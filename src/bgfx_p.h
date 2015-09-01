@@ -859,6 +859,8 @@ namespace bgfx
 #define CONSTANT_OPCODE_COPY_MASK  UINT32_C(0x00000001)
 
 #define BGFX_UNIFORM_FRAGMENTBIT UINT8_C(0x10)
+#define BGFX_UNIFORM_SAMPLERBIT  UINT8_C(0x20)
+#define BGFX_UNIFORM_MASK (BGFX_UNIFORM_FRAGMENTBIT|BGFX_UNIFORM_SAMPLERBIT)
 
 	class ConstantBuffer
 	{
@@ -971,12 +973,9 @@ namespace bgfx
 		char m_buffer[8];
 	};
 
-	typedef const void* (*UniformFn)(const void* _data);
-
 	struct UniformInfo
 	{
 		const void* m_data;
-		UniformFn m_func;
 		UniformHandle m_handle;
 	};
 
@@ -1002,14 +1001,13 @@ namespace bgfx
  			return NULL;
  		}
 
-		const UniformInfo& add(UniformHandle _handle, const char* _name, const void* _data, UniformFn _func = NULL)
+		const UniformInfo& add(UniformHandle _handle, const char* _name, const void* _data)
 		{
 			UniformHashMap::iterator it = m_uniforms.find(_name);
 			if (it == m_uniforms.end() )
 			{
 				UniformInfo info;
 				info.m_data   = _data;
-				info.m_func   = _func;
 				info.m_handle = _handle;
 
 				stl::pair<UniformHashMap::iterator, bool> result = m_uniforms.insert(UniformHashMap::value_type(_name, info) );
@@ -1018,7 +1016,6 @@ namespace bgfx
 
 			UniformInfo& info = it->second;
 			info.m_data   = _data;
-			info.m_func   = _func;
 			info.m_handle = _handle;
 
 			return info;

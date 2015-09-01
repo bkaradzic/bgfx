@@ -2215,7 +2215,7 @@ namespace bgfx { namespace d3d9
 					m_predefined[m_numPredefined].m_type  = uint8_t(predefined|fragmentBit);
 					m_numPredefined++;
 				}
-				else
+				else if (0 == (BGFX_UNIFORM_SAMPLERBIT & type) )
 				{
 					const UniformInfo* info = s_renderD3D9->m_uniformReg.find(name);
 					BX_CHECK(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
@@ -2231,10 +2231,10 @@ namespace bgfx { namespace d3d9
 					}
 				}
 
-				BX_TRACE("\t%s: %s, type %2d, num %2d, r.index %3d, r.count %2d"
+				BX_TRACE("\t%s: %s (%s), num %2d, r.index %3d, r.count %2d"
 					, kind
 					, name
-					, type
+					, getUniformTypeName(UniformType::Enum(type&~BGFX_UNIFORM_MASK) )
 					, num
 					, regIndex
 					, regCount

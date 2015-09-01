@@ -1,5 +1,9 @@
 root = true
 
+[fcpp/*]
+indent_style = space
+indent_size  = 2
+
 [ocornut-imgui/*]
-indent_style             = space
-indent_size              = 4
+indent_style = space
+indent_size  = 4

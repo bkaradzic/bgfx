@@ -27,6 +27,8 @@ vs_%.bin.h : vs_%.sc
 	-@cat $(SHADER_TMP) >> $(@)
 	-$(SILENT) $(SHADERC) $(VS_FLAGS) --platform windows -p vs_4_0 -O 3 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_dx11
 	-@cat $(SHADER_TMP) >> $(@)
+	-$(SILENT) $(SHADERC) $(VS_FLAGS) --platform ios     -p metal  -O 3 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_mtl
+	-@cat $(SHADER_TMP) >> $(@)
 
 fs_%.bin.h : fs_%.sc
 	@echo [$(<)]
@@ -35,6 +37,8 @@ fs_%.bin.h : fs_%.sc
 	-$(SILENT) $(SHADERC) $(FS_FLAGS) --platform windows -p ps_3_0 -O 3 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_dx9
 	-@cat $(SHADER_TMP) >> $(@)
 	-$(SILENT) $(SHADERC) $(FS_FLAGS) --platform windows -p ps_4_0 -O 3 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_dx11
+	-@cat $(SHADER_TMP) >> $(@)
+	-$(SILENT) $(SHADERC) $(FS_FLAGS) --platform ios     -p metal  -O 3 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_mtl
 	-@cat $(SHADER_TMP) >> $(@)
 
 .PHONY: all

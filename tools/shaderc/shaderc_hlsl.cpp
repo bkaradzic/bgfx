@@ -115,7 +115,7 @@ UniformType::Enum findUniformType(const D3D11_SHADER_TYPE_DESC& constDesc)
 		const UniformRemap& remap = s_uniformRemap[ii];
 
 		if (remap.paramClass == constDesc.Class
-		&&  remap.paramType == constDesc.Type)
+		&&  remap.paramType  == constDesc.Type)
 		{
 			if (D3D_SVC_MATRIX_COLUMNS != constDesc.Class)
 			{
@@ -142,6 +142,24 @@ static uint32_t s_optimizationLevelDx11[4] =
 };
 
 typedef std::vector<std::string> UniformNameList;
+
+static bool isSampler(D3D_SHADER_VARIABLE_TYPE _svt)
+{
+	switch (_svt)
+	{
+	case D3D_SVT_SAMPLER:
+	case D3D_SVT_SAMPLER1D:
+	case D3D_SVT_SAMPLER2D:
+	case D3D_SVT_SAMPLER3D:
+	case D3D_SVT_SAMPLERCUBE:
+		return true;
+
+	default:
+		break;
+	}
+
+	return false;
+}
 
 bool getReflectionDataDx9(ID3DBlob* _code, UniformArray& _uniforms)
 {
@@ -222,9 +240,9 @@ bool getReflectionDataDx9(ID3DBlob* _code, UniformArray& _uniforms)
 			);
 
 		D3D11_SHADER_TYPE_DESC desc;
-		desc.Class = (D3D_SHADER_VARIABLE_CLASS)ctType.Class;
-		desc.Type = (D3D_SHADER_VARIABLE_TYPE)ctType.Type;
-		desc.Rows = ctType.Rows;
+		desc.Class   = (D3D_SHADER_VARIABLE_CLASS)ctType.Class;
+		desc.Type    = (D3D_SHADER_VARIABLE_TYPE)ctType.Type;
+		desc.Rows    = ctType.Rows;
 		desc.Columns = ctType.Columns;
 
 		UniformType::Enum type = findUniformType(desc);
@@ -232,10 +250,14 @@ bool getReflectionDataDx9(ID3DBlob* _code, UniformArray& _uniforms)
 		{
 			Uniform un;
 			un.name = '$' == name[0] ? name + 1 : name;
-			un.type = type;
-			un.num = (uint8_t)ctType.Elements;
+			un.type = isSampler(desc.Type)
+				? UniformType::Enum(BGFX_UNIFORM_SAMPLERBIT | type)
+				: type
+				;
+			un.num  = (uint8_t)ctType.Elements;
 			un.regIndex = ctInfo.RegisterIndex;
 			un.regCount = ctInfo.RegisterCount;
+
 			_uniforms.push_back(un);
 		}
 	}
@@ -376,7 +398,7 @@ bool getReflectionDataDx11(ID3DBlob* _code, bool _vshader, UniformArray& _unifor
 		hr = reflect->GetResourceBindingDesc(ii, &bindDesc);
 		if (SUCCEEDED(hr) )
 		{
-			//			if (bindDesc.Type == D3D_SIT_SAMPLER)
+			if (D3D_SIT_SAMPLER == bindDesc.Type)
 			{
 				BX_TRACE("\t%s, %d, %d, %d"
 					, bindDesc.Name
@@ -384,6 +406,18 @@ bool getReflectionDataDx11(ID3DBlob* _code, bool _vshader, UniformArray& _unifor
 					, bindDesc.BindPoint
 					, bindDesc.BindCount
 					);
+
+				const char * end = strstr(bindDesc.Name, "Sampler");
+				if (NULL != end)
+				{
+					Uniform un;
+					un.name.assign(bindDesc.Name, (end - bindDesc.Name) );
+					un.type = UniformType::Enum(BGFX_UNIFORM_SAMPLERBIT | UniformType::Int1);
+					un.num = 1;
+					un.regIndex = bindDesc.BindPoint;
+					un.regCount = bindDesc.BindCount;
+					_uniforms.push_back(un);
+				}
 			}
 		}
 	}

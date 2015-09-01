@@ -127,24 +127,24 @@ ReturnCode dodefine(struct Global *global)
      * DEF_NOARGS is needed to distinguish between
      * "#define foo" and "#define foo()".
      */
-    global->nargs = DEF_NOARGS;		/* No () parameters     */
+    global->nargs = DEF_NOARGS;         /* No () parameters     */
   }
   if (type[c] == SPA)                   /* At whitespace?       */
     c = skipws(global);                 /* Not any more.        */
-  global->workp = global->work;		/* Replacement put here */
-  global->inmacro = TRUE;		/* Keep \<newline> now	*/
-  quoting = 0;				/* No # seen yet.	*/
+  global->workp = global->work;         /* Replacement put here */
+  global->inmacro = TRUE;               /* Keep \<newline> now	*/
+  quoting = 0;                          /* No # seen yet.	*/
   while (c != EOF_CHAR && c != '\n') {  /* Compile macro body   */
 #if OK_CONCAT
     if (c == '#') {                     /* Token concatenation? */
       if ((c = get(global)) != '#') {   /* No, not really       */
-	quoting = 1;		        /* Maybe quoting op.	*/
-	continue;
+        quoting = 1;                    /* Maybe quoting op.    */
+        continue;
       }
       while (global->workp > global->work && type[(unsigned)*(global->workp - 1)] == SPA)
-	--global->workp;		/* Erase leading spaces */
-      if((ret=save(global, TOK_SEP)))     /* Stuff a delimiter    */
-	return(ret);
+        --global->workp;                /* Erase leading spaces */
+//       if ((ret=save(global, TOK_SEP)))  /* Stuff a delimiter    */
+//         return(ret);
       c = skipws(global);               /* Eat whitespace       */
       continue;
     }
