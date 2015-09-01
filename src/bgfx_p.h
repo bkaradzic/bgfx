@@ -2615,7 +2615,7 @@ namespace bgfx
 
 					uint8_t type;
 					bx::read(&reader, type);
-					type &= ~BGFX_UNIFORM_FRAGMENTBIT;
+					type &= ~BGFX_UNIFORM_MASK;
 
 					uint8_t num;
 					bx::read(&reader, num);
