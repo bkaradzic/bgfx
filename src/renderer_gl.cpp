@@ -451,6 +451,8 @@ namespace bgfx { namespace gl
 			ARB_half_float_pixel,
 			ARB_half_float_vertex,
 			ARB_instanced_arrays,
+			ARB_internalformat_query,
+			ARB_internalformat_query2,
 			ARB_invalidate_subdata,
 			ARB_map_buffer_range,
 			ARB_multi_draw_indirect,
@@ -646,6 +648,8 @@ namespace bgfx { namespace gl
 		{ "ARB_half_float_pixel",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "ARB_half_float_vertex",                 BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "ARB_instanced_arrays",                  BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
+		{ "ARB_internalformat_query",              BGFX_CONFIG_RENDERER_OPENGL >= 42, true  },
+		{ "ARB_internalformat_query2",             BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 		{ "ARB_invalidate_subdata",                BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 		{ "ARB_map_buffer_range",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "ARB_multi_draw_indirect",               BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
@@ -1595,6 +1599,32 @@ namespace bgfx { namespace gl
 					? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
 					: BGFX_CAPS_FORMAT_TEXTURE_NONE
 					;
+
+				if (NULL != glGetInternalformativ)
+				{
+					GLint maxSamples;
+					GL_CHECK(glGetInternalformativ(GL_RENDERBUFFER
+						, s_textureFormat[ii].m_internalFmt
+						, GL_SAMPLES
+						, 1
+						, &maxSamples
+						) );
+					supported |= maxSamples > 0
+						? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
+						: BGFX_CAPS_FORMAT_TEXTURE_NONE
+						;
+
+					GL_CHECK(glGetInternalformativ(GL_TEXTURE_2D_MULTISAMPLE
+						, s_textureFormat[ii].m_internalFmt
+						, GL_SAMPLES
+						, 1
+						, &maxSamples
+						) );
+					supported |= maxSamples > 0
+						? BGFX_CAPS_FORMAT_TEXTURE_MSAA
+						: BGFX_CAPS_FORMAT_TEXTURE_NONE
+						;
+				}
 
 				g_caps.formats[ii] = supported;
 			}

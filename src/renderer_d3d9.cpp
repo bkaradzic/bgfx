@@ -148,26 +148,6 @@ namespace bgfx { namespace d3d9
 		D3DCULL_CCW,
 	};
 
-	static const D3DFORMAT s_checkColorFormats[] =
-	{
-		D3DFMT_UNKNOWN,
-		D3DFMT_A8R8G8B8, D3DFMT_UNKNOWN,
-		D3DFMT_R32F, D3DFMT_R16F, D3DFMT_G16R16, D3DFMT_A8R8G8B8, D3DFMT_UNKNOWN,
-
-		D3DFMT_UNKNOWN, // terminator
-	};
-
-	static D3DFORMAT s_colorFormat[] =
-	{
-		D3DFMT_UNKNOWN, // ignored
-		D3DFMT_A8R8G8B8,
-		D3DFMT_A2B10G10R10,
-		D3DFMT_A16B16G16R16,
-		D3DFMT_A16B16G16R16F,
-		D3DFMT_R16F,
-		D3DFMT_R32F,
-	};
-
 	static const D3DTEXTUREADDRESS s_textureAddress[] =
 	{
 		D3DTADDRESS_WRAP,
@@ -630,24 +610,15 @@ namespace bgfx { namespace d3d9
 						, s_textureFormat[ii].m_fmt
 						) ) ? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER : BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
+					support |= SUCCEEDED(m_d3d9->CheckDeviceMultiSampleType(m_adapter
+						, m_deviceType
+						, s_textureFormat[ii].m_fmt
+						, true
+						, D3DMULTISAMPLE_2_SAMPLES
+						, NULL
+						) ) ? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA : BGFX_CAPS_FORMAT_TEXTURE_NONE;
+
 					g_caps.formats[ii] = support;
-				}
-			}
-
-			{
-				uint32_t index = 1;
-				for (const D3DFORMAT* fmt = &s_checkColorFormats[index]; *fmt != D3DFMT_UNKNOWN; ++fmt, ++index)
-				{
-					for (; *fmt != D3DFMT_UNKNOWN; ++fmt)
-					{
-						if (SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter, m_deviceType, adapterFormat, D3DUSAGE_RENDERTARGET, D3DRTYPE_TEXTURE, *fmt) ) )
-						{
-							s_colorFormat[index] = *fmt;
-							break;
-						}
-					}
-
-					for (; *fmt != D3DFMT_UNKNOWN; ++fmt);
 				}
 			}
 

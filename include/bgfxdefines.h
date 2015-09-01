@@ -359,13 +359,15 @@
 #define BGFX_CAPS_HIDPI                  UINT64_C(0x0000000000008000) //!< HiDPI rendering is supported.
 
 ///
-#define BGFX_CAPS_FORMAT_TEXTURE_NONE        UINT8_C(0x00) //!< Texture format is not supported.
-#define BGFX_CAPS_FORMAT_TEXTURE_COLOR       UINT8_C(0x01) //!< Texture format is supported.
-#define BGFX_CAPS_FORMAT_TEXTURE_COLOR_SRGB  UINT8_C(0x02) //!< Texture as sRGB format is supported.
-#define BGFX_CAPS_FORMAT_TEXTURE_EMULATED    UINT8_C(0x04) //!< Texture format is emulated.
-#define BGFX_CAPS_FORMAT_TEXTURE_VERTEX      UINT8_C(0x08) //!< Texture format can be used from vertex shader.
-#define BGFX_CAPS_FORMAT_TEXTURE_IMAGE       UINT8_C(0x10) //!< Texture format can be used as image from compute shader.
-#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER UINT8_C(0x20) //!< Texture format can be used as frame buffer.
+#define BGFX_CAPS_FORMAT_TEXTURE_NONE             UINT8_C(0x00) //!< Texture format is not supported.
+#define BGFX_CAPS_FORMAT_TEXTURE_COLOR            UINT8_C(0x01) //!< Texture format is supported.
+#define BGFX_CAPS_FORMAT_TEXTURE_COLOR_SRGB       UINT8_C(0x02) //!< Texture as sRGB format is supported.
+#define BGFX_CAPS_FORMAT_TEXTURE_EMULATED         UINT8_C(0x04) //!< Texture format is emulated.
+#define BGFX_CAPS_FORMAT_TEXTURE_VERTEX           UINT8_C(0x08) //!< Texture format can be used from vertex shader.
+#define BGFX_CAPS_FORMAT_TEXTURE_IMAGE            UINT8_C(0x10) //!< Texture format can be used as image from compute shader.
+#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER      UINT8_C(0x20) //!< Texture format can be used as frame buffer.
+#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA UINT8_C(0x40) //!< Texture format can be used as MSAA frame buffer.
+#define BGFX_CAPS_FORMAT_TEXTURE_MSAA             UINT8_C(0x80) //!< Texture can be sampled as MSAA.
 
 ///
 #define BGFX_VIEW_NONE   UINT8_C(0x00) //!<

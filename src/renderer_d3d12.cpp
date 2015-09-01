@@ -934,6 +934,20 @@ namespace bgfx { namespace d3d12
 									? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
 									: BGFX_CAPS_FORMAT_TEXTURE_NONE
 									;
+
+							support |= 0 != (data.Support1 & (0
+									| D3D12_FORMAT_SUPPORT1_MULTISAMPLE_RENDERTARGET
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+
+							support |= 0 != (data.Support1 & (0
+									| D3D12_FORMAT_SUPPORT1_MULTISAMPLE_LOAD
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_MSAA
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
 						}
 						else
 						{

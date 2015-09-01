@@ -910,24 +910,28 @@ namespace bgfx
 		}
 
 		BX_TRACE("Supported texture formats:");
-		BX_TRACE("\t +--------- x = supported / * = emulated");
-		BX_TRACE("\t |+-------- sRGB format");
-		BX_TRACE("\t ||+------- vertex format");
-		BX_TRACE("\t |||+------ image");
-		BX_TRACE("\t ||||+----- framebuffer");
-		BX_TRACE("\t |||||  +-- name");
+		BX_TRACE("\t +----------- x = supported / * = emulated");
+		BX_TRACE("\t |+---------- sRGB format");
+		BX_TRACE("\t ||+--------- vertex format");
+		BX_TRACE("\t |||+-------- image");
+		BX_TRACE("\t ||||+------- framebuffer");
+		BX_TRACE("\t |||||+------ MSAA framebuffer");
+		BX_TRACE("\t ||||||+----- MSAA texture");
+		BX_TRACE("\t |||||||  +-- name");
 		for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 		{
 			if (TextureFormat::Unknown != ii
 			&&  TextureFormat::UnknownDepth != ii)
 			{
 				uint8_t flags = g_caps.formats[ii];
-				BX_TRACE("\t[%c%c%c%c%c] %s"
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_COLOR       ? 'x' : flags&BGFX_CAPS_FORMAT_TEXTURE_EMULATED ? '*' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_COLOR_SRGB  ? 'l' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_VERTEX      ? 'v' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_IMAGE       ? 'i' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER ? 'f' : ' '
+				BX_TRACE("\t[%c%c%c%c%c%c%c] %s"
+					, flags&BGFX_CAPS_FORMAT_TEXTURE_COLOR            ? 'x' : flags&BGFX_CAPS_FORMAT_TEXTURE_EMULATED ? '*' : ' '
+					, flags&BGFX_CAPS_FORMAT_TEXTURE_COLOR_SRGB       ? 'l' : ' '
+					, flags&BGFX_CAPS_FORMAT_TEXTURE_VERTEX           ? 'v' : ' '
+					, flags&BGFX_CAPS_FORMAT_TEXTURE_IMAGE            ? 'i' : ' '
+					, flags&BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER      ? 'f' : ' '
+					, flags&BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA ? '+' : ' '
+					, flags&BGFX_CAPS_FORMAT_TEXTURE_MSAA             ? 'm' : ' '
 					, getName(TextureFormat::Enum(ii) )
 					);
 				BX_UNUSED(flags);
