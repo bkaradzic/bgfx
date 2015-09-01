@@ -1603,24 +1603,26 @@ namespace bgfx { namespace gl
 				if (NULL != glGetInternalformativ)
 				{
 					GLint maxSamples;
-					GL_CHECK(glGetInternalformativ(GL_RENDERBUFFER
+					glGetInternalformativ(GL_RENDERBUFFER
 						, s_textureFormat[ii].m_internalFmt
 						, GL_SAMPLES
 						, 1
 						, &maxSamples
-						) );
-					supported |= maxSamples > 0
+						);
+					GLenum err = glGetError();
+					supported |= 0 == err && maxSamples > 0
 						? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
 						: BGFX_CAPS_FORMAT_TEXTURE_NONE
 						;
 
-					GL_CHECK(glGetInternalformativ(GL_TEXTURE_2D_MULTISAMPLE
+					glGetInternalformativ(GL_TEXTURE_2D_MULTISAMPLE
 						, s_textureFormat[ii].m_internalFmt
 						, GL_SAMPLES
 						, 1
 						, &maxSamples
-						) );
-					supported |= maxSamples > 0
+						);
+					err = glGetError();
+					supported |= 0 == err && maxSamples > 0
 						? BGFX_CAPS_FORMAT_TEXTURE_MSAA
 						: BGFX_CAPS_FORMAT_TEXTURE_NONE
 						;
