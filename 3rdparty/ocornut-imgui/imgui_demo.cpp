@@ -1,4 +1,4 @@
-// ImGui library v1.45 WIP
+// ImGui library v1.45
 // Demo code
 
 // Don't remove this file from your project! It is useful reference code that you can execute.
@@ -701,7 +701,7 @@ void ImGui::ShowTestWindow(bool* opened)
             ImGui::PushItemWidth(100);
             goto_line |= ImGui::InputInt("##Line", &line, 0, 0, ImGuiInputTextFlags_EnterReturnsTrue);
             ImGui::PopItemWidth();
-            ImGui::BeginChild("Sub1", ImVec2(ImGui::GetWindowWidth() * 0.5f,300));
+            ImGui::BeginChild("Sub1", ImVec2(ImGui::GetWindowContentRegionWidth() * 0.5f,300), false, ImGuiWindowFlags_HorizontalScrollbar);
             for (int i = 0; i < 100; i++)
             {
                 ImGui::Text("%04d: scrollable region", i);
@@ -735,19 +735,24 @@ void ImGui::ShowTestWindow(bool* opened)
         if (ImGui::TreeNode("Widgets Alignment"))
         {
             static float f = 0.0f;
-            ImGui::Text("Fixed: 100 pixels");
+            ImGui::Text("PushItemWidth(100)");
             ImGui::PushItemWidth(100);
-            ImGui::InputFloat("float##1", &f);
+            ImGui::DragFloat("float##1", &f);
             ImGui::PopItemWidth();
 
-            ImGui::Text("Proportional: 50%% of window width");
+            ImGui::Text("PushItemWidth(GetWindowWidth() * 0.5f);");
             ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.5f);
-            ImGui::InputFloat("float##2", &f);
+            ImGui::DragFloat("float##2", &f);
             ImGui::PopItemWidth();
 
-            ImGui::Text("Right-aligned: Leave 100 pixels for label");
+            ImGui::Text("PushItemWidth(GetContentRegionAvailWidth() * 0.5f);");
+            ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth() * 0.5f);
+            ImGui::DragFloat("float##3", &f);
+            ImGui::PopItemWidth();
+
+            ImGui::Text("PushItemWidth(-100);");
             ImGui::PushItemWidth(-100);
-            ImGui::InputFloat("float##3", &f);
+            ImGui::DragFloat("float##4", &f);
             ImGui::PopItemWidth();
 
             ImGui::TreePop();
@@ -907,7 +912,7 @@ void ImGui::ShowTestWindow(bool* opened)
             static bool track = true;
             static int track_line = 50, scroll_to_px = 200;
             ImGui::Checkbox("Track", &track);
-            ImGui::SameLine(130); track |= ImGui::DragInt("##line", &track_line, 0.25f, 0, 9999, "Line %.0f");
+            ImGui::SameLine(130); track |= ImGui::DragInt("##line", &track_line, 0.25f, 0, 99, "Line %.0f");
             bool scroll_to = ImGui::Button("Scroll To");
             ImGui::SameLine(130); scroll_to |= ImGui::DragInt("##pos_y", &scroll_to_px, 1.00f, 0, 9999, "y = %.0f px");
             if (scroll_to) track = false;
@@ -934,6 +939,47 @@ void ImGui::ShowTestWindow(bool* opened)
                 }
                 ImGui::EndChild();
                 ImGui::EndGroup();
+            }
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Horizontal Scrolling"))
+        {
+            ImGui::Bullet(); ImGui::TextWrapped("Horizontal scrolling for a window has to be enabled explicitly via the ImGuiWindowFlags_HorizontalScrollbar flag.");
+            ImGui::Bullet(); ImGui::TextWrapped("You may want to explicitly specify content width by calling SetNextWindowContentWidth() before Begin().");
+            ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 1.0f));
+            ImGui::BeginChild("scrolling", ImVec2(0, ImGui::GetItemsLineHeightWithSpacing()*7 + 30), true, ImGuiWindowFlags_HorizontalScrollbar);
+            for (int line = 0; line < 7; line++)
+            {
+                // Display random stuff
+                int num_buttons = 10 + ((line & 1) ? line * 9 : line * 3);
+                for (int n = 0; n < num_buttons; n++)
+                {
+                    if (n > 0) ImGui::SameLine();
+                    ImGui::PushID(n + line * 1000);
+                    char num_buf[16];
+                    const char* label = (!(n%15)) ? "FizzBuzz" : (!(n%3)) ? "Fizz" : (!(n%5)) ? "Buzz" : (sprintf(num_buf, "%d", n), num_buf);
+                    float hue = n*0.05f;
+                    ImGui::PushStyleColor(ImGuiCol_Button, ImColor::HSV(hue, 0.6f, 0.6f));
+                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImColor::HSV(hue, 0.7f, 0.7f));
+                    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImColor::HSV(hue, 0.8f, 0.8f));
+                    ImGui::Button(label, ImVec2(40.0f + sinf((float)(line + n)) * 20.0f, 0.0f));
+                    ImGui::PopStyleColor(3);
+                    ImGui::PopID();
+                }
+            }
+            ImGui::EndChild();
+            ImGui::PopStyleVar(2);
+            float scroll_x_delta = 0.0f;
+            ImGui::SmallButton("<<"); if (ImGui::IsItemActive()) scroll_x_delta = -ImGui::GetIO().DeltaTime * 1000.0f;
+            ImGui::SameLine(); ImGui::Text("Scroll from code"); ImGui::SameLine(); 
+            ImGui::SmallButton(">>"); if (ImGui::IsItemActive()) scroll_x_delta = +ImGui::GetIO().DeltaTime * 1000.0f;
+            if (scroll_x_delta != 0.0f)
+            {
+                ImGui::BeginChild("scrolling"); // Demonstrate a trick: you can use Begin to set yourself in the context of another window (here we are already out of your child window)
+                ImGui::SetScrollX(ImGui::GetScrollX() + scroll_x_delta);
+                ImGui::End();
             }
             ImGui::TreePop();
         }
@@ -1205,7 +1251,7 @@ void ImGui::ShowTestWindow(bool* opened)
         ImGui::Separator();
         ImGui::Spacing();
 
-        // Word-wrapping
+        // Word wrapping
         ImGui::Text("Word-wrapping:");
         ImGui::Columns(2, "word-wrapping");
         ImGui::Separator();
@@ -1411,7 +1457,7 @@ void ImGui::ShowStyleEditor(ImGuiStyle* ref)
         ImGui::SliderFloat2("ItemInnerSpacing", (float*)&style.ItemInnerSpacing, 0.0f, 20.0f, "%.0f");
         ImGui::SliderFloat2("TouchExtraPadding", (float*)&style.TouchExtraPadding, 0.0f, 10.0f, "%.0f");
         ImGui::SliderFloat("IndentSpacing", &style.IndentSpacing, 0.0f, 30.0f, "%.0f");
-        ImGui::SliderFloat("ScrollbarWidth", &style.ScrollbarWidth, 1.0f, 20.0f, "%.0f");
+        ImGui::SliderFloat("ScrollbarWidth", &style.ScrollbarSize, 1.0f, 20.0f, "%.0f");
         ImGui::SliderFloat("ScrollbarRounding", &style.ScrollbarRounding, 0.0f, 16.0f, "%.0f");
         ImGui::SliderFloat("GrabMinSize", &style.GrabMinSize, 1.0f, 20.0f, "%.0f");
         ImGui::SliderFloat("GrabRounding", &style.GrabRounding, 0.0f, 16.0f, "%.0f");
@@ -1757,7 +1803,7 @@ struct ExampleAppConsole
         // Display every line as a separate entry so we can change their color or add custom widgets. If you only want raw text you can use ImGui::TextUnformatted(log.begin(), log.end());
         // NB- if you have thousands of entries this approach may be too inefficient. You can seek and display only the lines that are visible - CalcListClipping() is a helper to compute this information.
         // If your items are of variable size you may want to implement code similar to what CalcListClipping() does. Or split your data into fixed height items to allow random-seeking into your list.
-        ImGui::BeginChild("ScrollingRegion", ImVec2(0,-ImGui::GetItemsLineHeightWithSpacing()));
+        ImGui::BeginChild("ScrollingRegion", ImVec2(0,-ImGui::GetItemsLineHeightWithSpacing()), false, ImGuiWindowFlags_HorizontalScrollbar);
         if (ImGui::BeginPopupContextWindow())
         {
             if (ImGui::Selectable("Clear")) ClearLog();
@@ -1989,7 +2035,7 @@ struct ExampleAppLog
         ImGui::SameLine();
         Filter.Draw("Filter", -100.0f);
         ImGui::Separator();
-        ImGui::BeginChild("scrolling");
+        ImGui::BeginChild("scrolling", ImVec2(0,0), false, ImGuiWindowFlags_HorizontalScrollbar);
         if (copy) ImGui::LogToClipboard();
 
         if (Filter.IsActive())
@@ -2110,16 +2156,16 @@ static void ShowExampleAppLongText(bool* opened)
         ImGui::TextUnformatted(log.begin(), log.end());
         break;
     case 1:
-        // Multiple calls to Text(), manually coarsely clipped - demonstrate how to use the CalcListClipping() helper.
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0,0));
-        int display_start, display_end;
-        ImGui::CalcListClipping(lines, ImGui::GetTextLineHeight(), &display_start, &display_end);
-        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (display_start) * ImGui::GetTextLineHeight());
-        for (int i = display_start; i < display_end; i++)
-            ImGui::Text("%i The quick brown fox jumps over the lazy dog\n", i);
-        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (lines - display_end) * ImGui::GetTextLineHeight());
-        ImGui::PopStyleVar();
-        break;
+        {
+            // Multiple calls to Text(), manually coarsely clipped - demonstrate how to use the ImGuiListClipper helper.
+            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0,0));
+            ImGuiListClipper clipper(lines, ImGui::GetTextLineHeight());
+            for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
+                ImGui::Text("%i The quick brown fox jumps over the lazy dog\n", i);
+            clipper.End();
+            ImGui::PopStyleVar();
+            break;
+        }
     case 2:
         // Multiple calls to Text(), not clipped (slow)
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0,0));
