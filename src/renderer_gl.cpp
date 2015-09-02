@@ -5957,7 +5957,7 @@ namespace bgfx { namespace gl
 		perfStats.cpuTime      = frameTime;
 		perfStats.cpuTimerFreq = timerFreq;
 		perfStats.gpuTime      = elapsedGl;
-		perfStats.gpuTimerFreq = 100000000;
+		perfStats.gpuTimerFreq = 1000000000;
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
