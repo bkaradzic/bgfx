@@ -291,7 +291,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{ entry::Key::KeyQ,         entry::Modifier::RightCtrl, 1, NULL, "exit"                              },
 		{ entry::Key::KeyF,         entry::Modifier::LeftCtrl,  1, NULL, "graphics fullscreen"               },
 		{ entry::Key::KeyF,         entry::Modifier::RightCtrl, 1, NULL, "graphics fullscreen"               },
-		{ entry::Key::F11,          entry::Modifier::None,      1, NULL, "graphics fullscreen"               },
+		{ entry::Key::Return,       entry::Modifier::RightAlt,  1, NULL, "graphics fullscreen"               },
 		{ entry::Key::F1,           entry::Modifier::None,      1, NULL, "graphics stats"                    },
 		{ entry::Key::GamepadStart, entry::Modifier::None,      1, NULL, "graphics stats"                    },
 		{ entry::Key::F1,           entry::Modifier::LeftShift, 1, NULL, "graphics stats 0\ngraphics text 0" },

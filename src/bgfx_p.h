@@ -1088,7 +1088,10 @@ namespace bgfx
 
 			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
 			{
-				m_bind[ii].m_idx  = invalidHandle;
+				Binding& bind = m_bind[ii];
+				bind.m_idx  = invalidHandle;
+				bind.m_type = 0;
+				bind.m_un.m_draw.m_flags = 0;
 			}
 		}
 
