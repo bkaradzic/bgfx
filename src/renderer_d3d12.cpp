@@ -4490,7 +4490,6 @@ data.NumQualityLevels = 0;
 					if (wasCompute)
 					{
 						wasCompute = false;
-						kick();
 					}
 
 					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
