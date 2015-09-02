@@ -1221,6 +1221,11 @@ struct Imgui
 
 		const uint32_t rgb0 = _rgb0&0x00ffffff;
 
+		if (!visible(yy, height, area.m_scissorY, area.m_scissorHeight))
+		{
+			return false;
+		}
+
 		drawRoundedRect( (float)xx
 					   , (float)yy
 					   , (float)width
@@ -1265,6 +1270,11 @@ struct Imgui
 		const bool enabled = _enabled && isEnabled(m_areaId);
 		const bool over = enabled && inRect(xx, yy, width, height);
 		const bool res = buttonLogic(id, over);
+
+		if (!visible(yy, height, area.m_scissorY, area.m_scissorHeight))
+		{
+			return false;
+		}
 
 		if (isHot(id) )
 		{
@@ -1316,6 +1326,12 @@ struct Imgui
 
 		const int32_t cx = xx + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
 		const int32_t cy = yy + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
+
+		if (!visible(cy, CHECK_SIZE+6, area.m_scissorY, area.m_scissorHeight))
+		{
+			return false;
+		}
+
 		drawRoundedRect( (float)cx - 3
 			, (float)cy - 3
 			, (float)CHECK_SIZE + 6
@@ -3061,6 +3077,12 @@ struct Imgui
 		bool m_didScroll;
 		bool m_scissorEnabled;
 	};
+
+	bool visible(int32_t _elemY, int32_t _elemHeight, int32_t _scissorY, int32_t _scissorHeight)
+	{
+		return _elemY > _scissorY
+		   && (_elemY+_elemHeight) < (_scissorY+_scissorHeight);
+	}
 
 	inline Area& getCurrentArea()
 	{
