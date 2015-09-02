@@ -1118,15 +1118,16 @@ namespace bgfx { namespace d3d12
 
 				HRESULT hr = 0;
 				uint32_t syncInterval = !!(m_flags & BGFX_RESET_VSYNC);
+				uint32_t flags = 0 == syncInterval ? DXGI_PRESENT_RESTART : 0;
 				for (uint32_t ii = 1, num = m_numWindows; ii < num && SUCCEEDED(hr); ++ii)
 				{
-					hr = m_frameBuffers[m_windows[ii].idx].m_swapChain->Present(syncInterval, 0);
+					hr = m_frameBuffers[m_windows[ii].idx].m_swapChain->Present(syncInterval, flags);
 				}
 
 				if (SUCCEEDED(hr) )
 				{
 					m_cmd.finish(m_backBufferColorFence[(m_backBufferColorIdx-1) % m_scd.BufferCount]);
-					hr = m_swapChain->Present(syncInterval, 0);
+					hr = m_swapChain->Present(syncInterval, flags);
 				}
 
 				int64_t now = bx::getHPCounter();
@@ -4206,6 +4207,7 @@ data.NumQualityLevels = 0;
 
 		uint16_t currentSamplerStateIdx = invalidHandle;
 		uint16_t currentProgramIdx      = invalidHandle;
+		bool     hasPredefined          = false;
 		uint32_t currentBindHash = 0;
 		ID3D12PipelineState* currentPso = NULL;
 		SortKey key;
@@ -4278,6 +4280,7 @@ data.NumQualityLevels = 0;
 					currentPso = NULL;
 					currentSamplerStateIdx = invalidHandle;
 					currentProgramIdx      = invalidHandle;
+					hasPredefined          = false;
 
 					fbh = _render->m_fb[view];
 					setFrameBuffer(fbh);
@@ -4419,13 +4422,14 @@ data.NumQualityLevels = 0;
 						}
 					}
 
+					bool constantsChanged = false;
 					if (compute.m_constBegin < compute.m_constEnd
 					||  currentProgramIdx != key.m_program)
 					{
 						rendererUpdateUniforms(this, _render->m_constantBuffer, compute.m_constBegin, compute.m_constEnd);
 
 						currentProgramIdx = key.m_program;
-						ProgramD3D12& program = m_program[key.m_program];
+						ProgramD3D12& program = m_program[currentProgramIdx];
 
 						ConstantBuffer* vcb = program.m_vsh->m_constantBuffer;
 						if (NULL != vcb)
@@ -4433,6 +4437,14 @@ data.NumQualityLevels = 0;
 							commit(*vcb);
 						}
 
+						hasPredefined = 0 < program.m_numPredefined;
+						constantsChanged = true;
+					}
+
+					if (constantsChanged
+					||  hasPredefined)
+					{
+						ProgramD3D12& program = m_program[currentProgramIdx];
 						viewState.setPredefined<4>(this, view, 0, program, _render, compute);
 						commitShaderConstants(key.m_program, gpuAddress);
 						m_commandList->SetComputeRootConstantBufferView(Rdt::CBV, gpuAddress);
@@ -4510,6 +4522,8 @@ data.NumQualityLevels = 0;
 					const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
 					primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
 				}
+
+				rendererUpdateUniforms(this, _render->m_constantBuffer, draw.m_constBegin, draw.m_constEnd);
 
 				if (isValid(draw.m_vertexBuffer) )
 				{
@@ -4663,14 +4677,13 @@ data.NumQualityLevels = 0;
 						m_commandList->SetPipelineState(pso);
 					}
 
+					bool constantsChanged = false;
 					if (draw.m_constBegin < draw.m_constEnd
 					||  currentProgramIdx != key.m_program
 					||  BGFX_STATE_ALPHA_REF_MASK & changedFlags)
 					{
-						rendererUpdateUniforms(this, _render->m_constantBuffer, draw.m_constBegin, draw.m_constEnd);
-
 						currentProgramIdx = key.m_program;
-						ProgramD3D12& program = m_program[key.m_program];
+						ProgramD3D12& program = m_program[currentProgramIdx];
 
 						ConstantBuffer* vcb = program.m_vsh->m_constantBuffer;
 						if (NULL != vcb)
@@ -4684,6 +4697,14 @@ data.NumQualityLevels = 0;
 							commit(*fcb);
 						}
 
+						hasPredefined = 0 < program.m_numPredefined;
+						constantsChanged = true;
+					}
+
+					if (constantsChanged
+					||  hasPredefined)
+					{
+						ProgramD3D12& program = m_program[currentProgramIdx];
 						uint32_t ref = (newFlags&BGFX_STATE_ALPHA_REF_MASK)>>BGFX_STATE_ALPHA_REF_SHIFT;
 						viewState.m_alphaRef = ref/255.0f;
 						viewState.setPredefined<4>(this, view, 0, program, _render, draw);
