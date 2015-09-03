@@ -76,7 +76,7 @@
 #define BGFX_STATE_MASK                  UINT64_C(0xffffffffffffffff) //!<
 
 /// Default state is write to RGB, alpha, and depth with depth test less enabled, with clockwise
-/// culling and MSAA (when writting into MSAA frame buffer, otherwise this flag is ignored).
+/// culling and MSAA (when writing into MSAA frame buffer, otherwise this flag is ignored).
 #define BGFX_STATE_DEFAULT (0 \
 					| BGFX_STATE_RGB_WRITE \
 					| BGFX_STATE_ALPHA_WRITE \
