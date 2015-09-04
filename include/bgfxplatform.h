@@ -194,6 +194,11 @@ namespace bgfx
         setPlatformData(pd);
     }
 
+    namespace d3d11
+    {
+        extern void trim();
+    }
+
 } // namespace bgfx
 
 #endif // BX_PLATFORM_

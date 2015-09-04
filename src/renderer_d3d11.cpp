@@ -3038,6 +3038,23 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		s_renderD3D11 = NULL;
 	}
 
+    void trim()
+    {
+        if (s_renderD3D11)
+        {
+            if (s_renderD3D11->m_device)
+            {
+                IDXGIDevice3 * pDXGIDevice;
+                HRESULT hr = s_renderD3D11->m_device->QueryInterface(__uuidof(IDXGIDevice3), (void **)&pDXGIDevice);
+                if (SUCCEEDED(hr))
+                {
+                    pDXGIDevice->Trim();
+                    pDXGIDevice->Release();
+                }
+            }
+        }
+    }
+
 	struct UavFormat
 	{
 		DXGI_FORMAT format[3];
