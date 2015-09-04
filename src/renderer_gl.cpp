@@ -61,6 +61,27 @@ namespace bgfx { namespace gl
 	};
 	BX_STATIC_ASSERT(Attrib::Count == BX_COUNTOF(s_attribName) );
 
+	//HACK: kind of a temporary workaround so one varying.def.sc file can have for example two position semantics, one with ivec and one with vec type.
+	static const char* s_alternate_attribName[] =
+	{
+		"i_position",
+		"i_normal",
+		"i_tangent",
+		"i_bitangent",
+		"i_color0",
+		"i_color1",
+		"i_indices",
+		"i_weight",
+		"i_texcoord0",
+		"i_texcoord1",
+		"i_texcoord2",
+		"i_texcoord3",
+		"i_texcoord4",
+		"i_texcoord5",
+		"i_texcoord6",
+		"i_texcoord7",
+	};
+
 	static const char* s_instanceDataName[] =
 	{
 		"i_data0",
@@ -3541,6 +3562,16 @@ namespace bgfx { namespace gl
 				m_attributes[ii] = loc;
 				m_used[used++] = ii;
 			}
+			else //HACK:
+			{
+				loc = glGetAttribLocation(m_id, s_alternate_attribName[ii]);
+				if (-1 != loc)
+				{
+					BX_TRACE("attr %s: %d", s_attribName[ii], loc);
+					m_attributes[ii] = loc;
+					m_used[used++] = ii;
+				}
+			}
 		}
 		BX_CHECK(used < BX_COUNTOF(m_used), "Out of bounds %d > array size %d."
 				, used
@@ -3586,7 +3617,16 @@ namespace bgfx { namespace gl
 					GL_CHECK(glVertexAttribDivisor(loc, 0) );
 
 					uint32_t baseVertex = _baseVertex*_vertexDecl.m_stride + _vertexDecl.m_offset[attr];
-					GL_CHECK(glVertexAttribPointer(loc, num, s_attribType[type], normalized, _vertexDecl.m_stride, (void*)(uintptr_t)baseVertex) );
+#if (BGFX_CONFIG_RENDERER_OPENGL >= 3) || (BGFX_CONFIG_RENDERER_OPENGLES >= 3)
+					if(!normalized && (type == AttribType::Uint8 || type == AttribType::Int16))
+					{
+						GL_CHECK(glVertexAttribIPointer(loc, num, s_attribType[type], _vertexDecl.m_stride, (void*)(uintptr_t)baseVertex) );
+					}
+					else
+#endif
+					{
+						GL_CHECK(glVertexAttribPointer(loc, num, s_attribType[type], normalized, _vertexDecl.m_stride, (void*)(uintptr_t)baseVertex) );
+					}
 				}
 				else
 				{
