@@ -2230,6 +2230,10 @@ namespace bgfx { namespace d3d9
 						m_constantBuffer->writeUniformHandle( (UniformType::Enum)(type|fragmentBit), regIndex, info->m_handle, regCount);
 					}
 				}
+				else
+				{
+					kind = "sampler";
+				}
 
 				BX_TRACE("\t%s: %s (%s), num %2d, r.index %3d, r.count %2d"
 					, kind
