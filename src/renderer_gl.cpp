@@ -3586,7 +3586,27 @@ namespace bgfx { namespace gl
 					GL_CHECK(glVertexAttribDivisor(loc, 0) );
 
 					uint32_t baseVertex = _baseVertex*_vertexDecl.m_stride + _vertexDecl.m_offset[attr];
-					GL_CHECK(glVertexAttribPointer(loc, num, s_attribType[type], normalized, _vertexDecl.m_stride, (void*)(uintptr_t)baseVertex) );
+					if ( (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 30) ||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31) )
+					&& (AttribType::Uint8 == type || AttribType::Int16 == type)
+					&&  !normalized)
+					{
+						GL_CHECK(glVertexAttribIPointer(loc
+								, num
+								, s_attribType[type]
+								, _vertexDecl.m_stride
+								, (void*)(uintptr_t)baseVertex)
+								);
+					}
+					else
+					{
+						GL_CHECK(glVertexAttribPointer(loc
+								, num
+								, s_attribType[type]
+								, normalized
+								, _vertexDecl.m_stride
+								, (void*)(uintptr_t)baseVertex)
+								);
+					}
 				}
 				else
 				{
