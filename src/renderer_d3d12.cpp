@@ -4241,7 +4241,14 @@ data.NumQualityLevels = 0;
 		scratchBuffer.reset(gpuHandle);
 
 		D3D12_GPU_VIRTUAL_ADDRESS gpuAddress = UINT64_C(0);
-		StateCacheLru<D3D12_GPU_DESCRIPTOR_HANDLE, 64> bindLru;
+
+		struct Bind
+		{
+			D3D12_GPU_DESCRIPTOR_HANDLE m_srvHandle;
+			uint16_t m_samplerStateIdx;
+		};
+
+		StateCacheLru<Bind, 64> bindLru;
 
 		setResourceBarrier(m_commandList
 			, m_backBufferColor[m_backBufferColorIdx]
@@ -4348,8 +4355,8 @@ data.NumQualityLevels = 0;
 					{
 						currentBindHash  = bindHash;
 
-						D3D12_GPU_DESCRIPTOR_HANDLE* srv = bindLru.find(bindHash);
-						if (NULL == srv)
+						Bind* bind = bindLru.find(bindHash);
+						if (NULL == bind)
 						{
 							D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_MAX_COMPUTE_BINDINGS] = {};
 							uint32_t samplerFlags[BGFX_MAX_COMPUTE_BINDINGS] = {};
@@ -4413,12 +4420,21 @@ data.NumQualityLevels = 0;
 							m_commandList->SetComputeRootDescriptorTable(Rdt::SRV, srvHandle[0]);
 							m_commandList->SetComputeRootDescriptorTable(Rdt::UAV, srvHandle[0]);
 
-							bindLru.add(bindHash, srvHandle[0], 0);
+							Bind bind;
+							bind.m_srvHandle = srvHandle[0];
+							bind.m_samplerStateIdx = samplerStateIdx;
+							bindLru.add(bindHash, bind, 0);
 						}
 						else
 						{
-							m_commandList->SetComputeRootDescriptorTable(Rdt::SRV, *srv);
-							m_commandList->SetComputeRootDescriptorTable(Rdt::UAV, *srv);
+							uint16_t samplerStateIdx = bind->m_samplerStateIdx;
+							if (samplerStateIdx != currentSamplerStateIdx)
+							{
+								currentSamplerStateIdx = samplerStateIdx;
+								m_commandList->SetComputeRootDescriptorTable(Rdt::Sampler, m_samplerAllocator.get(samplerStateIdx) );
+							}
+							m_commandList->SetComputeRootDescriptorTable(Rdt::SRV, bind->m_srvHandle);
+							m_commandList->SetComputeRootDescriptorTable(Rdt::UAV, bind->m_srvHandle);
 						}
 					}
 
@@ -4560,8 +4576,8 @@ data.NumQualityLevels = 0;
 					{
 						currentBindHash  = bindHash;
 
-						D3D12_GPU_DESCRIPTOR_HANDLE* srv = bindLru.find(bindHash);
-						if (NULL == srv)
+						Bind* bind = bindLru.find(bindHash);
+						if (NULL == bind)
 						{
 							D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 							uint32_t samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
@@ -4600,12 +4616,21 @@ data.NumQualityLevels = 0;
 
 								m_commandList->SetGraphicsRootDescriptorTable(Rdt::SRV, srvHandle[0]);
 
-								bindLru.add(bindHash, srvHandle[0], 0);
+								Bind bind;
+								bind.m_srvHandle = srvHandle[0];
+								bind.m_samplerStateIdx = samplerStateIdx;
+								bindLru.add(bindHash, bind, 0);
 							}
 						}
 						else
 						{
-							m_commandList->SetGraphicsRootDescriptorTable(Rdt::SRV, *srv);
+							uint16_t samplerStateIdx = bind->m_samplerStateIdx;
+							if (samplerStateIdx != currentSamplerStateIdx)
+							{
+								currentSamplerStateIdx = samplerStateIdx;
+								m_commandList->SetGraphicsRootDescriptorTable(Rdt::Sampler, m_samplerAllocator.get(samplerStateIdx) );
+							}
+							m_commandList->SetGraphicsRootDescriptorTable(Rdt::SRV, bind->m_srvHandle);
 						}
 					}
 
