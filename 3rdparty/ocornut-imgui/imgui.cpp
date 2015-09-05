@@ -1,11 +1,13 @@
-// ImGui library v1.45
+// ImGui library v1.46 WIP
 // Main code & documentation
 
 // See ImGui::ShowTestWindow() in imgui_demo.cpp for demo code.
 // Read 'Programmer guide' below for notes on how to setup ImGui in your codebase.
 // Get latest version at https://github.com/ocornut/imgui
 // Releases change-log at https://github.com/ocornut/imgui/releases
-// Developed by Omar Cornut and ImGui contributors.
+// Developed by Omar Cornut and every direct or indirect contributors to the GitHub.
+// This library is free but I need your support to sustain development and maintenance.
+// If you work for a company, please consider financial support, e.g: https://www.patreon.com/imgui
 
 /*
 
@@ -2704,14 +2706,15 @@ static ImGuiWindow* FindHoveredWindow(ImVec2 pos, bool excluding_childs)
 // Test if mouse cursor is hovering given rectangle
 // NB- Rectangle is clipped by our current clip setting
 // NB- Expand the rectangle to be generous on imprecise inputs systems (g.Style.TouchExtraPadding)
-bool ImGui::IsMouseHoveringRect(const ImVec2& pos_min, const ImVec2& pos_max)
+bool ImGui::IsMouseHoveringRect(const ImVec2& pos_min, const ImVec2& pos_max, bool clip)
 {
     ImGuiState& g = *GImGui;
     ImGuiWindow* window = GetCurrentWindowRead();
 
     // Clip
     ImRect rect_clipped(pos_min, pos_max);
-    rect_clipped.Clip(window->ClipRect);
+    if (clip)
+        rect_clipped.Clip(window->ClipRect);
 
     // Expand for touch input
     const ImRect rect_for_touch(rect_clipped.Min - g.Style.TouchExtraPadding, rect_clipped.Max + g.Style.TouchExtraPadding);
@@ -3532,8 +3535,9 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
         {
             window->AutoPosLastDirection = -1;
 
-            if (!(flags & (ImGuiWindowFlags_ChildWindow|ImGuiWindowFlags_Tooltip)) || (flags & ImGuiWindowFlags_Popup))
-                FocusWindow(window);
+            if (!(flags & ImGuiWindowFlags_NoFocusOnAppearing))
+                if (!(flags & (ImGuiWindowFlags_ChildWindow|ImGuiWindowFlags_Tooltip)) || (flags & ImGuiWindowFlags_Popup))
+                    FocusWindow(window);
 
             // Popup first latch mouse position, will position itself when it appears next frame
             if ((flags & ImGuiWindowFlags_Popup) != 0 && !window_pos_set_by_api)
