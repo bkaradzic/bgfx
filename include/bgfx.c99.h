@@ -184,7 +184,7 @@ typedef enum bgfx_backbuffer_ratio
 } bgfx_backbuffer_ratio_t;
 
 #define BGFX_HANDLE_T(_name) \
-    typedef struct _name { uint16_t idx; } _name##_t;
+    typedef struct _name { uint16_t idx; } _name##_t
 
 BGFX_HANDLE_T(bgfx_indirect_buffer_handle);
 BGFX_HANDLE_T(bgfx_dynamic_index_buffer_handle);
