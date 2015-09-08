@@ -844,7 +844,7 @@ namespace bgfx { namespace mtl
 			m_maxAnisotropy = 1;
 		}
 
-		//TODO: _resolution has wrong dimensions, usng m_drawable.texture size now
+		//TODO: _resolution has wrong dimensions, using m_drawable.texture size now
 
 		if ( NULL == m_drawable.texture )
 			return;
