@@ -6001,6 +6001,10 @@ namespace bgfx { namespace gl
 				tvm.printf(0, pos++, 0x8f, "      Version: %s ", m_version);
 				tvm.printf(0, pos++, 0x8f, " GLSL version: %s ", m_glslVersion);
 
+				char processMemoryUsed[16];
+				bx::prettify(processMemoryUsed, BX_COUNTOF(processMemoryUsed), bx::getProcessMemoryUsed() );
+				tvm.printf(0, pos++, 0x8f, " Memory: %s (process) ", processMemoryUsed);
+
 				pos = 10;
 				tvm.printf(10, pos++, 0x8e, "      Frame CPU: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS "
 					, double(frameTime)*toMs

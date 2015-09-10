@@ -3750,6 +3750,10 @@ namespace bgfx { namespace d3d9
 				const D3DADAPTER_IDENTIFIER9& identifier = m_identifier;
 				tvm.printf(0, pos++, 0x8f, " Device: %s (%s)", identifier.Description, identifier.Driver);
 
+				char processMemoryUsed[16];
+				bx::prettify(processMemoryUsed, BX_COUNTOF(processMemoryUsed), bx::getProcessMemoryUsed() );
+				tvm.printf(0, pos++, 0x8f, " Memory: %s (process) ", processMemoryUsed);
+
 				pos = 10;
 				tvm.printf(10, pos++, 0x8e, "       Frame: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS "
 					, double(frameTime)*toMs

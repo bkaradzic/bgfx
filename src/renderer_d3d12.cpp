@@ -4805,10 +4805,14 @@ data.NumQualityLevels = 0;
 				char sharedSystem[16];
 				bx::prettify(sharedSystem, BX_COUNTOF(sharedSystem), desc.SharedSystemMemory);
 
-				tvm.printf(0, pos++, 0x8f, " Memory: %s (video), %s (system), %s (shared)"
+				char processMemoryUsed[16];
+				bx::prettify(processMemoryUsed, BX_COUNTOF(processMemoryUsed), bx::getProcessMemoryUsed() );
+
+				tvm.printf(0, pos++, 0x8f, " Memory: %s (video), %s (system), %s (shared), %s (process) "
 					, dedicatedVideo
 					, dedicatedSystem
 					, sharedSystem
+					, processMemoryUsed
 					);
 
 				DXGI_QUERY_VIDEO_MEMORY_INFO memInfo;
