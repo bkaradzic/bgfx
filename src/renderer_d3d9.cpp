@@ -335,7 +335,7 @@ namespace bgfx { namespace d3d9
 
 			RECT rect;
 			GetWindowRect( (HWND)g_platformData.nwh, &rect);
-			m_params.BackBufferWidth = rect.right-rect.left;
+			m_params.BackBufferWidth  = rect.right-rect.left;
 			m_params.BackBufferHeight = rect.bottom-rect.top;
 
 			m_d3d9dll = bx::dlopen("d3d9.dll");
@@ -1421,8 +1421,11 @@ namespace bgfx { namespace d3d9
 
 		static void setSamplerState(IDirect3DDevice9* _device, DWORD _stage, D3DSAMPLERSTATETYPE _type,DWORD _value)
 		{
-			DX_CHECK(_device->SetSamplerState(                           _stage, _type, _value) );
-			DX_CHECK(_device->SetSamplerState(D3DVERTEXTEXTURESAMPLER0 + _stage, _type, _value) );
+			DX_CHECK(_device->SetSamplerState(_stage, _type, _value) );
+			if (4 > _stage)
+			{
+				DX_CHECK(_device->SetSamplerState(D3DVERTEXTEXTURESAMPLER0 + _stage, _type, _value) );
+			}
 		}
 
 		void setSamplerState(uint8_t _stage, uint32_t _flags)
@@ -2745,8 +2748,11 @@ namespace bgfx { namespace d3d9
 			, 0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) ? _flags : m_flags
 			);
 		IDirect3DDevice9* device = s_renderD3D9->m_device;
-		DX_CHECK(device->SetTexture(                           _stage, m_ptr) );
- 		DX_CHECK(device->SetTexture(D3DVERTEXTEXTURESAMPLER0 + _stage, m_ptr) );
+		DX_CHECK(device->SetTexture(_stage, m_ptr) );
+		if (4 > _stage)
+		{
+			DX_CHECK(device->SetTexture(D3DVERTEXTEXTURESAMPLER0 + _stage, m_ptr) );
+		}
 	}
 
 	void TextureD3D9::resolve() const
@@ -3614,10 +3620,10 @@ namespace bgfx { namespace d3d9
 						numVertices = vb.m_size/vertexDecl.m_decl.m_stride;
 					}
 
-					uint32_t numIndices = 0;
+					uint32_t numIndices        = 0;
 					uint32_t numPrimsSubmitted = 0;
-					uint32_t numInstances = 0;
-					uint32_t numPrimsRendered = 0;
+					uint32_t numInstances      = 0;
+					uint32_t numPrimsRendered  = 0;
 
 					if (isValid(draw.m_indexBuffer) )
 					{
@@ -3640,10 +3646,10 @@ namespace bgfx { namespace d3d9
 						}
 						else if (prim.m_min <= draw.m_numIndices)
 						{
-							numIndices = draw.m_numIndices;
+							numIndices        = draw.m_numIndices;
 							numPrimsSubmitted = numIndices/prim.m_div - prim.m_sub;
-							numInstances = draw.m_numInstances;
-							numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
+							numInstances      = draw.m_numInstances;
+							numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
 
 							DX_CHECK(device->DrawIndexedPrimitive(prim.m_type
 								, draw.m_startVertex
@@ -3657,8 +3663,8 @@ namespace bgfx { namespace d3d9
 					else
 					{
 						numPrimsSubmitted = numVertices/prim.m_div - prim.m_sub;
-						numInstances = draw.m_numInstances;
-						numPrimsRendered = numPrimsSubmitted*draw.m_numInstances;
+						numInstances      = draw.m_numInstances;
+						numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
 
 						DX_CHECK(device->DrawPrimitive(prim.m_type
 							, draw.m_startVertex
