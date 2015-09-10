@@ -215,6 +215,14 @@ namespace ImGui
 		Image(texture.ptr, _size, _uv0, _uv1, _tint_col, _border_col);
 	}
 
+	// Helper function for passing bgfx::TextureHandle to ImGui::ImageButton.
+	inline bool ImageButton(bgfx::TextureHandle _handle, const ImVec2& _size, const ImVec2& _uv0 = ImVec2(0,0),  const ImVec2& _uv1 = ImVec2(1,1), int _frame_padding = -1, const ImVec4& _bg_col = ImVec4(0,0,0,0), const ImVec4& _tint_col = ImVec4(1,1,1,1))
+	{
+		union { bgfx::TextureHandle handle; ImTextureID ptr; } texture;
+		texture.handle = _handle;
+		return ImageButton(texture.ptr, _size, _uv0, _uv1, _frame_padding, _bg_col, _tint_col);
+	}
+
 } // namespace ImGui
 
 #endif // IMGUI_H_HEADER_GUARD
