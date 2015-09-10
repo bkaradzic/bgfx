@@ -3443,6 +3443,39 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		BufferD3D11::create(_size, _data, _flags, stride, true);
 	}
 
+	static bool hasDiscard(const void* _code, uint32_t _size)
+	{
+		bx::MemoryReader rd(_code, _size);
+
+		DxbcContext dxbc;
+		read(&rd, dxbc);
+
+		struct FindDiscard
+		{
+			FindDiscard()
+				: m_found(false)
+			{
+			}
+
+			static void find(uint32_t /*_offset*/, const DxbcInstruction& _instruction, void* _userData)
+			{
+				FindDiscard& out = *reinterpret_cast<FindDiscard*>(_userData);
+				if (_instruction.opcode == DxbcOpcode::DISCARD)
+				{
+					out.m_found = true;
+					return;
+				}
+			}
+
+			bool m_found;
+
+		} find;
+
+		parse(dxbc.shader, FindDiscard::find, &find);
+
+		return find.m_found;
+	}
+
 	void ShaderD3D11::create(const Memory* _mem)
 	{
 		bx::MemoryReader reader(_mem->data, _mem->size);
@@ -3559,6 +3592,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		if (BGFX_CHUNK_MAGIC_FSH == magic)
 		{
+			m_hasDiscard = hasDiscard(code, shaderSize);
 			DX_CHECK(s_renderD3D11->m_device->CreatePixelShader(code, shaderSize, NULL, &m_pixelShader) );
 			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create fragment shader.");
 		}
@@ -4682,9 +4716,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						deviceCtx->VSSetShader(vsh->m_vertexShader, NULL, 0);
 						deviceCtx->VSSetConstantBuffers(0, 1, &vsh->m_buffer);
 
-						if (NULL != m_currentColor)
+						const ShaderD3D11* fsh = program.m_fsh;
+						if (NULL != m_currentColor
+						||  fsh->m_hasDiscard)
 						{
-							const ShaderD3D11* fsh = program.m_fsh;
 							deviceCtx->PSSetShader(fsh->m_pixelShader, NULL, 0);
 							deviceCtx->PSSetConstantBuffers(0, 1, &fsh->m_buffer);
 						}
