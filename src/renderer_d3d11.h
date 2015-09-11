@@ -113,7 +113,7 @@ namespace bgfx { namespace d3d11
 			, m_hash(0)
 			, m_numUniforms(0)
 			, m_numPredefined(0)
-			, m_hasDiscard(false)
+			, m_hasDepthOp(false)
 		{
 		}
 
@@ -163,7 +163,7 @@ namespace bgfx { namespace d3d11
 
 		uint16_t m_numUniforms;
 		uint8_t m_numPredefined;
-		bool m_hasDiscard;
+		bool m_hasDepthOp;
 	};
 
 	struct ProgramD3D11
@@ -231,25 +231,27 @@ namespace bgfx { namespace d3d11
 
 		union
 		{
-			ID3D11Resource* m_ptr;
+			ID3D11Resource*  m_ptr;
 			ID3D11Texture2D* m_texture2d;
 			ID3D11Texture3D* m_texture3d;
 		};
 
-		ID3D11ShaderResourceView* m_srv;
+		ID3D11ShaderResourceView*  m_srv;
 		ID3D11UnorderedAccessView* m_uav;
 		ID3D11SamplerState* m_sampler;
 		uint32_t m_flags;
-		uint8_t m_type;
-		uint8_t m_requestedFormat;
-		uint8_t m_textureFormat;
-		uint8_t m_numMips;
+		uint8_t  m_type;
+		uint8_t  m_requestedFormat;
+		uint8_t  m_textureFormat;
+		uint8_t  m_numMips;
 	};
 
 	struct FrameBufferD3D11
 	{
 		FrameBufferD3D11()
 			: m_dsv(NULL)
+			, m_width(0)
+			, m_height(0)
 			, m_denseIdx(UINT16_MAX)
 			, m_num(0)
 			, m_numTh(0)
@@ -268,6 +270,8 @@ namespace bgfx { namespace d3d11
 		ID3D11ShaderResourceView* m_srv[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
 		ID3D11DepthStencilView* m_dsv;
 		IDXGISwapChain* m_swapChain;
+		uint32_t m_width;
+		uint32_t m_height;
 		uint16_t m_denseIdx;
 		uint8_t m_num;
 		uint8_t m_numTh;

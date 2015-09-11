@@ -2966,8 +2966,20 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		void clearQuad(ClearQuad& _clearQuad, const Rect& _rect, const Clear& _clear, const float _palette[][4])
 		{
-			uint32_t width  = getBufferWidth();
-			uint32_t height = getBufferHeight();
+			uint32_t width;
+			uint32_t height;
+
+			if (isValid(m_fbh) )
+			{
+				const FrameBufferD3D11& fb = m_frameBuffers[m_fbh.idx];
+				width  = fb.m_width;
+				height = fb.m_height;
+			}
+			else
+			{
+				width  = getBufferWidth();
+				height = getBufferHeight();
+			}
 
 			if (0      == _rect.m_x
 			&&  0      == _rect.m_y
@@ -3443,35 +3455,38 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		BufferD3D11::create(_size, _data, _flags, stride, true);
 	}
 
-	static bool hasDiscard(const void* _code, uint32_t _size)
+	static bool hasDepthOp(const void* _code, uint32_t _size)
 	{
 		bx::MemoryReader rd(_code, _size);
 
 		DxbcContext dxbc;
 		read(&rd, dxbc);
 
-		struct FindDiscard
+		struct FindDepthOp
 		{
-			FindDiscard()
+			FindDepthOp()
 				: m_found(false)
 			{
 			}
 
-			static void find(uint32_t /*_offset*/, const DxbcInstruction& _instruction, void* _userData)
+			static bool find(uint32_t /*_offset*/, const DxbcInstruction& _instruction, void* _userData)
 			{
-				FindDiscard& out = *reinterpret_cast<FindDiscard*>(_userData);
-				if (_instruction.opcode == DxbcOpcode::DISCARD)
+				FindDepthOp& out = *reinterpret_cast<FindDepthOp*>(_userData);
+				if (_instruction.opcode == DxbcOpcode::DISCARD
+				|| (0 != _instruction.numOperands &&  DxbcOperandType::OutputDepth == _instruction.operand[0].type) )
 				{
 					out.m_found = true;
-					return;
+					return false;
 				}
+
+				return true;
 			}
 
 			bool m_found;
 
 		} find;
 
-		parse(dxbc.shader, FindDiscard::find, &find);
+		parse(dxbc.shader, FindDepthOp::find, &find);
 
 		return find.m_found;
 	}
@@ -3592,7 +3607,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		if (BGFX_CHUNK_MAGIC_FSH == magic)
 		{
-			m_hasDiscard = hasDiscard(code, shaderSize);
+			m_hasDepthOp = hasDepthOp(code, shaderSize);
 			DX_CHECK(s_renderD3D11->m_device->CreatePixelShader(code, shaderSize, NULL, &m_pixelShader) );
 			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create fragment shader.");
 		}
@@ -4052,6 +4067,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	void FrameBufferD3D11::postReset()
 	{
+		m_width  = 0;
+		m_height = 0;
+
 		if (0 < m_numTh)
 		{
 			m_num = 0;
@@ -4061,6 +4079,32 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				if (isValid(handle) )
 				{
 					const TextureD3D11& texture = s_renderD3D11->m_textures[handle.idx];
+
+					if (0 == m_width)
+					{
+						switch (texture.m_type)
+						{
+						case TextureD3D11::Texture2D:
+						case TextureD3D11::TextureCube:
+							{
+								D3D11_TEXTURE2D_DESC desc;
+								texture.m_texture2d->GetDesc(&desc);
+								m_width  = desc.Width;
+								m_height = desc.Height;
+							}
+							break;
+
+						case TextureD3D11::Texture3D:
+							{
+								D3D11_TEXTURE3D_DESC desc;
+								texture.m_texture3d->GetDesc(&desc);
+								m_width  = desc.Width;
+								m_height = desc.Height;
+							}
+							break;
+						}
+					}
+
 					if (isDepth( (TextureFormat::Enum)texture.m_textureFormat) )
 					{
 						BX_CHECK(NULL == m_dsv, "Frame buffer already has depth-stencil attached.");
@@ -4718,7 +4762,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 						const ShaderD3D11* fsh = program.m_fsh;
 						if (NULL != m_currentColor
-						||  fsh->m_hasDiscard)
+						||  fsh->m_hasDepthOp)
 						{
 							deviceCtx->PSSetShader(fsh->m_pixelShader, NULL, 0);
 							deviceCtx->PSSetConstantBuffers(0, 1, &fsh->m_buffer);

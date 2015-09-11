@@ -2422,8 +2422,20 @@ data.NumQualityLevels = 0;
 
 		void clearQuad(const Rect& _rect, const Clear& _clear, const float _palette[][4])
 		{
-			uint32_t width  = m_scd.BufferDesc.Width;
-			uint32_t height = m_scd.BufferDesc.Height;
+			uint32_t width;
+			uint32_t height;
+
+			if (isValid(m_fbh) )
+			{
+				const FrameBufferD3D12& fb = m_frameBuffers[m_fbh.idx];
+				width  = fb.m_width;
+				height = fb.m_height;
+			}
+			else
+			{
+				width  = m_scd.BufferDesc.Width;
+				height = m_scd.BufferDesc.Height;
+			}
 
 			if (0      == _rect.m_x
 			&&  0      == _rect.m_y
@@ -4038,6 +4050,8 @@ data.NumQualityLevels = 0;
 			uint32_t fbhIdx = (uint32_t)(this - s_renderD3D12->m_frameBuffers);
 			rtvDescriptor.ptr += (BX_COUNTOF(s_renderD3D12->m_backBufferColor) + fbhIdx * BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) * rtvDescriptorSize;
 
+			m_width  = 0;
+			m_height = 0;
 			m_depth.idx = bgfx::invalidHandle;
 			m_num = 0;
 			for (uint32_t ii = 0; ii < m_numTh; ++ii)
@@ -4046,6 +4060,14 @@ data.NumQualityLevels = 0;
 				if (isValid(handle) )
 				{
 					const TextureD3D12& texture = s_renderD3D12->m_textures[handle.idx];
+
+					if (0 == m_width)
+					{
+						D3D12_RESOURCE_DESC desc = texture.m_ptr->GetDesc();
+						m_width  = uint32_t(desc.Width);
+						m_height = uint32_t(desc.Height);
+					}
+
 					if (isDepth( (TextureFormat::Enum)texture.m_textureFormat) )
 					{
 						BX_CHECK(!isValid(m_depth), "");

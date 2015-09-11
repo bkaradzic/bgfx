@@ -575,7 +575,7 @@ namespace bgfx
 	int32_t read(bx::ReaderSeekerI* _reader, DxbcShader& _shader);
 	int32_t write(bx::WriterI* _writer, const DxbcShader& _shader);
 
-	typedef void (*DxbcParseFn)(uint32_t _offset, const DxbcInstruction& _instruction, void* _userData);
+	typedef bool (*DxbcParseFn)(uint32_t _offset, const DxbcInstruction& _instruction, void* _userData);
 	void parse(const DxbcShader& _src, DxbcParseFn _fn, void* _userData);
 
 	typedef void (*DxbcFilterFn)(DxbcInstruction& _instruction, void* _userData);
