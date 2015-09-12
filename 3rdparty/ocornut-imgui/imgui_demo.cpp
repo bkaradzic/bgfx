@@ -206,9 +206,8 @@ void ImGui::ShowTestWindow(bool* opened)
         {
             ImGui::TextWrapped("Tip: Load fonts with io.Fonts->AddFontFromFileTTF().");
             ImFontAtlas* atlas = ImGui::GetIO().Fonts;
-            if (ImGui::TreeNode("Atlas texture"))
+            if (ImGui::TreeNode("Atlas texture", "Atlas texture (%dx%d pixels)", atlas->TexWidth, atlas->TexHeight))
             {
-                ImGui::Text("%dx%d pixels", atlas->TexWidth, atlas->TexHeight);
                 ImGui::Image(atlas->TexID, ImVec2((float)atlas->TexWidth, (float)atlas->TexHeight), ImVec2(0,0), ImVec2(1,1), ImColor(255,255,255,255), ImColor(255,255,255,128));
                 ImGui::TreePop();
             }
@@ -422,8 +421,12 @@ void ImGui::ShowTestWindow(bool* opened)
 
         if (ImGui::TreeNode("Multi-line Text Input"))
         {
+            static bool read_only = false;
             static char text[1024*16] = "// F00F bug\nlabel:\n\tlock cmpxchg8b eax\n";
-            ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(-1.0f, ImGui::GetTextLineHeight() * 16), ImGuiInputTextFlags_AllowTabInput);
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0,0));
+            ImGui::Checkbox("Read-only", &read_only);
+            ImGui::PopStyleVar();
+            ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(-1.0f, ImGui::GetTextLineHeight() * 16), ImGuiInputTextFlags_AllowTabInput | (read_only ? ImGuiInputTextFlags_ReadOnly : 0));
             ImGui::TreePop();
         }
 
@@ -832,7 +835,7 @@ void ImGui::ShowTestWindow(bool* opened)
 
         if (ImGui::TreeNode("Groups"))
         {
-            ImGui::TextWrapped("(Using ImGui::BeginGroup()/EndGroup() to layout items. BeginGroup() basically locks the horizontal position. EndGroup() bundled the whole group so that you can use functions such as IsItemHovered() on it.)");
+            ImGui::TextWrapped("(Using ImGui::BeginGroup()/EndGroup() to layout items. BeginGroup() basically locks the horizontal position. EndGroup() bundles the whole group so that you can use functions such as IsItemHovered() on it.)");
             ImGui::BeginGroup();
             {
                 ImGui::BeginGroup();
@@ -994,7 +997,8 @@ void ImGui::ShowTestWindow(bool* opened)
             ImVec4 clip_rect(pos.x, pos.y, pos.x+size.x, pos.y+size.y);
             ImGui::GetWindowDrawList()->AddRectFilled(pos, ImVec2(pos.x+size.x,pos.y+size.y), ImColor(90,90,120,255));
             ImGui::GetWindowDrawList()->AddText(ImGui::GetWindowFont(), ImGui::GetWindowFontSize()*2.0f, ImVec2(pos.x+offset.x,pos.y+offset.y), ImColor(255,255,255,255), "Line 1 hello\nLine 2 clip me!", NULL, 0.0f, &clip_rect);
-            ImGui::Dummy(size);
+            ImGui::InvisibleButton("##dummy", size);
+            if (ImGui::IsItemActive() && ImGui::IsMouseDragging()) { offset.x += ImGui::GetIO().MouseDelta.x; offset.y += ImGui::GetIO().MouseDelta.y; }
             ImGui::TreePop();
         }
     }
@@ -1367,7 +1371,8 @@ void ImGui::ShowTestWindow(bool* opened)
                 draw_list->PopClipRect();
                 ImVec2 value_raw = ImGui::GetMouseDragDelta(0, 0.0f);
                 ImVec2 value_with_lock_threshold = ImGui::GetMouseDragDelta(0);
-                ImGui::SameLine(); ImGui::Text("Raw (%.1f, %.1f), WithLockThresold (%.1f, %.1f)", value_raw.x, value_raw.y, value_with_lock_threshold.x, value_with_lock_threshold.y);
+                ImVec2 mouse_delta = ImGui::GetIO().MouseDelta;
+                ImGui::SameLine(); ImGui::Text("Raw (%.1f, %.1f), WithLockThresold (%.1f, %.1f), MouseDelta (%.1f, %.1f)", value_raw.x, value_raw.y, value_with_lock_threshold.x, value_with_lock_threshold.y, mouse_delta.x, mouse_delta.y);
             }
             ImGui::TreePop();
         }

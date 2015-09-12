@@ -94,11 +94,11 @@
         ImGuiIO& io = ImGui::GetIO();
         io.DisplaySize.x = 1920.0f;
         io.DisplaySize.y = 1280.0f;
-        io.DeltaTime = 1.0f/60.0f;
         io.IniFilename = "imgui.ini";
+        io.RenderDrawListsFn = my_render_function;  // Setup a render function, or set to NULL and call GetDrawData() after Render() to access the render data.
         // TODO: Fill others settings of the io structure
 
-        // Load texture
+        // Load texture atlas
         unsigned char* pixels;
         int width, height, bytes_per_pixels;
         io.Fonts->GetTexDataAsRGBA32(pixels, &width, &height, &bytes_per_pixels);
@@ -113,6 +113,7 @@
 
             // 2) TODO: fill all fields of IO structure and call NewFrame
             ImGuiIO& io = ImGui::GetIO();
+            io.DeltaTime = 1.0f/60.0f;
             io.MousePos = mouse_pos;
             io.MouseDown[0] = mouse_button_0;
             io.KeysDown[i] = ...
@@ -130,9 +131,9 @@
             // swap video buffer, etc.
         }
 
-   - after calling ImGui::NewFrame() you can read back flags from the IO structure  to tell how ImGui intends to use your inputs.
+   - after calling ImGui::NewFrame() you can read back flags from the IO structure to tell how ImGui intends to use your inputs.
      When 'io.WantCaptureMouse' or 'io.WantCaptureKeyboard' flags are set you may want to discard/hide the inputs from the rest of your application.
-     When 'io.WantInputsCharacters' is set to may want to notify your OS to popup an onscreen keyboard, if available.
+     When 'io.WantInputsCharacters' is set to may want to notify your OS to popup an on-screen keyboard, if available.
 
 
  API BREAKING CHANGES
@@ -142,7 +143,7 @@
  Here is a change-log of API breaking changes, if you are using one of the functions listed, expect to have to fix some code.
  Also read releases logs https://github.com/ocornut/imgui/releases for more details.
 
- - 2015/08/29 (1.45) - with the addition of horizontal scrollbar we made various fixes to inconsistencies with dealing with position:
+ - 2015/08/29 (1.45) - with the addition of horizontal scrollbar we made various fixes to inconsistencies with dealing with cursor position.
                        GetCursorPos()/SetCursorPos() functions now include the scrolled amount. It shouldn't affect the majority of users, but take note that SetCursorPosX(100.0f) puts you at +100 from the starting x position which may include scrolling, not at +100 from the window left side.
                        GetContentRegionMax()/GetWindowContentRegionMin()/GetWindowContentRegionMax() functions allow include the scrolled amount. Typically those were used in cases where no scrolling would happen so it may not be a problem, but watch out!
  - 2015/08/29 (1.45) - renamed style.ScrollbarWidth to style.ScrollbarSize
@@ -238,7 +239,7 @@
       stb_rect_pack.h
       stb_textedit.h
       stb_truetype.h
-    Don't overwrite imconfig.h if you have modification to your copy.
+    Don't overwrite imconfig.h if you have made modification to your copy.
     Check the "API BREAKING CHANGES" sections for a list of occasional API breaking changes. If you have a problem with a function, search for its name
     in the code, there will likely be a comment about it. Please report any issue to the GitHub page!
 
@@ -256,32 +257,37 @@
    - ID are uniquely scoped within windows, tree nodes, etc. so no conflict can happen if you have two buttons called "OK" in two different windows
      or in two different locations of a tree.
 
-   - if you have a same ID twice in the same location, you'll have a conflict:
+   - If you have a same ID twice in the same location, you'll have a conflict:
 
        Button("OK");
        Button("OK");           // ID collision! Both buttons will be treated as the same.
 
      Fear not! this is easy to solve and there are many ways to solve it!
 
-   - when passing a label you can optionally specify extra unique ID information within string itself. This helps solving the simpler collision cases.
+   - When passing a label you can optionally specify extra unique ID information within string itself. This helps solving the simpler collision cases.
      use "##" to pass a complement to the ID that won't be visible to the end-user:
 
-       Button("Play##0");      // Label = "Play",   ID = hash of "Play##0"
-       Button("Play##1");      // Label = "Play",   ID = hash of "Play##1" (different from above)
+       Button("Play");         // Label = "Play",   ID = hash of "Play"
+       Button("Play##foo1");   // Label = "Play",   ID = hash of "Play##foo1" (different from above)
+       Button("Play##foo2");   // Label = "Play",   ID = hash of "Play##foo2" (different from above)
 
-   - so if you want to hide the label but need an ID:
+   - If you want to completely hide the label, but still need an ID:
 
-       Checkbox("##On", &b);   // Label = "",       ID = hash of "##On"
+       Checkbox("##On", &b);   // Label = "",       ID = hash of "##On" (no label!)
 
-   - occasionally (rarely) you might want change a label while preserving a constant ID. This allows you to animate labels.
-     use "###" to pass a label that isn't part of ID:
+   - Occasionally/rarely you might want change a label while preserving a constant ID. This allows you to animate labels.
+     For example you may want to include varying information in a window title bar (and windows are uniquely identified by their ID.. obviously)
+     Use "###" to pass a label that isn't part of ID:
 
        Button("Hello###ID";   // Label = "Hello",  ID = hash of "ID"
        Button("World###ID";   // Label = "World",  ID = hash of "ID" (same as above)
+	   
+	   sprintf(buf, "My game (%f FPS)###MyGame");
+	   Begin(buf);            // Variable label,   ID = hash of "MyGame"
 
-   - use PushID() / PopID() to create scopes and avoid ID conflicts within the same Window.
-     this is the most convenient way of distinguish ID if you are iterating and creating many UI elements.
-     you can push a pointer, a string or an integer value. remember that ID are formed from the addition of everything in the ID stack!
+   - Use PushID() / PopID() to create scopes and avoid ID conflicts within the same Window.
+     This is the most convenient way of distinguishing ID if you are iterating and creating many UI elements.
+     You can push a pointer, a string or an integer value. Remember that ID are formed from the concatenation of everything in the ID stack!
 
        for (int i = 0; i < 100; i++)
        {
@@ -306,7 +312,7 @@
          PopID();
        }
 
-   - more example showing that you can stack multiple prefixes into the ID stack:
+   - More example showing that you can stack multiple prefixes into the ID stack:
 
        Button("Click");     // Label = "Click",  ID = hash of "Click"
        PushID("node");
@@ -316,7 +322,7 @@
          PopID();
        PopID();
 
-   - tree nodes implicitly creates a scope for you by calling PushID().
+   - Tree nodes implicitly creates a scope for you by calling PushID().
 
        Button("Click");     // Label = "Click",  ID = hash of "Click"
        if (TreeNode("node"))
@@ -325,8 +331,8 @@
          TreePop();
        }
 
-   - when working with trees, ID are used to preserve the opened/closed state of each tree node.
-     depending on your use cases you may want to use strings, indices or pointers as ID.
+   - When working with trees, ID are used to preserve the opened/closed state of each tree node.
+     Depending on your use cases you may want to use strings, indices or pointers as ID.
       e.g. when displaying a single object that may change over time (1-1 relationship), using a static string as ID will preserve your node open/closed state when the targeted object change.
       e.g. when displaying a list of objects, using indices or pointers as ID will preserve the node open/closed state differently. experiment and see what makes more sense!
 
@@ -336,12 +342,14 @@
  Q: How can I load a different font than the default? (default is an embedded version of ProggyClean.ttf, rendered at size 13)
  A: Use the font atlas to load the TTF file you want:
 
+      ImGuiIO& io = ImGui::GetIO();
       io.Fonts->AddFontFromFileTTF("myfontfile.ttf", size_in_pixels);
       io.Fonts->GetTexDataAsRGBA32() or GetTexDataAsAlpha8()
 
  Q: How can I load multiple fonts?
  A: Use the font atlas to pack them into a single texture:
 
+      ImGuiIO& io = ImGui::GetIO();
       ImFont* font0 = io.Fonts->AddFontDefault();
       ImFont* font1 = io.Fonts->AddFontFromFileTTF("myfontfile.ttf", size_in_pixels);
       ImFont* font2 = io.Fonts->AddFontFromFileTTF("myfontfile2.ttf", size_in_pixels);
@@ -366,7 +374,7 @@
 
     Read extra_fonts/README.txt or ImFontAtlas class for more details.
 
- Q: How can I display and input non-latin characters such as Chinese, Japanese, Korean, Cyrillic?
+ Q: How can I display and input non-Latin characters such as Chinese, Japanese, Korean, Cyrillic?
  A: When loading a font, pass custom Unicode ranges to specify the glyphs to load. ImGui will support UTF-8 encoding across the board.
     Character input depends on you passing the right character code to io.AddInputCharacter(). The example applications do that.
 
@@ -376,9 +384,9 @@
 
  - tip: the construct 'IMGUI_ONCE_UPON_A_FRAME { ... }' will run the block of code only once a frame. You can use it to quickly add custom UI in the middle of a deep nested inner loop in your code.
  - tip: you can create widgets without a Begin()/End() block, they will go in an implicit window called "Debug"
- - tip: you can call Begin() multiple times with the same name during the same frame, it will keep appending to the same window. this is also useful to set yourself in the context of a window (to get/set other settings)
+ - tip: you can call Begin() multiple times with the same name during the same frame, it will keep appending to the same window. this is also useful to set yourself in the context of another window (to get/set other settings)
  - tip: you can call Render() multiple times (e.g for VR renders).
- - tip: call and read the ShowTestWindow() code for more example of how to use ImGui!
+ - tip: call and read the ShowTestWindow() code in imgui_demo.cpp for more example of how to use ImGui!
 
 
  ISSUES & TODO-LIST
@@ -396,14 +404,13 @@
 !- scrolling: allow immediately effective change of scroll if we haven't appended items yet
  - widgets: display mode: widget-label, label-widget (aligned on column or using fixed size), label-newline-tab-widget etc.
  - widgets: clean up widgets internal toward exposing everything.
- - widgets: add a disabled/read-only mode (#211)
+ - widgets: add disabled and read-only modes (#211)
  - main: considering adding EndFrame()/Init(). some constructs are awkward in the implementation because of the lack of them.
  - main: IsItemHovered() make it more consistent for various type of widgets, widgets with multiple components, etc. also effectively IsHovered() region sometimes differs from hot region, e.g tree nodes
  - main: IsItemHovered() info stored in a stack? so that 'if TreeNode() { Text; TreePop; } if IsHovered' return the hover state of the TreeNode?
  - input text: add ImGuiInputTextFlags_EnterToApply? (off #218)
  - input text multi-line: way to dynamically grow the buffer without forcing the user to initially allocate for worse case (follow up on #200)
  - input text multi-line: line numbers? status bar? (follow up on #200)
- - input text: read-only mode (can still select/copy, always display input buffer)
  - input number: optional range min/max for Input*() functions
  - input number: holding [-]/[+] buttons could increase the step speed non-linearly (or user-controlled)
  - input number: use mouse wheel to step up/down
@@ -451,7 +458,8 @@
  - settings: write more decent code to allow saving/loading new fields
  - settings: api for per-tool simple persistent data (bool,int,float,columns sizes,etc.) in .ini file
  - style: store rounded corners in texture to use 1 quad per corner (filled and wireframe). so rounding have minor cost.
- - style: colorbox not always square?
+ - style: color-box not always square?
+ - style: a concept of "compact style" that the end-user can easily rely on (e.g. PushStyleCompact()?) that maps that other settings? 
  - text: simple markup language for color change?
  - log: LogButtons() options for specifying depth and/or hiding depth slider
  - log: have more control over the log scope (e.g. stop logging when leaving current tree node scope)
@@ -1114,21 +1122,21 @@ void ImGui::ColorConvertHSVtoRGB(float h, float s, float v, float& out_r, float&
 
 // Load file content into memory
 // Memory allocated with ImGui::MemAlloc(), must be freed by user using ImGui::MemFree()
-bool ImLoadFileToMemory(const char* filename, const char* file_open_mode, void** out_file_data, int* out_file_size, int padding_bytes)
+void* ImLoadFileToMemory(const char* filename, const char* file_open_mode, int* out_file_size, int padding_bytes)
 {
-    IM_ASSERT(filename && file_open_mode && out_file_data && out_file_size);
-    *out_file_data = NULL;
-    *out_file_size = 0;
+    IM_ASSERT(filename && file_open_mode);
+    if (out_file_size)
+        *out_file_size = 0;
 
     FILE* f;
     if ((f = fopen(filename, file_open_mode)) == NULL)
-        return false;
+        return NULL;
 
     long file_size_signed;
     if (fseek(f, 0, SEEK_END) || (file_size_signed = ftell(f)) == -1 || fseek(f, 0, SEEK_SET))
     {
         fclose(f);
-        return false;
+        return NULL;
     }
 
     int file_size = (int)file_size_signed;
@@ -1136,23 +1144,22 @@ bool ImLoadFileToMemory(const char* filename, const char* file_open_mode, void**
     if (file_data == NULL)
     {
         fclose(f);
-        return false;
+        return NULL;
     }
     if (fread(file_data, 1, (size_t)file_size, f) != (size_t)file_size)
     {
         fclose(f);
         ImGui::MemFree(file_data);
-        return false;
+        return NULL;
     }
     if (padding_bytes > 0)
         memset((void *)(((char*)file_data) + file_size), 0, padding_bytes);
 
     fclose(f);
-    *out_file_data = file_data;
     if (out_file_size)
         *out_file_size = file_size;
 
-    return true;
+    return file_data;
 }
 
 //-----------------------------------------------------------------------------
@@ -1769,6 +1776,12 @@ ImGuiStyle& ImGui::GetStyle()
     return GImGui->Style;
 }
 
+// Same value as passed to your RenderDrawListsFn() function. valid after Render() and until the next call to NewFrame()
+ImDrawData* ImGui::GetDrawData()
+{
+    return GImGui->RenderDrawData.Valid ? &GImGui->RenderDrawData : NULL;
+}
+
 float ImGui::GetTime()
 {
     return GImGui->Time;
@@ -1786,7 +1799,6 @@ void ImGui::NewFrame()
     // Check user data
     IM_ASSERT(g.IO.DeltaTime >= 0.0f);
     IM_ASSERT(g.IO.DisplaySize.x >= 0.0f && g.IO.DisplaySize.y >= 0.0f);
-    IM_ASSERT(g.IO.RenderDrawListsFn != NULL);       // Must be implemented
     IM_ASSERT(g.IO.Fonts->Fonts.Size > 0);           // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
     IM_ASSERT(g.IO.Fonts->Fonts[0]->IsLoaded());     // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
     IM_ASSERT(g.Style.CurveTessellationTol > 0.0f);  // Invalid
@@ -1811,6 +1823,11 @@ void ImGui::NewFrame()
     g.OverlayDrawList.PushTextureID(g.IO.Fonts->TexID);
     g.OverlayDrawList.PushClipRectFullScreen();
     g.OverlayDrawList.AddDrawCmd();
+
+    // Mark rendering data as invalid to prevent user who may have a handle on it to use it
+    g.RenderDrawData.Valid = false;
+    g.RenderDrawData.CmdLists = NULL;
+    g.RenderDrawData.CmdListsCount = g.RenderDrawData.TotalVtxCount = g.RenderDrawData.TotalIdxCount = 0;
 
     // Update inputs state
     if (g.IO.MousePos.x < 0 && g.IO.MousePos.y < 0)
@@ -2066,9 +2083,9 @@ static void LoadSettings()
     if (!filename)
         return;
 
-    char* file_data;
     int file_size;
-    if (!ImLoadFileToMemory(filename, "rb", (void**)&file_data, &file_size, 1))
+    char* file_data = (char*)ImLoadFileToMemory(filename, "rb", &file_size, 1);
+    if (!file_data)
         return;
 
     ImGuiIniData* settings = NULL;
@@ -2197,7 +2214,6 @@ static void AddDrawListToRenderList(ImVector<ImDrawList*>& out_render_list, ImDr
         // If this assert triggers because you are drawing lots of stuff manually, A) workaround by calling BeginChild()/EndChild() to put your draw commands in multiple draw lists, B) #define ImDrawIdx to a 'unsigned int' in imconfig.h and render accordingly.
         const unsigned long long int max_vtx_idx = (unsigned long long int)1L << (sizeof(ImDrawIdx)*8);
         IM_ASSERT((unsigned long long int)draw_list->_VtxCurrentIdx <= max_vtx_idx);
-        (void)max_vtx_idx;
 
         GImGui->IO.MetricsRenderVertices += draw_list->VtxBuffer.Size;
         GImGui->IO.MetricsRenderIndices += draw_list->IdxBuffer.Size;
@@ -2367,15 +2383,17 @@ void ImGui::Render()
         if (!g.OverlayDrawList.VtxBuffer.empty())
             AddDrawListToRenderList(g.RenderDrawLists[0], &g.OverlayDrawList);
 
-        // Render
-        if (!g.RenderDrawLists[0].empty())
+        // Setup draw data
+        g.RenderDrawData.Valid = true;
+        g.RenderDrawData.CmdLists = (g.RenderDrawLists[0].Size > 0) ? &g.RenderDrawLists[0][0] : NULL;
+        g.RenderDrawData.CmdListsCount = g.RenderDrawLists[0].Size;
+        g.RenderDrawData.TotalVtxCount = g.IO.MetricsRenderVertices;
+        g.RenderDrawData.TotalIdxCount = g.IO.MetricsRenderIndices;
+
+        // Render. If user hasn't set a callback then they may retrieve the draw data via GetDrawData()
+        if (g.RenderDrawData.CmdListsCount > 0 && g.IO.RenderDrawListsFn != NULL)
         {
-            ImDrawData data;
-            data.CmdLists = &g.RenderDrawLists[0][0];
-            data.CmdListsCount = g.RenderDrawLists[0].Size;
-            data.TotalVtxCount = g.IO.MetricsRenderVertices;
-            data.TotalIdxCount = g.IO.MetricsRenderIndices;
-            g.IO.RenderDrawListsFn(&data);
+            g.IO.RenderDrawListsFn(&g.RenderDrawData);
         }
     }
 }
@@ -3879,13 +3897,13 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
         window->DC.ChildWindows.resize(0);
         window->DC.LayoutType = ImGuiLayoutType_Vertical;
         window->DC.ItemWidth = window->ItemWidthDefault;
-        window->DC.ItemWidthStack.resize(0);
-        window->DC.ButtonRepeat = false;
-        window->DC.ButtonRepeatStack.resize(0);
-        window->DC.AllowKeyboardFocus = true;
-        window->DC.AllowKeyboardFocusStack.resize(0);
         window->DC.TextWrapPos = -1.0f; // disabled
+        window->DC.AllowKeyboardFocus = true;
+        window->DC.ButtonRepeat = false;
+        window->DC.ItemWidthStack.resize(0);
         window->DC.TextWrapPosStack.resize(0);
+        window->DC.AllowKeyboardFocusStack.resize(0);
+        window->DC.ButtonRepeatStack.resize(0);
         window->DC.ColorEditMode = ImGuiColorEditMode_UserSelect;
         window->DC.ColumnsCurrent = 0;
         window->DC.ColumnsCount = 1;
@@ -7020,6 +7038,7 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
 
     const ImGuiID id = window->GetID(label);
     const bool is_multiline = (flags & ImGuiInputTextFlags_Multiline) != 0;
+    const bool is_editable = (flags & ImGuiInputTextFlags_ReadOnly) == 0;
 
     ImVec2 label_size = ImGui::CalcTextSize(label, NULL, true);
     ImVec2 size = CalcItemSize(size_arg, CalcItemWidth(), is_multiline ? ImGui::GetTextLineHeight() * 8.0f : label_size.y); // Arbitrary default of 8 lines high for multi-line
@@ -7074,6 +7093,7 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
             // Start edition
             // Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
             // From the moment we focused we are ignoring the content of 'buf'
+            const int prev_len_w = edit_state.CurLenW;
             edit_state.Text.resize(buf_size);        // wchar count <= utf-8 count
             edit_state.InitialText.resize(buf_size); // utf-8
             ImFormatString(edit_state.InitialText.Data, edit_state.InitialText.Size, "%s", buf);
@@ -7083,21 +7103,24 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
             edit_state.InputCursorScreenPos = ImVec2(-1.f, -1.f);
             edit_state.CursorAnimReset();
 
-            if (edit_state.Id != id)
-            {
-                edit_state.Id = id;
-                edit_state.ScrollX = 0.f;
-                stb_textedit_initialize_state(&edit_state.StbState, !is_multiline);
-                if (!is_multiline && focus_requested_by_code)
-                    select_all = true;
-            }
-            else
+            // Preserve cursor position and undo/redo stack if we come back to same widget
+            // FIXME: We should probably compare the whole buffer to be on the safety side. Comparing buf (utf8) and edit_state.Text (wchar).
+            const bool recycle_state = (edit_state.Id == id) && (prev_len_w == edit_state.CurLenW);
+            if (recycle_state)
             {
                 // Recycle existing cursor/selection/undo stack but clamp position
                 // Note a single mouse click will override the cursor/position immediately by calling stb_textedit_click handler.
                 edit_state.StbState.cursor = ImMin(edit_state.StbState.cursor, edit_state.CurLenW);
                 edit_state.StbState.select_start = ImMin(edit_state.StbState.select_start, edit_state.CurLenW);
                 edit_state.StbState.select_end = ImMin(edit_state.StbState.select_end, edit_state.CurLenW);
+            }
+            else
+            {
+                edit_state.Id = id;
+                edit_state.ScrollX = 0.f;
+                stb_textedit_initialize_state(&edit_state.StbState, !is_multiline);
+                if (!is_multiline && focus_requested_by_code)
+                    select_all = true;
             }
             if (flags & ImGuiInputTextFlags_AlwaysInsertMode)
                 edit_state.StbState.insert_mode = true;
@@ -7151,7 +7174,7 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
         if (g.IO.InputCharacters[0])
         {
             // Process text input (before we check for Return because using some IME will effectively send a Return?)
-            if (!is_ctrl_down && !is_alt_down)
+            if (!is_ctrl_down && !is_alt_down && is_editable)
             {
                 for (int n = 0; n < IM_ARRAYSIZE(g.IO.InputCharacters) && g.IO.InputCharacters[n]; n++)
                     if (unsigned int c = (unsigned int)g.IO.InputCharacters[n])
@@ -7175,8 +7198,8 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
         else if (is_multiline && IsKeyPressedMap(ImGuiKey_DownArrow))   { if (is_ctrl_down) SetWindowScrollY(draw_window, draw_window->Scroll.y + g.FontSize); else edit_state.OnKeyPressed(STB_TEXTEDIT_K_DOWN| k_mask); }
         else if (IsKeyPressedMap(ImGuiKey_Home))                        { edit_state.OnKeyPressed(is_ctrl_down ? STB_TEXTEDIT_K_TEXTSTART | k_mask : STB_TEXTEDIT_K_LINESTART | k_mask); }
         else if (IsKeyPressedMap(ImGuiKey_End))                         { edit_state.OnKeyPressed(is_ctrl_down ? STB_TEXTEDIT_K_TEXTEND | k_mask : STB_TEXTEDIT_K_LINEEND | k_mask); }
-        else if (IsKeyPressedMap(ImGuiKey_Delete))                      { edit_state.OnKeyPressed(STB_TEXTEDIT_K_DELETE | k_mask); }
-        else if (IsKeyPressedMap(ImGuiKey_Backspace))                   { edit_state.OnKeyPressed(STB_TEXTEDIT_K_BACKSPACE | k_mask); }
+        else if (IsKeyPressedMap(ImGuiKey_Delete) && is_editable)      { edit_state.OnKeyPressed(STB_TEXTEDIT_K_DELETE | k_mask); }
+        else if (IsKeyPressedMap(ImGuiKey_Backspace) && is_editable)   { edit_state.OnKeyPressed(STB_TEXTEDIT_K_BACKSPACE | k_mask); }
         else if (IsKeyPressedMap(ImGuiKey_Enter))
         {
             bool ctrl_enter_for_new_line = (flags & ImGuiInputTextFlags_CtrlEnterForNewLine) != 0;
@@ -7185,24 +7208,24 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
                 SetActiveID(0);
                 enter_pressed = true;
             }
-            else // New line
+            else if (is_editable) // New line
             {
                 unsigned int c = '\n';
                 if (InputTextFilterCharacter(&c, flags, callback, user_data))
                     edit_state.OnKeyPressed((int)c);
             }
         }
-        else if ((flags & ImGuiInputTextFlags_AllowTabInput) && IsKeyPressedMap(ImGuiKey_Tab) && !is_ctrl_down && !is_shift_down && !is_alt_down)
+        else if ((flags & ImGuiInputTextFlags_AllowTabInput) && IsKeyPressedMap(ImGuiKey_Tab) && !is_ctrl_down && !is_shift_down && !is_alt_down && is_editable)
         {
             unsigned int c = '\t';
             if (InputTextFilterCharacter(&c, flags, callback, user_data))
                 edit_state.OnKeyPressed((int)c);
         }
-        else if (IsKeyPressedMap(ImGuiKey_Escape))              { SetActiveID(0); cancel_edit = true; }
-        else if (is_ctrl_only && IsKeyPressedMap(ImGuiKey_Z))   { edit_state.OnKeyPressed(STB_TEXTEDIT_K_UNDO); edit_state.ClearSelection(); }
-        else if (is_ctrl_only && IsKeyPressedMap(ImGuiKey_Y))   { edit_state.OnKeyPressed(STB_TEXTEDIT_K_REDO); edit_state.ClearSelection(); }
-        else if (is_ctrl_only && IsKeyPressedMap(ImGuiKey_A))   { edit_state.SelectAll(); edit_state.CursorFollow = true; }
-        else if (is_ctrl_only && (IsKeyPressedMap(ImGuiKey_X) || IsKeyPressedMap(ImGuiKey_C)) && (!is_multiline || edit_state.HasSelection()))
+        else if (IsKeyPressedMap(ImGuiKey_Escape))                              { SetActiveID(0); cancel_edit = true; }
+        else if (is_ctrl_only && IsKeyPressedMap(ImGuiKey_Z) && is_editable)    { edit_state.OnKeyPressed(STB_TEXTEDIT_K_UNDO); edit_state.ClearSelection(); }
+        else if (is_ctrl_only && IsKeyPressedMap(ImGuiKey_Y) && is_editable)    { edit_state.OnKeyPressed(STB_TEXTEDIT_K_REDO); edit_state.ClearSelection(); }
+        else if (is_ctrl_only && IsKeyPressedMap(ImGuiKey_A))                   { edit_state.SelectAll(); edit_state.CursorFollow = true; }
+        else if (is_ctrl_only && ((IsKeyPressedMap(ImGuiKey_X) && is_editable) || IsKeyPressedMap(ImGuiKey_C)) && (!is_multiline || edit_state.HasSelection()))
         {
             // Cut, Copy
             const bool cut = IsKeyPressedMap(ImGuiKey_X);
@@ -7224,7 +7247,7 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
                 stb_textedit_cut(&edit_state, &edit_state.StbState);
             }
         }
-        else if (is_ctrl_only && IsKeyPressedMap(ImGuiKey_V))
+        else if (is_ctrl_only && IsKeyPressedMap(ImGuiKey_V) && is_editable)
         {
             // Paste
             if (g.IO.GetClipboardTextFn)
@@ -7259,8 +7282,11 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
         if (cancel_edit)
         {
             // Restore initial value
-            ImFormatString(buf, buf_size, "%s", edit_state.InitialText.Data);
-            value_changed = true;
+            if (is_editable)
+            {
+                ImFormatString(buf, buf_size, "%s", edit_state.InitialText.Data);
+                value_changed = true;
+            }
         }
         else
         {
@@ -7268,8 +7294,11 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
             // Note that as soon as we can focus into the input box, the in-widget value gets priority over any underlying modification of the input buffer
             // FIXME: We actually always render 'buf' in RenderTextScrolledClipped
             // FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from the stb_textedit callbacks
-            edit_state.TempTextBuffer.resize(edit_state.Text.Size * 4);
-            ImTextStrToUtf8(edit_state.TempTextBuffer.Data, edit_state.TempTextBuffer.Size, edit_state.Text.Data, NULL);
+            if (is_editable)
+            {
+                edit_state.TempTextBuffer.resize(edit_state.Text.Size * 4);
+                ImTextStrToUtf8(edit_state.TempTextBuffer.Data, edit_state.TempTextBuffer.Size, edit_state.Text.Data, NULL);
+            }
 
             // User callback
             if ((flags & (ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory | ImGuiInputTextFlags_CallbackAlways)) != 0)
@@ -7299,12 +7328,14 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
                 {
                     ImGuiTextEditCallbackData callback_data;
                     callback_data.EventFlag = event_flag;
+                    callback_data.Flags = flags;
+                    callback_data.UserData = user_data;
+                    callback_data.ReadOnly = !is_editable;
+
                     callback_data.EventKey = event_key;
                     callback_data.Buf = edit_state.TempTextBuffer.Data;
                     callback_data.BufSize = edit_state.BufSizeA;
                     callback_data.BufDirty = false;
-                    callback_data.Flags = flags;
-                    callback_data.UserData = user_data;
 
                     // We have to convert from position from wchar to UTF-8 positions
                     ImWchar* text = edit_state.Text.Data;
@@ -7331,7 +7362,7 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
                 }
             }
 
-            if (strcmp(edit_state.TempTextBuffer.Data, buf) != 0)
+            if (is_editable && strcmp(edit_state.TempTextBuffer.Data, buf) != 0)
             {
                 ImFormatString(buf, buf_size, "%s", edit_state.TempTextBuffer.Data);
                 value_changed = true;
@@ -7354,7 +7385,7 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
         // - Display the text (this can be more easily clipped)
         // - Handle scrolling, highlight selection, display cursor (those all requires some form of 1d->2d cursor position calculation)
         // - Measure text height (for scrollbar)
-        // We are attempting to do most of that in one main pass to minimize the computation cost (non-negligible for large amount of text) + 2nd pass for selection rendering (we could merge them by an extra refactoring effort)
+        // We are attempting to do most of that in **one main pass** to minimize the computation cost (non-negligible for large amount of text) + 2nd pass for selection rendering (we could merge them by an extra refactoring effort)
         const ImWchar* text_begin = edit_state.Text.Data;
         const ImWchar* text_end = text_begin + edit_state.CurLenW;
         ImVec2 cursor_offset, select_start_offset;
@@ -7473,7 +7504,7 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
             draw_window->DrawList->AddLine(cursor_screen_pos + ImVec2(0.0f,-g.FontSize+0.5f), cursor_screen_pos + ImVec2(0.0f,-1.5f), window->Color(ImGuiCol_Text));
 
         // Notify OS of text input position for advanced IME
-        if (io.ImeSetInputScreenPosFn && ImLengthSqr(edit_state.InputCursorScreenPos - cursor_screen_pos) > 0.0001f)
+        if (is_editable && io.ImeSetInputScreenPosFn && ImLengthSqr(edit_state.InputCursorScreenPos - cursor_screen_pos) > 0.0001f)
             io.ImeSetInputScreenPosFn((int)cursor_screen_pos.x - 1, (int)(cursor_screen_pos.y - g.FontSize));   // -1 x offset so that Windows IME can cover our cursor. Bit of an extra nicety.
 
         edit_state.InputCursorScreenPos = cursor_screen_pos;
