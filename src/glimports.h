@@ -501,6 +501,7 @@ GL_IMPORT_____x(true,  PFNGLDELETESAMPLERSPROC,                    glDeleteSampl
 GL_IMPORT_____x(true,  PFNGLBINDSAMPLERPROC,                       glBindSampler);
 GL_IMPORT_____x(true,  PFNGLSAMPLERPARAMETERFPROC,                 glSamplerParameterf);
 GL_IMPORT_____x(true,  PFNGLSAMPLERPARAMETERIPROC,                 glSamplerParameteri);
+GL_IMPORT_____x(true,  PFNGLSAMPLERPARAMETERFVPROC,                glSamplerParameterfv);
 
 GL_IMPORT_____x(true,  PFNGLBINDBUFFERBASEPROC,                    glBindBufferBase);
 GL_IMPORT_____x(true,  PFNGLBINDBUFFERRANGEPROC,                   glBindBufferRange);
@@ -564,6 +565,7 @@ GL_IMPORT______(true,  PFNGLDELETESAMPLERSPROC,                    glDeleteSampl
 GL_IMPORT______(true,  PFNGLBINDSAMPLERPROC,                       glBindSampler);
 GL_IMPORT______(true,  PFNGLSAMPLERPARAMETERFPROC,                 glSamplerParameterf);
 GL_IMPORT______(true,  PFNGLSAMPLERPARAMETERIPROC,                 glSamplerParameteri);
+GL_IMPORT______(true,  PFNGLSAMPLERPARAMETERFVPROC,                glSamplerParameterfv);
 
 GL_IMPORT______(true,  PFNGLBINDBUFFERBASEPROC,                    glBindBufferBase);
 GL_IMPORT______(true,  PFNGLBINDBUFFERRANGEPROC,                   glBindBufferRange);
