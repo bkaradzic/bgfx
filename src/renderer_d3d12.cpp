@@ -125,6 +125,7 @@ namespace bgfx { namespace d3d12
 		D3D12_TEXTURE_ADDRESS_MODE_WRAP,
 		D3D12_TEXTURE_ADDRESS_MODE_MIRROR,
 		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+		D3D12_TEXTURE_ADDRESS_MODE_BORDER,
 	};
 
 	/*
@@ -2804,11 +2805,15 @@ data.NumQualityLevels = 0;
 			sd.AddressU = s_textureAddress[(flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT];
 			sd.AddressV = s_textureAddress[(flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT];
 			sd.AddressW = s_textureAddress[(flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT];
-			sd.MinLOD   = 0;
-			sd.MaxLOD   = D3D12_FLOAT32_MAX;
 			sd.MipLODBias     = 0.0f;
 			sd.MaxAnisotropy  = 1; //m_maxAnisotropy;
 			sd.ComparisonFunc = 0 == cmpFunc ? D3D12_COMPARISON_FUNC_NEVER : s_cmpFunc[cmpFunc];
+			sd.BorderColor[0] = 0.0f;
+			sd.BorderColor[1] = 0.0f;
+			sd.BorderColor[2] = 0.0f;
+			sd.BorderColor[3] = 0.0f;
+			sd.MinLOD   = 0;
+			sd.MaxLOD   = D3D12_FLOAT32_MAX;
 
 			D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle =
 			{

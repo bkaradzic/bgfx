@@ -153,6 +153,7 @@ namespace bgfx { namespace d3d9
 		D3DTADDRESS_WRAP,
 		D3DTADDRESS_MIRROR,
 		D3DTADDRESS_CLAMP,
+		D3DTADDRESS_BORDER,
 	};
 
 	static const D3DTEXTUREFILTERTYPE s_textureFilter[] =

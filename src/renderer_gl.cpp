@@ -160,6 +160,7 @@ namespace bgfx { namespace gl
 		GL_REPEAT,
 		GL_MIRRORED_REPEAT,
 		GL_CLAMP_TO_EDGE,
+		GL_CLAMP,
 	};
 
 	static const GLenum s_textureFilterMag[] =
