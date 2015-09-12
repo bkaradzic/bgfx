@@ -1194,6 +1194,7 @@ namespace bgfx { namespace gl
 			, m_vaoSupport(false)
 			, m_samplerObjectSupport(false)
 			, m_shadowSamplersSupport(false)
+			, m_borderColorSupport(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			, m_programBinarySupport(false)
 			, m_textureSwizzleSupport(false)
 			, m_depthTextureSupport(false)
@@ -1782,6 +1783,7 @@ namespace bgfx { namespace gl
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
 			{
+				m_borderColorSupport = s_extension[Extension::NV_texture_border_clamp].m_supported;
 				s_textureAddress[BGFX_TEXTURE_U_BORDER>>BGFX_TEXTURE_U_SHIFT] = s_extension[Extension::NV_texture_border_clamp].m_supported
 					? GL_CLAMP_TO_BORDER
 					: GL_CLAMP_TO_EDGE
@@ -2552,8 +2554,12 @@ namespace bgfx { namespace gl
 						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, magFilter) );
 						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, minFilter) );
 
-						const float color[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-						GL_CHECK(glSamplerParameterfv(sampler, GL_TEXTURE_BORDER_COLOR, color) );
+						if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+						||  m_borderColorSupport)
+						{
+							const float color[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+							GL_CHECK(glSamplerParameterfv(sampler, GL_TEXTURE_BORDER_COLOR, color) );
+						}
 
 						if (0 != (_flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) )
 						&&  0.0f < m_maxAnisotropy)
@@ -3047,6 +3053,7 @@ namespace bgfx { namespace gl
 		bool m_vaoSupport;
 		bool m_samplerObjectSupport;
 		bool m_shadowSamplersSupport;
+		bool m_borderColorSupport;
 		bool m_programBinarySupport;
 		bool m_textureSwizzleSupport;
 		bool m_depthTextureSupport;
@@ -4200,8 +4207,12 @@ namespace bgfx { namespace gl
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, magFilter) );
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilter) );
 
-			const float color[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-			GL_CHECK(glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, color) );
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+			||  s_renderGL->m_borderColorSupport)
+			{
+				const float color[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+				GL_CHECK(glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, color) );
+			}
 
 			if (0 != (flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) )
 			&&  0.0f < s_renderGL->m_maxAnisotropy)
