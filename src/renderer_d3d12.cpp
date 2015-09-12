@@ -1761,7 +1761,7 @@ data.NumQualityLevels = 0;
 
 				m_currentColor        = &m_rtvHandle;
 				m_currentDepthStencil = &m_dsvHandle;
-				m_commandList->OMSetRenderTargets(1, m_currentColor, false, m_currentDepthStencil);
+				m_commandList->OMSetRenderTargets(1, m_currentColor, true, m_currentDepthStencil);
 			}
 			else
 			{
@@ -1805,7 +1805,7 @@ data.NumQualityLevels = 0;
 
 				m_commandList->OMSetRenderTargets(frameBuffer.m_num
 												, m_currentColor
-												, true //NULL == m_currentDepthStencil
+												, true
 												, m_currentDepthStencil
 												);
 			}
@@ -4199,6 +4199,12 @@ data.NumQualityLevels = 0;
 		}
 	}
 
+	struct Bind
+	{
+		D3D12_GPU_DESCRIPTOR_HANDLE m_srvHandle;
+		uint16_t m_samplerStateIdx;
+	};
+
 	void RendererContextD3D12::submit(Frame* _render, ClearQuad& /*_clearQuad*/, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
 //		PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), L"rendererSubmit");
@@ -4272,12 +4278,6 @@ data.NumQualityLevels = 0;
 		scratchBuffer.reset(gpuHandle);
 
 		D3D12_GPU_VIRTUAL_ADDRESS gpuAddress = UINT64_C(0);
-
-		struct Bind
-		{
-			D3D12_GPU_DESCRIPTOR_HANDLE m_srvHandle;
-			uint16_t m_samplerStateIdx;
-		};
 
 		StateCacheLru<Bind, 64> bindLru;
 
