@@ -155,12 +155,12 @@ namespace bgfx { namespace gl
 		GL_BACK,
 	};
 
-	static const GLenum s_textureAddress[] =
+	static GLenum s_textureAddress[] =
 	{
 		GL_REPEAT,
 		GL_MIRRORED_REPEAT,
 		GL_CLAMP_TO_EDGE,
-		GL_CLAMP,
+		GL_CLAMP_TO_BORDER,
 	};
 
 	static const GLenum s_textureFilterMag[] =
@@ -550,6 +550,7 @@ namespace bgfx { namespace gl
 			MOZ_WEBGL_compressed_texture_s3tc,
 			MOZ_WEBGL_depth_texture,
 
+			NV_texture_border_clamp,
 			NV_draw_buffers,
 			NVX_gpu_memory_info,
 
@@ -747,6 +748,7 @@ namespace bgfx { namespace gl
 		{ "MOZ_WEBGL_compressed_texture_s3tc",     false,                             true  },
 		{ "MOZ_WEBGL_depth_texture",               false,                             true  },
 
+		{ "NV_texture_border_clamp",               false,                             true  }, // GLES2 extension.
 		{ "NV_draw_buffers",                       false,                             true  }, // GLES2 extension.
 		{ "NVX_gpu_memory_info",                   false,                             true  },
 
@@ -1778,6 +1780,14 @@ namespace bgfx { namespace gl
 
 			g_caps.supported |= m_glctx.getCaps();
 
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
+			{
+				s_textureAddress[BGFX_TEXTURE_U_BORDER>>BGFX_TEXTURE_U_SHIFT] = s_extension[Extension::NV_texture_border_clamp].m_supported
+					? GL_CLAMP_TO_BORDER
+					: GL_CLAMP_TO_EDGE
+					;
+			}
+
 			if (s_extension[Extension::EXT_texture_filter_anisotropic].m_supported)
 			{
 				GL_CHECK(glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &m_maxAnisotropyDefault) );
@@ -2541,6 +2551,9 @@ namespace bgfx { namespace gl
 						getFilters(_flags, 1 < _numMips, magFilter, minFilter);
 						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, magFilter) );
 						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, minFilter) );
+
+						const float color[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+						GL_CHECK(glSamplerParameterfv(sampler, GL_TEXTURE_BORDER_COLOR, color) );
 
 						if (0 != (_flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) )
 						&&  0.0f < m_maxAnisotropy)
@@ -4186,6 +4199,10 @@ namespace bgfx { namespace gl
 			getFilters(flags, 1 < numMips, magFilter, minFilter);
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, magFilter) );
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilter) );
+
+			const float color[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+			GL_CHECK(glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, color) );
+
 			if (0 != (flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) )
 			&&  0.0f < s_renderGL->m_maxAnisotropy)
 			{
