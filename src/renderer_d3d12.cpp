@@ -4386,8 +4386,8 @@ data.NumQualityLevels = 0;
 					{
 						currentBindHash  = bindHash;
 
-						Bind* bind = bindLru.find(bindHash);
-						if (NULL == bind)
+						Bind* bindCached = bindLru.find(bindHash);
+						if (NULL == bindCached)
 						{
 							D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_MAX_COMPUTE_BINDINGS] = {};
 							uint32_t samplerFlags[BGFX_MAX_COMPUTE_BINDINGS] = {};
@@ -4458,14 +4458,14 @@ data.NumQualityLevels = 0;
 						}
 						else
 						{
-							uint16_t samplerStateIdx = bind->m_samplerStateIdx;
+							uint16_t samplerStateIdx = bindCached->m_samplerStateIdx;
 							if (samplerStateIdx != currentSamplerStateIdx)
 							{
 								currentSamplerStateIdx = samplerStateIdx;
 								m_commandList->SetComputeRootDescriptorTable(Rdt::Sampler, m_samplerAllocator.get(samplerStateIdx) );
 							}
-							m_commandList->SetComputeRootDescriptorTable(Rdt::SRV, bind->m_srvHandle);
-							m_commandList->SetComputeRootDescriptorTable(Rdt::UAV, bind->m_srvHandle);
+							m_commandList->SetComputeRootDescriptorTable(Rdt::SRV, bindCached->m_srvHandle);
+							m_commandList->SetComputeRootDescriptorTable(Rdt::UAV, bindCached->m_srvHandle);
 						}
 					}
 
@@ -4607,8 +4607,8 @@ data.NumQualityLevels = 0;
 					{
 						currentBindHash  = bindHash;
 
-						Bind* bind = bindLru.find(bindHash);
-						if (NULL == bind)
+						Bind* bindCached = bindLru.find(bindHash);
+						if (NULL == bindCached)
 						{
 							D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 							uint32_t samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
@@ -4655,13 +4655,13 @@ data.NumQualityLevels = 0;
 						}
 						else
 						{
-							uint16_t samplerStateIdx = bind->m_samplerStateIdx;
+							uint16_t samplerStateIdx = bindCached->m_samplerStateIdx;
 							if (samplerStateIdx != currentSamplerStateIdx)
 							{
 								currentSamplerStateIdx = samplerStateIdx;
 								m_commandList->SetGraphicsRootDescriptorTable(Rdt::Sampler, m_samplerAllocator.get(samplerStateIdx) );
 							}
-							m_commandList->SetGraphicsRootDescriptorTable(Rdt::SRV, bind->m_srvHandle);
+							m_commandList->SetGraphicsRootDescriptorTable(Rdt::SRV, bindCached->m_srvHandle);
 						}
 					}
 
