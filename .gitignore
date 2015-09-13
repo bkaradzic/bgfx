@@ -4,3 +4,4 @@
 .git
 .svn
 tags
+.gdb_history

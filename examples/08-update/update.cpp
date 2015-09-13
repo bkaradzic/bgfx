@@ -138,10 +138,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	bgfx::TextureHandle textures[] =
 	{
-		loadTexture("texture_compression_bc1.dds", BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP),
-		loadTexture("texture_compression_bc2.dds", BGFX_TEXTURE_U_CLAMP),
-		loadTexture("texture_compression_bc3.dds", BGFX_TEXTURE_V_CLAMP),
-		loadTexture("texture_compression_etc1.ktx"),
+		loadTexture("texture_compression_bc1.dds",  BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP),
+		loadTexture("texture_compression_bc2.dds",  BGFX_TEXTURE_U_CLAMP),
+		loadTexture("texture_compression_bc3.dds",  BGFX_TEXTURE_V_CLAMP),
+		loadTexture("texture_compression_etc1.ktx", BGFX_TEXTURE_U_BORDER|BGFX_TEXTURE_V_BORDER),
 		loadTexture("texture_compression_etc2.ktx"),
 		loadTexture("texture_compression_ptc12.pvr"),
 		loadTexture("texture_compression_ptc14.pvr"),
@@ -364,12 +364,12 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Set view and projection matrix for view 1.
 		const float aspectRatio = float(height)/float(width);
-		const float size = 10.0f;
+		const float size = 11.0f;
 		bx::mtxOrtho(proj, -size, size, size*aspectRatio, -size*aspectRatio, 0.0f, 1000.0f);
 		bgfx::setViewTransform(1, NULL, proj);
 
 
-		bx::mtxTranslate(mtx, -8.0f - BX_COUNTOF(textures)*0.1f*0.5f, 1.9f, 0.0f);
+		bx::mtxTranslate(mtx, -size+2.0f - BX_COUNTOF(textures)*0.1f*0.5f, 1.9f, 0.0f);
 
 		// Set model matrix for rendering.
 		bgfx::setTransform(mtx);
@@ -387,11 +387,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		// Submit primitive for rendering to view 1.
 		bgfx::submit(1, programCmp);
 
-		const float xpos = -8.0f - BX_COUNTOF(textures)*0.1f*0.5f;
+		const float xpos = -size+2.0f - BX_COUNTOF(textures)*0.1f*0.5f;
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(textures); ++ii)
 		{
-			bx::mtxTranslate(mtx, xpos + ii*2.1f, 4.0f, 0.0f);
+			bx::mtxTranslate(mtx, xpos + ii*2.1f, size-6.5f, 0.0f);
 
 			// Set model matrix for rendering.
 			bgfx::setTransform(mtx);
@@ -412,7 +412,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		for (uint32_t ii = 0; ii < numTextures3d; ++ii)
 		{
-			bx::mtxTranslate(mtx, xpos + ii*2.1f, -4.0f, 0.0f);
+			bx::mtxTranslate(mtx, xpos + ii*2.1f, -size+6.5f, 0.0f);
 
 			// Set model matrix for rendering.
 			bgfx::setTransform(mtx);
@@ -431,9 +431,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 			bgfx::submit(1, program3d);
 		}
 
-		for (uint32_t ii = 0; ii < 3; ++ii)
+		for (uint32_t ii = 0; ii < 4; ++ii)
 		{
-			bx::mtxTranslate(mtx, xpos + 8*2.1f, -4.0f + ii*2.1f, 0.0f);
+			bx::mtxTranslate(mtx, xpos + (size-2.0f)*2.1f, -size+6.5f + ii*2.1f, 0.0f);
 
 			// Set model matrix for rendering.
 			bgfx::setTransform(mtx);

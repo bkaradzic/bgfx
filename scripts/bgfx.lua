@@ -58,14 +58,6 @@ function bgfxProject(_name, _kind, _defines)
 			}
 		end
 
-		if (_OPTIONS["vs"] == "vs2012-xp")
-		or (_OPTIONS["vs"] == "vs2013-xp") then
-			configuration { "vs201*" }
-				includedirs {
-					"$(DXSDK_DIR)/include",
-				}
-		end
-
 		configuration { "Debug" }
 			defines {
 				"BGFX_CONFIG_DEBUG=1",

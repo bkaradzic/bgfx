@@ -20,7 +20,7 @@ endif
 
 # $(info $(OS))
 
-GENIE=../bx/tools/bin/$(OS)/genie
+GENIE=../bx/tools/bin/$(OS)/genie $(GENIE_FLAGS)
 
 all:
 	$(GENIE) --with-tools --with-shared-lib vs2008

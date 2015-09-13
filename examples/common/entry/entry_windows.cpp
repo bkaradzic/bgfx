@@ -836,7 +836,7 @@ namespace entry
 
 		void adjust(HWND _hwnd, uint32_t _width, uint32_t _height, bool _windowFrame)
 		{
-			m_width = _width;
+			m_width  = _width;
 			m_height = _height;
 			m_aspectRatio = float(_width)/float(_height);
 
@@ -868,15 +868,16 @@ namespace entry
 				GetMonitorInfo(monitor, &mi);
 				newrect = mi.rcMonitor;
 				rect = mi.rcMonitor;
+				m_aspectRatio = float(newrect.right  - newrect.left)/float(newrect.bottom - newrect.top);
 #endif // !defined(__MINGW__)
 			}
 
 			SetWindowLong(_hwnd, GWL_STYLE, style);
-			uint32_t prewidth = newrect.right - newrect.left;
+			uint32_t prewidth  = newrect.right - newrect.left;
 			uint32_t preheight = newrect.bottom - newrect.top;
 			AdjustWindowRect(&newrect, style, FALSE);
-			m_frameWidth = (newrect.right - newrect.left) - prewidth;
-			m_frameHeight = (newrect.bottom - newrect.top) - preheight;
+			m_frameWidth  = (newrect.right  - newrect.left) - prewidth;
+			m_frameHeight = (newrect.bottom - newrect.top ) - preheight;
 			UpdateWindow(_hwnd);
 
 			if (rect.left == -32000
@@ -886,19 +887,19 @@ namespace entry
 				rect.top  = 0;
 			}
 
-			int32_t left = rect.left;
-			int32_t top = rect.top;
-			int32_t width = (newrect.right-newrect.left);
+			int32_t left   = rect.left;
+			int32_t top    = rect.top;
+			int32_t width  = (newrect.right-newrect.left);
 			int32_t height = (newrect.bottom-newrect.top);
 
 			if (!_windowFrame)
 			{
 				float aspectRatio = 1.0f/m_aspectRatio;
-				width = bx::uint32_max(ENTRY_DEFAULT_WIDTH/4, width);
+				width  = bx::uint32_max(ENTRY_DEFAULT_WIDTH/4, width);
 				height = uint32_t(float(width)*aspectRatio);
 
-				left = newrect.left+(newrect.right-newrect.left-width)/2;
-				top = newrect.top+(newrect.bottom-newrect.top-height)/2;
+				left   = newrect.left+(newrect.right -newrect.left-width)/2;
+				top    = newrect.top +(newrect.bottom-newrect.top-height)/2;
 			}
 
 			HWND parent = GetWindow(_hwnd, GW_OWNER);

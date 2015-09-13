@@ -235,6 +235,7 @@ struct OcornutImguiContext
 		io.MousePos = ImVec2( (float)_mx, (float)_my);
 		io.MouseDown[0] = 0 != (_button & IMGUI_MBUT_LEFT);
 		io.MouseDown[1] = 0 != (_button & IMGUI_MBUT_RIGHT);
+		io.MouseDown[2] = 0 != (_button & IMGUI_MBUT_MIDDLE);
 		io.MouseWheel = (float)(_scroll - m_lastScroll);
 		m_lastScroll = _scroll;
 
@@ -251,8 +252,16 @@ struct OcornutImguiContext
 
 		ImGui::NewFrame();
 
-		//ImGui::ShowTestWindow(); //Debug only.
-		//
+#if 0
+		ImGui::ShowTestWindow(); //Debug only.
+#endif // 0
+
+#if 0
+		extern void ShowExampleAppCustomNodeGraph(bool* opened);
+		bool opened = true;
+		ShowExampleAppCustomNodeGraph(&opened);
+#endif // 0
+
 #if defined(SCI_NAMESPACE) && 0
 		bool opened = true;
 		ImGuiScintilla("Scintilla Editor", &opened, ImVec2(640.0f, 480.0f) );

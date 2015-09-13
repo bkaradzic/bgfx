@@ -18,6 +18,13 @@ extern "C" int _main_(int _argc, char** _argv);
 #define ENTRY_WINDOW_FLAG_ASPECT_RATIO UINT32_C(0x00000001)
 #define ENTRY_WINDOW_FLAG_FRAME        UINT32_C(0x00000002)
 
+#define ENTRY_IMPLEMENT_MAIN(_app) \
+			int _main_(int _argc, char** _argv) \
+			{ \
+				_app app; \
+				return entry::runApp(&app, _argc, _argv); \
+			}
+
 namespace entry
 {
 	struct WindowHandle  { uint16_t idx; };
@@ -181,6 +188,19 @@ namespace entry
 		};
 	};
 
+	struct Suspend
+	{
+		enum Enum
+		{
+			WillSuspend,
+			DidSuspend,
+			WillResume,
+			DidResume,
+
+			Count
+		};
+	};
+
 	const char* getName(Key::Enum _key);
 
 	struct MouseState
@@ -243,6 +263,20 @@ namespace entry
 	};
 
 	bool processWindowEvents(WindowState& _state, uint32_t& _debug, uint32_t& _reset);
+
+	struct BX_NO_VTABLE AppI
+	{
+		virtual ~AppI() = 0;
+		virtual void init(int _argc, char** _argv) = 0;
+		virtual int  shutdown() = 0;
+		virtual bool update() = 0;
+	};
+
+	inline AppI::~AppI()
+	{
+	}
+
+	int runApp(AppI* _app, int _argc, char** _argv);
 
 } // namespace entry
 

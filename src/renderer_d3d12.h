@@ -91,15 +91,15 @@ namespace bgfx { namespace d3d12
 		uint32_t m_pos;
 	};
 
-	class DescriptorAllocator
+	class DescriptorAllocatorD3D12
 	{
 	public:
-		DescriptorAllocator()
+		DescriptorAllocatorD3D12()
 			: m_numDescriptorsPerBlock(1)
 		{
 		}
 
-		~DescriptorAllocator()
+		~DescriptorAllocatorD3D12()
 		{
 		}
 
@@ -140,15 +140,7 @@ namespace bgfx { namespace d3d12
 
 		void create(uint32_t _size, void* _data, uint16_t _flags, bool _vertex, uint32_t _stride = 0);
 		void update(ID3D12GraphicsCommandList* _commandList, uint32_t _offset, uint32_t _size, void* _data, bool _discard = false);
-
-		void destroy()
-		{
-			if (NULL != m_ptr)
-			{
-				DX_RELEASE(m_ptr, 0);
-				m_dynamic = false;
-			}
-		}
+		void destroy();
 
 		D3D12_RESOURCE_STATES setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state);
 
@@ -272,7 +264,6 @@ namespace bgfx { namespace d3d12
 		void create(const Memory* _mem, uint32_t _flags, uint8_t _skip);
 		void destroy();
 		void update(ID3D12GraphicsCommandList* _commandList, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
-		void commit(uint8_t _stage, uint32_t _flags = BGFX_SAMPLER_DEFAULT_FLAGS);
 		void resolve();
 		D3D12_RESOURCE_STATES setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state);
 
@@ -292,6 +283,8 @@ namespace bgfx { namespace d3d12
 	{
 		FrameBufferD3D12()
 			: m_swapChain(NULL)
+			, m_width(0)
+			, m_height(0)
 			, m_denseIdx(UINT16_MAX)
 			, m_num(0)
 			, m_numTh(0)
@@ -310,15 +303,17 @@ namespace bgfx { namespace d3d12
 		TextureHandle m_texture[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		TextureHandle m_depth;
 		IDXGISwapChain* m_swapChain;
+		uint32_t m_width;
+		uint32_t m_height;
 		uint16_t m_denseIdx;
 		uint8_t m_num;
 		uint8_t m_numTh;
 		TextureHandle m_th[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 	};
 
-	struct CommandQueue
+	struct CommandQueueD3D12
 	{
-		CommandQueue()
+		CommandQueueD3D12()
 			: m_currentFence(0)
 			, m_completedFence(0)
 			, m_control(BX_COUNTOF(m_commandList) )
@@ -350,6 +345,88 @@ namespace bgfx { namespace d3d12
 		typedef stl::vector<ID3D12Resource*> ResourceArray;
 		ResourceArray m_release[32];
 		bx::RingBufferControl m_control;
+	};
+
+	struct BatchD3D12
+	{
+		enum Enum
+		{
+			Draw,
+			DrawIndexed,
+
+			Count
+		};
+
+		BatchD3D12()
+			: m_currIndirect(0)
+			, m_maxDrawPerBatch(0)
+			, m_minIndirect(0)
+			, m_flushPerBatch(0)
+		{
+			memset(m_num, 0, sizeof(m_num) );
+		}
+
+		~BatchD3D12()
+		{
+		}
+
+		void create(uint32_t _maxDrawPerBatch);
+		void destroy();
+
+		template<typename Ty>
+		Ty& getCmd(Enum _type);
+
+		uint32_t draw(ID3D12GraphicsCommandList* _commandList, D3D12_GPU_VIRTUAL_ADDRESS _cbv, const RenderDraw& _draw);
+
+		void flush(ID3D12GraphicsCommandList* _commandList, Enum _type);
+		void flush(ID3D12GraphicsCommandList* _commandList, bool _clean = false);
+
+		void begin();
+		void end(ID3D12GraphicsCommandList* _commandList);
+
+		void setSeqMode(bool _enabled)
+		{
+			m_flushPerBatch = _enabled ? 1 : m_maxDrawPerBatch;
+		}
+
+		void setIndirectMode(bool _enabled)
+		{
+			m_minIndirect = _enabled ? 64 : UINT32_MAX;
+		}
+
+		ID3D12CommandSignature* m_commandSignature[Count];
+		uint32_t m_num[Count];
+		void* m_cmds[Count];
+
+		struct DrawIndirectCommand
+		{
+			D3D12_GPU_VIRTUAL_ADDRESS cbv;
+			D3D12_VERTEX_BUFFER_VIEW vbv[2];
+			D3D12_DRAW_ARGUMENTS draw;
+		};
+
+		struct DrawIndexedIndirectCommand
+		{
+			D3D12_GPU_VIRTUAL_ADDRESS cbv;
+			D3D12_VERTEX_BUFFER_VIEW vbv[2];
+			D3D12_INDEX_BUFFER_VIEW ibv;
+			D3D12_DRAW_INDEXED_ARGUMENTS drawIndexed;
+		};
+
+		struct Stats
+		{
+			uint32_t m_numImmediate[Count];
+			uint32_t m_numIndirect[Count];
+		};
+
+		BufferD3D12 m_indirect[32];
+		uint32_t m_currIndirect;
+		DrawIndexedIndirectCommand m_current;
+
+		Stats m_stats;
+		uint32_t m_maxDrawPerBatch;
+		uint32_t m_minIndirect;
+		uint32_t m_flushPerBatch;
 	};
 
 } /* namespace d3d12 */ } // namespace bgfx

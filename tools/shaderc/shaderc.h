@@ -116,6 +116,7 @@ struct UniformType
 };
 
 #define BGFX_UNIFORM_FRAGMENTBIT UINT8_C(0x10)
+#define BGFX_UNIFORM_SAMPLERBIT  UINT8_C(0x20)
 
 const char* getUniformTypeName(UniformType::Enum _enum);
 UniformType::Enum nameToUniformTypeEnum(const char* _name);

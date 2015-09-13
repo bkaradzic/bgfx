@@ -9,6 +9,10 @@
 
 #include <time.h>
 
+#if BX_PLATFORM_EMSCRIPTEN
+#	include <emscripten.h>
+#endif // BX_PLATFORM_EMSCRIPTEN
+
 #include "entry_p.h"
 #include "cmd.h"
 #include "input.h"
@@ -287,7 +291,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{ entry::Key::KeyQ,         entry::Modifier::RightCtrl, 1, NULL, "exit"                              },
 		{ entry::Key::KeyF,         entry::Modifier::LeftCtrl,  1, NULL, "graphics fullscreen"               },
 		{ entry::Key::KeyF,         entry::Modifier::RightCtrl, 1, NULL, "graphics fullscreen"               },
-		{ entry::Key::F11,          entry::Modifier::None,      1, NULL, "graphics fullscreen"               },
+		{ entry::Key::Return,       entry::Modifier::RightAlt,  1, NULL, "graphics fullscreen"               },
 		{ entry::Key::F1,           entry::Modifier::None,      1, NULL, "graphics stats"                    },
 		{ entry::Key::GamepadStart, entry::Modifier::None,      1, NULL, "graphics stats"                    },
 		{ entry::Key::F1,           entry::Modifier::LeftShift, 1, NULL, "graphics stats 0\ngraphics text 0" },
@@ -303,6 +307,28 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		INPUT_BINDING_END
 	};
+
+#if BX_PLATFORM_EMSCRIPTEN
+	static AppI* s_app;
+	static void updateApp()
+	{
+		s_app->update();
+	}
+#endif // BX_PLATFORM_EMSCRIPTEN
+
+	int runApp(AppI* _app, int _argc, char** _argv)
+	{
+		_app->init(_argc, _argv);
+
+#if BX_PLATFORM_EMSCRIPTEN
+		s_app = _app;
+		emscripten_set_main_loop(&updateApp, -1, 1);
+#else
+		while (_app->update() );
+#endif // BX_PLATFORM_EMSCRIPTEN
+
+		return _app->shutdown();
+	}
 
 	int main(int _argc, char** _argv)
 	{
@@ -438,7 +464,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				case Event::Window:
 					break;
 
-				default:
+                case Event::Suspend:
+                    break;
+
+                    default:
 					break;
 				}
 			}

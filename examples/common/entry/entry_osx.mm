@@ -39,6 +39,8 @@
 - (void)windowWillClose:(NSNotification*)notification;
 - (BOOL)windowShouldClose:(NSWindow*)window;
 - (void)windowDidResize:(NSNotification*)notification;
+- (void)windowDidBecomeKey:(NSNotification *)notification;
+- (void)windowDidResignKey:(NSNotification *)notification;
 
 @end
 
@@ -271,7 +273,7 @@ namespace entry
 					{
 						// TODO: remove!
 						// Command + Left Mouse Button acts as middle! This just a temporary solution!
-						// This is becase the average OSX user doesn't have middle mouse click.
+						// This is because the average OSX user doesn't have middle mouse click.
 						MouseButton::Enum mb = ([event modifierFlags] & NSCommandKeyMask) ? MouseButton::Middle : MouseButton::Left;
 						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, mb, true);
 						break;
@@ -382,6 +384,18 @@ namespace entry
 			// Make sure mouse button state is 'up' after resize.
 			m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Left,  false);
 			m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Right, false);
+		}
+
+		void windowDidBecomeKey()
+		{
+            m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::WillResume);
+			m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::DidResume);
+		}
+
+		void windowDidResignKey()
+		{
+            m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::WillSuspend);
+			m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::DidSuspend);
 		}
 
 		int32_t run(int _argc, char** _argv)
@@ -721,6 +735,20 @@ namespace entry
 	BX_UNUSED(notification);
 	using namespace entry;
 	s_ctx.windowDidResize();
+}
+
+- (void)windowDidBecomeKey:(NSNotification*)notification
+{
+    BX_UNUSED(notification);
+    using namespace entry;
+    s_ctx.windowDidBecomeKey();
+}
+
+- (void)windowDidResignKey:(NSNotification*)notification
+{
+    BX_UNUSED(notification);
+    using namespace entry;
+    s_ctx.windowDidResignKey();
 }
 
 @end

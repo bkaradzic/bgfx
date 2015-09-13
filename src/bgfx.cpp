@@ -9,7 +9,7 @@ namespace bgfx
 {
 #define BGFX_MAIN_THREAD_MAGIC UINT32_C(0x78666762)
 
-#if BGFX_CONFIG_MULTITHREADED && !BX_PLATFORM_OSX && !BX_PLATFORM_IOS
+#if BGFX_CONFIG_MULTITHREADED
 #	define BGFX_CHECK_MAIN_THREAD() \
 				BX_CHECK(NULL != s_ctx, "Library is not initialized yet."); \
 				BX_CHECK(BGFX_MAIN_THREAD_MAGIC == s_threadIndex, "Must be called from main thread.")
@@ -200,7 +200,50 @@ namespace bgfx
 
 	Caps g_caps;
 
-	static BX_THREAD uint32_t s_threadIndex = 0;
+#if !defined(BX_THREAD_LOCAL)
+	class ThreadData
+	{
+		BX_CLASS(ThreadData
+			, NO_COPY
+			, NO_ASSIGNMENT
+			);
+
+	public:
+		ThreadData(uintptr_t _rhs)
+		{
+			union { uintptr_t ui; void* ptr; } cast = { _rhs };
+			m_tls.set(cast.ptr);
+		}
+
+		operator uintptr_t() const
+		{
+			union { uintptr_t ui; void* ptr; } cast;
+			cast.ptr = m_tls.get();
+			return cast.ui;
+		}
+
+		uintptr_t operator=(uintptr_t _rhs)
+		{
+			union { uintptr_t ui; void* ptr; } cast = { _rhs };
+			m_tls.set(cast.ptr);
+			return _rhs;
+		}
+
+		bool operator==(uintptr_t _rhs) const
+		{
+			uintptr_t lhs = *this;
+			return lhs == _rhs;
+		}
+
+	private:
+		bx::TlsData m_tls;
+	};
+
+	static ThreadData s_threadIndex(0);
+#else
+	static BX_THREAD_LOCAL uint32_t s_threadIndex(0);
+#endif
+
 	static Context* s_ctx = NULL;
 	static bool s_renderFrameCalled = false;
 	PlatformData g_platformData;
@@ -686,7 +729,7 @@ namespace bgfx
 		"u_model",
 		"u_modelView",
 		"u_modelViewProj",
-		"u_alphaRef",
+		"u_alphaRef4",
 	};
 
 	const char* getPredefinedUniformName(PredefinedUniform::Enum _enum)
@@ -910,24 +953,28 @@ namespace bgfx
 		}
 
 		BX_TRACE("Supported texture formats:");
-		BX_TRACE("\t +--------- x = supported / * = emulated");
-		BX_TRACE("\t |+-------- sRGB format");
-		BX_TRACE("\t ||+------- vertex format");
-		BX_TRACE("\t |||+------ image");
-		BX_TRACE("\t ||||+----- framebuffer");
-		BX_TRACE("\t |||||  +-- name");
+		BX_TRACE("\t +----------- x = supported / * = emulated");
+		BX_TRACE("\t |+---------- sRGB format");
+		BX_TRACE("\t ||+--------- vertex format");
+		BX_TRACE("\t |||+-------- image");
+		BX_TRACE("\t ||||+------- framebuffer");
+		BX_TRACE("\t |||||+------ MSAA framebuffer");
+		BX_TRACE("\t ||||||+----- MSAA texture");
+		BX_TRACE("\t |||||||  +-- name");
 		for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 		{
 			if (TextureFormat::Unknown != ii
 			&&  TextureFormat::UnknownDepth != ii)
 			{
 				uint8_t flags = g_caps.formats[ii];
-				BX_TRACE("\t[%c%c%c%c%c] %s"
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_COLOR       ? 'x' : flags&BGFX_CAPS_FORMAT_TEXTURE_EMULATED ? '*' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_COLOR_SRGB  ? 'l' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_VERTEX      ? 'v' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_IMAGE       ? 'i' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER ? 'f' : ' '
+				BX_TRACE("\t[%c%c%c%c%c%c%c] %s"
+					, flags&BGFX_CAPS_FORMAT_TEXTURE_COLOR            ? 'x' : flags&BGFX_CAPS_FORMAT_TEXTURE_EMULATED ? '*' : ' '
+					, flags&BGFX_CAPS_FORMAT_TEXTURE_COLOR_SRGB       ? 'l' : ' '
+					, flags&BGFX_CAPS_FORMAT_TEXTURE_VERTEX           ? 'v' : ' '
+					, flags&BGFX_CAPS_FORMAT_TEXTURE_IMAGE            ? 'i' : ' '
+					, flags&BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER      ? 'f' : ' '
+					, flags&BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA ? '+' : ' '
+					, flags&BGFX_CAPS_FORMAT_TEXTURE_MSAA             ? 'm' : ' '
 					, getName(TextureFormat::Enum(ii) )
 					);
 				BX_UNUSED(flags);
@@ -980,7 +1027,7 @@ namespace bgfx
 		else
 		{
 			BX_TRACE("Creating rendering thread.");
-			m_thread.init(renderThread, this);
+			m_thread.init(renderThread, this, 0, "bgfx - renderer backend thread");
 			m_singleThreaded = false;
 		}
 #else
