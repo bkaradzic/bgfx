@@ -229,7 +229,7 @@ namespace bgfx
 			return _rhs;
 		}
 
-		bool operator==(uintptr_t _rhs)
+		bool operator==(uintptr_t _rhs) const
 		{
 			uintptr_t lhs = *this;
 			return lhs == _rhs;
