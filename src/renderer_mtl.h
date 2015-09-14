@@ -395,8 +395,8 @@ namespace bgfx { namespace mtl
 		uint32_t m_vshConstantBufferAlignmentMask;
 		uint32_t m_fshConstantBufferSize;
 		uint32_t m_fshConstantBufferAlignmentMask;
-		ConstantBuffer* m_fshConstantBuffer;
-		ConstantBuffer* m_vshConstantBuffer;
+		UniformBuffer* m_fshConstantBuffer;
+		UniformBuffer* m_vshConstantBuffer;
 		PredefinedUniform m_predefined[PredefinedUniform::Count*2];
 		uint8_t m_numPredefined;
 	};

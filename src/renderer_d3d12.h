@@ -179,7 +179,7 @@ namespace bgfx { namespace d3d12
 		{
 			if (NULL != m_constantBuffer)
 			{
-				ConstantBuffer::destroy(m_constantBuffer);
+				UniformBuffer::destroy(m_constantBuffer);
 				m_constantBuffer = NULL;
 			}
 
@@ -194,7 +194,7 @@ namespace bgfx { namespace d3d12
 		}
 
 		const Memory* m_code;
-		ConstantBuffer* m_constantBuffer;
+		UniformBuffer* m_constantBuffer;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
 		uint16_t m_attrMask[Attrib::Count];

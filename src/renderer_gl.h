@@ -807,7 +807,7 @@ typedef uint64_t GLuint64;
 
 namespace bgfx
 {
-	class ConstantBuffer;
+	class UniformBuffer;
 } // namespace bgfx
 
 namespace bgfx { namespace gl
@@ -1174,7 +1174,7 @@ namespace bgfx { namespace gl
  		GLint m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
  		uint8_t m_numSamplers;
 
-		ConstantBuffer* m_constantBuffer;
+		UniformBuffer* m_constantBuffer;
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
 		uint8_t m_numPredefined;
 		VaoCacheRef m_vcref;

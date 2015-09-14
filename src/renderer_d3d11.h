@@ -124,7 +124,7 @@ namespace bgfx { namespace d3d11
 		{
 			if (NULL != m_constantBuffer)
 			{
-				ConstantBuffer::destroy(m_constantBuffer);
+				UniformBuffer::destroy(m_constantBuffer);
 				m_constantBuffer = NULL;
 			}
 
@@ -154,7 +154,7 @@ namespace bgfx { namespace d3d11
 		};
 		const Memory* m_code;
 		ID3D11Buffer* m_buffer;
-		ConstantBuffer* m_constantBuffer;
+		UniformBuffer* m_constantBuffer;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
 		uint16_t m_attrMask[Attrib::Count];

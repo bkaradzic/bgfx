@@ -245,7 +245,7 @@ namespace bgfx { namespace d3d9
 		{
 			if (NULL != m_constantBuffer)
 			{
-				ConstantBuffer::destroy(m_constantBuffer);
+				UniformBuffer::destroy(m_constantBuffer);
 				m_constantBuffer = NULL;
 			}
 			m_numPredefined = 0;
@@ -263,7 +263,7 @@ namespace bgfx { namespace d3d9
 			IDirect3DVertexShader9* m_vertexShader;
 			IDirect3DPixelShader9*  m_pixelShader;
 		};
-		ConstantBuffer* m_constantBuffer;
+		UniformBuffer* m_constantBuffer;
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
 		uint8_t m_numPredefined;
 		uint8_t m_type;

@@ -765,7 +765,7 @@ namespace bgfx
 			return m_num;
 		}
 
-		m_constEnd = m_constantBuffer->getPos();
+		m_uniformEnd = m_uniformBuffer->getPos();
 
 		m_key.m_program = invalidHandle == _handle.idx
 			? 0
@@ -782,14 +782,14 @@ namespace bgfx
 		m_sortValues[m_num] = m_numRenderItems;
 		++m_num;
 
-		m_draw.m_constBegin = m_constBegin;
-		m_draw.m_constEnd   = m_constEnd;
+		m_draw.m_constBegin = m_uniformBegin;
+		m_draw.m_constEnd   = m_uniformEnd;
 		m_draw.m_flags |= m_flags;
 		m_renderItem[m_numRenderItems].draw = m_draw;
 		++m_numRenderItems;
 
 		m_draw.clear();
-		m_constBegin = m_constEnd;
+		m_uniformBegin = m_uniformEnd;
 		m_flags = BGFX_STATE_NONE;
 
 		return m_num;
@@ -809,7 +809,7 @@ namespace bgfx
 			return m_num;
 		}
 
-		m_constEnd = m_constantBuffer->getPos();
+		m_uniformEnd = m_uniformBuffer->getPos();
 
 		m_compute.m_matrix = m_draw.m_matrix;
 		m_compute.m_num    = m_draw.m_num;
@@ -829,13 +829,13 @@ namespace bgfx
 		m_sortValues[m_num] = m_numRenderItems;
 		++m_num;
 
-		m_compute.m_constBegin = m_constBegin;
-		m_compute.m_constEnd   = m_constEnd;
+		m_compute.m_constBegin = m_uniformBegin;
+		m_compute.m_constEnd   = m_uniformEnd;
 		m_renderItem[m_numRenderItems].compute = m_compute;
 		++m_numRenderItems;
 
 		m_compute.clear();
-		m_constBegin = m_constEnd;
+		m_uniformBegin = m_uniformEnd;
 
 		return m_num;
 	}
@@ -887,21 +887,21 @@ namespace bgfx
 		1,
 	};
 
-	void ConstantBuffer::writeUniform(UniformType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num)
+	void UniformBuffer::writeUniform(UniformType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num)
 	{
 		uint32_t opcode = encodeOpcode(_type, _loc, _num, true);
 		write(opcode);
 		write(_value, g_uniformTypeSize[_type]*_num);
 	}
 
-	void ConstantBuffer::writeUniformHandle(UniformType::Enum _type, uint16_t _loc, UniformHandle _handle, uint16_t _num)
+	void UniformBuffer::writeUniformHandle(UniformType::Enum _type, uint16_t _loc, UniformHandle _handle, uint16_t _num)
 	{
 		uint32_t opcode = encodeOpcode(_type, _loc, _num, false);
 		write(opcode);
 		write(&_handle, sizeof(UniformHandle) );
 	}
 
-	void ConstantBuffer::writeMarker(const char* _marker)
+	void UniformBuffer::writeMarker(const char* _marker)
 	{
 		uint16_t num = (uint16_t)strlen(_marker)+1;
 		uint32_t opcode = encodeOpcode(bgfx::UniformType::Count, 0, num, true);
@@ -1342,12 +1342,12 @@ namespace bgfx
 		return m_exit;
 	}
 
-	void rendererUpdateUniforms(RendererContextI* _renderCtx, ConstantBuffer* _constantBuffer, uint32_t _begin, uint32_t _end)
+	void rendererUpdateUniforms(RendererContextI* _renderCtx, UniformBuffer* _uniformBuffer, uint32_t _begin, uint32_t _end)
 	{
-		_constantBuffer->reset(_begin);
-		while (_constantBuffer->getPos() < _end)
+		_uniformBuffer->reset(_begin);
+		while (_uniformBuffer->getPos() < _end)
 		{
-			uint32_t opcode = _constantBuffer->read();
+			uint32_t opcode = _uniformBuffer->read();
 
 			if (UniformType::End == opcode)
 			{
@@ -1358,10 +1358,10 @@ namespace bgfx
 			uint16_t loc;
 			uint16_t num;
 			uint16_t copy;
-			ConstantBuffer::decodeOpcode(opcode, type, loc, num, copy);
+			UniformBuffer::decodeOpcode(opcode, type, loc, num, copy);
 
 			uint32_t size = g_uniformTypeSize[type]*num;
-			const char* data = _constantBuffer->read(size);
+			const char* data = _uniformBuffer->read(size);
 			if (UniformType::Count > type)
 			{
 				if (copy)
