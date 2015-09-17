@@ -1289,7 +1289,7 @@ namespace bgfx
 		if (m_clearColorDirty > 0)
 		{
 			--m_clearColorDirty;
-			memcpy(m_submit->m_clearColor, m_clearColor, sizeof(m_clearColor) );
+			memcpy(m_submit->m_colorPalette, m_clearColor, sizeof(m_clearColor) );
 		}
 		m_submit->finish();
 
@@ -2891,7 +2891,7 @@ again:
 		s_ctx->destroyUniform(_handle);
 	}
 
-	void setClearColor(uint8_t _index, uint32_t _rgba)
+	void setPaletteColor(uint8_t _index, uint32_t _rgba)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 
@@ -2907,20 +2907,20 @@ again:
 			bb * 1.0f/255.0f,
 			aa * 1.0f/255.0f,
 		};
-		s_ctx->setClearColor(_index, rgba);
+		s_ctx->setPaletteColor(_index, rgba);
 	}
 
-	void setClearColor(uint8_t _index, float _r, float _g, float _b, float _a)
+	void setPaletteColor(uint8_t _index, float _r, float _g, float _b, float _a)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		float rgba[4] = { _r, _g, _b, _a };
-		s_ctx->setClearColor(_index, rgba);
+		s_ctx->setPaletteColor(_index, rgba);
 	}
 
-	void setClearColor(uint8_t _index, const float _rgba[4])
+	void setPaletteColor(uint8_t _index, const float _rgba[4])
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->setClearColor(_index, _rgba);
+		s_ctx->setPaletteColor(_index, _rgba);
 	}
 
 	bool checkView(uint8_t _id)
@@ -3781,9 +3781,9 @@ BGFX_C_API void bgfx_destroy_uniform(bgfx_uniform_handle_t _handle)
 	bgfx::destroyUniform(handle.cpp);
 }
 
-BGFX_C_API void bgfx_set_clear_color(uint8_t _index, const float _rgba[4])
+BGFX_C_API void bgfx_set_palette_color(uint8_t _index, const float _rgba[4])
 {
-	bgfx::setClearColor(_index, _rgba);
+	bgfx::setPaletteColor(_index, _rgba);
 }
 
 BGFX_C_API void bgfx_set_view_name(uint8_t _id, const char* _name)

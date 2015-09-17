@@ -141,7 +141,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		loadTexture("texture_compression_bc1.dds",  BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP),
 		loadTexture("texture_compression_bc2.dds",  BGFX_TEXTURE_U_CLAMP),
 		loadTexture("texture_compression_bc3.dds",  BGFX_TEXTURE_V_CLAMP),
-		loadTexture("texture_compression_etc1.ktx", BGFX_TEXTURE_U_BORDER|BGFX_TEXTURE_V_BORDER),
+		loadTexture("texture_compression_etc1.ktx", BGFX_TEXTURE_U_BORDER|BGFX_TEXTURE_V_BORDER|BGFX_TEXTURE_BORDER_COLOR(1) ),
 		loadTexture("texture_compression_etc2.ktx"),
 		loadTexture("texture_compression_ptc12.pvr"),
 		loadTexture("texture_compression_ptc14.pvr"),
@@ -243,6 +243,9 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	while (!entry::processEvents(width, height, debug, reset) )
 	{
+		float borderColor[4] = { float(rand()%255)/255.0f, float(rand()%255)/255.0f, float(rand()%255)/255.0f, float(rand()%255)/255.0f };
+		bgfx::setPaletteColor(1, borderColor);
+
 		// Set view 0 and 1 viewport.
 		bgfx::setViewRect(0, 0, 0, width, height);
 		bgfx::setViewRect(1, 0, 0, width, height);

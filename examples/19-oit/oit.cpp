@@ -311,11 +311,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		bgfx::setViewTransform(0, view, proj);
 
-		// Set clear color palette for index 0
-		bgfx::setClearColor(0, 0.0f, 0.0f, 0.0f, 0.0f);
+		// Set palette color for index 0
+		bgfx::setPaletteColor(0, 0.0f, 0.0f, 0.0f, 0.0f);
 
-		// Set clear color palette for index 1
-		bgfx::setClearColor(1, 1.0f, 1.0f, 1.0f, 1.0f);
+		// Set palette color for index 1
+		bgfx::setPaletteColor(1, 1.0f, 1.0f, 1.0f, 1.0f);
 
 		bgfx::setViewClear(0
 			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH

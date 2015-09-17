@@ -1602,7 +1602,7 @@ namespace bgfx
 		uint8_t m_viewRemap[BGFX_CONFIG_MAX_VIEWS];
 		FrameBufferHandle m_fb[BGFX_CONFIG_MAX_VIEWS];
 		Clear m_clear[BGFX_CONFIG_MAX_VIEWS];
-		float m_clearColor[BGFX_CONFIG_MAX_CLEAR_COLOR_PALETTE][4];
+		float m_colorPalette[BGFX_CONFIG_MAX_COLOR_PALETTE][4];
 		Rect m_rect[BGFX_CONFIG_MAX_VIEWS];
 		Rect m_scissor[BGFX_CONFIG_MAX_VIEWS];
 		Matrix4 m_view[BGFX_CONFIG_MAX_VIEWS];
@@ -3179,11 +3179,11 @@ namespace bgfx
 			cmdbuf.write(_filePath, len);
 		}
 
-		BGFX_API_FUNC(void setClearColor(uint8_t _index, const float _rgba[4]) )
+		BGFX_API_FUNC(void setPaletteColor(uint8_t _index, const float _rgba[4]) )
 		{
-			BX_CHECK(_index < BGFX_CONFIG_MAX_CLEAR_COLOR_PALETTE, "Clear color palette index out of bounds %d (max: %d)."
+			BX_CHECK(_index < BGFX_CONFIG_MAX_COLOR_PALETTE, "Color palette index out of bounds %d (max: %d)."
 				, _index
-				, BGFX_CONFIG_MAX_CLEAR_COLOR_PALETTE
+				, BGFX_CONFIG_MAX_COLOR_PALETTE
 				);
 			memcpy(&m_clearColor[_index][0], _rgba, 16);
 			m_clearColorDirty = 2;
@@ -3684,7 +3684,7 @@ namespace bgfx
 		FrameBufferHandle m_fb[BGFX_CONFIG_MAX_VIEWS];
 		Clear m_clear[BGFX_CONFIG_MAX_VIEWS];
 
-		float m_clearColor[BGFX_CONFIG_MAX_CLEAR_COLOR_PALETTE][4];
+		float m_clearColor[BGFX_CONFIG_MAX_COLOR_PALETTE][4];
 		Rect m_rect[BGFX_CONFIG_MAX_VIEWS];
 		Rect m_scissor[BGFX_CONFIG_MAX_VIEWS];
 		Matrix4 m_view[BGFX_CONFIG_MAX_VIEWS];

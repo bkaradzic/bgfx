@@ -228,11 +228,11 @@ class Deferred : public entry::AppI
 		// Enable m_debug text.
 		bgfx::setDebug(m_debug);
 
-		// Set clear color palette for index 0
-		bgfx::setClearColor(0, UINT32_C(0x00000000) );
+		// Set palette color for index 0
+		bgfx::setPaletteColor(0, UINT32_C(0x00000000) );
 
-		// Set clear color palette for index 1
-		bgfx::setClearColor(1, UINT32_C(0x303030ff) );
+		// Set palette color for index 1
+		bgfx::setPaletteColor(1, UINT32_C(0x303030ff) );
 
 		// Set geometry pass view clear state.
 		bgfx::setViewClear(RENDER_PASS_GEOMETRY_ID

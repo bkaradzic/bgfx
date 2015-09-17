@@ -1074,7 +1074,7 @@ namespace bgfx { namespace gl
 			, m_fmt(GL_ZERO)
 			, m_type(GL_ZERO)
 			, m_flags(0)
-			, m_currentFlags(UINT32_MAX)
+			, m_currentSamplerHash(UINT32_MAX)
 			, m_numMips(0)
 		{
 		}
@@ -1083,8 +1083,8 @@ namespace bgfx { namespace gl
 		void create(const Memory* _mem, uint32_t _flags, uint8_t _skip);
 		void destroy();
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
-		void setSamplerState(uint32_t _flags);
-		void commit(uint32_t _stage, uint32_t _flags);
+		void setSamplerState(uint32_t _flags, const float _rgba[4]);
+		void commit(uint32_t _stage, uint32_t _flags, const float _palette[][4]);
 
 		GLuint m_id;
 		GLuint m_rbo;
@@ -1092,7 +1092,7 @@ namespace bgfx { namespace gl
 		GLenum m_fmt;
 		GLenum m_type;
 		uint32_t m_flags;
-		uint32_t m_currentFlags;
+		uint32_t m_currentSamplerHash;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_depth;

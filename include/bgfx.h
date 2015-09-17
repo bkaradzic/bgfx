@@ -1503,32 +1503,32 @@ namespace bgfx
 	///
 	void destroyUniform(UniformHandle _handle);
 
-	/// Set clear color palette value.
+	/// Set palette color value.
 	///
 	/// @param[in] _index Index into palette.
 	/// @param[in] _rgba Packed 32-bit RGBA value.
 	///
-	/// @attention C99 equivalent is `bgfx_set_clear_color`.
+	/// @attention C99 equivalent is `bgfx_set_palette_color`.
 	///
-	void setClearColor(uint8_t _index, uint32_t _rgba);
+	void setPaletteColor(uint8_t _index, uint32_t _rgba);
 
-	/// Set clear color palette value.
+	/// Set palette color value.
 	///
 	/// @param[in] _index Index into palette.
 	/// @param[in] _r, _g, _b, _a RGBA floating point values.
 	///
-	/// @attention C99 equivalent is `bgfx_set_clear_color`.
+	/// @attention C99 equivalent is `bgfx_set_palette_color`.
 	///
-	void setClearColor(uint8_t _index, float _r, float _g, float _b, float _a);
+	void setPaletteColor(uint8_t _index, float _r, float _g, float _b, float _a);
 
-	/// Set clear color palette value.
+	/// Set palette color value.
 	///
 	/// @param[in] _index Index into palette.
 	/// @param[in] _rgba RGBA floating point value.
 	///
-	/// @attention C99 equivalent is `bgfx_set_clear_color`.
+	/// @attention C99 equivalent is `bgfx_set_palette_color`.
 	///
-	void setClearColor(uint8_t _index, const float _rgba[4]);
+	void setPaletteColor(uint8_t _index, const float _rgba[4]);
 
 	/// Set view name.
 	///

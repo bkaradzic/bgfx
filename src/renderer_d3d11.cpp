@@ -52,6 +52,7 @@ namespace bgfx { namespace d3d11
 		ID3D11ShaderResourceView*  m_srv[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
 		ID3D11SamplerState*        m_sampler[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
 		uint32_t                   m_zero[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+		float                      m_zerof[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
 	};
 
 	BX_PRAGMA_DIAGNOSTIC_PUSH();
@@ -1844,7 +1845,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			setShaderUniform(flags, predefined.m_loc, proj, 4);
 
 			commitShaderConstants();
-			m_textures[_blitter.m_texture.idx].commit(0);
+			m_textures[_blitter.m_texture.idx].commit(0, BGFX_SAMPLER_DEFAULT_FLAGS, NULL);
 			commitTextureStage();
 		}
 
@@ -2500,7 +2501,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			_state &= BGFX_STATE_CULL_MASK|BGFX_STATE_MSAA;
 			_state |= _wireframe ? BGFX_STATE_PT_LINES : BGFX_STATE_NONE;
-			_state |= _scissor ? BGFX_STATE_RESERVED_MASK : 0;
+			_state |= _scissor   ? BGFX_STATE_RESERVED_MASK : 0;
 
 			ID3D11RasterizerState* rs = m_rasterizerStateCache.find(_state);
 			if (NULL == rs)
@@ -2527,37 +2528,76 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			m_deviceCtx->RSSetState(rs);
 		}
 
-		ID3D11SamplerState* getSamplerState(uint32_t _flags)
+		ID3D11SamplerState* getSamplerState(uint32_t _flags, const float _rgba[4])
 		{
+			const uint32_t index = (_flags & BGFX_TEXTURE_BORDER_COLOR_MASK) >> BGFX_TEXTURE_BORDER_COLOR_SHIFT;
 			_flags &= BGFX_TEXTURE_SAMPLER_BITS_MASK;
-			ID3D11SamplerState* sampler = m_samplerStateCache.find(_flags);
+
+			uint32_t hash;
+			ID3D11SamplerState* sampler;
+			if (BGFX_TEXTURE_U_BORDER != (_flags & BGFX_TEXTURE_U_BORDER)
+			&&  BGFX_TEXTURE_V_BORDER != (_flags & BGFX_TEXTURE_V_BORDER)
+			&&  BGFX_TEXTURE_W_BORDER != (_flags & BGFX_TEXTURE_W_BORDER) )
+			{
+				bx::HashMurmur2A murmur;
+				murmur.begin();
+				murmur.add(_flags);
+				murmur.add(-1);
+				hash = murmur.end();
+				_rgba = s_zero.m_zerof;
+
+				sampler = m_samplerStateCache.find(hash);
+			}
+			else
+			{
+				bx::HashMurmur2A murmur;
+				murmur.begin();
+				murmur.add(_flags);
+				murmur.add(index);
+				hash = murmur.end();
+				_rgba = NULL == _rgba ? s_zero.m_zerof : _rgba;
+
+				sampler = m_samplerStateCache.find(hash);
+				if (NULL != sampler)
+				{
+					D3D11_SAMPLER_DESC sd;
+					sampler->GetDesc(&sd);
+					if (0 != memcmp(_rgba, sd.BorderColor, 16) )
+					{
+						// Sampler will be released when updated sampler
+						// is added to cache.
+						sampler = NULL;
+					}
+				}
+			}
+
 			if (NULL == sampler)
 			{
-				const uint32_t cmpFunc = (_flags&BGFX_TEXTURE_COMPARE_MASK)>>BGFX_TEXTURE_COMPARE_SHIFT;
-				const uint8_t minFilter = s_textureFilter[0][(_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
-				const uint8_t magFilter = s_textureFilter[1][(_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
-				const uint8_t mipFilter = s_textureFilter[2][(_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT];
-				const uint8_t filter = 0 == cmpFunc ? 0 : D3D11_COMPARISON_FILTERING_BIT;
+				const uint32_t cmpFunc   = (_flags&BGFX_TEXTURE_COMPARE_MASK)>>BGFX_TEXTURE_COMPARE_SHIFT;
+				const uint8_t  minFilter = s_textureFilter[0][(_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
+				const uint8_t  magFilter = s_textureFilter[1][(_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
+				const uint8_t  mipFilter = s_textureFilter[2][(_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT];
+				const uint8_t  filter    = 0 == cmpFunc ? 0 : D3D11_COMPARISON_FILTERING_BIT;
 
 				D3D11_SAMPLER_DESC sd;
-				sd.Filter = (D3D11_FILTER)(filter|minFilter|magFilter|mipFilter);
-				sd.AddressU = s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT];
-				sd.AddressV = s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT];
-				sd.AddressW = s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT];
-				sd.MipLODBias = 0.0f;
+				sd.Filter         = (D3D11_FILTER)(filter|minFilter|magFilter|mipFilter);
+				sd.AddressU       = s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT];
+				sd.AddressV       = s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT];
+				sd.AddressW       = s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT];
+				sd.MipLODBias     = 0.0f;
 				sd.MaxAnisotropy  = m_maxAnisotropy;
 				sd.ComparisonFunc = 0 == cmpFunc ? D3D11_COMPARISON_NEVER : s_cmpFunc[cmpFunc];
-				sd.BorderColor[0] = 0.0f;
-				sd.BorderColor[1] = 0.0f;
-				sd.BorderColor[2] = 0.0f;
-				sd.BorderColor[3] = 0.0f;
+				sd.BorderColor[0] = _rgba[0];
+				sd.BorderColor[1] = _rgba[1];
+				sd.BorderColor[2] = _rgba[2];
+				sd.BorderColor[3] = _rgba[3];
 				sd.MinLOD = 0;
 				sd.MaxLOD = D3D11_FLOAT32_MAX;
 
 				m_device->CreateSamplerState(&sd, &sampler);
 				DX_CHECK_REFCOUNT(sampler, 1);
 
-				m_samplerStateCache.add(_flags, sampler);
+				m_samplerStateCache.add(hash, sampler);
 			}
 
 			return sampler;
@@ -3035,7 +3075,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						float mrtClear[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS][4];
 						for (uint32_t ii = 0; ii < numMrt; ++ii)
 						{
-							uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_CLEAR_COLOR_PALETTE-1, _clear.m_index[ii]);
+							uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[ii]);
 							memcpy(mrtClear[ii], _palette[index], 16);
 						}
 
@@ -3662,8 +3702,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	void TextureD3D11::create(const Memory* _mem, uint32_t _flags, uint8_t _skip)
 	{
-		m_sampler = s_renderD3D11->getSamplerState(_flags);
-
 		ImageContainer imageContainer;
 
 		if (imageParse(imageContainer, _mem->data, _mem->size) )
@@ -3953,14 +3991,18 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		}
 	}
 
-	void TextureD3D11::commit(uint8_t _stage, uint32_t _flags)
+	void TextureD3D11::commit(uint8_t _stage, uint32_t _flags, const float _palette[][4])
 	{
 		TextureStage& ts = s_renderD3D11->m_textureStage;
 		ts.m_srv[_stage] = m_srv;
-		ts.m_sampler[_stage] = 0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags)
-			? s_renderD3D11->getSamplerState(_flags)
-			: m_sampler
+		uint32_t flags = 0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags)
+			? _flags
+			: m_flags
 			;
+		uint32_t index = (flags & BGFX_TEXTURE_BORDER_COLOR_MASK) >> BGFX_TEXTURE_BORDER_COLOR_SHIFT;
+		ts.m_sampler[_stage] = s_renderD3D11->getSamplerState(flags
+									, _palette[index])
+									;
 	}
 
 	void TextureD3D11::resolve()
@@ -4451,7 +4493,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 					if (BGFX_CLEAR_NONE != (clr.m_flags & BGFX_CLEAR_MASK) )
 					{
-						clearQuad(_clearQuad, viewState.m_rect, clr, _render->m_clearColor);
+						clearQuad(_clearQuad, viewState.m_rect, clr, _render->m_colorPalette);
 						prim = s_primInfo[BX_COUNTOF(s_primName)]; // Force primitive type update after clear quad.
 					}
 				}
@@ -4555,7 +4597,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 											? texture.m_srv
 											: s_renderD3D11->getCachedSrv(texture.getHandle(), bind.m_un.m_compute.m_mip)
 											;
-										sampler[ii] = texture.m_sampler;
+										sampler[ii] = s_renderD3D11->getSamplerState(texture.m_flags, NULL);
 									}
 								}
 								break;
@@ -4819,7 +4861,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 							if (invalidHandle != bind.m_idx)
 							{
 								TextureD3D11& texture = m_textures[bind.m_idx];
-								texture.commit(stage, bind.m_un.m_draw.m_flags);
+								texture.commit(stage, bind.m_un.m_draw.m_flags, _render->m_colorPalette);
 							}
 							else
 							{

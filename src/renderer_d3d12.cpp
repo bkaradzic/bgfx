@@ -4351,7 +4351,7 @@ data.NumQualityLevels = 0;
 					{
 						Rect clearRect = rect;
 						clearRect.intersect(rect, viewScissorRect);
-						clearQuad(clearRect, clr, _render->m_clearColor);
+						clearQuad(clearRect, clr, _render->m_colorPalette);
 					}
 
 					prim = s_primInfo[BX_COUNTOF(s_primName)]; // Force primitive type update.
