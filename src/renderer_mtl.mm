@@ -220,6 +220,7 @@ namespace bgfx { namespace mtl
 		MTLSamplerAddressModeRepeat,
 		MTLSamplerAddressModeMirrorRepeat,
 		MTLSamplerAddressModeClampToEdge,
+		MTLSamplerAddressModeClampToZero,
 	};
 
 	static const MTLSamplerMinMagFilter s_textureFilterMinMag[] =
