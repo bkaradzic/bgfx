@@ -1467,7 +1467,7 @@ namespace bgfx { namespace d3d12
 
 			TextureD3D12& texture = m_textures[_blitter.m_texture.idx];
 			uint32_t samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = { texture.m_flags & BGFX_TEXTURE_SAMPLER_BITS_MASK };
-			uint16_t samplerStateIdx = getSamplerState(samplerFlags);
+			uint16_t samplerStateIdx = getSamplerState(samplerFlags, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, NULL);
 			m_commandList->SetGraphicsRootDescriptorTable(Rdt::Sampler, m_samplerAllocator.get(samplerStateIdx) );
 			D3D12_GPU_DESCRIPTOR_HANDLE srvHandle;
 			scratchBuffer.allocSrv(srvHandle, texture);
@@ -2265,7 +2265,7 @@ data.NumQualityLevels = 0;
 			return pso;
 		}
 
-		uint16_t getSamplerState(const uint32_t* _flags, uint32_t _num = BGFX_CONFIG_MAX_TEXTURE_SAMPLERS)
+		uint16_t getSamplerState(const uint32_t* _flags, uint32_t _num, const float _palette[][4])
 		{
 			bx::HashMurmur2A murmur;
 			murmur.begin();
@@ -2275,7 +2275,7 @@ data.NumQualityLevels = 0;
 			uint16_t sampler = m_samplerStateCache.find(hash);
 			if (UINT16_MAX == sampler)
 			{
-				sampler = m_samplerAllocator.alloc(_flags, _num);
+				sampler = m_samplerAllocator.alloc(_flags, _num, _palette);
 				m_samplerStateCache.add(hash, sampler);
 			}
 
@@ -2784,7 +2784,7 @@ data.NumQualityLevels = 0;
 		return idx;
 	}
 
-	uint16_t DescriptorAllocatorD3D12::alloc(const uint32_t* _flags, uint32_t _num)
+	uint16_t DescriptorAllocatorD3D12::alloc(const uint32_t* _flags, uint32_t _num, const float _palette[][4])
 	{
 		uint16_t idx = m_handleAlloc->alloc();
 
@@ -2808,10 +2808,30 @@ data.NumQualityLevels = 0;
 			sd.MipLODBias     = 0.0f;
 			sd.MaxAnisotropy  = 1; //m_maxAnisotropy;
 			sd.ComparisonFunc = 0 == cmpFunc ? D3D12_COMPARISON_FUNC_NEVER : s_cmpFunc[cmpFunc];
-			sd.BorderColor[0] = 0.0f;
-			sd.BorderColor[1] = 0.0f;
-			sd.BorderColor[2] = 0.0f;
-			sd.BorderColor[3] = 0.0f;
+
+			uint32_t index = (flags & BGFX_TEXTURE_BORDER_COLOR_MASK) >> BGFX_TEXTURE_BORDER_COLOR_SHIFT;
+			const bool needBorderColor = false
+				|| BGFX_TEXTURE_U_BORDER == (flags & BGFX_TEXTURE_U_BORDER)
+				|| BGFX_TEXTURE_V_BORDER == (flags & BGFX_TEXTURE_V_BORDER)
+				|| BGFX_TEXTURE_W_BORDER == (flags & BGFX_TEXTURE_W_BORDER)
+				;
+
+			if (NULL != _palette
+			&&  needBorderColor)
+			{
+				const float* rgba = _palette[index];
+				sd.BorderColor[0] = rgba[0];
+				sd.BorderColor[1] = rgba[1];
+				sd.BorderColor[2] = rgba[2];
+				sd.BorderColor[3] = rgba[3];
+			}
+			else
+			{
+				sd.BorderColor[0] = 0.0f;
+				sd.BorderColor[1] = 0.0f;
+				sd.BorderColor[2] = 0.0f;
+				sd.BorderColor[3] = 0.0f;
+			}
 			sd.MinLOD   = 0;
 			sd.MaxLOD   = D3D12_FLOAT32_MAX;
 
@@ -4441,7 +4461,7 @@ data.NumQualityLevels = 0;
 								}
 							}
 
-							uint16_t samplerStateIdx = getSamplerState(samplerFlags, BGFX_MAX_COMPUTE_BINDINGS);
+							uint16_t samplerStateIdx = getSamplerState(samplerFlags, BGFX_MAX_COMPUTE_BINDINGS, _render->m_colorPalette);
 							if (samplerStateIdx != currentSamplerStateIdx)
 							{
 								currentSamplerStateIdx = samplerStateIdx;
@@ -4625,7 +4645,7 @@ data.NumQualityLevels = 0;
 										samplerFlags[stage] = (0 == (BGFX_SAMPLER_DEFAULT_FLAGS & bind.m_un.m_draw.m_flags)
 											? bind.m_un.m_draw.m_flags
 											: texture.m_flags
-											) & BGFX_TEXTURE_SAMPLER_BITS_MASK
+											) & (BGFX_TEXTURE_SAMPLER_BITS_MASK|BGFX_TEXTURE_BORDER_COLOR_MASK)
 											;
 									}
 									else
@@ -4638,7 +4658,7 @@ data.NumQualityLevels = 0;
 
 							if (srvHandle[0].ptr != 0)
 							{
-								uint16_t samplerStateIdx = getSamplerState(samplerFlags);
+								uint16_t samplerStateIdx = getSamplerState(samplerFlags, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, _render->m_colorPalette);
 								if (samplerStateIdx != currentSamplerStateIdx)
 								{
 									currentSamplerStateIdx = samplerStateIdx;

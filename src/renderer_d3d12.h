@@ -107,7 +107,7 @@ namespace bgfx { namespace d3d12
 		void destroy();
 
 		uint16_t alloc(ID3D12Resource* _ptr, const D3D12_SHADER_RESOURCE_VIEW_DESC* _desc);
-		uint16_t alloc(const uint32_t* _flags, uint32_t _num = BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
+		uint16_t alloc(const uint32_t* _flags, uint32_t _num, const float _palette[][4]);
 		void free(uint16_t _handle);
 		void reset();
 
