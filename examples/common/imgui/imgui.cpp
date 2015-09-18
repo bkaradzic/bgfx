@@ -3080,8 +3080,8 @@ struct Imgui
 
 	bool visible(int32_t _elemY, int32_t _elemHeight, int32_t _scissorY, int32_t _scissorHeight)
 	{
-		return _elemY > _scissorY
-			&& (_elemY+_elemHeight) < (_scissorY+_scissorHeight);
+		return (_elemY+_elemHeight) > _scissorY
+		    && (_elemY) < (_scissorY+_scissorHeight);
 	}
 
 	inline Area& getCurrentArea()
