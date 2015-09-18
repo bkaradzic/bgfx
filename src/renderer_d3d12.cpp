@@ -2810,14 +2810,9 @@ data.NumQualityLevels = 0;
 			sd.ComparisonFunc = 0 == cmpFunc ? D3D12_COMPARISON_FUNC_NEVER : s_cmpFunc[cmpFunc];
 
 			uint32_t index = (flags & BGFX_TEXTURE_BORDER_COLOR_MASK) >> BGFX_TEXTURE_BORDER_COLOR_SHIFT;
-			const bool needBorderColor = false
-				|| BGFX_TEXTURE_U_BORDER == (flags & BGFX_TEXTURE_U_BORDER)
-				|| BGFX_TEXTURE_V_BORDER == (flags & BGFX_TEXTURE_V_BORDER)
-				|| BGFX_TEXTURE_W_BORDER == (flags & BGFX_TEXTURE_W_BORDER)
-				;
 
 			if (NULL != _palette
-			&&  needBorderColor)
+			&&  needBorderColor(flags) )
 			{
 				const float* rgba = _palette[index];
 				sd.BorderColor[0] = rgba[0];

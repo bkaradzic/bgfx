@@ -2535,9 +2535,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			uint32_t hash;
 			ID3D11SamplerState* sampler;
-			if (BGFX_TEXTURE_U_BORDER != (_flags & BGFX_TEXTURE_U_BORDER)
-			&&  BGFX_TEXTURE_V_BORDER != (_flags & BGFX_TEXTURE_V_BORDER)
-			&&  BGFX_TEXTURE_W_BORDER != (_flags & BGFX_TEXTURE_W_BORDER) )
+			if (!needBorderColor(_flags) )
 			{
 				bx::HashMurmur2A murmur;
 				murmur.begin();

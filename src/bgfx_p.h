@@ -314,6 +314,14 @@ namespace bgfx
 		return uint32_t( (_stencil >> (32*_0or1) ) );
 	}
 
+	inline bool needBorderColor(uint32_t _flags)
+	{
+		return BGFX_TEXTURE_U_BORDER == (_flags & BGFX_TEXTURE_U_BORDER)
+			|| BGFX_TEXTURE_V_BORDER == (_flags & BGFX_TEXTURE_V_BORDER)
+			|| BGFX_TEXTURE_W_BORDER == (_flags & BGFX_TEXTURE_W_BORDER)
+			;
+	}
+	
 	void dump(const VertexDecl& _decl);
 
 	struct TextVideoMem

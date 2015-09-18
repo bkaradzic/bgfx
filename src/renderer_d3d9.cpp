@@ -1454,9 +1454,7 @@ namespace bgfx { namespace d3d9
 				setSamplerState(device, _stage, D3DSAMP_SRGBTEXTURE, 0 != (flags & BGFX_TEXTURE_SRGB) );
 				if (NULL != _rgba)
 				{
-					if (BGFX_TEXTURE_U_BORDER == (_flags & BGFX_TEXTURE_U_BORDER)
-					||  BGFX_TEXTURE_V_BORDER == (_flags & BGFX_TEXTURE_V_BORDER)
-					||  BGFX_TEXTURE_W_BORDER == (_flags & BGFX_TEXTURE_W_BORDER) )
+					if (needBorderColor(_flags) )
 					{
 						DWORD bc = D3DCOLOR_COLORVALUE(_rgba[0], _rgba[1], _rgba[2], _rgba[3]);
 						setSamplerState(device

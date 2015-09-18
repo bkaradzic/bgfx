@@ -2540,9 +2540,7 @@ namespace bgfx { namespace gl
 
 					murmur.begin();
 					murmur.add(_flags);
-					if (BGFX_TEXTURE_U_BORDER != (_flags & BGFX_TEXTURE_U_BORDER)
-					&&  BGFX_TEXTURE_V_BORDER != (_flags & BGFX_TEXTURE_V_BORDER)
-					&&  BGFX_TEXTURE_W_BORDER != (_flags & BGFX_TEXTURE_W_BORDER) )
+					if (!needBorderColor(_flags) )
 					{
 						murmur.add(-1);
 						hash = murmur.end();
