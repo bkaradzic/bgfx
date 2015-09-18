@@ -2674,8 +2674,8 @@ again:
 
 		if (BackbufferRatio::Count != _ratio)
 		{
-			_width  = uint16_t(s_ctx->m_frame->m_resolution.m_width);
-			_height = uint16_t(s_ctx->m_frame->m_resolution.m_height);
+			_width  = uint16_t(s_ctx->m_resolution.m_width);
+			_height = uint16_t(s_ctx->m_resolution.m_height);
 			getTextureSizeFromRatio(_ratio, _width, _height);
 		}
 
