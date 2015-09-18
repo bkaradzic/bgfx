@@ -1286,9 +1286,9 @@ namespace bgfx
 		memcpy(m_submit->m_view, m_view, sizeof(m_view) );
 		memcpy(m_submit->m_proj, m_proj, sizeof(m_proj) );
 		memcpy(m_submit->m_viewFlags, m_viewFlags, sizeof(m_viewFlags) );
-		if (m_clearColorDirty > 0)
+		if (m_colorPaletteDirty > 0)
 		{
-			--m_clearColorDirty;
+			--m_colorPaletteDirty;
 			memcpy(m_submit->m_colorPalette, m_clearColor, sizeof(m_clearColor) );
 		}
 		m_submit->finish();

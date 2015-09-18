@@ -457,6 +457,7 @@ namespace bgfx { namespace d3d12
 		RendererContextD3D12()
 			: m_wireframe(false)
 			, m_flags(BGFX_RESET_NONE)
+			, m_maxAnisotropy(1)
 			, m_fsChanges(0)
 			, m_vsChanges(0)
 			, m_backBufferColorIdx(0)
@@ -1627,6 +1628,15 @@ data.NumQualityLevels = 0;
 
 		void updateResolution(const Resolution& _resolution)
 		{
+			if (!!(_resolution.m_flags & BGFX_RESET_MAXANISOTROPY) )
+			{
+				m_maxAnisotropy = D3D12_REQ_MAXANISOTROPY;
+			}
+			else
+			{
+				m_maxAnisotropy = 1;
+			}
+
 			if ( (uint32_t)m_scd.BufferDesc.Width != _resolution.m_width
 			||   (uint32_t)m_scd.BufferDesc.Height != _resolution.m_height
 			||   m_flags != _resolution.m_flags)
@@ -2522,6 +2532,7 @@ data.NumQualityLevels = 0;
 
 		DXGI_SWAP_CHAIN_DESC m_scd;
 		uint32_t m_flags;
+		uint32_t m_maxAnisotropy;
 
 		BufferD3D12 m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexBufferD3D12 m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
@@ -2788,7 +2799,8 @@ data.NumQualityLevels = 0;
 	{
 		uint16_t idx = m_handleAlloc->alloc();
 
-		ID3D12Device* device = s_renderD3D12->m_device;
+		ID3D12Device* device   = s_renderD3D12->m_device;
+		uint32_t maxAnisotropy = s_renderD3D12->m_maxAnisotropy;
 
 		for (uint32_t ii = 0; ii < _num; ++ii)
 		{
@@ -2806,7 +2818,7 @@ data.NumQualityLevels = 0;
 			sd.AddressV = s_textureAddress[(flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT];
 			sd.AddressW = s_textureAddress[(flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT];
 			sd.MipLODBias     = 0.0f;
-			sd.MaxAnisotropy  = 1; //m_maxAnisotropy;
+			sd.MaxAnisotropy  = maxAnisotropy;
 			sd.ComparisonFunc = 0 == cmpFunc ? D3D12_COMPARISON_FUNC_NEVER : s_cmpFunc[cmpFunc];
 
 			uint32_t index = (flags & BGFX_TEXTURE_BORDER_COLOR_MASK) >> BGFX_TEXTURE_BORDER_COLOR_SHIFT;

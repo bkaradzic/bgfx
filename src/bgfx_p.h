@@ -1925,7 +1925,7 @@ namespace bgfx
 			, m_submit(&m_frame[BGFX_CONFIG_MULTITHREADED ? 1 : 0])
 			, m_numFreeDynamicIndexBufferHandles(0)
 			, m_numFreeDynamicVertexBufferHandles(0)
-			, m_clearColorDirty(0)
+			, m_colorPaletteDirty(0)
 			, m_instBufferCount(0)
 			, m_frames(0)
 			, m_debug(BGFX_DEBUG_NONE)
@@ -3194,7 +3194,7 @@ namespace bgfx
 				, BGFX_CONFIG_MAX_COLOR_PALETTE
 				);
 			memcpy(&m_clearColor[_index][0], _rgba, 16);
-			m_clearColorDirty = 2;
+			m_colorPaletteDirty = 2;
 		}
 
 		BGFX_API_FUNC(void setViewName(uint8_t _id, const char* _name) )
@@ -3701,7 +3701,7 @@ namespace bgfx
 		uint16_t m_seq[BGFX_CONFIG_MAX_VIEWS];
 		uint16_t m_seqMask[BGFX_CONFIG_MAX_VIEWS];
 
-		uint8_t m_clearColorDirty;
+		uint8_t m_colorPaletteDirty;
 
 		Resolution m_resolution;
 		int32_t  m_instBufferCount;
