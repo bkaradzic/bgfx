@@ -7,7 +7,7 @@
 
 #if ENTRY_CONFIG_USE_NATIVE && BX_PLATFORM_NACL
 
-#include <bgfxplatform.h>
+#include <bgfx/bgfxplatform.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -29,7 +29,7 @@
 #include <ppapi/c/ppp_instance.h>
 #include <ppapi/gles2/gl2ext_ppapi.h>
 
-#include <bgfxplatform.h>
+#include <bgfx/bgfxplatform.h>
 #include <bx/thread.h>
 
 #include "entry.h"

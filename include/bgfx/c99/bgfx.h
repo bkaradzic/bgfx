@@ -13,7 +13,7 @@
 #include <stdint.h>  // uint32_t
 #include <stdlib.h>  // size_t
 
-#include "bgfxdefines.h"
+#include <bgfx/bgfxdefines.h>
 
 typedef enum bgfx_renderer_type
 {

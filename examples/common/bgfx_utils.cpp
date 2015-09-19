@@ -12,7 +12,7 @@
 #include <tinystl/string.h>
 namespace stl = tinystl;
 
-#include <bgfx.h>
+#include <bgfx/bgfx.h>
 #include <bx/readerwriter.h>
 #include <bx/fpumath.h>
 #include <bx/string.h>

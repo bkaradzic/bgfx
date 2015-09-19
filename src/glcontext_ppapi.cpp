@@ -6,7 +6,7 @@
 #include "bgfx_p.h"
 
 #if BX_PLATFORM_NACL && (BGFX_CONFIG_RENDERER_OPENGLES || BGFX_CONFIG_RENDERER_OPENGL)
-#	include <bgfxplatform.h>
+#	include <bgfx/bgfxplatform.h>
 #	include "renderer_gl.h"
 
 namespace bgfx { namespace gl

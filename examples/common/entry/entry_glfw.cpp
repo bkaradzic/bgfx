@@ -9,7 +9,7 @@
 
 #define GLFW_DLL
 #include <GLFW/glfw3.h>
-#include <bgfxplatform.h>
+#include <bgfx/bgfxplatform.h>
 #include "dbg.h"
 
 // This is just trivial implementation of GLFW3 integration.

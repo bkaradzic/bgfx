@@ -13,7 +13,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
-#include <bgfxplatform.h>
+#include <bgfx/bgfxplatform.h>
 
 #include <stdio.h>
 #include <bx/thread.h>

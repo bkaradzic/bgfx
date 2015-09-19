@@ -4,7 +4,7 @@
  */
 
 #include "common.h"
-#include <bgfx.h>
+#include <bgfx/bgfx.h>
 
 // embedded shaders
 #include "vs_metaballs.bin.h"

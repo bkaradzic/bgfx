@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <bgfx.h>
+#include <bgfx/bgfx.h>
 #include <bx/string.h>
 #include <bx/timer.h>
 #include "entry/entry.h"

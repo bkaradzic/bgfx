@@ -3217,8 +3217,8 @@ again:
 	}
 } // namespace bgfx
 
-#include <bgfx.c99.h>
-#include <bgfxplatform.c99.h>
+#include <bgfx/c99/bgfx.h>
+#include <bgfx/c99/bgfxplatform.h>
 
 BX_STATIC_ASSERT(bgfx::Fatal::Count         == bgfx::Fatal::Enum(BGFX_FATAL_COUNT) );
 BX_STATIC_ASSERT(bgfx::RendererType::Count  == bgfx::RendererType::Enum(BGFX_RENDERER_TYPE_COUNT) );
