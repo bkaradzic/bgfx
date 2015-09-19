@@ -6,7 +6,7 @@
 #include "common.h"
 #include "bgfx_utils.h"
 
-#include <bgfx.h>
+#include <bgfx/bgfx.h>
 #include <bx/timer.h>
 #include <bx/fpumath.h>
 

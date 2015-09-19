@@ -26,7 +26,7 @@
 #ifndef IMGUI_H_HEADER_GUARD
 #define IMGUI_H_HEADER_GUARD
 
-#include <bgfx.h>
+#include <bgfx/bgfx.h>
 #include <ocornut-imgui/imgui.h>
 
 #define IMGUI_MBUT_LEFT   0x01

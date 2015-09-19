@@ -7,7 +7,7 @@
 
 #if ENTRY_CONFIG_USE_NATIVE && BX_PLATFORM_ANDROID
 
-#include <bgfxplatform.h>
+#include <bgfx/bgfxplatform.h>
 
 #include <stdio.h>
 #include <bx/thread.h>

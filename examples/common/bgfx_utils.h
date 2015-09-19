@@ -6,7 +6,7 @@
 #ifndef BGFX_UTILS_H_HEADER_GUARD
 #define BGFX_UTILS_H_HEADER_GUARD
 
-#include <bgfx.h>
+#include <bgfx/bgfx.h>
 
 void* load(const char* _filePath, uint32_t* _size = NULL);
 void unload(void* _ptr);

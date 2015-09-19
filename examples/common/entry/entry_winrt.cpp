@@ -7,7 +7,7 @@
 
 #if BX_PLATFORM_WINRT
 
-#include <bgfxplatform.h>
+#include <bgfx/bgfxplatform.h>
 #include <bx/thread.h>
 
 using namespace Windows::ApplicationModel;

@@ -12,7 +12,7 @@
 #ifndef __VECTORDISPLAY_H__
 #define __VECTORDISPLAY_H__
 
-#include "bgfx.h"
+#include <bgfx/bgfx.h>
 
 #include <tinystl/allocator.h>
 #include <tinystl/vector.h>

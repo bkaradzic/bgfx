@@ -28,7 +28,7 @@
 #include <math.h>
 #include "nanovg.h"
 
-#include <bgfx.h>
+#include <bgfx/bgfx.h>
 
 #include <bx/bx.h>
 

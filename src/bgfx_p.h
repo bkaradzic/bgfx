@@ -19,7 +19,7 @@
 #	define BX_CONFIG_ALLOCATOR_DEBUG 1
 #endif // BGFX_CONFIG_DEBUG
 
-#include "bgfx.h"
+#include <bgfx/bgfx.h>
 #include "config.h"
 
 #include <inttypes.h>
@@ -108,7 +108,7 @@ namespace bgfx
 #include <bx/string.h>
 #include <bx/os.h>
 
-#include "bgfxplatform.h"
+#include <bgfx/bgfxplatform.h>
 #include "image.h"
 
 #define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', 0x2)

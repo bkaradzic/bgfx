@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <bgfx.h>
+#include <bgfx/bgfx.h>
 #include "../../src/vertexdecl.h"
 
 #include <tinystl/allocator.h>
