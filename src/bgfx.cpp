@@ -17,7 +17,7 @@ namespace bgfx
 #else
 #	define BGFX_CHECK_MAIN_THREAD()
 #	define BGFX_CHECK_RENDER_THREAD()
-#endif // BGFX_CONFIG_MULTITHREADED && !BX_PLATFORM_OSX && !BX_PLATFORM_IOS
+#endif // BGFX_CONFIG_MULTITHREADED
 
 #if BGFX_CONFIG_USE_TINYSTL
 	void* TinyStlAllocator::static_allocate(size_t _bytes)
@@ -1020,7 +1020,6 @@ namespace bgfx
 			// should not be created.
 			BX_TRACE("Application called bgfx::renderFrame directly, not creating render thread.");
 			m_singleThreaded = true
-				&& !BX_ENABLED(BX_PLATFORM_OSX || BX_PLATFORM_IOS)
 				&& ~BGFX_MAIN_THREAD_MAGIC == s_threadIndex
 				;
 		}
