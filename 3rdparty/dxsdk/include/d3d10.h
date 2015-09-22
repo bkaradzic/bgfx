@@ -1667,7 +1667,7 @@ struct CD3D10_BUFFER_DESC : public D3D10_BUFFER_DESC
         MiscFlags = miscFlags;
     }
     ~CD3D10_BUFFER_DESC() {}
-    operator const D3D10_BUFFER_DESC&() const { return *this; }
+//    operator const D3D10_BUFFER_DESC&() const { return *this; }
 };
 #endif
 
@@ -1894,7 +1894,7 @@ struct CD3D10_TEXTURE1D_DESC : public D3D10_TEXTURE1D_DESC
         MiscFlags = miscFlags;
     }
     ~CD3D10_TEXTURE1D_DESC() {}
-    operator const D3D10_TEXTURE1D_DESC&() const { return *this; }
+//    operator const D3D10_TEXTURE1D_DESC&() const { return *this; }
 };
 #endif
 
@@ -2137,7 +2137,7 @@ struct CD3D10_TEXTURE2D_DESC : public D3D10_TEXTURE2D_DESC
         MiscFlags = miscFlags;
     }
     ~CD3D10_TEXTURE2D_DESC() {}
-    operator const D3D10_TEXTURE2D_DESC&() const { return *this; }
+//    operator const D3D10_TEXTURE2D_DESC&() const { return *this; }
 };
 #endif
 typedef struct D3D10_MAPPED_TEXTURE2D
@@ -2381,7 +2381,7 @@ struct CD3D10_TEXTURE3D_DESC : public D3D10_TEXTURE3D_DESC
         MiscFlags = miscFlags;
     }
     ~CD3D10_TEXTURE3D_DESC() {}
-    operator const D3D10_TEXTURE3D_DESC&() const { return *this; }
+//    operator const D3D10_TEXTURE3D_DESC&() const { return *this; }
 };
 #endif
 typedef struct D3D10_MAPPED_TEXTURE3D

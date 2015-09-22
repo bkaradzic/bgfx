@@ -69,9 +69,15 @@ function bgfxProject(_name, _kind, _defines)
 				"GLESv2",
 			}
 
-		configuration { "winphone8* or winstore8*"}
+		configuration { "winphone8* or winstore8*" }
 			linkoptions {
 				"/ignore:4264" -- LNK4264: archiving object file compiled with /ZW into a static library; note that when authoring Windows Runtime types it is not recommended to link with a static library that contains Windows Runtime metadata
+			}
+
+		configuration { "*clang*" }
+			buildoptions {
+				"-Wno-microsoft-enum-value", -- enumerator value is not representable in the underlying type 'int'
+				"-Wno-microsoft-const-init", -- default initialization of an object of const type '' without a user-provided default constructor is a Microsoft extension
 			}
 
 		configuration { "osx" }

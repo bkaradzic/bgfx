@@ -490,7 +490,7 @@ namespace bgfx
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_dxbcSrvType) == DxbcResourceDim::Count);
 
-	static const char* s_dxbcInterpolationName[] =
+	const char* s_dxbcInterpolationName[] =
 	{
 		"",
 		"constant",

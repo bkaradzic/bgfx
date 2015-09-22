@@ -836,10 +836,10 @@ namespace bgfx { namespace d3d12
 
 				D3D12_ROOT_PARAMETER rootParameter[] =
 				{
-					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::Sampler] }, D3D12_SHADER_VISIBILITY_ALL },
-					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::SRV]     }, D3D12_SHADER_VISIBILITY_ALL },
-					{ D3D12_ROOT_PARAMETER_TYPE_CBV,              { 0, 0                        }, D3D12_SHADER_VISIBILITY_ALL },
-					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { 1, &descRange[Rdt::UAV]     }, D3D12_SHADER_VISIBILITY_ALL },
+					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { { 1, &descRange[Rdt::Sampler] } }, D3D12_SHADER_VISIBILITY_ALL },
+					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { { 1, &descRange[Rdt::SRV]     } }, D3D12_SHADER_VISIBILITY_ALL },
+					{ D3D12_ROOT_PARAMETER_TYPE_CBV,              { { 0, 0                        } }, D3D12_SHADER_VISIBILITY_ALL },
+					{ D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, { { 1, &descRange[Rdt::UAV]     } }, D3D12_SHADER_VISIBILITY_ALL },
 				};
 				rootParameter[Rdt::CBV].Descriptor.RegisterSpace  = 0;
 				rootParameter[Rdt::CBV].Descriptor.ShaderRegister = 0;
@@ -1365,7 +1365,7 @@ namespace bgfx { namespace d3d12
 			box.back   = 1;
 
 			setResourceBarrier(m_commandList, backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
-			D3D12_TEXTURE_COPY_LOCATION dst = { readback,   D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  layout };
+			D3D12_TEXTURE_COPY_LOCATION dst = { readback,   D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  { layout } };
 			D3D12_TEXTURE_COPY_LOCATION src = { backBuffer, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {}     };
 			m_commandList->CopyTextureRegion(&dst, 0, 0, 0, &src, &box);
 			setResourceBarrier(m_commandList, backBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_PRESENT);
@@ -3027,10 +3027,10 @@ data.NumQualityLevels = 0;
 
 		D3D12_INDIRECT_ARGUMENT_DESC drawArgDesc[] =
 		{
-			{ D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW, { Rdt::CBV } },
-			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   0            },
-			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   1            },
-			{ D3D12_INDIRECT_ARGUMENT_TYPE_DRAW,                 0            },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW, { { Rdt::CBV } } },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   { { 0        } } },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   { { 1        } } },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_DRAW,                 { { 0        } } },
 		};
 
 		D3D12_COMMAND_SIGNATURE_DESC drawCommandSignature =
@@ -3049,11 +3049,11 @@ data.NumQualityLevels = 0;
 
 		D3D12_INDIRECT_ARGUMENT_DESC drawIndexedArgDesc[] =
 		{
-			{ D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW, { Rdt::CBV } },
-			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   0            },
-			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   1            },
-			{ D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER_VIEW,    0            },
-			{ D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED,         0            },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW, { { Rdt::CBV } } },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   { { 0        } } },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   { { 1        } } },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER_VIEW,    { { 0        } } },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED,         { { 0        } } },
 		};
 
 		D3D12_COMMAND_SIGNATURE_DESC drawIndexedCommandSignature =
@@ -4025,9 +4025,9 @@ data.NumQualityLevels = 0;
 		box.front  = _z;
 		box.back   = _z+_depth;
 
-		D3D12_TEXTURE_COPY_LOCATION dst = { m_ptr,   D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {}     };
+		D3D12_TEXTURE_COPY_LOCATION dst = { m_ptr,   D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {        } };
 		dst.SubresourceIndex = subres;
-		D3D12_TEXTURE_COPY_LOCATION src = { staging, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  layout };
+		D3D12_TEXTURE_COPY_LOCATION src = { staging, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  { layout } };
 		_commandList->CopyTextureRegion(&dst, _rect.m_x, _rect.m_y, 0, &src, &box);
 
 		setState(_commandList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
