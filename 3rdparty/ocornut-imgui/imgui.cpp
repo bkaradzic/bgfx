@@ -19,7 +19,8 @@
  - FREQUENTLY ASKED QUESTIONS (FAQ), TIPS
    - How do I update to a newer version of ImGui?
    - Can I have multiple widgets with the same label? Can I have widget without a label? (Yes)
-   - Why is my text output blurry?
+   - I integrated ImGui in my engine and the text or lines are blurry..
+   - I integrated ImGui in my engine and some elements are disappearing when I move windows around..
    - How can I load a different font than the default?
    - How can I load multiple fonts?
    - How can I display and input non-latin characters such as Chinese, Japanese, Korean, Cyrillic?
@@ -336,8 +337,12 @@
       e.g. when displaying a single object that may change over time (1-1 relationship), using a static string as ID will preserve your node open/closed state when the targeted object change.
       e.g. when displaying a list of objects, using indices or pointers as ID will preserve the node open/closed state differently. experiment and see what makes more sense!
 
- Q: Why is my text output blurry?
- A: In your Render function, try translating your projection matrix by (0.5f,0.5f) or (0.375f,0.375f)
+ Q: I integrated ImGui in my engine and the text or lines are blurry..
+ A: In your Render function, try translating your projection matrix by (0.5f,0.5f) or (0.375f,0.375f).
+    Also make sure your orthographic projection matrix and io.DisplaySize matches your actual framebuffer dimension.
+
+ Q. I integrated ImGui in my engine and some elements are disappearing when I move windows around..
+    Most likely you are mishandling the clipping rectangles in your render function. Rectangles provided by ImGui are defined as (x1,y1,x2,y2) and NOT as (x1,y1,width,height).
 
  Q: How can I load a different font than the default? (default is an embedded version of ProggyClean.ttf, rendered at size 13)
  A: Use the font atlas to load the TTF file you want:
@@ -2217,7 +2222,6 @@ static void AddDrawListToRenderList(ImVector<ImDrawList*>& out_render_list, ImDr
         // If this assert triggers because you are drawing lots of stuff manually, A) workaround by calling BeginChild()/EndChild() to put your draw commands in multiple draw lists, B) #define ImDrawIdx to a 'unsigned int' in imconfig.h and render accordingly.
         const unsigned long long int max_vtx_idx = (unsigned long long int)1L << (sizeof(ImDrawIdx)*8);
         IM_ASSERT((unsigned long long int)draw_list->_VtxCurrentIdx <= max_vtx_idx);
-        (void)max_vtx_idx;
 
         GImGui->IO.MetricsRenderVertices += draw_list->VtxBuffer.Size;
         GImGui->IO.MetricsRenderIndices += draw_list->IdxBuffer.Size;
@@ -2270,7 +2274,13 @@ void ImGui::EndFrame()
     IM_ASSERT(g.Initialized);                       // Forgot to call ImGui::NewFrame()
     IM_ASSERT(g.FrameCountEnded != g.FrameCount);   // ImGui::EndFrame() called multiple times, or forgot to call ImGui::NewFrame() again
 
-    g.FrameCountEnded = g.FrameCount;
+    // Render tooltip
+    if (g.Tooltip[0])
+    {
+        ImGui::BeginTooltip();
+        ImGui::TextUnformatted(g.Tooltip);
+        ImGui::EndTooltip();
+    }
 
     // Hide implicit "Debug" window if it hasn't been used
     IM_ASSERT(g.CurrentWindowStack.Size == 1);    // Mismatched Begin/End
@@ -2320,6 +2330,8 @@ void ImGui::EndFrame()
     // Clear Input data for next frame
     g.IO.MouseWheel = 0.0f;
     memset(g.IO.InputCharacters, 0, sizeof(g.IO.InputCharacters));
+
+    g.FrameCountEnded = g.FrameCount;
 }
 
 void ImGui::Render()
@@ -2335,14 +2347,6 @@ void ImGui::Render()
     // Note that vertex buffers have been created and are wasted, so it is best practice that you don't create windows in the first place, or consistently respond to Begin() returning false.
     if (g.Style.Alpha > 0.0f)
     {
-        // Render tooltip
-        if (g.Tooltip[0])
-        {
-            ImGui::BeginTooltip();
-            ImGui::TextUnformatted(g.Tooltip);
-            ImGui::EndTooltip();
-        }
-
         // Gather windows to render
         g.IO.MetricsRenderVertices = g.IO.MetricsRenderIndices = g.IO.MetricsActiveWindows = 0;
         for (int i = 0; i < IM_ARRAYSIZE(g.RenderDrawLists); i++)
@@ -6576,16 +6580,15 @@ void ImGui::PlotEx(ImGuiPlotType plot_type, const char* label, float (*values_ge
 
     RenderFrame(frame_bb.Min, frame_bb.Max, window->Color(ImGuiCol_FrameBg), true, style.FrameRounding);
 
-    int res_w = ImMin((int)graph_size.x, values_count);
-    if (plot_type == ImGuiPlotType_Lines)
-        res_w -= 1;
+    int res_w = ImMin((int)graph_size.x, values_count) + ((plot_type == ImGuiPlotType_Lines) ? -1 : 0);
+    int item_count = values_count + ((plot_type == ImGuiPlotType_Lines) ? -1 : 0);
 
     // Tooltip on hover
     int v_hovered = -1;
     if (IsHovered(inner_bb, 0))
     {
         const float t = ImClamp((g.IO.MousePos.x - inner_bb.Min.x) / (inner_bb.Max.x - inner_bb.Min.x), 0.0f, 0.9999f);
-        const int v_idx = (int)(t * (values_count + ((plot_type == ImGuiPlotType_Lines) ? -1 : 0)));
+        const int v_idx = (int)(t * item_count);
         IM_ASSERT(v_idx >= 0 && v_idx < values_count);
 
         const float v0 = values_getter(data, (v_idx + values_offset) % values_count);
@@ -6601,7 +6604,7 @@ void ImGui::PlotEx(ImGuiPlotType plot_type, const char* label, float (*values_ge
 
     float v0 = values_getter(data, (0 + values_offset) % values_count);
     float t0 = 0.0f;
-    ImVec2 p0 = ImVec2( t0, 1.0f - ImSaturate((v0 - scale_min) / (scale_max - scale_min)) );
+    ImVec2 tp0 = ImVec2( t0, 1.0f - ImSaturate((v0 - scale_min) / (scale_max - scale_min)) );    // Point in the normalized space of our target rectangle
 
     const ImU32 col_base = window->Color((plot_type == ImGuiPlotType_Lines) ? ImGuiCol_PlotLines : ImGuiCol_PlotHistogram);
     const ImU32 col_hovered = window->Color((plot_type == ImGuiPlotType_Lines) ? ImGuiCol_PlotLinesHovered : ImGuiCol_PlotHistogramHovered);
@@ -6609,19 +6612,27 @@ void ImGui::PlotEx(ImGuiPlotType plot_type, const char* label, float (*values_ge
     for (int n = 0; n < res_w; n++)
     {
         const float t1 = t0 + t_step;
-        const int v_idx = (int)(t0 * values_count);
-        IM_ASSERT(v_idx >= 0 && v_idx < values_count);
-        const float v1 = values_getter(data, (v_idx + values_offset + 1) % values_count);
-        const ImVec2 p1 = ImVec2( t1, 1.0f - ImSaturate((v1 - scale_min) / (scale_max - scale_min)) );
+        const int v1_idx = (int)(t0 * item_count + 0.5f);
+        IM_ASSERT(v1_idx >= 0 && v1_idx < values_count);
+        const float v1 = values_getter(data, (v1_idx + values_offset + 1) % values_count);
+        const ImVec2 tp1 = ImVec2( t1, 1.0f - ImSaturate((v1 - scale_min) / (scale_max - scale_min)) );
 
-        // NB- Draw calls are merged together by the DrawList system.
+        // NB: Draw calls are merged together by the DrawList system. Still, we should render our batch are lower level to save a bit of CPU.
+        ImVec2 pos0 = ImLerp(inner_bb.Min, inner_bb.Max, tp0);
+        ImVec2 pos1 = ImLerp(inner_bb.Min, inner_bb.Max, (plot_type == ImGuiPlotType_Lines) ? tp1 : ImVec2(tp1.x, 1.0f));
         if (plot_type == ImGuiPlotType_Lines)
-            window->DrawList->AddLine(ImLerp(inner_bb.Min, inner_bb.Max, p0), ImLerp(inner_bb.Min, inner_bb.Max, p1), v_hovered == v_idx ? col_hovered : col_base);
+        {
+            window->DrawList->AddLine(pos0, pos1, v_hovered == v1_idx ? col_hovered : col_base);
+        }
         else if (plot_type == ImGuiPlotType_Histogram)
-            window->DrawList->AddRectFilled(ImLerp(inner_bb.Min, inner_bb.Max, p0), ImLerp(inner_bb.Min, inner_bb.Max, ImVec2(p1.x, 1.0f))+ImVec2(-1,0), v_hovered == v_idx ? col_hovered : col_base);
+        {
+            if (pos1.x >= pos0.x + 2.0f)
+                pos1.x -= 1.0f;
+            window->DrawList->AddRectFilled(pos0, pos1, v_hovered == v1_idx ? col_hovered : col_base);
+        }
 
         t0 = t1;
-        p0 = p1;
+        tp0 = tp1;
     }
 
     // Text overlay
@@ -7128,7 +7139,7 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
             else
             {
                 edit_state.Id = id;
-                edit_state.ScrollX = 0.f;
+                edit_state.ScrollX = 0.0f;
                 stb_textedit_initialize_state(&edit_state.StbState, !is_multiline);
                 if (!is_multiline && focus_requested_by_code)
                     select_all = true;
@@ -7178,6 +7189,7 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
         {
             stb_textedit_drag(&edit_state, &edit_state.StbState, mouse_x, mouse_y);
             edit_state.CursorAnimReset();
+            edit_state.CursorFollow = true;
         }
         if (edit_state.SelectedAllMouseLock && !io.MouseDown[0])
             edit_state.SelectedAllMouseLock = false;
@@ -7447,9 +7459,9 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
             {
                 const float scroll_increment_x = size.x * 0.25f;
                 if (cursor_offset.x < edit_state.ScrollX)
-                    edit_state.ScrollX = ImMax(0.0f, cursor_offset.x - scroll_increment_x);
+                    edit_state.ScrollX = (float)(int)ImMax(0.0f, cursor_offset.x - scroll_increment_x);
                 else if (cursor_offset.x - size.x >= edit_state.ScrollX)
-                    edit_state.ScrollX = cursor_offset.x - size.x + scroll_increment_x;
+                    edit_state.ScrollX = (float)(int)(cursor_offset.x - size.x + scroll_increment_x);
             }
             else
             {
