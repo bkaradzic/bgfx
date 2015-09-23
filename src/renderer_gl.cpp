@@ -1848,13 +1848,14 @@ namespace bgfx { namespace gl
 				&&  NULL != glGetDebugMessageLog)
 				{
 					GL_CHECK(glDebugMessageCallback(debugProcCb, NULL) );
-					GL_CHECK(glDebugMessageControl(GL_DONT_CARE
-							, GL_DONT_CARE
-							, GL_DEBUG_SEVERITY_MEDIUM
-							, 0
-							, NULL
-							, GL_TRUE
-							) );
+					// TODO:REG JNI GL2 check
+					// GL_CHECK(glDebugMessageControl(GL_DONT_CARE
+					// 		, GL_DONT_CARE
+					// 		, GL_DEBUG_SEVERITY_MEDIUM
+					// 		, 0
+					// 		, NULL
+					// 		, GL_TRUE
+					// 		) );
 				}
 			}
 
