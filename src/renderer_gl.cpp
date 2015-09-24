@@ -1053,8 +1053,7 @@ namespace bgfx { namespace gl
 			? tfi.m_internalFmtSrgb
 			: tfi.m_internalFmt
 			;
-		if (!s_textureFormat[_format].m_supported
-		||  GL_ZERO == internalFmt)
+		if (GL_ZERO == internalFmt)
 		{
 			return false;
 		}
@@ -1373,13 +1372,6 @@ namespace bgfx { namespace gl
 
 			// Allow all texture filters.
 			memset(s_textureFilter, true, BX_COUNTOF(s_textureFilter) );
-			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
-			{
-				s_textureFormat[ii].m_supported = true
-					&& TextureFormat::Unknown != ii
-					&& TextureFormat::UnknownDepth != ii
-					;
-			}
 
 			bool bc123Supported = 0
 				|| s_extension[Extension::EXT_texture_compression_s3tc        ].m_supported
