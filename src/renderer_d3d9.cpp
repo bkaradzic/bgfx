@@ -2234,6 +2234,7 @@ namespace bgfx { namespace d3d9
 				{
 					const UniformInfo* info = s_renderD3D9->m_uniformReg.find(name);
 					BX_CHECK(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
+
 					if (NULL != info)
 					{
 						if (NULL == m_constantBuffer)
