@@ -197,19 +197,21 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	// Create static index buffer.
 	bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
 
-	// Create texture sampler uniforms.
-	bgfx::UniformHandle s_texCube  = bgfx::createUniform("s_texCube",  bgfx::UniformType::Int1);
-	bgfx::UniformHandle s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
-
-	bgfx::UniformHandle u_time = bgfx::createUniform("u_time", bgfx::UniformType::Vec4);
-
-	bgfx::ProgramHandle program     = loadProgram("vs_update", "fs_update");
-	bgfx::ProgramHandle programCmp  = loadProgram("vs_update", "fs_update_cmp");
-	bgfx::ProgramHandle program3d   = BGFX_INVALID_HANDLE;
+	// Create programs.
+	bgfx::ProgramHandle program    = loadProgram("vs_update", "fs_update");
+	bgfx::ProgramHandle programCmp = loadProgram("vs_update", "fs_update_cmp");
+	bgfx::ProgramHandle program3d  = BGFX_INVALID_HANDLE;
 	if (texture3DSupported)
 	{
 		program3d = loadProgram("vs_update", "fs_update_3d");
 	}
+
+	// Create texture sampler uniforms.
+	bgfx::UniformHandle s_texCube  = bgfx::createUniform("s_texCube",  bgfx::UniformType::Int1);
+	bgfx::UniformHandle s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
+
+	// Create time uniform.
+	bgfx::UniformHandle u_time = bgfx::createUniform("u_time", bgfx::UniformType::Vec4);
 
 	const uint32_t textureSide = 2048;
 
