@@ -1313,6 +1313,19 @@ namespace bgfx
 			);
 	}
 
+	const char* Context::getName(UniformHandle _handle) const
+	{
+		for (UniformHashMap::const_iterator it = m_uniformHashMap.begin(), itEnd = m_uniformHashMap.end(); it != itEnd; ++it)
+		{
+			if (it->second.idx == _handle.idx)
+			{
+				return it->first.c_str();
+			}
+		}
+
+		return NULL;
+	}
+
 	bool Context::renderFrame()
 	{
 		if (m_rendererInitialized

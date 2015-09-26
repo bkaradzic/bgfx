@@ -311,7 +311,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		// Floor.
 		bx::mtxMul(lightMtx, mtxFloor, mtxShadow);
-		bgfx::setUniform(u_lightMtx, lightMtx);
 		uint32_t cached = bgfx::setTransform(mtxFloor);
 		for (uint32_t pass = 0; pass < 2; ++pass)
 		{
