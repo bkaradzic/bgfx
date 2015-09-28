@@ -1038,7 +1038,7 @@ namespace bgfx { namespace gl
 
 		if (isCompressed(_format) )
 		{
-			glCompressedTexImage2D(GL_TEXTURE_2D, 0, internalFmt, 16, 16, 0, size, data);
+			//glCompressedTexImage2D(GL_TEXTURE_2D, 0, internalFmt, 16, 16, 0, size, data);
 		}
 		else
 		{
@@ -1500,6 +1500,8 @@ namespace bgfx { namespace gl
 					{
 						setTextureFormat(TextureFormat::D16,   GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT);
 						setTextureFormat(TextureFormat::D24S8, GL_DEPTH_STENCIL,   GL_DEPTH_STENCIL,   GL_UNSIGNED_INT_24_8);
+
+                        s_textureFormat[TextureFormat::ETC2].m_supported = false;
 					}
 				}
 			}
