@@ -13,6 +13,7 @@
 #include <bx/thread.h>
 #include <bx/mutex.h>
 #include <bx/handlealloc.h>
+#include <bx/timer.h>
 #include <tinystl/allocator.h>
 #include <tinystl/string.h>
 
@@ -116,6 +117,17 @@ namespace entry
 
 		void update(EventQueue& _eventQueue)
 		{
+			int64_t now = bx::getHPCounter();
+			static int64_t next = now;
+
+			if (now < next)
+			{
+				return;
+			}
+
+			const int64_t timerFreq = bx::getHPFrequency();
+			next = now + timerFreq/60;
+
 			if (NULL == m_xinputdll)
 			{
 				return;
