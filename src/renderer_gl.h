@@ -309,6 +309,14 @@ typedef uint64_t GLuint64;
 #	define GL_RGBA16UI 0x8D76
 #endif // GL_RGBA16UI
 
+#ifndef GL_RGB9_E5
+#	define GL_RGB9_E5 0x8C3D
+#endif // GL_RGB9_E5
+
+#ifndef GL_UNSIGNED_INT_5_9_9_9_REV
+#	define GL_UNSIGNED_INT_5_9_9_9_REV 0x8C3E
+#endif // GL_UNSIGNED_INT_5_9_9_9_REV
+
 #ifndef GL_R11F_G11F_B10F
 #	define GL_R11F_G11F_B10F 0x8C3A
 #endif // GL_R11F_G11F_B10F
