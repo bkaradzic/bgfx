@@ -28,6 +28,7 @@
 
 #include <bgfx/bgfx.h>
 #include <ocornut-imgui/imgui.h>
+#include <ocornut-imgui/imgui_wm.h>
 
 #define IMGUI_MBUT_LEFT   0x01
 #define IMGUI_MBUT_RIGHT  0x02

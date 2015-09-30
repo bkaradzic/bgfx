@@ -8,6 +8,7 @@
 #include <bx/fpumath.h>
 #include <bx/timer.h>
 #include <ocornut-imgui/imgui.h>
+#include <ocornut-imgui/imgui_wm.h>
 #include "imgui.h"
 #include "ocornut_imgui.h"
 #include <stb/stb_image.c>
@@ -19,6 +20,142 @@
 
 #include "vs_ocornut_imgui.bin.h"
 #include "fs_ocornut_imgui.bin.h"
+
+class PlatformWindow : public ImWindow::ImwPlatformWindow
+{
+	typedef ImWindow::ImwPlatformWindow Super;
+
+public:
+	PlatformWindow(bool _mainWindow, bool _isDragWindow)
+		: ImWindow::ImwPlatformWindow(_mainWindow, _isDragWindow)
+		, m_pos(0.0f, 0.0f)
+		, m_size(0.0f, 0.0f)
+		, m_drag(false)
+	{
+	}
+
+	virtual ~PlatformWindow() BX_OVERRIDE
+	{
+	}
+
+	virtual bool Init(ImWindow::ImwPlatformWindow* /*_parent*/) BX_OVERRIDE
+	{
+		return true;
+	}
+
+	virtual const ImVec2& GetPosition() const BX_OVERRIDE
+	{
+		return m_pos;
+	}
+
+	virtual const ImVec2& GetSize() const BX_OVERRIDE
+	{
+		return m_size;
+	}
+
+	virtual void Show() BX_OVERRIDE
+	{
+	}
+
+	virtual void Hide() BX_OVERRIDE
+	{
+	}
+
+	virtual void SetSize(const ImVec2& _size) BX_OVERRIDE
+	{
+		m_size = _size;
+	}
+
+	virtual void SetPosition(const ImVec2& _pos) BX_OVERRIDE
+	{
+		m_pos = _pos;
+	}
+
+	virtual void SetTitle(const char* /*_title*/) BX_OVERRIDE
+	{
+	}
+
+	virtual void PreUpdate() BX_OVERRIDE
+	{
+	}
+
+	virtual void Paint() BX_OVERRIDE
+	{
+		if (!m_bIsDragWindow)
+		{
+			Super::Paint();
+		}
+	}
+
+	virtual void Destroy() BX_OVERRIDE
+	{
+	}
+
+	virtual void StartDrag() BX_OVERRIDE
+	{
+		m_drag = true;
+	}
+
+	virtual void StopDrag() BX_OVERRIDE
+	{
+		m_drag = false;
+	}
+
+	virtual bool IsDraging() BX_OVERRIDE
+	{
+		return m_drag;
+	}
+
+private:
+	ImVec2 m_pos;
+	ImVec2 m_size;
+	bool m_drag;
+};
+
+class WindowManager : public ImWindow::ImwWindowManager
+{
+	typedef ImWindow::ImwWindowManager Super;
+
+public:
+	WindowManager()
+	{
+	}
+
+	virtual ~WindowManager() BX_OVERRIDE
+	{
+	}
+
+protected:
+	virtual ImWindow::ImwPlatformWindow* CreatePlatformWindow(bool _main, ImWindow::ImwPlatformWindow* _parent, bool _isDragWindow) BX_OVERRIDE
+	{
+		PlatformWindow* window = new PlatformWindow(_main, _isDragWindow);
+		window->Init(_parent);
+		return static_cast<ImWindow::ImwPlatformWindow*>(window);
+	}
+
+	virtual void LogFormatted(const char* _str) BX_OVERRIDE
+	{
+		BX_TRACE("%s", _str); BX_UNUSED(_str);
+	}
+
+	virtual void InternalRun() BX_OVERRIDE
+	{
+		PreUpdate();
+		Update();
+	}
+
+	virtual ImVec2 GetCursorPos() BX_OVERRIDE
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		return io.MousePos;
+	}
+
+	virtual bool IsLeftClickDown() BX_OVERRIDE
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		return io.MouseDown[0];
+	}
+};
 
 struct OcornutImguiContext
 {
@@ -202,10 +339,15 @@ struct OcornutImguiContext
 
 		ImGuiStyle& style = ImGui::GetStyle();
 		style.FrameRounding = 4.0f;
+
+		m_wm = BX_NEW(m_allocator, WindowManager);
+		m_wm->Init();
 	}
 
 	void destroy()
 	{
+		m_wm->Exit();
+		BX_DELETE(m_allocator, m_wm);
 		ImGui::Shutdown();
 
 		bgfx::destroyUniform(s_tex);
@@ -270,6 +412,7 @@ struct OcornutImguiContext
 
 	void endFrame()
 	{
+		m_wm->Run();
 		ImGui::Render();
 	}
 
@@ -278,6 +421,7 @@ struct OcornutImguiContext
 	bgfx::ProgramHandle m_program;
 	bgfx::TextureHandle m_texture;
 	bgfx::UniformHandle s_tex;
+	WindowManager* m_wm;
 	int64_t m_last;
 	int32_t m_lastScroll;
 	uint8_t m_viewId;
