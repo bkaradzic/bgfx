@@ -200,7 +200,7 @@ namespace bgfx
 
 	Caps g_caps;
 
-#if !defined(BX_THREAD_LOCAL)
+#if BGFX_CONFIG_MULTITHREADED && !defined(BX_THREAD_LOCAL)
 	class ThreadData
 	{
 		BX_CLASS(ThreadData
@@ -240,6 +240,8 @@ namespace bgfx
 	};
 
 	static ThreadData s_threadIndex(0);
+#elif !BGFX_CONFIG_MULTITHREADED
+	static uint32_t s_threadIndex(0);
 #else
 	static BX_THREAD_LOCAL uint32_t s_threadIndex(0);
 #endif
