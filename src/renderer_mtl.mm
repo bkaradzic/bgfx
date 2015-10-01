@@ -2182,8 +2182,8 @@ namespace bgfx { namespace mtl
 					{
 						if (BGFX_CLEAR_COLOR_USE_PALETTE & clr.m_flags)
 						{
-							uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_CLEAR_COLOR_PALETTE-1, clr.m_index[0]);
-							const float* rgba = _render->m_clearColor[index];
+							uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, clr.m_index[0]);
+							const float* rgba = _render->m_colorPalette[index];
 							const float rr = rgba[0];
 							const float gg = rgba[1];
 							const float bb = rgba[2];
@@ -2255,7 +2255,7 @@ namespace bgfx { namespace mtl
 
 					if (BGFX_CLEAR_NONE != (clr.m_flags & BGFX_CLEAR_MASK) && !fullscreenRect)
 					{	//TODO: fallback to clear with quad
-						//clearQuad(_clearQuad, viewState.m_rect, clr, _render->m_clearColor);
+						//clearQuad(_clearQuad, viewState.m_rect, clr, _render->m_colorPalette);
 					}
 				}
 
@@ -2387,8 +2387,8 @@ namespace bgfx { namespace mtl
 				}
 
 				bool programChanged = false;
-				bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
-				rendererUpdateUniforms(this, _render->m_uniformBuffer, draw.m_uniformBegin, draw.m_uniformEnd);
+				bool constantsChanged = draw.m_constBegin < draw.m_constEnd;
+				rendererUpdateUniforms(this, _render->m_uniformBuffer, draw.m_constBegin, draw.m_constEnd);
 
 				if (key.m_program != programIdx ||
 					(BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE|BGFX_STATE_BLEND_INDEPENDENT|BGFX_STATE_MSAA) & changedFlags ||
