@@ -219,6 +219,8 @@ namespace bgfx
 			RGB10A2,
 			R11G11B10F,
 
+			RGB8,
+
 			UnknownDepth, // Depth formats below.
 
 			D16,
