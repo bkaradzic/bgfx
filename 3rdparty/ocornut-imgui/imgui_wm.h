@@ -28,7 +28,7 @@ typedef unsigned int ImU32;
 # define ImwMap std::unordered_map
 #endif // ImMap
 
-namespace ImWindow
+namespace ImGuiWM
 {
     enum EDockOrientation
     {
@@ -39,10 +39,10 @@ namespace ImWindow
         E_DOCK_ORIENTATION_BOTTOM,
     };
 
-    class ImwId
+    class Id
     {
     public:
-        ImwId();
+        Id();
         ImU32 GetId() const;
         const char* GetStr() const;
 
@@ -52,10 +52,10 @@ namespace ImWindow
         static int s_iNextId;
     };
 
-    class ImwWindow
+    class Window
     {
-        friend class ImwWindowManager;
-        friend class ImwContainer;
+        friend class WindowManager;
+        friend class Container;
 
     public:
         virtual void OnGui() = 0;
@@ -72,47 +72,47 @@ namespace ImWindow
         const ImVec2& GetLastSize() const;
 
     protected:
-        ImwWindow();
-        virtual ~ImwWindow();
+        Window();
+        virtual ~Window();
 
         char* m_pTitle;
-        ImwId m_oId;
+        Id m_oId;
 
         ImVec2 m_oLastPosition;
         ImVec2 m_oLastSize;
     };
 
-    typedef ImwList<ImwWindow*> ImwWindowList;
+    typedef ImwList<Window*> WindowList;
 
-    class ImwPlatformWindow;
+    class PlatformWindow;
 
-    class ImwContainer
+    class Container
     {
-        friend class ImwPlatformWindow;
+        friend class PlatformWindow;
 
     public:
-        void Dock(ImwWindow* pWindow,EDockOrientation eOrientation = E_DOCK_ORIENTATION_CENTER);
-        bool UnDock(ImwWindow* pWindow);
+        void Dock(Window* pWindow,EDockOrientation eOrientation = E_DOCK_ORIENTATION_CENTER);
+        bool UnDock(Window* pWindow);
 
         bool IsEmpty();
         bool IsSplit();
         bool HasWindowTabbed();
-        ImwContainer* HasWindow(const ImwWindow* pWindow);
-        ImwPlatformWindow* GetPlatformWindowParent() const;
-        ImwContainer* GetBestDocking(const ImVec2 oCursorPosInContainer,EDockOrientation& oOutOrientation,ImVec2& oOutAreaPos,ImVec2& oOutAreaSize);
+        Container* HasWindow(const Window* pWindow);
+        PlatformWindow* GetPlatformWindowParent() const;
+        Container* GetBestDocking(const ImVec2 oCursorPosInContainer,EDockOrientation& oOutOrientation,ImVec2& oOutAreaPos,ImVec2& oOutAreaSize);
 
     protected:
-        ImwContainer(ImwContainer* pParent);
-        ImwContainer(ImwPlatformWindow* pParent);
-        ~ImwContainer();
+        Container(Container* pParent);
+        Container(PlatformWindow* pParent);
+        ~Container();
 
         void CreateSplits();
         void Paint();
 
-        ImwContainer* m_pParent;
-        ImwPlatformWindow* m_pParentWindow;
-        ImwWindowList m_lWindows;
-        ImwContainer* m_pSplits[2];
+        Container* m_pParent;
+        PlatformWindow* m_pParentWindow;
+        WindowList m_lWindows;
+        Container* m_pSplits[2];
 
         float m_fSplitRatio;
         bool m_bVerticalSplit;
@@ -124,15 +124,15 @@ namespace ImWindow
         ImVec2 m_oLastSize;
     };
 
-    class ImwPlatformWindow
+    class PlatformWindow
     {
-        friend class ImwWindowManager;
+        friend class WindowManager;
 
     public:
-        ImwPlatformWindow(bool bMainWindow,bool bIsDragWindow);
-        virtual ~ImwPlatformWindow();
+        PlatformWindow(bool bMainWindow,bool bIsDragWindow);
+        virtual ~PlatformWindow();
 
-        virtual bool Init(ImwPlatformWindow* pParent) = 0;
+        virtual bool Init(PlatformWindow* pParent) = 0;
 
         virtual const ImVec2& GetPosition() const = 0;
         virtual const ImVec2& GetSize() const = 0;
@@ -145,11 +145,11 @@ namespace ImWindow
 
         bool IsMain();
 
-        void Dock(ImwWindow* pWindow);
-        bool UnDock(ImwWindow* pWindow);
+        void Dock(Window* pWindow);
+        bool UnDock(Window* pWindow);
 
-        ImwContainer* GetContainer();
-        ImwContainer* HasWindow(ImwWindow* pWindow);
+        Container* GetContainer();
+        Container* HasWindow(Window* pWindow);
         bool IsStateSet();
 
     protected:
@@ -166,21 +166,21 @@ namespace ImWindow
         void PaintContainer();
         void OnClose();
 
-        ImwId m_oId;
+        Id m_oId;
         bool m_bMain;
         bool m_bIsDragWindow;
-        ImwContainer* m_pContainer;
+        Container* m_pContainer;
         void* m_pState;
         void* m_pPreviousState;
     };
 
-    typedef ImwList<ImwPlatformWindow*> ImwPlatformWindowList;
+    typedef ImwList<PlatformWindow*> PlatformWindowList;
 
-    class ImwWindowManager
+    class WindowManager
     {
-        friend class ImwWindow;
-        friend class ImwPlatformWindow;
-        friend class ImwContainer;
+        friend class Window;
+        friend class PlatformWindow;
+        friend class Container;
 
         enum EPlatformWindowAction
         {
@@ -193,7 +193,7 @@ namespace ImWindow
 
         struct PlatformWindowAction
         {
-            ImwPlatformWindow* m_pPlatformWindow;
+            PlatformWindow* m_pPlatformWindow;
             unsigned int m_iFlags;
             ImVec2 m_oPosition;
             ImVec2 m_oSize;
@@ -201,16 +201,16 @@ namespace ImWindow
 
         struct DockAction
         {
-            ImwWindow* m_pWindow;
+            Window* m_pWindow;
 
             // Is Dock or Float
             bool m_bFloat;
 
             //For Docking
-            ImwWindow* m_pWith;
+            Window* m_pWith;
             EDockOrientation m_eOrientation;
-            ImwPlatformWindow* m_pToPlatformWindow;
-            ImwContainer* m_pToContainer;
+            PlatformWindow* m_pToPlatformWindow;
+            Container* m_pToContainer;
 
             //For Floating
             ImVec2 m_oPosition;
@@ -219,8 +219,8 @@ namespace ImWindow
 
         struct DrawWindowAreaAction
         {
-            DrawWindowAreaAction(ImwPlatformWindow* pWindow,const ImVec2& oRectPos,const ImVec2& oRectSize,const ImColor& oColor);
-            ImwPlatformWindow* m_pWindow;
+            DrawWindowAreaAction(PlatformWindow* pWindow,const ImVec2& oRectPos,const ImVec2& oRectSize,const ImColor& oColor);
+            PlatformWindow* m_pWindow;
             ImVec2 m_oRectPos;
             ImVec2 m_oRectSize;
             ImColor m_oColor;
@@ -235,52 +235,52 @@ namespace ImWindow
             ImColor m_oHightlightAreaColor;
         };
 
-        ImwWindowManager();
-        virtual ~ImwWindowManager();
+        WindowManager();
+        virtual ~WindowManager();
 
         bool Init();
         bool Run();
         void Exit();
 
-        ImwPlatformWindow* GetMainPlatformWindow();
+        PlatformWindow* GetMainPlatformWindow();
         Config& GetConfig();
 
         void SetMainTitle(const char* pTitle);
 
-        void Dock(ImwWindow* pWindow,EDockOrientation eOrientation = E_DOCK_ORIENTATION_CENTER,ImwPlatformWindow* pToPlatformWindow = NULL);
-        void DockTo(ImwWindow* pWindow,EDockOrientation eOrientation = E_DOCK_ORIENTATION_CENTER,ImwContainer* pContainer = NULL);
-        void DockWith(ImwWindow* pWindow,ImwWindow* pWithWindow,EDockOrientation eOrientation = E_DOCK_ORIENTATION_CENTER);
-        void Float(ImwWindow* pWindow,const ImVec2& oPosition = ImVec2(-1,-1),const ImVec2& oSize = ImVec2(-1,-1));
+        void Dock(Window* pWindow, EDockOrientation eOrientation = E_DOCK_ORIENTATION_CENTER, PlatformWindow* pToPlatformWindow = NULL);
+        void DockTo(Window* pWindow, EDockOrientation eOrientation = E_DOCK_ORIENTATION_CENTER, Container* pContainer = NULL);
+        void DockWith(Window* pWindow, Window* pWithWindow,EDockOrientation eOrientation = E_DOCK_ORIENTATION_CENTER);
+        void Float(Window* pWindow, const ImVec2& oPosition = ImVec2(-1,-1), const ImVec2& oSize = ImVec2(-1,-1));
 
-        const ImwWindowList& GetWindowList() const;
-        ImwPlatformWindow* GetCurrentPlatformWindow();
-        ImwPlatformWindow* GetWindowParent(ImwWindow* pWindow);
+        const WindowList& GetWindowList() const;
+        PlatformWindow* GetCurrentPlatformWindow();
+        PlatformWindow* GetWindowParent(Window* pWindow);
 
         void  Log(const char* pFormat, ...);
         virtual void LogFormatted(const char* pStr) = 0;;
 
-        static ImwWindowManager* GetInstance();
+        static WindowManager* GetInstance();
 
     protected:
-        virtual ImwPlatformWindow*  CreatePlatformWindow(bool bMain,ImwPlatformWindow* pParent,bool bDragWindow) = 0;
+        virtual PlatformWindow*  CreatePlatformWindow(bool bMain,PlatformWindow* pParent,bool bDragWindow) = 0;
         virtual void InternalRun() = 0;
         virtual ImVec2 GetCursorPos() = 0;
         virtual bool IsLeftClickDown() = 0;
 
-        void AddWindow(ImwWindow* pWindow);
-        void RemoveWindow(ImwWindow* pWindow);
-        void DestroyWindow(ImwWindow* pWindow);
+        void AddWindow(Window* pWindow);
+        void RemoveWindow(Window* pWindow);
+        void DestroyWindow(Window* pWindow);
 
-        void InternalDock(ImwWindow* pWindow,EDockOrientation eOrientation,ImwPlatformWindow* pToPlatformWindow);
-        void InternalDockTo(ImwWindow* pWindow,EDockOrientation eOrientation,ImwContainer* pToContainer);
-        void InternalDockWith(ImwWindow* pWindow,ImwWindow* pWithWindow,EDockOrientation eOrientation);
-        void InternalFloat(ImwWindow* pWindow,ImVec2 oPosition,ImVec2 oSize);
-        void InternalUnDock(ImwWindow* pWindow);
-        void InternalDrag(ImwWindow* pWindow);
+        void InternalDock(Window* pWindow,EDockOrientation eOrientation,PlatformWindow* pToPlatformWindow);
+        void InternalDockTo(Window* pWindow,EDockOrientation eOrientation,Container* pToContainer);
+        void InternalDockWith(Window* pWindow,Window* pWithWindow,EDockOrientation eOrientation);
+        void InternalFloat(Window* pWindow,ImVec2 oPosition,ImVec2 oSize);
+        void InternalUnDock(Window* pWindow);
+        void InternalDrag(Window* pWindow);
 
-        void OnClosePlatformWindow(ImwPlatformWindow* pWindow);
+        void OnClosePlatformWindow(PlatformWindow* pWindow);
 
-        void DrawWindowArea(ImwPlatformWindow* pWindow,const ImVec2& oPos,const ImVec2& oSize,const ImColor& oColor);
+        void DrawWindowArea(PlatformWindow* pWindow,const ImVec2& oPos,const ImVec2& oSize,const ImColor& oColor);
 
         void PreUpdate();
         void Update();
@@ -288,31 +288,31 @@ namespace ImWindow
         void UpdateDockActions();
         void UpdateOrphans();
 
-        void Paint(ImwPlatformWindow* pWindow);
+        void Paint(PlatformWindow* pWindow);
 
-        void StartDragWindow(ImwWindow* pWindow);
+        void StartDragWindow(Window* pWindow);
         void StopDragWindow();
         void UpdateDragWindow();
-        ImwContainer*  GetBestDocking(ImwPlatformWindow* pPlatformWindow,const ImVec2 oCursorPos,EDockOrientation& oOutOrientation,ImVec2& oOutAreaPos,ImVec2& oOutAreaSize);
+        Container*  GetBestDocking(PlatformWindow* pPlatformWindow,const ImVec2 oCursorPos,EDockOrientation& oOutOrientation,ImVec2& oOutAreaPos,ImVec2& oOutAreaSize);
 
         Config m_oConfig;
-        ImwPlatformWindow* m_pMainPlatformWindow;
-        ImwPlatformWindowList m_lPlatformWindows;
-        ImwPlatformWindow* m_pDragPlatformWindow;
-        ImwWindowList m_lWindows;
-        ImwWindowList m_lOrphanWindows;
-        ImwWindowList m_lToDestroyWindows;
-        ImwPlatformWindowList m_lToDestroyPlatformWindows;
+        PlatformWindow* m_pMainPlatformWindow;
+        PlatformWindowList m_lPlatformWindows;
+        PlatformWindow* m_pDragPlatformWindow;
+        WindowList m_lWindows;
+        WindowList m_lOrphanWindows;
+        WindowList m_lToDestroyWindows;
+        PlatformWindowList m_lToDestroyPlatformWindows;
         ImwList<PlatformWindowAction*> m_lPlatformWindowActions;
         ImwList<DockAction*> m_lDockActions;
         ImwList<DrawWindowAreaAction> m_lDrawWindowAreas;
 
-        ImwPlatformWindow* m_pCurrentPlatformWindow;
-        ImwWindow* m_pDraggedWindow;
+        PlatformWindow* m_pCurrentPlatformWindow;
+        Window* m_pDraggedWindow;
 
         ImVec2 m_oDragPreviewOffset;
 
-        static ImwWindowManager* s_pInstance;
+        static WindowManager* s_pInstance;
     };
 }
 

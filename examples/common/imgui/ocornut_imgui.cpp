@@ -21,13 +21,13 @@
 #include "vs_ocornut_imgui.bin.h"
 #include "fs_ocornut_imgui.bin.h"
 
-class PlatformWindow : public ImWindow::ImwPlatformWindow
+class PlatformWindow : public ImGuiWM::PlatformWindow
 {
-	typedef ImWindow::ImwPlatformWindow Super;
+	typedef ImGuiWM::PlatformWindow Super;
 
 public:
 	PlatformWindow(bool _mainWindow, bool _isDragWindow)
-		: ImWindow::ImwPlatformWindow(_mainWindow, _isDragWindow)
+		: ImGuiWM::PlatformWindow(_mainWindow, _isDragWindow)
 		, m_pos(0.0f, 0.0f)
 		, m_size(0.0f, 0.0f)
 		, m_drag(false)
@@ -38,7 +38,7 @@ public:
 	{
 	}
 
-	virtual bool Init(ImWindow::ImwPlatformWindow* /*_parent*/) BX_OVERRIDE
+	virtual bool Init(ImGuiWM::PlatformWindow* /*_parent*/) BX_OVERRIDE
 	{
 		return true;
 	}
@@ -112,9 +112,9 @@ private:
 	bool m_drag;
 };
 
-class WindowManager : public ImWindow::ImwWindowManager
+class WindowManager : public ImGuiWM::WindowManager
 {
-	typedef ImWindow::ImwWindowManager Super;
+	typedef ImGuiWM::WindowManager Super;
 
 public:
 	WindowManager()
@@ -126,11 +126,11 @@ public:
 	}
 
 protected:
-	virtual ImWindow::ImwPlatformWindow* CreatePlatformWindow(bool _main, ImWindow::ImwPlatformWindow* _parent, bool _isDragWindow) BX_OVERRIDE
+	virtual ImGuiWM::PlatformWindow* CreatePlatformWindow(bool _main, ImGuiWM::PlatformWindow* _parent, bool _isDragWindow) BX_OVERRIDE
 	{
 		PlatformWindow* window = new PlatformWindow(_main, _isDragWindow);
 		window->Init(_parent);
-		return static_cast<ImWindow::ImwPlatformWindow*>(window);
+		return static_cast<ImGuiWM::PlatformWindow*>(window);
 	}
 
 	virtual void LogFormatted(const char* _str) BX_OVERRIDE

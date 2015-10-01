@@ -17,68 +17,68 @@
 
 #define ImwSafeDelete(pObj) { if (NULL != pObj) { delete pObj; pObj = NULL; } }
 
-namespace ImWindow
+namespace ImGuiWM
 {
     static const ImVec2 IM_VEC2_0  = ImVec2(0, 0);
     static const ImVec2 IM_VEC2_N1 = ImVec2(-1, -1);
 
-    int ImwId::s_iNextId = 0;
+    int Id::s_iNextId = 0;
 
-    ImwId::ImwId()
+    Id::Id()
     {
         m_iId = s_iNextId++;
         ImFormatString(m_pId, 11, "0x%8X", m_iId);
     }
 
-    ImU32 ImwId::GetId() const
+    ImU32 Id::GetId() const
     {
         return m_iId;
     }
 
-    const char* ImwId::GetStr() const
+    const char* Id::GetStr() const
     {
         return m_pId;
     }
 
-    ImwWindow::ImwWindow()
+    Window::Window()
     {
         m_pTitle = NULL;
-        ImwWindowManager::GetInstance()->AddWindow(this);
+        WindowManager::GetInstance()->AddWindow(this);
     }
 
-    ImwWindow::~ImwWindow()
+    Window::~Window()
     {
-        ImwWindowManager::GetInstance()->RemoveWindow(this);
+        WindowManager::GetInstance()->RemoveWindow(this);
         ImGui::MemFree(m_pTitle);
     }
 
-    void ImwWindow::Destroy()
+    void Window::Destroy()
     {
-        ImwWindowManager::GetInstance()->DestroyWindow(this);
+        WindowManager::GetInstance()->DestroyWindow(this);
     }
 
-    void ImwWindow::SetTitle(const char* pTitle)
+    void Window::SetTitle(const char* pTitle)
     {
         ImGui::MemFree(m_pTitle);
         m_pTitle = ImStrdup(pTitle);
     }
 
-    const char* ImwWindow::GetTitle() const
+    const char* Window::GetTitle() const
     {
         return m_pTitle;
     }
 
-    const ImVec2& ImwWindow::GetLastPosition() const
+    const ImVec2& Window::GetLastPosition() const
     {
         return m_oLastPosition;
     }
 
-    const ImVec2& ImwWindow::GetLastSize() const
+    const ImVec2& Window::GetLastSize() const
     {
         return m_oLastSize;
     }
 
-    ImwContainer::ImwContainer(ImwContainer* pParent)
+    Container::Container(Container* pParent)
     {
         IM_ASSERT(NULL != pParent);
         m_pSplits[0] = NULL;
@@ -91,7 +91,7 @@ namespace ImWindow
         m_pParentWindow = (NULL != pParent) ? pParent->m_pParentWindow : NULL;
     }
 
-    ImwContainer::ImwContainer(ImwPlatformWindow* pParent)
+    Container::Container(PlatformWindow* pParent)
     {
         IM_ASSERT(NULL != pParent);
         m_pSplits[0] = NULL;
@@ -104,11 +104,11 @@ namespace ImWindow
         m_pParentWindow = pParent;
     }
 
-    ImwContainer::~ImwContainer()
+    Container::~Container()
     {
         while (m_lWindows.begin() != m_lWindows.end())
         {
-            ImwWindowManager::GetInstance()->RemoveWindow(*m_lWindows.begin());
+            WindowManager::GetInstance()->RemoveWindow(*m_lWindows.begin());
             delete *m_lWindows.begin();
             m_lWindows.erase(m_lWindows.begin());
         }
@@ -117,13 +117,13 @@ namespace ImWindow
         ImwSafeDelete(m_pSplits[1]);
     }
 
-    void ImwContainer::CreateSplits()
+    void Container::CreateSplits()
     {
-        m_pSplits[0] = new ImwContainer(this);
-        m_pSplits[1] = new ImwContainer(this);
+        m_pSplits[0] = new Container(this);
+        m_pSplits[1] = new Container(this);
     }
 
-    void ImwContainer::Dock(ImwWindow* pWindow, EDockOrientation eOrientation)
+    void Container::Dock(Window* pWindow, EDockOrientation eOrientation)
     {
         IM_ASSERT(NULL != pWindow);
 
@@ -197,8 +197,8 @@ namespace ImWindow
                     break;
                 case E_DOCK_ORIENTATION_TOP:
                 {
-                    ImwContainer* pSplit0 = m_pSplits[0];
-                    ImwContainer* pSplit1 = m_pSplits[1];
+                    Container* pSplit0 = m_pSplits[0];
+                    Container* pSplit1 = m_pSplits[1];
                     CreateSplits();
                     m_pSplits[0]->m_lWindows.push_back(pWindow);
                     m_pSplits[1]->m_bVerticalSplit = m_bVerticalSplit;
@@ -207,14 +207,14 @@ namespace ImWindow
                     m_pSplits[1]->m_pSplits[1] = pSplit1;
                     m_pSplits[1]->m_pSplits[0]->m_pParent = m_pSplits[1];
                     m_pSplits[1]->m_pSplits[1]->m_pParent = m_pSplits[1];
-                    m_fSplitRatio = ImwWindowManager::GetInstance()->GetConfig().m_fDragMarginSizeRatio;
+                    m_fSplitRatio = WindowManager::GetInstance()->GetConfig().m_fDragMarginSizeRatio;
                     m_bVerticalSplit = true;
                 }
                 break;
                 case E_DOCK_ORIENTATION_LEFT:
                 {
-                    ImwContainer* pSplit0 = m_pSplits[0];
-                    ImwContainer* pSplit1 = m_pSplits[1];
+                    Container* pSplit0 = m_pSplits[0];
+                    Container* pSplit1 = m_pSplits[1];
                     CreateSplits();
                     m_pSplits[0]->m_lWindows.push_back(pWindow);
                     m_pSplits[1]->m_bVerticalSplit = m_bVerticalSplit;
@@ -223,14 +223,14 @@ namespace ImWindow
                     m_pSplits[1]->m_pSplits[1] = pSplit1;
                     m_pSplits[1]->m_pSplits[0]->m_pParent = m_pSplits[1];
                     m_pSplits[1]->m_pSplits[1]->m_pParent = m_pSplits[1];
-                    m_fSplitRatio = ImwWindowManager::GetInstance()->GetConfig().m_fDragMarginSizeRatio;
+                    m_fSplitRatio = WindowManager::GetInstance()->GetConfig().m_fDragMarginSizeRatio;
                     m_bVerticalSplit = false;
                 }
                 break;
                 case E_DOCK_ORIENTATION_RIGHT:
                 {
-                    ImwContainer* pSplit0 = m_pSplits[0];
-                    ImwContainer* pSplit1 = m_pSplits[1];
+                    Container* pSplit0 = m_pSplits[0];
+                    Container* pSplit1 = m_pSplits[1];
                     CreateSplits();
                     m_pSplits[1]->m_lWindows.push_back(pWindow);
                     m_pSplits[0]->m_bVerticalSplit = m_bVerticalSplit;
@@ -239,14 +239,14 @@ namespace ImWindow
                     m_pSplits[0]->m_pSplits[1] = pSplit1;
                     m_pSplits[0]->m_pSplits[0]->m_pParent = m_pSplits[0];
                     m_pSplits[0]->m_pSplits[1]->m_pParent = m_pSplits[0];
-                    m_fSplitRatio = 1.f - ImwWindowManager::GetInstance()->GetConfig().m_fDragMarginSizeRatio;
+                    m_fSplitRatio = 1.f - WindowManager::GetInstance()->GetConfig().m_fDragMarginSizeRatio;
                     m_bVerticalSplit = false;
                 }
                 break;
                 case E_DOCK_ORIENTATION_BOTTOM:
                 {
-                    ImwContainer* pSplit0 = m_pSplits[0];
-                    ImwContainer* pSplit1 = m_pSplits[1];
+                    Container* pSplit0 = m_pSplits[0];
+                    Container* pSplit1 = m_pSplits[1];
                     CreateSplits();
                     m_pSplits[1]->m_lWindows.push_back(pWindow);
                     m_pSplits[0]->m_bVerticalSplit = m_bVerticalSplit;
@@ -255,7 +255,7 @@ namespace ImWindow
                     m_pSplits[0]->m_pSplits[1] = pSplit1;
                     m_pSplits[0]->m_pSplits[0]->m_pParent = m_pSplits[0];
                     m_pSplits[0]->m_pSplits[1]->m_pParent = m_pSplits[0];
-                    m_fSplitRatio = 1.f - ImwWindowManager::GetInstance()->GetConfig().m_fDragMarginSizeRatio;
+                    m_fSplitRatio = 1.f - WindowManager::GetInstance()->GetConfig().m_fDragMarginSizeRatio;
                     m_bVerticalSplit = true;
                 }
                 break;
@@ -264,7 +264,7 @@ namespace ImWindow
         }
     }
 
-    bool ImwContainer::UnDock(ImwWindow* pWindow)
+    bool Container::UnDock(Window* pWindow)
     {
         if (std::find(m_lWindows.begin(), m_lWindows.end(), pWindow) != m_lWindows.end())
         {
@@ -283,7 +283,7 @@ namespace ImWindow
                 {
                     if (m_pSplits[1]->IsSplit())
                     {
-                        ImwContainer* pSplit = m_pSplits[1];
+                        Container* pSplit = m_pSplits[1];
                         m_bVerticalSplit = pSplit->m_bVerticalSplit;
                         ImwSafeDelete(m_pSplits[0]);
                         m_pSplits[0] = pSplit->m_pSplits[0];
@@ -312,7 +312,7 @@ namespace ImWindow
                 {
                     if (m_pSplits[0]->IsSplit())
                     {
-                        ImwContainer* pSplit = m_pSplits[0];
+                        Container* pSplit = m_pSplits[0];
                         m_bVerticalSplit = pSplit->m_bVerticalSplit;
                         ImwSafeDelete(m_pSplits[1]);
                         m_pSplits[0] = pSplit->m_pSplits[0];
@@ -339,24 +339,24 @@ namespace ImWindow
         return false;
     }
 
-    bool ImwContainer::IsEmpty()
+    bool Container::IsEmpty()
     {
         //IM_ASSERT(IsSplit() != HasWindowTabbed());
         return !(IsSplit() || HasWindowTabbed());
     }
 
-    bool ImwContainer::IsSplit()
+    bool Container::IsSplit()
     {
         IM_ASSERT((NULL == m_pSplits[0]) == (NULL == m_pSplits[1]));
         return (NULL != m_pSplits[0] && NULL != m_pSplits[1]);
     }
 
-    bool ImwContainer::HasWindowTabbed()
+    bool Container::HasWindowTabbed()
     {
         return m_lWindows.size() > 0;
     }
 
-    ImwContainer* ImwContainer::HasWindow(const ImwWindow* pWindow)
+    Container* Container::HasWindow(const Window* pWindow)
     {
         if (std::find(m_lWindows.begin(), m_lWindows.end(), pWindow) != m_lWindows.end())
         {
@@ -366,7 +366,7 @@ namespace ImWindow
         {
             if (NULL != m_pSplits[0])
             {
-                ImwContainer* pContainer = m_pSplits[0]->HasWindow(pWindow);
+                Container* pContainer = m_pSplits[0]->HasWindow(pWindow);
                 if (NULL != pContainer)
                 {
                     return pContainer;
@@ -374,7 +374,7 @@ namespace ImWindow
             }
             if (NULL != m_pSplits[1])
             {
-                ImwContainer* pContainer = m_pSplits[1]->HasWindow(pWindow);
+                Container* pContainer = m_pSplits[1]->HasWindow(pWindow);
                 if (NULL != pContainer)
                 {
                     return pContainer;
@@ -384,14 +384,14 @@ namespace ImWindow
         return NULL;
     }
 
-    ImwPlatformWindow* ImwContainer::GetPlatformWindowParent() const
+    PlatformWindow* Container::GetPlatformWindowParent() const
     {
         return m_pParentWindow;
     }
 
-    void ImwContainer::Paint()
+    void Container::Paint()
     {
-        ImwWindowManager* pWindowManager = ImwWindowManager::GetInstance();
+        WindowManager* pWindowManager = WindowManager::GetInstance();
         ImGuiWindow* pWindow = ImGui::GetCurrentWindow();
         const ImGuiStyle& oStyle = ImGui::GetStyle();
 
@@ -491,7 +491,7 @@ namespace ImWindow
             if (ImGui::BeginPopupContextItem("TabListMenu", 0))
             {
                 int iIndex = 0;
-                for (ImwWindowList::const_iterator itWindow = m_lWindows.begin(); itWindow != m_lWindows.end(); ++itWindow, ++iIndex)
+                for (WindowList::const_iterator itWindow = m_lWindows.begin(); itWindow != m_lWindows.end(); ++itWindow, ++iIndex)
                 {
                     if (ImGui::Selectable((*itWindow)->GetTitle()))
                     {
@@ -529,7 +529,7 @@ namespace ImWindow
             int iIndex = 0;
             int iNewActive = m_iActiveWindow;
             int iSize = int(m_lWindows.size());
-            for (ImwWindowList::iterator it = m_lWindows.begin(); it != m_lWindows.end(); ++it)
+            for (WindowList::iterator it = m_lWindows.begin(); it != m_lWindows.end(); ++it)
             {
                 const ImVec2 oTextSize = ImGui::CalcTextSize((*it)->GetTitle());
                 const ImVec2 oRectSize(oTextSize.x + 4, oTextSize.y+2);
@@ -571,8 +571,8 @@ namespace ImWindow
                             ImGui::PopID();
                             ++iIndex1;
                         }
-                        const ImwWindowList& lWindows = pWindowManager->GetWindowList();
-                        for (ImwWindowList::const_iterator itWindow = lWindows.begin(); itWindow != lWindows.end(); ++itWindow)
+                        const WindowList& lWindows = pWindowManager->GetWindowList();
+                        for (WindowList::const_iterator itWindow = lWindows.begin(); itWindow != lWindows.end(); ++itWindow)
                         {
                             if ((*it) != (*itWindow))
                             {
@@ -580,7 +580,7 @@ namespace ImWindow
                                 if (ImGui::BeginMenu((*itWindow)->GetTitle()))
                                 {
                                     bool bHovered = false;
-                                    ImwPlatformWindow* pPlatformWindow = pWindowManager->GetWindowParent((*itWindow));
+                                    PlatformWindow* pPlatformWindow = pWindowManager->GetWindowParent((*itWindow));
 
                                     ImVec2 oLastWinPos = (*itWindow)->GetLastPosition();
                                     ImVec2 oLastWinSize = (*itWindow)->GetLastSize();
@@ -661,7 +661,7 @@ namespace ImWindow
             }
             m_iActiveWindow = iNewActive;
 
-            ImwWindowList::iterator itActiveWindow = m_lWindows.begin();
+            WindowList::iterator itActiveWindow = m_lWindows.begin();
             std::advance(itActiveWindow, m_iActiveWindow);
 
             //Draw active
@@ -676,7 +676,7 @@ namespace ImWindow
                 ImVec2 oWinPos = ImGui::GetWindowPos();
                 ImVec2 oWinSize = ImGui::GetWindowSize();
 
-                for (ImwWindowList::iterator it = m_lWindows.begin(); it != m_lWindows.end(); ++it)
+                for (WindowList::iterator it = m_lWindows.begin(); it != m_lWindows.end(); ++it)
                 {
                     (*it)->m_oLastPosition = oWinPos;
                     (*it)->m_oLastSize = oWinSize;
@@ -695,7 +695,7 @@ namespace ImWindow
         }
     }
 
-    ImwContainer* ImwContainer::GetBestDocking(const ImVec2 oCursorPos, EDockOrientation& oOutOrientation, ImVec2& oOutAreaPos, ImVec2& oOutAreaSize)
+    Container* Container::GetBestDocking(const ImVec2 oCursorPos, EDockOrientation& oOutOrientation, ImVec2& oOutAreaPos, ImVec2& oOutAreaSize)
     {
         if (m_pParent == NULL ||
             (oCursorPos.x >= m_oLastPosition.x && oCursorPos.x <= (m_oLastPosition.x + m_oLastSize.x) &&
@@ -703,7 +703,7 @@ namespace ImWindow
         {
             if (IsSplit())
             {
-                ImwContainer* pBestContainer = NULL;
+                Container* pBestContainer = NULL;
                 pBestContainer = m_pSplits[0]->GetBestDocking(oCursorPos, oOutOrientation, oOutAreaPos, oOutAreaSize);
                 if (NULL != pBestContainer)
                 {
@@ -745,19 +745,19 @@ namespace ImWindow
                     //Center
                     ImRect oRectCenter(ImVec2(oCenter.x - c_fBoxHalfSize, oCenter.y - c_fBoxHalfSize), ImVec2(oCenter.x + c_fBoxHalfSize, oCenter.y + c_fBoxHalfSize));
                     bIsInCenter = oRectCenter.Contains(oCursorPos);
-                    ImwWindowManager::GetInstance()->DrawWindowArea(m_pParentWindow, oRectCenter.Min, oRectCenter.GetSize(), bIsInCenter ? oBoxHightlightColor : oBoxColor);
+                    WindowManager::GetInstance()->DrawWindowArea(m_pParentWindow, oRectCenter.Min, oRectCenter.GetSize(), bIsInCenter ? oBoxHightlightColor : oBoxColor);
 
                     if (m_oLastSize.y >= c_fMinSize)
                     {
                         //Top
                         ImRect oRectTop(ImVec2(oCenter.x - c_fBoxHalfSize, oCenter.y - c_fBoxHalfSize * 4.f), ImVec2(oCenter.x + c_fBoxHalfSize, oCenter.y - c_fBoxHalfSize * 2.f));
                         bIsInTop = oRectTop.Contains(oCursorPos);
-                        ImwWindowManager::GetInstance()->DrawWindowArea(m_pParentWindow, oRectTop.Min, oRectTop.GetSize(), bIsInTop ? oBoxHightlightColor : oBoxColor);
+                        WindowManager::GetInstance()->DrawWindowArea(m_pParentWindow, oRectTop.Min, oRectTop.GetSize(), bIsInTop ? oBoxHightlightColor : oBoxColor);
 
                         //Bottom
                         ImRect oRectBottom(ImVec2(oCenter.x - c_fBoxHalfSize, oCenter.y + c_fBoxHalfSize * 2.f), ImVec2(oCenter.x + c_fBoxHalfSize, oCenter.y + c_fBoxHalfSize * 4.f));
                         bIsInBottom = oRectBottom.Contains(oCursorPos);
-                        ImwWindowManager::GetInstance()->DrawWindowArea(m_pParentWindow, oRectBottom.Min, oRectBottom.GetSize(), bIsInBottom ? oBoxHightlightColor : oBoxColor);
+                        WindowManager::GetInstance()->DrawWindowArea(m_pParentWindow, oRectBottom.Min, oRectBottom.GetSize(), bIsInBottom ? oBoxHightlightColor : oBoxColor);
                     }
 
                     if (m_oLastSize.x >= c_fMinSize)
@@ -765,12 +765,12 @@ namespace ImWindow
                         //Left
                         ImRect oRectLeft(ImVec2(oCenter.x - c_fBoxHalfSize * 4.f, oCenter.y - c_fBoxHalfSize), ImVec2(oCenter.x - c_fBoxHalfSize * 2.f, oCenter.y + c_fBoxHalfSize));
                         bIsInLeft = oRectLeft.Contains(oCursorPos);
-                        ImwWindowManager::GetInstance()->DrawWindowArea(m_pParentWindow, oRectLeft.Min, oRectLeft.GetSize(), bIsInLeft ? oBoxHightlightColor : oBoxColor);
+                        WindowManager::GetInstance()->DrawWindowArea(m_pParentWindow, oRectLeft.Min, oRectLeft.GetSize(), bIsInLeft ? oBoxHightlightColor : oBoxColor);
 
                         //Right
                         ImRect oRectRight(ImVec2(oCenter.x + c_fBoxHalfSize * 2.f, oCenter.y - c_fBoxHalfSize), ImVec2(oCenter.x + c_fBoxHalfSize * 4.f, oCenter.y + c_fBoxHalfSize));
                         bIsInRight = oRectRight.Contains(oCursorPos);
-                        ImwWindowManager::GetInstance()->DrawWindowArea(m_pParentWindow, oRectRight.Min, oRectRight.GetSize(), bIsInRight ? oBoxHightlightColor : oBoxColor);
+                        WindowManager::GetInstance()->DrawWindowArea(m_pParentWindow, oRectRight.Min, oRectRight.GetSize(), bIsInRight ? oBoxHightlightColor : oBoxColor);
                     }
 
                     if (bIsInCenter)
@@ -815,11 +815,11 @@ namespace ImWindow
         return NULL;
     }
 
-    ImwPlatformWindow::ImwPlatformWindow(bool bMain, bool bIsDragWindow)
+    PlatformWindow::PlatformWindow(bool bMain, bool bIsDragWindow)
     {
         m_bMain = bMain;
         m_bIsDragWindow = bIsDragWindow;
-        m_pContainer = new ImwContainer(this);
+        m_pContainer = new Container(this);
         m_pState = NULL;
         m_pPreviousState = NULL;
 
@@ -830,7 +830,7 @@ namespace ImWindow
         ImGui::SetInternalState(pTemp);
     }
 
-    ImwPlatformWindow::~ImwPlatformWindow()
+    PlatformWindow::~PlatformWindow()
     {
         ImwSafeDelete(m_pContainer);
 
@@ -844,19 +844,19 @@ namespace ImWindow
         ImGui::MemFree(m_pState);
     }
 
-    void ImwPlatformWindow::OnClose()
+    void PlatformWindow::OnClose()
     {
-        ImwWindowManager::GetInstance()->OnClosePlatformWindow(this);
+        WindowManager::GetInstance()->OnClosePlatformWindow(this);
     }
 
     static bool s_bStatePush = false;
 
-    bool ImwPlatformWindow::IsStateSet()
+    bool PlatformWindow::IsStateSet()
     {
         return s_bStatePush;
     }
 
-    void ImwPlatformWindow::SetState()
+    void PlatformWindow::SetState()
     {
         IM_ASSERT(s_bStatePush == false);
         s_bStatePush = true;
@@ -865,7 +865,7 @@ namespace ImWindow
         memcpy(&((ImGuiState*)m_pState)->Style, &((ImGuiState*)m_pPreviousState)->Style, sizeof(ImGuiStyle));
     }
 
-    void ImwPlatformWindow::RestoreState()
+    void PlatformWindow::RestoreState()
     {
         IM_ASSERT(s_bStatePush == true);
         s_bStatePush = false;
@@ -873,48 +873,48 @@ namespace ImWindow
         ImGui::SetInternalState(m_pPreviousState);
     }
 
-    void ImwPlatformWindow::OnLoseFocus()
+    void PlatformWindow::OnLoseFocus()
     {
         ImGuiState& g = *((ImGuiState*)m_pState);
         g.SetNextWindowPosCond = g.SetNextWindowSizeCond = g.SetNextWindowContentSizeCond = g.SetNextWindowCollapsedCond = g.SetNextWindowFocus = 0;
     }
 
-    void ImwPlatformWindow::Paint()
+    void PlatformWindow::Paint()
     {
-        ImwWindowManager::GetInstance()->Paint(this);
+        WindowManager::GetInstance()->Paint(this);
     }
 
-    bool ImwPlatformWindow::IsMain()
+    bool PlatformWindow::IsMain()
     {
         return m_bMain;
     }
 
-    void ImwPlatformWindow::Dock(ImwWindow* pWindow)
+    void PlatformWindow::Dock(Window* pWindow)
     {
         m_pContainer->Dock(pWindow);
     }
 
-    bool ImwPlatformWindow::UnDock(ImwWindow* pWindow)
+    bool PlatformWindow::UnDock(Window* pWindow)
     {
         return m_pContainer->UnDock(pWindow);
     }
 
-    ImwContainer* ImwPlatformWindow::GetContainer()
+    Container* PlatformWindow::GetContainer()
     {
         return m_pContainer;
     }
 
-    ImwContainer* ImwPlatformWindow::HasWindow(ImwWindow* pWindow)
+    Container* PlatformWindow::HasWindow(Window* pWindow)
     {
         return m_pContainer->HasWindow(pWindow);
     }
 
-    void ImwPlatformWindow::PaintContainer()
+    void PlatformWindow::PaintContainer()
     {
         m_pContainer->Paint();
     }
 
-    ImwWindowManager::DrawWindowAreaAction::DrawWindowAreaAction(ImwPlatformWindow* pWindow, const ImVec2& oRectPos, const ImVec2& oRectSize, const ImColor& oColor)
+    WindowManager::DrawWindowAreaAction::DrawWindowAreaAction(PlatformWindow* pWindow, const ImVec2& oRectPos, const ImVec2& oRectSize, const ImColor& oColor)
         : m_oColor(oColor)
     {
         m_pWindow = pWindow;
@@ -922,11 +922,11 @@ namespace ImWindow
         m_oRectSize = oRectSize;
     }
 
-    ImwWindowManager* ImwWindowManager::s_pInstance = 0;
+    WindowManager* WindowManager::s_pInstance = 0;
 
     //////////////////////////////////////////////////////////////////////////
 
-    ImwWindowManager::Config::Config()
+    WindowManager::Config::Config()
         : m_fDragMarginRatio(0.1f)
         , m_fDragMarginSizeRatio(0.25f)
         , m_oHightlightAreaColor(0.f, 0.5f, 1.f, 0.5f)
@@ -935,7 +935,7 @@ namespace ImWindow
 
     //////////////////////////////////////////////////////////////////////////
 
-    ImwWindowManager::ImwWindowManager()
+    WindowManager::WindowManager()
     {
         s_pInstance = this;
         m_pMainPlatformWindow = NULL;
@@ -945,7 +945,7 @@ namespace ImWindow
         m_oDragPreviewOffset = ImVec2(-20, -10);
     }
 
-    ImwWindowManager::~ImwWindowManager()
+    WindowManager::~WindowManager()
     {
         ImwSafeDelete(m_pMainPlatformWindow);
         ImwSafeDelete(m_pDragPlatformWindow);
@@ -953,7 +953,7 @@ namespace ImWindow
         ImGui::Shutdown();
     }
 
-    bool ImwWindowManager::Init()
+    bool WindowManager::Init()
     {
         m_pMainPlatformWindow = CreatePlatformWindow(true, NULL, false);
         if (NULL != m_pMainPlatformWindow)
@@ -966,7 +966,7 @@ namespace ImWindow
         return false;
     }
 
-    bool ImwWindowManager::Run()
+    bool WindowManager::Run()
     {
         if (m_pMainPlatformWindow != NULL)
         {
@@ -977,22 +977,22 @@ namespace ImWindow
         return m_pMainPlatformWindow != NULL;
     }
 
-    void ImwWindowManager::Exit()
+    void WindowManager::Exit()
     {
         //TODO : Manual exit
     }
 
-    ImwPlatformWindow* ImwWindowManager::GetMainPlatformWindow()
+    PlatformWindow* WindowManager::GetMainPlatformWindow()
     {
         return m_pMainPlatformWindow;
     }
 
-    ImwWindowManager::Config& ImwWindowManager::GetConfig()
+    WindowManager::Config& WindowManager::GetConfig()
     {
         return m_oConfig;
     }
 
-    void ImwWindowManager::SetMainTitle(const char* pTitle)
+    void WindowManager::SetMainTitle(const char* pTitle)
     {
         if (NULL != m_pMainPlatformWindow)
         {
@@ -1000,7 +1000,7 @@ namespace ImWindow
         }
     }
 
-    void ImwWindowManager::Dock(ImwWindow* pWindow, EDockOrientation eOrientation, ImwPlatformWindow* pToPlatformWindow)
+    void WindowManager::Dock(Window* pWindow, EDockOrientation eOrientation, PlatformWindow* pToPlatformWindow)
     {
         DockAction* pAction = new DockAction();
         pAction->m_bFloat = false;
@@ -1012,7 +1012,7 @@ namespace ImWindow
         m_lDockActions.push_back(pAction);
     }
 
-    void ImwWindowManager::DockTo(ImwWindow* pWindow, EDockOrientation eOrientation, ImwContainer* pContainer)
+    void WindowManager::DockTo(Window* pWindow, EDockOrientation eOrientation, Container* pContainer)
     {
         IM_ASSERT(NULL != pContainer);
         if (NULL != pContainer)
@@ -1028,7 +1028,7 @@ namespace ImWindow
         }
     }
 
-    void ImwWindowManager::DockWith(ImwWindow* pWindow, ImwWindow* pWithWindow, EDockOrientation eOrientation)
+    void WindowManager::DockWith(Window* pWindow, Window* pWithWindow, EDockOrientation eOrientation)
     {
         DockAction* pAction = new DockAction();
         pAction->m_bFloat = false;
@@ -1038,7 +1038,7 @@ namespace ImWindow
         m_lDockActions.push_back(pAction);
     }
 
-    void ImwWindowManager::Float(ImwWindow* pWindow, const ImVec2& oPosition, const ImVec2& oSize)
+    void WindowManager::Float(Window* pWindow, const ImVec2& oPosition, const ImVec2& oSize)
     {
         DockAction* pAction = new DockAction();
         pAction->m_bFloat = true;
@@ -1048,25 +1048,25 @@ namespace ImWindow
         m_lDockActions.push_back(pAction);
     }
 
-    const ImwWindowList& ImwWindowManager::GetWindowList() const
+    const WindowList& WindowManager::GetWindowList() const
     {
         return m_lWindows;
     }
 
-    ImwPlatformWindow* ImwWindowManager::GetCurrentPlatformWindow()
+    PlatformWindow* WindowManager::GetCurrentPlatformWindow()
     {
         return m_pCurrentPlatformWindow;
     }
 
-    ImwPlatformWindow* ImwWindowManager::GetWindowParent(ImwWindow* pWindow)
+    PlatformWindow* WindowManager::GetWindowParent(Window* pWindow)
     {
-        ImwContainer* pContainer = m_pMainPlatformWindow->HasWindow(pWindow);
+        Container* pContainer = m_pMainPlatformWindow->HasWindow(pWindow);
         if (NULL != pContainer)
         {
             return m_pMainPlatformWindow;
         }
 
-        for (ImwPlatformWindowList::iterator it = m_lPlatformWindows.begin(); it != m_lPlatformWindows.end(); ++it)
+        for (PlatformWindowList::iterator it = m_lPlatformWindows.begin(); it != m_lPlatformWindows.end(); ++it)
         {
             pContainer = (*it)->HasWindow(pWindow);
             if (NULL != pContainer)
@@ -1078,7 +1078,7 @@ namespace ImWindow
         return NULL;
     }
 
-    void ImwWindowManager::Log(const char* pFormat, ...)
+    void WindowManager::Log(const char* pFormat, ...)
     {
         char pBuffer[32768];
         va_list argptr;
@@ -1088,20 +1088,20 @@ namespace ImWindow
         LogFormatted(pBuffer);
     }
 
-    void ImwWindowManager::PreUpdate()
+    void WindowManager::PreUpdate()
     {
         if (NULL != m_pMainPlatformWindow)
         {
             m_pMainPlatformWindow->PreUpdate();
         }
 
-        for (ImwPlatformWindowList::iterator it = m_lPlatformWindows.begin(); it != m_lPlatformWindows.end(); ++it)
+        for (PlatformWindowList::iterator it = m_lPlatformWindows.begin(); it != m_lPlatformWindows.end(); ++it)
         {
             (*it)->PreUpdate();
         }
     }
 
-    void ImwWindowManager::Update()
+    void WindowManager::Update()
     {
         UpdatePlatformwWindowActions();
         UpdateDockActions();
@@ -1109,7 +1109,7 @@ namespace ImWindow
 
         while (m_lToDestroyWindows.begin() != m_lToDestroyWindows.end())
         {
-            ImwWindow* pWindow = *m_lToDestroyWindows.begin();
+            Window* pWindow = *m_lToDestroyWindows.begin();
 
             m_lToDestroyWindows.remove(pWindow);
             m_lOrphanWindows.remove(pWindow);
@@ -1122,7 +1122,7 @@ namespace ImWindow
 
         while (m_lToDestroyPlatformWindows.begin() != m_lToDestroyPlatformWindows.end())
         {
-            ImwPlatformWindow* pPlatformWindow = *m_lToDestroyPlatformWindows.begin();
+            PlatformWindow* pPlatformWindow = *m_lToDestroyPlatformWindows.begin();
             m_lToDestroyPlatformWindows.remove(pPlatformWindow);
             m_lPlatformWindows.remove(pPlatformWindow);
             delete pPlatformWindow;
@@ -1136,7 +1136,7 @@ namespace ImWindow
             m_pMainPlatformWindow->Paint();
         }
 
-        for (ImwPlatformWindowList::iterator it = m_lPlatformWindows.begin(); it != m_lPlatformWindows.end(); ++it)
+        for (PlatformWindowList::iterator it = m_lPlatformWindows.begin(); it != m_lPlatformWindows.end(); ++it)
         {
             m_pCurrentPlatformWindow = (*it);
             (*it)->Paint();
@@ -1145,7 +1145,7 @@ namespace ImWindow
         m_pCurrentPlatformWindow = NULL;
     }
 
-    void ImwWindowManager::UpdatePlatformwWindowActions()
+    void WindowManager::UpdatePlatformwWindowActions()
     {
         while (m_lPlatformWindowActions.begin() != m_lPlatformWindowActions.end())
         {
@@ -1171,7 +1171,7 @@ namespace ImWindow
                 }
                 else
                 {
-                    for (ImwPlatformWindowList::iterator it = m_lPlatformWindows.begin(); it != m_lPlatformWindows.end(); ++it)
+                    for (PlatformWindowList::iterator it = m_lPlatformWindows.begin(); it != m_lPlatformWindows.end(); ++it)
                     {
                         if (*it == pAction->m_pPlatformWindow)
                         {
@@ -1214,7 +1214,7 @@ namespace ImWindow
         }
     }
 
-    void ImwWindowManager::UpdateDockActions()
+    void WindowManager::UpdateDockActions()
     {
         while (m_lDockActions.begin() != m_lDockActions.end())
         {
@@ -1249,7 +1249,7 @@ namespace ImWindow
         }
     }
 
-    void ImwWindowManager::UpdateOrphans()
+    void WindowManager::UpdateOrphans()
     {
         while (m_lOrphanWindows.begin() != m_lOrphanWindows.end())
         {
@@ -1270,7 +1270,7 @@ namespace ImWindow
         }
     }
 
-    void ImwWindowManager::Paint(ImwPlatformWindow* pWindow)
+    void WindowManager::Paint(PlatformWindow* pWindow)
     {
         if (!pWindow->GetContainer()->IsEmpty() )
         {
@@ -1333,7 +1333,7 @@ namespace ImWindow
         }
     }
 
-    void ImwWindowManager::StartDragWindow(ImwWindow* pWindow)
+    void WindowManager::StartDragWindow(Window* pWindow)
     {
         if (NULL == m_pDraggedWindow)
         {
@@ -1352,7 +1352,7 @@ namespace ImWindow
         }
     }
 
-    void ImwWindowManager::StopDragWindow()
+    void WindowManager::StopDragWindow()
     {
         PlatformWindowAction* pAction = new PlatformWindowAction();
         pAction->m_pPlatformWindow = m_pDragPlatformWindow;
@@ -1362,7 +1362,7 @@ namespace ImWindow
         m_pDraggedWindow = NULL;
     }
 
-    void ImwWindowManager::UpdateDragWindow()
+    void WindowManager::UpdateDragWindow()
     {
         if (NULL != m_pDraggedWindow)
         {
@@ -1377,10 +1377,10 @@ namespace ImWindow
             EDockOrientation eBestDockOrientation;
             ImVec2 oHightlightPos;
             ImVec2 oHightlightSize;
-            ImwContainer* pBestContainer = GetBestDocking(m_pMainPlatformWindow, oCursorPos, eBestDockOrientation, oHightlightPos, oHightlightSize);
+            Container* pBestContainer = GetBestDocking(m_pMainPlatformWindow, oCursorPos, eBestDockOrientation, oHightlightPos, oHightlightSize);
             if (NULL == pBestContainer)
             {
-                for (ImwPlatformWindowList::iterator it = m_lPlatformWindows.begin(); it != m_lPlatformWindows.end() && NULL == pBestContainer; ++it)
+                for (PlatformWindowList::iterator it = m_lPlatformWindows.begin(); it != m_lPlatformWindows.end() && NULL == pBestContainer; ++it)
                 {
                     pBestContainer = GetBestDocking(*it, oCursorPos, eBestDockOrientation, oHightlightPos, oHightlightSize);
                 }
@@ -1407,7 +1407,7 @@ namespace ImWindow
         }
     }
 
-    ImwContainer* ImwWindowManager::GetBestDocking(ImwPlatformWindow* pPlatformWindow, const ImVec2 oCursorPos, EDockOrientation& oOutOrientation, ImVec2& oOutAreaPos, ImVec2& oOutAreaSize)
+    Container* WindowManager::GetBestDocking(PlatformWindow* pPlatformWindow, const ImVec2 oCursorPos, EDockOrientation& oOutOrientation, ImVec2& oOutAreaPos, ImVec2& oOutAreaSize)
     {
         ImVec2 oPos = pPlatformWindow->GetPosition();
         ImVec2 oSize = pPlatformWindow->GetSize();
@@ -1416,7 +1416,7 @@ namespace ImWindow
         {
             ImVec2 oRectPos(oCursorPos.x - oPos.x, oCursorPos.y - oPos.y);
 
-            ImwContainer* pBestContainer = pPlatformWindow->GetContainer()->GetBestDocking(oRectPos, oOutOrientation, oOutAreaPos, oOutAreaSize);
+            Container* pBestContainer = pPlatformWindow->GetContainer()->GetBestDocking(oRectPos, oOutOrientation, oOutAreaPos, oOutAreaSize);
             if (NULL != pBestContainer)
             {
                 return pBestContainer;
@@ -1463,20 +1463,20 @@ namespace ImWindow
         return NULL;
     }
 
-    void ImwWindowManager::AddWindow(ImwWindow* pWindow)
+    void WindowManager::AddWindow(Window* pWindow)
     {
         m_lWindows.push_back(pWindow);
 
         m_lOrphanWindows.push_back(pWindow);
     }
 
-    void ImwWindowManager::RemoveWindow(ImwWindow* pWindow)
+    void WindowManager::RemoveWindow(Window* pWindow)
     {
         m_lWindows.remove(pWindow);
         m_lOrphanWindows.remove(pWindow);
     }
 
-    void ImwWindowManager::DestroyWindow(ImwWindow* pWindow)
+    void WindowManager::DestroyWindow(Window* pWindow)
     {
         if (NULL != pWindow && std::find(m_lToDestroyWindows.begin(), m_lToDestroyWindows.end(), pWindow) == m_lToDestroyWindows.end())
         {
@@ -1484,25 +1484,25 @@ namespace ImWindow
         }
     }
 
-    void ImwWindowManager::InternalDock(ImwWindow* pWindow, EDockOrientation eOrientation, ImwPlatformWindow* pToPlatformWindow)
+    void WindowManager::InternalDock(Window* pWindow, EDockOrientation eOrientation, PlatformWindow* pToPlatformWindow)
     {
         pToPlatformWindow->m_pContainer->Dock(pWindow, eOrientation);
     }
 
-    void ImwWindowManager::InternalDockTo(ImwWindow* pWindow, EDockOrientation eOrientation, ImwContainer* pToContainer)
+    void WindowManager::InternalDockTo(Window* pWindow, EDockOrientation eOrientation, Container* pToContainer)
     {
         pToContainer->Dock(pWindow, eOrientation);
     }
 
-    void ImwWindowManager::InternalDockWith(ImwWindow* pWindow, ImwWindow* pWithWindow, EDockOrientation eOrientation)
+    void WindowManager::InternalDockWith(Window* pWindow, Window* pWithWindow, EDockOrientation eOrientation)
     {
-        ImwContainer* pContainer = m_pMainPlatformWindow->HasWindow(pWithWindow);
+        Container* pContainer = m_pMainPlatformWindow->HasWindow(pWithWindow);
         if (NULL != pContainer)
         {
             pContainer->Dock(pWindow, eOrientation);
         }
 
-        for (ImwPlatformWindowList::iterator it = m_lPlatformWindows.begin(); it != m_lPlatformWindows.end(); ++it)
+        for (PlatformWindowList::iterator it = m_lPlatformWindows.begin(); it != m_lPlatformWindows.end(); ++it)
         {
             pContainer = (*it)->HasWindow(pWithWindow);
             if (NULL != pContainer)
@@ -1513,9 +1513,9 @@ namespace ImWindow
         }
     }
 
-    void ImwWindowManager::InternalFloat(ImwWindow* pWindow, ImVec2 oPosition, ImVec2 oSize)
+    void WindowManager::InternalFloat(Window* pWindow, ImVec2 oPosition, ImVec2 oSize)
     {
-        ImwPlatformWindow* pPlatformWindow = CreatePlatformWindow(false, m_pMainPlatformWindow, false);
+        PlatformWindow* pPlatformWindow = CreatePlatformWindow(false, m_pMainPlatformWindow, false);
         if (NULL != pPlatformWindow)
         {
             m_lPlatformWindows.push_back(pPlatformWindow);
@@ -1538,14 +1538,14 @@ namespace ImWindow
         }
     }
 
-    void ImwWindowManager::InternalUnDock(ImwWindow* pWindow)
+    void WindowManager::InternalUnDock(Window* pWindow)
     {
         if (m_pMainPlatformWindow->UnDock(pWindow))
         {
             return;
         }
 
-        for (ImwPlatformWindowList::iterator it = m_lPlatformWindows.begin(); it != m_lPlatformWindows.end(); ++it)
+        for (PlatformWindowList::iterator it = m_lPlatformWindows.begin(); it != m_lPlatformWindows.end(); ++it)
         {
             if ((*it)->UnDock(pWindow))
             {
@@ -1561,7 +1561,7 @@ namespace ImWindow
         m_pDragPlatformWindow->UnDock(pWindow);
     }
 
-    void ImwWindowManager::OnClosePlatformWindow(ImwPlatformWindow* pWindow)
+    void WindowManager::OnClosePlatformWindow(PlatformWindow* pWindow)
     {
         PlatformWindowAction* pAction = new PlatformWindowAction();
         pAction->m_iFlags = E_PLATFORM_WINDOW_ACTION_DESTOY;
@@ -1569,13 +1569,13 @@ namespace ImWindow
         m_lPlatformWindowActions.push_back(pAction);
     }
 
-    void ImwWindowManager::DrawWindowArea(ImwPlatformWindow* pWindow, const ImVec2& oPos, const ImVec2& oSize, const ImColor& oColor)
+    void WindowManager::DrawWindowArea(PlatformWindow* pWindow, const ImVec2& oPos, const ImVec2& oSize, const ImColor& oColor)
     {
         m_lDrawWindowAreas.push_back(DrawWindowAreaAction(pWindow, oPos, oSize, oColor));
     }
 
     // Static
-    ImwWindowManager* ImwWindowManager::GetInstance()
+    WindowManager* WindowManager::GetInstance()
     {
         return s_pInstance;
     }
