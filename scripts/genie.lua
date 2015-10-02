@@ -315,6 +315,7 @@ function exampleProject(_name)
 		linkoptions {
 			"-framework CoreFoundation",
 			"-framework Foundation",
+			"-framework Metal",
 			"-framework OpenGLES",
 			"-framework UIKit",
 			"-framework QuartzCore",

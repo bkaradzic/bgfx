@@ -46,14 +46,37 @@ namespace bgfx { namespace mtl
 		id<MTLRenderCommandEncoder> renderCommandEncoderWithDescriptor( MTLRenderPassDescriptor *_renderPassDescriptor){
 			return [m_obj renderCommandEncoderWithDescriptor:_renderPassDescriptor];
 		}
-		id<MTLComputeCommandEncoder> computeCommandEncoder() { return [m_obj computeCommandEncoder]; }
+
+		id<MTLComputeCommandEncoder> computeCommandEncoder()
+		{
+			return [m_obj computeCommandEncoder];
+		}
 
 		// Scheduling and Executing Commands
-		void enqueue() { [m_obj enqueue]; }
-		void commit() { [m_obj commit]; }
-		void addCompletedHandler(mtlCallback _cb, void* _data) { [m_obj addCompletedHandler:^(id <MTLCommandBuffer> cmdb){ _cb(_data); }]; }
-		void presentDrawable(id<MTLDrawable> _drawable) { [m_obj presentDrawable:_drawable]; }
-		void waitUntilCompleted() { [m_obj waitUntilCompleted]; }
+		void enqueue()
+		{
+			[m_obj enqueue];
+		}
+
+		void commit()
+		{
+			[m_obj commit];
+		}
+
+		void addCompletedHandler(mtlCallback _cb, void* _data)
+		{
+			[m_obj addCompletedHandler:^(id <MTLCommandBuffer>){ _cb(_data); }];
+		}
+
+		void presentDrawable(id<MTLDrawable> _drawable)
+		{
+			[m_obj presentDrawable:_drawable];
+		}
+
+		void waitUntilCompleted()
+		{
+			[m_obj waitUntilCompleted];
+		}
 	MTL_CLASS_END
 
 	MTL_CLASS(CommandQueue)
@@ -365,14 +388,14 @@ namespace bgfx { namespace mtl
 		ProgramMtl()
 			: m_vsh(NULL)
 			, m_fsh(NULL)
-			, m_processedUniforms(false)
 			, m_vshConstantBuffer(NULL)
 			, m_fshConstantBuffer(NULL)
-			, m_numPredefined(0)
 			, m_vshConstantBufferSize(0)
 			, m_vshConstantBufferAlignmentMask(0)
 			, m_fshConstantBufferSize(0)
 			, m_fshConstantBufferAlignmentMask(0)
+			, m_numPredefined(0)
+			, m_processedUniforms(false)
 		{
 		}
 
@@ -383,22 +406,22 @@ namespace bgfx { namespace mtl
 
 		StateCacheT<RenderPipelineState>	m_renderPipelineStateCache;
 
-		uint8_t m_used[Attrib::Count+1]; // dense
+		uint8_t  m_used[Attrib::Count+1]; // dense
 		uint32_t m_attributes[Attrib::Count]; // sparse
 		uint32_t m_instanceData[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT+1];
 
 		const ShaderMtl* m_vsh;
 		const ShaderMtl* m_fsh;
+		UniformBuffer* m_vshConstantBuffer;
+		UniformBuffer* m_fshConstantBuffer;
 
-		bool m_processedUniforms;
 		uint32_t m_vshConstantBufferSize;
 		uint32_t m_vshConstantBufferAlignmentMask;
 		uint32_t m_fshConstantBufferSize;
 		uint32_t m_fshConstantBufferAlignmentMask;
-		UniformBuffer* m_fshConstantBuffer;
-		UniformBuffer* m_vshConstantBuffer;
 		PredefinedUniform m_predefined[PredefinedUniform::Count*2];
 		uint8_t m_numPredefined;
+		bool m_processedUniforms;
 	};
 
 	struct TextureMtl
@@ -407,8 +430,8 @@ namespace bgfx { namespace mtl
 			: m_ptr(NULL)
 			, m_ptrStencil(NULL)
 			, m_sampler(NULL)
-			, m_numMips(0)
 			, m_flags(0)
+			, m_numMips(0)
 		{
 		}
 
@@ -433,10 +456,9 @@ namespace bgfx { namespace mtl
 	struct FrameBufferMtl
 	{
 		FrameBufferMtl()
-			: //m_swapChain(NULL) //TODO: swapchain
-			 m_denseIdx(UINT16_MAX)
-			, m_num(0)
+			: m_denseIdx(UINT16_MAX)
 			, m_pixelFormatHash(0)
+			, m_num(0)
 		{
 			m_depthHandle.idx = invalidHandle;
 		}
@@ -455,7 +477,7 @@ namespace bgfx { namespace mtl
 
 		TextureHandle m_colorHandle[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
 		TextureHandle m_depthHandle;
-		uint8_t  m_num;	// number of color handles
+		uint8_t m_num; // number of color handles
 	};
 
 

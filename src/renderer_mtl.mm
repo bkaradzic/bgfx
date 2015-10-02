@@ -327,12 +327,12 @@ namespace bgfx { namespace mtl
 	struct RendererContextMtl : public RendererContextI
 	{
 		RendererContextMtl()
-			  :	m_numWindows(1),
-				m_metalLayer(NULL),
-				m_drawable(NULL),
-				m_maxAnisotropy(1),
-				m_rtMsaa(false),
-				m_backBufferPixelFormatHash(0)
+			: m_metalLayer(NULL)
+			, m_backBufferPixelFormatHash(0)
+			, m_maxAnisotropy(1)
+			, m_numWindows(1)
+			, m_rtMsaa(false)
+			, m_drawable(NULL)
 		{
 			m_fbh.idx = invalidHandle;
 		}
@@ -686,7 +686,7 @@ namespace bgfx { namespace mtl
 		uint32_t length = width*height*4;
 		uint8_t* data = (uint8_t*)BX_ALLOC(g_allocator, length);
 
-        MTLRegion region = { 0, 0, 0, width, height, 1};
+		MTLRegion region = { { 0, 0, 0 }, { width, height, 1 } };
 
 		backBuffer.getBytes(data, 4*width, 0, region, 0, 0);
 
@@ -1715,15 +1715,23 @@ namespace bgfx { namespace mtl
 
 	void BufferMtl::create(uint32_t _size, void* _data, uint16_t _flags, uint16_t _stride, bool _vertex)
 	{
+		BX_UNUSED(_flags, _stride, _vertex);
+
 		m_size = _size;
-		if ( NULL == _data )
+		if (NULL == _data)
+		{
 			m_buffer = s_renderMtl->m_device.newBufferWithLength(_size, 0);
+		}
 		else
+		{
 			m_buffer = s_renderMtl->m_device.newBufferWithBytes(_data, _size, 0);
+		}
 	}
 
 	void BufferMtl::update(uint32_t _offset, uint32_t _size, void* _data, bool _discard)
 	{
+		BX_UNUSED(_discard);
+
 		memcpy( (uint8_t*)m_buffer.contents() + _offset, _data, _size);
 	}
 
@@ -1797,11 +1805,11 @@ namespace bgfx { namespace mtl
 					 );
 
 
-			const bool bufferOnly   = 0 != (_flags&BGFX_TEXTURE_RT_BUFFER_ONLY);
+//			const bool bufferOnly   = 0 != (_flags&BGFX_TEXTURE_RT_BUFFER_ONLY);
 			const bool computeWrite = 0 != (_flags&BGFX_TEXTURE_COMPUTE_WRITE);
-			const bool renderTarget = 0 != (_flags&BGFX_TEXTURE_RT_MASK);
+//			const bool renderTarget = 0 != (_flags&BGFX_TEXTURE_RT_MASK);
 			const bool srgb			= 0 != (_flags&BGFX_TEXTURE_SRGB) || imageContainer.m_srgb;
-			const uint32_t msaaQuality = bx::uint32_satsub( (_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
+//			const uint32_t msaaQuality = bx::uint32_satsub( (_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
 //			const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
 
 			MTLPixelFormat format = MTLPixelFormatInvalid;
@@ -1868,7 +1876,7 @@ namespace bgfx { namespace mtl
 							data = temp;
 						}
 
-						MTLRegion region = { 0, 0, 0, width, height, depth};
+						MTLRegion region = { { 0, 0, 0 }, { width, height, depth } };
 
 						uint32_t bytesPerRow;
 						uint32_t bytesPerImage;
@@ -1914,7 +1922,7 @@ namespace bgfx { namespace mtl
 
 	void TextureMtl::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
-		MTLRegion region = { _rect.m_x, _rect.m_y, _z, _rect.m_width, _rect.m_height, _depth};
+		MTLRegion region = { { _rect.m_x, _rect.m_y, _z }, { _rect.m_width, _rect.m_height, _depth } };
 
 		const uint32_t bpp    = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
 		const uint32_t rectpitch = _rect.m_width*bpp/8;
@@ -1990,6 +1998,8 @@ namespace bgfx { namespace mtl
 
 	void FrameBufferMtl::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat)
 	{
+		BX_UNUSED(_denseIdx, _nwh, _width, _height, _depthFormat);
+
 		BX_WARN(false, "FrameBufferMtl::create not yet implemented");
 	}
 
@@ -2012,6 +2022,8 @@ namespace bgfx { namespace mtl
 
 	void RendererContextMtl::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) BX_OVERRIDE
 	{
+		BX_UNUSED(_clearQuad);
+
 		m_commandBuffer = m_commandQueue.commandBuffer();
 		retain(m_commandBuffer); // keep alive to be useable at 'flip'
 
@@ -2638,7 +2650,7 @@ namespace bgfx { namespace mtl
 
 			static uint32_t maxGpuLatency = 0;
 			static double   maxGpuElapsed = 0.0f;
-			double elapsedGpuMs = 0.0;
+//			double elapsedGpuMs = 0.0;
 
 			//TODO: gputimer
 			/*			m_gpuTimer.end();
