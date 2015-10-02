@@ -342,6 +342,32 @@ struct OcornutImguiContext
 
 		m_wm = BX_NEW(m_allocator, WindowManager);
 		m_wm->Init();
+
+#if 0
+		{
+			class Window : public ImGuiWM::Window
+			{
+			public:
+				Window(const char* _title)
+					: ImGuiWM::Window()
+				{
+					SetTitle(_title);
+				}
+
+				virtual void OnGui() BX_OVERRIDE
+				{
+				}
+			};
+
+			Window* w0 = new Window("test");
+			Window* w1 = new Window("abcd");
+			Window* w2 = new Window("xyzw");
+
+			m_wm->Dock(w0);
+			m_wm->DockWith(w1, w0, ImGuiWM::E_DOCK_ORIENTATION_RIGHT);
+			m_wm->DockWith(w2, w1, ImGuiWM::E_DOCK_ORIENTATION_BOTTOM);
+		}
+#endif // 0
 	}
 
 	void destroy()
