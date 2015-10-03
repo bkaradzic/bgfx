@@ -143,18 +143,6 @@ protected:
 		PreUpdate();
 		Update();
 	}
-
-	virtual ImVec2 GetCursorPos() BX_OVERRIDE
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		return io.MousePos;
-	}
-
-	virtual bool IsLeftClickDown() BX_OVERRIDE
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		return io.MouseDown[0];
-	}
 };
 
 struct OcornutImguiContext
@@ -362,10 +350,12 @@ struct OcornutImguiContext
 			Window* w0 = new Window("test");
 			Window* w1 = new Window("abcd");
 			Window* w2 = new Window("xyzw");
+			Window* w3 = new Window("0123");
 
 			m_wm->Dock(w0);
 			m_wm->DockWith(w1, w0, ImGuiWM::E_DOCK_ORIENTATION_RIGHT);
 			m_wm->DockWith(w2, w1, ImGuiWM::E_DOCK_ORIENTATION_BOTTOM);
+			m_wm->DockWith(w3, w0, ImGuiWM::E_DOCK_ORIENTATION_BOTTOM);
 		}
 #endif // 0
 	}

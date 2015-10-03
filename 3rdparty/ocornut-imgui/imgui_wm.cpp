@@ -1333,6 +1333,12 @@ namespace ImGuiWM
         }
     }
 
+    static ImVec2 GetCursorPos()
+    {
+        ImGuiIO& io = ImGui::GetIO();
+        return io.MousePos;
+    }
+
     void WindowManager::StartDragWindow(Window* pWindow)
     {
         if (NULL == m_pDraggedWindow)
@@ -1391,7 +1397,8 @@ namespace ImGuiWM
             }
 
             //if (!((ImGuiState*)m_pDragPlatformWindow->m_pState)->IO.MouseDown[0])
-            if (!IsLeftClickDown())
+            ImGuiIO& io = ImGui::GetIO();
+            if (!io.MouseDown[0])
             {
                 if (NULL != pBestContainer)
                 {

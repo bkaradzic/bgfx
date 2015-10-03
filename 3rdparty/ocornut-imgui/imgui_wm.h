@@ -264,8 +264,6 @@ namespace ImGuiWM
     protected:
         virtual PlatformWindow*  CreatePlatformWindow(bool bMain,PlatformWindow* pParent,bool bDragWindow) = 0;
         virtual void InternalRun() = 0;
-        virtual ImVec2 GetCursorPos() = 0;
-        virtual bool IsLeftClickDown() = 0;
 
         void AddWindow(Window* pWindow);
         void RemoveWindow(Window* pWindow);
@@ -293,7 +291,7 @@ namespace ImGuiWM
         void StartDragWindow(Window* pWindow);
         void StopDragWindow();
         void UpdateDragWindow();
-        Container*  GetBestDocking(PlatformWindow* pPlatformWindow,const ImVec2 oCursorPos,EDockOrientation& oOutOrientation,ImVec2& oOutAreaPos,ImVec2& oOutAreaSize);
+        Container*GetBestDocking(PlatformWindow* pPlatformWindow,const ImVec2 oCursorPos,EDockOrientation& oOutOrientation,ImVec2& oOutAreaPos,ImVec2& oOutAreaSize);
 
         Config m_oConfig;
         PlatformWindow* m_pMainPlatformWindow;
