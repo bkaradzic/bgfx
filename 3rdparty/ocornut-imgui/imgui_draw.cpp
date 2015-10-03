@@ -713,7 +713,7 @@ void ImDrawList::PathRect(const ImVec2& a, const ImVec2& b, float rounding, int 
     r = ImMin(r, fabsf(b.x-a.x) * ( ((rounding_corners&(1|2))==(1|2)) || ((rounding_corners&(4|8))==(4|8)) ? 0.5f : 1.0f ) - 1.0f);
     r = ImMin(r, fabsf(b.y-a.y) * ( ((rounding_corners&(1|8))==(1|8)) || ((rounding_corners&(2|4))==(2|4)) ? 0.5f : 1.0f ) - 1.0f);
 
-    if (r == 0.0f || rounding_corners == 0)
+    if (r <= 0.0f || rounding_corners == 0)
     {
         PathLineTo(a);
         PathLineTo(ImVec2(b.x,a.y));
@@ -1453,6 +1453,18 @@ const ImWchar*   ImFontAtlas::GetGlyphRangesDefault()
     static const ImWchar ranges[] =
     {
         0x0020, 0x00FF, // Basic Latin + Latin Supplement
+        0,
+    };
+    return &ranges[0];
+}
+
+const ImWchar*  ImFontAtlas::GetGlyphRangesKorean()
+{
+    static const ImWchar ranges[] =
+    {
+        0x0020, 0x00FF, // Basic Latin + Latin Supplement
+        0x3131, 0x3163, // Korean alphabets
+        0xAC00, 0xD79D, // Korean characters
         0,
     };
     return &ranges[0];

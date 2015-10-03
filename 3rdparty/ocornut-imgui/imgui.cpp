@@ -188,7 +188,7 @@
  - 2015/03/17 (1.36) - renamed GetItemBoxMin()/GetItemBoxMax()/IsMouseHoveringBox() to GetItemRectMin()/GetItemRectMax()/IsMouseHoveringRect(). Kept inline redirection function (will obsolete).
  - 2015/03/15 (1.36) - renamed style.TreeNodeSpacing to style.IndentSpacing, ImGuiStyleVar_TreeNodeSpacing to ImGuiStyleVar_IndentSpacing
  - 2015/03/13 (1.36) - renamed GetWindowIsFocused() to IsWindowFocused(). Kept inline redirection function (will obsolete).
- - 2015/03/08 (1.35) - renamed style.ScrollBarWidth to style.ScrollbarWidth
+ - 2015/03/08 (1.35) - renamed style.ScrollBarWidth to style.ScrollbarWidth (casing)
  - 2015/02/27 (1.34) - renamed OpenNextNode(bool) to SetNextTreeNodeOpened(bool, ImGuiSetCond). Kept inline redirection function (will obsolete).
  - 2015/02/27 (1.34) - renamed ImGuiSetCondition_*** to ImGuiSetCond_***, and _FirstUseThisSession becomes _Once.
  - 2015/02/11 (1.32) - changed text input callback ImGuiTextEditCallback return type from void-->int. reserved for future use, return 0 for now.
@@ -3854,7 +3854,7 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
                 else if ((flags & ImGuiWindowFlags_Popup) != 0)
                     window->DrawList->AddRectFilled(window->Pos, window->Pos+window->Size, window->Color(ImGuiCol_WindowBg, bg_alpha), window_rounding);
                 else if ((flags & ImGuiWindowFlags_ChildWindow) != 0)
-                    window->DrawList->AddRectFilled(window->Pos, window->Pos+window->Size - window->ScrollbarSizes, window->Color(ImGuiCol_ChildWindowBg, bg_alpha), window_rounding, window->ScrollbarY ? (1|8) : (0xF));
+                    window->DrawList->AddRectFilled(window->Pos, window->Pos+window->Size, window->Color(ImGuiCol_ChildWindowBg, bg_alpha), window_rounding);
                 else
                     window->DrawList->AddRectFilled(window->Pos, window->Pos+window->Size, window->Color(ImGuiCol_WindowBg, bg_alpha), window_rounding);
             }
@@ -3973,7 +3973,7 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
     // We set this up after processing the resize grip so that our clip rectangle doesn't lag by a frame
     // Note that if our window is collapsed we will end up with a null clipping rectangle which is the correct behavior.
     const ImRect title_bar_rect = window->TitleBarRect();
-    ImRect clip_rect(title_bar_rect.Min.x+0.5f+window->WindowPadding.x*0.5f, title_bar_rect.Max.y+window->MenuBarHeight()+0.5f, window->Pos.x+window->Size.x+0.5f-window->WindowPadding.x*0.5f, window->Pos.y+window->Size.y+0.5f);
+    ImRect clip_rect(title_bar_rect.Min.x+0.5f+window->WindowPadding.x*0.5f, title_bar_rect.Max.y+window->MenuBarHeight()+0.5f, window->Pos.x+window->Size.x-window->WindowPadding.x*0.5f, window->Pos.y+window->Size.y);
     if ((flags & ImGuiWindowFlags_ChildWindow) && (flags & ImGuiWindowFlags_ShowBorders))
         clip_rect.Min += ImVec2(1.0f,1.0f);
     clip_rect.Max.x -= window->ScrollbarY ? style.ScrollbarSize : 0.0f;
@@ -4045,10 +4045,17 @@ static void Scrollbar(ImGuiWindow* window, bool horizontal)
     float other_scrollbar_size_w = other_scrollbar ? style.ScrollbarSize : 0.0f;
     const ImRect window_rect = window->Rect();
     ImRect bb = horizontal
-        ? ImRect(window->Pos.x + 1, window_rect.Max.y - style.ScrollbarSize, window_rect.Max.x - 1 - other_scrollbar_size_w, window_rect.Max.y)
-        : ImRect(window_rect.Max.x - style.ScrollbarSize, window->Pos.y + window->TitleBarHeight()+1, window_rect.Max.x, window_rect.Max.y - 1 - other_scrollbar_size_w);
-    window->DrawList->AddRectFilled(bb.Min, bb.Max, window->Color(ImGuiCol_ScrollbarBg));
-    bb.Expand(-3.0f);
+        ? ImRect(window->Pos.x, window_rect.Max.y - style.ScrollbarSize, window_rect.Max.x - other_scrollbar_size_w, window_rect.Max.y)
+        : ImRect(window_rect.Max.x - style.ScrollbarSize, window->Pos.y + window->TitleBarHeight(), window_rect.Max.x, window_rect.Max.y - other_scrollbar_size_w);
+
+    float window_rounding = (window->Flags & ImGuiWindowFlags_ChildWindow) ? style.ChildWindowRounding : style.WindowRounding;
+	int window_rounding_corners;
+	if (horizontal)
+	    window_rounding_corners = 8 | (other_scrollbar ? 0 : 4);
+	else
+	    window_rounding_corners = ((window->Flags & ImGuiWindowFlags_NoTitleBar) ? 2 : 0) | (other_scrollbar ? 0 : 4);
+	window->DrawList->AddRectFilled(bb.Min, bb.Max, window->Color(ImGuiCol_ScrollbarBg), window_rounding, window_rounding_corners);
+    bb.Reduce(ImVec2(ImClamp((float)(int)((bb.Max.x - bb.Min.x - 2.0f) * 0.5f), 0.0f, 3.0f), ImClamp((float)(int)((bb.Max.y - bb.Min.y - 2.0f) * 0.5f), 0.0f, 3.0f)));
 
     // V denote the main axis of the scrollbar
     float scrollbar_size_v = horizontal ? bb.GetWidth() : bb.GetHeight();
@@ -4142,9 +4149,9 @@ void ImGui::FocusWindow(ImGuiWindow* window)
         if (g.ActiveId != 0 && g.ActiveIdWindow && g.ActiveIdWindow->RootWindow != window)
             ImGui::SetActiveID(0);
 
-    if (g.Windows.back() == window)
+    // Bring to front
+    if ((window->Flags & ImGuiWindowFlags_NoBringToFrontOnFocus) || g.Windows.back() == window)
         return;
-
     for (int i = 0; i < g.Windows.Size; i++)
         if (g.Windows[i] == window)
         {
@@ -5814,8 +5821,8 @@ static void DataTypeApplyOpFromText(const char* buf, const char* initial_value_b
     }
     else if (data_type == ImGuiDataType_Float)
     {
-        if (!scalar_format)
-            scalar_format = "%f";
+        // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in
+        scalar_format = "%f";
         float* v = (float*)data_ptr;
         float ref_v = *v;
         if (op && sscanf(initial_value_buf, scalar_format, &ref_v) < 1)
@@ -7642,7 +7649,7 @@ bool ImGui::InputFloat(const char* label, float* v, float step, float step_fast,
     if (decimal_precision < 0)
         strcpy(display_format, "%f");      // Ideally we'd have a minimum decimal precision of 1 to visually denote that this is a float, while hiding non-significant digits? %f doesn't have a minimum of 1
     else
-        ImFormatString(display_format, 16, "%%%df", decimal_precision);
+        ImFormatString(display_format, 16, "%%.%df", decimal_precision);
     return InputScalarEx(label, ImGuiDataType_Float, (void*)v, (void*)(step>0.0f ? &step : NULL), (void*)(step_fast>0.0f ? &step_fast : NULL), display_format, extra_flags);
 }
 
