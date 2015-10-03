@@ -350,7 +350,8 @@ namespace entry
 					, XNClientWindow
 					, m_window[0]
 					, NULL
-					);
+					);printf("x0\n");
+
 
 			//
 			bgfx::x11SetDisplayWindow(m_display, m_window[0]);
@@ -478,6 +479,9 @@ namespace entry
 													m_eventQueue.postCharEvent(handle, len, utf8);
 												}
 												break;
+
+											default:
+												break;
 											}
 										}
 
@@ -509,6 +513,9 @@ namespace entry
 			thread.shutdown();
 
 			s_joystick.shutdown();
+
+			XDestroyIC(ic);
+			XCloseIM(im);
 
 			XUnmapWindow(m_display, m_window[0]);
 			XDestroyWindow(m_display, m_window[0]);
