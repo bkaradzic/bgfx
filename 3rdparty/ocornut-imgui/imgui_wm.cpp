@@ -15,7 +15,9 @@
 #include "imgui_internal.h"
 #include <algorithm>
 
-#define ImwSafeDelete(pObj) { if (NULL != pObj) { delete pObj; pObj = NULL; } }
+#define IMGUI_NEW(type)              new (ImGui::MemAlloc(sizeof(type) ) ) type
+#define IMGUI_DELETE(type, obj)      reinterpret_cast<type*>(obj)->~type(), ImGui::MemFree(obj)
+#define IMGUI_DELETE_NULL(type, obj) do { if (NULL != obj) { IMGUI_DELETE(type, obj); obj = NULL; } } while (0)
 
 namespace ImGuiWM
 {
@@ -117,19 +119,20 @@ namespace ImGuiWM
     {
         while (m_lWindows.begin() != m_lWindows.end())
         {
-            WindowManager::GetInstance()->RemoveWindow(*m_lWindows.begin());
-            delete *m_lWindows.begin();
+            Window* window = *m_lWindows.begin();
+            WindowManager::GetInstance()->RemoveWindow(window);
+            IMGUI_DELETE(Window, window);
             m_lWindows.erase(m_lWindows.begin());
         }
 
-        ImwSafeDelete(m_pSplits[0]);
-        ImwSafeDelete(m_pSplits[1]);
+        IMGUI_DELETE_NULL(Container, m_pSplits[0]);
+        IMGUI_DELETE_NULL(Container, m_pSplits[1]);
     }
 
     void Container::CreateSplits()
     {
-        m_pSplits[0] = new Container(this);
-        m_pSplits[1] = new Container(this);
+        m_pSplits[0] = IMGUI_NEW(Container)(this);
+        m_pSplits[1] = IMGUI_NEW(Container)(this);
     }
 
     void Container::Dock(Window* pWindow, EDockOrientation eOrientation)
@@ -284,6 +287,7 @@ namespace ImGuiWM
             }
             return true;
         }
+
         if (NULL != m_pSplits[0] && NULL != m_pSplits[1])
         {
             if (m_pSplits[0]->UnDock(pWindow))
@@ -294,22 +298,22 @@ namespace ImGuiWM
                     {
                         Container* pSplit = m_pSplits[1];
                         m_bVerticalSplit = pSplit->m_bVerticalSplit;
-                        ImwSafeDelete(m_pSplits[0]);
+                        IMGUI_DELETE_NULL(Container, m_pSplits[0]);
                         m_pSplits[0] = pSplit->m_pSplits[0];
                         m_pSplits[1] = pSplit->m_pSplits[1];
                         pSplit->m_pSplits[0] = NULL;
                         pSplit->m_pSplits[1] = NULL;
                         m_pSplits[0]->m_pParent = this;
                         m_pSplits[1]->m_pParent = this;
-                        ImwSafeDelete(pSplit);
+                        IMGUI_DELETE_NULL(Container, pSplit);
                     }
                     else
                     {
                         m_lWindows.insert(m_lWindows.end(), m_pSplits[1]->m_lWindows.begin(), m_pSplits[1]->m_lWindows.end());
                         m_pSplits[1]->m_lWindows.clear();
                         m_pSplits[1]->m_iActiveWindow = 0;
-                        ImwSafeDelete(m_pSplits[0]);
-                        ImwSafeDelete(m_pSplits[1]);
+                        IMGUI_DELETE_NULL(Container, m_pSplits[0]);
+                        IMGUI_DELETE_NULL(Container, m_pSplits[1]);
                     }
                 }
                 return true;
@@ -323,22 +327,22 @@ namespace ImGuiWM
                     {
                         Container* pSplit = m_pSplits[0];
                         m_bVerticalSplit = pSplit->m_bVerticalSplit;
-                        ImwSafeDelete(m_pSplits[1]);
+                        IMGUI_DELETE_NULL(Container, m_pSplits[1]);
                         m_pSplits[0] = pSplit->m_pSplits[0];
                         m_pSplits[1] = pSplit->m_pSplits[1];
                         pSplit->m_pSplits[0] = NULL;
                         pSplit->m_pSplits[1] = NULL;
                         m_pSplits[0]->m_pParent = this;
                         m_pSplits[1]->m_pParent = this;
-                        ImwSafeDelete(pSplit);
+                        IMGUI_DELETE_NULL(Container, pSplit);
                     }
                     else
                     {
                         m_lWindows.insert(m_lWindows.end(), m_pSplits[0]->m_lWindows.begin(), m_pSplits[0]->m_lWindows.end());
                         m_pSplits[0]->m_lWindows.clear();
                         m_pSplits[0]->m_iActiveWindow = 0;
-                        ImwSafeDelete(m_pSplits[0]);
-                        ImwSafeDelete(m_pSplits[1]);
+                        IMGUI_DELETE_NULL(Container, m_pSplits[0]);
+                        IMGUI_DELETE_NULL(Container, m_pSplits[1]);
                     }
                 }
                 return true;
@@ -911,7 +915,7 @@ namespace ImGuiWM
     {
         m_bMain = bMain;
         m_bIsDragWindow = bIsDragWindow;
-        m_pContainer = new Container(this);
+        m_pContainer = IMGUI_NEW(Container)(this);
         m_pState = NULL;
         m_pPreviousState = NULL;
 
@@ -924,7 +928,7 @@ namespace ImGuiWM
 
     PlatformWindow::~PlatformWindow()
     {
-        ImwSafeDelete(m_pContainer);
+        IMGUI_DELETE_NULL(Container, m_pContainer);
 
         SetState();
         if (!IsMain())
@@ -1039,8 +1043,8 @@ namespace ImGuiWM
 
     WindowManager::~WindowManager()
     {
-        ImwSafeDelete(m_pMainPlatformWindow);
-        ImwSafeDelete(m_pDragPlatformWindow);
+        IMGUI_DELETE_NULL(PlatformWindow, m_pMainPlatformWindow);
+        IMGUI_DELETE_NULL(PlatformWindow, m_pDragPlatformWindow);
         s_pInstance = 0;
         ImGui::Shutdown();
     }
@@ -1094,7 +1098,7 @@ namespace ImGuiWM
 
     void WindowManager::Dock(Window* pWindow, EDockOrientation eOrientation, PlatformWindow* pToPlatformWindow)
     {
-        DockAction* pAction = new DockAction();
+        DockAction* pAction = IMGUI_NEW(DockAction);
         pAction->m_bFloat = false;
         pAction->m_pWindow = pWindow;
         pAction->m_pWith = NULL;
@@ -1109,7 +1113,7 @@ namespace ImGuiWM
         IM_ASSERT(NULL != pContainer);
         if (NULL != pContainer)
         {
-            DockAction* pAction = new DockAction();
+            DockAction* pAction = IMGUI_NEW(DockAction);
             pAction->m_bFloat = false;
             pAction->m_pWindow = pWindow;
             pAction->m_pWith = NULL;
@@ -1122,7 +1126,7 @@ namespace ImGuiWM
 
     void WindowManager::DockWith(Window* pWindow, Window* pWithWindow, EDockOrientation eOrientation)
     {
-        DockAction* pAction = new DockAction();
+        DockAction* pAction = IMGUI_NEW(DockAction);
         pAction->m_bFloat = false;
         pAction->m_pWindow = pWindow;
         pAction->m_pWith = pWithWindow;
@@ -1132,7 +1136,7 @@ namespace ImGuiWM
 
     void WindowManager::Float(Window* pWindow, const ImVec2& oPosition, const ImVec2& oSize)
     {
-        DockAction* pAction = new DockAction();
+        DockAction* pAction = IMGUI_NEW(DockAction);
         pAction->m_bFloat = true;
         pAction->m_pWindow = pWindow;
         pAction->m_oPosition = oPosition;
@@ -1209,7 +1213,7 @@ namespace ImGuiWM
 
             InternalUnDock(pWindow);
 
-            delete pWindow;
+            IMGUI_DELETE(Window, pWindow);
         }
 
         while (m_lToDestroyPlatformWindows.begin() != m_lToDestroyPlatformWindows.end())
@@ -1217,7 +1221,7 @@ namespace ImGuiWM
             PlatformWindow* pPlatformWindow = *m_lToDestroyPlatformWindows.begin();
             m_lToDestroyPlatformWindows.remove(pPlatformWindow);
             m_lPlatformWindows.remove(pPlatformWindow);
-            delete pPlatformWindow;
+            IMGUI_DELETE(PlatformWindow, pPlatformWindow);
         }
 
         UpdateDragWindow();
@@ -1254,10 +1258,10 @@ namespace ImGuiWM
                 {
                     while (m_lPlatformWindows.begin() != m_lPlatformWindows.end())
                     {
-                        delete *m_lPlatformWindows.begin();
+                        IMGUI_DELETE(PlatformWindow, *m_lPlatformWindows.begin());
                         m_lPlatformWindows.erase(m_lPlatformWindows.begin());
                     }
-                    delete m_pMainPlatformWindow;
+                    IMGUI_DELETE(PlatformWindow, m_pMainPlatformWindow);
                     m_pMainPlatformWindow = NULL;
                     bFound = true;
                 }
@@ -1267,7 +1271,7 @@ namespace ImGuiWM
                     {
                         if (*it == pAction->m_pPlatformWindow)
                         {
-                            delete *it;
+                            IMGUI_DELETE(PlatformWindow, *it);
                             m_lPlatformWindows.erase(it);
                             bFound = true;
                             break;
@@ -1301,7 +1305,7 @@ namespace ImGuiWM
                 pAction->m_pPlatformWindow->SetSize(pAction->m_oSize);
             }
 
-            delete *m_lPlatformWindowActions.begin();
+            IMGUI_DELETE(PlatformWindowAction, *m_lPlatformWindowActions.begin());
             m_lPlatformWindowActions.erase(m_lPlatformWindowActions.begin());
         }
     }
@@ -1336,7 +1340,7 @@ namespace ImGuiWM
 
             m_lOrphanWindows.remove(pAction->m_pWindow);
 
-            delete pAction;
+            IMGUI_DELETE(PlatformWindowAction, pAction);
             m_lDockActions.erase(m_lDockActions.begin());
         }
     }
@@ -1435,7 +1439,7 @@ namespace ImGuiWM
         {
             m_pDraggedWindow = pWindow;
 
-            PlatformWindowAction* pAction = new PlatformWindowAction();
+            PlatformWindowAction* pAction = IMGUI_NEW(PlatformWindowAction);
             pAction->m_pPlatformWindow = m_pDragPlatformWindow;
             pAction->m_iFlags = E_PLATFORM_WINDOW_ACTION_SHOW | E_PLATFORM_WINDOW_ACTION_SET_POSITION | E_PLATFORM_WINDOW_ACTION_SET_SIZE;
             ImVec2 oCursorPos = GetCursorPos();
@@ -1450,7 +1454,7 @@ namespace ImGuiWM
 
     void WindowManager::StopDragWindow()
     {
-        PlatformWindowAction* pAction = new PlatformWindowAction();
+        PlatformWindowAction* pAction = IMGUI_NEW(PlatformWindowAction);
         pAction->m_pPlatformWindow = m_pDragPlatformWindow;
         pAction->m_iFlags = E_PLATFORM_WINDOW_ACTION_HIDE;
         m_pDragPlatformWindow->Hide();
@@ -1660,7 +1664,7 @@ namespace ImGuiWM
 
     void WindowManager::OnClosePlatformWindow(PlatformWindow* pWindow)
     {
-        PlatformWindowAction* pAction = new PlatformWindowAction();
+        PlatformWindowAction* pAction = IMGUI_NEW(PlatformWindowAction);
         pAction->m_iFlags = E_PLATFORM_WINDOW_ACTION_DESTOY;
         pAction->m_pPlatformWindow = pWindow;
         m_lPlatformWindowActions.push_back(pAction);
