@@ -247,7 +247,7 @@ namespace ImGuiWM
         PlatformWindow* GetCurrentPlatformWindow();
         PlatformWindow* GetWindowParent(Window* pWindow);
 
-        void  Log(const char* pFormat, ...);
+        void Log(const char* pFormat, ...);
         virtual void LogFormatted(const char* pStr) = 0;;
 
         static WindowManager* GetInstance();
@@ -282,7 +282,7 @@ namespace ImGuiWM
         void StartDragWindow(Window* pWindow);
         void StopDragWindow();
         void UpdateDragWindow();
-        Container*GetBestDocking(PlatformWindow* pPlatformWindow,const ImVec2 oCursorPos,EDockOrientation& oOutOrientation,ImVec2& oOutAreaPos,ImVec2& oOutAreaSize);
+        Container* GetBestDocking(PlatformWindow* pPlatformWindow,const ImVec2 oCursorPos,EDockOrientation& oOutOrientation,ImVec2& oOutAreaPos,ImVec2& oOutAreaSize);
 
         Config m_oConfig;
         PlatformWindow* m_pMainPlatformWindow;
