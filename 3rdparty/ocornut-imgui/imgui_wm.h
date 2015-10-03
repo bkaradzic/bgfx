@@ -182,15 +182,6 @@ namespace ImGuiWM
         friend class PlatformWindow;
         friend class Container;
 
-        enum EPlatformWindowAction
-        {
-            E_PLATFORM_WINDOW_ACTION_DESTOY       =  1,
-            E_PLATFORM_WINDOW_ACTION_SHOW         =  2,
-            E_PLATFORM_WINDOW_ACTION_HIDE         =  4,
-            E_PLATFORM_WINDOW_ACTION_SET_POSITION =  8,
-            E_PLATFORM_WINDOW_ACTION_SET_SIZE     = 16,
-        };
-
         struct PlatformWindowAction
         {
             PlatformWindow* m_pPlatformWindow;
