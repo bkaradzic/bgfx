@@ -338,6 +338,20 @@ namespace entry
 			XMapWindow(m_display, m_window[0]);
 			XStoreName(m_display, m_window[0], "BGFX");
 
+			XIM im;
+			im = XOpenIM(m_display, NULL, NULL, NULL);
+
+			XIC ic;
+			ic = XCreateIC(im
+					, XNInputStyle
+					, 0
+					| XIMPreeditNothing
+					| XIMStatusNothing
+					, XNClientWindow
+					, m_window[0]
+					, NULL
+					);
+
 			//
 			bgfx::x11SetDisplayWindow(m_display, m_window[0]);
 
@@ -449,10 +463,27 @@ namespace entry
 
 								default:
 									{
+										WindowHandle handle = findHandle(xkey.window);
+										if (KeyPress == event.type)
+										{
+											Status status = 0;
+											uint8_t utf8[4];
+											int len = Xutf8LookupString(ic, &xkey, (char*)utf8, sizeof(utf8), &keysym, &status);
+											switch (status)
+											{
+											case XLookupChars:
+											case XLookupBoth:
+												if (0 != len)
+												{
+													m_eventQueue.postCharEvent(handle, len, utf8);
+												}
+												break;
+											}
+										}
+
 										Key::Enum key = fromXk(keysym);
 										if (Key::None != key)
 										{
-											WindowHandle handle = findHandle(xkey.window);
 											m_eventQueue.postKeyEvent(handle, key, m_modifiers, KeyPress == event.type);
 										}
 									}
