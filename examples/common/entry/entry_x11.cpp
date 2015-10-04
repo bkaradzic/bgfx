@@ -299,11 +299,10 @@ namespace entry
 			m_visual = DefaultVisual(m_display, screen);
 			m_root   = RootWindow(m_display, screen);
 
-			XSetWindowAttributes windowAttrs;
-			memset(&windowAttrs, 0, sizeof(windowAttrs) );
-			windowAttrs.background_pixmap = 0;
-			windowAttrs.border_pixel = 0;
-			windowAttrs.event_mask = 0
+			memset(&m_windowAttrs, 0, sizeof(m_windowAttrs) );
+			m_windowAttrs.background_pixmap = 0;
+			m_windowAttrs.border_pixel = 0;
+			m_windowAttrs.event_mask = 0
 					| ButtonPressMask
 					| ButtonReleaseMask
 					| ExposureMask
@@ -322,7 +321,7 @@ namespace entry
 									, InputOutput
 									, m_visual
 									, CWBorderPixel|CWEventMask
-									, &windowAttrs
+									, &m_windowAttrs
 									);
 
 			// Clear window to black.
@@ -531,21 +530,6 @@ namespace entry
 
 		void createWindow(WindowHandle _handle, Msg* msg)
 		{
-			XSetWindowAttributes windowAttrs;
-			memset(&windowAttrs, 0, sizeof(windowAttrs) );
-			windowAttrs.background_pixmap = 0;
-			windowAttrs.border_pixel = 0;
-			windowAttrs.event_mask = 0
-					| ButtonPressMask
-					| ButtonReleaseMask
-					| ExposureMask
-					| KeyPressMask
-					| KeyReleaseMask
-					| PointerMotionMask
-					| ResizeRedirectMask
-					| StructureNotifyMask
-					;
-
 			Window window = XCreateWindow(m_display
 									, m_root
 									, msg->m_x
@@ -557,7 +541,7 @@ namespace entry
 									, InputOutput
 									, m_visual
 									, CWBorderPixel|CWEventMask
-									, &windowAttrs
+									, &m_windowAttrs
 									);
 			m_window[_handle.idx] = window;
 
@@ -620,6 +604,8 @@ namespace entry
 		int32_t m_depth;
 		Visual* m_visual;
 		Window  m_root;
+
+		XSetWindowAttributes m_windowAttrs;
 
 		Display* m_display;
 		Window m_window[ENTRY_CONFIG_MAX_WINDOWS];
@@ -686,26 +672,23 @@ namespace entry
 
 	void setWindowPos(WindowHandle _handle, int32_t _x, int32_t _y)
 	{
-		BX_UNUSED(_handle, _x, _y);
+		Display* display = s_ctx.m_display;
+		Window   window  = s_ctx.m_window[_handle.idx];
+		XMoveWindow(display, window, _x, _y);
 	}
 
 	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height)
 	{
-		BX_UNUSED(_handle);
-		XResizeRequestEvent ev;
-		ev.type = ResizeRequest;
-		ev.serial = 0;
-		ev.send_event = true;
-		ev.display = s_ctx.m_display;
-		ev.window = s_ctx.m_window[0];
-		ev.width = (int)_width;
-		ev.height = (int)_height;
-		XSendEvent(s_ctx.m_display, s_ctx.m_window[0], false, ResizeRedirectMask, (XEvent*)&ev);
+		Display* display = s_ctx.m_display;
+		Window   window  = s_ctx.m_window[_handle.idx];
+		XResizeWindow(display, window, int32_t(_width), int32_t(_height) );
 	}
 
 	void setWindowTitle(WindowHandle _handle, const char* _title)
 	{
-		XStoreName(s_ctx.m_display, s_ctx.m_window[_handle.idx], _title);
+		Display* display = s_ctx.m_display;
+		Window   window  = s_ctx.m_window[_handle.idx];
+		XStoreName(display, window, _title);
 	}
 
 	void toggleWindowFrame(WindowHandle _handle)
