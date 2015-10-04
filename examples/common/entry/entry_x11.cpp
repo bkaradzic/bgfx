@@ -349,8 +349,7 @@ namespace entry
 					, XNClientWindow
 					, m_window[0]
 					, NULL
-					);printf("x0\n");
-
+					);
 
 			//
 			bgfx::x11SetDisplayWindow(m_display, m_window[0]);
