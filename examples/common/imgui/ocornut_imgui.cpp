@@ -128,7 +128,7 @@ public:
 protected:
 	virtual ImGuiWM::PlatformWindow* CreatePlatformWindow(bool _main, ImGuiWM::PlatformWindow* _parent, bool _isDragWindow) BX_OVERRIDE
 	{
-		PlatformWindow* window = new PlatformWindow(_main, _isDragWindow);
+		PlatformWindow* window = new (ImGui::MemAlloc(sizeof(PlatformWindow) ) ) PlatformWindow(_main, _isDragWindow);
 		window->Init(_parent);
 		return static_cast<ImGuiWM::PlatformWindow*>(window);
 	}

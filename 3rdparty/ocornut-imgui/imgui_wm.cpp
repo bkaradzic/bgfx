@@ -17,7 +17,7 @@
 
 #define IMGUI_NEW(type)              new (ImGui::MemAlloc(sizeof(type) ) ) type
 #define IMGUI_DELETE(type, obj)      reinterpret_cast<type*>(obj)->~type(), ImGui::MemFree(obj)
-#define IMGUI_DELETE_NULL(type, obj) do { if (NULL != obj) { IMGUI_DELETE(type, obj); obj = NULL; } } while (0)
+#define IMGUI_DELETE_NULL(type, obj) for (;;) { if (NULL != obj) { IMGUI_DELETE(type, obj); obj = NULL; } break; }
 
 namespace ImGuiWM
 {
