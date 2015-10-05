@@ -164,7 +164,7 @@ namespace bgfx
 		"RGB10A2",    // RGB10A2
 		"R11G11B10F", // R11G11B10F
 
-		"RGB8",      // RGB8
+		"RGB8",       // RGB8
 
 		"<unknown>",  // UnknownDepth
 		"D16",        // D16

@@ -79,6 +79,7 @@ typedef int64_t  GLint64;
 typedef uint64_t GLuint64;
 #		define GL_PROGRAM_BINARY_LENGTH GL_PROGRAM_BINARY_LENGTH_OES
 #		define GL_HALF_FLOAT GL_HALF_FLOAT_OES
+#		define GL_RGB8 GL_RGB8_OES
 #		define GL_RGBA8 GL_RGBA8_OES
 #		define GL_UNSIGNED_INT_2_10_10_10_REV GL_UNSIGNED_INT_2_10_10_10_REV_EXT
 #		define GL_TEXTURE_3D GL_TEXTURE_3D_OES
@@ -292,10 +293,6 @@ typedef uint64_t GLuint64;
 #ifndef GL_RGB10_A2
 #	define GL_RGB10_A2 0x8059
 #endif // GL_RGB10_A2
-
-#ifndef GL_RGB8
-#	define GL_RGB8 0x8051
-#endif // GL_RGB8
 
 #ifndef GL_RGBA16
 #	define GL_RGBA16 0x805B
