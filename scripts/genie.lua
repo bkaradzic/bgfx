@@ -305,9 +305,11 @@ function exampleProject(_name)
 		}
 
 	configuration { "osx" }
-		links {
-			"Cocoa.framework",
-			"OpenGL.framework",
+		linkoptions {
+			"-framework Cocoa",
+			"-framework Metal",
+			"-framework QuartzCore",
+			"-framework OpenGL",
 		}
 
 	configuration { "ios*" }

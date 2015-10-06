@@ -242,82 +242,80 @@ namespace bgfx { namespace mtl
 		MTLPixelFormat m_fmtSrgb;
 	};
 
-	//TODO: add new ios/osx formats
-	//TODO: add caps for format support
 	static TextureFormatInfo s_textureFormat[] =
 	{
-		{ MTLPixelFormatInvalid,          MTLPixelFormatInvalid              }, // BC1
-		{ MTLPixelFormatInvalid,          MTLPixelFormatInvalid              }, // BC2
-		{ MTLPixelFormatInvalid,          MTLPixelFormatInvalid              }, // BC3
-		{ MTLPixelFormatInvalid,          MTLPixelFormatInvalid              }, // BC4
-		{ MTLPixelFormatInvalid,          MTLPixelFormatInvalid              }, // BC5
-		{ MTLPixelFormatInvalid,          MTLPixelFormatInvalid              }, // BC6H
-		{ MTLPixelFormatInvalid,          MTLPixelFormatInvalid              }, // BC7
-		{ MTLPixelFormatInvalid,          MTLPixelFormatInvalid              }, // ETC1
-		{ MTLPixelFormatETC2_RGB8,        MTLPixelFormatETC2_RGB8_sRGB       }, // ETC2
-		{ MTLPixelFormatEAC_RGBA8,        MTLPixelFormatEAC_RGBA8_sRGB       }, // ETC2A
-		{ MTLPixelFormatETC2_RGB8A1,      MTLPixelFormatETC2_RGB8A1_sRGB     }, // ETC2A1
-		{ MTLPixelFormatPVRTC_RGB_2BPP,   MTLPixelFormatPVRTC_RGB_2BPP_sRGB  }, // PTC12
-		{ MTLPixelFormatPVRTC_RGB_4BPP,   MTLPixelFormatPVRTC_RGB_4BPP_sRGB  }, // PTC14
-		{ MTLPixelFormatPVRTC_RGBA_2BPP,  MTLPixelFormatPVRTC_RGBA_2BPP_sRGB }, // PTC12A
-		{ MTLPixelFormatPVRTC_RGBA_4BPP,  MTLPixelFormatPVRTC_RGBA_4BPP_sRGB }, // PTC14A
-		{ MTLPixelFormatInvalid,          MTLPixelFormatInvalid              }, // PTC22
-		{ MTLPixelFormatInvalid,          MTLPixelFormatInvalid              }, // PTC24
-		{ MTLPixelFormatInvalid,          MTLPixelFormatInvalid              }, // Unknown
-		{ MTLPixelFormatInvalid,          MTLPixelFormatInvalid              }, // R1
-		{ MTLPixelFormatA8Unorm,          MTLPixelFormatInvalid              }, // A8
-		{ MTLPixelFormatR8Unorm,          MTLPixelFormatR8Unorm_sRGB         }, // R8
-		{ MTLPixelFormatR8Sint,           MTLPixelFormatInvalid              }, // R8I
-		{ MTLPixelFormatR8Uint,           MTLPixelFormatInvalid              }, // R8U
-		{ MTLPixelFormatR8Snorm,          MTLPixelFormatInvalid              }, // R8S
-		{ MTLPixelFormatR16Unorm,         MTLPixelFormatInvalid              }, // R16
-		{ MTLPixelFormatR16Sint,          MTLPixelFormatInvalid              }, // R16I
-		{ MTLPixelFormatR16Uint,          MTLPixelFormatInvalid              }, // R16U
-		{ MTLPixelFormatR16Float,         MTLPixelFormatInvalid              }, // R16F
-		{ MTLPixelFormatR16Snorm,         MTLPixelFormatInvalid              }, // R16S
-		{ MTLPixelFormatR32Sint,          MTLPixelFormatInvalid              }, // R32I
-		{ MTLPixelFormatR32Uint,          MTLPixelFormatInvalid              }, // R32U
-		{ MTLPixelFormatR32Float,         MTLPixelFormatInvalid              }, // R32F
-		{ MTLPixelFormatRG8Unorm,         MTLPixelFormatRG8Unorm_sRGB        }, // RG8
-		{ MTLPixelFormatRG8Sint,          MTLPixelFormatInvalid              }, // RG8I
-		{ MTLPixelFormatRG8Uint,          MTLPixelFormatInvalid              }, // RG8U
-		{ MTLPixelFormatRG8Snorm,         MTLPixelFormatInvalid              }, // RG8S
-		{ MTLPixelFormatRG16Unorm,        MTLPixelFormatInvalid              }, // RG16
-		{ MTLPixelFormatRG16Sint,         MTLPixelFormatInvalid              }, // RG16I
-		{ MTLPixelFormatRG16Uint,         MTLPixelFormatInvalid              }, // RG16U
-		{ MTLPixelFormatRG16Float,        MTLPixelFormatInvalid              }, // RG16F
-		{ MTLPixelFormatRG16Snorm,        MTLPixelFormatInvalid              }, // RG16S
-		{ MTLPixelFormatRG32Sint,         MTLPixelFormatInvalid              }, // RG32I
-		{ MTLPixelFormatRG32Uint,         MTLPixelFormatInvalid              }, // RG32U
-		{ MTLPixelFormatRG32Float,        MTLPixelFormatInvalid              }, // RG32F
-		{ MTLPixelFormatRGB9E5Float,      MTLPixelFormatInvalid              }, // RGB9E5F
-		{ MTLPixelFormatBGRA8Unorm,       MTLPixelFormatBGRA8Unorm_sRGB      }, // BGRA8
-		{ MTLPixelFormatRGBA8Unorm,       MTLPixelFormatRGBA8Unorm_sRGB      }, // RGBA8
-		{ MTLPixelFormatRGBA8Sint,        MTLPixelFormatInvalid              }, // RGBA8I
-		{ MTLPixelFormatRGBA8Uint,        MTLPixelFormatInvalid              }, // RGBA8U
-		{ MTLPixelFormatRGBA8Snorm,       MTLPixelFormatInvalid              }, // RGBA8S
-		{ MTLPixelFormatRGBA16Unorm,      MTLPixelFormatInvalid              }, // RGBA16
-		{ MTLPixelFormatRGBA16Sint,       MTLPixelFormatInvalid              }, // RGBA16I
-		{ MTLPixelFormatRGBA16Uint,       MTLPixelFormatInvalid              }, // RGBA16I
-		{ MTLPixelFormatRGBA16Float,      MTLPixelFormatInvalid              }, // RGBA16F
-		{ MTLPixelFormatRGBA16Snorm,      MTLPixelFormatInvalid              }, // RGBA16S
-		{ MTLPixelFormatRGBA32Sint,       MTLPixelFormatInvalid              }, // RGBA32I
-		{ MTLPixelFormatRGBA32Uint,       MTLPixelFormatInvalid              }, // RGBA32U
-		{ MTLPixelFormatRGBA32Float,      MTLPixelFormatInvalid              }, // RGBA32F
-		{ MTLPixelFormatB5G6R5Unorm,      MTLPixelFormatInvalid              }, // R5G6B5
-		{ MTLPixelFormatABGR4Unorm,       MTLPixelFormatInvalid              }, // RGBA4
-		{ MTLPixelFormatA1BGR5Unorm,      MTLPixelFormatInvalid              }, // RGB5A1
-		{ MTLPixelFormatRGB10A2Unorm,     MTLPixelFormatInvalid              }, // RGB10A2
-		{ MTLPixelFormatRG11B10Float,     MTLPixelFormatInvalid              }, // R11G11B10F
-		{ MTLPixelFormatInvalid,          MTLPixelFormatInvalid              }, // UnknownDepth
-		{ MTLPixelFormatDepth32Float,     MTLPixelFormatInvalid              }, // D16
-		{ MTLPixelFormatDepth32Float,     MTLPixelFormatInvalid              }, // D24
-		{ MTLPixelFormatInvalid,          MTLPixelFormatInvalid              }, // D24S8
-		{ MTLPixelFormatDepth32Float,     MTLPixelFormatInvalid              }, // D32
-		{ MTLPixelFormatDepth32Float,     MTLPixelFormatInvalid              }, // D16F
-		{ MTLPixelFormatDepth32Float,     MTLPixelFormatInvalid              }, // D24F
-		{ MTLPixelFormatDepth32Float,     MTLPixelFormatInvalid              }, // D32F
-		{ MTLPixelFormatStencil8,         MTLPixelFormatInvalid              }, // D0S8
+		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // BC1
+		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // BC2
+		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // BC3
+		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // BC4
+		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // BC5
+		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // BC6H
+		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // BC7
+		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // ETC1
+		{ 180 /*MTLPixelFormatETC2_RGB8*/,       181 /*MTLPixelFormatETC2_RGB8_sRGB*/       }, // ETC2
+		{ 178 /*MTLPixelFormatEAC_RGBA8*/,       179 /*MTLPixelFormatEAC_RGBA8_sRGB*/       }, // ETC2A
+		{ 182 /*MTLPixelFormatETC2_RGB8A1*/,     183 /*MTLPixelFormatETC2_RGB8A1_sRGB*/     }, // ETC2A1
+		{ 160 /*MTLPixelFormatPVRTC_RGB_2BPP*/,  161 /*MTLPixelFormatPVRTC_RGB_2BPP_sRGB*/  }, // PTC12
+		{ 162 /*MTLPixelFormatPVRTC_RGB_4BPP*/,  163 /*MTLPixelFormatPVRTC_RGB_4BPP_sRGB*/  }, // PTC14
+		{ 164 /*MTLPixelFormatPVRTC_RGBA_2BPP*/, 165 /*MTLPixelFormatPVRTC_RGBA_2BPP_sRGB*/ }, // PTC12A
+		{ 166 /*MTLPixelFormatPVRTC_RGBA_4BPP*/, 167 /*MTLPixelFormatPVRTC_RGBA_4BPP_sRGB*/ }, // PTC14A
+		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // PTC22
+		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // PTC24
+		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // Unknown
+		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // R1
+		{ MTLPixelFormatA8Unorm,                 MTLPixelFormatInvalid                      }, // A8
+		{ MTLPixelFormatR8Unorm,                 11 /*MTLPixelFormatR8Unorm_sRGB*/          }, // R8
+		{ MTLPixelFormatR8Sint,                  MTLPixelFormatInvalid                      }, // R8I
+		{ MTLPixelFormatR8Uint,                  MTLPixelFormatInvalid                      }, // R8U
+		{ MTLPixelFormatR8Snorm,                 MTLPixelFormatInvalid                      }, // R8S
+		{ MTLPixelFormatR16Unorm,                MTLPixelFormatInvalid                      }, // R16
+		{ MTLPixelFormatR16Sint,                 MTLPixelFormatInvalid                      }, // R16I
+		{ MTLPixelFormatR16Uint,                 MTLPixelFormatInvalid                      }, // R16U
+		{ MTLPixelFormatR16Float,                MTLPixelFormatInvalid                      }, // R16F
+		{ MTLPixelFormatR16Snorm,                MTLPixelFormatInvalid                      }, // R16S
+		{ MTLPixelFormatR32Sint,                 MTLPixelFormatInvalid                      }, // R32I
+		{ MTLPixelFormatR32Uint,                 MTLPixelFormatInvalid                      }, // R32U
+		{ MTLPixelFormatR32Float,                MTLPixelFormatInvalid                      }, // R32F
+		{ MTLPixelFormatRG8Unorm,                31 /*MTLPixelFormatRG8Unorm_sRGB*/         }, // RG8
+		{ MTLPixelFormatRG8Sint,                 MTLPixelFormatInvalid                      }, // RG8I
+		{ MTLPixelFormatRG8Uint,                 MTLPixelFormatInvalid                      }, // RG8U
+		{ MTLPixelFormatRG8Snorm,                MTLPixelFormatInvalid                      }, // RG8S
+		{ MTLPixelFormatRG16Unorm,               MTLPixelFormatInvalid                      }, // RG16
+		{ MTLPixelFormatRG16Sint,                MTLPixelFormatInvalid                      }, // RG16I
+		{ MTLPixelFormatRG16Uint,                MTLPixelFormatInvalid                      }, // RG16U
+		{ MTLPixelFormatRG16Float,               MTLPixelFormatInvalid                      }, // RG16F
+		{ MTLPixelFormatRG16Snorm,               MTLPixelFormatInvalid                      }, // RG16S
+		{ MTLPixelFormatRG32Sint,                MTLPixelFormatInvalid                      }, // RG32I
+		{ MTLPixelFormatRG32Uint,                MTLPixelFormatInvalid                      }, // RG32U
+		{ MTLPixelFormatRG32Float,               MTLPixelFormatInvalid                      }, // RG32F
+		{ MTLPixelFormatRGB9E5Float,             MTLPixelFormatInvalid                      }, // RGB9E5F
+		{ MTLPixelFormatBGRA8Unorm,              MTLPixelFormatBGRA8Unorm_sRGB              }, // BGRA8
+		{ MTLPixelFormatRGBA8Unorm,              MTLPixelFormatRGBA8Unorm_sRGB              }, // RGBA8
+		{ MTLPixelFormatRGBA8Sint,               MTLPixelFormatInvalid                      }, // RGBA8I
+		{ MTLPixelFormatRGBA8Uint,               MTLPixelFormatInvalid                      }, // RGBA8U
+		{ MTLPixelFormatRGBA8Snorm,              MTLPixelFormatInvalid                      }, // RGBA8S
+		{ MTLPixelFormatRGBA16Unorm,             MTLPixelFormatInvalid                      }, // RGBA16
+		{ MTLPixelFormatRGBA16Sint,              MTLPixelFormatInvalid                      }, // RGBA16I
+		{ MTLPixelFormatRGBA16Uint,              MTLPixelFormatInvalid                      }, // RGBA16I
+		{ MTLPixelFormatRGBA16Float,             MTLPixelFormatInvalid                      }, // RGBA16F
+		{ MTLPixelFormatRGBA16Snorm,             MTLPixelFormatInvalid                      }, // RGBA16S
+		{ MTLPixelFormatRGBA32Sint,              MTLPixelFormatInvalid                      }, // RGBA32I
+		{ MTLPixelFormatRGBA32Uint,              MTLPixelFormatInvalid                      }, // RGBA32U
+		{ MTLPixelFormatRGBA32Float,             MTLPixelFormatInvalid                      }, // RGBA32F
+		{ 40 /*MTLPixelFormatB5G6R5Unorm*/,      MTLPixelFormatInvalid                      }, // R5G6B5
+		{ 42 /*MTLPixelFormatABGR4Unorm*/,       MTLPixelFormatInvalid                      }, // RGBA4
+		{ 41 /*MTLPixelFormatA1BGR5Unorm*/,      MTLPixelFormatInvalid                      }, // RGB5A1
+		{ MTLPixelFormatRGB10A2Unorm,            MTLPixelFormatInvalid                      }, // RGB10A2
+		{ MTLPixelFormatRG11B10Float,            MTLPixelFormatInvalid                      }, // R11G11B10F
+		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // UnknownDepth
+		{ MTLPixelFormatDepth32Float,            MTLPixelFormatInvalid                      }, // D16
+		{ MTLPixelFormatDepth32Float,            MTLPixelFormatInvalid                      }, // D24
+		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // D24S8
+		{ MTLPixelFormatDepth32Float,            MTLPixelFormatInvalid                      }, // D32
+		{ MTLPixelFormatDepth32Float,            MTLPixelFormatInvalid                      }, // D16F
+		{ MTLPixelFormatDepth32Float,            MTLPixelFormatInvalid                      }, // D24F
+		{ MTLPixelFormatDepth32Float,            MTLPixelFormatInvalid                      }, // D32F
+		{ MTLPixelFormatStencil8,                MTLPixelFormatInvalid                      }, // D0S8
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
@@ -343,7 +341,9 @@ namespace bgfx { namespace mtl
 
 		bool init()
 		{
-			if ( NSClassFromString(@"CAMetalLayer") != nil)
+			BX_TRACE("Init.");
+
+			if (NULL != NSClassFromString(@"CAMetalLayer") )
 			{
 				//on iOS we need the layer as CAmetalLayer
 #if BX_PLATFORM_IOS
@@ -371,7 +371,8 @@ namespace bgfx { namespace mtl
 				}
 			}
 
-			if (m_device==NULL || m_metalLayer==nil)
+			if (NULL == m_device
+			||  NULL == m_metalLayer)
 			{
 				BX_WARN(NULL != m_device, "Unable to create Metal device.");
 				return false;
@@ -382,11 +383,11 @@ namespace bgfx { namespace mtl
 			m_commandQueue = m_device.newCommandQueue();
 			BGFX_FATAL(NULL != m_commandQueue, Fatal::UnableToInitialize, "Unable to create Metal device.");
 
-			m_renderPipelineDescriptor = newRenderPipelineDescriptor();
-			m_depthStencilDescriptor = newDepthStencilDescriptor();
+			m_renderPipelineDescriptor   = newRenderPipelineDescriptor();
+			m_depthStencilDescriptor     = newDepthStencilDescriptor();
 			m_frontFaceStencilDescriptor = newStencilDescriptor();
-			m_backFaceStencilDescriptor = newStencilDescriptor();
-			m_vertexDescriptor = newVertexDescriptor();
+			m_backFaceStencilDescriptor  = newStencilDescriptor();
+			m_vertexDescriptor  = newVertexDescriptor();
 			m_textureDescriptor = newTextureDescriptor();
 			m_samplerDescriptor = newSamplerDescriptor();
 
@@ -401,7 +402,7 @@ namespace bgfx { namespace mtl
 								 | BGFX_CAPS_TEXTURE_3D
 								 | BGFX_CAPS_INSTANCING
 								 | BGFX_CAPS_VERTEX_ATTRIB_HALF
-//								 | BGFX_CAPS_FRAGMENT_DEPTH //TODO: is this supported?
+//								 | BGFX_CAPS_FRAGMENT_DEPTH
 								 | BGFX_CAPS_BLEND_INDEPENDENT
 								 | BGFX_CAPS_COMPUTE
 								 | BGFX_CAPS_INDEX32
@@ -447,6 +448,7 @@ namespace bgfx { namespace mtl
 				bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d   ", ii);
 			}
 
+			BX_TRACE("x");
 			return true;
 		}
 
@@ -489,7 +491,6 @@ namespace bgfx { namespace mtl
 	{
 		return BGFX_RENDERER_METAL_NAME;
 	}
-
 
 	void createIndexBuffer(IndexBufferHandle _handle, Memory* _mem, uint16_t _flags) BX_OVERRIDE
 	{
@@ -837,34 +838,29 @@ namespace bgfx { namespace mtl
 
 	void updateResolution(const Resolution& _resolution)
 	{
-		if (!!(_resolution.m_flags & BGFX_RESET_MAXANISOTROPY) )
-		{
-			m_maxAnisotropy = 16;
-		}
-		else
-		{
-			m_maxAnisotropy = 1;
-		}
+		m_maxAnisotropy = !!(_resolution.m_flags & BGFX_RESET_MAXANISOTROPY)
+			? 16
+			: 1
+			;
 
 		//TODO: _resolution has wrong dimensions, using m_drawable.texture size now
-
-		if ( NULL == m_drawable.texture )
+		if (NULL == m_drawable.texture)
+		{
 			return;
+		}
 
-		uint32_t width = (uint32_t)m_drawable.texture.width;
+		uint32_t width  = (uint32_t)m_drawable.texture.width;
 		uint32_t height = (uint32_t)m_drawable.texture.height;
 
 		//TODO: there should be a way to specify if backbuffer needs stencil/depth.
 		//TODO: support msaa
-		if ( NULL == m_backBufferDepth || width!=m_backBufferDepth.width() || height!=m_backBufferDepth.height())
+		if (NULL == m_backBufferDepth
+		||  width  != m_backBufferDepth.width()
+		||  height != m_backBufferDepth.height() )
 		{
 			m_textureDescriptor.textureType = MTLTextureType2D;
 
-#if BX_PLATFORM_IOS
 			m_textureDescriptor.pixelFormat = MTLPixelFormatDepth32Float;
-#else
-			m_textureDescriptor.pixelFormat = MTLPixelFormatDepth32Float_Stencil8;
-#endif // BX_PLATFORM_*
 
 			m_textureDescriptor.width = width;
 			m_textureDescriptor.height = height;
@@ -874,25 +870,22 @@ namespace bgfx { namespace mtl
 			m_textureDescriptor.arrayLength = 1;
 			//m_textureDescriptor.resourceOptions = 0;
 
-			if ( NULL != m_backBufferDepth )
+			if (NULL != m_backBufferDepth)
 			{
 				release(m_backBufferDepth);
 			}
 			m_backBufferDepth = m_device.newTextureWithDescriptor(m_textureDescriptor);
 
-#if BX_PLATFORM_IOS
 			m_textureDescriptor.pixelFormat = MTLPixelFormatStencil8;
 			m_textureDescriptor.width = width;
 			m_textureDescriptor.height = height;
 
-			if ( NULL != m_backBufferStencil )
+			if (NULL != m_backBufferStencil)
 			{
 				release(m_backBufferStencil);
 			}
+
 			m_backBufferStencil = m_device.newTextureWithDescriptor(m_textureDescriptor);
-#else
-			m_backBufferStencil = m_backBufferDepth;
-#endif // BX_PLATFORM_*
 
 			bx::HashMurmur2A murmur;
 			murmur.begin();
@@ -1076,25 +1069,25 @@ namespace bgfx { namespace mtl
 			uint32_t frontAndBack = bstencil != BGFX_STENCIL_NONE && bstencil != fstencil;
 			bstencil = frontAndBack ? bstencil : fstencil;
 
-			if ( 0 != _stencil)
+			if (0 != _stencil)
 			{
 				StencilDescriptor frontFaceDesc = m_frontFaceStencilDescriptor;
 				StencilDescriptor backfaceDesc = m_backFaceStencilDescriptor;
 
-				uint32_t readMask = (fstencil&BGFX_STENCIL_FUNC_RMASK_MASK)>>BGFX_STENCIL_FUNC_RMASK_SHIFT;
+				uint32_t readMask  = (fstencil&BGFX_STENCIL_FUNC_RMASK_MASK)>>BGFX_STENCIL_FUNC_RMASK_SHIFT;
 				uint32_t writeMask = 0xff;
 
-				frontFaceDesc.stencilFailureOperation = s_stencilOp[(fstencil&BGFX_STENCIL_OP_FAIL_S_MASK)>>BGFX_STENCIL_OP_FAIL_S_SHIFT];
-				frontFaceDesc.depthFailureOperation = s_stencilOp[(fstencil&BGFX_STENCIL_OP_FAIL_Z_MASK)>>BGFX_STENCIL_OP_FAIL_Z_SHIFT];
+				frontFaceDesc.stencilFailureOperation   = s_stencilOp[(fstencil&BGFX_STENCIL_OP_FAIL_S_MASK)>>BGFX_STENCIL_OP_FAIL_S_SHIFT];
+				frontFaceDesc.depthFailureOperation     = s_stencilOp[(fstencil&BGFX_STENCIL_OP_FAIL_Z_MASK)>>BGFX_STENCIL_OP_FAIL_Z_SHIFT];
 				frontFaceDesc.depthStencilPassOperation = s_stencilOp[(fstencil&BGFX_STENCIL_OP_PASS_Z_MASK)>>BGFX_STENCIL_OP_PASS_Z_SHIFT];
-				frontFaceDesc.stencilCompareFunction  = s_cmpFunc[(fstencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT];
+				frontFaceDesc.stencilCompareFunction    = s_cmpFunc[(fstencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT];
 				frontFaceDesc.readMask  = readMask;
 				frontFaceDesc.writeMask = writeMask;
 
-				backfaceDesc.stencilFailureOperation = s_stencilOp[(bstencil&BGFX_STENCIL_OP_FAIL_S_MASK)>>BGFX_STENCIL_OP_FAIL_S_SHIFT];
-				backfaceDesc.depthFailureOperation = s_stencilOp[(bstencil&BGFX_STENCIL_OP_FAIL_Z_MASK)>>BGFX_STENCIL_OP_FAIL_Z_SHIFT];
+				backfaceDesc.stencilFailureOperation   = s_stencilOp[(bstencil&BGFX_STENCIL_OP_FAIL_S_MASK)>>BGFX_STENCIL_OP_FAIL_S_SHIFT];
+				backfaceDesc.depthFailureOperation     = s_stencilOp[(bstencil&BGFX_STENCIL_OP_FAIL_Z_MASK)>>BGFX_STENCIL_OP_FAIL_Z_SHIFT];
 				backfaceDesc.depthStencilPassOperation = s_stencilOp[(bstencil&BGFX_STENCIL_OP_PASS_Z_MASK)>>BGFX_STENCIL_OP_PASS_Z_SHIFT];
-				backfaceDesc.stencilCompareFunction = s_cmpFunc[(bstencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT];
+				backfaceDesc.stencilCompareFunction    = s_cmpFunc[(bstencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT];
 				backfaceDesc.readMask  = readMask;
 				backfaceDesc.writeMask = writeMask;
 
@@ -1103,7 +1096,7 @@ namespace bgfx { namespace mtl
 			}
 			else
 			{
-				desc.backFaceStencil = NULL;
+				desc.backFaceStencil  = NULL;
 				desc.frontFaceStencil = NULL;
 			}
 
@@ -1134,8 +1127,8 @@ namespace bgfx { namespace mtl
 			m_samplerDescriptor.normalizedCoordinates = TRUE;
 			m_samplerDescriptor.maxAnisotropy =  m_maxAnisotropy;
 
-				//TODO: I haven't found how to specify this. Comparison function can be specified in shader.
-				//  On OSX this can be specified. There is no support for this on iOS right now.
+			//TODO: I haven't found how to specify this. Comparison function can be specified in shader.
+			//  On OSX this can be specified. There is no support for this on iOS right now.
 			//const uint32_t cmpFunc = (_flags&BGFX_TEXTURE_COMPARE_MASK)>>BGFX_TEXTURE_COMPARE_SHIFT;
 			//const uint8_t filter = 0 == cmpFunc ? 0 : D3D11_COMPARISON_FILTERING_BIT;
 			//m_samplerDescriptor.comparisonFunc = 0 == cmpFunc ? D3D11_COMPARISON_NEVER : s_cmpFunc[cmpFunc];
@@ -1156,8 +1149,6 @@ namespace bgfx { namespace mtl
 	{
 		return m_backBufferDepth.height();
 	}
-
-
 
 	Device        m_device;
 	CommandQueue  m_commandQueue;
@@ -1606,12 +1597,12 @@ namespace bgfx { namespace mtl
 
 				if ( NULL != reflection )
 				{
-					for( int type =0; type<2; ++type)
+					for (uint32_t shaderType = 0; shaderType < 2; ++shaderType)
 					{
-						UniformBuffer*& constantBuffer = (type==0?m_vshConstantBuffer : m_fshConstantBuffer);
-						uint8_t fragmentBit = (1 == type ? BGFX_UNIFORM_FRAGMENTBIT : 0);
+						UniformBuffer*& constantBuffer = (shaderType == 0 ? m_vshConstantBuffer : m_fshConstantBuffer);
+						uint8_t fragmentBit = (1 == shaderType ? BGFX_UNIFORM_FRAGMENTBIT : 0);
 
-						for( MTLArgument* arg in (type==0?reflection.vertexArguments:reflection.fragmentArguments))
+						for( MTLArgument* arg in (shaderType == 0 ? reflection.vertexArguments : reflection.fragmentArguments))
 						{
 							BX_TRACE("arg: %s type:%d", utf8String(arg.name), arg.type);
 							if (arg.active)
@@ -1623,7 +1614,7 @@ namespace bgfx { namespace mtl
 
 									if ( MTLDataTypeStruct == arg.bufferDataType )
 									{
-										if ( type == 0)
+										if (shaderType == 0)
 										{
 											m_vshConstantBufferSize = (uint32_t)arg.bufferDataSize;
 											m_vshConstantBufferAlignmentMask = (uint32_t)arg.bufferAlignment - 1;
@@ -1642,7 +1633,7 @@ namespace bgfx { namespace mtl
 											MTLDataType dataType = uniform.dataType;
 											uint32_t num = 1;
 
-											if (dataType==MTLDataTypeArray)
+											if (dataType == MTLDataTypeArray)
 											{
 												dataType = uniform.arrayType.elementType;
 												num = (uint32_t)uniform.arrayType.arrayLength;
@@ -1883,7 +1874,8 @@ namespace bgfx { namespace mtl
 
 						if ( compressed && !convert)
 						{
-							if ( format >= MTLPixelFormatPVRTC_RGB_2BPP && format <= MTLPixelFormatPVRTC_RGBA_4BPP_sRGB)
+							if (format >= 160 /*MTLPixelFormatPVRTC_RGB_2BPP*/
+							&&  format <= 167 /*MTLPixelFormatPVRTC_RGBA_4BPP_sRGB*/)
 							{
 								bytesPerRow = 0;
 								bytesPerImage = 0;

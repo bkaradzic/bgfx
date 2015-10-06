@@ -1621,6 +1621,13 @@ again:
 			}
 			else
 			{
+#if 0
+				if (s_rendererCreator[RendererType::Metal].supported)
+				{
+					_type = RendererType::Metal;
+				}
+				else
+#endif // 0
 				if (s_rendererCreator[RendererType::OpenGL].supported)
 				{
 					_type = RendererType::OpenGL;

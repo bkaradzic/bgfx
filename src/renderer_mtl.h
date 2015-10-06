@@ -13,9 +13,9 @@
 #import <QuartzCore/CAMetalLayer.h>
 #import <Metal/Metal.h>
 
-#ifdef BX_PLATFORM_IOS
+#if BX_PLATFORM_IOS
 #	import <UIKit/UIKit.h>
-#endif // BX_PLATFORM_IOS
+#endif // BX_PLATFORM_*
 
 namespace bgfx { namespace mtl
 {
@@ -265,10 +265,11 @@ namespace bgfx { namespace mtl
 	[_obj release]; \
 	_obj = nil;
 
-#ifdef BX_PLATFORM_IOS
+#if BX_PLATFORM_IOS
 	bool OsVersionEqualOrGreater(const char* _version) { return ([[[UIDevice currentDevice] systemVersion] compare:@(_version) options:NSNumericSearch] != NSOrderedAscending); }
 	//TODO: this could be in bx ?
-#endif
+#endif //
+
 	// end of c++ wrapper
 
 	template <typename Ty>

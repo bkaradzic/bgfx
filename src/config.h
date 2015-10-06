@@ -41,10 +41,10 @@
 					? 1 : 0)
 #	endif // BGFX_CONFIG_RENDERER_DIRECT3D12
 
-	//TODO: should check if iOS8 or greater
 #	ifndef BGFX_CONFIG_RENDERER_METAL
 #		define BGFX_CONFIG_RENDERER_METAL (0 \
 					|| BX_PLATFORM_IOS \
+					|| BX_PLATFORM_OSX \
 					? 1 : 0)
 #	endif // BGFX_CONFIG_RENDERER_METAL
 
