@@ -530,7 +530,7 @@ namespace entry
 							, msg->m_y
 							, msg->m_width
 							, msg->m_height
-							, m_hwnd[0]
+							, NULL
 							, NULL
 							, (HINSTANCE)GetModuleHandle(NULL)
 							, 0
@@ -912,33 +912,6 @@ namespace entry
 
 				left   = newrect.left+(newrect.right -newrect.left-width)/2;
 				top    = newrect.top +(newrect.bottom-newrect.top-height)/2;
-			}
-
-			HWND parent = GetWindow(_hwnd, GW_OWNER);
-			if (NULL != parent)
-			{
-				if (_windowFrame)
-				{
-					SetWindowPos(parent
-						, HWND_TOP
-						, -32000
-						, -32000
-						, 0
-						, 0
-						, SWP_SHOWWINDOW
-						);
-				}
-				else
-				{
-					SetWindowPos(parent
-						, HWND_TOP
-						, newrect.left
-						, newrect.top
-						, newrect.right-newrect.left
-						, newrect.bottom-newrect.top
-						, SWP_SHOWWINDOW
-						);
-				}
 			}
 
 			SetWindowPos(_hwnd
