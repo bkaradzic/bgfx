@@ -1453,6 +1453,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			invalidateCache();
 
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
+			{
+				m_frameBuffers[ii].destroy();
+			}
+
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_indexBuffers); ++ii)
 			{
 				m_indexBuffers[ii].destroy();

@@ -248,6 +248,7 @@ namespace bgfx { namespace d3d11
 	{
 		FrameBufferD3D11()
 			: m_dsv(NULL)
+			, m_swapChain(NULL)
 			, m_width(0)
 			, m_height(0)
 			, m_denseIdx(UINT16_MAX)
