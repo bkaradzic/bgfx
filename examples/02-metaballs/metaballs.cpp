@@ -504,6 +504,11 @@ class Metaballs : public entry::AppI
 				fs_metaballs = bgfx::makeRef(fs_metaballs_dx11, sizeof(fs_metaballs_dx11) );
 				break;
 
+			case bgfx::RendererType::Metal:
+				vs_metaballs = bgfx::makeRef(vs_metaballs_mtl, sizeof(vs_metaballs_mtl) );
+				fs_metaballs = bgfx::makeRef(fs_metaballs_mtl, sizeof(fs_metaballs_mtl) );
+				break;
+
 			default:
 				vs_metaballs = bgfx::makeRef(vs_metaballs_glsl, sizeof(vs_metaballs_glsl) );
 				fs_metaballs = bgfx::makeRef(fs_metaballs_glsl, sizeof(fs_metaballs_glsl) );
