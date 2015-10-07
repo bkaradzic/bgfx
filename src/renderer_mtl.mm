@@ -348,7 +348,8 @@ namespace bgfx { namespace mtl
 				//on iOS we need the layer as CAmetalLayer
 #if BX_PLATFORM_IOS
 				CAMetalLayer* metalLayer = (CAMetalLayer*)g_platformData.nwh;
-				if (metalLayer == nil || ![metalLayer isKindOfClass:NSClassFromString(@"CAMetalLayer")])
+				if (NULL == metalLayer
+				|| ![metalLayer isKindOfClass:NSClassFromString(@"CAMetalLayer")])
 				{
 					BX_WARN(NULL != m_device, "Unable to create Metal device. Please set platform data window to a CAMetalLayer");
 					return false;
@@ -378,7 +379,8 @@ namespace bgfx { namespace mtl
 				return false;
 			}
 
-			m_metalLayer.device = m_device;
+			m_metalLayer.device      = m_device;
+			m_metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
 
 			m_commandQueue = m_device.newCommandQueue();
 			BGFX_FATAL(NULL != m_commandQueue, Fatal::UnableToInitialize, "Unable to create Metal device.");
@@ -410,7 +412,7 @@ namespace bgfx { namespace mtl
 								 );
 
 			g_caps.maxTextureSize = 2048; //ASK: real caps width/height: 4096, but max depth(3D) size is only: 2048
-				//TODO: OSX
+			//TODO: OSX
 #if BX_PLATFORM_IOS
 			g_caps.maxFBAttachments = uint8_t(bx::uint32_min(m_device.supportsFeatureSet(MTLFeatureSet_iOS_GPUFamily2_v1) ? 8 :4, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS));
 #endif // BX_PLATFORM_*
@@ -448,7 +450,6 @@ namespace bgfx { namespace mtl
 				bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d   ", ii);
 			}
 
-			BX_TRACE("x");
 			return true;
 		}
 
@@ -675,8 +676,11 @@ namespace bgfx { namespace mtl
 
 	void saveScreenShot(const char* _filePath) BX_OVERRIDE
 	{
-		if ( NULL == m_drawable || NULL == m_drawable.texture)
+		if (NULL == m_drawable
+		||  NULL == m_drawable.texture)
+		{
 			return;
+		}
 
 		//TODO: we should wait for completion of pending commandBuffers
 		//TODO: implement this with saveScreenshotBegin/End
@@ -804,8 +808,11 @@ namespace bgfx { namespace mtl
 
 	void flip(HMD& /*_hmd*/) BX_OVERRIDE
 	{
-		if ( m_drawable == nil || m_commandBuffer == nil) //there was no draw call, cannot flip
+		if (NULL == m_drawable
+		||  NULL == m_commandBuffer)
+		{
 			return;
+		}
 
 		// Present and commit the command buffer
 		m_commandBuffer.presentDrawable(m_drawable);
