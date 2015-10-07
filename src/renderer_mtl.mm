@@ -2050,7 +2050,7 @@ namespace bgfx { namespace mtl
 
 		//TODO: acquire CAMetalDrawable just before we really need it. When we are using an encoder with target metalLayer's texture
 		m_drawable = m_metalLayer.nextDrawable;
-		retain(m_drawable); // keep alive to be useable at 'flip'
+//		retain(m_drawable); // keep alive to be useable at 'flip'
 
 		m_uniformBufferVertexOffset = 0;
 		m_uniformBufferFragmentOffset = 0;
