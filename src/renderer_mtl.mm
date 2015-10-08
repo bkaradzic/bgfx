@@ -867,7 +867,7 @@ namespace bgfx { namespace mtl
 		{
 			m_textureDescriptor.textureType = MTLTextureType2D;
 
-			m_textureDescriptor.pixelFormat = MTLPixelFormatDepth32Float;
+			m_textureDescriptor.pixelFormat = MTLPixelFormatDepth32Float_Stencil8;
 
 			m_textureDescriptor.width  = width;
 			m_textureDescriptor.height = height;
@@ -878,6 +878,7 @@ namespace bgfx { namespace mtl
 			m_textureDescriptor.resourceOptions = MTLResourceStorageModePrivate;
 			m_textureDescriptor.cpuCacheMode    = MTLCPUCacheModeDefaultCache;
 			m_textureDescriptor.storageMode     = MTLStorageModePrivate;
+			m_textureDescriptor.usage = MTLTextureUsageRenderTarget;
 
 			if (NULL != m_backBufferDepth)
 			{
@@ -1459,7 +1460,7 @@ namespace bgfx { namespace mtl
 			{
 				pd.colorAttachments[0].pixelFormat = s_renderMtl->m_drawable.texture.pixelFormat;
 				pd.depthAttachmentPixelFormat      = s_renderMtl->m_backBufferDepth.m_obj.pixelFormat;
-				pd.stencilAttachmentPixelFormat    = MTLPixelFormatInvalid; //s_renderMtl->m_backBufferStencil.m_obj.pixelFormat;
+				pd.stencilAttachmentPixelFormat    = s_renderMtl->m_backBufferStencil.m_obj.pixelFormat;
 			}
 			else
 			{
@@ -1846,7 +1847,8 @@ namespace bgfx { namespace mtl
 			desc.sampleCount = 1; //TODO: set samplecount -  If textureType is not MTLTextureType2DMultisample, the value must be 1.
 			desc.resourceOptions = MTLResourceStorageModePrivate;
 			desc.cpuCacheMode    = MTLCPUCacheModeDefaultCache;
-			desc.storageMode     = MTLStorageModePrivate;
+			desc.storageMode     = MTLStorageModeManaged; //MTLStorageModePrivate;
+			desc.usage = MTLTextureUsageShaderRead;
 
 			//TODO: set resource flags depending on usage(renderTarget/computeWrite/etc) on iOS9/OSX
 
