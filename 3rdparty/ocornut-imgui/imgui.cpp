@@ -704,6 +704,10 @@ ImGuiIO::ImGuiIO()
     MouseDoubleClickTime = 0.30f;
     MouseDoubleClickMaxDist = 6.0f;
     MouseDragThreshold = 6.0f;
+    for (int i = 0; i < IM_ARRAYSIZE(MouseDownDuration); i++)
+        MouseDownDuration[i] = MouseDownDurationPrev[i] = -1.0f;
+    for (int i = 0; i < IM_ARRAYSIZE(KeysDownDuration); i++)
+        KeysDownDuration[i] = KeysDownDurationPrev[i] = -1.0f;
     for (int i = 0; i < ImGuiKey_COUNT; i++)
         KeyMap[i] = -1;
     KeyRepeatDelay = 0.250f;
@@ -1855,7 +1859,7 @@ void ImGui::NewFrame()
     for (int i = 0; i < IM_ARRAYSIZE(g.IO.MouseDown); i++)
     {
         g.IO.MouseClicked[i] = g.IO.MouseDown[i] && g.IO.MouseDownDuration[i] < 0.0f;
-        g.IO.MouseReleased[i] = !g.IO.MouseDown[i] && g.IO.MouseDownDurationPrev[i] >= 0.0f;
+        g.IO.MouseReleased[i] = !g.IO.MouseDown[i] && g.IO.MouseDownDuration[i] >= 0.0f;
         g.IO.MouseDownDurationPrev[i] = g.IO.MouseDownDuration[i];
         g.IO.MouseDownDuration[i] = g.IO.MouseDown[i] ? (g.IO.MouseDownDuration[i] < 0.0f ? 0.0f : g.IO.MouseDownDuration[i] + g.IO.DeltaTime) : -1.0f;
         g.IO.MouseDoubleClicked[i] = false;
@@ -4052,9 +4056,10 @@ static void Scrollbar(ImGuiWindow* window, bool horizontal)
     bool other_scrollbar = (horizontal ? window->ScrollbarY : window->ScrollbarX);
     float other_scrollbar_size_w = other_scrollbar ? style.ScrollbarSize : 0.0f;
     const ImRect window_rect = window->Rect();
+    const float border_offset = (window->Flags & ImGuiWindowFlags_ShowBorders) ? 1.0f : 0.0f;
     ImRect bb = horizontal
-        ? ImRect(window->Pos.x, window_rect.Max.y - style.ScrollbarSize, window_rect.Max.x - other_scrollbar_size_w, window_rect.Max.y)
-        : ImRect(window_rect.Max.x - style.ScrollbarSize, window->Pos.y + window->TitleBarHeight(), window_rect.Max.x, window_rect.Max.y - other_scrollbar_size_w);
+        ? ImRect(window->Pos.x + border_offset, window_rect.Max.y - style.ScrollbarSize, window_rect.Max.x - other_scrollbar_size_w, window_rect.Max.y)
+        : ImRect(window_rect.Max.x - style.ScrollbarSize, window->Pos.y + window->TitleBarHeight() + border_offset, window_rect.Max.x, window_rect.Max.y - other_scrollbar_size_w);
 
     float window_rounding = (window->Flags & ImGuiWindowFlags_ChildWindow) ? style.ChildWindowRounding : style.WindowRounding;
     int window_rounding_corners;
