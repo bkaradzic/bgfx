@@ -451,7 +451,7 @@ struct OcornutImguiContext
 		m_wm = BX_NEW(m_allocator, WindowManager);
 		m_wm->Init();
 
-#if 1
+#if 0
 		{
 			class Window : public ImGuiWM::Window
 			{
