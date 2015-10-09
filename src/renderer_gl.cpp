@@ -1039,7 +1039,7 @@ namespace bgfx { namespace gl
 			;
 
 		GLsizei size = (16*16*getBitsPerPixel(_format) )/8;
-		void* data = alloca(size);
+		void* data = bx::alignPtr(alloca(size+16), 0, 16);
 
 		if (isCompressed(_format) )
 		{
@@ -1554,7 +1554,10 @@ namespace bgfx { namespace gl
 				s_textureFormat[TextureFormat::R8].m_fmt         = GL_LUMINANCE;
 			}
 
-			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
+			for (uint32_t ii = BX_ENABLED(BX_PLATFORM_IOS) ? TextureFormat::Unknown : 0 // skip test on iOS!
+				; ii < TextureFormat::Count
+				; ++ii
+				)
 			{
 				if (TextureFormat::Unknown != ii
 				&&  TextureFormat::UnknownDepth != ii)
