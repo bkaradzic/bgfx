@@ -1,6 +1,7 @@
 #ifdef __GNUC__
 #	pragma GCC diagnostic ignored "-Wshadow"
 #elif defined(_MSC_VER)
+#	pragma warning(disable:4312) // warning C4312: 'type cast': conversion from '' to '' of greater size
 #	pragma warning(disable:4456) // warning C4456: declaration of 'k' hides previous local declaration
 #	pragma warning(disable:4457) // warning C4457: declaration of 'y' hides function parameter
 #endif
