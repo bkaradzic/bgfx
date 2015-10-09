@@ -1320,7 +1320,10 @@ namespace ImGuiWM
 
             if (pAction->m_bFloat)
             {
-                InternalFloat(pAction->m_pWindow, pAction->m_oPosition, pAction->m_oSize);
+                if (!InternalFloat(pAction->m_pWindow, pAction->m_oPosition, pAction->m_oSize) )
+                {
+                    InternalDock(pAction->m_pWindow, E_DOCK_ORIENTATION_LEFT, m_pMainPlatformWindow);
+                }
             }
             else
             {
@@ -1371,16 +1374,6 @@ namespace ImGuiWM
         if (!pWindow->GetContainer()->IsEmpty() )
         {
             float fY = 0.f;
-//             if (pWindow->IsMain())
-//             {
-//                 ImGui::BeginMainMenuBar();
-//                 for (ImwWindowList::iterator it = m_lWindows.begin(); it != m_lWindows.end(); ++it)
-//                 {
-//                     (*it)->OnMenu();
-//                 }
-//                 fY = ImGui::GetWindowHeight();
-//                 ImGui::EndMainMenuBar();
-//             }
 
             ImGui::SetNextWindowPos(ImVec2(0, fY), ImGuiSetCond_Always);
             ImGui::SetNextWindowSize(ImVec2(pWindow->GetSize().x, pWindow->GetSize().y - fY), ImGuiSetCond_Always);
@@ -1392,8 +1385,13 @@ namespace ImGuiWM
             }
 
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(5.0f, 5.0f));
-            ImGui::Begin("Main", NULL, iFlags);
+
+            char name[64];
+            ImFormatString(name, sizeof(name), "Window %p", pWindow);
+            ImGui::Begin(name, NULL, iFlags);
+            pWindow->PaintBegin();
             pWindow->PaintContainer();
+            pWindow->PaintEnd();
             ImGui::End();
             ImGui::PopStyleVar(1);
 
@@ -1614,29 +1612,33 @@ namespace ImGuiWM
         }
     }
 
-    void WindowManager::InternalFloat(Window* pWindow, ImVec2 oPosition, ImVec2 oSize)
+    bool WindowManager::InternalFloat(Window* pWindow, ImVec2 oPosition, ImVec2 oSize)
     {
         PlatformWindow* pPlatformWindow = CreatePlatformWindow(false, m_pMainPlatformWindow, false);
-        if (NULL != pPlatformWindow)
+        if (NULL == pPlatformWindow)
         {
-            m_lPlatformWindows.push_back(pPlatformWindow);
-
-            if (oSize.x == IM_VEC2_N1.x && oSize.y == IM_VEC2_N1.y)
-            {
-                oSize = pWindow->GetLastSize();
-            }
-
-            if (oPosition.x == IM_VEC2_N1.x && oPosition.y == IM_VEC2_N1.y)
-            {
-                oPosition = GetCursorPos();
-                oPosition.x -= 20;
-                oPosition.x -= 10;
-            }
-            pPlatformWindow->Dock(pWindow);
-            pPlatformWindow->SetSize(oSize);
-            pPlatformWindow->SetPosition(oPosition);
-            pPlatformWindow->Show();
+            return false;
         }
+
+        m_lPlatformWindows.push_back(pPlatformWindow);
+
+        if (oSize.x == IM_VEC2_N1.x && oSize.y == IM_VEC2_N1.y)
+        {
+            oSize = pWindow->GetLastSize();
+        }
+
+        if (oPosition.x == IM_VEC2_N1.x && oPosition.y == IM_VEC2_N1.y)
+        {
+            oPosition = GetCursorPos();
+            oPosition.x -= 20;
+            oPosition.x -= 10;
+        }
+        pPlatformWindow->Dock(pWindow);
+        pPlatformWindow->SetSize(oSize);
+        pPlatformWindow->SetPosition(oPosition);
+        pPlatformWindow->Show();
+
+        return true;
     }
 
     void WindowManager::InternalUnDock(Window* pWindow)

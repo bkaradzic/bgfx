@@ -13,6 +13,14 @@
 #include "ocornut_imgui.h"
 #include <stb/stb_image.c>
 
+#ifndef USE_ENTRY
+#	define USE_ENTRY defined(SCI_NAMESPACE)
+#endif // USE_ENTRY
+
+#if USE_ENTRY
+#	include "../entry/entry.h"
+#endif // USE_ENTRY
+
 #if defined(SCI_NAMESPACE)
 #	include "../entry/input.h"
 #	include "scintilla.h"
@@ -20,6 +28,8 @@
 
 #include "vs_ocornut_imgui.bin.h"
 #include "fs_ocornut_imgui.bin.h"
+
+void viewCallback(const ImDrawList* _parentList, const ImDrawCmd* _cmd);
 
 class PlatformWindow : public ImGuiWM::PlatformWindow
 {
@@ -32,6 +42,19 @@ public:
 		, m_size(0.0f, 0.0f)
 		, m_drag(false)
 	{
+#if USE_ENTRY
+		if (!_mainWindow
+		&&  !_isDragWindow)
+		{
+			m_window = entry::createWindow(0, 0, 640, 380);
+			extern void pwToWindow(entry::WindowHandle _handle, PlatformWindow* _pw);
+			pwToWindow(m_window, this);
+		}
+		else
+		{
+			m_window.idx = 0;
+		}
+#endif // USE_ENTRY
 	}
 
 	virtual ~PlatformWindow() BX_OVERRIDE
@@ -63,20 +86,57 @@ public:
 
 	virtual void SetSize(const ImVec2& _size) BX_OVERRIDE
 	{
+#if USE_ENTRY
+		if (0 != m_window.idx
+		&&  m_size.x != _size.x
+		&&  m_size.y != _size.y)
+		{
+			entry::setWindowSize(m_window, int32_t(_size.x), int32_t(_size.y) );
+		}
+#endif // USE_ENTRY
+
 		m_size = _size;
 	}
 
 	virtual void SetPosition(const ImVec2& _pos) BX_OVERRIDE
 	{
+
+#if USE_ENTRY
+		if (0 != m_window.idx
+		&&  m_pos.x != _pos.x
+		&&  m_pos.y != _pos.y)
+		{
+			entry::setWindowPos(m_window, int32_t(_pos.x), int32_t(_pos.y) );
+		}
+#endif // USE_ENTRY
+
 		m_pos = _pos;
 	}
 
-	virtual void SetTitle(const char* /*_title*/) BX_OVERRIDE
+	virtual void SetTitle(const char* _title) BX_OVERRIDE
 	{
+#if USE_ENTRY
+		entry::setWindowTitle(m_window, _title);
+#else
+		BX_UNUSED(_title);
+#endif // USE_ENTRY
 	}
 
 	virtual void PreUpdate() BX_OVERRIDE
 	{
+	}
+
+	virtual void PaintBegin()
+	{
+#if USE_ENTRY
+		if (!m_bIsDragWindow)
+		{
+			ImDrawList* drawList = ImGui::GetWindowDrawList();
+			union { entry::WindowHandle handle; void* ptr; } cast = { m_window };
+			drawList->AddCallback(viewCallback, cast.ptr);
+			drawList->PushClipRect(ImVec4(0.0f, 0.0f, m_size.x, m_size.y) );
+		}
+#endif // USE_ENTRY
 	}
 
 	virtual void Paint() BX_OVERRIDE
@@ -85,6 +145,18 @@ public:
 		{
 			Super::Paint();
 		}
+	}
+
+	virtual void PaintEnd()
+	{
+#if USE_ENTRY
+		if (!m_bIsDragWindow)
+		{
+			ImDrawList* drawList = ImGui::GetWindowDrawList();
+			drawList->PopClipRect();
+			drawList->AddCallback(viewCallback, NULL);
+		}
+#endif // USE_ENTRY
 	}
 
 	virtual void Destroy() BX_OVERRIDE
@@ -110,6 +182,10 @@ private:
 	ImVec2 m_pos;
 	ImVec2 m_size;
 	bool m_drag;
+
+#if USE_ENTRY
+	entry::WindowHandle m_window;
+#endif // USE_ENTRY
 };
 
 class WindowManager : public ImGuiWM::WindowManager
@@ -128,6 +204,15 @@ public:
 protected:
 	virtual ImGuiWM::PlatformWindow* CreatePlatformWindow(bool _main, ImGuiWM::PlatformWindow* _parent, bool _isDragWindow) BX_OVERRIDE
 	{
+#if USE_ENTRY
+#else
+		if (!_main
+		&&  !_isDragWindow)
+		{
+			return NULL;
+		}
+#endif // USE_ENTRY
+
 		PlatformWindow* window = new (ImGui::MemAlloc(sizeof(PlatformWindow) ) ) PlatformWindow(_main, _isDragWindow);
 		window->Init(_parent);
 		return static_cast<ImGuiWM::PlatformWindow*>(window);
@@ -149,82 +234,117 @@ struct OcornutImguiContext
 {
 	static void* memAlloc(size_t _size);
 	static void memFree(void* _ptr);
-	static void renderDrawLists(ImDrawData* draw_data);
+	static void renderDrawLists(ImDrawData* _drawData);
 
-	void render(ImDrawData* draw_data)
+	void render(ImDrawData* _drawData)
 	{
-		const float width  = ImGui::GetIO().DisplaySize.x;
-		const float height = ImGui::GetIO().DisplaySize.y;
+		const ImGuiIO& io = ImGui::GetIO();
+		const float width  = io.DisplaySize.x;
+		const float height = io.DisplaySize.y;
 
-		float ortho[16];
-		bx::mtxOrtho(ortho, 0.0f, width, height, 0.0f, -1.0f, 1.0f);
+		{
+			float ortho[16];
+			bx::mtxOrtho(ortho, 0.0f, width, height, 0.0f, -1.0f, 1.0f);
+			bgfx::setViewTransform(m_viewId, NULL, ortho);
+		}
 
-		bgfx::setViewTransform(m_viewId, NULL, ortho);
+#if USE_ENTRY
+		for (uint32_t ii = 1; ii < BX_COUNTOF(m_window); ++ii)
+		{
+			Window& window = m_window[ii];
+			if (bgfx::isValid(window.m_fbh) )
+			{
+				const uint8_t viewId = window.m_viewId;
+				bgfx::setViewClear(viewId
+					, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
+					, 0x303030ff + rand()
+					, 1.0f
+					, 0
+					);
+				bgfx::setViewFrameBuffer(viewId, window.m_fbh);
+				bgfx::setViewRect(viewId
+					, 0
+					, 0
+					, window.m_state.m_width
+					, window.m_state.m_height
+					);
+				float ortho[16];
+				bx::mtxOrtho(ortho
+					, 0.0f
+					, float(window.m_state.m_width)
+					, float(window.m_state.m_height)
+					, 0.0f
+					, -1.0f
+					, 1.0f
+					);
+				bgfx::setViewTransform(viewId
+					, NULL
+					, ortho
+					);
+			}
+		}
+#endif // USE_ENTRY
 
 		// Render command lists
-		for (int32_t ii = 0; ii < draw_data->CmdListsCount; ++ii)
+		for (int32_t ii = 0, num = _drawData->CmdListsCount; ii < num; ++ii)
 		{
 			bgfx::TransientVertexBuffer tvb;
 			bgfx::TransientIndexBuffer tib;
 
-			const ImDrawList* cmd_list   = draw_data->CmdLists[ii];
-			uint32_t vtx_size = (uint32_t)cmd_list->VtxBuffer.size();
-			uint32_t idx_size = (uint32_t)cmd_list->IdxBuffer.size();
+			const ImDrawList* drawList = _drawData->CmdLists[ii];
+			uint32_t numVertices = (uint32_t)drawList->VtxBuffer.size();
+			uint32_t numIndices  = (uint32_t)drawList->IdxBuffer.size();
 
-			if (!bgfx::checkAvailTransientVertexBuffer(vtx_size, m_decl) || !bgfx::checkAvailTransientIndexBuffer(idx_size) )
+			if (!bgfx::checkAvailTransientVertexBuffer(numVertices, m_decl)
+			||  !bgfx::checkAvailTransientIndexBuffer(numIndices) )
 			{
 				// not enough space in transient buffer just quit drawing the rest...
 				break;
 			}
 
-			bgfx::allocTransientVertexBuffer(&tvb, vtx_size, m_decl);
-			bgfx::allocTransientIndexBuffer(&tib, idx_size);
+			bgfx::allocTransientVertexBuffer(&tvb, numVertices, m_decl);
+			bgfx::allocTransientIndexBuffer(&tib, numIndices);
 
 			ImDrawVert* verts = (ImDrawVert*)tvb.data;
-			memcpy(verts, cmd_list->VtxBuffer.begin(), vtx_size * sizeof(ImDrawVert) );
+			memcpy(verts, drawList->VtxBuffer.begin(), numVertices * sizeof(ImDrawVert) );
 
 			ImDrawIdx* indices = (ImDrawIdx*)tib.data;
-			memcpy(indices, cmd_list->IdxBuffer.begin(), idx_size * sizeof(ImDrawIdx) );
+			memcpy(indices, drawList->IdxBuffer.begin(), numIndices * sizeof(ImDrawIdx) );
 
-			uint32_t elem_offset = 0;
-			const ImDrawCmd* pcmd_begin = cmd_list->CmdBuffer.begin();
-			const ImDrawCmd* pcmd_end   = cmd_list->CmdBuffer.end();
-			for (const ImDrawCmd* pcmd = pcmd_begin; pcmd != pcmd_end; pcmd++)
+			uint32_t offset = 0;
+			for (const ImDrawCmd* cmd = drawList->CmdBuffer.begin(), *cmdEnd = drawList->CmdBuffer.end(); cmd != cmdEnd; ++cmd)
 			{
-				if (pcmd->UserCallback)
+				if (cmd->UserCallback)
 				{
-					pcmd->UserCallback(cmd_list, pcmd);
-					elem_offset += pcmd->ElemCount;
-					continue;
+					cmd->UserCallback(drawList, cmd);
 				}
-				if (0 == pcmd->ElemCount)
+				else if (0 != cmd->ElemCount)
 				{
-					continue;
+					bgfx::setState(0
+							| BGFX_STATE_RGB_WRITE
+							| BGFX_STATE_ALPHA_WRITE
+							| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
+							| BGFX_STATE_MSAA
+							);
+					const uint16_t xx = uint16_t(bx::fmax(cmd->ClipRect.x, 0.0f) );
+					const uint16_t yy = uint16_t(bx::fmax(cmd->ClipRect.y, 0.0f) );
+					bgfx::setScissor(xx, yy
+							, uint16_t(bx::fmin(cmd->ClipRect.z, 65535.0f)-xx)
+							, uint16_t(bx::fmin(cmd->ClipRect.w, 65535.0f)-yy)
+							);
+					union { void* ptr; bgfx::TextureHandle handle; } texture = { cmd->TextureId };
+
+					bgfx::setTexture(0, s_tex, 0 != texture.handle.idx
+							? texture.handle
+							: m_texture
+							);
+
+					bgfx::setVertexBuffer(&tvb, 0, numVertices);
+					bgfx::setIndexBuffer(&tib, offset, cmd->ElemCount);
+					bgfx::submit(m_viewId, m_program);
 				}
 
-				bgfx::setState(0
-					| BGFX_STATE_RGB_WRITE
-					| BGFX_STATE_ALPHA_WRITE
-					| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
-					| BGFX_STATE_MSAA
-					);
-				bgfx::setScissor(uint16_t(bx::fmax(pcmd->ClipRect.x, 0.0f) )
-					, uint16_t(bx::fmax(pcmd->ClipRect.y, 0.0f) )
-					, uint16_t(bx::fmin(pcmd->ClipRect.z, 65535.0f)-bx::fmax(pcmd->ClipRect.x, 0.0f) )
-					, uint16_t(bx::fmin(pcmd->ClipRect.w, 65535.0f)-bx::fmax(pcmd->ClipRect.y, 0.0f) )
-					);
-				union { void* ptr; bgfx::TextureHandle handle; } texture = { pcmd->TextureId };
-
-				bgfx::setTexture(0, s_tex, 0 != texture.handle.idx
-					? texture.handle
-					: m_texture
-					);
-
-				bgfx::setVertexBuffer(&tvb, 0, vtx_size);
-				bgfx::setIndexBuffer(&tib, elem_offset, pcmd->ElemCount);
-				bgfx::submit(m_viewId, m_program);
-
-				elem_offset += pcmd->ElemCount;
+				offset += cmd->ElemCount;
 			}
 		}
 	}
@@ -331,7 +451,7 @@ struct OcornutImguiContext
 		m_wm = BX_NEW(m_allocator, WindowManager);
 		m_wm->Init();
 
-#if 0
+#if 1
 		{
 			class Window : public ImGuiWM::Window
 			{
@@ -347,10 +467,28 @@ struct OcornutImguiContext
 				}
 			};
 
-			Window* w0 = new Window("test");
-			Window* w1 = new Window("abcd");
-			Window* w2 = new Window("xyzw");
-			Window* w3 = new Window("0123");
+			class WindowX : public ImGuiWM::Window
+			{
+			public:
+				WindowX(const char* _title)
+					: ImGuiWM::Window()
+				{
+					SetTitle(_title);
+				}
+
+				virtual void OnGui() BX_OVERRIDE
+				{
+#if defined(SCI_NAMESPACE) && 0
+					bool opened = true;
+					ImGuiScintilla("Scintilla Editor", &opened, ImVec2(640.0f, 480.0f) );
+#endif // 0
+				}
+			};
+
+			Window*  w0 = new Window("test");
+			WindowX* w1 = new WindowX("abcd");
+			Window*  w2 = new Window("xyzw");
+			Window*  w3 = new Window("0123");
 
 			m_wm->Dock(w0);
 			m_wm->DockWith(w1, w0, ImGuiWM::E_DOCK_ORIENTATION_RIGHT);
@@ -375,7 +513,9 @@ struct OcornutImguiContext
 
 	void beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, int _width, int _height, char _inputChar, uint8_t _viewId)
 	{
-		m_viewId = _viewId;
+		m_viewId        = _viewId;
+		m_defaultViewId = _viewId;
+
 		ImGuiIO& io = ImGui::GetIO();
 		if (_inputChar < 0x7f)
 		{
@@ -419,11 +559,6 @@ struct OcornutImguiContext
 		bool opened = true;
 		ShowExampleAppCustomNodeGraph(&opened);
 #endif // 0
-
-#if defined(SCI_NAMESPACE) && 0
-		bool opened = true;
-		ImGuiScintilla("Scintilla Editor", &opened, ImVec2(640.0f, 480.0f) );
-#endif // 0
 	}
 
 	void endFrame()
@@ -441,9 +576,79 @@ struct OcornutImguiContext
 	int64_t m_last;
 	int32_t m_lastScroll;
 	uint8_t m_viewId;
+	uint8_t m_defaultViewId;
+
+#if USE_ENTRY
+	struct Window
+	{
+		Window()
+		{
+			m_fbh.idx = bgfx::invalidHandle;
+		}
+
+		entry::WindowState m_state;
+		PlatformWindow* m_pw;
+		bgfx::FrameBufferHandle m_fbh;
+		uint8_t m_viewId;
+	};
+
+	Window m_window[16];
+#endif // USE_ENTRY
 };
 
 static OcornutImguiContext s_ctx;
+
+#if USE_ENTRY
+
+void viewCallback(const ImDrawList* /*_parentList*/, const ImDrawCmd* _cmd)
+{
+	union { void* ptr; entry::WindowHandle handle; } cast = { _cmd->UserCallbackData };
+
+	if (0 != cast.handle.idx)
+	{
+		s_ctx.m_viewId = s_ctx.m_window[cast.handle.idx].m_viewId;
+	}
+	else
+	{
+		s_ctx.m_viewId = s_ctx.m_defaultViewId;
+	}
+}
+
+void pwToWindow(entry::WindowHandle _handle, PlatformWindow* _pw)
+{
+	s_ctx.m_window[_handle.idx].m_pw = _pw;
+}
+
+void imguiUpdateWindow(const entry::WindowState& _state)
+{
+	OcornutImguiContext::Window& window = s_ctx.m_window[_state.m_handle.idx];
+
+	if (window.m_state.m_nwh    != _state.m_nwh
+	|| (window.m_state.m_width  != _state.m_width
+	||  window.m_state.m_height != _state.m_height) )
+	{
+		// When window changes size or native window handle changed
+		// frame buffer must be recreated.
+		if (bgfx::isValid(window.m_fbh) )
+		{
+			bgfx::destroyFrameBuffer(window.m_fbh);
+			window.m_fbh.idx = bgfx::invalidHandle;
+		}
+
+		if (NULL != _state.m_nwh)
+		{
+			window.m_fbh = bgfx::createFrameBuffer(_state.m_nwh, _state.m_width, _state.m_height);
+			window.m_viewId = 200 + _state.m_handle.idx;
+		}
+		else
+		{
+			window.m_viewId = s_ctx.m_defaultViewId;
+		}
+	}
+
+	memcpy(&window.m_state, &_state, sizeof(entry::WindowState) );
+}
+#endif // USE_ENTRY
 
 void* OcornutImguiContext::memAlloc(size_t _size)
 {

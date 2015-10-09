@@ -157,7 +157,9 @@ namespace ImGuiWM
         void RestoreState();
         void OnLoseFocus();
         virtual void PreUpdate() = 0;
+        virtual void PaintBegin() = 0;
         virtual void Paint();
+        virtual void PaintEnd() = 0;
         virtual void Destroy() = 0;
         virtual void StartDrag() = 0;
         virtual void StopDrag() = 0;
@@ -253,7 +255,7 @@ namespace ImGuiWM
         static WindowManager* GetInstance();
 
     protected:
-        virtual PlatformWindow*  CreatePlatformWindow(bool bMain,PlatformWindow* pParent,bool bDragWindow) = 0;
+        virtual PlatformWindow* CreatePlatformWindow(bool bMain,PlatformWindow* pParent,bool bDragWindow) = 0;
         virtual void InternalRun() = 0;
 
         void AddWindow(Window* pWindow);
@@ -263,7 +265,7 @@ namespace ImGuiWM
         void InternalDock(Window* pWindow,EDockOrientation eOrientation,PlatformWindow* pToPlatformWindow);
         void InternalDockTo(Window* pWindow,EDockOrientation eOrientation,Container* pToContainer);
         void InternalDockWith(Window* pWindow,Window* pWithWindow,EDockOrientation eOrientation);
-        void InternalFloat(Window* pWindow,ImVec2 oPosition,ImVec2 oSize);
+        bool InternalFloat(Window* pWindow,ImVec2 oPosition,ImVec2 oSize);
         void InternalUnDock(Window* pWindow);
         void InternalDrag(Window* pWindow);
 

@@ -1105,7 +1105,7 @@ ScintillaEditor* ImGuiScintilla(const char* _name, bool* _opened, const ImVec2& 
 {
 	ScintillaEditor* sci = NULL;
 
-	if (ImGui::Begin(_name, _opened, _size) )
+//	if (ImGui::Begin(_name, _opened, _size) )
 	{
 		ImGuiStorage* storage = ImGui::GetStateStorage();
 
@@ -1121,7 +1121,7 @@ ScintillaEditor* ImGuiScintilla(const char* _name, bool* _opened, const ImVec2& 
 		sci->draw();
 	}
 
-	ImGui::End();
+//	ImGui::End();
 	return sci;
 }
 
