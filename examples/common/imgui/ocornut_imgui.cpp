@@ -320,25 +320,37 @@ struct OcornutImguiContext
 				}
 				else if (0 != cmd->ElemCount)
 				{
-					bgfx::setState(0
-							| BGFX_STATE_RGB_WRITE
-							| BGFX_STATE_ALPHA_WRITE
-							| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
-							| BGFX_STATE_MSAA
-							);
+					uint64_t state = 0
+						| BGFX_STATE_RGB_WRITE
+						| BGFX_STATE_ALPHA_WRITE
+						| BGFX_STATE_MSAA
+						;
+
+					bgfx::TextureHandle th = m_texture;
+
+					if (NULL != cmd->TextureId)
+					{
+						union { ImTextureID ptr; struct { uint16_t flags; bgfx::TextureHandle handle; } s; } texture = { cmd->TextureId };
+						state |= 0 != (IMGUI_FLAGS_ALPHA_BLEND & texture.s.flags)
+							? BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
+							: BGFX_STATE_NONE
+							;
+						th = texture.s.handle;
+					}
+					else
+					{
+						state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
+					}
+
 					const uint16_t xx = uint16_t(bx::fmax(cmd->ClipRect.x, 0.0f) );
 					const uint16_t yy = uint16_t(bx::fmax(cmd->ClipRect.y, 0.0f) );
 					bgfx::setScissor(xx, yy
 							, uint16_t(bx::fmin(cmd->ClipRect.z, 65535.0f)-xx)
 							, uint16_t(bx::fmin(cmd->ClipRect.w, 65535.0f)-yy)
 							);
-					union { void* ptr; bgfx::TextureHandle handle; } texture = { cmd->TextureId };
 
-					bgfx::setTexture(0, s_tex, 0 != texture.handle.idx
-							? texture.handle
-							: m_texture
-							);
-
+					bgfx::setState(state);
+					bgfx::setTexture(0, s_tex, th);
 					bgfx::setVertexBuffer(&tvb, 0, numVertices);
 					bgfx::setIndexBuffer(&tib, offset, cmd->ElemCount);
 					bgfx::submit(m_viewId, m_program);
