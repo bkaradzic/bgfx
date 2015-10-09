@@ -439,6 +439,8 @@ GL_IMPORT______(true,  PFNGLPUSHGROUPMARKEREXTPROC,                glPushGroupMa
 GL_IMPORT______(true,  PFNGLPOPGROUPMARKEREXTPROC,                 glPopGroupMarker);
 #else
 GL_IMPORT______(true,  PFNGLVERTEXATTRIBIPOINTERPROC,              glVertexAttribIPointer);
+GL_IMPORT______(true,  PFNGLGETINTERNALFORMATIVPROC,               glGetInternalformativ);
+GL_IMPORT______(true,  PFNGLGETINTERNALFORMATI64VPROC,             glGetInternalformati64v);
 #endif // BGFX_USE_GL_DYNAMIC_LIB
 
 GL_IMPORT______(true,  PFNGLSTRINGMARKERGREMEDYPROC,               glStringMarkerGREMEDY);
@@ -453,9 +455,6 @@ GL_IMPORT_KHR__(true,  PFNGLDEBUGMESSAGECONTROLPROC,               glDebugMessag
 GL_IMPORT_KHR__(true,  PFNGLDEBUGMESSAGEINSERTPROC,                glDebugMessageInsert);
 GL_IMPORT_KHR__(true,  PFNGLDEBUGMESSAGECALLBACKPROC,              glDebugMessageCallback);
 GL_IMPORT_KHR__(true,  PFNGLGETDEBUGMESSAGELOGPROC,                glGetDebugMessageLog);
-
-GL_IMPORT______(true,  PFNGLGETINTERNALFORMATIVPROC,               glGetInternalformativ);
-GL_IMPORT______(true,  PFNGLGETINTERNALFORMATI64VPROC,             glGetInternalformati64v);
 
 #	if BGFX_CONFIG_RENDERER_OPENGLES < 30
 GL_IMPORT_OES__(true,  PFNGLTEXIMAGE3DPROC,                        glTexImage3D);
