@@ -1847,7 +1847,7 @@ namespace bgfx { namespace mtl
 			desc.sampleCount = 1; //TODO: set samplecount -  If textureType is not MTLTextureType2DMultisample, the value must be 1.
 			desc.resourceOptions = MTLResourceStorageModePrivate;
 			desc.cpuCacheMode    = MTLCPUCacheModeDefaultCache;
-			desc.storageMode     = MTLStorageModeManaged; //MTLStorageModePrivate;
+			desc.storageMode     = 1 /*MTLStorageModeManaged*/;
 			desc.usage = MTLTextureUsageShaderRead;
 
 			//TODO: set resource flags depending on usage(renderTarget/computeWrite/etc) on iOS9/OSX
