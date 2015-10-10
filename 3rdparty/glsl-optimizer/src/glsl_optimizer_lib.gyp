@@ -135,7 +135,6 @@
         'glsl/opt_swizzle_swizzle.cpp',
         'glsl/opt_tree_grafting.cpp',
         'glsl/opt_vectorize.cpp',
-        'glsl/opt_vector_splitting.cpp',
         'glsl/opt_flip_matrices.cpp',
         'glsl/opt_dead_builtin_varyings.cpp',
         'glsl/program.h',

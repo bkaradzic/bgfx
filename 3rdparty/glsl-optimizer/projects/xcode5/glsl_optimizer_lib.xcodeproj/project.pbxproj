@@ -126,7 +126,6 @@
 		2BA7E14617D0AEB200D5C475 /* lower_vector_insert.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA7E13C17D0AEB200D5C475 /* lower_vector_insert.cpp */; };
 		2BA7E14817D0AEB200D5C475 /* opt_dead_builtin_varyings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA7E13D17D0AEB200D5C475 /* opt_dead_builtin_varyings.cpp */; };
 		2BA7E14A17D0AEB200D5C475 /* opt_flip_matrices.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA7E13E17D0AEB200D5C475 /* opt_flip_matrices.cpp */; };
-		2BA84CA619580C9D0021BE1D /* opt_vector_splitting.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA84CA519580C9D0021BE1D /* opt_vector_splitting.cpp */; };
 		2BB2F5B012B8F1580052C6B0 /* lower_discard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BB2F5AA12B8F1580052C6B0 /* lower_discard.cpp */; };
 		2BB2F5B112B8F1580052C6B0 /* lower_instructions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BB2F5AB12B8F1580052C6B0 /* lower_instructions.cpp */; };
 		2BB2F5B212B8F1580052C6B0 /* lower_vector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BB2F5AC12B8F1580052C6B0 /* lower_vector.cpp */; };
@@ -292,7 +291,6 @@
 		2BA7E13C17D0AEB200D5C475 /* lower_vector_insert.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_vector_insert.cpp; path = ../../src/glsl/lower_vector_insert.cpp; sourceTree = "<group>"; };
 		2BA7E13D17D0AEB200D5C475 /* opt_dead_builtin_varyings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_dead_builtin_varyings.cpp; path = ../../src/glsl/opt_dead_builtin_varyings.cpp; sourceTree = "<group>"; };
 		2BA7E13E17D0AEB200D5C475 /* opt_flip_matrices.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_flip_matrices.cpp; path = ../../src/glsl/opt_flip_matrices.cpp; sourceTree = "<group>"; };
-		2BA84CA519580C9D0021BE1D /* opt_vector_splitting.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_vector_splitting.cpp; path = ../../src/glsl/opt_vector_splitting.cpp; sourceTree = "<group>"; };
 		2BB2F5AA12B8F1580052C6B0 /* lower_discard.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_discard.cpp; path = ../../src/glsl/lower_discard.cpp; sourceTree = SOURCE_ROOT; };
 		2BB2F5AB12B8F1580052C6B0 /* lower_instructions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_instructions.cpp; path = ../../src/glsl/lower_instructions.cpp; sourceTree = SOURCE_ROOT; };
 		2BB2F5AC12B8F1580052C6B0 /* lower_vector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_vector.cpp; path = ../../src/glsl/lower_vector.cpp; sourceTree = SOURCE_ROOT; };
@@ -543,7 +541,6 @@
 				2B38545B1293BE5000F3E692 /* opt_swizzle_swizzle.cpp */,
 				2B38545C1293BE5000F3E692 /* opt_tree_grafting.cpp */,
 				2B9F0A3C189664F3002FF617 /* opt_vectorize.cpp */,
-				2BA84CA519580C9D0021BE1D /* opt_vector_splitting.cpp */,
 				2BA55A991207FEA6002DC82D /* program.h */,
 				2BA55A9A1207FEA6002DC82D /* s_expression.cpp */,
 				2BA55A9B1207FEA6002DC82D /* s_expression.h */,
@@ -730,7 +727,6 @@
 				2B78C91D1858B052007F5D2A /* ir_equals.cpp in Sources */,
 				2B6A99F61223B1670059FBED /* glcpp-parse.c in Sources */,
 				2B6A99FB1223B1670059FBED /* pp.c in Sources */,
-				2BA84CA619580C9D0021BE1D /* opt_vector_splitting.cpp in Sources */,
 				2BBA49281254706A00D42573 /* glsl_symbol_table.cpp in Sources */,
 				2BBA492A1254706A00D42573 /* loop_analysis.cpp in Sources */,
 				2BBA492C1254706A00D42573 /* loop_controls.cpp in Sources */,

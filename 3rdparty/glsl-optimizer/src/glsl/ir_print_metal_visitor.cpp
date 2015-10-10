@@ -235,8 +235,10 @@ _mesa_print_ir_metal(exec_list *instructions,
 			// skip gl_ variables if they aren't used/assigned
 			if (strstr(var->name, "gl_") == var->name)
 			{
-				if (!var->data.used && !var->data.assigned)
-					continue;
+				if (NULL == strstr(var->name, "gl_FragData_") ) {
+					if (!var->data.used && !var->data.assigned)
+						continue;
+				}
 			}
 
 			//

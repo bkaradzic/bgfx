@@ -10,4 +10,4 @@ void main ()
 // inputs: 1
 //  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]
 // textures: 1
-//  #0: shadowmap (high 2d) 0x0 [-1]
+//  #0: shadowmap (high 2dshadow) 0x0 [-1]
