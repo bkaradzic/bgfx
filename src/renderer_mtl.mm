@@ -412,10 +412,7 @@ namespace bgfx { namespace mtl
 								 );
 
 			g_caps.maxTextureSize = 2048; //ASK: real caps width/height: 4096, but max depth(3D) size is only: 2048
-			//TODO: OSX
-#if BX_PLATFORM_IOS
-			g_caps.maxFBAttachments = uint8_t(bx::uint32_min(m_device.supportsFeatureSet(MTLFeatureSet_iOS_GPUFamily2_v1) ? 8 :4, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS));
-#endif // BX_PLATFORM_*
+			g_caps.maxFBAttachments = 4; // uint8_t(bx::uint32_min(m_device.supportsFeatureSet(MTLFeatureSet_iOS_GPUFamily2_v1) ? 8 : 4, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS));
 
 			//todo: vendor id, device id, gpu enum
 			//todo: texture format caps
@@ -1819,7 +1816,7 @@ namespace bgfx { namespace mtl
 					 );
 
 
-//			const bool bufferOnly   = 0 != (_flags&BGFX_TEXTURE_RT_BUFFER_ONLY);
+			const bool bufferOnly   = 0 != (_flags&BGFX_TEXTURE_RT_BUFFER_ONLY);
 			const bool computeWrite = 0 != (_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 //			const bool renderTarget = 0 != (_flags&BGFX_TEXTURE_RT_MASK);
 			const bool srgb			= 0 != (_flags&BGFX_TEXTURE_SRGB) || imageContainer.m_srgb;
@@ -1840,14 +1837,14 @@ namespace bgfx { namespace mtl
 			}
 
 			desc.pixelFormat = format;
-			desc.width = textureWidth;
+			desc.width  = textureWidth;
 			desc.height = textureHeight;
-			desc.depth = bx::uint32_max(1,imageContainer.m_depth);
+			desc.depth  = bx::uint32_max(1,imageContainer.m_depth);
 			desc.mipmapLevelCount = imageContainer.m_numMips;
-			desc.sampleCount = 1; //TODO: set samplecount -  If textureType is not MTLTextureType2DMultisample, the value must be 1.
-			desc.resourceOptions = MTLResourceStorageModePrivate;
-			desc.cpuCacheMode    = MTLCPUCacheModeDefaultCache;
-			desc.storageMode     = 1 /*MTLStorageModeManaged*/;
+			desc.sampleCount      = 1; //TODO: set samplecount -  If textureType is not MTLTextureType2DMultisample, the value must be 1.
+			desc.resourceOptions  = MTLResourceStorageModePrivate;
+			desc.cpuCacheMode     = MTLCPUCacheModeDefaultCache;
+			desc.storageMode      = bufferOnly ? 1 /*MTLStorageModeManaged*/ : 2 /*MTLStorageModePrivate*/;
 			desc.usage = MTLTextureUsageShaderRead;
 
 			//TODO: set resource flags depending on usage(renderTarget/computeWrite/etc) on iOS9/OSX

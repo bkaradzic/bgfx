@@ -1621,7 +1621,7 @@ again:
 			}
 			else
 			{
-#if 0
+#if 1
 				if (s_rendererCreator[RendererType::Metal].supported)
 				{
 					_type = RendererType::Metal;
