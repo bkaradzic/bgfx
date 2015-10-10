@@ -8,6 +8,11 @@
 #if BGFX_CONFIG_RENDERER_DIRECT3D11
 #	include "renderer_d3d11.h"
 
+#if BX_PLATFORM_WINRT
+#include <inspectable.h>
+#include <windows.ui.xaml.media.dxinterop.h>
+#endif
+
 namespace bgfx { namespace d3d11
 {
 	static wchar_t s_viewNameW[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
@@ -1012,22 +1017,50 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					memset(&m_scd, 0, sizeof(m_scd) );
 					m_scd.Width  = BGFX_DEFAULT_WIDTH;
 					m_scd.Height = BGFX_DEFAULT_HEIGHT;
-					m_scd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+                    m_scd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 					m_scd.Stereo = false;
 					m_scd.SampleDesc.Count   = 1;
 					m_scd.SampleDesc.Quality = 0;
 					m_scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 					m_scd.BufferCount = 2;
-					m_scd.Scaling     = DXGI_SCALING_NONE;
+                    m_scd.Scaling = (g_platformData.ndt == 0) ? DXGI_SCALING_NONE : DXGI_SCALING_STRETCH;
 					m_scd.SwapEffect  = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 					m_scd.AlphaMode   = DXGI_ALPHA_MODE_IGNORE;
 
-					hr = m_factory->CreateSwapChainForCoreWindow(m_device
-						, (::IUnknown*)g_platformData.nwh
-						, &m_scd
-						, NULL
-						, &m_swapChain
-						);
+                    if (g_platformData.ndt == 0)
+                    {
+                        hr = m_factory->CreateSwapChainForCoreWindow(m_device
+                            , (::IUnknown*)g_platformData.nwh
+                            , &m_scd
+                            , NULL
+                            , &m_swapChain
+                            );
+                        BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 swap chain.");
+                    }
+                    else
+                    {
+                        BGFX_FATAL(g_platformData.ndt == reinterpret_cast<void*>(1), Fatal::UnableToInitialize, "Unable to set swap chain on panel.");
+
+                        hr = m_factory->CreateSwapChainForComposition(
+                            m_device,
+                            &m_scd,
+                            NULL,
+                            &m_swapChain);
+                        BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 swap chain.");
+
+                        IInspectable *nativeWindow = reinterpret_cast<IInspectable *>(g_platformData.nwh);
+                        ISwapChainBackgroundPanelNative* panel = nullptr;
+                        hr = nativeWindow->QueryInterface(__uuidof(ISwapChainBackgroundPanelNative), (void **)&panel);
+                        BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to set swap chain on panel.");
+
+                        if (panel != nullptr)
+                        {
+                            hr = panel->SetSwapChain(m_swapChain);
+                            BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to set swap chain on panel.");
+
+                            panel->Release();
+                        }
+                    }
 #else
 					hr = adapter->GetParent(IID_IDXGIFactory, (void**)&m_factory);
 					BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
@@ -2122,12 +2155,40 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 #if BX_PLATFORM_WINRT
 						HRESULT hr;
-						hr = m_factory->CreateSwapChainForCoreWindow(m_device
-							, (::IUnknown*)g_platformData.nwh
-							, scd
-							, NULL
-							, &m_swapChain
-							);
+                        if (g_platformData.ndt == 0)
+                        {
+                            hr = m_factory->CreateSwapChainForCoreWindow(m_device
+                            	, (::IUnknown*)g_platformData.nwh
+                            	, scd
+                            	, NULL
+                            	, &m_swapChain
+                            	);
+                            BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 swap chain.");
+                        }
+                        else
+                        {
+                            BGFX_FATAL(g_platformData.ndt == reinterpret_cast<void*>(1), Fatal::UnableToInitialize, "Invalid native display type.");
+
+                            hr = m_factory->CreateSwapChainForComposition(
+                                m_device,
+                                &m_scd,
+                                NULL,
+                                &m_swapChain);
+                            BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 swap chain.");
+
+                            IInspectable *nativeWindow = reinterpret_cast<IInspectable *>(g_platformData.nwh);
+                            ISwapChainBackgroundPanelNative* panel = nullptr;
+                            hr = nativeWindow->QueryInterface(__uuidof(ISwapChainBackgroundPanelNative), (void **)&panel);
+                            BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to set swap chain on panel.");
+
+                            if (panel != nullptr)
+                            {
+                                hr = panel->SetSwapChain(m_swapChain);
+                                BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to set swap chain on panel.");
+
+                                panel->Release();
+                            }
+                        }
 #else
 						HRESULT hr;
 						hr = m_factory->CreateSwapChain(m_device
@@ -3257,6 +3318,23 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		BX_DELETE(g_allocator, s_renderD3D11);
 		s_renderD3D11 = NULL;
 	}
+
+    void trim()
+    {
+        if (s_renderD3D11)
+        {
+            if (s_renderD3D11->m_device)
+            {
+                IDXGIDevice3 * pDXGIDevice;
+                HRESULT hr = s_renderD3D11->m_device->QueryInterface(__uuidof(IDXGIDevice3), (void **)&pDXGIDevice);
+                if (SUCCEEDED(hr))
+                {
+                    pDXGIDevice->Trim();
+                    pDXGIDevice->Release();
+                }
+            }
+        }
+    }
 
 	void stubMultiDrawInstancedIndirect(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride)
 	{
