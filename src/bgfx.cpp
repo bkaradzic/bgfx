@@ -42,8 +42,18 @@ namespace bgfx
 
 		virtual void traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList) BX_OVERRIDE
 		{
-			dbgPrintf("%s (%d): ", _filePath, _line);
-			dbgPrintfVargs(_format, _argList);
+			char temp[2048];
+			char* out = temp;
+			int32_t len   = bx::snprintf(out, sizeof(temp), "%s (%d): ", _filePath, _line);
+			int32_t total = len + bx::vsnprintf(out + len, sizeof(temp)-len, _format, _argList);
+			if ( (int32_t)sizeof(temp) < total)
+			{
+				out = (char*)alloca(total+1);
+				memcpy(out, temp, len);
+				bx::vsnprintf(out + len, total-len, _format, _argList);
+			}
+			out[total] = '\0';
+			bx::debugOutput(out);
 		}
 
 		virtual void fatal(Fatal::Enum _code, const char* _str) BX_OVERRIDE
@@ -1621,7 +1631,7 @@ again:
 			}
 			else
 			{
-#if 1
+#if 0
 				if (s_rendererCreator[RendererType::Metal].supported)
 				{
 					_type = RendererType::Metal;
