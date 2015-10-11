@@ -134,7 +134,10 @@ namespace bgfx { namespace mtl
 		{
 			NSError* error;
 			id<MTLLibrary> lib =  [m_obj newLibraryWithData:(dispatch_data_t)_data error:&error];
-			BX_WARN(error==NULL,"newLibraryWithData failed:%s", [error.localizedDescription UTF8String] );
+			BX_WARN(NULL == error
+				, "newLibraryWithData failed: %s"
+				, error.localizedDescription.UTF8String
+				);
 			return lib;
 		}
 
@@ -142,9 +145,11 @@ namespace bgfx { namespace mtl
 		{
 			NSError* error;
 			id<MTLLibrary> lib = [m_obj newLibraryWithSource:@(_source) options:nil error:&error];
-			if (error!=nil) NSLog(@"Shader compilation failed:%@", error.localizedDescription);
 			//TODO: sometimes prints null as paremeter. string is too large
-			BX_WARN(error==NULL,"Shader compilation failed:%s", [error.localizedDescription UTF8String]);
+			BX_WARN(NULL == error
+				, "Shader compilation failed: %s"
+				, error.localizedDescription.UTF8String
+				);
 			return lib;
 		}
 
@@ -189,7 +194,10 @@ namespace bgfx { namespace mtl
 		{
 			NSError* error;
 			id <MTLRenderPipelineState> state = [m_obj newRenderPipelineStateWithDescriptor:_descriptor error:&error];
-			BX_WARN(error==NULL,"newRenderPipelineStateWithDescriptor failed:%s", [error.localizedDescription UTF8String] );
+			BX_WARN(NULL == error
+				, "newRenderPipelineStateWithDescriptor failed: %s"
+				, error.localizedDescription.UTF8String
+				);
 			return state;
 		}
 
@@ -198,7 +206,10 @@ namespace bgfx { namespace mtl
 			NSError* error;
 			id <MTLRenderPipelineState> state = [m_obj newRenderPipelineStateWithDescriptor:_descriptor options:_options reflection:_reflection error:&error];
 
-			BX_WARN(error==NULL,"newRenderPipelineStateWithDescriptor failed:%s", [error.localizedDescription UTF8String] );
+			BX_WARN(NULL == error
+				, "newRenderPipelineStateWithDescriptor failed: %s"
+				, error.localizedDescription.UTF8String
+				);
 			return state;
 		}
 
@@ -207,7 +218,11 @@ namespace bgfx { namespace mtl
 		{
 			NSError* error;
 			id <MTLComputePipelineState> state = [m_obj newComputePipelineStateWithFunction:_computeFunction error:&error];
-			BX_WARN(error==NULL,"newComputePipelineStateWithFunction failed:%s", [error.localizedDescription UTF8String] );
+
+			BX_WARN(NULL == error
+				, "newComputePipelineStateWithFunction failed: %s"
+				, error.localizedDescription.UTF8String
+				);
 			return state;
 		}
 	MTL_CLASS_END
