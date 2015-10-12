@@ -61,7 +61,7 @@ project ("example-common")
 		}
 	end
 
-	configuration { "osx or ios*" }
+	configuration { "osx or ios* or tvos*" }
 		files {
 			path.join(BGFX_DIR, "examples/common/**.mm"),
 		}

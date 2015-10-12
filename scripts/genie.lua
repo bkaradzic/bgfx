@@ -312,7 +312,7 @@ function exampleProject(_name)
 			"-framework OpenGL",
 		}
 
-	configuration { "ios*" }
+	configuration { "ios* or tvos*" }
 		kind "ConsoleApp"
 		linkoptions {
 			"-framework CoreFoundation",
@@ -327,6 +327,12 @@ function exampleProject(_name)
 		kind "WindowedApp"
 		files {
 			path.join(BGFX_DIR, "examples/runtime/iOS-Info.plist"),
+		}
+
+	configuration { "xcode4", "tvos" }
+		kind "WindowedApp"
+		files {
+			path.join(BGFX_DIR, "examples/runtime/tvOS-Info.plist"),
 		}
 
 	configuration { "qnx*" }
