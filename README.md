@@ -28,10 +28,11 @@ Supported platforms:
  * Android (14+, ARM, x86, MIPS)
  * asm.js/Emscripten (1.25.0)
  * FreeBSD
- * iOS
+ * iOS (iPhone, iPad, AppleTV)
  * Linux ![](https://tc27.draster.com/app/rest/builds/buildType:(id:Bgfx_Linux)/statusIcon)
+ * MIPS Creator CI20
  * Native Client (PPAPI 37+, ARM, x86, x64, PNaCl)
- * OSX (10.9)
+ * OSX (10.9+)
  * RaspberryPi
  * Windows (XP, Vista, 7, 8, 10) ![](https://tc27.draster.com/app/rest/builds/buildType:(id:Bgfx_Windows)/statusIcon)
  * WinRT (WinPhone 8.0+)
