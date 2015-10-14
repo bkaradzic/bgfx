@@ -321,7 +321,7 @@ namespace bgfx
 			|| BGFX_TEXTURE_W_BORDER == (_flags & BGFX_TEXTURE_W_BORDER)
 			;
 	}
-	
+
 	void dump(const VertexDecl& _decl);
 
 	struct TextVideoMem
@@ -3385,6 +3385,7 @@ namespace bgfx
 
 		BGFX_API_FUNC(void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _firstIndex, uint32_t _numIndices) )
 		{
+			BGFX_CHECK_HANDLE("setIndexBuffer", m_indexBufferHandle, _tib->handle);
 			m_submit->setIndexBuffer(_tib, _firstIndex, _numIndices);
 		}
 
@@ -3402,6 +3403,7 @@ namespace bgfx
 
 		BGFX_API_FUNC(void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices) )
 		{
+			BGFX_CHECK_HANDLE("setVertexBuffer", m_vertexBufferHandle, _tvb->handle);
 			m_submit->setVertexBuffer(_tvb, _startVertex, _numVertices);
 		}
 
