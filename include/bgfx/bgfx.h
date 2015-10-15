@@ -2046,6 +2046,18 @@ namespace bgfx
 	///
 	void discard();
 
+	/// Blit texture region between two textures.
+	///
+	/// @attention C99 equivalent is `bgfx_blit`.
+	///
+	void blit(uint8_t _id, TextureHandle _dst, uint16_t _dstX, uint16_t _dstY, TextureHandle _src, uint16_t _srcX = 0, uint16_t _srcY = 0, uint16_t _width = UINT16_MAX, uint16_t _height = UINT16_MAX);
+
+	/// Blit texture region between two textures.
+	///
+	/// @attention C99 equivalent is `bgfx_blit`.
+	///
+	void blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip = 0, uint16_t _srcX = 0, uint16_t _srcY = 0, uint16_t _srcZ = 0, uint16_t _width = UINT16_MAX, uint16_t _height = UINT16_MAX, uint16_t _depth = UINT16_MAX);
+
 	/// Request screen shot.
 	///
 	/// @param[in] _filePath Will be passed to `bgfx::CallbackI::screenShot` callback.

@@ -310,6 +310,7 @@
 #define BGFX_TEXTURE_COMPARE_MASK        UINT32_C(0x000f0000) //!<
 #define BGFX_TEXTURE_COMPUTE_WRITE       UINT32_C(0x00100000) //!<
 #define BGFX_TEXTURE_SRGB                UINT32_C(0x00200000) //!<
+#define BGFX_TEXTURE_BLIT_DST            UINT32_C(0x00400000) //!<
 #define BGFX_TEXTURE_BORDER_COLOR_SHIFT  24                   //!<
 #define BGFX_TEXTURE_BORDER_COLOR_MASK   UINT32_C(0x0f000000) //!<
 #define BGFX_TEXTURE_RESERVED_SHIFT      28                   //!<

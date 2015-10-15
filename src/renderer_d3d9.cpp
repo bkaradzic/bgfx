@@ -2290,22 +2290,23 @@ namespace bgfx { namespace d3d9
 
 	void TextureD3D9::createTexture(uint32_t _width, uint32_t _height, uint8_t _numMips)
 	{
-		m_width = (uint16_t)_width;
-		m_height = (uint16_t)_height;
+		m_width   = (uint16_t)_width;
+		m_height  = (uint16_t)_height;
 		m_numMips = _numMips;
-		m_type = Texture2D;
+		m_type    = Texture2D;
 		const TextureFormat::Enum fmt = (TextureFormat::Enum)m_textureFormat;
 
 		DWORD usage = 0;
 		D3DPOOL pool = s_renderD3D9->m_pool;
 
 		const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
+		const bool blit         = 0 != (m_flags&BGFX_TEXTURE_BLIT_DST);
 		if (isDepth(fmt) )
 		{
 			usage = D3DUSAGE_DEPTHSTENCIL;
 			pool  = D3DPOOL_DEFAULT;
 		}
-		else if (renderTarget)
+		else if (renderTarget || blit)
 		{
 			usage = D3DUSAGE_RENDERTARGET;
 			pool  = D3DPOOL_DEFAULT;
@@ -2793,7 +2794,7 @@ namespace bgfx { namespace d3d9
 	{
 		TextureFormat::Enum fmt = (TextureFormat::Enum)m_textureFormat;
 		if (TextureFormat::Unknown != fmt
-		&& (isDepth(fmt) || !!(m_flags&BGFX_TEXTURE_RT_MASK) ) )
+		&& (isDepth(fmt) || !!(m_flags&(BGFX_TEXTURE_RT_MASK|BGFX_TEXTURE_BLIT_DST) ) ) )
 		{
 			DX_RELEASE(m_ptr, 0);
 			DX_RELEASE(m_surface, 0);
@@ -2804,7 +2805,7 @@ namespace bgfx { namespace d3d9
 	{
 		TextureFormat::Enum fmt = (TextureFormat::Enum)m_textureFormat;
 		if (TextureFormat::Unknown != fmt
-		&& (isDepth(fmt) || !!(m_flags&BGFX_TEXTURE_RT_MASK) ) )
+		&& (isDepth(fmt) || !!(m_flags&(BGFX_TEXTURE_RT_MASK|BGFX_TEXTURE_BLIT_DST)) ) )
 		{
 			createTexture(m_width, m_height, m_numMips);
 		}
@@ -3202,6 +3203,11 @@ namespace bgfx { namespace d3d9
 		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
 		uint32_t blendFactor = 0;
 
+		BlitKey blitKey;
+		blitKey.decode(_render->m_blitKeys[0]);
+		uint16_t numBlitItems = _render->m_numBlitItems;
+		uint16_t blitItem = 0;
+
 		uint8_t primIndex;
 		{
 			const uint64_t pt = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
@@ -3293,6 +3299,33 @@ namespace bgfx { namespace d3d9
 					DX_CHECK(device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE) );
 					DX_CHECK(device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE) );
 					DX_CHECK(device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER) );
+
+					for (; blitItem < numBlitItems && blitKey.m_view == view; blitItem++)
+					{
+						const BlitItem& blit = _render->m_blitItem[blitItem];
+						blitKey.decode(_render->m_blitKeys[blitItem+1]);
+
+						const TextureD3D9 src = m_textures[blit.m_src.idx];
+						const TextureD3D9 dst = m_textures[blit.m_dst.idx];
+
+						RECT srcRect = { blit.m_srcX, blit.m_srcY, blit.m_srcX + blit.m_width, blit.m_srcY + blit.m_height };
+						RECT dstRect = { blit.m_dstX, blit.m_dstY, blit.m_dstX + blit.m_width, blit.m_dstY + blit.m_height };
+
+						IDirect3DSurface9* srcSurface;
+						DX_CHECK(src.m_texture2d->GetSurfaceLevel(blit.m_srcMip, &srcSurface) );
+
+						IDirect3DSurface9* dstSurface;
+						DX_CHECK(dst.m_texture2d->GetSurfaceLevel(blit.m_dstMip, &dstSurface) );
+
+						DX_CHECK(m_device->StretchRect(srcSurface
+							, &srcRect
+							, dstSurface
+							, &dstRect
+							, D3DTEXF_NONE
+							) );
+						srcSurface->Release();
+						dstSurface->Release();
+					}
 				}
 
 				uint16_t scissor = draw.m_scissor;

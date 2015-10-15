@@ -4450,6 +4450,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
 
+		BlitKey blitKey;
+		blitKey.decode(_render->m_blitKeys[0]);
+		uint16_t numBlitItems = _render->m_numBlitItems;
+		uint16_t blitItem = 0;
+
 		const uint64_t primType = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
 		uint8_t primIndex = uint8_t(primType >> BGFX_STATE_PT_SHIFT);
 		PrimInfo prim = s_primInfo[primIndex];
@@ -4582,6 +4587,33 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					{
 						clearQuad(_clearQuad, viewState.m_rect, clr, _render->m_colorPalette);
 						prim = s_primInfo[BX_COUNTOF(s_primName)]; // Force primitive type update after clear quad.
+					}
+
+					for (; blitItem < numBlitItems && blitKey.m_view == view; blitItem++)
+					{
+						const BlitItem& blit = _render->m_blitItem[blitItem];
+						blitKey.decode(_render->m_blitKeys[blitItem+1]);
+
+						const TextureD3D11 src = m_textures[blit.m_src.idx];
+						const TextureD3D11 dst = m_textures[blit.m_dst.idx];
+
+						D3D11_BOX box;
+						box.left   = blit.m_srcX;
+						box.top    = blit.m_srcY;
+						box.front  = blit.m_srcZ;
+						box.right  = blit.m_srcX + blit.m_width;
+						box.bottom = blit.m_srcY + blit.m_height;
+						box.back   = blit.m_srcZ + bx::uint16_max(blit.m_depth, 1);
+
+						deviceCtx->CopySubresourceRegion(dst.m_ptr
+							, blit.m_dstMip
+							, blit.m_dstX
+							, blit.m_dstY
+							, blit.m_dstZ
+							, src.m_ptr
+							, blit.m_srcMip
+							, &box
+							);
 					}
 				}
 

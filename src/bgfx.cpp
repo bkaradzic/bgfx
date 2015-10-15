@@ -852,6 +852,31 @@ namespace bgfx
 		return m_num;
 	}
 
+	void Frame::blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
+	{
+		uint16_t item = m_numBlitItems++;
+
+		BlitItem& blit = m_blitItem[item];
+		blit.m_srcX   = _srcX;
+		blit.m_srcY	  =	_srcY;
+		blit.m_srcZ	  =	_srcZ;
+		blit.m_dstX	  =	_dstX;
+		blit.m_dstY	  =	_dstY;
+		blit.m_dstZ	  =	_dstZ;
+		blit.m_width  =	_width;
+		blit.m_height =	_height;
+		blit.m_depth  = _depth;
+		blit.m_srcMip = _srcMip;
+		blit.m_dstMip = _dstMip;
+		blit.m_src	  =	_src;
+		blit.m_dst	  =	_dst;
+
+		BlitKey key;
+		key.m_view = _id;
+		key.m_item = item;
+		m_blitKeys[item] = key.encode();
+	}
+
 	void Frame::sort()
 	{
 		for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
@@ -859,6 +884,12 @@ namespace bgfx
 			m_sortKeys[ii] = SortKey::remapView(m_sortKeys[ii], m_viewRemap);
 		}
 		bx::radixSort64(m_sortKeys, s_ctx->m_tempKeys, m_sortValues, s_ctx->m_tempValues, m_num);
+
+		for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
+		{
+			m_blitKeys[ii] = BlitKey::remapView(m_blitKeys[ii], m_viewRemap);
+		}
+		bx::radixSort32(m_blitKeys, (uint32_t*)&s_ctx->m_tempKeys, m_numBlitItems);
 	}
 
 	RenderFrame::Enum renderFrame()
@@ -1631,7 +1662,7 @@ again:
 			}
 			else
 			{
-#if 0
+#if 1
 				if (s_rendererCreator[RendererType::Metal].supported)
 				{
 					_type = RendererType::Metal;
@@ -3241,6 +3272,17 @@ again:
 		s_ctx->discard();
 	}
 
+	void blit(uint8_t _id, TextureHandle _dst, uint16_t _dstX, uint16_t _dstY, TextureHandle _src, uint16_t _srcX, uint16_t _srcY, uint16_t _width, uint16_t _height)
+	{
+		blit(_id, _dst, 0, _dstX, _dstY, 0, _src, 0, _srcX, _srcY, 0, _width, _height, 0);
+	}
+
+	void blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx->blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
+	}
+
 	void saveScreenShot(const char* _filePath)
 	{
 		BGFX_CHECK_MAIN_THREAD();
@@ -4057,6 +4099,13 @@ BGFX_C_API uint32_t bgfx_dispatch_indirect(uint8_t _id, bgfx_program_handle_t _h
 BGFX_C_API void bgfx_discard()
 {
 	bgfx::discard();
+}
+
+BGFX_C_API void bgfx_blit(uint8_t _id, bgfx_texture_handle_t _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, bgfx_texture_handle_t _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
+{
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } dst = { _dst };
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } src = { _src };
+	bgfx::blit(_id, dst.cpp, _dstMip, _dstX, _dstY, _dstZ, src.cpp, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
 }
 
 BGFX_C_API void bgfx_save_screen_shot(const char* _filePath)

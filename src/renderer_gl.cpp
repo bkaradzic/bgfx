@@ -441,6 +441,7 @@ namespace bgfx { namespace gl
 
 			ARB_compute_shader,
 			ARB_conservative_depth,
+			ARB_copy_image,
 			ARB_debug_label,
 			ARB_debug_output,
 			ARB_depth_buffer_float,
@@ -499,6 +500,7 @@ namespace bgfx { namespace gl
 			EXT_blend_subtract,
 			EXT_color_buffer_half_float,
 			EXT_color_buffer_float,
+			EXT_copy_image,
 			EXT_compressed_ETC1_RGB8_sub_texture,
 			EXT_debug_label,
 			EXT_debug_marker,
@@ -554,10 +556,12 @@ namespace bgfx { namespace gl
 			MOZ_WEBGL_compressed_texture_s3tc,
 			MOZ_WEBGL_depth_texture,
 
-			NV_texture_border_clamp,
+			NV_copy_image,
 			NV_draw_buffers,
+			NV_texture_border_clamp,
 			NVX_gpu_memory_info,
 
+			OES_copy_image,
 			OES_compressed_ETC1_RGB8_texture,
 			OES_depth24,
 			OES_depth32,
@@ -640,6 +644,7 @@ namespace bgfx { namespace gl
 
 		{ "ARB_compute_shader",                    BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 		{ "ARB_conservative_depth",                BGFX_CONFIG_RENDERER_OPENGL >= 42, true  },
+		{ "ARB_copy_image",                        BGFX_CONFIG_RENDERER_OPENGL >= 42, true  },
 		{ "ARB_debug_label",                       false,                             true  },
 		{ "ARB_debug_output",                      BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 		{ "ARB_depth_buffer_float",                BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
@@ -698,6 +703,7 @@ namespace bgfx { namespace gl
 		{ "EXT_blend_subtract",                    BGFX_CONFIG_RENDERER_OPENGL >= 14, true  },
 		{ "EXT_color_buffer_half_float",           false,                             true  }, // GLES2 extension.
 		{ "EXT_color_buffer_float",                false,                             true  }, // GLES2 extension.
+		{ "EXT_copy_image",                        false,                             true  }, // GLES2 extension.
 		{ "EXT_compressed_ETC1_RGB8_sub_texture",  false,                             true  }, // GLES2 extension.
 		{ "EXT_debug_label",                       false,                             true  },
 		{ "EXT_debug_marker",                      false,                             true  },
@@ -753,10 +759,12 @@ namespace bgfx { namespace gl
 		{ "MOZ_WEBGL_compressed_texture_s3tc",     false,                             true  },
 		{ "MOZ_WEBGL_depth_texture",               false,                             true  },
 
-		{ "NV_texture_border_clamp",               false,                             true  }, // GLES2 extension.
+		{ "NV_copy_image",                         false,                             true  },
 		{ "NV_draw_buffers",                       false,                             true  }, // GLES2 extension.
+		{ "NV_texture_border_clamp",               false,                             true  }, // GLES2 extension.
 		{ "NVX_gpu_memory_info",                   false,                             true  },
 
+		{ "OES_copy_image",                        false,                             true  },
 		{ "OES_compressed_ETC1_RGB8_texture",      false,                             true  },
 		{ "OES_depth24",                           false,                             true  },
 		{ "OES_depth32",                           false,                             true  },
@@ -5105,6 +5113,12 @@ namespace bgfx { namespace gl
 		SortKey key;
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
+
+		BlitKey blitKey;
+		blitKey.decode(_render->m_blitKeys[0]);
+		uint16_t numBlitItems = _render->m_numBlitItems;
+		uint16_t blitItem = 0;
+
 		int32_t height = hmdEnabled
 					? _render->m_hmd.height
 					: _render->m_resolution.m_height
@@ -5257,6 +5271,32 @@ namespace bgfx { namespace gl
 					GL_CHECK(glDepthFunc(GL_LESS) );
 					GL_CHECK(glEnable(GL_CULL_FACE) );
 					GL_CHECK(glDisable(GL_BLEND) );
+
+					for (; blitItem < numBlitItems && blitKey.m_view == view; blitItem++)
+					{
+						const BlitItem& blit = _render->m_blitItem[blitItem];
+						blitKey.decode(_render->m_blitKeys[blitItem+1]);
+
+						const TextureGL src = m_textures[blit.m_src.idx];
+						const TextureGL dst = m_textures[blit.m_dst.idx];
+
+						GL_CHECK(glCopyImageSubData(src.m_id
+							, src.m_target
+							, blit.m_srcMip
+							, blit.m_srcX
+							, blit.m_srcY
+							, blit.m_srcZ
+							, dst.m_id
+							, dst.m_target
+							, blit.m_dstMip
+							, blit.m_dstX
+							, blit.m_dstY
+							, blit.m_dstZ
+							, blit.m_width
+							, blit.m_height
+							, bx::uint32_max(blit.m_depth, 1)
+							) );
+					}
 				}
 
 				if (isCompute)
