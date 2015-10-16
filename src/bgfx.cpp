@@ -1594,8 +1594,8 @@ again:
 
 				if (windowsVersionIs(Condition::GreaterEqual, 0x0602) )
 				{
-					first  = RendererType::Direct3D12;
-					second = RendererType::Direct3D11;
+					first  = RendererType::Direct3D11;
+					second = RendererType::Direct3D12;
 					if (!s_rendererCreator[second].supported)
 					{
 						second = RendererType::Direct3D9;
@@ -1662,7 +1662,7 @@ again:
 			}
 			else
 			{
-#if 1
+#if 0
 				if (s_rendererCreator[RendererType::Metal].supported)
 				{
 					_type = RendererType::Metal;

@@ -3905,7 +3905,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			const bool bufferOnly   = 0 != (m_flags&BGFX_TEXTURE_RT_BUFFER_ONLY);
 			const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 			const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
-			const bool srgb			= 0 != (m_flags&BGFX_TEXTURE_SRGB) || imageContainer.m_srgb;
+			const bool srgb         = 0 != (m_flags&BGFX_TEXTURE_SRGB) || imageContainer.m_srgb;
+			const bool blit         = 0 != (m_flags&BGFX_TEXTURE_BLIT_DST);
 			const uint32_t msaaQuality = bx::uint32_satsub( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
 			const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
 
@@ -3943,7 +3944,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					desc.MipLevels  = numMips;
 					desc.Format     = format;
 					desc.SampleDesc = msaa;
-					desc.Usage      = kk == 0 ? D3D11_USAGE_DEFAULT : D3D11_USAGE_IMMUTABLE;
+					desc.Usage      = kk == 0 || blit ? D3D11_USAGE_DEFAULT : D3D11_USAGE_IMMUTABLE;
 					desc.BindFlags  = bufferOnly ? 0 : D3D11_BIND_SHADER_RESOURCE;
 					desc.CPUAccessFlags = 0;
 
@@ -3991,7 +3992,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					desc.Depth  = imageContainer.m_depth;
 					desc.MipLevels = imageContainer.m_numMips;
 					desc.Format    = format;
-					desc.Usage     = kk == 0 ? D3D11_USAGE_DEFAULT : D3D11_USAGE_IMMUTABLE;
+					desc.Usage     = kk == 0 || blit ? D3D11_USAGE_DEFAULT : D3D11_USAGE_IMMUTABLE;
 					desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 					desc.CPUAccessFlags = 0;
 					desc.MiscFlags      = 0;
