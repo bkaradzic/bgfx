@@ -856,20 +856,20 @@ namespace bgfx
 	{
 		uint16_t item = m_numBlitItems++;
 
-		BlitItem& blit = m_blitItem[item];
-		blit.m_srcX   = _srcX;
-		blit.m_srcY	  =	_srcY;
-		blit.m_srcZ	  =	_srcZ;
-		blit.m_dstX	  =	_dstX;
-		blit.m_dstY	  =	_dstY;
-		blit.m_dstZ	  =	_dstZ;
-		blit.m_width  =	_width;
-		blit.m_height =	_height;
-		blit.m_depth  = _depth;
-		blit.m_srcMip = _srcMip;
-		blit.m_dstMip = _dstMip;
-		blit.m_src	  =	_src;
-		blit.m_dst	  =	_dst;
+		BlitItem& bi = m_blitItem[item];
+		bi.m_srcX    = _srcX;
+		bi.m_srcY    = _srcY;
+		bi.m_srcZ    = _srcZ;
+		bi.m_dstX    = _dstX;
+		bi.m_dstY    = _dstY;
+		bi.m_dstZ    = _dstZ;
+		bi.m_width   = _width;
+		bi.m_height  = _height;
+		bi.m_depth   = _depth;
+		bi.m_srcMip  = _srcMip;
+		bi.m_dstMip  = _dstMip;
+		bi.m_src     = _src;
+		bi.m_dst     = _dst;
 
 		BlitKey key;
 		key.m_view = _id;
