@@ -5119,7 +5119,7 @@ namespace bgfx { namespace gl
 		uint16_t numBlitItems = _render->m_numBlitItems;
 		uint16_t blitItem = 0;
 
-		int32_t height = hmdEnabled
+		int32_t resolutionHeight = hmdEnabled
 					? _render->m_hmd.height
 					: _render->m_resolution.m_height
 					;
@@ -5191,11 +5191,11 @@ namespace bgfx { namespace gl
 					if (_render->m_fb[view].idx != fbh.idx)
 					{
 						fbh = _render->m_fb[view];
-						height = hmdEnabled
+						resolutionHeight = hmdEnabled
 							? _render->m_hmd.height
 							: _render->m_resolution.m_height
 							;
-						height = setFrameBuffer(fbh, height, discardFlags);
+						resolutionHeight = setFrameBuffer(fbh, resolutionHeight, discardFlags);
 					}
 
 					viewRestart = ( (BGFX_VIEW_STEREO == (_render->m_viewFlags[view] & BGFX_VIEW_STEREO) ) );
@@ -5253,7 +5253,7 @@ namespace bgfx { namespace gl
 					viewScissorRect = viewHasScissor ? scissorRect : viewState.m_rect;
 
 					GL_CHECK(glViewport(viewState.m_rect.m_x
-						, height-viewState.m_rect.m_height-viewState.m_rect.m_y
+						, resolutionHeight-viewState.m_rect.m_height-viewState.m_rect.m_y
 						, viewState.m_rect.m_width
 						, viewState.m_rect.m_height
 						) );
@@ -5263,7 +5263,7 @@ namespace bgfx { namespace gl
 
 					if (BGFX_CLEAR_NONE != (clear.m_flags & BGFX_CLEAR_MASK) )
 					{
-						clearQuad(_clearQuad, viewState.m_rect, clear, height, _render->m_colorPalette);
+						clearQuad(_clearQuad, viewState.m_rect, clear, resolutionHeight, _render->m_colorPalette);
 					}
 
 					GL_CHECK(glDisable(GL_STENCIL_TEST) );
@@ -5274,34 +5274,34 @@ namespace bgfx { namespace gl
 
 					for (; blitItem < numBlitItems && blitKey.m_view == view; blitItem++)
 					{
-						const BlitItem& blit = _render->m_blitItem[blitItem];
+						const BlitItem& bi = _render->m_blitItem[blitItem];
 						blitKey.decode(_render->m_blitKeys[blitItem+1]);
 
-						const TextureGL& src = m_textures[blit.m_src.idx];
-						const TextureGL& dst = m_textures[blit.m_dst.idx];
+						const TextureGL& src = m_textures[bi.m_src.idx];
+						const TextureGL& dst = m_textures[bi.m_dst.idx];
 
-						uint32_t srcWidth  = bx::uint32_min(src.m_width,  blit.m_srcX + blit.m_width)  - blit.m_srcX;
-						uint32_t srcHeight = bx::uint32_min(src.m_height, blit.m_srcY + blit.m_height) - blit.m_srcY;
-						uint32_t srcDepth  = bx::uint32_min(src.m_depth,  blit.m_srcZ + blit.m_depth)  - blit.m_srcZ;
-						uint32_t dstWidth  = bx::uint32_min(dst.m_width,  blit.m_dstX + blit.m_width)  - blit.m_dstX;
-						uint32_t dstHeight = bx::uint32_min(dst.m_height, blit.m_dstY + blit.m_height) - blit.m_dstY;
-						uint32_t dstDepth  = bx::uint32_min(dst.m_depth,  blit.m_dstZ + blit.m_depth)  - blit.m_dstZ;
+						uint32_t srcWidth  = bx::uint32_min(src.m_width,  bi.m_srcX + bi.m_width)  - bi.m_srcX;
+						uint32_t srcHeight = bx::uint32_min(src.m_height, bi.m_srcY + bi.m_height) - bi.m_srcY;
+						uint32_t srcDepth  = bx::uint32_min(src.m_depth,  bi.m_srcZ + bi.m_depth)  - bi.m_srcZ;
+						uint32_t dstWidth  = bx::uint32_min(dst.m_width,  bi.m_dstX + bi.m_width)  - bi.m_dstX;
+						uint32_t dstHeight = bx::uint32_min(dst.m_height, bi.m_dstY + bi.m_height) - bi.m_dstY;
+						uint32_t dstDepth  = bx::uint32_min(dst.m_depth,  bi.m_dstZ + bi.m_depth)  - bi.m_dstZ;
 						uint32_t width     = bx::uint32_min(srcWidth,  dstWidth);
 						uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
 						uint32_t depth     = bx::uint32_min(srcDepth,  dstDepth);
 
 						GL_CHECK(glCopyImageSubData(src.m_id
 							, src.m_target
-							, blit.m_srcMip
-							, blit.m_srcX
-							, blit.m_srcY
-							, blit.m_srcZ
+							, bi.m_srcMip
+							, bi.m_srcX
+							, bi.m_srcY
+							, bi.m_srcZ
 							, dst.m_id
 							, dst.m_target
-							, blit.m_dstMip
-							, blit.m_dstX
-							, blit.m_dstY
-							, blit.m_dstZ
+							, bi.m_dstMip
+							, bi.m_dstX
+							, bi.m_dstY
+							, bi.m_dstZ
 							, width
 							, height
 							, bx::uint32_max(depth, 1)
@@ -5469,7 +5469,7 @@ namespace bgfx { namespace gl
 						{
 							GL_CHECK(glEnable(GL_SCISSOR_TEST) );
 							GL_CHECK(glScissor(viewScissorRect.m_x
-								, height-viewScissorRect.m_height-viewScissorRect.m_y
+								, resolutionHeight-viewScissorRect.m_height-viewScissorRect.m_y
 								, viewScissorRect.m_width
 								, viewScissorRect.m_height
 								) );
@@ -5485,7 +5485,7 @@ namespace bgfx { namespace gl
 						scissorRect.intersect(viewScissorRect, _render->m_rectCache.m_cache[scissor]);
 						GL_CHECK(glEnable(GL_SCISSOR_TEST) );
 						GL_CHECK(glScissor(scissorRect.m_x
-							, height-scissorRect.m_height-scissorRect.m_y
+							, resolutionHeight-scissorRect.m_height-scissorRect.m_y
 							, scissorRect.m_width
 							, scissorRect.m_height
 							) );
