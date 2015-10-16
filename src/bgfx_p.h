@@ -3612,6 +3612,14 @@ namespace bgfx
 
 		BGFX_API_FUNC(void blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth) )
 		{
+			const TextureRef& src = m_textureRef[_src.idx];
+			const TextureRef& dst = m_textureRef[_dst.idx];
+			BX_CHECK(src.m_format == dst.m_format
+				, "Texture format must match (src %s, dst %s)."
+				, bgfx::getName(TextureFormat::Enum(src.m_format) )
+				, bgfx::getName(TextureFormat::Enum(dst.m_format) )
+				);
+			BX_UNUSED(src, dst);
 			m_submit->blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
 		}
 
