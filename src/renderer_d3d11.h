@@ -238,6 +238,9 @@ namespace bgfx { namespace d3d11
 		ID3D11ShaderResourceView*  m_srv;
 		ID3D11UnorderedAccessView* m_uav;
 		uint32_t m_flags;
+		uint32_t m_width;
+		uint32_t m_height;
+		uint32_t m_depth;
 		uint8_t  m_type;
 		uint8_t  m_requestedFormat;
 		uint8_t  m_textureFormat;

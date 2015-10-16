@@ -5277,8 +5277,18 @@ namespace bgfx { namespace gl
 						const BlitItem& blit = _render->m_blitItem[blitItem];
 						blitKey.decode(_render->m_blitKeys[blitItem+1]);
 
-						const TextureGL src = m_textures[blit.m_src.idx];
-						const TextureGL dst = m_textures[blit.m_dst.idx];
+						const TextureGL& src = m_textures[blit.m_src.idx];
+						const TextureGL& dst = m_textures[blit.m_dst.idx];
+
+						uint32_t srcWidth  = bx::uint32_min(src.m_width,  blit.m_srcX + blit.m_width)  - blit.m_srcX;
+						uint32_t srcHeight = bx::uint32_min(src.m_height, blit.m_srcY + blit.m_height) - blit.m_srcY;
+						uint32_t srcDepth  = bx::uint32_min(src.m_depth,  blit.m_srcZ + blit.m_depth)  - blit.m_srcZ;
+						uint32_t dstWidth  = bx::uint32_min(dst.m_width,  blit.m_dstX + blit.m_width)  - blit.m_dstX;
+						uint32_t dstHeight = bx::uint32_min(dst.m_height, blit.m_dstY + blit.m_height) - blit.m_dstY;
+						uint32_t dstDepth  = bx::uint32_min(dst.m_depth,  blit.m_dstZ + blit.m_depth)  - blit.m_dstZ;
+						uint32_t width     = bx::uint32_min(srcWidth,  dstWidth);
+						uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
+						uint32_t depth     = bx::uint32_min(srcDepth,  dstDepth);
 
 						GL_CHECK(glCopyImageSubData(src.m_id
 							, src.m_target
@@ -5292,9 +5302,9 @@ namespace bgfx { namespace gl
 							, blit.m_dstX
 							, blit.m_dstY
 							, blit.m_dstZ
-							, blit.m_width
-							, blit.m_height
-							, bx::uint32_max(blit.m_depth, 1)
+							, width
+							, height
+							, bx::uint32_max(depth, 1)
 							) );
 					}
 				}

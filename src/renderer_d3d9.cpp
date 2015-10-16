@@ -3305,11 +3305,18 @@ namespace bgfx { namespace d3d9
 						const BlitItem& blit = _render->m_blitItem[blitItem];
 						blitKey.decode(_render->m_blitKeys[blitItem+1]);
 
-						const TextureD3D9 src = m_textures[blit.m_src.idx];
-						const TextureD3D9 dst = m_textures[blit.m_dst.idx];
+						const TextureD3D9& src = m_textures[blit.m_src.idx];
+						const TextureD3D9& dst = m_textures[blit.m_dst.idx];
 
-						RECT srcRect = { blit.m_srcX, blit.m_srcY, blit.m_srcX + blit.m_width, blit.m_srcY + blit.m_height };
-						RECT dstRect = { blit.m_dstX, blit.m_dstY, blit.m_dstX + blit.m_width, blit.m_dstY + blit.m_height };
+						uint32_t srcWidth  = bx::uint32_min(src.m_width,  blit.m_srcX + blit.m_width)  - blit.m_srcX;
+						uint32_t srcHeight = bx::uint32_min(src.m_height, blit.m_srcY + blit.m_height) - blit.m_srcY;
+						uint32_t dstWidth  = bx::uint32_min(dst.m_width,  blit.m_dstX + blit.m_width)  - blit.m_dstX;
+						uint32_t dstHeight = bx::uint32_min(dst.m_height, blit.m_dstY + blit.m_height) - blit.m_dstY;
+						uint32_t width     = bx::uint32_min(srcWidth,  dstWidth);
+						uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
+
+						RECT srcRect = { blit.m_srcX, blit.m_srcY, blit.m_srcX + width, blit.m_srcY + height };
+						RECT dstRect = { blit.m_dstX, blit.m_dstY, blit.m_dstX + width, blit.m_dstY + height };
 
 						IDirect3DSurface9* srcSurface;
 						DX_CHECK(src.m_texture2d->GetSurfaceLevel(blit.m_srcMip, &srcSurface) );

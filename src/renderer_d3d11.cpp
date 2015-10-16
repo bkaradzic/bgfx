@@ -3800,7 +3800,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
 			const uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height>>startLod);
 
-			m_flags = _flags;
+			m_flags  = _flags;
+			m_width  = textureWidth;
+			m_height = textureHeight;
+			m_depth  = imageContainer.m_depth;
 			m_requestedFormat = (uint8_t)imageContainer.m_format;
 			m_textureFormat   = (uint8_t)imageContainer.m_format;
 
@@ -4594,16 +4597,26 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						const BlitItem& blit = _render->m_blitItem[blitItem];
 						blitKey.decode(_render->m_blitKeys[blitItem+1]);
 
-						const TextureD3D11 src = m_textures[blit.m_src.idx];
-						const TextureD3D11 dst = m_textures[blit.m_dst.idx];
+						const TextureD3D11& src = m_textures[blit.m_src.idx];
+						const TextureD3D11& dst = m_textures[blit.m_dst.idx];
+
+						uint32_t srcWidth  = bx::uint32_min(src.m_width,  blit.m_srcX + blit.m_width)  - blit.m_srcX;
+						uint32_t srcHeight = bx::uint32_min(src.m_height, blit.m_srcY + blit.m_height) - blit.m_srcY;
+						uint32_t srcDepth  = bx::uint32_min(src.m_depth,  blit.m_srcZ + blit.m_depth)  - blit.m_srcZ;
+						uint32_t dstWidth  = bx::uint32_min(dst.m_width,  blit.m_dstX + blit.m_width)  - blit.m_dstX;
+						uint32_t dstHeight = bx::uint32_min(dst.m_height, blit.m_dstY + blit.m_height) - blit.m_dstY;
+						uint32_t dstDepth  = bx::uint32_min(dst.m_depth,  blit.m_dstZ + blit.m_depth)  - blit.m_dstZ;
+						uint32_t width     = bx::uint32_min(srcWidth,  dstWidth);
+						uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
+						uint32_t depth     = bx::uint32_min(srcDepth,  dstDepth);
 
 						D3D11_BOX box;
 						box.left   = blit.m_srcX;
 						box.top    = blit.m_srcY;
 						box.front  = blit.m_srcZ;
-						box.right  = blit.m_srcX + blit.m_width;
-						box.bottom = blit.m_srcY + blit.m_height;
-						box.back   = blit.m_srcZ + bx::uint16_max(blit.m_depth, 1);
+						box.right  = blit.m_srcX + width;
+						box.bottom = blit.m_srcY + height;
+						box.back   = blit.m_srcZ + bx::uint32_max(1, depth);
 
 						deviceCtx->CopySubresourceRegion(dst.m_ptr
 							, blit.m_dstMip
