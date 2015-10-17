@@ -528,14 +528,15 @@ namespace bgfx { namespace d3d9
 			BX_TRACE("Max vertex index: %d", m_caps.MaxVertexIndex);
 
 			g_caps.supported |= ( 0
-								| BGFX_CAPS_TEXTURE_3D
-								| BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
-								| BGFX_CAPS_VERTEX_ATTRIB_HALF
-								| BGFX_CAPS_VERTEX_ATTRIB_UINT10
-								| BGFX_CAPS_FRAGMENT_DEPTH
-								| BGFX_CAPS_SWAP_CHAIN
-								| ( (UINT16_MAX < m_caps.MaxVertexIndex) ? BGFX_CAPS_INDEX32 : 0)
-								);
+				| BGFX_CAPS_TEXTURE_3D
+				| BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
+				| BGFX_CAPS_VERTEX_ATTRIB_HALF
+				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
+				| BGFX_CAPS_FRAGMENT_DEPTH
+				| BGFX_CAPS_SWAP_CHAIN
+				| ( (UINT16_MAX < m_caps.MaxVertexIndex) ? BGFX_CAPS_INDEX32 : 0)
+				| BGFX_CAPS_BLIT
+				);
 			g_caps.maxTextureSize = uint16_t(bx::uint32_min(m_caps.MaxTextureWidth, m_caps.MaxTextureHeight) );
 //			g_caps.maxVertexIndex = m_caps.MaxVertexIndex;
 
@@ -3300,7 +3301,7 @@ namespace bgfx { namespace d3d9
 					DX_CHECK(device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE) );
 					DX_CHECK(device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER) );
 
-					for (; blitItem < numBlitItems && blitKey.m_view == view; blitItem++)
+					for (; blitItem < numBlitItems && blitKey.m_view <= view; blitItem++)
 					{
 						const BlitItem& blit = _render->m_blitItem[blitItem];
 						blitKey.decode(_render->m_blitKeys[blitItem+1]);
@@ -3315,8 +3316,8 @@ namespace bgfx { namespace d3d9
 						uint32_t width     = bx::uint32_min(srcWidth,  dstWidth);
 						uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
 
-						RECT srcRect = { blit.m_srcX, blit.m_srcY, blit.m_srcX + width, blit.m_srcY + height };
-						RECT dstRect = { blit.m_dstX, blit.m_dstY, blit.m_dstX + width, blit.m_dstY + height };
+						RECT srcRect = { LONG(blit.m_srcX), LONG(blit.m_srcY), LONG(blit.m_srcX + width), LONG(blit.m_srcY + height) };
+						RECT dstRect = { LONG(blit.m_dstX), LONG(blit.m_dstY), LONG(blit.m_dstX + width), LONG(blit.m_dstY + height) };
 
 						IDirect3DSurface9* srcSurface;
 						DX_CHECK(src.m_texture2d->GetSurfaceLevel(blit.m_srcMip, &srcSurface) );

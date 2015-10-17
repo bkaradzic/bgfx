@@ -1156,6 +1156,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					| BGFX_CAPS_SWAP_CHAIN
 					| (m_ovr.isInitialized() ? BGFX_CAPS_HMD : 0)
 					| BGFX_CAPS_DRAW_INDIRECT
+					| BGFX_CAPS_BLIT
 					);
 
 				if (m_featureLevel <= D3D_FEATURE_LEVEL_9_2)
@@ -4593,7 +4594,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						prim = s_primInfo[BX_COUNTOF(s_primName)]; // Force primitive type update after clear quad.
 					}
 
-					for (; blitItem < numBlitItems && blitKey.m_view == view; blitItem++)
+					for (; blitItem < numBlitItems && blitKey.m_view <= view; blitItem++)
 					{
 						const BlitItem& blit = _render->m_blitItem[blitItem];
 						blitKey.decode(_render->m_blitKeys[blitItem+1]);
@@ -4616,7 +4617,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						box.top    = blit.m_srcY;
 						box.front  = blit.m_srcZ;
 						box.right  = blit.m_srcX + width;
-						box.bottom = blit.m_srcY + height;
+						box.bottom = blit.m_srcY + height;;
 						box.back   = blit.m_srcZ + bx::uint32_max(1, depth);
 
 						deviceCtx->CopySubresourceRegion(dst.m_ptr
