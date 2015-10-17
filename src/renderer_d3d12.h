@@ -272,6 +272,9 @@ namespace bgfx { namespace d3d12
 		ID3D12Resource* m_ptr;
 		D3D12_RESOURCE_STATES m_state;
 		uint32_t m_flags;
+		uint32_t m_width;
+		uint32_t m_height;
+		uint32_t m_depth;
 		uint16_t m_samplerIdx;
 		uint8_t m_type;
 		uint8_t m_requestedFormat;
@@ -341,9 +344,9 @@ namespace bgfx { namespace d3d12
 		uint64_t m_currentFence;
 		uint64_t m_completedFence;
 		ID3D12Fence* m_fence;
-		CommandList m_commandList[32];
+		CommandList m_commandList[256];
 		typedef stl::vector<ID3D12Resource*> ResourceArray;
-		ResourceArray m_release[32];
+		ResourceArray m_release[256];
 		bx::RingBufferControl m_control;
 	};
 
