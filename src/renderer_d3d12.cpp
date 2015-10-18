@@ -4419,7 +4419,7 @@ data.NumQualityLevels = 0;
  						box.front  = blit.m_srcZ;
  						box.right  = blit.m_srcX + width;
  						box.bottom = blit.m_srcY + height;;
- 						box.back   = blit.m_srcZ + bx::uint32_max(1, depth);
+ 						box.back   = blit.m_srcZ + bx::uint32_imax(1, depth);
 
 						D3D12_TEXTURE_COPY_LOCATION dstLocation = { dst.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { 0 } };
 						D3D12_TEXTURE_COPY_LOCATION srcLocation = { src.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { 0 } };

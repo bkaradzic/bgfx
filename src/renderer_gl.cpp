@@ -5320,7 +5320,7 @@ namespace bgfx { namespace gl
 								, bi.m_dstZ
 								, width
 								, height
-								, bx::uint32_max(depth, 1)
+								, bx::uint32_imax(depth, 1)
 								) );
 						}
 					}

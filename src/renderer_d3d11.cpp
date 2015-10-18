@@ -4618,7 +4618,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						box.front  = blit.m_srcZ;
 						box.right  = blit.m_srcX + width;
 						box.bottom = blit.m_srcY + height;;
-						box.back   = blit.m_srcZ + bx::uint32_max(1, depth);
+						box.back   = blit.m_srcZ + bx::uint32_imax(1, depth);
 
 						deviceCtx->CopySubresourceRegion(dst.m_ptr
 							, blit.m_dstMip
