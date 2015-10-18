@@ -3641,7 +3641,7 @@ data.NumQualityLevels = 0;
 			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
 			const uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height>>startLod);
 
-			m_flags = _flags;
+			m_flags  = _flags;
 			m_width  = textureWidth;
 			m_height = textureHeight;
 			m_depth  = imageContainer.m_depth;
@@ -4413,23 +4413,55 @@ data.NumQualityLevels = 0;
  						uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
  						uint32_t depth     = bx::uint32_min(srcDepth,  dstDepth);
 
- 						D3D12_BOX box;
- 						box.left   = blit.m_srcX;
- 						box.top    = blit.m_srcY;
- 						box.front  = blit.m_srcZ;
- 						box.right  = blit.m_srcX + width;
- 						box.bottom = blit.m_srcY + height;;
- 						box.back   = blit.m_srcZ + bx::uint32_imax(1, depth);
+						if (TextureD3D12::Texture3D == src.m_type)
+						{
+							D3D12_BOX box;
+ 							box.left   = blit.m_srcX;
+ 							box.top    = blit.m_srcY;
+ 							box.front  = blit.m_srcZ;
+ 							box.right  = blit.m_srcX + width;
+ 							box.bottom = blit.m_srcY + height;;
+ 							box.back   = blit.m_srcZ + bx::uint32_imax(1, depth);
 
-						D3D12_TEXTURE_COPY_LOCATION dstLocation = { dst.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { 0 } };
-						D3D12_TEXTURE_COPY_LOCATION srcLocation = { src.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { 0 } };
-						m_commandList->CopyTextureRegion(&dstLocation
-							, blit.m_dstX
-							, blit.m_dstY
-							, blit.m_dstZ
-							, &srcLocation
-							, &box
-							);
+							D3D12_TEXTURE_COPY_LOCATION dstLocation = { dst.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { 0 } };
+							D3D12_TEXTURE_COPY_LOCATION srcLocation = { src.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { 0 } };
+							m_commandList->CopyTextureRegion(&dstLocation
+								, blit.m_dstX
+								, blit.m_dstY
+								, blit.m_dstZ
+								, &srcLocation
+								, &box
+								);
+						}
+						else
+						{
+							D3D12_BOX box;
+ 							box.left   = blit.m_srcX;
+ 							box.top    = blit.m_srcY;
+ 							box.front  = 0;
+ 							box.right  = blit.m_srcX + width;
+ 							box.bottom = blit.m_srcY + height;;
+ 							box.back   = 1;
+
+							const uint32_t srcZ = TextureD3D12::TextureCube == src.m_type
+								? blit.m_srcZ
+								: 0
+								;
+							const uint32_t dstZ = TextureD3D12::TextureCube == dst.m_type
+								? blit.m_dstZ
+								: 0
+								;
+
+							D3D12_TEXTURE_COPY_LOCATION dstLocation = { dst.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { dstZ*dst.m_numMips+blit.m_dstMip } };
+							D3D12_TEXTURE_COPY_LOCATION srcLocation = { src.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { srcZ*src.m_numMips+blit.m_srcMip } };
+							m_commandList->CopyTextureRegion(&dstLocation
+								, blit.m_dstX
+								, blit.m_dstY
+								, 0
+								, &srcLocation
+								, &box
+								);
+						}
 					}
 				}
 
