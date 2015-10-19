@@ -2573,6 +2573,28 @@ namespace bgfx { namespace d3d9
 		BX_CHECK(false, "You should not be here.");
 	}
 
+	IDirect3DSurface9* TextureD3D9::getSurface(uint8_t _side, uint8_t _mip) const
+	{
+		IDirect3DSurface9* surface = NULL;
+
+		switch (m_type)
+		{
+		case Texture2D:
+			DX_CHECK(m_texture2d->GetSurfaceLevel(_mip, &surface) );
+			break;
+
+		case Texture3D:
+			BX_CHECK(false, "");
+			break;
+
+		case TextureCube:
+			DX_CHECK(m_textureCube->GetCubeMapSurface(D3DCUBEMAP_FACES(_side), _mip, &surface) );
+			break;
+		}
+
+		return surface;
+	}
+
 	void TextureD3D9::create(const Memory* _mem, uint32_t _flags, uint8_t _skip)
 	{
 		ImageContainer imageContainer;
@@ -2796,8 +2818,7 @@ namespace bgfx { namespace d3d9
 		if (NULL != m_surface
 		&&  NULL != m_texture2d)
 		{
-			IDirect3DSurface9* surface;
-			DX_CHECK(m_texture2d->GetSurfaceLevel(0, &surface) );
+			IDirect3DSurface9* surface = getSurface();
 			DX_CHECK(s_renderD3D9->m_device->StretchRect(m_surface
 				, NULL
 				, surface
@@ -2856,7 +2877,7 @@ namespace bgfx { namespace d3d9
 					}
 					else
 					{
-						DX_CHECK(texture.m_texture2d->GetSurfaceLevel(0, &m_depthStencil) );
+						m_depthStencil = texture.getSurface();
 					}
 				}
 				else
@@ -2869,7 +2890,7 @@ namespace bgfx { namespace d3d9
 					}
 					else
 					{
-						DX_CHECK(texture.m_texture2d->GetSurfaceLevel(0, &m_color[m_num]) );
+						m_color[m_num] = texture.getSurface();
 					}
 					m_num++;
 				}
@@ -3057,7 +3078,7 @@ namespace bgfx { namespace d3d9
 					}
 					else
 					{
-						DX_CHECK(texture.m_texture2d->GetSurfaceLevel(0, &m_color[ii]) );
+						m_color[ii] = texture.getSurface();
 					}
 				}
 			}
@@ -3072,7 +3093,7 @@ namespace bgfx { namespace d3d9
 				}
 				else
 				{
-					DX_CHECK(texture.m_texture2d->GetSurfaceLevel(0, &m_depthStencil) );
+					m_depthStencil = texture.getSurface();
 				}
 
 				if (0 == m_num)
@@ -3336,37 +3357,8 @@ namespace bgfx { namespace d3d9
 						RECT srcRect = { LONG(blit.m_srcX), LONG(blit.m_srcY), LONG(blit.m_srcX + width), LONG(blit.m_srcY + height) };
 						RECT dstRect = { LONG(blit.m_dstX), LONG(blit.m_dstY), LONG(blit.m_dstX + width), LONG(blit.m_dstY + height) };
 
-						IDirect3DSurface9* srcSurface;
-						switch (src.m_type)
-						{
-						case TextureD3D9::Texture2D:
-							DX_CHECK(src.m_texture2d->GetSurfaceLevel(blit.m_srcMip, &srcSurface) );
-							break;
-
-						case TextureD3D9::Texture3D:
-							BX_CHECK(false, "");
-							break;
-
-						case TextureD3D9::TextureCube:
-							DX_CHECK(src.m_textureCube->GetCubeMapSurface(D3DCUBEMAP_FACES(blit.m_srcZ), blit.m_srcMip, &srcSurface) );
-							break;
-						}
-
-						IDirect3DSurface9* dstSurface;
-						switch (dst.m_type)
-						{
-						case TextureD3D9::Texture2D:
-							DX_CHECK(dst.m_texture2d->GetSurfaceLevel(blit.m_dstMip, &dstSurface) );
-							break;
-
-						case TextureD3D9::Texture3D:
-							BX_CHECK(false, "");
-							break;
-
-						case TextureD3D9::TextureCube:
-							DX_CHECK(dst.m_textureCube->GetCubeMapSurface(D3DCUBEMAP_FACES(blit.m_dstZ), blit.m_dstMip, &dstSurface) );
-							break;
-						}
+						IDirect3DSurface9* srcSurface = src.getSurface(uint8_t(blit.m_srcZ), blit.m_srcMip);
+						IDirect3DSurface9* dstSurface = dst.getSurface(uint8_t(blit.m_dstZ), blit.m_dstMip);
 
 						HRESULT hr = m_device->StretchRect(srcSurface
 							, &srcRect

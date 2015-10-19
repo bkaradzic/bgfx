@@ -4240,23 +4240,96 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						}
 					}
 
+					const uint32_t msaaQuality   = bx::uint32_satsub( (texture.m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
+					const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
+
 					if (isDepth( (TextureFormat::Enum)texture.m_textureFormat) )
 					{
 						BX_CHECK(NULL == m_dsv, "Frame buffer already has depth-stencil attached.");
 
-						const uint32_t msaaQuality = bx::uint32_satsub( (texture.m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
-						const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
+						switch (texture.m_type)
+						{
+						default:
+						case TextureD3D11::Texture2D:
+							{
+								D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
+								dsvDesc.Format        = s_textureFormat[texture.m_textureFormat].m_fmtDsv;
+								dsvDesc.ViewDimension = 1 < msaa.Count
+									? D3D11_DSV_DIMENSION_TEXTURE2DMS
+									: D3D11_DSV_DIMENSION_TEXTURE2D
+									;
+								dsvDesc.Flags = 0;
+								dsvDesc.Texture2D.MipSlice = 0;
+								DX_CHECK(s_renderD3D11->m_device->CreateDepthStencilView(texture.m_ptr, &dsvDesc, &m_dsv) );
+							}
+							break;
 
-						D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
-						dsvDesc.Format = s_textureFormat[texture.m_textureFormat].m_fmtDsv;
-						dsvDesc.ViewDimension = 1 < msaa.Count ? D3D11_DSV_DIMENSION_TEXTURE2DMS : D3D11_DSV_DIMENSION_TEXTURE2D;
-						dsvDesc.Flags = 0;
-						dsvDesc.Texture2D.MipSlice = 0;
-						DX_CHECK(s_renderD3D11->m_device->CreateDepthStencilView(texture.m_ptr, &dsvDesc, &m_dsv) );
+						case TextureD3D11::TextureCube:
+							{
+								D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
+								dsvDesc.Format = s_textureFormat[texture.m_textureFormat].m_fmtDsv;
+								if (1 < msaa.Count)
+								{
+									dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY;
+									dsvDesc.Texture2DMSArray.ArraySize       = 1;
+									dsvDesc.Texture2DMSArray.FirstArraySlice = 0;
+								}
+								else
+								{
+									dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+									dsvDesc.Texture2DArray.ArraySize       = 1;
+									dsvDesc.Texture2DArray.FirstArraySlice = 0;
+									dsvDesc.Texture2DArray.MipSlice        = 0;
+								}
+								dsvDesc.Flags = 0;
+								DX_CHECK(s_renderD3D11->m_device->CreateDepthStencilView(texture.m_ptr, &dsvDesc, &m_dsv) );
+							}
+							break;
+						}
 					}
 					else
 					{
-						DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(texture.m_ptr, NULL, &m_rtv[m_num]) );
+						switch (texture.m_type)
+						{
+						default:
+						case TextureD3D11::Texture2D:
+							DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(texture.m_ptr, NULL, &m_rtv[m_num]) );
+							break;
+
+						case TextureD3D11::TextureCube:
+							{
+								D3D11_RENDER_TARGET_VIEW_DESC desc;
+								desc.Format = s_textureFormat[texture.m_textureFormat].m_fmt;
+								if (1 < msaa.Count)
+								{
+									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY;
+									desc.Texture2DMSArray.ArraySize       = 1;
+									desc.Texture2DMSArray.FirstArraySlice = 0;
+								}
+								else
+								{
+									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+									desc.Texture2DArray.ArraySize       = 1;
+									desc.Texture2DArray.FirstArraySlice = 0;
+									desc.Texture2DArray.MipSlice        = 0;
+								}
+								DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(texture.m_ptr, &desc, &m_rtv[m_num]) );
+							}
+							break;
+
+						case TextureD3D11::Texture3D:
+							{
+								D3D11_RENDER_TARGET_VIEW_DESC desc;
+								desc.Format        = s_textureFormat[texture.m_textureFormat].m_fmt;
+								desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE3D;
+								desc.Texture3D.MipSlice    = 0;
+								desc.Texture3D.WSize       = 1;
+								desc.Texture3D.FirstWSlice = 0;
+								DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(texture.m_ptr, &desc, &m_rtv[m_num]) );
+							}
+							break;
+						}
+
 						DX_CHECK(s_renderD3D11->m_device->CreateShaderResourceView(texture.m_ptr, NULL, &m_srv[m_num]) );
 						m_num++;
 					}

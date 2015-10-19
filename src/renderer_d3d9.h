@@ -321,6 +321,7 @@ namespace bgfx { namespace d3d9
 		uint8_t* lock(uint8_t _side, uint8_t _lod, uint32_t& _pitch, uint32_t& _slicePitch, const Rect* _rect = NULL);
 		void unlock(uint8_t _side, uint8_t _lod);
 		void dirty(uint8_t _side, const Rect& _rect, uint16_t _z, uint16_t _depth);
+		IDirect3DSurface9* getSurface(uint8_t _side = 0, uint8_t _mip = 0) const;
 
 		void create(const Memory* _mem, uint32_t _flags, uint8_t _skip);
 

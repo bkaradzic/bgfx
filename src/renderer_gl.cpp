@@ -4904,9 +4904,14 @@ namespace bgfx { namespace gl
 					}
 					else
 					{
+						GLenum target = GL_TEXTURE_CUBE_MAP == texture.m_target
+							? GL_TEXTURE_CUBE_MAP_POSITIVE_X
+							: texture.m_target
+							;
+
 						GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER
 							, attachment
-							, texture.m_target
+							, target
 							, texture.m_id
 							, 0
 							) );
