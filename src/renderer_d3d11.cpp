@@ -4612,23 +4612,55 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
 						uint32_t depth     = bx::uint32_min(srcDepth,  dstDepth);
 
-						D3D11_BOX box;
-						box.left   = blit.m_srcX;
-						box.top    = blit.m_srcY;
-						box.front  = blit.m_srcZ;
-						box.right  = blit.m_srcX + width;
-						box.bottom = blit.m_srcY + height;;
-						box.back   = blit.m_srcZ + bx::uint32_imax(1, depth);
+						if (TextureD3D11::Texture3D == src.m_type)
+						{
+							D3D11_BOX box;
+							box.left   = blit.m_srcX;
+							box.top    = blit.m_srcY;
+							box.front  = blit.m_srcZ;
+							box.right  = blit.m_srcX + width;
+							box.bottom = blit.m_srcY + height;;
+							box.back   = blit.m_srcZ + bx::uint32_imax(1, depth);
 
-						deviceCtx->CopySubresourceRegion(dst.m_ptr
-							, blit.m_dstMip
-							, blit.m_dstX
-							, blit.m_dstY
-							, blit.m_dstZ
-							, src.m_ptr
-							, blit.m_srcMip
-							, &box
-							);
+							deviceCtx->CopySubresourceRegion(dst.m_ptr
+								, blit.m_dstMip
+								, blit.m_dstX
+								, blit.m_dstY
+								, blit.m_dstZ
+								, src.m_ptr
+								, blit.m_srcMip
+								, &box
+								);
+						}
+						else
+						{
+							D3D11_BOX box;
+							box.left   = blit.m_srcX;
+							box.top    = blit.m_srcY;
+							box.front  = 0;
+							box.right  = blit.m_srcX + width;
+							box.bottom = blit.m_srcY + height;;
+							box.back   = 1;
+
+							const uint32_t srcZ = TextureD3D11::TextureCube == src.m_type
+								? blit.m_srcZ
+								: 0
+								;
+							const uint32_t dstZ = TextureD3D11::TextureCube == dst.m_type
+								? blit.m_dstZ
+								: 0
+								;
+
+							deviceCtx->CopySubresourceRegion(dst.m_ptr
+								, dstZ*dst.m_numMips+blit.m_dstMip
+								, blit.m_dstX
+								, blit.m_dstY
+								, 0
+								, src.m_ptr
+								, srcZ*src.m_numMips+blit.m_srcMip
+								, &box
+								);
+						}
 					}
 				}
 
