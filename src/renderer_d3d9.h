@@ -350,8 +350,9 @@ namespace bgfx { namespace d3d9
 
 		IDirect3DSurface9* m_surface;
 		uint32_t m_flags;
-		uint16_t m_width;
-		uint16_t m_height;
+		uint32_t m_width;
+		uint32_t m_height;
+		uint32_t m_depth;
 		uint8_t m_numMips;
 		uint8_t m_type;
 		uint8_t m_requestedFormat;
