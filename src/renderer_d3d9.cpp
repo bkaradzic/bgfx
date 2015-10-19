@@ -3353,7 +3353,7 @@ namespace bgfx { namespace d3d9
 						}
 
 						IDirect3DSurface9* dstSurface;
-						switch (src.m_type)
+						switch (dst.m_type)
 						{
 						case TextureD3D9::Texture2D:
 							DX_CHECK(dst.m_texture2d->GetSurfaceLevel(blit.m_dstMip, &dstSurface) );
@@ -3364,7 +3364,7 @@ namespace bgfx { namespace d3d9
 							break;
 
 						case TextureD3D9::TextureCube:
-							DX_CHECK(src.m_textureCube->GetCubeMapSurface(D3DCUBEMAP_FACES(blit.m_dstZ), blit.m_dstMip, &dstSurface) );
+							DX_CHECK(dst.m_textureCube->GetCubeMapSurface(D3DCUBEMAP_FACES(blit.m_dstZ), blit.m_dstMip, &dstSurface) );
 							break;
 						}
 
