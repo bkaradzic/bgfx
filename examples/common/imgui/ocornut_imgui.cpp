@@ -57,7 +57,7 @@ public:
 #endif // USE_ENTRY
 	}
 
-	virtual ~PlatformWindow() BX_OVERRIDE
+	virtual ~PlatformWindow()
 	{
 	}
 
@@ -197,7 +197,7 @@ public:
 	{
 	}
 
-	virtual ~WindowManager() BX_OVERRIDE
+	virtual ~WindowManager()
 	{
 	}
 
