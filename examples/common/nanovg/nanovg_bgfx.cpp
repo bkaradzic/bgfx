@@ -251,7 +251,7 @@ namespace
 			vs_nanovg_fill = bgfx::makeRef(vs_nanovg_fill_mtl, sizeof(vs_nanovg_fill_mtl) );
 			fs_nanovg_fill = bgfx::makeRef(fs_nanovg_fill_mtl, sizeof(fs_nanovg_fill_mtl) );
 			break;
-				
+
 		default:
 			vs_nanovg_fill = bgfx::makeRef(vs_nanovg_fill_glsl, sizeof(vs_nanovg_fill_glsl) );
 			fs_nanovg_fill = bgfx::makeRef(fs_nanovg_fill_glsl, sizeof(fs_nanovg_fill_glsl) );

@@ -612,6 +612,10 @@ namespace bgfx { namespace mtl
 	{
 	}
 
+	void readTexture(TextureHandle /*_handle*/, void* /*_data*/) BX_OVERRIDE
+	{
+	}
+
 	void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height) BX_OVERRIDE
 	{
 		TextureMtl& texture = m_textures[_handle.idx];

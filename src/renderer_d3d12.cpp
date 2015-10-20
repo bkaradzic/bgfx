@@ -884,7 +884,7 @@ namespace bgfx { namespace d3d12
 									| BGFX_CAPS_COMPUTE
 									| (m_options.ROVsSupported ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
 //									| BGFX_CAPS_SWAP_CHAIN
-									| BGFX_CAPS_BLIT
+									| BGFX_CAPS_TEXTURE_BLIT
 									);
 				g_caps.maxTextureSize   = 16384;
 				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(16, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
@@ -1247,6 +1247,10 @@ namespace bgfx { namespace d3d12
 		}
 
 		void updateTextureEnd() BX_OVERRIDE
+		{
+		}
+
+		void readTexture(TextureHandle /*_handle*/, void* /*_data*/) BX_OVERRIDE
 		{
 		}
 

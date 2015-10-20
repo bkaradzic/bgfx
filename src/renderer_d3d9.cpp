@@ -535,7 +535,8 @@ namespace bgfx { namespace d3d9
 				| BGFX_CAPS_FRAGMENT_DEPTH
 				| BGFX_CAPS_SWAP_CHAIN
 				| ( (UINT16_MAX < m_caps.MaxVertexIndex) ? BGFX_CAPS_INDEX32 : 0)
-				| ( (m_caps.DevCaps2 & D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES) ? BGFX_CAPS_BLIT : 0)
+//				| ( (m_caps.DevCaps2 & D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES) ? BGFX_CAPS_TEXTURE_BLIT : 0)
+//				| BGFX_CAPS_TEXTURE_READ_BACK
 				);
 			g_caps.maxTextureSize = uint16_t(bx::uint32_min(m_caps.MaxTextureWidth, m_caps.MaxTextureHeight) );
 //			g_caps.maxVertexIndex = m_caps.MaxVertexIndex;
@@ -900,6 +901,37 @@ namespace bgfx { namespace d3d9
 		{
 			m_updateTexture->updateEnd();
 			m_updateTexture = NULL;
+		}
+
+		void readTexture(TextureHandle _handle, void* _data) BX_OVERRIDE
+		{
+			TextureD3D9& texture = m_textures[_handle.idx];
+
+			D3DLOCKED_RECT lockedRect;
+			DX_CHECK(texture.m_texture2d->LockRect(0
+				, &lockedRect
+				, NULL
+				, D3DLOCK_NO_DIRTY_UPDATE|D3DLOCK_NOSYSLOCK|D3DLOCK_READONLY
+				) );
+
+			uint32_t srcPitch = lockedRect.Pitch;
+			uint8_t* src      = (uint8_t*)lockedRect.pBits;
+
+			const uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(texture.m_textureFormat) );
+			uint8_t* dst      = (uint8_t*)_data;
+			uint32_t dstPitch = texture.m_width*bpp/8;
+
+			uint32_t pitch = bx::uint32_min(srcPitch, dstPitch);
+
+			for (uint32_t yy = 0, height = texture.m_height; yy < height; ++yy)
+			{
+				memcpy(dst, src, pitch);
+
+				src += srcPitch;
+				dst += dstPitch;
+			}
+
+			DX_CHECK(texture.m_texture2d->UnlockRect(0) );
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height) BX_OVERRIDE

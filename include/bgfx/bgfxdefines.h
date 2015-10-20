@@ -311,6 +311,7 @@
 #define BGFX_TEXTURE_COMPUTE_WRITE       UINT32_C(0x00100000) //!<
 #define BGFX_TEXTURE_SRGB                UINT32_C(0x00200000) //!<
 #define BGFX_TEXTURE_BLIT_DST            UINT32_C(0x00400000) //!<
+#define BGFX_TEXTURE_READ_BACK           UINT32_C(0x00800000) //!<
 #define BGFX_TEXTURE_BORDER_COLOR_SHIFT  24                   //!<
 #define BGFX_TEXTURE_BORDER_COLOR_MASK   UINT32_C(0x0f000000) //!<
 #define BGFX_TEXTURE_RESERVED_SHIFT      28                   //!<
@@ -367,7 +368,8 @@
 #define BGFX_CAPS_INDEX32                UINT64_C(0x0000000000002000) //!< 32-bit indices are supported.
 #define BGFX_CAPS_DRAW_INDIRECT          UINT64_C(0x0000000000004000) //!< Draw indirect is supported.
 #define BGFX_CAPS_HIDPI                  UINT64_C(0x0000000000008000) //!< HiDPI rendering is supported.
-#define BGFX_CAPS_BLIT                   UINT64_C(0x0000000000010000) //!< Blit is supported.
+#define BGFX_CAPS_TEXTURE_BLIT           UINT64_C(0x0000000000010000) //!< Texture blit is supported.
+#define BGFX_CAPS_TEXTURE_READ_BACK      UINT64_C(0x0000000000020000) //!< Read-back texture is supported.
 
 ///
 #define BGFX_CAPS_FORMAT_TEXTURE_NONE             UINT8_C(0x00) //!< Texture format is not supported.

@@ -169,7 +169,7 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	const bgfx::Caps* caps = bgfx::getCaps();
 	const bool texture3DSupported = !!(caps->supported & BGFX_CAPS_TEXTURE_3D);
-	const bool blitSupported      = !!(caps->supported & BGFX_CAPS_BLIT);
+	const bool blitSupported      = !!(caps->supported & BGFX_CAPS_TEXTURE_BLIT);
 
 	uint32_t numTextures3d = 0;
 	bgfx::TextureHandle textures3d[3] = {};

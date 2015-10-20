@@ -977,7 +977,7 @@ namespace bgfx
 		CAPS_FLAGS(BGFX_CAPS_INDEX32),
 		CAPS_FLAGS(BGFX_CAPS_DRAW_INDIRECT),
 		CAPS_FLAGS(BGFX_CAPS_HIDPI),
-		CAPS_FLAGS(BGFX_CAPS_BLIT),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_BLIT),
 #undef CAPS_FLAGS
 	};
 
@@ -2058,6 +2058,18 @@ again:
 				}
 				break;
 
+			case CommandBuffer::ReadTexture:
+				{
+					TextureHandle handle;
+					_cmdbuf.read(handle);
+
+					void* data;
+					_cmdbuf.read(data);
+
+					m_renderCtx->readTexture(handle, data);
+				}
+				break;
+
 			case CommandBuffer::ResizeTexture:
 				{
 					TextureHandle handle;
@@ -2903,6 +2915,20 @@ again:
 		}
 	}
 
+	void readTexture(TextureHandle _handle, void* _data)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(NULL != _data, "_data can't be NULL");
+		s_ctx->readTexture(_handle, _data);
+	}
+
+	void readTexture(FrameBufferHandle _handle, uint8_t _attachment, void* _data)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(NULL != _data, "_data can't be NULL");
+		s_ctx->readTexture(_handle, _attachment, _data);
+	}
+
 	FrameBufferHandle createFrameBuffer(uint16_t _width, uint16_t _height, TextureFormat::Enum _format, uint32_t _textureFlags)
 	{
 		_textureFlags |= _textureFlags&BGFX_TEXTURE_RT_MSAA_MASK ? 0 : BGFX_TEXTURE_RT;
@@ -3278,10 +3304,21 @@ again:
 		blit(_id, _dst, 0, _dstX, _dstY, 0, _src, 0, _srcX, _srcY, 0, _width, _height, 0);
 	}
 
+	void blit(uint8_t _id, TextureHandle _dst, uint16_t _dstX, uint16_t _dstY, FrameBufferHandle _src, uint8_t _attachment, uint16_t _srcX, uint16_t _srcY, uint16_t _width, uint16_t _height)
+	{
+		blit(_id, _dst, 0, _dstX, _dstY, 0, _src, _attachment, 0, _srcX, _srcY, 0, _width, _height, 0);
+	}
+
 	void blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		s_ctx->blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
+	}
+
+	void blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, FrameBufferHandle _src, uint8_t _attachment, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx->blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _attachment, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
 	}
 
 	void saveScreenShot(const char* _filePath)

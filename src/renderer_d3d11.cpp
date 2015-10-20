@@ -1156,7 +1156,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					| BGFX_CAPS_SWAP_CHAIN
 					| (m_ovr.isInitialized() ? BGFX_CAPS_HMD : 0)
 					| BGFX_CAPS_DRAW_INDIRECT
-					| BGFX_CAPS_BLIT
+					| BGFX_CAPS_TEXTURE_BLIT
+					| BGFX_CAPS_TEXTURE_READ_BACK
 					);
 
 				if (m_featureLevel <= D3D_FEATURE_LEVEL_9_2)
@@ -1650,6 +1651,32 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		void updateTextureEnd() BX_OVERRIDE
 		{
+		}
+
+		void readTexture(TextureHandle _handle, void* _data) BX_OVERRIDE
+		{
+			const TextureD3D11& texture = m_textures[_handle.idx];
+			D3D11_MAPPED_SUBRESOURCE mapped;
+			DX_CHECK(m_deviceCtx->Map(texture.m_ptr, 0, D3D11_MAP_READ, 0, &mapped) );
+
+			uint8_t* src      = (uint8_t*)mapped.pData;
+			uint32_t srcPitch = mapped.RowPitch;
+
+			const uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(texture.m_textureFormat) );
+			uint8_t* dst      = (uint8_t*)_data;
+			uint32_t dstPitch = texture.m_width*bpp/8;
+
+			uint32_t pitch = bx::uint32_min(srcPitch, dstPitch);
+
+			for (uint32_t yy = 0, height = texture.m_height; yy < height; ++yy)
+			{
+				memcpy(dst, src, pitch);
+
+				src += srcPitch;
+				dst += dstPitch;
+			}
+
+			m_deviceCtx->Unmap(texture.m_ptr, 0);
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height) BX_OVERRIDE
@@ -3903,11 +3930,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				}
 			}
 
-			const bool bufferOnly   = 0 != (m_flags&BGFX_TEXTURE_RT_BUFFER_ONLY);
+			const bool bufferOnly   = 0 != (m_flags&(BGFX_TEXTURE_RT_BUFFER_ONLY|BGFX_TEXTURE_READ_BACK) );
 			const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 			const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
 			const bool srgb         = 0 != (m_flags&BGFX_TEXTURE_SRGB) || imageContainer.m_srgb;
 			const bool blit         = 0 != (m_flags&BGFX_TEXTURE_BLIT_DST);
+			const bool readBack     = 0 != (m_flags&BGFX_TEXTURE_READ_BACK);
 			const uint32_t msaaQuality = bx::uint32_satsub( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
 			const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
 
@@ -3964,6 +3992,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					{
 						desc.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;
 						desc.Usage = D3D11_USAGE_DEFAULT;
+					}
+
+					if (readBack)
+					{
+						desc.BindFlags      = 0;
+						desc.Usage          = D3D11_USAGE_STAGING;
+						desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
 					}
 
 					if (imageContainer.m_cubeMap)
