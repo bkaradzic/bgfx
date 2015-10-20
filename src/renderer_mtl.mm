@@ -429,9 +429,17 @@ namespace bgfx { namespace mtl
 
 			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 			{
-				uint8_t support = (s_textureFormat[ii].m_fmt != MTLPixelFormatInvalid) ? BGFX_CAPS_FORMAT_TEXTURE_COLOR : BGFX_CAPS_FORMAT_TEXTURE_NONE;
+				uint8_t support = 0;
 
-				support |= (s_textureFormat[ii].m_fmtSrgb != MTLPixelFormatInvalid) ? BGFX_CAPS_FORMAT_TEXTURE_COLOR_SRGB : BGFX_CAPS_FORMAT_TEXTURE_NONE;
+				support |= MTLPixelFormatInvalid != s_textureFormat[ii].m_fmt
+					? BGFX_CAPS_FORMAT_TEXTURE_COLOR
+					: BGFX_CAPS_FORMAT_TEXTURE_NONE
+					;
+
+				support |= MTLPixelFormatInvalid != s_textureFormat[ii].m_fmtSrgb
+					? BGFX_CAPS_FORMAT_TEXTURE_COLOR_SRGB
+					: BGFX_CAPS_FORMAT_TEXTURE_NONE
+					;
 
 					//TODO: additional caps flags
 //				support |= BGFX_CAPS_FORMAT_TEXTURE_VERTEX : BGFX_CAPS_FORMAT_TEXTURE_NONE;
@@ -439,6 +447,20 @@ namespace bgfx { namespace mtl
 //				support |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER : BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
 				g_caps.formats[ii] = support;
+			}
+
+			if (BX_ENABLED(BX_PLATFORM_OSX) )
+			{
+				g_caps.formats[TextureFormat::ETC1  ] =
+				g_caps.formats[TextureFormat::ETC2  ] =
+				g_caps.formats[TextureFormat::ETC2A ] =
+				g_caps.formats[TextureFormat::ETC2A1] =
+				g_caps.formats[TextureFormat::PTC12 ] =
+				g_caps.formats[TextureFormat::PTC14 ] =
+				g_caps.formats[TextureFormat::PTC12A] =
+				g_caps.formats[TextureFormat::PTC14A] =
+				g_caps.formats[TextureFormat::PTC22 ] =
+				g_caps.formats[TextureFormat::PTC24 ] = BGFX_CAPS_FORMAT_TEXTURE_NONE;
 			}
 
 			// Init reserved part of view name.
@@ -752,9 +774,11 @@ namespace bgfx { namespace mtl
 		rce.setScissorRect(rc);
 		rce.setCullMode(MTLCullModeNone);
 
-		uint64_t state = BGFX_STATE_RGB_WRITE
-						| BGFX_STATE_ALPHA_WRITE
-						| BGFX_STATE_DEPTH_TEST_ALWAYS;
+		uint64_t state = 0
+			| BGFX_STATE_RGB_WRITE
+			| BGFX_STATE_ALPHA_WRITE
+			| BGFX_STATE_DEPTH_TEST_ALWAYS
+			;
 
 		setDepthStencilState(state);
 
@@ -1772,12 +1796,17 @@ namespace bgfx { namespace mtl
 			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
 			const uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height>>startLod);
 
+			bool convert = BGFX_CAPS_FORMAT_TEXTURE_NONE == g_caps.formats[m_requestedFormat];
+
 			m_flags = _flags;
 			m_requestedFormat = (uint8_t)imageContainer.m_format;
-			m_textureFormat   = (uint8_t)imageContainer.m_format;
+			m_textureFormat   = convert
+				? uint8_t(TextureFormat::BGRA8)
+				: m_requestedFormat
+				;
 
 			const TextureFormatInfo& tfi = s_textureFormat[m_requestedFormat];
-			const bool convert = MTLPixelFormatInvalid == tfi.m_fmt;
+			convert = MTLPixelFormatInvalid == tfi.m_fmt;
 
 			uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
 			if (convert)

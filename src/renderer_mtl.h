@@ -58,6 +58,11 @@ namespace bgfx { namespace mtl
 			return [m_obj computeCommandEncoder];
 		}
 
+		id<MTLBlitCommandEncoder> blitCommandEncoder()
+		{
+			return [m_obj blitCommandEncoder];
+		}
+
 		// Scheduling and Executing Commands
 		void enqueue()
 		{
