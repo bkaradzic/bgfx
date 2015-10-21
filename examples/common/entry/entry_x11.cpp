@@ -316,7 +316,7 @@ namespace entry
 			m_window[0] = XCreateWindow(m_display
 									, m_root
 									, 0, 0
-									, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT, 0
+									, 1, 1, 0
 									, m_depth
 									, InputOutput
 									, m_visual
@@ -362,7 +362,7 @@ namespace entry
 			thread.init(mte.threadFunc, &mte);
 
 			WindowHandle defaultWindow = { 0 };
-			m_eventQueue.postSizeEvent(defaultWindow, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
+			m_eventQueue.postSizeEvent(defaultWindow, 1, 1);
 
 			s_joystick.init();
 

@@ -143,10 +143,10 @@ class HDR : public entry::AppI
 {
 	void init(int /*_argc*/, char** /*_argv*/) BX_OVERRIDE
 	{
-		m_width = 1280;
+		m_width  = 1280;
 		m_height = 720;
-		m_debug = BGFX_DEBUG_TEXT;
-		m_reset = BGFX_RESET_VSYNC;
+		m_debug  = BGFX_DEBUG_TEXT;
+		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init();
 		bgfx::reset(m_width, m_height, m_reset);
