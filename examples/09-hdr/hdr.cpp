@@ -269,6 +269,10 @@ class HDR : public entry::AppI
 		bgfx::destroyProgram(m_blurProgram);
 		bgfx::destroyProgram(m_brightProgram);
 		bgfx::destroyTexture(m_uffizi);
+		if (bgfx::isValid(m_rb) )
+		{
+			bgfx::destroyTexture(m_rb);
+		}
 
 		bgfx::destroyUniform(s_texCube);
 		bgfx::destroyUniform(s_texColor);
