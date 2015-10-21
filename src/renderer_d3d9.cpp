@@ -281,7 +281,6 @@ namespace bgfx { namespace d3d9
 			, m_captureTexture(NULL)
 			, m_captureSurface(NULL)
 			, m_captureResolve(NULL)
-			, m_flags(BGFX_RESET_NONE)
 			, m_maxAnisotropy(1)
 			, m_initialized(false)
 			, m_amd(false)
@@ -1176,9 +1175,11 @@ namespace bgfx { namespace d3d9
 
 			if (m_params.BackBufferWidth  != _resolution.m_width
 			||  m_params.BackBufferHeight != _resolution.m_height
-			||  m_flags != flags)
+			||  m_resolution.m_flags      != flags)
 			{
-				m_flags = flags;
+				flags &= ~BGFX_RESET_FORCE;
+
+				m_resolution.m_flags = flags;
 
 				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
 				m_textVideoMem.clear();
@@ -1195,12 +1196,12 @@ namespace bgfx { namespace d3d9
 
 				m_params.BackBufferWidth  = _resolution.m_width;
 				m_params.BackBufferHeight = _resolution.m_height;
-				m_params.FullScreen_RefreshRateInHz = BGFX_RESET_FULLSCREEN == (m_flags&BGFX_RESET_FULLSCREEN_MASK) ? 60 : 0;
-				m_params.PresentationInterval = !!(m_flags&BGFX_RESET_VSYNC) ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
+				m_params.FullScreen_RefreshRateInHz = BGFX_RESET_FULLSCREEN == (m_resolution.m_flags&BGFX_RESET_FULLSCREEN_MASK) ? 60 : 0;
+				m_params.PresentationInterval = !!(m_resolution.m_flags&BGFX_RESET_VSYNC) ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
 
 				updateMsaa();
 
-				Msaa& msaa = s_msaa[(m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
+				Msaa& msaa = s_msaa[(m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
 				m_params.MultiSampleType    = msaa.m_type;
 				m_params.MultiSampleQuality = msaa.m_quality;
 
@@ -1231,7 +1232,7 @@ namespace bgfx { namespace d3d9
 				}
 				DX_CHECK(m_device->SetDepthStencilSurface(m_backBufferDepthStencil) );
 
-				DX_CHECK(m_device->SetRenderState(D3DRS_SRGBWRITEENABLE, 0 != (m_flags & BGFX_RESET_SRGB_BACKBUFFER) ) );
+				DX_CHECK(m_device->SetRenderState(D3DRS_SRGBWRITEENABLE, 0 != (m_resolution.m_flags & BGFX_RESET_SRGB_BACKBUFFER) ) );
 			}
 			else
 			{
@@ -1514,7 +1515,7 @@ namespace bgfx { namespace d3d9
 
 		void capturePostReset()
 		{
-			if (m_flags&BGFX_RESET_CAPTURE)
+			if (m_resolution.m_flags&BGFX_RESET_CAPTURE)
 			{
 				uint32_t width  = m_params.BackBufferWidth;
 				uint32_t height = m_params.BackBufferHeight;
@@ -1918,7 +1919,6 @@ namespace bgfx { namespace d3d9
 		uint32_t m_adapter;
 		D3DDEVTYPE m_deviceType;
 		D3DPRESENT_PARAMETERS m_params;
-		uint32_t m_flags;
 		uint32_t m_maxAnisotropy;
 		D3DADAPTER_IDENTIFIER9 m_identifier;
 		Resolution m_resolution;

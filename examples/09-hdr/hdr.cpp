@@ -363,7 +363,7 @@ class HDR : public entry::AppI
 			// Set views.
 			for (uint32_t ii = 0; ii < 6; ++ii)
 			{
-				bgfx::setViewRect(ii, 0, 0, m_width, m_height);
+				bgfx::setViewRect(ii, 0, 0, bgfx::BackbufferRatio::Equal);
 			}
 			bgfx::setViewFrameBuffer(0, m_fbh);
 			bgfx::setViewFrameBuffer(1, m_fbh);
@@ -384,13 +384,13 @@ class HDR : public entry::AppI
 			bgfx::setViewRect(6, 0, 0, 1, 1);
 			bgfx::setViewFrameBuffer(6, m_lum[4]);
 
-			bgfx::setViewRect(7, 0, 0, m_width/2, m_height/2);
+			bgfx::setViewRect(7, 0, 0, bgfx::BackbufferRatio::Half);
 			bgfx::setViewFrameBuffer(7, m_bright);
 
-			bgfx::setViewRect(8, 0, 0, m_width/8, m_height/8);
+			bgfx::setViewRect(8, 0, 0, bgfx::BackbufferRatio::Eighth);
 			bgfx::setViewFrameBuffer(8, m_blur);
 
-			bgfx::setViewRect(9, 0, 0, m_width, m_height);
+			bgfx::setViewRect(9, 0, 0, bgfx::BackbufferRatio::Equal);
 
 			float view[16];
 			float proj[16];

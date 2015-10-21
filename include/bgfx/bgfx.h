@@ -1569,6 +1569,9 @@ namespace bgfx
 	///
 	void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
 
+	///
+	void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, BackbufferRatio::Enum _ratio);
+
 	/// Set view scissor. Draw primitive outside view will be clipped. When
 	/// _x, _y, _width and _height are set to 0, scissor will be disabled.
 	///

@@ -457,7 +457,6 @@ namespace bgfx { namespace d3d12
 	{
 		RendererContextD3D12()
 			: m_wireframe(false)
-			, m_flags(BGFX_RESET_NONE)
 			, m_maxAnisotropy(1)
 			, m_fsChanges(0)
 			, m_vsChanges(0)
@@ -1121,7 +1120,7 @@ namespace bgfx { namespace d3d12
 				int64_t start = bx::getHPCounter();
 
 				HRESULT hr = 0;
-				uint32_t syncInterval = !!(m_flags & BGFX_RESET_VSYNC);
+				uint32_t syncInterval = !!(m_resolution.m_flags & BGFX_RESET_VSYNC);
 				uint32_t flags = 0 == syncInterval ? DXGI_PRESENT_RESTART : 0;
 				for (uint32_t ii = 1, num = m_numWindows; ii < num && SUCCEEDED(hr); ++ii)
 				{
@@ -1643,17 +1642,17 @@ data.NumQualityLevels = 0;
 				m_maxAnisotropy = 1;
 			}
 
-			if ( (uint32_t)m_scd.BufferDesc.Width != _resolution.m_width
+			if ( (uint32_t)m_scd.BufferDesc.Width  != _resolution.m_width
 			||   (uint32_t)m_scd.BufferDesc.Height != _resolution.m_height
-			||   m_flags != _resolution.m_flags)
+			||   m_resolution.m_flags              != _resolution.m_flags)
 			{
-				bool resize = (m_flags&BGFX_RESET_MSAA_MASK) == (_resolution.m_flags&BGFX_RESET_MSAA_MASK);
-				m_flags = _resolution.m_flags;
+				bool resize = (m_resolution.m_flags&BGFX_RESET_MSAA_MASK) == (_resolution.m_flags&BGFX_RESET_MSAA_MASK);
 
 				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
 				m_textVideoMem.clear();
 
 				m_resolution = _resolution;
+				m_resolution.m_flags &= ~BGFX_RESET_FORCE;
 				m_scd.BufferDesc.Width  = _resolution.m_width;
 				m_scd.BufferDesc.Height = _resolution.m_height;
 
@@ -1678,7 +1677,7 @@ data.NumQualityLevels = 0;
 				else
 				{
 					updateMsaa();
-					m_scd.SampleDesc = s_msaa[(m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
+					m_scd.SampleDesc = s_msaa[(m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
 
 					DX_RELEASE(m_swapChain, 0);
 
@@ -2537,7 +2536,6 @@ data.NumQualityLevels = 0;
 		bool m_wireframe;
 
 		DXGI_SWAP_CHAIN_DESC m_scd;
-		uint32_t m_flags;
 		uint32_t m_maxAnisotropy;
 
 		BufferD3D12 m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];

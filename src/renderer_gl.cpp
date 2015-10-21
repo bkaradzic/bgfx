@@ -2346,6 +2346,8 @@ namespace bgfx { namespace gl
 			||  m_resolution.m_height != _resolution.m_height
 			||  m_resolution.m_flags  != flags)
 			{
+				flags &= ~BGFX_RESET_FORCE;
+
 				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
 				m_textVideoMem.clear();
 

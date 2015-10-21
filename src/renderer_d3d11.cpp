@@ -56,6 +56,7 @@ namespace bgfx { namespace d3d11
 		ID3D11UnorderedAccessView* m_uav[D3D11_PS_CS_UAV_REGISTER_COUNT];
 		ID3D11ShaderResourceView*  m_srv[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
 		ID3D11SamplerState*        m_sampler[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
+		ID3D11RenderTargetView*    m_rtv[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 		uint32_t                   m_zero[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
 		float                      m_zerof[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
 	};
@@ -569,7 +570,6 @@ namespace bgfx { namespace d3d11
 			, m_captureTexture(NULL)
 			, m_captureResolve(NULL)
 			, m_wireframe(false)
-			, m_flags(BGFX_RESET_NONE)
 			, m_maxAnisotropy(1)
 			, m_currentProgram(NULL)
 			, m_vsChanges(0)
@@ -1967,12 +1967,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				DX_CHECK(m_swapChain->GetBuffer(0, IID_ID3D11Texture2D, (void**)&color) );
 
 				D3D11_RENDER_TARGET_VIEW_DESC desc;
-				desc.ViewDimension = (m_flags & BGFX_RESET_MSAA_MASK)
+				desc.ViewDimension = (m_resolution.m_flags & BGFX_RESET_MSAA_MASK)
 					? D3D11_RTV_DIMENSION_TEXTURE2DMS
 					: D3D11_RTV_DIMENSION_TEXTURE2D
 					;
 				desc.Texture2D.MipSlice = 0;
-				desc.Format = (m_flags & BGFX_RESET_SRGB_BACKBUFFER)
+				desc.Format = (m_resolution.m_flags & BGFX_RESET_SRGB_BACKBUFFER)
 					? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
 					: DXGI_FORMAT_R8G8B8A8_UNORM
 					;
@@ -2036,7 +2036,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				HRESULT hr = S_OK;
 				uint32_t syncInterval = BX_ENABLED(BX_PLATFORM_WINRT)
 					? 1 // sync interval of 0 is not supported on WinRT
-					: !!(m_flags & BGFX_RESET_VSYNC)
+					: !!(m_resolution.m_flags & BGFX_RESET_VSYNC)
 					;
 
 				for (uint32_t ii = 1, num = m_numWindows; ii < num && SUCCEEDED(hr); ++ii)
@@ -2129,15 +2129,16 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			uint32_t flags = _resolution.m_flags & ~(BGFX_RESET_HMD_RECENTER | BGFX_RESET_MAXANISOTROPY);
 
-			if ( getBufferWidth()  != _resolution.m_width
-			||   getBufferHeight() != _resolution.m_height
-			||   m_flags != flags)
+			if ( getBufferWidth()     != _resolution.m_width
+			||   getBufferHeight()    != _resolution.m_height
+			||   m_resolution.m_flags != flags)
 			{
+				flags &= ~BGFX_RESET_FORCE;
+
 				bool resize = true
 					&& !BX_ENABLED(BX_PLATFORM_WINRT) // can't use ResizeBuffers on Windows Phone
-					&& (m_flags&BGFX_RESET_MSAA_MASK) == (flags&BGFX_RESET_MSAA_MASK)
+					&& (m_resolution.m_flags&BGFX_RESET_MSAA_MASK) == (flags&BGFX_RESET_MSAA_MASK)
 					;
-				m_flags = flags;
 
 				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
 				m_textVideoMem.clear();
@@ -2159,6 +2160,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				{
 					if (resize)
 					{
+						m_deviceCtx->OMSetRenderTargets(1, s_zero.m_rtv, NULL);
 						DX_CHECK(m_swapChain->ResizeBuffers(2
 							, getBufferWidth()
 							, getBufferHeight()
@@ -2169,13 +2171,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					else
 					{
 						updateMsaa();
-						m_scd.SampleDesc = s_msaa[(m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
+						m_scd.SampleDesc = s_msaa[(m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
 
 						DX_RELEASE(m_swapChain, 0);
 
 						SwapChainDesc* scd = &m_scd;
 						SwapChainDesc swapChainScd;
-						if (0 != (m_flags & BGFX_RESET_HMD)
+						if (0 != (m_resolution.m_flags & BGFX_RESET_HMD)
 						&&  m_ovr.isInitialized() )
 						{
 							swapChainScd = m_scd;
@@ -2948,7 +2950,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		void capturePostReset()
 		{
-			if (m_flags&BGFX_RESET_CAPTURE)
+			if (m_resolution.m_flags&BGFX_RESET_CAPTURE)
 			{
 				ID3D11Texture2D* backBuffer;
 				DX_CHECK(m_swapChain->GetBuffer(0, IID_ID3D11Texture2D, (void**)&backBuffer) );
@@ -3287,7 +3289,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 #endif // BX_PLATFORM_WINRT
 
 		SwapChainDesc m_scd;
-		uint32_t m_flags;
 		uint32_t m_maxAnisotropy;
 
 		IndexBufferD3D11 m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];

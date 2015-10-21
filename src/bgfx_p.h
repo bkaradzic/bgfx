@@ -174,6 +174,7 @@ namespace stl
 #define BGFX_MAX_COMPUTE_BINDINGS 8
 
 #define BGFX_SAMPLER_DEFAULT_FLAGS UINT32_C(0x10000000)
+#define BGFX_RESET_FORCE           UINT32_C(0x80000000)
 
 #define BGFX_RENDERER_DIRECT3D9_NAME  "Direct3D 9"
 #define BGFX_RENDERER_DIRECT3D11_NAME "Direct3D 11"
@@ -2036,6 +2037,7 @@ namespace bgfx
 						, uint16_t(m_resolution.m_width)
 						, uint16_t(m_resolution.m_height)
 						);
+					m_resolution.m_flags |= BGFX_RESET_FORCE;
 				}
 			}
 		}

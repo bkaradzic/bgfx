@@ -1320,6 +1320,7 @@ namespace bgfx
 	{
 		freeDynamicBuffers();
 		m_submit->m_resolution = m_resolution;
+		m_resolution.m_flags &= ~BGFX_RESET_FORCE;
 		m_submit->m_debug = m_debug;
 
 		memcpy(m_submit->m_viewRemap, m_viewRemap, sizeof(m_viewRemap) );
@@ -3032,6 +3033,17 @@ again:
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(checkView(_id), "Invalid view id: %d", _id);
 		s_ctx->setViewRect(_id, _x, _y, _width, _height);
+	}
+
+	void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, BackbufferRatio::Enum _ratio)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(checkView(_id), "Invalid view id: %d", _id);
+
+		uint16_t width  = uint16_t(s_ctx->m_resolution.m_width);
+		uint16_t height = uint16_t(s_ctx->m_resolution.m_height);
+		getTextureSizeFromRatio(_ratio, width, height);
+		setViewRect(_id, _x, _y, width, height);
 	}
 
 	void setViewScissor(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
