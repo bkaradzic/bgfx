@@ -320,6 +320,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	{
 		_app->init(_argc, _argv);
 
+		WindowHandle defaultWindow = { 0 };
+		setWindowSize(defaultWindow, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
+
 #if BX_PLATFORM_EMSCRIPTEN
 		s_app = _app;
 		emscripten_set_main_loop(&updateApp, -1, 1);
@@ -349,6 +352,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		entry::WindowHandle defaultWindow = { 0 };
 		entry::setWindowTitle(defaultWindow, bx::baseName(_argv[0]) );
+		setWindowSize(defaultWindow, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
 
 		int32_t result = ::_main_(_argc, _argv);
 
@@ -464,10 +468,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				case Event::Window:
 					break;
 
-                case Event::Suspend:
-                    break;
+				case Event::Suspend:
+					break;
 
-                    default:
+				default:
 					break;
 				}
 			}
@@ -614,6 +618,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						win.m_nwh    = window->m_nwh;
 						ev = NULL;
 					}
+					break;
+
+				case Event::Suspend:
 					break;
 
 				default:
