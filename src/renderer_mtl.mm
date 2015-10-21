@@ -1725,13 +1725,11 @@ namespace bgfx { namespace mtl
 								}
 								else if (arg.type == MTLArgumentTypeTexture)
 								{
-									const char* name = utf8String(arg.name);
-									BX_TRACE("texture: %s index:%d", name, arg.index);
+									BX_TRACE("texture: %s index:%d", utf8String(arg.name), arg.index);
 								}
 								else if (arg.type == MTLArgumentTypeSampler)
 								{
-									const char* name = utf8String(arg.name);
-									BX_TRACE("sampler: %s index:%d", name, arg.index);
+									BX_TRACE("sampler: %s index:%d", utf8String(arg.name), arg.index);
 								}
 							}
 						}
