@@ -1204,7 +1204,7 @@ namespace bgfx { namespace gl
 			, m_maxMsaa(0)
 			, m_vao(0)
 			, m_blitSupported(false)
-			, m_readBackSupported(false)
+			, m_readBackSupported(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			, m_vaoSupport(false)
 			, m_samplerObjectSupport(false)
 			, m_shadowSamplersSupport(false)
@@ -1718,6 +1718,11 @@ namespace bgfx { namespace gl
 					: 0
 					;
 			}
+
+			g_caps.supported |= m_readBackSupported
+				? BGFX_CAPS_TEXTURE_READ_BACK
+				: 0
+				;
 
 			g_caps.maxTextureSize = uint16_t(glGet(GL_MAX_TEXTURE_SIZE) );
 
