@@ -1507,6 +1507,7 @@ namespace bgfx { namespace gl
 						setTextureFormat(TextureFormat::D24S8, GL_DEPTH_STENCIL,   GL_DEPTH_STENCIL,   GL_UNSIGNED_INT_24_8);
 
                         s_textureFormat[TextureFormat::ETC2].m_supported = false;
+                        s_textureFormat[TextureFormat::RGBA16F].m_supported = false;
 					}
 				}
 			}
