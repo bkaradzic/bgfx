@@ -332,7 +332,6 @@ namespace bgfx { namespace mtl
 			, m_rtMsaa(false)
 			, m_drawable(NULL)
 		{
-			m_fbh.idx = invalidHandle;
 		}
 
 		~RendererContextMtl()
@@ -342,6 +341,10 @@ namespace bgfx { namespace mtl
 		bool init()
 		{
 			BX_TRACE("Init.");
+
+			m_fbh.idx = invalidHandle;
+			memset(m_uniforms, 0, sizeof(m_uniforms) );
+			memset(&m_resolution, 0, sizeof(m_resolution) );
 
 			if (NULL != NSClassFromString(@"CAMetalLayer") )
 			{
@@ -396,8 +399,6 @@ namespace bgfx { namespace mtl
 			m_uniformBuffer = m_device.newBufferWithLength(UNIFORM_BUFFER_SIZE, 0);
 			m_uniformBufferVertexOffset = 0;
 			m_uniformBufferFragmentOffset = 0;
-
-			memset(m_uniforms, 0, sizeof(m_uniforms) );
 
 			g_caps.supported |= (0
 								 | BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
@@ -886,10 +887,16 @@ namespace bgfx { namespace mtl
 
 		//TODO: there should be a way to specify if backbuffer needs stencil/depth.
 		//TODO: support msaa
-		if (NULL == m_backBufferDepth
+		if (NULL   == m_backBufferDepth
 		||  width  != m_backBufferDepth.width()
-		||  height != m_backBufferDepth.height() )
+		||  height != m_backBufferDepth.height()
+		||  m_resolution.m_width  != _resolution.m_width
+		||  m_resolution.m_height != _resolution.m_height
+		||  m_resolution.m_flags  != _resolution.m_flags)
 		{
+			m_resolution = _resolution;
+			m_resolution.m_flags &= ~BGFX_RESET_FORCE;
+
 			m_textureDescriptor.textureType = MTLTextureType2D;
 
 			m_textureDescriptor.pixelFormat = MTLPixelFormatDepth32Float_Stencil8;
@@ -1219,6 +1226,8 @@ namespace bgfx { namespace mtl
 
 	FrameBufferHandle m_fbh;
 	bool m_rtMsaa;
+
+	Resolution m_resolution;
 
 	// descriptors
 	RenderPipelineDescriptor m_renderPipelineDescriptor;
@@ -1857,14 +1866,17 @@ namespace bgfx { namespace mtl
 			MTLPixelFormat format = MTLPixelFormatInvalid;
 			if (srgb)
 			{
-				format      = s_textureFormat[m_textureFormat].m_fmtSrgb;
-				BX_WARN(format != MTLPixelFormatInvalid, "sRGB not supported for texture format %d", m_textureFormat);
+				format = s_textureFormat[m_textureFormat].m_fmtSrgb;
+				BX_WARN(format != MTLPixelFormatInvalid
+					, "sRGB not supported for texture format %d"
+					, m_textureFormat
+					);
 			}
 
 			if (format == MTLPixelFormatInvalid)
 			{
 				// not swizzled and not sRGB, or sRGB unsupported
-				format		= s_textureFormat[m_textureFormat].m_fmt;
+				format = s_textureFormat[m_textureFormat].m_fmt;
 			}
 
 			desc.pixelFormat = format;
