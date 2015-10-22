@@ -2348,11 +2348,11 @@ namespace bgfx { namespace gl
 			{
 				flags &= ~BGFX_RESET_FORCE;
 
-				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
-				m_textVideoMem.clear();
-
 				m_resolution = _resolution;
 				m_resolution.m_flags = flags;
+
+				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
+				m_textVideoMem.clear();
 
 				if ( (flags & BGFX_RESET_HMD)
 				&&  m_ovr.isInitialized() )

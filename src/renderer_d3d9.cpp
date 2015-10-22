@@ -1173,12 +1173,13 @@ namespace bgfx { namespace d3d9
 				;
 			uint32_t flags = _resolution.m_flags & ~(BGFX_RESET_HMD_RECENTER | BGFX_RESET_MAXANISOTROPY);
 
-			if (m_params.BackBufferWidth  != _resolution.m_width
-			||  m_params.BackBufferHeight != _resolution.m_height
-			||  m_resolution.m_flags      != flags)
+			if (m_resolution.m_width  != _resolution.m_width
+			||  m_resolution.m_height != _resolution.m_height
+			||  m_resolution.m_flags  != flags)
 			{
 				flags &= ~BGFX_RESET_FORCE;
 
+				m_resolution = _resolution;
 				m_resolution.m_flags = flags;
 
 				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);

@@ -1642,17 +1642,22 @@ data.NumQualityLevels = 0;
 				m_maxAnisotropy = 1;
 			}
 
-			if ( (uint32_t)m_scd.BufferDesc.Width  != _resolution.m_width
-			||   (uint32_t)m_scd.BufferDesc.Height != _resolution.m_height
-			||   m_resolution.m_flags              != _resolution.m_flags)
+			uint32_t flags = _resolution.m_flags & ~(BGFX_RESET_HMD_RECENTER | BGFX_RESET_MAXANISOTROPY);
+
+			if (m_resolution.m_width  != _resolution.m_width
+			||  m_resolution.m_height != _resolution.m_height
+			||  m_resolution.m_flags  != flags)
 			{
+				flags &= ~BGFX_RESET_FORCE;
+
 				bool resize = (m_resolution.m_flags&BGFX_RESET_MSAA_MASK) == (_resolution.m_flags&BGFX_RESET_MSAA_MASK);
+
+				m_resolution = _resolution;
+				m_resolution.m_flags = flags;
 
 				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
 				m_textVideoMem.clear();
 
-				m_resolution = _resolution;
-				m_resolution.m_flags &= ~BGFX_RESET_FORCE;
 				m_scd.BufferDesc.Width  = _resolution.m_width;
 				m_scd.BufferDesc.Height = _resolution.m_height;
 
