@@ -434,11 +434,15 @@ namespace bgfx { namespace mtl
 
 				support |= MTLPixelFormatInvalid != s_textureFormat[ii].m_fmt
 					? BGFX_CAPS_FORMAT_TEXTURE_2D
+					| BGFX_CAPS_FORMAT_TEXTURE_3D
+					| BGFX_CAPS_FORMAT_TEXTURE_CUBE
 					: BGFX_CAPS_FORMAT_TEXTURE_NONE
 					;
 
 				support |= MTLPixelFormatInvalid != s_textureFormat[ii].m_fmtSrgb
 					? BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
+					| BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
+					| BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
 					: BGFX_CAPS_FORMAT_TEXTURE_NONE
 					;
 
@@ -462,6 +466,15 @@ namespace bgfx { namespace mtl
 				g_caps.formats[TextureFormat::PTC14A] =
 				g_caps.formats[TextureFormat::PTC22 ] =
 				g_caps.formats[TextureFormat::PTC24 ] = BGFX_CAPS_FORMAT_TEXTURE_NONE;
+			}
+
+			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
+			{
+				if (BGFX_CAPS_FORMAT_TEXTURE_NONE == g_caps.formats[ii])
+				{
+					s_textureFormat[ii].m_fmt     = MTLPixelFormatInvalid;
+					s_textureFormat[ii].m_fmtSrgb = MTLPixelFormatInvalid;
+				}
 			}
 
 			// Init reserved part of view name.
@@ -1807,21 +1820,14 @@ namespace bgfx { namespace mtl
 			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
 			const uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height>>startLod);
 
-			const uint16_t formatMask = imageContainer.m_cubeMap
-				? BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED
-				: imageContainer.m_depth > 1
-				? BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED
-				: BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED
-				;
-
-			const bool convert = 0 != (g_caps.formats[m_requestedFormat] & formatMask);
-
 			m_flags = _flags;
 			m_requestedFormat = (uint8_t)imageContainer.m_format;
-			m_textureFormat   = convert
+			m_textureFormat   = MTLPixelFormatInvalid == s_textureFormat[m_requestedFormat].m_fmt
 				? uint8_t(TextureFormat::BGRA8)
 				: m_requestedFormat
 				;
+
+			const bool convert = m_requestedFormat != m_textureFormat;
 
 			uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
 			if (convert)
@@ -1860,7 +1866,7 @@ namespace bgfx { namespace mtl
 					 );
 
 			const bool bufferOnly   = 0 != (_flags&BGFX_TEXTURE_RT_BUFFER_ONLY);
-			const bool computeWrite = 0 != (_flags&BGFX_TEXTURE_COMPUTE_WRITE);
+//			const bool computeWrite = 0 != (_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 //			const bool renderTarget = 0 != (_flags&BGFX_TEXTURE_RT_MASK);
 			const bool srgb			= 0 != (_flags&BGFX_TEXTURE_SRGB) || imageContainer.m_srgb;
 //			const uint32_t msaaQuality = bx::uint32_satsub( (_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);

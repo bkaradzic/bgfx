@@ -1143,19 +1143,20 @@ namespace bgfx
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(s_emulatedFormats); ++ii)
 		{
-			if (0 == (g_caps.formats[s_emulatedFormats[ii] ] & BGFX_CAPS_FORMAT_TEXTURE_2D) )
+			const uint32_t fmt = s_emulatedFormats[ii];
+			if (0 == (g_caps.formats[fmt] & BGFX_CAPS_FORMAT_TEXTURE_2D) )
 			{
-				g_caps.formats[s_emulatedFormats[ii] ] |= BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED;
+				g_caps.formats[fmt] |= BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED;
 			}
 
-			if (0 == (g_caps.formats[s_emulatedFormats[ii] ] & BGFX_CAPS_FORMAT_TEXTURE_3D) )
+			if (0 == (g_caps.formats[fmt] & BGFX_CAPS_FORMAT_TEXTURE_3D) )
 			{
-				g_caps.formats[s_emulatedFormats[ii] ] |= BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED;
+				g_caps.formats[fmt] |= BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED;
 			}
 
-			if (0 == (g_caps.formats[s_emulatedFormats[ii] ] & BGFX_CAPS_FORMAT_TEXTURE_CUBE) )
+			if (0 == (g_caps.formats[fmt] & BGFX_CAPS_FORMAT_TEXTURE_CUBE) )
 			{
-				g_caps.formats[s_emulatedFormats[ii] ] |= BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED;
+				g_caps.formats[fmt] |= BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED;
 			}
 		}
 
