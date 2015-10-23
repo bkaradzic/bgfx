@@ -310,6 +310,7 @@ namespace bgfx { namespace d3d9
 		TextureD3D9()
 			: m_ptr(NULL)
 			, m_surface(NULL)
+			, m_staging(NULL)
 			, m_textureFormat(TextureFormat::Unknown)
 		{
 		}
@@ -329,6 +330,7 @@ namespace bgfx { namespace d3d9
 		{
 			DX_RELEASE(m_ptr, 0);
 			DX_RELEASE(m_surface, 0);
+			DX_RELEASE(m_staging, 0);
 			m_textureFormat = TextureFormat::Unknown;
 		}
 
@@ -350,6 +352,14 @@ namespace bgfx { namespace d3d9
 		};
 
 		IDirect3DSurface9* m_surface;
+
+		union
+		{
+			IDirect3DBaseTexture9*   m_staging;
+			IDirect3DTexture9*       m_staging2d;
+			IDirect3DVolumeTexture9* m_staging3d;
+			IDirect3DCubeTexture9*   m_stagingCube;
+		};
 		uint32_t m_flags;
 		uint32_t m_width;
 		uint32_t m_height;
