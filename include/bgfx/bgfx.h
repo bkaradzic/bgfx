@@ -471,10 +471,10 @@ namespace bgfx
 
 		/// Supported texture formats.
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_NONE` - not supported
-		///   - `BGFX_CAPS_FORMAT_TEXTURE_COLOR` - supported
-		///   - `BGFX_CAPS_FORMAT_TEXTURE_EMULATED` - emulated
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_2D` - supported
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED` - emulated
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_VERTEX` - supported vertex texture
-		uint8_t formats[TextureFormat::Count];
+		uint16_t formats[TextureFormat::Count];
 	};
 
 	/// Transient index buffer.
@@ -1448,7 +1448,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_create_frame_buffer_from_handles`.
 	///
-	FrameBufferHandle createFrameBuffer(uint8_t _num, TextureHandle* _handles, bool _destroyTextures = false);
+	FrameBufferHandle createFrameBuffer(uint8_t _num, const TextureHandle* _handles, bool _destroyTextures = false);
 
 	/// Create frame buffer for multiple window rendering.
 	///

@@ -433,12 +433,12 @@ namespace bgfx { namespace mtl
 				uint8_t support = 0;
 
 				support |= MTLPixelFormatInvalid != s_textureFormat[ii].m_fmt
-					? BGFX_CAPS_FORMAT_TEXTURE_COLOR
+					? BGFX_CAPS_FORMAT_TEXTURE_2D
 					: BGFX_CAPS_FORMAT_TEXTURE_NONE
 					;
 
 				support |= MTLPixelFormatInvalid != s_textureFormat[ii].m_fmtSrgb
-					? BGFX_CAPS_FORMAT_TEXTURE_COLOR_SRGB
+					? BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
 					: BGFX_CAPS_FORMAT_TEXTURE_NONE
 					;
 

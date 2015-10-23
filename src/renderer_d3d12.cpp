@@ -910,7 +910,7 @@ namespace bgfx { namespace d3d12
 									| D3D12_FORMAT_SUPPORT1_TEXTURE3D
 									| D3D12_FORMAT_SUPPORT1_TEXTURECUBE
 									) )
-									? BGFX_CAPS_FORMAT_TEXTURE_COLOR
+									? BGFX_CAPS_FORMAT_TEXTURE_2D
 									: BGFX_CAPS_FORMAT_TEXTURE_NONE
 									;
 
@@ -995,7 +995,7 @@ namespace bgfx { namespace d3d12
 									| D3D12_FORMAT_SUPPORT1_TEXTURE3D
 									| D3D12_FORMAT_SUPPORT1_TEXTURECUBE
 									) )
-									? BGFX_CAPS_FORMAT_TEXTURE_COLOR_SRGB
+									? BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
 									: BGFX_CAPS_FORMAT_TEXTURE_NONE
 									;
 						}

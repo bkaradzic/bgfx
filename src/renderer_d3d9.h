@@ -316,8 +316,8 @@ namespace bgfx { namespace d3d9
 		}
 
 		void createTexture(uint32_t _width, uint32_t _height, uint8_t _numMips);
-		void createVolumeTexture(uint32_t _width, uint32_t _height, uint32_t _depth, uint32_t _numMips);
-		void createCubeTexture(uint32_t _edge, uint32_t _numMips);
+		void createVolumeTexture(uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _numMips);
+		void createCubeTexture(uint32_t _width, uint8_t _numMips);
 
 		uint8_t* lock(uint8_t _side, uint8_t _lod, uint32_t& _pitch, uint32_t& _slicePitch, const Rect* _rect = NULL);
 		void unlock(uint8_t _side, uint8_t _lod);
