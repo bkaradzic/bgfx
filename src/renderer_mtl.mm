@@ -1807,7 +1807,14 @@ namespace bgfx { namespace mtl
 			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
 			const uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height>>startLod);
 
-			bool convert = BGFX_CAPS_FORMAT_TEXTURE_NONE == g_caps.formats[m_requestedFormat];
+			const uint16_t formatMask = imageContainer.m_cubeMap
+				? BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED
+				: imageContainer.m_depth > 1
+				? BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED
+				: BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED
+				;
+
+			const bool convert = 0 != (g_caps.formats[m_requestedFormat] & formatMask);
 
 			m_flags = _flags;
 			m_requestedFormat = (uint8_t)imageContainer.m_format;
@@ -1815,9 +1822,6 @@ namespace bgfx { namespace mtl
 				? uint8_t(TextureFormat::BGRA8)
 				: m_requestedFormat
 				;
-
-			const TextureFormatInfo& tfi = s_textureFormat[m_requestedFormat];
-			convert = MTLPixelFormatInvalid == tfi.m_fmt;
 
 			uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
 			if (convert)
@@ -1854,7 +1858,6 @@ namespace bgfx { namespace mtl
 					 , imageContainer.m_cubeMap ? "x6" : ""
 					 , 0 != (_flags&BGFX_TEXTURE_RT_MASK) ? " (render target)" : ""
 					 );
-
 
 			const bool bufferOnly   = 0 != (_flags&BGFX_TEXTURE_RT_BUFFER_ONLY);
 			const bool computeWrite = 0 != (_flags&BGFX_TEXTURE_COMPUTE_WRITE);
@@ -1933,45 +1936,47 @@ namespace bgfx { namespace mtl
 						if (convert)
 						{
 							imageDecodeToRgba8(temp
-											   , mip.m_data
-											   , mip.m_width
-											   , mip.m_height
-											   , mip.m_width*4
-											   , mip.m_format
-											   );
+								, mip.m_data
+								, mip.m_width
+								, mip.m_height
+								, mip.m_width*4
+								, mip.m_format
+								);
 							data = temp;
 						}
 
 						MTLRegion region = { { 0, 0, 0 }, { width, height, depth } };
 
-						uint32_t bytesPerRow;
-						uint32_t bytesPerImage;
+						uint32_t bytesPerRow   = 0;
+						uint32_t bytesPerImage = 0;
 
 						if (compressed && !convert)
 						{
 							if (format >= 160 /*MTLPixelFormatPVRTC_RGB_2BPP*/
 							&&  format <= 167 /*MTLPixelFormatPVRTC_RGBA_4BPP_sRGB*/)
 							{
-								bytesPerRow = 0;
+								bytesPerRow   = 0;
 								bytesPerImage = 0;
 							}
 							else
 							{
-								bytesPerRow = (mip.m_width / blockInfo.blockWidth )*mip.m_blockSize;
-								bytesPerImage = (desc.textureType == MTLTextureType3D) ? (mip.m_height/blockInfo.blockHeight)*bytesPerRow : 0;
+								bytesPerRow   = (mip.m_width / blockInfo.blockWidth)*mip.m_blockSize;
+								bytesPerImage = desc.textureType == MTLTextureType3D
+									? (mip.m_height/blockInfo.blockHeight)*bytesPerRow
+									: 0
+									;
 							}
 						}
 						else
 						{
-							bytesPerRow = width * bpp / 8;
-							bytesPerImage = (desc.textureType == MTLTextureType3D) ? width * height * bpp / 8 : 0;
+							bytesPerRow   = width * bpp / 8;
+							bytesPerImage = desc.textureType == MTLTextureType3D
+								? bytesPerRow * height
+								: 0
+								;
 						}
 
 						m_ptr.replaceRegion(region, lod, side, data, bytesPerRow, bytesPerImage);
-					}
-					else if (!computeWrite)
-					{
-						//TODO: do we need to clear to zero??
 					}
 
 					width  >>= 1;
@@ -1989,9 +1994,13 @@ namespace bgfx { namespace mtl
 
 	void TextureMtl::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
-		MTLRegion region = { { _rect.m_x, _rect.m_y, _z }, { _rect.m_width, _rect.m_height, _depth } };
+		MTLRegion region =
+		{
+			{ _rect.m_x,     _rect.m_y,      _z     },
+			{ _rect.m_width, _rect.m_height, _depth },
+		};
 
-		const uint32_t bpp    = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
+		const uint32_t bpp       = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
 		const uint32_t rectpitch = _rect.m_width*bpp/8;
 		const uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
 
