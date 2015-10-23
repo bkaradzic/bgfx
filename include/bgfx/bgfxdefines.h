@@ -376,11 +376,17 @@
 #define BGFX_CAPS_FORMAT_TEXTURE_2D               UINT16_C(0x0001) //!< Texture format is supported.
 #define BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB          UINT16_C(0x0002) //!< Texture as sRGB format is supported.
 #define BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED      UINT16_C(0x0004) //!< Texture format is emulated.
-#define BGFX_CAPS_FORMAT_TEXTURE_VERTEX           UINT16_C(0x0008) //!< Texture format can be used from vertex shader.
-#define BGFX_CAPS_FORMAT_TEXTURE_IMAGE            UINT16_C(0x0010) //!< Texture format can be used as image from compute shader.
-#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER      UINT16_C(0x0020) //!< Texture format can be used as frame buffer.
-#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA UINT16_C(0x0040) //!< Texture format can be used as MSAA frame buffer.
-#define BGFX_CAPS_FORMAT_TEXTURE_MSAA             UINT16_C(0x0080) //!< Texture can be sampled as MSAA.
+#define BGFX_CAPS_FORMAT_TEXTURE_3D               UINT16_C(0x0008) //!< Texture format is supported.
+#define BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB          UINT16_C(0x0010) //!< Texture as sRGB format is supported.
+#define BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED      UINT16_C(0x0020) //!< Texture format is emulated.
+#define BGFX_CAPS_FORMAT_TEXTURE_CUBE             UINT16_C(0x0040) //!< Texture format is supported.
+#define BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB        UINT16_C(0x0080) //!< Texture as sRGB format is supported.
+#define BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED    UINT16_C(0x0100) //!< Texture format is emulated.
+#define BGFX_CAPS_FORMAT_TEXTURE_VERTEX           UINT16_C(0x0200) //!< Texture format can be used from vertex shader.
+#define BGFX_CAPS_FORMAT_TEXTURE_IMAGE            UINT16_C(0x0400) //!< Texture format can be used as image from compute shader.
+#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER      UINT16_C(0x0800) //!< Texture format can be used as frame buffer.
+#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA UINT16_C(0x1000) //!< Texture format can be used as MSAA frame buffer.
+#define BGFX_CAPS_FORMAT_TEXTURE_MSAA             UINT16_C(0x2000) //!< Texture can be sampled as MSAA.
 
 ///
 #define BGFX_VIEW_NONE   UINT8_C(0x00) //!<

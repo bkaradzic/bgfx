@@ -1282,6 +1282,20 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 									;
 
 							support |= 0 != (data.OutFormatSupport & (0
+									| D3D11_FORMAT_SUPPORT_TEXTURE3D
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_3D
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+
+							support |= 0 != (data.OutFormatSupport & (0
+									| D3D11_FORMAT_SUPPORT_TEXTURECUBE
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_CUBE
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+
+							support |= 0 != (data.OutFormatSupport & (0
 									| D3D11_FORMAT_SUPPORT_BUFFER
 									| D3D11_FORMAT_SUPPORT_IA_VERTEX_BUFFER
 									| D3D11_FORMAT_SUPPORT_IA_INDEX_BUFFER
@@ -1359,10 +1373,22 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						{
 							support |= 0 != (data.OutFormatSupport & (0
 									| D3D11_FORMAT_SUPPORT_TEXTURE2D
-									| D3D11_FORMAT_SUPPORT_TEXTURE3D
-									| D3D11_FORMAT_SUPPORT_TEXTURECUBE
 									) )
 									? BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+
+							support |= 0 != (data.OutFormatSupport & (0
+									| D3D11_FORMAT_SUPPORT_TEXTURE3D
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+
+							support |= 0 != (data.OutFormatSupport & (0
+									| D3D11_FORMAT_SUPPORT_TEXTURECUBE
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
 									: BGFX_CAPS_FORMAT_TEXTURE_NONE
 									;
 						}

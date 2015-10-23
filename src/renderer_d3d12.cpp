@@ -907,10 +907,22 @@ namespace bgfx { namespace d3d12
 						{
 							support |= 0 != (data.Support1 & (0
 									| D3D12_FORMAT_SUPPORT1_TEXTURE2D
-									| D3D12_FORMAT_SUPPORT1_TEXTURE3D
-									| D3D12_FORMAT_SUPPORT1_TEXTURECUBE
 									) )
 									? BGFX_CAPS_FORMAT_TEXTURE_2D
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+
+							support |= 0 != (data.Support1 & (0
+									| D3D12_FORMAT_SUPPORT1_TEXTURE3D
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_3D
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+
+							support |= 0 != (data.Support1 & (0
+									| D3D12_FORMAT_SUPPORT1_TEXTURECUBE
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_CUBE
 									: BGFX_CAPS_FORMAT_TEXTURE_NONE
 									;
 
@@ -992,10 +1004,22 @@ namespace bgfx { namespace d3d12
 						{
 							support |= 0 != (data.Support1 & (0
 									| D3D12_FORMAT_SUPPORT1_TEXTURE2D
-									| D3D12_FORMAT_SUPPORT1_TEXTURE3D
-									| D3D12_FORMAT_SUPPORT1_TEXTURECUBE
 									) )
 									? BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+
+							support |= 0 != (data.Support1 & (0
+									| D3D12_FORMAT_SUPPORT1_TEXTURE3D
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+
+							support |= 0 != (data.Support1 & (0
+									| D3D12_FORMAT_SUPPORT1_TEXTURECUBE
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
 									: BGFX_CAPS_FORMAT_TEXTURE_NONE
 									;
 						}
