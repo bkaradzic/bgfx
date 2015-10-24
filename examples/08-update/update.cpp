@@ -112,14 +112,16 @@ static void updateTextureCubeRectBgra8(bgfx::TextureHandle _handle, uint8_t _sid
 	bgfx::updateTextureCube(_handle, _side, 0, _x, _y, _width, _height, mem);
 }
 
-int _main_(int /*_argc*/, char** /*_argv*/)
+int _main_(int _argc, char** _argv)
 {
+	Args args(_argc, _argv);
+
 	uint32_t width  = 1280;
 	uint32_t height = 720;
 	uint32_t debug  = BGFX_DEBUG_TEXT;
 	uint32_t reset  = BGFX_RESET_VSYNC;
 
-	bgfx::init();
+	bgfx::init(args.m_type, args.m_pciId);
 	bgfx::reset(width, height, reset);
 
 	// Enable debug text.
@@ -149,24 +151,6 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 		loadTexture("texture_compression_ptc24.pvr"),
 	};
 
-	const bgfx::Memory* mem8   = bgfx::alloc(32*32*32);
-	const bgfx::Memory* mem16f = bgfx::alloc(32*32*32*2);
-	const bgfx::Memory* mem32f = bgfx::alloc(32*32*32*4);
-	for (uint8_t zz = 0; zz < 32; ++zz)
-	{
-		for (uint8_t yy = 0; yy < 32; ++yy)
-		{
-			for (uint8_t xx = 0; xx < 32; ++xx)
-			{
-				const uint32_t offset = ( (zz*32+yy)*32+xx);
-				const uint32_t val = xx ^ yy ^ zz;
-				mem8->data[offset] = val<<3;
-				*(uint16_t*)&mem16f->data[offset*2] = bx::halfFromFloat( (float)val/32.0f);
-				*(float*)&mem32f->data[offset*4] = (float)val/32.0f;
-			}
-		}
-	}
-
 	const bgfx::Caps* caps = bgfx::getCaps();
 	const bool texture3DSupported = !!(caps->supported & BGFX_CAPS_TEXTURE_3D);
 	const bool blitSupported      = !!(caps->supported & BGFX_CAPS_TEXTURE_BLIT);
@@ -176,6 +160,24 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 	if (texture3DSupported)
 	{
+		const bgfx::Memory* mem8   = bgfx::alloc(32*32*32);
+		const bgfx::Memory* mem16f = bgfx::alloc(32*32*32*2);
+		const bgfx::Memory* mem32f = bgfx::alloc(32*32*32*4);
+		for (uint8_t zz = 0; zz < 32; ++zz)
+		{
+			for (uint8_t yy = 0; yy < 32; ++yy)
+			{
+				for (uint8_t xx = 0; xx < 32; ++xx)
+				{
+					const uint32_t offset = ( (zz*32+yy)*32+xx);
+					const uint32_t val = xx ^ yy ^ zz;
+					mem8->data[offset] = val<<3;
+					*(uint16_t*)&mem16f->data[offset*2] = bx::halfFromFloat( (float)val/32.0f);
+					*(float*)&mem32f->data[offset*4] = (float)val/32.0f;
+				}
+			}
+		}
+
 		if (0 != (BGFX_CAPS_FORMAT_TEXTURE_2D & caps->formats[bgfx::TextureFormat::R8]) )
 		{
 			textures3d[numTextures3d++] = bgfx::createTexture3D(32, 32, 32, 0, bgfx::TextureFormat::R8,   BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem8);

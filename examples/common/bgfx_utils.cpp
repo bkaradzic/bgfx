@@ -13,8 +13,9 @@
 namespace stl = tinystl;
 
 #include <bgfx/bgfx.h>
-#include <bx/readerwriter.h>
+#include <bx/commandline.h>
 #include <bx/fpumath.h>
+#include <bx/readerwriter.h>
 #include <bx/string.h>
 #include "entry/entry.h"
 #include <ib-compress/indexbufferdecompression.h>
@@ -620,4 +621,60 @@ void meshSubmit(const Mesh* _mesh, uint8_t _id, bgfx::ProgramHandle _program, co
 void meshSubmit(const Mesh* _mesh, const MeshState*const* _state, uint8_t _numPasses, const float* _mtx, uint16_t _numMatrices)
 {
 	_mesh->submit(_state, _numPasses, _mtx, _numMatrices);
+}
+
+Args::Args(int _argc, char** _argv)
+	: m_type(bgfx::RendererType::Count)
+	, m_pciId(BGFX_PCI_ID_NONE)
+{
+	bx::CommandLine cmdLine(_argc, (const char**)_argv);
+
+	if (cmdLine.hasArg("gl") )
+	{
+		m_type = bgfx::RendererType::OpenGL;
+	}
+	else if (cmdLine.hasArg("noop")
+		 ||  cmdLine.hasArg("vk") )
+	{
+		m_type = bgfx::RendererType::OpenGL;
+	}
+	else if (BX_ENABLED(BX_PLATFORM_WINDOWS) )
+	{
+		if (cmdLine.hasArg("d3d9") )
+		{
+			m_type = bgfx::RendererType::Direct3D9;
+		}
+		else if (cmdLine.hasArg("d3d11") )
+		{
+			m_type = bgfx::RendererType::Direct3D11;
+		}
+		else if (cmdLine.hasArg("d3d12") )
+		{
+			m_type = bgfx::RendererType::Direct3D12;
+		}
+	}
+	else if (BX_ENABLED(BX_PLATFORM_OSX) )
+	{
+		if (cmdLine.hasArg("mtl") )
+		{
+			m_type = bgfx::RendererType::Metal;
+		}
+	}
+
+	if (cmdLine.hasArg("amd") )
+	{
+		m_pciId = BGFX_PCI_ID_AMD;
+	}
+	else if (cmdLine.hasArg("nvidia") )
+	{
+		m_pciId = BGFX_PCI_ID_NVIDIA;
+	}
+	else if (cmdLine.hasArg("intel") )
+	{
+		m_pciId = BGFX_PCI_ID_INTEL;
+	}
+	else if (cmdLine.hasArg("sw") )
+	{
+		m_pciId = BGFX_PCI_ID_SOFTWARE_RASTERIZER;
+	}
 }
