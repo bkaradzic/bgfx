@@ -312,7 +312,16 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 				for (uint32_t ii = 0, num = bx::uint32_min(10, (uint32_t)quads.size() ); ii < num; ++ii)
 				{
-					cube.clear(quads.front() );
+					face = quads.front();
+					const Pack2D& rect = face.m_rect;
+
+					updateTextureCubeRectBgra8(textureCube[0], face.m_side, rect.m_x, rect.m_y, rect.m_width, rect.m_height, 0, 0, 0);
+					if (blitSupported)
+					{
+						bgfx::blit(0, textureCube[1], 0, rect.m_x, rect.m_y, face.m_side, textureCube[0], 0, rect.m_x, rect.m_y, face.m_side, rect.m_width, rect.m_height);
+					}
+
+					cube.clear(face);
 					quads.pop_front();
 				}
 			}
