@@ -3,10 +3,10 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include <bgfx/bgfx.h>
-#include <bx/uint32_t.h>
-
 #include "common.h"
+#include "bgfx_utils.h"
+
+#include <bx/uint32_t.h>
 #include "imgui/imgui.h"
 
 // embedded shaders
@@ -72,8 +72,10 @@ static const int64_t lowwm  = 1000000/57;
 
 class DrawStress : public entry::AppI
 {
-	void init(int /*_argc*/, char** /*_argv*/) BX_OVERRIDE
+	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
+		Args args(_argc, _argv);
+		
 		m_width  = 1280;
 		m_height = 720;
 		m_debug  = BGFX_DEBUG_TEXT;
@@ -91,7 +93,7 @@ class DrawStress : public entry::AppI
 		m_deltaTimeAvgNs = 0;
 		m_numFrames      = 0;
 
-		bgfx::init();
+		bgfx::init(args.m_type, args.m_pciId);
 		bgfx::reset(m_width, m_height, m_reset);
 
 		const bgfx::Caps* caps = bgfx::getCaps();

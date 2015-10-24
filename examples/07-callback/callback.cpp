@@ -364,8 +364,10 @@ private:
 	uint32_t m_maxBlocks;
 };
 
-int _main_(int /*_argc*/, char** /*_argv*/)
+int _main_(int _argc, char** _argv)
 {
+	Args args(_argc, _argv);
+
 	BgfxCallback callback;
 	BgfxAllocator allocator;
 
@@ -376,9 +378,10 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 	bgfx::RendererType::Enum renderers[bgfx::RendererType::Count];
 	uint8_t numRenderers = bgfx::getSupportedRenderers(renderers);
 
-	bgfx::init(
-		  renderers[bx::getHPCounter() % numRenderers] /* randomize renderer */
-		, BGFX_PCI_ID_NONE
+	bgfx::init(bgfx::RendererType::Count == args.m_type
+		? renderers[bx::getHPCounter() % numRenderers] /* randomize renderer */
+		: args.m_type
+		, args.m_pciId
 		, 0
 		, &callback  // custom callback handler
 		, &allocator // custom allocator

@@ -1313,15 +1313,17 @@ struct ShadowMapSettings
 #undef IMGUI_FLOAT_PARAM
 };
 
-int _main_(int /*_argc*/, char** /*_argv*/)
+int _main_(int _argc, char** _argv)
 {
+	Args args(_argc, _argv);
+
 	uint32_t debug = BGFX_DEBUG_TEXT;
 	uint32_t reset = BGFX_RESET_VSYNC;
 
 	ViewState viewState(1280, 720);
 	ClearValues clearValues(0x00000000, 1.0f, 0);
 
-	bgfx::init();
+	bgfx::init(args.m_type, args.m_pciId);
 	bgfx::reset(viewState.m_width, viewState.m_height, reset);
 
 	// Enable debug text.
