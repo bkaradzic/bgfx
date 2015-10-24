@@ -2805,7 +2805,9 @@ again:
 	TextureHandle createTexture3D(uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_TEXTURE_3D), "Texture3D is not supported! Use bgfx::getCaps to check backend renderer capabilities.");
+		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_TEXTURE_3D)
+			, "Texture3D is not supported! Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_3D backend renderer capabilities."
+			);
 
 		_numMips = uint8_t(bx::uint32_max(1, _numMips) );
 
@@ -2908,6 +2910,9 @@ again:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
+		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_TEXTURE_3D)
+			, "Texture3D is not supported! Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_3D backend renderer capabilities."
+			);
 		if (_width == 0
 		||  _height == 0
 		||  _depth == 0)
@@ -2940,6 +2945,9 @@ again:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _data, "_data can't be NULL");
+		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_TEXTURE_READ_BACK)
+			, "Texture read-back is not supported! Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_READ_BACK backend renderer capabilities."
+			);
 		s_ctx->readTexture(_handle, _data);
 	}
 
@@ -2947,6 +2955,9 @@ again:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _data, "_data can't be NULL");
+		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_TEXTURE_READ_BACK)
+			, "Texture read-back is not supported! Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_READ_BACK backend renderer capabilities."
+			);
 		s_ctx->readTexture(_handle, _attachment, _data);
 	}
 
@@ -3344,12 +3355,18 @@ again:
 	void blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_TEXTURE_BLIT)
+			, "Texture blit is not supported, use bgfx::getCaps to test BGFX_CAPS_TEXTURE_BLIT feature availability"
+			);
 		s_ctx->blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
 	}
 
 	void blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, FrameBufferHandle _src, uint8_t _attachment, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_TEXTURE_BLIT)
+			, "Texture blit is not supported! Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_BLIT backend renderer capabilities."
+			);
 		s_ctx->blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _attachment, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
 	}
 
