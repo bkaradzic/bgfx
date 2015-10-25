@@ -131,7 +131,7 @@ class Lod : public entry::AppI
 				, m_height
 				);
 
-			imguiBeginScrollArea("Toggle m_transitions", m_width - m_width / 5 - 10, 10, m_width / 5, m_height / 6, &m_scrollArea);
+			imguiBeginScrollArea("Toggle transitions", m_width - m_width / 5 - 10, 10, m_width / 5, m_height / 6, &m_scrollArea);
 			imguiSeparatorLine();
 
 			if (imguiButton(m_transitions ? "ON" : "OFF") )
@@ -140,7 +140,7 @@ class Lod : public entry::AppI
 			}
 
 			static float distance = 2.0f;
-			imguiSlider("Distance", distance, 2.0f, 6.0f, .01f);
+			imguiSlider("Distance", distance, 2.0f, 6.0f, 0.01f);
 
 			imguiEndScrollArea();
 			imguiEndFrame();
@@ -162,9 +162,8 @@ class Lod : public entry::AppI
 			// Use debug font to print information about this example.
 			bgfx::dbgTextClear();
 			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/12-lod");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Mesh LOD m_transitions.");
+			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Mesh LOD transitions.");
 			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
-			bgfx::dbgTextPrintf(0, 4, m_transitions ? 0x2f : 0x1f, m_transitions ? "m_transitions on" : "m_transitions off");
 
 			float at[3]  = { 0.0f,      1.0f,  0.0f };
 			float eye[3] = { 0.0f, -distance, -2.0f };
