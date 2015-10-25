@@ -203,6 +203,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#dispatch">Dispatch</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#blit">Blit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#resources">Resources</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#shaders-and-programs">Shaders and Programs</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#uniforms">Uniforms</a></li>
@@ -984,12 +985,12 @@
 
 <dl class="member">
 <dt id="_CPPv2N4bgfx4Caps7formatsE">
-<span id="bgfx::Caps::formats__uint8_tA"></span><span class="target" id="project0structbgfx_1_1_caps_1a092975e6acf153a8f4e4ee505e086070"></span>uint8_t <code class="descname">formats</code>[TextureFormat::Count]<a class="headerlink" href="#_CPPv2N4bgfx4Caps7formatsE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::Caps::formats__uint16_tA"></span><span class="target" id="project0structbgfx_1_1_caps_1a9d3d8445e5c828669c924e6fa38e9389"></span>uint16_t <code class="descname">formats</code>[TextureFormat::Count]<a class="headerlink" href="#_CPPv2N4bgfx4Caps7formatsE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Supported texture formats. </p>
 <p><ul class="simple">
 <li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_NONE</span></code> - not supported</li>
-<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_COLOR</span></code> - supported</li>
-<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_EMULATED</span></code> - emulated</li>
+<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_2D</span></code> - supported</li>
+<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED</span></code> - emulated</li>
 <li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_VERTEX</span></code> - supported vertex texture </li>
 </ul>
 </p>
@@ -1484,31 +1485,16 @@ In graphics debugger view name will appear as:<dl class="docutils">
 </p>
 </dd></dl>
 
-<dl class="function">
-<dt id="_CPPv2N4bgfx11setViewRectE7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t">
-<span id="bgfx::setViewRect__uint8_t.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="project0namespacebgfx_1a0d9b4f0ae1b9ca9d637c1062910d468a"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewRect</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, uint16_t <em>_x</em>, uint16_t <em>_y</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11setViewRectE7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set view rectangle. Draw primitive outside view will be clipped. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_view_rect</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_x</span></code> - <p>Position x from the left corner of the window. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_y</span></code> - <p>Position y from the top corner of the window. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_width</span></code> - <p>Width of view port region. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Height of view port region.</p>
-</li>
-</ul>
-</dd>
-</dl>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::setViewRect&#8221; with arguments () in doxygen xml output for project &#8220;project0&#8221; from directory: ../../.build/docs/xml.
+Potential matches:
 </p>
-</dd></dl>
-
+<pre class="last literal-block">
+- void bgfx::setViewRect(uint8_t, uint16_t, uint16_t, BackbufferRatio::Enum)
+- void bgfx::setViewRect(uint8_t, uint16_t, uint16_t, uint16_t, uint16_t)
+</pre>
+</div>
 <dl class="function">
 <dt id="_CPPv2N4bgfx14setViewScissorE7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t">
 <span id="bgfx::setViewScissor__uint8_t.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="project0namespacebgfx_1a3d1b68d9678d716e25795aa3eef2bfe1"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewScissor</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, uint16_t <em>_x</em>, uint16_t <em>_y</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14setViewScissorE7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
@@ -2167,7 +2153,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Frame buffer handle. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_attachment</span></code> - <p>Attachment index. </p>
+<li><code class="first docutils literal"><span class="pre">_attachment</span></code> - <p>Frame buffer attachment index. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p>Texture sampling mode. Default value UINT32_MAX uses texture sampling settings from the texture.<ul class="simple">
 <li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</li>
@@ -2392,7 +2378,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Frame buffer handle. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_attachment</span></code> - <p>Attachment index. </p>
+<li><code class="first docutils literal"><span class="pre">_attachment</span></code> - <p>Frame buffer attachment index. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Texture access. See <code class="docutils literal"><span class="pre">Access::Enum</span></code>. </p>
 </li>
@@ -2470,6 +2456,177 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 </div>
+</div>
+<div class="section" id="blit">
+<h2>Blit<a class="headerlink" href="#blit" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="_CPPv2N4bgfx4blitE7uint8_t13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t">
+<span id="bgfx::blit__uint8_t.TextureHandle.uint16_t.uint16_t.TextureHandle.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="project0namespacebgfx_1a0ced752657573f20fd4fb3006b6287c8"></span>void <code class="descclassname">bgfx::</code><code class="descname">blit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, TextureHandle <em>_dst</em>, uint16_t <em>_dstX</em>, uint16_t <em>_dstY</em>, TextureHandle <em>_src</em>, uint16_t <em>_srcX</em>, uint16_t <em>_srcY</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx4blitE7uint8_t13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blit texture 2D region between two 2D textures. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd><p class="first">Destination texture must be create with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_BLIT_DST</span></code> flag. </p>
+<p>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_BLIT</span></code>. </p>
+<p class="last">C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_blit</span></code>. </p>
+</dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dst</span></code> - <p>Destination texture handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstX</span></code> - <p>Destination texture X position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstY</span></code> - <p>Destination texture Y position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_src</span></code> - <p>Source texture handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcX</span></code> - <p>Source texture X position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcY</span></code> - <p>Source texture Y position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_width</span></code> - <p>Width of region. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Height of region.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx4blitE7uint8_t13TextureHandle8uint16_t8uint16_t17FrameBufferHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t">
+<span id="bgfx::blit__uint8_t.TextureHandle.uint16_t.uint16_t.FrameBufferHandle.uint8_t.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="project0namespacebgfx_1aacf82edb73efb1fcb751f47a013e0999"></span>void <code class="descclassname">bgfx::</code><code class="descname">blit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, TextureHandle <em>_dst</em>, uint16_t <em>_dstX</em>, uint16_t <em>_dstY</em>, FrameBufferHandle <em>_src</em>, uint8_t <em>_attachment</em>, uint16_t <em>_srcX</em>, uint16_t <em>_srcY</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx4blitE7uint8_t13TextureHandle8uint16_t8uint16_t17FrameBufferHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blit texture 2D region between 2D frame buffer and 2D texture. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd><p class="first">Destination texture must be create with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_BLIT_DST</span></code> flag. </p>
+<p>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_BLIT</span></code>. </p>
+<p class="last">C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_blit</span></code>. </p>
+</dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dst</span></code> - <p>Destination texture handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstX</span></code> - <p>Destination texture X position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstY</span></code> - <p>Destination texture Y position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_src</span></code> - <p>Source frame buffer handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_attachment</span></code> - <p>Source frame buffer attachment index. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcX</span></code> - <p>Source texture X position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcY</span></code> - <p>Source texture Y position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_width</span></code> - <p>Width of region. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Height of region.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx4blitE7uint8_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t">
+<span id="bgfx::blit__uint8_t.TextureHandle.uint8_t.uint16_t.uint16_t.uint16_t.TextureHandle.uint8_t.uint16_t.uint16_t.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="project0namespacebgfx_1aa14664b2fd3aafb69138fe6ccfe3ca1f"></span>void <code class="descclassname">bgfx::</code><code class="descname">blit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, TextureHandle <em>_dst</em>, uint8_t <em>_dstMip</em>, uint16_t <em>_dstX</em>, uint16_t <em>_dstY</em>, uint16_t <em>_dstZ</em>, TextureHandle <em>_src</em>, uint8_t <em>_srcMip</em>, uint16_t <em>_srcX</em>, uint16_t <em>_srcY</em>, uint16_t <em>_srcZ</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint16_t <em>_depth</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx4blitE7uint8_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blit texture region between two textures. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd><p class="first">Destination texture must be create with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_BLIT_DST</span></code> flag. </p>
+<p>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_BLIT</span></code>. </p>
+<p class="last">C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_blit</span></code>. </p>
+</dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dst</span></code> - <p>Destination texture handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstMip</span></code> - <p>Destination texture mip level. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstX</span></code> - <p>Destination texture X position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstY</span></code> - <p>Destination texture Y position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstZ</span></code> - <p>If texture is 2D this argument should be 0. If destination texture is cube this argument represent destination texture cube face. For 3D texture this argument represent destination texture Z position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_src</span></code> - <p>Source texture handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcMip</span></code> - <p>Source texture mip level. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcX</span></code> - <p>Source texture X position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcY</span></code> - <p>Source texture Y position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcZ</span></code> - <p>If texture is 2D this argument should be 0. If source texture is cube this argument represent source texture cube face. For 3D texture this argument represent source texture Z position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_width</span></code> - <p>Width of region. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Height of region. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>If texture is 3D this argument represent depth of region, otherwise is unused.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx4blitE7uint8_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t17FrameBufferHandle7uint8_t7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t">
+<span id="bgfx::blit__uint8_t.TextureHandle.uint8_t.uint16_t.uint16_t.uint16_t.FrameBufferHandle.uint8_t.uint8_t.uint16_t.uint16_t.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="project0namespacebgfx_1a5ac694ecc0ee68d3fcf50a078e4ccf2d"></span>void <code class="descclassname">bgfx::</code><code class="descname">blit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, TextureHandle <em>_dst</em>, uint8_t <em>_dstMip</em>, uint16_t <em>_dstX</em>, uint16_t <em>_dstY</em>, uint16_t <em>_dstZ</em>, FrameBufferHandle <em>_src</em>, uint8_t <em>_attachment</em>, uint8_t <em>_srcMip</em>, uint16_t <em>_srcX</em>, uint16_t <em>_srcY</em>, uint16_t <em>_srcZ</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint16_t <em>_depth</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx4blitE7uint8_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t17FrameBufferHandle7uint8_t7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blit texture region between frame buffer and texture. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd><p class="first">Destination texture must be create with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_BLIT_DST</span></code> flag. </p>
+<p>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_BLIT</span></code>. </p>
+<p class="last">C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_blit</span></code>. </p>
+</dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dst</span></code> - <p>Destination texture handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstMip</span></code> - <p>Destination texture mip level. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstX</span></code> - <p>Destination texture X position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstY</span></code> - <p>Destination texture Y position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstZ</span></code> - <p>If texture is 2D this argument should be 0. If destination texture is cube this argument represent destination texture cube face. For 3D texture this argument represent destination texture Z position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_src</span></code> - <p>Source frame buffer handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_attachment</span></code> - <p>Source frame buffer attachment index. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcMip</span></code> - <p>Source texture mip level. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcX</span></code> - <p>Source texture X position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcY</span></code> - <p>Source texture Y position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcZ</span></code> - <p>If texture is 2D this argument should be 0. If source texture is cube this argument represent source texture cube face. For 3D texture this argument represent source texture Z position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_width</span></code> - <p>Width of region. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Height of region. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>If texture is 3D this argument represent depth of region, otherwise is unused.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
 </div>
 <div class="section" id="resources">
 <h2>Resources<a class="headerlink" href="#resources" title="Permalink to this headline">¶</a></h2>
@@ -3591,6 +3748,11 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dd></dd></dl>
 
 <dl class="member">
+<dt id="_CPPv2N4bgfx13TextureFormat7RGB9E5FE">
+<span id="bgfx::TextureFormat::RGB9E5F"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ae16f6d03d3fb347cf375b35bca2a0211"></span><code class="descname">RGB9E5F</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat7RGB9E5FE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
 <dt id="_CPPv2N4bgfx13TextureFormat5BGRA8E">
 <span id="bgfx::TextureFormat::BGRA8"></span><span class="target" id="project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a8f9737f30497f922acb85eabfab5bd8b"></span><code class="descname">BGRA8</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormat5BGRA8E" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -4011,12 +4173,64 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="_CPPv2N4bgfx11readTextureE13TextureHandlePv">
+<span id="bgfx::readTexture__TextureHandle.voidP"></span><span class="target" id="project0namespacebgfx_1ac8de0663cbec720564e98e452fcb0ed2"></span>void <code class="descclassname">bgfx::</code><code class="descname">readTexture</code><span class="sig-paren">(</span>TextureHandle <em>_handle</em>, void *<em>_data</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11readTextureE13TextureHandlePv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read back texture content. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd><p class="first">Texture must be created with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_READ_BACK</span></code> flag. </p>
+<p>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_READ_BACK</span></code>. </p>
+<p class="last">C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_read_texture</span></code>. </p>
+</dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Texture handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_data</span></code> - <p>Destination buffer.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx11readTextureE17FrameBufferHandle7uint8_tPv">
+<span id="bgfx::readTexture__FrameBufferHandle.uint8_t.voidP"></span><span class="target" id="project0namespacebgfx_1a3a6e449f0e2986a4a4c7f97ecb7e201f"></span>void <code class="descclassname">bgfx::</code><code class="descname">readTexture</code><span class="sig-paren">(</span>FrameBufferHandle <em>_handle</em>, uint8_t <em>_attachment</em>, void *<em>_data</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11readTextureE17FrameBufferHandle7uint8_tPv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read back texture content. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd><p class="first">Texture must be created with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_READ_BACK</span></code> flag. </p>
+<p>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_READ_BACK</span></code>. </p>
+<p class="last">C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_read_texture</span></code>. </p>
+</dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Frame buffer handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_attachment</span></code> - <p>Frame buffer attachment index. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_data</span></code> - <p>Destination buffer.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="_CPPv2N4bgfx14destroyTextureE13TextureHandle">
 <span id="bgfx::destroyTexture__TextureHandle"></span><span class="target" id="project0namespacebgfx_1a3cc8f5416512b46cedee40d444f1bc0e"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyTexture</code><span class="sig-paren">(</span>TextureHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14destroyTextureE13TextureHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Destroy texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_texture</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Texture handle.</p>
+</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
@@ -4049,27 +4263,18 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
-<dl class="function">
-<dt id="_CPPv2N4bgfx17createFrameBufferE7uint8_tP13TextureHandleb">
-<span id="bgfx::createFrameBuffer__uint8_t.TextureHandleP.b"></span><span class="target" id="project0namespacebgfx_1a0449c456fc8ccff699b0a16a050d5ba1"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>uint8_t <em>_num</em>, TextureHandle *<em>_handles</em>, bool <em>_destroyTextures</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferE7uint8_tP13TextureHandleb" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create frame buffer. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_frame_buffer_from_handles</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of texture attachments. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_handles</span></code> - <p>Texture attachments. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_destroyTextures</span></code> - <p>If true, textures will be destroyed when frame buffer is destroyed.</p>
-</li>
-</ul>
-</dd>
-</dl>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;createFrameBuffer&#8221; with arguments (uint8_t, TextureHandle *, bool) in doxygen xml output for project &#8220;project0&#8221; from directory: ../../.build/docs/xml.
+Potential matches:
 </p>
-</dd></dl>
-
+<pre class="last literal-block">
+- FrameBufferHandle bgfx::createFrameBuffer(void *, uint16_t, uint16_t, TextureFormat::Enum)
+- FrameBufferHandle bgfx::createFrameBuffer(uint16_t, uint16_t, TextureFormat::Enum, uint32_t)
+- FrameBufferHandle bgfx::createFrameBuffer(uint8_t, const TextureHandle *, bool)
+- FrameBufferHandle bgfx::createFrameBuffer(BackbufferRatio::Enum, TextureFormat::Enum, uint32_t)
+</pre>
+</div>
 <dl class="function">
 <dt id="_CPPv2N4bgfx17createFrameBufferEPv8uint16_t8uint16_tN13TextureFormat4EnumE">
 <span id="bgfx::createFrameBuffer__voidP.uint16_t.uint16_t.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1acb6883cf9094d49e7f1767f9e4b8a8b8"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>void *<em>_nwh</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_depthFormat</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEPv8uint16_t8uint16_tN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
