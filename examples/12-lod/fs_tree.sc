@@ -34,7 +34,7 @@ void main()
 	vec3 normal = normalize(v_normal);
 	vec3 view = normalize(v_view);
 	vec2 bln = blinn(lightDir, normal, view);
-	float l = saturate(bln.y);
+	float l = saturate(bln.y) + 0.12;
 
 	color.xyz = toLinear(color.xyz)*l;
 	gl_FragColor = toGamma(color);
