@@ -1485,16 +1485,36 @@ In graphics debugger view name will appear as:<dl class="docutils">
 </p>
 </dd></dl>
 
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::setViewRect&#8221; with arguments () in doxygen xml output for project &#8220;project0&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+<dl class="function">
+<dt id="_CPPv2N4bgfx11setViewRectE7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t">
+<span id="bgfx::setViewRect__uint8_t.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="project0namespacebgfx_1a0d9b4f0ae1b9ca9d637c1062910d468a"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewRect</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, uint16_t <em>_x</em>, uint16_t <em>_y</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11setViewRectE7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set view rectangle. Draw primitive outside view will be clipped. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_view_rect</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_x</span></code> - <p>Position x from the left corner of the window. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_y</span></code> - <p>Position y from the top corner of the window. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_width</span></code> - <p>Width of view port region. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Height of view port region.</p>
+</li>
+</ul>
+</dd>
+</dl>
 </p>
-<pre class="last literal-block">
-- void bgfx::setViewRect(uint8_t, uint16_t, uint16_t, BackbufferRatio::Enum)
-- void bgfx::setViewRect(uint8_t, uint16_t, uint16_t, uint16_t, uint16_t)
-</pre>
-</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx11setViewRectE7uint8_t8uint16_t8uint16_tN15BackbufferRatio4EnumE">
+<span id="bgfx::setViewRect__uint8_t.uint16_t.uint16_t.BackbufferRatio::Enum"></span><span class="target" id="project0namespacebgfx_1a60262b4046cf2510dd3c216e13829c87"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewRect</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, uint16_t <em>_x</em>, uint16_t <em>_y</em>, BackbufferRatio::Enum <em>_ratio</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11setViewRectE7uint8_t8uint16_t8uint16_tN15BackbufferRatio4EnumE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="function">
 <dt id="_CPPv2N4bgfx14setViewScissorE7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t">
 <span id="bgfx::setViewScissor__uint8_t.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="project0namespacebgfx_1a3d1b68d9678d716e25795aa3eef2bfe1"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewScissor</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, uint16_t <em>_x</em>, uint16_t <em>_y</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14setViewScissorE7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
@@ -4239,6 +4259,33 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <div class="section" id="frame-buffers">
 <h3>Frame Buffers<a class="headerlink" href="#frame-buffers" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
+<dt id="_CPPv2N4bgfx17createFrameBufferE8uint16_t8uint16_tN13TextureFormat4EnumE8uint32_t">
+<span id="bgfx::createFrameBuffer__uint16_t.uint16_t.TextureFormat::Enum.uint32_t"></span><span class="target" id="project0namespacebgfx_1a51e6723db7d8375e211b2ae5046634b5"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>uint16_t <em>_width</em>, uint16_t <em>_height</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_textureFlags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferE8uint16_t8uint16_tN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create frame buffer (simple). </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_frame_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_width</span></code> - <p>Texture width. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Texture height. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><a class="reference internal" href="#project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span><span class="pre">TextureFormat::Enum</span></span></a></code>. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_textureFlags</span></code> - <p>Default texture sampling mode is linear, and wrap mode is repeat.<ul class="simple">
+<li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]</span></code> - Point or anisotropic sampling.</li>
+</ul>
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="_CPPv2N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint32_t">
 <span id="bgfx::createFrameBuffer__BackbufferRatio::Enum.TextureFormat::Enum.uint32_t"></span><span class="target" id="project0namespacebgfx_1a721dad473bb58b7331864e95e6433c46"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>BackbufferRatio::Enum <em>_ratio</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_textureFlags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio if back buffer resolution changes. </p>
@@ -4263,18 +4310,27 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;createFrameBuffer&#8221; with arguments (uint8_t, TextureHandle *, bool) in doxygen xml output for project &#8220;project0&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+<dl class="function">
+<dt id="_CPPv2N4bgfx17createFrameBufferE7uint8_tPK13TextureHandleb">
+<span id="bgfx::createFrameBuffer__uint8_t.TextureHandleCP.b"></span><span class="target" id="project0namespacebgfx_1a24c15472da58c79e49b04cb8ed97a436"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>uint8_t <em>_num</em>, <em class="property">const</em> TextureHandle *<em>_handles</em>, bool <em>_destroyTextures</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferE7uint8_tPK13TextureHandleb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create frame buffer. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_frame_buffer_from_handles</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of texture attachments. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_handles</span></code> - <p>Texture attachments. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_destroyTextures</span></code> - <p>If true, textures will be destroyed when frame buffer is destroyed.</p>
+</li>
+</ul>
+</dd>
+</dl>
 </p>
-<pre class="last literal-block">
-- FrameBufferHandle bgfx::createFrameBuffer(void *, uint16_t, uint16_t, TextureFormat::Enum)
-- FrameBufferHandle bgfx::createFrameBuffer(uint16_t, uint16_t, TextureFormat::Enum, uint32_t)
-- FrameBufferHandle bgfx::createFrameBuffer(uint8_t, const TextureHandle *, bool)
-- FrameBufferHandle bgfx::createFrameBuffer(BackbufferRatio::Enum, TextureFormat::Enum, uint32_t)
-</pre>
-</div>
+</dd></dl>
+
 <dl class="function">
 <dt id="_CPPv2N4bgfx17createFrameBufferEPv8uint16_t8uint16_tN13TextureFormat4EnumE">
 <span id="bgfx::createFrameBuffer__voidP.uint16_t.uint16_t.TextureFormat::Enum"></span><span class="target" id="project0namespacebgfx_1acb6883cf9094d49e7f1767f9e4b8a8b8"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>void *<em>_nwh</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_depthFormat</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEPv8uint16_t8uint16_tN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
