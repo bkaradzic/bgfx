@@ -209,7 +209,7 @@ public:
 		// Create programs.
 		m_program    = loadProgram("vs_update", "fs_update");
 		m_programCmp = loadProgram("vs_update", "fs_update_cmp");
-		m_program3d  = BGFX_INVALID_HANDLE;
+		m_program3d.idx = bgfx::invalidHandle;
 		if (m_texture3DSupported)
 		{
 			m_program3d = loadProgram("vs_update", "fs_update_3d");
