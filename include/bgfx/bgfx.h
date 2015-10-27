@@ -8,7 +8,7 @@
 
 #include <stdarg.h> // va_list
 #include <stdint.h> // uint32_t
-#include <stdlib.h> // size_t
+#include <stdlib.h> // NULL
 
 #include <bgfx/bgfxdefines.h>
 
