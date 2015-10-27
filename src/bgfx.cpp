@@ -1096,17 +1096,9 @@ namespace bgfx
 			m_viewRemap[ii] = uint8_t(ii);
 		}
 
-		memset(m_fb,   0xff, sizeof(m_fb) );
-		memset(m_clear,   0, sizeof(m_clear) );
-		memset(m_rect,    0, sizeof(m_rect) );
-		memset(m_scissor, 0, sizeof(m_scissor) );
-		memset(m_seq,     0, sizeof(m_seq) );
-		memset(m_seqMask, 0, sizeof(m_seqMask) );
-
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_rect); ++ii)
+		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 		{
-			m_rect[ii].m_width  = 1;
-			m_rect[ii].m_height = 1;
+			resetView(uint8_t(ii) );
 		}
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_clearColor); ++ii)
@@ -3125,6 +3117,13 @@ again:
 		s_ctx->setViewRemap(_id, _num, _remap);
 	}
 
+	void resetView(uint8_t _id)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(checkView(_id), "Invalid view id: %d", _id);
+		s_ctx->resetView(_id);
+	}
+
 	void setMarker(const char* _marker)
 	{
 		BGFX_CHECK_MAIN_THREAD();
@@ -3995,6 +3994,11 @@ BGFX_C_API void bgfx_set_view_transform_stereo(uint8_t _id, const void* _view, c
 BGFX_C_API void bgfx_set_view_remap(uint8_t _id, uint8_t _num, const void* _remap)
 {
 	bgfx::setViewRemap(_id, _num, _remap);
+}
+
+BGFX_C_API void bgfx_reset_view(uint8_t _id)
+{
+	bgfx::resetView(_id);
 }
 
 BGFX_C_API void bgfx_set_marker(const char* _marker)

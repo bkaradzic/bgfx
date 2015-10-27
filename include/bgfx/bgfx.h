@@ -1688,6 +1688,14 @@ namespace bgfx
 	///
 	void setViewRemap(uint8_t _id = 0, uint8_t _num = UINT8_MAX, const void* _remap = NULL);
 
+	/// Reset all view settings to default.
+	///
+	/// @param[in] _id View id.
+	///
+	/// @attention C99 equivalent is `bgfx_reset_view`.
+	///
+	void resetView(uint8_t _id);
+
 	/// Sets debug marker.
 	///
 	/// @attention C99 equivalent is `bgfx_set_marker`.

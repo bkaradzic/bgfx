@@ -3397,6 +3397,17 @@ namespace bgfx
 			}
 		}
 
+		BGFX_API_FUNC(void resetView(uint8_t _id) )
+		{
+			setViewRect(_id, 0, 0, 1, 1);
+			setViewScissor(_id, 0, 0, 0, 0);
+			setViewClear(_id, BGFX_CLEAR_NONE, 0, 0.0f, 0);
+			setViewSeq(_id, false);
+			bgfx::FrameBufferHandle invalid = BGFX_INVALID_HANDLE;
+			setViewFrameBuffer(_id, invalid);
+			setViewTransform(_id, NULL, NULL, BGFX_VIEW_NONE, NULL);
+		}
+
 		BGFX_API_FUNC(void setViewRemap(uint8_t _id, uint8_t _num, const void* _remap) )
 		{
 			const uint32_t num = bx::uint32_min(_id + _num, BGFX_CONFIG_MAX_VIEWS) - _id;
