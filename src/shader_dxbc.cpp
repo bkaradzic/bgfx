@@ -1785,6 +1785,7 @@ namespace bgfx
 				size += read(_reader, _dxbc.outputSignature);
 				break;
 
+			case BX_MAKEFOURCC('A', 'o', 'n', '9'): // Contains DX9BC for feature level 9.x (*s_4_0_level_9_*) shaders.
 			case BX_MAKEFOURCC('I', 'F', 'C', 'E'): // Interface.
 			case BX_MAKEFOURCC('R', 'D', 'E', 'F'): // Resource definition.
 			case BX_MAKEFOURCC('S', 'D', 'G', 'B'): // Shader debugging info (old).
@@ -1794,6 +1795,8 @@ namespace bgfx
 			case BX_MAKEFOURCC('P', 'C', 'S', 'G'): // Patch constant signature.
 			case BX_MAKEFOURCC('P', 'S', 'O', '1'): // Pipeline State Object 1
 			case BX_MAKEFOURCC('P', 'S', 'O', '2'): // Pipeline State Object 2
+			case BX_MAKEFOURCC('X', 'N', 'A', 'P'): // ?
+			case BX_MAKEFOURCC('X', 'N', 'A', 'S'): // ?
 				size += chunkSize;
 				break;
 
