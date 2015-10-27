@@ -884,6 +884,7 @@ namespace bgfx { namespace d3d12
 									| (m_options.ROVsSupported ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
 //									| BGFX_CAPS_SWAP_CHAIN
 									| BGFX_CAPS_TEXTURE_BLIT
+									| BGFX_CAPS_TEXTURE_READ_BACK
 									);
 				g_caps.maxTextureSize   = 16384;
 				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(16, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
@@ -1273,8 +1274,63 @@ namespace bgfx { namespace d3d12
 		{
 		}
 
-		void readTexture(TextureHandle /*_handle*/, void* /*_data*/) BX_OVERRIDE
+		void readTexture(TextureHandle _handle, void* _data) BX_OVERRIDE
 		{
+			const TextureD3D12& texture = m_textures[_handle.idx];
+
+			D3D12_RESOURCE_DESC desc = texture.m_ptr->GetDesc();
+
+			D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
+			uint32_t numRows;
+			uint64_t total;
+			uint64_t srcPitch;
+			m_device->GetCopyableFootprints(&desc
+				, 0
+				, 1
+				, 0
+				, &layout
+				, &numRows
+				, &srcPitch
+				, &total
+				);
+
+			ID3D12Resource* readback = createCommittedResource(m_device, HeapProperty::ReadBack, total);
+
+			D3D12_BOX box;
+			box.left   = 0;
+			box.top    = 0;
+			box.right  = texture.m_width;
+			box.bottom = texture.m_height;
+			box.front  = 0;
+			box.back   = 1;
+
+			D3D12_TEXTURE_COPY_LOCATION dstLocation = { readback,      D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  { layout } };
+			D3D12_TEXTURE_COPY_LOCATION srcLocation = { texture.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {}         };
+			m_commandList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, &box);
+
+			finish();
+			m_commandList = m_cmd.alloc();
+
+			uint8_t* src;
+			readback->Map(0, NULL, (void**)&src);
+
+			const uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(texture.m_textureFormat) );
+			uint8_t* dst      = (uint8_t*)_data;
+			uint32_t dstPitch = texture.m_width*bpp/8;
+
+			uint32_t pitch = bx::uint32_min(uint32_t(srcPitch), dstPitch);
+
+			for (uint32_t yy = 0, height = texture.m_height; yy < height; ++yy)
+			{
+				memcpy(dst, src, pitch);
+
+				src += srcPitch;
+				dst += dstPitch;
+			}
+
+			readback->Unmap(0, NULL);
+
+			DX_RELEASE(readback, 0);
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height) BX_OVERRIDE
