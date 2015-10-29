@@ -2585,10 +2585,12 @@ namespace bgfx { namespace d3d9
 					rect.right  = rect.left + _rect->m_width;
 					rect.bottom = rect.top  + _rect->m_height;
 					DX_CHECK(m_staging2d->LockRect(_lod, &lockedRect, &rect, 0) );
+					DX_CHECK(m_staging2d->AddDirtyRect(&rect) );
 				}
 				else
 				{
 					DX_CHECK(m_staging2d->LockRect(_lod, &lockedRect, NULL, 0) );
+					DX_CHECK(m_staging2d->AddDirtyRect(NULL) );
 				}
 
 				_pitch = lockedRect.Pitch;
@@ -2600,6 +2602,7 @@ namespace bgfx { namespace d3d9
 			{
 				D3DLOCKED_BOX box;
 				DX_CHECK(m_staging3d->LockBox(_lod, &box, NULL, 0) );
+				DX_CHECK(m_staging3d->AddDirtyBox(NULL) );
 				_pitch      = box.RowPitch;
 				_slicePitch = box.SlicePitch;
 				return (uint8_t*)box.pBits;
@@ -2617,10 +2620,12 @@ namespace bgfx { namespace d3d9
 					rect.right  = rect.left + _rect->m_width;
 					rect.bottom = rect.top + _rect->m_height;
 					DX_CHECK(m_stagingCube->LockRect(D3DCUBEMAP_FACES(_side), _lod, &lockedRect, &rect, 0) );
+					DX_CHECK(m_textureCube->AddDirtyRect(D3DCUBEMAP_FACES(_side), &rect) );
 				}
 				else
 				{
 					DX_CHECK(m_stagingCube->LockRect(D3DCUBEMAP_FACES(_side), _lod, &lockedRect, NULL, 0) );
+					DX_CHECK(m_textureCube->AddDirtyRect(D3DCUBEMAP_FACES(_side), NULL) );
 				}
 
 				_pitch = lockedRect.Pitch;
