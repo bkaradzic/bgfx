@@ -1241,8 +1241,6 @@ namespace bgfx { namespace d3d9
 				m_params.MultiSampleType    = msaa.m_type;
 				m_params.MultiSampleQuality = msaa.m_quality;
 
-				m_resolution = _resolution;
-
 				preReset();
 				DX_CHECK(m_device->Reset(&m_params) );
 				postReset();
