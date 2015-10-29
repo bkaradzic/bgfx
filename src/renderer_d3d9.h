@@ -10,9 +10,6 @@
 
 #if BX_PLATFORM_WINDOWS
 #	include <sal.h>
-#	if !BGFX_CONFIG_RENDERER_DIRECT3D9EX
-//#		define D3D_DISABLE_9EX
-#	endif // !BGFX_CONFIG_RENDERER_DIRECT3D9EX
 #	include <d3d9.h>
 
 #elif BX_PLATFORM_XBOX360
