@@ -3314,8 +3314,8 @@ namespace bgfx { namespace d3d9
 	{
 		Frame& frame = m_frame[m_control.m_current];
 		frame.m_disjoint->Issue(D3DISSUE_END);
-		frame.m_end->Issue(D3DISSUE_END);
 		frame.m_freq->Issue(D3DISSUE_END);
+		frame.m_end->Issue(D3DISSUE_END);
 		m_control.commit(1);
 	}
 
@@ -3325,8 +3325,8 @@ namespace bgfx { namespace d3d9
 		{
 			Frame& frame = m_frame[m_control.m_read];
 
-			uint64_t freq;
-			HRESULT hr = frame.m_freq->GetData(&freq, sizeof(freq), 0);
+			uint64_t timeEnd;
+			HRESULT hr = frame.m_end->GetData(&timeEnd, sizeof(timeEnd), 0);
 			if (S_OK == hr)
 			{
 				m_control.consume(1);
@@ -3334,8 +3334,8 @@ namespace bgfx { namespace d3d9
 				uint64_t timeStart;
 				DX_CHECK(frame.m_start->GetData(&timeStart, sizeof(timeStart), 0) );
 
-				uint64_t timeEnd;
-				DX_CHECK(frame.m_end->GetData(&timeEnd, sizeof(timeEnd), 0) );
+				uint64_t freq;
+				DX_CHECK(frame.m_freq->GetData(&freq, sizeof(freq), 0) );
 
 				m_frequency = freq;
 				m_elapsed   = timeEnd - timeStart;
