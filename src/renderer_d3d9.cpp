@@ -727,6 +727,17 @@ namespace bgfx { namespace d3d9
 				mbstowcs(s_viewNameW[ii], name, BGFX_CONFIG_MAX_VIEW_NAME_RESERVED);
 			}
 
+			if (NULL != m_deviceEx)
+			{
+				int32_t gpuPriority;
+				DX_CHECK(m_deviceEx->GetGPUThreadPriority(&gpuPriority) );
+				BX_TRACE("GPU thread priority: %d", gpuPriority);
+
+				uint32_t maxLatency;
+				DX_CHECK(m_deviceEx->GetMaximumFrameLatency(&maxLatency) );
+				BX_TRACE("GPU max frame latency: %d", maxLatency);
+			}
+
 			postReset();
 
 			m_initialized = true;
