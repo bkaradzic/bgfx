@@ -134,9 +134,12 @@ namespace bgfx { namespace gl
 	{
 		BX_UNUSED(_width, _height);
 
+#if defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
 		bool hidpi = !!(_flags&BGFX_RESET_HIDPI);
 		NSOpenGLView* glView = (NSOpenGLView*)m_view;
-		[glView setWantsBestResolutionOpenGLSurface:hidpi];
+		if ([glView respondsToSelector:@selector(setWantsBestResolutionOpenGLSurface:)])
+			[glView setWantsBestResolutionOpenGLSurface:hidpi];
+#endif // defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
 
 		bool vsync = !!(_flags&BGFX_RESET_VSYNC);
 		GLint interval = vsync ? 1 : 0;
@@ -147,11 +150,12 @@ namespace bgfx { namespace gl
 
 	uint64_t GlContext::getCaps() const
 	{
+		uint64_t caps = 0;
+#if defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
 		NSWindow* nsWindow = (NSWindow*)g_platformData.nwh;
-		uint64_t caps = 1.0f < [nsWindow backingScaleFactor]
-			? BGFX_CAPS_HIDPI
-			: 0
-			;
+		if ([nsWindow respondsToSelector:@selector(backingScaleFactor)] && (1.0f < [nsWindow backingScaleFactor]))
+			caps |= BGFX_CAPS_HIDPI;
+#endif // defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
 		return caps;
 	}
 
