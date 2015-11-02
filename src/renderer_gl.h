@@ -1188,38 +1188,6 @@ namespace bgfx { namespace gl
 		VaoCacheRef m_vcref;
 	};
 
-	struct QueriesGL
-	{
-		void create()
-		{
-			GL_CHECK(glGenQueries(BX_COUNTOF(m_queries), m_queries) );
-		}
-
-		void destroy()
-		{
-			GL_CHECK(glDeleteQueries(BX_COUNTOF(m_queries), m_queries) );
-		}
-
-		void begin(uint16_t _id, GLenum _target) const
-		{
-			GL_CHECK(glBeginQuery(_target, m_queries[_id]) );
-		}
-
-		void end(GLenum _target) const
-		{
-			GL_CHECK(glEndQuery(_target) );
-		}
-
-		uint64_t getResult(uint16_t _id) const
-		{
-			uint64_t result;
-			GL_CHECK(glGetQueryObjectui64v(m_queries[_id], GL_QUERY_RESULT, &result) );
-			return result;
-		}
-
-		GLuint m_queries[64];
-	};
-
 	struct TimerQueryGL
 	{
 		TimerQueryGL()
@@ -1282,6 +1250,29 @@ namespace bgfx { namespace gl
 		uint64_t m_elapsed;
 
 		GLuint m_frame[4];
+		bx::RingBufferControl m_control;
+	};
+
+	struct OcclusionQueryGL
+	{
+		OcclusionQueryGL()
+			: m_control(BX_COUNTOF(m_query) )
+		{
+		}
+
+		void create();
+		void destroy();
+		void begin(OcclusionQueryHandle _handle);
+		void end();
+		void resolve(bool _wait = false);
+
+		struct Query
+		{
+			GLuint m_id;
+			OcclusionQueryHandle m_handle;
+		};
+
+		Query m_query[BGFX_CONFIG_MAX_OCCUSION_QUERIES];
 		bx::RingBufferControl m_control;
 	};
 

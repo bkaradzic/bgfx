@@ -209,6 +209,9 @@ class Occlusion : public entry::AppI
 				bgfx::setViewRect(2, 10, height - height/4 - 10, width/4, height/4);
 			}
 
+			bgfx::touch(0);
+			bgfx::touch(2);
+
 			for (uint32_t yy = 0; yy < CUBES_DIM; ++yy)
 			{
 				for (uint32_t xx = 0; xx < CUBES_DIM; ++xx)

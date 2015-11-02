@@ -3516,6 +3516,11 @@ namespace bgfx { namespace d3d9
 
 		invalidateSamplerState();
 
+		if (m_occlusionQuerySupport)
+		{
+			m_occlusionQuery.resolve();
+		}
+
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 		{
 			for (uint32_t item = 0, numItems = _render->m_num; item < numItems; ++item)

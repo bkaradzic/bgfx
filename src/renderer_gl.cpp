@@ -558,6 +558,7 @@ namespace bgfx { namespace gl
 
 			NV_copy_image,
 			NV_draw_buffers,
+			NV_occlusion_query,
 			NV_texture_border_clamp,
 			NVX_gpu_memory_info,
 
@@ -716,7 +717,7 @@ namespace bgfx { namespace gl
 		{ "EXT_framebuffer_object",                BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "EXT_framebuffer_sRGB",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "EXT_multi_draw_indirect",               false,                             true  }, // GLES3.1 extension.
-		{ "EXT_occlusion_query_boolean",           false,                             true  },
+		{ "EXT_occlusion_query_boolean",           false,                             true  }, // GLES2 extension.
 		{ "EXT_packed_float",                      BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "EXT_read_format_bgra",                  false,                             true  },
 		{ "EXT_shader_image_load_store",           false,                             true  },
@@ -761,6 +762,7 @@ namespace bgfx { namespace gl
 
 		{ "NV_copy_image",                         false,                             true  },
 		{ "NV_draw_buffers",                       false,                             true  }, // GLES2 extension.
+		{ "NV_occlusion_query",                    false,                             true  },
 		{ "NV_texture_border_clamp",               false,                             true  }, // GLES2 extension.
 		{ "NVX_gpu_memory_info",                   false,                             true  },
 
@@ -1213,6 +1215,7 @@ namespace bgfx { namespace gl
 			, m_textureSwizzleSupport(false)
 			, m_depthTextureSupport(false)
 			, m_timerQuerySupport(false)
+			, m_occlusionQuerySupport(false)
 			, m_flip(false)
 			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
 			, m_backBufferFbo(0)
@@ -1800,6 +1803,18 @@ namespace bgfx { namespace gl
 				&& NULL != glGetQueryObjectui64v
 				;
 
+			m_occlusionQuerySupport = false
+				|| s_extension[Extension::ARB_occlusion_query        ].m_supported
+				|| s_extension[Extension::ARB_occlusion_query2       ].m_supported
+				|| s_extension[Extension::EXT_occlusion_query_boolean].m_supported
+				|| s_extension[Extension::NV_occlusion_query         ].m_supported
+				;
+
+			g_caps.supported |= m_occlusionQuerySupport
+				? BGFX_CAPS_OCCLUSION_QUERY
+				: 0
+				;
+
 			g_caps.supported |= m_depthTextureSupport
 				? BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
 				: 0
@@ -1926,10 +1941,14 @@ namespace bgfx { namespace gl
 				glInvalidateFramebuffer = stubInvalidateFramebuffer;
 			}
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-			&&  m_timerQuerySupport)
+			if (m_timerQuerySupport)
 			{
 				m_gpuTimer.create();
+			}
+
+			if (m_occlusionQuerySupport)
+			{
+				m_occlusionQuery.create();
 			}
 
 			// Init reserved part of view name.
@@ -1957,10 +1976,14 @@ namespace bgfx { namespace gl
 
 			invalidateCache();
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-			&&  m_timerQuerySupport)
+			if (m_timerQuerySupport)
 			{
 				m_gpuTimer.destroy();
+			}
+
+			if (m_occlusionQuerySupport)
+			{
+				m_occlusionQuery.destroy();
 			}
 
 			destroyMsaaFbo();
@@ -2689,6 +2712,12 @@ namespace bgfx { namespace gl
 			}
 		}
 
+		bool isVisible(OcclusionQueryHandle _handle)
+		{
+			m_occlusionQuery.resolve();
+			return m_occlusion[_handle.idx];
+		}
+
 		void ovrPostReset()
 		{
 #if BGFX_CONFIG_USE_OVR
@@ -3127,9 +3156,12 @@ namespace bgfx { namespace gl
 		TextureGL m_textures[BGFX_CONFIG_MAX_TEXTURES];
 		VertexDecl m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
 		FrameBufferGL m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
+		bool m_occlusion[BGFX_CONFIG_MAX_OCCUSION_QUERIES];
 		UniformRegistry m_uniformReg;
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
+
 		TimerQueryGL m_gpuTimer;
+		OcclusionQueryGL m_occlusionQuery;
 
 		VaoStateCache m_vaoStateCache;
 		SamplerStateCache m_samplerStateCache;
@@ -3157,6 +3189,7 @@ namespace bgfx { namespace gl
 		bool m_textureSwizzleSupport;
 		bool m_depthTextureSupport;
 		bool m_timerQuerySupport;
+		bool m_occlusionQuerySupport;
 		bool m_flip;
 
 		uint64_t m_hash;
@@ -5115,6 +5148,65 @@ namespace bgfx { namespace gl
 		GL_CHECK(glInvalidateFramebuffer(GL_FRAMEBUFFER, idx, buffers) );
 	}
 
+	void OcclusionQueryGL::create()
+	{
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_query); ++ii)
+		{
+			Query& query = m_query[ii];
+			GL_CHECK(glGenQueries(1, &query.m_id) );
+		}
+	}
+
+	void OcclusionQueryGL::destroy()
+	{
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_query); ++ii)
+		{
+			Query& query = m_query[ii];
+			GL_CHECK(glDeleteQueries(1, &query.m_id) );
+		}
+	}
+
+	void OcclusionQueryGL::begin(OcclusionQueryHandle _handle)
+	{
+		while (0 == m_control.reserve(1) )
+		{
+			resolve(true);
+		}
+
+		Query& query = m_query[m_control.m_current];
+		GL_CHECK(glBeginQuery(GL_SAMPLES_PASSED, query.m_id) );
+		query.m_handle = _handle;
+	}
+
+	void OcclusionQueryGL::end()
+	{
+		GL_CHECK(glEndQuery(GL_SAMPLES_PASSED) );
+		m_control.commit(1);
+	}
+
+	void OcclusionQueryGL::resolve(bool _wait)
+	{
+		while (0 != m_control.available() )
+		{
+			Query& query = m_query[m_control.m_read];
+			int32_t result;
+
+			if (!_wait)
+			{
+				GL_CHECK(glGetQueryObjectiv(query.m_id, GL_QUERY_RESULT_AVAILABLE, &result) );
+
+				if (!result)
+				{
+					break;
+				}
+			}
+
+			GL_CHECK(glGetQueryObjectiv(query.m_id, GL_QUERY_RESULT, &result) );
+			s_renderGL->m_occlusion[query.m_handle.idx] = 0 < result;
+			m_control.consume(1);
+		}
+	}
+
 	void RendererContextGL::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
 		if (1 < m_numWindows
@@ -5212,6 +5304,11 @@ namespace bgfx { namespace gl
 		uint32_t statsNumInstances[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumIndices = 0;
 		uint32_t statsKeyType[2] = {};
+
+		if (m_occlusionQuerySupport)
+		{
+			m_occlusionQuery.resolve();
+		}
 
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 		{
@@ -5504,6 +5601,14 @@ namespace bgfx { namespace gl
 				}
 
 				const RenderDraw& draw = renderItem.draw;
+
+				const bool hasOcclusionQuery = 0 != (draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
+				if (isValid(draw.m_occlusionQuery)
+				&&  !hasOcclusionQuery
+				&&  !isVisible(draw.m_occlusionQuery) )
+				{
+					continue;
+				}
 
 				const uint64_t newFlags = draw.m_stateFlags;
 				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
@@ -6017,6 +6122,11 @@ namespace bgfx { namespace gl
 						uint32_t numPrimsRendered  = 0;
 						uint32_t numDrawIndirect   = 0;
 
+						if (hasOcclusionQuery)
+						{
+							m_occlusionQuery.begin(draw.m_occlusionQuery);
+						}
+
 						if (isValid(draw.m_indirectBuffer) )
 						{
 							const VertexBufferGL& vb = m_vertexBuffers[draw.m_indirectBuffer.idx];
@@ -6121,6 +6231,11 @@ namespace bgfx { namespace gl
 									, draw.m_numInstances
 									) );
 							}
+						}
+
+						if (hasOcclusionQuery)
+						{
+							m_occlusionQuery.end();
 						}
 
 						statsNumPrimsSubmitted[primIndex] += numPrimsSubmitted;
