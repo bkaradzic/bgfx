@@ -19,6 +19,11 @@ namespace bgfx
 #	define BGFX_CHECK_RENDER_THREAD()
 #endif // BGFX_CONFIG_MULTITHREADED
 
+#define BGFX_CHECK_CAPS(_caps, _msg) \
+		BX_CHECK(0 != (g_caps.supported & (_caps) ) \
+			, _msg " Use bgfx::getCaps to check " #_caps " backend renderer capabilities." \
+			);
+
 #if BGFX_CONFIG_USE_TINYSTL
 	void* TinyStlAllocator::static_allocate(size_t _bytes)
 	{
@@ -2619,9 +2624,7 @@ again:
 	const InstanceDataBuffer* allocInstanceDataBuffer(uint32_t _num, uint16_t _stride)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_INSTANCING)
-			, "Instancing is not supported! Use bgfx::getCaps to check backend renderer capabilities."
-			);
+		BGFX_CHECK_CAPS(BGFX_CAPS_INSTANCING, "Instancing is not supported!");
 		BX_CHECK(0 < _num, "Requesting 0 instanced data vertices.");
 		return s_ctx->allocInstanceDataBuffer(_num, _stride);
 	}
@@ -2810,9 +2813,7 @@ again:
 	TextureHandle createTexture3D(uint16_t _width, uint16_t _height, uint16_t _depth, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_TEXTURE_3D)
-			, "Texture3D is not supported! Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_3D backend renderer capabilities."
-			);
+		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_3D, "Texture3D is not supported!");
 
 		_numMips = uint8_t(bx::uint32_max(1, _numMips) );
 
@@ -2915,9 +2916,7 @@ again:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
-		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_TEXTURE_3D)
-			, "Texture3D is not supported! Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_3D backend renderer capabilities."
-			);
+		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_3D, "Texture3D is not supported!");
 
 		if (_width == 0
 		||  _height == 0
@@ -2951,9 +2950,7 @@ again:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _data, "_data can't be NULL");
-		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_TEXTURE_READ_BACK)
-			, "Texture read-back is not supported! Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_READ_BACK backend renderer capabilities."
-			);
+		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_READ_BACK, "Texture read-back is not supported!");
 		s_ctx->readTexture(_handle, _data);
 	}
 
@@ -2961,9 +2958,7 @@ again:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _data, "_data can't be NULL");
-		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_TEXTURE_READ_BACK)
-			, "Texture read-back is not supported! Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_READ_BACK backend renderer capabilities."
-			);
+		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_READ_BACK, "Texture read-back is not supported!");
 		s_ctx->readTexture(_handle, _attachment, _data);
 	}
 
@@ -3021,18 +3016,14 @@ again:
 	OcclusionQueryHandle createOcclusionQuery()
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_OCCLUSION_QUERY)
-			, "Occlusion query is not supported, use bgfx::getCaps to test BGFX_CAPS_OCCLUSION_QUERY feature availability"
-			);
+		BGFX_CHECK_CAPS(BGFX_CAPS_OCCLUSION_QUERY, "Occlusion query is not supported!");
 		return s_ctx->createOcclusionQuery();
 	}
 
 	void destroyOcclusionQuery(OcclusionQueryHandle _handle)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_OCCLUSION_QUERY)
-			, "Occlusion query is not supported, use bgfx::getCaps to test BGFX_CAPS_OCCLUSION_QUERY feature availability"
-			);
+		BGFX_CHECK_CAPS(BGFX_CAPS_OCCLUSION_QUERY, "Occlusion query is not supported!");
 		s_ctx->destroyOcclusionQuery(_handle);
 	}
 
@@ -3172,9 +3163,7 @@ again:
 	void setCondition(OcclusionQueryHandle _handle, bool _visible)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_OCCLUSION_QUERY)
-			, "Occlusion query is not supported, use bgfx::getCaps to test BGFX_CAPS_OCCLUSION_QUERY feature availability"
-			);
+		BGFX_CHECK_CAPS(BGFX_CAPS_OCCLUSION_QUERY, "Occlusion query is not supported!");
 		s_ctx->setCondition(_handle, _visible);
 	}
 
@@ -3323,7 +3312,7 @@ again:
 		BX_CHECK(false
 			|| !isValid(_occlusionQuery)
 			|| 0 != (g_caps.supported & BGFX_CAPS_OCCLUSION_QUERY)
-			, "Occlusion query is not supported, use bgfx::getCaps to test BGFX_CAPS_OCCLUSION_QUERY feature availability"
+			, "Occlusion query is not supported! Use bgfx::getCaps to check BGFX_CAPS_OCCLUSION_QUERY backend renderer capabilities."
 			);
 		return s_ctx->submit(_id, _program, _occlusionQuery, _depth);
 	}
@@ -3407,18 +3396,14 @@ again:
 	void blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_TEXTURE_BLIT)
-			, "Texture blit is not supported, use bgfx::getCaps to test BGFX_CAPS_TEXTURE_BLIT feature availability"
-			);
+		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_BLIT, "Texture blit is not supported!");
 		s_ctx->blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
 	}
 
 	void blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, FrameBufferHandle _src, uint8_t _attachment, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_TEXTURE_BLIT)
-			, "Texture blit is not supported! Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_BLIT backend renderer capabilities."
-			);
+		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_BLIT, "Texture blit is not supported!");
 		s_ctx->blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _attachment, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
 	}
 
