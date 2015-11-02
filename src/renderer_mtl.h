@@ -674,7 +674,7 @@ namespace bgfx { namespace mtl
 			MTL_RELEASE(m_ptrStencil);
 		}
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
-		void commit(uint8_t _stage, uint32_t _flags = BGFX_SAMPLER_DEFAULT_FLAGS);
+		void commit(uint8_t _stage, uint32_t _flags = BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER);
 
 		Texture m_ptr;
 		Texture m_ptrStencil; // for emulating packed depth/stencil formats - only for iOS8...

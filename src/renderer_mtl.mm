@@ -908,7 +908,7 @@ namespace bgfx { namespace mtl
 		||  m_resolution.m_flags  != _resolution.m_flags)
 		{
 			m_resolution = _resolution;
-			m_resolution.m_flags &= ~BGFX_RESET_FORCE;
+			m_resolution.m_flags &= ~BGFX_RESET_INTERNAL_FORCE;
 
 			m_textureDescriptor.textureType = MTLTextureType2D;
 
@@ -2034,7 +2034,7 @@ namespace bgfx { namespace mtl
 	{
 		//TODO: vertex or fragment stage?
 		s_renderMtl->m_renderCommandEncoder.setFragmentTexture(m_ptr, _stage);
-		s_renderMtl->m_renderCommandEncoder.setFragmentSamplerState(0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags)
+		s_renderMtl->m_renderCommandEncoder.setFragmentSamplerState(0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags)
 																	? s_renderMtl->getSamplerState(_flags)
 																	: m_sampler, _stage);
 	}
@@ -2146,8 +2146,8 @@ namespace bgfx { namespace mtl
 
 		RenderDraw currentState;
 		currentState.clear();
-		currentState.m_flags = BGFX_STATE_NONE;
-		currentState.m_stencil = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
+		currentState.m_stateFlags = BGFX_STATE_NONE;
+		currentState.m_stencil    = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
 		_render->m_hmdInitialized = false;
 
@@ -2370,9 +2370,9 @@ namespace bgfx { namespace mtl
 
 				const RenderDraw& draw = renderItem.draw;
 
-				const uint64_t newFlags = draw.m_flags;
-				uint64_t changedFlags = currentState.m_flags ^ draw.m_flags;
-				currentState.m_flags = newFlags;
+				const uint64_t newFlags = draw.m_stateFlags;
+				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
+				currentState.m_stateFlags = newFlags;
 
 				const uint64_t newStencil = draw.m_stencil;
 				uint64_t changedStencil = currentState.m_stencil ^ draw.m_stencil;
@@ -2384,8 +2384,8 @@ namespace bgfx { namespace mtl
 					currentState.m_scissor = !draw.m_scissor;
 					changedFlags = BGFX_STATE_MASK;
 					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
-					currentState.m_flags = newFlags;
-					currentState.m_stencil = newStencil;
+					currentState.m_stateFlags = newFlags;
+					currentState.m_stencil    = newStencil;
 
 					programIdx = invalidHandle;
 					setDepthStencilState(newFlags, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT));
@@ -2574,13 +2574,13 @@ namespace bgfx { namespace mtl
 						const Binding& sampler = draw.m_bind[stage];
 						Binding& current = currentState.m_bind[stage];
 						if (current.m_idx != sampler.m_idx
-							||  current.m_un.m_draw.m_flags != sampler.m_un.m_draw.m_flags
-							||  programChanged)
+						||  current.m_un.m_draw.m_textureFlags != sampler.m_un.m_draw.m_textureFlags
+						||  programChanged)
 						{
 							if (invalidHandle != sampler.m_idx)
 							{
 								TextureMtl& texture = m_textures[sampler.m_idx];
-								texture.commit(stage, sampler.m_un.m_draw.m_flags);
+								texture.commit(stage, sampler.m_un.m_draw.m_textureFlags);
 							}
 						}
 
@@ -2589,13 +2589,13 @@ namespace bgfx { namespace mtl
 				}
 
 				if (currentState.m_vertexBuffer.idx       != draw.m_vertexBuffer.idx
-					||  currentState.m_startVertex			  != draw.m_startVertex
-					||  currentState.m_instanceDataBuffer.idx != draw.m_instanceDataBuffer.idx
-					||  currentState.m_instanceDataOffset     != draw.m_instanceDataOffset
-					)
+				||  currentState.m_startVertex            != draw.m_startVertex
+				||  currentState.m_instanceDataBuffer.idx != draw.m_instanceDataBuffer.idx
+				||  currentState.m_instanceDataOffset     != draw.m_instanceDataOffset
+				)
 				{
 					currentState.m_vertexBuffer           = draw.m_vertexBuffer;
-					currentState.m_startVertex           = draw.m_startVertex;
+					currentState.m_startVertex            = draw.m_startVertex;
 					currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
 					currentState.m_instanceDataOffset     = draw.m_instanceDataOffset;
 
