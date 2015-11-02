@@ -9,11 +9,7 @@
 #include "common.h"
 #include "bgfx_utils.h"
 
-#include <bgfx/bgfx.h>
-#include <bx/timer.h>
 #include <bx/readerwriter.h>
-#include <bx/fpumath.h>
-#include "entry/entry.h"
 #include "camera.h"
 #include "imgui/imgui.h"
 
@@ -1002,7 +998,7 @@ int _main_(int _argc, char** _argv)
 		last = now;
 		const double freq = double(bx::getHPFrequency() );
 		const double toMs = 1000.0/freq;
-		float time = (float)( (now - timeOffset)/double(bx::getHPFrequency() ) );
+		const float time = (float)( (now - timeOffset)/double(bx::getHPFrequency() ) );
 		const float deltaTime = float(frameTime/freq);
 		s_uniforms.m_time = time;
 

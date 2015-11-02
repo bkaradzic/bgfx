@@ -307,6 +307,29 @@ namespace bgfx { namespace d3d11
 		bx::RingBufferControl m_control;
 	};
 
+	struct OcclusionQueryD3D11
+	{
+		OcclusionQueryD3D11()
+			: m_control(BX_COUNTOF(m_query) )
+		{
+		}
+
+		void postReset();
+		void preReset();
+		void begin(OcclusionQueryHandle _handle);
+		void end();
+		void resolve(bool _wait = false);
+
+		struct Query
+		{
+			ID3D11Query* m_ptr;
+			OcclusionQueryHandle m_handle;
+		};
+
+		Query m_query[BGFX_CONFIG_MAX_OCCUSION_QUERIES];
+		bx::RingBufferControl m_control;
+	};
+
 } /*  namespace d3d11 */ } // namespace bgfx
 
 #endif // BGFX_RENDERER_D3D11_H_HEADER_GUARD

@@ -6,8 +6,10 @@
 #include <bx/timer.h>
 #include <bx/fpumath.h>
 #include "camera.h"
+#include "entry/entry.h"
 #include "entry/cmd.h"
 #include "entry/input.h"
+#include <bx/allocator.h>
 
 int cmdMove(CmdContext* /*_context*/, void* /*_userData*/, int _argc, char const* const* _argv)
 {
@@ -63,7 +65,9 @@ static const InputBinding s_camBindings[] =
 	{ entry::Key::GamepadDown,      entry::Modifier::None, 0, cmd, "move backward" },
 	{ entry::Key::KeyD,             entry::Modifier::None, 0, cmd, "move right"    },
 	{ entry::Key::GamepadRight,     entry::Modifier::None, 0, cmd, "move right"    },
+	{ entry::Key::KeyQ,             entry::Modifier::None, 0, cmd, "move down"     },
 	{ entry::Key::GamepadShoulderL, entry::Modifier::None, 0, cmd, "move down"     },
+	{ entry::Key::KeyE,             entry::Modifier::None, 0, cmd, "move up"       },
 	{ entry::Key::GamepadShoulderR, entry::Modifier::None, 0, cmd, "move up"       },
 
 	INPUT_BINDING_END
@@ -294,12 +298,12 @@ static Camera* s_camera = NULL;
 
 void cameraCreate()
 {
-	s_camera = new Camera;
+	s_camera = BX_NEW(entry::getAllocator(), Camera);
 }
 
 void cameraDestroy()
 {
-	delete s_camera;
+	BX_DELETE(entry::getAllocator(), s_camera);
 	s_camera = NULL;
 }
 

@@ -762,7 +762,7 @@ namespace bgfx
 		return PredefinedUniform::Count;
 	}
 
-	uint32_t Frame::submit(uint8_t _id, ProgramHandle _handle, int32_t _depth)
+	uint32_t Frame::submit(uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth)
 	{
 		if (m_discard)
 		{
@@ -779,9 +779,9 @@ namespace bgfx
 
 		m_uniformEnd = m_uniformBuffer->getPos();
 
-		m_key.m_program = invalidHandle == _handle.idx
+		m_key.m_program = invalidHandle == _program.idx
 			? 0
-			: _handle.idx
+			: _program.idx
 			;
 
 		m_key.m_depth  = (uint32_t)_depth;
@@ -796,13 +796,22 @@ namespace bgfx
 
 		m_draw.m_constBegin = m_uniformBegin;
 		m_draw.m_constEnd   = m_uniformEnd;
-		m_draw.m_flags |= m_flags;
+		m_draw.m_stateFlags |= m_stateFlags;
+
+		if (isValid(_occlusionQuery) )
+		{
+			BX_CHECK(!isValid(m_draw.m_occlusionQuery), "");
+
+			m_draw.m_stateFlags |= BGFX_STATE_INTERNAL_OCCLUSION_QUERY;
+			m_draw.m_occlusionQuery = _occlusionQuery;
+		}
+
 		m_renderItem[m_numRenderItems].draw = m_draw;
 		++m_numRenderItems;
 
 		m_draw.clear();
 		m_uniformBegin = m_uniformEnd;
-		m_flags = BGFX_STATE_NONE;
+		m_stateFlags = BGFX_STATE_NONE;
 
 		return m_num;
 	}
@@ -979,6 +988,7 @@ namespace bgfx
 		CAPS_FLAGS(BGFX_CAPS_HIDPI),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_BLIT),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_READ_BACK),
+		CAPS_FLAGS(BGFX_CAPS_OCCLUSION_QUERY),
 #undef CAPS_FLAGS
 	};
 
@@ -1331,7 +1341,7 @@ namespace bgfx
 	{
 		freeDynamicBuffers();
 		m_submit->m_resolution = m_resolution;
-		m_resolution.m_flags &= ~BGFX_RESET_FORCE;
+		m_resolution.m_flags &= ~BGFX_RESET_INTERNAL_FORCE;
 		m_submit->m_debug = m_debug;
 
 		memcpy(m_submit->m_viewRemap, m_viewRemap, sizeof(m_viewRemap) );
@@ -2608,7 +2618,9 @@ again:
 	const InstanceDataBuffer* allocInstanceDataBuffer(uint32_t _num, uint16_t _stride)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_INSTANCING), "Instancing is not supported! Use bgfx::getCaps to check backend renderer capabilities.");
+		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_INSTANCING)
+			, "Instancing is not supported! Use bgfx::getCaps to check backend renderer capabilities."
+			);
 		BX_CHECK(0 < _num, "Requesting 0 instanced data vertices.");
 		return s_ctx->allocInstanceDataBuffer(_num, _stride);
 	}
@@ -2905,6 +2917,7 @@ again:
 		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_TEXTURE_3D)
 			, "Texture3D is not supported! Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_3D backend renderer capabilities."
 			);
+
 		if (_width == 0
 		||  _height == 0
 		||  _depth == 0)
@@ -3002,6 +3015,24 @@ again:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		s_ctx->destroyUniform(_handle);
+	}
+
+	OcclusionQueryHandle createOcclusionQuery()
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_OCCLUSION_QUERY)
+			, "Occlusion query is not supported, use bgfx::getCaps to test BGFX_CAPS_OCCLUSION_QUERY feature availability"
+			);
+		return s_ctx->createOcclusionQuery();
+	}
+
+	void destroyOcclusionQuery(OcclusionQueryHandle _handle)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_OCCLUSION_QUERY)
+			, "Occlusion query is not supported, use bgfx::getCaps to test BGFX_CAPS_OCCLUSION_QUERY feature availability"
+			);
+		s_ctx->destroyOcclusionQuery(_handle);
 	}
 
 	void setPaletteColor(uint8_t _index, uint32_t _rgba)
@@ -3133,7 +3164,17 @@ again:
 	void setState(uint64_t _state, uint32_t _rgba)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(0 == (_state&BGFX_STATE_RESERVED_MASK), "Do not set state reserved flags!");
 		s_ctx->setState(_state, _rgba);
+	}
+
+	void setCondition(OcclusionQueryHandle _handle, bool _visible)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(0 != (g_caps.supported & BGFX_CAPS_OCCLUSION_QUERY)
+			, "Occlusion query is not supported, use bgfx::getCaps to test BGFX_CAPS_OCCLUSION_QUERY feature availability"
+			);
+		s_ctx->setCondition(_handle, _visible);
 	}
 
 	void setStencil(uint32_t _fstencil, uint32_t _bstencil)
@@ -3269,16 +3310,27 @@ again:
 		return submit(_id, handle);
 	}
 
-	uint32_t submit(uint8_t _id, ProgramHandle _handle, int32_t _depth)
+	uint32_t submit(uint8_t _id, ProgramHandle _program, int32_t _depth)
 	{
-		BGFX_CHECK_MAIN_THREAD();
-		return s_ctx->submit(_id, _handle, _depth);
+		OcclusionQueryHandle handle = BGFX_INVALID_HANDLE;
+		return submit(_id, _program, handle, _depth);
 	}
 
-	uint32_t submit(uint8_t _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth)
+	uint32_t submit(uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		return s_ctx->submit(_id, _handle, _indirectHandle, _start, _num, _depth);
+		BX_CHECK(false
+			|| !isValid(_occlusionQuery)
+			|| 0 != (g_caps.supported & BGFX_CAPS_OCCLUSION_QUERY)
+			, "Occlusion query is not supported, use bgfx::getCaps to test BGFX_CAPS_OCCLUSION_QUERY feature availability"
+			);
+		return s_ctx->submit(_id, _program, _occlusionQuery, _depth);
+	}
+
+	uint32_t submit(uint8_t _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		return s_ctx->submit(_id, _program, _indirectHandle, _start, _num, _depth);
 	}
 
 	void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
@@ -4011,6 +4063,12 @@ BGFX_C_API void bgfx_set_state(uint64_t _state, uint32_t _rgba)
 	bgfx::setState(_state, _rgba);
 }
 
+BGFX_C_API void bgfx_set_condition(bgfx_occlusion_query_handle_t _handle, bool _visible)
+{
+	union { bgfx_occlusion_query_handle_t c; bgfx::OcclusionQueryHandle cpp; } handle = { _handle };
+	bgfx::setCondition(handle.cpp, _visible);
+}
+
 BGFX_C_API void bgfx_set_stencil(uint32_t _fstencil, uint32_t _bstencil)
 {
 	bgfx::setStencil(_fstencil, _bstencil);
@@ -4121,6 +4179,13 @@ BGFX_C_API uint32_t bgfx_submit(uint8_t _id, bgfx_program_handle_t _handle, int3
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
 	return bgfx::submit(_id, handle.cpp, _depth);
+}
+
+BGFX_C_API uint32_t bgfx_submit_occlusion_query(uint8_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, int32_t _depth)
+{
+	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } program = { _program };
+	union { bgfx_occlusion_query_handle c; bgfx::OcclusionQueryHandle cpp; } occlusionQuery = { _occlusionQuery };
+	return bgfx::submit(_id, program.cpp, occlusionQuery.cpp, _depth);
 }
 
 BGFX_C_API uint32_t bgfx_submit_indirect(uint8_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth)

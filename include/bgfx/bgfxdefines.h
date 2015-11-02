@@ -71,7 +71,9 @@
 /// MSAA frame buffer.
 #define BGFX_STATE_MSAA                  UINT64_C(0x1000000000000000) //!< Enable MSAA rasterization.
 
-#define BGFX_STATE_RESERVED_MASK         UINT64_C(0xe000000000000000) //!< Internal bits, do not use!
+/// Do not use!
+#define BGFX_STATE_RESERVED_SHIFT        61                           //!< Internal bits shift.
+#define BGFX_STATE_RESERVED_MASK         UINT64_C(0xe000000000000000) //!< Internal bits mask.
 
 /// See BGFX_STATE_POINT_SIZE(_size) helper macro.
 #define BGFX_STATE_NONE                  UINT64_C(0x0000000000000000) //!< No state.
@@ -370,6 +372,7 @@
 #define BGFX_CAPS_HIDPI                  UINT64_C(0x0000000000008000) //!< HiDPI rendering is supported.
 #define BGFX_CAPS_TEXTURE_BLIT           UINT64_C(0x0000000000010000) //!< Texture blit is supported.
 #define BGFX_CAPS_TEXTURE_READ_BACK      UINT64_C(0x0000000000020000) //!< Read-back texture is supported.
+#define BGFX_CAPS_OCCLUSION_QUERY        UINT64_C(0x0000000000040000) //!< Occlusion query is supported.
 
 ///
 #define BGFX_CAPS_FORMAT_TEXTURE_NONE             UINT16_C(0x0000) //!< Texture format is not supported.

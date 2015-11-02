@@ -357,6 +357,7 @@ namespace bgfx { namespace d3d9
 			IDirect3DVolumeTexture9* m_staging3d;
 			IDirect3DCubeTexture9*   m_stagingCube;
 		};
+
 		uint32_t m_flags;
 		uint32_t m_width;
 		uint32_t m_height;
@@ -426,6 +427,29 @@ namespace bgfx { namespace d3d9
 		uint64_t m_frequency;
 
 		Frame m_frame[4];
+		bx::RingBufferControl m_control;
+	};
+
+	struct OcclusionQueryD3D9
+	{
+		OcclusionQueryD3D9()
+			: m_control(BX_COUNTOF(m_query) )
+		{
+		}
+
+		void postReset();
+		void preReset();
+		void begin(OcclusionQueryHandle _handle);
+		void end();
+		void resolve(bool _wait = false);
+
+		struct Query
+		{
+			IDirect3DQuery9* m_ptr;
+			OcclusionQueryHandle m_handle;
+		};
+
+		Query m_query[BGFX_CONFIG_MAX_OCCUSION_QUERIES];
 		bx::RingBufferControl m_control;
 	};
 

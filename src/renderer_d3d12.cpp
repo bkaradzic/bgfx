@@ -1728,7 +1728,7 @@ data.NumQualityLevels = 0;
 			||  m_resolution.m_height != _resolution.m_height
 			||  m_resolution.m_flags  != flags)
 			{
-				flags &= ~BGFX_RESET_FORCE;
+				flags &= ~BGFX_RESET_INTERNAL_FORCE;
 
 				bool resize = (m_resolution.m_flags&BGFX_RESET_MSAA_MASK) == (_resolution.m_flags&BGFX_RESET_MSAA_MASK);
 
@@ -4349,8 +4349,8 @@ data.NumQualityLevels = 0;
 
 		RenderDraw currentState;
 		currentState.clear();
-		currentState.m_flags = BGFX_STATE_NONE;
-		currentState.m_stencil = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
+		currentState.m_stateFlags = BGFX_STATE_NONE;
+		currentState.m_stencil    = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
 		_render->m_hmdInitialized = false;
 
@@ -4718,9 +4718,9 @@ data.NumQualityLevels = 0;
 
 				const RenderDraw& draw = renderItem.draw;
 
-				const uint64_t newFlags = draw.m_flags;
-				uint64_t changedFlags = currentState.m_flags ^ draw.m_flags;
-				currentState.m_flags = newFlags;
+				const uint64_t newFlags = draw.m_stateFlags;
+				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
+				currentState.m_stateFlags = newFlags;
 
 				const uint64_t newStencil = draw.m_stencil;
 				uint64_t changedStencil = (currentState.m_stencil ^ draw.m_stencil) & BGFX_STENCIL_FUNC_REF_MASK;
@@ -4765,8 +4765,8 @@ data.NumQualityLevels = 0;
 					currentState.m_scissor = !draw.m_scissor;
 					changedFlags = BGFX_STATE_MASK;
 					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
-					currentState.m_flags = newFlags;
-					currentState.m_stencil = newStencil;
+					currentState.m_stateFlags = newFlags;
+					currentState.m_stencil    = newStencil;
 
 					const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
 					primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
@@ -4776,7 +4776,7 @@ data.NumQualityLevels = 0;
 
 				if (isValid(draw.m_vertexBuffer) )
 				{
-					const uint64_t state = draw.m_flags;
+					const uint64_t state = draw.m_stateFlags;
 					bool hasFactor = 0
 						|| f0 == (state & f0)
 						|| f1 == (state & f1)
@@ -4825,8 +4825,8 @@ data.NumQualityLevels = 0;
 										TextureD3D12& texture = m_textures[bind.m_idx];
 										texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 										scratchBuffer.allocSrv(srvHandle[stage], texture);
-										samplerFlags[stage] = (0 == (BGFX_SAMPLER_DEFAULT_FLAGS & bind.m_un.m_draw.m_flags)
-											? bind.m_un.m_draw.m_flags
+										samplerFlags[stage] = (0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & bind.m_un.m_draw.m_textureFlags)
+											? bind.m_un.m_draw.m_textureFlags
 											: texture.m_flags
 											) & (BGFX_TEXTURE_SAMPLER_BITS_MASK|BGFX_TEXTURE_BORDER_COLOR_MASK)
 											;

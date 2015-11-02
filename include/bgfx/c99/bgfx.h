@@ -192,6 +192,7 @@ BGFX_HANDLE_T(bgfx_dynamic_index_buffer_handle);
 BGFX_HANDLE_T(bgfx_dynamic_vertex_buffer_handle);
 BGFX_HANDLE_T(bgfx_frame_buffer_handle);
 BGFX_HANDLE_T(bgfx_index_buffer_handle);
+BGFX_HANDLE_T(bgfx_occlusion_query_handle);
 BGFX_HANDLE_T(bgfx_program_handle);
 BGFX_HANDLE_T(bgfx_shader_handle);
 BGFX_HANDLE_T(bgfx_texture_handle);
@@ -678,6 +679,9 @@ BGFX_C_API void bgfx_set_marker(const char* _marker);
 BGFX_C_API void bgfx_set_state(uint64_t _state, uint32_t _rgba);
 
 /**/
+BGFX_C_API void bgfx_set_condition(bgfx_occlusion_query_handle_t _handle, bool _visible);
+
+/**/
 BGFX_C_API void bgfx_set_stencil(uint32_t _fstencil, uint32_t _bstencil);
 
 /**/
@@ -736,6 +740,9 @@ BGFX_C_API uint32_t bgfx_touch(uint8_t _id);
 
 /**/
 BGFX_C_API uint32_t bgfx_submit(uint8_t _id, bgfx_program_handle_t _handle, int32_t _depth);
+
+/**/
+BGFX_C_API uint32_t bgfx_submit_occlusion_query(uint8_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, int32_t _depth);
 
 /**/
 BGFX_C_API uint32_t bgfx_submit_indirect(uint8_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth);
