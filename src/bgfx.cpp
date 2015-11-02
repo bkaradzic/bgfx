@@ -1256,6 +1256,7 @@ namespace bgfx
 			CHECK_HANDLE_LEAK(m_textureHandle);
 			CHECK_HANDLE_LEAK(m_frameBufferHandle);
 			CHECK_HANDLE_LEAK(m_uniformHandle);
+			CHECK_HANDLE_LEAK(m_occlusionQueryHandle);
 #undef CHECK_HANDLE_LEAK
 		}
 	}
