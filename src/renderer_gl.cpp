@@ -2712,10 +2712,10 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		bool isVisible(OcclusionQueryHandle _handle)
+		bool isVisible(OcclusionQueryHandle _handle, bool _visible)
 		{
 			m_occlusionQuery.resolve();
-			return m_occlusion[_handle.idx];
+			return _visible == m_occlusion[_handle.idx];
 		}
 
 		void ovrPostReset()
@@ -5605,7 +5605,7 @@ namespace bgfx { namespace gl
 				const bool hasOcclusionQuery = 0 != (draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
 				if (isValid(draw.m_occlusionQuery)
 				&&  !hasOcclusionQuery
-				&&  !isVisible(draw.m_occlusionQuery) )
+				&&  !isVisible(draw.m_occlusionQuery, 0 != (draw.m_submitFlags&BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE) ) )
 				{
 					continue;
 				}

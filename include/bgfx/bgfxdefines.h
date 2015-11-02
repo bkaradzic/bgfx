@@ -353,6 +353,9 @@
 #define BGFX_RESET_SRGB_BACKBUFFER       UINT32_C(0x00008000) //!< Enable sRGB backbuffer.
 #define BGFX_RESET_HIDPI                 UINT32_C(0x00010000) //!< Enable HiDPI rendering.
 
+#define BGFX_RESET_RESERVED_SHIFT        31                   //!< Internal bits shift.
+#define BGFX_RESET_RESERVED_MASK         UINT32_C(0x80000000) //!< Internal bits mask.
+
 ///
 #define BGFX_CAPS_TEXTURE_COMPARE_LEQUAL UINT64_C(0x0000000000000001) //!< Texture compare less equal mode is supported.
 #define BGFX_CAPS_TEXTURE_COMPARE_ALL    UINT64_C(0x0000000000000003) //!< All texture compare modes are supported.
@@ -396,10 +399,13 @@
 #define BGFX_VIEW_STEREO UINT8_C(0x01) //!< View will be rendered in stereo mode.
 
 ///
-#define BGFX_SUBMIT_EYE_LEFT  UINT8_C(0x01) //!< Submit to left eye.
-#define BGFX_SUBMIT_EYE_RIGHT UINT8_C(0x02) //!< Submit to right eye.
-#define BGFX_SUBMIT_EYE_MASK  UINT8_C(0x03) //!<
-#define BGFX_SUBMIT_EYE_FIRST BGFX_SUBMIT_EYE_LEFT
+#define BGFX_SUBMIT_EYE_LEFT       UINT8_C(0x01) //!< Submit to left eye.
+#define BGFX_SUBMIT_EYE_RIGHT      UINT8_C(0x02) //!< Submit to right eye.
+#define BGFX_SUBMIT_EYE_MASK       UINT8_C(0x03) //!<
+#define BGFX_SUBMIT_EYE_FIRST      BGFX_SUBMIT_EYE_LEFT
+
+#define BGFX_SUBMIT_RESERVED_SHIFT 7             //!< Internal bits shift.
+#define BGFX_SUBMIT_RESERVED_MASK  UINT8_C(0x80) //!< Internal bits mask.
 
 ///
 #define BGFX_PCI_ID_NONE                UINT16_C(0x0000) //!< Autoselect adapter.
