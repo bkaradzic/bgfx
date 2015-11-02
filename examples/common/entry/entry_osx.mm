@@ -469,6 +469,9 @@ namespace entry
 			bx::Thread thread;
 			thread.init(mte.threadFunc, &mte);
 
+			WindowHandle handle = { 0 };
+			m_eventQueue.postSizeEvent(handle, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
+
 			while (!(m_exit = [dg applicationHasTerminated]) )
 			{
 				if (bgfx::RenderFrame::Exiting == bgfx::renderFrame() )

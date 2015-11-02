@@ -250,7 +250,9 @@ namespace entry
 	struct WindowState
 	{
 		WindowState()
-			: m_nwh(NULL)
+			: m_width(0)
+			, m_height(0)
+			, m_nwh(NULL)
 		{
 			m_handle.idx = UINT16_MAX;
 		}

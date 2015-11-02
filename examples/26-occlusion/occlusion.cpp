@@ -63,14 +63,14 @@ class Occlusion : public entry::AppI
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
-		
-		m_state.m_width  = 1280;
-		m_state.m_height = 720;
+
+		uint32_t width  = 1280;
+		uint32_t height = 720;
 		m_debug  = BGFX_DEBUG_TEXT;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
-		bgfx::reset(m_state.m_width, m_state.m_height, m_reset);
+		bgfx::reset(width, height, m_reset);
 
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
