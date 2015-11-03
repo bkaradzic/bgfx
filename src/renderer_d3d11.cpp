@@ -2137,7 +2137,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						updateMsaa();
 						m_scd.SampleDesc = s_msaa[(m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
 
-//						DX_RELEASE(m_swapChain, 0);
+						DX_RELEASE(m_swapChain, 0);
 
 						SwapChainDesc* scd = &m_scd;
 						SwapChainDesc swapChainScd;
