@@ -1328,6 +1328,11 @@ namespace bgfx
 	{
 		BX_CHECK(0 == m_instBufferCount, "Instance buffer allocated, but not used. This is incorrect, and causes memory leak.");
 
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG_OCCLUSION) )
+		{
+			m_occlusionQuerySet.clear();
+		}
+
 		// wait for render thread to finish
 		renderSemWait();
 		frameNoRenderWait();

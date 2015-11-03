@@ -3605,6 +3605,17 @@ namespace bgfx
 			{
 				m_uniformSet.clear();
 			}
+
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_OCCLUSION)
+			&&  isValid(_occlusionQuery) )
+			{
+				BX_CHECK(m_occlusionQuerySet.end() == m_occlusionQuerySet.find(_occlusionQuery.idx)
+					, "OcclusionQuery %d was already used for this frame."
+					, _occlusionQuery.idx
+					);
+				m_occlusionQuerySet.insert(_occlusionQuery.idx);
+			}
+
 			return m_submit->submit(_id, _program, _occlusionQuery, _depth);
 		}
 
@@ -3873,10 +3884,12 @@ namespace bgfx
 			bool m_window;
 		};
 
+		typedef stl::unordered_set<uint16_t> HandleSet;
+		HandleSet m_uniformSet;
+		HandleSet m_occlusionQuerySet;
+
 		typedef stl::unordered_map<stl::string, UniformHandle> UniformHashMap;
 		UniformHashMap m_uniformHashMap;
-		typedef stl::unordered_set<uint16_t> UniformSet;
-		UniformSet m_uniformSet;
 		UniformRef m_uniformRef[BGFX_CONFIG_MAX_UNIFORMS];
 
 		ShaderRef m_shaderRef[BGFX_CONFIG_MAX_SHADERS];
