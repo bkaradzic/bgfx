@@ -190,6 +190,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#stencil-flags">Stencil Flags</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#scissor">Scissor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#transform">Transform</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#conditional-rendering">Conditional Rendering</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#buffers">Buffers</a></li>
@@ -213,6 +214,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#frame-buffers">Frame Buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#instance-buffer">Instance Buffer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#indirect-buffer">Indirect Buffer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#occlusion-query">Occlusion Query</a></li>
 </ul>
 </li>
 </ul>
@@ -1915,6 +1917,28 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 </div>
+<div class="section" id="conditional-rendering">
+<h4>Conditional Rendering<a class="headerlink" href="#conditional-rendering" title="Permalink to this headline">¶</a></h4>
+<dl class="function">
+<dt id="_CPPv2N4bgfx12setConditionE20OcclusionQueryHandleb">
+<span id="bgfx::setCondition__OcclusionQueryHandle.b"></span><span class="target" id="project0namespacebgfx_1ab3d4234c579854aeafffbbc3a0b8a436"></span>void <code class="descclassname">bgfx::</code><code class="descname">setCondition</code><span class="sig-paren">(</span>OcclusionQueryHandle <em>_handle</em>, bool <em>_visible</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12setConditionE20OcclusionQueryHandleb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set condition for rendering. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_condition</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Occlusion query handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_visible</span></code> - <p>Render if occlusion query is visible.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
 </div>
 <div class="section" id="buffers">
 <h3>Buffers<a class="headerlink" href="#buffers" title="Permalink to this headline">¶</a></h3>
@@ -2192,7 +2216,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <h3>Submit<a class="headerlink" href="#submit" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle7int32_t">
-<span id="bgfx::submit__uint8_t.ProgramHandle.int32_t"></span><span class="target" id="project0namespacebgfx_1a10799bca819bfc884724ae4add65238e"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_handle</em>, int32_t <em>_depth</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle7int32_t" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::submit__uint8_t.ProgramHandle.int32_t"></span><span class="target" id="project0namespacebgfx_1a0db51c7aae6bfa2f1ed41754d72f26c7"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, int32_t <em>_depth</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle7int32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit primitive for rendering. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
@@ -2203,7 +2227,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Program. </p>
+<li><code class="first docutils literal"><span class="pre">_program</span></code> - <p>Program. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>Depth for sorting. </p>
 </li>
@@ -2213,9 +2237,20 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::submit&#8221; with arguments (uint8_t, ProgramHandle, OcclusionQueryHandle, int32_t)) in doxygen xml output for project &#8220;project0&#8221; from directory: ../../.build/docs/xml.
+Potential matches:
+</p>
+<pre class="last literal-block">
+- uint32_t bgfx::submit(uint8_t, ProgramHandle, int32_t)
+- uint32_t bgfx::submit(uint8_t, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t, int32_t)
+- uint32_t bgfx::submit(uint8_t, ProgramHandle, OcclusionQueryHandle, int32_t)
+</pre>
+</div>
 <dl class="function">
 <dt id="_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_t">
-<span id="bgfx::submit__uint8_t.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.int32_t"></span><span class="target" id="project0namespacebgfx_1a9599b8855e45ceaa035fee1313b638a3"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_handle</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em>, uint16_t <em>_num</em>, int32_t <em>_depth</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_t" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::submit__uint8_t.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.int32_t"></span><span class="target" id="project0namespacebgfx_1a549c8c0042a1fb8260bef06aded173a0"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em>, uint16_t <em>_num</em>, int32_t <em>_depth</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit primitive for rendering with index and instance data info from indirect buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -2224,7 +2259,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Program. </p>
+<li><code class="first docutils literal"><span class="pre">_program</span></code> - <p>Program. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_indirectHandle</span></code> - <p>Indirect buffer. </p>
 </li>
@@ -4425,6 +4460,39 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_indirect_buffer</span></code>. </dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+<div class="section" id="occlusion-query">
+<h3>Occlusion Query<a class="headerlink" href="#occlusion-query" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="_CPPv2N4bgfx20createOcclusionQueryEv">
+<span id="bgfx::createOcclusionQuery"></span><span class="target" id="project0namespacebgfx_1a6c9054faddeffa204c82105b9b5814dd"></span>OcclusionQueryHandle <code class="descclassname">bgfx::</code><code class="descname">createOcclusionQuery</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx20createOcclusionQueryEv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create occlusion query. </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Handle to occlusion query object.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_occlusion_query</span></code>. </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx21destroyOcclusionQueryE20OcclusionQueryHandle">
+<span id="bgfx::destroyOcclusionQuery__OcclusionQueryHandle"></span><span class="target" id="project0namespacebgfx_1a140d956fa9e8bbd5edd6c1daf749ca61"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyOcclusionQuery</code><span class="sig-paren">(</span>OcclusionQueryHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx21destroyOcclusionQueryE20OcclusionQueryHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Destroy occlusion query. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_occlusion_query</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Handle to occlusion query object.</p>
+</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
