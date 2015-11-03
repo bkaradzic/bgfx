@@ -3984,6 +3984,19 @@ BGFX_C_API void bgfx_destroy_uniform(bgfx_uniform_handle_t _handle)
 	bgfx::destroyUniform(handle.cpp);
 }
 
+BGFX_C_API bgfx_occlusion_query_handle_t bgfx_create_occlusion_query()
+{
+	union { bgfx_occlusion_query_handle_t c; bgfx::OcclusionQueryHandle cpp; } handle;
+	handle.cpp = bgfx::createOcclusionQuery();
+	return handle.c;
+}
+
+BGFX_C_API void bgfx_destroy_occlusion_query(bgfx_occlusion_query_handle_t _handle)
+{
+	union { bgfx_occlusion_query_handle_t c; bgfx::OcclusionQueryHandle cpp; } handle = { _handle };
+	bgfx::destroyOcclusionQuery(handle.cpp);
+}
+
 BGFX_C_API void bgfx_set_palette_color(uint8_t _index, const float _rgba[4])
 {
 	bgfx::setPaletteColor(_index, _rgba);

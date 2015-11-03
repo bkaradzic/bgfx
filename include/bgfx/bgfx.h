@@ -1530,9 +1530,19 @@ namespace bgfx
 	///
 	void destroyUniform(UniformHandle _handle);
 
+	/// Create occlusion query.
+	///
+	/// @returns Handle to occlusion query object.
+	///
+	/// @attention C99 equivalent is `bgfx_create_occlusion_query`.
 	///
 	OcclusionQueryHandle createOcclusionQuery();
 
+	/// Destroy occlusion query.
+	///
+	/// @param[in] _handle Handle to occlusion query object.
+	///
+	/// @attention C99 equivalent is `bgfx_destroy_occlusion_query`.
 	///
 	void destroyOcclusionQuery(OcclusionQueryHandle _handle);
 
@@ -1969,7 +1979,7 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_submit`.
 	///
 	uint32_t submit(uint8_t _id, ProgramHandle _program, int32_t _depth = 0);
-	
+
 	/// Submit primitive with occlusion query for rendering.
 	///
 	/// @param[in] _id View id.
