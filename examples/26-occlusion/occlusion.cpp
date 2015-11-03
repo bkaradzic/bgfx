@@ -159,7 +159,7 @@ class Occlusion : public entry::AppI
 			// Use debug font to print information about this example.
 			bgfx::dbgTextClear();
 			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/26-occlusion");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Using occlusion query to do conditional rendering.");
+			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Using occlusion query for conditional rendering.");
 			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			uint32_t width  = m_state.m_width;
