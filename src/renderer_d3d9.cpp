@@ -3434,7 +3434,7 @@ namespace bgfx { namespace d3d9
 		{
 			Query& query = m_query[m_control.m_read];
 
-			uint64_t result;
+			uint32_t result;
 			HRESULT hr = query.m_ptr->GetData(&result, sizeof(result), 0);
 			if (S_FALSE == hr)
 			{

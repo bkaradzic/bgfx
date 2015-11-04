@@ -254,7 +254,10 @@ class Occlusion : public entry::AppI
 				}
 			}
 
-			bgfx::dbgTextImage(5, 5, CUBES_DIM, CUBES_DIM, img, CUBES_DIM*2);
+			for (uint32_t xx = 0; xx < CUBES_DIM; ++xx)
+			{
+				bgfx::dbgTextImage(5 + xx*2, 5, 1, CUBES_DIM, img + xx*2, CUBES_DIM*2);
+			}
 
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
