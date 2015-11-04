@@ -1550,9 +1550,10 @@ namespace bgfx
 	///
 	OcclusionQueryHandle createOcclusionQuery();
 
-	/// Retrieve occlusion query result.
+	/// Retrieve occlusion query result from previous frame.
 	///
 	/// @param[in] _handle Handle to occlusion query object.
+	/// @returns Occlusion query result.
 	///
 	/// @attention C99 equivalent is `bgfx_get_result`.
 	///

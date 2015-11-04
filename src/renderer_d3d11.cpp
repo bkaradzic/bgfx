@@ -2732,7 +2732,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		bool isVisible(Frame* _render, OcclusionQueryHandle _handle, bool _visible)
 		{
 			m_occlusionQuery.resolve(_render);
-			return _visible == 0 != _render->m_occlusion[_handle.idx];
+			return _visible == (0 != _render->m_occlusion[_handle.idx]);
 		}
 
 		DXGI_FORMAT getBufferFormat()
