@@ -1565,10 +1565,10 @@ namespace bgfx { namespace d3d9
 			}
 		}
 
-		bool isVisible(OcclusionQueryHandle _handle, bool _visible)
+		bool isVisible(Frame* _render, OcclusionQueryHandle _handle, bool _visible)
 		{
-			m_occlusionQuery.resolve();
-			return _visible == m_occlusion[_handle.idx];
+			m_occlusionQuery.resolve(_render);
+			return _visible == 0 != _render->m_occlusion[_handle.idx];
 		}
 
 		void capturePreReset()
@@ -2007,7 +2007,6 @@ namespace bgfx { namespace d3d9
 		TextureD3D9 m_textures[BGFX_CONFIG_MAX_TEXTURES];
 		VertexDeclD3D9 m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
 		FrameBufferD3D9 m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
-		bool m_occlusion[BGFX_CONFIG_MAX_OCCUSION_QUERIES];
 		UniformRegistry m_uniformReg;
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 
@@ -3410,11 +3409,11 @@ namespace bgfx { namespace d3d9
 		}
 	}
 
-	void OcclusionQueryD3D9::begin(OcclusionQueryHandle _handle)
+	void OcclusionQueryD3D9::begin(Frame* _render, OcclusionQueryHandle _handle)
 	{
 		while (0 == m_control.reserve(1) )
 		{
-			resolve(true);
+			resolve(_render, true);
 		}
 
 		Query& query = m_query[m_control.m_current];
@@ -3429,7 +3428,7 @@ namespace bgfx { namespace d3d9
 		m_control.commit(1);
 	}
 
-	void OcclusionQueryD3D9::resolve(bool)
+	void OcclusionQueryD3D9::resolve(Frame* _render, bool)
 	{
 		while (0 != m_control.available() )
 		{
@@ -3442,7 +3441,7 @@ namespace bgfx { namespace d3d9
 				break;
 			}
 
-			s_renderD3D9->m_occlusion[query.m_handle.idx] = 0 < result;
+			_render->m_occlusion[query.m_handle.idx] = 0 < result;
 			m_control.consume(1);
 		}
 	}
@@ -3518,7 +3517,7 @@ namespace bgfx { namespace d3d9
 
 		if (m_occlusionQuerySupport)
 		{
-			m_occlusionQuery.resolve();
+			m_occlusionQuery.resolve(_render);
 		}
 
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
@@ -3539,7 +3538,7 @@ namespace bgfx { namespace d3d9
 				const bool hasOcclusionQuery = 0 != (draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
 				if (isValid(draw.m_occlusionQuery)
 				&&  !hasOcclusionQuery
-				&&  !isVisible(draw.m_occlusionQuery, 0 != (draw.m_submitFlags&BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE) ) )
+				&&  !isVisible(_render, draw.m_occlusionQuery, 0 != (draw.m_submitFlags&BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE) ) )
 				{
 					continue;
 				}
@@ -4003,7 +4002,7 @@ namespace bgfx { namespace d3d9
 
 					if (hasOcclusionQuery)
 					{
-						m_occlusionQuery.begin(draw.m_occlusionQuery);
+						m_occlusionQuery.begin(_render, draw.m_occlusionQuery);
 					}
 
 					if (isValid(draw.m_indexBuffer) )

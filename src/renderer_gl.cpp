@@ -2712,10 +2712,10 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		bool isVisible(OcclusionQueryHandle _handle, bool _visible)
+		bool isVisible(Frame* _render, OcclusionQueryHandle _handle, bool _visible)
 		{
-			m_occlusionQuery.resolve();
-			return _visible == m_occlusion[_handle.idx];
+			m_occlusionQuery.resolve(_render);
+			return _visible == 0 != _render->m_occlusion[_handle.idx];
 		}
 
 		void ovrPostReset()
@@ -3156,7 +3156,6 @@ namespace bgfx { namespace gl
 		TextureGL m_textures[BGFX_CONFIG_MAX_TEXTURES];
 		VertexDecl m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
 		FrameBufferGL m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
-		bool m_occlusion[BGFX_CONFIG_MAX_OCCUSION_QUERIES];
 		UniformRegistry m_uniformReg;
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 
@@ -5166,11 +5165,11 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	void OcclusionQueryGL::begin(OcclusionQueryHandle _handle)
+	void OcclusionQueryGL::begin(Frame* _render, OcclusionQueryHandle _handle)
 	{
 		while (0 == m_control.reserve(1) )
 		{
-			resolve(true);
+			resolve(_render, true);
 		}
 
 		Query& query = m_query[m_control.m_current];
@@ -5184,7 +5183,7 @@ namespace bgfx { namespace gl
 		m_control.commit(1);
 	}
 
-	void OcclusionQueryGL::resolve(bool _wait)
+	void OcclusionQueryGL::resolve(Frame* _render, bool _wait)
 	{
 		while (0 != m_control.available() )
 		{
@@ -5202,7 +5201,7 @@ namespace bgfx { namespace gl
 			}
 
 			GL_CHECK(glGetQueryObjectiv(query.m_id, GL_QUERY_RESULT, &result) );
-			s_renderGL->m_occlusion[query.m_handle.idx] = 0 < result;
+			_render->m_occlusion[query.m_handle.idx] = 0 < result;
 			m_control.consume(1);
 		}
 	}
@@ -5307,7 +5306,7 @@ namespace bgfx { namespace gl
 
 		if (m_occlusionQuerySupport)
 		{
-			m_occlusionQuery.resolve();
+			m_occlusionQuery.resolve(_render);
 		}
 
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
@@ -5605,7 +5604,7 @@ namespace bgfx { namespace gl
 				const bool hasOcclusionQuery = 0 != (draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
 				if (isValid(draw.m_occlusionQuery)
 				&&  !hasOcclusionQuery
-				&&  !isVisible(draw.m_occlusionQuery, 0 != (draw.m_submitFlags&BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE) ) )
+				&&  !isVisible(_render, draw.m_occlusionQuery, 0 != (draw.m_submitFlags&BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE) ) )
 				{
 					continue;
 				}
@@ -6124,7 +6123,7 @@ namespace bgfx { namespace gl
 
 						if (hasOcclusionQuery)
 						{
-							m_occlusionQuery.begin(draw.m_occlusionQuery);
+							m_occlusionQuery.begin(_render, draw.m_occlusionQuery);
 						}
 
 						if (isValid(draw.m_indirectBuffer) )

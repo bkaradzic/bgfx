@@ -212,6 +212,8 @@ class Occlusion : public entry::AppI
 			bgfx::touch(0);
 			bgfx::touch(2);
 
+			uint8_t img[CUBES_DIM*CUBES_DIM*2];
+
 			for (uint32_t yy = 0; yy < CUBES_DIM; ++yy)
 			{
 				for (uint32_t xx = 0; xx < CUBES_DIM; ++xx)
@@ -246,8 +248,13 @@ class Occlusion : public entry::AppI
 					bgfx::setCondition(occlusionQuery, true);
 					bgfx::setState(BGFX_STATE_DEFAULT);
 					bgfx::submit(2, m_program);
+
+					img[(yy*CUBES_DIM+xx)*2+0] = " \xfex"[bgfx::getResult(occlusionQuery)];
+					img[(yy*CUBES_DIM+xx)*2+1] = 0xf;
 				}
 			}
+
+			bgfx::dbgTextImage(5, 5, CUBES_DIM, CUBES_DIM, img, CUBES_DIM*2);
 
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.

@@ -316,9 +316,9 @@ namespace bgfx { namespace d3d11
 
 		void postReset();
 		void preReset();
-		void begin(OcclusionQueryHandle _handle);
+		void begin(Frame* _render, OcclusionQueryHandle _handle);
 		void end();
-		void resolve(bool _wait = false);
+		void resolve(Frame* _render, bool _wait = false);
 
 		struct Query
 		{

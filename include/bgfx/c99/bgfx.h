@@ -184,6 +184,16 @@ typedef enum bgfx_backbuffer_ratio
 
 } bgfx_backbuffer_ratio_t;
 
+typedef enum bgfx_occlusion_query_result
+{
+    BGFX_OCCLUSION_QUERY_RESULT_INVISIBLE,
+    BGFX_OCCLUSION_QUERY_RESULT_VISIBLE,
+    BGFX_OCCLUSION_QUERY_RESULT_NORESULT,
+
+    BGFX_OCCLUSION_QUERY_RESULT_COUNT
+
+} bgfx_occlusion_query_result_t;
+
 #define BGFX_HANDLE_T(_name) \
     typedef struct _name { uint16_t idx; } _name##_t
 
@@ -641,6 +651,9 @@ BGFX_C_API void bgfx_destroy_uniform(bgfx_uniform_handle_t _handle);
 
 /**/
 BGFX_C_API bgfx_occlusion_query_handle_t bgfx_create_occlusion_query();
+
+/**/
+BGFX_C_API bgfx_occlusion_query_result_t bgfx_get_result(bgfx_occlusion_query_handle_t _handle);
 
 /**/
 BGFX_C_API void bgfx_destroy_occlusion_query(bgfx_occlusion_query_handle_t _handle);

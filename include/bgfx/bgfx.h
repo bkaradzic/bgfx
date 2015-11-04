@@ -275,6 +275,18 @@ namespace bgfx
 		};
 	};
 
+	struct OcclusionQueryResult
+	{
+		enum Enum
+		{
+			Invisible,
+			Visible,
+			NoResult,
+
+			Count
+		};
+	};
+
 	static const uint16_t invalidHandle = UINT16_MAX;
 
 	BGFX_HANDLE(DynamicIndexBufferHandle);
@@ -1537,6 +1549,14 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_create_occlusion_query`.
 	///
 	OcclusionQueryHandle createOcclusionQuery();
+
+	/// Retrieve occlusion query result.
+	///
+	/// @param[in] _handle Handle to occlusion query object.
+	///
+	/// @attention C99 equivalent is `bgfx_get_result`.
+	///
+	OcclusionQueryResult::Enum getResult(OcclusionQueryHandle _handle);
 
 	/// Destroy occlusion query.
 	///

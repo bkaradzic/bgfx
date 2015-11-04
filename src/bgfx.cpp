@@ -1372,6 +1372,8 @@ namespace bgfx
 
 		bx::xchg(m_render, m_submit);
 
+		memcpy(m_render->m_occlusion, m_submit->m_occlusion, sizeof(m_submit->m_occlusion) );
+
 		if (!BX_ENABLED(BGFX_CONFIG_MULTITHREADED)
 		||  m_singleThreaded)
 		{
@@ -3026,6 +3028,13 @@ again:
 		return s_ctx->createOcclusionQuery();
 	}
 
+	OcclusionQueryResult::Enum getResult(OcclusionQueryHandle _handle)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		BGFX_CHECK_CAPS(BGFX_CAPS_OCCLUSION_QUERY, "Occlusion query is not supported!");
+		return s_ctx->getResult(_handle);
+	}
+
 	void destroyOcclusionQuery(OcclusionQueryHandle _handle)
 	{
 		BGFX_CHECK_MAIN_THREAD();
@@ -3989,6 +3998,12 @@ BGFX_C_API bgfx_occlusion_query_handle_t bgfx_create_occlusion_query()
 	union { bgfx_occlusion_query_handle_t c; bgfx::OcclusionQueryHandle cpp; } handle;
 	handle.cpp = bgfx::createOcclusionQuery();
 	return handle.c;
+}
+
+BGFX_C_API bgfx_occlusion_query_result_t bgfx_get_result(bgfx_occlusion_query_handle_t _handle)
+{
+	union { bgfx_occlusion_query_handle_t c; bgfx::OcclusionQueryHandle cpp; } handle = { _handle };
+	return bgfx_occlusion_query_result_t(bgfx::getResult(handle.cpp) );
 }
 
 BGFX_C_API void bgfx_destroy_occlusion_query(bgfx_occlusion_query_handle_t _handle)
