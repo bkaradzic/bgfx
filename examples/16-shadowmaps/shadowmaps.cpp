@@ -1960,7 +1960,7 @@ int _main_(int _argc, char** _argv)
 	const float camNear    = 0.1f;
 	const float camFar     = 2000.0f;
 	const float projHeight = 1.0f/tanf(bx::toRad(camFovy)*0.5f);
-	const float projWidth  = projHeight * 1.0f/camAspect;
+	const float projWidth  = projHeight * camAspect;
 	bx::mtxProj(viewState.m_proj, camFovy, camAspect, camNear, camFar);
 	cameraGetViewMtx(viewState.m_view);
 
