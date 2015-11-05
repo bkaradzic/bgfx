@@ -2113,7 +2113,7 @@ namespace bgfx { namespace mtl
 
 	void OcclusionQueryMTL::preReset()
 	{
-		m_buffer = s_renderMtl->m_device.newBufferWithLength(BX_COUNTOF(m_query)*8, 0);
+		m_buffer = s_renderMtl->m_device.newBufferWithLength(BX_COUNTOF(m_query) * 8, 0);
 	}
 
 	void OcclusionQueryMTL::begin(RenderCommandEncoder& _rce, Frame* _render, OcclusionQueryHandle _handle)
@@ -2125,13 +2125,15 @@ namespace bgfx { namespace mtl
 
 		Query& query = m_query[m_control.m_current];
 		query.m_handle = _handle;
-		_rce.setVisibilityResultMode(MTLVisibilityResultModeBoolean, _handle.idx);
+		uint32_t offset = _handle.idx * 8;
+		_rce.setVisibilityResultMode(MTLVisibilityResultModeBoolean, offset);
 	}
 
 	void OcclusionQueryMTL::end(RenderCommandEncoder& _rce)
 	{
 		Query& query = m_query[m_control.m_current];
-		_rce.setVisibilityResultMode(MTLVisibilityResultModeDisabled, query.m_handle.idx);
+		uint32_t offset = query.m_handle.idx * 8;
+		_rce.setVisibilityResultMode(MTLVisibilityResultModeDisabled, offset);
 		m_control.commit(1);
 	}
 
