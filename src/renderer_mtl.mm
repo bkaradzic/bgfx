@@ -1062,6 +1062,11 @@ namespace bgfx { namespace mtl
 			}
 		}
 
+		void clearQuad(ClearQuad& _clearQuad, const Rect& _rect, const Clear& _clear, const float _palette[][4])
+		{
+			BX_UNUSED(_clearQuad, _rect, _clear, _palette);
+		}
+
 		void setFrameBuffer(RenderPassDescriptor renderPassDescriptor, FrameBufferHandle _fbh, bool _msaa = true)
 		{
 			if (!isValid(_fbh) )
@@ -1069,8 +1074,6 @@ namespace bgfx { namespace mtl
 				renderPassDescriptor.colorAttachments[0].texture = m_drawable.texture;
 				renderPassDescriptor.depthAttachment.texture = m_backBufferDepth;
 				renderPassDescriptor.stencilAttachment.texture = m_backBufferStencil;
-
-				//todo: set resolve textures
 			}
 			else
 			{
@@ -1089,19 +1092,19 @@ namespace bgfx { namespace mtl
 					renderPassDescriptor.stencilAttachment.texture = texture.m_ptrStencil;
 					//TODO: stencilAttachment should be the same if packed/depth stencil format is used
 				}
-
-				//todo: set resolve textures
 			}
 
-			m_fbh = _fbh;
+			m_fbh    = _fbh;
 			m_rtMsaa = _msaa;
 		}
 
 		void setDepthStencilState(uint64_t _state, uint64_t _stencil = 0)
 		{
 			_state &= BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK;
+
 			uint32_t fstencil = unpackStencil(0, _stencil);
-			uint32_t ref = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
+			uint32_t ref      = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
+
 			_stencil &= packStencil(~BGFX_STENCIL_FUNC_REF_MASK, BGFX_STENCIL_MASK);
 
 			bx::HashMurmur2A murmur;
@@ -1166,6 +1169,7 @@ namespace bgfx { namespace mtl
 		{
 			_flags &= BGFX_TEXTURE_SAMPLER_BITS_MASK;
 			SamplerState sampler = m_samplerStateCache.find(_flags);
+
 			if (NULL == sampler)
 			{
 
@@ -2259,7 +2263,7 @@ namespace bgfx { namespace mtl
 				const bool viewChanged = 0
 					|| key.m_view != view
 					|| item == numItems
-				;
+					;
 				const RenderItem& renderItem = _render->m_renderItem[_render->m_sortValues[item] ];
 				++item;
 
@@ -2277,9 +2281,9 @@ namespace bgfx { namespace mtl
 					view = key.m_view;
 					programIdx = invalidHandle;
 
-
 					viewRestart = ( (BGFX_VIEW_STEREO == (_render->m_viewFlags[view] & BGFX_VIEW_STEREO) ) );
 					viewRestart &= hmdEnabled;
+
 					if (viewRestart)
 					{
 						if (0 == restartState)
@@ -2297,6 +2301,7 @@ namespace bgfx { namespace mtl
 					}
 
 					viewState.m_rect = _render->m_rect[view];
+
 					if (viewRestart)
 					{
 						viewState.m_rect.m_x = eye * (viewState.m_rect.m_width+1)/2;
@@ -2323,9 +2328,10 @@ namespace bgfx { namespace mtl
 					setFrameBuffer(renderPassDescriptor, fbh);
 
 					RenderPassColorAttachmentDescriptor colorAttachment0 = renderPassDescriptor.colorAttachments[0];
-					if (BGFX_CLEAR_COLOR & clr.m_flags)
+
+					if (0 != (BGFX_CLEAR_COLOR & clr.m_flags) )
 					{
-						if (BGFX_CLEAR_COLOR_USE_PALETTE & clr.m_flags)
+						if (0 != (BGFX_CLEAR_COLOR_USE_PALETTE & clr.m_flags) )
 						{
 							uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, clr.m_index[0]);
 							const float* rgba = _render->m_colorPalette[index];
@@ -2333,7 +2339,7 @@ namespace bgfx { namespace mtl
 							const float gg = rgba[1];
 							const float bb = rgba[2];
 							const float aa = rgba[3];
-							colorAttachment0.clearColor = MTLClearColorMake(rr,gg,bb,aa);
+							colorAttachment0.clearColor = MTLClearColorMake(rr, gg, bb, aa);
 						}
 						else
 						{
@@ -2341,20 +2347,25 @@ namespace bgfx { namespace mtl
 							float gg = clr.m_index[1]*1.0f/255.0f;
 							float bb = clr.m_index[2]*1.0f/255.0f;
 							float aa = clr.m_index[3]*1.0f/255.0f;
-							colorAttachment0.clearColor = MTLClearColorMake(rr,gg,bb,aa);
+							colorAttachment0.clearColor = MTLClearColorMake(rr, gg, bb, aa);
 						}
 
 						colorAttachment0.loadAction = MTLLoadActionClear;
 					}
 					else
+					{
 						colorAttachment0.loadAction = MTLLoadActionLoad;
+					}
 
 					//TODO: optimize store actions use discard flag
 					RenderPassDepthAttachmentDescriptor depthAttachment = renderPassDescriptor.depthAttachment;
 					if (NULL != depthAttachment.texture)
 					{
 						depthAttachment.clearDepth = clr.m_depth;
-						depthAttachment.loadAction = (BGFX_CLEAR_DEPTH & clr.m_flags) ? MTLLoadActionClear : MTLLoadActionLoad;
+						depthAttachment.loadAction = 0 != (BGFX_CLEAR_DEPTH & clr.m_flags)
+							? MTLLoadActionClear
+							: MTLLoadActionLoad
+							;
 						depthAttachment.storeAction = MTLStoreActionStore;
 					}
 
@@ -2362,7 +2373,10 @@ namespace bgfx { namespace mtl
 					if (NULL != stencilAttachment.texture)
 					{
 						stencilAttachment.clearStencil = clr.m_stencil;
-						stencilAttachment.loadAction   = (BGFX_CLEAR_STENCIL & clr.m_flags) ? MTLLoadActionClear : MTLLoadActionLoad;
+						stencilAttachment.loadAction   = 0 != (BGFX_CLEAR_STENCIL & clr.m_flags)
+							? MTLLoadActionClear
+							: MTLLoadActionLoad
+							;
 						stencilAttachment.storeAction  = MTLStoreActionStore;
 					}
 
@@ -2370,6 +2384,7 @@ namespace bgfx { namespace mtl
 					{
 						m_renderCommandEncoder.endEncoding();
 					}
+
 					rce = m_commandBuffer.renderCommandEncoderWithDescriptor(renderPassDescriptor);
 					m_renderCommandEncoder = rce;
 					MTL_RELEASE(renderPassDescriptor);
@@ -2383,8 +2398,10 @@ namespace bgfx { namespace mtl
 
 					if (BX_ENABLED(BGFX_CONFIG_DEBUG_MTL) )
 					{
-						if (item != 1) //ASK: better check ? I don't get the whole restart thing
+						if (item != 1)
+						{
 							rce.popDebugGroup();
+						}
 
 						rce.pushDebugGroup(s_viewName[view]);
 					}
@@ -2392,19 +2409,18 @@ namespace bgfx { namespace mtl
 					MTLViewport vp;
 					vp.originX = viewState.m_rect.m_x;
 					vp.originY = viewState.m_rect.m_y;
-					vp.width    = viewState.m_rect.m_width;
-					vp.height   = viewState.m_rect.m_height;
-					vp.znear = 0.0f;
-					vp.zfar = 1.0f;
+					vp.width   = viewState.m_rect.m_width;
+					vp.height  = viewState.m_rect.m_height;
+					vp.znear   = 0.0f;
+					vp.zfar    = 1.0f;
 					rce.setViewport(vp);
 
-					if (BGFX_CLEAR_NONE != (clr.m_flags & BGFX_CLEAR_MASK) && !fullscreenRect)
-					{	//TODO: fallback to clear with quad
-						//clearQuad(_clearQuad, viewState.m_rect, clr, _render->m_colorPalette);
+					if (BGFX_CLEAR_NONE != (clr.m_flags & BGFX_CLEAR_MASK)
+					&& !fullscreenRect)
+					{
+						clearQuad(_clearQuad, viewState.m_rect, clr, _render->m_colorPalette);
 					}
 				}
-
-		//TODO: iscompute
 
 				bool resetState = viewChanged || wasCompute;
 
