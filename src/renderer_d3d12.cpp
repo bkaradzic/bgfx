@@ -364,6 +364,7 @@ namespace bgfx { namespace d3d12
 	static const GUID IID_ID3D12PipelineState       = { 0x765a30f3, 0xf624, 0x4c6f, { 0xa8, 0x28, 0xac, 0xe9, 0x48, 0x62, 0x24, 0x45 } };
 	static const GUID IID_ID3D12Resource            = { 0x696442be, 0xa72e, 0x4059, { 0xbc, 0x79, 0x5b, 0x5c, 0x98, 0x04, 0x0f, 0xad } };
 	static const GUID IID_ID3D12RootSignature       = { 0xc54a6b66, 0x72df, 0x4ee8, { 0x8b, 0xe5, 0xa9, 0x46, 0xa1, 0x42, 0x92, 0x14 } };
+	static const GUID IID_ID3D12QueryHeap           = { 0x0d9658ae, 0xed45, 0x469e, { 0xa6, 0x1d, 0x97, 0x0e, 0xc5, 0x83, 0xca, 0xb4 } };
 	static const GUID IID_IDXGIFactory4             = { 0x1bc6ea02, 0xef36, 0x464f, { 0xbf, 0x0c, 0x21, 0xca, 0x39, 0xe5, 0x16, 0x8a } };
 
 	struct HeapProperty
@@ -885,6 +886,7 @@ namespace bgfx { namespace d3d12
 //									| BGFX_CAPS_SWAP_CHAIN
 									| BGFX_CAPS_TEXTURE_BLIT
 									| BGFX_CAPS_TEXTURE_READ_BACK
+									| BGFX_CAPS_OCCLUSION_QUERY
 									);
 				g_caps.maxTextureSize   = 16384;
 				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(16, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
@@ -1036,6 +1038,7 @@ namespace bgfx { namespace d3d12
 				postReset();
 
 				m_batch.create(4<<10);
+				m_occlusionQuery.init();
 			}
 			return true;
 
@@ -1068,6 +1071,8 @@ namespace bgfx { namespace d3d12
 			m_batch.destroy();
 
 			preReset();
+
+			m_occlusionQuery.shutdown();
 
 			m_samplerAllocator.destroy();
 
@@ -2382,6 +2387,12 @@ data.NumQualityLevels = 0;
 			return sampler;
 		}
 
+		bool isVisible(Frame* _render, OcclusionQueryHandle _handle, bool _visible)
+		{
+			m_occlusionQuery.resolve(_render);
+			return _visible == (0 != _render->m_occlusion[_handle.idx]);
+		}
+
 		void commit(UniformBuffer& _uniformBuffer)
 		{
 			_uniformBuffer.reset();
@@ -2552,7 +2563,7 @@ data.NumQualityLevels = 0;
 				rect.top    = _rect.m_y;
 				rect.right  = _rect.m_x + _rect.m_width;
 				rect.bottom = _rect.m_y + _rect.m_height;
-				clear(_clear, _palette, &rect);
+				clear(_clear, _palette, &rect, 1);
 			}
 		}
 
@@ -2597,6 +2608,7 @@ data.NumQualityLevels = 0;
 
 		ID3D12Device* m_device;
 		ID3D12InfoQueue* m_infoQueue;
+		OcclusionQueryD3D12 m_occlusionQuery;
 
 		ID3D12DescriptorHeap* m_rtvDescriptorHeap;
 		ID3D12DescriptorHeap* m_dsvDescriptorHeap;
@@ -4318,6 +4330,78 @@ data.NumQualityLevels = 0;
 		}
 	}
 
+	void OcclusionQueryD3D12::init()
+	{
+		D3D12_QUERY_HEAP_DESC queryHeapDesc;
+		queryHeapDesc.Count    = BX_COUNTOF(m_query);
+		queryHeapDesc.NodeMask = 1;
+		queryHeapDesc.Type     = D3D12_QUERY_HEAP_TYPE_OCCLUSION;
+		DX_CHECK(s_renderD3D12->m_device->CreateQueryHeap(&queryHeapDesc
+				, IID_ID3D12QueryHeap
+				, (void**)&m_queryHeap
+				) );
+
+		m_readback = createCommittedResource(s_renderD3D12->m_device
+						, HeapProperty::ReadBack
+						, BX_COUNTOF(m_query)*sizeof(uint64_t)
+						);
+
+		D3D12_RANGE range = { 0, BX_COUNTOF(m_query) };
+		m_readback->Map(0, &range, (void**)&m_result);
+	}
+
+	void OcclusionQueryD3D12::shutdown()
+	{
+		D3D12_RANGE range = { 0, 0 };
+		m_readback->Unmap(0, &range);
+
+		DX_RELEASE(m_queryHeap, 0);
+		DX_RELEASE(m_readback, 0);
+	}
+
+	void OcclusionQueryD3D12::begin(ID3D12GraphicsCommandList* _commandList, Frame* _render, OcclusionQueryHandle _handle)
+	{
+		while (0 == m_control.reserve(1) )
+		{
+			resolve(_render);
+		}
+
+		Query& query = m_query[m_control.m_current];
+		query.m_handle = _handle;
+		_commandList->BeginQuery(m_queryHeap
+			, D3D12_QUERY_TYPE_BINARY_OCCLUSION
+			, _handle.idx
+			);
+	}
+
+	void OcclusionQueryD3D12::end(ID3D12GraphicsCommandList* _commandList)
+	{
+		Query& query = m_query[m_control.m_current];
+		_commandList->EndQuery(m_queryHeap
+			, D3D12_QUERY_TYPE_BINARY_OCCLUSION
+			, query.m_handle.idx
+			);
+		_commandList->ResolveQueryData(m_queryHeap
+			, D3D12_QUERY_TYPE_BINARY_OCCLUSION
+			, query.m_handle.idx
+			, 1
+			, m_readback
+			, query.m_handle.idx * sizeof(uint64_t)
+			);
+		m_control.commit(1);
+	}
+
+	void OcclusionQueryD3D12::resolve(Frame* _render)
+	{
+		while (0 != m_control.available() )
+		{
+			Query& query = m_query[m_control.m_read];
+
+			_render->m_occlusion[query.m_handle.idx] = 0 < m_result[query.m_handle.idx];
+			m_control.consume(1);
+		}
+	}
+
 	struct Bind
 	{
 		D3D12_GPU_DESCRIPTOR_HANDLE m_srvHandle;
@@ -4412,6 +4496,8 @@ data.NumQualityLevels = 0;
 			, D3D12_RESOURCE_STATE_PRESENT
 			, D3D12_RESOURCE_STATE_RENDER_TARGET
 			);
+
+		m_occlusionQuery.resolve(_render);
 
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 		{
@@ -4718,6 +4804,14 @@ data.NumQualityLevels = 0;
 
 				const RenderDraw& draw = renderItem.draw;
 
+				const bool hasOcclusionQuery = 0 != (draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
+				if (isValid(draw.m_occlusionQuery)
+				&&  !hasOcclusionQuery
+				&&  !isVisible(_render, draw.m_occlusionQuery, 0 != (draw.m_submitFlags&BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE) ) )
+				{
+					continue;
+				}
+
 				const uint64_t newFlags = draw.m_stateFlags;
 				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
 				currentState.m_stateFlags = newFlags;
@@ -4801,7 +4895,8 @@ data.NumQualityLevels = 0;
 					|| (0 != (BGFX_STATE_PT_MASK & changedFlags)
 					||  prim.m_toplogy != s_primInfo[primIndex].m_toplogy)
 					||  currentState.m_scissor != scissor
-					||  pso != currentPso)
+					||  pso != currentPso
+					||  hasOcclusionQuery)
 					{
 						m_batch.flush(m_commandList);
 					}
@@ -4977,6 +5072,13 @@ data.NumQualityLevels = 0;
 					statsNumPrimsRendered[primIndex]  += numPrimsRendered;
 					statsNumInstances[primIndex]      += draw.m_numInstances;
 					statsNumIndices                   += numIndices;
+
+					if (hasOcclusionQuery)
+					{
+						m_occlusionQuery.begin(m_commandList, _render, draw.m_occlusionQuery);
+						m_batch.flush(m_commandList);
+						m_occlusionQuery.end(m_commandList);
+					}
 				}
 			}
 
