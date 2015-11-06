@@ -2389,7 +2389,6 @@ data.NumQualityLevels = 0;
 
 		bool isVisible(Frame* _render, OcclusionQueryHandle _handle, bool _visible)
 		{
-			m_occlusionQuery.resolve(_render);
 			return _visible == (0 != _render->m_occlusion[_handle.idx]);
 		}
 
@@ -4333,7 +4332,7 @@ data.NumQualityLevels = 0;
 	void OcclusionQueryD3D12::init()
 	{
 		D3D12_QUERY_HEAP_DESC queryHeapDesc;
-		queryHeapDesc.Count    = BX_COUNTOF(m_query);
+		queryHeapDesc.Count    = BX_COUNTOF(m_handle);
 		queryHeapDesc.NodeMask = 1;
 		queryHeapDesc.Type     = D3D12_QUERY_HEAP_TYPE_OCCLUSION;
 		DX_CHECK(s_renderD3D12->m_device->CreateQueryHeap(&queryHeapDesc
@@ -4343,10 +4342,10 @@ data.NumQualityLevels = 0;
 
 		m_readback = createCommittedResource(s_renderD3D12->m_device
 						, HeapProperty::ReadBack
-						, BX_COUNTOF(m_query)*sizeof(uint64_t)
+						, BX_COUNTOF(m_handle)*sizeof(uint64_t)
 						);
 
-		D3D12_RANGE range = { 0, BX_COUNTOF(m_query) };
+		D3D12_RANGE range = { 0, BX_COUNTOF(m_handle) };
 		m_readback->Map(0, &range, (void**)&m_result);
 	}
 
@@ -4363,11 +4362,12 @@ data.NumQualityLevels = 0;
 	{
 		while (0 == m_control.reserve(1) )
 		{
-			resolve(_render);
+			OcclusionQueryHandle handle = m_handle[m_control.m_read];
+			_render->m_occlusion[handle.idx] = 0 < m_result[handle.idx];
+			m_control.consume(1);
 		}
 
-		Query& query = m_query[m_control.m_current];
-		query.m_handle = _handle;
+		m_handle[m_control.m_current] = _handle;
 		_commandList->BeginQuery(m_queryHeap
 			, D3D12_QUERY_TYPE_BINARY_OCCLUSION
 			, _handle.idx
@@ -4376,30 +4376,19 @@ data.NumQualityLevels = 0;
 
 	void OcclusionQueryD3D12::end(ID3D12GraphicsCommandList* _commandList)
 	{
-		Query& query = m_query[m_control.m_current];
+		OcclusionQueryHandle handle = m_handle[m_control.m_current];
 		_commandList->EndQuery(m_queryHeap
 			, D3D12_QUERY_TYPE_BINARY_OCCLUSION
-			, query.m_handle.idx
+			, handle.idx
 			);
 		_commandList->ResolveQueryData(m_queryHeap
 			, D3D12_QUERY_TYPE_BINARY_OCCLUSION
-			, query.m_handle.idx
+			, handle.idx
 			, 1
 			, m_readback
-			, query.m_handle.idx * sizeof(uint64_t)
+			, handle.idx * sizeof(uint64_t)
 			);
 		m_control.commit(1);
-	}
-
-	void OcclusionQueryD3D12::resolve(Frame* _render)
-	{
-		while (0 != m_control.available() )
-		{
-			Query& query = m_query[m_control.m_read];
-
-			_render->m_occlusion[query.m_handle.idx] = 0 < m_result[query.m_handle.idx];
-			m_control.consume(1);
-		}
 	}
 
 	struct Bind
@@ -4496,8 +4485,6 @@ data.NumQualityLevels = 0;
 			, D3D12_RESOURCE_STATE_PRESENT
 			, D3D12_RESOURCE_STATE_RENDER_TARGET
 			);
-
-		m_occlusionQuery.resolve(_render);
 
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 		{

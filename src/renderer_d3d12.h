@@ -435,7 +435,7 @@ namespace bgfx { namespace d3d12
 	struct OcclusionQueryD3D12
 	{
 		OcclusionQueryD3D12()
-			: m_control(BX_COUNTOF(m_query) )
+			: m_control(BX_COUNTOF(m_handle) )
 		{
 		}
 
@@ -443,16 +443,10 @@ namespace bgfx { namespace d3d12
 		void shutdown();
 		void begin(ID3D12GraphicsCommandList* _commandList, Frame* _render, OcclusionQueryHandle _handle);
 		void end(ID3D12GraphicsCommandList* _commandList);
-		void resolve(Frame* _render);
-
-		struct Query
-		{
-			OcclusionQueryHandle m_handle;
-		};
 
 		ID3D12Resource*  m_readback;
 		ID3D12QueryHeap* m_queryHeap;
-		Query m_query[BGFX_CONFIG_MAX_OCCUSION_QUERIES];
+		OcclusionQueryHandle m_handle[BGFX_CONFIG_MAX_OCCUSION_QUERIES];
 		uint64_t* m_result;
 		bx::RingBufferControl m_control;
 	};
