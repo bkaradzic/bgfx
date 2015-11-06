@@ -868,27 +868,34 @@ namespace bgfx
 
 	void Frame::blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
 	{
-		uint16_t item = m_numBlitItems++;
+		BX_WARN(m_numBlitItems < BGFX_CONFIG_MAX_BLIT_ITEMS
+			, "Exceed number of available blit items per frame. BGFX_CONFIG_MAX_BLIT_ITEMS is %d. Skipping blit."
+			, BGFX_CONFIG_MAX_BLIT_ITEMS
+			);
+		if (m_numBlitItems < BGFX_CONFIG_MAX_BLIT_ITEMS)
+		{
+			uint16_t item = m_numBlitItems++;
 
-		BlitItem& bi = m_blitItem[item];
-		bi.m_srcX    = _srcX;
-		bi.m_srcY    = _srcY;
-		bi.m_srcZ    = _srcZ;
-		bi.m_dstX    = _dstX;
-		bi.m_dstY    = _dstY;
-		bi.m_dstZ    = _dstZ;
-		bi.m_width   = _width;
-		bi.m_height  = _height;
-		bi.m_depth   = _depth;
-		bi.m_srcMip  = _srcMip;
-		bi.m_dstMip  = _dstMip;
-		bi.m_src     = _src;
-		bi.m_dst     = _dst;
+			BlitItem& bi = m_blitItem[item];
+			bi.m_srcX    = _srcX;
+			bi.m_srcY    = _srcY;
+			bi.m_srcZ    = _srcZ;
+			bi.m_dstX    = _dstX;
+			bi.m_dstY    = _dstY;
+			bi.m_dstZ    = _dstZ;
+			bi.m_width   = _width;
+			bi.m_height  = _height;
+			bi.m_depth   = _depth;
+			bi.m_srcMip  = _srcMip;
+			bi.m_dstMip  = _dstMip;
+			bi.m_src     = _src;
+			bi.m_dst     = _dst;
 
-		BlitKey key;
-		key.m_view = _id;
-		key.m_item = item;
-		m_blitKeys[item] = key.encode();
+			BlitKey key;
+			key.m_view = _id;
+			key.m_item = item;
+			m_blitKeys[item] = key.encode();
+		}
 	}
 
 	void Frame::sort()

@@ -712,6 +712,29 @@ namespace bgfx { namespace mtl
 		uint8_t m_num; // number of color handles
 	};
 
+	struct OcclusionQueryMTL
+	{
+		OcclusionQueryMTL()
+			: m_control(BX_COUNTOF(m_query) )
+		{
+		}
+
+		void postReset();
+		void preReset();
+		void begin(RenderCommandEncoder& _rce, Frame* _render, OcclusionQueryHandle _handle);
+		void end(RenderCommandEncoder& _rce);
+		void resolve(Frame* _render, bool _wait = false);
+
+		struct Query
+		{
+			OcclusionQueryHandle m_handle;
+		};
+
+		Buffer m_buffer;
+		Query m_query[BGFX_CONFIG_MAX_OCCUSION_QUERIES];
+		bx::RingBufferControl m_control;
+	};
+
 } /* namespace metal */ } // namespace bgfx
 
 #endif // BGFX_CONFIG_RENDERER_METAL

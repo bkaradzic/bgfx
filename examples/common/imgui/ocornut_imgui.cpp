@@ -508,6 +508,8 @@ struct OcornutImguiContext
 			m_wm->DockWith(w3, w0, ImGuiWM::E_DOCK_ORIENTATION_BOTTOM);
 		}
 #endif // 0
+
+		ImGui::NewFrame();
 	}
 
 	void destroy()
