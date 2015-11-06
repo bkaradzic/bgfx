@@ -2156,8 +2156,6 @@ namespace bgfx { namespace mtl
 
 	void RendererContextMtl::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) BX_OVERRIDE
 	{
-		BX_UNUSED(_clearQuad);
-
 		m_commandBuffer = m_commandQueue.commandBuffer();
 		retain(m_commandBuffer); // keep alive to be useable at 'flip'
 
@@ -2316,13 +2314,15 @@ namespace bgfx { namespace mtl
 					RenderPassDescriptor renderPassDescriptor = newRenderPassDescriptor();
 					renderPassDescriptor.visibilityResultBuffer = m_occlusionQuery.m_buffer;
 
-					//todo: check FB size
 					uint32_t width  = getBufferWidth();
 					uint32_t height = getBufferHeight();
 					Rect viewRect = viewState.m_rect;
-					bool fullscreenRect = (0 == viewRect.m_x && 0 == viewRect.m_y	&&  width  == viewRect.m_width	&&  height == viewRect.m_height);
-
-					//TODO/OPTIMIZATION: merge views with same target framebuffer into one renderPass
+					bool fullscreenRect = true
+						&& 0      == viewRect.m_x
+						&& 0      == viewRect.m_y
+						&& width  == viewRect.m_width
+						&& height == viewRect.m_height
+						;
 
 					fbh = _render->m_fb[view];
 					setFrameBuffer(renderPassDescriptor, fbh);
@@ -2431,7 +2431,6 @@ namespace bgfx { namespace mtl
 					programIdx = invalidHandle;
 					currentProgram = NULL;
 
-					//TODO
 					//invalidateCompute();
 				}
 
@@ -2509,18 +2508,18 @@ namespace bgfx { namespace mtl
 					rce.setScissorRect(rc);
 				}
 
-				if ((BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK) & changedFlags
-					|| 0 != changedStencil)
+				if ( (BGFX_STATE_DEPTH_WRITE|BGFX_STATE_DEPTH_TEST_MASK) & changedFlags
+				|| 0 != changedStencil)
 				{
 					setDepthStencilState(newFlags,newStencil);
 				}
 
-				if ((0
-					  | BGFX_STATE_CULL_MASK
-					  | BGFX_STATE_ALPHA_REF_MASK
-					  | BGFX_STATE_PT_MASK
-					  //| BGFX_STATE_POINT_SIZE_MASK //TODO: not supported. could be supported with uniform
-					  ) & changedFlags)
+				if ( (0
+					 | BGFX_STATE_CULL_MASK
+					 | BGFX_STATE_ALPHA_REF_MASK
+					 | BGFX_STATE_PT_MASK
+//					 | BGFX_STATE_POINT_SIZE_MASK
+					 ) & changedFlags)
 				{
 					if (BGFX_STATE_CULL_MASK & changedFlags)
 					{
@@ -2543,7 +2542,8 @@ namespace bgfx { namespace mtl
 					}
 				}
 
-				if ((blendFactor != draw.m_rgba) && !(newFlags & BGFX_STATE_BLEND_INDEPENDENT) )
+				if (blendFactor != draw.m_rgba
+				&& !(newFlags & BGFX_STATE_BLEND_INDEPENDENT) )
 				{
 					const uint32_t rgba = draw.m_rgba;
 					float rr = ( (rgba>>24)     )/255.0f;
@@ -2619,8 +2619,6 @@ namespace bgfx { namespace mtl
 						m_uniformBufferFragmentOffset = BX_ALIGN_MASK(m_uniformBufferFragmentOffset, program.m_fshConstantBufferAlignmentMask);
 						rce.setFragmentBuffer(m_uniformBuffer, m_uniformBufferFragmentOffset, 0);
 					}
-
-					//TODO: create new UniformBuffer when not enough place for next buffer
 
 					if (constantsChanged)
 					{
@@ -2716,7 +2714,6 @@ namespace bgfx { namespace mtl
 
 					if (isValid(draw.m_indirectBuffer) )
 					{
-						 // TODO: indirect draw
 					}
 					else
 					{
@@ -2771,21 +2768,12 @@ namespace bgfx { namespace mtl
 
 			if (wasCompute)
 			{
-				//TODO
 				//invalidateCompute();
 			}
 
 			if (0 < _render->m_num)
 			{
-				//ASK: we now using one commandBuffer that is commited in flush. Should we implement this?
-				//if (0 != (m_resolution.m_flags & BGFX_RESET_FLUSH_AFTER_RENDER) )
-				{
-					// ????
-					//deviceCtx->Flush();
-				}
-
 				captureElapsed = -bx::getHPCounter();
-				//TODO
 				//capture();
 				captureElapsed += bx::getHPCounter();
 			}
@@ -2799,7 +2787,6 @@ namespace bgfx { namespace mtl
 			}
 		}
 
-		//TODO: debug stats
 		int64_t now = bx::getHPCounter();
 		elapsed += now;
 
@@ -2820,17 +2807,16 @@ namespace bgfx { namespace mtl
 			static double   maxGpuElapsed = 0.0f;
 //			double elapsedGpuMs = 0.0;
 
-			//TODO: gputimer
-			/*			m_gpuTimer.end();
+//			m_gpuTimer.end();
+//
+//			while (m_gpuTimer.get() )
+//			{
+//				double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
+//				elapsedGpuMs   = m_gpuTimer.m_elapsed * toGpuMs;
+//				maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
+//			}
+//			maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
 
-			 while (m_gpuTimer.get() )
-			 {
-				double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
-				elapsedGpuMs   = m_gpuTimer.m_elapsed * toGpuMs;
-				maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
-			 }
-			 maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
-			 */
 			TextVideoMem& tvm = m_textVideoMem;
 
 			static int64_t next = now;
@@ -2845,50 +2831,46 @@ namespace bgfx { namespace mtl
 				tvm.clear();
 				uint16_t pos = 0;
 				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f, " %s / " BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME " "
-				   , getRendererName()
-				   );
-
-				//const D3DADAPTER_IDENTIFIER9& identifier = m_identifier;
-				//tvm.printf(0, pos++, 0x0f, " Device: %s (%s)", identifier.Description, identifier.Driver);
+						, getRendererName()
+						);
 
 				pos = 10;
 				tvm.printf(10, pos++, 0x8e, "       Frame: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS "
-						   , double(frameTime)*toMs
-						   , double(min)*toMs
-						   , double(max)*toMs
-						   , freq/frameTime
-						   );
+						, double(frameTime)*toMs
+						, double(min)*toMs
+						, double(max)*toMs
+						, freq/frameTime
+						);
 
-				/*
-				 const uint32_t msaa = (m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
-				 tvm.printf(10, pos++, 0x8e, " Reset flags: [%c] vsync, [%c] MSAAx%d, [%c] MaxAnisotropy "
-				 , !!(m_resolution.m_flags&BGFX_RESET_VSYNC) ? '\xfe' : ' '
-					, 0 != msaa ? '\xfe' : ' '
-				 , 1<<msaa
-				 , !!(m_resolution.m_flags&BGFX_RESET_MAXANISOTROPY) ? '\xfe' : ' '
-				 );
-		 */
+				const uint32_t msaa = (m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
+				tvm.printf(10, pos++, 0x8e, " Reset flags: [%c] vsync, [%c] MSAAx%d, [%c] MaxAnisotropy "
+						, !!(m_resolution.m_flags&BGFX_RESET_VSYNC) ? '\xfe' : ' '
+						, 0 != msaa ? '\xfe' : ' '
+						, 1<<msaa
+						, !!(m_resolution.m_flags&BGFX_RESET_MAXANISOTROPY) ? '\xfe' : ' '
+						);
+
 				double elapsedCpuMs = double(elapsed)*toMs;
 				tvm.printf(10, pos++, 0x8e, "   Submitted: %4d (draw %4d, compute %4d) / CPU %3.4f [ms] %c GPU %3.4f [ms] (latency %d)"
-						   , _render->m_num
-						   , statsKeyType[0]
-						   , statsKeyType[1]
-						   , elapsedCpuMs
-						   , elapsedCpuMs > maxGpuElapsed ? '>' : '<'
-						   , maxGpuElapsed
-						   , maxGpuLatency
-						   );
+						, _render->m_num
+						, statsKeyType[0]
+						, statsKeyType[1]
+						, elapsedCpuMs
+						, elapsedCpuMs > maxGpuElapsed ? '>' : '<'
+						, maxGpuElapsed
+						, maxGpuLatency
+						);
 				maxGpuLatency = 0;
 				maxGpuElapsed = 0.0;
 
 				for (uint32_t ii = 0; ii < BX_COUNTOF(s_primName); ++ii)
 				{
 					tvm.printf(10, pos++, 0x8e, "   %9s: %7d (#inst: %5d), submitted: %7d"
-					   , s_primName[ii]
-					   , statsNumPrimsRendered[ii]
-					   , statsNumInstances[ii]
-					   , statsNumPrimsSubmitted[ii]
-					   );
+							, s_primName[ii]
+							, statsNumPrimsRendered[ii]
+							, statsNumInstances[ii]
+							, statsNumPrimsSubmitted[ii]
+							);
 				}
 
 				tvm.printf(10, pos++, 0x8e, "      Indices: %7d ", statsNumIndices);
