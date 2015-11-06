@@ -29,12 +29,12 @@ Supported platforms:
  * asm.js/Emscripten (1.25.0)
  * FreeBSD
  * iOS (iPhone, iPad, AppleTV)
- * Linux
+ * Linux ![](https://tc27.draster.com/app/rest/builds/buildType:(id:Bgfx_Linux)/statusIcon)
  * MIPS Creator CI20
  * Native Client (PPAPI 37+, ARM, x86, x64, PNaCl)
  * OSX (10.9+)
  * RaspberryPi
- * Windows (XP, Vista, 7, 8, 10)
+ * Windows (XP, Vista, 7, 8, 10) ![](https://tc27.draster.com/app/rest/builds/buildType:(id:Bgfx_Windows)/statusIcon)
  * WinRT (WinPhone 8.0+)
 
 Supported compilers:
@@ -50,6 +50,11 @@ Languages:
  * [D language API bindings](https://github.com/DerelictOrg/DerelictBgfx)
  * [Go language API bindings](https://github.com/james4k/go-bgfx)
  * [Java language API bindings](https://github.com/enleeten/twilight-bgfx)
+
+Build status
+------------
+
+https://tc27.draster.com/guestAuth/overview.html
 
 Who is using it?
 ----------------
