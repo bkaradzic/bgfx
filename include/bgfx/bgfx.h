@@ -750,7 +750,7 @@ namespace bgfx
 	///
 	/// @param[in] _vendorId Vendor PCI id. If set to `BGFX_PCI_ID_NONE` it will select the first
 	///   device.
-	///   - `BGFX_PCI_ID_NONE` - autoselect.
+	///   - `BGFX_PCI_ID_NONE` - auto-select.
 	///   - `BGFX_PCI_ID_AMD` - AMD.
 	///   - `BGFX_PCI_ID_INTEL` - Intel.
 	///   - `BGFX_PCI_ID_NVIDIA` - nVidia.
@@ -763,9 +763,9 @@ namespace bgfx
 	///
 	/// @param[in] _reallocator Custom allocator. When custom allocator is not
 	///   specified, library uses default CRT allocator. The library assumes
-	///   icustom allocator is thread safe.
+	///   custom allocator is thread safe.
 	///
-	/// @returns `true` if initialization is sucessful.
+	/// @returns `true` if initialization is successful.
 	///
 	/// @attention C99 equivalent is `bgfx_init`.
 	///
@@ -1492,7 +1492,7 @@ namespace bgfx
 	/// @returns Handle to frame buffer object.
 	///
 	/// @remarks
-	///   Frame buffer cannnot be used for sampling.
+	///   Frame buffer cannot be used for sampling.
 	///
 	/// @attention C99 equivalent is `bgfx_create_frame_buffer_from_nwh`.
 	///
