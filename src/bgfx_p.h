@@ -295,7 +295,7 @@ namespace bgfx
 
 	extern const uint32_t g_uniformTypeSize[UniformType::Count+1];
 	extern CallbackI* g_callback;
-	extern bx::ReallocatorI* g_allocator;
+	extern bx::AllocatorI* g_allocator;
 	extern Caps g_caps;
 
 	void setGraphicsDebuggerPresent(bool _present);

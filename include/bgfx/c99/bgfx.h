@@ -416,20 +416,18 @@ typedef struct bgfx_callback_vtbl
 } bgfx_callback_vtbl_t;
 
 /**/
-typedef struct bgfx_reallocator_interface
+typedef struct bgfx_allocator_interface
 {
-    const struct bgfx_reallocator_vtbl* vtbl;
+    const struct bgfx_allocator_vtbl* vtbl;
 
-} bgfx_reallocator_interface_t;
+} bgfx_allocator_interface_t;
 
 /**/
-typedef struct bgfx_reallocator_vtbl
+typedef struct bgfx_allocator_vtbl
 {
-    void* (*alloc)(bgfx_reallocator_interface_t* _this, size_t _size, size_t _align, const char* _file, uint32_t _line);
-    void  (*free)(bgfx_reallocator_interface_t* _this, void* _ptr, size_t _align, const char* _file, uint32_t _line);
-    void* (*realloc)(bgfx_reallocator_interface_t* _this, void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line);
+    void* (*realloc)(bgfx_allocator_interface_t* _this, void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line);
 
-} bgfx_reallocator_vtbl_t;
+} bgfx_allocator_vtbl_t;
 
 /**/
 typedef struct bgfx_interface_vtbl
@@ -448,7 +446,7 @@ typedef struct bgfx_interface_vtbl
     void (*image_rgba8_downsample_2x2)(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst);
     uint8_t (*get_supported_renderers)(bgfx_renderer_type_t _enum[BGFX_RENDERER_TYPE_COUNT]);
     const char* (*get_renderer_name)(bgfx_renderer_type_t _type);
-    bool (*init)(bgfx_renderer_type_t _type, uint16_t _vendorId, uint16_t _deviceId, bgfx_callback_interface_t* _callback, bgfx_reallocator_interface_t* _allocator);
+    bool (*init)(bgfx_renderer_type_t _type, uint16_t _vendorId, uint16_t _deviceId, bgfx_callback_interface_t* _callback, bgfx_allocator_interface_t* _allocator);
     void (*shutdown)();
     void (*reset)(uint32_t _width, uint32_t _height, uint32_t _flags);
     uint32_t (*frame)();
@@ -602,7 +600,7 @@ BGFX_C_API uint8_t bgfx_get_supported_renderers(bgfx_renderer_type_t _enum[BGFX_
 BGFX_C_API const char* bgfx_get_renderer_name(bgfx_renderer_type_t _type);
 
 /**/
-BGFX_C_API bool bgfx_init(bgfx_renderer_type_t _type, uint16_t _vendorId, uint16_t _deviceId, bgfx_callback_interface_t* _callback, bgfx_reallocator_interface_t* _allocator);
+BGFX_C_API bool bgfx_init(bgfx_renderer_type_t _type, uint16_t _vendorId, uint16_t _deviceId, bgfx_callback_interface_t* _callback, bgfx_allocator_interface_t* _allocator);
 
 /**/
 BGFX_C_API void bgfx_shutdown();

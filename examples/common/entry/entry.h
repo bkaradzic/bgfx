@@ -10,7 +10,7 @@
 #include <string.h> // memset
 #include <bx/bx.h>
 
-namespace bx { struct FileReaderI; struct FileWriterI; struct ReallocatorI; }
+namespace bx { struct FileReaderI; struct FileWriterI; struct AllocatorI; }
 
 extern "C" int _main_(int _argc, char** _argv);
 
@@ -236,7 +236,7 @@ namespace entry
 
 	bx::FileReaderI* getFileReader();
 	bx::FileWriterI* getFileWriter();
-	bx::ReallocatorI* getAllocator();
+	bx::AllocatorI*  getAllocator();
 
 	WindowHandle createWindow(int32_t _x, int32_t _y, uint32_t _width, uint32_t _height, uint32_t _flags = ENTRY_WINDOW_FLAG_NONE, const char* _title = "");
 	void destroyWindow(WindowHandle _handle);

@@ -19,7 +19,7 @@
 
 #define BGFX_INVALID_HANDLE { bgfx::invalidHandle }
 
-namespace bx { struct ReallocatorI; }
+namespace bx { struct AllocatorI; }
 
 /// BGFX
 namespace bgfx
@@ -769,7 +769,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_init`.
 	///
-	bool init(RendererType::Enum _type = RendererType::Count, uint16_t _vendorId = BGFX_PCI_ID_NONE, uint16_t _deviceId = 0, CallbackI* _callback = NULL, bx::ReallocatorI* _reallocator = NULL);
+	bool init(RendererType::Enum _type = RendererType::Count, uint16_t _vendorId = BGFX_PCI_ID_NONE, uint16_t _deviceId = 0, CallbackI* _callback = NULL, bx::AllocatorI* _reallocator = NULL);
 
 	/// Shutdown bgfx library.
 	///

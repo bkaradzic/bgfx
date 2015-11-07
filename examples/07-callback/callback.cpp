@@ -291,7 +291,7 @@ struct BgfxCallback : public bgfx::CallbackI
 	AviWriter* m_writer;
 };
 
-class BgfxAllocator : public bx::ReallocatorI
+class BgfxAllocator : public bx::AllocatorI
 {
 public:
 	BgfxAllocator()
@@ -304,39 +304,40 @@ public:
 	{
 	}
 
-	virtual void* alloc(size_t _size, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
+	virtual void* realloc(void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
 	{
-		if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
+		if (0 == _size)
 		{
-			void* ptr = ::malloc(_size);
-			dbgPrintf("%s(%d): ALLOC %p of %d byte(s)\n", _file, _line, ptr, _size);
-			++m_numBlocks;
-			m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
-			return ptr;
+			if (NULL != _ptr)
+			{
+				if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
+				{
+					dbgPrintf("%s(%d): FREE %p\n", _file, _line, _ptr);
+					::free(_ptr);
+					--m_numBlocks;
+				}
+				else
+				{
+					bx::alignedFree(this, _ptr, _align, _file, _line);
+				}
+			}
+
+			return NULL;
 		}
-
-		return bx::alignedAlloc(this, _size, _align, _file, _line);
-	}
-
-	virtual void free(void* _ptr, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
-	{
-		if (NULL != _ptr)
+		else if (NULL == _ptr)
 		{
 			if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
 			{
-				dbgPrintf("%s(%d): FREE %p\n", _file, _line, _ptr);
-				::free(_ptr);
-				--m_numBlocks;
+				void* ptr = ::malloc(_size);
+				dbgPrintf("%s(%d): ALLOC %p of %d byte(s)\n", _file, _line, ptr, _size);
+				++m_numBlocks;
+				m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
+				return ptr;
 			}
-			else
-			{
-				bx::alignedFree(this, _ptr, _align, _file, _line);
-			}
-		}
-	}
 
-	virtual void* realloc(void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
-	{
+			return bx::alignedAlloc(this, _size, _align, _file, _line);
+		}
+
 		if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
 		{
 			void* ptr = ::realloc(_ptr, _size);

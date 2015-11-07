@@ -125,7 +125,7 @@ namespace bgfx
 #	define BGFX_CONFIG_MEMORY_TRACKING (BGFX_CONFIG_DEBUG && BX_CONFIG_SUPPORTS_THREADING)
 #endif // BGFX_CONFIG_MEMORY_TRACKING
 
-	class AllocatorStub : public bx::ReallocatorI
+	class AllocatorStub : public bx::AllocatorI
 	{
 	public:
 		AllocatorStub()
@@ -136,49 +136,50 @@ namespace bgfx
 		{
 		}
 
-		virtual void* alloc(size_t _size, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
+		virtual void* realloc(void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
 		{
-			if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
+			if (0 == _size)
 			{
-#if BGFX_CONFIG_MEMORY_TRACKING
+				if (NULL != _ptr)
 				{
-					bx::LwMutexScope scope(m_mutex);
-					++m_numBlocks;
-					m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
-				}
+					if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
+					{
+#if BGFX_CONFIG_MEMORY_TRACKING
+						{
+							bx::LwMutexScope scope(m_mutex);
+							BX_CHECK(m_numBlocks > 0, "Number of blocks is 0. Possible alloc/free mismatch?");
+							--m_numBlocks;
+						}
 #endif // BGFX_CONFIG_MEMORY_TRACKING
 
-				return ::malloc(_size);
+						::free(_ptr);
+					}
+					else
+					{
+						bx::alignedFree(this, _ptr, _align, _file, _line);
+					}
+				}
+
+				return NULL;
 			}
-
-			return bx::alignedAlloc(this, _size, _align, _file, _line);
-		}
-
-		virtual void free(void* _ptr, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
-		{
-			if (NULL != _ptr)
+			else if (NULL == _ptr)
 			{
 				if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
 				{
 #if BGFX_CONFIG_MEMORY_TRACKING
 					{
 						bx::LwMutexScope scope(m_mutex);
-						BX_CHECK(m_numBlocks > 0, "Number of blocks is 0. Possible alloc/free mismatch?");
-						--m_numBlocks;
+						++m_numBlocks;
+						m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
 					}
 #endif // BGFX_CONFIG_MEMORY_TRACKING
 
-					::free(_ptr);
+					return ::malloc(_size);
 				}
-				else
-				{
-					bx::alignedFree(this, _ptr, _align, _file, _line);
-				}
-			}
-		}
 
-		virtual void* realloc(void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
-		{
+				return bx::alignedAlloc(this, _size, _align, _file, _line);
+			}
+
 			if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
 			{
 #if BGFX_CONFIG_MEMORY_TRACKING
@@ -211,7 +212,7 @@ namespace bgfx
 	static bool s_graphicsDebuggerPresent = false;
 
 	CallbackI* g_callback = NULL;
-	bx::ReallocatorI* g_allocator = NULL;
+	bx::AllocatorI* g_allocator = NULL;
 
 	Caps g_caps;
 
@@ -2275,7 +2276,7 @@ again:
 		return s_rendererCreator[_type].name;
 	}
 
-	bool init(RendererType::Enum _type, uint16_t _vendorId, uint16_t _deviceId, CallbackI* _callback, bx::ReallocatorI* _allocator)
+	bool init(RendererType::Enum _type, uint16_t _vendorId, uint16_t _deviceId, CallbackI* _callback, bx::AllocatorI* _allocator)
 	{
 		BX_CHECK(NULL == s_ctx, "bgfx is already initialized.");
 
@@ -3512,21 +3513,11 @@ namespace bgfx
 		bgfx_callback_interface_t* m_interface;
 	};
 
-	class AllocatorC99 : public bx::ReallocatorI
+	class AllocatorC99 : public bx::AllocatorI
 	{
 	public:
 		virtual ~AllocatorC99()
 		{
-		}
-
-		virtual void* alloc(size_t _size, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
-		{
-			return m_interface->vtbl->alloc(m_interface, _size, _align, _file, _line);
-		}
-
-		virtual void free(void* _ptr, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
-		{
-			m_interface->vtbl->free(m_interface, _ptr, _align, _file, _line);
 		}
 
 		virtual void* realloc(void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
@@ -3534,7 +3525,7 @@ namespace bgfx
 			return m_interface->vtbl->realloc(m_interface, _ptr, _size, _align, _file, _line);
 		}
 
-		bgfx_reallocator_interface_t* m_interface;
+		bgfx_allocator_interface_t* m_interface;
 	};
 
 } // namespace bgfx
@@ -3613,7 +3604,7 @@ BGFX_C_API const char* bgfx_get_renderer_name(bgfx_renderer_type_t _type)
 	return bgfx::getRendererName(bgfx::RendererType::Enum(_type) );
 }
 
-BGFX_C_API bool bgfx_init(bgfx_renderer_type_t _type, uint16_t _vendorId, uint16_t _deviceId, bgfx_callback_interface_t* _callback, bgfx_reallocator_interface_t* _allocator)
+BGFX_C_API bool bgfx_init(bgfx_renderer_type_t _type, uint16_t _vendorId, uint16_t _deviceId, bgfx_callback_interface_t* _callback, bgfx_allocator_interface_t* _allocator)
 {
 	static bgfx::CallbackC99 s_callback;
 	s_callback.m_interface = _callback;
