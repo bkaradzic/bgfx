@@ -444,21 +444,7 @@ namespace bgfx
 
 		/// Supported functionality.
 		///
-		/// - `BGFX_CAPS_TEXTURE_COMPARE_LEQUAL` - Less equal texture
-		///      compare mode.
-		/// - `BGFX_CAPS_TEXTURE_COMPARE_ALL` - All texture compare modes.
-		/// - `BGFX_CAPS_TEXTURE_3D` - 3D textures.
-		/// - `BGFX_CAPS_VERTEX_ATTRIB_HALF` - AttribType::Half.
-		/// - `BGFX_CAPS_INSTANCING` - Vertex instancing.
-		/// - `BGFX_CAPS_RENDERER_MULTITHREADED` - Renderer on separate
-		///      thread.
-		/// - `BGFX_CAPS_FRAGMENT_DEPTH` - Fragment shader can modify depth
-		///      buffer value (gl_FragDepth).
-		/// - `BGFX_CAPS_BLEND_INDEPENDENT` - Multiple render targets can
-		///      have different blend mode set individually.
-		/// - `BGFX_CAPS_COMPUTE` - Renderer has compute shaders.
-		/// - `BGFX_CAPS_FRAGMENT_ORDERING` - Intel's pixel sync.
-		/// - `BGFX_CAPS_SWAP_CHAIN` - Multiple windows.
+		/// @attention See BGFX_CAPS_* flags at https://bkaradzic.github.io/bgfx/bgfx.html#available-caps
 		///
 		uint64_t supported;
 
