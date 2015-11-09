@@ -288,12 +288,12 @@
 <div class="section" id="initialization-and-shutdown">
 <h3>Initialization and Shutdown<a class="headerlink" href="#initialization-and-shutdown" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
-<dt id="_CPPv2N4bgfx4initEN12RendererType4EnumE8uint16_t8uint16_tP9CallbackIPN2bx12ReallocatorIE">
-<span id="bgfx::init__RendererType::Enum.uint16_t.uint16_t.CallbackIP.bx::ReallocatorIP"></span><span class="target" id="project0namespacebgfx_1ae8474ed41cf78992f5aa1285652fdaa9"></span>bool <code class="descclassname">bgfx::</code><code class="descname">init</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv2N4bgfx12RendererTypeE" title="bgfx::RendererType">RendererType</a>::<a class="reference internal" href="#_CPPv2N4bgfx12RendererType4EnumE" title="bgfx::RendererType::Enum">Enum</a> <em>_type</em>, uint16_t <em>_vendorId</em>, uint16_t <em>_deviceId</em>, <a class="reference internal" href="#_CPPv2N4bgfx9CallbackIE" title="bgfx::CallbackI">CallbackI</a> *<em>_callback</em>, bx::ReallocatorI *<em>_reallocator</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx4initEN12RendererType4EnumE8uint16_t8uint16_tP9CallbackIPN2bx12ReallocatorIE" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx4initEN12RendererType4EnumE8uint16_t8uint16_tP9CallbackIPN2bx10AllocatorIE">
+<span id="bgfx::init__RendererType::Enum.uint16_t.uint16_t.CallbackIP.bx::AllocatorIP"></span><span class="target" id="project0namespacebgfx_1a61064c8132d185e4e48ea9366a40fdd5"></span>bool <code class="descclassname">bgfx::</code><code class="descname">init</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv2N4bgfx12RendererTypeE" title="bgfx::RendererType">RendererType</a>::<a class="reference internal" href="#_CPPv2N4bgfx12RendererType4EnumE" title="bgfx::RendererType::Enum">Enum</a> <em>_type</em>, uint16_t <em>_vendorId</em>, uint16_t <em>_deviceId</em>, <a class="reference internal" href="#_CPPv2N4bgfx9CallbackIE" title="bgfx::CallbackI">CallbackI</a> *<em>_callback</em>, bx::AllocatorI *<em>_reallocator</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx4initEN12RendererType4EnumE8uint16_t8uint16_tP9CallbackIPN2bx10AllocatorIE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize bgfx library. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
-<dd><code class="docutils literal"><span class="pre">true</span></code> if initialization is sucessful.</dd>
+<dd><code class="docutils literal"><span class="pre">true</span></code> if initialization is successful.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_init</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -301,7 +301,7 @@
 <li><code class="first docutils literal"><span class="pre">_type</span></code> - <p>Select rendering backend. When set to RendererType::Count default rendering backend will be selected. See: <code class="docutils literal"><a class="reference internal" href="#project0structbgfx_1_1_renderer_type"><span><span class="pre">bgfx::RendererType</span></span></a></code></p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_vendorId</span></code> - <p>Vendor PCI id. If set to <code class="docutils literal"><span class="pre">BGFX_PCI_ID_NONE</span></code> it will select the first device.<ul class="simple">
-<li><code class="docutils literal"><span class="pre">BGFX_PCI_ID_NONE</span></code> - autoselect.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_PCI_ID_NONE</span></code> - auto-select.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_PCI_ID_AMD</span></code> - AMD.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_PCI_ID_INTEL</span></code> - Intel.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_PCI_ID_NVIDIA</span></code> - nVidia.</li>
@@ -312,7 +312,7 @@
 </li>
 <li><code class="first docutils literal"><span class="pre">_callback</span></code> - <p>Provide application specific callback interface. See: <code class="docutils literal"><a class="reference internal" href="#project0structbgfx_1_1_callback_i"><span><span class="pre">bgfx::CallbackI</span></span></a></code></p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_reallocator</span></code> - <p>Custom allocator. When custom allocator is not specified, library uses default CRT allocator. The library assumes icustom allocator is thread safe.</p>
+<li><code class="first docutils literal"><span class="pre">_reallocator</span></code> - <p>Custom allocator. When custom allocator is not specified, library uses default CRT allocator. The library assumes custom allocator is thread safe.</p>
 </li>
 </ul>
 </dd>
@@ -923,19 +923,10 @@
 <dt id="_CPPv2N4bgfx4Caps9supportedE">
 <span id="bgfx::Caps::supported__uint64_t"></span><span class="target" id="project0structbgfx_1_1_caps_1a39b666b5fe440ad5e92748bb1fce60cf"></span>uint64_t <code class="descname">supported</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps9supportedE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Supported functionality. </p>
-<p><ul class="simple">
-<li><code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_COMPARE_LEQUAL</span></code> - Less equal texture compare mode.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_COMPARE_ALL</span></code> - All texture compare modes.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_3D</span></code> - 3D textures.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_CAPS_VERTEX_ATTRIB_HALF</span></code> - AttribType::Half.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_CAPS_INSTANCING</span></code> - Vertex instancing.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_CAPS_RENDERER_MULTITHREADED</span></code> - Renderer on separate thread.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FRAGMENT_DEPTH</span></code> - Fragment shader can modify depth buffer value (gl_FragDepth).</li>
-<li><code class="docutils literal"><span class="pre">BGFX_CAPS_BLEND_INDEPENDENT</span></code> - Multiple render targets can have different blend mode set individually.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_CAPS_COMPUTE</span></code> - Renderer has compute shaders.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FRAGMENT_ORDERING</span></code> - Intel&#8217;s pixel sync.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_CAPS_SWAP_CHAIN</span></code> - Multiple windows. </li>
-</ul>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>See BGFX_CAPS_* flags at <a class="reference external" href="https://bkaradzic.github.io/bgfx/bgfx.html#available-caps">https://bkaradzic.github.io/bgfx/bgfx.html#available-caps</a> </dd>
+</dl>
 </p>
 </dd></dl>
 
@@ -1014,6 +1005,8 @@
 
 </dd></dl>
 
+<div class="section" id="available-caps">
+<h5>Available Caps<a class="headerlink" href="#available-caps" title="Permalink to this headline">¶</a></h5>
 <dl class="macro">
 <dt id="c.BGFX_CAPS_TEXTURE_COMPARE_LEQUAL">
 <span class="target" id="project0bgfxdefines_8h_1a1316712571960b2e3c9daf12723041d7"></span><code class="descname">BGFX_CAPS_TEXTURE_COMPARE_LEQUAL</code><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_COMPARE_LEQUAL" title="Permalink to this definition">¶</a></dt>
@@ -1104,6 +1097,25 @@
 <dd><p>HiDPI rendering is supported. </p>
 </dd></dl>
 
+<dl class="macro">
+<dt id="c.BGFX_CAPS_TEXTURE_BLIT">
+<span class="target" id="project0bgfxdefines_8h_1a7ddb9c7ef30ca6c8b68b686b5122123f"></span><code class="descname">BGFX_CAPS_TEXTURE_BLIT</code><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_BLIT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Texture blit is supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_TEXTURE_READ_BACK">
+<span class="target" id="project0bgfxdefines_8h_1ac2cd9bdd84fdce3e55b3054413094f0d"></span><code class="descname">BGFX_CAPS_TEXTURE_READ_BACK</code><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_READ_BACK" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read-back texture is supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_OCCLUSION_QUERY">
+<span class="target" id="project0bgfxdefines_8h_1a35626a97a17fc3e2f3b712a8221c38bf"></span><code class="descname">BGFX_CAPS_OCCLUSION_QUERY</code><a class="headerlink" href="#c.BGFX_CAPS_OCCLUSION_QUERY" title="Permalink to this definition">¶</a></dt>
+<dd><p>Occlusion query is supported. </p>
+</dd></dl>
+
+</div>
 </div>
 <div class="section" id="statistics">
 <h4>Statistics<a class="headerlink" href="#statistics" title="Permalink to this headline">¶</a></h4>
@@ -1279,7 +1291,7 @@ creating windows.</p>
 <dt><strong>Return</strong></dt>
 <dd>Current renderer state. See: <code class="docutils literal"><a class="reference internal" href="#project0structbgfx_1_1_render_frame"><span><span class="pre">bgfx::RenderFrame</span></span></a></code>.</dd>
 <dt><strong>Warning</strong></dt>
-<dd>This call should be only used on platforms that don&#8217;t allow creating separate rendering thread. If it is called before to <a class="reference internal" href="#project0namespacebgfx_1ae8474ed41cf78992f5aa1285652fdaa9"><span>bgfx::init</span></a>, render thread won&#8217;t be created by <a class="reference internal" href="#project0namespacebgfx_1ae8474ed41cf78992f5aa1285652fdaa9"><span>bgfx::init</span></a> call. </dd>
+<dd>This call should be only used on platforms that don&#8217;t allow creating separate rendering thread. If it is called before to <a class="reference internal" href="#project0namespacebgfx_1a61064c8132d185e4e48ea9366a40fdd5"><span>bgfx::init</span></a>, render thread won&#8217;t be created by <a class="reference internal" href="#project0namespacebgfx_1a61064c8132d185e4e48ea9366a40fdd5"><span>bgfx::init</span></a> call. </dd>
 </dl>
 </p>
 </dd></dl>
@@ -1301,7 +1313,7 @@ creating windows.</p>
 <dd><p>Set platform data. </p>
 <p><dl class="docutils">
 <dt><strong>Warning</strong></dt>
-<dd>Must be called before <code class="docutils literal"><a class="reference internal" href="#project0namespacebgfx_1ae8474ed41cf78992f5aa1285652fdaa9"><span><span class="pre">bgfx::init</span></span></a></code>.</dd>
+<dd>Must be called before <code class="docutils literal"><a class="reference internal" href="#project0namespacebgfx_1a61064c8132d185e4e48ea9366a40fdd5"><span><span class="pre">bgfx::init</span></span></a></code>.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_platform_data</span></code>. </dd>
 </dl>
@@ -4390,7 +4402,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dt><strong>Return</strong></dt>
 <dd>Handle to frame buffer object.</dd>
 <dt><strong>Remark</strong></dt>
-<dd>Frame buffer cannnot be used for sampling.</dd>
+<dd>Frame buffer cannot be used for sampling.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_frame_buffer_from_nwh</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
