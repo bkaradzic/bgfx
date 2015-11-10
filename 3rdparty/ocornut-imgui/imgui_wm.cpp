@@ -921,7 +921,7 @@ namespace ImGuiWM
 
         void* pTemp = ImGui::GetInternalState();
         m_pState = ImGui::MemAlloc(ImGui::GetInternalStateSize());
-        ImGui::SetInternalState(m_pState, true);
+        ImGui::SetInternalState(m_pState, false);
         ImGui::GetIO().IniFilename = NULL;
         ImGui::SetInternalState(pTemp);
     }
