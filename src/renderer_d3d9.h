@@ -418,11 +418,13 @@ namespace bgfx { namespace d3d9
 		struct Frame
 		{
 			IDirect3DQuery9* m_disjoint;
-			IDirect3DQuery9* m_start;
+			IDirect3DQuery9* m_begin;
 			IDirect3DQuery9* m_end;
 			IDirect3DQuery9* m_freq;
 		};
 
+		uint64_t m_begin;
+		uint64_t m_end;
 		uint64_t m_elapsed;
 		uint64_t m_frequency;
 

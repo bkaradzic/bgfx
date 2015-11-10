@@ -589,10 +589,12 @@ namespace bgfx
 	///
 	struct Stats
 	{
-		uint64_t cpuTime;      //!< CPU frame time.
+		uint64_t cpuTimeBegin; //!< CPU frame begin time.
+		uint64_t cpuTimeEnd;   //!< CPU frame end time.
 		uint64_t cpuTimerFreq; //!< CPU timer frequency.
 
-		uint64_t gpuTime;      //!< GPU frame time.
+		uint64_t gpuTimeBegin; //!< GPU frame begin time.
+		uint64_t gpuTimeEnd;   //!< GPU frame end time.
 		uint64_t gpuTimerFreq; //!< GPU timer frequency.
 	};
 

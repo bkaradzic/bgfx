@@ -296,10 +296,12 @@ namespace bgfx { namespace d3d11
 		struct Frame
 		{
 			ID3D11Query* m_disjoint;
-			ID3D11Query* m_start;
+			ID3D11Query* m_begin;
 			ID3D11Query* m_end;
 		};
 
+		uint64_t m_begin;
+		uint64_t m_end;
 		uint64_t m_elapsed;
 		uint64_t m_frequency;
 
