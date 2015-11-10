@@ -242,6 +242,11 @@ class DrawStress : public entry::AppI
 			imguiLabel("Draw calls: %d", m_dim*m_dim*m_dim);
 			imguiLabel("Avg Delta Time (1 second) [ms]: %0.4f", m_deltaTimeAvgNs/1000.0f);
 
+			imguiSeparatorLine();
+			const bgfx::Stats* stats = bgfx::getStats();
+			imguiLabel("GPU %0.6f [ms]", double(stats->gpuTimeEnd - stats->gpuTimeBegin)*1000.0/stats->gpuTimerFreq);
+			imguiLabel("CPU %0.6f [ms]", double(stats->cpuTimeEnd - stats->cpuTimeBegin)*1000.0/stats->cpuTimerFreq);
+
 			imguiEndScrollArea();
 			imguiEndFrame();
 

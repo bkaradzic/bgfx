@@ -1205,12 +1205,22 @@ namespace bgfx { namespace gl
 
 		void create()
 		{
-			GL_CHECK(glGenQueries(BX_COUNTOF(m_frame), m_frame) );
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frame); ++ii)
+			{
+				Frame& frame = m_frame[ii];
+				GL_CHECK(glGenQueries(1, &frame.m_begin) );
+				GL_CHECK(glGenQueries(1, &frame.m_elapsed) );
+			}
 		}
 
 		void destroy()
 		{
-			GL_CHECK(glDeleteQueries(BX_COUNTOF(m_frame), m_frame) );
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frame); ++ii)
+			{
+				Frame& frame = m_frame[ii];
+				GL_CHECK(glDeleteQueries(1, &frame.m_begin) );
+				GL_CHECK(glDeleteQueries(1, &frame.m_elapsed) );
+			}
 		}
 
 		void begin()
@@ -1220,8 +1230,13 @@ namespace bgfx { namespace gl
 				get();
 			}
 
+			Frame& frame = m_frame[m_control.m_current];
+			GL_CHECK(glQueryCounter(frame.m_begin
+					, GL_TIMESTAMP
+					) );
+
 			GL_CHECK(glBeginQuery(GL_TIME_ELAPSED
-					, m_frame[m_control.m_current]
+					, frame.m_elapsed
 					) );
 		}
 
@@ -1235,18 +1250,26 @@ namespace bgfx { namespace gl
 		{
 			if (0 != m_control.available() )
 			{
+				Frame& frame = m_frame[m_control.m_read];
+
 				GLint available;
-				GL_CHECK(glGetQueryObjectiv(m_frame[m_control.m_read]
+				GL_CHECK(glGetQueryObjectiv(frame.m_elapsed
 						, GL_QUERY_RESULT_AVAILABLE
 						, &available
 						) );
 
 				if (available)
 				{
-					GL_CHECK(glGetQueryObjectui64v(m_frame[m_control.m_read]
+					GL_CHECK(glGetQueryObjectui64v(frame.m_begin
+							, GL_QUERY_RESULT
+							, &m_begin
+							) );
+
+					GL_CHECK(glGetQueryObjectui64v(frame.m_elapsed
 							, GL_QUERY_RESULT
 							, &m_elapsed
 							) );
+					m_end = m_begin + m_elapsed;
 					m_control.consume(1);
 					return true;
 				}
@@ -1255,9 +1278,17 @@ namespace bgfx { namespace gl
 			return false;
 		}
 
+		uint64_t m_begin;
+		uint64_t m_end;
 		uint64_t m_elapsed;
 
-		GLuint m_frame[4];
+		struct Frame
+		{
+			GLuint m_begin;
+			GLuint m_elapsed;
+		};
+
+		Frame m_frame[4];
 		bx::RingBufferControl m_control;
 	};
 
