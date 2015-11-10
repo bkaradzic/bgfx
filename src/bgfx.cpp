@@ -1416,8 +1416,10 @@ namespace bgfx
 
 	bool Context::renderFrame()
 	{
+		BGFX_PROFILER_SCOPE("bgfx", "renderFrame", 0xff2040ff)
+
 		if (m_rendererInitialized
-		&&  !m_flipAfterRender)
+		&& !m_flipAfterRender)
 		{
 			m_renderCtx->flip(m_render->m_hmd);
 		}
