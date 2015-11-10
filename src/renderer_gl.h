@@ -509,6 +509,10 @@ typedef uint64_t GLuint64;
 #	define GL_TIME_ELAPSED 0x88BF
 #endif // GL_TIME_ELAPSED
 
+#ifndef GL_TIMESTAMP
+#	define GL_TIMESTAMP 0x8E28
+#endif // GL_TIMESTAMP
+
 #ifndef GL_VBO_FREE_MEMORY_ATI
 #	define GL_VBO_FREE_MEMORY_ATI 0x87FB
 #endif // GL_VBO_FREE_MEMORY_ATI
