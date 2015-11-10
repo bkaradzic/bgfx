@@ -1416,7 +1416,7 @@ namespace bgfx
 
 	bool Context::renderFrame()
 	{
-		BGFX_PROFILER_SCOPE("bgfx", "renderFrame", 0xff2040ff)
+		BGFX_PROFILER_SCOPE(bgfx, render_frame, 0xff2040ff)
 
 		if (m_rendererInitialized
 		&& !m_flipAfterRender)

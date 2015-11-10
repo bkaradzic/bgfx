@@ -52,10 +52,10 @@
 #ifndef BGFX_PROFILER_SCOPE
 #	if BGFX_CONFIG_PROFILER_MICROPROFILE
 #		include <microprofile.h>
-#		define BGFX_PROFILER_SCOPE(_group, _name, _color) MICROPROFILE_SCOPEI(_group, _name, _color)
+#		define BGFX_PROFILER_SCOPE(_group, _name, _color) MICROPROFILE_SCOPEI(#_group, #_name, _color)
 #	elif BGFX_CONFIG_PROFILER_REMOTERY
 #		include <remotery.h>
-#		define BGFX_PROFILER_SCOPE(_group, _name, _color) rmt_ScopedCPUSample(_name)
+#		define BGFX_PROFILER_SCOPE(_group, _name, _color) rmt_ScopedCPUSample(_group##_name)
 #	else
 #		define BGFX_PROFILER_SCOPE(_group, _name, _color) BX_NOOP()
 #	endif // BGFX_CONFIG_PROFILER_*
@@ -3795,7 +3795,7 @@ namespace bgfx
 		{
 			if (!m_singleThreaded)
 			{
-				BGFX_PROFILER_SCOPE("bgfx", "main thread wait", 0xff2040ff)
+				BGFX_PROFILER_SCOPE(bgfx, main_thread_wait, 0xff2040ff)
 				int64_t start = bx::getHPCounter();
 				bool ok = m_gameSem.wait();
 				BX_CHECK(ok, "Semaphore wait failed."); BX_UNUSED(ok);
@@ -3815,7 +3815,7 @@ namespace bgfx
 		{
 			if (!m_singleThreaded)
 			{
-				BGFX_PROFILER_SCOPE("bgfx", "render thread wait", 0xff2040ff)
+				BGFX_PROFILER_SCOPE(bgfx, render_thread_wait, 0xff2040ff)
 				int64_t start = bx::getHPCounter();
 				bool ok = m_renderSem.wait();
 				BX_CHECK(ok, "Semaphore wait failed."); BX_UNUSED(ok);
