@@ -54,8 +54,8 @@
 #		include <microprofile.h>
 #		define BGFX_PROFILER_SCOPE(_group, _name, _color) MICROPROFILE_SCOPEI(#_group, #_name, _color)
 #	elif BGFX_CONFIG_PROFILER_REMOTERY
-#		include <remotery.h>
-#		define BGFX_PROFILER_SCOPE(_group, _name, _color) rmt_ScopedCPUSample(_group##_name)
+#		include <remotery/lib/Remotery.h>
+#		define BGFX_PROFILER_SCOPE(_group, _name, _color) rmt_ScopedCPUSample(_group##_##_name)
 #	else
 #		define BGFX_PROFILER_SCOPE(_group, _name, _color) BX_NOOP()
 #	endif // BGFX_CONFIG_PROFILER_*
