@@ -1453,6 +1453,8 @@ namespace bgfx { namespace mtl
 
 		m_processedUniforms = false;
 		m_numPredefined = 0;
+
+		m_renderPipelineStateCache.invalidate();
 	}
 
 	UniformType::Enum convertMtlType(MTLDataType _type)
