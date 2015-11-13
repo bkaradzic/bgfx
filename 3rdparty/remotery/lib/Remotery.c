@@ -674,7 +674,7 @@ static rmtError VirtualMirrorBuffer_Constructor(VirtualMirrorBuffer* buffer, rmt
     // derived from this software without specific prior written permission.
     //
     // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-    // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+    // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
     // ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
     // INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
     // GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -1392,7 +1392,7 @@ static void ObjectAllocator_Push(ObjectAllocator* allocator, ObjectLink* start, 
     assert(end != NULL);
 
     // CAS pop add range to the front of the list
-    while (1)
+    for (;;)
     {
         ObjectLink* old_link = (ObjectLink*)allocator->first_free;
         end->next = old_link;
@@ -1410,7 +1410,7 @@ static ObjectLink* ObjectAllocator_Pop(ObjectAllocator* allocator)
     assert(allocator->first_free != NULL);
 
     // CAS pop from the front of the list
-    while (1)
+    for (;;)
     {
         ObjectLink* old_link = (ObjectLink*)allocator->first_free;
         ObjectLink* next_link = old_link->next;
@@ -1740,9 +1740,16 @@ static SocketStatus TCPSocket_PollStatus(TCPSocket* tcp_socket)
     FD_ZERO(&fd_read);
     FD_ZERO(&fd_write);
     FD_ZERO(&fd_errors);
+#ifdef _MSC_VER
+#   pragma warning(push)
+#   pragma warning(disable:4127) // warning C4127: conditional expression is constant
+#endif // _MSC_VER
     FD_SET(tcp_socket->socket, &fd_read);
     FD_SET(tcp_socket->socket, &fd_write);
     FD_SET(tcp_socket->socket, &fd_errors);
+#ifdef _MSC_VER
+#   pragma warning(pop)
+#endif // _MSC_VER
 
     // Poll socket status without blocking
     tv.tv_sec = 0;
@@ -2273,7 +2280,7 @@ static rmtU32 MurmurHash3_x86_32(const void* key, int len, rmtU32 seed)
         k2 *= c2;
 
         h1 ^= k2;
-        h1 = rotl32(h1,13); 
+        h1 = rotl32(h1,13);
         h1 = h1*5+0xe6546b64;
     }
 
@@ -2299,7 +2306,7 @@ static rmtU32 MurmurHash3_x86_32(const void* key, int len, rmtU32 seed)
     h1 = fmix32(h1);
 
     return h1;
-} 
+}
 
 
 
@@ -2797,7 +2804,7 @@ typedef struct Message
 
 
 // Multiple producer, single consumer message queue that uses its own data buffer
-// to store the message data. 
+// to store the message data.
 typedef struct MessageQueue
 {
     rmtU32 size;
@@ -2857,7 +2864,7 @@ static Message* MessageQueue_AllocMessage(MessageQueue* queue, rmtU32 payload_si
 
     assert(queue != NULL);
 
-    while (1)
+    for (;;)
     {
         // Check for potential overflow
         rmtU32 s = queue->size;
@@ -3064,7 +3071,7 @@ static rmtError Server_ReceiveMessage(Server* server, char message_first_byte, r
     // (don't want to add safe strcmp to lib yet)
     if (message_data[0] == 'C' && message_data[1] == 'O' && message_data[2] == 'N' && message_data[3] == 'I')
     {
-        // Pass on to any registered handler 
+        // Pass on to any registered handler
         if (g_Settings.input_handler != NULL)
             g_Settings.input_handler(message_data + 4, g_Settings.input_handler_context);
 
@@ -3415,7 +3422,7 @@ static rmtError json_SampleArray(Buffer* buffer, Sample* first_sample, rmtPStr n
 
 typedef struct SampleTree
 {
-    // Allocator for all samples 
+    // Allocator for all samples
     ObjectAllocator* allocator;
 
     // Root sample for all samples created by this thread
@@ -3652,7 +3659,7 @@ static rmtError ThreadSampler_Constructor(ThreadSampler* thread_sampler)
 
     // Set defaults
     for (i = 0; i < SampleType_Count; i++)
-        thread_sampler->sample_trees[i] = NULL; 
+        thread_sampler->sample_trees[i] = NULL;
     thread_sampler->next = NULL;
 
     // Set the initial name to Thread0 etc.
@@ -3970,7 +3977,7 @@ static rmtError Remotery_ConsumeMessageQueue(Remotery* rmt)
         {
             // This shouldn't be possible
             case MsgID_NotReady:
-                assert(RMT_FALSE); 
+                assert(RMT_FALSE);
                 break;
 
             // Dispatch to message handler
@@ -3997,7 +4004,7 @@ static void Remotery_FlushMessageQueue(Remotery* rmt)
     assert(rmt != NULL);
 
     // Loop reading all remaining messages
-    while (1)
+    for (;;)
     {
         Message* message = MessageQueue_PeekNextMessage(rmt->mq_to_rmt_thread);
         if (message == NULL)
@@ -4193,9 +4200,9 @@ static rmtError Remotery_GetThreadSampler(Remotery* rmt, ThreadSampler** thread_
         if (error != RMT_ERROR_NONE)
             return error;
         ts = *thread_sampler;
- 
+
         // Add to the beginning of the global linked list of thread samplers
-        while (1)
+        for (;;)
         {
             ThreadSampler* old_ts = rmt->first_thread_sampler;
             ts->next = old_ts;
@@ -4232,7 +4239,7 @@ static void Remotery_DestroyThreadSamplers(Remotery* rmt)
     {
         ThreadSampler* ts;
 
-        while (1)
+        for (;;)
         {
             ThreadSampler* old_ts = rmt->first_thread_sampler;
             ThreadSampler* next_ts = old_ts->next;
@@ -4504,7 +4511,7 @@ RMT_API void _rmt_BeginCPUSample(rmtPStr name, rmtU32* hash_cache)
     // of call or stored elsewhere when dynamic names are required.
     //
     // If 'hash_cache' is NULL then this call becomes more expensive, as it has to recalculate the hash of the name.
-    
+
     ThreadSampler* ts;
 
     if (g_Remotery == NULL)
@@ -4776,7 +4783,7 @@ RMT_API void _rmt_BeginCUDASample(rmtPStr name, rmtU32* hash_cache, void* stream
         if (*cuda_tree == NULL)
         {
             CUDASample* root_sample;
-            
+
             New_3(SampleTree, *cuda_tree, sizeof(CUDASample), (ObjConstructor)CUDASample_Constructor, (ObjDestructor)CUDASample_Destructor);
             if (error != RMT_ERROR_NONE)
                 return;
