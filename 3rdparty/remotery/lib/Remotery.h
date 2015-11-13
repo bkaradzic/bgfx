@@ -253,7 +253,7 @@ typedef enum rmtError
 // Can call remotery functions on a null pointer
 // TODO: Can embed extern "C" in these macros?
 
-#define rmt_Settings()																\
+#define rmt_Settings()                                                              \
     RMT_OPTIONAL_RET(RMT_ENABLED, _rmt_Settings(), NULL )
 
 #define rmt_CreateGlobalInstance(rmt)                                               \
@@ -294,7 +294,7 @@ typedef void (*rmtInputHandlerPtr)(const char* text, void* context);
 // Struture to fill in to modify Remotery default settings
 typedef struct rmtSettings
 {
-    rmtU32 port;
+    rmtU16 port;
 
     // How long to sleep between server updates, hopefully trying to give
     // a little CPU back to other threads.
@@ -320,7 +320,7 @@ typedef struct rmtSettings
 
     // Context pointer that gets sent to Remotery console callback function
     void* input_handler_context;
-    
+
     rmtPStr logFilename;
 } rmtSettings;
 
