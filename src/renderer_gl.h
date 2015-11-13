@@ -1235,9 +1235,12 @@ namespace bgfx { namespace gl
 			}
 
 			Frame& frame = m_frame[m_control.m_current];
-			GL_CHECK(glQueryCounter(frame.m_begin
-					, GL_TIMESTAMP
-					) );
+			if (!BX_ENABLED(BX_PLATFORM_OSX) )
+			{
+				GL_CHECK(glQueryCounter(frame.m_begin
+						, GL_TIMESTAMP
+						) );
+			}
 
 			GL_CHECK(glBeginQuery(GL_TIME_ELAPSED
 					, frame.m_elapsed
@@ -1264,10 +1267,17 @@ namespace bgfx { namespace gl
 
 				if (available)
 				{
-					GL_CHECK(glGetQueryObjectui64v(frame.m_begin
-							, GL_QUERY_RESULT
-							, &m_begin
-							) );
+					if (!BX_ENABLED(BX_PLATFORM_OSX) )
+					{
+						GL_CHECK(glGetQueryObjectui64v(frame.m_begin
+								, GL_QUERY_RESULT
+								, &m_begin
+								) );
+					}
+					else
+					{
+						m_begin = 0;
+					}
 
 					GL_CHECK(glGetQueryObjectui64v(frame.m_elapsed
 							, GL_QUERY_RESULT
