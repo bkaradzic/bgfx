@@ -7,3 +7,7 @@ indent_size  = 2
 [ocornut-imgui/*]
 indent_style = space
 indent_size  = 4
+
+[remotery/*]
+indent_style = space
+indent_size  = 4
