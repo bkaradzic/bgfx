@@ -17,6 +17,12 @@
 #include "cmd.h"
 #include "input.h"
 
+#if ENTRY_CONFIG_PROFILER
+#	define RMT_ENABLED
+#endif // ENTRY_CONFIG_PROFILER
+
+#include <remotery/lib/Remotery.c>
+
 extern "C" int _main_(int _argc, char** _argv);
 
 namespace entry
@@ -24,6 +30,9 @@ namespace entry
 	static uint32_t s_debug = BGFX_DEBUG_NONE;
 	static uint32_t s_reset = BGFX_RESET_NONE;
 	static bool s_exit = false;
+
+	static Remotery* s_rmt = NULL;
+
 	static bx::FileReaderI* s_fileReader = NULL;
 	static bx::FileWriterI* s_fileWriter = NULL;
 
@@ -338,6 +347,15 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	{
 		//DBG(BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME);
 
+		if (BX_ENABLED(ENTRY_CONFIG_PROFILER) )
+		{
+//			rmtSettings* settings = rmt_Settings();
+			if (RMT_ERROR_NONE != rmt_CreateGlobalInstance(&s_rmt) )
+			{
+				s_rmt = NULL;
+			}
+		}
+
 #if BX_CONFIG_CRT_FILE_READER_WRITER
 		s_fileReader = new bx::CrtFileReader;
 		s_fileWriter = new bx::CrtFileWriter;
@@ -369,6 +387,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		delete s_fileWriter;
 		s_fileWriter = NULL;
 #endif // BX_CONFIG_CRT_FILE_READER_WRITER
+
+		if (BX_ENABLED(ENTRY_CONFIG_PROFILER)
+		&&  NULL != s_rmt)
+		{
+			rmt_DestroyGlobalInstance(s_rmt);
+		}
 
 		return result;
 	}
