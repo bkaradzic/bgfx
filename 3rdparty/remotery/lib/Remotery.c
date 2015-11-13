@@ -508,7 +508,7 @@ static void WriteFence()
 
 // Get a shared value with acquire semantics, ensuring the read is complete
 // before the function returns.
-static void* LoadAcquire(void* volatile const* addr)
+void* LoadAcquire(void* volatile const* addr)
 {
     // Hardware fence is implicit on x86 so only need the compiler fence
     void* v = *addr;
@@ -519,7 +519,7 @@ static void* LoadAcquire(void* volatile const* addr)
 
 // Set a shared value with release semantics, ensuring any prior writes
 // are complete before the value is set.
-static void StoreRelease(void* volatile*  addr, void* v)
+void StoreRelease(void* volatile*  addr, void* v)
 {
     // Hardware fence is implicit on x86 so only need the compiler fence
     WriteFence();
@@ -613,6 +613,7 @@ typedef struct VirtualMirrorBuffer
 static rmtError VirtualMirrorBuffer_Constructor(VirtualMirrorBuffer* buffer, rmtU32 size, int nb_attempts)
 {
     static const rmtU32 k_64 = 64 * 1024;
+    RMT_UNREFERENCED_PARAMETER(nb_attempts);
 
 #ifdef RMT_PLATFORM_LINUX
     char path[] = "/dev/shm/ring-buffer-XXXXXX";
@@ -785,7 +786,7 @@ static rmtError VirtualMirrorBuffer_Constructor(VirtualMirrorBuffer* buffer, rmt
 
 #endif
     // Map 2 contiguous pages
-    buffer->ptr = mmap(NULL, size * 2, PROT_NONE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    buffer->ptr = (rmtU8*)mmap(NULL, size * 2, PROT_NONE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
     if (buffer->ptr == MAP_FAILED)
     {
         buffer->ptr = NULL;
@@ -1173,8 +1174,6 @@ strstr_s (char *dest, rsize_t dmax,
 static errno_t
 strncat_s (char *dest, rsize_t dmax, const char *src, rsize_t slen)
 {
-    rsize_t orig_dmax;
-    char *orig_dest;
     const char *overlap_bumper;
 
     if (dest == NULL) {
@@ -1198,8 +1197,6 @@ strncat_s (char *dest, rsize_t dmax, const char *src, rsize_t slen)
     }
 
     /* hold base of dest in case src was not copied */
-    orig_dmax = dmax;
-    orig_dest = dest;
 
     if (dest < src) {
         overlap_bumper = src;
@@ -1341,9 +1338,9 @@ static void itoahex_s( char *dest, rsize_t dmax, rmtS32 value )
 //
 // All objects that require free-list-backed allocation need to inherit from this type.
 //
-typedef struct ObjectLink
+typedef struct ObjectLink_s
 {
-    struct ObjectLink* volatile next;
+    struct ObjectLink_s* volatile next;
 } ObjectLink;
 
 
@@ -1676,11 +1673,12 @@ static void TCPSocket_Destructor(TCPSocket* tcp_socket)
 static rmtError TCPSocket_RunServer(TCPSocket* tcp_socket, rmtU16 port)
 {
     SOCKET s = INVALID_SOCKET;
-    struct sockaddr_in sin = { 0 };
+    struct sockaddr_in sin;
     #ifdef RMT_PLATFORM_WINDOWS
         u_long nonblock = 1;
     #endif
 
+    memset(&sin, 0, sizeof(sin) );
     assert(tcp_socket != NULL);
 
     // Try to create the socket
@@ -3294,7 +3292,7 @@ enum SampleType
 typedef struct Sample
 {
     // Inherit so that samples can be quickly allocated
-    ObjectLink ObjectLink;
+    ObjectLink Link;
 
     enum SampleType type;
 
@@ -3568,13 +3566,13 @@ static void SampleTree_Pop(SampleTree* tree, Sample* sample)
 static ObjectLink* FlattenSampleTree(Sample* sample, rmtU32* nb_samples)
 {
     Sample* child;
-    ObjectLink* cur_link = &sample->ObjectLink;
+    ObjectLink* cur_link = &sample->Link;
 
     assert(sample != NULL);
     assert(nb_samples != NULL);
 
     *nb_samples += 1;
-    sample->ObjectLink.next = (ObjectLink*)sample->first_child;
+    sample->Link.next = (ObjectLink*)sample->first_child;
 
     // Link all children together
     for (child = sample->first_child; child != NULL; child = child->next_sibling)
@@ -3600,7 +3598,7 @@ static void FreeSampleTree(Sample* sample, ObjectAllocator* allocator)
     ObjectLink* last_link = FlattenSampleTree(sample, &nb_cleared_samples);
 
     // Release the complete sample memory range
-    if (sample->ObjectLink.next != NULL)
+    if (sample->Link.next != NULL)
         ObjectAllocator_FreeRange(allocator, sample, last_link, nb_cleared_samples);
     else
         ObjectAllocator_Free(allocator, sample);
@@ -4272,18 +4270,18 @@ static void Remotery_DestroyThreadSamplers(Remotery* rmt)
 }
 
 
-static void* CRTMalloc(void* mm_context, rmtU32 size)
+static void* CRTMalloc(void* /*mm_context*/, rmtU32 size)
 {
     return malloc((size_t)size);
 }
 
 
-static void CRTFree(void* mm_context, void* ptr)
+static void CRTFree(void* /*mm_context*/, void* ptr)
 {
     free(ptr);
 }
 
-static void* CRTRealloc(void* mm_context, void* ptr, rmtU32 size)
+static void* CRTRealloc(void* /*mm_context*/, void* ptr, rmtU32 size)
 {
     return realloc(ptr, size);
 }
@@ -4361,6 +4359,7 @@ RMT_API Remotery* _rmt_GetGlobalInstance(void)
 
 static void SetDebuggerThreadName(const char* name)
 {
+    RMT_UNREFERENCED_PARAMETER(name);
     #ifdef RMT_PLATFORM_WINDOWS
         THREADNAME_INFO info;
         info.dwType = 0x1000;
@@ -4926,7 +4925,7 @@ static void D3D11_Destructor(D3D11* d3d11)
 typedef struct D3D11Timestamp
 {
     // Inherit so that timestamps can be quickly allocated
-    ObjectLink ObjectLink;
+    ObjectLink Link;
 
     // Pair of timestamp queries that wrap the sample
     ID3D11Query* query_start;
@@ -5481,7 +5480,7 @@ static void OpenGL_Destructor(OpenGL* opengl)
 typedef struct OpenGLTimestamp
 {
     // Inherit so that timestamps can be quickly allocated
-    ObjectLink ObjectLink;
+    ObjectLink Link;
 
     // Pair of timestamp queries that wrap the sample
     GLuint queries[2];
