@@ -55,27 +55,8 @@ namespace bgfx
 		return false;
 	}
 
-#define RENDERDOC_IMPORT \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_Shutdown); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetLogFile); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_GetCapture); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetCaptureOptions); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetActiveWindow); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_TriggerCapture); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_StartFrameCapture); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_EndFrameCapture); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_GetOverlayBits); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_MaskOverlayBits); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetFocusToggleKeys); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_SetCaptureKeys); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_InitRemoteAccess); \
-			RENDERDOC_IMPORT_FUNC(RENDERDOC_UnloadCrashHandler);
-
-#define RENDERDOC_IMPORT_FUNC(_func) p##_func _func
-	RENDERDOC_IMPORT
-#undef RENDERDOC_IMPORT_FUNC
-
-	pRENDERDOC_GetAPIVersion RENDERDOC_GetAPIVersion;
+	pRENDERDOC_GetAPI RENDERDOC_GetAPI;
+	static RENDERDOC_API_1_0_0* s_renderDoc;
 
 	void* loadRenderDoc()
 	{
@@ -89,33 +70,21 @@ namespace bgfx
 
 		if (NULL != renderdocdll)
 		{
-			RENDERDOC_GetAPIVersion = (pRENDERDOC_GetAPIVersion)bx::dlsym(renderdocdll, "RENDERDOC_GetAPIVersion");
-			if (NULL != RENDERDOC_GetAPIVersion
-			&&  RENDERDOC_API_VERSION == RENDERDOC_GetAPIVersion() )
+			RENDERDOC_GetAPI = (pRENDERDOC_GetAPI)bx::dlsym(renderdocdll, "RENDERDOC_GetAPI");
+			if (NULL != RENDERDOC_GetAPI
+			&&  1 == RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_0_0, (void**)&s_renderDoc) )
 			{
-#define RENDERDOC_IMPORT_FUNC(_func) \
-			_func = (p##_func)bx::dlsym(renderdocdll, #_func); \
-			BX_TRACE("%p " #_func, _func);
-RENDERDOC_IMPORT
-#undef RENDERDOC_IMPORT_FUNC
+				s_renderDoc->SetLogFilePathTemplate("temp/bgfx");
 
-				RENDERDOC_SetLogFile("temp/bgfx");
+ 				s_renderDoc->SetFocusToggleKeys(NULL, 0);
 
-				RENDERDOC_SetFocusToggleKeys(NULL, 0);
+				RENDERDOC_InputButton captureKey = eRENDERDOC_Key_F11;
+				s_renderDoc->SetCaptureKeys(&captureKey, 1);
 
-				KeyButton captureKey = eKey_F11;
-				RENDERDOC_SetCaptureKeys(&captureKey, 1);
+				s_renderDoc->SetCaptureOptionU32(eRENDERDOC_Option_AllowVSync,      1);
+				s_renderDoc->SetCaptureOptionU32(eRENDERDOC_Option_SaveAllInitials, 1);
 
-				CaptureOptions opt;
-				memset(&opt, 0, sizeof(opt) );
-				opt.AllowVSync      = 1;
-				opt.SaveAllInitials = 1;
-				RENDERDOC_SetCaptureOptions(&opt);
-
-				uint32_t ident = 0;
-				RENDERDOC_InitRemoteAccess(&ident);
-
-				RENDERDOC_MaskOverlayBits(eOverlay_None, eOverlay_None);
+				s_renderDoc->MaskOverlayBits(eRENDERDOC_Overlay_None, eRENDERDOC_Overlay_None);
 			}
 			else
 			{
@@ -131,7 +100,7 @@ RENDERDOC_IMPORT
 	{
 		if (NULL != _renderdocdll)
 		{
-			RENDERDOC_Shutdown();
+			s_renderDoc->Shutdown();
 			bx::dlclose(_renderdocdll);
 		}
 	}

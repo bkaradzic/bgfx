@@ -4,7 +4,7 @@
 */
 
 #include "common.h"
-#include <bgfx.h>
+#include <bgfx/bgfx.h>
 
 #include <limits.h> // INT_MAX
 #include <memory.h> // memset

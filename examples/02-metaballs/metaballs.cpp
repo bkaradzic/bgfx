@@ -4,7 +4,7 @@
  */
 
 #include "common.h"
-#include <bgfx.h>
+#include "bgfx_utils.h"
 
 // embedded shaders
 #include "vs_metaballs.bin.h"
@@ -464,14 +464,16 @@ uint32_t triangulate(uint8_t* _result, uint32_t _stride, const float* __restrict
 
 class Metaballs : public entry::AppI
 {
-	void init(int /*_argc*/, char** /*_argv*/) BX_OVERRIDE
+	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
+		Args args(_argc, _argv);
+		
 		m_width = 1280;
 		m_height = 720;
 		m_debug = BGFX_DEBUG_TEXT;
 		m_reset = BGFX_RESET_VSYNC;
 
-		bgfx::init();
+		bgfx::init(args.m_type, args.m_pciId);
 		bgfx::reset(m_width, m_height, m_reset);
 
 		// Enable debug text.
@@ -502,6 +504,11 @@ class Metaballs : public entry::AppI
 			case bgfx::RendererType::Direct3D12:
 				vs_metaballs = bgfx::makeRef(vs_metaballs_dx11, sizeof(vs_metaballs_dx11) );
 				fs_metaballs = bgfx::makeRef(fs_metaballs_dx11, sizeof(fs_metaballs_dx11) );
+				break;
+
+			case bgfx::RendererType::Metal:
+				vs_metaballs = bgfx::makeRef(vs_metaballs_mtl, sizeof(vs_metaballs_mtl) );
+				fs_metaballs = bgfx::makeRef(fs_metaballs_mtl, sizeof(fs_metaballs_mtl) );
 				break;
 
 			default:

@@ -52,7 +52,7 @@ float4 Temp_0_2;
 float4 Temp_1_3;
 float4 Temp_2_4;
 float4 Temp_3_5;
-int tmpvar_6;
+int4 Temp_int_0_6;
   Temp_0_2 = (_mtl_i.dcl_Input0_POSITION0.yyyy * _mtl_u.glstate_matrix_mvp[1]);
   Temp_0_2 = ((_mtl_u.glstate_matrix_mvp[0] * _mtl_i.dcl_Input0_POSITION0.xxxx) + Temp_0_2);
   Temp_0_2 = ((_mtl_u.glstate_matrix_mvp[2] * _mtl_i.dcl_Input0_POSITION0.zzzz) + Temp_0_2);
@@ -69,51 +69,23 @@ int tmpvar_6;
   Temp_0_2.w = rsqrt(Temp_0_2.w);
   Temp_1_3.xyz = (Temp_0_2.wwww * Temp_1_3.xyzx).xyz;
   Temp_2_4.xyz = _mtl_u.glstate_lightmodel_ambient.xyz;
-  tmpvar_6 = 0;
-  Temp_3_5.xyz = ((-(Temp_0_2.xyzx) * _mtl_u.unity_LightPosition[tmpvar_6].wwww) + _mtl_u.unity_LightPosition[tmpvar_6].xyzx).xyz;
-  Temp_1_3.w = dot (Temp_3_5.xyz, Temp_3_5.xyz);
-  Temp_2_4.w = ((Temp_1_3.w * _mtl_u.unity_LightAtten[tmpvar_6].z) + 1.0);
-  Temp_2_4.w = (1.0/(Temp_2_4.w));
-  Temp_1_3.w = rsqrt(Temp_1_3.w);
-  Temp_3_5.xyz = (Temp_1_3.wwww * Temp_3_5.xyzx).xyz;
-  Temp_1_3.w = dot (Temp_1_3.xyz, Temp_3_5.xyz);
-  Temp_1_3.w = max (Temp_1_3.w, 0.0);
-  Temp_1_3.w = (Temp_1_3.w * Temp_2_4.w);
-  Temp_2_4.xyz = ((_mtl_u.unity_LightColor[tmpvar_6].xyzx * Temp_1_3.wwww) + _mtl_u.glstate_lightmodel_ambient.xyzx).xyz;
-  tmpvar_6++;
-  Temp_3_5.xyz = ((-(Temp_0_2.xyzx) * _mtl_u.unity_LightPosition[tmpvar_6].wwww) + _mtl_u.unity_LightPosition[tmpvar_6].xyzx).xyz;
-  Temp_1_3.w = dot (Temp_3_5.xyz, Temp_3_5.xyz);
-  Temp_2_4.w = ((Temp_1_3.w * _mtl_u.unity_LightAtten[tmpvar_6].z) + 1.0);
-  Temp_2_4.w = (1.0/(Temp_2_4.w));
-  Temp_1_3.w = rsqrt(Temp_1_3.w);
-  Temp_3_5.xyz = (Temp_1_3.wwww * Temp_3_5.xyzx).xyz;
-  Temp_1_3.w = dot (Temp_1_3.xyz, Temp_3_5.xyz);
-  Temp_1_3.w = max (Temp_1_3.w, 0.0);
-  Temp_1_3.w = (Temp_1_3.w * Temp_2_4.w);
-  Temp_2_4.xyz = ((_mtl_u.unity_LightColor[tmpvar_6].xyzx * Temp_1_3.wwww) + Temp_2_4.xyzx).xyz;
-  tmpvar_6++;
-  Temp_3_5.xyz = ((-(Temp_0_2.xyzx) * _mtl_u.unity_LightPosition[tmpvar_6].wwww) + _mtl_u.unity_LightPosition[tmpvar_6].xyzx).xyz;
-  Temp_1_3.w = dot (Temp_3_5.xyz, Temp_3_5.xyz);
-  Temp_2_4.w = ((Temp_1_3.w * _mtl_u.unity_LightAtten[tmpvar_6].z) + 1.0);
-  Temp_2_4.w = (1.0/(Temp_2_4.w));
-  Temp_1_3.w = rsqrt(Temp_1_3.w);
-  Temp_3_5.xyz = (Temp_1_3.wwww * Temp_3_5.xyzx).xyz;
-  Temp_1_3.w = dot (Temp_1_3.xyz, Temp_3_5.xyz);
-  Temp_1_3.w = max (Temp_1_3.w, 0.0);
-  Temp_1_3.w = (Temp_1_3.w * Temp_2_4.w);
-  Temp_2_4.xyz = ((_mtl_u.unity_LightColor[tmpvar_6].xyzx * Temp_1_3.wwww) + Temp_2_4.xyzx).xyz;
-  tmpvar_6++;
-  Temp_3_5.xyz = ((-(Temp_0_2.xyzx) * _mtl_u.unity_LightPosition[tmpvar_6].wwww) + _mtl_u.unity_LightPosition[tmpvar_6].xyzx).xyz;
-  Temp_1_3.w = dot (Temp_3_5.xyz, Temp_3_5.xyz);
-  Temp_2_4.w = ((Temp_1_3.w * _mtl_u.unity_LightAtten[tmpvar_6].z) + 1.0);
-  Temp_2_4.w = (1.0/(Temp_2_4.w));
-  Temp_1_3.w = rsqrt(Temp_1_3.w);
-  Temp_3_5.xyz = (Temp_1_3.wwww * Temp_3_5.xyzx).xyz;
-  Temp_1_3.w = dot (Temp_1_3.xyz, Temp_3_5.xyz);
-  Temp_1_3.w = max (Temp_1_3.w, 0.0);
-  Temp_1_3.w = (Temp_1_3.w * Temp_2_4.w);
-  Temp_2_4.xyz = ((_mtl_u.unity_LightColor[tmpvar_6].xyzx * Temp_1_3.wwww) + Temp_2_4.xyzx).xyz;
-  tmpvar_6++;
+  Temp_int_0_6.w = 0;
+  while (true) {
+    if ((Temp_int_0_6.w >= 4)) {
+      break;
+    };
+    Temp_3_5.xyz = ((-(Temp_0_2.xyzx) * _mtl_u.unity_LightPosition[Temp_int_0_6.w].wwww) + _mtl_u.unity_LightPosition[Temp_int_0_6.w].xyzx).xyz;
+    Temp_1_3.w = dot (Temp_3_5.xyz, Temp_3_5.xyz);
+    Temp_2_4.w = ((Temp_1_3.w * _mtl_u.unity_LightAtten[Temp_int_0_6.w].z) + 1.0);
+    Temp_2_4.w = (1.0/(Temp_2_4.w));
+    Temp_1_3.w = rsqrt(Temp_1_3.w);
+    Temp_3_5.xyz = (Temp_1_3.wwww * Temp_3_5.xyzx).xyz;
+    Temp_1_3.w = dot (Temp_1_3.xyz, Temp_3_5.xyz);
+    Temp_1_3.w = max (Temp_1_3.w, 0.0);
+    Temp_1_3.w = (Temp_1_3.w * Temp_2_4.w);
+    Temp_2_4.xyz = ((_mtl_u.unity_LightColor[Temp_int_0_6.w].xyzx * Temp_1_3.wwww) + Temp_2_4.xyzx).xyz;
+    Temp_int_0_6.w = (Temp_int_0_6.w + 1);
+  };
   _mtl_o.VtxGeoOutput2_COLOR0.xyz = (Temp_2_4.xyzx + Temp_2_4.xyzx).xyz;
   _mtl_o.VtxGeoOutput2_COLOR0.w = 1.0;
   _mtl_o.gl_Position = phase0_Output0_1;
@@ -121,7 +93,7 @@ int tmpvar_6;
 }
 
 
-// stats: 87 alu 0 tex 0 flow
+// stats: 43 alu 0 tex 2 flow
 // inputs: 3
 //  #0: dcl_Input0_POSITION0 (high float) 4x1 [-1] loc 0
 //  #1: dcl_Input1_NORMAL0 (high float) 4x1 [-1] loc 1

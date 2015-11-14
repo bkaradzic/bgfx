@@ -1,0 +1,211 @@
+
+body
+{
+    /* Take up the full page */
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+
+    background-color: #AAA;
+}
+
+
+.NoSelect
+{
+    /* Disable text selection so that it doesn't interfere with faux-button clicking */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+    /* Stops the text cursor over the label */
+    cursor:default;
+}
+
+
+/* Override default window styles to remove 3D effect */
+.Window
+{
+    background: #555;
+    box-shadow: none;
+    border-radius: 3px;
+}
+/*.WindowTitleBar
+{
+    border-bottom: none;
+    border-radius: 0px;
+}
+.WindowBody
+{
+    border-top: none;
+}*/
+
+
+/* Override default container style to remove 3D effect */
+.Container
+{
+    border: none;
+    box-shadow: none;
+}
+
+
+/* Override default edit box style to remove 3D effect */
+.EditBox
+{
+    border: none;
+    box-shadow: none;
+    width:200;
+}
+
+
+
+.ConsoleText
+{
+    overflow:auto;
+    color: #BBB;
+    font: 9px Verdana;
+    margin: 2px;
+}
+
+
+.PingContainer
+{
+    background-color: #F55;
+    border-radius: 2px;
+
+    /* Transition from green is gradual */
+    transition: background-color 0.25s ease-in;
+}
+
+
+.PingContainerActive
+{
+    background-color: #5F5;
+
+    /* Transition to green is instant */
+    transition: none;
+}
+
+
+.SampleNameCell
+{
+    width:300px;
+}
+
+
+.TimelineBox
+{
+    /* Following style generally copies GridRowCell.GridGroup from BrowserLib */
+
+    padding: 1px 1px 1px 2px;
+    margin: 1px;
+
+    border: 1px solid;
+    border-radius: 2px;
+    border-top-color:#555;
+    border-left-color:#555;
+    border-bottom-color:#111;
+    border-right-color:#111;
+
+    background: #222;
+
+    font: 9px Verdana;
+    color: #BBB;
+}
+.TimelineRow
+{
+    width: 100%;
+}
+.TimelineRowCheckbox
+{
+    width: 12px;
+    height: 12px;
+    margin: 0px;
+}
+.TimelineRowCheck
+{
+    /* Pull .TimelineRowExpand to the right of the checkbox */
+    float:left;
+
+    width: 14px;
+    height: 14px;
+}
+.TimelineRowExpand
+{
+    /* Pull .TimelineRowLabel to the right of +/- buttons */
+    float:left;
+
+    width: 14px;
+    height: 14px;
+}
+.TimelineRowExpandButton
+{
+    width: 11px;
+    height: 12px;
+
+    color: #333;
+
+    border: 1px solid;
+
+    border-top-color:#F4F4F4;
+    border-left-color:#F4F4F4;
+    border-bottom-color:#8E8F8F;
+    border-right-color:#8E8F8F;
+
+    /* Top-right to bottom-left grey background gradient */
+    background: #f6f6f6; /* Old browsers */
+    background: -moz-linear-gradient(-45deg,  #f6f6f6 0%, #abaeb2 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, right bottom, color-stop(0%,#f6f6f6), color-stop(100%,#abaeb2)); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(-45deg,  #f6f6f6 0%,#abaeb2 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(-45deg,  #f6f6f6 0%,#abaeb2 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(-45deg,  #f6f6f6 0%,#abaeb2 100%); /* IE10+ */
+    background: linear-gradient(135deg,  #f6f6f6 0%,#abaeb2 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f6f6f6', endColorstr='#abaeb2',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+
+    text-align: center;
+    vertical-align: center;
+}
+.TimelineRowExpandButton:hover
+{
+    border-top-color:#79C6F9;
+    border-left-color:#79C6F9;
+    border-bottom-color:#385D72;
+    border-right-color:#385D72;
+
+    /* Top-right to bottom-left blue background gradient, matching border */
+    background: #f3f3f3; /* Old browsers */
+    background: -moz-linear-gradient(-45deg,  #f3f3f3 0%, #79c6f9 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, right bottom, color-stop(0%,#f3f3f3), color-stop(100%,#79c6f9)); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(-45deg,  #f3f3f3 0%,#79c6f9 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(-45deg,  #f3f3f3 0%,#79c6f9 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(-45deg,  #f3f3f3 0%,#79c6f9 100%); /* IE10+ */
+    background: linear-gradient(135deg,  #f3f3f3 0%,#79c6f9 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f3f3f3', endColorstr='#79c6f9',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+}
+.TimelineRowExpandButtonActive
+{
+    /* Simple means of shifting text within a div to the bottom-right */
+    padding-left:1px;
+    padding-top:1px;
+    width:10px;
+    height:11px;
+}
+.TimelineRowLabel
+{
+    /* Pull .TimelineRowCanvas to the right of the label */
+    float:left;
+
+    width: 140px;
+    height: 14px;
+}
+.TimelineRowCanvas
+{
+}
+
+/* enable vertical scrollbar in TimelineContainer (useful for many threads) */
+.TimelineContainer
+{
+    overflow-y: scroll;
+}

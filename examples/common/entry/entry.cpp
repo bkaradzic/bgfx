@@ -3,7 +3,7 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include <bgfx.h>
+#include <bgfx/bgfx.h>
 #include <bx/string.h>
 #include <bx/readerwriter.h>
 
@@ -17,6 +17,12 @@
 #include "cmd.h"
 #include "input.h"
 
+#if ENTRY_CONFIG_PROFILER
+#	define RMT_ENABLED
+#endif // ENTRY_CONFIG_PROFILER
+
+#include <remotery/lib/Remotery.c>
+
 extern "C" int _main_(int _argc, char** _argv);
 
 namespace entry
@@ -24,14 +30,17 @@ namespace entry
 	static uint32_t s_debug = BGFX_DEBUG_NONE;
 	static uint32_t s_reset = BGFX_RESET_NONE;
 	static bool s_exit = false;
+
+	static Remotery* s_rmt = NULL;
+
 	static bx::FileReaderI* s_fileReader = NULL;
 	static bx::FileWriterI* s_fileWriter = NULL;
 
-	extern bx::ReallocatorI* getDefaultAllocator();
-	static bx::ReallocatorI* s_allocator = getDefaultAllocator();
+	extern bx::AllocatorI* getDefaultAllocator();
+	static bx::AllocatorI* s_allocator = getDefaultAllocator();
 
 #if ENTRY_CONFIG_IMPLEMENT_DEFAULT_ALLOCATOR
-	bx::ReallocatorI* getDefaultAllocator()
+	bx::AllocatorI* getDefaultAllocator()
 	{
 BX_PRAGMA_DIAGNOSTIC_PUSH();
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4459); // warning C4459: declaration of 's_allocator' hides global declaration
@@ -319,6 +328,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	int runApp(AppI* _app, int _argc, char** _argv)
 	{
 		_app->init(_argc, _argv);
+		bgfx::frame();
+
+		WindowHandle defaultWindow = { 0 };
+		setWindowSize(defaultWindow, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
 
 #if BX_PLATFORM_EMSCRIPTEN
 		s_app = _app;
@@ -333,6 +346,15 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	int main(int _argc, char** _argv)
 	{
 		//DBG(BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME);
+
+		if (BX_ENABLED(ENTRY_CONFIG_PROFILER) )
+		{
+//			rmtSettings* settings = rmt_Settings();
+			if (RMT_ERROR_NONE != rmt_CreateGlobalInstance(&s_rmt) )
+			{
+				s_rmt = NULL;
+			}
+		}
 
 #if BX_CONFIG_CRT_FILE_READER_WRITER
 		s_fileReader = new bx::CrtFileReader;
@@ -349,6 +371,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		entry::WindowHandle defaultWindow = { 0 };
 		entry::setWindowTitle(defaultWindow, bx::baseName(_argv[0]) );
+		setWindowSize(defaultWindow, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
 
 		int32_t result = ::_main_(_argc, _argv);
 
@@ -364,6 +387,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		delete s_fileWriter;
 		s_fileWriter = NULL;
 #endif // BX_CONFIG_CRT_FILE_READER_WRITER
+
+		if (BX_ENABLED(ENTRY_CONFIG_PROFILER)
+		&&  NULL != s_rmt)
+		{
+			rmt_DestroyGlobalInstance(s_rmt);
+		}
 
 		return result;
 	}
@@ -464,10 +493,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				case Event::Window:
 					break;
 
-                case Event::Suspend:
-                    break;
+				case Event::Suspend:
+					break;
 
-                    default:
+				default:
 					break;
 				}
 			}
@@ -616,6 +645,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 					break;
 
+				case Event::Suspend:
+					break;
+
 				default:
 					break;
 				}
@@ -658,7 +690,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		return s_fileWriter;
 	}
 
-	bx::ReallocatorI* getAllocator()
+	bx::AllocatorI* getAllocator()
 	{
 		return s_allocator;
 	}

@@ -103,7 +103,6 @@ SRC = ast_array_index.cpp \
 	opt_swizzle_swizzle.cpp \
 	opt_tree_grafting.cpp \
 	opt_vectorize.cpp \
-	opt_vector_splitting.cpp \
 	s_expression.cpp \
 	standalone_scaffolding.cpp \
 	strtod.c \

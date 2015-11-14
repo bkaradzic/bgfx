@@ -40,14 +40,14 @@ vec4 Temp_0;
 vec4 Temp_1;
 vec4 Temp_2;
 vec4 Temp_3;
-int tmpvar_1;
+ivec4 Temp_int_0;
 void main ()
 {
   Temp_0 = (dcl_Input0_POSITION0.yyyy * glstate_matrix_mvp[1]);
   Temp_0 = ((glstate_matrix_mvp[0] * dcl_Input0_POSITION0.xxxx) + Temp_0);
   Temp_0 = ((glstate_matrix_mvp[2] * dcl_Input0_POSITION0.zzzz) + Temp_0);
-  vec4 tmpvar_2;
-  tmpvar_2 = ((glstate_matrix_mvp[3] * dcl_Input0_POSITION0.wwww) + Temp_0);
+  vec4 tmpvar_1;
+  tmpvar_1 = ((glstate_matrix_mvp[3] * dcl_Input0_POSITION0.wwww) + Temp_0);
   VtxGeoOutput1_TEXCOORD0.xy = ((dcl_Input2_TEXCOORD0.xyxx * _MainTex_ST.xyxx) + _MainTex_ST.zwzz).xy;
   Temp_0.xyz = (dcl_Input0_POSITION0.yyyy * glstate_matrix_modelview0[1].xyzx).xyz;
   Temp_0.xyz = ((glstate_matrix_modelview0[0].xyzx * dcl_Input0_POSITION0.xxxx) + Temp_0.xyzx).xyz;
@@ -60,58 +60,30 @@ void main ()
   Temp_0.w = inversesqrt(Temp_0.w);
   Temp_1.xyz = (Temp_0.wwww * Temp_1.xyzx).xyz;
   Temp_2.xyz = glstate_lightmodel_ambient.xyz;
-  tmpvar_1 = 0;
-  Temp_3.xyz = ((-(Temp_0.xyzx) * unity_LightPosition[tmpvar_1].wwww) + unity_LightPosition[tmpvar_1].xyzx).xyz;
-  Temp_1.w = dot (Temp_3.xyz, Temp_3.xyz);
-  Temp_2.w = ((Temp_1.w * unity_LightAtten[tmpvar_1].z) + 1.0);
-  Temp_2.w = (1.0/(Temp_2.w));
-  Temp_1.w = inversesqrt(Temp_1.w);
-  Temp_3.xyz = (Temp_1.wwww * Temp_3.xyzx).xyz;
-  Temp_1.w = dot (Temp_1.xyz, Temp_3.xyz);
-  Temp_1.w = max (Temp_1.w, 0.0);
-  Temp_1.w = (Temp_1.w * Temp_2.w);
-  Temp_2.xyz = ((unity_LightColor[tmpvar_1].xyzx * Temp_1.wwww) + glstate_lightmodel_ambient.xyzx).xyz;
-  tmpvar_1++;
-  Temp_3.xyz = ((-(Temp_0.xyzx) * unity_LightPosition[tmpvar_1].wwww) + unity_LightPosition[tmpvar_1].xyzx).xyz;
-  Temp_1.w = dot (Temp_3.xyz, Temp_3.xyz);
-  Temp_2.w = ((Temp_1.w * unity_LightAtten[tmpvar_1].z) + 1.0);
-  Temp_2.w = (1.0/(Temp_2.w));
-  Temp_1.w = inversesqrt(Temp_1.w);
-  Temp_3.xyz = (Temp_1.wwww * Temp_3.xyzx).xyz;
-  Temp_1.w = dot (Temp_1.xyz, Temp_3.xyz);
-  Temp_1.w = max (Temp_1.w, 0.0);
-  Temp_1.w = (Temp_1.w * Temp_2.w);
-  Temp_2.xyz = ((unity_LightColor[tmpvar_1].xyzx * Temp_1.wwww) + Temp_2.xyzx).xyz;
-  tmpvar_1++;
-  Temp_3.xyz = ((-(Temp_0.xyzx) * unity_LightPosition[tmpvar_1].wwww) + unity_LightPosition[tmpvar_1].xyzx).xyz;
-  Temp_1.w = dot (Temp_3.xyz, Temp_3.xyz);
-  Temp_2.w = ((Temp_1.w * unity_LightAtten[tmpvar_1].z) + 1.0);
-  Temp_2.w = (1.0/(Temp_2.w));
-  Temp_1.w = inversesqrt(Temp_1.w);
-  Temp_3.xyz = (Temp_1.wwww * Temp_3.xyzx).xyz;
-  Temp_1.w = dot (Temp_1.xyz, Temp_3.xyz);
-  Temp_1.w = max (Temp_1.w, 0.0);
-  Temp_1.w = (Temp_1.w * Temp_2.w);
-  Temp_2.xyz = ((unity_LightColor[tmpvar_1].xyzx * Temp_1.wwww) + Temp_2.xyzx).xyz;
-  tmpvar_1++;
-  Temp_3.xyz = ((-(Temp_0.xyzx) * unity_LightPosition[tmpvar_1].wwww) + unity_LightPosition[tmpvar_1].xyzx).xyz;
-  Temp_1.w = dot (Temp_3.xyz, Temp_3.xyz);
-  Temp_2.w = ((Temp_1.w * unity_LightAtten[tmpvar_1].z) + 1.0);
-  Temp_2.w = (1.0/(Temp_2.w));
-  Temp_1.w = inversesqrt(Temp_1.w);
-  Temp_3.xyz = (Temp_1.wwww * Temp_3.xyzx).xyz;
-  Temp_1.w = dot (Temp_1.xyz, Temp_3.xyz);
-  Temp_1.w = max (Temp_1.w, 0.0);
-  Temp_1.w = (Temp_1.w * Temp_2.w);
-  Temp_2.xyz = ((unity_LightColor[tmpvar_1].xyzx * Temp_1.wwww) + Temp_2.xyzx).xyz;
-  tmpvar_1++;
+  Temp_int_0.w = 0;
+  while (true) {
+    if ((Temp_int_0.w >= 4)) {
+      break;
+    };
+    Temp_3.xyz = ((-(Temp_0.xyzx) * unity_LightPosition[Temp_int_0.w].wwww) + unity_LightPosition[Temp_int_0.w].xyzx).xyz;
+    Temp_1.w = dot (Temp_3.xyz, Temp_3.xyz);
+    Temp_2.w = ((Temp_1.w * unity_LightAtten[Temp_int_0.w].z) + 1.0);
+    Temp_2.w = (1.0/(Temp_2.w));
+    Temp_1.w = inversesqrt(Temp_1.w);
+    Temp_3.xyz = (Temp_1.wwww * Temp_3.xyzx).xyz;
+    Temp_1.w = dot (Temp_1.xyz, Temp_3.xyz);
+    Temp_1.w = max (Temp_1.w, 0.0);
+    Temp_1.w = (Temp_1.w * Temp_2.w);
+    Temp_2.xyz = ((unity_LightColor[Temp_int_0.w].xyzx * Temp_1.wwww) + Temp_2.xyzx).xyz;
+    Temp_int_0.w = (Temp_int_0.w + 1);
+  };
   VtxGeoOutput2_COLOR0.xyz = (Temp_2.xyzx + Temp_2.xyzx).xyz;
   VtxGeoOutput2_COLOR0.w = 1.0;
-  gl_Position = tmpvar_2;
+  gl_Position = tmpvar_1;
 }
 
 
-// stats: 87 alu 0 tex 0 flow
+// stats: 43 alu 0 tex 2 flow
 // inputs: 3
 //  #0: dcl_Input0_POSITION0 (high float) 4x1 [-1]
 //  #1: dcl_Input1_NORMAL0 (high float) 4x1 [-1]

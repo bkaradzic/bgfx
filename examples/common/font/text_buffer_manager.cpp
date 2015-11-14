@@ -5,7 +5,7 @@
 
 #include "../common.h"
 
-#include <bgfx.h>
+#include <bgfx/bgfx.h>
 #include <stddef.h> // offsetof
 #include <memory.h> // memcpy
 #include <wchar.h>  // wcslen
@@ -329,6 +329,15 @@ void TextBuffer::clearTextBuffer()
 
 void TextBuffer::appendGlyph(FontHandle _handle, CodePoint _codePoint)
 {
+	if (_codePoint == L'\t')
+	{
+		for (uint32_t ii = 0; ii < 4; ++ii)
+		{
+			appendGlyph(_handle, L' ');
+		}
+		return;
+	}
+
 	const GlyphInfo* glyph = m_fontManager->getGlyphInfo(_handle, _codePoint);
 	BX_WARN(NULL != glyph, "Glyph not found (font handle %d, code point %d)", _handle.idx, _codePoint);
 	if (NULL == glyph)
@@ -336,27 +345,27 @@ void TextBuffer::appendGlyph(FontHandle _handle, CodePoint _codePoint)
 		return;
 	}
 
-	const FontInfo& font = m_fontManager->getFontInfo(_handle);
-
 	if( m_vertexCount/4 >= MAX_BUFFERED_CHARACTERS)
 	{
 		return;
 	}
+
+	const FontInfo& font = m_fontManager->getFontInfo(_handle);
 
 	if (_codePoint == L'\n')
 	{
 		m_penX = m_originX;
 		m_penY += m_lineGap + m_lineAscender -m_lineDescender;
 		m_lineGap = font.lineGap;
-		m_lineDescender = font.descender;
-		m_lineAscender = font.ascender;
+		m_lineDescender  = font.descender;
+		m_lineAscender   = font.ascender;
 		m_lineStartIndex = m_vertexCount;
 		return;
 	}
 
 	//is there a change of font size that require the text on the left to be centered again ?
 	if (font.ascender > m_lineAscender
-		|| (font.descender < m_lineDescender) )
+	|| (font.descender < m_lineDescender) )
 	{
 		if (font.descender < m_lineDescender)
 		{
@@ -377,7 +386,7 @@ void TextBuffer::appendGlyph(FontHandle _handle, CodePoint _codePoint)
 	const Atlas* atlas = m_fontManager->getAtlas();
 
 	if (m_styleFlags & STYLE_BACKGROUND
-	&&  m_backgroundColor & 0xFF000000)
+	&&  m_backgroundColor & 0xff000000)
 	{
 		float x0 = (m_penX - kerning);
 		float y0 = (m_penY);
@@ -592,7 +601,7 @@ TextBufferManager::TextBufferManager(FontManager* _fontManager)
 		vs_font_distance_field_subpixel = bgfx::makeRef(vs_font_distance_field_subpixel_mtl, sizeof(vs_font_distance_field_subpixel_mtl) );
 		fs_font_distance_field_subpixel = bgfx::makeRef(fs_font_distance_field_subpixel_mtl, sizeof(fs_font_distance_field_subpixel_mtl) );
 		break;
-			
+
 	default:
 		vs_font_basic = bgfx::makeRef(vs_font_basic_glsl, sizeof(vs_font_basic_glsl) );
 		fs_font_basic = bgfx::makeRef(fs_font_basic_glsl, sizeof(fs_font_basic_glsl) );

@@ -10,7 +10,7 @@
 #define MAKE_DXGI_HRESULT(code) MAKE_HRESULT(1, _FACDXGI, code)
 #define MAKE_DXGI_STATUS(code)  MAKE_HRESULT(0, _FACDXGI, code)
 
-#if defined(__MINGW32__) || !defined(DXGI_ERROR_INVALID_CALL)
+#if !defined(DXGI_ERROR_INVALID_CALL)
 #	define DXGI_STATUS_OCCLUDED                     MAKE_DXGI_STATUS(1)
 #	define DXGI_STATUS_CLIPPED                      MAKE_DXGI_STATUS(2)
 #	define DXGI_STATUS_NO_REDIRECTION               MAKE_DXGI_STATUS(4)

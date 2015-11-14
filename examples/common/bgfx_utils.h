@@ -6,7 +6,7 @@
 #ifndef BGFX_UTILS_H_HEADER_GUARD
 #define BGFX_UTILS_H_HEADER_GUARD
 
-#include <bgfx.h>
+#include <bgfx/bgfx.h>
 
 void* load(const char* _filePath, uint32_t* _size = NULL);
 void unload(void* _ptr);
@@ -42,5 +42,13 @@ void meshStateDestroy(MeshState* _meshState);
 
 void meshSubmit(const Mesh* _mesh, uint8_t _id, bgfx::ProgramHandle _program, const float* _mtx, uint64_t _state = BGFX_STATE_MASK);
 void meshSubmit(const Mesh* _mesh, const MeshState*const* _state, uint8_t _numPasses, const float* _mtx, uint16_t _numMatrices = 1);
+
+struct Args
+{
+	Args(int _argc, char** _argv);
+
+	bgfx::RendererType::Enum m_type;
+	uint16_t m_pciId;
+};
 
 #endif // BGFX_UTILS_H_HEADER_GUARD

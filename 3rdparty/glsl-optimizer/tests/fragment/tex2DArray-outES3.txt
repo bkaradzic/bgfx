@@ -1,0 +1,33 @@
+#version 300 es
+out lowp vec4 _fragData;
+uniform sampler2DArray myarr;
+in highp vec4 uv;
+void main ()
+{
+  lowp vec4 tmpvar_1;
+  highp vec4 slod_2;
+  lowp vec4 tmpvar_3;
+  tmpvar_3 = texture (myarr, uv.xyz);
+  highp vec4 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  lowp vec4 tmpvar_5;
+  tmpvar_5 = texture (myarr, uv.xyw);
+  highp vec4 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  lowp vec4 tmpvar_7;
+  tmpvar_7 = texture (myarr, uv.xyz, 1.5);
+  highp vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  lowp vec4 tmpvar_9;
+  tmpvar_9 = textureLod (myarr, uv.xyz, 2.5);
+  slod_2 = tmpvar_9;
+  tmpvar_1 = ((tmpvar_4 + tmpvar_6) + (tmpvar_8 + slod_2));
+  _fragData = tmpvar_1;
+}
+
+
+// stats: 3 alu 4 tex 0 flow
+// inputs: 1
+//  #0: uv (high float) 4x1 [-1]
+// textures: 1
+//  #0: myarr (low 2darray) 0x0 [-1]

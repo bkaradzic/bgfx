@@ -66,6 +66,7 @@ namespace bgfx
 		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // RG32I
 		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RG32U
 		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // RG32F
+		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // RGB9E5F
 		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // BGRA8
 		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RGBA8
 		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // RGBA8I
@@ -84,9 +85,6 @@ namespace bgfx
 		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RGB5A1
 		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RGB10A2
 		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // R11G11B10F
-
-		{  24, 1, 1,  3, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RGB8
-
 		{   0, 0, 0,  0, 0, 0,  0, 0, uint8_t(EncodingType::Count) }, // UnknownDepth
 		{  16, 1, 1,  2, 1, 1, 16, 0, uint8_t(EncodingType::Unorm) }, // D16
 		{  24, 1, 1,  3, 1, 1, 24, 0, uint8_t(EncodingType::Unorm) }, // D24
@@ -145,6 +143,7 @@ namespace bgfx
 		"RG32I",      // RG32I
 		"RG32U",      // RG32U
 		"RG32F",      // RG32F
+		"RGB9E5",     // RGB9E5F
 		"BGRA8",      // BGRA8
 		"RGBA8",      // RGBA8
 		"RGBA8I",     // RGBA8I
@@ -163,9 +162,6 @@ namespace bgfx
 		"RGB5A1",     // RGB5A1
 		"RGB10A2",    // RGB10A2
 		"R11G11B10F", // R11G11B10F
-
-		"RGB8",       // RGB8
-
 		"<unknown>",  // UnknownDepth
 		"D16",        // D16
 		"D24",        // D24

@@ -25,7 +25,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 #include "../common.h"
 
-#include <bgfx.h>
+#include <bgfx/bgfx.h>
 #include <math.h>
 
 #if USE_EDTAA3

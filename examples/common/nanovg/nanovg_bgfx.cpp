@@ -28,7 +28,7 @@
 #include <math.h>
 #include "nanovg.h"
 
-#include <bgfx.h>
+#include <bgfx/bgfx.h>
 
 #include <bx/bx.h>
 
@@ -251,7 +251,7 @@ namespace
 			vs_nanovg_fill = bgfx::makeRef(vs_nanovg_fill_mtl, sizeof(vs_nanovg_fill_mtl) );
 			fs_nanovg_fill = bgfx::makeRef(fs_nanovg_fill_mtl, sizeof(fs_nanovg_fill_mtl) );
 			break;
-				
+
 		default:
 			vs_nanovg_fill = bgfx::makeRef(vs_nanovg_fill_glsl, sizeof(vs_nanovg_fill_glsl) );
 			fs_nanovg_fill = bgfx::makeRef(fs_nanovg_fill_glsl, sizeof(fs_nanovg_fill_glsl) );
@@ -349,7 +349,7 @@ namespace
 		uint32_t pitch = tex->width * bytesPerPixel;
 
 		bgfx::updateTexture2D(tex->id, 0, x, y, w, h
-				, bgfx::makeRef(data + y*pitch + x*bytesPerPixel, h*pitch)
+				, bgfx::copy(data + y*pitch + x*bytesPerPixel, h*pitch)
 				, pitch
 				);
 
@@ -666,7 +666,6 @@ namespace
 				| BGFX_STATE_PT_TRISTRIP
 				);
 			bgfx::setVertexBuffer(&gl->tvb, paths[i].strokeOffset, paths[i].strokeCount);
-			bgfx::setTexture(0, gl->s_tex, gl->th);
 			bgfx::setTexture(0, gl->s_tex, gl->th);
 			bgfx::submit(gl->viewid, gl->prog);
 		}

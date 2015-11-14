@@ -305,16 +305,19 @@ function exampleProject(_name)
 		}
 
 	configuration { "osx" }
-		links {
-			"Cocoa.framework",
-			"OpenGL.framework",
+		linkoptions {
+			"-framework Cocoa",
+			"-framework Metal",
+			"-framework QuartzCore",
+			"-framework OpenGL",
 		}
 
-	configuration { "ios*" }
+	configuration { "ios* or tvos*" }
 		kind "ConsoleApp"
 		linkoptions {
 			"-framework CoreFoundation",
 			"-framework Foundation",
+			"-framework Metal",
 			"-framework OpenGLES",
 			"-framework UIKit",
 			"-framework QuartzCore",
@@ -324,6 +327,12 @@ function exampleProject(_name)
 		kind "WindowedApp"
 		files {
 			path.join(BGFX_DIR, "examples/runtime/iOS-Info.plist"),
+		}
+
+	configuration { "xcode4", "tvos" }
+		kind "WindowedApp"
+		files {
+			path.join(BGFX_DIR, "examples/runtime/tvOS-Info.plist"),
 		}
 
 	configuration { "qnx*" }
@@ -372,6 +381,7 @@ exampleProject("21-deferred")
 exampleProject("22-windows")
 exampleProject("23-vectordisplay")
 exampleProject("24-nbody")
+exampleProject("26-occlusion")
 
 -- C99 source doesn't compile under WinRT settings
 if not premake.vstudio.iswinrt() then

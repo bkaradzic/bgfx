@@ -317,7 +317,6 @@
     <ClCompile Include="..\..\src\glsl\opt_swizzle_swizzle.cpp" />
     <ClCompile Include="..\..\src\glsl\opt_tree_grafting.cpp" />
     <ClCompile Include="..\..\src\glsl\opt_vectorize.cpp" />
-    <ClCompile Include="..\..\src\glsl\opt_vector_splitting.cpp" />
     <ClCompile Include="..\..\src\glsl\s_expression.cpp" />
     <ClCompile Include="..\..\src\glsl\standalone_scaffolding.cpp" />
     <ClCompile Include="..\..\src\glsl\strtod.c" />

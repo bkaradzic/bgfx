@@ -4,7 +4,7 @@
  */
 
 #include "common.h"
-#include <bgfx.h>
+#include <bgfx/bgfx.h>
 #include <bx/uint32_t.h>
 #include "logo.h"
 

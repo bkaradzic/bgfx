@@ -1,5 +1,7 @@
 #ifdef __GNUC__
 #	pragma GCC diagnostic ignored "-Wshadow"
+#elif defined(_MSC_VER)
+#	pragma warning(disable:4456) // warning C4456: declaration of 'k' hides previous local declaration
 #endif
 
 // stb_truetype.h - v1.07 - public domain

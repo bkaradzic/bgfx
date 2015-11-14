@@ -52,6 +52,8 @@ enum glslopt_basic_type {
 	kGlslTypeTex2D,
 	kGlslTypeTex3D,
 	kGlslTypeTexCube,
+	kGlslTypeTex2DShadow,
+	kGlslTypeTex2DArray,
 	kGlslTypeOther,
 	kGlslTypeCount
 };

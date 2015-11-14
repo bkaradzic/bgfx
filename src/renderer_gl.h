@@ -79,7 +79,6 @@ typedef int64_t  GLint64;
 typedef uint64_t GLuint64;
 #		define GL_PROGRAM_BINARY_LENGTH GL_PROGRAM_BINARY_LENGTH_OES
 #		define GL_HALF_FLOAT GL_HALF_FLOAT_OES
-#		define GL_RGB8 GL_RGB8_OES
 #		define GL_RGBA8 GL_RGBA8_OES
 #		define GL_UNSIGNED_INT_2_10_10_10_REV GL_UNSIGNED_INT_2_10_10_10_REV_EXT
 #		define GL_TEXTURE_3D GL_TEXTURE_3D_OES
@@ -294,10 +293,6 @@ typedef uint64_t GLuint64;
 #	define GL_RGB10_A2 0x8059
 #endif // GL_RGB10_A2
 
-#ifndef GL_RGB8
-#	define GL_RGB8 0x8051
-#endif // GL_RGB8
-
 #ifndef GL_RGBA16
 #	define GL_RGBA16 0x805B
 #endif // GL_RGBA16
@@ -313,6 +308,14 @@ typedef uint64_t GLuint64;
 #ifndef GL_RGBA16UI
 #	define GL_RGBA16UI 0x8D76
 #endif // GL_RGBA16UI
+
+#ifndef GL_RGB9_E5
+#	define GL_RGB9_E5 0x8C3D
+#endif // GL_RGB9_E5
+
+#ifndef GL_UNSIGNED_INT_5_9_9_9_REV
+#	define GL_UNSIGNED_INT_5_9_9_9_REV 0x8C3E
+#endif // GL_UNSIGNED_INT_5_9_9_9_REV
 
 #ifndef GL_R11F_G11F_B10F
 #	define GL_R11F_G11F_B10F 0x8C3A
@@ -426,10 +429,6 @@ typedef uint64_t GLuint64;
 #	define GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB 0x8E8F
 #endif // GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB
 
-#ifndef GL_SRGB8
-#	define GL_SRGB8 0x8C40
-#endif // GL_SRGB8
-
 #ifndef GL_SRGB8_ALPHA8
 #	define GL_SRGB8_ALPHA8 0x8C43
 #endif // GL_SRGB8_ALPHA8
@@ -490,6 +489,14 @@ typedef uint64_t GLuint64;
 #	define GL_QUERY_RESULT_AVAILABLE 0x8867
 #endif // GL_QUERY_RESULT_AVAILABLE
 
+#ifndef GL_SAMPLES_PASSED
+#	define GL_SAMPLES_PASSED 0x8914
+#endif // GL_SAMPLES_PASSED
+
+#ifndef GL_ANY_SAMPLES_PASSED
+#	define GL_ANY_SAMPLES_PASSED 0x8C2F
+#endif // GL_ANY_SAMPLES_PASSED
+
 #ifndef GL_READ_FRAMEBUFFER
 #	define GL_READ_FRAMEBUFFER 0x8CA8
 #endif /// GL_READ_FRAMEBUFFER
@@ -501,6 +508,10 @@ typedef uint64_t GLuint64;
 #ifndef GL_TIME_ELAPSED
 #	define GL_TIME_ELAPSED 0x88BF
 #endif // GL_TIME_ELAPSED
+
+#ifndef GL_TIMESTAMP
+#	define GL_TIMESTAMP 0x8E28
+#endif // GL_TIMESTAMP
 
 #ifndef GL_VBO_FREE_MEMORY_ATI
 #	define GL_VBO_FREE_MEMORY_ATI 0x87FB
@@ -816,7 +827,7 @@ typedef uint64_t GLuint64;
 
 namespace bgfx
 {
-	class ConstantBuffer;
+	class UniformBuffer;
 } // namespace bgfx
 
 namespace bgfx { namespace gl
@@ -1083,7 +1094,7 @@ namespace bgfx { namespace gl
 			, m_fmt(GL_ZERO)
 			, m_type(GL_ZERO)
 			, m_flags(0)
-			, m_currentFlags(UINT32_MAX)
+			, m_currentSamplerHash(UINT32_MAX)
 			, m_numMips(0)
 		{
 		}
@@ -1092,8 +1103,8 @@ namespace bgfx { namespace gl
 		void create(const Memory* _mem, uint32_t _flags, uint8_t _skip);
 		void destroy();
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
-		void setSamplerState(uint32_t _flags);
-		void commit(uint32_t _stage, uint32_t _flags);
+		void setSamplerState(uint32_t _flags, const float _rgba[4]);
+		void commit(uint32_t _stage, uint32_t _flags, const float _palette[][4]);
 
 		GLuint m_id;
 		GLuint m_rbo;
@@ -1101,7 +1112,7 @@ namespace bgfx { namespace gl
 		GLenum m_fmt;
 		GLenum m_type;
 		uint32_t m_flags;
-		uint32_t m_currentFlags;
+		uint32_t m_currentSamplerHash;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_depth;
@@ -1183,42 +1194,10 @@ namespace bgfx { namespace gl
  		GLint m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
  		uint8_t m_numSamplers;
 
-		ConstantBuffer* m_constantBuffer;
+		UniformBuffer* m_constantBuffer;
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
 		uint8_t m_numPredefined;
 		VaoCacheRef m_vcref;
-	};
-
-	struct QueriesGL
-	{
-		void create()
-		{
-			GL_CHECK(glGenQueries(BX_COUNTOF(m_queries), m_queries) );
-		}
-
-		void destroy()
-		{
-			GL_CHECK(glDeleteQueries(BX_COUNTOF(m_queries), m_queries) );
-		}
-
-		void begin(uint16_t _id, GLenum _target) const
-		{
-			GL_CHECK(glBeginQuery(_target, m_queries[_id]) );
-		}
-
-		void end(GLenum _target) const
-		{
-			GL_CHECK(glEndQuery(_target) );
-		}
-
-		uint64_t getResult(uint16_t _id) const
-		{
-			uint64_t result;
-			GL_CHECK(glGetQueryObjectui64v(m_queries[_id], GL_QUERY_RESULT, &result) );
-			return result;
-		}
-
-		GLuint m_queries[64];
 	};
 
 	struct TimerQueryGL
@@ -1230,12 +1209,22 @@ namespace bgfx { namespace gl
 
 		void create()
 		{
-			GL_CHECK(glGenQueries(BX_COUNTOF(m_frame), m_frame) );
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frame); ++ii)
+			{
+				Frame& frame = m_frame[ii];
+				GL_CHECK(glGenQueries(1, &frame.m_begin) );
+				GL_CHECK(glGenQueries(1, &frame.m_elapsed) );
+			}
 		}
 
 		void destroy()
 		{
-			GL_CHECK(glDeleteQueries(BX_COUNTOF(m_frame), m_frame) );
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frame); ++ii)
+			{
+				Frame& frame = m_frame[ii];
+				GL_CHECK(glDeleteQueries(1, &frame.m_begin) );
+				GL_CHECK(glDeleteQueries(1, &frame.m_elapsed) );
+			}
 		}
 
 		void begin()
@@ -1245,8 +1234,16 @@ namespace bgfx { namespace gl
 				get();
 			}
 
+			Frame& frame = m_frame[m_control.m_current];
+			if (!BX_ENABLED(BX_PLATFORM_OSX) )
+			{
+				GL_CHECK(glQueryCounter(frame.m_begin
+						, GL_TIMESTAMP
+						) );
+			}
+
 			GL_CHECK(glBeginQuery(GL_TIME_ELAPSED
-					, m_frame[m_control.m_current]
+					, frame.m_elapsed
 					) );
 		}
 
@@ -1260,18 +1257,33 @@ namespace bgfx { namespace gl
 		{
 			if (0 != m_control.available() )
 			{
+				Frame& frame = m_frame[m_control.m_read];
+
 				GLint available;
-				GL_CHECK(glGetQueryObjectiv(m_frame[m_control.m_read]
+				GL_CHECK(glGetQueryObjectiv(frame.m_elapsed
 						, GL_QUERY_RESULT_AVAILABLE
 						, &available
 						) );
 
 				if (available)
 				{
-					GL_CHECK(glGetQueryObjectui64v(m_frame[m_control.m_read]
+					if (!BX_ENABLED(BX_PLATFORM_OSX) )
+					{
+						GL_CHECK(glGetQueryObjectui64v(frame.m_begin
+								, GL_QUERY_RESULT
+								, &m_begin
+								) );
+					}
+					else
+					{
+						m_begin = 0;
+					}
+
+					GL_CHECK(glGetQueryObjectui64v(frame.m_elapsed
 							, GL_QUERY_RESULT
 							, &m_elapsed
 							) );
+					m_end = m_begin + m_elapsed;
 					m_control.consume(1);
 					return true;
 				}
@@ -1280,9 +1292,40 @@ namespace bgfx { namespace gl
 			return false;
 		}
 
+		uint64_t m_begin;
+		uint64_t m_end;
 		uint64_t m_elapsed;
 
-		GLuint m_frame[4];
+		struct Frame
+		{
+			GLuint m_begin;
+			GLuint m_elapsed;
+		};
+
+		Frame m_frame[4];
+		bx::RingBufferControl m_control;
+	};
+
+	struct OcclusionQueryGL
+	{
+		OcclusionQueryGL()
+			: m_control(BX_COUNTOF(m_query) )
+		{
+		}
+
+		void create();
+		void destroy();
+		void begin(Frame* _render, OcclusionQueryHandle _handle);
+		void end();
+		void resolve(Frame* _render, bool _wait = false);
+
+		struct Query
+		{
+			GLuint m_id;
+			OcclusionQueryHandle m_handle;
+		};
+
+		Query m_query[BGFX_CONFIG_MAX_OCCUSION_QUERIES];
 		bx::RingBufferControl m_control;
 	};
 
