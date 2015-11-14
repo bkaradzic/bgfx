@@ -7,10 +7,10 @@
 
 uniform vec4 u_lightPos;
 #if SHADOW_PACKED_DEPTH
-SAMPLER2D(u_shadowMap, 0);
+SAMPLER2D(s_shadowMap, 0);
 #	define Sampler sampler2D
 #else
-SAMPLER2DSHADOW(u_shadowMap, 0);
+SAMPLER2DSHADOW(s_shadowMap, 0);
 #	define Sampler sampler2DShadow
 #endif // SHADOW_PACKED_DEPTH
 
@@ -90,7 +90,7 @@ void main()
 	vec2 lc = lit(ld, n, vd, 1.0);
 
 	vec2 texelSize = vec2_splat(1.0/512.0);
-	float visibility = PCF(u_shadowMap, v_shadowcoord, shadowMapBias, texelSize);
+	float visibility = PCF(s_shadowMap, v_shadowcoord, shadowMapBias, texelSize);
 
 	vec3 ambient = 0.1 * color;
 	vec3 brdf = (lc.x + lc.y) * color * visibility;

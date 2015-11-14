@@ -19,7 +19,7 @@ using namespace std::tr1;
 #include "common.h"
 #include "bgfx_utils.h"
 
-#include <bgfx.h>
+#include <bgfx/bgfx.h>
 #include <bx/timer.h>
 #include <bx/readerwriter.h>
 #include <bx/allocator.h>
@@ -1850,15 +1850,17 @@ bool clipTest(const float* _planes, uint8_t _planeNum, const Mesh& _mesh, const 
 	return false;
 }
 
-int _main_(int /*_argc*/, char** /*_argv*/)
+int _main_(int _argc, char** _argv)
 {
+	Args args(_argc, _argv);
+
 	ViewState viewState(1280, 720);
 	ClearValues clearValues = {0x00000000, 1.0f, 0};
 
 	uint32_t debug = BGFX_DEBUG_TEXT;
 	uint32_t reset = BGFX_RESET_VSYNC;
 
-	bgfx::init();
+	bgfx::init(args.m_type, args.m_pciId);
 	bgfx::reset(viewState.m_width, viewState.m_height, reset);
 
 	// Enable debug text.

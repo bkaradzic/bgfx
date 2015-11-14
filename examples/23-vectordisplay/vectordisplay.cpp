@@ -210,8 +210,6 @@ void VectorDisplay::endFrame()
 
 	if (m_brightness > 0)
 	{
-		bgfx::setUniform(u_params, params);
-
 		bgfx::setTexture(0, s_texColor, m_sceneFrameBuffer);
 
 		int npasses = (int)(m_brightness * 4);
@@ -263,6 +261,8 @@ void VectorDisplay::endFrame()
 			bgfx::setTexture(0, s_texColor, m_glow1FrameBuffer);
 		}
 	}
+
+	bgfx::discard();
 
 	//now do last pass, combination of blur and normal buffer to screen
 	bgfx::setViewTransform(viewCounter, NULL, proj);

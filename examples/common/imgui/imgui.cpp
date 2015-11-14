@@ -466,7 +466,7 @@ struct Imgui
 			_size = sizeof(s_droidSansTtf);
 		}
 
-		IMGUI_create(_data, _size, _fontSize, _allocator);
+		IMGUI_create(_data, _size, _fontSize, m_allocator);
 
 		m_nvg = nvgCreate(1, m_view);
  		nvgCreateFontMem(m_nvg, "default", (unsigned char*)_data, INT32_MAX, 0);
@@ -3080,8 +3080,8 @@ struct Imgui
 
 	bool visible(int32_t _elemY, int32_t _elemHeight, int32_t _scissorY, int32_t _scissorHeight)
 	{
-		return _elemY > _scissorY
-			&& (_elemY+_elemHeight) < (_scissorY+_scissorHeight);
+		return (_elemY+_elemHeight) > _scissorY
+		    && (_elemY) < (_scissorY+_scissorHeight);
 	}
 
 	inline Area& getCurrentArea()

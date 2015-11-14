@@ -1,0 +1,546 @@
+
+
+.notextsel
+{
+	/* Disable text selection so that it doesn't interfere with button-clicking */
+	user-select:none;
+
+	/* Stops the text cursor over the label */
+	cursor:default;
+}
+
+
+
+/* ------------------------------------------------------------------------------------------------------------------ */
+/* Window Styles                                                                                                      */
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+
+
+.Window
+{
+	/* Allows movement of the window to exceed browser region without triggering scroll bars */
+	position:fixed;
+
+	/* Clip all contents to the window border */
+	overflow: hidden;
+
+	background: #404040;
+
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+
+	-webkit-box-shadow: 3px 3px 3px #111, 1px 1px 1px #606060 inset;
+	box-shadow: 3px 3px 3px #111, 1px 1px 1px #606060 inset;
+}
+
+.Window_Transparent
+{
+	/* Set transparency changes to fade in/out */
+	opacity: 0.5;
+	transition: opacity 0.5s ease-out;
+	-moz-transition: opacity 0.5s ease-out;
+	-webkit-transition: opacity 0.5s ease-out;
+}
+
+.Window_Transparent:hover
+{
+	opacity: 1;
+}
+
+.WindowTitleBar
+{
+	height: 17px;
+	cursor: move;
+
+	border-bottom: 1px solid #303030;
+	border-radius: 5px;
+}
+
+.WindowTitleBarText
+{
+	color: #BBB;
+	font: 9px Verdana;
+
+	padding: 3px;
+	cursor: move;
+}
+
+.WindowTitleBarClose
+{
+	color: #999999;
+	font: 9px Verdana;
+
+	padding: 3px;
+	cursor: default;
+}
+
+.WindowBody
+{
+	/* Turns this node into a "positioned node" so that its children can be placed relative to it */
+	position: absolute;
+
+	/* Fill the parent window node */
+	width: 100%;
+	height: 100%;
+
+	padding:10px;
+	border-top: 1px solid #606060;
+}
+
+
+
+/* ------------------------------------------------------------------------------------------------------------------ */
+/* Container Styles                                                                                                   */
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+
+
+.Container
+{
+	/* Position relative to the parent window */
+	position: absolute;
+
+	background:#2C2C2C;
+
+	border: 1px black solid;
+
+	/* Two inset box shadows to simulate depressing */
+	-webkit-box-shadow: -1px -1px 1px #222 inset, 1px 1px 1px #222 inset;
+	box-shadow: -1px -1px 1px #222 inset, 1px 1px 1px #222 inset;
+}
+
+
+
+/* ------------------------------------------------------------------------------------------------------------------ */
+/* Treeview Styles                                                                                                    */
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+
+
+.Treeview
+{
+	position: absolute;
+
+	background:#2C2C2C;
+	border: 1px solid black;
+	overflow:hidden;
+
+	/* Two inset box shadows to simulate depressing */
+	-webkit-box-shadow: -1px -1px 1px #222 inset, 1px 1px 1px #222 inset;
+	box-shadow: -1px -1px 1px #222 inset, 1px 1px 1px #222 inset;
+}
+
+.TreeviewItem
+{
+	margin:1px;
+	padding:2px;
+	border:solid 1px #2C2C2C;
+	background-color:#2C2C2C;
+}
+
+.TreeviewItemImage
+{
+	float: left;
+}
+
+.TreeviewItemText
+{
+	float: left;
+	margin-left:4px;
+}
+
+.TreeviewItemChildren
+{
+	overflow: hidden;
+}
+
+.TreeviewItemSelected
+{
+	background-color:#444;
+	border-color:#FFF;
+
+	-webkit-transition: background-color 0.2s ease-in-out;
+	-moz-transition: background-color 0.2s ease-in-out;
+	-webkit-transition: border-color 0.2s ease-in-out;
+	-moz-transition: border-color 0.2s ease-in-out;
+}
+
+/* Used to populate treeviews that want highlight on hover behaviour */
+.TreeviewItemHover
+{
+}
+
+.TreeviewItemHover:hover
+{
+	background-color:#111;
+	border-color:#444;
+
+	-webkit-transition: background-color 0.2s ease-in-out;
+	-moz-transition: background-color 0.2s ease-in-out;
+	-webkit-transition: border-color 0.2s ease-in-out;
+	-moz-transition: border-color 0.2s ease-in-out;
+}
+
+.TreeviewScrollbarInset
+{
+	float: right;
+
+	position:relative;
+
+	height: 100%;
+
+	/* CRAZINESS PART A: Trying to get the inset and scrollbar to have 100% height match its container */
+	margin: -8px -8px 0 0;
+	padding: 0 1px 14px 1px;
+
+	width:20px;
+	background:#2C2C2C;
+	border: 1px solid black;
+
+	/* Two inset box shadows to simulate depressing */
+	-webkit-box-shadow: -1px -1px 1px #222 inset, 1px 1px 1px #222 inset;
+	box-shadow: -1px -1px 1px #222 inset, 1px 1px 1px #222 inset;
+}
+
+.TreeviewScrollbar
+{
+	position:relative;
+
+	background:#2C2C2C;
+	border: 1px solid black;
+
+	/* CRAZINESS PART B: Trying to get the inset and scrollbar to have 100% height match its container */
+	padding: 0 0 10px 0;
+	margin: 1px 0 0 0;
+
+	width: 18px;
+	height: 100%;
+
+	border-radius:6px;
+	border-color:#000;
+	border-width:1px;
+	border-style:solid;
+
+	/* The gradient for the button background */
+	background-color:#666;
+	background: -webkit-gradient(linear, left top, left bottom, from(#666), to(#383838));
+	background: -moz-linear-gradient(top, #666, #383838);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#666666', endColorstr='#383838');
+
+	/* A box shadow and inset box highlight */
+	-webkit-box-shadow: 1px 1px 1px #222, 1px 1px 1px #777 inset;
+	box-shadow: 1px 1px 1px #222, 1px 1px 1px #777 inset;
+}
+
+.TreeviewScrollbarHeld
+{
+	/* Reset the gradient to a full-colour background */
+	background:#383838;
+
+	/* Two inset box shadows to simulate depressing */
+	-webkit-box-shadow: -1px -1px 1px #222 inset, 1px 1px 1px #222 inset;
+	box-shadow: -1px -1px 1px #222 inset, 1px 1px 1px #222 inset;
+}
+
+
+ 
+/* ------------------------------------------------------------------------------------------------------------------ */
+/* Treeview Styles                                                                                                    */
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+
+
+.EditBoxContainer
+{
+	position: absolute;
+	padding:2px 10px 2px 10px;
+}
+
+.EditBoxLabel
+{
+	float:left;
+	padding: 3px 4px 4px 4px;
+	font: 9px Verdana;
+}
+
+.EditBox
+{
+	float:left;
+
+	background:#666;
+	border: 1px solid;
+	border-radius: 6px;
+	padding: 3px 4px 3px 4px;
+	height: 20px;
+
+	box-shadow: 1px 1px 1px #222 inset;
+
+	transition: all 0.3s ease-in-out;
+}
+
+.EditBox:focus
+{
+	background:#FFF;
+	outline:0;
+}
+
+
+
+/* ------------------------------------------------------------------------------------------------------------------ */
+/* Label Styles                                                                                                       */
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+
+
+.Label
+{
+	/* Position relative to the parent window */
+	position:absolute;
+
+	color: #BBB;
+	font: 9px Verdana;
+}
+
+
+
+/* ------------------------------------------------------------------------------------------------------------------ */
+/* Combo Box Styles                                                                                                   */
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+
+
+.ComboBox
+{
+	position:absolute;
+
+	/* TEMP! */
+	width:90px;
+
+	/* Height is fixed to match the font */
+	height:14px;
+
+	/* Align the text within the combo box */
+	padding: 1px 0 0 5px;
+
+	/* Solid, rounded border */
+	border: 1px solid #111;
+	border-radius: 5px;
+
+	/* http://www.colorzilla.com/gradient-editor/#e3e3e3+0,c6c6c6+22,b7b7b7+33,afafaf+50,a7a7a7+67,797979+82,414141+100;Custom */    
+	background: #e3e3e3;
+	background: -moz-linear-gradient(top,  #e3e3e3 0%, #c6c6c6 22%, #b7b7b7 33%, #afafaf 50%, #a7a7a7 67%, #797979 82%, #414141 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#e3e3e3), color-stop(22%,#c6c6c6), color-stop(33%,#b7b7b7), color-stop(50%,#afafaf), color-stop(67%,#a7a7a7), color-stop(82%,#797979), color-stop(100%,#414141));
+	background: -webkit-linear-gradient(top,  #e3e3e3 0%,#c6c6c6 22%,#b7b7b7 33%,#afafaf 50%,#a7a7a7 67%,#797979 82%,#414141 100%);
+	background: -o-linear-gradient(top,  #e3e3e3 0%,#c6c6c6 22%,#b7b7b7 33%,#afafaf 50%,#a7a7a7 67%,#797979 82%,#414141 100%);
+	background: -ms-linear-gradient(top,  #e3e3e3 0%,#c6c6c6 22%,#b7b7b7 33%,#afafaf 50%,#a7a7a7 67%,#797979 82%,#414141 100%);
+	background: linear-gradient(top,  #e3e3e3 0%,#c6c6c6 22%,#b7b7b7 33%,#afafaf 50%,#a7a7a7 67%,#797979 82%,#414141 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e3e3e3', endColorstr='#414141',GradientType=0 );
+}
+
+.ComboBoxPressed
+{
+	/* The reverse of the default background, simulating depression */
+	background: #414141;
+	background: -moz-linear-gradient(top,  #414141 0%, #797979 18%, #a7a7a7 33%, #afafaf 50%, #b7b7b7 67%, #c6c6c6 78%, #e3e3e3 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#414141), color-stop(18%,#797979), color-stop(33%,#a7a7a7), color-stop(50%,#afafaf), color-stop(67%,#b7b7b7), color-stop(78%,#c6c6c6), color-stop(100%,#e3e3e3));
+	background: -webkit-linear-gradient(top,  #414141 0%,#797979 18%,#a7a7a7 33%,#afafaf 50%,#b7b7b7 67%,#c6c6c6 78%,#e3e3e3 100%);
+	background: -o-linear-gradient(top,  #414141 0%,#797979 18%,#a7a7a7 33%,#afafaf 50%,#b7b7b7 67%,#c6c6c6 78%,#e3e3e3 100%);
+	background: -ms-linear-gradient(top,  #414141 0%,#797979 18%,#a7a7a7 33%,#afafaf 50%,#b7b7b7 67%,#c6c6c6 78%,#e3e3e3 100%);
+	background: linear-gradient(top,  #414141 0%,#797979 18%,#a7a7a7 33%,#afafaf 50%,#b7b7b7 67%,#c6c6c6 78%,#e3e3e3 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#414141', endColorstr='#e3e3e3',GradientType=0 );
+}
+
+.ComboBoxText
+{
+	/* Text info */
+	color: #000;
+	font: 9px Verdana;
+
+	float:left;
+}
+
+.ComboBoxIcon
+{
+	/* Push the image to the far right */
+	float:right;
+
+	/* Align the image with the combo box */
+	padding: 2px 5px 0 0;
+}
+
+.ComboBoxPopup
+{
+	position: fixed;
+
+	background: #CCC;
+
+	border-radius: 5px;
+
+	padding: 1px 0 1px 0;
+}
+
+.ComboBoxPopupItem
+{
+	/* Text info */
+	color: #000;
+	font: 9px Verdana;
+
+	padding: 1px 1px 1px 5px;
+
+	border-bottom: 1px solid #AAA;
+	border-top: 1px solid #FFF;
+}
+
+.ComboBoxPopupItemText
+{
+	float:left;
+}
+
+.ComboBoxPopupItemIcon
+{
+	/* Push the image to the far right */
+	float:right;
+
+	/* Align the image with the combo box */
+	padding: 2px 5px 0 0;
+}
+
+.ComboBoxPopupItem:first-child
+{
+	border-top: 0px;
+}
+
+.ComboBoxPopupItem:last-child
+{
+	border-bottom: 0px;
+}
+
+.ComboBoxPopupItem:hover
+{
+	color:#FFF;
+	background: #2036E1;
+}
+
+
+
+/* ------------------------------------------------------------------------------------------------------------------ */
+/* Grid Styles                                                                                                        */
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+
+
+.Grid
+{
+	/* Clip contents */
+	overflow: hidden;
+
+	position: relative;
+
+	background: #333;
+
+	border-radius: 2px;
+}
+
+.GridBody
+{
+}
+
+.GridRow
+{
+	background:#303030;
+
+	color: #BBB;
+	font: 9px Verdana;
+
+	padding: 2px;
+}
+
+.GridRow.GridGroup
+{
+	padding: 0px;
+}
+
+.GridRow:nth-child(odd)
+{
+	background:#333;
+}
+
+.GridRowCell
+{
+	float:left;
+}
+.GridRowCell.GridGroup
+{
+	color: #BBB;
+
+	/* Override default from name */
+	width: 100%;
+
+	padding: 1px 1px 1px 2px;
+	border: 1px solid;
+	border-radius: 2px;
+
+	border-top-color:#555;
+	border-left-color:#555;
+	border-bottom-color:#111;
+	border-right-color:#111;
+
+	background: #222;
+}
+
+.GridRowBody
+{
+	/* Clip all contents for show/hide group*/
+	overflow: hidden;
+
+	/* Crazy CSS rules: controls for properties don't clip if this isn't set on this parent */
+	position: relative;
+}
+
+
+
+/* ------------------------------------------------------------------------------------------------------------------ */
+/* Button Styles                                                                                                      */
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+
+
+.Button
+{
+	/* Position relative to the parent window */
+	position:absolute;
+
+	border-radius:6px;
+	border-color:#000;
+	border-width:1px;
+	border-style:solid;
+
+	/* Padding at the top includes 2px for the text drop-shadow */
+	padding: 2px 5px 3px 5px;
+
+	color: #BBB;
+	font: 9px Verdana;
+	text-shadow: 1px 1px 1px black;
+	text-align: center;
+
+	/* The gradient for the button background */
+	background-color:#666;
+	background: -webkit-gradient(linear, left top, left bottom, from(#666), to(#383838));
+	background: -moz-linear-gradient(top, #666, #383838);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#666666', endColorstr='#383838');
+
+	/* A box shadow and inset box highlight */
+	-webkit-box-shadow: 1px 1px 1px #222, 1px 1px 1px #777 inset;
+	box-shadow: 1px 1px 1px #222, 1px 1px 1px #777 inset;
+}
+
+.ButtonHeld
+{
+	/* Reset the gradient to a full-colour background */
+	background:#383838;
+
+	/* Two inset box shadows to simulate depressing */
+	-webkit-box-shadow: -1px -1px 1px #222 inset, 1px 1px 1px #222 inset;
+	box-shadow: -1px -1px 1px #222 inset, 1px 1px 1px #222 inset;
+}

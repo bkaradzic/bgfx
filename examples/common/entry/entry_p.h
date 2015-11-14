@@ -48,6 +48,10 @@
 #	define ENTRY_CONFIG_IMPLEMENT_DEFAULT_ALLOCATOR 1
 #endif // ENTRY_CONFIG_IMPLEMENT_DEFAULT_ALLOCATOR
 
+#ifndef ENTRY_CONFIG_PROFILER
+#	define ENTRY_CONFIG_PROFILER 0
+#endif // ENTRY_CONFIG_PROFILER
+
 #define ENTRY_IMPLEMENT_EVENT(_class, _type) \
 			_class(WindowHandle _handle) : Event(_type, _handle) {}
 

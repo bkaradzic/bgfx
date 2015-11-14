@@ -146,14 +146,16 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBott
 	}
 }
 
-int _main_(int /*_argc*/, char** /*_argv*/)
+int _main_(int _argc, char** _argv)
 {
+	Args args(_argc, _argv);
+
 	uint32_t width = 1280;
 	uint32_t height = 720;
 	uint32_t debug = BGFX_DEBUG_TEXT;
 	uint32_t reset = BGFX_RESET_VSYNC;
 
-	bgfx::init();
+	bgfx::init(args.m_type, args.m_pciId);
 	bgfx::reset(width, height, reset);
 
 	// Create vertex stream declaration.
@@ -311,11 +313,11 @@ int _main_(int /*_argc*/, char** /*_argv*/)
 
 		bgfx::setViewTransform(0, view, proj);
 
-		// Set clear color palette for index 0
-		bgfx::setClearColor(0, 0.0f, 0.0f, 0.0f, 0.0f);
+		// Set palette color for index 0
+		bgfx::setPaletteColor(0, 0.0f, 0.0f, 0.0f, 0.0f);
 
-		// Set clear color palette for index 1
-		bgfx::setClearColor(1, 1.0f, 1.0f, 1.0f, 1.0f);
+		// Set palette color for index 1
+		bgfx::setPaletteColor(1, 1.0f, 1.0f, 1.0f, 1.0f);
 
 		bgfx::setViewClear(0
 			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH

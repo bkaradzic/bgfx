@@ -11,7 +11,7 @@
 #define XK_LATIN1
 #include <X11/keysymdef.h>
 #include <X11/Xlib.h> // will include X11 which #defines None... Don't mess with order of includes.
-#include <bgfxplatform.h>
+#include <bgfx/bgfxplatform.h>
 
 #undef None
 #include <bx/thread.h>
@@ -299,11 +299,10 @@ namespace entry
 			m_visual = DefaultVisual(m_display, screen);
 			m_root   = RootWindow(m_display, screen);
 
-			XSetWindowAttributes windowAttrs;
-			memset(&windowAttrs, 0, sizeof(windowAttrs) );
-			windowAttrs.background_pixmap = 0;
-			windowAttrs.border_pixel = 0;
-			windowAttrs.event_mask = 0
+			memset(&m_windowAttrs, 0, sizeof(m_windowAttrs) );
+			m_windowAttrs.background_pixmap = 0;
+			m_windowAttrs.border_pixel = 0;
+			m_windowAttrs.event_mask = 0
 					| ButtonPressMask
 					| ButtonReleaseMask
 					| ExposureMask
@@ -317,12 +316,12 @@ namespace entry
 			m_window[0] = XCreateWindow(m_display
 									, m_root
 									, 0, 0
-									, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT, 0
+									, 1, 1, 0
 									, m_depth
 									, InputOutput
 									, m_visual
 									, CWBorderPixel|CWEventMask
-									, &windowAttrs
+									, &m_windowAttrs
 									);
 
 			// Clear window to black.
@@ -338,6 +337,20 @@ namespace entry
 			XMapWindow(m_display, m_window[0]);
 			XStoreName(m_display, m_window[0], "BGFX");
 
+			XIM im;
+			im = XOpenIM(m_display, NULL, NULL, NULL);
+
+			XIC ic;
+			ic = XCreateIC(im
+					, XNInputStyle
+					, 0
+					| XIMPreeditNothing
+					| XIMStatusNothing
+					, XNClientWindow
+					, m_window[0]
+					, NULL
+					);
+
 			//
 			bgfx::x11SetDisplayWindow(m_display, m_window[0]);
 
@@ -349,7 +362,7 @@ namespace entry
 			thread.init(mte.threadFunc, &mte);
 
 			WindowHandle defaultWindow = { 0 };
-			m_eventQueue.postSizeEvent(defaultWindow, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
+			m_eventQueue.postSizeEvent(defaultWindow, 1, 1);
 
 			s_joystick.init();
 
@@ -449,10 +462,30 @@ namespace entry
 
 								default:
 									{
+										WindowHandle handle = findHandle(xkey.window);
+										if (KeyPress == event.type)
+										{
+											Status status = 0;
+											uint8_t utf8[4];
+											int len = Xutf8LookupString(ic, &xkey, (char*)utf8, sizeof(utf8), &keysym, &status);
+											switch (status)
+											{
+											case XLookupChars:
+											case XLookupBoth:
+												if (0 != len)
+												{
+													m_eventQueue.postCharEvent(handle, len, utf8);
+												}
+												break;
+
+											default:
+												break;
+											}
+										}
+
 										Key::Enum key = fromXk(keysym);
 										if (Key::None != key)
 										{
-											WindowHandle handle = findHandle(xkey.window);
 											m_eventQueue.postKeyEvent(handle, key, m_modifiers, KeyPress == event.type);
 										}
 									}
@@ -479,6 +512,9 @@ namespace entry
 
 			s_joystick.shutdown();
 
+			XDestroyIC(ic);
+			XCloseIM(im);
+
 			XUnmapWindow(m_display, m_window[0]);
 			XDestroyWindow(m_display, m_window[0]);
 
@@ -493,21 +529,6 @@ namespace entry
 
 		void createWindow(WindowHandle _handle, Msg* msg)
 		{
-			XSetWindowAttributes windowAttrs;
-			memset(&windowAttrs, 0, sizeof(windowAttrs) );
-			windowAttrs.background_pixmap = 0;
-			windowAttrs.border_pixel = 0;
-			windowAttrs.event_mask = 0
-					| ButtonPressMask
-					| ButtonReleaseMask
-					| ExposureMask
-					| KeyPressMask
-					| KeyReleaseMask
-					| PointerMotionMask
-					| ResizeRedirectMask
-					| StructureNotifyMask
-					;
-
 			Window window = XCreateWindow(m_display
 									, m_root
 									, msg->m_x
@@ -519,7 +540,7 @@ namespace entry
 									, InputOutput
 									, m_visual
 									, CWBorderPixel|CWEventMask
-									, &windowAttrs
+									, &m_windowAttrs
 									);
 			m_window[_handle.idx] = window;
 
@@ -582,6 +603,8 @@ namespace entry
 		int32_t m_depth;
 		Visual* m_visual;
 		Window  m_root;
+
+		XSetWindowAttributes m_windowAttrs;
 
 		Display* m_display;
 		Window m_window[ENTRY_CONFIG_MAX_WINDOWS];
@@ -648,26 +671,23 @@ namespace entry
 
 	void setWindowPos(WindowHandle _handle, int32_t _x, int32_t _y)
 	{
-		BX_UNUSED(_handle, _x, _y);
+		Display* display = s_ctx.m_display;
+		Window   window  = s_ctx.m_window[_handle.idx];
+		XMoveWindow(display, window, _x, _y);
 	}
 
 	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height)
 	{
-		BX_UNUSED(_handle);
-		XResizeRequestEvent ev;
-		ev.type = ResizeRequest;
-		ev.serial = 0;
-		ev.send_event = true;
-		ev.display = s_ctx.m_display;
-		ev.window = s_ctx.m_window[0];
-		ev.width = (int)_width;
-		ev.height = (int)_height;
-		XSendEvent(s_ctx.m_display, s_ctx.m_window[0], false, ResizeRedirectMask, (XEvent*)&ev);
+		Display* display = s_ctx.m_display;
+		Window   window  = s_ctx.m_window[_handle.idx];
+		XResizeWindow(display, window, int32_t(_width), int32_t(_height) );
 	}
 
 	void setWindowTitle(WindowHandle _handle, const char* _title)
 	{
-		XStoreName(s_ctx.m_display, s_ctx.m_window[_handle.idx], _title);
+		Display* display = s_ctx.m_display;
+		Window   window  = s_ctx.m_window[_handle.idx];
+		XStoreName(display, window, _title);
 	}
 
 	void toggleWindowFrame(WindowHandle _handle)

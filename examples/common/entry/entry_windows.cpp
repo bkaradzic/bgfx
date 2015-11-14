@@ -7,12 +7,13 @@
 
 #if ENTRY_CONFIG_USE_NATIVE && BX_PLATFORM_WINDOWS
 
-#include <bgfxplatform.h>
+#include <bgfx/bgfxplatform.h>
 
 #include <bx/uint32_t.h>
 #include <bx/thread.h>
 #include <bx/mutex.h>
 #include <bx/handlealloc.h>
+#include <bx/timer.h>
 #include <tinystl/allocator.h>
 #include <tinystl/string.h>
 
@@ -116,6 +117,17 @@ namespace entry
 
 		void update(EventQueue& _eventQueue)
 		{
+			int64_t now = bx::getHPCounter();
+			static int64_t next = now;
+
+			if (now < next)
+			{
+				return;
+			}
+
+			const int64_t timerFreq = bx::getHPFrequency();
+			next = now + timerFreq/60;
+
 			if (NULL == m_xinputdll)
 			{
 				return;
@@ -518,7 +530,7 @@ namespace entry
 							, msg->m_y
 							, msg->m_width
 							, msg->m_height
-							, m_hwnd[0]
+							, NULL
 							, NULL
 							, (HINSTANCE)GetModuleHandle(NULL)
 							, 0
@@ -900,33 +912,6 @@ namespace entry
 
 				left   = newrect.left+(newrect.right -newrect.left-width)/2;
 				top    = newrect.top +(newrect.bottom-newrect.top-height)/2;
-			}
-
-			HWND parent = GetWindow(_hwnd, GW_OWNER);
-			if (NULL != parent)
-			{
-				if (_windowFrame)
-				{
-					SetWindowPos(parent
-						, HWND_TOP
-						, -32000
-						, -32000
-						, 0
-						, 0
-						, SWP_SHOWWINDOW
-						);
-				}
-				else
-				{
-					SetWindowPos(parent
-						, HWND_TOP
-						, newrect.left
-						, newrect.top
-						, newrect.right-newrect.left
-						, newrect.bottom-newrect.top
-						, SWP_SHOWWINDOW
-						);
-				}
 			}
 
 			SetWindowPos(_hwnd

@@ -6,6 +6,8 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
+#define BGFX_API_VERSION UINT32_C(2)
+
 ///
 #define BGFX_STATE_RGB_WRITE             UINT64_C(0x0000000000000001) //!< Enable RGB write.
 #define BGFX_STATE_ALPHA_WRITE           UINT64_C(0x0000000000000002) //!< Enable alpha write.
@@ -13,12 +15,12 @@
 
 #define BGFX_STATE_DEPTH_TEST_LESS       UINT64_C(0x0000000000000010) //!< Enable depth test, less.
 #define BGFX_STATE_DEPTH_TEST_LEQUAL     UINT64_C(0x0000000000000020) //!< Enable depth test, less equal.
-#define BGFX_STATE_DEPTH_TEST_EQUAL      UINT64_C(0x0000000000000030) //!<
-#define BGFX_STATE_DEPTH_TEST_GEQUAL     UINT64_C(0x0000000000000040) //!<
-#define BGFX_STATE_DEPTH_TEST_GREATER    UINT64_C(0x0000000000000050) //!<
-#define BGFX_STATE_DEPTH_TEST_NOTEQUAL   UINT64_C(0x0000000000000060) //!<
-#define BGFX_STATE_DEPTH_TEST_NEVER      UINT64_C(0x0000000000000070) //!<
-#define BGFX_STATE_DEPTH_TEST_ALWAYS     UINT64_C(0x0000000000000080) //!<
+#define BGFX_STATE_DEPTH_TEST_EQUAL      UINT64_C(0x0000000000000030) //!< Enable depth test, equal.
+#define BGFX_STATE_DEPTH_TEST_GEQUAL     UINT64_C(0x0000000000000040) //!< Enable depth test, greater equal.
+#define BGFX_STATE_DEPTH_TEST_GREATER    UINT64_C(0x0000000000000050) //!< Enable depth test, greater.
+#define BGFX_STATE_DEPTH_TEST_NOTEQUAL   UINT64_C(0x0000000000000060) //!< Enable depth test, not equal.
+#define BGFX_STATE_DEPTH_TEST_NEVER      UINT64_C(0x0000000000000070) //!< Enable depth test, never.
+#define BGFX_STATE_DEPTH_TEST_ALWAYS     UINT64_C(0x0000000000000080) //!< Enable depth test, always.
 #define BGFX_STATE_DEPTH_TEST_SHIFT      4
 #define BGFX_STATE_DEPTH_TEST_MASK       UINT64_C(0x00000000000000f0) //!< Depth test state bit mask.
 
@@ -53,8 +55,9 @@
 #define BGFX_STATE_CULL_SHIFT            36                           //!< Culling mode bit shift.
 #define BGFX_STATE_CULL_MASK             UINT64_C(0x0000003000000000) //!< Culling mode bit mask.
 
-#define BGFX_STATE_ALPHA_REF_SHIFT       40                           //!<
-#define BGFX_STATE_ALPHA_REF_MASK        UINT64_C(0x0000ff0000000000) //!<
+/// See BGFX_STATE_ALPHA_REF(_ref) helper macro.
+#define BGFX_STATE_ALPHA_REF_SHIFT       40                           //!< Alpha reference bit shift.
+#define BGFX_STATE_ALPHA_REF_MASK        UINT64_C(0x0000ff0000000000) //!< Alpha reference bit mask.
 
 #define BGFX_STATE_PT_TRISTRIP           UINT64_C(0x0001000000000000) //!< Tristrip.
 #define BGFX_STATE_PT_LINES              UINT64_C(0x0002000000000000) //!< Lines.
@@ -63,17 +66,20 @@
 #define BGFX_STATE_PT_SHIFT              48                           //!< Primitive type bit shift.
 #define BGFX_STATE_PT_MASK               UINT64_C(0x0007000000000000) //!< Primitive type bit mask.
 
-#define BGFX_STATE_POINT_SIZE_SHIFT      52                           //!<
-#define BGFX_STATE_POINT_SIZE_MASK       UINT64_C(0x0ff0000000000000) //!<
+#define BGFX_STATE_POINT_SIZE_SHIFT      52                           //!< Point size bit shift.
+#define BGFX_STATE_POINT_SIZE_MASK       UINT64_C(0x0ff0000000000000) //!< Point size bit mask.
 
 /// Enable MSAA write when writing into MSAA frame buffer. This flag is ignored when not writing into
 /// MSAA frame buffer.
-#define BGFX_STATE_MSAA                  UINT64_C(0x1000000000000000) //!<
+#define BGFX_STATE_MSAA                  UINT64_C(0x1000000000000000) //!< Enable MSAA rasterization.
 
-#define BGFX_STATE_RESERVED_MASK         UINT64_C(0xe000000000000000) //!<
+/// Do not use!
+#define BGFX_STATE_RESERVED_SHIFT        61                           //!< Internal bits shift.
+#define BGFX_STATE_RESERVED_MASK         UINT64_C(0xe000000000000000) //!< Internal bits mask.
 
-#define BGFX_STATE_NONE                  UINT64_C(0x0000000000000000) //!<
-#define BGFX_STATE_MASK                  UINT64_C(0xffffffffffffffff) //!<
+/// See BGFX_STATE_POINT_SIZE(_size) helper macro.
+#define BGFX_STATE_NONE                  UINT64_C(0x0000000000000000) //!< No state.
+#define BGFX_STATE_MASK                  UINT64_C(0xffffffffffffffff) //!< State mask.
 
 /// Default state is write to RGB, alpha, and depth with depth test less enabled, with clockwise
 /// culling and MSAA (when writing into MSAA frame buffer, otherwise this flag is ignored).
@@ -248,9 +254,9 @@
 #define BGFX_BUFFER_COMPUTE_TYPE_SHIFT   4                //!<
 #define BGFX_BUFFER_COMPUTE_TYPE_MASK    UINT16_C(0x0030) //!<
 
-#define BGFX_BUFFER_COMPUTE_READ         UINT16_C(0x0100) //!<
-#define BGFX_BUFFER_COMPUTE_WRITE        UINT16_C(0x0200) //!<
-#define BGFX_BUFFER_DRAW_INDIRECT        UINT16_C(0x0400) //!<
+#define BGFX_BUFFER_COMPUTE_READ         UINT16_C(0x0100) //!< Buffer will be read by shader.
+#define BGFX_BUFFER_COMPUTE_WRITE        UINT16_C(0x0200) //!< Buffer will be used for writing.
+#define BGFX_BUFFER_DRAW_INDIRECT        UINT16_C(0x0400) //!< Buffer will be used for storing draw indirect commands.
 #define BGFX_BUFFER_ALLOW_RESIZE         UINT16_C(0x0800) //!<
 #define BGFX_BUFFER_INDEX32              UINT16_C(0x1000) //!<
 
@@ -308,8 +314,14 @@
 #define BGFX_TEXTURE_COMPARE_MASK        UINT32_C(0x000f0000) //!<
 #define BGFX_TEXTURE_COMPUTE_WRITE       UINT32_C(0x00100000) //!<
 #define BGFX_TEXTURE_SRGB                UINT32_C(0x00200000) //!<
-#define BGFX_TEXTURE_RESERVED_SHIFT      24                   //!<
-#define BGFX_TEXTURE_RESERVED_MASK       UINT32_C(0xff000000) //!<
+#define BGFX_TEXTURE_BLIT_DST            UINT32_C(0x00400000) //!<
+#define BGFX_TEXTURE_READ_BACK           UINT32_C(0x00800000) //!<
+#define BGFX_TEXTURE_BORDER_COLOR_SHIFT  24                   //!<
+#define BGFX_TEXTURE_BORDER_COLOR_MASK   UINT32_C(0x0f000000) //!<
+#define BGFX_TEXTURE_RESERVED_SHIFT      28                   //!<
+#define BGFX_TEXTURE_RESERVED_MASK       UINT32_C(0xf0000000) //!<
+
+#define BGFX_TEXTURE_BORDER_COLOR(_index) ( (_index << BGFX_TEXTURE_BORDER_COLOR_SHIFT) & BGFX_TEXTURE_BORDER_COLOR_MASK)
 
 #define BGFX_TEXTURE_SAMPLER_BITS_MASK (0 \
 			| BGFX_TEXTURE_U_MASK \
@@ -343,6 +355,9 @@
 #define BGFX_RESET_SRGB_BACKBUFFER       UINT32_C(0x00008000) //!< Enable sRGB backbuffer.
 #define BGFX_RESET_HIDPI                 UINT32_C(0x00010000) //!< Enable HiDPI rendering.
 
+#define BGFX_RESET_RESERVED_SHIFT        31                   //!< Internal bits shift.
+#define BGFX_RESET_RESERVED_MASK         UINT32_C(0x80000000) //!< Internal bits mask.
+
 ///
 #define BGFX_CAPS_TEXTURE_COMPARE_LEQUAL UINT64_C(0x0000000000000001) //!< Texture compare less equal mode is supported.
 #define BGFX_CAPS_TEXTURE_COMPARE_ALL    UINT64_C(0x0000000000000003) //!< All texture compare modes are supported.
@@ -360,27 +375,39 @@
 #define BGFX_CAPS_INDEX32                UINT64_C(0x0000000000002000) //!< 32-bit indices are supported.
 #define BGFX_CAPS_DRAW_INDIRECT          UINT64_C(0x0000000000004000) //!< Draw indirect is supported.
 #define BGFX_CAPS_HIDPI                  UINT64_C(0x0000000000008000) //!< HiDPI rendering is supported.
+#define BGFX_CAPS_TEXTURE_BLIT           UINT64_C(0x0000000000010000) //!< Texture blit is supported.
+#define BGFX_CAPS_TEXTURE_READ_BACK      UINT64_C(0x0000000000020000) //!< Read-back texture is supported.
+#define BGFX_CAPS_OCCLUSION_QUERY        UINT64_C(0x0000000000040000) //!< Occlusion query is supported.
 
 ///
-#define BGFX_CAPS_FORMAT_TEXTURE_NONE             UINT8_C(0x00) //!< Texture format is not supported.
-#define BGFX_CAPS_FORMAT_TEXTURE_COLOR            UINT8_C(0x01) //!< Texture format is supported.
-#define BGFX_CAPS_FORMAT_TEXTURE_COLOR_SRGB       UINT8_C(0x02) //!< Texture as sRGB format is supported.
-#define BGFX_CAPS_FORMAT_TEXTURE_EMULATED         UINT8_C(0x04) //!< Texture format is emulated.
-#define BGFX_CAPS_FORMAT_TEXTURE_VERTEX           UINT8_C(0x08) //!< Texture format can be used from vertex shader.
-#define BGFX_CAPS_FORMAT_TEXTURE_IMAGE            UINT8_C(0x10) //!< Texture format can be used as image from compute shader.
-#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER      UINT8_C(0x20) //!< Texture format can be used as frame buffer.
-#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA UINT8_C(0x40) //!< Texture format can be used as MSAA frame buffer.
-#define BGFX_CAPS_FORMAT_TEXTURE_MSAA             UINT8_C(0x80) //!< Texture can be sampled as MSAA.
+#define BGFX_CAPS_FORMAT_TEXTURE_NONE             UINT16_C(0x0000) //!< Texture format is not supported.
+#define BGFX_CAPS_FORMAT_TEXTURE_2D               UINT16_C(0x0001) //!< Texture format is supported.
+#define BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB          UINT16_C(0x0002) //!< Texture as sRGB format is supported.
+#define BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED      UINT16_C(0x0004) //!< Texture format is emulated.
+#define BGFX_CAPS_FORMAT_TEXTURE_3D               UINT16_C(0x0008) //!< Texture format is supported.
+#define BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB          UINT16_C(0x0010) //!< Texture as sRGB format is supported.
+#define BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED      UINT16_C(0x0020) //!< Texture format is emulated.
+#define BGFX_CAPS_FORMAT_TEXTURE_CUBE             UINT16_C(0x0040) //!< Texture format is supported.
+#define BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB        UINT16_C(0x0080) //!< Texture as sRGB format is supported.
+#define BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED    UINT16_C(0x0100) //!< Texture format is emulated.
+#define BGFX_CAPS_FORMAT_TEXTURE_VERTEX           UINT16_C(0x0200) //!< Texture format can be used from vertex shader.
+#define BGFX_CAPS_FORMAT_TEXTURE_IMAGE            UINT16_C(0x0400) //!< Texture format can be used as image from compute shader.
+#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER      UINT16_C(0x0800) //!< Texture format can be used as frame buffer.
+#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA UINT16_C(0x1000) //!< Texture format can be used as MSAA frame buffer.
+#define BGFX_CAPS_FORMAT_TEXTURE_MSAA             UINT16_C(0x2000) //!< Texture can be sampled as MSAA.
 
 ///
 #define BGFX_VIEW_NONE   UINT8_C(0x00) //!<
-#define BGFX_VIEW_STEREO UINT8_C(0x01) //!<
+#define BGFX_VIEW_STEREO UINT8_C(0x01) //!< View will be rendered in stereo mode.
 
 ///
-#define BGFX_SUBMIT_EYE_LEFT  UINT8_C(0x01) //!<
-#define BGFX_SUBMIT_EYE_RIGHT UINT8_C(0x02) //!<
-#define BGFX_SUBMIT_EYE_MASK  UINT8_C(0x03) //!<
-#define BGFX_SUBMIT_EYE_FIRST BGFX_SUBMIT_EYE_LEFT
+#define BGFX_SUBMIT_EYE_LEFT       UINT8_C(0x01) //!< Submit to left eye.
+#define BGFX_SUBMIT_EYE_RIGHT      UINT8_C(0x02) //!< Submit to right eye.
+#define BGFX_SUBMIT_EYE_MASK       UINT8_C(0x03) //!<
+#define BGFX_SUBMIT_EYE_FIRST      BGFX_SUBMIT_EYE_LEFT
+
+#define BGFX_SUBMIT_RESERVED_SHIFT 7             //!< Internal bits shift.
+#define BGFX_SUBMIT_RESERVED_MASK  UINT8_C(0x80) //!< Internal bits mask.
 
 ///
 #define BGFX_PCI_ID_NONE                UINT16_C(0x0000) //!< Autoselect adapter.

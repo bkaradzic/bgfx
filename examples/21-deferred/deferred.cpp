@@ -18,11 +18,6 @@
 static float s_texelHalf = 0.0f;
 static bool s_originBottomLeft = false;
 
-inline void mtxProj(float* _result, float _fovy, float _aspect, float _near, float _far)
-{
-	bx::mtxProj(_result, _fovy, _aspect, _near, _far, s_originBottomLeft);
-}
-
 struct PosNormalTangentTexcoordVertex
 {
 	float m_x;
@@ -220,24 +215,26 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf
 
 class Deferred : public entry::AppI
 {
-	void init(int /*_argc*/, char** /*_argv*/) BX_OVERRIDE
+	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
-		m_width = 1280;
+		Args args(_argc, _argv);
+		
+		m_width  = 1280;
 		m_height = 720;
-		m_debug = BGFX_DEBUG_TEXT;
-		m_reset = BGFX_RESET_VSYNC;
+		m_debug  = BGFX_DEBUG_TEXT;
+		m_reset  = BGFX_RESET_VSYNC;
 
-		bgfx::init();
+		bgfx::init(args.m_type, args.m_pciId);
 		bgfx::reset(m_width, m_height, m_reset);
 
 		// Enable m_debug text.
 		bgfx::setDebug(m_debug);
 
-		// Set clear color palette for index 0
-		bgfx::setClearColor(0, UINT32_C(0x00000000) );
+		// Set palette color for index 0
+		bgfx::setPaletteColor(0, UINT32_C(0x00000000) );
 
-		// Set clear color palette for index 1
-		bgfx::setClearColor(1, UINT32_C(0x303030ff) );
+		// Set palette color for index 1
+		bgfx::setPaletteColor(1, UINT32_C(0x303030ff) );
 
 		// Set geometry pass view clear state.
 		bgfx::setViewClear(RENDER_PASS_GEOMETRY_ID
@@ -415,9 +412,9 @@ class Deferred : public entry::AppI
 			else
 			{
 				if (m_oldWidth  != m_width
-						||  m_oldHeight != m_height
-						||  m_oldReset  != m_reset
-						||  !bgfx::isValid(m_gbuffer) )
+				||  m_oldHeight != m_height
+				||  m_oldReset  != m_reset
+				||  !bgfx::isValid(m_gbuffer) )
 				{
 					// Recreate variable size render targets when resolution changes.
 					m_oldWidth  = m_width;
@@ -504,7 +501,7 @@ class Deferred : public entry::AppI
 					bgfx::setViewFrameBuffer(RENDER_PASS_LIGHT_ID, m_lightBuffer);
 
 					float proj[16];
-					mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f);
+					bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, s_originBottomLeft);
 
 					bgfx::setViewFrameBuffer(RENDER_PASS_GEOMETRY_ID, m_gbuffer);
 					bgfx::setViewTransform(RENDER_PASS_GEOMETRY_ID, view, proj);

@@ -38,4 +38,4 @@ void main ()
 //  #0: uv (high float) 4x1 [-1]
 // textures: 2
 //  #0: tex (low 2d) 0x0 [-1]
-//  #1: shadowmap (low 2d) 0x0 [-1]
+//  #1: shadowmap (low 2dshadow) 0x0 [-1]

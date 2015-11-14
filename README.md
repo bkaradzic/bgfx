@@ -28,10 +28,11 @@ Supported platforms:
  * Android (14+, ARM, x86, MIPS)
  * asm.js/Emscripten (1.25.0)
  * FreeBSD
- * iOS
+ * iOS (iPhone, iPad, AppleTV)
  * Linux ![](https://tc27.draster.com/app/rest/builds/buildType:(id:Bgfx_Linux)/statusIcon)
+ * MIPS Creator CI20
  * Native Client (PPAPI 37+, ARM, x86, x64, PNaCl)
- * OSX (10.9)
+ * OSX (10.9+)
  * RaspberryPi
  * Windows (XP, Vista, 7, 8, 10) ![](https://tc27.draster.com/app/rest/builds/buildType:(id:Bgfx_Windows)/statusIcon)
  * WinRT (WinPhone 8.0+)
@@ -72,7 +73,7 @@ https://github.com/emoon/ProDBG - ProDBG is a new debugger under development
 that will support a variety of targets and operating systems. Currently it's in
 very early development and primary focusing on Mac as primary target. This is
 how it currently looks.  
-![mac_screenshot](https://raw.githubusercontent.com/emoon/ProDBG/master/data/screens/mac_screenshot.png)
+![ProDBG_screenshot](https://raw.githubusercontent.com/emoon/ProDBG/master/data/screens/mac_screenshot.png)
 
 http://www.dogbytegames.com/ Dogbyte Games is an indie mobile developer studio
 focusing on racing games.  
@@ -90,10 +91,8 @@ JavaScript for desktop/mobile apps. Idea is to combine the fast workflow and
 deployment model of web with the performance of native code and GPU acceleration.
 
 https://github.com/nem0/LumixEngine LumixEngine is a MIT licensed 3D engine.
-The main goal is performance and Unity-like usability.
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=eyqk61Yw52E
-" target="_blank"><img src="http://img.youtube.com/vi/eyqk61Yw52E/0.jpg" 
-alt="LumixEngine Terrain Editor" width="640" height="480" border="0" /></a>
+The main goal is performance and Unity-like usability.  
+![LumixEngine screenshot](https://cloud.githubusercontent.com/assets/153526/10109455/450c51be-63c7-11e5-9c87-96d9d00efe02.png)
 
 [Building](https://bkaradzic.github.io/bgfx/build.html)
 -------------------------------------------------------

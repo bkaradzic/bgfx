@@ -9,7 +9,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-#include <bgfxplatform.h>
+#include <bgfx/bgfxplatform.h>
 
 #include <bx/uint32_t.h>
 #include <bx/thread.h>
@@ -444,7 +444,7 @@ namespace entry
 			const float centerY = (screenRect.size.height - (float)ENTRY_DEFAULT_HEIGHT)*0.5f;
 
 			m_windowAlloc.alloc();
-			NSRect rect = NSMakeRect(centerX, centerY, (float)ENTRY_DEFAULT_WIDTH, (float)ENTRY_DEFAULT_HEIGHT);
+			NSRect rect = NSMakeRect(centerX, centerY, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
 			NSWindow* window = [[NSWindow alloc]
 				initWithContentRect:rect
 				styleMask:m_style
@@ -468,6 +468,9 @@ namespace entry
 
 			bx::Thread thread;
 			thread.init(mte.threadFunc, &mte);
+
+			WindowHandle handle = { 0 };
+			m_eventQueue.postSizeEvent(handle, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
 
 			while (!(m_exit = [dg applicationHasTerminated]) )
 			{

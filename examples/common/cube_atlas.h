@@ -15,7 +15,7 @@
 /// algorithm based on C++ sources provided by Jukka Jylänki at:
 /// http://clb.demon.fi/files/RectangleBinPack/
 
-#include <bgfx.h>
+#include <bgfx/bgfx.h>
 
 struct AtlasRegion
 {

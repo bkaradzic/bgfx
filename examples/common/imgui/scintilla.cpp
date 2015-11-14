@@ -1101,11 +1101,11 @@ namespace Scintilla
 
 } // namespace Scintilla
 
-ScintillaEditor* ImGuiScintilla(const char* _name, bool* _opened, const ImVec2& _size)
+ScintillaEditor* ImGuiScintilla(const char* _name, bool* /*_opened*/, const ImVec2& /*_size*/)
 {
 	ScintillaEditor* sci = NULL;
 
-	if (ImGui::Begin(_name, _opened, _size) )
+//	if (ImGui::Begin(_name, _opened, _size) )
 	{
 		ImGuiStorage* storage = ImGui::GetStateStorage();
 
@@ -1121,7 +1121,7 @@ ScintillaEditor* ImGuiScintilla(const char* _name, bool* _opened, const ImVec2& 
 		sci->draw();
 	}
 
-	ImGui::End();
+//	ImGui::End();
 	return sci;
 }
 

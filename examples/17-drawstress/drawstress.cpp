@@ -3,10 +3,10 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include <bgfx.h>
-#include <bx/uint32_t.h>
-
 #include "common.h"
+#include "bgfx_utils.h"
+
+#include <bx/uint32_t.h>
 #include "imgui/imgui.h"
 
 // embedded shaders
@@ -72,8 +72,10 @@ static const int64_t lowwm  = 1000000/57;
 
 class DrawStress : public entry::AppI
 {
-	void init(int /*_argc*/, char** /*_argv*/) BX_OVERRIDE
+	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
+		Args args(_argc, _argv);
+		
 		m_width  = 1280;
 		m_height = 720;
 		m_debug  = BGFX_DEBUG_TEXT;
@@ -91,7 +93,7 @@ class DrawStress : public entry::AppI
 		m_deltaTimeAvgNs = 0;
 		m_numFrames      = 0;
 
-		bgfx::init();
+		bgfx::init(args.m_type, args.m_pciId);
 		bgfx::reset(m_width, m_height, m_reset);
 
 		const bgfx::Caps* caps = bgfx::getCaps();
@@ -125,6 +127,11 @@ class DrawStress : public entry::AppI
 			case bgfx::RendererType::Direct3D12:
 				vs_drawstress = bgfx::makeRef(vs_drawstress_dx11, sizeof(vs_drawstress_dx11) );
 				fs_drawstress = bgfx::makeRef(fs_drawstress_dx11, sizeof(fs_drawstress_dx11) );
+				break;
+
+			case bgfx::RendererType::Metal:
+				vs_drawstress = bgfx::makeRef(vs_drawstress_mtl, sizeof(vs_drawstress_mtl) );
+				fs_drawstress = bgfx::makeRef(fs_drawstress_mtl, sizeof(fs_drawstress_mtl) );
 				break;
 
 			default:
@@ -234,6 +241,11 @@ class DrawStress : public entry::AppI
 			imguiSlider("Dim", m_dim, 5, m_maxDim);
 			imguiLabel("Draw calls: %d", m_dim*m_dim*m_dim);
 			imguiLabel("Avg Delta Time (1 second) [ms]: %0.4f", m_deltaTimeAvgNs/1000.0f);
+
+			imguiSeparatorLine();
+			const bgfx::Stats* stats = bgfx::getStats();
+			imguiLabel("GPU %0.6f [ms]", double(stats->gpuTimeEnd - stats->gpuTimeBegin)*1000.0/stats->gpuTimerFreq);
+			imguiLabel("CPU %0.6f [ms]", double(stats->cpuTimeEnd - stats->cpuTimeBegin)*1000.0/stats->cpuTimerFreq);
 
 			imguiEndScrollArea();
 			imguiEndFrame();

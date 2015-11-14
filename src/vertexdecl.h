@@ -6,7 +6,7 @@
 #ifndef BGFX_VERTEXDECL_H_HEADER_GUARD
 #define BGFX_VERTEXDECL_H_HEADER_GUARD
 
-#include <bgfx.h>
+#include <bgfx/bgfx.h>
 #include <bx/readerwriter.h>
 
 namespace bgfx
