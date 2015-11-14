@@ -39,6 +39,21 @@ namespace entry
 	extern bx::AllocatorI* getDefaultAllocator();
 	static bx::AllocatorI* s_allocator = getDefaultAllocator();
 
+	void* rmtMalloc(void* /*_context*/, rmtU32 _size)
+	{
+		return BX_ALLOC(s_allocator, _size);
+	}
+
+	void* rmtRealloc(void* /*_context*/, void* _ptr, rmtU32 _size)
+	{
+		return BX_REALLOC(s_allocator, _ptr, _size);
+	}
+
+	void rmtFree(void* /*_context*/, void* _ptr)
+	{
+		BX_FREE(s_allocator, _ptr);
+	}
+
 #if ENTRY_CONFIG_IMPLEMENT_DEFAULT_ALLOCATOR
 	bx::AllocatorI* getDefaultAllocator()
 	{
@@ -349,10 +364,20 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		if (BX_ENABLED(ENTRY_CONFIG_PROFILER) )
 		{
-//			rmtSettings* settings = rmt_Settings();
-			if (RMT_ERROR_NONE != rmt_CreateGlobalInstance(&s_rmt) )
+			rmtSettings* settings = rmt_Settings();
+			BX_WARN(NULL != settings, "Remotery is not enabled.");
+			if (NULL != settings)
 			{
-				s_rmt = NULL;
+				settings->malloc  = rmtMalloc;
+				settings->realloc = rmtRealloc;
+				settings->free    = rmtFree;
+
+				rmtError err = rmt_CreateGlobalInstance(&s_rmt);
+				BX_WARN(RMT_ERROR_NONE != err, "Remotery failed to create global instance.");
+				if (RMT_ERROR_NONE != err)
+				{
+					s_rmt = NULL;
+				}
 			}
 		}
 

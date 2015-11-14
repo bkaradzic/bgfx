@@ -488,15 +488,7 @@ static void AtomicSub(rmtS32 volatile* value, rmtS32 sub)
 }
 
 
-// Compiler read/write fences (windows implementation)
-static void ReadFence()
-{
-#if defined(RMT_PLATFORM_WINDOWS)
-    _ReadBarrier();
-#else
-    asm volatile ("" : : : "memory");
-#endif
-}
+// Compiler write fences (windows implementation)
 static void WriteFence()
 {
 #if defined(RMT_PLATFORM_WINDOWS) && !defined(__MINGW32__)
