@@ -113,7 +113,7 @@ error:
 }
 #endif // __ANDROID__
 
-#ifdef RMT_ENABLED
+#if RMT_ENABLED
 
 // Global settings
 static rmtSettings g_Settings;
@@ -133,7 +133,7 @@ static rmtBool g_SettingsInitialized = RMT_FALSE;
 //
 // Required CRT dependencies
 //
-#ifdef RMT_USE_TINYCRT
+#if RMT_USE_TINYCRT
 
     #include <TinyCRT/TinyCRT.h>
     #include <TinyCRT/TinyWinsock.h>
@@ -189,7 +189,7 @@ static rmtBool g_SettingsInitialized = RMT_FALSE;
 #define RMT_UNREFERENCED_PARAMETER(i) (void)(1 ? (void)0 : ((void)i))
 
 
-#ifdef RMT_USE_CUDA
+#if RMT_USE_CUDA
     #include <cuda.h>
 #endif
 
@@ -488,7 +488,15 @@ static void AtomicSub(rmtS32 volatile* value, rmtS32 sub)
 }
 
 
-// Compiler write fences (windows implementation)
+// Compiler read/write fences (windows implementation)
+static void ReadFence()
+{
+#if defined(RMT_PLATFORM_WINDOWS)
+    _ReadBarrier();
+#else
+    asm volatile ("" : : : "memory");
+#endif
+}
 static void WriteFence()
 {
 #if defined(RMT_PLATFORM_WINDOWS) && !defined(__MINGW32__)
@@ -3719,14 +3727,14 @@ static rmtBool ThreadSampler_Pop(ThreadSampler* ts, MessageQueue* queue, Sample*
 
 
 
-#ifdef RMT_USE_D3D11
+#if RMT_USE_D3D11
 typedef struct D3D11 D3D11;
 static rmtError D3D11_Create(D3D11** d3d11);
 static void D3D11_Destructor(D3D11* d3d11);
 #endif
 
 
-#ifdef RMT_USE_OPENGL
+#if RMT_USE_OPENGL
 typedef struct OpenGL OpenGL;
 static rmtError OpenGL_Create(OpenGL** opengl);
 static void OpenGL_Destructor(OpenGL* opengl);
@@ -3754,15 +3762,15 @@ struct Remotery
     // The main server thread
     Thread* thread;
 
-#ifdef RMT_USE_CUDA
+#if RMT_USE_CUDA
     rmtCUDABind cuda;
 #endif
 
-#ifdef RMT_USE_D3D11
+#if RMT_USE_D3D11
     D3D11* d3d11;
 #endif
 
-#ifdef RMT_USE_OPENGL
+#if RMT_USE_OPENGL
     OpenGL* opengl;
 #endif
 };
@@ -3892,7 +3900,7 @@ static rmtError json_SampleTree(Buffer* buffer, Msg_SampleTree* msg)
 }
 
 
-#ifdef RMT_USE_CUDA
+#if RMT_USE_CUDA
 static rmtBool AreCUDASamplesReady(Sample* sample);
 static rmtBool GetCUDASampleTimes(Sample* root_sample, Sample* sample);
 #endif
@@ -3912,7 +3920,7 @@ static rmtError Remotery_SendSampleTreeMessage(Remotery* rmt, Message* message)
     sample = sample_tree->root_sample;
     assert(sample != NULL);
 
-    #ifdef RMT_USE_CUDA
+    #if RMT_USE_CUDA
     if (sample->type == SampleType_CUDA)
     {
         // If these CUDA samples aren't ready yet, stick them to the back of the queue and continue
@@ -4102,7 +4110,7 @@ static rmtError Remotery_Constructor(Remotery* rmt)
     if (error != RMT_ERROR_NONE)
         return error;
 
-    #ifdef RMT_USE_CUDA
+    #if RMT_USE_CUDA
 
         rmt->cuda.CtxSetCurrent = NULL;
         rmt->cuda.EventCreate = NULL;
@@ -4113,14 +4121,14 @@ static rmtError Remotery_Constructor(Remotery* rmt)
 
     #endif
 
-    #ifdef RMT_USE_D3D11
+    #if RMT_USE_D3D11
         rmt->d3d11 = NULL;
         error = D3D11_Create(&rmt->d3d11);
         if (error != RMT_ERROR_NONE)
             return error;
     #endif
 
-    #ifdef RMT_USE_OPENGL
+    #if RMT_USE_OPENGL
         rmt->opengl = NULL;
         error = OpenGL_Create(&rmt->opengl);
         if (error != RMT_ERROR_NONE)
@@ -4154,11 +4162,11 @@ static void Remotery_Destructor(Remotery* rmt)
     g_Remotery = NULL;
     g_RemoteryCreated = RMT_FALSE;
 
-    #ifdef RMT_USE_D3D11
+    #if RMT_USE_D3D11
         Delete(D3D11, rmt->d3d11);
     #endif
 
-    #ifdef RMT_USE_OPENGL
+    #if RMT_USE_OPENGL
         Delete(OpenGL, rmt->opengl);
     #endif
 
@@ -4548,7 +4556,7 @@ RMT_API void _rmt_EndCPUSample(void)
 
 
 
-#ifdef RMT_USE_CUDA
+#if RMT_USE_CUDA
 
 
 typedef struct CUDASample
@@ -4828,7 +4836,7 @@ RMT_API void _rmt_EndCUDASample(void* stream)
 
 
 
-#ifdef RMT_USE_D3D11
+#if RMT_USE_D3D11
 
 
 // As clReflect has no way of disabling C++ compile mode, this forces C interfaces everywhere...
@@ -5314,7 +5322,7 @@ RMT_API void _rmt_EndD3D11Sample(void)
 
 
 
-#ifdef RMT_USE_OPENGL
+#if RMT_USE_OPENGL
 
 
 #ifndef APIENTRY

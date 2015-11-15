@@ -42,20 +42,30 @@ documented just below this comment.
 #define RMT_INCLUDED_H
 
 
-// Disable this to not include any bits of Remotery in your build
-#define RMT_ENABLED
+// Set to 0 to not include any bits of Remotery in your build
+#ifndef RMT_ENABLED
+#define RMT_ENABLED 1
+#endif
 
 // Used by the Celtoys TinyCRT library (not released yet)
-//#define RMT_USE_TINYCRT
+#ifndef RMT_USE_TINYCRT
+#define RMT_USE_TINYCRT 0
+#endif
 
 // Assuming CUDA headers/libs are setup, allow CUDA profiling
-//#define RMT_USE_CUDA
+#ifndef RMT_USE_CUDA
+#define RMT_USE_CUDA 0
+#endif
 
 // Assuming Direct3D 11 headers/libs are setup, allow D3D11 profiling
-//#define RMT_USE_D3D11
+#ifndef RMT_USE_D3D11
+#define RMT_USE_D3D11 0
+#endif
 
 // Allow OpenGL profiling
-//#define RMT_USE_OPENGL
+#ifndef RMT_USE_OPENGL
+#define RMT_USE_OPENGL 0
+#endif
 
 
 /*
@@ -109,22 +119,22 @@ documented just below this comment.
 
 // Allows macros to be written that can work around the inability to do: #define(x) #ifdef x
 // with the C preprocessor.
-#ifdef RMT_ENABLED
+#if RMT_ENABLED
     #define IFDEF_RMT_ENABLED(t, f) t
 #else
     #define IFDEF_RMT_ENABLED(t, f) f
 #endif
-#if defined(RMT_ENABLED) && defined(RMT_USE_CUDA)
+#if RMT_ENABLED && RMT_USE_CUDA
     #define IFDEF_RMT_USE_CUDA(t, f) t
 #else
     #define IFDEF_RMT_USE_CUDA(t, f) f
 #endif
-#if defined(RMT_ENABLED) && defined(RMT_USE_D3D11)
+#if RMT_ENABLED && RMT_USE_D3D11
     #define IFDEF_RMT_USE_D3D11(t, f) t
 #else
     #define IFDEF_RMT_USE_D3D11(t, f) f
 #endif
-#if defined(RMT_ENABLED) && defined(RMT_USE_OPENGL)
+#if RMT_ENABLED && RMT_USE_OPENGL
 #define IFDEF_RMT_USE_OPENGL(t, f) t
 #else
 #define IFDEF_RMT_USE_OPENGL(t, f) f
@@ -409,7 +419,7 @@ typedef struct rmtCUDABind
 #ifdef __cplusplus
 
 
-#ifdef RMT_ENABLED
+#if RMT_ENABLED
 
 // Types that end samples in their destructors
 extern "C" RMT_API void _rmt_EndCPUSample(void);
@@ -420,7 +430,7 @@ struct rmt_EndCPUSampleOnScopeExit
         _rmt_EndCPUSample();
     }
 };
-#ifdef RMT_USE_CUDA
+#if RMT_USE_CUDA
 extern "C" RMT_API void _rmt_EndCUDASample(void* stream);
 struct rmt_EndCUDASampleOnScopeExit
 {
@@ -434,7 +444,7 @@ struct rmt_EndCUDASampleOnScopeExit
     void* stream;
 };
 #endif
-#ifdef RMT_USE_D3D11
+#if RMT_USE_D3D11
 extern "C" RMT_API void _rmt_EndD3D11Sample(void);
 struct rmt_EndD3D11SampleOnScopeExit
 {
@@ -445,7 +455,7 @@ struct rmt_EndD3D11SampleOnScopeExit
 };
 #endif
 
-#ifdef RMT_USE_OPENGL
+#if RMT_USE_OPENGL
 extern "C" RMT_API void _rmt_EndOpenGLSample(void);
 struct rmt_EndOpenGLSampleOnScopeExit
 {
@@ -488,7 +498,7 @@ struct rmt_EndOpenGLSampleOnScopeExit
 
 
 
-#ifdef RMT_ENABLED
+#if RMT_ENABLED
 
 #ifdef __cplusplus
 extern "C" {
@@ -504,20 +514,20 @@ RMT_API void _rmt_LogText(rmtPStr text);
 RMT_API void _rmt_BeginCPUSample(rmtPStr name, rmtU32* hash_cache);
 RMT_API void _rmt_EndCPUSample(void);
 
-#ifdef RMT_USE_CUDA
+#if RMT_USE_CUDA
 RMT_API void _rmt_BindCUDA(const rmtCUDABind* bind);
 RMT_API void _rmt_BeginCUDASample(rmtPStr name, rmtU32* hash_cache, void* stream);
 RMT_API void _rmt_EndCUDASample(void* stream);
 #endif
 
-#ifdef RMT_USE_D3D11
+#if RMT_USE_D3D11
 RMT_API void _rmt_BindD3D11(void* device, void* context);
 RMT_API void _rmt_UnbindD3D11(void);
 RMT_API void _rmt_BeginD3D11Sample(rmtPStr name, rmtU32* hash_cache);
 RMT_API void _rmt_EndD3D11Sample(void);
 #endif
 
-#ifdef RMT_USE_OPENGL
+#if RMT_USE_OPENGL
 RMT_API void _rmt_BindOpenGL();
 RMT_API void _rmt_UnbindOpenGL(void);
 RMT_API void _rmt_BeginOpenGLSample(rmtPStr name, rmtU32* hash_cache);

@@ -11,7 +11,7 @@ Supported features:
 * Web viewer that runs in Chrome, Firefox and Safari. Custom WebSockets server
   transmits sample data to the browser on a latent thread.
 * Profiles itself and shows how it's performing in the viewer.
-* Can optionally sample CUDA/D3D11 GPU activity.
+* Can optionally sample CUDA/D3D11/OpenGL GPU activity.
 * Console output for logging text.
 * Console input for sending commands to your game.
 
@@ -31,13 +31,13 @@ Compiling
 
 You can define some extra macros to modify what features are compiled into Remotery:
 
-    Macro               Default             Description
+    Macro               Default     Description
 
-    RMT_ENABLED         <defined>           Disable this to not include any bits of Remotery in your build
-    RMT_USE_TINYCRT     <not defined>       Used by the Celtoys TinyCRT library (not released yet)
-    RMT_USE_CUDA        <not defined>       Assuming CUDA headers/libs are setup, allow CUDA profiling
-    RMT_USE_D3D11       <not defined>       Assuming Direct3D 11 headers/libs are setup, allow D3D11 GPU profiling
-    RMT_USE_OPENGL      <not defined>       Allow OpenGL GPU profiling (standalone except you must link to OpenGL which you already do if you use it)
+    RMT_ENABLED         1           Disable this to not include any bits of Remotery in your build
+    RMT_USE_TINYCRT     0           Used by the Celtoys TinyCRT library (not released yet)
+    RMT_USE_CUDA        0           Assuming CUDA headers/libs are setup, allow CUDA profiling
+    RMT_USE_D3D11       0           Assuming Direct3D 11 headers/libs are setup, allow D3D11 GPU profiling
+    RMT_USE_OPENGL      0           Allow OpenGL GPU profiling (standalone except you must link to OpenGL which you already do if you use it)
 
 
 Basic Use
