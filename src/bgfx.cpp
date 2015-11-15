@@ -1341,6 +1341,7 @@ namespace bgfx
 			m_occlusionQuerySet.clear();
 		}
 
+		BGFX_PROFILER_SCOPE(bgfx, main_thread_frame, 0xff2040ff);
 		// wait for render thread to finish
 		renderSemWait();
 		frameNoRenderWait();
@@ -1416,7 +1417,7 @@ namespace bgfx
 
 	bool Context::renderFrame()
 	{
-		BGFX_PROFILER_SCOPE(bgfx, render_frame, 0xff2040ff)
+		BGFX_PROFILER_SCOPE(bgfx, render_frame, 0xff2040ff);
 
 		if (m_rendererInitialized
 		&& !m_flipAfterRender)
@@ -1429,6 +1430,7 @@ namespace bgfx
 		rendererExecCommands(m_render->m_cmdPre);
 		if (m_rendererInitialized)
 		{
+			BGFX_PROFILER_SCOPE(bgfx, render_submit, 0xff2040ff);
 			m_renderCtx->submit(m_render, m_clearQuad, m_textVideoMemBlitter);
 		}
 		rendererExecCommands(m_render->m_cmdPost);

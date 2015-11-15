@@ -378,7 +378,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				rmtError err = rmt_CreateGlobalInstance(&s_rmt);
 				BX_WARN(RMT_ERROR_NONE != err, "Remotery failed to create global instance.");
-				if (RMT_ERROR_NONE != err)
+				if (RMT_ERROR_NONE == err)
+				{
+					rmt_SetCurrentThreadName("Main");
+				}
+				else
 				{
 					s_rmt = NULL;
 				}
