@@ -488,15 +488,7 @@ static void AtomicSub(rmtS32 volatile* value, rmtS32 sub)
 }
 
 
-// Compiler read/write fences (windows implementation)
-static void ReadFence()
-{
-#if defined(RMT_PLATFORM_WINDOWS)
-    _ReadBarrier();
-#else
-    asm volatile ("" : : : "memory");
-#endif
-}
+// Compiler write fences (windows implementation)
 static void WriteFence()
 {
 #if defined(RMT_PLATFORM_WINDOWS) && !defined(__MINGW32__)
@@ -2337,7 +2329,11 @@ typedef struct
     rmtU32 frame_bytes_remaining;
     rmtU32 mask_offset;
 
-    rmtU8 data_mask[4];
+    union
+    {
+        rmtU8 data_mask[4];
+        rmtU32 data_mask_u32;
+    };
 } WebSocket;
 
 
@@ -2754,7 +2750,7 @@ static rmtError WebSocket_Receive(WebSocket* web_socket, void* data, rmtU32* msg
         }
 
         // Apply data mask
-        if (*(rmtU32*)web_socket->data_mask != 0)
+        if (web_socket->data_mask_u32 != 0)
         {
             rmtU32 i;
             for (i = 0; i < bytes_to_read; i++)
