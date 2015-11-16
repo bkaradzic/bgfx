@@ -94,6 +94,7 @@ if _OPTIONS["with-profiler"] then
 	defines {
 		"ENTRY_CONFIG_PROFILER=1",
 		"BGFX_CONFIG_PROFILER_REMOTERY=1",
+        "_WINSOCKAPI_"
 	}
 end
 
