@@ -105,6 +105,9 @@ namespace bgfx
 	void imageWriteTga(bx::WriterI* _writer, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale, bool _yflip);
 
 	///
+	void imageWriteKtx(bx::WriterI* _writer, TextureFormat::Enum _format, bool _cubeMap, uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _numMips, uint32_t _srcPitch, uint32_t _slicePitch, const void* _src);
+
+	///
 	bool imageParse(ImageContainer& _imageContainer, bx::ReaderSeekerI* _reader);
 
 	///

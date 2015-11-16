@@ -31,71 +31,52 @@ namespace bgfx
 		return mem;
 	}
 
-	void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale = false, bool _yflip = false)
+	void release(const Memory* _mem)
 	{
-		FILE* file = fopen(_filePath, "wb");
-		if ( NULL != file )
-		{
-			uint8_t type = _grayscale ? 3 : 2;
-			uint8_t bpp = _grayscale ? 8 : 32;
-
-			putc(0, file);
-			putc(0, file);
-			putc(type, file);
-			putc(0, file);
-			putc(0, file);
-			putc(0, file);
-			putc(0, file);
-			putc(0, file);
-			putc(0, file);
-			putc(0, file);
-			putc(0, file);
-			putc(0, file);
-			putc(_width&0xff, file);
-			putc( (_width>>8)&0xff, file);
-			putc(_height&0xff, file);
-			putc( (_height>>8)&0xff, file);
-			putc(bpp, file);
-			putc(32, file);
-
-			uint32_t dstPitch = _width*bpp/8;
-			if (_yflip)
-			{
-				uint8_t* data = (uint8_t*)_src + dstPitch*_height - _srcPitch;
-				for (uint32_t yy = 0; yy < _height; ++yy)
-				{
-					fwrite(data, dstPitch, 1, file);
-					data -= _srcPitch;
-				}
-			}
-			else
-			{
-				uint8_t* data = (uint8_t*)_src;
-				for (uint32_t yy = 0; yy < _height; ++yy)
-				{
-					fwrite(data, dstPitch, 1, file);
-					data += _srcPitch;
-				}
-			}
-
-			fclose(file);
-		}
+		Memory* mem = const_cast<Memory*>(_mem);
+		::free(mem);
 	}
+
+} // namespace bgfx
+
+void help(const char* _error = NULL)
+{
+	if (NULL != _error)
+	{
+		fprintf(stderr, "Error:\n%s\n\n", _error);
+	}
+
+	fprintf(stderr
+		, "texturec, bgfx texture compiler tool\n"
+		  "Copyright 2011-2015 Branimir Karadzic. All rights reserved.\n"
+		  "License: http://www.opensource.org/licenses/BSD-2-Clause\n\n"
+		);
 }
 
 int main(int _argc, const char* _argv[])
 {
 	bx::CommandLine cmdLine(_argc, _argv);
 
-	const char* inputFileName = cmdLine.findOption('i');
+	if (cmdLine.hasArg('h', "help") )
+	{
+		help();
+		return EXIT_FAILURE;
+	}
 
+	const char* inputFileName = cmdLine.findOption('i');
 	if (NULL == inputFileName)
 	{
-		return 0;
+		help("Input file must be specified.");
+		return EXIT_FAILURE;
 	}
 
 	bx::CrtFileReader reader;
-	bx::open(&reader, inputFileName);
+	if (0 != bx::open(&reader, inputFileName) )
+	{
+		help("Failed to open input file.");
+		return EXIT_FAILURE;
+	}
+
 	uint32_t size = (uint32_t)bx::getSize(&reader);
 	const Memory* mem = alloc(size);
 	bx::read(&reader, mem->data, mem->size);
@@ -154,9 +135,23 @@ int main(int _argc, const char* _argv[])
 						}
 
 						char filePath[256];
-						bx::snprintf(filePath, sizeof(filePath), "mip%d_%d.tga", side, lod);
+						bx::snprintf(filePath, sizeof(filePath), "mip%d_%d.ktx", side, lod);
 
-						saveTga(filePath, width, height, dstpitch, bits);
+						bx::CrtFileWriter writer;
+						if (0 == bx::open(&writer, filePath) )
+						{
+							if (NULL != bx::stristr(filePath, ".ktx") )
+							{
+								imageWriteKtx(&writer, TextureFormat::BGRA8, false, width, height, 0, 1, dstpitch, dstpitch, bits);
+							}
+							else
+							{
+								imageWriteTga(&writer, width, height, dstpitch, bits, false, false);
+							}
+
+							bx::close(&writer);
+						}
+
 						free(bits);
 					}
 
@@ -176,14 +171,18 @@ int main(int _argc, const char* _argv[])
 					bx::snprintf(filePath, sizeof(filePath), "mip%d.bin", lod);
 
 					bx::CrtFileWriter writer;
-					bx::open(&writer, filePath);
-					printf("mip%d, size %d\n", lod, mip.m_size);
-					bx::write(&writer, mip.m_data, mip.m_size);
-					bx::close(&writer);
+					if (0 == bx::open(&writer, filePath) )
+					{
+						printf("mip%d, size %d\n", lod, mip.m_size);
+						bx::write(&writer, mip.m_data, mip.m_size);
+						bx::close(&writer);
+					}
 				}
 			}
 		}
 	}
+
+	release(mem);
 
 	return EXIT_SUCCESS;
 }
