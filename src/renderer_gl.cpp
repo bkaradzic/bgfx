@@ -17,12 +17,12 @@
 #	define BGFX_GPU_PROFILER_BEGIN_DYNAMIC(_namestr) rmt_BeginOpenGLSampleDynamic(_namestr)
 #	define BGFX_GPU_PROFILER_END() rmt_EndOpenGLSample()
 #else
-#	define BGFX_GPU_PROFILER_BIND(_device, _context) BX_NOOP()
+#	define BGFX_GPU_PROFILER_BIND() BX_NOOP()
 #	define BGFX_GPU_PROFILER_UNBIND() BX_NOOP()
 #	define BGFX_GPU_PROFILER_BEGIN(_group, _name, _color) BX_NOOP()
 #	define BGFX_GPU_PROFILER_BEGIN_DYNAMIC(_namestr) BX_NOOP()
 #	define BGFX_GPU_PROFILER_END() BX_NOOP()
-#endif
+#endif // BGFX_CONFIG_PROFILER_REMOTERY
 
 namespace bgfx { namespace gl
 {
