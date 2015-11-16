@@ -3,7 +3,7 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
-#include <bx/bx.h>
+#include <bx/platform.h>
 #if BX_PLATFORM_WINDOWS
 // BK - Remotery needs WinSock, but on VS2015/Win10 build
 //      fails if WinSock2 is included after Windows.h?!
