@@ -2451,6 +2451,8 @@ namespace bgfx
 		const uint32_t minBlockX   = blockInfo.minBlockX;
 		const uint32_t minBlockY   = blockInfo.minBlockY;
 
+		BX_UNUSED(blockSize);
+
 		const uint8_t* src = (const uint8_t*)_src;
 		for (uint8_t side = 0, numSides = _cubeMap ? 6 : 1; side < numSides; ++side)
 		{
