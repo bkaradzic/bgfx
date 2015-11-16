@@ -1810,6 +1810,8 @@ namespace bgfx { namespace gl
 				|| s_extension[Extension::NV_occlusion_query         ].m_supported
 				;
 
+			m_occlusionQuerySupport &= (glGenQueries != nullptr);
+
 			g_caps.supported |= m_occlusionQuerySupport
 				? BGFX_CAPS_OCCLUSION_QUERY
 				: 0
