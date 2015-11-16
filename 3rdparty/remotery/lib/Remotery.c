@@ -2901,6 +2901,8 @@ static void MessageQueue_CommitMessage(MessageQueue* queue, Message* message, Me
     // Setting the message ID signals to the consumer that the message is ready
     assert(message->id == MsgID_NotReady);
     message->id = id;
+
+	RMT_UNREFERENCED_PARAMETER(queue);
 }
 
 
@@ -5122,7 +5124,7 @@ RMT_API void _rmt_UnbindD3D11(void)
         d3d11->context = NULL;
 
         // Flush the main queue of allocated D3D timestamps
-        while (1)
+        for (;;)
         {
             Msg_SampleTree* sample_tree;
             Sample* sample;
@@ -5249,7 +5251,7 @@ static void UpdateD3D11Frame(void)
     rmt_BeginCPUSample(rmt_UpdateD3D11Frame);
 
     // Process all messages in the D3D queue
-    while (1)
+	for (;;)
     {
         Msg_SampleTree* sample_tree;
         Sample* sample;
