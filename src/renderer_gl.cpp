@@ -10,6 +10,20 @@
 #	include <bx/timer.h>
 #	include <bx/uint32_t.h>
 
+#if BGFX_CONFIG_PROFILER_REMOTERY
+#	define BGFX_GPU_PROFILER_BIND() rmt_BindOpenGL()
+#	define BGFX_GPU_PROFILER_UNBIND() rmt_UnbindOpenGL()
+#	define BGFX_GPU_PROFILER_BEGIN(_group, _name, _color) rmt_BeginOpenGLSample(_group##_##_name)
+#	define BGFX_GPU_PROFILER_BEGIN_DYNAMIC(_namestr) rmt_BeginOpenGLSampleDynamic(_namestr)
+#	define BGFX_GPU_PROFILER_END() rmt_EndOpenGLSample()
+#else
+#	define BGFX_GPU_PROFILER_BIND(_device, _context) BX_NOOP()
+#	define BGFX_GPU_PROFILER_UNBIND() BX_NOOP()
+#	define BGFX_GPU_PROFILER_BEGIN(_group, _name, _color) BX_NOOP()
+#	define BGFX_GPU_PROFILER_BEGIN_DYNAMIC(_namestr) BX_NOOP()
+#	define BGFX_GPU_PROFILER_END() BX_NOOP()
+#endif
+
 namespace bgfx { namespace gl
 {
 	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
@@ -1958,10 +1972,14 @@ namespace bgfx { namespace gl
 			}
 
 			ovrPostReset();
+
+			BGFX_GPU_PROFILER_BIND();
 		}
 
 		void shutdown()
 		{
+			BGFX_GPU_PROFILER_UNBIND();
+
 			ovrPreReset();
 			m_ovr.shutdown();
 
@@ -2272,13 +2290,10 @@ namespace bgfx { namespace gl
 
 		void updateViewName(uint8_t _id, const char* _name) BX_OVERRIDE
 		{
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
-			{
-				bx::strlcpy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
-					, _name
-					, BX_COUNTOF(s_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
-					);
-			}
+			bx::strlcpy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
+				, _name
+				, BX_COUNTOF(s_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
+				);
 		}
 
 		void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) BX_OVERRIDE
@@ -5217,6 +5232,8 @@ namespace bgfx { namespace gl
 
 	void RendererContextGL::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
+		BGFX_GPU_PROFILER_BEGIN_DYNAMIC("rendererSubmit");
+
 		if (1 < m_numWindows
 		&&  m_vaoSupport)
 		{
@@ -5382,6 +5399,14 @@ namespace bgfx { namespace gl
 					{
 						eye = 0;
 					}
+
+					if (item > 1)
+					{
+						BGFX_GPU_PROFILER_END();
+						BGFX_PROFILER_END();
+					}
+					BGFX_PROFILER_BEGIN_DYNAMIC(s_viewName[view]);
+					BGFX_GPU_PROFILER_BEGIN_DYNAMIC(s_viewName[view]);
 
 					viewState.m_rect = _render->m_rect[view];
 					if (viewRestart)
@@ -6266,8 +6291,13 @@ namespace bgfx { namespace gl
 				captureElapsed = -bx::getHPCounter();
 				capture();
 				captureElapsed += bx::getHPCounter();
+
+				BGFX_GPU_PROFILER_END();
+				BGFX_PROFILER_END();
 			}
 		}
+
+		BGFX_GPU_PROFILER_END();
 
 		m_glctx.makeCurrent(NULL);
 		int64_t now = bx::getHPCounter();

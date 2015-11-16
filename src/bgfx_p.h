@@ -53,14 +53,24 @@
 #	if BGFX_CONFIG_PROFILER_MICROPROFILE
 #		include <microprofile.h>
 #		define BGFX_PROFILER_SCOPE(_group, _name, _color) MICROPROFILE_SCOPEI(#_group, #_name, _color)
+#		define BGFX_PROFILER_BEGIN(_group, _name, _color) BX_NOOP()
+#		define BGFX_PROFILER_BEGIN_DYNAMIC(_namestr) BX_NOOP()
+#		define BGFX_PROFILER_END() BX_NOOP()
 #		define BGFX_PROFILER_SET_CURRENT_THREAD_NAME(_name) BX_NOOP()
 #	elif BGFX_CONFIG_PROFILER_REMOTERY
 #		define RMT_ENABLED BGFX_CONFIG_PROFILER_REMOTERY
+#		define RMT_USE_D3D11 BGFX_CONFIG_RENDERER_DIRECT3D11
 #		include <remotery/lib/Remotery.h>
 #		define BGFX_PROFILER_SCOPE(_group, _name, _color) rmt_ScopedCPUSample(_group##_##_name)
+#		define BGFX_PROFILER_BEGIN(_group, _name, _color) rmt_BeginCPUSample(_group##_##_name)
+#		define BGFX_PROFILER_BEGIN_DYNAMIC(_namestr) rmt_BeginCPUSampleDynamic(_namestr)
+#		define BGFX_PROFILER_END() rmt_EndCPUSample()
 #		define BGFX_PROFILER_SET_CURRENT_THREAD_NAME(_name) rmt_SetCurrentThreadName(_name)
 #	else
 #		define BGFX_PROFILER_SCOPE(_group, _name, _color) BX_NOOP()
+#		define BGFX_PROFILER_BEGIN(_group, _name, _color) BX_NOOP()
+#		define BGFX_PROFILER_BEGIN_DYNAMIC(_namestr) BX_NOOP()
+#		define BGFX_PROFILER_END() BX_NOOP()
 #		define BGFX_PROFILER_SET_CURRENT_THREAD_NAME(_name) BX_NOOP()
 #	endif // BGFX_CONFIG_PROFILER_*
 #endif // BGFX_PROFILER_SCOPE

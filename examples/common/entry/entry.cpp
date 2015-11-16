@@ -4,12 +4,6 @@
  */
 
 #include <bx/bx.h>
-#if BX_PLATFORM_WINDOWS
-// BK - Remotery needs WinSock, but on VS2015/Win10 build
-//      fails if WinSock2 is included after Windows.h?!
-#	include <WinSock2.h>
-#endif // BX_PLATFORM_WINDOWS
-
 #include <bgfx/bgfx.h>
 #include <bx/string.h>
 #include <bx/readerwriter.h>
@@ -25,7 +19,7 @@
 #include "input.h"
 
 #define RMT_ENABLED ENTRY_CONFIG_PROFILER
-#include <remotery/lib/Remotery.c>
+#include <remotery/lib/Remotery.h>
 
 extern "C" int _main_(int _argc, char** _argv);
 

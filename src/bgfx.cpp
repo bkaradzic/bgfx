@@ -5,6 +5,12 @@
 
 #include "bgfx_p.h"
 
+#if BGFX_CONFIG_PROFILER_REMOTERY
+#	define RMT_USE_D3D11 BGFX_CONFIG_RENDERER_DIRECT3D11
+#	define RMT_USE_OPENGL 0
+#	include <remotery/lib/Remotery.c>
+#endif
+
 namespace bgfx
 {
 #define BGFX_MAIN_THREAD_MAGIC UINT32_C(0x78666762)
