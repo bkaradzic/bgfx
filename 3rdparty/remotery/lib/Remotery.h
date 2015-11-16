@@ -290,6 +290,9 @@ typedef enum rmtError
         _rmt_BeginCPUSample(#name, &rmt_sample_hash_##name);                        \
     })
 
+#define rmt_BeginCPUSampleDynamic(namestr)                                          \
+    RMT_OPTIONAL(RMT_ENABLED, _rmt_BeginCPUSample(namestr, NULL))
+
 #define rmt_EndCPUSample()                                                          \
     RMT_OPTIONAL(RMT_ENABLED, _rmt_EndCPUSample())
 
@@ -385,6 +388,9 @@ typedef struct rmtCUDABind
         _rmt_BeginD3D11Sample(#name, &rmt_sample_hash_##name);              \
     })
 
+#define rmt_BeginD3D11SampleDynamic(namestr)                                \
+    RMT_OPTIONAL(RMT_USE_D3D11, _rmt_BeginD3D11Sample(namestr, NULL))
+
 #define rmt_EndD3D11Sample()                                                \
     RMT_OPTIONAL(RMT_USE_D3D11, _rmt_EndD3D11Sample())
 
@@ -400,6 +406,9 @@ typedef struct rmtCUDABind
         static rmtU32 rmt_sample_hash_##name = 0;                           \
         _rmt_BeginOpenGLSample(#name, &rmt_sample_hash_##name);             \
     })
+
+#define rmt_BeginOpenGLSampleDynamic(namestr)                               \
+    RMT_OPTIONAL(RMT_USE_OPENGL, _rmt_BeginOpenGLSample(namestr, NULL))
 
 #define rmt_EndOpenGLSample()                                               \
     RMT_OPTIONAL(RMT_USE_OPENGL, _rmt_EndOpenGLSample())
