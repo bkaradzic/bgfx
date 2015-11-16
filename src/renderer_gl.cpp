@@ -1453,6 +1453,15 @@ namespace bgfx { namespace gl
 			s_textureFormat[TextureFormat::ETC2A ].m_supported |= etc2Supported;
 			s_textureFormat[TextureFormat::ETC2A1].m_supported |= etc2Supported;
 
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) )
+			{
+				if (BX_ENABLED(BX_PLATFORM_IOS) )
+				{
+					s_textureFormat[TextureFormat::ETC2].m_supported = false;
+					s_textureFormat[TextureFormat::RGBA16F].m_supported = false;
+				}
+			}
+
 			if (!s_textureFormat[TextureFormat::ETC1].m_supported
 			&&   s_textureFormat[TextureFormat::ETC2].m_supported)
 			{
@@ -1596,6 +1605,12 @@ namespace bgfx { namespace gl
 			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 			{
 				uint8_t supported = 0;
+
+				if (!s_textureFormat[ii].m_supported)
+				{
+					continue;
+				}
+
 				supported |= s_textureFormat[ii].m_supported
 					? BGFX_CAPS_FORMAT_TEXTURE_2D
 					| BGFX_CAPS_FORMAT_TEXTURE_3D
