@@ -2902,7 +2902,7 @@ static void MessageQueue_CommitMessage(MessageQueue* queue, Message* message, Me
     assert(message->id == MsgID_NotReady);
     message->id = id;
 
-	RMT_UNREFERENCED_PARAMETER(queue);
+    RMT_UNREFERENCED_PARAMETER(queue);
 }
 
 
@@ -5251,7 +5251,7 @@ static void UpdateD3D11Frame(void)
     rmt_BeginCPUSample(rmt_UpdateD3D11Frame);
 
     // Process all messages in the D3D queue
-	for (;;)
+    for (;;)
     {
         Msg_SampleTree* sample_tree;
         Sample* sample;
