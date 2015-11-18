@@ -1592,11 +1592,11 @@ namespace bgfx
 	///
 	///   In graphics debugger view name will appear as:
 	///
-	///     "nnnce <view name>"
-	///      ^  ^^ ^
-	///      |  |+-- eye (L/R)
-	///      |  +-- compute (C)
-	///      +-- view id
+	///       "nnnce <view name>"
+	///        ^  ^^ ^
+	///        |  |+-- eye (L/R)
+	///        |  +--- compute (C)
+	///        +------ view id
 	///
 	/// @attention C99 equivalent is `bgfx_set_view_name`.
 	///
