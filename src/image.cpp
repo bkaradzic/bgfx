@@ -1848,17 +1848,18 @@ namespace bgfx
 			}
 		}
 
-		_imageContainer.m_data = NULL;
-		_imageContainer.m_size = 0;
-		_imageContainer.m_offset = (uint32_t)offset;
-		_imageContainer.m_width  = width;
-		_imageContainer.m_height = height;
-		_imageContainer.m_depth  = depth;
-		_imageContainer.m_format = uint8_t(format);
+		_imageContainer.m_data     = NULL;
+		_imageContainer.m_size     = 0;
+		_imageContainer.m_offset   = (uint32_t)offset;
+		_imageContainer.m_width    = width;
+		_imageContainer.m_height   = height;
+		_imageContainer.m_depth    = depth;
+		_imageContainer.m_format   = uint8_t(format);
 		_imageContainer.m_numMips  = uint8_t(numMips);
 		_imageContainer.m_hasAlpha = hasAlpha;
 		_imageContainer.m_cubeMap  = numFaces > 1;
-		_imageContainer.m_ktx = true;
+		_imageContainer.m_ktx      = true;
+		_imageContainer.m_ktxLE    = fromLittleEndian;
 
 		return TextureFormat::Unknown != format;
 	}
@@ -1994,18 +1995,19 @@ namespace bgfx
 			}
 		}
 
-		_imageContainer.m_data = NULL;
-		_imageContainer.m_size = 0;
-		_imageContainer.m_offset = (uint32_t)offset;
-		_imageContainer.m_width  = width;
-		_imageContainer.m_height = height;
-		_imageContainer.m_depth  = depth;
-		_imageContainer.m_format = uint8_t(format);
+		_imageContainer.m_data     = NULL;
+		_imageContainer.m_size     = 0;
+		_imageContainer.m_offset   = (uint32_t)offset;
+		_imageContainer.m_width    = width;
+		_imageContainer.m_height   = height;
+		_imageContainer.m_depth    = depth;
+		_imageContainer.m_format   = uint8_t(format);
 		_imageContainer.m_numMips  = uint8_t(numMips);
 		_imageContainer.m_hasAlpha = hasAlpha;
 		_imageContainer.m_cubeMap  = numFaces > 1;
-		_imageContainer.m_ktx = false;
-		_imageContainer.m_srgb = colorSpace > 0;
+		_imageContainer.m_ktx      = false;
+		_imageContainer.m_ktxLE    = false;
+		_imageContainer.m_srgb     = colorSpace > 0;
 
 		return TextureFormat::Unknown != format;
 	}
@@ -2044,14 +2046,15 @@ namespace bgfx
 				_imageContainer.m_data = tc.m_mem->data;
 				_imageContainer.m_size = tc.m_mem->size;
 			}
-			_imageContainer.m_width = tc.m_width;
-			_imageContainer.m_height = tc.m_height;
-			_imageContainer.m_depth = tc.m_depth;
-			_imageContainer.m_numMips = tc.m_numMips;
+			_imageContainer.m_width    = tc.m_width;
+			_imageContainer.m_height   = tc.m_height;
+			_imageContainer.m_depth    = tc.m_depth;
+			_imageContainer.m_numMips  = tc.m_numMips;
 			_imageContainer.m_hasAlpha = false;
-			_imageContainer.m_cubeMap = tc.m_cubeMap;
-			_imageContainer.m_ktx = false;
-			_imageContainer.m_srgb = false;
+			_imageContainer.m_cubeMap  = tc.m_cubeMap;
+			_imageContainer.m_ktx      = false;
+			_imageContainer.m_ktxLE    = false;
+			_imageContainer.m_srgb     = false;
 
 			return true;
 		}
@@ -2316,7 +2319,9 @@ namespace bgfx
 			_size = _imageContainer.m_size;
 		}
 
-		for (uint8_t side = 0, numSides = _imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
+		const uint8_t* data = (const uint8_t*)_data;
+
+		if (_imageContainer.m_ktx)
 		{
 			uint32_t width  = _imageContainer.m_width;
 			uint32_t height = _imageContainer.m_height;
@@ -2324,37 +2329,82 @@ namespace bgfx
 
 			for (uint8_t lod = 0, num = _imageContainer.m_numMips; lod < num; ++lod)
 			{
-				// skip imageSize in KTX format.
-				offset += _imageContainer.m_ktx ? sizeof(uint32_t) : 0;
+				uint32_t imageSize = bx::toHostEndian(*(const uint32_t*)&data[offset], _imageContainer.m_ktxLE);
+				offset += sizeof(uint32_t);
 
 				width  = bx::uint32_max(blockWidth  * minBlockX, ( (width  + blockWidth  - 1) / blockWidth )*blockWidth);
 				height = bx::uint32_max(blockHeight * minBlockY, ( (height + blockHeight - 1) / blockHeight)*blockHeight);
 				depth  = bx::uint32_max(1, depth);
 
 				uint32_t size = width*height*depth*bpp/8;
+				BX_CHECK(size == imageSize, "KTX: Image size mismatch %d (expected %d).", size, imageSize);
 
-				if (side == _side
-				&&  lod == _lod)
+				for (uint8_t side = 0, numSides = _imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 				{
-					_mip.m_width     = width;
-					_mip.m_height    = height;
-					_mip.m_blockSize = blockSize;
-					_mip.m_size = size;
-					_mip.m_data = (const uint8_t*)_data + offset;
-					_mip.m_bpp  = bpp;
-					_mip.m_format   = uint8_t(format);
-					_mip.m_hasAlpha = hasAlpha;
-					return true;
+					if (side == _side
+					&&  lod  == _lod)
+					{
+						_mip.m_width     = width;
+						_mip.m_height    = height;
+						_mip.m_blockSize = blockSize;
+						_mip.m_size      = size;
+						_mip.m_data      = &data[offset];
+						_mip.m_bpp       = bpp;
+						_mip.m_format    = uint8_t(format);
+						_mip.m_hasAlpha  = hasAlpha;
+						return true;
+					}
+
+					offset += imageSize;
+
+					BX_CHECK(offset <= _size, "Reading past size of data buffer! (offset %d, size %d)", offset, _size);
+					BX_UNUSED(_size);
 				}
-
-				offset += size;
-
-				BX_CHECK(offset <= _size, "Reading past size of data buffer! (offset %d, size %d)", offset, _size);
-				BX_UNUSED(_size);
 
 				width  >>= 1;
 				height >>= 1;
 				depth  >>= 1;
+			}
+		}
+		else
+		{
+			for (uint8_t side = 0, numSides = _imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
+			{
+				uint32_t width  = _imageContainer.m_width;
+				uint32_t height = _imageContainer.m_height;
+				uint32_t depth  = _imageContainer.m_depth;
+
+				for (uint8_t lod = 0, num = _imageContainer.m_numMips; lod < num; ++lod)
+				{
+					width  = bx::uint32_max(blockWidth  * minBlockX, ( (width  + blockWidth  - 1) / blockWidth )*blockWidth);
+					height = bx::uint32_max(blockHeight * minBlockY, ( (height + blockHeight - 1) / blockHeight)*blockHeight);
+					depth  = bx::uint32_max(1, depth);
+
+					uint32_t size = width*height*depth*bpp/8;
+
+					if (side == _side
+					&&  lod  == _lod)
+					{
+						_mip.m_width     = width;
+						_mip.m_height    = height;
+						_mip.m_blockSize = blockSize;
+						_mip.m_size      = size;
+						_mip.m_data      = &data[offset];
+						_mip.m_bpp       = bpp;
+						_mip.m_format    = uint8_t(format);
+						_mip.m_hasAlpha  = hasAlpha;
+						return true;
+					}
+
+					offset += size;
+
+					BX_CHECK(offset <= _size, "Reading past size of data buffer! (offset %d, size %d)", offset, _size);
+					BX_UNUSED(_size);
+
+					width  >>= 1;
+					height >>= 1;
+					depth  >>= 1;
+				}
 			}
 		}
 
@@ -2363,14 +2413,14 @@ namespace bgfx
 
 	void imageWriteTga(bx::WriterI* _writer, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale, bool _yflip)
 	{
-		uint8_t type = _grayscale ? 3 : 2;
-		uint8_t bpp = _grayscale ? 8 : 32;
+		uint8_t type = _grayscale ? 3 :  2;
+		uint8_t bpp  = _grayscale ? 8 : 32;
 
 		uint8_t header[18] = {};
-		header[2]  = type;
-		header[12] = _width&0xff;
-		header[13] = (_width>>8)&0xff;
-		header[14] = _height&0xff;
+		header[ 2] = type;
+		header[12] =  _width     &0xff;
+		header[13] = (_width >>8)&0xff;
+		header[14] =  _height    &0xff;
 		header[15] = (_height>>8)&0xff;
 		header[16] = bpp;
 		header[17] = 32;
@@ -2402,79 +2452,90 @@ namespace bgfx
 		}
 	}
 
-	void imageWriteKtx(bx::WriterI* _writer, TextureFormat::Enum _format, bool _cubeMap, uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _numMips, uint32_t _srcPitch, uint32_t _slicePitch, const void* _src)
+	static int32_t imageWriteKtxHeader(bx::WriterI* _writer, TextureFormat::Enum _format, bool _cubeMap, uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _numMips)
 	{
-		BX_UNUSED(_srcPitch, _slicePitch);
-
-		bx::write(_writer, "\xabKTX 11\xbb\r\n\x1a\n", 12);
-
-		bx::write(_writer, UINT32_C(0x04030201) );
-
-		// glType
-		bx::write(_writer, UINT32_C(0) );
-
-		// glTypeSize
-		bx::write(_writer, UINT32_C(1) );
-
-		// glFormat
-		bx::write(_writer, UINT32_C(0) );
-
 		const KtxFormatInfo& tfi = s_translateKtxFormat[_format];
 
-		// glInternalFormat
-		bx::write(_writer, tfi.m_internalFmt);
+		int32_t size = 0;
+		size += bx::write(_writer, "\xabKTX 11\xbb\r\n\x1a\n", 12);
+		size += bx::write(_writer, UINT32_C(0x04030201) );
+		size += bx::write(_writer, UINT32_C(0) ); // glType
+		size += bx::write(_writer, UINT32_C(1) ); // glTypeSize
+		size += bx::write(_writer, UINT32_C(0) ); // glFormat
+		size += bx::write(_writer, tfi.m_internalFmt); // glInternalFormat
+		size += bx::write(_writer, tfi.m_fmt); // glBaseInternalFormat
+		size += bx::write(_writer, _width);
+		size += bx::write(_writer, _height);
+		size += bx::write(_writer, _depth);
+		size += bx::write(_writer, UINT32_C(0) ); // numberOfArrayElements
+		size += bx::write(_writer, _cubeMap ? UINT32_C(6) : UINT32_C(0) );
+		size += bx::write(_writer, uint32_t(_numMips) );
+		size += bx::write(_writer, UINT32_C(0) ); // Meta-data size.
 
-		// glBaseInternalFormat
-		bx::write(_writer, tfi.m_fmt);
+		BX_CHECK(size == 64, "KTX: Failed to write header size %d (expected: %d).", size, 64);
+		return size;
+	}
 
-		bx::write(_writer, _width);
-
-		bx::write(_writer, _height);
-
-		bx::write(_writer, _depth);
-
-		// numberOfArrayElements
-		bx::write(_writer, UINT32_C(0) );
-
-		bx::write(_writer, _cubeMap ? UINT32_C(6) : UINT32_C(0) );
-
-		bx::write(_writer, uint32_t(_numMips) );
-
-		// Meta-data size.
-		bx::write(_writer, UINT32_C(0) );
+	void imageWriteKtx(bx::WriterI* _writer, TextureFormat::Enum _format, bool _cubeMap, uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _numMips, const void* _src)
+	{
+		imageWriteKtxHeader(_writer, _format, _cubeMap, _width, _height, _depth, _numMips);
 
 		const ImageBlockInfo& blockInfo = s_imageBlockInfo[_format];
 		const uint8_t  bpp         = blockInfo.bitsPerPixel;
-		const uint32_t blockSize   = blockInfo.blockSize;
 		const uint32_t blockWidth  = blockInfo.blockWidth;
 		const uint32_t blockHeight = blockInfo.blockHeight;
 		const uint32_t minBlockX   = blockInfo.minBlockX;
 		const uint32_t minBlockY   = blockInfo.minBlockY;
 
-		BX_UNUSED(blockSize);
-
 		const uint8_t* src = (const uint8_t*)_src;
-		for (uint8_t side = 0, numSides = _cubeMap ? 6 : 1; side < numSides; ++side)
+		uint32_t width  = _width;
+		uint32_t height = _height;
+		uint32_t depth  = _depth;
+
+		for (uint8_t lod = 0, num = _numMips; lod < num; ++lod)
 		{
-			uint32_t width  = _width;
-			uint32_t height = _height;
-			uint32_t depth  = _depth;
+			width  = bx::uint32_max(blockWidth  * minBlockX, ( (width  + blockWidth  - 1) / blockWidth )*blockWidth);
+			height = bx::uint32_max(blockHeight * minBlockY, ( (height + blockHeight - 1) / blockHeight)*blockHeight);
+			depth  = bx::uint32_max(1, depth);
 
-			for (uint8_t lod = 0, num = _numMips; lod < num; ++lod)
+			uint32_t size = width*height*depth*bpp/8;
+			bx::write(_writer, size);
+
+			for (uint8_t side = 0, numSides = _cubeMap ? 6 : 1; side < numSides; ++side)
 			{
-				width  = bx::uint32_max(blockWidth  * minBlockX, ( (width  + blockWidth  - 1) / blockWidth )*blockWidth);
-				height = bx::uint32_max(blockHeight * minBlockY, ( (height + blockHeight - 1) / blockHeight)*blockHeight);
-				depth  = bx::uint32_max(1, depth);
-
-				uint32_t size = width*height*depth*bpp/8;
-				bx::write(_writer, size);
-
 				bx::write(_writer, src, size);
 				src += size;
+			}
 
-				width  >>= 1;
-				height >>= 1;
-				depth  >>= 1;
+			width  >>= 1;
+			height >>= 1;
+			depth  >>= 1;
+		}
+	}
+
+	void imageWriteKtx(bx::WriterI* _writer, ImageContainer& _imageContainer, const void* _data, uint32_t _size)
+	{
+		imageWriteKtxHeader(_writer
+			, TextureFormat::Enum(_imageContainer.m_format)
+			, _imageContainer.m_cubeMap
+			, _imageContainer.m_width
+			, _imageContainer.m_height
+			, _imageContainer.m_depth
+			, _imageContainer.m_numMips
+			);
+
+		for (uint32_t lod = 0, num = _imageContainer.m_numMips; lod < num; ++lod)
+		{
+			ImageMip mip;
+			imageGetRawData(_imageContainer, 0, lod, _data, _size, mip);
+			bx::write(_writer, mip.m_size);
+
+			for (uint8_t side = 0, numSides = _imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
+			{
+				if (imageGetRawData(_imageContainer, side, lod, _data, _size, mip) )
+				{
+					bx::write(_writer, mip.m_data, mip.m_size);
+				}
 			}
 		}
 	}
