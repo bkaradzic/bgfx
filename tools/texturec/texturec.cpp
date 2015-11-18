@@ -131,7 +131,13 @@ int main(int _argc, const char* _argv[])
 						}
 						else
 						{
-							imageDecodeToBgra8(bits, mip.m_data, mip.m_width, mip.m_height, mip.m_width*4, mip.m_format);
+							imageDecodeToBgra8(bits
+								, mip.m_data
+								, mip.m_width
+								, mip.m_height
+								, mip.m_width*4
+								, mip.m_format
+								);
 						}
 
 						char filePath[256];
@@ -142,7 +148,15 @@ int main(int _argc, const char* _argv[])
 						{
 							if (NULL != bx::stristr(filePath, ".ktx") )
 							{
-								imageWriteKtx(&writer, TextureFormat::BGRA8, false, width, height, 0, 1, dstpitch, dstpitch, bits);
+								imageWriteKtx(&writer
+									, TextureFormat::BGRA8
+									, false
+									, width
+									, height
+									, 0
+									, 1
+									, bits
+									);
 							}
 							else
 							{
