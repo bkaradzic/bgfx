@@ -1137,9 +1137,15 @@
 <div class="breathe-sectiondef container">
 <p class="breathe-sectiondef-title rubric">Public Members</p>
 <dl class="member">
-<dt id="_CPPv2N4bgfx5Stats7cpuTimeE">
-<span id="bgfx::Stats::cpuTime__uint64_t"></span><span class="target" id="project0structbgfx_1_1_stats_1a127f672343a0dcfa3e0b174d26b8c544"></span>uint64_t <code class="descname">cpuTime</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats7cpuTimeE" title="Permalink to this definition">¶</a></dt>
-<dd><p>CPU frame time. </p>
+<dt id="_CPPv2N4bgfx5Stats12cpuTimeBeginE">
+<span id="bgfx::Stats::cpuTimeBegin__uint64_t"></span><span class="target" id="project0structbgfx_1_1_stats_1a3ca21838fdd43b962a6b22869e6fe97b"></span>uint64_t <code class="descname">cpuTimeBegin</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats12cpuTimeBeginE" title="Permalink to this definition">¶</a></dt>
+<dd><p>CPU frame begin time. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx5Stats10cpuTimeEndE">
+<span id="bgfx::Stats::cpuTimeEnd__uint64_t"></span><span class="target" id="project0structbgfx_1_1_stats_1a37da0b114f76a989d098b65a80072e48"></span>uint64_t <code class="descname">cpuTimeEnd</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats10cpuTimeEndE" title="Permalink to this definition">¶</a></dt>
+<dd><p>CPU frame end time. </p>
 </dd></dl>
 
 <dl class="member">
@@ -1149,9 +1155,15 @@
 </dd></dl>
 
 <dl class="member">
-<dt id="_CPPv2N4bgfx5Stats7gpuTimeE">
-<span id="bgfx::Stats::gpuTime__uint64_t"></span><span class="target" id="project0structbgfx_1_1_stats_1a281de41a5f0f42c24cf64bc88bb35ed4"></span>uint64_t <code class="descname">gpuTime</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats7gpuTimeE" title="Permalink to this definition">¶</a></dt>
-<dd><p>GPU frame time. </p>
+<dt id="_CPPv2N4bgfx5Stats12gpuTimeBeginE">
+<span id="bgfx::Stats::gpuTimeBegin__uint64_t"></span><span class="target" id="project0structbgfx_1_1_stats_1aa995ea357564126351d9665b3664f2c5"></span>uint64_t <code class="descname">gpuTimeBegin</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats12gpuTimeBeginE" title="Permalink to this definition">¶</a></dt>
+<dd><p>GPU frame begin time. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx5Stats10gpuTimeEndE">
+<span id="bgfx::Stats::gpuTimeEnd__uint64_t"></span><span class="target" id="project0structbgfx_1_1_stats_1a620911049a1ce9e8edf87ba47954df4d"></span>uint64_t <code class="descname">gpuTimeEnd</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats10gpuTimeEndE" title="Permalink to this definition">¶</a></dt>
+<dd><p>GPU frame end time. </p>
 </dd></dl>
 
 <dl class="member">
@@ -1480,7 +1492,14 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <span id="bgfx::setViewName__uint8_t.cCP"></span><span class="target" id="project0namespacebgfx_1ab0d0a3f61f5adc31ee7f59f2893cfcd9"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewName</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, <em class="property">const</em> char *<em>_name</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11setViewNameE7uint8_tPKc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set view name. </p>
 <p>
-In graphics debugger view name will appear as:<dl class="docutils">
+In graphics debugger view name will appear as: <div class="highlight-python"><div class="highlight"><pre>&quot;nnnce &lt;view name&gt;&quot;
+ ^  ^^ ^
+ |  |+-- eye (L/R)
+ |  +--- compute (C)
+ +------ view id
+</pre></div>
+</div>
+<dl class="docutils">
 <dt><strong>Remark</strong></dt>
 <dd>This is debug only feature.</dd>
 <dt><strong>Parameters</strong></dt>
@@ -1493,7 +1512,6 @@ In graphics debugger view name will appear as:<dl class="docutils">
 </dd>
 </dl>
 </p>
-<p>&#8220;nnnce &lt;view name&gt;&#8221; ^ ^^ ^ | |+ eye (L/R) | + compute (C) + view id</p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_view_name</span></code>. </dd>
