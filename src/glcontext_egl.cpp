@@ -307,7 +307,7 @@ EGL_IMPORT
 			BGFX_FATAL(success, Fatal::UnableToInitialize, "Failed to set context.");
 			m_current = NULL;
 
-			eglSwapInterval(m_display, 0);
+			eglSwapInterval(m_display, 1);//0);
 		}
 
 		import();
@@ -349,7 +349,7 @@ EGL_IMPORT
 		if (NULL != m_display)
 		{
 			bool vsync = !!(_flags&BGFX_RESET_VSYNC);
-			eglSwapInterval(m_display, vsync ? 1 : 0);
+			eglSwapInterval(m_display, 1);//vsync ? 1 : 0);
 		}
 	}
 
