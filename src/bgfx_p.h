@@ -60,6 +60,7 @@
 #	elif BGFX_CONFIG_PROFILER_REMOTERY
 #		define RMT_ENABLED BGFX_CONFIG_PROFILER_REMOTERY
 #		define RMT_USE_D3D11 BGFX_CONFIG_RENDERER_DIRECT3D11
+#		define RMT_USE_OPENGL BGFX_CONFIG_RENDERER_OPENGL
 #		include <remotery/lib/Remotery.h>
 #		define BGFX_PROFILER_SCOPE(_group, _name, _color) rmt_ScopedCPUSample(_group##_##_name)
 #		define BGFX_PROFILER_BEGIN(_group, _name, _color) rmt_BeginCPUSample(_group##_##_name)
