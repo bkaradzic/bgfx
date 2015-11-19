@@ -419,6 +419,7 @@
  - main: IsItemHovered() make it more consistent for various type of widgets, widgets with multiple components, etc. also effectively IsHovered() region sometimes differs from hot region, e.g tree nodes
  - main: IsItemHovered() info stored in a stack? so that 'if TreeNode() { Text; TreePop; } if IsHovered' return the hover state of the TreeNode?
  - input text: add ImGuiInputTextFlags_EnterToApply? (off #218)
+ - input text multi-line: don't directly call AddText() which does an unnecessary vertex reserve for character count prior to clipping. and/or more line-based clipping to AddText(). and/or reorganize TextUnformatted/RenderText for more efficiency for large text (e.g TextUnformatted could clip and log separately, etc).
  - input text multi-line: way to dynamically grow the buffer without forcing the user to initially allocate for worse case (follow up on #200)
  - input text multi-line: line numbers? status bar? (follow up on #200)
  - input number: optional range min/max for Input*() functions
@@ -429,13 +430,13 @@
  - image/image button: misalignment on padded/bordered button?
  - image/image button: parameters are confusing, image() has tint_col,border_col whereas imagebutton() has bg_col/tint_col. Even thou they are different parameters ordering could be more consistent. can we fix that?
  - layout: horizontal layout helper (#97)
+ - layout: horizontal flow until no space left (#404)
  - layout: more generic alignment state (left/right/centered) for single items?
  - layout: clean up the InputFloatN/SliderFloatN/ColorEdit4 layout code. item width should include frame padding.
  - columns: separator function or parameter that works within the column (currently Separator() bypass all columns) (#125)
  - columns: declare column set (each column: fixed size, %, fill, distribute default size among fills) (#125)
  - columns: columns header to act as button (~sort op) and allow resize/reorder (#125)
  - columns: user specify columns size (#125)
- - popup: border options. richer api like BeginChild() perhaps? (#197)
  - combo: sparse combo boxes (via function call?)
  - combo: contents should extends to fit label if combo widget is small
  - combo/listbox: keyboard control. need InputText-like non-active focus + key handling. considering keyboard for custom listbox (pr #203)
@@ -443,7 +444,9 @@
  - listbox: user may want to initial scroll to focus on the one selected value?
  - listbox: keyboard navigation.
  - listbox: scrolling should track modified selection.
--! menus/popups: clarify usage of popups id, how MenuItem/Selectable closing parent popups affects the ID, etc. this is quite fishy needs improvement! (#331)
+!- popups/menus: clarify usage of popups id, how MenuItem/Selectable closing parent popups affects the ID, etc. this is quite fishy needs improvement! (#331, #402)
+ - popups: add variant using global identifier similar to Begin/End (#402)
+ - popups: border options. richer api like BeginChild() perhaps? (#197)
  - menus: local shortcuts, global shortcuts (#126)
  - menus: icons
  - menus: menubars: some sort of priority / effect of main menu-bar on desktop size?
@@ -477,6 +480,7 @@
  - style: color-box not always square?
  - style: a concept of "compact style" that the end-user can easily rely on (e.g. PushStyleCompact()?) that maps to other settings? avoid implementing duplicate helpers such as SmallCheckbox(), etc.
  - text: simple markup language for color change?
+ - font: helper to add glyph redirect/replacements (e.g. redirect alternate apostrophe unicode code points to ascii one, etc.)
  - log: LogButtons() options for specifying depth and/or hiding depth slider
  - log: have more control over the log scope (e.g. stop logging when leaving current tree node scope)
  - log: be able to log anything (e.g. right-click on a window/tree-node, shows context menu? log into tty/file/clipboard)
@@ -510,6 +514,7 @@
 
 #include <ctype.h>      // toupper, isprint
 #include <math.h>       // sqrtf, fabsf, fmodf, powf, cosf, sinf, floorf, ceilf
+#include <stdlib.h>     // NULL, malloc, free, qsort, atoi
 #include <stdio.h>      // vsnprintf, sscanf, printf
 #include <new>          // new (ptr)
 #if defined(_MSC_VER) && _MSC_VER <= 1500 // MSVC 2008 or earlier
@@ -2040,6 +2045,12 @@ void ImGui::NewFrame()
 void ImGui::Shutdown()
 {
     ImGuiState& g = *GImGui;
+
+    // The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE (which would happen if we never called NewFrame)
+    if (g.IO.Fonts) // Testing for NULL to allow user to NULLify in case of running Shutdown() on multiple contexts. Bit hacky.
+        g.IO.Fonts->Clear();
+
+    // Cleanup of other data are conditional on actually having used ImGui.
     if (!g.Initialized)
         return;
 
@@ -2087,9 +2098,6 @@ void ImGui::Shutdown()
         g.LogClipboard->~ImGuiTextBuffer();
         ImGui::MemFree(g.LogClipboard);
     }
-
-    if (g.IO.Fonts) // Testing for NULL to allow user to NULLify in case of running Shutdown() on multiple contexts. Bit hacky.
-        g.IO.Fonts->Clear();
 
     g.Initialized = false;
 }
@@ -2258,7 +2266,9 @@ static void AddDrawListToRenderList(ImVector<ImDrawList*>& out_render_list, ImDr
         // Check that draw_list doesn't use more vertices than indexable (default ImDrawIdx = 2 bytes = 64K vertices)
         // If this assert triggers because you are drawing lots of stuff manually, A) workaround by calling BeginChild()/EndChild() to put your draw commands in multiple draw lists, B) #define ImDrawIdx to a 'unsigned int' in imconfig.h and render accordingly.
         const unsigned long long int max_vtx_idx = (unsigned long long int)1L << (sizeof(ImDrawIdx)*8);
+        (void)max_vtx_idx;
         IM_ASSERT((unsigned long long int)draw_list->_VtxCurrentIdx <= max_vtx_idx);
+        (void)max_vtx_idx;
 
         GImGui->IO.MetricsRenderVertices += draw_list->VtxBuffer.Size;
         GImGui->IO.MetricsRenderIndices += draw_list->IdxBuffer.Size;
@@ -3068,6 +3078,8 @@ static bool IsPopupOpen(ImGuiID id)
     return opened;
 }
 
+// Mark popup as open. Popups are closed when user click outside, or activate a pressable item, or CloseCurrentPopup() is called within a BeginPopup()/EndPopup() block.
+// Popup identifiers are relative to the current ID-stack (so OpenPopup and BeginPopup needs to be at the same level).
 // One open popup per level of the popup hierarchy (NB: when assigning we reset the Window member of ImGuiPopupRef to NULL)
 void ImGui::OpenPopup(const char* str_id)
 {
@@ -3851,7 +3863,7 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
                 const ImRect resize_rect(br - ImVec2(resize_corner_size * 0.75f, resize_corner_size * 0.75f), br);
                 const ImGuiID resize_id = window->GetID("#RESIZE");
                 bool hovered, held;
-                ButtonBehavior(resize_rect, resize_id, &hovered, &held, true, ImGuiButtonFlags_FlattenChilds);
+                ButtonBehavior(resize_rect, resize_id, &hovered, &held, ImGuiButtonFlags_FlattenChilds);
                 resize_col = window->Color(held ? ImGuiCol_ResizeGripActive : hovered ? ImGuiCol_ResizeGripHovered : ImGuiCol_ResizeGrip);
 
                 if (hovered || held)
@@ -4112,7 +4124,7 @@ static void Scrollbar(ImGuiWindow* window, bool horizontal)
     bool held = false;
     bool hovered = false;
     const bool previously_held = (g.ActiveId == id);
-    ImGui::ButtonBehavior(bb, id, &hovered, &held, true);
+    ImGui::ButtonBehavior(bb, id, &hovered, &held);
 
     float scroll_max = ImMax(1.0f, win_size_contents_v - win_size_avail_v);
     float scroll_ratio = ImSaturate(scroll_v / scroll_max);
@@ -4348,6 +4360,7 @@ static float* GetStyleVarFloatAddr(ImGuiStyleVar idx)
     case ImGuiStyleVar_FrameRounding: return &g.Style.FrameRounding;
     case ImGuiStyleVar_IndentSpacing: return &g.Style.IndentSpacing;
     case ImGuiStyleVar_GrabMinSize: return &g.Style.GrabMinSize;
+    case ImGuiStyleVar_ViewId: return &g.Style.ViewId;
     }
     return NULL;
 }
@@ -5130,7 +5143,7 @@ static inline bool IsWindowContentHoverable(ImGuiWindow* window)
     return true;
 }
 
-bool ImGui::ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool* out_held, bool allow_key_modifiers, ImGuiButtonFlags flags)
+bool ImGui::ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool* out_held, ImGuiButtonFlags flags)
 {
     ImGuiState& g = *GImGui;
     ImGuiWindow* window = GetCurrentWindow();
@@ -5148,7 +5161,7 @@ bool ImGui::ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool
     if (hovered)
     {
         SetHoveredID(id);
-        if (allow_key_modifiers || (!g.IO.KeyCtrl && !g.IO.KeyShift && !g.IO.KeyAlt))
+        if (!(flags & ImGuiButtonFlags_NoKeyModifiers) || (!g.IO.KeyCtrl && !g.IO.KeyShift && !g.IO.KeyAlt))
         {
             if (g.IO.MouseClicked[0])
             {
@@ -5219,7 +5232,7 @@ bool ImGui::ButtonEx(const char* label, const ImVec2& size_arg, ImGuiButtonFlags
 
     if (window->DC.ButtonRepeat) flags |= ImGuiButtonFlags_Repeat;
     bool hovered, held;
-    bool pressed = ButtonBehavior(bb, id, &hovered, &held, true, flags);
+    bool pressed = ButtonBehavior(bb, id, &hovered, &held, flags);
 
     // Render
     const ImU32 col = window->Color((hovered && held) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
@@ -5265,7 +5278,7 @@ bool ImGui::InvisibleButton(const char* str_id, const ImVec2& size_arg)
         return false;
 
     bool hovered, held;
-    bool pressed = ButtonBehavior(bb, id, &hovered, &held, true);
+    bool pressed = ButtonBehavior(bb, id, &hovered, &held);
 
     return pressed;
 }
@@ -5280,7 +5293,7 @@ static bool CloseWindowButton(bool* p_opened)
     const ImRect bb(window->Rect().GetTR() + ImVec2(-2.0f-size,2.0f), window->Rect().GetTR() + ImVec2(-2.0f,2.0f+size));
 
     bool hovered, held;
-    bool pressed = ImGui::ButtonBehavior(bb, id, &hovered, &held, true);
+    bool pressed = ImGui::ButtonBehavior(bb, id, &hovered, &held);
 
     // Render
     const ImU32 col = window->Color((held && hovered) ? ImGuiCol_CloseButtonActive : hovered ? ImGuiCol_CloseButtonHovered : ImGuiCol_CloseButton);
@@ -5351,11 +5364,11 @@ bool ImGui::ImageButton(ImTextureID user_texture_id, const ImVec2& size, const I
         return false;
 
     bool hovered, held;
-    bool pressed = ButtonBehavior(bb, id, &hovered, &held, true);
+    bool pressed = ButtonBehavior(bb, id, &hovered, &held);
 
     // Render
     const ImU32 col = window->Color((hovered && held) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
-    RenderFrame(bb.Min, bb.Max, col);
+    RenderFrame(bb.Min, bb.Max, col, true, ImClamp((float)ImMin(padding.x, padding.y), 0.0f, style.FrameRounding));
     if (bg_col.w > 0.0f)
         window->DrawList->AddRectFilled(image_bb.Min, image_bb.Max, window->Color(bg_col));
     window->DrawList->AddImage(user_texture_id, image_bb.Min, image_bb.Max, uv0, uv1, window->Color(tint_col));
@@ -5557,7 +5570,7 @@ bool ImGui::CollapsingHeader(const char* label, const char* str_id, bool display
         return opened;
 
     bool hovered, held;
-    bool pressed = ButtonBehavior(interact_bb, id, &hovered, &held, false);
+    bool pressed = ButtonBehavior(interact_bb, id, &hovered, &held, ImGuiButtonFlags_NoKeyModifiers);
     if (pressed)
     {
         opened = !opened;
@@ -5587,7 +5600,7 @@ bool ImGui::CollapsingHeader(const char* label, const char* str_id, bool display
     else
     {
         // Unframed typed for tree nodes
-        if ((held && hovered) || hovered)
+        if (hovered)
             RenderFrame(bb.Min, bb.Max, col, false);
         RenderCollapseTriangle(bb.Min + ImVec2(style.FramePadding.x, g.FontSize*0.15f), opened, 0.70f, false);
         if (g.LogEnabled)
@@ -5947,7 +5960,7 @@ float ImGui::RoundScalar(float value, int decimal_precision)
     return negative ? -value : value;
 }
 
-bool ImGui::SliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v, float v_min, float v_max, float power, int decimal_precision, bool horizontal)
+bool ImGui::SliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v, float v_min, float v_max, float power, int decimal_precision, ImGuiSliderFlags flags)
 {
     ImGuiState& g = *GImGui;
     ImGuiWindow* window = GetCurrentWindow();
@@ -5957,17 +5970,18 @@ bool ImGui::SliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v, float v
     RenderFrame(frame_bb.Min, frame_bb.Max, window->Color(ImGuiCol_FrameBg), true, style.FrameRounding);
 
     const bool is_non_linear = fabsf(power - 1.0f) > 0.0001f;
+    const bool is_horizontal = (flags & ImGuiSliderFlags_Vertical) == 0;
 
     const float grab_padding = 2.0f;
-    const float slider_sz = horizontal ? (frame_bb.GetWidth() - grab_padding * 2.0f) : (frame_bb.GetHeight() - grab_padding * 2.0f);
+    const float slider_sz = is_horizontal ? (frame_bb.GetWidth() - grab_padding * 2.0f) : (frame_bb.GetHeight() - grab_padding * 2.0f);
     float grab_sz;
     if (decimal_precision > 0)
         grab_sz = ImMin(style.GrabMinSize, slider_sz);
     else
         grab_sz = ImMin(ImMax(1.0f * (slider_sz / (v_max-v_min+1.0f)), style.GrabMinSize), slider_sz);  // Integer sliders, if possible have the grab size represent 1 unit
     const float slider_usable_sz = slider_sz - grab_sz;
-    const float slider_usable_pos_min = (horizontal ? frame_bb.Min.x : frame_bb.Min.y) + grab_padding + grab_sz*0.5f;
-    const float slider_usable_pos_max = (horizontal ? frame_bb.Max.x : frame_bb.Max.y) - grab_padding - grab_sz*0.5f;
+    const float slider_usable_pos_min = (is_horizontal ? frame_bb.Min.x : frame_bb.Min.y) + grab_padding + grab_sz*0.5f;
+    const float slider_usable_pos_max = (is_horizontal ? frame_bb.Max.x : frame_bb.Max.y) - grab_padding - grab_sz*0.5f;
 
     // For logarithmic sliders that cross over sign boundary we want the exponential increase to be symmetric around 0.0f
     float linear_zero_pos = 0.0f;   // 0.0->1.0f
@@ -5990,9 +6004,9 @@ bool ImGui::SliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v, float v
     {
         if (g.IO.MouseDown[0])
         {
-            const float mouse_abs_pos = horizontal ? g.IO.MousePos.x : g.IO.MousePos.y;
+            const float mouse_abs_pos = is_horizontal ? g.IO.MousePos.x : g.IO.MousePos.y;
             float normalized_pos = ImClamp((mouse_abs_pos - slider_usable_pos_min) / slider_usable_sz, 0.0f, 1.0f);
-            if (!horizontal)
+            if (!is_horizontal)
                 normalized_pos = 1.0f - normalized_pos;
 
             float new_value;
@@ -6061,11 +6075,11 @@ bool ImGui::SliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v, float v
     }
 
     // Draw
-    if (!horizontal)
+    if (!is_horizontal)
         grab_t = 1.0f - grab_t;
     const float grab_pos = ImLerp(slider_usable_pos_min, slider_usable_pos_max, grab_t);
     ImRect grab_bb;
-    if (horizontal)
+    if (is_horizontal)
         grab_bb = ImRect(ImVec2(grab_pos - grab_sz*0.5f, frame_bb.Min.y + grab_padding), ImVec2(grab_pos + grab_sz*0.5f, frame_bb.Max.y - grab_padding));
     else
         grab_bb = ImRect(ImVec2(frame_bb.Min.x + grab_padding, grab_pos - grab_sz*0.5f), ImVec2(frame_bb.Max.x - grab_padding, grab_pos + grab_sz*0.5f));
@@ -6129,7 +6143,7 @@ bool ImGui::SliderFloat(const char* label, float* v, float v_min, float v_max, c
     ItemSize(total_bb, style.FramePadding.y);
 
     // Actual slider behavior + render grab
-    const bool value_changed = SliderBehavior(frame_bb, id, v, v_min, v_max, power, decimal_precision, true);
+    const bool value_changed = SliderBehavior(frame_bb, id, v, v_min, v_max, power, decimal_precision);
 
     // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
     char value_buf[64];
@@ -6175,7 +6189,7 @@ bool ImGui::VSliderFloat(const char* label, const ImVec2& size, float* v, float 
     }
 
     // Actual slider behavior + render grab
-    bool value_changed = SliderBehavior(frame_bb, id, v, v_min, v_max, power, decimal_precision, false);
+    bool value_changed = SliderBehavior(frame_bb, id, v, v_min, v_max, power, decimal_precision, ImGuiSliderFlags_Vertical);
 
     // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
     // For the vertical slider we allow centered text to overlap the frame padding
@@ -6754,7 +6768,7 @@ bool ImGui::Checkbox(const char* label, bool* v)
         return false;
 
     bool hovered, held;
-    bool pressed = ButtonBehavior(total_bb, id, &hovered, &held, true);
+    bool pressed = ButtonBehavior(total_bb, id, &hovered, &held);
     if (pressed)
         *v = !(*v);
 
@@ -6817,7 +6831,7 @@ bool ImGui::RadioButton(const char* label, bool active)
     const float radius = check_bb.GetHeight() * 0.5f;
 
     bool hovered, held;
-    bool pressed = ButtonBehavior(total_bb, id, &hovered, &held, true);
+    bool pressed = ButtonBehavior(total_bb, id, &hovered, &held);
 
     window->DrawList->AddCircleFilled(center, radius, window->Color((held && hovered) ? ImGuiCol_FrameBgActive : hovered ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg), 16);
     if (active)
@@ -8003,7 +8017,7 @@ bool ImGui::Selectable(const char* label, bool selected, ImGuiSelectableFlags fl
     if (flags & ImGuiSelectableFlags_MenuItem) button_flags |= ImGuiButtonFlags_PressedOnClick|ImGuiButtonFlags_PressedOnRelease;
     if (flags & ImGuiSelectableFlags_Disabled) button_flags |= ImGuiButtonFlags_Disabled;
     bool hovered, held;
-    bool pressed = ButtonBehavior(bb_with_spacing, id, &hovered, &held, true, button_flags);
+    bool pressed = ButtonBehavior(bb_with_spacing, id, &hovered, &held, button_flags);
     if (flags & ImGuiSelectableFlags_Disabled)
         selected = false;
 
@@ -8359,7 +8373,7 @@ bool ImGui::ColorButton(const ImVec4& col, bool small_height, bool outline_borde
         return false;
 
     bool hovered, held;
-    bool pressed = ButtonBehavior(bb, id, &hovered, &held, true);
+    bool pressed = ButtonBehavior(bb, id, &hovered, &held);
     RenderFrame(bb.Min, bb.Max, window->Color(col), outline_border, style.FrameRounding);
 
     if (hovered)

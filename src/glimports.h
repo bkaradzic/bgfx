@@ -464,6 +464,9 @@ GL_IMPORT_KHR__(true,  PFNGLDEBUGMESSAGEINSERTPROC,                glDebugMessag
 GL_IMPORT_KHR__(true,  PFNGLDEBUGMESSAGECALLBACKPROC,              glDebugMessageCallback);
 GL_IMPORT_KHR__(true,  PFNGLGETDEBUGMESSAGELOGPROC,                glGetDebugMessageLog);
 
+GL_IMPORT_____x(true,  PFNGLGETCOMPRESSEDTEXIMAGEPROC,             glGetCompressedTexImage);
+GL_IMPORT_____x(true,  PFNGLGETTEXIMAGEPROC,                       glGetTexImage);
+
 #	if BGFX_CONFIG_RENDERER_OPENGLES < 30
 GL_IMPORT_OES__(true,  PFNGLTEXIMAGE3DPROC,                        glTexImage3D);
 GL_IMPORT_OES__(true,  PFNGLTEXSUBIMAGE3DPROC,                     glTexSubImage3D);
@@ -523,9 +526,6 @@ GL_IMPORT_____x(true,  PFNGLMEMORYBARRIERPROC,                     glMemoryBarri
 GL_IMPORT_____x(true,  PFNGLDISPATCHCOMPUTEPROC,                   glDispatchCompute);
 GL_IMPORT_____x(true,  PFNGLDISPATCHCOMPUTEINDIRECTPROC,           glDispatchComputeIndirect);
 
-GL_IMPORT_____x(true,  PFNGLGETCOMPRESSEDTEXIMAGEPROC,             glGetCompressedTexImage);
-GL_IMPORT_____x(true,  PFNGLGETTEXIMAGEPROC,                       glGetTexImage);
-
 GL_IMPORT_NV___(true,  PFNGLDRAWBUFFERSPROC,                       glDrawBuffers);
 GL_IMPORT_NV___(true,  PFNGLGENQUERIESPROC,                        glGenQueries);
 GL_IMPORT_NV___(true,  PFNGLDELETEQUERIESPROC,                     glDeleteQueries);
@@ -533,6 +533,7 @@ GL_IMPORT_NV___(true,  PFNGLBEGINQUERYPROC,                        glBeginQuery)
 GL_IMPORT_NV___(true,  PFNGLENDQUERYPROC,                          glEndQuery);
 GL_IMPORT_NV___(true,  PFNGLGETQUERYOBJECTIVPROC,                  glGetQueryObjectiv);
 GL_IMPORT_NV___(true,  PFNGLGETQUERYOBJECTUI64VPROC,               glGetQueryObjectui64v);
+GL_IMPORT_NV___(true,  PFNGLQUERYCOUNTERPROC,                      glQueryCounter);
 
 GL_IMPORT      (true,  PFNGLINVALIDATEFRAMEBUFFERPROC,             glInvalidateFramebuffer, glDiscardFramebufferEXT);
 
@@ -597,6 +598,7 @@ GL_IMPORT______(true,  PFNGLBEGINQUERYPROC,                        glBeginQuery)
 GL_IMPORT______(true,  PFNGLENDQUERYPROC,                          glEndQuery);
 GL_IMPORT______(true,  PFNGLGETQUERYOBJECTIVPROC,                  glGetQueryObjectiv);
 GL_IMPORT______(true,  PFNGLGETQUERYOBJECTUI64VPROC,               glGetQueryObjectui64v);
+GL_IMPORT______(true,  PFNGLQUERYCOUNTERPROC,                      glQueryCounter);
 
 GL_IMPORT______(true,  PFNGLDRAWARRAYSINDIRECTPROC,                glDrawArraysIndirect);
 GL_IMPORT______(true,  PFNGLDRAWELEMENTSINDIRECTPROC,              glDrawElementsIndirect);

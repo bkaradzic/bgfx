@@ -349,7 +349,7 @@ namespace
 		uint32_t pitch = tex->width * bytesPerPixel;
 
 		bgfx::updateTexture2D(tex->id, 0, x, y, w, h
-				, bgfx::makeRef(data + y*pitch + x*bytesPerPixel, h*pitch)
+				, bgfx::copy(data + y*pitch + x*bytesPerPixel, h*pitch)
 				, pitch
 				);
 

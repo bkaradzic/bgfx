@@ -10,10 +10,15 @@
 #endif
 
 #include "imgui.h"
-#include <ctype.h>              // toupper, isprint
-#include <math.h>               // sqrtf, fabsf, fmodf, powf, cosf, sinf, floorf, ceilf
-#include <stdio.h>              // vsnprintf, sscanf, printf
-#include <stdint.h>             // intptr_t
+#include <ctype.h>          // toupper, isprint
+#include <math.h>           // sqrtf, fabsf, fmodf, powf, cosf, sinf, floorf, ceilf
+#include <stdio.h>          // vsnprintf, sscanf, printf
+#include <stdlib.h>         // NULL, malloc, free, qsort, atoi
+#if defined(_MSC_VER) && _MSC_VER <= 1500 // MSVC 2008 or earlier
+#include <stddef.h>         // intptr_t
+#else
+#include <stdint.h>         // intptr_t
+#endif
 
 #ifdef _MSC_VER
 #pragma warning (disable: 4996) // 'This function or variable may be unsafe': strcpy, strdup, sprintf, vsnprintf, sscanf, fopen
@@ -1098,14 +1103,20 @@ void ImGui::ShowTestWindow(bool* opened)
                 ImGui::EndPopup();
             }
 
+            ImGui::Spacing();
             ImGui::TextWrapped("Below we are testing adding menu items to a regular window. It's rather unusual but should work!");
             ImGui::Separator();
+            // NB: As a quirk in this very specific example, we want to differentiate the parent of this menu from the parent of the various popup menus above. 
+            // To do so we are encloding the items in a PushID()/PopID() block to make them two different menusets. If we don't, opening any popup above and hovering our menu here
+            // would open it. This is because once a menu is active, we allow to switch to a sibling menu by just hovering on it, which is the desired behavior for regular menus.
+            ImGui::PushID("foo");
             ImGui::MenuItem("Menu item", "CTRL+M");
-            if (ImGui::BeginMenu("Menu"))
+            if (ImGui::BeginMenu("Menu inside a regular window"))
             {
                 ShowExampleMenuFile();
                 ImGui::EndMenu();
             }
+            ImGui::PopID();
             ImGui::Separator();
 
             ImGui::TreePop();
@@ -1735,7 +1746,7 @@ static void ShowExampleAppCustomRendering(bool* opened)
     if (ImGui::IsItemHovered())
     {
         ImVec2 mouse_pos_in_canvas = ImVec2(ImGui::GetIO().MousePos.x - canvas_pos.x, ImGui::GetIO().MousePos.y - canvas_pos.y);
-        if (!adding_line && ImGui::GetIO().MouseClicked[0])
+        if (!adding_line && ImGui::IsMouseClicked(0))
         {
             points.push_back(mouse_pos_in_canvas);
             adding_line = true;
@@ -1747,9 +1758,9 @@ static void ShowExampleAppCustomRendering(bool* opened)
             if (!ImGui::GetIO().MouseDown[0])
                 adding_line = adding_preview = false;
         }
-        if (ImGui::GetIO().MouseClicked[1] && !points.empty())
+        if (ImGui::IsMouseClicked(1) && !points.empty())
         {
-            adding_line = false;
+            adding_line = adding_preview = false;
             points.pop_back();
             points.pop_back();
         }

@@ -1101,7 +1101,7 @@ namespace Scintilla
 
 } // namespace Scintilla
 
-ScintillaEditor* ImGuiScintilla(const char* _name, bool* _opened, const ImVec2& _size)
+ScintillaEditor* ImGuiScintilla(const char* _name, bool* /*_opened*/, const ImVec2& /*_size*/)
 {
 	ScintillaEditor* sci = NULL;
 

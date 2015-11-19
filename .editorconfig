@@ -8,7 +8,7 @@ max_line_length = 100
 insert_final_newline     = true
 trim_trailing_whitespace = true
 
-[*.c99.h]
+[include/bgfx/c99/*.h]
 indent_style = space
 
 [*.md]

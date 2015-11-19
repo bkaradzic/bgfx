@@ -24,6 +24,11 @@ newoption {
 }
 
 newoption {
+	trigger = "with-profiler",
+	description = "Enable build with intrusive profiler.",
+}
+
+newoption {
 	trigger = "with-scintilla",
 	description = "Enable building with Scintilla editor.",
 }
@@ -83,6 +88,14 @@ if _OPTIONS["with-sdl"] then
 			print("Set SDL2_DIR enviroment variable.")
 		end
 	end
+end
+
+if _OPTIONS["with-profiler"] then
+	defines {
+		"ENTRY_CONFIG_PROFILER=1",
+		"BGFX_CONFIG_PROFILER_REMOTERY=1",
+        "_WINSOCKAPI_"
+	}
 end
 
 function exampleProject(_name)
@@ -381,6 +394,7 @@ exampleProject("21-deferred")
 exampleProject("22-windows")
 exampleProject("23-vectordisplay")
 exampleProject("24-nbody")
+exampleProject("26-occlusion")
 
 -- C99 source doesn't compile under WinRT settings
 if not premake.vstudio.iswinrt() then

@@ -18,8 +18,8 @@
 
 #include <stdio.h>      // vsnprintf, sscanf, printf
 #include <new>          // new (ptr)
-#ifndef alloca
-#if _WIN32
+#if !defined(alloca) && !defined(__FreeBSD__)
+#if defined(_WIN32)
 #include <malloc.h>     // alloca
 #else
 #include <alloca.h>     // alloca
@@ -139,6 +139,7 @@ void ImDrawList::AddDrawCmd()
     ImDrawCmd draw_cmd;
     draw_cmd.ClipRect = _ClipRectStack.Size ? _ClipRectStack.back() : GNullClipRect;
     draw_cmd.TextureId = _TextureIdStack.Size ? _TextureIdStack.back() : NULL;
+    draw_cmd.ViewId = (unsigned char)(GImGui->Style.ViewId);
 
     IM_ASSERT(draw_cmd.ClipRect.x <= draw_cmd.ClipRect.z && draw_cmd.ClipRect.y <= draw_cmd.ClipRect.w);
     CmdBuffer.push_back(draw_cmd);
@@ -250,6 +251,7 @@ void ImDrawList::ChannelsSplit(int channels_count)
             ImDrawCmd draw_cmd;
             draw_cmd.ClipRect = _ClipRectStack.back();
             draw_cmd.TextureId = _TextureIdStack.back();
+            draw_cmd.ViewId = (unsigned char)(GImGui->Style.ViewId);
             _Channels[i].CmdBuffer.push_back(draw_cmd);
         }
     }
@@ -1082,13 +1084,13 @@ static const char*  GetDefaultCompressedFontDataTTFBase85();
 static unsigned int Decode85Byte(char c)                                    { return c >= '\\' ? c-36 : c-35; }
 static void         Decode85(const unsigned char* src, unsigned char* dst)  
 {
-	while (*src)
-	{
-		unsigned int tmp = Decode85Byte(src[0]) + 85*(Decode85Byte(src[1]) + 85*(Decode85Byte(src[2]) + 85*(Decode85Byte(src[3]) + 85*Decode85Byte(src[4]))));
-		dst[0] = ((tmp >> 0) & 0xFF); dst[1] = ((tmp >> 8) & 0xFF); dst[2] = ((tmp >> 16) & 0xFF); dst[3] = ((tmp >> 24) & 0xFF);   // We can't assume little-endianess.
+    while (*src)
+    {
+        unsigned int tmp = Decode85Byte(src[0]) + 85*(Decode85Byte(src[1]) + 85*(Decode85Byte(src[2]) + 85*(Decode85Byte(src[3]) + 85*Decode85Byte(src[4]))));
+        dst[0] = ((tmp >> 0) & 0xFF); dst[1] = ((tmp >> 8) & 0xFF); dst[2] = ((tmp >> 16) & 0xFF); dst[3] = ((tmp >> 24) & 0xFF);   // We can't assume little-endianess.
         src += 5;
         dst += 4;
-	}
+    }
 }
 
 // Load embedded ProggyClean.ttf at size 13, disable oversampling

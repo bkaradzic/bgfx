@@ -16,7 +16,7 @@ uniform vec4 u_color;
 uniform vec4 u_specular_shininess;
 uniform vec4 u_lightPosRadius[MAX_NUM_LIGHTS];
 uniform vec4 u_lightRgbInnerR[MAX_NUM_LIGHTS];
-SAMPLER2D(u_texColor, 0);
+SAMPLER2D(s_texColor, 0);
 
 #define u_ambientPass  u_params.x
 #define u_lightingPass u_params.y
@@ -80,7 +80,7 @@ void main()
 	}
 	lightColor *= u_lightingPass;
 
-	vec3 color = toLinear(texture2D(u_texColor, v_texcoord0)).xyz;
+	vec3 color = toLinear(texture2D(s_texColor, v_texcoord0)).xyz;
 
 	vec3 ambient = toGamma(ambientColor * color);
 	vec3 diffuse = toGamma(lightColor * color);

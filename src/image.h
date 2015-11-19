@@ -12,18 +12,19 @@ namespace bgfx
 {
 	struct ImageContainer
 	{
-		void* m_data;
+		void*    m_data;
 		uint32_t m_size;
 		uint32_t m_offset;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_depth;
-		uint8_t m_format;
-		uint8_t m_numMips;
-		bool m_hasAlpha;
-		bool m_cubeMap;
-		bool m_ktx;
-		bool m_srgb;
+		uint8_t  m_format;
+		uint8_t  m_numMips;
+		bool     m_hasAlpha;
+		bool     m_cubeMap;
+		bool     m_ktx;
+		bool     m_ktxLE;
+		bool     m_srgb;
 	};
 
 	struct ImageMip
@@ -103,6 +104,12 @@ namespace bgfx
 
 	///
 	void imageWriteTga(bx::WriterI* _writer, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale, bool _yflip);
+
+	///
+	void imageWriteKtx(bx::WriterI* _writer, TextureFormat::Enum _format, bool _cubeMap, uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _numMips, const void* _src);
+
+	///
+	void imageWriteKtx(bx::WriterI* _writer, ImageContainer& _imageContainer, const void* _data, uint32_t _size);
 
 	///
 	bool imageParse(ImageContainer& _imageContainer, bx::ReaderSeekerI* _reader);

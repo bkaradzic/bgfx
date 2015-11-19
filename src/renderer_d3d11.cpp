@@ -13,9 +13,24 @@
 #	include <windows.ui.xaml.media.dxinterop.h>
 #endif // BX_PLATFORM_WINRT
 
+#if BGFX_CONFIG_PROFILER_REMOTERY
+#	define BGFX_GPU_PROFILER_BIND(_device, _context) rmt_BindD3D11(_device, _context)
+#	define BGFX_GPU_PROFILER_UNBIND() rmt_UnbindD3D11()
+#	define BGFX_GPU_PROFILER_BEGIN(_group, _name, _color) rmt_BeginD3D11Sample(_group##_##_name)
+#	define BGFX_GPU_PROFILER_BEGIN_DYNAMIC(_namestr) rmt_BeginD3D11SampleDynamic(_namestr)
+#	define BGFX_GPU_PROFILER_END() rmt_EndD3D11Sample()
+#else
+#	define BGFX_GPU_PROFILER_BIND(_device, _context) BX_NOOP()
+#	define BGFX_GPU_PROFILER_UNBIND() BX_NOOP()
+#	define BGFX_GPU_PROFILER_BEGIN(_group, _name, _color) BX_NOOP()
+#	define BGFX_GPU_PROFILER_BEGIN_DYNAMIC(_namestr) BX_NOOP()
+#	define BGFX_GPU_PROFILER_END() BX_NOOP()
+#endif
+
 namespace bgfx { namespace d3d11
 {
 	static wchar_t s_viewNameW[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
+	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
 
 	struct PrimInfo
 	{
@@ -1158,6 +1173,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					| BGFX_CAPS_DRAW_INDIRECT
 					| BGFX_CAPS_TEXTURE_BLIT
 					| BGFX_CAPS_TEXTURE_READ_BACK
+					| BGFX_CAPS_OCCLUSION_QUERY
 					);
 
 				if (m_featureLevel <= D3D_FEATURE_LEVEL_9_2)
@@ -1277,7 +1293,21 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 									| D3D11_FORMAT_SUPPORT_TEXTURE3D
 									| D3D11_FORMAT_SUPPORT_TEXTURECUBE
 									) )
-									? BGFX_CAPS_FORMAT_TEXTURE_COLOR
+									? BGFX_CAPS_FORMAT_TEXTURE_2D
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+
+							support |= 0 != (data.OutFormatSupport & (0
+									| D3D11_FORMAT_SUPPORT_TEXTURE3D
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_3D
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+
+							support |= 0 != (data.OutFormatSupport & (0
+									| D3D11_FORMAT_SUPPORT_TEXTURECUBE
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_CUBE
 									: BGFX_CAPS_FORMAT_TEXTURE_NONE
 									;
 
@@ -1359,10 +1389,22 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						{
 							support |= 0 != (data.OutFormatSupport & (0
 									| D3D11_FORMAT_SUPPORT_TEXTURE2D
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+
+							support |= 0 != (data.OutFormatSupport & (0
 									| D3D11_FORMAT_SUPPORT_TEXTURE3D
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+
+							support |= 0 != (data.OutFormatSupport & (0
 									| D3D11_FORMAT_SUPPORT_TEXTURECUBE
 									) )
-									? BGFX_CAPS_FORMAT_TEXTURE_COLOR_SRGB
+									? BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
 									: BGFX_CAPS_FORMAT_TEXTURE_NONE
 									;
 						}
@@ -1378,9 +1420,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				// Init reserved part of view name.
 				for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 				{
-					char name[BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1];
-					bx::snprintf(name, sizeof(name), "%3d   ", ii);
-					mbstowcs(s_viewNameW[ii], name, BGFX_CONFIG_MAX_VIEW_NAME_RESERVED);
+					bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED + 1, "%3d   ", ii);
+					mbstowcs(s_viewNameW[ii], s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED);
 				}
 
 				if (BX_ENABLED(BGFX_CONFIG_DEBUG)
@@ -1422,6 +1463,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				postReset();
 			}
 
+			BGFX_GPU_PROFILER_BIND(m_device, m_deviceCtx);
 			return true;
 
 		error:
@@ -1474,6 +1516,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		void shutdown()
 		{
+			BGFX_GPU_PROFILER_UNBIND();
+
 			preReset();
 			m_ovr.shutdown();
 
@@ -1837,6 +1881,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					, BX_COUNTOF(s_viewNameW[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
 					);
 			}
+
+			bx::strlcpy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
+				, _name
+				, BX_COUNTOF(s_viewName[0]) - BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
+				);
 		}
 
 		void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) BX_OVERRIDE
@@ -1914,7 +1963,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			setShaderUniform(flags, predefined.m_loc, proj, 4);
 
 			commitShaderConstants();
-			m_textures[_blitter.m_texture.idx].commit(0, BGFX_SAMPLER_DEFAULT_FLAGS, NULL);
+			m_textures[_blitter.m_texture.idx].commit(0, BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER, NULL);
 			commitTextureStage();
 		}
 
@@ -1938,6 +1987,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			ovrPreReset();
 
 			m_gpuTimer.preReset();
+			m_occlusionQuery.preReset();
 
 			if (NULL == g_platformData.backBufferDS)
 			{
@@ -1982,6 +2032,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			}
 
 			m_gpuTimer.postReset();
+			m_occlusionQuery.postReset();
 
 			ovrPostReset();
 
@@ -2133,7 +2184,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			||  m_resolution.m_height != _resolution.m_height
 			||  m_resolution.m_flags  != flags)
 			{
-				flags &= ~BGFX_RESET_FORCE;
+				flags &= ~BGFX_RESET_INTERNAL_FORCE;
 
 				bool resize = true
 					&& !BX_ENABLED(BX_PLATFORM_WINRT) // can't use ResizeBuffers on Windows Phone
@@ -2698,6 +2749,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			}
 
 			return sampler;
+		}
+
+		bool isVisible(Frame* _render, OcclusionQueryHandle _handle, bool _visible)
+		{
+			m_occlusionQuery.resolve(_render);
+			return _visible == (0 != _render->m_occlusion[_handle.idx]);
 		}
 
 		DXGI_FORMAT getBufferFormat()
@@ -3270,6 +3327,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		ID3D11DeviceContext* m_deviceCtx;
 		ID3D11InfoQueue*     m_infoQueue;
 		TimerQueryD3D11      m_gpuTimer;
+		OcclusionQueryD3D11  m_occlusionQuery;
 
 		ID3D11RenderTargetView* m_backBufferColor;
 		ID3D11DepthStencilView* m_backBufferDepthStencil;
@@ -4123,7 +4181,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	{
 		TextureStage& ts = s_renderD3D11->m_textureStage;
 		ts.m_srv[_stage] = m_srv;
-		uint32_t flags = 0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags)
+		uint32_t flags = 0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags)
 			? _flags
 			: m_flags
 			;
@@ -4439,7 +4497,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			DX_CHECK(device->CreateQuery(&query, &frame.m_disjoint) );
 
 			query.Query = D3D11_QUERY_TIMESTAMP;
-			DX_CHECK(device->CreateQuery(&query, &frame.m_start) );
+			DX_CHECK(device->CreateQuery(&query, &frame.m_begin) );
 			DX_CHECK(device->CreateQuery(&query, &frame.m_end) );
 		}
 
@@ -4454,7 +4512,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			Frame& frame = m_frame[ii];
 			DX_RELEASE(frame.m_disjoint, 0);
-			DX_RELEASE(frame.m_start, 0);
+			DX_RELEASE(frame.m_begin, 0);
 			DX_RELEASE(frame.m_end, 0);
 		}
 	}
@@ -4470,7 +4528,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		Frame& frame = m_frame[m_control.m_current];
 		deviceCtx->Begin(frame.m_disjoint);
-		deviceCtx->End(frame.m_start);
+		deviceCtx->End(frame.m_begin);
 	}
 
 	void TimerQueryD3D11::end()
@@ -4489,8 +4547,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
 			Frame& frame = m_frame[m_control.m_read];
 
-			uint64_t finish;
-			HRESULT hr = deviceCtx->GetData(frame.m_end, &finish, sizeof(finish), 0);
+			uint64_t timeEnd;
+			HRESULT hr = deviceCtx->GetData(frame.m_end, &timeEnd, sizeof(timeEnd), D3D11_ASYNC_GETDATA_DONOTFLUSH);
 			if (S_OK == hr)
 			{
 				m_control.consume(1);
@@ -4504,11 +4562,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				D3D11_QUERY_DATA_TIMESTAMP_DISJOINT disjoint;
 				deviceCtx->GetData(frame.m_disjoint, &disjoint, sizeof(disjoint), 0);
 
-				uint64_t start;
-				deviceCtx->GetData(frame.m_start, &start, sizeof(start), 0);
+				uint64_t timeBegin;
+				deviceCtx->GetData(frame.m_begin, &timeBegin, sizeof(timeBegin), 0);
 
 				m_frequency = disjoint.Frequency;
-				m_elapsed   = finish - start;
+				m_begin     = timeBegin;
+				m_end       = timeEnd;
+				m_elapsed   = timeEnd - timeBegin;
 
 				return true;
 			}
@@ -4517,9 +4577,74 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		return false;
 	}
 
+	void OcclusionQueryD3D11::postReset()
+	{
+		ID3D11Device* device = s_renderD3D11->m_device;
+
+		D3D11_QUERY_DESC desc;
+		desc.Query = D3D11_QUERY_OCCLUSION;
+		desc.MiscFlags = 0;
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_query); ++ii)
+		{
+			Query& query = m_query[ii];
+			DX_CHECK(device->CreateQuery(&desc, &query.m_ptr) );
+		}
+	}
+
+	void OcclusionQueryD3D11::preReset()
+	{
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_query); ++ii)
+		{
+			Query& query = m_query[ii];
+			DX_RELEASE(query.m_ptr, 0);
+		}
+	}
+
+	void OcclusionQueryD3D11::begin(Frame* _render, OcclusionQueryHandle _handle)
+	{
+		while (0 == m_control.reserve(1) )
+		{
+			resolve(_render, true);
+		}
+
+		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
+		Query& query = m_query[m_control.m_current];
+		deviceCtx->Begin(query.m_ptr);
+		query.m_handle = _handle;
+	}
+
+	void OcclusionQueryD3D11::end()
+	{
+		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
+		Query& query = m_query[m_control.m_current];
+		deviceCtx->End(query.m_ptr);
+		m_control.commit(1);
+	}
+
+	void OcclusionQueryD3D11::resolve(Frame* _render, bool _wait)
+	{
+		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
+
+		while (0 != m_control.available() )
+		{
+			Query& query = m_query[m_control.m_read];
+
+			uint64_t result = 0;
+			HRESULT hr = deviceCtx->GetData(query.m_ptr, &result, sizeof(result), _wait ? 0 : D3D11_ASYNC_GETDATA_DONOTFLUSH);
+			if (S_FALSE == hr)
+			{
+				break;
+			}
+
+			_render->m_occlusion[query.m_handle.idx] = 0 < result;
+			m_control.consume(1);
+		}
+	}
+
 	void RendererContextD3D11::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
 		PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), L"rendererSubmit");
+		BGFX_GPU_PROFILER_BEGIN_DYNAMIC("rendererSubmit");
 
 		ID3D11DeviceContext* deviceCtx = m_deviceCtx;
 
@@ -4546,7 +4671,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		RenderDraw currentState;
 		currentState.clear();
-		currentState.m_flags = BGFX_STATE_NONE;
+		currentState.m_stateFlags = BGFX_STATE_NONE;
 		currentState.m_stencil = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
 		_render->m_hmdInitialized = m_ovr.isInitialized();
@@ -4585,6 +4710,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		uint32_t statsNumDrawIndirect[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumIndices = 0;
 		uint32_t statsKeyType[2] = {};
+
+		m_occlusionQuery.resolve(_render);
 
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 		{
@@ -4650,6 +4777,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 
 					PIX_ENDEVENT();
+					if (item > 1)
+					{
+						BGFX_GPU_PROFILER_END();
+						BGFX_PROFILER_END();
+					}
+					BGFX_PROFILER_BEGIN_DYNAMIC(s_viewName[view]);
+					BGFX_GPU_PROFILER_BEGIN_DYNAMIC(s_viewName[view]);
 
 					viewState.m_rect = _render->m_rect[view];
 					if (viewRestart)
@@ -4939,8 +5073,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), viewNameW);
 					}
 
-					wasCompute = false;
-
 					programIdx = invalidHandle;
 					m_currentProgram = NULL;
 
@@ -4949,10 +5081,18 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				const RenderDraw& draw = renderItem.draw;
 
-				const uint64_t newFlags = draw.m_flags;
-				uint64_t changedFlags = currentState.m_flags ^ draw.m_flags;
+				const bool hasOcclusionQuery = 0 != (draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
+				if (isValid(draw.m_occlusionQuery)
+				&&  !hasOcclusionQuery
+				&&  !isVisible(_render, draw.m_occlusionQuery, 0 != (draw.m_submitFlags&BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE) ) )
+				{
+					continue;
+				}
+
+				const uint64_t newFlags = draw.m_stateFlags;
+				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
 				changedFlags |= currentState.m_rgba != draw.m_rgba ? BGFX_D3D11_BLEND_STATE_MASK : 0;
-				currentState.m_flags = newFlags;
+				currentState.m_stateFlags = newFlags;
 
 				const uint64_t newStencil = draw.m_stencil;
 				uint64_t changedStencil = currentState.m_stencil ^ draw.m_stencil;
@@ -4961,12 +5101,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				if (resetState)
 				{
+					wasCompute = false;
+
 					currentState.clear();
 					currentState.m_scissor = !draw.m_scissor;
 					changedFlags = BGFX_STATE_MASK;
 					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
-					currentState.m_flags = newFlags;
-					currentState.m_stencil = newStencil;
+					currentState.m_stateFlags = newFlags;
+					currentState.m_stencil    = newStencil;
 
 					setBlendState(newFlags);
 					setDepthStencilState(newFlags, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT) );
@@ -5130,13 +5272,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						const Binding& bind = draw.m_bind[stage];
 						Binding& current = currentState.m_bind[stage];
 						if (current.m_idx != bind.m_idx
-						||  current.m_un.m_draw.m_flags != bind.m_un.m_draw.m_flags
+						||  current.m_un.m_draw.m_textureFlags != bind.m_un.m_draw.m_textureFlags
 						||  programChanged)
 						{
 							if (invalidHandle != bind.m_idx)
 							{
 								TextureD3D11& texture = m_textures[bind.m_idx];
-								texture.commit(stage, bind.m_un.m_draw.m_flags, _render->m_colorPalette);
+								texture.commit(stage, bind.m_un.m_draw.m_textureFlags, _render->m_colorPalette);
 							}
 							else
 							{
@@ -5234,6 +5376,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					uint32_t numInstances      = 0;
 					uint32_t numPrimsRendered  = 0;
 					uint32_t numDrawIndirect   = 0;
+
+					if (hasOcclusionQuery)
+					{
+						m_occlusionQuery.begin(_render, draw.m_occlusionQuery);
+					}
 
 					if (isValid(draw.m_indirectBuffer) )
 					{
@@ -5343,6 +5490,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 									);
 							}
 						}
+
+						if (hasOcclusionQuery)
+						{
+							m_occlusionQuery.end();
+						}
 					}
 
 					statsNumPrimsSubmitted[primIndex] += numPrimsSubmitted;
@@ -5376,15 +5528,23 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				captureElapsed = -bx::getHPCounter();
 				capture();
 				captureElapsed += bx::getHPCounter();
+
+				BGFX_GPU_PROFILER_END();
+				BGFX_PROFILER_END();
 			}
 		}
 
 		PIX_ENDEVENT();
+		BGFX_GPU_PROFILER_END();
 
 		int64_t now = bx::getHPCounter();
 		elapsed += now;
 
 		static int64_t last = now;
+
+		Stats& perfStats = _render->m_perfStats;
+		perfStats.cpuTimeBegin = last;
+
 		int64_t frameTime = now - last;
 		last = now;
 
@@ -5409,10 +5569,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		const int64_t timerFreq = bx::getHPFrequency();
 
-		Stats& perfStats   = _render->m_perfStats;
-		perfStats.cpuTime      = frameTime;
+		perfStats.cpuTimeEnd   = now;
 		perfStats.cpuTimerFreq = timerFreq;
-		perfStats.gpuTime      = m_gpuTimer.m_elapsed;
+		perfStats.gpuTimeBegin = m_gpuTimer.m_begin;
+		perfStats.gpuTimeEnd   = m_gpuTimer.m_end;
 		perfStats.gpuTimerFreq = m_gpuTimer.m_frequency;
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
@@ -5513,6 +5673,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				tvm.printf(10, pos++, 0x8e, " Uniform size: %7d, Max: %7d ", _render->m_uniformEnd, _render->m_uniformMax);
 				tvm.printf(10, pos++, 0x8e, "     DVB size: %7d ", _render->m_vboffset);
 				tvm.printf(10, pos++, 0x8e, "     DIB size: %7d ", _render->m_iboffset);
+
+				pos++;
+				tvm.printf(10, pos++, 0x8e, " Occlusion queries: %3d ", m_occlusionQuery.m_control.available() );
 
 				pos++;
 				tvm.printf(10, pos++, 0x8e, " State cache:                                ");

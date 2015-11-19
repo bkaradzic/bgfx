@@ -14,7 +14,11 @@
 #include <stb/stb_image.c>
 
 #ifndef USE_ENTRY
-#	define USE_ENTRY defined(SCI_NAMESPACE)
+#	if defined(SCI_NAMESPACE)
+#		define USE_ENTRY 1
+#	else
+#		define USE_ENTRY 0
+#	endif // defined(SCI_NAMESPACE)
 #endif // USE_ENTRY
 
 #if USE_ENTRY
@@ -28,8 +32,6 @@
 
 #include "vs_ocornut_imgui.bin.h"
 #include "fs_ocornut_imgui.bin.h"
-
-void viewCallback(const ImDrawList* _parentList, const ImDrawCmd* _cmd);
 
 class PlatformWindow : public ImGuiWM::PlatformWindow
 {
@@ -47,7 +49,7 @@ public:
 		&&  !_isDragWindow)
 		{
 			m_window = entry::createWindow(0, 0, 640, 380);
-			extern void pwToWindow(entry::WindowHandle _handle, PlatformWindow* _pw);
+			extern void pwToWindow(entry::WindowHandle _handle, class PlatformWindow* _pw);
 			pwToWindow(m_window, this);
 		}
 		else
@@ -59,6 +61,12 @@ public:
 
 	virtual ~PlatformWindow()
 	{
+#if USE_ENTRY
+		if (0 != m_window.idx)
+		{
+			entry::destroyWindow(m_window);
+		}
+#endif // USE_ENTRY
 	}
 
 	virtual bool Init(ImGuiWM::PlatformWindow* /*_parent*/) BX_OVERRIDE
@@ -100,7 +108,6 @@ public:
 
 	virtual void SetPosition(const ImVec2& _pos) BX_OVERRIDE
 	{
-
 #if USE_ENTRY
 		if (0 != m_window.idx
 		&&  m_pos.x != _pos.x
@@ -126,38 +133,9 @@ public:
 	{
 	}
 
-	virtual void PaintBegin()
-	{
-#if USE_ENTRY
-		if (!m_bIsDragWindow)
-		{
-			ImDrawList* drawList = ImGui::GetWindowDrawList();
-			union { entry::WindowHandle handle; void* ptr; } cast = { m_window };
-			drawList->AddCallback(viewCallback, cast.ptr);
-			drawList->PushClipRect(ImVec4(0.0f, 0.0f, m_size.x, m_size.y) );
-		}
-#endif // USE_ENTRY
-	}
-
-	virtual void Paint() BX_OVERRIDE
-	{
-		if (!m_bIsDragWindow)
-		{
-			Super::Paint();
-		}
-	}
-
-	virtual void PaintEnd()
-	{
-#if USE_ENTRY
-		if (!m_bIsDragWindow)
-		{
-			ImDrawList* drawList = ImGui::GetWindowDrawList();
-			drawList->PopClipRect();
-			drawList->AddCallback(viewCallback, NULL);
-		}
-#endif // USE_ENTRY
-	}
+	virtual void PaintBegin() BX_OVERRIDE;
+	virtual void Paint() BX_OVERRIDE;
+	virtual void PaintEnd() BX_OVERRIDE;
 
 	virtual void Destroy() BX_OVERRIDE
 	{
@@ -257,7 +235,7 @@ struct OcornutImguiContext
 				const uint8_t viewId = window.m_viewId;
 				bgfx::setViewClear(viewId
 					, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-					, 0x303030ff + rand()
+					, 0x303030ff
 					, 1.0f
 					, 0
 					);
@@ -353,7 +331,7 @@ struct OcornutImguiContext
 					bgfx::setTexture(0, s_tex, th);
 					bgfx::setVertexBuffer(&tvb, 0, numVertices);
 					bgfx::setIndexBuffer(&tib, offset, cmd->ElemCount);
-					bgfx::submit(m_viewId, m_program);
+					bgfx::submit(cmd->ViewId, m_program);
 				}
 
 				offset += cmd->ElemCount;
@@ -443,9 +421,11 @@ struct OcornutImguiContext
 		uint8_t* data;
 		int32_t width;
 		int32_t height;
-		void* font = ImGui::MemAlloc(_size);
-		memcpy(font, _data, _size);
-		io.Fonts->AddFontFromMemoryTTF(font, _size, _fontSize);
+		{
+			void* font = ImGui::MemAlloc(_size);
+			memcpy(font, _data, _size);
+			io.Fonts->AddFontFromMemoryTTF(font, _size, _fontSize);
+		}
 
 		io.Fonts->GetTexDataAsRGBA32(&data, &width, &height);
 
@@ -498,14 +478,14 @@ struct OcornutImguiContext
 			};
 
 			Window*  w0 = new Window("test");
-			WindowX* w1 = new WindowX("abcd");
+			WindowX* w1 = new WindowX("Scintilla");
 			Window*  w2 = new Window("xyzw");
 			Window*  w3 = new Window("0123");
 
-			m_wm->Dock(w0);
-			m_wm->DockWith(w1, w0, ImGuiWM::E_DOCK_ORIENTATION_RIGHT);
-			m_wm->DockWith(w2, w1, ImGuiWM::E_DOCK_ORIENTATION_BOTTOM);
-			m_wm->DockWith(w3, w0, ImGuiWM::E_DOCK_ORIENTATION_BOTTOM);
+ 			m_wm->Dock(w0);
+ 			m_wm->DockWith(w1, w0, ImGuiWM::E_DOCK_ORIENTATION_RIGHT);
+ 			m_wm->DockWith(w2, w1, ImGuiWM::E_DOCK_ORIENTATION_BOTTOM);
+ 			m_wm->DockWith(w3, w0, ImGuiWM::E_DOCK_ORIENTATION_BOTTOM);
 		}
 #endif // 0
 	}
@@ -525,8 +505,7 @@ struct OcornutImguiContext
 
 	void beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, int _width, int _height, char _inputChar, uint8_t _viewId)
 	{
-		m_viewId        = _viewId;
-		m_defaultViewId = _viewId;
+		m_viewId = _viewId;
 
 		ImGuiIO& io = ImGui::GetIO();
 		if (_inputChar < 0x7f)
@@ -561,6 +540,7 @@ struct OcornutImguiContext
 #endif // defined(SCI_NAMESPACE)
 
 		ImGui::NewFrame();
+		ImGui::PushStyleVar(ImGuiStyleVar_ViewId, (float)_viewId);
 
 #if 0
 		ImGui::ShowTestWindow(); //Debug only.
@@ -576,6 +556,7 @@ struct OcornutImguiContext
 	void endFrame()
 	{
 		m_wm->Run();
+		ImGui::PopStyleVar(1);
 		ImGui::Render();
 	}
 
@@ -588,7 +569,6 @@ struct OcornutImguiContext
 	int64_t m_last;
 	int32_t m_lastScroll;
 	uint8_t m_viewId;
-	uint8_t m_defaultViewId;
 
 #if USE_ENTRY
 	struct Window
@@ -610,21 +590,52 @@ struct OcornutImguiContext
 
 static OcornutImguiContext s_ctx;
 
-#if USE_ENTRY
-
-void viewCallback(const ImDrawList* /*_parentList*/, const ImDrawCmd* _cmd)
+void PlatformWindow::PaintBegin()
 {
-	union { void* ptr; entry::WindowHandle handle; } cast = { _cmd->UserCallbackData };
+#if USE_ENTRY
+	if (!m_bIsDragWindow)
+	{
+		OcornutImguiContext::Window& win = s_ctx.m_window[m_window.idx];
+		entry::WindowState& state = win.m_state;
+		ImGuiIO& io = ImGui::GetIO();
+		io.MousePos = ImVec2((float)state.m_mouse.m_mx, (float)state.m_mouse.m_my);
+		io.MouseDown[0] = !!state.m_mouse.m_buttons[entry::MouseButton::Left];
+		io.MouseDown[1] = !!state.m_mouse.m_buttons[entry::MouseButton::Right];
+		io.MouseDown[2] = !!state.m_mouse.m_buttons[entry::MouseButton::Middle];
+		io.MouseWheel   = float(state.m_mouse.m_mz);
 
-	if (0 != cast.handle.idx)
-	{
-		s_ctx.m_viewId = s_ctx.m_window[cast.handle.idx].m_viewId;
+		ImGui::PushStyleVar(ImGuiStyleVar_ViewId, (float)win.m_viewId);
 	}
-	else
+#endif // USE_ENTRY
+}
+
+void PlatformWindow::Paint()
+{
+	if (!m_bIsDragWindow)
 	{
-		s_ctx.m_viewId = s_ctx.m_defaultViewId;
+		Super::Paint();
 	}
 }
+
+void PlatformWindow::PaintEnd()
+{
+#if USE_ENTRY
+	if (!m_bIsDragWindow)
+	{
+		ImGui::PopStyleVar(1);
+
+		entry::WindowState& state = s_ctx.m_window[0].m_state;
+		ImGuiIO& io = ImGui::GetIO();
+		io.MousePos = ImVec2((float)state.m_mouse.m_mx, (float)state.m_mouse.m_my);
+		io.MouseDown[0] = !!state.m_mouse.m_buttons[entry::MouseButton::Left];
+		io.MouseDown[1] = !!state.m_mouse.m_buttons[entry::MouseButton::Right];
+		io.MouseDown[2] = !!state.m_mouse.m_buttons[entry::MouseButton::Middle];
+		io.MouseWheel   = float(state.m_mouse.m_mz);
+	}
+#endif // USE_ENTRY
+}
+
+#if USE_ENTRY
 
 void pwToWindow(entry::WindowHandle _handle, PlatformWindow* _pw)
 {
@@ -654,7 +665,7 @@ void imguiUpdateWindow(const entry::WindowState& _state)
 		}
 		else
 		{
-			window.m_viewId = s_ctx.m_defaultViewId;
+			window.m_viewId = s_ctx.m_viewId;
 		}
 	}
 
@@ -672,9 +683,9 @@ void OcornutImguiContext::memFree(void* _ptr)
 	BX_FREE(s_ctx.m_allocator, _ptr);
 }
 
-void OcornutImguiContext::renderDrawLists(ImDrawData* draw_data)
+void OcornutImguiContext::renderDrawLists(ImDrawData* _drawData)
 {
-	s_ctx.render(draw_data);
+	s_ctx.render(_drawData);
 }
 
 void IMGUI_create(const void* _data, uint32_t _size, float _fontSize, bx::AllocatorI* _allocator)

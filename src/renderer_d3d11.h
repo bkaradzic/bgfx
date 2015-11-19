@@ -296,14 +296,39 @@ namespace bgfx { namespace d3d11
 		struct Frame
 		{
 			ID3D11Query* m_disjoint;
-			ID3D11Query* m_start;
+			ID3D11Query* m_begin;
 			ID3D11Query* m_end;
 		};
 
+		uint64_t m_begin;
+		uint64_t m_end;
 		uint64_t m_elapsed;
 		uint64_t m_frequency;
 
 		Frame m_frame[4];
+		bx::RingBufferControl m_control;
+	};
+
+	struct OcclusionQueryD3D11
+	{
+		OcclusionQueryD3D11()
+			: m_control(BX_COUNTOF(m_query) )
+		{
+		}
+
+		void postReset();
+		void preReset();
+		void begin(Frame* _render, OcclusionQueryHandle _handle);
+		void end();
+		void resolve(Frame* _render, bool _wait = false);
+
+		struct Query
+		{
+			ID3D11Query* m_ptr;
+			OcclusionQueryHandle m_handle;
+		};
+
+		Query m_query[BGFX_CONFIG_MAX_OCCUSION_QUERIES];
 		bx::RingBufferControl m_control;
 	};
 

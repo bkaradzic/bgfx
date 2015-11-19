@@ -6,10 +6,15 @@ $input v_texcoord0, v_texcoord1, v_texcoord2, v_texcoord3, v_texcoord4
  */
 
 #include "common.sh"
-SAMPLER2D(u_shadowMap0, 4);
+SAMPLER2D(s_shadowMap0, 4);
 
 void main()
 {
-	gl_FragColor = blur9VSM(u_shadowMap0, v_texcoord0, v_texcoord1, v_texcoord2, v_texcoord3, v_texcoord4);
+	gl_FragColor = blur9VSM(s_shadowMap0
+						, v_texcoord0
+						, v_texcoord1
+						, v_texcoord2
+						, v_texcoord3
+						, v_texcoord4
+						);
 }
-

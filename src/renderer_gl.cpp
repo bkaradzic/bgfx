@@ -10,6 +10,20 @@
 #	include <bx/timer.h>
 #	include <bx/uint32_t.h>
 
+#if BGFX_CONFIG_PROFILER_REMOTERY
+#	define BGFX_GPU_PROFILER_BIND() rmt_BindOpenGL()
+#	define BGFX_GPU_PROFILER_UNBIND() rmt_UnbindOpenGL()
+#	define BGFX_GPU_PROFILER_BEGIN(_group, _name, _color) rmt_BeginOpenGLSample(_group##_##_name)
+#	define BGFX_GPU_PROFILER_BEGIN_DYNAMIC(_namestr) rmt_BeginOpenGLSampleDynamic(_namestr)
+#	define BGFX_GPU_PROFILER_END() rmt_EndOpenGLSample()
+#else
+#	define BGFX_GPU_PROFILER_BIND() BX_NOOP()
+#	define BGFX_GPU_PROFILER_UNBIND() BX_NOOP()
+#	define BGFX_GPU_PROFILER_BEGIN(_group, _name, _color) BX_NOOP()
+#	define BGFX_GPU_PROFILER_BEGIN_DYNAMIC(_namestr) BX_NOOP()
+#	define BGFX_GPU_PROFILER_END() BX_NOOP()
+#endif // BGFX_CONFIG_PROFILER_REMOTERY
+
 namespace bgfx { namespace gl
 {
 	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
@@ -558,6 +572,7 @@ namespace bgfx { namespace gl
 
 			NV_copy_image,
 			NV_draw_buffers,
+			NV_occlusion_query,
 			NV_texture_border_clamp,
 			NVX_gpu_memory_info,
 
@@ -716,7 +731,7 @@ namespace bgfx { namespace gl
 		{ "EXT_framebuffer_object",                BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "EXT_framebuffer_sRGB",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "EXT_multi_draw_indirect",               false,                             true  }, // GLES3.1 extension.
-		{ "EXT_occlusion_query_boolean",           false,                             true  },
+		{ "EXT_occlusion_query_boolean",           false,                             true  }, // GLES2 extension.
 		{ "EXT_packed_float",                      BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "EXT_read_format_bgra",                  false,                             true  },
 		{ "EXT_shader_image_load_store",           false,                             true  },
@@ -761,6 +776,7 @@ namespace bgfx { namespace gl
 
 		{ "NV_copy_image",                         false,                             true  },
 		{ "NV_draw_buffers",                       false,                             true  }, // GLES2 extension.
+		{ "NV_occlusion_query",                    false,                             true  },
 		{ "NV_texture_border_clamp",               false,                             true  }, // GLES2 extension.
 		{ "NVX_gpu_memory_info",                   false,                             true  },
 
@@ -1213,6 +1229,7 @@ namespace bgfx { namespace gl
 			, m_textureSwizzleSupport(false)
 			, m_depthTextureSupport(false)
 			, m_timerQuerySupport(false)
+			, m_occlusionQuerySupport(false)
 			, m_flip(false)
 			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
 			, m_backBufferFbo(0)
@@ -1594,12 +1611,16 @@ namespace bgfx { namespace gl
 			{
 				uint8_t supported = 0;
 				supported |= s_textureFormat[ii].m_supported
-					? BGFX_CAPS_FORMAT_TEXTURE_COLOR
+					? BGFX_CAPS_FORMAT_TEXTURE_2D
+					| BGFX_CAPS_FORMAT_TEXTURE_3D
+					| BGFX_CAPS_FORMAT_TEXTURE_CUBE
 					: BGFX_CAPS_FORMAT_TEXTURE_NONE
 					;
 
 				supported |= isTextureFormatValid(TextureFormat::Enum(ii), true)
-					? BGFX_CAPS_FORMAT_TEXTURE_COLOR_SRGB
+					? BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
+					| BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
+					| BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
 					: BGFX_CAPS_FORMAT_TEXTURE_NONE
 					;
 
@@ -1796,6 +1817,25 @@ namespace bgfx { namespace gl
 				&& NULL != glGetQueryObjectui64v
 				;
 
+			m_occlusionQuerySupport = false
+				|| s_extension[Extension::ARB_occlusion_query        ].m_supported
+				|| s_extension[Extension::ARB_occlusion_query2       ].m_supported
+				|| s_extension[Extension::EXT_occlusion_query_boolean].m_supported
+				|| s_extension[Extension::NV_occlusion_query         ].m_supported
+				;
+
+			m_occlusionQuerySupport &= true
+				&& NULL != glGenQueries
+				&& NULL != glDeleteQueries
+				&& NULL != glBeginQuery
+				&& NULL != glEndQuery
+				;
+
+			g_caps.supported |= m_occlusionQuerySupport
+				? BGFX_CAPS_OCCLUSION_QUERY
+				: 0
+				;
+
 			g_caps.supported |= m_depthTextureSupport
 				? BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
 				: 0
@@ -1922,10 +1962,14 @@ namespace bgfx { namespace gl
 				glInvalidateFramebuffer = stubInvalidateFramebuffer;
 			}
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-			&&  m_timerQuerySupport)
+			if (m_timerQuerySupport)
 			{
 				m_gpuTimer.create();
+			}
+
+			if (m_occlusionQuerySupport)
+			{
+				m_occlusionQuery.create();
 			}
 
 			// Init reserved part of view name.
@@ -1935,10 +1979,14 @@ namespace bgfx { namespace gl
 			}
 
 			ovrPostReset();
+
+			BGFX_GPU_PROFILER_BIND();
 		}
 
 		void shutdown()
 		{
+			BGFX_GPU_PROFILER_UNBIND();
+
 			ovrPreReset();
 			m_ovr.shutdown();
 
@@ -1953,10 +2001,14 @@ namespace bgfx { namespace gl
 
 			invalidateCache();
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-			&&  m_timerQuerySupport)
+			if (m_timerQuerySupport)
 			{
 				m_gpuTimer.destroy();
+			}
+
+			if (m_occlusionQuerySupport)
+			{
+				m_occlusionQuery.destroy();
 			}
 
 			destroyMsaaFbo();
@@ -2245,13 +2297,10 @@ namespace bgfx { namespace gl
 
 		void updateViewName(uint8_t _id, const char* _name) BX_OVERRIDE
 		{
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
-			{
-				bx::strlcpy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
-					, _name
-					, BX_COUNTOF(s_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
-					);
-			}
+			bx::strlcpy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
+				, _name
+				, BX_COUNTOF(s_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
+				);
 		}
 
 		void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) BX_OVERRIDE
@@ -2306,6 +2355,15 @@ namespace bgfx { namespace gl
 
 			GL_CHECK(glActiveTexture(GL_TEXTURE0) );
 			GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_textures[_blitter.m_texture.idx].m_id) );
+
+			if (!BX_ENABLED(BX_PLATFORM_OSX) )
+			{
+				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+				||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+				{
+					GL_CHECK(glBindSampler(0, 0) );
+				}
+			}
 		}
 
 		void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) BX_OVERRIDE
@@ -2346,7 +2404,7 @@ namespace bgfx { namespace gl
 			||  m_resolution.m_height != _resolution.m_height
 			||  m_resolution.m_flags  != flags)
 			{
-				flags &= ~BGFX_RESET_FORCE;
+				flags &= ~BGFX_RESET_INTERNAL_FORCE;
 
 				m_resolution = _resolution;
 				m_resolution.m_flags = flags;
@@ -2583,7 +2641,7 @@ namespace bgfx { namespace gl
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
 			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 			{
-				if (0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) )
+				if (0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags) )
 				{
 					const uint32_t index = (_flags & BGFX_TEXTURE_BORDER_COLOR_MASK) >> BGFX_TEXTURE_BORDER_COLOR_SHIFT;
 
@@ -2683,6 +2741,12 @@ namespace bgfx { namespace gl
 					GL_CHECK(glBindSampler(_stage, 0) );
 				}
 			}
+		}
+
+		bool isVisible(Frame* _render, OcclusionQueryHandle _handle, bool _visible)
+		{
+			m_occlusionQuery.resolve(_render);
+			return _visible == (0 != _render->m_occlusion[_handle.idx]);
 		}
 
 		void ovrPostReset()
@@ -3125,7 +3189,9 @@ namespace bgfx { namespace gl
 		FrameBufferGL m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 		UniformRegistry m_uniformReg;
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
+
 		TimerQueryGL m_gpuTimer;
+		OcclusionQueryGL m_occlusionQuery;
 
 		VaoStateCache m_vaoStateCache;
 		SamplerStateCache m_samplerStateCache;
@@ -3153,6 +3219,7 @@ namespace bgfx { namespace gl
 		bool m_textureSwizzleSupport;
 		bool m_depthTextureSupport;
 		bool m_timerQuerySupport;
+		bool m_occlusionQuerySupport;
 		bool m_flip;
 
 		uint64_t m_hash;
@@ -4278,7 +4345,7 @@ namespace bgfx { namespace gl
 				;
 		}
 
-		const uint32_t flags = (0 != (BGFX_SAMPLER_DEFAULT_FLAGS & _flags) ? m_flags : _flags) & BGFX_TEXTURE_SAMPLER_BITS_MASK;
+		const uint32_t flags = (0 != (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags) ? m_flags : _flags) & BGFX_TEXTURE_SAMPLER_BITS_MASK;
 
 		bool hasBorderColor = false;
 		bx::HashMurmur2A murmur;
@@ -4357,7 +4424,7 @@ namespace bgfx { namespace gl
 
 	void TextureGL::commit(uint32_t _stage, uint32_t _flags, const float _palette[][4])
 	{
-		const uint32_t flags = 0 == (BGFX_SAMPLER_DEFAULT_FLAGS & _flags)
+		const uint32_t flags = 0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags)
 			? _flags
 			: m_flags
 			;
@@ -5111,8 +5178,69 @@ namespace bgfx { namespace gl
 		GL_CHECK(glInvalidateFramebuffer(GL_FRAMEBUFFER, idx, buffers) );
 	}
 
+	void OcclusionQueryGL::create()
+	{
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_query); ++ii)
+		{
+			Query& query = m_query[ii];
+			GL_CHECK(glGenQueries(1, &query.m_id) );
+		}
+	}
+
+	void OcclusionQueryGL::destroy()
+	{
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_query); ++ii)
+		{
+			Query& query = m_query[ii];
+			GL_CHECK(glDeleteQueries(1, &query.m_id) );
+		}
+	}
+
+	void OcclusionQueryGL::begin(Frame* _render, OcclusionQueryHandle _handle)
+	{
+		while (0 == m_control.reserve(1) )
+		{
+			resolve(_render, true);
+		}
+
+		Query& query = m_query[m_control.m_current];
+		GL_CHECK(glBeginQuery(GL_SAMPLES_PASSED, query.m_id) );
+		query.m_handle = _handle;
+	}
+
+	void OcclusionQueryGL::end()
+	{
+		GL_CHECK(glEndQuery(GL_SAMPLES_PASSED) );
+		m_control.commit(1);
+	}
+
+	void OcclusionQueryGL::resolve(Frame* _render, bool _wait)
+	{
+		while (0 != m_control.available() )
+		{
+			Query& query = m_query[m_control.m_read];
+			int32_t result;
+
+			if (!_wait)
+			{
+				GL_CHECK(glGetQueryObjectiv(query.m_id, GL_QUERY_RESULT_AVAILABLE, &result) );
+
+				if (!result)
+				{
+					break;
+				}
+			}
+
+			GL_CHECK(glGetQueryObjectiv(query.m_id, GL_QUERY_RESULT, &result) );
+			_render->m_occlusion[query.m_handle.idx] = 0 < result;
+			m_control.consume(1);
+		}
+	}
+
 	void RendererContextGL::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
+		BGFX_GPU_PROFILER_BEGIN_DYNAMIC("rendererSubmit");
+
 		if (1 < m_numWindows
 		&&  m_vaoSupport)
 		{
@@ -5159,8 +5287,8 @@ namespace bgfx { namespace gl
 
 		RenderDraw currentState;
 		currentState.clear();
-		currentState.m_flags = BGFX_STATE_NONE;
-		currentState.m_stencil = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
+		currentState.m_stateFlags = BGFX_STATE_NONE;
+		currentState.m_stencil    = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
 		_render->m_hmdInitialized = m_ovr.isInitialized();
 
@@ -5208,6 +5336,11 @@ namespace bgfx { namespace gl
 		uint32_t statsNumInstances[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumIndices = 0;
 		uint32_t statsKeyType[2] = {};
+
+		if (m_occlusionQuerySupport)
+		{
+			m_occlusionQuery.resolve(_render);
+		}
 
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 		{
@@ -5273,6 +5406,14 @@ namespace bgfx { namespace gl
 					{
 						eye = 0;
 					}
+
+					if (item > 1)
+					{
+						BGFX_GPU_PROFILER_END();
+						BGFX_PROFILER_END();
+					}
+					BGFX_PROFILER_BEGIN_DYNAMIC(s_viewName[view]);
+					BGFX_GPU_PROFILER_BEGIN_DYNAMIC(s_viewName[view]);
 
 					viewState.m_rect = _render->m_rect[view];
 					if (viewRestart)
@@ -5501,9 +5642,17 @@ namespace bgfx { namespace gl
 
 				const RenderDraw& draw = renderItem.draw;
 
-				const uint64_t newFlags = draw.m_flags;
-				uint64_t changedFlags = currentState.m_flags ^ draw.m_flags;
-				currentState.m_flags = newFlags;
+				const bool hasOcclusionQuery = 0 != (draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
+				if (isValid(draw.m_occlusionQuery)
+				&&  !hasOcclusionQuery
+				&&  !isVisible(_render, draw.m_occlusionQuery, 0 != (draw.m_submitFlags&BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE) ) )
+				{
+					continue;
+				}
+
+				const uint64_t newFlags = draw.m_stateFlags;
+				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
+				currentState.m_stateFlags = newFlags;
 
 				const uint64_t newStencil = draw.m_stencil;
 				uint64_t changedStencil = currentState.m_stencil ^ draw.m_stencil;
@@ -5515,8 +5664,8 @@ namespace bgfx { namespace gl
 					currentState.m_scissor = !draw.m_scissor;
 					changedFlags = BGFX_STATE_MASK;
 					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
-					currentState.m_flags = newFlags;
-					currentState.m_stencil = newStencil;
+					currentState.m_stateFlags = newFlags;
+					currentState.m_stencil    = newStencil;
 				}
 
 				uint16_t scissor = draw.m_scissor;
@@ -5826,13 +5975,13 @@ namespace bgfx { namespace gl
 							const Binding& bind = draw.m_bind[stage];
 							Binding& current = currentState.m_bind[stage];
 							if (current.m_idx != bind.m_idx
-							||  current.m_un.m_draw.m_flags != bind.m_un.m_draw.m_flags
+							||  current.m_un.m_draw.m_textureFlags != bind.m_un.m_draw.m_textureFlags
 							||  programChanged)
 							{
 								if (invalidHandle != bind.m_idx)
 								{
 									TextureGL& texture = m_textures[bind.m_idx];
-									texture.commit(stage, bind.m_un.m_draw.m_flags, _render->m_colorPalette);
+									texture.commit(stage, bind.m_un.m_draw.m_textureFlags, _render->m_colorPalette);
 								}
 							}
 
@@ -6013,6 +6162,11 @@ namespace bgfx { namespace gl
 						uint32_t numPrimsRendered  = 0;
 						uint32_t numDrawIndirect   = 0;
 
+						if (hasOcclusionQuery)
+						{
+							m_occlusionQuery.begin(_render, draw.m_occlusionQuery);
+						}
+
 						if (isValid(draw.m_indirectBuffer) )
 						{
 							const VertexBufferGL& vb = m_vertexBuffers[draw.m_indirectBuffer.idx];
@@ -6119,6 +6273,11 @@ namespace bgfx { namespace gl
 							}
 						}
 
+						if (hasOcclusionQuery)
+						{
+							m_occlusionQuery.end();
+						}
+
 						statsNumPrimsSubmitted[primIndex] += numPrimsSubmitted;
 						statsNumPrimsRendered[primIndex]  += numPrimsRendered;
 						statsNumInstances[primIndex]      += numInstances;
@@ -6139,14 +6298,23 @@ namespace bgfx { namespace gl
 				captureElapsed = -bx::getHPCounter();
 				capture();
 				captureElapsed += bx::getHPCounter();
+
+				BGFX_GPU_PROFILER_END();
+				BGFX_PROFILER_END();
 			}
 		}
+
+		BGFX_GPU_PROFILER_END();
 
 		m_glctx.makeCurrent(NULL);
 		int64_t now = bx::getHPCounter();
 		elapsed += now;
 
 		static int64_t last = now;
+
+		Stats& perfStats   = _render->m_perfStats;
+		perfStats.cpuTimeBegin = last;
+
 		int64_t frameTime = now - last;
 		last = now;
 
@@ -6174,10 +6342,10 @@ namespace bgfx { namespace gl
 
 		const int64_t timerFreq = bx::getHPFrequency();
 
-		Stats& perfStats   = _render->m_perfStats;
-		perfStats.cpuTime      = frameTime;
+		perfStats.cpuTimeEnd   = now;
 		perfStats.cpuTimerFreq = timerFreq;
-		perfStats.gpuTime      = elapsedGl;
+		perfStats.gpuTimeBegin = m_gpuTimer.m_begin;
+		perfStats.gpuTimeEnd   = m_gpuTimer.m_end;
 		perfStats.gpuTimerFreq = 1000000000;
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )

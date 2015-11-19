@@ -16,7 +16,7 @@
 #include <algorithm>
 
 #define IMGUI_NEW(type)              new (ImGui::MemAlloc(sizeof(type) ) ) type
-#define IMGUI_DELETE(type, obj)      reinterpret_cast<type*>(obj)->~type(), ImGui::MemFree(obj)
+#define IMGUI_DELETE(type, obj)      static_cast<type*>(obj)->~type(), ImGui::MemFree(obj)
 #define IMGUI_DELETE_NULL(type, obj) for (;;) { if (NULL != obj) { IMGUI_DELETE(type, obj); obj = NULL; } break; }
 
 namespace ImGuiWM
@@ -768,7 +768,6 @@ namespace ImGuiWM
                 //ImGui::PushStyleColor(ImGuiCol_ChildWindowBg, ImColor(59, 59, 59, 255));
                 ImGui::BeginChild((*itActiveWindow)->GetId(), ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
 
-
                 ImVec2 oWinPos = ImGui::GetWindowPos();
                 ImVec2 oWinSize = ImGui::GetWindowSize();
 
@@ -921,7 +920,7 @@ namespace ImGuiWM
 
         void* pTemp = ImGui::GetInternalState();
         m_pState = ImGui::MemAlloc(ImGui::GetInternalStateSize());
-        ImGui::SetInternalState(m_pState, true);
+        ImGui::SetInternalState(m_pState, false);
         ImGui::GetIO().IniFilename = NULL;
         ImGui::SetInternalState(pTemp);
     }
@@ -935,7 +934,7 @@ namespace ImGuiWM
         {
             ImGui::GetIO().Fonts = NULL;
         }
-        ImGui::Shutdown();
+
         RestoreState();
         ImGui::MemFree(m_pState);
     }
@@ -977,7 +976,9 @@ namespace ImGuiWM
 
     void PlatformWindow::Paint()
     {
+        PaintBegin();
         WindowManager::GetInstance()->Paint(this);
+        PaintEnd();
     }
 
     bool PlatformWindow::IsMain()
@@ -1343,7 +1344,7 @@ namespace ImGuiWM
 
             m_lOrphanWindows.remove(pAction->m_pWindow);
 
-            IMGUI_DELETE(PlatformWindowAction, pAction);
+            IMGUI_DELETE(DockAction, pAction);
             m_lDockActions.erase(m_lDockActions.begin());
         }
     }
@@ -1385,13 +1386,10 @@ namespace ImGuiWM
             }
 
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(5.0f, 5.0f));
-
             char name[64];
             ImFormatString(name, sizeof(name), "Window %p", pWindow);
             ImGui::Begin(name, NULL, iFlags);
-            pWindow->PaintBegin();
             pWindow->PaintContainer();
-            pWindow->PaintEnd();
             ImGui::End();
             ImGui::PopStyleVar(1);
 

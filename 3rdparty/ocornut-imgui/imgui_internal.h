@@ -39,6 +39,7 @@ struct ImGuiWindow;
 typedef int ImGuiLayoutType;      // enum ImGuiLayoutType_
 typedef int ImGuiButtonFlags;     // enum ImGuiButtonFlags_
 typedef int ImGuiTreeNodeFlags;   // enum ImGuiTreeNodeFlags_
+typedef int ImGuiSliderFlags;     // enum ImGuiSliderFlags_
 
 //-------------------------------------------------------------------------
 // STB libraries
@@ -116,7 +117,7 @@ static inline ImVec2& operator+=(ImVec2& lhs, const ImVec2& rhs)                
 static inline ImVec2& operator-=(ImVec2& lhs, const ImVec2& rhs)                { lhs.x -= rhs.x; lhs.y -= rhs.y; return lhs; }
 static inline ImVec2& operator*=(ImVec2& lhs, const float rhs)                  { lhs.x *= rhs; lhs.y *= rhs; return lhs; }
 static inline ImVec2& operator/=(ImVec2& lhs, const float rhs)                  { lhs.x /= rhs; lhs.y /= rhs; return lhs; }
-static inline ImVec4 operator-(const ImVec4& lhs, const ImVec4& rhs)            { return ImVec4(lhs.x-rhs.x, lhs.y-rhs.y, lhs.z-rhs.z, lhs.w-lhs.w); }
+static inline ImVec4 operator-(const ImVec4& lhs, const ImVec4& rhs)            { return ImVec4(lhs.x-rhs.x, lhs.y-rhs.y, lhs.z-rhs.z, lhs.w-rhs.w); }
 #endif
 
 static inline int    ImMin(int lhs, int rhs)                                    { return lhs < rhs ? lhs : rhs; }
@@ -148,13 +149,19 @@ enum ImGuiButtonFlags_
     ImGuiButtonFlags_FlattenChilds      = 1 << 3,
     ImGuiButtonFlags_DontClosePopups    = 1 << 4,
     ImGuiButtonFlags_Disabled           = 1 << 5,
-    ImGuiButtonFlags_AlignTextBaseLine  = 1 << 6
+    ImGuiButtonFlags_AlignTextBaseLine  = 1 << 6,
+    ImGuiButtonFlags_NoKeyModifiers     = 1 << 7
 };
 
 enum ImGuiTreeNodeFlags_
 {
     ImGuiTreeNodeFlags_DefaultOpen          = 1 << 0,
     ImGuiTreeNodeFlags_NoAutoExpandOnLog    = 1 << 1
+};
+
+enum ImGuiSliderFlags_
+{
+    ImGuiSliderFlags_Vertical               = 1 << 0,
 };
 
 enum ImGuiSelectableFlagsPrivate_
@@ -673,10 +680,10 @@ namespace ImGui
     IMGUI_API void          RenderCollapseTriangle(ImVec2 p_min, bool opened, float scale = 1.0f, bool shadow = false);
     IMGUI_API void          RenderCheckMark(ImVec2 pos, ImU32 col);
 
-    IMGUI_API bool          ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool* out_held, bool allow_key_modifiers, ImGuiButtonFlags flags = 0);
+    IMGUI_API bool          ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool* out_held, ImGuiButtonFlags flags = 0);
     IMGUI_API bool          ButtonEx(const char* label, const ImVec2& size_arg = ImVec2(0,0), ImGuiButtonFlags flags = 0);
 
-    IMGUI_API bool          SliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v, float v_min, float v_max, float power, int decimal_precision, bool horizontal);
+    IMGUI_API bool          SliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v, float v_min, float v_max, float power, int decimal_precision, ImGuiSliderFlags flags = 0);
     IMGUI_API bool          SliderFloatN(const char* label, float* v, int components, float v_min, float v_max, const char* display_format, float power);
     IMGUI_API bool          SliderIntN(const char* label, int* v, int components, int v_min, int v_max, const char* display_format);
 

@@ -6,13 +6,10 @@
 #ifndef BGFX_RENDERER_D3D9_H_HEADER_GUARD
 #define BGFX_RENDERER_D3D9_H_HEADER_GUARD
 
-#define BGFX_CONFIG_RENDERER_DIRECT3D9EX (BX_PLATFORM_WINDOWS && 0)
+#define BGFX_CONFIG_RENDERER_DIRECT3D9EX BX_PLATFORM_WINDOWS
 
 #if BX_PLATFORM_WINDOWS
 #	include <sal.h>
-#	if !BGFX_CONFIG_RENDERER_DIRECT3D9EX
-//#		define D3D_DISABLE_9EX
-#	endif // !BGFX_CONFIG_RENDERER_DIRECT3D9EX
 #	include <d3d9.h>
 
 #elif BX_PLATFORM_XBOX360
@@ -316,8 +313,8 @@ namespace bgfx { namespace d3d9
 		}
 
 		void createTexture(uint32_t _width, uint32_t _height, uint8_t _numMips);
-		void createVolumeTexture(uint32_t _width, uint32_t _height, uint32_t _depth, uint32_t _numMips);
-		void createCubeTexture(uint32_t _edge, uint32_t _numMips);
+		void createVolumeTexture(uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _numMips);
+		void createCubeTexture(uint32_t _width, uint8_t _numMips);
 
 		uint8_t* lock(uint8_t _side, uint8_t _lod, uint32_t& _pitch, uint32_t& _slicePitch, const Rect* _rect = NULL);
 		void unlock(uint8_t _side, uint8_t _lod);
@@ -360,6 +357,7 @@ namespace bgfx { namespace d3d9
 			IDirect3DVolumeTexture9* m_staging3d;
 			IDirect3DCubeTexture9*   m_stagingCube;
 		};
+
 		uint32_t m_flags;
 		uint32_t m_width;
 		uint32_t m_height;
@@ -420,15 +418,40 @@ namespace bgfx { namespace d3d9
 		struct Frame
 		{
 			IDirect3DQuery9* m_disjoint;
-			IDirect3DQuery9* m_start;
+			IDirect3DQuery9* m_begin;
 			IDirect3DQuery9* m_end;
 			IDirect3DQuery9* m_freq;
 		};
 
+		uint64_t m_begin;
+		uint64_t m_end;
 		uint64_t m_elapsed;
 		uint64_t m_frequency;
 
 		Frame m_frame[4];
+		bx::RingBufferControl m_control;
+	};
+
+	struct OcclusionQueryD3D9
+	{
+		OcclusionQueryD3D9()
+			: m_control(BX_COUNTOF(m_query) )
+		{
+		}
+
+		void postReset();
+		void preReset();
+		void begin(Frame* _render, OcclusionQueryHandle _handle);
+		void end();
+		void resolve(Frame* _render, bool _wait = false);
+
+		struct Query
+		{
+			IDirect3DQuery9* m_ptr;
+			OcclusionQueryHandle m_handle;
+		};
+
+		Query m_query[BGFX_CONFIG_MAX_OCCUSION_QUERIES];
 		bx::RingBufferControl m_control;
 	};
 
