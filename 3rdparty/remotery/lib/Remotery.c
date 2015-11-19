@@ -5389,7 +5389,11 @@ GLAPI GLenum GLAPIENTRY glGetError(void) { return 0; }
 #elif defined(__native_client__)
 #  define rmtGetProcAddress(name) NULL /* TODO */
 #else /* __linux */
+#  ifdef __cplusplus
 extern "C" void* glXGetProcAddressARB(const GLubyte*);
+#  else
+extern void* glXGetProcAddressARB(const GLubyte*);
+#  endif // __cplusplus
 #  define rmtGetProcAddress(name) (*glXGetProcAddressARB)(name)
 #endif
 
