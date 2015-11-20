@@ -3649,9 +3649,9 @@ namespace bgfx { namespace d3d9
 						// GetRenderTargetData (dst must be SYSTEMMEM)
 
 						HRESULT hr = m_device->StretchRect(srcSurface
-							, &srcRect
+							, isDepth((TextureFormat::Enum)src.m_textureFormat) ? NULL : &srcRect
 							, dstSurface
-							, &dstRect
+							, isDepth((TextureFormat::Enum)src.m_textureFormat) ? NULL : &dstRect
 							, D3DTEXF_NONE
 							);
 						if (FAILED(hr) )
