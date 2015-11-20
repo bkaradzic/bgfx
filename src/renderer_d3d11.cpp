@@ -4901,7 +4901,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								, 0
 								, src.m_ptr
 								, srcZ*src.m_numMips+blit.m_srcMip
-								, &box
+								, isDepth((TextureFormat::Enum)src.m_textureFormat) ? NULL : &box
 								);
 						}
 					}
