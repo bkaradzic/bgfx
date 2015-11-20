@@ -4894,7 +4894,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								: 0
 								;
 
-							bool depth = isDepth(TextureFormat::Enum(src.m_textureFormat) );
+							bool depthStencil = isDepth(TextureFormat::Enum(src.m_textureFormat) );
 							deviceCtx->CopySubresourceRegion(dst.m_ptr
 								, dstZ*dst.m_numMips+blit.m_dstMip
 								, blit.m_dstX
@@ -4902,7 +4902,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								, 0
 								, src.m_ptr
 								, srcZ*src.m_numMips+blit.m_srcMip
-								, depth ? NULL : &box
+								, depthStencil ? NULL : &box
 								);
 						}
 					}
