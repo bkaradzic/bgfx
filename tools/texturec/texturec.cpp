@@ -18,6 +18,7 @@ using namespace bgfx;
 #endif // DEBUG
 
 #include <bx/bx.h>
+#include <bx/allocator.h>
 #include <bx/commandline.h>
 #include <bx/uint32_t.h>
 
@@ -70,6 +71,13 @@ int main(int _argc, const char* _argv[])
 		return EXIT_FAILURE;
 	}
 
+	const char* outputFileName = cmdLine.findOption('o');
+	if (NULL == outputFileName)
+	{
+		help("Output file must be specified.");
+		return EXIT_FAILURE;
+	}
+
 	bx::CrtFileReader reader;
 	if (0 != bx::open(&reader, inputFileName) )
 	{
@@ -86,6 +94,21 @@ int main(int _argc, const char* _argv[])
 
 	if (imageParse(imageContainer, mem->data, mem->size) )
 	{
+		bx::CrtFileWriter writer;
+		if (0 == bx::open(&writer, outputFileName) )
+		{
+			if (NULL != bx::stristr(outputFileName, ".ktx") )
+			{
+				imageWriteKtx(&writer, imageContainer, mem->data, mem->size);
+			}
+
+			bx::close(&writer);
+		}
+	}
+
+#if 0
+	if (imageParse(imageContainer, mem->data, mem->size) )
+	{
 		bool decompress = cmdLine.hasArg('d');
 
 		if (decompress
@@ -93,12 +116,12 @@ int main(int _argc, const char* _argv[])
 		{
 			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 			{
-				uint32_t width = imageContainer.m_width;
+				uint32_t width  = imageContainer.m_width;
 				uint32_t height = imageContainer.m_height;
 
 				for (uint32_t lod = 0, num = imageContainer.m_numMips; lod < num; ++lod)
 				{
-					width = bx::uint32_max(1, width);
+					width  = bx::uint32_max(1, width);
 					height = bx::uint32_max(1, height);
 
 					ImageMip mip;
@@ -107,7 +130,7 @@ int main(int _argc, const char* _argv[])
 						uint32_t dstpitch = width*4;
 						uint8_t* bits = (uint8_t*)malloc(dstpitch*height);
 
-						if (width != mip.m_width
+						if (width  != mip.m_width
 						||  height != mip.m_height)
 						{
 							uint8_t* temp = (uint8_t*)realloc(NULL, mip.m_width*mip.m_height*4);
@@ -195,6 +218,7 @@ int main(int _argc, const char* _argv[])
 			}
 		}
 	}
+#endif // 0
 
 	release(mem);
 
