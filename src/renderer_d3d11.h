@@ -20,7 +20,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4005) // warning C4005: '' : macro redefinitio
 #include <sal.h>
 #define D3D11_NO_HELPERS
 #if BX_PLATFORM_WINRT
-#	include <d3d11_3.h>
+#	include <d3d11_2.h>
 #else
 #	include <d3d11.h>
 #endif // BX_PLATFORM_WINRT
