@@ -150,11 +150,10 @@ namespace bgfx { namespace mtl
 		{
 			NSError* error;
 			id<MTLLibrary> lib = [m_obj newLibraryWithSource:@(_source) options:nil error:&error];
-			//TODO: sometimes prints null as paremeter. string is too large
-			BX_WARN(NULL == error
-				, "Shader compilation failed: %s"
-				, error.localizedDescription.UTF8String
-				);
+//			BX_WARN(NULL == error
+//				, "Shader compilation failed: %s"
+//				, [error.localizedDescription UTF8String]
+//				);
 			return lib;
 		}
 
