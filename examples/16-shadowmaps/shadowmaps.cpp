@@ -1942,7 +1942,7 @@ int _main_(int _argc, char** _argv)
 		bgfx::TextureHandle fbtextures[] =
 		{
 			bgfx::createTexture2D(currentShadowMapSize, currentShadowMapSize, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
-			bgfx::createTexture2D(currentShadowMapSize, currentShadowMapSize, 1, bgfx::TextureFormat::D24S8),
+			bgfx::createTexture2D(currentShadowMapSize, currentShadowMapSize, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT),
 		};
 		s_rtShadowMap[ii] = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 	}
@@ -3096,7 +3096,7 @@ int _main_(int _argc, char** _argv)
 				bgfx::TextureHandle fbtextures[] =
 				{
 					bgfx::createTexture2D(currentShadowMapSize, currentShadowMapSize, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
-					bgfx::createTexture2D(currentShadowMapSize, currentShadowMapSize, 1, bgfx::TextureFormat::D24S8),
+					bgfx::createTexture2D(currentShadowMapSize, currentShadowMapSize, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT),
 				};
 				s_rtShadowMap[0] = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 			}
@@ -3111,7 +3111,7 @@ int _main_(int _argc, char** _argv)
 						bgfx::TextureHandle fbtextures[] =
 						{
 							bgfx::createTexture2D(currentShadowMapSize, currentShadowMapSize, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
-							bgfx::createTexture2D(currentShadowMapSize, currentShadowMapSize, 1, bgfx::TextureFormat::D24S8),
+							bgfx::createTexture2D(currentShadowMapSize, currentShadowMapSize, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT),
 						};
 						s_rtShadowMap[ii] = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 					}
