@@ -252,19 +252,19 @@ namespace bgfx { namespace mtl
 		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // BC6H
 		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // BC7
 		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // ETC1
-		{ 180 /*MTLPixelFormatETC2_RGB8*/,       181 /*MTLPixelFormatETC2_RGB8_sRGB*/       }, // ETC2
-		{ 178 /*MTLPixelFormatEAC_RGBA8*/,       179 /*MTLPixelFormatEAC_RGBA8_sRGB*/       }, // ETC2A
-		{ 182 /*MTLPixelFormatETC2_RGB8A1*/,     183 /*MTLPixelFormatETC2_RGB8A1_sRGB*/     }, // ETC2A1
-		{ 160 /*MTLPixelFormatPVRTC_RGB_2BPP*/,  161 /*MTLPixelFormatPVRTC_RGB_2BPP_sRGB*/  }, // PTC12
-		{ 162 /*MTLPixelFormatPVRTC_RGB_4BPP*/,  163 /*MTLPixelFormatPVRTC_RGB_4BPP_sRGB*/  }, // PTC14
-		{ 164 /*MTLPixelFormatPVRTC_RGBA_2BPP*/, 165 /*MTLPixelFormatPVRTC_RGBA_2BPP_sRGB*/ }, // PTC12A
-		{ 166 /*MTLPixelFormatPVRTC_RGBA_4BPP*/, 167 /*MTLPixelFormatPVRTC_RGBA_4BPP_sRGB*/ }, // PTC14A
+		{ (MTLPixelFormat)180 /*MTLPixelFormatETC2_RGB8*/,       (MTLPixelFormat)181 /*MTLPixelFormatETC2_RGB8_sRGB*/       }, // ETC2
+		{ (MTLPixelFormat)178 /*MTLPixelFormatEAC_RGBA8*/,       (MTLPixelFormat)179 /*MTLPixelFormatEAC_RGBA8_sRGB*/       }, // ETC2A
+		{ (MTLPixelFormat)182 /*MTLPixelFormatETC2_RGB8A1*/,     (MTLPixelFormat)183 /*MTLPixelFormatETC2_RGB8A1_sRGB*/     }, // ETC2A1
+		{ (MTLPixelFormat)160 /*MTLPixelFormatPVRTC_RGB_2BPP*/,  (MTLPixelFormat)161 /*MTLPixelFormatPVRTC_RGB_2BPP_sRGB*/  }, // PTC12
+		{ (MTLPixelFormat)162 /*MTLPixelFormatPVRTC_RGB_4BPP*/,  (MTLPixelFormat)163 /*MTLPixelFormatPVRTC_RGB_4BPP_sRGB*/  }, // PTC14
+		{ (MTLPixelFormat)164 /*MTLPixelFormatPVRTC_RGBA_2BPP*/, (MTLPixelFormat)165 /*MTLPixelFormatPVRTC_RGBA_2BPP_sRGB*/ }, // PTC12A
+		{ (MTLPixelFormat)166 /*MTLPixelFormatPVRTC_RGBA_4BPP*/, (MTLPixelFormat)167 /*MTLPixelFormatPVRTC_RGBA_4BPP_sRGB*/ }, // PTC14A
 		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // PTC22
 		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // PTC24
 		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // Unknown
 		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // R1
 		{ MTLPixelFormatA8Unorm,                 MTLPixelFormatInvalid                      }, // A8
-		{ MTLPixelFormatR8Unorm,                 11 /*MTLPixelFormatR8Unorm_sRGB*/          }, // R8
+		{ MTLPixelFormatR8Unorm,                 (MTLPixelFormat)11 /*MTLPixelFormatR8Unorm_sRGB*/          }, // R8
 		{ MTLPixelFormatR8Sint,                  MTLPixelFormatInvalid                      }, // R8I
 		{ MTLPixelFormatR8Uint,                  MTLPixelFormatInvalid                      }, // R8U
 		{ MTLPixelFormatR8Snorm,                 MTLPixelFormatInvalid                      }, // R8S
@@ -276,7 +276,7 @@ namespace bgfx { namespace mtl
 		{ MTLPixelFormatR32Sint,                 MTLPixelFormatInvalid                      }, // R32I
 		{ MTLPixelFormatR32Uint,                 MTLPixelFormatInvalid                      }, // R32U
 		{ MTLPixelFormatR32Float,                MTLPixelFormatInvalid                      }, // R32F
-		{ MTLPixelFormatRG8Unorm,                31 /*MTLPixelFormatRG8Unorm_sRGB*/         }, // RG8
+		{ MTLPixelFormatRG8Unorm,                (MTLPixelFormat)31 /*MTLPixelFormatRG8Unorm_sRGB*/         }, // RG8
 		{ MTLPixelFormatRG8Sint,                 MTLPixelFormatInvalid                      }, // RG8I
 		{ MTLPixelFormatRG8Uint,                 MTLPixelFormatInvalid                      }, // RG8U
 		{ MTLPixelFormatRG8Snorm,                MTLPixelFormatInvalid                      }, // RG8S
@@ -302,9 +302,9 @@ namespace bgfx { namespace mtl
 		{ MTLPixelFormatRGBA32Sint,              MTLPixelFormatInvalid                      }, // RGBA32I
 		{ MTLPixelFormatRGBA32Uint,              MTLPixelFormatInvalid                      }, // RGBA32U
 		{ MTLPixelFormatRGBA32Float,             MTLPixelFormatInvalid                      }, // RGBA32F
-		{ 40 /*MTLPixelFormatB5G6R5Unorm*/,      MTLPixelFormatInvalid                      }, // R5G6B5
-		{ 42 /*MTLPixelFormatABGR4Unorm*/,       MTLPixelFormatInvalid                      }, // RGBA4
-		{ 41 /*MTLPixelFormatA1BGR5Unorm*/,      MTLPixelFormatInvalid                      }, // RGB5A1
+		{ (MTLPixelFormat)40 /*MTLPixelFormatB5G6R5Unorm*/,      MTLPixelFormatInvalid                      }, // R5G6B5
+		{ (MTLPixelFormat)42 /*MTLPixelFormatABGR4Unorm*/,       MTLPixelFormatInvalid                      }, // RGBA4
+		{ (MTLPixelFormat)41 /*MTLPixelFormatA1BGR5Unorm*/,      MTLPixelFormatInvalid                      }, // RGB5A1
 		{ MTLPixelFormatRGB10A2Unorm,            MTLPixelFormatInvalid                      }, // RGB10A2
 		{ MTLPixelFormatRG11B10Float,            MTLPixelFormatInvalid                      }, // R11G11B10F
 		{ MTLPixelFormatInvalid,                 MTLPixelFormatInvalid                      }, // UnknownDepth
@@ -1907,10 +1907,10 @@ namespace bgfx { namespace mtl
 			desc.resourceOptions  = MTLResourceStorageModePrivate;
 			desc.cpuCacheMode     = MTLCPUCacheModeDefaultCache;
 
-			desc.storageMode = bufferOnly
+			desc.storageMode = (MTLStorageMode)(bufferOnly
 				? 2 /*MTLStorageModePrivate*/
 				: 1 /*MTLStorageModeManaged*/
-				;
+				);
 			desc.usage       = bufferOnly
 				? MTLTextureUsageShaderWrite
 				: MTLTextureUsageShaderRead
