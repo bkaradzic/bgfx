@@ -4583,8 +4583,8 @@ data.NumQualityLevels = 0;
  							box.bottom = blit.m_srcY + height;;
  							box.back   = blit.m_srcZ + bx::uint32_imax(1, depth);
 
-							D3D12_TEXTURE_COPY_LOCATION dstLocation = { dst.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { 0 } };
-							D3D12_TEXTURE_COPY_LOCATION srcLocation = { src.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { 0 } };
+							D3D12_TEXTURE_COPY_LOCATION dstLocation = { dst.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{ 0 }} };
+							D3D12_TEXTURE_COPY_LOCATION srcLocation = { src.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{ 0 }} };
 							m_commandList->CopyTextureRegion(&dstLocation
 								, blit.m_dstX
 								, blit.m_dstY
@@ -4612,8 +4612,8 @@ data.NumQualityLevels = 0;
 								: 0
 								;
 
-							D3D12_TEXTURE_COPY_LOCATION dstLocation = { dst.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { dstZ*dst.m_numMips+blit.m_dstMip } };
-							D3D12_TEXTURE_COPY_LOCATION srcLocation = { src.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { srcZ*src.m_numMips+blit.m_srcMip } };
+							D3D12_TEXTURE_COPY_LOCATION dstLocation = { dst.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{ dstZ*dst.m_numMips+blit.m_dstMip }} };
+							D3D12_TEXTURE_COPY_LOCATION srcLocation = { src.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{ srcZ*src.m_numMips+blit.m_srcMip }} };
 							bool depthStencil = isDepth(TextureFormat::Enum(src.m_textureFormat) );
 							m_commandList->CopyTextureRegion(&dstLocation
 								, blit.m_dstX
