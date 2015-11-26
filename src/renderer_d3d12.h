@@ -432,6 +432,30 @@ namespace bgfx { namespace d3d12
 		uint32_t m_flushPerBatch;
 	};
 
+	struct TimerQueryD3D12
+	{
+		TimerQueryD3D12()
+			: m_control(4)
+		{
+		}
+
+		void init();
+		void shutdown();
+		void begin(ID3D12GraphicsCommandList* _commandList);
+		void end(ID3D12GraphicsCommandList* _commandList);
+		bool get();
+
+		uint64_t m_begin;
+		uint64_t m_end;
+		uint64_t m_elapsed;
+		uint64_t m_frequency;
+
+		ID3D12Resource*  m_readback;
+		ID3D12QueryHeap* m_queryHeap;
+		uint64_t* m_result;
+		bx::RingBufferControl m_control;
+	};
+
 	struct OcclusionQueryD3D12
 	{
 		OcclusionQueryD3D12()

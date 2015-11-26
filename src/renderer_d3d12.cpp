@@ -1038,6 +1038,7 @@ namespace bgfx { namespace d3d12
 				postReset();
 
 				m_batch.create(4<<10);
+				m_gpuTimer.init();
 				m_occlusionQuery.init();
 			}
 			return true;
@@ -1072,6 +1073,7 @@ namespace bgfx { namespace d3d12
 
 			preReset();
 
+			m_gpuTimer.shutdown();
 			m_occlusionQuery.shutdown();
 
 			m_samplerAllocator.destroy();
@@ -2605,8 +2607,9 @@ data.NumQualityLevels = 0;
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 
-		ID3D12Device* m_device;
-		ID3D12InfoQueue* m_infoQueue;
+		ID3D12Device*       m_device;
+		ID3D12InfoQueue*    m_infoQueue;
+		TimerQueryD3D12     m_gpuTimer;
 		OcclusionQueryD3D12 m_occlusionQuery;
 
 		ID3D12DescriptorHeap* m_rtvDescriptorHeap;
@@ -4329,6 +4332,88 @@ data.NumQualityLevels = 0;
 		}
 	}
 
+	void TimerQueryD3D12::init()
+	{
+		D3D12_QUERY_HEAP_DESC queryHeapDesc;
+		queryHeapDesc.Count    = m_control.m_size * 2;
+		queryHeapDesc.NodeMask = 1;
+		queryHeapDesc.Type     = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
+		DX_CHECK(s_renderD3D12->m_device->CreateQueryHeap(&queryHeapDesc
+				, IID_ID3D12QueryHeap
+				, (void**)&m_queryHeap
+				) );
+
+		const uint32_t size = queryHeapDesc.Count*sizeof(uint64_t);
+		m_readback = createCommittedResource(s_renderD3D12->m_device
+						, HeapProperty::ReadBack
+						, size
+						);
+
+		DX_CHECK(s_renderD3D12->m_cmd.m_commandQueue->GetTimestampFrequency(&m_frequency) );
+
+		D3D12_RANGE range = { 0, size };
+		m_readback->Map(0, &range, (void**)&m_result);
+	}
+
+	void TimerQueryD3D12::shutdown()
+	{
+		D3D12_RANGE range = { 0, 0 };
+		m_readback->Unmap(0, &range);
+
+		DX_RELEASE(m_queryHeap, 0);
+		DX_RELEASE(m_readback, 0);
+	}
+
+	void TimerQueryD3D12::begin(ID3D12GraphicsCommandList* _commandList)
+	{
+		BX_UNUSED(_commandList);
+		while (0 == m_control.reserve(1) )
+		{
+			m_control.consume(1);
+		}
+
+		uint32_t offset = m_control.m_current * 2 + 0;
+		_commandList->EndQuery(m_queryHeap
+			, D3D12_QUERY_TYPE_TIMESTAMP
+			, offset
+			);
+	}
+
+	void TimerQueryD3D12::end(ID3D12GraphicsCommandList* _commandList)
+	{
+		BX_UNUSED(_commandList);
+		uint32_t offset = m_control.m_current * 2;
+		_commandList->EndQuery(m_queryHeap
+			, D3D12_QUERY_TYPE_TIMESTAMP
+			, offset + 1
+			);
+		_commandList->ResolveQueryData(m_queryHeap
+			, D3D12_QUERY_TYPE_TIMESTAMP
+			, offset
+			, 2
+			, m_readback
+			, offset * sizeof(uint64_t)
+			);
+		m_control.commit(1);
+	}
+
+	bool TimerQueryD3D12::get()
+	{
+		if (0 != m_control.available() )
+		{
+			uint32_t offset = m_control.m_read * 2;
+			m_begin = m_result[offset+0];
+			m_end   = m_result[offset+1];
+			m_elapsed = m_end - m_begin;
+
+			m_control.consume(1);
+
+			return true;
+		}
+
+		return false;
+	}
+
 	void OcclusionQueryD3D12::init()
 	{
 		D3D12_QUERY_HEAP_DESC queryHeapDesc;
@@ -4340,12 +4425,13 @@ data.NumQualityLevels = 0;
 				, (void**)&m_queryHeap
 				) );
 
+		const uint32_t size = BX_COUNTOF(m_handle)*sizeof(uint64_t);
 		m_readback = createCommittedResource(s_renderD3D12->m_device
 						, HeapProperty::ReadBack
-						, BX_COUNTOF(m_handle)*sizeof(uint64_t)
+						, size
 						);
 
-		D3D12_RANGE range = { 0, BX_COUNTOF(m_handle) };
+		D3D12_RANGE range = { 0, size };
 		m_readback->Map(0, &range, (void**)&m_result);
 	}
 
@@ -4405,6 +4491,8 @@ data.NumQualityLevels = 0;
 
 		int64_t elapsed = -bx::getHPCounter();
 		int64_t captureElapsed = 0;
+
+		m_gpuTimer.begin(m_commandList);
 
 		if (0 < _render->m_iboffset)
 		{
@@ -5077,6 +5165,10 @@ data.NumQualityLevels = 0;
 		elapsed += now;
 
 		static int64_t last = now;
+
+		Stats& perfStats = _render->m_perfStats;
+		perfStats.cpuTimeBegin = last;
+
 		int64_t frameTime = now - last;
 		last = now;
 
@@ -5085,10 +5177,32 @@ data.NumQualityLevels = 0;
 		min = bx::int64_min(min, frameTime);
 		max = bx::int64_max(max, frameTime);
 
+		static uint32_t maxGpuLatency = 0;
+		static double   maxGpuElapsed = 0.0f;
+		double elapsedGpuMs = 0.0;
+
 		static int64_t presentMin = m_presentElapsed;
 		static int64_t presentMax = m_presentElapsed;
 		presentMin = bx::int64_min(presentMin, m_presentElapsed);
 		presentMax = bx::int64_max(presentMax, m_presentElapsed);
+
+		m_gpuTimer.end(m_commandList);
+
+		while (m_gpuTimer.get() )
+		{
+			double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
+			elapsedGpuMs   = m_gpuTimer.m_elapsed * toGpuMs;
+			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
+		}
+		maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
+
+		const int64_t timerFreq = bx::getHPFrequency();
+
+		perfStats.cpuTimeEnd   = now;
+		perfStats.cpuTimerFreq = timerFreq;
+		perfStats.gpuTimeBegin = m_gpuTimer.m_begin;
+		perfStats.gpuTimeEnd   = m_gpuTimer.m_end;
+		perfStats.gpuTimerFreq = m_gpuTimer.m_frequency;
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH | BGFX_DEBUG_STATS) )
 		{
