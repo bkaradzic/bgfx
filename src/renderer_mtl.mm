@@ -1784,9 +1784,11 @@ namespace bgfx { namespace mtl
 
 	void BufferMtl::create(uint32_t _size, void* _data, uint16_t _flags, uint16_t _stride, bool _vertex)
 	{
-		BX_UNUSED(_flags, _stride, _vertex);
+		BX_UNUSED(_stride, _vertex);
 
 		m_size = _size;
+		m_flags = _flags;
+
 		if (NULL == _data)
 		{
 			m_buffer = s_renderMtl->m_device.newBufferWithLength(_size, 0);
