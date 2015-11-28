@@ -946,7 +946,7 @@ int loadDemoData(struct NVGcontext* vg, struct DemoData* data)
 		char file[128];
 		bx::snprintf(file, 128, "images/image%d.jpg", ii+1);
 		data->images[ii] = nvgCreateImage(vg, file, 0);
-		if (data->images[ii] == bgfx::invalidHandle)
+		if (data->images[ii] == 0)
 		{
 			printf("Could not load %s.\n", file);
 			return -1;
