@@ -1,5 +1,5 @@
 #define u_ambientPass    u_params0.x
-#define u_lightningPass  u_params0.y
+#define u_lightingPass   u_params0.y
 
 #define u_shadowMapBias   u_params1.x
 #define u_shadowMapParam0 u_params1.z

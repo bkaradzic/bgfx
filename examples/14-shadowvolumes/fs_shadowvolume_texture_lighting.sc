@@ -18,7 +18,7 @@ SAMPLER2D(s_texColor,   0);
 SAMPLER2D(s_texStencil, 1);
 
 #define u_ambientPass   u_params.x
-#define u_lightningPass u_params.y
+#define u_lightingPass  u_params.y
 #define u_texelHalf     u_params.z
 #define u_specular      u_specular_shininess.xyz
 #define u_shininess     u_specular_shininess.w
@@ -65,7 +65,7 @@ void main()
 
 	vec3 normal = normalize(v_normal);
 	vec3 viewDir = -normalize(v_view);
-	vec3 lightColor = calcLight(v_view, normal, viewDir) * u_lightningPass;
+	vec3 lightColor = calcLight(v_view, normal, viewDir) * u_lightingPass;
 
 	vec2 ndc = gl_FragCoord.xy * u_viewTexel.xy + u_viewTexel.xy * u_texelHalf;
 	vec4 texcolor = texture2D(s_texStencil, ndc);

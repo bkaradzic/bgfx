@@ -6,11 +6,11 @@ $input v_position, v_normal, v_view, v_texcoord1, v_texcoord2, v_texcoord3, v_te
  */
 
 #define SM_VSM 1
-#define SM_CSM 1
+#define SM_OMNI 1
 
-#include "fs_shadowmaps_color_lightning.sh"
+#include "fs_shadowmaps_color_lighting.sh"
 
 void main()
 {
-#include "fs_shadowmaps_color_lightning_main.sh"
+#include "fs_shadowmaps_color_lighting_main.sh"
 }

@@ -412,7 +412,7 @@ struct Uniforms
 	void init()
 	{
 		m_ambientPass    = 1.0f;
-		m_lightningPass  = 1.0f;
+		m_lightingPass   = 1.0f;
 
 		m_shadowMapBias   = 0.003f;
 		m_shadowMapOffset = 0.0f;
@@ -571,7 +571,7 @@ struct Uniforms
 		struct
 		{
 			float m_ambientPass;
-			float m_lightningPass;
+			float m_lightingPass;
 			float m_unused00;
 			float m_unused01;
 		};
@@ -1201,48 +1201,48 @@ struct Programs
 		m_packDepth[DepthImpl::Linear][PackDepth::RGBA] = loadProgram("vs_shadowmaps_packdepth_linear", "fs_shadowmaps_packdepth_linear");
 		m_packDepth[DepthImpl::Linear][PackDepth::VSM]  = loadProgram("vs_shadowmaps_packdepth_linear", "fs_shadowmaps_packdepth_vsm_linear");
 
-		// Color lightning.
-		m_colorLightning[SmType::Single][DepthImpl::InvZ][SmImpl::Hard] = loadProgram("vs_shadowmaps_color_lightning", "fs_shadowmaps_color_lightning_hard");
-		m_colorLightning[SmType::Single][DepthImpl::InvZ][SmImpl::PCF]  = loadProgram("vs_shadowmaps_color_lightning", "fs_shadowmaps_color_lightning_pcf");
-		m_colorLightning[SmType::Single][DepthImpl::InvZ][SmImpl::VSM]  = loadProgram("vs_shadowmaps_color_lightning", "fs_shadowmaps_color_lightning_vsm");
-		m_colorLightning[SmType::Single][DepthImpl::InvZ][SmImpl::ESM]  = loadProgram("vs_shadowmaps_color_lightning", "fs_shadowmaps_color_lightning_esm");
+		// Color lighting.
+		m_colorLighting[SmType::Single][DepthImpl::InvZ][SmImpl::Hard] = loadProgram("vs_shadowmaps_color_lighting", "fs_shadowmaps_color_lighting_hard");
+		m_colorLighting[SmType::Single][DepthImpl::InvZ][SmImpl::PCF]  = loadProgram("vs_shadowmaps_color_lighting", "fs_shadowmaps_color_lighting_pcf");
+		m_colorLighting[SmType::Single][DepthImpl::InvZ][SmImpl::VSM]  = loadProgram("vs_shadowmaps_color_lighting", "fs_shadowmaps_color_lighting_vsm");
+		m_colorLighting[SmType::Single][DepthImpl::InvZ][SmImpl::ESM]  = loadProgram("vs_shadowmaps_color_lighting", "fs_shadowmaps_color_lighting_esm");
 
-		m_colorLightning[SmType::Single][DepthImpl::Linear][SmImpl::Hard] = loadProgram("vs_shadowmaps_color_lightning_linear", "fs_shadowmaps_color_lightning_hard_linear");
-		m_colorLightning[SmType::Single][DepthImpl::Linear][SmImpl::PCF]  = loadProgram("vs_shadowmaps_color_lightning_linear", "fs_shadowmaps_color_lightning_pcf_linear");
-		m_colorLightning[SmType::Single][DepthImpl::Linear][SmImpl::VSM]  = loadProgram("vs_shadowmaps_color_lightning_linear", "fs_shadowmaps_color_lightning_vsm_linear");
-		m_colorLightning[SmType::Single][DepthImpl::Linear][SmImpl::ESM]  = loadProgram("vs_shadowmaps_color_lightning_linear", "fs_shadowmaps_color_lightning_esm_linear");
+		m_colorLighting[SmType::Single][DepthImpl::Linear][SmImpl::Hard] = loadProgram("vs_shadowmaps_color_lighting_linear", "fs_shadowmaps_color_lighting_hard_linear");
+		m_colorLighting[SmType::Single][DepthImpl::Linear][SmImpl::PCF]  = loadProgram("vs_shadowmaps_color_lighting_linear", "fs_shadowmaps_color_lighting_pcf_linear");
+		m_colorLighting[SmType::Single][DepthImpl::Linear][SmImpl::VSM]  = loadProgram("vs_shadowmaps_color_lighting_linear", "fs_shadowmaps_color_lighting_vsm_linear");
+		m_colorLighting[SmType::Single][DepthImpl::Linear][SmImpl::ESM]  = loadProgram("vs_shadowmaps_color_lighting_linear", "fs_shadowmaps_color_lighting_esm_linear");
 
-		m_colorLightning[SmType::Omni][DepthImpl::InvZ][SmImpl::Hard] = loadProgram("vs_shadowmaps_color_lightning_omni", "fs_shadowmaps_color_lightning_hard_omni");
-		m_colorLightning[SmType::Omni][DepthImpl::InvZ][SmImpl::PCF]  = loadProgram("vs_shadowmaps_color_lightning_omni", "fs_shadowmaps_color_lightning_pcf_omni");
-		m_colorLightning[SmType::Omni][DepthImpl::InvZ][SmImpl::VSM]  = loadProgram("vs_shadowmaps_color_lightning_omni", "fs_shadowmaps_color_lightning_vsm_omni");
-		m_colorLightning[SmType::Omni][DepthImpl::InvZ][SmImpl::ESM]  = loadProgram("vs_shadowmaps_color_lightning_omni", "fs_shadowmaps_color_lightning_esm_omni");
+		m_colorLighting[SmType::Omni][DepthImpl::InvZ][SmImpl::Hard] = loadProgram("vs_shadowmaps_color_lighting_omni", "fs_shadowmaps_color_lighting_hard_omni");
+		m_colorLighting[SmType::Omni][DepthImpl::InvZ][SmImpl::PCF]  = loadProgram("vs_shadowmaps_color_lighting_omni", "fs_shadowmaps_color_lighting_pcf_omni");
+		m_colorLighting[SmType::Omni][DepthImpl::InvZ][SmImpl::VSM]  = loadProgram("vs_shadowmaps_color_lighting_omni", "fs_shadowmaps_color_lighting_vsm_omni");
+		m_colorLighting[SmType::Omni][DepthImpl::InvZ][SmImpl::ESM]  = loadProgram("vs_shadowmaps_color_lighting_omni", "fs_shadowmaps_color_lighting_esm_omni");
 
-		m_colorLightning[SmType::Omni][DepthImpl::Linear][SmImpl::Hard] = loadProgram("vs_shadowmaps_color_lightning_linear_omni", "fs_shadowmaps_color_lightning_hard_linear_omni");
-		m_colorLightning[SmType::Omni][DepthImpl::Linear][SmImpl::PCF]  = loadProgram("vs_shadowmaps_color_lightning_linear_omni", "fs_shadowmaps_color_lightning_pcf_linear_omni");
-		m_colorLightning[SmType::Omni][DepthImpl::Linear][SmImpl::VSM]  = loadProgram("vs_shadowmaps_color_lightning_linear_omni", "fs_shadowmaps_color_lightning_vsm_linear_omni");
-		m_colorLightning[SmType::Omni][DepthImpl::Linear][SmImpl::ESM]  = loadProgram("vs_shadowmaps_color_lightning_linear_omni", "fs_shadowmaps_color_lightning_esm_linear_omni");
+		m_colorLighting[SmType::Omni][DepthImpl::Linear][SmImpl::Hard] = loadProgram("vs_shadowmaps_color_lighting_linear_omni", "fs_shadowmaps_color_lighting_hard_linear_omni");
+		m_colorLighting[SmType::Omni][DepthImpl::Linear][SmImpl::PCF]  = loadProgram("vs_shadowmaps_color_lighting_linear_omni", "fs_shadowmaps_color_lighting_pcf_linear_omni");
+		m_colorLighting[SmType::Omni][DepthImpl::Linear][SmImpl::VSM]  = loadProgram("vs_shadowmaps_color_lighting_linear_omni", "fs_shadowmaps_color_lighting_vsm_linear_omni");
+		m_colorLighting[SmType::Omni][DepthImpl::Linear][SmImpl::ESM]  = loadProgram("vs_shadowmaps_color_lighting_linear_omni", "fs_shadowmaps_color_lighting_esm_linear_omni");
 
-		m_colorLightning[SmType::Cascade][DepthImpl::InvZ][SmImpl::Hard] = loadProgram("vs_shadowmaps_color_lightning_csm", "fs_shadowmaps_color_lightning_hard_csm");
-		m_colorLightning[SmType::Cascade][DepthImpl::InvZ][SmImpl::PCF]  = loadProgram("vs_shadowmaps_color_lightning_csm", "fs_shadowmaps_color_lightning_pcf_csm");
-		m_colorLightning[SmType::Cascade][DepthImpl::InvZ][SmImpl::VSM]  = loadProgram("vs_shadowmaps_color_lightning_csm", "fs_shadowmaps_color_lightning_vsm_csm");
-		m_colorLightning[SmType::Cascade][DepthImpl::InvZ][SmImpl::ESM]  = loadProgram("vs_shadowmaps_color_lightning_csm", "fs_shadowmaps_color_lightning_esm_csm");
+		m_colorLighting[SmType::Cascade][DepthImpl::InvZ][SmImpl::Hard] = loadProgram("vs_shadowmaps_color_lighting_csm", "fs_shadowmaps_color_lighting_hard_csm");
+		m_colorLighting[SmType::Cascade][DepthImpl::InvZ][SmImpl::PCF]  = loadProgram("vs_shadowmaps_color_lighting_csm", "fs_shadowmaps_color_lighting_pcf_csm");
+		m_colorLighting[SmType::Cascade][DepthImpl::InvZ][SmImpl::VSM]  = loadProgram("vs_shadowmaps_color_lighting_csm", "fs_shadowmaps_color_lighting_vsm_csm");
+		m_colorLighting[SmType::Cascade][DepthImpl::InvZ][SmImpl::ESM]  = loadProgram("vs_shadowmaps_color_lighting_csm", "fs_shadowmaps_color_lighting_esm_csm");
 
-		m_colorLightning[SmType::Cascade][DepthImpl::Linear][SmImpl::Hard] = loadProgram("vs_shadowmaps_color_lightning_linear_csm", "fs_shadowmaps_color_lightning_hard_linear_csm");
-		m_colorLightning[SmType::Cascade][DepthImpl::Linear][SmImpl::PCF]  = loadProgram("vs_shadowmaps_color_lightning_linear_csm", "fs_shadowmaps_color_lightning_pcf_linear_csm");
-		m_colorLightning[SmType::Cascade][DepthImpl::Linear][SmImpl::VSM]  = loadProgram("vs_shadowmaps_color_lightning_linear_csm", "fs_shadowmaps_color_lightning_vsm_linear_csm");
-		m_colorLightning[SmType::Cascade][DepthImpl::Linear][SmImpl::ESM]  = loadProgram("vs_shadowmaps_color_lightning_linear_csm", "fs_shadowmaps_color_lightning_esm_linear_csm");
+		m_colorLighting[SmType::Cascade][DepthImpl::Linear][SmImpl::Hard] = loadProgram("vs_shadowmaps_color_lighting_linear_csm", "fs_shadowmaps_color_lighting_hard_linear_csm");
+		m_colorLighting[SmType::Cascade][DepthImpl::Linear][SmImpl::PCF]  = loadProgram("vs_shadowmaps_color_lighting_linear_csm", "fs_shadowmaps_color_lighting_pcf_linear_csm");
+		m_colorLighting[SmType::Cascade][DepthImpl::Linear][SmImpl::VSM]  = loadProgram("vs_shadowmaps_color_lighting_linear_csm", "fs_shadowmaps_color_lighting_vsm_linear_csm");
+		m_colorLighting[SmType::Cascade][DepthImpl::Linear][SmImpl::ESM]  = loadProgram("vs_shadowmaps_color_lighting_linear_csm", "fs_shadowmaps_color_lighting_esm_linear_csm");
 	}
 
 	void destroy()
 	{
-		// Color lightning.
+		// Color lighting.
 		for (uint8_t ii = 0; ii < SmType::Count; ++ii)
 		{
 			for (uint8_t jj = 0; jj < DepthImpl::Count; ++jj)
 			{
 				for (uint8_t kk = 0; kk < SmImpl::Count; ++kk)
 				{
-					bgfx::destroyProgram(m_colorLightning[ii][jj][kk]);
+					bgfx::destroyProgram(m_colorLighting[ii][jj][kk]);
 				}
 			}
 		}
@@ -1287,7 +1287,7 @@ struct Programs
 	bgfx::ProgramHandle m_hBlur[PackDepth::Count];
 	bgfx::ProgramHandle m_drawDepth[PackDepth::Count];
 	bgfx::ProgramHandle m_packDepth[DepthImpl::Count][PackDepth::Count];
-	bgfx::ProgramHandle m_colorLightning[SmType::Count][DepthImpl::Count][SmImpl::Count];
+	bgfx::ProgramHandle m_colorLighting[SmType::Count][DepthImpl::Count][SmImpl::Count];
 };
 
 static Programs s_programs;
@@ -1464,7 +1464,7 @@ int _main_(int _argc, char** _argv)
 			, 1.0f, 0.0f, 3.0f, 0.01f          // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::InvZ][PackDepth::RGBA] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Single][DepthImpl::InvZ][SmImpl::Hard] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Single][DepthImpl::InvZ][SmImpl::Hard] //m_progDraw
 		},
 		{ //SmImpl::PCF
 			  10.0f, 7.0f, 12.0f, 1.0f         // m_sizePwrTwo
@@ -1481,7 +1481,7 @@ int _main_(int _argc, char** _argv)
 			, 1.0f, 0.0f, 3.0f, 0.01f          // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::InvZ][PackDepth::RGBA] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Single][DepthImpl::InvZ][SmImpl::PCF] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Single][DepthImpl::InvZ][SmImpl::PCF] //m_progDraw
 		},
 		{ //SmImpl::VSM
 			  10.0f, 7.0f, 12.0f, 1.0f         // m_sizePwrTwo
@@ -1498,7 +1498,7 @@ int _main_(int _argc, char** _argv)
 			, 1.0f, 0.0f, 3.0f, 0.01f          // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::InvZ][PackDepth::VSM] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Single][DepthImpl::InvZ][SmImpl::VSM] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Single][DepthImpl::InvZ][SmImpl::VSM] //m_progDraw
 		},
 		{ //SmImpl::ESM
 			  10.0f, 7.0f, 12.0f, 1.0f         // m_sizePwrTwo
@@ -1515,7 +1515,7 @@ int _main_(int _argc, char** _argv)
 			, 1.0f, 0.0f, 3.0f, 0.01f          // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::InvZ][PackDepth::RGBA] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Single][DepthImpl::InvZ][SmImpl::ESM] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Single][DepthImpl::InvZ][SmImpl::ESM] //m_progDraw
 		}
 
 		},
@@ -1536,7 +1536,7 @@ int _main_(int _argc, char** _argv)
 			, 1.0f, 0.0f, 3.0f, 0.01f          // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::Linear][PackDepth::RGBA] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Single][DepthImpl::Linear][SmImpl::Hard] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Single][DepthImpl::Linear][SmImpl::Hard] //m_progDraw
 		},
 		{ //SmImpl::PCF
 			  10.0f, 7.0f, 12.0f, 1.0f         // m_sizePwrTwo
@@ -1553,7 +1553,7 @@ int _main_(int _argc, char** _argv)
 			, 1.0f, 0.0f, 3.0f, 0.01f          // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::Linear][PackDepth::RGBA] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Single][DepthImpl::Linear][SmImpl::PCF] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Single][DepthImpl::Linear][SmImpl::PCF] //m_progDraw
 		},
 		{ //SmImpl::VSM
 			  10.0f, 7.0f, 12.0f, 1.0f         // m_sizePwrTwo
@@ -1570,7 +1570,7 @@ int _main_(int _argc, char** _argv)
 			, 1.0f, 0.0f, 3.0f, 0.01f          // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::Linear][PackDepth::VSM] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Single][DepthImpl::Linear][SmImpl::VSM] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Single][DepthImpl::Linear][SmImpl::VSM] //m_progDraw
 		},
 		{ //SmImpl::ESM
 			  10.0f, 7.0f, 12.0f, 1.0f         // m_sizePwrTwo
@@ -1587,7 +1587,7 @@ int _main_(int _argc, char** _argv)
 			, 1.0f, 0.0f, 3.0f, 0.01f          // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::Linear][PackDepth::RGBA] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Single][DepthImpl::Linear][SmImpl::ESM] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Single][DepthImpl::Linear][SmImpl::ESM] //m_progDraw
 		}
 
 		}
@@ -1612,7 +1612,7 @@ int _main_(int _argc, char** _argv)
 			, 0.25f, 0.0f, 2.0f, 0.001f        // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::InvZ][PackDepth::RGBA] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Omni][DepthImpl::InvZ][SmImpl::Hard] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Omni][DepthImpl::InvZ][SmImpl::Hard] //m_progDraw
 		},
 		{ //SmImpl::PCF
 			  12.0f, 9.0f, 12.0f, 1.0f         // m_sizePwrTwo
@@ -1629,7 +1629,7 @@ int _main_(int _argc, char** _argv)
 			, 1.0f, 0.0f, 3.0f, 0.001f         // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::InvZ][PackDepth::RGBA] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Omni][DepthImpl::InvZ][SmImpl::PCF] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Omni][DepthImpl::InvZ][SmImpl::PCF] //m_progDraw
 		},
 		{ //SmImpl::VSM
 			  12.0f, 9.0f, 12.0f, 1.0f         // m_sizePwrTwo
@@ -1646,7 +1646,7 @@ int _main_(int _argc, char** _argv)
 			, 0.25f, 0.0f, 2.0f, 0.001f        // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::InvZ][PackDepth::VSM] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Omni][DepthImpl::InvZ][SmImpl::VSM] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Omni][DepthImpl::InvZ][SmImpl::VSM] //m_progDraw
 		},
 		{ //SmImpl::ESM
 			  12.0f, 9.0f, 12.0f, 1.0f         // m_sizePwrTwo
@@ -1663,7 +1663,7 @@ int _main_(int _argc, char** _argv)
 			, 0.25f, 0.0f, 2.0f, 0.001f        // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::InvZ][PackDepth::RGBA] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Omni][DepthImpl::InvZ][SmImpl::ESM] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Omni][DepthImpl::InvZ][SmImpl::ESM] //m_progDraw
 		}
 
 		},
@@ -1684,7 +1684,7 @@ int _main_(int _argc, char** _argv)
 			, 0.25f, 0.0f, 2.0f, 0.001f        // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::Linear][PackDepth::RGBA] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Omni][DepthImpl::Linear][SmImpl::Hard] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Omni][DepthImpl::Linear][SmImpl::Hard] //m_progDraw
 		},
 		{ //SmImpl::PCF
 			  12.0f, 9.0f, 12.0f, 1.0f         // m_sizePwrTwo
@@ -1701,7 +1701,7 @@ int _main_(int _argc, char** _argv)
 			, 1.0f, 0.0f, 3.0f, 0.001f         // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::Linear][PackDepth::RGBA] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Omni][DepthImpl::Linear][SmImpl::PCF] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Omni][DepthImpl::Linear][SmImpl::PCF] //m_progDraw
 		},
 		{ //SmImpl::VSM
 			  12.0f, 9.0f, 12.0f, 1.0f         // m_sizePwrTwo
@@ -1718,7 +1718,7 @@ int _main_(int _argc, char** _argv)
 			, 0.25f, 0.0f, 2.0f, 0.001f        // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::Linear][PackDepth::VSM] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Omni][DepthImpl::Linear][SmImpl::VSM] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Omni][DepthImpl::Linear][SmImpl::VSM] //m_progDraw
 		},
 		{ //SmImpl::ESM
 			  12.0f, 9.0f, 12.0f, 1.0f         // m_sizePwrTwo
@@ -1735,7 +1735,7 @@ int _main_(int _argc, char** _argv)
 			, 0.25f, 0.0f, 2.0f, 0.001f        // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::Linear][PackDepth::RGBA] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Omni][DepthImpl::Linear][SmImpl::ESM] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Omni][DepthImpl::Linear][SmImpl::ESM] //m_progDraw
 		}
 
 		}
@@ -1760,7 +1760,7 @@ int _main_(int _argc, char** _argv)
 			, 0.2f, 0.0f, 1.0f, 0.01f          // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::InvZ][PackDepth::RGBA] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Cascade][DepthImpl::InvZ][SmImpl::Hard] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Cascade][DepthImpl::InvZ][SmImpl::Hard] //m_progDraw
 		},
 		{ //SmImpl::PCF
 			  11.0f, 7.0f, 12.0f, 1.0f         // m_sizePwrTwo
@@ -1777,7 +1777,7 @@ int _main_(int _argc, char** _argv)
 			, 1.0f, 0.0f, 3.0f, 0.01f          // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::InvZ][PackDepth::RGBA] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Cascade][DepthImpl::InvZ][SmImpl::PCF] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Cascade][DepthImpl::InvZ][SmImpl::PCF] //m_progDraw
 		},
 		{ //SmImpl::VSM
 			  11.0f, 7.0f, 12.0f, 1.0f         // m_sizePwrTwo
@@ -1794,7 +1794,7 @@ int _main_(int _argc, char** _argv)
 			, 0.2f, 0.0f, 1.0f, 0.01f          // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::InvZ][PackDepth::VSM] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Cascade][DepthImpl::InvZ][SmImpl::VSM] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Cascade][DepthImpl::InvZ][SmImpl::VSM] //m_progDraw
 		},
 		{ //SmImpl::ESM
 			  11.0f, 7.0f, 12.0f, 1.0f         // m_sizePwrTwo
@@ -1811,7 +1811,7 @@ int _main_(int _argc, char** _argv)
 			, 0.2f, 0.0f, 1.0f, 0.01f          // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::InvZ][PackDepth::RGBA] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Cascade][DepthImpl::InvZ][SmImpl::ESM] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Cascade][DepthImpl::InvZ][SmImpl::ESM] //m_progDraw
 		}
 
 		},
@@ -1832,7 +1832,7 @@ int _main_(int _argc, char** _argv)
 			, 0.2f, 0.0f, 1.0f, 0.01f          // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::Linear][PackDepth::RGBA] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Cascade][DepthImpl::Linear][SmImpl::Hard] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Cascade][DepthImpl::Linear][SmImpl::Hard] //m_progDraw
 		},
 		{ //SmImpl::PCF
 			  11.0f, 7.0f, 12.0f, 1.0f         // m_sizePwrTwo
@@ -1849,7 +1849,7 @@ int _main_(int _argc, char** _argv)
 			, 1.0f, 0.0f, 3.0f, 0.01f          // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::Linear][PackDepth::RGBA] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Cascade][DepthImpl::Linear][SmImpl::PCF] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Cascade][DepthImpl::Linear][SmImpl::PCF] //m_progDraw
 		},
 		{ //SmImpl::VSM
 			  11.0f, 7.0f, 12.0f, 1.0f         // m_sizePwrTwo
@@ -1866,7 +1866,7 @@ int _main_(int _argc, char** _argv)
 			, 0.2f, 0.0f, 1.0f, 0.01f          // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::Linear][PackDepth::VSM] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Cascade][DepthImpl::Linear][SmImpl::VSM] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Cascade][DepthImpl::Linear][SmImpl::VSM] //m_progDraw
 		},
 		{ //SmImpl::ESM
 			  11.0f, 7.0f, 12.0f, 1.0f         // m_sizePwrTwo
@@ -1883,7 +1883,7 @@ int _main_(int _argc, char** _argv)
 			, 0.2f, 0.0f, 1.0f, 0.01f          // m_yOffset
 			, true                             // m_doBlur
 			, &s_programs.m_packDepth[DepthImpl::Linear][PackDepth::RGBA] //m_progPack
-			, &s_programs.m_colorLightning[SmType::Cascade][DepthImpl::Linear][SmImpl::ESM] //m_progDraw
+			, &s_programs.m_colorLighting[SmType::Cascade][DepthImpl::Linear][SmImpl::ESM] //m_progDraw
 		}
 
 		}

@@ -205,7 +205,7 @@ struct Uniforms
 	void init()
 	{
 		m_params.m_ambientPass   = 1.0f;
-		m_params.m_lightningPass = 1.0f;
+		m_params.m_lightingPass  = 1.0f;
 		m_params.m_texelHalf     = 0.0f;
 
 		m_ambient[0] = 0.05f;
@@ -299,7 +299,7 @@ struct Uniforms
 	struct Params
 	{
 		float m_ambientPass;
-		float m_lightningPass;
+		float m_lightingPass;
 		float m_texelHalf;
 		float m_unused00;
 	};
@@ -326,7 +326,7 @@ struct Uniforms
 
 	/**
 	 * u_params.x - u_ambientPass
-	 * u_params.y - u_lightningPass
+	 * u_params.y - u_lightingPass
 	 * u_params.z - u_texelHalf
 	 * u_params.w - unused
 
@@ -1905,10 +1905,10 @@ int _main_(int _argc, char** _argv)
 	s_texColor   = bgfx::createUniform("s_texColor",   bgfx::UniformType::Int1);
 	s_texStencil = bgfx::createUniform("s_texStencil", bgfx::UniformType::Int1);
 
-	bgfx::ProgramHandle programTextureLightning = loadProgram("vs_shadowvolume_texture_lightning", "fs_shadowvolume_texture_lightning");
-	bgfx::ProgramHandle programColorLightning   = loadProgram("vs_shadowvolume_color_lightning",   "fs_shadowvolume_color_lightning"  );
-	bgfx::ProgramHandle programColorTexture     = loadProgram("vs_shadowvolume_color_texture",     "fs_shadowvolume_color_texture"    );
-	bgfx::ProgramHandle programTexture          = loadProgram("vs_shadowvolume_texture",           "fs_shadowvolume_texture"          );
+	bgfx::ProgramHandle programTextureLighting  = loadProgram("vs_shadowvolume_texture_lighting", "fs_shadowvolume_texture_lighting");
+	bgfx::ProgramHandle programColorLighting    = loadProgram("vs_shadowvolume_color_lighting",   "fs_shadowvolume_color_lighting"  );
+	bgfx::ProgramHandle programColorTexture     = loadProgram("vs_shadowvolume_color_texture",    "fs_shadowvolume_color_texture"   );
+	bgfx::ProgramHandle programTexture          = loadProgram("vs_shadowvolume_texture",          "fs_shadowvolume_texture"         );
 
 	bgfx::ProgramHandle programBackBlank        = loadProgram("vs_shadowvolume_svback",  "fs_shadowvolume_svbackblank" );
 	bgfx::ProgramHandle programSideBlank        = loadProgram("vs_shadowvolume_svside",  "fs_shadowvolume_svsideblank" );
@@ -1967,28 +1967,28 @@ int _main_(int _argc, char** _argv)
 	Model vplaneModel;
 
 	bunnyHighPolyModel.load("meshes/bunny_patched.bin");
-	bunnyHighPolyModel.m_program = programColorLightning;
+	bunnyHighPolyModel.m_program = programColorLighting;
 
 	bunnyLowPolyModel.load("meshes/bunny_decimated.bin");
-	bunnyLowPolyModel.m_program = programColorLightning;
+	bunnyLowPolyModel.m_program = programColorLighting;
 
 	columnModel.load("meshes/column.bin");
-	columnModel.m_program = programColorLightning;
+	columnModel.m_program = programColorLighting;
 
 	platformModel.load("meshes/platform.bin");
-	platformModel.m_program = programTextureLightning;
+	platformModel.m_program = programTextureLighting;
 	platformModel.m_texture = figureTex;
 
 	cubeModel.load("meshes/cube.bin");
-	cubeModel.m_program = programTextureLightning;
+	cubeModel.m_program = programTextureLighting;
 	cubeModel.m_texture = figureTex;
 
 	hplaneFieldModel.load(s_hplaneVertices, BX_COUNTOF(s_hplaneVertices), PosNormalTexcoordVertex::ms_decl, s_planeIndices, BX_COUNTOF(s_planeIndices) );
-	hplaneFieldModel.m_program = programTextureLightning;
+	hplaneFieldModel.m_program = programTextureLighting;
 	hplaneFieldModel.m_texture = fieldstoneTex;
 
 	hplaneFigureModel.load(s_hplaneVertices, BX_COUNTOF(s_hplaneVertices), PosNormalTexcoordVertex::ms_decl, s_planeIndices, BX_COUNTOF(s_planeIndices) );
-	hplaneFigureModel.m_program = programTextureLightning;
+	hplaneFigureModel.m_program = programTextureLighting;
 	hplaneFigureModel.m_texture = figureTex;
 
 	vplaneModel.load(s_vplaneVertices, BX_COUNTOF(s_vplaneVertices), PosNormalTexcoordVertex::ms_decl, s_planeIndices, BX_COUNTOF(s_planeIndices) );
@@ -2249,7 +2249,7 @@ int _main_(int _argc, char** _argv)
 
 		//update settings
 		s_uniforms.m_params.m_ambientPass     = 1.0f;
-		s_uniforms.m_params.m_lightningPass   = 1.0f;
+		s_uniforms.m_params.m_lightingPass    = 1.0f;
 		s_uniforms.m_params.m_texelHalf       = s_texelHalf;
 		s_uniforms.m_svparams.m_useStencilTex = float(settings_useStencilTexture);
 
@@ -2539,7 +2539,7 @@ int _main_(int _argc, char** _argv)
 
 		// Draw ambient only.
 		s_uniforms.m_params.m_ambientPass = 1.0f;
-		s_uniforms.m_params.m_lightningPass = 0.0f;
+		s_uniforms.m_params.m_lightingPass = 0.0f;
 
 		s_uniforms.m_color[0] = 1.0f;
 		s_uniforms.m_color[1] = 1.0f;
@@ -2773,7 +2773,7 @@ int _main_(int _argc, char** _argv)
 
 			// Draw diffuse only.
 			s_uniforms.m_params.m_ambientPass = 0.0f;
-			s_uniforms.m_params.m_lightningPass = 1.0f;
+			s_uniforms.m_params.m_lightingPass = 1.0f;
 
 			RenderState& drawDiffuse = settings_useStencilTexture
 				? s_renderStates[RenderState::ShadowVolume_UsingStencilTexture_DrawDiffuse]
@@ -2851,8 +2851,8 @@ int _main_(int _argc, char** _argv)
 	bgfx::destroyTexture(fieldstoneTex);
 	bgfx::destroyTexture(flareTex);
 
-	bgfx::destroyProgram(programTextureLightning);
-	bgfx::destroyProgram(programColorLightning);
+	bgfx::destroyProgram(programTextureLighting);
+	bgfx::destroyProgram(programColorLighting);
 	bgfx::destroyProgram(programColorTexture);
 	bgfx::destroyProgram(programTexture);
 
