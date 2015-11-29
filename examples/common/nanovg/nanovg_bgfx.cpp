@@ -327,7 +327,7 @@ namespace
 						, mem
 						);
 
-		return tex->id.idx;
+		return bgfx::isValid(tex->id) ? tex->id.idx : 0;
 	}
 
 	static int nvgRenderDeleteTexture(void* _userPtr, int image)
