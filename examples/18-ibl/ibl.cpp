@@ -455,7 +455,7 @@ int _main_(int _argc, char** _argv)
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
 		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/18-ibl");
-		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Image based lighting.");
+		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Image-based lighting.");
 		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 		float at[3] = { 0.0f, 0.0f, 0.0f };
