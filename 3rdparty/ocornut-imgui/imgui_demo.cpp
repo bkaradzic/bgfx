@@ -2176,10 +2176,10 @@ static void ShowExampleAppLayout(bool* opened)
     ImGui::End();
 }
 
-static void ShowExampleAppPropertyEditor(bool* opened)
+static void ShowExampleAppPropertyEditor(bool* p_opened)
 {
     ImGui::SetNextWindowSize(ImVec2(430,450), ImGuiSetCond_FirstUseEver);
-    if (!ImGui::Begin("Example: Property editor", opened))
+    if (!ImGui::Begin("Example: Property editor", p_opened))
     {
         ImGui::End();
         return;
