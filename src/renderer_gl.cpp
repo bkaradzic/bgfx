@@ -2481,6 +2481,15 @@ namespace bgfx { namespace gl
 			if (!isValid(_fbh) )
 			{
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
+				
+				if (0 != (m_resolution.m_flags & BGFX_RESET_SRGB_BACKBUFFER))
+				{
+					GL_CHECK(glEnable(GL_FRAMEBUFFER_SRGB));
+				}
+				else
+				{
+					GL_CHECK(glDisable(GL_FRAMEBUFFER_SRGB));
+				}
 			}
 			else
 			{
