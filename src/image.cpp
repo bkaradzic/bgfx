@@ -2524,7 +2524,7 @@ namespace bgfx
 			, _imageContainer.m_numMips
 			);
 
-		for (uint32_t lod = 0, num = _imageContainer.m_numMips; lod < num; ++lod)
+		for (uint8_t lod = 0, num = _imageContainer.m_numMips; lod < num; ++lod)
 		{
 			ImageMip mip;
 			imageGetRawData(_imageContainer, 0, lod, _data, _size, mip);

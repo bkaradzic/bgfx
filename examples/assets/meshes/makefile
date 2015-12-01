@@ -16,6 +16,7 @@ GEOMETRY_SRC= \
 	column \
 	cube \
 	hollowcube \
+	orb \
 	platform \
 	tree \
 	tree1b_lod0_1 \
