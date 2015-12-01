@@ -89,8 +89,8 @@ struct AviWriter
 		bx::write(m_writer, BX_MAKEFOURCC('v', 'i', 'd', 's') ); // fccType
 		bx::write(m_writer, BX_MAKEFOURCC('D', 'I', 'B', ' ') ); // fccHandler
 		bx::write(m_writer, UINT32_C(0) );      // dwFlags
-		bx::write(m_writer, UINT16_C(0) );      // wPriority
-		bx::write(m_writer, UINT16_C(0) );      // wLanguage
+		bx::write(m_writer, uint16_t(0) );      // wPriority
+		bx::write(m_writer, uint16_t(0) );      // wLanguage
 		bx::write(m_writer, UINT32_C(0) );      // dwInitialFrames
 		bx::write(m_writer, UINT32_C(1) );      // dwScale
 		bx::write(m_writer, _fps);              // dwRate
@@ -102,8 +102,8 @@ struct AviWriter
 		bx::write(m_writer, m_frameSize);       // dwSuggestedBufferSize
 		bx::write(m_writer, UINT32_MAX);        // dwQuality
 		bx::write(m_writer, UINT32_C(0) );      // dwSampleSize
-		bx::write(m_writer, INT16_C(0) );       // rcFrame.left
-		bx::write(m_writer, INT16_C(0) );       // rcFrame.top
+		bx::write(m_writer, int16_t(0) );       // rcFrame.left
+		bx::write(m_writer, int16_t(0) );       // rcFrame.top
 		bx::write(m_writer, uint16_t(_width) ); // rcFrame.right
 		bx::write(m_writer, uint16_t(_height) );// rcFrame.bottom
 
@@ -114,8 +114,8 @@ struct AviWriter
 		bx::write(m_writer, UINT32_C(40) );     // biSize
 		bx::write(m_writer, _width);            // biWidth
 		bx::write(m_writer, _height);           // biHeight
-		bx::write(m_writer, UINT16_C(1) );      // biPlanes
-		bx::write(m_writer, UINT16_C(24) );     // biBitCount
+		bx::write(m_writer, uint16_t(1) );      // biPlanes
+		bx::write(m_writer, uint16_t(24) );     // biBitCount
 		bx::write(m_writer, UINT32_C(0) );      // biCompression
 		bx::write(m_writer, m_frameSize);       // biSizeImage
 		bx::write(m_writer, UINT32_C(0) );      // biXPelsPerMeter
