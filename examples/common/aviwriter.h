@@ -63,7 +63,7 @@ struct AviWriter
 		bx::write(m_writer, UINT32_C(0) );      // dwMicroSecPerFrame
 		bx::write(m_writer, UINT32_C(0) );      // dwMaxBytesPerSec
 		bx::write(m_writer, UINT32_C(0) );      // dwPaddingGranularity
-		bx::write(m_writer, UINT32_C(0x101) );  // dwFlags
+		bx::write(m_writer, UINT32_C(0x110) );  // dwFlags
 
 		m_totalFramesOffset = m_writer->seek();
 		bx::write(m_writer, UINT32_C(0) );      // dwTotalFrames
