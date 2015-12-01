@@ -2787,6 +2787,10 @@ again:
 	TextureHandle createTexture2D(BackbufferRatio::Enum _ratio, uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(0 != (g_caps.formats[_format] & (BGFX_CAPS_FORMAT_TEXTURE_2D|BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED|BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB) )
+			, "Format %s is not supported for 2D texture. Use bgfx::getCaps to check available texture formats."
+			, getName(_format)
+			);
 
 		_numMips = uint8_t(bx::uint32_max(1, _numMips) );
 
@@ -2847,6 +2851,10 @@ again:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_3D, "Texture3D is not supported!");
+		BX_CHECK(0 != (g_caps.formats[_format] & (BGFX_CAPS_FORMAT_TEXTURE_3D|BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED|BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB) )
+			, "Format %s is not supported for 3D texture. Use bgfx::getCaps to check available texture formats."
+			, getName(_format)
+			);
 
 		_numMips = uint8_t(bx::uint32_max(1, _numMips) );
 
@@ -2887,6 +2895,10 @@ again:
 	TextureHandle createTextureCube(uint16_t _size, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
 	{
 		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(0 != (g_caps.formats[_format] & (BGFX_CAPS_FORMAT_TEXTURE_CUBE|BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED|BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB) )
+			, "Format %s is not supported for cube texture. Use bgfx::getCaps to check available texture formats."
+			, getName(_format)
+			);
 
 		_numMips = uint8_t(bx::uint32_max(1, _numMips) );
 
