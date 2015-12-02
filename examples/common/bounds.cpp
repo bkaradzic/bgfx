@@ -334,9 +334,9 @@ bool intersect(const Ray& _ray, const Aabb& _aabb, Intersection* _intersection)
 
 	if (NULL != _intersection)
 	{
-		_intersection->m_normal[0] = (min[0] == tmin) - (max[0] == tmin);
-		_intersection->m_normal[1] = (min[1] == tmin) - (max[1] == tmin);
-		_intersection->m_normal[2] = (min[2] == tmin) - (max[2] == tmin);
+		_intersection->m_normal[0] = float( (min[0] == tmin) - (max[0] == tmin) );
+		_intersection->m_normal[1] = float( (min[1] == tmin) - (max[1] == tmin) );
+		_intersection->m_normal[2] = float( (min[2] == tmin) - (max[2] == tmin) );
 
 		_intersection->m_dist = tmin;
 		getPointAt(_intersection->m_pos, _ray, tmin);
