@@ -104,6 +104,10 @@ namespace bgfx
 		{
 			invalidate(_key);
 			m_hashMap.insert(stl::make_pair(_key, _value) );
+			BX_CHECK(1 == getRefCount(_value), "Interface ref count %d, hash %" PRIx64 "."
+				, getRefCount(_value)
+				, _key
+				);
 		}
 
 		Ty* find(uint64_t _key)
