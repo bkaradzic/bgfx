@@ -226,7 +226,7 @@ void ImGui::ShowTestWindow(bool* p_opened)
             {
                 ImFont* font = atlas->Fonts[i];
                 ImGui::BulletText("Font %d: \'%s\', %.2f px, %d glyphs", i, font->ConfigData ? font->ConfigData[0].Name : "", font->FontSize, font->Glyphs.Size);
-                ImGui::TreePush((void*)intptr_t(i));
+                ImGui::TreePush((void*)(intptr_t)i);
                 if (i > 0) { ImGui::SameLine(); if (ImGui::SmallButton("Set as default")) { atlas->Fonts[i] = atlas->Fonts[0]; atlas->Fonts[0] = font; } }
                 ImGui::PushFont(font);
                 ImGui::Text("The quick brown fox jumps over the lazy dog");
@@ -264,7 +264,7 @@ void ImGui::ShowTestWindow(bool* p_opened)
         {
             for (int i = 0; i < 5; i++)
             {
-                if (ImGui::TreeNode((void*)intptr_t(i), "Child %d", i))
+                if (ImGui::TreeNode((void*)(intptr_t)i, "Child %d", i))
                 {
                     ImGui::Text("blah blah");
                     ImGui::SameLine();
@@ -779,7 +779,7 @@ void ImGui::ShowTestWindow(bool* p_opened)
             ImGui::TreePop();
         }
 
-        if (ImGui::TreeNode("Widgets Alignment"))
+        if (ImGui::TreeNode("Widgets Width"))
         {
             static float f = 0.0f;
             ImGui::Text("PushItemWidth(100)");
@@ -950,6 +950,17 @@ void ImGui::ShowTestWindow(bool* p_opened)
             ImGui::Text("Widget"); ImGui::SameLine();
             ImGui::SmallButton("Widget");
 
+            // Tree
+            const float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
+            ImGui::Button("Button##1"); 
+            ImGui::SameLine(0.0f, spacing); 
+            if (ImGui::TreeNode("Node##1")) { for (int i = 0; i < 6; i++) ImGui::BulletText("Item %d..", i); ImGui::TreePop(); }    // Dummy tree data
+
+            ImGui::AlignFirstTextHeightToWidgets();         // Vertically align text node a bit lower so it'll be vertically centered with upcoming widget. Otherwise you can use SmallButton (smaller fit).
+            bool tree_opened = ImGui::TreeNode("Node##2");  // Common mistake to avoid: if we want to SameLine after TreeNode we need to do it before we add child content.
+            ImGui::SameLine(0.0f, spacing); ImGui::Button("Button##2");
+            if (tree_opened) { for (int i = 0; i < 6; i++) ImGui::BulletText("Item %d..", i); ImGui::TreePop(); }   // Dummy tree data
+
             ImGui::TreePop();
         }
 
@@ -969,7 +980,7 @@ void ImGui::ShowTestWindow(bool* p_opened)
                 if (i > 0) ImGui::SameLine();
                 ImGui::BeginGroup();
                 ImGui::Text("%s", i == 0 ? "Top" : i == 1 ? "25%" : i == 2 ? "Center" : i == 3 ? "75%" : "Bottom");
-                ImGui::BeginChild(ImGui::GetID((void*)intptr_t(i)), ImVec2(ImGui::GetWindowWidth() * 0.17f, 200.0f), true);
+                ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)i), ImVec2(ImGui::GetWindowWidth() * 0.17f, 200.0f), true);
                 if (scroll_to)
                     ImGui::SetScrollFromPosY(ImGui::GetCursorStartPos().y + scroll_to_px, i * 0.25f);
                 for (int line = 0; line < 100; line++)
@@ -1038,13 +1049,13 @@ void ImGui::ShowTestWindow(bool* p_opened)
             static ImVec2 size(100, 100), offset(50, 20);
             ImGui::TextWrapped("On a per-widget basis we are occasionally clipping text CPU-side if it won't fit in its frame. Otherwise we are doing coarser clipping + passing a scissor rectangle to the renderer. The system is designed to try minimizing both execution and CPU/GPU rendering cost.");
             ImGui::DragFloat2("size", (float*)&size, 0.5f, 0.0f, 200.0f, "%.0f");
-            ImGui::DragFloat2("offset", (float*)&offset, 0.5f, -200, 200.0f, "%.0f");
+            ImGui::TextWrapped("(Click and drag)");
             ImVec2 pos = ImGui::GetCursorScreenPos();
             ImVec4 clip_rect(pos.x, pos.y, pos.x+size.x, pos.y+size.y);
-            ImGui::GetWindowDrawList()->AddRectFilled(pos, ImVec2(pos.x+size.x,pos.y+size.y), ImColor(90,90,120,255));
-            ImGui::GetWindowDrawList()->AddText(ImGui::GetWindowFont(), ImGui::GetWindowFontSize()*2.0f, ImVec2(pos.x+offset.x,pos.y+offset.y), ImColor(255,255,255,255), "Line 1 hello\nLine 2 clip me!", NULL, 0.0f, &clip_rect);
             ImGui::InvisibleButton("##dummy", size);
             if (ImGui::IsItemActive() && ImGui::IsMouseDragging()) { offset.x += ImGui::GetIO().MouseDelta.x; offset.y += ImGui::GetIO().MouseDelta.y; }
+            ImGui::GetWindowDrawList()->AddRectFilled(pos, ImVec2(pos.x+size.x,pos.y+size.y), ImColor(90,90,120,255));
+            ImGui::GetWindowDrawList()->AddText(ImGui::GetWindowFont(), ImGui::GetWindowFontSize()*2.0f, ImVec2(pos.x+offset.x,pos.y+offset.y), ImColor(255,255,255,255), "Line 1 hello\nLine 2 clip me!", NULL, 0.0f, &clip_rect);
             ImGui::TreePop();
         }
     }
@@ -1328,9 +1339,9 @@ void ImGui::ShowTestWindow(bool* p_opened)
             ImGui::TreePop();
         }
 
-        bool opened = ImGui::TreeNode("Tree within single cell");
+        bool node_opened = ImGui::TreeNode("Tree within single cell");
         ImGui::SameLine(); ShowHelpMarker("NB: Tree node must be poped before ending the cell.\nThere's no storage of state per-cell.");
-        if (opened)
+        if (node_opened)
         {
             ImGui::Columns(2, "tree items"); 
             ImGui::Separator();
@@ -2191,16 +2202,15 @@ static void ShowExampleAppPropertyEditor(bool* p_opened)
     ImGui::Columns(2);
     ImGui::Separator();
 
-    ImGui::Text("Item1"); ImGui::NextColumn();
-    ImGui::Text("value1"); ImGui::NextColumn();
-
     struct funcs
     {
         static void ShowDummyObject(const char* prefix, ImU32 uid)
         {
-            ImGui::PushID(uid); // Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
+            ImGui::PushID(uid);                      // Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
+            ImGui::AlignFirstTextHeightToWidgets();  // Text and Tree nodes are less high than regular widgets, here we add vertical spacing to make the tree lines equal high.
             bool opened = ImGui::TreeNode("Object", "%s_%u", prefix, uid);
             ImGui::NextColumn();
+            ImGui::AlignFirstTextHeightToWidgets();
             ImGui::Text("my sailor is rich");
             ImGui::NextColumn();
             if (opened) 

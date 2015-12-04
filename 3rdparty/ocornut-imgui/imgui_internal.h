@@ -196,33 +196,33 @@ enum ImGuiDataType
 // NB: we can't rely on ImVec2 math operators being available here
 struct IMGUI_API ImRect
 {
-    ImVec2          Min;    // Upper-left
-    ImVec2          Max;    // Lower-right
+    ImVec2      Min;    // Upper-left
+    ImVec2      Max;    // Lower-right
 
     ImRect()                                        : Min(FLT_MAX,FLT_MAX), Max(-FLT_MAX,-FLT_MAX)  {}
     ImRect(const ImVec2& min, const ImVec2& max)    : Min(min), Max(max)                            {}
     ImRect(const ImVec4& v)                         : Min(v.x, v.y), Max(v.z, v.w)                  {}
     ImRect(float x1, float y1, float x2, float y2)  : Min(x1, y1), Max(x2, y2)                      {}
 
-    ImVec2          GetCenter() const               { return ImVec2((Min.x+Max.x)*0.5f, (Min.y+Max.y)*0.5f); }
-    ImVec2          GetSize() const                 { return ImVec2(Max.x-Min.x, Max.y-Min.y); }
-    float           GetWidth() const                { return Max.x-Min.x; }
-    float           GetHeight() const               { return Max.y-Min.y; }
-    ImVec2          GetTL() const                   { return Min; }
-    ImVec2          GetTR() const                   { return ImVec2(Max.x, Min.y); }
-    ImVec2          GetBL() const                   { return ImVec2(Min.x, Max.y); }
-    ImVec2          GetBR() const                   { return Max; }
-    bool            Contains(const ImVec2& p) const { return p.x >= Min.x     && p.y >= Min.y     && p.x < Max.x     && p.y < Max.y; }
-    bool            Contains(const ImRect& r) const { return r.Min.x >= Min.x && r.Min.y >= Min.y && r.Max.x < Max.x && r.Max.y < Max.y; }
-    bool            Overlaps(const ImRect& r) const { return r.Min.y < Max.y  && r.Max.y > Min.y  && r.Min.x < Max.x && r.Max.x > Min.x; }
-    void            Add(const ImVec2& rhs)          { if (Min.x > rhs.x)     Min.x = rhs.x;     if (Min.y > rhs.y) Min.y = rhs.y;         if (Max.x < rhs.x) Max.x = rhs.x;         if (Max.y < rhs.y) Max.y = rhs.y; }
-    void            Add(const ImRect& rhs)          { if (Min.x > rhs.Min.x) Min.x = rhs.Min.x; if (Min.y > rhs.Min.y) Min.y = rhs.Min.y; if (Max.x < rhs.Max.x) Max.x = rhs.Max.x; if (Max.y < rhs.Max.y) Max.y = rhs.Max.y; }
-    void            Expand(const float amount)      { Min.x -= amount;   Min.y -= amount;   Max.x += amount;   Max.y += amount; }
-    void            Expand(const ImVec2& amount)    { Min.x -= amount.x; Min.y -= amount.y; Max.x += amount.x; Max.y += amount.y; }
-    void            Reduce(const ImVec2& amount)    { Min.x += amount.x; Min.y += amount.y; Max.x -= amount.x; Max.y -= amount.y; }
-    void            Clip(const ImRect& clip)        { if (Min.x < clip.Min.x) Min.x = clip.Min.x; if (Min.y < clip.Min.y) Min.y = clip.Min.y; if (Max.x > clip.Max.x) Max.x = clip.Max.x; if (Max.y > clip.Max.y) Max.y = clip.Max.y; }
-    void            Round()                         { Min.x = (float)(int)Min.x; Min.y = (float)(int)Min.y; Max.x = (float)(int)Max.x; Max.y = (float)(int)Max.y; }
-    ImVec2          GetClosestPoint(ImVec2 p, bool on_edge) const
+    ImVec2      GetCenter() const               { return ImVec2((Min.x+Max.x)*0.5f, (Min.y+Max.y)*0.5f); }
+    ImVec2      GetSize() const                 { return ImVec2(Max.x-Min.x, Max.y-Min.y); }
+    float       GetWidth() const                { return Max.x-Min.x; }
+    float       GetHeight() const               { return Max.y-Min.y; }
+    ImVec2      GetTL() const                   { return Min; }                   // Top-left
+    ImVec2      GetTR() const                   { return ImVec2(Max.x, Min.y); }  // Top-right
+    ImVec2      GetBL() const                   { return ImVec2(Min.x, Max.y); }  // Bottom-left
+    ImVec2      GetBR() const                   { return Max; }                   // Bottom-right
+    bool        Contains(const ImVec2& p) const { return p.x >= Min.x     && p.y >= Min.y     && p.x < Max.x     && p.y < Max.y; }
+    bool        Contains(const ImRect& r) const { return r.Min.x >= Min.x && r.Min.y >= Min.y && r.Max.x < Max.x && r.Max.y < Max.y; }
+    bool        Overlaps(const ImRect& r) const { return r.Min.y < Max.y  && r.Max.y > Min.y  && r.Min.x < Max.x && r.Max.x > Min.x; }
+    void        Add(const ImVec2& rhs)          { if (Min.x > rhs.x)     Min.x = rhs.x;     if (Min.y > rhs.y) Min.y = rhs.y;         if (Max.x < rhs.x) Max.x = rhs.x;         if (Max.y < rhs.y) Max.y = rhs.y; }
+    void        Add(const ImRect& rhs)          { if (Min.x > rhs.Min.x) Min.x = rhs.Min.x; if (Min.y > rhs.Min.y) Min.y = rhs.Min.y; if (Max.x < rhs.Max.x) Max.x = rhs.Max.x; if (Max.y < rhs.Max.y) Max.y = rhs.Max.y; }
+    void        Expand(const float amount)      { Min.x -= amount;   Min.y -= amount;   Max.x += amount;   Max.y += amount; }
+    void        Expand(const ImVec2& amount)    { Min.x -= amount.x; Min.y -= amount.y; Max.x += amount.x; Max.y += amount.y; }
+    void        Reduce(const ImVec2& amount)    { Min.x += amount.x; Min.y += amount.y; Max.x -= amount.x; Max.y -= amount.y; }
+    void        Clip(const ImRect& clip)        { if (Min.x < clip.Min.x) Min.x = clip.Min.x; if (Min.y < clip.Min.y) Min.y = clip.Min.y; if (Max.x > clip.Max.x) Max.x = clip.Max.x; if (Max.y > clip.Max.y) Max.y = clip.Max.y; }
+    void        Round()                         { Min.x = (float)(int)Min.x; Min.y = (float)(int)Min.y; Max.x = (float)(int)Max.x; Max.y = (float)(int)Max.y; }
+    ImVec2      GetClosestPoint(ImVec2 p, bool on_edge) const
     {
         if (!on_edge && Contains(p))
             return p;
@@ -237,8 +237,8 @@ struct IMGUI_API ImRect
 // Stacked color modifier, backup of modified data so we can restore it
 struct ImGuiColMod
 {
-    ImGuiCol        Col;
-    ImVec4          PreviousValue;
+    ImGuiCol    Col;
+    ImVec4      PreviousValue;
 };
 
 // Stacked style modifier, backup of modified data so we can restore it
@@ -251,34 +251,34 @@ struct ImGuiStyleMod
 // Stacked data for BeginGroup()/EndGroup()
 struct ImGuiGroupData
 {
-    ImVec2          BackupCursorPos;
-    ImVec2          BackupCursorMaxPos;
-    float           BackupIndentX;
-    float           BackupCurrentLineHeight;
-    float           BackupCurrentLineTextBaseOffset;
-    float           BackupLogLinePosY;
-    bool            AdvanceCursor;
+    ImVec2      BackupCursorPos;
+    ImVec2      BackupCursorMaxPos;
+    float       BackupIndentX;
+    float       BackupCurrentLineHeight;
+    float       BackupCurrentLineTextBaseOffset;
+    float       BackupLogLinePosY;
+    bool        AdvanceCursor;
 };
 
 // Per column data for Columns()
 struct ImGuiColumnData
 {
-    float           OffsetNorm;     // Column start offset, normalized 0.0 (far left) -> 1.0 (far right)
-    //float         IndentX;
+    float       OffsetNorm;     // Column start offset, normalized 0.0 (far left) -> 1.0 (far right)
+    //float     IndentX;
 };
 
 // Simple column measurement currently used for MenuItem() only. This is very short-sighted for now and NOT a generic helper.
 struct IMGUI_API ImGuiSimpleColumns
 {
-    int                 Count;
-    float               Spacing;
-    float               Width, NextWidth;
-    float               Pos[8], NextWidths[8];
+    int         Count;
+    float       Spacing;
+    float       Width, NextWidth;
+    float       Pos[8], NextWidths[8];
 
     ImGuiSimpleColumns();
-    void                Update(int count, float spacing, bool clear);
-    float               DeclColumns(float w0, float w1, float w2);
-    float               CalcExtraSpace(float avail_w);
+    void       Update(int count, float spacing, bool clear);
+    float      DeclColumns(float w0, float w1, float w2);
+    float      CalcExtraSpace(float avail_w);
 };
 
 // Internal state of the currently focused/edited text input box
@@ -294,7 +294,6 @@ struct IMGUI_API ImGuiTextEditState
     ImGuiStb::STB_TexteditState   StbState;
     float               CursorAnim;
     bool                CursorFollow;
-    ImVec2              InputCursorScreenPos;       // Cursor position in screen space to be used by IME callback.
     bool                SelectedAllMouseLock;
 
     ImGuiTextEditState()                            { memset(this, 0, sizeof(*this)); }
@@ -309,11 +308,11 @@ struct IMGUI_API ImGuiTextEditState
 // Data saved in imgui.ini file
 struct ImGuiIniData
 {
-    char*               Name;
-    ImGuiID             ID;
-    ImVec2              Pos;
-    ImVec2              Size;
-    bool                Collapsed;
+    char*       Name;
+    ImGuiID     ID;
+    ImVec2      Pos;
+    ImVec2      Size;
+    bool        Collapsed;
 };
 
 // Mouse cursor data (used when io.MouseDrawCursor is set)
@@ -329,11 +328,11 @@ struct ImGuiMouseCursorData
 // Storage for current popup stack
 struct ImGuiPopupRef
 {
-    ImGuiID             PopupID;        // Set on OpenPopup()
-    ImGuiWindow*        Window;         // Resolved on BeginPopup() - may stay unresolved if user never calls OpenPopup()
-    ImGuiWindow*        ParentWindow;   // Set on OpenPopup()
-    ImGuiID             ParentMenuSet;  // Set on OpenPopup()
-    ImVec2              MousePosOnOpen; // Copy of mouse position at the time of opening popup
+    ImGuiID         PopupID;        // Set on OpenPopup()
+    ImGuiWindow*    Window;         // Resolved on BeginPopup() - may stay unresolved if user never calls OpenPopup()
+    ImGuiWindow*    ParentWindow;   // Set on OpenPopup()
+    ImGuiID         ParentMenuSet;  // Set on OpenPopup()
+    ImVec2          MousePosOnOpen; // Copy of mouse position at the time of opening popup
 
     ImGuiPopupRef(ImGuiID id, ImGuiWindow* parent_window, ImGuiID parent_menu_set, const ImVec2& mouse_pos) { PopupID = id; Window = NULL; ParentWindow = parent_window; ParentMenuSet = parent_menu_set; MousePosOnOpen = mouse_pos; }
 };
@@ -361,13 +360,13 @@ struct ImGuiState
     ImGuiWindow*            HoveredWindow;                      // Will catch mouse inputs
     ImGuiWindow*            HoveredRootWindow;                  // Will catch mouse inputs (for focus/move only)
     ImGuiID                 HoveredId;                          // Hovered widget
-    bool                    HoveredIdAllowHoveringOthers;
+    bool                    HoveredIdAllowOverlap;
     ImGuiID                 HoveredIdPreviousFrame;
     ImGuiID                 ActiveId;                           // Active widget
     ImGuiID                 ActiveIdPreviousFrame;
     bool                    ActiveIdIsAlive;
     bool                    ActiveIdIsJustActivated;            // Set at the time of activation for one frame
-    bool                    ActiveIdAllowHoveringOthers;        // Set only by active widget
+    bool                    ActiveIdAllowOverlap;               // Set only by active widget
     ImGuiWindow*            ActiveIdWindow;
     ImGuiWindow*            MovedWindow;                        // Track the child window we clicked on to move a window. Pointer is only valid if ActiveID is the "#MOVE" identifier of a window.
     ImVector<ImGuiIniData>  Settings;                           // .ini Settings
@@ -414,6 +413,7 @@ struct ImGuiState
     ImVec2                  ScrollbarClickDeltaToGrabCenter;   // Distance between mouse and center of grab box, normalized in parent space. Use storage?
     char                    Tooltip[1024];
     char*                   PrivateClipboard;                   // If no custom clipboard handler is defined
+    ImVec2                  OsImePosRequest, OsImePosSet;       // Cursor position request & last passed to the OS Input Method Editor
 
     // Logging
     bool                    LogEnabled;
@@ -445,13 +445,13 @@ struct ImGuiState
         HoveredWindow = NULL;
         HoveredRootWindow = NULL;
         HoveredId = 0;
-        HoveredIdAllowHoveringOthers = false;
+        HoveredIdAllowOverlap = false;
         HoveredIdPreviousFrame = 0;
         ActiveId = 0;
         ActiveIdPreviousFrame = 0;
         ActiveIdIsAlive = false;
         ActiveIdIsJustActivated = false;
-        ActiveIdAllowHoveringOthers = false;
+        ActiveIdAllowOverlap = false;
         ActiveIdWindow = NULL;
         MovedWindow = NULL;
         SettingsDirtyTimer = 0.0f;
@@ -477,6 +477,7 @@ struct ImGuiState
         ScrollbarClickDeltaToGrabCenter = ImVec2(0.0f, 0.0f);
         memset(Tooltip, 0, sizeof(Tooltip));
         PrivateClipboard = NULL;
+        OsImePosRequest = OsImePosSet = ImVec2(-1.0f, -1.0f);
 
         ModalWindowDarkeningRatio = 0.0f;
         OverlayDrawList._OwnerName = "##Overlay"; // Give it a name for debugging
@@ -682,6 +683,7 @@ namespace ImGui
     IMGUI_API void          FocusableItemUnregister(ImGuiWindow* window);
     IMGUI_API ImVec2        CalcItemSize(ImVec2 size, float default_x, float default_y);
     IMGUI_API float         CalcWrapWidthForPos(const ImVec2& pos, float wrap_pos_x);
+    IMGUI_API void          SetItemAllowOverlap();      // Allow last item to be overlapped by a subsequent item
 
     // NB: All position are in absolute pixels coordinates (not window coordinates)
     IMGUI_API void          RenderText(ImVec2 pos, const char* text, const char* text_end = NULL, bool hide_text_after_hash = true);
