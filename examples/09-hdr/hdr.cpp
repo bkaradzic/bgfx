@@ -336,7 +336,7 @@ class HDR : public entry::AppI
 			{
 				union { uint32_t color; uint8_t bgra[4]; } cast = { m_lumBgra8 };
 				float exponent = cast.bgra[3]/255.0f * 255.0f - 128.0f;
-				float lumAvg   = cast.bgra[2]/255.0f * exp2(exponent);
+				float lumAvg   = cast.bgra[2]/255.0f * bx::fexp2(exponent);
 				imguiSlider("Lum Avg", lumAvg, 0.0f, 1.0f, 0.01f, false);
 			}
 
