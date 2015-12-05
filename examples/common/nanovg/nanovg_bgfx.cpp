@@ -134,7 +134,6 @@ namespace
 
 		struct GLNVGtexture* textures;
 		float view[2];
-		float surface[2];
 		int ntextures;
 		int ctextures;
 		int textureId;
@@ -523,13 +522,11 @@ namespace
 		gl->th = handle;
 	}
 
-	static void nvgRenderViewport(void* _userPtr, int width, int height, int surfaceWidth, int surfaceHeight)
+	static void nvgRenderViewport(void* _userPtr, int width, int height)
 	{
 		struct GLNVGcontext* gl = (struct GLNVGcontext*)_userPtr;
 		gl->view[0] = (float)width;
 		gl->view[1] = (float)height;
-		gl->surface[0] = (float)surfaceWidth;
-		gl->surface[1] = (float)surfaceHeight;
 		bgfx::setViewRect(gl->viewid, 0, 0, width, height);
 	}
 
@@ -721,7 +718,7 @@ namespace
 								);
 			}
 
-			bgfx::setUniform(gl->u_viewSize, gl->surface);
+			bgfx::setUniform(gl->u_viewSize, gl->view);
 
 			for (uint32_t ii = 0, num = gl->ncalls; ii < num; ++ii)
 			{

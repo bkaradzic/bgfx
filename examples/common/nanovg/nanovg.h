@@ -116,7 +116,6 @@ enum NVGimageFlags {
 // frame buffer size. In that case you would set windowWidth/Height to the window size
 // devicePixelRatio to: frameBufferWidth / windowWidth.
 void nvgBeginFrame(NVGcontext* ctx, int windowWidth, int windowHeight, float devicePixelRatio);
-void nvgBeginFrameScaled(NVGcontext* ctx, int windowWidth, int windowHeight, int surfaceWidth, int surfaceHeight, float devicePixelRatio);
 
 // Cancels drawing the current frame.
 void nvgCancelFrame(NVGcontext* ctx);
@@ -143,7 +142,7 @@ NVGcolor nvgRGBA(unsigned char r, unsigned char g, unsigned char b, unsigned cha
 NVGcolor nvgRGBAf(float r, float g, float b, float a);
 
 
-// Linearly interpoaltes from color c0 to c1, and returns resulting color value.
+// Linearly interpolates from color c0 to c1, and returns resulting color value.
 NVGcolor nvgLerpRGBA(NVGcolor c0, NVGcolor c1, float u);
 
 // Sets transparency of a color value.
@@ -192,7 +191,7 @@ void nvgStrokeColor(NVGcontext* ctx, NVGcolor color);
 // Sets current stroke style to a paint, which can be a one of the gradients or a pattern.
 void nvgStrokePaint(NVGcontext* ctx, NVGpaint paint);
 
-// Sets current fill cstyle to a solid color.
+// Sets current fill style to a solid color.
 void nvgFillColor(NVGcontext* ctx, NVGcolor color);
 
 // Sets current fill style to a paint, which can be a one of the gradients or a pattern.
@@ -202,7 +201,7 @@ void nvgFillPaint(NVGcontext* ctx, NVGpaint paint);
 // Miter limit controls when a sharp corner is beveled.
 void nvgMiterLimit(NVGcontext* ctx, float limit);
 
-// Sets the stroke witdth of the stroke style.
+// Sets the stroke width of the stroke style.
 void nvgStrokeWidth(NVGcontext* ctx, float size);
 
 // Sets how the end of the line (cap) is drawn,
@@ -247,16 +246,16 @@ void nvgTransform(NVGcontext* ctx, float a, float b, float c, float d, float e, 
 // Translates current coordinate system.
 void nvgTranslate(NVGcontext* ctx, float x, float y);
 
-// Rotates current coordinate system. Angle is specifid in radians.
+// Rotates current coordinate system. Angle is specified in radians.
 void nvgRotate(NVGcontext* ctx, float angle);
 
-// Skews the current coordinate system along X axis. Angle is specifid in radians.
+// Skews the current coordinate system along X axis. Angle is specified in radians.
 void nvgSkewX(NVGcontext* ctx, float angle);
 
-// Skews the current coordinate system along Y axis. Angle is specifid in radians.
+// Skews the current coordinate system along Y axis. Angle is specified in radians.
 void nvgSkewY(NVGcontext* ctx, float angle);
 
-// Scales the current coordinat system.
+// Scales the current coordinate system.
 void nvgScale(NVGcontext* ctx, float x, float y);
 
 // Stores the top part (a-f) of the current transformation matrix in to the specified buffer.
@@ -268,7 +267,7 @@ void nvgCurrentTransform(NVGcontext* ctx, float* xform);
 
 
 // The following functions can be used to make calculations on 2x3 transformation matrices.
-// A 2x3 matrix is representated as float[6].
+// A 2x3 matrix is represented as float[6].
 
 // Sets the transform to identity matrix.
 void nvgTransformIdentity(float* dst);
@@ -279,13 +278,13 @@ void nvgTransformTranslate(float* dst, float tx, float ty);
 // Sets the transform to scale matrix.
 void nvgTransformScale(float* dst, float sx, float sy);
 
-// Sets the transform to rotate matrix. Angle is specifid in radians.
+// Sets the transform to rotate matrix. Angle is specified in radians.
 void nvgTransformRotate(float* dst, float a);
 
-// Sets the transform to skew-x matrix. Angle is specifid in radians.
+// Sets the transform to skew-x matrix. Angle is specified in radians.
 void nvgTransformSkewX(float* dst, float a);
 
-// Sets the transform to skew-y matrix. Angle is specifid in radians.
+// Sets the transform to skew-y matrix. Angle is specified in radians.
 void nvgTransformSkewY(float* dst, float a);
 
 // Sets the transform to the result of multiplication of two transforms, of A = A*B.
@@ -301,7 +300,7 @@ int nvgTransformInverse(float* dst, const float* src);
 // Transform a point by given transform.
 void nvgTransformPoint(float* dstx, float* dsty, const float* xform, float srcx, float srcy);
 
-// Converts degress to radians and vice versa.
+// Converts degrees to radians and vice versa.
 float nvgDegToRad(float deg);
 float nvgRadToDeg(float rad);
 
@@ -327,7 +326,7 @@ int nvgCreateImageRGBA(NVGcontext* ctx, int w, int h, int imageFlags, const unsi
 // Updates image data specified by image handle.
 void nvgUpdateImage(NVGcontext* ctx, int image, const unsigned char* data);
 
-// Returns the domensions of a created image.
+// Returns the dimensions of a created image.
 void nvgImageSize(NVGcontext* ctx, int image, int* w, int* h);
 
 // Deletes created image.
@@ -507,7 +506,7 @@ void nvgTextLetterSpacing(NVGcontext* ctx, float spacing);
 // Sets the proportional line height of current text style. The line height is specified as multiple of font size. 
 void nvgTextLineHeight(NVGcontext* ctx, float lineHeight);
 
-// Sets the text align of current text style, see NVGaling for options.
+// Sets the text align of current text style, see NVGalign for options.
 void nvgTextAlign(NVGcontext* ctx, int align);
 
 // Sets the font face based on specified id of current text style.
@@ -589,7 +588,7 @@ struct NVGparams {
 	int (*renderDeleteTexture)(void* uptr, int image);
 	int (*renderUpdateTexture)(void* uptr, int image, int x, int y, int w, int h, const unsigned char* data);
 	int (*renderGetTextureSize)(void* uptr, int image, int* w, int* h);
-	void (*renderViewport)(void* uptr, int width, int height, int surfaceWidth, int surfaceHeight);
+	void (*renderViewport)(void* uptr, int width, int height);
 	void (*renderCancel)(void* uptr);
 	void (*renderFlush)(void* uptr);
 	void (*renderFill)(void* uptr, NVGpaint* paint, NVGscissor* scissor, float fringe, const float* bounds, const NVGpath* paths, int npaths);
@@ -603,7 +602,7 @@ NVGcontext* nvgCreate(int edgeaa, unsigned char viewid);
 void nvgViewId(struct NVGcontext* ctx, unsigned char viewid);
 void nvgDelete(struct NVGcontext* ctx);
 
-// Contructor and destructor, called by the render back-end.
+// Constructor and destructor, called by the render back-end.
 NVGcontext* nvgCreateInternal(NVGparams* params);
 void nvgDeleteInternal(NVGcontext* ctx);
 
