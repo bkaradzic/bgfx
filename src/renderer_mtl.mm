@@ -724,7 +724,7 @@ namespace bgfx { namespace mtl
 		void saveScreenShot(const char* _filePath) BX_OVERRIDE
 		{
 			if (NULL == m_drawable
-					||  NULL == m_drawable.texture)
+			||  NULL == m_drawable.texture)
 			{
 				return;
 			}
@@ -733,7 +733,7 @@ namespace bgfx { namespace mtl
 			//TODO: implement this with saveScreenshotBegin/End
 
 			Texture backBuffer = m_drawable.texture;
-			uint32_t width = backBuffer.width();
+			uint32_t width  = backBuffer.width();
 			uint32_t height = backBuffer.height();
 			uint32_t length = width*height*4;
 			uint8_t* data = (uint8_t*)BX_ALLOC(g_allocator, length);
@@ -858,7 +858,7 @@ namespace bgfx { namespace mtl
 		void flip(HMD& /*_hmd*/) BX_OVERRIDE
 		{
 			if (NULL == m_drawable
-					||  NULL == m_commandBuffer)
+			||  NULL == m_commandBuffer)
 			{
 				return;
 			}
