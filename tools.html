@@ -222,7 +222,10 @@
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">Tools</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#shader-compiler-shaderc">Shader Compiler (shaderc)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#shader-compiler-shaderc">Shader Compiler (shaderc)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#building-shaders">Building shaders</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#texture-compiler-texturec">Texture Compiler (texturec)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#geometry-compiler-geometryc">Geometry Compiler (geometryc)</a></li>
 </ul>
@@ -305,6 +308,11 @@ precission instead of using <code class="docutils literal"><span class="pre">att
 </ul>
 <p>For more info see <a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/bgfx_shader.sh">shader helper
 macros</a>.</p>
+<div class="section" id="building-shaders">
+<h3>Building shaders<a class="headerlink" href="#building-shaders" title="Permalink to this headline">¶</a></h3>
+<p>Shaders must be compiled for all renderers by using <cite>shaderc</cite> tool. Makefile to simplify building
+shaders is provided in examples. D3D9 and D3D11 shaders can be only compiled on Windows.</p>
+</div>
 </div>
 <div class="section" id="texture-compiler-texturec">
 <h2>Texture Compiler (texturec)<a class="headerlink" href="#texture-compiler-texturec" title="Permalink to this headline">¶</a></h2>
