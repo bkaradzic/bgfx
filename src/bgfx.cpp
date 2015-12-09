@@ -368,7 +368,7 @@ namespace bgfx
 
 	static const uint32_t numCharsPerBatch = 1024;
 	static const uint32_t numBatchVertices = numCharsPerBatch*4;
-	static const uint32_t numBatchIndices = numCharsPerBatch*6;
+	static const uint32_t numBatchIndices  = numCharsPerBatch*6;
 
 	void TextVideoMemBlitter::init()
 	{
@@ -2976,9 +2976,9 @@ again:
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
 		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_3D, "Texture3D is not supported!");
 
-		if (_width == 0
-		||  _height == 0
-		||  _depth == 0)
+		if (0 == _width
+		||  0 == _height
+		||  0 == _depth)
 		{
 			release(_mem);
 		}
@@ -2993,8 +2993,8 @@ again:
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
 		BX_CHECK(_side <= 5, "Invalid side %d.", _side);
-		if (_width == 0
-		||  _height == 0)
+		if (0 == _width
+		||  0 == _height)
 		{
 			release(_mem);
 		}

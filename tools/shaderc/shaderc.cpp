@@ -1589,7 +1589,12 @@ int main(int _argc, const char* _argv[])
 							if (varyingIt != varyingMap.end() )
 							{
 								const Varying& var = varyingIt->second;
-								preprocessor.writef(" \\\n\t%s = %s;", var.m_name.c_str(), var.m_init.c_str() );
+								preprocessor.writef(" \\\n\t%s", var.m_name.c_str() );
+								if (!var.m_init.empty() )
+								{
+									preprocessor.writef(" = %s", var.m_init.c_str() );
+								}
+								preprocessor.writef(";");
 							}
 						}
 
