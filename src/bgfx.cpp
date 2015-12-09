@@ -339,11 +339,13 @@ namespace bgfx
 
 	void trace(const char* _filePath, uint16_t _line, const char* _format, ...)
 	{
-		va_list argList;
-		va_start(argList, _format);
-		g_callback->traceVargs(_filePath, _line, _format, argList);
-		va_end(argList);
-
+		if (NULL != g_callback)
+		{
+			va_list argList;
+			va_start(argList, _format);
+			g_callback->traceVargs(_filePath, _line, _format, argList);
+			va_end(argList);
+		}
 	}
 
 #include "charset.h"
