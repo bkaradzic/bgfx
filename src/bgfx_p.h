@@ -700,9 +700,25 @@ namespace bgfx
 		void operator=(const CommandBuffer&);
 	};
 
-#define SORT_KEY_RENDER_DRAW (UINT64_C(1)<<0x36)
-#define SORT_KEY_VIEW_SHIFT  UINT8_C(0x37)
-#define SORT_KEY_VIEW_MASK   ( (uint64_t(BGFX_CONFIG_MAX_VIEWS-1) )<<SORT_KEY_VIEW_SHIFT)
+#define SORT_KEY_DRAW_BIT              (UINT64_C(1)<<0x36)
+
+#define SORT_KEY_SEQ_SHIFT             0x2b
+#define SORT_KEY_SEQ_MASK              (UINT64_C(0x7ff)<<SORT_KEY_SEQ_SHIFT)
+
+#define SORT_KEY_VIEW_SHIFT            0x37
+#define SORT_KEY_VIEW_MASK             ( (uint64_t(BGFX_CONFIG_MAX_VIEWS-1) )<<SORT_KEY_VIEW_SHIFT)
+
+#define SORT_KEY_DRAW_TRANS_SHIFT      0x29
+#define SORT_KEY_DRAW_TRANS_MASK       (UINT64_C(0x3)<<SORT_KEY_DRAW_TRANS_SHIFT)
+
+#define SORT_KEY_DRAW_PROGRAM_SHIFT    0x20
+#define SORT_KEY_DRAW_PROGRAM_MASK     ( (uint64_t(BGFX_CONFIG_MAX_PROGRAMS-1) )<<SORT_KEY_DRAW_PROGRAM_SHIFT)
+
+#define SORT_KEY_COMPUTE_PROGRAM_SHIFT 0x22
+#define SORT_KEY_COMPUTE_PROGRAM_MASK  ( (uint64_t(BGFX_CONFIG_MAX_PROGRAMS-1) )<<SORT_KEY_COMPUTE_PROGRAM_SHIFT)
+
+#define SORT_KEY_DRAW_DEPTH_SHIFT      0
+#define SORT_KEY_DRAW_DEPTH_MASK       ( (uint64_t(UINT32_MAX) )<<SORT_KEY_DRAW_DEPTH_SHIFT)
 
 	BX_STATIC_ASSERT(BGFX_CONFIG_MAX_VIEWS <= 256);
 	BX_STATIC_ASSERT( (BGFX_CONFIG_MAX_PROGRAMS & (BGFX_CONFIG_MAX_PROGRAMS-1) ) == 0); // must be power of 2
@@ -719,12 +735,17 @@ namespace bgfx
 			// |   view-+|      seq-+ +-trans  +-program                 depth-+|
 			// |         +-draw                                                 |
 
-			const uint64_t depth   = m_depth;
-			const uint64_t program = uint64_t(m_program)<<0x20;
-			const uint64_t trans   = uint64_t(m_trans  )<<0x29;
-			const uint64_t seq     = uint64_t(m_seq    )<<0x2b;
-			const uint64_t view    = uint64_t(m_view   )<<SORT_KEY_VIEW_SHIFT;
-			const uint64_t key     = depth|program|trans|SORT_KEY_RENDER_DRAW|seq|view;
+			const uint64_t depth   = (uint64_t(m_depth  ) << SORT_KEY_DRAW_DEPTH_SHIFT  ) & SORT_KEY_DRAW_DEPTH_MASK;
+			const uint64_t program = (uint64_t(m_program) << SORT_KEY_DRAW_PROGRAM_SHIFT) & SORT_KEY_DRAW_PROGRAM_MASK;
+			const uint64_t trans   = (uint64_t(m_trans  ) << SORT_KEY_DRAW_TRANS_SHIFT  ) & SORT_KEY_DRAW_TRANS_MASK;
+			const uint64_t seq     = (uint64_t(m_seq    ) << SORT_KEY_SEQ_SHIFT         ) & SORT_KEY_SEQ_MASK;
+			const uint64_t view    = (uint64_t(m_view   ) << SORT_KEY_VIEW_SHIFT        ) & SORT_KEY_VIEW_MASK;
+			const uint64_t key     = depth|program|trans|SORT_KEY_DRAW_BIT|seq|view;
+
+			BX_CHECK(seq == (uint64_t(m_seq) << SORT_KEY_SEQ_SHIFT), "SortKey error, sequence is truncated (m_seq: %d)."
+				, m_seq
+				);
+
 			return key;
 		}
 
@@ -738,27 +759,32 @@ namespace bgfx
 			// |   view-+|      seq-+        +-program                          |
 			// |         +-draw                                                 |
 
-			const uint64_t program = uint64_t(m_program)<<0x22;
-			const uint64_t seq     = uint64_t(m_seq    )<<0x2b;
-			const uint64_t view    = uint64_t(m_view   )<<SORT_KEY_VIEW_SHIFT;
+			const uint64_t program = (uint64_t(m_program) << SORT_KEY_COMPUTE_PROGRAM_SHIFT) & SORT_KEY_COMPUTE_PROGRAM_MASK;
+			const uint64_t seq     = (uint64_t(m_seq    ) << SORT_KEY_SEQ_SHIFT            ) & SORT_KEY_SEQ_MASK;
+			const uint64_t view    = (uint64_t(m_view   ) << SORT_KEY_VIEW_SHIFT           ) & SORT_KEY_VIEW_MASK;
 			const uint64_t key     = program|seq|view;
+
+			BX_CHECK(seq == (uint64_t(m_seq) << SORT_KEY_SEQ_SHIFT), "SortKey error, sequence is truncated (m_seq: %d)."
+				, m_seq
+				);
+
 			return key;
 		}
 
 		/// Returns true if item is command.
 		bool decode(uint64_t _key)
 		{
-			m_seq     = (_key>>0x2c)& 0x7ff;
-			m_view    = uint8_t( (_key&SORT_KEY_VIEW_MASK)>>SORT_KEY_VIEW_SHIFT);
-			if (_key & SORT_KEY_RENDER_DRAW)
+			m_seq  = uint16_t( (_key & SORT_KEY_SEQ_MASK ) >> SORT_KEY_SEQ_SHIFT);
+			m_view =  uint8_t( (_key & SORT_KEY_VIEW_MASK) >> SORT_KEY_VIEW_SHIFT);
+			if (_key & SORT_KEY_DRAW_BIT)
 			{
-				m_depth   =  _key       & 0xffffffff;
-				m_program = (_key>>0x20)&(BGFX_CONFIG_MAX_PROGRAMS-1);
-				m_trans   = (_key>>0x29)& 0x3;
+				m_depth   = uint32_t( (_key & SORT_KEY_DRAW_DEPTH_MASK  ) >> SORT_KEY_DRAW_DEPTH_SHIFT);
+				m_program = uint16_t( (_key & SORT_KEY_DRAW_PROGRAM_MASK) >> SORT_KEY_DRAW_PROGRAM_SHIFT);
+				m_trans   =  uint8_t( (_key & SORT_KEY_DRAW_TRANS_MASK  ) >> SORT_KEY_DRAW_TRANS_SHIFT);
 				return false; // draw
 			}
 
-			m_program = (_key>>0x22)&(BGFX_CONFIG_MAX_PROGRAMS-1);
+			m_program = uint16_t( (_key & SORT_KEY_COMPUTE_PROGRAM_MASK) >> SORT_KEY_COMPUTE_PROGRAM_SHIFT);
 			return true; // compute
 		}
 
