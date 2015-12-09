@@ -1816,6 +1816,7 @@ namespace bgfx { namespace gl
 				;
 
 			m_timerQuerySupport &= true
+				&& NULL != glQueryCounter
 				&& NULL != glGetQueryObjectiv
 				&& NULL != glGetQueryObjectui64v
 				;

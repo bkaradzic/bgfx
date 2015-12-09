@@ -31,6 +31,7 @@ namespace bgfx { namespace gl
 			, m_instInterface(NULL)
 			, m_graphicsInterface(NULL)
 			, m_instancedArrays(NULL)
+			, m_query(NULL)
 			, m_postSwapBuffers(NULL)
 			, m_forceSwap(true)
 		{
@@ -59,6 +60,7 @@ namespace bgfx { namespace gl
 		const PPB_Instance* m_instInterface;
 		const PPB_Graphics3D* m_graphicsInterface;
 		const PPB_OpenGLES2InstancedArrays* m_instancedArrays;
+		const PPB_OpenGLES2Query* m_query;
 		PostSwapBuffersFn m_postSwapBuffers;
 		bool m_forceSwap;
 	};
@@ -95,6 +97,40 @@ namespace bgfx { namespace gl
 		s_ppapi.m_instancedArrays->DrawElementsInstancedANGLE(s_ppapi.m_context, _mode, _count, _type, _indices, _primcount);
 	}
 
+	static void GL_APIENTRY naclGenQueries(GLsizei _n, GLuint* _queries)
+	{
+		s_ppapi.m_query->GenQueriesEXT(s_ppapi.m_context, _n, _queries);
+	}
+
+	static void GL_APIENTRY naclDeleteQueries(GLsizei _n, const GLuint* _queries)
+	{
+		s_ppapi.m_query->DeleteQueriesEXT(s_ppapi.m_context, _n, _queries);
+	}
+
+	static void GL_APIENTRY naclBeginQuery(GLenum _target, GLuint _id)
+	{
+		BX_UNUSED(_target);
+		s_ppapi.m_query->BeginQueryEXT(s_ppapi.m_context, GL_ANY_SAMPLES_PASSED_EXT, _id);
+	}
+
+	static void GL_APIENTRY naclEndQuery(GLenum _target)
+	{
+		BX_UNUSED(_target);
+		s_ppapi.m_query->EndQueryEXT(s_ppapi.m_context, GL_ANY_SAMPLES_PASSED_EXT);
+	}
+
+	static void GL_APIENTRY naclGetQueryObjectiv(GLuint _id, GLenum _pname, GLint* _params)
+	{
+		s_ppapi.m_query->GetQueryivEXT(s_ppapi.m_context, GL_ANY_SAMPLES_PASSED_EXT, GL_CURRENT_QUERY_EXT, _params);
+	}
+
+	static void GL_APIENTRY naclGetQueryObjectui64v(GLuint _id, GLenum _pname, GLuint64* _params)
+	{
+		GLint params;
+		s_ppapi.m_query->GetQueryivEXT(s_ppapi.m_context, GL_ANY_SAMPLES_PASSED_EXT, GL_CURRENT_QUERY_EXT, &params);
+		*_params = params;
+	}
+
 	bool Ppapi::setInterfaces(PP_Instance _instance, const PPB_Instance* _instInterface, const PPB_Graphics3D* _graphicsInterface, PostSwapBuffersFn _postSwapBuffers)
 	{
 		BX_TRACE("PPAPI Interfaces");
@@ -103,6 +139,7 @@ namespace bgfx { namespace gl
 		m_instInterface = _instInterface;
 		m_graphicsInterface = _graphicsInterface;
 		m_instancedArrays = glGetInstancedArraysInterfacePPAPI();
+		m_query = glGetQueryInterfacePPAPI();
 		m_postSwapBuffers = _postSwapBuffers;
 
 		int32_t attribs[] =
@@ -128,9 +165,22 @@ namespace bgfx { namespace gl
 		glSetCurrentContextPPAPI(m_context);
 		m_graphicsInterface->SwapBuffers(m_context, naclSwapComplete);
 
-		glVertexAttribDivisor   = naclVertexAttribDivisor;
-		glDrawArraysInstanced   = naclDrawArraysInstanced;
-		glDrawElementsInstanced = naclDrawElementsInstanced;
+		if (NULL != m_instancedArrays)
+		{
+			glVertexAttribDivisor   = naclVertexAttribDivisor;
+			glDrawArraysInstanced   = naclDrawArraysInstanced;
+			glDrawElementsInstanced = naclDrawElementsInstanced;
+		}
+
+		if (NULL != m_query)
+		{
+			glGenQueries          = naclGenQueries;
+			glDeleteQueries       = naclDeleteQueries;
+			glBeginQuery          = naclBeginQuery;
+			glEndQuery            = naclEndQuery;
+			glGetQueryObjectiv    = naclGetQueryObjectiv;
+			glGetQueryObjectui64v = naclGetQueryObjectui64v;
+		}
 
 		// Prevent render thread creation.
 		RenderFrame::Enum result = renderFrame();
