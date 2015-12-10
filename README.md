@@ -97,6 +97,13 @@ The main goal is performance and Unity-like usability.
 https://github.com/podgorskiy/KeplerOrbits KeplerOrbits - Tool that calculates
 positions of celestial bodies using their orbital elements. [Web Demo](http://podgorskiy.com/KeplerOrbits/KeplerOrbits.html)
 
+https://github.com/cyberegoorg/cetech - CETech is Data-Driven game engine and
+toolbox inspired by Bitsquid/Stingray engine.  
+![CETech screenshot](https://github.com/cyberegoorg/cetech/raw/master/docs/img/prototyp.png)
+
+https://github.com/jpcy/ioq3-renderer-bgfx - A renderer for ioquake3 written in
+C++ and using bgfx to support multiple rendering APIs.
+
 [Building](https://bkaradzic.github.io/bgfx/build.html)
 -------------------------------------------------------
 
