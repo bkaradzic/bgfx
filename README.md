@@ -102,7 +102,8 @@ toolbox inspired by Bitsquid/Stingray engine.
 ![CETech screenshot](https://github.com/cyberegoorg/cetech/raw/master/docs/img/prototyp.png)
 
 https://github.com/jpcy/ioq3-renderer-bgfx - A renderer for ioquake3 written in
-C++ and using bgfx to support multiple rendering APIs.
+C++ and using bgfx to support multiple rendering APIs.  
+![ioq3-renderer-bgfx screenshot](https://camo.githubusercontent.com/052aa40c05120e56306294d3a1bb5f99f97de8c8/687474703a2f2f692e696d6775722e636f6d2f64364f6856594b2e6a7067)
 
 [Building](https://bkaradzic.github.io/bgfx/build.html)
 -------------------------------------------------------
