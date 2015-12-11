@@ -70,6 +70,12 @@ local BGFX_BUILD_DIR = path.join(BGFX_DIR, ".build")
 local BGFX_THIRD_PARTY_DIR = path.join(BGFX_DIR, "3rdparty")
 BX_DIR = path.getabsolute(path.join(BGFX_DIR, "../bx"))
 
+if not os.isdir(BX_DIR) then
+	print("bx not found at " .. BX_DIR)
+	print("For more info see: https://bkaradzic.github.io/bgfx/build.html")
+	os.exit()
+end
+
 defines {
 	"BX_CONFIG_ENABLE_MSVC_LEVEL4_WARNINGS=1"
 }
