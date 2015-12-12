@@ -67,6 +67,11 @@ documented just below this comment.
 #define RMT_USE_OPENGL 0
 #endif
 
+// Initially use POSIX thread names to name threads instead of Thread0, 1, ...
+#ifndef RMT_USE_POSIX_THREADNAMES
+#define RMT_USE_POSIX_THREADNAMES 0
+#endif
+
 
 /*
 ------------------------------------------------------------------------------------------------------------------------
