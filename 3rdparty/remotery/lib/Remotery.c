@@ -5381,7 +5381,8 @@ GLAPI GLenum GLAPIENTRY glGetError(void) { return 0; }
 #if defined(_WIN32)
 #  define rmtGetProcAddress(name) wglGetProcAddress((LPCSTR)name)
 #elif defined(__APPLE__) && !defined(GLEW_APPLE_GLX)
-#  define rmtGetProcAddress(name) NSGLGetProcAddress(name)
+void* nsglGetProcAddress(const GLubyte* _name);
+#  define rmtGetProcAddress(name) nsglGetProcAddress(name)
 #elif defined(__sgi) || defined(__sun)
 #  define rmtGetProcAddress(name) dlGetProcAddress(name)
 #elif defined(__ANDROID__)
