@@ -9,5 +9,5 @@ $input v_position, v_texcoord0
 
 void main()
 {
-    gl_FragColor = vec4(v_texcoord0.x, v_texcoord0.y, v_position.y / 50.0, 1.0); 
+	gl_FragColor = vec4(v_texcoord0.x, v_texcoord0.y, v_position.y / 50.0, 1.0);
 }
