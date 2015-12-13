@@ -125,9 +125,9 @@ class Terrain : public entry::AppI
 
 		cameraCreate();
 
-		const float initialPos[3] = { 0.0f, 15.0f, 0.0f };
+		const float initialPos[3] = { s_terrainSize/2.0f, 100.0f, 0.0f };
 		cameraSetPosition(initialPos);
-		cameraSetVerticalAngle(0.0f);
+		cameraSetVerticalAngle(-bx::pi/4.0f);
 	}
 
 	virtual int shutdown() BX_OVERRIDE
