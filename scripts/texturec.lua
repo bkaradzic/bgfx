@@ -7,14 +7,11 @@ project "texturec"
 	uuid "838801ee-7bc3-11e1-9f19-eae7d36e7d26"
 	kind "ConsoleApp"
 
-	defines {
-		"ENTRY_CONFIG_PROFILER=0",
-	}
-
 	includedirs {
 		path.join(BX_DIR, "include"),
 		path.join(BGFX_DIR, "include"),
 		path.join(BGFX_DIR, "src"),
+		path.join(BGFX_DIR, "3rdparty"),
 	}
 
 	files {
