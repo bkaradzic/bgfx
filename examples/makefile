@@ -29,6 +29,7 @@ rebuild:
 	@make -s --no-print-directory rebuild -C 24-nbody
 #	@make -s --no-print-directory rebuild -C 25-c99
 #	@make -s --no-print-directory rebuild -C 26-occlusion
+	@make -s --no-print-directory rebuild -C 27-terrain
 	@make -s --no-print-directory rebuild -C common/font
 	@make -s --no-print-directory rebuild -C common/imgui
 	@make -s --no-print-directory rebuild -C common/nanovg
@@ -52,3 +53,4 @@ metal:
 	@make -s --no-print-directory TARGET=5 -C 21-deferred
 	@make -s --no-print-directory TARGET=5 -C 23-vectordisplay
 	@make -s --no-print-directory TARGET=5 -C 24-nbody
+	@make -s --no-print-directory TARGET=5 -C 27-terrain
