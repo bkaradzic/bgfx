@@ -459,6 +459,7 @@ namespace bgfx { namespace d3d12
 		RendererContextD3D12()
 			: m_wireframe(false)
 			, m_maxAnisotropy(1)
+			, m_depthClamp(false)
 			, m_fsChanges(0)
 			, m_vsChanges(0)
 			, m_backBufferColorIdx(0)
@@ -1729,7 +1730,15 @@ data.NumQualityLevels = 0;
 				m_maxAnisotropy = 1;
 			}
 
-			uint32_t flags = _resolution.m_flags & ~(BGFX_RESET_HMD_RECENTER | BGFX_RESET_MAXANISOTROPY);
+			bool depthClamp = !!(_resolution.m_flags & BGFX_RESET_DEPTH_CLAMP);
+
+			if (m_depthClamp != depthClamp)
+			{
+				m_depthClamp = depthClamp;
+				m_pipelineStateCache.invalidate();
+			}
+
+			uint32_t flags = _resolution.m_flags & ~(BGFX_RESET_HMD_RECENTER | BGFX_RESET_MAXANISOTROPY | BGFX_RESET_DEPTH_CLAMP);
 
 			if (m_resolution.m_width  != _resolution.m_width
 			||  m_resolution.m_height != _resolution.m_height
@@ -2007,7 +2016,7 @@ data.NumQualityLevels = 0;
 			desc.DepthBias = 0;
 			desc.DepthBiasClamp = 0.0f;
 			desc.SlopeScaledDepthBias = 0.0f;
-			desc.DepthClipEnable = false;
+			desc.DepthClipEnable = m_depthClamp;
 			desc.MultisampleEnable = !!(_state&BGFX_STATE_MSAA);
 			desc.AntialiasedLineEnable = false;
 			desc.ForcedSampleCount = 0;
@@ -2636,6 +2645,7 @@ data.NumQualityLevels = 0;
 
 		DXGI_SWAP_CHAIN_DESC m_scd;
 		uint32_t m_maxAnisotropy;
+		bool m_depthClamp;
 
 		BufferD3D12 m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexBufferD3D12 m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];

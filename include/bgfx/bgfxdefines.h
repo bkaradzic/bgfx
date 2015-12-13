@@ -354,6 +354,7 @@
 #define BGFX_RESET_FLIP_AFTER_RENDER     UINT32_C(0x00004000) //!< This flag  specifies where flip occurs. Default behavior is that flip occurs before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
 #define BGFX_RESET_SRGB_BACKBUFFER       UINT32_C(0x00008000) //!< Enable sRGB backbuffer.
 #define BGFX_RESET_HIDPI                 UINT32_C(0x00010000) //!< Enable HiDPI rendering.
+#define BGFX_RESET_DEPTH_CLAMP           UINT32_C(0x00020000) //!< Enable depth clamp.
 
 #define BGFX_RESET_RESERVED_SHIFT        31                   //!< Internal bits shift.
 #define BGFX_RESET_RESERVED_MASK         UINT32_C(0x80000000) //!< Internal bits mask.

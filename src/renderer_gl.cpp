@@ -1936,11 +1936,6 @@ namespace bgfx { namespace gl
 				GL_CHECK(glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS) );
 			}
 
-			if (s_extension[Extension::ARB_depth_clamp].m_supported)
-			{
-				GL_CHECK(glEnable(GL_DEPTH_CLAMP) );
-			}
-
 			if (NULL == glFrameTerminatorGREMEDY
 			||  !s_extension[Extension::GREMEDY_frame_terminator].m_supported)
 			{
@@ -2404,7 +2399,20 @@ namespace bgfx { namespace gl
 				? m_maxAnisotropyDefault
 				: 0.0f
 				;
-			uint32_t flags = _resolution.m_flags & ~(BGFX_RESET_HMD_RECENTER | BGFX_RESET_MAXANISOTROPY);
+
+			if (s_extension[Extension::ARB_depth_clamp].m_supported)
+			{
+				if (!!(_resolution.m_flags & BGFX_RESET_DEPTH_CLAMP) )
+				{
+					GL_CHECK(glEnable(GL_DEPTH_CLAMP) );
+				}
+				else
+				{
+					GL_CHECK(glDisable(GL_DEPTH_CLAMP) );
+				}
+			}
+
+			uint32_t flags = _resolution.m_flags & ~(BGFX_RESET_HMD_RECENTER | BGFX_RESET_MAXANISOTROPY | BGFX_RESET_DEPTH_CLAMP);
 
 			if (m_resolution.m_width  != _resolution.m_width
 			||  m_resolution.m_height != _resolution.m_height
