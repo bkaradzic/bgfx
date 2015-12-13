@@ -2182,11 +2182,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				m_samplerStateCache.invalidate();
 			}
 
-			bool depthClamp = false;
-			if (!!(_resolution.m_flags & BGFX_RESET_DEPTH_CLAMP) )
-			{
-				depthClamp = m_featureLevel <= D3D_FEATURE_LEVEL_9_3; // disabling depth clamp is only supported on 10_0+
-			}
+			bool depthClamp = true
+				&& !!(_resolution.m_flags & BGFX_RESET_DEPTH_CLAMP)
+				&& m_featureLevel > D3D_FEATURE_LEVEL_9_3 // disabling depth clamp is only supported on 10_0+
+				;
 
 			if (m_depthClamp != depthClamp)
 			{
@@ -2673,7 +2672,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				desc.DepthBias = 0;
 				desc.DepthBiasClamp = 0.0f;
 				desc.SlopeScaledDepthBias = 0.0f;
-				desc.DepthClipEnable = m_depthClamp;
+				desc.DepthClipEnable = !m_depthClamp;
 				desc.ScissorEnable = _scissor;
 				desc.MultisampleEnable = !!(_state&BGFX_STATE_MSAA);
 				desc.AntialiasedLineEnable = false;
