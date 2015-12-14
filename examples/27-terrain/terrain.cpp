@@ -215,9 +215,9 @@ class Terrain : public entry::AppI
 	{
 		const bgfx::Memory* mem;
 
-		// Vertex Buffer : Destroy and recreate a regular vertex buffer to update terrain.
-		if (m_terrain.m_mode == 0)
+		switch (m_terrain.m_mode)
 		{
+		default: // Vertex Buffer : Destroy and recreate a regular vertex buffer to update terrain.
 			updateTerrainMesh();
 
 			if (bgfx::isValid(m_vbh) )
@@ -227,7 +227,6 @@ class Terrain : public entry::AppI
 
 			mem = bgfx::makeRef(&m_terrain.m_vertices[0], sizeof(PosTexCoord0Vertex) * m_terrain.m_vertexCount);
 			m_vbh = bgfx::createVertexBuffer(mem, PosTexCoord0Vertex::ms_decl);
-
 			if (bgfx::isValid(m_ibh) )
 			{
 				bgfx::destroyIndexBuffer(m_ibh);
@@ -235,11 +234,9 @@ class Terrain : public entry::AppI
 
 			mem = bgfx::makeRef(&m_terrain.m_indices[0], sizeof(uint16_t) * m_terrain.m_indexCount);
 			m_ibh = bgfx::createIndexBuffer(mem);
-		}
+			break;
 
-		// Dynamic Vertex Buffer : Utilize dynamic vertex buffer to update terrain.
-		if (m_terrain.m_mode == 1)
-		{
+		case 1: // Dynamic Vertex Buffer : Utilize dynamic vertex buffer to update terrain.
 			updateTerrainMesh();
 
 			if (!bgfx::isValid(m_dvbh) )
@@ -257,11 +254,9 @@ class Terrain : public entry::AppI
 
 			mem = bgfx::makeRef(&m_terrain.m_indices[0], sizeof(uint16_t) * m_terrain.m_indexCount);
 			bgfx::updateDynamicIndexBuffer(m_dibh, 0, mem);
-		}
+			break;
 
-		// Height Texture: Update a height texture that is sampled in the terrain vertex shader.
-		if (m_terrain.m_mode == 2)
-		{
+		case 2: // Height Texture: Update a height texture that is sampled in the terrain vertex shader.
 			if (!bgfx::isValid(m_vbh) || !bgfx::isValid(m_ibh) )
 			{
 				updateTerrainMesh();
@@ -280,6 +275,7 @@ class Terrain : public entry::AppI
 
 			mem = bgfx::makeRef(&m_terrain.m_heightMap[0], sizeof(uint8_t) * s_terrainSize * s_terrainSize);
 			bgfx::updateTexture2D(m_heightTexture, 0, 0, 0, s_terrainSize, s_terrainSize, mem);
+			break;
 		}
 	}
 
@@ -458,24 +454,26 @@ class Terrain : public entry::AppI
 			bgfx::setViewTransform(0, m_viewMtx, m_projMtx);
 			bgfx::setTransform(m_terrain.m_transform);
 
-			if (m_terrain.m_mode == 0)
+			switch (m_terrain.m_mode)
 			{
+			default:
 				bgfx::setVertexBuffer(m_vbh);
 				bgfx::setIndexBuffer(m_ibh);
 				bgfx::submit(0, m_terrainProgram);
-			}
-			else if (m_terrain.m_mode == 1)
-			{
+				break;
+
+			case 1:
 				bgfx::setVertexBuffer(m_dvbh);
 				bgfx::setIndexBuffer(m_dibh);
 				bgfx::submit(0, m_terrainProgram);
-			}
-			else if (m_terrain.m_mode == 2)
-			{
+				break;
+
+			case 2:
 				bgfx::setVertexBuffer(m_vbh);
 				bgfx::setIndexBuffer(m_ibh);
 				bgfx::setTexture(0, s_heightTexture, m_heightTexture);
 				bgfx::submit(0, m_terrainHeightTextureProgram);
+				break;
 			}
 
 			// Advance to next frame. Rendering thread will be kicked to
