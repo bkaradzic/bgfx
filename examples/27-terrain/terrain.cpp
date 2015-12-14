@@ -8,8 +8,9 @@
 #include "imgui/imgui.h"
 #include "camera.h"
 #include "bounds.h"
-#include "bx/fpumath.h"
+#include <bx/allocator.h>
 #include <bx/debug.h>
+#include <bx/fpumath.h>
 
 static float s_texelHalf = 0.0f;
 static bool s_originBottomLeft = false;
@@ -114,11 +115,13 @@ class Terrain : public entry::AppI
 		m_brush.m_size  = 10;
 		m_brush.m_raise = true;
 
-		m_terrain.m_mode     = 0;
+		uint32_t num = s_terrainSize * s_terrainSize;
+
+		m_terrain.m_mode      = 0;
 		m_terrain.m_dirty     = true;
-		m_terrain.m_vertices  = new PosTexCoord0Vertex[s_terrainSize * s_terrainSize];
-		m_terrain.m_indices   = new uint16_t[s_terrainSize * s_terrainSize * 6];
-		m_terrain.m_heightMap = new uint8_t[s_terrainSize * s_terrainSize];
+		m_terrain.m_vertices  = (PosTexCoord0Vertex*)BX_ALLOC(entry::getAllocator(), num * sizeof(PosTexCoord0Vertex) );
+		m_terrain.m_indices   = (uint16_t*)BX_ALLOC(entry::getAllocator(), num * sizeof(uint16_t) * 6);
+		m_terrain.m_heightMap = (uint8_t*)BX_ALLOC(entry::getAllocator(), num);
 
 		bx::mtxSRT(m_terrain.m_transform, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 		memset(m_terrain.m_heightMap, 0, sizeof(uint8_t) * s_terrainSize * s_terrainSize);
@@ -157,6 +160,7 @@ class Terrain : public entry::AppI
 		}
 
 		bgfx::destroyUniform(s_heightTexture);
+
 		if (bgfx::isValid(m_heightTexture) )
 		{
 			bgfx::destroyTexture(m_heightTexture);
@@ -165,9 +169,9 @@ class Terrain : public entry::AppI
 		bgfx::destroyProgram(m_terrainProgram);
 		bgfx::destroyProgram(m_terrainHeightTextureProgram);
 
-		delete[] m_terrain.m_vertices;
-		delete[] m_terrain.m_indices;
-		delete[] m_terrain.m_heightMap;
+		BX_FREE(entry::getAllocator(), m_terrain.m_vertices);
+		BX_FREE(entry::getAllocator(), m_terrain.m_indices);
+		BX_FREE(entry::getAllocator(), m_terrain.m_heightMap);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();
