@@ -309,10 +309,13 @@ class Terrain : public entry::AppI
 				// Brush attenuation
 				float a2 = (float)(area_x * area_x);
 				float b2 = (float)(area_y * area_y);
-				float brushAttn = m_brush.m_size - sqrtf(a2 + b2);
+				float brushAttn = m_brush.m_size - bx::fsqrt(a2 + b2);
 
 				// Raise/Lower and scale by brush power.
-				height += bx::fclamp(brushAttn * m_brush.m_power, 0.0, m_brush.m_power) * m_brush.m_raise ? 1.0 : -1.0;
+				height += (bx::fclamp(brushAttn * m_brush.m_power, 0.0, m_brush.m_power) * m_brush.m_raise)
+					?  1.0
+					: -1.0
+					;
 
 				m_terrain.m_heightMap[heightMapPos] = (uint8_t)bx::fclamp(height, 0.0, 255.0);
 				m_terrain.m_dirty = true;
