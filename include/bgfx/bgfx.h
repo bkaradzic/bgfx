@@ -1414,7 +1414,7 @@ namespace bgfx
 	///
 	/// @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
 	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_READ_BACK`.
-	/// @attention C99 equivalent is `bgfx_read_texture`.
+	/// @attention C99 equivalent is `bgfx_read_frame_buffer`.
 	///
 	void readTexture(FrameBufferHandle _handle, uint8_t _attachment, void* _data);
 
@@ -1614,6 +1614,7 @@ namespace bgfx
 	///
 	void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
 
+    /// @attention C99 equivalent is `bgfx_set_view_rect_auto`.
 	///
 	void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, BackbufferRatio::Enum _ratio);
 
