@@ -16,6 +16,8 @@ project "texturec"
 
 	files {
 		path.join(BGFX_DIR, "src/image.*"),
+		path.join(BGFX_DIR, "3rdparty/libsquish/**.cpp"),
+		path.join(BGFX_DIR, "3rdparty/libsquish/**.h"),
 		path.join(BGFX_DIR, "tools/texturec/**.cpp"),
 		path.join(BGFX_DIR, "tools/texturec/**.h"),
 	}
