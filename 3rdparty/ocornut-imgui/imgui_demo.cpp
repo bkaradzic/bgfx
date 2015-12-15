@@ -94,7 +94,6 @@ void ImGui::ShowUserGuide()
 void ImGui::ShowTestWindow(bool* p_opened)
 {
     // Examples apps
-    static bool show_app_metrics = false;
     static bool show_app_main_menu_bar = false;
     static bool show_app_console = false;
     static bool show_app_log = false;
@@ -103,10 +102,13 @@ void ImGui::ShowTestWindow(bool* p_opened)
     static bool show_app_long_text = false;
     static bool show_app_auto_resize = false;
     static bool show_app_fixed_overlay = false;
-    static bool show_app_custom_rendering = false;
     static bool show_app_manipulating_window_title = false;
+    static bool show_app_custom_rendering = false;
+    static bool show_app_style_editor = false;
+
+    static bool show_app_metrics = false;
     static bool show_app_about = false;
-    if (show_app_metrics) ImGui::ShowMetricsWindow(&show_app_metrics);
+
     if (show_app_main_menu_bar) ShowExampleAppMainMenuBar();
     if (show_app_console) ShowExampleAppConsole(&show_app_console);
     if (show_app_log) ShowExampleAppLog(&show_app_log);
@@ -117,6 +119,9 @@ void ImGui::ShowTestWindow(bool* p_opened)
     if (show_app_fixed_overlay) ShowExampleAppFixedOverlay(&show_app_fixed_overlay);
     if (show_app_manipulating_window_title) ShowExampleAppManipulatingWindowTitle(&show_app_manipulating_window_title);
     if (show_app_custom_rendering) ShowExampleAppCustomRendering(&show_app_custom_rendering);
+
+    if (show_app_metrics) ImGui::ShowMetricsWindow(&show_app_metrics);
+    if (show_app_style_editor) { ImGui::Begin("Style Editor", &show_app_style_editor); ImGui::ShowStyleEditor(); ImGui::End(); }
     if (show_app_about)
     {
         ImGui::Begin("About ImGui", &show_app_about, ImGuiWindowFlags_AlwaysAutoResize);
@@ -134,7 +139,7 @@ void ImGui::ShowTestWindow(bool* p_opened)
     static bool no_scrollbar = false;
     static bool no_collapse = false;
     static bool no_menu = false;
-    static float bg_alpha = 0.65f;
+    static float bg_alpha = -0.01f; // <0: default
 
     // Demonstrate the various window flags. Typically you would just use the default.
     ImGuiWindowFlags window_flags = 0;
@@ -182,6 +187,7 @@ void ImGui::ShowTestWindow(bool* p_opened)
         if (ImGui::BeginMenu("Help"))
         {
             ImGui::MenuItem("Metrics", NULL, &show_app_metrics);
+            ImGui::MenuItem("Style Editor", NULL, &show_app_style_editor);
             ImGui::MenuItem("About ImGui", NULL, &show_app_about);
             ImGui::EndMenu();
         }
@@ -197,14 +203,17 @@ void ImGui::ShowTestWindow(bool* p_opened)
 
     if (ImGui::CollapsingHeader("Window options"))
     {
-        ImGui::Checkbox("no titlebar", &no_titlebar); ImGui::SameLine(150);
-        ImGui::Checkbox("no border", &no_border); ImGui::SameLine(300);
-        ImGui::Checkbox("no resize", &no_resize);
-        ImGui::Checkbox("no move", &no_move); ImGui::SameLine(150);
-        ImGui::Checkbox("no scrollbar", &no_scrollbar); ImGui::SameLine(300);
-        ImGui::Checkbox("no collapse", &no_collapse);
-        ImGui::Checkbox("no menu", &no_menu);
-        ImGui::SliderFloat("bg alpha", &bg_alpha, 0.0f, 1.0f);
+        ImGui::Checkbox("No titlebar", &no_titlebar); ImGui::SameLine(150);
+        ImGui::Checkbox("No border", &no_border); ImGui::SameLine(300);
+        ImGui::Checkbox("No resize", &no_resize);
+        ImGui::Checkbox("No move", &no_move); ImGui::SameLine(150);
+        ImGui::Checkbox("No scrollbar", &no_scrollbar); ImGui::SameLine(300);
+        ImGui::Checkbox("No collapse", &no_collapse);
+        ImGui::Checkbox("No menu", &no_menu);
+
+        ImGui::PushItemWidth(100);
+        ImGui::DragFloat("Window Fill Alpha", &bg_alpha, 0.005f, -0.01f, 1.0f, bg_alpha < 0.0f ? "(default)" : "%.3f"); // Not exposing zero here so user doesn't "lose" the UI (zero alpha clips all widgets). But application code could have a toggle to switch between zero and non-zero.
+        ImGui::PopItemWidth();
 
         if (ImGui::TreeNode("Style"))
         {
@@ -214,7 +223,8 @@ void ImGui::ShowTestWindow(bool* p_opened)
 
         if (ImGui::TreeNode("Fonts", "Fonts (%d)", ImGui::GetIO().Fonts->Fonts.Size))
         {
-            ImGui::TextWrapped("Tip: Load fonts with io.Fonts->AddFontFromFileTTF().");
+            ImGui::SameLine();
+            ShowHelpMarker("Tip: Load fonts with io.Fonts->AddFontFromFileTTF()\nbefore calling io.Fonts->GetTex* functions.");
             ImFontAtlas* atlas = ImGui::GetIO().Fonts;
             if (ImGui::TreeNode("Atlas texture", "Atlas texture (%dx%d pixels)", atlas->TexWidth, atlas->TexHeight))
             {
@@ -237,7 +247,10 @@ void ImGui::ShowTestWindow(bool* p_opened)
                     ImGui::Text("Ascent: %f, Descent: %f, Height: %f", font->Ascent, font->Descent, font->Ascent - font->Descent);
                     ImGui::Text("Fallback character: '%c' (%d)", font->FallbackChar, font->FallbackChar);
                     for (int config_i = 0; config_i < font->ConfigDataCount; config_i++)
-                        ImGui::BulletText("Input %d: \'%s\'", config_i, font->ConfigData[config_i].Name);
+                    {
+                        ImFontConfig* cfg = &font->ConfigData[config_i];
+                        ImGui::BulletText("Input %d: \'%s\'\nOversample: (%d,%d), PixelSnapH: %d", config_i, cfg->Name, cfg->OversampleH, cfg->OversampleV, cfg->PixelSnapH);
+                    }
                     ImGui::TreePop();
                 }
                 ImGui::TreePop();
@@ -695,13 +708,15 @@ void ImGui::ShowTestWindow(bool* p_opened)
 
     if (ImGui::CollapsingHeader("Graphs widgets"))
     {
+        static bool animate = true;
+        ImGui::Checkbox("Animate", &animate);
+
         static float arr[] = { 0.6f, 0.1f, 1.0f, 0.5f, 0.92f, 0.1f, 0.2f };
         ImGui::PlotLines("Frame Times", arr, IM_ARRAYSIZE(arr));
 
-        static bool pause;
         static ImVector<float> values; if (values.empty()) { values.resize(90); memset(values.Data, 0, values.Size*sizeof(float)); }
         static int values_offset = 0;
-        if (!pause)
+        if (animate)
         {
             static float refresh_time = ImGui::GetTime(); // Create dummy data at fixed 60 hz rate for the demo
             for (; ImGui::GetTime() > refresh_time + 1.0f/60.0f; refresh_time += 1.0f/60.0f)
@@ -712,12 +727,7 @@ void ImGui::ShowTestWindow(bool* p_opened)
                 phase += 0.10f*values_offset;
             }
         }
-        ImGui::PlotLines("##Lines", values.Data, values.Size, values_offset, "avg 0.0", -1.0f, 1.0f, ImVec2(0,80));
-        ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
-        ImGui::BeginGroup();
-        ImGui::Text("Lines");
-        ImGui::Checkbox("pause", &pause);
-        ImGui::EndGroup();
+        ImGui::PlotLines("Lines", values.Data, values.Size, values_offset, "avg 0.0", -1.0f, 1.0f, ImVec2(0,80));
         ImGui::PlotHistogram("Histogram", arr, IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2(0,80));
 
         // Use functions to generate output
@@ -735,6 +745,26 @@ void ImGui::ShowTestWindow(bool* p_opened)
         float (*func)(void*, int) = (func_type == 0) ? Funcs::Sin : Funcs::Saw;
         ImGui::PlotLines("Lines", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0,80));
         ImGui::PlotHistogram("Histogram", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0,80));
+        ImGui::Separator();
+
+        // Animate a simple progress bar
+        static float progress = 0.0f, progress_dir = 1.0f;
+        if (animate)
+        {
+            progress += progress_dir * 0.4f * ImGui::GetIO().DeltaTime;
+            if (progress >= +1.1f) { progress = +1.1f; progress_dir *= -1.0f; }
+            if (progress <= -0.1f) { progress = -0.1f; progress_dir *= -1.0f; }
+        }
+
+        // Typically we would use ImVec2(-1.0f,0.0f) to use all available width, or ImVec2(width,0.0f) for a specified width. ImVec2(0.0f,0.0f) uses ItemWidth.
+        ImGui::ProgressBar(progress, ImVec2(0.0f,0.0f));
+        ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+        ImGui::Text("Progress Bar");
+
+        float progress_saturated = (progress < 0.0f) ? 0.0f : (progress > 1.0f) ? 1.0f : progress;
+        char buf[32];
+        sprintf(buf, "%d/%d", (int)(progress_saturated*1753), 1753);
+        ImGui::ProgressBar(progress, ImVec2(0.f,0.f), buf);
     }
 
     if (ImGui::CollapsingHeader("Layout"))
@@ -960,6 +990,15 @@ void ImGui::ShowTestWindow(bool* p_opened)
             bool tree_opened = ImGui::TreeNode("Node##2");  // Common mistake to avoid: if we want to SameLine after TreeNode we need to do it before we add child content.
             ImGui::SameLine(0.0f, spacing); ImGui::Button("Button##2");
             if (tree_opened) { for (int i = 0; i < 6; i++) ImGui::BulletText("Item %d..", i); ImGui::TreePop(); }   // Dummy tree data
+
+            // Bullet
+            ImGui::Button("Button##3"); 
+            ImGui::SameLine(0.0f, spacing); 
+            ImGui::BulletText("Bullet text");
+
+            ImGui::AlignFirstTextHeightToWidgets();
+            ImGui::BulletText("Node");
+            ImGui::SameLine(0.0f, spacing); ImGui::Button("Button##4");
 
             ImGui::TreePop();
         }
@@ -1503,13 +1542,14 @@ void ImGui::ShowStyleEditor(ImGuiStyle* ref)
         ImGui::PushItemWidth(100);
         ImGui::DragFloat("Curve Tessellation Tolerance", &style.CurveTessellationTol, 0.02f, 0.10f, FLT_MAX, NULL, 2.0f);
         if (style.CurveTessellationTol < 0.0f) style.CurveTessellationTol = 0.10f;
+        ImGui::DragFloat("Global Alpha", &style.Alpha, 0.005f, 0.20f, 1.0f, "%.2f"); // Not exposing zero here so user doesn't "lose" the UI (zero alpha clips all widgets). But application code could have a toggle to switch between zero and non-zero.
+        ImGui::DragFloat("Window Fill Alpha Default", &style.WindowFillAlphaDefault, 0.005f, 0.0f, 1.0f, "%.2f");
         ImGui::PopItemWidth();
         ImGui::TreePop();
     }
 
     if (ImGui::TreeNode("Sizes"))
     {
-        ImGui::SliderFloat("Alpha", &style.Alpha, 0.20f, 1.0f, "%.2f");                 // Not exposing zero here so user doesn't "lose" the UI. But application code could have a toggle to switch between zero and non-zero.
         ImGui::SliderFloat2("WindowPadding", (float*)&style.WindowPadding, 0.0f, 20.0f, "%.0f");
         ImGui::SliderFloat("WindowRounding", &style.WindowRounding, 0.0f, 16.0f, "%.0f");
         ImGui::SliderFloat("ChildWindowRounding", &style.ChildWindowRounding, 0.0f, 16.0f, "%.0f");
@@ -1530,7 +1570,7 @@ void ImGui::ShowStyleEditor(ImGuiStyle* ref)
     {
         static int output_dest = 0;
         static bool output_only_modified = false;
-        if (ImGui::Button("Output Colors"))
+        if (ImGui::Button("Copy Colors"))
         {
             if (output_dest == 0)
                 ImGui::LogToClipboard();
@@ -2230,6 +2270,7 @@ static void ShowExampleAppPropertyEditor(bool* p_opened)
                         //ImGui::Text("Field_%d", i);
                         char label[32];
                         sprintf(label, "Field_%d", i);
+                        ImGui::Bullet();
                         ImGui::Selectable(label);
                         ImGui::NextColumn();
                         ImGui::PushItemWidth(-1);

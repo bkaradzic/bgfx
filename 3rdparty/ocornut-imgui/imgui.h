@@ -41,6 +41,7 @@ struct ImDrawList;
 struct ImDrawData;
 struct ImFont;
 struct ImFontAtlas;
+struct ImColor;
 struct ImGuiIO;
 struct ImGuiStorage;
 struct ImGuiStyle;
@@ -172,6 +173,8 @@ namespace ImGui
     IMGUI_API void          PushStyleVar(ImGuiStyleVar idx, float val);
     IMGUI_API void          PushStyleVar(ImGuiStyleVar idx, const ImVec2& val);
     IMGUI_API void          PopStyleVar(int count = 1);
+    IMGUI_API ImU32         GetColorU32(ImGuiCol idx, float alpha_mul = 1.0f);                  // retrieve given style color with style alpha applied and optional extra alpha multiplier
+    IMGUI_API ImU32         GetColorU32(const ImVec4& col);                                     // retrieve given color with style alpha applied
 
     // Parameters stacks (current window)
     IMGUI_API void          PushItemWidth(float item_width);                                    // width of items for the common item+label case, pixels. 0.0f = default to ~2/3 of windows width, >0.0f: width in pixels, <0.0f align xx pixels to the right of window (so -1.0f always align width to the right side)
@@ -257,11 +260,12 @@ namespace ImGui
     IMGUI_API bool          ColorButton(const ImVec4& col, bool small_height = false, bool outline_border = true);
     IMGUI_API bool          ColorEdit3(const char* label, float col[3]);
     IMGUI_API bool          ColorEdit4(const char* label, float col[4], bool show_alpha = true);
-    IMGUI_API void          ColorEditMode(ImGuiColorEditMode mode);
+    IMGUI_API void          ColorEditMode(ImGuiColorEditMode mode);                                 // FIXME-OBSOLETE: This is inconsistent with most of the API and should be obsoleted.
     IMGUI_API void          PlotLines(const char* label, const float* values, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0), int stride = sizeof(float));
     IMGUI_API void          PlotLines(const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0));
     IMGUI_API void          PlotHistogram(const char* label, const float* values, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0), int stride = sizeof(float));
     IMGUI_API void          PlotHistogram(const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0));
+    IMGUI_API void          ProgressBar(float fraction, const ImVec2& size_arg = ImVec2(-1,0), const char* overlay = NULL);
 
     // Widgets: Drags (tip: ctrl+click on a drag box to input text)
     IMGUI_API bool          DragFloat(const char* label, float* v, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* display_format = "%.3f", float power = 1.0f);     // If v_min >= v_max we have no bound
@@ -736,8 +740,9 @@ struct ImGuiIO
     ImWchar     InputCharacters[16+1];      // List of characters input (translated by user from keypress+keyboard state). Fill using AddInputCharacter() helper.
 
     // Functions
-    IMGUI_API void AddInputCharacter(ImWchar c);                    // Helper to add a new character into InputCharacters[]
-    IMGUI_API void AddInputCharactersUTF8(const char* utf8_chars);  // Helper to add new characters into InputCharacters[] from an UTF-8 string
+    IMGUI_API void AddInputCharacter(ImWchar c);                        // Helper to add a new character into InputCharacters[]
+    IMGUI_API void AddInputCharactersUTF8(const char* utf8_chars);      // Helper to add new characters into InputCharacters[] from an UTF-8 string
+    IMGUI_API void ClearInputCharacters() { InputCharacters[0] = 0; }   // Helper to clear the text input buffer
 
     //------------------------------------------------------------------
     // Output - Retrieve after calling NewFrame(), you can use them to discard inputs or hide them from the rest of your application
@@ -972,12 +977,15 @@ struct ImColor
 {
     ImVec4              Value;
 
+    ImColor()                                                       { Value.x = Value.y = Value.z = Value.w = 0.0f; }
     ImColor(int r, int g, int b, int a = 255)                       { float sc = 1.0f/255.0f; Value.x = (float)r * sc; Value.y = (float)g * sc; Value.z = (float)b * sc; Value.w = (float)a * sc; }
     ImColor(ImU32 rgba)                                             { float sc = 1.0f/255.0f; Value.x = (float)(rgba&0xFF) * sc; Value.y = (float)((rgba>>8)&0xFF) * sc; Value.z = (float)((rgba>>16)&0xFF) * sc; Value.w = (float)(rgba >> 24) * sc; }
     ImColor(float r, float g, float b, float a = 1.0f)              { Value.x = r; Value.y = g; Value.z = b; Value.w = a; }
     ImColor(const ImVec4& col)                                      { Value = col; }
-    operator ImU32() const                                          { return ImGui::ColorConvertFloat4ToU32(Value); }
-    operator ImVec4() const                                         { return Value; }
+    inline operator ImU32() const                                   { return ImGui::ColorConvertFloat4ToU32(Value); }
+    inline operator ImVec4() const                                  { return Value; }
+
+    inline void    SetHSV(float h, float s, float v, float a = 1.0f){ ImGui::ColorConvertHSVtoRGB(h, s, v, Value.x, Value.y, Value.z); Value.w = a; }
 
     static ImColor HSV(float h, float s, float v, float a = 1.0f)   { float r,g,b; ImGui::ColorConvertHSVtoRGB(h, s, v, r, g, b); return ImColor(r,g,b,a); }
 };
