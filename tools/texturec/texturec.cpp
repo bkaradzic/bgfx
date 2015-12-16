@@ -13,6 +13,7 @@ using namespace bgfx;
 
 #include "image.h"
 #include <libsquish/squish.h>
+#include <etc1/etc1.h>
 
 #if 0
 #	define BX_TRACE(_format, ...) fprintf(stderr, "" _format "\n", ##__VA_ARGS__)
