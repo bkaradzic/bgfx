@@ -5728,6 +5728,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	}
 } /* namespace d3d11 */ } // namespace bgfx
 
+#undef BGFX_GPU_PROFILER_BIND
+#undef BGFX_GPU_PROFILER_UNBIND
+#undef BGFX_GPU_PROFILER_BEGIN
+#undef BGFX_GPU_PROFILER_BEGIN_DYNAMIC
+#undef BGFX_GPU_PROFILER_END
+
 #else
 
 namespace bgfx { namespace d3d11
