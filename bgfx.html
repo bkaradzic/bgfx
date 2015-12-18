@@ -1563,7 +1563,12 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dl class="function">
 <dt id="_CPPv2N4bgfx11setViewRectE7uint8_t8uint16_t8uint16_tN15BackbufferRatio4EnumE">
 <span id="bgfx::setViewRect__uint8_t.uint16_t.uint16_t.BackbufferRatio::Enum"></span><span class="target" id="project0namespacebgfx_1a60262b4046cf2510dd3c216e13829c87"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewRect</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, uint16_t <em>_x</em>, uint16_t <em>_y</em>, BackbufferRatio::Enum <em>_ratio</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11setViewRectE7uint8_t8uint16_t8uint16_tN15BackbufferRatio4EnumE" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_view_rect_auto</span></code>. </dd>
+</dl>
+</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx14setViewScissorE7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t">
@@ -4319,7 +4324,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dt><strong>Attention</strong></dt>
 <dd><p class="first">Texture must be created with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_READ_BACK</span></code> flag. </p>
 <p>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_READ_BACK</span></code>. </p>
-<p class="last">C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_read_texture</span></code>. </p>
+<p class="last">C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_read_frame_buffer</span></code>. </p>
 </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
