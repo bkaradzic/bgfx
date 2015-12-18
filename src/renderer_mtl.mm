@@ -18,6 +18,7 @@
 #import <Foundation/Foundation.h>
 
 #define UNIFORM_BUFFER_SIZE (1024*1024)
+#define UNIFORM_BUFFER_COUNT (3)
 
 /*
 Known issues / TODOs:
@@ -331,6 +332,7 @@ namespace bgfx { namespace mtl
 			, m_numWindows(1)
 			, m_rtMsaa(false)
 			, m_drawable(NULL)
+			, m_uniformBufferIndex(0)
 		{
 		}
 
@@ -398,7 +400,10 @@ namespace bgfx { namespace mtl
 			m_textureDescriptor = newTextureDescriptor();
 			m_samplerDescriptor = newSamplerDescriptor();
 
-			m_uniformBuffer = m_device.newBufferWithLength(UNIFORM_BUFFER_SIZE, 0);
+			for (uint8_t i=0; i < UNIFORM_BUFFER_COUNT; ++i)
+			{
+				m_uniformBuffers[i] = m_device.newBufferWithLength(UNIFORM_BUFFER_SIZE, 0);
+			}
 			m_uniformBufferVertexOffset = 0;
 			m_uniformBufferFragmentOffset = 0;
 
@@ -521,7 +526,10 @@ namespace bgfx { namespace mtl
 				MTL_RELEASE(m_backBufferStencil);
 			}
 
-			MTL_RELEASE(m_uniformBuffer);
+			for (uint8_t i=0; i < UNIFORM_BUFFER_COUNT; ++i)
+			{
+				MTL_RELEASE(m_uniformBuffers[i]);
+			}
 			MTL_RELEASE(m_commandQueue);
 			MTL_RELEASE(m_device);
 		}
@@ -1223,9 +1231,11 @@ namespace bgfx { namespace mtl
 
 		OcclusionQueryMTL m_occlusionQuery;
 
-		Buffer   m_uniformBuffer; //todo: use a pool of this
+		Buffer	 m_uniformBuffer;
+		Buffer   m_uniformBuffers[UNIFORM_BUFFER_COUNT];
 		uint32_t m_uniformBufferVertexOffset;
 		uint32_t m_uniformBufferFragmentOffset;
+		uint8_t  m_uniformBufferIndex;
 
 		uint16_t          m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
@@ -2170,6 +2180,8 @@ namespace bgfx { namespace mtl
 		m_drawable = m_metalLayer.nextDrawable;
 //		retain(m_drawable); // keep alive to be useable at 'flip'
 
+		m_uniformBuffer = m_uniformBuffers[m_uniformBufferIndex];
+		m_uniformBufferIndex = (m_uniformBufferIndex + 1) % UNIFORM_BUFFER_COUNT;
 		m_uniformBufferVertexOffset = 0;
 		m_uniformBufferFragmentOffset = 0;
 
