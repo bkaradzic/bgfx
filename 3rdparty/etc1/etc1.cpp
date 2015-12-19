@@ -519,7 +519,7 @@ etc1_uint32 etc1_get_encoded_data_size(etc1_uint32 width, etc1_uint32 height) {
 
 int etc1_encode_image(const etc1_byte* pIn, etc1_uint32 width, etc1_uint32 height,
         etc1_uint32 pixelSize, etc1_uint32 stride, etc1_byte* pOut) {
-    if (pixelSize < 2 || pixelSize > 3) {
+    if (pixelSize < 2 || pixelSize > 4) {
         return -1;
     }
     static const unsigned short kYMask[] = { 0x0, 0xf, 0xff, 0xfff, 0xffff };
@@ -546,7 +546,7 @@ int etc1_encode_image(const etc1_byte* pIn, etc1_uint32 width, etc1_uint32 heigh
             for (etc1_uint32 cy = 0; cy < yEnd; cy++) {
                 etc1_byte* q = block + (cy * 4) * 3;
                 const etc1_byte* p = pIn + pixelSize * x + stride * (y + cy);
-                if (pixelSize == 3) {
+                if (pixelSize >= 3) {
                     memcpy(q, p, xEnd * 3);
                 } else {
                     for (etc1_uint32 cx = 0; cx < xEnd; cx++) {
@@ -576,7 +576,7 @@ int etc1_encode_image(const etc1_byte* pIn, etc1_uint32 width, etc1_uint32 heigh
 int etc1_decode_image(const etc1_byte* pIn, etc1_byte* pOut,
         etc1_uint32 width, etc1_uint32 height,
         etc1_uint32 pixelSize, etc1_uint32 stride) {
-    if (pixelSize < 2 || pixelSize > 3) {
+    if (pixelSize < 2 || pixelSize > 4) {
         return -1;
     }
     etc1_byte block[ETC1_DECODED_BLOCK_SIZE];
@@ -599,7 +599,7 @@ int etc1_decode_image(const etc1_byte* pIn, etc1_byte* pOut,
             for (etc1_uint32 cy = 0; cy < yEnd; cy++) {
                 const etc1_byte* q = block + (cy * 4) * 3;
                 etc1_byte* p = pOut + pixelSize * x + stride * (y + cy);
-                if (pixelSize == 3) {
+                if (pixelSize >= 3) {
                     memcpy(p, q, xEnd * 3);
                 } else {
                     for (etc1_uint32 cx = 0; cx < xEnd; cx++) {

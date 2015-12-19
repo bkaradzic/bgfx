@@ -9,7 +9,6 @@
 
 // Just hacking DDS loading code in here.
 #include "bgfx_p.h"
-using namespace bgfx;
 
 #include "image.h"
 #include <libsquish/squish.h>
@@ -58,6 +57,8 @@ void help(const char* _error = NULL)
 
 int main(int _argc, const char* _argv[])
 {
+	using namespace bgfx;
+
 	bx::CommandLine cmdLine(_argc, _argv);
 
 	if (cmdLine.hasArg('h', "help") )
@@ -87,6 +88,33 @@ int main(int _argc, const char* _argv[])
 		return EXIT_FAILURE;
 	}
 
+	const bool  mips = cmdLine.hasArg('m', "mips");
+	const char* type = cmdLine.findOption('t');
+	TextureFormat::Enum format = TextureFormat::BGRA8;
+
+	if (NULL != type)
+	{
+		if (0 == bx::stricmp(type, "bc1")
+		||  0 == bx::stricmp(type, "dxt1") )
+		{
+			format = TextureFormat::BC1;
+		}
+		else if (0 == bx::stricmp(type, "bc2")
+		||       0 == bx::stricmp(type, "dxt3") )
+		{
+			format = TextureFormat::BC2;
+		}
+		else if (0 == bx::stricmp(type, "bc3")
+		||       0 == bx::stricmp(type, "dxt5") )
+		{
+			format = TextureFormat::BC3;
+		}
+		else if (0 == bx::stricmp(type, "etc1") )
+		{
+			format = TextureFormat::ETC1;
+		}
+	}
+
 	uint32_t size = (uint32_t)bx::getSize(&reader);
 	const Memory* mem = alloc(size);
 	bx::read(&reader, mem->data, mem->size);
@@ -94,133 +122,65 @@ int main(int _argc, const char* _argv[])
 
 	ImageContainer imageContainer;
 
-	if (imageParse(imageContainer, mem->data, mem->size) )
+	bool loaded = imageParse(imageContainer, mem->data, mem->size);
+	if (!loaded)
 	{
-		bx::CrtFileWriter writer;
-		if (0 == bx::open(&writer, outputFileName) )
-		{
-			if (NULL != bx::stristr(outputFileName, ".ktx") )
-			{
-				imageWriteKtx(&writer, imageContainer, mem->data, mem->size);
-			}
-
-			bx::close(&writer);
-		}
 	}
 
-#if 0
-	if (imageParse(imageContainer, mem->data, mem->size) )
+	BX_UNUSED(mips);
+	if (loaded)
 	{
-		bool decompress = cmdLine.hasArg('d');
+		bx::CrtAllocator allocator;
+		uint8_t* output = NULL;
 
-		if (decompress
-		||  0 == imageContainer.m_format)
+		ImageMip mip;
+		if (imageGetRawData(imageContainer, 0, 0, mem->data, mem->size, mip) )
 		{
-			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
+			uint8_t* rgba = (uint8_t*)BX_ALLOC(&allocator, imageGetSize(TextureFormat::RGBA8, mip.m_width, mip.m_height) );
+
+			imageDecodeToRgba8(rgba, mip.m_data, mip.m_width, mip.m_height, mip.m_width*mip.m_bpp/8, mip.m_format);
+
+			output = (uint8_t*)BX_ALLOC(&allocator, imageGetSize(format, mip.m_width, mip.m_height) );
+
+			switch (format)
 			{
-				uint32_t width  = imageContainer.m_width;
-				uint32_t height = imageContainer.m_height;
+			case TextureFormat::BC1:
+			case TextureFormat::BC2:
+			case TextureFormat::BC3:
+				squish::CompressImage(rgba, mip.m_width, mip.m_height, output
+					, format == TextureFormat::BC1 ? squish::kDxt1
+					: format == TextureFormat::BC2 ? squish::kDxt3
+					:                                squish::kDxt5
+					);
+				break;
 
-				for (uint32_t lod = 0, num = imageContainer.m_numMips; lod < num; ++lod)
-				{
-					width  = bx::uint32_max(1, width);
-					height = bx::uint32_max(1, height);
+			case TextureFormat::ETC1:
+				etc1_encode_image(rgba, mip.m_width, mip.m_height, 4, mip.m_width*4, output);
+				break;
 
-					ImageMip mip;
-					if (imageGetRawData(imageContainer, side, lod, mem->data, mem->size, mip) )
-					{
-						uint32_t dstpitch = width*4;
-						uint8_t* bits = (uint8_t*)malloc(dstpitch*height);
-
-						if (width  != mip.m_width
-						||  height != mip.m_height)
-						{
-							uint8_t* temp = (uint8_t*)realloc(NULL, mip.m_width*mip.m_height*4);
-							imageDecodeToBgra8(temp, mip.m_data, mip.m_width, mip.m_height, mip.m_width*4, mip.m_format);
-							uint32_t srcpitch = mip.m_width*4;
-
-							for (uint32_t yy = 0; yy < height; ++yy)
-							{
-								uint8_t* src = &temp[yy*srcpitch];
-								uint8_t* dst = &bits[yy*dstpitch];
-
-								for (uint32_t xx = 0; xx < width; ++xx)
-								{
-									memcpy(dst, src, 4);
-									dst += 4;
-									src += 4;
-								}
-							}
-
-							free(temp);
-						}
-						else
-						{
-							imageDecodeToBgra8(bits
-								, mip.m_data
-								, mip.m_width
-								, mip.m_height
-								, mip.m_width*4
-								, mip.m_format
-								);
-						}
-
-						char filePath[256];
-						bx::snprintf(filePath, sizeof(filePath), "mip%d_%d.ktx", side, lod);
-
-						bx::CrtFileWriter writer;
-						if (0 == bx::open(&writer, filePath) )
-						{
-							if (NULL != bx::stristr(filePath, ".ktx") )
-							{
-								imageWriteKtx(&writer
-									, TextureFormat::BGRA8
-									, false
-									, width
-									, height
-									, 0
-									, 1
-									, bits
-									);
-							}
-							else
-							{
-								imageWriteTga(&writer, width, height, dstpitch, bits, false, false);
-							}
-
-							bx::close(&writer);
-						}
-
-						free(bits);
-					}
-
-					width >>= 1;
-					height >>= 1;
-				}
+			default:
+				break;
 			}
+
+			BX_FREE(&allocator, rgba);
 		}
-		else
-		{
-			for (uint32_t lod = 0, num = imageContainer.m_numMips; lod < num; ++lod)
-			{
-				ImageMip mip;
-				if (imageGetRawData(imageContainer, 0, lod, mem->data, mem->size, mip) )
-				{
-					char filePath[256];
-					bx::snprintf(filePath, sizeof(filePath), "mip%d.bin", lod);
 
-					bx::CrtFileWriter writer;
-					if (0 == bx::open(&writer, filePath) )
-					{
-						printf("mip%d, size %d\n", lod, mip.m_size);
-						bx::write(&writer, mip.m_data, mip.m_size);
-						bx::close(&writer);
-					}
+		if (NULL != output)
+		{
+			bx::CrtFileWriter writer;
+			if (0 == bx::open(&writer, outputFileName) )
+			{
+				if (NULL != bx::stristr(outputFileName, ".ktx") )
+				{
+					imageWriteKtx(&writer, imageContainer, mem->data, mem->size);
 				}
+
+				bx::close(&writer);
 			}
+
+			BX_FREE(&allocator, output);
 		}
 	}
-#endif // 0
 
 	release(mem);
 
