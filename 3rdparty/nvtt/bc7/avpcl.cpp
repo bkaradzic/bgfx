@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and limitations 
 
 #include "tile.h"
 #include "avpcl.h"
-#include "nvcore/Debug.h"
-#include "nvmath/Vector.inl"
-#include <cstring>
+#include "nvcore/debug.h"
+#include "nvmath/vector.inl"
+#include <string.h>
 #include <float.h>
 
 using namespace nv;

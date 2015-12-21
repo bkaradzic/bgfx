@@ -9,12 +9,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 See the License for the specific language governing permissions and limitations under the License.
 */
-#pragma once
 #ifndef _ZOH_TILE_H
 #define _ZOH_TILE_H
 
 #include "zoh_utils.h"
-#include "nvmath/Vector.h"
+#include "nvmath/vector.h"
 #include <math.h>
 
 namespace ZOH {

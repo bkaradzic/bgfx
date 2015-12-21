@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and limitations 
 #ifndef _AVPCL_TILE_H
 #define _AVPCL_TILE_H
 
-#include "nvmath/Vector.h"
+#include "nvmath/vector.h"
 #include <math.h>
 #include "avpcl_utils.h"
 

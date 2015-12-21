@@ -18,8 +18,8 @@ See the License for the specific language governing permissions and limitations 
 #include "zoh.h"
 #include "zoh_utils.h"
 
-#include "nvmath/Vector.inl"
-#include "nvmath/Fitting.h"
+#include "nvmath/vector.inl"
+#include "nvmath/fitting.h"
 
 #include <string.h> // strlen
 #include <float.h> // FLT_MAX

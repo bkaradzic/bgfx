@@ -35,7 +35,11 @@ namespace nv
 
     inline bool isFinite(const float f)
     {
+#if NV_CC_MSVC
         return _finite(f) != 0;
+#elif NV_CC_GNUC
+        return finitef(f);
+#endif //
     }
 
     // Eliminates negative zeros from a float array.

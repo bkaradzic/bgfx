@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and limitations 
 // Utility and common routines
 
 #include "zoh_utils.h"
-#include "nvmath/Vector.inl"
+#include "nvmath/vector.inl"
 #include <math.h>
 
 using namespace nv;

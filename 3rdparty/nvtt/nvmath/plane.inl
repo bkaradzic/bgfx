@@ -4,8 +4,8 @@
 #ifndef NV_MATH_PLANE_INL
 #define NV_MATH_PLANE_INL
 
-#include "Plane.h"
-#include "Vector.inl"
+#include "plane.h"
+#include "vector.inl"
 
 namespace nv
 {

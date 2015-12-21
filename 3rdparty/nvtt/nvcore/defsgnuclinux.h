@@ -5,6 +5,10 @@
 #include <stdint.h> // uint8_t, int8_t, ... uintptr_t
 #include <stddef.h> // operator new, size_t, NULL
 
+#ifndef __STDC_VERSION__
+#	define __STDC_VERSION__ 0
+#endif
+
 // Function linkage
 #define DLL_IMPORT
 #if __GNUC__ >= 4

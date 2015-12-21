@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and limitations 
 
 #include "avpcl_utils.h"
 #include "avpcl.h"
-#include "nvmath/Vector.inl"
+#include "nvmath/vector.inl"
 #include <math.h>
 
 using namespace nv;

@@ -3,6 +3,9 @@
 #ifndef NV_CORE_H
 #define NV_CORE_H
 
+#define NVCORE_SHARED 0
+#define NV_NO_ASSERT 0
+
 // Function linkage
 #if NVCORE_SHARED
 #ifdef NVCORE_EXPORTS
@@ -17,21 +20,8 @@
 #define NVCORE_CLASS
 #endif // NVCORE_SHARED
 
-
 // Platform definitions
 #include "posh.h"
-
-// OS:
-// NV_OS_WIN32
-// NV_OS_WIN64
-// NV_OS_MINGW
-// NV_OS_CYGWIN
-// NV_OS_LINUX
-// NV_OS_UNIX
-// NV_OS_DARWIN
-// NV_OS_XBOX
-// NV_OS_ORBIS
-// NV_OS_IOS
 
 #define NV_OS_STRING POSH_OS_STRING
 
@@ -71,6 +61,53 @@
 #   error "Unsupported OS"
 #endif
 
+#ifndef NV_OS_WIN32
+#	define NV_OS_WIN32  0
+#endif // NV_OS_WIN32
+
+#ifndef NV_OS_WIN64
+#	define NV_OS_WIN64  0
+#endif // NV_OS_WIN64
+
+#ifndef NV_OS_MINGW
+#	define NV_OS_MINGW  0
+#endif // NV_OS_MINGW
+
+#ifndef NV_OS_CYGWIN
+#	define NV_OS_CYGWIN 0
+#endif // NV_OS_CYGWIN
+
+#ifndef NV_OS_LINUX
+#	define NV_OS_LINUX  0
+#endif // NV_OS_LINUX
+
+#ifndef NV_OS_FREEBSD
+#	define NV_OS_FREEBSD 0
+#endif // NV_OS_FREEBSD
+
+#ifndef NV_OS_OPENBSD
+#	define NV_OS_OPENBSD 0
+#endif // NV_OS_OPENBSD
+
+#ifndef NV_OS_UNIX
+#	define NV_OS_UNIX   0
+#endif // NV_OS_UNIX
+
+#ifndef NV_OS_DARWIN
+#	define NV_OS_DARWIN 0
+#endif // NV_OS_DARWIN
+
+#ifndef NV_OS_XBOX
+#	define NV_OS_XBOX   0
+#endif // NV_OS_XBOX
+
+#ifndef NV_OS_ORBIS
+#	define NV_OS_ORBIS  0
+#endif // NV_OS_ORBIS
+
+#ifndef NV_OS_IOS
+#	define NV_OS_IOS    0
+#endif // NV_OS_IOS
 
 // Threading:
 // some platforms don't implement __thread or similar for thread-local-storage
@@ -88,11 +125,6 @@
 
 
 // CPUs:
-// NV_CPU_X86
-// NV_CPU_X86_64
-// NV_CPU_PPC
-// NV_CPU_ARM
-// NV_CPU_AARCH64
 
 #define NV_CPU_STRING   POSH_CPU_STRING
 
@@ -111,11 +143,27 @@
 #   error "Unsupported CPU"
 #endif
 
+#ifndef NV_CPU_X86
+#	define NV_CPU_X86     0
+#endif // NV_CPU_X86
+
+#ifndef NV_CPU_X86_64
+#	define NV_CPU_X86_64  0
+#endif // NV_CPU_X86_64
+
+#ifndef NV_CPU_PPC
+#	define NV_CPU_PPC     0
+#endif // NV_CPU_PPC
+
+#ifndef NV_CPU_ARM
+#	define NV_CPU_ARM     0
+#endif // NV_CPU_ARM
+
+#ifndef NV_CPU_AARCH64
+#	define NV_CPU_AARCH64 0
+#endif // NV_CPU_AARCH64
 
 // Compiler:
-// NV_CC_GNUC
-// NV_CC_MSVC
-// NV_CC_CLANG
 
 #if defined POSH_COMPILER_CLANG
 #   define NV_CC_CLANG  1
@@ -124,12 +172,30 @@
 #elif defined POSH_COMPILER_GCC
 #   define NV_CC_GNUC   1
 #   define NV_CC_STRING "gcc"
+#	pragma GCC diagnostic ignored "-Wshadow"
+#	pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#	pragma GCC diagnostic ignored "-Wunused-function"
+#	pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#	pragma GCC diagnostic ignored "-Wunused-variable"
+#	pragma GCC diagnostic ignored "-Wunused-parameter"
 #elif defined POSH_COMPILER_MSVC
 #   define NV_CC_MSVC   1
 #   define NV_CC_STRING "msvc"
 #else
 #   error "Unsupported compiler"
 #endif
+
+#ifndef NV_CC_GNUC
+#	define NV_CC_GNUC  0
+#endif // NV_CC_GNUC
+
+#ifndef NV_CC_MSVC
+#	define NV_CC_MSVC  0
+#endif // NV_CC_MSVC
+
+#ifndef NV_CC_CLANG
+#	define NV_CC_CLANG 0
+#endif // NV_CC_CLANG
 
 #if NV_CC_MSVC
 #define NV_CC_CPP11 (__cplusplus > 199711L || _MSC_VER >= 1800) // Visual Studio 2013 has all the features we use, but doesn't advertise full C++11 support yet.
@@ -198,8 +264,6 @@ typedef uint32      uint;
     private: \
     void *operator new(size_t size); \
     void *operator new[](size_t size)
-    //static void *operator new(size_t size); \
-    //static void *operator new[](size_t size);
 
 // String concatenation macros.
 #define NV_STRING_JOIN2(arg1, arg2) NV_DO_STRING_JOIN2(arg1, arg2)
@@ -276,19 +340,19 @@ NV_COMPILER_CHECK(sizeof(uint32) == 4);
 // Platform includes
 #if NV_CC_MSVC
 #   if NV_OS_WIN32
-#       include "DefsVcWin32.h"
+#       include "defsvcwin32.h"
 #   elif NV_OS_XBOX
-#       include "DefsVcXBox.h"
+#       include "defsvcxbox.h"
 #   else
 #       error "MSVC: Platform not supported"
 #   endif
 #elif NV_CC_GNUC
 #   if NV_OS_LINUX
-#       include "DefsGnucLinux.h"
+#       include "defsgnuclinux.h"
 #   elif NV_OS_DARWIN || NV_OS_FREEBSD || NV_OS_OPENBSD
-#       include "DefsGnucDarwin.h"
+#       include "defsgnucdarwin.h"
 #   elif NV_OS_MINGW
-#       include "DefsGnucWin32.h"
+#       include "defsgnucwin32.h"
 #   elif NV_OS_CYGWIN
 #       error "GCC: Cygwin not supported"
 #   else

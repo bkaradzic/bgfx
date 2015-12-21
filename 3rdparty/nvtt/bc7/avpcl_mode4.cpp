@@ -17,13 +17,13 @@ See the License for the specific language governing permissions and limitations 
 #include "bits.h"
 #include "tile.h"
 #include "avpcl.h"
-#include "nvcore/Debug.h"
-#include "nvmath/Vector.inl"
-#include "nvmath/Matrix.inl"
-#include "nvmath/Fitting.h"
+#include "nvcore/debug.h"
+#include "nvmath/vector.inl"
+#include "nvmath/matrix.inl"
+#include "nvmath/fitting.h"
 #include "avpcl_utils.h"
 #include "endpts.h"
-#include <cstring>
+#include <string.h>
 #include <float.h>
 
 using namespace nv;

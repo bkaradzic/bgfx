@@ -9,13 +9,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 See the License for the specific language governing permissions and limitations under the License.
 */
-#pragma once
 #ifndef _ZOH_BITS_H
 #define _ZOH_BITS_H
 
 // read/write a bitstream
 
-#include "nvcore/Debug.h"
+#include "nvcore/debug.h"
 
 namespace ZOH {
 

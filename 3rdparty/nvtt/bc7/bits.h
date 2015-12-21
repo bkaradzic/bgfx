@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and limitations 
 
 // read/write a bitstream
 
-#include "nvcore/Debug.h"
+#include "nvcore/debug.h"
 
 namespace AVPCL {
 

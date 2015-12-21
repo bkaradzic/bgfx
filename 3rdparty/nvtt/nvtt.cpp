@@ -12,7 +12,7 @@
 #include "bc7/avpcl.h"
 #include "nvmath/vector.inl"
 
-NVCORE_API int nvAbort(const char *, const char *, int , const char *, const char *, ...) __attribute__((format (printf, 5, 6)))
+NVCORE_API int nvAbort(const char *, const char *, int , const char *, const char *, ...)
 {
 	abort();
 	return 0;

@@ -4,7 +4,7 @@
 #ifndef NV_MATH_MATRIX_INL
 #define NV_MATH_MATRIX_INL
 
-#include "Matrix.h"
+#include "matrix.h"
 
 namespace nv
 {

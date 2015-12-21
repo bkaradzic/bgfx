@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and limitations 
 
 // endpoint definitions and routines to search through endpoint space
 
-#include "nvmath/Vector.h"
+#include "nvmath/vector.h"
 
 namespace AVPCL {
 
