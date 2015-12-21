@@ -169,6 +169,13 @@
 #   define NV_CC_CLANG  1
 #   define NV_CC_GNUC   1    // Clang is compatible with GCC.
 #   define NV_CC_STRING "clang"
+#	pragma clang diagnostic ignored "-Wmissing-braces"
+#	pragma clang diagnostic ignored "-Wshadow"
+#	pragma clang diagnostic ignored "-Wunused-local-typedef"
+#	pragma clang diagnostic ignored "-Wunused-function"
+#	pragma clang diagnostic ignored "-Wunused-variable"
+#	pragma clang diagnostic ignored "-Wunused-parameter"
+#	pragma clang diagnostic ignored "-Wsometimes-uninitialized"
 #elif defined POSH_COMPILER_GCC
 #   define NV_CC_GNUC   1
 #   define NV_CC_STRING "gcc"

@@ -4,7 +4,7 @@
 #define NV_CORE_MEMORY_H
 
 #include "nvcore.h"
-#include <malloc.h>
+#include <stdlib.h>
 
 namespace nv {
 

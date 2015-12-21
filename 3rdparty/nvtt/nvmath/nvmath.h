@@ -3,7 +3,7 @@
 #ifndef NV_MATH_H
 #define NV_MATH_H
 
-#include <math.h>
+#include <cmath>
 #include <float.h>  // finite, isnan
 
 #include "nvcore/utils.h"   // max, clamp
@@ -35,11 +35,7 @@ namespace nv
 
     inline bool isFinite(const float f)
     {
-#if NV_CC_MSVC
-        return _finite(f) != 0;
-#elif NV_CC_GNUC
-        return finitef(f);
-#endif //
+		return std::isfinite(f);
     }
 
     // Eliminates negative zeros from a float array.
