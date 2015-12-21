@@ -13,6 +13,7 @@
 #include "image.h"
 #include <libsquish/squish.h>
 #include <etc1/etc1.h>
+#include <nvtt/nvtt.h>
 
 #if 0
 #	define BX_TRACE(_format, ...) fprintf(stderr, "" _format "\n", ##__VA_ARGS__)
@@ -113,6 +114,14 @@ int main(int _argc, const char* _argv[])
 		{
 			format = TextureFormat::ETC1;
 		}
+		else if (0 == bx::stricmp(type, "bc6h") )
+		{
+			format = TextureFormat::BC6H;
+		}
+		else if (0 == bx::stricmp(type, "bc7") )
+		{
+			format = TextureFormat::BC7;
+		}
 	}
 
 	uint32_t size = (uint32_t)bx::getSize(&reader);
@@ -154,8 +163,31 @@ int main(int _argc, const char* _argv[])
 					);
 				break;
 
+			case TextureFormat::BC4:
+			case TextureFormat::BC5:
+				break;
+
+			case TextureFormat::BC6H:
+				nvtt::compressBC6H(rgba, mip.m_width, mip.m_height, 4, output);
+				break;
+
+			case TextureFormat::BC7:
+				nvtt::compressBC7(rgba, mip.m_width, mip.m_height, 4, output);
+				break;
+
 			case TextureFormat::ETC1:
 				etc1_encode_image(rgba, mip.m_width, mip.m_height, 4, mip.m_width*4, output);
+				break;
+
+			case TextureFormat::ETC2:
+			case TextureFormat::ETC2A:
+			case TextureFormat::ETC2A1:
+			case TextureFormat::PTC12:
+			case TextureFormat::PTC14:
+			case TextureFormat::PTC12A:
+			case TextureFormat::PTC14A:
+			case TextureFormat::PTC22:
+			case TextureFormat::PTC24:
 				break;
 
 			default:

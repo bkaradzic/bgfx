@@ -12,6 +12,7 @@ project "texturec"
 		path.join(BGFX_DIR, "include"),
 		path.join(BGFX_DIR, "src"),
 		path.join(BGFX_DIR, "3rdparty"),
+		path.join(BGFX_DIR, "3rdparty/nvtt"),
 	}
 
 	files {
@@ -20,6 +21,8 @@ project "texturec"
 		path.join(BGFX_DIR, "3rdparty/libsquish/**.h"),
 		path.join(BGFX_DIR, "3rdparty/etc1/**.cpp"),
 		path.join(BGFX_DIR, "3rdparty/etc1/**.h"),
+		path.join(BGFX_DIR, "3rdparty/nvtt/**.cpp"),
+		path.join(BGFX_DIR, "3rdparty/nvtt/**.h"),
 		path.join(BGFX_DIR, "tools/texturec/**.cpp"),
 		path.join(BGFX_DIR, "tools/texturec/**.h"),
 	}
