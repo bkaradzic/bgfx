@@ -11,3 +11,5 @@ indent_size  = 4
 [remotery/*]
 indent_style = space
 indent_size  = 4
+
+[libsquish/*]

@@ -39,23 +39,29 @@ typedef unsigned char u8;
 enum
 {
 	//! Use DXT1 compression.
-	kDxt1 = ( 1 << 0 ), 
-	
+	kDxt1 = ( 1 << 0 ),
+
 	//! Use DXT3 compression.
-	kDxt3 = ( 1 << 1 ), 
-	
+	kDxt3 = ( 1 << 1 ),
+
 	//! Use DXT5 compression.
-	kDxt5 = ( 1 << 2 ), 
-	
+	kDxt5 = ( 1 << 2 ),
+
+	//! Use BC4 compression.
+	kBc4 = ( 1 << 3 ),
+
+	//! Use BC5 compression.
+	kBc5 = ( 1 << 4 ),
+
 	//! Use a very slow but very high quality colour compressor.
 	kColourIterativeClusterFit = ( 1 << 8 ),	
-	
+
 	//! Use a slow but high quality colour compressor (the default).
 	kColourClusterFit = ( 1 << 3 ),	
-	
+
 	//! Use a fast but low quality colour compressor.
 	kColourRangeFit	= ( 1 << 4 ),
-	
+
 	//! Weight the colour by alpha during cluster fit (disabled by default).
 	kWeightColourByAlpha = ( 1 << 7 )
 };

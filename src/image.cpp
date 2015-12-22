@@ -1609,18 +1609,19 @@ namespace bgfx
 			}
 		}
 
-		_imageContainer.m_data = NULL;
-		_imageContainer.m_size = 0;
-		_imageContainer.m_offset = (uint32_t)bx::seek(_reader);
-		_imageContainer.m_width  = width;
-		_imageContainer.m_height = height;
-		_imageContainer.m_depth  = depth;
+		_imageContainer.m_data     = NULL;
+		_imageContainer.m_size     = 0;
+		_imageContainer.m_offset   = (uint32_t)bx::seek(_reader);
+		_imageContainer.m_width    = width;
+		_imageContainer.m_height   = height;
+		_imageContainer.m_depth    = depth;
 		_imageContainer.m_format   = uint8_t(format);
 		_imageContainer.m_numMips  = uint8_t( (caps[0] & DDSCAPS_MIPMAP) ? mips : 1);
 		_imageContainer.m_hasAlpha = hasAlpha;
 		_imageContainer.m_cubeMap  = cubeMap;
-		_imageContainer.m_ktx = false;
-		_imageContainer.m_srgb = srgb;
+		_imageContainer.m_ktx      = false;
+		_imageContainer.m_ktxLE    = false;
+		_imageContainer.m_srgb     = srgb;
 
 		return TextureFormat::Unknown != format;
 	}
@@ -1896,6 +1897,7 @@ namespace bgfx
 		_imageContainer.m_cubeMap  = numFaces > 1;
 		_imageContainer.m_ktx      = true;
 		_imageContainer.m_ktxLE    = fromLittleEndian;
+		_imageContainer.m_srgb     = false;
 
 		return TextureFormat::Unknown != format;
 	}

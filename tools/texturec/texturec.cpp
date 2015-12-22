@@ -40,6 +40,54 @@ namespace bgfx
 		::free(mem);
 	}
 
+	void imageEncodeFromRgba8(uint8_t* _dst, const uint8_t* _src, uint32_t _width, uint32_t _height, uint8_t _format)
+	{
+		TextureFormat::Enum format = TextureFormat::Enum(_format);
+
+		switch (format)
+		{
+		case TextureFormat::BC1:
+		case TextureFormat::BC2:
+		case TextureFormat::BC3:
+		case TextureFormat::BC4:
+		case TextureFormat::BC5:
+			squish::CompressImage(_src, _width, _height, _dst
+				, format == TextureFormat::BC1 ? squish::kDxt1
+				: format == TextureFormat::BC2 ? squish::kDxt3
+				: format == TextureFormat::BC3 ? squish::kDxt5
+				: format == TextureFormat::BC4 ? squish::kBc4
+				:                                squish::kBc5
+				);
+			break;
+
+		case TextureFormat::BC6H:
+			nvtt::compressBC6H(_src, _width, _height, 4, _dst);
+			break;
+
+		case TextureFormat::BC7:
+			nvtt::compressBC7(_src, _width, _height, 4, _dst);
+			break;
+
+		case TextureFormat::ETC1:
+			etc1_encode_image(_src, _width, _height, 4, _width*4, _dst);
+			break;
+
+		case TextureFormat::ETC2:
+		case TextureFormat::ETC2A:
+		case TextureFormat::ETC2A1:
+		case TextureFormat::PTC12:
+		case TextureFormat::PTC14:
+		case TextureFormat::PTC12A:
+		case TextureFormat::PTC14A:
+		case TextureFormat::PTC22:
+		case TextureFormat::PTC24:
+			break;
+
+		default:
+			break;
+		}
+	}
+
 } // namespace bgfx
 
 void help(const char* _error = NULL)
@@ -110,6 +158,14 @@ int main(int _argc, const char* _argv[])
 		{
 			format = TextureFormat::BC3;
 		}
+		else if (0 == bx::stricmp(type, "bc4") )
+		{
+			format = TextureFormat::BC4;
+		}
+		else if (0 == bx::stricmp(type, "bc5") )
+		{
+			format = TextureFormat::BC5;
+		}
 		else if (0 == bx::stricmp(type, "etc1") )
 		{
 			format = TextureFormat::ETC1;
@@ -134,6 +190,7 @@ int main(int _argc, const char* _argv[])
 	bool loaded = imageParse(imageContainer, mem->data, mem->size);
 	if (!loaded)
 	{
+
 	}
 
 	BX_UNUSED(mips);
@@ -151,48 +208,8 @@ int main(int _argc, const char* _argv[])
 
 			output = (uint8_t*)BX_ALLOC(&allocator, imageGetSize(format, mip.m_width, mip.m_height) );
 
-			switch (format)
-			{
-			case TextureFormat::BC1:
-			case TextureFormat::BC2:
-			case TextureFormat::BC3:
-				squish::CompressImage(rgba, mip.m_width, mip.m_height, output
-					, format == TextureFormat::BC1 ? squish::kDxt1
-					: format == TextureFormat::BC2 ? squish::kDxt3
-					:                                squish::kDxt5
-					);
-				break;
-
-			case TextureFormat::BC4:
-			case TextureFormat::BC5:
-				break;
-
-			case TextureFormat::BC6H:
-				nvtt::compressBC6H(rgba, mip.m_width, mip.m_height, 4, output);
-				break;
-
-			case TextureFormat::BC7:
-				nvtt::compressBC7(rgba, mip.m_width, mip.m_height, 4, output);
-				break;
-
-			case TextureFormat::ETC1:
-				etc1_encode_image(rgba, mip.m_width, mip.m_height, 4, mip.m_width*4, output);
-				break;
-
-			case TextureFormat::ETC2:
-			case TextureFormat::ETC2A:
-			case TextureFormat::ETC2A1:
-			case TextureFormat::PTC12:
-			case TextureFormat::PTC14:
-			case TextureFormat::PTC12A:
-			case TextureFormat::PTC14A:
-			case TextureFormat::PTC22:
-			case TextureFormat::PTC24:
-				break;
-
-			default:
-				break;
-			}
+			imageContainer.m_format = format;
+			imageEncodeFromRgba8(output, rgba, mip.m_width, mip.m_height, format);
 
 			BX_FREE(&allocator, rgba);
 		}
