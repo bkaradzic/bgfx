@@ -83,9 +83,9 @@ function bgfxProject(_name, _kind, _defines)
 		configuration { "osx" }
 			linkoptions {
 				"-framework Cocoa",
-				"-framework Metal",
 				"-framework QuartzCore",
 				"-framework OpenGL",
+				"-weak_framework Metal",
 			}
 
 		configuration { "not nacl" }

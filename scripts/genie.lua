@@ -326,9 +326,9 @@ function exampleProject(_name)
 	configuration { "osx" }
 		linkoptions {
 			"-framework Cocoa",
-			"-framework Metal",
 			"-framework QuartzCore",
 			"-framework OpenGL",
+			"-weak_framework Metal",
 		}
 
 	configuration { "ios* or tvos*" }
@@ -336,10 +336,10 @@ function exampleProject(_name)
 		linkoptions {
 			"-framework CoreFoundation",
 			"-framework Foundation",
-			"-framework Metal",
 			"-framework OpenGLES",
 			"-framework UIKit",
 			"-framework QuartzCore",
+			"-weak_framework Metal",
 		}
 
 	configuration { "xcode4", "ios" }

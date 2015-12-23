@@ -329,10 +329,10 @@ namespace bgfx { namespace mtl
 			: m_metalLayer(NULL)
 			, m_backBufferPixelFormatHash(0)
 			, m_maxAnisotropy(1)
+			, m_uniformBufferIndex(0)
 			, m_numWindows(1)
 			, m_rtMsaa(false)
 			, m_drawable(NULL)
-			, m_uniformBufferIndex(0)
 		{
 		}
 
@@ -1231,7 +1231,7 @@ namespace bgfx { namespace mtl
 
 		OcclusionQueryMTL m_occlusionQuery;
 
-		Buffer	 m_uniformBuffer;
+		Buffer   m_uniformBuffer;
 		Buffer   m_uniformBuffers[UNIFORM_BUFFER_COUNT];
 		uint32_t m_uniformBufferVertexOffset;
 		uint32_t m_uniformBufferFragmentOffset;
