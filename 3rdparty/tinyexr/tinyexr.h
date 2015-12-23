@@ -4210,6 +4210,13 @@ mz_uint tdefl_create_comp_flags_from_zip_params(int level, int window_bits,
 #pragma warning(disable : 4204) // nonstandard extension used : non-constant
                                 // aggregate initializer (also supported by GNU
                                 // C and C99, so no big deal)
+#pragma warning(disable : 4244) // 'initializing': conversion from '__int64' to
+                                // 'int', possible loss of data
+#pragma warning(disable : 4267) // 'argument': conversion from '__int64' to 'int',
+                                // possible loss of data
+#pragma warning(disable : 4996) // 'strdup': The POSIX name for this item is
+                                // deprecated. Instead, use the ISO C and C++
+                                // conformant name: _strdup.
 #endif
 
 // Simple PNG writer function by Alex Evans, 2011. Released into the public
@@ -4300,10 +4307,6 @@ void *tdefl_write_image_to_png_file_in_memory(const void *pImage, int w, int h,
   return tdefl_write_image_to_png_file_in_memory_ex(pImage, w, h, num_chans,
                                                     pLen_out, 6, MZ_FALSE);
 }
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
 
 // ------------------- .ZIP archive reading
 
@@ -11118,6 +11121,10 @@ int ParseMultiChannelEXRHeaderFromMemory(EXRImage *exrImage,
 
   return 0; // OK
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #endif
 
