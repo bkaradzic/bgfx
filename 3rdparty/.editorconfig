@@ -13,3 +13,9 @@ indent_style = space
 indent_size  = 4
 
 [libsquish/*]
+indent_style = tab
+indent_size  = 4
+
+[pvrtc/*]
+indent_style = space
+indent_size  = 4
