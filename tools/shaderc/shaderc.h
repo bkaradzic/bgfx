@@ -140,4 +140,6 @@ void writeFile(const char* _filePath, const void* _data, int32_t _size);
 bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::string& _code, bx::WriterI* _writer, bool firstPass = true);
 bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::string& _code, bx::WriterI* _writer);
 
+int compileShader(bx::CommandLine& _cmdLine, bx::ReaderSeekerI* _reader, bx::WriterI* _writer);
+
 #endif // SHADERC_H_HEADER_GUARD
