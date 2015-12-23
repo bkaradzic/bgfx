@@ -14,6 +14,7 @@
 #include <libsquish/squish.h>
 #include <etc1/etc1.h>
 #include <nvtt/nvtt.h>
+#include <pvrtc/PvrTcEncoder.h>
 
 #if 0
 #	define BX_TRACE(_format, ...) fprintf(stderr, "" _format "\n", ##__VA_ARGS__)
@@ -76,9 +77,35 @@ namespace bgfx
 		case TextureFormat::ETC2A:
 		case TextureFormat::ETC2A1:
 		case TextureFormat::PTC12:
+			break;
+
 		case TextureFormat::PTC14:
+			{
+				using namespace Javelin;
+				RgbBitmap bmp;
+				bmp.width  = _width;
+				bmp.height = _height;
+				bmp.data   = const_cast<uint8_t*>(_src);
+				PvrTcEncoder::EncodeRgb4Bpp(_dst, bmp);
+				bmp.data = NULL;
+			}
+			break;
+
 		case TextureFormat::PTC12A:
+			break;
+
 		case TextureFormat::PTC14A:
+			{
+				using namespace Javelin;
+				RgbaBitmap bmp;
+				bmp.width  = _width;
+				bmp.height = _height;
+				bmp.data   = const_cast<uint8_t*>(_src);
+				PvrTcEncoder::EncodeRgba4Bpp(_dst, bmp);
+				bmp.data = NULL;
+			}
+			break;
+
 		case TextureFormat::PTC22:
 		case TextureFormat::PTC24:
 			break;
@@ -177,6 +204,14 @@ int main(int _argc, const char* _argv[])
 		else if (0 == bx::stricmp(type, "bc7") )
 		{
 			format = TextureFormat::BC7;
+		}
+		else if (0 == bx::stricmp(type, "ptc14") )
+		{
+			format = TextureFormat::PTC14;
+		}
+		else if (0 == bx::stricmp(type, "ptc14a") )
+		{
+			format = TextureFormat::PTC14A;
 		}
 	}
 
