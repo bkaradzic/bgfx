@@ -15,6 +15,7 @@
 #include <etc1/etc1.h>
 #include <nvtt/nvtt.h>
 #include <pvrtc/PvrTcEncoder.h>
+#include <tinyexr/tinyexr.h>
 
 #if 0
 #	define BX_TRACE(_format, ...) fprintf(stderr, "" _format "\n", ##__VA_ARGS__)

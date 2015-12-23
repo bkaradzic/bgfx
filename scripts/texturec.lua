@@ -25,6 +25,8 @@ project "texturec"
 		path.join(BGFX_DIR, "3rdparty/nvtt/**.h"),
 		path.join(BGFX_DIR, "3rdparty/pvrtc/**.cpp"),
 		path.join(BGFX_DIR, "3rdparty/pvrtc/**.h"),
+		path.join(BGFX_DIR, "3rdparty/tinyexr/**.cc"),
+		path.join(BGFX_DIR, "3rdparty/tinyexr/**.h"),
 		path.join(BGFX_DIR, "tools/texturec/**.cpp"),
 		path.join(BGFX_DIR, "tools/texturec/**.h"),
 	}
