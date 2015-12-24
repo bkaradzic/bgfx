@@ -1,7 +1,7 @@
-// ImGui library v1.47 WIP
-// Internals
-// You may use this file to debug, understand or extend ImGui features but we don't provide any guarantee of forward compatibility!
+// dear imgui, v1.47 WIP
+// (internals)
 
+// You may use this file to debug, understand or extend ImGui features but we don't provide any guarantee of forward compatibility!
 // Implement maths operators for ImVec2 (disabled by default to not collide with using IM_VEC2_CLASS_EXTRA along with your own math types+operators)
 //   #define IMGUI_DEFINE_MATH_OPERATORS
 
@@ -512,8 +512,8 @@ struct IMGUI_API ImGuiDrawContext
     int                     TreeDepth;
     ImGuiID                 LastItemID;
     ImRect                  LastItemRect;
-    bool                    LastItemHoveredAndUsable;
-    bool                    LastItemHoveredRect;
+    bool                    LastItemHoveredAndUsable;  // Item rectangle is hovered, and its window is currently interactable with (not blocked by a popup preventing access to the window)
+    bool                    LastItemHoveredRect;       // Item rectangle is hovered, but its window may or not be currently interactable with (might be blocked by a popup preventing access to the window)
     bool                    MenuBarAppending;
     float                   MenuBarOffsetX;
     ImVector<ImGuiWindow*>  ChildWindows;
@@ -683,16 +683,22 @@ namespace ImGui
     IMGUI_API float         CalcWrapWidthForPos(const ImVec2& pos, float wrap_pos_x);
     IMGUI_API void          SetItemAllowOverlap();      // Allow last item to be overlapped by a subsequent item
 
+    IMGUI_API void          OpenPopupEx(const char* str_id, bool reopen_existing);
+
     inline IMGUI_API ImU32  GetColorU32(ImGuiCol idx, float alpha_mul)  { ImVec4 c = GImGui->Style.Colors[idx]; c.w *= GImGui->Style.Alpha * alpha_mul; return ImGui::ColorConvertFloat4ToU32(c); }
     inline IMGUI_API ImU32  GetColorU32(const ImVec4& col)              { ImVec4 c = col; c.w *= GImGui->Style.Alpha; return ImGui::ColorConvertFloat4ToU32(c); }
 
     // NB: All position are in absolute pixels coordinates (not window coordinates)
+    // FIXME: Refactor all RenderText* functions into one.
     IMGUI_API void          RenderText(ImVec2 pos, const char* text, const char* text_end = NULL, bool hide_text_after_hash = true);
     IMGUI_API void          RenderTextWrapped(ImVec2 pos, const char* text, const char* text_end, float wrap_width);
     IMGUI_API void          RenderTextClipped(const ImVec2& pos_min, const ImVec2& pos_max, const char* text, const char* text_end, const ImVec2* text_size_if_known, ImGuiAlign align = ImGuiAlign_Default, const ImVec2* clip_min = NULL, const ImVec2* clip_max = NULL);
     IMGUI_API void          RenderFrame(ImVec2 p_min, ImVec2 p_max, ImU32 fill_col, bool border = true, float rounding = 0.0f);
     IMGUI_API void          RenderCollapseTriangle(ImVec2 p_min, bool opened, float scale = 1.0f, bool shadow = false);
     IMGUI_API void          RenderCheckMark(ImVec2 pos, ImU32 col);
+
+    IMGUI_API void          PushClipRect(const ImVec2& clip_rect_min, const ImVec2& clip_rect_max, bool intersect_with_existing_clip_rect = true);
+    IMGUI_API void          PopClipRect();
 
     IMGUI_API bool          ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool* out_held, ImGuiButtonFlags flags = 0);
     IMGUI_API bool          ButtonEx(const char* label, const ImVec2& size_arg = ImVec2(0,0), ImGuiButtonFlags flags = 0);
