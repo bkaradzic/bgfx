@@ -151,7 +151,7 @@ int GetStorageRequirements( int width, int height, int flags )
 	// compute the storage requirements
 	int blockcount = ( ( width + 3 )/4 ) * ( ( height + 3 )/4 );
 	int blocksize = ( ( flags & ( kDxt1 | kBc4 ) ) != 0 ) ? 8 : 16;
-	return blockcount*blocksize;	
+	return blockcount*blocksize;
 }
 
 void CompressImage( u8 const* rgba, int width, int height, void* blocks, int flags, float* metric )

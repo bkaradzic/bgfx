@@ -547,7 +547,11 @@ int etc1_encode_image(const etc1_byte* pIn, etc1_uint32 width, etc1_uint32 heigh
                 etc1_byte* q = block + (cy * 4) * 3;
                 const etc1_byte* p = pIn + pixelSize * x + stride * (y + cy);
                 if (pixelSize >= 3) {
-                    memcpy(q, p, xEnd * 3);
+                    for (etc1_uint32 cx = 0; cx < xEnd; cx++) {
+                        memcpy(q, p, 3);
+                        q += 3;
+                        p += pixelSize;
+                    }
                 } else {
                     for (etc1_uint32 cx = 0; cx < xEnd; cx++) {
                         int pixel = (p[1] << 8) | p[0];
@@ -600,7 +604,11 @@ int etc1_decode_image(const etc1_byte* pIn, etc1_byte* pOut,
                 const etc1_byte* q = block + (cy * 4) * 3;
                 etc1_byte* p = pOut + pixelSize * x + stride * (y + cy);
                 if (pixelSize >= 3) {
-                    memcpy(p, q, xEnd * 3);
+                    for (etc1_uint32 cx = 0; cx < xEnd; cx++) {
+                        memcpy(p, q, 3);
+                        q += 3;
+                        p += pixelSize;
+                    }
                 } else {
                     for (etc1_uint32 cx = 0; cx < xEnd; cx++) {
                         etc1_byte r = *q++;

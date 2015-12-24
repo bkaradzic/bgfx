@@ -17,6 +17,9 @@
 #include <pvrtc/PvrTcEncoder.h>
 #include <tinyexr/tinyexr.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.c>
+
 #if 0
 #	define BX_TRACE(_format, ...) fprintf(stderr, "" _format "\n", ##__VA_ARGS__)
 #endif // DEBUG
@@ -33,6 +36,15 @@ namespace bgfx
 		Memory* mem = (Memory*)::realloc(NULL, sizeof(Memory) + _size);
 		mem->size = _size;
 		mem->data = (uint8_t*)mem + sizeof(Memory);
+		return mem;
+	}
+
+	const Memory* makeRef(const void* _data, uint32_t _size, ReleaseFn _releaseFn, void* _userData)
+	{
+		BX_UNUSED(_releaseFn, _userData);
+		Memory* mem = (Memory*)::realloc(NULL, sizeof(Memory) );
+		mem->size = _size;
+		mem->data = (uint8_t*)_data;
 		return mem;
 	}
 
@@ -54,11 +66,11 @@ namespace bgfx
 		case TextureFormat::BC4:
 		case TextureFormat::BC5:
 			squish::CompressImage(_src, _width, _height, _dst
-				, format == TextureFormat::BC1 ? squish::kDxt1
-				: format == TextureFormat::BC2 ? squish::kDxt3
+				, format == TextureFormat::BC2 ? squish::kDxt3
 				: format == TextureFormat::BC3 ? squish::kDxt5
 				: format == TextureFormat::BC4 ? squish::kBc4
-				:                                squish::kBc5
+				: format == TextureFormat::BC5 ? squish::kBc5
+				:                                squish::kDxt1
 				);
 			break;
 
@@ -109,6 +121,10 @@ namespace bgfx
 
 		case TextureFormat::PTC22:
 		case TextureFormat::PTC24:
+			break;
+
+		case TextureFormat::RGBA8:
+			memcpy(_dst, _src, _width*_height*4);
 			break;
 
 		default:
@@ -214,6 +230,11 @@ int main(int _argc, const char* _argv[])
 		{
 			format = TextureFormat::PTC14A;
 		}
+		else
+		{
+			help("Invalid format specified.");
+			return EXIT_FAILURE;
+		}
 	}
 
 	uint32_t size = (uint32_t)bx::getSize(&reader);
@@ -221,31 +242,60 @@ int main(int _argc, const char* _argv[])
 	bx::read(&reader, mem->data, mem->size);
 	bx::close(&reader);
 
+	uint8_t* decodedImage = NULL;
 	ImageContainer imageContainer;
 
 	bool loaded = imageParse(imageContainer, mem->data, mem->size);
 	if (!loaded)
 	{
+		int width  = 0;
+		int height = 0;
+		int comp   = 0;
 
+		decodedImage = stbi_load_from_memory( (uint8_t*)mem->data, mem->size, &width, &height, &comp, 4);
+		loaded = NULL != decodedImage;
+
+		if (loaded)
+		{
+			release(mem);
+
+			mem = makeRef(decodedImage, width*height*4);
+
+			imageContainer.m_data     = mem->data;
+			imageContainer.m_size     = mem->size;
+			imageContainer.m_offset   = 0;
+			imageContainer.m_width    = width;
+			imageContainer.m_height   = height;
+			imageContainer.m_depth    = 1;
+			imageContainer.m_format   = bgfx::TextureFormat::RGBA8;
+			imageContainer.m_numMips  = 1;
+			imageContainer.m_hasAlpha = true;
+			imageContainer.m_cubeMap  = false;
+			imageContainer.m_ktx      = false;
+			imageContainer.m_ktxLE    = false;
+			imageContainer.m_srgb     = false;
+		}
 	}
 
 	BX_UNUSED(mips);
 	if (loaded)
 	{
 		bx::CrtAllocator allocator;
-		uint8_t* output = NULL;
+		const Memory* output = NULL;
 
 		ImageMip mip;
 		if (imageGetRawData(imageContainer, 0, 0, mem->data, mem->size, mip) )
 		{
-			uint8_t* rgba = (uint8_t*)BX_ALLOC(&allocator, imageGetSize(TextureFormat::RGBA8, mip.m_width, mip.m_height) );
+			uint32_t size = imageGetSize(TextureFormat::RGBA8, mip.m_width, mip.m_height);
+			uint8_t* rgba = (uint8_t*)BX_ALLOC(&allocator, size);
 
 			imageDecodeToRgba8(rgba, mip.m_data, mip.m_width, mip.m_height, mip.m_width*mip.m_bpp/8, mip.m_format);
 
-			output = (uint8_t*)BX_ALLOC(&allocator, imageGetSize(format, mip.m_width, mip.m_height) );
-
+			imageContainer.m_size   = imageGetSize(format, mip.m_width, mip.m_height);
 			imageContainer.m_format = format;
-			imageEncodeFromRgba8(output, rgba, mip.m_width, mip.m_height, format);
+			output = alloc(imageContainer.m_size);
+
+			imageEncodeFromRgba8(output->data, rgba, mip.m_width, mip.m_height, format);
 
 			BX_FREE(&allocator, rgba);
 		}
@@ -257,13 +307,13 @@ int main(int _argc, const char* _argv[])
 			{
 				if (NULL != bx::stristr(outputFileName, ".ktx") )
 				{
-					imageWriteKtx(&writer, imageContainer, mem->data, mem->size);
+					imageWriteKtx(&writer, imageContainer, output->data, output->size);
 				}
 
 				bx::close(&writer);
 			}
 
-			BX_FREE(&allocator, output);
+			release(output);
 		}
 	}
 

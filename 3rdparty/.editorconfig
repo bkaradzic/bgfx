@@ -1,21 +1,25 @@
 root = true
 
+[etc1/*]
+indent_style = space
+indent_size  = 4
+
 [fcpp/*]
 indent_style = space
 indent_size  = 2
-
-[ocornut-imgui/*]
-indent_style = space
-indent_size  = 4
-
-[remotery/*]
-indent_style = space
-indent_size  = 4
 
 [libsquish/*]
 indent_style = tab
 indent_size  = 4
 
+[ocornut-imgui/*]
+indent_style = space
+indent_size  = 4
+
 [pvrtc/*]
+indent_style = space
+indent_size  = 4
+
+[remotery/*]
 indent_style = space
 indent_size  = 4
