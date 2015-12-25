@@ -2509,6 +2509,7 @@ namespace bgfx
 				dvb.m_handle.idx  = uint16_t(ptr>>32);
 				dvb.m_offset      = uint32_t(ptr);
 				dvb.m_size        = _mem->size;
+                dvb.m_numVertices = dvb.m_size / dvb.m_stride;
 				dvb.m_startVertex = bx::strideAlign(dvb.m_offset, dvb.m_stride)/dvb.m_stride;
 			}
 
