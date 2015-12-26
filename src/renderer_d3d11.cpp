@@ -2599,7 +2599,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		void setDepthStencilState(uint64_t _state, uint64_t _stencil = 0)
 		{
-			_state &= BGFX_D3D11_DEPTH_STENCIL_MASK;
+			uint32_t func = (_state&BGFX_STATE_DEPTH_TEST_MASK)>>BGFX_STATE_DEPTH_TEST_SHIFT;
+			_state &= 0 == func ? 0 : BGFX_D3D11_DEPTH_STENCIL_MASK;
 
 			uint32_t fstencil = unpackStencil(0, _stencil);
 			uint32_t ref = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
@@ -2616,17 +2617,16 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			{
 				D3D11_DEPTH_STENCIL_DESC desc;
 				memset(&desc, 0, sizeof(desc) );
-				uint32_t func = (_state&BGFX_STATE_DEPTH_TEST_MASK)>>BGFX_STATE_DEPTH_TEST_SHIFT;
-				desc.DepthEnable = 0 != func;
+				desc.DepthEnable    = 0 != func;
 				desc.DepthWriteMask = !!(BGFX_STATE_DEPTH_WRITE & _state) ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
-				desc.DepthFunc = s_cmpFunc[func];
+				desc.DepthFunc      = s_cmpFunc[func];
 
-				uint32_t bstencil = unpackStencil(1, _stencil);
+				uint32_t bstencil     = unpackStencil(1, _stencil);
 				uint32_t frontAndBack = bstencil != BGFX_STENCIL_NONE && bstencil != fstencil;
 				bstencil = frontAndBack ? bstencil : fstencil;
 
-				desc.StencilEnable = 0 != _stencil;
-				desc.StencilReadMask = (fstencil&BGFX_STENCIL_FUNC_RMASK_MASK)>>BGFX_STENCIL_FUNC_RMASK_SHIFT;
+				desc.StencilEnable    = 0 != _stencil;
+				desc.StencilReadMask  = (fstencil&BGFX_STENCIL_FUNC_RMASK_MASK)>>BGFX_STENCIL_FUNC_RMASK_SHIFT;
 				desc.StencilWriteMask = 0xff;
 				desc.FrontFace.StencilFailOp      = s_stencilOp[(fstencil&BGFX_STENCIL_OP_FAIL_S_MASK)>>BGFX_STENCIL_OP_FAIL_S_SHIFT];
 				desc.FrontFace.StencilDepthFailOp = s_stencilOp[(fstencil&BGFX_STENCIL_OP_FAIL_Z_MASK)>>BGFX_STENCIL_OP_FAIL_Z_SHIFT];
