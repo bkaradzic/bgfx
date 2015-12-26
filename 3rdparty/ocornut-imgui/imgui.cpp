@@ -1,5 +1,5 @@
-// ImGui library v1.47 WIP
-// Main code & documentation
+// dear imgui, v1.47 WIP
+// (main code and documentation)
 
 // See ImGui::ShowTestWindow() in imgui_demo.cpp for demo code.
 // Newcomers, read 'Programmer guide' below for notes on how to setup ImGui in your codebase.
@@ -599,9 +599,7 @@ static void             LoadSettings();
 static void             SaveSettings();
 static void             MarkSettingsDirty();
 
-static void             PushClipRect(const ImRect& clip_rect, bool clipped_by_current = true);
 static void             PushColumnClipRect(int column_index = -1);
-static void             PopClipRect();
 static ImRect           GetVisibleRect();
 
 static bool             BeginPopupEx(const char* str_id, ImGuiWindowFlags extra_flags);
@@ -2304,12 +2302,12 @@ static void AddWindowToRenderList(ImVector<ImDrawList*>& out_render_list, ImGuiW
     }
 }
 
-static void PushClipRect(const ImRect& clip_rect, bool clipped)
+void ImGui::PushClipRect(const ImVec2& clip_rect_min, const ImVec2& clip_rect_max, bool intersect_with_existing_clip_rect)
 {
-    ImGuiWindow* window = ImGui::GetCurrentWindow();
+    ImGuiWindow* window = GetCurrentWindow();
 
-    ImRect cr = clip_rect;
-    if (clipped)
+    ImRect cr(clip_rect_min, clip_rect_max);
+    if (intersect_with_existing_clip_rect)
     {
         // Clip our argument with the current clip rect
         cr.Clip(window->ClipRect);
@@ -2322,9 +2320,9 @@ static void PushClipRect(const ImRect& clip_rect, bool clipped)
     window->DrawList->PushClipRect(ImVec4(cr.Min.x, cr.Min.y, cr.Max.x, cr.Max.y));
 }
 
-static void PopClipRect()
+void ImGui::PopClipRect()
 {
-    ImGuiWindow* window = ImGui::GetCurrentWindow();
+    ImGuiWindow* window = GetCurrentWindow();
     window->DrawList->PopClipRect();
     window->ClipRect = window->DrawList->_ClipRectStack.back();
 }
@@ -2595,10 +2593,7 @@ void ImGui::RenderText(ImVec2 pos, const char* text, const char* text_end, bool 
     const int text_len = (int)(text_display_end - text);
     if (text_len > 0)
     {
-        // Render
         window->DrawList->AddText(g.Font, g.FontSize, pos, GetColorU32(ImGuiCol_Text), text, text_display_end);
-
-        // Log as text
         if (g.LogEnabled)
             LogRenderedText(pos, text, text_display_end);
     }
@@ -3111,10 +3106,11 @@ static bool IsPopupOpen(ImGuiID id)
     return opened;
 }
 
-// Mark popup as open. Popups are closed when user click outside, or activate a pressable item, or CloseCurrentPopup() is called within a BeginPopup()/EndPopup() block.
+// Mark popup as open (toggle toward open state). 
+// Popups are closed when user click outside, or activate a pressable item, or CloseCurrentPopup() is called within a BeginPopup()/EndPopup() block.
 // Popup identifiers are relative to the current ID-stack (so OpenPopup and BeginPopup needs to be at the same level).
 // One open popup per level of the popup hierarchy (NB: when assigning we reset the Window member of ImGuiPopupRef to NULL)
-void ImGui::OpenPopup(const char* str_id)
+void ImGui::OpenPopupEx(const char* str_id, bool reopen_existing)
 {
     ImGuiState& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
@@ -3123,11 +3119,16 @@ void ImGui::OpenPopup(const char* str_id)
     ImGuiPopupRef popup_ref = ImGuiPopupRef(id, window, window->GetID("##menus"), g.IO.MousePos); // Tagged as new ref because constructor sets Window to NULL (we are passing the ParentWindow info here)
     if (g.OpenedPopupStack.Size < current_stack_size + 1)
         g.OpenedPopupStack.push_back(popup_ref);
-    else if (g.OpenedPopupStack[current_stack_size].PopupID != id)
+    else if (reopen_existing || g.OpenedPopupStack[current_stack_size].PopupID != id)
     {
         g.OpenedPopupStack.resize(current_stack_size+1);
         g.OpenedPopupStack[current_stack_size] = popup_ref;
     }
+}
+
+void ImGui::OpenPopup(const char* str_id)
+{
+    ImGui::OpenPopupEx(str_id, false);
 }
 
 static void CloseInactivePopups()
@@ -3201,7 +3202,7 @@ void ImGui::CloseCurrentPopup()
     ClosePopupToLevel(popup_idx);
 }
 
-static void ClearSetNextWindowData()
+static inline void ClearSetNextWindowData()
 {
     ImGuiState& g = *GImGui;
     g.SetNextWindowPosCond = g.SetNextWindowSizeCond = g.SetNextWindowContentSizeCond = g.SetNextWindowCollapsedCond = g.SetNextWindowFocus = 0;
@@ -3276,10 +3277,18 @@ void ImGui::EndPopup()
         ImGui::PopStyleVar();
 }
 
+// This is a helper to handle the most simple case of associating one named popup to one given widget.
+// 1. If you have many possible popups (for different "instances" of a same widget, or for wholly different widgets), you may be better off handling 
+//    this yourself so you can store data relative to the widget that opened the popup instead of choosing different popup identifiers.
+// 2. If you want right-clicking on the same item to reopen the popup at new location, use the same code replacing IsItemHovered() with IsItemHoveredRect()
+//    and passing true to the OpenPopupEx().
+//    Because: hovering an item in a window below the popup won't normally trigger is hovering behavior/coloring. The pattern of ignoring the fact that 
+//    the item isn't interactable (because it is blocked by the active popup) may useful in some situation when e.g. large canvas as one item, content of menu
+//    driven by click position.
 bool ImGui::BeginPopupContextItem(const char* str_id, int mouse_button)
 {
     if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(mouse_button))
-        ImGui::OpenPopup(str_id);
+        ImGui::OpenPopupEx(str_id, false);
     return ImGui::BeginPopup(str_id);
 }
 
@@ -3288,7 +3297,7 @@ bool ImGui::BeginPopupContextWindow(bool also_over_items, const char* str_id, in
     if (!str_id) str_id = "window_context_menu";
     if (ImGui::IsMouseHoveringWindow() && ImGui::IsMouseClicked(mouse_button))
         if (also_over_items || !ImGui::IsAnyItemHovered())
-            ImGui::OpenPopup(str_id);
+            ImGui::OpenPopupEx(str_id, true);
     return ImGui::BeginPopup(str_id);
 }
 
@@ -3296,7 +3305,7 @@ bool ImGui::BeginPopupContextVoid(const char* str_id, int mouse_button)
 {
     if (!str_id) str_id = "void_context_menu";
     if (!ImGui::IsMouseHoveringAnyWindow() && ImGui::IsMouseClicked(mouse_button))
-        ImGui::OpenPopup(str_id);
+        ImGui::OpenPopupEx(str_id, true);
     return ImGui::BeginPopup(str_id);
 }
 
@@ -3407,9 +3416,10 @@ static ImVec2 FindBestPopupWindowPos(const ImVec2& base_pos, const ImVec2& size,
 {
     const ImGuiStyle& style = GImGui->Style;
 
-    // Clamp into visible area while not overlapping the cursor
+    // Clamp into visible area while not overlapping the cursor. Safety padding is optional if our popup size won't fit without it.
+    ImVec2 safe_padding = style.DisplaySafeAreaPadding;
     ImRect r_outer(GetVisibleRect());
-    r_outer.Reduce(style.DisplaySafeAreaPadding);
+    r_outer.Reduce(ImVec2((size.x - r_outer.GetWidth() > safe_padding.x*2) ? safe_padding.x : 0.0f, (size.y - r_outer.GetHeight() > safe_padding.y*2) ? safe_padding.y : 0.0f));
     ImVec2 base_pos_clamped = ImClamp(base_pos, r_outer.Min, r_outer.Max - size);
 
     for (int n = (*last_dir != -1) ? -1 : 0; n < 4; n++)   // Right, down, up, left. Favor last used direction.
@@ -3504,7 +3514,10 @@ static ImGuiWindow* CreateNewWindow(const char* name, ImVec2 size, ImGuiWindowFl
         window->AutoFitOnlyGrows = (window->AutoFitFramesX > 0) || (window->AutoFitFramesY > 0);
     }
 
-    g.Windows.push_back(window);
+    if (flags & ImGuiWindowFlags_NoBringToFrontOnFocus)
+        g.Windows.insert(g.Windows.begin(), window); // Quite slow but rare and only once
+    else
+        g.Windows.push_back(window);
     return window;
 }
 
@@ -3643,10 +3656,13 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
 
         // Setup texture, outer clipping rectangle
         window->DrawList->PushTextureID(g.Font->ContainerAtlas->TexID);
-        if ((flags & ImGuiWindowFlags_ChildWindow) && !(flags & (ImGuiWindowFlags_ComboBox|ImGuiWindowFlags_Popup)))
-            PushClipRect(parent_window->ClipRect);
-        else
-            PushClipRect(GetVisibleRect());
+        {
+            ImRect fullscreen_rect(GetVisibleRect());
+            if ((flags & ImGuiWindowFlags_ChildWindow) && !(flags & (ImGuiWindowFlags_ComboBox|ImGuiWindowFlags_Popup)))
+                PushClipRect(parent_window->ClipRect.Min, parent_window->ClipRect.Max, true);
+            else
+                PushClipRect(fullscreen_rect.Min, fullscreen_rect.Max, true);
+        }
 
         // New windows appears in front
         if (!window_was_active)
@@ -3712,7 +3728,7 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
         }
         else
         {
-            size_auto_fit = ImClamp(window->SizeContents + window->WindowPadding, style.WindowMinSize, ImMax(style.WindowMinSize, g.IO.DisplaySize - window->WindowPadding));
+            size_auto_fit = ImClamp(window->SizeContents + window->WindowPadding, style.WindowMinSize, ImMax(style.WindowMinSize, g.IO.DisplaySize - g.Style.DisplaySafeAreaPadding));
             
             // Handling case of auto fit window not fitting in screen on one axis, we are growing auto fit size on the other axis to compensate for expected scrollbar. FIXME: Might turn bigger than DisplaySize-WindowPadding.
             if (size_auto_fit.x < window->SizeContents.x && !(flags & ImGuiWindowFlags_NoScrollbar) && (flags & ImGuiWindowFlags_HorizontalScrollbar))
@@ -3868,7 +3884,7 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
         // Modal window darkens what is behind them
         if ((flags & ImGuiWindowFlags_Modal) != 0 && window == GetFrontMostModalRootWindow())
         {
-            ImRect fullscreen_rect = GetVisibleRect();
+            ImRect fullscreen_rect(GetVisibleRect());
             window->DrawList->AddRectFilled(fullscreen_rect.Min, fullscreen_rect.Max, GetColorU32(ImGuiCol_ModalWindowDarkening, g.ModalWindowDarkeningRatio));
         }
 
@@ -4060,7 +4076,7 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
     clip_rect.Max.x = window->Pos.x + window->Size.x - window->ScrollbarSizes.x - ImMax(border_size, window->WindowPadding.x*0.5f);
     clip_rect.Max.y = window->Pos.y + window->Size.y - border_size - window->ScrollbarSizes.y;
 
-    PushClipRect(clip_rect);
+    PushClipRect(clip_rect.Min, clip_rect.Max, true);
 
     // Clear 'accessed' flag last thing
     if (first_begin_of_the_frame)
@@ -8315,7 +8331,7 @@ bool ImGui::BeginMenuBar()
     ImGui::PushID("##menubar");
     ImRect rect = window->MenuBarRect();
     float border_size = (window->Flags & ImGuiWindowFlags_ShowBorders) ? 1.0f : 0.0f;
-    PushClipRect(ImVec4(rect.Min.x+0.5f, rect.Min.y-0.5f+border_size, rect.Max.x+0.5f, rect.Max.y-0.5f), false);
+    PushClipRect(ImVec2(rect.Min.x+0.5f, rect.Min.y-0.5f+border_size), ImVec2(rect.Max.x+0.5f, rect.Max.y-0.5f), false);
     window->DC.CursorPos = ImVec2(rect.Min.x + window->DC.MenuBarOffsetX, rect.Min.y);// + g.Style.FramePadding.y);
     window->DC.LayoutType = ImGuiLayoutType_Horizontal;
     window->DC.MenuBarAppending = true;
@@ -8891,7 +8907,7 @@ static void PushColumnClipRect(int column_index)
 
     const float x1 = window->Pos.x + ImGui::GetColumnOffset(column_index) - 1;
     const float x2 = window->Pos.x + ImGui::GetColumnOffset(column_index+1) - 1;
-    PushClipRect(ImVec4(x1,-FLT_MAX,x2,+FLT_MAX));
+    ImGui::PushClipRect(ImVec2(x1,-FLT_MAX), ImVec2(x2,+FLT_MAX), true);
 }
 
 void ImGui::Columns(int columns_count, const char* id, bool border)
@@ -9225,7 +9241,7 @@ void ImGui::ShowMetricsWindow(bool* opened)
                         ImGui::BulletText("Callback %p, user_data %p", pcmd->UserCallback, pcmd->UserCallbackData);
                         continue;
                     }
-                    ImGui::BulletText("Draw %d %s vtx, tex = %p, clip_rect = (%.0f,%.0f)..(%.0f,%.0f)", pcmd->ElemCount, draw_list->IdxBuffer.Size > 0 ? "indexed" : "non-indexed", pcmd->TextureId, pcmd->ClipRect.x, pcmd->ClipRect.y, pcmd->ClipRect.z, pcmd->ClipRect.w);
+                    ImGui::BulletText("Draw %-4d %s vtx, tex = %p, clip_rect = (%.0f,%.0f)..(%.0f,%.0f)", pcmd->ElemCount, draw_list->IdxBuffer.Size > 0 ? "indexed" : "non-indexed", pcmd->TextureId, pcmd->ClipRect.x, pcmd->ClipRect.y, pcmd->ClipRect.z, pcmd->ClipRect.w);
                     if (show_clip_rects && ImGui::IsItemHovered())
                     {
                         ImRect clip_rect = pcmd->ClipRect;
@@ -9297,8 +9313,8 @@ void ImGui::ShowMetricsWindow(bool* opened)
 
 //-----------------------------------------------------------------------------
 
-//---- Include imgui_user.inl at the end of imgui.cpp
-//---- So you can include code that extends ImGui using its private data/functions.
+// Include imgui_user.inl at the end of imgui.cpp to access private data/functions that aren't exposed.
+// Prefer just including imgui_internal.h from your code rather than using this define. If a declaration is missing from imgui_internal.h add it or request it on the github.
 #ifdef IMGUI_INCLUDE_IMGUI_USER_INL
 #include "imgui_user.inl"
 #endif

@@ -189,7 +189,7 @@ void* rmtLoadLibrary(const char* path)
 static void rmtFreeLibrary(void* handle)
 {
     #if defined(RMT_PLATFORM_WINDOWS)
-        FreeLibrary(handle);
+        FreeLibrary((HMODULE)handle);
     #elif defined(RMT_PLATFORM_POSIX)
         dlclose(handle);
     #endif
