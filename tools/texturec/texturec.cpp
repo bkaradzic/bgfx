@@ -146,12 +146,32 @@ void help(const char* _error = NULL)
 		  "Copyright 2011-2015 Branimir Karadzic. All rights reserved.\n"
 		  "License: http://www.opensource.org/licenses/BSD-2-Clause\n\n"
 		);
+
+	fprintf(stderr
+		, "Usage: texturec -f <in> -o <out> -t <format>\n"
+
+		  "\n"
+		  "Supported input file types:\n"
+		  "    *.png                  Portable Network Graphics\n"
+		  "    *.tga                  Targa\n"
+		  "    *.dds                  Direct Draw Surface\n"
+		  "    *.ktx                  Khronos Texture\n"
+		  "    *.pvr                  PowerVR\n"
+
+		  "\n"
+		  "Options:\n"
+		  "  -f <file path>           Input file path.\n"
+		  "  -o <file path>           Output file path (file will be written in KTX format).\n"
+		  "  -t <format>              Output format type (BC1/2/3/4/5, ETC1, PVR14, etc.).\n"
+		  "  -m, --mips               Generate mip-maps.\n"
+
+		  "\n"
+		  "For additional information, see https://github.com/bkaradzic/bgfx\n"
+		);
 }
 
 int main(int _argc, const char* _argv[])
 {
-	using namespace bgfx;
-
 	bx::CommandLine cmdLine(_argc, _argv);
 
 	if (cmdLine.hasArg('h', "help") )
@@ -160,7 +180,7 @@ int main(int _argc, const char* _argv[])
 		return EXIT_FAILURE;
 	}
 
-	const char* inputFileName = cmdLine.findOption('i');
+	const char* inputFileName = cmdLine.findOption('f');
 	if (NULL == inputFileName)
 	{
 		help("Input file must be specified.");
@@ -183,54 +203,13 @@ int main(int _argc, const char* _argv[])
 
 	const bool  mips = cmdLine.hasArg('m', "mips");
 	const char* type = cmdLine.findOption('t');
-	TextureFormat::Enum format = TextureFormat::BGRA8;
+	bgfx::TextureFormat::Enum format = bgfx::TextureFormat::BGRA8;
 
 	if (NULL != type)
 	{
-		if (0 == bx::stricmp(type, "bc1")
-		||  0 == bx::stricmp(type, "dxt1") )
-		{
-			format = TextureFormat::BC1;
-		}
-		else if (0 == bx::stricmp(type, "bc2")
-		||       0 == bx::stricmp(type, "dxt3") )
-		{
-			format = TextureFormat::BC2;
-		}
-		else if (0 == bx::stricmp(type, "bc3")
-		||       0 == bx::stricmp(type, "dxt5") )
-		{
-			format = TextureFormat::BC3;
-		}
-		else if (0 == bx::stricmp(type, "bc4") )
-		{
-			format = TextureFormat::BC4;
-		}
-		else if (0 == bx::stricmp(type, "bc5") )
-		{
-			format = TextureFormat::BC5;
-		}
-		else if (0 == bx::stricmp(type, "etc1") )
-		{
-			format = TextureFormat::ETC1;
-		}
-		else if (0 == bx::stricmp(type, "bc6h") )
-		{
-			format = TextureFormat::BC6H;
-		}
-		else if (0 == bx::stricmp(type, "bc7") )
-		{
-			format = TextureFormat::BC7;
-		}
-		else if (0 == bx::stricmp(type, "ptc14") )
-		{
-			format = TextureFormat::PTC14;
-		}
-		else if (0 == bx::stricmp(type, "ptc14a") )
-		{
-			format = TextureFormat::PTC14A;
-		}
-		else
+		format = bgfx::getFormat(type);
+
+		if (!isValid(format) )
 		{
 			help("Invalid format specified.");
 			return EXIT_FAILURE;
@@ -238,86 +217,92 @@ int main(int _argc, const char* _argv[])
 	}
 
 	uint32_t size = (uint32_t)bx::getSize(&reader);
-	const Memory* mem = alloc(size);
+	const bgfx::Memory* mem = bgfx::alloc(size);
 	bx::read(&reader, mem->data, mem->size);
 	bx::close(&reader);
 
-	uint8_t* decodedImage = NULL;
-	ImageContainer imageContainer;
-
-	bool loaded = imageParse(imageContainer, mem->data, mem->size);
-	if (!loaded)
 	{
-		int width  = 0;
-		int height = 0;
-		int comp   = 0;
+		using namespace bgfx;
 
-		decodedImage = stbi_load_from_memory( (uint8_t*)mem->data, mem->size, &width, &height, &comp, 4);
-		loaded = NULL != decodedImage;
+		uint8_t* decodedImage = NULL;
+		ImageContainer imageContainer;
 
+		bool loaded = imageParse(imageContainer, mem->data, mem->size);
+		if (!loaded)
+		{
+			int width  = 0;
+			int height = 0;
+			int comp   = 0;
+
+			decodedImage = stbi_load_from_memory( (uint8_t*)mem->data, mem->size, &width, &height, &comp, 4);
+			loaded = NULL != decodedImage;
+
+			if (loaded)
+			{
+				release(mem);
+
+				mem = makeRef(decodedImage, width*height*4);
+
+				imageContainer.m_data     = mem->data;
+				imageContainer.m_size     = mem->size;
+				imageContainer.m_offset   = 0;
+				imageContainer.m_width    = width;
+				imageContainer.m_height   = height;
+				imageContainer.m_depth    = 1;
+				imageContainer.m_format   = bgfx::TextureFormat::RGBA8;
+				imageContainer.m_numMips  = 1;
+				imageContainer.m_hasAlpha = true;
+				imageContainer.m_cubeMap  = false;
+				imageContainer.m_ktx      = false;
+				imageContainer.m_ktxLE    = false;
+				imageContainer.m_srgb     = false;
+			}
+		}
+
+		BX_UNUSED(mips);
 		if (loaded)
 		{
-			release(mem);
+			bx::CrtAllocator allocator;
+			const Memory* output = NULL;
 
-			mem = makeRef(decodedImage, width*height*4);
-
-			imageContainer.m_data     = mem->data;
-			imageContainer.m_size     = mem->size;
-			imageContainer.m_offset   = 0;
-			imageContainer.m_width    = width;
-			imageContainer.m_height   = height;
-			imageContainer.m_depth    = 1;
-			imageContainer.m_format   = bgfx::TextureFormat::RGBA8;
-			imageContainer.m_numMips  = 1;
-			imageContainer.m_hasAlpha = true;
-			imageContainer.m_cubeMap  = false;
-			imageContainer.m_ktx      = false;
-			imageContainer.m_ktxLE    = false;
-			imageContainer.m_srgb     = false;
-		}
-	}
-
-	BX_UNUSED(mips);
-	if (loaded)
-	{
-		bx::CrtAllocator allocator;
-		const Memory* output = NULL;
-
-		ImageMip mip;
-		if (imageGetRawData(imageContainer, 0, 0, mem->data, mem->size, mip) )
-		{
-			uint32_t size = imageGetSize(TextureFormat::RGBA8, mip.m_width, mip.m_height);
-			uint8_t* rgba = (uint8_t*)BX_ALLOC(&allocator, size);
-
-			imageDecodeToRgba8(rgba, mip.m_data, mip.m_width, mip.m_height, mip.m_width*mip.m_bpp/8, mip.m_format);
-
-			imageContainer.m_size   = imageGetSize(format, mip.m_width, mip.m_height);
-			imageContainer.m_format = format;
-			output = alloc(imageContainer.m_size);
-
-			imageEncodeFromRgba8(output->data, rgba, mip.m_width, mip.m_height, format);
-
-			BX_FREE(&allocator, rgba);
-		}
-
-		if (NULL != output)
-		{
-			bx::CrtFileWriter writer;
-			if (0 == bx::open(&writer, outputFileName) )
+			ImageMip mip;
+			if (imageGetRawData(imageContainer, 0, 0, mem->data, mem->size, mip) )
 			{
-				if (NULL != bx::stristr(outputFileName, ".ktx") )
-				{
-					imageWriteKtx(&writer, imageContainer, output->data, output->size);
-				}
+				uint32_t size = imageGetSize(TextureFormat::RGBA8, mip.m_width, mip.m_height);
+				uint8_t* rgba = (uint8_t*)BX_ALLOC(&allocator, size);
 
-				bx::close(&writer);
+				imageDecodeToRgba8(rgba, mip.m_data, mip.m_width, mip.m_height, mip.m_width*mip.m_bpp/8, mip.m_format);
+
+				imageContainer.m_size   = imageGetSize(format, mip.m_width, mip.m_height);
+				imageContainer.m_format = format;
+				output = alloc(imageContainer.m_size);
+
+	//			bgfx::imageRgba8Downsample2x2(width, height, pitch, data, data);
+
+				imageEncodeFromRgba8(output->data, rgba, mip.m_width, mip.m_height, format);
+
+				BX_FREE(&allocator, rgba);
 			}
 
-			release(output);
-		}
-	}
+			if (NULL != output)
+			{
+				bx::CrtFileWriter writer;
+				if (0 == bx::open(&writer, outputFileName) )
+				{
+					if (NULL != bx::stristr(outputFileName, ".ktx") )
+					{
+						imageWriteKtx(&writer, imageContainer, output->data, output->size);
+					}
 
-	release(mem);
+					bx::close(&writer);
+				}
+
+				release(output);
+			}
+		}
+
+		release(mem);
+	}
 
 	return EXIT_SUCCESS;
 }

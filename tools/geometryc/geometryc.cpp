@@ -368,7 +368,7 @@ void help(const char* _error = NULL)
 
 		  "\n"
 		  "Supported input file types:\n"
-		  "    *.obj                    Wavefront\n"
+		  "    *.obj                  Wavefront\n"
 
 		  "\n"
 		  "Options:\n"

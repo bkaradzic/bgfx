@@ -193,6 +193,14 @@ namespace bgfx
 			;
 	}
 
+	bool isValid(TextureFormat::Enum _format)
+	{
+		return _format != TextureFormat::Unknown
+			&& _format != TextureFormat::UnknownDepth
+			&& _format != TextureFormat::Count
+			;
+	}
+
 	uint8_t getBitsPerPixel(TextureFormat::Enum _format)
 	{
 		return s_imageBlockInfo[_format].bitsPerPixel;
@@ -211,6 +219,23 @@ namespace bgfx
 	const char* getName(TextureFormat::Enum _format)
 	{
 		return s_textureFormatName[_format];
+	}
+
+	TextureFormat::Enum getFormat(const char* _name)
+	{
+		for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
+		{
+			const TextureFormat::Enum fmt = TextureFormat::Enum(ii);
+			if (isValid(fmt) )
+			{
+				if (0 == bx::stricmp(s_textureFormatName[ii], _name) )
+				{
+					return fmt;
+				}
+			}
+		}
+
+		return TextureFormat::Unknown;
 	}
 
 	uint32_t imageGetSize(TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth, bool _cubeMap, uint8_t _numMips)

@@ -66,25 +66,31 @@ namespace bgfx
 		uint8_t encoding;
 	};
 
-	///
+	/// Returns true if texture format is compressed.
 	bool isCompressed(TextureFormat::Enum _format);
 
-	///
+	/// Returns true if texture format is uncompressed.
 	bool isColor(TextureFormat::Enum _format);
 
-	///
+	/// Returns true if texture format is depth.
 	bool isDepth(TextureFormat::Enum _format);
 
-	///
+	/// Returns true if texture format is valid.
+	bool isValid(TextureFormat::Enum _format);
+
+	/// Returns bits per pixel.
 	uint8_t getBitsPerPixel(TextureFormat::Enum _format);
 
-	///
+	/// Returns texture block info.
 	const ImageBlockInfo& getBlockInfo(TextureFormat::Enum _format);
 
-	///
+	/// Converts format to string.
 	const char* getName(TextureFormat::Enum _format);
 
-	///
+	/// Converts string to format.
+	TextureFormat::Enum getFormat(const char* _name);
+
+	/// Returns image size.
 	uint32_t imageGetSize(TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth = 0, bool _cubeMap = false, uint8_t _numMips = 0);
 
 	///

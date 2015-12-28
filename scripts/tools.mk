@@ -24,3 +24,4 @@ endif
 
 SHADERC:="$(THISDIR)../tools/bin/$(OS)/shaderc"
 GEOMETRYC:="$(THISDIR)../tools/bin/$(OS)/geometryc"
+TEXTUREC:="$(THISDIR)../tools/bin/$(OS)/texturec"

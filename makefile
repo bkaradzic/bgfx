@@ -276,4 +276,8 @@ tools/bin/$(OS)/geometryc$(EXE): .build/projects/$(BUILD_PROJECT_DIR)
 	$(SILENT) $(MAKE) -C .build/projects/$(BUILD_PROJECT_DIR) -f geometryc.make config=$(BUILD_TOOLS_CONFIG)
 	$(SILENT) cp .build/$(BUILD_OUTPUT_DIR)/bin/geometryc$(BUILD_TOOLS_SUFFIX)$(EXE) $(@)
 
-tools: tools/bin/$(OS)/shaderc$(EXE) tools/bin/$(OS)/geometryc$(EXE)
+tools/bin/$(OS)/texturec$(EXE): .build/projects/$(BUILD_PROJECT_DIR)
+	$(SILENT) $(MAKE) -C .build/projects/$(BUILD_PROJECT_DIR) -f texturec.make config=$(BUILD_TOOLS_CONFIG)
+	$(SILENT) cp .build/$(BUILD_OUTPUT_DIR)/bin/texturec$(BUILD_TOOLS_SUFFIX)$(EXE) $(@)
+
+tools: tools/bin/$(OS)/shaderc$(EXE) tools/bin/$(OS)/geometryc$(EXE) tools/bin/$(OS)/texturec$(EXE)
