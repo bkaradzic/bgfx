@@ -133,7 +133,7 @@ struct Uniform
 typedef std::vector<Uniform> UniformArray;
 
 void printCode(const char* _code, int32_t _line = 0, int32_t _start = 0, int32_t _end = INT32_MAX);
-void strreplace(char* _str, const char* _find, const char* _replace);
+void strReplace(char* _str, const char* _find, const char* _replace);
 int32_t writef(bx::WriterI* _writer, const char* _format, ...);
 void writeFile(const char* _filePath, const void* _data, int32_t _size);
 

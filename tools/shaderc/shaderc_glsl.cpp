@@ -70,17 +70,17 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::str
 	if (0 != _gles)
 	{
 		char* code = const_cast<char*>(optimizedShader);
-		strreplace(code, "gl_FragDepthEXT", "gl_FragDepth");
+		strReplace(code, "gl_FragDepthEXT", "gl_FragDepth");
 
-		strreplace(code, "texture2DLodEXT", "texture2DLod");
-		strreplace(code, "texture2DProjLodEXT", "texture2DProjLod");
-		strreplace(code, "textureCubeLodEXT", "textureCubeLod");
-		strreplace(code, "texture2DGradEXT", "texture2DGrad");
-		strreplace(code, "texture2DProjGradEXT", "texture2DProjGrad");
-		strreplace(code, "textureCubeGradEXT", "textureCubeGrad");
+		strReplace(code, "texture2DLodEXT", "texture2DLod");
+		strReplace(code, "texture2DProjLodEXT", "texture2DProjLod");
+		strReplace(code, "textureCubeLodEXT", "textureCubeLod");
+		strReplace(code, "texture2DGradEXT", "texture2DGrad");
+		strReplace(code, "texture2DProjGradEXT", "texture2DProjGrad");
+		strReplace(code, "textureCubeGradEXT", "textureCubeGrad");
 
-		strreplace(code, "shadow2DEXT", "shadow2D");
-		strreplace(code, "shadow2DProjEXT", "shadow2DProj");
+		strReplace(code, "shadow2DEXT", "shadow2D");
+		strReplace(code, "shadow2DProjEXT", "shadow2DProj");
 	}
 
 	UniformArray uniforms;

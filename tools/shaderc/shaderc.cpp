@@ -293,14 +293,14 @@ private:
 	uint32_t m_size;
 };
 
-void strins(char* _str, const char* _insert)
+void strInsert(char* _str, const char* _insert)
 {
 	size_t len = strlen(_insert);
 	memmove(&_str[len], _str, strlen(_str) );
 	memcpy(_str, _insert, len);
 }
 
-void strreplace(char* _str, const char* _find, const char* _replace)
+void strReplace(char* _str, const char* _find, const char* _replace)
 {
 	const size_t len = strlen(_find);
 
@@ -317,6 +317,12 @@ void strreplace(char* _str, const char* _find, const char* _replace)
 	{
 		memcpy(ptr, replace, len);
 	}
+}
+
+void strNormalizeEol(char* _str)
+{
+	strReplace(_str, "\r\n", "\n");
+	strReplace(_str, "\r",   "\n");
 }
 
 void printCode(const char* _code, int32_t _line, int32_t _start, int32_t _end)
@@ -587,7 +593,7 @@ void addFragData(Preprocessor& _preprocessor, char* _data, uint32_t _idx, bool _
 	char replace[32];
 	bx::snprintf(replace, sizeof(replace), "gl_FragData_%d_", _idx);
 
-	strreplace(_data, find, replace);
+	strReplace(_data, find, replace);
 
 	_preprocessor.writef(
 		" \\\n\t%sout vec4 gl_FragData_%d_ : SV_TARGET%d"
@@ -602,7 +608,7 @@ void voidFragData(char* _data, uint32_t _idx)
 	char find[32];
 	bx::snprintf(find, sizeof(find), "gl_FragData[%d]", _idx);
 
-	strreplace(_data, find, "bgfx_VoidFrag");
+	strReplace(_data, find, "bgfx_VoidFrag");
 }
 
 // c - compute
@@ -1015,6 +1021,8 @@ int main(int _argc, const char* _argv[])
 			memset(&data[size+1], 0, padding);
 			fclose(file);
 
+			strNormalizeEol(data);
+
 			input = const_cast<char*>(bx::strws(data) );
 			while (input[0] == '$')
 			{
@@ -1408,7 +1416,7 @@ int main(int _argc, const char* _argv[])
 						const char* brace = strstr(entry, "{");
 						if (NULL != brace)
 						{
-							strins(const_cast<char*>(brace+1), "\nvec4 bgfx_VoidFrag;\n");
+							strInsert(const_cast<char*>(brace+1), "\nvec4 bgfx_VoidFrag;\n");
 						}
 
 						const bool hasFragCoord   = NULL != strstr(input, "gl_FragCoord") || hlsl > 3 || hlsl == 2;
@@ -1540,7 +1548,7 @@ int main(int _argc, const char* _argv[])
 							const char* end = bx::strmb(brace, '{', '}');
 							if (NULL != end)
 							{
-								strins(const_cast<char*>(end), "__RETURN__;\n");
+								strInsert(const_cast<char*>(end), "__RETURN__;\n");
 							}
 						}
 
