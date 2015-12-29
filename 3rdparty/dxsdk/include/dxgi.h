@@ -141,6 +141,7 @@ typedef interface IDXGIDevice1 IDXGIDevice1;
 #include "oaidl.h"
 #include "ocidl.h"
 #include "dxgitype.h"
+#include "d3dcommon.h"
 
 #ifdef __cplusplus
 extern "C"{
