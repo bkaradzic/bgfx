@@ -185,6 +185,7 @@
 #	pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #	pragma GCC diagnostic ignored "-Wunused-variable"
 #	pragma GCC diagnostic ignored "-Wunused-parameter"
+#	pragma GCC diagnostic ignored "-Warray-bounds"
 #elif defined POSH_COMPILER_MSVC
 #   define NV_CC_MSVC   1
 #   define NV_CC_STRING "msvc"
@@ -220,14 +221,6 @@
 #define NV_LITTLE_ENDIAN    POSH_LITTLE_ENDIAN
 #define NV_BIG_ENDIAN       POSH_BIG_ENDIAN
 #define NV_ENDIAN_STRING    POSH_ENDIAN_STRING
-
-
-// Define the right printf prefix for size_t arguments:
-#if POSH_64BIT_POINTER
-#  define NV_SIZET_PRINTF_PREFIX POSH_I64_PRINTF_PREFIX
-#else
-#  define NV_SIZET_PRINTF_PREFIX
-#endif
 
 
 // Type definitions:
