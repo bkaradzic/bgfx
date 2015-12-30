@@ -11,6 +11,7 @@
 #	if BGFX_USE_EGL
 
 #		if BX_PLATFORM_RPI
+#			include <X11/Xlib.h>
 #			include <bcm_host.h>
 #		endif // BX_PLATFORM_RPI
 
@@ -150,6 +151,7 @@ EGL_IMPORT
 	{
 		// Noop for now...
 		BX_UNUSED(_display, _window);
+		g_platformData.ndt = EGL_DEFAULT_DISPLAY;
 	}
 #	endif // BX_PLATFORM_RPI
 
@@ -224,8 +226,8 @@ EGL_IMPORT
 			DISPMANX_DISPLAY_HANDLE_T dispmanDisplay = vc_dispmanx_display_open(0);
 			DISPMANX_UPDATE_HANDLE_T  dispmanUpdate  = vc_dispmanx_update_start(0);
 
-			VC_RECT_T dstRect = { 0, 0, _width,        _height       };
-			VC_RECT_T srcRect = { 0, 0, _width  << 16, _height << 16 };
+			VC_RECT_T dstRect = { 0, 0, int32_t(_width),        int32_t(_height)       };
+			VC_RECT_T srcRect = { 0, 0, int32_t(_width)  << 16, int32_t(_height) << 16 };
 
 			DISPMANX_ELEMENT_HANDLE_T dispmanElement = vc_dispmanx_element_add(dispmanUpdate
 				, dispmanDisplay
@@ -259,6 +261,9 @@ EGL_IMPORT
 
 				EGLint flags = 0;
 
+#	if BX_PLATFORM_RPI
+				BX_UNUSED(hasEglKhrCreateContext, hasEglKhrNoError);
+#else
 				if (hasEglKhrCreateContext)
 				{
 					bx::write(&writer, EGLint(EGL_CONTEXT_MAJOR_VERSION_KHR) );
@@ -285,6 +290,7 @@ EGL_IMPORT
 					}
 				}
 				else
+#	endif // BX_PLATFORM_RPI
 				{
 					bx::write(&writer, EGLint(EGL_CONTEXT_CLIENT_VERSION) );
 					bx::write(&writer, 2);
