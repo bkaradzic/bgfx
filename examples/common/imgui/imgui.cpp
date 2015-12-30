@@ -3415,12 +3415,14 @@ bool imguiCheck(const char* _text, bool _checked, bool _enabled)
 	return s_imgui.check(_text, _checked, _enabled);
 }
 
-void imguiBool(const char* _text, bool& _flag, bool _enabled)
+bool imguiBool(const char* _text, bool& _flag, bool _enabled)
 {
-	if (imguiCheck(_text, _flag, _enabled) )
+    bool result = imguiCheck(_text, _flag, _enabled);
+	if (result)
 	{
 		_flag = !_flag;
 	}
+    return result;
 }
 
 bool imguiCollapse(const char* _text, const char* _subtext, bool _checked, bool _enabled)

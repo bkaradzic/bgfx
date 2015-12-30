@@ -173,7 +173,7 @@ void imguiSetCurrentScissor(); // Call before drawing custom widgets over imgui 
 bool imguiButton(const char* _text, bool _enabled = true, ImguiAlign::Enum _align = ImguiAlign::LeftIndented, uint32_t _rgb0 = IMGUI_BUTTON_RGB0, int32_t _r = IMGUI_BUTTON_R);
 bool imguiItem(const char* _text, bool _enabled = true);
 bool imguiCheck(const char* _text, bool _checked, bool _enabled = true);
-void imguiBool(const char* _text, bool& _flag, bool _enabled = true);
+bool imguiBool(const char* _text, bool& _flag, bool _enabled = true);
 bool imguiCollapse(const char* _text, const char* _subtext, bool _checked, bool _enabled = true);
 void imguiLabel(const char* _format, ...);
 void imguiLabel(uint32_t _rgba, const char* _format, ...);
