@@ -146,13 +146,6 @@ EGL_IMPORT
 
 #	if BX_PLATFORM_RPI
 	static EGL_DISPMANX_WINDOW_T s_dispmanWindow;
-
-	void x11SetDisplayWindow(::Display* _display, ::Window _window)
-	{
-		// Noop for now...
-		BX_UNUSED(_display, _window);
-		g_platformData.ndt = EGL_DEFAULT_DISPLAY;
-	}
 #	endif // BX_PLATFORM_RPI
 
 	void GlContext::create(uint32_t _width, uint32_t _height)
@@ -165,6 +158,10 @@ EGL_IMPORT
 
 		if (NULL == g_platformData.context)
 		{
+#	if BX_PLATFORM_RPI
+			g_platformData.ndt = EGL_DEFAULT_DISPLAY;
+#	endif // BX_PLATFORM_RPI
+
 			BX_UNUSED(_width, _height);
 			EGLNativeDisplayType ndt = (EGLNativeDisplayType)g_platformData.ndt;
 			EGLNativeWindowType  nwh = (EGLNativeWindowType )g_platformData.nwh;
