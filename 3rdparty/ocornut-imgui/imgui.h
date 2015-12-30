@@ -1,4 +1,4 @@
-// dear imgui, v1.47
+// dear imgui, v1.48 WIP
 // (headers)
 
 // See imgui.cpp file for documentation.
@@ -16,7 +16,7 @@
 #include <stddef.h>         // ptrdiff_t, NULL
 #include <string.h>         // memset, memmove, memcpy, strlen, strchr, strcpy, strcmp
 
-#define IMGUI_VERSION       "1.47"
+#define IMGUI_VERSION       "1.48 WIP"
 
 // Define assertion handler.
 #ifndef IM_ASSERT
@@ -1116,8 +1116,8 @@ struct ImDrawList
 
     // Primitives
     IMGUI_API void  AddLine(const ImVec2& a, const ImVec2& b, ImU32 col, float thickness = 1.0f);
-    IMGUI_API void  AddRect(const ImVec2& a, const ImVec2& b, ImU32 col, float rounding = 0.0f, int rounding_corners = 0x0F);
-    IMGUI_API void  AddRectFilled(const ImVec2& a, const ImVec2& b, ImU32 col, float rounding = 0.0f, int rounding_corners = 0x0F);
+    IMGUI_API void  AddRect(const ImVec2& a, const ImVec2& b, ImU32 col, float rounding = 0.0f, int rounding_corners = 0x0F);        // a: upper-left, b: lower-right
+    IMGUI_API void  AddRectFilled(const ImVec2& a, const ImVec2& b, ImU32 col, float rounding = 0.0f, int rounding_corners = 0x0F);  // a: upper-left, b: lower-right
     IMGUI_API void  AddRectFilledMultiColor(const ImVec2& a, const ImVec2& b, ImU32 col_upr_left, ImU32 col_upr_right, ImU32 col_bot_right, ImU32 col_bot_left);
     IMGUI_API void  AddTriangleFilled(const ImVec2& a, const ImVec2& b, const ImVec2& c, ImU32 col);
     IMGUI_API void  AddCircle(const ImVec2& centre, float radius, ImU32 col, int num_segments = 12);

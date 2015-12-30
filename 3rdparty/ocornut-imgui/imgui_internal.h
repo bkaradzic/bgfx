@@ -1,4 +1,4 @@
-// dear imgui, v1.47
+// dear imgui, v1.48 WIP
 // (internals)
 
 // You may use this file to debug, understand or extend ImGui features but we don't provide any guarantee of forward compatibility!
@@ -161,7 +161,7 @@ enum ImGuiTreeNodeFlags_
 
 enum ImGuiSliderFlags_
 {
-    ImGuiSliderFlags_Vertical               = 1 << 0,
+    ImGuiSliderFlags_Vertical               = 1 << 0
 };
 
 enum ImGuiSelectableFlagsPrivate_
