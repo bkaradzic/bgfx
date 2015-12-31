@@ -3495,7 +3495,7 @@ namespace bgfx { namespace d3d9
 		uint16_t programIdx = invalidHandle;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
-		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
+		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
 		uint32_t blendFactor = 0;
 
 		BlitKey blitKey;
