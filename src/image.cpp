@@ -241,7 +241,6 @@ namespace bgfx
 	uint8_t imageGetNumMips(TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth)
 	{
 		const ImageBlockInfo& blockInfo = getBlockInfo(_format);
-		const uint8_t  bpp         = blockInfo.bitsPerPixel;
 		const uint16_t blockWidth  = blockInfo.blockWidth;
 		const uint16_t blockHeight = blockInfo.blockHeight;
 		const uint16_t minBlockX   = blockInfo.minBlockX;
