@@ -238,6 +238,37 @@ namespace bgfx
 		return TextureFormat::Unknown;
 	}
 
+	uint8_t imageGetNumMips(TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth)
+	{
+		const ImageBlockInfo& blockInfo = getBlockInfo(_format);
+		const uint8_t  bpp         = blockInfo.bitsPerPixel;
+		const uint16_t blockWidth  = blockInfo.blockWidth;
+		const uint16_t blockHeight = blockInfo.blockHeight;
+		const uint16_t minBlockX   = blockInfo.minBlockX;
+		const uint16_t minBlockY   = blockInfo.minBlockY;
+
+		_width   = bx::uint16_max(blockWidth  * minBlockX, ( (_width  + blockWidth  - 1) / blockWidth)*blockWidth);
+		_height  = bx::uint16_max(blockHeight * minBlockY, ( (_height + blockHeight - 1) / blockHeight)*blockHeight);
+		_depth   = bx::uint16_max(1, _depth);
+
+		uint8_t numMips = 0;
+
+		for (uint32_t width = _width, height = _height, depth = _depth
+			; blockWidth < width && blockHeight < height && 1 < depth
+			; ++numMips)
+		{
+			width  = bx::uint32_max(blockWidth  * minBlockX, ( (width  + blockWidth  - 1) / blockWidth )*blockWidth);
+			height = bx::uint32_max(blockHeight * minBlockY, ( (height + blockHeight - 1) / blockHeight)*blockHeight);
+			depth  = bx::uint32_max(1, depth);
+
+			width  >>= 1;
+			height >>= 1;
+			depth  >>= 1;
+		}
+
+		return numMips;
+	}
+
 	uint32_t imageGetSize(TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth, bool _cubeMap, uint8_t _numMips)
 	{
 		const ImageBlockInfo& blockInfo = getBlockInfo(_format);

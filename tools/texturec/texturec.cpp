@@ -123,6 +123,10 @@ namespace bgfx
 		case TextureFormat::PTC24:
 			break;
 
+		case TextureFormat::BGRA8:
+			imageSwizzleBgra8(_width, _height, _width*4, _src, _dst);
+			break;
+
 		case TextureFormat::RGBA8:
 			memcpy(_dst, _src, _width*_height*4);
 			break;
@@ -259,7 +263,6 @@ int main(int _argc, const char* _argv[])
 			}
 		}
 
-		BX_UNUSED(mips);
 		if (loaded)
 		{
 			bx::CrtAllocator allocator;
@@ -271,15 +274,35 @@ int main(int _argc, const char* _argv[])
 				uint32_t size = imageGetSize(TextureFormat::RGBA8, mip.m_width, mip.m_height);
 				uint8_t* rgba = (uint8_t*)BX_ALLOC(&allocator, size);
 
-				imageDecodeToRgba8(rgba, mip.m_data, mip.m_width, mip.m_height, mip.m_width*mip.m_bpp/8, mip.m_format);
+				imageDecodeToRgba8(rgba
+					, mip.m_data
+					, mip.m_width
+					, mip.m_height
+					, mip.m_width*mip.m_bpp/8
+					, mip.m_format
+					);
 
-				imageContainer.m_size   = imageGetSize(format, mip.m_width, mip.m_height);
+				uint8_t numMips = mips
+					? imageGetNumMips(format, mip.m_width, mip.m_height)
+					: 1
+					;
+				imageContainer.m_size   = imageGetSize(format, mip.m_width, mip.m_height, 0, false, numMips);
 				imageContainer.m_format = format;
 				output = alloc(imageContainer.m_size);
 
-	//			bgfx::imageRgba8Downsample2x2(width, height, pitch, data, data);
-
 				imageEncodeFromRgba8(output->data, rgba, mip.m_width, mip.m_height, format);
+
+				for (uint8_t lod = 1; lod < numMips; ++lod)
+				{
+					ImageMip mip1;
+					imageGetRawData(imageContainer, 0, lod, output->data, output->size, mip1);
+					uint8_t* data = const_cast<uint8_t*>(mip1.m_data);
+
+					uint32_t width  = bx::uint32_max(1, mip.m_width >>lod);
+					uint32_t height = bx::uint32_max(1, mip.m_height>>lod);
+					imageRgba8Downsample2x2(width, height, width*4, rgba, rgba);
+					imageEncodeFromRgba8(data, rgba, mip.m_width, mip.m_height, format);
+				}
 
 				BX_FREE(&allocator, rgba);
 			}

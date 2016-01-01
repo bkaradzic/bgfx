@@ -90,6 +90,9 @@ namespace bgfx
 	/// Converts string to format.
 	TextureFormat::Enum getFormat(const char* _name);
 
+	/// Returns number of mip-maps required for complete mip-map chain.
+	uint8_t imageGetNumMips(TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth = 0);
+
 	/// Returns image size.
 	uint32_t imageGetSize(TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth = 0, bool _cubeMap = false, uint8_t _numMips = 0);
 
