@@ -126,7 +126,7 @@ C++ and using bgfx to support multiple rendering APIs.
 <img align="right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
 </a>
 
-	Copyright 2010-2015 Branimir Karadzic. All rights reserved.
+	Copyright 2010-2016 Branimir Karadzic. All rights reserved.
 	
 	https://github.com/bkaradzic/bgfx
 	
