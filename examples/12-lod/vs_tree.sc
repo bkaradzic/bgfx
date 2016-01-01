@@ -3,7 +3,7 @@ $output v_pos, v_view, v_normal, v_texcoord0
 
 /*
  * Copyright 2013 Milos Tosic. All rights reserved.
- * License: http://www.opensource.org/licenses/BSD-2-Clause
+ * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
 #include "../common/common.sh"

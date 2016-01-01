@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2015 Branimir Karadzic. All rights reserved.
- * License: http://www.opensource.org/licenses/BSD-2-Clause
+ * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
 #include <stdio.h>
@@ -147,8 +147,8 @@ void help(const char* _error = NULL)
 
 	fprintf(stderr
 		, "texturec, bgfx texture compiler tool\n"
-		  "Copyright 2011-2015 Branimir Karadzic. All rights reserved.\n"
-		  "License: http://www.opensource.org/licenses/BSD-2-Clause\n\n"
+		  "Copyright 2011-2016 Branimir Karadzic. All rights reserved.\n"
+		  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
 		);
 
 	fprintf(stderr
