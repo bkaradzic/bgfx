@@ -12,6 +12,22 @@
 
 #ifndef __cplusplus
 
+#if BGFX_SHADER_LANGUAGE_HLSL > 3
+#	define BRANCH [branch]
+#	define LOOP   [loop]
+#	define UNROLL [unroll]
+#else
+#	define BRANCH
+#	define LOOP
+#	define UNROLL
+#endif // BGFX_SHADER_LANGUAGE_HLSL > 3
+
+#if BGFX_SHADER_LANGUAGE_HLSL > 3 && BGFX_SHADER_TYPE_FRAGMENT
+#	define EARLY_DEPTH_STENCIL [earlydepthstencil]
+#else
+#	define EARLY_DEPTH_STENCIL
+#endif // BGFX_SHADER_LANGUAGE_HLSL > 3 && BGFX_SHADER_TYPE_FRAGMENT
+
 #if BGFX_SHADER_LANGUAGE_HLSL
 #	define dFdx(_x) ddx(_x)
 #	define dFdy(_y) ddy(-_y)
