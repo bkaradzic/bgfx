@@ -4727,7 +4727,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			// reset the framebuffer to be the backbuffer; depending on the swap effect,
 			// if we don't do this we'll only see one frame of output and then nothing
-			setFrameBuffer(fbh);
+			FrameBufferHandle invalid = BGFX_INVALID_HANDLE;
+			setFrameBuffer(invalid);
 
 			bool viewRestart = false;
 			uint8_t eye = 0;
