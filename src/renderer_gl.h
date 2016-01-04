@@ -10,7 +10,7 @@
 			|| BX_PLATFORM_ANDROID \
 			|| BX_PLATFORM_EMSCRIPTEN \
 			|| BX_PLATFORM_LINUX \
-			|| BX_PLATFORM_FREEBSD \
+			|| BX_PLATFORM_BSD \
 			|| BX_PLATFORM_QNX \
 			|| BX_PLATFORM_RPI \
 			|| BX_PLATFORM_WINDOWS \
@@ -19,12 +19,12 @@
 #define BGFX_USE_WGL (BGFX_CONFIG_RENDERER_OPENGL && BX_PLATFORM_WINDOWS)
 #define BGFX_USE_GLX (BGFX_CONFIG_RENDERER_OPENGL && (0 \
 			|| BX_PLATFORM_LINUX \
-			|| BX_PLATFORM_FREEBSD \
+			|| BX_PLATFORM_BSD \
 			) )
 
 #define BGFX_USE_GL_DYNAMIC_LIB (0 \
 			|| BX_PLATFORM_LINUX \
-			|| BX_PLATFORM_FREEBSD \
+			|| BX_PLATFORM_BSD \
 			|| BX_PLATFORM_OSX \
 			|| BX_PLATFORM_WINDOWS \
 			)
@@ -36,7 +36,7 @@
 #			define GL_ARB_shader_objects // OSX collsion with GLhandleARB in gltypes.h
 #		endif // BX_PLATFORM_OSX
 #	else
-#		if BX_PLATFORM_LINUX || BX_PLATFORM_FREEBSD
+#		if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
 #			define GL_PROTOTYPES
 #			define GL_GLEXT_LEGACY
 #			include <GL/gl.h>
@@ -805,7 +805,7 @@ typedef uint64_t GLuint64;
 #	include "glcontext_ppapi.h"
 #elif BX_PLATFORM_WINDOWS
 #	include <windows.h>
-#elif BX_PLATFORM_LINUX || BX_PLATFORM_FREEBSD
+#elif BX_PLATFORM_LINUX || BX_PLATFORM_BSD
 #	include "glcontext_glx.h"
 #elif BX_PLATFORM_OSX
 #	include "glcontext_nsgl.h"

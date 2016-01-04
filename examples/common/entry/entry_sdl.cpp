@@ -142,7 +142,7 @@ namespace entry
 			return NULL;
 		}
 
-#	if BX_PLATFORM_LINUX || BX_PLATFORM_FREEBSD
+#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
 		return (void*)wmi.info.x11.window;
 #	elif BX_PLATFORM_OSX
 		return wmi.info.cocoa.window;
