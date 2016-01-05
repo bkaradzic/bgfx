@@ -2846,7 +2846,7 @@ again:
 		tc.m_sides   = 0;
 		tc.m_depth   = 0;
 		tc.m_numMips = _numMips;
-		tc.m_format  = uint8_t(_format);
+		tc.m_format  = _format;
 		tc.m_cubeMap = false;
 		tc.m_mem     = _mem;
 		bx::write(&writer, tc);
@@ -2897,15 +2897,15 @@ again:
 		bx::write(&writer, magic);
 
 		TextureCreate tc;
-		tc.m_flags = _flags;
-		tc.m_width = _width;
-		tc.m_height = _height;
-		tc.m_sides = 0;
-		tc.m_depth = _depth;
+		tc.m_flags   = _flags;
+		tc.m_width   = _width;
+		tc.m_height  = _height;
+		tc.m_sides   = 0;
+		tc.m_depth   = _depth;
 		tc.m_numMips = _numMips;
-		tc.m_format = uint8_t(_format);
+		tc.m_format  = _format;
 		tc.m_cubeMap = false;
-		tc.m_mem = _mem;
+		tc.m_mem     = _mem;
 		bx::write(&writer, tc);
 
 		return s_ctx->createTexture(mem, _flags, 0, NULL, BackbufferRatio::Count);
@@ -2947,7 +2947,7 @@ again:
 		tc.m_sides   = 6;
 		tc.m_depth   = 0;
 		tc.m_numMips = _numMips;
-		tc.m_format  = uint8_t(_format);
+		tc.m_format  = _format;
 		tc.m_cubeMap = true;
 		tc.m_mem     = _mem;
 		bx::write(&writer, tc);
