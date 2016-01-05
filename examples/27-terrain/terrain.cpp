@@ -313,11 +313,11 @@ class Terrain : public entry::AppI
 
 				// Raise/Lower and scale by brush power.
 				height += (bx::fclamp(brushAttn * m_brush.m_power, 0.0, m_brush.m_power) * m_brush.m_raise)
-					?  1.0
-					: -1.0
+					?  1.0f
+					: -1.0f
 					;
 
-				m_terrain.m_heightMap[heightMapPos] = (uint8_t)bx::fclamp(height, 0.0, 255.0);
+				m_terrain.m_heightMap[heightMapPos] = (uint8_t)bx::fclamp(height, 0.0f, 255.0f);
 				m_terrain.m_dirty = true;
 			}
 		}
@@ -328,8 +328,8 @@ class Terrain : public entry::AppI
 		float ray_clip[4];
 		ray_clip[0] = ( (2.0f * m_mouseState.m_mx) / m_width - 1.0f) * -1.0f;
 		ray_clip[1] = ( (1.0f - (2.0f * m_mouseState.m_my) / m_height) ) * -1.0f;
-		ray_clip[2] = -1.0;
-		ray_clip[3] = 1.0;
+		ray_clip[2] = -1.0f;
+		ray_clip[3] =  1.0f;
 
 		float invProjMtx[16];
 		bx::mtxInverse(invProjMtx, m_projMtx);
