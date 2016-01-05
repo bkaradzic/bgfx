@@ -2473,12 +2473,9 @@ namespace bgfx
 		using namespace bx;
 		const float4_t unpack = float4_ld(1.0f, 1.0f/256.0f, 1.0f/65536.0f, 1.0f/16777216.0f);
 		const float4_t umask  = float4_ild(0xff, 0xff00, 0xff0000, 0xff000000);
-		const float4_t pmask  = float4_ild(0xff, 0x7f80, 0xff0000, 0x7f800000);
 		const float4_t wflip  = float4_ild(0, 0, 0, 0x80000000);
 		const float4_t wadd   = float4_ld(0.0f, 0.0f, 0.0f, 32768.0f*65536.0f);
-		const float4_t gamma  = float4_ld(1.0f/2.2f, 1.0f/2.2f, 1.0f/2.2f, 1.0f);
 		const float4_t linear = float4_ld(2.2f, 2.2f, 2.2f, 1.0f);
-		const float4_t quater = float4_splat(0.25f);
 
 		for (uint32_t yy = 0, ystep = _pitch; yy < dstheight; ++yy, src += ystep)
 		{
@@ -2507,8 +2504,6 @@ namespace bgfx
 		uint32_t width  = _width/4;
 		uint32_t height = _height/4;
 
-		uint8_t temp[16*4];
-
 		switch (_format)
 		{
 		case TextureFormat::BC5:
@@ -2516,6 +2511,8 @@ namespace bgfx
 			{
 				for (uint32_t xx = 0; xx < width; ++xx)
 				{
+					uint8_t temp[16*4];
+
 					decodeBlockDxt45A(temp+1, src);
 					src += 8;
 					decodeBlockDxt45A(temp+2, src);
