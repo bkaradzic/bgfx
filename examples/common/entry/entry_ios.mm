@@ -312,8 +312,18 @@ static	void* m_device = NULL;
 
 	[m_window makeKeyAndVisible];
 
-	//float scaleFactor = [[UIScreen mainScreen] scale]; // should use this, but ui is too small on ipad retina
 	float scaleFactor = 1.0f;
+    
+#ifdef __IPHONE_8_0
+    if ([m_window.screen respondsToSelector:@selector(nativeScale)])
+    {
+        scaleFactor = m_window.screen.nativeScale;
+    } else
+#endif
+    {
+        scaleFactor = m_window.screen.scale;
+    }
+ 
 	[m_view setContentScaleFactor: scaleFactor ];
 
 	s_ctx = new Context((uint32_t)(scaleFactor*rect.size.width), (uint32_t)(scaleFactor*rect.size.height));
