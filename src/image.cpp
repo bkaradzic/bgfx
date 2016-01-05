@@ -2544,7 +2544,7 @@ namespace bgfx
 
 		default:
 			{
-				void* temp = BX_ALLOC(_allocator, imageGetSize(_format, _pitch/4, _height) );
+				void* temp = BX_ALLOC(_allocator, imageGetSize(_format, uint16_t(_pitch/4), uint16_t(_height) ) );
 				imageDecodeToRgba8(temp, _src, _width, _height, _pitch, _format);
 				imageRgba8ToRgba32f(_dst, _width, _height, _pitch, temp);
 				BX_FREE(_allocator, temp);

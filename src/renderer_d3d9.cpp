@@ -2798,8 +2798,8 @@ namespace bgfx { namespace d3d9
 			m_height  = textureHeight;
 			m_depth   = imageContainer.m_depth;
 			m_numMips = numMips;
-			m_requestedFormat = imageContainer.m_format;
-			m_textureFormat   = imageContainer.m_format;
+			m_requestedFormat =
+			m_textureFormat   = uint8_t(imageContainer.m_format);
 
 			const TextureFormatInfo& tfi = s_textureFormat[m_requestedFormat];
 			uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );

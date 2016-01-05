@@ -3909,7 +3909,7 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	bool TextureGL::init(GLenum _target, uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _format, uint8_t _numMips, uint32_t _flags)
+	bool TextureGL::init(GLenum _target, uint32_t _width, uint32_t _height, uint32_t _depth, TextureFormat::Enum _format, uint8_t _numMips, uint32_t _flags)
 	{
 		m_target  = _target;
 		m_numMips = _numMips;
@@ -3918,8 +3918,8 @@ namespace bgfx { namespace gl
 		m_height  = _height;
 		m_depth   = _depth;
 		m_currentSamplerHash    = UINT32_MAX;
-		m_requestedFormat = _format;
-		m_textureFormat   = _format;
+		m_requestedFormat =
+		m_textureFormat   = uint8_t(_format);
 
 		const bool bufferOnly   = 0 != (m_flags&BGFX_TEXTURE_RT_BUFFER_ONLY);
 		const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE );
