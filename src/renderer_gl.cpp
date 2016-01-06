@@ -1233,7 +1233,7 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		BX_TRACE("GL_EXTENSION %3d%s: %s", index, supported ? " (supported)" : "", _name);
+		BX_TRACE("GL_EXTENSION %s: %s", supported ? " (supported)" : "", _name);
 		BX_UNUSED(supported);
 	}
 
