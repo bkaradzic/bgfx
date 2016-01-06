@@ -1894,7 +1894,7 @@ namespace bgfx
 		{ KTX_RG32UI,                                   KTX_ZERO,                                       KTX_RG,                                       KTX_UNSIGNED_INT,                 }, // RG32U
 		{ KTX_RG32F,                                    KTX_ZERO,                                       KTX_RG,                                       KTX_FLOAT,                        }, // RG32F
 		{ KTX_RGB9_E5,                                  KTX_ZERO,                                       KTX_RGB,                                      KTX_UNSIGNED_INT_5_9_9_9_REV,     }, // RGB9E5F
-		{ KTX_RGBA8,                                    KTX_SRGB8_ALPHA8,                               KTX_BGRA,                                     KTX_UNSIGNED_BYTE,                }, // BGRA8
+		{ KTX_BGRA,                                     KTX_SRGB8_ALPHA8,                               KTX_BGRA,                                     KTX_UNSIGNED_BYTE,                }, // BGRA8
 		{ KTX_RGBA8,                                    KTX_SRGB8_ALPHA8,                               KTX_RGBA,                                     KTX_UNSIGNED_BYTE,                }, // RGBA8
 		{ KTX_RGBA8I,                                   KTX_ZERO,                                       KTX_RGBA,                                     KTX_BYTE,                         }, // RGBA8I
 		{ KTX_RGBA8UI,                                  KTX_ZERO,                                       KTX_RGBA,                                     KTX_UNSIGNED_BYTE,                }, // RGBA8U
@@ -2475,7 +2475,6 @@ namespace bgfx
 		const float4_t umask  = float4_ild(0xff, 0xff00, 0xff0000, 0xff000000);
 		const float4_t wflip  = float4_ild(0, 0, 0, 0x80000000);
 		const float4_t wadd   = float4_ld(0.0f, 0.0f, 0.0f, 32768.0f*65536.0f);
-		const float4_t linear = float4_ld(2.2f, 2.2f, 2.2f, 1.0f);
 
 		for (uint32_t yy = 0, ystep = _pitch; yy < dstheight; ++yy, src += ystep)
 		{
@@ -2489,9 +2488,7 @@ namespace bgfx
 				const float4_t abgr0c = float4_add(abgr0f, wadd);
 				const float4_t abgr0n = float4_mul(abgr0c, unpack);
 
-				const float4_t abgr0l = float4_pow(abgr0n, linear);
-
-				float4_st(dst, abgr0l);
+				float4_st(dst, abgr0n);
 			}
 		}
 	}
