@@ -139,15 +139,36 @@ namespace bgfx
 	void imageEncodeFromRgba32f(void* _dst, const void* _src, uint32_t _width, uint32_t _height, uint8_t _format)
 	{
 		TextureFormat::Enum format = TextureFormat::Enum(_format);
+
+		const float* src = (const float*)_src;
+
 		switch (format)
 		{
 		case TextureFormat::RGBA8:
+			{
+				uint8_t* dst = (uint8_t*)_dst;
+				for (uint32_t yy = 0; yy < _height; ++yy)
+				{
+					for (uint32_t xx = 0; xx < _width; ++xx)
+					{
+						const uint32_t offset = (yy*_width + xx) * 4;
+						const float* input = &src[offset];
+						uint8_t* output    = &dst[offset];
+						output[0] = uint8_t( (input[0]*0.5f + 0.5f)*255.0f + 0.5f);
+						output[1] = uint8_t( (input[1]*0.5f + 0.5f)*255.0f + 0.5f);
+						output[2] = uint8_t( (input[2]*0.5f + 0.5f)*255.0f + 0.5f);
+						output[3] = uint8_t( (input[3]*0.5f + 0.5f)*255.0f + 0.5f);
+					}
+				}
+			}
+			break;
+
+		case TextureFormat::BC5:
 			break;
 
 		default:
 			break;
 		}
-		BX_UNUSED(_dst, _src, _width, _height, _format);
 	}
 
 } // namespace bgfx
@@ -307,11 +328,12 @@ int main(int _argc, const char* _argv[])
 						, mip.m_width
 						, mip.m_height
 						, mip.m_width*mip.m_bpp/8
-						, TextureFormat::Enum(mip.m_format)
+						, mip.m_format
 						);
 
-					imageContainer.m_size   = imageGetSize(format, mip.m_width, mip.m_height, 0, false, numMips);
-					imageContainer.m_format = format;
+					imageContainer.m_numMips = numMips;
+					imageContainer.m_size    = imageGetSize(format, mip.m_width, mip.m_height, 0, false, numMips);
+					imageContainer.m_format  = format;
 					output = alloc(imageContainer.m_size);
 
 					imageEncodeFromRgba32f(output->data, rgba, mip.m_width, mip.m_height, format);
@@ -324,8 +346,8 @@ int main(int _argc, const char* _argv[])
 
 						uint32_t width  = bx::uint32_max(1, mip.m_width >>lod);
 						uint32_t height = bx::uint32_max(1, mip.m_height>>lod);
-						imageRgba32fDownsample2x2NormalMap(width, height, width*4, rgba, rgba);
-						imageEncodeFromRgba32f(data, rgba, mip.m_width, mip.m_height, format);
+						imageRgba32fDownsample2x2NormalMap(width, height, width*16, rgba, rgba);
+						imageEncodeFromRgba32f(data, rgba, width, height, format);
 					}
 				}
 				else
@@ -334,8 +356,9 @@ int main(int _argc, const char* _argv[])
 					temp = BX_ALLOC(&allocator, size);
 					uint8_t* rgba = (uint8_t*)temp;
 
-					imageContainer.m_size   = imageGetSize(format, mip.m_width, mip.m_height, 0, false, numMips);
-					imageContainer.m_format = format;
+					imageContainer.m_numMips = numMips;
+					imageContainer.m_size    = imageGetSize(format, mip.m_width, mip.m_height, 0, false, numMips);
+					imageContainer.m_format  = format;
 					output = alloc(imageContainer.m_size);
 
 					imageEncodeFromRgba8(output->data, rgba, mip.m_width, mip.m_height, format);
@@ -349,7 +372,7 @@ int main(int _argc, const char* _argv[])
 						uint32_t width  = bx::uint32_max(1, mip.m_width >>lod);
 						uint32_t height = bx::uint32_max(1, mip.m_height>>lod);
 						imageRgba8Downsample2x2(width, height, width*4, rgba, rgba);
-						imageEncodeFromRgba8(data, rgba, mip.m_width, mip.m_height, format);
+						imageEncodeFromRgba8(data, rgba, width, height, format);
 					}
 				}
 
