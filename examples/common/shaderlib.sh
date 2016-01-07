@@ -60,11 +60,11 @@ vec3 decodeNormalSphereMap(vec2 _encodedNormal)
 	return vec3(normalize(_encodedNormal.xy) * sqrt(1.0 - zz*zz), zz);
 }
 
-// Reference:
-// Octahedron normal vector encoding
-// http://kriscg.blogspot.com/2014/04/octahedron-normal-vector-encoding.html
 vec2 octahedronWrap(vec2 _val)
 {
+	// Reference:
+	// Octahedron normal vector encoding
+	// http://kriscg.blogspot.com/2014/04/octahedron-normal-vector-encoding.html
 	return (1.0 - abs(_val.yx) )
 		 * mix(vec2_splat(-1.0), vec2_splat(1.0), vec2(greaterThanEqual(_val.xy, vec2_splat(0.0) ) ) );
 }
@@ -87,11 +87,11 @@ vec3 decodeNormalOctahedron(vec2 _encodedNormal)
 	return normalize(normal);
 }
 
-// Reference:
-// RGB/XYZ Matrices
-// http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
 vec3 convertRGB2XYZ(vec3 _rgb)
 {
+	// Reference:
+	// RGB/XYZ Matrices
+	// http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
 	vec3 xyz;
 	xyz.x = dot(vec3(0.4124564, 0.3575761, 0.1804375), _rgb);
 	xyz.y = dot(vec3(0.2126729, 0.7151522, 0.0721750), _rgb);
@@ -244,6 +244,24 @@ vec3 toFilmic(vec3 _rgb)
 vec4 toFilmic(vec4 _rgba)
 {
 	return vec4(toFilmic(_rgba.xyz), _rgba.w);
+}
+
+vec3 toAcesFilmic(vec3 _rgb)
+{
+	// Reference:
+	// ACES Filmic Tone Mapping Curve
+	// https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
+	float aa = 2.51f;
+	float bb = 0.03f;
+	float cc = 2.43f;
+	float dd = 0.59f;
+	float ee = 0.14f;
+	return saturate( (_rgb*(aa*_rgb + bb) )/(_rgb*(cc*_rgb + dd) + ee) );
+}
+
+vec4 toAcesFilmic(vec4 _rgba)
+{
+	return vec4(toAcesFilmic(_rgba.xyz), _rgba.w);
 }
 
 vec3 luma(vec3 _rgb)
