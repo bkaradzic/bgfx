@@ -331,6 +331,19 @@ int main(int _argc, const char* _argv[])
 						, mip.m_format
 						);
 
+					for (uint32_t yy = 0; yy < mip.m_height; ++yy)
+					{
+						for (uint32_t xx = 0; xx < mip.m_width; ++xx)
+						{
+							const uint32_t offset = (yy*mip.m_width + xx) * 4;
+							float* inout = &rgba[offset];
+							inout[0] = inout[0] * 2.0f/255.0f - 1.0f;
+							inout[1] = inout[1] * 2.0f/255.0f - 1.0f;
+							inout[2] = inout[2] * 2.0f/255.0f - 1.0f;
+							inout[3] = inout[3] * 2.0f/255.0f - 1.0f;
+						}
+					}
+
 					imageContainer.m_numMips = numMips;
 					imageContainer.m_size    = imageGetSize(format, mip.m_width, mip.m_height, 0, false, numMips);
 					imageContainer.m_format  = format;
@@ -340,14 +353,12 @@ int main(int _argc, const char* _argv[])
 
 					for (uint8_t lod = 1; lod < numMips; ++lod)
 					{
-						ImageMip mip1;
-						imageGetRawData(imageContainer, 0, lod, output->data, output->size, mip1);
-						uint8_t* data = const_cast<uint8_t*>(mip1.m_data);
+						imageRgba32fDownsample2x2NormalMap(mip.m_width, mip.m_height, mip.m_width*16, rgba, rgba);
 
-						uint32_t width  = bx::uint32_max(1, mip.m_width >>lod);
-						uint32_t height = bx::uint32_max(1, mip.m_height>>lod);
-						imageRgba32fDownsample2x2NormalMap(width, height, width*16, rgba, rgba);
-						imageEncodeFromRgba32f(data, rgba, width, height, format);
+						ImageMip dstMip;
+						imageGetRawData(imageContainer, 0, lod, output->data, output->size, dstMip);
+						uint8_t* data = const_cast<uint8_t*>(dstMip.m_data);
+						imageEncodeFromRgba32f(data, rgba, dstMip.m_width, dstMip.m_height, format);
 					}
 				}
 				else
@@ -355,6 +366,14 @@ int main(int _argc, const char* _argv[])
 					uint32_t size = imageGetSize(TextureFormat::RGBA8, mip.m_width, mip.m_height);
 					temp = BX_ALLOC(&allocator, size);
 					uint8_t* rgba = (uint8_t*)temp;
+
+					imageDecodeToRgba8(rgba
+						, mip.m_data
+						, mip.m_width
+						, mip.m_height
+						, mip.m_width*mip.m_bpp/8
+						, mip.m_format
+						);
 
 					imageContainer.m_numMips = numMips;
 					imageContainer.m_size    = imageGetSize(format, mip.m_width, mip.m_height, 0, false, numMips);
@@ -365,14 +384,12 @@ int main(int _argc, const char* _argv[])
 
 					for (uint8_t lod = 1; lod < numMips; ++lod)
 					{
-						ImageMip mip1;
-						imageGetRawData(imageContainer, 0, lod, output->data, output->size, mip1);
-						uint8_t* data = const_cast<uint8_t*>(mip1.m_data);
+						imageRgba8Downsample2x2(mip.m_width, mip.m_height, mip.m_width*4, rgba, rgba);
 
-						uint32_t width  = bx::uint32_max(1, mip.m_width >>lod);
-						uint32_t height = bx::uint32_max(1, mip.m_height>>lod);
-						imageRgba8Downsample2x2(width, height, width*4, rgba, rgba);
-						imageEncodeFromRgba8(data, rgba, width, height, format);
+						ImageMip dstMip;
+						imageGetRawData(imageContainer, 0, lod, output->data, output->size, dstMip);
+						uint8_t* data = const_cast<uint8_t*>(dstMip.m_data);
+						imageEncodeFromRgba8(data, rgba, dstMip.m_width, dstMip.m_height, format);
 					}
 				}
 

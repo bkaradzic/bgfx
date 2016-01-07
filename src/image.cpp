@@ -469,28 +469,29 @@ namespace bgfx
 			return;
 		}
 
-		float* dst = (float*)_dst;
-		const float* src = (const float*)_src;
+		const uint8_t* src = (const uint8_t*)_src;
+		uint8_t* dst = (uint8_t*)_dst;
 
 		for (uint32_t yy = 0, ystep = _pitch*2; yy < dstheight; ++yy, src += ystep)
 		{
-			const float* rgba = src;
-			for (uint32_t xx = 0; xx < dstwidth; ++xx, rgba += 8, dst += 4)
+			const float* rgba0 = (const float*)&src[0];
+			const float* rgba1 = (const float*)&src[_pitch];
+			for (uint32_t xx = 0; xx < dstwidth; ++xx, rgba0 += 8, rgba1 += 8, dst += 16)
 			{
 				float xyz[3];
-				xyz[0]  = rgba[       0];
-				xyz[1]  = rgba[       1];
-				xyz[2]  = rgba[       2];
-				xyz[0] += rgba[       4];
-				xyz[1] += rgba[       5];
-				xyz[2] += rgba[       6];
-				xyz[0] += rgba[_pitch+0];
-				xyz[1] += rgba[_pitch+1];
-				xyz[2] += rgba[_pitch+2];
-				xyz[0] += rgba[_pitch+4];
-				xyz[1] += rgba[_pitch+5];
-				xyz[2] += rgba[_pitch+6];
-				bx::vec3Norm(dst, xyz);
+				xyz[0]  = rgba0[0];
+				xyz[1]  = rgba0[1];
+				xyz[2]  = rgba0[2];
+				xyz[0] += rgba0[4];
+				xyz[1] += rgba0[5];
+				xyz[2] += rgba0[6];
+				xyz[0] += rgba1[0];
+				xyz[1] += rgba1[1];
+				xyz[2] += rgba1[2];
+				xyz[0] += rgba1[4];
+				xyz[1] += rgba1[5];
+				xyz[2] += rgba1[6];
+				bx::vec3Norm( (float*)dst, xyz);
 			}
 		}
 	}
@@ -2496,36 +2497,39 @@ namespace bgfx
 	void imageDecodeToRgba32f(bx::AllocatorI* _allocator, void* _dst, const void* _src, uint32_t _width, uint32_t _height, uint32_t _pitch, TextureFormat::Enum _format)
 	{
 		const uint8_t* src = (const uint8_t*)_src;
-		float* dst = (float*)_dst;
-
-		uint32_t width  = _width/4;
-		uint32_t height = _height/4;
+		uint8_t* dst = (uint8_t*)_dst;
 
 		switch (_format)
 		{
 		case TextureFormat::BC5:
-			for (uint32_t yy = 0; yy < height; ++yy)
 			{
-				for (uint32_t xx = 0; xx < width; ++xx)
+				uint32_t width  = _width/4;
+				uint32_t height = _height/4;
+
+				for (uint32_t yy = 0; yy < height; ++yy)
 				{
-					uint8_t temp[16*4];
-
-					decodeBlockDxt45A(temp+1, src);
-					src += 8;
-					decodeBlockDxt45A(temp+2, src);
-					src += 8;
-
-					for (uint32_t ii = 0; ii < 16; ++ii)
+					for (uint32_t xx = 0; xx < width; ++xx)
 					{
-						float nx = temp[ii*4+2]*2.0f/255.0f - 1.0f;
-						float ny = temp[ii*4+1]*2.0f/255.0f - 1.0f;
-						float nz = sqrtf(1.0f - nx*nx - ny*ny);
+						uint8_t temp[16*4];
 
-						float* block = &dst[( (yy + ii/4)*_pitch+xx*4+ii%4)*16];
-						block[0] = nx;
-						block[1] = ny;
-						block[2] = nz;
-						block[3] = 0.0f;
+						decodeBlockDxt45A(temp+1, src);
+						src += 8;
+						decodeBlockDxt45A(temp+2, src);
+						src += 8;
+
+						for (uint32_t ii = 0; ii < 16; ++ii)
+						{
+							float nx = temp[ii*4+2]*2.0f/255.0f - 1.0f;
+							float ny = temp[ii*4+1]*2.0f/255.0f - 1.0f;
+							float nz = sqrtf(1.0f - nx*nx - ny*ny);
+
+							const uint32_t offset = (yy + ii/4)*_pitch + (xx*4 + ii%4)*16;
+							float* block = (float*)&dst[offset];
+							block[0] = nx;
+							block[1] = ny;
+							block[2] = nz;
+							block[3] = 0.0f;
+						}
 					}
 				}
 			}
