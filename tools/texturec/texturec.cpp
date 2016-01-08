@@ -136,11 +136,11 @@ namespace bgfx
 		}
 	}
 
-	void imageEncodeFromRgba32f(void* _dst, const void* _src, uint32_t _width, uint32_t _height, uint8_t _format)
+	void imageEncodeFromRgba32f(bx::AllocatorI* _allocator, void* _dst, const void* _src, uint32_t _width, uint32_t _height, uint8_t _format)
 	{
 		TextureFormat::Enum format = TextureFormat::Enum(_format);
 
-		const float* src = (const float*)_src;
+		const uint8_t* src = (const uint8_t*)_src;
 
 		switch (format)
 		{
@@ -151,24 +151,91 @@ namespace bgfx
 				{
 					for (uint32_t xx = 0; xx < _width; ++xx)
 					{
-						const uint32_t offset = (yy*_width + xx) * 4;
-						const float* input = &src[offset];
-						uint8_t* output    = &dst[offset];
-						output[0] = uint8_t( (input[0]*0.5f + 0.5f)*255.0f + 0.5f);
-						output[1] = uint8_t( (input[1]*0.5f + 0.5f)*255.0f + 0.5f);
-						output[2] = uint8_t( (input[2]*0.5f + 0.5f)*255.0f + 0.5f);
-						output[3] = uint8_t( (input[3]*0.5f + 0.5f)*255.0f + 0.5f);
+						const uint32_t offset = yy*_width + xx;
+						const float* input = (const float*)&src[offset * 16];
+						uint8_t* output    = &dst[offset * 4];
+						output[0] = uint8_t(input[0]*255.0f + 0.5f);
+						output[1] = uint8_t(input[1]*255.0f + 0.5f);
+						output[2] = uint8_t(input[2]*255.0f + 0.5f);
+						output[3] = uint8_t(input[3]*255.0f + 0.5f);
 					}
 				}
 			}
 			break;
 
 		case TextureFormat::BC5:
+			{
+				uint8_t* temp = (uint8_t*)BX_ALLOC(_allocator, _width*_height*4);
+				for (uint32_t yy = 0; yy < _height; ++yy)
+				{
+					for (uint32_t xx = 0; xx < _width; ++xx)
+					{
+						const uint32_t offset = yy*_width + xx;
+						const float* input = (const float*)&src[offset * 16];
+						uint8_t* output    = &temp[offset * 4];
+						output[0] = uint8_t(input[0]*255.0f + 0.5f);
+						output[1] = uint8_t(input[1]*255.0f + 0.5f);
+						output[2] = uint8_t(input[2]*255.0f + 0.5f);
+						output[3] = uint8_t(input[3]*255.0f + 0.5f);
+					}
+				}
+
+				imageEncodeFromRgba8(_dst, temp, _width, _height, _format);
+				BX_FREE(_allocator, temp);
+			}
 			break;
 
 		default:
 			break;
 		}
+	}
+
+	void imageRgba32f11to01(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src)
+	{
+		const uint8_t* src = (const uint8_t*)_src;
+		uint8_t* dst = (uint8_t*)_dst;
+
+		for (uint32_t yy = 0; yy < _height; ++yy)
+		{
+			for (uint32_t xx = 0; xx < _width; ++xx)
+			{
+				const uint32_t offset = yy*_pitch + xx * 16;
+				const float* input = (const float*)&src[offset];
+				float* output = (float*)&dst[offset];
+				output[0] = input[0]*0.5f + 0.5f;
+				output[1] = input[1]*0.5f + 0.5f;
+				output[2] = input[2]*0.5f + 0.5f;
+				output[3] = input[3]*0.5f + 0.5f;
+			}
+		}
+	}
+
+	const Memory* imageAlloc(ImageContainer& _imageContainer, TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth = 0, bool _cubeMap = false, bool _mips = false)
+	{
+		const uint8_t numMips = _mips ? imageGetNumMips(_format, _width, _height) : 1;
+		uint32_t size = imageGetSize(_format, _width, _height, 0, false, numMips);
+		const Memory* image = alloc(size);
+
+		_imageContainer.m_data     = image->data;
+		_imageContainer.m_format   = _format;
+		_imageContainer.m_size     = image->size;
+		_imageContainer.m_offset   = 0;
+		_imageContainer.m_width    = _width;
+		_imageContainer.m_height   = _height;
+		_imageContainer.m_depth    = _depth;
+		_imageContainer.m_numMips  = numMips;
+		_imageContainer.m_hasAlpha = false;
+		_imageContainer.m_cubeMap  = _cubeMap;
+		_imageContainer.m_ktx      = false;
+		_imageContainer.m_ktxLE    = false;
+		_imageContainer.m_srgb     = false;
+
+		return image;
+	}
+
+	void imageFree(const Memory* _memory)
+	{
+		release(_memory);
 	}
 
 } // namespace bgfx
@@ -321,6 +388,7 @@ int main(int _argc, const char* _argv[])
 					uint32_t size = imageGetSize(TextureFormat::RGBA32F, mip.m_width, mip.m_height);
 					temp = BX_ALLOC(&allocator, size);
 					float* rgba = (float*)temp;
+					float* rgbaDst = (float*)BX_ALLOC(&allocator, size);
 
 					imageDecodeToRgba32f(&allocator
 						, rgba
@@ -331,35 +399,39 @@ int main(int _argc, const char* _argv[])
 						, mip.m_format
 						);
 
-					for (uint32_t yy = 0; yy < mip.m_height; ++yy)
+					if (TextureFormat::BC5 != mip.m_format)
 					{
-						for (uint32_t xx = 0; xx < mip.m_width; ++xx)
+						for (uint32_t yy = 0; yy < mip.m_height; ++yy)
 						{
-							const uint32_t offset = (yy*mip.m_width + xx) * 4;
-							float* inout = &rgba[offset];
-							inout[0] = inout[0] * 2.0f/255.0f - 1.0f;
-							inout[1] = inout[1] * 2.0f/255.0f - 1.0f;
-							inout[2] = inout[2] * 2.0f/255.0f - 1.0f;
-							inout[3] = inout[3] * 2.0f/255.0f - 1.0f;
+							for (uint32_t xx = 0; xx < mip.m_width; ++xx)
+							{
+								const uint32_t offset = (yy*mip.m_width + xx) * 4;
+								float* inout = &rgba[offset];
+								inout[0] = inout[0] * 2.0f/255.0f - 1.0f;
+								inout[1] = inout[1] * 2.0f/255.0f - 1.0f;
+								inout[2] = inout[2] * 2.0f/255.0f - 1.0f;
+								inout[3] = inout[3] * 2.0f/255.0f - 1.0f;
+							}
 						}
 					}
 
-					imageContainer.m_numMips = numMips;
-					imageContainer.m_size    = imageGetSize(format, mip.m_width, mip.m_height, 0, false, numMips);
-					imageContainer.m_format  = format;
-					output = alloc(imageContainer.m_size);
+					output = imageAlloc(imageContainer, format, mip.m_width, mip.m_height, 0, false, mips);
 
-					imageEncodeFromRgba32f(output->data, rgba, mip.m_width, mip.m_height, format);
+					imageRgba32f11to01(rgbaDst, mip.m_width, mip.m_height, mip.m_width*16, rgba);
+					imageEncodeFromRgba32f(&allocator, output->data, rgbaDst, mip.m_width, mip.m_height, format);
 
 					for (uint8_t lod = 1; lod < numMips; ++lod)
 					{
 						imageRgba32fDownsample2x2NormalMap(mip.m_width, mip.m_height, mip.m_width*16, rgba, rgba);
+						imageRgba32f11to01(rgbaDst, mip.m_width, mip.m_height, mip.m_width*16, rgba);
 
 						ImageMip dstMip;
 						imageGetRawData(imageContainer, 0, lod, output->data, output->size, dstMip);
 						uint8_t* data = const_cast<uint8_t*>(dstMip.m_data);
-						imageEncodeFromRgba32f(data, rgba, dstMip.m_width, dstMip.m_height, format);
+						imageEncodeFromRgba32f(&allocator, data, rgbaDst, dstMip.m_width, dstMip.m_height, format);
 					}
+
+					BX_FREE(&allocator, rgbaDst);
 				}
 				else
 				{
@@ -375,10 +447,7 @@ int main(int _argc, const char* _argv[])
 						, mip.m_format
 						);
 
-					imageContainer.m_numMips = numMips;
-					imageContainer.m_size    = imageGetSize(format, mip.m_width, mip.m_height, 0, false, numMips);
-					imageContainer.m_format  = format;
-					output = alloc(imageContainer.m_size);
+					output = imageAlloc(imageContainer, format, mip.m_width, mip.m_height, 0, false, mips);
 
 					imageEncodeFromRgba8(output->data, rgba, mip.m_width, mip.m_height, format);
 
@@ -408,8 +477,13 @@ int main(int _argc, const char* _argv[])
 
 					bx::close(&writer);
 				}
+				else
+				{
+					help("Failed to open output file.");
+					return EXIT_FAILURE;
+				}
 
-				release(output);
+				imageFree(output);
 			}
 		}
 

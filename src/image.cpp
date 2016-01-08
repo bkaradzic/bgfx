@@ -2293,9 +2293,9 @@ namespace bgfx
 			{
 				for (uint32_t xx = 0; xx < width; ++xx)
 				{
-					decodeBlockDxt45A(temp+1, src);
-					src += 8;
 					decodeBlockDxt45A(temp+2, src);
+					src += 8;
+					decodeBlockDxt45A(temp+1, src);
 					src += 8;
 
 					for (uint32_t ii = 0; ii < 16; ++ii)
@@ -2512,9 +2512,9 @@ namespace bgfx
 					{
 						uint8_t temp[16*4];
 
-						decodeBlockDxt45A(temp+1, src);
-						src += 8;
 						decodeBlockDxt45A(temp+2, src);
+						src += 8;
+						decodeBlockDxt45A(temp+1, src);
 						src += 8;
 
 						for (uint32_t ii = 0; ii < 16; ++ii)
@@ -2523,7 +2523,7 @@ namespace bgfx
 							float ny = temp[ii*4+1]*2.0f/255.0f - 1.0f;
 							float nz = sqrtf(1.0f - nx*nx - ny*ny);
 
-							const uint32_t offset = (yy + ii/4)*_pitch + (xx*4 + ii%4)*16;
+							const uint32_t offset = (yy*4 + ii/4)*_width*16 + (xx*4 + ii%4)*16;
 							float* block = (float*)&dst[offset];
 							block[0] = nx;
 							block[1] = ny;
