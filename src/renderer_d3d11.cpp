@@ -2224,6 +2224,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				}
 				else
 				{
+					m_deviceCtx->ClearState();
+					m_deviceCtx->Flush();
+
 					if (resize)
 					{
 						m_deviceCtx->OMSetRenderTargets(1, s_zero.m_rtv, NULL);
