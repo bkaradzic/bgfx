@@ -68,7 +68,10 @@ solution "bgfx"
 BGFX_DIR = path.getabsolute("..")
 local BGFX_BUILD_DIR = path.join(BGFX_DIR, ".build")
 local BGFX_THIRD_PARTY_DIR = path.join(BGFX_DIR, "3rdparty")
-BX_DIR = path.getabsolute(path.join(BGFX_DIR, "../bx"))
+BX_DIR = os.getenv("BX_DIR")
+if BX_DIR == "" then
+  BX_DIR = path.getabsolute(path.join(BGFX_DIR, "../bx"))
+end
 
 if not os.isdir(BX_DIR) then
 	print("bx not found at " .. BX_DIR)
