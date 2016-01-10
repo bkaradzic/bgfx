@@ -583,6 +583,681 @@ namespace bgfx
 		imageCopy(_height, _pitch, _src, dstPitch, _dst);
 	}
 
+	uint32_t toUnorm(float _value, float _scale)
+	{
+		return uint32_t(bx::fround(
+					bx::fsaturate(_value) * _scale)
+					);
+	}
+
+	float fromUnorm(uint32_t _value, float _scale)
+	{
+		return float(_value) / _scale;
+	}
+
+	int32_t toSnorm(float _value, float _scale)
+	{
+		return int32_t(bx::fround(
+					bx::fclamp(_value, -1.0f, 1.0f) * _scale)
+					);
+	}
+
+	float fromSnorm(int32_t _value, float _scale)
+	{
+		return bx::fmax(-1.0f, float(_value) / _scale);
+	}
+
+	// R8
+	void packR8(void* _dst, const float* _src)
+	{
+		uint8_t* dst = (uint8_t*)_dst;
+		dst[0] = uint8_t(toUnorm(_src[0], 255.0f) );
+	}
+
+	void unpackR8(float* _dst, const void* _src)
+	{
+		const uint8_t* src = (const uint8_t*)_src;
+		_dst[0] = fromUnorm(src[0], 255.0f);
+	}
+
+	// R8S
+	void packR8S(void* _dst, const float* _src)
+	{
+		int8_t* dst = (int8_t*)_dst;
+		dst[0] = int8_t(toSnorm(_src[0], 127.0f) );
+	}
+
+	void unpackR8S(float* _dst, const void* _src)
+	{
+		const int8_t* src = (const int8_t*)_src;
+		_dst[0] = fromSnorm(src[0], 127.0f);
+	}
+
+	// R8I
+	void packR8I(void* _dst, const float* _src)
+	{
+		int8_t* dst = (int8_t*)_dst;
+		dst[0] = int8_t(_src[0]);
+	}
+
+	void unpackR8I(float* _dst, const void* _src)
+	{
+		const int8_t* src = (const int8_t*)_src;
+		_dst[0] = float(src[0]);
+	}
+
+	// R8U
+	void packR8U(void* _dst, const float* _src)
+	{
+		uint8_t* dst = (uint8_t*)_dst;
+		dst[0] = uint8_t(_src[0]);
+	}
+
+	void unpackR8U(float* _dst, const void* _src)
+	{
+		const uint8_t* src = (const uint8_t*)_src;
+		_dst[0] = float(src[0]);
+	}
+
+	// RG8
+	void packRg8(void* _dst, const float* _src)
+	{
+		uint8_t* dst = (uint8_t*)_dst;
+		dst[0] = uint8_t(toUnorm(_src[0], 255.0f) );
+		dst[1] = uint8_t(toUnorm(_src[1], 255.0f) );
+	}
+
+	void unpackRg8(float* _dst, const void* _src)
+	{
+		const uint8_t* src = (const uint8_t*)_src;
+		_dst[0] = fromUnorm(src[0], 255.0f);
+		_dst[1] = fromUnorm(src[1], 255.0f);
+	}
+
+	// RG8S
+	void packRg8S(void* _dst, const float* _src)
+	{
+		int8_t* dst = (int8_t*)_dst;
+		dst[0] = int8_t(toSnorm(_src[0], 127.0f) );
+		dst[1] = int8_t(toSnorm(_src[1], 127.0f) );
+	}
+
+	void unpackRg8S(float* _dst, const void* _src)
+	{
+		const int8_t* src = (const int8_t*)_src;
+		_dst[0] = fromSnorm(src[0], 127.0f);
+		_dst[1] = fromSnorm(src[1], 127.0f);
+	}
+
+	// RG8I
+	void packRg8I(void* _dst, const float* _src)
+	{
+		int8_t* dst = (int8_t*)_dst;
+		dst[0] = int8_t(_src[0]);
+		dst[1] = int8_t(_src[1]);
+	}
+
+	void unpackRg8I(float* _dst, const void* _src)
+	{
+		const int8_t* src = (const int8_t*)_src;
+		_dst[0] = float(src[0]);
+		_dst[1] = float(src[1]);
+	}
+
+	// RG8U
+	void packRg8U(void* _dst, const float* _src)
+	{
+		uint8_t* dst = (uint8_t*)_dst;
+		dst[0] = uint8_t(_src[0]);
+		dst[1] = uint8_t(_src[1]);
+	}
+
+	void unpackRg8U(float* _dst, const void* _src)
+	{
+		const uint8_t* src = (const uint8_t*)_src;
+		_dst[0] = float(src[0]);
+		_dst[1] = float(src[1]);
+	}
+
+	// RGBA8
+	void packRgba8(void* _dst, const float* _src)
+	{
+		uint8_t* dst = (uint8_t*)_dst;
+		dst[0] = uint8_t(toUnorm(_src[0], 255.0f) );
+		dst[1] = uint8_t(toUnorm(_src[1], 255.0f) );
+		dst[2] = uint8_t(toUnorm(_src[2], 255.0f) );
+		dst[3] = uint8_t(toUnorm(_src[3], 255.0f) );
+	}
+
+	void unpackRgba8(float* _dst, const void* _src)
+	{
+		const uint8_t* src = (const uint8_t*)_src;
+		_dst[0] = fromUnorm(src[0], 255.0f);
+		_dst[1] = fromUnorm(src[1], 255.0f);
+		_dst[2] = fromUnorm(src[2], 255.0f);
+		_dst[3] = fromUnorm(src[3], 255.0f);
+	}
+
+	// BGRA8
+	void packBgra8(void* _dst, const float* _src)
+	{
+		uint8_t* dst = (uint8_t*)_dst;
+		dst[2] = uint8_t(toUnorm(_src[0], 255.0f) );
+		dst[1] = uint8_t(toUnorm(_src[1], 255.0f) );
+		dst[0] = uint8_t(toUnorm(_src[2], 255.0f) );
+		dst[3] = uint8_t(toUnorm(_src[3], 255.0f) );
+	}
+
+	void unpackBgra8(float* _dst, const void* _src)
+	{
+		const uint8_t* src = (const uint8_t*)_src;
+		_dst[0] = fromUnorm(src[2], 255.0f);
+		_dst[1] = fromUnorm(src[1], 255.0f);
+		_dst[2] = fromUnorm(src[0], 255.0f);
+		_dst[3] = fromUnorm(src[3], 255.0f);
+	}
+
+	// RGBA8S
+	void packRgba8S(void* _dst, const float* _src)
+	{
+		int8_t* dst = (int8_t*)_dst;
+		dst[0] = int8_t(toSnorm(_src[0], 127.0f) );
+		dst[1] = int8_t(toSnorm(_src[1], 127.0f) );
+		dst[2] = int8_t(toSnorm(_src[2], 127.0f) );
+		dst[3] = int8_t(toSnorm(_src[3], 127.0f) );
+	}
+
+	void unpackRgba8S(float* _dst, const void* _src)
+	{
+		const int8_t* src = (const int8_t*)_src;
+		_dst[0] = fromSnorm(src[0], 127.0f);
+		_dst[1] = fromSnorm(src[1], 127.0f);
+		_dst[2] = fromSnorm(src[2], 127.0f);
+		_dst[3] = fromSnorm(src[3], 127.0f);
+	}
+
+	// RGBA8I
+	void packRgba8I(void* _dst, const float* _src)
+	{
+		int8_t* dst = (int8_t*)_dst;
+		dst[0] = int8_t(_src[0]);
+		dst[1] = int8_t(_src[1]);
+		dst[2] = int8_t(_src[2]);
+		dst[3] = int8_t(_src[3]);
+	}
+
+	void unpackRgba8I(float* _dst, const void* _src)
+	{
+		const int8_t* src = (const int8_t*)_src;
+		_dst[0] = float(src[0]);
+		_dst[1] = float(src[1]);
+		_dst[2] = float(src[2]);
+		_dst[3] = float(src[3]);
+	}
+
+	// RGBA8U
+	void packRgba8U(void* _dst, const float* _src)
+	{
+		uint8_t* dst = (uint8_t*)_dst;
+		dst[0] = uint8_t(_src[0]);
+		dst[1] = uint8_t(_src[1]);
+		dst[2] = uint8_t(_src[2]);
+		dst[3] = uint8_t(_src[3]);
+	}
+
+	void unpackRgba8U(float* _dst, const void* _src)
+	{
+		const uint8_t* src = (const uint8_t*)_src;
+		_dst[0] = float(src[0]);
+		_dst[1] = float(src[1]);
+		_dst[2] = float(src[2]);
+		_dst[3] = float(src[3]);
+	}
+
+	// R16
+	void packR16(void* _dst, const float* _src)
+	{
+		uint16_t* dst = (uint16_t*)_dst;
+		dst[0] = uint16_t(toUnorm(_src[0], 65535.0f) );
+	}
+
+	void unpackR16(float* _dst, const void* _src)
+	{
+		const uint16_t* src = (const uint16_t*)_src;
+		_dst[0] = fromUnorm(src[0], 65535.0f);
+	}
+
+	// R16S
+	void packR16S(void* _dst, const float* _src)
+	{
+		int16_t* dst = (int16_t*)_dst;
+		dst[0] = int16_t(toSnorm(_src[0], 32767.0f) );
+	}
+
+	void unpackR16S(float* _dst, const void* _src)
+	{
+		const int16_t* src = (const int16_t*)_src;
+		_dst[0] = fromSnorm(src[0], 32767.0f);
+	}
+
+	// R16I
+	void packR16I(void* _dst, const float* _src)
+	{
+		int16_t* dst = (int16_t*)_dst;
+		dst[0] = int16_t(_src[0]);
+	}
+
+	void unpackR16I(float* _dst, const void* _src)
+	{
+		const int16_t* src = (const int16_t*)_src;
+		_dst[0] = float(src[0]);
+	}
+
+	// R16U
+	void packR16U(void* _dst, const float* _src)
+	{
+		uint16_t* dst = (uint16_t*)_dst;
+		dst[0] = uint16_t(_src[0]);
+	}
+
+	void unpackR16U(float* _dst, const void* _src)
+	{
+		const uint16_t* src = (const uint16_t*)_src;
+		_dst[0] = float(src[0]);
+	}
+
+	// R16F
+	void packR16F(void* _dst, const float* _src)
+	{
+		uint16_t* dst = (uint16_t*)_dst;
+		dst[0] = bx::halfFromFloat(_src[0]);
+	}
+
+	void unpackR16F(float* _dst, const void* _src)
+	{
+		const uint16_t* src = (const uint16_t*)_src;
+		_dst[0] = bx::halfToFloat(src[0]);
+	}
+
+	// RG16
+	void packRg16(void* _dst, const float* _src)
+	{
+		uint16_t* dst = (uint16_t*)_dst;
+		dst[0] = uint16_t(toUnorm(_src[0], 65535.0f) );
+		dst[1] = uint16_t(toUnorm(_src[1], 65535.0f) );
+	}
+
+	void unpackRg16(float* _dst, const void* _src)
+	{
+		const uint16_t* src = (const uint16_t*)_src;
+		_dst[0] = fromUnorm(src[0], 65535.0f);
+		_dst[1] = fromUnorm(src[1], 65535.0f);
+	}
+
+	// RG16S
+	void packRg16S(void* _dst, const float* _src)
+	{
+		int16_t* dst = (int16_t*)_dst;
+		dst[0] = int16_t(toSnorm(_src[0], 32767.0f) );
+		dst[1] = int16_t(toSnorm(_src[1], 32767.0f) );
+	}
+
+	void unpackRg16S(float* _dst, const void* _src)
+	{
+		const int16_t* src = (const int16_t*)_src;
+		_dst[0] = fromSnorm(src[0], 32767.0f);
+		_dst[1] = fromSnorm(src[1], 32767.0f);
+	}
+
+	// RG16I
+	void packRg16I(void* _dst, const float* _src)
+	{
+		int16_t* dst = (int16_t*)_dst;
+		dst[0] = int16_t(_src[0]);
+		dst[1] = int16_t(_src[1]);
+	}
+
+	void unpackRg16I(float* _dst, const void* _src)
+	{
+		const int16_t* src = (const int16_t*)_src;
+		_dst[0] = float(src[0]);
+		_dst[1] = float(src[1]);
+	}
+
+	// RG16U
+	void packRg16U(void* _dst, const float* _src)
+	{
+		uint16_t* dst = (uint16_t*)_dst;
+		dst[0] = uint16_t(_src[0]);
+		dst[1] = uint16_t(_src[1]);
+	}
+
+	void unpackRg16U(float* _dst, const void* _src)
+	{
+		const uint16_t* src = (const uint16_t*)_src;
+		_dst[0] = float(src[0]);
+		_dst[1] = float(src[1]);
+	}
+
+	// RG16F
+	void packRg16F(void* _dst, const float* _src)
+	{
+		uint16_t* dst = (uint16_t*)_dst;
+		dst[0] = bx::halfFromFloat(_src[0]);
+		dst[1] = bx::halfFromFloat(_src[1]);
+	}
+
+	void unpackRg16F(float* _dst, const void* _src)
+	{
+		const uint16_t* src = (const uint16_t*)_src;
+		_dst[0] = bx::halfToFloat(src[0]);
+		_dst[1] = bx::halfToFloat(src[1]);
+	}
+
+	// RGBA16
+	void packRgba16(void* _dst, const float* _src)
+	{
+		uint16_t* dst = (uint16_t*)_dst;
+		dst[0] = uint16_t(toUnorm(_src[0], 65535.0f) );
+		dst[1] = uint16_t(toUnorm(_src[1], 65535.0f) );
+		dst[2] = uint16_t(toUnorm(_src[2], 65535.0f) );
+		dst[3] = uint16_t(toUnorm(_src[3], 65535.0f) );
+	}
+
+	void unpackRgba16(float* _dst, const void* _src)
+	{
+		const uint16_t* src = (const uint16_t*)_src;
+		_dst[0] = fromUnorm(src[0], 65535.0f);
+		_dst[1] = fromUnorm(src[1], 65535.0f);
+		_dst[2] = fromUnorm(src[2], 65535.0f);
+		_dst[3] = fromUnorm(src[3], 65535.0f);
+	}
+
+	// RGBA16S
+	void packRgba16S(void* _dst, const float* _src)
+	{
+		int16_t* dst = (int16_t*)_dst;
+		dst[0] = int16_t(toSnorm(_src[0], 32767.0f) );
+		dst[1] = int16_t(toSnorm(_src[1], 32767.0f) );
+		dst[2] = int16_t(toSnorm(_src[2], 32767.0f) );
+		dst[3] = int16_t(toSnorm(_src[3], 32767.0f) );
+	}
+
+	void unpackRgba16S(float* _dst, const void* _src)
+	{
+		const int16_t* src = (const int16_t*)_src;
+		_dst[0] = fromSnorm(src[0], 32767.0f);
+		_dst[1] = fromSnorm(src[1], 32767.0f);
+		_dst[2] = fromSnorm(src[2], 32767.0f);
+		_dst[3] = fromSnorm(src[3], 32767.0f);
+	}
+
+	// RGBA16I
+	void packRgba16I(void* _dst, const float* _src)
+	{
+		int16_t* dst = (int16_t*)_dst;
+		dst[0] = int16_t(_src[0]);
+		dst[1] = int16_t(_src[1]);
+		dst[2] = int16_t(_src[2]);
+		dst[3] = int16_t(_src[3]);
+	}
+
+	void unpackRgba16I(float* _dst, const void* _src)
+	{
+		const int16_t* src = (const int16_t*)_src;
+		_dst[0] = float(src[0]);
+		_dst[1] = float(src[1]);
+		_dst[2] = float(src[2]);
+		_dst[3] = float(src[3]);
+	}
+
+	// RGBA16U
+	void packRgba16U(void* _dst, const float* _src)
+	{
+		uint16_t* dst = (uint16_t*)_dst;
+		dst[0] = uint16_t(_src[0]);
+		dst[1] = uint16_t(_src[1]);
+		dst[2] = uint16_t(_src[2]);
+		dst[3] = uint16_t(_src[3]);
+	}
+
+	void unpackRgba16U(float* _dst, const void* _src)
+	{
+		const uint16_t* src = (const uint16_t*)_src;
+		_dst[0] = float(src[0]);
+		_dst[1] = float(src[1]);
+		_dst[2] = float(src[2]);
+		_dst[3] = float(src[3]);
+	}
+
+	// RGBA16F
+	void packRgba16F(void* _dst, const float* _src)
+	{
+		uint16_t* dst = (uint16_t*)_dst;
+		dst[0] = bx::halfFromFloat(_src[0]);
+		dst[1] = bx::halfFromFloat(_src[1]);
+		dst[2] = bx::halfFromFloat(_src[2]);
+		dst[3] = bx::halfFromFloat(_src[3]);
+	}
+
+	void unpackRgba16F(float* _dst, const void* _src)
+	{
+		const uint16_t* src = (const uint16_t*)_src;
+		_dst[0] = bx::halfToFloat(src[0]);
+		_dst[1] = bx::halfToFloat(src[1]);
+		_dst[2] = bx::halfToFloat(src[2]);
+		_dst[3] = bx::halfToFloat(src[3]);
+	}
+
+	// R32I
+	void packR32I(void* _dst, const float* _src)
+	{
+		memcpy(_dst, _src, 4);
+	}
+
+	void unpackR32I(float* _dst, const void* _src)
+	{
+		memcpy(_dst, _src, 4);
+	}
+
+	// R32U
+	void packR32U(void* _dst, const float* _src)
+	{
+		memcpy(_dst, _src, 4);
+	}
+
+	void unpackR32U(float* _dst, const void* _src)
+	{
+		memcpy(_dst, _src, 4);
+	}
+
+	// R32F
+	void packR32F(void* _dst, const float* _src)
+	{
+		memcpy(_dst, _src, 4);
+	}
+
+	void unpackR32F(float* _dst, const void* _src)
+	{
+		memcpy(_dst, _src, 4);
+	}
+
+	// RG32I
+	void packRg32I(void* _dst, const float* _src)
+	{
+		memcpy(_dst, _src, 8);
+	}
+
+	void unpackRg32I(float* _dst, const void* _src)
+	{
+		memcpy(_dst, _src, 8);
+	}
+
+	// RG32U
+	void packRg32U(void* _dst, const float* _src)
+	{
+		memcpy(_dst, _src, 8);
+	}
+
+	void unpackRg32U(float* _dst, const void* _src)
+	{
+		memcpy(_dst, _src, 8);
+	}
+
+	// RG32F
+	void packRg32F(void* _dst, const float* _src)
+	{
+		memcpy(_dst, _src, 8);
+	}
+
+	void unpackRg32F(float* _dst, const void* _src)
+	{
+		memcpy(_dst, _src, 8);
+	}
+
+	// RGBA32I
+	void packRgba32I(void* _dst, const float* _src)
+	{
+		memcpy(_dst, _src, 16);
+	}
+
+	void unpackRgba32I(float* _dst, const void* _src)
+	{
+		memcpy(_dst, _src, 16);
+	}
+
+	// RGBA32U
+	void packRgba32U(void* _dst, const float* _src)
+	{
+		memcpy(_dst, _src, 16);
+	}
+
+	void unpackRgba32U(float* _dst, const void* _src)
+	{
+		memcpy(_dst, _src, 16);
+	}
+
+	// RGBA32F
+	void packRgba32F(void* _dst, const float* _src)
+	{
+		memcpy(_dst, _src, 16);
+	}
+
+	void unpackRgba32F(float* _dst, const void* _src)
+	{
+		memcpy(_dst, _src, 16);
+	}
+
+	typedef void (*PackFn)(void*, const float*);
+	typedef void (*UnpackFn)(float*, const void*);
+
+	struct PackUnpack
+	{
+		PackFn pack;
+		UnpackFn unpack;
+	};
+
+	static PackUnpack s_packUnpack[] =
+	{
+		{ NULL,        NULL          }, // BC1
+		{ NULL,        NULL          }, // BC2
+		{ NULL,        NULL          }, // BC3
+		{ NULL,        NULL          }, // BC4
+		{ NULL,        NULL          }, // BC5
+		{ NULL,        NULL          }, // BC6H
+		{ NULL,        NULL          }, // BC7
+		{ NULL,        NULL          }, // ETC1
+		{ NULL,        NULL          }, // ETC2
+		{ NULL,        NULL          }, // ETC2A
+		{ NULL,        NULL          }, // ETC2A1
+		{ NULL,        NULL          }, // PTC12
+		{ NULL,        NULL          }, // PTC14
+		{ NULL,        NULL          }, // PTC12A
+		{ NULL,        NULL          }, // PTC14A
+		{ NULL,        NULL          }, // PTC22
+		{ NULL,        NULL          }, // PTC24
+		{ NULL,        NULL          }, // Unknown
+		{ NULL,        NULL          }, // R1
+		{ packR8,      unpackR8      }, // A8
+		{ packR8,      unpackR8      }, // R8
+		{ packR8I,     unpackR8I     }, // R8I
+		{ packR8U,     unpackR8U     }, // R8U
+		{ packR8S,     unpackR8S     }, // R8S
+		{ packR16,     unpackR16     }, // R16
+		{ packR16I,    unpackR16I    }, // R16I
+		{ packR16U,    unpackR16U    }, // R16U
+		{ packR16F,    unpackR16F    }, // R16F
+		{ packR16S,    unpackR16S    }, // R16S
+		{ packR32I,    unpackR32I    }, // R32I
+		{ packR32U,    unpackR32U    }, // R32U
+		{ packR32F,    unpackR32F    }, // R32F
+		{ packRg8,     unpackRg8     }, // RG8
+		{ packRg8I,    unpackRg8I    }, // RG8I
+		{ packRg8U,    unpackRg8U    }, // RG8U
+		{ packRg8S,    unpackRg8S    }, // RG8S
+		{ packRg16,    unpackRg16    }, // RG16
+		{ packRg16I,   unpackRg16I   }, // RG16I
+		{ packRg16U,   unpackRg16U   }, // RG16U
+		{ packRg16F,   unpackRg16F   }, // RG16F
+		{ packRg16S,   unpackRg16S   }, // RG16S
+		{ packRg32I,   unpackRg32I   }, // RG32I
+		{ packRg32U,   unpackRg32U   }, // RG32U
+		{ packRg32F,   unpackRg32F   }, // RG32F
+		{ NULL,        NULL          }, // RGB9E5F
+		{ packBgra8,   unpackBgra8   }, // BGRA8
+		{ packRgba8,   unpackRgba8   }, // RGBA8
+		{ packRgba8I,  unpackRgba8I  }, // RGBA8I
+		{ packRgba8U,  unpackRgba8U  }, // RGBA8U
+		{ packRgba8S,  unpackRgba8S  }, // RGBA8S
+		{ packRgba16,  unpackRgba16  }, // RGBA16
+		{ packRgba16I, unpackRgba16I }, // RGBA16I
+		{ packRgba16U, unpackRgba16U }, // RGBA16U
+		{ packRgba16F, unpackRgba16F }, // RGBA16F
+		{ packRgba16S, unpackRgba16S }, // RGBA16S
+		{ packRgba32I, unpackRgba32I }, // RGBA32I
+		{ packRgba32U, unpackRgba32U }, // RGBA32U
+		{ packRgba32F, unpackRgba32F }, // RGBA32F
+		{ NULL,        NULL          }, // R5G6B5
+		{ NULL,        NULL          }, // RGBA4
+		{ NULL,        NULL          }, // RGB5A1
+		{ NULL,        NULL          }, // RGB10A2
+		{ NULL,        NULL          }, // R11G11B10F
+		{ NULL,        NULL          }, // UnknownDepth
+		{ NULL,        NULL          }, // D16
+		{ NULL,        NULL          }, // D24
+		{ NULL,        NULL          }, // D24S8
+		{ NULL,        NULL          }, // D32
+		{ NULL,        NULL          }, // D16F
+		{ NULL,        NULL          }, // D24F
+		{ NULL,        NULL          }, // D32F
+		{ NULL,        NULL          }, // D0S8
+	};
+	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_packUnpack) );
+
+	void imageConvert(void* _dst, TextureFormat::Enum _dstFormat, const void* _src, TextureFormat::Enum _srcFormat, uint32_t _width, uint32_t _height)
+	{
+		const uint8_t* src = (uint8_t*)_src;
+		uint8_t* dst = (uint8_t*)_dst;
+
+		const uint32_t srcBpp   = s_imageBlockInfo[_srcFormat].bitsPerPixel;
+		const uint32_t dstBpp   = s_imageBlockInfo[_dstFormat].bitsPerPixel;
+		const uint32_t srcPitch = _width * srcBpp / 8;
+		const uint32_t dstPitch = _width * dstBpp / 8;
+
+		UnpackFn unpack = s_packUnpack[_srcFormat].unpack;
+		PackFn   pack   = s_packUnpack[_dstFormat].pack;
+
+		for (uint32_t yy = 0; yy < _height; ++yy, src += srcPitch, dst += dstPitch)
+		{
+			for (uint32_t xx = 0; xx < _width; ++xx)
+			{
+				float rgba[4];
+				unpack(rgba, &src[xx*srcBpp/8]);
+				pack(&dst[xx*srcBpp/8], rgba);
+			}
+		}
+	}
+
 	uint8_t bitRangeConvert(uint32_t _in, uint32_t _from, uint32_t _to)
 	{
 		using namespace bx;
