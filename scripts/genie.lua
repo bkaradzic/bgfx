@@ -66,12 +66,12 @@ solution "bgfx"
 	startproject "example-00-helloworld"
 
 BGFX_DIR = path.getabsolute("..")
-BX_DIR = os.getenv("BX_DIR")
+BX_DIR   = os.getenv("BX_DIR")
 
 local BGFX_BUILD_DIR = path.join(BGFX_DIR, ".build")
 local BGFX_THIRD_PARTY_DIR = path.join(BGFX_DIR, "3rdparty")
 if not BX_DIR then
-  BX_DIR = path.getabsolute(path.join(BGFX_DIR, "../bx"))
+	BX_DIR = path.getabsolute(path.join(BGFX_DIR, "../bx"))
 end
 
 if not os.isdir(BX_DIR) then
