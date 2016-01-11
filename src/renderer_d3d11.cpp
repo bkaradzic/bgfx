@@ -3081,6 +3081,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				D3D11_MAPPED_SUBRESOURCE mapped;
 				DX_CHECK(m_deviceCtx->Map(m_captureTexture, 0, D3D11_MAP_READ, 0, &mapped) );
 
+				imageSwizzleBgra8(getBufferWidth()
+					, getBufferHeight()
+					, mapped.RowPitch
+					, mapped.pData
+					, mapped.pData
+					);
+
 				g_callback->captureFrame(mapped.pData, getBufferHeight()*mapped.RowPitch);
 
 				m_deviceCtx->Unmap(m_captureTexture, 0);

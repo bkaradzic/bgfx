@@ -2899,6 +2899,11 @@ namespace bgfx { namespace gl
 					, m_capture
 					) );
 
+				if (GL_RGBA == m_readPixelsFmt)
+				{
+					imageSwizzleBgra8(m_resolution.m_width, m_resolution.m_height, m_resolution.m_width*4, m_capture, m_capture);
+				}
+
 				g_callback->captureFrame(m_capture, m_captureSize);
 			}
 		}
