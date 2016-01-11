@@ -35,7 +35,11 @@ namespace nv
 
     inline bool isFinite(const float f)
     {
+#if defined(_MSC_VER) && _MSC_VER <= 1800
+		return true;
+#else
 		return std::isfinite(f);
+#endif // defined(_MSC_VER) && _MSC_VER <= 1800
     }
 
     // Eliminates negative zeros from a float array.
