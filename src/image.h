@@ -118,7 +118,13 @@ namespace bgfx
 	void imageCopy(uint32_t _width, uint32_t _height, uint32_t _bpp, uint32_t _pitch, const void* _src, void* _dst);
 
 	///
-	void imageConvert(void* _dst, TextureFormat::Enum _dstFormat, const void* _src, TextureFormat::Enum _srcFormat, uint32_t _width, uint32_t _height);
+	bool imageConvert(void* _dst, TextureFormat::Enum _dstFormat, const void* _src, TextureFormat::Enum _srcFormat, uint32_t _width, uint32_t _height);
+
+	///
+	const Memory* imageAlloc(ImageContainer& _imageContainer, TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth = 0, bool _cubeMap = false, bool _mips = false);
+
+	///
+	void imageFree(const Memory* _memory);
 
 	///
 	void imageWriteTga(bx::WriterI* _writer, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, bool _grayscale, bool _yflip);
