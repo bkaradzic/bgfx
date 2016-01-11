@@ -1118,6 +1118,8 @@ namespace bgfx
 	template<int32_t MantissaBits, int32_t ExpBits>
 	void encodeRgbE(float* _dst, const float* _src)
 	{
+		// Reference:
+		// https://www.opengl.org/registry/specs/EXT/texture_shared_exponent.txt
 		const int32_t expMax  = (1<<ExpBits) - 1;
 		const int32_t expBias = (1<<(ExpBits - 1) ) - 1;
 		const float   sharedExpMax = float( (1 << MantissaBits) - 1) / (1 << MantissaBits) * (1 << (expMax-expBias));
