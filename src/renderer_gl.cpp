@@ -1403,7 +1403,7 @@ namespace bgfx { namespace gl
 				{
 					GLint numExtensions = 0;
 					glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
-					glGetError(); // ignore error if glGetString returns NULL.
+					glGetError(); // ignore error if glGetIntegerv returns NULL.
 
 					for (GLint index = 0; index < numExtensions; ++index)
 					{
