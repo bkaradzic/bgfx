@@ -210,34 +210,6 @@ namespace bgfx
 		}
 	}
 
-	const Memory* imageAlloc(ImageContainer& _imageContainer, TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth = 0, bool _cubeMap = false, bool _mips = false)
-	{
-		const uint8_t numMips = _mips ? imageGetNumMips(_format, _width, _height) : 1;
-		uint32_t size = imageGetSize(_format, _width, _height, 0, false, numMips);
-		const Memory* image = alloc(size);
-
-		_imageContainer.m_data     = image->data;
-		_imageContainer.m_format   = _format;
-		_imageContainer.m_size     = image->size;
-		_imageContainer.m_offset   = 0;
-		_imageContainer.m_width    = _width;
-		_imageContainer.m_height   = _height;
-		_imageContainer.m_depth    = _depth;
-		_imageContainer.m_numMips  = numMips;
-		_imageContainer.m_hasAlpha = false;
-		_imageContainer.m_cubeMap  = _cubeMap;
-		_imageContainer.m_ktx      = false;
-		_imageContainer.m_ktxLE    = false;
-		_imageContainer.m_srgb     = false;
-
-		return image;
-	}
-
-	void imageFree(const Memory* _memory)
-	{
-		release(_memory);
-	}
-
 } // namespace bgfx
 
 void help(const char* _error = NULL)
