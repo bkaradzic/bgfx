@@ -1239,10 +1239,10 @@ namespace bgfx
 	void unpackRgba4(float* _dst, const void* _src)
 	{
 		uint16_t packed = *( (const uint16_t*)_src);
-		_dst[0] = float( ( (packed    ) & 0x7) ) / 15.0f;
-		_dst[1] = float( ( (packed>> 4) & 0x7) ) / 15.0f;
-		_dst[2] = float( ( (packed>> 8) & 0x7) ) / 15.0f;
-		_dst[3] = float( ( (packed>>12) & 0x7) ) / 15.0f;
+		_dst[0] = float( ( (packed    ) & 0xf) ) / 15.0f;
+		_dst[1] = float( ( (packed>> 4) & 0xf) ) / 15.0f;
+		_dst[2] = float( ( (packed>> 8) & 0xf) ) / 15.0f;
+		_dst[3] = float( ( (packed>>12) & 0xf) ) / 15.0f;
 	}
 
 	// RGB5A1
