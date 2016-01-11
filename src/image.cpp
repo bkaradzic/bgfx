@@ -1413,7 +1413,7 @@ namespace bgfx
 			{
 				float rgba[4];
 				unpack(rgba, &src[xx*srcBpp/8]);
-				pack(&dst[xx*srcBpp/8], rgba);
+				pack(&dst[xx*dstBpp/8], rgba);
 			}
 		}
 

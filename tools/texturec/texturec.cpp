@@ -132,6 +132,7 @@ namespace bgfx
 			break;
 
 		default:
+			imageConvert(_dst, format, _src, TextureFormat::RGBA8, _width, _height);
 			break;
 		}
 	}
