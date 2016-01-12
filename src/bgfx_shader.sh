@@ -67,6 +67,11 @@ vec4 bgfxTexture2DProj(BgfxSampler2D _sampler, vec4 _coord)
 	return _sampler.m_texture.Sample(_sampler.m_sampler, coord);
 }
 
+vec4 bgfxTexelFetch(BgfxSampler2D _sampler, ivec2 _coord, int _level)
+{
+	return _sampler.m_texture.Load(ivec3(_coord, _level));
+}
+
 struct BgfxSampler2DShadow
 {
 	SamplerComparisonState m_sampler;
@@ -148,6 +153,7 @@ vec4 bgfxTextureCubeLod(BgfxSamplerCube _sampler, vec3 _coord, float _level)
 #		define texture2D(_sampler, _coord) bgfxTexture2D(_sampler, _coord)
 #		define texture2DLod(_sampler, _coord, _level) bgfxTexture2DLod(_sampler, _coord, _level)
 #		define texture2DProj(_sampler, _coord) bgfxTexture2DProj(_sampler, _coord)
+#		define texelFetch(_sampler, _coord, _level) bgfxTexelFetch(_sampler, _coord, _level)
 
 #		define SAMPLER2DSHADOW(_name, _reg) \
 			uniform SamplerComparisonState _name ## Sampler : register(s[_reg]); \
