@@ -1122,29 +1122,38 @@ namespace bgfx
 		// https://www.opengl.org/registry/specs/EXT/texture_shared_exponent.txt
 		const int32_t expMax  = (1<<ExpBits) - 1;
 		const int32_t expBias = (1<<(ExpBits - 1) ) - 1;
-		const float   sharedExpMax = float( (1 << MantissaBits) - 1) / (1 << MantissaBits) * (1 << (expMax-expBias));
+		const float   sharedExpMax = float(expMax) / float(expMax + 1) * float(1 << (expMax - expBias) );
 
 		const float rr  = bx::fclamp(_src[0], 0.0f, sharedExpMax);
 		const float gg  = bx::fclamp(_src[1], 0.0f, sharedExpMax);
 		const float bb  = bx::fclamp(_src[2], 0.0f, sharedExpMax);
 		const float max = bx::fmax3(rr, gg, bb);
-		const float expShared = bx::fmax(-expBias-1, bx::ffloor(bx::flog2(max) ) ) + 1 + expBias;
-		const float invExp    = 1.0f/bx::fpow(2.0f, expShared - expBias - MantissaBits);
+		union { float ff; uint32_t ui; } cast = { max };
+		int32_t expShared = int32_t(bx::uint32_imax(uint32_t(-expBias-1), ( ( (cast.ui>>23) & 0xff) - 127) ) ) + 1 + expBias;
+		float denom = bx::fpow(2.0f, float(expShared - expBias - MantissaBits) );
 
-		_dst[0] = rr * invExp;
-		_dst[1] = gg * invExp;
-		_dst[2] = bb * invExp;
-		_dst[3] = expShared;
+		if ( (1<<MantissaBits) == int32_t(bx::fround(max/denom) ) )
+		{
+			denom *= 2.0f;
+			++expShared;
+		}
+
+		const float invDenom = 1.0f/denom;
+		_dst[0] = bx::fround(rr * invDenom);
+		_dst[1] = bx::fround(gg * invDenom);
+		_dst[2] = bx::fround(bb * invDenom);
+		_dst[3] = float(expShared);
 	}
 
 	template<int32_t MantissaBits, int32_t ExpBits>
 	void decodeRgbE(float* _dst, const float* _src)
 	{
 		const int32_t expBias = (1<<(ExpBits - 1) ) - 1;
-		const float exp = bx::fpow(2.0f, _src[3]-float(expBias-MantissaBits) );
-		_dst[0] = _src[0] * exp;
-		_dst[1] = _src[1] * exp;
-		_dst[2] = _src[2] * exp;
+		const float exponent  = _src[3]-float(expBias-MantissaBits);
+		const float scale     = bx::fpow(2.0f, exponent);
+		_dst[0] = _src[0] * scale;
+		_dst[1] = _src[1] * scale;
+		_dst[2] = _src[2] * scale;
 	}
 
 	// RGB9E5F
@@ -1154,10 +1163,10 @@ namespace bgfx
 		encodeRgbE<9, 5>(tmp, _src);
 
 		*( (uint32_t*)_dst) = 0
-			| (toUnorm(tmp[0], 511.0f)    )
-			| (toUnorm(tmp[1], 511.0f)<< 9)
-			| (toUnorm(tmp[2], 511.0f)<<18)
-			| (uint32_t(tmp[3])      <<27)
+			| (uint32_t(tmp[0])     )
+			| (uint32_t(tmp[1]) << 9)
+			| (uint32_t(tmp[2]) <<18)
+			| (uint32_t(tmp[3]) <<27)
 			;
 	}
 
