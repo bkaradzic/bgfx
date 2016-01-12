@@ -4898,12 +4898,18 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						}
 						else
 						{
+							bool depthStencil = isDepth(TextureFormat::Enum(src.m_textureFormat) );
+							BX_CHECK(!depthStencil
+								||  (width == src.m_width && height == src.m_height)
+								, "When blitting depthstencil surface, source resolution must match destination."
+								);
+
 							D3D11_BOX box;
 							box.left   = blit.m_srcX;
 							box.top    = blit.m_srcY;
 							box.front  = 0;
 							box.right  = blit.m_srcX + width;
-							box.bottom = blit.m_srcY + height;;
+							box.bottom = blit.m_srcY + height;
 							box.back   = 1;
 
 							const uint32_t srcZ = TextureD3D11::TextureCube == src.m_type
@@ -4915,7 +4921,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								: 0
 								;
 
-							bool depthStencil = isDepth(TextureFormat::Enum(src.m_textureFormat) );
 							deviceCtx->CopySubresourceRegion(dst.m_ptr
 								, dstZ*dst.m_numMips+blit.m_dstMip
 								, blit.m_dstX
