@@ -31,7 +31,7 @@
 #define NV_FASTCALL     __attribute__((fastcall))
 //#if __GNUC__ > 3
 // It seems that GCC does not assume always_inline implies inline. I think this depends on the GCC version :(
-#define NV_FORCEINLINE  inline __attribute__((always_inline))
+#define NV_FORCEINLINE  inline
 //#else
 // Some compilers complain that inline and always_inline are redundant.
 //#define NV_FORCEINLINE  __attribute__((always_inline))

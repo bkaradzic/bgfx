@@ -128,6 +128,7 @@ namespace
 
 		uint64_t state;
 		bgfx::TextureHandle th;
+		bgfx::TextureHandle texMissing;
 
 		bgfx::TransientVertexBuffer tvb;
 		uint8_t viewid;
@@ -262,6 +263,11 @@ namespace
 						, bgfx::createShader(fs_nanovg_fill)
 						, true
 						);
+
+		const bgfx::Memory* mem = bgfx::alloc(4*4*4);
+		uint32_t* bgra8 = (uint32_t*)mem->data;
+		memset(bgra8, 0, 4*4*4);
+		gl->texMissing = bgfx::createTexture2D(4, 4, 0, bgfx::TextureFormat::BGRA8, 0, mem);
 
 		gl->u_scissorMat      = bgfx::createUniform("u_scissorMat",      bgfx::UniformType::Mat3);
 		gl->u_paintMat        = bgfx::createUniform("u_paintMat",        bgfx::UniformType::Mat3);
@@ -444,8 +450,7 @@ namespace
 		memcpy(frag->extent, paint->extent, sizeof(frag->extent) );
 		frag->strokeMult = (width*0.5f + fringe*0.5f) / fringe;
 
-		bgfx::TextureHandle invalid = BGFX_INVALID_HANDLE;
-		gl->th = invalid;
+		gl->th = gl->texMissing;
 		if (paint->image != 0)
 		{
 			tex = glnvg__findTexture(gl, paint->image);
@@ -460,7 +465,7 @@ namespace
 		else
 		{
 			frag->type = NSVG_SHADER_FILLGRAD;
-			frag->radius = paint->radius;
+			frag->radius  = paint->radius;
 			frag->feather = paint->feather;
 		}
 
@@ -502,7 +507,7 @@ namespace
 		bgfx::setUniform(gl->u_extentRadius,    &frag->extent[0]);
 		bgfx::setUniform(gl->u_params,          &frag->feather);
 
-		bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
+		bgfx::TextureHandle handle = gl->texMissing;
 
 		if (image != 0)
 		{
@@ -976,6 +981,7 @@ namespace
 		}
 
 		bgfx::destroyProgram(gl->prog);
+		bgfx::destroyTexture(gl->texMissing);
 
 		bgfx::destroyUniform(gl->u_scissorMat);
 		bgfx::destroyUniform(gl->u_paintMat);

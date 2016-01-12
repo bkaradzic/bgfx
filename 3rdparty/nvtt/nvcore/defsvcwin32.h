@@ -48,7 +48,7 @@
 #endif
 
 #define NV_NOINLINE __declspec(noinline)
-#define NV_FORCEINLINE __forceinline
+#define NV_FORCEINLINE inline
 
 #define NV_THREAD_LOCAL __declspec(thread)
 
