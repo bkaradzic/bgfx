@@ -54,7 +54,7 @@ namespace bgfx
 		::free(mem);
 	}
 
-	void imageEncodeFromRgba8(void* _dst, const void* _src, uint32_t _width, uint32_t _height, uint8_t _format)
+	bool imageEncodeFromRgba8(void* _dst, const void* _src, uint32_t _width, uint32_t _height, uint8_t _format)
 	{
 		TextureFormat::Enum format = TextureFormat::Enum(_format);
 
@@ -72,25 +72,19 @@ namespace bgfx
 				: format == TextureFormat::BC5 ? squish::kBc5
 				:                                squish::kDxt1
 				);
-			break;
+			return true;
 
 		case TextureFormat::BC6H:
 			nvtt::compressBC6H( (const uint8_t*)_src, _width, _height, 4, _dst);
-			break;
+			return true;
 
 		case TextureFormat::BC7:
 			nvtt::compressBC7( (const uint8_t*)_src, _width, _height, 4, _dst);
-			break;
+			return true;
 
 		case TextureFormat::ETC1:
 			etc1_encode_image( (const uint8_t*)_src, _width, _height, 4, _width*4, (uint8_t*)_dst);
-			break;
-
-		case TextureFormat::ETC2:
-		case TextureFormat::ETC2A:
-		case TextureFormat::ETC2A1:
-		case TextureFormat::PTC12:
-			break;
+			return true;
 
 		case TextureFormat::PTC14:
 			{
@@ -102,10 +96,7 @@ namespace bgfx
 				PvrTcEncoder::EncodeRgb4Bpp(_dst, bmp);
 				bmp.data = NULL;
 			}
-			break;
-
-		case TextureFormat::PTC12A:
-			break;
+			return true;
 
 		case TextureFormat::PTC14A:
 			{
@@ -117,27 +108,24 @@ namespace bgfx
 				PvrTcEncoder::EncodeRgba4Bpp(_dst, bmp);
 				bmp.data = NULL;
 			}
-			break;
-
-		case TextureFormat::PTC22:
-		case TextureFormat::PTC24:
-			break;
+			return true;
 
 		case TextureFormat::BGRA8:
 			imageSwizzleBgra8(_width, _height, _width*4, _src, _dst);
-			break;
+			return true;
 
 		case TextureFormat::RGBA8:
 			memcpy(_dst, _src, _width*_height*4);
-			break;
+			return true;
 
 		default:
-			imageConvert(_dst, format, _src, TextureFormat::RGBA8, _width, _height);
-			break;
+			return imageConvert(_dst, format, _src, TextureFormat::RGBA8, _width, _height);
 		}
+
+		return false;
 	}
 
-	void imageEncodeFromRgba32f(bx::AllocatorI* _allocator, void* _dst, const void* _src, uint32_t _width, uint32_t _height, uint8_t _format)
+	bool imageEncodeFromRgba32f(bx::AllocatorI* _allocator, void* _dst, const void* _src, uint32_t _width, uint32_t _height, uint8_t _format)
 	{
 		TextureFormat::Enum format = TextureFormat::Enum(_format);
 
@@ -162,7 +150,7 @@ namespace bgfx
 					}
 				}
 			}
-			break;
+			return true;
 
 		case TextureFormat::BC5:
 			{
@@ -184,11 +172,13 @@ namespace bgfx
 				imageEncodeFromRgba8(_dst, temp, _width, _height, _format);
 				BX_FREE(_allocator, temp);
 			}
-			break;
+			return true;
 
 		default:
-			break;
+			return imageConvert(_dst, format, _src, TextureFormat::RGBA32F, _width, _height);
 		}
+
+		return false;
 	}
 
 	void imageRgba32f11to01(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src)
