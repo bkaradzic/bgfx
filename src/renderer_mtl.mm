@@ -1887,7 +1887,7 @@ namespace bgfx { namespace mtl
 					 , 0 != (_flags&BGFX_TEXTURE_RT_MASK) ? " (render target)" : ""
 					 );
 
-			const bool bufferOnly   = 0 != (_flags&BGFX_TEXTURE_RT_BUFFER_ONLY);
+			const bool writeOnly   = 0 != (_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
 //			const bool computeWrite = 0 != (_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 //			const bool renderTarget = 0 != (_flags&BGFX_TEXTURE_RT_MASK);
 			const bool srgb			= 0 != (_flags&BGFX_TEXTURE_SRGB) || imageContainer.m_srgb;
@@ -1919,11 +1919,11 @@ namespace bgfx { namespace mtl
 			desc.resourceOptions  = MTLResourceStorageModePrivate;
 			desc.cpuCacheMode     = MTLCPUCacheModeDefaultCache;
 
-			desc.storageMode = (MTLStorageMode)(bufferOnly
+			desc.storageMode = (MTLStorageMode)(writeOnly
 				? 2 /*MTLStorageModePrivate*/
 				: 1 /*MTLStorageModeManaged*/
 				);
-			desc.usage       = bufferOnly
+			desc.usage       = writeOnly
 				? MTLTextureUsageShaderWrite
 				: MTLTextureUsageShaderRead
 				;

@@ -1898,7 +1898,7 @@ int _main_(int _argc, char** _argv)
 	bgfx::TextureHandle fbtextures[] =
 	{
 		bgfx::createTexture2D(viewState.m_width, viewState.m_height, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_RT),
-		bgfx::createTexture2D(viewState.m_width, viewState.m_height, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_BUFFER_ONLY),
+		bgfx::createTexture2D(viewState.m_width, viewState.m_height, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY),
 	};
 	s_stencilFb  = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 
@@ -2092,7 +2092,7 @@ int _main_(int _argc, char** _argv)
 			bgfx::destroyFrameBuffer(s_stencilFb);
 
 			fbtextures[0] = bgfx::createTexture2D(viewState.m_width, viewState.m_height, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_RT);
-			fbtextures[1] = bgfx::createTexture2D(viewState.m_width, viewState.m_height, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_BUFFER_ONLY);
+			fbtextures[1] = bgfx::createTexture2D(viewState.m_width, viewState.m_height, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY);
 			s_stencilFb = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 		}
 

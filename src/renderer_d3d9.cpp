@@ -2431,10 +2431,10 @@ namespace bgfx { namespace d3d9
 			uint32_t msaaQuality = ( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT);
 			msaaQuality = bx::uint32_satsub(msaaQuality, 1);
 
-			bool bufferOnly = 0 != (m_flags&BGFX_TEXTURE_RT_BUFFER_ONLY);
+			bool writeOnly = 0 != (m_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
 
 			if (0 != msaaQuality
-			||  bufferOnly)
+			||  writeOnly)
 			{
 				const Msaa& msaa = s_msaa[msaaQuality];
 
@@ -2465,7 +2465,7 @@ namespace bgfx { namespace d3d9
 						) );
 				}
 
-				if (bufferOnly)
+				if (writeOnly)
 				{
 					// This is render buffer, there is no sampling, no need
 					// to create texture.
@@ -2841,7 +2841,7 @@ namespace bgfx { namespace d3d9
 				, 0 != (m_flags&BGFX_TEXTURE_RT_MASK) ? " (render target)" : ""
 				);
 
-			if (0 != (_flags&BGFX_TEXTURE_RT_BUFFER_ONLY) )
+			if (0 != (_flags&BGFX_TEXTURE_RT_WRITE_ONLY) )
 			{
 				return;
 			}

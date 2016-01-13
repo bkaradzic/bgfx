@@ -4009,7 +4009,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				}
 			}
 
-			const bool bufferOnly   = 0 != (m_flags&(BGFX_TEXTURE_RT_BUFFER_ONLY|BGFX_TEXTURE_READ_BACK) );
+			const bool writeOnly    = 0 != (m_flags&(BGFX_TEXTURE_RT_WRITE_ONLY|BGFX_TEXTURE_READ_BACK) );
 			const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 			const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
 			const bool srgb         = 0 != (m_flags&BGFX_TEXTURE_SRGB) || imageContainer.m_srgb;
@@ -4053,7 +4053,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					desc.Format     = format;
 					desc.SampleDesc = msaa;
 					desc.Usage      = kk == 0 || blit ? D3D11_USAGE_DEFAULT : D3D11_USAGE_IMMUTABLE;
-					desc.BindFlags  = bufferOnly ? 0 : D3D11_BIND_SHADER_RESOURCE;
+					desc.BindFlags  = writeOnly ? 0 : D3D11_BIND_SHADER_RESOURCE;
 					desc.CPUAccessFlags = 0;
 
 					if (isDepth( (TextureFormat::Enum)m_textureFormat) )
@@ -4126,7 +4126,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				break;
 			}
 
-			if (!bufferOnly)
+			if (!writeOnly)
 			{
 				DX_CHECK(s_renderD3D11->m_device->CreateShaderResourceView(m_ptr, &srvd, &m_srv) );
 			}
