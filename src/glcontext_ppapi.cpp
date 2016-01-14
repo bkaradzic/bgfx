@@ -191,6 +191,8 @@ namespace bgfx { namespace gl
 	{
 		BX_UNUSED(_width, _height);
 		BX_TRACE("GlContext::create");
+
+		g_internalData.context = m_context;
 	}
 
 	void GlContext::destroy()

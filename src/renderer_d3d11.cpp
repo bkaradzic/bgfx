@@ -1465,6 +1465,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			}
 
 			BGFX_GPU_PROFILER_BIND(m_device, m_deviceCtx);
+
+			g_internalData.context = m_device;
 			return true;
 
 		error:

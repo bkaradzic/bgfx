@@ -277,6 +277,7 @@ namespace bgfx
 
 	static Context* s_ctx = NULL;
 	static bool s_renderFrameCalled = false;
+	InternalData g_internalData;
 	PlatformData g_platformData;
 
 	void AllocatorStub::checkLeaks()
@@ -292,19 +293,24 @@ namespace bgfx
 #endif // BGFX_CONFIG_MEMORY_TRACKING
 	}
 
-	void setPlatformData(const PlatformData& _pd)
+	void setPlatformData(const PlatformData& _data)
 	{
 		if (NULL != s_ctx)
 		{
 			BGFX_FATAL(true
-				&& g_platformData.ndt     == _pd.ndt
-				&& g_platformData.nwh     == _pd.nwh
-				&& g_platformData.context == _pd.context
+				&& g_platformData.ndt     == _data.ndt
+				&& g_platformData.nwh     == _data.nwh
+				&& g_platformData.context == _data.context
 				, Fatal::UnableToInitialize
 				, "Only backbuffer pointer can be changed after initialization!"
 				);
 		}
-		memcpy(&g_platformData, &_pd, sizeof(PlatformData) );
+		memcpy(&g_platformData, &_data, sizeof(PlatformData) );
+	}
+
+	const InternalData* getInternalData()
+	{
+		return &g_internalData;
 	}
 
 	void setGraphicsDebuggerPresent(bool _present)
@@ -4364,9 +4370,14 @@ BGFX_C_API bgfx_render_frame_t bgfx_render_frame()
 	return bgfx_render_frame_t(bgfx::renderFrame() );
 }
 
-BGFX_C_API void bgfx_set_platform_data(bgfx_platform_data_t* _pd)
+BGFX_C_API void bgfx_set_platform_data(const bgfx_platform_data_t* _data)
 {
-	bgfx::setPlatformData(*(bgfx::PlatformData*)_pd);
+	bgfx::setPlatformData(*(const bgfx::PlatformData*)_data);
+}
+
+BGFX_C_API const bgfx_internal_data_t* bgfx_get_internal_data()
+{
+	return (const bgfx_internal_data_t*)bgfx::getInternalData();
 }
 
 BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
@@ -4376,6 +4387,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 #define BGFX_IMPORT \
 	BGFX_IMPORT_FUNC(render_frame) \
 	BGFX_IMPORT_FUNC(set_platform_data) \
+	BGFX_IMPORT_FUNC(get_internal_data) \
 	BGFX_IMPORT_FUNC(vertex_decl_begin) \
 	BGFX_IMPORT_FUNC(vertex_decl_add) \
 	BGFX_IMPORT_FUNC(vertex_decl_skip) \

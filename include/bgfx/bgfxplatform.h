@@ -45,10 +45,10 @@ namespace bgfx
 	///
 	struct PlatformData
 	{
-		void* ndt;          //!< Native display type
-		void* nwh;          //!< Native window handle
-		void* context;      //!< GL context, or D3D device
-		void* backBuffer;   //!< GL backbuffer, or D3D render target view
+		void* ndt;          //!< Native display type.
+		void* nwh;          //!< Native window handle.
+		void* context;      //!< GL context, or D3D device.
+		void* backBuffer;   //!< GL backbuffer, or D3D render target view.
 		void* backBufferDS; //!< Backbuffer depth/stencil.
 	};
 
@@ -58,7 +58,19 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_set_platform_data`.
 	///
-	void setPlatformData(const PlatformData& _hooks);
+	void setPlatformData(const PlatformData& _data);
+
+	///
+	struct InternalData
+	{
+		void* context; //!< GL context, or D3D device.
+	};
+
+	/// Get internal data for interop.
+	///
+	/// @attention C99 equivalent is `bgfx_get_internal_data`.
+	///
+	const InternalData* getInternalData();
 
 } // namespace bgfx
 

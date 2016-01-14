@@ -1042,6 +1042,8 @@ namespace bgfx { namespace d3d12
 				m_gpuTimer.init();
 				m_occlusionQuery.init();
 			}
+
+			g_internalData.context = m_device;
 			return true;
 
 		error:

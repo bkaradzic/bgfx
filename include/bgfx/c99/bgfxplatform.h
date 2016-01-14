@@ -41,6 +41,14 @@ typedef struct bgfx_platform_data
 
 } bgfx_platform_data_t;
 
-BGFX_C_API void bgfx_set_platform_data(bgfx_platform_data_t* _pd);
+BGFX_C_API void bgfx_set_platform_data(const bgfx_platform_data_t* _data);
+
+typedef struct bgfx_internal_data
+{
+    void* context;
+
+} bgfx_internal_data_t;
+
+BGFX_C_API const bgfx_internal_data_t* bgfx_get_internal_data();
 
 #endif // BGFX_PLATFORM_C99_H_HEADER_GUARD

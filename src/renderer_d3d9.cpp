@@ -752,6 +752,7 @@ namespace bgfx { namespace d3d9
 
 			m_initialized = true;
 
+			g_internalData.context = m_device;
 			return true;
 
 		error:

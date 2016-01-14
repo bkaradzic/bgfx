@@ -268,6 +268,8 @@ namespace bgfx { namespace gl
 		}
 
 		import();
+
+		g_internalData.context = m_context;
 	}
 
 	void GlContext::destroy()

@@ -314,6 +314,8 @@ EGL_IMPORT
 		}
 
 		import();
+
+		g_internalData.context = m_context;
 	}
 
 	void GlContext::destroy()

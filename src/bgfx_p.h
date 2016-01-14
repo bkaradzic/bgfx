@@ -256,6 +256,7 @@ namespace stl
 
 namespace bgfx
 {
+	extern InternalData g_internalData;
 	extern PlatformData g_platformData;
 
 #if BGFX_CONFIG_MAX_DRAW_CALLS < (64<<10)

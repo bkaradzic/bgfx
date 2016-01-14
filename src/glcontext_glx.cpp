@@ -211,6 +211,8 @@ namespace bgfx { namespace gl
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glXSwapBuffers( (::Display*)g_platformData.ndt, (::Window)g_platformData.nwh);
+
+		g_internalData.context = m_context;
 	}
 
 	void GlContext::destroy()
