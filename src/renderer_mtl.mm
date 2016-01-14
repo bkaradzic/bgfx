@@ -495,6 +495,7 @@ namespace bgfx { namespace mtl
 
 			m_occlusionQuery.preReset();
 
+			g_internalData.context = m_device;
 			return true;
 		}
 
