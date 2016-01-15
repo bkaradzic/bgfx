@@ -989,13 +989,13 @@ struct Mesh
 		m_groups.clear();
 	}
 
-	void submit(uint8_t _viewId, float* _mtx, bgfx::ProgramHandle _program, const RenderState& _renderState)
+	void submit(uint8_t _viewId, float* _mtx, bgfx::ProgramHandle _program, const RenderState& _renderState, bool _submitShadowMaps = false)
 	{
 		bgfx::TextureHandle texture = BGFX_INVALID_HANDLE;
-		submit(_viewId, _mtx, _program, _renderState, texture);
+		submit(_viewId, _mtx, _program, _renderState, texture, _submitShadowMaps);
 	}
 
-	void submit(uint8_t _viewId, float* _mtx, bgfx::ProgramHandle _program, const RenderState& _renderState, bgfx::TextureHandle _texture)
+	void submit(uint8_t _viewId, float* _mtx, bgfx::ProgramHandle _program, const RenderState& _renderState, bgfx::TextureHandle _texture, bool _submitShadowMaps = false)
 	{
 		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
 		{
@@ -1015,9 +1015,12 @@ struct Mesh
 				bgfx::setTexture(0, s_texColor, _texture);
 			}
 
-			for (uint8_t ii = 0; ii < ShadowMapRenderTargets::Count; ++ii)
+			if (_submitShadowMaps)
 			{
-				bgfx::setTexture(4 + ii, s_shadowMap[ii], s_rtShadowMap[ii]);
+				for (uint8_t ii = 0; ii < ShadowMapRenderTargets::Count; ++ii)
+				{
+					bgfx::setTexture(4 + ii, s_shadowMap[ii], s_rtShadowMap[ii]);
+				}
 			}
 
 			// Apply render state.
@@ -2977,6 +2980,7 @@ int _main_(int _argc, char** _argv)
 					, mtxFloor
 					, *currentSmSettings->m_progDraw
 					, s_renderStates[RenderState::Default]
+					, true
 					);
 
 			// Bunny.
@@ -2988,6 +2992,7 @@ int _main_(int _argc, char** _argv)
 					, mtxBunny
 					, *currentSmSettings->m_progDraw
 					, s_renderStates[RenderState::Default]
+					, true
 					);
 
 			// Hollow cube.
@@ -2999,6 +3004,7 @@ int _main_(int _argc, char** _argv)
 					, mtxHollowcube
 					, *currentSmSettings->m_progDraw
 					, s_renderStates[RenderState::Default]
+					, true
 					);
 
 			// Cube.
@@ -3010,6 +3016,7 @@ int _main_(int _argc, char** _argv)
 					, mtxCube
 					, *currentSmSettings->m_progDraw
 					, s_renderStates[RenderState::Default]
+					, true
 					);
 
 			// Trees.
@@ -3023,6 +3030,7 @@ int _main_(int _argc, char** _argv)
 						, mtxTrees[ii]
 						, *currentSmSettings->m_progDraw
 						, s_renderStates[RenderState::Default]
+						, true
 						);
 			}
 
