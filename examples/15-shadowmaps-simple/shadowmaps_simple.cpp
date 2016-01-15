@@ -274,7 +274,7 @@ int _main_(int _argc, char** _argv)
 		bx::mtxLookAt(lightView, eye, at);
 
 		const float area = 30.0f;
-		bx::mtxOrtho(lightProj, -area, area, -area, area, -100.0f, 100.0f);
+		bx::mtxOrtho(lightProj, -area, area, -area, area, -100.0f, 100.0f, 0.0f, flipV);
 
 		bgfx::setViewRect(RENDER_SHADOW_PASS_ID, 0, 0, shadowMapSize, shadowMapSize);
 		bgfx::setViewFrameBuffer(RENDER_SHADOW_PASS_ID, shadowMapFB);
