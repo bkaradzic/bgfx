@@ -6342,6 +6342,8 @@ namespace bgfx { namespace gl
 
 			blitMsaaFbo();
 
+			GL_CHECK(glBindVertexArray(m_vao) );
+
 			if (0 < _render->m_num)
 			{
 				if (0 != (m_resolution.m_flags & BGFX_RESET_FLUSH_AFTER_RENDER) )
