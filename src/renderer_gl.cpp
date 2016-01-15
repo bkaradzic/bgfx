@@ -6342,7 +6342,10 @@ namespace bgfx { namespace gl
 
 			blitMsaaFbo();
 
-			GL_CHECK(glBindVertexArray(m_vao) );
+			if (m_vaoSupport)
+			{
+				GL_CHECK(glBindVertexArray(m_vao) );
+			}
 
 			if (0 < _render->m_num)
 			{
