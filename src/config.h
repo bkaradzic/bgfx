@@ -65,6 +65,7 @@
 					|| BX_PLATFORM_NACL \
 					|| BX_PLATFORM_QNX \
 					|| BX_PLATFORM_RPI \
+					|| BX_PLATFORM_STEAMLINK \
 					? 1 : 0)
 #	endif // BGFX_CONFIG_RENDERER_OPENGLES
 

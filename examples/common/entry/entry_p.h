@@ -14,7 +14,7 @@
 #include <string.h> // memcpy
 
 #ifndef ENTRY_CONFIG_USE_SDL
-#	define ENTRY_CONFIG_USE_SDL 0
+#	define ENTRY_CONFIG_USE_SDL BX_PLATFORM_STEAMLINK
 #endif // ENTRY_CONFIG_USE_SDL
 
 #ifndef ENTRY_CONFIG_USE_GLFW
