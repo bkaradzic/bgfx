@@ -60,13 +60,19 @@ namespace bgfx
 	///
 	void setPlatformData(const PlatformData& _data);
 
+	/// Internal data.
+	///
+	/// @attention C99 equivalent is `bgfx_internal_data_t`.
 	///
 	struct InternalData
 	{
-		void* context; //!< GL context, or D3D device.
+		const struct Caps* caps; //!< Renderer capabilities.
+		void* context;           //!< GL context, or D3D device.
 	};
 
 	/// Get internal data for interop.
+	///
+	/// @warning Must be called only on render thread.
 	///
 	/// @attention C99 equivalent is `bgfx_get_internal_data`.
 	///

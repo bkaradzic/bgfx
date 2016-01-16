@@ -45,6 +45,7 @@ BGFX_C_API void bgfx_set_platform_data(const bgfx_platform_data_t* _data);
 
 typedef struct bgfx_internal_data
 {
+	const struct bgfx_caps* caps;
     void* context;
 
 } bgfx_internal_data_t;
