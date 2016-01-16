@@ -310,6 +310,7 @@ namespace bgfx
 
 	const InternalData* getInternalData()
 	{
+		BGFX_CHECK_RENDER_THREAD();
 		return &g_internalData;
 	}
 
@@ -1223,6 +1224,8 @@ namespace bgfx
 			frame();
 		}
 
+		g_internalData.caps = getCaps();
+
 		return true;
 	}
 
@@ -1269,6 +1272,7 @@ namespace bgfx
 		m_render->destroy();
 #endif // BGFX_CONFIG_MULTITHREADED
 
+		memset(&g_internalData, 0, sizeof(InternalData) );
 		s_ctx = NULL;
 
 		m_submit->destroy();
@@ -3510,6 +3514,7 @@ BX_STATIC_ASSERT(sizeof(bgfx::InstanceDataBuffer)    == sizeof(bgfx_instance_dat
 BX_STATIC_ASSERT(sizeof(bgfx::TextureInfo)           == sizeof(bgfx_texture_info_t) );
 BX_STATIC_ASSERT(sizeof(bgfx::Caps)                  == sizeof(bgfx_caps_t) );
 BX_STATIC_ASSERT(sizeof(bgfx::PlatformData)          == sizeof(bgfx_platform_data_t) );
+BX_STATIC_ASSERT(sizeof(bgfx::InternalData)          == sizeof(bgfx_internal_data_t) );
 
 namespace bgfx
 {
