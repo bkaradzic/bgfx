@@ -1755,6 +1755,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			release(mem);
 		}
 
+		void setInternal(TextureHandle _handle, uintptr_t _ptr) BX_OVERRIDE
+		{
+			m_textures[_handle.idx].setInternal(_ptr);
+		}
+
 		void destroyTexture(TextureHandle _handle) BX_OVERRIDE
 		{
 			m_textures[_handle.idx].destroy();
@@ -4157,9 +4162,19 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	void TextureD3D11::destroy()
 	{
 		s_renderD3D11->m_srvUavLru.invalidateWithParent(getHandle().idx);
-		DX_RELEASE(m_srv, 0);
-		DX_RELEASE(m_uav, 0);
-		DX_RELEASE(m_ptr, 0);
+		if (0 == (m_flags & BGFX_TEXTURE_INTERNAL_SHARED) )
+		{
+			DX_RELEASE(m_srv, 0);
+			DX_RELEASE(m_uav, 0);
+			DX_RELEASE(m_ptr, 0);
+		}
+	}
+
+	void TextureD3D11::setInternal(uintptr_t _ptr)
+	{
+		destroy();
+		m_flags |= BGFX_TEXTURE_INTERNAL_SHARED;
+		m_ptr = (ID3D11Resource*)_ptr;
 	}
 
 	void TextureD3D11::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)

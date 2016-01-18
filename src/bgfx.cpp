@@ -314,6 +314,12 @@ namespace bgfx
 		return &g_internalData;
 	}
 
+	void setInternal(TextureHandle _handle, uintptr_t _ptr)
+	{
+		BGFX_CHECK_RENDER_THREAD();
+		s_ctx->m_renderCtx->setInternal(_handle, _ptr);
+	}
+
 	void setGraphicsDebuggerPresent(bool _present)
 	{
 		BX_TRACE("Graphics debugger is %spresent.", _present ? "" : "not ");
@@ -3498,6 +3504,32 @@ again:
 #include <bgfx/c99/bgfx.h>
 #include <bgfx/c99/bgfxplatform.h>
 
+#define FLAGS_MASK_TEST(_flags, _mask) ( (_flags) == ( (_flags) & (_mask) ) )
+
+BX_STATIC_ASSERT(FLAGS_MASK_TEST(0
+	| BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER
+	| BGFX_TEXTURE_INTERNAL_SHARED
+	, BGFX_TEXTURE_RESERVED_MASK
+	) );
+
+BX_STATIC_ASSERT(FLAGS_MASK_TEST(0
+	| BGFX_RESET_INTERNAL_FORCE
+	, BGFX_RESET_RESERVED_MASK
+	) );
+
+BX_STATIC_ASSERT(FLAGS_MASK_TEST(0
+	| BGFX_STATE_INTERNAL_SCISSOR
+	| BGFX_STATE_INTERNAL_OCCLUSION_QUERY
+	, BGFX_STATE_RESERVED_MASK
+	) );
+
+BX_STATIC_ASSERT(FLAGS_MASK_TEST(0
+	| BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE
+	, BGFX_SUBMIT_RESERVED_MASK
+	) );
+
+#undef FLAGS_MASK_TEST
+
 BX_STATIC_ASSERT(bgfx::Fatal::Count         == bgfx::Fatal::Enum(BGFX_FATAL_COUNT) );
 BX_STATIC_ASSERT(bgfx::RendererType::Count  == bgfx::RendererType::Enum(BGFX_RENDERER_TYPE_COUNT) );
 BX_STATIC_ASSERT(bgfx::Attrib::Count        == bgfx::Attrib::Enum(BGFX_ATTRIB_COUNT) );
@@ -4383,6 +4415,12 @@ BGFX_C_API void bgfx_set_platform_data(const bgfx_platform_data_t* _data)
 BGFX_C_API const bgfx_internal_data_t* bgfx_get_internal_data()
 {
 	return (const bgfx_internal_data_t*)bgfx::getInternalData();
+}
+
+BGFX_C_API void bgfx_set_internal_texture(bgfx_texture_handle_t _handle, uintptr_t _ptr)
+{
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
+	bgfx::setInternal(handle.cpp, _ptr);
 }
 
 BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)

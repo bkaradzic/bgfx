@@ -11,6 +11,7 @@
 // necessary to use this header in conjunction with creating windows.
 
 #include <bx/platform.h>
+#include <bgfx/bgfx.h>
 
 namespace bgfx
 {
@@ -77,6 +78,14 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_get_internal_data`.
 	///
 	const InternalData* getInternalData();
+
+	/// Set externally created texture.
+	///
+	/// @warning Must be called only on render thread.
+	///
+	/// @attention C99 equivalent is `bgfx_set_internal_texture`.
+	///
+	void setInternal(TextureHandle _handle, uintptr_t _ptr);
 
 } // namespace bgfx
 

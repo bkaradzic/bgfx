@@ -121,6 +121,10 @@ namespace bgfx { namespace noop
 		{
 		}
 
+		void setInternal(TextureHandle /*_handle*/, uintptr_t /*_ptr*/) BX_OVERRIDE
+		{
+		}
+
 		void destroyTexture(TextureHandle /*_handle*/) BX_OVERRIDE
 		{
 		}
