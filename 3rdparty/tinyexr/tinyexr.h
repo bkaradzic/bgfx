@@ -1306,8 +1306,17 @@ typedef struct {
       m_tree[TINFL_MAX_HUFF_SYMBOLS_0 * 2];
 } tinfl_huff_table;
 
-#if MINIZ_HAS_64BIT_REGISTERS
-#define TINFL_USE_64BIT_BITBUF 1
+
+#ifndef MINIZ_HAS_64BIT_REGISTERS
+#	define MINIZ_HAS_64BIT_REGISTERS 0
+#endif
+
+#ifndef TINFL_USE_64BIT_BITBUF
+#	if MINIZ_HAS_64BIT_REGISTERS
+#		define TINFL_USE_64BIT_BITBUF 1
+#	else
+#		define TINFL_USE_64BIT_BITBUF 0
+#	endif
 #endif
 
 #if TINFL_USE_64BIT_BITBUF
