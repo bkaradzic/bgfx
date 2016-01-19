@@ -87,6 +87,9 @@ namespace bgfx
 	///
 	void setInternal(TextureHandle _handle, uintptr_t _ptr);
 
+	///
+	uintptr_t setInternal(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_TEXTURE_NONE);
+
 } // namespace bgfx
 
 #if BX_PLATFORM_ANDROID

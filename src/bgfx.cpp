@@ -320,6 +320,37 @@ namespace bgfx
 		s_ctx->m_renderCtx->setInternal(_handle, _ptr);
 	}
 
+	uintptr_t setInternal(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags)
+	{
+		BGFX_CHECK_RENDER_THREAD();
+
+		uint32_t size = sizeof(uint32_t) + sizeof(TextureCreate);
+		Memory* mem   = const_cast<Memory*>(alloc(size) );
+
+		bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
+		uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
+		bx::write(&writer, magic);
+
+		TextureCreate tc;
+		tc.m_flags   = _flags;
+		tc.m_width   = _width;
+		tc.m_height  = _height;
+		tc.m_sides   = 0;
+		tc.m_depth   = 0;
+		tc.m_numMips = uint8_t(bx::uint16_max(1, _numMips) );
+		tc.m_format  = _format;
+		tc.m_cubeMap = false;
+		tc.m_mem     = NULL;
+		bx::write(&writer, tc);
+
+		s_ctx->m_renderCtx->destroyTexture(_handle);
+		s_ctx->m_renderCtx->createTexture(_handle, mem, _flags, 0);
+
+		release(mem);
+
+		return s_ctx->m_renderCtx->getInternal(_handle);
+	}
+
 	void setGraphicsDebuggerPresent(bool _present)
 	{
 		BX_TRACE("Graphics debugger is %spresent.", _present ? "" : "not ");
@@ -2841,19 +2872,19 @@ again:
 				);
 		}
 
-		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
-		const Memory* mem = alloc(size);
-
-		bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
-		uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
-		bx::write(&writer, magic);
-
 		if (BackbufferRatio::Count != _ratio)
 		{
 			_width  = uint16_t(s_ctx->m_resolution.m_width);
 			_height = uint16_t(s_ctx->m_resolution.m_height);
 			getTextureSizeFromRatio(_ratio, _width, _height);
 		}
+
+		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
+		const Memory* mem = alloc(size);
+
+		bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
+		uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
+		bx::write(&writer, magic);
 
 		TextureCreate tc;
 		tc.m_flags   = _flags;

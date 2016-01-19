@@ -2044,6 +2044,7 @@ namespace bgfx
 		virtual void readTexture(TextureHandle _handle, void* _data) = 0;
 		virtual void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height) = 0;
 		virtual void setInternal(TextureHandle _handle, uintptr_t _ptr) = 0;
+		virtual uintptr_t getInternal(TextureHandle _handle) = 0;
 		virtual void destroyTexture(TextureHandle _handle) = 0;
 		virtual void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles) = 0;
 		virtual void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat) = 0;

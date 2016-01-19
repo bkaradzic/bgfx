@@ -1002,6 +1002,11 @@ namespace bgfx { namespace d3d9
 			BX_UNUSED(_handle, _ptr);
 		}
 
+		uintptr_t getInternal(TextureHandle _handle) BX_OVERRIDE
+		{
+			return uintptr_t(m_textures[_handle.idx].m_ptr);
+		}
+
 		void destroyTexture(TextureHandle _handle) BX_OVERRIDE
 		{
 			m_textures[_handle.idx].destroy();
