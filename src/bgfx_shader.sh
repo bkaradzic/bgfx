@@ -75,13 +75,13 @@ struct BgfxSampler2DShadow
 
 float bgfxShadow2D(BgfxSampler2DShadow _sampler, vec3 _coord)
 {
-	return _sampler.m_texture.SampleCmpLevelZero(_sampler.m_sampler, _coord.xy, _coord.z * 2.0 - 1.0);
+	return _sampler.m_texture.SampleCmpLevelZero(_sampler.m_sampler, _coord.xy, _coord.z);
 }
 
 float bgfxShadow2DProj(BgfxSampler2DShadow _sampler, vec4 _coord)
 {
 	vec3 coord = _coord.xyz * rcp(_coord.w);
-	return _sampler.m_texture.SampleCmpLevelZero(_sampler.m_sampler, coord.xy, coord.z * 2.0 - 1.0);
+	return _sampler.m_texture.SampleCmpLevelZero(_sampler.m_sampler, coord.xy, coord.z);
 }
 
 struct BgfxSampler3D
@@ -196,9 +196,9 @@ float bgfxShadow2D(sampler2DShadow _sampler, vec3 _coord)
 {
 #if 0
 	float occluder = tex2D(_sampler, _coord.xy).x;
-	return step(_coord.z * 2.0 - 1.0, occluder);
+	return step(_coord.z, occluder);
 #else
-	return tex2Dproj(_sampler, vec4(_coord.xy, _coord.z * 2.0 - 1.0, 1.0) ).x;
+	return tex2Dproj(_sampler, vec4(_coord.xy, _coord.z, 1.0) ).x;
 #endif // 0
 }
 
@@ -207,7 +207,7 @@ float bgfxShadow2DProj(sampler2DShadow _sampler, vec4 _coord)
 #if 0
 	vec3 coord = _coord.xyz * rcp(_coord.w);
 	float occluder = tex2D(_sampler, coord.xy).x;
-	return step(coord.z * 2.0 - 1.0, occluder);
+	return step(coord.z, occluder);
 #else
 	return tex2Dproj(_sampler, _coord).x;
 #endif // 0
