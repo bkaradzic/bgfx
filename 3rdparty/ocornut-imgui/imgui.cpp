@@ -2488,17 +2488,8 @@ static const char*  FindTextDisplayEnd(const char* text, const char* text_end)
     if (!text_end)
         text_end = (const char*)-1;
 
-    ImGuiState& g = *GImGui;
-    if (g.DisableHideTextAfterDoubleHash > 0)
-    {
-        while (text_display_end < text_end && *text_display_end != '\0')
-            text_display_end++;
-    }
-    else
-    {
-        while (text_display_end < text_end && *text_display_end != '\0' && (text_display_end[0] != '#' || text_display_end[1] != '#'))
-            text_display_end++;
-    }
+    while (text_display_end < text_end && *text_display_end != '\0' && (text_display_end[0] != '#' || text_display_end[1] != '#'))
+        text_display_end++;
     return text_display_end;
 }
 
@@ -2736,6 +2727,8 @@ ImVec2 ImGui::CalcTextSize(const char* text, const char* text_end, bool hide_tex
 
     ImFont* font = g.Font;
     const float font_size = g.FontSize;
+    if (text == text_display_end)
+        return ImVec2(0.0f, font_size);
     ImVec2 text_size = font->CalcTextSizeA(font_size, FLT_MAX, wrap_width, text, text_display_end, NULL);
 
     // Cancel out character spacing for the last character of a line (it is baked into glyph->XAdvance field)
@@ -5173,7 +5166,8 @@ void ImGui::LabelTextV(const char* label, const char* fmt, va_list args)
     const char* value_text_begin = &g.TempBuffer[0];
     const char* value_text_end = value_text_begin + ImFormatStringV(g.TempBuffer, IM_ARRAYSIZE(g.TempBuffer), fmt, args);
     RenderTextClipped(value_bb.Min, value_bb.Max, value_text_begin, value_text_end, NULL, ImGuiAlign_VCenter);
-    RenderText(ImVec2(value_bb.Max.x + style.ItemInnerSpacing.x, value_bb.Min.y + style.FramePadding.y), label);
+    if (label_size.x > 0.0f)
+        RenderText(ImVec2(value_bb.Max.x + style.ItemInnerSpacing.x, value_bb.Min.y + style.FramePadding.y), label);
 }
 
 void ImGui::LabelText(const char* label, const char* fmt, ...)
@@ -5599,8 +5593,9 @@ bool ImGui::CollapsingHeader(const char* label, const char* str_id, bool display
         str_id = label;
     if (label == NULL)
         label = str_id;
+    const bool label_hide_text_after_double_hash = (label == str_id); // Only search and hide text after ## if we have passed label and ID separately, otherwise allow "##" within format string.
     const ImGuiID id = window->GetID(str_id);
-    const ImVec2 label_size = CalcTextSize(label, NULL, true);
+    const ImVec2 label_size = CalcTextSize(label, NULL, label_hide_text_after_double_hash); 
 
     // We vertically grow up to current line height up the typical widget height.
     const float text_base_offset_y = ImMax(0.0f, window->DC.CurrentLineTextBaseOffset - padding.y); // Latch before ItemSize changes it
@@ -5663,7 +5658,7 @@ bool ImGui::CollapsingHeader(const char* label, const char* str_id, bool display
         RenderCollapseTriangle(bb.Min + ImVec2(padding.x, g.FontSize*0.15f + text_base_offset_y), opened, 0.70f, false);
         if (g.LogEnabled)
             LogRenderedText(text_pos, ">");
-        RenderText(text_pos, label);
+        RenderText(text_pos, label, NULL, label_hide_text_after_double_hash);
     }
 
     return opened;
@@ -6667,7 +6662,7 @@ void ImGui::PlotEx(ImGuiPlotType plot_type, const char* label, float (*values_ge
     ImGuiState& g = *GImGui;
     const ImGuiStyle& style = g.Style;
 
-    const ImVec2 label_size = ImGui::CalcTextSize(label, NULL, true);
+    const ImVec2 label_size = CalcTextSize(label, NULL, true);
     if (graph_size.x == 0.0f)
         graph_size.x = CalcItemWidth() + (style.FramePadding.x * 2);
     if (graph_size.y == 0.0f)
@@ -6758,7 +6753,8 @@ void ImGui::PlotEx(ImGuiPlotType plot_type, const char* label, float (*values_ge
     if (overlay_text)
         RenderTextClipped(ImVec2(frame_bb.Min.x, frame_bb.Min.y + style.FramePadding.y), frame_bb.Max, overlay_text, NULL, NULL, ImGuiAlign_Center);
 
-    RenderText(ImVec2(frame_bb.Max.x + style.ItemInnerSpacing.x, inner_bb.Min.y), label);
+    if (label_size.x > 0.0f)
+        RenderText(ImVec2(frame_bb.Max.x + style.ItemInnerSpacing.x, inner_bb.Min.y), label);
 }
 
 struct ImGuiPlotArrayGetterData
@@ -6875,7 +6871,8 @@ bool ImGui::Checkbox(const char* label, bool* v)
 
     if (g.LogEnabled)
         LogRenderedText(text_bb.GetTL(), *v ? "[x]" : "[ ]");
-    RenderText(text_bb.GetTL(), label);
+    if (label_size.x > 0.0f)
+        RenderText(text_bb.GetTL(), label);
 
     return pressed;
 }
@@ -6942,7 +6939,8 @@ bool ImGui::RadioButton(const char* label, bool active)
 
     if (g.LogEnabled)
         LogRenderedText(text_bb.GetTL(), active ? "(x)" : "( )");
-    RenderText(text_bb.GetTL(), label);
+    if (label_size.x > 0.0f)
+        RenderText(text_bb.GetTL(), label);
 
     return pressed;
 }
@@ -9283,7 +9281,6 @@ void ImGui::ShowMetricsWindow(bool* opened)
         };
 
         ImGuiState& g = *GImGui;                // Access private state
-        g.DisableHideTextAfterDoubleHash++;     // Not exposed (yet). Disable processing that hides text after '##' markers.
         Funcs::NodeWindows(g.Windows, "Windows");
         if (ImGui::TreeNode("DrawList", "Active DrawLists (%d)", g.RenderDrawLists[0].Size))
         {
@@ -9309,7 +9306,6 @@ void ImGui::ShowMetricsWindow(bool* opened)
             ImGui::Text("ActiveID: 0x%08X/0x%08X", g.ActiveId, g.ActiveIdPreviousFrame);
             ImGui::TreePop();
         }
-        g.DisableHideTextAfterDoubleHash--;
     }
     ImGui::End();
 }
