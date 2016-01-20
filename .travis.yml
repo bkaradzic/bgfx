@@ -7,10 +7,10 @@ matrix:
 #      os: osx
 
 before_script:
-  git clone https://github.com/bkaradzic/bx 3rdparty/bx
+  git clone https://github.com/bkaradzic/bx ../bx
 
 script:
-  make BX_DIR=$PWD/3rdparty/bx build
+  make build
 
 branches:
   only:
