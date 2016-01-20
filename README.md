@@ -1,6 +1,8 @@
 [bgfx](https://github.com/bkaradzic/bgfx) - Cross-platform rendering library
 ============================================================================
 
+[![Build Status](https://travis-ci.org/bkaradzic/bgfx.svg?branch=master)](https://travis-ci.org/bkaradzic/bgfx)
+
 [What is it?](https://bkaradzic.github.io/bgfx/overview.html)
 -------------------------------------------------------------
 
@@ -53,12 +55,11 @@ Languages:
  * [Haskell language API bindings](https://github.com/haskell-game/bgfx)
  * [Rust language API bindings](https://github.com/rhoot/bgfx-rs)
 
-Build status
-------------
+Build
+-----
 
-[![Build Status](https://travis-ci.org/bkaradzic/bgfx.svg?branch=master)](https://travis-ci.org/bkaradzic/bgfx)
-
-https://tc27.draster.com/guestAuth/overview.html
+ - TeamCity https://tc27.draster.com/guestAuth/overview.html
+ - TravisCI https://travis-ci.org/bkaradzic/bgfx
 
 Who is using it?
 ----------------
