@@ -36,7 +36,7 @@ function bgfxProject(_name, _kind, _defines)
 		includedirs {
 			path.join(BGFX_DIR, "3rdparty"),
 			path.join(BGFX_DIR, "3rdparty/dxsdk/include"),
-			path.join(BGFX_DIR, "../bx/include"),
+			path.join(BX_DIR,   "include"),
 		}
 
 		defines {
