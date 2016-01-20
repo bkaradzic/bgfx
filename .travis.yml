@@ -1,0 +1,23 @@
+language: cpp
+matrix:
+  include:
+    - compiler: gcc
+      os: linux
+    - compiler: clang
+      os: osx
+
+before_script:
+  git clone https://github.com/bkaradzic/bx 3rdparty/bx
+
+script:
+  make BX_DIR=$PWD/3rdparty/bx build
+
+branches:
+  only:
+    - master
+
+notifications:
+  email: false
+
+osx_image:
+  xcode61

@@ -214,6 +214,14 @@ rpi-release: .build/projects/gmake-rpi
 	$(MAKE) -R -C .build/projects/gmake-rpi config=release
 rpi: rpi-debug rpi-release
 
+build-darwin: osx
+
+build-linux: linux-debug64 linux-release64
+
+build-windows: mingw-gcc
+
+build: build-$(OS)
+
 rebuild-shaders:
 	$(MAKE) -R -C examples rebuild
 

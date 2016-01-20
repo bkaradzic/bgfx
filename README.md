@@ -56,6 +56,8 @@ Languages:
 Build status
 ------------
 
+[![Build Status](https://travis-ci.org/bkaradzic/bgfx.svg?branch=master)](https://travis-ci.org/bkaradzic/bgfx)
+
 https://tc27.draster.com/guestAuth/overview.html
 
 Who is using it?
