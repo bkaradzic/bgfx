@@ -19,5 +19,4 @@ branches:
 notifications:
   email: false
 
-osx_image:
-  xcode61
+osx_image: xcode7.3
