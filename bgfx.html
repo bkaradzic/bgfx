@@ -1392,6 +1392,107 @@ creating windows.</p>
 </div>
 </dd></dl>
 
+<dl class="function">
+<dt id="_CPPv2N4bgfx15getInternalDataEv">
+<span id="bgfx::getInternalData"></span><span class="target" id="project0namespacebgfx_1ab9a78921e4ee1ce8b06287cfc7062a7b"></span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx12InternalDataE" title="bgfx::InternalData">InternalData</a> *<code class="descclassname">bgfx::</code><code class="descname">getInternalData</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15getInternalDataEv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get internal data for interop. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>It&#8217;s expected you understand some bgfx internals before you use this call.</dd>
+<dt><strong>Warning</strong></dt>
+<dd>Must be called only on render thread.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_get_internal_data</span></code>. </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv2N4bgfx12InternalDataE">
+<span id="bgfx::InternalData"></span><span class="target" id="project0structbgfx_1_1_internal_data"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">InternalData</code><a class="headerlink" href="#_CPPv2N4bgfx12InternalDataE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Internal data. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_internal_data_t</span></code>. </dd>
+</dl>
+</p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N4bgfx12InternalData4capsE">
+<span id="bgfx::InternalData::caps__CapsCP"></span><span class="target" id="project0structbgfx_1_1_internal_data_1ad0e12d34b057c2cf2b7d73ccb3d51a80"></span><em class="property">const</em> <em class="property">struct</em> <a class="reference internal" href="#_CPPv2N4bgfx4CapsE" title="bgfx::Caps">Caps</a> *<code class="descname">caps</code><a class="headerlink" href="#_CPPv2N4bgfx12InternalData4capsE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Renderer capabilities. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx12InternalData7contextE">
+<span id="bgfx::InternalData::context__voidP"></span><span class="target" id="project0structbgfx_1_1_internal_data_1a9d5f68c848da64f6aa35335bfb1ef762"></span>void *<code class="descname">context</code><a class="headerlink" href="#_CPPv2N4bgfx12InternalData7contextE" title="Permalink to this definition">¶</a></dt>
+<dd><p>GL context, or D3D device. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx16overrideInternalE13TextureHandle9uintptr_t">
+<span id="bgfx::overrideInternal__TextureHandle.uintptr_t"></span><span class="target" id="project0namespacebgfx_1a2846da0a74fcf260460abf8eb3a2cc30"></span>void <code class="descclassname">bgfx::</code><code class="descname">overrideInternal</code><span class="sig-paren">(</span>TextureHandle <em>_handle</em>, uintptr_t <em>_ptr</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx16overrideInternalE13TextureHandle9uintptr_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override internal texture with externally created texture. Previously created internal texture will released. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>It&#8217;s expected you understand some bgfx internals before you use this call.</dd>
+<dt><strong>Warning</strong></dt>
+<dd>Must be called only on render thread.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_override_internal_texture_ptr</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Texture handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_ptr</span></code> - <p>Native API pointer to texture.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx16overrideInternalE13TextureHandle8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_t">
+<span id="bgfx::overrideInternal__TextureHandle.uint16_t.uint16_t.uint8_t.TextureFormat::Enum.uint32_t"></span><span class="target" id="project0namespacebgfx_1ac24001a0eb88946cfb457a59940a3f88"></span>uintptr_t <code class="descclassname">bgfx::</code><code class="descname">overrideInternal</code><span class="sig-paren">(</span>TextureHandle <em>_handle</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint8_t <em>_numMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_flags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx16overrideInternalE13TextureHandle8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override internal texture by creating new texture. Previously created internal texture will released. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>It&#8217;s expected you understand some bgfx internals before you use this call.</dd>
+<dt><strong>Return</strong></dt>
+<dd>Native API pointer to texture.</dd>
+<dt><strong>Warning</strong></dt>
+<dd>Must be called only on render thread.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_override_internal_texture</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Texture handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_width</span></code> - <p>Width. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Height. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_numMips</span></code> - <p>Number of mip-maps. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><a class="reference internal" href="#project0structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span><span class="pre">TextureFormat::Enum</span></span></a></code>. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p>Default texture sampling mode is linear, and wrap mode is repeat.<ul class="simple">
+<li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]</span></code> - Point or anisotropic sampling.</li>
+</ul>
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
 </div>
 <div class="section" id="miscellaneous">
 <h3>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permalink to this headline">¶</a></h3>
