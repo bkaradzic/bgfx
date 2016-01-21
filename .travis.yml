@@ -3,8 +3,8 @@ matrix:
   include:
     - compiler: gcc
       os: linux
-#    - compiler: clang
-#      os: osx
+    - compiler: clang
+      os: osx
 
 before_script:
   git clone https://github.com/bkaradzic/bx ../bx
