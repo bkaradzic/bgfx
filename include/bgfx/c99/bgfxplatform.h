@@ -56,14 +56,19 @@ typedef struct bgfx_internal_data
 BGFX_C_API const bgfx_internal_data_t* bgfx_get_internal_data();
 
 /**/
-BGFX_C_API void bgfx_set_internal_texture(bgfx_texture_handle_t _handle, uintptr_t _ptr);
+BGFX_C_API void bgfx_override_internal_texture_ptr(bgfx_texture_handle_t _handle, uintptr_t _ptr);
+
+/**/
+BGFX_C_API uintptr_t bgfx_override_internal_texture(bgfx_texture_handle_t _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, bgfx_texture_format_t _format, uint32_t _flags);
 
 /**/
 typedef struct bgfx_interface_vtbl
 {
     bgfx_render_frame_t (*render_frame)();
     void (*set_platform_data)(const bgfx_platform_data_t* _data);
-    const bgfx_internal_data_t* (*get_platform_data)();
+    const bgfx_internal_data_t* (*get_internal_data)();
+	void (*override_internal_texture_ptr)(bgfx_texture_handle_t _handle, uintptr_t _ptr);
+	uintptr_t (*override_internal_texture)(bgfx_texture_handle_t _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, bgfx_texture_format_t _format, uint32_t _flags);
     void (*vertex_decl_begin)(bgfx_vertex_decl_t* _decl, bgfx_renderer_type_t _renderer);
     void (*vertex_decl_add)(bgfx_vertex_decl_t* _decl, bgfx_attrib_t _attrib, uint8_t _num, bgfx_attrib_type_t _type, bool _normalized, bool _asInt);
     void (*vertex_decl_skip)(bgfx_vertex_decl_t* _decl, uint8_t _num);

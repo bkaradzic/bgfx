@@ -314,13 +314,13 @@ namespace bgfx
 		return &g_internalData;
 	}
 
-	void setInternal(TextureHandle _handle, uintptr_t _ptr)
+	void overrideInternal(TextureHandle _handle, uintptr_t _ptr)
 	{
 		BGFX_CHECK_RENDER_THREAD();
-		s_ctx->m_renderCtx->setInternal(_handle, _ptr);
+		s_ctx->m_renderCtx->overrideInternal(_handle, _ptr);
 	}
 
-	uintptr_t setInternal(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags)
+	uintptr_t overrideInternal(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags)
 	{
 		BGFX_CHECK_RENDER_THREAD();
 
@@ -4448,10 +4448,16 @@ BGFX_C_API const bgfx_internal_data_t* bgfx_get_internal_data()
 	return (const bgfx_internal_data_t*)bgfx::getInternalData();
 }
 
-BGFX_C_API void bgfx_set_internal_texture(bgfx_texture_handle_t _handle, uintptr_t _ptr)
+BGFX_C_API void bgfx_override_internal_texture_ptr(bgfx_texture_handle_t _handle, uintptr_t _ptr)
 {
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
-	bgfx::setInternal(handle.cpp, _ptr);
+	bgfx::overrideInternal(handle.cpp, _ptr);
+}
+
+BGFX_C_API uintptr_t bgfx_override_internal_texture(bgfx_texture_handle_t _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, bgfx_texture_format_t _format, uint32_t _flags)
+{
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
+	return bgfx::overrideInternal(handle.cpp, _width, _height, _numMips, bgfx::TextureFormat::Enum(_format), _flags);
 }
 
 BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
@@ -4462,6 +4468,8 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 	BGFX_IMPORT_FUNC(render_frame) \
 	BGFX_IMPORT_FUNC(set_platform_data) \
 	BGFX_IMPORT_FUNC(get_internal_data) \
+	BGFX_IMPORT_FUNC(override_internal_texture_ptr) \
+	BGFX_IMPORT_FUNC(override_internal_texture) \
 	BGFX_IMPORT_FUNC(vertex_decl_begin) \
 	BGFX_IMPORT_FUNC(vertex_decl_add) \
 	BGFX_IMPORT_FUNC(vertex_decl_skip) \

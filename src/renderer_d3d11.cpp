@@ -1755,9 +1755,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			release(mem);
 		}
 
-		void setInternal(TextureHandle _handle, uintptr_t _ptr) BX_OVERRIDE
+		void overrideInternal(TextureHandle _handle, uintptr_t _ptr) BX_OVERRIDE
 		{
-			m_textures[_handle.idx].setInternal(_ptr);
+			m_textures[_handle.idx].overrideInternal(_ptr);
 		}
 
 		uintptr_t getInternal(TextureHandle _handle) BX_OVERRIDE
@@ -4175,7 +4175,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		}
 	}
 
-	void TextureD3D11::setInternal(uintptr_t _ptr)
+	void TextureD3D11::overrideInternal(uintptr_t _ptr)
 	{
 		destroy();
 		m_flags |= BGFX_TEXTURE_INTERNAL_SHARED;
