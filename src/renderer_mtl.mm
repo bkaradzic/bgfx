@@ -678,7 +678,7 @@ namespace bgfx { namespace mtl
 			release(mem);
 		}
 
-		void setInternal(TextureHandle _handle, uintptr_t _ptr) BX_OVERRIDE
+		void overrideInternal(TextureHandle _handle, uintptr_t _ptr) BX_OVERRIDE
 		{
 			BX_UNUSED(_handle, _ptr);
 		}
