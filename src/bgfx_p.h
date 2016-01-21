@@ -266,6 +266,25 @@ namespace bgfx
 	typedef uint32_t RenderItemCount;
 #endif // BGFX_CONFIG_MAX_DRAW_CALLS < (64<<10)
 
+
+
+#if BGFX_CONFIG_SORTKEY_SEQUENCE_BITS > 16
+	typedef uint32_t SortKeySequenceType;
+#elif BGFX_CONFIG_SORTKEY_SEQUENCE_BITS > 8
+	typedef uint16_t SortKeySequenceType;
+#else
+	typedef uint8_t SortKeySequenceType;
+#endif // BGFX_CONFIG_SORTKEY_SEQUENCE_BITS
+
+#if BGFX_CONFIG_SORTKEY_DEPTH_BITS > 16
+	typedef uint32_t SortKeyDepthType;
+#elif BGFX_CONFIG_SORTKEY_DEPTH_BITS > 8
+	typedef uint16_t SortKeyDepthType;
+#else
+	typedef uint8_t SortKeyDepthType;
+#endif // BGFX_CONFIG_SORTKEY_DEPTH_BITS
+
+
 	struct Clear
 	{
 		uint8_t  m_index[8];
@@ -702,26 +721,30 @@ namespace bgfx
 		void operator=(const CommandBuffer&);
 	};
 
-#define SORT_KEY_DRAW_BIT              (UINT64_C(1)<<0x36)
+#define SORT_KEY_DRAW_BIT              (UINT64_C(1)<<(BGFX_CONFIG_SORTKEY_DEPTH_BITS + 11 + BGFX_CONFIG_SORTKEY_SEQUENCE_BITS))
 
-#define SORT_KEY_SEQ_SHIFT             0x2b
-#define SORT_KEY_SEQ_MASK              (UINT64_C(0x7ff)<<SORT_KEY_SEQ_SHIFT)
+#define SORT_KEY_SEQ_SHIFT             (BGFX_CONFIG_SORTKEY_DEPTH_BITS + 11)
+#define SORT_KEY_SEQ_MASK              (((UINT64_C(1) << BGFX_CONFIG_SORTKEY_SEQUENCE_BITS) - 1)<<SORT_KEY_SEQ_SHIFT)
 
-#define SORT_KEY_VIEW_SHIFT            0x37
+#define SORT_KEY_VIEW_SHIFT            (BGFX_CONFIG_SORTKEY_DEPTH_BITS + 11 + BGFX_CONFIG_SORTKEY_SEQUENCE_BITS + 1)
 #define SORT_KEY_VIEW_MASK             ( (uint64_t(BGFX_CONFIG_MAX_VIEWS-1) )<<SORT_KEY_VIEW_SHIFT)
 
-#define SORT_KEY_DRAW_TRANS_SHIFT      0x29
+#define SORT_KEY_DRAW_TRANS_SHIFT      (BGFX_CONFIG_SORTKEY_DEPTH_BITS + 9)
 #define SORT_KEY_DRAW_TRANS_MASK       (UINT64_C(0x3)<<SORT_KEY_DRAW_TRANS_SHIFT)
 
-#define SORT_KEY_DRAW_PROGRAM_SHIFT    0x20
+#define SORT_KEY_DRAW_PROGRAM_SHIFT    BGFX_CONFIG_SORTKEY_DEPTH_BITS
 #define SORT_KEY_DRAW_PROGRAM_MASK     ( (uint64_t(BGFX_CONFIG_MAX_PROGRAMS-1) )<<SORT_KEY_DRAW_PROGRAM_SHIFT)
 
 #define SORT_KEY_DRAW_DEPTH_SHIFT      0
-#define SORT_KEY_DRAW_DEPTH_MASK       ( (uint64_t(UINT32_MAX) )<<SORT_KEY_DRAW_DEPTH_SHIFT)
+#define SORT_KEY_DRAW_DEPTH_MASK       ( (uint64_t((UINT64_C(1) << BGFX_CONFIG_SORTKEY_DEPTH_BITS) - 1) )<<SORT_KEY_DRAW_DEPTH_SHIFT)
 
-#define SORT_KEY_COMPUTE_PROGRAM_SHIFT 0x22
+#define SORT_KEY_COMPUTE_PROGRAM_SHIFT (BGFX_CONFIG_SORTKEY_DEPTH_BITS + 2)
 #define SORT_KEY_COMPUTE_PROGRAM_MASK  ( (uint64_t(BGFX_CONFIG_MAX_PROGRAMS-1) )<<SORT_KEY_COMPUTE_PROGRAM_SHIFT)
 
+
+	BX_STATIC_ASSERT(BGFX_CONFIG_SORTKEY_DEPTH_BITS <= 32);
+	BX_STATIC_ASSERT(BGFX_CONFIG_SORTKEY_SEQUENCE_BITS <= 32);
+	BX_STATIC_ASSERT((BGFX_CONFIG_SORTKEY_SEQUENCE_BITS + BGFX_CONFIG_SORTKEY_DEPTH_BITS) <= 43);
 	BX_STATIC_ASSERT(BGFX_CONFIG_MAX_VIEWS <= 256);
 	BX_STATIC_ASSERT( (BGFX_CONFIG_MAX_PROGRAMS & (BGFX_CONFIG_MAX_PROGRAMS-1) ) == 0); // Must be power of 2.
 	BX_STATIC_ASSERT( (0 // Render key mask shouldn't overlap.
@@ -802,11 +825,11 @@ namespace bgfx
 		/// Returns true if item is command.
 		bool decode(uint64_t _key)
 		{
-			m_seq  = uint16_t( (_key & SORT_KEY_SEQ_MASK ) >> SORT_KEY_SEQ_SHIFT);
+			m_seq  = SortKeySequenceType( (_key & SORT_KEY_SEQ_MASK ) >> SORT_KEY_SEQ_SHIFT);
 			m_view =  uint8_t( (_key & SORT_KEY_VIEW_MASK) >> SORT_KEY_VIEW_SHIFT);
 			if (_key & SORT_KEY_DRAW_BIT)
 			{
-				m_depth   = uint32_t( (_key & SORT_KEY_DRAW_DEPTH_MASK  ) >> SORT_KEY_DRAW_DEPTH_SHIFT);
+				m_depth   = SortKeyDepthType( (_key & SORT_KEY_DRAW_DEPTH_MASK  ) >> SORT_KEY_DRAW_DEPTH_SHIFT);
 				m_program = uint16_t( (_key & SORT_KEY_DRAW_PROGRAM_MASK) >> SORT_KEY_DRAW_PROGRAM_SHIFT);
 				m_trans   =  uint8_t( (_key & SORT_KEY_DRAW_TRANS_MASK  ) >> SORT_KEY_DRAW_TRANS_SHIFT);
 				return false; // draw
@@ -840,9 +863,9 @@ namespace bgfx
 			m_trans   = 0;
 		}
 
-		uint32_t m_depth;
+		SortKeyDepthType m_depth;
 		uint16_t m_program;
-		uint16_t m_seq;
+		SortKeySequenceType m_seq;
 		uint8_t  m_view;
 		uint8_t  m_trans;
 	};
@@ -3488,7 +3511,7 @@ namespace bgfx
 
 		BGFX_API_FUNC(void setViewSeq(uint8_t _id, bool _enabled) )
 		{
-			m_seqMask[_id] = _enabled ? 0xffff : 0x0;
+			m_seqMask[_id] = _enabled ? ~SortKeySequenceType(0) : 0x0;
 		}
 
 		BGFX_API_FUNC(void setViewFrameBuffer(uint8_t _id, FrameBufferHandle _handle) )
@@ -4019,8 +4042,8 @@ namespace bgfx
 		Matrix4 m_view[BGFX_CONFIG_MAX_VIEWS];
 		Matrix4 m_proj[2][BGFX_CONFIG_MAX_VIEWS];
 		uint8_t m_viewFlags[BGFX_CONFIG_MAX_VIEWS];
-		uint16_t m_seq[BGFX_CONFIG_MAX_VIEWS];
-		uint16_t m_seqMask[BGFX_CONFIG_MAX_VIEWS];
+		SortKeySequenceType m_seq[BGFX_CONFIG_MAX_VIEWS];
+		SortKeySequenceType m_seqMask[BGFX_CONFIG_MAX_VIEWS];
 
 		uint8_t m_colorPaletteDirty;
 

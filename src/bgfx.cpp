@@ -853,7 +853,7 @@ namespace bgfx
 			: _program.idx
 			;
 
-		m_key.m_depth  = (uint32_t)_depth;
+		m_key.m_depth  = (SortKeyDepthType)_depth;
 		m_key.m_view   = _id;
 		m_key.m_seq    = s_ctx->m_seq[_id] & s_ctx->m_seqMask[_id];
 		s_ctx->m_seq[_id]++;
