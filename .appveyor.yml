@@ -1,0 +1,19 @@
+shallow_clone: true
+
+os:
+  - Visual Studio 2015
+
+environment:
+  matrix:
+  - TOOLSET: vs2015
+
+configuration:
+  - Debug
+  - Release
+
+install:
+  - git clone https://github.com/bkaradzic/bx ..\bx
+  - ..\bx\tools\bin\windows\genie %TOOLSET%
+
+build:
+  project: .build/projects/$(TOOLSET)/bgfx.sln

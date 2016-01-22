@@ -2,6 +2,7 @@
 ============================================================================
 
 [![Build Status](https://travis-ci.org/bkaradzic/bgfx.svg?branch=master)](https://travis-ci.org/bkaradzic/bgfx)
+[![Build status](https://ci.appveyor.com/api/projects/status/ipa3ojgeaet1oko5?svg=true)](https://ci.appveyor.com/project/bkaradzic/bgfx)
 
 [What is it?](https://bkaradzic.github.io/bgfx/overview.html)
 -------------------------------------------------------------
@@ -58,6 +59,7 @@ Languages:
 Build
 -----
 
+ - AppVeyor https://ci.appveyor.com/project/bkaradzic/bgfx
  - TeamCity https://tc27.draster.com/guestAuth/overview.html
  - TravisCI https://travis-ci.org/bkaradzic/bgfx
 
