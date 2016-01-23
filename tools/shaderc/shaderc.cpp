@@ -4,6 +4,7 @@
  */
 
 #include "shaderc.h"
+#include <bx/tokenizecmd.h>
 
 bool g_verbose = false;
 
@@ -662,6 +663,7 @@ void help(const char* _error = NULL)
 		  "           osx\n"
 		  "           windows\n"
 		  "      --preprocess              Preprocess only.\n"
+		  "      --define <defines>        Add defines to preprocessor (semicolon separated).\n"
 		  "      --raw                     Do not process shader. No preprocessor, and no glsl-optimizer (GLSL only).\n"
 		  "      --type <type>             Shader type (vertex, fragment)\n"
 		  "      --varyingdef <file path>  Path to varying.def.sc file.\n"
@@ -805,6 +807,21 @@ int main(int _argc, const char* _argv[])
 			dir.assign(filePath, base-filePath);
 			preprocessor.addInclude(dir.c_str() );
 		}
+	}
+
+	const char* defines = cmdLine.findOption("define");
+	while (NULL != defines
+	&&    '\0'  != *defines)
+	{
+		defines = bx::strws(defines);
+		const char* eol = strchr(defines, ';');
+		if (NULL == eol)
+		{
+			eol = defines + strlen(defines);
+		}
+		std::string define(defines, eol);
+		preprocessor.setDefine(define.c_str());
+		defines = ';' == *eol ? eol+1 : eol;
 	}
 
 	preprocessor.setDefaultDefine("BX_PLATFORM_ANDROID");
