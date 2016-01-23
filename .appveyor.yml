@@ -13,7 +13,7 @@ configuration:
 
 install:
   - git clone https://github.com/bkaradzic/bx ..\bx
-  - ..\bx\tools\bin\windows\genie %TOOLSET%
+  - ..\bx\tools\bin\windows\genie --with-tools %TOOLSET%
 
 build:
   project: .build/projects/$(TOOLSET)/bgfx.sln
