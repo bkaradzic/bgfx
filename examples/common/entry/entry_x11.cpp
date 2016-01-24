@@ -61,6 +61,23 @@ namespace entry
 		GamepadAxis::RightZ,
 	};
 
+	struct AxisDpadRemap
+	{
+		Key::Enum first;
+		Key::Enum second;
+	};
+
+	static AxisDpadRemap s_axisDpad[] =
+	{
+		{ Key::GamepadLeft, Key::GamepadRight },
+		{ Key::GamepadUp,   Key::GamepadDown  },
+		{ Key::None,        Key::None         },
+		{ Key::GamepadLeft, Key::GamepadRight },
+		{ Key::GamepadUp,   Key::GamepadDown  },
+		{ Key::None,        Key::None         },
+	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_translateAxis) == BX_COUNTOF(s_axisDpad) );
+
 	struct Joystick
 	{
 		Joystick()
@@ -135,6 +152,24 @@ namespace entry
 					if (filter(axis, &value) )
 					{
 						_eventQueue.postAxisEvent(defaultWindow, handle, axis, value);
+
+						if (Key::None != s_axisDpad[axis].first)
+						{
+							if (m_value[axis] == 0)
+							{
+								_eventQueue.postKeyEvent(defaultWindow, s_axisDpad[axis].first,  0, false);
+								_eventQueue.postKeyEvent(defaultWindow, s_axisDpad[axis].second, 0, false);
+							}
+							else
+							{
+								_eventQueue.postKeyEvent(defaultWindow
+									, 0 > m_value[axis] ? s_axisDpad[axis].first : s_axisDpad[axis].second
+									, 0
+									, true
+									);
+							}
+						}
+
 					}
 				}
 			}
