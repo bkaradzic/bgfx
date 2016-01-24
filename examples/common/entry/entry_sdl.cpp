@@ -11,13 +11,21 @@
 #	define SDL_MAIN_HANDLED
 #endif // BX_PLATFORM_WINDOWS
 
+#include <bx/bx.h>
+
 #include <SDL2/SDL.h>
+
+BX_PRAGMA_DIAGNOSTIC_PUSH_CLANG()
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wextern-c-compat")
 #include <SDL2/SDL_syswm.h>
+BX_PRAGMA_DIAGNOSTIC_POP_CLANG()
+
 #include <bgfx/bgfxplatform.h>
 
 #include <stdio.h>
 #include <bx/thread.h>
 #include <bx/handlealloc.h>
+#include <bx/readerwriter.h>
 #include <tinystl/allocator.h>
 #include <tinystl/string.h>
 
@@ -356,10 +364,18 @@ namespace entry
 			WindowHandle defaultWindow = { 0 };
 			setWindowSize(defaultWindow, m_width, m_height, true);
 
-			SDL_RWops* rw = SDL_RWFromFile("gamecontrollerdb.txt", "rb");
-			if (NULL != rw)
+			bx::FileReaderI* reader = getFileReader();
+			if (0 == bx::open(reader, "gamecontrollerdb.txt") )
 			{
-				SDL_GameControllerAddMappingsFromRW(rw, 1);
+				bx::AllocatorI* allocator = getAllocator();
+				uint32_t size = (uint32_t)bx::getSize(reader);
+				void* data = BX_ALLOC(allocator, size);
+				bx::read(reader, data, size);
+				bx::close(reader);
+
+				SDL_GameControllerAddMapping( (char*)data);
+
+				BX_FREE(allocator, data);
 			}
 
 			bool exit = false;
@@ -477,6 +493,7 @@ namespace entry
 							}
 						}
 						break;
+
 					case SDL_KEYUP:
 						{
 							const SDL_KeyboardEvent& kev = event.key;
