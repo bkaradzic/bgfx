@@ -113,6 +113,9 @@ https://github.com/jpcy/ioq3-renderer-bgfx - A renderer for ioquake3 written in
 C++ and using bgfx to support multiple rendering APIs.  
 ![ioq3-renderer-bgfx screenshot](https://camo.githubusercontent.com/052aa40c05120e56306294d3a1bb5f99f97de8c8/687474703a2f2f692e696d6775722e636f6d2f64364f6856594b2e6a7067)
 
+[DLS](http://makingartstudios.itch.io/dls) - the digital logic simulator game.  
+![dls-screenshot](https://img.itch.io/aW1hZ2UvMzk3MTgvMTc5MjQ4LnBuZw==/original/kA%2FQPb.png)
+
 [Building](https://bkaradzic.github.io/bgfx/build.html)
 -------------------------------------------------------
 
