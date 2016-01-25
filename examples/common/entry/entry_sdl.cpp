@@ -21,6 +21,9 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wextern-c-compat")
 BX_PRAGMA_DIAGNOSTIC_POP_CLANG()
 
 #include <bgfx/bgfxplatform.h>
+#if defined(None) // X11 defines this...
+#	undef None
+#endif // defined(None)
 
 #include <stdio.h>
 #include <bx/thread.h>
