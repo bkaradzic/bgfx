@@ -1902,13 +1902,8 @@ namespace bgfx
 	void filter(DxbcShader& _dst, const DxbcShader& _src, DxbcFilterFn _fn, void* _userData)
 	{
 		bx::MemoryReader reader(_src.byteCode.data(), uint32_t(_src.byteCode.size() ) );
-	
-#if BX_CONFIG_ALLOCATOR_CRT
-		bx::CrtAllocator r;
-		bx::MemoryBlock mb(&r);
-#else 
+
 		bx::MemoryBlock mb(g_allocator);
-#endif
 		bx::MemoryWriter writer(&mb);
 
 		for (uint32_t token = 0, numTokens = uint32_t(_src.byteCode.size() / sizeof(uint32_t) ); token < numTokens;)
