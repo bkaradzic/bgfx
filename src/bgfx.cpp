@@ -221,7 +221,9 @@ namespace bgfx
 	};
 
 	static CallbackStub*  s_callbackStub  = NULL;
+#if BX_CONFIG_ALLOCATOR_CRT
 	static AllocatorStub* s_allocatorStub = NULL;
+#endif
 	static bool s_graphicsDebuggerPresent = false;
 
 	CallbackI* g_callback = NULL;
@@ -2363,9 +2365,14 @@ again:
 		}
 		else
 		{
+#if BX_CONFIG_ALLOCATOR_CRT
 			bx::CrtAllocator allocator;
 			g_allocator =
 				s_allocatorStub = BX_NEW(&allocator, AllocatorStub);
+#else
+			BX_CHECK(false, "No allocator has been passed to bgfx::init(). Either specify a bx::AllocatorI instance or enable BX_CONFIG_ALLOCATOR_CRT directive.");
+			return false;
+#endif
 		}
 
 		if (NULL != _callback)
@@ -2394,12 +2401,14 @@ again:
 				s_callbackStub = NULL;
 			}
 
+#if BX_CONFIG_ALLOCATOR_CRT
 			if (NULL != s_allocatorStub)
 			{
 				bx::CrtAllocator allocator;
 				BX_DELETE(&allocator, s_allocatorStub);
 				s_allocatorStub = NULL;
 			}
+#endif
 
 			s_threadIndex = 0;
 			g_callback    = NULL;
@@ -2424,10 +2433,12 @@ again:
 
 		BX_TRACE("Shutdown complete.");
 
+#if BX_CONFIG_ALLOCATOR_CRT
 		if (NULL != s_allocatorStub)
 		{
 			s_allocatorStub->checkLeaks();
 		}
+#endif
 
 		if (NULL != s_callbackStub)
 		{
@@ -2435,13 +2446,15 @@ again:
 			s_callbackStub = NULL;
 		}
 
+#if BX_CONFIG_ALLOCATOR_CRT
 		if (NULL != s_allocatorStub)
 		{
 			bx::CrtAllocator allocator;
 			BX_DELETE(&allocator, s_allocatorStub);
 			s_allocatorStub = NULL;
 		}
-
+#endif
+		
 		s_threadIndex = 0;
 		g_callback    = NULL;
 		g_allocator   = NULL;
