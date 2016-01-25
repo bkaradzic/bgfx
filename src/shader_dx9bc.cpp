@@ -722,8 +722,7 @@ namespace bgfx
 	{
 		bx::MemoryReader reader(_src.byteCode.data(), uint32_t(_src.byteCode.size() ) );
 
-		bx::CrtAllocator r;
-		bx::MemoryBlock mb(&r);
+		bx::MemoryBlock mb(g_allocator);
 		bx::MemoryWriter writer(&mb);
 
 		for (uint32_t token = 0, numTokens = uint32_t(_src.byteCode.size() / sizeof(uint32_t) ); token < numTokens;)
