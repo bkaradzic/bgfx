@@ -487,6 +487,8 @@ namespace bgfx { namespace d3d11
 		return false;
 	};
 
+	// Reference:
+	// https://github.com/GPUOpen-LibrariesAndSDKs/AGS_SDK
 	enum AGS_RETURN_CODE
 	{
 		AGS_SUCCESS,
