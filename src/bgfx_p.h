@@ -702,25 +702,27 @@ namespace bgfx
 		void operator=(const CommandBuffer&);
 	};
 
-#define SORT_KEY_DRAW_BIT              (UINT64_C(1)<<0x36)
+#define SORT_KEY_NUM_BITS_TRANS        2
 
-#define SORT_KEY_SEQ_SHIFT             0x2b
-#define SORT_KEY_SEQ_MASK              (UINT64_C(0x7ff)<<SORT_KEY_SEQ_SHIFT)
+#define SORT_KEY_DRAW_BIT              (UINT64_C(1)<<0x36)
 
 #define SORT_KEY_VIEW_SHIFT            0x37
 #define SORT_KEY_VIEW_MASK             ( (uint64_t(BGFX_CONFIG_MAX_VIEWS-1) )<<SORT_KEY_VIEW_SHIFT)
 
-#define SORT_KEY_DRAW_TRANS_SHIFT      0x29
-#define SORT_KEY_DRAW_TRANS_MASK       (UINT64_C(0x3)<<SORT_KEY_DRAW_TRANS_SHIFT)
+#define SORT_KEY_DRAW_DEPTH_SHIFT      0
+#define SORT_KEY_DRAW_DEPTH_MASK       ( ( (UINT64_C(1)<<BGFX_CONFIG_SORT_KEY_NUM_BITS_DEPTH)-1)<<SORT_KEY_DRAW_DEPTH_SHIFT)
 
-#define SORT_KEY_DRAW_PROGRAM_SHIFT    0x20
+#define SORT_KEY_DRAW_PROGRAM_SHIFT    (SORT_KEY_DRAW_DEPTH_SHIFT+BGFX_CONFIG_SORT_KEY_NUM_BITS_DEPTH)
 #define SORT_KEY_DRAW_PROGRAM_MASK     ( (uint64_t(BGFX_CONFIG_MAX_PROGRAMS-1) )<<SORT_KEY_DRAW_PROGRAM_SHIFT)
 
-#define SORT_KEY_DRAW_DEPTH_SHIFT      0
-#define SORT_KEY_DRAW_DEPTH_MASK       ( (uint64_t(UINT32_MAX) )<<SORT_KEY_DRAW_DEPTH_SHIFT)
-
-#define SORT_KEY_COMPUTE_PROGRAM_SHIFT 0x22
+#define SORT_KEY_COMPUTE_PROGRAM_SHIFT (SORT_KEY_DRAW_DEPTH_SHIFT+BGFX_CONFIG_SORT_KEY_NUM_BITS_DEPTH+SORT_KEY_NUM_BITS_TRANS)
 #define SORT_KEY_COMPUTE_PROGRAM_MASK  ( (uint64_t(BGFX_CONFIG_MAX_PROGRAMS-1) )<<SORT_KEY_COMPUTE_PROGRAM_SHIFT)
+
+#define SORT_KEY_DRAW_TRANS_SHIFT      (SORT_KEY_DRAW_PROGRAM_SHIFT+BGFX_CONFIG_SORT_KEY_NUM_BITS_PROGRAM)
+#define SORT_KEY_DRAW_TRANS_MASK       (UINT64_C(0x3)<<SORT_KEY_DRAW_TRANS_SHIFT)
+
+#define SORT_KEY_SEQ_SHIFT             (SORT_KEY_DRAW_TRANS_SHIFT+SORT_KEY_NUM_BITS_TRANS)
+#define SORT_KEY_SEQ_MASK              ( ( (UINT64_C(1)<<BGFX_CONFIG_SORT_KEY_NUM_BITS_SEQ)-1)<<SORT_KEY_SEQ_SHIFT)
 
 	BX_STATIC_ASSERT(BGFX_CONFIG_MAX_VIEWS <= 256);
 	BX_STATIC_ASSERT( (BGFX_CONFIG_MAX_PROGRAMS & (BGFX_CONFIG_MAX_PROGRAMS-1) ) == 0); // Must be power of 2.
@@ -802,7 +804,7 @@ namespace bgfx
 		/// Returns true if item is command.
 		bool decode(uint64_t _key)
 		{
-			m_seq  = uint16_t( (_key & SORT_KEY_SEQ_MASK ) >> SORT_KEY_SEQ_SHIFT);
+			m_seq  = uint32_t( (_key & SORT_KEY_SEQ_MASK ) >> SORT_KEY_SEQ_SHIFT);
 			m_view =  uint8_t( (_key & SORT_KEY_VIEW_MASK) >> SORT_KEY_VIEW_SHIFT);
 			if (_key & SORT_KEY_DRAW_BIT)
 			{
@@ -834,15 +836,15 @@ namespace bgfx
 		void reset()
 		{
 			m_depth   = 0;
-			m_program = 0;
 			m_seq     = 0;
+			m_program = 0;
 			m_view    = 0;
 			m_trans   = 0;
 		}
 
 		uint32_t m_depth;
+		uint32_t m_seq;
 		uint16_t m_program;
-		uint16_t m_seq;
 		uint8_t  m_view;
 		uint8_t  m_trans;
 	};

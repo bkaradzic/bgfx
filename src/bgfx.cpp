@@ -1070,6 +1070,15 @@ namespace bgfx
 
 	static void dumpCaps()
 	{
+		BX_TRACE("Sort key masks:");
+		BX_TRACE("\t  View     %016" PRIx64, SORT_KEY_VIEW_MASK);
+		BX_TRACE("\t  Draw bit %016" PRIx64, SORT_KEY_DRAW_BIT);
+		BX_TRACE("\t  Seq      %016" PRIx64, SORT_KEY_SEQ_MASK);
+		BX_TRACE("\tD Trans    %016" PRIx64, SORT_KEY_DRAW_TRANS_MASK);
+		BX_TRACE("\tD Program  %016" PRIx64, SORT_KEY_DRAW_PROGRAM_MASK);
+		BX_TRACE("\tC Program  %016" PRIx64, SORT_KEY_COMPUTE_PROGRAM_MASK);
+		BX_TRACE("\tD Depth    %016" PRIx64, SORT_KEY_DRAW_DEPTH_MASK);
+
 		BX_TRACE("Supported capabilities (renderer %s, vendor 0x%04x, device 0x%04x):"
 				, s_ctx->m_renderCtx->getRendererName()
 				, g_caps.vendorId
