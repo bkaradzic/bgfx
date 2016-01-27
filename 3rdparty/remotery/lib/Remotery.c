@@ -5506,7 +5506,8 @@ static void* rmtglGetProcAddress(OpenGL* opengl, const char* symbol)
 
     #elif defined(__APPLE__) && !defined(GLEW_APPLE_GLX)
 
-        return NSGLGetProcAddress((const GLubyte*)symbol);
+        extern void* nsglGetProcAddress(const GLubyte* _name);
+        return nsglGetProcAddress((const GLubyte*)symbol);
 
     #elif defined(RMT_PLATFORM_LINUX)
 
