@@ -13,6 +13,7 @@
 #include "image.h"
 #include <libsquish/squish.h>
 #include <etc1/etc1.h>
+#include <etc2/ProcessRGB.hpp>
 #include <nvtt/nvtt.h>
 #include <pvrtc/PvrTcEncoder.h>
 #include <tinyexr/tinyexr.h>
@@ -84,6 +85,23 @@ namespace bgfx
 
 		case TextureFormat::ETC1:
 			etc1_encode_image( (const uint8_t*)_src, _width, _height, 4, _width*4, (uint8_t*)_dst);
+			return true;
+
+		case TextureFormat::ETC2:
+			{
+				const uint32_t pitch  = _width*4;
+				const uint32_t width  = _width/4;
+				const uint32_t height = _height/4;
+				const uint8_t* src = (const uint8_t*)_src;
+				uint64_t* dst = (uint64_t*)_dst;
+				for (uint32_t yy = 0; yy < height; ++yy)
+				{
+					for (uint32_t xx = 0; xx < width; ++xx)
+					{
+						*dst++ = ProcessRGB_ETC2(&src[(yy*pitch+xx)*4]);
+					}
+				}
+			}
 			return true;
 
 		case TextureFormat::PTC14:

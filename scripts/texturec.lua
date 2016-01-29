@@ -21,6 +21,8 @@ project "texturec"
 		path.join(BGFX_DIR, "3rdparty/libsquish/**.h"),
 		path.join(BGFX_DIR, "3rdparty/etc1/**.cpp"),
 		path.join(BGFX_DIR, "3rdparty/etc1/**.h"),
+		path.join(BGFX_DIR, "3rdparty/etc2/**.cpp"),
+		path.join(BGFX_DIR, "3rdparty/etc2/**.hpp"),
 		path.join(BGFX_DIR, "3rdparty/nvtt/**.cpp"),
 		path.join(BGFX_DIR, "3rdparty/nvtt/**.h"),
 		path.join(BGFX_DIR, "3rdparty/pvrtc/**.cpp"),
