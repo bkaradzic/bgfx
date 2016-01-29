@@ -5,6 +5,7 @@ os:
 
 environment:
   matrix:
+  - TOOLSET: vs2013
   - TOOLSET: vs2015
 
 configuration:
