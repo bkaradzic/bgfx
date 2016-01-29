@@ -1,8 +1,5 @@
 shallow_clone: true
 
-os:
-  - Visual Studio 2015
-
 environment:
   matrix:
   - TOOLSET: vs2008
