@@ -2,6 +2,7 @@
 #define __DARKRL__MATH_HPP__
 
 #include <algorithm>
+#include <math.h>
 
 #include "Types.hpp"
 
@@ -46,7 +47,7 @@ inline float sRGB2linear( float v )
     }
     else
     {
-        return pow( ( v + a ) / ( 1 + a ), 2.4f );
+        return powf( ( v + a ) / ( 1 + a ), 2.4f );
     }
 }
 

@@ -22,7 +22,7 @@
 namespace
 {
 
-typedef std::array<uint16, 4> v4i;
+typedef uint16 v4i[4];
 
 void Average( const uint8* data, v4i* a )
 {
@@ -88,10 +88,22 @@ void Average( const uint8* data, v4i* a )
         }
     }
 
-    a[0] = v4i{ uint16( (r[2] + r[3] + 4) / 8 ), uint16( (g[2] + g[3] + 4) / 8 ), uint16( (b[2] + b[3] + 4) / 8 ), 0};
-    a[1] = v4i{ uint16( (r[0] + r[1] + 4) / 8 ), uint16( (g[0] + g[1] + 4) / 8 ), uint16( (b[0] + b[1] + 4) / 8 ), 0};
-    a[2] = v4i{ uint16( (r[1] + r[3] + 4) / 8 ), uint16( (g[1] + g[3] + 4) / 8 ), uint16( (b[1] + b[3] + 4) / 8 ), 0};
-    a[3] = v4i{ uint16( (r[0] + r[2] + 4) / 8 ), uint16( (g[0] + g[2] + 4) / 8 ), uint16( (b[0] + b[2] + 4) / 8 ), 0};
+    a[0][0] = uint16( (r[2] + r[3] + 4) / 8 );
+    a[0][1] = uint16( (g[2] + g[3] + 4) / 8 );
+    a[0][2] = uint16( (b[2] + b[3] + 4) / 8 );
+    a[0][3] = 0;
+    a[1][0] = uint16( (r[0] + r[1] + 4) / 8 );
+    a[1][1] = uint16( (g[0] + g[1] + 4) / 8 );
+    a[1][2] = uint16( (b[0] + b[1] + 4) / 8 );
+    a[1][3] = 0;
+    a[2][0] = uint16( (r[1] + r[3] + 4) / 8 );
+    a[2][1] = uint16( (g[1] + g[3] + 4) / 8 );
+    a[2][2] = uint16( (b[1] + b[3] + 4) / 8 );
+    a[2][3] = 0;
+    a[3][0] = uint16( (r[0] + r[2] + 4) / 8 );
+    a[3][1] = uint16( (g[0] + g[2] + 4) / 8 );
+    a[3][2] = uint16( (b[0] + b[2] + 4) / 8 );
+    a[3][3] = 0;
 #endif
 }
 
@@ -549,15 +561,15 @@ std::pair<uint64, uint64> Planar(const uint8* src)
     float dB = b * (4.0f / 16.0f);
 
     // calculating the three colors RGBO, RGBH, and RGBV.  RGB = df - af * x - bf * y;
-    float cofR = std::fma(aR,  255.0f, std::fma(bR,  255.0f, dR));
-    float cofG = std::fma(aG,  255.0f, std::fma(bG,  255.0f, dG));
-    float cofB = std::fma(aB,  255.0f, std::fma(bB,  255.0f, dB));
-    float chfR = std::fma(aR, -425.0f, std::fma(bR,  255.0f, dR));
-    float chfG = std::fma(aG, -425.0f, std::fma(bG,  255.0f, dG));
-    float chfB = std::fma(aB, -425.0f, std::fma(bB,  255.0f, dB));
-    float cvfR = std::fma(aR,  255.0f, std::fma(bR, -425.0f, dR));
-    float cvfG = std::fma(aG,  255.0f, std::fma(bG, -425.0f, dG));
-    float cvfB = std::fma(aB,  255.0f, std::fma(bB, -425.0f, dB));
+    float cofR = (aR *  255.0f + (bR *  255.0f + dR));
+    float cofG = (aG *  255.0f + (bG *  255.0f + dG));
+    float cofB = (aB *  255.0f + (bB *  255.0f + dB));
+    float chfR = (aR * -425.0f + (bR *  255.0f + dR));
+    float chfG = (aG * -425.0f + (bG *  255.0f + dG));
+    float chfB = (aB * -425.0f + (bB *  255.0f + dB));
+    float cvfR = (aR *  255.0f + (bR * -425.0f + dR));
+    float cvfG = (aG *  255.0f + (bG * -425.0f + dG));
+    float cvfB = (aB *  255.0f + (bB * -425.0f + dB));
 
     // convert to r6g7b6
     int32 coR = convert6(cofR);
