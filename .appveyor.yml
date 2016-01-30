@@ -5,7 +5,6 @@ os:
 
 environment:
   matrix:
-  - TOOLSET: vs2010
   - TOOLSET: vs2012
   - TOOLSET: vs2013
   - TOOLSET: vs2015
