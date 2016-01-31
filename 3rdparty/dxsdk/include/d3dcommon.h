@@ -37,11 +37,12 @@
 #pragma once
 #endif
 
-#if defined(_MSC_VER) && _MSC_VER < 1600
+#if defined(_MSC_VER) && _MSC_VER <= 1600
 #ifndef VS2008_SAL_COMPAT
 #define VS2008_SAL_COMPAT
 // BK - SAL compatibility for VS2008
 
+#if _MSC_VER < 1600
 #define DEFINE_ENUM_FLAG_OPERATORS(ENUMTYPE) \
 			extern "C++" { \
 				inline ENUMTYPE operator |  (ENUMTYPE  _a, ENUMTYPE _b) { return  ENUMTYPE   ( ( (int)  _a) |  ( (int)_b) ); } \
@@ -52,6 +53,7 @@
 				inline ENUMTYPE operator ^  (ENUMTYPE  _a, ENUMTYPE _b) { return  ENUMTYPE   ( ( (int)  _a) ^  ( (int)_b) ); } \
 				inline ENUMTYPE operator ^= (ENUMTYPE &_a, ENUMTYPE _b) { return (ENUMTYPE &)( ( (int &)_a) ^= ( (int)_b) ); } \
 			}
+#endif // _MSC_VER < 1600
 
 #undef _Out_
 #define _Out_
