@@ -12,7 +12,6 @@ project "shaderc"
 
 	includedirs {
 		path.join(GLSL_OPTIMIZER, "src"),
-		"3rdparty/dxsdk/include",
 	}
 
 	removeflags {
@@ -69,6 +68,7 @@ project "shaderc"
 		path.join(BX_DIR, "include"),
 		path.join(BGFX_DIR, "include"),
 
+		path.join(BGFX_DIR, "3rdparty/dxsdk/include"),
 		FCPP_DIR,
 
 		path.join(GLSL_OPTIMIZER, "include"),
