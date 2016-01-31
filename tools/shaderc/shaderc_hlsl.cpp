@@ -7,7 +7,10 @@
 
 #if SHADERC_CONFIG_HLSL
 
-#define INITGUID
+//#define __REQUIRED_RPCNDR_H_VERSION__ 475
+//#define __in
+//#define __out
+
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
 #include <bx/os.h>
@@ -18,6 +21,8 @@
 
 namespace bgfx
 {
+	static const GUID IID_ID3D11ShaderReflection = { 0x6e6ffa6a, 0x9bae, 0x4613, { 0xa5, 0x1e, 0x91, 0x65, 0x2d, 0x50, 0x8c, 0x21 } };
+
 	typedef HRESULT(WINAPI* PFN_D3D_COMPILE)(_In_reads_bytes_(SrcDataSize) LPCVOID pSrcData
 		, _In_ SIZE_T SrcDataSize
 		, _In_opt_ LPCSTR pSourceName
@@ -482,7 +487,7 @@ namespace bgfx
 			fprintf(stderr, "Error: Shader profile must be specified.\n");
 			return false;
 		}
- 
+
 		void* d3dcompilerdll = bx::dlopen("D3DCompiler_47.dll");
 		if (NULL == d3dcompilerdll)
 		{
@@ -497,7 +502,7 @@ namespace bgfx
 
 		if (NULL == D3DCompile
 		||  NULL == D3DDisassemble
-		||  NULL == D3DReflect    
+		||  NULL == D3DReflect
 		||  NULL == D3DStripShader)
 		{
 			bx::dlclose(d3dcompilerdll);
