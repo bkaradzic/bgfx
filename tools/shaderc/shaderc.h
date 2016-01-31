@@ -61,7 +61,6 @@
 
 namespace bgfx
 {
-
 	extern bool g_verbose;
 
 	class LineReader
