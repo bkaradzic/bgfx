@@ -440,7 +440,7 @@ class Terrain : public entry::AppI
 			cameraUpdate(deltaTime, m_mouseState);
 
 			bool leftMouseButtonDown = !!m_mouseState.m_buttons[entry::MouseButton::Left];
-			if (leftMouseButtonDown)
+			if (leftMouseButtonDown && !imguiMouseOverArea())
 			{
 				mousePickTerrain();
 			}
