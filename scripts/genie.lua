@@ -414,7 +414,6 @@ end
 
 if _OPTIONS["with-tools"] then
 	group "tools"
-	dofile "makedisttex.lua"
 	dofile "shaderc.lua"
 	dofile "texturec.lua"
 	dofile "geometryc.lua"

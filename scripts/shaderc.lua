@@ -55,11 +55,6 @@ project "shaderc"
 			path.join(GLSL_OPTIMIZER, "include/c99"),
 		}
 
-	configuration { "vs* or mingw*" }
-		links {
-			"d3dcompiler",
-		}
-
 	configuration {}
 
 	defines { -- fcpp
@@ -73,6 +68,7 @@ project "shaderc"
 		path.join(BX_DIR, "include"),
 		path.join(BGFX_DIR, "include"),
 
+		path.join(BGFX_DIR, "3rdparty/dxsdk/include"),
 		FCPP_DIR,
 
 		path.join(GLSL_OPTIMIZER, "include"),

@@ -8,7 +8,7 @@
 
 #define _BX_TRACE(_format, ...) \
 				BX_MACRO_BLOCK_BEGIN \
-					if (g_verbose) \
+					if (bgfx::g_verbose) \
 					{ \
 						fprintf(stderr, BX_FILE_LINE_LITERAL "" _format "\n", ##__VA_ARGS__); \
 					} \
@@ -39,8 +39,6 @@
 #	define SHADERC_CONFIG_HLSL BX_PLATFORM_WINDOWS
 #endif // SHADERC_CONFIG_HLSL
 
-extern bool g_verbose;
-
 #include <alloca.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -61,83 +59,74 @@ extern bool g_verbose;
 #include <bx/hash.h>
 #include "../../src/vertexdecl.h"
 
-class LineReader
+namespace bgfx
 {
-public:
-	LineReader(const char* _str)
-		: m_str(_str)
-		, m_pos(0)
-		, m_size((uint32_t)strlen(_str))
+	extern bool g_verbose;
+
+	class LineReader
 	{
-	}
+	public:
+		LineReader(const char* _str)
+			: m_str(_str)
+			, m_pos(0)
+			, m_size((uint32_t)strlen(_str))
+		{
+		}
 
-	std::string getLine()
-	{
-		const char* str = &m_str[m_pos];
-		skipLine();
+		std::string getLine()
+		{
+			const char* str = &m_str[m_pos];
+			skipLine();
 
-		const char* eol = &m_str[m_pos];
+			const char* eol = &m_str[m_pos];
 
-		std::string tmp;
-		tmp.assign(str, eol - str);
-		return tmp;
-	}
+			std::string tmp;
+			tmp.assign(str, eol - str);
+			return tmp;
+		}
 
-	bool isEof() const
-	{
-		return m_str[m_pos] == '\0';
-	}
+		bool isEof() const
+		{
+			return m_str[m_pos] == '\0';
+		}
 
-	void skipLine()
-	{
-		const char* str = &m_str[m_pos];
-		const char* nl = bx::strnl(str);
-		m_pos += (uint32_t)(nl - str);
-	}
+		void skipLine()
+		{
+			const char* str = &m_str[m_pos];
+			const char* nl = bx::strnl(str);
+			m_pos += (uint32_t)(nl - str);
+		}
 
-	const char* m_str;
-	uint32_t m_pos;
-	uint32_t m_size;
-};
-
-struct UniformType
-{
-	enum Enum
-	{
-		Int1,
-		End,
-
-		Vec4,
-		Mat3,
-		Mat4,
-
-		Count
+		const char* m_str;
+		uint32_t m_pos;
+		uint32_t m_size;
 	};
-};
 
-#define BGFX_UNIFORM_FRAGMENTBIT UINT8_C(0x10)
-#define BGFX_UNIFORM_SAMPLERBIT  UINT8_C(0x20)
+	#define BGFX_UNIFORM_FRAGMENTBIT UINT8_C(0x10)
+	#define BGFX_UNIFORM_SAMPLERBIT  UINT8_C(0x20)
 
-const char* getUniformTypeName(UniformType::Enum _enum);
-UniformType::Enum nameToUniformTypeEnum(const char* _name);
+	const char* getUniformTypeName(UniformType::Enum _enum);
+	UniformType::Enum nameToUniformTypeEnum(const char* _name);
 
-struct Uniform
-{
-	std::string name;
-	UniformType::Enum type;
-	uint8_t num;
-	uint16_t regIndex;
-	uint16_t regCount;
-};
+	struct Uniform
+	{
+		std::string name;
+		UniformType::Enum type;
+		uint8_t num;
+		uint16_t regIndex;
+		uint16_t regCount;
+	};
 
-typedef std::vector<Uniform> UniformArray;
+	typedef std::vector<Uniform> UniformArray;
 
-void printCode(const char* _code, int32_t _line = 0, int32_t _start = 0, int32_t _end = INT32_MAX);
-void strReplace(char* _str, const char* _find, const char* _replace);
-int32_t writef(bx::WriterI* _writer, const char* _format, ...);
-void writeFile(const char* _filePath, const void* _data, int32_t _size);
+	void printCode(const char* _code, int32_t _line = 0, int32_t _start = 0, int32_t _end = INT32_MAX);
+	void strReplace(char* _str, const char* _find, const char* _replace);
+	int32_t writef(bx::WriterI* _writer, const char* _format, ...);
+	void writeFile(const char* _filePath, const void* _data, int32_t _size);
 
-bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::string& _code, bx::WriterI* _writer, bool firstPass = true);
-bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::string& _code, bx::WriterI* _writer);
+	bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::string& _code, bx::WriterI* _writer, bool firstPass = true);
+	bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::string& _code, bx::WriterI* _writer);
+
+} // namespace bgfx
 
 #endif // SHADERC_H_HEADER_GUARD
