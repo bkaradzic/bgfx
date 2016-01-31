@@ -6,6 +6,9 @@
 #include "shaderc.h"
 #include <bx/tokenizecmd.h>
 
+namespace bgfx
+{
+
 bool g_verbose = false;
 
 #define MAX_TAGS 256
@@ -684,7 +687,7 @@ void help(const char* _error = NULL)
 		);
 }
 
-int main(int _argc, const char* _argv[])
+int compileShader(int _argc, const char* _argv[])
 {
 	bx::CommandLine cmdLine(_argc, _argv);
 
@@ -1828,4 +1831,11 @@ int main(int _argc, const char* _argv[])
 
 	fprintf(stderr, "Failed to build shader.\n");
 	return EXIT_FAILURE;
+}
+
+} // namespace bgfx
+
+int main(int _argc, const char* _argv[])
+{
+	return bgfx::compileShader(_argc, _argv);
 }

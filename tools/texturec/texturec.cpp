@@ -17,6 +17,7 @@
 #include <nvtt/nvtt.h>
 #include <pvrtc/PvrTcEncoder.h>
 #include <tinyexr/tinyexr.h>
+#include <edtaa3/edtaa3func.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.c>
@@ -219,6 +220,91 @@ namespace bgfx
 		}
 	}
 
+	static void edtaa3(bx::AllocatorI* _allocator, double* _dst, uint32_t _width, uint32_t _height, double* _src)
+	{
+		const uint32_t numPixels = _width*_height;
+
+		short* xdist = (short *)BX_ALLOC(_allocator, numPixels*sizeof(short) );
+		short* ydist = (short *)BX_ALLOC(_allocator, numPixels*sizeof(short) );
+		double* gx   = (double*)BX_ALLOC(_allocator, numPixels*sizeof(double) );
+		double* gy   = (double*)BX_ALLOC(_allocator, numPixels*sizeof(double) );
+
+		::computegradient(_src, _width, _height, gx, gy);
+		::edtaa3(_src, gx, gy, _width, _height, xdist, ydist, _dst);
+
+		for (uint32_t ii = 0; ii < numPixels; ++ii)
+		{
+			if (_dst[ii] < 0.0)
+			{
+				_dst[ii] = 0.0;
+			}
+		}
+
+		BX_FREE(_allocator, xdist);
+		BX_FREE(_allocator, ydist);
+		BX_FREE(_allocator, gx);
+		BX_FREE(_allocator, gy);
+	}
+
+	inline double min(double _a, double _b)
+	{
+		return _a > _b ? _b : _a;
+	}
+
+	inline double max(double _a, double _b)
+	{
+		return _a > _b ? _a : _b;
+	}
+
+	inline double clamp(double _val, double _min, double _max)
+	{
+		return max(min(_val, _max), _min);
+	}
+
+	void imageMakeDist(bx::AllocatorI* _allocator, void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, float _edge, const void* _src)
+	{
+		const uint32_t numPixels = _width*_height;
+
+		double* imgIn   = (double*)BX_ALLOC(_allocator, numPixels*sizeof(double) );
+		double* outside = (double*)BX_ALLOC(_allocator, numPixels*sizeof(double) );
+		double* inside  = (double*)BX_ALLOC(_allocator, numPixels*sizeof(double) );
+
+		for (uint32_t yy = 0; yy < _height; ++yy)
+		{
+			const uint8_t* src = (const uint8_t*)_src + yy*_pitch;
+			double* dst = &imgIn[yy*_width];
+			for (uint32_t xx = 0; xx < _width; ++xx)
+			{
+				dst[xx] = double(src[xx])/255.0;
+			}
+		}
+
+		edtaa3(_allocator, outside, _width, _height, imgIn);
+
+		for (uint32_t ii = 0; ii < numPixels; ++ii)
+		{
+			imgIn[ii] = 1.0 - imgIn[ii];
+		}
+
+		edtaa3(_allocator, inside, _width, _height, imgIn);
+
+		BX_FREE(_allocator, imgIn);
+
+		uint8_t* dst = (uint8_t*)_dst;
+
+		double edgeOffset = _edge*0.5;
+		double invEdge = 1.0/_edge;
+
+		for (uint32_t ii = 0; ii < numPixels; ++ii)
+		{
+			double dist = clamp( ( (outside[ii] - inside[ii])+edgeOffset) * invEdge, 0.0, 1.0);
+			dst[ii] = 255-uint8_t(dist * 255.0);
+		}
+
+		BX_FREE(_allocator, inside);
+		BX_FREE(_allocator, outside);
+	}
+
 } // namespace bgfx
 
 void help(const char* _error = NULL)
@@ -252,6 +338,7 @@ void help(const char* _error = NULL)
 		  "  -t <format>              Output format type (BC1/2/3/4/5, ETC1, PVR14, etc.).\n"
 		  "  -m, --mips               Generate mip-maps.\n"
 		  "  -n, --normalmap          Input texture is normal map.\n"
+		  "      --sdf <edge>         Compute SDF texture.\n"
 
 		  "\n"
 		  "For additional information, see https://github.com/bkaradzic/bgfx\n"
@@ -281,6 +368,16 @@ int main(int _argc, const char* _argv[])
 		help("Output file must be specified.");
 		return EXIT_FAILURE;
 	}
+
+	bool sdf = false;
+	double edge = 16.0;
+	const char* edgeOpt = cmdLine.findOption("sdf");
+	if (NULL != edgeOpt)
+	{
+		sdf  = true;
+		edge = atof(edgeOpt);
+	}
+	BX_UNUSED(sdf, edge);
 
 	bx::CrtFileReader reader;
 	if (0 != bx::open(&reader, inputFileName) )

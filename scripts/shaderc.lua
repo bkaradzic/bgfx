@@ -12,6 +12,7 @@ project "shaderc"
 
 	includedirs {
 		path.join(GLSL_OPTIMIZER, "src"),
+		"3rdparty/dxsdk/include",
 	}
 
 	removeflags {
@@ -53,11 +54,6 @@ project "shaderc"
 	configuration { "vs*" }
 		includedirs {
 			path.join(GLSL_OPTIMIZER, "include/c99"),
-		}
-
-	configuration { "vs* or mingw*" }
-		links {
-			"d3dcompiler",
 		}
 
 	configuration {}

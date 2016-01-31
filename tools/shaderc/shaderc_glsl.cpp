@@ -6,6 +6,9 @@
 #include "shaderc.h"
 #include "glsl_optimizer.h"
 
+namespace bgfx
+{
+
 bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::string& _code, bx::WriterI* _writer)
 {
 	char ch = tolower(_cmdLine.findOption('\0', "type")[0]);
@@ -210,3 +213,5 @@ bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::str
 
 	return true;
 }
+
+} // namespace bgfx
