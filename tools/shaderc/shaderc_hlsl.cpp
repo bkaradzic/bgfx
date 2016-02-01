@@ -7,9 +7,11 @@
 
 #if SHADERC_CONFIG_HLSL
 
-//#define __REQUIRED_RPCNDR_H_VERSION__ 475
-//#define __in
-//#define __out
+#if defined(__MINGW32__)
+#	define __REQUIRED_RPCNDR_H_VERSION__ 475
+#	define __in
+#	define __out
+#endif // defined(__MINGW32__)
 
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
