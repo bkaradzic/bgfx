@@ -426,7 +426,7 @@ namespace entry
 			setWindowSize(defaultWindow, m_width, m_height, true);
 
 			bx::FileReaderI* reader = getFileReader();
-			if (0 == bx::open(reader, "gamecontrollerdb.txt") )
+			if (bx::open(reader, "gamecontrollerdb.txt") )
 			{
 				bx::AllocatorI* allocator = getAllocator();
 				uint32_t size = (uint32_t)bx::getSize(reader);

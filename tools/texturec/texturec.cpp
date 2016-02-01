@@ -380,7 +380,7 @@ int main(int _argc, const char* _argv[])
 	BX_UNUSED(sdf, edge);
 
 	bx::CrtFileReader reader;
-	if (0 != bx::open(&reader, inputFileName) )
+	if (!bx::open(&reader, inputFileName) )
 	{
 		help("Failed to open input file.");
 		return EXIT_FAILURE;
@@ -546,7 +546,7 @@ int main(int _argc, const char* _argv[])
 			if (NULL != output)
 			{
 				bx::CrtFileWriter writer;
-				if (0 == bx::open(&writer, outputFileName) )
+				if (!bx::open(&writer, outputFileName) )
 				{
 					if (NULL != bx::stristr(outputFileName, ".ktx") )
 					{

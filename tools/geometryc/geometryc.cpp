@@ -811,7 +811,7 @@ int main(int _argc, const char* _argv[])
 	PrimitiveArray primitives;
 
 	bx::CrtFileWriter writer;
-	if (0 != writer.open(outFilePath) )
+	if (bx::open(&writer, outFilePath) )
 	{
 		printf("Unable to open output file '%s'.", outFilePath);
 		exit(EXIT_FAILURE);
@@ -1000,8 +1000,8 @@ int main(int _argc, const char* _argv[])
 			);
 	}
 
-	printf("size: %d\n", uint32_t(writer.seek() ) );
-	writer.close();
+	printf("size: %d\n", uint32_t(bx::seek(&writer) ) );
+	bx::close(&writer);
 
 	delete [] indexData;
 	delete [] vertexData;

@@ -6,6 +6,11 @@
 #ifndef SHADERC_H_HEADER_GUARD
 #define SHADERC_H_HEADER_GUARD
 
+namespace bgfx
+{
+	extern bool g_verbose;
+}
+
 #define _BX_TRACE(_format, ...) \
 				BX_MACRO_BLOCK_BEGIN \
 					if (bgfx::g_verbose) \

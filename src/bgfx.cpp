@@ -112,10 +112,10 @@ namespace bgfx
 			strcat(filePath, ".tga");
 
 			bx::CrtFileWriter writer;
-			if (0 == writer.open(filePath) )
+			if (bx::open(&writer, filePath) )
 			{
 				imageWriteTga(&writer, _width, _height, _pitch, _data, false, _yflip);
-				writer.close();
+				bx::close(&writer);
 			}
 #endif // BX_CONFIG_CRT_FILE_READER_WRITER
 		}

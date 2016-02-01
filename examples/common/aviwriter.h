@@ -26,7 +26,7 @@ struct AviWriter
 
 	bool open(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _fps, bool _yflip)
 	{
-		if (0 != m_writer->open(_filePath) )
+		if (!bx::open(m_writer, _filePath) )
 		{
 			return false;
 		}
@@ -36,7 +36,7 @@ struct AviWriter
 		m_numFrames = 0;
 		m_width = _width;
 		m_height = _height;
-		
+
 		// Bgfx returns _yflip true for OpenGL since bottom left corner is 0, 0. In D3D top left corner
 		// is 0, 0. DIB expect OpenGL style coordinates, so this is inverted logic for AVI writer.
 		m_yflip = !_yflip;
@@ -163,7 +163,7 @@ struct AviWriter
 			m_writer->seek(m_lengthOffset, bx::Whence::Begin);
 			bx::write(m_writer, m_numFrames);
 
-			m_writer->close();
+			bx::close(m_writer);
 
 			delete [] m_frame;
 			m_frame = NULL;
