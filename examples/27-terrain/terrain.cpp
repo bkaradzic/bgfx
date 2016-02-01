@@ -436,13 +436,15 @@ class Terrain : public entry::AppI
 			imguiEndScrollArea();
 			imguiEndFrame();
 
-			// Update camera.
-			cameraUpdate(deltaTime, m_mouseState);
-
-			bool leftMouseButtonDown = !!m_mouseState.m_buttons[entry::MouseButton::Left];
-			if (leftMouseButtonDown)
+			if (!imguiMouseOverArea() )
 			{
-				mousePickTerrain();
+				// Update camera.
+				cameraUpdate(deltaTime, m_mouseState);
+
+				if (!!m_mouseState.m_buttons[entry::MouseButton::Left])
+				{
+					mousePickTerrain();
+				}
 			}
 
 			// Update terrain.
