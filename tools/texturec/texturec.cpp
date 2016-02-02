@@ -90,16 +90,28 @@ namespace bgfx
 
 		case TextureFormat::ETC2:
 			{
-				const uint32_t pitch  = _width*4;
-				const uint32_t width  = _width/4;
-				const uint32_t height = _height/4;
+				const uint32_t blockWidth  = (_width +3)/4;
+				const uint32_t blockHeight = (_height+3)/4;
+				const uint32_t pitch = _width*4;
 				const uint8_t* src = (const uint8_t*)_src;
 				uint64_t* dst = (uint64_t*)_dst;
-				for (uint32_t yy = 0; yy < height; ++yy)
+				for (uint32_t yy = 0; yy < blockHeight; ++yy)
 				{
-					for (uint32_t xx = 0; xx < width; ++xx)
+					for (uint32_t xx = 0; xx < blockWidth; ++xx)
 					{
-						*dst++ = ProcessRGB_ETC2(&src[(yy*pitch+xx)*4]);
+						uint8_t block[4*4*4];
+						const uint8_t* ptr = &src[(yy*pitch+xx)*4];
+						memcpy(&block[ 0], ptr + pitch*0, 16);
+						memcpy(&block[16], ptr + pitch*1, 16);
+						memcpy(&block[32], ptr + pitch*2, 16);
+						memcpy(&block[48], ptr + pitch*3, 16);
+
+						for (uint32_t ii = 0; ii < 16; ++ii)
+						{ // BGRx
+							bx::xchg(block[ii*4+0], block[ii*4+2]);
+						}
+
+						*dst++ = ProcessRGB_ETC2(block);
 					}
 				}
 			}
@@ -546,7 +558,7 @@ int main(int _argc, const char* _argv[])
 			if (NULL != output)
 			{
 				bx::CrtFileWriter writer;
-				if (!bx::open(&writer, outputFileName) )
+				if (bx::open(&writer, outputFileName) )
 				{
 					if (NULL != bx::stristr(outputFileName, ".ktx") )
 					{
