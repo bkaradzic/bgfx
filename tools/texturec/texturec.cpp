@@ -100,14 +100,11 @@ namespace bgfx
 					for (uint32_t xx = 0; xx < blockWidth; ++xx)
 					{
 						uint8_t block[4*4*4];
-						const uint8_t* ptr = &src[(yy*pitch+xx)*4];
-						memcpy(&block[ 0], ptr + pitch*0, 16);
-						memcpy(&block[16], ptr + pitch*1, 16);
-						memcpy(&block[32], ptr + pitch*2, 16);
-						memcpy(&block[48], ptr + pitch*3, 16);
+						const uint8_t* ptr = &src[(yy*pitch+xx*4)*4];
 
 						for (uint32_t ii = 0; ii < 16; ++ii)
 						{ // BGRx
+							memcpy(&block[ii*4], &ptr[(ii%4)*pitch + (ii&~3)], 4);
 							bx::xchg(block[ii*4+0], block[ii*4+2]);
 						}
 
