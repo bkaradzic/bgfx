@@ -104,10 +104,11 @@ namespace bgfx
 				continue;
 			}
 
+			BX_TRACE("Loaded %s compiler.", compiler->fileName);
 			return compiler;
 		}
 
-		fprintf(stderr, "Error: Unable to open D3DCompiler_47.dll shader compiler.\n");
+		fprintf(stderr, "Error: Unable to open D3DCompiler_*.dll shader compiler.\n");
 		return NULL;
 	}
 
