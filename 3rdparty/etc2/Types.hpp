@@ -1,7 +1,7 @@
 #ifndef __DARKRL__TYPES_HPP__
 #define __DARKRL__TYPES_HPP__
 
-#include <cstdint>
+#include <stdint.h>
 
 typedef int8_t      int8;
 typedef uint8_t     uint8;
