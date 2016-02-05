@@ -32,12 +32,12 @@ Supported platforms:
  * asm.js/Emscripten (1.25.0)
  * FreeBSD
  * iOS (iPhone, iPad, AppleTV)
- * Linux ![](https://tc27.draster.com/app/rest/builds/buildType:(id:Bgfx_Linux)/statusIcon)
+ * Linux
  * MIPS Creator CI20
  * Native Client (PPAPI 37+, ARM, x86, x64, PNaCl)
  * OSX (10.9+)
  * RaspberryPi
- * Windows (XP, Vista, 7, 8, 10) ![](https://tc27.draster.com/app/rest/builds/buildType:(id:Bgfx_Windows)/statusIcon)
+ * Windows (XP, Vista, 7, 8, 10)
  * WinRT (WinPhone 8.0+)
 
 Supported compilers:
@@ -60,7 +60,6 @@ Build
 -----
 
  - AppVeyor https://ci.appveyor.com/project/bkaradzic/bgfx
- - TeamCity https://tc27.draster.com/guestAuth/overview.html
  - TravisCI https://travis-ci.org/bkaradzic/bgfx
 
 Who is using it?

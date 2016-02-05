@@ -425,14 +425,14 @@ namespace entry
 			WindowHandle defaultWindow = { 0 };
 			setWindowSize(defaultWindow, m_width, m_height, true);
 
-			bx::FileReaderI* reader = getFileReader();
-			if (0 == bx::open(reader, "gamecontrollerdb.txt") )
+			bx::CrtFileReader reader;
+			if (bx::open(&reader, "gamecontrollerdb.txt") )
 			{
 				bx::AllocatorI* allocator = getAllocator();
-				uint32_t size = (uint32_t)bx::getSize(reader);
+				uint32_t size = (uint32_t)bx::getSize(&reader);
 				void* data = BX_ALLOC(allocator, size);
-				bx::read(reader, data, size);
-				bx::close(reader);
+				bx::read(&reader, data, size);
+				bx::close(&reader);
 
 				SDL_GameControllerAddMapping( (char*)data);
 

@@ -90,16 +90,25 @@ namespace bgfx
 
 		case TextureFormat::ETC2:
 			{
-				const uint32_t pitch  = _width*4;
-				const uint32_t width  = _width/4;
-				const uint32_t height = _height/4;
+				const uint32_t blockWidth  = (_width +3)/4;
+				const uint32_t blockHeight = (_height+3)/4;
+				const uint32_t pitch = _width*4;
 				const uint8_t* src = (const uint8_t*)_src;
 				uint64_t* dst = (uint64_t*)_dst;
-				for (uint32_t yy = 0; yy < height; ++yy)
+				for (uint32_t yy = 0; yy < blockHeight; ++yy)
 				{
-					for (uint32_t xx = 0; xx < width; ++xx)
+					for (uint32_t xx = 0; xx < blockWidth; ++xx)
 					{
-						*dst++ = ProcessRGB_ETC2(&src[(yy*pitch+xx)*4]);
+						uint8_t block[4*4*4];
+						const uint8_t* ptr = &src[(yy*pitch+xx*4)*4];
+
+						for (uint32_t ii = 0; ii < 16; ++ii)
+						{ // BGRx
+							memcpy(&block[ii*4], &ptr[(ii%4)*pitch + (ii&~3)], 4);
+							bx::xchg(block[ii*4+0], block[ii*4+2]);
+						}
+
+						*dst++ = ProcessRGB_ETC2(block);
 					}
 				}
 			}
@@ -380,7 +389,7 @@ int main(int _argc, const char* _argv[])
 	BX_UNUSED(sdf, edge);
 
 	bx::CrtFileReader reader;
-	if (0 != bx::open(&reader, inputFileName) )
+	if (!bx::open(&reader, inputFileName) )
 	{
 		help("Failed to open input file.");
 		return EXIT_FAILURE;
@@ -546,7 +555,7 @@ int main(int _argc, const char* _argv[])
 			if (NULL != output)
 			{
 				bx::CrtFileWriter writer;
-				if (0 == bx::open(&writer, outputFileName) )
+				if (bx::open(&writer, outputFileName) )
 				{
 					if (NULL != bx::stristr(outputFileName, ".ktx") )
 					{

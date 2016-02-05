@@ -240,7 +240,7 @@ public:
 				, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT
 				);
 
-		m_m_texture2dData = (uint8_t*)malloc(m_texture2dSize*m_texture2dSize*4);
+		m_texture2dData = (uint8_t*)malloc(m_texture2dSize*m_texture2dSize*4);
 
 		m_rr = rand()%255;
 		m_gg = rand()%255;
@@ -255,13 +255,13 @@ public:
 
 	virtual int shutdown() BX_OVERRIDE
 	{
-		// m_m_texture2dData is managed from main thread, and it's passed to renderer
+		// m_texture2dData is managed from main thread, and it's passed to renderer
 		// just as MemoryRef. At this point render might be using it. We must wait
 		// previous frame to finish before we can free it.
 		bgfx::frame();
 
 		// Cleanup.
-		free(m_m_texture2dData);
+		free(m_texture2dData);
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_textures); ++ii)
 		{
@@ -380,7 +380,7 @@ public:
 					const uint16_t tx = rand()%(m_texture2dSize-tw);
 					const uint16_t ty = rand()%(m_texture2dSize-th);
 
-					uint8_t* dst = &m_m_texture2dData[(ty*m_texture2dSize+tx)*4];
+					uint8_t* dst = &m_texture2dData[(ty*m_texture2dSize+tx)*4];
 					uint8_t* next = dst + pitch;
 
 					// Using makeRef to pass texture memory without copying.
@@ -537,7 +537,7 @@ public:
 		return false;
 	}
 
-	uint8_t* m_m_texture2dData;
+	uint8_t* m_texture2dData;
 
 	uint32_t m_width;
 	uint32_t m_height;

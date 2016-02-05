@@ -1,4 +1,3 @@
-#include <array>
 #include <string.h>
 
 #include "Math.hpp"

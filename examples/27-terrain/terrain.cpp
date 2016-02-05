@@ -69,7 +69,7 @@ class Terrain : public entry::AppI
 		m_debug  = BGFX_DEBUG_TEXT;
 		m_reset  = BGFX_RESET_VSYNC;
 
-		bgfx::init(bgfx::RendererType::Direct3D11, args.m_pciId);
+		bgfx::init(args.m_type, args.m_pciId);
 		bgfx::reset(m_width, m_height, m_reset);
 
 		// Enable m_debug text.
@@ -436,13 +436,15 @@ class Terrain : public entry::AppI
 			imguiEndScrollArea();
 			imguiEndFrame();
 
-			// Update camera.
-			cameraUpdate(deltaTime, m_mouseState);
-
-			bool leftMouseButtonDown = !!m_mouseState.m_buttons[entry::MouseButton::Left];
-			if (leftMouseButtonDown)
+			if (!imguiMouseOverArea() )
 			{
-				mousePickTerrain();
+				// Update camera.
+				cameraUpdate(deltaTime, m_mouseState);
+
+				if (!!m_mouseState.m_buttons[entry::MouseButton::Left])
+				{
+					mousePickTerrain();
+				}
 			}
 
 			// Update terrain.

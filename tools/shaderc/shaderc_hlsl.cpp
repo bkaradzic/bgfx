@@ -7,9 +7,11 @@
 
 #if SHADERC_CONFIG_HLSL
 
-//#define __REQUIRED_RPCNDR_H_VERSION__ 475
-//#define __in
-//#define __out
+#if defined(__MINGW32__)
+#	define __REQUIRED_RPCNDR_H_VERSION__ 475
+#	define __in
+#	define __out
+#endif // defined(__MINGW32__)
 
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
@@ -21,8 +23,6 @@
 
 namespace bgfx
 {
-	static const GUID IID_ID3D11ShaderReflection = { 0x6e6ffa6a, 0x9bae, 0x4613, { 0xa5, 0x1e, 0x91, 0x65, 0x2d, 0x50, 0x8c, 0x21 } };
-
 	typedef HRESULT(WINAPI* PFN_D3D_COMPILE)(_In_reads_bytes_(SrcDataSize) LPCVOID pSrcData
 		, _In_ SIZE_T SrcDataSize
 		, _In_opt_ LPCSTR pSourceName
@@ -59,6 +59,63 @@ namespace bgfx
 	PFN_D3D_DISASSEMBLE  D3DDisassemble;
 	PFN_D3D_REFLECT      D3DReflect;
 	PFN_D3D_STRIP_SHADER D3DStripShader;
+
+	struct D3DCompiler
+	{
+		const char* fileName;
+		const GUID  IID_ID3D11ShaderReflection;
+	};
+
+	static const D3DCompiler s_d3dcompiler[] =
+	{ // BK - the only different in interface is GetRequiresFlags at the end
+	  //      of IID_ID3D11ShaderReflection47 (which is not used anyway).
+		{ "D3DCompiler_47.dll", { 0x8d536ca1, 0x0cca, 0x4956, { 0xa8, 0x37, 0x78, 0x69, 0x63, 0x75, 0x55, 0x84 } } },
+		{ "D3DCompiler_46.dll", { 0x0a233719, 0x3960, 0x4578, { 0x9d, 0x7c, 0x20, 0x3b, 0x8b, 0x1d, 0x9c, 0xc1 } } },
+		{ "D3DCompiler_45.dll", { 0x0a233719, 0x3960, 0x4578, { 0x9d, 0x7c, 0x20, 0x3b, 0x8b, 0x1d, 0x9c, 0xc1 } } },
+		{ "D3DCompiler_44.dll", { 0x0a233719, 0x3960, 0x4578, { 0x9d, 0x7c, 0x20, 0x3b, 0x8b, 0x1d, 0x9c, 0xc1 } } },
+		{ "D3DCompiler_43.dll", { 0x0a233719, 0x3960, 0x4578, { 0x9d, 0x7c, 0x20, 0x3b, 0x8b, 0x1d, 0x9c, 0xc1 } } },
+	};
+
+	static const D3DCompiler* s_compiler;
+	static void* s_d3dcompilerdll;
+
+	const D3DCompiler* load()
+	{
+		for (uint32_t ii = 0; ii < BX_COUNTOF(s_d3dcompiler); ++ii)
+		{
+			const D3DCompiler* compiler = &s_d3dcompiler[ii];
+			s_d3dcompilerdll = bx::dlopen(compiler->fileName);
+			if (NULL == s_d3dcompilerdll)
+			{
+				continue;
+			}
+
+			D3DCompile     = (PFN_D3D_COMPILE     )bx::dlsym(s_d3dcompilerdll, "D3DCompile");
+			D3DDisassemble = (PFN_D3D_DISASSEMBLE )bx::dlsym(s_d3dcompilerdll, "D3DDisassemble");
+			D3DReflect     = (PFN_D3D_REFLECT     )bx::dlsym(s_d3dcompilerdll, "D3DReflect");
+			D3DStripShader = (PFN_D3D_STRIP_SHADER)bx::dlsym(s_d3dcompilerdll, "D3DStripShader");
+
+			if (NULL == D3DCompile
+			||  NULL == D3DDisassemble
+			||  NULL == D3DReflect
+			||  NULL == D3DStripShader)
+			{
+				bx::dlclose(s_d3dcompilerdll);
+				continue;
+			}
+
+			BX_TRACE("Loaded %s compiler.", compiler->fileName);
+			return compiler;
+		}
+
+		fprintf(stderr, "Error: Unable to open D3DCompiler_*.dll shader compiler.\n");
+		return NULL;
+	}
+
+	void unload()
+	{
+		bx::dlclose(s_d3dcompilerdll);
+	}
 
 	struct CTHeader
 	{
@@ -319,7 +376,7 @@ namespace bgfx
 		ID3D11ShaderReflection* reflect = NULL;
 		HRESULT hr = D3DReflect(_code->GetBufferPointer()
 			, _code->GetBufferSize()
-			, IID_ID3D11ShaderReflection
+			, s_compiler->IID_ID3D11ShaderReflection
 			, (void**)&reflect
 			);
 		if (FAILED(hr) )
@@ -488,26 +545,7 @@ namespace bgfx
 			return false;
 		}
 
-		void* d3dcompilerdll = bx::dlopen("D3DCompiler_47.dll");
-		if (NULL == d3dcompilerdll)
-		{
-			fprintf(stderr, "Error: Unable to open D3DCompiler_47.dll shader compiler.\n");
-			return false;
-		}
-
-		D3DCompile     = (PFN_D3D_COMPILE     )bx::dlsym(d3dcompilerdll, "D3DCompile");
-		D3DDisassemble = (PFN_D3D_DISASSEMBLE )bx::dlsym(d3dcompilerdll, "D3DDisassemble");
-		D3DReflect     = (PFN_D3D_REFLECT     )bx::dlsym(d3dcompilerdll, "D3DReflect");
-		D3DStripShader = (PFN_D3D_STRIP_SHADER)bx::dlsym(d3dcompilerdll, "D3DStripShader");
-
-		if (NULL == D3DCompile
-		||  NULL == D3DDisassemble
-		||  NULL == D3DReflect
-		||  NULL == D3DStripShader)
-		{
-			bx::dlclose(d3dcompilerdll);
-			return false;
-		}
+		s_compiler = load();
 
 		bool result = false;
 		bool debug = _cmdLine.hasArg('\0', "debug");
@@ -741,7 +779,7 @@ namespace bgfx
 
 	error:
 		code->Release();
-		bx::dlclose(d3dcompilerdll);
+		unload();
 		return result;
 	}
 
