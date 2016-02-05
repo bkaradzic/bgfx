@@ -1,7 +1,5 @@
 glcpp
 glcpp-parse.output
-glcpp-parse.c
-glcpp-parse.h
 
 *.o
 *.lo
