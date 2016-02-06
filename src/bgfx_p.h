@@ -450,7 +450,7 @@ namespace bgfx
 				const uint32_t width  = (bx::uint32_min(m_width,  _width +_x)-_x)*2;
 				const uint32_t height =  bx::uint32_min(m_height, _height+_y)-_y;
 				const uint32_t dstPitch = m_width*2;
-				bx::memcpy(dst, src, width, height, _pitch, dstPitch);
+				bx::memCopy(dst, src, width, height, _pitch, dstPitch);
 			}
 		}
 
