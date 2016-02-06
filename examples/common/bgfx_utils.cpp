@@ -409,7 +409,9 @@ struct Mesh
 		bx::AllocatorI* allocator = entry::getAllocator();
 
 		uint32_t chunk;
-		while (4 == bx::read(_reader, chunk) )
+		bx::Error err;
+		while (4 == bx::read(_reader, chunk, &err)
+		&&     err.isOk() )
 		{
 			switch (chunk)
 			{
