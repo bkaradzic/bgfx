@@ -1502,7 +1502,7 @@ namespace bgfx
 				, BGFX_CONFIG_MAX_MATRIX_CACHE
 				);
 			m_draw.m_matrix = _cache;
-			m_draw.m_num    = bx::uint32_min(_cache+_num, BGFX_CONFIG_MAX_MATRIX_CACHE-1) - _cache;
+			m_draw.m_num    = uint16_t(bx::uint32_min(_cache+_num, BGFX_CONFIG_MAX_MATRIX_CACHE-1) - _cache);
 		}
 
 		void setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
