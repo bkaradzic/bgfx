@@ -1043,7 +1043,7 @@ NVGcontext* nvgCreate(int edgeaa, unsigned char _viewId, bx::AllocatorI* _alloca
 		_allocator = &allocator;
 #else
 		BX_CHECK(false, "No allocator has been passed to nvgCreate(). Either specify a bx::AllocatorI instance or enable BX_CONFIG_ALLOCATOR_CRT directive.");
-		return nullptr;
+		return NULL;
 #endif
 	}
 
