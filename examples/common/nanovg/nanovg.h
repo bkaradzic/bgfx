@@ -598,8 +598,10 @@ struct NVGparams {
 };
 typedef struct NVGparams NVGparams;
 
-NVGcontext* nvgCreate(int edgeaa, unsigned char viewid);
-void nvgViewId(struct NVGcontext* ctx, unsigned char viewid);
+namespace bx { struct AllocatorI; }
+
+NVGcontext* nvgCreate(int edgeaa, unsigned char _viewId, bx::AllocatorI* _allocator = NULL);
+void nvgViewId(struct NVGcontext* ctx, unsigned char _viewId);
 void nvgDelete(struct NVGcontext* ctx);
 
 // Constructor and destructor, called by the render back-end.
