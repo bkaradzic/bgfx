@@ -468,7 +468,7 @@ struct Imgui
 
 		IMGUI_create(_data, _size, _fontSize, m_allocator);
 
-		m_nvg = nvgCreate(1, m_view);
+		m_nvg = nvgCreate(1, m_view, m_allocator);
  		nvgCreateFontMem(m_nvg, "default", (unsigned char*)_data, INT32_MAX, 0);
  		nvgFontSize(m_nvg, _fontSize);
  		nvgFontFace(m_nvg, "default");

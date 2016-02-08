@@ -603,85 +603,85 @@ namespace bgfx { namespace d3d9
 				s_textureFormat[TextureFormat::BC5].m_fmt = s_extendedFormats[ExtendedFormat::Ati2].m_supported ? D3DFMT_ATI2 : D3DFMT_UNKNOWN;
 
 				g_caps.supported |= m_instancingSupport ? BGFX_CAPS_INSTANCING : 0;
+			}
 
-				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
-				{
-					uint8_t support = 0;
+			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
+			{
+				uint8_t support = 0;
 
-					support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
-						, m_deviceType
-						, adapterFormat
-						, 0
-						, D3DRTYPE_TEXTURE
-						, s_textureFormat[ii].m_fmt
-						) ) ? BGFX_CAPS_FORMAT_TEXTURE_2D : BGFX_CAPS_FORMAT_TEXTURE_NONE;
+				support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
+					, m_deviceType
+					, adapterFormat
+					, 0
+					, D3DRTYPE_TEXTURE
+					, s_textureFormat[ii].m_fmt
+					) ) ? BGFX_CAPS_FORMAT_TEXTURE_2D : BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
-					support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
-						, m_deviceType
-						, adapterFormat
-						, D3DUSAGE_QUERY_SRGBREAD
-						, D3DRTYPE_TEXTURE
-						, s_textureFormat[ii].m_fmt
-						) ) ? BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB : BGFX_CAPS_FORMAT_TEXTURE_NONE;
+				support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
+					, m_deviceType
+					, adapterFormat
+					, D3DUSAGE_QUERY_SRGBREAD
+					, D3DRTYPE_TEXTURE
+					, s_textureFormat[ii].m_fmt
+					) ) ? BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB : BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
-					support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
-						, m_deviceType
-						, adapterFormat
-						, 0
-						, D3DRTYPE_VOLUMETEXTURE
-						, s_textureFormat[ii].m_fmt
-						) ) ? BGFX_CAPS_FORMAT_TEXTURE_3D : BGFX_CAPS_FORMAT_TEXTURE_NONE;
+				support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
+					, m_deviceType
+					, adapterFormat
+					, 0
+					, D3DRTYPE_VOLUMETEXTURE
+					, s_textureFormat[ii].m_fmt
+					) ) ? BGFX_CAPS_FORMAT_TEXTURE_3D : BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
-					support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
-						, m_deviceType
-						, adapterFormat
-						, D3DUSAGE_QUERY_SRGBREAD
-						, D3DRTYPE_VOLUMETEXTURE
-						, s_textureFormat[ii].m_fmt
-						) ) ? BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB : BGFX_CAPS_FORMAT_TEXTURE_NONE;
+				support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
+					, m_deviceType
+					, adapterFormat
+					, D3DUSAGE_QUERY_SRGBREAD
+					, D3DRTYPE_VOLUMETEXTURE
+					, s_textureFormat[ii].m_fmt
+					) ) ? BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB : BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
-					support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
-						, m_deviceType
-						, adapterFormat
-						, 0
-						, D3DRTYPE_CUBETEXTURE
-						, s_textureFormat[ii].m_fmt
-						) ) ? BGFX_CAPS_FORMAT_TEXTURE_CUBE : BGFX_CAPS_FORMAT_TEXTURE_NONE;
+				support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
+					, m_deviceType
+					, adapterFormat
+					, 0
+					, D3DRTYPE_CUBETEXTURE
+					, s_textureFormat[ii].m_fmt
+					) ) ? BGFX_CAPS_FORMAT_TEXTURE_CUBE : BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
-					support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
-						, m_deviceType
-						, adapterFormat
-						, D3DUSAGE_QUERY_SRGBREAD
-						, D3DRTYPE_CUBETEXTURE
-						, s_textureFormat[ii].m_fmt
-						) ) ? BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB : BGFX_CAPS_FORMAT_TEXTURE_NONE;
+				support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
+					, m_deviceType
+					, adapterFormat
+					, D3DUSAGE_QUERY_SRGBREAD
+					, D3DRTYPE_CUBETEXTURE
+					, s_textureFormat[ii].m_fmt
+					) ) ? BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB : BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
-					support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
-						, m_deviceType
-						, adapterFormat
-						, D3DUSAGE_QUERY_VERTEXTEXTURE
-						, D3DRTYPE_TEXTURE
-						, s_textureFormat[ii].m_fmt
-						) ) ? BGFX_CAPS_FORMAT_TEXTURE_VERTEX : BGFX_CAPS_FORMAT_TEXTURE_NONE;
+				support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
+					, m_deviceType
+					, adapterFormat
+					, D3DUSAGE_QUERY_VERTEXTEXTURE
+					, D3DRTYPE_TEXTURE
+					, s_textureFormat[ii].m_fmt
+					) ) ? BGFX_CAPS_FORMAT_TEXTURE_VERTEX : BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
-					support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
-						, m_deviceType
-						, adapterFormat
-						, isDepth(TextureFormat::Enum(ii) ) ? D3DUSAGE_DEPTHSTENCIL : D3DUSAGE_RENDERTARGET
-						, D3DRTYPE_TEXTURE
-						, s_textureFormat[ii].m_fmt
-						) ) ? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER : BGFX_CAPS_FORMAT_TEXTURE_NONE;
+				support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
+					, m_deviceType
+					, adapterFormat
+					, isDepth(TextureFormat::Enum(ii) ) ? D3DUSAGE_DEPTHSTENCIL : D3DUSAGE_RENDERTARGET
+					, D3DRTYPE_TEXTURE
+					, s_textureFormat[ii].m_fmt
+					) ) ? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER : BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
-					support |= SUCCEEDED(m_d3d9->CheckDeviceMultiSampleType(m_adapter
-						, m_deviceType
-						, s_textureFormat[ii].m_fmt
-						, true
-						, D3DMULTISAMPLE_2_SAMPLES
-						, NULL
-						) ) ? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA : BGFX_CAPS_FORMAT_TEXTURE_NONE;
+				support |= SUCCEEDED(m_d3d9->CheckDeviceMultiSampleType(m_adapter
+					, m_deviceType
+					, s_textureFormat[ii].m_fmt
+					, true
+					, D3DMULTISAMPLE_2_SAMPLES
+					, NULL
+					) ) ? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA : BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
-					g_caps.formats[ii] = support;
-				}
+				g_caps.formats[ii] = support;
 			}
 
 			m_fmtDepth = D3DFMT_D24S8;
@@ -2913,13 +2913,7 @@ namespace bgfx { namespace d3d9
 										, mip.m_format
 										);
 
-								uint32_t dstpitch = pitch;
-								for (uint32_t yy = 0; yy < height; ++yy)
-								{
-									uint8_t* src = &temp[yy*srcpitch];
-									uint8_t* dst = &bits[yy*dstpitch];
-									memcpy(dst, src, dstpitch);
-								}
+								bx::memCopy(bits, temp, pitch, height, srcpitch, pitch);
 
 								BX_FREE(g_allocator, temp);
 							}

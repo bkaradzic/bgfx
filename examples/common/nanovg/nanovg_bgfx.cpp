@@ -23,8 +23,6 @@
 #define NVG_ANTIALIAS 1
 
 #include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <math.h>
 #include "nanovg.h"
 
@@ -34,11 +32,6 @@
 #include <bx/allocator.h>
 
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4244); // warning C4244: '=' : conversion from '' to '', possible loss of data
-
-namespace bgfx
-{
-	extern bx::AllocatorI* g_allocator;
-}
 
 namespace
 {
@@ -119,6 +112,8 @@ namespace
 
 	struct GLNVGcontext
 	{
+		bx::AllocatorI* m_allocator;
+
 		bgfx::ProgramHandle prog;
 		bgfx::UniformHandle u_scissorMat;
 		bgfx::UniformHandle u_paintMat;
@@ -137,7 +132,7 @@ namespace
 		bgfx::TextureHandle texMissing;
 
 		bgfx::TransientVertexBuffer tvb;
-		uint8_t viewid;
+		uint8_t m_viewId;
 
 		struct GLNVGtexture* textures;
 		float view[2];
@@ -183,7 +178,7 @@ namespace
 			{
 				int old = gl->ctextures;
 				gl->ctextures = (gl->ctextures == 0) ? 2 : gl->ctextures*2;
-				gl->textures = (struct GLNVGtexture*)BX_REALLOC(bgfx::g_allocator, gl->textures, sizeof(struct GLNVGtexture)*gl->ctextures);
+				gl->textures = (struct GLNVGtexture*)BX_REALLOC(gl->m_allocator, gl->textures, sizeof(struct GLNVGtexture)*gl->ctextures);
 				memset(&gl->textures[old], 0xff, (gl->ctextures-old)*sizeof(struct GLNVGtexture) );
 
 				if (gl->textures == NULL)
@@ -554,7 +549,7 @@ namespace
 		struct GLNVGcontext* gl = (struct GLNVGcontext*)_userPtr;
 		gl->view[0] = (float)width;
 		gl->view[1] = (float)height;
-		bgfx::setViewRect(gl->viewid, 0, 0, width, height);
+		bgfx::setViewRect(gl->m_viewId, 0, 0, width, height);
 	}
 
 	static void fan(uint32_t _start, uint32_t _count)
@@ -602,7 +597,7 @@ namespace
 				bgfx::setVertexBuffer(&gl->tvb);
 				bgfx::setTexture(0, gl->s_tex, gl->th);
 				fan(paths[i].fillOffset, paths[i].fillCount);
-				bgfx::submit(gl->viewid, gl->prog);
+				bgfx::submit(gl->m_viewId, gl->prog);
 			}
 		}
 
@@ -626,7 +621,7 @@ namespace
 					);
 				bgfx::setVertexBuffer(&gl->tvb, paths[i].strokeOffset, paths[i].strokeCount);
 				bgfx::setTexture(0, gl->s_tex, gl->th);
-				bgfx::submit(gl->viewid, gl->prog);
+				bgfx::submit(gl->m_viewId, gl->prog);
 			}
 		}
 
@@ -641,7 +636,7 @@ namespace
 				| BGFX_STENCIL_OP_FAIL_Z_ZERO
 				| BGFX_STENCIL_OP_PASS_Z_ZERO
 				);
-		bgfx::submit(gl->viewid, gl->prog);
+		bgfx::submit(gl->m_viewId, gl->prog);
 	}
 
 	static void glnvg__convexFill(struct GLNVGcontext* gl, struct GLNVGcall* call)
@@ -658,7 +653,7 @@ namespace
 			bgfx::setVertexBuffer(&gl->tvb);
 			bgfx::setTexture(0, gl->s_tex, gl->th);
 			fan(paths[i].fillOffset, paths[i].fillCount);
-			bgfx::submit(gl->viewid, gl->prog);
+			bgfx::submit(gl->m_viewId, gl->prog);
 		}
 
 		if (gl->edgeAntiAlias)
@@ -671,7 +666,7 @@ namespace
 					);
 				bgfx::setVertexBuffer(&gl->tvb, paths[i].strokeOffset, paths[i].strokeCount);
 				bgfx::setTexture(0, gl->s_tex, gl->th);
-				bgfx::submit(gl->viewid, gl->prog);
+				bgfx::submit(gl->m_viewId, gl->prog);
 			}
 		}
 	}
@@ -691,7 +686,7 @@ namespace
 				);
 			bgfx::setVertexBuffer(&gl->tvb, paths[i].strokeOffset, paths[i].strokeCount);
 			bgfx::setTexture(0, gl->s_tex, gl->th);
-			bgfx::submit(gl->viewid, gl->prog);
+			bgfx::submit(gl->m_viewId, gl->prog);
 		}
 	}
 
@@ -704,7 +699,7 @@ namespace
 			bgfx::setState(gl->state);
 			bgfx::setVertexBuffer(&gl->tvb, call->vertexOffset, call->vertexCount);
 			bgfx::setTexture(0, gl->s_tex, gl->th);
-			bgfx::submit(gl->viewid, gl->prog);
+			bgfx::submit(gl->m_viewId, gl->prog);
 		}
 	}
 
@@ -797,7 +792,7 @@ namespace
 		if (gl->ncalls+1 > gl->ccalls)
 		{
 			gl->ccalls = gl->ccalls == 0 ? 32 : gl->ccalls * 2;
-			gl->calls = (struct GLNVGcall*)BX_REALLOC(bgfx::g_allocator, gl->calls, sizeof(struct GLNVGcall) * gl->ccalls);
+			gl->calls = (struct GLNVGcall*)BX_REALLOC(gl->m_allocator, gl->calls, sizeof(struct GLNVGcall) * gl->ccalls);
 		}
 		ret = &gl->calls[gl->ncalls++];
 		memset(ret, 0, sizeof(struct GLNVGcall) );
@@ -810,7 +805,7 @@ namespace
 		if (gl->npaths + n > gl->cpaths) {
 			GLNVGpath* paths;
 			int cpaths = glnvg__maxi(gl->npaths + n, 128) + gl->cpaths / 2; // 1.5x Overallocate
-			paths = (GLNVGpath*)BX_REALLOC(bgfx::g_allocator, gl->paths, sizeof(GLNVGpath) * cpaths);
+			paths = (GLNVGpath*)BX_REALLOC(gl->m_allocator, gl->paths, sizeof(GLNVGpath) * cpaths);
 			if (paths == NULL) return -1;
 			gl->paths = paths;
 			gl->cpaths = cpaths;
@@ -827,7 +822,7 @@ namespace
 		{
 			NVGvertex* verts;
 			int cverts = glnvg__maxi(gl->nverts + n, 4096) + gl->cverts/2; // 1.5x Overallocate
-			verts = (NVGvertex*)BX_REALLOC(bgfx::g_allocator, gl->verts, sizeof(NVGvertex) * cverts);
+			verts = (NVGvertex*)BX_REALLOC(gl->m_allocator, gl->verts, sizeof(NVGvertex) * cverts);
 			if (verts == NULL) return -1;
 			gl->verts = verts;
 			gl->cverts = cverts;
@@ -843,7 +838,7 @@ namespace
 		if (gl->nuniforms+n > gl->cuniforms)
 		{
 			gl->cuniforms = gl->cuniforms == 0 ? glnvg__maxi(n, 32) : gl->cuniforms * 2;
-			gl->uniforms = (unsigned char*)BX_REALLOC(bgfx::g_allocator, gl->uniforms, gl->cuniforms * structSize);
+			gl->uniforms = (unsigned char*)BX_REALLOC(gl->m_allocator, gl->uniforms, gl->cuniforms * structSize);
 		}
 		ret = gl->nuniforms * structSize;
 		gl->nuniforms += n;
@@ -1029,18 +1024,23 @@ namespace
 			}
 		}
 
-		BX_FREE(bgfx::g_allocator, gl->textures);
-
-		BX_FREE(bgfx::g_allocator, gl);
+		BX_FREE(gl->m_allocator, gl->textures);
+		BX_FREE(gl->m_allocator, gl);
 	}
 
 } // namespace
 
-NVGcontext* nvgCreate(int edgeaa, unsigned char viewid)
+NVGcontext* nvgCreate(int edgeaa, unsigned char _viewId, bx::AllocatorI* _allocator)
 {
+	if (NULL == _allocator)
+	{
+		static bx::CrtAllocator allocator;
+		_allocator = &allocator;
+	}
+
 	struct NVGparams params;
 	struct NVGcontext* ctx = NULL;
-	struct GLNVGcontext* gl = (struct GLNVGcontext*)BX_ALLOC(bgfx::g_allocator, sizeof(struct GLNVGcontext));
+	struct GLNVGcontext* gl = (struct GLNVGcontext*)BX_ALLOC(_allocator, sizeof(struct GLNVGcontext) );
 	if (gl == NULL) goto error;
 	memset(gl, 0, sizeof(struct GLNVGcontext) );
 
@@ -1059,8 +1059,9 @@ NVGcontext* nvgCreate(int edgeaa, unsigned char viewid)
 	params.userPtr = gl;
 	params.edgeAntiAlias = edgeaa;
 
+	gl->m_allocator   = _allocator;
 	gl->edgeAntiAlias = edgeaa;
-	gl->viewid = uint8_t(viewid);
+	gl->m_viewId      = uint8_t(_viewId);
 
 	ctx = nvgCreateInternal(&params);
 	if (ctx == NULL) goto error;
@@ -1077,11 +1078,11 @@ error:
 	return NULL;
 }
 
-void nvgViewId(struct NVGcontext* ctx, unsigned char viewid)
+void nvgViewId(struct NVGcontext* ctx, unsigned char _viewId)
 {
 	struct NVGparams* params = nvgInternalParams(ctx);
 	struct GLNVGcontext* gl = (struct GLNVGcontext*)params->userPtr;
-	gl->viewid = uint8_t(viewid);
+	gl->m_viewId = uint8_t(_viewId);
 }
 
 void nvgDelete(struct NVGcontext* ctx)
