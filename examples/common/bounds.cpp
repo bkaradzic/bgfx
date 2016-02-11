@@ -277,6 +277,102 @@ void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 	_sphere.m_radius = bx::fsqrt(maxDistSq);
 }
 
+void buildFrustumPlanes(Plane* _result, const float* _viewProj)
+{
+	const float xw = _viewProj[ 3];
+	const float yw = _viewProj[ 7];
+	const float zw = _viewProj[11];
+	const float ww = _viewProj[15];
+
+	const float xz = _viewProj[ 2];
+	const float yz = _viewProj[ 6];
+	const float zz = _viewProj[10];
+	const float wz = _viewProj[14];
+
+	Plane& near   = _result[0];
+	Plane& far    = _result[1];
+	Plane& left   = _result[2];
+	Plane& right  = _result[3];
+	Plane& top    = _result[4];
+	Plane& bottom = _result[5];
+
+	near.m_normal[0] = xw - xz;
+	near.m_normal[1] = yw - yz;
+	near.m_normal[2] = zw - zz;
+	near.m_dist      = ww - wz;
+
+	far.m_normal[0] = xw + xz;
+	far.m_normal[1] = yw + yz;
+	far.m_normal[2] = zw + zz;
+	far.m_dist      = ww + wz;
+
+	const float xx = _viewProj[ 0];
+	const float yx = _viewProj[ 4];
+	const float zx = _viewProj[ 8];
+	const float wx = _viewProj[12];
+
+	left.m_normal[0] = xw - xx;
+	left.m_normal[1] = yw - yx;
+	left.m_normal[2] = zw - zx;
+	left.m_dist      = ww - wx;
+
+	right.m_normal[0] = xw + xx;
+	right.m_normal[1] = yw + yx;
+	right.m_normal[2] = zw + zx;
+	right.m_dist      = ww + wx;
+
+	const float xy = _viewProj[ 1];
+	const float yy = _viewProj[ 5];
+	const float zy = _viewProj[ 9];
+	const float wy = _viewProj[13];
+
+	top.m_normal[0] = xw + xy;
+	top.m_normal[1] = yw + yy;
+	top.m_normal[2] = zw + zy;
+	top.m_dist      = ww + wy;
+
+	bottom.m_normal[0] = xw - xy;
+	bottom.m_normal[1] = yw - yy;
+	bottom.m_normal[2] = zw - zy;
+	bottom.m_dist      = ww - wy;
+
+	Plane* plane = _result;
+	for (uint32_t ii = 0; ii < 6; ++ii)
+	{
+		float invLen = 1.0f / bx::vec3Norm(plane->m_normal, plane->m_normal);
+		plane->m_dist *= invLen;
+		++plane;
+	}
+}
+
+void intersectPlanes(float _result[3], const Plane& _pa, const Plane& _pb, const Plane& _pc)
+{
+	float axb[3];
+	bx::vec3Cross(axb, _pa.m_normal, _pb.m_normal);
+
+	float bxc[3];
+	bx::vec3Cross(bxc, _pb.m_normal, _pc.m_normal);
+
+	float cxa[3];
+	bx::vec3Cross(cxa, _pc.m_normal, _pa.m_normal);
+
+	float tmp0[3];
+	bx::vec3Mul(tmp0, bxc, _pa.m_dist);
+
+	float tmp1[3];
+	bx::vec3Mul(tmp1, cxa, _pb.m_dist);
+
+	float tmp2[3];
+	bx::vec3Mul(tmp2, axb, _pc.m_dist);
+
+	float tmp[3];
+	bx::vec3Add(tmp, tmp0, tmp1);
+	bx::vec3Add(tmp0, tmp, tmp2);
+
+	float denom = bx::vec3Dot(_pa.m_normal, bxc);
+	bx::vec3Mul(_result, tmp0, -1.0f/denom);
+}
+
 Ray makeRay(float _x, float _y, const float* _invVp)
 {
 	Ray ray;
