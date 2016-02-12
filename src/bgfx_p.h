@@ -573,8 +573,14 @@ namespace bgfx
 	const char* getPredefinedUniformName(PredefinedUniform::Enum _enum);
 	PredefinedUniform::Enum nameToPredefinedUniformEnum(const char* _name);
 
-	struct CommandBuffer
+	class CommandBuffer
 	{
+		BX_CLASS(CommandBuffer
+			, NO_COPY
+			, NO_ASSIGNMENT
+			);
+
+	public:
 		CommandBuffer()
 			: m_pos(0)
 			, m_size(BGFX_CONFIG_MAX_COMMAND_BUFFER_SIZE)
@@ -690,10 +696,6 @@ namespace bgfx
 		uint32_t m_pos;
 		uint32_t m_size;
 		uint8_t m_buffer[BGFX_CONFIG_MAX_COMMAND_BUFFER_SIZE];
-
-	private:
-		CommandBuffer(const CommandBuffer&);
-		void operator=(const CommandBuffer&);
 	};
 
 #define SORT_KEY_NUM_BITS_TRANS        2
