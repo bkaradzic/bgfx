@@ -811,7 +811,7 @@ int main(int _argc, const char* _argv[])
 	PrimitiveArray primitives;
 
 	bx::CrtFileWriter writer;
-	if (bx::open(&writer, outFilePath) )
+	if (!bx::open(&writer, outFilePath) )
 	{
 		printf("Unable to open output file '%s'.", outFilePath);
 		exit(EXIT_FAILURE);
