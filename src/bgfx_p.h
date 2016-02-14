@@ -2052,7 +2052,7 @@ namespace bgfx
 		virtual void overrideInternal(TextureHandle _handle, uintptr_t _ptr) = 0;
 		virtual uintptr_t getInternal(TextureHandle _handle) = 0;
 		virtual void destroyTexture(TextureHandle _handle) = 0;
-		virtual void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles) = 0;
+		virtual void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles, const uint8_t* _side) = 0;
 		virtual void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat) = 0;
 		virtual void destroyFrameBuffer(FrameBufferHandle _handle) = 0;
 		virtual void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name) = 0;
@@ -3207,7 +3207,7 @@ namespace bgfx
 				;
 		}
 
-		BGFX_API_FUNC(FrameBufferHandle createFrameBuffer(uint8_t _num, const TextureHandle* _handles, bool _destroyTextures) )
+		BGFX_API_FUNC(FrameBufferHandle createFrameBuffer(uint8_t _num, const TextureHandle* _handles, const uint8_t* _side, bool _destroyTextures) )
 		{
 			BX_CHECK(checkFrameBuffer(_num, _handles)
 				, "Too many frame buffer attachments (num attachments: %d, max color attachments %d)!"
@@ -3237,6 +3237,7 @@ namespace bgfx
 					BX_UNUSED(bbRatio);
 
 					cmdbuf.write(texHandle);
+					cmdbuf.write(_side[ii]);
 
 					ref.un.m_th[ii] = texHandle;
 					textureIncRef(texHandle);

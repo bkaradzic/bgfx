@@ -1362,8 +1362,8 @@ namespace bgfx
 	/// Update Cube texture.
 	///
 	/// @param[in] _handle Texture handle.
-	/// @param[in] _side Cubemap side, where 0 is +X, 1 is -X, 2 is +Y, 3 is
-	///   -Y, 4 is +Z, and 5 is -Z.
+	/// @param[in] _side Cubemap side `BGFX_CUBE_MAP_<POSITIVE or NEGATIVE>_<AXIS>`,
+	///   where 0 is +X, 1 is -X, 2 is +Y, 3 is -Y, 4 is +Z, and 5 is -Z.
 	///
 	///                  +----------+
 	///                  |-z       2|
@@ -1469,6 +1469,19 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_create_frame_buffer_from_handles`.
 	///
 	FrameBufferHandle createFrameBuffer(uint8_t _num, const TextureHandle* _handles, bool _destroyTextures = false);
+
+	/// Create frame buffer.
+	///
+	/// @param[in] _num Number of texture attachments.
+	/// @param[in] _handles Texture attachments.
+	/// @param[in] _side Side for cubemap texture attachements.
+	///   See: `BGFX_CUBE_MAP_<POSITIVE or NEGATIVE>_<AXIS>`.
+	/// @param[in] _destroyTextures If true, textures will be destroyed when
+	///   frame buffer is destroyed.
+	///
+	/// @attention C99 equivalent is `bgfx_create_frame_buffer_from_handles`.
+	///
+	FrameBufferHandle createFrameBuffer(uint8_t _num, const TextureHandle* _handles, const uint8_t* _side, bool _destroyTextures = false);
 
 	/// Create frame buffer for multiple window rendering.
 	///

@@ -2243,9 +2243,9 @@ namespace bgfx { namespace gl
 			m_textures[_handle.idx].destroy();
 		}
 
-		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles) BX_OVERRIDE
+		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles, const uint8_t* _side) BX_OVERRIDE
 		{
-			m_frameBuffers[_handle.idx].create(_num, _textureHandles);
+			m_frameBuffers[_handle.idx].create(_num, _textureHandles, _side);
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat) BX_OVERRIDE
@@ -5017,12 +5017,13 @@ namespace bgfx { namespace gl
 		BX_UNUSED(complete);
 	}
 
-	void FrameBufferGL::create(uint8_t _num, const TextureHandle* _handles)
+	void FrameBufferGL::create(uint8_t _num, const TextureHandle* _handles, const uint8_t* _side)
 	{
 		GL_CHECK(glGenFramebuffers(1, &m_fbo[0]) );
 
 		m_numTh = _num;
 		memcpy(m_th, _handles, _num*sizeof(TextureHandle) );
+		memcpy(m_side, _side, _num);
 
 		postReset();
 	}
@@ -5086,7 +5087,7 @@ namespace bgfx { namespace gl
 					else
 					{
 						GLenum target = GL_TEXTURE_CUBE_MAP == texture.m_target
-							? GL_TEXTURE_CUBE_MAP_POSITIVE_X
+							? GL_TEXTURE_CUBE_MAP_POSITIVE_X + m_side[ii]
 							: texture.m_target
 							;
 

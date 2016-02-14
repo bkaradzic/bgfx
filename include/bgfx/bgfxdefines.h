@@ -6,7 +6,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(7)
+#define BGFX_API_VERSION UINT32_C(8)
 
 ///
 #define BGFX_STATE_RGB_WRITE             UINT64_C(0x0000000000000001) //!< Enable RGB write.
@@ -421,5 +421,13 @@
 #define BGFX_HMD_NONE              UINT8_C(0x00) //!< None.
 #define BGFX_HMD_DEVICE_RESOLUTION UINT8_C(0x01) //!< Has HMD native resolution.
 #define BGFX_HMD_RENDERING         UINT8_C(0x02) //!< Rendering to HMD.
+
+///
+#define BGFX_CUBE_MAP_POSITIVE_X UINT8_C(0x00) //!< Cubemap +x.
+#define BGFX_CUBE_MAP_NEGATIVE_X UINT8_C(0x01) //!< Cubemap -x.
+#define BGFX_CUBE_MAP_POSITIVE_Y UINT8_C(0x02) //!< Cubemap +y.
+#define BGFX_CUBE_MAP_NEGATIVE_Y UINT8_C(0x03) //!< Cubemap -y.
+#define BGFX_CUBE_MAP_POSITIVE_Z UINT8_C(0x04) //!< Cubemap +z.
+#define BGFX_CUBE_MAP_NEGATIVE_Z UINT8_C(0x05) //!< Cubemap -z.
 
 #endif // BGFX_DEFINES_H_HEADER_GUARD

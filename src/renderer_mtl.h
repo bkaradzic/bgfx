@@ -694,7 +694,7 @@ namespace bgfx { namespace mtl
 			m_depthHandle.idx = invalidHandle;
 		}
 
-		void create(uint8_t _num, const TextureHandle* _handles);
+		void create(uint8_t _num, const TextureHandle* _handles, const uint8_t* _side);
 		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat);
 		void postReset();
 		uint16_t destroy();

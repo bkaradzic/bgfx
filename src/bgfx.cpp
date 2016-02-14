@@ -2260,12 +2260,14 @@ again:
 						_cmdbuf.read(num);
 
 						TextureHandle textureHandles[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+						uint8_t side[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 						for (uint32_t ii = 0; ii < num; ++ii)
 						{
 							_cmdbuf.read(textureHandles[ii]);
+							_cmdbuf.read(side[ii]);
 						}
 
-						m_renderCtx->createFrameBuffer(handle, num, textureHandles);
+						m_renderCtx->createFrameBuffer(handle, num, textureHandles, side);
 					}
 				}
 				break;
@@ -3112,6 +3114,12 @@ again:
 
 	FrameBufferHandle createFrameBuffer(uint8_t _num, const TextureHandle* _handles, bool _destroyTextures)
 	{
+		uint8_t side[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS] = {};
+		return createFrameBuffer(_num, _handles, side, _destroyTextures);
+	}
+
+	FrameBufferHandle createFrameBuffer(uint8_t _num, const TextureHandle* _handles, const uint8_t* _side, bool _destroyTextures)
+	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(_num != 0, "Number of frame buffer attachments can't be 0.");
 		BX_CHECK(_num <= BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS, "Number of frame buffer attachments is larger than allowed %d (max: %d)."
@@ -3119,7 +3127,8 @@ again:
 			, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS
 			);
 		BX_CHECK(NULL != _handles, "_handles can't be NULL");
-		return s_ctx->createFrameBuffer(_num, _handles, _destroyTextures);
+		BX_CHECK(NULL != _side, "_side can't be NULL");
+		return s_ctx->createFrameBuffer(_num, _handles, _side, _destroyTextures);
 	}
 
 	FrameBufferHandle createFrameBuffer(void* _nwh, uint16_t _width, uint16_t _height, TextureFormat::Enum _depthFormat)
@@ -4114,10 +4123,10 @@ BGFX_C_API bgfx_frame_buffer_handle_t bgfx_create_frame_buffer_scaled(bgfx_backb
 	return handle.c;
 }
 
-BGFX_C_API bgfx_frame_buffer_handle_t bgfx_create_frame_buffer_from_handles(uint8_t _num, const bgfx_texture_handle_t* _handles, bool _destroyTextures)
+BGFX_C_API bgfx_frame_buffer_handle_t bgfx_create_frame_buffer_from_handles(uint8_t _num, const bgfx_texture_handle_t* _handles, const uint8_t* _side, bool _destroyTextures)
 {
 	union { bgfx_frame_buffer_handle_t c; bgfx::FrameBufferHandle cpp; } handle;
-	handle.cpp = bgfx::createFrameBuffer(_num, (const bgfx::TextureHandle*)_handles, _destroyTextures);
+	handle.cpp = bgfx::createFrameBuffer(_num, (const bgfx::TextureHandle*)_handles, _side, _destroyTextures);
 	return handle.c;
 }
 
