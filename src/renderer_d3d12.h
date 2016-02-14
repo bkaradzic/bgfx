@@ -295,8 +295,8 @@ namespace bgfx { namespace d3d12
 			m_depth.idx = bgfx::invalidHandle;
 		}
 
-		void create(uint8_t _num, const TextureHandle* _handles);
-		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat);
+		void create(uint8_t _num, const TextureHandle* _handles, uint32_t _flags);
+		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat, uint32_t _flags);
 		uint16_t destroy();
 		void preReset();
 		void postReset();
@@ -306,6 +306,7 @@ namespace bgfx { namespace d3d12
 		TextureHandle m_texture[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		TextureHandle m_depth;
 		IDXGISwapChain* m_swapChain;
+		uint32_t m_flags;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint16_t m_denseIdx;

@@ -2252,7 +2252,10 @@ again:
 						TextureFormat::Enum depthFormat;
 						_cmdbuf.read(depthFormat);
 
-						m_renderCtx->createFrameBuffer(handle, nwh, width, height, depthFormat);
+						uint32_t flags;
+						_cmdbuf.read(flags);
+
+						m_renderCtx->createFrameBuffer(handle, nwh, width, height, depthFormat, flags);
 					}
 					else
 					{
@@ -2265,7 +2268,10 @@ again:
 							_cmdbuf.read(textureHandles[ii]);
 						}
 
-						m_renderCtx->createFrameBuffer(handle, num, textureHandles);
+						uint32_t flags;
+						_cmdbuf.read(flags);
+
+						m_renderCtx->createFrameBuffer(handle, num, textureHandles, flags);
 					}
 				}
 				break;
@@ -3095,22 +3101,22 @@ again:
 		s_ctx->readTexture(_handle, _attachment, _data);
 	}
 
-	FrameBufferHandle createFrameBuffer(uint16_t _width, uint16_t _height, TextureFormat::Enum _format, uint32_t _textureFlags)
+	FrameBufferHandle createFrameBuffer(uint16_t _width, uint16_t _height, TextureFormat::Enum _format, uint32_t _textureFlags, uint32_t _frameBufferFlags)
 	{
 		_textureFlags |= _textureFlags&BGFX_TEXTURE_RT_MSAA_MASK ? 0 : BGFX_TEXTURE_RT;
 		TextureHandle th = createTexture2D(_width, _height, 1, _format, _textureFlags);
-		return createFrameBuffer(1, &th, true);
+		return createFrameBuffer(1, &th, true, _frameBufferFlags);
 	}
 
-	FrameBufferHandle createFrameBuffer(BackbufferRatio::Enum _ratio, TextureFormat::Enum _format, uint32_t _textureFlags)
+	FrameBufferHandle createFrameBuffer(BackbufferRatio::Enum _ratio, TextureFormat::Enum _format, uint32_t _textureFlags, uint32_t _frameBufferFlags)
 	{
 		BX_CHECK(_ratio < BackbufferRatio::Count, "Invalid back buffer ratio.");
 		_textureFlags |= _textureFlags&BGFX_TEXTURE_RT_MSAA_MASK ? 0 : BGFX_TEXTURE_RT;
 		TextureHandle th = createTexture2D(_ratio, 1, _format, _textureFlags);
-		return createFrameBuffer(1, &th, true);
+		return createFrameBuffer(1, &th, true, _frameBufferFlags);
 	}
 
-	FrameBufferHandle createFrameBuffer(uint8_t _num, const TextureHandle* _handles, bool _destroyTextures)
+	FrameBufferHandle createFrameBuffer(uint8_t _num, const TextureHandle* _handles, bool _destroyTextures, uint32_t _frameBufferFlags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(_num != 0, "Number of frame buffer attachments can't be 0.");
@@ -3119,13 +3125,13 @@ again:
 			, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS
 			);
 		BX_CHECK(NULL != _handles, "_handles can't be NULL");
-		return s_ctx->createFrameBuffer(_num, _handles, _destroyTextures);
+		return s_ctx->createFrameBuffer(_num, _handles, _destroyTextures, _frameBufferFlags);
 	}
 
-	FrameBufferHandle createFrameBuffer(void* _nwh, uint16_t _width, uint16_t _height, TextureFormat::Enum _depthFormat)
+	FrameBufferHandle createFrameBuffer(void* _nwh, uint16_t _width, uint16_t _height, TextureFormat::Enum _depthFormat, uint32_t _frameBufferFlags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		return s_ctx->createFrameBuffer(_nwh, _width, _height, _depthFormat);
+		return s_ctx->createFrameBuffer(_nwh, _width, _height, _depthFormat, _frameBufferFlags);
 	}
 
 	void destroyFrameBuffer(FrameBufferHandle _handle)

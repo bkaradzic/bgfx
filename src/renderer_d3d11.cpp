@@ -1778,16 +1778,16 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			m_textures[_handle.idx].destroy();
 		}
 
-		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles) BX_OVERRIDE
+		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles, uint32_t _frameBufferFlags) BX_OVERRIDE
 		{
-			m_frameBuffers[_handle.idx].create(_num, _textureHandles);
+			m_frameBuffers[_handle.idx].create(_num, _textureHandles, _frameBufferFlags);
 		}
 
-		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat) BX_OVERRIDE
+		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat, uint32_t _frameBufferFlags) BX_OVERRIDE
 		{
 			uint16_t denseIdx = m_numWindows++;
 			m_windows[denseIdx] = _handle;
-			m_frameBuffers[_handle.idx].create(denseIdx, _nwh, _width, _height, _depthFormat);
+			m_frameBuffers[_handle.idx].create(denseIdx, _nwh, _width, _height, _depthFormat, _frameBufferFlags);
 		}
 
 		void destroyFrameBuffer(FrameBufferHandle _handle) BX_OVERRIDE
@@ -4252,7 +4252,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		return handle;
 	}
 
-	void FrameBufferD3D11::create(uint8_t _num, const TextureHandle* _handles)
+	void FrameBufferD3D11::create(uint8_t _num, const TextureHandle* _handles, uint32_t _flags)
 	{
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_rtv); ++ii)
 		{
@@ -4261,13 +4261,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		m_dsv       = NULL;
 		m_swapChain = NULL;
 
+		m_flags = _flags;
 		m_numTh = _num;
 		memcpy(m_th, _handles, _num*sizeof(TextureHandle) );
 
 		postReset();
 	}
 
-	void FrameBufferD3D11::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat)
+	void FrameBufferD3D11::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat, uint32_t _flags)
 	{
 		DXGI_SWAP_CHAIN_DESC scd;
 		memcpy(&scd, &s_renderD3D11->m_scd, sizeof(DXGI_SWAP_CHAIN_DESC) );
@@ -4313,6 +4314,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		m_srv[0]   = NULL;
 		m_denseIdx = _denseIdx;
 		m_num      = 1;
+		m_flags    = _flags;
 	}
 
 	uint16_t FrameBufferD3D11::destroy()
@@ -4411,19 +4413,21 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 						case TextureD3D11::TextureCube:
 							{
+								uint32_t cubeSide = (m_flags & BGFX_FRAMEBUFFER_CUBE_MAP_MASK) >> BGFX_FRAMEBUFFER_CUBE_MAP_SHIFT;
+
 								D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
 								dsvDesc.Format = s_textureFormat[texture.m_textureFormat].m_fmtDsv;
 								if (1 < msaa.Count)
 								{
 									dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY;
 									dsvDesc.Texture2DMSArray.ArraySize       = 1;
-									dsvDesc.Texture2DMSArray.FirstArraySlice = 0;
+									dsvDesc.Texture2DMSArray.FirstArraySlice = cubeSide;
 								}
 								else
 								{
 									dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
 									dsvDesc.Texture2DArray.ArraySize       = 1;
-									dsvDesc.Texture2DArray.FirstArraySlice = 0;
+									dsvDesc.Texture2DArray.FirstArraySlice = cubeSide;
 									dsvDesc.Texture2DArray.MipSlice        = 0;
 								}
 								dsvDesc.Flags = 0;
@@ -4443,19 +4447,21 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 						case TextureD3D11::TextureCube:
 							{
+								uint32_t cubeSide = (m_flags & BGFX_FRAMEBUFFER_CUBE_MAP_MASK) >> BGFX_FRAMEBUFFER_CUBE_MAP_SHIFT;
+
 								D3D11_RENDER_TARGET_VIEW_DESC desc;
 								desc.Format = s_textureFormat[texture.m_textureFormat].m_fmt;
 								if (1 < msaa.Count)
 								{
 									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY;
 									desc.Texture2DMSArray.ArraySize       = 1;
-									desc.Texture2DMSArray.FirstArraySlice = 0;
+									desc.Texture2DMSArray.FirstArraySlice = cubeSide;
 								}
 								else
 								{
 									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
 									desc.Texture2DArray.ArraySize       = 1;
-									desc.Texture2DArray.FirstArraySlice = 0;
+									desc.Texture2DArray.FirstArraySlice = cubeSide;
 									desc.Texture2DArray.MipSlice        = 0;
 								}
 								DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(texture.m_ptr, &desc, &m_rtv[m_num]) );

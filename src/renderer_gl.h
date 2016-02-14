@@ -1169,8 +1169,8 @@ namespace bgfx { namespace gl
 			memset(m_fbo, 0, sizeof(m_fbo) );
 		}
 
-		void create(uint8_t _num, const TextureHandle* _handles);
-		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat);
+		void create(uint8_t _num, const TextureHandle* _handles, uint32_t _flags);
+		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat, uint32_t _flags);
 		void postReset();
 		uint16_t destroy();
 		void resolve();
@@ -1178,6 +1178,7 @@ namespace bgfx { namespace gl
 
 		SwapChainGL* m_swapChain;
 		GLuint m_fbo[2];
+		uint32_t m_flags;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint16_t m_denseIdx;
