@@ -1018,16 +1018,16 @@ namespace bgfx { namespace d3d9
 			m_textures[_handle.idx].destroy();
 		}
 
-		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles) BX_OVERRIDE
+		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles, uint32_t _frameBufferFlags) BX_OVERRIDE
 		{
-			m_frameBuffers[_handle.idx].create(_num, _textureHandles);
+			m_frameBuffers[_handle.idx].create(_num, _textureHandles, _frameBufferFlags);
 		}
 
-		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat) BX_OVERRIDE
+		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat, uint32_t _frameBufferFlags) BX_OVERRIDE
 		{
 			uint16_t denseIdx = m_numWindows++;
 			m_windows[denseIdx] = _handle;
-			m_frameBuffers[_handle.idx].create(denseIdx, _nwh, _width, _height, _depthFormat);
+			m_frameBuffers[_handle.idx].create(denseIdx, _nwh, _width, _height, _depthFormat, _frameBufferFlags);
 		}
 
 		void destroyFrameBuffer(FrameBufferHandle _handle) BX_OVERRIDE
@@ -3062,7 +3062,7 @@ namespace bgfx { namespace d3d9
 		}
 	}
 
-	void FrameBufferD3D9::create(uint8_t _num, const TextureHandle* _handles)
+	void FrameBufferD3D9::create(uint8_t _num, const TextureHandle* _handles, uint32_t _flags)
 	{
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_color); ++ii)
 		{
@@ -3070,6 +3070,7 @@ namespace bgfx { namespace d3d9
 		}
 		m_depthStencil = NULL;
 
+		m_flags = _flags;
 		m_num = 0;
 		m_needResolve = false;
 		for (uint32_t ii = 0; ii < _num; ++ii)
@@ -3102,7 +3103,11 @@ namespace bgfx { namespace d3d9
 					}
 					else
 					{
-						m_color[m_num] = texture.getSurface();
+						uint32_t cubeSide = 0;
+						if (texture.m_type == TextureD3D9::TextureCube)
+							cubeSide = (m_flags & BGFX_FRAMEBUFFER_CUBE_MAP_MASK) >> BGFX_FRAMEBUFFER_CUBE_MAP_SHIFT;
+
+						m_color[m_num] = texture.getSurface(cubeSide);
 					}
 					m_num++;
 				}
@@ -3117,12 +3122,13 @@ namespace bgfx { namespace d3d9
 		}
 	}
 
-	void FrameBufferD3D9::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat)
+	void FrameBufferD3D9::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat, uint32_t _flags)
 	{
 		BX_UNUSED(_depthFormat);
 
 		m_hwnd = (HWND)_nwh;
 
+		m_flags  = _flags;
 		m_width  = bx::uint32_max(_width,  16);
 		m_height = bx::uint32_max(_height, 16);
 

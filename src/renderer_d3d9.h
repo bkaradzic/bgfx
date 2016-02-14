@@ -389,8 +389,8 @@ namespace bgfx { namespace d3d9
 			m_depthHandle.idx = invalidHandle;
 		}
 
-		void create(uint8_t _num, const TextureHandle* _handles);
-		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat);
+		void create(uint8_t _num, const TextureHandle* _handles, uint32_t _flags);
+		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat, uint32_t _flags);
 		uint16_t destroy();
 		HRESULT present();
 		void resolve() const;
@@ -402,6 +402,7 @@ namespace bgfx { namespace d3d9
 		IDirect3DSurface9* m_depthStencil;
 		IDirect3DSwapChain9* m_swapChain;
 		HWND m_hwnd;
+		uint32_t m_flags;
 		uint32_t m_width;
 		uint32_t m_height;
 

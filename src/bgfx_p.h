@@ -2052,8 +2052,8 @@ namespace bgfx
 		virtual void overrideInternal(TextureHandle _handle, uintptr_t _ptr) = 0;
 		virtual uintptr_t getInternal(TextureHandle _handle) = 0;
 		virtual void destroyTexture(TextureHandle _handle) = 0;
-		virtual void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles) = 0;
-		virtual void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat) = 0;
+		virtual void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles, uint32_t _flags) = 0;
+		virtual void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat, uint32_t _flags) = 0;
 		virtual void destroyFrameBuffer(FrameBufferHandle _handle) = 0;
 		virtual void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name) = 0;
 		virtual void destroyUniform(UniformHandle _handle) = 0;
@@ -3207,7 +3207,7 @@ namespace bgfx
 				;
 		}
 
-		BGFX_API_FUNC(FrameBufferHandle createFrameBuffer(uint8_t _num, const TextureHandle* _handles, bool _destroyTextures) )
+		BGFX_API_FUNC(FrameBufferHandle createFrameBuffer(uint8_t _num, const TextureHandle* _handles, bool _destroyTextures, uint32_t _frameBufferFlags) )
 		{
 			BX_CHECK(checkFrameBuffer(_num, _handles)
 				, "Too many frame buffer attachments (num attachments: %d, max color attachments %d)!"
@@ -3241,6 +3241,8 @@ namespace bgfx
 					ref.un.m_th[ii] = texHandle;
 					textureIncRef(texHandle);
 				}
+
+				cmdbuf.write(_frameBufferFlags);
 			}
 
 			if (_destroyTextures)
@@ -3254,7 +3256,7 @@ namespace bgfx
 			return handle;
 		}
 
-		BGFX_API_FUNC(FrameBufferHandle createFrameBuffer(void* _nwh, uint16_t _width, uint16_t _height, TextureFormat::Enum _depthFormat) )
+		BGFX_API_FUNC(FrameBufferHandle createFrameBuffer(void* _nwh, uint16_t _width, uint16_t _height, TextureFormat::Enum _depthFormat, uint32_t _frameBufferFlags) )
 		{
 			FrameBufferHandle handle = { m_frameBufferHandle.alloc() };
 			BX_WARN(isValid(handle), "Failed to allocate frame buffer handle.");
@@ -3268,6 +3270,7 @@ namespace bgfx
 				cmdbuf.write(_width);
 				cmdbuf.write(_height);
 				cmdbuf.write(_depthFormat);
+				cmdbuf.write(_frameBufferFlags);
 
 				FrameBufferRef& ref = m_frameBufferRef[handle.idx];
 				ref.m_window = true;
