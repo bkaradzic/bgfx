@@ -88,10 +88,16 @@ function bgfxProject(_name, _kind, _defines)
 				"-weak_framework Metal",
 			}
 
-		configuration { "not nacl" }
+		configuration { "not nacl", "not linux-steamlink" }
 			includedirs {
 				--nacl has GLES2 headers modified...
+				--steamlink has EGL headers modified...
 				path.join(BGFX_DIR, "3rdparty/khronos"),
+			}
+
+		configuration { "linux-steamlink" }
+			defines {
+				"EGL_API_FB",
 			}
 
 		configuration {}

@@ -304,13 +304,21 @@ function exampleProject(_name)
 		kind "ConsoleApp"
 		targetextension ".bc"
 
-	configuration { "linux-* or freebsd" }
+	configuration { "linux-* or freebsd", "not linux-steamlink" }
 		links {
 			"X11",
 			"GL",
 			"pthread",
 		}
 
+	configuration { "linux-steamlink" }
+		links {
+			"EGL",
+			"GLESv2",
+			"SDL2",
+			"pthread",
+		}
+		
 	configuration { "rpi" }
 		links {
 			"X11",

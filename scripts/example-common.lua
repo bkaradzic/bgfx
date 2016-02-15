@@ -60,6 +60,11 @@ project ("example-common")
 			"ENTRY_CONFIG_USE_GLFW=1",
 		}
 	end
+	
+	configuration { "linux-steamlink" }
+		defines {
+			"EGL_API_FB",
+		}
 
 	configuration { "osx or ios* or tvos*" }
 		files {
