@@ -4,8 +4,6 @@
  */
 
 #include "bgfx_p.h"
-#include <math.h> // powf, sqrtf
-
 #include "image.h"
 
 namespace bgfx
@@ -345,30 +343,30 @@ namespace bgfx
 			const uint8_t* rgba = src;
 			for (uint32_t xx = 0; xx < dstwidth; ++xx, rgba += 8, dst += 4)
 			{
-				float rr = powf(rgba[       0], 2.2f);
-				float gg = powf(rgba[       1], 2.2f);
-				float bb = powf(rgba[       2], 2.2f);
-				float aa =      rgba[       3];
-				rr      += powf(rgba[       4], 2.2f);
-				gg      += powf(rgba[       5], 2.2f);
-				bb      += powf(rgba[       6], 2.2f);
-				aa      +=      rgba[       7];
-				rr      += powf(rgba[_pitch+0], 2.2f);
-				gg      += powf(rgba[_pitch+1], 2.2f);
-				bb      += powf(rgba[_pitch+2], 2.2f);
-				aa      +=      rgba[_pitch+3];
-				rr      += powf(rgba[_pitch+4], 2.2f);
-				gg      += powf(rgba[_pitch+5], 2.2f);
-				bb      += powf(rgba[_pitch+6], 2.2f);
-				aa      +=      rgba[_pitch+7];
+				float rr = bx::fpow(rgba[       0], 2.2f);
+				float gg = bx::fpow(rgba[       1], 2.2f);
+				float bb = bx::fpow(rgba[       2], 2.2f);
+				float aa =          rgba[       3];
+				rr      += bx::fpow(rgba[       4], 2.2f);
+				gg      += bx::fpow(rgba[       5], 2.2f);
+				bb      += bx::fpow(rgba[       6], 2.2f);
+				aa      +=          rgba[       7];
+				rr      += bx::fpow(rgba[_pitch+0], 2.2f);
+				gg      += bx::fpow(rgba[_pitch+1], 2.2f);
+				bb      += bx::fpow(rgba[_pitch+2], 2.2f);
+				aa      +=          rgba[_pitch+3];
+				rr      += bx::fpow(rgba[_pitch+4], 2.2f);
+				gg      += bx::fpow(rgba[_pitch+5], 2.2f);
+				bb      += bx::fpow(rgba[_pitch+6], 2.2f);
+				aa      +=          rgba[_pitch+7];
 
 				rr *= 0.25f;
 				gg *= 0.25f;
 				bb *= 0.25f;
 				aa *= 0.25f;
-				rr = powf(rr, 1.0f/2.2f);
-				gg = powf(gg, 1.0f/2.2f);
-				bb = powf(bb, 1.0f/2.2f);
+				rr = bx::fpow(rr, 1.0f/2.2f);
+				gg = bx::fpow(gg, 1.0f/2.2f);
+				bb = bx::fpow(bb, 1.0f/2.2f);
 				dst[0] = (uint8_t)rr;
 				dst[1] = (uint8_t)gg;
 				dst[2] = (uint8_t)bb;
@@ -3176,7 +3174,7 @@ namespace bgfx
 					{
 						float nx = temp[ii*4+2]*2.0f/255.0f - 1.0f;
 						float ny = temp[ii*4+1]*2.0f/255.0f - 1.0f;
-						float nz = sqrtf(1.0f - nx*nx - ny*ny);
+						float nz = bx::fsqrt(1.0f - nx*nx - ny*ny);
 						temp[ii*4+0] = uint8_t( (nz + 1.0f)*255.0f/2.0f);
 						temp[ii*4+3] = 0;
 					}
@@ -3323,10 +3321,10 @@ namespace bgfx
 			const uint8_t* rgba = src;
 			for (uint32_t xx = 0; xx < dstwidth; ++xx, rgba += 4, dst += 4)
 			{
-				dst[0] = powf(rgba[          0], 2.2f);
-				dst[1] = powf(rgba[          1], 2.2f);
-				dst[2] = powf(rgba[          2], 2.2f);
-				dst[3] =      rgba[          3];
+				dst[0] = bx::fpow(rgba[0], 2.2f);
+				dst[1] = bx::fpow(rgba[1], 2.2f);
+				dst[2] = bx::fpow(rgba[2], 2.2f);
+				dst[3] =          rgba[3];
 			}
 		}
 	}
@@ -3395,7 +3393,7 @@ namespace bgfx
 						{
 							float nx = temp[ii*4+2]*2.0f/255.0f - 1.0f;
 							float ny = temp[ii*4+1]*2.0f/255.0f - 1.0f;
-							float nz = sqrtf(1.0f - nx*nx - ny*ny);
+							float nz = bx::fsqrt(1.0f - nx*nx - ny*ny);
 
 							const uint32_t offset = (yy*4 + ii/4)*_width*16 + (xx*4 + ii%4)*16;
 							float* block = (float*)&dst[offset];
