@@ -311,6 +311,14 @@ function exampleProject(_name)
 			"pthread",
 		}
 
+	configuration { "steamlink" }
+		links {
+			"EGL",
+			"GLESv2",
+			"SDL2",
+			"pthread",
+		}
+		
 	configuration { "rpi" }
 		links {
 			"X11",
