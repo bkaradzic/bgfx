@@ -279,6 +279,9 @@ namespace bgfx
 #	elif BX_PLATFORM_WINDOWS
 		pd.ndt          = NULL;
 		pd.nwh          = wmi.info.win.window;
+#	elif BX_PLATFORM_STEAMLINK
+		pd.ndt          = wmi.info.vivante.display;
+		pd.nwh          = wmi.info.vivante.window;
 #	endif // BX_PLATFORM_
 		pd.context      = NULL;
 		pd.backBuffer   = NULL;
