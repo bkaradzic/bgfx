@@ -532,6 +532,9 @@ namespace bgfx
 		bool    cubeMap;            //!< Texture is cubemap.
 	};
 
+	/// Frame buffer texture attachemnt info.
+	///
+	/// @attention C99 equivalent is `bgfx_attachment_t`.
 	///
 	struct Attachment
 	{
@@ -1481,7 +1484,7 @@ namespace bgfx
 	/// Create frame buffer.
 	///
 	/// @param[in] _num Number of texture attachments.
-	/// @param[in] _attachment Attachment info. See: `Attachment`.
+	/// @param[in] _attachment Attachment texture info. See: `Attachment`.
 	/// @param[in] _destroyTextures If true, textures will be destroyed when
 	///   frame buffer is destroyed.
 	///
