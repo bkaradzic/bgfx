@@ -2052,7 +2052,7 @@ namespace bgfx
 		virtual void overrideInternal(TextureHandle _handle, uintptr_t _ptr) = 0;
 		virtual uintptr_t getInternal(TextureHandle _handle) = 0;
 		virtual void destroyTexture(TextureHandle _handle) = 0;
-		virtual void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles, const uint8_t* _side) = 0;
+		virtual void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const Attachment* _attachment) = 0;
 		virtual void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat) = 0;
 		virtual void destroyFrameBuffer(FrameBufferHandle _handle) = 0;
 		virtual void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name) = 0;
@@ -3184,14 +3184,14 @@ namespace bgfx
 			cmdbuf.write(_mem);
 		}
 
-		bool checkFrameBuffer(uint8_t _num, const TextureHandle* _handles) const
+		bool checkFrameBuffer(uint8_t _num, const Attachment* _attachment) const
 		{
 			uint8_t color = 0;
 			uint8_t depth = 0;
 
 			for (uint32_t ii = 0; ii < _num; ++ii)
 			{
-				TextureHandle texHandle = _handles[ii];
+				TextureHandle texHandle = _attachment[ii].handle;
 				if (isDepth(TextureFormat::Enum(m_textureRef[texHandle.idx].m_format)))
 				{
 					++depth;
@@ -3207,9 +3207,9 @@ namespace bgfx
 				;
 		}
 
-		BGFX_API_FUNC(FrameBufferHandle createFrameBuffer(uint8_t _num, const TextureHandle* _handles, const uint8_t* _side, bool _destroyTextures) )
+		BGFX_API_FUNC(FrameBufferHandle createFrameBuffer(uint8_t _num, const Attachment* _attachment, bool _destroyTextures) )
 		{
-			BX_CHECK(checkFrameBuffer(_num, _handles)
+			BX_CHECK(checkFrameBuffer(_num, _attachment)
 				, "Too many frame buffer attachments (num attachments: %d, max color attachments %d)!"
 				, _num
 				, g_caps.maxFBAttachments
@@ -3228,27 +3228,26 @@ namespace bgfx
 				FrameBufferRef& ref = m_frameBufferRef[handle.idx];
 				ref.m_window = false;
 				memset(ref.un.m_th, 0xff, sizeof(ref.un.m_th) );
-				BackbufferRatio::Enum bbRatio = BackbufferRatio::Enum(m_textureRef[_handles[0].idx].m_bbRatio);
+				BackbufferRatio::Enum bbRatio = BackbufferRatio::Enum(m_textureRef[_attachment[0].handle.idx].m_bbRatio);
 				for (uint32_t ii = 0; ii < _num; ++ii)
 				{
-					TextureHandle texHandle = _handles[ii];
+					TextureHandle texHandle = _attachment[ii].handle;
 					BGFX_CHECK_HANDLE("createFrameBuffer texture handle", m_textureHandle, texHandle);
 					BX_CHECK(bbRatio == m_textureRef[texHandle.idx].m_bbRatio, "Mismatch in texture back-buffer ratio.");
 					BX_UNUSED(bbRatio);
 
-					cmdbuf.write(texHandle);
-					cmdbuf.write(_side[ii]);
-
 					ref.un.m_th[ii] = texHandle;
 					textureIncRef(texHandle);
 				}
+
+				cmdbuf.write(_attachment, sizeof(Attachment) * _num);
 			}
 
 			if (_destroyTextures)
 			{
 				for (uint32_t ii = 0; ii < _num; ++ii)
 				{
-					textureTakeOwnership(_handles[ii]);
+					textureTakeOwnership(_attachment[ii].handle);
 				}
 			}
 

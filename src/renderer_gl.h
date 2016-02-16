@@ -1170,7 +1170,7 @@ namespace bgfx { namespace gl
 			memset(m_fbo, 0, sizeof(m_fbo) );
 		}
 
-		void create(uint8_t _num, const TextureHandle* _handles, const uint8_t* _side);
+		void create(uint8_t _num, const Attachment* _attachment);
 		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat);
 		void postReset();
 		uint16_t destroy();
@@ -1184,8 +1184,7 @@ namespace bgfx { namespace gl
 		uint16_t m_denseIdx;
 		uint8_t  m_num;
 		uint8_t  m_numTh;
-		TextureHandle m_th[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
-		uint8_t m_side[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 	};
 
 	struct ProgramGL

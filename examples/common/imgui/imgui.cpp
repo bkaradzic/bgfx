@@ -3572,3 +3572,10 @@ bool imguiMouseOverArea()
 {
 	return s_imgui.m_insideArea;
 }
+
+bgfx::ProgramHandle imguiGetImageProgram(uint8_t _mip)
+{
+	const float lodEnabled[4] = { float(_mip), 1.0f, 0.0f, 0.0f };
+	bgfx::setUniform(s_imgui.u_imageLodEnabled, lodEnabled);
+	return s_imgui.m_imageProgram;
+}

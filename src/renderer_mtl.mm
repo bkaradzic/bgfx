@@ -694,9 +694,9 @@ namespace bgfx { namespace mtl
 			m_textures[_handle.idx].destroy();
 		}
 
-		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles, const uint8_t* _side) BX_OVERRIDE
+		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const Attachment* _attachment) BX_OVERRIDE
 		{
-			m_frameBuffers[_handle.idx].create(_num, _textureHandles, _side);
+			m_frameBuffers[_handle.idx].create(_num, _attachment);
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat) BX_OVERRIDE
@@ -2079,12 +2079,12 @@ namespace bgfx { namespace mtl
 																	: m_sampler, _stage);
 	}
 
-	void FrameBufferMtl::create(uint8_t _num, const TextureHandle* _handles, const uint8_t* /*_side*/)
+	void FrameBufferMtl::create(uint8_t _num, const Attachment* _attachment)
 	{
 		m_num = 0;
 		for (uint32_t ii = 0; ii < _num; ++ii)
 		{
-			TextureHandle handle = _handles[ii];
+			TextureHandle handle = _attachment[ii].handle;
 			if (isValid(handle) )
 			{
 				const TextureMtl& texture = s_renderMtl->m_textures[handle.idx];

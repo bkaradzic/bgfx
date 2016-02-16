@@ -1018,9 +1018,9 @@ namespace bgfx { namespace d3d9
 			m_textures[_handle.idx].destroy();
 		}
 
-		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles, const uint8_t* _side) BX_OVERRIDE
+		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const Attachment* _attachment) BX_OVERRIDE
 		{
-			m_frameBuffers[_handle.idx].create(_num, _textureHandles, _side);
+			m_frameBuffers[_handle.idx].create(_num, _attachment);
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat) BX_OVERRIDE
@@ -3062,7 +3062,7 @@ namespace bgfx { namespace d3d9
 		}
 	}
 
-	void FrameBufferD3D9::create(uint8_t _num, const TextureHandle* _handles, const uint8_t* _side)
+	void FrameBufferD3D9::create(uint8_t _num, const Attachment* _attachment)
 	{
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_color); ++ii)
 		{
@@ -3074,7 +3074,7 @@ namespace bgfx { namespace d3d9
 		m_needResolve = false;
 		for (uint32_t ii = 0; ii < _num; ++ii)
 		{
-			TextureHandle handle = _handles[ii];
+			TextureHandle handle = _attachment[ii].handle;
 			if (isValid(handle) )
 			{
 				const TextureD3D9& texture = s_renderD3D9->m_textures[handle.idx];
@@ -3102,7 +3102,7 @@ namespace bgfx { namespace d3d9
 					}
 					else
 					{
-						m_color[m_num] = texture.getSurface(_side[ii]);
+						m_color[m_num] = texture.getSurface(uint8_t(_attachment[ii].layer) );
 					}
 					m_num++;
 				}

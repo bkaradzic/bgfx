@@ -2243,9 +2243,9 @@ namespace bgfx { namespace gl
 			m_textures[_handle.idx].destroy();
 		}
 
-		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles, const uint8_t* _side) BX_OVERRIDE
+		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const Attachment* _attachment) BX_OVERRIDE
 		{
-			m_frameBuffers[_handle.idx].create(_num, _textureHandles, _side);
+			m_frameBuffers[_handle.idx].create(_num, _attachment);
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat) BX_OVERRIDE
@@ -5017,13 +5017,12 @@ namespace bgfx { namespace gl
 		BX_UNUSED(complete);
 	}
 
-	void FrameBufferGL::create(uint8_t _num, const TextureHandle* _handles, const uint8_t* _side)
+	void FrameBufferGL::create(uint8_t _num, const Attachment* _attachment)
 	{
 		GL_CHECK(glGenFramebuffers(1, &m_fbo[0]) );
 
 		m_numTh = _num;
-		memcpy(m_th, _handles, _num*sizeof(TextureHandle) );
-		memcpy(m_side, _side, _num);
+		memcpy(m_attachment, _attachment, _num*sizeof(Attachment) );
 
 		postReset();
 	}
@@ -5041,7 +5040,7 @@ namespace bgfx { namespace gl
 			uint32_t colorIdx = 0;
 			for (uint32_t ii = 0; ii < m_numTh; ++ii)
 			{
-				TextureHandle handle = m_th[ii];
+				TextureHandle handle = m_attachment[ii].handle;
 				if (isValid(handle) )
 				{
 					const TextureGL& texture = s_renderGL->m_textures[handle.idx];
@@ -5087,7 +5086,7 @@ namespace bgfx { namespace gl
 					else
 					{
 						GLenum target = GL_TEXTURE_CUBE_MAP == texture.m_target
-							? GL_TEXTURE_CUBE_MAP_POSITIVE_X + m_side[ii]
+							? GL_TEXTURE_CUBE_MAP_POSITIVE_X + m_attachment[ii].layer
 							: texture.m_target
 							;
 
@@ -5095,7 +5094,7 @@ namespace bgfx { namespace gl
 							, attachment
 							, target
 							, texture.m_id
-							, 0
+							, m_attachment[ii].mip
 							) );
 					}
 
@@ -5135,7 +5134,7 @@ namespace bgfx { namespace gl
 				colorIdx = 0;
 				for (uint32_t ii = 0; ii < m_numTh; ++ii)
 				{
-					TextureHandle handle = m_th[ii];
+					TextureHandle handle = m_attachment[ii].handle;
 					if (isValid(handle) )
 					{
 						const TextureGL& texture = s_renderGL->m_textures[handle.idx];
@@ -5146,11 +5145,17 @@ namespace bgfx { namespace gl
 							if (!isDepth( (TextureFormat::Enum)texture.m_textureFormat) )
 							{
 								++colorIdx;
+
+								GLenum target = GL_TEXTURE_CUBE_MAP == texture.m_target
+									? GL_TEXTURE_CUBE_MAP_POSITIVE_X + m_attachment[ii].layer
+									: texture.m_target
+									;
+
 								GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER
 									, attachment
-									, texture.m_target
+									, target
 									, texture.m_id
-									, 0
+									, m_attachment[ii].mip
 									) );
 							}
 						}

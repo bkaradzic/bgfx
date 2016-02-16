@@ -1388,9 +1388,9 @@ namespace bgfx { namespace d3d12
 			m_textures[_handle.idx].destroy();
 		}
 
-		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles, const uint8_t* _side) BX_OVERRIDE
+		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const Attachment* _attachment) BX_OVERRIDE
 		{
-			m_frameBuffers[_handle.idx].create(_num, _textureHandles, _side);
+			m_frameBuffers[_handle.idx].create(_num, _attachment);
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat) BX_OVERRIDE
@@ -4184,11 +4184,10 @@ data.NumQualityLevels = 0;
 		return _state;
 	}
 
-	void FrameBufferD3D12::create(uint8_t _num, const TextureHandle* _handles, const uint8_t* _side)
+	void FrameBufferD3D12::create(uint8_t _num, const Attachment* _attachment)
 	{
 		m_numTh = _num;
-		memcpy(m_th, _handles, _num*sizeof(TextureHandle) );
-		memcpy(m_side, _side, _num);
+		memcpy(m_attachment, _attachment, _num*sizeof(Attachment) );
 
 		postReset();
 	}
@@ -4218,7 +4217,7 @@ data.NumQualityLevels = 0;
 			m_num = 0;
 			for (uint32_t ii = 0; ii < m_numTh; ++ii)
 			{
-				TextureHandle handle = m_th[ii];
+				TextureHandle handle = m_attachment[ii].handle;
 				if (isValid(handle) )
 				{
 					const TextureD3D12& texture = s_renderD3D12->m_textures[handle.idx];

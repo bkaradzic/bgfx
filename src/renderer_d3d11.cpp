@@ -1778,9 +1778,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			m_textures[_handle.idx].destroy();
 		}
 
-		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const TextureHandle* _textureHandles, const uint8_t* _side) BX_OVERRIDE
+		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const Attachment* _attachment) BX_OVERRIDE
 		{
-			m_frameBuffers[_handle.idx].create(_num, _textureHandles, _side);
+			m_frameBuffers[_handle.idx].create(_num, _attachment);
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat) BX_OVERRIDE
@@ -4252,7 +4252,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		return handle;
 	}
 
-	void FrameBufferD3D11::create(uint8_t _num, const TextureHandle* _handles, const uint8_t* _side)
+	void FrameBufferD3D11::create(uint8_t _num, const Attachment* _attachment)
 	{
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_rtv); ++ii)
 		{
@@ -4262,8 +4262,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		m_swapChain = NULL;
 
 		m_numTh = _num;
-		memcpy(m_th, _handles, _num*sizeof(TextureHandle) );
-		memcpy(m_side, _side, _num);
+		memcpy(m_attachment, _attachment, _num*sizeof(Attachment) );
 
 		postReset();
 	}
@@ -4356,7 +4355,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			m_num = 0;
 			for (uint32_t ii = 0; ii < m_numTh; ++ii)
 			{
-				TextureHandle handle = m_th[ii];
+				TextureHandle handle = m_attachment[ii].handle;
 				if (isValid(handle) )
 				{
 					const TextureD3D11& texture = s_renderD3D11->m_textures[handle.idx];
@@ -4405,7 +4404,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 									: D3D11_DSV_DIMENSION_TEXTURE2D
 									;
 								dsvDesc.Flags = 0;
-								dsvDesc.Texture2D.MipSlice = 0;
+								dsvDesc.Texture2D.MipSlice = m_attachment[ii].mip;
 								DX_CHECK(s_renderD3D11->m_device->CreateDepthStencilView(texture.m_ptr, &dsvDesc, &m_dsv) );
 							}
 							break;
@@ -4418,14 +4417,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								{
 									dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY;
 									dsvDesc.Texture2DMSArray.ArraySize       = 1;
-									dsvDesc.Texture2DMSArray.FirstArraySlice = m_side[ii];
+									dsvDesc.Texture2DMSArray.FirstArraySlice = m_attachment[ii].layer;
 								}
 								else
 								{
 									dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
 									dsvDesc.Texture2DArray.ArraySize       = 1;
-									dsvDesc.Texture2DArray.FirstArraySlice = m_side[ii];
-									dsvDesc.Texture2DArray.MipSlice        = 0;
+									dsvDesc.Texture2DArray.FirstArraySlice = m_attachment[ii].layer;
+									dsvDesc.Texture2DArray.MipSlice        = m_attachment[ii].mip;
 								}
 								dsvDesc.Flags = 0;
 								DX_CHECK(s_renderD3D11->m_device->CreateDepthStencilView(texture.m_ptr, &dsvDesc, &m_dsv) );
@@ -4439,7 +4438,20 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						{
 						default:
 						case TextureD3D11::Texture2D:
-							DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(texture.m_ptr, NULL, &m_rtv[m_num]) );
+							{
+								D3D11_RENDER_TARGET_VIEW_DESC desc;
+								desc.Format = s_textureFormat[texture.m_textureFormat].m_fmt;
+								if (1 < msaa.Count)
+								{
+									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
+								}
+								else
+								{
+									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+									desc.Texture2D.MipSlice = m_attachment[ii].mip;
+								}
+								DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(texture.m_ptr, &desc, &m_rtv[m_num]) );
+							}
 							break;
 
 						case TextureD3D11::TextureCube:
@@ -4450,14 +4462,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								{
 									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY;
 									desc.Texture2DMSArray.ArraySize       = 1;
-									desc.Texture2DMSArray.FirstArraySlice = 0;
+									desc.Texture2DMSArray.FirstArraySlice = m_attachment[ii].layer;
 								}
 								else
 								{
 									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
 									desc.Texture2DArray.ArraySize       = 1;
-									desc.Texture2DArray.FirstArraySlice = m_side[ii];
-									desc.Texture2DArray.MipSlice        = 0;
+									desc.Texture2DArray.FirstArraySlice = m_attachment[ii].layer;
+									desc.Texture2DArray.MipSlice        = m_attachment[ii].mip;
 								}
 								DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(texture.m_ptr, &desc, &m_rtv[m_num]) );
 							}
@@ -4468,9 +4480,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								D3D11_RENDER_TARGET_VIEW_DESC desc;
 								desc.Format        = s_textureFormat[texture.m_textureFormat].m_fmt;
 								desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE3D;
-								desc.Texture3D.MipSlice    = 0;
+								desc.Texture3D.MipSlice    = m_attachment[ii].mip;
 								desc.Texture3D.WSize       = 1;
-								desc.Texture3D.FirstWSlice = 0;
+								desc.Texture3D.FirstWSlice = m_attachment[ii].layer;
 								DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(texture.m_ptr, &desc, &m_rtv[m_num]) );
 							}
 							break;

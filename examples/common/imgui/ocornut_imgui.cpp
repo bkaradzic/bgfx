@@ -305,15 +305,21 @@ struct OcornutImguiContext
 						;
 
 					bgfx::TextureHandle th = m_texture;
+					bgfx::ProgramHandle program = m_program;
 
 					if (NULL != cmd->TextureId)
 					{
-						union { ImTextureID ptr; struct { uint16_t flags; bgfx::TextureHandle handle; } s; } texture = { cmd->TextureId };
+						union { ImTextureID ptr; struct { bgfx::TextureHandle handle; uint8_t flags; uint8_t mip; } s; } texture = { cmd->TextureId };
 						state |= 0 != (IMGUI_FLAGS_ALPHA_BLEND & texture.s.flags)
 							? BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 							: BGFX_STATE_NONE
 							;
 						th = texture.s.handle;
+						if (0 != texture.s.mip)
+						{
+							extern bgfx::ProgramHandle imguiGetImageProgram(uint8_t _mip);
+							program = imguiGetImageProgram(texture.s.mip);
+						}
 					}
 					else
 					{
@@ -331,7 +337,7 @@ struct OcornutImguiContext
 					bgfx::setTexture(0, s_tex, th);
 					bgfx::setVertexBuffer(&tvb, 0, numVertices);
 					bgfx::setIndexBuffer(&tib, offset, cmd->ElemCount);
-					bgfx::submit(cmd->ViewId, m_program);
+					bgfx::submit(cmd->ViewId, program);
 				}
 
 				offset += cmd->ElemCount;
