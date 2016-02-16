@@ -37,6 +37,7 @@ Supported platforms:
  * Native Client (PPAPI 37+, ARM, x86, x64, PNaCl)
  * OSX (10.9+)
  * RaspberryPi
+ * SteamLink
  * Windows (XP, Vista, 7, 8, 10)
  * WinRT (WinPhone 8.0+)
 
