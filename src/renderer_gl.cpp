@@ -5047,8 +5047,8 @@ namespace bgfx { namespace gl
 
 					if (0 == colorIdx)
 					{
-						m_width  = texture.m_width;
-						m_height = texture.m_height;
+						m_width  = bx::uint32_max(texture.m_width  >> m_attachment[ii].mip, 1);
+						m_height = bx::uint32_max(texture.m_height >> m_attachment[ii].mip, 1);
 					}
 
 					GLenum attachment = GL_COLOR_ATTACHMENT0 + colorIdx;
