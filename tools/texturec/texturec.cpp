@@ -511,6 +511,8 @@ int main(int _argc, const char* _argv[])
 					{
 						imageRgba32fDownsample2x2NormalMap(mip.m_width, mip.m_height, mip.m_width*16, rgba, rgba);
 						imageRgba32f11to01(rgbaDst, mip.m_width, mip.m_height, mip.m_width*16, rgba);
+						mip.m_width  = bx::uint32_max(1, mip.m_width  >> 1);
+						mip.m_height = bx::uint32_max(1, mip.m_height >> 1);
 
 						ImageMip dstMip;
 						imageGetRawData(imageContainer, 0, lod, output->data, output->size, dstMip);
@@ -541,6 +543,8 @@ int main(int _argc, const char* _argv[])
 					for (uint8_t lod = 1; lod < numMips; ++lod)
 					{
 						imageRgba8Downsample2x2(mip.m_width, mip.m_height, mip.m_width*4, rgba, rgba);
+						mip.m_width  = bx::uint32_max(1, mip.m_width  >> 1);
+						mip.m_height = bx::uint32_max(1, mip.m_height >> 1);
 
 						ImageMip dstMip;
 						imageGetRawData(imageContainer, 0, lod, output->data, output->size, dstMip);
