@@ -11,6 +11,7 @@
 
 #include <bx/allocator.h>
 #include <bx/ringbuffer.h>
+#include <tinystl/string.h>
 #include <tinystl/allocator.h>
 #include <tinystl/unordered_map.h>
 namespace stl = tinystl;
@@ -197,12 +198,12 @@ struct Input
 
 	void addBindings(const char* _name, const InputBinding* _bindings)
 	{
-		m_inputBindingsMap.insert(stl::make_pair(_name, _bindings) );
+		m_inputBindingsMap.insert(stl::make_pair(stl::string(_name), _bindings) );
 	}
 
 	void removeBindings(const char* _name)
 	{
-		InputBindingMap::iterator it = m_inputBindingsMap.find(_name);
+		InputBindingMap::iterator it = m_inputBindingsMap.find(stl::string(_name));
 		if (it != m_inputBindingsMap.end() )
 		{
 			m_inputBindingsMap.erase(it);
@@ -275,7 +276,7 @@ struct Input
 		}
 	}
 
-	typedef stl::unordered_map<const char*, const InputBinding*> InputBindingMap;
+	typedef stl::unordered_map<stl::string, const InputBinding*> InputBindingMap;
 	InputBindingMap m_inputBindingsMap;
 	Mouse m_mouse;
 	Keyboard m_keyboard;
