@@ -1721,6 +1721,8 @@ namespace bgfx
 
 	RendererContextI* rendererCreate(RendererType::Enum _type)
 	{
+		RendererType::Enum last = RendererType::Count;
+
 		if (RendererType::Count == _type)
 		{
 again:
@@ -1823,14 +1825,17 @@ again:
 		}
 
 		RendererContextI* renderCtx = s_rendererCreator[_type].createFn();
-
-		if (NULL == renderCtx)
+		if (last != _type)
 		{
-			s_rendererCreator[_type].supported = false;
-			goto again;
-		}
+			if (NULL == renderCtx)
+			{
+				s_rendererCreator[_type].supported = false;
+				last = _type;
+				goto again;
+			}
 
-		s_rendererDestroyFn = s_rendererCreator[_type].destroyFn;
+			s_rendererDestroyFn = s_rendererCreator[_type].destroyFn;
+		}
 
 		return renderCtx;
 	}
