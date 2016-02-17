@@ -646,10 +646,13 @@ Args::Args(int _argc, char** _argv)
 	{
 		m_type = bgfx::RendererType::OpenGL;
 	}
-	else if (cmdLine.hasArg("noop")
-		 ||  cmdLine.hasArg("vk") )
+	else if (cmdLine.hasArg("vk") )
 	{
-		m_type = bgfx::RendererType::OpenGL;
+		m_type = bgfx::RendererType::Vulkan;
+	}
+	else if (cmdLine.hasArg("noop") )
+	{
+		m_type = bgfx::RendererType::Null;
 	}
 	else if (BX_ENABLED(BX_PLATFORM_WINDOWS) )
 	{
