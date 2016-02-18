@@ -3072,9 +3072,11 @@ namespace bgfx { namespace d3d9
 
 		m_num = 0;
 		m_needResolve = false;
+		memcpy(m_attachment, _attachment, _num*sizeof(Attachment) );
+
 		for (uint32_t ii = 0; ii < _num; ++ii)
 		{
-			TextureHandle handle = _attachment[ii].handle;
+			TextureHandle handle = m_attachment[ii].handle;
 			if (isValid(handle) )
 			{
 				const TextureD3D9& texture = s_renderD3D9->m_textures[handle.idx];
@@ -3102,12 +3104,17 @@ namespace bgfx { namespace d3d9
 					}
 					else
 					{
-						m_color[m_num] = texture.getSurface(uint8_t(_attachment[ii].layer) );
+						m_color[m_num] = texture.getSurface(uint8_t(m_attachment[ii].layer), uint8_t(m_attachment[ii].mip) );
+						m_attachment[m_num].layer = m_attachment[ii].layer;
+						m_attachment[m_num].mip   = m_attachment[ii].mip;
 					}
 					m_num++;
 				}
 
-				m_needResolve |= (NULL != texture.m_surface) && (NULL != texture.m_texture2d);
+				m_needResolve |= true
+					&& (NULL != texture.m_surface)
+					&& (NULL != texture.m_texture2d)
+					;
 			}
 		}
 
@@ -3290,7 +3297,7 @@ namespace bgfx { namespace d3d9
 					}
 					else
 					{
-						m_color[ii] = texture.getSurface();
+						m_color[ii] = texture.getSurface(uint8_t(m_attachment[ii].layer), uint8_t(m_attachment[ii].mip) );
 					}
 				}
 			}
