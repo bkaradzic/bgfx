@@ -626,7 +626,7 @@ namespace bgfx
 		void write(const void* _data, uint32_t _size)
 		{
 			BX_CHECK(m_size == BGFX_CONFIG_MAX_COMMAND_BUFFER_SIZE, "Called write outside start/finish?");
-			BX_CHECK(m_pos < m_size, "");
+			BX_CHECK(m_pos < m_size, "CommandBuffer::write error (pos: %d, size: %d).", m_pos, m_size);
 			memcpy(&m_buffer[m_pos], _data, _size);
 			m_pos += _size;
 		}
@@ -640,7 +640,7 @@ namespace bgfx
 
 		void read(void* _data, uint32_t _size)
 		{
-			BX_CHECK(m_pos < m_size, "");
+			BX_CHECK(m_pos < m_size, "CommandBuffer::read error (pos: %d, size: %d).", m_pos, m_size);
 			memcpy(_data, &m_buffer[m_pos], _size);
 			m_pos += _size;
 		}
@@ -654,7 +654,7 @@ namespace bgfx
 
 		const uint8_t* skip(uint32_t _size)
 		{
-			BX_CHECK(m_pos < m_size, "");
+			BX_CHECK(m_pos < m_size, "CommandBuffer::skip error (pos: %d, size: %d).", m_pos, m_size);
 			const uint8_t* result = &m_buffer[m_pos];
 			m_pos += _size;
 			return result;
