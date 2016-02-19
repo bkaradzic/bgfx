@@ -275,10 +275,11 @@ namespace bgfx { namespace d3d11
 		IDXGISwapChain* m_swapChain;
 		uint32_t m_width;
 		uint32_t m_height;
+
+		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		uint16_t m_denseIdx;
 		uint8_t m_num;
 		uint8_t m_numTh;
-		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 	};
 
 	struct TimerQueryD3D11
