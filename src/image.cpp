@@ -2211,9 +2211,9 @@ namespace bgfx
 		}
 	}
 
-	const Memory* imageAlloc(ImageContainer& _imageContainer, TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth, bool _cubeMap, bool _numMips)
+	const Memory* imageAlloc(ImageContainer& _imageContainer, TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth, bool _cubeMap, bool _generateMips)
 	{
-		const uint8_t numMips = _numMips ? imageGetNumMips(_format, _width, _height) : 1;
+		const uint8_t numMips = _generateMips ? imageGetNumMips(_format, _width, _height) : 1;
 		uint32_t size = imageGetSize(_format, _width, _height, 0, false, numMips);
 		const Memory* image = alloc(size);
 
