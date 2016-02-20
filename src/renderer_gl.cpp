@@ -4590,7 +4590,7 @@ namespace bgfx { namespace gl
 
 		for (uint32_t ii = 0; ii < count; ++ii)
 		{
-			uint8_t nameSize;
+			uint8_t nameSize = 0;
 			bx::read(&reader, nameSize);
 
 			char name[256];

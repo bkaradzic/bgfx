@@ -2794,14 +2794,14 @@ namespace bgfx
 
 				for (uint32_t ii = 0; ii < count; ++ii)
 				{
-					uint8_t nameSize;
+					uint8_t nameSize = 0;
 					bx::read(&reader, nameSize);
 
 					char name[256];
 					bx::read(&reader, &name, nameSize);
 					name[nameSize] = '\0';
 
-					uint8_t type;
+					uint8_t type = 0;
 					bx::read(&reader, type);
 					type &= ~BGFX_UNIFORM_MASK;
 
