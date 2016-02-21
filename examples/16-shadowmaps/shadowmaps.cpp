@@ -12,8 +12,8 @@
 
 #include <bgfx/bgfx.h>
 #include <bx/timer.h>
-#include <bx/readerwriter.h>
 #include <bx/fpumath.h>
+#include <bx/crtimpl.h>
 #include "entry/entry.h"
 #include "camera.h"
 #include "imgui/imgui.h"

@@ -18,6 +18,8 @@
 #	include <remotery/lib/Remotery.c>
 #endif // BGFX_CONFIG_PROFILER_REMOTERY_BUILD_LIB
 
+#include <bx/crtimpl.h>
+
 namespace bgfx
 {
 #define BGFX_MAIN_THREAD_MAGIC UINT32_C(0x78666762)
@@ -982,13 +984,13 @@ namespace bgfx
 		{
 			m_sortKeys[ii] = SortKey::remapView(m_sortKeys[ii], m_viewRemap);
 		}
-		bx::radixSort64(m_sortKeys, s_ctx->m_tempKeys, m_sortValues, s_ctx->m_tempValues, m_num);
+		bx::radixSort(m_sortKeys, s_ctx->m_tempKeys, m_sortValues, s_ctx->m_tempValues, m_num);
 
 		for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
 		{
 			m_blitKeys[ii] = BlitKey::remapView(m_blitKeys[ii], m_viewRemap);
 		}
-		bx::radixSort32(m_blitKeys, (uint32_t*)&s_ctx->m_tempKeys, m_numBlitItems);
+		bx::radixSort(m_blitKeys, (uint32_t*)&s_ctx->m_tempKeys, m_numBlitItems);
 	}
 
 	RenderFrame::Enum renderFrame()

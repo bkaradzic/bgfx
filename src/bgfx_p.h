@@ -504,7 +504,7 @@ namespace bgfx
 			{
 				uint32_t* tempKeys = (uint32_t*)alloca(sizeof(m_keys) );
 				uint32_t* tempValues = (uint32_t*)alloca(sizeof(m_values) );
-				bx::radixSort32(m_keys, tempKeys, m_values, tempValues, m_num);
+				bx::radixSort(m_keys, tempKeys, m_values, tempValues, m_num);
 				return true;
 			}
 

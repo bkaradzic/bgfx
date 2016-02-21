@@ -9,7 +9,7 @@
 #include "common.h"
 #include "bgfx_utils.h"
 
-#include <bx/readerwriter.h>
+#include <bx/crtimpl.h>
 #include "camera.h"
 #include "imgui/imgui.h"
 

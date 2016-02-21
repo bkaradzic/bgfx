@@ -28,6 +28,7 @@
 #include <bx/uint32_t.h>
 #include <bx/fpumath.h>
 #include <bx/handlealloc.h>
+#include <bx/crtimpl.h>
 
 #include "imgui.h"
 #include "ocornut_imgui.h"

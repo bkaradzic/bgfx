@@ -6,7 +6,7 @@
 #include <bx/bx.h>
 #include <bgfx/bgfx.h>
 #include <bx/string.h>
-#include <bx/readerwriter.h>
+#include <bx/crtimpl.h>
 
 #include <time.h>
 
