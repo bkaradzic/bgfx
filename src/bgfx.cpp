@@ -700,7 +700,8 @@ namespace bgfx
 				}
 			}
 			else if (RendererType::OpenGLES == g_caps.rendererType
-				 ||  RendererType::OpenGL   == g_caps.rendererType)
+				 ||  RendererType::OpenGL   == g_caps.rendererType
+				 ||  RendererType::Vulkan   == g_caps.rendererType)
 			{
 				vsh = createShader(makeRef(vs_clear_glsl, sizeof(vs_clear_glsl) ) );
 
