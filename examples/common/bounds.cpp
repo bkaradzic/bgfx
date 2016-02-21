@@ -277,6 +277,43 @@ void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 	_sphere.m_radius = bx::fsqrt(maxDistSq);
 }
 
+void calcPlaneUv(const Plane& _plane, float _step, float* _udir, float* _vdir)
+{
+	const uint8_t axis =
+		   bx::fabsolute(_plane.m_normal[0]) > 0.6f ? 0
+		: (bx::fabsolute(_plane.m_normal[1]) > 0.6f ? 1
+		:                                             2
+		);
+	const uint8_t* index  = (uint8_t*)&"\x1\x2\x0\x2\x0\x1"[axis*2];
+	const uint8_t idx0 = *(index  );
+	const uint8_t idx1 = *(index+1);
+	const float invStep = 1.0f/_step;
+
+	_udir[0] = 0.0f;
+	_udir[1] = 0.0f;
+	_udir[2] = 0.0f;
+	_udir[idx0] = invStep;
+
+	_vdir[0] = 0.0f;
+	_vdir[1] = 0.0f;
+	_vdir[2] = 0.0f;
+	_vdir[idx1] = invStep;
+
+	const float invPlaneAxis = 1.0f / _plane.m_normal[axis];
+	float normal[3];
+	float invLen;
+
+	invLen = 1.0f / bx::vec3Norm(normal, _udir);
+	bx::vec3Mul(_udir, normal, invLen);
+	_udir[axis] -= bx::vec3Dot(_udir, _plane.m_normal) * invPlaneAxis;
+	bx::vec3Norm(_udir, _udir);
+
+	invLen = 1.0f / bx::vec3Norm(normal, _vdir);
+	bx::vec3Mul(_vdir, normal, invLen);
+	_vdir[axis] -= bx::vec3Dot(_vdir, _plane.m_normal) * invPlaneAxis;
+	bx::vec3Norm(_vdir, _vdir);
+}
+
 void buildFrustumPlanes(Plane* _result, const float* _viewProj)
 {
 	const float xw = _viewProj[ 3];
