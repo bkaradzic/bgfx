@@ -59,9 +59,9 @@ namespace bgfx
 #include <bx/commandline.h>
 #include <bx/endian.h>
 #include <bx/uint32_t.h>
-#include <bx/readerwriter.h>
 #include <bx/string.h>
 #include <bx/hash.h>
+#include <bx/crtimpl.h>
 #include "../../src/vertexdecl.h"
 
 namespace bgfx

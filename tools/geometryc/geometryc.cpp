@@ -58,11 +58,11 @@ namespace stl = tinystl;
 #include <bx/debug.h>
 #include <bx/commandline.h>
 #include <bx/timer.h>
-#include <bx/readerwriter.h>
 #include <bx/hash.h>
 #include <bx/uint32_t.h>
 #include <bx/fpumath.h>
 #include <bx/tokenizecmd.h>
+#include <bx/crtimpl.h>
 
 #include "bounds.h"
 

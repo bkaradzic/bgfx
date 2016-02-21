@@ -27,8 +27,8 @@
 #endif // DEBUG
 
 #include <bx/bx.h>
-#include <bx/allocator.h>
 #include <bx/commandline.h>
+#include <bx/crtimpl.h>
 #include <bx/uint32_t.h>
 
 namespace bgfx
