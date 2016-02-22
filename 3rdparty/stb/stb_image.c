@@ -1,7 +1,9 @@
 #ifdef __GNUC__
 #	pragma GCC diagnostic ignored "-Wshadow"
 #	pragma GCC diagnostic ignored "-Warray-bounds"
-#	pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#	ifndef __clang__
+#		pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#	endif // __clang__
 #elif defined(_MSC_VER)
 #	pragma warning(disable:4312) // warning C4312: 'type cast': conversion from '' to '' of greater size
 #	pragma warning(disable:4456) // warning C4456: declaration of 'k' hides previous local declaration
