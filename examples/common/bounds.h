@@ -95,7 +95,7 @@ void calcMaxBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _numVertices, uint32_t _stride, float _step = 0.01f);
 
 /// Calculate coplanar U/V vectors.
-void calcPlaneUv(const Plane& _plane, float _step, float* _udir, float* _vdir);
+void calcPlaneUv(const Plane& _plane, float* _udir, float* _vdir);
 
 /// Returns 6 (near, far, left, right, top, bottom) planes representing frustum planes.
 void buildFrustumPlanes(Plane* _planes, const float* _viewProj);

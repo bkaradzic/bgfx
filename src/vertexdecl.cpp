@@ -6,9 +6,10 @@
 #include <string.h>
 #include <bx/debug.h>
 #include <bx/hash.h>
-#include <bx/uint32_t.h>
-#include <bx/string.h>
 #include <bx/readerwriter.h>
+#include <bx/radixsort.h>
+#include <bx/string.h>
+#include <bx/uint32_t.h>
 
 #include "config.h"
 #include "vertexdecl.h"
@@ -839,4 +840,5 @@ namespace bgfx
 
 		return (uint16_t)numVertices;
 	}
+
 } // namespace bgfx
