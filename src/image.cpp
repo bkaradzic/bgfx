@@ -1396,6 +1396,15 @@ namespace bgfx
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_packUnpack) );
 
+	bool imageConvert(TextureFormat::Enum _dstFormat, TextureFormat::Enum _srcFormat)
+	{
+		UnpackFn unpack = s_packUnpack[_srcFormat].unpack;
+		PackFn   pack   = s_packUnpack[_dstFormat].pack;
+		return NULL != pack
+			&& NULL != unpack
+			;
+	}
+
 	bool imageConvert(void* _dst, TextureFormat::Enum _dstFormat, const void* _src, TextureFormat::Enum _srcFormat, uint32_t _width, uint32_t _height)
 	{
 		UnpackFn unpack = s_packUnpack[_srcFormat].unpack;
@@ -3277,8 +3286,11 @@ namespace bgfx
 			break;
 
 		default:
-			// Decompression not implemented... Make ugly red-yellow checkerboard texture.
-			imageCheckerboard(_width, _height, 16, UINT32_C(0xffff0000), UINT32_C(0xffffff00), _dst);
+			if (!imageConvert(_dst, TextureFormat::BGRA8, _src, _format, _width, _height) )
+			{
+				// Failed to convert, just make ugly red-yellow checkerboard texture.
+				imageCheckerboard(_width, _height, 16, UINT32_C(0xffff0000), UINT32_C(0xffffff00), _dst);
+			}
 			break;
 		}
 	}

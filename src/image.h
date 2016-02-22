@@ -118,6 +118,9 @@ namespace bgfx
 	void imageCopy(uint32_t _width, uint32_t _height, uint32_t _bpp, uint32_t _pitch, const void* _src, void* _dst);
 
 	///
+	bool imageConvert(TextureFormat::Enum _dstFormat, TextureFormat::Enum _srcFormat);
+
+	///
 	bool imageConvert(void* _dst, TextureFormat::Enum _dstFormat, const void* _src, TextureFormat::Enum _srcFormat, uint32_t _width, uint32_t _height);
 
 	///
