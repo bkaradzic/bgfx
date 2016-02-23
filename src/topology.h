@@ -25,18 +25,21 @@ namespace bgfx
 		};
 	};
 
-	/// Converts topology from triangle list to line list.
+	/// Convert index buffer for use with different primitive topologies.
 	///
-	/// @param[in] _conversion
-	/// @param[in] _dst
-	/// @param[in] _dstSize
-	/// @param[in] _indices
-	/// @param[in] _numIndices
-	/// @param[in] _index32
+	/// @param[in] _conversion Conversion type, see `TopologyConvert::Enum`.
+	/// @param[in] _dst Destination index buffer. If this argument it NULL
+	///    function will return number of indices after conversion.
+	/// @param[in] _dstSize Destination index buffer in bytes. It must be
+	///    large enough to contain output indices. If destionation size is
+	///    insufficent index buffer will be truncated.
+	/// @param[in] _indices Source indices.
+	/// @param[in] _numIndices Number of input indices.
+	/// @param[in] _index32 Set to `true` if input indices are 32-bit.
 	///
-	/// @returns
+	/// @returns Number of output indices after conversion.
 	///
-	uint32_t toplogyConvert(TopologyConvert::Enum _conversion, void* _dst, uint32_t _dstSize, const void* _indices, uint32_t _numIndices, bool _index32, bx::AllocatorI* _allocator);
+	uint32_t topologyConvert(TopologyConvert::Enum _conversion, void* _dst, uint32_t _dstSize, const void* _indices, uint32_t _numIndices, bool _index32, bx::AllocatorI* _allocator);
 
 } // namespace bgfx
 

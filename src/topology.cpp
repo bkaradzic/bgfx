@@ -12,7 +12,7 @@
 namespace bgfx
 {
 	template<typename IndexT>
-	static uint32_t toplogyConvertTriListFlipWinding(void* _dst, uint32_t _dstSize, const IndexT* _indices, uint32_t _numIndices)
+	static uint32_t topologyConvertTriListFlipWinding(void* _dst, uint32_t _dstSize, const IndexT* _indices, uint32_t _numIndices)
 	{
 		if (NULL == _dst)
 		{
@@ -35,7 +35,7 @@ namespace bgfx
 	}
 
 	template<typename IndexT, typename SortT>
-	static uint32_t toplogyConvertTriListToLineList(void* _dst, uint32_t _dstSize, const IndexT* _indices, uint32_t _numIndices, IndexT* _temp, SortT* _tempSort)
+	static uint32_t topologyConvertTriListToLineList(void* _dst, uint32_t _dstSize, const IndexT* _indices, uint32_t _numIndices, IndexT* _temp, SortT* _tempSort)
 	{
 		// Create all line pairs and sort indices.
 		IndexT* dst = _temp;
@@ -107,17 +107,17 @@ namespace bgfx
 	}
 
 	template<typename IndexT, typename SortT>
-	static uint32_t toplogyConvertTriListToLineList(void* _dst, uint32_t _dstSize, const IndexT* _indices, uint32_t _numIndices, bx::AllocatorI* _allocator)
+	static uint32_t topologyConvertTriListToLineList(void* _dst, uint32_t _dstSize, const IndexT* _indices, uint32_t _numIndices, bx::AllocatorI* _allocator)
 	{
 		IndexT* temp     = (IndexT*)BX_ALLOC(_allocator, _numIndices*2*sizeof(IndexT)*2);
 		SortT*  tempSort = (SortT*)&temp[_numIndices*2];
-		uint32_t num = toplogyConvertTriListToLineList(_dst, _dstSize, _indices, _numIndices, temp, tempSort);
+		uint32_t num = topologyConvertTriListToLineList(_dst, _dstSize, _indices, _numIndices, temp, tempSort);
 		BX_FREE(_allocator, temp);
 		return num;
 	}
 
 	template<typename IndexT>
-	static uint32_t toplogyConvertTriStripToTriList(void* _dst, uint32_t _dstSize, const IndexT* _indices, uint32_t _numIndices)
+	static uint32_t topologyConvertTriStripToTriList(void* _dst, uint32_t _dstSize, const IndexT* _indices, uint32_t _numIndices)
 	{
 		IndexT* dst = (IndexT*)_dst;
 		IndexT* end = &dst[_dstSize/sizeof(IndexT)];
@@ -141,7 +141,7 @@ namespace bgfx
 	}
 
 	template<typename IndexT>
-	static uint32_t toplogyConvertLineStripToLineList(void* _dst, uint32_t _dstSize, const IndexT* _indices, uint32_t _numIndices)
+	static uint32_t topologyConvertLineStripToLineList(void* _dst, uint32_t _dstSize, const IndexT* _indices, uint32_t _numIndices)
 	{
 		IndexT* dst = (IndexT*)_dst;
 		IndexT* end = &dst[_dstSize/sizeof(IndexT)];
@@ -164,25 +164,25 @@ namespace bgfx
 		return uint32_t(dst - (IndexT*)_dst);
 	}
 
-	uint32_t toplogyConvert(TopologyConvert::Enum _conversion, void* _dst, uint32_t _dstSize, const void* _indices, uint32_t _numIndices, bool _index32, bx::AllocatorI* _allocator)
+	uint32_t topologyConvert(TopologyConvert::Enum _conversion, void* _dst, uint32_t _dstSize, const void* _indices, uint32_t _numIndices, bool _index32, bx::AllocatorI* _allocator)
 	{
 		switch (_conversion)
 		{
 		case TopologyConvert::TriStripToTriList:
 			if (_index32)
 			{
-				return toplogyConvertTriStripToTriList(_dst, _dstSize, (const uint32_t*)_indices, _numIndices);
+				return topologyConvertTriStripToTriList(_dst, _dstSize, (const uint32_t*)_indices, _numIndices);
 			}
 
-			return toplogyConvertTriStripToTriList(_dst, _dstSize, (const uint16_t*)_indices, _numIndices);
+			return topologyConvertTriStripToTriList(_dst, _dstSize, (const uint16_t*)_indices, _numIndices);
 
 		case TopologyConvert::TriListFlipWinding:
 			if (_index32)
 			{
-				return toplogyConvertTriListFlipWinding(_dst, _dstSize, (const uint32_t*)_indices, _numIndices);
+				return topologyConvertTriListFlipWinding(_dst, _dstSize, (const uint32_t*)_indices, _numIndices);
 			}
 
-			return toplogyConvertTriListFlipWinding(_dst, _dstSize, (const uint16_t*)_indices, _numIndices);
+			return topologyConvertTriListFlipWinding(_dst, _dstSize, (const uint16_t*)_indices, _numIndices);
 
 		case TopologyConvert::TriListToLineList:
 			if (NULL == _allocator)
@@ -192,18 +192,18 @@ namespace bgfx
 
 			if (_index32)
 			{
-				return toplogyConvertTriListToLineList<uint32_t, uint64_t>(_dst, _dstSize, (const uint32_t*)_indices, _numIndices, _allocator);
+				return topologyConvertTriListToLineList<uint32_t, uint64_t>(_dst, _dstSize, (const uint32_t*)_indices, _numIndices, _allocator);
 			}
 
-			return toplogyConvertTriListToLineList<uint16_t, uint32_t>(_dst, _dstSize, (const uint16_t*)_indices, _numIndices, _allocator);
+			return topologyConvertTriListToLineList<uint16_t, uint32_t>(_dst, _dstSize, (const uint16_t*)_indices, _numIndices, _allocator);
 
 		case TopologyConvert::LineStripToLineList:
 			if (_index32)
 			{
-				return toplogyConvertLineStripToLineList(_dst, _dstSize, (const uint32_t*)_indices, _numIndices);
+				return topologyConvertLineStripToLineList(_dst, _dstSize, (const uint32_t*)_indices, _numIndices);
 			}
 
-			return toplogyConvertLineStripToLineList(_dst, _dstSize, (const uint16_t*)_indices, _numIndices);
+			return topologyConvertLineStripToLineList(_dst, _dstSize, (const uint16_t*)_indices, _numIndices);
 
 		default:
 			break;
