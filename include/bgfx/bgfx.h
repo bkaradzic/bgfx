@@ -264,24 +264,45 @@ namespace bgfx
 		/// Backbuffer ratios:
 		enum Enum
 		{
-			Equal,
-			Half,
-			Quarter,
-			Eighth,
-			Sixteenth,
-			Double,
+			Equal,     //!< Equal to backbuffer.
+			Half,      //!< One half size of backbuffer.
+			Quarter,   //!< One quarter size of backbuffer.
+			Eighth,    //!< One eighth size of backbuffer.
+			Sixteenth, //!< One sixteenth size of backbuffer.
+			Double,    //!< Double size of backbuffer.
 
 			Count
 		};
 	};
 
+	/// Occlusion query result.
+	///
+	/// @attention C99 equivalent is `bgfx_occlusion_query_result_t`.
+	///
 	struct OcclusionQueryResult
 	{
 		enum Enum
 		{
-			Invisible,
-			Visible,
-			NoResult,
+			Invisible, //!< Query failed test.
+			Visible,   //!< Query passed test.
+			NoResult,  //!< Query result is not available yet.
+
+			Count
+		};
+	};
+
+	/// Topology conversion function.
+	///
+	/// @attention C99 equivalent is `bgfx_topology_convert_t`.
+	///
+	struct TopologyConvert
+	{
+		enum Enum
+		{
+			TriListFlipWinding,  //!< Flip winding order of triangle list.
+			TriListToLineList,   //!< Convert triangle list to line list.
+			TriStripToTriList,   //!< Convert triangle strip to triangle list.
+			LineStripToLineList, //!< Convert line strip to line list.
 
 			Count
 		};
@@ -702,6 +723,24 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_weld_vertices`.
 	///
 	uint16_t weldVertices(uint16_t* _output, const VertexDecl& _decl, const void* _data, uint16_t _num, float _epsilon = 0.001f);
+
+	/// Convert index buffer for use with different primitive topologies.
+	///
+	/// @param[in] _conversion Conversion type, see `TopologyConvert::Enum`.
+	/// @param[in] _dst Destination index buffer. If this argument it NULL
+	///    function will return number of indices after conversion.
+	/// @param[in] _dstSize Destination index buffer in bytes. It must be
+	///    large enough to contain output indices. If destination size is
+	///    insufficient index buffer will be truncated.
+	/// @param[in] _indices Source indices.
+	/// @param[in] _numIndices Number of input indices.
+	/// @param[in] _index32 Set to `true` if input indices are 32-bit.
+	///
+	/// @returns Number of output indices after conversion.
+	///
+	/// @attention C99 equivalent is `bgfx_topology_convert`.
+	///
+	uint32_t topologyConvert(TopologyConvert::Enum _conversion, void* _dst, uint32_t _dstSize, const void* _indices, uint32_t _numIndices, bool _index32);
 
 	/// Swizzle RGBA8 image to BGRA8.
 	///
@@ -1864,12 +1903,28 @@ namespace bgfx
 	/// Set index buffer for draw primitive.
 	///
 	/// @param[in] _handle Index buffer.
+	///
+	/// @attention C99 equivalent is `bgfx_set_index_buffer`.
+	///
+	void setIndexBuffer(IndexBufferHandle _handle);
+
+	/// Set index buffer for draw primitive.
+	///
+	/// @param[in] _handle Index buffer.
 	/// @param[in] _firstIndex First index to render.
 	/// @param[in] _numIndices Number of indices to render.
 	///
 	/// @attention C99 equivalent is `bgfx_set_index_buffer`.
 	///
-	void setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex = 0, uint32_t _numIndices = UINT32_MAX);
+	void setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices);
+
+	/// Set index buffer for draw primitive.
+	///
+	/// @param[in] _handle Dynamic index buffer.
+	///
+	/// @attention C99 equivalent is `bgfx_set_dynamic_index_buffer`.
+	///
+	void setIndexBuffer(DynamicIndexBufferHandle _handle);
 
 	/// Set index buffer for draw primitive.
 	///
@@ -1879,7 +1934,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_set_dynamic_index_buffer`.
 	///
-	void setIndexBuffer(DynamicIndexBufferHandle _handle, uint32_t _firstIndex = 0, uint32_t _numIndices = UINT32_MAX);
+	void setIndexBuffer(DynamicIndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices);
 
 	/// Set index buffer for draw primitive.
 	///
@@ -1920,11 +1975,20 @@ namespace bgfx
 	/// Set vertex buffer for draw primitive.
 	///
 	/// @param[in] _handle Dynamic vertex buffer.
+	///
+	/// @attention C99 equivalent is `bgfx_set_dynamic_vertex_buffer`.
+	///
+	void setVertexBuffer(DynamicVertexBufferHandle _handle);
+
+	/// Set vertex buffer for draw primitive.
+	///
+	/// @param[in] _handle Dynamic vertex buffer.
+	/// @param[in] _startVertex First vertex to render.
 	/// @param[in] _numVertices Number of vertices to render.
 	///
 	/// @attention C99 equivalent is `bgfx_set_dynamic_vertex_buffer`.
 	///
-	void setVertexBuffer(DynamicVertexBufferHandle _handle, uint32_t _numVertices = UINT32_MAX);
+	void setVertexBuffer(DynamicVertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices);
 
 	/// Set vertex buffer for draw primitive.
 	///

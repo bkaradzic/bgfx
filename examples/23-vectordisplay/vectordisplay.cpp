@@ -186,7 +186,7 @@ void VectorDisplay::endFrame()
 
 			bgfx::setTexture(0, s_texColor, m_lineTexId);
 
-			bgfx::setVertexBuffer(m_vertexBuffers[i], m_vertexBuffersSize[i]); // explicitly feed vertex number!
+			bgfx::setVertexBuffer(m_vertexBuffers[i], 0, m_vertexBuffersSize[i]); // explicitly feed vertex number!
 
 			bgfx::setState(0
 				| BGFX_STATE_RGB_WRITE

@@ -822,8 +822,8 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 						);
 			}
 
-			bgfx::setVertexBuffer(vbh, bc.textBuffer->getVertexCount() );
-			bgfx::setIndexBuffer(ibh, bc.textBuffer->getIndexCount() );
+			bgfx::setVertexBuffer(vbh, 0, bc.textBuffer->getVertexCount() );
+			bgfx::setIndexBuffer(ibh, 0, bc.textBuffer->getIndexCount() );
 		}
 		break;
 

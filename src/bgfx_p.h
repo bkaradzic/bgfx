@@ -1538,10 +1538,10 @@ namespace bgfx
 			m_draw.m_vertexBuffer = _handle;
 		}
 
-		void setVertexBuffer(const DynamicVertexBuffer& _dvb, uint32_t _numVertices)
+		void setVertexBuffer(const DynamicVertexBuffer& _dvb, uint32_t _startVertex, uint32_t _numVertices)
 		{
-			m_draw.m_startVertex  = _dvb.m_startVertex;
-			m_draw.m_numVertices  = bx::uint32_min(_dvb.m_numVertices, _numVertices);
+			m_draw.m_startVertex  = _dvb.m_startVertex + _startVertex;
+			m_draw.m_numVertices  = bx::uint32_min(bx::uint32_imax(0, _dvb.m_numVertices - _startVertex), _numVertices);
 			m_draw.m_vertexBuffer = _dvb.m_handle;
 			m_draw.m_vertexDecl   = _dvb.m_decl;
 		}
@@ -1549,7 +1549,7 @@ namespace bgfx
 		void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices)
 		{
 			m_draw.m_startVertex  = _tvb->startVertex + _startVertex;
-			m_draw.m_numVertices  = bx::uint32_min(_tvb->size/_tvb->stride, _numVertices);
+			m_draw.m_numVertices  = bx::uint32_min(bx::uint32_imax(0, _tvb->size/_tvb->stride - _startVertex), _numVertices);
 			m_draw.m_vertexBuffer = _tvb->handle;
 			m_draw.m_vertexDecl   = _tvb->decl;
 		}
@@ -3650,10 +3650,10 @@ namespace bgfx
 			m_submit->setVertexBuffer(_handle, _startVertex, _numVertices);
 		}
 
-		BGFX_API_FUNC(void setVertexBuffer(DynamicVertexBufferHandle _handle, uint32_t _numVertices) )
+		BGFX_API_FUNC(void setVertexBuffer(DynamicVertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices) )
 		{
 			BGFX_CHECK_HANDLE("setVertexBuffer", m_dynamicVertexBufferHandle, _handle);
-			m_submit->setVertexBuffer(m_dynamicVertexBuffers[_handle.idx], _numVertices);
+			m_submit->setVertexBuffer(m_dynamicVertexBuffers[_handle.idx], _startVertex, _numVertices);
 		}
 
 		BGFX_API_FUNC(void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices) )

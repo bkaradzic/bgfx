@@ -4,6 +4,7 @@
  */
 
 #include <bx/debug.h>
+#include <bx/allocator.h>
 #include <bx/radixsort.h>
 
 #include "config.h"

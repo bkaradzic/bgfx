@@ -220,6 +220,17 @@ typedef enum bgfx_occlusion_query_result
 
 } bgfx_occlusion_query_result_t;
 
+typedef enum bgfx_topology_convert
+{
+    BGFX_TOPOLOGY_CONVERT_TRI_LIST_FLIP_WINDING,
+    BGFX_TOPOLOGY_CONVERT_TRI_LIST_TO_LINE_LIST,
+    BGFX_TOPOLOGY_CONVERT_TRI_STRIP_TO_TRI_LIST,
+    BGFX_TOPOLOGY_CONVERT_LINE_STRIP_TO_LINE_LIST,
+
+    BGFX_TOPOLOGY_CONVERT_COUNT
+
+} bgfx_topology_convert_t;
+
 #define BGFX_HANDLE_T(_name) \
     typedef struct _name { uint16_t idx; } _name##_t
 
@@ -753,7 +764,7 @@ BGFX_C_API void bgfx_set_transient_index_buffer(const bgfx_transient_index_buffe
 BGFX_C_API void bgfx_set_vertex_buffer(bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices);
 
 /**/
-BGFX_C_API void bgfx_set_dynamic_vertex_buffer(bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _numVertices);
+BGFX_C_API void bgfx_set_dynamic_vertex_buffer(bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices);
 
 /**/
 BGFX_C_API void bgfx_set_transient_vertex_buffer(const bgfx_transient_vertex_buffer_t* _tvb, uint32_t _startVertex, uint32_t _numVertices);

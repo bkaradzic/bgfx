@@ -7,37 +7,24 @@
 #define BGFX_TOPOLOGY_H_HEADER_GUARD
 
 #include <bgfx/bgfx.h>
-#include <bx/allocator.h>
 
 namespace bgfx
 {
-	///
-	struct TopologyConvert
-	{
-		enum Enum
-		{
-			TriListFlipWinding,
-			TriListToLineList,
-			TriStripToTriList,
-			LineStripToLineList,
-
-			Count
-		};
-	};
-
 	/// Convert index buffer for use with different primitive topologies.
 	///
 	/// @param[in] _conversion Conversion type, see `TopologyConvert::Enum`.
 	/// @param[in] _dst Destination index buffer. If this argument it NULL
 	///    function will return number of indices after conversion.
 	/// @param[in] _dstSize Destination index buffer in bytes. It must be
-	///    large enough to contain output indices. If destionation size is
-	///    insufficent index buffer will be truncated.
+	///    large enough to contain output indices. If destination size is
+	///    insufficient index buffer will be truncated.
 	/// @param[in] _indices Source indices.
 	/// @param[in] _numIndices Number of input indices.
 	/// @param[in] _index32 Set to `true` if input indices are 32-bit.
 	///
 	/// @returns Number of output indices after conversion.
+	///
+	/// @attention C99 equivalent is `bgfx_topology_convert`.
 	///
 	uint32_t topologyConvert(TopologyConvert::Enum _conversion, void* _dst, uint32_t _dstSize, const void* _indices, uint32_t _numIndices, bool _index32, bx::AllocatorI* _allocator);
 
