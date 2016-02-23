@@ -260,7 +260,7 @@ namespace bgfx { namespace gl
 		{ GL_RGBA32I,                                  GL_ZERO,                                       GL_RGBA,                                     GL_INT,                          false }, // RGBA32I
 		{ GL_RGBA32UI,                                 GL_ZERO,                                       GL_RGBA,                                     GL_UNSIGNED_INT,                 false }, // RGBA32U
 		{ GL_RGBA32F,                                  GL_ZERO,                                       GL_RGBA,                                     GL_FLOAT,                        false }, // RGBA32F
-		{ GL_RGB565,                                   GL_ZERO,                                       GL_RGB,                                      GL_UNSIGNED_SHORT_5_6_5_REV,     false }, // R5G6B5
+		{ GL_RGB565,                                   GL_ZERO,                                       GL_RGB,                                      GL_UNSIGNED_SHORT_5_6_5,         false }, // R5G6B5
 		{ GL_RGBA4,                                    GL_ZERO,                                       GL_RGBA,                                     GL_UNSIGNED_SHORT_4_4_4_4_REV,   false }, // RGBA4
 		{ GL_RGB5_A1,                                  GL_ZERO,                                       GL_RGBA,                                     GL_UNSIGNED_SHORT_1_5_5_5_REV,   false }, // RGB5A1
 		{ GL_RGB10_A2,                                 GL_ZERO,                                       GL_RGBA,                                     GL_UNSIGNED_INT_2_10_10_10_REV,  false }, // RGB10A2
@@ -3951,7 +3951,7 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	bool TextureGL::init(GLenum _target, uint32_t _width, uint32_t _height, uint32_t _depth, TextureFormat::Enum _format, uint8_t _numMips, uint32_t _flags)
+	bool TextureGL::init(GLenum _target, uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _numMips, uint32_t _flags)
 	{
 		m_target  = _target;
 		m_numMips = _numMips;
@@ -3959,9 +3959,7 @@ namespace bgfx { namespace gl
 		m_width   = _width;
 		m_height  = _height;
 		m_depth   = _depth;
-		m_currentSamplerHash    = UINT32_MAX;
-		m_requestedFormat =
-		m_textureFormat   = uint8_t(_format);
+		m_currentSamplerHash = UINT32_MAX;
 
 		const bool writeOnly    = 0 != (m_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
 		const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE );
@@ -3972,7 +3970,7 @@ namespace bgfx { namespace gl
 			BX_CHECK(0 != m_id, "Failed to generate texture id.");
 			GL_CHECK(glBindTexture(_target, m_id) );
 
-			const TextureFormatInfo& tfi = s_textureFormat[_format];
+			const TextureFormatInfo& tfi = s_textureFormat[m_textureFormat];
 			m_fmt  = tfi.m_fmt;
 			m_type = tfi.m_type;
 
@@ -3981,11 +3979,9 @@ namespace bgfx { namespace gl
 				&& !s_textureFormat[m_requestedFormat].m_supported
 				&& !s_renderGL->m_textureSwizzleSupport
 				;
-			const bool compressed = isCompressed(TextureFormat::Enum(m_requestedFormat) );
-			const bool convert    = false
-				|| (compressed && m_textureFormat != m_requestedFormat)
+			const bool convert = false
+				|| m_textureFormat != m_requestedFormat
 				|| swizzle
-				|| !s_textureFormat[m_requestedFormat].m_supported
 				;
 
 			if (convert)
@@ -4097,6 +4093,9 @@ namespace bgfx { namespace gl
 				textureDepth  = imageContainer.m_depth;
 			}
 
+			m_requestedFormat  = uint8_t(imageContainer.m_format);
+			m_textureFormat    = uint8_t(getViableTextureFormat(imageContainer) );
+
 			GLenum target = GL_TEXTURE_2D;
 			if (imageContainer.m_cubeMap)
 			{
@@ -4111,7 +4110,6 @@ namespace bgfx { namespace gl
 					, textureWidth
 					, textureHeight
 					, textureDepth
-					, imageContainer.m_format
 					, numMips
 					, _flags
 					) )

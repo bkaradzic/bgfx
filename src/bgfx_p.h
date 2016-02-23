@@ -332,6 +332,7 @@ namespace bgfx
 	void release(const Memory* _mem);
 	const char* getAttribName(Attrib::Enum _attr);
 	void getTextureSizeFromRatio(BackbufferRatio::Enum _ratio, uint16_t& _width, uint16_t& _height);
+	TextureFormat::Enum getViableTextureFormat(const ImageContainer& _imageContainer);
 
 	inline uint32_t castfu(float _value)
 	{

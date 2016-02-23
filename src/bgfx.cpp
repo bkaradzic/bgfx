@@ -1148,6 +1148,38 @@ namespace bgfx
 		BX_TRACE("Max FB attachments: %d", g_caps.maxFBAttachments);
 	}
 
+	TextureFormat::Enum getViableTextureFormat(const ImageContainer& _imageContainer)
+	{
+		const uint32_t formatCaps = g_caps.formats[_imageContainer.m_format];
+		bool convert = 0 == formatCaps;
+
+		if (_imageContainer.m_cubeMap)
+		{
+			convert |= 0 == (formatCaps & BGFX_CAPS_FORMAT_TEXTURE_CUBE)
+					&& 0 != (formatCaps & BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED)
+					;
+		}
+		else if (_imageContainer.m_depth > 1)
+		{
+			convert |= 0 == (formatCaps & BGFX_CAPS_FORMAT_TEXTURE_3D)
+					&& 0 != (formatCaps & BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED)
+					;
+		}
+		else
+		{
+			convert |= 0 == (formatCaps & BGFX_CAPS_FORMAT_TEXTURE_2D)
+					&& 0 != (formatCaps & BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED)
+					;
+		}
+
+		if (convert)
+		{
+			return TextureFormat::BGRA8;
+		}
+
+		return _imageContainer.m_format;
+	}
+
 	static TextureFormat::Enum s_emulatedFormats[] =
 	{
 		TextureFormat::BC1,

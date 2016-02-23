@@ -2828,16 +2828,11 @@ namespace bgfx { namespace d3d9
 			m_height  = textureHeight;
 			m_depth   = imageContainer.m_depth;
 			m_numMips = numMips;
-			m_requestedFormat =
-			m_textureFormat   = uint8_t(imageContainer.m_format);
+			m_requestedFormat = uint8_t(imageContainer.m_format);
+			m_textureFormat   = uint8_t(getViableTextureFormat(imageContainer) );
+			const bool convert = m_textureFormat != m_requestedFormat;
 
-			const TextureFormatInfo& tfi = s_textureFormat[m_requestedFormat];
 			uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
-			if (D3DFMT_UNKNOWN == tfi.m_fmt)
-			{
-				m_textureFormat = (uint8_t)TextureFormat::BGRA8;
-				bpp = 32;
-			}
 
 			if (imageContainer.m_cubeMap)
 			{
@@ -2879,8 +2874,6 @@ namespace bgfx { namespace d3d9
 							&& imageContainer.m_format != TextureFormat::BC4
 							&& imageContainer.m_format != TextureFormat::BC5
 							;
-
-			const bool convert = m_textureFormat != m_requestedFormat;
 
 			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 			{
