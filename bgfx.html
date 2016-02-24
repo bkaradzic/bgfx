@@ -1500,6 +1500,109 @@ creating windows.</p>
 <div class="section" id="miscellaneous">
 <h3>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
+<dt id="_CPPv2N4bgfx10vertexPackEKfbN6Attrib4EnumERK10VertexDeclPv8uint32_t">
+<span id="bgfx::vertexPack__floatC.b.Attrib::Enum.VertexDeclCR.voidP.uint32_t"></span><span class="target" id="project0namespacebgfx_1af00c88a0daf27e1ddc43470a3e0f73ad"></span>void <code class="descclassname">bgfx::</code><code class="descname">vertexPack</code><span class="sig-paren">(</span><em class="property">const</em> float <em>_input</em>, bool <em>_inputNormalized</em>, <a class="reference internal" href="#_CPPv2N4bgfx6AttribE" title="bgfx::Attrib">Attrib</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Attrib4EnumE" title="bgfx::Attrib::Enum">Enum</a> <em>_attr</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx10VertexDeclE" title="bgfx::VertexDecl">VertexDecl</a> &amp;<em>_decl</em>, void *<em>_data</em>, uint32_t <em>_index</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx10vertexPackEKfbN6Attrib4EnumERK10VertexDeclPv8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pack vec4 into vertex stream format. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_vertex_pack</span></code>. </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx12vertexUnpackEfN6Attrib4EnumERK10VertexDeclPKv8uint32_t">
+<span id="bgfx::vertexUnpack__float.Attrib::Enum.VertexDeclCR.voidCP.uint32_t"></span><span class="target" id="project0namespacebgfx_1a2407f7864d3303f18177f4b6ec1fbd08"></span>void <code class="descclassname">bgfx::</code><code class="descname">vertexUnpack</code><span class="sig-paren">(</span>float <em>_output</em>, <a class="reference internal" href="#_CPPv2N4bgfx6AttribE" title="bgfx::Attrib">Attrib</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Attrib4EnumE" title="bgfx::Attrib::Enum">Enum</a> <em>_attr</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx10VertexDeclE" title="bgfx::VertexDecl">VertexDecl</a> &amp;<em>_decl</em>, <em class="property">const</em> void *<em>_data</em>, uint32_t <em>_index</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12vertexUnpackEfN6Attrib4EnumERK10VertexDeclPKv8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack vec4 from vertex stream format. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_vertex_unpack</span></code>. </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx13vertexConvertERK10VertexDeclPvRK10VertexDeclPKv8uint32_t">
+<span id="bgfx::vertexConvert__VertexDeclCR.voidP.VertexDeclCR.voidCP.uint32_t"></span><span class="target" id="project0namespacebgfx_1af941804b071ee62fefc45e5d80787701"></span>void <code class="descclassname">bgfx::</code><code class="descname">vertexConvert</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx10VertexDeclE" title="bgfx::VertexDecl">VertexDecl</a> &amp;<em>_destDecl</em>, void *<em>_destData</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx10VertexDeclE" title="bgfx::VertexDecl">VertexDecl</a> &amp;<em>_srcDecl</em>, <em class="property">const</em> void *<em>_srcData</em>, uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx13vertexConvertERK10VertexDeclPvRK10VertexDeclPKv8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts vertex stream data from one vertex stream format to another. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_vertex_convert</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_destDecl</span></code> - <p>Destination vertex stream declaration. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_destData</span></code> - <p>Destination vertex stream. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcDecl</span></code> - <p>Source vertex stream declaration. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcData</span></code> - <p>Source vertex stream data. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of vertices to convert from source to destination.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx12weldVerticesEP8uint16_tRK10VertexDeclPKv8uint16_tf">
+<span id="bgfx::weldVertices__uint16_tP.VertexDeclCR.voidCP.uint16_t.float"></span><span class="target" id="project0namespacebgfx_1a487ee942fc5775ecd46a7cc48f9e3bb0"></span>uint16_t <code class="descclassname">bgfx::</code><code class="descname">weldVertices</code><span class="sig-paren">(</span>uint16_t *<em>_output</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx10VertexDeclE" title="bgfx::VertexDecl">VertexDecl</a> &amp;<em>_decl</em>, <em class="property">const</em> void *<em>_data</em>, uint16_t <em>_num</em>, float <em>_epsilon</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12weldVerticesEP8uint16_tRK10VertexDeclPKv8uint16_tf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Weld vertices. </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Number of unique vertices after vertex welding.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_weld_vertices</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_output</span></code> - <p>Welded vertices remapping table. The size of buffer must be the same as number of vertices. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_decl</span></code> - <p>Vertex stream declaration. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_data</span></code> - <p>Vertex stream. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of vertices in vertex stream. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_epsilon</span></code> - <p>Error tolerance for vertex position comparison. </p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx15topologyConvertEN15TopologyConvert4EnumEPv8uint32_tPKv8uint32_tb">
+<span id="bgfx::topologyConvert__TopologyConvert::Enum.voidP.uint32_t.voidCP.uint32_t.b"></span><span class="target" id="project0namespacebgfx_1a4faf0379f4f649826fa82616a84a4b13"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">topologyConvert</code><span class="sig-paren">(</span>TopologyConvert::Enum <em>_conversion</em>, void *<em>_dst</em>, uint32_t <em>_dstSize</em>, <em class="property">const</em> void *<em>_indices</em>, uint32_t <em>_numIndices</em>, bool <em>_index32</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15topologyConvertEN15TopologyConvert4EnumEPv8uint32_tPKv8uint32_tb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert index buffer for use with different primitive topologies. </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Number of output indices after conversion.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_topology_convert</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_conversion</span></code> - <p>Conversion type, see <code class="docutils literal"><span class="pre">TopologyConvert::Enum</span></code>. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dst</span></code> - <p>Destination index buffer. If this argument it NULL function will return number of indices after conversion. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstSize</span></code> - <p>Destination index buffer in bytes. It must be large enough to contain output indices. If destination size is insufficient index buffer will be truncated. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_indices</span></code> - <p>Source indices. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_numIndices</span></code> - <p>Number of input indices. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_index32</span></code> - <p>Set to <code class="docutils literal"><span class="pre">true</span></code> if input indices are 32-bit.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="_CPPv2N4bgfx7discardEv">
 <span id="bgfx::discard"></span><span class="target" id="project0namespacebgfx_1a0c43481c7f94a51e14842b3971e21c54"></span>void <code class="descclassname">bgfx::</code><code class="descname">discard</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7discardEv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Discard all previously set state for draw or compute call. </p>
@@ -2100,8 +2203,25 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <div class="section" id="buffers">
 <h3>Buffers<a class="headerlink" href="#buffers" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
+<dt id="_CPPv2N4bgfx14setIndexBufferE17IndexBufferHandle">
+<span id="bgfx::setIndexBuffer__IndexBufferHandle"></span><span class="target" id="project0namespacebgfx_1a788bf7feee1fd76127e628fcc0e879d4"></span>void <code class="descclassname">bgfx::</code><code class="descname">setIndexBuffer</code><span class="sig-paren">(</span>IndexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14setIndexBufferE17IndexBufferHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set index buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_index_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Index buffer.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="_CPPv2N4bgfx14setIndexBufferE17IndexBufferHandle8uint32_t8uint32_t">
-<span id="bgfx::setIndexBuffer__IndexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="project0namespacebgfx_1adce84edbab8794d9979476ccecc797aa"></span>void <code class="descclassname">bgfx::</code><code class="descname">setIndexBuffer</code><span class="sig-paren">(</span>IndexBufferHandle <em>_handle</em>, uint32_t <em>_firstIndex</em>, uint32_t <em>_numIndices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14setIndexBufferE17IndexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::setIndexBuffer__IndexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="project0namespacebgfx_1a557d08e2d163054e7642206ac00b6724"></span>void <code class="descclassname">bgfx::</code><code class="descname">setIndexBuffer</code><span class="sig-paren">(</span>IndexBufferHandle <em>_handle</em>, uint32_t <em>_firstIndex</em>, uint32_t <em>_numIndices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14setIndexBufferE17IndexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set index buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -2121,19 +2241,15 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx14setIndexBufferE24DynamicIndexBufferHandle8uint32_t8uint32_t">
-<span id="bgfx::setIndexBuffer__DynamicIndexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="project0namespacebgfx_1ad5aa3d6a895bb2963df4d04426584543"></span>void <code class="descclassname">bgfx::</code><code class="descname">setIndexBuffer</code><span class="sig-paren">(</span>DynamicIndexBufferHandle <em>_handle</em>, uint32_t <em>_firstIndex</em>, uint32_t <em>_numIndices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14setIndexBufferE24DynamicIndexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx14setIndexBufferE24DynamicIndexBufferHandle">
+<span id="bgfx::setIndexBuffer__DynamicIndexBufferHandle"></span><span class="target" id="project0namespacebgfx_1abdf5b7249100abcb08ec8195e65bbb66"></span>void <code class="descclassname">bgfx::</code><code class="descname">setIndexBuffer</code><span class="sig-paren">(</span>DynamicIndexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14setIndexBufferE24DynamicIndexBufferHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set index buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_dynamic_index_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Dynamic index buffer. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_firstIndex</span></code> - <p>First index to render. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_numIndices</span></code> - <p>Number of indices to render.</p>
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Dynamic index buffer.</p>
 </li>
 </ul>
 </dd>
@@ -2142,15 +2258,15 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx14setIndexBufferEPK20TransientIndexBuffer8uint32_t8uint32_t">
-<span id="bgfx::setIndexBuffer__TransientIndexBufferCP.uint32_t.uint32_t"></span><span class="target" id="project0namespacebgfx_1a1ff04459d5f92944634903ab4bdfe8bc"></span>void <code class="descclassname">bgfx::</code><code class="descname">setIndexBuffer</code><span class="sig-paren">(</span><em class="property">const</em> TransientIndexBuffer *<em>_tib</em>, uint32_t <em>_firstIndex</em>, uint32_t <em>_numIndices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14setIndexBufferEPK20TransientIndexBuffer8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx14setIndexBufferE24DynamicIndexBufferHandle8uint32_t8uint32_t">
+<span id="bgfx::setIndexBuffer__DynamicIndexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="project0namespacebgfx_1a97f7ff081c65d9d14bab89286dacc8c2"></span>void <code class="descclassname">bgfx::</code><code class="descname">setIndexBuffer</code><span class="sig-paren">(</span>DynamicIndexBufferHandle <em>_handle</em>, uint32_t <em>_firstIndex</em>, uint32_t <em>_numIndices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14setIndexBufferE24DynamicIndexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set index buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transient_index_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_dynamic_index_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_tib</span></code> - <p>Transient index buffer. </p>
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Dynamic index buffer. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_firstIndex</span></code> - <p>First index to render. </p>
 </li>
@@ -2172,6 +2288,27 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_tib</span></code> - <p>Transient index buffer.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx14setIndexBufferEPK20TransientIndexBuffer8uint32_t8uint32_t">
+<span id="bgfx::setIndexBuffer__TransientIndexBufferCP.uint32_t.uint32_t"></span><span class="target" id="project0namespacebgfx_1a1ff04459d5f92944634903ab4bdfe8bc"></span>void <code class="descclassname">bgfx::</code><code class="descname">setIndexBuffer</code><span class="sig-paren">(</span><em class="property">const</em> TransientIndexBuffer *<em>_tib</em>, uint32_t <em>_firstIndex</em>, uint32_t <em>_numIndices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14setIndexBufferEPK20TransientIndexBuffer8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set index buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transient_index_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_tib</span></code> - <p>Transient index buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_firstIndex</span></code> - <p>First index to render. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_numIndices</span></code> - <p>Number of indices to render.</p>
 </li>
 </ul>
 </dd>
@@ -2218,8 +2355,25 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx15setVertexBufferE25DynamicVertexBufferHandle8uint32_t">
-<span id="bgfx::setVertexBuffer__DynamicVertexBufferHandle.uint32_t"></span><span class="target" id="project0namespacebgfx_1a8f0fd5ff0b80aa3f4ffcedad7b39130a"></span>void <code class="descclassname">bgfx::</code><code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>DynamicVertexBufferHandle <em>_handle</em>, uint32_t <em>_numVertices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15setVertexBufferE25DynamicVertexBufferHandle8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx15setVertexBufferE25DynamicVertexBufferHandle">
+<span id="bgfx::setVertexBuffer__DynamicVertexBufferHandle"></span><span class="target" id="project0namespacebgfx_1a851ec1c38d446e0ad97cc2cbecccfde6"></span>void <code class="descclassname">bgfx::</code><code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>DynamicVertexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15setVertexBufferE25DynamicVertexBufferHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set vertex buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_dynamic_vertex_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Dynamic vertex buffer.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx15setVertexBufferE25DynamicVertexBufferHandle8uint32_t8uint32_t">
+<span id="bgfx::setVertexBuffer__DynamicVertexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="project0namespacebgfx_1a526691fc5de0086bbad5f44e55a8354a"></span>void <code class="descclassname">bgfx::</code><code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>DynamicVertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15setVertexBufferE25DynamicVertexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set vertex buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -2227,6 +2381,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Dynamic vertex buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_startVertex</span></code> - <p>First vertex to render. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_numVertices</span></code> - <p>Number of vertices to render.</p>
 </li>
@@ -4358,7 +4514,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Texture handle. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_side</span></code> - <p>Cubemap side, where 0 is +X, 1 is -X, 2 is +Y, 3 is -Y, 4 is +Z, and 5 is -Z. <div class="highlight-python"><div class="highlight"><pre>           +----------+
+<li><code class="first docutils literal"><span class="pre">_side</span></code> - <p>Cubemap side <code class="docutils literal"><span class="pre">BGFX_CUBE_MAP_&lt;POSITIVE</span> <span class="pre">or</span> <span class="pre">NEGATIVE&gt;_&lt;X,</span> <span class="pre">Y</span> <span class="pre">or</span> <span class="pre">Z&gt;</span></code>, where 0 is +X, 1 is -X, 2 is +Y, 3 is -Y, 4 is +Z, and 5 is -Z. <div class="highlight-python"><div class="highlight"><pre>           +----------+
            |-z       2|
            | ^  +y    |
            | |        |
