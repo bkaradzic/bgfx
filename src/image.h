@@ -101,6 +101,22 @@ namespace bgfx
 	void packRg8U(void* _dst, const float* _src);
 	void unpackRg8U(float* _dst, const void* _src);
 
+	// RGB8
+	void packRgb8(void* _dst, const float* _src);
+	void unpackRgb8(float* _dst, const void* _src);
+
+	// RGB8S
+	void packRgb8S(void* _dst, const float* _src);
+	void unpackRgb8S(float* _dst, const void* _src);
+
+	// RGB8I
+	void packRgb8I(void* _dst, const float* _src);
+	void unpackRgb8I(float* _dst, const void* _src);
+
+	// RGB8U
+	void packRgb8U(void* _dst, const float* _src);
+	void unpackRgb8U(float* _dst, const void* _src);
+
 	// RGBA8
 	void packRgba8(void* _dst, const float* _src);
 	void unpackRgba8(float* _dst, const void* _src);
@@ -307,7 +323,7 @@ namespace bgfx
 	void imageConvert(void* _dst, uint32_t _bpp, PackFn _pack, const void* _src, UnpackFn _unpack, uint32_t _size);
 
 	///
-	void imageConvert(void* _dst, uint32_t _dstBpp, PackFn _pack, const void* _src, uint32_t _srcBpp, UnpackFn _unpack, uint32_t _width, uint32_t _height);
+	void imageConvert(void* _dst, uint32_t _dstBpp, PackFn _pack, const void* _src, uint32_t _srcBpp, UnpackFn _unpack, uint32_t _width, uint32_t _height, uint32_t _srcPitch);
 
 	///
 	bool imageConvert(void* _dst, TextureFormat::Enum _dstFormat, const void* _src, TextureFormat::Enum _srcFormat, uint32_t _width, uint32_t _height);

@@ -64,6 +64,10 @@ namespace bgfx
 		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // RG32I
 		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RG32U
 		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // RG32F
+		{  24, 1, 1,  3, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RGB8
+		{  24, 1, 1,  3, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // RGB8I
+		{  24, 1, 1,  3, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RGB8U
+		{  24, 1, 1,  3, 1, 1,  0, 0, uint8_t(EncodingType::Snorm) }, // RGB8S
 		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // RGB9E5F
 		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // BGRA8
 		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RGBA8
@@ -141,6 +145,10 @@ namespace bgfx
 		"RG32I",      // RG32I
 		"RG32U",      // RG32U
 		"RG32F",      // RG32F
+		"RGB8",       // RGB8
+		"RGB8I",      // RGB8I
+		"RGB8U",      // RGB8U
+		"RGB8S",      // RGB8S
 		"RGB9E5",     // RGB9E5F
 		"BGRA8",      // BGRA8
 		"RGBA8",      // RGBA8
@@ -717,23 +725,72 @@ namespace bgfx
 		_dst[1] = float(src[1]);
 	}
 
-	// RGBA8
-	void packRgba8(void* _dst, const float* _src)
+	// RGB8
+	void packRgb8(void* _dst, const float* _src)
 	{
 		uint8_t* dst = (uint8_t*)_dst;
 		dst[0] = uint8_t(toUnorm(_src[0], 255.0f) );
 		dst[1] = uint8_t(toUnorm(_src[1], 255.0f) );
 		dst[2] = uint8_t(toUnorm(_src[2], 255.0f) );
-		dst[3] = uint8_t(toUnorm(_src[3], 255.0f) );
 	}
 
-	void unpackRgba8(float* _dst, const void* _src)
+	void unpackRgb8(float* _dst, const void* _src)
 	{
 		const uint8_t* src = (const uint8_t*)_src;
 		_dst[0] = fromUnorm(src[0], 255.0f);
 		_dst[1] = fromUnorm(src[1], 255.0f);
 		_dst[2] = fromUnorm(src[2], 255.0f);
-		_dst[3] = fromUnorm(src[3], 255.0f);
+	}
+
+	// RGB8S
+	void packRgb8S(void* _dst, const float* _src)
+	{
+		int8_t* dst = (int8_t*)_dst;
+		dst[0] = int8_t(toSnorm(_src[0], 127.0f) );
+		dst[1] = int8_t(toSnorm(_src[1], 127.0f) );
+		dst[2] = int8_t(toSnorm(_src[2], 127.0f) );
+	}
+
+	void unpackRgb8S(float* _dst, const void* _src)
+	{
+		const int8_t* src = (const int8_t*)_src;
+		_dst[0] = fromSnorm(src[0], 127.0f);
+		_dst[1] = fromSnorm(src[1], 127.0f);
+		_dst[2] = fromSnorm(src[2], 127.0f);
+	}
+
+	// RGB8I
+	void packRgb8I(void* _dst, const float* _src)
+	{
+		int8_t* dst = (int8_t*)_dst;
+		dst[0] = int8_t(_src[0]);
+		dst[1] = int8_t(_src[1]);
+		dst[2] = int8_t(_src[2]);
+	}
+
+	void unpackRgb8I(float* _dst, const void* _src)
+	{
+		const int8_t* src = (const int8_t*)_src;
+		_dst[0] = float(src[0]);
+		_dst[1] = float(src[1]);
+		_dst[2] = float(src[2]);
+	}
+
+	// RGB8U
+	void packRgb8U(void* _dst, const float* _src)
+	{
+		uint8_t* dst = (uint8_t*)_dst;
+		dst[0] = uint8_t(_src[0]);
+		dst[1] = uint8_t(_src[1]);
+		dst[2] = uint8_t(_src[2]);
+	}
+
+	void unpackRgb8U(float* _dst, const void* _src)
+	{
+		const uint8_t* src = (const uint8_t*)_src;
+		_dst[0] = float(src[0]);
+		_dst[1] = float(src[1]);
+		_dst[2] = float(src[2]);
 	}
 
 	// BGRA8
@@ -752,6 +809,25 @@ namespace bgfx
 		_dst[0] = fromUnorm(src[2], 255.0f);
 		_dst[1] = fromUnorm(src[1], 255.0f);
 		_dst[2] = fromUnorm(src[0], 255.0f);
+		_dst[3] = fromUnorm(src[3], 255.0f);
+	}
+
+	// RGBA8
+	void packRgba8(void* _dst, const float* _src)
+	{
+		uint8_t* dst = (uint8_t*)_dst;
+		dst[0] = uint8_t(toUnorm(_src[0], 255.0f) );
+		dst[1] = uint8_t(toUnorm(_src[1], 255.0f) );
+		dst[2] = uint8_t(toUnorm(_src[2], 255.0f) );
+		dst[3] = uint8_t(toUnorm(_src[3], 255.0f) );
+	}
+
+	void unpackRgba8(float* _dst, const void* _src)
+	{
+		const uint8_t* src = (const uint8_t*)_src;
+		_dst[0] = fromUnorm(src[0], 255.0f);
+		_dst[1] = fromUnorm(src[1], 255.0f);
+		_dst[2] = fromUnorm(src[2], 255.0f);
 		_dst[3] = fromUnorm(src[3], 255.0f);
 	}
 
@@ -1402,6 +1478,10 @@ namespace bgfx
 		{ packRg32I,      unpackRg32I      }, // RG32I
 		{ packRg32U,      unpackRg32U      }, // RG32U
 		{ packRg32F,      unpackRg32F      }, // RG32F
+		{ packRgb8,       unpackRgb8       }, // RGB8
+		{ packRgb8S,      unpackRgb8S      }, // RGB8S
+		{ packRgb8I,      unpackRgb8I      }, // RGB8I
+		{ packRgb8U,      unpackRgb8U      }, // RGB8U
 		{ packRgb9E5F,    unpackRgb9E5F    }, // RGB9E5F
 		{ packBgra8,      unpackBgra8      }, // BGRA8
 		{ packRgba8,      unpackRgba8      }, // RGBA8
@@ -1457,15 +1537,14 @@ namespace bgfx
 		}
 	}
 
-	void imageConvert(void* _dst, uint32_t _dstBpp, PackFn _pack, const void* _src, uint32_t _srcBpp, UnpackFn _unpack, uint32_t _width, uint32_t _height)
+	void imageConvert(void* _dst, uint32_t _dstBpp, PackFn _pack, const void* _src, uint32_t _srcBpp, UnpackFn _unpack, uint32_t _width, uint32_t _height, uint32_t _srcPitch)
 	{
 		const uint8_t* src = (uint8_t*)_src;
 		uint8_t* dst = (uint8_t*)_dst;
 
-		const uint32_t srcPitch = _width * _srcBpp / 8;
 		const uint32_t dstPitch = _width * _dstBpp / 8;
 
-		for (uint32_t yy = 0; yy < _height; ++yy, src += srcPitch, dst += dstPitch)
+		for (uint32_t yy = 0; yy < _height; ++yy, src += _srcPitch, dst += dstPitch)
 		{
 			for (uint32_t xx = 0; xx < _width; ++xx)
 			{
@@ -1476,7 +1555,7 @@ namespace bgfx
 		}
 	}
 
-	bool imageConvert(void* _dst, TextureFormat::Enum _dstFormat, const void* _src, TextureFormat::Enum _srcFormat, uint32_t _width, uint32_t _height)
+	bool imageConvert(void* _dst, TextureFormat::Enum _dstFormat, const void* _src, TextureFormat::Enum _srcFormat, uint32_t _width, uint32_t _height, uint32_t _srcPitch)
 	{
 		UnpackFn unpack = s_packUnpack[_srcFormat].unpack;
 		PackFn   pack   = s_packUnpack[_dstFormat].pack;
@@ -1488,7 +1567,7 @@ namespace bgfx
 
 		const uint32_t srcBpp = s_imageBlockInfo[_srcFormat].bitsPerPixel;
 		const uint32_t dstBpp = s_imageBlockInfo[_dstFormat].bitsPerPixel;
-		imageConvert(_dst, dstBpp, pack, _src, srcBpp, unpack, _width, _height);
+		imageConvert(_dst, dstBpp, pack, _src, srcBpp, unpack, _width, _height, _srcPitch);
 
 		return true;
 	}
@@ -2739,6 +2818,7 @@ namespace bgfx
 #define KTX_RG16_SNORM                                0x8F99
 #define KTX_RGB16_SNORM                               0x8F9A
 #define KTX_RGBA16_SNORM                              0x8F9B
+#define KTX_SRGB8                                     0x8C41
 #define KTX_SRGB8_ALPHA8                              0x8C43
 #define KTX_RGBA32UI                                  0x8D70
 #define KTX_RGB32UI                                   0x8D71
@@ -2751,6 +2831,7 @@ namespace bgfx
 #define KTX_RGBA16I                                   0x8D88
 #define KTX_RGB16I                                    0x8D89
 #define KTX_RGBA8I                                    0x8D8E
+#define KTX_RGB8                                      0x8051
 #define KTX_RGB8I                                     0x8D8F
 #define KTX_RGB9_E5                                   0x8C3D
 #define KTX_R11F_G11F_B10F                            0x8C3A
@@ -2832,6 +2913,10 @@ namespace bgfx
 		{ KTX_RG32I,                                    KTX_ZERO,                                       KTX_RG,                                       KTX_INT,                          }, // RG32I
 		{ KTX_RG32UI,                                   KTX_ZERO,                                       KTX_RG,                                       KTX_UNSIGNED_INT,                 }, // RG32U
 		{ KTX_RG32F,                                    KTX_ZERO,                                       KTX_RG,                                       KTX_FLOAT,                        }, // RG32F
+		{ KTX_RGB8,                                     KTX_SRGB8,                                      KTX_RGB,                                      KTX_UNSIGNED_BYTE,                }, // RGB8
+		{ KTX_RGB8I,                                    KTX_ZERO,                                       KTX_RGB,                                      KTX_BYTE,                         }, // RGB8I
+		{ KTX_RGB8UI,                                   KTX_ZERO,                                       KTX_RGB,                                      KTX_UNSIGNED_BYTE,                }, // RGB8U
+		{ KTX_RGB8_SNORM,                               KTX_ZERO,                                       KTX_RGB,                                      KTX_BYTE,                         }, // RGB8S
 		{ KTX_RGB9_E5,                                  KTX_ZERO,                                       KTX_RGB,                                      KTX_UNSIGNED_INT_5_9_9_9_REV,     }, // RGB9E5F
 		{ KTX_BGRA,                                     KTX_SRGB8_ALPHA8,                               KTX_BGRA,                                     KTX_UNSIGNED_BYTE,                }, // BGRA8
 		{ KTX_RGBA8,                                    KTX_SRGB8_ALPHA8,                               KTX_RGBA,                                     KTX_UNSIGNED_BYTE,                }, // RGBA8
@@ -3343,7 +3428,7 @@ namespace bgfx
 			break;
 
 		default:
-			if (!imageConvert(_dst, TextureFormat::BGRA8, _src, _format, _width, _height) )
+			if (!imageConvert(_dst, TextureFormat::BGRA8, _src, _format, _width, _height, _pitch) )
 			{
 				// Failed to convert, just make ugly red-yellow checkerboard texture.
 				imageCheckerboard(_width, _height, 16, UINT32_C(0xffff0000), UINT32_C(0xffffff00), _dst);
