@@ -2927,7 +2927,20 @@ namespace bgfx { namespace d3d9
 						else
 						{
 							uint32_t size = useMipSize ? mip.m_size : mipSize;
-							memcpy(bits, mip.m_data, size);
+							switch (m_textureFormat)
+							{
+							case TextureFormat::RGB5A1:
+								imageConvert(bits, 16, packBgr5a1, mip.m_data, unpackRgb5a1, size);
+								break;
+
+							case TextureFormat::RGBA4:
+								imageConvert(bits, 16, packBgra4, mip.m_data, unpackRgba4, size);
+								break;
+
+							default:
+								memcpy(bits, mip.m_data, size);
+								break;
+							}
 						}
 
 						unlock(side, lod);
@@ -2976,7 +2989,20 @@ namespace bgfx { namespace d3d9
 			uint8_t* dst = bits;
 			for (uint32_t yy = 0, height = _rect.m_height; yy < height; ++yy)
 			{
-				memcpy(dst, src, rectpitch);
+				switch (m_textureFormat)
+				{
+				case TextureFormat::RGB5A1:
+					imageConvert(dst, 16, packBgr5a1, src, unpackRgb5a1, rectpitch);
+					break;
+
+				case TextureFormat::RGBA4:
+					imageConvert(dst, 16, packBgra4, src, unpackRgba4, rectpitch);
+					break;
+
+				default:
+					memcpy(dst, src, rectpitch);
+					break;
+				}
 				src += srcpitch;
 				dst += dstpitch;
 			}

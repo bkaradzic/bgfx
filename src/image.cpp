@@ -1252,6 +1252,26 @@ namespace bgfx
 		_dst[3] = float( ( (packed>>12) & 0xf) ) / 15.0f;
 	}
 
+	// RGBA4
+	void packBgra4(void* _dst, const float* _src)
+	{
+		*( (uint16_t*)_dst) = 0
+			| uint16_t(toUnorm(_src[0], 15.0f)<< 8)
+			| uint16_t(toUnorm(_src[1], 15.0f)<< 4)
+			| uint16_t(toUnorm(_src[2], 15.0f)    )
+			| uint16_t(toUnorm(_src[3], 15.0f)<<12)
+			;
+	}
+
+	void unpackBgra4(float* _dst, const void* _src)
+	{
+		uint16_t packed = *( (const uint16_t*)_src);
+		_dst[0] = float( ( (packed>> 8) & 0xf) ) / 15.0f;
+		_dst[1] = float( ( (packed>> 4) & 0xf) ) / 15.0f;
+		_dst[2] = float( ( (packed    ) & 0xf) ) / 15.0f;
+		_dst[3] = float( ( (packed>>12) & 0xf) ) / 15.0f;
+	}
+
 	// RGB5A1
 	void packRgb5a1(void* _dst, const float* _src)
 	{
@@ -1269,6 +1289,26 @@ namespace bgfx
 		_dst[0] = float( ( (packed    ) & 0x1f) ) / 31.0f;
 		_dst[1] = float( ( (packed>> 5) & 0x1f) ) / 31.0f;
 		_dst[2] = float( ( (packed>>10) & 0x1f) ) / 31.0f;
+		_dst[3] = float( ( (packed>>14) &  0x1) );
+	}
+
+	// BGR5A1
+	void packBgr5a1(void* _dst, const float* _src)
+	{
+		*( (uint16_t*)_dst) = 0
+			| uint16_t(toUnorm(_src[0], 31.0f)<<10)
+			| uint16_t(toUnorm(_src[1], 31.0f)<< 5)
+			| uint16_t(toUnorm(_src[2], 31.0f)    )
+			| uint16_t(toUnorm(_src[3],  1.0f)<<15)
+			;
+	}
+
+	void unpackBgr5a1(float* _dst, const void* _src)
+	{
+		uint16_t packed = *( (const uint16_t*)_src);
+		_dst[0] = float( ( (packed>>10) & 0x1f) ) / 31.0f;
+		_dst[1] = float( ( (packed>> 5) & 0x1f) ) / 31.0f;
+		_dst[2] = float( ( (packed    ) & 0x1f) ) / 31.0f;
 		_dst[3] = float( ( (packed>>14) &  0x1) );
 	}
 
@@ -1309,9 +1349,6 @@ namespace bgfx
 		_dst[1] = bx::halfToFloat( (packed>> 7) & 0x7ff0);
 		_dst[2] = bx::halfToFloat( (packed>>17) & 0x7fe0);
 	}
-
-	typedef void (*PackFn)(void*, const float*);
-	typedef void (*UnpackFn)(float*, const void*);
 
 	struct PackUnpack
 	{
@@ -1405,6 +1442,40 @@ namespace bgfx
 			;
 	}
 
+	void imageConvert(void* _dst, uint32_t _bpp, PackFn _pack, const void* _src, UnpackFn _unpack, uint32_t _size)
+	{
+		const uint8_t* src = (uint8_t*)_src;
+		uint8_t* dst = (uint8_t*)_dst;
+
+		const uint32_t size = _size * 8 / _bpp;
+
+		for (uint32_t ii = 0; ii < size; ++ii)
+		{
+			float rgba[4];
+			_unpack(rgba, &src[ii*_bpp/8]);
+			_pack(&dst[ii*_bpp/8], rgba);
+		}
+	}
+
+	void imageConvert(void* _dst, uint32_t _dstBpp, PackFn _pack, const void* _src, uint32_t _srcBpp, UnpackFn _unpack, uint32_t _width, uint32_t _height)
+	{
+		const uint8_t* src = (uint8_t*)_src;
+		uint8_t* dst = (uint8_t*)_dst;
+
+		const uint32_t srcPitch = _width * _srcBpp / 8;
+		const uint32_t dstPitch = _width * _dstBpp / 8;
+
+		for (uint32_t yy = 0; yy < _height; ++yy, src += srcPitch, dst += dstPitch)
+		{
+			for (uint32_t xx = 0; xx < _width; ++xx)
+			{
+				float rgba[4];
+				_unpack(rgba, &src[xx*_srcBpp/8]);
+				_pack(&dst[xx*_dstBpp/8], rgba);
+			}
+		}
+	}
+
 	bool imageConvert(void* _dst, TextureFormat::Enum _dstFormat, const void* _src, TextureFormat::Enum _srcFormat, uint32_t _width, uint32_t _height)
 	{
 		UnpackFn unpack = s_packUnpack[_srcFormat].unpack;
@@ -1415,23 +1486,9 @@ namespace bgfx
 			return false;
 		}
 
-		const uint8_t* src = (uint8_t*)_src;
-		uint8_t* dst = (uint8_t*)_dst;
-
-		const uint32_t srcBpp   = s_imageBlockInfo[_srcFormat].bitsPerPixel;
-		const uint32_t dstBpp   = s_imageBlockInfo[_dstFormat].bitsPerPixel;
-		const uint32_t srcPitch = _width * srcBpp / 8;
-		const uint32_t dstPitch = _width * dstBpp / 8;
-
-		for (uint32_t yy = 0; yy < _height; ++yy, src += srcPitch, dst += dstPitch)
-		{
-			for (uint32_t xx = 0; xx < _width; ++xx)
-			{
-				float rgba[4];
-				unpack(rgba, &src[xx*srcBpp/8]);
-				pack(&dst[xx*dstBpp/8], rgba);
-			}
-		}
+		const uint32_t srcBpp = s_imageBlockInfo[_srcFormat].bitsPerPixel;
+		const uint32_t dstBpp = s_imageBlockInfo[_dstFormat].bitsPerPixel;
+		imageConvert(_dst, dstBpp, pack, _src, srcBpp, unpack, _width, _height);
 
 		return true;
 	}
