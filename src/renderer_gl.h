@@ -222,6 +222,30 @@ typedef uint64_t GLuint64;
 #	define GL_RG32F 0x8230
 #endif // GL_RG32F
 
+#ifndef GL_RGB8
+#	define GL_RGB8 0x8051
+#endif // GL_RGB8
+
+#ifndef GL_SRGB
+#	define GL_SRGB 0x8C40
+#endif // GL_SRGB
+
+#ifndef GL_SRGB8
+#	define GL_SRGB8 0x8C41
+#endif // GL_SRGB8
+
+#ifndef GL_RGB8I
+#	define GL_RGB8I 0x8D8F
+#endif // GL_RGB8I
+
+#ifndef GL_RGB8UI
+#	define GL_RGB8UI 0x8D7D
+#endif // GL_RGB8UI
+
+#ifndef GL_RGB8_SNORM
+#	define GL_RGB8_SNORM 0x8F96
+#endif // GL_RGB8_SNORM
+
 #ifndef GL_RGBA8I
 #	define GL_RGBA8I 0x8D8E
 #endif // GL_RGBA8I
