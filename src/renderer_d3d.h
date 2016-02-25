@@ -21,6 +21,12 @@
 
 namespace bgfx
 {
+#if BX_PLATFORM_XBOXONE
+	typedef ::IGraphicsUnknown IUnknown;
+#else
+	typedef ::IUnknown IUnknown;
+#endif // BX_PLATFORM_XBOXONE
+
 #define _DX_CHECK(_call) \
 			BX_MACRO_BLOCK_BEGIN \
 				HRESULT __hr__ = _call; \
@@ -96,7 +102,7 @@ namespace bgfx
 		return _interface->Release();
 	}
 
-	template <typename Ty>
+	template<typename Ty>
 	class StateCacheT
 	{
 	public:

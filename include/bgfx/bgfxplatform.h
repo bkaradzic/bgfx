@@ -232,7 +232,7 @@ namespace bgfx
 
 } // namespace bgfx
 
-#elif BX_PLATFORM_WINRT
+#elif BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
 #   include <Unknwn.h>
 
 namespace bgfx

@@ -8,10 +8,12 @@
 #if BGFX_CONFIG_RENDERER_DIRECT3D11
 #	include "renderer_d3d11.h"
 
-#if BX_PLATFORM_WINRT
+#if BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
 #	include <inspectable.h>
-#	include <windows.ui.xaml.media.dxinterop.h>
-#endif // BX_PLATFORM_WINRT
+#	if BX_PLATFORM_WINRT
+#		include <windows.ui.xaml.media.dxinterop.h>
+#	endif // BX_PLATFORM_WINRT
+#endif // BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
 
 #if BGFX_CONFIG_PROFILER_REMOTERY
 #	define BGFX_GPU_PROFILER_BIND(_device, _context) rmt_BindD3D11(_device, _context)
@@ -791,12 +793,15 @@ namespace bgfx { namespace d3d11
 
 			HRESULT hr;
 			IDXGIFactory* factory;
-#if BX_PLATFORM_WINRT
+#if BX_PLATFORM_XBOXONE
+			hr = S_OK;
+			factory = NULL;
+#elif BX_PLATFORM_WINRT
 			// WinRT requires the IDXGIFactory2 interface, which isn't supported on older platforms
 			hr = CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&factory);
 #else
 			hr = CreateDXGIFactory(IID_IDXGIFactory, (void**)&factory);
-#endif // BX_PLATFORM_WINRT
+#endif // BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
 			BX_WARN(SUCCEEDED(hr), "Unable to create DXGI factory.");
 			if (FAILED(hr) )
 			{
@@ -1027,7 +1032,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				if (NULL == g_platformData.backBuffer)
 				{
-#if BX_PLATFORM_WINRT
+#if BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
 					hr = adapter->GetParent(__uuidof(IDXGIFactory2), (void**)&m_factory);
 					BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
 					DX_RELEASE(adapter, 2);
@@ -1072,6 +1077,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								);
 						BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 swap chain.");
 
+#	if BX_PLATFORM_WINRT
 						IInspectable* nativeWindow = reinterpret_cast<IInspectable *>(g_platformData.nwh);
 						ISwapChainBackgroundPanelNative* panel = NULL;
 						hr = nativeWindow->QueryInterface(__uuidof(ISwapChainBackgroundPanelNative), (void**)&panel);
@@ -1084,6 +1090,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 							panel->Release();
 						}
+#	endif // BX_PLATFORM_WINRT
 					}
 #else
 					hr = adapter->GetParent(IID_IDXGIFactory, (void**)&m_factory);
@@ -1116,7 +1123,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						| DXGI_MWA_NO_WINDOW_CHANGES
 						| DXGI_MWA_NO_ALT_ENTER
 						) );
-#endif // BX_PLATFORM_WINRT
+#endif // BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
 					BX_WARN(SUCCEEDED(hr), "Failed to create swap chain.");
 					if (FAILED(hr) )
 					{
@@ -2110,7 +2117,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			if (NULL != m_swapChain)
 			{
 				HRESULT hr = S_OK;
-				uint32_t syncInterval = BX_ENABLED(BX_PLATFORM_WINRT)
+				uint32_t syncInterval = BX_ENABLED(BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT)
 					? 1 // sync interval of 0 is not supported on WinRT
 					: !!(m_resolution.m_flags & BGFX_RESET_VSYNC)
 					;
@@ -2226,7 +2233,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				flags &= ~BGFX_RESET_INTERNAL_FORCE;
 
 				bool resize = true
-					&& !BX_ENABLED(BX_PLATFORM_WINRT) // can't use ResizeBuffers on Windows Phone
+					&& !BX_ENABLED(BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT) // can't use ResizeBuffers on Windows Phone
 					&& (m_resolution.m_flags&BGFX_RESET_MSAA_MASK) == (flags&BGFX_RESET_MSAA_MASK)
 					;
 
@@ -2278,7 +2285,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 							scd = &swapChainScd;
 						}
 
-#if BX_PLATFORM_WINRT
+#if BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
 						HRESULT hr;
 						if (g_platformData.ndt == 0)
 						{
@@ -2301,6 +2308,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 									);
 							BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 swap chain.");
 
+#	if BX_PLATFORM_WINRT
 							IInspectable *nativeWindow = reinterpret_cast<IInspectable *>(g_platformData.nwh);
 							ISwapChainBackgroundPanelNative* panel = NULL;
 							hr = nativeWindow->QueryInterface(__uuidof(ISwapChainBackgroundPanelNative), (void **)&panel);
@@ -2313,6 +2321,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 								panel->Release();
 							}
+#	endif // BX_PLATFORM_WINRT
 						}
 #else
 						HRESULT hr;
@@ -2320,7 +2329,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								, scd
 								, &m_swapChain
 								);
-#endif // BX_PLATFORM_WINRT
+#endif // BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
 						BGFX_FATAL(SUCCEEDED(hr), bgfx::Fatal::UnableToInitialize, "Failed to create swap chain.");
 					}
 				}
@@ -2793,7 +2802,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		DXGI_FORMAT getBufferFormat()
 		{
-#if BX_PLATFORM_WINRT
+#if BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
 			return m_scd.Format;
 #else
 			return m_scd.BufferDesc.Format;
@@ -2802,7 +2811,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		uint32_t getBufferWidth()
 		{
-#if BX_PLATFORM_WINRT
+#if BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
 			return m_scd.Width;
 #else
 			return m_scd.BufferDesc.Width;
@@ -2811,7 +2820,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		uint32_t getBufferHeight()
 		{
-#if BX_PLATFORM_WINRT
+#if BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
 			return m_scd.Height;
 #else
 			return m_scd.BufferDesc.Height;
@@ -2820,7 +2829,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		void setBufferSize(uint32_t _width, uint32_t _height)
 		{
-#if BX_PLATFORM_WINRT
+#if BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
 			m_scd.Width  = _width;
 			m_scd.Height = _height;
 #else
@@ -3352,13 +3361,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		D3D_FEATURE_LEVEL m_featureLevel;
 		IDXGIAdapter*     m_adapter;
 		DXGI_ADAPTER_DESC m_adapterDesc;
-#if BX_PLATFORM_WINRT
+#if BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
 		IDXGIFactory2*    m_factory;
 		IDXGISwapChain1*  m_swapChain;
 #else
 		IDXGIFactory*     m_factory;
 		IDXGISwapChain*   m_swapChain;
-#endif // BX_PLATFORM_WINRT
+#endif // BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
 
 		uint16_t m_lost;
 		uint16_t m_numWindows;
@@ -3381,11 +3390,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		Resolution m_resolution;
 		bool m_wireframe;
 
-#if BX_PLATFORM_WINRT
+#if BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
 		typedef DXGI_SWAP_CHAIN_DESC1 SwapChainDesc;
 #else
 		typedef DXGI_SWAP_CHAIN_DESC  SwapChainDesc;
-#endif // BX_PLATFORM_WINRT
+#endif // BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
 
 		SwapChainDesc m_scd;
 		uint32_t m_maxAnisotropy;
@@ -3465,7 +3474,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				}
 			}
 		}
-#endif // BX_PLATFORM_WINRT
+#endif // BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
 	}
 
 	void stubMultiDrawInstancedIndirect(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride)

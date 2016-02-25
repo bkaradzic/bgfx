@@ -1828,7 +1828,7 @@ again:
 			{
 				_type = RendererType::OpenGLES;
 			}
-			else if (BX_ENABLED(BX_PLATFORM_WINRT) )
+			else if (BX_ENABLED(BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT) )
 			{
 				_type = RendererType::Direct3D11;
 			}
