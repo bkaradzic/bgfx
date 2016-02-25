@@ -169,9 +169,14 @@ class Terrain : public entry::AppI
 		bgfx::destroyProgram(m_terrainProgram);
 		bgfx::destroyProgram(m_terrainHeightTextureProgram);
 
-		BX_FREE(entry::getAllocator(), m_terrain.m_vertices);
-		BX_FREE(entry::getAllocator(), m_terrain.m_indices);
-		BX_FREE(entry::getAllocator(), m_terrain.m_heightMap);
+		/// When data is passed to bgfx via makeRef we need to make
+		/// sure library is done with it before freeing memory blocks.
+		bgfx::frame();
+
+		bx::AllocatorI* allocator = entry::getAllocator();
+		BX_FREE(allocator, m_terrain.m_vertices);
+		BX_FREE(allocator, m_terrain.m_indices);
+		BX_FREE(allocator, m_terrain.m_heightMap);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();
