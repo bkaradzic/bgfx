@@ -57,11 +57,20 @@ Languages:
  * [Haskell language API bindings](https://github.com/haskell-game/bgfx)
  * [Rust language API bindings](https://github.com/rhoot/bgfx-rs)
 
-Build
------
+[Building](https://bkaradzic.github.io/bgfx/build.html)
+----------------------------------------------------
 
  - AppVeyor https://ci.appveyor.com/project/bkaradzic/bgfx
  - TravisCI https://travis-ci.org/bkaradzic/bgfx
+
+[Examples](https://bkaradzic.github.io/bgfx/examples.html)
+----------------------------------------------------------
+
+[API Reference](https://bkaradzic.github.io/bgfx/bgfx.html)
+-----------------------------------------------------------
+
+[Tools](https://bkaradzic.github.io/bgfx/tools.html)
+----------------------------------------------------
 
 Who is using it?
 ----------------
@@ -117,18 +126,6 @@ http://makingartstudios.itch.io/dls - DLS the digital logic simulator game.
 ![dls-screenshot](https://img.itch.io/aW1hZ2UvMzk3MTgvMTc5MjQ4LnBuZw==/original/kA%2FQPb.png)
 
 https://github.com/mamedev/mame MAME - Multiple Arcade Machine Emulator
-
-[Building](https://bkaradzic.github.io/bgfx/build.html)
--------------------------------------------------------
-
-[Examples](https://bkaradzic.github.io/bgfx/examples.html)
-----------------------------------------------------------
-
-[API Reference](https://bkaradzic.github.io/bgfx/bgfx.html)
------------------------------------------------------------
-
-[Tools](https://bkaradzic.github.io/bgfx/tools.html)
-----------------------------------------------------
 
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
