@@ -218,7 +218,7 @@ function exampleProject(_name)
 		configuration {}
 	end
 
-	configuration { "vs*" }
+	configuration { "vs*", "x32 or x64" }
 		linkoptions {
 			"/ignore:4199", -- LNK4199: /DELAYLOAD:*.dll ignored; no imports found from *.dll
 		}
@@ -226,7 +226,7 @@ function exampleProject(_name)
 			"DelayImp",
 		}
 
-	configuration { "vs201*" }
+	configuration { "vs201*", "x32 or x64" }
 		linkoptions { -- this is needed only for testing with GLES2/3 on Windows with VS201x
 			"/DELAYLOAD:\"libEGL.dll\"",
 			"/DELAYLOAD:\"libGLESv2.dll\"",
@@ -234,11 +234,22 @@ function exampleProject(_name)
 
 	configuration { "mingw*" }
 		targetextension ".exe"
-
-	configuration { "vs20* or mingw*" }
 		links {
 			"gdi32",
 			"psapi",
+		}
+
+	configuration { "vs20*", "x32 or x64" }
+		links {
+			"gdi32",
+			"psapi",
+		}
+
+	configuration { "durango" }
+		links {
+			"d3d11_x",
+			"combase",
+			"kernelx",
 		}
 
 	configuration { "winphone8* or winstore8*" }
@@ -318,7 +329,7 @@ function exampleProject(_name)
 			"SDL2",
 			"pthread",
 		}
-		
+
 	configuration { "rpi" }
 		links {
 			"X11",
