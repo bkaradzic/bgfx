@@ -369,7 +369,7 @@ struct DebugDraw
 			const uint32_t tess = 3-mesh;
 			const uint32_t numVertices = genSphere(tess);
 			const uint32_t numIndices  = numVertices;
-			
+
 			vertices[id] = BX_ALLOC(m_allocator, numVertices*stride);
 			genSphere(tess, vertices[id], stride);
 
@@ -413,7 +413,7 @@ struct DebugDraw
 
 			BX_FREE(m_allocator, trilist);
 		}
-			
+
 		m_mesh[Mesh::Cube].m_startVertex = startVertex;
 		m_mesh[Mesh::Cube].m_numVertices = BX_COUNTOF(s_cubeVertices);
 		m_mesh[Mesh::Cube].m_startIndex[0] = startIndex;
@@ -784,7 +784,10 @@ struct DebugDraw
 				, _sphere.m_center[1]
 				, _sphere.m_center[2]
 				);
-		uint8_t lod = attrib.m_lod > Mesh::SphereMaxLod ? Mesh::SphereMaxLod : attrib.m_lod;
+		uint8_t lod = attrib.m_lod > Mesh::SphereMaxLod
+					? uint8_t(Mesh::SphereMaxLod)
+					: attrib.m_lod
+					;
 		draw(Mesh::Enum(Mesh::Sphere0 + lod), mtx, attrib.m_wireframe);
 	}
 
