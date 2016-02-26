@@ -1572,6 +1572,12 @@ namespace bgfx
 		return true;
 	}
 
+	bool imageConvert(void* _dst, TextureFormat::Enum _dstFormat, const void* _src, TextureFormat::Enum _srcFormat, uint32_t _width, uint32_t _height)
+	{
+		const uint32_t srcBpp = s_imageBlockInfo[_srcFormat].bitsPerPixel;
+		return imageConvert(_dst, _dstFormat, _src, _srcFormat, _width, _height, _width*srcBpp);
+	}
+
 	uint8_t bitRangeConvert(uint32_t _in, uint32_t _from, uint32_t _to)
 	{
 		using namespace bx;
