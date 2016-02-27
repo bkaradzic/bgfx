@@ -8,12 +8,12 @@
 #if BGFX_CONFIG_RENDERER_DIRECT3D11
 #	include "renderer_d3d11.h"
 
-#if BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
+#if !BX_PLATFORM_WINDOWS
 #	include <inspectable.h>
 #	if BX_PLATFORM_WINRT
 #		include <windows.ui.xaml.media.dxinterop.h>
 #	endif // BX_PLATFORM_WINRT
-#endif // BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
+#endif // !BX_PLATFORM_WINDOWS
 
 #if BGFX_CONFIG_PROFILER_REMOTERY
 #	define BGFX_GPU_PROFILER_BIND(_device, _context) rmt_BindD3D11(_device, _context)
@@ -791,17 +791,14 @@ namespace bgfx { namespace d3d11
 			}
 #endif // USE_D3D11_DYNAMIC_LIB
 
-			HRESULT hr;
-			IDXGIFactory* factory;
-#if BX_PLATFORM_XBOXONE
-			hr = S_OK;
-			factory = NULL;
-#elif BX_PLATFORM_WINRT
+			HRESULT hr = S_OK;
+			IDXGIFactory* factory = NULL;
+#if BX_PLATFORM_WINRT
 			// WinRT requires the IDXGIFactory2 interface, which isn't supported on older platforms
 			hr = CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&factory);
-#else
+#elif BX_PLATFORM_WINDOWS
 			hr = CreateDXGIFactory(IID_IDXGIFactory, (void**)&factory);
-#endif // BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
+#endif // BX_PLATFORM_*
 			BX_WARN(SUCCEEDED(hr), "Unable to create DXGI factory.");
 			if (FAILED(hr) )
 			{
@@ -820,60 +817,63 @@ namespace bgfx { namespace d3d11
 					: D3D_DRIVER_TYPE_HARDWARE
 					;
 
-				IDXGIAdapter* adapter;
-				for (uint32_t ii = 0
-					; DXGI_ERROR_NOT_FOUND != factory->EnumAdapters(ii, &adapter) && ii < BX_COUNTOF(g_caps.gpu)
-					; ++ii
-					)
+				if (NULL != factory)
 				{
-					DXGI_ADAPTER_DESC desc;
-					hr = adapter->GetDesc(&desc);
-					if (SUCCEEDED(hr) )
+					IDXGIAdapter* adapter;
+					for (uint32_t ii = 0
+						; DXGI_ERROR_NOT_FOUND != factory->EnumAdapters(ii, &adapter) && ii < BX_COUNTOF(g_caps.gpu)
+						; ++ii
+						)
 					{
-						BX_TRACE("Adapter #%d", ii);
-
-						char description[BX_COUNTOF(desc.Description)];
-						wcstombs(description, desc.Description, BX_COUNTOF(desc.Description) );
-						BX_TRACE("\tDescription: %s", description);
-						BX_TRACE("\tVendorId: 0x%08x, DeviceId: 0x%08x, SubSysId: 0x%08x, Revision: 0x%08x"
-							, desc.VendorId
-							, desc.DeviceId
-							, desc.SubSysId
-							, desc.Revision
-							);
-						BX_TRACE("\tMemory: %" PRIi64 " (video), %" PRIi64 " (system), %" PRIi64 " (shared)"
-							, desc.DedicatedVideoMemory
-							, desc.DedicatedSystemMemory
-							, desc.SharedSystemMemory
-							);
-
-						g_caps.gpu[ii].vendorId = (uint16_t)desc.VendorId;
-						g_caps.gpu[ii].deviceId = (uint16_t)desc.DeviceId;
-						++g_caps.numGPUs;
-
-						if (NULL == m_adapter)
+						DXGI_ADAPTER_DESC desc;
+						hr = adapter->GetDesc(&desc);
+						if (SUCCEEDED(hr) )
 						{
-							if ( (BGFX_PCI_ID_NONE != g_caps.vendorId ||             0 != g_caps.deviceId)
-							&&   (BGFX_PCI_ID_NONE == g_caps.vendorId || desc.VendorId == g_caps.vendorId)
-							&&   (               0 == g_caps.deviceId || desc.DeviceId == g_caps.deviceId) )
-							{
-								m_adapter = adapter;
-								m_adapter->AddRef();
-								m_driverType = D3D_DRIVER_TYPE_UNKNOWN;
-							}
+							BX_TRACE("Adapter #%d", ii);
 
-							if (BX_ENABLED(BGFX_CONFIG_DEBUG_PERFHUD)
-							&&  0 != strstr(description, "PerfHUD") )
+							char description[BX_COUNTOF(desc.Description)];
+							wcstombs(description, desc.Description, BX_COUNTOF(desc.Description) );
+							BX_TRACE("\tDescription: %s", description);
+							BX_TRACE("\tVendorId: 0x%08x, DeviceId: 0x%08x, SubSysId: 0x%08x, Revision: 0x%08x"
+								, desc.VendorId
+								, desc.DeviceId
+								, desc.SubSysId
+								, desc.Revision
+								);
+							BX_TRACE("\tMemory: %" PRIi64 " (video), %" PRIi64 " (system), %" PRIi64 " (shared)"
+								, desc.DedicatedVideoMemory
+								, desc.DedicatedSystemMemory
+								, desc.SharedSystemMemory
+								);
+
+							g_caps.gpu[ii].vendorId = (uint16_t)desc.VendorId;
+							g_caps.gpu[ii].deviceId = (uint16_t)desc.DeviceId;
+							++g_caps.numGPUs;
+
+							if (NULL == m_adapter)
 							{
-								m_adapter = adapter;
-								m_driverType = D3D_DRIVER_TYPE_REFERENCE;
+								if ( (BGFX_PCI_ID_NONE != g_caps.vendorId ||             0 != g_caps.deviceId)
+								&&   (BGFX_PCI_ID_NONE == g_caps.vendorId || desc.VendorId == g_caps.vendorId)
+								&&   (               0 == g_caps.deviceId || desc.DeviceId == g_caps.deviceId) )
+								{
+									m_adapter = adapter;
+									m_adapter->AddRef();
+									m_driverType = D3D_DRIVER_TYPE_UNKNOWN;
+								}
+
+								if (BX_ENABLED(BGFX_CONFIG_DEBUG_PERFHUD)
+								&&  0 != strstr(description, "PerfHUD") )
+								{
+									m_adapter = adapter;
+									m_driverType = D3D_DRIVER_TYPE_REFERENCE;
+								}
 							}
 						}
-					}
 
-					DX_RELEASE(adapter, adapter == m_adapter ? 1 : 0);
+						DX_RELEASE(adapter, adapter == m_adapter ? 1 : 0);
+					}
+					DX_RELEASE(factory, NULL != m_adapter ? 1 : 0);
 				}
-				DX_RELEASE(factory, NULL != m_adapter ? 1 : 0);
 
 				D3D_FEATURE_LEVEL featureLevel[] =
 				{
@@ -1032,7 +1032,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				if (NULL == g_platformData.backBuffer)
 				{
-#if BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
+#if !BX_PLATFORM_WINDOWS
 					hr = adapter->GetParent(__uuidof(IDXGIFactory2), (void**)&m_factory);
 					BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
 					DX_RELEASE(adapter, 2);
@@ -1123,7 +1123,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						| DXGI_MWA_NO_WINDOW_CHANGES
 						| DXGI_MWA_NO_ALT_ENTER
 						) );
-#endif // BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
+#endif // BX_PLATFORM_*
 					BX_WARN(SUCCEEDED(hr), "Failed to create swap chain.");
 					if (FAILED(hr) )
 					{
@@ -2117,7 +2117,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			if (NULL != m_swapChain)
 			{
 				HRESULT hr = S_OK;
-				uint32_t syncInterval = BX_ENABLED(BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT)
+				uint32_t syncInterval = BX_ENABLED(!BX_PLATFORM_WINDOWS)
 					? 1 // sync interval of 0 is not supported on WinRT
 					: !!(m_resolution.m_flags & BGFX_RESET_VSYNC)
 					;
@@ -2285,7 +2285,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 							scd = &swapChainScd;
 						}
 
-#if BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
+#if !BX_PLATFORM_WINDOWS
 						HRESULT hr;
 						if (g_platformData.ndt == 0)
 						{
@@ -2329,7 +2329,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								, scd
 								, &m_swapChain
 								);
-#endif // BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
+#endif // !BX_PLATFORM_WINDOWS
 						BGFX_FATAL(SUCCEEDED(hr), bgfx::Fatal::UnableToInitialize, "Failed to create swap chain.");
 					}
 				}
@@ -2802,39 +2802,39 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		DXGI_FORMAT getBufferFormat()
 		{
-#if BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
-			return m_scd.Format;
-#else
+#if BX_PLATFORM_WINDOWS
 			return m_scd.BufferDesc.Format;
+#else
+			return m_scd.Format;
 #endif
 		}
 
 		uint32_t getBufferWidth()
 		{
-#if BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
-			return m_scd.Width;
-#else
+#if BX_PLATFORM_WINDOWS
 			return m_scd.BufferDesc.Width;
+#else
+			return m_scd.Width;
 #endif
 		}
 
 		uint32_t getBufferHeight()
 		{
-#if BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
-			return m_scd.Height;
-#else
+#if BX_PLATFORM_WINDOWS
 			return m_scd.BufferDesc.Height;
+#else
+			return m_scd.Height;
 #endif
 		}
 
 		void setBufferSize(uint32_t _width, uint32_t _height)
 		{
-#if BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
-			m_scd.Width  = _width;
-			m_scd.Height = _height;
-#else
+#if BX_PLATFORM_WINDOWS
 			m_scd.BufferDesc.Width  = _width;
 			m_scd.BufferDesc.Height = _height;
+#else
+			m_scd.Width  = _width;
+			m_scd.Height = _height;
 #endif
 		}
 
@@ -3361,13 +3361,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		D3D_FEATURE_LEVEL m_featureLevel;
 		IDXGIAdapter*     m_adapter;
 		DXGI_ADAPTER_DESC m_adapterDesc;
-#if BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
-		IDXGIFactory2*    m_factory;
-		IDXGISwapChain1*  m_swapChain;
-#else
+#if BX_PLATFORM_WINDOWS
 		IDXGIFactory*     m_factory;
 		IDXGISwapChain*   m_swapChain;
-#endif // BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
+#else
+		IDXGIFactory2*    m_factory;
+		IDXGISwapChain1*  m_swapChain;
+#endif // BX_PLATFORM_WINDOWS
 
 		uint16_t m_lost;
 		uint16_t m_numWindows;
@@ -3390,11 +3390,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		Resolution m_resolution;
 		bool m_wireframe;
 
-#if BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
-		typedef DXGI_SWAP_CHAIN_DESC1 SwapChainDesc;
-#else
+#if BX_PLATFORM_WINDOWS
 		typedef DXGI_SWAP_CHAIN_DESC  SwapChainDesc;
-#endif // BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
+#else
+		typedef DXGI_SWAP_CHAIN_DESC1 SwapChainDesc;
+#endif // BX_PLATFORM_WINDOWS
 
 		SwapChainDesc m_scd;
 		uint32_t m_maxAnisotropy;
@@ -3474,7 +3474,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				}
 			}
 		}
-#endif // BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
+#endif // BX_PLATFORM_WINRT
 	}
 
 	void stubMultiDrawInstancedIndirect(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride)
