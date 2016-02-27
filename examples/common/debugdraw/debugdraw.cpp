@@ -467,9 +467,10 @@ struct DebugDraw
 	{
 		bgfx::destroyIndexBuffer(m_ibh);
 		bgfx::destroyVertexBuffer(m_vbh);
-		bgfx::destroyProgram(m_program[0]);
-		bgfx::destroyProgram(m_program[1]);
-		bgfx::destroyProgram(m_program[2]);
+		for (uint32_t ii = 0; ii < Program::Count; ++ii)
+		{
+			bgfx::destroyProgram(m_program[ii]);
+		}
 		bgfx::destroyUniform(u_params);
 	}
 
