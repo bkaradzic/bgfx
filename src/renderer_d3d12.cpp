@@ -63,20 +63,20 @@ namespace bgfx { namespace d3d12
 
 	static const D3D12_BLEND s_blendFactor[][2] =
 	{
-		{ (D3D12_BLEND)0,               (D3D12_BLEND)0               }, // ignored
+		{ D3D12_BLEND(0),               D3D12_BLEND(0)               }, // ignored
 		{ D3D12_BLEND_ZERO,             D3D12_BLEND_ZERO             }, // ZERO
-		{ D3D12_BLEND_ONE,              D3D12_BLEND_ONE              },	// ONE
-		{ D3D12_BLEND_SRC_COLOR,        D3D12_BLEND_SRC_ALPHA        },	// SRC_COLOR
-		{ D3D12_BLEND_INV_SRC_COLOR,    D3D12_BLEND_INV_SRC_ALPHA    },	// INV_SRC_COLOR
-		{ D3D12_BLEND_SRC_ALPHA,        D3D12_BLEND_SRC_ALPHA        },	// SRC_ALPHA
-		{ D3D12_BLEND_INV_SRC_ALPHA,    D3D12_BLEND_INV_SRC_ALPHA    },	// INV_SRC_ALPHA
-		{ D3D12_BLEND_DEST_ALPHA,       D3D12_BLEND_DEST_ALPHA       },	// DST_ALPHA
-		{ D3D12_BLEND_INV_DEST_ALPHA,   D3D12_BLEND_INV_DEST_ALPHA   },	// INV_DST_ALPHA
-		{ D3D12_BLEND_DEST_COLOR,       D3D12_BLEND_DEST_ALPHA       },	// DST_COLOR
-		{ D3D12_BLEND_INV_DEST_COLOR,   D3D12_BLEND_INV_DEST_ALPHA   },	// INV_DST_COLOR
-		{ D3D12_BLEND_SRC_ALPHA_SAT,    D3D12_BLEND_ONE              },	// SRC_ALPHA_SAT
-		{ D3D12_BLEND_BLEND_FACTOR,     D3D12_BLEND_BLEND_FACTOR     },	// FACTOR
-		{ D3D12_BLEND_INV_BLEND_FACTOR, D3D12_BLEND_INV_BLEND_FACTOR },	// INV_FACTOR
+		{ D3D12_BLEND_ONE,              D3D12_BLEND_ONE              }, // ONE
+		{ D3D12_BLEND_SRC_COLOR,        D3D12_BLEND_SRC_ALPHA        }, // SRC_COLOR
+		{ D3D12_BLEND_INV_SRC_COLOR,    D3D12_BLEND_INV_SRC_ALPHA    }, // INV_SRC_COLOR
+		{ D3D12_BLEND_SRC_ALPHA,        D3D12_BLEND_SRC_ALPHA        }, // SRC_ALPHA
+		{ D3D12_BLEND_INV_SRC_ALPHA,    D3D12_BLEND_INV_SRC_ALPHA    }, // INV_SRC_ALPHA
+		{ D3D12_BLEND_DEST_ALPHA,       D3D12_BLEND_DEST_ALPHA       }, // DST_ALPHA
+		{ D3D12_BLEND_INV_DEST_ALPHA,   D3D12_BLEND_INV_DEST_ALPHA   }, // INV_DST_ALPHA
+		{ D3D12_BLEND_DEST_COLOR,       D3D12_BLEND_DEST_ALPHA       }, // DST_COLOR
+		{ D3D12_BLEND_INV_DEST_COLOR,   D3D12_BLEND_INV_DEST_ALPHA   }, // INV_DST_COLOR
+		{ D3D12_BLEND_SRC_ALPHA_SAT,    D3D12_BLEND_ONE              }, // SRC_ALPHA_SAT
+		{ D3D12_BLEND_BLEND_FACTOR,     D3D12_BLEND_BLEND_FACTOR     }, // FACTOR
+		{ D3D12_BLEND_INV_BLEND_FACTOR, D3D12_BLEND_INV_BLEND_FACTOR }, // INV_FACTOR
 	};
 
 	static const D3D12_BLEND_OP s_blendEquation[] =
@@ -1947,13 +1947,14 @@ data.NumQualityLevels = 0;
 			m_rtMsaa = _msaa;
 		}
 
-		void setBlendState(D3D12_BLEND_DESC& desc, uint64_t _state, uint32_t _rgba = 0)
+		void setBlendState(D3D12_BLEND_DESC& _desc, uint64_t _state, uint32_t _rgba = 0)
 		{
-			memset(&desc, 0, sizeof(desc) );
-			desc.IndependentBlendEnable = !!(BGFX_STATE_BLEND_INDEPENDENT & _state);
+			_desc.AlphaToCoverageEnable  = false;
+			_desc.IndependentBlendEnable = !!(BGFX_STATE_BLEND_INDEPENDENT & _state);
 
-			D3D12_RENDER_TARGET_BLEND_DESC* drt = &desc.RenderTarget[0];
-			drt->BlendEnable = !!(BGFX_STATE_BLEND_MASK & _state);
+			D3D12_RENDER_TARGET_BLEND_DESC* drt = &_desc.RenderTarget[0];
+			drt->BlendEnable   = !!(BGFX_STATE_BLEND_MASK & _state);
+			drt->LogicOpEnable = false;
 
 			{
 				const uint32_t blend    = uint32_t( (_state & BGFX_STATE_BLEND_MASK         ) >> BGFX_STATE_BLEND_SHIFT);
@@ -1987,14 +1988,16 @@ data.NumQualityLevels = 0;
 					: 0
 					;
 
+			drt->LogicOp = D3D12_LOGIC_OP_CLEAR;
 			drt->RenderTargetWriteMask = writeMask;
 
-			if (desc.IndependentBlendEnable)
+			if (_desc.IndependentBlendEnable)
 			{
 				for (uint32_t ii = 1, rgba = _rgba; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii, rgba >>= 11)
 				{
-					drt = &desc.RenderTarget[ii];
+					drt = &_desc.RenderTarget[ii];
 					drt->BlendEnable = 0 != (rgba & 0x7ff);
+					drt->LogicOpEnable = false;
 
 					const uint32_t src      = (rgba     ) & 0xf;
 					const uint32_t dst      = (rgba >> 4) & 0xf;
@@ -2008,6 +2011,7 @@ data.NumQualityLevels = 0;
 					drt->DestBlendAlpha = s_blendFactor[dst][1];
 					drt->BlendOpAlpha   = s_blendEquation[equation];
 
+					drt->LogicOp = D3D12_LOGIC_OP_CLEAR;
 					drt->RenderTargetWriteMask = writeMask;
 				}
 			}
@@ -2015,61 +2019,61 @@ data.NumQualityLevels = 0;
 			{
 				for (uint32_t ii = 1; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii)
 				{
-					memcpy(&desc.RenderTarget[ii], drt, sizeof(D3D12_RENDER_TARGET_BLEND_DESC) );
+					memcpy(&_desc.RenderTarget[ii], drt, sizeof(D3D12_RENDER_TARGET_BLEND_DESC) );
 				}
 			}
 		}
 
-		void setRasterizerState(D3D12_RASTERIZER_DESC& desc, uint64_t _state, bool _wireframe = false)
+		void setRasterizerState(D3D12_RASTERIZER_DESC& _desc, uint64_t _state, bool _wireframe = false)
 		{
 			const uint32_t cull = (_state&BGFX_STATE_CULL_MASK) >> BGFX_STATE_CULL_SHIFT;
 
-			desc.FillMode = _wireframe
+			_desc.FillMode = _wireframe
 				? D3D12_FILL_MODE_WIREFRAME
 				: D3D12_FILL_MODE_SOLID
 				;
-			desc.CullMode = s_cullMode[cull];
-			desc.FrontCounterClockwise = false;
-			desc.DepthBias = 0;
-			desc.DepthBiasClamp = 0.0f;
-			desc.SlopeScaledDepthBias = 0.0f;
-			desc.DepthClipEnable = !m_depthClamp;
-			desc.MultisampleEnable = !!(_state&BGFX_STATE_MSAA);
-			desc.AntialiasedLineEnable = false;
-			desc.ForcedSampleCount = 0;
-			desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+			_desc.CullMode = s_cullMode[cull];
+			_desc.FrontCounterClockwise = false;
+			_desc.DepthBias = 0;
+			_desc.DepthBiasClamp = 0.0f;
+			_desc.SlopeScaledDepthBias = 0.0f;
+			_desc.DepthClipEnable = !m_depthClamp;
+			_desc.MultisampleEnable = !!(_state&BGFX_STATE_MSAA);
+			_desc.AntialiasedLineEnable = false;
+			_desc.ForcedSampleCount = 0;
+			_desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 		}
 
-		void setDepthStencilState(D3D12_DEPTH_STENCIL_DESC& desc, uint64_t _state, uint64_t _stencil = 0)
+		void setDepthStencilState(D3D12_DEPTH_STENCIL_DESC& _desc, uint64_t _state, uint64_t _stencil = 0)
 		{
 			const uint32_t fstencil = unpackStencil(0, _stencil);
 
-			memset(&desc, 0, sizeof(desc) );
+			memset(&_desc, 0, sizeof(_desc) );
 			uint32_t func = (_state&BGFX_STATE_DEPTH_TEST_MASK)>>BGFX_STATE_DEPTH_TEST_SHIFT;
-			desc.DepthEnable = 0 != func;
-			desc.DepthWriteMask = !!(BGFX_STATE_DEPTH_WRITE & _state)
+			_desc.DepthEnable = 0 != func;
+			_desc.DepthWriteMask = !!(BGFX_STATE_DEPTH_WRITE & _state)
 				? D3D12_DEPTH_WRITE_MASK_ALL
 				: D3D12_DEPTH_WRITE_MASK_ZERO
 				;
-			desc.DepthFunc = s_cmpFunc[func];
+			_desc.DepthFunc = s_cmpFunc[func];
 
 			uint32_t bstencil = unpackStencil(1, _stencil);
 			uint32_t frontAndBack = bstencil != BGFX_STENCIL_NONE && bstencil != fstencil;
 			bstencil = frontAndBack ? bstencil : fstencil;
 
-			desc.StencilEnable    = 0 != _stencil;
-			desc.StencilReadMask  = (fstencil & BGFX_STENCIL_FUNC_RMASK_MASK) >> BGFX_STENCIL_FUNC_RMASK_SHIFT;
-			desc.StencilWriteMask = 0xff;
+			_desc.StencilEnable    = 0 != _stencil;
+			_desc.StencilReadMask  = (fstencil & BGFX_STENCIL_FUNC_RMASK_MASK) >> BGFX_STENCIL_FUNC_RMASK_SHIFT;
+			_desc.StencilWriteMask = 0xff;
 
-			desc.FrontFace.StencilFailOp      = s_stencilOp[(fstencil & BGFX_STENCIL_OP_FAIL_S_MASK) >> BGFX_STENCIL_OP_FAIL_S_SHIFT];
-			desc.FrontFace.StencilDepthFailOp = s_stencilOp[(fstencil & BGFX_STENCIL_OP_FAIL_Z_MASK) >> BGFX_STENCIL_OP_FAIL_Z_SHIFT];
-			desc.FrontFace.StencilPassOp      = s_stencilOp[(fstencil & BGFX_STENCIL_OP_PASS_Z_MASK) >> BGFX_STENCIL_OP_PASS_Z_SHIFT];
-			desc.FrontFace.StencilFunc        = s_cmpFunc[(fstencil & BGFX_STENCIL_TEST_MASK) >> BGFX_STENCIL_TEST_SHIFT];
+			_desc.FrontFace.StencilFailOp      = s_stencilOp[(fstencil & BGFX_STENCIL_OP_FAIL_S_MASK) >> BGFX_STENCIL_OP_FAIL_S_SHIFT];
+			_desc.FrontFace.StencilDepthFailOp = s_stencilOp[(fstencil & BGFX_STENCIL_OP_FAIL_Z_MASK) >> BGFX_STENCIL_OP_FAIL_Z_SHIFT];
+			_desc.FrontFace.StencilPassOp      = s_stencilOp[(fstencil & BGFX_STENCIL_OP_PASS_Z_MASK) >> BGFX_STENCIL_OP_PASS_Z_SHIFT];
+			_desc.FrontFace.StencilFunc        = s_cmpFunc[(fstencil & BGFX_STENCIL_TEST_MASK) >> BGFX_STENCIL_TEST_SHIFT];
 
-			desc.BackFace.StencilFailOp       = s_stencilOp[(bstencil & BGFX_STENCIL_OP_FAIL_S_MASK) >> BGFX_STENCIL_OP_FAIL_S_SHIFT];
-			desc.BackFace.StencilDepthFailOp  = s_stencilOp[(bstencil & BGFX_STENCIL_OP_FAIL_Z_MASK) >> BGFX_STENCIL_OP_FAIL_Z_SHIFT];
-			desc.BackFace.StencilPassOp       = s_stencilOp[(bstencil & BGFX_STENCIL_OP_PASS_Z_MASK) >> BGFX_STENCIL_OP_PASS_Z_SHIFT];
-			desc.BackFace.StencilFunc         = s_cmpFunc[(bstencil&BGFX_STENCIL_TEST_MASK) >> BGFX_STENCIL_TEST_SHIFT];
+			_desc.BackFace.StencilFailOp       = s_stencilOp[(bstencil & BGFX_STENCIL_OP_FAIL_S_MASK) >> BGFX_STENCIL_OP_FAIL_S_SHIFT];
+			_desc.BackFace.StencilDepthFailOp  = s_stencilOp[(bstencil & BGFX_STENCIL_OP_FAIL_Z_MASK) >> BGFX_STENCIL_OP_FAIL_Z_SHIFT];
+			_desc.BackFace.StencilPassOp       = s_stencilOp[(bstencil & BGFX_STENCIL_OP_PASS_Z_MASK) >> BGFX_STENCIL_OP_PASS_Z_SHIFT];
+			_desc.BackFace.StencilFunc         = s_cmpFunc[(bstencil&BGFX_STENCIL_TEST_MASK) >> BGFX_STENCIL_TEST_SHIFT];
 		}
 
 		uint32_t setInputLayout(D3D12_INPUT_ELEMENT_DESC* _vertexElements, const VertexDecl& _vertexDecl, const ProgramD3D12& _program, uint8_t _numInstanceData)

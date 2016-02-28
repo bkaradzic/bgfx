@@ -103,20 +103,20 @@ namespace bgfx { namespace d3d11
 
 	static const D3D11_BLEND s_blendFactor[][2] =
 	{
-		{ (D3D11_BLEND)0,               (D3D11_BLEND)0               }, // ignored
+		{ D3D11_BLEND(0),               D3D11_BLEND(0)               }, // ignored
 		{ D3D11_BLEND_ZERO,             D3D11_BLEND_ZERO             }, // ZERO
-		{ D3D11_BLEND_ONE,              D3D11_BLEND_ONE              },	// ONE
-		{ D3D11_BLEND_SRC_COLOR,        D3D11_BLEND_SRC_ALPHA        },	// SRC_COLOR
-		{ D3D11_BLEND_INV_SRC_COLOR,    D3D11_BLEND_INV_SRC_ALPHA    },	// INV_SRC_COLOR
-		{ D3D11_BLEND_SRC_ALPHA,        D3D11_BLEND_SRC_ALPHA        },	// SRC_ALPHA
-		{ D3D11_BLEND_INV_SRC_ALPHA,    D3D11_BLEND_INV_SRC_ALPHA    },	// INV_SRC_ALPHA
-		{ D3D11_BLEND_DEST_ALPHA,       D3D11_BLEND_DEST_ALPHA       },	// DST_ALPHA
-		{ D3D11_BLEND_INV_DEST_ALPHA,   D3D11_BLEND_INV_DEST_ALPHA   },	// INV_DST_ALPHA
-		{ D3D11_BLEND_DEST_COLOR,       D3D11_BLEND_DEST_ALPHA       },	// DST_COLOR
-		{ D3D11_BLEND_INV_DEST_COLOR,   D3D11_BLEND_INV_DEST_ALPHA   },	// INV_DST_COLOR
-		{ D3D11_BLEND_SRC_ALPHA_SAT,    D3D11_BLEND_ONE              },	// SRC_ALPHA_SAT
-		{ D3D11_BLEND_BLEND_FACTOR,     D3D11_BLEND_BLEND_FACTOR     },	// FACTOR
-		{ D3D11_BLEND_INV_BLEND_FACTOR, D3D11_BLEND_INV_BLEND_FACTOR },	// INV_FACTOR
+		{ D3D11_BLEND_ONE,              D3D11_BLEND_ONE              }, // ONE
+		{ D3D11_BLEND_SRC_COLOR,        D3D11_BLEND_SRC_ALPHA        }, // SRC_COLOR
+		{ D3D11_BLEND_INV_SRC_COLOR,    D3D11_BLEND_INV_SRC_ALPHA    }, // INV_SRC_COLOR
+		{ D3D11_BLEND_SRC_ALPHA,        D3D11_BLEND_SRC_ALPHA        }, // SRC_ALPHA
+		{ D3D11_BLEND_INV_SRC_ALPHA,    D3D11_BLEND_INV_SRC_ALPHA    }, // INV_SRC_ALPHA
+		{ D3D11_BLEND_DEST_ALPHA,       D3D11_BLEND_DEST_ALPHA       }, // DST_ALPHA
+		{ D3D11_BLEND_INV_DEST_ALPHA,   D3D11_BLEND_INV_DEST_ALPHA   }, // INV_DST_ALPHA
+		{ D3D11_BLEND_DEST_COLOR,       D3D11_BLEND_DEST_ALPHA       }, // DST_COLOR
+		{ D3D11_BLEND_INV_DEST_COLOR,   D3D11_BLEND_INV_DEST_ALPHA   }, // INV_DST_COLOR
+		{ D3D11_BLEND_SRC_ALPHA_SAT,    D3D11_BLEND_ONE              }, // SRC_ALPHA_SAT
+		{ D3D11_BLEND_BLEND_FACTOR,     D3D11_BLEND_BLEND_FACTOR     }, // FACTOR
+		{ D3D11_BLEND_INV_BLEND_FACTOR, D3D11_BLEND_INV_BLEND_FACTOR }, // INV_FACTOR
 	};
 
 	static const D3D11_BLEND_OP s_blendEquation[] =
@@ -592,9 +592,9 @@ namespace bgfx { namespace d3d11
 			, m_currentDepthStencil(NULL)
 			, m_captureTexture(NULL)
 			, m_captureResolve(NULL)
-			, m_wireframe(false)
 			, m_maxAnisotropy(1)
 			, m_depthClamp(false)
+			, m_wireframe(false)
 			, m_currentProgram(NULL)
 			, m_vsChanges(0)
 			, m_fsChanges(0)
@@ -3388,7 +3388,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		ID3D11Texture2D* m_captureResolve;
 
 		Resolution m_resolution;
-		bool m_wireframe;
 
 #if BX_PLATFORM_WINDOWS
 		typedef DXGI_SWAP_CHAIN_DESC  SwapChainDesc;
@@ -3399,6 +3398,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		SwapChainDesc m_scd;
 		uint32_t m_maxAnisotropy;
 		bool m_depthClamp;
+		bool m_wireframe;
 
 		IndexBufferD3D11 m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexBufferD3D11 m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
