@@ -120,7 +120,6 @@ namespace bgfx { namespace d3d11
 		}
 
 		void create(const Memory* _mem);
-		DWORD* getShaderCode(uint8_t _fragmentBit, const Memory* _mem);
 
 		void destroy()
 		{

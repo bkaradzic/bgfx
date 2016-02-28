@@ -3869,7 +3869,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		uint16_t shaderSize;
 		bx::read(&reader, shaderSize);
 
-		const DWORD* code = (const DWORD*)reader.getDataPtr();
+		const void* code = reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
 
 		if (BGFX_CHUNK_MAGIC_FSH == magic)
