@@ -540,17 +540,16 @@ struct Mesh
 				;
 		}
 
-		uint32_t cached = bgfx::setTransform(_mtx);
+		bgfx::setTransform(_mtx);
+		bgfx::setState(_state);
 
 		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
 		{
 			const Group& group = *it;
 
-			bgfx::setTransform(cached);
 			bgfx::setIndexBuffer(group.m_ibh);
 			bgfx::setVertexBuffer(group.m_vbh);
-			bgfx::setState(_state);
-			bgfx::submit(_id, _program);
+			bgfx::submit(_id, _program, 0, it != itEnd-1);
 		}
 	}
 
@@ -560,26 +559,28 @@ struct Mesh
 
 		for (uint32_t pass = 0; pass < _numPasses; ++pass)
 		{
+			bgfx::setTransform(cached, _numMatrices);
+
 			const MeshState& state = *_state[pass];
+			bgfx::setState(state.m_state);
+
+			for (uint8_t tex = 0; tex < state.m_numTextures; ++tex)
+			{
+				const MeshState::Texture& texture = state.m_textures[tex];
+				bgfx::setTexture(texture.m_stage
+						, texture.m_sampler
+						, texture.m_texture
+						, texture.m_flags
+						);
+			}
 
 			for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
 			{
 				const Group& group = *it;
 
-				bgfx::setTransform(cached, _numMatrices);
-				for (uint8_t tex = 0; tex < state.m_numTextures; ++tex)
-				{
-					const MeshState::Texture& texture = state.m_textures[tex];
-					bgfx::setTexture(texture.m_stage
-							, texture.m_sampler
-							, texture.m_texture
-							, texture.m_flags
-							);
-				}
 				bgfx::setIndexBuffer(group.m_ibh);
 				bgfx::setVertexBuffer(group.m_vbh);
-				bgfx::setState(state.m_state);
-				bgfx::submit(state.m_viewId, state.m_program);
+				bgfx::submit(state.m_viewId, state.m_program, 0, it != itEnd-1);
 			}
 		}
 	}

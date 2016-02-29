@@ -848,7 +848,7 @@ namespace bgfx
 		return PredefinedUniform::Count;
 	}
 
-	uint32_t Frame::submit(uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth)
+	uint32_t Frame::submit(uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth, bool _preserveState)
 	{
 		if (m_discard)
 		{
@@ -895,9 +895,12 @@ namespace bgfx
 		m_renderItem[m_numRenderItems].draw = m_draw;
 		++m_numRenderItems;
 
-		m_draw.clear();
-		m_uniformBegin = m_uniformEnd;
-		m_stateFlags = BGFX_STATE_NONE;
+		if (!_preserveState)
+		{
+			m_draw.clear();
+			m_uniformBegin = m_uniformEnd;
+			m_stateFlags = BGFX_STATE_NONE;
+		}
 
 		return m_num;
 	}
@@ -3508,13 +3511,13 @@ again:
 		return submit(_id, handle);
 	}
 
-	uint32_t submit(uint8_t _id, ProgramHandle _program, int32_t _depth)
+	uint32_t submit(uint8_t _id, ProgramHandle _program, int32_t _depth, bool _preserveState)
 	{
 		OcclusionQueryHandle handle = BGFX_INVALID_HANDLE;
-		return submit(_id, _program, handle, _depth);
+		return submit(_id, _program, handle, _depth, _preserveState);
 	}
 
-	uint32_t submit(uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth)
+	uint32_t submit(uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth, bool _preserveState)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(false
@@ -3522,13 +3525,13 @@ again:
 			|| 0 != (g_caps.supported & BGFX_CAPS_OCCLUSION_QUERY)
 			, "Occlusion query is not supported! Use bgfx::getCaps to check BGFX_CAPS_OCCLUSION_QUERY backend renderer capabilities."
 			);
-		return s_ctx->submit(_id, _program, _occlusionQuery, _depth);
+		return s_ctx->submit(_id, _program, _occlusionQuery, _depth, _preserveState);
 	}
 
-	uint32_t submit(uint8_t _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth)
+	uint32_t submit(uint8_t _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth, bool _preserveState)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		return s_ctx->submit(_id, _program, _indirectHandle, _start, _num, _depth);
+		return s_ctx->submit(_id, _program, _indirectHandle, _start, _num, _depth, _preserveState);
 	}
 
 	void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
@@ -4438,24 +4441,24 @@ BGFX_C_API uint32_t bgfx_touch(uint8_t _id)
 	return bgfx::touch(_id);
 }
 
-BGFX_C_API uint32_t bgfx_submit(uint8_t _id, bgfx_program_handle_t _handle, int32_t _depth)
+BGFX_C_API uint32_t bgfx_submit(uint8_t _id, bgfx_program_handle_t _handle, int32_t _depth, bool _preserveState)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
-	return bgfx::submit(_id, handle.cpp, _depth);
+	return bgfx::submit(_id, handle.cpp, _depth, _preserveState);
 }
 
-BGFX_C_API uint32_t bgfx_submit_occlusion_query(uint8_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, int32_t _depth)
+BGFX_C_API uint32_t bgfx_submit_occlusion_query(uint8_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, int32_t _depth, bool _preserveState)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } program = { _program };
 	union { bgfx_occlusion_query_handle c; bgfx::OcclusionQueryHandle cpp; } occlusionQuery = { _occlusionQuery };
-	return bgfx::submit(_id, program.cpp, occlusionQuery.cpp, _depth);
+	return bgfx::submit(_id, program.cpp, occlusionQuery.cpp, _depth, _preserveState);
 }
 
-BGFX_C_API uint32_t bgfx_submit_indirect(uint8_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth)
+BGFX_C_API uint32_t bgfx_submit_indirect(uint8_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth, bool _preserveState)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
 	union { bgfx_indirect_buffer_handle_t c; bgfx::IndirectBufferHandle cpp; } indirectHandle = { _indirectHandle };
-	return bgfx::submit(_id, handle.cpp, indirectHandle.cpp, _start, _num, _depth);
+	return bgfx::submit(_id, handle.cpp, indirectHandle.cpp, _start, _num, _depth, _preserveState);
 }
 
 BGFX_C_API void bgfx_set_image(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format)

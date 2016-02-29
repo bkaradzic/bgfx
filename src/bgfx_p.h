@@ -1632,15 +1632,15 @@ namespace bgfx
 			m_stateFlags = BGFX_STATE_NONE;
 		}
 
-		uint32_t submit(uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth);
+		uint32_t submit(uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth, bool _preserveState);
 
-		uint32_t submit(uint8_t _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth)
+		uint32_t submit(uint8_t _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth, bool _preserveState)
 		{
 			m_draw.m_startIndirect  = _start;
 			m_draw.m_numIndirect    = _num;
 			m_draw.m_indirectBuffer = _indirectHandle;
 			OcclusionQueryHandle handle = BGFX_INVALID_HANDLE;
-			return submit(_id, _program, handle, _depth);
+			return submit(_id, _program, handle, _depth, _preserveState);
 		}
 
 		uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _ngx, uint16_t _ngy, uint16_t _ngz, uint8_t _flags);
@@ -3713,7 +3713,7 @@ namespace bgfx
 			m_submit->setTexture(_stage, _sampler, textureHandle, _flags);
 		}
 
-		BGFX_API_FUNC(uint32_t submit(uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth) )
+		BGFX_API_FUNC(uint32_t submit(uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth, bool _preserveState) )
 		{
 			BGFX_CHECK_HANDLE_INVALID_OK("submit", m_programHandle, _program);
 			BGFX_CHECK_HANDLE_INVALID_OK("submit", m_occlusionQueryHandle, _occlusionQuery);
@@ -3732,10 +3732,10 @@ namespace bgfx
 				m_occlusionQuerySet.insert(_occlusionQuery.idx);
 			}
 
-			return m_submit->submit(_id, _program, _occlusionQuery, _depth);
+			return m_submit->submit(_id, _program, _occlusionQuery, _depth, _preserveState);
 		}
 
-		BGFX_API_FUNC(uint32_t submit(uint8_t _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth) )
+		BGFX_API_FUNC(uint32_t submit(uint8_t _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth, bool _preserveState) )
 		{
 			BGFX_CHECK_HANDLE_INVALID_OK("submit", m_programHandle, _handle);
 			BGFX_CHECK_HANDLE("submit", m_vertexBufferHandle, _indirectHandle);
@@ -3743,7 +3743,7 @@ namespace bgfx
 			{
 				m_uniformSet.clear();
 			}
-			return m_submit->submit(_id, _handle, _indirectHandle, _start, _num, _depth);
+			return m_submit->submit(_id, _handle, _indirectHandle, _start, _num, _depth, _preserveState);
 		}
 
 		BGFX_API_FUNC(void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access) )

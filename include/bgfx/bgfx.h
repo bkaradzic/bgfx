@@ -2074,11 +2074,13 @@ namespace bgfx
 	/// @param[in] _id View id.
 	/// @param[in] _program Program.
 	/// @param[in] _depth Depth for sorting.
+	/// @param[in] _preserveState Preserve internal draw state for next draw
+	///   call submit.
 	/// @returns Number of draw calls.
 	///
 	/// @attention C99 equivalent is `bgfx_submit`.
 	///
-	uint32_t submit(uint8_t _id, ProgramHandle _program, int32_t _depth = 0);
+	uint32_t submit(uint8_t _id, ProgramHandle _program, int32_t _depth = 0, bool _preserveState = false);
 
 	/// Submit primitive with occlusion query for rendering.
 	///
@@ -2086,11 +2088,13 @@ namespace bgfx
 	/// @param[in] _program Program.
 	/// @param[in] _occlusionQuery Occlusion query.
 	/// @param[in] _depth Depth for sorting.
+	/// @param[in] _preserveState Preserve internal draw state for next draw
+	///   call submit.
 	/// @returns Number of draw calls.
 	///
 	/// @attention C99 equivalent is `bgfx_submit_occlusion_query.
 	///
-	uint32_t submit(uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth = 0);
+	uint32_t submit(uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth = 0, bool _preserveState = false);
 
 	/// Submit primitive for rendering with index and instance data info from
 	/// indirect buffer.
@@ -2101,10 +2105,13 @@ namespace bgfx
 	/// @param[in] _start First element in indirect buffer.
 	/// @param[in] _num Number of dispatches.
 	/// @param[in] _depth Depth for sorting.
+	/// @param[in] _preserveState Preserve internal draw state for next draw
+	///   call submit.
+	/// @returns Number of draw calls.
 	///
 	/// @attention C99 equivalent is `bgfx_submit_indirect`.
 	///
-	uint32_t submit(uint8_t _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start = 0, uint16_t _num = 1, int32_t _depth = 0);
+	uint32_t submit(uint8_t _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start = 0, uint16_t _num = 1, int32_t _depth = 0, bool _preserveState = false);
 
 	/// Set compute index buffer.
 	///

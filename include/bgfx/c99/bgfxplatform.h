@@ -179,9 +179,9 @@ typedef struct bgfx_interface_vtbl
     void (*set_texture)(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint32_t _flags);
     void (*set_texture_from_frame_buffer)(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_frame_buffer_handle_t _handle, uint8_t _attachment, uint32_t _flags);
     uint32_t (*touch)(uint8_t _id);
-    uint32_t (*submit)(uint8_t _id, bgfx_program_handle_t _handle, int32_t _depth);
-    uint32_t (*submit_occlusion_query)(uint8_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, int32_t _depth);
-    uint32_t (*submit_indirect)(uint8_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth);
+    uint32_t (*submit)(uint8_t _id, bgfx_program_handle_t _handle, int32_t _depth, bool _preserveState);
+    uint32_t (*submit_occlusion_query)(uint8_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, int32_t _depth, bool _preserveState);
+    uint32_t (*submit_indirect)(uint8_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth, bool _preserveState);
     void (*set_image)(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format);
     void (*set_image_from_frame_buffer)(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_frame_buffer_handle_t _handle, uint8_t _attachment, bgfx_access_t _access, bgfx_texture_format_t _format);
     void (*set_compute_index_buffer)(uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access);
