@@ -18,7 +18,7 @@ namespace bgfx { namespace d3d12
 
 	struct PrimInfo
 	{
-		D3D_PRIMITIVE_TOPOLOGY m_toplogy;
+		D3D_PRIMITIVE_TOPOLOGY m_topology;
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE m_topologyType;
 		uint32_t m_min;
 		uint32_t m_div;
@@ -4992,7 +4992,7 @@ data.NumQualityLevels = 0;
 					||  0 != changedStencil
 					|| (hasFactor && blendFactor != draw.m_rgba)
 					|| (0 != (BGFX_STATE_PT_MASK & changedFlags)
-					||  prim.m_toplogy != s_primInfo[primIndex].m_toplogy)
+					||  prim.m_topology != s_primInfo[primIndex].m_topology)
 					||  currentState.m_scissor != scissor
 					||  pso != currentPso
 					||  hasOcclusionQuery)
@@ -5083,12 +5083,12 @@ data.NumQualityLevels = 0;
 					}
 
 					if (0 != (BGFX_STATE_PT_MASK & changedFlags)
-					||  prim.m_toplogy != s_primInfo[primIndex].m_toplogy)
+					||  prim.m_topology != s_primInfo[primIndex].m_topology)
 					{
 						const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
 						primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
 						prim = s_primInfo[primIndex];
-						m_commandList->IASetPrimitiveTopology(prim.m_toplogy);
+						m_commandList->IASetPrimitiveTopology(prim.m_topology);
 					}
 
 					if (currentState.m_scissor != scissor)
