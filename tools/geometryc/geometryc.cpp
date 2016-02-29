@@ -81,6 +81,7 @@ struct Index3
 	int32_t m_texcoord;
 	int32_t m_normal;
 	int32_t m_vertexIndex;
+	int32_t m_vbc; // Barycentric ID. Holds eigher 0, 1 or 2.
 };
 
 typedef stl::unordered_map<uint64_t, Index3> Index3Map;
@@ -387,6 +388,7 @@ void help(const char* _error = NULL)
 		  "           0 - unpacked 8 bytes (default).\n"
 		  "           1 - packed 4 bytes.\n"
 		  "      --tangent            Calculate tangent vectors (packing mode is the same as normal).\n"
+		  "      --barycentric        Adds barycentric vertex attribute (packed in bgfx::Attrib::Color1).\n"
 		  "  -c, --compress           Compress indices.\n"
 
 		  "\n"
@@ -450,6 +452,7 @@ int main(int _argc, const char* _argv[])
 	bool ccw = cmdLine.hasArg("ccw");
 	bool flipV = cmdLine.hasArg("flipv");
 	bool hasTangent = cmdLine.hasArg("tangent");
+	bool hasBc = cmdLine.hasArg("barycentric");
 
 	FILE* file = fopen(filePath, "r");
 	if (NULL == file)
@@ -513,6 +516,14 @@ int main(int _argc, const char* _argv[])
 					index.m_texcoord = -1;
 					index.m_normal = -1;
 					index.m_vertexIndex = -1;
+					if (hasBc)
+					{
+						index.m_vbc = edge < 3 ? edge : (1+(edge+1) )&1;
+					}
+					else
+					{
+						index.m_vbc = 0;
+					}
 
 					char* vertex   = argv[edge+1];
 					char* texcoord = strchr(vertex, '/');
@@ -542,7 +553,8 @@ int main(int _argc, const char* _argv[])
 					uint64_t hash0 = index.m_position;
 					uint64_t hash1 = uint64_t(index.m_texcoord)<<20;
 					uint64_t hash2 = uint64_t(index.m_normal)<<40;
-					uint64_t hash = hash0^hash1^hash2;
+					uint64_t hash3 = uint64_t(index.m_vbc)<<60;
+					uint64_t hash = hash0^hash1^hash2^hash3;
 
 					stl::pair<Index3Map::iterator, bool> result = indexMap.insert(stl::make_pair(hash, index) );
 					if (!result.second)
@@ -755,6 +767,11 @@ int main(int _argc, const char* _argv[])
 		decl.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true);
 	}
 
+	if (hasBc)
+	{
+		decl.add(bgfx::Attrib::Color1, 4, bgfx::AttribType::Uint8, true);
+	}
+
 	if (hasTexcoord)
 	{
 		switch (packUv)
@@ -912,6 +929,17 @@ int main(int _argc, const char* _argv[])
 					{
 						uint32_t* color0 = (uint32_t*)(vertices + color0Offset);
 						*color0 = rgbaToAbgr(numVertices%255, numIndices%255, 0, 0xff);
+					}
+
+					if (hasBc)
+					{
+						const float bc[3] =
+						{
+							(index.m_vbc == 0) ? 1.0f : 0.0f,
+							(index.m_vbc == 1) ? 1.0f : 0.0f,
+							(index.m_vbc == 2) ? 1.0f : 0.0f,
+						};
+						bgfx::vertexPack(bc, true, bgfx::Attrib::Color1, decl, vertices);
 					}
 
 					if (hasTexcoord)
