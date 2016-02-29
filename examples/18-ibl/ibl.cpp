@@ -388,13 +388,13 @@ struct Camera
 struct Mouse
 {
 	Mouse()
+		: m_dx(0.0f)
+		, m_dy(0.0f)
+		, m_prevMx(0.0f)
+		, m_prevMy(0.0f)
+		, m_scroll(0)
+		, m_scrollPrev(0)
 	{
-		m_dx = 0.0f;
-		m_dy = 0.0f;
-		m_prevMx = 0.0f;
-		m_prevMx = 0.0f;
-		m_scroll = 0;
-		m_scrollPrev = 0;
 	}
 
 	void update(float _mx, float _my, int32_t _mz, uint32_t _width, uint32_t _height)
