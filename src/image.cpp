@@ -3704,8 +3704,10 @@ namespace bgfx
 		return false;
 	}
 
-	void imageWriteTga(bx::WriterI* _writer, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, bool _grayscale, bool _yflip)
+	void imageWriteTga(bx::WriterI* _writer, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, bool _grayscale, bool _yflip, bx::Error* _err)
 	{
+		BX_ERROR_SCOPE(_err);
+
 		uint8_t type = _grayscale ? 3 :  2;
 		uint8_t bpp  = _grayscale ? 8 : 32;
 
@@ -3718,7 +3720,7 @@ namespace bgfx
 		header[16] = bpp;
 		header[17] = 32;
 
-		bx::write(_writer, header, sizeof(header) );
+		bx::write(_writer, header, sizeof(header), _err);
 
 		uint32_t dstPitch = _width*bpp/8;
 		if (_yflip)
@@ -3726,52 +3728,56 @@ namespace bgfx
 			uint8_t* data = (uint8_t*)_src + _pitch*_height - _pitch;
 			for (uint32_t yy = 0; yy < _height; ++yy)
 			{
-				bx::write(_writer, data, dstPitch);
+				bx::write(_writer, data, dstPitch, _err);
 				data -= _pitch;
 			}
 		}
 		else if (_pitch == dstPitch)
 		{
-			bx::write(_writer, _src, _height*_pitch);
+			bx::write(_writer, _src, _height*_pitch, _err);
 		}
 		else
 		{
 			uint8_t* data = (uint8_t*)_src;
 			for (uint32_t yy = 0; yy < _height; ++yy)
 			{
-				bx::write(_writer, data, dstPitch);
+				bx::write(_writer, data, dstPitch, _err);
 				data += _pitch;
 			}
 		}
 	}
 
-	static int32_t imageWriteKtxHeader(bx::WriterI* _writer, TextureFormat::Enum _format, bool _cubeMap, uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _numMips)
+	static int32_t imageWriteKtxHeader(bx::WriterI* _writer, TextureFormat::Enum _format, bool _cubeMap, uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _numMips, bx::Error* _err)
 	{
+		BX_ERROR_SCOPE(_err);
+
 		const KtxFormatInfo& tfi = s_translateKtxFormat[_format];
 
 		int32_t size = 0;
-		size += bx::write(_writer, "\xabKTX 11\xbb\r\n\x1a\n", 12);
-		size += bx::write(_writer, UINT32_C(0x04030201) );
-		size += bx::write(_writer, UINT32_C(0) ); // glType
-		size += bx::write(_writer, UINT32_C(1) ); // glTypeSize
-		size += bx::write(_writer, UINT32_C(0) ); // glFormat
-		size += bx::write(_writer, tfi.m_internalFmt); // glInternalFormat
-		size += bx::write(_writer, tfi.m_fmt); // glBaseInternalFormat
-		size += bx::write(_writer, _width);
-		size += bx::write(_writer, _height);
-		size += bx::write(_writer, _depth);
-		size += bx::write(_writer, UINT32_C(0) ); // numberOfArrayElements
-		size += bx::write(_writer, _cubeMap ? UINT32_C(6) : UINT32_C(0) );
-		size += bx::write(_writer, uint32_t(_numMips) );
-		size += bx::write(_writer, UINT32_C(0) ); // Meta-data size.
+		size += bx::write(_writer, "\xabKTX 11\xbb\r\n\x1a\n", 12, _err);
+		size += bx::write(_writer, UINT32_C(0x04030201), _err);
+		size += bx::write(_writer, UINT32_C(0), _err); // glType
+		size += bx::write(_writer, UINT32_C(1), _err); // glTypeSize
+		size += bx::write(_writer, UINT32_C(0), _err); // glFormat
+		size += bx::write(_writer, tfi.m_internalFmt, _err); // glInternalFormat
+		size += bx::write(_writer, tfi.m_fmt, _err); // glBaseInternalFormat
+		size += bx::write(_writer, _width, _err);
+		size += bx::write(_writer, _height, _err);
+		size += bx::write(_writer, _depth, _err);
+		size += bx::write(_writer, UINT32_C(0), _err); // numberOfArrayElements
+		size += bx::write(_writer, _cubeMap ? UINT32_C(6) : UINT32_C(0), _err);
+		size += bx::write(_writer, uint32_t(_numMips), _err);
+		size += bx::write(_writer, UINT32_C(0), _err); // Meta-data size.
 
-		BX_CHECK(size == 64, "KTX: Failed to write header size %d (expected: %d).", size, 64);
+		BX_WARN(size == 64, "KTX: Failed to write header size %d (expected: %d).", size, 64);
 		return size;
 	}
 
-	void imageWriteKtx(bx::WriterI* _writer, TextureFormat::Enum _format, bool _cubeMap, uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _numMips, const void* _src)
+	void imageWriteKtx(bx::WriterI* _writer, TextureFormat::Enum _format, bool _cubeMap, uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _numMips, const void* _src, bx::Error* _err)
 	{
-		imageWriteKtxHeader(_writer, _format, _cubeMap, _width, _height, _depth, _numMips);
+		BX_ERROR_SCOPE(_err);
+
+		imageWriteKtxHeader(_writer, _format, _cubeMap, _width, _height, _depth, _numMips, _err);
 
 		const ImageBlockInfo& blockInfo = s_imageBlockInfo[_format];
 		const uint8_t  bpp         = blockInfo.bitsPerPixel;
@@ -3792,11 +3798,11 @@ namespace bgfx
 			depth  = bx::uint32_max(1, depth);
 
 			uint32_t size = width*height*depth*bpp/8;
-			bx::write(_writer, size);
+			bx::write(_writer, size, _err);
 
 			for (uint8_t side = 0, numSides = _cubeMap ? 6 : 1; side < numSides; ++side)
 			{
-				bx::write(_writer, src, size);
+				bx::write(_writer, src, size, _err);
 				src += size;
 			}
 
@@ -3806,8 +3812,10 @@ namespace bgfx
 		}
 	}
 
-	void imageWriteKtx(bx::WriterI* _writer, ImageContainer& _imageContainer, const void* _data, uint32_t _size)
+	void imageWriteKtx(bx::WriterI* _writer, ImageContainer& _imageContainer, const void* _data, uint32_t _size, bx::Error* _err)
 	{
+		BX_ERROR_SCOPE(_err);
+
 		imageWriteKtxHeader(_writer
 			, TextureFormat::Enum(_imageContainer.m_format)
 			, _imageContainer.m_cubeMap
@@ -3815,19 +3823,20 @@ namespace bgfx
 			, _imageContainer.m_height
 			, _imageContainer.m_depth
 			, _imageContainer.m_numMips
+			, _err
 			);
 
 		for (uint8_t lod = 0, num = _imageContainer.m_numMips; lod < num; ++lod)
 		{
 			ImageMip mip;
 			imageGetRawData(_imageContainer, 0, lod, _data, _size, mip);
-			bx::write(_writer, mip.m_size);
+			bx::write(_writer, mip.m_size, _err);
 
 			for (uint8_t side = 0, numSides = _imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 			{
 				if (imageGetRawData(_imageContainer, side, lod, _data, _size, mip) )
 				{
-					bx::write(_writer, mip.m_data, mip.m_size);
+					bx::write(_writer, mip.m_data, mip.m_size, _err);
 				}
 			}
 		}
