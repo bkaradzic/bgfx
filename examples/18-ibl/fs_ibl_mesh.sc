@@ -1,77 +1,124 @@
 $input v_view, v_normal
 
 /*
- * Copyright 2014 Dario Manesku. All rights reserved.
+ * Copyright 2014-2016 Dario Manesku. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
 #include "../common/common.sh"
-
-uniform vec4 u_params;
-uniform mat4 u_mtx;
-uniform vec4 u_flags;
-uniform vec4 u_rgbDiff;
-uniform vec4 u_rgbSpec;
+#include "uniforms.sh"
 
 SAMPLERCUBE(s_texCube, 0);
 SAMPLERCUBE(s_texCubeIrr, 1);
 
-#define u_glossiness u_params.x
-#define u_exposure   u_params.y
-#define u_diffspec   u_params.z
-
-#define u_doDiffuse     u_flags.x
-#define u_doSpecular    u_flags.y
-#define u_doDiffuseIbl  u_flags.z
-#define u_doSpecularIbl u_flags.w
-
-vec3 fresnel(vec3 _cspec, float _dot)
+vec3 calcFresnel(vec3 _cspec, float _dot)
 {
-	return _cspec + (1.0 - _cspec) * pow(1.0 - _dot, 5);
+	return _cspec + (1.0 - _cspec)*pow(1.0 - _dot, 5.0);
+}
+
+vec3 calcLambert(vec3 _cdiff, float _ndotl)
+{
+	return _cdiff*_ndotl;
+}
+
+vec3 calcBlinn(vec3 _cspec, float _ndoth, float _ndotl, float _specPwr)
+{
+	float norm = (_specPwr+8.0)*0.125;
+	float brdf = pow(_ndoth, _specPwr)*_ndotl*norm;
+	return _cspec*brdf;
+}
+
+float specPwr(float _gloss)
+{
+	return exp2(10.0*_gloss+2.0);
+}
+
+// Ref: http://the-witness.net/news/2012/02/seamless-cube-map-filtering/
+vec3 fixCubeLookup(vec3 _v, float _lod, float _topLevelCubeSize)
+{
+	float ax = abs(_v.x);
+	float ay = abs(_v.y);
+	float az = abs(_v.z);
+	float vmax = max(max(ax, ay), az);
+	float scale = 1.0 - exp2(_lod) / _topLevelCubeSize;
+	if (ax != vmax) { _v.x *= scale; }
+	if (ay != vmax) { _v.y *= scale; }
+	if (az != vmax) { _v.z *= scale; }
+	return _v;
 }
 
 void main()
 {
-	vec3 light  = vec3(0.0, 0.0, -1.0);
-	vec3 clight = vec3(1.0, 1.0,  1.0);
+	// Light.
+	vec3 ld     = normalize(u_lightDir);
+	vec3 clight = u_lightCol;
 
-	vec3 v = v_view;
-	vec3 n = normalize(v_normal);
-	vec3 l = normalize(light);
-	vec3 h = normalize(v + l);
+	// Input.
+	vec3 nn = normalize(v_normal);
+	vec3 vv = normalize(v_view);
+	vec3 hh = normalize(vv + ld);
 
-	float ndotl = clamp(dot(n, l), 0.0, 1.0); //diff
-	float ndoth = clamp(dot(n, h), 0.0, 1.0); //spec
-	float vdoth = clamp(dot(v, h), 0.0, 1.0); //spec fresnel
-	float ndotv = clamp(dot(n, v), 0.0, 1.0); //env spec fresnel
+	float ndotv = clamp(dot(nn, vv), 0.0, 1.0);
+	float ndotl = clamp(dot(nn, ld), 0.0, 1.0);
+	float ndoth = clamp(dot(nn, hh), 0.0, 1.0);
+	float hdotv = clamp(dot(hh, vv), 0.0, 1.0);
 
-	vec3 r = 2.0*ndotv*n - v; // reflect(v, n);
+	// Material params.
+	vec3  albedo       = u_rgbDiff.xyz;
+	float reflectivity = u_reflectivity;
+	float gloss        = u_glossiness;
 
-	vec3 cubeR = normalize(mul(u_mtx, vec4(r, 0.0)).xyz);
-	vec3 cubeN = normalize(mul(u_mtx, vec4(n, 0.0)).xyz);
+	// Reflection.
+	vec3 refl;
+	if (0.0 == u_metalOrSpec) // Metalness workflow.
+	{
+		refl = mix(vec3_splat(0.04), albedo, reflectivity);
+	}
+	else // Specular workflow.
+	{
+		refl = u_rgbSpec.xyz * vec3_splat(reflectivity);
+	}
+	vec3 dirF0 = calcFresnel(refl, hdotv);
+	vec3 envF0 = calcFresnel(refl, ndotv);
 
-	float mipLevel = min((1.0 - u_glossiness)*11.0 + 1.0, 8.0);
-	vec3 cenv = textureCubeLod(s_texCube, cubeR, mipLevel).xyz;
+	// Direct lighting.
+	vec3 dirSpec = dirF0;
+	vec3 dirDiff = albedo * 1.0-dirF0;
 
-	vec3 kd = u_rgbDiff.xyz;
-	vec3 ks = u_rgbSpec.xyz;
+	vec3 lambert = u_doDiffuse  * calcLambert(dirDiff, ndotl);
+	vec3 blinn   = u_doSpecular * calcBlinn(dirSpec, ndoth, ndotl, specPwr(gloss));
+	vec3 direct  = (lambert + blinn)*clight;
 
-	vec3 cs = ks * u_diffspec;
-	vec3 cd = kd * (1.0 - cs);
+	// Indirect lighting.
+	vec3 envSpec = envF0;
+	vec3 envDiff = albedo * 1.0-envF0;
 
-	vec3 diff = cd;
-	float pwr = exp2(u_glossiness * 11.0 + 1.0);
-	vec3 spec = cs * pow(ndoth, pwr) * ( (pwr + 8.0)/8.0) * fresnel(cs, vdoth);
+	// Note: Environment textures are filtered with cmft: https://github.com/dariomanesku/cmft
+	// Params used:
+	// --excludeBase true //!< First level mip is not filtered.
+	// --mipCount 7       //!< 7 mip levels are used in total, [256x256 .. 4x4]. Lower res mip maps should be avoided.
+	// --glossScale 10    //!< Spec power scale. See: specPwr().
+	// --glossBias 2      //!< Spec power bias. See: specPwr().
+	// --edgeFixup warp   //!< This must be used on DirectX9. When fileted with 'warp', fixCubeLookup() should be used.
+	float mip = 1.0 + 5.0*(1.0 - gloss); // Use mip levels [1..6] for radiance.
 
-	vec3 ambspec = fresnel(cs, ndotv) * cenv;
-	vec3 ambdiff = cd * textureCube(s_texCubeIrr, cubeN).xyz;
+	mat4 mtx;
+	mtx[0] = u_mtx0;
+	mtx[1] = u_mtx1;
+	mtx[2] = u_mtx2;
+	mtx[3] = u_mtx3;
+	vec3 vr = 2.0*ndotv*nn - vv; // Same as: -reflect(vv, nn);
+	vec3 cubeR = normalize(instMul(mtx, vec4(vr, 0.0)).xyz);
+	vec3 cubeN = normalize(instMul(mtx, vec4(nn, 0.0)).xyz);
+	cubeR = fixCubeLookup(cubeR, mip, 256.0);
 
-	vec3 lc = (   diff * u_doDiffuse    +    spec * u_doSpecular   ) * ndotl * clight;
-	vec3 ec = (ambdiff * u_doDiffuseIbl + ambspec * u_doSpecularIbl);
+	vec3 radiance   = u_doDiffuseIbl  * envSpec * toLinear(textureCubeLod(s_texCube, cubeR, mip).xyz);
+	vec3 irradiance = u_doSpecularIbl * envDiff * toLinear(textureCube(s_texCubeIrr, cubeN).xyz);
+	vec3 indirect = radiance + irradiance;
 
-	vec3 color = lc + ec;
+	// Color.
+	vec3 color = direct + indirect;
 	color = color * exp2(u_exposure);
-
 	gl_FragColor.xyz = toFilmic(color);
 	gl_FragColor.w = 1.0;
 }
