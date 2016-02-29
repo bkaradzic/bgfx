@@ -14,7 +14,7 @@ void main()
 	float opacity = u_wfOpacity;
 	float thickness = u_wfThickness;
 
-	if (!gl_FrontFacing) { opacity *= 0.5; }
+	if (gl_FrontFacing) { opacity *= 0.5; }
 
 	vec3 fw = abs(dFdx(v_bc)) + abs(dFdy(v_bc));
 	vec3 val = smoothstep(vec3_splat(0.0), vec3_splat(fw*thickness), v_bc);
