@@ -734,6 +734,7 @@ int _main_(int _argc, char** _argv)
 
 		// Submit view 0.
 		bgfx::setTexture(0, s_texCube, lightProbes[currentLightProbe].m_tex);
+		bgfx::setTexture(1, s_texCubeIrr, lightProbes[currentLightProbe].m_texIrr);
 		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 		screenSpaceQuad( (float)width, (float)height, true);
 		uniforms.submit();

@@ -459,7 +459,7 @@ class Wireframe : public entry::AppI
 			last = now;
 			const double freq = double(bx::getHPFrequency() );
 			const double toMs = 1000.0/freq;
-			const double deltaTimeSec = double(frameTime)/freq;
+			const float deltaTimeSec = float(double(frameTime)/freq);
 
 			// Use m_debug font to print information about this example.
 			bgfx::dbgTextClear();
@@ -472,7 +472,7 @@ class Wireframe : public entry::AppI
 			bgfx::setViewClear(0, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
 
 			const bool mouseOverGui = imguiMouseOverArea();
-			m_mouse.update(m_mouseState.m_mx, m_mouseState.m_my, m_mouseState.m_mz, m_width, m_height);
+			m_mouse.update(float(m_mouseState.m_mx), float(m_mouseState.m_my), m_mouseState.m_mz, m_width, m_height);
 			if (!mouseOverGui)
 			{
 				if (m_mouseState.m_buttons[entry::MouseButton::Left])
@@ -497,7 +497,7 @@ class Wireframe : public entry::AppI
 			bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f);
 			bgfx::setViewTransform(0, view, proj);
 
-			m_uniforms.m_drawEdges = (DrawMode::WireframeShaded == m_drawMode) ? 1.0f : 0.0;
+			m_uniforms.m_drawEdges = (DrawMode::WireframeShaded == m_drawMode) ? 1.0f : 0.0f;
 			m_uniforms.submit();
 
 			if (DrawMode::Wireframe == m_drawMode)

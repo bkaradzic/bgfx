@@ -3717,7 +3717,8 @@ namespace bgfx
 		{
 			BGFX_CHECK_HANDLE_INVALID_OK("submit", m_programHandle, _program);
 			BGFX_CHECK_HANDLE_INVALID_OK("submit", m_occlusionQueryHandle, _occlusionQuery);
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM)
+			&& !_preserveState)
 			{
 				m_uniformSet.clear();
 			}
@@ -3739,7 +3740,8 @@ namespace bgfx
 		{
 			BGFX_CHECK_HANDLE_INVALID_OK("submit", m_programHandle, _handle);
 			BGFX_CHECK_HANDLE("submit", m_vertexBufferHandle, _indirectHandle);
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM)
+			&& !_preserveState)
 			{
 				m_uniformSet.clear();
 			}
