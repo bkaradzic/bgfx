@@ -435,8 +435,8 @@ class Wireframe : public entry::AppI
 				const uint32_t prevMeshSel = m_meshSelection;
 				m_meshSelection = imguiChoose(m_meshSelection
 											, "Bunny"
-											, "Orb"
 											, "Hollowcubes"
+											, "Orb"
 											);
 				if (prevMeshSel != m_meshSelection)
 				{
