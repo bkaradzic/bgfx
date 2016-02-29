@@ -627,7 +627,7 @@ int _main_(int _argc, char** _argv)
 		const bool isBunny = (0 == settings.m_meshSelection);
 		if (!isBunny)
 		{
-			settings.m_metalOrSpec = 0.0f;
+			settings.m_metalOrSpec = 0;
 		}
 
 		imguiSeparator(4);
@@ -672,7 +672,7 @@ int _main_(int _argc, char** _argv)
 		last = now;
 		const double freq = double(bx::getHPFrequency() );
 		const double toMs = 1000.0/freq;
-		const double deltaTimeSec = double(frameTime)/freq;
+		const float deltaTimeSec = float(double(frameTime)/freq);
 
 		// Use debug font to print information about this example.
 		bgfx::dbgTextClear();
@@ -682,7 +682,7 @@ int _main_(int _argc, char** _argv)
 
 		// Camera.
 		const bool mouseOverGui = imguiMouseOverArea();
-		mouse.update(mouseState.m_mx, mouseState.m_my, mouseState.m_mz, width, height);
+		mouse.update(float(mouseState.m_mx), float(mouseState.m_my), mouseState.m_mz, width, height);
 		if (!mouseOverGui)
 		{
 			if (mouseState.m_buttons[entry::MouseButton::Left])
