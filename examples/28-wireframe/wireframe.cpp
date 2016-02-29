@@ -544,7 +544,6 @@ class Wireframe : public entry::AppI
 	uint32_t m_height;
 	uint32_t m_debug;
 	uint32_t m_reset;
-	uint32_t m_lumBgra8;
 
 	uint32_t m_oldWidth;
 	uint32_t m_oldHeight;
