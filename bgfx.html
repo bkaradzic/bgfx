@@ -2529,8 +2529,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <div class="section" id="submit">
 <h3>Submit<a class="headerlink" href="#submit" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
-<dt id="_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle7int32_t">
-<span id="bgfx::submit__uint8_t.ProgramHandle.int32_t"></span><span class="target" id="project0namespacebgfx_1a0db51c7aae6bfa2f1ed41754d72f26c7"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, int32_t <em>_depth</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle7int32_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle7int32_tb">
+<span id="bgfx::submit__uint8_t.ProgramHandle.int32_t.b"></span><span class="target" id="project0namespacebgfx_1aa4b058cface13ced7c67a1dbede8339f"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, int32_t <em>_depth</em>, bool <em>_preserveState</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit primitive for rendering. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
@@ -2545,6 +2545,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>Depth for sorting. </p>
 </li>
+<li><code class="first docutils literal"><span class="pre">_preserveState</span></code> - <p>Preserve internal draw state for next draw call submit. </p>
+</li>
 </ul>
 </dd>
 </dl>
@@ -2552,8 +2554,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20OcclusionQueryHandle7int32_t">
-<span id="bgfx::submit__uint8_t.ProgramHandle.OcclusionQueryHandle.int32_t"></span><span class="target" id="project0namespacebgfx_1a7c6e4bbf09c47a2d6dbf77568436cb0a"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, OcclusionQueryHandle <em>_occlusionQuery</em>, int32_t <em>_depth</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20OcclusionQueryHandle7int32_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20OcclusionQueryHandle7int32_tb">
+<span id="bgfx::submit__uint8_t.ProgramHandle.OcclusionQueryHandle.int32_t.b"></span><span class="target" id="project0namespacebgfx_1af24217fa4ff9afea227dc03f73ee8f63"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, OcclusionQueryHandle <em>_occlusionQuery</em>, int32_t <em>_depth</em>, bool <em>_preserveState</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20OcclusionQueryHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit primitive with occlusion query for rendering. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
@@ -2570,6 +2572,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>Depth for sorting. </p>
 </li>
+<li><code class="first docutils literal"><span class="pre">_preserveState</span></code> - <p>Preserve internal draw state for next draw call submit. </p>
+</li>
 </ul>
 </dd>
 </dl>
@@ -2577,10 +2581,12 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_t">
-<span id="bgfx::submit__uint8_t.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.int32_t"></span><span class="target" id="project0namespacebgfx_1a549c8c0042a1fb8260bef06aded173a0"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em>, uint16_t <em>_num</em>, int32_t <em>_depth</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_tb">
+<span id="bgfx::submit__uint8_t.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.int32_t.b"></span><span class="target" id="project0namespacebgfx_1ade90dc0d315e5314e10ba415a7621584"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em>, uint16_t <em>_num</em>, int32_t <em>_depth</em>, bool <em>_preserveState</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_tb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit primitive for rendering with index and instance data info from indirect buffer. </p>
 <p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Number of draw calls.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_submit_indirect</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -2595,7 +2601,9 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of dispatches. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>Depth for sorting.</p>
+<li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>Depth for sorting. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_preserveState</span></code> - <p>Preserve internal draw state for next draw call submit. </p>
 </li>
 </ul>
 </dd>
