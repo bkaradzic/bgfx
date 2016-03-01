@@ -182,9 +182,9 @@
 	Shader shader = evalShader(lc.x, lc.y);
 
 	//Fog.
-	const vec3 fogColor = vec3_splat(0.0);
-	const float fogDensity = 0.0035;
-	const float LOG2 = 1.442695;
+	vec3 fogColor = vec3_splat(0.0);
+	float fogDensity = 0.0035;
+	float LOG2 = 1.442695;
 	float z = length(v);
 	float fogFactor = clamp(1.0/exp2(fogDensity*fogDensity*z*z*LOG2), 0.0, 1.0);
 
