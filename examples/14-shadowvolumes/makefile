@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2014 Dario Manesku. All rights reserved.
+# Copyright 2011-2016 Branimir Karadzic. All rights reserved.
 # License: http://www.opensource.org/licenses/BSD-2-Clause
 #
 
@@ -9,22 +9,10 @@ BUILD_DIR=../../.build
 
 include $(BGFX_DIR)/scripts/shader.mk
 
-GEOMETRY_SRC= \
-	bunny_patched \
-	bunny_decimated \
-	platform \
-	cube
-
-GEOMETRY_BIN=$(addprefix $(RUNTIME_DIR)/meshes/, $(addsuffix .bin, $(basename $(GEOMETRY_SRC))))
-
-geometry: $(GEOMETRY_BIN)
-
-$(RUNTIME_DIR)/meshes/%.bin : %.obj
-	$(SILENT) $(GEOMETRYC) -f $(<) -o $(@) --packnormal 1
-
 rebuild:
 	@make -s --no-print-directory TARGET=0 clean all
 	@make -s --no-print-directory TARGET=1 clean all
 	@make -s --no-print-directory TARGET=2 clean all
 	@make -s --no-print-directory TARGET=3 clean all
 	@make -s --no-print-directory TARGET=4 clean all
+	@make -s --no-print-directory TARGET=5 clean all

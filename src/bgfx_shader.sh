@@ -39,6 +39,13 @@
 #	define bvec4 bool4
 
 #	if BGFX_SHADER_LANGUAGE_HLSL > 3
+#		if BGFX_SHADER_LANGUAGE_HLSL > 4
+#			define dFdxCoarse(_x) ddx_coarse(_x)
+#			define dFdxFine(_x)   ddx_fine(_x)
+#			define dFdyCoarse(_y) ddy_coarse(-_y)
+#			define dFdyFine(_y)   ddy_fine(-_y)
+#		endif // BGFX_SHADER_LANGUAGE_HLSL > 4
+
 struct BgfxSampler2D
 {
 	SamplerState m_sampler;
