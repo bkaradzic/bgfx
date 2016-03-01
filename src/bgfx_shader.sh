@@ -39,6 +39,13 @@
 #	define bvec4 bool4
 
 #	if BGFX_SHADER_LANGUAGE_HLSL > 3
+#		if BGFX_SHADER_LANGUAGE_HLSL > 4
+#			define dFdxCoarse(_x) ddx_coarse(_x)
+#			define dFdxFine(_x)   ddx_fine(_x)
+#			define dFdyCoarse(_y) ddy_coarse(-_y)
+#			define dFdyFine(_y)   ddy_fine(-_y)
+#		endif // BGFX_SHADER_LANGUAGE_HLSL > 4
+
 struct BgfxSampler2D
 {
 	SamplerState m_sampler;
@@ -239,14 +246,6 @@ float bgfxShadow2DProj(sampler2DShadow _sampler, vec4 _coord)
 
 #	endif // BGFX_SHADER_LANGUAGE_HLSL > 3
 
-vec2 vec2_splat(float _x) { return vec2(_x, _x); }
-vec3 vec3_splat(float _x) { return vec3(_x, _x, _x); }
-vec4 vec4_splat(float _x) { return vec4(_x, _x, _x, _x); }
-
-uvec2 uvec2_splat(uint _x) { return uvec2(_x, _x); }
-uvec3 uvec3_splat(uint _x) { return uvec3(_x, _x, _x); }
-uvec4 uvec4_splat(uint _x) { return uvec4(_x, _x, _x, _x); }
-
 vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_mtx, _vec); }
 vec3 instMul(mat3 _mtx, vec3 _vec) { return mul(_vec, _mtx); }
 vec4 instMul(vec4 _vec, mat4 _mtx) { return mul(_mtx, _vec); }
@@ -294,12 +293,6 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #	define SAMPLER3D(_name, _reg) uniform sampler3D _name
 #	define SAMPLERCUBE(_name, _reg) uniform samplerCube _name
 #	define SAMPLER2DSHADOW(_name, _reg) uniform sampler2DShadow _name
-#	define vec2_splat(_x) vec2(_x)
-#	define vec3_splat(_x) vec3(_x)
-#	define vec4_splat(_x) vec4(_x)
-#	define uvec2_splat(_x) uvec2(_x)
-#	define uvec3_splat(_x) uvec3(_x)
-#	define uvec4_splat(_x) uvec4(_x)
 
 #	if BGFX_SHADER_LANGUAGE_GLSL >= 130
 #		define ISAMPLER3D(_name, _reg) uniform isampler3D _name
@@ -318,6 +311,16 @@ vec2  rcp(vec2  _a) { return vec2(1.0)/_a; }
 vec3  rcp(vec3  _a) { return vec3(1.0)/_a; }
 vec4  rcp(vec4  _a) { return vec4(1.0)/_a; }
 #endif // BGFX_SHADER_LANGUAGE_*
+
+vec2 vec2_splat(float _x) { return vec2(_x, _x); }
+vec3 vec3_splat(float _x) { return vec3(_x, _x, _x); }
+vec4 vec4_splat(float _x) { return vec4(_x, _x, _x, _x); }
+
+#if BGFX_SHADER_LANGUAGE_GLSL >= 130 || BGFX_SHADER_LANGUAGE_HLSL
+uvec2 uvec2_splat(uint _x) { return uvec2(_x, _x); }
+uvec3 uvec3_splat(uint _x) { return uvec3(_x, _x, _x); }
+uvec4 uvec4_splat(uint _x) { return uvec4(_x, _x, _x, _x); }
+#endif // BGFX_SHADER_LANGUAGE_GLSL >= 130 || BGFX_SHADER_LANGUAGE_HLSL
 
 uniform vec4  u_viewRect;
 uniform vec4  u_viewTexel;

@@ -1,5 +1,5 @@
 #
-# Copyright 2013 Milos Tosic. All rights reserved.
+# Copyright 2011-2016 Branimir Karadzic. All rights reserved.
 # License: http://www.opensource.org/licenses/BSD-2-Clause
 #
 
@@ -15,3 +15,4 @@ rebuild:
 	@make -s --no-print-directory TARGET=2 clean all
 	@make -s --no-print-directory TARGET=3 clean all
 	@make -s --no-print-directory TARGET=4 clean all
+	@make -s --no-print-directory TARGET=5 clean all
