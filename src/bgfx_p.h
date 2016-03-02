@@ -1246,8 +1246,8 @@ namespace bgfx
 		uint32_t m_startVertex;
 		uint32_t m_numVertices;
 		uint32_t m_instanceDataOffset;
+		uint32_t m_numInstances;
 		uint16_t m_instanceDataStride;
-		uint16_t m_numInstances;
 		uint16_t m_startIndirect;
 		uint16_t m_numIndirect;
 		uint16_t m_num;
@@ -1558,7 +1558,7 @@ namespace bgfx
 		{
  			m_draw.m_instanceDataOffset = _idb->offset;
 			m_draw.m_instanceDataStride = _idb->stride;
-			m_draw.m_numInstances       = uint16_t(bx::uint32_min(_idb->num, _num) );
+			m_draw.m_numInstances       = bx::uint32_min(_idb->num, _num);
 			m_draw.m_instanceDataBuffer = _idb->handle;
 			BX_FREE(g_allocator, const_cast<InstanceDataBuffer*>(_idb) );
 		}
@@ -1567,7 +1567,7 @@ namespace bgfx
 		{
 			m_draw.m_instanceDataOffset = _startVertex * _stride;
 			m_draw.m_instanceDataStride = _stride;
-			m_draw.m_numInstances       = uint16_t(_num);
+			m_draw.m_numInstances       = _num;
 			m_draw.m_instanceDataBuffer = _handle;
 		}
 
@@ -2498,8 +2498,7 @@ namespace bgfx
 		BGFX_API_FUNC(DynamicVertexBufferHandle createDynamicVertexBuffer(const Memory* _mem, const VertexDecl& _decl, uint16_t _flags) )
 		{
 			uint32_t numVertices = _mem->size/_decl.m_stride;
-			BX_CHECK(numVertices <= UINT16_MAX, "Num vertices exceeds maximum (num %d, max %d).", numVertices, UINT16_MAX);
-			DynamicVertexBufferHandle handle = createDynamicVertexBuffer(uint16_t(numVertices), _decl, _flags);
+			DynamicVertexBufferHandle handle = createDynamicVertexBuffer(numVertices, _decl, _flags);
 			if (isValid(handle) )
 			{
 				updateDynamicVertexBuffer(handle, 0, _mem);
