@@ -3706,9 +3706,19 @@ namespace bgfx { namespace gl
 			case GL_IMAGE_CUBE:
 			case GL_INT_IMAGE_CUBE:
 			case GL_UNSIGNED_INT_IMAGE_CUBE:
-				BX_TRACE("Sampler #%d at location %d.", m_numSamplers, loc);
-				m_sampler[m_numSamplers] = loc;
-				m_numSamplers++;
+				if (m_numSamplers < BX_COUNTOF(m_sampler) )
+				{
+					BX_TRACE("Sampler #%d at location %d.", m_numSamplers, loc);
+					m_sampler[m_numSamplers] = loc;
+					m_numSamplers++;
+				}
+				else
+				{
+					BX_TRACE("Too many samplers (max: %d)! Sampler at location %d."
+							, BX_COUNTOF(m_sampler)
+							, loc
+							);
+				}
 				break;
 
 			default:
