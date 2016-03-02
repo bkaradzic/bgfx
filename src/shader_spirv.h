@@ -491,7 +491,7 @@ namespace bgfx
 	int32_t read(bx::ReaderSeekerI* _reader, SpirvShader& _shader);
 	int32_t write(bx::WriterI* _writer, const SpirvShader& _shader);
 
-	typedef void (*SpirvParseFn)(uint32_t _offset, const SpirvInstruction& _instruction, void* _userData);
+	typedef bool (*SpirvParseFn)(uint32_t _offset, const SpirvInstruction& _instruction, void* _userData);
 	void parse(const SpirvShader& _src, SpirvParseFn _fn, void* _userData);
 
 	typedef void (*SpirvFilterFn)(SpirvInstruction& _instruction, void* _userData);

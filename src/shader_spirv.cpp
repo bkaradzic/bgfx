@@ -723,7 +723,11 @@ namespace bgfx
 					);
 			BX_UNUSED(size);
 
-			_fn(token * sizeof(uint32_t), instruction, _userData);
+			bool cont = _fn(token * sizeof(uint32_t), instruction, _userData);
+			if (!cont)
+			{
+				return;
+			}
 
 			token += instruction.length;
 		}

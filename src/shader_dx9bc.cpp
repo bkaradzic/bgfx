@@ -712,7 +712,11 @@ namespace bgfx
 			uint32_t size = read(&reader, instruction);
 			BX_CHECK(size/4 == instruction.length, "read %d, expected %d", size/4, instruction.length); BX_UNUSED(size);
 
-			_fn(token * sizeof(uint32_t), instruction, _userData);
+			bool cont = _fn(token * sizeof(uint32_t), instruction, _userData);
+			if (!cont)
+			{
+				return;
+			}
 
 			token += instruction.length;
 		}

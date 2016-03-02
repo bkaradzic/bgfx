@@ -247,7 +247,7 @@ namespace bgfx
 	int32_t read(bx::ReaderSeekerI* _reader, Dx9bc& _dx9bc);
 	int32_t write(bx::WriterSeekerI* _writer, const Dx9bc& _dx9bc);
 
-	typedef void (*Dx9bcParseFn)(uint32_t _offset, const Dx9bcInstruction& _instruction, void* _userData);
+	typedef bool (*Dx9bcParseFn)(uint32_t _offset, const Dx9bcInstruction& _instruction, void* _userData);
 	void parse(const Dx9bcShader& _src, Dx9bcParseFn _fn, void* _userData);
 
 	typedef void (*Dx9bcFilterFn)(Dx9bcInstruction& _instruction, void* _userData);
