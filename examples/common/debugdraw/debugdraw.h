@@ -40,6 +40,9 @@ void ddPush();
 void ddPop();
 
 ///
+void ddSetState(bool _depthTest, bool _depthWrite, bool _clockwise);
+
+///
 void ddSetColor(uint32_t _abgr);
 
 ///
@@ -88,7 +91,7 @@ void ddDraw(const Obb& _obb);
 void ddDraw(const Sphere& _sphere);
 
 ///
-void ddDraw(const void* _viewProj);
+void ddDrawFrustum(const void* _viewProj);
 
 ///
 void ddDrawArc(Axis::Enum _axis, float _x, float _y, float _z, float _radius, float _degrees);

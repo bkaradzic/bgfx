@@ -484,6 +484,12 @@ struct DebugDraw
 		m_stack   = 0;
 
 		Attrib& attrib = m_attrib[0];
+		attrib.m_state = 0
+			| BGFX_STATE_RGB_WRITE
+			| BGFX_STATE_DEPTH_TEST_LESS
+			| BGFX_STATE_DEPTH_WRITE
+			| BGFX_STATE_CULL_CW
+			;
 		attrib.m_scale     = 1.0f;
 		attrib.m_offset    = 0.0f;
 		attrib.m_abgr      = UINT32_MAX;
@@ -544,6 +550,31 @@ struct DebugDraw
 	void setTranslate(const float* _pos)
 	{
 		setTranslate(_pos[0], _pos[1], _pos[2]);
+	}
+
+	void setState(bool _depthTest, bool _depthWrite, bool _clockwise)
+	{
+		m_attrib[m_stack].m_state &= ~(0
+			| BGFX_STATE_DEPTH_TEST_LESS
+			| BGFX_STATE_DEPTH_WRITE
+			| BGFX_STATE_CULL_CW
+			| BGFX_STATE_CULL_CCW
+			);
+
+		m_attrib[m_stack].m_state |= _depthTest
+			? BGFX_STATE_DEPTH_TEST_LESS
+			: 0
+			;
+
+		m_attrib[m_stack].m_state |= _depthWrite
+			? BGFX_STATE_DEPTH_WRITE
+			: 0
+			;
+
+		m_attrib[m_stack].m_state |= _clockwise
+			? BGFX_STATE_CULL_CW
+			: BGFX_STATE_CULL_CCW
+			;
 	}
 
 	void setColor(uint32_t _abgr)
@@ -792,7 +823,7 @@ struct DebugDraw
 		draw(Mesh::Enum(Mesh::Sphere0 + lod), mtx, attrib.m_wireframe);
 	}
 
-	void draw(const float* _viewProj)
+	void drawFrustum(const float* _viewProj)
 	{
 		Plane planes[6];
 		buildFrustumPlanes(planes, _viewProj);
@@ -832,9 +863,9 @@ struct DebugDraw
 		lineTo(&points[21]);
 	}
 
-	void draw(const void* _viewProj)
+	void drawFrustum(const void* _viewProj)
 	{
-		draw( (const float*)_viewProj);
+		drawFrustum( (const float*)_viewProj);
 	}
 
 	void drawArc(Axis::Enum _axis, float _x, float _y, float _z, float _radius, float _degrees)
@@ -1160,10 +1191,7 @@ private:
 		bgfx::setTransform(_mtx);
 		bgfx::setVertexBuffer(m_vbh, mesh.m_startVertex, mesh.m_numVertices);
 		bgfx::setState(0
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_DEPTH_TEST_LESS
-				| BGFX_STATE_DEPTH_WRITE
-				| BGFX_STATE_CULL_CW
+				| attrib.m_state
 				| (_wireframe ? BGFX_STATE_PT_LINES : 0)
 				);
 		bgfx::submit(m_viewId, m_program[_wireframe ? Program::Fill : Program::FillLit]);
@@ -1238,6 +1266,7 @@ private:
 
 	struct Attrib
 	{
+		uint64_t m_state;
 		float    m_offset;
 		float    m_scale;
 		uint32_t m_abgr;
@@ -1291,6 +1320,11 @@ void ddPush()
 void ddPop()
 {
 	s_dd.pop();
+}
+
+void ddSetState(bool _depthTest, bool _depthWrite, bool _clockwise)
+{
+	s_dd.setState(_depthTest, _depthWrite, _clockwise);
 }
 
 void ddSetColor(uint32_t _abgr)
@@ -1373,9 +1407,9 @@ void ddDraw(const Sphere& _sphere)
 	s_dd.draw(_sphere);
 }
 
-void ddDraw(const void* _viewProj)
+void ddDrawFrustum(const void* _viewProj)
 {
-	s_dd.draw(_viewProj);
+	s_dd.drawFrustum(_viewProj);
 }
 
 void ddDrawArc(Axis::Enum _axis, float _x, float _y, float _z, float _radius, float _degrees)
