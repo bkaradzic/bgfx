@@ -366,7 +366,7 @@ struct DebugDraw
 		{
 			Mesh::Enum id = Mesh::Enum(Mesh::Sphere0+mesh);
 
-			const uint32_t tess = 3-mesh;
+			const uint8_t  tess = uint8_t(3-mesh);
 			const uint32_t numVertices = genSphere(tess);
 			const uint32_t numIndices  = numVertices;
 
@@ -382,7 +382,7 @@ struct DebugDraw
 
 
 
-			uint16_t numLineListIndices = bgfx::topologyConvert(bgfx::TopologyConvert::TriListToLineList
+			uint32_t numLineListIndices = bgfx::topologyConvert(bgfx::TopologyConvert::TriListToLineList
 							, NULL
 							, 0
 							, trilist
