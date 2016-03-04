@@ -1964,7 +1964,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			ovrPreReset();
 
-			m_gpuTimer.preReset();
+			if (m_featureLevel > D3D_FEATURE_LEVEL_9_3)
+			{
+				m_gpuTimer.preReset();
+			}
+
 			m_occlusionQuery.preReset();
 
 			if (NULL == g_platformData.backBufferDS)
@@ -2009,7 +2013,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				DX_RELEASE(color, 0);
 			}
 
-			m_gpuTimer.postReset();
+			if (m_featureLevel > D3D_FEATURE_LEVEL_9_3)
+			{
+				m_gpuTimer.postReset();
+			}
+
 			m_occlusionQuery.postReset();
 
 			ovrPostReset();
@@ -4630,7 +4638,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		int64_t elapsed = -bx::getHPCounter();
 		int64_t captureElapsed = 0;
 
-		m_gpuTimer.begin();
+		if (m_featureLevel > D3D_FEATURE_LEVEL_9_3)
+		{
+			m_gpuTimer.begin();
+		}
 
 		if (0 < _render->m_iboffset)
 		{
@@ -5521,25 +5532,27 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		static uint32_t maxGpuLatency = 0;
 		static double   maxGpuElapsed = 0.0f;
+		const int64_t timerFreq = bx::getHPFrequency();
 		double elapsedGpuMs = 0.0;
 
-		m_gpuTimer.end();
-
-		while (m_gpuTimer.get() )
+		if (m_featureLevel > D3D_FEATURE_LEVEL_9_3)
 		{
-			double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
-			elapsedGpuMs   = m_gpuTimer.m_elapsed * toGpuMs;
-			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
+			m_gpuTimer.end();
+
+			while (m_gpuTimer.get())
+			{
+				double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
+				elapsedGpuMs = m_gpuTimer.m_elapsed * toGpuMs;
+				maxGpuElapsed = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
+			}
+			maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available() - 1);
+
+			perfStats.cpuTimeEnd = now;
+			perfStats.cpuTimerFreq = timerFreq;
+			perfStats.gpuTimeBegin = m_gpuTimer.m_begin;
+			perfStats.gpuTimeEnd = m_gpuTimer.m_end;
+			perfStats.gpuTimerFreq = m_gpuTimer.m_frequency;
 		}
-		maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
-
-		const int64_t timerFreq = bx::getHPFrequency();
-
-		perfStats.cpuTimeEnd   = now;
-		perfStats.cpuTimerFreq = timerFreq;
-		perfStats.gpuTimeBegin = m_gpuTimer.m_begin;
-		perfStats.gpuTimeEnd   = m_gpuTimer.m_end;
-		perfStats.gpuTimerFreq = m_gpuTimer.m_frequency;
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
