@@ -344,10 +344,10 @@ namespace bgfx { namespace d3d9
 			m_params.BackBufferHeight = rect.bottom-rect.top;
 
 			m_d3d9dll = bx::dlopen("d3d9.dll");
-			BX_WARN(NULL != m_d3d9dll, "Failed to load d3d9.dll.");
 
 			if (NULL == m_d3d9dll)
 			{
+				BX_TRACE("Failed to load d3d9.dll.");
 				goto error;
 			}
 
@@ -374,16 +374,25 @@ namespace bgfx { namespace d3d9
 			&&  NULL != Direct3DCreate9Ex)
 			{
 				Direct3DCreate9Ex(D3D_SDK_VERSION, &m_d3d9ex);
-				DX_CHECK(m_d3d9ex->QueryInterface(IID_IDirect3D9, (void**)&m_d3d9) );
-				m_pool = D3DPOOL_DEFAULT;
+				HRESULT hr = m_d3d9ex->QueryInterface(IID_IDirect3D9, (void**)&m_d3d9);
+				if (FAILED(hr) )
+				{
+					BX_TRACE("Failed to query D3D9 interface 0x%08x.", hr);
+					DX_RELEASE(m_d3d9ex, 0);
+				}
+				else
+				{
+					m_pool = D3DPOOL_DEFAULT;
+				}
 			}
-			else
+
+			if (NULL == m_d3d9)
 			{
 				Direct3DCreate9 = (Direct3DCreate9Fn)bx::dlsym(m_d3d9dll, "Direct3DCreate9");
-				BX_WARN(NULL != Direct3DCreate9, "Function Direct3DCreate9 not found.");
 
 				if (NULL == Direct3DCreate9)
 				{
+					BX_TRACE("Function Direct3DCreate9 not found.");
 					goto error;
 				}
 
@@ -391,10 +400,9 @@ namespace bgfx { namespace d3d9
 				m_pool = D3DPOOL_MANAGED;
 			}
 
-			BX_WARN(NULL != m_d3d9, "Unable to create Direct3D.");
-
 			if (NULL == m_d3d9)
 			{
+				BX_TRACE("Unable to create Direct3D.");
 				goto error;
 			}
 
@@ -491,10 +499,9 @@ namespace bgfx { namespace d3d9
 				}
 			}
 
-			BX_WARN(NULL != m_device, "Unable to create Direct3D9 device.");
-
 			if (NULL == m_device)
 			{
+				BX_TRACE("Unable to create Direct3D9 device.");
 				goto error;
 			}
 
