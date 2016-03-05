@@ -3728,8 +3728,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	{
 		bx::MemoryReader rd(_code, _size);
 
+		bx::Error err;
 		DxbcContext dxbc;
-		read(&rd, dxbc);
+		read(&rd, dxbc, &err);
 
 		struct FindDepthOp
 		{

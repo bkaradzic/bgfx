@@ -552,7 +552,7 @@ namespace bgfx
 
 #define DXBC_MAX_NAME_STRING 512
 
-	int32_t readString(bx::ReaderSeekerI* _reader, int64_t _offset, char* _out, uint32_t _max = DXBC_MAX_NAME_STRING)
+	int32_t readString(bx::ReaderSeekerI* _reader, int64_t _offset, char* _out, uint32_t _max, bx::Error* _err)
 	{
 		int64_t oldOffset = bx::seek(_reader);
 		bx::seek(_reader, _offset, bx::Whence::Begin);
@@ -562,7 +562,7 @@ namespace bgfx
 		for (uint32_t ii = 0; ii < _max-1; ++ii)
 		{
 			char ch;
-			size += bx::read(_reader, ch);
+			size += bx::read(_reader, ch, _err);
 			*_out++ = ch;
 
 			if ('\0' == ch)
@@ -755,7 +755,7 @@ namespace bgfx
 		memcpy(_digest, hash, 16);
 	}
 
-	int32_t read(bx::ReaderI* _reader, DxbcSubOperand& _subOperand)
+	int32_t read(bx::ReaderI* _reader, DxbcSubOperand& _subOperand, bx::Error* _err)
 	{
 		uint32_t token;
 		int32_t size = 0;
@@ -773,7 +773,7 @@ namespace bgfx
 		// |+------------------------------- addressing mode 2
 		// +-------------------------------- extended
 
-		size += bx::read(_reader, token);
+		size += bx::read(_reader, token, _err);
 		_subOperand.type         = DxbcOperandType::Enum( (token & UINT32_C(0x000ff000) ) >> 12);
 		_subOperand.numAddrModes =               uint8_t( (token & UINT32_C(0x00300000) ) >> 20);
 		_subOperand.addrMode     =               uint8_t( (token & UINT32_C(0x01c00000) ) >> 22);
@@ -784,7 +784,7 @@ namespace bgfx
 		switch (_subOperand.addrMode)
 		{
 		case DxbcOperandAddrMode::Imm32:
-			size += bx::read(_reader, _subOperand.regIndex);
+			size += bx::read(_reader, _subOperand.regIndex, _err);
 			break;
 
 		case DxbcOperandAddrMode::Reg:
@@ -796,7 +796,7 @@ namespace bgfx
 
 		case DxbcOperandAddrMode::RegImm32:
 			{
-				size += bx::read(_reader, _subOperand.regIndex);
+				size += bx::read(_reader, _subOperand.regIndex, _err);
 
 				DxbcSubOperand subOperand;
 				size += read(_reader, subOperand);
@@ -805,8 +805,8 @@ namespace bgfx
 
 		case DxbcOperandAddrMode::RegImm64:
 			{
-				size += bx::read(_reader, _subOperand.regIndex);
-				size += bx::read(_reader, _subOperand.regIndex);
+				size += bx::read(_reader, _subOperand.regIndex, _err);
+				size += bx::read(_reader, _subOperand.regIndex, _err);
 
 				DxbcSubOperand subOperand;
 				size += read(_reader, subOperand);
@@ -821,7 +821,7 @@ namespace bgfx
 		return size;
 	}
 
-	int32_t write(bx::WriterI* _writer, const DxbcSubOperand& _subOperand)
+	int32_t write(bx::WriterI* _writer, const DxbcSubOperand& _subOperand, bx::Error* _err)
 	{
 		int32_t size = 0;
 
@@ -832,12 +832,12 @@ namespace bgfx
 		token |= (_subOperand.mode         <<  2) & UINT32_C(0x0000000c);
 		token |= (_subOperand.modeBits     <<  4) & UINT32_C(0x00000ff0);
 		token |=  _subOperand.num                 & UINT32_C(0x00000003);
-		size += bx::write(_writer, token);
+		size += bx::write(_writer, token, _err);
 
 		switch (_subOperand.addrMode)
 		{
 		case DxbcOperandAddrMode::Imm32:
-			size += bx::write(_writer, _subOperand.regIndex);
+			size += bx::write(_writer, _subOperand.regIndex, _err);
 			break;
 
 		case DxbcOperandAddrMode::Reg:
@@ -849,7 +849,7 @@ namespace bgfx
 
 		case DxbcOperandAddrMode::RegImm32:
 			{
-				size += bx::write(_writer, _subOperand.regIndex);
+				size += bx::write(_writer, _subOperand.regIndex, _err);
 
 				DxbcSubOperand subOperand;
 				size += write(_writer, subOperand);
@@ -858,8 +858,8 @@ namespace bgfx
 
 		case DxbcOperandAddrMode::RegImm64:
 			{
-				size += bx::write(_writer, _subOperand.regIndex);
-				size += bx::write(_writer, _subOperand.regIndex);
+				size += bx::write(_writer, _subOperand.regIndex, _err);
+				size += bx::write(_writer, _subOperand.regIndex, _err);
 
 				DxbcSubOperand subOperand;
 				size += write(_writer, subOperand);
@@ -874,12 +874,12 @@ namespace bgfx
 		return size;
 	}
 
-	int32_t read(bx::ReaderI* _reader, DxbcOperand& _operand)
+	int32_t read(bx::ReaderI* _reader, DxbcOperand& _operand, bx::Error* _err)
 	{
 		int32_t size = 0;
 
 		uint32_t token;
-		size += bx::read(_reader, token);
+		size += bx::read(_reader, token, _err);
 
 		// 0       1       2       3
 		// 76543210765432107654321076543210
@@ -906,7 +906,7 @@ namespace bgfx
 
 		if (_operand.extended)
 		{
-			size += bx::read(_reader, _operand.extBits);
+			size += bx::read(_reader, _operand.extBits, _err);
 		}
 
 		switch (_operand.type)
@@ -915,7 +915,7 @@ namespace bgfx
 			_operand.num = 2 == _operand.num ? 4 : _operand.num;
 			for (uint32_t ii = 0; ii < _operand.num; ++ii)
 			{
-				size += bx::read(_reader, _operand.un.imm32[ii]);
+				size += bx::read(_reader, _operand.un.imm32[ii], _err);
 			}
 			break;
 
@@ -923,7 +923,7 @@ namespace bgfx
 			_operand.num = 2 == _operand.num ? 4 : _operand.num;
 			for (uint32_t ii = 0; ii < _operand.num; ++ii)
 			{
-				size += bx::read(_reader, _operand.un.imm64[ii]);
+				size += bx::read(_reader, _operand.un.imm64[ii], _err);
 			}
 			break;
 
@@ -936,16 +936,16 @@ namespace bgfx
 			switch (_operand.addrMode[ii])
 			{
 			case DxbcOperandAddrMode::Imm32:
-				size += bx::read(_reader, _operand.regIndex[ii]);
+				size += bx::read(_reader, _operand.regIndex[ii], _err);
 				break;
 
 			case DxbcOperandAddrMode::Reg:
-				size += read(_reader, _operand.subOperand[ii]);
+				size += read(_reader, _operand.subOperand[ii], _err);
 				break;
 
 			case DxbcOperandAddrMode::RegImm32:
-				size += bx::read(_reader, _operand.regIndex[ii]);
-				size += read(_reader, _operand.subOperand[ii]);
+				size += bx::read(_reader, _operand.regIndex[ii], _err);
+				size += read(_reader, _operand.subOperand[ii], _err);
 				break;
 
 			default:
@@ -957,7 +957,7 @@ namespace bgfx
 		return size;
 	}
 
-	int32_t write(bx::WriterI* _writer, const DxbcOperand& _operand)
+	int32_t write(bx::WriterI* _writer, const DxbcOperand& _operand, bx::Error* _err)
 	{
 		int32_t size = 0;
 
@@ -973,7 +973,7 @@ namespace bgfx
 		token |= (4 == _operand.num ? 2 : _operand.num) & UINT32_C(0x00000003);
 		token |= ( (_operand.modeBits & "\x0f\xff\x03\x00"[_operand.mode]) << 4) & UINT32_C(0x00000ff0);
 
-		size += bx::write(_writer, token);
+		size += bx::write(_writer, token, _err);
 
 		if (_operand.extended)
 		{
@@ -985,14 +985,14 @@ namespace bgfx
 		case DxbcOperandType::Imm32:
 			for (uint32_t ii = 0; ii < _operand.num; ++ii)
 			{
-				size += bx::write(_writer, _operand.un.imm32[ii]);
+				size += bx::write(_writer, _operand.un.imm32[ii], _err);
 			}
 			break;
 
 		case DxbcOperandType::Imm64:
 			for (uint32_t ii = 0; ii < _operand.num; ++ii)
 			{
-				size += bx::write(_writer, _operand.un.imm64[ii]);
+				size += bx::write(_writer, _operand.un.imm64[ii], _err);
 			}
 			break;
 
@@ -1005,16 +1005,16 @@ namespace bgfx
 			switch (_operand.addrMode[ii])
 			{
 			case DxbcOperandAddrMode::Imm32:
-				size += bx::write(_writer, _operand.regIndex[ii]);
+				size += bx::write(_writer, _operand.regIndex[ii], _err);
 				break;
 
 			case DxbcOperandAddrMode::Reg:
-				size += write(_writer, _operand.subOperand[ii]);
+				size += write(_writer, _operand.subOperand[ii], _err);
 				break;
 
 			case DxbcOperandAddrMode::RegImm32:
-				size += bx::write(_writer, _operand.regIndex[ii]);
-				size += write(_writer, _operand.subOperand[ii]);
+				size += bx::write(_writer, _operand.regIndex[ii], _err);
+				size += write(_writer, _operand.subOperand[ii], _err);
 				break;
 
 			default:
@@ -1026,12 +1026,12 @@ namespace bgfx
 		return size;
 	}
 
-	int32_t read(bx::ReaderI* _reader, DxbcInstruction& _instruction)
+	int32_t read(bx::ReaderI* _reader, DxbcInstruction& _instruction, bx::Error* _err)
 	{
 		uint32_t size = 0;
 
 		uint32_t token;
-		size += bx::read(_reader, token);
+		size += bx::read(_reader, token, _err);
 
 		// 0       1       2       3
 		// 76543210765432107654321076543210
@@ -1077,7 +1077,7 @@ namespace bgfx
 					for (uint32_t ii = 0, num = (_instruction.length-2)/4; ii < num; ++ii)
 					{
 						char temp[16];
-						size += bx::read(_reader, temp, 16);
+						size += bx::read(_reader, temp, 16, _err);
 					}
 
 				}
@@ -1190,7 +1190,7 @@ namespace bgfx
 			uint32_t extBits;
 			size += bx::read(_reader, extBits);
 			extended = 0 != (extBits & UINT32_C(0x80000000) );
-			_instruction.extended[ii] = DxbcInstruction::ExtendedType::Enum(extBits & UINT32_C(0x0000001f) );
+			_instruction.extended[ii  ] = DxbcInstruction::ExtendedType::Enum(extBits & UINT32_C(0x0000001f) );
 			_instruction.extended[ii+1] = DxbcInstruction::ExtendedType::Count;
 
 			switch (_instruction.extended[ii])
@@ -1244,7 +1244,7 @@ namespace bgfx
 			case DxbcOpcode::DCL_FUNCTION_TABLE:
 				{
 					uint32_t tableId;
-					size += read(_reader, tableId);
+					size += read(_reader, tableId, _err);
 
 					uint32_t num;
 					size += read(_reader, num);
@@ -1252,7 +1252,7 @@ namespace bgfx
 					for (uint32_t ii = 0; ii < num; ++ii)
 					{
 						uint32_t bodyId;
-						size += read(_reader, bodyId);
+						size += read(_reader, bodyId, _err);
 					}
 				}
 				break;
@@ -1260,10 +1260,10 @@ namespace bgfx
 			case DxbcOpcode::DCL_INTERFACE:
 				{
 					uint32_t interfaceId;
-					size += read(_reader, interfaceId);
+					size += read(_reader, interfaceId, _err);
 
 					uint32_t num;
-					size += read(_reader, num);
+					size += read(_reader, num, _err);
 
 					BX_CHECK(false, "not implemented.");
 				}
@@ -1279,16 +1279,16 @@ namespace bgfx
 		_instruction.numOperands = info.numOperands;
 		switch (info.numOperands)
 		{
-		case 6: size += read(_reader, _instruction.operand[currOp++]);
-		case 5: size += read(_reader, _instruction.operand[currOp++]);
-		case 4: size += read(_reader, _instruction.operand[currOp++]);
-		case 3: size += read(_reader, _instruction.operand[currOp++]);
-		case 2: size += read(_reader, _instruction.operand[currOp++]);
-		case 1: size += read(_reader, _instruction.operand[currOp++]);
+		case 6: size += read(_reader, _instruction.operand[currOp++], _err);
+		case 5: size += read(_reader, _instruction.operand[currOp++], _err);
+		case 4: size += read(_reader, _instruction.operand[currOp++], _err);
+		case 3: size += read(_reader, _instruction.operand[currOp++], _err);
+		case 2: size += read(_reader, _instruction.operand[currOp++], _err);
+		case 1: size += read(_reader, _instruction.operand[currOp++], _err);
 		case 0:
 			if (0 < info.numValues)
 			{
-				size += read(_reader, _instruction.value, info.numValues*sizeof(uint32_t) );
+				size += read(_reader, _instruction.value, info.numValues*sizeof(uint32_t), _err);
 			}
 			break;
 
@@ -1304,7 +1304,7 @@ namespace bgfx
 		return size;
 	}
 
-	int32_t write(bx::WriterI* _writer, const DxbcInstruction& _instruction)
+	int32_t write(bx::WriterI* _writer, const DxbcInstruction& _instruction, bx::Error* _err)
 	{
 		uint32_t token = 0;
 		token |= (_instruction.opcode        ) & UINT32_C(0x000007ff);
@@ -1366,7 +1366,7 @@ namespace bgfx
 
 		uint32_t size =0;
 		size += bx::write(_writer, token);
-;
+
 		for (uint32_t ii = 0; _instruction.extended[ii] != DxbcInstruction::ExtendedType::Count; ++ii)
 		{
 			// 0       1       2       3
@@ -1427,18 +1427,18 @@ namespace bgfx
 				break;
 			}
 
-			size += bx::write(_writer, token);
+			size += bx::write(_writer, token, _err);
 		}
 
 		for (uint32_t ii = 0; ii < _instruction.numOperands; ++ii)
 		{
-			size += write(_writer, _instruction.operand[ii]);
+			size += write(_writer, _instruction.operand[ii], _err);
 		}
 
 		const DxbcOpcodeInfo& info = s_dxbcOpcodeInfo[_instruction.opcode];
 		if (0 < info.numValues)
 		{
-			size += bx::write(_writer, _instruction.value, info.numValues*sizeof(uint32_t) );
+			size += bx::write(_writer, _instruction.value, info.numValues*sizeof(uint32_t), _err);
 		}
 
 		return size;
@@ -1609,15 +1609,15 @@ namespace bgfx
 		return size;
 	}
 
-	int32_t read(bx::ReaderSeekerI* _reader, DxbcSignature& _signature)
+	int32_t read(bx::ReaderSeekerI* _reader, DxbcSignature& _signature, bx::Error* _err)
 	{
 		int32_t size = 0;
 
 		int64_t offset = bx::seek(_reader);
 
 		uint32_t num;
-		size += bx::read(_reader, num);
-		size += bx::read(_reader, _signature.key);
+		size += bx::read(_reader, num, _err);
+		size += bx::read(_reader, _signature.key, _err);
 
 		for (uint32_t ii = 0; ii < num; ++ii)
 		{
@@ -1627,20 +1627,20 @@ namespace bgfx
 			size += bx::read(_reader, nameOffset);
 
 			char name[DXBC_MAX_NAME_STRING];
-			readString(_reader, offset + nameOffset, name);
+			readString(_reader, offset + nameOffset, name, DXBC_MAX_NAME_STRING, _err);
 			element.name = name;
 
-			size += bx::read(_reader, element.semanticIndex);
-			size += bx::read(_reader, element.valueType);
-			size += bx::read(_reader, element.componentType);
-			size += bx::read(_reader, element.registerIndex);
-			size += bx::read(_reader, element.mask);
-			size += bx::read(_reader, element.readWriteMask);
-			size += bx::read(_reader, element.stream);
+			size += bx::read(_reader, element.semanticIndex, _err);
+			size += bx::read(_reader, element.valueType, _err);
+			size += bx::read(_reader, element.componentType, _err);
+			size += bx::read(_reader, element.registerIndex, _err);
+			size += bx::read(_reader, element.mask, _err);
+			size += bx::read(_reader, element.readWriteMask, _err);
+			size += bx::read(_reader, element.stream, _err);
 
 			// padding
 			uint8_t padding;
-			size += bx::read(_reader, padding);
+			size += bx::read(_reader, padding, _err);
 
 			_signature.elements.push_back(element);
 		}
@@ -1648,13 +1648,13 @@ namespace bgfx
 		return size;
 	}
 
-	int32_t write(bx::WriterI* _writer, const DxbcSignature& _signature)
+	int32_t write(bx::WriterI* _writer, const DxbcSignature& _signature, bx::Error* _err)
 	{
 		int32_t size = 0;
 
 		const uint32_t num = uint32_t(_signature.elements.size() );
-		size += bx::write(_writer, num);
-		size += bx::write(_writer, _signature.key);
+		size += bx::write(_writer, num, _err);
+		size += bx::write(_writer, _signature.key, _err);
 
 		typedef stl::unordered_map<stl::string, uint32_t> NameOffsetMap;
 		NameOffsetMap nom;
@@ -1669,7 +1669,7 @@ namespace bgfx
 			if (it == nom.end() )
 			{
 				nom.insert(stl::make_pair(element.name, nameOffset) );
-				size += bx::write(_writer, nameOffset);
+				size += bx::write(_writer, nameOffset, _err);
 				nameOffset += uint32_t(element.name.size() + 1);
 			}
 			else
@@ -1677,15 +1677,14 @@ namespace bgfx
 				size += bx::write(_writer, it->second);
 			}
 
-			size += bx::write(_writer, element.semanticIndex);
-			size += bx::write(_writer, element.valueType);
-			size += bx::write(_writer, element.componentType);
-			size += bx::write(_writer, element.registerIndex);
-			size += bx::write(_writer, element.mask);
-			size += bx::write(_writer, element.readWriteMask);
-			size += bx::write(_writer, element.stream);
-			size += bx::write(_writer, pad);
-
+			size += bx::write(_writer, element.semanticIndex, _err);
+			size += bx::write(_writer, element.valueType, _err);
+			size += bx::write(_writer, element.componentType, _err);
+			size += bx::write(_writer, element.registerIndex, _err);
+			size += bx::write(_writer, element.mask, _err);
+			size += bx::write(_writer, element.readWriteMask, _err);
+			size += bx::write(_writer, element.stream, _err);
+			size += bx::write(_writer, pad, _err);
 		}
 
 		uint32_t len = 0;
@@ -1696,42 +1695,42 @@ namespace bgfx
 			if (it != nom.end() )
 			{
 				nom.erase(it);
-				size += bx::write(_writer, element.name.c_str(), uint32_t(element.name.size() + 1) );
+				size += bx::write(_writer, element.name.c_str(), uint32_t(element.name.size() + 1), _err);
 				len  += uint32_t(element.name.size() + 1);
 			}
 		}
 
 		// align 4 bytes
-		size += bx::writeRep(_writer, 0xab, (len+3)/4*4 - len);
+		size += bx::writeRep(_writer, 0xab, (len+3)/4*4 - len, _err);
 
 		return size;
 	}
 
-	int32_t read(bx::ReaderSeekerI* _reader, DxbcShader& _shader)
+	int32_t read(bx::ReaderSeekerI* _reader, DxbcShader& _shader, bx::Error* _err)
 	{
 		int32_t size = 0;
 
-		size += bx::read(_reader, _shader.version);
+		size += bx::read(_reader, _shader.version, _err);
 
 		uint32_t bcLength;
-		size += bx::read(_reader, bcLength);
+		size += bx::read(_reader, bcLength, _err);
 
 		uint32_t len = (bcLength-2)*sizeof(uint32_t);
 		_shader.byteCode.resize(len);
-		size += bx::read(_reader, _shader.byteCode.data(), len);
+		size += bx::read(_reader, _shader.byteCode.data(), len, _err);
 
 		return size;
 	}
 
-	int32_t write(bx::WriterI* _writer, const DxbcShader& _shader)
+	int32_t write(bx::WriterI* _writer, const DxbcShader& _shader, bx::Error* _err)
 	{
 		const uint32_t len = uint32_t(_shader.byteCode.size() );
 		const uint32_t bcLength = len / sizeof(uint32_t) + 2;
 
 		int32_t size = 0;
-		size += bx::write(_writer, _shader.version);
-		size += bx::write(_writer, bcLength);
-		size += bx::write(_writer, _shader.byteCode.data(), len);
+		size += bx::write(_writer, _shader.version, _err);
+		size += bx::write(_writer, bcLength, _err);
+		size += bx::write(_writer, _shader.byteCode.data(), len, _err);
 
 		return size;
 	}
@@ -1743,10 +1742,10 @@ namespace bgfx
 #define DXBC_CHUNK_INPUT_SIGNATURE  BX_MAKEFOURCC('I', 'S', 'G', 'N')
 #define DXBC_CHUNK_OUTPUT_SIGNATURE BX_MAKEFOURCC('O', 'S', 'G', 'N')
 
-	int32_t read(bx::ReaderSeekerI* _reader, DxbcContext& _dxbc)
+	int32_t read(bx::ReaderSeekerI* _reader, DxbcContext& _dxbc, bx::Error* _err)
 	{
 		int32_t size = 0;
-		size += bx::read(_reader, _dxbc.header);
+		size += bx::read(_reader, _dxbc.header, _err);
 		_dxbc.shader.shex = false;
 
 		for (uint32_t ii = 0; ii < _dxbc.header.numChunks; ++ii)
@@ -1754,15 +1753,15 @@ namespace bgfx
 			bx::seek(_reader, sizeof(DxbcContext::Header) + ii*sizeof(uint32_t), bx::Whence::Begin);
 
 			uint32_t chunkOffset;
-			size += bx::read(_reader, chunkOffset);
+			size += bx::read(_reader, chunkOffset, _err);
 
 			bx::seek(_reader, chunkOffset, bx::Whence::Begin);
 
 			uint32_t fourcc;
-			size += bx::read(_reader, fourcc);
+			size += bx::read(_reader, fourcc, _err);
 
 			uint32_t chunkSize;
-			size += bx::read(_reader, chunkSize);
+			size += bx::read(_reader, chunkSize, _err);
 
 			switch (fourcc)
 			{
@@ -1771,18 +1770,18 @@ namespace bgfx
 				// fallthrough
 
 			case DXBC_CHUNK_SHADER:
-				size += read(_reader, _dxbc.shader);
+				size += read(_reader, _dxbc.shader, _err);
 				break;
 
 			case BX_MAKEFOURCC('I', 'S', 'G', '1'):
 			case DXBC_CHUNK_INPUT_SIGNATURE:
-				size += read(_reader, _dxbc.inputSignature);
+				size += read(_reader, _dxbc.inputSignature, _err);
 				break;
 
 			case BX_MAKEFOURCC('O', 'S', 'G', '1'):
 			case BX_MAKEFOURCC('O', 'S', 'G', '5'):
 			case DXBC_CHUNK_OUTPUT_SIGNATURE:
-				size += read(_reader, _dxbc.outputSignature);
+				size += read(_reader, _dxbc.outputSignature, _err);
 				break;
 
 			case BX_MAKEFOURCC('A', 'o', 'n', '9'): // Contains DX9BC for feature level 9.x (*s_4_0_level_9_*) shaders.
@@ -1816,43 +1815,43 @@ namespace bgfx
 		return size;
 	}
 
-	int32_t write(bx::WriterSeekerI* _writer, const DxbcContext& _dxbc)
+	int32_t write(bx::WriterSeekerI* _writer, const DxbcContext& _dxbc, bx::Error* _err)
 	{
 		int32_t size = 0;
 
 		int64_t dxbcOffset = bx::seek(_writer);
 		size += bx::write(_writer, DXBC_CHUNK_HEADER);
 
-		size += bx::writeRep(_writer, 0, 16);
+		size += bx::writeRep(_writer, 0, 16, _err);
 
-		size += bx::write(_writer, UINT32_C(1) );
+		size += bx::write(_writer, UINT32_C(1), _err);
 
 		int64_t sizeOffset = bx::seek(_writer);
-		size += bx::writeRep(_writer, 0, 4);
+		size += bx::writeRep(_writer, 0, 4, _err);
 
 		uint32_t numChunks = 3;
-		size += bx::write(_writer, numChunks);
+		size += bx::write(_writer, numChunks, _err);
 
 		int64_t chunksOffsets = bx::seek(_writer);
-		size += bx::writeRep(_writer, 0, numChunks*sizeof(uint32_t) );
+		size += bx::writeRep(_writer, 0, numChunks*sizeof(uint32_t), _err);
 
 		uint32_t chunkOffset[3];
 		uint32_t chunkSize[3];
 
 		chunkOffset[0] = uint32_t(bx::seek(_writer) - dxbcOffset);
-		size += write(_writer, DXBC_CHUNK_INPUT_SIGNATURE);
-		size += write(_writer, UINT32_C(0) );
-		chunkSize[0] = write(_writer, _dxbc.inputSignature);
+		size += write(_writer, DXBC_CHUNK_INPUT_SIGNATURE, _err);
+		size += write(_writer, UINT32_C(0), _err);
+		chunkSize[0] = write(_writer, _dxbc.inputSignature, _err);
 
 		chunkOffset[1] = uint32_t(bx::seek(_writer) - dxbcOffset);
-		size += write(_writer, DXBC_CHUNK_OUTPUT_SIGNATURE);
-		size += write(_writer, UINT32_C(0) );
-		chunkSize[1] = write(_writer, _dxbc.outputSignature);
+		size += write(_writer, DXBC_CHUNK_OUTPUT_SIGNATURE, _err);
+		size += write(_writer, UINT32_C(0), _err);
+		chunkSize[1] = write(_writer, _dxbc.outputSignature, _err);
 
 		chunkOffset[2] = uint32_t(bx::seek(_writer) - dxbcOffset);
-		size += write(_writer, _dxbc.shader.shex ? DXBC_CHUNK_SHADER_EX : DXBC_CHUNK_SHADER);
-		size += write(_writer, UINT32_C(0) );
-		chunkSize[2] = write(_writer, _dxbc.shader);
+		size += write(_writer, _dxbc.shader.shex ? DXBC_CHUNK_SHADER_EX : DXBC_CHUNK_SHADER, _err);
+		size += write(_writer, UINT32_C(0), _err);
+		chunkSize[2] = write(_writer, _dxbc.shader, _err);
 
 		size += 0
 			+ chunkSize[0]
@@ -1863,15 +1862,15 @@ namespace bgfx
 		int64_t eof = bx::seek(_writer);
 
 		bx::seek(_writer, sizeOffset, bx::Whence::Begin);
-		bx::write(_writer, size);
+		bx::write(_writer, size, _err);
 
 		bx::seek(_writer, chunksOffsets, bx::Whence::Begin);
-		bx::write(_writer, chunkOffset, sizeof(chunkOffset) );
+		bx::write(_writer, chunkOffset, sizeof(chunkOffset), _err);
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(chunkOffset); ++ii)
 		{
 			bx::seek(_writer, chunkOffset[ii]+4, bx::Whence::Begin);
-			bx::write(_writer, chunkSize[ii]);
+			bx::write(_writer, chunkSize[ii], _err);
 		}
 
 		bx::seek(_writer, eof, bx::Whence::Begin);
@@ -1879,14 +1878,16 @@ namespace bgfx
 		return size;
 	}
 
-	void parse(const DxbcShader& _src, DxbcParseFn _fn, void* _userData)
+	void parse(const DxbcShader& _src, DxbcParseFn _fn, void* _userData, bx::Error* _err)
 	{
+		BX_ERROR_SCOPE(_err);
+
 		bx::MemoryReader reader(_src.byteCode.data(), uint32_t(_src.byteCode.size() ) );
 
 		for (uint32_t token = 0, numTokens = uint32_t(_src.byteCode.size() / sizeof(uint32_t) ); token < numTokens;)
 		{
 			DxbcInstruction instruction;
-			uint32_t size = read(&reader, instruction);
+			uint32_t size = read(&reader, instruction, _err);
 			BX_CHECK(size/4 == instruction.length, "read %d, expected %d", size/4, instruction.length); BX_UNUSED(size);
 
 			bool cont = _fn(token * sizeof(uint32_t), instruction, _userData);
@@ -1899,8 +1900,10 @@ namespace bgfx
 		}
 	}
 
-	void filter(DxbcShader& _dst, const DxbcShader& _src, DxbcFilterFn _fn, void* _userData)
+	void filter(DxbcShader& _dst, const DxbcShader& _src, DxbcFilterFn _fn, void* _userData, bx::Error* _err)
 	{
+		BX_ERROR_SCOPE(_err);
+
 		bx::MemoryReader reader(_src.byteCode.data(), uint32_t(_src.byteCode.size() ) );
 
 		bx::MemoryBlock mb(g_allocator);
@@ -1909,12 +1912,12 @@ namespace bgfx
 		for (uint32_t token = 0, numTokens = uint32_t(_src.byteCode.size() / sizeof(uint32_t) ); token < numTokens;)
 		{
 			DxbcInstruction instruction;
-			uint32_t size = read(&reader, instruction);
+			uint32_t size = read(&reader, instruction, _err);
 			BX_CHECK(size/4 == instruction.length, "read %d, expected %d", size/4, instruction.length); BX_UNUSED(size);
 
 			_fn(instruction, _userData);
 
-			write(&writer, instruction);
+			write(&writer, instruction, _err);
 
 			token += instruction.length;
 		}

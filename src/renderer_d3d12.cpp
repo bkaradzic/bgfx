@@ -2238,7 +2238,8 @@ data.NumQualityLevels = 0;
  			bx::StaticMemoryBlockWriter wr(temp->data, temp->size);
 
 			DxbcContext dxbc;
-			read(&rd, dxbc);
+			bx::Error err;
+			read(&rd, dxbc, &err);
 
 			bool patchShader = true;
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
@@ -2246,7 +2247,7 @@ data.NumQualityLevels = 0;
 				union { uint32_t offset; void* ptr; } cast = { 0 };
 				filter(dxbc.shader, dxbc.shader, patchCb0, cast.ptr);
 
-				write(&wr, dxbc);
+				write(&wr, dxbc, &err);
 
 				dxbcHash(temp->data + 20, temp->size - 20, temp->data + 4);
 
@@ -2280,7 +2281,7 @@ data.NumQualityLevels = 0;
 					uint32_t(program.m_vsh->m_size)/16
 				};
 				filter(dxbc.shader, dxbc.shader, patchCb0, cast.ptr);
-				write(&wr, dxbc);
+				write(&wr, dxbc, &err);
 				dxbcHash(temp->data + 20, temp->size - 20, temp->data + 4);
 
 				desc.PS.pShaderBytecode = temp->data;
