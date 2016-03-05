@@ -429,7 +429,10 @@ int _main_(int _argc, char** _argv)
 	uint32_t width = 1280;
 	uint32_t height = 720;
 	uint32_t debug = BGFX_DEBUG_TEXT;
-	uint32_t reset = BGFX_RESET_VSYNC;
+	uint32_t reset  = 0
+		| BGFX_RESET_VSYNC
+		| BGFX_RESET_MSAA_X16
+		;
 
 	bgfx::init(args.m_type, args.m_pciId);
 	bgfx::reset(width, height, reset);

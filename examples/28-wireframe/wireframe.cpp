@@ -313,7 +313,10 @@ class Wireframe : public entry::AppI
 		m_width  = 1280;
 		m_height = 720;
 		m_debug  = BGFX_DEBUG_TEXT;
-		m_reset  = BGFX_RESET_VSYNC;
+		m_reset  = 0
+			| BGFX_RESET_VSYNC
+			| BGFX_RESET_MSAA_X16
+			;
 
 		bgfx::init(args.m_type, args.m_pciId);
 		bgfx::reset(m_width, m_height, m_reset);
