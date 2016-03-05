@@ -1,4 +1,5 @@
 #include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
 constant float3 _xlat_mtl_const1[8] = {float3(0.0130572, 0.587232, -0.119337), float3(0.323078, 0.0220727, -0.418873), float3(-0.310725, -0.191367, 0.0561369), float3(-0.479646, 0.0939877, -0.580265), float3(0.139999, -0.33577, 0.559679), float3(-0.248458, 0.255532, 0.348944), float3(0.18719, -0.702764, -0.231748), float3(0.884915, 0.284208, 0.368524)};
 struct xlatMtlShaderInput {

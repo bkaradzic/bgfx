@@ -163,8 +163,10 @@ exec_node_get_prev(struct exec_node *n)
 static inline void
 exec_node_remove(struct exec_node *n)
 {
-   n->next->prev = n->prev;
-   n->prev->next = n->next;
+   if (n->next)
+      n->next->prev = n->prev;
+   if (n->prev)
+      n->prev->next = n->next;
    n->next = NULL;
    n->prev = NULL;
 }

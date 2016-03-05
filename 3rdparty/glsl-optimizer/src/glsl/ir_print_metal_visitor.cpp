@@ -1020,17 +1020,7 @@ void ir_print_metal_visitor::visit(ir_expression *ir)
 			const bool halfCast = (arg_prec == glsl_precision_medium || arg_prec == glsl_precision_low);
 			buffer.asprintf_append (halfCast ? "((half)1.0/(" : "(1.0/(");
 		} else {
-			switch(ir->operation) {
-				case ir_unop_dFdy:
-				case ir_unop_dFdy_coarse:
-				case ir_unop_dFdy_fine:
-					buffer.asprintf_append ("%s(-", operator_glsl_strs[ir->operation]);
-					break;
-
-				default:
-					buffer.asprintf_append ("%s(", operator_glsl_strs[ir->operation]);
-					break;
-			}
+			buffer.asprintf_append ("%s(", operator_glsl_strs[ir->operation]);
 		}
 		if (ir->operands[0])
 			ir->operands[0]->accept(this);

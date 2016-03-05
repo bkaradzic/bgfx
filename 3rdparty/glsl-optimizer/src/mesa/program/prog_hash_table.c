@@ -84,6 +84,8 @@ hash_table_ctor(unsigned num_buckets, hash_func_t hash,
 void
 hash_table_dtor(struct hash_table *ht)
 {
+   if (!ht)
+      return;
    hash_table_clear(ht);
    free(ht);
 }

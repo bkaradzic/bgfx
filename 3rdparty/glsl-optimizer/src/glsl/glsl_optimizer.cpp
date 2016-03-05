@@ -440,8 +440,12 @@ static bool propagate_precision(exec_list* list, bool assign_high_to_undefined)
 static void do_optimization_passes(exec_list* ir, bool linked, _mesa_glsl_parse_state* state, void* mem_ctx)
 {
 	bool progress;
+	// FIXME: Shouldn't need to bound the number of passes
+	int passes = 0,
+		kMaximumPasses = 1000;
 	do {
 		progress = false;
+		++passes;
 		bool progress2;
 		debug_print_ir ("Initial", ir, state, mem_ctx);
 		if (linked) {
@@ -497,7 +501,7 @@ static void do_optimization_passes(exec_list* ir, bool linked, _mesa_glsl_parse_
 			}
 			delete ls;
 		}
-	} while (progress);
+	} while (progress && passes < kMaximumPasses);
 
 	if (!state->metal_target)
 	{

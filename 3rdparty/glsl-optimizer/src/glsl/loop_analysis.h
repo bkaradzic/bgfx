@@ -251,6 +251,8 @@ public:
    loop_variable_state* get_for_inductor (const ir_variable*);
    bool insert_inductor(loop_variable* loopvar, loop_variable_state* state, ir_loop* loop);
    void insert_non_inductor(ir_variable *var);
+   void insert_variable(ir_variable *var);
+   void reference_variable(ir_variable *var, bool assignment);
 
    bool loop_found;
 
@@ -267,6 +269,7 @@ private:
     */
    hash_table *ht_inductors;
    hash_table *ht_non_inductors;
+   hash_table *ht_variables;
  
 
    void *mem_ctx;

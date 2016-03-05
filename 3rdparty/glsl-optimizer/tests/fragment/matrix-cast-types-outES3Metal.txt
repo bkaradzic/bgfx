@@ -1,4 +1,5 @@
 #include <metal_stdlib>
+#pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
 inline float4x4 _xlcast_float4x4(half4x4 v) { return float4x4(float4(v[0]), float4(v[1]), float4(v[2]), float4(v[3])); }
 inline float3x3 _xlcast_float3x3(half3x3 v) { return float3x3(float3(v[0]), float3(v[1]), float3(v[2])); }
