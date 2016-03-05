@@ -412,7 +412,9 @@ LLVM:
 #  if !defined POSH_OS_XBOX
 #     if defined _WIN64
 #        define POSH_OS_WIN64 1
-#        define POSH_OS_STRING "Win64"
+#        if !defined POSH_OS_STRING
+#           define POSH_OS_STRING "Win64"
+#        endif // !defined POSH_OS_STRING
 #     else
 #        if !defined POSH_OS_STRING
 #           define POSH_OS_STRING "Win32"
@@ -1026,5 +1028,3 @@ extern posh_i64_t  POSH_ReadI64FromBig( const void *src );
 #ifdef __cplusplus
 }
 #endif
-
-
