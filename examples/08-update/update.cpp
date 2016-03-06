@@ -115,10 +115,10 @@ static void updateTextureCubeRectBgra8(bgfx::TextureHandle _handle, uint8_t _sid
 static const uint32_t m_textureside   = 512;
 static const uint32_t m_texture2dSize = 256;
 
-class Update : public entry::AppI
+class ExampleUpdate : public entry::AppI
 {
 public:
-	Update()
+	ExampleUpdate()
 		: m_cube(m_textureside)
 	{
 	}
@@ -575,4 +575,4 @@ public:
 
 };
 
-ENTRY_IMPLEMENT_MAIN(Update);
+ENTRY_IMPLEMENT_MAIN(ExampleUpdate);

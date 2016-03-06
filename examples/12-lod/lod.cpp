@@ -23,7 +23,7 @@ static const KnightPos knightTour[8*4] =
 	{7,1}, {6,3}, {5,1}, {7,0}, {6,2}, {4,3}, {3,1}, {2,3},
 };
 
-class Lod : public entry::AppI
+class ExampleLod : public entry::AppI
 {
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
@@ -316,4 +316,4 @@ class Lod : public entry::AppI
 	bool    m_transitions;
 };
 
-ENTRY_IMPLEMENT_MAIN(Lod);
+ENTRY_IMPLEMENT_MAIN(ExampleLod);

@@ -58,7 +58,7 @@ struct BrushData
 	float   m_power;
 };
 
-class Terrain : public entry::AppI
+class ExampleTerrain : public entry::AppI
 {
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
@@ -531,4 +531,4 @@ class Terrain : public entry::AppI
 	int64_t m_timeOffset;
 };
 
-ENTRY_IMPLEMENT_MAIN(Terrain);
+ENTRY_IMPLEMENT_MAIN(ExampleTerrain);

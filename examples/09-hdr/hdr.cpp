@@ -139,7 +139,7 @@ inline float square(float _x)
 	return _x*_x;
 }
 
-class HDR : public entry::AppI
+class ExampleHDR : public entry::AppI
 {
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
@@ -561,4 +561,4 @@ class HDR : public entry::AppI
 	float m_time;
 };
 
-ENTRY_IMPLEMENT_MAIN(HDR);
+ENTRY_IMPLEMENT_MAIN(ExampleHDR);

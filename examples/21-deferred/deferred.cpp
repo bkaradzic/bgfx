@@ -213,7 +213,7 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf
 	}
 }
 
-class Deferred : public entry::AppI
+class ExampleDeferred : public entry::AppI
 {
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
@@ -792,4 +792,4 @@ class Deferred : public entry::AppI
 	int64_t m_timeOffset;
 };
 
-ENTRY_IMPLEMENT_MAIN(Deferred);
+ENTRY_IMPLEMENT_MAIN(ExampleDeferred);

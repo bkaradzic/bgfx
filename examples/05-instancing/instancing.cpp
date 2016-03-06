@@ -55,7 +55,7 @@ static const uint16_t s_cubeIndices[36] =
 	6, 3, 7,
 };
 
-class Instancing : public entry::AppI
+class ExampleInstancing : public entry::AppI
 {
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
@@ -247,4 +247,4 @@ class Instancing : public entry::AppI
 	int64_t m_timeOffset;
 };
 
-ENTRY_IMPLEMENT_MAIN(Instancing);
+ENTRY_IMPLEMENT_MAIN(ExampleInstancing);

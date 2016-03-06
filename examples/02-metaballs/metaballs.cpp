@@ -462,7 +462,7 @@ uint32_t triangulate(uint8_t* _result, uint32_t _stride, const float* __restrict
 
 #define DIMS 32
 
-class Metaballs : public entry::AppI
+class ExampleMetaballs : public entry::AppI
 {
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
@@ -780,4 +780,4 @@ class Metaballs : public entry::AppI
 	int64_t m_timeOffset;
 };
 
-ENTRY_IMPLEMENT_MAIN(Metaballs);
+ENTRY_IMPLEMENT_MAIN(ExampleMetaballs);

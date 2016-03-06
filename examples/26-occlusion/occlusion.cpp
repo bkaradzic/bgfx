@@ -58,7 +58,7 @@ static const uint16_t s_cubeIndices[36] =
 	6, 3, 7,
 };
 
-class Occlusion : public entry::AppI
+class ExampleOcclusion : public entry::AppI
 {
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
@@ -282,4 +282,4 @@ class Occlusion : public entry::AppI
 	entry::WindowState m_state;
 };
 
-ENTRY_IMPLEMENT_MAIN(Occlusion);
+ENTRY_IMPLEMENT_MAIN(ExampleOcclusion);
