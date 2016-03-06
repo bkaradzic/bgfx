@@ -286,8 +286,10 @@ namespace bgfx
 		return s_attribTypeToId[_attr].id;
 	}
 
-	int32_t write(bx::WriterI* _writer, const VertexDecl& _decl)
+	int32_t write(bx::WriterI* _writer, const VertexDecl& _decl, bx::Error* _err)
 	{
+		BX_ERROR_SCOPE(_err);
+
 		int32_t total = 0;
 		uint8_t numAttrs = 0;
 
@@ -296,8 +298,8 @@ namespace bgfx
 			numAttrs += UINT16_MAX == _decl.m_attributes[attr] ? 0 : 1;
 		}
 
-		total += bx::write(_writer, numAttrs);
-		total += bx::write(_writer, _decl.m_stride);
+		total += bx::write(_writer, numAttrs, _err);
+		total += bx::write(_writer, _decl.m_stride, _err);
 
 		for (uint32_t attr = 0; attr < Attrib::Count; ++attr)
 		{
@@ -308,49 +310,61 @@ namespace bgfx
 				bool normalized;
 				bool asInt;
 				_decl.decode(Attrib::Enum(attr), num, type, normalized, asInt);
-				total += bx::write(_writer, _decl.m_offset[attr]);
-				total += bx::write(_writer, s_attribToId[attr].id);
-				total += bx::write(_writer, num);
-				total += bx::write(_writer, s_attribTypeToId[type].id);
-				total += bx::write(_writer, normalized);
-				total += bx::write(_writer, asInt);
+				total += bx::write(_writer, _decl.m_offset[attr], _err);
+				total += bx::write(_writer, s_attribToId[attr].id, _err);
+				total += bx::write(_writer, num, _err);
+				total += bx::write(_writer, s_attribTypeToId[type].id, _err);
+				total += bx::write(_writer, normalized, _err);
+				total += bx::write(_writer, asInt, _err);
 			}
 		}
 
 		return total;
 	}
 
-	int32_t read(bx::ReaderI* _reader, VertexDecl& _decl)
+	int32_t read(bx::ReaderI* _reader, VertexDecl& _decl, bx::Error* _err)
 	{
+		BX_ERROR_SCOPE(_err);
+
 		int32_t total = 0;
 
 		uint8_t numAttrs;
-		total += bx::read(_reader, numAttrs);
+		total += bx::read(_reader, numAttrs, _err);
 
 		uint16_t stride;
-		total += bx::read(_reader, stride);
+		total += bx::read(_reader, stride, _err);
+
+		if (!_err->isOk() )
+		{
+			return total;
+		}
 
 		_decl.begin();
 
 		for (uint32_t ii = 0; ii < numAttrs; ++ii)
 		{
 			uint16_t offset;
-			total += bx::read(_reader, offset);
+			total += bx::read(_reader, offset, _err);
 
 			uint16_t attribId = 0;
-			total += bx::read(_reader, attribId);
+			total += bx::read(_reader, attribId, _err);
 
 			uint8_t num;
-			total += bx::read(_reader, num);
+			total += bx::read(_reader, num, _err);
 
 			uint16_t attribTypeId;
-			total += bx::read(_reader, attribTypeId);
+			total += bx::read(_reader, attribTypeId, _err);
 
 			bool normalized;
-			total += bx::read(_reader, normalized);
+			total += bx::read(_reader, normalized, _err);
 
 			bool asInt;
-			total += bx::read(_reader, asInt);
+			total += bx::read(_reader, asInt, _err);
+
+			if (!_err->isOk() )
+			{
+				return total;
+			}
 
 			Attrib::Enum     attr = idToAttrib(attribId);
 			AttribType::Enum type = idToAttribType(attribTypeId);

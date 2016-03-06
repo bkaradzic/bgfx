@@ -30,10 +30,10 @@ namespace bgfx
 	AttribType::Enum idToAttribType(uint16_t id);
 
 	///
-	int32_t write(bx::WriterI* _writer, const bgfx::VertexDecl& _decl);
+	int32_t write(bx::WriterI* _writer, const bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
 
 	///
-	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl);
+	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
 
 } // namespace bgfx
 
