@@ -599,6 +599,7 @@ namespace bgfx { namespace d3d11
 			, m_vsChanges(0)
 			, m_fsChanges(0)
 			, m_rtMsaa(false)
+			, m_timerQuerySupport(false)
 			, m_ovrRtv(NULL)
 			, m_ovrDsv(NULL)
 		{
@@ -1192,6 +1193,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					| BGFX_CAPS_TEXTURE_READ_BACK
 					| BGFX_CAPS_OCCLUSION_QUERY
 					);
+
+				m_timerQuerySupport = m_featureLevel >= D3D_FEATURE_LEVEL_9_3;
 
 				if (m_featureLevel <= D3D_FEATURE_LEVEL_9_2)
 				{
@@ -2021,7 +2024,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			ovrPreReset();
 
-			m_gpuTimer.preReset();
+			if (m_timerQuerySupport)
+			{
+				m_gpuTimer.preReset();
+			}
 			m_occlusionQuery.preReset();
 
 			if (NULL == g_platformData.backBufferDS)
@@ -2066,7 +2072,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				DX_RELEASE(color, 0);
 			}
 
-			m_gpuTimer.postReset();
+			if (m_timerQuerySupport)
+			{
+				m_gpuTimer.postReset();
+			}
 			m_occlusionQuery.postReset();
 
 			ovrPostReset();
@@ -3434,6 +3443,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		FrameBufferHandle m_fbh;
 		bool m_rtMsaa;
+		bool m_timerQuerySupport;
 
 		OVR m_ovr;
 		TextureD3D11 m_ovrRT;
@@ -4726,7 +4736,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		int64_t elapsed = -bx::getHPCounter();
 		int64_t captureElapsed = 0;
 
-		m_gpuTimer.begin();
+		if (m_timerQuerySupport)
+		{
+			m_gpuTimer.begin();
+		}
 
 		if (0 < _render->m_iboffset)
 		{
@@ -5636,15 +5649,18 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		static double   maxGpuElapsed = 0.0f;
 		double elapsedGpuMs = 0.0;
 
-		m_gpuTimer.end();
-
-		while (m_gpuTimer.get() )
+		if (m_timerQuerySupport)
 		{
-			double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
-			elapsedGpuMs   = m_gpuTimer.m_elapsed * toGpuMs;
-			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
+			m_gpuTimer.end();
+
+			while (m_gpuTimer.get() )
+			{
+				double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
+				elapsedGpuMs   = m_gpuTimer.m_elapsed * toGpuMs;
+				maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
+			}
+			maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
 		}
-		maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
 
 		const int64_t timerFreq = bx::getHPFrequency();
 
