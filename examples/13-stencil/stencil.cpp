@@ -646,13 +646,12 @@ struct Group
 
 namespace bgfx
 {
-	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl);
+	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
 }
 
 struct Mesh
 {
-	void load(const void* _vertices, uint32_t _numVertices, const bgfx::VertexDecl _decl
-		, const uint16_t* _indices, uint32_t _numIndices)
+	void load(const void* _vertices, uint32_t _numVertices, const bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
 	{
 		Group group;
 		const bgfx::Memory* mem;
@@ -665,12 +664,6 @@ struct Mesh
 		size = _numIndices*2;
 		mem = bgfx::makeRef(_indices, size);
 		group.m_ibh = bgfx::createIndexBuffer(mem);
-
-		//TODO:
-		// group.m_sphere = ...
-		// group.m_aabb = ...
-		// group.m_obb = ...
-		// group.m_prims = ...
 
 		m_groups.push_back(group);
 	}

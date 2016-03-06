@@ -856,7 +856,7 @@ struct Group
 
 namespace bgfx
 {
-	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl);
+	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
 }
 
 struct Mesh
