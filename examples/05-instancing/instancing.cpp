@@ -55,171 +55,196 @@ static const uint16_t s_cubeIndices[36] =
 	6, 3, 7,
 };
 
-int _main_(int _argc, char** _argv)
+class Instancing : public entry::AppI
 {
-	Args args(_argc, _argv);
-
-	uint32_t width = 1280;
-	uint32_t height = 720;
-	uint32_t debug = BGFX_DEBUG_TEXT;
-	uint32_t reset = BGFX_RESET_VSYNC;
-
-	bgfx::init(args.m_type, args.m_pciId);
-	bgfx::reset(width, height, reset);
-
-	// Enable debug text.
-	bgfx::setDebug(debug);
-
-	// Set view 0 clear state.
-	bgfx::setViewClear(0
-		, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-		, 0x303030ff
-		, 1.0f
-		, 0
-		);
-
-	// Get renderer capabilities info.
-	const bgfx::Caps* caps = bgfx::getCaps();
-
-	// Create vertex stream declaration.
-	PosColorVertex::init();
-
-	const bgfx::Memory* mem;
-
-	// Create static vertex buffer.
-	mem = bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) );
-	bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(mem, PosColorVertex::ms_decl);
-
-	// Create static index buffer.
-	mem = bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) );
-	bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(mem);
-
-	// Create program from shaders.
-	bgfx::ProgramHandle program = loadProgram("vs_instancing", "fs_instancing");
-
-	int64_t timeOffset = bx::getHPCounter();
-
-	while (!entry::processEvents(width, height, debug, reset) )
+	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
-		// Set view 0 default viewport.
-		bgfx::setViewRect(0, 0, 0, width, height);
+		Args args(_argc, _argv);
 
-		// This dummy draw call is here to make sure that view 0 is cleared
-		// if no other draw calls are submitted to view 0.
-		bgfx::touch(0);
+		m_width  = 1280;
+		m_height = 720;
+		m_debug  = BGFX_DEBUG_TEXT;
+		m_reset  = BGFX_RESET_VSYNC;
 
-		int64_t now = bx::getHPCounter();
-		static int64_t last = now;
-		const int64_t frameTime = now - last;
-		last = now;
-		const double freq = double(bx::getHPFrequency() );
-		const double toMs = 1000.0/freq;
-		float time = (float)( (now - timeOffset)/double(bx::getHPFrequency() ) );
+		bgfx::init(args.m_type, args.m_pciId);
+		bgfx::reset(m_width, m_height, m_reset);
 
-		// Use debug font to print information about this example.
-		bgfx::dbgTextClear();
-		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/05-instancing");
-		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Geometry instancing.");
-		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
+		// Enable debug text.
+		bgfx::setDebug(m_debug);
 
-		// Check if instancing is supported.
-		if (0 == (BGFX_CAPS_INSTANCING & caps->supported) )
+		// Set view 0 clear state.
+		bgfx::setViewClear(0
+			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
+			, 0x303030ff
+			, 1.0f
+			, 0
+			);
+
+		// Create vertex stream declaration.
+		PosColorVertex::init();
+
+		// Create static vertex buffer.
+		m_vbh = bgfx::createVertexBuffer(
+					  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
+					, PosColorVertex::ms_decl
+					);
+
+		// Create static index buffer.
+		m_ibh = bgfx::createIndexBuffer(
+					bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) )
+					);
+
+		// Create program from shaders.
+		m_program = loadProgram("vs_instancing", "fs_instancing");
+
+		m_timeOffset = bx::getHPCounter();
+	}
+
+	int shutdown() BX_OVERRIDE
+	{
+		// Cleanup.
+		bgfx::destroyIndexBuffer(m_ibh);
+		bgfx::destroyVertexBuffer(m_vbh);
+		bgfx::destroyProgram(m_program);
+
+		// Shutdown bgfx.
+		bgfx::shutdown();
+
+		return 0;
+	}
+
+	bool update() BX_OVERRIDE
+	{
+		if (!entry::processEvents(m_width, m_height, m_debug, m_reset) )
 		{
-			// When instancing is not supported by GPU, implement alternative
-			// code path that doesn't use instancing.
-			bool blink = uint32_t(time*3.0f)&1;
-			bgfx::dbgTextPrintf(0, 5, blink ? 0x1f : 0x01, " Instancing is not supported by GPU. ");
-		}
-		else
-		{
-			float at[3]  = { 0.0f, 0.0f,   0.0f };
-			float eye[3] = { 0.0f, 0.0f, -35.0f };
+			// Set view 0 default viewport.
+			bgfx::setViewRect(0, 0, 0, m_width, m_height);
 
-			// Set view and projection matrix for view 0.
-			const bgfx::HMD* hmd = bgfx::getHMD();
-			if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
+			// This dummy draw call is here to make sure that view 0 is cleared
+			// if no other draw calls are submitted to view 0.
+			bgfx::touch(0);
+
+			int64_t now = bx::getHPCounter();
+			static int64_t last = now;
+			const int64_t frameTime = now - last;
+			last = now;
+			const double freq = double(bx::getHPFrequency() );
+			const double toMs = 1000.0/freq;
+			float time = (float)( (now - m_timeOffset)/double(bx::getHPFrequency() ) );
+
+			// Use debug font to print information about this example.
+			bgfx::dbgTextClear();
+			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/05-instancing");
+			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Geometry instancing.");
+			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
+
+			// Get renderer capabilities info.
+			const bgfx::Caps* caps = bgfx::getCaps();
+
+			// Check if instancing is supported.
+			if (0 == (BGFX_CAPS_INSTANCING & caps->supported) )
 			{
-				float view[16];
-				bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);
-
-				float proj[16];
-				bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f);
-
-				bgfx::setViewTransform(0, view, proj);
-
-				// Set view 0 default viewport.
-				//
-				// Use HMD's width/height since HMD's internal frame buffer size
-				// might be much larger than window size.
-				bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
+				// When instancing is not supported by GPU, implement alternative
+				// code path that doesn't use instancing.
+				bool blink = uint32_t(time*3.0f)&1;
+				bgfx::dbgTextPrintf(0, 5, blink ? 0x1f : 0x01, " Instancing is not supported by GPU. ");
 			}
 			else
 			{
-				float view[16];
-				bx::mtxLookAt(view, eye, at);
+				float at[3]  = { 0.0f, 0.0f,   0.0f };
+				float eye[3] = { 0.0f, 0.0f, -35.0f };
 
-				float proj[16];
-				bx::mtxProj(proj, 60.0f, float(width)/float(height), 0.1f, 100.0f);
-				bgfx::setViewTransform(0, view, proj);
-
-				// Set view 0 default viewport.
-				bgfx::setViewRect(0, 0, 0, width, height);
-			}
-
-			const uint16_t instanceStride = 80;
-			const bgfx::InstanceDataBuffer* idb = bgfx::allocInstanceDataBuffer(121, instanceStride);
-			if (NULL != idb)
-			{
-				uint8_t* data = idb->data;
-
-				// Write instance data for 11x11 cubes.
-				for (uint32_t yy = 0, numInstances = 0; yy < 11 && numInstances < idb->num; ++yy)
+				// Set view and projection matrix for view 0.
+				const bgfx::HMD* hmd = bgfx::getHMD();
+				if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
 				{
-					for (uint32_t xx = 0; xx < 11 && numInstances < idb->num; ++xx, ++numInstances)
-					{
-						float* mtx = (float*)data;
-						bx::mtxRotateXY(mtx, time + xx*0.21f, time + yy*0.37f);
-						mtx[12] = -15.0f + float(xx)*3.0f;
-						mtx[13] = -15.0f + float(yy)*3.0f;
-						mtx[14] = 0.0f;
+					float view[16];
+					bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);
 
-						float* color = (float*)&data[64];
-						color[0] = sinf(time+float(xx)/11.0f)*0.5f+0.5f;
-						color[1] = cosf(time+float(yy)/11.0f)*0.5f+0.5f;
-						color[2] = sinf(time*3.0f)*0.5f+0.5f;
-						color[3] = 1.0f;
+					float proj[16];
+					bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f);
 
-						data += instanceStride;
-					}
+					bgfx::setViewTransform(0, view, proj);
+
+					// Set view 0 default viewport.
+					//
+					// Use HMD's width/height since HMD's internal frame buffer size
+					// might be much larger than window size.
+					bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
+				}
+				else
+				{
+					float view[16];
+					bx::mtxLookAt(view, eye, at);
+
+					float proj[16];
+					bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f);
+					bgfx::setViewTransform(0, view, proj);
+
+					// Set view 0 default viewport.
+					bgfx::setViewRect(0, 0, 0, m_width, m_height);
 				}
 
-				// Set vertex and index buffer.
-				bgfx::setVertexBuffer(vbh);
-				bgfx::setIndexBuffer(ibh);
+				const uint16_t instanceStride = 80;
+				const bgfx::InstanceDataBuffer* idb = bgfx::allocInstanceDataBuffer(121, instanceStride);
+				if (NULL != idb)
+				{
+					uint8_t* data = idb->data;
 
-				// Set instance data buffer.
-				bgfx::setInstanceDataBuffer(idb);
+					// Write instance data for 11x11 cubes.
+					for (uint32_t yy = 0, numInstances = 0; yy < 11 && numInstances < idb->num; ++yy)
+					{
+						for (uint32_t xx = 0; xx < 11 && numInstances < idb->num; ++xx, ++numInstances)
+						{
+							float* mtx = (float*)data;
+							bx::mtxRotateXY(mtx, time + xx*0.21f, time + yy*0.37f);
+							mtx[12] = -15.0f + float(xx)*3.0f;
+							mtx[13] = -15.0f + float(yy)*3.0f;
+							mtx[14] = 0.0f;
 
-				// Set render states.
-				bgfx::setState(BGFX_STATE_DEFAULT);
+							float* color = (float*)&data[64];
+							color[0] = sinf(time+float(xx)/11.0f)*0.5f+0.5f;
+							color[1] = cosf(time+float(yy)/11.0f)*0.5f+0.5f;
+							color[2] = sinf(time*3.0f)*0.5f+0.5f;
+							color[3] = 1.0f;
 
-				// Submit primitive for rendering to view 0.
-				bgfx::submit(0, program);
+							data += instanceStride;
+						}
+					}
+
+					// Set vertex and index buffer.
+					bgfx::setVertexBuffer(m_vbh);
+					bgfx::setIndexBuffer(m_ibh);
+
+					// Set instance data buffer.
+					bgfx::setInstanceDataBuffer(idb);
+
+					// Set render states.
+					bgfx::setState(BGFX_STATE_DEFAULT);
+
+					// Submit primitive for rendering to view 0.
+					bgfx::submit(0, m_program);
+				}
 			}
+
+			// Advance to next frame. Rendering thread will be kicked to
+			// process submitted rendering primitives.
+			bgfx::frame();
+			return true;
 		}
 
-		// Advance to next frame. Rendering thread will be kicked to
-		// process submitted rendering primitives.
-		bgfx::frame();
+		return false;
 	}
 
-	// Cleanup.
-	bgfx::destroyIndexBuffer(ibh);
-	bgfx::destroyVertexBuffer(vbh);
-	bgfx::destroyProgram(program);
+	uint32_t m_width;
+	uint32_t m_height;
+	uint32_t m_debug;
+	uint32_t m_reset;
+	bgfx::VertexBufferHandle m_vbh;
+	bgfx::IndexBufferHandle  m_ibh;
+	bgfx::ProgramHandle m_program;
 
-	// Shutdown bgfx.
-	bgfx::shutdown();
+	int64_t m_timeOffset;
+};
 
-	return 0;
-}
+ENTRY_IMPLEMENT_MAIN(Instancing);
