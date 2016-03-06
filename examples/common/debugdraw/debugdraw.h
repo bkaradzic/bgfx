@@ -97,10 +97,10 @@ void ddDrawFrustum(const void* _viewProj);
 void ddDrawArc(Axis::Enum _axis, float _x, float _y, float _z, float _radius, float _degrees);
 
 ///
-void ddDrawCircle(const void* _normal, const void* _center, float _radius);
+void ddDrawCircle(const void* _normal, const void* _center, float _radius, float _weight = 0.0f);
 
 ///
-void ddDrawCircle(Axis::Enum _axis, float _x, float _y, float _z, float _radius);
+void ddDrawCircle(Axis::Enum _axis, float _x, float _y, float _z, float _radius, float _weight = 0.0f);
 
 ///
 void ddDrawAxis(float _x, float _y, float _z, float _len = 1.0f, Axis::Enum _highlight = Axis::Count);

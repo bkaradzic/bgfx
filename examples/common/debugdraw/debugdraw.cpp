@@ -97,6 +97,22 @@ static uint8_t getCircleLod(uint8_t _lod)
 	return s_circleLod[_lod];
 }
 
+static void circle(float* _out, float _angle)
+{
+	float sa = bx::fsin(_angle);
+	float ca = bx::fcos(_angle);
+	_out[0] = sa;
+	_out[1] = ca;
+}
+
+static void squircle(float* _out, float _angle)
+{
+	float sa = bx::fsin(_angle);
+	float ca = bx::fcos(_angle);
+	_out[0] = bx::fsqrt(bx::fabsolute(sa) ) * bx::fsign(sa);
+	_out[1] = bx::fsqrt(bx::fabsolute(ca) ) * bx::fsign(ca);
+}
+
 uint32_t genSphere(uint8_t _subdiv0, void* _pos0 = NULL, uint16_t _posStride0 = 0, void* _normals0 = NULL, uint16_t _normalStride0 = 0)
 {
 	if (NULL != _pos0)
@@ -910,11 +926,12 @@ struct DebugDraw
 		lineTo(_x, _y, _z);
 	}
 
-	void drawCircle(const float* _normal, const float* _center, float _radius)
+	void drawCircle(const float* _normal, const float* _center, float _radius, float _weight = 0.0f)
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 		const uint32_t num = getCircleLod(attrib.m_lod);
 		const float step = bx::pi * 2.0f / num;
+		_weight = bx::fclamp(_weight, 0.0f, 2.0f);
 
 		Plane plane = { { _normal[0], _normal[1], _normal[2] }, 0.0f };
 		float udir[3];
@@ -922,45 +939,70 @@ struct DebugDraw
 		calcPlaneUv(plane, udir, vdir);
 
 		float pos[3];
-		bx::vec3Add(pos, vdir, _center);
+		float tmp0[3];
+		float tmp1[3];
+
+		float xy0[2];
+		float xy1[2];
+		circle(xy0, 0.0f);
+		squircle(xy1, 0.0f);
+
+		bx::vec3Mul(pos,  udir, bx::flerp(xy0[0], xy1[0], _weight)*_radius);
+		bx::vec3Mul(tmp0, vdir, bx::flerp(xy0[1], xy1[1], _weight)*_radius);
+		bx::vec3Add(tmp1, pos,  tmp0);
+		bx::vec3Add(pos,  tmp1, _center);
 		moveTo(pos);
 
 		for (uint32_t ii = 1; ii < num; ++ii)
 		{
-			float tmp0[3];
-			float tmp1[3];
-			bx::vec3Mul(pos,  udir, bx::fsin(step * ii)*_radius);
-			bx::vec3Mul(tmp0, vdir, bx::fcos(step * ii)*_radius);
+			float angle = step * ii;
+			circle(xy0, angle);
+			squircle(xy1, angle);
+
+			bx::vec3Mul(pos,  udir, bx::flerp(xy0[0], xy1[0], _weight)*_radius);
+			bx::vec3Mul(tmp0, vdir, bx::flerp(xy0[1], xy1[1], _weight)*_radius);
 			bx::vec3Add(tmp1, pos,  tmp0);
 			bx::vec3Add(pos,  tmp1, _center);
 			lineTo(pos);
 		}
+
+		close();
 	}
 
-	void drawCircle(const void* _normal, const void* _center, float _radius)
+	void drawCircle(const void* _normal, const void* _center, float _radius, float _weight = 0.0f)
 	{
-		drawCircle( (const float*)_normal, (const float*)_center, _radius);
+		drawCircle( (const float*)_normal, (const float*)_center, _radius, _weight);
 	}
 
-	void drawCircle(Axis::Enum _axis, float _x, float _y, float _z, float _radius)
+	void drawCircle(Axis::Enum _axis, float _x, float _y, float _z, float _radius, float _weight = 0.0f)
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 		const uint32_t num = getCircleLod(attrib.m_lod);
 		const float step = bx::pi * 2.0f / num;
+		_weight = bx::fclamp(_weight, 0.0f, 2.0f);
+
+		float xy0[2];
+		float xy1[2];
+		circle(xy0, 0.0f);
+		squircle(xy1, 0.0f);
 
 		float pos[3];
 		getPoint(pos, _axis
-			, bx::fsin(step * 0)*_radius
-			, bx::fcos(step * 0)*_radius
+			, bx::flerp(xy0[0], xy1[0], _weight)*_radius
+			, bx::flerp(xy0[1], xy1[1], _weight)*_radius
 			);
 
 		moveTo(pos[0] + _x, pos[1] + _y, pos[2] + _z);
 		for (uint32_t ii = 1; ii < num; ++ii)
 		{
+			float angle = step * ii;
+			circle(xy0, angle);
+			squircle(xy1, angle);
+
 			getPoint(pos, _axis
-				 , bx::fsin(step * ii)*_radius
-				 , bx::fcos(step * ii)*_radius
-				 );
+				, bx::flerp(xy0[0], xy1[0], _weight)*_radius
+				, bx::flerp(xy0[1], xy1[1], _weight)*_radius
+				);
 			lineTo(pos[0] + _x, pos[1] + _y, pos[2] + _z);
 		}
 		close();
@@ -1417,14 +1459,14 @@ void ddDrawArc(Axis::Enum _axis, float _x, float _y, float _z, float _radius, fl
 	s_dd.drawArc(_axis, _x, _y, _z, _radius, _degrees);
 }
 
-void ddDrawCircle(const void* _normal, const void* _center, float _radius)
+void ddDrawCircle(const void* _normal, const void* _center, float _radius, float _weight)
 {
-	s_dd.drawCircle(_normal, _center, _radius);
+	s_dd.drawCircle(_normal, _center, _radius, _weight);
 }
 
-void ddDrawCircle(Axis::Enum _axis, float _x, float _y, float _z, float _radius)
+void ddDrawCircle(Axis::Enum _axis, float _x, float _y, float _z, float _radius, float _weight)
 {
-	s_dd.drawCircle(_axis, _x, _y, _z, _radius);
+	s_dd.drawCircle(_axis, _x, _y, _z, _radius, _weight);
 }
 
 void ddDrawAxis(float _x, float _y, float _z, float _len, Axis::Enum _hightlight)
