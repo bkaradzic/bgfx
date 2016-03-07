@@ -1201,80 +1201,105 @@ void renderDemo(struct NVGcontext* vg, float mx, float my, float width, float he
 	nvgRestore(vg);
 }
 
-int _main_(int _argc, char** _argv)
+class ExampleNanoVG : public entry::AppI
 {
-	Args args(_argc, _argv);
-
-	uint32_t width = 1280;
-	uint32_t height = 720;
-	uint32_t debug = BGFX_DEBUG_TEXT;
-	uint32_t reset = BGFX_RESET_VSYNC;
-
-	bgfx::init(args.m_type, args.m_pciId);
-	bgfx::reset(width, height, reset);
-
-	// Enable debug text.
-	bgfx::setDebug(debug);
-
-	// Set view 0 clear state.
-	bgfx::setViewClear(0
-		, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-		, 0x303030ff
-		, 1.0f
-		, 0
-		);
-
-	imguiCreate();
-
-	NVGcontext* nvg = nvgCreate(1, 0);
-	bgfx::setViewSeq(0, true);
-
-	DemoData data;
-	loadDemoData(nvg, &data);
-
-	bndSetFont(nvgCreateFont(nvg, "droidsans", "font/droidsans.ttf") );
-	bndSetIconImage(nvgCreateImage(nvg, "images/blender_icons16.png", 0) );
-
-	int64_t timeOffset = bx::getHPCounter();
-
-	entry::MouseState mouseState;
-	while (!entry::processEvents(width, height, debug, reset, &mouseState) )
+	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
-		int64_t now = bx::getHPCounter();
-		const double freq = double(bx::getHPFrequency() );
-		float time = (float)( (now-timeOffset)/freq);
+		Args args(_argc, _argv);
 
-		// Set view 0 default viewport.
-		bgfx::setViewRect(0, 0, 0, width, height);
+		m_width  = 1280;
+		m_height = 720;
+		m_debug  = BGFX_DEBUG_TEXT;
+		m_reset  = BGFX_RESET_VSYNC;
 
-		// This dummy draw call is here to make sure that view 0 is cleared
-		// if no other draw calls are submitted to view 0.
-		bgfx::touch(0);
+		bgfx::init(args.m_type, args.m_pciId);
+		bgfx::reset(m_width, m_height, m_reset);
 
-		// Use debug font to print information about this example.
-		bgfx::dbgTextClear();
-		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/20-nanovg");
-		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: NanoVG is small antialiased vector graphics rendering library.");
+		// Enable debug text.
+		bgfx::setDebug(m_debug);
 
-		nvgBeginFrame(nvg, width, height, 1.0f);
+		// Set view 0 clear state.
+		bgfx::setViewClear(0
+			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
+			, 0x303030ff
+			, 1.0f
+			, 0
+			);
 
-		renderDemo(nvg, float(mouseState.m_mx), float(mouseState.m_my), float(width), float(height), time, 0, &data);
+		imguiCreate();
 
-		nvgEndFrame(nvg);
+		m_nvg = nvgCreate(1, 0);
+		bgfx::setViewSeq(0, true);
 
-		// Advance to next frame. Rendering thread will be kicked to
-		// process submitted rendering primitives.
-		bgfx::frame();
+		loadDemoData(m_nvg, &m_data);
+
+		bndSetFont(nvgCreateFont(m_nvg, "droidsans", "font/droidsans.ttf") );
+		bndSetIconImage(nvgCreateImage(m_nvg, "images/blender_icons16.png", 0) );
+
+		m_timeOffset = bx::getHPCounter();
 	}
 
-	freeDemoData(nvg, &data);
+	int shutdown() BX_OVERRIDE
+	{
+		freeDemoData(m_nvg, &m_data);
 
-	nvgDelete(nvg);
+		nvgDelete(m_nvg);
 
-	imguiDestroy();
+		imguiDestroy();
 
-	// Shutdown bgfx.
-	bgfx::shutdown();
+		// Shutdown bgfx.
+		bgfx::shutdown();
 
-	return 0;
-}
+		return 0;
+	}
+
+	bool update() BX_OVERRIDE
+	{
+		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
+		{
+			int64_t now = bx::getHPCounter();
+			const double freq = double(bx::getHPFrequency() );
+			float time = (float)( (now-m_timeOffset)/freq);
+
+			// Set view 0 default viewport.
+			bgfx::setViewRect(0, 0, 0, m_width, m_height);
+
+			// This dummy draw call is here to make sure that view 0 is cleared
+			// if no other draw calls are submitted to view 0.
+			bgfx::touch(0);
+
+			// Use debug font to print information about this example.
+			bgfx::dbgTextClear();
+			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/20-nanovg");
+			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: NanoVG is small antialiased vector graphics rendering library.");
+
+			nvgBeginFrame(m_nvg, m_width, m_height, 1.0f);
+
+			renderDemo(m_nvg, float(m_mouseState.m_mx), float(m_mouseState.m_my), float(m_width), float(m_height), time, 0, &m_data);
+
+			nvgEndFrame(m_nvg);
+
+			// Advance to next frame. Rendering thread will be kicked to
+			// process submitted rendering primitives.
+			bgfx::frame();
+
+			return true;
+		}
+
+		return false;
+	}
+
+	uint32_t m_width;
+	uint32_t m_height;
+	uint32_t m_debug;
+	uint32_t m_reset;
+
+	entry::MouseState m_mouseState;
+
+	int64_t m_timeOffset;
+
+	NVGcontext* m_nvg;
+	DemoData m_data;
+};
+
+ENTRY_IMPLEMENT_MAIN(ExampleNanoVG);
