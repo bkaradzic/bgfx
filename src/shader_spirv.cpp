@@ -781,7 +781,7 @@ namespace bgfx
 			size += read(_reader, _instruction.result, _err);
 		}
 
-		uint32_t currOp = 0;
+		uint16_t currOp = 0;
 		switch (_instruction.opcode)
 		{
 		case SpvOpcode::EntryPoint:
