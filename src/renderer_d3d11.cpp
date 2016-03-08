@@ -493,6 +493,27 @@ namespace bgfx { namespace d3d11
 		return false;
 	};
 
+	void resume(ID3D11Device* _device)
+	{
+		BX_UNUSED(_device);
+	}
+
+	void suspend(ID3D11Device* _device)
+	{
+		BX_UNUSED(_device);
+	}
+
+	void trim(ID3D11Device* _device)
+	{
+		IDXGIDevice3* device;
+		HRESULT hr = _device->QueryInterface(IID_IDXGIDevice3, (void**)&device);
+		if (SUCCEEDED(hr) )
+		{
+			device->Trim();
+			DX_RELEASE(device, 1);
+		}
+	}
+
 	// Reference:
 	// https://github.com/GPUOpen-LibrariesAndSDKs/AGS_SDK
 	enum AGS_RETURN_CODE
@@ -2206,9 +2227,30 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			}
 		}
 
-		void updateResolution(const Resolution& _resolution)
+		bool updateResolution(const Resolution& _resolution)
 		{
-			bool recenter   = !!(_resolution.m_flags & BGFX_RESET_HMD_RECENTER);
+			const bool suspended    = !!( _resolution.m_flags & BGFX_RESET_SUSPEND);
+			const bool wasSuspended = !!(m_resolution.m_flags & BGFX_RESET_SUSPEND);
+			if (suspended && wasSuspended)
+			{
+				return true;
+			}
+			else if (suspended)
+			{
+				m_deviceCtx->Flush();
+				m_deviceCtx->ClearState();
+				trim(m_device);
+				suspend(m_device);
+				m_resolution.m_flags |= BGFX_RESET_SUSPEND;
+				return true;
+			}
+			else if (wasSuspended)
+			{
+				resume(m_device);
+				m_resolution.m_flags &= ~BGFX_RESET_SUSPEND;
+			}
+
+			bool recenter = !!(_resolution.m_flags & BGFX_RESET_HMD_RECENTER);
 
 			uint32_t maxAnisotropy = 1;
 			if (!!(_resolution.m_flags & BGFX_RESET_MAXANISOTROPY) )
@@ -2236,7 +2278,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				m_rasterizerStateCache.invalidate();
 			}
 
-			uint32_t flags = _resolution.m_flags & ~(BGFX_RESET_HMD_RECENTER | BGFX_RESET_MAXANISOTROPY | BGFX_RESET_DEPTH_CLAMP);
+			uint32_t flags = _resolution.m_flags & ~(0
+				| BGFX_RESET_HMD_RECENTER
+				| BGFX_RESET_MAXANISOTROPY
+				| BGFX_RESET_DEPTH_CLAMP
+				| BGFX_RESET_SUSPEND
+				);
 
 			if (m_resolution.m_width  != _resolution.m_width
 			||  m_resolution.m_height != _resolution.m_height
@@ -2259,6 +2306,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				preReset();
 
+				m_deviceCtx->Flush();
+				m_deviceCtx->ClearState();
+
 				if (NULL == m_swapChain)
 				{
 					// Updated backbuffer if it changed in PlatformData.
@@ -2267,9 +2317,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				}
 				else
 				{
-					m_deviceCtx->ClearState();
-					m_deviceCtx->Flush();
-
 					if (resize)
 					{
 						m_deviceCtx->OMSetRenderTargets(1, s_zero.m_rtv, NULL);
@@ -2353,6 +2400,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			{
 				m_ovr.recenter();
 			}
+
+			return false;
 		}
 
 		void setShaderUniform(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
@@ -3469,25 +3518,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		s_renderD3D11->shutdown();
 		BX_DELETE(g_allocator, s_renderD3D11);
 		s_renderD3D11 = NULL;
-	}
-
-	void trim()
-	{
-#if BX_PLATFORM_WINRT
-		if (NULL != s_renderD3D11)
-		{
-			if (s_renderD3D11->m_device)
-			{
-				IDXGIDevice3* pDXGIDevice;
-				HRESULT hr = s_renderD3D11->m_device->QueryInterface(__uuidof(IDXGIDevice3),(void **)&pDXGIDevice);
-				if (SUCCEEDED(hr) )
-				{
-					pDXGIDevice->Trim();
-					pDXGIDevice->Release();
-				}
-			}
-		}
-#endif // BX_PLATFORM_WINRT
 	}
 
 	void stubMultiDrawInstancedIndirect(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride)
@@ -4726,12 +4756,15 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	void RendererContextD3D11::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
+		if (updateResolution(_render->m_resolution) )
+		{
+			return;
+		}
+
 		PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), L"rendererSubmit");
 		BGFX_GPU_PROFILER_BEGIN_DYNAMIC("rendererSubmit");
 
 		ID3D11DeviceContext* deviceCtx = m_deviceCtx;
-
-		updateResolution(_render->m_resolution);
 
 		int64_t elapsed = -bx::getHPCounter();
 		int64_t captureElapsed = 0;

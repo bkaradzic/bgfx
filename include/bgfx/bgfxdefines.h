@@ -355,6 +355,7 @@
 #define BGFX_RESET_SRGB_BACKBUFFER       UINT32_C(0x00008000) //!< Enable sRGB backbuffer.
 #define BGFX_RESET_HIDPI                 UINT32_C(0x00010000) //!< Enable HiDPI rendering.
 #define BGFX_RESET_DEPTH_CLAMP           UINT32_C(0x00020000) //!< Enable depth clamp.
+#define BGFX_RESET_SUSPEND               UINT32_C(0x00040000) //!< Suspend rendering.
 
 #define BGFX_RESET_RESERVED_SHIFT        31                   //!< Internal bits shift.
 #define BGFX_RESET_RESERVED_MASK         UINT32_C(0x80000000) //!< Internal bits mask.
