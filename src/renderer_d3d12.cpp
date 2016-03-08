@@ -560,7 +560,12 @@ namespace bgfx { namespace d3d12
 
 			HRESULT hr;
 
+#if BX_PLATFORM_WINDOWS
 			hr = CreateDXGIFactory1(IID_IDXGIFactory4, (void**)&m_factory);
+#else
+			hr = S_OK;
+			m_factory = NULL;
+#endif // BX_PLATFORM_*
 			BX_WARN(SUCCEEDED(hr), "Unable to create DXGI factory.");
 
 			if (FAILED(hr) )
@@ -574,7 +579,11 @@ namespace bgfx { namespace d3d12
 			m_driverType = D3D_DRIVER_TYPE_HARDWARE;
 
 			{
+#if BX_PLATFORM_WINDOWS
 				IDXGIAdapter3* adapter;
+#else
+				IDXGIAdapter* adapter;
+#endif // BX_PLATFORM_*
 				for (uint32_t ii = 0; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, reinterpret_cast<IDXGIAdapter**>(&adapter) ); ++ii)
 				{
 					DXGI_ADAPTER_DESC desc;
@@ -667,7 +676,11 @@ namespace bgfx { namespace d3d12
 			{
 				memset(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
 				luid = m_device->GetAdapterLuid();
+#if BX_PLATFORM_WINDOWS
 				IDXGIAdapter3* adapter;
+#else
+				IDXGIAdapter* adapter;
+#endif // BX_PLATFORM_*
 				for (uint32_t ii = 0; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, reinterpret_cast<IDXGIAdapter**>(&adapter) ); ++ii)
 				{
 					adapter->GetDesc(&m_adapterDesc);
@@ -760,13 +773,14 @@ namespace bgfx { namespace d3d12
 				m_resolution.m_width  = BGFX_DEFAULT_WIDTH;
 				m_resolution.m_height = BGFX_DEFAULT_HEIGHT;
 
+				m_numWindows = 1;
+
+#if BX_PLATFORM_WINDOWS
 				DX_CHECK(m_factory->MakeWindowAssociation( (HWND)g_platformData.nwh
 						, 0
 						| DXGI_MWA_NO_WINDOW_CHANGES
 						| DXGI_MWA_NO_ALT_ENTER
 						) );
-
-				m_numWindows = 1;
 
 				if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 				{
@@ -793,6 +807,7 @@ namespace bgfx { namespace d3d12
 						DX_RELEASE_WARNONLY(m_infoQueue, 0);
 					}
 				}
+#endif // BX_PLATFORM_WINDOWS
 
 				D3D12_DESCRIPTOR_HEAP_DESC rtvDescHeap;
 				rtvDescHeap.NumDescriptors = 0
@@ -1776,6 +1791,8 @@ data.NumQualityLevels = 0;
 
 				preReset();
 
+				BX_UNUSED(resize);
+#if BX_PLATFORM_WINDOWS
 				if (resize)
 				{
 					uint32_t nodeMask[] = { 1, 1, 1, 1 };
@@ -1793,6 +1810,7 @@ data.NumQualityLevels = 0;
 							) );
 				}
 				else
+#endif // BX_PLATFORM_WINDOWS
 				{
 					updateMsaa();
 					m_scd.SampleDesc = s_msaa[(m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
@@ -2625,21 +2643,27 @@ data.NumQualityLevels = 0;
 		void* m_dxgidll;
 
 		D3D_DRIVER_TYPE m_driverType;
-		IDXGIAdapter3* m_adapter;
 		DXGI_ADAPTER_DESC m_adapterDesc;
 		D3D12_FEATURE_DATA_ARCHITECTURE m_architecture;
 		D3D12_FEATURE_DATA_D3D12_OPTIONS m_options;
 
-		IDXGIFactory4* m_factory;
-
+#if BX_PLATFORM_WINDOWS
+		IDXGIAdapter3*   m_adapter;
+		IDXGIFactory4*   m_factory;
 		IDXGISwapChain3* m_swapChain;
+		ID3D12InfoQueue* m_infoQueue;
+#else
+		IDXGIAdapter*    m_adapter;
+		IDXGIFactory2*   m_factory;
+		IDXGISwapChain1* m_swapChain;
+#endif // BX_PLATFORM_WINDOWS
+
 		int64_t m_presentElapsed;
 		uint16_t m_lost;
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 
 		ID3D12Device*       m_device;
-		ID3D12InfoQueue*    m_infoQueue;
 		TimerQueryD3D12     m_gpuTimer;
 		OcclusionQueryD3D12 m_occlusionQuery;
 
@@ -4579,7 +4603,9 @@ data.NumQualityLevels = 0;
 		uint32_t statsNumIndices = 0;
 		uint32_t statsKeyType[2] = {};
 
+#if BX_PLATFORM_WINDOWS
 		m_backBufferColorIdx = m_swapChain->GetCurrentBackBufferIndex();
+#endif // BX_PLATFORM_WINDOWS
 
 		const uint64_t f0 = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_FACTOR);
 		const uint64_t f1 = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_INV_FACTOR, BGFX_STATE_BLEND_INV_FACTOR);
@@ -5273,6 +5299,7 @@ data.NumQualityLevels = 0;
 					, processMemoryUsed
 					);
 
+#if BX_PLATFORM_WINDOWS
 				DXGI_QUERY_VIDEO_MEMORY_INFO memInfo;
 				DX_CHECK(m_adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &memInfo) );
 
@@ -5294,6 +5321,7 @@ data.NumQualityLevels = 0;
 					, availableForReservation
 					, currentReservation
 					);
+#endif // BX_PLATFORM_WINDOWS
 
 				pos = 10;
 				tvm.printf(10, pos++, 0x8e, "       Frame: % 7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS "
