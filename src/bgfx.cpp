@@ -1755,122 +1755,83 @@ namespace bgfx
 #endif // BX_PLATFORM_WINDOWS
 	}
 
+	static int32_t compareDescending(const void* _lhs, const void* _rhs)
+	{
+		return *(const int32_t*)_rhs - *(const int32_t*)_lhs;
+	}
+
 	RendererContextI* rendererCreate(RendererType::Enum _type)
 	{
-		RendererType::Enum last = RendererType::Count;
+		int32_t scores[RendererType::Count];
+		uint32_t numScores = 0;
 
-		if (RendererType::Count == _type)
+		for (uint32_t ii = 0; ii < RendererType::Count; ++ii)
 		{
-again:
-			if (BX_ENABLED(BX_PLATFORM_WINDOWS) )
+			RendererType::Enum renderer = RendererType::Enum(ii);
+			if (s_rendererCreator[ii].supported)
 			{
-				RendererType::Enum first  = RendererType::Direct3D9;
-				RendererType::Enum second = RendererType::Direct3D11;
-
-				if (windowsVersionIs(Condition::GreaterEqual, 0x0602) )
+				int32_t score = 0;
+				if (_type == renderer)
 				{
-					first  = RendererType::Direct3D11;
-					second = RendererType::Direct3D12;
-					if (!s_rendererCreator[second].supported)
+					score += 1000;
+				}
+
+				score += RendererType::Null != renderer ? 1 : 0;
+
+				if (BX_ENABLED(BX_PLATFORM_WINDOWS) )
+				{
+					if (windowsVersionIs(Condition::GreaterEqual, 0x0602) )
 					{
-						second = RendererType::Direct3D9;
+						score += RendererType::Direct3D11 == renderer ? 20 : 0;
+						score += RendererType::Direct3D12 == renderer ? 10 : 0;
+					}
+					else if (windowsVersionIs(Condition::GreaterEqual, 0x0601) )
+					{
+						score += RendererType::Direct3D11 == renderer ?   20 : 0;
+						score += RendererType::Direct3D9  == renderer ?   10 : 0;
+						score += RendererType::Direct3D12 == renderer ? -100 : 0;
+					}
+					else
+					{
+						score += RendererType::Direct3D12 == renderer ? -100 : 0;
 					}
 				}
-				else if (windowsVersionIs(Condition::GreaterEqual, 0x0601) )
+				else if (BX_ENABLED(0
+					 ||  BX_PLATFORM_ANDROID
+					 ||  BX_PLATFORM_EMSCRIPTEN
+					 ||  BX_PLATFORM_IOS
+					 ||  BX_PLATFORM_NACL
+					 ||  BX_PLATFORM_RPI
+					 ) )
 				{
-					first  = RendererType::Direct3D11;
-					second = RendererType::Direct3D9;
+					score += RendererType::OpenGLES == renderer ? 20 : 0;
+				}
+				else if (BX_ENABLED(0
+					 ||  BX_PLATFORM_XBOXONE
+					 ||  BX_PLATFORM_WINRT
+					 ) )
+				{
+					score += RendererType::Direct3D11 == renderer ? 20 : 0;
 				}
 
-				if (s_rendererCreator[first].supported)
-				{
-					_type = first;
-				}
-				else if (s_rendererCreator[second].supported)
-				{
-					_type = second;
-				}
-				else if (s_rendererCreator[RendererType::OpenGL].supported)
-				{
-					_type = RendererType::OpenGL;
-				}
-				else if (s_rendererCreator[RendererType::OpenGLES].supported)
-				{
-					_type = RendererType::OpenGLES;
-				}
-				else if (s_rendererCreator[RendererType::Direct3D12].supported)
-				{
-					_type = RendererType::Direct3D12;
-				}
-				else if (s_rendererCreator[RendererType::Vulkan].supported)
-				{
-					_type = RendererType::Vulkan;
-				}
-				else
-				{
-					_type = RendererType::Null;
-				}
-			}
-			else if (BX_ENABLED(BX_PLATFORM_IOS) )
-			{
-				if (s_rendererCreator[RendererType::Metal].supported)
-				{
-					_type = RendererType::Metal;
-				}
-				else if (s_rendererCreator[RendererType::OpenGLES].supported)
-				{
-					_type = RendererType::OpenGLES;
-				}
-			}
-			else if (BX_ENABLED(0
-				 ||  BX_PLATFORM_ANDROID
-				 ||  BX_PLATFORM_EMSCRIPTEN
-				 ||  BX_PLATFORM_NACL
-				 ||  BX_PLATFORM_RPI
-				 ) )
-			{
-				_type = RendererType::OpenGLES;
-			}
-			else if (BX_ENABLED(BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT) )
-			{
-				_type = RendererType::Direct3D11;
-			}
-			else
-			{
-#if 0
-				if (s_rendererCreator[RendererType::Metal].supported)
-				{
-					_type = RendererType::Metal;
-				}
-				else
-#endif // 0
-				if (s_rendererCreator[RendererType::OpenGL].supported)
-				{
-					_type = RendererType::OpenGL;
-				}
-				else if (s_rendererCreator[RendererType::OpenGLES].supported)
-				{
-					_type = RendererType::OpenGLES;
-				}
-			}
-
-			if (!s_rendererCreator[_type].supported)
-			{
-				_type = RendererType::Null;
+				scores[numScores++] = (score<<8) | uint8_t(renderer);
 			}
 		}
 
-		RendererContextI* renderCtx = s_rendererCreator[_type].createFn();
-		if (last != _type)
+		qsort(scores, numScores, sizeof(int32_t), compareDescending);
+
+		RendererContextI* renderCtx;
+		for (uint32_t ii = 0; ii < numScores; ++ii)
 		{
-			if (NULL == renderCtx)
+			RendererType::Enum renderer = RendererType::Enum(scores[ii] & 0xff);
+			renderCtx = s_rendererCreator[renderer].createFn();
+			if (NULL != renderCtx)
 			{
-				s_rendererCreator[_type].supported = false;
-				last = _type;
-				goto again;
+				s_rendererDestroyFn = s_rendererCreator[renderer].destroyFn;
+				break;
 			}
 
-			s_rendererDestroyFn = s_rendererCreator[_type].destroyFn;
+			s_rendererCreator[renderer].supported = false;
 		}
 
 		return renderCtx;

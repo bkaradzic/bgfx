@@ -912,7 +912,6 @@ namespace bgfx { namespace d3d11
 					D3D_FEATURE_LEVEL_10_0,
 					D3D_FEATURE_LEVEL_9_3,
 					D3D_FEATURE_LEVEL_9_2,
-					D3D_FEATURE_LEVEL_9_1,
 				};
 
 				for (;;)
@@ -1216,10 +1215,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					| BGFX_CAPS_DRAW_INDIRECT
 					| BGFX_CAPS_TEXTURE_BLIT
 					| BGFX_CAPS_TEXTURE_READ_BACK
-					| BGFX_CAPS_OCCLUSION_QUERY
+					| ( (m_featureLevel >= D3D_FEATURE_LEVEL_9_2) ? BGFX_CAPS_OCCLUSION_QUERY : 0)
 					);
 
-				m_timerQuerySupport = m_featureLevel >= D3D_FEATURE_LEVEL_9_3;
+				m_timerQuerySupport = m_featureLevel >= D3D_FEATURE_LEVEL_10_0;
 
 				if (m_featureLevel <= D3D_FEATURE_LEVEL_9_2)
 				{
