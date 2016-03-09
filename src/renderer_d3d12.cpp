@@ -8,10 +8,6 @@
 #if BGFX_CONFIG_RENDERER_DIRECT3D12
 #	include "renderer_d3d12.h"
 
-#	if !USE_D3D12_DYNAMIC_LIB
-#		pragma comment(lib, "D3D12.lib")
-#	endif // !USE_D3D12_DYNAMIC_LIB
-
 namespace bgfx { namespace d3d12
 {
 	static wchar_t s_viewNameW[BGFX_CONFIG_MAX_VIEWS][256];
@@ -1083,6 +1079,7 @@ namespace bgfx { namespace d3d12
 				bx::dlclose(m_kernel32dll);
 #endif // USE_D3D12_DYNAMIC_LIB
 			case ErrorState::Default:
+			default:
 				break;
 			}
 

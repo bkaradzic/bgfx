@@ -505,6 +505,7 @@ namespace bgfx { namespace d3d11
 
 	void trim(ID3D11Device* _device)
 	{
+#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 		IDXGIDevice3* device;
 		HRESULT hr = _device->QueryInterface(IID_IDXGIDevice3, (void**)&device);
 		if (SUCCEEDED(hr) )
@@ -512,6 +513,9 @@ namespace bgfx { namespace d3d11
 			device->Trim();
 			DX_RELEASE(device, 1);
 		}
+#else
+		BX_UNUSED(_device);
+#endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 	}
 
 	// Reference:
@@ -1518,8 +1522,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				DX_RELEASE(m_device, 0);
 				DX_RELEASE(m_factory, 0);
 
-			case ErrorState::LoadedDXGI:
 #if USE_D3D11_DYNAMIC_LIB
+			case ErrorState::LoadedDXGI:
 				if (NULL != m_dxgidebugdll)
 				{
 					bx::dlclose(m_dxgidebugdll);
@@ -1534,15 +1538,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				bx::dlclose(m_dxgidll);
 				m_dxgidll = NULL;
-#endif // USE_D3D11_DYNAMIC_LIB
 
 			case ErrorState::LoadedD3D11:
-#if USE_D3D11_DYNAMIC_LIB
 				bx::dlclose(m_d3d11dll);
 				m_d3d11dll = NULL;
 #endif // USE_D3D11_DYNAMIC_LIB
 
 			case ErrorState::Default:
+			default:
 				if (NULL != m_ags)
 				{
 					agsDeInit(m_ags);

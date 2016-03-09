@@ -248,6 +248,7 @@ function exampleProject(_name)
 	configuration { "durango" }
 		links {
 			"d3d11_x",
+			"d3d12_x",
 			"combase",
 			"kernelx",
 		}
