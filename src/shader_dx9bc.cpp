@@ -282,9 +282,9 @@ namespace bgfx
 		size += bx::read(_reader, token, _err);
 
 		_subOperand.type        =   Dx9bcOperandType::Enum( ( (token & UINT32_C(0x70000000) ) >> 28)
-														  | ( (token & UINT32_C(0x00001800) ) >>  8) );
+		                                                  | ( (token & UINT32_C(0x00001800) ) >>  8) );
 		_subOperand.regIndex    =                             (token & UINT32_C(0x000007ff) );
-		_subOperand.swizzleBits =                      uint8_t( (token & UINT32_C(0x00ff0000) ) >> 16);
+		_subOperand.swizzleBits =                    uint8_t( (token & UINT32_C(0x00ff0000) ) >> 16);
 
 		return size;
 	}
@@ -741,7 +741,7 @@ namespace bgfx
 
 			_fn(instruction, _userData);
 
-			write(&writer, instruction);
+			write(&writer, instruction, _err);
 
 			token += instruction.length;
 		}

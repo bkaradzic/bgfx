@@ -747,10 +747,10 @@ namespace bgfx { namespace d3d11
 
 #if USE_D3D11_DYNAMIC_LIB
 			m_d3d11dll = bx::dlopen("d3d11.dll");
-			BX_WARN(NULL != m_d3d11dll, "Failed to load d3d11.dll.");
 
 			if (NULL == m_d3d11dll)
 			{
+				BX_TRACE("Failed to load d3d11.dll.");
 				goto error;
 			}
 
@@ -777,25 +777,25 @@ namespace bgfx { namespace d3d11
 			}
 
 			D3D11CreateDevice = (PFN_D3D11_CREATE_DEVICE)bx::dlsym(m_d3d11dll, "D3D11CreateDevice");
-			BX_WARN(NULL != D3D11CreateDevice, "Function D3D11CreateDevice not found.");
 			if (NULL == D3D11CreateDevice)
 			{
+				BX_TRACE("Function D3D11CreateDevice not found.");
 				goto error;
 			}
 
 			m_dxgidll = bx::dlopen("dxgi.dll");
-			BX_WARN(NULL != m_dxgidll, "Failed to load dxgi.dll.");
 			if (NULL == m_dxgidll)
 			{
+				BX_TRACE("Failed to load dxgi.dll.");
 				goto error;
 			}
 
 			errorState = ErrorState::LoadedDXGI;
 
 			CreateDXGIFactory = (PFN_CREATE_DXGI_FACTORY)bx::dlsym(m_dxgidll, "CreateDXGIFactory");
-			BX_WARN(NULL != CreateDXGIFactory, "Function CreateDXGIFactory not found.");
 			if (NULL == CreateDXGIFactory)
 			{
+				BX_TRACE("Function CreateDXGIFactory not found.");
 				goto error;
 			}
 
@@ -828,9 +828,9 @@ namespace bgfx { namespace d3d11
 			hr = S_OK;
 			factory = NULL;
 #endif // BX_PLATFORM_*
-			BX_WARN(SUCCEEDED(hr), "Unable to create DXGI factory.");
 			if (FAILED(hr) )
 			{
+				BX_TRACE("Unable to create DXGI factory.");
 				goto error;
 			}
 
@@ -910,8 +910,10 @@ namespace bgfx { namespace d3d11
 					D3D_FEATURE_LEVEL_11_0,
 					D3D_FEATURE_LEVEL_10_1,
 					D3D_FEATURE_LEVEL_10_0,
+#if BX_PLATFORM_WINRT
 					D3D_FEATURE_LEVEL_9_3,
 					D3D_FEATURE_LEVEL_9_2,
+#endif // BX_PLATFORM_WINRT
 				};
 
 				for (;;)
@@ -965,10 +967,10 @@ namespace bgfx { namespace d3d11
 
 					break;
 				}
-				BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
 
 				if (FAILED(hr) )
 				{
+					BX_TRACE("Unable to create Direct3D11 device.");
 					goto error;
 				}
 
@@ -980,10 +982,10 @@ namespace bgfx { namespace d3d11
 			else
 			{
 				m_device->GetImmediateContext(&m_deviceCtx);
-				BX_WARN(NULL != m_deviceCtx, "Unable to create Direct3D11 device.");
 
 				if (NULL == m_deviceCtx)
 				{
+					BX_TRACE("Unable to create Direct3D11 device.");
 					goto error;
 				}
 			}
@@ -1020,9 +1022,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 				}
 
-				BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
 				if (FAILED(hr) )
 				{
+					BX_TRACE("Unable to create Direct3D11 device.");
 					goto error;
 				}
 
@@ -1045,9 +1047,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				}
 
 				hr = adapter->GetDesc(&m_adapterDesc);
-				BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
 				if (FAILED(hr) )
 				{
+					BX_TRACE("Unable to create Direct3D11 device.");
 					DX_RELEASE(adapter, 2);
 					goto error;
 				}
@@ -1062,10 +1064,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				{
 #if !BX_PLATFORM_WINDOWS
 					hr = adapter->GetParent(__uuidof(IDXGIFactory2), (void**)&m_factory);
-					BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
 					DX_RELEASE(adapter, 2);
 					if (FAILED(hr) )
 					{
+						BX_TRACE("Unable to create Direct3D11 device.");
 						goto error;
 					}
 
@@ -1122,10 +1124,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 #else
 					hr = adapter->GetParent(IID_IDXGIFactory, (void**)&m_factory);
-					BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 device.");
 					DX_RELEASE(adapter, 2);
 					if (FAILED(hr) )
 					{
+						BX_TRACE("Unable to create Direct3D11 device.");
 						goto error;
 					}
 
@@ -1152,9 +1154,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						| DXGI_MWA_NO_ALT_ENTER
 						) );
 #endif // BX_PLATFORM_*
-					BX_WARN(SUCCEEDED(hr), "Failed to create swap chain.");
 					if (FAILED(hr) )
 					{
+						BX_TRACE("Failed to create swap chain.");
 						goto error;
 					}
 				}
@@ -1867,9 +1869,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		void saveScreenShot(const char* _filePath) BX_OVERRIDE
 		{
-			BX_WARN(NULL != m_swapChain, "Unable to capture screenshot %s.", _filePath);
 			if (NULL == m_swapChain)
 			{
+				BX_TRACE("Unable to capture screenshot %s.", _filePath);
 				return;
 			}
 
@@ -5722,8 +5724,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				tvm.clear();
 				uint16_t pos = 0;
 				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f
-					, " %s / " BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME " "
+					, " %s (FL %d.%d) / " BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME " "
 					, getRendererName()
+					, (m_featureLevel >> 12) & 0xf
+					, (m_featureLevel >>  8) & 0xf
 					);
 
 				const DXGI_ADAPTER_DESC& desc = m_adapterDesc;

@@ -448,6 +448,8 @@ namespace bgfx
 
 	struct DxbcSubOperand
 	{
+		DxbcSubOperand() { /* not pod */ }
+
 		DxbcOperandType::Enum type;
 		uint8_t mode;
 		uint8_t modeBits;
@@ -459,6 +461,8 @@ namespace bgfx
 
 	struct DxbcOperand
 	{
+		DxbcOperand() { /* not pod */ }
+
 		DxbcOperandType::Enum type;
 		DxbcOperandMode::Enum mode;
 		uint8_t modeBits;
@@ -480,6 +484,8 @@ namespace bgfx
 
 	struct DxbcInstruction
 	{
+		DxbcInstruction() { /* not pod */ }
+
 		struct ExtendedType
 		{
 			enum Enum
@@ -546,6 +552,8 @@ namespace bgfx
 
 	struct DxbcSignature
 	{
+		DxbcSignature() { /* not pod */ }
+
 		struct Element
 		{
 			stl::string name;
@@ -570,6 +578,7 @@ namespace bgfx
 		uint32_t version;
 		stl::vector<uint8_t> byteCode;
 		bool shex;
+		bool aon9;
 	};
 
 	int32_t read(bx::ReaderSeekerI* _reader, DxbcShader& _shader, bx::Error* _err);

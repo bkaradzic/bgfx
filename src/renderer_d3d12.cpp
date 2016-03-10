@@ -457,7 +457,11 @@ namespace bgfx { namespace d3d12
 	struct RendererContextD3D12 : public RendererContextI
 	{
 		RendererContextD3D12()
-			: m_wireframe(false)
+			: m_d3d12dll(NULL)
+			, m_dxgidll(NULL)
+			, m_renderdocdll(NULL)
+			, m_featureLevel(D3D_FEATURE_LEVEL(0) )
+			, m_wireframe(false)
 			, m_maxAnisotropy(1)
 			, m_depthClamp(false)
 			, m_fsChanges(0)
@@ -660,12 +664,13 @@ namespace bgfx { namespace d3d12
 						, (featureLevel[ii] >> 12) & 0xf
 						, (featureLevel[ii] >>  8) & 0xf
 						);
+					m_featureLevel = featureLevel[ii];
 				}
-				BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D12 device.");
 			}
 
 			if (FAILED(hr) )
 			{
+				BX_TRACE("Unable to create Direct3D12 device.");
 				goto error;
 			}
 
@@ -2261,8 +2266,9 @@ data.NumQualityLevels = 0;
 			bx::Error err;
 			read(&rd, dxbc, &err);
 
-			bool patchShader = true;
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+			bool patchShader = !dxbc.shader.aon9;
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG)
+			&&  patchShader)
 			{
 				union { uint32_t offset; void* ptr; } cast = { 0 };
 				filter(dxbc.shader, dxbc.shader, patchCb0, cast.ptr);
@@ -2306,6 +2312,11 @@ data.NumQualityLevels = 0;
 
 				desc.PS.pShaderBytecode = temp->data;
 				desc.PS.BytecodeLength  = temp->size;
+			}
+			else
+			{
+				desc.PS.pShaderBytecode = program.m_fsh->m_code->data;
+				desc.PS.BytecodeLength  = program.m_fsh->m_code->size;
 			}
 
 			desc.DS.pShaderBytecode = NULL;
@@ -2643,6 +2654,9 @@ data.NumQualityLevels = 0;
 		void* m_kernel32dll;
 		void* m_d3d12dll;
 		void* m_dxgidll;
+		void* m_renderdocdll;
+
+		D3D_FEATURE_LEVEL m_featureLevel;
 
 		D3D_DRIVER_TYPE m_driverType;
 		DXGI_ADAPTER_DESC m_adapterDesc;
@@ -5273,8 +5287,10 @@ data.NumQualityLevels = 0;
 				tvm.clear();
 				uint16_t pos = 0;
 				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f
-					, " %s / " BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME " "
+					, " %s (FL %d.%d) / " BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME " "
 					, getRendererName()
+					, (m_featureLevel >> 12) & 0xf
+					, (m_featureLevel >>  8) & 0xf
 					);
 
 				const DXGI_ADAPTER_DESC& desc = m_adapterDesc;

@@ -790,7 +790,7 @@ namespace bgfx
 		case DxbcOperandAddrMode::Reg:
 			{
 				DxbcSubOperand subOperand;
-				size += read(_reader, subOperand);
+				size += read(_reader, subOperand, _err);
 			}
 			break;
 
@@ -799,7 +799,7 @@ namespace bgfx
 				size += bx::read(_reader, _subOperand.regIndex, _err);
 
 				DxbcSubOperand subOperand;
-				size += read(_reader, subOperand);
+				size += read(_reader, subOperand, _err);
 			}
 			break;
 
@@ -809,7 +809,7 @@ namespace bgfx
 				size += bx::read(_reader, _subOperand.regIndex, _err);
 
 				DxbcSubOperand subOperand;
-				size += read(_reader, subOperand);
+				size += read(_reader, subOperand, _err);
 			}
 			break;
 
@@ -843,7 +843,7 @@ namespace bgfx
 		case DxbcOperandAddrMode::Reg:
 			{
 				DxbcSubOperand subOperand;
-				size += write(_writer, subOperand);
+				size += write(_writer, subOperand, _err);
 			}
 			break;
 
@@ -852,7 +852,7 @@ namespace bgfx
 				size += bx::write(_writer, _subOperand.regIndex, _err);
 
 				DxbcSubOperand subOperand;
-				size += write(_writer, subOperand);
+				size += write(_writer, subOperand, _err);
 			}
 			break;
 
@@ -862,7 +862,7 @@ namespace bgfx
 				size += bx::write(_writer, _subOperand.regIndex, _err);
 
 				DxbcSubOperand subOperand;
-				size += write(_writer, subOperand);
+				size += write(_writer, subOperand, _err);
 			}
 			break;
 
@@ -1747,6 +1747,7 @@ namespace bgfx
 		int32_t size = 0;
 		size += bx::read(_reader, _dxbc.header, _err);
 		_dxbc.shader.shex = false;
+		_dxbc.shader.aon9 = false;
 
 		for (uint32_t ii = 0; ii < _dxbc.header.numChunks; ++ii)
 		{
@@ -1785,6 +1786,9 @@ namespace bgfx
 				break;
 
 			case BX_MAKEFOURCC('A', 'o', 'n', '9'): // Contains DX9BC for feature level 9.x (*s_4_0_level_9_*) shaders.
+				_dxbc.shader.aon9 = true;
+				break;
+
 			case BX_MAKEFOURCC('I', 'F', 'C', 'E'): // Interface.
 			case BX_MAKEFOURCC('R', 'D', 'E', 'F'): // Resource definition.
 			case BX_MAKEFOURCC('S', 'D', 'G', 'B'): // Shader debugging info (old).

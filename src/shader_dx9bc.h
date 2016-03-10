@@ -187,6 +187,8 @@ namespace bgfx
 
 	struct Dx9bcSubOperand
 	{
+		Dx9bcSubOperand() { /* not pod */ }
+
 		Dx9bcOperandType::Enum type;
 		uint32_t regIndex;
 		uint8_t swizzleBits;
@@ -194,6 +196,8 @@ namespace bgfx
 
 	struct Dx9bcOperand
 	{
+		Dx9bcOperand() { /* not pod */ }
+
 		Dx9bcOperandType::Enum type;
 		uint32_t regIndex;
 
@@ -214,6 +218,8 @@ namespace bgfx
 
 	struct Dx9bcInstruction
 	{
+		Dx9bcInstruction() { /* not pod */ }
+
 		Dx9bcOpcode::Enum opcode;
 		uint16_t length;
 		uint8_t numOperands;
@@ -232,6 +238,8 @@ namespace bgfx
 
 	struct Dx9bcShader
 	{
+		Dx9bcShader() { /* not pod */ }
+
 		stl::vector<uint8_t> byteCode;
 	};
 
@@ -240,6 +248,8 @@ namespace bgfx
 
 	struct Dx9bc
 	{
+		Dx9bc() { /* not pod */ }
+
 		uint32_t version;
 		Dx9bcShader shader;
 	};

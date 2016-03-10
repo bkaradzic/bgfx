@@ -524,6 +524,8 @@ namespace bgfx
 
 	struct SpvOperand
 	{
+		SpvOperand() { /* not pod */ }
+
 		enum Enum
 		{
 			AccessQualifier,
@@ -575,6 +577,8 @@ namespace bgfx
 
 	struct SpvInstruction
 	{
+		SpvInstruction() { /* not pod */ }
+
 		SpvOpcode::Enum opcode;
 		uint16_t length;
 		uint16_t numOperands;
@@ -593,6 +597,8 @@ namespace bgfx
 
 	struct SpvShader
 	{
+		SpvShader() { /* not pod */ }
+
 		stl::vector<uint8_t> byteCode;
 	};
 
@@ -607,6 +613,8 @@ namespace bgfx
 
 	struct SpirV
 	{
+		SpirV() { /* not pod */ }
+
 		struct Header
 		{
 			uint32_t magic;
