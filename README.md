@@ -77,7 +77,8 @@ Who is using it?
 ----------------
 
 http://airmech.com/ AirMech is a free-to-play futuristic action real-time
-strategy video game developed and published by Carbon Games.
+strategy video game developed and published by Carbon Games.  
+![airmech](https://www.mobygames.com/images/shots/l/830630-airmech-playstation-4-screenshot-blue-bar-on-your-mech-indicates.jpg)
 
 https://github.com/dariomanesku/cmftStudio cmftStudio - cubemap filtering tool.  
 ![cmftStudio](https://github.com/dariomanesku/cmftStudio/raw/master/screenshots/cmftStudio_small.jpg)
