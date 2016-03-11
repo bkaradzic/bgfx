@@ -137,6 +137,7 @@ namespace bgfx
 
 #include <bgfx/bgfxplatform.h>
 #include "image.h"
+#include "shader.h"
 
 #define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', 0x2)
 #define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x4)
