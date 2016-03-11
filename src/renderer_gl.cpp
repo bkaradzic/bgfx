@@ -534,6 +534,8 @@ namespace bgfx { namespace gl
 			EXT_discard_framebuffer,
 			EXT_disjoint_timer_query,
 			EXT_draw_buffers,
+			EXT_draw_instanced,
+			EXT_instanced_arrays,
 			EXT_frag_depth,
 			EXT_framebuffer_blit,
 			EXT_framebuffer_object,
@@ -739,6 +741,8 @@ namespace bgfx { namespace gl
 		{ "EXT_discard_framebuffer",               false,                             true  }, // GLES2 extension.
 		{ "EXT_disjoint_timer_query",              false,                             true  }, // GLES2 extension.
 		{ "EXT_draw_buffers",                      false,                             true  }, // GLES2 extension.
+		{ "EXT_draw_instanced",                    false,                             true  }, // GLES2 extension.
+		{ "EXT_instanced_arrays",                  false,                             true  }, // GLES2 extension.
 		{ "EXT_frag_depth",                        false,                             true  }, // GLES2 extension.
 		{ "EXT_framebuffer_blit",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "EXT_framebuffer_object",                BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
@@ -1921,17 +1925,15 @@ namespace bgfx { namespace gl
 			}
 			else
 			{
-				if (!BX_ENABLED(BX_PLATFORM_IOS) )
+				if (s_extension[Extension::ANGLE_instanced_arrays].m_supported
+				||  s_extension[Extension::ARB_instanced_arrays].m_supported
+				||  s_extension[Extension::EXT_instanced_arrays].m_supported)
 				{
-					if (s_extension[Extension::ARB_instanced_arrays].m_supported
-					||  s_extension[Extension::ANGLE_instanced_arrays].m_supported)
+					if (NULL != glVertexAttribDivisor
+					&&  NULL != glDrawArraysInstanced
+					&&  NULL != glDrawElementsInstanced)
 					{
-						if (NULL != glVertexAttribDivisor
-						&&  NULL != glDrawArraysInstanced
-						&&  NULL != glDrawElementsInstanced)
-						{
-							g_caps.supported |= BGFX_CAPS_INSTANCING;
-						}
+						g_caps.supported |= BGFX_CAPS_INSTANCING;
 					}
 				}
 
