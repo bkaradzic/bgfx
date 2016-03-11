@@ -81,10 +81,14 @@ namespace bgfx
 			uint16_t count;
 			bx::read(_reader, count, _err);
 
+			if (!_err->isOk() ) { return; }
+
 			for (uint32_t ii = 0; ii < count; ++ii)
 			{
 				uint8_t nameSize;
 				bx::read(_reader, nameSize, _err);
+
+				if (!_err->isOk() ) { return; }
 
 				char name[256];
 				bx::read(_reader, &name, nameSize, _err);
@@ -106,13 +110,15 @@ namespace bgfx
 			uint16_t shaderSize;
 			bx::read(_reader, shaderSize, _err);
 
+			if (!_err->isOk() ) { return; }
+
 			uint8_t* shaderCode = (uint8_t*)BX_ALLOC(g_allocator, shaderSize);
 			bx::read(_reader, shaderCode, shaderSize, _err);
 
 			bx::MemoryReader reader(shaderCode, shaderSize);
 			disassembleByteCode(_writer, &reader, _err);
 
-			bx::write(_writer, '\0');
+			bx::write(_writer, '\0', _err);
 
 			BX_FREE(g_allocator, shaderCode);
 		}
