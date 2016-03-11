@@ -345,7 +345,7 @@ namespace bgfx
 		};
 	};
 
-	struct SpirvBuiltin
+	struct SpvBuiltin
 	{
 		enum Enum
 		{
@@ -605,11 +605,11 @@ namespace bgfx
 	int32_t read(bx::ReaderSeekerI* _reader, SpvShader& _shader, bx::Error* _err);
 	int32_t write(bx::WriterI* _writer, const SpvShader& _shader, bx::Error* _err);
 
-	typedef bool (*SpirvParseFn)(uint32_t _offset, const SpvInstruction& _instruction, void* _userData);
-	void parse(const SpvShader& _src, SpirvParseFn _fn, void* _userData, bx::Error* _err = NULL);
+	typedef bool (*SpvParseFn)(uint32_t _offset, const SpvInstruction& _instruction, void* _userData);
+	void parse(const SpvShader& _src, SpvParseFn _fn, void* _userData, bx::Error* _err = NULL);
 
-	typedef void (*SpirvFilterFn)(SpvInstruction& _instruction, void* _userData);
-	void filter(SpvShader& _dst, const SpvShader& _src, SpirvFilterFn _fn, void* _userData, bx::Error* _err = NULL);
+	typedef void (*SpvFilterFn)(SpvInstruction& _instruction, void* _userData);
+	void filter(SpvShader& _dst, const SpvShader& _src, SpvFilterFn _fn, void* _userData, bx::Error* _err = NULL);
 
 	struct SpirV
 	{

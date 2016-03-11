@@ -961,7 +961,7 @@ namespace bgfx
 		return size;
 	}
 
-	void parse(const SpvShader& _src, SpirvParseFn _fn, void* _userData, bx::Error* _err)
+	void parse(const SpvShader& _src, SpvParseFn _fn, void* _userData, bx::Error* _err)
 	{
 		BX_ERROR_SCOPE(_err);
 
