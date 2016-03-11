@@ -4737,8 +4737,8 @@ data.NumQualityLevels = 0;
  							box.bottom = blit.m_srcY + height;;
  							box.back   = blit.m_srcZ + bx::uint32_imax(1, depth);
 
-							D3D12_TEXTURE_COPY_LOCATION dstLocation = { dst.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{ 0 }} };
-							D3D12_TEXTURE_COPY_LOCATION srcLocation = { src.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{ 0 }} };
+							D3D12_TEXTURE_COPY_LOCATION dstLocation = { dst.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{}} };
+							D3D12_TEXTURE_COPY_LOCATION srcLocation = { src.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{}} };
 							m_commandList->CopyTextureRegion(&dstLocation
 								, blit.m_dstX
 								, blit.m_dstY
@@ -4750,12 +4750,12 @@ data.NumQualityLevels = 0;
 						else
 						{
 							D3D12_BOX box;
- 							box.left   = blit.m_srcX;
- 							box.top    = blit.m_srcY;
- 							box.front  = 0;
- 							box.right  = blit.m_srcX + width;
- 							box.bottom = blit.m_srcY + height;;
- 							box.back   = 1;
+							box.left   = blit.m_srcX;
+							box.top    = blit.m_srcY;
+							box.front  = 0;
+							box.right  = blit.m_srcX + width;
+							box.bottom = blit.m_srcY + height;;
+							box.back   = 1;
 
 							const uint32_t srcZ = TextureD3D12::TextureCube == src.m_type
 								? blit.m_srcZ
@@ -4766,8 +4766,15 @@ data.NumQualityLevels = 0;
 								: 0
 								;
 
-							D3D12_TEXTURE_COPY_LOCATION dstLocation = { dst.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{ dstZ*dst.m_numMips+blit.m_dstMip }} };
-							D3D12_TEXTURE_COPY_LOCATION srcLocation = { src.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{ srcZ*src.m_numMips+blit.m_srcMip }} };
+							D3D12_TEXTURE_COPY_LOCATION dstLocation;
+							dstLocation.pResource = dst.m_ptr;
+							dstLocation.Type      = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+							dstLocation.SubresourceIndex = dstZ*dst.m_numMips+blit.m_dstMip;
+							D3D12_TEXTURE_COPY_LOCATION srcLocation;
+							srcLocation.pResource = src.m_ptr;
+							srcLocation.Type      = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+							srcLocation.SubresourceIndex = srcZ*src.m_numMips+blit.m_srcMip;
+
 							bool depthStencil = isDepth(TextureFormat::Enum(src.m_textureFormat) );
 							m_commandList->CopyTextureRegion(&dstLocation
 								, blit.m_dstX
