@@ -1819,7 +1819,7 @@ namespace bgfx
 
 		qsort(scores, numScores, sizeof(int32_t), compareDescending);
 
-		RendererContextI* renderCtx;
+		RendererContextI* renderCtx = NULL;
 		for (uint32_t ii = 0; ii < numScores; ++ii)
 		{
 			RendererType::Enum renderer = RendererType::Enum(scores[ii] & 0xff);
