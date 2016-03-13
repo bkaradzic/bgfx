@@ -348,7 +348,6 @@ namespace bgfx
 		bx::write(&writer, magic);
 
 		TextureCreate tc;
-		tc.m_flags   = _flags;
 		tc.m_width   = _width;
 		tc.m_height  = _height;
 		tc.m_sides   = 0;
@@ -1820,7 +1819,7 @@ namespace bgfx
 
 		qsort(scores, numScores, sizeof(int32_t), compareDescending);
 
-		RendererContextI* renderCtx = NULL;
+		RendererContextI* renderCtx;
 		for (uint32_t ii = 0; ii < numScores; ++ii)
 		{
 			RendererType::Enum renderer = RendererType::Enum(scores[ii] & 0xff);
@@ -2913,7 +2912,6 @@ namespace bgfx
 		bx::write(&writer, magic);
 
 		TextureCreate tc;
-		tc.m_flags   = _flags;
 		tc.m_width   = _width;
 		tc.m_height  = _height;
 		tc.m_sides   = 0;
@@ -2970,7 +2968,6 @@ namespace bgfx
 		bx::write(&writer, magic);
 
 		TextureCreate tc;
-		tc.m_flags   = _flags;
 		tc.m_width   = _width;
 		tc.m_height  = _height;
 		tc.m_sides   = 0;
@@ -3014,7 +3011,6 @@ namespace bgfx
 		bx::write(&writer, magic);
 
 		TextureCreate tc;
-		tc.m_flags   = _flags;
 		tc.m_width   = _size;
 		tc.m_height  = _size;
 		tc.m_sides   = 6;

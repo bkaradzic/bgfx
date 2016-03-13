@@ -1782,7 +1782,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			bx::write(&writer, magic);
 
 			TextureCreate tc;
-			tc.m_flags   = texture.m_flags;
 			tc.m_width   = _width;
 			tc.m_height  = _height;
 			tc.m_sides   = 0;
@@ -1794,7 +1793,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			bx::write(&writer, tc);
 
 			texture.destroy();
-			texture.create(mem, tc.m_flags, 0);
+			texture.create(mem, texture.m_flags, 0);
 
 			release(mem);
 		}

@@ -313,7 +313,6 @@ namespace bgfx
 	struct TextureCreate
 	{
 		TextureFormat::Enum m_format;
-		uint32_t m_flags;
 		uint16_t m_width;
 		uint16_t m_height;
 		uint16_t m_sides;

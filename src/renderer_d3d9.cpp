@@ -1004,8 +1004,29 @@ namespace bgfx { namespace d3d9
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height) BX_OVERRIDE
 		{
 			TextureD3D9& texture = m_textures[_handle.idx];
-			texture.m_width  = _width;
-			texture.m_height = _height;
+
+			uint32_t size = sizeof(uint32_t) + sizeof(TextureCreate);
+			const Memory* mem = alloc(size);
+
+			bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
+			uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
+			bx::write(&writer, magic);
+
+			TextureCreate tc;
+			tc.m_width   = _width;
+			tc.m_height  = _height;
+			tc.m_sides   = 0;
+			tc.m_depth   = 0;
+			tc.m_numMips = 1;
+			tc.m_format  = TextureFormat::Enum(texture.m_requestedFormat);
+			tc.m_cubeMap = false;
+			tc.m_mem     = NULL;
+			bx::write(&writer, tc);
+
+			texture.destroy();
+			texture.create(mem, texture.m_flags, 0);
+
+			release(mem);
 		}
 
 		void overrideInternal(TextureHandle _handle, uintptr_t _ptr) BX_OVERRIDE
