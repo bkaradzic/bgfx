@@ -2562,7 +2562,15 @@ namespace bgfx { namespace gl
 			{
 				FrameBufferGL& frameBuffer = m_frameBuffers[_fbh.idx];
 				_height = frameBuffer.m_height;
-                m_glctx.makeCurrent(frameBuffer.m_swapChain);
+                if (UINT16_MAX != frameBuffer.m_denseIdx)
+                {
+                    m_glctx.makeCurrent(frameBuffer.m_swapChain);
+                }
+                else
+                {
+                    m_glctx.makeCurrent(NULL);
+                    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.m_fbo[0]) );
+                }
 			}
 
 			m_fbh       = _fbh;
