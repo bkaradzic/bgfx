@@ -25,8 +25,8 @@
 */
 
 
-#ifndef __VK_PLATFORM_H__
-#define __VK_PLATFORM_H__
+#ifndef VK_PLATFORM_H_
+#define VK_PLATFORM_H_
 
 #ifdef __cplusplus
 extern "C"
@@ -124,4 +124,4 @@ extern "C"
 #include <xcb/xcb.h>
 #endif
 
-#endif // __VK_PLATFORM_H__
+#endif
