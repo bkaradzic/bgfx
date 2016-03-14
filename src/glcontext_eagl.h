@@ -15,11 +15,7 @@ namespace bgfx { namespace gl
 	struct GlContext
 	{
 		GlContext()
-			: m_current(0)
-			, m_context(0)
-			, m_fbo(0)
-			, m_colorRbo(0)
-			, m_depthStencilRbo(0)
+			: m_context(0)
 		{
 		}
 
@@ -45,7 +41,7 @@ namespace bgfx { namespace gl
 			return 0 != m_context;
 		}
 
-		SwapChainGL* m_current;
+		void* m_view;
 		void* m_context;
 
 		GLuint m_fbo;
