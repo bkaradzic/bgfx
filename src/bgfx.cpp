@@ -2373,7 +2373,21 @@ namespace bgfx
 
 	bool init(RendererType::Enum _type, uint16_t _vendorId, uint16_t _deviceId, CallbackI* _callback, bx::AllocatorI* _allocator)
 	{
-		BX_CHECK(NULL == s_ctx, "bgfx is already initialized.");
+		if (NULL != s_ctx)
+		{
+			BX_CHECK(false, "bgfx is already initialized.");
+			return false;
+		}
+
+		if (NULL == g_platformData.ndt
+		&&  NULL == g_platformData.nwh
+		&&  NULL == g_platformData.context
+		&&  NULL == g_platformData.backBuffer
+		&&  NULL == g_platformData.backBufferDS)
+		{
+			BX_CHECK(false, "bgfx platform data like window handle or backbuffer must be set.");
+			return false;
+		}
 
 		memset(&g_caps, 0, sizeof(g_caps) );
 		g_caps.maxViews     = BGFX_CONFIG_MAX_VIEWS;
