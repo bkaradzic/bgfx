@@ -1890,6 +1890,15 @@ namespace bgfx
 				}
 			}
 
+			for (VertexDeclMap::iterator it = m_vertexDeclMap.begin(), itEnd = m_vertexDeclMap.end(); it != itEnd; ++it)
+			{
+				if (it->second.idx == declHandle.idx)
+				{
+					m_vertexDeclMap.erase(it);
+					break;
+				}
+			}
+
 			return declHandle;
 		}
 
@@ -2553,7 +2562,7 @@ namespace bgfx
 			DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[_handle.idx];
 
 			VertexDeclHandle declHandle = m_declRef.release(dvb.m_handle);
-			if (invalidHandle != declHandle.idx)
+			if (isValid(declHandle) )
 			{
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexDecl);
 				cmdbuf.write(declHandle);
