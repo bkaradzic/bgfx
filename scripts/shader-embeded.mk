@@ -46,7 +46,7 @@ fs_%.bin.h : fs_%.sc
 
 cs_%.bin.h : cs_%.sc
 	@echo [$(<)]
-	$(SILENT) $(SHADERC) $(CS_FLAGS) --platform linux                  -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_glsl
+	$(SILENT) $(SHADERC) $(CS_FLAGS) --platform linux -p 430 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_glsl
 	@cat $(SHADER_TMP) > $(@)
 	-$(SILENT) $(SHADERC) $(CS_FLAGS) --platform windows -p cs_5_0 -O 1 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_dx11
 	-@cat $(SHADER_TMP) >> $(@)
