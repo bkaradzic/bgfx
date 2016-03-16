@@ -2269,6 +2269,7 @@ namespace bgfx
 			VertexDeclHandle declHandle = m_declRef.release(_handle);
 			if (isValid(declHandle) )
 			{
+				m_vertexDeclHandle.free(declHandle.idx);
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexDecl);
 				cmdbuf.write(declHandle);
 			}
@@ -2561,6 +2562,7 @@ namespace bgfx
 			VertexDeclHandle declHandle = m_declRef.release(dvb.m_handle);
 			if (isValid(declHandle) )
 			{
+				m_vertexDeclHandle.free(declHandle.idx);
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexDecl);
 				cmdbuf.write(declHandle);
 			}
