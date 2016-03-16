@@ -107,6 +107,7 @@ namespace bgfx { namespace d3d9
 			Null,
 			Resz,
 			Rawz,
+			Atoc,
 
 			Count,
 		};

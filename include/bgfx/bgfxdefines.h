@@ -6,80 +6,82 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(11)
+#define BGFX_API_VERSION UINT32_C(12)
 
 ///
-#define BGFX_STATE_RGB_WRITE             UINT64_C(0x0000000000000001) //!< Enable RGB write.
-#define BGFX_STATE_ALPHA_WRITE           UINT64_C(0x0000000000000002) //!< Enable alpha write.
-#define BGFX_STATE_DEPTH_WRITE           UINT64_C(0x0000000000000004) //!< Enable depth write.
+#define BGFX_STATE_RGB_WRITE               UINT64_C(0x0000000000000001) //!< Enable RGB write.
+#define BGFX_STATE_ALPHA_WRITE             UINT64_C(0x0000000000000002) //!< Enable alpha write.
+#define BGFX_STATE_DEPTH_WRITE             UINT64_C(0x0000000000000004) //!< Enable depth write.
 
-#define BGFX_STATE_DEPTH_TEST_LESS       UINT64_C(0x0000000000000010) //!< Enable depth test, less.
-#define BGFX_STATE_DEPTH_TEST_LEQUAL     UINT64_C(0x0000000000000020) //!< Enable depth test, less equal.
-#define BGFX_STATE_DEPTH_TEST_EQUAL      UINT64_C(0x0000000000000030) //!< Enable depth test, equal.
-#define BGFX_STATE_DEPTH_TEST_GEQUAL     UINT64_C(0x0000000000000040) //!< Enable depth test, greater equal.
-#define BGFX_STATE_DEPTH_TEST_GREATER    UINT64_C(0x0000000000000050) //!< Enable depth test, greater.
-#define BGFX_STATE_DEPTH_TEST_NOTEQUAL   UINT64_C(0x0000000000000060) //!< Enable depth test, not equal.
-#define BGFX_STATE_DEPTH_TEST_NEVER      UINT64_C(0x0000000000000070) //!< Enable depth test, never.
-#define BGFX_STATE_DEPTH_TEST_ALWAYS     UINT64_C(0x0000000000000080) //!< Enable depth test, always.
-#define BGFX_STATE_DEPTH_TEST_SHIFT      4                            //!< Depth test state bit shift.
-#define BGFX_STATE_DEPTH_TEST_MASK       UINT64_C(0x00000000000000f0) //!< Depth test state bit mask.
+#define BGFX_STATE_DEPTH_TEST_LESS         UINT64_C(0x0000000000000010) //!< Enable depth test, less.
+#define BGFX_STATE_DEPTH_TEST_LEQUAL       UINT64_C(0x0000000000000020) //!< Enable depth test, less equal.
+#define BGFX_STATE_DEPTH_TEST_EQUAL        UINT64_C(0x0000000000000030) //!< Enable depth test, equal.
+#define BGFX_STATE_DEPTH_TEST_GEQUAL       UINT64_C(0x0000000000000040) //!< Enable depth test, greater equal.
+#define BGFX_STATE_DEPTH_TEST_GREATER      UINT64_C(0x0000000000000050) //!< Enable depth test, greater.
+#define BGFX_STATE_DEPTH_TEST_NOTEQUAL     UINT64_C(0x0000000000000060) //!< Enable depth test, not equal.
+#define BGFX_STATE_DEPTH_TEST_NEVER        UINT64_C(0x0000000000000070) //!< Enable depth test, never.
+#define BGFX_STATE_DEPTH_TEST_ALWAYS       UINT64_C(0x0000000000000080) //!< Enable depth test, always.
+#define BGFX_STATE_DEPTH_TEST_SHIFT        4                            //!< Depth test state bit shift.
+#define BGFX_STATE_DEPTH_TEST_MASK         UINT64_C(0x00000000000000f0) //!< Depth test state bit mask.
 
-#define BGFX_STATE_BLEND_ZERO            UINT64_C(0x0000000000001000) //!<
-#define BGFX_STATE_BLEND_ONE             UINT64_C(0x0000000000002000) //!<
-#define BGFX_STATE_BLEND_SRC_COLOR       UINT64_C(0x0000000000003000) //!<
-#define BGFX_STATE_BLEND_INV_SRC_COLOR   UINT64_C(0x0000000000004000) //!<
-#define BGFX_STATE_BLEND_SRC_ALPHA       UINT64_C(0x0000000000005000) //!<
-#define BGFX_STATE_BLEND_INV_SRC_ALPHA   UINT64_C(0x0000000000006000) //!<
-#define BGFX_STATE_BLEND_DST_ALPHA       UINT64_C(0x0000000000007000) //!<
-#define BGFX_STATE_BLEND_INV_DST_ALPHA   UINT64_C(0x0000000000008000) //!<
-#define BGFX_STATE_BLEND_DST_COLOR       UINT64_C(0x0000000000009000) //!<
-#define BGFX_STATE_BLEND_INV_DST_COLOR   UINT64_C(0x000000000000a000) //!<
-#define BGFX_STATE_BLEND_SRC_ALPHA_SAT   UINT64_C(0x000000000000b000) //!<
-#define BGFX_STATE_BLEND_FACTOR          UINT64_C(0x000000000000c000) //!<
-#define BGFX_STATE_BLEND_INV_FACTOR      UINT64_C(0x000000000000d000) //!<
-#define BGFX_STATE_BLEND_SHIFT           12                           //!< Blend state bit shift.
-#define BGFX_STATE_BLEND_MASK            UINT64_C(0x000000000ffff000) //!< Blend state bit mask.
+#define BGFX_STATE_BLEND_ZERO              UINT64_C(0x0000000000001000) //!<
+#define BGFX_STATE_BLEND_ONE               UINT64_C(0x0000000000002000) //!<
+#define BGFX_STATE_BLEND_SRC_COLOR         UINT64_C(0x0000000000003000) //!<
+#define BGFX_STATE_BLEND_INV_SRC_COLOR     UINT64_C(0x0000000000004000) //!<
+#define BGFX_STATE_BLEND_SRC_ALPHA         UINT64_C(0x0000000000005000) //!<
+#define BGFX_STATE_BLEND_INV_SRC_ALPHA     UINT64_C(0x0000000000006000) //!<
+#define BGFX_STATE_BLEND_DST_ALPHA         UINT64_C(0x0000000000007000) //!<
+#define BGFX_STATE_BLEND_INV_DST_ALPHA     UINT64_C(0x0000000000008000) //!<
+#define BGFX_STATE_BLEND_DST_COLOR         UINT64_C(0x0000000000009000) //!<
+#define BGFX_STATE_BLEND_INV_DST_COLOR     UINT64_C(0x000000000000a000) //!<
+#define BGFX_STATE_BLEND_SRC_ALPHA_SAT     UINT64_C(0x000000000000b000) //!<
+#define BGFX_STATE_BLEND_FACTOR            UINT64_C(0x000000000000c000) //!<
+#define BGFX_STATE_BLEND_INV_FACTOR        UINT64_C(0x000000000000d000) //!<
+#define BGFX_STATE_BLEND_SHIFT             12                           //!< Blend state bit shift.
+#define BGFX_STATE_BLEND_MASK              UINT64_C(0x000000000ffff000) //!< Blend state bit mask.
 
-#define BGFX_STATE_BLEND_EQUATION_ADD    UINT64_C(0x0000000000000000) //!<
-#define BGFX_STATE_BLEND_EQUATION_SUB    UINT64_C(0x0000000010000000) //!<
-#define BGFX_STATE_BLEND_EQUATION_REVSUB UINT64_C(0x0000000020000000) //!<
-#define BGFX_STATE_BLEND_EQUATION_MIN    UINT64_C(0x0000000030000000) //!<
-#define BGFX_STATE_BLEND_EQUATION_MAX    UINT64_C(0x0000000040000000) //!<
-#define BGFX_STATE_BLEND_EQUATION_SHIFT  28                           //!< Blend equation bit shift.
-#define BGFX_STATE_BLEND_EQUATION_MASK   UINT64_C(0x00000003f0000000) //!< Blend equation bit mask.
+#define BGFX_STATE_BLEND_EQUATION_ADD      UINT64_C(0x0000000000000000) //!<
+#define BGFX_STATE_BLEND_EQUATION_SUB      UINT64_C(0x0000000010000000) //!<
+#define BGFX_STATE_BLEND_EQUATION_REVSUB   UINT64_C(0x0000000020000000) //!<
+#define BGFX_STATE_BLEND_EQUATION_MIN      UINT64_C(0x0000000030000000) //!<
+#define BGFX_STATE_BLEND_EQUATION_MAX      UINT64_C(0x0000000040000000) //!<
+#define BGFX_STATE_BLEND_EQUATION_SHIFT    28                           //!< Blend equation bit shift.
+#define BGFX_STATE_BLEND_EQUATION_MASK     UINT64_C(0x00000003f0000000) //!< Blend equation bit mask.
 
-#define BGFX_STATE_BLEND_INDEPENDENT     UINT64_C(0x0000000400000000) //!< Enable blend independent.
+#define BGFX_STATE_BLEND_INDEPENDENT       UINT64_C(0x0000000400000000) //!< Enable blend independent.
+#define BGFX_STATE_BLEND_ALPHA_TO_COVERAGE UINT64_C(0x0000000800000000) //!< Enable alpha to coverage.
 
-#define BGFX_STATE_CULL_CW               UINT64_C(0x0000001000000000) //!< Cull clockwise triangles.
-#define BGFX_STATE_CULL_CCW              UINT64_C(0x0000002000000000) //!< Cull counter-clockwise triangles.
-#define BGFX_STATE_CULL_SHIFT            36                           //!< Culling mode bit shift.
-#define BGFX_STATE_CULL_MASK             UINT64_C(0x0000003000000000) //!< Culling mode bit mask.
+#define BGFX_STATE_CULL_CW                 UINT64_C(0x0000001000000000) //!< Cull clockwise triangles.
+#define BGFX_STATE_CULL_CCW                UINT64_C(0x0000002000000000) //!< Cull counter-clockwise triangles.
+#define BGFX_STATE_CULL_SHIFT              36                           //!< Culling mode bit shift.
+#define BGFX_STATE_CULL_MASK               UINT64_C(0x0000003000000000) //!< Culling mode bit mask.
 
 /// See BGFX_STATE_ALPHA_REF(_ref) helper macro.
-#define BGFX_STATE_ALPHA_REF_SHIFT       40                           //!< Alpha reference bit shift.
-#define BGFX_STATE_ALPHA_REF_MASK        UINT64_C(0x0000ff0000000000) //!< Alpha reference bit mask.
+#define BGFX_STATE_ALPHA_REF_SHIFT         40                           //!< Alpha reference bit shift.
+#define BGFX_STATE_ALPHA_REF_MASK          UINT64_C(0x0000ff0000000000) //!< Alpha reference bit mask.
 
-#define BGFX_STATE_PT_TRISTRIP           UINT64_C(0x0001000000000000) //!< Tristrip.
-#define BGFX_STATE_PT_LINES              UINT64_C(0x0002000000000000) //!< Lines.
-#define BGFX_STATE_PT_LINESTRIP          UINT64_C(0x0003000000000000) //!< Line strip.
-#define BGFX_STATE_PT_POINTS             UINT64_C(0x0004000000000000) //!< Points.
-#define BGFX_STATE_PT_SHIFT              48                           //!< Primitive type bit shift.
-#define BGFX_STATE_PT_MASK               UINT64_C(0x0007000000000000) //!< Primitive type bit mask.
+#define BGFX_STATE_PT_TRISTRIP             UINT64_C(0x0001000000000000) //!< Tristrip.
+#define BGFX_STATE_PT_LINES                UINT64_C(0x0002000000000000) //!< Lines.
+#define BGFX_STATE_PT_LINESTRIP            UINT64_C(0x0003000000000000) //!< Line strip.
+#define BGFX_STATE_PT_POINTS               UINT64_C(0x0004000000000000) //!< Points.
+#define BGFX_STATE_PT_SHIFT                48                           //!< Primitive type bit shift.
+#define BGFX_STATE_PT_MASK                 UINT64_C(0x0007000000000000) //!< Primitive type bit mask.
 
-#define BGFX_STATE_POINT_SIZE_SHIFT      52                           //!< Point size bit shift.
-#define BGFX_STATE_POINT_SIZE_MASK       UINT64_C(0x0ff0000000000000) //!< Point size bit mask.
+#define BGFX_STATE_POINT_SIZE_SHIFT        52                           //!< Point size bit shift.
+#define BGFX_STATE_POINT_SIZE_MASK         UINT64_C(0x00f0000000000000) //!< Point size bit mask.
 
 /// Enable MSAA write when writing into MSAA frame buffer. This flag is ignored when not writing into
 /// MSAA frame buffer.
-#define BGFX_STATE_MSAA                  UINT64_C(0x1000000000000000) //!< Enable MSAA rasterization.
+#define BGFX_STATE_MSAA                    UINT64_C(0x0100000000000000) //!< Enable MSAA rasterization.
+#define BGFX_STATE_LINEAA                  UINT64_C(0x0200000000000000) //!< Enable line AA rasterization.
 
 /// Do not use!
-#define BGFX_STATE_RESERVED_SHIFT        61                           //!< Internal bits shift.
-#define BGFX_STATE_RESERVED_MASK         UINT64_C(0xe000000000000000) //!< Internal bits mask.
+#define BGFX_STATE_RESERVED_SHIFT          61                           //!< Internal bits shift.
+#define BGFX_STATE_RESERVED_MASK           UINT64_C(0xe000000000000000) //!< Internal bits mask.
 
 /// See BGFX_STATE_POINT_SIZE(_size) helper macro.
-#define BGFX_STATE_NONE                  UINT64_C(0x0000000000000000) //!< No state.
-#define BGFX_STATE_MASK                  UINT64_C(0xffffffffffffffff) //!< State mask.
+#define BGFX_STATE_NONE                    UINT64_C(0x0000000000000000) //!< No state.
+#define BGFX_STATE_MASK                    UINT64_C(0xffffffffffffffff) //!< State mask.
 
 /// Default state is write to RGB, alpha, and depth with depth test less enabled, with clockwise
 /// culling and MSAA (when writing into MSAA frame buffer, otherwise this flag is ignored).
@@ -380,6 +382,7 @@
 #define BGFX_CAPS_TEXTURE_BLIT           UINT64_C(0x0000000000010000) //!< Texture blit is supported.
 #define BGFX_CAPS_TEXTURE_READ_BACK      UINT64_C(0x0000000000020000) //!< Read-back texture is supported.
 #define BGFX_CAPS_OCCLUSION_QUERY        UINT64_C(0x0000000000040000) //!< Occlusion query is supported.
+#define BGFX_CAPS_ALPHA_TO_COVERAGE      UINT64_C(0x0000000000080000) //!< Alpha to coverage is supported.
 
 ///
 #define BGFX_CAPS_FORMAT_TEXTURE_NONE             UINT16_C(0x0000) //!< Texture format is not supported.

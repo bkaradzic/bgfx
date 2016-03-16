@@ -1234,7 +1234,7 @@ private:
 		bgfx::setVertexBuffer(m_vbh, mesh.m_startVertex, mesh.m_numVertices);
 		bgfx::setState(0
 				| attrib.m_state
-				| (_wireframe ? BGFX_STATE_PT_LINES : 0)
+				| (_wireframe ? BGFX_STATE_PT_LINES|BGFX_STATE_LINEAA|BGFX_STATE_BLEND_ALPHA : 0)
 				);
 		bgfx::submit(m_viewId, m_program[_wireframe ? Program::Fill : Program::FillLit]);
 	}
@@ -1268,7 +1268,8 @@ private:
 						| BGFX_STATE_PT_LINES
 						| BGFX_STATE_DEPTH_TEST_LEQUAL
 						| BGFX_STATE_DEPTH_WRITE
-//						| BGFX_STATE_BLEND_ALPHA
+						| BGFX_STATE_LINEAA
+						| BGFX_STATE_BLEND_ALPHA
 						);
 				bgfx::setTransform(m_mtx);
 				bgfx::ProgramHandle program = m_program[m_attrib[m_stack].m_stipple ? 1 : 0];

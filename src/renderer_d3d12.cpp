@@ -908,6 +908,7 @@ namespace bgfx { namespace d3d12
 									| BGFX_CAPS_TEXTURE_BLIT
 									| BGFX_CAPS_TEXTURE_READ_BACK
 									| BGFX_CAPS_OCCLUSION_QUERY
+									| BGFX_CAPS_ALPHA_TO_COVERAGE
 									);
 				g_caps.maxTextureSize   = 16384;
 				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(16, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
@@ -1973,7 +1974,7 @@ data.NumQualityLevels = 0;
 
 		void setBlendState(D3D12_BLEND_DESC& _desc, uint64_t _state, uint32_t _rgba = 0)
 		{
-			_desc.AlphaToCoverageEnable  = false;
+			_desc.AlphaToCoverageEnable  = !!(BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & _state);
 			_desc.IndependentBlendEnable = !!(BGFX_STATE_BLEND_INDEPENDENT & _state);
 
 			D3D12_RENDER_TARGET_BLEND_DESC* drt = &_desc.RenderTarget[0];
@@ -2210,6 +2211,7 @@ data.NumQualityLevels = 0;
 				| BGFX_STATE_BLEND_MASK
 				| BGFX_STATE_BLEND_EQUATION_MASK
 				| BGFX_STATE_BLEND_INDEPENDENT
+				| BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
 				| BGFX_STATE_CULL_MASK
 				| BGFX_STATE_MSAA
 				| BGFX_STATE_PT_MASK

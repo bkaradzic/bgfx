@@ -1744,6 +1744,11 @@ namespace bgfx { namespace gl
 				: 0
 				;
 
+			g_caps.supported |= s_extension[Extension::ARB_multisample].m_supported
+				? BGFX_CAPS_ALPHA_TO_COVERAGE
+				: 0
+				;
+
 			const bool drawIndirectSupported = false
 				|| s_extension[Extension::AMD_multi_draw_indirect].m_supported
 				|| s_extension[Extension::ARB_draw_indirect      ].m_supported
@@ -5931,6 +5936,18 @@ namespace bgfx { namespace gl
 							GL_CHECK(glDisable(GL_MULTISAMPLE) );
 						}
 					}
+
+					if (BGFX_STATE_LINEAA & changedFlags)
+					{
+						if (BGFX_STATE_LINEAA & newFlags)
+						{
+							GL_CHECK(glEnable(GL_LINE_SMOOTH) );
+						}
+						else
+						{
+							GL_CHECK(glDisable(GL_LINE_SMOOTH) );
+						}
+					}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
 					if ( (BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE) & changedFlags)
@@ -5940,10 +5957,27 @@ namespace bgfx { namespace gl
 						GL_CHECK(glColorMask(rgb, rgb, rgb, alpha) );
 					}
 
-					if ( (BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK|BGFX_STATE_BLEND_INDEPENDENT) & changedFlags
+					if ( ( (0
+						| BGFX_STATE_BLEND_MASK
+						| BGFX_STATE_BLEND_EQUATION_MASK
+						| BGFX_STATE_BLEND_INDEPENDENT
+						| BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
+						) & changedFlags)
 					||  blendFactor != draw.m_rgba)
 					{
-						if ( (BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK|BGFX_STATE_BLEND_INDEPENDENT) & newFlags
+						if (BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & newFlags)
+						{
+							GL_CHECK(glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE) );
+						}
+						else
+						{
+							GL_CHECK(glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE) );
+						}
+
+						if ( ( (0
+							| BGFX_STATE_BLEND_MASK
+							| BGFX_STATE_BLEND_EQUATION_MASK
+							| BGFX_STATE_BLEND_INDEPENDENT) & newFlags)
 						||  blendFactor != draw.m_rgba)
 						{
 							const bool enabled = !!(BGFX_STATE_BLEND_MASK & newFlags);

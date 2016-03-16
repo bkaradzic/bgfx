@@ -1218,6 +1218,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					| BGFX_CAPS_TEXTURE_BLIT
 					| BGFX_CAPS_TEXTURE_READ_BACK
 					| ( (m_featureLevel >= D3D_FEATURE_LEVEL_9_2) ? BGFX_CAPS_OCCLUSION_QUERY : 0)
+					| BGFX_CAPS_ALPHA_TO_COVERAGE
 					);
 
 				m_timerQuerySupport = m_featureLevel >= D3D_FEATURE_LEVEL_10_0;
@@ -2605,7 +2606,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			if (NULL == bs)
 			{
 				D3D11_BLEND_DESC desc;
-				memset(&desc, 0, sizeof(desc) );
+				desc.AlphaToCoverageEnable  = !!(BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & _state);
 				desc.IndependentBlendEnable = !!(BGFX_STATE_BLEND_INDEPENDENT & _state);
 
 				D3D11_RENDER_TARGET_BLEND_DESC* drt = &desc.RenderTarget[0];
@@ -2756,7 +2757,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		void setRasterizerState(uint64_t _state, bool _wireframe = false, bool _scissor = false)
 		{
-			_state &= BGFX_STATE_CULL_MASK|BGFX_STATE_MSAA;
+			_state &= BGFX_STATE_CULL_MASK|BGFX_STATE_MSAA|BGFX_STATE_LINEAA;
 			_state |= _wireframe ? BGFX_STATE_PT_LINES : BGFX_STATE_NONE;
 			_state |= _scissor   ? BGFX_STATE_RESERVED_MASK : 0;
 
@@ -2775,7 +2776,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				desc.DepthClipEnable = !m_depthClamp;
 				desc.ScissorEnable = _scissor;
 				desc.MultisampleEnable = !!(_state&BGFX_STATE_MSAA);
-				desc.AntialiasedLineEnable = false;
+				desc.AntialiasedLineEnable = !!(_state&BGFX_STATE_LINEAA);
 
 				DX_CHECK(m_device->CreateRasterizerState(&desc, &rs) );
 
@@ -5302,9 +5303,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					 | BGFX_STATE_PT_MASK
 					 | BGFX_STATE_POINT_SIZE_MASK
 					 | BGFX_STATE_MSAA
+					 | BGFX_STATE_LINEAA
 					 ) & changedFlags)
 				{
-					if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_MSAA) & changedFlags)
+					if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_MSAA|BGFX_STATE_LINEAA) & changedFlags)
 					{
 						setRasterizerState(newFlags, wireframe, scissorEnabled);
 					}
