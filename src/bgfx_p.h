@@ -88,6 +88,9 @@ namespace bgfx
 
 	void dbgPrintfVargs(const char* _format, va_list _argList);
 	void dbgPrintf(const char* _format, ...);
+
+	inline bool operator==(const VertexDeclHandle& _lhs, const VertexDeclHandle& _rhs) { return _lhs.idx == _rhs.idx; }
+	inline bool operator==(const UniformHandle& _lhs,    const UniformHandle&    _rhs) { return _lhs.idx == _rhs.idx; }
 }
 
 #define _BX_TRACE(_format, ...) \
@@ -134,6 +137,7 @@ namespace bgfx
 #include <bx/allocator.h>
 #include <bx/string.h>
 #include <bx/os.h>
+#include <bx/maputil.h>
 
 #include <bgfx/bgfxplatform.h>
 #include "image.h"
@@ -1890,14 +1894,7 @@ namespace bgfx
 				}
 			}
 
-			for (VertexDeclMap::iterator it = m_vertexDeclMap.begin(), itEnd = m_vertexDeclMap.end(); it != itEnd; ++it)
-			{
-				if (it->second.idx == declHandle.idx)
-				{
-					m_vertexDeclMap.erase(it);
-					break;
-				}
-			}
+			bx::mapRemove(m_vertexDeclMap, declHandle);
 
 			return declHandle;
 		}
@@ -3046,7 +3043,7 @@ namespace bgfx
 					hash |= pr.m_fsh.idx << 16;
 				}
 
-				m_programHashMap.erase(m_programHashMap.find(hash) );
+				bx::mapRemove(m_programHashMap, hash);
 			}
 		}
 
@@ -3385,14 +3382,7 @@ namespace bgfx
 
 			if (0 == refs)
 			{
-				for (UniformHashMap::iterator it = m_uniformHashMap.begin(), itEnd = m_uniformHashMap.end(); it != itEnd; ++it)
-				{
-					if (it->second.idx == _handle.idx)
-					{
-						m_uniformHashMap.erase(it);
-						break;
-					}
-				}
+				bx::mapRemove(m_uniformHashMap, _handle);
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyUniform);
 				cmdbuf.write(_handle);
