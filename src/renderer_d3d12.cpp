@@ -2064,7 +2064,7 @@ data.NumQualityLevels = 0;
 			_desc.SlopeScaledDepthBias = 0.0f;
 			_desc.DepthClipEnable = !m_depthClamp;
 			_desc.MultisampleEnable = !!(_state&BGFX_STATE_MSAA);
-			_desc.AntialiasedLineEnable = false;
+			_desc.AntialiasedLineEnable = !!(_state&BGFX_STATE_LINEAA);
 			_desc.ForcedSampleCount = 0;
 			_desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 		}
@@ -2214,6 +2214,7 @@ data.NumQualityLevels = 0;
 				| BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
 				| BGFX_STATE_CULL_MASK
 				| BGFX_STATE_MSAA
+				| BGFX_STATE_LINEAA
 				| BGFX_STATE_PT_MASK
 				;
 
