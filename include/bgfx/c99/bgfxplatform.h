@@ -13,7 +13,7 @@
 // necessary to use this header in conjunction with creating windows.
 
 #include <bx/platform.h>
-#include <bgfx/c99/bgfxplatform.h>
+#include <bgfx/c99/bgfx.h>
 
 typedef enum bgfx_render_frame
 {
