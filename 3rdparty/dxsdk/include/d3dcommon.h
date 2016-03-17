@@ -73,6 +73,7 @@
 #define _Out_writes_bytes_opt_(size)
 #define _Out_writes_bytes_to_(size,count)
 #define _Outptr_
+#define _Outptr_opt_
 #define _Outptr_opt_result_maybenull_
 #define _Outptr_opt_result_bytebuffer_(size)
 #define _Outptr_result_maybenull_
