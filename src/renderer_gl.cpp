@@ -585,6 +585,7 @@ namespace bgfx { namespace gl
 			MOZ_WEBGL_compressed_texture_s3tc,
 			MOZ_WEBGL_depth_texture,
 
+			NV_conservative_raster,
 			NV_copy_image,
 			NV_draw_buffers,
 			NV_occlusion_query,
@@ -792,6 +793,7 @@ namespace bgfx { namespace gl
 		{ "MOZ_WEBGL_compressed_texture_s3tc",     false,                             true  },
 		{ "MOZ_WEBGL_depth_texture",               false,                             true  },
 
+		{ "NV_conservative_raster",                false,                             true  },
 		{ "NV_copy_image",                         false,                             true  },
 		{ "NV_draw_buffers",                       false,                             true  }, // GLES2 extension.
 		{ "NV_occlusion_query",                    false,                             true  },
@@ -1277,6 +1279,8 @@ namespace bgfx { namespace gl
 			, m_depthTextureSupport(false)
 			, m_timerQuerySupport(false)
 			, m_occlusionQuerySupport(false)
+			, m_atocSupport(false)
+			, m_conservativeRasterSupport(false)
 			, m_flip(false)
 			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
 			, m_backBufferFbo(0)
@@ -1744,11 +1748,6 @@ namespace bgfx { namespace gl
 				: 0
 				;
 
-			g_caps.supported |= s_extension[Extension::ARB_multisample].m_supported
-				? BGFX_CAPS_ALPHA_TO_COVERAGE
-				: 0
-				;
-
 			const bool drawIndirectSupported = false
 				|| s_extension[Extension::AMD_multi_draw_indirect].m_supported
 				|| s_extension[Extension::ARB_draw_indirect      ].m_supported
@@ -1875,19 +1874,15 @@ namespace bgfx { namespace gl
 				&& NULL != glEndQuery
 				;
 
-			g_caps.supported |= m_occlusionQuerySupport
-				? BGFX_CAPS_OCCLUSION_QUERY
-				: 0
-				;
+			m_atocSupport = s_extension[Extension::ARB_multisample].m_supported;
+			m_conservativeRasterSupport = s_extension[Extension::NV_conservative_raster].m_supported;
 
-			g_caps.supported |= m_depthTextureSupport
-				? BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
-				: 0
-				;
-
-			g_caps.supported |= computeSupport
-				? BGFX_CAPS_COMPUTE
-				: 0
+			g_caps.supported |= 0
+				| (m_atocSupport               ? BGFX_CAPS_ALPHA_TO_COVERAGE      : 0)
+				| (m_conservativeRasterSupport ? BGFX_CAPS_CONSERVATIVE_RASTER    : 0)
+				| (m_occlusionQuerySupport     ? BGFX_CAPS_OCCLUSION_QUERY        : 0)
+				| (m_depthTextureSupport       ? BGFX_CAPS_TEXTURE_COMPARE_LEQUAL : 0)
+				| (computeSupport              ? BGFX_CAPS_COMPUTE                : 0)
 				;
 
 			g_caps.supported |= m_glctx.getCaps();
@@ -3311,6 +3306,8 @@ namespace bgfx { namespace gl
 		bool m_depthTextureSupport;
 		bool m_timerQuerySupport;
 		bool m_occlusionQuerySupport;
+		bool m_atocSupport;
+		bool m_conservativeRasterSupport;
 		bool m_flip;
 
 		uint64_t m_hash;
@@ -5872,6 +5869,8 @@ namespace bgfx { namespace gl
 					 | BGFX_STATE_PT_MASK
 					 | BGFX_STATE_POINT_SIZE_MASK
 					 | BGFX_STATE_MSAA
+					 | BGFX_STATE_LINEAA
+					 | BGFX_STATE_CONSERVATIVE_RASTER
 					 ) & changedFlags)
 				{
 					if (BGFX_STATE_CULL_MASK & changedFlags)
@@ -5927,26 +5926,27 @@ namespace bgfx { namespace gl
 
 					if (BGFX_STATE_MSAA & changedFlags)
 					{
-						if (BGFX_STATE_MSAA & newFlags)
-						{
-							GL_CHECK(glEnable(GL_MULTISAMPLE) );
-						}
-						else
-						{
-							GL_CHECK(glDisable(GL_MULTISAMPLE) );
-						}
+						GL_CHECK(BGFX_STATE_MSAA & newFlags
+							? glEnable(GL_MULTISAMPLE)
+							: glDisable(GL_MULTISAMPLE)
+							);
 					}
 
 					if (BGFX_STATE_LINEAA & changedFlags)
 					{
-						if (BGFX_STATE_LINEAA & newFlags)
-						{
-							GL_CHECK(glEnable(GL_LINE_SMOOTH) );
-						}
-						else
-						{
-							GL_CHECK(glDisable(GL_LINE_SMOOTH) );
-						}
+						GL_CHECK(BGFX_STATE_LINEAA & newFlags
+							? glEnable(GL_LINE_SMOOTH)
+							: glDisable(GL_LINE_SMOOTH)
+							);
+					}
+
+					if (m_conservativeRasterSupport
+					&&  BGFX_STATE_CONSERVATIVE_RASTER & changedFlags)
+					{
+						GL_CHECK(BGFX_STATE_CONSERVATIVE_RASTER & newFlags
+							? glEnable(GL_CONSERVATIVE_RASTERIZATION_NV)
+							: glDisable(GL_CONSERVATIVE_RASTERIZATION_NV)
+							);
 					}
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
@@ -5965,13 +5965,16 @@ namespace bgfx { namespace gl
 						) & changedFlags)
 					||  blendFactor != draw.m_rgba)
 					{
-						if (BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & newFlags)
+						if (m_atocSupport)
 						{
-							GL_CHECK(glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE) );
-						}
-						else
-						{
-							GL_CHECK(glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE) );
+							if (BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & newFlags)
+							{
+								GL_CHECK(glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE) );
+							}
+							else
+							{
+								GL_CHECK(glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE) );
+							}
 						}
 
 						if ( ( (0

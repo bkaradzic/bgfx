@@ -6,7 +6,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(12)
+#define BGFX_API_VERSION UINT32_C(13)
 
 ///
 #define BGFX_STATE_RGB_WRITE               UINT64_C(0x0000000000000001) //!< Enable RGB write.
@@ -74,6 +74,7 @@
 /// MSAA frame buffer.
 #define BGFX_STATE_MSAA                    UINT64_C(0x0100000000000000) //!< Enable MSAA rasterization.
 #define BGFX_STATE_LINEAA                  UINT64_C(0x0200000000000000) //!< Enable line AA rasterization.
+#define BGFX_STATE_CONSERVATIVE_RASTER     UINT64_C(0x0400000000000000) //!< Enable conservative rasterization.
 
 /// Do not use!
 #define BGFX_STATE_RESERVED_SHIFT          61                           //!< Internal bits shift.
@@ -383,6 +384,7 @@
 #define BGFX_CAPS_TEXTURE_READ_BACK      UINT64_C(0x0000000000020000) //!< Read-back texture is supported.
 #define BGFX_CAPS_OCCLUSION_QUERY        UINT64_C(0x0000000000040000) //!< Occlusion query is supported.
 #define BGFX_CAPS_ALPHA_TO_COVERAGE      UINT64_C(0x0000000000080000) //!< Alpha to coverage is supported.
+#define BGFX_CAPS_CONSERVATIVE_RASTER    UINT64_C(0x0000000000100000) //!< Conservative rasterization is supported.
 
 ///
 #define BGFX_CAPS_FORMAT_TEXTURE_NONE             UINT16_C(0x0000) //!< Texture format is not supported.

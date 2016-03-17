@@ -997,7 +997,8 @@ namespace bgfx { namespace d3d11
 				for (uint32_t ii = 0; ii < BX_COUNTOF(s_deviceIIDs) && FAILED(hr); ++ii)
 				{
 					hr = m_device->QueryInterface(s_deviceIIDs[ii], (void**)&device);
-					BX_TRACE("D3D device 11.%d, hr %x", BX_COUNTOF(s_deviceIIDs)-1-ii, hr);
+					m_deviceInterfaceVersion = BX_COUNTOF(s_deviceIIDs)-1-ii;
+					BX_TRACE("D3D device 11.%d, hr %x", m_deviceInterfaceVersion, hr);
 
 					if (SUCCEEDED(hr) )
 					{
@@ -1219,6 +1220,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					| BGFX_CAPS_TEXTURE_READ_BACK
 					| ( (m_featureLevel >= D3D_FEATURE_LEVEL_9_2) ? BGFX_CAPS_OCCLUSION_QUERY : 0)
 					| BGFX_CAPS_ALPHA_TO_COVERAGE
+					| ( (m_deviceInterfaceVersion >= 3) ? BGFX_CAPS_CONSERVATIVE_RASTER : 0)
 					);
 
 				m_timerQuerySupport = m_featureLevel >= D3D_FEATURE_LEVEL_10_0;
@@ -2757,7 +2759,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		void setRasterizerState(uint64_t _state, bool _wireframe = false, bool _scissor = false)
 		{
-			_state &= BGFX_STATE_CULL_MASK|BGFX_STATE_MSAA|BGFX_STATE_LINEAA;
+			_state &= 0
+				| BGFX_STATE_CULL_MASK
+				| BGFX_STATE_MSAA
+				| BGFX_STATE_LINEAA
+				| BGFX_STATE_CONSERVATIVE_RASTER
+				;
 			_state |= _wireframe ? BGFX_STATE_PT_LINES : BGFX_STATE_NONE;
 			_state |= _scissor   ? BGFX_STATE_RESERVED_MASK : 0;
 
@@ -2766,19 +2773,44 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			{
 				uint32_t cull = (_state&BGFX_STATE_CULL_MASK)>>BGFX_STATE_CULL_SHIFT;
 
-				D3D11_RASTERIZER_DESC desc;
-				desc.FillMode = _wireframe ? D3D11_FILL_WIREFRAME : D3D11_FILL_SOLID;
-				desc.CullMode = s_cullMode[cull];
-				desc.FrontCounterClockwise = false;
-				desc.DepthBias = 0;
-				desc.DepthBiasClamp = 0.0f;
-				desc.SlopeScaledDepthBias = 0.0f;
-				desc.DepthClipEnable = !m_depthClamp;
-				desc.ScissorEnable = _scissor;
-				desc.MultisampleEnable = !!(_state&BGFX_STATE_MSAA);
-				desc.AntialiasedLineEnable = !!(_state&BGFX_STATE_LINEAA);
+				if (m_deviceInterfaceVersion >= 3)
+				{
+					D3D11_RASTERIZER_DESC2 desc;
+					desc.FillMode = _wireframe ? D3D11_FILL_WIREFRAME : D3D11_FILL_SOLID;
+					desc.CullMode = s_cullMode[cull];
+					desc.FrontCounterClockwise = false;
+					desc.DepthBias             = 0;
+					desc.DepthBiasClamp        = 0.0f;
+					desc.SlopeScaledDepthBias  = 0.0f;
+					desc.DepthClipEnable       = !m_depthClamp;
+					desc.ScissorEnable         = _scissor;
+					desc.MultisampleEnable     = !!(_state&BGFX_STATE_MSAA);
+					desc.AntialiasedLineEnable = !!(_state&BGFX_STATE_LINEAA);
+					desc.ForcedSampleCount     = 0;
+					desc.ConservativeRaster    = !!(_state&BGFX_STATE_CONSERVATIVE_RASTER)
+						? D3D11_CONSERVATIVE_RASTERIZATION_MODE_ON
+						: D3D11_CONSERVATIVE_RASTERIZATION_MODE_OFF
+						;
 
-				DX_CHECK(m_device->CreateRasterizerState(&desc, &rs) );
+					ID3D11Device3* device3 = reinterpret_cast<ID3D11Device3*>(m_device);
+					DX_CHECK(device3->CreateRasterizerState2(&desc, reinterpret_cast<ID3D11RasterizerState2**>(&rs) ) );
+				}
+				else
+				{
+					D3D11_RASTERIZER_DESC desc;
+					desc.FillMode = _wireframe ? D3D11_FILL_WIREFRAME : D3D11_FILL_SOLID;
+					desc.CullMode = s_cullMode[cull];
+					desc.FrontCounterClockwise = false;
+					desc.DepthBias             = 0;
+					desc.DepthBiasClamp        = 0.0f;
+					desc.SlopeScaledDepthBias  = 0.0f;
+					desc.DepthClipEnable       = !m_depthClamp;
+					desc.ScissorEnable         = _scissor;
+					desc.MultisampleEnable     = !!(_state&BGFX_STATE_MSAA);
+					desc.AntialiasedLineEnable = !!(_state&BGFX_STATE_LINEAA);
+
+					DX_CHECK(m_device->CreateRasterizerState(&desc, &rs) );
+				}
 
 				m_rasterizerStateCache.add(_state, rs);
 			}
@@ -3443,6 +3475,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		ID3D11InfoQueue*     m_infoQueue;
 		TimerQueryD3D11      m_gpuTimer;
 		OcclusionQueryD3D11  m_occlusionQuery;
+
+		uint32_t m_deviceInterfaceVersion;
 
 		ID3D11RenderTargetView* m_backBufferColor;
 		ID3D11DepthStencilView* m_backBufferDepthStencil;
@@ -5304,9 +5338,15 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					 | BGFX_STATE_POINT_SIZE_MASK
 					 | BGFX_STATE_MSAA
 					 | BGFX_STATE_LINEAA
+					 | BGFX_STATE_CONSERVATIVE_RASTER
 					 ) & changedFlags)
 				{
-					if ( (BGFX_STATE_CULL_MASK|BGFX_STATE_MSAA|BGFX_STATE_LINEAA) & changedFlags)
+					if ( (0
+						 | BGFX_STATE_CULL_MASK
+						 | BGFX_STATE_MSAA
+						 | BGFX_STATE_LINEAA
+						 | BGFX_STATE_CONSERVATIVE_RASTER
+						 ) & changedFlags)
 					{
 						setRasterizerState(newFlags, wireframe, scissorEnabled);
 					}
@@ -5725,8 +5765,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				tvm.clear();
 				uint16_t pos = 0;
 				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x89 : 0x8f
-					, " %s (FL %d.%d) / " BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME " "
+					, " %s.%d (FL %d.%d) / " BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME " "
 					, getRendererName()
+					, m_deviceInterfaceVersion
 					, (m_featureLevel >> 12) & 0xf
 					, (m_featureLevel >>  8) & 0xf
 					);

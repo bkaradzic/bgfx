@@ -2059,14 +2059,17 @@ data.NumQualityLevels = 0;
 				;
 			_desc.CullMode = s_cullMode[cull];
 			_desc.FrontCounterClockwise = false;
-			_desc.DepthBias = 0;
-			_desc.DepthBiasClamp = 0.0f;
-			_desc.SlopeScaledDepthBias = 0.0f;
-			_desc.DepthClipEnable = !m_depthClamp;
-			_desc.MultisampleEnable = !!(_state&BGFX_STATE_MSAA);
+			_desc.DepthBias             = 0;
+			_desc.DepthBiasClamp        = 0.0f;
+			_desc.SlopeScaledDepthBias  = 0.0f;
+			_desc.DepthClipEnable       = !m_depthClamp;
+			_desc.MultisampleEnable     = !!(_state&BGFX_STATE_MSAA);
 			_desc.AntialiasedLineEnable = !!(_state&BGFX_STATE_LINEAA);
-			_desc.ForcedSampleCount = 0;
-			_desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+			_desc.ForcedSampleCount     = 0;
+			_desc.ConservativeRaster    = !!(_state&BGFX_STATE_CONSERVATIVE_RASTER)
+				? D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON
+				: D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF
+				;
 		}
 
 		void setDepthStencilState(D3D12_DEPTH_STENCIL_DESC& _desc, uint64_t _state, uint64_t _stencil = 0)
@@ -2215,6 +2218,7 @@ data.NumQualityLevels = 0;
 				| BGFX_STATE_CULL_MASK
 				| BGFX_STATE_MSAA
 				| BGFX_STATE_LINEAA
+				| BGFX_STATE_CONSERVATIVE_RASTER
 				| BGFX_STATE_PT_MASK
 				;
 
