@@ -376,15 +376,18 @@ namespace bgfx { namespace d3d9
 			&&  NULL != Direct3DCreate9Ex)
 			{
 				Direct3DCreate9Ex(D3D_SDK_VERSION, &m_d3d9ex);
-				HRESULT hr = m_d3d9ex->QueryInterface(IID_IDirect3D9, (void**)&m_d3d9);
-				if (FAILED(hr) )
+				if (NULL != m_d3d9ex)
 				{
-					BX_TRACE("Failed to query D3D9 interface 0x%08x.", hr);
-					DX_RELEASE(m_d3d9ex, 0);
-				}
-				else
-				{
-					m_pool = D3DPOOL_DEFAULT;
+					HRESULT hr = m_d3d9ex->QueryInterface(IID_IDirect3D9, (void**)&m_d3d9);
+					if (FAILED(hr) )
+					{
+						BX_TRACE("Failed to query D3D9 interface 0x%08x.", hr);
+						DX_RELEASE(m_d3d9ex, 0);
+					}
+					else
+					{
+						m_pool = D3DPOOL_DEFAULT;
+					}
 				}
 			}
 
