@@ -1351,6 +1351,12 @@ namespace bgfx
 		m_dynVertexBufferAllocator.compact();
 		m_dynIndexBufferAllocator.compact();
 
+		BX_CHECK(m_vertexDeclHandle.getNumHandles() == uint16_t(m_declRef.m_vertexDeclMap.size() )
+				, "VertexDeclRef mismatch, num handles %d, handles in hash map %d."
+				, m_vertexDeclHandle.getNumHandles()
+				, m_declRef.m_vertexDeclMap.size()
+				);
+
 		m_declRef.shutdown(m_vertexDeclHandle);
 
 #if BGFX_CONFIG_MULTITHREADED

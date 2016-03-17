@@ -2271,7 +2271,7 @@ namespace bgfx
 			{
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexDecl);
 				cmdbuf.write(declHandle);
-				m_submit->free(declHandle);
+				m_render->free(declHandle);
 			}
 
 			m_vertexBufferHandle.free(_handle.idx);
@@ -2564,7 +2564,7 @@ namespace bgfx
 			{
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexDecl);
 				cmdbuf.write(declHandle);
-				m_submit->free(declHandle);
+				m_render->free(declHandle);
 			}
 
 			if (0 != (dvb.m_flags & BGFX_BUFFER_COMPUTE_WRITE) )
