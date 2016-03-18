@@ -1010,7 +1010,7 @@ namespace bgfx { namespace d3d11
 					hr = m_device->QueryInterface(s_d3dDeviceIIDs[ii], (void**)&device);
 					if (SUCCEEDED(hr) )
 					{
-						DX_RELEASE(device, 2);
+						device->Release(); // BK - ignore ref count.
 						m_deviceInterfaceVersion = BX_COUNTOF(s_d3dDeviceIIDs)-ii;
 						break;
 					}
