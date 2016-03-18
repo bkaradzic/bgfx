@@ -70,6 +70,23 @@ namespace bgfx
 		NULL
 	};
 
+	static const char* s_ARB_gpu_shader5[] =
+	{
+		"bitfieldReverse",
+		"floatBitsToInt",
+		"floatBitsToUint",
+		"intBitsToFloat",
+		"uintBitsToFloat",
+		NULL
+	};
+
+	static const char* s_ARB_shading_language_packing[] =
+	{
+		"packHalf2x16",
+		"unpackHalf2x16",
+		NULL
+	};
+
 	static const char* s_130[] =
 	{
 		"uint",
@@ -1706,7 +1723,9 @@ namespace bgfx
 							{
 								std::string code;
 
-								bool hasTextureLod = NULL != bx::findIdentifierMatch(input, s_ARB_shader_texture_lod /*EXT_shader_texture_lod*/);
+								const bool hasTextureLod    = NULL != bx::findIdentifierMatch(input, s_ARB_shader_texture_lod /*EXT_shader_texture_lod*/);
+								const bool hasShader5       = NULL != bx::findIdentifierMatch(input, s_ARB_gpu_shader5);
+								const bool hasShaderPacking = NULL != bx::findIdentifierMatch(input, s_ARB_shading_language_packing);
 
 								if (0 == essl)
 								{
@@ -1721,6 +1740,20 @@ namespace bgfx
 									else
 									{
 										bx::stringPrintf(code, "#version %s\n", need130 ? "130" : profile);
+									}
+
+									if (hasShader5)
+									{
+										bx::stringPrintf(code
+											, "#extension GL_ARB_gpu_shader5 : enable\n"
+											);
+									}
+
+									if (hasShaderPacking)
+									{
+										bx::stringPrintf(code
+											, "#extension GL_ARB_shading_language_packing : enable\n"
+											);
 									}
 
 									bx::stringPrintf(code
@@ -1769,6 +1802,20 @@ namespace bgfx
 											, "#extension GL_EXT_shadow_samplers : enable\n"
 											  "#define shadow2D shadow2DEXT\n"
 											  "#define shadow2DProj shadow2DProjEXT\n"
+											);
+									}
+
+									if (hasShader5)
+									{
+										bx::stringPrintf(code
+											, "#extension GL_ARB_gpu_shader5 : enable\n"
+											);
+									}
+
+									if (hasShaderPacking)
+									{
+										bx::stringPrintf(code
+											, "#extension GL_ARB_shading_language_packing : enable\n"
 											);
 									}
 

@@ -12,36 +12,6 @@
 
 #if BGFX_SHADER_LANGUAGE_HLSL
 
-float uintBitsToFloat(uint  _x) { return asfloat(_x); }
-vec2  uintBitsToFloat(uint2 _x) { return asfloat(_x); }
-vec3  uintBitsToFloat(uint3 _x) { return asfloat(_x); }
-vec4  uintBitsToFloat(uint4 _x) { return asfloat(_x); }
-
-uint  floatBitsToUint(float _x) { return asuint(_x); }
-uvec2 floatBitsToUint(vec2  _x) { return asuint(_x); }
-uvec3 floatBitsToUint(vec3  _x) { return asuint(_x); }
-uvec4 floatBitsToUint(vec4  _x) { return asuint(_x); }
-
-int   floatBitsToInt(float _x) { return asint(_x); }
-ivec2 floatBitsToInt(vec2  _x) { return asint(_x); }
-ivec3 floatBitsToInt(vec3  _x) { return asint(_x); }
-ivec4 floatBitsToInt(vec4  _x) { return asint(_x); }
-
-uint  bitfieldReverse(uint  _x) { return reversebits(_x); }
-uint2 bitfieldReverse(uint2 _x) { return reversebits(_x); }
-uint3 bitfieldReverse(uint3 _x) { return reversebits(_x); }
-uint4 bitfieldReverse(uint4 _x) { return reversebits(_x); }
-
-uint packHalf2x16(vec2 _x)
-{
-	return (f32tof16(_x.x)<<16) | f32tof16(_x.y);
-}
-
-vec2 unpackHalf2x16(uint _x)
-{
-	return vec2(f16tof32(_x >> 16), f16tof32(_x) );
-}
-
 #define SHARED groupshared
 
 #define r32ui   uint
