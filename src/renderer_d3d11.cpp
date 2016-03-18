@@ -412,6 +412,9 @@ namespace bgfx { namespace d3d11
 	static const GUID IID_IDXGIDevice1          = { 0x77db970f, 0x6276, 0x48ba, { 0xba, 0x28, 0x07, 0x01, 0x43, 0xb4, 0x39, 0x2c } };
 	static const GUID IID_IDXGIDevice2          = { 0x05008617, 0xfbfd, 0x4051, { 0xa7, 0x90, 0x14, 0x48, 0x84, 0xb4, 0xf6, 0xa9 } };
 	static const GUID IID_IDXGIDevice3          = { 0x6007896c, 0x3244, 0x4afd, { 0xbf, 0x18, 0xa6, 0xd3, 0xbe, 0xda, 0x50, 0x23 } };
+	static const GUID IID_ID3D11Device1         = { 0xa04bfb29, 0x08ef, 0x43d6, { 0xa4, 0x9c, 0xa9, 0xbd, 0xbd, 0xcb, 0xe6, 0x86 } };
+	static const GUID IID_ID3D11Device2         = { 0x9d06dffa, 0xd1e5, 0x4d07, { 0x83, 0xa8, 0x1b, 0xb1, 0x23, 0xf2, 0xf8, 0x41 } };
+	static const GUID IID_ID3D11Device3         = { 0xa05c8c37, 0xd2c6, 0x4732, { 0xb3, 0xa0, 0x9c, 0xe0, 0xb0, 0xdc, 0x9a, 0xe6 } };
 	static const GUID IID_IDXGIAdapter          = { 0x2411e7e1, 0x12ac, 0x4ccf, { 0xbd, 0x14, 0x97, 0x98, 0xe8, 0x53, 0x4d, 0xc0 } };
 	static const GUID IID_ID3D11InfoQueue       = { 0x6543dbb6, 0x1b48, 0x42f5, { 0xab, 0x82, 0xe9, 0x7e, 0xc7, 0x43, 0x26, 0xf6 } };
 	static const GUID IID_IDXGIDeviceRenderDoc  = { 0xa7aa6116, 0x9c8d, 0x4bba, { 0x90, 0x83, 0xb4, 0xd8, 0x16, 0xb7, 0x1b, 0x78 } };
@@ -422,7 +425,14 @@ namespace bgfx { namespace d3d11
 		D3D11_FORMAT_SUPPORT2_UAV_TYPED_STORE = 0x80,
 	};
 
-	static const GUID s_deviceIIDs[] =
+	static const GUID s_d3dDeviceIIDs[] =
+	{
+		IID_ID3D11Device3,
+		IID_ID3D11Device2,
+		IID_ID3D11Device1,
+	};
+
+	static const GUID s_dxgiDeviceIIDs[] =
 	{
 		IID_IDXGIDevice3,
 		IID_IDXGIDevice2,
@@ -906,6 +916,8 @@ namespace bgfx { namespace d3d11
 
 				D3D_FEATURE_LEVEL featureLevel[] =
 				{
+					D3D_FEATURE_LEVEL_12_1,
+					D3D_FEATURE_LEVEL_12_0,
 					D3D_FEATURE_LEVEL_11_1,
 					D3D_FEATURE_LEVEL_11_0,
 					D3D_FEATURE_LEVEL_10_1,
@@ -991,14 +1003,26 @@ namespace bgfx { namespace d3d11
 			}
 
 			{
-				IDXGIDevice*  device = NULL;
+				m_deviceInterfaceVersion = 0;
+				for (uint32_t ii = 0; ii < BX_COUNTOF(s_d3dDeviceIIDs); ++ii)
+				{
+					ID3D11Device* device;
+					hr = m_device->QueryInterface(s_d3dDeviceIIDs[ii], (void**)&device);
+					if (SUCCEEDED(hr) )
+					{
+						DX_RELEASE(device, 2);
+						m_deviceInterfaceVersion = BX_COUNTOF(s_d3dDeviceIIDs)-ii;
+						break;
+					}
+				}
+
+				IDXGIDevice*  device  = NULL;
 				IDXGIAdapter* adapter = NULL;
 				hr = E_FAIL;
-				for (uint32_t ii = 0; ii < BX_COUNTOF(s_deviceIIDs) && FAILED(hr); ++ii)
+				for (uint32_t ii = 0; ii < BX_COUNTOF(s_dxgiDeviceIIDs) && FAILED(hr); ++ii)
 				{
-					hr = m_device->QueryInterface(s_deviceIIDs[ii], (void**)&device);
-					m_deviceInterfaceVersion = BX_COUNTOF(s_deviceIIDs)-1-ii;
-					BX_TRACE("D3D device 11.%d, hr %x", m_deviceInterfaceVersion, hr);
+					hr = m_device->QueryInterface(s_dxgiDeviceIIDs[ii], (void**)&device);
+					BX_TRACE("DXGI device 11.%d, hr %x", BX_COUNTOF(s_dxgiDeviceIIDs)-1-ii, hr);
 
 					if (SUCCEEDED(hr) )
 					{
@@ -1012,7 +1036,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4530) // warning C4530: C++ exception handler 
 						}
 						catch (...)
 						{
-							BX_TRACE("Failed to get adapter foro IID_IDXGIDevice%d.", BX_COUNTOF(s_deviceIIDs)-1-ii);
+							BX_TRACE("Failed to get adapter foro IID_IDXGIDevice%d.", BX_COUNTOF(s_dxgiDeviceIIDs)-1-ii);
 							DX_RELEASE(device, 0);
 							hr = E_FAIL;
 						}
@@ -2767,6 +2791,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				;
 			_state |= _wireframe ? BGFX_STATE_PT_LINES : BGFX_STATE_NONE;
 			_state |= _scissor   ? BGFX_STATE_RESERVED_MASK : 0;
+			_state &= ~(m_deviceInterfaceVersion >= 3 ? 0 : BGFX_STATE_CONSERVATIVE_RASTER);
 
 			ID3D11RasterizerState* rs = m_rasterizerStateCache.find(_state);
 			if (NULL == rs)
