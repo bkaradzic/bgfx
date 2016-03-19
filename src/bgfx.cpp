@@ -2387,7 +2387,8 @@ namespace bgfx
 			return false;
 		}
 
-		if (NULL == g_platformData.ndt
+		if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
+		&&  NULL == g_platformData.ndt
 		&&  NULL == g_platformData.nwh
 		&&  NULL == g_platformData.context
 		&&  NULL == g_platformData.backBuffer
