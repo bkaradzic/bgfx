@@ -2387,7 +2387,7 @@ namespace bgfx
 			return false;
 		}
 
-		if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
+		if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_NACL)
 		&&  NULL == g_platformData.ndt
 		&&  NULL == g_platformData.nwh
 		&&  NULL == g_platformData.context
