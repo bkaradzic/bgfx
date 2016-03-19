@@ -2364,6 +2364,16 @@ namespace bgfx
 
 	const Memory* imageAlloc(ImageContainer& _imageContainer, TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth, bool _cubeMap, bool _generateMips)
 	{
+		const ImageBlockInfo& blockInfo = getBlockInfo(_format);
+		const uint16_t blockWidth  = blockInfo.blockWidth;
+		const uint16_t blockHeight = blockInfo.blockHeight;
+		const uint16_t minBlockX   = blockInfo.minBlockX;
+		const uint16_t minBlockY   = blockInfo.minBlockY;
+
+		_width   = bx::uint16_max(blockWidth  * minBlockX, ( (_width  + blockWidth  - 1) / blockWidth)*blockWidth);
+		_height  = bx::uint16_max(blockHeight * minBlockY, ( (_height + blockHeight - 1) / blockHeight)*blockHeight);
+		_depth   = bx::uint16_max(1, _depth);
+
 		const uint8_t numMips = _generateMips ? imageGetNumMips(_format, _width, _height) : 1;
 		uint32_t size = imageGetSize(_format, _width, _height, 0, false, numMips);
 		const Memory* image = alloc(size);
