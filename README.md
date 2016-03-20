@@ -21,6 +21,7 @@ Supported rendering backends:
  * OpenGL ES 2
  * OpenGL ES 3.1
  * WebGL 1.0
+ * WebGL 2.0
 
 Supported HMD:
 
