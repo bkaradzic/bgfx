@@ -48,17 +48,17 @@ namespace bgfx
 			read(_reader, spirv, _err);
 			parse(spirv.shader, printAsm, _writer, _err);
 		}
-		else if (magic != BX_MAKEFOURCC('D', 'X', 'B', 'C') )
-		{
-			Dx9bc dx9bc;
-			read(_reader, dx9bc, _err);
-			parse(dx9bc.shader, printAsm, _writer, _err);
-		}
-		else
+		else if (magic == BX_MAKEFOURCC('D', 'X', 'B', 'C') )
 		{
 			DxbcContext dxbc;
 			read(_reader, dxbc, _err);
 			parse(dxbc.shader, printAsm, _writer, _err);
+		}
+		else
+		{
+			Dx9bc dx9bc;
+			read(_reader, dx9bc, _err);
+			parse(dx9bc.shader, printAsm, _writer, _err);
 		}
 	}
 

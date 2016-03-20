@@ -8,15 +8,6 @@
 
 namespace bgfx
 {
-	struct SpvOpcodeInfo
-	{
-		bool hasType;
-		bool hasResult;
-		SpvOperand::Enum operands[8];
-	};
-
-	static const SpvOpcodeInfo s_spvOpcodeInfo[] =
-	{
 #define SPV_OPERAND_1(_a0) SpvOperand::_a0
 #define SPV_OPERAND_2(_a0, _a1) SPV_OPERAND_1(_a0), SPV_OPERAND_1(_a1)
 #define SPV_OPERAND_3(_a0, _a1, _a2) SPV_OPERAND_1(_a0), SPV_OPERAND_2(_a1, _a2)
@@ -33,6 +24,23 @@ namespace bgfx
 #	define SPV_OPERAND(...) { BX_MACRO_DISPATCHER(SPV_OPERAND_, __VA_ARGS__)(__VA_ARGS__) }
 #endif // BX_COMPILER_MSVC
 #define _ Count
+
+	bool isDebug(SpvOpcode::Enum _opcode)
+	{
+		return (SpvOpcode::SourceContinued <= _opcode && SpvOpcode::Line >= _opcode)
+			||  SpvOpcode::NoLine == _opcode
+			;
+	}
+
+	struct SpvOpcodeInfo
+	{
+		bool hasType;
+		bool hasResult;
+		SpvOperand::Enum operands[8];
+	};
+
+	static const SpvOpcodeInfo s_spvOpcodeInfo[] =
+	{
 		{ false, false, /* Nop,                                     //   0 */ SPV_OPERAND(_) },
 		{ true,  true,  /* Undef,                                   //   1 */ SPV_OPERAND(_) },
 		{ false, false, /* SourceContinued,                         //   2 */ SPV_OPERAND(_) },
@@ -61,10 +69,10 @@ namespace bgfx
 		{ false, true,  /* TypeImage,                               //  25 */ SPV_OPERAND(SampledType, Dim, LiteralNumber, LiteralNumber, LiteralNumber, LiteralNumber, ImageFormat, AccessQualifier) },
 		{ false, true,  /* TypeSampler,                             //  26 */ SPV_OPERAND(LiteralNumber) },
 		{ false, true,  /* TypeSampledImage,                        //  27 */ SPV_OPERAND(LiteralNumber) },
-		{ false, true,  /* TypeArray,                               //  28 */ SPV_OPERAND(LiteralNumber) },
-		{ false, true,  /* TypeRuntimeArray,                        //  29 */ SPV_OPERAND(_) },
-		{ false, true,  /* TypeStruct,                              //  30 */ SPV_OPERAND(_) },
-		{ false, true,  /* TypeOpaque,                              //  31 */ SPV_OPERAND(_) },
+		{ false, true,  /* TypeArray,                               //  28 */ SPV_OPERAND(ElementType, LiteralNumber) },
+		{ false, true,  /* TypeRuntimeArray,                        //  29 */ SPV_OPERAND(ElementType) },
+		{ false, true,  /* TypeStruct,                              //  30 */ SPV_OPERAND(IdRep) },
+		{ false, true,  /* TypeOpaque,                              //  31 */ SPV_OPERAND(LiteralString) },
 		{ false, true,  /* TypePointer,                             //  32 */ SPV_OPERAND(StorageClass, Id) },
 		{ false, true,  /* TypeFunction,                            //  33 */ SPV_OPERAND(Id, Id, Id, Id, Id) },
 		{ false, true,  /* TypeEvent,                               //  34 */ SPV_OPERAND(_) },
@@ -354,8 +362,6 @@ namespace bgfx
 		{ true,  true,  /* AtomicFlagTestAndSet,                    // 318 */ SPV_OPERAND(_) },
 		{ false, false, /* AtomicFlagClear,                         // 319 */ SPV_OPERAND(_) },
 		{ true,  true,  /* ImageSparseRead,                         // 320 */ SPV_OPERAND(_) },
-#undef _
-#undef SPV_OPERAND
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_spvOpcodeInfo) == SpvOpcode::Count);
 
@@ -682,17 +688,135 @@ namespace bgfx
 		"AtomicFlagTestAndSet",
 		"AtomicFlagClear",
 		"ImageSparseRead",
+		"",
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_spvOpcode) == SpvOpcode::Count);
+	BX_STATIC_ASSERT(BX_COUNTOF(s_spvOpcode)-1 == SpvOpcode::Count);
 
 	const char* getName(SpvOpcode::Enum _opcode)
 	{
-		BX_WARN(_opcode < SpvOpcode::Count, "Unknown opcode id %d.", _opcode);
-		return _opcode < SpvOpcode::Count
+		BX_WARN(_opcode <= SpvOpcode::Count, "Unknown opcode id %d.", _opcode);
+		return _opcode <= SpvOpcode::Count
 			?  s_spvOpcode[_opcode]
 			: "?SpvOpcode?"
 			;
 	}
+
+	struct SpvDecorationInfo
+	{
+		SpvOperand::Enum operands[2];
+	};
+
+	static const SpvDecorationInfo s_spvDecorationInfo[] =
+	{
+		{ /* RelaxedPrecision     */ SPV_OPERAND(_) },
+		{ /* SpecId               */ SPV_OPERAND(LiteralNumber) },
+		{ /* Block                */ SPV_OPERAND(_) },
+		{ /* BufferBlock          */ SPV_OPERAND(_) },
+		{ /* RowMajor             */ SPV_OPERAND(_) },
+		{ /* ColMajor             */ SPV_OPERAND(_) },
+		{ /* ArrayStride          */ SPV_OPERAND(LiteralNumber) },
+		{ /* MatrixStride         */ SPV_OPERAND(LiteralNumber) },
+		{ /* GLSLShared           */ SPV_OPERAND(_) },
+		{ /* GLSLPacked           */ SPV_OPERAND(_) },
+		{ /* CPacked              */ SPV_OPERAND(_) },
+		{ /* BuiltIn              */ SPV_OPERAND(LiteralNumber) },
+		{ /* Unknown12            */ SPV_OPERAND(_) },
+		{ /* NoPerspective        */ SPV_OPERAND(_) },
+		{ /* Flat                 */ SPV_OPERAND(_) },
+		{ /* Patch                */ SPV_OPERAND(_) },
+		{ /* Centroid             */ SPV_OPERAND(_) },
+		{ /* Sample               */ SPV_OPERAND(_) },
+		{ /* Invariant            */ SPV_OPERAND(_) },
+		{ /* Restrict             */ SPV_OPERAND(_) },
+		{ /* Aliased              */ SPV_OPERAND(_) },
+		{ /* Volatile             */ SPV_OPERAND(_) },
+		{ /* Constant             */ SPV_OPERAND(_) },
+		{ /* Coherent             */ SPV_OPERAND(_) },
+		{ /* NonWritable          */ SPV_OPERAND(_) },
+		{ /* NonReadable          */ SPV_OPERAND(_) },
+		{ /* Uniform              */ SPV_OPERAND(_) },
+		{ /* Unknown27            */ SPV_OPERAND(_) },
+		{ /* SaturatedConversion  */ SPV_OPERAND(_) },
+		{ /* Stream               */ SPV_OPERAND(LiteralNumber) },
+		{ /* Location             */ SPV_OPERAND(LiteralNumber) },
+		{ /* Component            */ SPV_OPERAND(LiteralNumber) },
+		{ /* Index                */ SPV_OPERAND(LiteralNumber) },
+		{ /* Binding              */ SPV_OPERAND(LiteralNumber) },
+		{ /* DescriptorSet        */ SPV_OPERAND(LiteralNumber) },
+		{ /* Offset               */ SPV_OPERAND(LiteralNumber) },
+		{ /* XfbBuffer            */ SPV_OPERAND(LiteralNumber) },
+		{ /* XfbStride            */ SPV_OPERAND(LiteralNumber) },
+		{ /* FuncParamAttr        */ SPV_OPERAND(_) },
+		{ /* FPRoundingMode       */ SPV_OPERAND(_) },
+		{ /* FPFastMathMode       */ SPV_OPERAND(_) },
+		{ /* LinkageAttributes    */ SPV_OPERAND(LiteralString, LinkageType) },
+		{ /* NoContraction        */ SPV_OPERAND(_) },
+		{ /* InputAttachmentIndex */ SPV_OPERAND(LiteralNumber) },
+		{ /* Alignment            */ SPV_OPERAND(LiteralNumber) },
+	};
+
+	static const char* s_spvDecoration[] =
+	{
+		"RelaxedPrecision",
+		"SpecId",
+		"Block",
+		"BufferBlock",
+		"RowMajor",
+		"ColMajor",
+		"ArrayStride",
+		"MatrixStride",
+		"GLSLShared",
+		"GLSLPacked",
+		"CPacked",
+		"BuiltIn",
+		"Unknown12",
+		"NoPerspective",
+		"Flat",
+		"Patch",
+		"Centroid",
+		"Sample",
+		"Invariant",
+		"Restrict",
+		"Aliased",
+		"Volatile",
+		"Constant",
+		"Coherent",
+		"NonWritable",
+		"NonReadable",
+		"Uniform",
+		"Unknown27",
+		"SaturatedConversion",
+		"Stream",
+		"Location",
+		"Component",
+		"Index",
+		"Binding",
+		"DescriptorSet",
+		"Offset",
+		"XfbBuffer",
+		"XfbStride",
+		"FuncParamAttr",
+		"FPRoundingMode",
+		"FPFastMathMode",
+		"LinkageAttributes",
+		"NoContraction",
+		"InputAttachmentIndex",
+		"Alignment",
+		""
+	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_spvDecoration)-1 == SpvDecoration::Count);
+
+	const char* getName(SpvDecoration::Enum _enum)
+	{
+		BX_CHECK(_enum <= SpvDecoration::Count, "Unknown decoration id %d.", _enum);
+		return _enum <= SpvDecoration::Count
+			?  s_spvDecoration[_enum]
+			: "?SpvDecoration?"
+			;
+	}
+
+#undef _
+#undef SPV_OPERAND
 
 	static const char* s_spvStorageClass[] =
 	{
@@ -708,15 +832,72 @@ namespace bgfx
 		"PushConstant",
 		"AtomicCounter",
 		"Image",
+		""
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_spvStorageClass) == SpvStorageClass::Count);
+	BX_STATIC_ASSERT(BX_COUNTOF(s_spvStorageClass)-1 == SpvStorageClass::Count);
 
 	const char* getName(SpvStorageClass::Enum _enum)
 	{
-		BX_CHECK(_enum < SpvStorageClass::Count, "Unknown storage class id %d.", _enum);
-		return _enum < SpvStorageClass::Count
+		BX_CHECK(_enum <= SpvStorageClass::Count, "Unknown storage class id %d.", _enum);
+		return _enum <= SpvStorageClass::Count
 			?  s_spvStorageClass[_enum]
 			: "?SpvStorageClass?"
+			;
+	}
+
+	static const char* s_spvBuiltin[] =
+	{
+		"Position",
+		"PointSize",
+		"ClipDistance",
+		"CullDistance",
+		"VertexId",
+		"InstanceId",
+		"PrimitiveId",
+		"InvocationId",
+		"Layer",
+		"ViewportIndex",
+		"TessLevelOuter",
+		"TessLevelInner",
+		"TessCoord",
+		"PatchVertices",
+		"FragCoord",
+		"PointCoord",
+		"FrontFacing",
+		"SampleId",
+		"SamplePosition",
+		"SampleMask",
+		"FragDepth",
+		"HelperInvocation",
+		"NumWorkgroups",
+		"WorkgroupSize",
+		"WorkgroupId",
+		"LocalInvocationId",
+		"GlobalInvocationId",
+		"LocalInvocationIndex",
+		"WorkDim",
+		"GlobalSize",
+		"EnqueuedWorkgroupSize",
+		"GlobalOffset",
+		"GlobalLinearId",
+		"SubgroupSize",
+		"SubgroupMaxSize",
+		"NumSubgroups",
+		"NumEnqueuedSubgroups",
+		"SubgroupId",
+		"SubgroupLocalInvocationId",
+		"VertexIndex",
+		"InstanceIndex",
+		"",
+	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_spvBuiltin)-1 == SpvBuiltin::Count);
+
+	const char* getName(SpvBuiltin::Enum _enum)
+	{
+		BX_CHECK(_enum <= SpvBuiltin::Count, "Unknown builtin id %d.", _enum);
+		return _enum <= SpvBuiltin::Count
+			?  s_spvBuiltin[_enum]
+			: "?SpvBuiltin?"
 			;
 	}
 
@@ -775,10 +956,18 @@ namespace bgfx
 		{
 			size += read(_reader, _instruction.type, _err);
 		}
+		else
+		{
+			_instruction.type = UINT32_MAX;
+		}
 
 		if (info.hasResult)
 		{
 			size += read(_reader, _instruction.result, _err);
+		}
+		else
+		{
+			_instruction.result = UINT32_MAX;
 		}
 
 		uint16_t currOp = 0;
@@ -826,10 +1015,21 @@ namespace bgfx
 
 		if (_instruction.hasResult)
 		{
-			size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
-						, " %%%d = "
-						, _instruction.result
-						);
+			if (_instruction.hasType)
+			{
+				size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
+							, " r%d.t%d = "
+							, _instruction.result
+							, _instruction.type
+							);
+			}
+			else
+			{
+				size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
+							, " r%d = "
+							, _instruction.result
+							);
+			}
 		}
 
 		size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
@@ -847,6 +1047,14 @@ namespace bgfx
 							, "%sAddressingModel(%d)"
 							, 0 == ii ? " " : ", "
 							, operand.data[0]
+							);
+				break;
+
+			case SpvOperand::Decoration:
+				size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
+							, "%s%s"
+							, 0 == ii ? " " : ", "
+							, getName(SpvDecoration::Enum(operand.data[0]) )
 							);
 				break;
 
@@ -900,7 +1108,7 @@ namespace bgfx
 
 			default:
 				size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
-							, "%s%%%d"
+							, "%sr%d"
 							, 0 == ii ? " " : ", "
 							, operand.data[0]
 							);
@@ -978,12 +1186,16 @@ namespace bgfx
 				return;
 			}
 
-			BX_CHECK(size/4 == instruction.length, "read %d, expected %d, %s"
-					, size/4
-					, instruction.length
-					, getName(instruction.opcode)
-					);
-			BX_UNUSED(size);
+			if (size/4 != instruction.length)
+			{
+				BX_TRACE("read %d, expected %d, %s"
+						, size/4
+						, instruction.length
+						, getName(instruction.opcode)
+						);
+				BX_ERROR_SET(_err, BGFX_SHADER_SPIRV_INVALID_INSTRUCTION, "SPIR-V: Invalid instruction.");
+				return;
+			}
 
 			bool cont = _fn(token * sizeof(uint32_t), instruction, _userData);
 			if (!cont)
