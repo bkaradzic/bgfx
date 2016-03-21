@@ -149,6 +149,7 @@
  Here is a change-log of API breaking changes, if you are using one of the functions listed, expect to have to fix some code.
  Also read releases logs https://github.com/ocornut/imgui/releases for more details.
 
+ - 2016/03/21 (1.48) - renamed GetWindowFont() to GetFont(), GetWindowFontSize() to GetFontSize(). Kept inline redirection function (will obsolete).
  - 2016/03/02 (1.48) - InputText() completion/history/always callbacks: if you modify the text buffer manually (without using DeleteChars()/InsertChars() helper) you need to maintain the BufTextLen field. added an assert.
  - 2016/01/23 (1.48) - fixed not honoring exact width passed to PushItemWidth(), previously it would add extra FramePadding.x*2 over that width. if you had manual pixel-perfect alignment in place it might affect you.
  - 2015/12/27 (1.48) - fixed ImDrawList::AddRect() which used to render a rectangle 1 px too large on each axis.
@@ -424,7 +425,6 @@
  - window: get size/pos helpers given names (see discussion in #249)
  - window: a collapsed window can be stuck behind the main menu bar?
  - window: detect extra End() call that pop the "Debug" window out and assert at call site instead of later.
- - window: consider renaming "GetWindowFont" which conflict with old Windows #define (#340)
  - window/tooltip: allow to set the width of a tooltip to allow TextWrapped() etc. while keeping the height automatic.
  - window: increase minimum size of a window with menus or fix the menu rendering so that it doesn't look odd.
  - draw-list: maintaining bounding box per command would allow to merge draw command when clipping isn't relied on (typical non-scrolling window or non-overflowing column would merge with previous command).
@@ -591,7 +591,6 @@
 //-------------------------------------------------------------------------
 
 static void             LogRenderedText(const ImVec2& ref_pos, const char* text, const char* text_end = NULL);
-static const char*      FindTextDisplayEnd(const char* text, const char* text_end = NULL);
 
 static void             PushMultiItemsWidths(int components, float w_full = 0.0f);
 static float            GetDraggedColumnOffset(int column_index);
@@ -2510,8 +2509,7 @@ void ImGui::Render()
     }
 }
 
-// Find the optional ## from which we stop displaying text.
-static const char*  FindTextDisplayEnd(const char* text, const char* text_end)
+const char* ImGui::FindRenderedTextEnd(const char* text, const char* text_end)
 {
     const char* text_display_end = text;
     if (!text_end)
@@ -2550,7 +2548,7 @@ static void LogRenderedText(const ImVec2& ref_pos, const char* text, const char*
     ImGuiWindow* window = ImGui::GetCurrentWindowRead();
 
     if (!text_end)
-        text_end = FindTextDisplayEnd(text, text_end);
+        text_end = ImGui::FindRenderedTextEnd(text, text_end);
 
     const bool log_new_line = ref_pos.y > window->DC.LogLinePosY+1;
     window->DC.LogLinePosY = ref_pos.y;
@@ -2604,7 +2602,7 @@ void ImGui::RenderText(ImVec2 pos, const char* text, const char* text_end, bool 
     const char* text_display_end;
     if (hide_text_after_hash)
     {
-        text_display_end = FindTextDisplayEnd(text, text_end);
+        text_display_end = FindRenderedTextEnd(text, text_end);
     }
     else
     {
@@ -2643,7 +2641,7 @@ void ImGui::RenderTextWrapped(ImVec2 pos, const char* text, const char* text_end
 void ImGui::RenderTextClipped(const ImVec2& pos_min, const ImVec2& pos_max, const char* text, const char* text_end, const ImVec2* text_size_if_known, ImGuiAlign align, const ImVec2* clip_min, const ImVec2* clip_max)
 {
     // Hide anything after a '##' string
-    const char* text_display_end = FindTextDisplayEnd(text, text_end);
+    const char* text_display_end = FindRenderedTextEnd(text, text_end);
     const int text_len = (int)(text_display_end - text);
     if (text_len == 0)
         return;
@@ -2750,7 +2748,7 @@ ImVec2 ImGui::CalcTextSize(const char* text, const char* text_end, bool hide_tex
 
     const char* text_display_end;
     if (hide_text_after_double_hash)
-        text_display_end = FindTextDisplayEnd(text, text_end);      // Hide anything after a '##' string
+        text_display_end = FindRenderedTextEnd(text, text_end);      // Hide anything after a '##' string
     else
         text_display_end = text_end;
 
@@ -2829,13 +2827,13 @@ static ImGuiWindow* FindHoveredWindow(ImVec2 pos, bool excluding_childs)
 // Test if mouse cursor is hovering given rectangle
 // NB- Rectangle is clipped by our current clip setting
 // NB- Expand the rectangle to be generous on imprecise inputs systems (g.Style.TouchExtraPadding)
-bool ImGui::IsMouseHoveringRect(const ImVec2& pos_min, const ImVec2& pos_max, bool clip)
+bool ImGui::IsMouseHoveringRect(const ImVec2& r_min, const ImVec2& r_max, bool clip)
 {
     ImGuiState& g = *GImGui;
     ImGuiWindow* window = GetCurrentWindowRead();
 
     // Clip
-    ImRect rect_clipped(pos_min, pos_max);
+    ImRect rect_clipped(r_min, r_max);
     if (clip)
         rect_clipped.Clip(window->ClipRect);
 
@@ -4832,16 +4830,19 @@ ImDrawList* ImGui::GetWindowDrawList()
     return window->DrawList;
 }
 
-ImFont* ImGui::GetWindowFont()
+ImFont* ImGui::GetFont()
 {
-    ImGuiState& g = *GImGui;
-    return g.Font;
+    return GImGui->Font;
 }
 
-float ImGui::GetWindowFontSize()
+float ImGui::GetFontSize()
 {
-    ImGuiState& g = *GImGui;
-    return g.FontSize;
+    return GImGui->FontSize;
+}
+
+ImVec2 ImGui::GetFontTexUvWhitePixel()
+{
+    return GImGui->FontTexUvWhitePixel;
 }
 
 void ImGui::SetWindowFontScale(float scale)
@@ -6336,7 +6337,7 @@ bool ImGui::SliderFloatN(const char* label, float* v, int components, float v_mi
     }
     ImGui::PopID();
 
-    ImGui::TextUnformatted(label, FindTextDisplayEnd(label));
+    ImGui::TextUnformatted(label, FindRenderedTextEnd(label));
     ImGui::EndGroup();
 
     return value_changed;
@@ -6378,7 +6379,7 @@ bool ImGui::SliderIntN(const char* label, int* v, int components, int v_min, int
     }
     ImGui::PopID();
 
-    ImGui::TextUnformatted(label, FindTextDisplayEnd(label));
+    ImGui::TextUnformatted(label, FindRenderedTextEnd(label));
     ImGui::EndGroup();
 
     return value_changed;
@@ -6558,7 +6559,7 @@ bool ImGui::DragFloatN(const char* label, float* v, int components, float v_spee
     }
     ImGui::PopID();
 
-    ImGui::TextUnformatted(label, FindTextDisplayEnd(label));
+    ImGui::TextUnformatted(label, FindRenderedTextEnd(label));
     ImGui::EndGroup();
 
     return value_changed;
@@ -6597,7 +6598,7 @@ bool ImGui::DragFloatRange2(const char* label, float* v_current_min, float* v_cu
     ImGui::PopItemWidth();
     ImGui::SameLine(0, g.Style.ItemInnerSpacing.x);
 
-    ImGui::TextUnformatted(label, FindTextDisplayEnd(label));
+    ImGui::TextUnformatted(label, FindRenderedTextEnd(label));
     ImGui::EndGroup();
     ImGui::PopID();
 
@@ -6636,7 +6637,7 @@ bool ImGui::DragIntN(const char* label, int* v, int components, float v_speed, i
     }
     ImGui::PopID();
 
-    ImGui::TextUnformatted(label, FindTextDisplayEnd(label));
+    ImGui::TextUnformatted(label, FindRenderedTextEnd(label));
     ImGui::EndGroup();
 
     return value_changed;
@@ -6675,7 +6676,7 @@ bool ImGui::DragIntRange2(const char* label, int* v_current_min, int* v_current_
     ImGui::PopItemWidth();
     ImGui::SameLine(0, g.Style.ItemInnerSpacing.x);
 
-    ImGui::TextUnformatted(label, FindTextDisplayEnd(label));
+    ImGui::TextUnformatted(label, FindRenderedTextEnd(label));
     ImGui::EndGroup();
     ImGui::PopID();
 
@@ -6909,12 +6910,16 @@ bool ImGui::Checkbox(const char* label, bool* v)
 
 bool ImGui::CheckboxFlags(const char* label, unsigned int* flags, unsigned int flags_value)
 {
-    bool v = (*flags & flags_value) ? true : false;
+    bool v = ((*flags & flags_value) == flags_value);
     bool pressed = ImGui::Checkbox(label, &v);
-    if (v)
-        *flags |= flags_value;
-    else
-        *flags &= ~flags_value;
+    if (pressed)
+    {
+        if (v)
+            *flags |= flags_value;
+        else
+            *flags &= ~flags_value;
+    }
+    
     return pressed;
 }
 
@@ -7895,7 +7900,7 @@ bool ImGui::InputFloatN(const char* label, float* v, int components, int decimal
     ImGui::PopID();
 
     window->DC.CurrentLineTextBaseOffset = ImMax(window->DC.CurrentLineTextBaseOffset, g.Style.FramePadding.y);
-    ImGui::TextUnformatted(label, FindTextDisplayEnd(label));
+    ImGui::TextUnformatted(label, FindRenderedTextEnd(label));
     ImGui::EndGroup();
 
     return value_changed;
@@ -7938,7 +7943,7 @@ bool ImGui::InputIntN(const char* label, int* v, int components, ImGuiInputTextF
     ImGui::PopID();
 
     window->DC.CurrentLineTextBaseOffset = ImMax(window->DC.CurrentLineTextBaseOffset, g.Style.FramePadding.y);
-    ImGui::TextUnformatted(label, FindTextDisplayEnd(label));
+    ImGui::TextUnformatted(label, FindRenderedTextEnd(label));
     ImGui::EndGroup();
 
     return value_changed;
@@ -8649,7 +8654,7 @@ bool ImGui::ColorEdit4(const char* label, float col[4], bool alpha)
             g.ColorEditModeStorage.SetInt(id, (edit_mode + 1) % 3); // Don't set local copy of 'edit_mode' right away!
     }
 
-    const char* label_display_end = FindTextDisplayEnd(label);
+    const char* label_display_end = FindRenderedTextEnd(label);
     if (label != label_display_end)
     {
         ImGui::SameLine(0, (window->DC.ColorEditMode == ImGuiColorEditMode_UserSelectShowButton) ? -1.0f : style.ItemInnerSpacing.x);
@@ -8798,33 +8803,31 @@ void ImGui::EndGroup()
 }
 
 // Gets back to previous line and continue with horizontal layout
-//      local_pos_x == 0   : follow on previous item
-//      local_pos_x != 0   : align to specified column
+//      pos_x == 0      : follow on previous item
+//      pos_x != 0      : align to specified column
 //      spacing_w < 0   : use default spacing if column_x==0, no spacing if column_x!=0
 //      spacing_w >= 0  : enforce spacing
-void ImGui::SameLine(float local_pos_x, float spacing_w)
+void ImGui::SameLine(float pos_x, float spacing_w)
 {
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
         return;
 
     ImGuiState& g = *GImGui;
-    float x, y;
-    if (local_pos_x != 0.0f)
+    if (pos_x != 0.0f)
     {
         if (spacing_w < 0.0f) spacing_w = 0.0f;
-        x = window->Pos.x - window->Scroll.x + local_pos_x + spacing_w;
-        y = window->DC.CursorPosPrevLine.y;
+        window->DC.CursorPos.x = window->Pos.x - window->Scroll.x + pos_x + spacing_w;
+        window->DC.CursorPos.y = window->DC.CursorPosPrevLine.y;
     }
     else
     {
         if (spacing_w < 0.0f) spacing_w = g.Style.ItemSpacing.x;
-        x = window->DC.CursorPosPrevLine.x + spacing_w;
-        y = window->DC.CursorPosPrevLine.y;
+        window->DC.CursorPos.x = window->DC.CursorPosPrevLine.x + spacing_w;
+        window->DC.CursorPos.y = window->DC.CursorPosPrevLine.y;
     }
     window->DC.CurrentLineHeight = window->DC.PrevLineHeight;
     window->DC.CurrentLineTextBaseOffset = window->DC.PrevLineTextBaseOffset;
-    window->DC.CursorPos = ImVec2(x, y);
 }
 
 void ImGui::NextColumn()
