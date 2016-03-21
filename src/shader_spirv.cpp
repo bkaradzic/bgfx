@@ -808,6 +808,7 @@ namespace bgfx
 
 	const char* getName(SpvDecoration::Enum _enum)
 	{
+		BX_UNUSED(s_spvDecorationInfo);
 		BX_CHECK(_enum <= SpvDecoration::Count, "Unknown decoration id %d.", _enum);
 		return _enum <= SpvDecoration::Count
 			?  s_spvDecoration[_enum]
