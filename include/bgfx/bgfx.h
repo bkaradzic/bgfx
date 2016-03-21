@@ -2361,7 +2361,14 @@ namespace bgfx
 		, uint32_t _flags = UINT32_MAX
 		);
 
-	/// Touch view.
+	/// Submit an empty primitive for rendering. Uniforms and draw state
+	/// will be applied but no geometry will be submitted.
+	///
+	/// These empty draw calls will sort before ordinary draw calls.
+	///
+	/// @param[in] _id View id.
+	/// @returns Number of draw calls.
+	///
 	uint32_t touch(uint8_t _id);
 
 	/// Submit primitive for rendering.
