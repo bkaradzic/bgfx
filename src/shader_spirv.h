@@ -581,9 +581,8 @@ namespace bgfx
 		};
 
 		Enum type;
-		uint32_t data[4];
+		uint32_t data;
 
-		uint32_t target;
 		stl::string literalString;
 	};
 
