@@ -186,9 +186,9 @@ namespace bgfx { namespace gl
 
 	static const GLenum s_textureFilterMin[][3] =
 	{
-		{ GL_LINEAR,  GL_LINEAR_MIPMAP_LINEAR,  GL_NEAREST_MIPMAP_LINEAR  },
-		{ GL_NEAREST, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_NEAREST },
-		{ GL_LINEAR,  GL_LINEAR_MIPMAP_LINEAR,  GL_NEAREST_MIPMAP_LINEAR  },
+		{ GL_LINEAR,  GL_LINEAR_MIPMAP_LINEAR,  GL_LINEAR_MIPMAP_NEAREST  },
+		{ GL_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST_MIPMAP_NEAREST },
+		{ GL_LINEAR,  GL_LINEAR_MIPMAP_LINEAR,  GL_LINEAR_MIPMAP_NEAREST  },
 	};
 
 	struct TextureFormatInfo
@@ -4437,11 +4437,11 @@ namespace bgfx { namespace gl
 		&&  !s_textureFilter[m_textureFormat])
 		{
 			// Force point sampling when texture format doesn't support linear sampling.
-			_flags &= 0
+			_flags &= ~(0
 				| BGFX_TEXTURE_MIN_MASK
 				| BGFX_TEXTURE_MAG_MASK
 				| BGFX_TEXTURE_MIP_MASK
-				;
+				);
 			_flags |= 0
 				| BGFX_TEXTURE_MIN_POINT
 				| BGFX_TEXTURE_MAG_POINT
