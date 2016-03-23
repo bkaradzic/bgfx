@@ -130,6 +130,11 @@ http://makingartstudios.itch.io/dls - DLS the digital logic simulator game.
 
 https://github.com/mamedev/mame MAME - Multiple Arcade Machine Emulator
 
+https://blackshift.itch.io/blackshift - Blackshift is a grid-based, space-themed
+action puzzle game which isn't afraid of complexity — think Chip's Challenge on
+crack.  
+![blackshift-screenshot](https://img.itch.io/aW1hZ2UvNTA3NDkvMjU2OTIzLmpwZw==/original/V%2BbpZD.jpg)
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
