@@ -182,6 +182,16 @@ vec4 bgfxTextureCubeLod(BgfxSamplerCube _sampler, vec3 _coord, float _level)
 	return _sampler.m_texture.SampleLevel(_sampler.m_sampler, _coord, _level);
 }
 
+vec4 bgfxTexelFetch(BgfxSampler2D _sampler, ivec2 _coord, int _lod)
+{
+	return _sampler.m_texture.Load(ivec3(_coord, _lod) );
+}
+
+vec4 bgfxTexelFetch(BgfxSampler3D _sampler, ivec3 _coord, int _lod)
+{
+	return _sampler.m_texture.Load(ivec4(_coord, _lod) );
+}
+
 #		define SAMPLER2D(_name, _reg) \
 			uniform SamplerState _name ## Sampler : register(s[_reg]); \
 			uniform Texture2D _name ## Texture : register(t[_reg]); \
@@ -220,6 +230,8 @@ vec4 bgfxTextureCubeLod(BgfxSamplerCube _sampler, vec3 _coord, float _level)
 #		define samplerCube BgfxSamplerCube
 #		define textureCube(_sampler, _coord) bgfxTextureCube(_sampler, _coord)
 #		define textureCubeLod(_sampler, _coord, _level) bgfxTextureCubeLod(_sampler, _coord, _level)
+
+#		define texelFetch(_sampler, _coord, _lod) bgfxTexelFetch(_sampler, _coord, _lod)
 #	else
 
 #		define sampler2DShadow sampler2D
