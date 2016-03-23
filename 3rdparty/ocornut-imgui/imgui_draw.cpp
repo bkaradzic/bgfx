@@ -825,6 +825,17 @@ void ImDrawList::AddRectFilledMultiColor(const ImVec2& a, const ImVec2& c, ImU32
     PrimWriteVtx(ImVec2(a.x, c.y), uv, col_bot_left);
 }
 
+void ImDrawList::AddTriangle(const ImVec2& a, const ImVec2& b, const ImVec2& c, ImU32 col, float thickness)
+{
+    if ((col >> 24) == 0)
+        return;
+
+    PathLineTo(a);
+    PathLineTo(b);
+    PathLineTo(c);
+    PathStroke(col, true, thickness);
+}
+
 void ImDrawList::AddTriangleFilled(const ImVec2& a, const ImVec2& b, const ImVec2& c, ImU32 col)
 {
     if ((col >> 24) == 0)
@@ -876,6 +887,13 @@ void ImDrawList::AddText(const ImFont* font, float font_size, const ImVec2& pos,
     if (text_begin == text_end)
         return;
 
+    // Note: This is one of the few instance of breaking the encapsulation of ImDrawList, as we pull this from ImGui state, but it is just SO useful.
+    // Might just move Font/FontSize to ImDrawList?
+    if (font == NULL)
+        font = GImGui->Font;
+    if (font_size == 0.0f)
+        font_size = GImGui->FontSize;
+
     IM_ASSERT(font->ContainerAtlas->TexID == _TextureIdStack.back());  // Use high-level ImGui::PushFont() or low-level ImDrawList::PushTextureId() to change font.
 
     // reserve vertices for worse case (over-reserving is useful and easily amortized)
@@ -908,12 +926,8 @@ void ImDrawList::AddText(const ImFont* font, float font_size, const ImVec2& pos,
     _VtxCurrentIdx = (unsigned int)VtxBuffer.Size;
 }
 
-// [Uses global ImGui state] This is one of the few function breaking the encapsulation of ImDrawLst, but it is just so useful.
 void ImDrawList::AddText(const ImVec2& pos, ImU32 col, const char* text_begin, const char* text_end)
 {
-    if ((col >> 24) == 0)
-        return;
-
     AddText(GImGui->Font, GImGui->FontSize, pos, col, text_begin, text_end);
 }
 
@@ -1994,10 +2008,10 @@ void ImFont::RenderText(float size, ImVec2 pos, ImU32 col, const ImVec4& clip_re
         {
             char_width = glyph->XAdvance * scale;
 
-            // Clipping on Y is more likely
+            // Arbitrarily assume that both space and tabs are empty glyphs as an optimization
             if (c != ' ' && c != '\t')
             {
-                // We don't do a second finer clipping test on the Y axis (TODO: do some measurement see if it is worth it, probably not)
+                // We don't do a second finer clipping test on the Y axis as we've already skipped anything before clip_rect.y and exit once we pass clip_rect.w
                 float y1 = (float)(y + glyph->Y0 * scale);
                 float y2 = (float)(y + glyph->Y1 * scale);
 
@@ -2041,8 +2055,8 @@ void ImFont::RenderText(float size, ImVec2 pos, ImU32 col, const ImVec4& clip_re
                         }
                     }
 
-                    // NB: we are not calling PrimRectUV() here because non-inlined causes too much overhead in a debug build.
-                    // inlined:
+                    // We are NOT calling PrimRectUV() here because non-inlined causes too much overhead in a debug build.
+                    // Inlined here:
                     {
                         idx_write[0] = (ImDrawIdx)(vtx_current_idx); idx_write[1] = (ImDrawIdx)(vtx_current_idx+1); idx_write[2] = (ImDrawIdx)(vtx_current_idx+2);
                         idx_write[3] = (ImDrawIdx)(vtx_current_idx); idx_write[4] = (ImDrawIdx)(vtx_current_idx+2); idx_write[5] = (ImDrawIdx)(vtx_current_idx+3);
