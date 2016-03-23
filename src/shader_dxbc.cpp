@@ -1735,7 +1735,6 @@ namespace bgfx
 		return size;
 	}
 
-#define DXBC_CHUNK_HEADER           BX_MAKEFOURCC('D', 'X', 'B', 'C')
 #define DXBC_CHUNK_SHADER           BX_MAKEFOURCC('S', 'H', 'D', 'R')
 #define DXBC_CHUNK_SHADER_EX        BX_MAKEFOURCC('S', 'H', 'E', 'X')
 

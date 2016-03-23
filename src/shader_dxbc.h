@@ -8,6 +8,8 @@
 
 #include <bx/readerwriter.h>
 
+#define DXBC_CHUNK_HEADER BX_MAKEFOURCC('D', 'X', 'B', 'C')
+
 namespace bgfx
 {
 	struct DxbcOpcode
