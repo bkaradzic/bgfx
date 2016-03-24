@@ -299,7 +299,7 @@
 <dd><p>Initialize bgfx library. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
-<dd><code class="docutils literal"><span class="pre">true</span></code> if initialization is successful.</dd>
+<dd><code class="docutils literal"><span class="pre">true</span></code> if initialization was successful.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_init</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -307,10 +307,11 @@
 <li><code class="first docutils literal"><span class="pre">_type</span></code> - <p>Select rendering backend. When set to RendererType::Count default rendering backend will be selected. See: <code class="docutils literal"><a class="reference internal" href="#project0structbgfx_1_1_renderer_type"><span><span class="pre">bgfx::RendererType</span></span></a></code></p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_vendorId</span></code> - <p>Vendor PCI id. If set to <code class="docutils literal"><span class="pre">BGFX_PCI_ID_NONE</span></code> it will select the first device.<ul class="simple">
-<li><code class="docutils literal"><span class="pre">BGFX_PCI_ID_NONE</span></code> - auto-select.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_PCI_ID_AMD</span></code> - AMD.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_PCI_ID_INTEL</span></code> - Intel.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_PCI_ID_NVIDIA</span></code> - nVidia.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_PCI_ID_NONE</span></code> - Autoselect adapter.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_PCI_ID_SOFTWARE_RASTERIZER</span></code> - Software rasterizer.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_PCI_ID_AMD</span></code> - AMD adapter.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_PCI_ID_INTEL</span></code> - Intel adapter.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_PCI_ID_NVIDIA</span></code> - nVidia adapter.</li>
 </ul>
 </p>
 </li>
@@ -1617,7 +1618,19 @@ creating windows.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx5touchE7uint8_t">
 <span id="bgfx::touch__uint8_t"></span><span class="target" id="project0namespacebgfx_1ad618bc888550110ff95d1b78c635e460"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">touch</code><span class="sig-paren">(</span>uint8_t <em>_id</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx5touchE7uint8_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Touch view. </p>
+<dd><p>Submit an empty primitive for rendering. Uniforms and draw state will be applied but no geometry will be submitted. </p>
+<p>These empty draw calls will sort before ordinary draw calls.</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Number of draw calls. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
 </dd></dl>
 
 <dl class="function">
