@@ -324,13 +324,15 @@ static bgfx::ShaderHandle createEmbeddedShader(bgfx::RendererType::Enum _type, u
 struct DebugDraw
 {
 	DebugDraw()
-		: m_state(State::Count)
+		: m_depthTestLess(true)
+		, m_state(State::Count)
 	{
 	}
 
-	void init(bx::AllocatorI* _allocator)
+	void init(bool _depthTestLess, bx::AllocatorI* _allocator)
 	{
 		m_allocator = _allocator;
+		m_depthTestLess = _depthTestLess;
 
 #if BX_CONFIG_ALLOCATOR_CRT
 		if (NULL == _allocator)
@@ -502,9 +504,9 @@ struct DebugDraw
 		Attrib& attrib = m_attrib[0];
 		attrib.m_state = 0
 			| BGFX_STATE_RGB_WRITE
-			| BGFX_STATE_DEPTH_TEST_LESS
-			| BGFX_STATE_DEPTH_WRITE
+			| (m_depthTestLess ? BGFX_STATE_DEPTH_TEST_LESS : BGFX_STATE_DEPTH_TEST_GREATER)
 			| BGFX_STATE_CULL_CW
+			| BGFX_STATE_DEPTH_WRITE
 			;
 		attrib.m_scale     = 1.0f;
 		attrib.m_offset    = 0.0f;
@@ -533,7 +535,10 @@ struct DebugDraw
 	void pop()
 	{
 		BX_CHECK(State::Count != m_state);
-		if (m_attrib[m_stack].m_stipple != m_attrib[m_stack-1].m_stipple)
+		const Attrib& curr = m_attrib[m_stack];
+		const Attrib& prev = m_attrib[m_stack-1];
+		if (curr.m_stipple != prev.m_stipple
+		||  curr.m_state   != prev.m_state)
 		{
 			flush();
 		}
@@ -570,15 +575,20 @@ struct DebugDraw
 
 	void setState(bool _depthTest, bool _depthWrite, bool _clockwise)
 	{
+		const uint64_t depthTest = m_depthTestLess
+			? BGFX_STATE_DEPTH_TEST_LESS
+			: BGFX_STATE_DEPTH_TEST_GREATER
+			;
+
 		m_attrib[m_stack].m_state &= ~(0
-			| BGFX_STATE_DEPTH_TEST_LESS
+			| BGFX_STATE_DEPTH_TEST_MASK
 			| BGFX_STATE_DEPTH_WRITE
 			| BGFX_STATE_CULL_CW
 			| BGFX_STATE_CULL_CCW
 			);
 
 		m_attrib[m_stack].m_state |= _depthTest
-			? BGFX_STATE_DEPTH_TEST_LESS
+			? depthTest
 			: 0
 			;
 
@@ -1266,7 +1276,7 @@ private:
 				bgfx::setState(0
 						| BGFX_STATE_RGB_WRITE
 						| BGFX_STATE_PT_LINES
-						| BGFX_STATE_DEPTH_TEST_LEQUAL
+						| (m_depthTestLess ? BGFX_STATE_DEPTH_TEST_LEQUAL : BGFX_STATE_DEPTH_TEST_GEQUAL)
 						| BGFX_STATE_DEPTH_WRITE
 						| BGFX_STATE_LINEAA
 						| BGFX_STATE_BLEND_ALPHA
@@ -1306,6 +1316,7 @@ private:
 	uint16_t m_vertexPos;
 	uint8_t  m_viewId;
 	uint8_t  m_stack;
+	bool     m_depthTestLess;
 
 	struct Attrib
 	{
@@ -1335,9 +1346,9 @@ private:
 
 static DebugDraw s_dd;
 
-void ddInit(bx::AllocatorI* _allocator)
+void ddInit(bool _depthTestLess, bx::AllocatorI* _allocator)
 {
-	s_dd.init(_allocator);
+	s_dd.init(_depthTestLess, _allocator);
 }
 
 void ddShutdown()

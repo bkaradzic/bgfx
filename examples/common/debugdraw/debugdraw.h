@@ -22,7 +22,7 @@ struct Axis
 };
 
 ///
-void ddInit(bx::AllocatorI* _allocator = NULL);
+void ddInit(bool _depthTestLess = true, bx::AllocatorI* _allocator = NULL);
 
 ///
 void ddShutdown();
