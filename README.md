@@ -128,8 +128,9 @@ C++ and using bgfx to support multiple rendering APIs.
 http://makingartstudios.itch.io/dls - DLS the digital logic simulator game.  
 ![dls-screenshot](https://img.itch.io/aW1hZ2UvMzk3MTgvMTc5MjQ4LnBuZw==/original/kA%2FQPb.png)
 
-https://github.com/mamedev/mame MAME - Multiple Arcade Machine Emulator  
-[Try MAME in browser](http://fos.textfiles.com/dfjustin/pacman/pacman/)
+https://github.com/mamedev/mame MAME - Multiple Arcade Machine Emulator
+[Try MAME in Browser!](http://fos.textfiles.com/dfjustin/pacman/pacman/)  
+![mame-screenshot](https://raw.githubusercontent.com/mamedev/www.mamedev.org/d8d716dbb63919a11964b5d47b9b7f6cfa006b56/bgfx/Raiden.png)
 
 https://blackshift.itch.io/blackshift - Blackshift is a grid-based, space-themed
 action puzzle game which isn't afraid of complexity — think Chip's Challenge on
