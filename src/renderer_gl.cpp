@@ -901,6 +901,13 @@ namespace bgfx { namespace gl
 		NULL
 	};
 
+	static const char* s_texelFetch[] =
+	{
+		"texelFetch",
+		"texelFetchOffset",
+		NULL
+	};
+
 	static void GL_APIENTRY stubVertexAttribDivisor(GLuint /*_index*/, GLuint /*_divisor*/)
 	{
 	}
@@ -4821,16 +4828,17 @@ namespace bgfx { namespace gl
 				else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
 					 &&  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL <= 21) )
 				{
-					bool usesTextureLod = true
+					const bool usesTextureLod = true
 						&& s_extension[Extension::ARB_shader_texture_lod].m_supported
 						&& bx::findIdentifierMatch(code, s_ARB_shader_texture_lod)
 						;
+					const bool usesIUsamplers = !!bx::findIdentifierMatch(code, s_uisamplers);
+					const bool usesTexelFetch = !!bx::findIdentifierMatch(code, s_texelFetch);
 
-					bool usesIUsamplers = !!bx::findIdentifierMatch(code, s_uisamplers);
-
-					uint32_t version = usesIUsamplers
-						? 130
-						: (usesTextureLod ? 120 : 0)
+					uint32_t version =
+						  usesTexelFetch || usesIUsamplers ? 130
+						: usesTextureLod ? 120
+						: 0
 						;
 
 					if (0 != version)
