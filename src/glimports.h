@@ -65,6 +65,7 @@ typedef void           (GL_APIENTRYP PFNGLCLEARCOLORPROC) (GLfloat red, GLfloat 
 typedef void           (GL_APIENTRYP PFNGLCLEARDEPTHPROC) (GLdouble d);
 typedef void           (GL_APIENTRYP PFNGLCLEARDEPTHFPROC) (GLfloat d);
 typedef void           (GL_APIENTRYP PFNGLCLEARSTENCILPROC) (GLint s);
+typedef void           (GL_APIENTRYP PFNGLCLIPCONTROLPROC) (GLenum origin, GLenum depth);
 typedef void           (GL_APIENTRYP PFNGLCOLORMASKPROC) (GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
 typedef void           (GL_APIENTRYP PFNGLCOMPILESHADERPROC) (GLuint shader);
 typedef void           (GL_APIENTRYP PFNGLCOMPRESSEDTEXIMAGE2DPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void *data);
@@ -249,6 +250,7 @@ GL_IMPORT______(false, PFNGLCLEARPROC,                             glClear);
 GL_IMPORT______(true,  PFNGLCLEARBUFFERFVPROC,                     glClearBufferfv);
 GL_IMPORT______(false, PFNGLCLEARCOLORPROC,                        glClearColor);
 GL_IMPORT______(false, PFNGLCLEARSTENCILPROC,                      glClearStencil);
+GL_IMPORT______(true,  PFNGLCLIPCONTROLPROC,                       glClipControl);
 GL_IMPORT______(false, PFNGLCOLORMASKPROC,                         glColorMask);
 GL_IMPORT______(false, PFNGLCOMPILESHADERPROC,                     glCompileShader);
 GL_IMPORT______(false, PFNGLCOMPRESSEDTEXIMAGE2DPROC,              glCompressedTexImage2D);
