@@ -79,6 +79,7 @@
  - your code creates the UI, if your code doesn't run the UI is gone! == very dynamic UI, no construction/destructions steps, less data retention on your side, no state duplication, less sync, less bugs.
  - call and read ImGui::ShowTestWindow() for demo code demonstrating most features.
  - see examples/ folder for standalone sample applications. Prefer reading examples/opengl_example/ first at it is the simplest.
+   you may be able to grab and copy a ready made imgui_impl_*** file from the examples/.
  - customization: PushStyleColor()/PushStyleVar() or the style editor to tweak the look of the interface (e.g. if you want a more compact UI or a different color scheme).
 
  - getting started:
@@ -86,12 +87,13 @@
    - init: call io.Fonts->GetTexDataAsRGBA32(...) and load the font texture pixels into graphics memory.
    - every frame:
       1/ in your mainloop or right after you got your keyboard/mouse info, call ImGui::GetIO() and fill the fields marked 'Input'
-      2/ call ImGui::NewFrame().
+      2/ call ImGui::NewFrame() as early as you can!
       3/ use any ImGui function you want between NewFrame() and Render()
-      4/ call ImGui::Render() to render all the accumulated command-lists. it will call your RenderDrawListFn handler that you set in the IO structure.
+      4/ call ImGui::Render() as late as you can to end the frame and finalize render data. it will call your RenderDrawListFn handler that you set in the IO structure.
+         (if you don't need to render, you still need to call Render() and ignore the callback, or call EndFrame() instead. if you call neither some aspects of windows focusing/moving will appear broken.)
    - all rendering information are stored into command-lists until ImGui::Render() is called.
-   - ImGui never touches or know about your GPU state. the only function that knows about GPU is the RenderDrawListFn handler that you must provide.
-   - effectively it means you can create widgets at any time in your code, regardless of considerations of being in "update" vs "render" phases.
+   - ImGui never touches or know about your GPU state. the only function that knows about GPU is the RenderDrawListFn handler that you provide.
+   - effectively it means you can create widgets at any time in your code, regardless of considerations of being in "update" vs "render" phases of your own application.
    - refer to the examples applications in the examples/ folder for instruction on how to setup your code.
    - a typical application skeleton may be:
 
@@ -108,7 +110,7 @@
         unsigned char* pixels;
         int width, height;
         io.Fonts->GetTexDataAsRGBA32(pixels, &width, &height);
-        // TODO: At this points you've got a texture pointed to by 'pixels' and you need to upload that your your graphic system 
+        // TODO: At this points you've got a texture pointed to by 'pixels' and you need to upload that your your graphic system
         // TODO: Store your texture pointer/identifier (whatever your engine uses) in 'io.Fonts->TexID'
 
         // Application main loop
@@ -135,7 +137,7 @@
 
             // 4) render & swap video buffers
             ImGui::Render();
-            // swap video buffer, etc.
+            SwapBuffers();
         }
 
    - after calling ImGui::NewFrame() you can read back flags from the IO structure to tell how ImGui intends to use your inputs.
@@ -309,7 +311,7 @@
 
        Button("Hello###ID";   // Label = "Hello",  ID = hash of "ID"
        Button("World###ID";   // Label = "World",  ID = hash of "ID" (same as above)
-       
+
        sprintf(buf, "My game (%f FPS)###MyGame");
        Begin(buf);            // Variable label,   ID = hash of "MyGame"
 
@@ -447,7 +449,7 @@
  - widgets: clean up widgets internal toward exposing everything.
  - widgets: add disabled and read-only modes (#211)
  - main: considering adding EndFrame()/Init(). some constructs are awkward in the implementation because of the lack of them.
- - main: make it so that a frame with no window registered won't refocus every window on subsequent frames (~bump LastFrameActive of all windows). 
+ - main: make it so that a frame with no window registered won't refocus every window on subsequent frames (~bump LastFrameActive of all windows).
  - main: IsItemHovered() make it more consistent for various type of widgets, widgets with multiple components, etc. also effectively IsHovered() region sometimes differs from hot region, e.g tree nodes
  - main: IsItemHovered() info stored in a stack? so that 'if TreeNode() { Text; TreePop; } if IsHovered' return the hover state of the TreeNode?
  - input text: add ImGuiInputTextFlags_EnterToApply? (off #218)
@@ -653,7 +655,7 @@ static ImVec2           InputTextCalcTextSizeW(const ImWchar* text_begin, const 
 static inline void      DataTypeFormatString(ImGuiDataType data_type, void* data_ptr, const char* display_format, char* buf, int buf_size);
 static inline void      DataTypeFormatString(ImGuiDataType data_type, void* data_ptr, int decimal_precision, char* buf, int buf_size);
 static void             DataTypeApplyOp(ImGuiDataType data_type, int op, void* value1, const void* value2);
-static void             DataTypeApplyOpFromText(const char* buf, const char* initial_value_buf, ImGuiDataType data_type, void* data_ptr, const char* scalar_format);
+static bool             DataTypeApplyOpFromText(const char* buf, const char* initial_value_buf, ImGuiDataType data_type, void* data_ptr, const char* scalar_format);
 
 //-----------------------------------------------------------------------------
 // Platform dependent default implementations
@@ -985,7 +987,7 @@ int ImTextCharFromUtf8(unsigned int* out_char, const char* in_text, const char* 
     if ((*str & 0xf0) == 0xe0)
     {
         *out_char = 0xFFFD; // will be invalid but not end of string
-        if (in_text_end && in_text_end - (const char*)str < 3) return 1; 
+        if (in_text_end && in_text_end - (const char*)str < 3) return 1;
         if (*str == 0xe0 && (str[1] < 0xa0 || str[1] > 0xbf)) return 3;
         if (*str == 0xed && str[1] > 0x9f) return 3; // str[1] < 0x80 is checked below
         c = (unsigned int)((*str++ & 0x0f) << 12);
@@ -2389,7 +2391,7 @@ void ImGui::EndFrame()
     // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
     if (g.IO.ImeSetInputScreenPosFn && ImLengthSqr(g.OsImePosRequest - g.OsImePosSet) > 0.0001f)
     {
-        g.IO.ImeSetInputScreenPosFn((int)g.OsImePosRequest.x, (int)g.OsImePosRequest.y);   
+        g.IO.ImeSetInputScreenPosFn((int)g.OsImePosRequest.x, (int)g.OsImePosRequest.y);
         g.OsImePosSet = g.OsImePosRequest;
     }
 
@@ -3142,7 +3144,7 @@ static bool IsPopupOpen(ImGuiID id)
     return opened;
 }
 
-// Mark popup as open (toggle toward open state). 
+// Mark popup as open (toggle toward open state).
 // Popups are closed when user click outside, or activate a pressable item, or CloseCurrentPopup() is called within a BeginPopup()/EndPopup() block.
 // Popup identifiers are relative to the current ID-stack (so OpenPopup and BeginPopup needs to be at the same level).
 // One open popup per level of the popup hierarchy (NB: when assigning we reset the Window member of ImGuiPopupRef to NULL)
@@ -3320,11 +3322,11 @@ void ImGui::EndPopup()
 }
 
 // This is a helper to handle the most simple case of associating one named popup to one given widget.
-// 1. If you have many possible popups (for different "instances" of a same widget, or for wholly different widgets), you may be better off handling 
+// 1. If you have many possible popups (for different "instances" of a same widget, or for wholly different widgets), you may be better off handling
 //    this yourself so you can store data relative to the widget that opened the popup instead of choosing different popup identifiers.
 // 2. If you want right-clicking on the same item to reopen the popup at new location, use the same code replacing IsItemHovered() with IsItemHoveredRect()
 //    and passing true to the OpenPopupEx().
-//    Because: hovering an item in a window below the popup won't normally trigger is hovering behavior/coloring. The pattern of ignoring the fact that 
+//    Because: hovering an item in a window below the popup won't normally trigger is hovering behavior/coloring. The pattern of ignoring the fact that
 //    the item isn't interactable (because it is blocked by the active popup) may useful in some situation when e.g. large canvas as one item, content of menu
 //    driven by click position.
 bool ImGui::BeginPopupContextItem(const char* str_id, int mouse_button)
@@ -3483,7 +3485,7 @@ static ImVec2 FindBestPopupWindowPos(const ImVec2& base_pos, const ImVec2& size,
 
 ImGuiWindow* ImGui::FindWindowByName(const char* name)
 {
-    // FIXME-OPT: Store sorted hashes -> pointers so we can do a bissection in a contiguous block 
+    // FIXME-OPT: Store sorted hashes -> pointers so we can do a bissection in a contiguous block
     ImGuiState& g = *GImGui;
     ImGuiID id = ImHash(name, 0);
     for (int i = 0; i < g.Windows.Size; i++)
@@ -3616,7 +3618,7 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
         g.CurrentPopupStack.push_back(popup_ref);
         window->PopupID = popup_ref.PopupID;
     }
-    
+
     const bool window_appearing_after_being_hidden = (window->HiddenFrames == 1);
 
     // Process SetNextWindow***() calls
@@ -3764,7 +3766,7 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
         else
         {
             size_auto_fit = ImClamp(window->SizeContents + window->WindowPadding, style.WindowMinSize, ImMax(style.WindowMinSize, g.IO.DisplaySize - g.Style.DisplaySafeAreaPadding));
-            
+
             // Handling case of auto fit window not fitting in screen on one axis, we are growing auto fit size on the other axis to compensate for expected scrollbar. FIXME: Might turn bigger than DisplaySize-WindowPadding.
             if (size_auto_fit.x < window->SizeContents.x && !(flags & ImGuiWindowFlags_NoScrollbar) && (flags & ImGuiWindowFlags_HorizontalScrollbar))
                 size_auto_fit.y += style.ScrollbarSize;
@@ -5639,7 +5641,7 @@ bool ImGui::CollapsingHeader(const char* label, const char* str_id, bool display
         label = str_id;
     const bool label_hide_text_after_double_hash = (label == str_id); // Only search and hide text after ## if we have passed label and ID separately, otherwise allow "##" within format string.
     const ImGuiID id = window->GetID(str_id);
-    const ImVec2 label_size = CalcTextSize(label, NULL, label_hide_text_after_double_hash); 
+    const ImVec2 label_size = CalcTextSize(label, NULL, label_hide_text_after_double_hash);
 
     // We vertically grow up to current line height up the typical widget height.
     const float text_base_offset_y = ImMax(0.0f, window->DC.CurrentLineTextBaseOffset - padding.y); // Latch before ItemSize changes it
@@ -5933,7 +5935,7 @@ static void DataTypeApplyOp(ImGuiDataType data_type, int op, void* value1, const
 }
 
 // User can input math operators (e.g. +100) to edit a numerical values.
-static void DataTypeApplyOpFromText(const char* buf, const char* initial_value_buf, ImGuiDataType data_type, void* data_ptr, const char* scalar_format)
+static bool DataTypeApplyOpFromText(const char* buf, const char* initial_value_buf, ImGuiDataType data_type, void* data_ptr, const char* scalar_format)
 {
     while (ImCharIsSpace(*buf))
         buf++;
@@ -5952,41 +5954,47 @@ static void DataTypeApplyOpFromText(const char* buf, const char* initial_value_b
         op = 0;
     }
     if (!buf[0])
-        return;
+        return false;
 
     if (data_type == ImGuiDataType_Int)
     {
         if (!scalar_format)
             scalar_format = "%d";
         int* v = (int*)data_ptr;
-        int ref_v = *v;
-        if (op && sscanf(initial_value_buf, scalar_format, &ref_v) < 1)
-            return;
+        const int old_v = *v;
+        int arg0 = *v;
+        if (op && sscanf(initial_value_buf, scalar_format, &arg0) < 1)
+            return false;
 
         // Store operand in a float so we can use fractional value for multipliers (*1.1), but constant always parsed as integer so we can fit big integers (e.g. 2000000003) past float precision
-        float op_v = 0.0f;
-        if (op == '+')      { if (sscanf(buf, "%f", &op_v) == 1) *v = (int)(ref_v + op_v); }                // Add (use "+-" to subtract)
-        else if (op == '*') { if (sscanf(buf, "%f", &op_v) == 1) *v = (int)(ref_v * op_v); }                // Multiply
-        else if (op == '/') { if (sscanf(buf, "%f", &op_v) == 1 && op_v != 0.0f) *v = (int)(ref_v / op_v); }// Divide
-        else                { if (sscanf(buf, scalar_format, &ref_v) == 1) *v = ref_v; }                    // Assign constant
+        float arg1 = 0.0f;
+        if (op == '+')      { if (sscanf(buf, "%f", &arg1) == 1) *v = (int)(arg0 + arg1); }                // Add (use "+-" to subtract)
+        else if (op == '*') { if (sscanf(buf, "%f", &arg1) == 1) *v = (int)(arg0 * arg1); }                // Multiply
+        else if (op == '/') { if (sscanf(buf, "%f", &arg1) == 1 && arg1 != 0.0f) *v = (int)(arg0 / arg1); }// Divide
+        else                { if (sscanf(buf, scalar_format, &arg0) == 1) *v = arg0; }                     // Assign constant
+        return (old_v != *v);
     }
     else if (data_type == ImGuiDataType_Float)
     {
         // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in
         scalar_format = "%f";
         float* v = (float*)data_ptr;
-        float ref_v = *v;
-        if (op && sscanf(initial_value_buf, scalar_format, &ref_v) < 1)
-            return;
-        float op_v = 0.0f;
-        if (sscanf(buf, scalar_format, &op_v) < 1)
-            return;
+        const float old_v = *v;
+        float arg0 = *v;
+        if (op && sscanf(initial_value_buf, scalar_format, &arg0) < 1)
+            return false;
 
-        if (op == '+')      { *v = ref_v + op_v; }                      // Add (use "+-" to subtract)
-        else if (op == '*') { *v = ref_v * op_v; }                      // Multiply
-        else if (op == '/') { if (op_v != 0.0f) *v = ref_v / op_v; }    // Divide
-        else                { *v = op_v; }                              // Assign constant
+        float arg1 = 0.0f;
+        if (sscanf(buf, scalar_format, &arg1) < 1)
+            return false;
+        if (op == '+')      { *v = arg0 + arg1; }                    // Add (use "+-" to subtract)
+        else if (op == '*') { *v = arg0 * arg1; }                    // Multiply
+        else if (op == '/') { if (arg1 != 0.0f) *v = arg0 / arg1; }  // Divide
+        else                { *v = arg1; }                           // Assign constant
+        return (old_v != *v);
     }
+
+    return false;
 }
 
 // Create text input in place of a slider (when CTRL+Clicking on slider)
@@ -6002,7 +6010,7 @@ bool ImGui::InputScalarAsWidgetReplacement(const ImRect& aabb, const char* label
 
     char buf[32];
     DataTypeFormatString(data_type, data_ptr, decimal_precision, buf, IM_ARRAYSIZE(buf));
-    bool value_changed = InputTextEx(label, buf, IM_ARRAYSIZE(buf), aabb.GetSize(), ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_AutoSelectAll);
+    bool text_value_changed = InputTextEx(label, buf, IM_ARRAYSIZE(buf), aabb.GetSize(), ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_AutoSelectAll);
     if (g.ScalarAsInputTextId == 0)
     {
         // First frame
@@ -6015,9 +6023,9 @@ bool ImGui::InputScalarAsWidgetReplacement(const ImRect& aabb, const char* label
         // Release
         g.ScalarAsInputTextId = 0;
     }
-    if (value_changed)
-        DataTypeApplyOpFromText(buf, GImGui->InputTextState.InitialText.begin(), data_type, data_ptr, NULL);
-    return value_changed;
+    if (text_value_changed)
+        return DataTypeApplyOpFromText(buf, GImGui->InputTextState.InitialText.begin(), data_type, data_ptr, NULL);
+    return false;
 }
 
 // Parse display precision back from the display format string
@@ -6867,7 +6875,7 @@ void ImGui::ProgressBar(float fraction, const ImVec2& size_arg, const char* over
         ImFormatString(overlay_buf, IM_ARRAYSIZE(overlay_buf), "%.0f%%", fraction*100+0.01f);
         overlay = overlay_buf;
     }
-    
+
     ImVec2 overlay_size = CalcTextSize(overlay, NULL);
     if (overlay_size.x > 0.0f)
         RenderTextClipped(ImVec2(ImClamp(fill_br.x + style.ItemSpacing.x, bb.Min.x, bb.Max.x - overlay_size.x - style.ItemInnerSpacing.x), bb.Min.y), bb.Max, overlay, NULL, &overlay_size, ImGuiAlign_Left|ImGuiAlign_VCenter, &bb.Min, &bb.Max);
@@ -6932,7 +6940,7 @@ bool ImGui::CheckboxFlags(const char* label, unsigned int* flags, unsigned int f
         else
             *flags &= ~flags_value;
     }
-    
+
     return pressed;
 }
 
@@ -7767,7 +7775,7 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
 
         // Notify OS of text input position for advanced IME (-1 x offset so that Windows IME can cover our cursor. Bit of an extra nicety.)
         if (is_editable)
-            g.OsImePosRequest = ImVec2(cursor_screen_pos.x - 1, cursor_screen_pos.y - g.FontSize);    
+            g.OsImePosRequest = ImVec2(cursor_screen_pos.x - 1, cursor_screen_pos.y - g.FontSize);
     }
     else
     {
@@ -7839,10 +7847,7 @@ bool ImGui::InputScalarEx(const char* label, ImGuiDataType data_type, void* data
         extra_flags |= ImGuiInputTextFlags_CharsDecimal;
     extra_flags |= ImGuiInputTextFlags_AutoSelectAll;
     if (ImGui::InputText("", buf, IM_ARRAYSIZE(buf), extra_flags))
-    {
-        DataTypeApplyOpFromText(buf, GImGui->InputTextState.InitialText.begin(), data_type, data_ptr, scalar_format);
-        value_changed = true;
-    }
+        value_changed = DataTypeApplyOpFromText(buf, GImGui->InputTextState.InitialText.begin(), data_type, data_ptr, scalar_format);
 
     // Step buttons
     if (step_ptr)
@@ -8047,10 +8052,12 @@ bool ImGui::Combo(const char* label, int* current_item, bool (*items_getter)(voi
 
     const float arrow_size = (g.FontSize + style.FramePadding.x * 2.0f);
     const bool hovered = IsHovered(frame_bb, id);
+    bool popup_opened = IsPopupOpen(id);
+    bool popup_opened_now = false;
 
     const ImRect value_bb(frame_bb.Min, frame_bb.Max - ImVec2(arrow_size, 0.0f));
     RenderFrame(frame_bb.Min, frame_bb.Max, GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
-    RenderFrame(ImVec2(frame_bb.Max.x-arrow_size, frame_bb.Min.y), frame_bb.Max, GetColorU32(hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button), true, style.FrameRounding); // FIXME-ROUNDING
+    RenderFrame(ImVec2(frame_bb.Max.x-arrow_size, frame_bb.Min.y), frame_bb.Max, GetColorU32(popup_opened || hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button), true, style.FrameRounding); // FIXME-ROUNDING
     RenderCollapseTriangle(ImVec2(frame_bb.Max.x-arrow_size, frame_bb.Min.y) + style.FramePadding, true);
 
     if (*current_item >= 0 && *current_item < items_count)
@@ -8063,7 +8070,6 @@ bool ImGui::Combo(const char* label, int* current_item, bool (*items_getter)(voi
     if (label_size.x > 0)
         RenderText(ImVec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y), label);
 
-    bool menu_toggled = false;
     if (hovered)
     {
         SetHoveredID(id);
@@ -8077,8 +8083,8 @@ bool ImGui::Combo(const char* label, int* current_item, bool (*items_getter)(voi
             else
             {
                 FocusWindow(window);
-                ImGui::OpenPopup(label);
-                menu_toggled = true;
+                OpenPopup(label);
+                popup_opened = popup_opened_now = true;
             }
         }
     }
@@ -8091,8 +8097,15 @@ bool ImGui::Combo(const char* label, int* current_item, bool (*items_getter)(voi
             height_in_items = 7;
 
         float popup_height = (label_size.y + style.ItemSpacing.y) * ImMin(items_count, height_in_items) + (style.FramePadding.y * 3);
-        ImRect popup_rect(ImVec2(frame_bb.Min.x, frame_bb.Max.y), ImVec2(frame_bb.Max.x, frame_bb.Max.y + popup_height));
-        popup_rect.Max.y = ImMin(popup_rect.Max.y, g.IO.DisplaySize.y - style.DisplaySafeAreaPadding.y); // Adhoc height limit for Combo. Ideally should be handled in Begin() along with other popups size, we want to have the possibility of moving the popup above as well.
+        float popup_y1 = frame_bb.Max.y;
+        float popup_y2 = ImClamp(popup_y1 + popup_height, popup_y1, g.IO.DisplaySize.y - style.DisplaySafeAreaPadding.y);
+        if ((popup_y2 - popup_y1) < ImMin(popup_height, frame_bb.Min.y - style.DisplaySafeAreaPadding.y))
+        {
+            // Position our combo ABOVE because there's more space to fit! (FIXME: Handle in Begin() or use a shared helper. We have similar code in Begin() for popup placement)
+            popup_y1 = ImClamp(frame_bb.Min.y - popup_height, style.DisplaySafeAreaPadding.y, frame_bb.Min.y);
+            popup_y2 = frame_bb.Min.y;
+        }
+        ImRect popup_rect(ImVec2(frame_bb.Min.x, popup_y1), ImVec2(frame_bb.Max.x, popup_y2));
         ImGui::SetNextWindowPos(popup_rect.Min);
         ImGui::SetNextWindowSize(popup_rect.GetSize());
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, style.FramePadding);
@@ -8115,7 +8128,7 @@ bool ImGui::Combo(const char* label, int* current_item, bool (*items_getter)(voi
                     value_changed = true;
                     *current_item = i;
                 }
-                if (item_selected && menu_toggled)
+                if (item_selected && popup_opened_now)
                     ImGui::SetScrollHere();
                 ImGui::PopID();
             }
@@ -8654,7 +8667,7 @@ bool ImGui::ColorEdit4(const char* label, float col[4], bool alpha)
     const ImVec4 col_display(col[0], col[1], col[2], 1.0f);
     if (ImGui::ColorButton(col_display))
         g.ColorEditModeStorage.SetInt(id, (edit_mode + 1) % 3); // Don't set local copy of 'edit_mode' right away!
-    
+
     // Recreate our own tooltip over's ColorButton() one because we want to display correct alpha here
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Color:\n(%.2f,%.2f,%.2f,%.2f)\n#%02X%02X%02X%02X", col[0], col[1], col[2], col[3], IM_F32_TO_INT8(col[0]), IM_F32_TO_INT8(col[1]), IM_F32_TO_INT8(col[2]), IM_F32_TO_INT8(col[3]));
@@ -8751,7 +8764,7 @@ void ImGui::Dummy(const ImVec2& size)
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
         return;
-    
+
     const ImRect bb(window->DC.CursorPos, window->DC.CursorPos + size);
     ItemSize(bb);
     ItemAdd(bb, NULL);
@@ -9013,9 +9026,9 @@ void ImGui::Columns(int columns_count, const char* id, bool border)
         }
     }
 
-    // Differentiate column ID with an arbitrary prefix for cases where users name their columns set the same as another widget. 
+    // Differentiate column ID with an arbitrary prefix for cases where users name their columns set the same as another widget.
     // In addition, when an identifier isn't explicitly provided we include the number of columns in the hash to make it uniquer.
-    ImGui::PushID(0x11223347 + (id ? 0 : columns_count)); 
+    ImGui::PushID(0x11223347 + (id ? 0 : columns_count));
     window->DC.ColumnsSetID = window->GetID(id ? id : "columns");
     ImGui::PopID();
 
