@@ -4629,9 +4629,6 @@ data.NumQualityLevels = 0;
 		m_backBufferColorIdx = m_swapChain->GetCurrentBackBufferIndex();
 #endif // BX_PLATFORM_WINDOWS
 
-		const uint64_t f0 = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_FACTOR);
-		const uint64_t f1 = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_INV_FACTOR, BGFX_STATE_BLEND_INV_FACTOR);
-
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
 		ScratchBufferD3D12& scratchBuffer = m_scratchBuffer[m_backBufferColorIdx];
 		scratchBuffer.reset(gpuHandle);
@@ -5027,8 +5024,10 @@ data.NumQualityLevels = 0;
 				{
 					const uint64_t state = draw.m_stateFlags;
 					bool hasFactor = 0
-						|| f0 == (state & f0)
-						|| f1 == (state & f1)
+						|| 0 != (state &  BGFX_STATE_BLEND_FACTOR         )
+						|| 0 != (state &  BGFX_STATE_BLEND_INV_FACTOR     )
+						|| 0 != (state & (BGFX_STATE_BLEND_FACTOR    <<4) )
+						|| 0 != (state & (BGFX_STATE_BLEND_INV_FACTOR<<4) )
 						;
 
 					const VertexBufferD3D12& vb = m_vertexBuffers[draw.m_vertexBuffer.idx];
