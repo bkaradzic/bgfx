@@ -2705,11 +2705,15 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				m_blendStateCache.add(hash, bs);
 			}
 
+			const uint64_t f0 = BGFX_STATE_BLEND_FACTOR;
+			const uint64_t f1 = BGFX_STATE_BLEND_INV_FACTOR;
+			const uint64_t f2 = BGFX_STATE_BLEND_FACTOR<<4;
+			const uint64_t f3 = BGFX_STATE_BLEND_INV_FACTOR<<4;
 			bool hasFactor = 0
-				|| 0 != (_state &  BGFX_STATE_BLEND_FACTOR         )
-				|| 0 != (_state &  BGFX_STATE_BLEND_INV_FACTOR     )
-				|| 0 != (_state & (BGFX_STATE_BLEND_FACTOR    <<4) )
-				|| 0 != (_state & (BGFX_STATE_BLEND_INV_FACTOR<<4) )
+				|| f0 == (_state & f0)
+				|| f1 == (_state & f1)
+				|| f2 == (_state & f2)
+				|| f3 == (_state & f3)
 				;
 
 			float blendFactor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
