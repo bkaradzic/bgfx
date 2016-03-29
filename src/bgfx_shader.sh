@@ -29,6 +29,7 @@
 #endif // BGFX_SHADER_LANGUAGE_HLSL > 3 && BGFX_SHADER_TYPE_FRAGMENT
 
 #if BGFX_SHADER_LANGUAGE_HLSL
+#	define CONST(_x) static const _x
 #	define dFdx(_x) ddx(_x)
 #	define dFdy(_y) ddy(-_y)
 #	define inversesqrt(_x) rsqrt(_x)
@@ -333,6 +334,7 @@ vec3  mod(vec3  _a, vec3  _b) { return _a - _b * floor(_a / _b); }
 vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 
 #else
+#	define CONST(_x) const _x
 #	define atan2(_x, _y) atan(_x, _y)
 #	define mul(_a, _b) ( (_a) * (_b) )
 #	define saturate(_x) clamp(_x, 0.0, 1.0)
