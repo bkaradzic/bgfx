@@ -2,7 +2,7 @@
 // File: vk_platform.h
 //
 /*
-** Copyright (c) 2014-2015 The Khronos Group Inc.
+** Copyright (c) 2014-2016 The Khronos Group Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and/or associated documentation files (the
@@ -25,8 +25,8 @@
 */
 
 
-#ifndef VK_PLATFORM_H_
-#define VK_PLATFORM_H_
+#ifndef __VK_PLATFORM_H__
+#define __VK_PLATFORM_H__
 
 #ifdef __cplusplus
 extern "C"
@@ -124,4 +124,4 @@ extern "C"
 #include <xcb/xcb.h>
 #endif
 
-#endif
+#endif // __VK_PLATFORM_H__
