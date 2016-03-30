@@ -4,6 +4,12 @@ Everyone is welcome to contribute to bgfx by submitting bug reports, testing on
 different platforms, writing examples, improving documentation, profiling and
 optimizing, helping newcomers, telling others about bgfx, etc.
 
+## Submitting bugs
+
+Unless bug is trivial, and easy to explain and understand, the fastest way to
+fix bug is to get repro case. In most of cases it's enough to modify existing
+example (with minimal number of changes) and reproduce bug there.
+
 ## Contributing code
 
 **When contributing to the bgfx project you must agree to the BSD 2-clause
