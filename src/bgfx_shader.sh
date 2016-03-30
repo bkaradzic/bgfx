@@ -110,6 +110,20 @@ vec4 bgfxTexture2DProj(BgfxSampler2D _sampler, vec4 _coord)
 	return _sampler.m_texture.Sample(_sampler.m_sampler, coord);
 }
 
+struct BgfxSampler2DMS
+{
+	SamplerState m_sampler;
+	Texture2DMS m_texture;
+};
+
+vec4 bgfxTexture2DMS(BgfxSampler2DMS _sampler, vec2 _coord, int _sampleIdx)
+{
+	ivec2 size;
+	int numSamples;
+	_sampler.m_texture.GetDimensions(size.x, size.y, numSamples);
+	return _sampler.m_texture.Load(ivec2(_coord * size), _sampleIdx);
+}
+
 struct BgfxSampler2DShadow
 {
 	SamplerComparisonState m_sampler;
@@ -188,6 +202,11 @@ vec4 bgfxTexelFetch(BgfxSampler2D _sampler, ivec2 _coord, int _lod)
 	return _sampler.m_texture.Load(ivec3(_coord, _lod) );
 }
 
+vec4 bgfxTexelFetch(BgfxSampler2DMS _sampler, ivec2 _coord, int _sampleIdx)
+{
+	return _sampler.m_texture.Load(_coord, _sampleIdx);
+}
+
 vec4 bgfxTexelFetch(BgfxSampler3D _sampler, ivec3 _coord, int _lod)
 {
 	return _sampler.m_texture.Load(ivec4(_coord, _lod) );
@@ -201,6 +220,13 @@ vec4 bgfxTexelFetch(BgfxSampler3D _sampler, ivec3 _coord, int _lod)
 #		define texture2D(_sampler, _coord) bgfxTexture2D(_sampler, _coord)
 #		define texture2DLod(_sampler, _coord, _level) bgfxTexture2DLod(_sampler, _coord, _level)
 #		define texture2DProj(_sampler, _coord) bgfxTexture2DProj(_sampler, _coord)
+
+#		define SAMPLER2DMS(_name, _reg) \
+			uniform SamplerState _name ## Sampler : register(s[_reg]); \
+			uniform Texture2DMS _name ## Texture : register(t[_reg]); \
+			static BgfxSampler2DMS _name = { _name ## Sampler, _name ## Texture }
+#		define sampler2DMS BgfxSampler2DMS
+#		define texture2DMS(_sampler, _coord, _idx) bgfxTexture2DMS(_sampler, _coord, _idx)
 
 #		define SAMPLER2DSHADOW(_name, _reg) \
 			uniform SamplerComparisonState _name ## Sampler : register(s[_reg]); \
@@ -269,6 +295,7 @@ float bgfxShadow2DProj(sampler2DShadow _sampler, vec4 _coord)
 }
 
 #		define SAMPLER2D(_name, _reg) uniform sampler2D _name : register(s ## _reg)
+#		define SAMPLER2DMS(_name, _reg) uniform sampler2DMS _name : register(s ## _reg)
 #		define texture2D(_sampler, _coord) tex2D(_sampler, _coord)
 #		define texture2DProj(_sampler, _coord) bgfxTexture2DProj(_sampler, _coord)
 
@@ -339,6 +366,7 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #	define mul(_a, _b) ( (_a) * (_b) )
 #	define saturate(_x) clamp(_x, 0.0, 1.0)
 #	define SAMPLER2D(_name, _reg) uniform sampler2D _name
+#	define SAMPLER2DMS(_name, _reg) uniform sampler2DMS _name
 #	define SAMPLER3D(_name, _reg) uniform sampler3D _name
 #	define SAMPLERCUBE(_name, _reg) uniform samplerCube _name
 #	define SAMPLER2DSHADOW(_name, _reg) uniform sampler2DShadow _name
