@@ -116,14 +116,6 @@ struct BgfxSampler2DMS
 	Texture2DMS m_texture;
 };
 
-vec4 bgfxTexture2DMS(BgfxSampler2DMS _sampler, vec2 _coord, int _sampleIdx)
-{
-	ivec2 size;
-	int numSamples;
-	_sampler.m_texture.GetDimensions(size.x, size.y, numSamples);
-	return _sampler.m_texture.Load(ivec2(_coord * size), _sampleIdx);
-}
-
 struct BgfxSampler2DShadow
 {
 	SamplerComparisonState m_sampler;

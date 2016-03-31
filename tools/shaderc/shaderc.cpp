@@ -98,6 +98,14 @@ namespace bgfx
 		NULL
 	};
 
+	static const char* s_ARB_texture_multisample[] =
+	{
+		"sampler2DMS",
+		"isampler2DMS",
+		"usampler2DMS",
+		NULL
+	};
+
 	const char* s_uniformTypeName[UniformType::Count] =
 	{
 		"int",
@@ -1725,6 +1733,7 @@ namespace bgfx
 								const bool hasTextureLod    = NULL != bx::findIdentifierMatch(input, s_ARB_shader_texture_lod /*EXT_shader_texture_lod*/);
 								const bool hasShader5       = NULL != bx::findIdentifierMatch(input, s_ARB_gpu_shader5);
 								const bool hasShaderPacking = NULL != bx::findIdentifierMatch(input, s_ARB_shading_language_packing);
+								const bool hasTextureMS     = NULL != bx::findIdentifierMatch(input, s_ARB_texture_multisample);
 
 								if (0 == essl)
 								{
@@ -1765,6 +1774,13 @@ namespace bgfx
 									{
 										bx::stringPrintf(code
 											, "#extension GL_ARB_shader_texture_lod : enable\n"
+											);
+									}
+
+									if (hasTextureMS)
+									{
+										bx::stringPrintf(code
+											, "#extension GL_ARB_texture_multisample : enable\n"
 											);
 									}
 								}

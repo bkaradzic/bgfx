@@ -910,6 +910,14 @@ namespace bgfx { namespace gl
 		NULL
 	};
 
+	static const char* s_ARB_texture_multisample[] =
+	{
+		"sampler2DMS",
+		"isampler2DMS",
+		"usampler2DMS",
+		NULL
+	};
+
 	static void GL_APIENTRY stubVertexAttribDivisor(GLuint /*_index*/, GLuint /*_divisor*/)
 	{
 	}
@@ -4836,9 +4844,10 @@ namespace bgfx { namespace gl
 						;
 					const bool usesIUsamplers = !!bx::findIdentifierMatch(code, s_uisamplers);
 					const bool usesTexelFetch = !!bx::findIdentifierMatch(code, s_texelFetch);
+					const bool usesTextureMS  = !!bx::findIdentifierMatch(code, s_ARB_texture_multisample);
 
 					uint32_t version =
-						  usesTexelFetch || usesIUsamplers ? 130
+						  usesIUsamplers || usesTexelFetch || usesTextureMS ? 130
 						: usesTextureLod ? 120
 						: 0
 						;
@@ -4854,6 +4863,11 @@ namespace bgfx { namespace gl
 						{
 							writeString(&writer, "#extension GL_ARB_shader_texture_lod : enable\n");
 						}
+					}
+
+					if (usesTextureMS)
+					{
+						writeString(&writer, "#extension GL_ARB_texture_multisample : enable\n");
 					}
 
 					if (130 <= version)
