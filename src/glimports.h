@@ -359,7 +359,7 @@ GL_IMPORT______(true,  PFNGLREADBUFFERPROC,                        glReadBuffer)
 GL_IMPORT______(false, PFNGLREADPIXELSPROC,                        glReadPixels);
 GL_IMPORT______(true,  PFNGLRENDERBUFFERSTORAGEPROC,               glRenderbufferStorage);
 GL_IMPORT______(true,  PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC,    glRenderbufferStorageMultisample);
-GL_IMPORT______(true,  PFNGLSAMPLEMASKIPROC,                       glSampleMaskI);
+GL_IMPORT______(true,  PFNGLSAMPLEMASKIPROC,                       glSampleMaski);
 GL_IMPORT______(true,  PFNGLSAMPLERPARAMETERIPROC,                 glSamplerParameteri);
 GL_IMPORT______(true,  PFNGLSAMPLERPARAMETERFPROC,                 glSamplerParameterf);
 GL_IMPORT______(true,  PFNGLSAMPLERPARAMETERFVPROC,                glSamplerParameterfv);
