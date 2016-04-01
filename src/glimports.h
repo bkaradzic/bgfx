@@ -515,6 +515,7 @@ GL_IMPORT_OES__(true,  PFNGLBINDVERTEXARRAYPROC,                   glBindVertexA
 GL_IMPORT_OES__(true,  PFNGLDELETEVERTEXARRAYSPROC,                glDeleteVertexArrays);
 GL_IMPORT_OES__(true,  PFNGLGENVERTEXARRAYSPROC,                   glGenVertexArrays);
 
+GL_IMPORT_____x(true,  PFNGLCLIPCONTROLPROC,                       glClipControl);
 GL_IMPORT_____x(true,  PFNGLENABLEIPROC,                           glEnablei);
 GL_IMPORT_____x(true,  PFNGLDISABLEIPROC,                          glDisablei);
 GL_IMPORT_____x(true,  PFNGLBLENDEQUATIONIPROC,                    glBlendEquationi);
