@@ -499,6 +499,8 @@ namespace bgfx
 		uint8_t  numGPUs;          //!< Number of enumerated GPUs.
 		uint16_t vendorId;         //!< Selected GPU vendor id.
 		uint16_t deviceId;         //!< Selected GPU device id.
+		bool     homogeneousDepth; //!< True when NDC depth is in [-1, 1] range.
+		bool     originBottomLeft; //!< True when NDC origin is at bottom left.
 
 		/// GPU info.
 		///

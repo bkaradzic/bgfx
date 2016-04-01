@@ -1151,6 +1151,10 @@ namespace bgfx
 		}
 
 		BX_TRACE("Max FB attachments: %d", g_caps.maxFBAttachments);
+		BX_TRACE("NDC depth [%d, 1], origin %s left."
+			, g_caps.homogeneousDepth ? -1 : 0
+			, g_caps.originBottomLeft ? "bottom" : "top"
+			);
 	}
 
 	TextureFormat::Enum getViableTextureFormat(const ImageContainer& _imageContainer)

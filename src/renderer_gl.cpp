@@ -1818,6 +1818,17 @@ namespace bgfx { namespace gl
 						);
 			}
 
+			if (s_extension[Extension::ARB_clip_control].m_supported)
+			{
+				GL_CHECK(glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE) );
+				g_caps.originBottomLeft = true;
+			}
+			else
+			{
+				g_caps.homogeneousDepth = true;
+				g_caps.originBottomLeft = true;
+			}
+
 			m_vaoSupport = !!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 				|| s_extension[Extension::ARB_vertex_array_object].m_supported
 				|| s_extension[Extension::OES_vertex_array_object].m_supported
