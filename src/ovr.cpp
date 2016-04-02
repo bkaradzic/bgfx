@@ -165,7 +165,10 @@ namespace bgfx
 		for (int eye = 0; eye < ovrEye_Count; eye++)
 		{
 			eyeLayer.ColorTexture[eye] = m_eyeBuffers[eye]->m_swapTextureChain;
-			eyeLayer.Viewport[eye]     = ::OVR::Recti(m_eyeBuffers[eye]->m_eyeTextureSize);
+			eyeLayer.Viewport[eye].Pos.x  = 0;
+			eyeLayer.Viewport[eye].Pos.y  = 0;
+			eyeLayer.Viewport[eye].Size.w = m_eyeBuffers[eye]->m_eyeTextureSize.w;
+			eyeLayer.Viewport[eye].Size.h = m_eyeBuffers[eye]->m_eyeTextureSize.h;
 			eyeLayer.Fov[eye]          = m_hmdDesc.DefaultEyeFov[eye];
 			eyeLayer.RenderPose[eye]   = m_pose[eye];
 			eyeLayer.SensorSampleTime  = m_sensorSampleTime;

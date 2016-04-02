@@ -25,8 +25,6 @@
 #		include <OVR_CAPI_GL.h>
 #	endif // BGFX_CONFIG_RENDERER_OPENGL
 
-#include "Extras/OVR_Math.h"
-
 namespace bgfx
 {
 	// single eye buffer
