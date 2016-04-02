@@ -5473,8 +5473,6 @@ namespace bgfx { namespace gl
 		viewScissorRect.clear();
 		uint16_t discardFlags = BGFX_CLEAR_NONE;
 
-		GL_CHECK(glEnable(GL_SCISSOR_TEST) );
-
 		const bool blendIndependentSupported = s_extension[Extension::ARB_draw_buffers_blend].m_supported;
 		const bool computeSupported = (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) && s_extension[Extension::ARB_compute_shader].m_supported)
 									|| BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31)
@@ -5824,16 +5822,25 @@ namespace bgfx { namespace gl
 
 					if (UINT16_MAX == scissor)
 					{
-						GL_CHECK(glScissor(viewScissorRect.m_x
-							, resolutionHeight-viewScissorRect.m_height-viewScissorRect.m_y
-							, viewScissorRect.m_width
-							, viewScissorRect.m_height
-							) );
+						if (viewHasScissor)
+						{
+							GL_CHECK(glEnable(GL_SCISSOR_TEST) );
+							GL_CHECK(glScissor(viewScissorRect.m_x
+								, resolutionHeight-viewScissorRect.m_height-viewScissorRect.m_y
+								, viewScissorRect.m_width
+								, viewScissorRect.m_height
+								) );
+						}
+						else
+						{
+							GL_CHECK(glDisable(GL_SCISSOR_TEST) );
+						}
 					}
 					else
 					{
 						Rect scissorRect;
 						scissorRect.intersect(viewScissorRect, _render->m_rectCache.m_cache[scissor]);
+						GL_CHECK(glEnable(GL_SCISSOR_TEST) );
 						GL_CHECK(glScissor(scissorRect.m_x
 							, resolutionHeight-scissorRect.m_height-scissorRect.m_y
 							, scissorRect.m_width
