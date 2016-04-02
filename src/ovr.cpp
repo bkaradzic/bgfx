@@ -9,17 +9,15 @@
 
 namespace bgfx
 {
-#if OVR_VERSION <= OVR_VERSION_050
-#	define OVR_EYE_BUFFER 100
-#else
-#	define OVR_EYE_BUFFER 8
-#endif // OVR_VERSION...
-
 	OVR::OVR()
 		: m_hmd(NULL)
 		, m_isenabled(false)
-		, m_debug(false)
+		, m_mirror(NULL)
+		, m_hmdFrameReady(-1)
+		, m_frameIndex(0)
+		, m_sensorSampleTime(0)
 	{
+		memset(m_eyeBuffers, 0, sizeof(m_eyeBuffers));
 	}
 
 	OVR::~OVR()
@@ -29,225 +27,162 @@ namespace bgfx
 
 	void OVR::init()
 	{
-		bool initialized = !!ovr_Initialize();
-		BX_WARN(initialized, "Unable to create OVR device.");
-		if (!initialized)
+		ovrResult initialized = ovr_Initialize(NULL);
+		ovrGraphicsLuid luid;
+
+		BX_WARN(initialized == ovrSuccess, "Unable to create OVR device.");
+		
+		if (initialized != ovrSuccess)
 		{
 			return;
 		}
 
-		m_hmd = ovrHmd_Create(0);
-		if (NULL == m_hmd)
+		initialized = ovr_Create(&m_hmd, &luid);
+		if (initialized != ovrSuccess)
 		{
-			m_hmd = ovrHmd_CreateDebug(ovrHmd_DK2);
-			BX_WARN(NULL != m_hmd, "Unable to create OVR device.");
-			if (NULL == m_hmd)
-			{
-				return;
-			}
+			BX_WARN(initialized == ovrSuccess, "Unable to create OVR device.");
+			return;
 		}
 
+		m_hmdDesc = ovr_GetHmdDesc(m_hmd);
+
 		BX_TRACE("HMD: %s, %s, firmware: %d.%d"
-			, m_hmd->ProductName
-			, m_hmd->Manufacturer
-			, m_hmd->FirmwareMajor
-			, m_hmd->FirmwareMinor
+			, m_hmdDesc.ProductName
+			, m_hmdDesc.Manufacturer
+			, m_hmdDesc.FirmwareMajor
+			, m_hmdDesc.FirmwareMinor
 			);
 
-		ovrSizei sizeL = ovrHmd_GetFovTextureSize(m_hmd, ovrEye_Left,  m_hmd->DefaultEyeFov[0], 1.0f);
-		ovrSizei sizeR = ovrHmd_GetFovTextureSize(m_hmd, ovrEye_Right, m_hmd->DefaultEyeFov[1], 1.0f);
-		m_rtSize.w = sizeL.w + sizeR.w + OVR_EYE_BUFFER;
-		m_rtSize.h = bx::uint32_max(sizeL.h, sizeR.h);
-		m_warning = true;
+		ovrSizei sizeL = ovr_GetFovTextureSize(m_hmd, ovrEye_Left,  m_hmdDesc.DefaultEyeFov[0], 1.0f);
+		ovrSizei sizeR = ovr_GetFovTextureSize(m_hmd, ovrEye_Right, m_hmdDesc.DefaultEyeFov[1], 1.0f);
+		m_hmdSize.w = sizeL.w + sizeR.w;
+		m_hmdSize.h = bx::uint32_max(sizeL.h, sizeR.h);
 	}
 
 	void OVR::shutdown()
 	{
 		BX_CHECK(!m_isenabled, "HMD not disabled.");
-		ovrHmd_Destroy(m_hmd);
+
+		for (int i = 0; i < 2; i++)
+		{
+			if (m_eyeBuffers[i])
+			{
+				m_eyeBuffers[i]->destroy(m_hmd);
+				BX_DELETE(g_allocator, m_eyeBuffers[i]);
+			}
+		}
+
+		if (m_mirror)
+		{
+			m_mirror->destroy(m_hmd);
+			BX_DELETE(g_allocator, m_mirror);
+		}
+
+		ovr_Destroy(m_hmd);
 		m_hmd = NULL;
 		ovr_Shutdown();
 	}
 
 	void OVR::getViewport(uint8_t _eye, Rect* _viewport)
 	{
-		_viewport->m_x      = _eye * (m_rtSize.w + OVR_EYE_BUFFER + 1)/2;
+		_viewport->m_x      = 0;
 		_viewport->m_y      = 0;
-		_viewport->m_width  = (m_rtSize.w - OVR_EYE_BUFFER)/2;
-		_viewport->m_height = m_rtSize.h;
+		_viewport->m_width  = m_eyeBuffers[_eye]->m_eyeTextureSize.w;
+		_viewport->m_height = m_eyeBuffers[_eye]->m_eyeTextureSize.h;
 	}
 
-	bool OVR::postReset(void* _nwh, ovrRenderAPIConfig* _config, bool _debug)
+	void OVR::renderEyeStart(uint8_t _eye)
 	{
-		if (_debug)
-		{
-			switch (_config->Header.API)
-			{
-#if BGFX_CONFIG_RENDERER_DIRECT3D11
-			case ovrRenderAPI_D3D11:
-				{
-					ovrD3D11ConfigData* data = (ovrD3D11ConfigData*)_config;
-#	if OVR_VERSION > OVR_VERSION_043
-					m_rtSize = data->Header.BackBufferSize;
-#	else
-					m_rtSize = data->Header.RTSize;
-#	endif // OVR_VERSION > OVR_VERSION_043
-				}
-				break;
-#endif // BGFX_CONFIG_RENDERER_DIRECT3D11
+		m_eyeBuffers[_eye]->onRender(m_hmd);
+	}
 
-#if BGFX_CONFIG_RENDERER_OPENGL
-			case ovrRenderAPI_OpenGL:
-				{
-					ovrGLConfigData* data = (ovrGLConfigData*)_config;
-#	if OVR_VERSION > OVR_VERSION_043
-					m_rtSize = data->Header.BackBufferSize;
-#	else
-					m_rtSize = data->Header.RTSize;
-#	endif // OVR_VERSION > OVR_VERSION_043
-				}
-				break;
-#endif // BGFX_CONFIG_RENDERER_OPENGL
-
-			case ovrRenderAPI_None:
-			default:
-				BX_CHECK(false, "You should not be here!");
-				break;
-			}
-
-			m_debug = true;
-			return false;
-		}
-
+	bool OVR::postReset()
+	{
 		if (NULL == m_hmd)
 		{
 			return false;
 		}
 
+		for (int eyeIdx = 0; eyeIdx < ovrEye_Count; eyeIdx++)
+		{
+			m_erd[eyeIdx] = ovr_GetRenderDesc(m_hmd, (ovrEyeType)eyeIdx, m_hmdDesc.DefaultEyeFov[eyeIdx]);
+		}
+
 		m_isenabled = true;
 
-		ovrBool result;
-		result = ovrHmd_AttachToWindow(m_hmd, _nwh, NULL, NULL);
-		if (!result) { goto ovrError; }
-
-		ovrFovPort eyeFov[2] = { m_hmd->DefaultEyeFov[0], m_hmd->DefaultEyeFov[1] };
-		result = ovrHmd_ConfigureRendering(m_hmd
-			, _config
-			, 0
-#if OVR_VERSION < OVR_VERSION_050
-			| ovrDistortionCap_Chromatic // permanently enabled >= v5.0
-#endif
-			| ovrDistortionCap_Vignette
-			| ovrDistortionCap_TimeWarp
-			| ovrDistortionCap_Overdrive
-			| ovrDistortionCap_NoRestore
-			| ovrDistortionCap_HqDistortion
-			, eyeFov
-			, m_erd
-			);
-		if (!result) { goto ovrError; }
-
-		ovrHmd_SetEnabledCaps(m_hmd
-			, 0
-			| ovrHmdCap_LowPersistence
-			| ovrHmdCap_DynamicPrediction
-			);
-
-		result = ovrHmd_ConfigureTracking(m_hmd
-			, 0
-			| ovrTrackingCap_Orientation
-			| ovrTrackingCap_MagYawCorrection
-			| ovrTrackingCap_Position
-			, 0
-			);
-
-		if (!result)
-		{
-ovrError:
-			BX_TRACE("Failed to initialize OVR.");
-			m_isenabled = false;
-			return false;
-		}
-
-		m_warning = true;
 		return true;
-	}
-
-	void OVR::postReset(const ovrTexture& _texture)
-	{
-		if (NULL != m_hmd)
-		{
-			m_texture[0] = _texture;
-			m_texture[1] = _texture;
-
-			ovrRecti rect;
-			rect.Pos.x  = 0;
-			rect.Pos.y  = 0;
-			rect.Size.w = (m_rtSize.w - OVR_EYE_BUFFER)/2;
-			rect.Size.h = m_rtSize.h;
-
-			m_texture[0].Header.RenderViewport = rect;
-
-			rect.Pos.x += rect.Size.w + OVR_EYE_BUFFER;
-			m_texture[1].Header.RenderViewport = rect;
-
-			m_timing = ovrHmd_BeginFrame(m_hmd, 0);
-#if OVR_VERSION > OVR_VERSION_042
-			m_pose[0] = ovrHmd_GetHmdPosePerEye(m_hmd, ovrEye_Left);
-			m_pose[1] = ovrHmd_GetHmdPosePerEye(m_hmd, ovrEye_Right);
-#else
-			m_pose[0] = ovrHmd_GetEyePose(m_hmd, ovrEye_Left);
-			m_pose[1] = ovrHmd_GetEyePose(m_hmd, ovrEye_Right);
-#endif // OVR_VERSION > OVR_VERSION_042
-		}
 	}
 
 	void OVR::preReset()
 	{
 		if (m_isenabled)
 		{
-			ovrHmd_EndFrame(m_hmd, m_pose, m_texture);
-			ovrHmd_AttachToWindow(m_hmd, NULL, NULL, NULL);
-			ovrHmd_ConfigureRendering(m_hmd, NULL, 0, NULL, NULL);
+			// on window resize this will recreate the mirror texture in ovrPostReset
+			m_mirror->destroy(m_hmd);
+			BX_DELETE(g_allocator, m_mirror);
+			m_mirror = NULL;
 			m_isenabled = false;
 		}
-
-		m_debug = false;
 	}
 
-	bool OVR::swap(HMD& _hmd)
+	void OVR::commitEye(uint8_t _eye)
+	{
+		if (m_isenabled)
+		{
+			m_hmdFrameReady = ovr_CommitTextureSwapChain(m_hmd, m_eyeBuffers[_eye]->m_swapTextureChain);
+		}
+	}
+
+	bool OVR::swap(HMD& _hmd, bool originBottomLeft)
 	{
 		_hmd.flags = BGFX_HMD_NONE;
 
 		if (NULL != m_hmd)
 		{
 			_hmd.flags |= BGFX_HMD_DEVICE_RESOLUTION;
-			_hmd.deviceWidth  = m_hmd->Resolution.w;
-			_hmd.deviceHeight = m_hmd->Resolution.h;
+			_hmd.deviceWidth  = m_hmdDesc.Resolution.w;
+			_hmd.deviceHeight = m_hmdDesc.Resolution.h;
 		}
 
-		if (!m_isenabled)
+		if (!m_isenabled || !OVR_SUCCESS(m_hmdFrameReady))
 		{
 			return false;
 		}
 
 		_hmd.flags |= BGFX_HMD_RENDERING;
-		ovrHmd_EndFrame(m_hmd, m_pose, m_texture);
 
-		if (m_warning)
+		// finish frame for current eye
+		ovrViewScaleDesc viewScaleDesc;
+		viewScaleDesc.HmdSpaceToWorldScaleInMeters = 1.0f;
+		viewScaleDesc.HmdToEyeOffset[0] = m_hmdToEyeOffset[0];
+		viewScaleDesc.HmdToEyeOffset[1] = m_hmdToEyeOffset[1];
+
+		// create the main eye layer
+		ovrLayerEyeFov eyeLayer;
+		eyeLayer.Header.Type = ovrLayerType_EyeFov;
+		eyeLayer.Header.Flags = originBottomLeft ? ovrLayerFlag_TextureOriginAtBottomLeft : 0;
+
+		for (int eye = 0; eye < ovrEye_Count; eye++)
 		{
-			m_warning = !ovrHmd_DismissHSWDisplay(m_hmd);
+			eyeLayer.ColorTexture[eye] = m_eyeBuffers[eye]->m_swapTextureChain;
+			eyeLayer.Viewport[eye]     = ::OVR::Recti(m_eyeBuffers[eye]->m_eyeTextureSize);
+			eyeLayer.Fov[eye]          = m_hmdDesc.DefaultEyeFov[eye];
+			eyeLayer.RenderPose[eye]   = m_pose[eye];
+			eyeLayer.SensorSampleTime  = m_sensorSampleTime;
 		}
 
-		m_timing = ovrHmd_BeginFrame(m_hmd, 0);
+		// append all the layers to global list
+		ovrLayerHeader* layerList = &eyeLayer.Header;
 
-#if OVR_VERSION > OVR_VERSION_042
-		m_pose[0] = ovrHmd_GetHmdPosePerEye(m_hmd, ovrEye_Left);
-		m_pose[1] = ovrHmd_GetHmdPosePerEye(m_hmd, ovrEye_Right);
-#else
-		m_pose[0] = ovrHmd_GetEyePose(m_hmd, ovrEye_Left);
-		m_pose[1] = ovrHmd_GetEyePose(m_hmd, ovrEye_Right);
-#endif // OVR_VERSION > OVR_VERSION_042
+		ovr_SubmitFrame(m_hmd, m_frameIndex, NULL, &layerList, 1);
+
+		// perform mirror texture blit right after the entire frame is submitted to HMD
+		m_mirror->blit(m_hmd);
+
+		m_hmdToEyeOffset[0] = m_erd[0].HmdToEyeOffset;
+		m_hmdToEyeOffset[1] = m_erd[1].HmdToEyeOffset;
+
+		ovr_GetEyePoses(m_hmd, m_frameIndex, ovrTrue, m_hmdToEyeOffset, m_pose, &m_sensorSampleTime);
 
 		getEyePose(_hmd);
 
@@ -258,7 +193,7 @@ ovrError:
 	{
 		if (NULL != m_hmd)
 		{
-			ovrHmd_RecenterPose(m_hmd);
+			ovr_RecenterTrackingOrigin(m_hmd);
 		}
 	}
 
@@ -283,44 +218,27 @@ ovrError:
 				eye.fov[1] = erd.Fov.DownTan;
 				eye.fov[2] = erd.Fov.LeftTan;
 				eye.fov[3] = erd.Fov.RightTan;
-#if OVR_VERSION > OVR_VERSION_042
-				eye.viewOffset[0] = erd.HmdToEyeViewOffset.x;
-				eye.viewOffset[1] = erd.HmdToEyeViewOffset.y;
-				eye.viewOffset[2] = erd.HmdToEyeViewOffset.z;
-#else
-				eye.viewOffset[0] = erd.ViewAdjust.x;
-				eye.viewOffset[1] = erd.ViewAdjust.y;
-				eye.viewOffset[2] = erd.ViewAdjust.z;
-#endif // OVR_VERSION > OVR_VERSION_042
+
+				ovrMatrix4f eyeProj = ovrMatrix4f_Projection(m_erd[ii].Fov, 0.01f, 1000.0f, ovrProjection_LeftHanded);
+				for (int jj = 0; jj < 4; ++jj)
+				{
+					for (int kk = 0; kk < 4; ++kk)
+					{
+						eye.projection[4 * jj + kk] = eyeProj.M[kk][jj];
+					}
+				}
+
+				eye.viewOffset[0] = erd.HmdToEyeOffset.x;
+				eye.viewOffset[1] = erd.HmdToEyeOffset.y;
+				eye.viewOffset[2] = erd.HmdToEyeOffset.z;
+
 				eye.pixelsPerTanAngle[0] = erd.PixelsPerTanAngleAtCenter.x;
 				eye.pixelsPerTanAngle[1] = erd.PixelsPerTanAngleAtCenter.y;
 			}
 		}
-		else
-		{
-			for (int ii = 0; ii < 2; ++ii)
-			{
-				_hmd.eye[ii].rotation[0] = 0.0f;
-				_hmd.eye[ii].rotation[1] = 0.0f;
-				_hmd.eye[ii].rotation[2] = 0.0f;
-				_hmd.eye[ii].rotation[3] = 1.0f;
-				_hmd.eye[ii].translation[0] = 0.0f;
-				_hmd.eye[ii].translation[1] = 0.0f;
-				_hmd.eye[ii].translation[2] = 0.0f;
-				_hmd.eye[ii].fov[0] = 1.32928634f;
-				_hmd.eye[ii].fov[1] = 1.32928634f;
-				_hmd.eye[ii].fov[2] = 0 == ii ? 1.05865765f : 1.09236801f;
-				_hmd.eye[ii].fov[3] = 0 == ii ? 1.09236801f : 1.05865765f;
-				_hmd.eye[ii].viewOffset[0] = 0 == ii ? 0.0355070010f  : -0.0375000015f;
-				_hmd.eye[ii].viewOffset[1] = 0.0f;
-				_hmd.eye[ii].viewOffset[2] = 0 == ii ? 0.00150949787f : -0.00150949787f;
-				_hmd.eye[ii].pixelsPerTanAngle[0] = 1;
-				_hmd.eye[ii].pixelsPerTanAngle[1] = 1;
-			}
-		}
 
-		_hmd.width  = uint16_t(m_rtSize.w);
-		_hmd.height = uint16_t(m_rtSize.h);
+		_hmd.width  = uint16_t(m_hmdSize.w);
+		_hmd.height = uint16_t(m_hmdSize.h);
 	}
 
 } // namespace bgfx
