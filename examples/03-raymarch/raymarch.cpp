@@ -107,7 +107,7 @@ class ExampleRaymarch : public entry::AppI
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
-		
+
 		m_width  = 1280;
 		m_height = 720;
 		m_debug  = BGFX_DEBUG_TEXT;
@@ -127,18 +127,8 @@ class ExampleRaymarch : public entry::AppI
 				, 0
 				);
 
-		// Setup root path for binary shaders. Shader binaries are different
-		// for each renderer.
-		switch (bgfx::getRendererType() )
-		{
-		default:
-			break;
-
-		case bgfx::RendererType::OpenGL:
-		case bgfx::RendererType::OpenGLES:
-			s_oglNdc = true;
-			break;
-		}
+		const bgfx::Caps* caps = bgfx::getCaps();
+		s_oglNdc = caps->homogeneousDepth;
 
 		// Create vertex stream declaration.
 		PosColorTexCoord0Vertex::init();
