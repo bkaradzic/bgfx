@@ -72,7 +72,7 @@ vec3 clipToWorld(mat4 _invViewProj, vec3 _clipPos)
 void main()
 {
 	vec3  normal      = decodeNormalUint(texture2D(s_normal, v_texcoord0).xyz);
-	float deviceDepth = texture2D(s_depth,  v_texcoord0).x;
+	float deviceDepth = texture2D(s_depth, v_texcoord0).x;
 	float depth       = toClipSpaceDepth(deviceDepth);
 
 	vec3 clip = vec3(v_texcoord0 * 2.0 - 1.0, depth);

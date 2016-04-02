@@ -230,9 +230,9 @@ class ExampleHDR : public entry::AppI
 		// Imgui.
 		imguiCreate();
 
-		const bgfx::RendererType::Enum renderer = bgfx::getRendererType();
-		s_texelHalf = bgfx::RendererType::Direct3D9 == renderer ? 0.5f : 0.0f;
-		s_originBottomLeft = bgfx::RendererType::OpenGL == renderer || bgfx::RendererType::OpenGLES == renderer;
+		const bgfx::Caps* caps = bgfx::getCaps();
+		s_texelHalf        = bgfx::RendererType::Direct3D9 == caps->rendererType ? 0.5f : 0.0f;
+		s_originBottomLeft = caps->originBottomLeft;
 
 		m_oldWidth  = 0;
 		m_oldHeight = 0;

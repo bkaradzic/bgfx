@@ -1818,12 +1818,12 @@ namespace bgfx { namespace gl
 						);
 			}
 
-			if (s_extension[Extension::ARB_clip_control].m_supported)
-			{
-				GL_CHECK(glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE) );
-				g_caps.originBottomLeft = true;
-			}
-			else
+//			if (s_extension[Extension::ARB_clip_control].m_supported)
+//			{
+//				GL_CHECK(glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE) );
+//				g_caps.originBottomLeft = true;
+//			}
+//			else
 			{
 				g_caps.homogeneousDepth = true;
 				g_caps.originBottomLeft = true;
