@@ -173,21 +173,10 @@ function exampleProject(_name)
 	end
 
 	if _OPTIONS["with-ovr"] then
-		links   {
-			"winmm",
-			"ws2_32",
-		}
-
-		configuration { "x32", "Debug" }
-			libdirs { path.join("$(OVR_DIR)/LibOVR/Lib/Windows/Win32/Debug", _ACTION) }
-
-		configuration { "x32", "Release" }
+		configuration { "x32" }
 			libdirs { path.join("$(OVR_DIR)/LibOVR/Lib/Windows/Win32/Release", _ACTION) }
 
-		configuration { "x64", "Debug" }
-			libdirs { path.join("$(OVR_DIR)/LibOVR/Lib/Windows/x64/Debug", _ACTION) }
-
-		configuration { "x64", "Release" }
+		configuration { "x64" }
 			libdirs { path.join("$(OVR_DIR)/LibOVR/Lib/Windows/x64/Release", _ACTION) }
 
 		configuration { "x32 or x64" }
