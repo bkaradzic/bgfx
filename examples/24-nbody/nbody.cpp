@@ -305,11 +305,7 @@ int _main_(int _argc, char** _argv)
 
 				float tmp[16];
 				bx::mtxMul(tmp, view, viewHead);
-
-				float proj[16];
-				bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 10000.0f);
-
-				bgfx::setViewTransform(0, tmp, proj);
+				bgfx::setViewTransform(0, tmp, hmd->eye[0].projection);
 
 				// Set view 0 default viewport.
 				//

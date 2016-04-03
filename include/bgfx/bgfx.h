@@ -499,6 +499,8 @@ namespace bgfx
 		uint8_t  numGPUs;          //!< Number of enumerated GPUs.
 		uint16_t vendorId;         //!< Selected GPU vendor id.
 		uint16_t deviceId;         //!< Selected GPU device id.
+		bool     homogeneousDepth; //!< True when NDC depth is in [-1, 1] range.
+		bool     originBottomLeft; //!< True when NDC origin is at bottom left.
 
 		/// GPU info.
 		///
@@ -613,6 +615,7 @@ namespace bgfx
 			float translation[3];       //!< Eye translation.
 			float fov[4];               //!< Field of view (up, down, left, right).
 			float viewOffset[3];        //!< Eye view matrix translation adjustment.
+			float projection[16];       //!< Eye projection matrix
 			float pixelsPerTanAngle[2]; //!<
 		};
 
@@ -1912,7 +1915,7 @@ namespace bgfx
 	///
 	void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
 
-    /// @attention C99 equivalent is `bgfx_set_view_rect_auto`.
+	/// @attention C99 equivalent is `bgfx_set_view_rect_auto`.
 	///
 	void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, BackbufferRatio::Enum _ratio);
 

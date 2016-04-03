@@ -107,8 +107,8 @@ typedef uint64_t GLuint64;
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
 #include "renderer.h"
-#include "ovr.h"
-#include "renderdoc.h"
+#include "hmd_ovr.h"
+#include "debug_renderdoc.h"
 
 #ifndef GL_LUMINANCE
 #	define GL_LUMINANCE 0x1909
@@ -790,6 +790,22 @@ typedef uint64_t GLuint64;
 #ifndef GL_CONSERVATIVE_RASTERIZATION_NV
 #	define GL_CONSERVATIVE_RASTERIZATION_NV 0x9346
 #endif // GL_CONSERVATIVE_RASTERIZATION_NV
+
+#ifndef GL_NEGATIVE_ONE_TO_ONE
+#	define GL_NEGATIVE_ONE_TO_ONE 0x935E
+#endif // GL_NEGATIVE_ONE_TO_ONE
+
+#ifndef GL_ZERO_TO_ONE
+#	define GL_ZERO_TO_ONE 0x935F
+#endif // GL_ZERO_TO_ONE
+
+#ifndef GL_LOWER_LEFT
+#	define GL_LOWER_LEFT 0x8CA1
+#endif // GL_LOWER_LEFT
+
+#ifndef GL_UPPER_LEFT
+#	define GL_UPPER_LEFT 0x8CA2
+#endif // GL_UPPER_LEFT
 
 // _KHR or _ARB...
 #define GL_DEBUG_OUTPUT_SYNCHRONOUS         0x8242

@@ -1274,6 +1274,144 @@ namespace bgfx { namespace gl
 		BX_UNUSED(supported);
 	}
 
+#if BGFX_CONFIG_USE_OVR
+
+	// Oculus Rift eye buffer
+	struct OVRBufferGL : public OVRBufferI
+	{
+		OVRBufferGL(const ovrSession& session, int eyeIdx)
+		{
+			ovrHmdDesc hmdDesc = ovr_GetHmdDesc(session);
+			m_eyeTextureSize = ovr_GetFovTextureSize(session, (ovrEyeType)eyeIdx, hmdDesc.DefaultEyeFov[eyeIdx], 1.0f);
+
+			ovrTextureSwapChainDesc desc = {};
+			desc.Type = ovrTexture_2D;
+			desc.ArraySize = 1;
+			desc.Width  = m_eyeTextureSize.w;
+			desc.Height = m_eyeTextureSize.h;
+			desc.MipLevels = 1;
+			desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+			desc.SampleCount = 1;
+			desc.StaticImage = ovrFalse;
+
+			ovr_CreateTextureSwapChainGL(session, &desc, &m_swapTextureChain);
+
+			int textureCount = 0;
+			ovr_GetTextureSwapChainLength(session, m_swapTextureChain, &textureCount);
+
+			for (int j = 0; j < textureCount; ++j)
+			{
+				GLuint chainTexId;
+				ovr_GetTextureSwapChainBufferGL(session, m_swapTextureChain, j, &chainTexId);
+				GL_CHECK(glBindTexture(GL_TEXTURE_2D, chainTexId));
+
+				GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+				GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+				GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+				GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+			}
+
+			GL_CHECK(glGenFramebuffers(1, &m_eyeFbo));
+
+			// create depth buffer
+			GL_CHECK(glGenTextures(1, &m_depthBuffer));
+			GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_depthBuffer));
+			GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+			GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+			GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+			GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+
+			GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, m_eyeTextureSize.w, m_eyeTextureSize.h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL));
+		}
+
+		void onRender(const ovrSession& session)
+		{
+			// set the current eye texture in swap chain
+			int curIndex;
+			ovr_GetTextureSwapChainCurrentIndex(session, m_swapTextureChain, &curIndex);
+			ovr_GetTextureSwapChainBufferGL(session, m_swapTextureChain, curIndex, &m_eyeTexId);
+
+			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_eyeFbo));
+			GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_eyeTexId, 0));
+			GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthBuffer, 0));
+
+			GL_CHECK(glViewport(0, 0, m_eyeTextureSize.w, m_eyeTextureSize.h));
+			GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+		}
+
+		void destroy(const ovrSession& session)
+		{
+			GL_CHECK(glDeleteFramebuffers(1, &m_eyeFbo));
+			GL_CHECK(glDeleteTextures(1, &m_depthBuffer));
+
+			ovr_DestroyTextureSwapChain(session, m_swapTextureChain);
+		}
+
+		GLuint m_eyeFbo;
+		GLuint m_eyeTexId;
+		GLuint m_depthBuffer;
+	};
+
+	// Oculus Rift mirror
+	struct OVRMirrorGL : public OVRMirrorI
+	{
+		void init(const ovrSession& session, int windowWidth, int windowHeight)
+		{
+			memset(&m_mirrorDesc, 0, sizeof(m_mirrorDesc));
+			m_mirrorDesc.Width  = windowWidth;
+			m_mirrorDesc.Height = windowHeight;
+			m_mirrorDesc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+
+			ovr_CreateMirrorTextureGL(session, &m_mirrorDesc, &m_mirrorTexture);
+
+			// Fallback to doing nothing if mirror was not created. This is to prevent errors with fast window resizes
+			if (!m_mirrorTexture)
+				return;
+
+			// Configure the mirror read buffer
+			GLuint texId;
+			ovr_GetMirrorTextureBufferGL(session, m_mirrorTexture, &texId);
+			GL_CHECK(glGenFramebuffers(1, &m_mirrorFBO));
+			GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_mirrorFBO));
+			GL_CHECK(glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId, 0));
+			GL_CHECK(glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0));
+			GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0));
+
+			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+			{
+				GL_CHECK(glDeleteFramebuffers(1, &m_mirrorFBO));
+				BX_CHECK(false, "Could not initialize VR buffers!");
+			}
+		}
+
+		void destroy(const ovrSession& session)
+		{
+			if (!m_mirrorTexture)
+				return;
+
+			GL_CHECK(glDeleteFramebuffers(1, &m_mirrorFBO));
+			ovr_DestroyMirrorTexture(session, m_mirrorTexture);
+			m_mirrorTexture = NULL;
+		}
+
+		void blit(const ovrSession& /*session*/)
+		{
+			if (!m_mirrorTexture)
+				return;
+
+			// Blit mirror texture to back buffer
+			GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_mirrorFBO));
+			GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+			GLint w = m_mirrorDesc.Width;
+			GLint h = m_mirrorDesc.Height;
+			GL_CHECK(glBlitFramebuffer(0, h, w, 0, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+			GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0));
+		}
+
+		GLuint m_mirrorFBO;
+	};
+#endif // BGFX_CONFIG_USE_OVR
+
 	struct RendererContextGL : public RendererContextI
 	{
 		RendererContextGL()
@@ -1304,7 +1442,6 @@ namespace bgfx { namespace gl
 			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
 			, m_backBufferFbo(0)
 			, m_msaaBackBufferFbo(0)
-			, m_ovrFbo(0)
 		{
 			memset(m_msaaBackBufferRbos, 0, sizeof(m_msaaBackBufferRbos) );
 		}
@@ -1818,6 +1955,17 @@ namespace bgfx { namespace gl
 						);
 			}
 
+//			if (s_extension[Extension::ARB_clip_control].m_supported)
+//			{
+//				GL_CHECK(glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE) );
+//				g_caps.originBottomLeft = true;
+//			}
+//			else
+			{
+				g_caps.homogeneousDepth = true;
+				g_caps.originBottomLeft = true;
+			}
+
 			m_vaoSupport = !!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 				|| s_extension[Extension::ARB_vertex_array_object].m_supported
 				|| s_extension[Extension::OES_vertex_array_object].m_supported
@@ -2096,10 +2244,9 @@ namespace bgfx { namespace gl
 					m_glctx.swap(m_frameBuffers[m_windows[ii].idx].m_swapChain);
 				}
 
-				if (!m_ovr.swap(_hmd) )
-				{
-					m_glctx.swap();
-				}
+				m_ovr.swap(_hmd, true);
+				// need to swap GL render context even if OVR is enabled to get the mirror texture in the output
+				m_glctx.swap();
 			}
 		}
 
@@ -2386,10 +2533,6 @@ namespace bgfx { namespace gl
 
 			uint32_t width  = m_resolution.m_width;
 			uint32_t height = m_resolution.m_height;
-			if (m_ovr.isEnabled() )
-			{
-				m_ovr.getSize(width, height);
-			}
 
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
 			GL_CHECK(glViewport(0, 0, width, height) );
@@ -2846,63 +2989,22 @@ namespace bgfx { namespace gl
 		void ovrPostReset()
 		{
 #if BGFX_CONFIG_USE_OVR
-			if (m_resolution.m_flags & (BGFX_RESET_HMD|BGFX_RESET_HMD_DEBUG) )
+			if (m_resolution.m_flags & (BGFX_RESET_HMD | BGFX_RESET_HMD_DEBUG))
 			{
-				ovrGLConfig config;
-				config.OGL.Header.API = ovrRenderAPI_OpenGL;
-#	if OVR_VERSION > OVR_VERSION_043
-				config.OGL.Header.BackBufferSize.w = m_resolution.m_width;
-				config.OGL.Header.BackBufferSize.h = m_resolution.m_height;
-#	else
-				config.OGL.Header.RTSize.w = m_resolution.m_width;
-				config.OGL.Header.RTSize.h = m_resolution.m_height;
-#	endif // OVR_VERSION > OVR_VERSION_043
-				config.OGL.Header.Multisample = 0;
-				config.OGL.Window = (HWND)g_platformData.nwh;
-				config.OGL.DC = GetDC(config.OGL.Window);
-				if (m_ovr.postReset(g_platformData.nwh, &config.Config, !!(m_resolution.m_flags & BGFX_RESET_HMD_DEBUG) ) )
+				if (m_ovr.postReset())
 				{
-					uint32_t size = sizeof(uint32_t) + sizeof(TextureCreate);
-					const Memory* mem = alloc(size);
+					for (int eyeIdx = 0; eyeIdx < ovrEye_Count; eyeIdx++)
+					{
+						// eye buffers need to be initialized only once during application lifetime
+						if (!m_ovr.m_eyeBuffers[eyeIdx])
+						{
+							m_ovr.m_eyeBuffers[eyeIdx] = BX_NEW(g_allocator, OVRBufferGL(m_ovr.m_hmd, eyeIdx));
+						}
+					}
 
-					bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
-					uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
-					bx::write(&writer, magic);
-
-					TextureCreate tc;
-					tc.m_flags   = BGFX_TEXTURE_RT|( ((m_resolution.m_flags & BGFX_RESET_MSAA_MASK) >> BGFX_RESET_MSAA_SHIFT) << BGFX_TEXTURE_RT_MSAA_SHIFT);;
-					tc.m_width   = m_ovr.m_rtSize.w;
-					tc.m_height  = m_ovr.m_rtSize.h;
-					tc.m_sides   = 0;
-					tc.m_depth   = 0;
-					tc.m_numMips = 1;
-					tc.m_format  = uint8_t(bgfx::TextureFormat::BGRA8);
-					tc.m_cubeMap = false;
-					tc.m_mem = NULL;
-					bx::write(&writer, tc);
-
-					m_ovrRT.create(mem, tc.m_flags, 0);
-					release(mem);
-
-					m_ovrFbo = m_msaaBackBufferFbo;
-
-					GL_CHECK(glGenFramebuffers(1, &m_msaaBackBufferFbo) );
-					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
-
-					GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER
-						, GL_COLOR_ATTACHMENT0
-						, GL_TEXTURE_2D
-						, m_ovrRT.m_id
-						, 0
-						) );
-
-					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_ovrFbo) );
-
-					ovrGLTexture texture;
-					texture.OGL.Header.API         = ovrRenderAPI_OpenGL;
-					texture.OGL.Header.TextureSize = m_ovr.m_rtSize;
-					texture.OGL.TexId              = m_ovrRT.m_id;
-					m_ovr.postReset(texture.Texture);
+					// recreate mirror texture
+					m_ovr.m_mirror = BX_NEW(g_allocator, OVRMirrorGL);
+					m_ovr.m_mirror->init(m_ovr.m_hmd, m_resolution.m_width, m_resolution.m_height);
 				}
 			}
 #endif // BGFX_CONFIG_USE_OVR
@@ -2912,14 +3014,6 @@ namespace bgfx { namespace gl
 		{
 #if BGFX_CONFIG_USE_OVR
 			m_ovr.preReset();
-			if (m_ovr.isEnabled() )
-			{
-				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
-				GL_CHECK(glDeleteFramebuffers(1, &m_msaaBackBufferFbo) );
-				m_msaaBackBufferFbo = m_ovrFbo;
-				m_ovrFbo = 0;
-				m_ovrRT.destroy();
-			}
 #endif // BGFX_CONFIG_USE_OVR
 		}
 
@@ -3343,8 +3437,6 @@ namespace bgfx { namespace gl
 		const char* m_glslVersion;
 
 		OVR m_ovr;
-		TextureGL m_ovrRT;
-		GLint m_ovrFbo;
 	};
 
 	RendererContextGL* s_renderGL;
@@ -3636,7 +3728,7 @@ namespace bgfx { namespace gl
 		}
 
 		m_numPredefined = 0;
- 		m_numSamplers = 0;
+		m_numSamplers = 0;
 
 		BX_TRACE("Uniforms (%d):", activeUniforms);
 		for (int32_t ii = 0; ii < activeUniforms; ++ii)
@@ -5428,7 +5520,7 @@ namespace bgfx { namespace gl
 
 		_render->m_hmdInitialized = m_ovr.isInitialized();
 
-		const bool hmdEnabled = m_ovr.isEnabled() || m_ovr.isDebug();
+		const bool hmdEnabled = m_ovr.isEnabled();
 		ViewState viewState(_render, hmdEnabled);
 
 		uint16_t programIdx = invalidHandle;
@@ -5478,12 +5570,13 @@ namespace bgfx { namespace gl
 			m_occlusionQuery.resolve(_render);
 		}
 
+		uint8_t eye = 0;
+
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 		{
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
 
 			bool viewRestart = false;
-			uint8_t eye = 0;
 			uint8_t restartState = 0;
 			viewState.m_rect = _render->m_rect[0];
 
@@ -5565,6 +5658,9 @@ namespace bgfx { namespace gl
 						if (m_ovr.isEnabled() )
 						{
 							m_ovr.getViewport(eye, &viewState.m_rect);
+							// commit previous eye to HMD and start rendering new frame
+							m_ovr.commitEye(eye);
+							m_ovr.renderEyeStart(eye);
 						}
 						else
 						{
@@ -5584,7 +5680,7 @@ namespace bgfx { namespace gl
 					}
 
 					const Rect& scissorRect = _render->m_scissor[view];
-					viewHasScissor = !scissorRect.isZero();
+					viewHasScissor  = !scissorRect.isZero();
 					viewScissorRect = viewHasScissor ? scissorRect : viewState.m_rect;
 
 					GL_CHECK(glViewport(viewState.m_rect.m_x
@@ -5666,7 +5762,7 @@ namespace bgfx { namespace gl
 						const RenderCompute& compute = renderItem.compute;
 
 						ProgramGL& program = m_program[key.m_program];
- 						GL_CHECK(glUseProgram(program.m_id) );
+						GL_CHECK(glUseProgram(program.m_id) );
 
 						GLbitfield barrier = 0;
 						for (uint32_t ii = 0; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)

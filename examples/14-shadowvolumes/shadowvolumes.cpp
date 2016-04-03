@@ -1866,22 +1866,9 @@ int _main_(int _argc, char** _argv)
 	// Enable debug text.
 	bgfx::setDebug(debug);
 
-	// Setup root path for binary shaders. Shader binaries are different
-	// for each renderer.
-	switch (bgfx::getRendererType() )
-	{
-	case bgfx::RendererType::Direct3D9:
-		s_texelHalf = 0.5f;
-		break;
-
-	case bgfx::RendererType::OpenGL:
-	case bgfx::RendererType::OpenGLES:
-		s_oglNdc = true;
-		break;
-
-	default:
-		break;
-	}
+	const bgfx::Caps* caps = bgfx::getCaps();
+	s_oglNdc    = caps->homogeneousDepth;
+	s_texelHalf = bgfx::RendererType::Direct3D9 == caps->rendererType ? 0.5f : 0.0f;
 
 	// Imgui
 	imguiCreate();

@@ -515,6 +515,7 @@ GL_IMPORT_OES__(true,  PFNGLBINDVERTEXARRAYPROC,                   glBindVertexA
 GL_IMPORT_OES__(true,  PFNGLDELETEVERTEXARRAYSPROC,                glDeleteVertexArrays);
 GL_IMPORT_OES__(true,  PFNGLGENVERTEXARRAYSPROC,                   glGenVertexArrays);
 
+GL_IMPORT_____x(true,  PFNGLCLIPCONTROLPROC,                       glClipControl);
 GL_IMPORT_____x(true,  PFNGLENABLEIPROC,                           glEnablei);
 GL_IMPORT_____x(true,  PFNGLDISABLEIPROC,                          glDisablei);
 GL_IMPORT_____x(true,  PFNGLBLENDEQUATIONIPROC,                    glBlendEquationi);
@@ -556,6 +557,7 @@ GL_IMPORT_NV___(true,  PFNGLQUERYCOUNTERPROC,                      glQueryCounte
 GL_IMPORT      (true,  PFNGLINVALIDATEFRAMEBUFFERPROC,             glInvalidateFramebuffer, glDiscardFramebufferEXT);
 
 #	elif !BGFX_USE_GL_DYNAMIC_LIB
+GL_IMPORT______(true,  PFNGLCLIPCONTROLPROC,                       glClipControl);
 GL_IMPORT______(true,  PFNGLGETSTRINGIPROC,                        glGetStringi);
 
 GL_IMPORT______(true,  PFNGLTEXIMAGE3DPROC,                        glTexImage3D);

@@ -4,6 +4,9 @@ Everyone is welcome to contribute to bgfx by submitting bug reports, testing on
 different platforms, writing examples, improving documentation, profiling and
 optimizing, helping newcomers, telling others about bgfx, etc.
 
+If you have just quick oneliner question it's prefereable to ask it at chat
+https://gitter.im/bkaradzic/bgfx instead opening new issue.
+
 ## Submitting bugs
 
 Unless bug is trivial, and easy to explain and understand, the fastest way to
