@@ -174,11 +174,7 @@ class ExampleLod : public entry::AppI
 			{
 				float view[16];
 				bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);
-
-				float proj[16];
-				bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f);
-
-				bgfx::setViewTransform(0, view, proj);
+				bgfx::setViewTransform(0, view, hmd->eye[0].projection);
 
 				// Set view 0 default viewport.
 				//

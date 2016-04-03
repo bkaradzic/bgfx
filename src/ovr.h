@@ -14,36 +14,42 @@
 
 #	define OVR_VERSION_(_a, _b, _c) (_a * 10000 + _b * 100 + _c)
 #	define OVR_VERSION     OVR_VERSION_(OVR_PRODUCT_VERSION, OVR_MAJOR_VERSION, OVR_MINOR_VERSION)
-#	define OVR_VERSION_042 OVR_VERSION_(0, 4, 2)
-#	define OVR_VERSION_043 OVR_VERSION_(0, 4, 3)
-#	define OVR_VERSION_044 OVR_VERSION_(0, 4, 4)
-#	define OVR_VERSION_050 OVR_VERSION_(0, 5, 0)
 
-#	if OVR_VERSION < OVR_VERSION_050
-#		include <OVR.h>
-#	else
-#		include <OVR_CAPI.h>
-#	endif // OVR_VERSION < OVR_VERSION_050
+#	include <OVR_CAPI.h>
 
 #	if BGFX_CONFIG_RENDERER_DIRECT3D11
-#		if OVR_VERSION < OVR_VERSION_050
-#			define OVR_D3D_VERSION 11
-#			include <OVR_D3D.h>
-#		else
-#			include <OVR_CAPI_D3D.h>
-#		endif
+#		include <OVR_CAPI_D3D.h>
 #	endif // BGFX_CONFIG_RENDERER_DIRECT3D11
 
 #	if BGFX_CONFIG_RENDERER_OPENGL
-#		if OVR_VERSION < OVR_VERSION_050
-#			include <OVR_GL.h>
-#		else
-#			include <OVR_CAPI_GL.h>
-#		endif
+#		include <OVR_CAPI_GL.h>
 #	endif // BGFX_CONFIG_RENDERER_OPENGL
 
 namespace bgfx
 {
+	// single eye buffer
+	struct OVRBufferI
+	{
+		virtual ~OVRBufferI() {};
+		virtual void onRender(const ovrSession &session) = 0;
+		virtual void destroy(const ovrSession &session) = 0;
+
+		ovrSizei   m_eyeTextureSize;
+		ovrTextureSwapChain m_swapTextureChain;
+	};
+
+	// mirrored window output
+	struct OVRMirrorI
+	{
+		virtual ~OVRMirrorI() {};
+		virtual void init(const ovrSession &session, int windowWidth, int windowHeight) = 0;
+		virtual void destroy(const ovrSession &session) = 0;
+		virtual void blit(const ovrSession &session) = 0;
+
+		ovrMirrorTexture     m_mirrorTexture;
+		ovrMirrorTextureDesc m_mirrorDesc;
+	};
+
 	struct OVR
 	{
 		OVR();
@@ -59,37 +65,31 @@ namespace bgfx
 			return m_isenabled;
 		}
 
-		bool isDebug() const
-		{
-			return m_debug;
-		}
-
 		void init();
 		void shutdown();
 
 		void getViewport(uint8_t _eye, Rect* _viewport);
-		bool postReset(void* _nwh, ovrRenderAPIConfig* _config, bool _debug = false);
-		void postReset(const ovrTexture& _texture);
+		void renderEyeStart(uint8_t _eye);
+		bool postReset();
 		void preReset();
-		bool swap(HMD& _hmd);
+		void commitEye(uint8_t _eye);
+		bool swap(HMD& _hmd, bool originBottomLeft);
 		void recenter();
 		void getEyePose(HMD& _hmd);
-		void getSize(uint32_t& _width, uint32_t& _height) const
-		{
-			_width  = m_rtSize.w;
-			_height = m_rtSize.h;
-		}
 
-		ovrHmd m_hmd;
-		ovrFrameTiming m_timing;
+		ovrSession m_hmd;
+		ovrHmdDesc m_hmdDesc;
 		ovrEyeRenderDesc m_erd[2];
-		ovrRecti m_rect[2];
-		ovrPosef m_pose[2];
-		ovrTexture m_texture[2];
-		ovrSizei m_rtSize;
-		bool m_warning;
+		ovrRecti    m_rect[2];
+		ovrPosef    m_pose[2];
+		ovrVector3f m_hmdToEyeOffset[2];
+		ovrSizei    m_hmdSize;
+		ovrResult   m_hmdFrameReady;
+		OVRBufferI *m_eyeBuffers[2];
+		OVRMirrorI *m_mirror;
+		long long   m_frameIndex;
+		double      m_sensorSampleTime;
 		bool m_isenabled;
-		bool m_debug;
 	};
 
 } // namespace bgfx
@@ -139,7 +139,15 @@ namespace bgfx
 			_viewport->m_height = 0;
 		}
 
-		bool swap(HMD& _hmd)
+		void commitEye(uint8_t /*_eye*/)
+		{
+		}
+
+		void renderEyeStart(uint8_t /*_eye*/)
+		{
+		}
+
+		bool swap(HMD& _hmd, bool /*originBottomLeft*/)
 		{
 			_hmd.flags = BGFX_HMD_NONE;
 			getEyePose(_hmd);
@@ -154,12 +162,6 @@ namespace bgfx
 		{
 			_hmd.width  = 0;
 			_hmd.height = 0;
-		}
-
-		void getSize(uint32_t& _width, uint32_t& _height) const
-		{
-			_width  = 0;
-			_height = 0;
 		}
 	};
 
