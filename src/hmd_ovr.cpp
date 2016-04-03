@@ -3,7 +3,7 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
-#include "ovr.h"
+#include "hmd_ovr.h"
 
 #if BGFX_CONFIG_USE_OVR
 
