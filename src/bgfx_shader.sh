@@ -88,6 +88,16 @@ struct BgfxSampler2D
 	Texture2D m_texture;
 };
 
+struct BgfxISampler2D
+{
+	Texture2D<ivec4> m_texture;
+};
+
+struct BgfxUSampler2D
+{
+	Texture2D<uvec4> m_texture;
+};
+
 struct BgfxSampler2DShadow
 {
 	SamplerComparisonState m_sampler;
@@ -194,6 +204,16 @@ vec4 bgfxTexelFetch(BgfxSampler2D _sampler, ivec2 _coord, int _lod)
 	return _sampler.m_texture.Load(ivec3(_coord, _lod) );
 }
 
+ivec4 bgfxTexelFetch(BgfxISampler2D _sampler, ivec2 _coord, int _lod)
+{
+	return _sampler.m_texture.Load(ivec3(_coord, _lod) );
+}
+
+uvec4 bgfxTexelFetch(BgfxUSampler2D _sampler, ivec2 _coord, int _lod)
+{
+	return _sampler.m_texture.Load(ivec3(_coord, _lod) );
+}
+
 vec4 bgfxTexelFetch(BgfxSampler2DMS _sampler, ivec2 _coord, int _sampleIdx)
 {
 	return _sampler.m_texture.Load(_coord, _sampleIdx);
@@ -208,6 +228,12 @@ vec4 bgfxTexelFetch(BgfxSampler3D _sampler, ivec3 _coord, int _lod)
 			uniform SamplerState _name ## Sampler : register(s[_reg]); \
 			uniform Texture2D _name ## Texture : register(t[_reg]); \
 			static BgfxSampler2D _name = { _name ## Sampler, _name ## Texture }
+#		define ISAMPLER2D(_name, _reg) \
+			uniform Texture2D<ivec4> _name ## Texture : register(t[_reg]); \
+			static BgfxISampler2D _name = { _name ## Texture }
+#		define USAMPLER2D(_name, _reg) \
+			uniform Texture2D<uvec4> _name ## Texture : register(t[_reg]); \
+			static BgfxUSampler2D _name = { _name ## Texture }
 #		define sampler2D BgfxSampler2D
 #		define texture2D(_sampler, _coord) bgfxTexture2D(_sampler, _coord)
 #		define texture2DLod(_sampler, _coord, _level) bgfxTexture2DLod(_sampler, _coord, _level)
@@ -364,8 +390,12 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #	define SAMPLER2DSHADOW(_name, _reg) uniform sampler2DShadow _name
 
 #	if BGFX_SHADER_LANGUAGE_GLSL >= 130
+#		define ISAMPLER2D(_name, _reg) uniform isampler2D _name
+#		define USAMPLER2D(_name, _reg) uniform usampler2D _name
 #		define ISAMPLER3D(_name, _reg) uniform isampler3D _name
 #		define USAMPLER3D(_name, _reg) uniform usampler3D _name
+ivec4 texture2D(isampler2D _sampler, vec2 _coord) { return texture(_sampler, _coord); }
+uvec4 texture2D(usampler2D _sampler, vec2 _coord) { return texture(_sampler, _coord); }
 ivec4 texture3D(isampler3D _sampler, vec3 _coord) { return texture(_sampler, _coord); }
 uvec4 texture3D(usampler3D _sampler, vec3 _coord) { return texture(_sampler, _coord); }
 #	endif // BGFX_SHADER_LANGUAGE_GLSL >= 130
