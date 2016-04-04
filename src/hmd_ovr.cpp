@@ -144,6 +144,13 @@ namespace bgfx
 			_hmd.deviceHeight = m_hmdDesc.Resolution.h;
 		}
 
+		// commit eyes to HMD
+		for (int eye = 0; eye < 2; eye++)
+		{
+			commitEye(eye);
+		}
+
+		// check that eyes committed successfully
 		if (!m_isenabled || !OVR_SUCCESS(m_hmdFrameReady))
 		{
 			return false;

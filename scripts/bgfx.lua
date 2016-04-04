@@ -56,6 +56,17 @@ function bgfxProject(_name, _kind, _defines)
 			includedirs {
 				"$(OVR_DIR)/LibOVR/Include",
 			}
+
+			configuration { "x32" }
+				libdirs { path.join("$(OVR_DIR)/LibOVR/Lib/Windows/Win32/Release", _ACTION) }
+
+			configuration { "x64" }
+				libdirs { path.join("$(OVR_DIR)/LibOVR/Lib/Windows/x64/Release", _ACTION) }
+
+			configuration { "x32 or x64" }
+				links { "libovr" }
+
+			configuration {}
 		end
 
 		configuration { "Debug" }
