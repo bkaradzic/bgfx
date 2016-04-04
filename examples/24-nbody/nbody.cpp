@@ -305,7 +305,7 @@ int _main_(int _argc, char** _argv)
 
 				float tmp[16];
 				bx::mtxMul(tmp, view, viewHead);
-				bgfx::setViewTransform(0, tmp, hmd->eye[0].projection);
+				bgfx::setViewTransform(0, tmp, hmd->eye[0].projection, BGFX_VIEW_STEREO, hmd->eye[1].projection);
 
 				// Set view 0 default viewport.
 				//

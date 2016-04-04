@@ -160,7 +160,7 @@ class ExampleInstancing : public entry::AppI
 				{
 					float view[16];
 					bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);
-					bgfx::setViewTransform(0, view, hmd->eye[0].projection);
+					bgfx::setViewTransform(0, view, hmd->eye[0].projection, BGFX_VIEW_STEREO, hmd->eye[1].projection);
 
 					// Set view 0 default viewport.
 					//
