@@ -5077,8 +5077,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						if (m_ovr.isEnabled() )
 						{
 							m_ovr.getViewport(eye, &viewState.m_rect);
-							// commit previous eye to HMD and start rendering new frame
-							m_ovr.commitEye(eye);
 							m_ovr.renderEyeStart(eye);
 						}
 						else

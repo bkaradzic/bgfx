@@ -72,7 +72,6 @@ namespace bgfx
 		void renderEyeStart(uint8_t _eye);
 		bool postReset();
 		void preReset();
-		void commitEye(uint8_t _eye);
 		bool swap(HMD& _hmd, bool originBottomLeft);
 		void recenter();
 		void getEyePose(HMD& _hmd);
@@ -84,7 +83,6 @@ namespace bgfx
 		ovrPosef    m_pose[2];
 		ovrVector3f m_hmdToEyeOffset[2];
 		ovrSizei    m_hmdSize;
-		ovrResult   m_hmdFrameReady;
 		OVRBufferI *m_eyeBuffers[2];
 		OVRMirrorI *m_mirror;
 		long long   m_frameIndex;
@@ -137,10 +135,6 @@ namespace bgfx
 			_viewport->m_y      = 0;
 			_viewport->m_width  = 0;
 			_viewport->m_height = 0;
-		}
-
-		void commitEye(uint8_t /*_eye*/)
-		{
 		}
 
 		void renderEyeStart(uint8_t /*_eye*/)

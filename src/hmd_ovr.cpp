@@ -13,7 +13,6 @@ namespace bgfx
 		: m_hmd(NULL)
 		, m_isenabled(false)
 		, m_mirror(NULL)
-		, m_hmdFrameReady(-1)
 		, m_frameIndex(0)
 		, m_sensorSampleTime(0)
 	{
@@ -125,14 +124,6 @@ namespace bgfx
 		}
 	}
 
-	void OVR::commitEye(uint8_t _eye)
-	{
-		if (m_isenabled)
-		{
-			m_hmdFrameReady = ovr_CommitTextureSwapChain(m_hmd, m_eyeBuffers[_eye]->m_swapTextureChain);
-		}
-	}
-
 	bool OVR::swap(HMD& _hmd, bool originBottomLeft)
 	{
 		_hmd.flags = BGFX_HMD_NONE;
@@ -144,9 +135,15 @@ namespace bgfx
 			_hmd.deviceHeight = m_hmdDesc.Resolution.h;
 		}
 
-		if (!m_isenabled || !OVR_SUCCESS(m_hmdFrameReady))
+		if (!m_isenabled)
 		{
 			return false;
+		}
+
+		// commit eyes to HMD
+		for (int eye = 0; eye < 2; eye++)
+		{
+			ovr_CommitTextureSwapChain(m_hmd, m_eyeBuffers[eye]->m_swapTextureChain);
 		}
 
 		_hmd.flags |= BGFX_HMD_RENDERING;

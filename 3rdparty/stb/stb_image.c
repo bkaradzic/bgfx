@@ -5,6 +5,8 @@
 #		pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #	endif // __clang__
 #elif defined(_MSC_VER)
+#	pragma warning(disable:4244) // warning C4244: '=': conversion from 'int' to 'stbi__uint16', possible loss of data
+#	pragma warning(disable:4245) // warning C4245: 'argument': conversion from 'int' to 'char', signed/unsigned mismatch
 #	pragma warning(disable:4312) // warning C4312: 'type cast': conversion from '' to '' of greater size
 #	pragma warning(disable:4456) // warning C4456: declaration of 'k' hides previous local declaration
 #	pragma warning(disable:4457) // warning C4457: declaration of 'y' hides function parameter
