@@ -3564,7 +3564,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		desc.BindFlags = ovrTextureBind_DX_RenderTarget;
 		desc.StaticImage = ovrFalse;
 
-		ovrResult result = ovr_CreateTextureSwapChainDX(_session, s_renderD3D11->m_device, &desc, &m_textureSwapChain);
+		ID3D11Device* device = s_renderD3D11->m_device;
+
+		ovrResult result = ovr_CreateTextureSwapChainDX(_session, device, &desc, &m_textureSwapChain);
 
 		if (!OVR_SUCCESS(result) )
 		{
@@ -3584,7 +3586,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			rtvd.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 
 			ID3D11RenderTargetView* rtv;
-			DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(tex, &rtvd, &rtv) );
+			DX_CHECK(device->CreateRenderTargetView(tex, &rtvd, &rtv) );
 			m_eyeRtv[ii] = rtv;
 			DX_RELEASE(tex, 1);
 		}
@@ -3603,8 +3605,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		dbDesc.MiscFlags = 0;
 		dbDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 		ID3D11Texture2D* tex;
-		DX_CHECK(s_renderD3D11->m_device->CreateTexture2D(&dbDesc, NULL, &tex) );
-		DX_CHECK(s_renderD3D11->m_device->CreateDepthStencilView(tex, NULL, &m_depthBuffer) );
+		DX_CHECK(device->CreateTexture2D(&dbDesc, NULL, &tex) );
+		DX_CHECK(device->CreateDepthStencilView(tex, NULL, &m_depthBuffer) );
 		DX_RELEASE(tex, 0);
 	}
 
@@ -3614,10 +3616,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		int texIndex = 0;
 		ovr_GetTextureSwapChainCurrentIndex(_session, m_textureSwapChain, &texIndex);
 
-		float black[] = { 0.f, 0.f, 0.f, 0.f }; // Important that alpha=0, if want pixels to be transparent, for manual layers
-		s_renderD3D11->m_deviceCtx->OMSetRenderTargets(1, &m_eyeRtv[texIndex], m_depthBuffer);
-		s_renderD3D11->m_deviceCtx->ClearRenderTargetView(m_eyeRtv[texIndex], black);
-		s_renderD3D11->m_deviceCtx->ClearDepthStencilView(m_depthBuffer, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);
+		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
+
+		float black[] = { 0.0f, 0.0f, 0.0f, 0.0f }; // Important that alpha=0, if want pixels to be transparent, for manual layers
+		deviceCtx->OMSetRenderTargets(1, &m_eyeRtv[texIndex], m_depthBuffer);
+		deviceCtx->ClearRenderTargetView(m_eyeRtv[texIndex], black);
+		deviceCtx->ClearDepthStencilView(m_depthBuffer, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);
 
 		D3D11_VIEWPORT D3Dvp;
 		D3Dvp.TopLeftX = 0;
@@ -3626,7 +3630,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		D3Dvp.Height = (FLOAT)m_eyeTextureSize.h;
 		D3Dvp.MinDepth = 0;
 		D3Dvp.MaxDepth = 1;
-		s_renderD3D11->m_deviceCtx->RSSetViewports(1, &D3Dvp);
+		deviceCtx->RSSetViewports(1, &D3Dvp);
 	}
 
 	void OVRBufferD3D11::destroy(const ovrSession& _session)

@@ -3319,10 +3319,10 @@ namespace bgfx { namespace gl
 	}
 
 #if BGFX_CONFIG_USE_OVR
-	void OVRBufferGL::create(const ovrSession& session, int eyeIdx)
+	void OVRBufferGL::create(const ovrSession& _session, int _eyeIdx)
 	{
-		ovrHmdDesc hmdDesc = ovr_GetHmdDesc(session);
-		m_eyeTextureSize = ovr_GetFovTextureSize(session, (ovrEyeType)eyeIdx, hmdDesc.DefaultEyeFov[eyeIdx], 1.0f);
+		ovrHmdDesc hmdDesc = ovr_GetHmdDesc(_session);
+		m_eyeTextureSize = ovr_GetFovTextureSize(_session, ovrEyeType(_eyeIdx), hmdDesc.DefaultEyeFov[_eyeIdx], 1.0f);
 
 		ovrTextureSwapChainDesc desc = {};
 		desc.Type = ovrTexture_2D;
@@ -3334,15 +3334,15 @@ namespace bgfx { namespace gl
 		desc.SampleCount = 1;
 		desc.StaticImage = ovrFalse;
 
-		ovr_CreateTextureSwapChainGL(session, &desc, &m_textureSwapChain);
+		ovr_CreateTextureSwapChainGL(_session, &desc, &m_textureSwapChain);
 
 		int textureCount = 0;
-		ovr_GetTextureSwapChainLength(session, m_textureSwapChain, &textureCount);
+		ovr_GetTextureSwapChainLength(_session, m_textureSwapChain, &textureCount);
 
 		for (int j = 0; j < textureCount; ++j)
 		{
 			GLuint chainTexId;
-			ovr_GetTextureSwapChainBufferGL(session, m_textureSwapChain, j, &chainTexId);
+			ovr_GetTextureSwapChainBufferGL(_session, m_textureSwapChain, j, &chainTexId);
 			GL_CHECK(glBindTexture(GL_TEXTURE_2D, chainTexId) );
 
 			GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR) );
@@ -3364,12 +3364,12 @@ namespace bgfx { namespace gl
 		GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, m_eyeTextureSize.w, m_eyeTextureSize.h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL) );
 	}
 
-	void OVRBufferGL::render(const ovrSession& session)
+	void OVRBufferGL::render(const ovrSession& _session)
 	{
 		// set the current eye texture in swap chain
 		int curIndex;
-		ovr_GetTextureSwapChainCurrentIndex(session, m_textureSwapChain, &curIndex);
-		ovr_GetTextureSwapChainBufferGL(session, m_textureSwapChain, curIndex, &m_eyeTexId);
+		ovr_GetTextureSwapChainCurrentIndex(_session, m_textureSwapChain, &curIndex);
+		ovr_GetTextureSwapChainBufferGL(_session, m_textureSwapChain, curIndex, &m_eyeTexId);
 
 		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_eyeFbo) );
 		GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_eyeTexId, 0) );
@@ -3379,22 +3379,22 @@ namespace bgfx { namespace gl
 		GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT) );
 	}
 
-	void OVRBufferGL::destroy(const ovrSession& session)
+	void OVRBufferGL::destroy(const ovrSession& _session)
 	{
 		GL_CHECK(glDeleteFramebuffers(1, &m_eyeFbo) );
 		GL_CHECK(glDeleteTextures(1, &m_depthBuffer) );
 
-		ovr_DestroyTextureSwapChain(session, m_textureSwapChain);
+		ovr_DestroyTextureSwapChain(_session, m_textureSwapChain);
 	}
 
-	void OVRMirrorGL::create(const ovrSession& session, int windowWidth, int windowHeight)
+	void OVRMirrorGL::create(const ovrSession& _session, int _width, int _height)
 	{
 		memset(&m_mirrorTextureDesc, 0, sizeof(m_mirrorTextureDesc) );
-		m_mirrorTextureDesc.Width  = windowWidth;
-		m_mirrorTextureDesc.Height = windowHeight;
+		m_mirrorTextureDesc.Width  = _width;
+		m_mirrorTextureDesc.Height = _height;
 		m_mirrorTextureDesc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
 
-		ovr_CreateMirrorTextureGL(session, &m_mirrorTextureDesc, &m_mirrorTexture);
+		ovr_CreateMirrorTextureGL(_session, &m_mirrorTextureDesc, &m_mirrorTexture);
 
 		// Fallback to doing nothing if mirror was not created. This is to prevent errors with fast window resizes
 		if (!m_mirrorTexture)
@@ -3402,7 +3402,7 @@ namespace bgfx { namespace gl
 
 		// Configure the mirror read buffer
 		GLuint texId;
-		ovr_GetMirrorTextureBufferGL(session, m_mirrorTexture, &texId);
+		ovr_GetMirrorTextureBufferGL(_session, m_mirrorTexture, &texId);
 		GL_CHECK(glGenFramebuffers(1, &m_mirrorFBO) );
 		GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_mirrorFBO) );
 		GL_CHECK(glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId, 0) );
@@ -3416,28 +3416,28 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	void OVRMirrorGL::destroy(const ovrSession& session)
+	void OVRMirrorGL::destroy(const ovrSession& _session)
 	{
-		if (!m_mirrorTexture)
-			return;
-
-		GL_CHECK(glDeleteFramebuffers(1, &m_mirrorFBO) );
-		ovr_DestroyMirrorTexture(session, m_mirrorTexture);
-		m_mirrorTexture = NULL;
+		if (NULL != m_mirrorTexture)
+		{
+			GL_CHECK(glDeleteFramebuffers(1, &m_mirrorFBO) );
+			ovr_DestroyMirrorTexture(_session, m_mirrorTexture);
+			m_mirrorTexture = NULL;
+		}
 	}
 
-	void OVRMirrorGL::blit(const ovrSession& /*session*/)
+	void OVRMirrorGL::blit(const ovrSession& /*_session*/)
 	{
-		if (!m_mirrorTexture)
-			return;
-
-		// Blit mirror texture to back buffer
-		GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_mirrorFBO) );
-		GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0) );
-		GLint width  = m_mirrorTextureDesc.Width;
-		GLint height = m_mirrorTextureDesc.Height;
-		GL_CHECK(glBlitFramebuffer(0, height, width, 0, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST) );
-		GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0) );
+		if (NULL != m_mirrorTexture)
+		{
+			// Blit mirror texture to back buffer
+			GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_mirrorFBO) );
+			GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0) );
+			GLint width  = m_mirrorTextureDesc.Width;
+			GLint height = m_mirrorTextureDesc.Height;
+			GL_CHECK(glBlitFramebuffer(0, height, width, 0, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST) );
+			GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0) );
+		}
 	}
 #endif // BGFX_CONFIG_USE_OVR
 
