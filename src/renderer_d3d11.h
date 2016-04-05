@@ -59,6 +59,25 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 
 namespace bgfx { namespace d3d11
 {
+#if BGFX_CONFIG_USE_OVR
+	struct OVRBufferD3D11 : public OVRBufferI
+	{
+		virtual void init(const ovrSession& _session, int _eyeIdx) BX_OVERRIDE;
+		virtual void destroy(const ovrSession& _session) BX_OVERRIDE;
+		virtual void onRender(const ovrSession& _session) BX_OVERRIDE;
+
+		ID3D11RenderTargetView* m_eyeRtv[4];
+		ID3D11DepthStencilView* m_depthBuffer;
+	};
+
+	struct OVRMirrorD3D11 : public OVRMirrorI
+	{
+		virtual void init(const ovrSession& _session, int _width, int _height) BX_OVERRIDE;
+		virtual void destroy(const ovrSession& session) BX_OVERRIDE;
+		virtual void blit(const ovrSession& session) BX_OVERRIDE;
+	};
+#endif // BGFX_CONFIG_USE_OVR
+
 	struct BufferD3D11
 	{
 		BufferD3D11()

@@ -601,166 +601,6 @@ namespace bgfx { namespace d3d11
 	static PFN_GET_DEBUG_INTERFACE1 DXGIGetDebugInterface1;
 #endif // USE_D3D11_DYNAMIC_LIB
 
-#if BGFX_CONFIG_USE_OVR
-	// Oculus Rift eye buffer
-	struct OVRBufferD3D11 : public OVRBufferI
-	{
-		OVRBufferD3D11(const ovrSession& _session, int eyeIdx, ID3D11Device* _device, ID3D11DeviceContext* _deviceCtx)
-		{
-			m_device    = _device;
-			m_deviceCtx = _deviceCtx;
-			ovrHmdDesc hmdDesc = ovr_GetHmdDesc(_session);
-			m_eyeTextureSize = ovr_GetFovTextureSize(_session, (ovrEyeType)eyeIdx, hmdDesc.DefaultEyeFov[eyeIdx], 1.0f);
-
-			ovrTextureSwapChainDesc desc = {};
-			desc.Type = ovrTexture_2D;
-			desc.ArraySize = 1;
-			desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
-			desc.Width  = m_eyeTextureSize.w;
-			desc.Height = m_eyeTextureSize.h;
-			desc.MipLevels   = 1;
-			desc.SampleCount = 1;
-			desc.MiscFlags = ovrTextureMisc_DX_Typeless;
-			desc.BindFlags = ovrTextureBind_DX_RenderTarget;
-			desc.StaticImage = ovrFalse;
-
-			ovrResult result = ovr_CreateTextureSwapChainDX(_session, _device, &desc, &m_swapTextureChain);
-
-			if (!OVR_SUCCESS(result) )
-			{
-				BX_CHECK(false, "Could not create D3D11 OVR swap texture");
-			}
-
-			memset(m_eyeRtv, 0, sizeof(m_eyeRtv) );
-			int textureCount = 0;
-			ovr_GetTextureSwapChainLength(_session, m_swapTextureChain, &textureCount);
-
-			for (int ii = 0; ii < textureCount; ++ii)
-			{
-				ID3D11Texture2D* tex = NULL;
-				ovr_GetTextureSwapChainBufferDX(_session, m_swapTextureChain, ii, IID_PPV_ARGS(&tex) );
-				D3D11_RENDER_TARGET_VIEW_DESC rtvd = {};
-				rtvd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-				rtvd.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-
-				ID3D11RenderTargetView* rtv;
-				DX_CHECK(_device->CreateRenderTargetView(tex, &rtvd, &rtv) );
-				m_eyeRtv[ii] = rtv;
-				DX_RELEASE(tex, 1);
-			}
-
-			// setup depth buffer
-			D3D11_TEXTURE2D_DESC dbDesc;
-			dbDesc.Width = m_eyeTextureSize.w;
-			dbDesc.Height = m_eyeTextureSize.h;
-			dbDesc.MipLevels = 1;
-			dbDesc.ArraySize = 1;
-			dbDesc.Format = DXGI_FORMAT_D32_FLOAT;
-			dbDesc.SampleDesc.Count = 1;
-			dbDesc.SampleDesc.Quality = 0;
-			dbDesc.Usage = D3D11_USAGE_DEFAULT;
-			dbDesc.CPUAccessFlags = 0;
-			dbDesc.MiscFlags = 0;
-			dbDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-			ID3D11Texture2D* tex;
-			DX_CHECK(_device->CreateTexture2D(&dbDesc, NULL, &tex) );
-			DX_CHECK(_device->CreateDepthStencilView(tex, NULL, &m_depthBuffer) );
-			DX_RELEASE(tex, 0);
-		}
-
-		void onRender(const ovrSession& _session)
-		{
-			// Clear and set up rendertarget
-			int texIndex = 0;
-			ovr_GetTextureSwapChainCurrentIndex(_session, m_swapTextureChain, &texIndex);
-
-			float black[] = { 0.f, 0.f, 0.f, 0.f }; // Important that alpha=0, if want pixels to be transparent, for manual layers
-			m_deviceCtx->OMSetRenderTargets(1, &m_eyeRtv[texIndex], m_depthBuffer);
-			m_deviceCtx->ClearRenderTargetView(m_eyeRtv[texIndex], black);
-			m_deviceCtx->ClearDepthStencilView(m_depthBuffer, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);
-
-			D3D11_VIEWPORT D3Dvp;
-			D3Dvp.TopLeftX = 0;
-			D3Dvp.TopLeftY = 0;
-			D3Dvp.Width  = (FLOAT)m_eyeTextureSize.w;
-			D3Dvp.Height = (FLOAT)m_eyeTextureSize.h;
-			D3Dvp.MinDepth = 0;
-			D3Dvp.MaxDepth = 1;
-			m_deviceCtx->RSSetViewports(1, &D3Dvp);
-		}
-
-		void destroy(const ovrSession& _session)
-		{
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_eyeRtv); ++ii)
-			{
-				DX_RELEASE(m_eyeRtv[ii], 0);
-			}
-
-			ovr_DestroyTextureSwapChain(_session, m_swapTextureChain);
-			m_depthBuffer->Release();
-		}
-
-		ID3D11Device*           m_device;
-		ID3D11DeviceContext*    m_deviceCtx;
-		ID3D11RenderTargetView* m_eyeRtv[4];
-		ID3D11DepthStencilView* m_depthBuffer;
-	};
-
-	// Oculus Rift mirror
-	struct OVRMirrorD3D11 : public OVRMirrorI
-	{
-		OVRMirrorD3D11(ID3D11Device* _device, ID3D11DeviceContext* _deviceCtx, IDXGISwapChain* _swapChain)
-			: m_device(_device)
-			, m_deviceCtx(_deviceCtx)
-			, m_swapChain(_swapChain)
-		{
-		}
-
-		void init(const ovrSession& _session, int _width, int _height)
-		{
-			m_mirrorDesc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
-			m_mirrorDesc.Width  = _width;
-			m_mirrorDesc.Height = _height;
-			ovrResult result = ovr_CreateMirrorTextureDX(_session, m_device, &m_mirrorDesc, &m_mirrorTexture);
-
-			if (!OVR_SUCCESS(result) )
-			{
-				BX_CHECK(false, "Could not create D3D11 OVR mirror texture");
-			}
-		}
-
-		void destroy(const ovrSession& session)
-		{
-			if (NULL != m_mirrorTexture)
-			{
-				ovr_DestroyMirrorTexture(session, m_mirrorTexture);
-				m_mirrorTexture = NULL;
-			}
-		}
-
-		void blit(const ovrSession& session)
-		{
-			if (NULL != m_mirrorTexture)
-			{
-				ID3D11Texture2D* tex = NULL;
-				ovr_GetMirrorTextureBufferDX(session, m_mirrorTexture, IID_PPV_ARGS(&tex) );
-				ID3D11Texture2D* backBuffer;
-				DX_CHECK(m_swapChain->GetBuffer(0, IID_ID3D11Texture2D, (void**)&backBuffer) );
-
-				m_deviceCtx->CopyResource(backBuffer, tex);
-				DX_CHECK(m_swapChain->Present(0, 0) );
-
-				DX_RELEASE(tex, 1);
-				DX_RELEASE(backBuffer, 0);
-			}
-		}
-
-		ID3D11Device*        m_device;
-		ID3D11DeviceContext* m_deviceCtx;
-		IDXGISwapChain*      m_swapChain;
-	};
-#endif // BGFX_CONFIG_USE_OVR
-
 	struct RendererContextD3D11 : public RendererContextI
 	{
 		RendererContextD3D11()
@@ -3246,12 +3086,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						// eye buffers need to be initialized only once during application lifetime
 						if (!m_ovr.m_eyeBuffers[eyeIdx])
 						{
-							m_ovr.m_eyeBuffers[eyeIdx] = BX_NEW(g_allocator, OVRBufferD3D11(m_ovr.m_hmd, eyeIdx, m_device, m_deviceCtx) );
+							m_ovr.m_eyeBuffers[eyeIdx] = BX_NEW(g_allocator, OVRBufferD3D11);
+							m_ovr.m_eyeBuffers[eyeIdx]->init(m_ovr.m_hmd, eyeIdx);
 						}
 					}
 
 					// recreate mirror texture
-					m_ovr.m_mirror = BX_NEW(g_allocator, OVRMirrorD3D11(m_device, m_deviceCtx, m_swapChain) );
+					m_ovr.m_mirror = BX_NEW(g_allocator, OVRMirrorD3D11);
 					m_ovr.m_mirror->init(m_ovr.m_hmd, m_resolution.m_width, m_resolution.m_height);
 				}
 			}
@@ -3704,6 +3545,140 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	{
 		agsDriverExtensions_MultiDrawIndexedInstancedIndirect(s_renderD3D11->m_ags, _numDrawIndirect, _ptr, _offset, _stride);
 	}
+
+#if BGFX_CONFIG_USE_OVR
+	void OVRBufferD3D11::init(const ovrSession& _session, int _eyeIdx)
+	{
+		ovrHmdDesc hmdDesc = ovr_GetHmdDesc(_session);
+		m_eyeTextureSize = ovr_GetFovTextureSize(_session, (ovrEyeType)_eyeIdx, hmdDesc.DefaultEyeFov[_eyeIdx], 1.0f);
+
+		ovrTextureSwapChainDesc desc = {};
+		desc.Type = ovrTexture_2D;
+		desc.ArraySize = 1;
+		desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+		desc.Width  = m_eyeTextureSize.w;
+		desc.Height = m_eyeTextureSize.h;
+		desc.MipLevels   = 1;
+		desc.SampleCount = 1;
+		desc.MiscFlags = ovrTextureMisc_DX_Typeless;
+		desc.BindFlags = ovrTextureBind_DX_RenderTarget;
+		desc.StaticImage = ovrFalse;
+
+		ovrResult result = ovr_CreateTextureSwapChainDX(_session, s_renderD3D11->m_device, &desc, &m_swapTextureChain);
+
+		if (!OVR_SUCCESS(result) )
+		{
+			BX_CHECK(false, "Could not create D3D11 OVR swap texture");
+		}
+
+		memset(m_eyeRtv, 0, sizeof(m_eyeRtv) );
+		int textureCount = 0;
+		ovr_GetTextureSwapChainLength(_session, m_swapTextureChain, &textureCount);
+
+		for (int ii = 0; ii < textureCount; ++ii)
+		{
+			ID3D11Texture2D* tex = NULL;
+			ovr_GetTextureSwapChainBufferDX(_session, m_swapTextureChain, ii, IID_PPV_ARGS(&tex) );
+			D3D11_RENDER_TARGET_VIEW_DESC rtvd = {};
+			rtvd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			rtvd.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+
+			ID3D11RenderTargetView* rtv;
+			DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(tex, &rtvd, &rtv) );
+			m_eyeRtv[ii] = rtv;
+			DX_RELEASE(tex, 1);
+		}
+
+		// setup depth buffer
+		D3D11_TEXTURE2D_DESC dbDesc;
+		dbDesc.Width = m_eyeTextureSize.w;
+		dbDesc.Height = m_eyeTextureSize.h;
+		dbDesc.MipLevels = 1;
+		dbDesc.ArraySize = 1;
+		dbDesc.Format = DXGI_FORMAT_D32_FLOAT;
+		dbDesc.SampleDesc.Count = 1;
+		dbDesc.SampleDesc.Quality = 0;
+		dbDesc.Usage = D3D11_USAGE_DEFAULT;
+		dbDesc.CPUAccessFlags = 0;
+		dbDesc.MiscFlags = 0;
+		dbDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+		ID3D11Texture2D* tex;
+		DX_CHECK(s_renderD3D11->m_device->CreateTexture2D(&dbDesc, NULL, &tex) );
+		DX_CHECK(s_renderD3D11->m_device->CreateDepthStencilView(tex, NULL, &m_depthBuffer) );
+		DX_RELEASE(tex, 0);
+	}
+
+	void OVRBufferD3D11::onRender(const ovrSession& _session)
+	{
+		// Clear and set up rendertarget
+		int texIndex = 0;
+		ovr_GetTextureSwapChainCurrentIndex(_session, m_swapTextureChain, &texIndex);
+
+		float black[] = { 0.f, 0.f, 0.f, 0.f }; // Important that alpha=0, if want pixels to be transparent, for manual layers
+		s_renderD3D11->m_deviceCtx->OMSetRenderTargets(1, &m_eyeRtv[texIndex], m_depthBuffer);
+		s_renderD3D11->m_deviceCtx->ClearRenderTargetView(m_eyeRtv[texIndex], black);
+		s_renderD3D11->m_deviceCtx->ClearDepthStencilView(m_depthBuffer, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);
+
+		D3D11_VIEWPORT D3Dvp;
+		D3Dvp.TopLeftX = 0;
+		D3Dvp.TopLeftY = 0;
+		D3Dvp.Width  = (FLOAT)m_eyeTextureSize.w;
+		D3Dvp.Height = (FLOAT)m_eyeTextureSize.h;
+		D3Dvp.MinDepth = 0;
+		D3Dvp.MaxDepth = 1;
+		s_renderD3D11->m_deviceCtx->RSSetViewports(1, &D3Dvp);
+	}
+
+	void OVRBufferD3D11::destroy(const ovrSession& _session)
+	{
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_eyeRtv); ++ii)
+		{
+			DX_RELEASE(m_eyeRtv[ii], 0);
+		}
+
+		ovr_DestroyTextureSwapChain(_session, m_swapTextureChain);
+		m_depthBuffer->Release();
+	}
+
+	void OVRMirrorD3D11::init(const ovrSession& _session, int _width, int _height)
+	{
+		m_mirrorDesc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+		m_mirrorDesc.Width  = _width;
+		m_mirrorDesc.Height = _height;
+		ovrResult result = ovr_CreateMirrorTextureDX(_session, s_renderD3D11->m_device, &m_mirrorDesc, &m_mirrorTexture);
+
+		if (!OVR_SUCCESS(result) )
+		{
+			BX_CHECK(false, "Could not create D3D11 OVR mirror texture");
+		}
+	}
+
+		void OVRMirrorD3D11::destroy(const ovrSession& session)
+		{
+			if (NULL != m_mirrorTexture)
+			{
+				ovr_DestroyMirrorTexture(session, m_mirrorTexture);
+				m_mirrorTexture = NULL;
+			}
+		}
+
+		void OVRMirrorD3D11::blit(const ovrSession& _session)
+		{
+			if (NULL != m_mirrorTexture)
+			{
+				ID3D11Texture2D* tex = NULL;
+				ovr_GetMirrorTextureBufferDX(_session, m_mirrorTexture, IID_PPV_ARGS(&tex) );
+				ID3D11Texture2D* backBuffer;
+				DX_CHECK(s_renderD3D11->m_swapChain->GetBuffer(0, IID_ID3D11Texture2D, (void**)&backBuffer) );
+
+				s_renderD3D11->m_deviceCtx->CopyResource(backBuffer, tex);
+				DX_CHECK(s_renderD3D11->m_swapChain->Present(0, 0) );
+
+				DX_RELEASE(tex, 1);
+				DX_RELEASE(backBuffer, 0);
+			}
+		}
+#endif // BGFX_CONFIG_USE_OVR
 
 	struct UavFormat
 	{

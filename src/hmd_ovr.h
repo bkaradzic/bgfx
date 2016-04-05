@@ -31,8 +31,9 @@ namespace bgfx
 	struct OVRBufferI
 	{
 		virtual ~OVRBufferI() {};
-		virtual void onRender(const ovrSession &session) = 0;
-		virtual void destroy(const ovrSession &session) = 0;
+		virtual void init(const ovrSession& _session, int _eyeIdx) = 0;
+		virtual void onRender(const ovrSession& _session) = 0;
+		virtual void destroy(const ovrSession& _session) = 0;
 
 		ovrSizei   m_eyeTextureSize;
 		ovrTextureSwapChain m_swapTextureChain;
@@ -42,9 +43,9 @@ namespace bgfx
 	struct OVRMirrorI
 	{
 		virtual ~OVRMirrorI() {};
-		virtual void init(const ovrSession &session, int windowWidth, int windowHeight) = 0;
-		virtual void destroy(const ovrSession &session) = 0;
-		virtual void blit(const ovrSession &session) = 0;
+		virtual void init(const ovrSession& _session, int windowWidth, int windowHeight) = 0;
+		virtual void destroy(const ovrSession& _session) = 0;
+		virtual void blit(const ovrSession& _session) = 0;
 
 		ovrMirrorTexture     m_mirrorTexture;
 		ovrMirrorTextureDesc m_mirrorDesc;
