@@ -51,6 +51,7 @@ function bgfxProject(_name, _kind, _defines)
 
 		if _OPTIONS["with-ovr"] then
 			defines {
+				"BGFX_CONFIG_MULTITHREADED=0",
 				"BGFX_CONFIG_USE_OVR=1",
 			}
 			includedirs {
