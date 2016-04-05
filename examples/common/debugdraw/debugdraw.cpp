@@ -1276,8 +1276,8 @@ private:
 				bgfx::setState(0
 						| BGFX_STATE_RGB_WRITE
 						| BGFX_STATE_PT_LINES
-						| (m_depthTestLess ? BGFX_STATE_DEPTH_TEST_LEQUAL : BGFX_STATE_DEPTH_TEST_GEQUAL)
-						| BGFX_STATE_DEPTH_WRITE
+						| ((m_attrib[m_stack].m_state & BGFX_STATE_DEPTH_TEST_MASK) ? (m_depthTestLess ? BGFX_STATE_DEPTH_TEST_LEQUAL : BGFX_STATE_DEPTH_TEST_GEQUAL) : 0)
+						| ((m_attrib[m_stack].m_state & BGFX_STATE_DEPTH_WRITE) ? BGFX_STATE_DEPTH_WRITE : 0)
 						| BGFX_STATE_LINEAA
 						| BGFX_STATE_BLEND_ALPHA
 						);
