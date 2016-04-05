@@ -29,17 +29,16 @@ namespace bgfx
 		ovrResult initialized = ovr_Initialize(NULL);
 		ovrGraphicsLuid luid;
 
-		BX_WARN(initialized == ovrSuccess, "Unable to create OVR device.");
-		
 		if (initialized != ovrSuccess)
 		{
+			BX_TRACE("Unable to create OVR device.");
 			return;
 		}
 
 		initialized = ovr_Create(&m_hmd, &luid);
 		if (initialized != ovrSuccess)
 		{
-			BX_WARN(initialized == ovrSuccess, "Unable to create OVR device.");
+			BX_TRACE("Unable to create OVR device.");
 			return;
 		}
 
@@ -62,12 +61,12 @@ namespace bgfx
 	{
 		BX_CHECK(!m_isenabled, "HMD not disabled.");
 
-		for (int i = 0; i < 2; i++)
+		for (uint32_t ii = 0; ii < 2; ++ii)
 		{
-			if (m_eyeBuffers[i])
+			if (m_eyeBuffers[ii])
 			{
-				m_eyeBuffers[i]->destroy(m_hmd);
-				BX_DELETE(g_allocator, m_eyeBuffers[i]);
+				m_eyeBuffers[ii]->destroy(m_hmd);
+				BX_DELETE(g_allocator, m_eyeBuffers[ii]);
 			}
 		}
 
@@ -102,9 +101,9 @@ namespace bgfx
 			return false;
 		}
 
-		for (int eyeIdx = 0; eyeIdx < ovrEye_Count; eyeIdx++)
+		for (uint32_t ii = 0; ii < 2; ++ii)
 		{
-			m_erd[eyeIdx] = ovr_GetRenderDesc(m_hmd, (ovrEyeType)eyeIdx, m_hmdDesc.DefaultEyeFov[eyeIdx]);
+			m_erd[ii] = ovr_GetRenderDesc(m_hmd, ovrEyeType(ii), m_hmdDesc.DefaultEyeFov[ii]);
 		}
 
 		m_isenabled = true;
@@ -141,9 +140,9 @@ namespace bgfx
 		}
 
 		// commit eyes to HMD
-		for (int eye = 0; eye < 2; eye++)
+		for (uint32_t ii = 0; ii < 2; ++ii)
 		{
-			ovr_CommitTextureSwapChain(m_hmd, m_eyeBuffers[eye]->m_swapTextureChain);
+			ovr_CommitTextureSwapChain(m_hmd, m_eyeBuffers[ii]->m_swapTextureChain);
 		}
 
 		_hmd.flags |= BGFX_HMD_RENDERING;
@@ -159,16 +158,16 @@ namespace bgfx
 		eyeLayer.Header.Type = ovrLayerType_EyeFov;
 		eyeLayer.Header.Flags = originBottomLeft ? ovrLayerFlag_TextureOriginAtBottomLeft : 0;
 
-		for (int eye = 0; eye < ovrEye_Count; eye++)
+		for (uint32_t ii = 0; ii < 2; ++ii)
 		{
-			eyeLayer.ColorTexture[eye] = m_eyeBuffers[eye]->m_swapTextureChain;
-			eyeLayer.Viewport[eye].Pos.x  = 0;
-			eyeLayer.Viewport[eye].Pos.y  = 0;
-			eyeLayer.Viewport[eye].Size.w = m_eyeBuffers[eye]->m_eyeTextureSize.w;
-			eyeLayer.Viewport[eye].Size.h = m_eyeBuffers[eye]->m_eyeTextureSize.h;
-			eyeLayer.Fov[eye]          = m_hmdDesc.DefaultEyeFov[eye];
-			eyeLayer.RenderPose[eye]   = m_pose[eye];
-			eyeLayer.SensorSampleTime  = m_sensorSampleTime;
+			eyeLayer.ColorTexture[ii]    = m_eyeBuffers[ii]->m_swapTextureChain;
+			eyeLayer.Viewport[ii].Pos.x  = 0;
+			eyeLayer.Viewport[ii].Pos.y  = 0;
+			eyeLayer.Viewport[ii].Size.w = m_eyeBuffers[ii]->m_eyeTextureSize.w;
+			eyeLayer.Viewport[ii].Size.h = m_eyeBuffers[ii]->m_eyeTextureSize.h;
+			eyeLayer.Fov[ii]             = m_hmdDesc.DefaultEyeFov[ii];
+			eyeLayer.RenderPose[ii]      = m_pose[ii];
+			eyeLayer.SensorSampleTime    = m_sensorSampleTime;
 		}
 
 		// append all the layers to global list
@@ -201,7 +200,7 @@ namespace bgfx
 	{
 		if (NULL != m_hmd)
 		{
-			for (int ii = 0; ii < 2; ++ii)
+			for (uint32_t ii = 0; ii < 2; ++ii)
 			{
 				const ovrPosef& pose = m_pose[ii];
 				HMD::Eye& eye = _hmd.eye[ii];
@@ -220,9 +219,9 @@ namespace bgfx
 				eye.fov[3] = erd.Fov.RightTan;
 
 				ovrMatrix4f eyeProj = ovrMatrix4f_Projection(m_erd[ii].Fov, 0.01f, 1000.0f, ovrProjection_LeftHanded);
-				for (int jj = 0; jj < 4; ++jj)
+				for (uint32_t jj = 0; jj < 4; ++jj)
 				{
-					for (int kk = 0; kk < 4; ++kk)
+					for (uint32_t kk = 0; kk < 4; ++kk)
 					{
 						eye.projection[4 * jj + kk] = eyeProj.M[kk][jj];
 					}
