@@ -477,6 +477,19 @@ int main(int _argc, const char* _argv[])
 					ImageMip dstMip;
 					imageGetRawData(imageContainer, 0, 0, NULL, 0, dstMip);
 
+					if (mip.m_width  != dstMip.m_width
+					&&  mip.m_height != dstMip.m_height)
+					{
+						printf("Invalid input image size %dx%d, it must be at least %dx%d to be converted to %s format.\n"
+							, mip.m_width
+							, mip.m_height
+							, dstMip.m_width
+							, dstMip.m_height
+							, getName(format)
+							);
+						return EXIT_FAILURE;
+					}
+
 					uint32_t size = imageGetSize(TextureFormat::RGBA32F, dstMip.m_width, dstMip.m_height);
 					temp = BX_ALLOC(&allocator, size);
 					float* rgba = (float*)temp;
@@ -527,6 +540,19 @@ int main(int _argc, const char* _argv[])
 
 					ImageMip dstMip;
 					imageGetRawData(imageContainer, 0, 0, NULL, 0, dstMip);
+
+					if (mip.m_width  != dstMip.m_width
+					&&  mip.m_height != dstMip.m_height)
+					{
+						printf("Invalid input image size %dx%d, it must be at least %dx%d to be converted to %s format.\n"
+							, mip.m_width
+							, mip.m_height
+							, dstMip.m_width
+							, dstMip.m_height
+							, getName(format)
+							);
+						return EXIT_FAILURE;
+					}
 
 					uint32_t size = imageGetSize(TextureFormat::RGBA8, dstMip.m_width, dstMip.m_height);
 					temp = BX_ALLOC(&allocator, size);
