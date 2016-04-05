@@ -252,24 +252,12 @@ namespace bgfx
 		const uint16_t minBlockX   = blockInfo.minBlockX;
 		const uint16_t minBlockY   = blockInfo.minBlockY;
 
-		_width   = bx::uint16_max(blockWidth  * minBlockX, ( (_width  + blockWidth  - 1) / blockWidth)*blockWidth);
-		_height  = bx::uint16_max(blockHeight * minBlockY, ( (_height + blockHeight - 1) / blockHeight)*blockHeight);
-		_depth   = bx::uint16_max(1, _depth);
+		_width  = bx::uint16_max(blockWidth  * minBlockX, ( (_width  + blockWidth  - 1) / blockWidth)*blockWidth);
+		_height = bx::uint16_max(blockHeight * minBlockY, ( (_height + blockHeight - 1) / blockHeight)*blockHeight);
+		_depth  = bx::uint16_max(1, _depth);
 
-		uint8_t numMips = 0;
-
-		for (uint32_t width = _width, height = _height, depth = _depth
-			; blockWidth < width || blockHeight < height || 1 < depth
-			; ++numMips)
-		{
-			width  = bx::uint32_max(blockWidth  * minBlockX, ( (width  + blockWidth  - 1) / blockWidth )*blockWidth);
-			height = bx::uint32_max(blockHeight * minBlockY, ( (height + blockHeight - 1) / blockHeight)*blockHeight);
-			depth  = bx::uint32_max(1, depth);
-
-			width  >>= 1;
-			height >>= 1;
-			depth  >>= 1;
-		}
+		uint32_t max = bx::uint32_max(_width, bx::uint32_max(_height, _depth) );
+		uint8_t numMips = uint8_t(bx::flog2(float(max) ) );
 
 		return numMips;
 	}
