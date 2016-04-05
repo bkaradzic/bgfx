@@ -904,9 +904,9 @@ namespace bgfx { namespace gl
 #if BGFX_CONFIG_USE_OVR
 	struct OVRBufferGL : public OVRBufferI
 	{
-		virtual void init(const ovrSession& _session, int _eyeIdx) BX_OVERRIDE;
+		virtual void create(const ovrSession& _session, int _eyeIdx) BX_OVERRIDE;
 		virtual void destroy(const ovrSession& _session) BX_OVERRIDE;
-		virtual void onRender(const ovrSession& _session) BX_OVERRIDE;
+		virtual void render(const ovrSession& _session) BX_OVERRIDE;
 
 		GLuint m_eyeFbo;
 		GLuint m_eyeTexId;
@@ -915,7 +915,7 @@ namespace bgfx { namespace gl
 
 	struct OVRMirrorGL : public OVRMirrorI
 	{
-		virtual void init(const ovrSession& _session, int _width, int _height) BX_OVERRIDE;
+		virtual void create(const ovrSession& _session, int _width, int _height) BX_OVERRIDE;
 		virtual void destroy(const ovrSession& _session) BX_OVERRIDE;
 		virtual void blit(const ovrSession& _session) BX_OVERRIDE;
 

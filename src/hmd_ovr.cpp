@@ -91,7 +91,7 @@ namespace bgfx
 
 	void OVR::renderEyeStart(uint8_t _eye)
 	{
-		m_eyeBuffers[_eye]->onRender(m_hmd);
+		m_eyeBuffers[_eye]->render(m_hmd);
 	}
 
 	bool OVR::postReset()
@@ -142,7 +142,7 @@ namespace bgfx
 		// commit eyes to HMD
 		for (uint32_t ii = 0; ii < 2; ++ii)
 		{
-			ovr_CommitTextureSwapChain(m_hmd, m_eyeBuffers[ii]->m_swapTextureChain);
+			ovr_CommitTextureSwapChain(m_hmd, m_eyeBuffers[ii]->m_textureSwapChain);
 		}
 
 		_hmd.flags |= BGFX_HMD_RENDERING;
@@ -160,7 +160,7 @@ namespace bgfx
 
 		for (uint32_t ii = 0; ii < 2; ++ii)
 		{
-			eyeLayer.ColorTexture[ii]    = m_eyeBuffers[ii]->m_swapTextureChain;
+			eyeLayer.ColorTexture[ii]    = m_eyeBuffers[ii]->m_textureSwapChain;
 			eyeLayer.Viewport[ii].Pos.x  = 0;
 			eyeLayer.Viewport[ii].Pos.y  = 0;
 			eyeLayer.Viewport[ii].Size.w = m_eyeBuffers[ii]->m_eyeTextureSize.w;
