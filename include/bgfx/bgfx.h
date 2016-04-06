@@ -2165,11 +2165,12 @@ namespace bgfx
 	///
 	/// @param[in] _handle Uniform.
 	/// @param[in] _value Pointer to uniform data.
-	/// @param[in] _num Number of elements.
+	/// @param[in] _num Number of elements. Passing `UINT16_MAX` will
+	///   use the _num passed on uniform creation.
 	///
 	/// @attention C99 equivalent is `bgfx_set_uniform`.
 	///
-	void setUniform(UniformHandle _handle, const void* _value, uint16_t _num = 1);
+	void setUniform(UniformHandle _handle, const void* _value, uint16_t _num = UINT16_MAX);
 
 	/// Set index buffer for draw primitive.
 	///
