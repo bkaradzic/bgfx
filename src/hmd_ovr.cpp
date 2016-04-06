@@ -9,9 +9,19 @@
 
 namespace bgfx
 {
+#define _OVR_CHECK(_call) \
+			BX_MACRO_BLOCK_BEGIN \
+				ovrResult __result__ = _call; \
+				BX_CHECK(OVR_SUCCESS(__result__), #_call " FAILED %d", __result__); \
+			BX_MACRO_BLOCK_END
+
+#if BGFX_CONFIG_DEBUG
+#	define OVR_CHECK(_call) _OVR_CHECK(_call)
+#endif // BGFX_CONFIG_DEBUG
+
 	OVR::OVR()
 		: m_hmd(NULL)
-		, m_isenabled(false)
+		, m_enabled(false)
 		, m_mirror(NULL)
 		, m_frameIndex(0)
 		, m_sensorSampleTime(0)
@@ -26,17 +36,17 @@ namespace bgfx
 
 	void OVR::init()
 	{
-		ovrResult initialized = ovr_Initialize(NULL);
-		ovrGraphicsLuid luid;
+		ovrResult result = ovr_Initialize(NULL);
 
-		if (initialized != ovrSuccess)
+		if (result != ovrSuccess)
 		{
 			BX_TRACE("Unable to create OVR device.");
 			return;
 		}
 
-		initialized = ovr_Create(&m_hmd, &luid);
-		if (initialized != ovrSuccess)
+		ovrGraphicsLuid luid;
+		result = ovr_Create(&m_hmd, &luid);
+		if (result != ovrSuccess)
 		{
 			BX_TRACE("Unable to create OVR device.");
 			return;
@@ -59,7 +69,7 @@ namespace bgfx
 
 	void OVR::shutdown()
 	{
-		BX_CHECK(!m_isenabled, "HMD not disabled.");
+		BX_CHECK(!m_enabled, "HMD not disabled.");
 
 		for (uint32_t ii = 0; ii < 2; ++ii)
 		{
@@ -106,24 +116,24 @@ namespace bgfx
 			m_erd[ii] = ovr_GetRenderDesc(m_hmd, ovrEyeType(ii), m_hmdDesc.DefaultEyeFov[ii]);
 		}
 
-		m_isenabled = true;
+		m_enabled = true;
 
 		return true;
 	}
 
 	void OVR::preReset()
 	{
-		if (m_isenabled)
+		if (m_enabled)
 		{
 			// on window resize this will recreate the mirror texture in ovrPostReset
 			m_mirror->destroy(m_hmd);
 			BX_DELETE(g_allocator, m_mirror);
 			m_mirror = NULL;
-			m_isenabled = false;
+			m_enabled = false;
 		}
 	}
 
-	bool OVR::swap(HMD& _hmd, bool originBottomLeft)
+	OVR::Enum OVR::swap(HMD& _hmd, bool originBottomLeft)
 	{
 		_hmd.flags = BGFX_HMD_NONE;
 
@@ -134,15 +144,20 @@ namespace bgfx
 			_hmd.deviceHeight = m_hmdDesc.Resolution.h;
 		}
 
-		if (!m_isenabled)
+		if (!m_enabled)
 		{
-			return false;
+			return NotEnabled;
 		}
 
-		// commit eyes to HMD
+		ovrResult result;
+
 		for (uint32_t ii = 0; ii < 2; ++ii)
 		{
-			ovr_CommitTextureSwapChain(m_hmd, m_eyeBuffers[ii]->m_textureSwapChain);
+			result = ovr_CommitTextureSwapChain(m_hmd, m_eyeBuffers[ii]->m_textureSwapChain);
+			if (!OVR_SUCCESS(result) )
+			{
+				return DeviceLost;
+			}
 		}
 
 		_hmd.flags |= BGFX_HMD_RENDERING;
@@ -173,7 +188,11 @@ namespace bgfx
 		// append all the layers to global list
 		ovrLayerHeader* layerList = &eyeLayer.Header;
 
-		ovr_SubmitFrame(m_hmd, m_frameIndex, NULL, &layerList, 1);
+		result = ovr_SubmitFrame(m_hmd, m_frameIndex, NULL, &layerList, 1);
+		if (!OVR_SUCCESS(result) )
+		{
+			return DeviceLost;
+		}
 
 		// perform mirror texture blit right after the entire frame is submitted to HMD
 		m_mirror->blit(m_hmd);
@@ -185,14 +204,14 @@ namespace bgfx
 
 		getEyePose(_hmd);
 
-		return true;
+		return Success;
 	}
 
 	void OVR::recenter()
 	{
 		if (NULL != m_hmd)
 		{
-			ovr_RecenterTrackingOrigin(m_hmd);
+			OVR_CHECK(ovr_RecenterTrackingOrigin(m_hmd) );
 		}
 	}
 

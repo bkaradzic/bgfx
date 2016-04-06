@@ -2192,9 +2192,18 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				if (SUCCEEDED(hr) )
 				{
-					if (!m_ovr.swap(_hmd, false) )
+					switch (m_ovr.swap(_hmd, false) )
 					{
+					case OVR::NotEnabled:
 						hr = m_swapChain->Present(syncInterval, 0);
+						break;
+
+					case OVR::DeviceLost:
+						ovrPreReset();
+						break;
+
+					default:
+						break;
 					}
 				}
 
@@ -3656,11 +3665,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		m_mirrorTextureDesc.Width  = _width;
 		m_mirrorTextureDesc.Height = _height;
 		ovrResult result = ovr_CreateMirrorTextureDX(_session, s_renderD3D11->m_device, &m_mirrorTextureDesc, &m_mirrorTexture);
-
-		if (!OVR_SUCCESS(result) )
-		{
-			BX_CHECK(false, "Could not create D3D11 OVR mirror texture");
-		}
+		BX_WARN(OVR_SUCCESS(result), "Could not create D3D11 OVR mirror texture");
 	}
 
 		void OVRMirrorD3D11::destroy(const ovrSession& session)

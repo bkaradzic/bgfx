@@ -53,6 +53,15 @@ namespace bgfx
 
 	struct OVR
 	{
+		enum Enum
+		{
+			NotEnabled,
+			DeviceLost,
+			Success,
+
+			Count
+		};
+
 		OVR();
 		~OVR();
 
@@ -63,7 +72,7 @@ namespace bgfx
 
 		bool isEnabled() const
 		{
-			return m_isenabled;
+			return m_enabled;
 		}
 
 		void init();
@@ -73,7 +82,7 @@ namespace bgfx
 		void renderEyeStart(uint8_t _eye);
 		bool postReset();
 		void preReset();
-		bool swap(HMD& _hmd, bool originBottomLeft);
+		Enum swap(HMD& _hmd, bool originBottomLeft);
 		void recenter();
 		void getEyePose(HMD& _hmd);
 
@@ -86,9 +95,9 @@ namespace bgfx
 		ovrSizei    m_hmdSize;
 		OVRBufferI *m_eyeBuffers[2];
 		OVRMirrorI *m_mirror;
-		long long   m_frameIndex;
+		uint64_t    m_frameIndex;
 		double      m_sensorSampleTime;
-		bool m_isenabled;
+		bool m_enabled;
 	};
 
 } // namespace bgfx

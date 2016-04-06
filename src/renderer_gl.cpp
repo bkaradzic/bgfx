@@ -2106,7 +2106,16 @@ namespace bgfx { namespace gl
 					m_glctx.swap(m_frameBuffers[m_windows[ii].idx].m_swapChain);
 				}
 
-				m_ovr.swap(_hmd, true);
+				switch (m_ovr.swap(_hmd, true) )
+				{
+				case OVR::DeviceLost:
+					ovrPreReset();
+					break;
+
+				default:
+					break;
+				}
+
 				// need to swap GL render context even if OVR is enabled to get the mirror texture in the output
 				m_glctx.swap();
 			}
