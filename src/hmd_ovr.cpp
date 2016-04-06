@@ -73,17 +73,17 @@ namespace bgfx
 
 		for (uint32_t ii = 0; ii < 2; ++ii)
 		{
-			if (m_eyeBuffers[ii])
+			if (NULL != m_eyeBuffers[ii])
 			{
 				m_eyeBuffers[ii]->destroy(m_hmd);
-				BX_DELETE(g_allocator, m_eyeBuffers[ii]);
+				m_eyeBuffers[ii] = NULL;
 			}
 		}
 
-		if (m_mirror)
+		if (NULL != m_mirror)
 		{
 			m_mirror->destroy(m_hmd);
-			BX_DELETE(g_allocator, m_mirror);
+			m_mirror = NULL;
 		}
 
 		ovr_Destroy(m_hmd);
@@ -127,7 +127,6 @@ namespace bgfx
 		{
 			// on window resize this will recreate the mirror texture in ovrPostReset
 			m_mirror->destroy(m_hmd);
-			BX_DELETE(g_allocator, m_mirror);
 			m_mirror = NULL;
 			m_enabled = false;
 		}

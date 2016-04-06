@@ -2860,22 +2860,22 @@ namespace bgfx { namespace gl
 		void ovrPostReset()
 		{
 #if BGFX_CONFIG_USE_OVR
-			if (m_resolution.m_flags & (BGFX_RESET_HMD | BGFX_RESET_HMD_DEBUG) )
+			if (m_resolution.m_flags & (BGFX_RESET_HMD|BGFX_RESET_HMD_DEBUG) )
 			{
 				if (m_ovr.postReset() )
 				{
-					for (int eyeIdx = 0; eyeIdx < ovrEye_Count; eyeIdx++)
+					for (uint32_t ii = 0; ii < 2; ++ii)
 					{
 						// eye buffers need to be initialized only once during application lifetime
-						if (!m_ovr.m_eyeBuffers[eyeIdx])
+						if (NULL == m_ovr.m_eyeBuffers[ii])
 						{
-							m_ovr.m_eyeBuffers[eyeIdx] = BX_NEW(g_allocator, OVRBufferGL);
-							m_ovr.m_eyeBuffers[eyeIdx]->create(m_ovr.m_hmd, eyeIdx);
+							m_ovr.m_eyeBuffers[ii] = &m_ovrBuffers[ii];
+							m_ovr.m_eyeBuffers[ii]->create(m_ovr.m_hmd, ii);
 						}
 					}
 
 					// recreate mirror texture
-					m_ovr.m_mirror = BX_NEW(g_allocator, OVRMirrorGL);
+					m_ovr.m_mirror = &m_ovrMirror;
 					m_ovr.m_mirror->create(m_ovr.m_hmd, m_resolution.m_width, m_resolution.m_height);
 				}
 			}
@@ -3309,6 +3309,10 @@ namespace bgfx { namespace gl
 		const char* m_glslVersion;
 
 		OVR m_ovr;
+#if BGFX_CONFIG_USE_OVR
+		OVRMirrorGL m_ovrMirror;
+		OVRBufferGL m_ovrBuffers[2];
+#endif // BGFX_CONFIG_USE_OVR
 	};
 
 	RendererContextGL* s_renderGL;

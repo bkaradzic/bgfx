@@ -108,6 +108,15 @@ namespace bgfx
 {
 	struct OVR
 	{
+		enum Enum
+		{
+			NotEnabled,
+			DeviceLost,
+			Success,
+
+			Count
+		};
+
 		OVR()
 		{
 		}
