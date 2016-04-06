@@ -65,9 +65,6 @@ class DebugDrawApp : public entry::AppI
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
-			// Set view 0 default viewport.
-			bgfx::setViewRect(0, 0, 0, m_width, m_height);
-
 			int64_t now = bx::getHPCounter() - m_timeOffset;
 			static int64_t last = now;
 			const int64_t frameTime = now - last;
@@ -89,9 +86,24 @@ class DebugDrawApp : public entry::AppI
 			cameraGetViewMtx(view);
 
 			float proj[16];
-			bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f);
 
-			bgfx::setViewTransform(0, view, proj);
+			// Set view and projection matrix for view 0.
+			const bgfx::HMD* hmd = bgfx::getHMD();
+			if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
+			{
+				float eye[3];
+				cameraGetPosition(eye);
+				bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);
+				bgfx::setViewTransform(0, view, hmd->eye[0].projection, BGFX_VIEW_STEREO, hmd->eye[1].projection);
+				bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
+			}
+			else
+			{
+				bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f);
+
+				bgfx::setViewTransform(0, view, proj);
+				bgfx::setViewRect(0, 0, 0, m_width, m_height);
+			}
 
 			float zero[3] = {};
 

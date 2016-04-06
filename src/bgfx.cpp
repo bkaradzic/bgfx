@@ -1431,14 +1431,14 @@ namespace bgfx
 			m_indexBufferHandle.free(_frame->m_freeIndexBufferHandle[ii].idx);
 		}
 
-		for (uint16_t ii = 0, num = _frame->m_numFreeVertexDeclHandles; ii < num; ++ii)
-		{
-			m_vertexDeclHandle.free(_frame->m_freeVertexDeclHandle[ii].idx);
-		}
-
 		for (uint16_t ii = 0, num = _frame->m_numFreeVertexBufferHandles; ii < num; ++ii)
 		{
 			destroyVertexBufferInternal(_frame->m_freeVertexBufferHandle[ii]);
+		}
+
+		for (uint16_t ii = 0, num = _frame->m_numFreeVertexDeclHandles; ii < num; ++ii)
+		{
+			m_vertexDeclHandle.free(_frame->m_freeVertexDeclHandle[ii].idx);
 		}
 
 		for (uint16_t ii = 0, num = _frame->m_numFreeShaderHandles; ii < num; ++ii)
