@@ -103,6 +103,9 @@ void ddDrawCircle(const void* _normal, const void* _center, float _radius, float
 void ddDrawCircle(Axis::Enum _axis, float _x, float _y, float _z, float _radius, float _weight = 0.0f);
 
 ///
+void ddDrawCone(const void* _from, const void* _to, float _radius, float _weight = 0.0f);
+
+///
 void ddDrawAxis(float _x, float _y, float _z, float _len = 1.0f, Axis::Enum _highlight = Axis::Count);
 
 ///

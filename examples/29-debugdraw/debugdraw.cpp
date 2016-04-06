@@ -174,6 +174,15 @@ class DebugDrawApp : public entry::AppI
 				ddDrawCircle(Axis::Z, -8.0f, 0.0f, 0.0f, 1.25f, 2.0f);
 			ddPop();
 
+			ddPush();
+			{
+				ddSetLod(UINT8_MAX);
+				float from[3] = { -11.0f, 4.0f, 0.0f };
+				float to[3]   = { -13.0f, 6.0f, 1.0f };
+				ddDrawCone(from, to, 0.5f );
+			}
+			ddPop();
+
 			ddDrawOrb(-11.0f, 0.0f, 0.0f, 1.0f);
 			ddEnd();
 
