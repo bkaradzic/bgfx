@@ -160,11 +160,11 @@ namespace bgfx
 		{
 		}
 
-		bool swap(HMD& _hmd, bool /*originBottomLeft*/)
+		Enum swap(HMD& _hmd, bool /*originBottomLeft*/)
 		{
 			_hmd.flags = BGFX_HMD_NONE;
 			getEyePose(_hmd);
-			return false;
+			return NotEnabled;
 		}
 
 		void recenter()
