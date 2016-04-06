@@ -1338,18 +1338,19 @@ private:
 				bgfx::allocTransientIndexBuffer(&tib, m_indexPos);
 				memcpy(tib.data, m_indices, m_indexPos * sizeof(uint16_t) );
 
+				const Attrib& attrib = m_attrib[m_stack];
+
 				bgfx::setVertexBuffer(&tvb);
 				bgfx::setIndexBuffer(&tib);
 				bgfx::setState(0
 						| BGFX_STATE_RGB_WRITE
 						| BGFX_STATE_PT_LINES
-						| ((m_attrib[m_stack].m_state & BGFX_STATE_DEPTH_TEST_MASK) ? (m_depthTestLess ? BGFX_STATE_DEPTH_TEST_LEQUAL : BGFX_STATE_DEPTH_TEST_GEQUAL) : 0)
-						| ((m_attrib[m_stack].m_state & BGFX_STATE_DEPTH_WRITE) ? BGFX_STATE_DEPTH_WRITE : 0)
+						| attrib.m_state
 						| BGFX_STATE_LINEAA
 						| BGFX_STATE_BLEND_ALPHA
 						);
 				bgfx::setTransform(m_mtx);
-				bgfx::ProgramHandle program = m_program[m_attrib[m_stack].m_stipple ? 1 : 0];
+				bgfx::ProgramHandle program = m_program[attrib.m_stipple ? 1 : 0];
 				bgfx::submit(m_viewId, program);
 			}
 
