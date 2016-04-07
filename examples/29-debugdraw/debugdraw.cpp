@@ -187,12 +187,18 @@ class DebugDrawApp : public entry::AppI
 			ddPop();
 
 			ddPush();
-			{
 				ddSetLod(UINT8_MAX);
-				float from[3] = { -11.0f, 4.0f, 0.0f };
-				float to[3]   = { -13.0f, 6.0f, 1.0f };
-				ddDrawCone(from, to, 0.5f );
-			}
+				{
+					float from[3] = { -11.0f, 4.0f,  0.0f };
+					float to[3]   = { -13.0f, 6.0f,  1.0f };
+					ddDrawCone(from, to, 1.0f );
+				}
+
+				{
+					float from[3] = {  -9.0f, 2.0f, -1.0f };
+					float to[3]   = { -11.0f, 4.0f,  0.0f };
+					ddDrawCylinder(from, to, 0.5f );
+				}
 			ddPop();
 
 			ddDrawOrb(-11.0f, 0.0f, 0.0f, 1.0f);
