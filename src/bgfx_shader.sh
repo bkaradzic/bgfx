@@ -394,10 +394,39 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #		define USAMPLER2D(_name, _reg) uniform usampler2D _name
 #		define ISAMPLER3D(_name, _reg) uniform isampler3D _name
 #		define USAMPLER3D(_name, _reg) uniform usampler3D _name
-ivec4 texture2D(isampler2D _sampler, vec2 _coord) { return texture(_sampler, _coord); }
-uvec4 texture2D(usampler2D _sampler, vec2 _coord) { return texture(_sampler, _coord); }
-ivec4 texture3D(isampler3D _sampler, vec3 _coord) { return texture(_sampler, _coord); }
-uvec4 texture3D(usampler3D _sampler, vec3 _coord) { return texture(_sampler, _coord); }
+
+vec4 bgfxTexture2D(sampler2D _sampler, vec2 _coord)
+{
+	return texture(_sampler, _coord);
+}
+
+ivec4 bgfxTexture2D(isampler2D _sampler, vec2 _coord)
+{
+	return texture(_sampler, _coord);
+}
+
+uvec4 bgfxTexture2D(usampler2D _sampler, vec2 _coord)
+{
+	return texture(_sampler, _coord);
+}
+
+vec4 bgfxTexture3D(sampler3D _sampler, vec3 _coord)
+{
+	return texture(_sampler, _coord);
+}
+
+ivec4 bgfxTexture3D(isampler3D _sampler, vec3 _coord)
+{
+	return texture(_sampler, _coord);
+}
+
+uvec4 bgfxTexture3D(usampler3D _sampler, vec3 _coord)
+{
+	return texture(_sampler, _coord);
+}
+
+#		define texture2D(_sampler, _coord) bgfxTexture2D(_sampler, _coord)
+#		define texture3D(_sampler, _coord) bgfxTexture3D(_sampler, _coord)
 #	endif // BGFX_SHADER_LANGUAGE_GLSL >= 130
 
 vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_vec, _mtx); }
