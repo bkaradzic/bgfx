@@ -10,6 +10,10 @@
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
+#if defined(Success)
+// X11 defines Success
+#	undef Success
+#endif // defined(Success)
 
 namespace bgfx { namespace gl
 {
