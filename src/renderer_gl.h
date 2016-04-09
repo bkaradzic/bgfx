@@ -905,13 +905,17 @@ namespace bgfx { namespace gl
 #if BGFX_CONFIG_USE_OVR
 	struct OVRBufferGL : public OVRBufferI
 	{
-		virtual void create(const ovrSession& _session, int _eyeIdx) BX_OVERRIDE;
+		virtual void create(const ovrSession& _session, int _eyeIdx, int _msaaSamples) BX_OVERRIDE;
 		virtual void destroy(const ovrSession& _session) BX_OVERRIDE;
 		virtual void render(const ovrSession& _session) BX_OVERRIDE;
+		virtual void postRender(const ovrSession& _sesion) BX_OVERRIDE;
 
 		GLuint m_eyeFbo;
 		GLuint m_eyeTexId;
 		GLuint m_depthBuffer;
+		GLuint m_msaaEyeFbo;
+		GLuint m_msaaEyeTexId;
+		GLuint m_msaaDepthBuffer;
 	};
 
 	struct OVRMirrorGL : public OVRMirrorI
@@ -1285,8 +1289,8 @@ namespace bgfx { namespace gl
 
 		void create(const ShaderGL& _vsh, const ShaderGL& _fsh);
 		void destroy();
- 		void init();
- 		void bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex = 0) const;
+		void init();
+		void bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex = 0) const;
 		void bindInstanceData(uint32_t _stride, uint32_t _baseVertex = 0) const;
 
 		void add(uint32_t _hash)
@@ -1300,8 +1304,8 @@ namespace bgfx { namespace gl
 		GLint m_attributes[Attrib::Count]; // sparse
 		GLint m_instanceData[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT+1];
 
- 		GLint m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
- 		uint8_t m_numSamplers;
+		GLint m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+		uint8_t m_numSamplers;
 
 		UniformBuffer* m_constantBuffer;
 		PredefinedUniform m_predefined[PredefinedUniform::Count];

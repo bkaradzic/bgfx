@@ -152,6 +152,7 @@ namespace bgfx
 
 		for (uint32_t ii = 0; ii < 2; ++ii)
 		{
+			m_eyeBuffers[ii]->postRender(m_hmd);
 			result = ovr_CommitTextureSwapChain(m_hmd, m_eyeBuffers[ii]->m_textureSwapChain);
 			if (!OVR_SUCCESS(result) )
 			{
