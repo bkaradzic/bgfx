@@ -17,7 +17,11 @@
 #define EXTERN_C
 #endif
 
-#define OPENVR_FNTABLE_CALLTYPE __stdcall
+#if defined( _WIN32 )
+#	define OPENVR_FNTABLE_CALLTYPE __stdcall
+#else
+#	define OPENVR_FNTABLE_CALLTYPE
+#endif //
 
 // OPENVR API export macro
 #if defined( _WIN32 ) && !defined( _X360 )
@@ -43,11 +47,6 @@
 #endif
 
 #include <stdint.h>
-
-#if defined( __WIN32 )
-typedef char bool;
-#endif
-
 
 // OpenVR Constants
 
