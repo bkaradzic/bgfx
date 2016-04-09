@@ -63,12 +63,16 @@ namespace bgfx { namespace d3d11
 #if BGFX_CONFIG_USE_OVR
 	struct OVRBufferD3D11 : public OVRBufferI
 	{
-		virtual void create(const ovrSession& _session, int _eyeIdx) BX_OVERRIDE;
+		virtual void create(const ovrSession& _session, int _eyeIdx, int _msaaSamples) BX_OVERRIDE;
 		virtual void destroy(const ovrSession& _session) BX_OVERRIDE;
 		virtual void render(const ovrSession& _session) BX_OVERRIDE;
+		virtual void postRender(const ovrSession& _session) BX_OVERRIDE;
 
 		ID3D11RenderTargetView* m_eyeRtv[4];
 		ID3D11DepthStencilView* m_depthBuffer;
+		ID3D11Texture2D* m_msaaTexture;
+		ID3D11ShaderResourceView* m_msaaSv;
+		ID3D11RenderTargetView* m_msaaRtv;
 	};
 
 	struct OVRMirrorD3D11 : public OVRMirrorI

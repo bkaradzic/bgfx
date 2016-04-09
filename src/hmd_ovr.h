@@ -31,10 +31,10 @@ namespace bgfx
 	struct OVRBufferI
 	{
 		virtual ~OVRBufferI() {};
-		virtual void create(const ovrSession& _session, int _eyeIdx) = 0;
+		virtual void create(const ovrSession& _session, int _eyeIdx, int _msaaSamples) = 0;
 		virtual void destroy(const ovrSession& _session) = 0;
 		virtual void render(const ovrSession& _session) = 0;
-
+		virtual void postRender(const ovrSession& _session) = 0;
 		ovrSizei m_eyeTextureSize;
 		ovrTextureSwapChain m_textureSwapChain;
 	};
