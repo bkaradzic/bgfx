@@ -1076,13 +1076,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					DX_RELEASE(device, 2);
 				}
 
+				memset(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
 				hr = adapter->GetDesc(&m_adapterDesc);
-				if (FAILED(hr) )
-				{
-					BX_TRACE("Unable to create Direct3D11 device.");
-					DX_RELEASE(adapter, 2);
-					goto error;
-				}
+				BX_WARN(SUCCEEDED(hr), "Adapter GetDesc failed 0x%08x.", hr);
 
 				g_caps.vendorId = 0 == m_adapterDesc.VendorId
 					? BGFX_PCI_ID_SOFTWARE_RASTERIZER
@@ -1354,140 +1350,168 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 					if (DXGI_FORMAT_UNKNOWN != fmt)
 					{
-						struct D3D11_FEATURE_DATA_FORMAT_SUPPORT
+						if (BX_ENABLED(BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT) )
 						{
-							DXGI_FORMAT InFormat;
-							UINT OutFormatSupport;
-						};
+							struct D3D11_FEATURE_DATA_FORMAT_SUPPORT
+							{
+								DXGI_FORMAT InFormat;
+								UINT OutFormatSupport;
+							};
 
-						D3D11_FEATURE_DATA_FORMAT_SUPPORT data; // D3D11_FEATURE_DATA_FORMAT_SUPPORT2
-						data.InFormat = fmt;
-						hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT, &data, sizeof(data) );
-						if (SUCCEEDED(hr) )
-						{
-							support |= 0 != (data.OutFormatSupport & (0
-									| D3D11_FORMAT_SUPPORT_TEXTURE2D
-									| D3D11_FORMAT_SUPPORT_TEXTURE3D
-									| D3D11_FORMAT_SUPPORT_TEXTURECUBE
-									) )
-									? BGFX_CAPS_FORMAT_TEXTURE_2D
-									: BGFX_CAPS_FORMAT_TEXTURE_NONE
-									;
-
-							support |= 0 != (data.OutFormatSupport & (0
-									| D3D11_FORMAT_SUPPORT_TEXTURE3D
-									) )
-									? BGFX_CAPS_FORMAT_TEXTURE_3D
-									: BGFX_CAPS_FORMAT_TEXTURE_NONE
-									;
-
-							support |= 0 != (data.OutFormatSupport & (0
-									| D3D11_FORMAT_SUPPORT_TEXTURECUBE
-									) )
-									? BGFX_CAPS_FORMAT_TEXTURE_CUBE
-									: BGFX_CAPS_FORMAT_TEXTURE_NONE
-									;
-
-							support |= 0 != (data.OutFormatSupport & (0
-									| D3D11_FORMAT_SUPPORT_BUFFER
-									| D3D11_FORMAT_SUPPORT_IA_VERTEX_BUFFER
-									| D3D11_FORMAT_SUPPORT_IA_INDEX_BUFFER
-									) )
-									? BGFX_CAPS_FORMAT_TEXTURE_VERTEX
-									: BGFX_CAPS_FORMAT_TEXTURE_NONE
-									;
-
-							support |= 0 != (data.OutFormatSupport & (0
-									| D3D11_FORMAT_SUPPORT_SHADER_LOAD
-									) )
-									? BGFX_CAPS_FORMAT_TEXTURE_IMAGE
-									: BGFX_CAPS_FORMAT_TEXTURE_NONE
-									;
-
-							support |= 0 != (data.OutFormatSupport & (0
-									| D3D11_FORMAT_SUPPORT_RENDER_TARGET
-									| D3D11_FORMAT_SUPPORT_DEPTH_STENCIL
-									) )
-									? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
-									: BGFX_CAPS_FORMAT_TEXTURE_NONE
-									;
-
-							support |= 0 != (data.OutFormatSupport & (0
-									| D3D11_FORMAT_SUPPORT_MULTISAMPLE_RENDERTARGET
-									) )
-									? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
-									: BGFX_CAPS_FORMAT_TEXTURE_NONE
-									;
-
-							support |= 0 != (data.OutFormatSupport & (0
-									| D3D11_FORMAT_SUPPORT_MULTISAMPLE_LOAD
-									) )
-									? BGFX_CAPS_FORMAT_TEXTURE_MSAA
-									: BGFX_CAPS_FORMAT_TEXTURE_NONE
-									;
-						}
-						else
-						{
-							BX_TRACE("CheckFeatureSupport failed with %x for format %s.", hr, getName(TextureFormat::Enum(ii) ) );
-						}
-
-						if (0 != (support & BGFX_CAPS_FORMAT_TEXTURE_IMAGE) )
-						{
-							// clear image flag for additional testing
-							support &= ~BGFX_CAPS_FORMAT_TEXTURE_IMAGE;
-
-							data.InFormat = s_textureFormat[ii].m_fmt;
-							hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT2, &data, sizeof(data) );
+							D3D11_FEATURE_DATA_FORMAT_SUPPORT data; // D3D11_FEATURE_DATA_FORMAT_SUPPORT2
+							data.InFormat = fmt;
+							hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT, &data, sizeof(data) );
 							if (SUCCEEDED(hr) )
 							{
 								support |= 0 != (data.OutFormatSupport & (0
-										| D3D11_FORMAT_SUPPORT2_UAV_TYPED_LOAD
-										| D3D11_FORMAT_SUPPORT2_UAV_TYPED_STORE
+										| D3D11_FORMAT_SUPPORT_TEXTURE2D
+										| D3D11_FORMAT_SUPPORT_TEXTURE3D
+										| D3D11_FORMAT_SUPPORT_TEXTURECUBE
+										) )
+										? BGFX_CAPS_FORMAT_TEXTURE_2D
+										: BGFX_CAPS_FORMAT_TEXTURE_NONE
+										;
+
+								support |= 0 != (data.OutFormatSupport & (0
+										| D3D11_FORMAT_SUPPORT_TEXTURE3D
+										) )
+										? BGFX_CAPS_FORMAT_TEXTURE_3D
+										: BGFX_CAPS_FORMAT_TEXTURE_NONE
+										;
+
+								support |= 0 != (data.OutFormatSupport & (0
+										| D3D11_FORMAT_SUPPORT_TEXTURECUBE
+										) )
+										? BGFX_CAPS_FORMAT_TEXTURE_CUBE
+										: BGFX_CAPS_FORMAT_TEXTURE_NONE
+										;
+
+								support |= 0 != (data.OutFormatSupport & (0
+										| D3D11_FORMAT_SUPPORT_BUFFER
+										| D3D11_FORMAT_SUPPORT_IA_VERTEX_BUFFER
+										| D3D11_FORMAT_SUPPORT_IA_INDEX_BUFFER
+										) )
+										? BGFX_CAPS_FORMAT_TEXTURE_VERTEX
+										: BGFX_CAPS_FORMAT_TEXTURE_NONE
+										;
+
+								support |= 0 != (data.OutFormatSupport & (0
+										| D3D11_FORMAT_SUPPORT_SHADER_LOAD
 										) )
 										? BGFX_CAPS_FORMAT_TEXTURE_IMAGE
 										: BGFX_CAPS_FORMAT_TEXTURE_NONE
 										;
+
+								support |= 0 != (data.OutFormatSupport & (0
+										| D3D11_FORMAT_SUPPORT_RENDER_TARGET
+										| D3D11_FORMAT_SUPPORT_DEPTH_STENCIL
+										) )
+										? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
+										: BGFX_CAPS_FORMAT_TEXTURE_NONE
+										;
+
+								support |= 0 != (data.OutFormatSupport & (0
+										| D3D11_FORMAT_SUPPORT_MULTISAMPLE_RENDERTARGET
+										) )
+										? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
+										: BGFX_CAPS_FORMAT_TEXTURE_NONE
+										;
+
+								support |= 0 != (data.OutFormatSupport & (0
+										| D3D11_FORMAT_SUPPORT_MULTISAMPLE_LOAD
+										) )
+										? BGFX_CAPS_FORMAT_TEXTURE_MSAA
+										: BGFX_CAPS_FORMAT_TEXTURE_NONE
+										;
 							}
+							else
+							{
+								BX_TRACE("CheckFeatureSupport failed with %x for format %s.", hr, getName(TextureFormat::Enum(ii) ) );
+							}
+
+							if (0 != (support & BGFX_CAPS_FORMAT_TEXTURE_IMAGE) )
+							{
+								// clear image flag for additional testing
+								support &= ~BGFX_CAPS_FORMAT_TEXTURE_IMAGE;
+
+								data.InFormat = s_textureFormat[ii].m_fmt;
+								hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT2, &data, sizeof(data) );
+								if (SUCCEEDED(hr) )
+								{
+									support |= 0 != (data.OutFormatSupport & (0
+											| D3D11_FORMAT_SUPPORT2_UAV_TYPED_LOAD
+											| D3D11_FORMAT_SUPPORT2_UAV_TYPED_STORE
+											) )
+											? BGFX_CAPS_FORMAT_TEXTURE_IMAGE
+											: BGFX_CAPS_FORMAT_TEXTURE_NONE
+											;
+								}
+							}
+						}
+						else
+						{
+							support |= 0
+								| BGFX_CAPS_FORMAT_TEXTURE_2D
+								| BGFX_CAPS_FORMAT_TEXTURE_3D
+								| BGFX_CAPS_FORMAT_TEXTURE_CUBE
+								| BGFX_CAPS_FORMAT_TEXTURE_IMAGE
+								| BGFX_CAPS_FORMAT_TEXTURE_VERTEX
+								| BGFX_CAPS_FORMAT_TEXTURE_IMAGE
+								| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
+								| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
+								| BGFX_CAPS_FORMAT_TEXTURE_MSAA
+								;
 						}
 					}
 
 					if (DXGI_FORMAT_UNKNOWN != fmtSrgb)
 					{
-						struct D3D11_FEATURE_DATA_FORMAT_SUPPORT
+						if (BX_ENABLED(BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT) )
 						{
-							DXGI_FORMAT InFormat;
-							UINT OutFormatSupport;
-						};
+							struct D3D11_FEATURE_DATA_FORMAT_SUPPORT
+							{
+								DXGI_FORMAT InFormat;
+								UINT OutFormatSupport;
+							};
 
-						D3D11_FEATURE_DATA_FORMAT_SUPPORT data; // D3D11_FEATURE_DATA_FORMAT_SUPPORT2
-						data.InFormat = fmtSrgb;
-						hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT, &data, sizeof(data) );
-						if (SUCCEEDED(hr) )
-						{
-							support |= 0 != (data.OutFormatSupport & (0
-									| D3D11_FORMAT_SUPPORT_TEXTURE2D
-									) )
-									? BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
-									: BGFX_CAPS_FORMAT_TEXTURE_NONE
-									;
+							D3D11_FEATURE_DATA_FORMAT_SUPPORT data; // D3D11_FEATURE_DATA_FORMAT_SUPPORT2
+							data.InFormat = fmtSrgb;
+							hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT, &data, sizeof(data) );
+							if (SUCCEEDED(hr) )
+							{
+								support |= 0 != (data.OutFormatSupport & (0
+										| D3D11_FORMAT_SUPPORT_TEXTURE2D
+										) )
+										? BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
+										: BGFX_CAPS_FORMAT_TEXTURE_NONE
+										;
 
-							support |= 0 != (data.OutFormatSupport & (0
-									| D3D11_FORMAT_SUPPORT_TEXTURE3D
-									) )
-									? BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
-									: BGFX_CAPS_FORMAT_TEXTURE_NONE
-									;
+								support |= 0 != (data.OutFormatSupport & (0
+										| D3D11_FORMAT_SUPPORT_TEXTURE3D
+										) )
+										? BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
+										: BGFX_CAPS_FORMAT_TEXTURE_NONE
+										;
 
-							support |= 0 != (data.OutFormatSupport & (0
-									| D3D11_FORMAT_SUPPORT_TEXTURECUBE
-									) )
-									? BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
-									: BGFX_CAPS_FORMAT_TEXTURE_NONE
-									;
+								support |= 0 != (data.OutFormatSupport & (0
+										| D3D11_FORMAT_SUPPORT_TEXTURECUBE
+										) )
+										? BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
+										: BGFX_CAPS_FORMAT_TEXTURE_NONE
+										;
+							}
+							else
+							{
+								BX_TRACE("CheckFeatureSupport failed with %x for sRGB format %s.", hr, getName(TextureFormat::Enum(ii) ) );
+							}
 						}
 						else
 						{
-							BX_TRACE("CheckFeatureSupport failed with %x for sRGB format %s.", hr, getName(TextureFormat::Enum(ii) ) );
+							support |= 0
+								| BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
+								| BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
+								| BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
+								;
 						}
 					}
 

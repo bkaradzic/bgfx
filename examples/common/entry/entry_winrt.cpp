@@ -5,7 +5,7 @@
 
 #include "entry_p.h"
 
-#if BX_PLATFORM_WINRT
+#if BX_PLATFORM_WINRT || BX_PLATFORM_XBOXONE
 
 #include <bgfx/bgfxplatform.h>
 #include <bx/thread.h>
@@ -17,7 +17,9 @@ using namespace Windows::UI::Core;
 using namespace Windows::UI::Input;
 using namespace Windows::System;
 using namespace Windows::Foundation;
+#if BX_PLATFORM_WINRT
 using namespace Windows::Graphics::Display;
+#endif // BX_PLATFORM_WINRT
 using namespace Platform;
 
 static char* g_emptyArgs[] = { "" };
@@ -36,13 +38,23 @@ public:
 	// IFrameworkView Methods.
 	virtual void Initialize(CoreApplicationView^ applicationView)
 	{
-		applicationView->Activated += ref new TypedEventHandler<CoreApplicationView^, IActivatedEventArgs^>(this, &App::OnActivated);
+		applicationView->Activated += ref new
+			TypedEventHandler<CoreApplicationView^, IActivatedEventArgs^>(this, &App::OnActivated);
+
+		CoreApplication::Suspending += ref new
+			EventHandler<SuspendingEventArgs^>(this, &App::OnSuspending);
+
+		CoreApplication::Resuming += ref new
+			EventHandler<Platform::Object^>(this, &App::OnResuming);
 	}
 
 	virtual void SetWindow(CoreWindow^ window)
 	{
-		window->VisibilityChanged += ref new TypedEventHandler<CoreWindow^, VisibilityChangedEventArgs^>(this, &App::OnVisibilityChanged);
-		window->Closed += ref new TypedEventHandler<CoreWindow^, CoreWindowEventArgs^>(this, &App::OnWindowClosed);
+		window->VisibilityChanged += ref new
+			TypedEventHandler<CoreWindow^, VisibilityChangedEventArgs^>(this, &App::OnVisibilityChanged);
+
+		window->Closed += ref new
+			TypedEventHandler<CoreWindow^, CoreWindowEventArgs^>(this, &App::OnWindowClosed);
 
 		bgfx::winrtSetWindow(reinterpret_cast<IUnknown*>(window) );
 	}
@@ -58,13 +70,15 @@ public:
 
 		CoreWindow^ window = CoreWindow::GetForCurrentThread();
 		auto bounds = window->Bounds;
-		auto dpi = DisplayInformation::GetForCurrentView()->LogicalDpi;
 
+#if BX_PLATFORM_WINRT
+		auto dpi = DisplayInformation::GetForCurrentView()->LogicalDpi;
 		static const float dipsPerInch = 96.0f;
 		g_eventQueue.postSizeEvent(g_defaultWindow
-			, lround(floorf(bounds.Width * dpi / dipsPerInch + 0.5f) )
-			, lround(floorf(bounds.Height * dpi / dipsPerInch + 0.5f) )
+			, lround(bx::ffloor(bounds.Width  * dpi / dipsPerInch + 0.5f) )
+			, lround(bx::ffloor(bounds.Height * dpi / dipsPerInch + 0.5f) )
 			);
+#endif // BX_PLATFORM_WINRT
 
 		while (!m_windowClosed)
 		{
@@ -100,6 +114,16 @@ private:
 	{
 		m_windowVisible = args->Visible;
 	}
+
+    void OnSuspending(Platform::Object^ sender, SuspendingEventArgs^ args)
+    {
+        SuspendingDeferral^ deferral = args->SuspendingOperation->GetDeferral();
+		BX_UNUSED(deferral);
+    }
+
+    void OnResuming(Platform::Object^ sender, Platform::Object^ args)
+    {
+    }
 
 	void OnWindowClosed(CoreWindow^ sender, CoreWindowEventArgs^ args)
 	{
@@ -189,4 +213,4 @@ int main(Array<String^>^)
 	return 0;
 }
 
-#endif // BX_PLATFORM_WINRT
+#endif // BX_PLATFORM_WINRT || BX_PLATFORM_XBOXONE
