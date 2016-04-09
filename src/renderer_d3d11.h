@@ -33,6 +33,7 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 #include "renderer_d3d.h"
 #include "shader_dxbc.h"
 #include "hmd_ovr.h"
+#include "hmd_openvr.h"
 #include "debug_renderdoc.h"
 
 #ifndef D3DCOLOR_ARGB
