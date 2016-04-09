@@ -60,14 +60,14 @@ namespace bgfx
 			VR_GetVRInitErrorAsEnglishDescription = (PFN_VR_GETVRINITERRORASENGLISHDESCRIPTION)bx::dlsym(openvrdll, "VR_GetVRInitErrorAsEnglishDescription");
 
 			if (NULL == VR_InitInternal
-			&&  NULL == VR_ShutdownInternal
-			&&  NULL == VR_IsHmdPresent
-			&&  NULL == VR_GetGenericInterface
-			&&  NULL == VR_IsRuntimeInstalled
-			&&  NULL == VR_IsInterfaceVersionValid
-			&&  NULL == VR_GetInitToken
-			&&  NULL == VR_GetVRInitErrorAsSymbol
-			&&  NULL == VR_GetVRInitErrorAsEnglishDescription)
+			||  NULL == VR_ShutdownInternal
+			||  NULL == VR_IsHmdPresent
+			||  NULL == VR_GetGenericInterface
+			||  NULL == VR_IsRuntimeInstalled
+			||  NULL == VR_IsInterfaceVersionValid
+			||  NULL == VR_GetInitToken
+			||  NULL == VR_GetVRInitErrorAsSymbol
+			||  NULL == VR_GetVRInitErrorAsEnglishDescription)
 			{
 				bx::dlclose(openvrdll);
 				return NULL;
