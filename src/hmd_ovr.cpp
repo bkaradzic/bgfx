@@ -17,6 +17,8 @@ namespace bgfx
 
 #if BGFX_CONFIG_DEBUG
 #	define OVR_CHECK(_call) _OVR_CHECK(_call)
+#else
+#	define OVR_CHECK(_call) _call
 #endif // BGFX_CONFIG_DEBUG
 
 	OVR::OVR()
