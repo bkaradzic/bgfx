@@ -248,9 +248,9 @@ namespace bgfx
 					}
 				}
 
-				eye.viewOffset[0] = erd.HmdToEyeOffset.x;
-				eye.viewOffset[1] = erd.HmdToEyeOffset.y;
-				eye.viewOffset[2] = erd.HmdToEyeOffset.z;
+				eye.viewOffset[0] = -erd.HmdToEyeOffset.x;
+				eye.viewOffset[1] = -erd.HmdToEyeOffset.y;
+				eye.viewOffset[2] = -erd.HmdToEyeOffset.z;
 
 				eye.pixelsPerTanAngle[0] = erd.PixelsPerTanAngleAtCenter.x;
 				eye.pixelsPerTanAngle[1] = erd.PixelsPerTanAngleAtCenter.y;
