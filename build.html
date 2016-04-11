@@ -455,24 +455,12 @@ instead) inside different build system.</p>
 </div>
 <div class="section" id="oculusvr-integration">
 <h2>OculusVR Integration<a class="headerlink" href="#oculusvr-integration" title="Permalink to this headline">¶</a></h2>
-<p>OculusVR support is currently experimental, and only DX11 is tested. To
-build with OculusVR HMD support enabled you must set <code class="docutils literal"><span class="pre">OVR_DIR</span></code>
-enviroment variable:</p>
+<p>To build with OculusVR HMD support enabled you must set <code class="docutils literal"><span class="pre">OVR_DIR</span></code> enviroment variable:</p>
 <div class="highlight-python"><div class="highlight"><pre>set OVR_DIR=&lt;path to OculusSDK&gt;
 </pre></div>
 </div>
 <p>And generate project files with <code class="docutils literal"><span class="pre">--with-ovr</span></code> option:</p>
 <div class="highlight-python"><div class="highlight"><pre>genie --with-ovr vs2012
-</pre></div>
-</div>
-<p>In <code class="docutils literal"><span class="pre">LibOVR/Include</span></code> create trampoline headers <code class="docutils literal"><span class="pre">OVR_D3D.h</span></code> and
-<code class="docutils literal"><span class="pre">OVR_GL.h</span></code>.</p>
-<p><code class="docutils literal"><span class="pre">OVR_D3D.h</span></code> should contain:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c">#include &quot;../Src/OVR_CAPI_D3D.h&quot;</span>
-</pre></div>
-</div>
-<p><code class="docutils literal"><span class="pre">OVR_GL.h</span></code> should contain:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c">#include &quot;../Src/OVR_CAPI_GL.h&quot;</span>
 </pre></div>
 </div>
 </div>
