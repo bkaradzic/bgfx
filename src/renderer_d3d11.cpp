@@ -3762,6 +3762,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		m_mirrorTextureDesc.Height = _height;
 		ovrResult result = ovr_CreateMirrorTextureDX(_session, s_renderD3D11->m_device, &m_mirrorTextureDesc, &m_mirrorTexture);
 		BX_WARN(OVR_SUCCESS(result), "Could not create D3D11 OVR mirror texture");
+		BX_UNUSED(result);
 	}
 
 		void OVRMirrorD3D11::destroy(const ovrSession& session)
