@@ -19,6 +19,10 @@
 #include <tinyexr/tinyexr.h>
 #include <edtaa3/edtaa3func.h>
 
+extern "C" {
+#include <iqa.h>
+}
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.c>
 
@@ -348,6 +352,7 @@ void help(const char* _error = NULL)
 		  "  -m, --mips               Generate mip-maps.\n"
 		  "  -n, --normalmap          Input texture is normal map.\n"
 		  "      --sdf <edge>         Compute SDF texture.\n"
+		  "      --iqa                Image Quality Assesment\n"
 
 		  "\n"
 		  "For additional information, see https://github.com/bkaradzic/bgfx\n"
@@ -409,8 +414,9 @@ int main(int _argc, const char* _argv[])
 		}
 	}
 
-	const bool mips      = cmdLine.hasArg('m', "mips");
-	const bool normalMap = cmdLine.hasArg('n', "normalmap");
+	const bool mips      = cmdLine.hasArg('m',  "mips");
+	const bool normalMap = cmdLine.hasArg('n',  "normalmap");
+	const bool iqa       = cmdLine.hasArg('\0', "iqa");
 
 	uint32_t size = (uint32_t)bx::getSize(&reader);
 	const bgfx::Memory* mem = bgfx::alloc(size);
@@ -567,6 +573,13 @@ int main(int _argc, const char* _argv[])
 						, mip.m_format
 						);
 
+					void* ref = NULL;
+					if (iqa)
+					{
+						ref = BX_ALLOC(&allocator, size);
+						memcpy(ref, rgba, size);
+					}
+
 					imageEncodeFromRgba8(output->data, rgba, dstMip.m_width, dstMip.m_height, format);
 
 					for (uint8_t lod = 1; lod < numMips; ++lod)
@@ -575,6 +588,40 @@ int main(int _argc, const char* _argv[])
 						imageGetRawData(imageContainer, 0, lod, output->data, output->size, dstMip);
 						uint8_t* data = const_cast<uint8_t*>(dstMip.m_data);
 						imageEncodeFromRgba8(data, rgba, dstMip.m_width, dstMip.m_height, format);
+					}
+
+					if (NULL != ref)
+					{
+						imageDecodeToRgba8(rgba
+							, output->data
+							, mip.m_width
+							, mip.m_height
+							, mip.m_width*mip.m_bpp/8
+							, format
+							);
+
+						static const iqa_ssim_args args =
+						{
+							0.39f,     // alpha
+							0.731f,    // beta
+							1.12f,     // gamma
+							187,       // L
+							0.025987f, // K1
+							0.0173f,   // K2
+							1          // factor
+						};
+
+						float result = iqa_ssim( (uint8_t*)ref
+								, rgba
+								, mip.m_width
+								, mip.m_height
+								, mip.m_width*mip.m_bpp/8
+								, 0
+								, &args
+								);
+						printf("%f\n", result);
+
+						BX_FREE(&allocator, ref);
 					}
 				}
 
