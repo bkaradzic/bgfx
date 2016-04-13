@@ -867,6 +867,10 @@ typedef uint64_t GLuint64;
 #	define GL_DISPATCH_INDIRECT_BUFFER 0x90EE
 #endif // GL_DISPATCH_INDIRECT_BUFFER
 
+#ifndef GL_MAX_NAME_LENGTH
+#	define GL_MAX_NAME_LENGTH 0x92F6
+#endif // GL_MAX_NAME_LENGTH
+
 #if BX_PLATFORM_NACL
 #	include "glcontext_ppapi.h"
 #elif BX_PLATFORM_WINDOWS

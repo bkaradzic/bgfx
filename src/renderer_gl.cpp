@@ -3791,8 +3791,8 @@ namespace bgfx { namespace gl
 			GL_CHECK(glGetProgramInterfaceiv(m_id, GL_PROGRAM_INPUT,   GL_ACTIVE_RESOURCES, &activeAttribs ) );
 			GL_CHECK(glGetProgramInterfaceiv(m_id, GL_UNIFORM,         GL_ACTIVE_RESOURCES, &activeUniforms) );
 			GL_CHECK(glGetProgramInterfaceiv(m_id, GL_BUFFER_VARIABLE, GL_ACTIVE_RESOURCES, &activeBuffers ) );
-			GL_CHECK(glGetProgramInterfaceiv(m_id, GL_PROGRAM_INPUT,	GL_MAX_NAME_LENGTH, &max0		   ) );
-			GL_CHECK(glGetProgramInterfaceiv(m_id, GL_UNIFORM,			GL_MAX_NAME_LENGTH, &max1		   ) );
+			GL_CHECK(glGetProgramInterfaceiv(m_id, GL_PROGRAM_INPUT,   GL_MAX_NAME_LENGTH,  &max0          ) );
+			GL_CHECK(glGetProgramInterfaceiv(m_id, GL_UNIFORM,         GL_MAX_NAME_LENGTH,  &max1          ) );
 		}
 		else
 		{
@@ -3817,7 +3817,15 @@ namespace bgfx { namespace gl
 			{
 				GL_CHECK(glGetProgramResourceName(m_id, GL_PROGRAM_INPUT, ii, maxLength + 1, &size, name) );
 				GLenum typeProp[] = { GL_TYPE };
-				GL_CHECK(glGetProgramResourceiv(m_id, GL_PROGRAM_INPUT, ii, BX_COUNTOF(typeProp), typeProp, 1, NULL, (GLint *)&type) );
+				GL_CHECK(glGetProgramResourceiv(m_id
+					, GL_PROGRAM_INPUT
+					, ii
+					, BX_COUNTOF(typeProp)
+					, typeProp
+					, 1
+					, NULL
+					, (GLint *)&type)
+					);
 			}
 			else
 			{
