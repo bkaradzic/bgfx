@@ -128,7 +128,6 @@ struct BgfxSamplerCube
 
 struct BgfxSampler2DMS
 {
-	SamplerState m_sampler;
 	Texture2DMS<vec4> m_texture;
 };
 
@@ -240,11 +239,9 @@ vec4 bgfxTexelFetch(BgfxSampler3D _sampler, ivec3 _coord, int _lod)
 #		define texture2DProj(_sampler, _coord) bgfxTexture2DProj(_sampler, _coord)
 
 #		define SAMPLER2DMS(_name, _reg) \
-			uniform SamplerState _name ## Sampler : register(s[_reg]); \
-			uniform Texture2DMS _name ## Texture : register(t[_reg]); \
-			static BgfxSampler2DMS _name = { _name ## Sampler, _name ## Texture }
+			uniform Texture2DMS<vec4> _name ## Texture : register(t[_reg]); \
+			static BgfxSampler2DMS _name = { _name ## Texture }
 #		define sampler2DMS BgfxSampler2DMS
-#		define texture2DMS(_sampler, _coord, _idx) bgfxTexture2DMS(_sampler, _coord, _idx)
 
 #		define SAMPLER2DSHADOW(_name, _reg) \
 			uniform SamplerComparisonState _name ## Sampler : register(s[_reg]); \
