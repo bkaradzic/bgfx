@@ -16,9 +16,9 @@
 #include <tinystl/unordered_map.h>
 namespace stl = tinystl;
 
-struct Mouse
+struct InputMouse
 {
-	Mouse()
+	InputMouse()
 		: m_width(1280)
 		, m_height(720)
 		, m_wheelDelta(120)
@@ -69,9 +69,9 @@ struct Mouse
 	bool m_lock;
 };
 
-struct Keyboard
+struct InputKeyboard
 {
-	Keyboard()
+	InputKeyboard()
 		: m_ring(BX_COUNTOF(m_char)-4)
 	{
 	}
@@ -215,7 +215,7 @@ struct Input
 		for (const InputBinding* binding = _bindings; binding->m_key != entry::Key::None; ++binding)
 		{
 			uint8_t modifiers;
-			bool down =	Keyboard::decodeKeyState(m_keyboard.m_key[binding->m_key], modifiers);
+			bool down = InputKeyboard::decodeKeyState(m_keyboard.m_key[binding->m_key], modifiers);
 
 			if (binding->m_flags == 1)
 			{
@@ -278,8 +278,8 @@ struct Input
 
 	typedef stl::unordered_map<stl::string, const InputBinding*> InputBindingMap;
 	InputBindingMap m_inputBindingsMap;
-	Mouse m_mouse;
-	Keyboard m_keyboard;
+	InputKeyboard m_keyboard;
+	InputMouse m_mouse;
 	Gamepad m_gamepad[ENTRY_CONFIG_MAX_GAMEPADS];
 };
 
