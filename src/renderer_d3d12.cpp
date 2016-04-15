@@ -352,6 +352,7 @@ namespace bgfx { namespace d3d12
 		_commandList->ResourceBarrier(1, &barrier);
 	}
 
+#if USE_D3D12_DYNAMIC_LIB
 	static const GUID IID_ID3D12CommandAllocator    = { 0x6102dee4, 0xaf59, 0x4b09, { 0xb9, 0x99, 0xb4, 0x4d, 0x73, 0xf0, 0x9b, 0x24 } };
 	static const GUID IID_ID3D12CommandQueue        = { 0x0ec870a6, 0x5d7e, 0x4c22, { 0x8c, 0xfc, 0x5b, 0xaa, 0xe0, 0x76, 0x16, 0xed } };
 	static const GUID IID_ID3D12CommandSignature    = { 0xc36a797c, 0xec80, 0x4f0a, { 0x89, 0x85, 0xa7, 0xb2, 0x47, 0x50, 0x82, 0xd1 } };
@@ -366,6 +367,7 @@ namespace bgfx { namespace d3d12
 	static const GUID IID_ID3D12RootSignature       = { 0xc54a6b66, 0x72df, 0x4ee8, { 0x8b, 0xe5, 0xa9, 0x46, 0xa1, 0x42, 0x92, 0x14 } };
 	static const GUID IID_ID3D12QueryHeap           = { 0x0d9658ae, 0xed45, 0x469e, { 0xa6, 0x1d, 0x97, 0x0e, 0xc5, 0x83, 0xca, 0xb4 } };
 	static const GUID IID_IDXGIFactory4             = { 0x1bc6ea02, 0xef36, 0x464f, { 0xbf, 0x0c, 0x21, 0xca, 0x39, 0xe5, 0x16, 0x8a } };
+#endif // USE_D3D12_DYNAMIC_LIB
 
 	struct HeapProperty
 	{
@@ -578,6 +580,7 @@ namespace bgfx { namespace d3d12
 			m_adapter = NULL;
 			m_driverType = D3D_DRIVER_TYPE_HARDWARE;
 
+			if (NULL != m_factory)
 			{
 #if BX_PLATFORM_WINDOWS
 				IDXGIAdapter3* adapter;
@@ -674,6 +677,7 @@ namespace bgfx { namespace d3d12
 				goto error;
 			}
 
+			if (NULL != m_factory)
 			{
 				memset(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
 				luid = m_device->GetAdapterLuid();
@@ -725,6 +729,36 @@ namespace bgfx { namespace d3d12
 					}
 				}
 			}
+
+#if !BX_PLATFORM_WINDOWS
+			if (NULL == m_factory)
+			{
+				IDXGIDevice1* dxgiDevice;
+				hr = m_device->QueryInterface(IID_IDXGIDevice1, (void**)&dxgiDevice);
+
+				if (FAILED(hr) )
+				{
+					BX_TRACE("Unable to query IDXGIDevice1 interface 0x%08x.", hr);
+					goto error;
+				}
+
+				hr = dxgiDevice->GetAdapter(&m_adapter);
+
+				if (FAILED(hr) )
+				{
+					BX_TRACE("DXGIDevice1::GetAdapter failed 0x%08x.", hr);
+					goto error;
+				}
+
+				hr = m_adapter->GetParent(IID_IDXGIFactory2, (void**)&m_factory);
+
+				if (FAILED(hr) )
+				{
+					BX_TRACE("IDXGIAdapter::GetParent failed 0x%08x.", hr);
+					goto error;
+				}
+			}
+#endif // !BX_PLATFORM_WINDOWS
 
 			DX_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &m_options, sizeof(m_options) ) );
 			BX_TRACE("D3D12 options:")
