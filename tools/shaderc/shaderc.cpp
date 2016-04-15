@@ -1653,6 +1653,16 @@ namespace bgfx
 							preprocessor.writef(
 								"\n#define __RETURN__ \\\n"
 								"\t} \\\n"
+								);
+
+							if (hlsl <= 3)
+							{
+//								preprocessor.writef(
+//									"\tgl_Position.xy += u_viewTexel.xy * gl_Position.w; \\\n"
+//									);
+							}
+
+							preprocessor.writef(
 								"\treturn _varying_"
 								);
 						}
