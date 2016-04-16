@@ -995,9 +995,11 @@ namespace bgfx { namespace d3d11
 
 				if (NULL == m_deviceCtx)
 				{
-					BX_TRACE("Unable to create Direct3D11 device.");
+					BX_TRACE("Unable to retrieve Direct3D11 ImmediateContext.");
 					goto error;
 				}
+
+				m_featureLevel = m_device->GetFeatureLevel();
 			}
 
 			{
