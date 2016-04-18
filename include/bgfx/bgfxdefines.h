@@ -6,7 +6,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(13)
+#define BGFX_API_VERSION UINT32_C(14)
 
 ///
 #define BGFX_STATE_RGB_WRITE               UINT64_C(0x0000000000000001) //!< Enable RGB write.
@@ -296,6 +296,7 @@
 #define BGFX_TEXTURE_MIP_POINT           UINT32_C(0x00000400) //!<
 #define BGFX_TEXTURE_MIP_SHIFT           10                   //!<
 #define BGFX_TEXTURE_MIP_MASK            UINT32_C(0x00000400) //!<
+#define BGFX_TEXTURE_MSAA_SAMPLE         UINT32_C(0x00000800) //!<
 #define BGFX_TEXTURE_RT                  UINT32_C(0x00001000) //!<
 #define BGFX_TEXTURE_RT_MSAA_X2          UINT32_C(0x00002000) //!<
 #define BGFX_TEXTURE_RT_MSAA_X4          UINT32_C(0x00003000) //!<

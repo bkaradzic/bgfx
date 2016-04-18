@@ -2410,7 +2410,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						}
 
 #if !BX_PLATFORM_WINDOWS
-						HRESULT hr;
+						HRESULT hr = S_OK;
 						if (g_platformData.ndt == 0)
 						{
 							hr = m_factory->CreateSwapChainForCoreWindow(m_device
@@ -3078,14 +3078,20 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			ID3D11ShaderResourceView* srv;
 			if (NULL == ptr)
 			{
-				TextureD3D11& texture = m_textures[_handle.idx];
+				const TextureD3D11& texture = m_textures[_handle.idx];
+				const bool     msaaSample  = 0 != (texture.m_flags&BGFX_TEXTURE_MSAA_SAMPLE);
+				const uint32_t msaaQuality = bx::uint32_satsub( (texture.m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
+				const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
 
 				D3D11_SHADER_RESOURCE_VIEW_DESC desc;
 				desc.Format = s_textureFormat[texture.m_textureFormat].m_fmtSrv;
 				switch (texture.m_type)
 				{
 				case TextureD3D11::Texture2D:
-					desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+					desc.ViewDimension = 1 < msaa.Count && msaaSample
+						? D3D11_SRV_DIMENSION_TEXTURE2DMS
+						: D3D11_SRV_DIMENSION_TEXTURE2D
+						;
 					desc.Texture2D.MostDetailedMip = _mip;
 					desc.Texture2D.MipLevels       = 1;
 					break;
@@ -4327,6 +4333,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			const bool srgb         = 0 != (m_flags&BGFX_TEXTURE_SRGB) || imageContainer.m_srgb;
 			const bool blit         = 0 != (m_flags&BGFX_TEXTURE_BLIT_DST);
 			const bool readBack     = 0 != (m_flags&BGFX_TEXTURE_READ_BACK);
+			const bool msaaSample   = 0 != (m_flags&BGFX_TEXTURE_MSAA_SAMPLE);
 			const uint32_t msaaQuality = bx::uint32_satsub( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
 			const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
 
@@ -4403,8 +4410,16 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					{
 						desc.ArraySize = 1;
 						desc.MiscFlags = 0;
-						srvd.ViewDimension = 1 < msaa.Count ? D3D11_SRV_DIMENSION_TEXTURE2DMS : D3D11_SRV_DIMENSION_TEXTURE2D;
-						srvd.Texture2D.MipLevels = numMips;
+						if (1 < msaa.Count
+						&&  msaaSample)
+						{
+							srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMS;
+						}
+						else
+						{
+							srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+							srvd.Texture2D.MipLevels = numMips;
+						}
 					}
 
 					DX_CHECK(s_renderD3D11->m_device->CreateTexture2D(&desc, kk == 0 ? NULL : srd, &m_texture2d) );
@@ -4678,7 +4693,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						}
 					}
 
-					const uint32_t msaaQuality   = bx::uint32_satsub( (texture.m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
+					const uint32_t msaaQuality = bx::uint32_satsub( (texture.m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
 					const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
 
 					if (isDepth( (TextureFormat::Enum)texture.m_textureFormat) )
