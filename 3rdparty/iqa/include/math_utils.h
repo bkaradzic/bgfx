@@ -40,18 +40,18 @@
 /**
  * Rounds a float to the nearest integer.
  */
-IQA_EXPORT IQA_INLINE int _round(float a);
+IQA_EXPORT int _round(float a);
 
-IQA_EXPORT IQA_INLINE int _max(int x, int y);
+IQA_EXPORT int _max(int x, int y);
 
-IQA_EXPORT IQA_INLINE int _min(int x, int y);
+IQA_EXPORT int _min(int x, int y);
 
 
 /** 
  * Compares 2 floats to the specified digit of precision.
  * @return 0 if equal, 1 otherwise.
  */
-IQA_EXPORT IQA_INLINE int _cmp_float(float a, float b, int digits);
+IQA_EXPORT int _cmp_float(float a, float b, int digits);
 
 
 /** 
@@ -59,6 +59,6 @@ IQA_EXPORT IQA_INLINE int _cmp_float(float a, float b, int digits);
  * same size as 'a' or smaller.
  * @return 0 if equal, 1 otherwise
  */
-IQA_EXPORT IQA_INLINE int _matrix_cmp(const float *a, const float *b, int w, int h, int digits);
+IQA_EXPORT int _matrix_cmp(const float *a, const float *b, int w, int h, int digits);
 
 #endif /*_MATH_UTILS_H_*/
