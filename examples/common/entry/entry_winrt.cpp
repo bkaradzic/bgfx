@@ -115,15 +115,15 @@ private:
 		m_windowVisible = args->Visible;
 	}
 
-    void OnSuspending(Platform::Object^ sender, SuspendingEventArgs^ args)
-    {
-        SuspendingDeferral^ deferral = args->SuspendingOperation->GetDeferral();
+	void OnSuspending(Platform::Object^ sender, SuspendingEventArgs^ args)
+	{
+		SuspendingDeferral^ deferral = args->SuspendingOperation->GetDeferral();
 		BX_UNUSED(deferral);
-    }
+	}
 
-    void OnResuming(Platform::Object^ sender, Platform::Object^ args)
-    {
-    }
+	void OnResuming(Platform::Object^ sender, Platform::Object^ args)
+	{
+	}
 
 	void OnWindowClosed(CoreWindow^ sender, CoreWindowEventArgs^ args)
 	{
