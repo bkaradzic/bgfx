@@ -2535,7 +2535,10 @@ namespace bgfx
 			}
 
 			uint32_t offset = (dvb.m_startVertex + _startVertex)*dvb.m_stride;
-			uint32_t size   = bx::uint32_min(bx::uint32_satsub(dvb.m_size, _startVertex*dvb.m_stride), _mem->size);
+			uint32_t size   = bx::uint32_min(offset
+				+ bx::uint32_min(bx::uint32_satsub(dvb.m_size, _startVertex*dvb.m_stride), _mem->size)
+				, BGFX_CONFIG_DYNAMIC_VERTEX_BUFFER_SIZE) - offset
+				;
 			BX_CHECK(_mem->size <= size, "Truncating dynamic vertex buffer update (size %d, mem size %d)."
 				, dvb.m_size
 				, _mem->size
