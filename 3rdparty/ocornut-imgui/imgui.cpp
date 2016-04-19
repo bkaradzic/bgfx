@@ -534,6 +534,7 @@
  - style: try to make PushStyleVar() more robust to incorrect parameters (to be more friendly to edit & continues situation).
  - style/opt: PopStyleVar could be optimized by having GetStyleVar returns the type, using a table mapping stylevar enum to data type.
  - style: global scale setting.
+ - style: WindowPadding needs to be EVEN needs the 0.5 multiplier probably have a subtle effect on clip rectangle
  - text: simple markup language for color change?
  - font: dynamic font atlas to avoid baking huge ranges into bitmap and make scaling easier.
  - font: helper to add glyph redirect/replacements (e.g. redirect alternate apostrophe unicode code points to ascii one, etc.)
@@ -558,7 +559,8 @@
  - remote: make a system like RemoteImGui first-class citizen/project (#75)
 !- demo: custom render demo pushes a clipping rectangle past parent window bounds. expose ImGui::PushClipRect() from imgui_internal.h?
  - drawlist: end-user probably can't call Clear() directly because we expect a texture to be pushed in the stack.
- - examples: directx9/directx11: save/restore device state more thoroughly.
+ - examples: directx9: save/restore device state more thoroughly.
+ - examples: window minimize, maximize (#583)
  - optimization: use another hash function than crc32, e.g. FNV1a
  - optimization/render: merge command-lists with same clip-rect into one even if they aren't sequential? (as long as in-between clip rectangle don't overlap)?
  - optimization: turn some the various stack vectors into statically-sized arrays
@@ -1575,6 +1577,7 @@ ImGuiWindow::ImGuiWindow(const char* name)
     MoveID = GetID("#MOVE");
 
     Flags = 0;
+    IndexWithinParent = 0;
     PosFloat = Pos = ImVec2(0.0f, 0.0f);
     Size = SizeFull = ImVec2(0.0f, 0.0f);
     SizeContents = SizeContentsExplicit = ImVec2(0.0f, 0.0f);
@@ -2305,7 +2308,7 @@ static int ChildWindowComparer(const void* lhs, const void* rhs)
         return d;
     if (int d = (a->Flags & ImGuiWindowFlags_ComboBox) - (b->Flags & ImGuiWindowFlags_ComboBox))
         return d;
-    return 0;
+    return (a->IndexWithinParent - b->IndexWithinParent);
 }
 
 static void AddWindowToSortedBuffer(ImVector<ImGuiWindow*>& out_sorted_windows, ImGuiWindow* window)
@@ -3696,6 +3699,7 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
     if (first_begin_of_the_frame)
     {
         window->Active = true;
+        window->IndexWithinParent = 0;
         window->BeginCount = 0;
         window->DrawList->Clear();
         window->ClipRect = ImVec4(-FLT_MAX,-FLT_MAX,+FLT_MAX,+FLT_MAX);
@@ -3826,7 +3830,10 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
 
         // Position child window
         if (flags & ImGuiWindowFlags_ChildWindow)
+        {
+            window->IndexWithinParent = parent_window->DC.ChildWindows.Size;
             parent_window->DC.ChildWindows.push_back(window);
+        }
         if ((flags & ImGuiWindowFlags_ChildWindow) && !(flags & ImGuiWindowFlags_Popup))
         {
             window->Pos = window->PosFloat = parent_window->DC.CursorPos;
