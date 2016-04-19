@@ -2385,7 +2385,10 @@ namespace bgfx
 			}
 
 			uint32_t offset = (dib.m_startIndex + _startIndex)*indexSize;
-			uint32_t size   = bx::uint32_min(bx::uint32_satsub(dib.m_size, _startIndex*indexSize), _mem->size);
+			uint32_t size   = bx::uint32_min(offset
+				+ bx::uint32_min(bx::uint32_satsub(dib.m_size, _startIndex*indexSize), _mem->size)
+				, BGFX_CONFIG_DYNAMIC_INDEX_BUFFER_SIZE) - offset
+				;
 			BX_CHECK(_mem->size <= size, "Truncating dynamic index buffer update (size %d, mem size %d)."
 				, size
 				, _mem->size
@@ -2535,9 +2538,12 @@ namespace bgfx
 			}
 
 			uint32_t offset = (dvb.m_startVertex + _startVertex)*dvb.m_stride;
-			uint32_t size   = bx::uint32_min(bx::uint32_satsub(dvb.m_size, _startVertex*dvb.m_stride), _mem->size);
+			uint32_t size   = bx::uint32_min(offset
+				+ bx::uint32_min(bx::uint32_satsub(dvb.m_size, _startVertex*dvb.m_stride), _mem->size)
+				, BGFX_CONFIG_DYNAMIC_VERTEX_BUFFER_SIZE) - offset
+				;
 			BX_CHECK(_mem->size <= size, "Truncating dynamic vertex buffer update (size %d, mem size %d)."
-				, dvb.m_size
+				, size
 				, _mem->size
 				);
 
