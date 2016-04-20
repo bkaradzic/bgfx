@@ -278,7 +278,8 @@ typedef struct bgfx_hmd_eye
     float rotation[4];
     float translation[3];
     float fov[4];
-    float adjust[3];
+    float viewOffset[3];
+    float projection[16];
     float pixelsPerTanAngle[2];
 
 } bgfx_hmd_eye_t;
