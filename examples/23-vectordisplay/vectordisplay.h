@@ -18,6 +18,19 @@
 #include <tinystl/vector.h>
 namespace stl = tinystl;
 
+struct PosColorUvVertex
+{
+	float m_x;
+	float m_y;
+	float m_z;
+	float m_u;
+	float m_v;
+	uint32_t m_abgr;
+
+	static void init();
+	static bgfx::VertexDecl ms_decl;
+};
+
 class VectorDisplay
 {
 public:
@@ -103,19 +116,12 @@ public:
 protected:
 	void screenSpaceQuad(float _textureWidth, float _textureHeight, float _width = 1.0f, float _height = 1.0f);
 
-	typedef struct             //has to match the spec submitted to the 3d-api!
-	{
-		float x, y, z;
-		float u, v;
-		uint32_t color;
-	} point_t;
-
-	typedef struct
+	struct PendingPoint
 	{
 		float x, y;
-	} pending_point_t;
+	};
 
-	typedef struct
+	struct Line
 	{
 		float x0, y0, x1, y1;                     // nominal points
 		float a;                                  // angle
@@ -135,7 +141,7 @@ protected:
 		float s0, s1;                             // shorten line by this amount
 
 		float len;
-	} line_t;
+	};
 
 	float effectiveThickness();
 	void setupResDependent();
@@ -144,7 +150,7 @@ protected:
 	void appendTexpoint(float _x, float _y, float _u, float _v);
 
 	void drawFan(float _cx, float _cy, float _pa, float _a, float _t, float _s, float _e);
-	void drawLines(line_t* _lines, int _numberLines);
+	void drawLines(Line* _lines, int _numberLines);
 	void genLinetex();
 
 	bool m_originBottomLeft;
@@ -170,8 +176,8 @@ protected:
 	float m_decayValue;
 	uint8_t m_drawColorR, m_drawColorG, m_drawColorB, m_drawColorA;
 
-	stl::vector<point_t> m_points;
-	stl::vector<pending_point_t> m_pendingPoints;
+	stl::vector<PosColorUvVertex> m_points;
+	stl::vector<PendingPoint> m_pendingPoints;
 
 	int m_currentDrawStep;
 	stl::vector<bgfx::DynamicVertexBufferHandle> m_vertexBuffers;

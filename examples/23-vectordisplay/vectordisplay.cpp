@@ -33,26 +33,16 @@ const float DEFAULT_BRIGHTNESS = 1.0f;
 const int TEXTURE_SIZE = 64;
 const int HALF_TEXTURE_SIZE = TEXTURE_SIZE / 2;
 
-struct PosColorUvVertex
+void PosColorUvVertex::init()
 {
-	float m_x;
-	float m_y;
-	float m_z;
-	float m_u;
-	float m_v;
-	uint32_t m_abgr;
+	ms_decl
+		.begin()
+		.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
+		.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+		.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
+		.end();
+}
 
-	static void init()
-	{
-		ms_decl
-			.begin()
-			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
-			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-			.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
-			.end();
-	}
-	static bgfx::VertexDecl ms_decl;
-};
 bgfx::VertexDecl PosColorUvVertex::ms_decl;
 
 inline float normalizef(float _a)
@@ -156,7 +146,7 @@ void VectorDisplay::endFrame()
 
 	bgfx::updateDynamicVertexBuffer(m_vertexBuffers[m_currentDrawStep]
 		, 0
-		, bgfx::copy(m_points.data(), (uint32_t)m_points.size() * sizeof(point_t) )
+		, bgfx::copy(m_points.data(), (uint32_t)m_points.size() * sizeof(PosColorUvVertex) )
 	);
 	m_vertexBuffersSize[m_currentDrawStep] = (uint32_t)m_points.size();
 
@@ -307,7 +297,7 @@ void VectorDisplay::beginDraw(float _x, float _y)
 {
 	BX_CHECK(0 == m_pendingPoints.size(), "Begin draw on already filled buffer!");
 
-	pending_point_t point;
+	PendingPoint point;
 	point.x = _x * m_drawScale + m_drawOffsetX;
 	point.y = _y * m_drawScale + m_drawOffsetY;
 	m_pendingPoints.push_back(point);
@@ -315,7 +305,7 @@ void VectorDisplay::beginDraw(float _x, float _y)
 
 void VectorDisplay::drawTo(float _x, float _y)
 {
-	pending_point_t point;
+	PendingPoint point;
 	point.x = _x * m_drawScale + m_drawOffsetX;
 	point.y = _y * m_drawScale + m_drawOffsetY;
 	m_pendingPoints.push_back(point);
@@ -331,7 +321,7 @@ void VectorDisplay::endDraw()
 
 	// from the list of points, build a list of lines
 	uint32_t nlines = (uint32_t)m_pendingPoints.size() - 1;
-	line_t* lines = (line_t*)alloca(nlines * sizeof(line_t) );
+	Line* lines = (Line*)alloca(nlines * sizeof(Line) );
 
 	float t = effectiveThickness();
 	int first_last_same = bx::fabsolute(m_pendingPoints[0].x - m_pendingPoints[m_pendingPoints.size() - 1].x) < 0.1
@@ -340,7 +330,7 @@ void VectorDisplay::endDraw()
 	// compute basics
 	for (size_t i = 1; i < m_pendingPoints.size(); i++)
 	{
-		line_t* line = &lines[i - 1];
+		Line* line = &lines[i - 1];
 		line->is_first = i == 1;
 		line->is_last = i == nlines;
 
@@ -370,7 +360,7 @@ void VectorDisplay::endDraw()
 	// compute adjustments for connected line segments
 	for (size_t i = 0; i < nlines; i++)
 	{
-		line_t* line = &lines[i], * pline = &lines[(nlines + i - 1) % nlines];
+		Line* line = &lines[i], * pline = &lines[(nlines + i - 1) % nlines];
 
 		if (line->has_prev)
 		{
@@ -428,7 +418,7 @@ void VectorDisplay::endDraw()
 	// compute line geometry
 	for (size_t i = 0; i < nlines; i++)
 	{
-		line_t* line = &lines[i];
+		Line* line = &lines[i];
 
 		// shorten lines if needed
 		line->x0 = line->x0 + line->s0 * line->cos_a;
@@ -592,13 +582,13 @@ void VectorDisplay::setDrawColor(float _r, float _g, float _b, float _a)
 
 void VectorDisplay::appendTexpoint(float _x, float _y, float _u, float _v)
 {
-	point_t point;
-	point.x = _x;
-	point.y = _y;
-	point.z = 0.0;
-	point.color = (m_drawColorA << 24) | (m_drawColorB << 16) | (m_drawColorG << 8) | m_drawColorR;
-	point.u = _u / TEXTURE_SIZE;
-	point.v = 1.0f - _v / TEXTURE_SIZE;
+	PosColorUvVertex point;
+	point.m_x = _x;
+	point.m_y = _y;
+	point.m_z = 0.0;
+	point.m_abgr = (m_drawColorA << 24) | (m_drawColorB << 16) | (m_drawColorG << 8) | m_drawColorR;
+	point.m_u = _u / TEXTURE_SIZE;
+	point.m_v = 1.0f - _v / TEXTURE_SIZE;
 	m_points.push_back(point);
 }
 
@@ -638,14 +628,14 @@ void VectorDisplay::drawFan(float _cx, float _cy, float _pa, float _a, float _t,
 	}
 }
 
-void VectorDisplay::drawLines(line_t* _lines, int _numberLines)
+void VectorDisplay::drawLines(Line* _lines, int _numberLines)
 {
 	int i;
 	float t = effectiveThickness();
 
 	for (i = 0; i < _numberLines; i++)
 	{
-		line_t* line = &_lines[i], * pline = &_lines[(_numberLines + i - 1) % _numberLines];
+		Line* line = &_lines[i], * pline = &_lines[(_numberLines + i - 1) % _numberLines];
 
 		if (line->has_prev)     // draw fan for connection to previous
 		{
