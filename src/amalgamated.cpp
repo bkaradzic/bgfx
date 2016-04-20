@@ -10,6 +10,7 @@
 #include "glcontext_wgl.cpp"
 #include "image.cpp"
 #include "hmd_ovr.cpp"
+#include "hmd_openvr.cpp"
 #include "debug_renderdoc.cpp"
 #include "renderer_d3d9.cpp"
 #include "renderer_d3d11.cpp"
