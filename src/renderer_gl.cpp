@@ -3410,7 +3410,6 @@ namespace bgfx { namespace gl
 			GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT) );
 			GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR) );
 			GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR) );
-
 			GL_CHECK(glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAX_LEVEL, 0) );
 		}
 	}
@@ -3580,6 +3579,10 @@ namespace bgfx { namespace gl
 			GLSL_TYPE(GL_INT_SAMPLER_CUBE);
 			GLSL_TYPE(GL_UNSIGNED_INT_SAMPLER_CUBE);
 
+			GLSL_TYPE(GL_SAMPLER_2D_MULTISAMPLE);
+			GLSL_TYPE(GL_INT_SAMPLER_2D_MULTISAMPLE);
+			GLSL_TYPE(GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE);
+
 			GLSL_TYPE(GL_SAMPLER_2D_SHADOW);
 
 			GLSL_TYPE(GL_IMAGE_1D);
@@ -3669,6 +3672,10 @@ namespace bgfx { namespace gl
 		case GL_UNSIGNED_INT_SAMPLER_CUBE:
 
 		case GL_SAMPLER_2D_SHADOW:
+
+		case GL_SAMPLER_2D_MULTISAMPLE:
+		case GL_INT_SAMPLER_2D_MULTISAMPLE:
+		case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE:
 
 		case GL_IMAGE_1D:
 		case GL_INT_IMAGE_1D:
@@ -4151,17 +4158,22 @@ namespace bgfx { namespace gl
 		m_vcref.invalidate(s_renderGL->m_vaoStateCache);
 	}
 
-	static void texImage(GLenum _target, GLint _level, GLint _internalFormat, GLsizei _width, GLsizei _height, GLsizei _depth, GLint _border, GLenum _format, GLenum _type, const GLvoid* _data)
+	static void texImage(GLenum _target, uint32_t _msaaQuality, GLint _level, GLint _internalFormat, GLsizei _width, GLsizei _height, GLsizei _depth, GLint _border, GLenum _format, GLenum _type, const GLvoid* _data)
 	{
 		if (_target == GL_TEXTURE_3D)
 		{
 			GL_CHECK(glTexImage3D(_target, _level, _internalFormat, _width, _height, _depth, _border, _format, _type, _data) );
 		}
+		else if (_target == GL_TEXTURE_2D_MULTISAMPLE)
+		{
+			GL_CHECK(glTexImage2DMultisample(_target, _msaaQuality, _internalFormat, _width, _height, false) );
+		}
 		else
 		{
-			BX_UNUSED(_depth);
 			GL_CHECK(glTexImage2D(_target, _level, _internalFormat, _width, _height, _border, _format, _type, _data) );
 		}
+
+		BX_UNUSED(_msaaQuality, _depth, _border, _data);
 	}
 
 	static void texSubImage(GLenum _target, GLint _level, GLint _xoffset, GLint _yoffset, GLint _zoffset, GLsizei _width, GLsizei _height, GLsizei _depth, GLenum _format, GLenum _type, const GLvoid* _data)
@@ -4348,7 +4360,14 @@ namespace bgfx { namespace gl
 			m_requestedFormat  = uint8_t(imageContainer.m_format);
 			m_textureFormat    = uint8_t(getViableTextureFormat(imageContainer) );
 
-			GLenum target = GL_TEXTURE_2D;
+			const bool computeWrite = 0 != (_flags&BGFX_TEXTURE_COMPUTE_WRITE);
+			const bool srgb         = 0 != (_flags&BGFX_TEXTURE_SRGB);
+			const bool msaaSample   = 0 != (_flags&BGFX_TEXTURE_MSAA_SAMPLE);
+			uint32_t msaaQuality = ( (_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT);
+			msaaQuality = bx::uint32_satsub(msaaQuality, 1);
+			msaaQuality = bx::uint32_min(s_renderGL->m_maxMsaa, msaaQuality == 0 ? 0 : 1<<msaaQuality);
+
+			GLenum target = msaaSample ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
 			if (imageContainer.m_cubeMap)
 			{
 				target = GL_TEXTURE_CUBE_MAP;
@@ -4368,9 +4387,6 @@ namespace bgfx { namespace gl
 			{
 				return;
 			}
-
-			const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
-			const bool srgb         = 0 != (m_flags&BGFX_TEXTURE_SRGB);
 
 			target = GL_TEXTURE_CUBE_MAP == m_target ? GL_TEXTURE_CUBE_MAP_POSITIVE_X : m_target;
 
@@ -4461,6 +4477,7 @@ namespace bgfx { namespace gl
 							}
 
 							texImage(target+side
+								, msaaQuality
 								, lod
 								, internalFmt
 								, width
@@ -4496,6 +4513,7 @@ namespace bgfx { namespace gl
 						else
 						{
 							texImage(target+side
+								, msaaQuality
 								, lod
 								, internalFmt
 								, width
@@ -4692,8 +4710,9 @@ namespace bgfx { namespace gl
 
 		if (hash != m_currentSamplerHash)
 		{
-			const GLenum  target  = m_target;
-			const uint8_t numMips = m_numMips;
+			const GLenum  target     = m_target == GL_TEXTURE_2D_MULTISAMPLE ? GL_TEXTURE_2D : m_target;
+			const GLenum  targetMsaa = m_target;
+			const uint8_t numMips    = m_numMips;
 
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_S, s_textureAddress[(flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT]) );
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_T, s_textureAddress[(flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT]) );
@@ -4701,7 +4720,7 @@ namespace bgfx { namespace gl
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 			||  s_extension[Extension::APPLE_texture_max_level].m_supported)
 			{
-				GL_CHECK(glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, numMips-1) );
+				GL_CHECK(glTexParameteri(targetMsaa, GL_TEXTURE_MAX_LEVEL, numMips-1) );
 			}
 
 			if (target == GL_TEXTURE_3D)
@@ -4736,12 +4755,12 @@ namespace bgfx { namespace gl
 				const uint32_t cmpFunc = (flags&BGFX_TEXTURE_COMPARE_MASK)>>BGFX_TEXTURE_COMPARE_SHIFT;
 				if (0 == cmpFunc)
 				{
-					GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_COMPARE_MODE, GL_NONE) );
+					GL_CHECK(glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_NONE) );
 				}
 				else
 				{
-					GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE) );
-					GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_COMPARE_FUNC, s_cmpFunc[cmpFunc]) );
+					GL_CHECK(glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE) );
+					GL_CHECK(glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, s_cmpFunc[cmpFunc]) );
 				}
 			}
 
