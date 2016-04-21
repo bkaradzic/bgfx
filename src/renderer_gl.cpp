@@ -5067,10 +5067,9 @@ namespace bgfx { namespace gl
 						;
 					const bool usesIUsamplers = !!bx::findIdentifierMatch(code, s_uisamplers);
 					const bool usesTexelFetch = !!bx::findIdentifierMatch(code, s_texelFetch);
-					const bool usesTextureMS  = !!bx::findIdentifierMatch(code, s_ARB_texture_multisample);
 
 					uint32_t version =
-						  usesIUsamplers || usesTexelFetch || usesTextureMS ? 130
+						  usesIUsamplers || usesTexelFetch ? 130
 						: usesTextureLod ? 120
 						: 0
 						;
@@ -5086,11 +5085,6 @@ namespace bgfx { namespace gl
 						{
 							writeString(&writer, "#extension GL_ARB_shader_texture_lod : enable\n");
 						}
-					}
-
-					if (usesTextureMS)
-					{
-						writeString(&writer, "#extension GL_ARB_texture_multisample : enable\n");
 					}
 
 					if (130 <= version)
@@ -5206,6 +5200,11 @@ namespace bgfx { namespace gl
 							{
 								writeString(&writer, "#define beginFragmentShaderOrdering()\n");
 							}
+						}
+
+						if (!!bx::findIdentifierMatch(code, s_ARB_texture_multisample))
+						{
+							writeString(&writer, "#extension GL_ARB_texture_multisample : enable\n");
 						}
 
 						if (0 != fragData)
