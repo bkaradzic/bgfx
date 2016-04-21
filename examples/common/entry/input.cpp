@@ -72,7 +72,7 @@ struct Mouse
 struct Keyboard
 {
 	Keyboard()
-		: m_ring(BX_COUNTOF(m_char) )
+		: m_ring(BX_COUNTOF(m_char)-4)
 	{
 	}
 
