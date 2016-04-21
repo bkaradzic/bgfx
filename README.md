@@ -139,6 +139,14 @@ action puzzle game which isn't afraid of complexity — think Chip's Challenge o
 crack.  
 ![blackshift-screenshot](https://img.itch.io/aW1hZ2UvNTA3NDkvMjU2OTIzLmpwZw==/original/V%2BbpZD.jpg)
 
+https://eheitzresearch.wordpress.com/415-2/ - Real-Time Polygonal-Light Shading
+with Linearly Transformed Cosines, Eric Heitz, Jonathan Dupuy, Stephen Hill and
+David Neubelt, ACM SIGGRAPH 2016
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=ZLRgEN7AQgM
+" target="_blank"><img src="http://img.youtube.com/vi/ZLRgEN7AQgM/0.jpg" 
+alt="Real-Time Polygonal-Light Shading with Linearly Transformed Cosines "
+width="640" height="480" border="0" /></a>
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
