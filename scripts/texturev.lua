@@ -1,6 +1,6 @@
 project ("texturev")
 	uuid (os.uuid("texturev") )
-	kind "WindowedApp"
+	kind "ConsoleApp"
 
 	configuration {}
 
