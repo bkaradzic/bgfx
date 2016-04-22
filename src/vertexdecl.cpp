@@ -107,6 +107,7 @@ namespace bgfx
 		murmur.begin();
 		murmur.add(m_attributes, sizeof(m_attributes) );
 		murmur.add(m_offset, sizeof(m_offset) );
+		murmur.add(m_stride);
 		m_hash = murmur.end();
 	}
 
