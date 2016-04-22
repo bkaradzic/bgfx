@@ -156,12 +156,10 @@ struct LightProbe
 	{
 		char filePath[512];
 
-		strcpy(filePath, _name);
-		strcat(filePath, "_lod.dds");
+		bx::snprintf(filePath, BX_COUNTOF(filePath), "textures/%s_lod.dds", _name);
 		m_tex = loadTexture(filePath, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP);
 
-		strcpy(filePath, _name);
-		strcat(filePath, "_irr.dds");
+		bx::snprintf(filePath, BX_COUNTOF(filePath), "textures/%s_irr.dds", _name);
 		m_texIrr = loadTexture(filePath, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP);
 	}
 

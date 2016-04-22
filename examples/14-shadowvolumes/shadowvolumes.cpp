@@ -1878,9 +1878,9 @@ int _main_(int _argc, char** _argv)
 	s_uniforms.init();
 	s_uniforms.submitConstUniforms();
 
-	bgfx::TextureHandle figureTex     = loadTexture("figure-rgba.dds");
-	bgfx::TextureHandle flareTex      = loadTexture("flare.dds");
-	bgfx::TextureHandle fieldstoneTex = loadTexture("fieldstone-rgba.dds");
+	bgfx::TextureHandle figureTex     = loadTexture("textures/figure-rgba.dds");
+	bgfx::TextureHandle flareTex      = loadTexture("textures/flare.dds");
+	bgfx::TextureHandle fieldstoneTex = loadTexture("textures/fieldstone-rgba.dds");
 
 	bgfx::TextureHandle fbtextures[] =
 	{

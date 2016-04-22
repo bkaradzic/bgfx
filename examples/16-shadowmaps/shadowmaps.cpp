@@ -1379,9 +1379,9 @@ int _main_(int _argc, char** _argv)
 	PosColorTexCoord0Vertex::init();
 
 	// Textures.
-	bgfx::TextureHandle texFigure     = loadTexture("figure-rgba.dds");
-	bgfx::TextureHandle texFlare      = loadTexture("flare.dds");
-	bgfx::TextureHandle texFieldstone = loadTexture("fieldstone-rgba.dds");
+	bgfx::TextureHandle texFigure     = loadTexture("textures/figure-rgba.dds");
+	bgfx::TextureHandle texFlare      = loadTexture("textures/flare.dds");
+	bgfx::TextureHandle texFieldstone = loadTexture("textures/fieldstone-rgba.dds");
 
 	// Meshes.
 	Mesh bunnyMesh;

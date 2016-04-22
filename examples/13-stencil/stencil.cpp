@@ -873,9 +873,9 @@ int _main_(int _argc, char** _argv)
 	hplaneMesh.load(s_hplaneVertices, BX_COUNTOF(s_hplaneVertices), PosNormalTexcoordVertex::ms_decl, s_planeIndices, BX_COUNTOF(s_planeIndices) );
 	vplaneMesh.load(s_vplaneVertices, BX_COUNTOF(s_vplaneVertices), PosNormalTexcoordVertex::ms_decl, s_planeIndices, BX_COUNTOF(s_planeIndices) );
 
-	bgfx::TextureHandle figureTex     = loadTexture("figure-rgba.dds");
-	bgfx::TextureHandle flareTex      = loadTexture("flare.dds");
-	bgfx::TextureHandle fieldstoneTex = loadTexture("fieldstone-rgba.dds");
+	bgfx::TextureHandle figureTex     = loadTexture("textures/figure-rgba.dds");
+	bgfx::TextureHandle flareTex      = loadTexture("textures/flare.dds");
+	bgfx::TextureHandle fieldstoneTex = loadTexture("textures/fieldstone-rgba.dds");
 
 	// Setup lights.
 	const float rgbInnerR[][4] =

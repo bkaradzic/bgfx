@@ -178,7 +178,7 @@ class ExampleHDR : public entry::AppI
 		bgfx::setViewName(8, "Blur vertical");
 		bgfx::setViewName(9, "Blur horizontal + tonemap");
 
-		m_uffizi = loadTexture("uffizi.dds"
+		m_uffizi = loadTexture("textures/uffizi.dds"
 				, 0
 				| BGFX_TEXTURE_U_CLAMP
 				| BGFX_TEXTURE_V_CLAMP

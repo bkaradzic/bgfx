@@ -293,10 +293,10 @@ class ExampleDeferred : public entry::AppI
 		m_lineProgram    = loadProgram("vs_deferred_debug_line", "fs_deferred_debug_line");
 
 		// Load diffuse texture.
-		m_textureColor  = loadTexture("fieldstone-rgba.dds");
+		m_textureColor  = loadTexture("textures/fieldstone-rgba.dds");
 
 		// Load normal texture.
-		m_textureNormal = loadTexture("fieldstone-n.dds");
+		m_textureNormal = loadTexture("textures/fieldstone-n.dds");
 
 		m_gbufferTex[0].idx = bgfx::invalidHandle;
 		m_gbufferTex[1].idx = bgfx::invalidHandle;

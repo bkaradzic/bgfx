@@ -335,7 +335,11 @@ texturec: .build/projects/$(BUILD_PROJECT_DIR) ## Build texturec tool.
 	$(SILENT) $(MAKE) -C .build/projects/$(BUILD_PROJECT_DIR) -f texturec.make config=$(BUILD_TOOLS_CONFIG)
 	$(SILENT) cp .build/$(BUILD_OUTPUT_DIR)/bin/texturec$(BUILD_TOOLS_SUFFIX)$(EXE) tools/bin/$(OS)/texturec$(EXE)
 
-tools: geometryc shaderc texturec ## Build tools.
+texturev: .build/projects/$(BUILD_PROJECT_DIR) ## Build texturev tool.
+	$(SILENT) $(MAKE) -C .build/projects/$(BUILD_PROJECT_DIR) texturev config=$(BUILD_TOOLS_CONFIG)
+	$(SILENT) cp .build/$(BUILD_OUTPUT_DIR)/bin/texturev$(BUILD_TOOLS_SUFFIX)$(EXE) tools/bin/$(OS)/texturev$(EXE)
+
+tools: geometryc shaderc texturec texturev ## Build tools.
 
 dist-windows: .build/projects/gmake-mingw-gcc
 	$(SILENT) $(MAKE) -C .build/projects/gmake-mingw-gcc config=release64 -j 6 geometryc

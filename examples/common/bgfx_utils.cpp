@@ -156,28 +156,20 @@ bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
 typedef unsigned char stbi_uc;
 extern "C" stbi_uc *stbi_load_from_memory(stbi_uc const *buffer, int len, int *x, int *y, int *comp, int req_comp);
 
-bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _name, uint32_t _flags, uint8_t _skip, bgfx::TextureInfo* _info)
+bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath, uint32_t _flags, uint8_t _skip, bgfx::TextureInfo* _info)
 {
-	char filePath[512] = { '\0' };
-	if (NULL == strchr(_name, '/') )
+	if (NULL != bx::stristr(_filePath, ".dds")
+	||  NULL != bx::stristr(_filePath, ".pvr")
+	||  NULL != bx::stristr(_filePath, ".ktx") )
 	{
-		strcpy(filePath, "textures/");
-	}
-
-	strcat(filePath, _name);
-
-	if (NULL != bx::stristr(_name, ".dds")
-	||  NULL != bx::stristr(_name, ".pvr")
-	||  NULL != bx::stristr(_name, ".ktx") )
-	{
-		const bgfx::Memory* mem = loadMem(_reader, filePath);
+		const bgfx::Memory* mem = loadMem(_reader, _filePath);
 		if (NULL != mem)
 		{
 			return bgfx::createTexture(mem, _flags, _skip, _info);
 		}
 
 		bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
-		DBG("Failed to load %s.", filePath);
+		DBG("Failed to load %s.", _filePath);
 		return handle;
 	}
 
@@ -185,7 +177,7 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _name, uin
 	bx::AllocatorI* allocator = entry::getAllocator();
 
 	uint32_t size = 0;
-	void* data = loadMem(_reader, allocator, filePath, &size);
+	void* data = loadMem(_reader, allocator, _filePath, &size);
 	if (NULL != data)
 	{
 		int width  = 0;
@@ -222,7 +214,7 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _name, uin
 	}
 	else
 	{
-		DBG("Failed to load %s.", filePath);
+		DBG("Failed to load %s.", _filePath);
 	}
 
 	return handle;
