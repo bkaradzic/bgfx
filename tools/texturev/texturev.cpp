@@ -27,6 +27,8 @@
 #include <string>
 namespace stl = tinystl;
 
+#include "image.h"
+
 struct Binding
 {
 	enum Enum
@@ -534,8 +536,6 @@ int _main_(int _argc, char** _argv)
 				fileIndex = view.m_fileIndex;
 
 				filePath = view.m_fileList[view.m_fileIndex].c_str();
-				entry::WindowHandle handle = { 0 };
-				entry::setWindowTitle(handle, filePath);
 
 				texture = loadTexture(filePath
 						, 0
@@ -545,6 +545,16 @@ int _main_(int _argc, char** _argv)
 						, 0
 						, &view.m_info
 						);
+
+				std::string title;
+				bx::stringPrintf(title, "%s (%d x %d, %s)"
+					, filePath
+					, view.m_info.width
+					, view.m_info.height
+					, bgfx::getName(view.m_info.format)
+					);
+				entry::WindowHandle handle = { 0 };
+				entry::setWindowTitle(handle, title.c_str() );
 			}
 
 			int64_t now = bx::getHPCounter();
