@@ -936,7 +936,7 @@ namespace bgfx { namespace d3d11
 						;
 
 					hr = E_FAIL;
-					for (uint32_t ii = 0; ii < 3 && FAILED(hr);)
+					for (uint32_t ii = 0; ii < BX_COUNTOF(featureLevel) && FAILED(hr);)
 					{
 						hr = D3D11CreateDevice(m_adapter
 							, m_driverType
