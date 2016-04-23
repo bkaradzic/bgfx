@@ -8,11 +8,12 @@
 #include <bx/os.h>
 #include <bx/string.h>
 #include <bx/uint32_t.h>
-#include <dirent.h>
 #include <entry/entry.h>
 #include <entry/input.h>
 #include <entry/cmd.h>
 #include <bgfx_utils.h>
+
+#include <dirent.h>
 
 #include "vs_texture.bin.h"
 #include "fs_texture.bin.h"
@@ -21,12 +22,16 @@
 
 #include <bx/crtimpl.h>
 
+#include <tinystl/allocator.h>
+#include <tinystl/vector.h>
+#include <string>
+namespace stl = tinystl;
+
 struct Binding
 {
 	enum Enum
 	{
 		App,
-		Dir,
 		View,
 
 		Count
@@ -40,32 +45,23 @@ static const InputBinding s_bindingApp[] =
 	INPUT_BINDING_END
 };
 
-static const InputBinding s_bindingDir[] =
-{
-	{ entry::Key::Up,        entry::Modifier::None,       1, NULL, "dir up"         },
-	{ entry::Key::Down,      entry::Modifier::None,       1, NULL, "dir down"       },
-	{ entry::Key::PageUp,    entry::Modifier::None,       1, NULL, "dir up"         },
-	{ entry::Key::PageDown,  entry::Modifier::None,       1, NULL, "dir down"       },
-	{ entry::Key::Left,      entry::Modifier::None,       1, NULL, "dir back"       },
-	{ entry::Key::Backspace, entry::Modifier::None,       1, NULL, "dir back"       },
-	{ entry::Key::Right,     entry::Modifier::None,       1, NULL, "dir enter"      },
-	{ entry::Key::Return,    entry::Modifier::None,       1, NULL, "dir enter"      },
-
-	INPUT_BINDING_END
-};
-
 static const InputBinding s_bindingView[] =
 {
-	{ entry::Key::Comma,     entry::Modifier::None,       1, NULL, "view mip prev"  },
-	{ entry::Key::Period,    entry::Modifier::None,       1, NULL, "view mip next"  },
-	{ entry::Key::Comma,     entry::Modifier::LeftShift,  1, NULL, "view mip"       },
-	{ entry::Key::Comma,     entry::Modifier::RightShift, 1, NULL, "view mip"       },
+	{ entry::Key::Comma,     entry::Modifier::None,       1, NULL, "view mip prev"    },
+	{ entry::Key::Period,    entry::Modifier::None,       1, NULL, "view mip next"    },
+	{ entry::Key::Comma,     entry::Modifier::LeftShift,  1, NULL, "view mip"         },
+	{ entry::Key::Comma,     entry::Modifier::RightShift, 1, NULL, "view mip"         },
 
-	{ entry::Key::Slash,     entry::Modifier::None,       1, NULL, "view filter"    },
+	{ entry::Key::Slash,     entry::Modifier::None,       1, NULL, "view filter"      },
 
-	{ entry::Key::Key0,      entry::Modifier::None,       1, NULL, "view zoom 1.0"  },
-	{ entry::Key::Plus,      entry::Modifier::None,       1, NULL, "view zoom +0.1" },
-	{ entry::Key::Minus,     entry::Modifier::None,       1, NULL, "view zoom -0.1" },
+	{ entry::Key::Key0,      entry::Modifier::None,       1, NULL, "view zoom 1.0"    },
+	{ entry::Key::Plus,      entry::Modifier::None,       1, NULL, "view zoom +0.1"   },
+	{ entry::Key::Minus,     entry::Modifier::None,       1, NULL, "view zoom -0.1"   },
+
+	{ entry::Key::Up,        entry::Modifier::None,       1, NULL, "view file-up"     },
+	{ entry::Key::Down,      entry::Modifier::None,       1, NULL, "view file-down"   },
+	{ entry::Key::PageUp,    entry::Modifier::None,       1, NULL, "view file-pgup"   },
+	{ entry::Key::PageDown,  entry::Modifier::None,       1, NULL, "view file-pgdown" },
 
 	INPUT_BINDING_END
 };
@@ -73,7 +69,6 @@ static const InputBinding s_bindingView[] =
 static const char* s_bindingName[] =
 {
 	"App",
-	"Dir",
 	"View",
 };
 BX_STATIC_ASSERT(Binding::Count == BX_COUNTOF(s_bindingName) );
@@ -81,7 +76,6 @@ BX_STATIC_ASSERT(Binding::Count == BX_COUNTOF(s_bindingName) );
 static const InputBinding* s_binding[] =
 {
 	s_bindingApp,
-	s_bindingDir,
 	s_bindingView,
 };
 BX_STATIC_ASSERT(Binding::Count == BX_COUNTOF(s_binding) );
@@ -89,7 +83,8 @@ BX_STATIC_ASSERT(Binding::Count == BX_COUNTOF(s_binding) );
 struct View
 {
 	View()
-		: m_scaleFn(0)
+		: m_fileIndex(0)
+		, m_scaleFn(0)
 		, m_mip(0)
 		, m_zoom(1.0f)
 		, m_filter(true)
@@ -166,12 +161,76 @@ struct View
 					m_filter ^= true;
 				}
 			}
+			else if (0 == strcmp(_argv[1], "file-up") )
+			{
+				m_fileIndex = bx::uint32_satsub(m_fileIndex, 1);
+			}
+			else if (0 == strcmp(_argv[1], "file-down") )
+			{
+				uint32_t numFiles = bx::uint32_satsub(uint32_t(m_fileList.size() ), 1);
+				++m_fileIndex;
+				m_fileIndex = bx::uint32_min(m_fileIndex, numFiles);
+			}
 		}
 
 		return 0;
 	}
 
+	void updateFileList(const char* _path, const char* _fileName = "")
+	{
+		std::string path = _path;
+
+		DIR* dir = opendir(_path);
+
+		if (NULL == dir)
+		{
+			path = ".";
+		}
+
+		dir = opendir(path.c_str() );
+		if (NULL != dir)
+		{
+			for (dirent* item = readdir(dir); NULL != item; item = readdir(dir) )
+			{
+				if (0 == (item->d_type & DT_DIR) )
+				{
+					const char* ext = strrchr(item->d_name, '.');
+					if (NULL != ext)
+					{
+						if (0 == bx::stricmp(ext, ".dds")
+						||  0 == bx::stricmp(ext, ".jpg")
+						||  0 == bx::stricmp(ext, ".jpeg")
+						||  0 == bx::stricmp(ext, ".hdr")
+						||  0 == bx::stricmp(ext, ".ktx")
+						||  0 == bx::stricmp(ext, ".png")
+						||  0 == bx::stricmp(ext, ".pvr")
+						||  0 == bx::stricmp(ext, ".tga")
+						   )
+						{
+							if (0 == strcmp(_fileName, item->d_name) )
+							{
+								m_fileIndex = uint32_t(m_fileList.size() );
+							}
+
+							std::string name = path;
+							char ch = name.back();
+							name += '/' == ch || '\\' == ch ? "" : "/";
+							name += item->d_name;
+							m_fileList.push_back(name);
+						}
+					}
+				}
+			}
+
+			closedir(dir);
+		}
+	}
+
+	typedef stl::vector<std::string> FileList;
+	FileList m_fileList;
+
 	bgfx::TextureInfo m_info;
+	uint32_t m_fileIndex;
 	uint32_t m_scaleFn;
 	uint32_t m_mip;
 	float    m_zoom;
@@ -358,7 +417,6 @@ int _main_(int _argc, char** _argv)
 	uint32_t reset  = BGFX_RESET_VSYNC;
 
 	inputAddBindings(s_bindingName[Binding::App],  s_binding[Binding::App]);
-	inputAddBindings(s_bindingName[Binding::Dir],  s_binding[Binding::Dir]);
 	inputAddBindings(s_bindingName[Binding::View], s_binding[Binding::View]);
 
 	View view;
@@ -423,7 +481,6 @@ int _main_(int _argc, char** _argv)
 	bgfx::UniformHandle u_mtx      = bgfx::createUniform("u_mtx",      bgfx::UniformType::Mat4);
 	bgfx::UniformHandle u_params   = bgfx::createUniform("u_params",   bgfx::UniformType::Vec4);
 
-	bgfx::TextureHandle texture = BGFX_INVALID_HANDLE;
 	float speed = 0.37f;
 	float time  = 0.0f;
 
@@ -431,27 +488,65 @@ int _main_(int _argc, char** _argv)
 	Interpolator zoom(1.0);
 	Interpolator scale(1.0);
 
-	texture = loadTexture(_argv[1]
-			, 0
-			| BGFX_TEXTURE_U_CLAMP
-			| BGFX_TEXTURE_V_CLAMP
-			| BGFX_TEXTURE_W_CLAMP
-			, 0
-			, &view.m_info
-			);
+	const char* filePath = _argv[1];
+	bool directory = false;
+
+	bx::FileInfo fi;
+	bx::stat(filePath, fi);
+	directory = bx::FileInfo::Directory == fi.m_type;
+
+	std::string path = filePath;
+	if (!directory)
+	{
+		const char* fileName = directory ? filePath : bx::baseName(filePath);
+		path.assign(filePath, fileName);
+		view.updateFileList(path.c_str(), fileName);
+	}
+	else
+	{
+		view.updateFileList(path.c_str() );
+	}
 
 	int exitcode = EXIT_SUCCESS;
+	bgfx::TextureHandle texture = BGFX_INVALID_HANDLE;
 
-	if (!bgfx::isValid(texture) )
+	if (view.m_fileList.empty() )
 	{
 		fprintf(stderr, "Unable to load '%s' texture.\n", _argv[1]);
 		exitcode = EXIT_FAILURE;
 	}
 	else
 	{
+		uint32_t fileIndex = 0;
+
 		entry::MouseState mouseState;
 		while (!entry::processEvents(width, height, debug, reset, &mouseState) )
 		{
+
+			if (!bgfx::isValid(texture)
+			||  view.m_fileIndex != fileIndex)
+			{
+				if (bgfx::isValid(texture) )
+				{
+					bgfx::destroyTexture(texture);
+				}
+
+				fileIndex = view.m_fileIndex;
+
+				filePath = view.m_fileList[view.m_fileIndex].c_str();
+				entry::WindowHandle handle = { 0 };
+				entry::setWindowTitle(handle, filePath);
+
+				texture = loadTexture(filePath
+						, 0
+						| BGFX_TEXTURE_U_CLAMP
+						| BGFX_TEXTURE_V_CLAMP
+						| BGFX_TEXTURE_W_CLAMP
+						, 0
+						, &view.m_info
+						);
+			}
+
 			int64_t now = bx::getHPCounter();
 			static int64_t last = now;
 			const int64_t frameTime = now - last;
@@ -468,20 +563,21 @@ int _main_(int _argc, char** _argv)
 
 			bgfx::dbgTextClear();
 
-			scale.set(bx::fmin( float(width)  / float(view.m_info.width)
-						, float(height) / float(view.m_info.height)
-						)
-					, 0.1f
-					);
+			scale.set(
+				  bx::fmin( float(width) / float(view.m_info.width)
+				, float(height) / float(view.m_info.height)
+				)
+				, 0.1f
+				);
 			zoom.set(view.m_zoom, 0.25);
 
 			float ss = scale.getValue() * zoom.getValue();
 
 			screenQuad( int(width  - view.m_info.width  * ss)/2
-					, int(height - view.m_info.height * ss)/2
-					, int(view.m_info.width  * ss)
-					, int(view.m_info.height * ss)
-					);
+				, int(height - view.m_info.height * ss)/2
+				, int(view.m_info.width  * ss)
+				, int(view.m_info.height * ss)
+				);
 
 			float mtx[16];
 			bx::mtxRotateXY(mtx, 0.0f, time);
@@ -493,19 +589,19 @@ int _main_(int _argc, char** _argv)
 			bgfx::setUniform(u_params, params);
 
 			bgfx::setTexture(0
-					, s_texColor
-					, texture
-					, view.m_filter
-					? BGFX_TEXTURE_NONE
-					: 0
-					| BGFX_TEXTURE_MIN_POINT
-					| BGFX_TEXTURE_MIP_POINT
-					| BGFX_TEXTURE_MAG_POINT
-					);
+				, s_texColor
+				, texture
+				, view.m_filter
+				? BGFX_TEXTURE_NONE
+				: 0
+				| BGFX_TEXTURE_MIN_POINT
+				| BGFX_TEXTURE_MIP_POINT
+				| BGFX_TEXTURE_MAG_POINT
+				);
 			bgfx::setState(0
-					| BGFX_STATE_RGB_WRITE
-					| BGFX_STATE_ALPHA_WRITE
-					);
+				| BGFX_STATE_RGB_WRITE
+				| BGFX_STATE_ALPHA_WRITE
+				);
 			bgfx::submit(0, view.m_info.cubeMap ? textureCubeProgram : textureProgram);
 
 			bgfx::frame();
