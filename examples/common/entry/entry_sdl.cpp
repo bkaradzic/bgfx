@@ -49,6 +49,25 @@ namespace entry
 		return modifiers;
 	}
 
+	static uint8_t translateKeyModifierPress(uint16_t _key)
+	{
+		uint8_t modifier;
+		switch (_key)
+		{
+			case SDL_SCANCODE_LALT:   { modifier = Modifier::LeftAlt;    } break;
+			case SDL_SCANCODE_RALT:   { modifier = Modifier::RightAlt;   } break;
+			case SDL_SCANCODE_LCTRL:  { modifier = Modifier::LeftCtrl;   } break;
+			case SDL_SCANCODE_RCTRL:  { modifier = Modifier::RightCtrl;  } break;
+			case SDL_SCANCODE_LSHIFT: { modifier = Modifier::LeftShift;  } break;
+			case SDL_SCANCODE_RSHIFT: { modifier = Modifier::RightShift; } break;
+			case SDL_SCANCODE_LGUI:   { modifier = Modifier::LeftMeta;   } break;
+			case SDL_SCANCODE_RGUI:   { modifier = Modifier::RightMeta;  } break;
+			default:                  { modifier = 0;                    } break;
+		}
+
+		return modifier;
+	}
+
 	static uint8_t s_translateKey[256];
 
 	static void initTranslateKey(uint16_t _sdl, Key::Enum _key)
@@ -539,14 +558,41 @@ namespace entry
 								uint8_t modifiers = translateKeyModifiers(kev.keysym.mod);
 								Key::Enum key = translateKey(kev.keysym.scancode);
 
-#if 0
+								#if 0
 								DBG("SDL scancode %d, key %d, name %s, key name %s"
 									, kev.keysym.scancode
 									, key
 									, SDL_GetScancodeName(kev.keysym.scancode)
 									, SDL_GetKeyName(kev.keysym.scancode)
 									);
-#endif // 0
+								#endif // 0
+
+								/// If you only press (e.g.) 'shift' and nothing else, then key == 'shift', modifier == 0.
+								/// Further along, pressing 'shift' + 'ctrl' would be: key == 'shift', modifier == 'ctrl.
+								if (0 == key && 0 == modifiers)
+								{
+									modifiers = translateKeyModifierPress(kev.keysym.scancode);
+								}
+
+								/// TODO: These keys are not captured by SDL_TEXTINPUT. Should be probably handled by SDL_TEXTEDITING. This is a workaround for now.
+								if (Key::Esc == key)
+								{
+									uint8_t pressedChar[4];
+									pressedChar[0] = 0x1b;
+									m_eventQueue.postCharEvent(handle, 1, pressedChar);
+								}
+								else if (Key::Return == key)
+								{
+									uint8_t pressedChar[4];
+									pressedChar[0] = 0x0d;
+									m_eventQueue.postCharEvent(handle, 1, pressedChar);
+								}
+								else if (Key::Backspace == key)
+								{
+									uint8_t pressedChar[4];
+									pressedChar[0] = 0x08;
+									m_eventQueue.postCharEvent(handle, 1, pressedChar);
+								}
 
 								m_eventQueue.postKeyEvent(handle, key, modifiers, kev.state == SDL_PRESSED);
 							}
