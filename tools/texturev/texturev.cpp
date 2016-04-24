@@ -628,10 +628,11 @@ int _main_(int _argc, char** _argv)
 						);
 
 				std::string title;
-				bx::stringPrintf(title, "%s (%d x %d, %s)"
+				bx::stringPrintf(title, "%s (%d x %d%s, %s)"
 					, filePath
 					, view.m_info.width
 					, view.m_info.height
+					, view.m_info.cubeMap ? " CubeMap" : ""
 					, bgfx::getName(view.m_info.format)
 					);
 				entry::WindowHandle handle = { 0 };
