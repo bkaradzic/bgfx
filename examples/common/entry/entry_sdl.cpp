@@ -558,14 +558,14 @@ namespace entry
 								uint8_t modifiers = translateKeyModifiers(kev.keysym.mod);
 								Key::Enum key = translateKey(kev.keysym.scancode);
 
-								#if 0
+#if 0
 								DBG("SDL scancode %d, key %d, name %s, key name %s"
 									, kev.keysym.scancode
 									, key
 									, SDL_GetScancodeName(kev.keysym.scancode)
 									, SDL_GetKeyName(kev.keysym.scancode)
 									);
-								#endif // 0
+#endif // 0
 
 								/// If you only press (e.g.) 'shift' and nothing else, then key == 'shift', modifier == 0.
 								/// Further along, pressing 'shift' + 'ctrl' would be: key == 'shift', modifier == 'ctrl.
