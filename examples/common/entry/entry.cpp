@@ -463,8 +463,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				case Event::Gamepad:
 					{
-						const GamepadEvent* gev = static_cast<const GamepadEvent*>(ev);
-						DBG("gamepad %d, %d", gev->m_gamepad.idx, gev->m_connected);
+//						const GamepadEvent* gev = static_cast<const GamepadEvent*>(ev);
+//						DBG("gamepad %d, %d", gev->m_gamepad.idx, gev->m_connected);
 					}
 					break;
 

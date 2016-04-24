@@ -273,6 +273,11 @@ namespace ImGui
 		return ImageButton(_handle, IMGUI_FLAGS_ALPHA_BLEND, 0, _size, _uv0, _uv1, _framePadding, _bgCol, _tintCol);
 	}
 
+	inline void NextLine()
+	{
+		SetCursorPosY(GetCursorPosY() + GetTextLineHeightWithSpacing() );
+	}
+
 } // namespace ImGui
 
 #endif // IMGUI_H_HEADER_GUARD

@@ -11,6 +11,7 @@
 #include <entry/entry.h>
 #include <entry/input.h>
 #include <entry/cmd.h>
+#include <imgui/imgui.h>
 #include <bgfx_utils.h>
 
 #include <dirent.h>
@@ -42,7 +43,8 @@ struct Binding
 
 static const InputBinding s_bindingApp[] =
 {
-	{ entry::Key::Esc,       entry::Modifier::None,       1, NULL, "exit"           },
+	{ entry::Key::Esc,  entry::Modifier::None,  1, NULL, "exit"                },
+	{ entry::Key::KeyF, entry::Modifier::None,  1, NULL, "graphics fullscreen" },
 
 	INPUT_BINDING_END
 };
@@ -64,6 +66,8 @@ static const InputBinding s_bindingView[] =
 	{ entry::Key::Down,      entry::Modifier::None,       1, NULL, "view file-down"   },
 	{ entry::Key::PageUp,    entry::Modifier::None,       1, NULL, "view file-pgup"   },
 	{ entry::Key::PageDown,  entry::Modifier::None,       1, NULL, "view file-pgdown" },
+
+	{ entry::Key::KeyH,      entry::Modifier::None,       1, NULL, "view help"        },
 
 	INPUT_BINDING_END
 };
@@ -90,6 +94,7 @@ struct View
 		, m_mip(0)
 		, m_zoom(1.0f)
 		, m_filter(true)
+		, m_help(false)
 	{
 	}
 
@@ -173,6 +178,10 @@ struct View
 				++m_fileIndex;
 				m_fileIndex = bx::uint32_min(m_fileIndex, numFiles);
 			}
+			else if (0 == strcmp(_argv[1], "help") )
+			{
+				m_help ^= true;
+			}
 		}
 
 		return 0;
@@ -237,6 +246,7 @@ struct View
 	uint32_t m_mip;
 	float    m_zoom;
 	bool     m_filter;
+	bool     m_help;
 };
 
 int cmdView(CmdContext* /*_context*/, void* _userData, int _argc, char const* const* _argv)
@@ -407,12 +417,6 @@ void help(const char* _error = NULL)
 
 int _main_(int _argc, char** _argv)
 {
-	if (2 > _argc)
-	{
-		help("File path is not specified.");
-		return EXIT_FAILURE;
-	}
-
 	uint32_t width  = 1280;
 	uint32_t height = 720;
 	uint32_t debug  = BGFX_DEBUG_TEXT;
@@ -434,6 +438,8 @@ int _main_(int _argc, char** _argv)
 		, 1.0f
 		, 0
 		);
+
+	imguiCreate();
 
 	PosUvColorVertex::init();
 
@@ -490,7 +496,7 @@ int _main_(int _argc, char** _argv)
 	Interpolator zoom(1.0);
 	Interpolator scale(1.0);
 
-	const char* filePath = _argv[1];
+	const char* filePath = _argc < 2 ? "" : _argv[1];
 	bool directory = false;
 
 	bx::FileInfo fi;
@@ -514,8 +520,15 @@ int _main_(int _argc, char** _argv)
 
 	if (view.m_fileList.empty() )
 	{
-		fprintf(stderr, "Unable to load '%s' texture.\n", _argv[1]);
 		exitcode = EXIT_FAILURE;
+		if (2 > _argc)
+		{
+			help("File path is not specified.");
+		}
+		else
+		{
+			fprintf(stderr, "Unable to load '%s' texture.\n", filePath);
+		}
 	}
 	else
 	{
@@ -524,6 +537,74 @@ int _main_(int _argc, char** _argv)
 		entry::MouseState mouseState;
 		while (!entry::processEvents(width, height, debug, reset, &mouseState) )
 		{
+			imguiBeginFrame(mouseState.m_mx
+				, mouseState.m_my
+				, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				, mouseState.m_mz
+				, width
+				, height
+				);
+
+			static bool help = false;
+
+			if (help == false
+			&&  help != view.m_help)
+			{
+				ImGui::OpenPopup("Help");
+			}
+
+			if (ImGui::BeginPopupModal("Help", NULL, ImGuiWindowFlags_AlwaysAutoResize) )
+			{
+				ImGui::SetWindowFontScale(1.2f);
+
+				ImGui::Text(
+					"texturev, bgfx texture viewer tool\n"
+					"Copyright 2011-2016 Branimir Karadzic. All rights reserved.\n"
+					"License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n"
+					);
+				ImGui::Separator();
+				ImGui::NextLine();
+
+				ImGui::Text("Key bindings:\n\n");
+
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "ESC");  ImGui::SameLine(64); ImGui::Text("Exit.");
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "h");    ImGui::SameLine(64); ImGui::Text("Toggle help screen.");
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "f");    ImGui::SameLine(64); ImGui::Text("Toggle full-screen.");
+				ImGui::NextLine();
+
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "-");    ImGui::SameLine(64); ImGui::Text("Zoom out.");
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "=");    ImGui::SameLine(64); ImGui::Text("Zoom in.");
+				ImGui::NextLine();
+
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), ",");    ImGui::SameLine(64); ImGui::Text("MIP level up.");
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), ".");    ImGui::SameLine(64); ImGui::Text("MIP level down.");
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "/");    ImGui::SameLine(64); ImGui::Text("Toggle linear/point texture sampling.");
+				ImGui::NextLine();
+
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "up");   ImGui::SameLine(64); ImGui::Text("Previous texture.");
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "down"); ImGui::SameLine(64); ImGui::Text("Next texture.");
+				ImGui::NextLine();
+
+				ImGui::Dummy(ImVec2(0.0f, 0.0f) );
+				ImGui::SameLine(ImGui::GetWindowWidth() - 136.0f);
+				if (ImGui::Button("Close", ImVec2(128.0f, 0.0f) )
+				|| !view.m_help)
+				{
+					view.m_help = false;
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::EndPopup();
+			}
+
+			help = view.m_help;
+
+//			bool b;
+//			ImGui::ShowTestWindow(&b);
+
+			imguiEndFrame();
 
 			if (!bgfx::isValid(texture)
 			||  view.m_fileIndex != fileIndex)
@@ -627,6 +708,8 @@ int _main_(int _argc, char** _argv)
 	bgfx::destroyUniform(u_params);
 	bgfx::destroyProgram(textureProgram);
 	bgfx::destroyProgram(textureCubeProgram);
+
+	imguiDestroy();
 
 	bgfx::shutdown();
 
