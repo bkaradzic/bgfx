@@ -49,25 +49,6 @@ namespace entry
 		return modifiers;
 	}
 
-	static uint8_t translateKeyModifierPress(uint16_t _key)
-	{
-		uint8_t modifier;
-		switch (_key)
-		{
-			case SDL_SCANCODE_LALT:   { modifier = Modifier::LeftAlt;    } break;
-			case SDL_SCANCODE_RALT:   { modifier = Modifier::RightAlt;   } break;
-			case SDL_SCANCODE_LCTRL:  { modifier = Modifier::LeftCtrl;   } break;
-			case SDL_SCANCODE_RCTRL:  { modifier = Modifier::RightCtrl;  } break;
-			case SDL_SCANCODE_LSHIFT: { modifier = Modifier::LeftShift;  } break;
-			case SDL_SCANCODE_RSHIFT: { modifier = Modifier::RightShift; } break;
-			case SDL_SCANCODE_LGUI:   { modifier = Modifier::LeftMeta;   } break;
-			case SDL_SCANCODE_RGUI:   { modifier = Modifier::RightMeta;  } break;
-			default:                  { modifier = 0;                    } break;
-		}
-
-		return modifier;
-	}
-
 	static uint8_t s_translateKey[256];
 
 	static void initTranslateKey(uint16_t _sdl, Key::Enum _key)
@@ -330,6 +311,11 @@ namespace entry
 			initTranslateKey(SDL_SCANCODE_KP_MINUS,     Key::Minus);
 			initTranslateKey(SDL_SCANCODE_MINUS,        Key::Minus);
 			initTranslateKey(SDL_SCANCODE_GRAVE,        Key::Tilde);
+			initTranslateKey(SDL_SCANCODE_KP_COMMA,     Key::Comma);
+			initTranslateKey(SDL_SCANCODE_COMMA,        Key::Comma);
+			initTranslateKey(SDL_SCANCODE_KP_PERIOD,    Key::Period);
+			initTranslateKey(SDL_SCANCODE_PERIOD,       Key::Period);
+			initTranslateKey(SDL_SCANCODE_SLASH,        Key::Slash);
 			initTranslateKey(SDL_SCANCODE_F1,           Key::F1);
 			initTranslateKey(SDL_SCANCODE_F2,           Key::F2);
 			initTranslateKey(SDL_SCANCODE_F3,           Key::F3);
@@ -553,12 +539,14 @@ namespace entry
 								uint8_t modifiers = translateKeyModifiers(kev.keysym.mod);
 								Key::Enum key = translateKey(kev.keysym.scancode);
 
-//								DBG("SDL scancode %d, key %d, name %s, key name %s"
-//									, kev.keysym.scancode
-//									, key
-//									, SDL_GetScancodeName(kev.keysym.scancode)
-//									, SDL_GetKeyName(kev.keysym.scancode)
-//									);
+#if 0
+								DBG("SDL scancode %d, key %d, name %s, key name %s"
+									, kev.keysym.scancode
+									, key
+									, SDL_GetScancodeName(kev.keysym.scancode)
+									, SDL_GetKeyName(kev.keysym.scancode)
+									);
+#endif // 0
 
 								m_eventQueue.postKeyEvent(handle, key, modifiers, kev.state == SDL_PRESSED);
 							}
