@@ -635,7 +635,6 @@ static inline bool      IsWindowContentHoverable(ImGuiWindow* window);
 static void             ClearSetNextWindowData();
 static void             CheckStacksSize(ImGuiWindow* window, bool write);
 static void             Scrollbar(ImGuiWindow* window, bool horizontal);
-static bool             CloseWindowButton(bool* p_opened);
 
 static void             AddDrawListToRenderList(ImVector<ImDrawList*>& out_render_list, ImDrawList* draw_list);
 static void             AddWindowToRenderList(ImVector<ImDrawList*>& out_render_list, ImGuiWindow* window);
@@ -2342,9 +2341,13 @@ static void AddDrawListToRenderList(ImVector<ImDrawList*>& out_render_list, ImDr
             return;
     }
 
+    // Draw list sanity check. Detect mismatch between PrimReserve() calls and incrementing _VtxCurrentIdx, _VtxWritePtr etc.
+    IM_ASSERT(draw_list->_VtxWritePtr == draw_list->VtxBuffer.Data + draw_list->VtxBuffer.Size);
+    IM_ASSERT(draw_list->_IdxWritePtr == draw_list->IdxBuffer.Data + draw_list->IdxBuffer.Size);
+    IM_ASSERT((int)draw_list->_VtxCurrentIdx == draw_list->VtxBuffer.Size);                   
+
     // Check that draw_list doesn't use more vertices than indexable (default ImDrawIdx = 2 bytes = 64K vertices)
     // If this assert triggers because you are drawing lots of stuff manually, A) workaround by calling BeginChild()/EndChild() to put your draw commands in multiple draw lists, B) #define ImDrawIdx to a 'unsigned int' in imconfig.h and render accordingly.
-    IM_ASSERT((int)draw_list->_VtxCurrentIdx == draw_list->VtxBuffer.Size);                   // Sanity check. Bug or mismatch between PrimReserve() calls and incrementing _VtxCurrentIdx, _VtxWritePtr etc.
     IM_ASSERT((int64_t)draw_list->_VtxCurrentIdx <= ((int64_t)1L << (sizeof(ImDrawIdx)*8)));  // Too many vertices in same ImDrawList. See comment above.
     
     out_render_list.push_back(draw_list);
@@ -2371,13 +2374,14 @@ void ImGui::PushClipRect(const ImVec2& clip_rect_min, const ImVec2& clip_rect_ma
     ImGuiWindow* window = GetCurrentWindow();
 
     ImRect cr(clip_rect_min, clip_rect_max);
-    if (intersect_with_existing_clip_rect)
-    {
-        // Clip our argument with the current clip rect
+    if (intersect_with_existing_clip_rect)      // Clip our argument with the current clip rect
         cr.Clip(window->ClipRect);
-    }
     cr.Max.x = ImMax(cr.Min.x, cr.Max.x);
     cr.Max.y = ImMax(cr.Min.y, cr.Max.y);
+    cr.Min.x = (float)(int)(cr.Min.x + 0.5f);   // Round (expecting to round down). Ensure that e.g. (int)(max.x-min.x) in user code produce correct result.
+    cr.Min.y = (float)(int)(cr.Min.y + 0.5f);
+    cr.Max.x = (float)(int)(cr.Max.x + 0.5f);
+    cr.Max.y = (float)(int)(cr.Max.y + 0.5f);
 
     IM_ASSERT(cr.Min.x <= cr.Max.x && cr.Min.y <= cr.Max.y);
     window->ClipRect = cr;
@@ -3375,7 +3379,7 @@ bool ImGui::BeginChild(const char* str_id, const ImVec2& size_arg, bool border, 
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoSavedSettings|ImGuiWindowFlags_ChildWindow;
 
     const ImVec2 content_avail = ImGui::GetContentRegionAvail();
-    ImVec2 size = ImRound(size_arg);
+    ImVec2 size = ImFloor(size_arg);
     if (size.x <= 0.0f)
     {
         if (size.x == 0.0f)
@@ -4084,7 +4088,12 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
         if (!(flags & ImGuiWindowFlags_NoTitleBar))
         {
             if (p_opened != NULL)
-                CloseWindowButton(p_opened);
+            {
+                const float pad = 2.0f;
+                const float rad = (window->TitleBarHeight() - pad*2.0f) * 0.5f;
+                if (CloseButton(window->GetID("#CLOSE"), window->Rect().GetTR() + ImVec2(-pad - rad, pad + rad), rad))
+                    *p_opened = false;
+            }
 
             const ImVec2 text_size = CalcTextSize(name, NULL, true);
             if (!(flags & ImGuiWindowFlags_NoCollapse))
@@ -4121,9 +4130,9 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
     const ImRect title_bar_rect = window->TitleBarRect();
     const float border_size = window->BorderSize;
     ImRect clip_rect;
-    clip_rect.Min.x = title_bar_rect.Min.x + 0.5f + ImMax(border_size, window->WindowPadding.x*0.5f);
-    clip_rect.Min.y = title_bar_rect.Max.y + window->MenuBarHeight() + 0.5f + border_size;
-    clip_rect.Max.x = window->Pos.x + window->Size.x - window->ScrollbarSizes.x - ImMax(border_size, window->WindowPadding.x*0.5f);
+    clip_rect.Min.x = title_bar_rect.Min.x + ImMax(border_size, (float)(int)(window->WindowPadding.x*0.5f));
+    clip_rect.Min.y = title_bar_rect.Max.y + window->MenuBarHeight() + border_size;
+    clip_rect.Max.x = window->Pos.x + window->Size.x - window->ScrollbarSizes.x - ImMax(border_size, (float)(int)(window->WindowPadding.x*0.5f));
     clip_rect.Max.y = window->Pos.y + window->Size.y - border_size - window->ScrollbarSizes.y;
     PushClipRect(clip_rect.Min, clip_rect.Max, true);
 
@@ -5392,13 +5401,11 @@ bool ImGui::InvisibleButton(const char* str_id, const ImVec2& size_arg)
 }
 
 // Upper-right button to close a window.
-static bool CloseWindowButton(bool* p_opened)
+bool ImGui::CloseButton(ImGuiID id, const ImVec2& pos, float radius)
 {
     ImGuiWindow* window = ImGui::GetCurrentWindow();
 
-    const ImGuiID id = window->GetID("#CLOSE");
-    const float size = window->TitleBarHeight() - 4.0f;
-    const ImRect bb(window->Rect().GetTR() + ImVec2(-2.0f-size,2.0f), window->Rect().GetTR() + ImVec2(-2.0f,2.0f+size));
+    const ImRect bb(pos - ImVec2(radius,radius), pos + ImVec2(radius,radius));
 
     bool hovered, held;
     bool pressed = ImGui::ButtonBehavior(bb, id, &hovered, &held);
@@ -5406,17 +5413,14 @@ static bool CloseWindowButton(bool* p_opened)
     // Render
     const ImU32 col = ImGui::GetColorU32((held && hovered) ? ImGuiCol_CloseButtonActive : hovered ? ImGuiCol_CloseButtonHovered : ImGuiCol_CloseButton);
     const ImVec2 center = bb.GetCenter();
-    window->DrawList->AddCircleFilled(center, ImMax(2.0f,size*0.5f), col, 16);
+    window->DrawList->AddCircleFilled(center, ImMax(2.0f, radius), col, 12);
 
-    const float cross_extent = (size * 0.5f * 0.7071f) - 1.0f;
+    const float cross_extent = (radius * 0.7071f) - 1.0f;
     if (hovered)
     {
         window->DrawList->AddLine(center + ImVec2(+cross_extent,+cross_extent), center + ImVec2(-cross_extent,-cross_extent), ImGui::GetColorU32(ImGuiCol_Text));
         window->DrawList->AddLine(center + ImVec2(+cross_extent,-cross_extent), center + ImVec2(-cross_extent,+cross_extent), ImGui::GetColorU32(ImGuiCol_Text));
     }
-
-    if (p_opened != NULL && pressed)
-        *p_opened = false;
 
     return pressed;
 }
@@ -7801,10 +7805,11 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
         draw_window->DrawList->AddText(g.Font, g.FontSize, render_pos - render_scroll, GetColorU32(ImGuiCol_Text), buf, buf+edit_state.CurLenA, 0.0f, is_multiline ? NULL : &clip_rect);
 
         // Draw blinking cursor
-        ImVec2 cursor_screen_pos = render_pos + cursor_offset - render_scroll;
         bool cursor_is_visible = (g.InputTextState.CursorAnim <= 0.0f) || fmodf(g.InputTextState.CursorAnim, 1.20f) <= 0.80f;
-        if (cursor_is_visible)
-            draw_window->DrawList->AddLine(cursor_screen_pos + ImVec2(0.0f,-g.FontSize+0.5f), cursor_screen_pos + ImVec2(0.0f,-1.5f), GetColorU32(ImGuiCol_Text));
+        ImVec2 cursor_screen_pos = render_pos + cursor_offset - render_scroll;
+        ImRect cursor_screen_rect(cursor_screen_pos.x, cursor_screen_pos.y-g.FontSize+0.5f, cursor_screen_pos.x, cursor_screen_pos.y-1.5f);
+        if (cursor_is_visible && cursor_screen_rect.Overlaps(clip_rect))
+            draw_window->DrawList->AddLine(cursor_screen_rect.Min, cursor_screen_rect.Max, GetColorU32(ImGuiCol_Text));
 
         // Notify OS of text input position for advanced IME (-1 x offset so that Windows IME can cover our cursor. Bit of an extra nicety.)
         if (is_editable)
@@ -8430,7 +8435,7 @@ bool ImGui::BeginMenuBar()
     ImGui::BeginGroup(); // Save position
     ImGui::PushID("##menubar");
     ImRect rect = window->MenuBarRect();
-    PushClipRect(ImVec2(rect.Min.x+0.5f, rect.Min.y-0.5f+window->BorderSize), ImVec2(rect.Max.x+0.5f, rect.Max.y-0.5f), false);
+    PushClipRect(ImVec2(rect.Min.x, rect.Min.y + window->BorderSize), ImVec2(rect.Max.x, rect.Max.y), false);
     window->DC.CursorPos = ImVec2(rect.Min.x + window->DC.MenuBarOffsetX, rect.Min.y);// + g.Style.FramePadding.y);
     window->DC.LayoutType = ImGuiLayoutType_Horizontal;
     window->DC.MenuBarAppending = true;
@@ -9350,8 +9355,8 @@ void ImGui::ShowMetricsWindow(bool* opened)
                         ImDrawIdx* idx_buffer = (draw_list->IdxBuffer.Size > 0) ? draw_list->IdxBuffer.Data : NULL;
                         for (int i = elem_offset; i < elem_offset + (int)pcmd->ElemCount; i++)
                             vtxs_rect.Add(draw_list->VtxBuffer[idx_buffer ? idx_buffer[i] : i].pos);
-                        clip_rect.Round(); overlay_draw_list->AddRect(clip_rect.Min, clip_rect.Max, ImColor(255,255,0));
-                        vtxs_rect.Round(); overlay_draw_list->AddRect(vtxs_rect.Min, vtxs_rect.Max, ImColor(255,0,255));
+                        clip_rect.Floor(); overlay_draw_list->AddRect(clip_rect.Min, clip_rect.Max, ImColor(255,255,0));
+                        vtxs_rect.Floor(); overlay_draw_list->AddRect(vtxs_rect.Min, vtxs_rect.Max, ImColor(255,0,255));
                     }
                     if (!draw_opened)
                         continue;
