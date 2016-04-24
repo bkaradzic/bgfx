@@ -553,36 +553,14 @@ namespace entry
 								uint8_t modifiers = translateKeyModifiers(kev.keysym.mod);
 								Key::Enum key = translateKey(kev.keysym.scancode);
 
-								/// If you only press (e.g.) 'shift' and nothing else, then key == 'shift', modifier == 0.
-								/// Further along, pressing 'shift' + 'ctrl' would be: key == 'shift', modifier == 'ctrl.
-								if (0 == key && 0 == modifiers)
-								{
-									modifiers = translateKeyModifierPress(kev.keysym.scancode);
-								}
+//								DBG("SDL scancode %d, key %d, name %s, key name %s"
+//									, kev.keysym.scancode
+//									, key
+//									, SDL_GetScancodeName(kev.keysym.scancode)
+//									, SDL_GetKeyName(kev.keysym.scancode)
+//									);
 
-								// TODO: These keys are not captured by SDL_TEXTINPUT. Should be probably handled by SDL_TEXTEDITING. This is a workaround for now.
-								if (key == 1) // Escape
-								{
-									uint8_t pressedChar[4];
-									pressedChar[0] = 0x1b;
-									m_eventQueue.postCharEvent(handle, 1, pressedChar);
-								}
-								else if (key == 2) // Enter
-								{
-									uint8_t pressedChar[4];
-									pressedChar[0] = 0x0d;
-									m_eventQueue.postCharEvent(handle, 1, pressedChar);
-								}
-								else if (key == 5) // Backspace
-								{
-									uint8_t pressedChar[4];
-									pressedChar[0] = 0x08;
-									m_eventQueue.postCharEvent(handle, 1, pressedChar);
-								}
-								else
-								{
-									m_eventQueue.postKeyEvent(handle, key, modifiers, kev.state == SDL_PRESSED);
-								}
+								m_eventQueue.postKeyEvent(handle, key, modifiers, kev.state == SDL_PRESSED);
 							}
 						}
 						break;
