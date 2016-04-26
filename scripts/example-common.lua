@@ -19,6 +19,7 @@ project ("example-common")
 		path.join(BGFX_DIR, "3rdparty/ocornut-imgui/**.cpp"),
 		path.join(BGFX_DIR, "3rdparty/ocornut-imgui/**.h"),
 		path.join(BGFX_DIR, "examples/common/**.cpp"),
+		path.join(BGFX_DIR, "examples/common/**.cpp"),
 		path.join(BGFX_DIR, "examples/common/**.h"),
 	}
 
@@ -60,7 +61,7 @@ project ("example-common")
 			"ENTRY_CONFIG_USE_GLFW=1",
 		}
 	end
-	
+
 	configuration { "linux-steamlink" }
 		defines {
 			"EGL_API_FB",
@@ -71,7 +72,10 @@ project ("example-common")
 			path.join(BGFX_DIR, "examples/common/**.mm"),
 		}
 
-	configuration { "winphone8* or winstore8*"}
+	configuration { "winphone8* or winstore8* or durango"}
+		files {
+			path.join(BGFX_DIR, "examples/common/**.cx"),
+		}
 		linkoptions {
 			"/ignore:4264" -- LNK4264: archiving object file compiled with /ZW into a static library; note that when authoring Windows Runtime types it is not recommended to link with a static library that contains Windows Runtime metadata
 		}
