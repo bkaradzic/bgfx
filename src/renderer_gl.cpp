@@ -918,6 +918,23 @@ namespace bgfx { namespace gl
 		NULL
 	};
 
+	static const char* s_ARB_gpu_shader5[] =
+	{
+		"bitfieldReverse",
+		"floatBitsToInt",
+		"floatBitsToUint",
+		"intBitsToFloat",
+		"uintBitsToFloat",
+		NULL
+	};
+
+	static const char* s_ARB_shading_language_packing[] =
+	{
+		"packHalf2x16",
+		"unpackHalf2x16",
+		NULL
+	};
+
 	static void GL_APIENTRY stubVertexAttribDivisor(GLuint /*_index*/, GLuint /*_divisor*/)
 	{
 	}
@@ -5067,6 +5084,8 @@ namespace bgfx { namespace gl
 						;
 					const bool usesIUsamplers = !!bx::findIdentifierMatch(code, s_uisamplers);
 					const bool usesTexelFetch = !!bx::findIdentifierMatch(code, s_texelFetch);
+					const bool usesGpuShader5 = !!bx::findIdentifierMatch(code, s_ARB_gpu_shader5);
+					const bool usesPacking    = !!bx::findIdentifierMatch(code, s_ARB_shading_language_packing);
 
 					uint32_t version =
 						  usesIUsamplers || usesTexelFetch ? 130
@@ -5085,6 +5104,16 @@ namespace bgfx { namespace gl
 						{
 							writeString(&writer, "#extension GL_ARB_shader_texture_lod : enable\n");
 						}
+					}
+
+					if (usesGpuShader5)
+					{
+						writeString(&writer, "#extension GL_ARB_gpu_shader5 : enable\n");
+					}
+
+					if (usesPacking)
+					{
+						writeString(&writer, "#extension GL_ARB_shading_language_packing : enable\n");
 					}
 
 					if (130 <= version)
@@ -5122,6 +5151,18 @@ namespace bgfx { namespace gl
 						{
 							writeString(&writer, "out vec4 bgfx_FragColor;\n");
 							writeString(&writer, "#define gl_FragColor bgfx_FragColor\n");
+						}
+					}
+					else
+					{
+						if (m_type == GL_FRAGMENT_SHADER)
+						{
+							writeString(&writer, "#define in varying\n");
+						}
+						else
+						{
+							writeString(&writer, "#define in attribute\n");
+							writeString(&writer, "#define out varying\n");
 						}
 					}
 
