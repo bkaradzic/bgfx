@@ -152,6 +152,7 @@
  Here is a change-log of API breaking changes, if you are using one of the functions listed, expect to have to fix some code.
  Also read releases logs https://github.com/ocornut/imgui/releases for more details.
 
+ - 2016/04/26 (1.49) - changed ImDrawList::PushClipRect(ImVec4 rect) to ImDraw::PushClipRect(Imvec2 min,ImVec2 max,bool intersect_with_current_clip_rect=false). Note that higher-level ImGui::PushClipRect() is preferable because it will clip at logic/widget level, whereas ImDrawList::PushClipRect() only affect your renderer.
  - 2016/04/03 (1.48) - removed style.WindowFillAlphaDefault setting which was redundant. Bake default BG alpha inside style.Colors[ImGuiCol_WindowBg] and all other Bg color values. (ref github issue #337).
  - 2016/04/03 (1.48) - renamed ImGuiCol_TooltipBg to ImGuiCol_PopupBg, used by popups/menus and tooltips. popups/menus were previously using ImGuiCol_WindowBg. (ref github issue #337)
  - 2016/03/21 (1.48) - renamed GetWindowFont() to GetFont(), GetWindowFontSize() to GetFontSize(). Kept inline redirection function (will obsolete).
@@ -410,12 +411,16 @@
       io.Fonts->LoadFromFileTTF("myfontfile.ttf", size_pixels, NULL, &config, io.Fonts->GetGlyphRangesJapanese());
 
  Q: How can I display and input non-Latin characters such as Chinese, Japanese, Korean, Cyrillic?
- A: When loading a font, pass custom Unicode ranges to specify the glyphs to load. ImGui will support UTF-8 encoding across the board.
-    Character input depends on you passing the right character code to io.AddInputCharacter(). The example applications do that.
+ A: When loading a font, pass custom Unicode ranges to specify the glyphs to load. 
+    All strings passed need to use UTF-8 encoding. Specifying literal in your source code using a local code page (such as CP-923 for Japanese CP-1251 for Cyrillic) will not work.
+    In C++11 you can encode a string literal in UTF-8 by using the u8"hello" syntax. Otherwise you can convert yourself to UTF-8 or load text data from file already saved as UTF-8.
+    You can also try to remap your local codepage characters to their Unicode codepoint using font->AddRemapChar(), but international users may have problems reading/editing your source code.
 
       io.Fonts->AddFontFromFileTTF("myfontfile.ttf", size_in_pixels, NULL, io.Fonts->GetGlyphRangesJapanese());  // Load Japanese characters
       io.Fonts->GetTexDataAsRGBA32() or GetTexDataAsAlpha8()
       io.ImeWindowHandle = MY_HWND;      // To input using Microsoft IME, give ImGui the hwnd of your application
+
+    As for text input, depends on you passing the right character code to io.AddInputCharacter(). The example applications do that.
 
  - tip: the construct 'IMGUI_ONCE_UPON_A_FRAME { ... }' will run the block of code only once a frame. You can use it to quickly add custom UI in the middle of a deep nested inner loop in your code.
  - tip: you can create widgets without a Begin()/End() block, they will go in an implicit window called "Debug"
@@ -537,7 +542,7 @@
  - style: WindowPadding needs to be EVEN needs the 0.5 multiplier probably have a subtle effect on clip rectangle
  - text: simple markup language for color change?
  - font: dynamic font atlas to avoid baking huge ranges into bitmap and make scaling easier.
- - font: helper to add glyph redirect/replacements (e.g. redirect alternate apostrophe unicode code points to ascii one, etc.)
+ - font: fix AddRemapChar() to work before font has been built.
  - log: LogButtons() options for specifying depth and/or hiding depth slider
  - log: have more control over the log scope (e.g. stop logging when leaving current tree node scope)
  - log: be able to log anything (e.g. right-click on a window/tree-node, shows context menu? log into tty/file/clipboard)
@@ -557,7 +562,6 @@
  - style editor: have a more global HSV setter (e.g. alter hue on all elements). consider replacing active/hovered by offset in HSV space? (#438)
  - style editor: color child window height expressed in multiple of line height.
  - remote: make a system like RemoteImGui first-class citizen/project (#75)
-!- demo: custom render demo pushes a clipping rectangle past parent window bounds. expose ImGui::PushClipRect() from imgui_internal.h?
  - drawlist: end-user probably can't call Clear() directly because we expect a texture to be pushed in the stack.
  - examples: directx9: save/restore device state more thoroughly.
  - examples: window minimize, maximize (#583)
@@ -2369,23 +2373,11 @@ static void AddWindowToRenderList(ImVector<ImDrawList*>& out_render_list, ImGuiW
     }
 }
 
-void ImGui::PushClipRect(const ImVec2& clip_rect_min, const ImVec2& clip_rect_max, bool intersect_with_existing_clip_rect)
+void ImGui::PushClipRect(const ImVec2& clip_rect_min, const ImVec2& clip_rect_max, bool intersect_with_current_clip_rect)
 {
     ImGuiWindow* window = GetCurrentWindow();
-
-    ImRect cr(clip_rect_min, clip_rect_max);
-    if (intersect_with_existing_clip_rect)      // Clip our argument with the current clip rect
-        cr.Clip(window->ClipRect);
-    cr.Max.x = ImMax(cr.Min.x, cr.Max.x);
-    cr.Max.y = ImMax(cr.Min.y, cr.Max.y);
-    cr.Min.x = (float)(int)(cr.Min.x + 0.5f);   // Round (expecting to round down). Ensure that e.g. (int)(max.x-min.x) in user code produce correct result.
-    cr.Min.y = (float)(int)(cr.Min.y + 0.5f);
-    cr.Max.x = (float)(int)(cr.Max.x + 0.5f);
-    cr.Max.y = (float)(int)(cr.Max.y + 0.5f);
-
-    IM_ASSERT(cr.Min.x <= cr.Max.x && cr.Min.y <= cr.Max.y);
-    window->ClipRect = cr;
-    window->DrawList->PushClipRect(ImVec4(cr.Min.x, cr.Min.y, cr.Max.x, cr.Max.y));
+    window->DrawList->PushClipRect(clip_rect_min, clip_rect_max, intersect_with_current_clip_rect);
+    window->ClipRect = window->DrawList->_ClipRectStack.back();
 }
 
 void ImGui::PopClipRect()
@@ -3224,8 +3216,8 @@ static void CloseInactivePopups()
 static ImGuiWindow* GetFrontMostModalRootWindow()
 {
     ImGuiState& g = *GImGui;
-    if (!g.OpenedPopupStack.empty())
-        if (ImGuiWindow* front_most_popup = g.OpenedPopupStack.back().Window)
+    for (int n = g.OpenedPopupStack.Size-1; n >= 0; n--)
+        if (ImGuiWindow* front_most_popup = g.OpenedPopupStack.Data[n].Window)
             if (front_most_popup->Flags & ImGuiWindowFlags_Modal)
                 return front_most_popup;
     return NULL;
@@ -8375,7 +8367,7 @@ bool ImGui::MenuItem(const char* label, const char* shortcut, bool selected, boo
     float w = window->MenuColumns.DeclColumns(label_size.x, shortcut_size.x, (float)(int)(g.FontSize * 1.20f)); // Feedback for next frame
     float extra_w = ImMax(0.0f, ImGui::GetContentRegionAvail().x - w);
 
-    bool pressed = ImGui::Selectable(label, false, ImGuiSelectableFlags_MenuItem | ImGuiSelectableFlags_DrawFillAvailWidth | (!enabled ? ImGuiSelectableFlags_Disabled : 0), ImVec2(w, 0.0f));
+    bool pressed = ImGui::Selectable(label, false, ImGuiSelectableFlags_MenuItem | ImGuiSelectableFlags_DrawFillAvailWidth | (enabled ? 0 : ImGuiSelectableFlags_Disabled), ImVec2(w, 0.0f));
     if (shortcut_size.x > 0.0f)
     {
         ImGui::PushStyleColor(ImGuiCol_Text, g.Style.Colors[ImGuiCol_TextDisabled]);
@@ -8384,7 +8376,7 @@ bool ImGui::MenuItem(const char* label, const char* shortcut, bool selected, boo
     }
 
     if (selected)
-        RenderCheckMark(pos + ImVec2(window->MenuColumns.Pos[2] + extra_w + g.FontSize * 0.20f, 0.0f), GetColorU32(ImGuiCol_Text));
+        RenderCheckMark(pos + ImVec2(window->MenuColumns.Pos[2] + extra_w + g.FontSize * 0.20f, 0.0f), GetColorU32(enabled ? ImGuiCol_Text : ImGuiCol_TextDisabled));
 
     return pressed;
 }
