@@ -226,12 +226,13 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#geometry-compiler-geometryc">Geometry Compiler (geometryc)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tools.html#shader-compiler-shaderc">Shader Compiler (shaderc)</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="tools.html#building-shaders">Building shaders</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tools.html#texture-compiler-texturec">Texture Compiler (texturec)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tools.html#geometry-compiler-geometryc">Geometry Compiler (geometryc)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#texture-viewer-texturev">Texture Viewer (texturev)</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a><ul>
@@ -625,38 +626,52 @@ changing <code class="docutils literal"><span class="pre">BGFX_CONFIG_MAX_DRAW_C
 <td>30</td>
 <td>27000</td>
 </tr>
-<tr class="row-odd"><td>i5-4250U 1.3</td>
+<tr class="row-odd"><td>i5-6200U 2.3</td>
+<td>DX11</td>
+<td>Intel 520</td>
+<td>x64/GCC/Win 10</td>
+<td>30</td>
+<td>27000</td>
+</tr>
+<tr class="row-even"><td>i5-4250U 1.3</td>
 <td>GL2.1</td>
 <td>HD5000</td>
 <td>x64/Clang/OSX 10.9</td>
 <td>28</td>
 <td>21852</td>
 </tr>
-<tr class="row-even"><td>Q8200 2.33</td>
+<tr class="row-odd"><td>Q8200 2.33</td>
 <td>NV 319.32</td>
 <td>GTX260</td>
 <td>x64/GCC/Linux</td>
 <td>27</td>
 <td>19683</td>
 </tr>
-<tr class="row-odd"><td>i7-2600K 3.4</td>
+<tr class="row-even"><td>i7-2600K 3.4</td>
 <td>DX9</td>
 <td>AMD6800</td>
 <td>x64/VS2012/Win 7</td>
 <td>27</td>
 <td>19683</td>
 </tr>
-<tr class="row-even"><td>i7-2600K 3.4</td>
+<tr class="row-odd"><td>i7-2600K 3.4</td>
 <td>GL2.1</td>
 <td>AMD6800</td>
 <td>x64/VS2012/Win 7</td>
 <td>26</td>
 <td>17576</td>
 </tr>
-<tr class="row-odd"><td>i7-4770R 3.2</td>
+<tr class="row-even"><td>i7-4770R 3.2</td>
 <td>Mesa 10.5.9</td>
 <td>HD5200</td>
 <td>x64/GCC/Linux</td>
+<td>26</td>
+<td>17576</td>
+</tr>
+<tr class="row-odd"><td>i5-6200U 2.3</td>
+<td>GL</td>
+<td>Intel 520</td>
+<td>x64/GCC/Win 10</td>
 <td>26</td>
 <td>17576</td>
 </tr>
@@ -667,80 +682,94 @@ changing <code class="docutils literal"><span class="pre">BGFX_CONFIG_MAX_DRAW_C
 <td>24</td>
 <td>13824</td>
 </tr>
-<tr class="row-odd"><td>i7-4750HQ 2.0</td>
+<tr class="row-odd"><td>i5-6200U 2.3</td>
+<td>Mesa 10.5.9</td>
+<td>Intel 520</td>
+<td>x64/GCC/Linux</td>
+<td>23</td>
+<td>12167</td>
+</tr>
+<tr class="row-even"><td>i7-4750HQ 2.0</td>
 <td>Mesa 10.0.1</td>
 <td>HD5200</td>
 <td>x64/GCC/Linux</td>
 <td>22</td>
 <td>10648</td>
 </tr>
-<tr class="row-even"><td>i7-4750HQ 2.0</td>
+<tr class="row-odd"><td>i7-4750HQ 2.0</td>
 <td>Mesa 10.1.3</td>
 <td>HD5200</td>
 <td>x64/GCC/Linux</td>
 <td>21</td>
 <td>9261</td>
 </tr>
-<tr class="row-odd"><td>i7-920 2.66</td>
+<tr class="row-even"><td>i7-920 2.66</td>
 <td>ES2-ANGLE</td>
 <td>GTX650Ti</td>
 <td>x86/VS2008/Win 7</td>
 <td>21</td>
 <td>9261</td>
 </tr>
-<tr class="row-even"><td>Q8200 2.33</td>
+<tr class="row-odd"><td>Q8200 2.33</td>
 <td>Gallium 0.4</td>
 <td>AMD5770</td>
 <td>x64/GCC/Linux</td>
 <td>21</td>
 <td>9261</td>
 </tr>
-<tr class="row-odd"><td>i5-4250U 1.3</td>
+<tr class="row-even"><td>i5-4250U 1.3</td>
 <td>ES2</td>
 <td>HD5000</td>
 <td>JIT/Clang/PNaCl 31</td>
 <td>21</td>
 <td>9261</td>
 </tr>
-<tr class="row-even"><td>i5-4250U 1.3</td>
+<tr class="row-odd"><td>i5-4250U 1.3</td>
 <td>ES2</td>
 <td>HD5000</td>
 <td>x86/GCC/NaCl 31</td>
 <td>20</td>
 <td>8000</td>
 </tr>
-<tr class="row-odd"><td>Q8200 2.33</td>
+<tr class="row-even"><td>Q8200 2.33</td>
 <td>Gallium 0.4</td>
 <td>GTX260</td>
 <td>x64/GCC/Linux</td>
 <td>19</td>
 <td>6859</td>
 </tr>
-<tr class="row-even"><td>i5-2450M 2.5</td>
+<tr class="row-odd"><td>i5-2450M 2.5</td>
 <td>Mesa 10.2.0</td>
 <td>HD3000</td>
 <td>x64/GCC/Linux</td>
 <td>19</td>
 <td>6859</td>
 </tr>
-<tr class="row-odd"><td>i7-920 2.66</td>
+<tr class="row-even"><td>i7-920 2.66</td>
 <td>ES2-PowerVR</td>
 <td>GTX650Ti</td>
 <td>x86/VS2008/Win 7</td>
 <td>18</td>
 <td>5832</td>
 </tr>
-<tr class="row-even"><td>i7-920 2.66</td>
+<tr class="row-odd"><td>i7-920 2.66</td>
 <td>FF27-GL</td>
 <td>GTX650Ti</td>
 <td>JIT/Clang/W7-asm.js</td>
 <td>17</td>
 <td>4913</td>
 </tr>
-<tr class="row-odd"><td>i7-4750HQ 2.0</td>
+<tr class="row-even"><td>i7-4750HQ 2.0</td>
 <td>Mesa 8.0.5</td>
 <td>LLVMPIPE</td>
 <td>x64/GCC/Linux</td>
+<td>16</td>
+<td>4096</td>
+</tr>
+<tr class="row-odd"><td>i5-6200U 2.3</td>
+<td>DX9</td>
+<td>Intel 520</td>
+<td>x64/GCC/Win 10</td>
 <td>16</td>
 <td>4096</td>
 </tr>
