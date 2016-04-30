@@ -208,6 +208,13 @@ namespace bgfx
 		uint8_t nul = 0;
 		bx::write(_writer, nul);
 
+		if (_cmdLine.hasArg('\0', "disasm") )
+		{
+			std::string disasmfp = _cmdLine.findOption('o');
+			disasmfp += ".disasm";
+			writeFile(disasmfp.c_str(), optimizedShader, shaderSize);
+		}
+
 		glslopt_cleanup(ctx);
 
 		return true;
