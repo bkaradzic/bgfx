@@ -343,11 +343,13 @@ tools: geometryc shaderc texturec texturev ## Build tools.
 
 dist-windows: .build/projects/gmake-mingw-gcc
 	$(SILENT) $(MAKE) -C .build/projects/gmake-mingw-gcc config=release64 -j 6 geometryc
-	$(SILENT) cp .build/win64_mingw-gcc/bin/geometrycRelease tools/bin/windows/geometryc.exe
+	$(SILENT) cp .build/win64_mingw-gcc/bin/geometrycRelease.exe tools/bin/windows/geometryc.exe
 	$(SILENT) $(MAKE) -C .build/projects/gmake-mingw-gcc config=release64 -j 6 shaderc
-	$(SILENT) cp .build/win64_mingw-gcc/bin/shadercRelease   tools/bin/windows/shaderc.exe
+	$(SILENT) cp .build/win64_mingw-gcc/bin/shadercRelease.exe   tools/bin/windows/shaderc.exe
 	$(SILENT) $(MAKE) -C .build/projects/gmake-mingw-gcc config=release64 -j 6 texturec
-	$(SILENT) cp .build/win64_mingw-gcc/bin/texturecRelease  tools/bin/windows/texturec.exe
+	$(SILENT) cp .build/win64_mingw-gcc/bin/texturecRelease.exe  tools/bin/windows/texturec.exe
+	$(SILENT) $(MAKE) -C .build/projects/gmake-mingw-gcc config=release64 -j 6 texturev
+	$(SILENT) cp .build/win64_mingw-gcc/bin/texturevRelease.exe tools/bin/windows/texturev.exe
 
 dist-linux: .build/projects/gmake-linux
 	$(SILENT) $(MAKE) -C .build/projects/gmake-linux     config=release64 -j 6 geometryc
@@ -356,6 +358,8 @@ dist-linux: .build/projects/gmake-linux
 	$(SILENT) cp .build/linux64_gcc/bin/shadercRelease   tools/bin/linux/shaderc
 	$(SILENT) $(MAKE) -C .build/projects/gmake-linux     config=release64 -j 6 texturec
 	$(SILENT) cp .build/linux64_gcc/bin/texturecRelease  tools/bin/linux/texturec
+	$(SILENT) $(MAKE) -C .build/projects/gmake-linux     config=release64 -j 6 texturev
+	$(SILENT) cp .build/linux64_gcc/bin/texturevRelease  tools/bin/linux/texturev
 
 dist-darwin: .build/projects/gmake-osx
 	$(SILENT) $(MAKE) -C .build/projects/gmake-osx       config=release64 -j 6 geometryc
@@ -364,5 +368,7 @@ dist-darwin: .build/projects/gmake-osx
 	$(SILENT) cp .build/osx64_clang/bin/shadercRelease   tools/bin/darwin/shaderc
 	$(SILENT) $(MAKE) -C .build/projects/gmake-osx       config=release64 -j 6 texturec
 	$(SILENT) cp .build/osx64_clang/bin/texturecRelease  tools/bin/darwin/texturec
+	$(SILENT) $(MAKE) -C .build/projects/gmake-osx       config=release64 -j 6 texturev
+	$(SILENT) cp .build/osx64_clang/bin/texturevRelease  tools/bin/darwin/texturev
 
 dist: clean dist-windows dist-linux dist-darwin

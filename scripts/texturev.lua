@@ -120,7 +120,7 @@ project ("texturev")
 			"/DELAYLOAD:\"libGLESv2.dll\"",
 		}
 
-	configuration { "mingw*" }
+	configuration { "mingw-*" }
 		targetextension ".exe"
 
 	configuration { "vs20* or mingw*" }

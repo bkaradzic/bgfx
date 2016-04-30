@@ -25,9 +25,14 @@ project "geometryc"
 		path.join(BGFX_DIR, "examples/common/bounds.**"),
 	}
 
+	configuration { "mingw-*" }
+		targetextension ".exe"
+
 	configuration { "osx" }
 		links {
 			"Cocoa.framework",
 		}
+
+	configuration {}
 
 	strip()

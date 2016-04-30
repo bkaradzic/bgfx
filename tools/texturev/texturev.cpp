@@ -224,7 +224,7 @@ struct View
 							}
 
 							std::string name = path;
-							char ch = name.back();
+							char ch = name[name.size()-1];
 							name += '/' == ch || '\\' == ch ? "" : "/";
 							name += item->d_name;
 							m_fileList.push_back(name);
