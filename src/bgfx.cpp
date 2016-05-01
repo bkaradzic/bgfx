@@ -65,8 +65,11 @@ namespace bgfx
 		{
 			char temp[2048];
 			char* out = temp;
+			va_list argListCopy;
+			va_copy(argListCopy, _argList);
 			int32_t len   = bx::snprintf(out, sizeof(temp), "%s (%d): ", _filePath, _line);
-			int32_t total = len + bx::vsnprintf(out + len, sizeof(temp)-len, _format, _argList);
+			int32_t total = len + bx::vsnprintf(out + len, sizeof(temp)-len, _format, argListCopy);
+			va_end(argListCopy);
 			if ( (int32_t)sizeof(temp) < total)
 			{
 				out = (char*)alloca(total+1);
