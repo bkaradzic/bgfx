@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include <bgfx/bgfx.h>
+#include <bx/commandline.h>
 #include <bx/os.h>
 #include <bx/string.h>
 #include <bx/uint32_t.h>
@@ -29,6 +30,18 @@
 namespace stl = tinystl;
 
 #include "image.h"
+
+static const char* s_supportedExt[] =
+{
+	"dds",
+	"jpg",
+	"jpeg",
+	"hdr",
+	"ktx",
+	"png",
+	"pvr",
+	"tga",
+};
 
 struct Binding
 {
@@ -208,15 +221,17 @@ struct View
 					const char* ext = strrchr(item->d_name, '.');
 					if (NULL != ext)
 					{
-						if (0 == bx::stricmp(ext, ".dds")
-						||  0 == bx::stricmp(ext, ".jpg")
-						||  0 == bx::stricmp(ext, ".jpeg")
-						||  0 == bx::stricmp(ext, ".hdr")
-						||  0 == bx::stricmp(ext, ".ktx")
-						||  0 == bx::stricmp(ext, ".png")
-						||  0 == bx::stricmp(ext, ".pvr")
-						||  0 == bx::stricmp(ext, ".tga")
-						   )
+						bool supported = false;
+						for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
+						{
+							if (0 == bx::stricmp(ext, s_supportedExt[ii]) )
+							{
+								supported = true;
+								break;
+							}
+						}
+
+						if (supported)
 						{
 							if (0 == strcmp(_fileName, item->d_name) )
 							{
@@ -411,12 +426,90 @@ void help(const char* _error = NULL)
 	fprintf(stderr
 		, "Usage: texturev <file path>\n"
 		  "\n"
+		  "Supported input file types:\n"
+		  );
+
+	for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
+	{
+		fprintf(stderr, "    *.%s\n", s_supportedExt[ii]);
+	}
+
+	fprintf(stderr
+		, "\n"
+		  "Options:\n"
+		  "      --associate          Associate file extensions with texturev.\n"
+		  "\n"
 		  "For additional information, see https://github.com/bkaradzic/bgfx\n"
 		);
 }
 
+void associate()
+{
+#if BX_PLATFORM_WINDOWS
+	std::string str;
+
+	char exec[MAX_PATH];
+	GetModuleFileNameA(GetModuleHandleA(NULL), exec, MAX_PATH);
+
+	std::string value;
+	bx::stringPrintf(value, "@=\"\\\"%s\\\" \\\"%1\\\"\"\n\n", exec);
+
+	str += "Windows Registry Editor Version 5.00\n\n";
+
+	str += "[HKEY_CLASSES_ROOT\\texturev\\shell\\open\\command]\n";
+	str += value;
+
+	str += "[HKEY_CLASSES_ROOT\\Applications\\texturev.exe\\shell\\open\\command]\n";
+	str += value;
+
+	for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
+	{
+		const char* ext = s_supportedExt[ii];
+		bx::stringPrintf(str, "[HKEY_CLASSES_ROOT\\.%s]\n@=\"texturev\"\n\n", ext);
+		bx::stringPrintf(str, "[HKEY_CURRENT_USER\\Software\\Classes\\.%s]\n@=\"texturev\"\n\n", ext);
+	}
+
+	char temp[MAX_PATH];
+	GetTempPathA(MAX_PATH, temp);
+	strcat(temp, "\\texturev.reg");
+
+	bx::CrtFileWriter writer;
+	bx::Error err;
+	if (bx::open(&writer, temp, false, &err) )
+	{
+		bx::write(&writer, str.c_str(), str.length(), &err);
+		bx::close(&writer);
+
+		if (err.isOk() )
+		{
+			std::string cmd;
+			bx::stringPrintf(cmd, "regedit.exe /s %s", temp);
+
+			bx::ProcessReader reader;
+			if (bx::open(&reader, cmd.c_str(), &err) )
+			{
+				bx::close(&reader);
+			}
+		}
+	}
+#endif // BX_PLATFORM_WINDOWS
+}
+
 int _main_(int _argc, char** _argv)
 {
+	bx::CommandLine cmdLine(_argc, _argv);
+
+	if (cmdLine.hasArg('h', "help") )
+	{
+		help();
+		return EXIT_FAILURE;
+	}
+	else if (cmdLine.hasArg("associate") )
+	{
+		associate();
+		return EXIT_FAILURE;
+	}
+
 	uint32_t width  = 1280;
 	uint32_t height = 720;
 	uint32_t debug  = BGFX_DEBUG_TEXT;
