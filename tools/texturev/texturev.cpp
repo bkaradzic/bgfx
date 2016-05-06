@@ -221,6 +221,7 @@ struct View
 					const char* ext = strrchr(item->d_name, '.');
 					if (NULL != ext)
 					{
+						ext += 1;
 						bool supported = false;
 						for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
 						{
@@ -443,6 +444,20 @@ void help(const char* _error = NULL)
 		);
 }
 
+std::string replaceAll(const std::string& _str, const char* _from, const char* _to)
+{
+	std::string str = _str;
+	size_t startPos = 0;
+	const size_t fromLen = strlen(_from);
+	const size_t toLen   = strlen(_to);
+	while ( (startPos = str.find(_from, startPos) ) != std::string::npos)
+	{
+		str.replace(startPos, fromLen, _to);
+		startPos += toLen;
+	}
+	return str;
+}
+
 void associate()
 {
 #if BX_PLATFORM_WINDOWS
@@ -451,22 +466,24 @@ void associate()
 	char exec[MAX_PATH];
 	GetModuleFileNameA(GetModuleHandleA(NULL), exec, MAX_PATH);
 
+	std::string fp = replaceAll(exec, "\\", "\\\\");
+
 	std::string value;
-	bx::stringPrintf(value, "@=\"\\\"%s\\\" \\\"%1\\\"\"\n\n", exec);
+	bx::stringPrintf(value, "@=\"\\\"%s\\\" \\\"%%1\\\"\"\r\n\r\n", fp.c_str() );
 
-	str += "Windows Registry Editor Version 5.00\n\n";
+	str += "Windows Registry Editor Version 5.00\r\n\r\n";
 
-	str += "[HKEY_CLASSES_ROOT\\texturev\\shell\\open\\command]\n";
+	str += "[HKEY_CLASSES_ROOT\\texturev\\shell\\open\\command]\r\n";
 	str += value;
 
-	str += "[HKEY_CLASSES_ROOT\\Applications\\texturev.exe\\shell\\open\\command]\n";
+	str += "[HKEY_CLASSES_ROOT\\Applications\\texturev.exe\\shell\\open\\command]\r\n";
 	str += value;
 
 	for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
 	{
 		const char* ext = s_supportedExt[ii];
-		bx::stringPrintf(str, "[HKEY_CLASSES_ROOT\\.%s]\n@=\"texturev\"\n\n", ext);
-		bx::stringPrintf(str, "[HKEY_CURRENT_USER\\Software\\Classes\\.%s]\n@=\"texturev\"\n\n", ext);
+		bx::stringPrintf(str, "[HKEY_CLASSES_ROOT\\.%s]\n@=\"texturev\"\r\n\r\n", ext);
+		bx::stringPrintf(str, "[HKEY_CURRENT_USER\\Software\\Classes\\.%s]\n@=\"texturev\"\r\n\r\n", ext);
 	}
 
 	char temp[MAX_PATH];
