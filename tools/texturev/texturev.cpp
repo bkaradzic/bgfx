@@ -466,10 +466,10 @@ void associate()
 	char exec[MAX_PATH];
 	GetModuleFileNameA(GetModuleHandleA(NULL), exec, MAX_PATH);
 
-	std::string fp = replaceAll(exec, "\\", "\\\\");
+	std::string strExec = replaceAll(exec, "\\", "\\\\");
 
 	std::string value;
-	bx::stringPrintf(value, "@=\"\\\"%s\\\" \\\"%%1\\\"\"\r\n\r\n", fp.c_str() );
+	bx::stringPrintf(value, "@=\"\\\"%s\\\" \\\"%%1\\\"\"\r\n\r\n", strExec.c_str() );
 
 	str += "Windows Registry Editor Version 5.00\r\n\r\n";
 
@@ -482,8 +482,12 @@ void associate()
 	for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
 	{
 		const char* ext = s_supportedExt[ii];
-		bx::stringPrintf(str, "[HKEY_CLASSES_ROOT\\.%s]\n@=\"texturev\"\r\n\r\n", ext);
-		bx::stringPrintf(str, "[HKEY_CURRENT_USER\\Software\\Classes\\.%s]\n@=\"texturev\"\r\n\r\n", ext);
+
+		bx::stringPrintf(str, "[-HKEY_CLASSES_ROOT\\.%s]\r\n\r\n", ext);
+		bx::stringPrintf(str, "[-HKEY_CURRENT_USER\\Software\\Classes\\.%s]\r\n\r\n", ext);
+
+		bx::stringPrintf(str, "[HKEY_CLASSES_ROOT\\.%s]\r\n@=\"texturev\"\r\n\r\n", ext);
+		bx::stringPrintf(str, "[HKEY_CURRENT_USER\\Software\\Classes\\.%s]\r\n@=\"texturev\"\r\n\r\n", ext);
 	}
 
 	char temp[MAX_PATH];
