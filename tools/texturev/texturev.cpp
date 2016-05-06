@@ -452,7 +452,7 @@ void associate()
 	char exec[MAX_PATH];
 	GetModuleFileNameA(GetModuleHandleA(NULL), exec, MAX_PATH);
 
-	std::string strExec = bx::replaceAll(exec, "\\", "\\\\");
+	std::string strExec = bx::replaceAll<std::string>(exec, "\\", "\\\\");
 
 	std::string value;
 	bx::stringPrintf(value, "@=\"\\\"%s\\\" \\\"%%1\\\"\"\r\n\r\n", strExec.c_str() );
