@@ -771,14 +771,14 @@ static RenderState s_renderStates[RenderState::Count] =
 
 struct ViewState
 {
-	ViewState(uint32_t _width = 1280, uint32_t _height = 720)
+	ViewState(uint16_t _width = 1280, uint16_t _height = 720)
 		: m_width(_width)
 		, m_height(_height)
 	{
 	}
 
-	uint32_t m_width;
-	uint32_t m_height;
+	uint16_t m_width;
+	uint16_t m_height;
 
 	float m_view[16];
 	float m_proj[16];
@@ -1971,8 +1971,13 @@ int _main_(int _argc, char** _argv)
 	float timeAccumulatorScene = 0.0f;
 
 	entry::MouseState mouseState;
-	while (!entry::processEvents(viewState.m_width, viewState.m_height, debug, reset, &mouseState) )
+	uint32_t width;
+	uint32_t height;
+	while (!entry::processEvents(width, height, debug, reset, &mouseState) )
 	{
+		viewState.m_width  = uint16_t(width);
+		viewState.m_height = uint16_t(height);
+
 		// Imgui.
 		imguiBeginFrame(mouseState.m_mx
 			, mouseState.m_my
@@ -2451,7 +2456,7 @@ int _main_(int _argc, char** _argv)
 
 		// Reset render targets.
 		const bgfx::FrameBufferHandle invalidRt = BGFX_INVALID_HANDLE;
-		for (uint32_t ii = 0; ii < RENDERVIEW_DRAWDEPTH_3_ID+1; ++ii)
+		for (uint8_t ii = 0; ii < RENDERVIEW_DRAWDEPTH_3_ID+1; ++ii)
 		{
 			bgfx::setViewFrameBuffer(ii, invalidRt);
 		}
@@ -2767,7 +2772,7 @@ int _main_(int _argc, char** _argv)
 				uint8_t renderStateIndex = RenderState::ShadowMap_PackDepth;
 				if(LightType::PointLight == settings.m_lightType && settings.m_stencilPack)
 				{
-					renderStateIndex = (ii < 2) ? RenderState::ShadowMap_PackDepthHoriz : RenderState::ShadowMap_PackDepthVert;
+					renderStateIndex = uint8_t( (ii < 2) ? RenderState::ShadowMap_PackDepthHoriz : RenderState::ShadowMap_PackDepthVert);
 				}
 
 				// Floor.

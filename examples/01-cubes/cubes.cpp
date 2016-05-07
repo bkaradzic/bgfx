@@ -161,7 +161,7 @@ class ExampleCubes : public entry::AppI
 				bgfx::setViewTransform(0, view, proj);
 
 				// Set view 0 default viewport.
-				bgfx::setViewRect(0, 0, 0, m_width, m_height);
+				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 			}
 
 			// This dummy draw call is here to make sure that view 0 is cleared
