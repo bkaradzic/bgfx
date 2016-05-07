@@ -11,6 +11,9 @@ trim_trailing_whitespace = true
 [include/bgfx/c99/*.h]
 indent_style = space
 
+[*.ninja]
+indent_style = space
+
 [*.md]
 trim_trailing_whitespace = false
 max_line_length = 80

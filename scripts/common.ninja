@@ -3,3 +3,24 @@ builddir  = ../.build
 rule geometryc_pack_normal
     command = geometryc -f $in -o $out --packnormal 1
     description = Converting geometry $in...
+
+rule texturec_bc1
+    command = texturec -f $in -o $out -t bc1 -m
+
+rule texturec_bc2
+    command = texturec -f $in -o $out -t bc2 -m
+
+rule texturec_bc3
+    command = texturec -f $in -o $out -t bc3 -m
+
+rule texturec_bc4
+    command = texturec -f $in -o $out -t bc4 -m
+
+rule texturec_bc5
+    command = texturec -f $in -o $out -t bc5 -m
+
+rule texturec_etc1
+    command = texturec -f $in -o $out -t etc1 -m
+
+rule texturec_etc2
+    command = texturec -f $in -o $out -t etc2 -m

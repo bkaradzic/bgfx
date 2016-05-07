@@ -149,9 +149,9 @@ public:
 		// Create vertex stream declaration.
 		PosTexcoordVertex::init();
 
-		m_textures[0] = loadTexture("textures/texture_compression_bc1.dds",  BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP);
-		m_textures[1] = loadTexture("textures/texture_compression_bc2.dds",  BGFX_TEXTURE_U_CLAMP);
-		m_textures[2] = loadTexture("textures/texture_compression_bc3.dds",  BGFX_TEXTURE_V_CLAMP);
+		m_textures[0] = loadTexture("textures/texture_compression_bc1.ktx",  BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP);
+		m_textures[1] = loadTexture("textures/texture_compression_bc2.ktx",  BGFX_TEXTURE_U_CLAMP);
+		m_textures[2] = loadTexture("textures/texture_compression_bc3.ktx",  BGFX_TEXTURE_V_CLAMP);
 		m_textures[3] = loadTexture("textures/texture_compression_etc1.ktx", BGFX_TEXTURE_U_BORDER|BGFX_TEXTURE_V_BORDER|BGFX_TEXTURE_BORDER_COLOR(1) );
 		m_textures[4] = loadTexture("textures/texture_compression_etc2.ktx");
 		m_textures[5] = loadTexture("textures/texture_compression_ptc12.pvr");
