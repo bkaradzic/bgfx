@@ -325,7 +325,7 @@
 
 /*
  * Some special constants.  These may need to be changed if cpp
- * is ported to a wierd machine.
+ * is ported to a weird machine.
  *
  * NOTE: if cpp is run on a non-ascii machine, ALERT and VT may
  * need to be changed.	They are used to implement the proposed
