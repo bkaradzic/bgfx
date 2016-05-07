@@ -1,0 +1,18 @@
+include ../../../scripts/common.ninja
+meshes = ../../runtime/meshes
+
+build $meshes/bunny.bin:           geometryc_pack_normal bunny.obj
+build $meshes/bunny_decimated.bin: geometryc_pack_normal bunny_decimated.obj
+build $meshes/bunny_patched.bin:   geometryc_pack_normal bunny_patched.obj
+build $meshes/column.bin:          geometryc_pack_normal column.obj
+build $meshes/cube.bin:            geometryc_pack_normal cube.obj
+build $meshes/hollowcube.bin:      geometryc_pack_normal hollowcube.obj
+build $meshes/orb.bin:             geometryc_pack_normal orb.obj
+build $meshes/platform.bin:        geometryc_pack_normal platform.obj
+build $meshes/tree.bin:            geometryc_pack_normal tree.obj
+build $meshes/tree1b_lod0_1.bin:   geometryc_pack_normal tree1b_lod0_1.obj
+build $meshes/tree1b_lod0_2.bin:   geometryc_pack_normal tree1b_lod0_2.obj
+build $meshes/tree1b_lod1_1.bin:   geometryc_pack_normal tree1b_lod1_1.obj
+build $meshes/tree1b_lod1_2.bin:   geometryc_pack_normal tree1b_lod1_2.obj
+build $meshes/tree1b_lod2_1.bin:   geometryc_pack_normal tree1b_lod2_1.obj
+build $meshes/tree1b_lod2_2.bin:   geometryc_pack_normal tree1b_lod2_2.obj

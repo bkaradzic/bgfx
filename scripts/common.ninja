@@ -1,0 +1,5 @@
+builddir  = ../.build
+
+rule geometryc_pack_normal
+    command = geometryc -f $in -o $out --packnormal 1
+    description = Converting geometry $in...
