@@ -112,18 +112,18 @@ bool RectanglePacker::addRectangle(uint16_t _width, uint16_t _height, uint16_t& 
 	best_width = INT_MAX;
 	for (uint16_t ii = 0, num = uint16_t(m_skyline.size() ); ii < num; ++ii)
 	{
-		uint16_t yy = (uint16_t)fit(ii, _width, _height);
+		int32_t yy = fit(ii, _width, _height);
 		if (yy >= 0)
 		{
 			node = &m_skyline[ii];
 			if ( ( (yy + _height) < best_height)
 			|| ( ( (yy + _height) == best_height) && (node->width < best_width) ) )
 			{
-				best_height = yy + _height;
+				best_height = uint16_t(yy) + _height;
 				best_index = ii;
 				best_width = node->width;
 				_outX = node->x;
-				_outY = yy;
+				_outY = uint16_t(yy);
 			}
 		}
 	}
