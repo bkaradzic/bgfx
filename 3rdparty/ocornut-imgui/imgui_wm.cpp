@@ -915,14 +915,11 @@ namespace ImGuiWM
         m_bMain = bMain;
         m_bIsDragWindow = bIsDragWindow;
         m_pContainer = IMGUI_NEW(Container)(this);
-        m_pState = NULL;
         m_pPreviousState = NULL;
 
-        void* pTemp = ImGui::GetInternalState();
-        m_pState = ImGui::MemAlloc(ImGui::GetInternalStateSize());
-        ImGui::SetInternalState(m_pState, false);
         ImGui::GetIO().IniFilename = NULL;
-        ImGui::SetInternalState(pTemp);
+
+        m_pState = ImGui::CreateContext();
     }
 
     PlatformWindow::~PlatformWindow()
@@ -936,7 +933,8 @@ namespace ImGuiWM
         }
 
         RestoreState();
-        ImGui::MemFree(m_pState);
+        ImGui::DestroyContext(m_pState);
+        m_pState = NULL;
     }
 
     void PlatformWindow::OnClose()
@@ -955,22 +953,22 @@ namespace ImGuiWM
     {
         IM_ASSERT(s_bStatePush == false);
         s_bStatePush = true;
-        m_pPreviousState = ImGui::GetInternalState();
-        ImGui::SetInternalState(m_pState);
-        memcpy(&((ImGuiState*)m_pState)->Style, &((ImGuiState*)m_pPreviousState)->Style, sizeof(ImGuiStyle));
+        m_pPreviousState = ImGui::GetCurrentContext();
+        ImGui::SetCurrentContext(m_pState);
+        memcpy(&m_pState->Style, &m_pPreviousState->Style, sizeof(ImGuiStyle) );
     }
 
     void PlatformWindow::RestoreState()
     {
         IM_ASSERT(s_bStatePush == true);
         s_bStatePush = false;
-        memcpy(&((ImGuiState*)m_pPreviousState)->Style, &((ImGuiState*)m_pState)->Style, sizeof(ImGuiStyle));
-        ImGui::SetInternalState(m_pPreviousState);
+        memcpy(&m_pPreviousState->Style, &m_pState->Style, sizeof(ImGuiStyle) );
+        ImGui::SetCurrentContext(m_pPreviousState);
     }
 
     void PlatformWindow::OnLoseFocus()
     {
-        ImGuiState& g = *((ImGuiState*)m_pState);
+        ImGuiContext& g = *m_pState;
         g.SetNextWindowPosCond = g.SetNextWindowSizeCond = g.SetNextWindowContentSizeCond = g.SetNextWindowCollapsedCond = g.SetNextWindowFocus = 0;
     }
 
@@ -1444,7 +1442,7 @@ namespace ImGuiWM
             m_lPlatformWindowActions.push_back(pAction);
 
             Dock(pWindow, E_DOCK_ORIENTATION_CENTER, m_pDragPlatformWindow);
-            ((ImGuiState*)m_pDragPlatformWindow->m_pState)->IO.MouseDown[0] = true;
+            m_pDragPlatformWindow->m_pState->IO.MouseDown[0] = true;
         }
     }
 
@@ -1486,7 +1484,6 @@ namespace ImGuiWM
                 DrawWindowArea(pBestContainer->GetPlatformWindowParent(), oHightlightPos, oHightlightSize, m_oConfig.m_oHightlightAreaColor);
             }
 
-            //if (!((ImGuiState*)m_pDragPlatformWindow->m_pState)->IO.MouseDown[0])
             ImGuiIO& io = ImGui::GetIO();
             if (!io.MouseDown[0])
             {

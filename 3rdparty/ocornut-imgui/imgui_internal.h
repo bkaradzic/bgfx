@@ -33,7 +33,6 @@ struct ImGuiTextEditState;
 struct ImGuiIniData;
 struct ImGuiMouseCursorData;
 struct ImGuiPopupRef;
-struct ImGuiState;
 struct ImGuiWindow;
 
 typedef int ImGuiLayoutType;      // enum ImGuiLayoutType_
@@ -71,7 +70,7 @@ namespace ImGuiStb
 // Context
 //-----------------------------------------------------------------------------
 
-extern IMGUI_API ImGuiState*  GImGui;
+extern IMGUI_API ImGuiContext*  GImGui;     // current implicit ImGui context pointer
 
 //-----------------------------------------------------------------------------
 // Helpers
@@ -144,7 +143,7 @@ static inline ImVec2 ImFloor(ImVec2 v)                                          
 struct ImPlacementNewDummy {};
 inline void* operator new(size_t, ImPlacementNewDummy, void* ptr) { return ptr; }
 inline void operator delete(void*, ImPlacementNewDummy, void*) {}
-#define IM_PLACEMENT_NEW(_PTR)  new(ImPlacementNewDummy() ,_PTR)
+#define IM_PLACEMENT_NEW(_PTR)  new(ImPlacementNewDummy(), _PTR)
 #endif
 
 //-----------------------------------------------------------------------------
@@ -274,7 +273,7 @@ struct ImGuiColumnData
     //float     IndentX;
 };
 
-// Simple column measurement currently used for MenuItem() only. This is very short-sighted for now and NOT a generic helper.
+// Simple column measurement currently used for MenuItem() only. This is very short-sighted/throw-away code and NOT a generic helper.
 struct IMGUI_API ImGuiSimpleColumns
 {
     int         Count;
@@ -283,9 +282,9 @@ struct IMGUI_API ImGuiSimpleColumns
     float       Pos[8], NextWidths[8];
 
     ImGuiSimpleColumns();
-    void       Update(int count, float spacing, bool clear);
-    float      DeclColumns(float w0, float w1, float w2);
-    float      CalcExtraSpace(float avail_w);
+    void        Update(int count, float spacing, bool clear);
+    float       DeclColumns(float w0, float w1, float w2);
+    float       CalcExtraSpace(float avail_w);
 };
 
 // Internal state of the currently focused/edited text input box
@@ -345,7 +344,7 @@ struct ImGuiPopupRef
 };
 
 // Main state for ImGui
-struct ImGuiState
+struct ImGuiContext
 {
     bool                    Initialized;
     ImGuiIO                 IO;
@@ -378,7 +377,7 @@ struct ImGuiState
     ImGuiWindow*            MovedWindow;                        // Track the child window we clicked on to move a window.
     ImGuiID                 MovedWindowMoveId;                  // == MovedWindow->RootWindow->MoveId
     ImVector<ImGuiIniData>  Settings;                           // .ini Settings
-    float                   SettingsDirtyTimer;                 // Save .ini settinngs on disk when time reaches zero
+    float                   SettingsDirtyTimer;                 // Save .ini Settings on disk when time reaches zero
     ImVector<ImGuiColMod>   ColorModifiers;                     // Stack for PushStyleColor()/PopStyleColor()
     ImVector<ImGuiStyleMod> StyleModifiers;                     // Stack for PushStyleVar()/PopStyleVar()
     ImVector<ImFont*>       FontStack;                          // Stack for PushFont()/PopFont()
@@ -417,7 +416,7 @@ struct ImGuiState
     float                   DragSpeedDefaultRatio;              // If speed == 0.0f, uses (max-min) * DragSpeedDefaultRatio
     float                   DragSpeedScaleSlow;
     float                   DragSpeedScaleFast;
-    ImVec2                  ScrollbarClickDeltaToGrabCenter;   // Distance between mouse and center of grab box, normalized in parent space. Use storage?
+    ImVec2                  ScrollbarClickDeltaToGrabCenter;    // Distance between mouse and center of grab box, normalized in parent space. Use storage?
     char                    Tooltip[1024];
     char*                   PrivateClipboard;                   // If no custom clipboard handler is defined
     ImVec2                  OsImePosRequest, OsImePosSet;       // Cursor position request & last passed to the OS Input Method Editor
@@ -437,7 +436,7 @@ struct ImGuiState
     int                     CaptureKeyboardNextFrame;
     char                    TempBuffer[1024*3+1];               // temporary text buffer
 
-    ImGuiState()
+    ImGuiContext()
     {
         Initialized = false;
         Font = NULL;
@@ -673,8 +672,8 @@ namespace ImGui
     // If this ever crash because g.CurrentWindow is NULL it means that either
     // - ImGui::NewFrame() has never been called, which is illegal.
     // - You are calling ImGui functions after ImGui::Render() and before the next ImGui::NewFrame(), which is also illegal.
-    inline    ImGuiWindow*  GetCurrentWindowRead()      { ImGuiState& g = *GImGui; return g.CurrentWindow; }
-    inline    ImGuiWindow*  GetCurrentWindow()          { ImGuiState& g = *GImGui; g.CurrentWindow->Accessed = true; return g.CurrentWindow; }
+    inline    ImGuiWindow*  GetCurrentWindowRead()      { ImGuiContext& g = *GImGui; return g.CurrentWindow; }
+    inline    ImGuiWindow*  GetCurrentWindow()          { ImGuiContext& g = *GImGui; g.CurrentWindow->Accessed = true; return g.CurrentWindow; }
     IMGUI_API ImGuiWindow*  GetParentWindow();
     IMGUI_API ImGuiWindow*  FindWindowByName(const char* name);
     IMGUI_API void          FocusWindow(ImGuiWindow* window);

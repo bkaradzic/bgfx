@@ -172,8 +172,8 @@ namespace ImGuiWM
         bool m_bMain;
         bool m_bIsDragWindow;
         Container* m_pContainer;
-        void* m_pState;
-        void* m_pPreviousState;
+        ImGuiContext* m_pState;
+        ImGuiContext* m_pPreviousState;
     };
 
     typedef ImwList<PlatformWindow*> PlatformWindowList;
