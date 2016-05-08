@@ -5090,7 +5090,7 @@ namespace bgfx { namespace gl
 					uint32_t version =
 						  usesIUsamplers || usesTexelFetch ? 130
 						: usesTextureLod ? 120
-						: 0
+						: 120
 						;
 
 					if (0 != version)
