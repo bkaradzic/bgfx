@@ -7,11 +7,10 @@
 #include "bgfx_utils.h"
 #include <entry/cmd.h>
 #include <entry/input.h>
+#include <debugdraw/debugdraw.h>
 #include "camera.h"
 
 #include <bx/uint32_t.h>
-
-#include "../common/debugdraw/debugdraw.h"
 
 class DebugDrawApp : public entry::AppI
 {
