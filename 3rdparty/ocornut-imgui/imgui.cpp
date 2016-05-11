@@ -624,6 +624,7 @@
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"// warning : 'xx' is deprecated: The POSIX name for this item.. // for strdup used in demo code (so user can copy & paste the code)
 #pragma clang diagnostic ignored "-Wint-to-void-pointer-cast" // warning : cast to 'void *' from smaller integer type 'int'
 #pragma clang diagnostic ignored "-Wunused-function"          // warning: 'xxxx' defined but not used
+#pragma clang diagnostic ignored "-Wint-to-void-pointer-cast" // warning : cast to 'void *' from smaller integer type 'int' //
 #elif defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Wunused-function"          // warning: 'xxxx' defined but not used
 #pragma GCC diagnostic ignored "-Wint-to-pointer-cast"      // warning: cast to pointer from integer of different size
@@ -649,7 +650,6 @@ static void             SetWindowScrollY(ImGuiWindow* window, float new_scroll_y
 static void             SetWindowPos(ImGuiWindow* window, const ImVec2& pos, ImGuiSetCond cond);
 static void             SetWindowSize(ImGuiWindow* window, const ImVec2& size, ImGuiSetCond cond);
 static void             SetWindowCollapsed(ImGuiWindow* window, bool collapsed, ImGuiSetCond cond);
-ImGuiWindow*            FindWindowByName(const char* name);
 static ImGuiWindow*     FindHoveredWindow(ImVec2 pos, bool excluding_childs);
 static ImGuiWindow*     CreateNewWindow(const char* name, ImVec2 size, ImGuiWindowFlags flags);
 static inline bool      IsWindowContentHoverable(ImGuiWindow* window);
@@ -1645,6 +1645,7 @@ ImGuiWindow::ImGuiWindow(const char* name)
     DrawList->_OwnerName = Name;
     RootWindow = NULL;
     RootNonPopupWindow = NULL;
+    ParentWindow = NULL;
 
     FocusIdxAllCounter = FocusIdxTabCounter = -1;
     FocusIdxAllRequestCurrent = FocusIdxTabRequestCurrent = IM_INT_MAX;
@@ -2088,7 +2089,10 @@ void ImGui::NewFrame()
     if (ImGuiWindow* modal_window = GetFrontMostModalRootWindow())
     {
         g.ModalWindowDarkeningRatio = ImMin(g.ModalWindowDarkeningRatio + g.IO.DeltaTime * 6.0f, 1.0f);
-        if (g.HoveredRootWindow != modal_window)
+        ImGuiWindow* window = g.HoveredRootWindow;
+        while (window && window != modal_window)
+            window = window->ParentWindow;
+        if (!window)
             g.HoveredRootWindow = g.HoveredWindow = NULL;
     }
     else
@@ -3763,6 +3767,7 @@ bool ImGui::Begin(const char* name, bool* p_open, const ImVec2& size_on_first_us
     for (root_non_popup_idx = root_idx; root_non_popup_idx > 0; root_non_popup_idx--)
         if (!(g.CurrentWindowStack[root_non_popup_idx]->Flags & (ImGuiWindowFlags_ChildWindow | ImGuiWindowFlags_Popup)))
             break;
+    window->ParentWindow = parent_window;
     window->RootWindow = g.CurrentWindowStack[root_idx];
     window->RootNonPopupWindow = g.CurrentWindowStack[root_non_popup_idx];      // This is merely for displaying the TitleBgActive color.
 
