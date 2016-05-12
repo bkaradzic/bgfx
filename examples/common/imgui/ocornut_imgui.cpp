@@ -513,11 +513,12 @@ struct OcornutImguiContext
 
 	void setupStyle(bool _dark)
 	{
-		// Doug Binks' color scheme
+		// Doug Binks' darl color scheme
 		// https://gist.github.com/dougbinks/8089b4bbaccaaf6fa204236978d165a9
 		ImGuiStyle& style = ImGui::GetStyle();
 
-		style.FrameRounding = 3.0f;
+		// light style from Pacome Danhiez (user itamago)
+		// https://github.com/ocornut/imgui/pull/511#issuecomment-175719267
 		style.Colors[ImGuiCol_Text]                  = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
 		style.Colors[ImGuiCol_TextDisabled]          = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
 		style.Colors[ImGuiCol_WindowBg]              = ImVec4(0.94f, 0.94f, 0.94f, 1.00f);
