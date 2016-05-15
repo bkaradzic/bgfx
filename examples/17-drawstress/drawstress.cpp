@@ -246,7 +246,9 @@ class ExampleDrawStress : public entry::AppI
 			const bgfx::Stats* stats = bgfx::getStats();
 			imguiLabel("GPU %0.6f [ms]", double(stats->gpuTimeEnd - stats->gpuTimeBegin)*1000.0/stats->gpuTimerFreq);
 			imguiLabel("CPU %0.6f [ms]", double(stats->cpuTimeEnd - stats->cpuTimeBegin)*1000.0/stats->cpuTimerFreq);
-
+			imguiLabel("Waiting for render thread %0.6f [ms]", double(stats->waitRender) * toMs);
+			imguiLabel("Waiting for submit thread %0.6f [ms]", double(stats->waitSubmit) * toMs);
+			
 			imguiEndScrollArea();
 			imguiEndFrame();
 

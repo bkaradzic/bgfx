@@ -3892,6 +3892,7 @@ namespace bgfx
 				bool ok = m_gameSem.wait();
 				BX_CHECK(ok, "Semaphore wait failed."); BX_UNUSED(ok);
 				m_render->m_waitSubmit = bx::getHPCounter()-start;
+				m_submit->m_perfStats.waitSubmit = m_submit->m_waitSubmit;
 			}
 		}
 
@@ -3912,6 +3913,7 @@ namespace bgfx
 				bool ok = m_renderSem.wait();
 				BX_CHECK(ok, "Semaphore wait failed."); BX_UNUSED(ok);
 				m_submit->m_waitRender = bx::getHPCounter() - start;
+				m_submit->m_perfStats.waitRender = m_submit->m_waitRender;
 			}
 		}
 
