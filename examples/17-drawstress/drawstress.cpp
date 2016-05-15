@@ -75,7 +75,7 @@ class ExampleDrawStress : public entry::AppI
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
-		
+
 		m_width  = 1280;
 		m_height = 720;
 		m_debug  = BGFX_DEBUG_TEXT;
@@ -224,7 +224,7 @@ class ExampleDrawStress : public entry::AppI
 					, m_height
 					);
 
-			imguiBeginScrollArea("Settings", m_width - m_width / 4 - 10, 10, m_width / 4, m_height / 3, &m_scrollArea);
+			imguiBeginScrollArea("Settings", m_width - m_width / 4 - 10, 10, m_width / 4, m_height / 2, &m_scrollArea);
 			imguiSeparatorLine();
 
 			m_transform = imguiChoose(m_transform
@@ -248,7 +248,7 @@ class ExampleDrawStress : public entry::AppI
 			imguiLabel("CPU %0.6f [ms]", double(stats->cpuTimeEnd - stats->cpuTimeBegin)*1000.0/stats->cpuTimerFreq);
 			imguiLabel("Waiting for render thread %0.6f [ms]", double(stats->waitRender) * toMs);
 			imguiLabel("Waiting for submit thread %0.6f [ms]", double(stats->waitSubmit) * toMs);
-			
+
 			imguiEndScrollArea();
 			imguiEndFrame();
 
