@@ -307,6 +307,8 @@ typedef struct bgfx_stats
     uint64_t gpuTimeEnd;
     uint64_t gpuTimerFreq;
 
+	int64_t waitRender;
+	int64_t waitSubmit;
 } bgfx_stats_t;
 
 /**/

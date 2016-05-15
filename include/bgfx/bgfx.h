@@ -640,6 +640,9 @@ namespace bgfx
 		uint64_t gpuTimeBegin; //!< GPU frame begin time.
 		uint64_t gpuTimeEnd;   //!< GPU frame end time.
 		uint64_t gpuTimerFreq; //!< GPU timer frequency.
+
+		int64_t waitRender;    //!< Render wait time.
+		int64_t waitSubmit;    //!< Submit wait time.
 	};
 
 	/// Vertex declaration.
