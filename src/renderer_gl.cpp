@@ -1049,8 +1049,10 @@ namespace bgfx { namespace gl
 			;
 
 		GLsizei size = (16*16*getBitsPerPixel(_format) )/8;
+		size *= 2;
 		void* data = bx::alignPtr(alloca(size+16), 0, 16);
-
+		memset(data, 0, size);
+		
 		if (isCompressed(_format) )
 		{
 			glCompressedTexImage2D(GL_TEXTURE_2D, 0, internalFmt, 16, 16, 0, size, data);
