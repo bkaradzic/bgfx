@@ -80,6 +80,11 @@ static const InputBinding s_bindingView[] =
 	{ entry::Key::PageUp,    entry::Modifier::None,       1, NULL, "view file-pgup"   },
 	{ entry::Key::PageDown,  entry::Modifier::None,       1, NULL, "view file-pgdown" },
 
+	{ entry::Key::KeyR,      entry::Modifier::None,       1, NULL, "view rgb r"       },
+	{ entry::Key::KeyG,      entry::Modifier::None,       1, NULL, "view rgb g"       },
+	{ entry::Key::KeyB,      entry::Modifier::None,       1, NULL, "view rgb b"       },
+	{ entry::Key::KeyA,      entry::Modifier::None,       1, NULL, "view rgb a"       },
+
 	{ entry::Key::KeyH,      entry::Modifier::None,       1, NULL, "view help"        },
 
 	INPUT_BINDING_END
@@ -105,8 +110,10 @@ struct View
 		: m_fileIndex(0)
 		, m_scaleFn(0)
 		, m_mip(0)
+		, m_abgr(UINT32_MAX)
 		, m_zoom(1.0f)
 		, m_filter(true)
+		, m_alpha(false)
 		, m_help(false)
 	{
 	}
@@ -191,6 +198,33 @@ struct View
 				++m_fileIndex;
 				m_fileIndex = bx::uint32_min(m_fileIndex, numFiles);
 			}
+			else if (0 == strcmp(_argv[1], "rgb") )
+			{
+				if (_argc >= 3)
+				{
+					if (_argv[2][0] == 'r')
+					{
+						m_abgr ^= 0x000000ff;
+					}
+					else if (_argv[2][0] == 'g')
+					{
+						m_abgr ^= 0x0000ff00;
+					}
+					else if (_argv[2][0] == 'b')
+					{
+						m_abgr ^= 0x00ff0000;
+					}
+					else if (_argv[2][0] == 'a')
+					{
+						m_alpha ^= true;
+					}
+				}
+				else
+				{
+					m_abgr  = UINT32_MAX;
+					m_alpha = false;
+				}
+			}
 			else if (0 == strcmp(_argv[1], "help") )
 			{
 				m_help ^= true;
@@ -260,8 +294,10 @@ struct View
 	uint32_t m_fileIndex;
 	uint32_t m_scaleFn;
 	uint32_t m_mip;
+	uint32_t m_abgr;
 	float    m_zoom;
 	bool     m_filter;
+	bool     m_alpha;
 	bool     m_help;
 };
 
@@ -294,7 +330,7 @@ struct PosUvColorVertex
 
 bgfx::VertexDecl PosUvColorVertex::ms_decl;
 
-bool screenQuad(int32_t _x, int32_t _y, int32_t _width, uint32_t _height, bool _originBottomLeft = false)
+bool screenQuad(int32_t _x, int32_t _y, int32_t _width, uint32_t _height, uint32_t _abgr, bool _originBottomLeft = false)
 {
 	if (bgfx::checkAvailTransientVertexBuffer(6, PosUvColorVertex::ms_decl) )
 	{
@@ -349,12 +385,12 @@ bool screenQuad(int32_t _x, int32_t _y, int32_t _width, uint32_t _height, bool _
 		vertex[5].m_u = minu;
 		vertex[5].m_v = minv;
 
-		vertex[0].m_abgr = UINT32_MAX;
-		vertex[1].m_abgr = UINT32_MAX;
-		vertex[2].m_abgr = UINT32_MAX;
-		vertex[3].m_abgr = UINT32_MAX;
-		vertex[4].m_abgr = UINT32_MAX;
-		vertex[5].m_abgr = UINT32_MAX;
+		vertex[0].m_abgr = _abgr;
+		vertex[1].m_abgr = _abgr;
+		vertex[2].m_abgr = _abgr;
+		vertex[3].m_abgr = _abgr;
+		vertex[4].m_abgr = _abgr;
+		vertex[5].m_abgr = _abgr;
 
 		bgfx::setVertexBuffer(&vb);
 
@@ -697,22 +733,26 @@ int _main_(int _argc, char** _argv)
 
 				ImGui::Text("Key bindings:\n\n");
 
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "ESC");  ImGui::SameLine(64); ImGui::Text("Exit.");
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "h");    ImGui::SameLine(64); ImGui::Text("Toggle help screen.");
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "f");    ImGui::SameLine(64); ImGui::Text("Toggle full-screen.");
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "ESC");   ImGui::SameLine(64); ImGui::Text("Exit.");
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "h");     ImGui::SameLine(64); ImGui::Text("Toggle help screen.");
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "f");     ImGui::SameLine(64); ImGui::Text("Toggle full-screen.");
 				ImGui::NextLine();
 
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "-");    ImGui::SameLine(64); ImGui::Text("Zoom out.");
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "=");    ImGui::SameLine(64); ImGui::Text("Zoom in.");
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "-");     ImGui::SameLine(64); ImGui::Text("Zoom out.");
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "=");     ImGui::SameLine(64); ImGui::Text("Zoom in.");
 				ImGui::NextLine();
 
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), ",");    ImGui::SameLine(64); ImGui::Text("MIP level up.");
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), ".");    ImGui::SameLine(64); ImGui::Text("MIP level down.");
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "/");    ImGui::SameLine(64); ImGui::Text("Toggle linear/point texture sampling.");
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), ",");     ImGui::SameLine(64); ImGui::Text("MIP level up.");
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), ".");     ImGui::SameLine(64); ImGui::Text("MIP level down.");
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "/");     ImGui::SameLine(64); ImGui::Text("Toggle linear/point texture sampling.");
 				ImGui::NextLine();
 
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "up");   ImGui::SameLine(64); ImGui::Text("Previous texture.");
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "down"); ImGui::SameLine(64); ImGui::Text("Next texture.");
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "up");    ImGui::SameLine(64); ImGui::Text("Previous texture.");
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "down");  ImGui::SameLine(64); ImGui::Text("Next texture.");
+				ImGui::NextLine();
+
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "r/g/b"); ImGui::SameLine(64); ImGui::Text("Toggle R, G, or B color channel.");
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "a");     ImGui::SameLine(64); ImGui::Text("Toggle alpha blending.");
 				ImGui::NextLine();
 
 				ImGui::Dummy(ImVec2(0.0f, 0.0f) );
@@ -797,6 +837,7 @@ int _main_(int _argc, char** _argv)
 				, int(height - view.m_info.height * ss)/2
 				, int(view.m_info.width  * ss)
 				, int(view.m_info.height * ss)
+				, view.m_abgr
 				);
 
 			float mtx[16];
@@ -821,6 +862,7 @@ int _main_(int _argc, char** _argv)
 			bgfx::setState(0
 				| BGFX_STATE_RGB_WRITE
 				| BGFX_STATE_ALPHA_WRITE
+				| (view.m_alpha ? BGFX_STATE_BLEND_ALPHA : BGFX_STATE_NONE)
 				);
 			bgfx::submit(0, view.m_info.cubeMap ? textureCubeProgram : textureProgram);
 
