@@ -2112,7 +2112,7 @@ namespace bgfx
 
 		{ 8, 0, 8, 0 },
 		{ 4, 4, 4, 4 },
-		{ 4, 4, 0, 0 },
+		{ 4, 4, 4, 4 },
 		{ 0, 8, 0, 8 },
 	};
 
@@ -2247,7 +2247,7 @@ namespace bgfx
 			*_r += bitRangeConvert( (_block >> 10) & 0x1f, 5, 8) * _factor;
 			*_g += bitRangeConvert( (_block >>  5) & 0x1f, 5, 8) * _factor;
 			*_b += bitRangeConvert( (_block >>  1) & 0x0f, 4, 8) * _factor;
-			*_a += 255;
+			*_a += 255 * _factor;
 		}
 		else
 		{
@@ -2265,7 +2265,7 @@ namespace bgfx
 			*_r += bitRangeConvert( (_block >> 26) & 0x1f, 5, 8) * _factor;
 			*_g += bitRangeConvert( (_block >> 21) & 0x1f, 5, 8) * _factor;
 			*_b += bitRangeConvert( (_block >> 16) & 0x1f, 5, 8) * _factor;
-			*_a += 255;
+			*_a += 255 * _factor;
 		}
 		else
 		{
@@ -3191,7 +3191,7 @@ namespace bgfx
 		_imageContainer.m_height   = height;
 		_imageContainer.m_depth    = depth;
 		_imageContainer.m_format   = format;
-		_imageContainer.m_numMips  = uint8_t(numMips);
+		_imageContainer.m_numMips  = uint8_t(bx::uint32_max(numMips, 1) );
 		_imageContainer.m_hasAlpha = hasAlpha;
 		_imageContainer.m_cubeMap  = numFaces > 1;
 		_imageContainer.m_ktx      = false;
@@ -3248,6 +3248,7 @@ namespace bgfx
 			return true;
 		}
 
+		BX_TRACE("Unrecognized image format (magic: 0x%08x)!", magic);
 		return false;
 	}
 
