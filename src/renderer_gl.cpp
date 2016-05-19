@@ -6198,7 +6198,15 @@ namespace bgfx { namespace gl
 						}
 						else
 						{
-							GL_CHECK(glDisable(GL_DEPTH_TEST) );
+							if (BGFX_STATE_DEPTH_WRITE & newFlags)
+							{
+								GL_CHECK(glEnable(GL_DEPTH_TEST) );
+								GL_CHECK(glDepthFunc(GL_ALWAYS) );
+							}
+							else
+							{
+								GL_CHECK(glDisable(GL_DEPTH_TEST) );
+							}
 						}
 					}
 
