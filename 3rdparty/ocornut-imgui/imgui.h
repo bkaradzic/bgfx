@@ -52,7 +52,8 @@ struct ImGuiStorage;                // Simple custom key value storage
 struct ImGuiStyle;                  // Runtime data for styling/colors
 struct ImGuiTextFilter;             // Parse and apply text filters. In format "aaaaa[,bbbb][,ccccc]"
 struct ImGuiTextBuffer;             // Text buffer for logging/accumulating text
-struct ImGuiTextEditCallbackData;   // Shared state of ImGui::InputText() when using custom callbacks (advanced)
+struct ImGuiTextEditCallbackData;   // Shared state of ImGui::InputText() when using custom ImGuiTextEditCallback (rare/advanced use)
+struct ImGuiSizeConstraintCallbackData;// Structure used to constraint window size in custom ways when using custom ImGuiSizeConstraintCallback (rare/advanced use)
 struct ImGuiListClipper;            // Helper to manually clip large list of items
 struct ImGuiContext;                // ImGui context (opaque)
 
@@ -73,6 +74,7 @@ typedef int ImGuiInputTextFlags;    // flags for InputText*()               // e
 typedef int ImGuiSelectableFlags;   // flags for Selectable()               // enum ImGuiSelectableFlags_
 typedef int ImGuiTreeNodeFlags;     // flags for TreeNode*(), Collapsing*() // enum ImGuiTreeNodeFlags_
 typedef int (*ImGuiTextEditCallback)(ImGuiTextEditCallbackData *data);
+typedef void (*ImGuiSizeConstraintCallback)(ImGuiSizeConstraintCallbackData* data);
 
 // Others helpers at bottom of the file:
 // class ImVector<>                 // Lightweight std::vector like class.
@@ -138,6 +140,7 @@ namespace ImGui
     IMGUI_API void          SetNextWindowPos(const ImVec2& pos, ImGuiSetCond cond = 0);         // set next window position. call before Begin()
     IMGUI_API void          SetNextWindowPosCenter(ImGuiSetCond cond = 0);                      // set next window position to be centered on screen. call before Begin()
     IMGUI_API void          SetNextWindowSize(const ImVec2& size, ImGuiSetCond cond = 0);       // set next window size. set axis to 0.0f to force an auto-fit on this axis. call before Begin()
+    IMGUI_API void          SetNextWindowSizeConstraint(const ImVec2& size_min, const ImVec2& size_max, ImGuiSizeConstraintCallback custom_callback = NULL, void* custom_callback_data = NULL); // set next window size limits. use -1,-1 on either X/Y axis to preserve the current size. Use callback to apply non-trivial programmatic constraints.
     IMGUI_API void          SetNextWindowContentSize(const ImVec2& size);                       // set next window content size (enforce the range of scrollbars). set axis to 0.0f to leave it automatic. call before Begin()
     IMGUI_API void          SetNextWindowContentWidth(float width);                             // set next window content width (enforce the range of horizontal scrollbar). call before Begin()
     IMGUI_API void          SetNextWindowCollapsed(bool collapsed, ImGuiSetCond cond = 0);      // set next window collapsed state. call before Begin()
@@ -250,7 +253,7 @@ namespace ImGui
     IMGUI_API void          BulletText(const char* fmt, ...) IM_PRINTFARGS(1);
     IMGUI_API void          BulletTextV(const char* fmt, va_list args);
     IMGUI_API bool          Button(const char* label, const ImVec2& size = ImVec2(0,0));
-    IMGUI_API bool          SmallButton(const char* label);
+    IMGUI_API bool          SmallButton(const char* label);                                         // button with FramePadding=(0,0)
     IMGUI_API bool          InvisibleButton(const char* str_id, const ImVec2& size);
     IMGUI_API void          Image(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0 = ImVec2(0,0), const ImVec2& uv1 = ImVec2(1,1), const ImVec4& tint_col = ImVec4(1,1,1,1), const ImVec4& border_col = ImVec4(0,0,0,0));
     IMGUI_API bool          ImageButton(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0 = ImVec2(0,0),  const ImVec2& uv1 = ImVec2(1,1), int frame_padding = -1, const ImVec4& bg_col = ImVec4(0,0,0,0), const ImVec4& tint_col = ImVec4(1,1,1,1));    // <0 frame_padding uses default frame padding settings. 0 for no padding
@@ -1031,7 +1034,18 @@ struct ImGuiTextEditCallbackData
     bool    HasSelection() const { return SelectionStart != SelectionEnd; }
 };
 
+// Resizing callback data to apply custom constraint. As enabled by SetNextWindowSizeConstraint(). Callback is called during the next Begin().
+// NB: For basic min/max size constraint on each axis you don't need to use the callback! The SetNextWindowSizeConstraint() parameters are enough.
+struct ImGuiSizeConstraintCallbackData
+{
+    void*   UserData;       // Read-only.   What user passed to SetNextWindowSizeConstraint()
+    ImVec2  Pos;            // Read-only.	Window position, for reference.
+    ImVec2  CurrentSize;    // Read-only.	Current window size.
+    ImVec2  DesiredSize;    // Read-write.  Desired size, based on user's mouse position. Write to this field to restrain resizing.
+};
+
 // ImColor() helper to implicity converts colors to either ImU32 (packed 4x1 byte) or ImVec4 (4x1 float)
+// Prefer using IM_COL32() macros if you want a guaranteed compile-time ImU32 for usage with ImDrawList API.
 // Avoid storing ImColor! Store either u32 of ImVec4. This is not a full-featured color class.
 // None of the ImGui API are using ImColor directly but you can use it as a convenience to pass colors in either ImU32 or ImVec4 formats.
 struct ImColor
@@ -1094,12 +1108,8 @@ struct ImGuiListClipper
 
 // Draw callbacks for advanced uses.
 // NB- You most likely do NOT need to use draw callbacks just to create your own widget or customized UI rendering (you can poke into the draw list for that)
-// Draw callback may be useful for example, if you want to render a complex 3D scene inside a UI element, change your GPU render state, etc.
-// The expected behavior from your rendering loop is:
-//   if (cmd.UserCallback != NULL)
-//       cmd.UserCallback(parent_list, cmd);
-//   else
-//       RenderTriangles()
+// Draw callback may be useful for example, A) Change your GPU render state, B) render a complex 3D scene inside a UI element (without an intermediate texture/render target), etc.
+// The expected behavior from your rendering function is 'if (cmd.UserCallback != NULL) cmd.UserCallback(parent_list, cmd); else RenderTriangles()'
 typedef void (*ImDrawCallback)(const ImDrawList* parent_list, const ImDrawCmd* cmd);
 
 // Typically, 1 command = 1 gpu draw call (unless command is a callback)
@@ -1115,7 +1125,7 @@ struct ImDrawCmd
     ImDrawCmd() { ElemCount = 0; ClipRect.x = ClipRect.y = -8192.0f; ClipRect.z = ClipRect.w = +8192.0f; TextureId = NULL; UserCallback = NULL; UserCallbackData = NULL; ViewId = 0; }
 };
 
-// Vertex index (override with, e.g. '#define ImDrawIdx unsigned int' in ImConfig)
+// Vertex index (override with '#define ImDrawIdx unsigned int' inside in imconfig.h)
 #ifndef ImDrawIdx
 typedef unsigned short ImDrawIdx;
 #endif
