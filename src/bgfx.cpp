@@ -2439,11 +2439,15 @@ again:
 	const Memory* makeRef(const void* _data, uint32_t _size, ReleaseFn _releaseFn, void* _userData)
 	{
 		MemoryRef* memRef = (MemoryRef*)BX_ALLOC(g_allocator, sizeof(MemoryRef) );
-		memRef->mem.size  = _size;
-		memRef->mem.data  = (uint8_t*)_data;
-		memRef->releaseFn = _releaseFn;
-		memRef->userData  = _userData;
-		return &memRef->mem;
+        if (memRef != nullptr)
+        {
+            memRef->mem.size  = _size;
+            memRef->mem.data  = (uint8_t*)_data;
+            memRef->releaseFn = _releaseFn;
+            memRef->userData  = _userData;
+            return &memRef->mem;
+        }
+        return nullptr;
 	}
 
 	bool isMemoryRef(const Memory* _mem)
