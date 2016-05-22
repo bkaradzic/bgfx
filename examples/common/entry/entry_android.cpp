@@ -140,7 +140,7 @@ namespace entry
 					// Command from main thread: a new ANativeWindow is ready for use.  Upon
 					// receiving this command, android_app->window will contain the new window
 					// surface.
-					if (m_window == NULL)
+					if (m_window != m_app->window)
 					{
 						m_window = m_app->window;
 						bgfx::androidSetWindow(m_window);
@@ -152,7 +152,14 @@ namespace entry
 						WindowHandle defaultWindow = { 0 };
 						m_eventQueue.postSizeEvent(defaultWindow, width, height);
 
-						m_thread.init(MainThreadEntry::threadFunc, &m_mte);
+						if (!m_thread.isRunning())
+						{
+							m_thread.init(MainThreadEntry::threadFunc, &m_mte);
+						}
+						else
+						{
+							bgfx::reset(width, height, BGFX_RESET_NATIVE_WINDOW);
+						}
 					}
 					break;
 

@@ -2154,6 +2154,9 @@ namespace bgfx
 					m_resolution.m_flags |= BGFX_RESET_INTERNAL_FORCE;
 				}
 			}
+
+			if (_flags & BGFX_RESET_NATIVE_WINDOW)
+				m_resolution.m_flags |= BGFX_RESET_INTERNAL_FORCE;
 		}
 
 		BGFX_API_FUNC(void setDebug(uint32_t _debug) )
