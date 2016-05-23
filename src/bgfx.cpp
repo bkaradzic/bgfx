@@ -285,6 +285,7 @@ namespace bgfx
 	static bool s_renderFrameCalled = false;
 	InternalData g_internalData;
 	PlatformData g_platformData;
+	bool g_platformDataChangedSinceReset = false;
 
 	void AllocatorStub::checkLeaks()
 	{
@@ -305,13 +306,13 @@ namespace bgfx
 		{
 			BGFX_FATAL(true
 				&& g_platformData.ndt     == _data.ndt
-				&& g_platformData.nwh     == _data.nwh
 				&& g_platformData.context == _data.context
 				, Fatal::UnableToInitialize
-				, "Only backbuffer pointer can be changed after initialization!"
+				, "Only backbuffer pointer and native window handle can be changed after initialization!"
 				);
 		}
 		memcpy(&g_platformData, &_data, sizeof(PlatformData) );
+		g_platformDataChangedSinceReset = true;
 	}
 
 	const InternalData* getInternalData()

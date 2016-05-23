@@ -264,6 +264,7 @@ namespace bgfx
 {
 	extern InternalData g_internalData;
 	extern PlatformData g_platformData;
+	extern bool g_platformDataChangedSinceReset;
 
 #if BGFX_CONFIG_MAX_DRAW_CALLS < (64<<10)
 	typedef uint16_t RenderItemCount;
@@ -2153,6 +2154,12 @@ namespace bgfx
 						);
 					m_resolution.m_flags |= BGFX_RESET_INTERNAL_FORCE;
 				}
+			}
+
+			if (g_platformDataChangedSinceReset)
+			{
+				m_resolution.m_flags |= BGFX_RESET_INTERNAL_FORCE;
+				g_platformDataChangedSinceReset = false;
 			}
 		}
 
