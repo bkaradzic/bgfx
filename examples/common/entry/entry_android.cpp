@@ -110,7 +110,7 @@ namespace entry
 			const char* argv[1] = { "android.so" };
 			m_mte.m_argc = 1;
 			m_mte.m_argv = const_cast<char**>(argv);
-			
+
 			while (0 == m_app->destroyRequested)
 			{
 				int32_t num;
@@ -152,8 +152,10 @@ namespace entry
 						WindowHandle defaultWindow = { 0 };
 						m_eventQueue.postSizeEvent(defaultWindow, width, height);
 
-						if (!m_thread.isRunning())
+						if (!m_thread.isRunning() )
+						{
 							m_thread.init(MainThreadEntry::threadFunc, &m_mte);
+						}
 					}
 					break;
 
