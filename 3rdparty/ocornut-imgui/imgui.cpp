@@ -153,9 +153,10 @@
  Here is a change-log of API breaking changes, if you are using one of the functions listed, expect to have to fix some code.
  Also read releases logs https://github.com/ocornut/imgui/releases for more details.
 
- - 2016/05/12 (1.49) - title bar (using TitleBg/TitleBgActive colors) isn't rendered over a window background (WindowBg color) anymore. 
-                       If your TitleBg/TitleBgActive alpha was 1.0f or you are using the default theme it will not affect you. However if your TitleBg/TitleBgActive alpha was <1.0f you need to tweak your custom theme to readjust for the fact that we don't draw a WindowBg background behind the title bar.
-                       This helper function will convert an old TitleBg/TitleBgActive color into a new one with the same visual output, given that color and the WindowBg color.
+ - 2016/05/12 (1.49) - title bar (using ImGuiCol_TitleBg/ImGuiCol_TitleBgActive colors) isn't rendered over a window background (ImGuiCol_WindowBg color) anymore. 
+                       If your TitleBg/TitleBgActive alpha was 1.0f or you are using the default theme it will not affect you. 
+                       However if your TitleBg/TitleBgActive alpha was <1.0f you need to tweak your custom theme to readjust for the fact that we don't draw a WindowBg background behind the title bar.
+                       This helper function will convert an old TitleBg/TitleBgActive color into a new one with the same visual output, given the OLD color and the OLD WindowBg color.
                            ImVec4 ConvertTitleBgCol(const ImVec4& win_bg_col, const ImVec4& title_bg_col)
                            {
                                float new_a = 1.0f - ((1.0f - win_bg_col.w) * (1.0f - title_bg_col.w)), k = title_bg_col.w / new_a;
@@ -578,7 +579,7 @@
  - keyboard: full keyboard navigation and focus. (#323)
  - focus: preserve ActiveId/focus stack state, e.g. when opening a menu and close it, previously selected InputText() focus gets restored (#622)
  - focus: SetKeyboardFocusHere() on with >= 0 offset could be done on same frame (else latch and modulate on beginning of next frame)
- - input: rework IO system to be able to pass actual ordered/timestamped events.
+ - input: rework IO system to be able to pass actual ordered/timestamped events. (~#335, #71)
  - input: allow to decide and pass explicit double-clicks (e.g. for windows by the CS_DBLCLKS style).
  - input: support track pad style scrolling & slider edit.
  - misc: provide a way to compile out the entire implementation while providing a dummy API (e.g. #define IMGUI_DUMMY_IMPL)
@@ -591,6 +592,7 @@
  - drawlist: end-user probably can't call Clear() directly because we expect a texture to be pushed in the stack.
  - examples: directx9: save/restore device state more thoroughly.
  - examples: window minimize, maximize (#583)
+ - optimization: add a flag to disable most of rendering, for the case where the user expect to skip it (#335)
  - optimization: use another hash function than crc32, e.g. FNV1a
  - optimization/render: merge command-lists with same clip-rect into one even if they aren't sequential? (as long as in-between clip rectangle don't overlap)?
  - optimization: turn some the various stack vectors into statically-sized arrays
@@ -4935,7 +4937,7 @@ void ImGui::SetNextWindowSize(const ImVec2& size, ImGuiSetCond cond)
     g.SetNextWindowSizeCond = cond ? cond : ImGuiSetCond_Always;
 }
 
-void ImGui::SetNextWindowSizeConstraint(const ImVec2& size_min, const ImVec2& size_max, ImGuiSizeConstraintCallback custom_callback, void* custom_callback_user_data)
+void ImGui::SetNextWindowSizeConstraints(const ImVec2& size_min, const ImVec2& size_max, ImGuiSizeConstraintCallback custom_callback, void* custom_callback_user_data)
 {
     ImGuiContext& g = *GImGui;
     g.SetNextWindowSizeConstraint = true;
@@ -5779,7 +5781,7 @@ void ImGui::LogButtons()
 
 bool ImGui::TreeNodeBehaviorIsOpen(ImGuiID id, ImGuiTreeNodeFlags flags)
 {
-    if (flags & ImGuiTreeNodeFlags_AlwaysOpen)
+    if (flags & ImGuiTreeNodeFlags_Leaf)
         return true;
 
     // We only write to the tree storage if the user clicks (or explicitely use SetNextTreeNode*** functions)
@@ -5874,7 +5876,7 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char* l
     if (flags & ImGuiTreeNodeFlags_OpenOnDoubleClick)
         button_flags |= ImGuiButtonFlags_PressedOnDoubleClick | ((flags & ImGuiTreeNodeFlags_OpenOnArrow) ? ImGuiButtonFlags_PressedOnClickRelease : 0);
     bool hovered, held, pressed = ButtonBehavior(interact_bb, id, &hovered, &held, button_flags);
-    if (pressed && !(flags & ImGuiTreeNodeFlags_AlwaysOpen))
+    if (pressed && !(flags & ImGuiTreeNodeFlags_Leaf))
     {
         bool toggled = !(flags & (ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick));
         if (flags & ImGuiTreeNodeFlags_OpenOnArrow)
@@ -5918,9 +5920,9 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char* l
         if (hovered || (flags & ImGuiTreeNodeFlags_Selected))
             RenderFrame(bb.Min, bb.Max, col, false);
 
-        if (flags & ImGuiTreeNodeFlags_AlwaysOpen)
+        if (flags & ImGuiTreeNodeFlags_Bullet)
             RenderBullet(bb.Min + ImVec2(text_offset_x * 0.5f, g.FontSize*0.50f + text_base_offset_y));
-        else
+        else if (!(flags & ImGuiTreeNodeFlags_Leaf))
             RenderCollapseTriangle(bb.Min + ImVec2(padding.x, g.FontSize*0.15f + text_base_offset_y), is_open, 0.70f, false);
         if (g.LogEnabled)
             LogRenderedText(text_pos, ">");
@@ -8781,7 +8783,7 @@ bool ImGui::BeginMenu(const char* label, bool enabled)
                 ImVec2 tc = (window->Pos.x < next_window->Pos.x) ? next_window_rect.GetBL() : next_window_rect.GetBR();
                 float extra = ImClamp(fabsf(ta.x - tb.x) * 0.30f, 5.0f, 30.0f); // add a bit of extra slack.
                 ta.x += (window->Pos.x < next_window->Pos.x) ? -0.5f : +0.5f;   // to avoid numerical issues
-                tb.y = ta.y + ImMax((tb.y - extra) - ta.y, -100.0f);            // triangle is maximum 200 high to limit the slope and the bias toward large sub-menus
+                tb.y = ta.y + ImMax((tb.y - extra) - ta.y, -100.0f);            // triangle is maximum 200 high to limit the slope and the bias toward large sub-menus // FIXME: Multiply by fb_scale?
                 tc.y = ta.y + ImMin((tc.y + extra) - ta.y, +100.0f);
                 moving_within_opened_triangle = ImIsPointInTriangle(g.IO.MousePos, ta, tb, tc);
                 //window->DrawList->PushClipRectFullScreen(); window->DrawList->AddTriangleFilled(ta, tb, tc, moving_within_opened_triangle ? 0x80008000 : 0x80000080); window->DrawList->PopClipRect(); // Debug
@@ -8798,7 +8800,8 @@ bool ImGui::BeginMenu(const char* label, bool enabled)
     }
     else if (pressed || (hovered && menuset_is_open && !menu_is_open)) // menu-bar: first click to open, then hover to open others
         want_open = true;
-
+    if (!enabled) // explicitly close if an open menu becomes disabled, facilitate users code a lot in pattern such as 'if (BeginMenu("options", has_object)) { ..use object.. }'
+        want_close = true;
     if (want_close && IsPopupOpen(id))
         ClosePopupToLevel(GImGui->CurrentPopupStack.Size);
 

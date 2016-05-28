@@ -33,6 +33,22 @@
 #include "vs_ocornut_imgui.bin.h"
 #include "fs_ocornut_imgui.bin.h"
 
+#include "icons_kenney.ttf.h"
+#include "icons_font_awesome.ttf.h"
+
+struct FontRangeMerge
+{
+	const void* data;
+	size_t      size;
+	ImWchar     ranges[3];
+};
+
+static FontRangeMerge s_fontRangeMerge[] =
+{
+	{ s_iconsKenney,      sizeof(s_iconsKenney),      { ICON_MIN_KI, ICON_MAX_KI, 0 } },
+	{ s_iconsFontAwesome, sizeof(s_iconsFontAwesome), { ICON_MIN_FA, ICON_MAX_FA, 0 } },
+};
+
 class PlatformWindow : public ImGuiWM::PlatformWindow
 {
 	typedef ImGuiWM::PlatformWindow Super;
@@ -430,9 +446,30 @@ struct OcornutImguiContext
 		int32_t width;
 		int32_t height;
 		{
-			void* font = ImGui::MemAlloc(_size);
-			memcpy(font, _data, _size);
-			io.Fonts->AddFontFromMemoryTTF(font, _size, _fontSize);
+			ImFontConfig config;
+			config.FontDataOwnedByAtlas = false;
+			config.MergeMode = false;
+			config.MergeGlyphCenterV = true;
+
+			io.Fonts->AddFontFromMemoryTTF( (void*)_data
+					, _size
+					, _fontSize
+					, &config
+					);
+
+			config.MergeMode = true;
+
+			for (uint32_t ii = 0; ii < BX_COUNTOF(s_fontRangeMerge); ++ii)
+			{
+				const FontRangeMerge& frm = s_fontRangeMerge[ii];
+
+				io.Fonts->AddFontFromMemoryTTF( (void*)frm.data
+						, frm.size
+						, _fontSize
+						, &config
+						, frm.ranges
+						);
+			}
 		}
 
 		io.Fonts->GetTexDataAsRGBA32(&data, &width, &height);

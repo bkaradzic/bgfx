@@ -724,7 +724,7 @@ int _main_(int _argc, char** _argv)
 				ImGui::SetWindowFontScale(1.2f);
 
 				ImGui::Text(
-					"texturev, bgfx texture viewer tool\n"
+					"texturev, bgfx texture viewer tool " ICON_KI_WRENCH "\n"
 					"Copyright 2011-2016 Branimir Karadzic. All rights reserved.\n"
 					"License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n"
 					);
