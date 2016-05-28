@@ -279,26 +279,7 @@ void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 
 void calcPlaneUv(const Plane& _plane, float* _udir, float* _vdir)
 {
-	const float nx = _plane.m_normal[0];
-	const float ny = _plane.m_normal[1];
-	const float nz = _plane.m_normal[2];
-
-	if (bx::fabsolute(nx) > bx::fabsolute(nz) )
-	{
-		float invLen = 1.0f / bx::fsqrt(nx*nx + nz*nz);
-		_udir[0] = -nz * invLen;
-		_udir[1] =  0.0f;
-		_udir[2] =  nx * invLen;
-	}
-	else
-	{
-		float invLen = 1.0f / bx::fsqrt(ny*ny + nz*nz);
-		_udir[0] =  0.0f;
-		_udir[1] =  nz * invLen;
-		_udir[2] = -ny * invLen;
-	}
-
-	bx::vec3Cross(_vdir, _plane.m_normal, _udir);
+	bx::vec3TangentFrame(_plane.m_normal, _udir, _vdir);
 }
 
 void buildFrustumPlanes(Plane* _result, const float* _viewProj)
