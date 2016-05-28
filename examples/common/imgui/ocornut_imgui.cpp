@@ -33,6 +33,8 @@
 #include "vs_ocornut_imgui.bin.h"
 #include "fs_ocornut_imgui.bin.h"
 
+#include "roboto_regular.ttf.h"
+#include "robotomono_regular.ttf.h"
 #include "icons_kenney.ttf.h"
 #include "icons_font_awesome.ttf.h"
 
@@ -45,8 +47,8 @@ struct FontRangeMerge
 
 static FontRangeMerge s_fontRangeMerge[] =
 {
-	{ s_iconsKenney,      sizeof(s_iconsKenney),      { ICON_MIN_KI, ICON_MAX_KI, 0 } },
-	{ s_iconsFontAwesome, sizeof(s_iconsFontAwesome), { ICON_MIN_FA, ICON_MAX_FA, 0 } },
+	{ s_iconsKenneyTtf,      sizeof(s_iconsKenneyTtf),      { ICON_MIN_KI, ICON_MAX_KI, 0 } },
+	{ s_iconsFontAwesomeTtf, sizeof(s_iconsFontAwesomeTtf), { ICON_MIN_FA, ICON_MAX_FA, 0 } },
 };
 
 class PlatformWindow : public ImGuiWM::PlatformWindow
@@ -361,7 +363,7 @@ struct OcornutImguiContext
 		}
 	}
 
-	void create(const void* _data, uint32_t _size, float _fontSize, bx::AllocatorI* _allocator)
+	void create(float _fontSize, bx::AllocatorI* _allocator)
 	{
 		m_viewId = 255;
 		m_allocator = _allocator;
@@ -449,15 +451,13 @@ struct OcornutImguiContext
 			ImFontConfig config;
 			config.FontDataOwnedByAtlas = false;
 			config.MergeMode = false;
-			config.MergeGlyphCenterV = true;
+//			config.MergeGlyphCenterV = true;
 
-			io.Fonts->AddFontFromMemoryTTF( (void*)_data
-					, _size
-					, _fontSize
-					, &config
-					);
+			m_font[ImGui::Font::Regular] = io.Fonts->AddFontFromMemoryTTF( (void*)s_robotoRegularTtf,     sizeof(s_robotoRegularTtf),     _fontSize, &config);
+			m_font[ImGui::Font::Mono   ] = io.Fonts->AddFontFromMemoryTTF( (void*)s_robotoMonoRegularTtf, sizeof(s_robotoMonoRegularTtf), _fontSize, &config);
 
 			config.MergeMode = true;
+			config.DstFont   = m_font[ImGui::Font::Regular];
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(s_fontRangeMerge); ++ii)
 			{
@@ -481,9 +481,6 @@ struct OcornutImguiContext
 			, 0
 			, bgfx::copy(data, width*height*4)
 			);
-
-		ImGuiStyle& style = ImGui::GetStyle();
-		style.FrameRounding = 4.0f;
 
 		m_wm = BX_NEW(m_allocator, WindowManager);
 		m_wm->Init();
@@ -553,6 +550,8 @@ struct OcornutImguiContext
 		// Doug Binks' darl color scheme
 		// https://gist.github.com/dougbinks/8089b4bbaccaaf6fa204236978d165a9
 		ImGuiStyle& style = ImGui::GetStyle();
+
+		style.FrameRounding = 4.0f;
 
 		// light style from Pacome Danhiez (user itamago)
 		// https://github.com/ocornut/imgui/pull/511#issuecomment-175719267
@@ -679,6 +678,7 @@ struct OcornutImguiContext
 	bgfx::ProgramHandle m_program;
 	bgfx::TextureHandle m_texture;
 	bgfx::UniformHandle s_tex;
+	ImFont* m_font[ImGui::Font::Count];
 	WindowManager* m_wm;
 	int64_t m_last;
 	int32_t m_lastScroll;
@@ -802,9 +802,9 @@ void OcornutImguiContext::renderDrawLists(ImDrawData* _drawData)
 	s_ctx.render(_drawData);
 }
 
-void IMGUI_create(const void* _data, uint32_t _size, float _fontSize, bx::AllocatorI* _allocator)
+void IMGUI_create(float _fontSize, bx::AllocatorI* _allocator)
 {
-	s_ctx.create(_data, _size, _fontSize, _allocator);
+	s_ctx.create(_fontSize, _allocator);
 }
 
 void IMGUI_destroy()
@@ -821,3 +821,11 @@ void IMGUI_endFrame()
 {
 	s_ctx.endFrame();
 }
+
+namespace ImGui
+{
+	void PushFont(Font::Enum _font)
+	{
+		PushFont(s_ctx.m_font[_font]);
+	}
+} // namespace ImGui

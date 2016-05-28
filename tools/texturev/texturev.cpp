@@ -721,7 +721,7 @@ int _main_(int _argc, char** _argv)
 
 			if (ImGui::BeginPopupModal("Help", NULL, ImGuiWindowFlags_AlwaysAutoResize) )
 			{
-				ImGui::SetWindowFontScale(1.2f);
+				ImGui::SetWindowFontScale(1.0f);
 
 				ImGui::Text(
 					"texturev, bgfx texture viewer tool " ICON_KI_WRENCH "\n"
