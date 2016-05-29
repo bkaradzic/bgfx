@@ -69,7 +69,7 @@ namespace ImGui
         for (int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++) // display only visible items
         {
             int addr = line_i * Rows;
-            Text("%0*X: ", addr_digits_count, base_display_addr+addr);
+            Text("%0*zx: ", addr_digits_count, base_display_addr+addr);
             SameLine();
 
             // Draw Hexadecimal
@@ -100,8 +100,8 @@ namespace ImGui
                     if (DataEditingTakeFocus)
                     {
                         SetKeyboardFocusHere();
-                        sprintf(AddrInput, "%0*X", addr_digits_count, base_display_addr+addr);
-                        sprintf(DataInput, "%02X", mem_data[addr]);
+                        sprintf(AddrInput, "%0*zx", addr_digits_count, base_display_addr+addr);
+                        sprintf(DataInput, "%02x", mem_data[addr]);
                     }
 
                     PushItemWidth(CalcTextSize("FF").x);
@@ -151,12 +151,12 @@ namespace ImGui
                         }
                         else
                         {
-                            Text("%02X ", byte);
+                            Text("%02x ", byte);
                         }
                     }
                     else
                     {
-                        Text("%02X ", mem_data[addr]);
+                        Text("%02x ", mem_data[addr]);
                     }
 
                     if (AllowEdits && IsItemHovered() && IsMouseClicked(0))
@@ -212,7 +212,7 @@ namespace ImGui
         PopAllowKeyboardFocus();
         PopItemWidth();
         SameLine();
-        Text("Range %0*X..%0*X", addr_digits_count, (int)base_display_addr, addr_digits_count, (int)base_display_addr+mem_size-1);
+        Text("Range %0*x..%0*x", addr_digits_count, (int)base_display_addr, addr_digits_count, (int)base_display_addr+mem_size-1);
         SameLine();
         PushItemWidth(70);
         if (InputText("##addr", AddrInput, 32, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue))
