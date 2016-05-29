@@ -873,7 +873,10 @@ struct Imgui
 			bgfx::setViewRect(_view, 0, 0, _width, _height);
 		}
 
-		updateInput(mx, my, _button, _scroll, _inputChar);
+		if (!ImGui::IsMouseHoveringAnyWindow() )
+		{
+			updateInput(mx, my, _button, _scroll, _inputChar);
+		}
 
 		m_hot = m_hotToBe;
 		m_hotToBe = 0;
@@ -3567,7 +3570,10 @@ float imguiGetTextLength(const char* _text, ImguiFontHandle _handle)
 
 bool imguiMouseOverArea()
 {
-	return s_imgui.m_insideArea;
+	return s_imgui.m_insideArea
+		|| ImGui::IsAnyItemHovered()
+		|| ImGui::IsMouseHoveringAnyWindow()
+		;
 }
 
 bgfx::ProgramHandle imguiGetImageProgram(uint8_t _mip)
