@@ -6,9 +6,19 @@ namespace ImGui
 //        End();
 //    }
 
-    void MemoryEditor::Draw(unsigned char* mem_data, int mem_size, size_t base_display_addr)
+    void MemoryEditor::Draw(void* mem_data_void, int mem_size, size_t base_display_addr)
     {
+        PushFont(Font::Mono);
+
+        unsigned char* mem_data = (unsigned char*)mem_data_void;
+
         BeginChild("##scrolling", ImVec2(0, -GetItemsLineHeightWithSpacing()));
+
+        if (ImGui::BeginPopupContextWindow() )
+        {
+            ImGui::Checkbox("HexII", &HexII);
+            ImGui::EndPopup();
+        }
 
         PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f) );
         PushStyleVar(ImGuiStyleVar_ItemSpacing,  ImVec2(0.0f, 0.0f) );
@@ -223,6 +233,13 @@ namespace ImGui
         }
 
         PopItemWidth();
+
+        PopFont();
+    }
+
+    void MemoryEditor::Draw(const void* mem_data, int mem_size, size_t base_display_addr)
+    {
+        Draw(const_cast<void*>(mem_data), mem_size, base_display_addr);
     }
 
 } // namespace ImGui

@@ -453,8 +453,8 @@ struct OcornutImguiContext
 			config.MergeMode = false;
 //			config.MergeGlyphCenterV = true;
 
-			m_font[ImGui::Font::Regular] = io.Fonts->AddFontFromMemoryTTF( (void*)s_robotoRegularTtf,     sizeof(s_robotoRegularTtf),     _fontSize, &config);
-			m_font[ImGui::Font::Mono   ] = io.Fonts->AddFontFromMemoryTTF( (void*)s_robotoMonoRegularTtf, sizeof(s_robotoMonoRegularTtf), _fontSize, &config);
+			m_font[ImGui::Font::Regular] = io.Fonts->AddFontFromMemoryTTF( (void*)s_robotoRegularTtf,     sizeof(s_robotoRegularTtf),     _fontSize,      &config);
+			m_font[ImGui::Font::Mono   ] = io.Fonts->AddFontFromMemoryTTF( (void*)s_robotoMonoRegularTtf, sizeof(s_robotoMonoRegularTtf), _fontSize-3.0f, &config);
 
 			config.MergeMode = true;
 			config.DstFont   = m_font[ImGui::Font::Regular];
@@ -660,9 +660,24 @@ struct OcornutImguiContext
 #endif // 0
 
 #if 0
-		extern void ShowExampleAppCustomNodeGraph(bool* opened);
-		bool opened = true;
-		ShowExampleAppCustomNodeGraph(&opened);
+		{
+			static ImGui::MemoryEditor me;
+			bool open = true;
+			if (ImGui::Begin("HexII", &open))
+			{
+				me.Draw(s_iconsKenneyTtf, sizeof(s_iconsKenneyTtf) );
+
+				ImGui::End();
+			}
+		}
+#endif // 0
+
+#if 0
+		{
+			extern void ShowExampleAppCustomNodeGraph(bool* opened);
+			bool opened = true;
+			ShowExampleAppCustomNodeGraph(&opened);
+		}
 #endif // 0
 	}
 

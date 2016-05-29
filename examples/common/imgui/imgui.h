@@ -280,19 +280,6 @@ namespace ImGui
 		SetCursorPosY(GetCursorPosY() + GetTextLineHeightWithSpacing() );
 	}
 
-	struct Font
-	{
-		enum Enum
-		{
-			Regular,
-			Mono,
-
-			Count
-		};
-	};
-
-	void PushFont(Font::Enum _font);
-
 } // namespace ImGui
 
 #endif // IMGUI_H_HEADER_GUARD

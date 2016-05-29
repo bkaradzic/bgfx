@@ -733,6 +733,7 @@ int _main_(int _argc, char** _argv)
 
 				ImGui::Text("Key bindings:\n\n");
 
+				ImGui::PushFont(ImGui::Font::Mono);
 				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "ESC");   ImGui::SameLine(64); ImGui::Text("Exit.");
 				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "h");     ImGui::SameLine(64); ImGui::Text("Toggle help screen.");
 				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "f");     ImGui::SameLine(64); ImGui::Text("Toggle full-screen.");
@@ -753,6 +754,8 @@ int _main_(int _argc, char** _argv)
 
 				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "r/g/b"); ImGui::SameLine(64); ImGui::Text("Toggle R, G, or B color channel.");
 				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "a");     ImGui::SameLine(64); ImGui::Text("Toggle alpha blending.");
+				ImGui::PopFont();
+
 				ImGui::NextLine();
 
 				ImGui::Dummy(ImVec2(0.0f, 0.0f) );

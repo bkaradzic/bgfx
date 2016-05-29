@@ -21,6 +21,7 @@ namespace ImGui
             strcpy(AddrInput, "");
         }
 
-        void Draw(unsigned char* mem_data, int mem_size, size_t base_display_addr = 0);
+        void Draw(void* mem_data, int mem_size, size_t base_display_addr = 0);
+        void Draw(const void* mem_data, int mem_size, size_t base_display_addr = 0);
     };
 } // namespace ImGui
