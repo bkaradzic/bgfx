@@ -162,6 +162,7 @@
                                float new_a = 1.0f - ((1.0f - win_bg_col.w) * (1.0f - title_bg_col.w)), k = title_bg_col.w / new_a;
                                return ImVec4((win_bg_col.x * win_bg_col.w + title_bg_col.x) * k, (win_bg_col.y * win_bg_col.w + title_bg_col.y) * k, (win_bg_col.z * win_bg_col.w + title_bg_col.z) * k, new_a);
                            }
+                       If this is confusing, pick the RGB value from title bar from an old screenshot and apply this as TitleBg/TitleBgActive. Or you may just create TitleBgActive from a tweaked TitleBg color.
  - 2016/05/07 (1.49) - removed confusing set of GetInternalState(), GetInternalStateSize(), SetInternalState() functions. Now using CreateContext(), DestroyContext(), GetCurrentContext(), SetCurrentContext().
  - 2016/05/02 (1.49) - renamed SetNextTreeNodeOpened() to SetNextTreeNodeOpen(), no redirection.
  - 2016/05/01 (1.49) - obsoleted old signature of CollapsingHeader(const char* label, const char* str_id = NULL, bool display_frame = true, bool default_open = false) as extra parameters were badly designed and rarely used. You can replace the "default_open = true" flag in new API with CollapsingHeader(label, ImGuiTreeNodeFlags_DefaultOpen).
@@ -546,12 +547,12 @@
  - drag float: up/down axis
  - drag float: added leeway on edge (e.g. a few invisible steps past the clamp limits)
  - tree node / optimization: avoid formatting when clipped.
- - tree node: clarify spacing, perhaps provide API to query exact spacing. provide API to draw the primitive. same with Bullet().
  - tree node: tree-node/header right-most side doesn't take account of horizontal scrolling.
- - tree node: add treenode/treepush int variants? because (void*) cast from int warns on some platforms/settings
+ - tree node: add treenode/treepush int variants? not there because (void*) cast from int warns on some platforms/settings?
  - tree node: try to apply scrolling at time of TreePop() if node was just opened and end of node is past scrolling limits?
  - tree node / selectable render mismatch which is visible if you use them both next to each other (e.g. cf. property viewer)
- - textwrapped: figure out better way to use TextWrapped() in an always auto-resize context (tooltip, etc.) (git issue #249)
+ - tree node: tweak color scheme to distinguish headers from selected tree node (#581)
+ - textwrapped: figure out better way to use TextWrapped() in an always auto-resize context (tooltip, etc.) (#249)
  - settings: write more decent code to allow saving/loading new fields
  - settings: api for per-tool simple persistent data (bool,int,float,columns sizes,etc.) in .ini file
  - style: add window shadows.
@@ -4204,6 +4205,12 @@ bool ImGui::Begin(const char* name, bool* p_open, const ImVec2& size_on_first_us
             }
         }
 
+        // Update ContentsRegionMax. All the variable it depends on are set above in this function.
+        window->ContentsRegionRect.Min.x = -window->Scroll.x + window->WindowPadding.x;
+        window->ContentsRegionRect.Min.x = -window->Scroll.y + window->WindowPadding.y + window->TitleBarHeight() + window->MenuBarHeight();
+        window->ContentsRegionRect.Max.x = -window->Scroll.x - window->WindowPadding.x + (window->SizeContentsExplicit.x != 0.0f ? window->SizeContentsExplicit.x : ImMax(window->SizeContents.x, window->Size.x - window->ScrollbarSizes.x)); 
+        window->ContentsRegionRect.Max.y = -window->Scroll.y - window->WindowPadding.y + (window->SizeContentsExplicit.y != 0.0f ? window->SizeContentsExplicit.y : ImMax(window->SizeContents.y, window->Size.y - window->ScrollbarSizes.y)); 
+
         // Setup drawing context
         window->DC.IndentX = 0.0f + window->WindowPadding.x - window->Scroll.x;
         window->DC.ColumnsOffsetX = 0.0f;
@@ -4974,12 +4981,10 @@ void ImGui::SetNextWindowFocus()
 }
 
 // In window space (not screen space!)
-// FIXME-OPT: Could cache and maintain it (pretty much only change on columns change)
 ImVec2 ImGui::GetContentRegionMax()
 {
     ImGuiWindow* window = GetCurrentWindowRead();
-    ImVec2 content_region_size = ImVec2(window->SizeContentsExplicit.x != 0.0f ? window->SizeContentsExplicit.x : window->Size.x - window->ScrollbarSizes.x, window->SizeContentsExplicit.y != 0.0f ? window->SizeContentsExplicit.y : window->Size.y - window->ScrollbarSizes.y);
-    ImVec2 mx = content_region_size - window->Scroll - window->WindowPadding;
+    ImVec2 mx = window->ContentsRegionRect.Max;
     if (window->DC.ColumnsCount != 1)
         mx.x = ImGui::GetColumnOffset(window->DC.ColumnsCurrent + 1) - window->WindowPadding.x;
     return mx;
@@ -5000,20 +5005,19 @@ float ImGui::GetContentRegionAvailWidth()
 ImVec2 ImGui::GetWindowContentRegionMin()
 {
     ImGuiWindow* window = GetCurrentWindowRead();
-    return ImVec2(-window->Scroll.x, -window->Scroll.y + window->TitleBarHeight() + window->MenuBarHeight()) + window->WindowPadding;
+    return window->ContentsRegionRect.Min;
 }
 
 ImVec2 ImGui::GetWindowContentRegionMax()
 {
     ImGuiWindow* window = GetCurrentWindowRead();
-    ImVec2 content_region_size = ImVec2(window->SizeContentsExplicit.x != 0.0f ? window->SizeContentsExplicit.x : window->Size.x, window->SizeContentsExplicit.y != 0.0f ? window->SizeContentsExplicit.y : window->Size.y);
-    ImVec2 m = content_region_size - window->Scroll - window->WindowPadding - window->ScrollbarSizes;
-    return m;
+    return window->ContentsRegionRect.Max;
 }
 
 float ImGui::GetWindowContentRegionWidth()
 {
-    return GetWindowContentRegionMax().x - GetWindowContentRegionMin().x;
+    ImGuiWindow* window = GetCurrentWindowRead();
+    return window->ContentsRegionRect.Max.x - window->ContentsRegionRect.Min.x;
 }
 
 float ImGui::GetTextLineHeight()
@@ -5852,7 +5856,7 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char* l
         bb.Max.x += (float)(int)(window->WindowPadding.x*0.5f) - 1;
     }
 
-    const float text_offset_x = g.FontSize + (display_frame ? padding.x*3 : padding.x*2);             // Collapser arrow width + Spacing
+    const float text_offset_x = (g.FontSize + (display_frame ? padding.x*3 : padding.x*2));   // Collapser arrow width + Spacing
     const float text_width = g.FontSize + (label_size.x > 0.0f ? label_size.x + padding.x*2 : 0.0f);   // Include collapser
     ItemSize(ImVec2(text_width, frame_height), text_base_offset_y);
 
@@ -5959,7 +5963,7 @@ bool ImGui::CollapsingHeader(const char* label, bool* p_open, ImGuiTreeNodeFlags
         // Create a small overlapping close button // FIXME: We can evolve this into user accessible helpers to add extra buttons on title bars, headers, etc.
         ImGuiContext& g = *GImGui;
         float button_sz = g.FontSize * 0.5f;
-        if (CloseButton(window->GetID((void*)(intptr_t)(id+1)), ImVec2(window->DC.LastItemRect.Max.x - g.Style.FramePadding.x - button_sz, window->DC.LastItemRect.Min.y + g.Style.FramePadding.y + button_sz), button_sz))
+        if (CloseButton(window->GetID((void*)(intptr_t)(id+1)), ImVec2(ImMin(window->DC.LastItemRect.Max.x, window->ClipRect.Max.x) - g.Style.FramePadding.x - button_sz, window->DC.LastItemRect.Min.y + g.Style.FramePadding.y + button_sz), button_sz))
             *p_open = false;
     }
 
@@ -6048,19 +6052,20 @@ bool ImGui::TreeNode(const char* label)
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
         return false;
-
     return TreeNodeBehavior(window->GetID(label), 0, label, NULL);
 }
 
-float ImGui::GetTreeNodeToLabelSpacing(ImGuiTreeNodeFlags flags)
+void ImGui::TreeAdvanceToLabelPos()
 {
     ImGuiContext& g = *GImGui;
-    float off_from_start;
-    if (flags & ImGuiTreeNodeFlags_Framed)
-        off_from_start = g.FontSize + (g.Style.FramePadding.x * 3.0f) - ((float)(int)(g.CurrentWindow->WindowPadding.x*0.5f) - 1);
-    else
-        off_from_start = g.FontSize + (g.Style.FramePadding.x * 2.0f);
-    return off_from_start;
+    g.CurrentWindow->DC.CursorPos.x += GetTreeNodeToLabelSpacing();
+}
+
+// Horizontal distance preceeding label when using TreeNode() or Bullet()
+float ImGui::GetTreeNodeToLabelSpacing()
+{
+    ImGuiContext& g = *GImGui;
+    return g.FontSize + (g.Style.FramePadding.x * 2.0f);
 }
 
 void ImGui::SetNextTreeNodeOpen(bool is_open, ImGuiSetCond cond)
@@ -9379,19 +9384,19 @@ void ImGui::Columns(int columns_count, const char* id, bool border)
     }
 }
 
-void ImGui::Indent()
+void ImGui::Indent(float indent_w)
 {
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = GetCurrentWindow();
-    window->DC.IndentX += g.Style.IndentSpacing;
+    window->DC.IndentX += (indent_w > 0.0f) ? indent_w : g.Style.IndentSpacing;
     window->DC.CursorPos.x = window->Pos.x + window->DC.IndentX + window->DC.ColumnsOffsetX;
 }
 
-void ImGui::Unindent()
+void ImGui::Unindent(float indent_w)
 {
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = GetCurrentWindow();
-    window->DC.IndentX -= g.Style.IndentSpacing;
+    window->DC.IndentX -= (indent_w > 0.0f) ? indent_w : g.Style.IndentSpacing;
     window->DC.CursorPos.x = window->Pos.x + window->DC.IndentX + window->DC.ColumnsOffsetX;
 }
 
