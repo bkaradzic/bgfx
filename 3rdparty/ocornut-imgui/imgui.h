@@ -1,4 +1,4 @@
-// dear imgui, v1.49 WIP
+// dear imgui, v1.50 WIP
 // (headers)
 
 // See imgui.cpp file for documentation.
@@ -16,7 +16,7 @@
 #include <stddef.h>         // ptrdiff_t, NULL
 #include <string.h>         // memset, memmove, memcpy, strlen, strchr, strcpy, strcmp
 
-#define IMGUI_VERSION       "1.49 WIP"
+#define IMGUI_VERSION       "1.50 WIP"
 
 // Define attributes of all API symbols declarations, e.g. for DLL under Windows.
 #ifndef IMGUI_API
@@ -34,6 +34,11 @@
 #define IM_PRINTFARGS(FMT) __attribute__((format(printf, FMT, (FMT+1))))
 #else
 #define IM_PRINTFARGS(FMT)
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wold-style-cast"
 #endif
 
 // Forward declarations
@@ -329,7 +334,7 @@ namespace ImGui
     IMGUI_API void          TreeAdvanceToLabelPos();                                                // advance cursor x position by GetTreeNodeToLabelSpacing()
     IMGUI_API float         GetTreeNodeToLabelSpacing();                                            // horizontal distance preceeding label when using TreeNode*() or Bullet() == (g.FontSize + style.FramePadding.x*2) for a regular unframed TreeNode
     IMGUI_API void          SetNextTreeNodeOpen(bool is_open, ImGuiSetCond cond = 0);               // set next TreeNode/CollapsingHeader open state.
-    IMGUI_API bool          CollapsingHeader(const char* label, ImGuiTreeNodeFlags flags = 0);      // if returning 'true' the header is open. user doesn't have to call TreePop().
+    IMGUI_API bool          CollapsingHeader(const char* label, ImGuiTreeNodeFlags flags = 0);      // if returning 'true' the header is open. doesn't indent nor push on ID stack. user doesn't have to call TreePop().
     IMGUI_API bool          CollapsingHeader(const char* label, bool* p_open, ImGuiTreeNodeFlags flags = 0); // when 'p_open' isn't NULL, display an additional small close button on upper right of the header
 
     // Widgets: Selectable / Lists
@@ -1387,6 +1392,10 @@ struct ImFont
     IMGUI_API void              GrowIndex(int new_size);
     IMGUI_API void              AddRemapChar(ImWchar dst, ImWchar src, bool overwrite_dst = true); // Makes 'dst' character/glyph points to 'src' character/glyph. Currently needs to be called AFTER fonts have been built.
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 //---- Include imgui_user.h at the end of imgui.h
 //---- So you can include code that extends ImGui using any of the types declared above.
