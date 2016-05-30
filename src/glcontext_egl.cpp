@@ -123,7 +123,7 @@ EGL_IMPORT
 
 		~SwapChainGL()
 		{
-			eglMakeCurrent(EGL_NO_DISPLAY, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+			eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 			eglDestroyContext(m_display, m_context);
 			eglDestroySurface(m_display, m_surface);
 		}
@@ -324,7 +324,7 @@ EGL_IMPORT
 	{
 		if (NULL != m_display)
 		{
-			eglMakeCurrent(EGL_NO_DISPLAY, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+			eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 			eglDestroyContext(m_display, m_context);
 			eglDestroySurface(m_display, m_surface);
 			eglTerminate(m_display);
@@ -344,7 +344,7 @@ EGL_IMPORT
 		if (NULL != m_display)
 		{
 			EGLNativeWindowType nwh = (EGLNativeWindowType )g_platformData.nwh;
-			eglMakeCurrent(EGL_NO_DISPLAY, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+			eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 			eglDestroySurface(m_display, m_surface);
 			m_surface = eglCreateWindowSurface(m_display, m_config, nwh, NULL);
 			BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
