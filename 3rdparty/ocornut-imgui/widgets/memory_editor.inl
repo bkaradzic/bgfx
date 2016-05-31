@@ -6,7 +6,7 @@ namespace ImGui
 //        End();
 //    }
 
-    void MemoryEditor::Draw(void* mem_data_void, int mem_size, size_t base_display_addr)
+    void MemoryEditor::Draw(void* mem_data_void, int mem_size, int base_display_addr)
     {
         PushFont(Font::Mono);
 
@@ -69,7 +69,7 @@ namespace ImGui
         for (int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++) // display only visible items
         {
             int addr = line_i * Rows;
-            Text("%0*zx: ", addr_digits_count, base_display_addr+addr);
+            Text("%0*x: ", addr_digits_count, base_display_addr+addr);
             SameLine();
 
             // Draw Hexadecimal
@@ -100,8 +100,8 @@ namespace ImGui
                     if (DataEditingTakeFocus)
                     {
                         SetKeyboardFocusHere();
-                        sprintf(AddrInput, "%0*zx", addr_digits_count, base_display_addr+addr);
-                        sprintf(DataInput, "%02x", mem_data[addr]);
+                        snprintf(AddrInput, sizeof(AddrInput), "%0*x", addr_digits_count, base_display_addr+addr);
+                        snprintf(DataInput, sizeof(DataInput), "%02x", mem_data[addr]);
                     }
 
                     PushItemWidth(CalcTextSize("FF").x);
@@ -237,7 +237,7 @@ namespace ImGui
         PopFont();
     }
 
-    void MemoryEditor::Draw(const void* mem_data, int mem_size, size_t base_display_addr)
+    void MemoryEditor::Draw(const void* mem_data, int mem_size, int base_display_addr)
     {
         Draw(const_cast<void*>(mem_data), mem_size, base_display_addr);
     }
