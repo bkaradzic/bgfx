@@ -1291,18 +1291,18 @@ namespace bgfx { namespace d3d9
 				? m_caps.MaxAnisotropy
 				: 1
 				;
-			uint32_t flags = _resolution.m_flags & ~(0
+			const uint32_t maskFlags = ~(0
 				| BGFX_RESET_HMD_RECENTER
 				| BGFX_RESET_MAXANISOTROPY
 				| BGFX_RESET_DEPTH_CLAMP
 				| BGFX_RESET_SUSPEND
 				);
 
-			if (m_resolution.m_width  != _resolution.m_width
-			||  m_resolution.m_height != _resolution.m_height
-			||  m_resolution.m_flags  != flags)
+			if (m_resolution.m_width            !=  _resolution.m_width
+			||  m_resolution.m_height           !=  _resolution.m_height
+			|| (m_resolution.m_flags&maskFlags) != (_resolution.m_flags&maskFlags) )
 			{
-				flags &= ~BGFX_RESET_INTERNAL_FORCE;
+				uint32_t flags = _resolution.m_flags & (~BGFX_RESET_INTERNAL_FORCE);
 
 				m_resolution = _resolution;
 				m_resolution.m_flags = flags;
