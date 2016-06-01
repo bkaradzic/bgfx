@@ -11,7 +11,6 @@
 #include <ocornut-imgui/imgui_wm.h>
 #include "imgui.h"
 #include "ocornut_imgui.h"
-#include <stb/stb_image.c>
 
 #ifndef USE_ENTRY
 #	if defined(SCI_NAMESPACE)
@@ -464,7 +463,7 @@ struct OcornutImguiContext
 				const FontRangeMerge& frm = s_fontRangeMerge[ii];
 
 				io.Fonts->AddFontFromMemoryTTF( (void*)frm.data
-						, frm.size
+						, (int)frm.size
 						, _fontSize
 						, &config
 						, frm.ranges

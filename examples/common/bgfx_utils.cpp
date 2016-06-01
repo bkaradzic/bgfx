@@ -14,11 +14,21 @@ namespace stl = tinystl;
 
 #include <bgfx/bgfx.h>
 #include <bx/commandline.h>
+#include <bx/endian.h>
 #include <bx/fpumath.h>
 #include <bx/readerwriter.h>
 #include <bx/string.h>
 #include "entry/entry.h"
 #include <ib-compress/indexbufferdecompression.h>
+
+#define LODEPNG_NO_COMPILE_ENCODER
+#define LODEPNG_NO_COMPILE_DISK
+#define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS
+#define LODEPNG_NO_COMPILE_ERROR_TEXT
+//#define LODEPNG_NO_COMPILE_ALLOCATORS
+#define LODEPNG_NO_COMPILE_CPP
+#include <lodepng/lodepng.cpp>
+#include <stb/stb_image.c>
 
 #include "bgfx_utils.h"
 
@@ -153,8 +163,8 @@ bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
 	return loadProgram(entry::getFileReader(), _vsName, _fsName);
 }
 
-typedef unsigned char stbi_uc;
-extern "C" stbi_uc *stbi_load_from_memory(stbi_uc const *buffer, int len, int *x, int *y, int *comp, int req_comp);
+//typedef unsigned char stbi_uc;
+//extern "C" stbi_uc *stbi_load_from_memory(stbi_uc const *buffer, int len, int *x, int *y, int *comp, int req_comp);
 
 bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath, uint32_t _flags, uint8_t _skip, bgfx::TextureInfo* _info)
 {
@@ -180,24 +190,76 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath,
 	void* data = loadMem(_reader, allocator, _filePath, &size);
 	if (NULL != data)
 	{
-		int width  = 0;
-		int height = 0;
-		int comp   = 0;
+		bgfx::TextureFormat::Enum format = bgfx::TextureFormat::RGBA8;
+		uint32_t bpp = 32;
 
-		uint8_t* img = NULL;
-		img = stbi_load_from_memory( (uint8_t*)data, size, &width, &height, &comp, 4);
+		uint32_t width  = 0;
+		uint32_t height = 0;
+
+		uint8_t* out = NULL;
+		static uint8_t pngMagic[] = { 0x89, 0x50, 0x4E, 0x47, 0x0d, 0x0a };
+		if (0 == memcmp(data, pngMagic, sizeof(pngMagic) ) )
+		{
+			unsigned error;
+			LodePNGState state;
+			lodepng_state_init(&state);
+			state.decoder.color_convert = 0;
+			error = lodepng_decode(&out, &width, &height, &state, (uint8_t*)data, size);
+
+			if (0 != error)
+			{
+				switch (state.info_raw.bitdepth)
+				{
+				case 16:
+					for (uint32_t ii = 0, num = width*height; ii < num; ++ii)
+					{
+						uint16_t* rgba = (uint16_t*)out + ii*4;
+						rgba[0] = bx::toHostEndian(rgba[0], false);
+						rgba[1] = bx::toHostEndian(rgba[1], false);
+						rgba[2] = bx::toHostEndian(rgba[2], false);
+						rgba[3] = bx::toHostEndian(rgba[3], false);
+					}
+					format = bgfx::TextureFormat::RGBA16;
+					bpp    = 64;
+					break;
+
+				case 32:
+					for (uint32_t ii = 0, num = width*height; ii < num; ++ii)
+					{
+						uint32_t* rgba = (uint32_t*)out + ii*4;
+						rgba[0] = bx::toHostEndian(rgba[0], false);
+						rgba[1] = bx::toHostEndian(rgba[1], false);
+						rgba[2] = bx::toHostEndian(rgba[2], false);
+						rgba[3] = bx::toHostEndian(rgba[3], false);
+					}
+					format = bgfx::TextureFormat::RGBA32U;
+					bpp    = 128;
+					break;
+
+				default:
+					break;
+				}
+			}
+
+			lodepng_state_cleanup(&state);
+		}
+		else
+		{
+			int comp   = 0;
+			out = stbi_load_from_memory( (uint8_t*)data, size, (int*)&width, (int*)&height, &comp, 4);
+		}
 
 		BX_FREE(allocator, data);
 
-		if (NULL != img)
+		if (NULL != out)
 		{
 			handle = bgfx::createTexture2D(uint16_t(width), uint16_t(height), 1
-											, bgfx::TextureFormat::RGBA8
+											, format
 											, _flags
-											, bgfx::copy(img, width*height*4)
+											, bgfx::copy(out, width*height*bpp/8)
 											);
 
-			free(img);
+			free(out);
 
 			if (NULL != _info)
 			{
@@ -207,7 +269,7 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath,
 					, 0
 					, false
 					, 1
-					, bgfx::TextureFormat::RGBA8
+					, format
 					);
 			}
 		}
