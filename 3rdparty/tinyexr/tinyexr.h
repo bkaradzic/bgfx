@@ -8031,7 +8031,7 @@ bool hufBuildDecTable(const long long *hcode, // i : encoding table
 
       HufDec *pl = hdecod + (c << (HUF_DECBITS - l));
 
-      for (long long i = 1 << (HUF_DECBITS - l); i > 0; i--, pl++) {
+      for (long long i = (long long)1 << (HUF_DECBITS - l); i > 0; i--, pl++) {
         if (pl->len || pl->p) {
           //
           // Error: a short code or a long code has

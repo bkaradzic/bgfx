@@ -34,10 +34,36 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wunused-result");
 #include "fontstash.h"
 BX_PRAGMA_DIAGNOSTIC_POP();
 
+#define LODEPNG_NO_COMPILE_ENCODER
+#define LODEPNG_NO_COMPILE_DISK
+#define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS
+#define LODEPNG_NO_COMPILE_ERROR_TEXT
+#define LODEPNG_NO_COMPILE_ALLOCATORS
+#define LODEPNG_NO_COMPILE_CPP
+#include <lodepng/lodepng.cpp>
+
+void* lodepng_malloc(size_t _size)
+{
+	return ::malloc(_size);
+}
+
+void* lodepng_realloc(void* _ptr, size_t _size)
+{
+	return ::realloc(_ptr, _size);
+}
+
+void lodepng_free(void* _ptr)
+{
+	::free(_ptr);
+}
+
 BX_PRAGMA_DIAGNOSTIC_PUSH();
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wmissing-field-initializers");
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow");
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wint-to-pointer-cast")
+#define STBI_MALLOC(_size)        lodepng_malloc(_size)
+#define STBI_REALLOC(_ptr, _size) lodepng_realloc(_ptr, _size)
+#define STBI_FREE(_ptr)           lodepng_free(_ptr)
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.c>
 BX_PRAGMA_DIAGNOSTIC_POP();

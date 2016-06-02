@@ -63,6 +63,10 @@ namespace bgfx
 		uint8_t minBlockY;
 		uint8_t depthBits;
 		uint8_t stencilBits;
+		uint8_t rBits;
+		uint8_t gBits;
+		uint8_t bBits;
+		uint8_t aBits;
 		uint8_t encoding;
 	};
 
@@ -303,6 +307,15 @@ namespace bgfx
 
 	///
 	void imageRgba8Downsample2x2(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst);
+
+	///
+	void imageRgba32fToLinear(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src);
+
+	///
+	void imageRgba32fToGamma(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src);
+
+	///
+	void imageRgba32fLinearDownsample2x2(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst);
 
 	///
 	void imageRgba32fDownsample2x2NormalMap(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst);
