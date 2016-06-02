@@ -1,3 +1,7 @@
+#ifdef _MSC_VER
+#   define snprintf _snprintf
+#endif
+
 namespace ImGui
 {
 //    const char* title;
