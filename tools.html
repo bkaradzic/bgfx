@@ -119,7 +119,7 @@
         <div class="rst-content">
           
 
-
+ 
 
 
 
@@ -153,17 +153,17 @@ This technique has certain drawbacks, but overall it&#8217;s simple and allows
 quick authoring of cross-platform shaders.</p>
 <p>Some differences between bgfx&#8217;s shaderc flavor of GLSL and regular GLSL:</p>
 <ul class="simple">
-<li>No <tt class="docutils literal"><span class="pre">bool/int</span></tt> uniforms, all uniforms must be <tt class="docutils literal"><span class="pre">float</span></tt>.</li>
-<li>Attributes and varyings can be accessed only from <tt class="docutils literal"><span class="pre">main()</span></tt>
+<li>No <code class="docutils literal"><span class="pre">bool/int</span></code> uniforms, all uniforms must be <code class="docutils literal"><span class="pre">float</span></code>.</li>
+<li>Attributes and varyings can be accessed only from <code class="docutils literal"><span class="pre">main()</span></code>
 function.</li>
-<li>Must use <tt class="docutils literal"><span class="pre">SAMPLER2D/3D/CUBE/etc.</span></tt> macros instead of
-<tt class="docutils literal"><span class="pre">sampler2D/3D/Cube/etc.</span></tt> tokens.</li>
-<li>Must use <tt class="docutils literal"><span class="pre">vec2/3/4_splat(&lt;value&gt;)</span></tt> instead of
-<tt class="docutils literal"><span class="pre">vec2/3/4(&lt;value&gt;)</span></tt>.</li>
-<li>Must use <tt class="docutils literal"><span class="pre">mul(x,</span> <span class="pre">y)</span></tt> when multiplying vectors and matrices.</li>
-<li>Must use <tt class="docutils literal"><span class="pre">varying.def.sc</span></tt> to define input/output semantic and
-precission instead of using <tt class="docutils literal"><span class="pre">attribute/in</span></tt> and <tt class="docutils literal"><span class="pre">varying/in/out</span></tt>.</li>
-<li><tt class="docutils literal"><span class="pre">$input/$output</span></tt> tokens must appear at the begining of shader.</li>
+<li>Must use <code class="docutils literal"><span class="pre">SAMPLER2D/3D/CUBE/etc.</span></code> macros instead of
+<code class="docutils literal"><span class="pre">sampler2D/3D/Cube/etc.</span></code> tokens.</li>
+<li>Must use <code class="docutils literal"><span class="pre">vec2/3/4_splat(&lt;value&gt;)</span></code> instead of
+<code class="docutils literal"><span class="pre">vec2/3/4(&lt;value&gt;)</span></code>.</li>
+<li>Must use <code class="docutils literal"><span class="pre">mul(x,</span> <span class="pre">y)</span></code> when multiplying vectors and matrices.</li>
+<li>Must use <code class="docutils literal"><span class="pre">varying.def.sc</span></code> to define input/output semantic and
+precission instead of using <code class="docutils literal"><span class="pre">attribute/in</span></code> and <code class="docutils literal"><span class="pre">varying/in/out</span></code>.</li>
+<li><code class="docutils literal"><span class="pre">$input/$output</span></code> tokens must appear at the begining of shader.</li>
 </ul>
 <p>For more info see <a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/bgfx_shader.sh">shader helper
 macros</a>.</p>

@@ -137,7 +137,7 @@
         <div class="rst-content">
           
 
-
+ 
 
 
 
@@ -252,9 +252,9 @@ one place, and on the low-level this allows better optimization of
 rendering order. This sometimes creates undesired results usually for
 GUI rendering, where draw order should usually match submit order. bgfx
 provides way to enable sequential rendering for these cases (see
-<tt class="docutils literal"><span class="pre">bgfx::setViewSeq</span></tt>).</p>
+<code class="docutils literal"><span class="pre">bgfx::setViewSeq</span></code>).</p>
 <p>Internally all low-level rendering draw calls are issued inside single
-function <tt class="docutils literal"><span class="pre">RendererContextI::submit</span></tt>. This function exist inside each
+function <code class="docutils literal"><span class="pre">RendererContextI::submit</span></code>. This function exist inside each
 renderer backend implementation.</p>
 <blockquote>
 <div><ul class="simple">
@@ -277,9 +277,9 @@ SDK</a>,
 SDK</a>.</p>
 <p>All configuration settings are located inside
 <a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/config.h">src/config.h</a>.</p>
-<p>Every <tt class="docutils literal"><span class="pre">BGFX_CONFIG_*</span></tt> setting can be changed by passing defines thru
+<p>Every <code class="docutils literal"><span class="pre">BGFX_CONFIG_*</span></code> setting can be changed by passing defines thru
 compiler switches. For example setting preprocessor define
-<tt class="docutils literal"><span class="pre">BGFX_CONFIG_RENDERER_OPENGL=1</span></tt> will change backend renderer to OpenGL
+<code class="docutils literal"><span class="pre">BGFX_CONFIG_RENDERER_OPENGL=1</span></code> will change backend renderer to OpenGL
 2.1. on Windows. Since rendering APIs are platform specific, this
 obviously won&#8217;t work nor make sense in all cases. Certain platforms have
 only single choice, for example the Native Client works only with OpenGL
@@ -291,7 +291,7 @@ errors.</p>
 <div class="section" id="renderdoc">
 <h3>RenderDoc<a class="headerlink" href="#renderdoc" title="Permalink to this headline">¶</a></h3>
 <p>Loading of RenderDoc is integrated in bgfx when using DX11 or OpenGL
-renderer. You can drop in <tt class="docutils literal"><span class="pre">renderdoc.dll</span></tt> from RenderDoc distribution
+renderer. You can drop in <code class="docutils literal"><span class="pre">renderdoc.dll</span></code> from RenderDoc distribution
 into working directory, and it will be automatically loaded during bgfx
 initialization. This allows frame capture at any time by pressing
 <strong>F11</strong>.</p>
@@ -300,8 +300,8 @@ initialization. This allows frame capture at any time by pressing
 <div class="section" id="intelgpa">
 <h3>IntelGPA<a class="headerlink" href="#intelgpa" title="Permalink to this headline">¶</a></h3>
 <p>Right click <strong>Intel GPA Monitor</strong> tray icon, choose preferences, check
-&#8220;Auto-detect launched applications&#8221; option. Find <tt class="docutils literal"><span class="pre">InjectionList.txt</span></tt>
-in GPA directory and add <tt class="docutils literal"><span class="pre">examples-*</span></tt> to the list.</p>
+&#8220;Auto-detect launched applications&#8221; option. Find <code class="docutils literal"><span class="pre">InjectionList.txt</span></code>
+in GPA directory and add <code class="docutils literal"><span class="pre">examples-*</span></code> to the list.</p>
 <p>Download:
 <a class="reference external" href="https://software.intel.com/en-us/vcsource/tools/intel-gpa">IntelGPA</a></p>
 </div>
@@ -473,19 +473,19 @@ int main(...
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">You can use <tt class="docutils literal"><span class="pre">--with-sdl</span></tt> when runnning GENie to enable SDL2 integration with examples:
-<tt class="docutils literal"><span class="pre">genie</span> <span class="pre">--with-sdl</span> <span class="pre">vs2012</span></tt></p>
+<p class="last">You can use <code class="docutils literal"><span class="pre">--with-sdl</span></code> when runnning GENie to enable SDL2 integration with examples:
+<code class="docutils literal"><span class="pre">genie</span> <span class="pre">--with-sdl</span> <span class="pre">vs2012</span></code></p>
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last"><tt class="docutils literal"><span class="pre">--with-glfw</span></tt> is also available, but it&#8217;s just simple stub to be used to test GLFW
+<p class="last"><code class="docutils literal"><span class="pre">--with-glfw</span></code> is also available, but it&#8217;s just simple stub to be used to test GLFW
 integration API.</p>
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">Special care is necessary to make custom windowing to work with multithreaded renderer.
 Each platform has rules about where renderer can be and how multithreading interacts
-with context/device. To disable multithreaded render use <tt class="docutils literal"><span class="pre">BGFX_CONFIG_MULTITHREDED=0</span></tt>
+with context/device. To disable multithreaded render use <code class="docutils literal"><span class="pre">BGFX_CONFIG_MULTITHREDED=0</span></code>
 preprocessor define.</p>
 </div>
 </div>
