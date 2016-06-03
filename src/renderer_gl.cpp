@@ -5640,6 +5640,11 @@ namespace bgfx { namespace gl
 	{
 		BGFX_GPU_PROFILER_BEGIN_DYNAMIC("rendererSubmit");
 
+		if (_render->m_capture)
+		{
+			renderDocTriggerCapture();
+		}
+
 		if (1 < m_numWindows
 		&&  m_vaoSupport)
 		{
