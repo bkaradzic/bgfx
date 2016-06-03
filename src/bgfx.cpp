@@ -1471,7 +1471,7 @@ namespace bgfx
 		}
 	}
 
-	uint32_t Context::frame()
+	uint32_t Context::frame(bool _capture)
 	{
 		BX_CHECK(0 == m_instBufferCount, "Instance buffer allocated, but not used. This is incorrect, and causes memory leak.");
 
@@ -1479,6 +1479,8 @@ namespace bgfx
 		{
 			m_occlusionQuerySet.clear();
 		}
+
+		m_submit->m_capture = _capture;
 
 		BGFX_PROFILER_SCOPE(bgfx, main_thread_frame, 0xff2040ff);
 		// wait for render thread to finish
@@ -2510,10 +2512,10 @@ namespace bgfx
 		s_ctx->reset(_width, _height, _flags);
 	}
 
-	uint32_t frame()
+	uint32_t frame(bool _capture)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		return s_ctx->frame();
+		return s_ctx->frame(_capture);
 	}
 
 	const Caps* getCaps()
@@ -3859,9 +3861,9 @@ BGFX_C_API void bgfx_reset(uint32_t _width, uint32_t _height, uint32_t _flags)
 	bgfx::reset(_width, _height, _flags);
 }
 
-BGFX_C_API uint32_t bgfx_frame()
+BGFX_C_API uint32_t bgfx_frame(bool _capture)
 {
-	return bgfx::frame();
+	return bgfx::frame(_capture);
 }
 
 BGFX_C_API bgfx_renderer_type_t bgfx_get_renderer_type()

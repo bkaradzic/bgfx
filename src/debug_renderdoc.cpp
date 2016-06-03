@@ -56,7 +56,7 @@ namespace bgfx
 	}
 
 	pRENDERDOC_GetAPI RENDERDOC_GetAPI;
-	static RENDERDOC_API_1_0_0* s_renderDoc;
+	static RENDERDOC_API_1_0_1* s_renderDoc;
 
 	void* loadRenderDoc()
 	{
@@ -105,6 +105,14 @@ namespace bgfx
 		}
 	}
 
+	void renderDocTriggerCapture()
+	{
+		if (NULL != s_renderDoc)
+		{
+			s_renderDoc->TriggerCapture();
+		}
+	}
+
 } // namespace bgfx
 
 #else
@@ -118,6 +126,10 @@ namespace bgfx
 	}
 
 	void unloadRenderDoc(void*)
+	{
+	}
+
+	void renderDocTriggerCapture()
 	{
 	}
 

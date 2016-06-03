@@ -63,7 +63,7 @@ int _main_(int _argc, char** _argv)
 
 		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
-		bgfx_frame();
+		bgfx_frame(false);
 	}
 
 	// Shutdown bgfx.

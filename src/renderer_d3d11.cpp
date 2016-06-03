@@ -5020,6 +5020,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			return;
 		}
 
+		if (_render->m_capture)
+		{
+			renderDocTriggerCapture();
+		}
+
 		PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), L"rendererSubmit");
 		BGFX_GPU_PROFILER_BEGIN_DYNAMIC("rendererSubmit");
 

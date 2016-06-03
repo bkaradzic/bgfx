@@ -1375,6 +1375,8 @@ namespace bgfx
 			, m_waitSubmit(0)
 			, m_waitRender(0)
 			, m_hmdInitialized(false)
+			, m_capture(false)
+			, m_discard(false)
 		{
 			SortKey term;
 			term.reset();
@@ -1428,6 +1430,7 @@ namespace bgfx
 			m_cmdPre.start();
 			m_cmdPost.start();
 			m_uniformBuffer->reset();
+			m_capture = false;
 			m_discard = false;
 		}
 
@@ -1836,6 +1839,7 @@ namespace bgfx
 		int64_t m_waitRender;
 
 		bool m_hmdInitialized;
+		bool m_capture;
 		bool m_discard;
 	};
 
@@ -3865,7 +3869,7 @@ namespace bgfx
 			blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, textureHandle, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
 		}
 
-		BGFX_API_FUNC(uint32_t frame() );
+		BGFX_API_FUNC(uint32_t frame(bool _capture = false) );
 
 		void dumpViewStats();
 		void freeDynamicBuffers();

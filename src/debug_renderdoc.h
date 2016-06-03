@@ -10,6 +10,7 @@ namespace bgfx
 {
 	void* loadRenderDoc();
 	void unloadRenderDoc(void*);
+	void renderDocTriggerCapture();
 
 } // namespace bgfx
 
