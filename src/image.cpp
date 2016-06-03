@@ -18,8 +18,8 @@ namespace bgfx
 		//  |  |  |   |  |  +---------------------------- min blocks y
 		//  |  |  |   |  |  |   +------------------------ depth bits
 		//  |  |  |   |  |  |   |  +--------------------- stencil bits
-		//  |  |  |   |  |  |   |  |   +----------------- r bits
-		//  |  |  |   |  |  |   |  |   |   g   b   a  +-- encoding type
+		//  |  |  |   |  |  |   |  |   +---+---+---+----- r, g, b, a bits
+		//  |  |  |   |  |  |   |  |   r   g   b   a  +-- encoding type
 		//  |  |  |   |  |  |   |  |   |   |   |   |  |
 		{   4, 4, 4,  8, 1, 1,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // BC1
 		{   8, 4, 4, 16, 1, 1,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // BC2
