@@ -4536,9 +4536,11 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx11readTextureE13TextureHandlePv">
-<span id="bgfx::readTexture__TextureHandle.voidP"></span><span class="target" id="bgfxnamespacebgfx_1ac8de0663cbec720564e98e452fcb0ed2"></span>void <code class="descclassname">bgfx::</code><code class="descname">readTexture</code><span class="sig-paren">(</span>TextureHandle <em>_handle</em>, void *<em>_data</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11readTextureE13TextureHandlePv" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::readTexture__TextureHandle.voidP"></span><span class="target" id="bgfxnamespacebgfx_1a6e6d88f74de73c87ca9644fd89eb6123"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">readTexture</code><span class="sig-paren">(</span>TextureHandle <em>_handle</em>, void *<em>_data</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11readTextureE13TextureHandlePv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read back texture content. </p>
 <p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Frame number when the result will be available. See: <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a7b228b3e83595148e428a248d73480e8"><span><span class="pre">bgfx::frame</span></span></a></code>.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>Texture must be created with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_READ_BACK</span></code> flag. </dd>
 <dt><strong>Attention</strong></dt>
@@ -4559,9 +4561,11 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx11readTextureE17FrameBufferHandle7uint8_tPv">
-<span id="bgfx::readTexture__FrameBufferHandle.uint8_t.voidP"></span><span class="target" id="bgfxnamespacebgfx_1a3a6e449f0e2986a4a4c7f97ecb7e201f"></span>void <code class="descclassname">bgfx::</code><code class="descname">readTexture</code><span class="sig-paren">(</span>FrameBufferHandle <em>_handle</em>, uint8_t <em>_attachment</em>, void *<em>_data</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11readTextureE17FrameBufferHandle7uint8_tPv" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::readTexture__FrameBufferHandle.uint8_t.voidP"></span><span class="target" id="bgfxnamespacebgfx_1a12fcff3a4cc55f59e90c8701224725b8"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">readTexture</code><span class="sig-paren">(</span>FrameBufferHandle <em>_handle</em>, uint8_t <em>_attachment</em>, void *<em>_data</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11readTextureE17FrameBufferHandle7uint8_tPv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read back texture content. </p>
 <p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Frame number when the result will be available. See: <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a7b228b3e83595148e428a248d73480e8"><span><span class="pre">bgfx::frame</span></span></a></code>.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>Texture must be created with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_READ_BACK</span></code> flag. </dd>
 <dt><strong>Attention</strong></dt>
@@ -4607,6 +4611,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="bgfx::createFrameBuffer__uint16_t.uint16_t.TextureFormat::Enum.uint32_t"></span><span class="target" id="bgfxnamespacebgfx_1a51e6723db7d8375e211b2ae5046634b5"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>uint16_t <em>_width</em>, uint16_t <em>_height</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_textureFlags</em> = BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferE8uint16_t8uint16_tN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create frame buffer (simple). </p>
 <p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Handle to frame buffer object.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_frame_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -4634,6 +4640,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="bgfx::createFrameBuffer__BackbufferRatio::Enum.TextureFormat::Enum.uint32_t"></span><span class="target" id="bgfxnamespacebgfx_1a721dad473bb58b7331864e95e6433c46"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>BackbufferRatio::Enum <em>_ratio</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_textureFlags</em> = BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio if back buffer resolution changes. </p>
 <p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Handle to frame buffer object.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_frame_buffer_scaled</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -4659,6 +4667,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="bgfx::createFrameBuffer__uint8_t.TextureHandleCP.b"></span><span class="target" id="bgfxnamespacebgfx_1a24c15472da58c79e49b04cb8ed97a436"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>uint8_t <em>_num</em>, <em class="property">const</em> TextureHandle *<em>_handles</em>, bool <em>_destroyTextures</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferE7uint8_tPK13TextureHandleb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create frame buffer. </p>
 <p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Handle to frame buffer object.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_frame_buffer_from_handles</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
