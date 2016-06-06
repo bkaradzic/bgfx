@@ -464,7 +464,7 @@ struct OcornutImguiContext
 
 				io.Fonts->AddFontFromMemoryTTF( (void*)frm.data
 						, (int)frm.size
-						, _fontSize
+						, _fontSize-3.0f
 						, &config
 						, frm.ranges
 						);
