@@ -3129,20 +3129,21 @@ namespace bgfx
 			textureDecRef(_handle);
 		}
 
-		BGFX_API_FUNC(void readTexture(TextureHandle _handle, void* _data) )
+		BGFX_API_FUNC(uint32_t readTexture(TextureHandle _handle, void* _data) )
 		{
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::ReadTexture);
 			cmdbuf.write(_handle);
 			cmdbuf.write(_data);
+			return m_frames + 2;
 		}
 
-		BGFX_API_FUNC(void readTexture(FrameBufferHandle _handle, uint8_t _attachment, void* _data) )
+		BGFX_API_FUNC(uint32_t readTexture(FrameBufferHandle _handle, uint8_t _attachment, void* _data) )
 		{
 			const FrameBufferRef& ref = m_frameBufferRef[_handle.idx];
 			BX_CHECK(!ref.m_window, "Can't sample window frame buffer.");
 			TextureHandle textureHandle = ref.un.m_th[_attachment];
 			BX_CHECK(isValid(textureHandle), "Frame buffer texture %d is invalid.", _attachment);
-			readTexture(textureHandle, _data);
+			return readTexture(textureHandle, _data);
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height)
