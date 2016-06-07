@@ -9,7 +9,7 @@ namespace ImGui
         : Ptr(NULL)
     {
         if (NULL != rhs.Ptr
-            && 0 != strcmp(rhs.Ptr, ""))
+        &&  0 != strcmp(rhs.Ptr, ""))
         {
             Ptr = ImStrdup(rhs.Ptr);
         }
@@ -19,7 +19,7 @@ namespace ImGui
         : Ptr(NULL)
     {
         if (NULL != rhs
-            && 0 != strcmp(rhs, ""))
+        &&  0 != strcmp(rhs, ""))
         {
             Ptr = ImStrdup(rhs);
         }
@@ -47,7 +47,7 @@ namespace ImGui
             Clear();
 
             if (NULL != rhs
-                && 0 != strcmp(rhs, ""))
+            &&  0 != strcmp(rhs, ""))
             {
                 Ptr = ImStrdup(rhs);
             }
