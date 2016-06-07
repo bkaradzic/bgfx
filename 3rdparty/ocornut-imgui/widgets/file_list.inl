@@ -4,26 +4,13 @@
 namespace ImGui
 {
 	ImFileInfo::ImFileInfo(const char* name, int64_t size)
+		: Name(name)
+		, Size(size)
 	{
-		Name = ImStrdup(name);
-		Size = size;
 	}
 
 	ImFileInfo::~ImFileInfo()
 	{
-		MemFree(Name);
-		Name = NULL;
-	}
-
-	ImFileInfo& ImFileInfo::operator=(const ImFileInfo& rhs)
-	{
-		if (this != &rhs)
-		{
-			Name = ImStrdup(rhs.Name);
-			Size = rhs.Size;
-		}
-
-		return *this;
 	}
 
 	void ImFileList::ChDir(const char* path)
@@ -68,11 +55,11 @@ namespace ImGui
 		{
 			const float lineHeight = GetTextLineHeightWithSpacing();
 
-			char* chdir = NULL;
+			ImString chdir;
 
 			int pos = 0;
 			ImGuiListClipper clipper(FileList.size(), lineHeight);
-			for (ImVector<ImFileInfo>::const_iterator it = FileList.begin(), itEnd = FileList.end()
+			for (FileInfoArray::const_iterator it = FileList.begin(), itEnd = FileList.end()
 				; it != itEnd
 				; ++it
 				)
@@ -85,7 +72,7 @@ namespace ImGui
 					const bool isDir = -1 == it->Size;
 					bool isSelected  = Pos == pos;
 
-					bool clicked = Selectable(it->Name, &isSelected, 0, ImVec2(150.0f, 0.0f) );
+					bool clicked = Selectable(it->Name.CStr(), &isSelected, 0, ImVec2(150.0f, 0.0f) );
 					SameLine();
 					if (isDir)
 					{
@@ -98,18 +85,16 @@ namespace ImGui
 
 					if (clicked)
 					{
-						if (0 == ImStricmp(it->Name, "..") )
+						if (0 == strcmp(it->Name.CStr(), "..") )
 						{
-							MemFree(chdir);
-							chdir = ImStrdup(it->Name);
+							chdir = it->Name;
 						}
 
 						Pos = pos;
 
 						if (isDir)
 						{
-							MemFree(chdir);
-							chdir = ImStrdup(it->Name);
+							chdir = it->Name;
 						}
 					}
 
@@ -121,10 +106,9 @@ namespace ImGui
 
 			ListBoxFooter();
 
-			if (NULL != chdir)
+			if (!chdir.IsEmpty() )
 			{
-				ChDir(chdir);
-				MemFree(chdir);
+				ChDir(chdir.CStr() );
 			}
 		}
 
