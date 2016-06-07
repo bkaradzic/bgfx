@@ -80,7 +80,7 @@ namespace ImGui
 					}
 					else
 					{
-						Text("%10d", it->Size);
+						Text("%10" PRId64, it->Size);
 					}
 
 					if (clicked)

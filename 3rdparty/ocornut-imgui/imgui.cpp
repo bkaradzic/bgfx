@@ -620,6 +620,7 @@
 #endif
 
 #ifdef _MSC_VER
+#pragma warning (disable: 4201) // nonstandard extension used: nameless struct/union
 #pragma warning (disable: 4127) // condition expression is constant
 #pragma warning (disable: 4505) // unreferenced local function has been removed (stb stuff)
 #pragma warning (disable: 4996) // 'This function or variable may be unsafe': strcpy, strdup, sprintf, vsnprintf, sscanf, fopen
