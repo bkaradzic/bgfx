@@ -15,4 +15,5 @@ namespace ImGui
 
 } // namespace ImGui
 
+#include "widgets/file_list.h"
 #include "widgets/memory_editor.h"
