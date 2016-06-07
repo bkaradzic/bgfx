@@ -72,8 +72,8 @@ namespace ImGui
 					const bool isDir = -1 == it->Size;
 					bool isSelected  = Pos == pos;
 
-					bool clicked = Selectable(it->Name.CStr(), &isSelected, 0, ImVec2(150.0f, 0.0f) );
-					SameLine();
+					bool clicked = Selectable(it->Name.CStr(), &isSelected);
+					SameLine(150);
 					if (isDir)
 					{
 						Text("%10s", "<DIR>");
