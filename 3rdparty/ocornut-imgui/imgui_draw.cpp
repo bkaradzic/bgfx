@@ -1697,7 +1697,7 @@ void ImFont::BuildLookupTable()
     for (int i = 0; i != Glyphs.Size; i++)
         max_codepoint = ImMax(max_codepoint, (int)Glyphs[i].Codepoint);
 
-    IM_ASSERT(Glyphs.Size < 32*1024);
+    IM_ASSERT(Glyphs.Size < 0xFFFF); // -1 is reserved
     IndexXAdvance.clear();
     IndexLookup.clear();
     GrowIndex(max_codepoint + 1);
@@ -1705,7 +1705,7 @@ void ImFont::BuildLookupTable()
     {
         int codepoint = (int)Glyphs[i].Codepoint;
         IndexXAdvance[codepoint] = Glyphs[i].XAdvance;
-        IndexLookup[codepoint] = (short)i;
+        IndexLookup[codepoint] = (unsigned short)i;
     }
 
     // Create a glyph to handle TAB
@@ -1719,7 +1719,7 @@ void ImFont::BuildLookupTable()
         tab_glyph.Codepoint = '\t';
         tab_glyph.XAdvance *= 4;
         IndexXAdvance[(int)tab_glyph.Codepoint] = (float)tab_glyph.XAdvance;
-        IndexLookup[(int)tab_glyph.Codepoint] = (short)(Glyphs.Size-1);
+        IndexLookup[(int)tab_glyph.Codepoint] = (unsigned short)(Glyphs.Size-1);
     }
 
     FallbackGlyph = NULL;
@@ -1747,7 +1747,7 @@ void ImFont::GrowIndex(int new_size)
     for (int i = old_size; i < new_size; i++)
     {
         IndexXAdvance[i] = -1.0f;
-        IndexLookup[i] = (short)-1;
+        IndexLookup[i] = (unsigned short)-1;
     }
 }
 
@@ -1756,13 +1756,13 @@ void ImFont::AddRemapChar(ImWchar dst, ImWchar src, bool overwrite_dst)
     IM_ASSERT(IndexLookup.Size > 0);    // Currently this can only be called AFTER the font has been built, aka after calling ImFontAtlas::GetTexDataAs*() function.
     int index_size = IndexLookup.Size;
 
-    if (dst < index_size && IndexLookup.Data[dst] == -1 && !overwrite_dst) // 'dst' already exists
+    if (dst < index_size && IndexLookup.Data[dst] == (unsigned short)-1 && !overwrite_dst) // 'dst' already exists
         return;
     if (src >= index_size && dst >= index_size) // both 'dst' and 'src' don't exist -> no-op
         return;
 
     GrowIndex(dst + 1);
-    IndexLookup[dst] = (src < index_size) ? IndexLookup.Data[src] : -1;
+    IndexLookup[dst] = (src < index_size) ? IndexLookup.Data[src] : (unsigned short)-1;
     IndexXAdvance[dst] = (src < index_size) ? IndexXAdvance.Data[src] : 1.0f;
 }
 
@@ -1770,8 +1770,8 @@ const ImFont::Glyph* ImFont::FindGlyph(unsigned short c) const
 {
     if (c < IndexLookup.Size)
     {
-        const short i = IndexLookup[c];
-        if (i != -1)
+        const unsigned short i = IndexLookup[c];
+        if (i != (unsigned short)-1)
             return &Glyphs.Data[i];
     }
     return FallbackGlyph;

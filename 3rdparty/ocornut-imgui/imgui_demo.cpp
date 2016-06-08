@@ -442,6 +442,19 @@ void ImGui::ShowTestWindow(bool* p_open)
                 ImGui::Selectable("Hello.h", &selected[2]);   ImGui::SameLine(300); ImGui::Text(" 2,345 bytes");
                 ImGui::TreePop();
             }
+            if (ImGui::TreeNode("In columns"))
+            {
+                ImGui::Columns(3, NULL, false);
+                static bool selected[16] = { 0 };
+                for (int i = 0; i < 16; i++)
+                {
+                    char label[32]; sprintf(label, "Item %d", i);
+                    if (ImGui::Selectable(label, &selected[i])) {}
+                    ImGui::NextColumn();
+                }
+                ImGui::Columns(1);
+                ImGui::TreePop();
+            }
             if (ImGui::TreeNode("Grid"))
             {
                 static bool selected[16] = { true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true };
@@ -1312,7 +1325,22 @@ void ImGui::ShowTestWindow(bool* p_open)
         // Basic columns
         if (ImGui::TreeNode("Basic"))
         {
-            ImGui::Columns(4, "mycolumns");
+            ImGui::Text("Without border:");
+            ImGui::Columns(3, "mycolumns3", false);  // 3-ways, no border
+            ImGui::Separator();
+            for (int n = 0; n < 14; n++)
+            {
+                char label[32];
+                sprintf(label, "Item %d", n);
+                if (ImGui::Selectable(label)) {}
+                //if (ImGui::Button(label, ImVec2(-1,0))) {}
+                ImGui::NextColumn();
+            }
+            ImGui::Columns(1);
+            ImGui::Separator();
+
+            ImGui::Text("With border:");
+            ImGui::Columns(4, "mycolumns"); // 4-ways, with border
             ImGui::Separator();
             ImGui::Text("ID"); ImGui::NextColumn();
             ImGui::Text("Name"); ImGui::NextColumn();
