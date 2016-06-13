@@ -106,6 +106,13 @@ namespace bgfx
 		NULL
 	};
 
+	static const char* s_texelFetch[] =
+	{
+		"texelFetch",
+		"texelFetchOffset",
+		NULL
+	};
+
 	const char* s_uniformTypeName[UniformType::Count] =
 	{
 		"int",
@@ -1360,16 +1367,6 @@ namespace bgfx
 					||  0 != essl
 					||  0 != metal)
 					{
-						if (120 == glsl
-						||  0   != essl)
-						{
-							preprocessor.writef(
-								"#define ivec2 vec2\n"
-								"#define ivec3 vec3\n"
-								"#define ivec4 vec4\n"
-								);
-						}
-
 						if (0 == essl)
 						{
 							// bgfx shadow2D/Proj behave like EXT_shadow_samplers
@@ -1740,34 +1737,41 @@ namespace bgfx
 							{
 								std::string code;
 
-								const bool hasTextureLod    = NULL != bx::findIdentifierMatch(input, s_ARB_shader_texture_lod /*EXT_shader_texture_lod*/);
-								const bool hasShader5       = NULL != bx::findIdentifierMatch(input, s_ARB_gpu_shader5);
-								const bool hasShaderPacking = NULL != bx::findIdentifierMatch(input, s_ARB_shading_language_packing);
-								const bool hasTextureMS     = NULL != bx::findIdentifierMatch(input, s_ARB_texture_multisample);
+								const bool usesTextureLod = !!bx::findIdentifierMatch(input, s_ARB_shader_texture_lod /*EXT_shader_texture_lod*/);
+								const bool usesGpuShader5 = !!bx::findIdentifierMatch(input, s_ARB_gpu_shader5);
+								const bool usesPacking    = !!bx::findIdentifierMatch(input, s_ARB_shading_language_packing);
+								const bool usesTextureMS  = !!bx::findIdentifierMatch(input, s_ARB_texture_multisample);
+								const bool usesTexelFetch = !!bx::findIdentifierMatch(input, s_texelFetch);
 
 								if (0 == essl)
 								{
-									const bool need130 = 120 == glsl
-										&& bx::findIdentifierMatch(input, s_130)
-										;
+									const bool need130 = 120 == glsl && (false
+										|| bx::findIdentifierMatch(input, s_130)
+										|| usesTexelFetch
+										);
 
 									if (0 != metal)
 									{
 										bx::stringPrintf(code, "#version 120\n");
+										bx::stringPrintf(code,
+												"#define ivec2 vec2\n"
+												"#define ivec3 vec3\n"
+												"#define ivec4 vec4\n"
+												);
 									}
 									else
 									{
 										bx::stringPrintf(code, "#version %s\n", need130 ? "130" : profile);
 									}
 
-									if (hasShader5)
+									if (usesGpuShader5)
 									{
 										bx::stringPrintf(code
 											, "#extension GL_ARB_gpu_shader5 : enable\n"
 											);
 									}
 
-									if (hasShaderPacking)
+									if (usesPacking)
 									{
 										bx::stringPrintf(code
 											, "#extension GL_ARB_shading_language_packing : enable\n"
@@ -1779,7 +1783,7 @@ namespace bgfx
 										  "#define bgfxShadow2DProj shadow2DProj\n"
 										);
 
-									if (hasTextureLod
+									if (usesTextureLod
 									&&  130 > glsl)
 									{
 										bx::stringPrintf(code
@@ -1787,7 +1791,7 @@ namespace bgfx
 											);
 									}
 
-									if (hasTextureMS)
+									if (usesTextureMS)
 									{
 										bx::stringPrintf(code
 											, "#extension GL_ARB_texture_multisample : enable\n"
@@ -1798,7 +1802,7 @@ namespace bgfx
 								{
 									// Pretend that all extensions are available.
 									// This will be stripped later.
-									if (hasTextureLod)
+									if (usesTextureLod)
 									{
 										bx::stringPrintf(code
 											, "#extension GL_EXT_shader_texture_lod : enable\n"
@@ -1830,14 +1834,14 @@ namespace bgfx
 											);
 									}
 
-									if (hasShader5)
+									if (usesGpuShader5)
 									{
 										bx::stringPrintf(code
 											, "#extension GL_ARB_gpu_shader5 : enable\n"
 											);
 									}
 
-									if (hasShaderPacking)
+									if (usesPacking)
 									{
 										bx::stringPrintf(code
 											, "#extension GL_ARB_shading_language_packing : enable\n"
