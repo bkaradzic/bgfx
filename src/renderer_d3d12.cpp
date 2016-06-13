@@ -5413,12 +5413,14 @@ data.NumQualityLevels = 0;
 
 		m_gpuTimer.end(m_commandList);
 
-		while (m_gpuTimer.get() )
+		do
 		{
 			double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
 			elapsedGpuMs   = m_gpuTimer.m_elapsed * toGpuMs;
 			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
 		}
+		while (m_gpuTimer.get() );
+
 		maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
 
 		const int64_t timerFreq = bx::getHPFrequency();

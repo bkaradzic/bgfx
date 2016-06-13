@@ -6791,12 +6791,14 @@ namespace bgfx { namespace gl
 		if (m_timerQuerySupport)
 		{
 			m_gpuTimer.end();
-			while (m_gpuTimer.get() )
+			do
 			{
 				elapsedGl     = m_gpuTimer.m_elapsed;
 				elapsedGpuMs  = double(elapsedGl)/1e6;
 				maxGpuElapsed = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
 			}
+			while (m_gpuTimer.get() );
+
 			maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
 		}
 
