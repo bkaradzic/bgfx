@@ -316,7 +316,7 @@ namespace bgfx
 		PlatformData pd;
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
 		pd.ndt          = glfwGetX11Display();
-		pd.nwh          = (void*)(uintptr_t)glfwGetX11Window(_window);
+		pd.nwh          = (void*)(uintptr_t)glfwGetGLXWindow(_window);
 		pd.context      = glfwGetGLXContext(_window);
 #	elif BX_PLATFORM_OSX
 		pd.ndt          = NULL;
