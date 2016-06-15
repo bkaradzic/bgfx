@@ -1753,15 +1753,19 @@ namespace bgfx
 									if (0 != metal)
 									{
 										bx::stringPrintf(code, "#version 120\n");
+									}
+									else
+									{
+										bx::stringPrintf(code, "#version %s\n", need130 ? "130" : profile);
+									}
+
+									if (130 > glsl)
+									{
 										bx::stringPrintf(code,
 												"#define ivec2 vec2\n"
 												"#define ivec3 vec3\n"
 												"#define ivec4 vec4\n"
 												);
-									}
-									else
-									{
-										bx::stringPrintf(code, "#version %s\n", need130 ? "130" : profile);
 									}
 
 									if (usesGpuShader5)
@@ -1800,6 +1804,12 @@ namespace bgfx
 								}
 								else
 								{
+									bx::stringPrintf(code,
+											"#define ivec2 vec2\n"
+											"#define ivec3 vec3\n"
+											"#define ivec4 vec4\n"
+											);
+
 									// Pretend that all extensions are available.
 									// This will be stripped later.
 									if (usesTextureLod)
