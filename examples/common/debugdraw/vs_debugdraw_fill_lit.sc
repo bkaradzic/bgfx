@@ -1,4 +1,4 @@
-$input a_position
+$input a_position, a_indices
 $output v_view, v_world
 
 /*
@@ -10,7 +10,8 @@ $output v_view, v_world
 
 void main()
 {
-	gl_Position = mul(u_modelViewProj, vec4(a_position, 1.0) );
-	v_view  = mul(u_modelView, vec4(a_position, 1.0) ).xyz;
-	v_world = mul(u_model[0],  vec4(a_position, 1.0) ).xyz;
+	vec4 world = mul(u_model[int(a_indices.x)], vec4(a_position, 1.0) );
+	gl_Position = mul(u_viewProj, world);
+	v_view  = mul(u_view, world).xyz;
+	v_world = world.xyz;
 }

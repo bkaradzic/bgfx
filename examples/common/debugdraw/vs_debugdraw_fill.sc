@@ -1,4 +1,4 @@
-$input a_position
+$input a_position, a_indices
 
 /*
  * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
@@ -9,5 +9,6 @@ $input a_position
 
 void main()
 {
-	gl_Position = mul(u_modelViewProj, vec4(a_position, 1.0) );
+	vec4 model = mul(u_model[int(a_indices.x)], vec4(a_position, 1.0) );
+	gl_Position = mul(u_viewProj, model);
 }
