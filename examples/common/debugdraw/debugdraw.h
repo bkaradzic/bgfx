@@ -109,7 +109,7 @@ void ddDrawCone(const void* _from, const void* _to, float _radius, float _weight
 void ddDrawCylinder(const void* _from, const void* _to, float _radius, float _weight = 0.0f);
 
 ///
-void ddDrawAxis(float _x, float _y, float _z, float _len = 1.0f, Axis::Enum _highlight = Axis::Count);
+void ddDrawAxis(float _x, float _y, float _z, float _len = 1.0f, Axis::Enum _highlight = Axis::Count, float _thickness = 0.0f);
 
 ///
 void ddDrawGrid(const void* _normal, const void* _center, uint32_t _size = 20, float _step = 1.0f);

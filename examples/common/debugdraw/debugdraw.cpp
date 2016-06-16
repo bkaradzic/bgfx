@@ -1231,21 +1231,60 @@ struct DebugDraw
 		drawCylinder( (const float*)_from, (const float*)_to, _radius, _weight);
 	}
 
-	void drawAxis(float _x, float _y, float _z, float _len, Axis::Enum _highlight)
+	void drawAxis(float _x, float _y, float _z, float _len, Axis::Enum _highlight, float _thickness)
 	{
 		push();
 
-		setColor(Axis::X == _highlight ? 0xff00ffff : 0xff0000ff);
-		moveTo(_x, _y, _z);
-		lineTo(_x + _len, _y, _z);
+		if (_thickness > 0.0f)
+		{
+			float from[3] = { _x, _y, _z };
+			float mid[3];
+			float to[3];
 
-		setColor(Axis::Y == _highlight ? 0xff00ffff : 0xff00ff00);
-		moveTo(_x, _y, _z);
-		lineTo(_x, _y + _len, _z);
+			setColor(Axis::X == _highlight ? 0xff00ffff : 0xff0000ff);
+			mid[0] = _x + _len - _thickness;
+			mid[1] = _y;
+			mid[2] = _z;
+			to[0] = _x + _len;
+			to[1] = _y;
+			to[2] = _z;
+			drawCylinder(from, mid, _thickness);
+			drawCone(mid, to, _thickness);
 
-		setColor(Axis::Z == _highlight ? 0xff00ffff : 0xffff0000);
-		moveTo(_x, _y, _z);
-		lineTo(_x, _y, _z + _len);
+			setColor(Axis::Y == _highlight ? 0xff00ffff : 0xff00ff00);
+			mid[0] = _x;
+			mid[1] = _y + _len - _thickness;
+			mid[2] = _z;
+			to[0] = _x;
+			to[1] = _y + _len;
+			to[2] = _z;
+			drawCylinder(from, mid, _thickness);
+			drawCone(mid, to, _thickness);
+
+			setColor(Axis::Z == _highlight ? 0xff00ffff : 0xffff0000);
+			mid[0] = _x;
+			mid[1] = _y;
+			mid[2] = _z + _len - _thickness;
+			to[0] = _x;
+			to[1] = _y;
+			to[2] = _z + _len;
+			drawCylinder(from, mid, _thickness);
+			drawCone(mid, to, _thickness);
+		}
+		else
+		{
+			setColor(Axis::X == _highlight ? 0xff00ffff : 0xff0000ff);
+			moveTo(_x, _y, _z);
+			lineTo(_x + _len, _y, _z);
+
+			setColor(Axis::Y == _highlight ? 0xff00ffff : 0xff00ff00);
+			moveTo(_x, _y, _z);
+			lineTo(_x, _y + _len, _z);
+
+			setColor(Axis::Z == _highlight ? 0xff00ffff : 0xffff0000);
+			moveTo(_x, _y, _z);
+			lineTo(_x, _y, _z + _len);
+		}
 
 		pop();
 	}
@@ -1726,9 +1765,9 @@ void ddDrawCylinder(const void* _from, const void* _to, float _radius, float _we
 	s_dd.drawCylinder(_from, _to, _radius, _weight);
 }
 
-void ddDrawAxis(float _x, float _y, float _z, float _len, Axis::Enum _hightlight)
+void ddDrawAxis(float _x, float _y, float _z, float _len, Axis::Enum _hightlight, float _thickness)
 {
-	s_dd.drawAxis(_x, _y, _z, _len, _hightlight);
+	s_dd.drawAxis(_x, _y, _z, _len, _hightlight, _thickness);
 }
 
 void ddDrawGrid(const void* _normal, const void* _center, uint32_t _size, float _step)
