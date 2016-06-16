@@ -1440,31 +1440,33 @@ private:
 				);
 		}
 
+		const float flip = 0 == (attrib.m_state & BGFX_STATE_CULL_CCW) ? 1.0f : -1.0f;
+
 		float params[4][4] =
 		{
-			{
-				 0.0f,
-				-1.0f,
-				 0.0f,
-				 3.0f,
+			{ // lightDir
+				 0.0f * flip,
+				-1.0f * flip,
+				 0.0f * flip,
+				 3.0f, // shininess
 			},
-			{
+			{ // skyColor
 				1.0f,
 				0.9f,
 				0.8f,
-				0.0f,
+				0.0f, // unused
 			},
-			{
+			{ // groundColor.xyz0
 				0.2f,
 				0.22f,
 				0.5f,
-				0.0f,
+				0.0f, // unused
 			},
-			{
-				( (attrib.m_abgr>>24)     )/255.0f,
-				( (attrib.m_abgr>>16)&0xff)/255.0f,
-				( (attrib.m_abgr>> 8)&0xff)/255.0f,
+			{ // matColor
 				( (attrib.m_abgr    )&0xff)/255.0f,
+				( (attrib.m_abgr>> 8)&0xff)/255.0f,
+				( (attrib.m_abgr>>16)&0xff)/255.0f,
+				( (attrib.m_abgr>>24)     )/255.0f,
 			},
 		};
 
