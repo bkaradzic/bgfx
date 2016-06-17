@@ -33,6 +33,7 @@ namespace stl = tinystl;
 
 static const char* s_supportedExt[] =
 {
+	"bmp",
 	"dds",
 	"jpg",
 	"jpeg",
