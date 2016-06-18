@@ -40,6 +40,7 @@ static const char* s_supportedExt[] =
 	"hdr",
 	"ktx",
 	"png",
+	"psd",
 	"pvr",
 	"tga",
 };
