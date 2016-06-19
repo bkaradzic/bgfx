@@ -4315,9 +4315,10 @@ namespace bgfx { namespace gl
 			uint32_t msaaQuality = ( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT);
 			msaaQuality = bx::uint32_satsub(msaaQuality, 1);
 			msaaQuality = bx::uint32_min(s_renderGL->m_maxMsaa, msaaQuality == 0 ? 0 : 1<<msaaQuality);
+			const bool msaaSample = 0 != (m_flags&BGFX_TEXTURE_MSAA_SAMPLE);
 
-			if (0 != msaaQuality
-			||  writeOnly)
+			if (!msaaSample
+			&& (0 != msaaQuality || writeOnly) )
 			{
 				GL_CHECK(glGenRenderbuffers(1, &m_rbo) );
 				BX_CHECK(0 != m_rbo, "Failed to generate renderbuffer id.");
