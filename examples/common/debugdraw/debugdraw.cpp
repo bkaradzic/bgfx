@@ -435,7 +435,7 @@ struct DebugDraw
 		{
 			Mesh::Enum id = Mesh::Enum(Mesh::Cone0+mesh);
 
-			const uint32_t num = getCircleLod(mesh);
+			const uint32_t num = getCircleLod(uint8_t(mesh) );
 			const float step = bx::pi * 2.0f / num;
 
 			const uint32_t numVertices = num+1;
@@ -466,19 +466,19 @@ struct DebugDraw
 				vertex[ii].m_z = xy[0];
 				vertex[ii].m_indices[0] = 0;
 
-				index[ii*3+0] = num;
-				index[ii*3+1] = (ii+1)%num;
-				index[ii*3+2] = ii;
+				index[ii*3+0] = uint16_t(num);
+				index[ii*3+1] = uint16_t( (ii+1)%num);
+				index[ii*3+2] = uint16_t(ii);
 
 				index[num*3+ii*3+0] = 0;
-				index[num*3+ii*3+1] = ii;
-				index[num*3+ii*3+2] = (ii+1)%num;
+				index[num*3+ii*3+1] = uint16_t(ii);
+				index[num*3+ii*3+2] = uint16_t( (ii+1)%num);
 
-				index[numIndices+ii*2+0] = ii;
-				index[numIndices+ii*2+1] = num;
+				index[numIndices+ii*2+0] = uint16_t(ii);
+				index[numIndices+ii*2+1] = uint16_t(num);
 
-				index[numIndices+num*2+ii*2+0] = ii;
-				index[numIndices+num*2+ii*2+1] = (ii+1)%num;
+				index[numIndices+num*2+ii*2+0] = uint16_t(ii);
+				index[numIndices+num*2+ii*2+1] = uint16_t( (ii+1)%num);
 			}
 
 			m_mesh[id].m_startVertex = startVertex;
@@ -496,7 +496,7 @@ struct DebugDraw
 		{
 			Mesh::Enum id = Mesh::Enum(Mesh::Cylinder0+mesh);
 
-			const uint32_t num = getCircleLod(mesh);
+			const uint32_t num = getCircleLod(uint8_t(mesh) );
 			const float step = bx::pi * 2.0f / num;
 
 			const uint32_t numVertices = num*2;
@@ -527,28 +527,28 @@ struct DebugDraw
 				vertex[ii+num].m_z = xy[0];
 				vertex[ii+num].m_indices[0] = 1;
 
-				index[ii*6+0] = ii+num;
-				index[ii*6+1] = (ii+1)%num;
-				index[ii*6+2] = ii;
-				index[ii*6+3] = ii+num;
-				index[ii*6+4] = (ii+1)%num+num;
-				index[ii*6+5] = (ii+1)%num;
+				index[ii*6+0] = uint16_t(ii+num);
+				index[ii*6+1] = uint16_t( (ii+1)%num);
+				index[ii*6+2] = uint16_t(ii);
+				index[ii*6+3] = uint16_t(ii+num);
+				index[ii*6+4] = uint16_t( (ii+1)%num+num);
+				index[ii*6+5] = uint16_t( (ii+1)%num);
 
-				index[num*6+ii*6+0] = 0;
-				index[num*6+ii*6+1] = ii;
-				index[num*6+ii*6+2] = (ii+1)%num;
-				index[num*6+ii*6+3] = num;
-				index[num*6+ii*6+4] = (ii+1)%num+num;
-				index[num*6+ii*6+5] = ii+num;
+				index[num*6+ii*6+0] = uint16_t(0);
+				index[num*6+ii*6+1] = uint16_t(ii);
+				index[num*6+ii*6+2] = uint16_t( (ii+1)%num);
+				index[num*6+ii*6+3] = uint16_t(num);
+				index[num*6+ii*6+4] = uint16_t( (ii+1)%num+num);
+				index[num*6+ii*6+5] = uint16_t(ii+num);
 
-				index[numIndices+ii*2+0] = ii;
-				index[numIndices+ii*2+1] = ii+num;
+				index[numIndices+ii*2+0] = uint16_t(ii);
+				index[numIndices+ii*2+1] = uint16_t(ii+num);
 
-				index[numIndices+num*2+ii*2+0] = ii;
-				index[numIndices+num*2+ii*2+1] = (ii+1)%num;
+				index[numIndices+num*2+ii*2+0] = uint16_t(ii);
+				index[numIndices+num*2+ii*2+1] = uint16_t( (ii+1)%num);
 
-				index[numIndices+num*4+ii*2+0] = num + ii;
-				index[numIndices+num*4+ii*2+1] = num + (ii+1)%num;
+				index[numIndices+num*4+ii*2+0] = uint16_t(num + ii);
+				index[numIndices+num*4+ii*2+1] = uint16_t(num + (ii+1)%num);
 			}
 
 			m_mesh[id].m_startVertex = startVertex;
@@ -1440,31 +1440,33 @@ private:
 				);
 		}
 
+		const float flip = 0 == (attrib.m_state & BGFX_STATE_CULL_CCW) ? 1.0f : -1.0f;
+
 		float params[4][4] =
 		{
-			{
-				 0.0f,
-				-1.0f,
-				 0.0f,
-				 3.0f,
+			{ // lightDir
+				 0.0f * flip,
+				-1.0f * flip,
+				 0.0f * flip,
+				 3.0f, // shininess
 			},
-			{
+			{ // skyColor
 				1.0f,
 				0.9f,
 				0.8f,
-				0.0f,
+				0.0f, // unused
 			},
-			{
+			{ // groundColor.xyz0
 				0.2f,
 				0.22f,
 				0.5f,
-				0.0f,
+				0.0f, // unused
 			},
-			{
-				( (attrib.m_abgr>>24)     )/255.0f,
-				( (attrib.m_abgr>>16)&0xff)/255.0f,
-				( (attrib.m_abgr>> 8)&0xff)/255.0f,
+			{ // matColor
 				( (attrib.m_abgr    )&0xff)/255.0f,
+				( (attrib.m_abgr>> 8)&0xff)/255.0f,
+				( (attrib.m_abgr>>16)&0xff)/255.0f,
+				( (attrib.m_abgr>>24)     )/255.0f,
 			},
 		};
 
