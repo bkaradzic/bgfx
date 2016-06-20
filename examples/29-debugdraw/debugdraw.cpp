@@ -198,6 +198,12 @@ class DebugDrawApp : public entry::AppI
 					float to[3]   = { -11.0f, 4.0f,  0.0f };
 					ddDrawCylinder(from, to, 0.5f );
 				}
+
+				{
+					float from[3] = {  0.0f, 7.0f, 0.0f };
+					float to[3]   = { -6.0f, 7.0f, 0.0f };
+					ddDrawCylinder(from, to, 0.5f, true);
+				}
 			ddPop();
 
 			ddDrawOrb(-11.0f, 0.0f, 0.0f, 1.0f);

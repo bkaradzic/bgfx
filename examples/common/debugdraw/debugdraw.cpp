@@ -566,10 +566,60 @@ struct DebugDraw
 		{
 			Mesh::Enum id = Mesh::Enum(Mesh::Capsule0+mesh);
 
-//			const uint8_t  tess = uint8_t(3-mesh);
-			const uint32_t numVertices = 0;
-			const uint32_t numIndices  = 0;
-			const uint32_t numLineListIndices = 0;
+			const uint32_t num = getCircleLod(uint8_t(mesh) );
+			const float step = bx::pi * 2.0f / num;
+
+			const uint32_t numVertices = num*2;
+			const uint32_t numIndices  = num*6;
+			const uint32_t numLineListIndices = num*6;
+
+			vertices[id] = BX_ALLOC(m_allocator, numVertices*stride);
+			indices[id]  = (uint16_t*)BX_ALLOC(m_allocator, (numIndices + numLineListIndices)*sizeof(uint16_t) );
+			memset(indices[id], 0, (numIndices + numLineListIndices)*sizeof(uint16_t) );
+
+			DebugShapeVertex* vertex = (DebugShapeVertex*)vertices[id];
+			uint16_t* index = indices[id];
+
+			for (uint32_t ii = 0; ii < num; ++ii)
+			{
+				const float angle = step * ii;
+
+				float xy[2];
+				circle(xy, angle);
+
+				vertex[ii].m_x = xy[1];
+				vertex[ii].m_y = 0.0f;
+				vertex[ii].m_z = xy[0];
+				vertex[ii].m_indices[0] = 0;
+
+				vertex[ii+num].m_x = xy[1];
+				vertex[ii+num].m_y = 0.0f;
+				vertex[ii+num].m_z = xy[0];
+				vertex[ii+num].m_indices[0] = 1;
+
+				index[ii*6+0] = uint16_t(ii+num);
+				index[ii*6+1] = uint16_t( (ii+1)%num);
+				index[ii*6+2] = uint16_t(ii);
+				index[ii*6+3] = uint16_t(ii+num);
+				index[ii*6+4] = uint16_t( (ii+1)%num+num);
+				index[ii*6+5] = uint16_t( (ii+1)%num);
+
+//				index[num*6+ii*6+0] = uint16_t(0);
+//				index[num*6+ii*6+1] = uint16_t(ii);
+//				index[num*6+ii*6+2] = uint16_t( (ii+1)%num);
+//				index[num*6+ii*6+3] = uint16_t(num);
+//				index[num*6+ii*6+4] = uint16_t( (ii+1)%num+num);
+//				index[num*6+ii*6+5] = uint16_t(ii+num);
+
+				index[numIndices+ii*2+0] = uint16_t(ii);
+				index[numIndices+ii*2+1] = uint16_t(ii+num);
+
+				index[numIndices+num*2+ii*2+0] = uint16_t(ii);
+				index[numIndices+num*2+ii*2+1] = uint16_t( (ii+1)%num);
+
+				index[numIndices+num*4+ii*2+0] = uint16_t(num + ii);
+				index[numIndices+num*4+ii*2+1] = uint16_t(num + (ii+1)%num);
+			}
 
 			m_mesh[id].m_startVertex = startVertex;
 			m_mesh[id].m_numVertices = numVertices;
@@ -930,7 +980,7 @@ struct DebugDraw
 
 	void draw(const Cylinder& _cylinder, bool _capsule)
 	{
-		BX_UNUSED(_cylinder, _capsule);
+		drawCylinder(_cylinder.m_pos, _cylinder.m_end, _cylinder.m_radius, _capsule);
 	}
 
 	void draw(const Disk& _disk)
@@ -1086,7 +1136,7 @@ struct DebugDraw
 		lineTo(_x, _y, _z);
 	}
 
-	void drawCircle(const float* _normal, const float* _center, float _radius, float _weight = 0.0f)
+	void drawCircle(const float* _normal, const float* _center, float _radius, float _weight)
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 		const uint32_t num = getCircleLod(attrib.m_lod);
@@ -1129,12 +1179,12 @@ struct DebugDraw
 		close();
 	}
 
-	void drawCircle(const void* _normal, const void* _center, float _radius, float _weight = 0.0f)
+	void drawCircle(const void* _normal, const void* _center, float _radius, float _weight)
 	{
 		drawCircle( (const float*)_normal, (const float*)_center, _radius, _weight);
 	}
 
-	void drawCircle(Axis::Enum _axis, float _x, float _y, float _z, float _radius, float _weight = 0.0f)
+	void drawCircle(Axis::Enum _axis, float _x, float _y, float _z, float _radius, float _weight)
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 		const uint32_t num = getCircleLod(attrib.m_lod);
@@ -1168,10 +1218,9 @@ struct DebugDraw
 		close();
 	}
 
-	void drawCone(const float* _from, const float* _to, float _radius, float _weight = 0.0f)
+	void drawCone(const float* _from, const float* _to, float _radius)
 	{
 		const Attrib& attrib = m_attrib[m_stack];
-		BX_UNUSED(_weight);
 
 		float tmp0[3];
 		bx::vec3Sub(tmp0, _from, _to);
@@ -1194,16 +1243,14 @@ struct DebugDraw
 		draw(Mesh::Enum(Mesh::Cone0 + lod), mtx[0], 2, attrib.m_wireframe);
 	}
 
-	void drawCone(const void* _from, const void* _to, float _radius, float _weight = 0.0f)
+	void drawCone(const void* _from, const void* _to, float _radius)
 	{
-		drawCone( (const float*)_from, (const float*)_to, _radius, _weight);
+		drawCone( (const float*)_from, (const float*)_to, _radius);
 	}
 
-	void drawCylinder(const float* _from, const float* _to, float _radius, float _weight = 0.0f)
+	void drawCylinder(const float* _from, const float* _to, float _radius, bool _capsule)
 	{
 		const Attrib& attrib = m_attrib[m_stack];
-
-		BX_UNUSED(_weight);
 
 		float tmp0[3];
 		bx::vec3Sub(tmp0, _from, _to);
@@ -1219,16 +1266,35 @@ struct DebugDraw
 		mtx[1][13] = _to[1];
 		mtx[1][14] = _to[2];
 
-		uint8_t lod = attrib.m_lod > Mesh::CylinderMaxLod
-					? uint8_t(Mesh::CylinderMaxLod)
-					: attrib.m_lod
-					;
-		draw(Mesh::Enum(Mesh::Cylinder0 + lod), mtx[0], 2, attrib.m_wireframe);
+		if (_capsule)
+		{
+			uint8_t lod = attrib.m_lod > Mesh::CapsuleMaxLod
+						? uint8_t(Mesh::CapsuleMaxLod)
+						: attrib.m_lod
+						;
+			draw(Mesh::Enum(Mesh::Capsule0 + lod), mtx[0], 2, attrib.m_wireframe);
+
+			Sphere sphere;
+			bx::vec3Move(sphere.m_center, _from);
+			sphere.m_radius = _radius;
+			draw(sphere);
+
+			bx::vec3Move(sphere.m_center, _to);
+			draw(sphere);
+		}
+		else
+		{
+			uint8_t lod = attrib.m_lod > Mesh::CylinderMaxLod
+						? uint8_t(Mesh::CylinderMaxLod)
+						: attrib.m_lod
+						;
+			draw(Mesh::Enum(Mesh::Cylinder0 + lod), mtx[0], 2, attrib.m_wireframe);
+		}
 	}
 
-	void drawCylinder(const void* _from, const void* _to, float _radius, float _weight = 0.0f)
+	void drawCylinder(const void* _from, const void* _to, float _radius, bool _capsule)
 	{
-		drawCylinder( (const float*)_from, (const float*)_to, _radius, _weight);
+		drawCylinder( (const float*)_from, (const float*)_to, _radius, _capsule);
 	}
 
 	void drawAxis(float _x, float _y, float _z, float _len, Axis::Enum _highlight, float _thickness)
@@ -1248,7 +1314,7 @@ struct DebugDraw
 			to[0] = _x + _len;
 			to[1] = _y;
 			to[2] = _z;
-			drawCylinder(from, mid, _thickness);
+			drawCylinder(from, mid, _thickness, false);
 			drawCone(mid, to, _thickness);
 
 			setColor(Axis::Y == _highlight ? 0xff00ffff : 0xff00ff00);
@@ -1258,7 +1324,7 @@ struct DebugDraw
 			to[0] = _x;
 			to[1] = _y + _len;
 			to[2] = _z;
-			drawCylinder(from, mid, _thickness);
+			drawCylinder(from, mid, _thickness, false);
 			drawCone(mid, to, _thickness);
 
 			setColor(Axis::Z == _highlight ? 0xff00ffff : 0xffff0000);
@@ -1268,7 +1334,7 @@ struct DebugDraw
 			to[0] = _x;
 			to[1] = _y;
 			to[2] = _z + _len;
-			drawCylinder(from, mid, _thickness);
+			drawCylinder(from, mid, _thickness, false);
 			drawCone(mid, to, _thickness);
 		}
 		else
@@ -1400,13 +1466,13 @@ struct DebugDraw
 		push();
 
 		setColor(Axis::X == _hightlight ? 0xff00ffff : 0xff0000ff);
-		drawCircle(Axis::X, _x, _y, _z, _radius);
+		drawCircle(Axis::X, _x, _y, _z, _radius, 0.0f);
 
 		setColor(Axis::Y == _hightlight ? 0xff00ffff : 0xff00ff00);
-		drawCircle(Axis::Y, _x, _y, _z, _radius);
+		drawCircle(Axis::Y, _x, _y, _z, _radius, 0.0f);
 
 		setColor(Axis::Z == _hightlight ? 0xff00ffff : 0xffff0000);
-		drawCircle(Axis::Z, _x, _y, _z, _radius);
+		drawCircle(Axis::Z, _x, _y, _z, _radius, 0.0f);
 
 		pop();
 	}
@@ -1755,14 +1821,29 @@ void ddDrawCircle(Axis::Enum _axis, float _x, float _y, float _z, float _radius,
 	s_dd.drawCircle(_axis, _x, _y, _z, _radius, _weight);
 }
 
-void ddDrawCone(const void* _from, const void* _to, float _radius, float _weight)
+void ddDrawCone(const void* _from, const void* _to, float _radius)
 {
-	s_dd.drawCone(_from, _to, _radius, _weight);
+	s_dd.drawCone(_from, _to, _radius);
 }
 
-void ddDrawCylinder(const void* _from, const void* _to, float _radius, float _weight)
+void ddDrawCylinder(const void* _from, const void* _to, float _radius, bool _capsule)
 {
-	s_dd.drawCylinder(_from, _to, _radius, _weight);
+	if (_capsule)
+	{
+		s_dd.push();
+		s_dd.setLod(0);
+		s_dd.drawCylinder(_from, _to, _radius, true);
+		s_dd.pop();
+	}
+	else
+	{
+		s_dd.drawCylinder(_from, _to, _radius, false);
+	}
+}
+
+void ddDrawCapsule(const void* _from, const void* _to, float _radius)
+{
+	s_dd.drawCylinder(_from, _to, _radius, true);
 }
 
 void ddDrawAxis(float _x, float _y, float _z, float _len, Axis::Enum _hightlight, float _thickness)
