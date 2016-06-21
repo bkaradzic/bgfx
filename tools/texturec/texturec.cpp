@@ -570,10 +570,13 @@ int main(int _argc, const char* _argv[])
 	const bool normalMap = cmdLine.hasArg('n',  "normalmap");
 	const bool iqa       = cmdLine.hasArg('\0', "iqa");
 
-	uint32_t size = (uint32_t)bx::getSize(&reader);
-	const bgfx::Memory* mem = bgfx::alloc(size);
-	bx::read(&reader, mem->data, mem->size);
-	bx::close(&reader);
+	const bgfx::Memory* mem;
+	{
+		uint32_t size = (uint32_t)bx::getSize(&reader);
+		mem = bgfx::alloc(size);
+		bx::read(&reader, mem->data, mem->size);
+		bx::close(&reader);
+	}
 
 	{
 		using namespace bgfx;
