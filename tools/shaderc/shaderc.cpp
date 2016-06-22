@@ -20,15 +20,6 @@ namespace bgfx
 	#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x4)
 	#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x4)
 
-	long int fsize(FILE* _file)
-	{
-		long int pos = ftell(_file);
-		fseek(_file, 0L, SEEK_END);
-		long int size = ftell(_file);
-		fseek(_file, pos, SEEK_SET);
-		return size;
-	}
-
 	static const char* s_ARB_shader_texture_lod[] =
 	{
 		"texture2DLod",
@@ -298,14 +289,23 @@ namespace bgfx
 		File(const char* _filePath)
 			: m_data(NULL)
 		{
-			FILE* file = fopen(_filePath, "r");
-			if (NULL != file)
+			bx::CrtFileReader reader;
+			if (bx::open(&reader, _filePath) )
 			{
-				m_size = fsize(file);
+				m_size = bx::getSize(&reader);
 				m_data = new char[m_size+1];
-				m_size = (uint32_t)fread(m_data, 1, m_size, file);
+				m_size = bx::read(&reader, m_data, m_size);
+				bx::close(&reader);
+
+				if (m_data[0] == '\xef'
+				&&  m_data[1] == '\xbb'
+				&&  m_data[2] == '\xbf')
+				{
+					memmove(m_data, &m_data[3], m_size-3);
+					m_size -= 3;
+				}
+
 				m_data[m_size] = '\0';
-				fclose(file);
 			}
 		}
 
@@ -953,8 +953,8 @@ namespace bgfx
 
 		bool compiled = false;
 
-		FILE* file = fopen(filePath, "r");
-		if (NULL == file)
+		bx::CrtFileReader reader;
+		if (!bx::open(&reader, filePath) )
 		{
 			fprintf(stderr, "Unable to open file '%s'.\n", filePath);
 		}
@@ -1064,14 +1064,23 @@ namespace bgfx
 			char* input;
 			{
 				const size_t padding = 1024;
-				uint32_t size = (uint32_t)fsize(file);
+				uint32_t size = (uint32_t)bx::getSize(&reader);
 				data = new char[size+padding+1];
-				size = (uint32_t)fread(data, 1, size, file);
+				size = (uint32_t)bx::read(&reader, data, size);
+
+				if (data[0] == '\xef'
+				&&  data[1] == '\xbb'
+				&&  data[2] == '\xbf')
+				{
+					memmove(data, &data[3], size-3);
+					size -= 3;
+				}
+
 				// Compiler generates "error X3000: syntax error: unexpected end of file"
 				// if input doesn't have empty line at EOF.
 				data[size] = '\n';
 				memset(&data[size+1], 0, padding);
-				fclose(file);
+				bx::close(&reader);
 
 				if (!raw)
 				{
