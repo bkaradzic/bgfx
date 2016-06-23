@@ -17,10 +17,23 @@
 
 #import <Foundation/Foundation.h>
 
-#define UNIFORM_BUFFER_SIZE (1024*1024)
+#define UNIFORM_BUFFER_SIZE (8*1024*1024)
 #define UNIFORM_BUFFER_COUNT (3)
 
 /*
+ //OSX issues:
+  03-raymarch: nothing is visible
+  12-lod: color differences
+  15-shadowmaps-simple: shader compilation error
+  16-shadowmaps: framebuffer creation problems
+  18-ibl:color wheel is not visible
+  19-oit: mrt independent does not work
+  20-nanovg: nothing is visible
+  21-deferred: only intermediate buffers are visible
+  22-windows: todo support multiple windows
+  26-occlusion: view 2's clear should clear only its rect (not while fb)
+  27-terrain: problem with sample in texture mode
+ 
 Known issues / TODOs:
 - 15-shadowmaps-simple (modified shaderc and example needs modification too, mtxCrop znew = z * 0.5 + 0.5 is not needed ) could be hacked in shader too
 - 19-oit ( hacked shaderc to support MRT output)
@@ -142,8 +155,8 @@ namespace bgfx { namespace mtl
 		{
 			{ MTLVertexFormatHalf2, MTLVertexFormatHalf2 },
 			{ MTLVertexFormatHalf2, MTLVertexFormatHalf2 },
-			{ MTLVertexFormatHalf3, MTLVertexFormatHalf2 },
-			{ MTLVertexFormatHalf4, MTLVertexFormatHalf2 }
+			{ MTLVertexFormatHalf3, MTLVertexFormatHalf3 },
+			{ MTLVertexFormatHalf4, MTLVertexFormatHalf4 }
 		},
 
 		//Float
@@ -289,7 +302,11 @@ namespace bgfx { namespace mtl
 		{ MTLPixelFormatRG32Sint,                  MTLPixelFormatInvalid                        }, // RG32I
 		{ MTLPixelFormatRG32Uint,                  MTLPixelFormatInvalid                        }, // RG32U
 		{ MTLPixelFormatRG32Float,                 MTLPixelFormatInvalid                        }, // RG32F
-		{ MTLPixelFormatRGB9E5Float,               MTLPixelFormatInvalid                        }, // RGB9E5F
+        { MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // RGB8
+        { MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // RGB8I
+        { MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // RGB8U
+		{ MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // RGB8S
+        { MTLPixelFormatRGB9E5Float,               MTLPixelFormatInvalid                        }, // RGB9E5F
 		{ MTLPixelFormatBGRA8Unorm,                MTLPixelFormatBGRA8Unorm_sRGB                }, // BGRA8
 		{ MTLPixelFormatRGBA8Unorm,                MTLPixelFormatRGBA8Unorm_sRGB                }, // RGBA8
 		{ MTLPixelFormatRGBA8Sint,                 MTLPixelFormatInvalid                        }, // RGBA8I
@@ -437,6 +454,11 @@ namespace bgfx { namespace mtl
 			}
 #	endif // __IPHONE_8_0
 #endif // BX_PLATFORM_*
+			
+
+#if BX_PLATFORM_OSX
+			s_textureFormat[TextureFormat::D24S8].m_fmt = m_device.depth24Stencil8PixelFormatSupported() ? MTLPixelFormatDepth24Unorm_Stencil8 : MTLPixelFormatDepth32Float_Stencil8;
+#endif
 
 			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 			{
@@ -1109,6 +1131,9 @@ namespace bgfx { namespace mtl
 					const TextureMtl& texture = m_textures[frameBuffer.m_depthHandle.idx];
 					renderPassDescriptor.depthAttachment.texture = texture.m_ptr;
 					renderPassDescriptor.stencilAttachment.texture = texture.m_ptrStencil;
+
+					if ( texture.m_textureFormat == TextureFormat::D24S8)
+						renderPassDescriptor.stencilAttachment.texture = texture.m_ptr;
 					//TODO: stencilAttachment should be the same if packed/depth stencil format is used
 				}
 			}
@@ -1559,7 +1584,9 @@ namespace bgfx { namespace mtl
 					{
 						pd.stencilAttachmentPixelFormat = MTLPixelFormatInvalid; //texture.m_ptrStencil.m_obj.pixelFormat;
 					}
-					//todo: stencil attachment should be the same as depth for packed depth/stencil
+					
+					if ( texture.m_textureFormat == TextureFormat::D24S8)
+						pd.stencilAttachmentPixelFormat = texture.m_ptr.m_obj.pixelFormat; 
 				}
 			}
 
@@ -1889,8 +1916,8 @@ namespace bgfx { namespace mtl
 					 );
 
 			const bool writeOnly   = 0 != (_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
-//			const bool computeWrite = 0 != (_flags&BGFX_TEXTURE_COMPUTE_WRITE);
-//			const bool renderTarget = 0 != (_flags&BGFX_TEXTURE_RT_MASK);
+			const bool computeWrite = 0 != (_flags&BGFX_TEXTURE_COMPUTE_WRITE);
+			const bool renderTarget = 0 != (_flags&BGFX_TEXTURE_RT_MASK);
 			const bool srgb			= 0 != (_flags&BGFX_TEXTURE_SRGB) || imageContainer.m_srgb;
 //			const uint32_t msaaQuality = bx::uint32_satsub( (_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
 //			const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
@@ -1920,16 +1947,17 @@ namespace bgfx { namespace mtl
 			desc.resourceOptions  = MTLResourceStorageModePrivate;
 			desc.cpuCacheMode     = MTLCPUCacheModeDefaultCache;
 
-			desc.storageMode = (MTLStorageMode)(writeOnly
+			//TODO: these flags works only on iOS9+/OSX
+			desc.storageMode = (MTLStorageMode)(writeOnly||isDepth(TextureFormat::Enum(m_textureFormat))
 				? 2 /*MTLStorageModePrivate*/
 				: 1 /*MTLStorageModeManaged*/
 				);
-			desc.usage       = writeOnly
-				? MTLTextureUsageShaderWrite
-				: MTLTextureUsageShaderRead
-				;
 
-			//TODO: set resource flags depending on usage(renderTarget/computeWrite/etc) on iOS9/OSX
+			desc.usage = MTLTextureUsageShaderRead;
+			if (computeWrite)
+				desc.usage |= MTLTextureUsageShaderWrite;
+			if (renderTarget)
+				desc.usage |= MTLTextureUsageRenderTarget;
 
 			m_ptr = s_renderMtl->m_device.newTextureWithDescriptor(desc);
 			if (m_requestedFormat == TextureFormat::D24S8
@@ -2527,6 +2555,9 @@ namespace bgfx { namespace mtl
 						rc.y    = scissorRect.m_y;
 						rc.width  = scissorRect.m_width;
 						rc.height = scissorRect.m_height;
+						
+						if ( rc.width == 0 || rc.height == 0 )
+							continue;
 					}
 					rce.setScissorRect(rc);
 				}

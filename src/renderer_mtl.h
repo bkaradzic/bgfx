@@ -229,6 +229,8 @@ namespace bgfx { namespace mtl
 				);
 			return state;
 		}
+	
+		bool depth24Stencil8PixelFormatSupported() { return m_obj.depth24Stencil8PixelFormatSupported; }
 	MTL_CLASS_END
 
 	MTL_CLASS(Function)
