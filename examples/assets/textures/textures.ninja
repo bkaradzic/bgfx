@@ -1,0 +1,7 @@
+textures = $pwd/../../runtime/textures
+
+build $textures/texture_compression_bc1.ktx:  texturec_bc1  $pwd/texture_compression.png
+build $textures/texture_compression_bc2.ktx:  texturec_bc2  $pwd/texture_compression.png
+build $textures/texture_compression_bc3.ktx:  texturec_bc3  $pwd/texture_compression.png
+build $textures/texture_compression_etc1.ktx: texturec_etc1 $pwd/texture_compression.png
+build $textures/texture_compression_etc2.ktx: texturec_etc2 $pwd/texture_compression.png

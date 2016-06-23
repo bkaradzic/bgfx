@@ -4,6 +4,10 @@ rule geometryc_pack_normal
     command = geometryc -f $in -o $out --packnormal 1
     description = Converting geometry $in...
 
+rule geometryc_pack_normal_barycentric
+    command = geometryc -f $in -o $out --packnormal 1 --barycentric
+    description = Converting geometry $in...
+
 rule texturec_bc1
     command = texturec -f $in -o $out -t bc1 -m
 
@@ -24,3 +28,9 @@ rule texturec_etc1
 
 rule texturec_etc2
     command = texturec -f $in -o $out -t etc2 -m
+
+pwd = ../examples/assets/meshes
+subninja ../examples/assets/meshes/meshes.ninja
+
+pwd = ../examples/assets/textures
+subninja ../examples/assets/textures/textures.ninja
