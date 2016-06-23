@@ -25,6 +25,7 @@ endif
 
 BX_DIR?=../bx
 GENIE?=$(BX_DIR)/tools/bin/$(OS)/genie
+NINJA?=$(BX_DIR)/tools/bin/$(OS)/ninja
 
 .PHONY: help
 
@@ -275,6 +276,9 @@ build: build-$(OS)
 
 rebuild-shaders:
 	$(MAKE) -R -C examples rebuild
+
+assets: # Build assets.
+	$(NINJA) -C scripts
 
 analyze:
 	cppcheck src/
