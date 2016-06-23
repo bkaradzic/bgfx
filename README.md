@@ -160,8 +160,6 @@ base on a far island.
 alt="Dead Venture - Gameplay Teaser (iOS / Android)"
 width="640" height="480" border="0" /></a>
 
-https://www.youtube.com/watch?v=CgMr1g12yXw
-
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
