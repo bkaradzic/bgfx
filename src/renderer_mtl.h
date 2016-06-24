@@ -502,13 +502,28 @@ namespace bgfx { namespace mtl
 				_obj = nil; \
 			BX_MACRO_BLOCK_END
 
-#if BX_PLATFORM_IOS
-	inline bool OsVersionEqualOrGreater(const char* _version)
+		//runtime os check
+	inline bool iOSVersionEqualOrGreater(const char* _version)
 	{
+#if BX_PLATFORM_IOS
 		return ([[[UIDevice currentDevice] systemVersion] compare:@(_version) options:NSNumericSearch] != NSOrderedAscending);
+#else
+		return false;
+#endif
 	}
-	//TODO: this could be in bx ?
-#endif //
+
+	inline bool macOSVersionEqualOrGreater(NSInteger _majorVersion,
+										   NSInteger _minorVersion,
+										   NSInteger _patchVersion)
+	{
+#if BX_PLATFORM_OSX
+		NSOperatingSystemVersion v = [[NSProcessInfo processInfo] operatingSystemVersion];
+		return (v.majorVersion<<16) + (v.minorVersion<<8) + v.patchVersion >=
+				(_majorVersion<<16) + (_minorVersion<<8) + _patchVersion;
+#else
+		return false;
+#endif
+	}
 
 	// end of c++ wrapper
 
