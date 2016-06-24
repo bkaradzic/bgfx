@@ -707,6 +707,9 @@ namespace bgfx
 	{
 		const uint8_t* src = (const uint8_t*)_src;
 		_dst[0] = fromUnorm(src[0], 255.0f);
+		_dst[1] = 0.0f;
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// R8S
@@ -720,6 +723,9 @@ namespace bgfx
 	{
 		const int8_t* src = (const int8_t*)_src;
 		_dst[0] = fromSnorm(src[0], 127.0f);
+		_dst[1] = 0.0f;
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// R8I
@@ -733,6 +739,9 @@ namespace bgfx
 	{
 		const int8_t* src = (const int8_t*)_src;
 		_dst[0] = float(src[0]);
+		_dst[1] = 0.0f;
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// R8U
@@ -746,6 +755,9 @@ namespace bgfx
 	{
 		const uint8_t* src = (const uint8_t*)_src;
 		_dst[0] = float(src[0]);
+		_dst[1] = 0.0f;
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RG8
@@ -761,6 +773,8 @@ namespace bgfx
 		const uint8_t* src = (const uint8_t*)_src;
 		_dst[0] = fromUnorm(src[0], 255.0f);
 		_dst[1] = fromUnorm(src[1], 255.0f);
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RG8S
@@ -776,6 +790,8 @@ namespace bgfx
 		const int8_t* src = (const int8_t*)_src;
 		_dst[0] = fromSnorm(src[0], 127.0f);
 		_dst[1] = fromSnorm(src[1], 127.0f);
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RG8I
@@ -791,6 +807,8 @@ namespace bgfx
 		const int8_t* src = (const int8_t*)_src;
 		_dst[0] = float(src[0]);
 		_dst[1] = float(src[1]);
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RG8U
@@ -806,6 +824,8 @@ namespace bgfx
 		const uint8_t* src = (const uint8_t*)_src;
 		_dst[0] = float(src[0]);
 		_dst[1] = float(src[1]);
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RGB8
@@ -823,6 +843,7 @@ namespace bgfx
 		_dst[0] = fromUnorm(src[0], 255.0f);
 		_dst[1] = fromUnorm(src[1], 255.0f);
 		_dst[2] = fromUnorm(src[2], 255.0f);
+		_dst[3] = 1.0f;
 	}
 
 	// RGB8S
@@ -840,6 +861,7 @@ namespace bgfx
 		_dst[0] = fromSnorm(src[0], 127.0f);
 		_dst[1] = fromSnorm(src[1], 127.0f);
 		_dst[2] = fromSnorm(src[2], 127.0f);
+		_dst[3] = 1.0f;
 	}
 
 	// RGB8I
@@ -857,6 +879,7 @@ namespace bgfx
 		_dst[0] = float(src[0]);
 		_dst[1] = float(src[1]);
 		_dst[2] = float(src[2]);
+		_dst[3] = 1.0f;
 	}
 
 	// RGB8U
@@ -874,6 +897,7 @@ namespace bgfx
 		_dst[0] = float(src[0]);
 		_dst[1] = float(src[1]);
 		_dst[2] = float(src[2]);
+		_dst[3] = 1.0f;
 	}
 
 	// BGRA8
@@ -982,6 +1006,9 @@ namespace bgfx
 	{
 		const uint16_t* src = (const uint16_t*)_src;
 		_dst[0] = fromUnorm(src[0], 65535.0f);
+		_dst[1] = 0.0f;
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// R16S
@@ -995,6 +1022,9 @@ namespace bgfx
 	{
 		const int16_t* src = (const int16_t*)_src;
 		_dst[0] = fromSnorm(src[0], 32767.0f);
+		_dst[1] = 0.0f;
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// R16I
@@ -1008,6 +1038,9 @@ namespace bgfx
 	{
 		const int16_t* src = (const int16_t*)_src;
 		_dst[0] = float(src[0]);
+		_dst[1] = 0.0f;
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// R16U
@@ -1034,6 +1067,9 @@ namespace bgfx
 	{
 		const uint16_t* src = (const uint16_t*)_src;
 		_dst[0] = bx::halfToFloat(src[0]);
+		_dst[1] = 0.0f;
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RG16
@@ -1049,6 +1085,8 @@ namespace bgfx
 		const uint16_t* src = (const uint16_t*)_src;
 		_dst[0] = fromUnorm(src[0], 65535.0f);
 		_dst[1] = fromUnorm(src[1], 65535.0f);
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RG16S
@@ -1064,6 +1102,8 @@ namespace bgfx
 		const int16_t* src = (const int16_t*)_src;
 		_dst[0] = fromSnorm(src[0], 32767.0f);
 		_dst[1] = fromSnorm(src[1], 32767.0f);
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RG16I
@@ -1079,6 +1119,8 @@ namespace bgfx
 		const int16_t* src = (const int16_t*)_src;
 		_dst[0] = float(src[0]);
 		_dst[1] = float(src[1]);
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RG16U
@@ -1094,6 +1136,8 @@ namespace bgfx
 		const uint16_t* src = (const uint16_t*)_src;
 		_dst[0] = float(src[0]);
 		_dst[1] = float(src[1]);
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RG16F
@@ -1109,6 +1153,8 @@ namespace bgfx
 		const uint16_t* src = (const uint16_t*)_src;
 		_dst[0] = bx::halfToFloat(src[0]);
 		_dst[1] = bx::halfToFloat(src[1]);
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RGBA16
@@ -1389,6 +1435,7 @@ namespace bgfx
 		_dst[0] = float( ( (packed>>11) & 0x1f) ) / 31.0f;
 		_dst[1] = float( ( (packed>> 5) & 0x3f) ) / 63.0f;
 		_dst[2] = float( ( (packed    ) & 0x1f) ) / 31.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RGBA4
@@ -1507,6 +1554,7 @@ namespace bgfx
 		_dst[0] = bx::halfToFloat( (packed<< 4) & 0x7ff0);
 		_dst[1] = bx::halfToFloat( (packed>> 7) & 0x7ff0);
 		_dst[2] = bx::halfToFloat( (packed>>17) & 0x7fe0);
+		_dst[3] = 1.0f;
 	}
 
 	struct PackUnpack
@@ -3581,7 +3629,7 @@ namespace bgfx
 
 		default:
 			imageDecodeToBgra8(_dst, _src, _width, _height, _pitch, _format);
-			imageSwizzleBgra8(_width, _height, _pitch, _dst, _dst);
+			imageSwizzleBgra8(_width, _height, _width*4, _dst, _dst);
 			break;
 		}
 	}
