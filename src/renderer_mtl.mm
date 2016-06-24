@@ -25,18 +25,18 @@
   03-raymarch: nothing is visible
   12-lod: color differences
   15-shadowmaps-simple: shader compilation error
-  16-shadowmaps: framebuffer creation problems
+  16-shadowmaps: framebuffer creation problems (iOS: PixelFormat MTLPixelFormatDepth32Float is not stencil renderable)
   18-ibl:color wheel is not visible
   19-oit: mrt independent does not work
   20-nanovg: nothing is visible
-  21-deferred: only intermediate buffers are visible
+  21-deferred: only intermediate buffers are visible (iOS)
   22-windows: todo support multiple windows
-  26-occlusion: view 2's clear should clear only its rect (not while fb)
-  27-terrain: problem with sample in texture mode
+  26-occlusion: view 2's clear should clear only its rect (not whole fb) (iOS, occlusion doesn't work)
+  27-terrain: problem with sample in texture mode (iOS)
  
 Known issues / TODOs:
+- device orientation change is not handled properly
 - 15-shadowmaps-simple (modified shaderc and example needs modification too, mtxCrop znew = z * 0.5 + 0.5 is not needed ) could be hacked in shader too
-- 19-oit ( hacked shaderc to support MRT output)
 - 21-deferred ( hacked shaderc to support MRT output and fs_deferred_light needed modification for metal (similar to BGFX_SHADER_LANGUAGE_HLSL )
 
 07-callback, saveScreenshot should be implemented with one frame latency (using saveScreenshotBegin and End)
@@ -46,8 +46,6 @@ Known issues / TODOs:
   Otherwise it works with hacking the slot.
 
 24-nbody - cannot generate compute shaders for metal
-
-20-nanonvg - TODO: remove sampler/texture hack
 
 - caps
 
@@ -447,15 +445,15 @@ namespace bgfx { namespace mtl
 
 			//add texture formats/caps/etc that are available only on new sdk/devices
 #if BX_PLATFORM_IOS
-#	ifdef __IPHONE_8_0
-			if (OsVersionEqualOrGreater("8.0.0"))
-			{
 				s_textureFormat[TextureFormat::D24S8].m_fmt = MTLPixelFormatDepth32Float;
-			}
-#	endif // __IPHONE_8_0
 #endif // BX_PLATFORM_*
-			
 
+			m_hasPixelFormatDepth32Float_Stencil8 =	(BX_ENABLED(BX_PLATFORM_OSX) ||
+												 ( BX_ENABLED(BX_PLATFORM_IOS) && iOSVersionEqualOrGreater("9.0.0") ) );
+
+			m_macOS11Runtime = (BX_ENABLED(BX_PLATFORM_OSX) && macOSVersionEqualOrGreater(10,11,0) );
+			m_iOS9Runtime = (BX_ENABLED(BX_PLATFORM_IOS) && iOSVersionEqualOrGreater("9.0.0") );
+			
 #if BX_PLATFORM_OSX
 			s_textureFormat[TextureFormat::D24S8].m_fmt = m_device.depth24Stencil8PixelFormatSupported() ? MTLPixelFormatDepth24Unorm_Stencil8 : MTLPixelFormatDepth32Float_Stencil8;
 #endif
@@ -963,7 +961,11 @@ namespace bgfx { namespace mtl
 
 				m_textureDescriptor.textureType = MTLTextureType2D;
 
-				m_textureDescriptor.pixelFormat = MTLPixelFormatDepth32Float_Stencil8;
+				if (m_hasPixelFormatDepth32Float_Stencil8)
+					m_textureDescriptor.pixelFormat = MTLPixelFormatDepth32Float_Stencil8;
+				else
+					m_textureDescriptor.pixelFormat = MTLPixelFormatDepth32Float;
+				//todo: create separate stencil buffer
 
 				m_textureDescriptor.width  = width;
 				m_textureDescriptor.height = height;
@@ -971,17 +973,27 @@ namespace bgfx { namespace mtl
 				m_textureDescriptor.mipmapLevelCount = 1;
 				m_textureDescriptor.sampleCount = 1;
 				m_textureDescriptor.arrayLength = 1;
-				m_textureDescriptor.resourceOptions = MTLResourceStorageModePrivate;
-				m_textureDescriptor.cpuCacheMode    = MTLCPUCacheModeDefaultCache;
-				m_textureDescriptor.storageMode     = MTLStorageModePrivate;
-				m_textureDescriptor.usage = MTLTextureUsageRenderTarget;
+				if ( m_iOS9Runtime || m_macOS11Runtime )
+				{
+					m_textureDescriptor.cpuCacheMode = MTLCPUCacheModeDefaultCache;
+					m_textureDescriptor.storageMode  = MTLStorageModePrivate;
+					m_textureDescriptor.usage		 = MTLTextureUsageRenderTarget;
+				}
 
 				if (NULL != m_backBufferDepth)
 				{
 					release(m_backBufferDepth);
 				}
 				m_backBufferDepth   = m_device.newTextureWithDescriptor(m_textureDescriptor);
-				m_backBufferStencil = m_backBufferDepth;
+				
+				
+				if (m_hasPixelFormatDepth32Float_Stencil8)
+					m_backBufferStencil = m_backBufferDepth;
+				else
+				{
+					m_textureDescriptor.pixelFormat = MTLPixelFormatStencil8;
+					m_backBufferStencil   = m_device.newTextureWithDescriptor(m_textureDescriptor);
+				}
 
 				bx::HashMurmur2A murmur;
 				murmur.begin();
@@ -1264,6 +1276,10 @@ namespace bgfx { namespace mtl
 		Texture       m_backBufferStencil;
 		uint32_t      m_backBufferPixelFormatHash;
 		uint32_t      m_maxAnisotropy;
+
+		bool m_iOS9Runtime;
+		bool m_macOS11Runtime;
+		bool m_hasPixelFormatDepth32Float_Stencil8;
 
 		OcclusionQueryMTL m_occlusionQuery;
 
@@ -1944,20 +1960,22 @@ namespace bgfx { namespace mtl
 			desc.depth  = bx::uint32_max(1,imageContainer.m_depth);
 			desc.mipmapLevelCount = imageContainer.m_numMips;
 			desc.sampleCount      = 1; //TODO: set samplecount -  If textureType is not MTLTextureType2DMultisample, the value must be 1.
-			desc.resourceOptions  = MTLResourceStorageModePrivate;
-			desc.cpuCacheMode     = MTLCPUCacheModeDefaultCache;
 
-			//TODO: these flags works only on iOS9+/OSX
-			desc.storageMode = (MTLStorageMode)(writeOnly||isDepth(TextureFormat::Enum(m_textureFormat))
-				? 2 /*MTLStorageModePrivate*/
-				: 1 /*MTLStorageModeManaged*/
-				);
-
-			desc.usage = MTLTextureUsageShaderRead;
-			if (computeWrite)
-				desc.usage |= MTLTextureUsageShaderWrite;
-			if (renderTarget)
-				desc.usage |= MTLTextureUsageRenderTarget;
+			if (s_renderMtl->m_iOS9Runtime || s_renderMtl->m_macOS11Runtime)
+			{
+				desc.cpuCacheMode     = MTLCPUCacheModeDefaultCache;
+				
+				desc.storageMode = (MTLStorageMode)(writeOnly||isDepth(TextureFormat::Enum(m_textureFormat))
+													? 2 /*MTLStorageModePrivate*/
+													: 1 /*MTLStorageModeManaged*/
+													);
+				
+				desc.usage = MTLTextureUsageShaderRead;
+				if (computeWrite)
+					desc.usage |= MTLTextureUsageShaderWrite;
+				if (renderTarget)
+					desc.usage |= MTLTextureUsageRenderTarget;
+			}
 
 			m_ptr = s_renderMtl->m_device.newTextureWithDescriptor(desc);
 			if (m_requestedFormat == TextureFormat::D24S8
@@ -2213,7 +2231,9 @@ namespace bgfx { namespace mtl
 
 		//TODO: acquire CAMetalDrawable just before we really need it. When we are using an encoder with target metalLayer's texture
 		m_drawable = m_metalLayer.nextDrawable;
-//		retain(m_drawable); // keep alive to be useable at 'flip'
+#if BX_PLATFORM_IOS
+		retain(m_drawable); // keep alive to be useable at 'flip'
+#endif
 
 		m_uniformBuffer = m_uniformBuffers[m_uniformBufferIndex];
 		m_uniformBufferIndex = (m_uniformBufferIndex + 1) % UNIFORM_BUFFER_COUNT;
@@ -2257,16 +2277,6 @@ namespace bgfx { namespace mtl
 		uint32_t blendFactor = 0;
 
 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
-
-		//TODO: REMOVE THIS - TEMPORARY HACK
-		m_textureDescriptor.textureType = MTLTextureType2D;
-		m_textureDescriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
-		m_textureDescriptor.width = 4;
-		m_textureDescriptor.height = 4;
-		m_textureDescriptor.depth = 1;
-		m_textureDescriptor.mipmapLevelCount = 1;
-		m_textureDescriptor.sampleCount = 1; //TODO: set samplecount -  If textureType is not MTLTextureType2DMultisample, the value must be 1.
-		Texture zeroTexture = m_device.newTextureWithDescriptor(m_textureDescriptor);
 
 		uint16_t programIdx = invalidHandle;
 		SortKey key;
@@ -2439,11 +2449,6 @@ namespace bgfx { namespace mtl
 					rce = m_commandBuffer.renderCommandEncoderWithDescriptor(renderPassDescriptor);
 					m_renderCommandEncoder = rce;
 					MTL_RELEASE(renderPassDescriptor);
-
-					//TODO: REMOVE THIS!!!!
-					// TERRIBLE HACK TO SUPPRESS DEBUG LAYER WARNING ABOUT MISSING TEXTURE/SAMPLER AT 0 in 20-nanovg
-					m_renderCommandEncoder.setFragmentTexture(zeroTexture, 0);
-					m_renderCommandEncoder.setFragmentSamplerState(getSamplerState(0), 0);
 
 					rce.setTriangleFillMode(wireframe? MTLTriangleFillModeLines : MTLTriangleFillModeFill);
 
@@ -2958,9 +2963,6 @@ namespace bgfx { namespace mtl
 
 			rce.popDebugGroup();
 		}
-
-		//TODO: REMOVE THIS - TEMPORARY HACK
-		release(zeroTexture);
 
 		rce.endEncoding();
 		m_renderCommandEncoder = 0;
