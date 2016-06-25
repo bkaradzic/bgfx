@@ -152,12 +152,12 @@ class DebugDrawApp : public entry::AppI
 				ddDraw(sphere);
 				ddSetWireframe(false);
 
-				ddSetColor(0xf0ffc0ff);
+				ddSetColor(0xc0ffc0ff);
 				sphere.m_center[0] = -2.0f;
 				ddSetLod(2);
 				ddDraw(sphere);
 
-				ddSetColor(0xc0f0ffff);
+				ddSetColor(0xa0f0ffff);
 				sphere.m_center[0] = -4.0f;
 				ddSetLod(1);
 				ddDraw(sphere);

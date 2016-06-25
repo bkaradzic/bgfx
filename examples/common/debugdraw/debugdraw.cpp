@@ -1546,6 +1546,7 @@ private:
 		}
 
 		const float flip = 0 == (attrib.m_state & BGFX_STATE_CULL_CCW) ? 1.0f : -1.0f;
+		const uint8_t alpha = attrib.m_abgr>>24;
 
 		float params[4][4] =
 		{
@@ -1571,7 +1572,7 @@ private:
 				( (attrib.m_abgr    )&0xff)/255.0f,
 				( (attrib.m_abgr>> 8)&0xff)/255.0f,
 				( (attrib.m_abgr>>16)&0xff)/255.0f,
-				( (attrib.m_abgr>>24)     )/255.0f,
+				(  alpha                  )/255.0f,
 			},
 		};
 
@@ -1583,7 +1584,8 @@ private:
 		bgfx::setVertexBuffer(m_vbh, mesh.m_startVertex, mesh.m_numVertices);
 		bgfx::setState(0
 				| attrib.m_state
-				| (_wireframe ? BGFX_STATE_PT_LINES|BGFX_STATE_LINEAA|BGFX_STATE_BLEND_ALPHA : 0)
+				| (_wireframe ? BGFX_STATE_PT_LINES|BGFX_STATE_LINEAA|BGFX_STATE_BLEND_ALPHA
+				: (alpha < 0xff) ? BGFX_STATE_BLEND_ALPHA : 0)
 				);
 		bgfx::submit(m_viewId, m_program[_wireframe ? Program::Fill : Program::FillLit]);
 	}
