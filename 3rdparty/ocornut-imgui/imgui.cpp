@@ -391,10 +391,12 @@
       e.g. when displaying a list of objects, using indices or pointers as ID will preserve the node open/closed state differently. experiment and see what makes more sense!
 
  Q: How can I tell when ImGui wants my mouse/keyboard inputs and when I can pass them to my application?
- A: You can read the 'io.WantCaptureXXX' flags in the ImGuiIO structure. Preferably read them after calling ImGui::NewFrame() to avoid those flags lagging by one frame.
+ A: You can read the 'io.WantCaptureXXX' flags in the ImGuiIO structure. Preferably read them after calling ImGui::NewFrame() to avoid those flags lagging by one frame, but either should be fine.
     When 'io.WantCaptureMouse' or 'io.WantCaptureKeyboard' flags are set you may want to discard/hide the inputs from the rest of your application.
     When 'io.WantInputsCharacters' is set to may want to notify your OS to popup an on-screen keyboard, if available.
     ImGui is tracking dragging and widget activity that may occur outside the boundary of a window, so 'io.WantCaptureMouse' is a more accurate and complete than testing for ImGui::IsMouseHoveringAnyWindow().
+    (Advanced note: text input releases focus on Return 'KeyDown', so the following Return 'KeyUp' event that your application receive will typically have 'io.WantcaptureKeyboard=false'. 
+     Depending on your application logic it may or not be inconvenient. You might want to track which key-downs were for ImGui (e.g. with an array of bool) and filter out the corresponding key-ups.)
 
  Q: How can I load a different font than the default? (default is an embedded version of ProggyClean.ttf, rendered at size 13)
  A: Use the font atlas to load the TTF file you want:
@@ -898,6 +900,13 @@ int ImStrnicmp(const char* str1, const char* str2, int count)
     int d = 0;
     while (count > 0 && (d = toupper(*str2) - toupper(*str1)) == 0 && *str1) { str1++; str2++; count--; }
     return d;
+}
+
+void ImStrncpy(char* dst, const char* src, int count)
+{
+    if (count < 1) return;
+    strncpy(dst, src, (size_t)count);
+    dst[count-1] = 0;
 }
 
 char* ImStrdup(const char *str)
@@ -1436,7 +1445,7 @@ ImGuiTextFilter::ImGuiTextFilter(const char* default_filter)
 {
     if (default_filter)
     {
-        ImFormatString(InputBuf, IM_ARRAYSIZE(InputBuf), "%s", default_filter);
+        ImStrncpy(InputBuf, default_filter, IM_ARRAYSIZE(InputBuf));
         Build();
     }
     else
@@ -4913,8 +4922,7 @@ void ImGui::SetWindowFocus(const char* name)
 {
     if (name)
     {
-        ImGuiWindow* window = FindWindowByName(name);
-        if (window)
+        if (ImGuiWindow* window = FindWindowByName(name))
             FocusWindow(window);
     }
     else
@@ -7637,9 +7645,9 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
             // Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
             // From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)
             const int prev_len_w = edit_state.CurLenW;
-            edit_state.Text.resize(buf_size+1);        // wchar count <= utf-8 count. we use +1 to make sure that .Data isn't NULL so it doesn't crash.
-            edit_state.InitialText.resize(buf_size+1); // utf-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash.
-            ImFormatString(edit_state.InitialText.Data, edit_state.InitialText.Size, "%s", buf);
+            edit_state.Text.resize(buf_size+1);        // wchar count <= UTF-8 count. we use +1 to make sure that .Data isn't NULL so it doesn't crash.
+            edit_state.InitialText.resize(buf_size+1); // UTF-8. we use +1 to make sure that .Data isn't NULL so it doesn't crash.
+            ImStrncpy(edit_state.InitialText.Data, buf, edit_state.InitialText.Size);
             const char* buf_end = NULL;
             edit_state.CurLenW = ImTextStrFromUtf8(edit_state.Text.Data, edit_state.Text.Size, buf, NULL, &buf_end);
             edit_state.CurLenA = (int)(buf_end - buf); // We can't get the result from ImFormatString() above because it is not UTF-8 aware. Here we'll cut off malformed UTF-8.
@@ -7845,7 +7853,7 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
             // Restore initial value
             if (is_editable)
             {
-                ImFormatString(buf, buf_size, "%s", edit_state.InitialText.Data);
+                ImStrncpy(buf, edit_state.InitialText.Data, buf_size);
                 value_changed = true;
             }
         }
@@ -7931,16 +7939,19 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
             // Copy back to user buffer
             if (is_editable && strcmp(edit_state.TempTextBuffer.Data, buf) != 0)
             {
-                ImFormatString(buf, buf_size, "%s", edit_state.TempTextBuffer.Data);
+                ImStrncpy(buf, edit_state.TempTextBuffer.Data, buf_size);
                 value_changed = true;
             }
         }
     }
 
+    // Render
+    // Select which buffer we are going to display. When ImGuiInputTextFlags_NoLiveEdit is set 'buf' might still be the old value. We set buf to NULL to prevent accidental usage from now on.
+    const char* buf_display = (g.ActiveId == id && is_editable) ? edit_state.TempTextBuffer.Data : buf; buf = NULL; 
+
     if (!is_multiline)
         RenderFrame(frame_bb.Min, frame_bb.Max, GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
 
-    // Render
     const ImVec4 clip_rect(frame_bb.Min.x, frame_bb.Min.y, frame_bb.Min.x + size.x, frame_bb.Min.y + size.y); // Not using frame_bb.Max because we have adjusted size
     ImVec2 render_pos = is_multiline ? draw_window->DC.CursorPos : frame_bb.Min + style.FramePadding;
     ImVec2 text_size(0.f, 0.f);
@@ -8066,7 +8077,7 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
             }
         }
 
-        draw_window->DrawList->AddText(g.Font, g.FontSize, render_pos - render_scroll, GetColorU32(ImGuiCol_Text), buf, buf+edit_state.CurLenA, 0.0f, is_multiline ? NULL : &clip_rect);
+        draw_window->DrawList->AddText(g.Font, g.FontSize, render_pos - render_scroll, GetColorU32(ImGuiCol_Text), buf_display, buf_display + edit_state.CurLenA, 0.0f, is_multiline ? NULL : &clip_rect);
 
         // Draw blinking cursor
         bool cursor_is_visible = (g.InputTextState.CursorAnim <= 0.0f) || fmodf(g.InputTextState.CursorAnim, 1.20f) <= 0.80f;
@@ -8084,8 +8095,8 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
         // Render text only
         const char* buf_end = NULL;
         if (is_multiline)
-            text_size = ImVec2(size.x, InputTextCalcTextLenAndLineCount(buf, &buf_end) * g.FontSize); // We don't need width
-        draw_window->DrawList->AddText(g.Font, g.FontSize, render_pos, GetColorU32(ImGuiCol_Text), buf, buf_end, 0.0f, is_multiline ? NULL : &clip_rect);
+            text_size = ImVec2(size.x, InputTextCalcTextLenAndLineCount(buf_display, &buf_end) * g.FontSize); // We don't need width
+        draw_window->DrawList->AddText(g.Font, g.FontSize, render_pos, GetColorU32(ImGuiCol_Text), buf_display, buf_end, 0.0f, is_multiline ? NULL : &clip_rect);
     }
 
     if (is_multiline)
@@ -8100,7 +8111,7 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
 
     // Log as text
     if (g.LogEnabled && !is_password)
-        LogRenderedText(render_pos, buf, NULL);
+        LogRenderedText(render_pos, buf_display, NULL);
 
     if (label_size.x > 0)
         RenderText(ImVec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y), label);
@@ -9464,7 +9475,7 @@ void ImGui::ValueColor(const char* prefix, const ImVec4& v)
     ColorButton(v, true);
 }
 
-void ImGui::ValueColor(const char* prefix, unsigned int v)
+void ImGui::ValueColor(const char* prefix, ImU32 v)
 {
     Text("%s: %08X", prefix, v);
     SameLine();
