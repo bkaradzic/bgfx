@@ -2627,8 +2627,9 @@ namespace bgfx
 				uint16_t flags = BGFX_BUFFER_NONE;
 				cmdbuf.write(flags);
 
-				tib = (TransientIndexBuffer*)BX_ALLOC(g_allocator, sizeof(TransientIndexBuffer)+_size);
-				tib->data   = (uint8_t*)&tib[1];
+                size_t size = BX_ALIGN_16(sizeof(TransientIndexBuffer)) + BX_ALIGN_16(_size);
+				tib = (TransientIndexBuffer*)BX_ALIGNED_ALLOC(g_allocator, size, 16);
+				tib->data   = (uint8_t *)((size_t)tib + BX_ALIGN_16(sizeof(TransientIndexBuffer)));
 				tib->size   = _size;
 				tib->handle = handle;
 			}
@@ -2683,8 +2684,9 @@ namespace bgfx
 				uint16_t flags = BGFX_BUFFER_NONE;
 				cmdbuf.write(flags);
 
-				tvb = (TransientVertexBuffer*)BX_ALLOC(g_allocator, sizeof(TransientVertexBuffer)+_size);
-				tvb->data = (uint8_t*)&tvb[1];
+                size_t size = BX_ALIGN_16(sizeof(TransientVertexBuffer)) + BX_ALIGN_16(_size);
+				tvb = (TransientVertexBuffer*)BX_ALIGNED_ALLOC(g_allocator, size, 16);
+				tvb->data = (uint8_t *)((size_t)tvb + BX_ALIGN_16(sizeof(TransientVertexBuffer)));
 				tvb->size = _size;
 				tvb->startVertex = 0;
 				tvb->stride = stride;
