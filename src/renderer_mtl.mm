@@ -21,10 +21,11 @@
 #define UNIFORM_BUFFER_COUNT (3)
 
 /*
- //OSX issues:
-  03-raymarch: nothing is visible
-  12-lod: color differences
+ // metal shader generation issues:
+  03-raymarch: nothing is visible  ( should be swapped in fragment output struct)
   15-shadowmaps-simple: shader compilation error
+ 
+ //OSX issues:
   16-shadowmaps: framebuffer creation problems (iOS: PixelFormat MTLPixelFormatDepth32Float is not stencil renderable)
   18-ibl:color wheel is not visible
   19-oit: mrt independent does not work
@@ -37,9 +38,9 @@
 Known issues / TODOs:
 - device orientation change is not handled properly
 - 15-shadowmaps-simple (modified shaderc and example needs modification too, mtxCrop znew = z * 0.5 + 0.5 is not needed ) could be hacked in shader too
-- 21-deferred ( hacked shaderc to support MRT output and fs_deferred_light needed modification for metal (similar to BGFX_SHADER_LANGUAGE_HLSL )
+ 21-deferred ( fs_deferred_light needed modification for metal (similar to BGFX_SHADER_LANGUAGE_HLSL )
 
-07-callback, saveScreenshot should be implemented with one frame latency (using saveScreenshotBegin and End)
+ 07-callback, saveScreenshot should be implemented with one frame latency (using saveScreenshotBegin and End)
 
 16-shadowmaps,  //problem with essl -> metal: SAMPLER2D(u_shadowMap0, 4);  sampler index is lost. Shadowmap is set to slot 4, but
  metal shader uses sampler/texture slot 0. this could require changes outside of renderer_mtl?
@@ -47,11 +48,7 @@ Known issues / TODOs:
 
 24-nbody - cannot generate compute shaders for metal
 
-- caps
-
 - optimization...
-
-create binary shader representation
 
  13-stencil and 16-shadowmaps are very inefficient. every view stores/loads backbuffer data
 
@@ -253,85 +250,85 @@ namespace bgfx { namespace mtl
 		MTLPixelFormat m_fmt;
 		MTLPixelFormat m_fmtSrgb;
 	};
-
+	
 	static TextureFormatInfo s_textureFormat[] =
 	{
-		{ MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // BC1
-		{ MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // BC2
-		{ MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // BC3
-		{ MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // BC4
-		{ MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // BC5
-		{ MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // BC6H
-		{ MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // BC7
-		{ MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // ETC1
-		{ MTLPixelFormat(180) /*ETC2_RGB8*/,       MTLPixelFormat(181) /*ETC2_RGB8_sRGB*/       }, // ETC2
-		{ MTLPixelFormat(178) /*EAC_RGBA8*/,       MTLPixelFormat(179) /*EAC_RGBA8_sRGB*/       }, // ETC2A
-		{ MTLPixelFormat(182) /*ETC2_RGB8A1*/,     MTLPixelFormat(183) /*ETC2_RGB8A1_sRGB*/     }, // ETC2A1
-		{ MTLPixelFormat(160) /*PVRTC_RGB_2BPP*/,  MTLPixelFormat(161) /*PVRTC_RGB_2BPP_sRGB*/  }, // PTC12
-		{ MTLPixelFormat(162) /*PVRTC_RGB_4BPP*/,  MTLPixelFormat(163) /*PVRTC_RGB_4BPP_sRGB*/  }, // PTC14
-		{ MTLPixelFormat(164) /*PVRTC_RGBA_2BPP*/, MTLPixelFormat(165) /*PVRTC_RGBA_2BPP_sRGB*/ }, // PTC12A
-		{ MTLPixelFormat(166) /*PVRTC_RGBA_4BPP*/, MTLPixelFormat(167) /*PVRTC_RGBA_4BPP_sRGB*/ }, // PTC14A
-		{ MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // PTC22
-		{ MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // PTC24
-		{ MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // Unknown
-		{ MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // R1
-		{ MTLPixelFormatA8Unorm,                   MTLPixelFormatInvalid                        }, // A8
-		{ MTLPixelFormatR8Unorm,                   MTLPixelFormat(11) /*R8Unorm_sRGB*/          }, // R8
-		{ MTLPixelFormatR8Sint,                    MTLPixelFormatInvalid                        }, // R8I
-		{ MTLPixelFormatR8Uint,                    MTLPixelFormatInvalid                        }, // R8U
-		{ MTLPixelFormatR8Snorm,                   MTLPixelFormatInvalid                        }, // R8S
-		{ MTLPixelFormatR16Unorm,                  MTLPixelFormatInvalid                        }, // R16
-		{ MTLPixelFormatR16Sint,                   MTLPixelFormatInvalid                        }, // R16I
-		{ MTLPixelFormatR16Uint,                   MTLPixelFormatInvalid                        }, // R16U
-		{ MTLPixelFormatR16Float,                  MTLPixelFormatInvalid                        }, // R16F
-		{ MTLPixelFormatR16Snorm,                  MTLPixelFormatInvalid                        }, // R16S
-		{ MTLPixelFormatR32Sint,                   MTLPixelFormatInvalid                        }, // R32I
-		{ MTLPixelFormatR32Uint,                   MTLPixelFormatInvalid                        }, // R32U
-		{ MTLPixelFormatR32Float,                  MTLPixelFormatInvalid                        }, // R32F
-		{ MTLPixelFormatRG8Unorm,                  MTLPixelFormat(31) /*RG8Unorm_sRGB*/         }, // RG8
-		{ MTLPixelFormatRG8Sint,                   MTLPixelFormatInvalid                        }, // RG8I
-		{ MTLPixelFormatRG8Uint,                   MTLPixelFormatInvalid                        }, // RG8U
-		{ MTLPixelFormatRG8Snorm,                  MTLPixelFormatInvalid                        }, // RG8S
-		{ MTLPixelFormatRG16Unorm,                 MTLPixelFormatInvalid                        }, // RG16
-		{ MTLPixelFormatRG16Sint,                  MTLPixelFormatInvalid                        }, // RG16I
-		{ MTLPixelFormatRG16Uint,                  MTLPixelFormatInvalid                        }, // RG16U
-		{ MTLPixelFormatRG16Float,                 MTLPixelFormatInvalid                        }, // RG16F
-		{ MTLPixelFormatRG16Snorm,                 MTLPixelFormatInvalid                        }, // RG16S
-		{ MTLPixelFormatRG32Sint,                  MTLPixelFormatInvalid                        }, // RG32I
-		{ MTLPixelFormatRG32Uint,                  MTLPixelFormatInvalid                        }, // RG32U
-		{ MTLPixelFormatRG32Float,                 MTLPixelFormatInvalid                        }, // RG32F
-        { MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // RGB8
-        { MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // RGB8I
-        { MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // RGB8U
-		{ MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // RGB8S
-        { MTLPixelFormatRGB9E5Float,               MTLPixelFormatInvalid                        }, // RGB9E5F
-		{ MTLPixelFormatBGRA8Unorm,                MTLPixelFormatBGRA8Unorm_sRGB                }, // BGRA8
-		{ MTLPixelFormatRGBA8Unorm,                MTLPixelFormatRGBA8Unorm_sRGB                }, // RGBA8
-		{ MTLPixelFormatRGBA8Sint,                 MTLPixelFormatInvalid                        }, // RGBA8I
-		{ MTLPixelFormatRGBA8Uint,                 MTLPixelFormatInvalid                        }, // RGBA8U
-		{ MTLPixelFormatRGBA8Snorm,                MTLPixelFormatInvalid                        }, // RGBA8S
-		{ MTLPixelFormatRGBA16Unorm,               MTLPixelFormatInvalid                        }, // RGBA16
-		{ MTLPixelFormatRGBA16Sint,                MTLPixelFormatInvalid                        }, // RGBA16I
-		{ MTLPixelFormatRGBA16Uint,                MTLPixelFormatInvalid                        }, // RGBA16I
-		{ MTLPixelFormatRGBA16Float,               MTLPixelFormatInvalid                        }, // RGBA16F
-		{ MTLPixelFormatRGBA16Snorm,               MTLPixelFormatInvalid                        }, // RGBA16S
-		{ MTLPixelFormatRGBA32Sint,                MTLPixelFormatInvalid                        }, // RGBA32I
-		{ MTLPixelFormatRGBA32Uint,                MTLPixelFormatInvalid                        }, // RGBA32U
-		{ MTLPixelFormatRGBA32Float,               MTLPixelFormatInvalid                        }, // RGBA32F
-		{ MTLPixelFormat(40) /*B5G6R5Unorm*/,      MTLPixelFormatInvalid                        }, // R5G6B5
-		{ MTLPixelFormat(42) /*ABGR4Unorm*/,       MTLPixelFormatInvalid                        }, // RGBA4
-		{ MTLPixelFormat(41) /*A1BGR5Unorm*/,      MTLPixelFormatInvalid                        }, // RGB5A1
-		{ MTLPixelFormatRGB10A2Unorm,              MTLPixelFormatInvalid                        }, // RGB10A2
-		{ MTLPixelFormatRG11B10Float,              MTLPixelFormatInvalid                        }, // R11G11B10F
-		{ MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // UnknownDepth
-		{ MTLPixelFormatDepth32Float,              MTLPixelFormatInvalid                        }, // D16
-		{ MTLPixelFormatDepth32Float,              MTLPixelFormatInvalid                        }, // D24
-		{ MTLPixelFormatInvalid,                   MTLPixelFormatInvalid                        }, // D24S8
-		{ MTLPixelFormatDepth32Float,              MTLPixelFormatInvalid                        }, // D32
-		{ MTLPixelFormatDepth32Float,              MTLPixelFormatInvalid                        }, // D16F
-		{ MTLPixelFormatDepth32Float,              MTLPixelFormatInvalid                        }, // D24F
-		{ MTLPixelFormatDepth32Float,              MTLPixelFormatInvalid                        }, // D32F
-		{ MTLPixelFormatStencil8,                  MTLPixelFormatInvalid                        }, // D0S8
+		{ MTLPixelFormat(130) /*BC1_RGBA*/,				MTLPixelFormat(131) /*BC1_RGBA_sRGB*/        }, // BC1
+		{ MTLPixelFormat(132) /*BC2_RGBA*/,				MTLPixelFormat(133) /*BC2_RGBA_sRGB*/        }, // BC2
+		{ MTLPixelFormat(134) /*BC3_RGBA*/,				MTLPixelFormat(135) /*BC3_RGBA_sRGB*/        }, // BC3
+		{ MTLPixelFormat(140) /*BC4_RUnorm*/,			MTLPixelFormatInvalid                        }, // BC4
+		{ MTLPixelFormat(142) /*BC5_RGUnorm*/,			MTLPixelFormatInvalid                        }, // BC5
+		{ MTLPixelFormat(150) /*BC6H_RGBFloat*/,		MTLPixelFormatInvalid                        }, // BC6H
+		{ MTLPixelFormat(152) /*BC7_RGBAUnorm*/,		MTLPixelFormat(153) /*BC7_RGBAUnorm_sRGB*/   }, // BC7
+		{ MTLPixelFormatInvalid,						MTLPixelFormatInvalid                        }, // ETC1
+		{ MTLPixelFormat(180) /*ETC2_RGB8*/,			MTLPixelFormat(181) /*ETC2_RGB8_sRGB*/       }, // ETC2
+		{ MTLPixelFormat(178) /*EAC_RGBA8*/,			MTLPixelFormat(179) /*EAC_RGBA8_sRGB*/       }, // ETC2A
+		{ MTLPixelFormat(182) /*ETC2_RGB8A1*/,			MTLPixelFormat(183) /*ETC2_RGB8A1_sRGB*/     }, // ETC2A1
+		{ MTLPixelFormat(160) /*PVRTC_RGB_2BPP*/,		MTLPixelFormat(161) /*PVRTC_RGB_2BPP_sRGB*/  }, // PTC12
+		{ MTLPixelFormat(162) /*PVRTC_RGB_4BPP*/,		MTLPixelFormat(163) /*PVRTC_RGB_4BPP_sRGB*/  }, // PTC14
+		{ MTLPixelFormat(164) /*PVRTC_RGBA_2BPP*/,		MTLPixelFormat(165) /*PVRTC_RGBA_2BPP_sRGB*/ }, // PTC12A
+		{ MTLPixelFormat(166) /*PVRTC_RGBA_4BPP*/,		MTLPixelFormat(167) /*PVRTC_RGBA_4BPP_sRGB*/ }, // PTC14A
+		{ MTLPixelFormatInvalid,						MTLPixelFormatInvalid                        }, // PTC22
+		{ MTLPixelFormatInvalid,						MTLPixelFormatInvalid                        }, // PTC24
+		{ MTLPixelFormatInvalid,						MTLPixelFormatInvalid                        }, // Unknown
+		{ MTLPixelFormatInvalid,						MTLPixelFormatInvalid                        }, // R1
+		{ MTLPixelFormatA8Unorm,						MTLPixelFormatInvalid                        }, // A8
+		{ MTLPixelFormatR8Unorm,						MTLPixelFormat(11) /*R8Unorm_sRGB*/          }, // R8
+		{ MTLPixelFormatR8Sint,							MTLPixelFormatInvalid                        }, // R8I
+		{ MTLPixelFormatR8Uint,							MTLPixelFormatInvalid                        }, // R8U
+		{ MTLPixelFormatR8Snorm,						MTLPixelFormatInvalid                        }, // R8S
+		{ MTLPixelFormatR16Unorm,						MTLPixelFormatInvalid                        }, // R16
+		{ MTLPixelFormatR16Sint,						MTLPixelFormatInvalid                        }, // R16I
+		{ MTLPixelFormatR16Uint,						MTLPixelFormatInvalid                        }, // R16U
+		{ MTLPixelFormatR16Float,						MTLPixelFormatInvalid                        }, // R16F
+		{ MTLPixelFormatR16Snorm,						MTLPixelFormatInvalid                        }, // R16S
+		{ MTLPixelFormatR32Sint,						MTLPixelFormatInvalid                        }, // R32I
+		{ MTLPixelFormatR32Uint,						MTLPixelFormatInvalid                        }, // R32U
+		{ MTLPixelFormatR32Float,						MTLPixelFormatInvalid                        }, // R32F
+		{ MTLPixelFormatRG8Unorm,						MTLPixelFormat(31) /*RG8Unorm_sRGB*/         }, // RG8
+		{ MTLPixelFormatRG8Sint,						MTLPixelFormatInvalid                        }, // RG8I
+		{ MTLPixelFormatRG8Uint,						MTLPixelFormatInvalid                        }, // RG8U
+		{ MTLPixelFormatRG8Snorm,						MTLPixelFormatInvalid                        }, // RG8S
+		{ MTLPixelFormatRG16Unorm,						MTLPixelFormatInvalid                        }, // RG16
+		{ MTLPixelFormatRG16Sint,						MTLPixelFormatInvalid                        }, // RG16I
+		{ MTLPixelFormatRG16Uint,						MTLPixelFormatInvalid                        }, // RG16U
+		{ MTLPixelFormatRG16Float,						MTLPixelFormatInvalid                        }, // RG16F
+		{ MTLPixelFormatRG16Snorm,						MTLPixelFormatInvalid                        }, // RG16S
+		{ MTLPixelFormatRG32Sint,						MTLPixelFormatInvalid                        }, // RG32I
+		{ MTLPixelFormatRG32Uint,						MTLPixelFormatInvalid                        }, // RG32U
+		{ MTLPixelFormatRG32Float,						MTLPixelFormatInvalid                        }, // RG32F
+        { MTLPixelFormatInvalid,						MTLPixelFormatInvalid                        }, // RGB8
+        { MTLPixelFormatInvalid,						MTLPixelFormatInvalid                        }, // RGB8I
+        { MTLPixelFormatInvalid,						MTLPixelFormatInvalid                        }, // RGB8U
+		{ MTLPixelFormatInvalid,						MTLPixelFormatInvalid                        }, // RGB8S
+		{ MTLPixelFormatRGB9E5Float,					MTLPixelFormatInvalid                        }, // RGB9E5F
+		{ MTLPixelFormatBGRA8Unorm,						MTLPixelFormatBGRA8Unorm_sRGB                }, // BGRA8
+		{ MTLPixelFormatRGBA8Unorm,						MTLPixelFormatRGBA8Unorm_sRGB                }, // RGBA8
+		{ MTLPixelFormatRGBA8Sint,						MTLPixelFormatInvalid                        }, // RGBA8I
+		{ MTLPixelFormatRGBA8Uint,						MTLPixelFormatInvalid                        }, // RGBA8U
+		{ MTLPixelFormatRGBA8Snorm,						MTLPixelFormatInvalid                        }, // RGBA8S
+		{ MTLPixelFormatRGBA16Unorm,					MTLPixelFormatInvalid                        }, // RGBA16
+		{ MTLPixelFormatRGBA16Sint,						MTLPixelFormatInvalid                        }, // RGBA16I
+		{ MTLPixelFormatRGBA16Uint,						MTLPixelFormatInvalid                        }, // RGBA16U
+		{ MTLPixelFormatRGBA16Float,					MTLPixelFormatInvalid                        }, // RGBA16F
+		{ MTLPixelFormatRGBA16Snorm,					MTLPixelFormatInvalid                        }, // RGBA16S
+		{ MTLPixelFormatRGBA32Sint,						MTLPixelFormatInvalid                        }, // RGBA32I
+		{ MTLPixelFormatRGBA32Uint,						MTLPixelFormatInvalid                        }, // RGBA32U
+		{ MTLPixelFormatRGBA32Float,					MTLPixelFormatInvalid                        }, // RGBA32F
+		{ MTLPixelFormat(40) /*B5G6R5Unorm*/,			MTLPixelFormatInvalid                        }, // R5G6B5
+		{ MTLPixelFormat(42) /*ABGR4Unorm*/,			MTLPixelFormatInvalid                        }, // RGBA4
+		{ MTLPixelFormat(41) /*A1BGR5Unorm*/,			MTLPixelFormatInvalid                        }, // RGB5A1
+		{ MTLPixelFormatRGB10A2Unorm,					MTLPixelFormatInvalid                        }, // RGB10A2
+		{ MTLPixelFormatRG11B10Float,					MTLPixelFormatInvalid                        }, // R11G11B10F
+		{ MTLPixelFormatInvalid,						MTLPixelFormatInvalid                        }, // UnknownDepth
+		{ MTLPixelFormatDepth32Float,					MTLPixelFormatInvalid                        }, // D16
+		{ MTLPixelFormatDepth32Float,					MTLPixelFormatInvalid                        }, // D24
+		{ MTLPixelFormat(255) /*Depth24Unorm_Stencil8*/,MTLPixelFormatInvalid						 }, // D24S8
+		{ MTLPixelFormatDepth32Float,					MTLPixelFormatInvalid                        }, // D32
+		{ MTLPixelFormatDepth32Float,					MTLPixelFormatInvalid                        }, // D16F
+		{ MTLPixelFormatDepth32Float,					MTLPixelFormatInvalid                        }, // D24F
+		{ MTLPixelFormatDepth32Float,					MTLPixelFormatInvalid                        }, // D32F
+		{ MTLPixelFormatStencil8,						MTLPixelFormatInvalid                        }, // D0S8
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
@@ -421,51 +418,65 @@ namespace bgfx { namespace mtl
 			}
 			m_uniformBufferVertexOffset = 0;
 			m_uniformBufferFragmentOffset = 0;
-
+			
 			g_caps.supported |= (0
+								 | BGFX_CAPS_TEXTURE_COMPARE_LEQUAL	//NOTE: on IOS Gpu Family 1/2 have to set compare in shader
+								 | BGFX_CAPS_TEXTURE_COMPARE_ALL
 								 | BGFX_CAPS_TEXTURE_3D
-								 | BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
-								 | BGFX_CAPS_INSTANCING
 								 | BGFX_CAPS_VERTEX_ATTRIB_HALF
-//								 | BGFX_CAPS_FRAGMENT_DEPTH
+								 | BGFX_CAPS_VERTEX_ATTRIB_UINT10
+								 | BGFX_CAPS_INSTANCING
+							     | BGFX_CAPS_FRAGMENT_DEPTH
 								 | BGFX_CAPS_BLEND_INDEPENDENT
-								 | BGFX_CAPS_COMPUTE
+								 | BGFX_CAPS_COMPUTE	// TODO: api/hw supports it but metal compute shaders are not yet supported
 								 | BGFX_CAPS_INDEX32
-								 | BGFX_CAPS_DRAW_INDIRECT
-//								 | BGFX_CAPS_TEXTURE_BLIT
-//								 | BGFX_CAPS_TEXTURE_READ_BACK
-								 | BGFX_CAPS_OCCLUSION_QUERY
+							   //| BGFX_CAPS_DRAW_INDIRECT // TODO: support on iOS9+gpu family3+ and on macOS
+							   //| BGFX_CAPS_TEXTURE_BLIT //TODO: is this supported???
+							   //| BGFX_CAPS_TEXTURE_READ_BACK //TODO: is this supported???
+							     | BGFX_CAPS_OCCLUSION_QUERY
+							     | BGFX_CAPS_ALPHA_TO_COVERAGE
 								 );
 
-			g_caps.maxTextureSize = 2048; //ASK: real caps width/height: 4096, but max depth(3D) size is only: 2048
-			g_caps.maxFBAttachments = 4; // uint8_t(bx::uint32_min(m_device.supportsFeatureSet(MTLFeatureSet_iOS_GPUFamily2_v1) ? 8 : 4, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS));
-
+			if (BX_ENABLED(BX_PLATFORM_IOS) )
+			{
+				if ( iOSVersionEqualOrGreater("9.0.0") )
+				{
+					g_caps.maxTextureSize = m_device.supportsFeatureSet(4 /* iOS_GPUFamily3_v1 */) ? 16384 : 8192;
+				}
+				else
+				{
+					g_caps.maxTextureSize = 4096;
+				}
+				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(m_device.supportsFeatureSet(1 /* MTLFeatureSet_iOS_GPUFamily2_v1 */) ? 8 : 4, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS));
+			
+			} else if (BX_ENABLED(BX_PLATFORM_OSX) )
+			{
+				g_caps.maxTextureSize = 16384;
+				g_caps.maxFBAttachments = 8;
+			}
+			
 			//todo: vendor id, device id, gpu enum
-			//todo: texture format caps
-
-			//add texture formats/caps/etc that are available only on new sdk/devices
-#if BX_PLATFORM_IOS
-				s_textureFormat[TextureFormat::D24S8].m_fmt = MTLPixelFormatDepth32Float;
-#endif // BX_PLATFORM_*
 
 			m_hasPixelFormatDepth32Float_Stencil8 =	(BX_ENABLED(BX_PLATFORM_OSX) ||
-												 ( BX_ENABLED(BX_PLATFORM_IOS) && iOSVersionEqualOrGreater("9.0.0") ) );
-
+													 ( BX_ENABLED(BX_PLATFORM_IOS) && iOSVersionEqualOrGreater("9.0.0") ) );
 			m_macOS11Runtime = (BX_ENABLED(BX_PLATFORM_OSX) && macOSVersionEqualOrGreater(10,11,0) );
 			m_iOS9Runtime = (BX_ENABLED(BX_PLATFORM_IOS) && iOSVersionEqualOrGreater("9.0.0") );
 			
-#if BX_PLATFORM_OSX
-			s_textureFormat[TextureFormat::D24S8].m_fmt = m_device.depth24Stencil8PixelFormatSupported() ? MTLPixelFormatDepth24Unorm_Stencil8 : MTLPixelFormatDepth32Float_Stencil8;
-#endif
+			if (BX_ENABLED(BX_PLATFORM_OSX) )
+			{
+				s_textureFormat[TextureFormat::R8].m_fmtSrgb = MTLPixelFormatInvalid;
+				s_textureFormat[TextureFormat::RG8].m_fmtSrgb = MTLPixelFormatInvalid;
+			}
 
 			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 			{
-				uint8_t support = 0;
+				uint16_t support = 0;
 
 				support |= MTLPixelFormatInvalid != s_textureFormat[ii].m_fmt
 					? BGFX_CAPS_FORMAT_TEXTURE_2D
 					| BGFX_CAPS_FORMAT_TEXTURE_3D
 					| BGFX_CAPS_FORMAT_TEXTURE_CUBE
+					| BGFX_CAPS_FORMAT_TEXTURE_VERTEX
 					: BGFX_CAPS_FORMAT_TEXTURE_NONE
 					;
 
@@ -473,20 +484,51 @@ namespace bgfx { namespace mtl
 					? BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
 					| BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
 					| BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
+					| BGFX_CAPS_FORMAT_TEXTURE_VERTEX
 					: BGFX_CAPS_FORMAT_TEXTURE_NONE
 					;
 
+				if (!isCompressed((TextureFormat::Enum)(ii)))
+				{
+					support |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
+						| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA;
+				}
+				
 					//TODO: additional caps flags
-//				support |= BGFX_CAPS_FORMAT_TEXTURE_VERTEX : BGFX_CAPS_FORMAT_TEXTURE_NONE;
 //				support |= BGFX_CAPS_FORMAT_TEXTURE_IMAGE : BGFX_CAPS_FORMAT_TEXTURE_NONE;
-//				support |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER : BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
 				g_caps.formats[ii] = support;
 			}
 
+			g_caps.formats[TextureFormat::A8] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER | BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
+			g_caps.formats[TextureFormat::RG32I] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
+			g_caps.formats[TextureFormat::RG32U] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
+			g_caps.formats[TextureFormat::RGBA32I] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
+			g_caps.formats[TextureFormat::RGBA32U] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
+			
+
+			if (BX_ENABLED(BX_PLATFORM_IOS) )
+			{
+				s_textureFormat[TextureFormat::D24S8].m_fmt = MTLPixelFormatDepth32Float;
+
+				g_caps.formats[TextureFormat::BC1] =
+				g_caps.formats[TextureFormat::BC2] =
+				g_caps.formats[TextureFormat::BC3] =
+				g_caps.formats[TextureFormat::BC4] =
+				g_caps.formats[TextureFormat::BC5] =
+				g_caps.formats[TextureFormat::BC6H] =
+				g_caps.formats[TextureFormat::BC7] = BGFX_CAPS_FORMAT_TEXTURE_NONE;
+				
+				g_caps.formats[TextureFormat::RG32F] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
+				g_caps.formats[TextureFormat::RGBA32F] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
+			}
+			
 			if (BX_ENABLED(BX_PLATFORM_OSX) )
 			{
-				g_caps.formats[TextureFormat::ETC1  ] =
+				s_textureFormat[TextureFormat::D24S8].m_fmt = m_device.depth24Stencil8PixelFormatSupported() ?
+									255 /* Depth24Unorm_Stencil8 */ :
+									MTLPixelFormatDepth32Float_Stencil8;
+				
 				g_caps.formats[TextureFormat::ETC2  ] =
 				g_caps.formats[TextureFormat::ETC2A ] =
 				g_caps.formats[TextureFormat::ETC2A1] =
@@ -494,8 +536,11 @@ namespace bgfx { namespace mtl
 				g_caps.formats[TextureFormat::PTC14 ] =
 				g_caps.formats[TextureFormat::PTC12A] =
 				g_caps.formats[TextureFormat::PTC14A] =
-				g_caps.formats[TextureFormat::PTC22 ] =
-				g_caps.formats[TextureFormat::PTC24 ] = BGFX_CAPS_FORMAT_TEXTURE_NONE;
+				g_caps.formats[TextureFormat::R5G6B5] =
+				g_caps.formats[TextureFormat::RGBA4 ] =
+				g_caps.formats[TextureFormat::RGB5A1] = BGFX_CAPS_FORMAT_TEXTURE_NONE;
+
+				g_caps.formats[TextureFormat::RGB9E5F] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER | BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
 			}
 
 			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
@@ -1547,7 +1592,7 @@ namespace bgfx { namespace mtl
 
 	RenderPipelineState ProgramMtl::getRenderPipelineState(uint64_t _state, uint32_t _rgba, FrameBufferHandle _fbHandle, VertexDeclHandle _declHandle,  uint16_t _numInstanceData)
 	{
-		_state &= (BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE|BGFX_STATE_BLEND_INDEPENDENT|BGFX_STATE_MSAA);
+		_state &= (BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE|BGFX_STATE_BLEND_INDEPENDENT|BGFX_STATE_MSAA|BGFX_STATE_BLEND_ALPHA_TO_COVERAGE);
 
 		bool independentBlendEnable = !!(BGFX_STATE_BLEND_INDEPENDENT & _state);
 
@@ -1573,6 +1618,9 @@ namespace bgfx { namespace mtl
 		{
 			RenderPipelineDescriptor& pd = s_renderMtl->m_renderPipelineDescriptor;
 			reset(pd);
+			
+			pd.alphaToCoverageEnabled  = !!(BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & _state);
+
 			uint32_t frameBufferAttachment = 1;
 
 			if (!isValid(_fbHandle) )
@@ -2010,7 +2058,7 @@ namespace bgfx { namespace mtl
 
 						if (convert)
 						{
-							imageDecodeToRgba8(temp
+							imageDecodeToBgra8(temp
 								, mip.m_data
 								, mip.m_width
 								, mip.m_height
@@ -2619,7 +2667,7 @@ namespace bgfx { namespace mtl
 				rendererUpdateUniforms(this, _render->m_uniformBuffer, draw.m_constBegin, draw.m_constEnd);
 
 				if (key.m_program != programIdx
-				|| (BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE|BGFX_STATE_BLEND_INDEPENDENT|BGFX_STATE_MSAA) & changedFlags
+				|| (BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE|BGFX_STATE_BLEND_INDEPENDENT|BGFX_STATE_MSAA|BGFX_STATE_BLEND_ALPHA_TO_COVERAGE) & changedFlags
 				||  currentState.m_vertexBuffer.idx != draw.m_vertexBuffer.idx
 				||  currentState.m_vertexDecl.idx != draw.m_vertexDecl.idx
 				||  currentState.m_instanceDataStride != draw.m_instanceDataStride
