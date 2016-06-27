@@ -1014,7 +1014,7 @@ namespace bgfx { namespace d3d12
 
 				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 				{
-					uint8_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
+					uint16_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
 					const DXGI_FORMAT fmt = isDepth(TextureFormat::Enum(ii) )
 						? s_textureFormat[ii].m_fmtDsv

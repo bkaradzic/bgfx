@@ -1686,7 +1686,7 @@ namespace bgfx { namespace gl
 
 			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 			{
-				uint8_t supported = 0;
+				uint16_t supported = BGFX_CAPS_FORMAT_TEXTURE_NONE;
 				supported |= s_textureFormat[ii].m_supported
 					? BGFX_CAPS_FORMAT_TEXTURE_2D
 					| BGFX_CAPS_FORMAT_TEXTURE_3D
