@@ -628,7 +628,7 @@ namespace bgfx { namespace d3d9
 
 			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 			{
-				uint8_t support = 0;
+				uint16_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
 				support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
 					, m_deviceType
