@@ -98,8 +98,8 @@ void main()
 	vec3 cubeN = normalize(instMul(mtx, vec4(nn, 0.0)).xyz);
 	cubeR = fixCubeLookup(cubeR, mip, 256.0);
 
-	vec3 radiance   = u_doDiffuseIbl  * envSpec * toLinear(textureCubeLod(s_texCube, cubeR, mip).xyz);
-	vec3 irradiance = u_doSpecularIbl * envDiff * toLinear(textureCube(s_texCubeIrr, cubeN).xyz);
+	vec3 radiance   = u_doSpecularIbl * envSpec * toLinear(textureCubeLod(s_texCube, cubeR, mip).xyz);
+	vec3 irradiance = u_doDiffuseIbl  * envDiff * toLinear(textureCube(s_texCubeIrr, cubeN).xyz);
 	vec3 indirect = radiance + irradiance;
 
 	// Color.
