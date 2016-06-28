@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2015 Attila Kocsis. All rights reserved.
+ * Copyright 2011-2016 Attila Kocsis. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -21,40 +21,33 @@
 #define UNIFORM_BUFFER_COUNT (3)
 
 /*
- // metal shader generation issues:
-  03-raymarch: nothing is visible  ( should be swapped in fragment output struct)
-  15-shadowmaps-simple: shader compilation error
+ // known metal shader generation issues:
+   03-raymarch: OSX nothing is visible  ( depth/color order should be swapped in fragment output struct)
+   15-shadowmaps-simple: shader compilation error
+   16-shadowmaps:  //problem with essl -> metal: SAMPLER2D(u_shadowMap0, 4);  sampler index is lost. Shadowmap is set to slot 4, but
+      metal shader uses sampler/texture slot 0. this could require changes outside of renderer_mtl?
+	  packFloatToRGBA needs highp. currently it uses half.
+   24-nbody: no generated compute shaders for metal
+   27-terrain: shaderc generates invalid metal shader for vs_terrain_height_texture. vertex output: half4 gl_Position [[position]], should be float4
  
- //OSX issues:
-  16-shadowmaps: framebuffer creation problems (iOS: PixelFormat MTLPixelFormatDepth32Float is not stencil renderable)
-  18-ibl:color wheel is not visible
-  19-oit: mrt independent does not work
-  20-nanovg: nothing is visible
-  21-deferred: only intermediate buffers are visible (iOS)
-  22-windows: todo support multiple windows
-  26-occlusion: view 2's clear should clear only its rect (not whole fb) (iOS, occlusion doesn't work)
-  27-terrain: problem with sample in texture mode (iOS)
+Known issues(driver problems??):
+  OSX mac mini(late 2014), OSX10.11.3 : nanovg-rendering: color writemask off causes problem...
+  iPad mini 2,  iOS 8.1.1:  21-deferred: scissor not working properly
+							26-occlusion: doesn't work with two rendercommandencoders, merge should fix this
  
-Known issues / TODOs:
-- device orientation change is not handled properly
-- 15-shadowmaps-simple (modified shaderc and example needs modification too, mtxCrop znew = z * 0.5 + 0.5 is not needed ) could be hacked in shader too
- 21-deferred ( fs_deferred_light needed modification for metal (similar to BGFX_SHADER_LANGUAGE_HLSL )
-
- 07-callback, saveScreenshot should be implemented with one frame latency (using saveScreenshotBegin and End)
-
-16-shadowmaps,  //problem with essl -> metal: SAMPLER2D(u_shadowMap0, 4);  sampler index is lost. Shadowmap is set to slot 4, but
- metal shader uses sampler/texture slot 0. this could require changes outside of renderer_mtl?
-  Otherwise it works with hacking the slot.
-
-24-nbody - cannot generate compute shaders for metal
-
-- optimization...
-
- 13-stencil and 16-shadowmaps are very inefficient. every view stores/loads backbuffer data
-
+TODOs:
+  07-callback, saveScreenshot should be implemented with one frame latency (using saveScreenshotBegin and End)
+  - iOS device orientation change is not handled properly
+ 
+ 22-windows: todo support multiple windows
+ 
+ - optimization: remove heavy sync, merge views with same fb and no clear.
+      13-stencil and 16-shadowmaps are very inefficient. every view stores/loads backbuffer data
+ 
+  - 15-shadowmaps-simple (example needs modification mtxCrop znew = z * 0.5 + 0.5 is not needed ) could be hacked in shader too
+ 
  BGFX_RESET_FLIP_AFTER_RENDER on low level renderers should be true? (crashes even with BGFX_RESET_FLIP_AFTER_RENDER because there is
  one rendering frame before reset). Do I have absolutely need to send result to View at flip or can I do it in submit?
-
  */
 
 namespace bgfx { namespace mtl
@@ -1191,7 +1184,6 @@ namespace bgfx { namespace mtl
 
 					if ( texture.m_textureFormat == TextureFormat::D24S8)
 						renderPassDescriptor.stencilAttachment.texture = texture.m_ptr;
-					//TODO: stencilAttachment should be the same if packed/depth stencil format is used
 				}
 			}
 
@@ -2156,6 +2148,11 @@ namespace bgfx { namespace mtl
 	void TextureMtl::commit(uint8_t _stage, uint32_t _flags)
 	{
 		//TODO: vertex or fragment stage?
+		s_renderMtl->m_renderCommandEncoder.setVertexTexture(m_ptr, _stage);
+		s_renderMtl->m_renderCommandEncoder.setVertexSamplerState(0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags)
+																	? s_renderMtl->getSamplerState(_flags)
+																	: m_sampler, _stage);
+		
 		s_renderMtl->m_renderCommandEncoder.setFragmentTexture(m_ptr, _stage);
 		s_renderMtl->m_renderCommandEncoder.setFragmentSamplerState(0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags)
 																	? s_renderMtl->getSamplerState(_flags)
@@ -2436,57 +2433,91 @@ namespace bgfx { namespace mtl
 					fbh = _render->m_fb[view];
 					setFrameBuffer(renderPassDescriptor, fbh);
 
-					RenderPassColorAttachmentDescriptor colorAttachment0 = renderPassDescriptor.colorAttachments[0];
-
-					if (0 != (BGFX_CLEAR_COLOR & clr.m_flags) )
+					if ( fullscreenRect)
 					{
-						if (0 != (BGFX_CLEAR_COLOR_USE_PALETTE & clr.m_flags) )
+						for(uint32_t ii = 0; ii < g_caps.maxFBAttachments; ++ii)
 						{
-							uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, clr.m_index[0]);
-							const float* rgba = _render->m_colorPalette[index];
-							const float rr = rgba[0];
-							const float gg = rgba[1];
-							const float bb = rgba[2];
-							const float aa = rgba[3];
-							colorAttachment0.clearColor = MTLClearColorMake(rr, gg, bb, aa);
+							MTLRenderPassColorAttachmentDescriptor* desc = renderPassDescriptor.colorAttachments[ii];
+							
+							if ( desc.texture != NULL)
+							{
+								if (0 != (BGFX_CLEAR_COLOR & clr.m_flags) )
+								{
+									if (0 != (BGFX_CLEAR_COLOR_USE_PALETTE & clr.m_flags) )
+									{
+										uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, clr.m_index[ii]);
+										const float* rgba = _render->m_colorPalette[index];
+										const float rr = rgba[0];
+										const float gg = rgba[1];
+										const float bb = rgba[2];
+										const float aa = rgba[3];
+										desc.clearColor = MTLClearColorMake(rr, gg, bb, aa);
+									}
+									else
+									{
+										float rr = clr.m_index[0]*1.0f/255.0f;
+										float gg = clr.m_index[1]*1.0f/255.0f;
+										float bb = clr.m_index[2]*1.0f/255.0f;
+										float aa = clr.m_index[3]*1.0f/255.0f;
+										desc.clearColor = MTLClearColorMake(rr, gg, bb, aa);
+									}
+									
+									desc.loadAction = MTLLoadActionClear;
+								}
+								else
+								{
+									desc.loadAction = MTLLoadActionLoad;
+								}
+							}
 						}
-						else
+						
+						//TODO: optimize store actions use discard flag
+						RenderPassDepthAttachmentDescriptor depthAttachment = renderPassDescriptor.depthAttachment;
+						if (NULL != depthAttachment.texture)
 						{
-							float rr = clr.m_index[0]*1.0f/255.0f;
-							float gg = clr.m_index[1]*1.0f/255.0f;
-							float bb = clr.m_index[2]*1.0f/255.0f;
-							float aa = clr.m_index[3]*1.0f/255.0f;
-							colorAttachment0.clearColor = MTLClearColorMake(rr, gg, bb, aa);
+							depthAttachment.clearDepth = clr.m_depth;
+							depthAttachment.loadAction = 0 != (BGFX_CLEAR_DEPTH & clr.m_flags)
+							? MTLLoadActionClear
+							: MTLLoadActionLoad
+							;
+							depthAttachment.storeAction = MTLStoreActionStore;
 						}
-
-						colorAttachment0.loadAction = MTLLoadActionClear;
+						
+						RenderPassStencilAttachmentDescriptor stencilAttachment = renderPassDescriptor.stencilAttachment;
+						if (NULL != stencilAttachment.texture)
+						{
+							stencilAttachment.clearStencil = clr.m_stencil;
+							stencilAttachment.loadAction   = 0 != (BGFX_CLEAR_STENCIL & clr.m_flags)
+							? MTLLoadActionClear
+							: MTLLoadActionLoad
+							;
+							stencilAttachment.storeAction  = MTLStoreActionStore;
+						}
 					}
 					else
 					{
-						colorAttachment0.loadAction = MTLLoadActionLoad;
-					}
-
-					//TODO: optimize store actions use discard flag
-					RenderPassDepthAttachmentDescriptor depthAttachment = renderPassDescriptor.depthAttachment;
-					if (NULL != depthAttachment.texture)
-					{
-						depthAttachment.clearDepth = clr.m_depth;
-						depthAttachment.loadAction = 0 != (BGFX_CLEAR_DEPTH & clr.m_flags)
-							? MTLLoadActionClear
-							: MTLLoadActionLoad
-							;
-						depthAttachment.storeAction = MTLStoreActionStore;
-					}
-
-					RenderPassStencilAttachmentDescriptor stencilAttachment = renderPassDescriptor.stencilAttachment;
-					if (NULL != stencilAttachment.texture)
-					{
-						stencilAttachment.clearStencil = clr.m_stencil;
-						stencilAttachment.loadAction   = 0 != (BGFX_CLEAR_STENCIL & clr.m_flags)
-							? MTLLoadActionClear
-							: MTLLoadActionLoad
-							;
-						stencilAttachment.storeAction  = MTLStoreActionStore;
+						for(uint32_t ii = 0; ii < g_caps.maxFBAttachments; ++ii)
+						{
+							MTLRenderPassColorAttachmentDescriptor* desc = renderPassDescriptor.colorAttachments[ii];
+							if ( desc.texture != NULL)
+								desc.loadAction = MTLLoadActionLoad;
+						}
+						
+						//TODO: optimize store actions use discard flag
+						RenderPassDepthAttachmentDescriptor depthAttachment = renderPassDescriptor.depthAttachment;
+						if (NULL != depthAttachment.texture)
+						{
+							depthAttachment.loadAction = MTLLoadActionLoad;
+							depthAttachment.storeAction = MTLStoreActionStore;
+						}
+						
+						RenderPassStencilAttachmentDescriptor stencilAttachment = renderPassDescriptor.stencilAttachment;
+						if (NULL != stencilAttachment.texture)
+						{
+							stencilAttachment.clearStencil = clr.m_stencil;
+							stencilAttachment.loadAction   = MTLLoadActionLoad;
+							stencilAttachment.storeAction  = MTLStoreActionStore;
+						}
 					}
 
 					if (0 != m_renderCommandEncoder)

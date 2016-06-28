@@ -410,6 +410,14 @@ class ExampleOIT : public entry::AppI
 							| BGFX_STATE_MSAA
 							;
 
+						const uint64_t stateNoDepth = 0
+						| BGFX_STATE_CULL_CW
+						| BGFX_STATE_RGB_WRITE
+						| BGFX_STATE_ALPHA_WRITE
+						| BGFX_STATE_DEPTH_TEST_ALWAYS
+						| BGFX_STATE_MSAA
+						;
+						
 						bgfx::ProgramHandle program = BGFX_INVALID_HANDLE;
 						switch (m_mode)
 						{
@@ -428,7 +436,7 @@ class ExampleOIT : public entry::AppI
 								program = m_wbSeparatePass;
 
 								// Set render states.
-								bgfx::setState(state
+								bgfx::setState(stateNoDepth
 									| BGFX_STATE_BLEND_FUNC_SEPARATE(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ZERO, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 									);
 								break;
@@ -438,7 +446,7 @@ class ExampleOIT : public entry::AppI
 								program = m_wbPass;
 
 								// Set render states.
-								bgfx::setState(state
+								bgfx::setState(stateNoDepth
 									| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
 									| BGFX_STATE_BLEND_INDEPENDENT
 									, 0
