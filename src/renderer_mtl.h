@@ -508,6 +508,7 @@ namespace bgfx { namespace mtl
 #if BX_PLATFORM_IOS
 		return ([[[UIDevice currentDevice] systemVersion] compare:@(_version) options:NSNumericSearch] != NSOrderedAscending);
 #else
+		BX_UNUSED(_version);
 		return false;
 #endif
 	}
@@ -521,6 +522,7 @@ namespace bgfx { namespace mtl
 		return (v.majorVersion<<16) + (v.minorVersion<<8) + v.patchVersion >=
 				(_majorVersion<<16) + (_minorVersion<<8) + _patchVersion;
 #else
+		BX_UNUSED(_majorVersion, _minorVersion, _patchVersion);
 		return false;
 #endif
 	}
