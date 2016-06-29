@@ -292,9 +292,9 @@ namespace bgfx
 			bx::CrtFileReader reader;
 			if (bx::open(&reader, _filePath) )
 			{
-				m_size = bx::getSize(&reader);
+				m_size = (uint32_t)bx::getSize(&reader);
 				m_data = new char[m_size+1];
-				m_size = bx::read(&reader, m_data, m_size);
+				m_size = (uint32_t)bx::read(&reader, m_data, m_size);
 				bx::close(&reader);
 
 				if (m_data[0] == '\xef'
