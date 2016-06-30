@@ -29,23 +29,23 @@
 	  packFloatToRGBA needs highp. currently it uses half.
    24-nbody: no generated compute shaders for metal
    27-terrain: shaderc generates invalid metal shader for vs_terrain_height_texture. vertex output: half4 gl_Position [[position]], should be float4
- 
+
 Known issues(driver problems??):
   OSX mac mini(late 2014), OSX10.11.3 : nanovg-rendering: color writemask off causes problem...
   iPad mini 2,  iOS 8.1.1:  21-deferred: scissor not working properly
 							26-occlusion: doesn't work with two rendercommandencoders, merge should fix this
- 
+
 TODOs:
   07-callback, saveScreenshot should be implemented with one frame latency (using saveScreenshotBegin and End)
   - iOS device orientation change is not handled properly
- 
+
  22-windows: todo support multiple windows
- 
+
  - optimization: remove heavy sync, merge views with same fb and no clear.
       13-stencil and 16-shadowmaps are very inefficient. every view stores/loads backbuffer data
- 
+
   - 15-shadowmaps-simple (example needs modification mtxCrop znew = z * 0.5 + 0.5 is not needed ) could be hacked in shader too
- 
+
  BGFX_RESET_FLIP_AFTER_RENDER on low level renderers should be true? (crashes even with BGFX_RESET_FLIP_AFTER_RENDER because there is
  one rendering frame before reset). Do I have absolutely need to send result to View at flip or can I do it in submit?
  */
@@ -243,7 +243,7 @@ namespace bgfx { namespace mtl
 		MTLPixelFormat m_fmt;
 		MTLPixelFormat m_fmtSrgb;
 	};
-	
+
 	static TextureFormatInfo s_textureFormat[] =
 	{
 		{ MTLPixelFormat(130) /*BC1_RGBA*/,				MTLPixelFormat(131) /*BC1_RGBA_sRGB*/        }, // BC1
@@ -411,7 +411,7 @@ namespace bgfx { namespace mtl
 			}
 			m_uniformBufferVertexOffset = 0;
 			m_uniformBufferFragmentOffset = 0;
-			
+
 			g_caps.supported |= (0
 								 | BGFX_CAPS_TEXTURE_COMPARE_LEQUAL	//NOTE: on IOS Gpu Family 1/2 have to set compare in shader
 								 | BGFX_CAPS_TEXTURE_COMPARE_ALL
@@ -434,27 +434,27 @@ namespace bgfx { namespace mtl
 			{
 				if ( iOSVersionEqualOrGreater("9.0.0") )
 				{
-					g_caps.maxTextureSize = m_device.supportsFeatureSet(4 /* iOS_GPUFamily3_v1 */) ? 16384 : 8192;
+					g_caps.maxTextureSize = m_device.supportsFeatureSet((MTLFeatureSet)4 /* iOS_GPUFamily3_v1 */) ? 16384 : 8192;
 				}
 				else
 				{
 					g_caps.maxTextureSize = 4096;
 				}
-				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(m_device.supportsFeatureSet(1 /* MTLFeatureSet_iOS_GPUFamily2_v1 */) ? 8 : 4, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS));
-			
+				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(m_device.supportsFeatureSet((MTLFeatureSet)1 /* MTLFeatureSet_iOS_GPUFamily2_v1 */) ? 8 : 4, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS));
+
 			} else if (BX_ENABLED(BX_PLATFORM_OSX) )
 			{
 				g_caps.maxTextureSize = 16384;
 				g_caps.maxFBAttachments = 8;
 			}
-			
+
 			//todo: vendor id, device id, gpu enum
 
 			m_hasPixelFormatDepth32Float_Stencil8 =	(BX_ENABLED(BX_PLATFORM_OSX) ||
 													 ( BX_ENABLED(BX_PLATFORM_IOS) && iOSVersionEqualOrGreater("9.0.0") ) );
 			m_macOS11Runtime = (BX_ENABLED(BX_PLATFORM_OSX) && macOSVersionEqualOrGreater(10,11,0) );
 			m_iOS9Runtime = (BX_ENABLED(BX_PLATFORM_IOS) && iOSVersionEqualOrGreater("9.0.0") );
-			
+
 			if (BX_ENABLED(BX_PLATFORM_OSX) )
 			{
 				s_textureFormat[TextureFormat::R8].m_fmtSrgb = MTLPixelFormatInvalid;
@@ -486,7 +486,7 @@ namespace bgfx { namespace mtl
 					support |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
 						| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA;
 				}
-				
+
 					//TODO: additional caps flags
 //				support |= BGFX_CAPS_FORMAT_TEXTURE_IMAGE : BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
@@ -498,7 +498,7 @@ namespace bgfx { namespace mtl
 			g_caps.formats[TextureFormat::RG32U] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
 			g_caps.formats[TextureFormat::RGBA32I] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
 			g_caps.formats[TextureFormat::RGBA32U] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
-			
+
 
 			if (BX_ENABLED(BX_PLATFORM_IOS) )
 			{
@@ -511,17 +511,17 @@ namespace bgfx { namespace mtl
 				g_caps.formats[TextureFormat::BC5] =
 				g_caps.formats[TextureFormat::BC6H] =
 				g_caps.formats[TextureFormat::BC7] = BGFX_CAPS_FORMAT_TEXTURE_NONE;
-				
+
 				g_caps.formats[TextureFormat::RG32F] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
 				g_caps.formats[TextureFormat::RGBA32F] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
 			}
-			
+
 			if (BX_ENABLED(BX_PLATFORM_OSX) )
 			{
-				s_textureFormat[TextureFormat::D24S8].m_fmt = m_device.depth24Stencil8PixelFormatSupported() ?
+				s_textureFormat[TextureFormat::D24S8].m_fmt = (MTLPixelFormat)(m_device.depth24Stencil8PixelFormatSupported() ?
 									255 /* Depth24Unorm_Stencil8 */ :
-									MTLPixelFormatDepth32Float_Stencil8;
-				
+									MTLPixelFormatDepth32Float_Stencil8);
+
 				g_caps.formats[TextureFormat::ETC2  ] =
 				g_caps.formats[TextureFormat::ETC2A ] =
 				g_caps.formats[TextureFormat::ETC2A1] =
@@ -1023,8 +1023,8 @@ namespace bgfx { namespace mtl
 					release(m_backBufferDepth);
 				}
 				m_backBufferDepth   = m_device.newTextureWithDescriptor(m_textureDescriptor);
-				
-				
+
+
 				if (m_hasPixelFormatDepth32Float_Stencil8)
 					m_backBufferStencil = m_backBufferDepth;
 				else
@@ -1610,7 +1610,7 @@ namespace bgfx { namespace mtl
 		{
 			RenderPipelineDescriptor& pd = s_renderMtl->m_renderPipelineDescriptor;
 			reset(pd);
-			
+
 			pd.alphaToCoverageEnabled  = !!(BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & _state);
 
 			uint32_t frameBufferAttachment = 1;
@@ -1640,9 +1640,9 @@ namespace bgfx { namespace mtl
 					{
 						pd.stencilAttachmentPixelFormat = MTLPixelFormatInvalid; //texture.m_ptrStencil.m_obj.pixelFormat;
 					}
-					
+
 					if ( texture.m_textureFormat == TextureFormat::D24S8)
-						pd.stencilAttachmentPixelFormat = texture.m_ptr.m_obj.pixelFormat; 
+						pd.stencilAttachmentPixelFormat = texture.m_ptr.m_obj.pixelFormat;
 				}
 			}
 
@@ -2004,12 +2004,12 @@ namespace bgfx { namespace mtl
 			if (s_renderMtl->m_iOS9Runtime || s_renderMtl->m_macOS11Runtime)
 			{
 				desc.cpuCacheMode     = MTLCPUCacheModeDefaultCache;
-				
+
 				desc.storageMode = (MTLStorageMode)(writeOnly||isDepth(TextureFormat::Enum(m_textureFormat))
 													? 2 /*MTLStorageModePrivate*/
 													: 1 /*MTLStorageModeManaged*/
 													);
-				
+
 				desc.usage = MTLTextureUsageShaderRead;
 				if (computeWrite)
 					desc.usage |= MTLTextureUsageShaderWrite;
@@ -2152,7 +2152,7 @@ namespace bgfx { namespace mtl
 		s_renderMtl->m_renderCommandEncoder.setVertexSamplerState(0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags)
 																	? s_renderMtl->getSamplerState(_flags)
 																	: m_sampler, _stage);
-		
+
 		s_renderMtl->m_renderCommandEncoder.setFragmentTexture(m_ptr, _stage);
 		s_renderMtl->m_renderCommandEncoder.setFragmentSamplerState(0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags)
 																	? s_renderMtl->getSamplerState(_flags)
@@ -2438,7 +2438,7 @@ namespace bgfx { namespace mtl
 						for(uint32_t ii = 0; ii < g_caps.maxFBAttachments; ++ii)
 						{
 							MTLRenderPassColorAttachmentDescriptor* desc = renderPassDescriptor.colorAttachments[ii];
-							
+
 							if ( desc.texture != NULL)
 							{
 								if (0 != (BGFX_CLEAR_COLOR & clr.m_flags) )
@@ -2461,7 +2461,7 @@ namespace bgfx { namespace mtl
 										float aa = clr.m_index[3]*1.0f/255.0f;
 										desc.clearColor = MTLClearColorMake(rr, gg, bb, aa);
 									}
-									
+
 									desc.loadAction = MTLLoadActionClear;
 								}
 								else
@@ -2470,7 +2470,7 @@ namespace bgfx { namespace mtl
 								}
 							}
 						}
-						
+
 						//TODO: optimize store actions use discard flag
 						RenderPassDepthAttachmentDescriptor depthAttachment = renderPassDescriptor.depthAttachment;
 						if (NULL != depthAttachment.texture)
@@ -2482,7 +2482,7 @@ namespace bgfx { namespace mtl
 							;
 							depthAttachment.storeAction = MTLStoreActionStore;
 						}
-						
+
 						RenderPassStencilAttachmentDescriptor stencilAttachment = renderPassDescriptor.stencilAttachment;
 						if (NULL != stencilAttachment.texture)
 						{
@@ -2502,7 +2502,7 @@ namespace bgfx { namespace mtl
 							if ( desc.texture != NULL)
 								desc.loadAction = MTLLoadActionLoad;
 						}
-						
+
 						//TODO: optimize store actions use discard flag
 						RenderPassDepthAttachmentDescriptor depthAttachment = renderPassDescriptor.depthAttachment;
 						if (NULL != depthAttachment.texture)
@@ -2510,7 +2510,7 @@ namespace bgfx { namespace mtl
 							depthAttachment.loadAction = MTLLoadActionLoad;
 							depthAttachment.storeAction = MTLStoreActionStore;
 						}
-						
+
 						RenderPassStencilAttachmentDescriptor stencilAttachment = renderPassDescriptor.stencilAttachment;
 						if (NULL != stencilAttachment.texture)
 						{
@@ -2639,7 +2639,7 @@ namespace bgfx { namespace mtl
 						rc.y    = scissorRect.m_y;
 						rc.width  = scissorRect.m_width;
 						rc.height = scissorRect.m_height;
-						
+
 						if ( rc.width == 0 || rc.height == 0 )
 							continue;
 					}
