@@ -1627,12 +1627,14 @@ float ImGuiSimpleColumns::CalcExtraSpace(float avail_w)
 
 static void SetCursorPosYAndSetupDummyPrevLine(float pos_y, float line_height)
 {
-    // Setting those fields so that SetScrollHere() can properly function after the end of our clipper usage.
-    // If we end up needing more accurate data (to e.g. use SameLine) we may as well make the clipper have a fourth step to let user process and display the last item in their list.
+    // Set cursor position and a few other things so that SetScrollHere() and Columns() can work when seeking cursor. 
+    // FIXME: It is problematic that we have to do that here, because custom/equivalent end-user code would stumble on the same issue. Consider moving within SetCursorXXX functions?
     ImGui::SetCursorPosY(pos_y);
     ImGuiWindow* window = ImGui::GetCurrentWindow();
-    window->DC.CursorPosPrevLine.y = window->DC.CursorPos.y - line_height;
-    window->DC.PrevLineHeight = (line_height - GImGui->Style.ItemSpacing.y);
+    window->DC.CursorPosPrevLine.y = window->DC.CursorPos.y - line_height;      // Setting those fields so that SetScrollHere() can properly function after the end of our clipper usage.
+    window->DC.PrevLineHeight = (line_height - GImGui->Style.ItemSpacing.y);    // If we end up needing more accurate data (to e.g. use SameLine) we may as well make the clipper have a fourth step to let user process and display the last item in their list.
+    if (window->DC.ColumnsCount > 1)
+        window->DC.ColumnsCellMinY = window->DC.CursorPos.y;                    // Setting this so that cell Y position are set properly
 }
 
 // Use case A: Begin() called from constructor with items_height<0, then called again from Sync() in StepNo 1
@@ -1685,8 +1687,9 @@ bool ImGuiListClipper::Step()
         if (ItemsCount == 1) { ItemsCount = -1; return false; }
         float items_height = ImGui::GetCursorPosY() - StartPosY;
         IM_ASSERT(items_height > 0.0f);   // If this triggers, it means Item 0 hasn't moved the cursor vertically
-        ImGui::SetCursorPosY(StartPosY);  // Rewind cursor so we can Begin() again, this time with a known height.
-        Begin(ItemsCount, items_height);
+        Begin(ItemsCount-1, items_height);
+        DisplayStart++;
+        DisplayEnd++;
         StepNo = 3;
         return true;
     }
@@ -5085,13 +5088,13 @@ ImVec2 ImGui::GetCursorPos()
 
 float ImGui::GetCursorPosX()
 {
-    ImGuiWindow* window = GetCurrentWindow();
+    ImGuiWindow* window = GetCurrentWindowRead();
     return window->DC.CursorPos.x - window->Pos.x + window->Scroll.x;
 }
 
 float ImGui::GetCursorPosY()
 {
-    ImGuiWindow* window = GetCurrentWindow();
+    ImGuiWindow* window = GetCurrentWindowRead();
     return window->DC.CursorPos.y - window->Pos.y + window->Scroll.y;
 }
 
@@ -5132,6 +5135,7 @@ void ImGui::SetCursorScreenPos(const ImVec2& screen_pos)
 {
     ImGuiWindow* window = GetCurrentWindow();
     window->DC.CursorPos = screen_pos;
+    window->DC.CursorMaxPos = ImMax(window->DC.CursorMaxPos, window->DC.CursorPos);
 }
 
 float ImGui::GetScrollX()
@@ -9184,37 +9188,34 @@ void ImGui::NewLine()
 void ImGui::NextColumn()
 {
     ImGuiWindow* window = GetCurrentWindow();
-    if (window->SkipItems)
+    if (window->SkipItems || window->DC.ColumnsCount <= 1)
         return;
 
     ImGuiContext& g = *GImGui;
-    if (window->DC.ColumnsCount > 1)
+    PopItemWidth();
+    PopClipRect();
+
+    window->DC.ColumnsCellMaxY = ImMax(window->DC.ColumnsCellMaxY, window->DC.CursorPos.y);
+    if (++window->DC.ColumnsCurrent < window->DC.ColumnsCount)
     {
-        PopItemWidth();
-        PopClipRect();
-
-        window->DC.ColumnsCellMaxY = ImMax(window->DC.ColumnsCellMaxY, window->DC.CursorPos.y);
-        if (++window->DC.ColumnsCurrent < window->DC.ColumnsCount)
-        {
-            // Columns 1+ cancel out IndentX
-            window->DC.ColumnsOffsetX = GetColumnOffset(window->DC.ColumnsCurrent) - window->DC.IndentX + g.Style.ItemSpacing.x;
-            window->DrawList->ChannelsSetCurrent(window->DC.ColumnsCurrent);
-        }
-        else
-        {
-            window->DC.ColumnsCurrent = 0;
-            window->DC.ColumnsOffsetX = 0.0f;
-            window->DC.ColumnsCellMinY = window->DC.ColumnsCellMaxY;
-            window->DrawList->ChannelsSetCurrent(0);
-        }
-        window->DC.CursorPos.x = (float)(int)(window->Pos.x + window->DC.IndentX + window->DC.ColumnsOffsetX);
-        window->DC.CursorPos.y = window->DC.ColumnsCellMinY;
-        window->DC.CurrentLineHeight = 0.0f;
-        window->DC.CurrentLineTextBaseOffset = 0.0f;
-
-        PushColumnClipRect();
-        PushItemWidth(GetColumnWidth() * 0.65f);  // FIXME: Move on columns setup
+        // Columns 1+ cancel out IndentX
+        window->DC.ColumnsOffsetX = GetColumnOffset(window->DC.ColumnsCurrent) - window->DC.IndentX + g.Style.ItemSpacing.x;
+        window->DrawList->ChannelsSetCurrent(window->DC.ColumnsCurrent);
     }
+    else
+    {
+        window->DC.ColumnsCurrent = 0;
+        window->DC.ColumnsOffsetX = 0.0f;
+        window->DC.ColumnsCellMinY = window->DC.ColumnsCellMaxY;
+        window->DrawList->ChannelsSetCurrent(0);
+    }
+    window->DC.CursorPos.x = (float)(int)(window->Pos.x + window->DC.IndentX + window->DC.ColumnsOffsetX);
+    window->DC.CursorPos.y = window->DC.ColumnsCellMinY;
+    window->DC.CurrentLineHeight = 0.0f;
+    window->DC.CurrentLineTextBaseOffset = 0.0f;
+
+    PushColumnClipRect();
+    PushItemWidth(GetColumnWidth() * 0.65f);  // FIXME: Move on columns setup
 }
 
 int ImGui::GetColumnIndex()
