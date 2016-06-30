@@ -800,7 +800,11 @@ namespace bgfx { namespace d3d11
 
 			errorState = ErrorState::LoadedDXGI;
 
-			CreateDXGIFactory = (PFN_CREATE_DXGI_FACTORY)bx::dlsym(m_dxgidll, "CreateDXGIFactory");
+			CreateDXGIFactory = (PFN_CREATE_DXGI_FACTORY)bx::dlsym(m_dxgidll, "CreateDXGIFactory1");
+			if (NULL == CreateDXGIFactory)
+			{
+				CreateDXGIFactory = (PFN_CREATE_DXGI_FACTORY)bx::dlsym(m_dxgidll, "CreateDXGIFactory");
+			}
 			if (NULL == CreateDXGIFactory)
 			{
 				BX_TRACE("Function CreateDXGIFactory not found.");
