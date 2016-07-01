@@ -18,34 +18,35 @@
 #import <Foundation/Foundation.h>
 
 #define UNIFORM_BUFFER_SIZE (8*1024*1024)
-#define UNIFORM_BUFFER_COUNT (3)
 
 /*
  // known metal shader generation issues:
-   03-raymarch: OSX nothing is visible  ( depth/color order should be swapped in fragment output struct)
    15-shadowmaps-simple: shader compilation error
    16-shadowmaps:  //problem with essl -> metal: SAMPLER2D(u_shadowMap0, 4);  sampler index is lost. Shadowmap is set to slot 4, but
       metal shader uses sampler/texture slot 0. this could require changes outside of renderer_mtl?
 	  packFloatToRGBA needs highp. currently it uses half.
    24-nbody: no generated compute shaders for metal
    27-terrain: shaderc generates invalid metal shader for vs_terrain_height_texture. vertex output: half4 gl_Position [[position]], should be float4
-
+ 
 Known issues(driver problems??):
   OSX mac mini(late 2014), OSX10.11.3 : nanovg-rendering: color writemask off causes problem...
-  iPad mini 2,  iOS 8.1.1:  21-deferred: scissor not working properly
-							26-occlusion: doesn't work with two rendercommandencoders, merge should fix this
+TODO: check if swap really solves this?	03-raymarch: OSX nothing is visible  ( depth/color order should be swapped in fragment output struct)
 
+  iPad mini 2,  iOS 8.1.1:  21-deferred: scissor not working properly
+							26-occlusion: query doesn't work with two rendercommandencoders, merge should fix this
+			Only on this device ( no problem on iPad Air 2 with iOS9.3.1)
+ 
 TODOs:
   07-callback, saveScreenshot should be implemented with one frame latency (using saveScreenshotBegin and End)
   - iOS device orientation change is not handled properly
-
+ 
  22-windows: todo support multiple windows
-
- - optimization: remove heavy sync, merge views with same fb and no clear.
+ 
+ - optimization: remove sync points, merge views with same fb and no clear.
       13-stencil and 16-shadowmaps are very inefficient. every view stores/loads backbuffer data
-
+ 
   - 15-shadowmaps-simple (example needs modification mtxCrop znew = z * 0.5 + 0.5 is not needed ) could be hacked in shader too
-
+ 
  BGFX_RESET_FLIP_AFTER_RENDER on low level renderers should be true? (crashes even with BGFX_RESET_FLIP_AFTER_RENDER because there is
  one rendering frame before reset). Do I have absolutely need to send result to View at flip or can I do it in submit?
  */
@@ -334,7 +335,7 @@ namespace bgfx { namespace mtl
 			: m_metalLayer(NULL)
 			, m_backBufferPixelFormatHash(0)
 			, m_maxAnisotropy(1)
-			, m_uniformBufferIndex(0)
+			, m_bufferIndex(0)
 			, m_numWindows(1)
 			, m_rtMsaa(false)
 			, m_drawable(NULL)
@@ -405,7 +406,8 @@ namespace bgfx { namespace mtl
 			m_textureDescriptor = newTextureDescriptor();
 			m_samplerDescriptor = newSamplerDescriptor();
 
-			for (uint8_t i=0; i < UNIFORM_BUFFER_COUNT; ++i)
+			m_framesSemaphore.post(MTL_MAX_FRAMES_IN_FLIGHT);
+			for (uint8_t i=0; i < MTL_MAX_FRAMES_IN_FLIGHT; ++i)
 			{
 				m_uniformBuffers[i] = m_device.newBufferWithLength(UNIFORM_BUFFER_SIZE, 0);
 			}
@@ -585,7 +587,7 @@ namespace bgfx { namespace mtl
 				MTL_RELEASE(m_backBufferStencil);
 			}
 
-			for (uint8_t i=0; i < UNIFORM_BUFFER_COUNT; ++i)
+			for (uint8_t i=0; i < MTL_MAX_FRAMES_IN_FLIGHT; ++i)
 			{
 				MTL_RELEASE(m_uniformBuffers[i]);
 			}
@@ -806,7 +808,7 @@ namespace bgfx { namespace mtl
 				return;
 			}
 
-			//TODO: we should wait for completion of pending commandBuffers
+			sync();
 			//TODO: implement this with saveScreenshotBegin/End
 
 			Texture backBuffer = m_drawable.texture;
@@ -908,7 +910,7 @@ namespace bgfx { namespace mtl
 			}
 
 			VertexBufferMtl& vb = m_vertexBuffers[_blitter.m_vb->handle.idx];
-			rce.setVertexBuffer(vb.m_buffer, 0, 1);
+			rce.setVertexBuffer(vb.getBuffer(), 0, 1);
 
 			float proj[16];
 			bx::mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f);
@@ -925,11 +927,18 @@ namespace bgfx { namespace mtl
 			const uint32_t numVertices = _numIndices*4/6;
 			if (0 < numVertices)
 			{
-				m_indexBuffers [_blitter.m_ib->handle.idx].update(0, _numIndices*2, _blitter.m_ib->data);
+				m_indexBuffers [_blitter.m_ib->handle.idx].update(0, _numIndices*2, _blitter.m_ib->data, true);
 				m_vertexBuffers[_blitter.m_vb->handle.idx].update(0, numVertices*_blitter.m_decl.m_stride, _blitter.m_vb->data, true);
 
-				m_renderCommandEncoder.drawIndexedPrimitives(MTLPrimitiveTypeTriangle, _numIndices, MTLIndexTypeUInt16, m_indexBuffers[_blitter.m_ib->handle.idx].m_buffer, 0, 1);
+				m_renderCommandEncoder.drawIndexedPrimitives(MTLPrimitiveTypeTriangle, _numIndices, MTLIndexTypeUInt16, m_indexBuffers[_blitter.m_ib->handle.idx].getBuffer(), 0, 1);
 			}
+		}
+
+		static void commandBufferFinishedCallback(void* _data)
+		{
+			RendererContextMtl* renderer = (RendererContextMtl*)_data;
+			if ( renderer )
+				renderer->m_framesSemaphore.post();
 		}
 
 		void flip(HMD& /*_hmd*/) BX_OVERRIDE
@@ -944,11 +953,13 @@ namespace bgfx { namespace mtl
 			m_commandBuffer.presentDrawable(m_drawable);
 			MTL_RELEASE(m_drawable);
 
+			m_commandBuffer.addCompletedHandler(commandBufferFinishedCallback, this);
+
 			m_commandBuffer.commit();
 
-			//  using heavy syncing now
-			//  TODO: refactor it with double/triple buffering frame data
-			m_commandBuffer.waitUntilCompleted();
+			MTL_RELEASE(m_prevCommandBuffer);
+			m_prevCommandBuffer = m_commandBuffer;
+			retain(m_commandBuffer);
 
 			MTL_RELEASE(m_commandBuffer);
 
@@ -1306,6 +1317,29 @@ namespace bgfx { namespace mtl
 			return m_backBufferDepth.height();
 		}
 
+		void sync()
+		{
+			if ( m_prevCommandBuffer )
+				m_prevCommandBuffer.waitUntilCompleted();
+		}
+
+		BlitCommandEncoder getBlitCommandEncoder()
+		{
+			if ( m_blitCommandEncoder == NULL)
+			{
+				if ( m_commandBuffer == NULL )
+				{
+					m_commandBuffer = m_commandQueue.commandBuffer();
+					retain(m_commandBuffer);
+				}
+				
+				m_blitCommandEncoder = m_commandBuffer.blitCommandEncoder();
+			}
+			
+			return m_blitCommandEncoder;
+		}
+
+
 		Device        m_device;
 		CommandQueue  m_commandQueue;
 		CAMetalLayer* m_metalLayer;
@@ -1320,11 +1354,14 @@ namespace bgfx { namespace mtl
 
 		OcclusionQueryMTL m_occlusionQuery;
 
+		bx::Semaphore m_framesSemaphore;
+
 		Buffer   m_uniformBuffer;
-		Buffer   m_uniformBuffers[UNIFORM_BUFFER_COUNT];
+		Buffer   m_uniformBuffers[MTL_MAX_FRAMES_IN_FLIGHT];
 		uint32_t m_uniformBufferVertexOffset;
 		uint32_t m_uniformBufferFragmentOffset;
-		uint8_t  m_uniformBufferIndex;
+
+		uint8_t  m_bufferIndex;
 
 		uint16_t          m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
@@ -1361,6 +1398,8 @@ namespace bgfx { namespace mtl
 		// currently active objects data
 		id <CAMetalDrawable> m_drawable;
 		CommandBuffer m_commandBuffer;
+		CommandBuffer m_prevCommandBuffer;
+		BlitCommandEncoder m_blitCommandEncoder;
 		RenderCommandEncoder m_renderCommandEncoder;
 	};
 
@@ -1453,14 +1492,6 @@ namespace bgfx { namespace mtl
 		int32_t tempLen = codeLen + (4<<10);
 		char* temp = (char*)alloca(tempLen);
 		bx::StaticMemoryBlockWriter writer(temp, tempLen);
-
-		//TODO: remove this hack. some shaders have problem with half<->float conversion
-		writeString(&writer
-					, "#define half float\n"
-					 "#define half2 float2\n"
-					 "#define half3 float3\n"
-					 "#define half4 float4\n"
-					);
 
 		bx::write(&writer, code, codeLen);
 		bx::write(&writer, '\0');
@@ -1892,14 +1923,16 @@ namespace bgfx { namespace mtl
 
 		m_size = _size;
 		m_flags = _flags;
+		m_dynamic = false; //NULL == _data;
 
 		if (NULL == _data)
 		{
-			m_buffer = s_renderMtl->m_device.newBufferWithLength(_size, 0);
+			for (uint32_t ii = 0; ii < MTL_MAX_FRAMES_IN_FLIGHT; ++ii)
+				m_buffers[ii] = s_renderMtl->m_device.newBufferWithLength(_size, 0);
 		}
 		else
 		{
-			m_buffer = s_renderMtl->m_device.newBufferWithBytes(_data, _size, 0);
+			m_buffers[0] = s_renderMtl->m_device.newBufferWithBytes(_data, _size, 0);
 		}
 	}
 
@@ -1907,7 +1940,12 @@ namespace bgfx { namespace mtl
 	{
 		BX_UNUSED(_discard);
 
-		memcpy( (uint8_t*)m_buffer.contents() + _offset, _data, _size);
+			//TODO: cannot call this more than once per frame
+		if ( m_dynamic && _discard )
+			m_bufferIndex = (m_bufferIndex + 1) % MTL_MAX_FRAMES_IN_FLIGHT;
+		else
+			s_renderMtl->sync();
+		memcpy( (uint8_t*)getBuffer().contents() + _offset, _data, _size);
 	}
 
 	void VertexBufferMtl::create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint16_t _flags)
@@ -2007,7 +2045,7 @@ namespace bgfx { namespace mtl
 
 				desc.storageMode = (MTLStorageMode)(writeOnly||isDepth(TextureFormat::Enum(m_textureFormat))
 													? 2 /*MTLStorageModePrivate*/
-													: 1 /*MTLStorageModeManaged*/
+													: ((BX_ENABLED(BX_PLATFORM_IOS)) ? 0 /* MTLStorageModeShared */ :  1 /*MTLStorageModeManaged*/)
 													);
 
 				desc.usage = MTLTextureUsageShaderRead;
@@ -2109,6 +2147,8 @@ namespace bgfx { namespace mtl
 
 	void TextureMtl::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
+		s_renderMtl->sync();
+		
 		MTLRegion region =
 		{
 			{ _rect.m_x,     _rect.m_y,      _z     },
@@ -2268,8 +2308,19 @@ namespace bgfx { namespace mtl
 
 	void RendererContextMtl::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) BX_OVERRIDE
 	{
-		m_commandBuffer = m_commandQueue.commandBuffer();
-		retain(m_commandBuffer); // keep alive to be useable at 'flip'
+		m_framesSemaphore.wait();
+
+		if ( m_commandBuffer == NULL )
+		{
+			m_commandBuffer = m_commandQueue.commandBuffer();
+			retain(m_commandBuffer); // keep alive to be useable at 'flip'
+		}
+		
+		if ( m_blitCommandEncoder )
+		{
+			m_blitCommandEncoder.endEncoding();
+			m_blitCommandEncoder = 0;
+		}
 
 		//TODO: multithreading with multiple commandbuffer
 		// is there a FAST way to tell which view is active?
@@ -2280,8 +2331,8 @@ namespace bgfx { namespace mtl
 		retain(m_drawable); // keep alive to be useable at 'flip'
 #endif
 
-		m_uniformBuffer = m_uniformBuffers[m_uniformBufferIndex];
-		m_uniformBufferIndex = (m_uniformBufferIndex + 1) % UNIFORM_BUFFER_COUNT;
+		m_uniformBuffer = m_uniformBuffers[m_bufferIndex];
+		m_bufferIndex = (m_bufferIndex + 1) % MTL_MAX_FRAMES_IN_FLIGHT;
 		m_uniformBufferVertexOffset = 0;
 		m_uniformBufferFragmentOffset = 0;
 
@@ -2299,13 +2350,13 @@ namespace bgfx { namespace mtl
 		if (0 < _render->m_iboffset)
 		{
 			TransientIndexBuffer* ib = _render->m_transientIb;
-			m_indexBuffers[ib->handle.idx].update(0, _render->m_iboffset, ib->data);
+			m_indexBuffers[ib->handle.idx].update(0, _render->m_iboffset, ib->data, true);
 		}
 
 		if (0 < _render->m_vboffset)
 		{
 			TransientVertexBuffer* vb = _render->m_transientVb;
-			m_vertexBuffers[vb->handle.idx].update(0, _render->m_vboffset, vb->data);
+			m_vertexBuffers[vb->handle.idx].update(0, _render->m_vboffset, vb->data, true);
 		}
 
 		_render->sort();
@@ -2818,12 +2869,12 @@ namespace bgfx { namespace mtl
 						const VertexDecl& vertexDecl = m_vertexDecls[decl];
 						uint32_t offset = draw.m_startVertex  * vertexDecl.getStride();
 
-						rce.setVertexBuffer(vb.m_buffer, offset, 1);
+						rce.setVertexBuffer(vb.getBuffer(), offset, 1);
 
 						if (isValid(draw.m_instanceDataBuffer) )
 						{
 							const VertexBufferMtl& inst = m_vertexBuffers[draw.m_instanceDataBuffer.idx];
-							rce.setVertexBuffer(inst.m_buffer, draw.m_instanceDataOffset, 2);
+							rce.setVertexBuffer(inst.getBuffer(), draw.m_instanceDataOffset, 2);
 						}
 					}
 				}
@@ -2868,7 +2919,7 @@ namespace bgfx { namespace mtl
 								numInstances      = draw.m_numInstances;
 								numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
 
-								rce.drawIndexedPrimitives(prim.m_type, numIndices, indexType, ib.m_buffer, 0, draw.m_numInstances);
+								rce.drawIndexedPrimitives(prim.m_type, numIndices, indexType, ib.getBuffer(), 0, draw.m_numInstances);
 							}
 							else if (prim.m_min <= draw.m_numIndices)
 							{
@@ -2878,7 +2929,7 @@ namespace bgfx { namespace mtl
 								numInstances      = draw.m_numInstances;
 								numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
 
-								rce.drawIndexedPrimitives(prim.m_type, numIndices, indexType, ib.m_buffer, draw.m_startIndex * indexSize,numInstances);
+								rce.drawIndexedPrimitives(prim.m_type, numIndices, indexType, ib.getBuffer(), draw.m_startIndex * indexSize,numInstances);
 							}
 						}
 						else

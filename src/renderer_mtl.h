@@ -23,6 +23,8 @@ namespace bgfx { namespace mtl
 	// objects with creation functions starting with 'new' has a refcount 1 after creation, object must be destroyed with release.
 	// commandBuffer, commandEncoders are autoreleased objects. Needs AutoreleasePool!
 
+#define MTL_MAX_FRAMES_IN_FLIGHT (3)
+	
 #define MTL_CLASS(name) \
 	class name \
 	{ \
@@ -35,6 +37,13 @@ namespace bgfx { namespace mtl
 
 		typedef void (*mtlCallback)(void* userData);
 
+	MTL_CLASS(BlitCommandEncoder)
+		void endEncoding()
+		{
+			[m_obj endEncoding];
+		}
+	MTL_CLASS_END
+	
 	MTL_CLASS(Buffer)
 		void* contents()
 		{
@@ -148,8 +157,14 @@ namespace bgfx { namespace mtl
 
 		id<MTLLibrary> newLibraryWithSource(const char* _source)
 		{
+			MTLCompileOptions* options = [MTLCompileOptions new];
+			//NOTE: turned of as 'When using the fast variants, math functions execute more quickly,
+			//      but operate over a **LIMITED RANGE** and their behavior when handling NaN values is not defined.'
+			if (BX_ENABLED(BX_PLATFORM_IOS))
+				options.fastMathEnabled = NO;
+
 			NSError* error;
-			id<MTLLibrary> lib = [m_obj newLibraryWithSource:@(_source) options:nil error:&error];
+			id<MTLLibrary> lib = [m_obj newLibraryWithSource:@(_source) options:options error:&error];
 			BX_WARN(NULL == error
 				, "Shader compilation failed: %s"
 				, [error.localizedDescription cStringUsingEncoding:NSASCIIStringEncoding]
@@ -583,10 +598,12 @@ namespace bgfx { namespace mtl
 	struct BufferMtl
 	{
 		BufferMtl()
-			: m_buffer(NULL)
-			, m_flags(BGFX_BUFFER_NONE)
+			: m_flags(BGFX_BUFFER_NONE)
 			, m_dynamic(false)
+			, m_bufferIndex(0)
 		{
+			for (uint32_t ii = 0; ii < MTL_MAX_FRAMES_IN_FLIGHT; ++ii)
+				m_buffers[ii] = NULL;
 		}
 
 		void create(uint32_t _size, void* _data, uint16_t _flags, uint16_t _stride = 0, bool _vertex = false);
@@ -594,18 +611,22 @@ namespace bgfx { namespace mtl
 
 		void destroy()
 		{
-			if (NULL != m_buffer)
+			for (uint32_t ii = 0; ii < MTL_MAX_FRAMES_IN_FLIGHT; ++ii)
 			{
-				[m_buffer release];
-				m_buffer = NULL;
-				m_dynamic = false;
+				MTL_RELEASE(m_buffers[ii]);
 			}
+			m_dynamic = false;
 		}
+		
+		Buffer getBuffer() const { return m_buffers[m_bufferIndex]; }
 
-		Buffer   m_buffer;
 		uint32_t m_size;
 		uint16_t m_flags;
+		
 		bool m_dynamic;
+	private:
+		uint8_t  m_bufferIndex;
+		Buffer   m_buffers[MTL_MAX_FRAMES_IN_FLIGHT];
 	};
 
 	typedef BufferMtl IndexBufferMtl;
