@@ -149,6 +149,7 @@ bool RectanglePacker::addRectangle(uint16_t _width, uint16_t _height, uint16_t& 
 			{
 				m_skyline.erase(m_skyline.begin() + ii);
 				--ii;
+				--num;
 			}
 			else
 			{
