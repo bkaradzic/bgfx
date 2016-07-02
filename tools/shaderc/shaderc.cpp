@@ -329,11 +329,12 @@ namespace bgfx
 		uint32_t m_size;
 	};
 
-	void strInsert(char* _str, const char* _insert)
+	char* strInsert(char* _str, const char* _insert)
 	{
 		size_t len = strlen(_insert);
 		memmove(&_str[len], _str, strlen(_str) );
 		memcpy(_str, _insert, len);
+		return _str + len;
 	}
 
 	void strReplace(char* _str, const char* _find, const char* _replace)
@@ -1063,7 +1064,7 @@ namespace bgfx
 			char* data;
 			char* input;
 			{
-				const size_t padding = 1024;
+				const size_t padding = 4096;
 				uint32_t size = (uint32_t)bx::getSize(&reader);
 				data = new char[size+padding+1];
 				size = (uint32_t)bx::read(&reader, data, size);
@@ -1463,12 +1464,13 @@ namespace bgfx
 
 						if ('f' == shaderType)
 						{
-							const char* brace = strstr(entry, "{");
-							if (NULL != brace)
+							const char* insert = strstr(entry, "{");
+							if (NULL != insert)
 							{
-								strInsert(const_cast<char*>(brace+1), "\nvec4 bgfx_VoidFrag;\n");
+								insert = strInsert(const_cast<char*>(insert+1), "\nvec4 bgfx_VoidFrag = vec4_splat(0.0);\n");
 							}
 
+							const bool hasFragColor   = NULL != strstr(input, "gl_FragColor");
 							const bool hasFragCoord   = NULL != strstr(input, "gl_FragCoord") || hlsl > 3 || hlsl == 2;
 							const bool hasFragDepth   = NULL != strstr(input, "gl_FragDepth");
 							const bool hasFrontFacing = NULL != strstr(input, "gl_FrontFacing");
@@ -1489,6 +1491,18 @@ namespace bgfx
 								// GL errors when both gl_FragColor and gl_FragData is used.
 								// This will trigger the same error with HLSL compiler too.
 								preprocessor.writef("#define gl_FragColor gl_FragData_0_\n");
+
+								// If it has gl_FragData or gl_FragColor, color target at
+								// index 0 exists, otherwise shader is not modifying color
+								// targets.
+								hasFragData[0] |= hasFragColor || d3d < 11;
+
+								if (NULL != insert
+								&&  d3d < 11
+								&&  !hasFragColor)
+								{
+									insert = strInsert(const_cast<char*>(insert+1), "\ngl_FragColor = bgfx_VoidFrag;\n");
+								}
 							}
 
 							preprocessor.writef("#define void_main()");
@@ -1518,11 +1532,9 @@ namespace bgfx
 								}
 							}
 
-							addFragData(preprocessor, input, 0, arg++ > 0);
-
 							const uint32_t maxRT = d3d > 9 ? BX_COUNTOF(hasFragData) : 4;
 
-							for (uint32_t ii = 1; ii < BX_COUNTOF(hasFragData); ++ii)
+							for (uint32_t ii = 0; ii < BX_COUNTOF(hasFragData); ++ii)
 							{
 								if (ii < maxRT)
 								{
