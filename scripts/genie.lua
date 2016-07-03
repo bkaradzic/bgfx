@@ -136,10 +136,17 @@ function exampleProject(_name)
 		path.join(BGFX_DIR, "examples", _name, "**.bin.h"),
 	}
 
-	links {
-		"bgfx",
-		"example-common",
-	}
+	if _OPTIONS["with-shared-lib"] then
+		links {
+			"bgfx-shared-lib",
+			"example-common",
+		}
+	else
+		links {
+			"bgfx",
+			"example-common",
+		}
+	end
 
 	if _OPTIONS["with-sdl"] then
 		defines { "ENTRY_CONFIG_USE_SDL=1" }
@@ -359,7 +366,6 @@ group "examples"
 dofile "example-common.lua"
 
 group "libs"
-bgfxProject("", "StaticLib", {})
 
 group "examples"
 exampleProject("00-helloworld")
@@ -400,6 +406,8 @@ end
 if _OPTIONS["with-shared-lib"] then
 	group "libs"
 	bgfxProject("-shared-lib", "SharedLib", {})
+else
+	bgfxProject("", "StaticLib", {})
 end
 
 if _OPTIONS["with-tools"] then
