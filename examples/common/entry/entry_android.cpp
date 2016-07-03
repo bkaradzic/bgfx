@@ -82,7 +82,6 @@ namespace entry
 	{
 		Context()
 			: m_window(NULL)
-			, m_count(0)
 		{
 			memset(m_value, 0, sizeof(m_value) );
 
@@ -297,43 +296,35 @@ namespace entry
 						int32_t action = (actionBits & AMOTION_EVENT_ACTION_MASK);
 						int32_t index  = (actionBits & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
 
-						count = m_count;
-
-						switch (action)
+						// Simulate left mouse click with 1st touch and right mouse click with 2nd touch. ignore other touchs
+						if (count < 2)
 						{
-						case AMOTION_EVENT_ACTION_DOWN:
-						case AMOTION_EVENT_ACTION_POINTER_DOWN:
-							m_count++;
-							break;
-
-						case AMOTION_EVENT_ACTION_UP:
-						case AMOTION_EVENT_ACTION_POINTER_UP:
-							m_count--;
-							break;
-
-						default:
-							break;
-						}
-
-						if (count != m_count)
-						{
-							m_eventQueue.postMouseEvent(defaultWindow
-								, (int32_t)mx
-								, (int32_t)my
-								, 0
-								, 1 == count ? MouseButton::Left : MouseButton::Right
-								, false
-								);
-
-							if (0 != m_count)
+							switch (action)
 							{
+							case AMOTION_EVENT_ACTION_DOWN:
+							case AMOTION_EVENT_ACTION_POINTER_DOWN:
 								m_eventQueue.postMouseEvent(defaultWindow
 									, (int32_t)mx
 									, (int32_t)my
 									, 0
-									, 1 == m_count ? MouseButton::Left : MouseButton::Right
+									, action == AMOTION_EVENT_ACTION_DOWN ? MouseButton::Left : MouseButton::Right
 									, true
 									);
+								break;
+
+							case AMOTION_EVENT_ACTION_UP:
+							case AMOTION_EVENT_ACTION_POINTER_UP:
+								m_eventQueue.postMouseEvent(defaultWindow
+									, (int32_t)mx
+									, (int32_t)my
+									, 0
+									, action == AMOTION_EVENT_ACTION_UP ? MouseButton::Left : MouseButton::Right
+									, false
+									);
+								break;
+
+							default:
+								break;
 							}
 						}
 
@@ -405,7 +396,6 @@ namespace entry
 		ANativeWindow* m_window;
 		android_app* m_app;
 
-		int32_t m_count;
 		int32_t m_value[GamepadAxis::Count];
 		int32_t m_deadzone[GamepadAxis::Count];
 	};
