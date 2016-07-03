@@ -12,28 +12,28 @@
 namespace bgfx
 {
 	///
-	void initAttribTypeSizeTable(RendererType::Enum _type);
+	BGFX_SHARED_LIB_API void initAttribTypeSizeTable(RendererType::Enum _type);
 
 	/// Returns attribute name.
-	const char* getAttribName(Attrib::Enum _attr);
+	BGFX_SHARED_LIB_API const char* getAttribName(Attrib::Enum _attr);
 
 	/// Dump vertex declaration into debug output.
-	void dump(const VertexDecl& _decl);
+	BGFX_SHARED_LIB_API void dump(const VertexDecl& _decl);
 
 	///
-	Attrib::Enum idToAttrib(uint16_t id);
+	BGFX_SHARED_LIB_API Attrib::Enum idToAttrib(uint16_t id);
 
 	///
-	uint16_t attribToId(Attrib::Enum _attr);
+	BGFX_SHARED_LIB_API uint16_t attribToId(Attrib::Enum _attr);
 
 	///
-	AttribType::Enum idToAttribType(uint16_t id);
+	BGFX_SHARED_LIB_API AttribType::Enum idToAttribType(uint16_t id);
 
 	///
-	int32_t write(bx::WriterI* _writer, const bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
+	BGFX_SHARED_LIB_API int32_t write(bx::WriterI* _writer, const bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
 
 	///
-	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
+	BGFX_SHARED_LIB_API int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
 
 } // namespace bgfx
 
