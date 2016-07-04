@@ -24,7 +24,7 @@ namespace bgfx { namespace mtl
 	// commandBuffer, commandEncoders are autoreleased objects. Needs AutoreleasePool!
 
 #define MTL_MAX_FRAMES_IN_FLIGHT (3)
-	
+
 #define MTL_CLASS(name) \
 	class name \
 	{ \
@@ -43,7 +43,7 @@ namespace bgfx { namespace mtl
 			[m_obj endEncoding];
 		}
 	MTL_CLASS_END
-	
+
 	MTL_CLASS(Buffer)
 		void* contents()
 		{
@@ -617,12 +617,12 @@ namespace bgfx { namespace mtl
 			}
 			m_dynamic = false;
 		}
-		
+
 		Buffer getBuffer() const { return m_buffers[m_bufferIndex]; }
 
 		uint32_t m_size;
 		uint16_t m_flags;
-		
+
 		bool m_dynamic;
 	private:
 		uint8_t  m_bufferIndex;

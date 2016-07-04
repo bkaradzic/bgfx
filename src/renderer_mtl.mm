@@ -28,7 +28,7 @@
 	  packFloatToRGBA needs highp. currently it uses half.
    24-nbody: no generated compute shaders for metal
    27-terrain: shaderc generates invalid metal shader for vs_terrain_height_texture. vertex output: half4 gl_Position [[position]], should be float4
- 
+
 Known issues(driver problems??):
   OSX mac mini(late 2014), OSX10.11.3 : nanovg-rendering: color writemask off causes problem...
 		03-raymarch: OSX nothing is visible  ( depth/color order should be swapped in fragment output struct)
@@ -36,19 +36,19 @@ Known issues(driver problems??):
   iPad mini 2,  iOS 8.1.1:  21-deferred: scissor not working properly
 							26-occlusion: query doesn't work with two rendercommandencoders, merge should fix this
 			Only on this device ( no problem on iPad Air 2 with iOS9.3.1)
- 
+
   TODOs:
   - iOS device orientation change is not handled properly
- 
+
  22-windows: todo support multiple windows
- 
+
  - optimization: remove sync points, merge views with same fb and no clear.
       13-stencil and 16-shadowmaps are very inefficient. every view stores/loads backbuffer data
 	  multithreading with multiple commandbuffer
 
- 
+
   - 15-shadowmaps-simple (example needs modification mtxCrop znew = z * 0.5 + 0.5 is not needed ) could be hacked in shader too
- 
+
 	BGFX_RESET_FLIP_AFTER_RENDER on low level renderers should be true?
 	Do I have absolutely need to send result to screen at flip or can I do it in submit?
  */
@@ -416,7 +416,7 @@ namespace bgfx { namespace mtl
 			}
 			m_uniformBufferVertexOffset = 0;
 			m_uniformBufferFragmentOffset = 0;
-			
+
 			const char* vshSource =
 				"using namespace metal;\n"
 				"struct xlatMtlShaderOutput { float4 gl_Position [[position]]; float2 v_texcoord0; }; \n"
@@ -428,7 +428,7 @@ namespace bgfx { namespace mtl
 				"   else { _mtl_o.gl_Position = float4(-1.0,3.0,0.0,1.0); _mtl_o.v_texcoord0 = float2(0.0,-1.0); }\n"
 				"   return _mtl_o;\n"
 				"}\n";
-			
+
 			 const char* fshSource = "using namespace metal; \n"
 				" struct xlatMtlShaderInput { float2 v_texcoord0; }; \n"
 				" fragment half4 xlatMtlMain (xlatMtlShaderInput _mtl_i[[stage_in]], texture2d<float> s_texColor [[texture(0)]], sampler _mtlsmp_s_texColor [[sampler(0)]] ) \n"
@@ -1365,10 +1365,10 @@ namespace bgfx { namespace mtl
 					m_commandBuffer = m_commandQueue.commandBuffer();
 					retain(m_commandBuffer);
 				}
-				
+
 				m_blitCommandEncoder = m_commandBuffer.blitCommandEncoder();
 			}
-			
+
 			return m_blitCommandEncoder;
 		}
 
@@ -1524,7 +1524,7 @@ namespace bgfx { namespace mtl
 
 		const char* code = (const char*)reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
-		
+
 			//TODO: use binary format
 		Library lib = s_renderMtl->m_device.newLibraryWithSource(code);
 
@@ -2176,7 +2176,7 @@ namespace bgfx { namespace mtl
 	void TextureMtl::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
 		s_renderMtl->sync();
-		
+
 		MTLRegion region =
 		{
 			{ _rect.m_x,     _rect.m_y,      _z     },
@@ -2343,7 +2343,7 @@ namespace bgfx { namespace mtl
 			m_commandBuffer = m_commandQueue.commandBuffer();
 			retain(m_commandBuffer); // keep alive to be useable at 'flip'
 		}
-		
+
 		if ( m_blitCommandEncoder )
 		{
 			m_blitCommandEncoder.endEncoding();
@@ -2356,7 +2356,7 @@ namespace bgfx { namespace mtl
 #if BX_PLATFORM_IOS
 		retain(m_drawable); // keep alive to be useable at 'flip'
 #endif
-		
+
 		if ( m_saveScreenshot )
 		{
 			if ( m_screenshotTarget )
@@ -2385,7 +2385,7 @@ namespace bgfx { namespace mtl
 														);
 					m_textureDescriptor.usage		 = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
 				}
-				
+
 				m_screenshotTarget   = m_device.newTextureWithDescriptor(m_textureDescriptor);
 			}
 			m_saveScreenshot = false;
@@ -3160,8 +3160,8 @@ namespace bgfx { namespace mtl
 
 		rce.endEncoding();
 		m_renderCommandEncoder = 0;
-		
-		
+
+
 		if ( m_screenshotTarget )
 		{
 			RenderPassDescriptor renderPassDescriptor = newRenderPassDescriptor();
@@ -3169,22 +3169,22 @@ namespace bgfx { namespace mtl
 			renderPassDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
 			renderPassDescriptor.depthAttachment.texture = m_backBufferDepth;
 			renderPassDescriptor.stencilAttachment.texture = m_backBufferStencil;
-			
+
 			rce =  m_commandBuffer.renderCommandEncoderWithDescriptor(renderPassDescriptor);
 
 			rce.setCullMode(MTLCullModeNone);
-	
+
 			uint32_t state = BGFX_STATE_DEFAULT;
 			FrameBufferHandle invalidFbh = BGFX_INVALID_HANDLE;
 			VertexDeclHandle invalidVdh = BGFX_INVALID_HANDLE;
 			RenderPipelineState pipelineState = m_screenshotBlitProgram.getRenderPipelineState(state, 0, invalidFbh, invalidVdh, 0);
 			rce.setRenderPipelineState(pipelineState);
-			
+
 			rce.setFragmentSamplerState(getSamplerState(BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT), 0);
 			rce.setFragmentTexture(m_screenshotTarget, 0);
-			
+
 			rce.drawPrimitives(MTLPrimitiveTypeTriangle, 0, 3, 1);
-			
+
 			rce.endEncoding();
 		 }
 	}
