@@ -473,11 +473,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						const MouseEvent* mouse = static_cast<const MouseEvent*>(ev);
 						handle = mouse->m_handle;
 
-						if (mouse->m_move)
-						{
-							inputSetMousePos(mouse->m_mx, mouse->m_my, mouse->m_mz);
-						}
-						else
+						inputSetMousePos(mouse->m_mx, mouse->m_my, mouse->m_mz);
+						if (!mouse->m_move)
 						{
 							inputSetMouseButtonState(mouse->m_button, mouse->m_down);
 						}
@@ -485,13 +482,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						if (NULL != _mouse
 						&&  !mouseLock)
 						{
-							if (mouse->m_move)
-							{
-								_mouse->m_mx = mouse->m_mx;
-								_mouse->m_my = mouse->m_my;
-								_mouse->m_mz = mouse->m_mz;
-							}
-							else
+							_mouse->m_mx = mouse->m_mx;
+							_mouse->m_my = mouse->m_my;
+							_mouse->m_mz = mouse->m_mz;
+							if (!mouse->m_move) 
 							{
 								_mouse->m_buttons[mouse->m_button] = mouse->m_down;
 							}
