@@ -21,6 +21,7 @@
 
 /*
  // known metal shader generation issues:
+   03-raymarch: OSX10.11.3 nothing is visible ( depth/color swap in fragment output struct fixed this )
    15-shadowmaps-simple: shader compilation error
    16-shadowmaps:  //problem with essl -> metal: SAMPLER2D(u_shadowMap0, 4);  sampler index is lost. Shadowmap is set to slot 4, but
       metal shader uses sampler/texture slot 0. this could require changes outside of renderer_mtl?
@@ -30,25 +31,26 @@
  
 Known issues(driver problems??):
   OSX mac mini(late 2014), OSX10.11.3 : nanovg-rendering: color writemask off causes problem...
-TODO: check if swap really solves this?	03-raymarch: OSX nothing is visible  ( depth/color order should be swapped in fragment output struct)
-
+		03-raymarch: OSX nothing is visible  ( depth/color order should be swapped in fragment output struct)
+					works fine with newer OSX
   iPad mini 2,  iOS 8.1.1:  21-deferred: scissor not working properly
 							26-occlusion: query doesn't work with two rendercommandencoders, merge should fix this
 			Only on this device ( no problem on iPad Air 2 with iOS9.3.1)
  
-TODOs:
-  07-callback, saveScreenshot should be implemented with one frame latency (using saveScreenshotBegin and End)
+  TODOs:
   - iOS device orientation change is not handled properly
  
  22-windows: todo support multiple windows
  
  - optimization: remove sync points, merge views with same fb and no clear.
       13-stencil and 16-shadowmaps are very inefficient. every view stores/loads backbuffer data
+	  multithreading with multiple commandbuffer
+
  
   - 15-shadowmaps-simple (example needs modification mtxCrop znew = z * 0.5 + 0.5 is not needed ) could be hacked in shader too
  
- BGFX_RESET_FLIP_AFTER_RENDER on low level renderers should be true? (crashes even with BGFX_RESET_FLIP_AFTER_RENDER because there is
- one rendering frame before reset). Do I have absolutely need to send result to View at flip or can I do it in submit?
+	BGFX_RESET_FLIP_AFTER_RENDER on low level renderers should be true?
+	Do I have absolutely need to send result to screen at flip or can I do it in submit?
  */
 
 namespace bgfx { namespace mtl
@@ -339,6 +341,7 @@ namespace bgfx { namespace mtl
 			, m_numWindows(1)
 			, m_rtMsaa(false)
 			, m_drawable(NULL)
+			, m_saveScreenshot(false)
 		{
 		}
 
@@ -413,6 +416,36 @@ namespace bgfx { namespace mtl
 			}
 			m_uniformBufferVertexOffset = 0;
 			m_uniformBufferFragmentOffset = 0;
+			
+			const char* vshSource =
+				"using namespace metal;\n"
+				"struct xlatMtlShaderOutput { float4 gl_Position [[position]]; float2 v_texcoord0; }; \n"
+				"vertex xlatMtlShaderOutput xlatMtlMain (uint v_id [[ vertex_id ]]) \n"
+				"{\n"
+				"	xlatMtlShaderOutput _mtl_o;\n"
+				"   if (v_id==0) { _mtl_o.gl_Position = float4(-1.0,-1.0,0.0,1.0); _mtl_o.v_texcoord0 = float2(0.0,1.0); } \n"
+				"   else if (v_id==1) { _mtl_o.gl_Position = float4(3.0,-1.0,0.0,1.0); _mtl_o.v_texcoord0 = float2(2.0,1.0); } \n"
+				"   else { _mtl_o.gl_Position = float4(-1.0,3.0,0.0,1.0); _mtl_o.v_texcoord0 = float2(0.0,-1.0); }\n"
+				"   return _mtl_o;\n"
+				"}\n";
+			
+			 const char* fshSource = "using namespace metal; \n"
+				" struct xlatMtlShaderInput { float2 v_texcoord0; }; \n"
+				" fragment half4 xlatMtlMain (xlatMtlShaderInput _mtl_i[[stage_in]], texture2d<float> s_texColor [[texture(0)]], sampler _mtlsmp_s_texColor [[sampler(0)]] ) \n"
+				" {	 return half4(s_texColor.sample(_mtlsmp_s_texColor, _mtl_i.v_texcoord0)); } \n";
+
+			//TODO: use binary format
+			Library lib = m_device.newLibraryWithSource(vshSource);
+			if (NULL != lib)
+			{
+				m_screenshotBlitProgramVsh.m_function = lib.newFunctionWithName(SHADER_FUNCTION_NAME);
+			}
+			lib = m_device.newLibraryWithSource(fshSource);
+			if (NULL != lib)
+			{
+				m_screenshotBlitProgramFsh.m_function = lib.newFunctionWithName(SHADER_FUNCTION_NAME);
+			}
+			m_screenshotBlitProgram.create(&m_screenshotBlitProgramVsh, &m_screenshotBlitProgramFsh);
 
 			g_caps.supported |= (0
 								 | BGFX_CAPS_TEXTURE_COMPARE_LEQUAL	//NOTE: on IOS Gpu Family 1/2 have to set compare in shader
@@ -802,28 +835,25 @@ namespace bgfx { namespace mtl
 
 		void saveScreenShot(const char* _filePath) BX_OVERRIDE
 		{
-			if (NULL == m_drawable
-			||  NULL == m_drawable.texture)
-			{
+			if (NULL == m_screenshotTarget)
 				return;
-			}
 
-			sync();
-			//TODO: implement this with saveScreenshotBegin/End
+			m_commandBuffer.commit();
+			m_commandBuffer.waitUntilCompleted();
+			MTL_RELEASE(m_commandBuffer)
 
-			Texture backBuffer = m_drawable.texture;
-			uint32_t width  = backBuffer.width();
-			uint32_t height = backBuffer.height();
+			uint32_t width  = m_screenshotTarget.width();
+			uint32_t height = m_screenshotTarget.height();
 			uint32_t length = width*height*4;
 			uint8_t* data = (uint8_t*)BX_ALLOC(g_allocator, length);
 
 			MTLRegion region = { { 0, 0, 0 }, { width, height, 1 } };
 
-			backBuffer.getBytes(data, 4*width, 0, region, 0, 0);
+			m_screenshotTarget.getBytes(data, 4*width, 0, region, 0, 0);
 
 			g_callback->screenShot(_filePath
-					, backBuffer.width()
-					, backBuffer.height()
+					, m_screenshotTarget.width()
+					, m_screenshotTarget.height()
 					, width*4
 					, data
 					, length
@@ -831,6 +861,9 @@ namespace bgfx { namespace mtl
 					);
 
 			BX_FREE(g_allocator, data);
+
+			m_commandBuffer = m_commandQueue.commandBuffer();
+			retain(m_commandBuffer); // keep alive to be useable at 'flip'
 		}
 
 		void updateViewName(uint8_t _id, const char* _name) BX_OVERRIDE
@@ -959,7 +992,7 @@ namespace bgfx { namespace mtl
 
 			MTL_RELEASE(m_prevCommandBuffer);
 			m_prevCommandBuffer = m_commandBuffer;
-			retain(m_commandBuffer);
+			retain(m_prevCommandBuffer);
 
 			MTL_RELEASE(m_commandBuffer);
 
@@ -1173,7 +1206,7 @@ namespace bgfx { namespace mtl
 		{
 			if (!isValid(_fbh) )
 			{
-				renderPassDescriptor.colorAttachments[0].texture = m_drawable.texture;
+				renderPassDescriptor.colorAttachments[0].texture = ((NULL != m_screenshotTarget) ?  m_screenshotTarget.m_obj : m_drawable.texture);
 				renderPassDescriptor.depthAttachment.texture = m_backBufferDepth;
 				renderPassDescriptor.stencilAttachment.texture = m_backBufferStencil;
 			}
@@ -1396,7 +1429,13 @@ namespace bgfx { namespace mtl
 		SamplerDescriptor        m_samplerDescriptor;
 
 		// currently active objects data
-		id <CAMetalDrawable> m_drawable;
+		id <CAMetalDrawable>	m_drawable;
+		bool					m_saveScreenshot;
+		Texture					m_screenshotTarget;
+		ShaderMtl				m_screenshotBlitProgramVsh;
+		ShaderMtl				m_screenshotBlitProgramFsh;
+		ProgramMtl				m_screenshotBlitProgram;
+
 		CommandBuffer m_commandBuffer;
 		CommandBuffer m_prevCommandBuffer;
 		BlitCommandEncoder m_blitCommandEncoder;
@@ -1447,8 +1486,6 @@ namespace bgfx { namespace mtl
 				break;
 		}
 
-		//bool fragment = BGFX_CHUNK_MAGIC_FSH == magic;
-
 		uint32_t iohash;
 		bx::read(&reader, iohash);
 
@@ -1487,16 +1524,7 @@ namespace bgfx { namespace mtl
 
 		const char* code = (const char*)reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
-
-		int32_t codeLen = (int32_t)strlen(code);
-		int32_t tempLen = codeLen + (4<<10);
-		char* temp = (char*)alloca(tempLen);
-		bx::StaticMemoryBlockWriter writer(temp, tempLen);
-
-		bx::write(&writer, code, codeLen);
-		bx::write(&writer, '\0');
-		code = temp;
-
+		
 			//TODO: use binary format
 		Library lib = s_renderMtl->m_device.newLibraryWithSource(code);
 
@@ -2322,14 +2350,50 @@ namespace bgfx { namespace mtl
 			m_blitCommandEncoder = 0;
 		}
 
-		//TODO: multithreading with multiple commandbuffer
-		// is there a FAST way to tell which view is active?
 
 		//TODO: acquire CAMetalDrawable just before we really need it. When we are using an encoder with target metalLayer's texture
 		m_drawable = m_metalLayer.nextDrawable;
 #if BX_PLATFORM_IOS
 		retain(m_drawable); // keep alive to be useable at 'flip'
 #endif
+		
+		if ( m_saveScreenshot )
+		{
+			if ( m_screenshotTarget )
+			{
+				if ( m_screenshotTarget.width() != m_drawable.texture.width ||
+					m_screenshotTarget.height() != m_drawable.texture.height )
+				{
+					MTL_RELEASE(m_screenshotTarget);
+				}
+			}
+
+			if ( NULL == m_screenshotTarget)
+			{
+				m_textureDescriptor.textureType = MTLTextureType2D;
+				m_textureDescriptor.pixelFormat = m_drawable.texture.pixelFormat;
+				m_textureDescriptor.width  = m_drawable.texture.width;
+				m_textureDescriptor.height = m_drawable.texture.height;
+				m_textureDescriptor.depth  = 1;
+				m_textureDescriptor.mipmapLevelCount = 1;
+				m_textureDescriptor.sampleCount = m_drawable.texture.sampleCount;
+				m_textureDescriptor.arrayLength = m_drawable.texture.arrayLength;
+				if ( m_iOS9Runtime || m_macOS11Runtime )
+				{
+					m_textureDescriptor.cpuCacheMode = MTLCPUCacheModeDefaultCache;
+					m_textureDescriptor.storageMode = (MTLStorageMode)(((BX_ENABLED(BX_PLATFORM_IOS)) ? 0 /* MTLStorageModeShared */ :  1 /*MTLStorageModeManaged*/)
+														);
+					m_textureDescriptor.usage		 = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+				}
+				
+				m_screenshotTarget   = m_device.newTextureWithDescriptor(m_textureDescriptor);
+			}
+			m_saveScreenshot = false;
+		}
+		else
+		{
+			MTL_RELEASE(m_screenshotTarget);
+		}
 
 		m_uniformBuffer = m_uniformBuffers[m_bufferIndex];
 		m_bufferIndex = (m_bufferIndex + 1) % MTL_MAX_FRAMES_IN_FLIGHT;
@@ -3096,6 +3160,33 @@ namespace bgfx { namespace mtl
 
 		rce.endEncoding();
 		m_renderCommandEncoder = 0;
+		
+		
+		if ( m_screenshotTarget )
+		{
+			RenderPassDescriptor renderPassDescriptor = newRenderPassDescriptor();
+			renderPassDescriptor.colorAttachments[0].texture = m_drawable.texture;
+			renderPassDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
+			renderPassDescriptor.depthAttachment.texture = m_backBufferDepth;
+			renderPassDescriptor.stencilAttachment.texture = m_backBufferStencil;
+			
+			rce =  m_commandBuffer.renderCommandEncoderWithDescriptor(renderPassDescriptor);
+
+			rce.setCullMode(MTLCullModeNone);
+	
+			uint32_t state = BGFX_STATE_DEFAULT;
+			FrameBufferHandle invalidFbh = BGFX_INVALID_HANDLE;
+			VertexDeclHandle invalidVdh = BGFX_INVALID_HANDLE;
+			RenderPipelineState pipelineState = m_screenshotBlitProgram.getRenderPipelineState(state, 0, invalidFbh, invalidVdh, 0);
+			rce.setRenderPipelineState(pipelineState);
+			
+			rce.setFragmentSamplerState(getSamplerState(BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT), 0);
+			rce.setFragmentTexture(m_screenshotTarget, 0);
+			
+			rce.drawPrimitives(MTLPrimitiveTypeTriangle, 0, 3, 1);
+			
+			rce.endEncoding();
+		 }
 	}
 
 } /* namespace mtl */ } // namespace bgfx
