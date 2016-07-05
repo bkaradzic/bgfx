@@ -48,14 +48,14 @@ Known issues(driver problems??):
  - remove sync points at texture/mesh update
  - merge views with same fb and no fullscreen clear
  - capture: 07-callback
- 
+
  - finish savescreenshot with screenshotbegin/end
 
  - support multiple windows: 22-windows
  - multithreading with multiple commandbuffer
 
  - compute and drawindirect: 24-nbody (needs comnpute shaders)
- 
+
  INFO:
   - 15-shadowmaps-simple (example needs modification mtxCrop znew = z * 0.5 + 0.5 is not needed ) could be hacked in shader too
 
@@ -426,7 +426,7 @@ namespace bgfx { namespace mtl
 			}
 			m_uniformBufferVertexOffset = 0;
 			m_uniformBufferFragmentOffset = 0;
-			
+
 			const char* vshSource =
 				"using namespace metal;\n"
 				"struct xlatMtlShaderOutput { float4 gl_Position [[position]]; float2 v_texcoord0; }; \n"
@@ -921,14 +921,14 @@ namespace bgfx { namespace mtl
 			{
 				if ( m_renderCommandEncoder )
 					m_renderCommandEncoder.endEncoding();
-				
+
 				RenderPassDescriptor renderPassDescriptor = newRenderPassDescriptor();
-				
+
 				setFrameBuffer(renderPassDescriptor, fbh);
 
 				renderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionLoad;
 				renderPassDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
-				
+
 				rce = m_commandBuffer.renderCommandEncoderWithDescriptor(renderPassDescriptor);
 				m_renderCommandEncoder = rce;
 				m_renderCommandEncoderFrameBufferHandle = fbh;
@@ -1048,7 +1048,7 @@ namespace bgfx { namespace mtl
 				? 16
 				: 1
 				;
-			
+
 			//TODO: there should be a way to specify if backbuffer needs stencil/depth.
 			//TODO: support msaa
 			const uint32_t maskFlags = ~(0
@@ -1057,7 +1057,7 @@ namespace bgfx { namespace mtl
 										 | BGFX_RESET_DEPTH_CLAMP
 										 | BGFX_RESET_SUSPEND
 										 );
-			
+
 			if (m_resolution.m_width				!=  _resolution.m_width
 				||  m_resolution.m_height           !=  _resolution.m_height
 				|| (m_resolution.m_flags&maskFlags) != (_resolution.m_flags&maskFlags) )
@@ -1067,7 +1067,7 @@ namespace bgfx { namespace mtl
 								? MTLPixelFormatBGRA8Unorm_sRGB
 								: MTLPixelFormatBGRA8Unorm
 								;
-				
+
 				m_resolution = _resolution;
 				m_resolution.m_flags &= ~BGFX_RESET_INTERNAL_FORCE;
 
@@ -1411,7 +1411,7 @@ namespace bgfx { namespace mtl
 				retain(m_drawable); // keep alive to be useable at 'flip'
 #endif
 			}
-			
+
 			return m_drawable;
 		}
 
@@ -2356,9 +2356,9 @@ namespace bgfx { namespace mtl
 		{
 			m_control.consume(1);
 		}
-	
+
 		uint32_t offset = m_control.m_current * 2 + 0;
-		
+
 		_commandBuffer.addScheduledHandler(setTimestamp, &m_result[offset]);
 		_commandBuffer.addCompletedHandler(setTimestamp, &m_result[offset+1]);
 		m_control.commit(1);
@@ -2372,12 +2372,12 @@ namespace bgfx { namespace mtl
 			m_begin = m_result[offset+0];
 			m_end   = m_result[offset+1];
 			m_elapsed = m_end - m_begin;
-		
+
 			m_control.consume(1);
-		
+
 			return true;
 		}
-	
+
 		return false;
 	}
 
@@ -2434,10 +2434,10 @@ namespace bgfx { namespace mtl
 			m_commandBuffer = m_commandQueue.commandBuffer();
 			retain(m_commandBuffer); // keep alive to be useable at 'flip'
 		}
-		
+
 		int64_t elapsed = -bx::getHPCounter();
 		int64_t captureElapsed = 0;
-		
+
 		m_gpuTimer.addHandlers(m_commandBuffer);
 
 		if ( m_blitCommandEncoder )
@@ -2447,7 +2447,7 @@ namespace bgfx { namespace mtl
 		}
 
 		updateResolution(_render->m_resolution);
-		
+
 		if ( m_saveScreenshot )
 		{
 			if ( m_screenshotTarget )
@@ -3122,24 +3122,24 @@ namespace bgfx { namespace mtl
 
 		int64_t now = bx::getHPCounter();
 		elapsed += now;
-		
+
 		static int64_t last = now;
-		
+
 		Stats& perfStats = _render->m_perfStats;
 		perfStats.cpuTimeBegin = last;
-		
+
 		int64_t frameTime = now - last;
 		last = now;
-		
+
 		static int64_t min = frameTime;
 		static int64_t max = frameTime;
 		min = bx::int64_min(min, frameTime);
 		max = bx::int64_max(max, frameTime);
-		
+
 		static uint32_t maxGpuLatency = 0;
 		static double   maxGpuElapsed = 0.0f;
 		double elapsedGpuMs = 0.0;
-		
+
 		do
 		{
 			double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
@@ -3147,11 +3147,11 @@ namespace bgfx { namespace mtl
 			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
 		}
 		while (m_gpuTimer.get() );
-		
+
 		maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
-		
+
 		const int64_t timerFreq = bx::getHPFrequency();
-		
+
 		perfStats.cpuTimeEnd   = now;
 		perfStats.cpuTimerFreq = timerFreq;
 		perfStats.gpuTimeBegin = m_gpuTimer.m_begin;
