@@ -3270,7 +3270,7 @@ namespace bgfx { namespace mtl
 
 			rce.setCullMode(MTLCullModeNone);
 
-			uint32_t state = BGFX_STATE_DEFAULT;
+			uint64_t state = BGFX_STATE_DEFAULT;
 			FrameBufferHandle invalidFbh = BGFX_INVALID_HANDLE;
 			VertexDeclHandle invalidVdh = BGFX_INVALID_HANDLE;
 			RenderPipelineState pipelineState = m_screenshotBlitProgram.getRenderPipelineState(state, 0, invalidFbh, invalidVdh, 0);
