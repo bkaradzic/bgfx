@@ -83,6 +83,11 @@ namespace bgfx { namespace mtl
 			[m_obj commit];
 		}
 
+		void addScheduledHandler(mtlCallback _cb, void* _data)
+		{
+			[m_obj addScheduledHandler:^(id <MTLCommandBuffer>){ _cb(_data); }];
+		}
+	
 		void addCompletedHandler(mtlCallback _cb, void* _data)
 		{
 			[m_obj addCompletedHandler:^(id <MTLCommandBuffer>){ _cb(_data); }];
@@ -756,6 +761,27 @@ namespace bgfx { namespace mtl
 		TextureHandle m_colorHandle[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
 		TextureHandle m_depthHandle;
 		uint8_t m_num; // number of color handles
+	};
+	
+	struct TimerQueryMtl
+	{
+		TimerQueryMtl()
+		: m_control(4)
+		{
+		}
+		
+		void init();
+		void shutdown();
+		void addHandlers(CommandBuffer& _commandBuffer);
+		bool get();
+		
+		uint64_t m_begin;
+		uint64_t m_end;
+		uint64_t m_elapsed;
+		uint64_t m_frequency;
+		
+		uint64_t m_result[4*2];
+		bx::RingBufferControl m_control;
 	};
 
 	struct OcclusionQueryMTL
