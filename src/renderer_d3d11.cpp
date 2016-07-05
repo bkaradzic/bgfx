@@ -2666,7 +2666,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			_state &= BGFX_D3D11_BLEND_STATE_MASK;
 
-			const uint64_t hash = _state;
+			const uint64_t hash = !!( BGFX_STATE_BLEND_INDEPENDENT & _state ) ?
+				_state | uint64_t( _rgba ) << 36  // NOTE: dropping the top bits of _rgba on the floor here!
+				: _state;
 			ID3D11BlendState* bs = m_blendStateCache.find(hash);
 			if (NULL == bs)
 			{
