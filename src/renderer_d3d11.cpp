@@ -2666,18 +2666,26 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			_state &= BGFX_D3D11_BLEND_STATE_MASK;
 
-			const uint64_t hash = _state;
+			bx::HashMurmur2A murmur;
+			murmur.begin();
+			murmur.add(_state);
+			murmur.add(!!(BGFX_STATE_BLEND_INDEPENDENT & _state)
+				? _rgba
+				: -1
+				);
+			const uint32_t hash = murmur.end();
+
 			ID3D11BlendState* bs = m_blendStateCache.find(hash);
 			if (NULL == bs)
 			{
 				D3D11_BLEND_DESC desc;
 				desc.AlphaToCoverageEnable  = !!(BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & _state);
-				desc.IndependentBlendEnable = !!(BGFX_STATE_BLEND_INDEPENDENT & _state);
+				desc.IndependentBlendEnable = !!(BGFX_STATE_BLEND_INDEPENDENT       & _state);
 
 				D3D11_RENDER_TARGET_BLEND_DESC* drt = &desc.RenderTarget[0];
 				drt->BlendEnable = !!(BGFX_STATE_BLEND_MASK & _state);
 
-				const uint32_t blend    = uint32_t( (_state&BGFX_STATE_BLEND_MASK)>>BGFX_STATE_BLEND_SHIFT);
+				const uint32_t blend    = uint32_t( (_state&BGFX_STATE_BLEND_MASK         )>>BGFX_STATE_BLEND_SHIFT);
 				const uint32_t equation = uint32_t( (_state&BGFX_STATE_BLEND_EQUATION_MASK)>>BGFX_STATE_BLEND_EQUATION_SHIFT);
 
 				const uint32_t srcRGB = (blend      ) & 0xf;
