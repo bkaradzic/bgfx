@@ -383,28 +383,38 @@ namespace bgfx
 
 	void fatal(Fatal::Enum _code, const char* _format, ...)
 	{
-		char temp[8192];
-
 		va_list argList;
 		va_start(argList, _format);
-		char* out = temp;
-		int32_t len = bx::vsnprintf(out, sizeof(temp), _format, argList);
-		if ( (int32_t)sizeof(temp) < len)
-		{
-			out = (char*)alloca(len+1);
-			len = bx::vsnprintf(out, len, _format, argList);
-		}
-		out[len] = '\0';
-		va_end(argList);
 
-		g_callback->fatal(_code, out);
+		if (BX_UNLIKELY(NULL == g_callback) )
+		{
+			dbgPrintfVargs(_format, argList);
+			abort();
+		}
+		else
+		{
+			char temp[8192];
+			char* out = temp;
+			int32_t len = bx::vsnprintf(out, sizeof(temp), _format, argList);
+			if ( (int32_t)sizeof(temp) < len)
+			{
+				out = (char*)alloca(len+1);
+				len = bx::vsnprintf(out, len, _format, argList);
+			}
+			out[len] = '\0';
+
+			g_callback->fatal(_code, out);
+		}
+
+		va_end(argList);
 	}
 
 	void trace(const char* _filePath, uint16_t _line, const char* _format, ...)
 	{
 		va_list argList;
 		va_start(argList, _format);
-		if (NULL == g_callback)
+
+		if (BX_UNLIKELY(NULL == g_callback) )
 		{
 			dbgPrintfVargs(_format, argList);
 		}
@@ -412,6 +422,7 @@ namespace bgfx
 		{
 			g_callback->traceVargs(_filePath, _line, _format, argList);
 		}
+
 		va_end(argList);
 	}
 
@@ -2393,27 +2404,20 @@ namespace bgfx
 	{
 		if (NULL != s_ctx)
 		{
-			BX_CHECK(false, "bgfx is already initialized.");
+			BX_TRACE("bgfx is already initialized.");
 			return false;
 		}
 
-		if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_NACL)
-		&&  NULL == g_platformData.ndt
-		&&  NULL == g_platformData.nwh
-		&&  NULL == g_platformData.context
-		&&  NULL == g_platformData.backBuffer
-		&&  NULL == g_platformData.backBufferDS)
+		struct ErrorState
 		{
-			BX_CHECK(false, "bgfx platform data like window handle or backbuffer must be set.");
-			return false;
-		}
+			enum Enum
+			{
+				Default,
+				ContextAllocated,
+			};
+		};
 
-		memset(&g_caps, 0, sizeof(g_caps) );
-		g_caps.maxViews     = BGFX_CONFIG_MAX_VIEWS;
-		g_caps.maxDrawCalls = BGFX_CONFIG_MAX_DRAW_CALLS;
-		g_caps.maxFBAttachments = 1;
-		g_caps.vendorId = _vendorId;
-		g_caps.deviceId = _deviceId;
+		ErrorState::Enum errorState = ErrorState::Default;
 
 		if (NULL != _allocator)
 		{
@@ -2436,16 +2440,45 @@ namespace bgfx
 				s_callbackStub = BX_NEW(g_allocator, CallbackStub);
 		}
 
+		if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_NACL)
+		&&  NULL == g_platformData.ndt
+		&&  NULL == g_platformData.nwh
+		&&  NULL == g_platformData.context
+		&&  NULL == g_platformData.backBuffer
+		&&  NULL == g_platformData.backBufferDS)
+		{
+			BX_TRACE("bgfx platform data like window handle or backbuffer must be set.");
+			goto error;
+		}
+
+		memset(&g_caps, 0, sizeof(g_caps) );
+		g_caps.maxViews     = BGFX_CONFIG_MAX_VIEWS;
+		g_caps.maxDrawCalls = BGFX_CONFIG_MAX_DRAW_CALLS;
+		g_caps.maxFBAttachments = 1;
+		g_caps.vendorId = _vendorId;
+		g_caps.deviceId = _deviceId;
+
 		BX_TRACE("Init...");
 
-		s_ctx = BX_ALIGNED_NEW(g_allocator, Context, 16);
-		if (!s_ctx->init(_type) )
-		{
-			BX_TRACE("Init failed.");
+		errorState = ErrorState::ContextAllocated;
 
+		s_ctx = BX_ALIGNED_NEW(g_allocator, Context, 16);
+		if (s_ctx->init(_type) )
+		{
+			BX_TRACE("Init complete.");
+			return true;
+		}
+
+error:
+		BX_TRACE("Init failed.");
+
+		switch (errorState)
+		{
+		case ErrorState::ContextAllocated:
 			BX_ALIGNED_DELETE(g_allocator, s_ctx, 16);
 			s_ctx = NULL;
 
+		case ErrorState::Default:
 			if (NULL != s_callbackStub)
 			{
 				BX_DELETE(g_allocator, s_callbackStub);
@@ -2462,11 +2495,10 @@ namespace bgfx
 			s_threadIndex = 0;
 			g_callback    = NULL;
 			g_allocator   = NULL;
-			return false;
+			break;
 		}
 
-		BX_TRACE("Init complete.");
-		return true;
+		return false;
 	}
 
 	void shutdown()
