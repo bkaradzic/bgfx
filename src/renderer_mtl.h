@@ -29,7 +29,7 @@ namespace bgfx { namespace mtl
 		return false;
 #endif
 	}
-	
+
 	inline bool macOSVersionEqualOrGreater(NSInteger _majorVersion,
 										   NSInteger _minorVersion,
 										   NSInteger _patchVersion)
@@ -43,8 +43,8 @@ namespace bgfx { namespace mtl
 		return false;
 #endif
 	}
-	
-	
+
+
 	// c++ wrapper
 	// objects with creation functions starting with 'new' has a refcount 1 after creation, object must be destroyed with release.
 	// commandBuffer, commandEncoders are autoreleased objects. Needs AutoreleasePool!
@@ -275,7 +275,7 @@ namespace bgfx { namespace mtl
 				);
 			return state;
 		}
-	
+
 		bool supportsTextureSampleCount(int sampleCount)
 		{
 			if (BX_ENABLED(BX_PLATFORM_IOS) && !iOSVersionEqualOrGreater("9.0.0") )
