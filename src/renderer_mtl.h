@@ -19,6 +19,32 @@
 
 namespace bgfx { namespace mtl
 {
+	//runtime os check
+	inline bool iOSVersionEqualOrGreater(const char* _version)
+	{
+#if BX_PLATFORM_IOS
+		return ([[[UIDevice currentDevice] systemVersion] compare:@(_version) options:NSNumericSearch] != NSOrderedAscending);
+#else
+		BX_UNUSED(_version);
+		return false;
+#endif
+	}
+	
+	inline bool macOSVersionEqualOrGreater(NSInteger _majorVersion,
+										   NSInteger _minorVersion,
+										   NSInteger _patchVersion)
+	{
+#if BX_PLATFORM_OSX
+		NSOperatingSystemVersion v = [[NSProcessInfo processInfo] operatingSystemVersion];
+		return (v.majorVersion<<16) + (v.minorVersion<<8) + v.patchVersion >=
+		(_majorVersion<<16) + (_minorVersion<<8) + _patchVersion;
+#else
+		BX_UNUSED(_majorVersion, _minorVersion, _patchVersion);
+		return false;
+#endif
+	}
+	
+	
 	// c++ wrapper
 	// objects with creation functions starting with 'new' has a refcount 1 after creation, object must be destroyed with release.
 	// commandBuffer, commandEncoders are autoreleased objects. Needs AutoreleasePool!
@@ -249,6 +275,14 @@ namespace bgfx { namespace mtl
 				);
 			return state;
 		}
+	
+		bool supportsTextureSampleCount(int sampleCount)
+		{
+			if (BX_ENABLED(BX_PLATFORM_IOS) && !iOSVersionEqualOrGreater("9.0.0") )
+				return sampleCount == 1 || sampleCount == 2 ||  sampleCount == 4;
+			else
+				return [m_obj supportsTextureSampleCount:sampleCount];
+		}
 
 		bool depth24Stencil8PixelFormatSupported()
 		{
@@ -424,6 +458,11 @@ namespace bgfx { namespace mtl
 		{
 			return m_obj.pixelFormat;
 		}
+
+		uint32_t sampleCount()
+		{
+			return (uint32_t)m_obj.sampleCount;
+		}
 	MTL_CLASS_END
 
 	typedef id<MTLComputePipelineState> ComputePipelineState;
@@ -521,31 +560,6 @@ namespace bgfx { namespace mtl
 				[_obj release]; \
 				_obj = nil; \
 			BX_MACRO_BLOCK_END
-
-		//runtime os check
-	inline bool iOSVersionEqualOrGreater(const char* _version)
-	{
-#if BX_PLATFORM_IOS
-		return ([[[UIDevice currentDevice] systemVersion] compare:@(_version) options:NSNumericSearch] != NSOrderedAscending);
-#else
-		BX_UNUSED(_version);
-		return false;
-#endif
-	}
-
-	inline bool macOSVersionEqualOrGreater(NSInteger _majorVersion,
-										   NSInteger _minorVersion,
-										   NSInteger _patchVersion)
-	{
-#if BX_PLATFORM_OSX
-		NSOperatingSystemVersion v = [[NSProcessInfo processInfo] operatingSystemVersion];
-		return (v.majorVersion<<16) + (v.minorVersion<<8) + v.patchVersion >=
-				(_majorVersion<<16) + (_minorVersion<<8) + _patchVersion;
-#else
-		BX_UNUSED(_majorVersion, _minorVersion, _patchVersion);
-		return false;
-#endif
-	}
 
 	// end of c++ wrapper
 
