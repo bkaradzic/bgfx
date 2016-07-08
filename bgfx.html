@@ -926,10 +926,21 @@
 <span id="bgfx::Caps::formats__uint16_tA"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1a9d3d8445e5c828669c924e6fa38e9389"></span>uint16_t <code class="descname">formats</code>[TextureFormat::Count]<a class="headerlink" href="#_CPPv2N4bgfx4Caps7formatsE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Supported texture formats. </p>
 <p><ul class="simple">
-<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_NONE</span></code> - not supported</li>
-<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_2D</span></code> - supported</li>
-<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED</span></code> - emulated</li>
-<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_VERTEX</span></code> - supported vertex texture </li>
+<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_NONE</span></code> - Texture format is not supported.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_2D</span></code> - Texture format is supported.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB</span></code> - Texture as sRGB format is supported.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED</span></code> - Texture format is emulated.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_3D</span></code> - Texture format is supported.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB</span></code> - Texture as sRGB format is supported.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED</span></code> - Texture format is emulated.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_CUBE</span></code> - Texture format is supported.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB</span></code> - Texture as sRGB format is supported.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED</span></code> - Texture format is emulated.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_VERTEX</span></code> - Texture format can be used from vertex shader.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_IMAGE</span></code> - Texture format can be used as image from compute shader.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER</span></code> - Texture format can be used as frame buffer.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA</span></code> - Texture format can be used as MSAA frame buffer.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_MSAA</span></code> - Texture can be sampled as MSAA. </li>
 </ul>
 </p>
 </dd></dl>
