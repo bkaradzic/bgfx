@@ -60,6 +60,12 @@ class ExamplePicking : public entry::AppI
 		const char * meshPaths[] = { "meshes/orb.bin", "meshes/column.bin", "meshes/bunny.bin", "meshes/cube.bin", "meshes/tree.bin", "meshes/hollowcube.bin" };
 		const float meshScale[] = { 0.5f, 0.05f, 0.5f, 0.25f, 0.05f, 0.05f };
 
+		m_highlighted = UINT32_MAX;
+		m_reading = 0;
+		m_currFrame = UINT32_MAX;
+		m_fov = 3.0f;
+		m_cameraSpin = false;
+
 		bx::RngMwc mwc;  // Random number generator
 		for (int32_t i = 0; i < 12; i++)
 		{
@@ -365,7 +371,7 @@ class ExamplePicking : public entry::AppI
 	float m_meshScale[12];
 	float m_idsF[12][4];
 	uint32_t m_idsU[12];
-	uint32_t m_highlighted = UINT32_MAX;
+	uint32_t m_highlighted;
 
 	// Resource handles
 	bgfx::ProgramHandle m_shadingProgram;
@@ -379,12 +385,11 @@ class ExamplePicking : public entry::AppI
 
 	uint8_t m_blitData[ID_DIM*ID_DIM * 4]; // Read blit into this
 
-	uint32_t m_reading = 0;
-	uint32_t m_currFrame = UINT32_MAX;
+	uint32_t m_reading;
+	uint32_t m_currFrame;
 
-	// UI
-	float m_fov = 3.0f;
-	bool m_cameraSpin = false;
+	float m_fov;
+	bool  m_cameraSpin;
 };
 
 ENTRY_IMPLEMENT_MAIN(ExamplePicking);
