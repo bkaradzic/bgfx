@@ -1,0 +1,187 @@
+#version 300 es
+struct FragmentCommonData {
+  mediump vec3 diffColor;
+  mediump vec3 specColor;
+  mediump float oneMinusReflectivity;
+  mediump float oneMinusRoughness;
+  mediump vec3 normalWorld;
+  mediump vec3 eyeVec;
+  mediump vec3 posWorld;
+  mediump float alpha;
+};
+uniform mediump vec4 _WorldSpaceLightPos0;
+uniform mediump vec4 unity_SHAr;
+uniform mediump vec4 unity_SHAg;
+uniform mediump vec4 unity_SHAb;
+uniform mediump vec4 _LightShadowData;
+uniform lowp samplerCube unity_SpecCube0;
+uniform mediump vec4 unity_SpecCube0_HDR;
+uniform mediump vec4 unity_ColorSpaceDielectricSpec;
+uniform lowp vec4 _LightColor0;
+uniform mediump vec4 _Color;
+uniform sampler2D _MainTex;
+uniform mediump float _Metallic;
+uniform mediump float _Glossiness;
+uniform sampler2D _OcclusionMap;
+uniform mediump float _OcclusionStrength;
+uniform lowp sampler2DShadow _ShadowMapTexture;
+in highp vec4 xlv_TEXCOORD0;
+in mediump vec3 xlv_TEXCOORD1;
+in mediump vec4 xlv_TEXCOORD2_2;
+in mediump vec4 xlv_TEXCOORD5;
+in mediump vec4 xlv_TEXCOORD6;
+in lowp vec4 xlv_COLOR;
+out lowp vec4 FragData[1];
+void main ()
+{
+  mediump vec4 c_1;
+  mediump float atten_2;
+  lowp vec4 tmpvar_3;
+  tmpvar_3 = texture (_MainTex, xlv_TEXCOORD0.xy);
+  mediump vec2 tmpvar_4;
+  tmpvar_4.x = _Metallic;
+  tmpvar_4.y = _Glossiness;
+  mediump vec3 tmpvar_5;
+  tmpvar_5 = (_Color.xyz * tmpvar_3.xyz);
+  mediump vec3 tmpvar_6;
+  mediump vec3 tmpvar_7;
+  tmpvar_7 = mix (unity_ColorSpaceDielectricSpec.xyz, tmpvar_5, vec3(_Metallic));
+  mediump float tmpvar_8;
+  tmpvar_8 = (unity_ColorSpaceDielectricSpec.w - (_Metallic * unity_ColorSpaceDielectricSpec.w));
+  tmpvar_6 = (tmpvar_5 * tmpvar_8);
+  mediump vec3 tmpvar_9;
+  tmpvar_9 = normalize(xlv_TEXCOORD2_2.xyz);
+  mediump vec3 tmpvar_10;
+  tmpvar_10 = normalize(xlv_TEXCOORD1);
+  mediump vec3 tmpvar_11;
+  tmpvar_11 = _LightColor0.xyz;
+  lowp float shadow_12;
+  mediump float tmpvar_13;
+  tmpvar_13 = texture (_ShadowMapTexture, xlv_TEXCOORD6.xyz);
+  lowp float tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  shadow_12 = (_LightShadowData.x + (tmpvar_14 * (1.0 - _LightShadowData.x)));
+  atten_2 = shadow_12;
+  mediump float occ_15;
+  lowp float tmpvar_16;
+  tmpvar_16 = texture (_OcclusionMap, xlv_TEXCOORD0.xy).y;
+  occ_15 = tmpvar_16;
+  mediump float tmpvar_17;
+  tmpvar_17 = ((1.0 - _OcclusionStrength) + (occ_15 * _OcclusionStrength));
+  FragmentCommonData s_18;
+  s_18 = FragmentCommonData(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 0.0, 0.0, vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 0.0);
+  s_18.oneMinusRoughness = tmpvar_4.y;
+  s_18.normalWorld = tmpvar_9;
+  s_18.eyeVec = tmpvar_10;
+  s_18.posWorld = vec3(0.0, 0.0, 0.0);
+  mediump vec3 tmpvar_19;
+  mediump vec3 tmpvar_20;
+  tmpvar_19 = s_18.normalWorld;
+  tmpvar_20 = s_18.eyeVec;
+  highp vec4 tmpvar_21;
+  tmpvar_21 = unity_SpecCube0_HDR;
+  mediump float tmpvar_22;
+  tmpvar_22 = (1.0 - s_18.oneMinusRoughness);
+  mediump vec3 tmpvar_23;
+  tmpvar_23 = (tmpvar_20 - (2.0 * (
+    dot (tmpvar_19, tmpvar_20)
+   * tmpvar_19)));
+  mediump vec4 tmpvar_24;
+  tmpvar_24.w = 1.0;
+  tmpvar_24.xyz = tmpvar_19;
+  mediump vec3 x_25;
+  x_25.x = dot (unity_SHAr, tmpvar_24);
+  x_25.y = dot (unity_SHAg, tmpvar_24);
+  x_25.z = dot (unity_SHAb, tmpvar_24);
+  mediump vec4 hdr_26;
+  hdr_26 = tmpvar_21;
+  mediump vec4 tmpvar_27;
+  tmpvar_27.xyz = tmpvar_23;
+  tmpvar_27.w = ((tmpvar_22 * (1.7 - 
+    (0.7 * tmpvar_22)
+  )) * 6.0);
+  lowp vec4 tmpvar_28;
+  tmpvar_28 = textureLod (unity_SpecCube0, tmpvar_23, tmpvar_27.w);
+  mediump vec4 tmpvar_29;
+  tmpvar_29 = tmpvar_28;
+  mediump vec3 viewDir_30;
+  viewDir_30 = -(tmpvar_10);
+  mediump vec3 tmpvar_31;
+  mediump vec3 inVec_32;
+  inVec_32 = (_WorldSpaceLightPos0.xyz + viewDir_30);
+  tmpvar_31 = (inVec_32 * inversesqrt(max (0.001, 
+    dot (inVec_32, inVec_32)
+  )));
+  mediump float tmpvar_33;
+  tmpvar_33 = max (0.0, dot (_WorldSpaceLightPos0.xyz, tmpvar_31));
+  mediump float tmpvar_34;
+  tmpvar_34 = (1.0 - _Glossiness);
+  mediump float tmpvar_35;
+  tmpvar_35 = max (0.0001, (tmpvar_34 * tmpvar_34));
+  mediump float tmpvar_36;
+  tmpvar_36 = max (((2.0 / 
+    (tmpvar_35 * tmpvar_35)
+  ) - 2.0), 0.0001);
+  mediump float x_37;
+  x_37 = (1.0 - max (0.0, dot (tmpvar_9, viewDir_30)));
+  mediump vec4 tmpvar_38;
+  tmpvar_38.w = 1.0;
+  tmpvar_38.xyz = (((
+    ((tmpvar_6 + (sqrt(
+      max (0.0001, (((tmpvar_36 + 1.0) * pow (
+        max (0.0, dot (tmpvar_9, tmpvar_31))
+      , tmpvar_36)) / ((
+        (8.0 * (((tmpvar_33 * tmpvar_33) * _Glossiness) + (tmpvar_34 * tmpvar_34)))
+       * tmpvar_33) + 0.0001)))
+    ) * tmpvar_7)) * (tmpvar_11 * atten_2))
+   * 
+    max (0.0, dot (tmpvar_9, _WorldSpaceLightPos0.xyz))
+  ) + (
+    (max (((1.055 * 
+      pow (max (vec3(0.0, 0.0, 0.0), (xlv_TEXCOORD5.xyz + x_25)), vec3(0.4166667, 0.4166667, 0.4166667))
+    ) - 0.055), vec3(0.0, 0.0, 0.0)) * tmpvar_17)
+   * tmpvar_6)) + ((
+    (1.0 - ((tmpvar_34 * tmpvar_34) * (tmpvar_34 * 0.28)))
+   * 
+    (((hdr_26.x * tmpvar_29.w) * tmpvar_29.xyz) * tmpvar_17)
+  ) * mix (tmpvar_7, vec3(
+    clamp ((_Glossiness + (1.0 - tmpvar_8)), 0.0, 1.0)
+  ), vec3(
+    ((x_37 * x_37) * (x_37 * x_37))
+  ))));
+  c_1 = (tmpvar_38 * xlv_COLOR);
+  c_1.xyz = c_1.xyz;
+  c_1.xyz = c_1.xyz;
+  mediump vec4 xlat_varoutput_39;
+  xlat_varoutput_39.xyz = c_1.xyz;
+  xlat_varoutput_39.w = 1.0;
+  FragData[0] = xlat_varoutput_39;
+}
+
+
+// stats: 97 alu 4 tex 0 flow
+// inputs: 6
+//  #0: xlv_TEXCOORD0 (high float) 4x1 [-1]
+//  #1: xlv_TEXCOORD1 (medium float) 3x1 [-1]
+//  #2: xlv_TEXCOORD2_2 (medium float) 4x1 [-1]
+//  #3: xlv_TEXCOORD5 (medium float) 4x1 [-1]
+//  #4: xlv_TEXCOORD6 (medium float) 4x1 [-1]
+//  #5: xlv_COLOR (low float) 4x1 [-1]
+// uniforms: 12 (total size: 0)
+//  #0: _WorldSpaceLightPos0 (medium float) 4x1 [-1]
+//  #1: unity_SHAr (medium float) 4x1 [-1]
+//  #2: unity_SHAg (medium float) 4x1 [-1]
+//  #3: unity_SHAb (medium float) 4x1 [-1]
+//  #4: _LightShadowData (medium float) 4x1 [-1]
+//  #5: unity_SpecCube0_HDR (medium float) 4x1 [-1]
+//  #6: unity_ColorSpaceDielectricSpec (medium float) 4x1 [-1]
+//  #7: _LightColor0 (low float) 4x1 [-1]
+//  #8: _Color (medium float) 4x1 [-1]
+//  #9: _Metallic (medium float) 1x1 [-1]
+//  #10: _Glossiness (medium float) 1x1 [-1]
+//  #11: _OcclusionStrength (medium float) 1x1 [-1]
+// textures: 4
+//  #0: unity_SpecCube0 (low cube) 0x0 [-1]
+//  #1: _MainTex (low 2d) 0x0 [-1]
+//  #2: _OcclusionMap (low 2d) 0x0 [-1]
+//  #3: _ShadowMapTexture (low 2dshadow) 0x0 [-1]

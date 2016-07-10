@@ -1,6 +1,23 @@
 GLSL optimizer Change Log
 =========================
 
+2016 06
+-------
+
+Fixed:
+
+* Fixed Metal translation in some cases having wrong precision on constants or constant arrays.
+
+
+2016 05
+-------
+
+Fixed:
+
+* Fixed Metal translation in some cases having wrong precision on struct members.
+* Fixed Metal translation in some cases emitting struct declarations vs. constant initializers in wrong order.
+
+
 2016 03
 -------
 

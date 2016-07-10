@@ -330,7 +330,7 @@ ir_constant::clone(void *mem_ctx, struct hash_table *ht) const
    case GLSL_TYPE_INT:
    case GLSL_TYPE_FLOAT:
    case GLSL_TYPE_BOOL:
-      return new(mem_ctx) ir_constant(this->type, &this->value);
+      return new(mem_ctx) ir_constant(this->type, &this->value, this->precision);
 
    case GLSL_TYPE_STRUCT: {
       ir_constant *c = new(mem_ctx) ir_constant;
@@ -351,6 +351,7 @@ ir_constant::clone(void *mem_ctx, struct hash_table *ht) const
       ir_constant *c = new(mem_ctx) ir_constant;
 
       c->type = this->type;
+      c->set_precision(this->get_precision());
       c->array_elements = ralloc_array(c, ir_constant *, this->type->length);
       for (unsigned i = 0; i < this->type->length; i++) {
 	 c->array_elements[i] = this->array_elements[i]->clone(mem_ctx, NULL);

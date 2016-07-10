@@ -1,0 +1,685 @@
+#version 300 es
+vec4 xll_texCUBElod(samplerCube s, vec4 coord) {
+  return textureLod( s, coord.xyz, coord.w);
+}
+float xll_shadow2D(mediump sampler2DShadow s, vec3 coord) { return texture (s, coord); }
+float xll_saturate_f( float x) {
+  return clamp( x, 0.0, 1.0);
+}
+vec2 xll_saturate_vf2( vec2 x) {
+  return clamp( x, 0.0, 1.0);
+}
+vec3 xll_saturate_vf3( vec3 x) {
+  return clamp( x, 0.0, 1.0); 
+}
+vec4 xll_saturate_vf4( vec4 x) {
+  return clamp( x, 0.0, 1.0);
+}
+mat2 xll_saturate_mf2x2(mat2 m) {
+  return mat2( clamp(m[0], 0.0, 1.0), clamp(m[1], 0.0, 1.0));
+}
+mat3 xll_saturate_mf3x3(mat3 m) {
+  return mat3( clamp(m[0], 0.0, 1.0), clamp(m[1], 0.0, 1.0), clamp(m[2], 0.0, 1.0));
+}
+mat4 xll_saturate_mf4x4(mat4 m) {
+  return mat4( clamp(m[0], 0.0, 1.0), clamp(m[1], 0.0, 1.0), clamp(m[2], 0.0, 1.0), clamp(m[3], 0.0, 1.0));
+}
+
+struct v2f_vertex_lit {
+    highp vec2 uv;
+    lowp vec4 diff;
+    lowp vec4 spec;
+};
+
+struct v2f_img {
+    highp vec4 pos;
+    mediump vec2 uv;
+};
+
+struct appdata_img {
+    highp vec4 vertex;
+    mediump vec2 texcoord;
+};
+
+struct Unity_GlossyEnvironmentData {
+    mediump float roughness;
+    mediump vec3 reflUVW;
+};
+
+struct UnityLight {
+    mediump vec3 color;
+    mediump vec3 dir;
+    mediump float ndotl;
+};
+
+struct UnityIndirect {
+    mediump vec3 diffuse;
+    mediump vec3 specular;
+};
+
+struct UnityGI {
+    UnityLight light;
+    UnityIndirect indirect;
+};
+
+struct UnityGIInput {
+    UnityLight light;
+    highp vec3 worldPos;
+    mediump vec3 worldViewDir;
+    mediump float atten;
+    mediump vec3 ambient;
+    mediump vec4 lightmapUV;
+    highp vec4 boxMax[2];
+    highp vec4 boxMin[2];
+    highp vec4 probePosition[2];
+    highp vec4 probeHDR[2];
+};
+
+struct SurfaceOutputStandard {
+    lowp vec3 Albedo;
+    lowp vec3 Normal;
+    mediump vec3 Emission;
+    mediump float Metallic;
+    mediump float Smoothness;
+    mediump float Occlusion;
+    lowp float Alpha;
+};
+
+struct SurfaceOutputStandardSpecular {
+    lowp vec3 Albedo;
+    lowp vec3 Specular;
+    lowp vec3 Normal;
+    mediump vec3 Emission;
+    mediump float Smoothness;
+    mediump float Occlusion;
+    lowp float Alpha;
+};
+
+struct VertexInput {
+    highp vec4 vertex;
+    mediump vec3 normal;
+    highp vec2 uv0;
+    highp vec2 uv1;
+};
+
+struct FragmentCommonData {
+    mediump vec3 diffColor;
+    mediump vec3 specColor;
+    mediump float oneMinusReflectivity;
+    mediump float oneMinusRoughness;
+    mediump vec3 normalWorld;
+    mediump vec3 eyeVec;
+    mediump vec3 posWorld;
+    mediump float alpha;
+};
+
+struct VertexOutputForwardBase {
+    highp vec4 pos;
+    highp vec4 tex;
+    mediump vec3 eyeVec;
+    mediump vec4 tangentToWorldAndParallax[3];
+    mediump vec4 ambientOrLightmapUV;
+    mediump vec4 _ShadowCoord;
+};
+
+struct VertexOutputForwardAdd {
+    highp vec4 pos;
+    highp vec4 tex;
+    mediump vec3 eyeVec;
+    mediump vec4 tangentToWorldAndLightDir[3];
+    mediump vec4 _ShadowCoord;
+};
+
+struct VertexOutputDeferred {
+    highp vec4 pos;
+    highp vec4 tex;
+    mediump vec3 eyeVec;
+    mediump vec4 tangentToWorldAndParallax[3];
+    mediump vec4 ambientOrLightmapUV;
+};
+
+struct VertexInput_VC {
+    highp vec4 vertex;
+    lowp vec4 color;
+    mediump vec3 normal;
+    highp vec2 uv0;
+    highp vec2 uv1;
+};
+
+struct VertexOutputForwardBase_VC {
+    highp vec4 pos;
+    highp vec4 tex;
+    mediump vec3 eyeVec;
+    mediump vec4 tangentToWorldAndParallax[3];
+    mediump vec4 ambientOrLightmapUV;
+    mediump vec4 _ShadowCoord;
+    lowp vec4 color;
+};
+
+struct VertexOutputDeferred_VC {
+    highp vec4 pos;
+    lowp vec4 color;
+    highp vec4 tex;
+    mediump vec3 eyeVec;
+    mediump vec4 tangentToWorldAndParallax[3];
+    mediump vec4 ambientOrLightmapUV;
+};
+
+uniform highp vec4 _Time;
+uniform highp vec4 _SinTime;
+uniform highp vec4 _CosTime;
+uniform highp vec4 unity_DeltaTime;
+
+uniform highp vec3 _WorldSpaceCameraPos;
+
+uniform highp vec4 _ProjectionParams;
+
+uniform highp vec4 _ScreenParams;
+
+uniform highp vec4 _ZBufferParams;
+
+uniform highp vec4 unity_OrthoParams;
+
+uniform highp vec4 unity_CameraWorldClipPlanes[6];
+
+uniform highp mat4 unity_CameraProjection;
+uniform highp mat4 unity_CameraInvProjection;
+
+uniform mediump vec4 _WorldSpaceLightPos0;
+
+uniform highp vec4 _LightPositionRange;
+uniform highp vec4 unity_4LightPosX0;
+uniform highp vec4 unity_4LightPosY0;
+
+uniform highp vec4 unity_4LightPosZ0;
+uniform mediump vec4 unity_4LightAtten0;
+uniform mediump vec4 unity_LightColor[8];
+
+uniform highp vec4 unity_LightPosition[8];
+
+uniform mediump vec4 unity_LightAtten[8];
+uniform highp vec4 unity_SpotDirection[8];
+
+uniform mediump vec4 unity_SHAr;
+uniform mediump vec4 unity_SHAg;
+uniform mediump vec4 unity_SHAb;
+uniform mediump vec4 unity_SHBr;
+
+uniform mediump vec4 unity_SHBg;
+uniform mediump vec4 unity_SHBb;
+uniform mediump vec4 unity_SHC;
+
+uniform mediump vec3 unity_LightColor0;
+uniform mediump vec3 unity_LightColor1;
+uniform mediump vec3 unity_LightColor2;
+uniform mediump vec3 unity_LightColor3;
+
+uniform highp vec4 unity_ShadowSplitSpheres[4];
+uniform highp vec4 unity_ShadowSplitSqRadii;
+uniform highp vec4 unity_LightShadowBias;
+uniform highp vec4 _LightSplitsNear;
+
+uniform highp vec4 _LightSplitsFar;
+uniform highp mat4 unity_World2Shadow[4];
+uniform mediump vec4 _LightShadowData;
+uniform highp vec4 unity_ShadowFadeCenterAndType;
+
+uniform highp mat4 glstate_matrix_mvp;
+uniform highp mat4 glstate_matrix_modelview0;
+uniform highp mat4 glstate_matrix_invtrans_modelview0;
+
+uniform highp mat4 _Object2World;
+uniform highp mat4 _World2Object;
+uniform highp vec4 unity_LODFade;
+uniform highp vec4 unity_WorldTransformParams;
+
+uniform highp mat4 glstate_matrix_transpose_modelview0;
+
+uniform highp mat4 glstate_matrix_projection;
+uniform lowp vec4 glstate_lightmodel_ambient;
+
+uniform highp mat4 unity_MatrixV;
+uniform highp mat4 unity_MatrixVP;
+
+uniform lowp vec4 unity_AmbientSky;
+uniform lowp vec4 unity_AmbientEquator;
+uniform lowp vec4 unity_AmbientGround;
+
+uniform lowp vec4 unity_FogColor;
+
+uniform highp vec4 unity_FogParams;
+
+uniform sampler2D unity_Lightmap;
+uniform sampler2D unity_LightmapInd;
+
+uniform sampler2D unity_DynamicLightmap;
+uniform sampler2D unity_DynamicDirectionality;
+uniform sampler2D unity_DynamicNormal;
+
+uniform highp vec4 unity_LightmapST;
+uniform highp vec4 unity_DynamicLightmapST;
+
+uniform samplerCube unity_SpecCube0;
+uniform samplerCube unity_SpecCube1;
+
+uniform highp vec4 unity_SpecCube0_BoxMax;
+uniform highp vec4 unity_SpecCube0_BoxMin;
+uniform highp vec4 unity_SpecCube0_ProbePosition;
+uniform mediump vec4 unity_SpecCube0_HDR;
+
+uniform highp vec4 unity_SpecCube1_BoxMax;
+uniform highp vec4 unity_SpecCube1_BoxMin;
+uniform highp vec4 unity_SpecCube1_ProbePosition;
+uniform mediump vec4 unity_SpecCube1_HDR;
+
+uniform lowp vec4 unity_ColorSpaceGrey;
+uniform lowp vec4 unity_ColorSpaceDouble;
+uniform mediump vec4 unity_ColorSpaceDielectricSpec;
+uniform mediump vec4 unity_ColorSpaceLuminance;
+
+uniform mediump vec4 unity_Lightmap_HDR;
+
+uniform mediump vec4 unity_DynamicLightmap_HDR;
+
+uniform lowp vec4 _LightColor0;
+uniform lowp vec4 _SpecColor;
+
+uniform sampler2D unity_NHxRoughness;
+
+uniform mediump vec4 _Color;
+uniform mediump float _Cutoff;
+uniform sampler2D _MainTex;
+
+uniform highp vec4 _MainTex_ST;
+uniform sampler2D _DetailAlbedoMap;
+uniform highp vec4 _DetailAlbedoMap_ST;
+
+uniform sampler2D _BumpMap;
+uniform mediump float _BumpScale;
+uniform sampler2D _DetailMask;
+
+uniform sampler2D _DetailNormalMap;
+uniform mediump float _DetailNormalMapScale;
+uniform sampler2D _SpecGlossMap;
+
+uniform sampler2D _MetallicGlossMap;
+uniform mediump float _Metallic;
+uniform mediump float _Glossiness;
+
+uniform sampler2D _OcclusionMap;
+uniform mediump float _OcclusionStrength;
+uniform sampler2D _ParallaxMap;
+
+uniform mediump float _Parallax;
+uniform mediump float _UVSec;
+uniform mediump vec4 _EmissionColor;
+
+uniform sampler2D _EmissionMap;
+
+uniform lowp sampler2DShadow _ShadowMapTexture;
+
+mediump float DotClamped( in mediump vec3 a, in mediump vec3 b ) {    
+    return max( 0.0, dot( a, b));
+}
+
+mediump float BlinnTerm( in mediump vec3 normal, in mediump vec3 halfDir ) {
+    return DotClamped( normal, halfDir);
+}
+
+mediump float Pow4( in mediump float x ) {
+    return (((x * x) * x) * x);
+}
+
+mediump vec3 FresnelLerpFast( in mediump vec3 F0, in mediump vec3 F90, in mediump float cosA ) {
+    mediump float t = Pow4( (1.0 - cosA));
+    return mix( F0, F90, vec3( t));
+}
+
+bool IsGammaSpace(  ) {
+    return true;
+}
+
+mediump float RoughnessToSpecPower( in mediump float roughness ) {
+    
+    mediump float m = max( 0.0001, (roughness * roughness));
+    mediump float n = ((2.0 / (m * m)) - 2.0);
+    n = max( n, 0.0001);
+    
+    return n;
+}
+
+mediump vec3 Unity_SafeNormalize( in mediump vec3 inVec ) {
+    mediump float dp3 = max( 0.001, dot( inVec, inVec));
+    return (inVec * inversesqrt(dp3));
+}
+
+mediump vec4 BRDF2_Unity_PBS( in mediump vec3 diffColor, in mediump vec3 specColor, in mediump float oneMinusReflectivity, in mediump float oneMinusRoughness, in mediump vec3 normal, in mediump vec3 viewDir, in UnityLight light, in UnityIndirect gi ) {
+    mediump vec3 halfDir = Unity_SafeNormalize( (light.dir + viewDir));
+    
+    mediump float nl = light.ndotl;
+    mediump float nh = BlinnTerm( normal, halfDir);
+    mediump float nv = DotClamped( normal, viewDir);
+    mediump float lh = DotClamped( light.dir, halfDir);
+    
+    mediump float roughness = (1.0 - oneMinusRoughness);
+    mediump float specularPower = RoughnessToSpecPower( roughness);
+    
+    mediump float invV = (((lh * lh) * oneMinusRoughness) + (roughness * roughness));
+    mediump float invF = lh;
+    mediump float specular = (((specularPower + 1.0) * pow( nh, specularPower)) / (((8.0 * invV) * invF) + 0.0001));
+    if (IsGammaSpace( )){
+        specular = sqrt(max( 0.0001, specular));
+    }
+    
+    mediump float realRoughness = (roughness * roughness);
+    mediump float surfaceReduction = (( IsGammaSpace( ) ) ? ( 0.28 ) : ( (0.6 - (0.08 * roughness)) ));
+    
+    surfaceReduction = (1.0 - ((realRoughness * roughness) * surfaceReduction));
+    
+    mediump float grazingTerm = xll_saturate_f((oneMinusRoughness + (1.0 - oneMinusReflectivity)));
+    mediump vec3 color = (((((diffColor + (specular * specColor)) * light.color) * nl) + (gi.diffuse * diffColor)) + ((surfaceReduction * gi.specular) * FresnelLerpFast( specColor, vec3( grazingTerm), nv)));
+    
+    return vec4( color, 1.0);
+}
+
+mediump vec3 BRDF_Unity_Indirect( in mediump vec3 baseColor, in mediump vec3 specColor, in mediump float oneMinusReflectivity, in mediump float oneMinusRoughness, in mediump vec3 normal, in mediump vec3 viewDir, in mediump float occlusion, in UnityGI gi ) {
+    mediump vec3 c = vec3( 0.0);
+    
+    return c;
+}
+
+mediump vec3 Emission( in highp vec2 uv ) {
+    return vec3( 0.0);
+}
+
+void ResetUnityLight( out UnityLight outLight ) {
+    
+    outLight.color = vec3( 0.0);
+    outLight.dir = vec3( 0.0);
+    outLight.ndotl = 0.0;
+}
+
+void ResetUnityGI( out UnityGI outGI ) {
+    ResetUnityLight( outGI.light);
+    
+    outGI.indirect.diffuse = vec3( 0.0);
+    outGI.indirect.specular = vec3( 0.0);
+}
+
+mediump vec3 LinearToGammaSpace( in mediump vec3 linRGB ) {
+    linRGB = max( linRGB, vec3( 0.0, 0.0, 0.0));
+    
+    return max( ((1.055 * pow( linRGB, vec3( 0.4166667))) - 0.055), vec3( 0.0));
+}
+
+mediump vec3 SHEvalLinearL0L1( in mediump vec4 normal ) {
+    mediump vec3 x;
+    
+    x.x = dot( unity_SHAr, normal);
+    x.y = dot( unity_SHAg, normal);
+    x.z = dot( unity_SHAb, normal);
+    
+    return x;
+}
+
+mediump vec3 ShadeSHPerPixel( in mediump vec3 normal, in mediump vec3 ambient ) {
+    
+    mediump vec3 ambient_contrib = vec3( 0.0);
+    
+    ambient_contrib = SHEvalLinearL0L1( vec4( normal, 1.0));
+    ambient = max( vec3( 0.0, 0.0, 0.0), (ambient + ambient_contrib));
+    if (IsGammaSpace( )){
+        ambient = LinearToGammaSpace( ambient);
+    }
+    
+    return ambient;
+}
+
+UnityGI UnityGI_Base( in UnityGIInput data, in mediump float occlusion, in mediump vec3 normalWorld ) {
+    UnityGI o_gi;
+    ResetUnityGI( o_gi);
+    
+    o_gi.light = data.light;
+    o_gi.light.color *= data.atten;
+    
+    o_gi.indirect.diffuse = ShadeSHPerPixel( normalWorld, data.ambient);
+    
+    o_gi.indirect.diffuse *= occlusion;
+    return o_gi;
+}
+
+UnityGI UnityGlobalIllumination( in UnityGIInput data, in mediump float occlusion, in mediump vec3 normalWorld ) {
+    return UnityGI_Base( data, occlusion, normalWorld);
+}
+
+mediump vec3 DecodeHDR( in mediump vec4 data, in mediump vec4 decodeInstructions ) {
+    return ((decodeInstructions.x * data.w) * data.xyz);
+}
+
+mediump vec3 DecodeHDR_NoLinearSupportInSM2( in mediump vec4 data, in mediump vec4 decodeInstructions ) {    
+    return DecodeHDR( data, decodeInstructions);
+}
+
+mediump vec3 Unity_GlossyEnvironment( in samplerCube tex, in mediump vec4 hdr, in Unity_GlossyEnvironmentData glossIn ) {
+    
+    mediump float roughness = glossIn.roughness;
+    
+    roughness = (roughness * (1.7 - (0.7 * roughness)));
+    
+    mediump float mip = (roughness * 6.0);
+    mediump vec4 rgbm = xll_texCUBElod( tex, vec4( glossIn.reflUVW, mip));
+    return DecodeHDR_NoLinearSupportInSM2( rgbm, hdr);
+}
+
+mediump vec3 UnityGI_IndirectSpecular( in UnityGIInput data, in mediump float occlusion, in mediump vec3 normalWorld, in Unity_GlossyEnvironmentData glossIn ) {
+    mediump vec3 specular;
+    mediump vec3 env0 = Unity_GlossyEnvironment( unity_SpecCube0, data.probeHDR[0], glossIn);
+    specular = env0;
+    return (specular * occlusion);
+}
+
+UnityGI UnityGlobalIllumination( in UnityGIInput data, in mediump float occlusion, in mediump vec3 normalWorld, in Unity_GlossyEnvironmentData glossIn ) {
+    UnityGI o_gi = UnityGI_Base( data, occlusion, normalWorld);
+    o_gi.indirect.specular = UnityGI_IndirectSpecular( data, occlusion, normalWorld, glossIn);    
+    return o_gi;
+}
+
+UnityGI FragmentGI( in FragmentCommonData s, in mediump float occlusion, in mediump vec4 i_ambientOrLightmapUV, in mediump float atten, in UnityLight light, in bool reflections ) {
+    UnityGIInput d;
+    d.light = light;
+    
+    d.worldPos = s.posWorld;
+    d.worldViewDir = (-s.eyeVec);
+    d.atten = atten;
+    
+    d.ambient = i_ambientOrLightmapUV.xyz;
+    d.lightmapUV = vec4( 0.0);
+    d.boxMax[0] = unity_SpecCube0_BoxMax;
+    
+    d.boxMin[0] = unity_SpecCube0_BoxMin;
+    d.probePosition[0] = unity_SpecCube0_ProbePosition;
+    d.probeHDR[0] = unity_SpecCube0_HDR;
+    
+    d.boxMax[1] = unity_SpecCube1_BoxMax;
+    d.boxMin[1] = unity_SpecCube1_BoxMin;
+    d.probePosition[1] = unity_SpecCube1_ProbePosition;
+    d.probeHDR[1] = unity_SpecCube1_HDR;
+    
+    if (reflections){
+        Unity_GlossyEnvironmentData g;
+        g.roughness = (1.0 - s.oneMinusRoughness);
+        
+        g.reflUVW = reflect( s.eyeVec, s.normalWorld);
+        return UnityGlobalIllumination( d, occlusion, s.normalWorld, g);
+    }
+    else{
+        return UnityGlobalIllumination( d, occlusion, s.normalWorld);
+    }
+}
+
+UnityGI FragmentGI( in highp vec3 posWorld, in mediump float occlusion, in mediump vec4 i_ambientOrLightmapUV, in mediump float atten, in mediump float oneMinusRoughness, in mediump vec3 normalWorld, in mediump vec3 eyeVec, in UnityLight light, in bool reflections ) {
+    FragmentCommonData s = FragmentCommonData(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 0.0, 0.0, vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 0.0);
+    s.oneMinusRoughness = oneMinusRoughness;
+    s.normalWorld = normalWorld;
+    s.eyeVec = eyeVec;
+    s.posWorld = posWorld;
+    return FragmentGI( s, occlusion, i_ambientOrLightmapUV, atten, light, reflections);
+}
+
+UnityGI FragmentGI( in highp vec3 posWorld, in mediump float occlusion, in mediump vec4 i_ambientOrLightmapUV, in mediump float atten, in mediump float oneMinusRoughness, in mediump vec3 normalWorld, in mediump vec3 eyeVec, in UnityLight light ) {
+    return FragmentGI( posWorld, occlusion, i_ambientOrLightmapUV, atten, oneMinusRoughness, normalWorld, eyeVec, light, true);
+}
+
+mediump float Alpha( in highp vec2 uv ) {
+    return (texture( _MainTex, uv).w * _Color.w);
+}
+
+mediump vec3 Albedo( in highp vec4 texcoords ) {
+    mediump vec3 albedo = (_Color.xyz * texture( _MainTex, texcoords.xy).xyz);
+    return albedo;
+}
+
+mediump float OneMinusReflectivityFromMetallic( in mediump float metallic ) {
+    mediump float oneMinusDielectricSpec = unity_ColorSpaceDielectricSpec.w;
+    return (oneMinusDielectricSpec - (metallic * oneMinusDielectricSpec));
+}
+
+mediump vec3 DiffuseAndSpecularFromMetallic( in mediump vec3 albedo, in mediump float metallic, out mediump vec3 specColor, out mediump float oneMinusReflectivity ) {
+    specColor = mix( unity_ColorSpaceDielectricSpec.xyz, albedo, vec3( metallic));
+    oneMinusReflectivity = OneMinusReflectivityFromMetallic( metallic);
+    
+    return (albedo * oneMinusReflectivity);
+}
+
+mediump vec2 MetallicGloss( in highp vec2 uv ) {
+    mediump vec2 mg;
+    
+    mg = vec2( _Metallic, _Glossiness);
+    return mg;
+}
+
+FragmentCommonData MetallicSetup( in highp vec4 i_tex ) {
+    mediump vec2 metallicGloss = MetallicGloss( i_tex.xy);
+    mediump float metallic = metallicGloss.x;
+    
+    mediump float oneMinusRoughness = metallicGloss.y;
+    mediump float oneMinusReflectivity;
+    mediump vec3 specColor;
+    
+    mediump vec3 diffColor = DiffuseAndSpecularFromMetallic( Albedo( i_tex), metallic, specColor, oneMinusReflectivity);
+    FragmentCommonData o = FragmentCommonData(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 0.0, 0.0, vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 0.0);
+    o.diffColor = diffColor;
+    
+    o.specColor = specColor;
+    o.oneMinusReflectivity = oneMinusReflectivity;
+    o.oneMinusRoughness = oneMinusRoughness;
+    return o;
+}
+
+mediump vec3 NormalizePerPixelNormal( in mediump vec3 n ) {
+    return normalize(n);
+}
+
+highp vec4 Parallax( in highp vec4 texcoords, in mediump vec3 viewDir ) {
+    return texcoords;
+}
+
+mediump vec3 PerPixelWorldNormal( in highp vec4 i_tex, in mediump vec4 tangentToWorld[3] ) {
+    mediump vec3 normalWorld = normalize(tangentToWorld[2].xyz);
+    return normalWorld;
+}
+
+mediump vec3 PreMultiplyAlpha( in mediump vec3 diffColor, in mediump float alpha, in mediump float oneMinusReflectivity, out mediump float outModifiedAlpha ) {
+    outModifiedAlpha = alpha;
+    return diffColor;
+}
+
+FragmentCommonData FragmentSetup( in highp vec4 i_tex, in mediump vec3 i_eyeVec, in mediump vec3 i_viewDirForParallax, in mediump vec4 tangentToWorld[3], in mediump vec3 i_posWorld ) {
+    i_tex = Parallax( i_tex, i_viewDirForParallax);
+    
+    mediump float alpha = Alpha( i_tex.xy);
+    
+    FragmentCommonData o = MetallicSetup( i_tex);
+    o.normalWorld = PerPixelWorldNormal( i_tex, tangentToWorld);
+    o.eyeVec = NormalizePerPixelNormal( i_eyeVec);
+    o.posWorld = i_posWorld;
+    
+    o.diffColor = PreMultiplyAlpha( o.diffColor, alpha, o.oneMinusReflectivity, o.alpha);
+    return o;
+}
+
+mediump float LambertTerm( in mediump vec3 normal, in mediump vec3 lightDir ) {
+    return DotClamped( normal, lightDir);
+}
+
+UnityLight MainLight( in mediump vec3 normalWorld ) {
+    UnityLight l;
+    
+    l.color = _LightColor0.xyz;
+    l.dir = _WorldSpaceLightPos0.xyz;
+    l.ndotl = LambertTerm( normalWorld, l.dir);
+    
+    return l;
+}
+
+mediump float LerpOneTo( in mediump float b, in mediump float t ) {
+    mediump float oneMinusT = (1.0 - t);
+    return (oneMinusT + (b * t));
+}
+
+mediump float Occlusion( in highp vec2 uv ) {    
+    mediump float occ = texture( _OcclusionMap, uv).y;
+    return LerpOneTo( occ, _OcclusionStrength);
+}
+
+mediump vec4 OutputForward( in mediump vec4 xlat_varoutput, in mediump float alphaFromSurface ) {
+    xlat_varoutput.w = 1.0;
+    return xlat_varoutput;
+}
+
+lowp float unitySampleShadow( in mediump vec4 shadowCoord ) {    
+    lowp float shadow = xll_shadow2D( _ShadowMapTexture, shadowCoord.xyz.xyz);
+    shadow = (_LightShadowData.x + (shadow * (1.0 - _LightShadowData.x)));
+    return shadow;
+}
+
+mediump vec4 fragForwardBase_VC( in VertexOutputForwardBase_VC i ) {
+    FragmentCommonData s = FragmentSetup( i.tex, i.eyeVec, vec3( 0.0, 0.0, 0.0), i.tangentToWorldAndParallax, vec3( 0.0, 0.0, 0.0));
+    UnityLight mainLight = MainLight( s.normalWorld);
+    
+    mediump float atten = unitySampleShadow( i._ShadowCoord);
+    mediump float occlusion = Occlusion( i.tex.xy);
+    UnityGI gi = FragmentGI( s.posWorld, occlusion, i.ambientOrLightmapUV, atten, s.oneMinusRoughness, s.normalWorld, s.eyeVec, mainLight);
+    
+    mediump vec4 c = BRDF2_Unity_PBS( s.diffColor, s.specColor, s.oneMinusReflectivity, s.oneMinusRoughness, s.normalWorld, (-s.eyeVec), gi.light, gi.indirect);
+    c *= i.color;
+    
+    c.xyz += BRDF_Unity_Indirect( s.diffColor, s.specColor, s.oneMinusReflectivity, s.oneMinusRoughness, s.normalWorld, (-s.eyeVec), occlusion, gi);
+    c.xyz += Emission( i.tex.xy);
+    
+    return OutputForward( c, (s.alpha * i.color.w));
+}
+in highp vec4 xlv_TEXCOORD0;
+in mediump vec3 xlv_TEXCOORD1;
+in mediump vec4 xlv_TEXCOORD2;
+in mediump vec4 xlv_TEXCOORD2_1;
+in mediump vec4 xlv_TEXCOORD2_2;
+in mediump vec4 xlv_TEXCOORD5;
+in mediump vec4 xlv_TEXCOORD6;
+in lowp vec4 xlv_COLOR;
+out lowp vec4 FragData [1];
+void main() {
+    mediump vec4 xl_retval;
+    VertexOutputForwardBase_VC xlt_i;
+    xlt_i.pos = vec4(0.0);
+    xlt_i.tex = vec4(xlv_TEXCOORD0);
+    xlt_i.eyeVec = vec3(xlv_TEXCOORD1);
+    xlt_i.tangentToWorldAndParallax[0] = vec4(xlv_TEXCOORD2);
+    xlt_i.tangentToWorldAndParallax[1] = vec4(xlv_TEXCOORD2_1);
+    xlt_i.tangentToWorldAndParallax[2] = vec4(xlv_TEXCOORD2_2);
+    xlt_i.ambientOrLightmapUV = vec4(xlv_TEXCOORD5);
+    xlt_i._ShadowCoord = vec4(xlv_TEXCOORD6);
+    xlt_i.color = vec4(xlv_COLOR);
+    xl_retval = fragForwardBase_VC( xlt_i);
+    FragData[0] = vec4(xl_retval);
+}

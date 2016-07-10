@@ -647,8 +647,8 @@ ir_constant::ir_constant()
 }
 
 ir_constant::ir_constant(const struct glsl_type *type,
-			 const ir_constant_data *data)
-   : ir_rvalue(ir_type_constant, glsl_precision_undefined)
+			 const ir_constant_data *data, glsl_precision precision)
+   : ir_rvalue(ir_type_constant, precision)
 {
    assert((type->base_type >= GLSL_TYPE_UINT)
 	  && (type->base_type <= GLSL_TYPE_BOOL));
