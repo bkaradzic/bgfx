@@ -103,8 +103,8 @@ class ExamplePicking : public entry::AppI
 		m_timeOffset = bx::getHPCounter();
 
 		// Set up ID buffer, which has a color target and depth buffer
-		m_pickingRT = bgfx::createTexture2D(ID_DIM, ID_DIM, 1, bgfx::TextureFormat::RGBA8, 0 // Probably would be better to use unsigned format
-			| BGFX_TEXTURE_RT                                                                // but currently doesn't display in imgui
+		m_pickingRT = bgfx::createTexture2D(ID_DIM, ID_DIM, 1, bgfx::TextureFormat::RGBA8, 0
+			| BGFX_TEXTURE_RT
 			| BGFX_TEXTURE_MIN_POINT
 			| BGFX_TEXTURE_MAG_POINT
 			| BGFX_TEXTURE_MIP_POINT
@@ -120,10 +120,10 @@ class ExamplePicking : public entry::AppI
 			| BGFX_TEXTURE_V_CLAMP
 			);
 
-		// CPU texture for blitting to and reading ID buffer so we can see what was clicked on
-		// Impossible to read directly from a render target, you *must* blit to a CPU texture first.
-		// Algorithm Overview:
-		// Render on GPU -> Blit to CPU texture -> Read from CPU texture
+		// CPU texture for blitting to and reading ID buffer so we can see what was clicked on.
+		// Impossible to read directly from a render target, you *must* blit to a CPU texture
+		// first. Algorithm Overview: Render on GPU -> Blit to CPU texture -> Read from CPU
+		// texture.
 		m_blitTex = bgfx::createTexture2D(ID_DIM, ID_DIM, 1, bgfx::TextureFormat::RGBA8, 0
 			| BGFX_TEXTURE_BLIT_DST
 			| BGFX_TEXTURE_READ_BACK
@@ -173,7 +173,7 @@ class ExamplePicking : public entry::AppI
 
 	bool update() BX_OVERRIDE
 	{
-		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState))
+		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
 			bgfx::setViewFrameBuffer(RENDER_PASS_ID, m_pickingFB);
 
@@ -183,7 +183,7 @@ class ExamplePicking : public entry::AppI
 			last = now;
 			const double freq = double(bx::getHPFrequency());
 			const double toMs = 1000.0 / freq;
-			float time = (float)((bx::getHPCounter() - m_timeOffset) / double(bx::getHPFrequency()));
+			float time = (float)( (bx::getHPCounter() - m_timeOffset) / double(bx::getHPFrequency() ) );
 
 			// Use debug font to print information about this example.
 			bgfx::dbgTextClear();
@@ -210,7 +210,7 @@ class ExamplePicking : public entry::AppI
 			bx::mtxProj(proj, 60.0f, float(m_width) / float(m_height), 0.1f, 100.0f);
 
 			// Set up view rect and transform for the shaded pass
-			bgfx::setViewRect(RENDER_PASS_SHADING, 0, 0, uint16_t(m_width), uint16_t(m_height));
+			bgfx::setViewRect(RENDER_PASS_SHADING, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 			bgfx::setViewTransform(RENDER_PASS_SHADING, view, proj);
 
 			// Set up picking pass
@@ -325,12 +325,14 @@ class ExamplePicking : public entry::AppI
 					{
 						amount = mapIter->second + 1;
 					}
+
 					ids[hashKey] = amount; // Amount of times this ID (color) has been clicked on in buffer
 					maxAmount = maxAmount > amount
 						? maxAmount
 						: amount
 						;
 				}
+
 				uint32_t idKey = 0;
 				m_highlighted = UINT32_MAX;
 				if (maxAmount)
@@ -343,6 +345,7 @@ class ExamplePicking : public entry::AppI
 							break;
 						}
 					}
+
 					for (uint32_t ii = 0; ii < 12; ++ii)
 					{
 						if (m_idsU[ii] == idKey)
@@ -355,7 +358,8 @@ class ExamplePicking : public entry::AppI
 			}
 
 			// Start a new readback?
-			if (!m_reading && m_mouseState.m_buttons[entry::MouseButton::Left])
+			if (!m_reading
+			&&  m_mouseState.m_buttons[entry::MouseButton::Left])
 			{
 				// Blit and read
 				bgfx::blit(RENDER_PASS_BLIT, m_blitTex, 0, 0, m_pickingRT);
