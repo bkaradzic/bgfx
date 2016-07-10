@@ -21,10 +21,10 @@ class ExamplePicking : public entry::AppI
 	{
 		Args args(_argc, _argv);
 
-		m_width = 1280;
+		m_width  = 1280;
 		m_height = 720;
-		m_debug = BGFX_DEBUG_TEXT;
-		m_reset = BGFX_RESET_VSYNC;
+		m_debug  = BGFX_DEBUG_TEXT;
+		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
 
@@ -50,15 +50,32 @@ class ExamplePicking : public entry::AppI
 			);
 
 		// Create uniforms
-		u_tint = bgfx::createUniform("u_tint", bgfx::UniformType::Vec4);  // Tint for when you click on items
-		u_id = bgfx::createUniform("u_id", bgfx::UniformType::Vec4);      // ID for drawing into ID buffer
+		u_tint = bgfx::createUniform("u_tint", bgfx::UniformType::Vec4); // Tint for when you click on items
+		u_id   = bgfx::createUniform("u_id",   bgfx::UniformType::Vec4); // ID for drawing into ID buffer
 
 		// Create program from shaders.
-		m_shadingProgram = loadProgram("vs_picking_shaded", "fs_picking_shaded");  // Blinn shading
-		m_idProgram = loadProgram("vs_picking_shaded", "fs_picking_id");           // Shader for drawing into ID buffer
+		m_shadingProgram = loadProgram("vs_picking_shaded", "fs_picking_shaded"); // Blinn shading
+		m_idProgram      = loadProgram("vs_picking_shaded", "fs_picking_id");     // Shader for drawing into ID buffer
 
-		const char * meshPaths[] = { "meshes/orb.bin", "meshes/column.bin", "meshes/bunny.bin", "meshes/cube.bin", "meshes/tree.bin", "meshes/hollowcube.bin" };
-		const float meshScale[] = { 0.5f, 0.05f, 0.5f, 0.25f, 0.05f, 0.05f };
+		static const char* meshPaths[] =
+		{
+			"meshes/orb.bin",
+			"meshes/column.bin",
+			"meshes/bunny.bin",
+			"meshes/cube.bin",
+			"meshes/tree.bin",
+			"meshes/hollowcube.bin",
+		};
+
+		static const float meshScale[] =
+		{
+			0.5f,
+			0.05f,
+			0.5f,
+			0.25f,
+			0.05f,
+			0.05f,
+		};
 
 		m_highlighted = UINT32_MAX;
 		m_reading = 0;
@@ -67,20 +84,20 @@ class ExamplePicking : public entry::AppI
 		m_cameraSpin = false;
 
 		bx::RngMwc mwc;  // Random number generator
-		for (int32_t i = 0; i < 12; i++)
+		for (uint32_t ii = 0; ii < 12; ++ii)
 		{
-			m_meshes[i] = meshLoad(meshPaths[i % 6]);
-			m_meshScale[i] = meshScale[i % 6];
+			m_meshes[ii]    = meshLoad(meshPaths[ii % BX_COUNTOF(meshPaths)]);
+			m_meshScale[ii] = meshScale[ii % BX_COUNTOF(meshPaths)];
 			// For the sake of this example, we'll give each mesh a random color,  so the debug output looks colorful.
 			// In an actual app, you'd probably just want to count starting from 1
-			uint32_t r = mwc.gen() % 256;
-			uint32_t g = mwc.gen() % 256;
-			uint32_t b = mwc.gen() % 256;
-			m_idsF[i][0] = r / 255.0f;
-			m_idsF[i][1] = g / 255.0f;
-			m_idsF[i][2] = b / 255.0f;
-			m_idsF[i][3] = 1.0f;
-			m_idsU[i] = (r)+(g << 8) + (b << 16) + (255u << 24);
+			uint32_t rr = mwc.gen() % 256;
+			uint32_t gg = mwc.gen() % 256;
+			uint32_t bb = mwc.gen() % 256;
+			m_idsF[ii][0] = rr / 255.0f;
+			m_idsF[ii][1] = gg / 255.0f;
+			m_idsF[ii][2] = bb / 255.0f;
+			m_idsF[ii][3] = 1.0f;
+			m_idsU[ii] = rr + (gg << 8) + (bb << 16) + (255u << 24);
 		}
 
 		m_timeOffset = bx::getHPCounter();
@@ -108,8 +125,8 @@ class ExamplePicking : public entry::AppI
 		// Algorithm Overview:
 		// Render on GPU -> Blit to CPU texture -> Read from CPU texture
 		m_blitTex = bgfx::createTexture2D(ID_DIM, ID_DIM, 1, bgfx::TextureFormat::RGBA8, 0
-			| BGFX_TEXTURE_BLIT_DST  // <==
-			| BGFX_TEXTURE_READ_BACK // <==
+			| BGFX_TEXTURE_BLIT_DST
+			| BGFX_TEXTURE_READ_BACK
 			| BGFX_TEXTURE_MIN_POINT
 			| BGFX_TEXTURE_MAG_POINT
 			| BGFX_TEXTURE_MIP_POINT
@@ -117,7 +134,11 @@ class ExamplePicking : public entry::AppI
 			| BGFX_TEXTURE_V_CLAMP
 			);
 
-		bgfx::TextureHandle rt[2] = { m_pickingRT, m_pickingRTDepth };
+		bgfx::TextureHandle rt[2] =
+		{
+			m_pickingRT,
+			m_pickingRTDepth
+		};
 		m_pickingFB = bgfx::createFrameBuffer(BX_COUNTOF(rt), rt, true);
 
 		imguiCreate();
@@ -125,9 +146,9 @@ class ExamplePicking : public entry::AppI
 
 	int shutdown() BX_OVERRIDE
 	{
-		for (int32_t i = 0; i < 12; i++)
+		for (uint32_t ii = 0; ii < 12; ++ii)
 		{
-			meshUnload(m_meshes[i]);
+			meshUnload(m_meshes[ii]);
 		}
 
 		// Cleanup.
@@ -174,8 +195,13 @@ class ExamplePicking : public entry::AppI
 			const float camSpeed = 0.25;
 			float cameraSpin = (float)m_cameraSpin;
 			float eyeDist = 2.5f;
-			float eye[3] = { -eyeDist * bx::fsin(time*cameraSpin*camSpeed), 0.0f, -eyeDist * bx::fcos(time*cameraSpin*camSpeed) };
-			float at[3] = { 0.0f, 0.0f,  0.0f };
+			float eye[3] =
+			{
+				-eyeDist * bx::fsin(time*cameraSpin*camSpeed),
+				0.0f,
+				-eyeDist * bx::fcos(time*cameraSpin*camSpeed),
+			};
+			float at[3] = { 0.0f, 0.0f, 0.0f };
 
 			float view[16];
 			bx::mtxLookAt(view, eye, at);
@@ -222,16 +248,16 @@ class ExamplePicking : public entry::AppI
 			const float tintBasic[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 			const float tintHighlighted[4] = { 0.3f, 0.3f, 2.0f, 1.0f };
 
-			for (uint32_t m = 0; m < 12; m++)
+			for (uint32_t mesh = 0; mesh < 12; ++mesh)
 			{
 				// Set up transform matrix for each mesh
 				float mtxRot[16];
 				bx::mtxRotateXY(mtxRot
 					, 0.0f
-					, time*0.37f*(m % 2 ? 1.0f : -1.0f)
+					, time*0.37f*(mesh % 2 ? 1.0f : -1.0f)
 					);
 				float mtxScale[16];
-				float scale = m_meshScale[m];
+				float scale = m_meshScale[mesh];
 				bx::mtxScale(mtxScale
 					, scale
 					, scale
@@ -239,8 +265,8 @@ class ExamplePicking : public entry::AppI
 					);
 				float mtxTrans[16];
 				bx::mtxTranslate(mtxTrans
-					, (m % 4) - 1.5f
-					, (m / 4) - 1.25f
+					, (mesh % 4) - 1.5f
+					, (mesh / 4) - 1.25f
 					, 0.0f
 					);
 
@@ -252,12 +278,16 @@ class ExamplePicking : public entry::AppI
 				// Submit mesh to both of our render passes
 
 				// Set uniform based on if this is the highlighted mesh
-				bgfx::setUniform(u_tint, m == m_highlighted ? tintHighlighted : tintBasic);
-				meshSubmit(m_meshes[m], RENDER_PASS_SHADING, m_shadingProgram, mtx);
+				bgfx::setUniform(u_tint
+					, mesh == m_highlighted
+					? tintHighlighted
+					: tintBasic
+					);
+				meshSubmit(m_meshes[mesh], RENDER_PASS_SHADING, m_shadingProgram, mtx);
 
 				// Submit ID pass based on mesh ID
-				bgfx::setUniform(u_id, m_idsF[m]);
-				meshSubmit(m_meshes[m], RENDER_PASS_ID, m_idProgram, mtx);
+				bgfx::setUniform(u_id, m_idsF[mesh]);
+				meshSubmit(m_meshes[mesh], RENDER_PASS_ID, m_idProgram, mtx);
 			}
 
 			// If the user previously clicked, and we're done reading data from GPU, look at ID buffer on CPU
@@ -269,23 +299,26 @@ class ExamplePicking : public entry::AppI
 				uint32_t maxAmount = 0;
 				for (uint8_t *x = m_blitData; x < m_blitData + ID_DIM * ID_DIM * 4;)
 				{
-					uint8_t r = *x++;
-					uint8_t g = *x++;
-					uint8_t b = *x++;
-					uint8_t a = *x++;
+					uint8_t rr = *x++;
+					uint8_t gg = *x++;
+					uint8_t bb = *x++;
+					uint8_t aa = *x++;
 
 					const bgfx::Caps* caps = bgfx::getCaps();
-					if (bgfx::RendererType::Direct3D9 == caps->rendererType){
+					if (bgfx::RendererType::Direct3D9 == caps->rendererType)
+					{
 						// Comes back as BGRA
-						uint8_t temp = r;
-						r = b;
-						b = temp;
+						uint8_t temp = rr;
+						rr = bb;
+						bb = temp;
 					}
 
-					if (r == 0 && g == 0 && b == 0) // Skip background
+					if (0 == (rr|gg|bb) ) // Skip background
+					{
 						continue;
+					}
 
-					uint32_t hashKey = (r)+(g << 8) + (b << 16) + (a << 24);
+					uint32_t hashKey = rr + (gg << 8) + (bb << 16) + (aa << 24);
 					std::map<uint32_t, uint32_t>::iterator mapIter = ids.find(hashKey);
 					uint32_t amount = 1;
 					if (mapIter != ids.end() )
@@ -293,7 +326,10 @@ class ExamplePicking : public entry::AppI
 						amount = mapIter->second + 1;
 					}
 					ids[hashKey] = amount; // Amount of times this ID (color) has been clicked on in buffer
-					maxAmount = maxAmount > amount ? maxAmount : amount;
+					maxAmount = maxAmount > amount
+						? maxAmount
+						: amount
+						;
 				}
 				uint32_t idKey = 0;
 				m_highlighted = UINT32_MAX;
@@ -307,11 +343,11 @@ class ExamplePicking : public entry::AppI
 							break;
 						}
 					}
-					for (uint32_t i = 0; i < 12; i++)
+					for (uint32_t ii = 0; ii < 12; ++ii)
 					{
-						if (m_idsU[i] == idKey)
+						if (m_idsU[ii] == idKey)
 						{
-							m_highlighted = i;
+							m_highlighted = ii;
 							break;
 						}
 					}
