@@ -250,33 +250,21 @@ class ExamplePicking : public entry::AppI
 
 			for (uint32_t mesh = 0; mesh < 12; ++mesh)
 			{
+				const float scale = m_meshScale[mesh];
+
 				// Set up transform matrix for each mesh
-				float mtxRot[16];
-				bx::mtxRotateXY(mtxRot
+				float mtx[16];
+				bx::mtxSRT(mtx
+					, scale, scale, scale
 					, 0.0f
 					, time*0.37f*(mesh % 2 ? 1.0f : -1.0f)
-					);
-				float mtxScale[16];
-				float scale = m_meshScale[mesh];
-				bx::mtxScale(mtxScale
-					, scale
-					, scale
-					, scale
-					);
-				float mtxTrans[16];
-				bx::mtxTranslate(mtxTrans
+					, 0.0f
 					, (mesh % 4) - 1.5f
 					, (mesh / 4) - 1.25f
 					, 0.0f
 					);
 
-				float mtx[16];
-				float mtxTransScale[16];
-				bx::mtxMul(mtxTransScale, mtxScale, mtxTrans);
-				bx::mtxMul(mtx, mtxRot, mtxTransScale);
-
 				// Submit mesh to both of our render passes
-
 				// Set uniform based on if this is the highlighted mesh
 				bgfx::setUniform(u_tint
 					, mesh == m_highlighted
