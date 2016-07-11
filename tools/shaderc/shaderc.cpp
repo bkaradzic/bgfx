@@ -124,7 +124,7 @@ namespace bgfx
 			return "nointerpolation";
 		}
 
-		return _glsl; // noperspective
+		return _glsl; // centroid, noperspective
 	}
 
 	const char* getUniformTypeName(UniformType::Enum _enum)
@@ -1003,7 +1003,8 @@ namespace bgfx
 
 					if (0 == strncmp(typen, "flat", 4)
 					||  0 == strncmp(typen, "smooth", 6)
-					||  0 == strncmp(typen, "noperspective", 13) )
+					||  0 == strncmp(typen, "noperspective", 13)
+					||  0 == strncmp(typen, "centroid", 8) )
 					{
 						interpolation = typen;
 						typen = parse = bx::strws(bx::strword(parse) );
@@ -1454,9 +1455,10 @@ namespace bgfx
 						if (hlsl < 4)
 						{
 							preprocessor.writef(
+								"#define centroid\n"
 								"#define flat\n"
-								"#define smooth\n"
 								"#define noperspective\n"
+								"#define smooth\n"
 								);
 						}
 

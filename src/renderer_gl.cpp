@@ -4921,10 +4921,11 @@ namespace bgfx { namespace gl
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
 				&&  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) )
 				{
-					writeString(&writer
-						, "#define flat\n"
-						  "#define smooth\n"
-						  "#define noperspective\n"
+					writeString(&writer,
+						"#define centroid\n"
+						"#define flat\n"
+						"#define noperspective\n"
+						"#define smooth\n"
 						);
 
 					bool usesDerivatives = s_extension[Extension::OES_standard_derivatives].m_supported
@@ -5173,13 +5174,14 @@ namespace bgfx { namespace gl
 						}
 					}
 
-					writeString(&writer
-							, "#define lowp\n"
-							  "#define mediump\n"
-							  "#define highp\n"
-							  "#define flat\n"
-							  "#define smooth\n"
-							  "#define noperspective\n"
+					writeString(&writer,
+							"#define lowp\n"
+							"#define mediump\n"
+							"#define highp\n"
+							"#define centroid\n"
+							"#define flat\n"
+							"#define noperspective\n"
+							"#define smooth\n"
 							);
 
 					bx::write(&writer, code, codeLen);
