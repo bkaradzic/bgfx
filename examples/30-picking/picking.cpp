@@ -188,7 +188,7 @@ class ExamplePicking : public entry::AppI
 			// Use debug font to print information about this example.
 			bgfx::dbgTextClear();
 			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/30-picking");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Mouse picking.");
+			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Mouse picking via GPU texture readback.");
 			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			// Set up matrices for basic forward renderer
