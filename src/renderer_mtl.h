@@ -64,6 +64,12 @@ namespace bgfx { namespace mtl
 		typedef void (*mtlCallback)(void* userData);
 
 	MTL_CLASS(BlitCommandEncoder)
+		void copyFromTexture(id<MTLTexture> _sourceTexture, NSUInteger _sourceSlice, NSUInteger _sourceLevel, MTLOrigin _sourceOrigin, MTLSize _sourceSize,
+							id<MTLTexture> _destinationTexture, NSUInteger _destinationSlice, NSUInteger _destinationLevel, MTLOrigin _destinationOrigin)
+		{
+			[m_obj copyFromTexture:_sourceTexture sourceSlice:_sourceSlice sourceLevel:_sourceLevel sourceOrigin:_sourceOrigin sourceSize:_sourceSize
+						 toTexture:_destinationTexture destinationSlice:_destinationSlice destinationLevel:_destinationLevel destinationOrigin:_destinationOrigin];
+		}
 		void endEncoding()
 		{
 			[m_obj endEncoding];
@@ -463,6 +469,11 @@ namespace bgfx { namespace mtl
 		{
 			return (uint32_t)m_obj.sampleCount;
 		}
+	
+		MTLTextureType textureType() const
+		{
+			return m_obj.textureType;
+		}
 	MTL_CLASS_END
 
 	typedef id<MTLComputePipelineState> ComputePipelineState;
@@ -728,6 +739,9 @@ namespace bgfx { namespace mtl
 			, m_ptrStencil(NULL)
 			, m_sampler(NULL)
 			, m_flags(0)
+			, m_width(0)
+			, m_height(0)
+			, m_depth(0)
 			, m_numMips(0)
 		{
 		}
@@ -747,6 +761,9 @@ namespace bgfx { namespace mtl
 		uint32_t m_flags;
 		uint8_t m_requestedFormat;
 		uint8_t m_textureFormat;
+		uint32_t m_width;
+		uint32_t m_height;
+		uint32_t m_depth;
 		uint8_t m_numMips;
 	};
 

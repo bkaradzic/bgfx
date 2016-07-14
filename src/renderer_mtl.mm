@@ -22,6 +22,8 @@
 /*
  // known metal shader generation issues:
    03-raymarch: OSX10.11.3 nothing is visible ( depth/color swap in fragment output struct fixed this )
+   14-shadowvolumes: in texture as stencil mode - columns/bunny are dark. in fs_shadowvolume_color_lighting SAMPLER2D(s_texStencil, 1) is 
+		converted to "texture2d<float> s_texStencil [[texture(0)]], sampler _mtlsmp_s_texStencil [[sampler(0)]]". Slot is 1 -> 0.
    15-shadowmaps-simple: shader compilation error
    16-shadowmaps:  //problem with essl -> metal: SAMPLER2D(u_shadowMap0, 4);  sampler index is lost. Shadowmap is set to slot 4, but
       metal shader uses sampler/texture slot 0. this could require changes outside of renderer_mtl?
@@ -34,21 +36,18 @@ Known issues(driver problems??):
 		03-raymarch: OSX nothing is visible  ( depth/color order should be swapped in fragment output struct)
 					works fine with newer OSX
   iPad mini 2,  iOS 8.1.1:  21-deferred: scissor not working properly
-							26-occlusion: query doesn't work with two rendercommandencoders, merge should fix this
+							26-occlusion: query doesn't work with two rendercommandencoders
 			Only on this device ( no problem on iPad Air 2 with iOS9.3.1)
 
   TODOs:
-
  - texture msaa: 09-hdr
- - texture blit support: 08-update, 09-hdr
- - texture read_back: 09-hdr
+ - texture blit+read_back: 09-hdr
  - textureMtl::commit set only vertex/fragment stage
  - FrameBufferMtl::postReset recreate framebuffer???
  - implement fb discard. problematic with multiple views that has same fb...
  - remove sync points at texture/mesh update
  - capture: 07-callback
 
- - 14-shadowvolumes: texture as stencil mode - columns are dark
  - backbuffer msaa color/depth/stencil is not saved. could have problem with views like: backbuffermsaa then rt then backbuffermsaa again
 
  - finish savescreenshot with screenshotbegin/end
@@ -479,7 +478,7 @@ namespace bgfx { namespace mtl
 								 | BGFX_CAPS_COMPUTE	// TODO: api/hw supports it but metal compute shaders are not yet supported
 								 | BGFX_CAPS_INDEX32
 							   //| BGFX_CAPS_DRAW_INDIRECT // TODO: support on iOS9+gpu family3+ and on macOS
-							   //| BGFX_CAPS_TEXTURE_BLIT //TODO: is this supported???
+							     | BGFX_CAPS_TEXTURE_BLIT
 							   //| BGFX_CAPS_TEXTURE_READ_BACK //TODO: is this supported???
 							     | BGFX_CAPS_OCCLUSION_QUERY
 							     | BGFX_CAPS_ALPHA_TO_COVERAGE
@@ -2233,6 +2232,9 @@ namespace bgfx { namespace mtl
 			const uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height>>startLod);
 
 			m_flags = _flags;
+			m_width   = textureWidth;
+			m_height  = textureHeight;
+			m_depth   = imageContainer.m_depth;
 			m_requestedFormat  = uint8_t(imageContainer.m_format);
 			m_textureFormat    = uint8_t(getViableTextureFormat(imageContainer) );
 			const bool convert = m_textureFormat != m_requestedFormat;
@@ -2708,6 +2710,11 @@ namespace bgfx { namespace mtl
 		SortKey key;
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
+		
+		BlitKey blitKey;
+		blitKey.decode(_render->m_blitKeys[0]);
+		uint16_t numBlitItems = _render->m_numBlitItems;
+		uint16_t blitItem = 0;
 
 		const uint64_t primType = 0;
 		uint8_t primIndex = uint8_t(primType>>BGFX_STATE_PT_SHIFT);
@@ -2790,7 +2797,50 @@ namespace bgfx { namespace mtl
 						viewState.m_rect.m_x = eye * (viewState.m_rect.m_width+1)/2;
 						viewState.m_rect.m_width /= 2;
 					}
+					
+					
+					for (; blitItem < numBlitItems && blitKey.m_view <= view; blitItem++)
+					{
+						if (0 != m_renderCommandEncoder)
+						{
+							m_renderCommandEncoder.endEncoding();
+						}
+						m_blitCommandEncoder = getBlitCommandEncoder();
+						
+						const BlitItem& blit = _render->m_blitItem[blitItem];
+						blitKey.decode(_render->m_blitKeys[blitItem+1]);
+						
+						const TextureMtl& src = m_textures[blit.m_src.idx];
+						const TextureMtl& dst = m_textures[blit.m_dst.idx];
+						
+						uint32_t srcWidth  = bx::uint32_min(src.m_width,  blit.m_srcX + blit.m_width)  - blit.m_srcX;
+						uint32_t srcHeight = bx::uint32_min(src.m_height, blit.m_srcY + blit.m_height) - blit.m_srcY;
+						uint32_t srcDepth  = bx::uint32_min(src.m_depth,  blit.m_srcZ + blit.m_depth)  - blit.m_srcZ;
+						uint32_t dstWidth  = bx::uint32_min(dst.m_width,  blit.m_dstX + blit.m_width)  - blit.m_dstX;
+						uint32_t dstHeight = bx::uint32_min(dst.m_height, blit.m_dstY + blit.m_height) - blit.m_dstY;
+						uint32_t dstDepth  = bx::uint32_min(dst.m_depth,  blit.m_dstZ + blit.m_depth)  - blit.m_dstZ;
+						uint32_t width     = bx::uint32_min(srcWidth,  dstWidth);
+						uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
+						uint32_t depth     = bx::uint32_min(srcDepth,  dstDepth);
 
+						if ( MTLTextureType3D == src.m_ptr.textureType())
+						{
+							m_blitCommandEncoder.copyFromTexture(src.m_ptr, 0, 0, MTLOriginMake(blit.m_srcX, blit.m_srcY, blit.m_srcZ), MTLSizeMake(width, height, bx::uint32_imax(depth, 1)),
+																 dst.m_ptr, 0, 0, MTLOriginMake(blit.m_dstX, blit.m_dstY, blit.m_dstZ));
+						}
+						else
+						{
+							m_blitCommandEncoder.copyFromTexture(src.m_ptr, blit.m_srcZ, blit.m_srcMip, MTLOriginMake(blit.m_srcX, blit.m_srcY, 0), MTLSizeMake(width, height, 1),
+																 dst.m_ptr, blit.m_dstZ, blit.m_dstMip, MTLOriginMake(blit.m_dstX, blit.m_dstY, 0));
+						}
+					}
+					
+					if (0 != m_blitCommandEncoder)
+					{
+						m_blitCommandEncoder.endEncoding();
+						m_blitCommandEncoder = 0;
+					}
+				
 					const Rect& scissorRect = _render->m_scissor[view];
 					viewHasScissor = !scissorRect.isZero();
 					viewScissorRect = viewHasScissor ? scissorRect : viewState.m_rect;
