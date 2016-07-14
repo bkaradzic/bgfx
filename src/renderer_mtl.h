@@ -469,7 +469,7 @@ namespace bgfx { namespace mtl
 		{
 			return (uint32_t)m_obj.sampleCount;
 		}
-	
+
 		MTLTextureType textureType() const
 		{
 			return m_obj.textureType;

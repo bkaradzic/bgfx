@@ -22,7 +22,7 @@
 /*
  // known metal shader generation issues:
    03-raymarch: OSX10.11.3 nothing is visible ( depth/color swap in fragment output struct fixed this )
-   14-shadowvolumes: in texture as stencil mode - columns/bunny are dark. in fs_shadowvolume_color_lighting SAMPLER2D(s_texStencil, 1) is 
+   14-shadowvolumes: in texture as stencil mode - columns/bunny are dark. in fs_shadowvolume_color_lighting SAMPLER2D(s_texStencil, 1) is
 		converted to "texture2d<float> s_texStencil [[texture(0)]], sampler _mtlsmp_s_texStencil [[sampler(0)]]". Slot is 1 -> 0.
    15-shadowmaps-simple: shader compilation error
    16-shadowmaps:  //problem with essl -> metal: SAMPLER2D(u_shadowMap0, 4);  sampler index is lost. Shadowmap is set to slot 4, but
@@ -2710,7 +2710,7 @@ namespace bgfx { namespace mtl
 		SortKey key;
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
-		
+
 		BlitKey blitKey;
 		blitKey.decode(_render->m_blitKeys[0]);
 		uint16_t numBlitItems = _render->m_numBlitItems;
@@ -2797,8 +2797,8 @@ namespace bgfx { namespace mtl
 						viewState.m_rect.m_x = eye * (viewState.m_rect.m_width+1)/2;
 						viewState.m_rect.m_width /= 2;
 					}
-					
-					
+
+
 					for (; blitItem < numBlitItems && blitKey.m_view <= view; blitItem++)
 					{
 						if (0 != m_renderCommandEncoder)
@@ -2806,13 +2806,13 @@ namespace bgfx { namespace mtl
 							m_renderCommandEncoder.endEncoding();
 						}
 						m_blitCommandEncoder = getBlitCommandEncoder();
-						
+
 						const BlitItem& blit = _render->m_blitItem[blitItem];
 						blitKey.decode(_render->m_blitKeys[blitItem+1]);
-						
+
 						const TextureMtl& src = m_textures[blit.m_src.idx];
 						const TextureMtl& dst = m_textures[blit.m_dst.idx];
-						
+
 						uint32_t srcWidth  = bx::uint32_min(src.m_width,  blit.m_srcX + blit.m_width)  - blit.m_srcX;
 						uint32_t srcHeight = bx::uint32_min(src.m_height, blit.m_srcY + blit.m_height) - blit.m_srcY;
 						uint32_t srcDepth  = bx::uint32_min(src.m_depth,  blit.m_srcZ + blit.m_depth)  - blit.m_srcZ;
@@ -2834,13 +2834,13 @@ namespace bgfx { namespace mtl
 																 dst.m_ptr, blit.m_dstZ, blit.m_dstMip, MTLOriginMake(blit.m_dstX, blit.m_dstY, 0));
 						}
 					}
-					
+
 					if (0 != m_blitCommandEncoder)
 					{
 						m_blitCommandEncoder.endEncoding();
 						m_blitCommandEncoder = 0;
 					}
-				
+
 					const Rect& scissorRect = _render->m_scissor[view];
 					viewHasScissor = !scissorRect.isZero();
 					viewScissorRect = viewHasScissor ? scissorRect : viewState.m_rect;
