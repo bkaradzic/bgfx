@@ -11,9 +11,9 @@ $input v_view, v_normal
 SAMPLERCUBE(s_texCube, 0);
 SAMPLERCUBE(s_texCubeIrr, 1);
 
-vec3 calcFresnel(vec3 _cspec, float _dot)
+vec3 calcFresnel(vec3 _cspec, float _dot, float _strength)
 {
-	return _cspec + (1.0 - _cspec)*pow(1.0 - _dot, 5.0);
+	return _cspec + (1.0 - _cspec)*pow(1.0 - _dot, 5.0) * _strength;
 }
 
 vec3 calcLambert(vec3 _cdiff, float _ndotl)
@@ -50,34 +50,27 @@ void main()
 	float hdotv = clamp(dot(hh, vv), 0.0, 1.0);
 
 	// Material params.
-	vec3  albedo       = u_rgbDiff.xyz;
-	float reflectivity = u_reflectivity;
-	float gloss        = u_glossiness;
+	vec3  inAlbedo       = u_rgbDiff.xyz;
+	float inReflectivity = u_reflectivity;
+	float inGloss        = u_glossiness;
 
 	// Reflection.
 	vec3 refl;
 	if (0.0 == u_metalOrSpec) // Metalness workflow.
 	{
-		refl = mix(vec3_splat(0.04), albedo, reflectivity);
+		refl = mix(vec3_splat(0.04), inAlbedo, inReflectivity);
 	}
 	else // Specular workflow.
 	{
-		refl = u_rgbSpec.xyz * vec3_splat(reflectivity);
+		refl = u_rgbSpec.xyz * vec3_splat(inReflectivity);
 	}
-	vec3 dirF0 = calcFresnel(refl, hdotv);
-	vec3 envF0 = calcFresnel(refl, ndotv);
+	vec3 albedo = inAlbedo * (1.0 - inReflectivity);
+	vec3 dirFresnel = calcFresnel(refl, hdotv, inGloss);
+	vec3 envFresnel = calcFresnel(refl, ndotv, inGloss);
 
-	// Direct lighting.
-	vec3 dirSpec = dirF0;
-	vec3 dirDiff = albedo * 1.0-dirF0;
-
-	vec3 lambert = u_doDiffuse  * calcLambert(dirDiff, ndotl);
-	vec3 blinn   = u_doSpecular * calcBlinn(dirSpec, ndoth, ndotl, specPwr(gloss));
+	vec3 lambert = u_doDiffuse  * calcLambert(albedo * (1.0 - dirFresnel), ndotl);
+	vec3 blinn   = u_doSpecular * calcBlinn(dirFresnel, ndoth, ndotl, specPwr(inGloss));
 	vec3 direct  = (lambert + blinn)*clight;
-
-	// Indirect lighting.
-	vec3 envSpec = envF0;
-	vec3 envDiff = albedo * 1.0-envF0;
 
 	// Note: Environment textures are filtered with cmft: https://github.com/dariomanesku/cmft
 	// Params used:
@@ -86,7 +79,7 @@ void main()
 	// --glossScale 10    //!< Spec power scale. See: specPwr().
 	// --glossBias 2      //!< Spec power bias. See: specPwr().
 	// --edgeFixup warp   //!< This must be used on DirectX9. When fileted with 'warp', fixCubeLookup() should be used.
-	float mip = 1.0 + 5.0*(1.0 - gloss); // Use mip levels [1..6] for radiance.
+	float mip = 1.0 + 5.0*(1.0 - inGloss); // Use mip levels [1..6] for radiance.
 
 	mat4 mtx;
 	mtx[0] = u_mtx0;
@@ -98,9 +91,11 @@ void main()
 	vec3 cubeN = normalize(instMul(mtx, vec4(nn, 0.0)).xyz);
 	cubeR = fixCubeLookup(cubeR, mip, 256.0);
 
-	vec3 radiance   = u_doSpecularIbl * envSpec * toLinear(textureCubeLod(s_texCube, cubeR, mip).xyz);
-	vec3 irradiance = u_doDiffuseIbl  * envDiff * toLinear(textureCube(s_texCubeIrr, cubeN).xyz);
-	vec3 indirect = radiance + irradiance;
+	vec3 radiance    = toLinear(textureCubeLod(s_texCube, cubeR, mip).xyz);
+	vec3 irradiance  = toLinear(textureCube(s_texCubeIrr, cubeN).xyz);
+	vec3 envDiffuse  = albedo     * irradiance * u_doDiffuseIbl;
+	vec3 envSpecular = envFresnel * radiance   * u_doSpecularIbl;
+	vec3 indirect    = envDiffuse + envSpecular;
 
 	// Color.
 	vec3 color = direct + indirect;
