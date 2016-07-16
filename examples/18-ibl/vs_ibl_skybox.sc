@@ -15,9 +15,9 @@ void main()
 {
 	gl_Position = mul(u_modelViewProj, vec4(a_position, 1.0) );
 
-	float fov = 45.0;
+	float fov = radians(45.0);
 	float height = tan(fov*0.5);
-	float aspect = height*(4.0/3.0);
+	float aspect = height*(u_viewRect.z / u_viewRect.w);
 	vec2 tex = (2.0*a_texcoord0-1.0) * vec2(aspect, height);
 
 	mat4 mtx;
