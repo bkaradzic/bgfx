@@ -365,6 +365,16 @@ private:
 	uint32_t m_maxBlocks;
 };
 
+void TestCallbackFromRenderThread(void *ptr)
+{
+  if ((void*)0xDEADBEEF != ptr)
+  {
+    dbgPrintf("Invalid call...");
+    abort();
+  }
+  dbgPrintf("TestCallbackFromRenderThrea %x", ptr);
+}
+
 int _main_(int _argc, char** _argv)
 {
 	Args args(_argc, _argv);
@@ -496,6 +506,11 @@ int _main_(int _argc, char** _argv)
 		{
 			bgfx::saveScreenShot("temp/frame150");
 		}
+
+    if (175 == frame)
+    {
+      bgfx::userCallback(TestCallbackFromRenderThread, (void*)0xDEADBEEF);
+    }
 
 		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.

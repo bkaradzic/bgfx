@@ -2346,6 +2346,17 @@ namespace bgfx
 				}
 				break;
 
+			case CommandBuffer::UserCallback:
+				{
+          UserCallback_I cb;
+          void *user_data;
+					_cmdbuf.read(cb);
+					_cmdbuf.read(user_data);
+          BX_CHECK(user_data, "Invalid Callback");
+          cb(user_data);
+				}
+				break;
+
 			case CommandBuffer::UpdateViewName:
 				{
 					uint8_t id;
@@ -3649,6 +3660,12 @@ error:
 		BGFX_CHECK_MAIN_THREAD();
 		s_ctx->saveScreenShot(_filePath);
 	}
+
+	void userCallback(UserCallback_I _callback, void *_user_data)
+  {
+		BGFX_CHECK_MAIN_THREAD();
+    s_ctx->userCallback(_callback, _user_data);
+  }
 } // namespace bgfx
 
 #include <bgfx/c99/bgfx.h>
@@ -4573,6 +4590,12 @@ BGFX_C_API void bgfx_save_screen_shot(const char* _filePath)
 {
 	bgfx::saveScreenShot(_filePath);
 }
+
+BGFX_C_API void bgfx_user_callback(void (*_callback)(void*),void* _user_data)
+{
+	bgfx::userCallback(_callback, _user_data);
+}
+
 
 BGFX_C_API bgfx_render_frame_t bgfx_render_frame()
 {

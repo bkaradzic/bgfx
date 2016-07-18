@@ -627,6 +627,7 @@ namespace bgfx
 			DestroyUniform,
 			ReadTexture,
 			SaveScreenShot,
+      UserCallback,
 		};
 
 		void write(const void* _data, uint32_t _size)
@@ -3447,6 +3448,13 @@ namespace bgfx
 			uint16_t len = (uint16_t)strlen(_filePath)+1;
 			cmdbuf.write(len);
 			cmdbuf.write(_filePath, len);
+		}
+
+		BGFX_API_FUNC(void userCallback(UserCallback_I _callback, void *_user_data) )
+		{
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::UserCallback);
+			cmdbuf.write(_callback);
+			cmdbuf.write(_user_data);
 		}
 
 		BGFX_API_FUNC(void setPaletteColor(uint8_t _index, const float _rgba[4]) )
