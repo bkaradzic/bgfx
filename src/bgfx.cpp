@@ -2247,7 +2247,10 @@ namespace bgfx
 					uint16_t height;
 					_cmdbuf.read(height);
 
-					m_renderCtx->resizeTexture(handle, width, height);
+					uint8_t numMips;
+					_cmdbuf.read(numMips);
+
+					m_renderCtx->resizeTexture(handle, width, height, numMips);
 				}
 				break;
 
@@ -2952,7 +2955,14 @@ error:
 			, getName(_format)
 			);
 
-		_numMips = uint8_t(bx::uint32_max(1, _numMips) );
+		if (BackbufferRatio::Count != _ratio)
+		{
+			_width  = uint16_t(s_ctx->m_resolution.m_width);
+			_height = uint16_t(s_ctx->m_resolution.m_height);
+			getTextureSizeFromRatio(_ratio, _width, _height);
+		}
+
+		_numMips = calcNumMips(_numMips, _width, _height);
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG)
 		&&  NULL != _mem)
@@ -2964,13 +2974,6 @@ error:
 				, ti.storageSize
 				, _mem->size
 				);
-		}
-
-		if (BackbufferRatio::Count != _ratio)
-		{
-			_width  = uint16_t(s_ctx->m_resolution.m_width);
-			_height = uint16_t(s_ctx->m_resolution.m_height);
-			getTextureSizeFromRatio(_ratio, _width, _height);
 		}
 
 		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
@@ -3015,7 +3018,7 @@ error:
 			, getName(_format)
 			);
 
-		_numMips = uint8_t(bx::uint32_max(1, _numMips) );
+		_numMips = calcNumMips(_numMips, _width, _height, _depth);
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG)
 		&&  NULL != _mem)
@@ -3058,7 +3061,7 @@ error:
 			, getName(_format)
 			);
 
-		_numMips = uint8_t(bx::uint32_max(1, _numMips) );
+		_numMips = calcNumMips(_numMips, _size, _size);
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG)
 		&&  NULL != _mem)

@@ -772,7 +772,7 @@ namespace bgfx { namespace mtl
 		{
 		}
 
-		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height) BX_OVERRIDE
+		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips) BX_OVERRIDE
 		{
 			TextureMtl& texture = m_textures[_handle.idx];
 
@@ -788,7 +788,7 @@ namespace bgfx { namespace mtl
 			tc.m_height  = _height;
 			tc.m_sides   = 0;
 			tc.m_depth   = 0;
-			tc.m_numMips = 1;
+			tc.m_numMips = _numMips;
 			tc.m_format  = TextureFormat::Enum(texture.m_requestedFormat);
 			tc.m_cubeMap = false;
 			tc.m_mem     = NULL;

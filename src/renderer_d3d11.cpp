@@ -1831,7 +1831,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			m_deviceCtx->Unmap(texture.m_ptr, 0);
 		}
 
-		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height) BX_OVERRIDE
+		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips) BX_OVERRIDE
 		{
 			TextureD3D11& texture = m_textures[_handle.idx];
 
@@ -1847,7 +1847,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			tc.m_height  = _height;
 			tc.m_sides   = 0;
 			tc.m_depth   = 0;
-			tc.m_numMips = 1;
+			tc.m_numMips = _numMips;
 			tc.m_format  = TextureFormat::Enum(texture.m_requestedFormat);
 			tc.m_cubeMap = false;
 			tc.m_mem     = NULL;

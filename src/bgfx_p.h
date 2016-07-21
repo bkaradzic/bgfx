@@ -364,6 +364,19 @@ namespace bgfx
 			;
 	}
 
+	inline uint8_t calcNumMips(uint8_t _numMips, uint16_t _width, uint16_t _height, uint16_t _depth = 1)
+	{
+		if (1 < _numMips)
+		{
+			const uint32_t max = bx::uint32_max(bx::uint32_max(_width, _height), _depth);
+			const uint32_t num = 1 + uint32_t(bx::flog2(float(max) ) );
+
+			return uint8_t(num);
+		}
+
+		return 1;
+	}
+
 	void dump(const VertexDecl& _decl);
 
 	struct TextVideoMem
@@ -2061,7 +2074,7 @@ namespace bgfx
 		virtual void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) = 0;
 		virtual void updateTextureEnd() = 0;
 		virtual void readTexture(TextureHandle _handle, void* _data) = 0;
-		virtual void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height) = 0;
+		virtual void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips) = 0;
 		virtual void overrideInternal(TextureHandle _handle, uintptr_t _ptr) = 0;
 		virtual uintptr_t getInternal(TextureHandle _handle) = 0;
 		virtual void destroyTexture(TextureHandle _handle) = 0;
@@ -2160,6 +2173,7 @@ namespace bgfx
 					resizeTexture(handle
 						, uint16_t(m_resolution.m_width)
 						, uint16_t(m_resolution.m_height)
+						, textureRef.m_numMips
 						);
 					m_resolution.m_flags |= BGFX_RESET_INTERNAL_FORCE;
 				}
@@ -3107,6 +3121,7 @@ namespace bgfx
 				ref.m_refCount = 1;
 				ref.m_bbRatio  = uint8_t(_ratio);
 				ref.m_format   = uint8_t(_info->format);
+				ref.m_numMips  = imageContainer.m_numMips;
 				ref.m_owned    = false;
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateTexture);
@@ -3149,12 +3164,13 @@ namespace bgfx
 			return readTexture(textureHandle, _data);
 		}
 
-		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height)
+		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips)
 		{
 			const TextureRef& textureRef = m_textureRef[_handle.idx];
 			BX_CHECK(BackbufferRatio::Count != textureRef.m_bbRatio, "");
 
 			getTextureSizeFromRatio(BackbufferRatio::Enum(textureRef.m_bbRatio), _width, _height);
+			_numMips = calcNumMips(_numMips, _width, _height);
 
 			BX_TRACE("Resize %3d: %4dx%d %s"
 				, _handle.idx
@@ -3167,6 +3183,7 @@ namespace bgfx
 			cmdbuf.write(_handle);
 			cmdbuf.write(_width);
 			cmdbuf.write(_height);
+			cmdbuf.write(_numMips);
 		}
 
 		void textureTakeOwnership(TextureHandle _handle)
@@ -4012,6 +4029,7 @@ namespace bgfx
 			int16_t m_refCount;
 			uint8_t m_bbRatio;
 			uint8_t m_format;
+			uint8_t m_numMips;
 			bool    m_owned;
 		};
 
