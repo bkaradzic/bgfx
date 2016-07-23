@@ -1429,6 +1429,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 										? BGFX_CAPS_FORMAT_TEXTURE_MSAA
 										: BGFX_CAPS_FORMAT_TEXTURE_NONE
 										;
+
+								support |= 0 != (data.OutFormatSupport & (0
+										| D3D11_FORMAT_SUPPORT_MIP_AUTOGEN
+										) )
+										? BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
+										: BGFX_CAPS_FORMAT_TEXTURE_NONE
+										;
 							}
 							else
 							{

@@ -403,6 +403,7 @@
 #define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER      UINT16_C(0x0800) //!< Texture format can be used as frame buffer.
 #define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA UINT16_C(0x1000) //!< Texture format can be used as MSAA frame buffer.
 #define BGFX_CAPS_FORMAT_TEXTURE_MSAA             UINT16_C(0x2000) //!< Texture can be sampled as MSAA.
+#define BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN      UINT16_C(0x4000) //!< Texture format supports auto-generated mips.
 
 ///
 #define BGFX_VIEW_NONE   UINT8_C(0x00) //!<

@@ -702,6 +702,14 @@ namespace bgfx { namespace d3d9
 					, NULL
 					) ) ? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA : BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
+				support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
+					, m_deviceType
+					, adapterFormat
+					, isDepth(TextureFormat::Enum(ii) ) ? D3DUSAGE_DEPTHSTENCIL : D3DUSAGE_RENDERTARGET
+					, D3DRTYPE_TEXTURE
+					, s_textureFormat[ii].m_fmt
+					) ) ? BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN : BGFX_CAPS_FORMAT_TEXTURE_NONE;
+
 				g_caps.formats[ii] = support;
 			}
 
@@ -1340,8 +1348,7 @@ namespace bgfx { namespace d3d9
 		void setFrameBuffer(FrameBufferHandle _fbh, bool _msaa = true)
 		{
 			if (isValid(m_fbh)
-			&&  m_fbh.idx != _fbh.idx
-			&&  m_rtMsaa)
+			&&  m_fbh.idx != _fbh.idx)
 			{
 				FrameBufferD3D9& frameBuffer = m_frameBuffers[m_fbh.idx];
 				frameBuffer.resolve();
