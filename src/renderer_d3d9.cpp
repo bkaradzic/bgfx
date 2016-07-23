@@ -2495,7 +2495,10 @@ namespace bgfx { namespace d3d9
 		}
 		else if (renderTarget || blit)
 		{
-			usage = D3DUSAGE_RENDERTARGET;
+			usage = 0
+				| D3DUSAGE_RENDERTARGET
+				| (1 < _numMips ? D3DUSAGE_AUTOGENMIPMAP : 0)
+				;
 		}
 
 		IDirect3DDevice9* device = s_renderD3D9->m_device;
@@ -3092,7 +3095,7 @@ namespace bgfx { namespace d3d9
 	void TextureD3D9::resolve() const
 	{
 		if (NULL != m_surface
-		&&  NULL != m_texture2d)
+		&&  NULL != m_ptr)
 		{
 			IDirect3DSurface9* surface = getSurface();
 			DX_CHECK(s_renderD3D9->m_device->StretchRect(m_surface
@@ -3102,6 +3105,11 @@ namespace bgfx { namespace d3d9
 				, D3DTEXF_LINEAR
 				) );
 			DX_RELEASE(surface, 1);
+
+			if (1 < m_numMips)
+			{
+				m_ptr->GenerateMipSubLevels();
+			}
 		}
 	}
 

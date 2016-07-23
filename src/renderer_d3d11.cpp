@@ -4392,6 +4392,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					desc.Usage      = kk == 0 || blit ? D3D11_USAGE_DEFAULT : D3D11_USAGE_IMMUTABLE;
 					desc.BindFlags  = writeOnly ? 0 : D3D11_BIND_SHADER_RESOURCE;
 					desc.CPUAccessFlags = 0;
+					desc.MiscFlags      = 0;
 
 					if (isDepth( (TextureFormat::Enum)m_textureFormat) )
 					{
@@ -4402,6 +4403,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					{
 						desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
 						desc.Usage = D3D11_USAGE_DEFAULT;
+						desc.MiscFlags |= 0
+							| (1 < numMips ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0)
+							;
 					}
 
 					if (computeWrite)
@@ -4420,14 +4424,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					if (imageContainer.m_cubeMap)
 					{
 						desc.ArraySize = 6;
-						desc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
+						desc.MiscFlags |= D3D11_RESOURCE_MISC_TEXTURECUBE;
 						srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
 						srvd.TextureCube.MipLevels = numMips;
 					}
 					else
 					{
 						desc.ArraySize = 1;
-						desc.MiscFlags = 0;
 						if (1 < msaa.Count
 						&&  msaaSample)
 						{
@@ -4568,8 +4571,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 									;
 	}
 
-	void TextureD3D11::resolve()
+	void TextureD3D11::resolve() const
 	{
+		const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
+		if (renderTarget
+		&&  1 < m_numMips)
+		{
+			s_renderD3D11->m_deviceCtx->GenerateMips(m_srv);
+		}
 	}
 
 	TextureHandle TextureD3D11::getHandle() const
@@ -4824,6 +4833,18 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	void FrameBufferD3D11::resolve()
 	{
+		if (0 < m_numTh)
+		{
+			for (uint32_t ii = 0; ii < m_numTh; ++ii)
+			{
+				TextureHandle handle = m_attachment[ii].handle;
+				if (isValid(handle) )
+				{
+					const TextureD3D11& texture = s_renderD3D11->m_textures[handle.idx];
+					texture.resolve();
+				}
+			}
+		}
 	}
 
 	void FrameBufferD3D11::clear(const Clear& _clear, const float _palette[][4])
