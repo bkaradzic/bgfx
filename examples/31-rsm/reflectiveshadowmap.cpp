@@ -255,19 +255,21 @@ public:
 
 		// Randomly create some models
 		bx::RngMwc mwc;  // Random number generator
-		for (Model & m : m_models)
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_models); ++ii)
 		{
-			uint32_t r = mwc.gen() % 256;
-			uint32_t g = mwc.gen() % 256;
-			uint32_t b = mwc.gen() % 256;
-			m.mesh = 1+mwc.gen()%(MESH_COUNT-1);
-			m.color[0] = r/255.0f;
-			m.color[1] = g/255.0f;
-			m.color[2] = b/255.0f;
-			m.color[3] = 1.0f;
-			m.position[0] = (((mwc.gen() % 256)) - 128.0f)/20.0f;
-			m.position[1] = 0;
-			m.position[2] = (((mwc.gen() % 256)) - 128.0f)/20.0f;
+			Model& model = m_models[ii];
+
+			uint32_t rr = mwc.gen() % 256;
+			uint32_t gg = mwc.gen() % 256;
+			uint32_t bb = mwc.gen() % 256;
+			model.mesh = 1+mwc.gen()%(MESH_COUNT-1);
+			model.color[0] = rr/255.0f;
+			model.color[1] = gg/255.0f;
+			model.color[2] = bb/255.0f;
+			model.color[3] = 1.0f;
+			model.position[0] = (((mwc.gen() % 256)) - 128.0f)/20.0f;
+			model.position[1] = 0;
+			model.position[2] = (((mwc.gen() % 256)) - 128.0f)/20.0f;
 		}
 
 		// Load ground.  We'll just use the cube since I don't have a ground model right now
@@ -386,12 +388,16 @@ public:
 		bgfx::destroyFrameBuffer(m_lightBuffer);
 		bgfx::destroyFrameBuffer(m_shadowBuffer);
 
-		for (uint32_t i = 0; i < BX_COUNTOF(m_gbufferTex); i++)
-			bgfx::destroyTexture(m_gbufferTex[i]);
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_gbufferTex); ++ii)
+		{
+			bgfx::destroyTexture(m_gbufferTex[ii]);
+		}
 
 		bgfx::destroyTexture(m_lightBufferTex);
-		for (uint32_t i = 0; i < BX_COUNTOF(m_shadowBufferTex); i++)
-			bgfx::destroyTexture(m_shadowBufferTex[i]);
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_shadowBufferTex); ++ii)
+		{
+			bgfx::destroyTexture(m_shadowBufferTex[ii]);
+		}
 
 		cameraDestroy();
 
