@@ -392,7 +392,7 @@ exampleProject("27-terrain")
 exampleProject("28-wireframe")
 exampleProject("29-debugdraw")
 exampleProject("30-picking")
-exampleProject("31-reflectiveshadowmap")
+exampleProject("31-rsm")
 
 -- C99 source doesn't compile under WinRT settings
 if not premake.vstudio.iswinrt() then
