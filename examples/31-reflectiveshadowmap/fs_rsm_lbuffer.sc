@@ -15,53 +15,53 @@ uniform mat4 u_invMvp;
 float toClipSpaceDepth(float _depthTextureZ)
 {
 #if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_METAL
-    return _depthTextureZ;
+	return _depthTextureZ;
 #else
-    return _depthTextureZ * 2.0 - 1.0;
+	return _depthTextureZ * 2.0 - 1.0;
 #endif // BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_METAL
 }
 
 vec3 clipToWorld(mat4 _invViewProj, vec3 _clipPos)
 {
-    vec4 wpos = mul(_invViewProj, vec4(_clipPos, 1.0) );
-    return wpos.xyz / wpos.w;
+	vec4 wpos = mul(_invViewProj, vec4(_clipPos, 1.0) );
+	return wpos.xyz / wpos.w;
 }
 
 void main()
 {
 #if BGFX_SHADER_LANGUAGE_HLSL && (BGFX_SHADER_LANGUAGE_HLSL < 4)
-    vec2 texCoord = gl_FragCoord.xy * u_viewTexel.xy + u_viewTexel.xy * vec2_splat(0.5);
+	vec2 texCoord = gl_FragCoord.xy * u_viewTexel.xy + u_viewTexel.xy * vec2_splat(0.5);
 #else
-    vec2 texCoord = gl_FragCoord.xy * u_viewTexel.xy;
+	vec2 texCoord = gl_FragCoord.xy * u_viewTexel.xy;
 #endif
 
-    // Get world position
-    float deviceDepth = texture2D(s_depth, texCoord).x;
-    float depth       = toClipSpaceDepth(deviceDepth);
+	// Get world position
+	float deviceDepth = texture2D(s_depth, texCoord).x;
+	float depth       = toClipSpaceDepth(deviceDepth);
 
-    vec3 clip = vec3(texCoord * 2.0 - 1.0, depth);
+	vec3 clip = vec3(texCoord * 2.0 - 1.0, depth);
 #if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_METAL
-    clip.y = -clip.y;
+	clip.y = -clip.y;
 #endif // BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_METAL
-    vec3 wpos = clipToWorld(u_invMvp, clip);
- 
-    // Get normal from its map, and decompress
-    vec3 n  = texture2D(s_normal, texCoord).xyz*2.0-1.0;
-    
-    // Do lighting
-    vec3 pointToLight = v_lightCenterScale.xyz-wpos;
-    float lightLen = sqrt(dot(pointToLight, pointToLight));
+	vec3 wpos = clipToWorld(u_invMvp, clip);
 
-    float lightFalloff;
+	// Get normal from its map, and decompress
+	vec3 n  = texture2D(s_normal, texCoord).xyz*2.0-1.0;
 
-    if (lightLen > v_lightCenterScale.w)
-        lightFalloff = 0.0;
-    else
-        lightFalloff = 1.0-(lightLen/v_lightCenterScale.w);  // Linear falloff for light (could use dist sq if you want)
+	// Do lighting
+	vec3 pointToLight = v_lightCenterScale.xyz-wpos;
+	float lightLen = sqrt(dot(pointToLight, pointToLight));
 
-    vec3 l = normalize(pointToLight)*lightFalloff;
-    
-    gl_FragColor.xyz = v_color0.xyz * max(0.0, dot(n,l));
+	float lightFalloff;
 
-    gl_FragColor.w = 1.0;
+	if (lightLen > v_lightCenterScale.w)
+		lightFalloff = 0.0;
+	else
+		lightFalloff = 1.0-(lightLen/v_lightCenterScale.w);  // Linear falloff for light (could use dist sq if you want)
+
+	vec3 l = normalize(pointToLight)*lightFalloff;
+
+	gl_FragColor.xyz = v_color0.xyz * max(0.0, dot(n,l));
+
+	gl_FragColor.w = 1.0;
 }
