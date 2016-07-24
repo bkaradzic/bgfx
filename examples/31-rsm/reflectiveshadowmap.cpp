@@ -66,7 +66,7 @@
 #define SHADOW_MAP_DIM 512
 #define LIGHT_DIST 10.0f
 
-static const char * m_meshPaths[MESH_COUNT] =
+static const char * s_meshPaths[] =
 {
 	"meshes/cube.bin",
 	"meshes/orb.bin",
@@ -74,6 +74,16 @@ static const char * m_meshPaths[MESH_COUNT] =
 	"meshes/bunny.bin",
 	"meshes/tree.bin",
 	"meshes/hollowcube.bin"
+};
+
+static const float s_meshScale[] =
+{
+	0.25f,
+	0.5f,
+	0.05f,
+	0.5f,
+	0.05f,
+	0.05f
 };
 
 // Vertex decl for our screen space quad (used in deferred rendering)
@@ -154,8 +164,21 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf
 	}
 }
 
-class ExampleReflectiveShadowMap : public entry::AppI
+class ExampleRSM : public entry::AppI
 {
+public:
+	ExampleRSM()
+		: m_reading(0)
+		, m_currFrame(UINT32_MAX)
+		, m_cameraSpin(false)
+		, m_lightElevation(35.0f)
+		, m_lightAzimuth(215.0f)
+		, m_rsmAmount(0.25f)
+		, m_vplRadius(3.0f)
+		, m_texelHalf(0.0f)
+	{
+	}
+
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
@@ -225,13 +248,15 @@ class ExampleReflectiveShadowMap : public entry::AppI
 		m_combineProgram = loadProgram("vs_rsm_combine", "fs_rsm_combine");  // Combiner
 
 		// Load some meshes
-		for (uint32_t i = 0; i < MESH_COUNT; i++) {
-			m_meshes[i] = meshLoad(m_meshPaths[i]);
+		for (uint32_t i = 0; i < MESH_COUNT; i++)
+		{
+			m_meshes[i] = meshLoad(s_meshPaths[i]);
 		}
 
 		// Randomly create some models
 		bx::RngMwc mwc;  // Random number generator
-		for (Model & m : m_models) {
+		for (Model & m : m_models)
+		{
 			uint32_t r = mwc.gen() % 256;
 			uint32_t g = mwc.gen() % 256;
 			uint32_t b = mwc.gen() % 256;
@@ -461,8 +486,10 @@ class ExampleReflectiveShadowMap : public entry::AppI
 
 			// Draw some lights (these should really be instanced but for this example they aren't...)
 			const unsigned MAX_SPHERE = 32;
-			for (uint32_t i = 0; i < MAX_SPHERE; i++) {
-				for (uint32_t j = 0; j < MAX_SPHERE; j++) {
+			for (uint32_t i = 0; i < MAX_SPHERE; i++)
+			{
+				for (uint32_t j = 0; j < MAX_SPHERE; j++)
+				{
 					// These are used in the fragment shader
 					bgfx::setTexture(0, s_normal, m_gbuffer, GBUFFER_RT_NORMAL);  // Normal for lighting calculations
 					bgfx::setTexture(1, s_depth,  m_gbuffer, GBUFFER_RT_DEPTH);   // Depth to reconstruct world position
@@ -567,10 +594,12 @@ class ExampleReflectiveShadowMap : public entry::AppI
 
 	void drawAllModels(uint8_t _pass, bgfx::ProgramHandle _program)
 	{
-		for (const Model & m : m_models)
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_models); ++ii)
 		{
+			const Model& model = m_models[ii];
+
 			// Set up transform matrix for each model
-			float scale = m_meshScale[m.mesh];
+			float scale = s_meshScale[model.mesh];
 			float mtx[16];
 			bx::mtxSRT(mtx
 					, scale
@@ -579,14 +608,14 @@ class ExampleReflectiveShadowMap : public entry::AppI
 					, 0.0f
 					, 0.0f
 					, 0.0f
-					, m.position[0]
-					, m.position[1]
-					, m.position[2]
+					, model.position[0]
+					, model.position[1]
+					, model.position[2]
 					);
 
 			// Submit mesh to gbuffer
-			bgfx::setUniform(u_tint, m.color);
-			meshSubmit(m_meshes[m.mesh], _pass, _program, mtx);
+			bgfx::setUniform(u_tint, model.color);
+			meshSubmit(m_meshes[model.mesh], _pass, _program, mtx);
 		}
 
 		// Draw ground
@@ -662,11 +691,7 @@ class ExampleReflectiveShadowMap : public entry::AppI
 	bgfx::TextureHandle m_lightBufferTex;
 	bgfx::TextureHandle m_shadowBufferTex[2];
 
-	uint32_t m_reading = 0;
-	uint32_t m_currFrame = UINT32_MAX;
-
-	// UI
-	bool m_cameraSpin = false;
+	const bgfx::Caps* m_caps;
 
 	struct Model
 	{
@@ -676,21 +701,23 @@ class ExampleReflectiveShadowMap : public entry::AppI
 	};
 
 	Model m_models[MODEL_COUNT];
+	Mesh * m_meshes[MESH_COUNT];
+
+	uint32_t m_reading;
+	uint32_t m_currFrame;
+
+	// UI
+	bool m_cameraSpin;
 
 	// Light position;
 	float m_lightDir[4];
-	float m_lightElevation = 35.0f;
-	float m_lightAzimuth = 215.0f;
+	float m_lightElevation;
+	float m_lightAzimuth;
 
+	float m_rsmAmount; // Amount of rsm
+	float m_vplRadius; // Radius of virtual point light
 
-	float m_rsmAmount = 0.25f; // Amount of rsm
-	float m_vplRadius = 3.0f;  // Radius of virtual point light
-
-	const float m_meshScale[MESH_COUNT] = {0.25f, 0.5f, 0.05f, 0.5f, 0.05f, 0.05f};
-	const bgfx::Caps* m_caps;
-	Mesh * m_meshes[MESH_COUNT];
-
-	float m_texelHalf = 0.0f;  // Texel offset for dx9
+	float m_texelHalf;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleReflectiveShadowMap);
+ENTRY_IMPLEMENT_MAIN(ExampleRSM);
