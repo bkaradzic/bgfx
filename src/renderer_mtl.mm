@@ -45,7 +45,7 @@ Known issues(driver problems??):
 
   TODOs:
  - remove sync points at texture/mesh update
- 
+
  - textureMtl::commit set only vertex/fragment stage
 
  - FrameBufferMtl::postReset recreate framebuffer???
@@ -55,7 +55,7 @@ Known issues(driver problems??):
  - implement fb discard. problematic with multiple views that has same fb...
  - msaa color/depth/stencil is not saved. could have problem when we switch back to msaa framebuffer
  - refactor store/load actions to support msaa/discard/capture/readback etc...
- 
+
  - finish savescreenshot with screenshotbegin/end
 
  - support multiple windows: 22-windows
@@ -643,7 +643,7 @@ namespace bgfx { namespace mtl
 			{
 				m_textures[ii].destroy();
 			}
-			
+
 			captureFinish();
 
 			MTL_RELEASE(m_depthStencilDescriptor);
@@ -783,17 +783,17 @@ namespace bgfx { namespace mtl
 			m_commandBuffer.commit();
 			m_commandBuffer.waitUntilCompleted();
 			MTL_RELEASE(m_commandBuffer)
-			
+
 			const TextureMtl& texture = m_textures[_handle.idx];
-			
+
 			uint32_t width  = texture.m_ptr.width();
 			uint32_t height = texture.m_ptr.height();
 			const uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(texture.m_textureFormat) );
 
 			MTLRegion region = { { 0, 0, 0 }, { width, height, 1 } };
-			
+
 			texture.m_ptr.getBytes(_data, width*bpp/8, 0, region, 0, 0);
-			
+
 			m_commandBuffer = m_commandQueue.commandBuffer();
 			retain(m_commandBuffer); //NOTE: keep alive to be useable at 'flip'
 		}
@@ -1185,7 +1185,7 @@ namespace bgfx { namespace mtl
 				{
 					m_frameBuffers[ii].postReset();
 				}
-				
+
 				updateCapture();
 
 				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
@@ -1224,52 +1224,52 @@ namespace bgfx { namespace mtl
 			{
 				if (NULL == m_screenshotTarget)
 					return;
-				
+
 				m_renderCommandEncoder.endEncoding();
-				
+
 				m_commandBuffer.commit();
 				m_commandBuffer.waitUntilCompleted();
 				MTL_RELEASE(m_commandBuffer)
-				
+
 				MTLRegion region = { { 0, 0, 0 }, { m_resolution.m_width, m_resolution.m_height, 1 } };
-				
+
 				//TODO: enable screenshot target when capturing
 				m_screenshotTarget.getBytes(m_capture, 4*m_resolution.m_width, 0, region, 0, 0);
-				
+
 				m_commandBuffer = m_commandQueue.commandBuffer();
 				retain(m_commandBuffer); //NOTE: keep alive to be useable at 'flip'
-				
+
 				if (m_screenshotTarget.pixelFormat() == MTLPixelFormatRGBA8Uint)
 				{
 					imageSwizzleBgra8(m_resolution.m_width, m_resolution.m_height, m_resolution.m_width*4, m_capture, m_capture);
 				}
-		
+
 				g_callback->captureFrame(m_capture, m_captureSize);
-				
+
 				RenderPassDescriptor renderPassDescriptor = newRenderPassDescriptor();
 				setFrameBuffer(renderPassDescriptor, m_renderCommandEncoderFrameBufferHandle);
-				
+
 				for(uint32_t ii = 0; ii < g_caps.maxFBAttachments; ++ii)
 				{
 					MTLRenderPassColorAttachmentDescriptor* desc = renderPassDescriptor.colorAttachments[ii];
 					if ( desc.texture != NULL)
 						desc.loadAction = MTLLoadActionLoad;
 				}
-				
+
 				RenderPassDepthAttachmentDescriptor depthAttachment = renderPassDescriptor.depthAttachment;
 				if (NULL != depthAttachment.texture)
 				{
 					depthAttachment.loadAction = MTLLoadActionLoad;
 					depthAttachment.storeAction = MTLStoreActionStore;
 				}
-				
+
 				RenderPassStencilAttachmentDescriptor stencilAttachment = renderPassDescriptor.stencilAttachment;
 				if (NULL != stencilAttachment.texture)
 				{
 					stencilAttachment.loadAction   = MTLLoadActionLoad;
 					stencilAttachment.storeAction  = MTLStoreActionStore;
 				}
-			
+
 				m_renderCommandEncoder = m_commandBuffer.renderCommandEncoderWithDescriptor(renderPassDescriptor);
 				MTL_RELEASE(renderPassDescriptor);
 			}
@@ -2448,7 +2448,7 @@ namespace bgfx { namespace mtl
 			}
 
 			m_ptr = s_renderMtl->m_device.newTextureWithDescriptor(desc);
-			
+
 			if ( sampleCount > 1)
 			{
 				desc.textureType = MTLTextureType2DMultisample;
@@ -2457,7 +2457,7 @@ namespace bgfx { namespace mtl
 					desc.storageMode = (MTLStorageMode)( 2 /*MTLStorageModePrivate*/);
 				m_ptrMSAA = s_renderMtl->m_device.newTextureWithDescriptor(desc);
 			}
-			
+
 			if (m_requestedFormat == TextureFormat::D24S8
 			&&  desc.pixelFormat  == MTLPixelFormatDepth32Float)
 			{
@@ -3013,7 +3013,7 @@ namespace bgfx { namespace mtl
 						{
 							m_renderCommandEncoder.endEncoding();
 						}
-						
+
 						RenderPassDescriptor renderPassDescriptor = newRenderPassDescriptor();
 						renderPassDescriptor.visibilityResultBuffer = m_occlusionQuery.m_buffer;
 
