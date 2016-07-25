@@ -9,40 +9,57 @@
 #include "imgui/imgui.h"
 #include <bx/rng.h>
 
-// Intro:
-// RSM (reflective shadow map) is a technique for global illumination.
-// It is similar to shadow map.  It piggybacks on the shadow map, in fact.
-
-// RSM is compatible with any type of lighting which can handle handle
-// a lot of point lights.  This sample happens to use a deferred renderer,
-// but other types would work.
-
-// Overview:
-// 1.  Draw into G-Buffer
-// 2.  Draw Shadow Map (with RSM piggybacked on)
-// 3.  Populate light buffer
-// 4.  Deferred "combine" pass.
-
-// Details:
-// 1.  G-Buffer:
-// Typical G-Buffer with normals, color, depth.
-// 2.  RSM:
-// A typical shadow map, except it also outputs to a "RSM" buffer.
-// The RSM contains the color of the item drawn, as well as a scalar value which represents
-// how much light would bounce off of the surface if it were hit with light from the origin
-// of the shadow map.
-// 3.  Light Buffer
-// We draw a lot of spheres into the light buffer.  These spheres are called VPL (virtual
-// point lights).  VPLs represent bounced light, and let us eliminate the classic "ambient"
-// term.  Instead of us supplying their world space position in a transform matrix,
-// VPLs gain their position from the shadow map from step 2, using an unprojection.  They gain
-// their color from the RSM.  You could also store their position in a buffer while drawing shadows,
-// I'm just using depth to keep the sample smaller.
-// 4.  Deferred combine:
-// Typical combine used in almost any sort of deferred renderer.
-
-// References
-// http://www.bpeers.com/blog/?itemid=517
+/*
+ * Intro
+ * =====
+ *
+ * RSM (reflective shadow map) is a technique for global illumination.
+ * It is similar to shadow map.  It piggybacks on the shadow map, in fact.
+ *
+ * RSM is compatible with any type of lighting which can handle handle
+ * a lot of point lights.  This sample happens to use a deferred renderer,
+ * but other types would work.
+ *
+ * Overview:
+ *
+ *  - Draw into G-Buffer
+ *  - Draw Shadow Map (with RSM piggybacked on)
+ *  - Populate light buffer
+ *  - Deferred "combine" pass.
+ *
+ * Details
+ * =======
+ *
+ * ## G-Buffer
+ *
+ * Typical G-Buffer with normals, color, depth.
+ *
+ * ## RSM
+ *
+ * A typical shadow map, except it also outputs to a "RSM" buffer.
+ * The RSM contains the color of the item drawn, as well as a scalar value which represents
+ * how much light would bounce off of the surface if it were hit with light from the origin
+ * of the shadow map.
+ *
+ * ## Light Buffer
+ *
+ * We draw a lot of spheres into the light buffer.  These spheres are called VPL (virtual
+ * point lights).  VPLs represent bounced light, and let us eliminate the classic "ambient"
+ * term.  Instead of us supplying their world space position in a transform matrix,
+ * VPLs gain their position from the shadow map from step 2, using an unprojection.  They gain
+ * their color from the RSM.  You could also store their position in a buffer while drawing shadows,
+ * I'm just using depth to keep the sample smaller.
+ *
+ * ## Deferred combine
+ *
+ * Typical combine used in almost any sort of deferred renderer.
+ *
+ * References
+ * ==========
+ *
+ * http: *www.bpeers.com/blog/?itemid=517
+ *
+ */
 
 // Render passes
 #define RENDER_PASS_GBUFFER      0  // GBuffer for normals and albedo
@@ -424,7 +441,7 @@ public:
 			// Use debug font to print information about this example.
 			bgfx::dbgTextClear();
 			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/31-reflectiveshadowmap");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: GI via reflective shadow map.");
+			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Global Illumination with Reflective Shadow Map.");
 			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			// Update camera
