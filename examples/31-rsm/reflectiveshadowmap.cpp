@@ -60,7 +60,6 @@
 #define SHADOW_RT_DEPTH 1        // Shadow maps always write a depth
 
 // Random meshes we draw
-#define MESH_COUNT  6    // Mesh (which is a vert/index buffer)
 #define MODEL_COUNT 222  // In this demo, a model is a mesh plus a transform and a color
 
 #define SHADOW_MAP_DIM 512
@@ -248,9 +247,9 @@ public:
 		m_combineProgram = loadProgram("vs_rsm_combine", "fs_rsm_combine");  // Combiner
 
 		// Load some meshes
-		for (uint32_t i = 0; i < MESH_COUNT; i++)
+		for (uint32_t ii = 0; ii < BX_COUNTOF(s_meshPaths); ++ii)
 		{
-			m_meshes[i] = meshLoad(s_meshPaths[i]);
+			m_meshes[ii] = meshLoad(s_meshPaths[ii]);
 		}
 
 		// Randomly create some models
@@ -262,7 +261,7 @@ public:
 			uint32_t rr = mwc.gen() % 256;
 			uint32_t gg = mwc.gen() % 256;
 			uint32_t bb = mwc.gen() % 256;
-			model.mesh = 1+mwc.gen()%(MESH_COUNT-1);
+			model.mesh = 1+mwc.gen()%(BX_COUNTOF(s_meshPaths)-1);
 			model.color[0] = rr/255.0f;
 			model.color[1] = gg/255.0f;
 			model.color[2] = bb/255.0f;
@@ -355,9 +354,9 @@ public:
 
 	int shutdown() BX_OVERRIDE
 	{
-		for (uint32_t i = 0; i < MESH_COUNT; i++)
+		for (uint32_t ii = 0; ii < BX_COUNTOF(s_meshPaths); ++ii)
 		{
-			meshUnload(m_meshes[i]);
+			meshUnload(m_meshes[ii]);
 		}
 
 		meshUnload(m_ground);
@@ -707,7 +706,7 @@ public:
 	};
 
 	Model m_models[MODEL_COUNT];
-	Mesh * m_meshes[MESH_COUNT];
+	Mesh * m_meshes[BX_COUNTOF(s_meshPaths)];
 
 	uint32_t m_reading;
 	uint32_t m_currFrame;
