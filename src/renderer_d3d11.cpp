@@ -3104,16 +3104,16 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			if (NULL == ptr)
 			{
 				const TextureD3D11& texture = m_textures[_handle.idx];
-				const bool     msaaSample  = 0 != (texture.m_flags&BGFX_TEXTURE_MSAA_SAMPLE);
 				const uint32_t msaaQuality = bx::uint32_satsub( (texture.m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
 				const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
+				const bool msaaSample = 1 < msaa.Count && 0 != (texture.m_flags&BGFX_TEXTURE_MSAA_SAMPLE);
 
 				D3D11_SHADER_RESOURCE_VIEW_DESC desc;
 				desc.Format = s_textureFormat[texture.m_textureFormat].m_fmtSrv;
 				switch (texture.m_type)
 				{
 				case TextureD3D11::Texture2D:
-					desc.ViewDimension = 1 < msaa.Count && msaaSample
+					desc.ViewDimension = msaaSample
 						? D3D11_SRV_DIMENSION_TEXTURE2DMS
 						: D3D11_SRV_DIMENSION_TEXTURE2D
 						;
@@ -4358,9 +4358,18 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			const bool srgb         = 0 != (m_flags&BGFX_TEXTURE_SRGB) || imageContainer.m_srgb;
 			const bool blit         = 0 != (m_flags&BGFX_TEXTURE_BLIT_DST);
 			const bool readBack     = 0 != (m_flags&BGFX_TEXTURE_READ_BACK);
-			const bool msaaSample   = 0 != (m_flags&BGFX_TEXTURE_MSAA_SAMPLE);
 			const uint32_t msaaQuality = bx::uint32_satsub( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
 			const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
+			const bool msaaSample  = true
+				&& 1 < msaa.Count
+				&& 0 != (m_flags&BGFX_TEXTURE_MSAA_SAMPLE)
+				&& !writeOnly
+				;
+			const bool needResolve = true
+				&& 1 < msaa.Count
+				&& 0 == (m_flags&BGFX_TEXTURE_MSAA_SAMPLE)
+				&& !writeOnly
+				;
 
 			D3D11_SHADER_RESOURCE_VIEW_DESC srvd;
 			memset(&srvd, 0, sizeof(srvd) );
@@ -4438,8 +4447,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					else
 					{
 						desc.ArraySize = 1;
-						if (1 < msaa.Count
-						&&  msaaSample)
+						if (msaaSample)
 						{
 							srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMS;
 						}
@@ -4448,6 +4456,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 							srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 							srvd.Texture2D.MipLevels = numMips;
 						}
+					}
+
+					if (needResolve)
+					{
+						DX_CHECK(s_renderD3D11->m_device->CreateTexture2D(&desc, NULL, &m_rt2d) );
+						desc.BindFlags &= ~(D3D11_BIND_RENDER_TARGET|D3D11_BIND_DEPTH_STENCIL);
+						desc.SampleDesc = s_msaa[0];
 					}
 
 					DX_CHECK(s_renderD3D11->m_device->CreateTexture2D(&desc, kk == 0 ? NULL : srd, &m_texture2d) );
@@ -4510,6 +4525,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	void TextureD3D11::destroy()
 	{
 		s_renderD3D11->m_srvUavLru.invalidateWithParent(getHandle().idx);
+		DX_RELEASE(m_rt, 0);
 		DX_RELEASE(m_srv, 0);
 		DX_RELEASE(m_uav, 0);
 		if (0 == (m_flags & BGFX_TEXTURE_INTERNAL_SHARED) )
@@ -4580,11 +4596,19 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	void TextureD3D11::resolve() const
 	{
+		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
+
+		const bool needResolve = NULL != m_rt;
+		if (needResolve)
+		{
+			deviceCtx->ResolveSubresource(m_texture2d, 0, m_rt, 0, s_textureFormat[m_textureFormat].m_fmt);
+		}
+
 		const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
 		if (renderTarget
 		&&  1 < m_numMips)
 		{
-			s_renderD3D11->m_deviceCtx->GenerateMips(m_srv);
+			deviceCtx->GenerateMips(m_srv);
 		}
 	}
 
@@ -4747,7 +4771,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 									;
 								dsvDesc.Flags = 0;
 								dsvDesc.Texture2D.MipSlice = m_attachment[ii].mip;
-								DX_CHECK(s_renderD3D11->m_device->CreateDepthStencilView(texture.m_ptr, &dsvDesc, &m_dsv) );
+								DX_CHECK(s_renderD3D11->m_device->CreateDepthStencilView(
+									  NULL == texture.m_rt ? texture.m_ptr : texture.m_rt
+									, &dsvDesc
+									, &m_dsv
+									) );
 							}
 							break;
 
@@ -4792,7 +4820,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 									desc.Texture2D.MipSlice = m_attachment[ii].mip;
 								}
-								DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(texture.m_ptr, &desc, &m_rtv[m_num]) );
+
+								DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(
+									  NULL == texture.m_rt ? texture.m_ptr : texture.m_rt
+									, &desc
+									, &m_rtv[m_num]
+									) );
 							}
 							break;
 

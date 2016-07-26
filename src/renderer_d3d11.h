@@ -242,6 +242,7 @@ namespace bgfx { namespace d3d11
 
 		TextureD3D11()
 			: m_ptr(NULL)
+			, m_rt(NULL)
 			, m_srv(NULL)
 			, m_uav(NULL)
 			, m_numMips(0)
@@ -261,6 +262,12 @@ namespace bgfx { namespace d3d11
 			ID3D11Resource*  m_ptr;
 			ID3D11Texture2D* m_texture2d;
 			ID3D11Texture3D* m_texture3d;
+		};
+
+		union
+		{
+			ID3D11Resource* m_rt;
+			ID3D11Texture2D* m_rt2d;
 		};
 
 		ID3D11ShaderResourceView*  m_srv;
