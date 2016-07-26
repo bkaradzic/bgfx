@@ -355,12 +355,12 @@ namespace bgfx { namespace mtl
 		RendererContextMtl()
 			: m_metalLayer(NULL)
 			, m_backBufferPixelFormatHash(0)
-			, m_capture(NULL)
-			, m_captureSize(0)
 			, m_maxAnisotropy(1)
 			, m_bufferIndex(0)
 			, m_numWindows(1)
 			, m_rtMsaa(false)
+			, m_capture(NULL)
+			, m_captureSize(0)
 			, m_drawable(NULL)
 			, m_saveScreenshot(false)
 		{
@@ -891,6 +891,7 @@ namespace bgfx { namespace mtl
 		//cmdPre
 		void saveScreenShotPre(const char* _filePath) BX_OVERRIDE
 		{
+			BX_UNUSED(_filePath);
 			m_saveScreenshot = true;
 		}
 
@@ -1388,7 +1389,7 @@ namespace bgfx { namespace mtl
 			}
 		}
 
-		void clearQuad(ClearQuad& _clearQuad, const Rect& _rect, const Clear& _clear, const float _palette[][4])
+		void clearQuad(ClearQuad& _clearQuad, const Rect& /*_rect*/, const Clear& _clear, const float _palette[][4])
 		{
 			uint32_t width;
 			uint32_t height;
@@ -1475,8 +1476,6 @@ namespace bgfx { namespace mtl
 			m_uniformBufferVertexOffset = m_uniformBufferFragmentOffset;
 
 			VertexBufferMtl& vb = m_vertexBuffers[_clearQuad.m_vb->handle.idx];
-			const VertexDecl& vertexDecl = m_vertexDecls[_clearQuad.m_vb->decl.idx];
-			const uint32_t stride = vertexDecl.m_stride;
 			const uint32_t offset = 0;
 
 			{
