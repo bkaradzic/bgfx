@@ -440,7 +440,7 @@ public:
 
 			// Use debug font to print information about this example.
 			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/31-reflectiveshadowmap");
+			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/31-rsm");
 			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Global Illumination with Reflective Shadow Map.");
 			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
