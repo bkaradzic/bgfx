@@ -44,9 +44,8 @@ Known issues(driver problems??):
 			Only on this device ( no problem on iPad Air 2 with iOS9.3.1)
 
   TODOs:
- - remove sync points at texture/mesh update
-
- - textureMtl::commit set only vertex/fragment stage
+ - remove sync points at mesh update. clearquad: 13-stencil, 26-occlusion, 30-picking
+ - framebufferMtl and TextureMtl resolve
 
  - FrameBufferMtl::postReset recreate framebuffer???
 
@@ -1022,9 +1021,6 @@ namespace bgfx { namespace mtl
 				rce.setFragmentBuffer(m_uniformBuffer, m_uniformBufferFragmentOffset, 0);
 			}
 
-			VertexBufferMtl& vb = m_vertexBuffers[_blitter.m_vb->handle.idx];
-			rce.setVertexBuffer(vb.getBuffer(), 0, 1);
-
 			float proj[16];
 			bx::mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f);
 
@@ -1032,7 +1028,7 @@ namespace bgfx { namespace mtl
 			uint8_t flags = predefined.m_type;
 			setShaderUniform(flags, predefined.m_loc, proj, 4);
 
-			m_textures[_blitter.m_texture.idx].commit(0);
+			m_textures[_blitter.m_texture.idx].commit(0, false, true);
 		}
 
 		void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) BX_OVERRIDE
@@ -1042,6 +1038,9 @@ namespace bgfx { namespace mtl
 			{
 				m_indexBuffers [_blitter.m_ib->handle.idx].update(0, _numIndices*2, _blitter.m_ib->data, true);
 				m_vertexBuffers[_blitter.m_vb->handle.idx].update(0, numVertices*_blitter.m_decl.m_stride, _blitter.m_vb->data, true);
+
+				VertexBufferMtl& vb = m_vertexBuffers[_blitter.m_vb->handle.idx];
+				m_renderCommandEncoder.setVertexBuffer(vb.getBuffer(), 0, 1);
 
 				m_renderCommandEncoder.drawIndexedPrimitives(MTLPrimitiveTypeTriangle, _numIndices, MTLIndexTypeUInt16, m_indexBuffers[_blitter.m_ib->handle.idx].getBuffer(), 0, 1);
 			}
@@ -2280,6 +2279,9 @@ namespace bgfx { namespace mtl
 								}
 								else if (arg.type == MTLArgumentTypeTexture)
 								{
+									if ( shaderType == 0 ) m_usedVertexSamplerStages |= 1<<arg.index;
+									else m_usedFragmentSamplerStages |= 1<<arg.index;
+
 									BX_TRACE("texture: %s index:%d", utf8String(arg.name), arg.index);
 								}
 								else if (arg.type == MTLArgumentTypeSampler)
@@ -2312,7 +2314,7 @@ namespace bgfx { namespace mtl
 
 		m_size = _size;
 		m_flags = _flags;
-		m_dynamic = false; //NULL == _data;
+		m_dynamic = (NULL == _data);
 
 		if (NULL == _data)
 		{
@@ -2331,10 +2333,24 @@ namespace bgfx { namespace mtl
 
 			//TODO: cannot call this more than once per frame
 		if ( m_dynamic && _discard )
+		{
 			m_bufferIndex = (m_bufferIndex + 1) % MTL_MAX_FRAMES_IN_FLIGHT;
-		else
+			memcpy( (uint8_t*)getBuffer().contents() + _offset, _data, _size);
+		}
+		else if ( NULL != s_renderMtl->m_renderCommandEncoder )
+		{	// NOTE: cannot blit while rendercommander is active. have to sync. slow. remove these.
+			// ClearQuad triggers this now
 			s_renderMtl->sync();
-		memcpy( (uint8_t*)getBuffer().contents() + _offset, _data, _size);
+			memcpy( (uint8_t*)getBuffer().contents() + _offset, _data, _size);
+		}
+		else
+		{
+			BlitCommandEncoder bce = s_renderMtl->getBlitCommandEncoder();
+
+			Buffer temp = s_renderMtl->m_device.newBufferWithBytes(_data, _size, 0);
+			bce.copyFromBuffer(temp, 0, getBuffer(), _offset, _size);
+			release(temp);
+		}
 	}
 
 	void VertexBufferMtl::create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint16_t _flags)
@@ -2549,14 +2565,6 @@ namespace bgfx { namespace mtl
 
 	void TextureMtl::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
-		s_renderMtl->sync();
-
-		MTLRegion region =
-		{
-			{ _rect.m_x,     _rect.m_y,      _z     },
-			{ _rect.m_width, _rect.m_height, _depth },
-		};
-
 		const uint32_t bpp       = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
 		const uint32_t rectpitch = _rect.m_width*bpp/8;
 		const uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
@@ -2579,7 +2587,38 @@ namespace bgfx { namespace mtl
 			data = temp;
 		}
 
-		m_ptr.replaceRegion(region, _mip, _side, data, srcpitch, srcpitch * _rect.m_height);
+		if ( NULL != s_renderMtl->m_renderCommandEncoder )
+		{
+			s_renderMtl->sync();
+
+			MTLRegion region =
+			{
+				{ _rect.m_x,     _rect.m_y,      _z     },
+				{ _rect.m_width, _rect.m_height, _depth },
+			};
+
+			m_ptr.replaceRegion(region, _mip, _side, data, srcpitch, srcpitch * _rect.m_height);
+		}
+		else
+		{
+			BlitCommandEncoder bce = s_renderMtl->getBlitCommandEncoder();
+
+			const uint32_t dstpitch = bx::strideAlign(rectpitch, 64);
+
+			Buffer tempBuffer = s_renderMtl->m_device.newBufferWithLength(dstpitch*_rect.m_height, 0);
+
+			const uint8_t* src = (uint8_t*)data;
+			uint8_t* dst = (uint8_t*)tempBuffer.contents();
+
+			for (uint32_t yy = 0; yy < _rect.m_height; ++yy, src += srcpitch, dst += dstpitch)
+			{
+				memcpy(dst, src, rectpitch);
+			}
+
+			bce.copyFromBuffer(tempBuffer, 0, dstpitch, dstpitch * _rect.m_height, MTLSizeMake(_rect.m_width, _rect.m_height, _depth),
+							   m_ptr, _side, _mip, MTLOriginMake(_rect.m_x, _rect.m_y, _z));
+			release(tempBuffer);
+		}
 
 		if (NULL != temp)
 		{
@@ -2587,18 +2626,23 @@ namespace bgfx { namespace mtl
 		}
 	}
 
-	void TextureMtl::commit(uint8_t _stage, uint32_t _flags)
+	void TextureMtl::commit(uint8_t _stage, bool _vertex, bool _fragment, uint32_t _flags)
 	{
-		//TODO: vertex or fragment stage?
-		s_renderMtl->m_renderCommandEncoder.setVertexTexture(m_ptr, _stage);
-		s_renderMtl->m_renderCommandEncoder.setVertexSamplerState(0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags)
-																	? s_renderMtl->getSamplerState(_flags)
-																	: m_sampler, _stage);
+		if (_vertex)
+		{
+			s_renderMtl->m_renderCommandEncoder.setVertexTexture(m_ptr, _stage);
+			s_renderMtl->m_renderCommandEncoder.setVertexSamplerState(0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags)
+																	  ? s_renderMtl->getSamplerState(_flags)
+																	  : m_sampler, _stage);
+		}
 
-		s_renderMtl->m_renderCommandEncoder.setFragmentTexture(m_ptr, _stage);
-		s_renderMtl->m_renderCommandEncoder.setFragmentSamplerState(0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags)
-																	? s_renderMtl->getSamplerState(_flags)
-																	: m_sampler, _stage);
+		if (_fragment)
+		{
+			s_renderMtl->m_renderCommandEncoder.setFragmentTexture(m_ptr, _stage);
+			s_renderMtl->m_renderCommandEncoder.setFragmentSamplerState(0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags)
+																		? s_renderMtl->getSamplerState(_flags)
+																		: m_sampler, _stage);
+		}
 	}
 
 	void FrameBufferMtl::create(uint8_t _num, const Attachment* _attachment)
@@ -2784,7 +2828,7 @@ namespace bgfx { namespace mtl
 
 		updateResolution(_render->m_resolution);
 
-		if ( m_saveScreenshot )
+		if ( m_saveScreenshot || NULL != m_capture )
 		{
 			if ( m_screenshotTarget )
 			{
@@ -3373,6 +3417,16 @@ namespace bgfx { namespace mtl
 				}
 
 				{
+					uint32_t usedVertexSamplerStages = 0;
+					uint32_t usedFragmentSamplerStages = 0;
+
+					if (invalidHandle != programIdx)
+					{
+						ProgramMtl& program = m_program[programIdx];
+						usedVertexSamplerStages = program.m_usedVertexSamplerStages;
+						usedFragmentSamplerStages = program.m_usedFragmentSamplerStages;
+					}
+
 					for (uint8_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 					{
 						const Binding& sampler = draw.m_bind[stage];
@@ -3384,7 +3438,9 @@ namespace bgfx { namespace mtl
 							if (invalidHandle != sampler.m_idx)
 							{
 								TextureMtl& texture = m_textures[sampler.m_idx];
-								texture.commit(stage, sampler.m_un.m_draw.m_textureFlags);
+								texture.commit(stage, (usedVertexSamplerStages&(1<<stage))!=0,
+											   (usedFragmentSamplerStages&(1<<stage))!=0,
+												sampler.m_un.m_draw.m_textureFlags);
 							}
 						}
 
