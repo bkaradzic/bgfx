@@ -27,11 +27,12 @@ WM.EditBox = (function()
 		this.SetPosition(x, y);
 		this.SetSize(w, h);
 
+		this.PreviousValue = "";
+
 		// Hook up the event handlers
 		DOM.Event.AddHandler(this.EditNode, "focus", Bind(OnFocus, this));
 		DOM.Event.AddHandler(this.EditNode, "keypress", Bind(OnKeyPress, this));
 		DOM.Event.AddHandler(this.EditNode, "keydown", Bind(OnKeyDown, this));
-		DOM.Event.AddHandler(this.EditNode, "change", Bind(OnChange, this));
 	}
 
 
@@ -88,9 +89,12 @@ WM.EditBox = (function()
 	function OnKeyPress(self, evt)
 	{
 		// Allow enter to confirm the text only when there's data
-		if (evt.keyCode == 13 && self.EditNode.value != "")
+		if (evt.keyCode == 13 && self.EditNode.value != "" && self.ChangeHandler)
 		{
-			self.EditNode.blur();
+			var focus = self.ChangeHandler(self.EditNode);
+			if (!focus)
+				self.EditNode.blur();
+			self.PreviousValue = "";
 		}
 	}
 
@@ -100,16 +104,14 @@ WM.EditBox = (function()
 		// Allow escape to cancel any text changes
 		if (evt.keyCode == 27)
 		{
-			self.EditNode.value = self.PreviousValue;
+			// On initial edit of the input, escape should NOT replace with the empty string
+			if (self.PreviousValue != "")
+			{
+				self.EditNode.value = self.PreviousValue;
+			}
+
 			self.EditNode.blur();
 		}
-	}
-
-
-	function OnChange(self, evt)
-	{
-		if (self.ChangeHandler)
-			self.ChangeHandler(self.EditNode);
 	}
 
 

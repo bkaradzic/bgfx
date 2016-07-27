@@ -19,7 +19,16 @@ Console = (function()
 
 		// This accumulates log text as fast as is required
 		this.PageTextBuffer = "";
+		this.LastPageTextBufferLen = 0;
 		this.AppTextBuffer = "";
+		this.LastAppTextBufferLen = 0;
+
+		// Setup command history control
+		this.CommandHistory = LocalStore.Get("App", "Global", "CommandHistory", [ ]);
+		this.CommandIndex = 0;
+		this.MaxNbCommands = 200;
+		DOM.Event.AddHandler(this.UserInput.EditNode, "keydown", Bind(OnKeyPress, this));
+		DOM.Event.AddHandler(this.UserInput.EditNode, "focus", Bind(OnFocus, this));
 
 		// At a much lower frequency this will update the console window
 		window.setInterval(Bind(UpdateHTML, this), 500);
@@ -91,13 +100,21 @@ Console = (function()
 	{
 		// Reset the current text buffer as html
 
-		var page_node = self.PageContainer.Node;
-		page_node.innerHTML = self.PageTextBuffer;
-		page_node.scrollTop = page_node.scrollHeight;
+		if (self.LastPageTextBufferLen != self.PageTextBuffer.length)
+		{
+			var page_node = self.PageContainer.Node;
+			page_node.innerHTML = self.PageTextBuffer;
+			page_node.scrollTop = page_node.scrollHeight;
+			self.LastPageTextBufferLen = self.PageTextBuffer.length;
+		}
 
-		var app_node = self.AppContainer.Node;
-		app_node.innerHTML = self.AppTextBuffer;
-		app_node.scrollTop = app_node.scrollHeight;
+		if (self.LastAppTextBufferLen != self.AppTextBuffer.length)
+		{		
+			var app_node = self.AppContainer.Node;
+			app_node.innerHTML = self.AppTextBuffer;
+			app_node.scrollTop = app_node.scrollHeight;
+			self.LastAppTextBufferLen = self.AppTextBuffer.length;
+		}
 	}
 
 
@@ -110,6 +127,64 @@ Console = (function()
 		// Emit to console and clear
 		self.Log("> " + msg);
 		self.UserInput.SetValue("");
+
+		// Keep track of recently issued commands, with an upper bound
+		self.CommandHistory.push(msg);
+		var extra_commands = self.CommandHistory.length - self.MaxNbCommands;
+		if (extra_commands > 0)
+			self.CommandHistory.splice(0, extra_commands);
+
+		// Set command history index to the most recent command
+		self.CommandIndex = self.CommandHistory.length;
+
+		// Backup to local store
+		LocalStore.Set("App", "Global", "CommandHistory", self.CommandHistory);
+
+		// Keep focus with the edit box
+		return true;
+	}
+
+
+	function OnKeyPress(self, evt)
+	{
+		evt = DOM.Event.Get(evt);
+
+		if (evt.keyCode == Keyboard.Codes.UP)
+		{
+			if (self.CommandHistory.length > 0)
+			{
+				// Cycle backwards through the command history
+				self.CommandIndex--;
+				if (self.CommandIndex < 0)
+					self.CommandIndex = self.CommandHistory.length - 1;
+				var command = self.CommandHistory[self.CommandIndex];
+				self.UserInput.SetValue(command);
+			}
+
+			// Stops default behaviour of moving cursor to the beginning
+			DOM.Event.StopDefaultAction(evt);
+		}
+
+		else if (evt.keyCode == Keyboard.Codes.DOWN)
+		{
+			if (self.CommandHistory.length > 0)
+			{
+				// Cycle fowards through the command history
+				self.CommandIndex = (self.CommandIndex + 1) % self.CommandHistory.length;
+				var command = self.CommandHistory[self.CommandIndex];
+				self.UserInput.SetValue(command);
+			}
+
+			// Stops default behaviour of moving cursor to the end
+			DOM.Event.StopDefaultAction(evt);
+		}
+	}
+
+
+	function OnFocus(self)
+	{
+		// Reset command index on focus
+		self.CommandIndex = self.CommandHistory.length;
 	}
 
 

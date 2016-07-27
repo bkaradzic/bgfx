@@ -67,6 +67,7 @@ body
     color: #BBB;
     font: 9px Verdana;
     margin: 2px;
+    white-space: pre;
 }
 
 

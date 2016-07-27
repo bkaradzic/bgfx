@@ -54,14 +54,14 @@ See the sample directory for further examples. A quick example:
 
         // Explicit begin/end for C
         {
-            rmt_BeginCPUSample(LogText);
+            rmt_BeginCPUSample(LogText, 0);
             rmt_LogText("Time me, please!");
             rmt_EndCPUSample();
         }
 
         // Scoped begin/end for C++
         {
-            rmt_ScopedCPUSample(LogText);
+            rmt_ScopedCPUSample(LogText, 0);
             rmt_LogText("Time me, too!");
         }
 

@@ -92,6 +92,9 @@ Remotery = (function()
 		// Update and disconnect, relying on auto-connect to reconnect
 		self.ConnectionAddress = node.value;
 		self.Server.Disconnect();
+
+		// Give input focus away
+		return false;
 	}
 
 
