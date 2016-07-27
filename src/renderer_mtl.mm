@@ -1476,6 +1476,8 @@ namespace bgfx { namespace mtl
 			m_uniformBufferVertexOffset = m_uniformBufferFragmentOffset;
 
 			VertexBufferMtl& vb = m_vertexBuffers[_clearQuad.m_vb->handle.idx];
+			const VertexDecl& vertexDecl = m_vertexDecls[_clearQuad.m_vb->decl.idx];
+-			const uint32_t stride = vertexDecl.m_stride;
 			const uint32_t offset = 0;
 
 			{
@@ -1487,7 +1489,12 @@ namespace bgfx { namespace mtl
 				};
 
 				Vertex* vertex = (Vertex*)_clearQuad.m_vb->data;
-				BX_CHECK(stride == sizeof(Vertex), "Stride/Vertex mismatch (stride %d, sizeof(Vertex) %d)", stride, sizeof(Vertex) );
+				BX_CHECK(stride == sizeof(Vertex)
+					, "Stride/Vertex mismatch (stride %d, sizeof(Vertex) %d)"
+					, stride
+					, sizeof(Vertex)
+					);
+				BX_UNUSED(stride);
 
 				const float depth = _clear.m_depth;
 
