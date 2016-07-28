@@ -1110,10 +1110,10 @@ namespace bgfx { namespace gl
 		tfi.m_type        = _type;
 	}
 
-	void initTestTexture(TextureFormat::Enum _format, bool srgb = false)
+	GLenum initTestTexture(TextureFormat::Enum _format, bool _srgb, bool _mipmaps)
 	{
 		const TextureFormatInfo& tfi = s_textureFormat[_format];
-		GLenum internalFmt = srgb
+		GLenum internalFmt = _srgb
 			? tfi.m_internalFmtSrgb
 			: tfi.m_internalFmt
 			;
@@ -1121,20 +1121,48 @@ namespace bgfx { namespace gl
 		GLsizei size = (16*16*getBitsPerPixel(_format) )/8;
 		void* data = bx::alignPtr(alloca(size+16), 0, 16);
 
+		GLenum err = 0;
+
 		if (isCompressed(_format) )
 		{
 			glCompressedTexImage2D(GL_TEXTURE_2D, 0, internalFmt, 16, 16, 0, size, data);
+			err |= glGetError();
+			if (_mipmaps)
+			{
+				glCompressedTexImage2D(GL_TEXTURE_2D, 1, internalFmt,  8,  8, 0, size, data);
+				err |= glGetError();
+				glCompressedTexImage2D(GL_TEXTURE_2D, 2, internalFmt,  4,  4, 0, size, data);
+				err |= glGetError();
+				glCompressedTexImage2D(GL_TEXTURE_2D, 3, internalFmt,  2,  2, 0, size, data);
+				err |= glGetError();
+				glCompressedTexImage2D(GL_TEXTURE_2D, 4, internalFmt,  1,  1, 0, size, data);
+				err |= glGetError();
+			}
 		}
 		else
 		{
 			glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, 16, 16, 0, tfi.m_fmt, tfi.m_type, data);
+			err |= glGetError();
+			if (_mipmaps)
+			{
+				glTexImage2D(GL_TEXTURE_2D, 1, internalFmt,  8,  8, 0, tfi.m_fmt, tfi.m_type, data);
+				err |= glGetError();
+				glTexImage2D(GL_TEXTURE_2D, 2, internalFmt,  4,  4, 0, tfi.m_fmt, tfi.m_type, data);
+				err |= glGetError();
+				glTexImage2D(GL_TEXTURE_2D, 3, internalFmt,  2,  2, 0, tfi.m_fmt, tfi.m_type, data);
+				err |= glGetError();
+				glTexImage2D(GL_TEXTURE_2D, 4, internalFmt,  1,  1, 0, tfi.m_fmt, tfi.m_type, data);
+				err |= glGetError();
+			}
 		}
+
+		return err;
 	}
 
-	static bool isTextureFormatValid(TextureFormat::Enum _format, bool srgb = false)
+	static bool isTextureFormatValid(TextureFormat::Enum _format, bool _srgb = false, bool _mipAutogen = false)
 	{
 		const TextureFormatInfo& tfi = s_textureFormat[_format];
-		GLenum internalFmt = srgb
+		GLenum internalFmt = _srgb
 			? tfi.m_internalFmtSrgb
 			: tfi.m_internalFmt
 			;
@@ -1146,10 +1174,16 @@ namespace bgfx { namespace gl
 		GLuint id;
 		GL_CHECK(glGenTextures(1, &id) );
 		GL_CHECK(glBindTexture(GL_TEXTURE_2D, id) );
-		initTestTexture(_format);
 
-		GLenum err = glGetError();
+		GLenum err = initTestTexture(_format, _srgb, _mipAutogen);
 		BX_WARN(0 == err, "TextureFormat::%s is not supported (%x: %s).", getName(_format), err, glEnumName(err) );
+
+		if (0 == err
+		&&  _mipAutogen)
+		{
+			glGenerateMipmap(GL_TEXTURE_2D);
+			err = glGetError();
+		}
 
 		GL_CHECK(glDeleteTextures(1, &id) );
 
@@ -1186,10 +1220,10 @@ namespace bgfx { namespace gl
 		return 0 == err;
 	}
 
-	static bool isFramebufferFormatValid(TextureFormat::Enum _format, bool srgb = false)
+	static bool isFramebufferFormatValid(TextureFormat::Enum _format, bool _srgb = false)
 	{
 		const TextureFormatInfo& tfi = s_textureFormat[_format];
-		GLenum internalFmt = srgb
+		GLenum internalFmt = _srgb
 			? tfi.m_internalFmtSrgb
 			: tfi.m_internalFmt
 			;
@@ -1207,9 +1241,7 @@ namespace bgfx { namespace gl
 		GL_CHECK(glGenTextures(1, &id) );
 		GL_CHECK(glBindTexture(GL_TEXTURE_2D, id) );
 
-		initTestTexture(_format);
-
-		GLenum err = glGetError();
+		GLenum err = initTestTexture(_format, _srgb, false);
 
 		GLenum attachment;
 		if (isDepth(_format) )
@@ -1698,6 +1730,11 @@ namespace bgfx { namespace gl
 					? BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
 					| BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
 					| BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
+					: BGFX_CAPS_FORMAT_TEXTURE_NONE
+					;
+
+				supported |= isTextureFormatValid(TextureFormat::Enum(ii), false, true)
+					? BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
 					: BGFX_CAPS_FORMAT_TEXTURE_NONE
 					;
 
