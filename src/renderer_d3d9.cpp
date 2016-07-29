@@ -1041,7 +1041,7 @@ namespace bgfx { namespace d3d9
 			tc.m_mem     = NULL;
 			bx::write(&writer, tc);
 
-			texture.destroy();
+			texture.destroy(true);
 			texture.create(mem, texture.m_flags, 0);
 
 			release(mem);

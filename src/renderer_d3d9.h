@@ -323,11 +323,21 @@ namespace bgfx { namespace d3d9
 
 		void create(const Memory* _mem, uint32_t _flags, uint8_t _skip);
 
-		void destroy()
+		void destroy(bool _resize = false)
 		{
 			if (0 == (m_flags & BGFX_TEXTURE_INTERNAL_SHARED) )
 			{
-				DX_RELEASE(m_ptr, 0);
+				if (_resize)
+				{
+					// BK - at the time of resize there might be one reference held by frame buffer
+					//      surface. This frame buffer will be recreated later, and release reference
+					//      to existing surface. That's why here we don't care about ref count.
+					m_ptr->Release();
+				}
+				else
+				{
+					DX_RELEASE(m_ptr, 0);
+				}
 			}
 			DX_RELEASE(m_surface, 0);
 			DX_RELEASE(m_staging, 0);
