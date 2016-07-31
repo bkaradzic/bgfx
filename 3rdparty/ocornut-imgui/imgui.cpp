@@ -1004,7 +1004,6 @@ ImU32 ImHash(const void* data, int data_size, ImU32 seed)
             // - We don't do 'current += 2; continue;' after handling ### to keep the code smaller.
             if (c == '#' && current[0] == '#' && current[1] == '#')
                 crc = seed;
-
             crc = (crc >> 8) ^ crc32_lut[(crc & 0xFF) ^ c];
         }
     }
@@ -1307,7 +1306,7 @@ void ImGuiStorage::Clear()
 }
 
 // std::lower_bound but without the bullshit
-static ImVector<ImGuiStorage::Pair>::iterator LowerBound(ImVector<ImGuiStorage::Pair>& data, ImU32 key)
+static ImVector<ImGuiStorage::Pair>::iterator LowerBound(ImVector<ImGuiStorage::Pair>& data, ImGuiID key)
 {
     ImVector<ImGuiStorage::Pair>::iterator first = data.begin();
     ImVector<ImGuiStorage::Pair>::iterator last = data.end();
@@ -1329,7 +1328,7 @@ static ImVector<ImGuiStorage::Pair>::iterator LowerBound(ImVector<ImGuiStorage::
     return first;
 }
 
-int ImGuiStorage::GetInt(ImU32 key, int default_val) const
+int ImGuiStorage::GetInt(ImGuiID key, int default_val) const
 {
     ImVector<Pair>::iterator it = LowerBound(const_cast<ImVector<ImGuiStorage::Pair>&>(Data), key);
     if (it == Data.end() || it->key != key)
@@ -1337,12 +1336,12 @@ int ImGuiStorage::GetInt(ImU32 key, int default_val) const
     return it->val_i;
 }
 
-bool ImGuiStorage::GetBool(ImU32 key, bool default_val) const
+bool ImGuiStorage::GetBool(ImGuiID key, bool default_val) const
 {
     return GetInt(key, default_val ? 1 : 0) != 0;
 }
 
-float ImGuiStorage::GetFloat(ImU32 key, float default_val) const
+float ImGuiStorage::GetFloat(ImGuiID key, float default_val) const
 {
     ImVector<Pair>::iterator it = LowerBound(const_cast<ImVector<ImGuiStorage::Pair>&>(Data), key);
     if (it == Data.end() || it->key != key)
@@ -1389,7 +1388,7 @@ void** ImGuiStorage::GetVoidPtrRef(ImGuiID key, void* default_val)
 }
 
 // FIXME-OPT: Need a way to reuse the result of lower_bound when doing GetInt()/SetInt() - not too bad because it only happens on explicit interaction (maximum one a frame)
-void ImGuiStorage::SetInt(ImU32 key, int val)
+void ImGuiStorage::SetInt(ImGuiID key, int val)
 {
     ImVector<Pair>::iterator it = LowerBound(Data, key);
     if (it == Data.end() || it->key != key)
@@ -1400,12 +1399,12 @@ void ImGuiStorage::SetInt(ImU32 key, int val)
     it->val_i = val;
 }
 
-void ImGuiStorage::SetBool(ImU32 key, bool val)
+void ImGuiStorage::SetBool(ImGuiID key, bool val)
 {
     SetInt(key, val ? 1 : 0);
 }
 
-void ImGuiStorage::SetFloat(ImU32 key, float val)
+void ImGuiStorage::SetFloat(ImGuiID key, float val)
 {
     ImVector<Pair>::iterator it = LowerBound(Data, key);
     if (it == Data.end() || it->key != key)
@@ -1416,7 +1415,7 @@ void ImGuiStorage::SetFloat(ImU32 key, float val)
     it->val_f = val;
 }
 
-void ImGuiStorage::SetVoidPtr(ImU32 key, void* val)
+void ImGuiStorage::SetVoidPtr(ImGuiID key, void* val)
 {
     ImVector<Pair>::iterator it = LowerBound(Data, key);
     if (it == Data.end() || it->key != key)
