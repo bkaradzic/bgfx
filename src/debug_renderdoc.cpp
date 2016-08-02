@@ -56,7 +56,7 @@ namespace bgfx
 	}
 
 	pRENDERDOC_GetAPI RENDERDOC_GetAPI;
-	static RENDERDOC_API_1_0_1* s_renderDoc;
+	static RENDERDOC_API_1_1_0* s_renderDoc;
 
 	void* loadRenderDoc()
 	{
@@ -72,7 +72,7 @@ namespace bgfx
 		{
 			RENDERDOC_GetAPI = (pRENDERDOC_GetAPI)bx::dlsym(renderdocdll, "RENDERDOC_GetAPI");
 			if (NULL != RENDERDOC_GetAPI
-			&&  1 == RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_0_0, (void**)&s_renderDoc) )
+			&&  1 == RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_1_0, (void**)&s_renderDoc) )
 			{
 				s_renderDoc->SetLogFilePathTemplate("temp/bgfx");
 
