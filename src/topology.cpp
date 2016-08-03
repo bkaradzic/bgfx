@@ -3,9 +3,11 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
-#include <bx/debug.h>
 #include <bx/allocator.h>
+#include <bx/debug.h>
+#include <bx/fpumath.h>
 #include <bx/radixsort.h>
+#include <bx/uint32_t.h>
 
 #include "config.h"
 #include "topology.h"
@@ -165,7 +167,15 @@ namespace bgfx
 		return uint32_t(dst - (IndexT*)_dst);
 	}
 
-	uint32_t topologyConvert(TopologyConvert::Enum _conversion, void* _dst, uint32_t _dstSize, const void* _indices, uint32_t _numIndices, bool _index32, bx::AllocatorI* _allocator)
+	uint32_t topologyConvert(
+		  TopologyConvert::Enum _conversion
+		, void* _dst
+		, uint32_t _dstSize
+		, const void* _indices
+		, uint32_t _numIndices
+		, bool _index32
+		, bx::AllocatorI* _allocator
+		)
 	{
 		switch (_conversion)
 		{
@@ -211,6 +221,189 @@ namespace bgfx
 		}
 
 		return 0;
+	}
+
+	inline uint32_t floatFlip(uint32_t _value)
+	{
+		using namespace bx;
+		const uint32_t tmp0   = uint32_sra(_value, 31);
+		const uint32_t tmp1   = uint32_neg(tmp0);
+		const uint32_t mask   = uint32_or(tmp1, 0x80000000);
+		const uint32_t result = uint32_xor(_value, mask);
+		return result;
+	}
+
+	inline float favg3(float _a, float _b, float _c)
+	{
+		return (_a + _b + _c) * 1.0f/3.0f;
+	}
+
+	const float* vertexPos(const void* _vertices, uint32_t _stride, uint32_t _index)
+	{
+		const uint8_t* vertices = (const uint8_t*)_vertices;
+		return (const float*)&vertices[_index*_stride];
+	}
+
+	inline float distanceDir(const float* __restrict _dir, const void* __restrict _vertices, uint32_t _stride, uint32_t _index)
+	{
+		return bx::vec3Dot(vertexPos(_vertices, _stride, _index), _dir);
+	}
+
+	inline float distancePos(const float* __restrict _pos, const void* __restrict _vertices, uint32_t _stride, uint32_t _index)
+	{
+		float tmp[3];
+		bx::vec3Sub(tmp, _pos, vertexPos(_vertices, _stride, _index) );
+		return bx::fsqrt(bx::vec3Dot(tmp, tmp) );
+	}
+
+	typedef float (*KeyFn)(float, float, float);
+	typedef float (*DistanceFn)(const float*, const void*, uint32_t, uint32_t);
+
+	template<typename IndexT, DistanceFn dfn, KeyFn kfn, uint32_t xorBits>
+	inline void calcSortKeys(
+		  uint32_t* __restrict _keys
+		, uint32_t* __restrict _values
+		, const float _dirOrPos[3]
+		, const void* __restrict _vertices
+		, uint32_t _stride
+		, const IndexT* _indices
+		, uint32_t _num
+		)
+	{
+		for (uint32_t ii = 0; ii < _num; ++ii)
+		{
+			const uint32_t idx0 = _indices[0];
+			const uint32_t idx1 = _indices[1];
+			const uint32_t idx2 = _indices[2];
+			_indices += 3;
+
+			float distance0 = dfn(_dirOrPos, _vertices, _stride, idx0);
+			float distance1 = dfn(_dirOrPos, _vertices, _stride, idx1);
+			float distance2 = dfn(_dirOrPos, _vertices, _stride, idx2);
+
+			union { float fl; uint32_t ui; } un;
+			un.fl = kfn(distance0, distance1, distance2);
+
+			_keys[ii] = floatFlip(un.ui) ^ xorBits;
+			_values[ii] = ii;
+		}
+	}
+
+	template<typename IndexT>
+	void topologySortTriList(
+		  Sort::Enum  _sort
+		, IndexT* _dst
+		, uint32_t* _keys
+		, uint32_t* _values
+		, uint32_t* _tempKeys
+		, uint32_t* _tempValues
+		, uint32_t  _num
+		, const float _dir[3]
+		, const float _pos[3]
+		, const void* _vertices
+		, uint32_t    _stride
+		, const IndexT* _indices
+		)
+	{
+		using namespace bx;
+
+		switch (_sort)
+		{
+		default:
+		case Sort::DirectionFrontToBackMin: calcSortKeys<IndexT, distanceDir, fmin3, 0         >(_keys, _values, _dir, _vertices, _stride, _indices, _num); break;
+		case Sort::DirectionFrontToBackAvg: calcSortKeys<IndexT, distanceDir, favg3, 0         >(_keys, _values, _dir, _vertices, _stride, _indices, _num); break;
+		case Sort::DirectionFrontToBackMax: calcSortKeys<IndexT, distanceDir, fmax3, 0         >(_keys, _values, _dir, _vertices, _stride, _indices, _num); break;
+		case Sort::DirectionBackToFrontMin: calcSortKeys<IndexT, distanceDir, fmin3, UINT32_MAX>(_keys, _values, _dir, _vertices, _stride, _indices, _num); break;
+		case Sort::DirectionBackToFrontAvg: calcSortKeys<IndexT, distanceDir, favg3, UINT32_MAX>(_keys, _values, _dir, _vertices, _stride, _indices, _num); break;
+		case Sort::DirectionBackToFrontMax: calcSortKeys<IndexT, distanceDir, fmax3, UINT32_MAX>(_keys, _values, _dir, _vertices, _stride, _indices, _num); break;
+		case Sort::DistanceFrontToBackMin:  calcSortKeys<IndexT, distancePos, fmin3, 0         >(_keys, _values, _pos, _vertices, _stride, _indices, _num); break;
+		case Sort::DistanceFrontToBackAvg:  calcSortKeys<IndexT, distancePos, favg3, 0         >(_keys, _values, _pos, _vertices, _stride, _indices, _num); break;
+		case Sort::DistanceFrontToBackMax:  calcSortKeys<IndexT, distancePos, fmax3, 0         >(_keys, _values, _pos, _vertices, _stride, _indices, _num); break;
+		case Sort::DistanceBackToFrontMin:  calcSortKeys<IndexT, distancePos, fmin3, UINT32_MAX>(_keys, _values, _pos, _vertices, _stride, _indices, _num); break;
+		case Sort::DistanceBackToFrontAvg:  calcSortKeys<IndexT, distancePos, favg3, UINT32_MAX>(_keys, _values, _pos, _vertices, _stride, _indices, _num); break;
+		case Sort::DistanceBackToFrontMax:  calcSortKeys<IndexT, distancePos, fmax3, UINT32_MAX>(_keys, _values, _pos, _vertices, _stride, _indices, _num); break;
+		}
+
+		radixSort(_keys, _tempKeys, _values, _tempValues, _num);
+
+		IndexT* sorted = _dst;
+
+		for (uint32_t ii = 0; ii < _num; ++ii)
+		{
+			uint32_t face = _values[ii]*3;
+			const IndexT idx0 = _indices[face+0];
+			const IndexT idx1 = _indices[face+1];
+			const IndexT idx2 = _indices[face+2];
+
+			sorted[0] = idx0;
+			sorted[1] = idx1;
+			sorted[2] = idx2;
+			sorted += 3;
+		}
+	}
+
+	void topologySortTriList(
+		  Sort::Enum  _sort
+		, void*       _dst
+		, uint32_t    _dstSize
+		, const float _dir[3]
+		, const float _pos[3]
+		, const void* _vertices
+		, uint32_t    _stride
+		, const void* _indices
+		, uint32_t    _numIndices
+		, bool        _index32
+		, bx::AllocatorI* _allocator
+		)
+	{
+		uint32_t indexSize = _index32
+			? sizeof(uint32_t)
+			: sizeof(uint16_t)
+			;
+		uint32_t  num  = bx::uint32_min(_numIndices*indexSize, _dstSize)/(indexSize*3);
+		uint32_t* temp = (uint32_t*)BX_ALLOC(_allocator, sizeof(uint32_t)*num*4);
+
+		uint32_t* keys       = &temp[num*0];
+		uint32_t* values     = &temp[num*1];
+		uint32_t* tempKeys   = &temp[num*2];
+		uint32_t* tempValues = &temp[num*3];
+
+		if (_index32)
+		{
+			topologySortTriList(
+					  _sort
+					, (uint32_t*)_dst
+					, keys
+					, values
+					, tempKeys
+					, tempValues
+					, num
+					, _dir
+					, _pos
+					, _vertices
+					, _stride
+					, (const uint32_t*)_indices
+					);
+		}
+		else
+		{
+			topologySortTriList(
+					  _sort
+					, (uint16_t*)_dst
+					, keys
+					, values
+					, tempKeys
+					, tempValues
+					, num
+					, _dir
+					, _pos
+					, _vertices
+					, _stride
+					, (const uint16_t*)_indices
+					);
+		}
+
+		BX_FREE(_allocator, temp);
 	}
 
 } //namespace bgfx
