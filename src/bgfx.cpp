@@ -2964,7 +2964,10 @@ error:
 			getTextureSizeFromRatio(_ratio, _width, _height);
 		}
 
-		_numMips = calcNumMips(_numMips, _width, _height);
+		if (0 == _numMips)
+		{
+			_numMips = calcNumMips(_numMips, _width, _height);
+		}
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG)
 		&&  NULL != _mem)
@@ -3020,7 +3023,10 @@ error:
 			, getName(_format)
 			);
 
-		_numMips = calcNumMips(_numMips, _width, _height, _depth);
+		if (0 == _numMips)
+		{
+			_numMips = calcNumMips(_numMips, _width, _height, _depth);
+		}
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG)
 		&&  NULL != _mem)
@@ -3063,7 +3069,10 @@ error:
 			, getName(_format)
 			);
 
-		_numMips = calcNumMips(_numMips, _size, _size);
+		if (0 == _numMips)
+		{
+			_numMips = calcNumMips(_numMips, _size, _size);
+		}
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG)
 		&&  NULL != _mem)
