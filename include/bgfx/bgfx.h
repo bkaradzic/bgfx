@@ -285,6 +285,7 @@ namespace bgfx
 	///
 	struct OcclusionQueryResult
 	{
+		/// Occlusion query results:
 		enum Enum
 		{
 			Invisible, //!< Query failed test.
@@ -301,6 +302,7 @@ namespace bgfx
 	///
 	struct TopologyConvert
 	{
+		/// Topology conversion functions:
 		enum Enum
 		{
 			TriListFlipWinding,  //!< Flip winding order of triangle list.
@@ -312,23 +314,27 @@ namespace bgfx
 		};
 	};
 
+	/// Topology sort order.
+	///
+	/// @attention C99 equivalent is `bgfx_topology_sort_t`.
 	///
 	struct TopologySort
 	{
+		/// Topology sort order:
 		enum Enum
 		{
-			DirectionFrontToBackMin,
-			DirectionFrontToBackAvg,
-			DirectionFrontToBackMax,
-			DirectionBackToFrontMin,
-			DirectionBackToFrontAvg,
-			DirectionBackToFrontMax,
-			DistanceFrontToBackMin,
-			DistanceFrontToBackAvg,
-			DistanceFrontToBackMax,
-			DistanceBackToFrontMin,
-			DistanceBackToFrontAvg,
-			DistanceBackToFrontMax,
+			DirectionFrontToBackMin, //!<
+			DirectionFrontToBackAvg, //!<
+			DirectionFrontToBackMax, //!<
+			DirectionBackToFrontMin, //!<
+			DirectionBackToFrontAvg, //!<
+			DirectionBackToFrontMax, //!<
+			DistanceFrontToBackMin,  //!<
+			DistanceFrontToBackAvg,  //!<
+			DistanceFrontToBackMax,  //!<
+			DistanceBackToFrontMin,  //!<
+			DistanceBackToFrontAvg,  //!<
+			DistanceBackToFrontMax,  //!<
 
 			Count
 		};
@@ -835,7 +841,7 @@ namespace bgfx
 	/// @param[in] _dstSize Destination index buffer in bytes. It must be
 	///    large enough to contain output indices. If destination size is
 	///    insufficient index buffer will be truncated.
-	/// @param[in] _indices Source indices.
+	/// @param[in]_indices Source indices.
 	/// @param[in] _numIndices Number of input indices.
 	/// @param[in] _index32 Set to `true` if input indices are 32-bit.
 	///
@@ -853,6 +859,21 @@ namespace bgfx
 		);
 
 	/// Sort indices.
+	///
+	/// @param[in] _sort Sort order, see `TopologySort::Enum`.
+	/// @param[in] _dst Destination index buffer.
+	/// @param[in] _dstSize Destination index buffer in bytes. It must be
+	///    large enough to contain output indices. If destination size is
+	///    insufficient index buffer will be truncated.
+	/// @param[in] _dir Direction (vector must be normalized).
+	/// @param[in] _pos Position.
+	/// @param[in] _vertices Pointer to first vertex represented as
+	///    float x, y, z. Must contain at least number of vertices
+	///    referencende by index buffer.
+	/// @param[in] _stride Vertex stride.
+	/// @param[in] _indices Source indices.
+	/// @param[in] _numIndices Number of input indices.
+	/// @param[in] _index32 Set to `true` if input indices are 32-bit.
 	///
 	/// @attention C99 equivalent is `bgfx_topology_sort_tri_list`.
 	///
