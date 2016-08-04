@@ -2379,6 +2379,11 @@ namespace bgfx
 		return topologyConvert(_conversion, _dst, _dstSize, _indices, _numIndices, _index32, g_allocator);
 	}
 
+	void topologySortTriList(TopologySort::Enum _sort, void* _dst, uint32_t _dstSize, const float _dir[3], const float _pos[3], const void* _vertices, uint32_t _stride, const void* _indices, uint32_t _numIndices, bool _index32)
+	{
+		topologySortTriList(_sort, _dst, _dstSize, _dir, _pos, _vertices, _stride, _indices, _numIndices, _index32, g_allocator);
+	}
+
 	uint8_t getSupportedRenderers(RendererType::Enum _enum[RendererType::Count])
 	{
 		uint8_t num = 0;
@@ -3852,6 +3857,11 @@ uint32_t bgfx_topology_convert(bgfx_topology_convert_t _conversion, void* _dst, 
 	return bgfx::topologyConvert(bgfx::TopologyConvert::Enum(_conversion), _dst, _dstSize, _indices, _numIndices, _index32);
 }
 
+void bgfx_topology_sort_tri_list(bgfx_topology_sort_t _sort, void* _dst, uint32_t _dstSize, const float _dir[3], const float _pos[3], const void* _vertices, uint32_t _stride, const void* _indices, uint32_t _numIndices, bool _index32)
+{
+	bgfx::topologySortTriList(bgfx::TopologySort::Enum(_sort), _dst, _dstSize, _dir, _pos, _vertices, _stride, _indices, _numIndices, _index32);
+}
+
 BGFX_C_API void bgfx_image_swizzle_bgra8(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
 {
 	bgfx::imageSwizzleBgra8(_width, _height, _pitch, _src, _dst);
@@ -4625,6 +4635,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 	BGFX_IMPORT_FUNC(vertex_convert) \
 	BGFX_IMPORT_FUNC(weld_vertices) \
 	BGFX_IMPORT_FUNC(topology_convert) \
+	BGFX_IMPORT_FUNC(topology_sort_tri_list) \
 	BGFX_IMPORT_FUNC(image_swizzle_bgra8) \
 	BGFX_IMPORT_FUNC(image_rgba8_downsample_2x2) \
 	BGFX_IMPORT_FUNC(get_supported_renderers) \

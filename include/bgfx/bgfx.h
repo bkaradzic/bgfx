@@ -312,6 +312,28 @@ namespace bgfx
 		};
 	};
 
+	///
+	struct TopologySort
+	{
+		enum Enum
+		{
+			DirectionFrontToBackMin,
+			DirectionFrontToBackAvg,
+			DirectionFrontToBackMax,
+			DirectionBackToFrontMin,
+			DirectionBackToFrontAvg,
+			DirectionBackToFrontMax,
+			DistanceFrontToBackMin,
+			DistanceFrontToBackAvg,
+			DistanceFrontToBackMax,
+			DistanceBackToFrontMin,
+			DistanceBackToFrontAvg,
+			DistanceBackToFrontMax,
+
+			Count
+		};
+	};
+
 	static const uint16_t invalidHandle = UINT16_MAX;
 
 	BGFX_HANDLE(DynamicIndexBufferHandle);
@@ -825,6 +847,23 @@ namespace bgfx
 		  TopologyConvert::Enum _conversion
 		, void* _dst
 		, uint32_t _dstSize
+		, const void* _indices
+		, uint32_t _numIndices
+		, bool _index32
+		);
+
+	/// Sort indices.
+	///
+	/// @attention C99 equivalent is `bgfx_topology_sort_tri_list`.
+	///
+	void topologySortTriList(
+		  TopologySort::Enum _sort
+		, void* _dst
+		, uint32_t _dstSize
+		, const float _dir[3]
+		, const float _pos[3]
+		, const void* _vertices
+		, uint32_t _stride
 		, const void* _indices
 		, uint32_t _numIndices
 		, bool _index32

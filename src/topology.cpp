@@ -291,7 +291,7 @@ namespace bgfx
 
 	template<typename IndexT>
 	void topologySortTriList(
-		  Sort::Enum  _sort
+		  TopologySort::Enum  _sort
 		, IndexT* _dst
 		, uint32_t* _keys
 		, uint32_t* _values
@@ -310,18 +310,18 @@ namespace bgfx
 		switch (_sort)
 		{
 		default:
-		case Sort::DirectionFrontToBackMin: calcSortKeys<IndexT, distanceDir, fmin3, 0         >(_keys, _values, _dir, _vertices, _stride, _indices, _num); break;
-		case Sort::DirectionFrontToBackAvg: calcSortKeys<IndexT, distanceDir, favg3, 0         >(_keys, _values, _dir, _vertices, _stride, _indices, _num); break;
-		case Sort::DirectionFrontToBackMax: calcSortKeys<IndexT, distanceDir, fmax3, 0         >(_keys, _values, _dir, _vertices, _stride, _indices, _num); break;
-		case Sort::DirectionBackToFrontMin: calcSortKeys<IndexT, distanceDir, fmin3, UINT32_MAX>(_keys, _values, _dir, _vertices, _stride, _indices, _num); break;
-		case Sort::DirectionBackToFrontAvg: calcSortKeys<IndexT, distanceDir, favg3, UINT32_MAX>(_keys, _values, _dir, _vertices, _stride, _indices, _num); break;
-		case Sort::DirectionBackToFrontMax: calcSortKeys<IndexT, distanceDir, fmax3, UINT32_MAX>(_keys, _values, _dir, _vertices, _stride, _indices, _num); break;
-		case Sort::DistanceFrontToBackMin:  calcSortKeys<IndexT, distancePos, fmin3, 0         >(_keys, _values, _pos, _vertices, _stride, _indices, _num); break;
-		case Sort::DistanceFrontToBackAvg:  calcSortKeys<IndexT, distancePos, favg3, 0         >(_keys, _values, _pos, _vertices, _stride, _indices, _num); break;
-		case Sort::DistanceFrontToBackMax:  calcSortKeys<IndexT, distancePos, fmax3, 0         >(_keys, _values, _pos, _vertices, _stride, _indices, _num); break;
-		case Sort::DistanceBackToFrontMin:  calcSortKeys<IndexT, distancePos, fmin3, UINT32_MAX>(_keys, _values, _pos, _vertices, _stride, _indices, _num); break;
-		case Sort::DistanceBackToFrontAvg:  calcSortKeys<IndexT, distancePos, favg3, UINT32_MAX>(_keys, _values, _pos, _vertices, _stride, _indices, _num); break;
-		case Sort::DistanceBackToFrontMax:  calcSortKeys<IndexT, distancePos, fmax3, UINT32_MAX>(_keys, _values, _pos, _vertices, _stride, _indices, _num); break;
+		case TopologySort::DirectionFrontToBackMin: calcSortKeys<IndexT, distanceDir, fmin3, 0         >(_keys, _values, _dir, _vertices, _stride, _indices, _num); break;
+		case TopologySort::DirectionFrontToBackAvg: calcSortKeys<IndexT, distanceDir, favg3, 0         >(_keys, _values, _dir, _vertices, _stride, _indices, _num); break;
+		case TopologySort::DirectionFrontToBackMax: calcSortKeys<IndexT, distanceDir, fmax3, 0         >(_keys, _values, _dir, _vertices, _stride, _indices, _num); break;
+		case TopologySort::DirectionBackToFrontMin: calcSortKeys<IndexT, distanceDir, fmin3, UINT32_MAX>(_keys, _values, _dir, _vertices, _stride, _indices, _num); break;
+		case TopologySort::DirectionBackToFrontAvg: calcSortKeys<IndexT, distanceDir, favg3, UINT32_MAX>(_keys, _values, _dir, _vertices, _stride, _indices, _num); break;
+		case TopologySort::DirectionBackToFrontMax: calcSortKeys<IndexT, distanceDir, fmax3, UINT32_MAX>(_keys, _values, _dir, _vertices, _stride, _indices, _num); break;
+		case TopologySort::DistanceFrontToBackMin:  calcSortKeys<IndexT, distancePos, fmin3, 0         >(_keys, _values, _pos, _vertices, _stride, _indices, _num); break;
+		case TopologySort::DistanceFrontToBackAvg:  calcSortKeys<IndexT, distancePos, favg3, 0         >(_keys, _values, _pos, _vertices, _stride, _indices, _num); break;
+		case TopologySort::DistanceFrontToBackMax:  calcSortKeys<IndexT, distancePos, fmax3, 0         >(_keys, _values, _pos, _vertices, _stride, _indices, _num); break;
+		case TopologySort::DistanceBackToFrontMin:  calcSortKeys<IndexT, distancePos, fmin3, UINT32_MAX>(_keys, _values, _pos, _vertices, _stride, _indices, _num); break;
+		case TopologySort::DistanceBackToFrontAvg:  calcSortKeys<IndexT, distancePos, favg3, UINT32_MAX>(_keys, _values, _pos, _vertices, _stride, _indices, _num); break;
+		case TopologySort::DistanceBackToFrontMax:  calcSortKeys<IndexT, distancePos, fmax3, UINT32_MAX>(_keys, _values, _pos, _vertices, _stride, _indices, _num); break;
 		}
 
 		radixSort(_keys, _tempKeys, _values, _tempValues, _num);
@@ -343,7 +343,7 @@ namespace bgfx
 	}
 
 	void topologySortTriList(
-		  Sort::Enum  _sort
+		  TopologySort::Enum  _sort
 		, void*       _dst
 		, uint32_t    _dstSize
 		, const float _dir[3]

@@ -235,6 +235,25 @@ typedef enum bgfx_topology_convert
 
 } bgfx_topology_convert_t;
 
+typedef enum bgfx_topology_sort
+{
+    BGFX_TOPOLOGY_SORT_DIRECTION_FRONT_TO_BACK_MIN,
+    BGFX_TOPOLOGY_SORT_DIRECTION_FRONT_TO_BACK_AVG,
+    BGFX_TOPOLOGY_SORT_DIRECTION_FRONT_TO_BACK_MAX,
+    BGFX_TOPOLOGY_SORT_DIRECTION_BACK_TO_FRONT_MIN,
+    BGFX_TOPOLOGY_SORT_DIRECTION_BACK_TO_FRONT_AVG,
+    BGFX_TOPOLOGY_SORT_DIRECTION_BACK_TO_FRONT_MAX,
+    BGFX_TOPOLOGY_SORT_DISTANCE_FRONT_TO_BACK_MIN,
+    BGFX_TOPOLOGY_SORT_DISTANCE_FRONT_TO_BACK_AVG,
+    BGFX_TOPOLOGY_SORT_DISTANCE_FRONT_TO_BACK_MAX,
+    BGFX_TOPOLOGY_SORT_DISTANCE_BACK_TO_FRONT_MIN,
+    BGFX_TOPOLOGY_SORT_DISTANCE_BACK_TO_FRONT_AVG,
+    BGFX_TOPOLOGY_SORT_DISTANCE_BACK_TO_FRONT_MAX,
+
+    BGFX_TOPOLOGY_SORT_COUNT
+
+} bgfx_topology_sort_t;
+
 #define BGFX_HANDLE_T(_name) \
     typedef struct _name { uint16_t idx; } _name##_t
 
@@ -482,6 +501,12 @@ BGFX_C_API void bgfx_vertex_convert(const bgfx_vertex_decl_t* _destDecl, void* _
 
 /**/
 BGFX_C_API uint16_t bgfx_weld_vertices(uint16_t* _output, const bgfx_vertex_decl_t* _decl, const void* _data, uint16_t _num, float _epsilon);
+
+/**/
+BGFX_C_API uint32_t bgfx_topology_convert(bgfx_topology_convert_t _conversion, void* _dst, uint32_t _dstSize, const void* _indices, uint32_t _numIndices, bool _index32);
+
+/**/
+BGFX_C_API void bgfx_topology_sort_tri_list(bgfx_topology_sort_t _sort, void* _dst, uint32_t _dstSize, const float _dir[3], const float _pos[3], const void* _vertices, uint32_t _stride, const void* _indices, uint32_t _numIndices, bool _index32);
 
 /**/
 BGFX_C_API void bgfx_image_swizzle_bgra8(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst);
