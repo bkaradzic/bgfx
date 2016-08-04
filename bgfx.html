@@ -1528,22 +1528,184 @@ creating windows.</p>
 </p>
 </dd></dl>
 
+<dl class="class">
+<dt id="_CPPv2N4bgfx15TopologyConvertE">
+<span id="bgfx::TopologyConvert"></span><span class="target" id="bgfxstructbgfx_1_1_topology_convert"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">TopologyConvert</code><a class="headerlink" href="#_CPPv2N4bgfx15TopologyConvertE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Topology conversion function. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_topology_convert_t</span></code>. </dd>
+</dl>
+</p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Types</p>
+<dl class="type">
+<dt id="_CPPv2N4bgfx15TopologyConvert4EnumE">
+<span id="bgfx::TopologyConvert::Enum"></span><span class="target" id="bgfxstructbgfx_1_1_topology_convert_1acc544033627edfbc7c30a75a58ace153"></span><em class="property">enum </em><code class="descname">Enum</code><a class="headerlink" href="#_CPPv2N4bgfx15TopologyConvert4EnumE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Topology conversion functions: </p>
+<p><em>Values:</em></p>
+<dl class="member">
+<dt id="_CPPv2N4bgfx15TopologyConvert18TriListFlipWindingE">
+<span id="bgfx::TopologyConvert::TriListFlipWinding"></span><span class="target" id="bgfxstructbgfx_1_1_topology_convert_1acc544033627edfbc7c30a75a58ace153af2abfef860edaf36065da1623f581d8a"></span><code class="descname">TriListFlipWinding</code><a class="headerlink" href="#_CPPv2N4bgfx15TopologyConvert18TriListFlipWindingE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flip winding order of triangle list. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx15TopologyConvert17TriListToLineListE">
+<span id="bgfx::TopologyConvert::TriListToLineList"></span><span class="target" id="bgfxstructbgfx_1_1_topology_convert_1acc544033627edfbc7c30a75a58ace153a0cf4dc87b95b89d5633e151a286aaeb1"></span><code class="descname">TriListToLineList</code><a class="headerlink" href="#_CPPv2N4bgfx15TopologyConvert17TriListToLineListE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert triangle list to line list. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx15TopologyConvert17TriStripToTriListE">
+<span id="bgfx::TopologyConvert::TriStripToTriList"></span><span class="target" id="bgfxstructbgfx_1_1_topology_convert_1acc544033627edfbc7c30a75a58ace153a85625c725665071c56f097237a5d3d24"></span><code class="descname">TriStripToTriList</code><a class="headerlink" href="#_CPPv2N4bgfx15TopologyConvert17TriStripToTriListE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert triangle strip to triangle list. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx15TopologyConvert19LineStripToLineListE">
+<span id="bgfx::TopologyConvert::LineStripToLineList"></span><span class="target" id="bgfxstructbgfx_1_1_topology_convert_1acc544033627edfbc7c30a75a58ace153a769b8c438cb40e80f4cafa654dc91c82"></span><code class="descname">LineStripToLineList</code><a class="headerlink" href="#_CPPv2N4bgfx15TopologyConvert19LineStripToLineListE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert line strip to line list. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx15TopologyConvert5CountE">
+<span id="bgfx::TopologyConvert::Count"></span><span class="target" id="bgfxstructbgfx_1_1_topology_convert_1acc544033627edfbc7c30a75a58ace153a6e2c38c108d7e6d9c8468bc33c13203d"></span><code class="descname">Count</code><a class="headerlink" href="#_CPPv2N4bgfx15TopologyConvert5CountE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</dd></dl>
+
 <dl class="function">
 <dt id="_CPPv2N4bgfx15topologyConvertEN15TopologyConvert4EnumEPv8uint32_tPKv8uint32_tb">
-<span id="bgfx::topologyConvert__TopologyConvert::Enum.voidP.uint32_t.voidCP.uint32_t.b"></span><span class="target" id="bgfxnamespacebgfx_1a4faf0379f4f649826fa82616a84a4b13"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">topologyConvert</code><span class="sig-paren">(</span>TopologyConvert::Enum <em>_conversion</em>, void *<em>_dst</em>, uint32_t <em>_dstSize</em>, <em class="property">const</em> void *<em>_indices</em>, uint32_t <em>_numIndices</em>, bool <em>_index32</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15topologyConvertEN15TopologyConvert4EnumEPv8uint32_tPKv8uint32_tb" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::topologyConvert__TopologyConvert::Enum.voidP.uint32_t.voidCP.uint32_t.b"></span><span class="target" id="bgfxnamespacebgfx_1a4faf0379f4f649826fa82616a84a4b13"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">topologyConvert</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv2N4bgfx15TopologyConvertE" title="bgfx::TopologyConvert">TopologyConvert</a>::<a class="reference internal" href="#_CPPv2N4bgfx15TopologyConvert4EnumE" title="bgfx::TopologyConvert::Enum">Enum</a> <em>_conversion</em>, void *<em>_dst</em>, uint32_t <em>_dstSize</em>, <em class="property">const</em> void *<em>_indices</em>, uint32_t <em>_numIndices</em>, bool <em>_index32</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15topologyConvertEN15TopologyConvert4EnumEPv8uint32_tPKv8uint32_tb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert index buffer for use with different primitive topologies. </p>
 <p><dl class="docutils">
-<dt><strong>Return</strong></dt>
-<dd>Number of output indices after conversion.</dd>
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_topology_convert</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_conversion</span></code> - <p>Conversion type, see <code class="docutils literal"><span class="pre">TopologyConvert::Enum</span></code>. </p>
+<li><code class="first docutils literal"><span class="pre">_conversion</span></code> - <p>Conversion type, see <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_topology_convert_1acc544033627edfbc7c30a75a58ace153"><span><span class="pre">TopologyConvert::Enum</span></span></a></code>. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_dst</span></code> - <p>Destination index buffer. If this argument it NULL function will return number of indices after conversion. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_dstSize</span></code> - <p>Destination index buffer in bytes. It must be large enough to contain output indices. If destination size is insufficient index buffer will be truncated. </p>
+</li>
+<li><code class="first docutils literal"></code> - </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv2N4bgfx12TopologySortE">
+<span id="bgfx::TopologySort"></span><span class="target" id="bgfxstructbgfx_1_1_topology_sort"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">TopologySort</code><a class="headerlink" href="#_CPPv2N4bgfx12TopologySortE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Topology sort order. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_topology_sort_t</span></code>. </dd>
+</dl>
+</p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Types</p>
+<dl class="type">
+<dt id="_CPPv2N4bgfx12TopologySort4EnumE">
+<span id="bgfx::TopologySort::Enum"></span><span class="target" id="bgfxstructbgfx_1_1_topology_sort_1a0c0c13fee2b99a20af8486ee9f734af1"></span><em class="property">enum </em><code class="descname">Enum</code><a class="headerlink" href="#_CPPv2N4bgfx12TopologySort4EnumE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Topology sort order: </p>
+<p><em>Values:</em></p>
+<dl class="member">
+<dt id="_CPPv2N4bgfx12TopologySort23DirectionFrontToBackMinE">
+<span id="bgfx::TopologySort::DirectionFrontToBackMin"></span><span class="target" id="bgfxstructbgfx_1_1_topology_sort_1a0c0c13fee2b99a20af8486ee9f734af1a9f867f8e9b573e9ed8beae01282ee39b"></span><code class="descname">DirectionFrontToBackMin</code><a class="headerlink" href="#_CPPv2N4bgfx12TopologySort23DirectionFrontToBackMinE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx12TopologySort23DirectionFrontToBackAvgE">
+<span id="bgfx::TopologySort::DirectionFrontToBackAvg"></span><span class="target" id="bgfxstructbgfx_1_1_topology_sort_1a0c0c13fee2b99a20af8486ee9f734af1ac03583c71a152650400eab4eca63df2c"></span><code class="descname">DirectionFrontToBackAvg</code><a class="headerlink" href="#_CPPv2N4bgfx12TopologySort23DirectionFrontToBackAvgE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx12TopologySort23DirectionFrontToBackMaxE">
+<span id="bgfx::TopologySort::DirectionFrontToBackMax"></span><span class="target" id="bgfxstructbgfx_1_1_topology_sort_1a0c0c13fee2b99a20af8486ee9f734af1af5703228e2266d9a8d499bfe0aafecee"></span><code class="descname">DirectionFrontToBackMax</code><a class="headerlink" href="#_CPPv2N4bgfx12TopologySort23DirectionFrontToBackMaxE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx12TopologySort23DirectionBackToFrontMinE">
+<span id="bgfx::TopologySort::DirectionBackToFrontMin"></span><span class="target" id="bgfxstructbgfx_1_1_topology_sort_1a0c0c13fee2b99a20af8486ee9f734af1a5f27bd27ae8dc25200e8f626c727e92d"></span><code class="descname">DirectionBackToFrontMin</code><a class="headerlink" href="#_CPPv2N4bgfx12TopologySort23DirectionBackToFrontMinE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx12TopologySort23DirectionBackToFrontAvgE">
+<span id="bgfx::TopologySort::DirectionBackToFrontAvg"></span><span class="target" id="bgfxstructbgfx_1_1_topology_sort_1a0c0c13fee2b99a20af8486ee9f734af1a9e62475043c1158962cec9aa56c31447"></span><code class="descname">DirectionBackToFrontAvg</code><a class="headerlink" href="#_CPPv2N4bgfx12TopologySort23DirectionBackToFrontAvgE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx12TopologySort23DirectionBackToFrontMaxE">
+<span id="bgfx::TopologySort::DirectionBackToFrontMax"></span><span class="target" id="bgfxstructbgfx_1_1_topology_sort_1a0c0c13fee2b99a20af8486ee9f734af1acb9116e807b838f449db00449c4d1cbd"></span><code class="descname">DirectionBackToFrontMax</code><a class="headerlink" href="#_CPPv2N4bgfx12TopologySort23DirectionBackToFrontMaxE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx12TopologySort22DistanceFrontToBackMinE">
+<span id="bgfx::TopologySort::DistanceFrontToBackMin"></span><span class="target" id="bgfxstructbgfx_1_1_topology_sort_1a0c0c13fee2b99a20af8486ee9f734af1a757e30b6ef8ace5e308a9b6b3368fc68"></span><code class="descname">DistanceFrontToBackMin</code><a class="headerlink" href="#_CPPv2N4bgfx12TopologySort22DistanceFrontToBackMinE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx12TopologySort22DistanceFrontToBackAvgE">
+<span id="bgfx::TopologySort::DistanceFrontToBackAvg"></span><span class="target" id="bgfxstructbgfx_1_1_topology_sort_1a0c0c13fee2b99a20af8486ee9f734af1aaab1225281f707f4036ba88fc0066a22"></span><code class="descname">DistanceFrontToBackAvg</code><a class="headerlink" href="#_CPPv2N4bgfx12TopologySort22DistanceFrontToBackAvgE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx12TopologySort22DistanceFrontToBackMaxE">
+<span id="bgfx::TopologySort::DistanceFrontToBackMax"></span><span class="target" id="bgfxstructbgfx_1_1_topology_sort_1a0c0c13fee2b99a20af8486ee9f734af1a5c2f181aa35fd8ba9bdb0b0e637beaf1"></span><code class="descname">DistanceFrontToBackMax</code><a class="headerlink" href="#_CPPv2N4bgfx12TopologySort22DistanceFrontToBackMaxE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx12TopologySort22DistanceBackToFrontMinE">
+<span id="bgfx::TopologySort::DistanceBackToFrontMin"></span><span class="target" id="bgfxstructbgfx_1_1_topology_sort_1a0c0c13fee2b99a20af8486ee9f734af1af56dda1e9beba76ddd5419e25b87a0f0"></span><code class="descname">DistanceBackToFrontMin</code><a class="headerlink" href="#_CPPv2N4bgfx12TopologySort22DistanceBackToFrontMinE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx12TopologySort22DistanceBackToFrontAvgE">
+<span id="bgfx::TopologySort::DistanceBackToFrontAvg"></span><span class="target" id="bgfxstructbgfx_1_1_topology_sort_1a0c0c13fee2b99a20af8486ee9f734af1af8535c276d3b2fb92f55c46625142fe8"></span><code class="descname">DistanceBackToFrontAvg</code><a class="headerlink" href="#_CPPv2N4bgfx12TopologySort22DistanceBackToFrontAvgE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx12TopologySort22DistanceBackToFrontMaxE">
+<span id="bgfx::TopologySort::DistanceBackToFrontMax"></span><span class="target" id="bgfxstructbgfx_1_1_topology_sort_1a0c0c13fee2b99a20af8486ee9f734af1ae7af947893a64ae25f2c5308d768e84d"></span><code class="descname">DistanceBackToFrontMax</code><a class="headerlink" href="#_CPPv2N4bgfx12TopologySort22DistanceBackToFrontMaxE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx12TopologySort5CountE">
+<span id="bgfx::TopologySort::Count"></span><span class="target" id="bgfxstructbgfx_1_1_topology_sort_1a0c0c13fee2b99a20af8486ee9f734af1a112dbbc1ca07323eba9eb361cd1b603e"></span><code class="descname">Count</code><a class="headerlink" href="#_CPPv2N4bgfx12TopologySort5CountE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx19topologySortTriListEN12TopologySort4EnumEPv8uint32_tA3_KfA3_KfPKv8uint32_tPKv8uint32_tb">
+<span id="bgfx::topologySortTriList__TopologySort::Enum.voidP.uint32_t.floatCA.floatCA.voidCP.uint32_t.voidCP.uint32_t.b"></span><span class="target" id="bgfxnamespacebgfx_1af481c92a166263933b649eced719228d"></span>void <code class="descclassname">bgfx::</code><code class="descname">topologySortTriList</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv2N4bgfx12TopologySortE" title="bgfx::TopologySort">TopologySort</a>::<a class="reference internal" href="#_CPPv2N4bgfx12TopologySort4EnumE" title="bgfx::TopologySort::Enum">Enum</a> <em>_sort</em>, void *<em>_dst</em>, uint32_t <em>_dstSize</em>, <em class="property">const</em> float <em>_dir</em>[3], <em class="property">const</em> float <em>_pos</em>[3], <em class="property">const</em> void *<em>_vertices</em>, uint32_t <em>_stride</em>, <em class="property">const</em> void *<em>_indices</em>, uint32_t <em>_numIndices</em>, bool <em>_index32</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx19topologySortTriListEN12TopologySort4EnumEPv8uint32_tA3_KfA3_KfPKv8uint32_tPKv8uint32_tb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sort indices. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_topology_sort_tri_list</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_sort</span></code> - <p>Sort order, see <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_topology_sort_1a0c0c13fee2b99a20af8486ee9f734af1"><span><span class="pre">TopologySort::Enum</span></span></a></code>. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dst</span></code> - <p>Destination index buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstSize</span></code> - <p>Destination index buffer in bytes. It must be large enough to contain output indices. If destination size is insufficient index buffer will be truncated. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dir</span></code> - <p>Direction (vector must be normalized). </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_pos</span></code> - <p>Position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_vertices</span></code> - <p>Pointer to first vertex represented as float x, y, z. Must contain at least number of vertices referencende by index buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_stride</span></code> - <p>Vertex stride. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_indices</span></code> - <p>Source indices. </p>
 </li>
@@ -4818,9 +4980,53 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
+<dl class="class">
+<dt id="_CPPv2N4bgfx20OcclusionQueryResultE">
+<span id="bgfx::OcclusionQueryResult"></span><span class="target" id="bgfxstructbgfx_1_1_occlusion_query_result"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">OcclusionQueryResult</code><a class="headerlink" href="#_CPPv2N4bgfx20OcclusionQueryResultE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Occlusion query result. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_occlusion_query_result_t</span></code>. </dd>
+</dl>
+</p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Types</p>
+<dl class="type">
+<dt id="_CPPv2N4bgfx20OcclusionQueryResult4EnumE">
+<span id="bgfx::OcclusionQueryResult::Enum"></span><span class="target" id="bgfxstructbgfx_1_1_occlusion_query_result_1ac0c21b4efbf73289b19a035bd75b8e8c"></span><em class="property">enum </em><code class="descname">Enum</code><a class="headerlink" href="#_CPPv2N4bgfx20OcclusionQueryResult4EnumE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Occlusion query results: </p>
+<p><em>Values:</em></p>
+<dl class="member">
+<dt id="_CPPv2N4bgfx20OcclusionQueryResult9InvisibleE">
+<span id="bgfx::OcclusionQueryResult::Invisible"></span><span class="target" id="bgfxstructbgfx_1_1_occlusion_query_result_1ac0c21b4efbf73289b19a035bd75b8e8ca2364647c4ea4e3b1999f9602323fad4c"></span><code class="descname">Invisible</code><a class="headerlink" href="#_CPPv2N4bgfx20OcclusionQueryResult9InvisibleE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Query failed test. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx20OcclusionQueryResult7VisibleE">
+<span id="bgfx::OcclusionQueryResult::Visible"></span><span class="target" id="bgfxstructbgfx_1_1_occlusion_query_result_1ac0c21b4efbf73289b19a035bd75b8e8ca61b3fa648c1c7acc8a3b62e17920a798"></span><code class="descname">Visible</code><a class="headerlink" href="#_CPPv2N4bgfx20OcclusionQueryResult7VisibleE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Query passed test. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx20OcclusionQueryResult8NoResultE">
+<span id="bgfx::OcclusionQueryResult::NoResult"></span><span class="target" id="bgfxstructbgfx_1_1_occlusion_query_result_1ac0c21b4efbf73289b19a035bd75b8e8ca19ab4aa30c501d80de1ee07962bbe6be"></span><code class="descname">NoResult</code><a class="headerlink" href="#_CPPv2N4bgfx20OcclusionQueryResult8NoResultE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Query result is not available yet. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx20OcclusionQueryResult5CountE">
+<span id="bgfx::OcclusionQueryResult::Count"></span><span class="target" id="bgfxstructbgfx_1_1_occlusion_query_result_1ac0c21b4efbf73289b19a035bd75b8e8ca7d146e3527bb06d8c6b3934eead6b22a"></span><code class="descname">Count</code><a class="headerlink" href="#_CPPv2N4bgfx20OcclusionQueryResult5CountE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</dd></dl>
+
 <dl class="function">
 <dt id="_CPPv2N4bgfx9getResultE20OcclusionQueryHandle">
-<span id="bgfx::getResult__OcclusionQueryHandle"></span><span class="target" id="bgfxnamespacebgfx_1a7ba8bfe99238724b19795de8a04d7d3c"></span>OcclusionQueryResult::Enum <code class="descclassname">bgfx::</code><code class="descname">getResult</code><span class="sig-paren">(</span>OcclusionQueryHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx9getResultE20OcclusionQueryHandle" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::getResult__OcclusionQueryHandle"></span><span class="target" id="bgfxnamespacebgfx_1a7ba8bfe99238724b19795de8a04d7d3c"></span><a class="reference internal" href="#_CPPv2N4bgfx20OcclusionQueryResultE" title="bgfx::OcclusionQueryResult">OcclusionQueryResult</a>::<a class="reference internal" href="#_CPPv2N4bgfx20OcclusionQueryResult4EnumE" title="bgfx::OcclusionQueryResult::Enum">Enum</a> <code class="descclassname">bgfx::</code><code class="descname">getResult</code><span class="sig-paren">(</span>OcclusionQueryHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx9getResultE20OcclusionQueryHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieve occlusion query result from previous frame. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
