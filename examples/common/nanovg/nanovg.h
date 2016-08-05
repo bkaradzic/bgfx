@@ -19,6 +19,8 @@
 #ifndef NANOVG_H
 #define NANOVG_H
 
+#include "nanovg_bgfx.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -597,12 +599,6 @@ struct NVGparams {
 	void (*renderDelete)(void* uptr);
 };
 typedef struct NVGparams NVGparams;
-
-namespace bx { struct AllocatorI; }
-
-NVGcontext* nvgCreate(int edgeaa, unsigned char _viewId, bx::AllocatorI* _allocator = NULL);
-void nvgViewId(struct NVGcontext* ctx, unsigned char _viewId);
-void nvgDelete(struct NVGcontext* ctx);
 
 // Constructor and destructor, called by the render back-end.
 NVGcontext* nvgCreateInternal(NVGparams* params);
