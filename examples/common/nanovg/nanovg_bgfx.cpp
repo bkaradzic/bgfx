@@ -1088,6 +1088,10 @@ error:
 	return NULL;
 }
 
+NVGcontext* nvgCreate(int edgeaa, unsigned char _viewId) {
+  return nvgCreate(edgeaa, _viewId, NULL);
+}
+
 void nvgViewId(struct NVGcontext* ctx, unsigned char _viewId)
 {
 	struct NVGparams* params = nvgInternalParams(ctx);
