@@ -545,12 +545,12 @@ namespace
 		gl->th = handle;
 	}
 
-	static void nvgRenderViewport(void* _userPtr, int width, int height)
+	static void nvgRenderViewport(void* _userPtr, int width, int height, float devicePixelRatio)
 	{
 		struct GLNVGcontext* gl = (struct GLNVGcontext*)_userPtr;
 		gl->view[0] = (float)width;
 		gl->view[1] = (float)height;
-		bgfx::setViewRect(gl->m_viewId, 0, 0, width, height);
+		bgfx::setViewRect(gl->m_viewId, 0, 0, width * devicePixelRatio, height * devicePixelRatio);
 	}
 
 	static void fan(uint32_t _start, uint32_t _count)
@@ -1086,6 +1086,10 @@ error:
 	}
 
 	return NULL;
+}
+
+NVGcontext* nvgCreate(int edgeaa, unsigned char _viewId) {
+  return nvgCreate(edgeaa, _viewId, NULL);
 }
 
 void nvgViewId(struct NVGcontext* ctx, unsigned char _viewId)

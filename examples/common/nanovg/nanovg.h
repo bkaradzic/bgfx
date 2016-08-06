@@ -19,6 +19,8 @@
 #ifndef NANOVG_H
 #define NANOVG_H
 
+#include "nanovg_bgfx.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -588,7 +590,7 @@ struct NVGparams {
 	int (*renderDeleteTexture)(void* uptr, int image);
 	int (*renderUpdateTexture)(void* uptr, int image, int x, int y, int w, int h, const unsigned char* data);
 	int (*renderGetTextureSize)(void* uptr, int image, int* w, int* h);
-	void (*renderViewport)(void* uptr, int width, int height);
+	void (*renderViewport)(void* uptr, int width, int height, float devicePixelRatio);
 	void (*renderCancel)(void* uptr);
 	void (*renderFlush)(void* uptr);
 	void (*renderFill)(void* uptr, NVGpaint* paint, NVGscissor* scissor, float fringe, const float* bounds, const NVGpath* paths, int npaths);
@@ -597,12 +599,6 @@ struct NVGparams {
 	void (*renderDelete)(void* uptr);
 };
 typedef struct NVGparams NVGparams;
-
-namespace bx { struct AllocatorI; }
-
-NVGcontext* nvgCreate(int edgeaa, unsigned char _viewId, bx::AllocatorI* _allocator = NULL);
-void nvgViewId(struct NVGcontext* ctx, unsigned char _viewId);
-void nvgDelete(struct NVGcontext* ctx);
 
 // Constructor and destructor, called by the render back-end.
 NVGcontext* nvgCreateInternal(NVGparams* params);
