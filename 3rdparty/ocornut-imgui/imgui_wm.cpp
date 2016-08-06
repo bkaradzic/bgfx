@@ -575,8 +575,8 @@ namespace ImGuiWM
                 ImColor oSelectedTab(37, 37, 37, 255); // selected
                 ImColor oBorderColor(72, 72, 72, 255); // border
 
-                ImVec2 oRectMin = ImGui::GetItemBoxMin();
-                ImVec2 oRectMax = ImGui::GetItemBoxMax();
+                ImVec2 oRectMin = ImGui::GetItemRectMin();
+                ImVec2 oRectMax = ImGui::GetItemRectMax();
 
                 const float fOverlap = 10.f;
                 const float fSlopWidth = 30.f;
