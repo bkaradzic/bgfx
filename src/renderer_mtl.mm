@@ -3029,7 +3029,7 @@ namespace bgfx { namespace mtl
 						{
 							m_blitCommandEncoder.copyFromTexture(src.m_ptr, 0, 0, MTLOriginMake(blit.m_srcX, blit.m_srcY, blit.m_srcZ), MTLSizeMake(width, height, bx::uint32_imax(depth, 1)),
 																 dst.m_ptr, 0, 0, MTLOriginMake(blit.m_dstX, blit.m_dstY, blit.m_dstZ));
-							if (readBack) {
+							if (m_macOS11Runtime &&readBack) {
 								m_blitCommandEncoder.synchronizeResource(dst.m_ptr);
 							}
 						}
@@ -3037,7 +3037,7 @@ namespace bgfx { namespace mtl
 						{
 							m_blitCommandEncoder.copyFromTexture(src.m_ptr, blit.m_srcZ, blit.m_srcMip, MTLOriginMake(blit.m_srcX, blit.m_srcY, 0), MTLSizeMake(width, height, 1),
 																 dst.m_ptr, blit.m_dstZ, blit.m_dstMip, MTLOriginMake(blit.m_dstX, blit.m_dstY, 0));
-							if (readBack) {
+							if (m_macOS11Runtime && readBack) {
 								m_blitCommandEncoder.synchronizeTexture(dst.m_ptr, 0, blit.m_dstMip);
 							}
 						}
