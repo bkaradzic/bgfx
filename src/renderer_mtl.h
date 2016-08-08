@@ -87,6 +87,16 @@ namespace bgfx { namespace mtl
 				 destinationSlice:_destinationSlice destinationLevel:_destinationLevel destinationOrigin:_destinationOrigin];
 		}
 
+		void synchronizeTexture(id<MTLTexture> _texture, NSUInteger _slice, NSUInteger _level)
+		{
+			[m_obj synchronizeTexture:_texture slice:_slice level:_level];
+		}
+
+		void synchronizeResource(id<MTLResource> _resource)
+		{
+			[m_obj synchronizeResource:_resource];
+		}
+
 		void endEncoding()
 		{
 			[m_obj endEncoding];
