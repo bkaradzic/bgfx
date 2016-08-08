@@ -1488,7 +1488,7 @@ struct Imgui
 		}
 	}
 
-	uint8_t tabs(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, int32_t _height, int32_t _r, uint8_t _nTabs, uint8_t _nEnabled, va_list _argList)
+	uint8_t tabs(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, int32_t _height, int32_t _r, uint32_t _nTabs, uint32_t _nEnabled, va_list _argList)
 	{
 		const char* titles[16];
 		bool tabEnabled[16];
@@ -3469,7 +3469,7 @@ void imguiInput(const char* _label, char* _str, uint32_t _len, bool _enabled, Im
 	s_imgui.input(_label, _str, _len, _enabled, _align, _r);
 }
 
-uint8_t imguiTabs(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, int32_t _height, int32_t _r, uint8_t _nTabs, uint8_t _nEnabled, ...)
+uint8_t imguiTabs(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, int32_t _height, int32_t _r, uint32_t _nTabs, uint32_t _nEnabled, ...)
 {
 	va_list argList;
 	va_start(argList, _nEnabled);
@@ -3479,7 +3479,7 @@ uint8_t imguiTabs(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, int
 	return result;
 }
 
-uint8_t imguiTabs(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, int32_t _height, int32_t _r, uint8_t _nTabs, ...)
+uint8_t imguiTabs(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, int32_t _height, int32_t _r, uint32_t _nTabs, ...)
 {
 	va_list argList;
 	va_start(argList, _nTabs);
