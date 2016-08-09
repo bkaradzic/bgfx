@@ -61,7 +61,7 @@ void main()
 		float d = clamp( (sdroundrect(pt, u_extent, u_radius) + u_feather*0.5) / u_feather, 0.0, 1.0);
 		vec4 color = mix(u_innerCol, u_outerCol, d);
 		// Combine alpha
-		color.w *= strokeAlpha * scissor;
+		color *= strokeAlpha * scissor;
 		result = color;
 	}
 	else if (u_type == 1.0) // Image
@@ -69,9 +69,12 @@ void main()
 		// Calculate color from texture
 		vec2 pt = mul(u_paintMat, vec3(v_position, 1.0) ).xy / u_extent;
 		vec4 color = texture2D(s_tex, pt);
-		color = u_texType == 0.0 ? color : vec4(1.0, 1.0, 1.0, color.x);
+		if (u_texType == 1.0) color = vec4(color.xyz * color.w, color.w);
+		if (u_texType == 2.0) color = color.xxxx;
+		// Apply color tint and alpha
+		color *= u_innerCol;
 		// Combine alpha
-		color.w *= strokeAlpha * scissor;
+		color *= strokeAlpha * scissor;
 		result = color;
 	}
 	else if (u_type == 2.0) // Stencil fill
@@ -81,8 +84,9 @@ void main()
 	else if (u_type == 3.0) // Textured tris
 	{
 		vec4 color = texture2D(s_tex, v_texcoord0.xy);
-		color = u_texType == 0.0 ? color : vec4(1.0, 1.0, 1.0, color.x);
-		color.w *= scissor;
+		if (u_texType == 1.0) color = vec4(color.xyz * color.w, color.w);
+		if (u_texType == 2.0) color = color.xxxx;
+		color *= scissor;
 		result = color * u_innerCol;
 	}
 

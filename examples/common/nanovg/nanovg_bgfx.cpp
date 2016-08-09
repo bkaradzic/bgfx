@@ -395,29 +395,6 @@ namespace
 		return 1;
 	}
 
-	static void glnvg__xformIdentity(float* t)
-	{
-		t[0] = 1.0f; t[1] = 0.0f;
-		t[2] = 0.0f; t[3] = 1.0f;
-		t[4] = 0.0f; t[5] = 0.0f;
-	}
-
-	static void glnvg__xformInverse(float* inv, float* t)
-	{
-		double invdet, det = (double)t[0] * t[3] - (double)t[2] * t[1];
-		if (det > -1e-6 && det < 1e-6) {
-			glnvg__xformIdentity(t);
-			return;
-		}
-		invdet = 1.0 / det;
-		inv[0] = (float)(t[3] * invdet);
-		inv[2] = (float)(-t[2] * invdet);
-		inv[4] = (float)( ((double)t[2] * t[5] - (double)t[3] * t[4]) * invdet);
-		inv[1] = (float)(-t[1] * invdet);
-		inv[3] = (float)(t[0] * invdet);
-		inv[5] = (float)( ((double)t[1] * t[4] - (double)t[0] * t[5]) * invdet);
-	}
-
 	static void glnvg__xformToMat3x4(float* m3, float* t)
 	{
 		m3[0] = t[0];
@@ -434,6 +411,14 @@ namespace
 		m3[11] = 0.0f;
 	}
 
+	static NVGcolor glnvg__premulColor(NVGcolor c)
+	{
+		c.r *= c.a;
+		c.g *= c.a;
+		c.b *= c.a;
+		return c;
+	}
+
 	static int glnvg__convertPaint(struct GLNVGcontext* gl, struct GLNVGfragUniforms* frag, struct NVGpaint* paint,
 								   struct NVGscissor* scissor, float width, float fringe)
 	{
@@ -442,13 +427,10 @@ namespace
 
 		memset(frag, 0, sizeof(*frag) );
 
-		frag->innerCol = paint->innerColor;
-		frag->outerCol = paint->outerColor;
+		frag->innerCol = glnvg__premulColor(paint->innerColor);
+		frag->outerCol = glnvg__premulColor(paint->outerColor);
 
-		glnvg__xformInverse(invxform, paint->xform);
-		glnvg__xformToMat3x4(frag->paintMat, invxform);
-
-		if (scissor->extent[0] < 0.5f || scissor->extent[1] < 0.5f)
+		if (scissor->extent[0] < -0.5f || scissor->extent[1] < -0.5f)
 		{
 			memset(frag->scissorMat, 0, sizeof(frag->scissorMat) );
 			frag->scissorExt[0] = 1.0f;
@@ -458,7 +440,7 @@ namespace
 		}
 		else
 		{
-			glnvg__xformInverse(invxform, scissor->xform);
+			nvgTransformInverse(invxform, scissor->xform);
 			glnvg__xformToMat3x4(frag->scissorMat, invxform);
 			frag->scissorExt[0] = scissor->extent[0];
 			frag->scissorExt[1] = scissor->extent[1];
@@ -476,8 +458,12 @@ namespace
 			{
 				return 0;
 			}
+			nvgTransformInverse(invxform, paint->xform);
 			frag->type = NSVG_SHADER_FILLIMG;
-			frag->texType = tex->type == NVG_TEXTURE_RGBA ? 0.0f : 1.0f;
+			if (tex->type == NVG_TEXTURE_RGBA)
+				frag->texType = (tex->flags & NVG_IMAGE_PREMULTIPLIED) ? 0.0f : 1.0f;
+			else
+				frag->texType = 2.0f;
 			gl->th = tex->id;
 		}
 		else
@@ -485,7 +471,10 @@ namespace
 			frag->type = NSVG_SHADER_FILLGRAD;
 			frag->radius  = paint->radius;
 			frag->feather = paint->feather;
+			nvgTransformInverse(invxform, paint->xform);
 		}
+
+		glnvg__xformToMat3x4(frag->paintMat, invxform);
 
 		return 1;
 	}
@@ -725,7 +714,7 @@ namespace
 
 			if (0 == gl->state)
 			{
-				gl->state = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
+				gl->state = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_INV_SRC_ALPHA);
 			}
 
 			gl->state |= 0
@@ -1121,8 +1110,7 @@ NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* ctx, int width,
 																				 int height, int imageFlags) {
 	NVGLUframebuffer* framebuffer = new NVGLUframebuffer;
 	framebuffer->ctx = ctx;
-	framebuffer->image = nvgCreateImageRGBA(ctx, width, height,
-																					imageFlags, NULL);
+	framebuffer->image = nvgCreateImageRGBA(ctx, width, height, imageFlags | NVG_IMAGE_PREMULTIPLIED, NULL);
 	bgfx::TextureHandle texture = nvglImageHandle(ctx, framebuffer->image);
 	if (!bgfx::isValid(texture)) {
 		nvgluDeleteFramebuffer(framebuffer);
