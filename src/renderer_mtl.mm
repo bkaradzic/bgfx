@@ -3023,23 +3023,29 @@ namespace bgfx { namespace mtl
 						uint32_t width     = bx::uint32_min(srcWidth,  dstWidth);
 						uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
 						uint32_t depth     = bx::uint32_min(srcDepth,  dstDepth);
+#if BX_PLATFORM_OSX
 						bool     readBack  = !!(dst.m_flags & BGFX_TEXTURE_READ_BACK);
+#endif  // BX_PLATFORM_OSX
 
 						if ( MTLTextureType3D == src.m_ptr.textureType())
 						{
 							m_blitCommandEncoder.copyFromTexture(src.m_ptr, 0, 0, MTLOriginMake(blit.m_srcX, blit.m_srcY, blit.m_srcZ), MTLSizeMake(width, height, bx::uint32_imax(depth, 1)),
 																 dst.m_ptr, 0, 0, MTLOriginMake(blit.m_dstX, blit.m_dstY, blit.m_dstZ));
+#if BX_PLATFORM_OSX
 							if (m_macOS11Runtime &&readBack) {
 								m_blitCommandEncoder.synchronizeResource(dst.m_ptr);
 							}
+#endif  // BX_PLATFORM_OSX
 						}
 						else
 						{
 							m_blitCommandEncoder.copyFromTexture(src.m_ptr, blit.m_srcZ, blit.m_srcMip, MTLOriginMake(blit.m_srcX, blit.m_srcY, 0), MTLSizeMake(width, height, 1),
 																 dst.m_ptr, blit.m_dstZ, blit.m_dstMip, MTLOriginMake(blit.m_dstX, blit.m_dstY, 0));
+#if BX_PLATFORM_OSX
 							if (m_macOS11Runtime && readBack) {
 								m_blitCommandEncoder.synchronizeTexture(dst.m_ptr, 0, blit.m_dstMip);
 							}
+#endif  // BX_PLATFORM_OSX
 						}
 					}
 
