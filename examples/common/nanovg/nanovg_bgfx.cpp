@@ -693,30 +693,26 @@ namespace
 		}
 	}
 
+	static const uint64_t s_blend[] =
+	{
+		BGFX_STATE_BLEND_ZERO,
+		BGFX_STATE_BLEND_ONE,
+		BGFX_STATE_BLEND_SRC_COLOR,
+		BGFX_STATE_BLEND_INV_SRC_COLOR,
+		BGFX_STATE_BLEND_DST_COLOR,
+		BGFX_STATE_BLEND_INV_DST_COLOR,
+		BGFX_STATE_BLEND_SRC_ALPHA,
+		BGFX_STATE_BLEND_INV_SRC_ALPHA,
+		BGFX_STATE_BLEND_DST_ALPHA,
+		BGFX_STATE_BLEND_INV_DST_ALPHA,
+		BGFX_STATE_BLEND_SRC_ALPHA_SAT,
+	};
+
 	static uint64_t glnvg_convertBlendFuncFactor(int factor)
 	{
-		if (factor == NVG_ZERO)
-			return BGFX_STATE_BLEND_ZERO;
-		if (factor == NVG_ONE)
-			return BGFX_STATE_BLEND_ONE;
-		if (factor == NVG_SRC_COLOR)
-			return BGFX_STATE_BLEND_SRC_COLOR;
-		if (factor == NVG_ONE_MINUS_SRC_COLOR)
-			return BGFX_STATE_BLEND_INV_SRC_COLOR;
-		if (factor == NVG_DST_COLOR)
-			return BGFX_STATE_BLEND_DST_COLOR;
-		if (factor == NVG_ONE_MINUS_DST_COLOR)
-			return BGFX_STATE_BLEND_INV_DST_COLOR;
-		if (factor == NVG_SRC_ALPHA)
-			return BGFX_STATE_BLEND_SRC_ALPHA;
-		if (factor == NVG_ONE_MINUS_SRC_ALPHA)
-			return BGFX_STATE_BLEND_INV_SRC_ALPHA;
-		if (factor == NVG_DST_ALPHA)
-			return BGFX_STATE_BLEND_DST_ALPHA;
-		if (factor == NVG_ONE_MINUS_DST_ALPHA)
-			return BGFX_STATE_BLEND_INV_DST_ALPHA;
-		if (factor == NVG_SRC_ALPHA_SATURATE)
-			return BGFX_STATE_BLEND_SRC_ALPHA_SAT;
+		const uint32_t numtz = bx::uint32_cnttz(factor);
+		const uint32_t idx   = bx::uint32_min(numtz, BX_COUNTOF(s_blend)-1);
+		return s_blend[idx];
 	}
 
 	static uint64_t glnvg__blendCompositeOperation(NVGcompositeOperationState op)
