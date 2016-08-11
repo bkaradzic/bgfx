@@ -23,7 +23,6 @@ typedef struct NVGLUframebuffer NVGLUframebuffer;
 NVGcontext* nvgCreate(int edgeaa, unsigned char _viewId, bx::AllocatorI* _allocator);
 NVGcontext* nvgCreate(int edgeaa, unsigned char _viewId);
 void nvgDelete(struct NVGcontext* ctx);
-void nvgState(struct NVGcontext* ctx, uint64_t state);
 uint8_t nvgViewId(struct NVGcontext* ctx);
 void nvgViewId(struct NVGcontext* ctx, unsigned char _viewId);
 

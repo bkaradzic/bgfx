@@ -537,7 +537,6 @@ namespace
 	static void nvgRenderViewport(void* _userPtr, int width, int height, float devicePixelRatio)
 	{
 		struct GLNVGcontext* gl = (struct GLNVGcontext*)_userPtr;
-		gl->state = 0;
 		gl->view[0] = (float)width;
 		gl->view[1] = (float)height;
 		bgfx::setViewRect(gl->m_viewId, 0, 0, width * devicePixelRatio, height * devicePixelRatio);
@@ -694,7 +693,42 @@ namespace
 		}
 	}
 
-	static void nvgRenderFlush(void* _userPtr)
+	static uint64_t glnvg_convertBlendFuncFactor(int factor)
+	{
+		if (factor == NVG_ZERO)
+			return BGFX_STATE_BLEND_ZERO;
+		if (factor == NVG_ONE)
+			return BGFX_STATE_BLEND_ONE;
+		if (factor == NVG_SRC_COLOR)
+			return BGFX_STATE_BLEND_SRC_COLOR;
+		if (factor == NVG_ONE_MINUS_SRC_COLOR)
+			return BGFX_STATE_BLEND_INV_SRC_COLOR;
+		if (factor == NVG_DST_COLOR)
+			return BGFX_STATE_BLEND_DST_COLOR;
+		if (factor == NVG_ONE_MINUS_DST_COLOR)
+			return BGFX_STATE_BLEND_INV_DST_COLOR;
+		if (factor == NVG_SRC_ALPHA)
+			return BGFX_STATE_BLEND_SRC_ALPHA;
+		if (factor == NVG_ONE_MINUS_SRC_ALPHA)
+			return BGFX_STATE_BLEND_INV_SRC_ALPHA;
+		if (factor == NVG_DST_ALPHA)
+			return BGFX_STATE_BLEND_DST_ALPHA;
+		if (factor == NVG_ONE_MINUS_DST_ALPHA)
+			return BGFX_STATE_BLEND_INV_DST_ALPHA;
+		if (factor == NVG_SRC_ALPHA_SATURATE)
+			return BGFX_STATE_BLEND_SRC_ALPHA_SAT;
+	}
+
+	static uint64_t glnvg__blendCompositeOperation(NVGcompositeOperationState op)
+	{
+		return BGFX_STATE_BLEND_FUNC_SEPARATE(
+				glnvg_convertBlendFuncFactor(op.srcRGB),
+				glnvg_convertBlendFuncFactor(op.dstRGB),
+				glnvg_convertBlendFuncFactor(op.srcAlpha),
+				glnvg_convertBlendFuncFactor(op.dstAlpha));
+	}
+
+	static void nvgRenderFlush(void* _userPtr, NVGcompositeOperationState compositeOperation)
 	{
 		struct GLNVGcontext* gl = (struct GLNVGcontext*)_userPtr;
 
@@ -712,12 +746,7 @@ namespace
 
 			memcpy(gl->tvb.data, gl->verts, gl->nverts * sizeof(struct NVGvertex) );
 
-			if (0 == gl->state)
-			{
-				gl->state = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_INV_SRC_ALPHA);
-			}
-
-			gl->state |= 0
+			gl->state = glnvg__blendCompositeOperation(compositeOperation)
 				| BGFX_STATE_RGB_WRITE
 				| BGFX_STATE_ALPHA_WRITE
 				;
@@ -1078,13 +1107,6 @@ void nvgDelete(struct NVGcontext* ctx)
 	nvgDeleteInternal(ctx);
 }
 
-void nvgState(struct NVGcontext* ctx, uint64_t state)
-{
-  struct NVGparams* params = nvgInternalParams(ctx);
-  struct GLNVGcontext* gl = (struct GLNVGcontext*)params->userPtr;
-  gl->state = state;
-}
-
 uint8_t nvgViewId(struct NVGcontext* ctx)
 {
 	struct NVGparams* params = nvgInternalParams(ctx);
@@ -1144,9 +1166,9 @@ void nvgluBindFramebuffer(NVGLUframebuffer* framebuffer) {
 void nvgluDeleteFramebuffer(NVGLUframebuffer* framebuffer) {
 	if (framebuffer == NULL)
 		return;
-	if (framebuffer->image >= 0)
-		nvgDeleteImage(framebuffer->ctx, framebuffer->image);
 	if (bgfx::isValid(framebuffer->handle))
 		bgfx::destroyFrameBuffer(framebuffer->handle);
+	if (framebuffer->image > 0)
+		nvgDeleteImage(framebuffer->ctx, framebuffer->image);
 	delete framebuffer;
 }
