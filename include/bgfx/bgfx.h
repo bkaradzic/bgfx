@@ -1102,7 +1102,7 @@ namespace bgfx
 	///
 	void dbgTextClear(uint8_t _attr = 0, bool _small = false);
 
-	/// Print into internal debug text character-buffer.
+	/// Print into internal debug text character-buffer (VGA-compatible text mode).
 	///
 	/// @param[in] _x    X position from top-left.
 	/// @param[in] _y    Y position from top-left.
