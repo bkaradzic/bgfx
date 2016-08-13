@@ -1850,7 +1850,7 @@ namespace bgfx
 	///
 	/// @returns Handle to frame buffer object.
 	///
-	/// @attention C99 equivalent is `bgfx_create_frame_buffer_from_handles`.
+	/// @attention C99 equivalent is `bgfx_create_frame_buffer_from_attachment`.
 	///
 	FrameBufferHandle createFrameBuffer(
 		  uint8_t _num
