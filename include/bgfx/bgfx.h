@@ -1102,7 +1102,13 @@ namespace bgfx
 	///
 	void dbgTextClear(uint8_t _attr = 0, bool _small = false);
 
-	/// Print into internal debug text buffer.
+	/// Print into internal debug text character-buffer.
+	///
+	/// @param[in] _x    X position from top-left.
+	/// @param[in] _y    Y position from top-left.
+	/// @param[in] _attr Color palette. Where top 4-bits represent index of background, and bottom
+	///   4-bits represent foreground color from standard VGA text palette.
+	/// @param[in] _format `printf` style format.
 	///
 	/// @attention C99 equivalent is `bgfx_dbg_text_printf`.
 	///
