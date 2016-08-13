@@ -714,10 +714,22 @@
 <dl class="function">
 <dt id="_CPPv2N4bgfx13dbgTextPrintfE8uint16_t8uint16_t7uint8_tPKcz">
 <span id="bgfx::dbgTextPrintf__uint16_t.uint16_t.uint8_t.cCP.z"></span><span class="target" id="bgfxnamespacebgfx_1a2d1c6e189bbfdc2b2458d152a2a08245"></span>void <code class="descclassname">bgfx::</code><code class="descname">dbgTextPrintf</code><span class="sig-paren">(</span>uint16_t <em>_x</em>, uint16_t <em>_y</em>, uint8_t <em>_attr</em>, <em class="property">const</em> char *<em>_format</em>, ...<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx13dbgTextPrintfE8uint16_t8uint16_t7uint8_tPKcz" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print into internal debug text buffer. </p>
+<dd><p>Print into internal debug text character-buffer (VGA-compatible text mode). </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_dbg_text_printf</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_x</span></code> - <p>X position from top-left. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_y</span></code> - <p>Y position from top-left. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_attr</span></code> - <p>Color palette. Where top 4-bits represent index of background, and bottom 4-bits represent foreground color from standard VGA text palette. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p><code class="docutils literal"><span class="pre">printf</span></code> style format.</p>
+</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
