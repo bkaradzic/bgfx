@@ -101,7 +101,24 @@ namespace bgfx { namespace gl
 			NSOpenGLView* glView = [[NSOpenGLView alloc] initWithFrame:glViewRect pixelFormat:pixelFormat];
 
 			[pixelFormat release];
-			[nsWindow setContentView:glView];
+            // GLFW creates a helper contentView that handles things like keyboard and drag and
+            // drop events. We don't want to clobber that view if it exists. Instead we just
+            // add ourselves as a subview and make the view resize automatically.
+            NSView *contentView = [nsWindow contentView];
+            if( contentView != nil )
+            {
+                [glView setAutoresizingMask:( NSViewHeightSizable |
+                                              NSViewWidthSizable |
+                                              NSViewMinXMargin |
+                                              NSViewMaxXMargin |
+                                              NSViewMinYMargin |
+                                              NSViewMaxYMargin )];
+                [contentView addSubview:glView];
+            }
+            else
+            {
+                [nsWindow setContentView:glView];
+            }
 
 			NSOpenGLContext* glContext = [glView openGLContext];
 			BGFX_FATAL(NULL != glContext, Fatal::UnableToInitialize, "Failed to initialize GL context.");
@@ -109,6 +126,12 @@ namespace bgfx { namespace gl
 			[glContext makeCurrentContext];
 			GLint interval = 0;
 			[glContext setValues:&interval forParameter:NSOpenGLCPSwapInterval];
+            
+            // When initializing NSOpenGLView programatically (as we are), this sometimes doesn't
+            // get hooked up properly (especially when there are existing window elements). This ensures
+            // we are valid. Otherwise, you'll probably get a GL_INVALID_FRAMEBUFFER_OPERATION when
+            // trying to glClear() for the first time.
+            [glContext setView:glView];
 
 			m_view    = glView;
 			m_context = glContext;
