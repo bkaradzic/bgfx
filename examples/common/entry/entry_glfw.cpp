@@ -7,8 +7,21 @@
 
 #if ENTRY_CONFIG_USE_GLFW
 
+#if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#	define GLFW_EXPOSE_NATIVE_X11
+#	define GLFW_EXPOSE_NATIVE_GLX
+#elif BX_PLATFORM_OSX
+#	define GLFW_EXPOSE_NATIVE_COCOA
+#	define GLFW_EXPOSE_NATIVE_NSGL
+#elif BX_PLATFORM_WINDOWS
+#	define GLFW_EXPOSE_NATIVE_WIN32
+#	define GLFW_EXPOSE_NATIVE_WGL
+#endif //
+
 #define GLFW_DLL
 #include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
+
 #include <bgfx/bgfxplatform.h>
 #include "dbg.h"
 
@@ -17,6 +30,27 @@
 
 namespace entry
 {
+	inline void glfwSetWindow(GLFWwindow* _window)
+	{
+		bgfx::PlatformData pd;
+#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+		pd.ndt          = glfwGetX11Display();
+		pd.nwh          = (void*)(uintptr_t)glfwGetGLXWindow(_window);
+		pd.context      = glfwGetGLXContext(_window);
+#	elif BX_PLATFORM_OSX
+		pd.ndt          = NULL;
+		pd.nwh          = glfwGetCocoaWindow(_window);
+		pd.context      = glfwGetNSGLContext(_window);
+#	elif BX_PLATFORM_WINDOWS
+		pd.ndt          = NULL;
+		pd.nwh          = glfwGetWin32Window(_window);
+		pd.context      = NULL;
+#	endif // BX_PLATFORM_WINDOWS
+		pd.backBuffer   = NULL;
+		pd.backBufferDS = NULL;
+		bgfx::setPlatformData(pd);
+	}
+
 	static void errorCb(int _error, const char* _description)
 	{
 		DBG("GLFW error %d: %s", _error, _description);
@@ -38,7 +72,7 @@ namespace entry
 
 			glfwSetKeyCallback(m_window, keyCb);
 
-			bgfx::glfwSetWindow(m_window);
+			glfwSetWindow(m_window);
 			int result = main(_argc, _argv);
 
 			glfwDestroyWindow(m_window);

@@ -15,10 +15,10 @@
 
 #include <SDL2/SDL.h>
 
-BX_PRAGMA_DIAGNOSTIC_PUSH_CLANG()
+BX_PRAGMA_DIAGNOSTIC_PUSH()
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wextern-c-compat")
 #include <SDL2/SDL_syswm.h>
-BX_PRAGMA_DIAGNOSTIC_POP_CLANG()
+BX_PRAGMA_DIAGNOSTIC_POP()
 
 #include <bgfx/bgfxplatform.h>
 #if defined(None) // X11 defines this...
@@ -35,6 +35,37 @@ BX_PRAGMA_DIAGNOSTIC_POP_CLANG()
 
 namespace entry
 {
+	inline bool sdlSetWindow(SDL_Window* _window)
+	{
+		SDL_SysWMinfo wmi;
+		SDL_VERSION(&wmi.version);
+		if (!SDL_GetWindowWMInfo(_window, &wmi) )
+		{
+			return false;
+		}
+
+		bgfx::PlatformData pd;
+#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+		pd.ndt          = wmi.info.x11.display;
+		pd.nwh          = (void*)(uintptr_t)wmi.info.x11.window;
+#	elif BX_PLATFORM_OSX
+		pd.ndt          = NULL;
+		pd.nwh          = wmi.info.cocoa.window;
+#	elif BX_PLATFORM_WINDOWS
+		pd.ndt          = NULL;
+		pd.nwh          = wmi.info.win.window;
+#	elif BX_PLATFORM_STEAMLINK
+		pd.ndt          = wmi.info.vivante.display;
+		pd.nwh          = wmi.info.vivante.window;
+#	endif // BX_PLATFORM_
+		pd.context      = NULL;
+		pd.backBuffer   = NULL;
+		pd.backBufferDS = NULL;
+		bgfx::setPlatformData(pd);
+
+		return true;
+	}
+
 	static uint8_t translateKeyModifiers(uint16_t _sdl)
 	{
 		uint8_t modifiers = 0;
@@ -446,7 +477,7 @@ namespace entry
 
 			s_userEventStart = SDL_RegisterEvents(7);
 
-			bgfx::sdlSetWindow(m_window[0]);
+			sdlSetWindow(m_window[0]);
 			bgfx::renderFrame();
 
 			m_thread.init(MainThreadEntry::threadFunc, &m_mte);
