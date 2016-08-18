@@ -17,6 +17,7 @@
 #include <android/looper.h>
 #include <android/window.h>
 #include <android_native_app_glue.h>
+#include <android/native_window.h>
 
 extern "C"
 {
@@ -28,6 +29,18 @@ extern "C"
 
 namespace entry
 {
+	///
+	inline void androidSetWindow(::ANativeWindow* _window)
+	{
+		bgfx::PlatformData pd;
+		pd.ndt          = NULL;
+		pd.nwh          = _window;
+		pd.context      = NULL;
+		pd.backBuffer   = NULL;
+		pd.backBufferDS = NULL;
+		bgfx::setPlatformData(pd);
+	}
+
 	struct GamepadRemap
 	{
 		uint16_t  m_keyCode;
@@ -142,7 +155,7 @@ namespace entry
 					if (m_window != m_app->window)
 					{
 						m_window = m_app->window;
-						bgfx::androidSetWindow(m_window);
+						androidSetWindow(m_window);
 
 						int32_t width  = ANativeWindow_getWidth(m_window);
 						int32_t height = ANativeWindow_getHeight(m_window);

@@ -9,6 +9,7 @@
 
 #include <bgfx/bgfxplatform.h>
 #include <bx/thread.h>
+#include <Unknwn.h>
 
 using namespace Windows::ApplicationModel;
 using namespace Windows::ApplicationModel::Core;
@@ -25,6 +26,18 @@ using namespace Platform;
 static char* g_emptyArgs[] = { "" };
 static entry::WindowHandle g_defaultWindow = { 0 };
 static entry::EventQueue g_eventQueue;
+
+///
+inline void winrtSetWindow(::IUnknown* _window)
+{
+	bgfx::PlatformData pd;
+	pd.ndt          = NULL;
+	pd.nwh          = _window;
+	pd.context      = NULL;
+	pd.backBuffer   = NULL;
+	pd.backBufferDS = NULL;
+	bgfx::setPlatformData(pd);
+}
 
 ref class App sealed : public IFrameworkView
 {
@@ -56,7 +69,7 @@ public:
 		window->Closed += ref new
 			TypedEventHandler<CoreWindow^, CoreWindowEventArgs^>(this, &App::OnWindowClosed);
 
-		bgfx::winrtSetWindow(reinterpret_cast<IUnknown*>(window) );
+		winrtSetWindow(reinterpret_cast<IUnknown*>(window) );
 	}
 
 	virtual void Load(String^ entryPoint)

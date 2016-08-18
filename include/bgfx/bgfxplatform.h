@@ -129,61 +129,7 @@ namespace bgfx
 
 } // namespace bgfx
 
-#if BX_PLATFORM_ANDROID
-#	include <android/native_window.h>
-
-namespace bgfx
-{
-	///
-	inline void androidSetWindow(::ANativeWindow* _window)
-	{
-		PlatformData pd;
-		pd.ndt          = NULL;
-		pd.nwh          = _window;
-		pd.context      = NULL;
-		pd.backBuffer   = NULL;
-		pd.backBufferDS = NULL;
-		setPlatformData(pd);
-	}
-
-} // namespace bgfx
-
-#elif BX_PLATFORM_IOS
-namespace bgfx
-{
-	///
-	inline void iosSetEaglLayer(void* _window)
-	{
-		PlatformData pd;
-		pd.ndt          = NULL;
-		pd.nwh          = _window;
-		pd.context      = NULL;
-		pd.backBuffer   = NULL;
-		pd.backBufferDS = NULL;
-		setPlatformData(pd);
-	}
-
-} // namespace bgfx
-
-#elif BX_PLATFORM_BSD || BX_PLATFORM_LINUX || BX_PLATFORM_RPI
-
-namespace bgfx
-{
-	///
-	inline void x11SetDisplayWindow(void* _display, uint32_t _window, void* _glx = NULL)
-	{
-		PlatformData pd;
-		pd.ndt          = _display;
-		pd.nwh          = (void*)(uintptr_t)_window;
-		pd.context      = _glx;
-		pd.backBuffer   = NULL;
-		pd.backBufferDS = NULL;
-		setPlatformData(pd);
-	}
-
-} // namespace bgfx
-
-#elif BX_PLATFORM_NACL
+#if BX_PLATFORM_NACL
 #	include <ppapi/c/ppb_graphics_3d.h>
 #	include <ppapi/c/ppb_instance.h>
 
@@ -193,61 +139,6 @@ namespace bgfx
 
 	///
 	bool naclSetInterfaces(::PP_Instance, const ::PPB_Instance*, const ::PPB_Graphics3D*, PostSwapBuffersFn);
-
-} // namespace bgfx
-
-#elif BX_PLATFORM_OSX
-namespace bgfx
-{
-	///
-	inline void osxSetNSWindow(void* _window, void* _nsgl = NULL)
-	{
-		PlatformData pd;
-		pd.ndt          = NULL;
-		pd.nwh          = _window;
-		pd.context      = _nsgl;
-		pd.backBuffer   = NULL;
-		pd.backBufferDS = NULL;
-		setPlatformData(pd);
-	}
-
-} // namespace bgfx
-
-#elif BX_PLATFORM_WINDOWS
-#	include <windows.h>
-
-namespace bgfx
-{
-	///
-	inline void winSetHwnd(::HWND _window)
-	{
-		PlatformData pd;
-		pd.ndt          = NULL;
-		pd.nwh          = _window;
-		pd.context      = NULL;
-		pd.backBuffer   = NULL;
-		pd.backBufferDS = NULL;
-		setPlatformData(pd);
-	}
-
-} // namespace bgfx
-
-#elif BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT
-#   include <Unknwn.h>
-
-namespace bgfx
-{
-	///
-	inline void winrtSetWindow(::IUnknown* _window)
-	{
-		PlatformData pd;
-		pd.ndt          = NULL;
-		pd.nwh          = _window;
-		pd.context      = NULL;
-		pd.backBuffer   = NULL;
-		pd.backBufferDS = NULL;
-		setPlatformData(pd);
-	}
 
 } // namespace bgfx
 

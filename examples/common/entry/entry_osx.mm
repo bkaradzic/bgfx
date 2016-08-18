@@ -46,6 +46,18 @@
 
 namespace entry
 {
+	///
+	inline void osxSetNSWindow(void* _window, void* _nsgl = NULL)
+	{
+		bgfx::PlatformData pd;
+		pd.ndt          = NULL;
+		pd.nwh          = _window;
+		pd.context      = _nsgl;
+		pd.backBuffer   = NULL;
+		pd.backBufferDS = NULL;
+		bgfx::setPlatformData(pd);
+	}
+
 	static WindowHandle s_defaultWindow = { 0 };	// TODO: Add support for more windows
 	static uint8_t s_translateKey[256];
 
@@ -460,7 +472,7 @@ namespace entry
 			m_window[0] = window;
 			m_windowFrame = [window frame];
 
-			bgfx::osxSetNSWindow(window);
+			osxSetNSWindow(window);
 
 			MainThreadEntry mte;
 			mte.m_argc = _argc;

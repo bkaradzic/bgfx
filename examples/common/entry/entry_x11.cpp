@@ -24,6 +24,18 @@
 
 namespace entry
 {
+	///
+	inline void x11SetDisplayWindow(void* _display, uint32_t _window, void* _glx = NULL)
+	{
+		bgfx::PlatformData pd;
+		pd.ndt          = _display;
+		pd.nwh          = (void*)(uintptr_t)_window;
+		pd.context      = _glx;
+		pd.backBuffer   = NULL;
+		pd.backBufferDS = NULL;
+		bgfx::setPlatformData(pd);
+	}
+
 #define JS_EVENT_BUTTON 0x01 /* button pressed/released */
 #define JS_EVENT_AXIS   0x02 /* joystick moved */
 #define JS_EVENT_INIT   0x80 /* initial state of device */
@@ -387,7 +399,7 @@ namespace entry
 					);
 
 			//
-			bgfx::x11SetDisplayWindow(m_display, m_window[0]);
+			x11SetDisplayWindow(m_display, m_window[0]);
 
 			MainThreadEntry mte;
 			mte.m_argc = _argc;
