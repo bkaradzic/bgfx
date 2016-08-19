@@ -1074,6 +1074,7 @@ namespace bgfx { namespace gl
 		case GL_DEBUG_SEVERITY_HIGH:            return "High";
 		case GL_DEBUG_SEVERITY_MEDIUM:          return "Medium";
 		case GL_DEBUG_SEVERITY_LOW:             return "Low";
+		case GL_DEBUG_SEVERITY_NOTIFICATION:    return "SPAM";
 		default:
 			break;
 		}
@@ -1083,14 +1084,17 @@ namespace bgfx { namespace gl
 
 	void GL_APIENTRY debugProcCb(GLenum _source, GLenum _type, GLuint _id, GLenum _severity, GLsizei /*_length*/, const GLchar* _message, const void* /*_userParam*/)
 	{
-		BX_TRACE("src %s, type %s, id %d, severity %s, '%s'"
-				, toString(_source)
-				, toString(_type)
-				, _id
-				, toString(_severity)
-				, _message
-				);
-		BX_UNUSED(_source, _type, _id, _severity, _message);
+		if (GL_DEBUG_SEVERITY_NOTIFICATION != _severity)
+		{
+			BX_TRACE("src %s, type %s, id %d, severity %s, '%s'"
+					, toString(_source)
+					, toString(_type)
+					, _id
+					, toString(_severity)
+					, _message
+					);
+			BX_UNUSED(_source, _type, _id, _severity, _message);
+		}
 	}
 
 	GLint glGet(GLenum _pname)
@@ -5935,6 +5939,7 @@ namespace bgfx { namespace gl
 					if (BGFX_CLEAR_NONE != (clear.m_flags & BGFX_CLEAR_MASK) )
 					{
 						clearQuad(_clearQuad, viewState.m_rect, clear, resolutionHeight, _render->m_colorPalette);
+						currentVao = UINT32_MAX; // clearQuad will mess with VAO, invalidate it.
 					}
 
 					GL_CHECK(glDisable(GL_STENCIL_TEST) );
