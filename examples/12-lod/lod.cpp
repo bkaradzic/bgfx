@@ -65,7 +65,7 @@ class ExampleLod : public entry::AppI
 			stippleTex->data[knightTour[ii].m_y * 8 + knightTour[ii].m_x] = ii*4;
 		}
 
-		m_textureStipple = bgfx::createTexture2D(8, 4, 1
+		m_textureStipple = bgfx::createTexture2D(8, 4, false, 1
 			, bgfx::TextureFormat::R8
 			, BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIN_POINT
 			, stippleTex

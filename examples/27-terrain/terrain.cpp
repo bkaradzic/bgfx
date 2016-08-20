@@ -274,7 +274,7 @@ class ExampleTerrain : public entry::AppI
 
 			if (!bgfx::isValid(m_heightTexture) )
 			{
-				m_heightTexture = bgfx::createTexture2D(s_terrainSize, s_terrainSize, 1, bgfx::TextureFormat::R8);
+				m_heightTexture = bgfx::createTexture2D(s_terrainSize, s_terrainSize, false, 1, bgfx::TextureFormat::R8);
 			}
 
 			mem = bgfx::makeRef(&m_terrain.m_heightMap[0], sizeof(uint8_t) * s_terrainSize * s_terrainSize);

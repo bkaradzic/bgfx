@@ -432,9 +432,9 @@ class ExampleDeferred : public entry::AppI
 						| BGFX_TEXTURE_U_CLAMP
 						| BGFX_TEXTURE_V_CLAMP
 						;
-					m_gbufferTex[0] = bgfx::createTexture2D(m_width, m_height, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
-					m_gbufferTex[1] = bgfx::createTexture2D(m_width, m_height, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
-					m_gbufferTex[2] = bgfx::createTexture2D(m_width, m_height, 1, bgfx::TextureFormat::D24,   samplerFlags);
+					m_gbufferTex[0] = bgfx::createTexture2D(m_width, m_height, false, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
+					m_gbufferTex[1] = bgfx::createTexture2D(m_width, m_height, false, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
+					m_gbufferTex[2] = bgfx::createTexture2D(m_width, m_height, false, 1, bgfx::TextureFormat::D24,   samplerFlags);
 					m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_gbufferTex), m_gbufferTex, true);
 
 					if (bgfx::isValid(m_lightBuffer) )

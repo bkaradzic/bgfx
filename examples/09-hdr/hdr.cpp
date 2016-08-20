@@ -203,8 +203,8 @@ class ExampleHDR : public entry::AppI
 
 		m_mesh = meshLoad("meshes/bunny.bin");
 
-		m_fbtextures[0] = bgfx::createTexture2D(m_width, m_height, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT|BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP);
-		m_fbtextures[1] = bgfx::createTexture2D(m_width, m_height, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY);
+		m_fbtextures[0] = bgfx::createTexture2D(m_width, m_height, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT|BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP);
+		m_fbtextures[1] = bgfx::createTexture2D(m_width, m_height, false, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY);
 		m_fbh = bgfx::createFrameBuffer(BX_COUNTOF(m_fbtextures), m_fbtextures, true);
 
 		m_lum[0] = bgfx::createFrameBuffer(128, 128, bgfx::TextureFormat::BGRA8);
@@ -219,7 +219,7 @@ class ExampleHDR : public entry::AppI
 		m_lumBgra8 = 0;
 		if ( (BGFX_CAPS_TEXTURE_BLIT|BGFX_CAPS_TEXTURE_READ_BACK) == (bgfx::getCaps()->supported & (BGFX_CAPS_TEXTURE_BLIT|BGFX_CAPS_TEXTURE_READ_BACK) ) )
 		{
-			m_rb = bgfx::createTexture2D(1, 1, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_READ_BACK);
+			m_rb = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_READ_BACK);
 		}
 		else
 		{
@@ -305,8 +305,8 @@ class ExampleHDR : public entry::AppI
 
 				bgfx::destroyFrameBuffer(m_fbh);
 
-				m_fbtextures[0] = bgfx::createTexture2D(m_width, m_height, 1, bgfx::TextureFormat::BGRA8, ( (msaa+1)<<BGFX_TEXTURE_RT_MSAA_SHIFT)|BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP);
-				m_fbtextures[1] = bgfx::createTexture2D(m_width, m_height, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY|( (msaa+1)<<BGFX_TEXTURE_RT_MSAA_SHIFT) );
+				m_fbtextures[0] = bgfx::createTexture2D(m_width, m_height, false, 1, bgfx::TextureFormat::BGRA8, ( (msaa+1)<<BGFX_TEXTURE_RT_MSAA_SHIFT)|BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP);
+				m_fbtextures[1] = bgfx::createTexture2D(m_width, m_height, false, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY|( (msaa+1)<<BGFX_TEXTURE_RT_MSAA_SHIFT) );
 				m_fbh = bgfx::createFrameBuffer(BX_COUNTOF(m_fbtextures), m_fbtextures, true);
 			}
 

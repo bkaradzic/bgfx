@@ -304,13 +304,13 @@ public:
 			;
 
 		// Make gbuffer and related textures
-		m_gbufferTex[GBUFFER_RT_NORMAL] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
-		m_gbufferTex[GBUFFER_RT_COLOR]  = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
-		m_gbufferTex[GBUFFER_RT_DEPTH]  = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, 1, bgfx::TextureFormat::D24,   samplerFlags);
+		m_gbufferTex[GBUFFER_RT_NORMAL] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
+		m_gbufferTex[GBUFFER_RT_COLOR]  = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
+		m_gbufferTex[GBUFFER_RT_DEPTH]  = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::D24,   samplerFlags);
 		m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_gbufferTex), m_gbufferTex, true);
 
 		// Make light buffer
-		m_lightBufferTex = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
+		m_lightBufferTex = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
 		bgfx::TextureHandle lightBufferRTs[] =  {
 			m_lightBufferTex
 		};
@@ -328,8 +328,9 @@ public:
 
 		// Reflective shadow map
 		m_shadowBufferTex[SHADOW_RT_RSM] = bgfx::createTexture2D(
-				SHADOW_MAP_DIM
+				  SHADOW_MAP_DIM
 				, SHADOW_MAP_DIM
+				, false
 				, 1
 				, bgfx::TextureFormat::BGRA8,
 				rsmFlags
@@ -337,8 +338,9 @@ public:
 
 		// Typical shadow map
 		m_shadowBufferTex[SHADOW_RT_DEPTH] = bgfx::createTexture2D(
-				SHADOW_MAP_DIM
+				  SHADOW_MAP_DIM
 				, SHADOW_MAP_DIM
+				, false
 				, 1
 				, bgfx::TextureFormat::D16,
 				BGFX_TEXTURE_RT/* | BGFX_TEXTURE_COMPARE_LEQUAL*/

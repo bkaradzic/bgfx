@@ -364,9 +364,9 @@ namespace bgfx
 			;
 	}
 
-	inline uint8_t calcNumMips(uint8_t _numMips, uint16_t _width, uint16_t _height, uint16_t _depth = 1)
+	inline uint8_t calcNumMips(bool _hasMips, uint16_t _width, uint16_t _height, uint16_t _depth = 1)
 	{
-		if (1 < _numMips)
+		if (_hasMips)
 		{
 			const uint32_t max = bx::uint32_max(bx::uint32_max(_width, _height), _depth);
 			const uint32_t num = 1 + uint32_t(bx::flog2(float(max) ) );
@@ -3097,7 +3097,8 @@ namespace bgfx
 					, (uint16_t)imageContainer.m_height
 					, (uint16_t)imageContainer.m_depth
 					, imageContainer.m_cubeMap
-					, imageContainer.m_numMips
+					, imageContainer.m_numMips > 1
+					, 1
 					, TextureFormat::Enum(imageContainer.m_format)
 					);
 			}

@@ -857,7 +857,7 @@ void VectorDisplay::genLinetex()                                    // generate 
 		| BGFX_TEXTURE_MAG_POINT
 		;
 
-	m_lineTexId = bgfx::createTexture2D(TEXTURE_SIZE, TEXTURE_SIZE, 1, bgfx::TextureFormat::BGRA8, flags, mem);
+	m_lineTexId = bgfx::createTexture2D(TEXTURE_SIZE, TEXTURE_SIZE, false, 1, bgfx::TextureFormat::BGRA8, flags, mem);
 }
 
 static const int8_t simplex[95][112] =

@@ -1516,6 +1516,14 @@ namespace bgfx
 
 	/// Calculate amount of memory required for texture.
 	///
+	/// @param[in] _width Width.
+	/// @param[in] _height Height.
+	/// @param[in] _depth Depth.
+	/// @param[in] _cubeMap Indicates that texture contains cubemap.
+	/// @param[in] _hasMips Indicates that texture contains full mip-map chain.
+	/// @param[in] _numLayers Number of layers in texture array.
+	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
+	///
 	/// @attention C99 equivalent is `bgfx_calc_texture_size`.
 	///
 	void calcTextureSize(
@@ -1524,7 +1532,8 @@ namespace bgfx
 		, uint16_t _height
 		, uint16_t _depth
 		, bool _cubeMap
-		, uint8_t _numMips
+		, bool _hasMips
+		, uint16_t _numLayers
 		, TextureFormat::Enum _format
 		);
 
@@ -1555,7 +1564,9 @@ namespace bgfx
 	///
 	/// @param[in] _width Width.
 	/// @param[in] _height Height.
-	/// @param[in] _numMips Number of mip-maps.
+	/// @param[in] _hasMips Indicates that texture contains full mip-map chain.
+	/// @param[in] _numLayers Number of layers in texture array. Must be 1 if caps
+	///   `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
 	/// @param[in] _flags Default texture sampling mode is linear, and wrap mode
 	///   is repeat.
@@ -1571,7 +1582,8 @@ namespace bgfx
 	TextureHandle createTexture2D(
 		  uint16_t _width
 		, uint16_t _height
-		, uint8_t _numMips
+		, bool     _hasMips
+		, uint16_t _numLayers
 		, TextureFormat::Enum _format
 		, uint32_t _flags = BGFX_TEXTURE_NONE
 		, const Memory* _mem = NULL
@@ -1582,7 +1594,9 @@ namespace bgfx
 	///
 	/// @param[in] _ratio Frame buffer size in respect to back-buffer size. See:
 	///   `BackbufferRatio::Enum`.
-	/// @param[in] _numMips Number of mip-maps.
+	/// @param[in] _hasMips Indicates that texture contains full mip-map chain.
+	/// @param[in] _numLayers Number of layers in texture array. Must be 1 if caps
+	///   `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
 	/// @param[in] _flags Default texture sampling mode is linear, and wrap mode
 	///   is repeat.
@@ -1595,7 +1609,8 @@ namespace bgfx
 	///
 	TextureHandle createTexture2D(
 		  BackbufferRatio::Enum _ratio
-		, uint8_t _numMips
+		, bool _hasMips
+		, uint16_t _numLayers
 		, TextureFormat::Enum _format
 		, uint32_t _flags = BGFX_TEXTURE_NONE
 		);
@@ -1605,7 +1620,7 @@ namespace bgfx
 	/// @param[in] _width Width.
 	/// @param[in] _height Height.
 	/// @param[in] _depth Depth.
-	/// @param[in] _numMips Number of mip-maps.
+	/// @param[in] _hasMips Indicates that texture contains full mip-map chain.
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
 	/// @param[in] _flags Default texture sampling mode is linear, and wrap mode
 	///   is repeat.
@@ -1622,7 +1637,7 @@ namespace bgfx
 		  uint16_t _width
 		, uint16_t _height
 		, uint16_t _depth
-		, uint8_t _numMips
+		, bool _hasMips
 		, TextureFormat::Enum _format
 		, uint32_t _flags = BGFX_TEXTURE_NONE
 		, const Memory* _mem = NULL
@@ -1631,7 +1646,9 @@ namespace bgfx
 	/// Create Cube texture.
 	///
 	/// @param[in] _size Cube side size.
-	/// @param[in] _numMips Number of mip-maps.
+	/// @param[in] _hasMips Indicates that texture contains full mip-map chain.
+	/// @param[in] _numLayers Number of layers in texture array. Must be 1 if caps
+	///   `BGFX_CAPS_TEXTURE_CUBE_ARRAY` flag is not set.
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
 	/// @param[in] _flags Default texture sampling mode is linear, and wrap mode
 	///   is repeat.
@@ -1646,7 +1663,8 @@ namespace bgfx
 	///
 	TextureHandle createTextureCube(
 		  uint16_t _size
-		, uint8_t _numMips
+		, bool _hasMips
+		, uint16_t _numLayers
 		, TextureFormat::Enum _format
 		, uint32_t _flags = BGFX_TEXTURE_NONE
 		, const Memory* _mem = NULL

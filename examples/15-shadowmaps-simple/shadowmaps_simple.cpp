@@ -140,7 +140,7 @@ int _main_(int _argc, char** _argv)
 		progShadow = loadProgram("vs_sms_shadow", "fs_sms_shadow");
 		progMesh   = loadProgram("vs_sms_mesh",   "fs_sms_mesh");
 
-		shadowMapTexture = bgfx::createTexture2D(shadowMapSize, shadowMapSize, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT | BGFX_TEXTURE_COMPARE_LEQUAL);
+		shadowMapTexture = bgfx::createTexture2D(shadowMapSize, shadowMapSize, false, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT | BGFX_TEXTURE_COMPARE_LEQUAL);
 		bgfx::TextureHandle fbtextures[] = { shadowMapTexture };
 		shadowMapFB = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 	}
@@ -151,11 +151,11 @@ int _main_(int _argc, char** _argv)
 		progShadow = loadProgram("vs_sms_shadow_pd", "fs_sms_shadow_pd");
 		progMesh   = loadProgram("vs_sms_mesh",      "fs_sms_mesh_pd");
 
-		shadowMapTexture = bgfx::createTexture2D(shadowMapSize, shadowMapSize, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT);
+		shadowMapTexture = bgfx::createTexture2D(shadowMapSize, shadowMapSize, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT);
 		bgfx::TextureHandle fbtextures[] =
 		{
 			shadowMapTexture,
-			bgfx::createTexture2D(shadowMapSize, shadowMapSize, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY),
+			bgfx::createTexture2D(shadowMapSize, shadowMapSize, false, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY),
 		};
 		shadowMapFB = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 	}

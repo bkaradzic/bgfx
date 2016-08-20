@@ -269,7 +269,7 @@ namespace
 		const bgfx::Memory* mem = bgfx::alloc(4*4*4);
 		uint32_t* bgra8 = (uint32_t*)mem->data;
 		memset(bgra8, 0, 4*4*4);
-		gl->texMissing = bgfx::createTexture2D(4, 4, 0, bgfx::TextureFormat::BGRA8, 0, mem);
+		gl->texMissing = bgfx::createTexture2D(4, 4, false, 1, bgfx::TextureFormat::BGRA8, 0, mem);
 
 		gl->u_scissorMat      = bgfx::createUniform("u_scissorMat",      bgfx::UniformType::Mat3);
 		gl->u_paintMat        = bgfx::createUniform("u_paintMat",        bgfx::UniformType::Mat3);
@@ -326,8 +326,10 @@ namespace
 			mem = bgfx::copy(_rgba, tex->height * pitch);
 		}
 
-		tex->id = bgfx::createTexture2D(tex->width
+		tex->id = bgfx::createTexture2D(
+						  tex->width
 						, tex->height
+						, false
 						, 1
 						, NVG_TEXTURE_RGBA == _type ? bgfx::TextureFormat::RGBA8 : bgfx::TextureFormat::R8
 						, BGFX_TEXTURE_NONE

@@ -264,8 +264,8 @@ class ExampleOIT : public entry::AppI
 					bgfx::destroyFrameBuffer(m_fbh);
 				}
 
-				m_fbtextures[0] = bgfx::createTexture2D(m_width, m_height, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_RT);
-				m_fbtextures[1] = bgfx::createTexture2D(m_width, m_height, 1, bgfx::TextureFormat::R16F,    BGFX_TEXTURE_RT);
+				m_fbtextures[0] = bgfx::createTexture2D(m_width, m_height, false, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_RT);
+				m_fbtextures[1] = bgfx::createTexture2D(m_width, m_height, false, 1, bgfx::TextureFormat::R16F,    BGFX_TEXTURE_RT);
 				m_fbh = bgfx::createFrameBuffer(BX_COUNTOF(m_fbtextures), m_fbtextures, true);
 			}
 
@@ -417,7 +417,7 @@ class ExampleOIT : public entry::AppI
 						| BGFX_STATE_DEPTH_TEST_ALWAYS
 						| BGFX_STATE_MSAA
 						;
-						
+
 						bgfx::ProgramHandle program = BGFX_INVALID_HANDLE;
 						switch (m_mode)
 						{

@@ -473,8 +473,10 @@ struct OcornutImguiContext
 
 		io.Fonts->GetTexDataAsRGBA32(&data, &width, &height);
 
-		m_texture = bgfx::createTexture2D( (uint16_t)width
+		m_texture = bgfx::createTexture2D(
+			  (uint16_t)width
 			, (uint16_t)height
+			, false
 			, 1
 			, bgfx::TextureFormat::BGRA8
 			, 0

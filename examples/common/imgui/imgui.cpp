@@ -410,7 +410,15 @@ struct Imgui
 		const ImguiFontHandle handle = { m_fontHandle.alloc() };
 		const bgfx::Memory* mem = bgfx::alloc(m_textureWidth * m_textureHeight);
 		stbtt_BakeFontBitmap( (uint8_t*)_data, 0, _fontSize, mem->data, m_textureWidth, m_textureHeight, 32, 96, m_fonts[handle.idx].m_cdata);
-		m_fonts[handle.idx].m_texture = bgfx::createTexture2D(m_textureWidth, m_textureHeight, 1, bgfx::TextureFormat::R8, BGFX_TEXTURE_NONE, mem);
+		m_fonts[handle.idx].m_texture = bgfx::createTexture2D(
+			  m_textureWidth
+			, m_textureHeight
+			, false
+			, 1
+			, bgfx::TextureFormat::R8
+			, BGFX_TEXTURE_NONE
+			, mem
+			);
 		m_fonts[handle.idx].m_size = _fontSize;
 #else
 		const ImguiFontHandle handle = { bgfx::invalidHandle };
@@ -448,7 +456,15 @@ struct Imgui
 			}
 		}
 
-		return bgfx::createTexture2D(uint16_t(_width), uint16_t(_height), 0, bgfx::TextureFormat::BGRA8, 0, mem);
+		return bgfx::createTexture2D(
+					  uint16_t(_width)
+					, uint16_t(_height)
+					, false
+					, 1
+					, bgfx::TextureFormat::BGRA8
+					, 0
+					, mem
+					);
 	}
 
 	ImguiFontHandle create(float _fontSize, bx::AllocatorI* _allocator)
