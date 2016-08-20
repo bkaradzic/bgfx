@@ -352,14 +352,14 @@ namespace bgfx
 		bx::write(&writer, magic);
 
 		TextureCreate tc;
-		tc.m_width   = _width;
-		tc.m_height  = _height;
-		tc.m_sides   = 0;
-		tc.m_depth   = 0;
-		tc.m_numMips = uint8_t(bx::uint16_max(1, _numMips) );
-		tc.m_format  = _format;
-		tc.m_cubeMap = false;
-		tc.m_mem     = NULL;
+		tc.m_width     = _width;
+		tc.m_height    = _height;
+		tc.m_depth     = 0;
+		tc.m_numLayers = 1;
+		tc.m_numMips   = uint8_t(bx::uint16_max(1, _numMips) );
+		tc.m_format    = _format;
+		tc.m_cubeMap   = false;
+		tc.m_mem       = NULL;
 		bx::write(&writer, tc);
 
 		rci->destroyTexture(_handle);
@@ -2974,14 +2974,14 @@ error:
 		bx::write(&writer, magic);
 
 		TextureCreate tc;
-		tc.m_width   = _width;
-		tc.m_height  = _height;
-		tc.m_sides   = 0;
-		tc.m_depth   = 0;
-		tc.m_numMips = numMips;
-		tc.m_format  = _format;
-		tc.m_cubeMap = false;
-		tc.m_mem     = _mem;
+		tc.m_width     = _width;
+		tc.m_height    = _height;
+		tc.m_depth     = 0;
+		tc.m_numLayers = 1;
+		tc.m_numMips   = numMips;
+		tc.m_format    = _format;
+		tc.m_cubeMap   = false;
+		tc.m_mem       = _mem;
 		bx::write(&writer, tc);
 
 		return s_ctx->createTexture(mem, _flags, 0, NULL, _ratio);
@@ -3030,14 +3030,14 @@ error:
 		bx::write(&writer, magic);
 
 		TextureCreate tc;
-		tc.m_width   = _width;
-		tc.m_height  = _height;
-		tc.m_sides   = 0;
-		tc.m_depth   = _depth;
-		tc.m_numMips = numMips;
-		tc.m_format  = _format;
-		tc.m_cubeMap = false;
-		tc.m_mem     = _mem;
+		tc.m_width     = _width;
+		tc.m_height    = _height;
+		tc.m_depth     = _depth;
+		tc.m_numLayers = 1;
+		tc.m_numMips   = numMips;
+		tc.m_format    = _format;
+		tc.m_cubeMap   = false;
+		tc.m_mem       = _mem;
 		bx::write(&writer, tc);
 
 		return s_ctx->createTexture(mem, _flags, 0, NULL, BackbufferRatio::Count);
@@ -3073,14 +3073,14 @@ error:
 		bx::write(&writer, magic);
 
 		TextureCreate tc;
-		tc.m_width   = _size;
-		tc.m_height  = _size;
-		tc.m_sides   = 6;
-		tc.m_depth   = 0;
-		tc.m_numMips = numMips;
-		tc.m_format  = _format;
-		tc.m_cubeMap = true;
-		tc.m_mem     = _mem;
+		tc.m_width     = _size;
+		tc.m_height    = _size;
+		tc.m_depth     = 0;
+		tc.m_numLayers = 1;
+		tc.m_numMips   = numMips;
+		tc.m_format    = _format;
+		tc.m_cubeMap   = true;
+		tc.m_mem       = _mem;
 		bx::write(&writer, tc);
 
 		return s_ctx->createTexture(mem, _flags, 0, NULL, BackbufferRatio::Count);
