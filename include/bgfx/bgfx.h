@@ -1114,6 +1114,19 @@ namespace bgfx
 	///
 	void dbgTextPrintf(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, ...);
 
+	/// Print into internal debug text character-buffer (VGA-compatible text mode).
+	///
+	/// @param[in] _x    X position from top-left.
+	/// @param[in] _y    Y position from top-left.
+	/// @param[in] _attr Color palette. Where top 4-bits represent index of background, and bottom
+	///   4-bits represent foreground color from standard VGA text palette.
+	/// @param[in] _format `printf` style format.
+	/// @param[in] _argList additional arguments for format string
+	///
+	/// @attention C99 equivalent is `bgfx_dbg_text_vprintf`.
+	///
+	void dbgTextPrintfVargs(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, va_list _argList);
+
 	/// Draw image into internal debug text buffer.
 	///
 	/// @param[in] _x      X position from top-left.
