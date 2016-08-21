@@ -3954,6 +3954,11 @@ BGFX_C_API void bgfx_dbg_text_printf(uint16_t _x, uint16_t _y, uint8_t _attr, co
 	va_end(argList);
 }
 
+BGFX_C_API void bgfx_dbg_text_vprintf(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, va_list _argList)
+{
+	bgfx::dbgTextPrintfVargs(_x, _y, _attr, _format, _argList);
+}
+
 BGFX_C_API void bgfx_dbg_text_image(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const void* _data, uint16_t _pitch)
 {
 	bgfx::dbgTextImage(_x, _y, _width, _height, _data, _pitch);
