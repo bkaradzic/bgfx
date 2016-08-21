@@ -89,6 +89,14 @@ namespace bgfx
 		NULL
 	};
 
+	static const char* s_textureArray[] =
+	{
+		"texture2DArray",
+		"texture2DArrayLod",
+		"shadow2DArray",
+		NULL
+	};
+
 	static const char* s_ARB_texture_multisample[] =
 	{
 		"sampler2DMS",
@@ -1760,11 +1768,12 @@ namespace bgfx
 							{
 								std::string code;
 
-								const bool usesTextureLod = !!bx::findIdentifierMatch(input, s_ARB_shader_texture_lod /*EXT_shader_texture_lod*/);
-								const bool usesGpuShader5 = !!bx::findIdentifierMatch(input, s_ARB_gpu_shader5);
-								const bool usesPacking    = !!bx::findIdentifierMatch(input, s_ARB_shading_language_packing);
-								const bool usesTextureMS  = !!bx::findIdentifierMatch(input, s_ARB_texture_multisample);
-								const bool usesTexelFetch = !!bx::findIdentifierMatch(input, s_texelFetch);
+								const bool usesGpuShader5   = !!bx::findIdentifierMatch(input, s_ARB_gpu_shader5);
+								const bool usesTexelFetch   = !!bx::findIdentifierMatch(input, s_texelFetch);
+								const bool usesTextureLod   = !!bx::findIdentifierMatch(input, s_ARB_shader_texture_lod /*EXT_shader_texture_lod*/);
+								const bool usesTextureMS    = !!bx::findIdentifierMatch(input, s_ARB_texture_multisample);
+								const bool usesTextureArray = !!bx::findIdentifierMatch(input, s_textureArray);
+								const bool usesPacking      = !!bx::findIdentifierMatch(input, s_ARB_shading_language_packing);
 
 								if (0 == essl)
 								{
@@ -1822,6 +1831,13 @@ namespace bgfx
 									{
 										bx::stringPrintf(code
 											, "#extension GL_ARB_texture_multisample : enable\n"
+											);
+									}
+
+									if (usesTextureArray)
+									{
+										bx::stringPrintf(code
+											, "#extension GL_EXT_texture_array : enable\n"
 											);
 									}
 								}

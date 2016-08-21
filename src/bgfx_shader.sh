@@ -380,11 +380,16 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #	define atan2(_x, _y) atan(_x, _y)
 #	define mul(_a, _b) ( (_a) * (_b) )
 #	define saturate(_x) clamp(_x, 0.0, 1.0)
-#	define SAMPLER2D(_name, _reg) uniform sampler2D _name
-#	define SAMPLER2DMS(_name, _reg) uniform sampler2DMS _name
-#	define SAMPLER3D(_name, _reg) uniform sampler3D _name
-#	define SAMPLERCUBE(_name, _reg) uniform samplerCube _name
+#	define SAMPLER2D(_name, _reg)       uniform sampler2D _name
+#	define SAMPLER2DMS(_name, _reg)     uniform sampler2DMS _name
+#	define SAMPLER3D(_name, _reg)       uniform sampler3D _name
+#	define SAMPLERCUBE(_name, _reg)     uniform samplerCube _name
 #	define SAMPLER2DSHADOW(_name, _reg) uniform sampler2DShadow _name
+
+#	define SAMPLER2DARRAY(_name, _reg)       uniform sampler2DArray _name
+#	define SAMPLER2DMSARRAY(_name, _reg)     uniform sampler2DMSArray _name
+#	define SAMPLERCUBEARRAY(_name, _reg)     uniform samplerCubeArray _name
+#	define SAMPLER2DARRAYSHADOW(_name, _reg) uniform sampler2DArrayShadow _name
 
 #	if BGFX_SHADER_LANGUAGE_GLSL >= 130
 #		define ISAMPLER2D(_name, _reg) uniform isampler2D _name
@@ -392,38 +397,9 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #		define ISAMPLER3D(_name, _reg) uniform isampler3D _name
 #		define USAMPLER3D(_name, _reg) uniform usampler3D _name
 
-vec4 bgfxTexture2D(sampler2D _sampler, vec2 _coord)
-{
-	return texture(_sampler, _coord);
-}
-
-ivec4 bgfxTexture2D(isampler2D _sampler, vec2 _coord)
-{
-	return texture(_sampler, _coord);
-}
-
-uvec4 bgfxTexture2D(usampler2D _sampler, vec2 _coord)
-{
-	return texture(_sampler, _coord);
-}
-
-vec4 bgfxTexture3D(sampler3D _sampler, vec3 _coord)
-{
-	return texture(_sampler, _coord);
-}
-
-ivec4 bgfxTexture3D(isampler3D _sampler, vec3 _coord)
-{
-	return texture(_sampler, _coord);
-}
-
-uvec4 bgfxTexture3D(usampler3D _sampler, vec3 _coord)
-{
-	return texture(_sampler, _coord);
-}
-
-#		define texture2D(_sampler, _coord) bgfxTexture2D(_sampler, _coord)
-#		define texture3D(_sampler, _coord) bgfxTexture3D(_sampler, _coord)
+#		define texture2D(_sampler, _coord)      texture(_sampler, _coord)
+#		define texture2DArray(_sampler, _coord) texture(_sampler, _coord)
+#		define texture3D(_sampler, _coord)      texture(_sampler, _coord)
 #	endif // BGFX_SHADER_LANGUAGE_GLSL >= 130
 
 vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_vec, _mtx); }

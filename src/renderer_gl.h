@@ -624,6 +624,14 @@ typedef uint64_t GLuint64;
 #	define GL_UNSIGNED_INT_SAMPLER_2D 0x8DD2
 #endif // GL_UNSIGNED_INT_SAMPLER_2D
 
+#ifndef GL_INT_SAMPLER_2D_ARRAY
+#	define GL_INT_SAMPLER_2D_ARRAY 0x8DCF
+#endif // GL_INT_SAMPLER_2D_ARRAY
+
+#ifndef GL_UNSIGNED_INT_SAMPLER_2D_ARRAY
+#	define GL_UNSIGNED_INT_SAMPLER_2D_ARRAY 0x8DD7
+#endif // GL_UNSIGNED_INT_SAMPLER_2D_ARRAY
+
 #ifndef GL_INT_SAMPLER_3D
 #	define GL_INT_SAMPLER_3D 0x8DCB
 #endif // GL_INT_SAMPLER_3D
@@ -655,6 +663,14 @@ typedef uint64_t GLuint64;
 #ifndef GL_SAMPLER_2D_SHADOW
 #	define GL_SAMPLER_2D_SHADOW 0x8B62
 #endif // GL_SAMPLER_2D_SHADOW
+
+#ifndef GL_SAMPLER_2D_ARRAY
+#	define GL_SAMPLER_2D_ARRAY 0x8DC1
+#endif // GL_SAMPLER_2D_ARRAY
+
+#ifndef GL_SAMPLER_2D_ARRAY_SHADOW
+#	define GL_SAMPLER_2D_ARRAY_SHADOW 0x8DC4
+#endif // GL_SAMPLER_2D_ARRAY_SHADOW
 
 #ifndef GL_TEXTURE_MAX_LEVEL
 #	define GL_TEXTURE_MAX_LEVEL 0x813D
@@ -862,6 +878,18 @@ typedef uint64_t GLuint64;
 #ifndef GL_CLAMP_TO_BORDER
 #	define GL_CLAMP_TO_BORDER 0x812D
 #endif // GL_CLAMP_TO_BORDER
+
+#ifndef GL_TEXTURE_2D_ARRAY
+#	define GL_TEXTURE_2D_ARRAY 0x8C1A
+#endif // GL_TEXTURE_2D_ARRAY
+
+#ifndef GL_TEXTURE_2D_MULTISAMPLE_ARRAY
+#	define GL_TEXTURE_2D_MULTISAMPLE_ARRAY 0x9102
+#endif // GL_TEXTURE_2D_MULTISAMPLE_ARRAY
+
+#ifndef GL_TEXTURE_CUBE_MAP_ARRAY
+#	define GL_TEXTURE_CUBE_MAP_ARRAY 0x9009
+#endif // GL_TEXTURE_CUBE_MAP_ARRAY
 
 #ifndef GL_TEXTURE_CUBE_MAP_SEAMLESS
 #	define GL_TEXTURE_CUBE_MAP_SEAMLESS 0x884F
@@ -1239,6 +1267,14 @@ namespace bgfx { namespace gl
 		void setSamplerState(uint32_t _flags, const float _rgba[4]);
 		void commit(uint32_t _stage, uint32_t _flags, const float _palette[][4]);
 		void resolve() const;
+
+		bool isCubeMap() const
+		{
+			return 0
+				|| GL_TEXTURE_CUBE_MAP       == m_target
+				|| GL_TEXTURE_CUBE_MAP_ARRAY == m_target
+				;
+		}
 
 		GLuint m_id;
 		GLuint m_rbo;

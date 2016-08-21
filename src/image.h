@@ -19,6 +19,7 @@ namespace bgfx
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_depth;
+		uint16_t m_numLayers;
 		uint8_t  m_numMips;
 		bool     m_hasAlpha;
 		bool     m_cubeMap;

@@ -278,7 +278,7 @@ class ExampleTerrain : public entry::AppI
 			}
 
 			mem = bgfx::makeRef(&m_terrain.m_heightMap[0], sizeof(uint8_t) * s_terrainSize * s_terrainSize);
-			bgfx::updateTexture2D(m_heightTexture, 0, 0, 0, s_terrainSize, s_terrainSize, mem);
+			bgfx::updateTexture2D(m_heightTexture, 0, 0, 0, 0, s_terrainSize, s_terrainSize, mem);
 			break;
 		}
 	}

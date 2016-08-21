@@ -337,14 +337,16 @@ namespace
 
 		if (NULL != mem)
 		{
-			bgfx::updateTexture2D(tex->id
-					, 0
-					, 0
-					, 0
-					, tex->width
-					, tex->height
-					, mem
-					);
+			bgfx::updateTexture2D(
+				  tex->id
+				, 0
+				, 0
+				, 0
+				, 0
+				, tex->width
+				, tex->height
+				, mem
+				);
 		}
 
 		return bgfx::isValid(tex->id) ? tex->id.idx : 0;
@@ -368,15 +370,17 @@ namespace
 		uint32_t bytesPerPixel = NVG_TEXTURE_RGBA == tex->type ? 4 : 1;
 		uint32_t pitch = tex->width * bytesPerPixel;
 
-		bgfx::updateTexture2D(tex->id
-				, 0
-				, x
-				, y
-				, w
-				, h
-				, bgfx::copy(data + y*pitch + x*bytesPerPixel, h*pitch)
-				, pitch
-				);
+		bgfx::updateTexture2D(
+			  tex->id
+			, 0
+			, 0
+			, x
+			, y
+			, w
+			, h
+			, bgfx::copy(data + y*pitch + x*bytesPerPixel, h*pitch)
+			, pitch
+			);
 
 		return 1;
 	}

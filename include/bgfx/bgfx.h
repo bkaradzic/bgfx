@@ -1686,6 +1686,7 @@ namespace bgfx
 	/// Update 2D texture.
 	///
 	/// @param[in] _handle Texture handle.
+	/// @param[in] _layer Layers in texture array.
 	/// @param[in] _mip Mip level.
 	/// @param[in] _x X offset in texture.
 	/// @param[in] _y Y offset in texture.
@@ -1699,6 +1700,7 @@ namespace bgfx
 	///
 	void updateTexture2D(
 		  TextureHandle _handle
+		, uint16_t _layer
 		, uint8_t _mip
 		, uint16_t _x
 		, uint16_t _y
@@ -1737,6 +1739,7 @@ namespace bgfx
 	/// Update Cube texture.
 	///
 	/// @param[in] _handle Texture handle.
+	/// @param[in] _layer Layers in texture array.
 	/// @param[in] _side Cubemap side `BGFX_CUBE_MAP_<POSITIVE or NEGATIVE>_<X, Y or Z>`,
 	///   where 0 is +X, 1 is -X, 2 is +Y, 3 is -Y, 4 is +Z, and 5 is -Z.
 	///
@@ -1770,6 +1773,7 @@ namespace bgfx
 	///
 	void updateTextureCube(
 		  TextureHandle _handle
+		, uint16_t _layer
 		, uint8_t _side
 		, uint8_t _mip
 		, uint16_t _x

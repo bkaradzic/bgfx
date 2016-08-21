@@ -2509,19 +2509,20 @@ namespace bgfx
 		uint32_t size = imageGetSize(_format, _width, _height, 0, false, numMips);
 		const Memory* image = alloc(size);
 
-		_imageContainer.m_data     = image->data;
-		_imageContainer.m_format   = _format;
-		_imageContainer.m_size     = image->size;
-		_imageContainer.m_offset   = 0;
-		_imageContainer.m_width    = _width;
-		_imageContainer.m_height   = _height;
-		_imageContainer.m_depth    = _depth;
-		_imageContainer.m_numMips  = numMips;
-		_imageContainer.m_hasAlpha = false;
-		_imageContainer.m_cubeMap  = _cubeMap;
-		_imageContainer.m_ktx      = false;
-		_imageContainer.m_ktxLE    = false;
-		_imageContainer.m_srgb     = false;
+		_imageContainer.m_data      = image->data;
+		_imageContainer.m_format    = _format;
+		_imageContainer.m_size      = image->size;
+		_imageContainer.m_offset    = 0;
+		_imageContainer.m_width     = _width;
+		_imageContainer.m_height    = _height;
+		_imageContainer.m_depth     = _depth;
+		_imageContainer.m_numLayers = 1;
+		_imageContainer.m_numMips   = numMips;
+		_imageContainer.m_hasAlpha  = false;
+		_imageContainer.m_cubeMap   = _cubeMap;
+		_imageContainer.m_ktx       = false;
+		_imageContainer.m_ktxLE     = false;
+		_imageContainer.m_srgb      = false;
 
 		return image;
 	}
@@ -2872,19 +2873,20 @@ namespace bgfx
 			}
 		}
 
-		_imageContainer.m_data     = NULL;
-		_imageContainer.m_size     = 0;
-		_imageContainer.m_offset   = (uint32_t)bx::seek(_reader);
-		_imageContainer.m_width    = width;
-		_imageContainer.m_height   = height;
-		_imageContainer.m_depth    = depth;
-		_imageContainer.m_format   = format;
-		_imageContainer.m_numMips  = uint8_t( (caps[0] & DDSCAPS_MIPMAP) ? mips : 1);
-		_imageContainer.m_hasAlpha = hasAlpha;
-		_imageContainer.m_cubeMap  = cubeMap;
-		_imageContainer.m_ktx      = false;
-		_imageContainer.m_ktxLE    = false;
-		_imageContainer.m_srgb     = srgb;
+		_imageContainer.m_data      = NULL;
+		_imageContainer.m_size      = 0;
+		_imageContainer.m_offset    = (uint32_t)bx::seek(_reader);
+		_imageContainer.m_width     = width;
+		_imageContainer.m_height    = height;
+		_imageContainer.m_depth     = depth;
+		_imageContainer.m_format    = format;
+		_imageContainer.m_numLayers = 1;
+		_imageContainer.m_numMips   = uint8_t( (caps[0] & DDSCAPS_MIPMAP) ? mips : 1);
+		_imageContainer.m_hasAlpha  = hasAlpha;
+		_imageContainer.m_cubeMap   = cubeMap;
+		_imageContainer.m_ktx       = false;
+		_imageContainer.m_ktxLE     = false;
+		_imageContainer.m_srgb      = srgb;
 
 		return TextureFormat::Unknown != format;
 	}
@@ -3178,19 +3180,20 @@ namespace bgfx
 			}
 		}
 
-		_imageContainer.m_data     = NULL;
-		_imageContainer.m_size     = 0;
-		_imageContainer.m_offset   = (uint32_t)offset;
-		_imageContainer.m_width    = width;
-		_imageContainer.m_height   = height;
-		_imageContainer.m_depth    = depth;
-		_imageContainer.m_format   = format;
-		_imageContainer.m_numMips  = uint8_t(bx::uint32_max(numMips, 1) );
-		_imageContainer.m_hasAlpha = hasAlpha;
-		_imageContainer.m_cubeMap  = numFaces > 1;
-		_imageContainer.m_ktx      = true;
-		_imageContainer.m_ktxLE    = fromLittleEndian;
-		_imageContainer.m_srgb     = false;
+		_imageContainer.m_data      = NULL;
+		_imageContainer.m_size      = 0;
+		_imageContainer.m_offset    = (uint32_t)offset;
+		_imageContainer.m_width     = width;
+		_imageContainer.m_height    = height;
+		_imageContainer.m_depth     = depth;
+		_imageContainer.m_format    = format;
+		_imageContainer.m_numLayers = 1;
+		_imageContainer.m_numMips   = uint8_t(bx::uint32_max(numMips, 1) );
+		_imageContainer.m_hasAlpha  = hasAlpha;
+		_imageContainer.m_cubeMap   = numFaces > 1;
+		_imageContainer.m_ktx       = true;
+		_imageContainer.m_ktxLE     = fromLittleEndian;
+		_imageContainer.m_srgb      = false;
 
 		return TextureFormat::Unknown != format;
 	}
@@ -3327,19 +3330,20 @@ namespace bgfx
 			}
 		}
 
-		_imageContainer.m_data     = NULL;
-		_imageContainer.m_size     = 0;
-		_imageContainer.m_offset   = (uint32_t)offset;
-		_imageContainer.m_width    = width;
-		_imageContainer.m_height   = height;
-		_imageContainer.m_depth    = depth;
-		_imageContainer.m_format   = format;
-		_imageContainer.m_numMips  = uint8_t(bx::uint32_max(numMips, 1) );
-		_imageContainer.m_hasAlpha = hasAlpha;
-		_imageContainer.m_cubeMap  = numFaces > 1;
-		_imageContainer.m_ktx      = false;
-		_imageContainer.m_ktxLE    = false;
-		_imageContainer.m_srgb     = colorSpace > 0;
+		_imageContainer.m_data      = NULL;
+		_imageContainer.m_size      = 0;
+		_imageContainer.m_offset    = (uint32_t)offset;
+		_imageContainer.m_width     = width;
+		_imageContainer.m_height    = height;
+		_imageContainer.m_depth     = depth;
+		_imageContainer.m_format    = format;
+		_imageContainer.m_numLayers = 1;
+		_imageContainer.m_numMips   = uint8_t(bx::uint32_max(numMips, 1) );
+		_imageContainer.m_hasAlpha  = hasAlpha;
+		_imageContainer.m_cubeMap   = numFaces > 1;
+		_imageContainer.m_ktx       = false;
+		_imageContainer.m_ktxLE     = false;
+		_imageContainer.m_srgb      = colorSpace > 0;
 
 		return TextureFormat::Unknown != format;
 	}
@@ -3378,15 +3382,16 @@ namespace bgfx
 				_imageContainer.m_data = tc.m_mem->data;
 				_imageContainer.m_size = tc.m_mem->size;
 			}
-			_imageContainer.m_width    = tc.m_width;
-			_imageContainer.m_height   = tc.m_height;
-			_imageContainer.m_depth    = tc.m_depth;
-			_imageContainer.m_numMips  = tc.m_numMips;
-			_imageContainer.m_hasAlpha = false;
-			_imageContainer.m_cubeMap  = tc.m_cubeMap;
-			_imageContainer.m_ktx      = false;
-			_imageContainer.m_ktxLE    = false;
-			_imageContainer.m_srgb     = false;
+			_imageContainer.m_width     = tc.m_width;
+			_imageContainer.m_height    = tc.m_height;
+			_imageContainer.m_depth     = tc.m_depth;
+			_imageContainer.m_numLayers = tc.m_numLayers;
+			_imageContainer.m_numMips   = tc.m_numMips;
+			_imageContainer.m_hasAlpha  = false;
+			_imageContainer.m_cubeMap   = tc.m_cubeMap;
+			_imageContainer.m_ktx       = false;
+			_imageContainer.m_ktxLE     = false;
+			_imageContainer.m_srgb      = false;
 
 			return true;
 		}

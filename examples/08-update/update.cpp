@@ -109,7 +109,7 @@ static void updateTextureCubeRectBgra8(bgfx::TextureHandle _handle, uint8_t _sid
 		data += 4;
 	}
 
-	bgfx::updateTextureCube(_handle, _side, 0, _x, _y, _width, _height, mem);
+	bgfx::updateTextureCube(_handle, 0, _side, 0, _x, _y, _width, _height, mem);
 }
 
 static const uint32_t m_textureside   = 512;
@@ -409,7 +409,7 @@ public:
 
 					// Pitch here makes possible to pass data from source to destination
 					// without need for m_textures and allocated memory to be the same size.
-					bgfx::updateTexture2D(m_texture2d, 0, tx, ty, tw, th, mem, pitch);
+					bgfx::updateTexture2D(m_texture2d, 0, 0, tx, ty, tw, th, mem, pitch);
 				}
 			}
 
