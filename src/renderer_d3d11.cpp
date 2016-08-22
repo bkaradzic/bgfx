@@ -1251,6 +1251,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					| ( (m_featureLevel >= D3D_FEATURE_LEVEL_9_2) ? BGFX_CAPS_OCCLUSION_QUERY : 0)
 					| BGFX_CAPS_ALPHA_TO_COVERAGE
 					| ( (m_deviceInterfaceVersion >= 3) ? BGFX_CAPS_CONSERVATIVE_RASTER : 0)
+					| BGFX_CAPS_TEXTURE_2D_ARRAY
+					| BGFX_CAPS_TEXTURE_CUBE_ARRAY
 					);
 
 				m_timerQuerySupport = m_featureLevel >= D3D_FEATURE_LEVEL_10_0;
@@ -4257,6 +4259,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			const ImageBlockInfo& blockInfo = getBlockInfo(TextureFormat::Enum(imageContainer.m_format) );
 			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
 			const uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height>>startLod);
+			const uint32_t numLayers     = imageContainer.m_numLayers;
 
 			m_flags  = _flags;
 			m_width  = textureWidth;
@@ -4439,22 +4442,48 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 					if (imageContainer.m_cubeMap)
 					{
-						desc.ArraySize = 6;
+						desc.ArraySize = 6 * numLayers;
 						desc.MiscFlags |= D3D11_RESOURCE_MISC_TEXTURECUBE;
-						srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
-						srvd.TextureCube.MipLevels = numMips;
-					}
-					else
-					{
-						desc.ArraySize = 1;
-						if (msaaSample)
+						if (1 < numLayers)
 						{
-							srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMS;
+							srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBEARRAY;
+							srvd.TextureCubeArray.MipLevels = numMips;
+							srvd.TextureCubeArray.NumCubes  = numLayers;
 						}
 						else
 						{
-							srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-							srvd.Texture2D.MipLevels = numMips;
+							srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+							srvd.TextureCube.MipLevels = numMips;
+						}
+					}
+					else
+					{
+						desc.ArraySize = numLayers;
+						if (msaaSample)
+						{
+							if (1 < numLayers)
+							{
+								srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMSARRAY;
+								srvd.Texture2DMSArray.ArraySize = numLayers;
+							}
+							else
+							{
+								srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMS;
+							}
+						}
+						else
+						{
+							if (1 < numLayers)
+							{
+								srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+								srvd.Texture2DArray.MipLevels = numMips;
+								srvd.Texture2DArray.ArraySize = numLayers;
+							}
+							else
+							{
+								srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+								srvd.Texture2D.MipLevels = numMips;
+							}
 						}
 					}
 
@@ -4552,10 +4581,22 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		box.top    = _rect.m_y;
 		box.right  = box.left + _rect.m_width;
 		box.bottom = box.top + _rect.m_height;
-		box.front  = _z;
-		box.back   = box.front + _depth;
 
-		const uint32_t subres = _mip + (_side * m_numMips);
+		uint32_t layer = 0;
+
+		if (TextureD3D11::Texture3D == m_type)
+		{
+			box.front = _z;
+			box.back  = box.front + _depth;
+		}
+		else
+		{
+			layer = _z * (TextureD3D11::TextureCube == m_type ? 6 : 1);
+			box.front = 0;
+			box.back  = 1;
+		}
+
+		const uint32_t subres = _mip + ( (layer + _side) * m_numMips);
 		const uint32_t bpp    = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
 		const uint32_t rectpitch = _rect.m_width*bpp/8;
 		const uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;

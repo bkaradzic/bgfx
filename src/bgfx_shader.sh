@@ -98,6 +98,12 @@ struct BgfxUSampler2D
 	Texture2D<uvec4> m_texture;
 };
 
+struct BgfxSampler2DArray
+{
+	SamplerState m_sampler;
+	Texture2DArray m_texture;
+};
+
 struct BgfxSampler2DShadow
 {
 	SamplerComparisonState m_sampler;
@@ -151,6 +157,11 @@ vec4 bgfxTexture2DProj(BgfxSampler2D _sampler, vec4 _coord)
 {
 	vec2 coord = _coord.xy * rcp(_coord.w);
 	return _sampler.m_texture.Sample(_sampler.m_sampler, coord);
+}
+
+vec4 bgfxTexture2DArray(BgfxSampler2DArray _sampler, vec3 _coord)
+{
+	return _sampler.m_texture.Sample(_sampler.m_sampler, _coord);
 }
 
 float bgfxShadow2D(BgfxSampler2DShadow _sampler, vec3 _coord)
@@ -237,6 +248,13 @@ vec4 bgfxTexelFetch(BgfxSampler3D _sampler, ivec3 _coord, int _lod)
 #		define texture2D(_sampler, _coord) bgfxTexture2D(_sampler, _coord)
 #		define texture2DLod(_sampler, _coord, _level) bgfxTexture2DLod(_sampler, _coord, _level)
 #		define texture2DProj(_sampler, _coord) bgfxTexture2DProj(_sampler, _coord)
+
+#		define SAMPLER2DARRAY(_name, _reg) \
+			uniform SamplerState _name ## Sampler : register(s[_reg]); \
+			uniform Texture2DArray _name ## Texture : register(t[_reg]); \
+			static BgfxSampler2DArray _name = { _name ## Sampler, _name ## Texture }
+#		define sampler2DArray BgfxSampler2DArray
+#		define texture2DArray(_sampler, _coord) bgfxTexture2DArray(_sampler, _coord)
 
 #		define SAMPLER2DMS(_name, _reg) \
 			uniform Texture2DMS<vec4> _name ## Texture : register(t[_reg]); \
