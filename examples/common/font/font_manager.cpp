@@ -466,7 +466,7 @@ FontManager::FontManager(Atlas* _atlas)
 	init();
 }
 
-FontManager::FontManager(uint32_t _textureSideWidth) 
+FontManager::FontManager(uint16_t _textureSideWidth)
 	: m_ownAtlas(true)
 	, m_atlas(new Atlas(_textureSideWidth) )
 {
@@ -546,8 +546,8 @@ FontHandle FontManager::createFontByPixelSize(TrueTypeHandle _ttfHandle, uint32_
 	CachedFont& font = m_cachedFonts[fontIdx];
 	font.trueTypeFont = ttf;
 	font.fontInfo = ttf->getFontInfo();
-	font.fontInfo.fontType = _fontType;
-	font.fontInfo.pixelSize = _pixelSize;
+	font.fontInfo.fontType  = int16_t(_fontType);
+	font.fontInfo.pixelSize = uint16_t(_pixelSize);
 	font.cachedGlyphs.clear();
 	font.masterFontHandle.idx = bx::HandleAlloc::invalid;
 
@@ -561,15 +561,15 @@ FontHandle FontManager::createScaledFontToPixelSize(FontHandle _baseFontHandle, 
 	CachedFont& baseFont = m_cachedFonts[_baseFontHandle.idx];
 	FontInfo& fontInfo = baseFont.fontInfo;
 
-	FontInfo newFontInfo = fontInfo;
-	newFontInfo.pixelSize = _pixelSize;
-	newFontInfo.scale = (float)_pixelSize / (float) fontInfo.pixelSize;
-	newFontInfo.ascender = (newFontInfo.ascender * newFontInfo.scale);
+	FontInfo newFontInfo  = fontInfo;
+	newFontInfo.pixelSize = uint16_t(_pixelSize);
+	newFontInfo.scale     = (float)_pixelSize / (float) fontInfo.pixelSize;
+	newFontInfo.ascender  = (newFontInfo.ascender * newFontInfo.scale);
 	newFontInfo.descender = (newFontInfo.descender * newFontInfo.scale);
-	newFontInfo.lineGap = (newFontInfo.lineGap * newFontInfo.scale);
-	newFontInfo.maxAdvanceWidth = (newFontInfo.maxAdvanceWidth * newFontInfo.scale);
+	newFontInfo.lineGap   = (newFontInfo.lineGap * newFontInfo.scale);
+	newFontInfo.maxAdvanceWidth    = (newFontInfo.maxAdvanceWidth * newFontInfo.scale);
 	newFontInfo.underlineThickness = (newFontInfo.underlineThickness * newFontInfo.scale);
-	newFontInfo.underlinePosition = (newFontInfo.underlinePosition * newFontInfo.scale);
+	newFontInfo.underlinePosition  = (newFontInfo.underlinePosition * newFontInfo.scale);
 
 	uint16_t fontIdx = m_fontHandles.alloc();
 	BX_CHECK(fontIdx != bx::HandleAlloc::invalid, "Invalid handle used");

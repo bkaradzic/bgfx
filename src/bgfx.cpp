@@ -2898,7 +2898,26 @@ error:
 		_depth   = bx::uint16_max(1, _depth);
 		const uint8_t  numMips = calcNumMips(_hasMips, _width, _height, _depth);
 		const uint32_t sides   = _cubeMap ? 6 : 1;
-		const uint32_t size    = _width*_height*_depth*numMips*bpp/8 * sides * _numLayers;
+
+		uint32_t width  = _width;
+		uint32_t height = _height;
+		uint32_t depth  = _depth;
+		uint32_t size   = 0;
+
+		for (uint32_t lod = 0; lod < numMips; ++lod)
+		{
+			width  = bx::uint32_max(blockWidth  * minBlockX, ( (width  + blockWidth  - 1) / blockWidth )*blockWidth);
+			height = bx::uint32_max(blockHeight * minBlockY, ( (height + blockHeight - 1) / blockHeight)*blockHeight);
+			depth  = bx::uint32_max(1, depth);
+
+			size += width*height*depth*bpp/8 * sides;
+
+			width  >>= 1;
+			height >>= 1;
+			depth  >>= 1;
+		}
+
+		size *= _numLayers;
 
 		_info.format  = _format;
 		_info.width   = _width;
@@ -2946,6 +2965,12 @@ error:
 			, "Format %s is not supported for 2D texture. Use bgfx::getCaps to check available texture formats."
 			, getName(_format)
 			);
+		BX_CHECK(false
+			|| 1 >= _numLayers
+			|| 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_2D_ARRAY)
+			, "_numLayers is %d. Texture 2D array is not supported! Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_2D_ARRAY backend renderer capabilities."
+			, _numLayers
+			);
 
 		if (BackbufferRatio::Count != _ratio)
 		{
@@ -2955,6 +2980,7 @@ error:
 		}
 
 		const uint8_t numMips = calcNumMips(_hasMips, _width, _height);
+		_numLayers = bx::uint16_max(_numLayers, 1);
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG)
 		&&  NULL != _mem)
@@ -3052,8 +3078,15 @@ error:
 			, "Format %s is not supported for cube texture. Use bgfx::getCaps to check available texture formats."
 			, getName(_format)
 			);
+		BX_CHECK(false
+			|| 1 >= _numLayers
+			|| 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_CUBE_ARRAY)
+			, "_numLayers is %d. Texture cube array is not supported! Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_CUBE_ARRAY backend renderer capabilities."
+			, _numLayers
+			);
 
 		const uint8_t numMips = calcNumMips(_hasMips, _size, _size);
+		_numLayers = bx::uint16_max(_numLayers, 1);
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG)
 		&&  NULL != _mem)
