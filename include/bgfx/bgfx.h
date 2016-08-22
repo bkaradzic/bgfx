@@ -841,7 +841,7 @@ namespace bgfx
 	/// @param[in] _dstSize Destination index buffer in bytes. It must be
 	///    large enough to contain output indices. If destination size is
 	///    insufficient index buffer will be truncated.
-	/// @param[in]_indices Source indices.
+	/// @param[in] _indices Source indices.
 	/// @param[in] _numIndices Number of input indices.
 	/// @param[in] _index32 Set to `true` if input indices are 32-bit.
 	///
@@ -1104,8 +1104,7 @@ namespace bgfx
 
 	/// Print into internal debug text character-buffer (VGA-compatible text mode).
 	///
-	/// @param[in] _x    X position from top-left.
-	/// @param[in] _y    Y position from top-left.
+	/// @param[in] _x, _y 2D position from top-left.
 	/// @param[in] _attr Color palette. Where top 4-bits represent index of background, and bottom
 	///   4-bits represent foreground color from standard VGA text palette.
 	/// @param[in] _format `printf` style format.
@@ -1116,8 +1115,7 @@ namespace bgfx
 
 	/// Print into internal debug text character-buffer (VGA-compatible text mode).
 	///
-	/// @param[in] _x    X position from top-left.
-	/// @param[in] _y    Y position from top-left.
+	/// @param[in] _x, _y 2D position from top-left.
 	/// @param[in] _attr Color palette. Where top 4-bits represent index of background, and bottom
 	///   4-bits represent foreground color from standard VGA text palette.
 	/// @param[in] _format `printf` style format.
@@ -1129,12 +1127,10 @@ namespace bgfx
 
 	/// Draw image into internal debug text buffer.
 	///
-	/// @param[in] _x      X position from top-left.
-	/// @param[in] _y      Y position from top-left.
-	/// @param[in] _width  Image width.
-	/// @param[in] _height Image height.
-	/// @param[in] _data   Raw image data (character/attribute raw encoding).
-	/// @param[in] _pitch  Image pitch in bytes.
+	/// @param[in] _x, _y 2D position from top-left.
+	/// @param[in] _width, _height  Image width and height.
+	/// @param[in] _data  Raw image data (character/attribute raw encoding).
+	/// @param[in] _pitch Image pitch in bytes.
 	///
 	/// @attention C99 equivalent is `bgfx_dbg_text_image`.
 	///
@@ -1529,6 +1525,7 @@ namespace bgfx
 
 	/// Calculate amount of memory required for texture.
 	///
+	/// @param[out] _info Resulting texture info structure.
 	/// @param[in] _width Width.
 	/// @param[in] _height Height.
 	/// @param[in] _depth Depth.
