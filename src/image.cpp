@@ -263,7 +263,7 @@ namespace bgfx
 		return numMips;
 	}
 
-	uint32_t imageGetSize(TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth, bool _cubeMap, uint8_t _numMips)
+	uint32_t imageGetSize(TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth, uint16_t _numLayers, bool _cubeMap, uint8_t _numMips)
 	{
 		const ImageBlockInfo& blockInfo = getBlockInfo(_format);
 		const uint8_t  bpp         = blockInfo.bitsPerPixel;
@@ -275,7 +275,6 @@ namespace bgfx
 		_width   = bx::uint16_max(blockWidth  * minBlockX, ( (_width  + blockWidth  - 1) / blockWidth)*blockWidth);
 		_height  = bx::uint16_max(blockHeight * minBlockY, ( (_height + blockHeight - 1) / blockHeight)*blockHeight);
 		_depth   = bx::uint16_max(1, _depth);
-		_numMips = uint8_t(bx::uint16_max(1, _numMips) );
 
 		uint32_t width  = _width;
 		uint32_t height = _height;
@@ -296,7 +295,7 @@ namespace bgfx
 			depth  >>= 1;
 		}
 
-		return size;
+		return size * _numLayers;
 	}
 
 	void imageSolid(uint32_t _width, uint32_t _height, uint32_t _solid, void* _dst)
@@ -2493,7 +2492,7 @@ namespace bgfx
 		}
 	}
 
-	const Memory* imageAlloc(ImageContainer& _imageContainer, TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth, bool _cubeMap, bool _generateMips)
+	const Memory* imageAlloc(ImageContainer& _imageContainer, TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth, uint16_t _numLayers, bool _cubeMap, bool _generateMips)
 	{
 		const ImageBlockInfo& blockInfo = getBlockInfo(_format);
 		const uint16_t blockWidth  = blockInfo.blockWidth;
@@ -2501,12 +2500,13 @@ namespace bgfx
 		const uint16_t minBlockX   = blockInfo.minBlockX;
 		const uint16_t minBlockY   = blockInfo.minBlockY;
 
-		_width   = bx::uint16_max(blockWidth  * minBlockX, ( (_width  + blockWidth  - 1) / blockWidth)*blockWidth);
-		_height  = bx::uint16_max(blockHeight * minBlockY, ( (_height + blockHeight - 1) / blockHeight)*blockHeight);
-		_depth   = bx::uint16_max(1, _depth);
+		_width     = bx::uint16_max(blockWidth  * minBlockX, ( (_width  + blockWidth  - 1) / blockWidth)*blockWidth);
+		_height    = bx::uint16_max(blockHeight * minBlockY, ( (_height + blockHeight - 1) / blockHeight)*blockHeight);
+		_depth     = bx::uint16_max(1, _depth);
+		_numLayers = bx::uint16_max(1, _numLayers);
 
 		const uint8_t numMips = _generateMips ? imageGetNumMips(_format, _width, _height) : 1;
-		uint32_t size = imageGetSize(_format, _width, _height, 0, false, numMips);
+		uint32_t size = imageGetSize(_format, _width, _height, _depth, _numLayers, _cubeMap, numMips);
 		const Memory* image = alloc(size);
 
 		_imageContainer.m_data      = image->data;
@@ -2516,7 +2516,7 @@ namespace bgfx
 		_imageContainer.m_width     = _width;
 		_imageContainer.m_height    = _height;
 		_imageContainer.m_depth     = _depth;
-		_imageContainer.m_numLayers = 1;
+		_imageContainer.m_numLayers = _numLayers;
 		_imageContainer.m_numMips   = numMips;
 		_imageContainer.m_hasAlpha  = false;
 		_imageContainer.m_cubeMap   = _cubeMap;

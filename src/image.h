@@ -298,7 +298,7 @@ namespace bgfx
 	uint8_t imageGetNumMips(TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth = 0);
 
 	/// Returns image size.
-	uint32_t imageGetSize(TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth = 0, bool _cubeMap = false, uint8_t _numMips = 0);
+	uint32_t imageGetSize(TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth = 0, uint16_t _numLayers = 0, bool _cubeMap = false, uint8_t _numMips = 0);
 
 	///
 	void imageSolid(uint32_t _width, uint32_t _height, uint32_t _solid, void* _dst);
@@ -343,7 +343,7 @@ namespace bgfx
 	bool imageConvert(void* _dst, TextureFormat::Enum _dstFormat, const void* _src, TextureFormat::Enum _srcFormat, uint32_t _width, uint32_t _height);
 
 	///
-	const Memory* imageAlloc(ImageContainer& _imageContainer, TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth = 0, bool _cubeMap = false, bool _generateMips = false);
+	const Memory* imageAlloc(ImageContainer& _imageContainer, TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth = 0, uint16_t _numLayers = 0, bool _cubeMap = false, bool _generateMips = false);
 
 	///
 	void imageFree(const Memory* _memory);

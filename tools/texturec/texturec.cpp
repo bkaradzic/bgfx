@@ -622,7 +622,7 @@ int main(int _argc, const char* _argv[])
 
 				if (normalMap)
 				{
-					output = imageAlloc(imageContainer, format, mip.m_width, mip.m_height, 0, false, mips);
+					output = imageAlloc(imageContainer, format, mip.m_width, mip.m_height, 0, 1, false, mips);
 
 					ImageMip dstMip;
 					imageGetRawData(imageContainer, 0, 0, NULL, 0, dstMip);
@@ -686,7 +686,7 @@ int main(int _argc, const char* _argv[])
 				}
 				else if (8 != getBlockInfo(imageContainer.m_format).rBits)
 				{
-					output = imageAlloc(imageContainer, format, mip.m_width, mip.m_height, 0, false, mips);
+					output = imageAlloc(imageContainer, format, mip.m_width, mip.m_height, 0, 1, false, mips);
 
 					ImageMip dstMip;
 					imageGetRawData(imageContainer, 0, 0, NULL, 0, dstMip);
@@ -746,7 +746,7 @@ int main(int _argc, const char* _argv[])
 				}
 				else
 				{
-					output = imageAlloc(imageContainer, format, mip.m_width, mip.m_height, 0, false, mips);
+					output = imageAlloc(imageContainer, format, mip.m_width, mip.m_height, 0, 1, false, mips);
 
 					ImageMip dstMip;
 					imageGetRawData(imageContainer, 0, 0, NULL, 0, dstMip);
