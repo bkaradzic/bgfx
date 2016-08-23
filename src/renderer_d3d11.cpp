@@ -4119,23 +4119,23 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			for (uint32_t ii = 0; ii < count; ++ii)
 			{
-				uint8_t nameSize;
+				uint8_t nameSize = 0;
 				bx::read(&reader, nameSize);
 
-				char name[256];
+				char name[256] = { '\0' };
 				bx::read(&reader, &name, nameSize);
 				name[nameSize] = '\0';
 
-				uint8_t type;
+				uint8_t type = 0;
 				bx::read(&reader, type);
 
-				uint8_t num;
+				uint8_t num = 0;
 				bx::read(&reader, num);
 
-				uint16_t regIndex;
+				uint16_t regIndex = 0;
 				bx::read(&reader, regIndex);
 
-				uint16_t regCount;
+				uint16_t regCount = 0;
 				bx::read(&reader, regCount);
 
 				const char* kind = "invalid";
@@ -4213,7 +4213,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create compute shader.");
 		}
 
-		uint8_t numAttrs;
+		uint8_t numAttrs = 0;
 		bx::read(&reader, numAttrs);
 
 		memset(m_attrMask, 0, sizeof(m_attrMask) );
@@ -4259,7 +4259,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			const ImageBlockInfo& blockInfo = getBlockInfo(TextureFormat::Enum(imageContainer.m_format) );
 			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
 			const uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height>>startLod);
-			const uint32_t numLayers     = imageContainer.m_numLayers;
+			const uint16_t numLayers     = imageContainer.m_numLayers;
 
 			m_flags  = _flags;
 			m_width  = textureWidth;
@@ -4285,7 +4285,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			m_numMips = numMips;
 
-			uint32_t numSrd = numMips*(imageContainer.m_cubeMap ? 6 : 1);
+			const uint16_t numSides = numLayers * (imageContainer.m_cubeMap ? 6 : 1);
+			const uint32_t numSrd   = numSides * numMips;
 			D3D11_SUBRESOURCE_DATA* srd = (D3D11_SUBRESOURCE_DATA*)alloca(numSrd*sizeof(D3D11_SUBRESOURCE_DATA) );
 
 			uint32_t kk = 0;
@@ -4304,7 +4305,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				, swizzle ? " (swizzle BGRA8 -> RGBA8)" : ""
 				);
 
-			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
+			for (uint16_t side = 0; side < numSides; ++side)
 			{
 				uint32_t width  = textureWidth;
 				uint32_t height = textureHeight;
@@ -4539,7 +4540,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			&&  0 != kk)
 			{
 				kk = 0;
-				for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
+				for (uint16_t side = 0; side < numSides; ++side)
 				{
 					for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
 					{
@@ -4593,7 +4594,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			layer = _z * (TextureD3D11::TextureCube == m_type ? 6 : 1);
 			box.front = 0;
-			box.back  = 1;
+			box.back  = 0;
 		}
 
 		const uint32_t subres = _mip + ( (layer + _side) * m_numMips);

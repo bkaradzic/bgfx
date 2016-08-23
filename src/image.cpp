@@ -3187,7 +3187,7 @@ namespace bgfx
 		_imageContainer.m_height    = height;
 		_imageContainer.m_depth     = depth;
 		_imageContainer.m_format    = format;
-		_imageContainer.m_numLayers = 1;
+		_imageContainer.m_numLayers = uint16_t(bx::uint32_max(numberOfArrayElements, 1) );
 		_imageContainer.m_numMips   = uint8_t(bx::uint32_max(numMips, 1) );
 		_imageContainer.m_hasAlpha  = hasAlpha;
 		_imageContainer.m_cubeMap   = numFaces > 1;
@@ -3768,7 +3768,7 @@ namespace bgfx
 		}
 	}
 
-	bool imageGetRawData(const ImageContainer& _imageContainer, uint8_t _side, uint8_t _lod, const void* _data, uint32_t _size, ImageMip& _mip)
+	bool imageGetRawData(const ImageContainer& _imageContainer, uint16_t _side, uint8_t _lod, const void* _data, uint32_t _size, ImageMip& _mip)
 	{
 		uint32_t offset = _imageContainer.m_offset;
 		TextureFormat::Enum format = TextureFormat::Enum(_imageContainer.m_format);
@@ -3795,6 +3795,7 @@ namespace bgfx
 		}
 
 		const uint8_t* data = (const uint8_t*)_data;
+		const uint16_t numSides = _imageContainer.m_numLayers * (_imageContainer.m_cubeMap ? 6 : 1);
 
 		if (_imageContainer.m_ktx)
 		{
@@ -3814,7 +3815,7 @@ namespace bgfx
 				uint32_t size = width*height*depth*bpp/8;
 				BX_CHECK(size == imageSize, "KTX: Image size mismatch %d (expected %d).", size, imageSize);
 
-				for (uint8_t side = 0, numSides = _imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
+				for (uint16_t side = 0; side < numSides; ++side)
 				{
 					if (side == _side
 					&&  lod  == _lod)
@@ -3843,7 +3844,7 @@ namespace bgfx
 		}
 		else
 		{
-			for (uint8_t side = 0, numSides = _imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
+			for (uint16_t side = 0; side < numSides; ++side)
 			{
 				uint32_t width  = _imageContainer.m_width;
 				uint32_t height = _imageContainer.m_height;
@@ -3937,19 +3938,19 @@ namespace bgfx
 
 		int32_t size = 0;
 		size += bx::write(_writer, "\xabKTX 11\xbb\r\n\x1a\n", 12, _err);
-		size += bx::write(_writer, UINT32_C(0x04030201), _err);
-		size += bx::write(_writer, UINT32_C(0), _err); // glType
-		size += bx::write(_writer, UINT32_C(1), _err); // glTypeSize
-		size += bx::write(_writer, UINT32_C(0), _err); // glFormat
+		size += bx::write(_writer, uint32_t(0x04030201), _err);
+		size += bx::write(_writer, uint32_t(0), _err); // glType
+		size += bx::write(_writer, uint32_t(1), _err); // glTypeSize
+		size += bx::write(_writer, uint32_t(0), _err); // glFormat
 		size += bx::write(_writer, tfi.m_internalFmt, _err); // glInternalFormat
 		size += bx::write(_writer, tfi.m_fmt, _err); // glBaseInternalFormat
 		size += bx::write(_writer, _width, _err);
 		size += bx::write(_writer, _height, _err);
 		size += bx::write(_writer, _depth, _err);
-		size += bx::write(_writer, UINT32_C(0), _err); // numberOfArrayElements
-		size += bx::write(_writer, _cubeMap ? UINT32_C(6) : UINT32_C(0), _err);
+		size += bx::write(_writer, uint32_t(0), _err); // numberOfArrayElements
+		size += bx::write(_writer, _cubeMap ? uint32_t(6) : uint32_t(0), _err);
 		size += bx::write(_writer, uint32_t(_numMips), _err);
-		size += bx::write(_writer, UINT32_C(0), _err); // Meta-data size.
+		size += bx::write(_writer, uint32_t(0), _err); // Meta-data size.
 
 		BX_WARN(size == 64, "KTX: Failed to write header size %d (expected: %d).", size, 64);
 		return size;

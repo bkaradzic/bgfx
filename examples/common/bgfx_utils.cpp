@@ -240,6 +240,8 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath,
 						break;
 
 					case LCT_PALETTE:
+						format = bgfx::TextureFormat::R8;
+						bpp    = 8;
 						break;
 					}
 					break;

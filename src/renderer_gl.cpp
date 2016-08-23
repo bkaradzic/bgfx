@@ -4604,6 +4604,7 @@ BX_TRACE("zoffset %d, depth %d", _zoffset, _depth);
 			uint8_t numMips = imageContainer.m_numMips;
 			const uint8_t startLod = uint8_t(bx::uint32_min(_skip, numMips-1) );
 			numMips -= startLod;
+			const uint16_t numLayers = imageContainer.m_numLayers;
 			uint32_t textureWidth;
 			uint32_t textureHeight;
 			uint32_t textureDepth;
@@ -4637,7 +4638,7 @@ BX_TRACE("zoffset %d, depth %d", _zoffset, _depth);
 				target = GL_TEXTURE_3D;
 			}
 
-			if (1 < imageContainer.m_numLayers)
+			if (1 < numLayers)
 			{
 				switch (target)
 				{
@@ -4684,7 +4685,7 @@ BX_TRACE("zoffset %d, depth %d", _zoffset, _depth);
 				, this - s_renderGL->m_textures
 				, getName( (TextureFormat::Enum)m_textureFormat)
 				, getName( (TextureFormat::Enum)m_requestedFormat)
-				, imageContainer.m_numLayers
+				, numLayers
 				, textureWidth
 				, textureHeight
 				, imageContainer.m_cubeMap ? 6 : (1 < imageContainer.m_depth ? imageContainer.m_depth : 0)
@@ -4705,7 +4706,9 @@ BX_TRACE("zoffset %d, depth %d", _zoffset, _depth);
 				temp = (uint8_t*)BX_ALLOC(g_allocator, textureWidth*textureHeight*4);
 			}
 
-			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
+			const uint16_t numSides = numLayers * (imageContainer.m_cubeMap ? 6 : 1);
+
+			for (uint16_t side = 0; side < numSides; ++side)
 			{
 				uint32_t width  = textureWidth;
 				uint32_t height = textureHeight;
