@@ -1586,6 +1586,8 @@ namespace bgfx
 	///     sampling.
 	///
 	/// @param[in] _mem Texture data. If `_mem` is non-NULL, created texture will be immutable.
+	///   When `_numLayers` is more than 1, expected memory layout is texture and all mips together
+	///   for each array element.
 	///
 	/// @attention C99 equivalent is `bgfx_create_texture_2d`.
 	///
@@ -1668,6 +1670,8 @@ namespace bgfx
 	///     sampling.
 	///
 	/// @param[in] _mem Texture data. If `_mem` is non-NULL, created texture will be immutable.
+	///   When `_numLayers` is more than 1, expected memory layout is cubemap texture and all mips
+	///   together for each array element.
 	///
 	/// @attention C99 equivalent is `bgfx_create_texture_cube`.
 	///
