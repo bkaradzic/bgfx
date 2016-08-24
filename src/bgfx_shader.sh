@@ -164,6 +164,11 @@ vec4 bgfxTexture2DArray(BgfxSampler2DArray _sampler, vec3 _coord)
 	return _sampler.m_texture.Sample(_sampler.m_sampler, _coord);
 }
 
+vec4 bgfxTexture2DArrayLod(BgfxSampler2DArray _sampler, vec3 _coord, float _lod)
+{
+	return _sampler.m_texture.SampleLevel(_sampler.m_sampler, _coord, _lod);
+}
+
 float bgfxShadow2D(BgfxSampler2DShadow _sampler, vec3 _coord)
 {
 	return _sampler.m_texture.SampleCmpLevelZero(_sampler.m_sampler, _coord.xy, _coord.z);
@@ -255,6 +260,7 @@ vec4 bgfxTexelFetch(BgfxSampler3D _sampler, ivec3 _coord, int _lod)
 			static BgfxSampler2DArray _name = { _name ## Sampler, _name ## Texture }
 #		define sampler2DArray BgfxSampler2DArray
 #		define texture2DArray(_sampler, _coord) bgfxTexture2DArray(_sampler, _coord)
+#		define texture2DArrayLod(_sampler, _coord, _lod) bgfxTexture2DArrayLod(_sampler, _coord, _lod)
 
 #		define SAMPLER2DMS(_name, _reg) \
 			uniform Texture2DMS<vec4> _name ## Texture : register(t[_reg]); \

@@ -661,10 +661,11 @@ int _main_(int _argc, char** _argv)
 
 	case bgfx::RendererType::Direct3D11:
 	case bgfx::RendererType::Direct3D12:
-		vs_texture      = bgfx::makeRef(vs_texture_dx11,      sizeof(vs_texture_dx11) );
-		fs_texture      = bgfx::makeRef(fs_texture_dx11,      sizeof(fs_texture_dx11) );
-		vs_texture_cube = bgfx::makeRef(vs_texture_cube_dx11, sizeof(vs_texture_cube_dx11) );
-		fs_texture_cube = bgfx::makeRef(fs_texture_cube_dx11, sizeof(fs_texture_cube_dx11) );
+		vs_texture       = bgfx::makeRef(vs_texture_dx11,       sizeof(vs_texture_dx11) );
+		fs_texture       = bgfx::makeRef(fs_texture_dx11,       sizeof(fs_texture_dx11) );
+		fs_texture_array = bgfx::makeRef(fs_texture_array_dx11, sizeof(fs_texture_dx11) );
+		vs_texture_cube  = bgfx::makeRef(vs_texture_cube_dx11,  sizeof(vs_texture_cube_dx11) );
+		fs_texture_cube  = bgfx::makeRef(fs_texture_cube_dx11,  sizeof(fs_texture_cube_dx11) );
 		break;
 
 	default:
