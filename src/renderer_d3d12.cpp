@@ -4697,7 +4697,7 @@ data.NumQualityLevels = 0;
 
 	void RendererContextD3D12::submit(Frame* _render, ClearQuad& /*_clearQuad*/, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
-//		PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), L"rendererSubmit");
+//		PIX_BEGINEVENT(D3DCOLOR_FRAME, L"rendererSubmit");
 
 		updateResolution(_render->m_resolution);
 
@@ -5133,7 +5133,7 @@ data.NumQualityLevels = 0;
 // 						wchar_t* viewNameW = s_viewNameW[view];
 // 						viewNameW[3] = L' ';
 // 						PIX_ENDEVENT();
-// 						PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), viewNameW);
+// 						PIX_BEGINEVENT(D3DCOLOR_DRAW, viewNameW);
 					}
 
 					commandListChanged = true;
@@ -5433,7 +5433,7 @@ data.NumQualityLevels = 0;
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH | BGFX_DEBUG_STATS) )
 		{
-//			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), L"debugstats");
+//			PIX_BEGINEVENT(D3DCOLOR_FRAME, L"debugstats");
 
 			TextVideoMem& tvm = m_textVideoMem;
 
@@ -5599,7 +5599,7 @@ data.NumQualityLevels = 0;
 		}
 		else if (_render->m_debug & BGFX_DEBUG_TEXT)
 		{
-//			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), L"debugtext");
+//			PIX_BEGINEVENT(D3DCOLOR_FRAME, L"debugtext");
 
 			blit(this, _textVideoMemBlitter, _render->m_textVideoMem);
 

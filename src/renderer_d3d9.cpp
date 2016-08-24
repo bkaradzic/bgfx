@@ -1191,7 +1191,7 @@ namespace bgfx { namespace d3d9
 			uint32_t size = _size*sizeof(wchar_t);
 			wchar_t* name = (wchar_t*)alloca(size);
 			mbstowcs(name, _marker, size-2);
-			PIX_SETMARKER(D3DCOLOR_RGBA(0xff, 0xff, 0xff, 0xff), name);
+			PIX_SETMARKER(D3DCOLOR_MARKER, name);
 #endif // BGFX_CONFIG_DEBUG_PIX
 			BX_UNUSED(_marker, _size);
 		}
@@ -3522,7 +3522,7 @@ namespace bgfx { namespace d3d9
 	{
 		IDirect3DDevice9* device = m_device;
 
-		PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), L"rendererSubmit");
+		PIX_BEGINEVENT(D3DCOLOR_FRAME, L"rendererSubmit");
 
 		updateResolution(_render->m_resolution);
 
@@ -3633,7 +3633,7 @@ namespace bgfx { namespace d3d9
 					currentState.m_stencil    = newStencil;
 
 					PIX_ENDEVENT();
-					PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), s_viewNameW[key.m_view]);
+					PIX_BEGINEVENT(D3DCOLOR_VIEW, s_viewNameW[key.m_view]);
 					if (item > 0)
 					{
 						BGFX_PROFILER_END();
@@ -4224,7 +4224,7 @@ namespace bgfx { namespace d3d9
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
-			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), L"debugstats");
+			PIX_BEGINEVENT(D3DCOLOR_FRAME, L"debugstats");
 
 			TextVideoMem& tvm = m_textVideoMem;
 
@@ -4314,7 +4314,7 @@ namespace bgfx { namespace d3d9
 		}
 		else if (_render->m_debug & BGFX_DEBUG_TEXT)
 		{
-			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), L"debugtext");
+			PIX_BEGINEVENT(D3DCOLOR_FRAME, L"debugtext");
 
 			blit(this, _textVideoMemBlitter, _render->m_textVideoMem);
 

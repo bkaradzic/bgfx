@@ -2032,7 +2032,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				uint32_t size = _size*sizeof(wchar_t);
 				wchar_t* name = (wchar_t*)alloca(size);
 				mbstowcs(name, _marker, size-2);
-				PIX_SETMARKER(D3DCOLOR_RGBA(0xff, 0xff, 0xff, 0xff), name);
+				PIX_SETMARKER(D3DCOLOR_MARKER, name);
 			}
 		}
 
@@ -5146,7 +5146,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			renderDocTriggerCapture();
 		}
 
-		PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), L"rendererSubmit");
+		PIX_BEGINEVENT(D3DCOLOR_FRAME, L"rendererSubmit");
 		BGFX_GPU_PROFILER_BEGIN_DYNAMIC("rendererSubmit");
 
 		ID3D11DeviceContext* deviceCtx = m_deviceCtx;
@@ -5297,7 +5297,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 							wchar_t* viewNameW = s_viewNameW[view];
 							viewNameW[3] = L' ';
 							viewNameW[4] = eye ? L'R' : L'L';
-							PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), viewNameW);
+							PIX_BEGINEVENT(0 == ( (view*2+eye)&1)
+								? D3DCOLOR_VIEW_L
+								: D3DCOLOR_VIEW_R
+								, viewNameW
+								);
 						}
 
 						if (m_ovr.isEnabled() )
@@ -5318,7 +5322,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 							wchar_t* viewNameW = s_viewNameW[view];
 							viewNameW[3] = L' ';
 							viewNameW[4] = L' ';
-							PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), viewNameW);
+							PIX_BEGINEVENT(D3DCOLOR_VIEW, viewNameW);
 						}
 					}
 
@@ -5429,7 +5433,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 							wchar_t* viewNameW = s_viewNameW[view];
 							viewNameW[3] = L'C';
 							PIX_ENDEVENT();
-							PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), viewNameW);
+							PIX_BEGINEVENT(D3DCOLOR_COMPUTE, viewNameW);
 						}
 
 						deviceCtx->IASetVertexBuffers(0, 2, s_zero.m_buffer, s_zero.m_zero, s_zero.m_zero);
@@ -5581,7 +5585,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						wchar_t* viewNameW = s_viewNameW[view];
 						viewNameW[3] = L' ';
 						PIX_ENDEVENT();
-						PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), viewNameW);
+						PIX_BEGINEVENT(D3DCOLOR_DRAW, viewNameW);
 					}
 
 					programIdx = invalidHandle;
@@ -6030,7 +6034,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					wchar_t* viewNameW = s_viewNameW[view];
 					viewNameW[3] = L'C';
 					PIX_ENDEVENT();
-					PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), viewNameW);
+					PIX_BEGINEVENT(D3DCOLOR_DRAW, viewNameW);
 				}
 
 				invalidateCompute();
@@ -6100,7 +6104,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
-			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), L"debugstats");
+			PIX_BEGINEVENT(D3DCOLOR_FRAME, L"debugstats");
 
 			TextVideoMem& tvm = m_textVideoMem;
 
@@ -6234,7 +6238,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		}
 		else if (_render->m_debug & BGFX_DEBUG_TEXT)
 		{
-			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), L"debugtext");
+			PIX_BEGINEVENT(D3DCOLOR_FRAME, L"debugtext");
 
 			blit(this, _textVideoMemBlitter, _render->m_textVideoMem);
 

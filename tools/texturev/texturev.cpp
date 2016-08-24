@@ -557,7 +557,7 @@ void associate()
 	bx::Error err;
 	if (bx::open(&writer, temp, false, &err) )
 	{
-		bx::write(&writer, str.c_str(), str.length(), &err);
+		bx::write(&writer, str.c_str(), uint32_t(str.length()), &err);
 		bx::close(&writer);
 
 		if (err.isOk() )
@@ -588,7 +588,7 @@ void associate()
 	bx::Error err;
 	if (bx::open(&writer, "/tmp/texturev.sh", false, &err) )
 	{
-		bx::write(&writer, str.c_str(), str.length(), &err);
+		bx::write(&writer, str.c_str(), uint32_t(str.length()), &err);
 		bx::close(&writer);
 
 		if (err.isOk() )
@@ -695,9 +695,6 @@ int _main_(int _argc, char** _argv)
 			: fsTexture
 			, true
 			);
-
-	bgfx::destroyShader(vsTexture);
-	bgfx::destroyShader(fsTexture);
 
 	bgfx::ProgramHandle textureCubeProgram = bgfx::createProgram(
 			  bgfx::createShader(vs_texture_cube)
