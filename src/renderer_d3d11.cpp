@@ -4294,10 +4294,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			const bool compressed = isCompressed(TextureFormat::Enum(m_textureFormat) );
 			const bool swizzle    = TextureFormat::BGRA8 == m_textureFormat && 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 
-			BX_TRACE("Texture %3d: %s (requested: %s), %dx%d%s%s%s."
+			BX_TRACE("Texture %3d: %s (requested: %s), layers %d, %dx%d%s%s%s."
 				, getHandle()
 				, getName( (TextureFormat::Enum)m_textureFormat)
 				, getName( (TextureFormat::Enum)m_requestedFormat)
+				, numLayers
 				, textureWidth
 				, textureHeight
 				, imageContainer.m_cubeMap ? "x6" : ""
@@ -4407,6 +4408,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					desc.Width  = textureWidth;
 					desc.Height = textureHeight;
 					desc.MipLevels  = numMips;
+					desc.ArraySize  = numSides;
 					desc.Format     = format;
 					desc.SampleDesc = msaa;
 					desc.Usage      = kk == 0 || blit ? D3D11_USAGE_DEFAULT : D3D11_USAGE_IMMUTABLE;
@@ -4443,7 +4445,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 					if (imageContainer.m_cubeMap)
 					{
-						desc.ArraySize = 6 * numLayers;
 						desc.MiscFlags |= D3D11_RESOURCE_MISC_TEXTURECUBE;
 						if (1 < numLayers)
 						{
@@ -4459,7 +4460,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 					else
 					{
-						desc.ArraySize = numLayers;
 						if (msaaSample)
 						{
 							if (1 < numLayers)

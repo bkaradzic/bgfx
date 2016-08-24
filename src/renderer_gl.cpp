@@ -4260,69 +4260,6 @@ namespace bgfx { namespace gl
 		m_vcref.invalidate(s_renderGL->m_vaoStateCache);
 	}
 
-	static void texImage(
-		  GLenum _target
-		, uint32_t _msaaQuality
-		, GLint _level
-		, GLint _internalFormat
-		, GLsizei _width
-		, GLsizei _height
-		, GLsizei _depth
-		, GLint _border
-		, GLenum _format
-		, GLenum _type
-		, const GLvoid* _data
-	)
-	{
-		if (_target == GL_TEXTURE_3D
-		||  _target == GL_TEXTURE_2D_ARRAY
-		||  _target == GL_TEXTURE_CUBE_MAP_ARRAY)
-		{
-			GL_CHECK(glTexImage3D(
-				  _target
-				, _level
-				, _internalFormat
-				, _width
-				, _height
-				, _depth
-				, _border
-				, _format
-				, _type
-				, _data
-				) );
-		}
-		else if (_target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY)
-		{
-		}
-		else if (_target == GL_TEXTURE_2D_MULTISAMPLE)
-		{
-			GL_CHECK(glTexImage2DMultisample(
-				  _target
-				, _msaaQuality
-				, _internalFormat
-				, _width
-				, _height
-				, false
-				) );
-		}
-		else
-		{
-			GL_CHECK(glTexImage2D(
-				  _target
-				, _level
-				, _internalFormat
-				, _width
-				, _height
-				, _border
-				, _format
-				, _type
-				, _data
-				) );
-		}
-
-		BX_UNUSED(_msaaQuality, _depth, _border, _data);
-	}
-
 	static void texSubImage(
 		  GLenum _target
 		, GLint _level
@@ -4341,8 +4278,6 @@ namespace bgfx { namespace gl
 		||  _target == GL_TEXTURE_2D_ARRAY
 		||  _target == GL_TEXTURE_CUBE_MAP_ARRAY)
 		{
-BX_TRACE("zoffset %d, depth %d", _zoffset, _depth);
-
 			GL_CHECK(glTexSubImage3D(
 				  _target
 				, _level
@@ -4377,51 +4312,70 @@ BX_TRACE("zoffset %d, depth %d", _zoffset, _depth);
 		}
 	}
 
-	static void compressedTexImage(
+	static void texImage(
 		  GLenum _target
+		, uint32_t _msaaQuality
 		, GLint _level
-		, GLenum _internalformat
+		, GLint _internalFormat
 		, GLsizei _width
 		, GLsizei _height
 		, GLsizei _depth
 		, GLint _border
-		, GLsizei _imageSize
+		, GLenum _format
+		, GLenum _type
 		, const GLvoid* _data
 	)
 	{
-		if (_target == GL_TEXTURE_3D
-		||  _target == GL_TEXTURE_2D_ARRAY
-		||  _target == GL_TEXTURE_CUBE_MAP_ARRAY)
+		if (_target == GL_TEXTURE_3D)
 		{
-			GL_CHECK(glCompressedTexImage3D(
+			GL_CHECK(glTexImage3D(
 				  _target
 				, _level
-				, _internalformat
+				, _internalFormat
 				, _width
 				, _height
 				, _depth
 				, _border
-				, _imageSize
+				, _format
+				, _type
 				, _data
 				) );
+		}
+		else if (_target == GL_TEXTURE_2D_ARRAY
+			 ||  _target == GL_TEXTURE_CUBE_MAP_ARRAY)
+		{
+			texSubImage(_target, _level, 0, 0, _depth, _width, _height, 1, _format, _type, _data);
 		}
 		else if (_target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY)
 		{
 		}
+		else if (_target == GL_TEXTURE_2D_MULTISAMPLE)
+		{
+			GL_CHECK(glTexImage2DMultisample(
+				  _target
+				, _msaaQuality
+				, _internalFormat
+				, _width
+				, _height
+				, false
+				) );
+		}
 		else
 		{
-			BX_UNUSED(_depth);
-			GL_CHECK(glCompressedTexImage2D(
+			GL_CHECK(glTexImage2D(
 				  _target
 				, _level
-				, _internalformat
+				, _internalFormat
 				, _width
 				, _height
 				, _border
-				, _imageSize
+				, _format
+				, _type
 				, _data
 				) );
 		}
+
+		BX_UNUSED(_msaaQuality, _depth, _border, _data);
 	}
 
 	static void compressedTexSubImage(
@@ -4471,6 +4425,56 @@ BX_TRACE("zoffset %d, depth %d", _zoffset, _depth);
 		}
 	}
 
+	static void compressedTexImage(
+		  GLenum _target
+		, GLint _level
+		, GLenum _internalformat
+		, GLsizei _width
+		, GLsizei _height
+		, GLsizei _depth
+		, GLint _border
+		, GLsizei _imageSize
+		, const GLvoid* _data
+	)
+	{
+		if (_target == GL_TEXTURE_3D)
+		{
+			GL_CHECK(glCompressedTexImage3D(
+				  _target
+				, _level
+				, _internalformat
+				, _width
+				, _height
+				, _depth
+				, _border
+				, _imageSize
+				, _data
+				) );
+		}
+		else if (_target == GL_TEXTURE_2D_ARRAY
+			 ||  _target == GL_TEXTURE_CUBE_MAP_ARRAY)
+		{
+			compressedTexSubImage(_target, _level, 0, 0, _depth, _width, _height, 1, _internalformat, _imageSize, _data);
+		}
+		else if (_target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY)
+		{
+		}
+		else
+		{
+			BX_UNUSED(_depth);
+			GL_CHECK(glCompressedTexImage2D(
+				  _target
+				, _level
+				, _internalformat
+				, _width
+				, _height
+				, _border
+				, _imageSize
+				, _data
+				) );
+		}
+	}
+
 	bool TextureGL::init(GLenum _target, uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _numMips, uint32_t _flags)
 	{
 		m_target  = _target;
@@ -4483,6 +4487,10 @@ BX_TRACE("zoffset %d, depth %d", _zoffset, _depth);
 
 		const bool writeOnly    = 0 != (m_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
 		const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE );
+		const bool textureArray = false
+			|| _target == GL_TEXTURE_2D_ARRAY
+			|| _target == GL_TEXTURE_CUBE_MAP_ARRAY
+			;
 
 		if (!writeOnly)
 		{
@@ -4510,6 +4518,17 @@ BX_TRACE("zoffset %d, depth %d", _zoffset, _depth);
 				const TextureFormatInfo& tfiRgba8 = s_textureFormat[TextureFormat::RGBA8];
 				m_fmt  = tfiRgba8.m_fmt;
 				m_type = tfiRgba8.m_type;
+			}
+
+			if (textureArray)
+			{
+				GL_CHECK(glTexStorage3D(_target
+					, _numMips
+					, s_textureFormat[m_textureFormat].m_internalFmt
+					, m_width
+					, m_height
+					, _depth
+					) );
 			}
 
 			if (computeWrite)
@@ -4638,7 +4657,8 @@ BX_TRACE("zoffset %d, depth %d", _zoffset, _depth);
 				target = GL_TEXTURE_3D;
 			}
 
-			if (1 < numLayers)
+			const bool textureArray = 1 < numLayers;
+			if (textureArray)
 			{
 				switch (target)
 				{
@@ -4713,6 +4733,10 @@ BX_TRACE("zoffset %d, depth %d", _zoffset, _depth);
 				uint32_t width  = textureWidth;
 				uint32_t height = textureHeight;
 				uint32_t depth  = imageContainer.m_depth;
+				GLenum imageTarget = imageContainer.m_cubeMap && !textureArray
+					? target+side
+					: target
+					;
 
 				for (uint8_t lod = 0, num = numMips; lod < num; ++lod)
 				{
@@ -4720,7 +4744,7 @@ BX_TRACE("zoffset %d, depth %d", _zoffset, _depth);
 					height = bx::uint32_max(1, height);
 					depth  = 1 < imageContainer.m_depth
 						? bx::uint32_max(1, depth)
-						: imageContainer.m_numLayers
+						: side
 						;
 
 					ImageMip mip;
@@ -4729,7 +4753,7 @@ BX_TRACE("zoffset %d, depth %d", _zoffset, _depth);
 						if (compressed
 						&& !convert)
 						{
-							compressedTexImage(target+side
+							compressedTexImage(imageTarget
 								, lod
 								, internalFmt
 								, width
@@ -4756,7 +4780,7 @@ BX_TRACE("zoffset %d, depth %d", _zoffset, _depth);
 								data = temp;
 							}
 
-							texImage(target+side
+							texImage(imageTarget
 								, msaaQuality
 								, lod
 								, internalFmt
@@ -4779,7 +4803,7 @@ BX_TRACE("zoffset %d, depth %d", _zoffset, _depth);
 										  * 4*4*getBitsPerPixel(TextureFormat::Enum(m_textureFormat) )/8
 										  ;
 
-							compressedTexImage(target+side
+							compressedTexImage(imageTarget
 								, lod
 								, internalFmt
 								, width
@@ -4792,7 +4816,7 @@ BX_TRACE("zoffset %d, depth %d", _zoffset, _depth);
 						}
 						else
 						{
-							texImage(target+side
+							texImage(imageTarget
 								, msaaQuality
 								, lod
 								, internalFmt
