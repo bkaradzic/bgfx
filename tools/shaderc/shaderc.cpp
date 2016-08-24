@@ -23,6 +23,7 @@ namespace bgfx
 	static const char* s_ARB_shader_texture_lod[] =
 	{
 		"texture2DLod",
+		"texture2DArrayLod", // BK - interacts with ARB_texture_array.
 		"texture2DProjLod",
 		"texture3DLod",
 		"texture3DProjLod",
@@ -1791,15 +1792,6 @@ namespace bgfx
 										bx::stringPrintf(code, "#version %s\n", need130 ? "130" : profile);
 									}
 
-									if (130 > glsl)
-									{
-										bx::stringPrintf(code,
-												"#define ivec2 vec2\n"
-												"#define ivec3 vec3\n"
-												"#define ivec4 vec4\n"
-												);
-									}
-
 									if (usesGpuShader5)
 									{
 										bx::stringPrintf(code
@@ -1813,11 +1805,6 @@ namespace bgfx
 											, "#extension GL_ARB_shading_language_packing : enable\n"
 											);
 									}
-
-									bx::stringPrintf(code
-										, "#define bgfxShadow2D shadow2D\n"
-										  "#define bgfxShadow2DProj shadow2DProj\n"
-										);
 
 									if (usesTextureLod
 									&&  130 > glsl)
@@ -1840,15 +1827,23 @@ namespace bgfx
 											, "#extension GL_EXT_texture_array : enable\n"
 											);
 									}
+
+									if (130 > glsl)
+									{
+										bx::stringPrintf(code,
+												"#define ivec2 vec2\n"
+												"#define ivec3 vec3\n"
+												"#define ivec4 vec4\n"
+												);
+									}
+
+									bx::stringPrintf(code
+										, "#define bgfxShadow2D shadow2D\n"
+										  "#define bgfxShadow2DProj shadow2DProj\n"
+										);
 								}
 								else
 								{
-									bx::stringPrintf(code,
-											"#define ivec2 vec2\n"
-											"#define ivec3 vec3\n"
-											"#define ivec4 vec4\n"
-											);
-
 									// Pretend that all extensions are available.
 									// This will be stripped later.
 									if (usesTextureLod)
@@ -1904,6 +1899,19 @@ namespace bgfx
 											  "#define gl_FragDepth gl_FragDepthEXT\n"
 											);
 									}
+
+									if (usesTextureArray)
+									{
+										bx::stringPrintf(code
+											, "#extension GL_EXT_texture_array : enable\n"
+											);
+									}
+
+									bx::stringPrintf(code,
+											"#define ivec2 vec2\n"
+											"#define ivec3 vec3\n"
+											"#define ivec4 vec4\n"
+											);
 								}
 
 								code += preprocessor.m_preprocessed;

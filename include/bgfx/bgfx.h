@@ -615,6 +615,7 @@ namespace bgfx
 		uint16_t width;             //!< Texture width.
 		uint16_t height;            //!< Texture height.
 		uint16_t depth;             //!< Texture depth.
+		uint16_t numLayers;         //!< Number of layers in texture array.
 		uint8_t numMips;            //!< Number of MIP maps.
 		uint8_t bitsPerPixel;       //!< Format bits per pixel.
 		bool    cubeMap;            //!< Texture is cubemap.

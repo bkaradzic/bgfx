@@ -2924,7 +2924,8 @@ error:
 		_info.height  = _height;
 		_info.depth   = _depth;
 		_info.numMips = numMips;
-		_info.cubeMap = _cubeMap;
+		_info.numLayers = _numLayers;
+		_info.cubeMap   = _cubeMap;
 		_info.storageSize  = size;
 		_info.bitsPerPixel = bpp;
 	}

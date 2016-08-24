@@ -3098,7 +3098,7 @@ namespace bgfx
 					, (uint16_t)imageContainer.m_depth
 					, imageContainer.m_cubeMap
 					, imageContainer.m_numMips > 1
-					, 1
+					, imageContainer.m_numLayers
 					, TextureFormat::Enum(imageContainer.m_format)
 					);
 			}

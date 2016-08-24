@@ -382,6 +382,7 @@ typedef struct bgfx_texture_info
     uint16_t width;
     uint16_t height;
     uint16_t depth;
+    uint16_t numLayers;
     uint8_t numMips;
     uint8_t bitsPerPixel;
     bool    cubeMap;
