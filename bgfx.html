@@ -4590,7 +4590,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </ul>
 </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_mem</span></code> - <p>Texture data. If <code class="docutils literal"><span class="pre">_mem</span></code> is non-NULL, created texture will be immutable.</p>
+<li><code class="first docutils literal"><span class="pre">_mem</span></code> - <p>Texture data. If <code class="docutils literal"><span class="pre">_mem</span></code> is non-NULL, created texture will be immutable. When <code class="docutils literal"><span class="pre">_numLayers</span></code> is more than 1, expected memory layout is texture and all mips together for each array element.</p>
 </li>
 </ul>
 </dd>
@@ -4749,7 +4749,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </ul>
 </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_mem</span></code> - <p>Texture data. If <code class="docutils literal"><span class="pre">_mem</span></code> is non-NULL, created texture will be immutable.</p>
+<li><code class="first docutils literal"><span class="pre">_mem</span></code> - <p>Texture data. If <code class="docutils literal"><span class="pre">_mem</span></code> is non-NULL, created texture will be immutable. When <code class="docutils literal"><span class="pre">_numLayers</span></code> is more than 1, expected memory layout is cubemap texture and all mips together for each array element.</p>
 </li>
 </ul>
 </dd>
