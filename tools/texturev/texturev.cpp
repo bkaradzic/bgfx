@@ -653,10 +653,11 @@ int _main_(int _argc, char** _argv)
 	switch (bgfx::getRendererType())
 	{
 	case bgfx::RendererType::Direct3D9:
-		vs_texture      = bgfx::makeRef(vs_texture_dx9,      sizeof(vs_texture_dx9) );
-		fs_texture      = bgfx::makeRef(fs_texture_dx9,      sizeof(fs_texture_dx9) );
-		vs_texture_cube = bgfx::makeRef(vs_texture_cube_dx9, sizeof(vs_texture_cube_dx9) );
-		fs_texture_cube = bgfx::makeRef(fs_texture_cube_dx9, sizeof(fs_texture_cube_dx9) );
+		vs_texture       = bgfx::makeRef(vs_texture_dx9,      sizeof(vs_texture_dx9) );
+		fs_texture       = bgfx::makeRef(fs_texture_dx9,      sizeof(fs_texture_dx9) );
+		fs_texture_array = NULL;
+		vs_texture_cube  = bgfx::makeRef(vs_texture_cube_dx9, sizeof(vs_texture_cube_dx9) );
+		fs_texture_cube  = bgfx::makeRef(fs_texture_cube_dx9, sizeof(fs_texture_cube_dx9) );
 		break;
 
 	case bgfx::RendererType::Direct3D11:
@@ -679,20 +680,24 @@ int _main_(int _argc, char** _argv)
 	}
 
 	bgfx::ShaderHandle vsTexture = bgfx::createShader(vs_texture);
+	bgfx::ShaderHandle fsTexture = bgfx::createShader(fs_texture);
 
 	bgfx::ProgramHandle textureProgram = bgfx::createProgram(
 			  vsTexture
-			, bgfx::createShader(fs_texture)
+			, fsTexture
 			, true
 			);
 
 	bgfx::ProgramHandle textureArrayProgram = bgfx::createProgram(
 			  vsTexture
-			, bgfx::createShader(fs_texture_array)
+			, NULL != fs_texture_array
+			? bgfx::createShader(fs_texture_array)
+			: fsTexture
 			, true
 			);
 
 	bgfx::destroyShader(vsTexture);
+	bgfx::destroyShader(fsTexture);
 
 	bgfx::ProgramHandle textureCubeProgram = bgfx::createProgram(
 			  bgfx::createShader(vs_texture_cube)
