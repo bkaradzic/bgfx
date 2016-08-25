@@ -310,9 +310,9 @@ namespace bgfx { namespace mtl
 		{ MTLPixelFormatRG32Sint,						MTLPixelFormatInvalid                        }, // RG32I
 		{ MTLPixelFormatRG32Uint,						MTLPixelFormatInvalid                        }, // RG32U
 		{ MTLPixelFormatRG32Float,						MTLPixelFormatInvalid                        }, // RG32F
-        { MTLPixelFormatInvalid,						MTLPixelFormatInvalid                        }, // RGB8
-        { MTLPixelFormatInvalid,						MTLPixelFormatInvalid                        }, // RGB8I
-        { MTLPixelFormatInvalid,						MTLPixelFormatInvalid                        }, // RGB8U
+		{ MTLPixelFormatInvalid,						MTLPixelFormatInvalid                        }, // RGB8
+		{ MTLPixelFormatInvalid,						MTLPixelFormatInvalid                        }, // RGB8I
+		{ MTLPixelFormatInvalid,						MTLPixelFormatInvalid                        }, // RGB8U
 		{ MTLPixelFormatInvalid,						MTLPixelFormatInvalid                        }, // RGB8S
 		{ MTLPixelFormatRGB9E5Float,					MTLPixelFormatInvalid                        }, // RGB9E5F
 		{ MTLPixelFormatBGRA8Unorm,						MTLPixelFormatBGRA8Unorm_sRGB                }, // BGRA8
@@ -474,27 +474,27 @@ namespace bgfx { namespace mtl
 			m_screenshotBlitRenderPipelineState = m_device.newRenderPipelineStateWithDescriptor(m_renderPipelineDescriptor);
 
 			g_caps.supported |= (0
-								 | BGFX_CAPS_TEXTURE_COMPARE_LEQUAL	//NOTE: on IOS Gpu Family 1/2 have to set compare in shader
-								 | BGFX_CAPS_TEXTURE_COMPARE_ALL
-								 | BGFX_CAPS_TEXTURE_3D
-								 | BGFX_CAPS_VERTEX_ATTRIB_HALF
-								 | BGFX_CAPS_VERTEX_ATTRIB_UINT10
-								 | BGFX_CAPS_INSTANCING
-							     | BGFX_CAPS_FRAGMENT_DEPTH
-								 | BGFX_CAPS_BLEND_INDEPENDENT
-							   //| BGFX_CAPS_COMPUTE	// TODO: api/hw supports it but metal compute shaders are not yet supported
-								 | BGFX_CAPS_INDEX32
-							   //| BGFX_CAPS_DRAW_INDIRECT // TODO: support on iOS9+gpu family3+ and on macOS
-							     | BGFX_CAPS_TEXTURE_BLIT
-							     | BGFX_CAPS_TEXTURE_READ_BACK
-							     | BGFX_CAPS_OCCLUSION_QUERY
-							     | BGFX_CAPS_ALPHA_TO_COVERAGE
-                                 | BGFX_CAPS_TEXTURE_2D_ARRAY // supported on all platforms
-								 );
+				| BGFX_CAPS_TEXTURE_COMPARE_LEQUAL	//NOTE: on IOS Gpu Family 1/2 have to set compare in shader
+				| BGFX_CAPS_TEXTURE_COMPARE_ALL
+				| BGFX_CAPS_TEXTURE_3D
+				| BGFX_CAPS_VERTEX_ATTRIB_HALF
+				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
+				| BGFX_CAPS_INSTANCING
+				| BGFX_CAPS_FRAGMENT_DEPTH
+				| BGFX_CAPS_BLEND_INDEPENDENT
+//				| BGFX_CAPS_COMPUTE // TODO: api/hw supports it but metal compute shaders are not yet supported
+				| BGFX_CAPS_INDEX32
+//				| BGFX_CAPS_DRAW_INDIRECT // TODO: support on iOS9+gpu family3+ and on macOS
+				| BGFX_CAPS_TEXTURE_BLIT
+				| BGFX_CAPS_TEXTURE_READ_BACK
+				| BGFX_CAPS_OCCLUSION_QUERY
+				| BGFX_CAPS_ALPHA_TO_COVERAGE
+				| BGFX_CAPS_TEXTURE_2D_ARRAY // supported on all platforms
+				);
 
 			if (BX_ENABLED(BX_PLATFORM_IOS) )
 			{
-				if ( iOSVersionEqualOrGreater("9.0.0") )
+				if (iOSVersionEqualOrGreater("9.0.0") )
 				{
 					g_caps.maxTextureSize = m_device.supportsFeatureSet((MTLFeatureSet)4 /* iOS_GPUFamily3_v1 */) ? 16384 : 8192;
 				}
@@ -502,21 +502,30 @@ namespace bgfx { namespace mtl
 				{
 					g_caps.maxTextureSize = 4096;
 				}
-				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(m_device.supportsFeatureSet((MTLFeatureSet)1 /* MTLFeatureSet_iOS_GPUFamily2_v1 */) ? 8 : 4, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS));
 
-			} else if (BX_ENABLED(BX_PLATFORM_OSX) )
+				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(m_device.supportsFeatureSet((MTLFeatureSet)1 /* MTLFeatureSet_iOS_GPUFamily2_v1 */) ? 8 : 4, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS));
+			}
+			else if (BX_ENABLED(BX_PLATFORM_OSX) )
 			{
-				g_caps.maxTextureSize = 16384;
+				g_caps.maxTextureSize   = 16384;
 				g_caps.maxFBAttachments = 8;
-                g_caps.supported |= BGFX_CAPS_TEXTURE_CUBE_ARRAY;
+				g_caps.supported |= BGFX_CAPS_TEXTURE_CUBE_ARRAY;
 			}
 
 			//todo: vendor id, device id, gpu enum
 
-			m_hasPixelFormatDepth32Float_Stencil8 =	(BX_ENABLED(BX_PLATFORM_OSX) ||
-													 ( BX_ENABLED(BX_PLATFORM_IOS) && iOSVersionEqualOrGreater("9.0.0") ) );
-			m_macOS11Runtime = (BX_ENABLED(BX_PLATFORM_OSX) && macOSVersionEqualOrGreater(10,11,0) );
-			m_iOS9Runtime = (BX_ENABLED(BX_PLATFORM_IOS) && iOSVersionEqualOrGreater("9.0.0") );
+			m_hasPixelFormatDepth32Float_Stencil8 =	false
+				||  BX_ENABLED(BX_PLATFORM_OSX)
+				|| (BX_ENABLED(BX_PLATFORM_IOS) && iOSVersionEqualOrGreater("9.0.0") )
+				;
+			m_macOS11Runtime = true
+				&& BX_ENABLED(BX_PLATFORM_OSX)
+				&& macOSVersionEqualOrGreater(10,11,0)
+				;
+			m_iOS9Runtime = true
+				&& BX_ENABLED(BX_PLATFORM_IOS)
+				&& iOSVersionEqualOrGreater("9.0.0")
+				;
 
 			if (BX_ENABLED(BX_PLATFORM_OSX) )
 			{
@@ -2386,7 +2395,7 @@ namespace bgfx { namespace mtl
 			const ImageBlockInfo& blockInfo = getBlockInfo(TextureFormat::Enum(imageContainer.m_format) );
 			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
 			const uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height>>startLod);
-            const uint16_t numLayers     = imageContainer.m_numLayers;
+			const uint16_t numLayers     = imageContainer.m_numLayers;
 
 			m_flags   = _flags;
 			m_width   = textureWidth;
@@ -2398,19 +2407,21 @@ namespace bgfx { namespace mtl
 			const uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
 
 			TextureDescriptor desc = s_renderMtl->m_textureDescriptor;
-            
-            if (1 < numLayers) {
-                if (imageContainer.m_cubeMap)
-                {
-                    desc.textureType = MTLTextureTypeCubeArray;
-                }
-                else
-                {
-                    desc.textureType = MTLTextureType2DArray;
-                }
-                desc.arrayLength = numLayers;
-            }
-            else if (imageContainer.m_cubeMap)
+
+			if (1 < numLayers)
+			{
+				if (imageContainer.m_cubeMap)
+				{
+					desc.textureType = MTLTextureTypeCubeArray;
+				}
+				else
+				{
+					desc.textureType = MTLTextureType2DArray;
+				}
+
+				desc.arrayLength = numLayers;
+			}
+			else if (imageContainer.m_cubeMap)
 			{
 				desc.textureType = MTLTextureTypeCube;
 			}
@@ -2424,26 +2435,26 @@ namespace bgfx { namespace mtl
 			}
 
 			m_numMips = numMips;
-            const uint16_t numSides = numLayers * (imageContainer.m_cubeMap ? 6 : 1);
+			const uint16_t numSides = numLayers * (imageContainer.m_cubeMap ? 6 : 1);
 
 			const bool compressed   = isCompressed(TextureFormat::Enum(m_textureFormat) );
-            const bool writeOnly    = 0 != (_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
-            const bool computeWrite = 0 != (_flags&BGFX_TEXTURE_COMPUTE_WRITE);
-            const bool renderTarget = 0 != (_flags&BGFX_TEXTURE_RT_MASK);
-            const bool srgb			= 0 != (_flags&BGFX_TEXTURE_SRGB) || imageContainer.m_srgb;
+			const bool writeOnly    = 0 != (_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
+			const bool computeWrite = 0 != (_flags&BGFX_TEXTURE_COMPUTE_WRITE);
+			const bool renderTarget = 0 != (_flags&BGFX_TEXTURE_RT_MASK);
+			const bool srgb			= 0 != (_flags&BGFX_TEXTURE_SRGB) || imageContainer.m_srgb;
 
 			BX_TRACE("Texture %3d: %s (requested: %s), layers %d, %dx%d%s RT[%c], WO[%c], CW[%c], sRGB[%c]"
 					 , this - s_renderMtl->m_textures
 					 , getName( (TextureFormat::Enum)m_textureFormat)
 					 , getName( (TextureFormat::Enum)m_requestedFormat)
-                     , numLayers
+					 , numLayers
 					 , textureWidth
 					 , textureHeight
 					 , imageContainer.m_cubeMap ? "x6" : ""
-                     , renderTarget ? 'x' : '.'
-                     , writeOnly ? 'x' : '.'
-                     , computeWrite ? 'x' : '.'
-                     , srgb ? 'x' : '.'
+					 , renderTarget ? 'x' : '.'
+					 , writeOnly ? 'x' : '.'
+					 , computeWrite ? 'x' : '.'
+					 , srgb ? 'x' : '.'
 					 );
 
 			const uint32_t msaaQuality = bx::uint32_satsub( (_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
