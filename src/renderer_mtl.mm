@@ -489,6 +489,7 @@ namespace bgfx { namespace mtl
 							     | BGFX_CAPS_TEXTURE_READ_BACK
 							     | BGFX_CAPS_OCCLUSION_QUERY
 							     | BGFX_CAPS_ALPHA_TO_COVERAGE
+                                 | BGFX_CAPS_TEXTURE_2D_ARRAY // supported on all platforms
 								 );
 
 			if (BX_ENABLED(BX_PLATFORM_IOS) )
@@ -507,6 +508,7 @@ namespace bgfx { namespace mtl
 			{
 				g_caps.maxTextureSize = 16384;
 				g_caps.maxFBAttachments = 8;
+                g_caps.supported |= BGFX_CAPS_TEXTURE_CUBE_ARRAY;
 			}
 
 			//todo: vendor id, device id, gpu enum
@@ -2384,8 +2386,9 @@ namespace bgfx { namespace mtl
 			const ImageBlockInfo& blockInfo = getBlockInfo(TextureFormat::Enum(imageContainer.m_format) );
 			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
 			const uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height>>startLod);
+            const uint16_t numLayers     = imageContainer.m_numLayers;
 
-			m_flags = _flags;
+			m_flags   = _flags;
 			m_width   = textureWidth;
 			m_height  = textureHeight;
 			m_depth   = imageContainer.m_depth;
@@ -2395,8 +2398,19 @@ namespace bgfx { namespace mtl
 			const uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
 
 			TextureDescriptor desc = s_renderMtl->m_textureDescriptor;
-
-			if (imageContainer.m_cubeMap)
+            
+            if (1 < numLayers) {
+                if (imageContainer.m_cubeMap)
+                {
+                    desc.textureType = MTLTextureTypeCubeArray;
+                }
+                else
+                {
+                    desc.textureType = MTLTextureType2DArray;
+                }
+                desc.arrayLength = numLayers;
+            }
+            else if (imageContainer.m_cubeMap)
 			{
 				desc.textureType = MTLTextureTypeCube;
 			}
@@ -2410,23 +2424,28 @@ namespace bgfx { namespace mtl
 			}
 
 			m_numMips = numMips;
+            const uint16_t numSides = numLayers * (imageContainer.m_cubeMap ? 6 : 1);
 
-			const bool compressed = isCompressed(TextureFormat::Enum(m_textureFormat) );
+			const bool compressed   = isCompressed(TextureFormat::Enum(m_textureFormat) );
+            const bool writeOnly    = 0 != (_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
+            const bool computeWrite = 0 != (_flags&BGFX_TEXTURE_COMPUTE_WRITE);
+            const bool renderTarget = 0 != (_flags&BGFX_TEXTURE_RT_MASK);
+            const bool srgb			= 0 != (_flags&BGFX_TEXTURE_SRGB) || imageContainer.m_srgb;
 
-			BX_TRACE("Texture %3d: %s (requested: %s), %dx%d%s%s."
+			BX_TRACE("Texture %3d: %s (requested: %s), layers %d, %dx%d%s RT[%c], WO[%c], CW[%c], sRGB[%c]"
 					 , this - s_renderMtl->m_textures
 					 , getName( (TextureFormat::Enum)m_textureFormat)
 					 , getName( (TextureFormat::Enum)m_requestedFormat)
+                     , numLayers
 					 , textureWidth
 					 , textureHeight
 					 , imageContainer.m_cubeMap ? "x6" : ""
-					 , 0 != (_flags&BGFX_TEXTURE_RT_MASK) ? " (render target)" : ""
+                     , renderTarget ? 'x' : '.'
+                     , writeOnly ? 'x' : '.'
+                     , computeWrite ? 'x' : '.'
+                     , srgb ? 'x' : '.'
 					 );
 
-			const bool writeOnly   = 0 != (_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
-			const bool computeWrite = 0 != (_flags&BGFX_TEXTURE_COMPUTE_WRITE);
-			const bool renderTarget = 0 != (_flags&BGFX_TEXTURE_RT_MASK);
-			const bool srgb			= 0 != (_flags&BGFX_TEXTURE_SRGB) || imageContainer.m_srgb;
 			const uint32_t msaaQuality = bx::uint32_satsub( (_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
 			int sampleCount = s_msaa[msaaQuality];
 
@@ -2455,7 +2474,7 @@ namespace bgfx { namespace mtl
 
 			if (s_renderMtl->m_iOS9Runtime || s_renderMtl->m_macOS11Runtime)
 			{
-				desc.cpuCacheMode     = MTLCPUCacheModeDefaultCache;
+				desc.cpuCacheMode = MTLCPUCacheModeDefaultCache;
 
 				desc.storageMode = (MTLStorageMode)(writeOnly||isDepth(TextureFormat::Enum(m_textureFormat))
 													? 2 /*MTLStorageModePrivate*/
@@ -2493,7 +2512,7 @@ namespace bgfx { namespace mtl
 				temp = (uint8_t*)BX_ALLOC(g_allocator, textureWidth*textureHeight*4);
 			}
 
-			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
+			for (uint8_t side = 0; side < numSides; ++side)
 			{
 				uint32_t width  = textureWidth;
 				uint32_t height = textureHeight;
