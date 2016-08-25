@@ -2793,6 +2793,7 @@ namespace bgfx
 		bx::skip(_reader, 4); // reserved
 
 		uint32_t dxgiFormat = 0;
+		uint32_t arraySize = 1;
 		if (DDPF_FOURCC == pixelFlags
 		&&  DDS_DX10 == fourcc)
 		{
@@ -2804,7 +2805,6 @@ namespace bgfx
 			uint32_t miscFlags;
 			bx::read(_reader, miscFlags);
 
-			uint32_t arraySize;
 			bx::read(_reader, arraySize);
 
 			uint32_t miscFlags2;
@@ -2880,7 +2880,7 @@ namespace bgfx
 		_imageContainer.m_height    = height;
 		_imageContainer.m_depth     = depth;
 		_imageContainer.m_format    = format;
-		_imageContainer.m_numLayers = 1;
+		_imageContainer.m_numLayers = arraySize;
 		_imageContainer.m_numMips   = uint8_t( (caps[0] & DDSCAPS_MIPMAP) ? mips : 1);
 		_imageContainer.m_hasAlpha  = hasAlpha;
 		_imageContainer.m_cubeMap   = cubeMap;

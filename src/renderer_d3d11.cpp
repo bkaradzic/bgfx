@@ -4594,7 +4594,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			layer = _z * (TextureD3D11::TextureCube == m_type ? 6 : 1);
 			box.front = 0;
-			box.back  = 0;
+			box.back  = 1;
 		}
 
 		const uint32_t subres = _mip + ( (layer + _side) * m_numMips);
