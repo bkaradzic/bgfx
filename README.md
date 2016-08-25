@@ -59,6 +59,7 @@ Languages:
  * [Haskell language API bindings](https://github.com/haskell-game/bgfx)
  * [Java language API bindings](https://github.com/enleeten/twilight-bgfx)
  * [Lua language API bindings](https://github.com/excessive/lua-bgfx)
+ * [Nim language API bindings](https://github.com/Halsys/nim-bgfx)
  * [Python language API bindings](https://github.com/jnadro/pybgfx#pybgf)
  * [Rust language API bindings](https://github.com/rhoot/bgfx-rs)
  * [Swift language API bindings](https://github.com/stuartcarnie/SwiftBGFX)
