@@ -2880,7 +2880,7 @@ namespace bgfx
 		_imageContainer.m_height    = height;
 		_imageContainer.m_depth     = depth;
 		_imageContainer.m_format    = format;
-		_imageContainer.m_numLayers = arraySize;
+		_imageContainer.m_numLayers = uint16_t(arraySize);
 		_imageContainer.m_numMips   = uint8_t( (caps[0] & DDSCAPS_MIPMAP) ? mips : 1);
 		_imageContainer.m_hasAlpha  = hasAlpha;
 		_imageContainer.m_cubeMap   = cubeMap;
