@@ -820,8 +820,8 @@ namespace entry
 									void* nwh = sdlNativeWindowHandle(m_window[handle.idx]);
 									if (NULL != nwh)
 									{
-										m_eventQueue.postWindowEvent(handle, nwh);
 										m_eventQueue.postSizeEvent(handle, msg->m_width, msg->m_height);
+										m_eventQueue.postWindowEvent(handle, nwh);
 									}
 
 									delete msg;
