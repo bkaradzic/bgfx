@@ -37,7 +37,6 @@ namespace ImGuizmo
 	struct vec_t
 	{
 	public:
-		vec_t(const vec_t& other) : x(other.x), y(other.y), z(other.z), w(other.w) {}
 		vec_t() {}
 		vec_t(float _x, float _y, float _z = 0.f, float _w = 0.f) : x(_x), y(_y), z(_z), w(_w) {}
 		vec_t(int _x, int _y, int _z = 0, int _w = 0) : x((float)_x), y((float)_y), z((float)_z), w((float)_w) {}
