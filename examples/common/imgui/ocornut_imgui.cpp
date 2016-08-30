@@ -654,6 +654,7 @@ struct OcornutImguiContext
 #endif // defined(SCI_NAMESPACE)
 
 		ImGui::NewFrame();
+		ImGuizmo::BeginFrame();
 		ImGui::PushStyleVar(ImGuiStyleVar_ViewId, (float)_viewId);
 
 #if 0
