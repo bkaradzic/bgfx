@@ -120,10 +120,10 @@ namespace ImGuizmo
 	vec_t vect(int _x, int _y, int _z = 0, int _w = 0)
 	{
 		vec_t res;
-		res.x = _x;
-		res.y = _y;
-		res.z = _z;
-		res.w = _w;
+		res.x = float(_x);
+		res.y = float(_y);
+		res.z = float(_z);
+		res.w = float(_w);
 		return res;
 	}
 
@@ -1032,7 +1032,7 @@ namespace ImGuizmo
 		}
 	}
 
-	static void HandleScale(float */*matrix*/, float */*deltaMatrix*/, int& type)
+	static void HandleScale(float * /*matrix*/, float * /*deltaMatrix*/, int& type)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 
