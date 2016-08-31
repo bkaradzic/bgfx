@@ -1129,6 +1129,11 @@ namespace bgfx { namespace gl
 		tfi.m_type        = _type;
 	}
 
+	void flushGlError()
+	{
+		for (GLenum err = glGetError(); err != 0; err = glGetError());
+	}
+
 	GLenum initTestTexture(TextureFormat::Enum _format, bool _srgb, bool _mipmaps)
 	{
 		const TextureFormatInfo& tfi = s_textureFormat[_format];
@@ -1140,6 +1145,7 @@ namespace bgfx { namespace gl
 		GLsizei size = (16*16*getBitsPerPixel(_format) )/8;
 		void* data = bx::alignPtr(alloca(size+16), 0, 16);
 
+		flushGlError();
 		GLenum err = 0;
 
 		if (isCompressed(_format) )
@@ -1219,8 +1225,12 @@ namespace bgfx { namespace gl
 		GLuint id;
 		GL_CHECK(glGenTextures(1, &id) );
 		GL_CHECK(glBindTexture(GL_TEXTURE_2D, id) );
+
+		flushGlError();
+		GLenum err = 0;
+
 		glTexStorage2D(GL_TEXTURE_2D, 1, s_imageFormat[_format], 16, 16);
-		GLenum err = glGetError();
+		err |= glGetError();
 		if (0 == err)
 		{
 			glBindImageTexture(0
@@ -1231,7 +1241,7 @@ namespace bgfx { namespace gl
 				, GL_READ_WRITE
 				, s_imageFormat[_format]
 				);
-			err = glGetError();
+			err |= glGetError();
 		}
 
 		GL_CHECK(glDeleteTextures(1, &id) );
