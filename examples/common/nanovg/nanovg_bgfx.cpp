@@ -31,6 +31,7 @@
 #include <bx/bx.h>
 #include <bx/allocator.h>
 #include <bx/crtimpl.h>
+#include <bx/uint32_t.h>
 
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4244); // warning C4244: '=' : conversion from '' to '', possible loss of data
 

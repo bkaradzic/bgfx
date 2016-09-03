@@ -1,3 +1,4 @@
+#include <bx/bx.h>
 #include <dirent.h>
 #include <sys/stat.h>
 
@@ -15,6 +16,9 @@ namespace ImGui
 
 	void ImFileList::ChDir(const char* path)
 	{
+#if BX_PLATFORM_NACL
+		BX_UNUSED(path);
+#else
 		DIR* dir = opendir(path);
 		if (NULL != dir)
 		{
@@ -43,6 +47,7 @@ namespace ImGui
 
 			closedir(dir);
 		}
+#endif // BX_PLATFORM_NACL
 	}
 
 	void ImFileList::Draw()
