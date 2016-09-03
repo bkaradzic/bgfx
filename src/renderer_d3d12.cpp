@@ -3846,23 +3846,23 @@ data.NumQualityLevels = 0;
 		{
 			for (uint32_t ii = 0; ii < count; ++ii)
 			{
-				uint8_t nameSize;
+				uint8_t nameSize = 0;
 				bx::read(&reader, nameSize);
 
-				char name[256];
+				char name[256] = {};
 				bx::read(&reader, &name, nameSize);
 				name[nameSize] = '\0';
 
-				uint8_t type;
+				uint8_t type = 0;
 				bx::read(&reader, type);
 
-				uint8_t num;
+				uint8_t num = 0;
 				bx::read(&reader, num);
 
-				uint16_t regIndex;
+				uint16_t regIndex = 0;
 				bx::read(&reader, regIndex);
 
-				uint16_t regCount;
+				uint16_t regCount = 0;
 				bx::read(&reader, regCount);
 
 				const char* kind = "invalid";
@@ -3922,7 +3922,7 @@ data.NumQualityLevels = 0;
 
 		m_code = copy(code, shaderSize);
 
-		uint8_t numAttrs;
+		uint8_t numAttrs = 0;
 		bx::read(&reader, numAttrs);
 
 		memset(m_attrMask, 0, sizeof(m_attrMask) );
