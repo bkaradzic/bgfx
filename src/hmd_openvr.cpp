@@ -5,10 +5,8 @@
 
 #include "hmd_openvr.h"
 
-BX_PRAGMA_DIAGNOSTIC_PUSH()
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-variable")
 #include <openvr/openvr_capi.h>
-BX_PRAGMA_DIAGNOSTIC_POP()
 
 namespace bgfx
 {
