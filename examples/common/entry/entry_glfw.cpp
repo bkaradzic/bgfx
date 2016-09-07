@@ -60,13 +60,24 @@ namespace entry
 		uint8_t modifiers = 0;
 
 		if (_glfw & GLFW_MOD_ALT)
-			modifiers |= Modifier::LeftAlt | Modifier::RightAlt;
+		{
+			modifiers |= Modifier::LeftAlt;
+		}
+
 		if (_glfw & GLFW_MOD_CONTROL)
-			modifiers |= Modifier::LeftCtrl | Modifier::RightCtrl;
+		{
+			modifiers |= Modifier::LeftCtrl;
+		}
+
 		if (_glfw & GLFW_MOD_SUPER)
-			modifiers |= Modifier::LeftMeta | Modifier::RightMeta;
+		{
+			modifiers |= Modifier::LeftMeta;
+		}
+
 		if (_glfw & GLFW_MOD_SHIFT)
-			modifiers |= Modifier::LeftShift | Modifier::RightShift;
+		{
+			modifiers |= Modifier::LeftShift;
+		}
 
 		return modifiers;
 	}
@@ -81,11 +92,15 @@ namespace entry
 	static MouseButton::Enum translateMouseButton(int _button)
 	{
 		if (_button == GLFW_MOUSE_BUTTON_LEFT)
+		{
 			return MouseButton::Left;
+		}
 		else if (_button == GLFW_MOUSE_BUTTON_RIGHT)
+		{
 			return MouseButton::Right;
-		else
-			return MouseButton::Middle;
+		}
+
+		return MouseButton::Middle;
 	}
 
 	static GamepadAxis::Enum translateGamepadAxis(int _axis)
@@ -143,13 +158,21 @@ namespace entry
 			int numButtons, numAxes;
 			const unsigned char* buttons = glfwGetJoystickButtons(m_handle.idx, &numButtons);
 			const float* axes = glfwGetJoystickAxes(m_handle.idx, &numAxes);
+
 			if (NULL == buttons || NULL == axes)
+			{
 				return;
+			}
 
 			if (numAxes > GamepadAxis::Count)
+			{
 				numAxes = GamepadAxis::Count;
+			}
+
 			if (numButtons > Key::Count - Key::GamepadA)
+			{
 				numButtons = Key::Count - Key::GamepadA;
+			}
 
 			WindowHandle defaultWindow = { 0 };
 
@@ -158,7 +181,10 @@ namespace entry
 				GamepadAxis::Enum axis = translateGamepadAxis(ii);
 				int32_t value = (int32_t) (axes[ii] * 32768.f);
 				if (GamepadAxis::LeftY == axis || GamepadAxis::RightY == axis)
+				{
 					value = -value;
+				}
+
 				if (m_axes[ii] != value)
 				{
 					m_axes[ii] = value;
@@ -256,24 +282,26 @@ namespace entry
 		uint8_t length = 0;
 
 		if (_scancode < 0x80)
+		{
 			_chars[length++] = (char) _scancode;
+		}
 		else if (_scancode < 0x800)
 		{
-			_chars[length++] = (_scancode >> 6) | 0xc0;
-			_chars[length++] = (_scancode & 0x3f) | 0x80;
+			_chars[length++] =  (_scancode >>  6)         | 0xc0;
+			_chars[length++] =  (_scancode        & 0x3f) | 0x80;
 		}
 		else if (_scancode < 0x10000)
 		{
-			_chars[length++] = (_scancode >> 12) | 0xe0;
-			_chars[length++] = ((_scancode >> 6) & 0x3f) | 0x80;
-			_chars[length++] = (_scancode & 0x3f) | 0x80;
+			_chars[length++] =  (_scancode >> 12)         | 0xe0;
+			_chars[length++] = ((_scancode >>  6) & 0x3f) | 0x80;
+			_chars[length++] =  (_scancode        & 0x3f) | 0x80;
 		}
 		else if (_scancode < 0x110000)
 		{
-			_chars[length++] = (_scancode >> 18) | 0xf0;
+			_chars[length++] =  (_scancode >> 18)         | 0xf0;
 			_chars[length++] = ((_scancode >> 12) & 0x3f) | 0x80;
-			_chars[length++] = ((_scancode >> 6) & 0x3f) | 0x80;
-			_chars[length++] = (_scancode & 0x3f) | 0x80;
+			_chars[length++] = ((_scancode >>  6) & 0x3f) | 0x80;
+			_chars[length++] =  (_scancode        & 0x3f) | 0x80;
 		}
 
 		return length;
@@ -369,8 +397,11 @@ namespace entry
 			glfwSetErrorCallback(errorCb);
 			glfwSetJoystickCallback(joystickCb);
 
-			if (!glfwInit())
-				return -1;
+			if (!glfwInit() )
+			{
+				DBG("glfwInit failed!");
+				return EXIT_FAILURE;
+			}
 
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
@@ -379,11 +410,14 @@ namespace entry
 				, ENTRY_DEFAULT_HEIGHT
 				, "bgfx"
 				, NULL
-				, NULL);
+				, NULL
+				);
+
 			if (!m_windows[0])
 			{
+				DBG("glfwCreateWindow failed!");
 				glfwTerminate();
-				return -1;
+				return EXIT_FAILURE;
 			}
 
 			glfwSetKeyCallback(m_windows[0], keyCb);
@@ -410,14 +444,17 @@ namespace entry
 
 			m_thread.init(MainThreadEntry::threadFunc, &m_mte);
 
-			while (!glfwWindowShouldClose(m_windows[0]))
+			while (NULL != m_windows[0]
+				&& !glfwWindowShouldClose(m_windows[0]))
 			{
 				glfwWaitEvents();
 
 				for (uint32_t ii = 0; ii < ENTRY_CONFIG_MAX_GAMEPADS; ++ii)
 				{
 					if (m_gamepad[ii].m_connected)
+					{
 						m_gamepad[ii].update(m_eventQueue);
+					}
 				}
 
 				while (Msg* msg = m_msgs.pop())
@@ -432,11 +469,15 @@ namespace entry
 								, NULL
 								, NULL);
 							if (!window)
+							{
 								break;
+							}
 
 							glfwSetWindowPos(window, msg->m_x, msg->m_y);
 							if (msg->m_flags & ENTRY_WINDOW_FLAG_ASPECT_RATIO)
+							{
 								glfwSetWindowAspectRatio(window, msg->m_width, msg->m_height);
+							}
 
 							glfwSetKeyCallback(window, keyCb);
 							glfwSetCharCallback(window, charCb);
@@ -453,7 +494,7 @@ namespace entry
 
 					case GLFW_WINDOW_DESTROY:
 						{
-							if (isValid(msg->m_handle))
+							if (isValid(msg->m_handle) )
 							{
 								GLFWwindow* window = m_windows[msg->m_handle.idx];
 								m_eventQueue.postWindowEvent(msg->m_handle);
@@ -502,17 +543,19 @@ namespace entry
 							else
 							{
 								GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-								if (!monitor)
-									break;
+								if (NULL != monitor)
+								{
+									const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+									glfwSetWindowMonitor(window
+										, monitor
+										, 0
+										, 0
+										, mode->width
+										, mode->height
+										, mode->refreshRate
+										);
+								}
 
-								const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-								glfwSetWindowMonitor(window
-									, monitor
-									, 0
-									, 0
-									, mode->width
-									, mode->height
-									, mode->refreshRate);
 							}
 						}
 						break;
@@ -521,9 +564,13 @@ namespace entry
 						{
 							GLFWwindow* window = m_windows[msg->m_handle.idx];
 							if (msg->m_value)
+							{
 								glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+							}
 							else
+							{
 								glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+							}
 						}
 						break;
 					}
@@ -587,7 +634,9 @@ namespace entry
 	{
 		BX_UNUSED(_scancode);
 		if (_key == GLFW_KEY_UNKNOWN)
+		{
 			return;
+		}
 		WindowHandle handle = s_ctx.findHandle(_window);
 		int mods = translateKeyModifiers(_mods);
 		Key::Enum key = translateKey(_key);
@@ -601,7 +650,10 @@ namespace entry
 		uint8_t chars[4];
 		uint8_t length = encodeUTF8(chars, _scancode);
 		if (!length)
+		{
 			return;
+		}
+
 		s_ctx.m_eventQueue.postCharEvent(handle, length, chars);
 	}
 
@@ -615,7 +667,8 @@ namespace entry
 		s_ctx.m_eventQueue.postMouseEvent(handle
 			, (int32_t) mx
 			, (int32_t) my
-			, (int32_t) s_ctx.m_scrollPos);
+			, (int32_t) s_ctx.m_scrollPos
+			);
 	}
 
 	void Context::cursorPosCb(GLFWwindow* _window, double _mx, double _my)
@@ -624,7 +677,8 @@ namespace entry
 		s_ctx.m_eventQueue.postMouseEvent(handle
 			, (int32_t) _mx
 			, (int32_t) _my
-			, (int32_t) s_ctx.m_scrollPos);
+			, (int32_t) s_ctx.m_scrollPos
+			);
 	}
 
 	void Context::mouseButtonCb(GLFWwindow* _window, int _button, int _action, int _mods)
@@ -639,7 +693,8 @@ namespace entry
 			, (int32_t) my
 			, (int32_t) s_ctx.m_scrollPos
 			, translateMouseButton(_button)
-			, down);
+			, down
+			);
 	}
 
 	void Context::windowSizeCb(GLFWwindow* _window, int _width, int _height)
@@ -651,7 +706,9 @@ namespace entry
 	static void joystickCb(int _jid, int _action)
 	{
 		if (_jid >= ENTRY_CONFIG_MAX_GAMEPADS)
+		{
 			return;
+		}
 
 		WindowHandle defaultWindow = { 0 };
 		GamepadHandle handle = { (uint16_t) _jid };
@@ -766,6 +823,12 @@ namespace entry
 	{
 		MainThreadEntry* self = (MainThreadEntry*)_userData;
 		int32_t result = main(self->m_argc, self->m_argv);
+
+		// Destroy main window on exit...
+		Msg* msg = new Msg(GLFW_WINDOW_DESTROY);
+		msg->m_handle.idx = 0;
+		s_ctx.m_msgs.push(msg);
+		glfwPostEmptyEvent();
 
 		return result;
 	}
