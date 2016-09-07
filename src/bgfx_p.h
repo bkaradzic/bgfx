@@ -332,6 +332,8 @@ namespace bgfx
 	extern bx::AllocatorI* g_allocator;
 	extern Caps g_caps;
 
+	typedef bx::StringT<&g_allocator> String;
+
 	void setGraphicsDebuggerPresent(bool _present);
 	bool isGraphicsDebuggerPresent();
 	void release(const Memory* _mem);
@@ -1146,31 +1148,22 @@ namespace bgfx
 		{
 		}
 
- 		const UniformInfo* find(const char* _name) const
- 		{
-			UniformHashMap::const_iterator it = m_uniforms.find(_name);
-			if (it != m_uniforms.end() )
+		const UniformInfo* find(const char* _name) const
+		{
+			uint16_t handle = m_uniforms.find(bx::hashMurmur2A(_name) );
+			if (UniformHashMap::invalid != handle)
 			{
-				return &it->second;
+				return &m_info[handle];
 			}
 
- 			return NULL;
- 		}
+			return NULL;
+		}
 
 		const UniformInfo& add(UniformHandle _handle, const char* _name, const void* _data)
 		{
-			UniformHashMap::iterator it = m_uniforms.find(_name);
-			if (it == m_uniforms.end() )
-			{
-				UniformInfo info;
-				info.m_data   = _data;
-				info.m_handle = _handle;
+			m_uniforms.insert(bx::hashMurmur2A(_name), _handle.idx);
 
-				stl::pair<UniformHashMap::iterator, bool> result = m_uniforms.insert(UniformHashMap::value_type(_name, info) );
-				return result.first->second;
-			}
-
-			UniformInfo& info = it->second;
+			UniformInfo& info = m_info[_handle.idx];
 			info.m_data   = _data;
 			info.m_handle = _handle;
 
@@ -1178,8 +1171,9 @@ namespace bgfx
 		}
 
 	private:
-		typedef stl::unordered_map<stl::string, UniformInfo> UniformHashMap;
+		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_UNIFORMS*2> UniformHashMap;
 		UniformHashMap m_uniforms;
+		UniformInfo m_info[BGFX_CONFIG_MAX_UNIFORMS];
 	};
 
 	struct Binding
@@ -1872,31 +1866,25 @@ namespace bgfx
 		template <uint16_t MaxHandlesT>
 		void shutdown(bx::HandleAllocT<MaxHandlesT>& _handleAlloc)
 		{
-			for (VertexDeclMap::iterator it = m_vertexDeclMap.begin(), itEnd = m_vertexDeclMap.end(); it != itEnd; ++it)
+			for (VertexDeclMap::Iterator it = m_vertexDeclMap.first(); m_vertexDeclMap.next(it); )
 			{
-				_handleAlloc.free(it->second.idx);
+				_handleAlloc.free(it.handle);
 			}
 
-			m_vertexDeclMap.clear();
+			m_vertexDeclMap.reset();
 		}
 
 		VertexDeclHandle find(uint32_t _hash)
 		{
-			VertexDeclMap::const_iterator it = m_vertexDeclMap.find(_hash);
-			if (it != m_vertexDeclMap.end() )
-			{
-				return it->second;
-			}
-
-			VertexDeclHandle result = BGFX_INVALID_HANDLE;
-			return result;
+			VertexDeclHandle handle = { m_vertexDeclMap.find(_hash) };
+			return handle;
 		}
 
 		void add(VertexBufferHandle _handle, VertexDeclHandle _declHandle, uint32_t _hash)
 		{
 			m_vertexBufferRef[_handle.idx] = _declHandle;
 			m_vertexDeclRef[_declHandle.idx]++;
-			m_vertexDeclMap.insert(stl::make_pair(_hash, _declHandle) );
+			m_vertexDeclMap.insert(_hash, _declHandle.idx);
 		}
 
 		VertexDeclHandle release(VertexBufferHandle _handle)
@@ -1913,13 +1901,14 @@ namespace bgfx
 				}
 			}
 
-			bx::mapRemove(m_vertexDeclMap, declHandle);
+			m_vertexDeclMap.removeByHandle(declHandle.idx);
 
 			return declHandle;
 		}
 
-		typedef stl::unordered_map<uint32_t, VertexDeclHandle> VertexDeclMap;
+		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_VERTEX_DECLS*2> VertexDeclMap;
 		VertexDeclMap m_vertexDeclMap;
+
 		uint16_t m_vertexDeclRef[BGFX_CONFIG_MAX_VERTEX_DECLS];
 		VertexDeclHandle m_vertexBufferRef[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
 	};
@@ -2961,10 +2950,10 @@ namespace bgfx
 				return invalid;
 			}
 
-			ProgramHashMap::const_iterator it = m_programHashMap.find(uint32_t(_fsh.idx<<16)|_vsh.idx);
-			if (it != m_programHashMap.end() )
+			uint16_t idx = m_programHashMap.find(uint32_t(_fsh.idx<<16)|_vsh.idx);
+			if (ProgramHashMap::invalid != idx)
 			{
-				ProgramHandle handle = it->second;
+				ProgramHandle handle = { idx };
 				ProgramRef& pr = m_programRef[handle.idx];
 				++pr.m_refCount;
 				return handle;
@@ -2992,7 +2981,7 @@ namespace bgfx
 				pr.m_fsh = _fsh;
 				pr.m_refCount = 1;
 
-				m_programHashMap.insert(stl::make_pair(uint32_t(_fsh.idx<<16)|_vsh.idx, handle) );
+				m_programHashMap.insert(uint32_t(_fsh.idx<<16)|_vsh.idx, handle.idx);
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
 				cmdbuf.write(handle);
@@ -3018,10 +3007,10 @@ namespace bgfx
 				return invalid;
 			}
 
-			ProgramHashMap::const_iterator it = m_programHashMap.find(_vsh.idx);
-			if (it != m_programHashMap.end() )
+			uint16_t idx = m_programHashMap.find(_vsh.idx);
+			if (ProgramHashMap::invalid != idx)
 			{
-				ProgramHandle handle = it->second;
+				ProgramHandle handle = { idx };
 				ProgramRef& pr = m_programRef[handle.idx];
 				++pr.m_refCount;
 				return handle;
@@ -3040,7 +3029,7 @@ namespace bgfx
 				pr.m_fsh = fsh;
 				pr.m_refCount = 1;
 
-				m_programHashMap.insert(stl::make_pair(uint32_t(_vsh.idx), handle) );
+				m_programHashMap.insert(uint32_t(_vsh.idx), handle.idx);
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
 				cmdbuf.write(handle);
@@ -3077,7 +3066,7 @@ namespace bgfx
 					hash |= pr.m_fsh.idx << 16;
 				}
 
-				bx::mapRemove(m_programHashMap, hash);
+				m_programHashMap.removeByKey(hash);
 			}
 		}
 
@@ -3369,10 +3358,10 @@ namespace bgfx
 				return handle;
 			}
 
-			UniformHashMap::iterator it = m_uniformHashMap.find(_name);
-			if (it != m_uniformHashMap.end() )
+			uint16_t idx = m_uniformHashMap.find(bx::hashMurmur2A(_name) );
+			if (UniformHashMap::invalid != idx)
 			{
-				UniformHandle handle = it->second;
+				UniformHandle handle = { idx };
 				UniformRef& uniform = m_uniformRef[handle.idx];
 
 				uint32_t oldsize = g_uniformTypeSize[uniform.m_type];
@@ -3405,11 +3394,12 @@ namespace bgfx
 				BX_TRACE("Creating uniform (handle %3d) %s", handle.idx, _name);
 
 				UniformRef& uniform = m_uniformRef[handle.idx];
+				uniform.m_name.set(_name);
 				uniform.m_refCount = 1;
 				uniform.m_type = _type;
 				uniform.m_num  = _num;
 
-				m_uniformHashMap.insert(stl::make_pair(stl::string(_name), handle) );
+				m_uniformHashMap.insert(bx::hashMurmur2A(_name), handle.idx);
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateUniform);
 				cmdbuf.write(handle);
@@ -3433,7 +3423,8 @@ namespace bgfx
 
 			if (0 == refs)
 			{
-				bx::mapRemove(m_uniformHashMap, _handle);
+				uniform.m_name.clear();
+				m_uniformHashMap.removeByHandle(_handle.idx);
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyUniform);
 				cmdbuf.write(_handle);
@@ -4027,14 +4018,15 @@ namespace bgfx
 		{
 			ShaderHandle m_vsh;
 			ShaderHandle m_fsh;
-			int16_t m_refCount;
+			int16_t      m_refCount;
 		};
 
 		struct UniformRef
 		{
+			String            m_name;
 			UniformType::Enum m_type;
-			uint16_t m_num;
-			int16_t m_refCount;
+			uint16_t          m_num;
+			int16_t           m_refCount;
 		};
 
 		struct TextureRef
@@ -4060,13 +4052,13 @@ namespace bgfx
 		HandleSet m_uniformSet;
 		HandleSet m_occlusionQuerySet;
 
-		typedef stl::unordered_map<stl::string, UniformHandle> UniformHashMap;
+		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_UNIFORMS*2> UniformHashMap;
 		UniformHashMap m_uniformHashMap;
 		UniformRef m_uniformRef[BGFX_CONFIG_MAX_UNIFORMS];
 
 		ShaderRef m_shaderRef[BGFX_CONFIG_MAX_SHADERS];
 
-		typedef stl::unordered_map<uint32_t, ProgramHandle> ProgramHashMap;
+		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_PROGRAMS*2> ProgramHashMap;
 		ProgramHashMap m_programHashMap;
 		ProgramRef m_programRef[BGFX_CONFIG_MAX_PROGRAMS];
 

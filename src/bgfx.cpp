@@ -1374,10 +1374,10 @@ namespace bgfx
 		m_dynVertexBufferAllocator.compact();
 		m_dynIndexBufferAllocator.compact();
 
-		BX_CHECK(m_vertexDeclHandle.getNumHandles() == uint16_t(m_declRef.m_vertexDeclMap.size() )
+		BX_CHECK(m_vertexDeclHandle.getNumHandles() == m_declRef.m_vertexDeclMap.getNumElements()
 				, "VertexDeclRef mismatch, num handles %d, handles in hash map %d."
 				, m_vertexDeclHandle.getNumHandles()
-				, m_declRef.m_vertexDeclMap.size()
+				, m_declRef.m_vertexDeclMap.getNumElements()
 				);
 
 		m_declRef.shutdown(m_vertexDeclHandle);
@@ -1560,15 +1560,7 @@ namespace bgfx
 
 	const char* Context::getName(UniformHandle _handle) const
 	{
-		for (UniformHashMap::const_iterator it = m_uniformHashMap.begin(), itEnd = m_uniformHashMap.end(); it != itEnd; ++it)
-		{
-			if (it->second.idx == _handle.idx)
-			{
-				return it->first.c_str();
-			}
-		}
-
-		return NULL;
+		return m_uniformRef[_handle.idx].m_name.getPtr();
 	}
 
 	bool Context::renderFrame()
