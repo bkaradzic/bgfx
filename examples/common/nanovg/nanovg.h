@@ -267,7 +267,7 @@ void nvgLineCap(NVGcontext* ctx, int cap);
 void nvgLineJoin(NVGcontext* ctx, int join);
 
 // Sets the transparency applied to all rendered shapes.
-// Already transparent paths will get proportionally more transparent as well.
+// Alreade transparent paths will get proportionally more transparent as well.
 void nvgGlobalAlpha(NVGcontext* ctx, float alpha);
 
 //
@@ -399,7 +399,7 @@ NVGpaint nvgLinearGradient(NVGcontext* ctx, float sx, float sy, float ex, float 
 						   NVGcolor icol, NVGcolor ocol);
 
 // Creates and returns a box gradient. Box gradient is a feathered rounded rectangle, it is useful for rendering
-// drop shadows or highlights for boxes. Parameters (x,y) define the top-left corner of the rectangle,
+// drop shadows or hilights for boxes. Parameters (x,y) define the top-left corner of the rectangle,
 // (w,h) define the size of the rectangle, r defines the corner radius, and f feather. Feather defines how blurry
 // the border of the rectangle is. Parameter icol specifies the inner color and ocol the outer color of the gradient.
 // The gradient is transformed by the current transform when it is passed to nvgFillPaint() or nvgStrokePaint().
@@ -547,6 +547,12 @@ int nvgCreateFontMem(NVGcontext* ctx, const char* name, unsigned char* data, int
 
 // Finds a loaded font of specified name, and returns handle to it, or -1 if the font is not found.
 int nvgFindFont(NVGcontext* ctx, const char* name);
+
+// Adds a fallback font by handle.
+int nvgAddFallbackFontId(NVGcontext* ctx, int baseFont, int fallbackFont);
+
+// Adds a fallback font by name.
+int nvgAddFallbackFont(NVGcontext* ctx, const char* baseFont, const char* fallbackFont);
 
 // Sets the font size of current text style.
 void nvgFontSize(NVGcontext* ctx, float size);
