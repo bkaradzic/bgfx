@@ -897,6 +897,7 @@ namespace bgfx { namespace mtl
 		{
 			BX_FREE(g_allocator, m_uniforms[_handle.idx]);
 			m_uniforms[_handle.idx] = NULL;
+			m_uniformReg.remove(_handle);
 		}
 
 		//cmdPre
@@ -2278,6 +2279,8 @@ namespace bgfx { namespace mtl
 											else
 											{
 												const UniformInfo* info = s_renderMtl->m_uniformReg.find(name);
+												BX_WARN(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
+
 												if (NULL != info)
 												{
 													if (NULL == constantBuffer)

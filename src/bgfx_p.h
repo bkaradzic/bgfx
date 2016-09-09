@@ -1161,13 +1161,21 @@ namespace bgfx
 
 		const UniformInfo& add(UniformHandle _handle, const char* _name, const void* _data)
 		{
-			m_uniforms.insert(bx::hashMurmur2A(_name), _handle.idx);
+			BX_CHECK(isValid(_handle), "Uniform handle is invalid (name: %s)!", _name);
+			const uint32_t key = bx::hashMurmur2A(_name);
+			m_uniforms.removeByKey(key);
+			m_uniforms.insert(key, _handle.idx);
 
 			UniformInfo& info = m_info[_handle.idx];
 			info.m_data   = _data;
 			info.m_handle = _handle;
 
 			return info;
+		}
+
+		void remove(UniformHandle _handle)
+		{
+			m_uniforms.removeByHandle(_handle.idx);
 		}
 
 	private:
@@ -2981,7 +2989,9 @@ namespace bgfx
 				pr.m_fsh = _fsh;
 				pr.m_refCount = 1;
 
-				m_programHashMap.insert(uint32_t(_fsh.idx<<16)|_vsh.idx, handle.idx);
+				const uint32_t key = uint32_t(_fsh.idx<<16)|_vsh.idx;
+				bool ok = m_programHashMap.insert(key, handle.idx);
+				BX_CHECK(ok, "Program already exists (key: %x, handle: %3d)!", key, handle.idx); BX_UNUSED(ok);
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
 				cmdbuf.write(handle);
@@ -3029,7 +3039,9 @@ namespace bgfx
 				pr.m_fsh = fsh;
 				pr.m_refCount = 1;
 
-				m_programHashMap.insert(uint32_t(_vsh.idx), handle.idx);
+				const uint32_t key = uint32_t(_vsh.idx);
+				bool ok = m_programHashMap.insert(key, handle.idx);
+				BX_CHECK(ok, "Program already exists (key: %x, handle: %3d)!", key, handle.idx); BX_UNUSED(ok);
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
 				cmdbuf.write(handle);
@@ -3066,7 +3078,7 @@ namespace bgfx
 					hash |= pr.m_fsh.idx << 16;
 				}
 
-				m_programHashMap.removeByKey(hash);
+				m_programHashMap.removeByHandle(_handle.idx);
 			}
 		}
 
@@ -3399,7 +3411,8 @@ namespace bgfx
 				uniform.m_type = _type;
 				uniform.m_num  = _num;
 
-				m_uniformHashMap.insert(bx::hashMurmur2A(_name), handle.idx);
+				bool ok = m_uniformHashMap.insert(bx::hashMurmur2A(_name), handle.idx);
+				BX_CHECK(ok, "Uniform already exists (name: %s)!", _name); BX_UNUSED(ok);
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateUniform);
 				cmdbuf.write(handle);
@@ -3657,6 +3670,7 @@ namespace bgfx
 		{
 			BGFX_CHECK_HANDLE("setUniform", m_uniformHandle, _handle);
 			UniformRef& uniform = m_uniformRef[_handle.idx];
+			BX_CHECK(isValid(_handle) && 0 < uniform.m_refCount, "Setting invalid uniform (handle %3d)!", _handle.idx);
 			BX_CHECK(_num == UINT16_MAX || uniform.m_num >= _num, "Truncated uniform update. %d (max: %d)", _num, uniform.m_num);
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
 			{
