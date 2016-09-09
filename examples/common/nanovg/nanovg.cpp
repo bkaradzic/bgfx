@@ -253,14 +253,10 @@ static void nvg__setDevicePixelRatio(NVGcontext* ctx, float ratio)
 
 static NVGcompositeOperationState nvg__compositeOperationState(int op)
 {
-	int sfactor, dfactor;
+	int sfactor = NVG_ONE;
+	int dfactor = NVG_ONE_MINUS_SRC_ALPHA;
 
-	if (op == NVG_SOURCE_OVER)
-	{
-		sfactor = NVG_ONE;
-		dfactor = NVG_ONE_MINUS_SRC_ALPHA;
-	}
-	else if (op == NVG_SOURCE_IN)
+	if (op == NVG_SOURCE_IN)
 	{
 		sfactor = NVG_DST_ALPHA;
 		dfactor = NVG_ZERO;
