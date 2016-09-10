@@ -39,29 +39,28 @@ clean: ## Clean all intermediate files.
 	@mkdir .build
 
 projgen: ## Generate project files for all configurations.
-	$(GENIE) --with-tools --with-examples --with-shared-lib vs2008
-	$(GENIE) --with-tools --with-examples --with-shared-lib vs2010
-	$(GENIE) --with-tools --with-examples --with-shared-lib vs2012
-	$(GENIE) --with-tools --with-examples --with-shared-lib vs2013
-	$(GENIE) --with-tools --with-examples --with-shared-lib vs2015
-	$(GENIE) --with-tools --with-examples --with-shared-lib --gcc=mingw-gcc gmake
-	$(GENIE) --with-tools --with-examples --with-shared-lib --gcc=linux-gcc gmake
-	$(GENIE) --with-tools --with-examples --with-shared-lib --gcc=osx gmake
-	$(GENIE) --with-tools --with-examples --with-shared-lib --xcode=osx xcode4
-	$(GENIE) --with-tools --with-examples --with-shared-lib --xcode=ios xcode4
-	$(GENIE) --with-examples --with-shared-lib --gcc=freebsd gmake
-
-	$(GENIE) --gcc=android-arm gmake
-	$(GENIE) --gcc=android-mips gmake
-	$(GENIE) --gcc=android-x86 gmake
-	$(GENIE) --gcc=asmjs gmake
-	$(GENIE) --gcc=ios-arm gmake
-	$(GENIE) --gcc=ios-arm64 gmake
-	$(GENIE) --gcc=ios-simulator gmake
-	$(GENIE) --gcc=nacl gmake
-	$(GENIE) --gcc=nacl-arm gmake
-	$(GENIE) --gcc=pnacl gmake
-	$(GENIE) --gcc=rpi gmake
+	$(GENIE) --with-tools --with-examples --with-shared-lib                     vs2008
+	$(GENIE) --with-tools --with-examples --with-shared-lib                     vs2010
+	$(GENIE) --with-tools --with-examples --with-shared-lib                     vs2012
+	$(GENIE) --with-tools --with-examples --with-shared-lib                     vs2013
+	$(GENIE) --with-tools --with-examples --with-shared-lib                     vs2015
+	$(GENIE) --with-tools --with-examples --with-shared-lib --gcc=mingw-gcc     gmake
+	$(GENIE) --with-tools --with-examples --with-shared-lib --gcc=linux-gcc     gmake
+	$(GENIE) --with-tools --with-examples --with-shared-lib --gcc=osx           gmake
+	$(GENIE) --with-tools --with-examples --with-shared-lib --xcode=osx         xcode4
+	$(GENIE) --with-tools --with-examples --with-shared-lib --xcode=ios         xcode4
+	$(GENIE)              --with-examples --with-shared-lib --gcc=freebsd       gmake
+	$(GENIE)              --with-examples                   --gcc=android-arm   gmake
+	$(GENIE)              --with-examples                   --gcc=android-mips  gmake
+	$(GENIE)              --with-examples                   --gcc=android-x86   gmake
+	$(GENIE)              --with-examples                   --gcc=asmjs         gmake
+	$(GENIE)              --with-examples                   --gcc=ios-arm       gmake
+	$(GENIE)              --with-examples                   --gcc=ios-arm64     gmake
+	$(GENIE)              --with-examples                   --gcc=ios-simulator gmake
+	$(GENIE)              --with-examples                   --gcc=nacl          gmake
+	$(GENIE)              --with-examples                   --gcc=nacl-arm      gmake
+	$(GENIE)              --with-examples                   --gcc=pnacl         gmake
+	$(GENIE)              --with-examples                   --gcc=rpi           gmake
 
 .build/projects/gmake-android-arm:
 	$(GENIE) --gcc=android-arm gmake
