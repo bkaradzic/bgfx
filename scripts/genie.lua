@@ -360,12 +360,13 @@ end
 
 dofile "bgfx.lua"
 
--- Always build 'example-common' because 'texturev' uses it as well.
-group "examples"
-dofile "example-common.lua"
-
 group "libs"
 bgfxProject("", "StaticLib", {})
+
+if _OPTIONS["with-examples"] or _OPTIONS["with-tools"] then
+	group "examples"
+	dofile "example-common.lua"
+end
 
 if _OPTIONS["with-examples"] then
 	group "examples"
