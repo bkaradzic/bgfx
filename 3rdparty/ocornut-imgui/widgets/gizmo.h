@@ -1,5 +1,5 @@
 // https://github.com/CedricGuillemet/ImGuizmo
-// v 1.02 WIP
+// v 1.03 WIP
 //
 // The MIT License(MIT)
 // 
@@ -25,17 +25,18 @@
 //
 // -------------------------------------------------------------------------------------------
 // History : 
+// 2016/09/09 Hatched negative axis. Snapping. Documentation update.
 // 2016/09/04 Axis switch and translation plan autohiding. Scale transform stability improved
 // 2016/09/01 Mogwai changed to Manipulate. Draw debug cube. Fixed inverted scale. Mixing scale and translation/rotation gives bad results.
 // 2016/08/31 First version
 //
 // -------------------------------------------------------------------------------------------
-// Future:
+// Future (no order):
 //
 // - Multi view
 // - display rotation/translation/scale infos in local/world space and not only local
 // - finish local/world matrix application
-// - snap
+// - OPERATION as bitmask
 // 
 // -------------------------------------------------------------------------------------------
 // Example 
@@ -73,7 +74,7 @@
 // if (ImGui::RadioButton("World", mCurrentGizmoMode == ImGuizmo::WORLD))
 //		mCurrentGizmoMode = ImGuizmo::WORLD;
 // 
-// ImGuizmo::Mogwai(gCurrentCamera->mView.m16, gCurrentCamera->mProjection.m16, mCurrentGizmoOperation, mCurrentGizmoMode, gizmoMatrix.m16);
+// ImGuizmo::Manipulate(gCurrentCamera->mView.m16, gCurrentCamera->mProjection.m16, mCurrentGizmoOperation, mCurrentGizmoMode, gizmoMatrix.m16);
 //
 
 #pragma once
@@ -128,5 +129,5 @@ namespace ImGuizmo
 		WORLD
 	};
 
-	void Manipulate(const float *view, const float *projection, OPERATION operation, MODE mode, float *matrix, float *deltaMatrix = 0);
+	void Manipulate(const float *view, const float *projection, OPERATION operation, MODE mode, float *matrix, float *deltaMatrix = 0, float *snap = 0);
 };

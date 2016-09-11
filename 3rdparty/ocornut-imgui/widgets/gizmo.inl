@@ -530,6 +530,7 @@ namespace ImGuizmo
 		// scale
 		vec_t mScale;
 		vec_t mScaleValueOrigin;
+		float mSaveMousePosx;
 
 		// save axis factor when using gizmo
 		bool mBelowAxisLimit[3];
@@ -550,7 +551,7 @@ namespace ImGuizmo
 	static const ImU32 selectionColor = 0xFF1080FF;
 	static const ImU32 inactiveColor = 0x99999999;
 	static const ImU32 translationLineColor = 0xAAAAAAAA;
-	static const char *translationInfoMask[] = { "X : %5.2f", "Y : %5.2f", "Z : %5.2f", "X : %5.2f Y : %5.2f", "Y : %5.2f Z : %5.2f", "X : %5.2f Z : %5.2f", "X : %5.2f Y : %5.2f Z : %5.2f" };
+	static const char *translationInfoMask[] = { "X : %5.3f", "Y : %5.3f", "Z : %5.3f", "X : %5.3f Y : %5.3f", "Y : %5.3f Z : %5.3f", "X : %5.3f Z : %5.3f", "X : %5.3f Y : %5.3f Z : %5.3f" };
 	static const char *scaleInfoMask[] = { "X : %5.2f", "Y : %5.2f", "Z : %5.2f", "XYZ : %5.2f" };
 	static const char *rotationInfoMask[] = { "X : %5.2f deg %5.2f rad", "Y : %5.2f deg %5.2f rad", "Z : %5.2f deg %5.2f rad", "Screen : %5.2f deg %5.2f rad" };
 	static const int translationInfoIndex[] = { 0,0,0, 1,0,0, 2,0,0, 0,1,0, 0,2,0, 1,2,0, 0,1,2 };
@@ -558,6 +559,7 @@ namespace ImGuizmo
 	static const float quadMax = 0.8f;
 	static const float quadUV[8] = { quadMin, quadMin, quadMin, quadMax, quadMax, quadMax, quadMax, quadMin };
 	static const int halfCircleSegmentCount = 64;
+	static const float snapTension = 0.5f;
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// 
@@ -763,6 +765,39 @@ namespace ImGuizmo
 		}
 	}
 
+	static void ComputeSnap(float*value, float *snap)
+	{
+		if (*snap <= FLT_EPSILON)
+			return;
+		float modulo = fmodf(*value, *snap);
+		float moduloRatio = fabsf(modulo) / *snap;
+		if (moduloRatio < snapTension)
+			*value -= modulo;
+		else if (moduloRatio >(1.f - snapTension))
+			*value = *value - modulo + *snap * ((*value<0.f) ? -1.f : 1.f);
+	}
+	static void ComputeSnap(vec_t& value, float *snap)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			ComputeSnap(&value[i], &snap[i]);
+		}
+	}
+
+	static float ComputeAngleOnPlan()
+	{
+		const float len = IntersectRayPlane(gContext.mRayOrigin, gContext.mRayVector, gContext.mTranslationPlan);
+		vec_t localPos = Normalized(gContext.mRayOrigin + gContext.mRayVector * len - gContext.mModel.v.position);
+
+		vec_t perpendicularVector;
+		perpendicularVector.Cross(gContext.mRotationVectorSource, gContext.mTranslationPlan);
+		perpendicularVector.Normalize();
+		float acosAngle = Clamp(Dot(localPos, gContext.mRotationVectorSource), -0.9999f, 0.9999f);
+		float angle = acosf(acosAngle);
+		angle *= (Dot(localPos, perpendicularVector) < 0.f) ? 1.f : -1.f;
+		return angle;
+	}
+
 	static void DrawRotationGizmo(int type)
 	{
 		ImDrawList* drawList = gContext.mDrawList;
@@ -818,6 +853,16 @@ namespace ImGuizmo
 		}
 	}
 
+	static void DrawHatchedAxis(const vec_t& axis)
+	{
+		for (int j = 1; j < 10; j++)
+		{
+			ImVec2 baseSSpace2 = worldToPos(axis * 0.05f * (float)(j * 2) * gContext.mScreenFactor, gContext.mMVP);
+			ImVec2 worldDirSSpace2 = worldToPos(axis * 0.05f * (float)(j * 2 + 1) * gContext.mScreenFactor, gContext.mMVP);
+			gContext.mDrawList->AddLine(baseSSpace2, worldDirSSpace2, 0x80000000, 6.f);
+		}
+	}
+
 	static void DrawScaleGizmo(int type)
 	{
 		ImDrawList* drawList = gContext.mDrawList;
@@ -853,9 +898,12 @@ namespace ImGuizmo
 					drawList->AddLine(baseSSpace, worldDirSSpaceNoScale, 0xFF404040, 6.f);
 					drawList->AddCircleFilled(worldDirSSpaceNoScale, 10.f, 0xFF404040);
 				}
-
+				
 				drawList->AddLine(baseSSpace, worldDirSSpace, colors[i + 1], 6.f);
 				drawList->AddCircleFilled(worldDirSSpace, 10.f, colors[i + 1]);
+
+				if (gContext.mAxisFactor[i] < 0.f)
+					DrawHatchedAxis(dirPlaneX * scaleDisplay[i]);
 			}
 		}
 		
@@ -877,8 +925,8 @@ namespace ImGuizmo
 			drawList->AddText(ImVec2(destinationPosOnScreen.x + 15, destinationPosOnScreen.y + 15), 0xFF000000, tmps);
 			drawList->AddText(ImVec2(destinationPosOnScreen.x + 14, destinationPosOnScreen.y + 14), 0xFFFFFFFF, tmps);
 		}
-		
 	}
+
 
 	static void DrawTranslationGizmo(int type)
 	{
@@ -905,6 +953,9 @@ namespace ImGuizmo
 				ImVec2 worldDirSSpace = worldToPos(dirPlaneX * gContext.mScreenFactor, gContext.mMVP);
 
 				drawList->AddLine(baseSSpace, worldDirSSpace, colors[i + 1], 6.f);
+				
+				if (gContext.mAxisFactor[i] < 0.f)
+					DrawHatchedAxis(dirPlaneX);
 			}
 
 			// draw plane
@@ -1047,7 +1098,7 @@ namespace ImGuizmo
 		return type;
 	}
 
-	static void HandleTranslation(float *matrix, float *deltaMatrix, int& type)
+	static void HandleTranslation(float *matrix, float *deltaMatrix, int& type, float *snap)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 
@@ -1056,9 +1107,11 @@ namespace ImGuizmo
 		{
 			const float len = IntersectRayPlane(gContext.mRayOrigin, gContext.mRayVector, gContext.mTranslationPlan);
 			vec_t newPos = gContext.mRayOrigin + gContext.mRayVector * len;
+
+			// compute delta
 			vec_t newOrigin = newPos - gContext.mRelativeOrigin * gContext.mScreenFactor;
 			vec_t delta = newOrigin - gContext.mModel.v.position;
-
+			
 			// 1 axis constraint
 			if (gContext.mCurrentOperation >= MOVE_X && gContext.mCurrentOperation <= MOVE_Z)
 			{
@@ -1068,8 +1121,15 @@ namespace ImGuizmo
 				delta = axisValue * lengthOnAxis;
 			}
 
+			// snap
+			if (snap)
+			{
+				vec_t cumulativeDelta = gContext.mModel.v.position + delta - gContext.mMatrixOrigin;
+				ComputeSnap(cumulativeDelta, snap);
+				delta = gContext.mMatrixOrigin + cumulativeDelta - gContext.mModel.v.position;
+			}
+
 			// compute matrix & delta
-			gContext.mTranslationPlanOrigin += delta;
 			matrix_t deltaMatrixTranslation;
 			deltaMatrixTranslation.Translation(delta);
 			if (deltaMatrix)
@@ -1103,7 +1163,7 @@ namespace ImGuizmo
 		}
 	}
 
-	static void HandleScale(float *matrix, float *deltaMatrix, int& type)
+	static void HandleScale(float *matrix, float *deltaMatrix, int& type, float *snap)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 
@@ -1125,6 +1185,7 @@ namespace ImGuizmo
 				gContext.mScale.Set(1.f, 1.f, 1.f);
 				gContext.mRelativeOrigin = (gContext.mTranslationPlanOrigin - gContext.mModel.v.position) * (1.f / gContext.mScreenFactor);
 				gContext.mScaleValueOrigin = makeVect(gContext.mModelSource.v.right.Length(), gContext.mModelSource.v.up.Length(), gContext.mModelSource.v.dir.Length());
+				gContext.mSaveMousePosx = io.MousePos.x;
 			}
 		}
 		// scale
@@ -1150,9 +1211,20 @@ namespace ImGuizmo
 			}
 			else
 			{			
-				float scaleDelta = io.MouseDelta.x * 0.01f;
+				float scaleDelta = (io.MousePos.x - gContext.mSaveMousePosx)  * 0.01f;
 				gContext.mScale.Set(max(1.f + scaleDelta, 0.001f));
 			}
+
+			// snap
+			if (snap)
+			{
+				float scaleSnap[] = { snap[0], snap[0], snap[0] };
+				ComputeSnap(gContext.mScale, scaleSnap);
+			}
+
+			// no 0 allowed
+			for (int i = 0; i < 3;i++)
+				gContext.mScale[i] = max(gContext.mScale[i], 0.001f);
 
 			// compute matrix & delta
 			matrix_t deltaMatrixScale;
@@ -1170,21 +1242,7 @@ namespace ImGuizmo
 		}
 	}
 
-	static float ComputeAngleOnPlan()
-	{
-		const float len = IntersectRayPlane(gContext.mRayOrigin, gContext.mRayVector, gContext.mTranslationPlan);
-		vec_t localPos = Normalized(gContext.mRayOrigin + gContext.mRayVector * len - gContext.mModel.v.position);
-
-		vec_t perpendicularVector;
-		perpendicularVector.Cross(gContext.mRotationVectorSource, gContext.mTranslationPlan);
-		perpendicularVector.Normalize();
-		float acosAngle = Clamp(Dot(localPos, gContext.mRotationVectorSource), -0.9999f, 0.9999f);
-		float angle = acosf(acosAngle);
-		angle *= (Dot(localPos, perpendicularVector) < 0.f) ? 1.f : -1.f;
-		return angle;
-	}
-
-	static void HandleRotation(float *matrix, float *deltaMatrix, int& type)
+	static void HandleRotation(float *matrix, float *deltaMatrix, int& type, float *snap)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 
@@ -1210,7 +1268,11 @@ namespace ImGuizmo
 		if (gContext.mbUsing)
 		{
 			gContext.mRotationAngle = ComputeAngleOnPlan();
-
+			if (snap)
+			{
+				float snapInRadian = snap[0] * DEG2RAD;
+				ComputeSnap(&gContext.mRotationAngle, &snapInRadian);
+			}
 			vec_t rotationAxisLocalSpace;
 			rotationAxisLocalSpace.TransformVector(makeVect(gContext.mTranslationPlan.x, gContext.mTranslationPlan.y, gContext.mTranslationPlan.z, 0.f), gContext.mModelInverse);
 
@@ -1268,7 +1330,7 @@ namespace ImGuizmo
 		float validScale[3];
 		for (int i = 0; i < 3; i++)
 		{
-			if (fabsf(scale[i]) < FLT_EPSILON)
+			if (fabsf(scale[i] < FLT_EPSILON))
 				validScale[i] = 0.001f;
 			else
 				validScale[i] = scale[i];
@@ -1279,7 +1341,7 @@ namespace ImGuizmo
 		mat.v.position.Set(translation[0], translation[1], translation[2], 1.f);
 	}
 
-	void Manipulate(const float *view, const float *projection, OPERATION operation, MODE mode, float *matrix, float *deltaMatrix)
+	void Manipulate(const float *view, const float *projection, OPERATION operation, MODE mode, float *matrix, float *deltaMatrix, float *snap)
 	{
 		ComputeContext(view, projection, matrix, mode);
 
@@ -1293,13 +1355,13 @@ namespace ImGuizmo
 			switch (operation)
 			{
 			case ROTATE:
-				HandleRotation(matrix, deltaMatrix, type);
+				HandleRotation(matrix, deltaMatrix, type, snap);
 				break;
 			case TRANSLATE:
-				HandleTranslation(matrix, deltaMatrix, type);
+				HandleTranslation(matrix, deltaMatrix, type, snap);
 				break;
 			case SCALE:
-				HandleScale(matrix, deltaMatrix, type);
+				HandleScale(matrix, deltaMatrix, type, snap);
 				break;
 			}
 		}
