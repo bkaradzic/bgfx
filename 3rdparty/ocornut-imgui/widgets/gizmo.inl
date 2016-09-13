@@ -1330,7 +1330,7 @@ namespace ImGuizmo
 		float validScale[3];
 		for (int i = 0; i < 3; i++)
 		{
-			if (fabsf(scale[i] < FLT_EPSILON))
+			if (fabsf(scale[i]) < FLT_EPSILON)
 				validScale[i] = 0.001f;
 			else
 				validScale[i] = scale[i];
