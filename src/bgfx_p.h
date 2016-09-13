@@ -1216,6 +1216,20 @@ namespace bgfx
 		} m_un;
 	};
 
+	struct Stream
+	{
+		void clear()
+		{
+			m_startVertex = 0;
+			m_handle.idx  = invalidHandle;
+			m_decl.idx    = invalidHandle;
+		}
+
+		uint32_t           m_startVertex;
+		VertexBufferHandle m_handle;
+		VertexDeclHandle   m_decl;
+	};
+
 	struct RenderDraw
 	{
 		void clear()
@@ -1228,7 +1242,6 @@ namespace bgfx
 			m_matrix      = 0;
 			m_startIndex  = 0;
 			m_numIndices  = UINT32_MAX;
-			m_startVertex = 0;
 			m_numVertices = UINT32_MAX;
 			m_instanceDataOffset = 0;
 			m_instanceDataStride = 0;
@@ -1238,8 +1251,8 @@ namespace bgfx
 			m_num           = 1;
 			m_submitFlags   = BGFX_SUBMIT_EYE_FIRST;
 			m_scissor       = UINT16_MAX;
-			m_vertexBuffer.idx       = invalidHandle;
-			m_vertexDecl.idx         = invalidHandle;
+			m_streamMask    = 0;
+			m_stream[0].clear();
 			m_indexBuffer.idx        = invalidHandle;
 			m_instanceDataBuffer.idx = invalidHandle;
 			m_indirectBuffer.idx     = invalidHandle;
@@ -1255,6 +1268,7 @@ namespace bgfx
 		}
 
 		Binding  m_bind[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+		Stream   m_stream[BGFX_CONFIG_MAX_VERTEX_STREAMS];
 		uint64_t m_stateFlags;
 		uint64_t m_stencil;
 		uint32_t m_rgba;
@@ -1263,7 +1277,6 @@ namespace bgfx
 		uint32_t m_matrix;
 		uint32_t m_startIndex;
 		uint32_t m_numIndices;
-		uint32_t m_startVertex;
 		uint32_t m_numVertices;
 		uint32_t m_instanceDataOffset;
 		uint32_t m_numInstances;
@@ -1273,9 +1286,8 @@ namespace bgfx
 		uint16_t m_num;
 		uint16_t m_scissor;
 		uint8_t  m_submitFlags;
+		uint8_t  m_streamMask;
 
-		VertexBufferHandle   m_vertexBuffer;
-		VertexDeclHandle     m_vertexDecl;
 		IndexBufferHandle    m_indexBuffer;
 		VertexBufferHandle   m_instanceDataBuffer;
 		IndirectBufferHandle m_indirectBuffer;
@@ -1555,27 +1567,49 @@ namespace bgfx
 			m_discard = 0 == _numIndices;
 		}
 
-		void setVertexBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices)
+		void setVertexBuffer(uint8_t _stream, VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices)
 		{
-			m_draw.m_startVertex  = _startVertex;
-			m_draw.m_numVertices  = _numVertices;
-			m_draw.m_vertexBuffer = _handle;
+			const uint8_t bit = 1<<_stream;
+			BX_CHECK(0 == (m_draw.m_streamMask & bit), "Vertex stream %d is already set.", _stream);
+			m_draw.m_streamMask |= bit;
+
+			Stream& stream = m_draw.m_stream[_stream];
+			stream.m_startVertex = _startVertex;
+			stream.m_handle      = _handle;
+			stream.m_decl.idx    = invalidHandle;
+			m_draw.m_numVertices = bx::uint32_min(m_draw.m_numVertices, _numVertices);
 		}
 
-		void setVertexBuffer(const DynamicVertexBuffer& _dvb, uint32_t _startVertex, uint32_t _numVertices)
+		void setVertexBuffer(uint8_t _stream, const DynamicVertexBuffer& _dvb, uint32_t _startVertex, uint32_t _numVertices)
 		{
-			m_draw.m_startVertex  = _dvb.m_startVertex + _startVertex;
-			m_draw.m_numVertices  = bx::uint32_min(bx::uint32_imax(0, _dvb.m_numVertices - _startVertex), _numVertices);
-			m_draw.m_vertexBuffer = _dvb.m_handle;
-			m_draw.m_vertexDecl   = _dvb.m_decl;
+			const uint8_t bit = 1<<_stream;
+			BX_CHECK(0 == (m_draw.m_streamMask & bit), "Vertex stream %d is already set.", _stream);
+			m_draw.m_streamMask |= bit;
+
+			Stream& stream = m_draw.m_stream[_stream];
+			stream.m_startVertex = _dvb.m_startVertex + _startVertex;
+			stream.m_handle      = _dvb.m_handle;
+			stream.m_decl        = _dvb.m_decl;
+			m_draw.m_numVertices =
+				  bx::uint32_min(m_draw.m_numVertices
+				, bx::uint32_min(bx::uint32_imax(0, _dvb.m_numVertices - _startVertex), _numVertices)
+				);
 		}
 
-		void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices)
+		void setVertexBuffer(uint8_t _stream, const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices)
 		{
-			m_draw.m_startVertex  = _tvb->startVertex + _startVertex;
-			m_draw.m_numVertices  = bx::uint32_min(bx::uint32_imax(0, _tvb->size/_tvb->stride - _startVertex), _numVertices);
-			m_draw.m_vertexBuffer = _tvb->handle;
-			m_draw.m_vertexDecl   = _tvb->decl;
+			const uint8_t bit = 1<<_stream;
+			BX_CHECK(0 == (m_draw.m_streamMask & bit), "Vertex stream %d is already set.", _stream);
+			m_draw.m_streamMask |= bit;
+
+			Stream& stream = m_draw.m_stream[_stream];
+			stream.m_startVertex  = _tvb->startVertex + _startVertex;
+			stream.m_handle       = _tvb->handle;
+			stream.m_decl         = _tvb->decl;
+			m_draw.m_numVertices  =
+				  bx::uint32_min(m_draw.m_numVertices
+				, bx::uint32_min(bx::uint32_imax(0, _tvb->size/_tvb->stride - _startVertex), _numVertices)
+				);
 		}
 
 		void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint32_t _num)
@@ -3702,22 +3736,25 @@ namespace bgfx
 			m_submit->setIndexBuffer(_tib, _firstIndex, _numIndices);
 		}
 
-		BGFX_API_FUNC(void setVertexBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices) )
+		BGFX_API_FUNC(void setVertexBuffer(uint8_t _stream, VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices) )
 		{
 			BGFX_CHECK_HANDLE("setVertexBuffer", m_vertexBufferHandle, _handle);
-			m_submit->setVertexBuffer(_handle, _startVertex, _numVertices);
+			BX_CHECK(_stream < BGFX_CONFIG_MAX_VERTEX_STREAMS, "Invalid stream %d (max %d).", _stream, BGFX_CONFIG_MAX_VERTEX_STREAMS);
+			m_submit->setVertexBuffer(_stream, _handle, _startVertex, _numVertices);
 		}
 
-		BGFX_API_FUNC(void setVertexBuffer(DynamicVertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices) )
+		BGFX_API_FUNC(void setVertexBuffer(uint8_t _stream, DynamicVertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices) )
 		{
 			BGFX_CHECK_HANDLE("setVertexBuffer", m_dynamicVertexBufferHandle, _handle);
-			m_submit->setVertexBuffer(m_dynamicVertexBuffers[_handle.idx], _startVertex, _numVertices);
+			BX_CHECK(_stream < BGFX_CONFIG_MAX_VERTEX_STREAMS, "Invalid stream %d (max %d).", _stream, BGFX_CONFIG_MAX_VERTEX_STREAMS);
+			m_submit->setVertexBuffer(_stream, m_dynamicVertexBuffers[_handle.idx], _startVertex, _numVertices);
 		}
 
-		BGFX_API_FUNC(void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices) )
+		BGFX_API_FUNC(void setVertexBuffer(uint8_t _stream, const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices) )
 		{
 			BGFX_CHECK_HANDLE("setVertexBuffer", m_vertexBufferHandle, _tvb->handle);
-			m_submit->setVertexBuffer(_tvb, _startVertex, _numVertices);
+			BX_CHECK(_stream < BGFX_CONFIG_MAX_VERTEX_STREAMS, "Invalid stream %d (max %d).", _stream, BGFX_CONFIG_MAX_VERTEX_STREAMS);
+			m_submit->setVertexBuffer(_stream, _tvb, _startVertex, _numVertices);
 		}
 
 		BGFX_API_FUNC(void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint32_t _num) )
@@ -3754,7 +3791,6 @@ namespace bgfx
 		BGFX_API_FUNC(void setTexture(uint8_t _stage, UniformHandle _sampler, FrameBufferHandle _handle, uint8_t _attachment, uint32_t _flags) )
 		{
 			BGFX_CHECK_HANDLE_INVALID_OK("setTexture/FrameBufferHandle", m_frameBufferHandle, _handle);
-			BX_CHECK(_attachment < g_caps.maxFBAttachments, "Frame buffer attachment index %d is invalid.", _attachment);
 			TextureHandle textureHandle = BGFX_INVALID_HANDLE;
 			if (isValid(_handle) )
 			{
@@ -3846,7 +3882,6 @@ namespace bgfx
 
 		BGFX_API_FUNC(void setImage(uint8_t _stage, UniformHandle _sampler, FrameBufferHandle _handle, uint8_t _attachment, Access::Enum _access, TextureFormat::Enum _format) )
 		{
-			BX_CHECK(_attachment < g_caps.maxFBAttachments, "Frame buffer attachment index %d is invalid.", _attachment);
 			TextureHandle textureHandle = BGFX_INVALID_HANDLE;
 			if (isValid(_handle) )
 			{

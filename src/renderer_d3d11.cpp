@@ -5816,24 +5816,24 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				}
 
 				if (programChanged
-				||  currentState.m_vertexDecl.idx         != draw.m_vertexDecl.idx
-				||  currentState.m_vertexBuffer.idx       != draw.m_vertexBuffer.idx
+				||  currentState.m_stream[0].m_decl.idx   != draw.m_stream[0].m_decl.idx
+				||  currentState.m_stream[0].m_handle.idx != draw.m_stream[0].m_handle.idx
 				||  currentState.m_instanceDataBuffer.idx != draw.m_instanceDataBuffer.idx
 				||  currentState.m_instanceDataOffset     != draw.m_instanceDataOffset
 				||  currentState.m_instanceDataStride     != draw.m_instanceDataStride)
 				{
-					currentState.m_vertexDecl             = draw.m_vertexDecl;
-					currentState.m_vertexBuffer           = draw.m_vertexBuffer;
+					currentState.m_stream[0].m_decl       = draw.m_stream[0].m_decl;
+					currentState.m_stream[0].m_handle     = draw.m_stream[0].m_handle;
 					currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
 					currentState.m_instanceDataOffset     = draw.m_instanceDataOffset;
 					currentState.m_instanceDataStride     = draw.m_instanceDataStride;
 
-					uint16_t handle = draw.m_vertexBuffer.idx;
+					uint16_t handle = draw.m_stream[0].m_handle.idx;
 					if (invalidHandle != handle)
 					{
 						const VertexBufferD3D11& vb = m_vertexBuffers[handle];
 
-						uint16_t decl = !isValid(vb.m_decl) ? draw.m_vertexDecl.idx : vb.m_decl.idx;
+						uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[0].m_decl.idx : vb.m_decl.idx;
 						const VertexDecl& vertexDecl = m_vertexDecls[decl];
 						uint32_t stride = vertexDecl.m_stride;
 						uint32_t offset = 0;
@@ -5877,13 +5877,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 				}
 
-				if (isValid(currentState.m_vertexBuffer) )
+				if (isValid(currentState.m_stream[0].m_handle) )
 				{
 					uint32_t numVertices = draw.m_numVertices;
 					if (UINT32_MAX == numVertices)
 					{
-						const VertexBufferD3D11& vb = m_vertexBuffers[currentState.m_vertexBuffer.idx];
-						uint16_t decl = !isValid(vb.m_decl) ? draw.m_vertexDecl.idx : vb.m_decl.idx;
+						const VertexBufferD3D11& vb = m_vertexBuffers[currentState.m_stream[0].m_handle.idx];
+						uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[0].m_decl.idx : vb.m_decl.idx;
 						const VertexDecl& vertexDecl = m_vertexDecls[decl];
 						numVertices = vb.m_size/vertexDecl.m_stride;
 					}
@@ -5949,7 +5949,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 									deviceCtx->DrawIndexedInstanced(numIndices
 										, draw.m_numInstances
 										, 0
-										, draw.m_startVertex
+										, draw.m_stream[0].m_startVertex
 										, 0
 										);
 								}
@@ -5957,7 +5957,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								{
 									deviceCtx->DrawIndexed(numIndices
 										, 0
-										, draw.m_startVertex
+										, draw.m_stream[0].m_startVertex
 										);
 								}
 							}
@@ -5973,7 +5973,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 									deviceCtx->DrawIndexedInstanced(numIndices
 										, draw.m_numInstances
 										, draw.m_startIndex
-										, draw.m_startVertex
+										, draw.m_stream[0].m_startVertex
 										, 0
 										);
 								}
@@ -5981,7 +5981,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								{
 									deviceCtx->DrawIndexed(numIndices
 										, draw.m_startIndex
-										, draw.m_startVertex
+										, draw.m_stream[0].m_startVertex
 										);
 								}
 							}
@@ -5996,14 +5996,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 							{
 								deviceCtx->DrawInstanced(numVertices
 									, draw.m_numInstances
-									, draw.m_startVertex
+									, draw.m_stream[0].m_startVertex
 									, 0
 									);
 							}
 							else
 							{
 								deviceCtx->Draw(numVertices
-									, draw.m_startVertex
+									, draw.m_stream[0].m_startVertex
 									);
 							}
 						}
