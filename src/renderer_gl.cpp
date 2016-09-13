@@ -6779,25 +6779,27 @@ namespace bgfx { namespace gl
 					}
 
 					if (0 != defaultVao
-					&&  0 == draw.m_startVertex
+					&&  0 == draw.m_stream[0].m_startVertex
 					&&  0 == draw.m_instanceDataOffset)
 					{
 						if (programChanged
-						||  baseVertex                        != draw.m_startVertex
-						||  currentState.m_vertexBuffer.idx   != draw.m_vertexBuffer.idx
-						||  currentState.m_indexBuffer.idx    != draw.m_indexBuffer.idx
-						||  currentState.m_instanceDataOffset != draw.m_instanceDataOffset
-						||  currentState.m_instanceDataStride != draw.m_instanceDataStride
+						||  baseVertex                            != draw.m_stream[0].m_startVertex
+						||  currentState.m_stream[0].m_handle.idx != draw.m_stream[0].m_handle.idx
+						||  currentState.m_indexBuffer.idx        != draw.m_indexBuffer.idx
+						||  currentState.m_instanceDataOffset     != draw.m_instanceDataOffset
+						||  currentState.m_instanceDataStride     != draw.m_instanceDataStride
 						||  currentState.m_instanceDataBuffer.idx != draw.m_instanceDataBuffer.idx)
 						{
 							bx::HashMurmur2A murmur;
 							murmur.begin();
-							murmur.add(draw.m_vertexBuffer.idx);
 
-							if (isValid(draw.m_vertexBuffer) )
+							const Stream& stream = draw.m_stream[0];
+							murmur.add(stream.m_handle.idx);
+
+							if (isValid(stream.m_handle) )
 							{
-								const VertexBufferGL& vb = m_vertexBuffers[draw.m_vertexBuffer.idx];
-								uint16_t decl = !isValid(vb.m_decl) ? draw.m_vertexDecl.idx : vb.m_decl.idx;
+								const VertexBufferGL& vb = m_vertexBuffers[stream.m_handle.idx];
+								uint16_t decl = !isValid(vb.m_decl) ? stream.m_decl.idx : vb.m_decl.idx;
 								murmur.add(decl);
 							}
 
@@ -6808,11 +6810,12 @@ namespace bgfx { namespace gl
 							murmur.add(programIdx);
 							uint32_t hash = murmur.end();
 
-							currentState.m_vertexBuffer = draw.m_vertexBuffer;
+							currentState.m_stream[0].m_handle = stream.m_handle;
+							baseVertex                        = stream.m_startVertex;
+
 							currentState.m_indexBuffer = draw.m_indexBuffer;
 							currentState.m_instanceDataOffset = draw.m_instanceDataOffset;
 							currentState.m_instanceDataStride = draw.m_instanceDataStride;
-							baseVertex = draw.m_startVertex;
 
 							GLuint id = m_vaoStateCache.find(hash);
 							if (UINT32_MAX != id)
@@ -6828,14 +6831,14 @@ namespace bgfx { namespace gl
 
 								program.add(hash);
 
-								if (isValid(draw.m_vertexBuffer) )
+								if (isValid(stream.m_handle) )
 								{
-									VertexBufferGL& vb = m_vertexBuffers[draw.m_vertexBuffer.idx];
+									VertexBufferGL& vb = m_vertexBuffers[stream.m_handle.idx];
 									vb.add(hash);
 									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
 
-									uint16_t decl = !isValid(vb.m_decl) ? draw.m_vertexDecl.idx : vb.m_decl.idx;
-									program.bindAttributes(m_vertexDecls[decl], draw.m_startVertex);
+									uint16_t decl = !isValid(vb.m_decl) ? stream.m_decl.idx : vb.m_decl.idx;
+									program.bindAttributes(m_vertexDecls[decl], stream.m_startVertex);
 
 									if (isValid(draw.m_instanceDataBuffer) )
 									{
@@ -6869,24 +6872,24 @@ namespace bgfx { namespace gl
 						&&  0 != currentVao)
 						{
 							GL_CHECK(glBindVertexArray(defaultVao) );
-							currentState.m_vertexBuffer.idx = invalidHandle;
-							currentState.m_indexBuffer.idx = invalidHandle;
+							currentState.m_stream[0].m_handle.idx = invalidHandle;
+							currentState.m_indexBuffer.idx        = invalidHandle;
 							bindAttribs = true;
 							currentVao = 0;
 						}
 
 						if (programChanged
-						||  currentState.m_vertexBuffer.idx != draw.m_vertexBuffer.idx
+						||  currentState.m_stream[0].m_handle.idx != draw.m_stream[0].m_handle.idx
 						||  currentState.m_instanceDataBuffer.idx != draw.m_instanceDataBuffer.idx
-						||  currentState.m_instanceDataOffset != draw.m_instanceDataOffset
-						||  currentState.m_instanceDataStride != draw.m_instanceDataStride)
+						||  currentState.m_instanceDataOffset     != draw.m_instanceDataOffset
+						||  currentState.m_instanceDataStride     != draw.m_instanceDataStride)
 						{
-							currentState.m_vertexBuffer = draw.m_vertexBuffer;
+							currentState.m_stream[0].m_handle     = draw.m_stream[0].m_handle;
 							currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
-							currentState.m_instanceDataOffset = draw.m_instanceDataOffset;
-							currentState.m_instanceDataStride = draw.m_instanceDataStride;
+							currentState.m_instanceDataOffset     = draw.m_instanceDataOffset;
+							currentState.m_instanceDataStride     = draw.m_instanceDataStride;
 
-							uint16_t handle = draw.m_vertexBuffer.idx;
+							uint16_t handle = draw.m_stream[0].m_handle.idx;
 							if (invalidHandle != handle)
 							{
 								VertexBufferGL& vb = m_vertexBuffers[handle];
@@ -6915,15 +6918,15 @@ namespace bgfx { namespace gl
 							}
 						}
 
-						if (isValid(currentState.m_vertexBuffer) )
+						if (isValid(currentState.m_stream[0].m_handle) )
 						{
-							if (baseVertex != draw.m_startVertex
+							if (baseVertex != draw.m_stream[0].m_startVertex
 							||  bindAttribs)
 							{
-								baseVertex = draw.m_startVertex;
-								const VertexBufferGL& vb = m_vertexBuffers[draw.m_vertexBuffer.idx];
-								uint16_t decl = !isValid(vb.m_decl) ? draw.m_vertexDecl.idx : vb.m_decl.idx;
-								program.bindAttributes(m_vertexDecls[decl], draw.m_startVertex);
+								baseVertex = draw.m_stream[0].m_startVertex;
+								const VertexBufferGL& vb = m_vertexBuffers[draw.m_stream[0].m_handle.idx];
+								uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[0].m_decl.idx : vb.m_decl.idx;
+								program.bindAttributes(m_vertexDecls[decl], draw.m_stream[0].m_startVertex);
 
 								if (isValid(draw.m_instanceDataBuffer) )
 								{
@@ -6934,13 +6937,13 @@ namespace bgfx { namespace gl
 						}
 					}
 
-					if (isValid(currentState.m_vertexBuffer) )
+					if (isValid(currentState.m_stream[0].m_handle) )
 					{
 						uint32_t numVertices = draw.m_numVertices;
 						if (UINT32_MAX == numVertices)
 						{
-							const VertexBufferGL& vb = m_vertexBuffers[currentState.m_vertexBuffer.idx];
-							uint16_t decl = !isValid(vb.m_decl) ? draw.m_vertexDecl.idx : vb.m_decl.idx;
+							const VertexBufferGL& vb = m_vertexBuffers[currentState.m_stream[0].m_handle.idx];
+							uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[0].m_decl.idx : vb.m_decl.idx;
 							const VertexDecl& vertexDecl = m_vertexDecls[decl];
 							numVertices = vb.m_size/vertexDecl.m_stride;
 						}
