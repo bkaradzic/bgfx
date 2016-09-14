@@ -2415,7 +2415,7 @@ namespace bgfx { namespace mtl
 			{
 				if (imageContainer.m_cubeMap)
 				{
-					desc.textureType = MTLTextureTypeCubeArray;
+					desc.textureType = MTLTextureType(6); // MTLTextureTypeCubeArray
 				}
 				else
 				{
