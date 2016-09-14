@@ -197,7 +197,10 @@ namespace bgfx
 		}
 
 		// perform mirror texture blit right after the entire frame is submitted to HMD
-		m_mirror->blit(m_hmd);
+		if (result != ovrSuccess_NotVisible)
+		{
+			m_mirror->blit(m_hmd);
+		}
 
 		m_hmdToEyeOffset[0] = m_erd[0].HmdToEyeOffset;
 		m_hmdToEyeOffset[1] = m_erd[1].HmdToEyeOffset;
