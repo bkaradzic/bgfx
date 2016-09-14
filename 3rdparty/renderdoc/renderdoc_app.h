@@ -24,6 +24,11 @@
 
 #pragma once
 
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Documentation for the API is available at https://renderdoc.org/docs/in_application_api.html
+//
+
 #if !defined(RENDERDOC_NO_STDINT)
 #include <stdint.h>
 #endif
@@ -380,18 +385,22 @@ typedef uint32_t(RENDERDOC_CC *pRENDERDOC_GetCapture)(uint32_t idx, char *logfil
                                                       uint32_t *pathlength, uint64_t *timestamp);
 
 // returns 1 if the RenderDoc UI is connected to this application, 0 otherwise
+// This was renamed to IsTargetControlConnected in API 1.1.1, the old typedef is kept here for
+// backwards compatibility with old code, it is castable either way since it's ABI compatible
+// as the same function pointer type.
 typedef uint32_t(RENDERDOC_CC *pRENDERDOC_IsRemoteAccessConnected)();
+typedef uint32_t(RENDERDOC_CC *pRENDERDOC_IsTargetControlConnected)();
 
 // This function will launch the Replay UI associated with the RenderDoc library injected
 // into the running application.
 //
-// if connectRemoteAccess is 1, the Replay UI will be launched with a command line parameter
+// if connectTargetControl is 1, the Replay UI will be launched with a command line parameter
 // to connect to this application
 // cmdline is the rest of the command line, as a UTF-8 string. E.g. a captures to open
 // if cmdline is NULL, the command line will be empty.
 //
 // returns the PID of the replay UI if successful, 0 if not successful.
-typedef uint32_t(RENDERDOC_CC *pRENDERDOC_LaunchReplayUI)(uint32_t connectRemoteAccess,
+typedef uint32_t(RENDERDOC_CC *pRENDERDOC_LaunchReplayUI)(uint32_t connectTargetControl,
                                                           const char *cmdline);
 
 // RenderDoc can return a higher version than requested if it's backwards compatible,
@@ -474,6 +483,7 @@ typedef enum {
   eRENDERDOC_API_Version_1_0_1 = 10001,    // RENDERDOC_API_1_0_1 = 1 00 01
   eRENDERDOC_API_Version_1_0_2 = 10002,    // RENDERDOC_API_1_0_2 = 1 00 02
   eRENDERDOC_API_Version_1_1_0 = 10100,    // RENDERDOC_API_1_1_0 = 1 01 00
+  eRENDERDOC_API_Version_1_1_1 = 10101,    // RENDERDOC_API_1_1_1 = 1 01 01
 } RENDERDOC_Version;
 
 // API version changelog:
@@ -484,6 +494,8 @@ typedef enum {
 // 1.0.2 - Refactor: Renamed eRENDERDOC_Option_DebugDeviceMode to eRENDERDOC_Option_APIValidation
 // 1.1.0 - Add feature: TriggerMultiFrameCapture(). Backwards compatible with 1.0.x since the new
 //         function pointer is added to the end of the struct, the original layout is identical
+// 1.1.1 - Refactor: Renamed remote access to target control (to better disambiguate from remote
+//         replay/remote server concept in replay UI)
 
 // eRENDERDOC_API_Version_1_1_0
 typedef struct
@@ -528,6 +540,53 @@ typedef struct
 typedef RENDERDOC_API_1_1_0 RENDERDOC_API_1_0_0;
 typedef RENDERDOC_API_1_1_0 RENDERDOC_API_1_0_1;
 typedef RENDERDOC_API_1_1_0 RENDERDOC_API_1_0_2;
+
+// although this structure is identical to RENDERDOC_API_1_1_0, the member
+// IsRemoteAccessConnected was renamed to IsTargetControlConnected. So that
+// old code can still compile with a new header, we must declare a new struct
+// type. It can be casted back and forth though, so we will still return a
+// pointer to this type for all previous API versions - the above struct is
+// purely legacy for compilation compatibility
+
+// eRENDERDOC_API_Version_1_1_1
+typedef struct
+{
+  pRENDERDOC_GetAPIVersion GetAPIVersion;
+
+  pRENDERDOC_SetCaptureOptionU32 SetCaptureOptionU32;
+  pRENDERDOC_SetCaptureOptionF32 SetCaptureOptionF32;
+
+  pRENDERDOC_GetCaptureOptionU32 GetCaptureOptionU32;
+  pRENDERDOC_GetCaptureOptionF32 GetCaptureOptionF32;
+
+  pRENDERDOC_SetFocusToggleKeys SetFocusToggleKeys;
+  pRENDERDOC_SetCaptureKeys SetCaptureKeys;
+
+  pRENDERDOC_GetOverlayBits GetOverlayBits;
+  pRENDERDOC_MaskOverlayBits MaskOverlayBits;
+
+  pRENDERDOC_Shutdown Shutdown;
+  pRENDERDOC_UnloadCrashHandler UnloadCrashHandler;
+
+  pRENDERDOC_SetLogFilePathTemplate SetLogFilePathTemplate;
+  pRENDERDOC_GetLogFilePathTemplate GetLogFilePathTemplate;
+
+  pRENDERDOC_GetNumCaptures GetNumCaptures;
+  pRENDERDOC_GetCapture GetCapture;
+
+  pRENDERDOC_TriggerCapture TriggerCapture;
+
+  pRENDERDOC_IsTargetControlConnected IsTargetControlConnected;
+  pRENDERDOC_LaunchReplayUI LaunchReplayUI;
+
+  pRENDERDOC_SetActiveWindow SetActiveWindow;
+
+  pRENDERDOC_StartFrameCapture StartFrameCapture;
+  pRENDERDOC_IsFrameCapturing IsFrameCapturing;
+  pRENDERDOC_EndFrameCapture EndFrameCapture;
+
+  pRENDERDOC_TriggerMultiFrameCapture TriggerMultiFrameCapture;
+} RENDERDOC_API_1_1_1;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // RenderDoc API entry point
