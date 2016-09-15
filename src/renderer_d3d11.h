@@ -61,26 +61,23 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 namespace bgfx { namespace d3d11
 {
 #if BGFX_CONFIG_USE_OVR
-	struct OVRBufferD3D11 : public OVRBufferI
+	struct OVRRenderD3D11 : public OVRRenderI
 	{
-		virtual void create(const ovrSession& _session, int _eyeIdx, int _msaaSamples) BX_OVERRIDE;
-		virtual void destroy(const ovrSession& _session) BX_OVERRIDE;
-		virtual void render(const ovrSession& _session) BX_OVERRIDE;
-		virtual void postRender(const ovrSession& _session) BX_OVERRIDE;
+		OVRRenderD3D11();
+		virtual void create(const ovrSession& _session, int _msaaSamples, int _mirrorWidth, int _mirrorHeight);
+		virtual void destroy(const ovrSession& _session);
+		virtual void preReset(const ovrSession& _session);
+		virtual void startEyeRender(const ovrSession& _session, int _eyeIdx);
+		virtual void postRender(const ovrSession& _session, int _eyeIdx);
+		virtual void blitMirror(const ovrSession& _session);
 
-		ID3D11RenderTargetView* m_eyeRtv[4];
-		ID3D11DepthStencilView* m_depthBuffer;
-		ID3D11Texture2D* m_msaaTexture;
-		ID3D11ShaderResourceView* m_msaaSv;
-		ID3D11RenderTargetView* m_msaaRtv;
+		ID3D11RenderTargetView* m_eyeRtv[2][4];
+		ID3D11DepthStencilView* m_depthBuffer[2];
+		ID3D11Texture2D* m_msaaTexture[2];
+		ID3D11ShaderResourceView* m_msaaSv[2];
+		ID3D11RenderTargetView* m_msaaRtv[2];
 	};
 
-	struct OVRMirrorD3D11 : public OVRMirrorI
-	{
-		virtual void create(const ovrSession& _session, int _width, int _height) BX_OVERRIDE;
-		virtual void destroy(const ovrSession& session) BX_OVERRIDE;
-		virtual void blit(const ovrSession& session) BX_OVERRIDE;
-	};
 #endif // BGFX_CONFIG_USE_OVR
 
 	struct BufferD3D11
