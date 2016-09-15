@@ -32,7 +32,7 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 #include "renderer.h"
 #include "renderer_d3d.h"
 #include "shader_dxbc.h"
-#include "hmd_ovr.h"
+#include "hmd.h"
 #include "hmd_openvr.h"
 #include "debug_renderdoc.h"
 
@@ -60,25 +60,6 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 
 namespace bgfx { namespace d3d11
 {
-#if BGFX_CONFIG_USE_OVR
-	struct OVRRenderD3D11 : public OVRRenderI
-	{
-		virtual void create(const ovrSession& _session, int _msaaSamples, int _mirrorWidth, int _mirrorHeight);
-		virtual void destroy(const ovrSession& _session);
-		virtual void preReset(const ovrSession& _session);
-		virtual void startEyeRender(const ovrSession& _session, int _eyeIdx);
-		virtual void postRender(const ovrSession& _session, int _eyeIdx);
-		virtual void blitMirror(const ovrSession& _session);
-
-		ID3D11RenderTargetView* m_eyeRtv[2][4];
-		ID3D11DepthStencilView* m_depthBuffer[2];
-		ID3D11Texture2D* m_msaaTexture[2];
-		ID3D11ShaderResourceView* m_msaaSv[2];
-		ID3D11RenderTargetView* m_msaaRtv[2];
-	};
-
-#endif // BGFX_CONFIG_USE_OVR
-
 	struct BufferD3D11
 	{
 		BufferD3D11()

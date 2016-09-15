@@ -10,6 +10,7 @@
 
 #if BGFX_CONFIG_USE_OVR
 
+#	include "hmd.h"
 #	include <OVR_Version.h>
 
 #	define OVR_VERSION_(_a, _b, _c) (_a * 10000 + _b * 100 + _c)
@@ -25,160 +26,41 @@
 #		include <OVR_CAPI_GL.h>
 #	endif // BGFX_CONFIG_RENDERER_OPENGL
 
-namespace bgfx
-{
-	// render data for both eyes and mirrored output
-	struct BX_NO_VTABLE OVRRenderI
-	{
-		OVRRenderI();
-		virtual ~OVRRenderI() = 0;
-		virtual void create(const ovrSession& _session, int _msaaSamples, int _mirrorWidth, int _mirrorHeight) = 0;
-		virtual void destroy(const ovrSession& _session) = 0;
-		virtual void preReset(const ovrSession& _session) = 0;
-		virtual void startEyeRender(const ovrSession& _session, int _eyeIdx) = 0;
-		virtual void postRender(const ovrSession& _session, int _eyeIdx) = 0;
-		virtual void blitMirror(const ovrSession& _session) = 0;
-
-		ovrSizei m_eyeTextureSize[2];
-		ovrTextureSwapChain m_textureSwapChain[2];
-		ovrMirrorTexture m_mirrorTexture;
-		ovrMirrorTextureDesc m_mirrorTextureDesc;
-	};
-
-	inline OVRRenderI::OVRRenderI()
-		: m_mirrorTexture(NULL)
-	{
-		memset(&m_textureSwapChain, 0, sizeof(m_textureSwapChain));
-	}
-
-	inline OVRRenderI::~OVRRenderI()
-	{
-	}
-
-	struct OVR
-	{
-		enum Enum
-		{
-			NotEnabled,
-			DeviceLost,
-			Success,
-
-			Count
-		};
-
-		OVR();
-		~OVR();
-
-		bool isInitialized() const
-		{
-			return NULL != m_hmd;
-		}
-
-		bool isEnabled() const
-		{
-			return m_enabled;
-		}
-
-		void init();
-		void shutdown();
-
-		void getViewport(uint8_t _eye, Rect* _viewport);
-		void renderEyeStart(uint8_t _eye);
-		bool postReset();
-		void preReset();
-		Enum swap(HMD& _hmd, bool originBottomLeft);
-		void recenter();
-		void getEyePose(HMD& _hmd);
-
-		ovrSession m_hmd;
-		ovrHmdDesc m_hmdDesc;
-		ovrEyeRenderDesc m_erd[2];
-		ovrRecti    m_rect[2];
-		ovrPosef    m_pose[2];
-		ovrVector3f m_hmdToEyeOffset[2];
-		ovrSizei    m_hmdSize;
-		OVRRenderI *m_render;
-		uint64_t    m_frameIndex;
-		double      m_sensorSampleTime;
-		bool m_enabled;
-	};
-
-} // namespace bgfx
-
-#else
 
 namespace bgfx
 {
-	struct OVR
+	class VRImplOVR : public VRImplI
 	{
-		enum Enum
-		{
-			NotEnabled,
-			DeviceLost,
-			Success,
+	public:
+		VRImplOVR();
+		virtual ~VRImplOVR() = 0;
 
-			Count
-		};
+		virtual bool init();
+		virtual void shutdown();
+		virtual void connect(VRDesc* _desc);
+		virtual void disconnect();
 
-		OVR()
+		virtual bool isConnected() const
 		{
+			return NULL != m_session;
 		}
 
-		~OVR()
-		{
-		}
+		virtual bool updateTracking(HMD& _hmd);
+		virtual void updateInput(HMD& _hmd);
+		virtual void recenter();
 
-		bool isInitialized() const
-		{
-			return false;
-		}
+		virtual bool createSwapChain(const VRDesc& _desc, int _msaaSamples, int _mirrorWidth, int _mirrorHeight) = 0;
+		virtual void destroySwapChain() = 0;
+		virtual void destroyMirror() = 0;
+		virtual void renderEyeStart(const VRDesc& _desc, uint8_t _eye) = 0;
+		virtual bool submitSwapChain(const VRDesc& _desc) = 0;
 
-		bool isEnabled() const
-		{
-			return false;
-		}
-
-		bool isDebug() const
-		{
-			return false;
-		}
-
-		void init()
-		{
-		}
-
-		void shutdown()
-		{
-		}
-
-		void getViewport(uint8_t /*_eye*/, Rect* _viewport)
-		{
-			_viewport->m_x      = 0;
-			_viewport->m_y      = 0;
-			_viewport->m_width  = 0;
-			_viewport->m_height = 0;
-		}
-
-		void renderEyeStart(uint8_t /*_eye*/)
-		{
-		}
-
-		Enum swap(HMD& _hmd, bool /*originBottomLeft*/)
-		{
-			_hmd.flags = BGFX_HMD_NONE;
-			getEyePose(_hmd);
-			return NotEnabled;
-		}
-
-		void recenter()
-		{
-		}
-
-		void getEyePose(HMD& _hmd)
-		{
-			_hmd.width  = 0;
-			_hmd.height = 0;
-		}
+	protected:
+		ovrSession m_session;
+		ovrLayerEyeFov m_renderLayer;
+		ovrViewScaleDesc m_viewScale;
+		ovrFovPort m_eyeFov[2];
+		ovrVector2f m_pixelsPerTanAngleAtCenter[2];
 	};
 
 } // namespace bgfx
