@@ -1570,7 +1570,7 @@ namespace bgfx
 		void setVertexBuffer(uint8_t _stream, VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices)
 		{
 			const uint8_t bit = 1<<_stream;
-			BX_CHECK(0 == (m_draw.m_streamMask & bit), "Vertex stream %d is already set.", _stream);
+//			BX_CHECK(0 == (m_draw.m_streamMask & bit), "Vertex stream %d is already set.", _stream);
 			m_draw.m_streamMask |= bit;
 
 			Stream& stream = m_draw.m_stream[_stream];
@@ -1583,7 +1583,7 @@ namespace bgfx
 		void setVertexBuffer(uint8_t _stream, const DynamicVertexBuffer& _dvb, uint32_t _startVertex, uint32_t _numVertices)
 		{
 			const uint8_t bit = 1<<_stream;
-			BX_CHECK(0 == (m_draw.m_streamMask & bit), "Vertex stream %d is already set.", _stream);
+//			BX_CHECK(0 == (m_draw.m_streamMask & bit), "Vertex stream %d is already set.", _stream);
 			m_draw.m_streamMask |= bit;
 
 			Stream& stream = m_draw.m_stream[_stream];
@@ -1599,7 +1599,7 @@ namespace bgfx
 		void setVertexBuffer(uint8_t _stream, const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices)
 		{
 			const uint8_t bit = 1<<_stream;
-			BX_CHECK(0 == (m_draw.m_streamMask & bit), "Vertex stream %d is already set.", _stream);
+//			BX_CHECK(0 == (m_draw.m_streamMask & bit), "Vertex stream %d is already set.", _stream);
 			m_draw.m_streamMask |= bit;
 
 			Stream& stream = m_draw.m_stream[_stream];
