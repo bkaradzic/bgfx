@@ -951,29 +951,25 @@ namespace bgfx
 namespace bgfx { namespace gl
 {
 #if BGFX_CONFIG_USE_OVR
-	struct OVRBufferGL : public OVRBufferI
+	struct OVRRenderGL : public OVRRenderI
 	{
-		virtual void create(const ovrSession& _session, int _eyeIdx, int _msaaSamples) BX_OVERRIDE;
-		virtual void destroy(const ovrSession& _session) BX_OVERRIDE;
-		virtual void render(const ovrSession& _session) BX_OVERRIDE;
-		virtual void postRender(const ovrSession& _sesion) BX_OVERRIDE;
+		OVRRenderGL();
+		virtual void create(const ovrSession& _session, int _msaaSamples, int _mirrorWidth, int _mirrorHeight);
+		virtual void destroy(const ovrSession& _session);
+		virtual void preReset(const ovrSession& _session);
+		virtual void startEyeRender(const ovrSession& _session, int _eyeIdx);
+		virtual void postRender(const ovrSession& _session, int _eyeIdx);
+		virtual void blitMirror(const ovrSession& _session);
 
-		GLuint m_eyeFbo;
-		GLuint m_eyeTexId;
-		GLuint m_depthBuffer;
-		GLuint m_msaaEyeFbo;
-		GLuint m_msaaEyeTexId;
-		GLuint m_msaaDepthBuffer;
-	};
-
-	struct OVRMirrorGL : public OVRMirrorI
-	{
-		virtual void create(const ovrSession& _session, int _width, int _height) BX_OVERRIDE;
-		virtual void destroy(const ovrSession& _session) BX_OVERRIDE;
-		virtual void blit(const ovrSession& _session) BX_OVERRIDE;
-
+		GLuint m_eyeFbo[2];
+		GLuint m_eyeTexId[2];
+		GLuint m_depthBuffer[2];
+		GLuint m_msaaEyeFbo[2];
+		GLuint m_msaaEyeTexId[2];
+		GLuint m_msaaDepthBuffer[2];
 		GLuint m_mirrorFBO;
 	};
+
 #endif // BGFX_CONFIG_USE_OVR
 
 	void dumpExtensions(const char* _extensions);

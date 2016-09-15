@@ -27,29 +27,26 @@
 
 namespace bgfx
 {
-	// single eye buffer
-	struct OVRBufferI
+	// render data for both eyes and mirrored output
+	struct BX_NO_VTABLE OVRRenderI
 	{
-		virtual ~OVRBufferI() {};
-		virtual void create(const ovrSession& _session, int _eyeIdx, int _msaaSamples) = 0;
+		virtual ~OVRRenderI() = 0;
+		virtual void create(const ovrSession& _session, int _msaaSamples, int _mirrorWidth, int _mirrorHeight) = 0;
 		virtual void destroy(const ovrSession& _session) = 0;
-		virtual void render(const ovrSession& _session) = 0;
-		virtual void postRender(const ovrSession& _session) = 0;
-		ovrSizei m_eyeTextureSize;
-		ovrTextureSwapChain m_textureSwapChain;
-	};
+		virtual void preReset(const ovrSession& _session) = 0;
+		virtual void startEyeRender(const ovrSession& _session, int _eyeIdx) = 0;
+		virtual void postRender(const ovrSession& _session, int _eyeIdx) = 0;
+		virtual void blitMirror(const ovrSession& _session) = 0;
 
-	// mirrored window output
-	struct OVRMirrorI
-	{
-		virtual ~OVRMirrorI() {};
-		virtual void create(const ovrSession& _session, int windowWidth, int windowHeight) = 0;
-		virtual void destroy(const ovrSession& _session) = 0;
-		virtual void blit(const ovrSession& _session) = 0;
-
-		ovrMirrorTexture     m_mirrorTexture;
+		ovrSizei m_eyeTextureSize[2];
+		ovrTextureSwapChain m_textureSwapChain[2];
+		ovrMirrorTexture m_mirrorTexture;
 		ovrMirrorTextureDesc m_mirrorTextureDesc;
 	};
+
+	inline OVRRenderI::~OVRRenderI()
+	{
+	}
 
 	struct OVR
 	{
@@ -93,8 +90,7 @@ namespace bgfx
 		ovrPosef    m_pose[2];
 		ovrVector3f m_hmdToEyeOffset[2];
 		ovrSizei    m_hmdSize;
-		OVRBufferI *m_eyeBuffers[2];
-		OVRMirrorI *m_mirror;
+		OVRRenderI *m_render;
 		uint64_t    m_frameIndex;
 		double      m_sensorSampleTime;
 		bool m_enabled;

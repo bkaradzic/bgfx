@@ -24,11 +24,10 @@ namespace bgfx
 	OVR::OVR()
 		: m_hmd(NULL)
 		, m_enabled(false)
-		, m_mirror(NULL)
+		, m_render(NULL)
 		, m_frameIndex(0)
 		, m_sensorSampleTime(0)
 	{
-		memset(m_eyeBuffers, 0, sizeof(m_eyeBuffers));
 	}
 
 	OVR::~OVR()
@@ -73,19 +72,10 @@ namespace bgfx
 	{
 		BX_CHECK(!m_enabled, "HMD not disabled.");
 
-		for (uint32_t ii = 0; ii < 2; ++ii)
+		if (NULL != m_render)
 		{
-			if (NULL != m_eyeBuffers[ii])
-			{
-				m_eyeBuffers[ii]->destroy(m_hmd);
-				m_eyeBuffers[ii] = NULL;
-			}
-		}
-
-		if (NULL != m_mirror)
-		{
-			m_mirror->destroy(m_hmd);
-			m_mirror = NULL;
+			m_render->destroy(m_hmd);
+			m_render = NULL;
 		}
 
 		ovr_Destroy(m_hmd);
@@ -97,13 +87,13 @@ namespace bgfx
 	{
 		_viewport->m_x      = 0;
 		_viewport->m_y      = 0;
-		_viewport->m_width  = m_eyeBuffers[_eye]->m_eyeTextureSize.w;
-		_viewport->m_height = m_eyeBuffers[_eye]->m_eyeTextureSize.h;
+		_viewport->m_width  = m_render->m_eyeTextureSize[_eye].w;
+		_viewport->m_height  = m_render->m_eyeTextureSize[_eye].h;
 	}
 
 	void OVR::renderEyeStart(uint8_t _eye)
 	{
-		m_eyeBuffers[_eye]->render(m_hmd);
+		m_render->startEyeRender(m_hmd, _eye);
 	}
 
 	bool OVR::postReset()
@@ -128,8 +118,7 @@ namespace bgfx
 		if (m_enabled)
 		{
 			// on window resize this will recreate the mirror texture in ovrPostReset
-			m_mirror->destroy(m_hmd);
-			m_mirror = NULL;
+			m_render->preReset(m_hmd);
 			m_enabled = false;
 		}
 	}
@@ -154,8 +143,8 @@ namespace bgfx
 
 		for (uint32_t ii = 0; ii < 2; ++ii)
 		{
-			m_eyeBuffers[ii]->postRender(m_hmd);
-			result = ovr_CommitTextureSwapChain(m_hmd, m_eyeBuffers[ii]->m_textureSwapChain);
+			m_render->postRender(m_hmd, ii);
+			result = ovr_CommitTextureSwapChain(m_hmd, m_render->m_textureSwapChain[ii]);
 			if (!OVR_SUCCESS(result) )
 			{
 				return DeviceLost;
@@ -177,11 +166,11 @@ namespace bgfx
 
 		for (uint32_t ii = 0; ii < 2; ++ii)
 		{
-			eyeLayer.ColorTexture[ii]    = m_eyeBuffers[ii]->m_textureSwapChain;
+			eyeLayer.ColorTexture[ii]    = m_render->m_textureSwapChain[ii];
 			eyeLayer.Viewport[ii].Pos.x  = 0;
 			eyeLayer.Viewport[ii].Pos.y  = 0;
-			eyeLayer.Viewport[ii].Size.w = m_eyeBuffers[ii]->m_eyeTextureSize.w;
-			eyeLayer.Viewport[ii].Size.h = m_eyeBuffers[ii]->m_eyeTextureSize.h;
+			eyeLayer.Viewport[ii].Size.w = m_render->m_eyeTextureSize[ii].w;
+			eyeLayer.Viewport[ii].Size.h = m_render->m_eyeTextureSize[ii].h;
 			eyeLayer.Fov[ii]             = m_hmdDesc.DefaultEyeFov[ii];
 			eyeLayer.RenderPose[ii]      = m_pose[ii];
 			eyeLayer.SensorSampleTime    = m_sensorSampleTime;
@@ -199,7 +188,7 @@ namespace bgfx
 		// perform mirror texture blit right after the entire frame is submitted to HMD
 		if (result != ovrSuccess_NotVisible)
 		{
-			m_mirror->blit(m_hmd);
+			m_render->blitMirror(m_hmd);
 		}
 
 		m_hmdToEyeOffset[0] = m_erd[0].HmdToEyeOffset;
