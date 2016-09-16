@@ -3545,7 +3545,7 @@ namespace bgfx { namespace gl
 		ovr_GetTextureSwapChainCurrentIndex(_session, m_textureSwapChain[_eyeIdx], &curIndex);
 		ovr_GetTextureSwapChainBufferGL(_session, m_textureSwapChain[_eyeIdx], curIndex, &m_eyeTexId[_eyeIdx]);
 
-		if (0 != m_msaaEyeFbo)
+		if (0 != m_msaaEyeFbo[_eyeIdx])
 		{
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaEyeFbo[_eyeIdx]) );
 			GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, m_msaaEyeTexId[_eyeIdx], 0) );

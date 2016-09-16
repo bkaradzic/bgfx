@@ -63,7 +63,6 @@ namespace bgfx { namespace d3d11
 #if BGFX_CONFIG_USE_OVR
 	struct OVRRenderD3D11 : public OVRRenderI
 	{
-		OVRRenderD3D11();
 		virtual void create(const ovrSession& _session, int _msaaSamples, int _mirrorWidth, int _mirrorHeight);
 		virtual void destroy(const ovrSession& _session);
 		virtual void preReset(const ovrSession& _session);
