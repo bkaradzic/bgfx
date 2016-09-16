@@ -5828,12 +5828,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				}
 
 				if (programChanged
+				||  currentState.m_streamMask             != draw.m_streamMask
 				||  currentState.m_stream[0].m_decl.idx   != draw.m_stream[0].m_decl.idx
 				||  currentState.m_stream[0].m_handle.idx != draw.m_stream[0].m_handle.idx
 				||  currentState.m_instanceDataBuffer.idx != draw.m_instanceDataBuffer.idx
 				||  currentState.m_instanceDataOffset     != draw.m_instanceDataOffset
 				||  currentState.m_instanceDataStride     != draw.m_instanceDataStride)
 				{
+				    currentState.m_streamMask             = draw.m_streamMask;
 					currentState.m_stream[0].m_decl       = draw.m_stream[0].m_decl;
 					currentState.m_stream[0].m_handle     = draw.m_stream[0].m_handle;
 					currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
@@ -5889,7 +5891,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 				}
 
-				if (isValid(currentState.m_stream[0].m_handle) )
+				if (0 != currentState.m_streamMask)
 				{
 					uint32_t numVertices = draw.m_numVertices;
 					if (UINT32_MAX == numVertices)

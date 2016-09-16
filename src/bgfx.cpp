@@ -898,6 +898,18 @@ namespace bgfx
 		m_draw.m_constEnd   = m_uniformEnd;
 		m_draw.m_stateFlags |= m_stateFlags;
 
+		uint32_t numVertices = UINT32_MAX;
+		for (uint32_t idx = 0, streamMask = m_draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
+			; 0 != streamMask
+			; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
+			)
+		{
+			streamMask >>= ntz;
+			idx         += ntz;
+			numVertices = bx::uint32_min(numVertices, m_numVertices[idx]);
+		}
+		m_draw.m_numVertices = numVertices;
+
 		if (isValid(_occlusionQuery) )
 		{
 			BX_CHECK(!isValid(m_draw.m_occlusionQuery), "");

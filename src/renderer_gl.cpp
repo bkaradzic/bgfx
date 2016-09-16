@@ -6795,6 +6795,7 @@ namespace bgfx { namespace gl
 					{
 						if (programChanged
 						||  baseVertex                            != draw.m_stream[0].m_startVertex
+						||  currentState.m_streamMask             != draw.m_streamMask
 						||  currentState.m_stream[0].m_handle.idx != draw.m_stream[0].m_handle.idx
 						||  currentState.m_indexBuffer.idx        != draw.m_indexBuffer.idx
 						||  currentState.m_instanceDataOffset     != draw.m_instanceDataOffset
@@ -6821,6 +6822,7 @@ namespace bgfx { namespace gl
 							murmur.add(programIdx);
 							uint32_t hash = murmur.end();
 
+							currentState.m_streamMask         = draw.m_streamMask;
 							currentState.m_stream[0].m_handle = stream.m_handle;
 							baseVertex                        = stream.m_startVertex;
 
@@ -6883,6 +6885,7 @@ namespace bgfx { namespace gl
 						&&  0 != currentVao)
 						{
 							GL_CHECK(glBindVertexArray(defaultVao) );
+							currentState.m_streamMask             = 0;
 							currentState.m_stream[0].m_handle.idx = invalidHandle;
 							currentState.m_indexBuffer.idx        = invalidHandle;
 							bindAttribs = true;
@@ -6890,11 +6893,13 @@ namespace bgfx { namespace gl
 						}
 
 						if (programChanged
+						||  currentState.m_streamMask             != draw.m_streamMask
 						||  currentState.m_stream[0].m_handle.idx != draw.m_stream[0].m_handle.idx
 						||  currentState.m_instanceDataBuffer.idx != draw.m_instanceDataBuffer.idx
 						||  currentState.m_instanceDataOffset     != draw.m_instanceDataOffset
 						||  currentState.m_instanceDataStride     != draw.m_instanceDataStride)
 						{
+							currentState.m_streamMask             = draw.m_streamMask;
 							currentState.m_stream[0].m_handle     = draw.m_stream[0].m_handle;
 							currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
 							currentState.m_instanceDataOffset     = draw.m_instanceDataOffset;
@@ -6929,7 +6934,7 @@ namespace bgfx { namespace gl
 							}
 						}
 
-						if (isValid(currentState.m_stream[0].m_handle) )
+						if (0 != currentState.m_streamMask)
 						{
 							if (baseVertex != draw.m_stream[0].m_startVertex
 							||  bindAttribs)
@@ -6948,7 +6953,7 @@ namespace bgfx { namespace gl
 						}
 					}
 
-					if (isValid(currentState.m_stream[0].m_handle) )
+					if (0 != currentState.m_streamMask)
 					{
 						uint32_t numVertices = draw.m_numVertices;
 						if (UINT32_MAX == numVertices)

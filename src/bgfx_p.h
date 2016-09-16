@@ -1267,6 +1267,15 @@ namespace bgfx
 			}
 		}
 
+		bool setStreamBit(uint8_t _stream, VertexBufferHandle _handle)
+		{
+			const uint8_t bit  = 1<<_stream;
+			const uint8_t mask = m_streamMask & ~bit;
+			const uint8_t tmp  = isValid(_handle) ? bit : 0;
+			m_streamMask = mask | tmp;
+			return 0 != tmp;
+		}
+
 		Binding  m_bind[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		Stream   m_stream[BGFX_CONFIG_MAX_VERTEX_STREAMS];
 		uint64_t m_stateFlags;
@@ -1569,47 +1578,42 @@ namespace bgfx
 
 		void setVertexBuffer(uint8_t _stream, VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices)
 		{
-			const uint8_t bit = 1<<_stream;
-//			BX_CHECK(0 == (m_draw.m_streamMask & bit), "Vertex stream %d is already set.", _stream);
-			m_draw.m_streamMask |= bit;
-
-			Stream& stream = m_draw.m_stream[_stream];
-			stream.m_startVertex = _startVertex;
-			stream.m_handle      = _handle;
-			stream.m_decl.idx    = invalidHandle;
-			m_draw.m_numVertices = bx::uint32_min(m_draw.m_numVertices, _numVertices);
+			if (m_draw.setStreamBit(_stream, _handle) )
+			{
+				Stream& stream = m_draw.m_stream[_stream];
+				stream.m_startVertex   = _startVertex;
+				stream.m_handle        = _handle;
+				stream.m_decl.idx      = invalidHandle;
+				m_numVertices[_stream] = _numVertices;
+			}
 		}
 
 		void setVertexBuffer(uint8_t _stream, const DynamicVertexBuffer& _dvb, uint32_t _startVertex, uint32_t _numVertices)
 		{
-			const uint8_t bit = 1<<_stream;
-//			BX_CHECK(0 == (m_draw.m_streamMask & bit), "Vertex stream %d is already set.", _stream);
-			m_draw.m_streamMask |= bit;
-
-			Stream& stream = m_draw.m_stream[_stream];
-			stream.m_startVertex = _dvb.m_startVertex + _startVertex;
-			stream.m_handle      = _dvb.m_handle;
-			stream.m_decl        = _dvb.m_decl;
-			m_draw.m_numVertices =
-				  bx::uint32_min(m_draw.m_numVertices
-				, bx::uint32_min(bx::uint32_imax(0, _dvb.m_numVertices - _startVertex), _numVertices)
-				);
+			if (m_draw.setStreamBit(_stream, _dvb.m_handle) )
+			{
+				Stream& stream = m_draw.m_stream[_stream];
+				stream.m_startVertex   = _dvb.m_startVertex + _startVertex;
+				stream.m_handle        = _dvb.m_handle;
+				stream.m_decl          = _dvb.m_decl;
+				m_numVertices[_stream] =
+					bx::uint32_min(bx::uint32_imax(0, _dvb.m_numVertices - _startVertex), _numVertices)
+					;
+			}
 		}
 
 		void setVertexBuffer(uint8_t _stream, const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices)
 		{
-			const uint8_t bit = 1<<_stream;
-//			BX_CHECK(0 == (m_draw.m_streamMask & bit), "Vertex stream %d is already set.", _stream);
-			m_draw.m_streamMask |= bit;
-
-			Stream& stream = m_draw.m_stream[_stream];
-			stream.m_startVertex  = _tvb->startVertex + _startVertex;
-			stream.m_handle       = _tvb->handle;
-			stream.m_decl         = _tvb->decl;
-			m_draw.m_numVertices  =
-				  bx::uint32_min(m_draw.m_numVertices
-				, bx::uint32_min(bx::uint32_imax(0, _tvb->size/_tvb->stride - _startVertex), _numVertices)
-				);
+			if (m_draw.setStreamBit(_stream, _tvb->handle) )
+			{
+				Stream& stream = m_draw.m_stream[_stream];
+				stream.m_startVertex  = _tvb->startVertex + _startVertex;
+				stream.m_handle       = _tvb->handle;
+				stream.m_decl         = _tvb->decl;
+				m_numVertices[_stream] =
+					bx::uint32_min(bx::uint32_imax(0, _tvb->size/_tvb->stride - _startVertex), _numVertices)
+					;
+			}
 		}
 
 		void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint32_t _num)
@@ -1835,6 +1839,7 @@ namespace bgfx
 		RenderItem m_renderItem[BGFX_CONFIG_MAX_DRAW_CALLS+1];
 		RenderDraw m_draw;
 		RenderCompute m_compute;
+		uint32_t m_numVertices[BGFX_CONFIG_MAX_VERTEX_STREAMS];
 		uint32_t m_blitKeys[BGFX_CONFIG_MAX_BLIT_ITEMS+1];
 		BlitItem m_blitItem[BGFX_CONFIG_MAX_BLIT_ITEMS+1];
 		uint64_t m_stateFlags;

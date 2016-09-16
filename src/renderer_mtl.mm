@@ -3382,12 +3382,14 @@ namespace bgfx { namespace mtl
 
 				if (key.m_program != programIdx
 				|| (BGFX_STATE_BLEND_MASK|BGFX_STATE_BLEND_EQUATION_MASK|BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE|BGFX_STATE_BLEND_INDEPENDENT|BGFX_STATE_MSAA|BGFX_STATE_BLEND_ALPHA_TO_COVERAGE) & changedFlags
+				||  currentState.m_streamMask             != draw.m_streamMask
 				||  currentState.m_stream[0].m_handle.idx != draw.m_stream[0].m_handle.idx
 				||  currentState.m_stream[0].m_decl.idx   != draw.m_stream[0].m_decl.idx
 				||  currentState.m_instanceDataStride     != draw.m_instanceDataStride
 				|| ( (blendFactor != draw.m_rgba) && !!(newFlags & BGFX_STATE_BLEND_INDEPENDENT) ) )
 				{
 					programIdx = key.m_program;
+					currentState.m_streamMask         = draw.m_streamMask;
 					currentState.m_stream[0].m_decl   = draw.m_stream[0].m_decl;
 					currentState.m_instanceDataStride = draw.m_instanceDataStride;
 
@@ -3500,11 +3502,13 @@ namespace bgfx { namespace mtl
 					}
 				}
 
-				if (currentState.m_stream[0].m_handle.idx  != draw.m_stream[0].m_handle.idx
+				if (currentState.m_streamMask              != draw.m_streamMask
+				||  currentState.m_stream[0].m_handle.idx  != draw.m_stream[0].m_handle.idx
 				||  currentState.m_stream[0].m_startVertex != draw.m_stream[0].m_startVertex
 				||  currentState.m_instanceDataBuffer.idx  != draw.m_instanceDataBuffer.idx
 				||  currentState.m_instanceDataOffset      != draw.m_instanceDataOffset)
 				{
+					currentState.m_streamMask               = draw.m_streamMask;
 					currentState.m_stream[0].m_handle       = draw.m_stream[0].m_handle;
 					currentState.m_stream[0].m_startVertex  = draw.m_stream[0].m_startVertex;
 					currentState.m_instanceDataBuffer.idx   = draw.m_instanceDataBuffer.idx;
@@ -3529,7 +3533,7 @@ namespace bgfx { namespace mtl
 					}
 				}
 
-				if (isValid(currentState.m_stream[0].m_handle) )
+				if (0 != currentState.m_streamMask)
 				{
 					uint32_t numVertices = draw.m_numVertices;
 					if (UINT32_MAX == numVertices)
