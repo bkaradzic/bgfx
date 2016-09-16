@@ -3765,7 +3765,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	{
 		for (int eye = 0; eye < 2; ++eye)
 		{
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_eyeRtv); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_eyeRtv[eye]); ++ii)
 			{
 				DX_RELEASE(m_eyeRtv[eye][ii], 0);
 			}
