@@ -30,6 +30,7 @@ namespace bgfx
 	// render data for both eyes and mirrored output
 	struct BX_NO_VTABLE OVRRenderI
 	{
+		OVRRenderI();
 		virtual ~OVRRenderI() = 0;
 		virtual void create(const ovrSession& _session, int _msaaSamples, int _mirrorWidth, int _mirrorHeight) = 0;
 		virtual void destroy(const ovrSession& _session) = 0;
@@ -43,6 +44,12 @@ namespace bgfx
 		ovrMirrorTexture m_mirrorTexture;
 		ovrMirrorTextureDesc m_mirrorTextureDesc;
 	};
+
+	inline OVRRenderI::OVRRenderI()
+		: m_mirrorTexture(NULL)
+	{
+		memset(&m_textureSwapChain, 0, sizeof(m_textureSwapChain));
+	}
 
 	inline OVRRenderI::~OVRRenderI()
 	{

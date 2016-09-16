@@ -3610,12 +3610,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	}
 
 #if BGFX_CONFIG_USE_OVR
-	OVRRenderD3D11::OVRRenderD3D11()
-	{
-		m_mirrorTexture = NULL;
-		memset(m_textureSwapChain, 0, sizeof(m_textureSwapChain));
-	}
-
 	void OVRRenderD3D11::create(const ovrSession& _session, int _msaaSamples, int _mirrorWidth, int _mirrorHeight)
 	{
 		ovrHmdDesc hmdDesc = ovr_GetHmdDesc(_session);
