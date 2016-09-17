@@ -35,25 +35,25 @@ namespace bgfx
 		VRImplOVR();
 		virtual ~VRImplOVR() = 0;
 
-		virtual bool init();
-		virtual void shutdown();
-		virtual void connect(VRDesc* _desc);
-		virtual void disconnect();
+		virtual bool init() BX_OVERRIDE;
+		virtual void shutdown() BX_OVERRIDE;
+		virtual void connect(VRDesc* _desc) BX_OVERRIDE;
+		virtual void disconnect() BX_OVERRIDE;
 
-		virtual bool isConnected() const
+		virtual bool isConnected() const BX_OVERRIDE
 		{
 			return NULL != m_session;
 		}
 
-		virtual bool updateTracking(HMD& _hmd);
-		virtual void updateInput(HMD& _hmd);
-		virtual void recenter();
+		virtual bool updateTracking(HMD& _hmd) BX_OVERRIDE;
+		virtual void updateInput(HMD& _hmd) BX_OVERRIDE;
+		virtual void recenter() BX_OVERRIDE;
 
-		virtual bool createSwapChain(const VRDesc& _desc, int _msaaSamples, int _mirrorWidth, int _mirrorHeight) = 0;
-		virtual void destroySwapChain() = 0;
-		virtual void destroyMirror() = 0;
-		virtual void renderEyeStart(const VRDesc& _desc, uint8_t _eye) = 0;
-		virtual bool submitSwapChain(const VRDesc& _desc) = 0;
+		virtual bool createSwapChain(const VRDesc& _desc, int _msaaSamples, int _mirrorWidth, int _mirrorHeight) BX_OVERRIDE = 0;
+		virtual void destroySwapChain() BX_OVERRIDE = 0;
+		virtual void destroyMirror() BX_OVERRIDE = 0;
+		virtual void renderEyeStart(const VRDesc& _desc, uint8_t _eye) BX_OVERRIDE = 0;
+		virtual bool submitSwapChain(const VRDesc& _desc) BX_OVERRIDE = 0;
 
 	protected:
 		ovrSession m_session;
