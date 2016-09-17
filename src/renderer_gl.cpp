@@ -1132,7 +1132,7 @@ namespace bgfx { namespace gl
 
 	void flushGlError()
 	{
-		for (GLenum err = glGetError(); err != 0; err = glGetError());
+		for (GLenum err = glGetError(); err != 0; err = glGetError() );
 	}
 
 	GLenum initTestTexture(TextureFormat::Enum _format, bool _srgb, bool _mipmaps)
@@ -2983,7 +2983,7 @@ namespace bgfx { namespace gl
 #if BGFX_CONFIG_USE_OVR
 			if (m_resolution.m_flags & (BGFX_RESET_HMD|BGFX_RESET_HMD_DEBUG) )
 			{
-				const uint32_t msaaSamples = 1 << ((m_resolution.m_flags&BGFX_RESET_MSAA_MASK) >> BGFX_RESET_MSAA_SHIFT);
+				const uint32_t msaaSamples = 1 << ( (m_resolution.m_flags&BGFX_RESET_MSAA_MASK) >> BGFX_RESET_MSAA_SHIFT);
 				m_ovr.postReset(msaaSamples, m_resolution.m_width, m_resolution.m_height);
 			}
 #endif // BGFX_CONFIG_USE_OVR
@@ -3442,15 +3442,15 @@ namespace bgfx { namespace gl
 	VRImplOVRGL::VRImplOVRGL()
 		: m_mirrorTexture(NULL)
 	{
-		memset(&m_textureSwapChain, 0, sizeof(m_textureSwapChain));
+		memset(&m_textureSwapChain, 0, sizeof(m_textureSwapChain) );
 	}
 
 	static void setDefaultSamplerState()
 	{
-		GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-		GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-		GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-		GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+		GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR) );
+		GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR) );
+		GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE) );
+		GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE) );
 	}
 
 	bool VRImplOVRGL::createSwapChain(const VRDesc& _desc, int _msaaSamples, int _mirrorWidth, int _mirrorHeight)
@@ -3464,7 +3464,7 @@ namespace bgfx { namespace gl
 				m_msaaEyeFbo[eye] = 0;
 				m_msaaEyeTexId[eye] = 0;
 				m_msaaDepthBuffer[eye] = 0;
-				memset(&m_eyeTexId[eye], 0, sizeof(m_eyeTexId[eye]));
+				memset(&m_eyeTexId[eye], 0, sizeof(m_eyeTexId[eye]) );
 
 				ovrTextureSwapChainDesc swapchainDesc = {};
 				swapchainDesc.Type = ovrTexture_2D;
@@ -3477,7 +3477,7 @@ namespace bgfx { namespace gl
 				swapchainDesc.StaticImage = ovrFalse;
 
 				ovrResult result = ovr_CreateTextureSwapChainGL(m_session, &swapchainDesc, &m_textureSwapChain[eye]);
-				if (!OVR_SUCCESS(result))
+				if (!OVR_SUCCESS(result) )
 				{
 					destroySwapChain();
 					return false;
@@ -3488,51 +3488,51 @@ namespace bgfx { namespace gl
 				for (int ii = 0; ii < textureCount; ++ii)
 				{
 					ovr_GetTextureSwapChainBufferGL(m_session, m_textureSwapChain[eye], ii, &m_eyeTexId[eye][ii]);
-					GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_eyeTexId[eye][ii]));
+					GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_eyeTexId[eye][ii]) );
 					setDefaultSamplerState();
 				}
 
-				GL_CHECK(glGenFramebuffers(1, &m_eyeFbo[eye]));
+				GL_CHECK(glGenFramebuffers(1, &m_eyeFbo[eye]) );
 
 				// create depth buffer
-				GL_CHECK(glGenTextures(1, &m_depthBuffer[eye]));
-				GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_depthBuffer[eye]));
+				GL_CHECK(glGenTextures(1, &m_depthBuffer[eye]) );
+				GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_depthBuffer[eye]) );
 				setDefaultSamplerState();
 
-				GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, _desc.m_eyeSize[eye].m_w, _desc.m_eyeSize[eye].m_h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL));
+				GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, _desc.m_eyeSize[eye].m_w, _desc.m_eyeSize[eye].m_h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL) );
 
-				GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_eyeFbo[eye]));
-				GL_CHECK(glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthBuffer[eye], 0));
-				GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0));
+				GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_eyeFbo[eye]) );
+				GL_CHECK(glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthBuffer[eye], 0) );
+				GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0) );
 
 				// create MSAA targets if needed
 				if (_msaaSamples > 1)
 				{
-					GL_CHECK(glGenFramebuffers(1, &m_msaaEyeFbo[eye]));
+					GL_CHECK(glGenFramebuffers(1, &m_msaaEyeFbo[eye]) );
 
 					// create color MSAA texture
-					GL_CHECK(glGenTextures(1, &m_msaaEyeTexId[eye]));
-					GL_CHECK(glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_msaaEyeTexId[eye]));
-					GL_CHECK(glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, _msaaSamples, GL_RGBA, _desc.m_eyeSize[eye].m_w, _desc.m_eyeSize[eye].m_h, false));
+					GL_CHECK(glGenTextures(1, &m_msaaEyeTexId[eye]) );
+					GL_CHECK(glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_msaaEyeTexId[eye]) );
+					GL_CHECK(glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, _msaaSamples, GL_RGBA, _desc.m_eyeSize[eye].m_w, _desc.m_eyeSize[eye].m_h, false) );
 					setDefaultSamplerState();
 
 					// create MSAA depth buffer
-					GL_CHECK(glGenTextures(1, &m_msaaDepthBuffer[eye]));
-					GL_CHECK(glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_depthBuffer[eye]));
-					GL_CHECK(glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, _msaaSamples, GL_DEPTH_COMPONENT, _desc.m_eyeSize[eye].m_w, _desc.m_eyeSize[eye].m_h, false));
+					GL_CHECK(glGenTextures(1, &m_msaaDepthBuffer[eye]) );
+					GL_CHECK(glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_depthBuffer[eye]) );
+					GL_CHECK(glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, _msaaSamples, GL_DEPTH_COMPONENT, _desc.m_eyeSize[eye].m_w, _desc.m_eyeSize[eye].m_h, false) );
 					setDefaultSamplerState();
 
-					GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_msaaEyeFbo[eye]));
-					GL_CHECK(glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, m_msaaEyeTexId[eye], 0));
-					GL_CHECK(glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0));
-					GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0));
+					GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_msaaEyeFbo[eye]) );
+					GL_CHECK(glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, m_msaaEyeTexId[eye], 0) );
+					GL_CHECK(glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0) );
+					GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0) );
 				}
 
 				m_renderLayer.ColorTexture[eye] = m_textureSwapChain[eye];
 			}
 		}
 
-			m_renderLayer.Header.Flags |= ovrLayerFlag_TextureOriginAtBottomLeft;
+		m_renderLayer.Header.Flags |= ovrLayerFlag_TextureOriginAtBottomLeft;
 
 		if (NULL == m_mirrorTexture)
 		{
@@ -3553,15 +3553,15 @@ namespace bgfx { namespace gl
 				// Configure the mirror read buffer
 				GLuint texId;
 				ovr_GetMirrorTextureBufferGL(m_session, m_mirrorTexture, &texId);
-				GL_CHECK(glGenFramebuffers(1, &m_mirrorFbo));
-				GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_mirrorFbo));
-				GL_CHECK(glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId, 0));
-				GL_CHECK(glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0));
-				GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0));
+				GL_CHECK(glGenFramebuffers(1, &m_mirrorFbo) );
+				GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_mirrorFbo) );
+				GL_CHECK(glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId, 0) );
+				GL_CHECK(glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0) );
+				GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0) );
 
 				if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 				{
-					GL_CHECK(glDeleteFramebuffers(1, &m_mirrorFbo));
+					GL_CHECK(glDeleteFramebuffers(1, &m_mirrorFbo) );
 					ovr_DestroyMirrorTexture(m_session, m_mirrorTexture);
 					m_mirrorTexture = NULL;
 					BX_CHECK(false, "Could not initialize VR mirror buffers!");
@@ -3578,17 +3578,17 @@ namespace bgfx { namespace gl
 		{
 			if (NULL != m_textureSwapChain[eye])
 			{
-				GL_CHECK(glDeleteFramebuffers(1, &m_eyeFbo[eye]));
-				GL_CHECK(glDeleteTextures(1, &m_depthBuffer[eye]));
+				GL_CHECK(glDeleteFramebuffers(1, &m_eyeFbo[eye]) );
+				GL_CHECK(glDeleteTextures(1, &m_depthBuffer[eye]) );
 
 				ovr_DestroyTextureSwapChain(m_session, m_textureSwapChain[eye]);
 				m_textureSwapChain[eye] = NULL;
 
 				if (0 != m_msaaEyeFbo[eye])
 				{
-					GL_CHECK(glDeleteFramebuffers(1, &m_msaaEyeFbo[eye]));
-					GL_CHECK(glDeleteTextures(1, &m_msaaEyeTexId[eye]));
-					GL_CHECK(glDeleteTextures(1, &m_msaaDepthBuffer[eye]));
+					GL_CHECK(glDeleteFramebuffers(1, &m_msaaEyeFbo[eye]) );
+					GL_CHECK(glDeleteTextures(1, &m_msaaEyeTexId[eye]) );
+					GL_CHECK(glDeleteTextures(1, &m_msaaDepthBuffer[eye]) );
 					m_msaaEyeFbo[eye] = 0;
 				}
 			}
@@ -3601,7 +3601,7 @@ namespace bgfx { namespace gl
 	{
 		if (NULL != m_mirrorTexture)
 		{
-			GL_CHECK(glDeleteFramebuffers(1, &m_mirrorFbo));
+			GL_CHECK(glDeleteFramebuffers(1, &m_mirrorFbo) );
 			ovr_DestroyMirrorTexture(m_session, m_mirrorTexture);
 			m_mirrorTexture = NULL;
 		}
@@ -3612,19 +3612,19 @@ namespace bgfx { namespace gl
 		// set the current eye texture in the swap chain
 		if (0 != m_msaaEyeFbo[_eye])
 		{
-			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaEyeFbo[_eye]));
+			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaEyeFbo[_eye]) );
 		}
 		else
 		{
 			int texIndex;
 			ovr_GetTextureSwapChainCurrentIndex(m_session, m_textureSwapChain[_eye], &texIndex);
 
-			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_eyeFbo[_eye]));
-			GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_eyeTexId[_eye][texIndex], 0));
+			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_eyeFbo[_eye]) );
+			GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_eyeTexId[_eye][texIndex], 0) );
 		}
 
-		GL_CHECK(glViewport(0, 0, _desc.m_eyeSize[_eye].m_w, _desc.m_eyeSize[_eye].m_h));
-		GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+		GL_CHECK(glViewport(0, 0, _desc.m_eyeSize[_eye].m_w, _desc.m_eyeSize[_eye].m_h) );
+		GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT) );
 	}
 
 	bool VRImplOVRGL::submitSwapChain(const VRDesc& _desc)
@@ -3637,23 +3637,25 @@ namespace bgfx { namespace gl
 				int destIndex;
 				ovr_GetTextureSwapChainCurrentIndex(m_session, m_textureSwapChain[eye], &destIndex);
 
-				GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_msaaEyeFbo[eye]));
+				GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_msaaEyeFbo[eye]) );
 				BX_CHECK(GL_FRAMEBUFFER_COMPLETE == glCheckFramebufferStatus(GL_READ_FRAMEBUFFER)
-						 , "glCheckFramebufferStatus failed 0x%08x"
-						 , glCheckFramebufferStatus(GL_READ_FRAMEBUFFER));
+						, "glCheckFramebufferStatus failed 0x%08x"
+						, glCheckFramebufferStatus(GL_READ_FRAMEBUFFER)
+						);
 
-				GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_eyeFbo[eye]));
-				GL_CHECK(glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_eyeTexId[eye][destIndex], 0));
+				GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_eyeFbo[eye]) );
+				GL_CHECK(glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_eyeTexId[eye][destIndex], 0) );
 				BX_CHECK(GL_FRAMEBUFFER_COMPLETE == glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER)
-						 , "glCheckFramebufferStatus failed 0x%08x"
-						 , glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER));
+						, "glCheckFramebufferStatus failed 0x%08x"
+						, glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER)
+						);
 
-				GL_CHECK(glBlitFramebuffer(0, 0, _desc.m_eyeSize[eye].m_w, _desc.m_eyeSize[eye].m_h, 0, 0, _desc.m_eyeSize[eye].m_w, _desc.m_eyeSize[eye].m_h, GL_COLOR_BUFFER_BIT, GL_NEAREST));
-				GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0));
+				GL_CHECK(glBlitFramebuffer(0, 0, _desc.m_eyeSize[eye].m_w, _desc.m_eyeSize[eye].m_h, 0, 0, _desc.m_eyeSize[eye].m_w, _desc.m_eyeSize[eye].m_h, GL_COLOR_BUFFER_BIT, GL_NEAREST) );
+				GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0) );
 			}
 
 			ovrResult result = ovr_CommitTextureSwapChain(m_session, m_textureSwapChain[eye]);
-			if (!OVR_SUCCESS(result))
+			if (!OVR_SUCCESS(result) )
 			{
 				return false;
 			}
@@ -3661,17 +3663,17 @@ namespace bgfx { namespace gl
 
 		ovrLayerHeader* layerList = &m_renderLayer.Header;
 		ovrResult result = ovr_SubmitFrame(m_session, 0, &m_viewScale, &layerList, 1);
-		if (!OVR_SUCCESS(result))
+		if (!OVR_SUCCESS(result) )
 		{
 			return false;
 		}
 
 		if (result != ovrSuccess_NotVisible && NULL != m_mirrorTexture)
 		{
-			GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_mirrorFbo));
-			GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
-			GL_CHECK(glBlitFramebuffer(0, m_mirrorHeight, m_mirrorWidth, 0, 0, 0, m_mirrorWidth, m_mirrorHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST));
-			GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0));
+			GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_mirrorFbo) );
+			GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0) );
+			GL_CHECK(glBlitFramebuffer(0, m_mirrorHeight, m_mirrorWidth, 0, 0, 0, m_mirrorWidth, m_mirrorHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST) );
+			GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0) );
 		}
 
 		return true;
@@ -5608,7 +5610,7 @@ namespace bgfx { namespace gl
 							}
 						}
 
-						if (!!bx::findIdentifierMatch(code, s_ARB_texture_multisample))
+						if (!!bx::findIdentifierMatch(code, s_ARB_texture_multisample) )
 						{
 							writeString(&writer, "#extension GL_ARB_texture_multisample : enable\n");
 						}
@@ -6388,7 +6390,7 @@ namespace bgfx { namespace gl
 								uintptr_t args = compute.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 								for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
 								{
-									GL_CHECK(glDispatchComputeIndirect((GLintptr)args) );
+									GL_CHECK(glDispatchComputeIndirect( (GLintptr)args) );
 									args += BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 								}
 							}
