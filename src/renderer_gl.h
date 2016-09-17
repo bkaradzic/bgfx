@@ -107,7 +107,7 @@ typedef uint64_t GLuint64;
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
 #include "renderer.h"
-#include "hmd_ovr.h"
+#include "hmd.h"
 #include "hmd_openvr.h"
 #include "debug_renderdoc.h"
 
@@ -950,28 +950,6 @@ namespace bgfx
 
 namespace bgfx { namespace gl
 {
-#if BGFX_CONFIG_USE_OVR
-	struct OVRRenderGL : public OVRRenderI
-	{
-		OVRRenderGL();
-		virtual void create(const ovrSession& _session, int _msaaSamples, int _mirrorWidth, int _mirrorHeight);
-		virtual void destroy(const ovrSession& _session);
-		virtual void preReset(const ovrSession& _session);
-		virtual void startEyeRender(const ovrSession& _session, int _eyeIdx);
-		virtual void postRender(const ovrSession& _session, int _eyeIdx);
-		virtual void blitMirror(const ovrSession& _session);
-
-		GLuint m_eyeFbo[2];
-		GLuint m_eyeTexId[2];
-		GLuint m_depthBuffer[2];
-		GLuint m_msaaEyeFbo[2];
-		GLuint m_msaaEyeTexId[2];
-		GLuint m_msaaDepthBuffer[2];
-		GLuint m_mirrorFBO;
-	};
-
-#endif // BGFX_CONFIG_USE_OVR
-
 	void dumpExtensions(const char* _extensions);
 
 	const char* glEnumName(GLenum _enum);
