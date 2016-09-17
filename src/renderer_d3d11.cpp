@@ -611,11 +611,11 @@ namespace bgfx { namespace d3d11
 	public:
 		VRImplOVRD3D11();
 
-		virtual bool createSwapChain(const VRDesc& _desc, int _msaaSamples, int _mirrorWidth, int _mirrorHeight);
-		virtual void destroySwapChain();
-		virtual void destroyMirror();
-		virtual void renderEyeStart(const VRDesc& _desc, uint8_t _eye);
-		virtual bool submitSwapChain(const VRDesc& _desc);
+		virtual bool createSwapChain(const VRDesc& _desc, int _msaaSamples, int _mirrorWidth, int _mirrorHeight) BX_OVERRIDE;
+		virtual void destroySwapChain() BX_OVERRIDE;
+		virtual void destroyMirror() BX_OVERRIDE;
+		virtual void renderEyeStart(const VRDesc& _desc, uint8_t _eye) BX_OVERRIDE;
+		virtual bool submitSwapChain(const VRDesc& _desc) BX_OVERRIDE;
 
 	private:
 		ID3D11RenderTargetView* m_eyeRtv[2][4];
