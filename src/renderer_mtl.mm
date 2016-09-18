@@ -378,8 +378,16 @@ namespace bgfx { namespace mtl
 			memset(m_uniforms, 0, sizeof(m_uniforms) );
 			memset(&m_resolution, 0, sizeof(m_resolution) );
 
+            if (NULL != NSClassFromString(@"MTKView")) {
+                MTKView *view = (MTKView *)g_platformData.nwh;
+                if (NULL != view && [view isKindOfClass:NSClassFromString(@"MTKView")]) {
+                    m_metalLayer = (CAMetalLayer *)view.layer;
+                }
+            }
+
 			if (NULL != NSClassFromString(@"CAMetalLayer") )
 			{
+                if (NULL == m_metalLayer)
 #if BX_PLATFORM_IOS
 				{
 					CAMetalLayer* metalLayer = (CAMetalLayer*)g_platformData.nwh;
