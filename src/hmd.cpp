@@ -8,26 +8,28 @@
 namespace bgfx
 {
 	VR::VR()
-		: m_framesUntilReconnect(0)
+		: m_impl(NULL)
+		, m_framesUntilReconnect(0)
 		, m_enabled(false)
 	{
 	}
 
 	void VR::init(VRImplI* _impl)
 	{
-		if (!_impl)
+		if (NULL == _impl)
 		{
 			return;
 		}
 
-		if (!_impl->init())
+		if (!_impl->init() )
 		{
 			return;
 		}
 
 		m_impl = _impl;
 		m_impl->connect(&m_desc);
-		if (!m_impl->isConnected())
+
+		if (!m_impl->isConnected() )
 		{
 			connectFailed();
 			return;
@@ -39,13 +41,14 @@ namespace bgfx
 
 	void VR::shutdown()
 	{
-		if (!m_impl)
+		if (NULL == m_impl)
 		{
 			return;
 		}
 
 		m_impl->destroySwapChain();
-		if (m_impl->isConnected())
+
+		if (m_impl->isConnected() )
 		{
 			m_impl->disconnect();
 		}
@@ -69,7 +72,7 @@ namespace bgfx
 
 	void VR::recenter()
 	{
-		if (m_impl)
+		if (NULL != m_impl)
 		{
 			m_impl->recenter();
 		}
@@ -77,7 +80,7 @@ namespace bgfx
 
 	void VR::preReset()
 	{
-		if (m_impl)
+		if (NULL != m_impl)
 		{
 			m_impl->destroyMirror();
 		}
@@ -87,7 +90,8 @@ namespace bgfx
 
 	void VR::postReset(int _msaaSamples, int _mirrorWidth, int _mirrorHeight)
 	{
-		if (m_impl && m_impl->createSwapChain(m_desc, _msaaSamples, _mirrorWidth, _mirrorHeight))
+		if (NULL != m_impl
+		&&  m_impl->createSwapChain(m_desc, _msaaSamples, _mirrorWidth, _mirrorHeight) )
 		{
 			m_enabled = true;
 		}
@@ -95,16 +99,18 @@ namespace bgfx
 
 	void VR::flip()
 	{
-		if (!m_impl || !m_enabled)
+		if (NULL == m_impl
+		||  !m_enabled)
 		{
 			return;
 		}
-		else if (!m_impl->isConnected() && !tryReconnect())
+		else if (!m_impl->isConnected()
+			 &&  !tryReconnect() )
 		{
 			return;
 		}
 
-		if (!m_impl->submitSwapChain(m_desc))
+		if (!m_impl->submitSwapChain(m_desc) )
 		{
 			m_impl->destroySwapChain();
 			m_impl->disconnect();
@@ -116,7 +122,7 @@ namespace bgfx
 	{
 		_hmd.flags = BGFX_HMD_NONE;
 
-		if (!m_impl)
+		if (NULL == m_impl)
 		{
 			return;
 		}
@@ -127,13 +133,13 @@ namespace bgfx
 		_hmd.width = m_hmdSize.m_w;
 		_hmd.height = m_hmdSize.m_h;
 
-		if (!m_impl->updateTracking(_hmd))
+		if (!m_impl->updateTracking(_hmd) )
 		{
 			m_impl->destroySwapChain();
 			m_impl->disconnect();
 		}
 
-		if (!m_impl->isConnected())
+		if (!m_impl->isConnected() )
 		{
 			return;
 		}
@@ -170,7 +176,7 @@ namespace bgfx
 
 		m_framesUntilReconnect = 90;
 		m_impl->connect(&m_desc);
-		if (!m_impl->isConnected())
+		if (!m_impl->isConnected() )
 		{
 			connectFailed();
 			return false;
@@ -186,19 +192,20 @@ namespace bgfx
 		// sane defaults
 		m_desc.m_deviceSize.m_w = 2160;
 		m_desc.m_deviceSize.m_h = 1200;
-		m_desc.m_deviceType = 0;
-		m_desc.m_refreshRate = 90.0f;
-		m_desc.m_neckOffset[0] = 0.0805f;
-		m_desc.m_neckOffset[1] = 0.075f;
+		m_desc.m_deviceType     = 0;
+		m_desc.m_refreshRate    = 90.0f;
+		m_desc.m_neckOffset[0]  = 0.0805f;
+		m_desc.m_neckOffset[1]  = 0.075f;
 
 		for (int eye = 0; eye < 2; ++eye)
 		{
-			m_desc.m_eyeFov[eye].m_up = 1.32928634f;
+			m_desc.m_eyeFov[eye].m_up   = 1.32928634f;
 			m_desc.m_eyeFov[eye].m_down = 1.32928634f;
 		}
-		m_desc.m_eyeFov[0].m_left = 1.05865765f;
+
+		m_desc.m_eyeFov[0].m_left  = 1.05865765f;
 		m_desc.m_eyeFov[0].m_right = 1.09236801f;
-		m_desc.m_eyeFov[1].m_left = 1.09236801f;
+		m_desc.m_eyeFov[1].m_left  = 1.09236801f;
 		m_desc.m_eyeFov[1].m_right = 1.05865765f;
 	}
 

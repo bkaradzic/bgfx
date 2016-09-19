@@ -90,9 +90,9 @@ namespace bgfx
 		bool tryReconnect();
 		void connectFailed();
 
+		VRImplI* m_impl;
 		VRDesc m_desc;
 		VRSize m_hmdSize;
-		VRImplI* m_impl;
 		uint32_t m_framesUntilReconnect;
 		bool m_enabled;
 	};
