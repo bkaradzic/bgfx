@@ -12,6 +12,7 @@
 
 #import <QuartzCore/CAMetalLayer.h>
 #import <Metal/Metal.h>
+#import <MetalKit/MetalKit.h>
 
 #if BX_PLATFORM_IOS
 #	import <UIKit/UIKit.h>
