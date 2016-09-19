@@ -64,8 +64,8 @@ namespace bgfx
 
 		_viewport->m_x      = 0;
 		_viewport->m_y      = 0;
-		_viewport->m_width  = m_desc.m_eyeSize[_eye].m_w;
-		_viewport->m_height = m_desc.m_eyeSize[_eye].m_h;
+		_viewport->m_width  = uint16_t(m_desc.m_eyeSize[_eye].m_w);
+		_viewport->m_height = uint16_t(m_desc.m_eyeSize[_eye].m_h);
 
 		m_impl->renderEyeStart(m_desc, _eye);
 	}
@@ -128,10 +128,10 @@ namespace bgfx
 		}
 
 		_hmd.flags = BGFX_HMD_DEVICE_RESOLUTION;
-		_hmd.deviceWidth = m_desc.m_deviceSize.m_w;
+		_hmd.deviceWidth  = m_desc.m_deviceSize.m_w;
 		_hmd.deviceHeight = m_desc.m_deviceSize.m_h;
-		_hmd.width = m_hmdSize.m_w;
-		_hmd.height = m_hmdSize.m_h;
+		_hmd.width  = uint16_t(m_hmdSize.m_w);
+		_hmd.height = uint16_t(m_hmdSize.m_h);
 
 		if (!m_impl->updateTracking(_hmd) )
 		{

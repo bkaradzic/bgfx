@@ -9,6 +9,7 @@
 #include "glcontext_ppapi.cpp"
 #include "glcontext_wgl.cpp"
 #include "image.cpp"
+#include "hmd.cpp"
 #include "hmd_ovr.cpp"
 #include "hmd_openvr.cpp"
 #include "debug_renderdoc.cpp"

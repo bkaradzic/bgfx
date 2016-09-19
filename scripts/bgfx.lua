@@ -132,22 +132,13 @@ function bgfxProject(_name, _kind, _defines)
 		if _OPTIONS["with-amalgamated"] then
 			excludes {
 				path.join(BGFX_DIR, "src/bgfx.cpp"),
-				path.join(BGFX_DIR, "src/glcontext_egl.cpp"),
-				path.join(BGFX_DIR, "src/glcontext_glx.cpp"),
-				path.join(BGFX_DIR, "src/glcontext_ppapi.cpp"),
-				path.join(BGFX_DIR, "src/glcontext_wgl.cpp"),
+				path.join(BGFX_DIR, "src/debug_**.cpp"),
+				path.join(BGFX_DIR, "src/glcontext_**.cpp"),
 				path.join(BGFX_DIR, "src/image.cpp"),
-				path.join(BGFX_DIR, "src/ovr.cpp"),
-				path.join(BGFX_DIR, "src/renderdoc.cpp"),
-				path.join(BGFX_DIR, "src/renderer_d3d9.cpp"),
-				path.join(BGFX_DIR, "src/renderer_d3d11.cpp"),
-				path.join(BGFX_DIR, "src/renderer_d3d12.cpp"),
-				path.join(BGFX_DIR, "src/renderer_null.cpp"),
-				path.join(BGFX_DIR, "src/renderer_gl.cpp"),
-				path.join(BGFX_DIR, "src/renderer_vk.cpp"),
-				path.join(BGFX_DIR, "src/shader_dx9bc.cpp"),
-				path.join(BGFX_DIR, "src/shader_dxbc.cpp"),
-				path.join(BGFX_DIR, "src/shader_spirv.cpp"),
+				path.join(BGFX_DIR, "src/hmd**.cpp"),
+				path.join(BGFX_DIR, "src/renderer_**.cpp"),
+				path.join(BGFX_DIR, "src/shader_**.cpp"),
+				path.join(BGFX_DIR, "src/topology.cpp"),
 				path.join(BGFX_DIR, "src/vertexdecl.cpp"),
 			}
 
@@ -157,9 +148,8 @@ function bgfxProject(_name, _kind, _defines)
 				}
 
 				excludes {
-					path.join(BGFX_DIR, "src/glcontext_eagl.mm"),
-					path.join(BGFX_DIR, "src/glcontext_nsgl.mm"),
-					path.join(BGFX_DIR, "src/renderer_mtl.mm"),
+					path.join(BGFX_DIR, "src/glcontext_**.mm"),
+					path.join(BGFX_DIR, "src/renderer_**.mm"),
 					path.join(BGFX_DIR, "src/amalgamated.cpp"),
 				}
 
@@ -168,9 +158,8 @@ function bgfxProject(_name, _kind, _defines)
 		else
 			configuration { "xcode* or osx or ios*" }
 				files {
-					path.join(BGFX_DIR, "src/glcontext_eagl.mm"),
-					path.join(BGFX_DIR, "src/glcontext_nsgl.mm"),
-					path.join(BGFX_DIR, "src/renderer_mtl.mm"),
+					path.join(BGFX_DIR, "src/glcontext_**.mm"),
+					path.join(BGFX_DIR, "src/renderer_**.mm"),
 				}
 
 			configuration {}
