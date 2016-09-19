@@ -98,6 +98,7 @@ function bgfxProject(_name, _kind, _defines)
 				"-framework QuartzCore",
 				"-framework OpenGL",
 				"-weak_framework Metal",
+				"-weak_framework MetalKit",
 			}
 
 		configuration { "not nacl", "not linux-steamlink" }
