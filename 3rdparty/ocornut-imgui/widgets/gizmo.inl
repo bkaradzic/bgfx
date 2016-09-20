@@ -914,7 +914,7 @@ namespace ImGuizmo
 		
 		if (gContext.mbUsing)
 		{
-//			ImVec2 sourcePosOnScreen = worldToPos(gContext.mMatrixOrigin, gContext.mViewProjection);
+			//ImVec2 sourcePosOnScreen = worldToPos(gContext.mMatrixOrigin, gContext.mViewProjection);
 			ImVec2 destinationPosOnScreen = worldToPos(gContext.mModel.v.position, gContext.mViewProjection);
 			/*vec_t dif(destinationPosOnScreen.x - sourcePosOnScreen.x, destinationPosOnScreen.y - sourcePosOnScreen.y);
 			dif.Normalize();
@@ -980,7 +980,7 @@ namespace ImGuizmo
 		{
 			ImVec2 sourcePosOnScreen = worldToPos(gContext.mMatrixOrigin, gContext.mViewProjection);
 			ImVec2 destinationPosOnScreen = worldToPos(gContext.mModel.v.position, gContext.mViewProjection);
-			vec_t dif = { destinationPosOnScreen.x - sourcePosOnScreen.x, destinationPosOnScreen.y - sourcePosOnScreen.y, 0.0f, 0.0f };
+			vec_t dif = { destinationPosOnScreen.x - sourcePosOnScreen.x, destinationPosOnScreen.y - sourcePosOnScreen.y, 0.f, 0.f };
 			dif.Normalize();
 			dif *= 5.f;
 			drawList->AddCircle(sourcePosOnScreen, 6.f, translationLineColor);
@@ -1037,7 +1037,7 @@ namespace ImGuizmo
 		ImGuiIO& io = ImGui::GetIO();
 		int type = NONE;
 
-		vec_t deltaScreen = { io.MousePos.x - gContext.mScreenSquareCenter.x, io.MousePos.y - gContext.mScreenSquareCenter.y, 0.0f, 0.0f };
+		vec_t deltaScreen = { io.MousePos.x - gContext.mScreenSquareCenter.x, io.MousePos.y - gContext.mScreenSquareCenter.y, 0.f, 0.f };
 		float dist = deltaScreen.Length();
 		if (dist >= 0.058f * io.DisplaySize.x && dist < 0.062f * io.DisplaySize.x)
 			type = ROTATE_SCREEN;
@@ -1133,9 +1133,13 @@ namespace ImGuizmo
 				vec_t cumulativeDelta = gContext.mModel.v.position + delta - gContext.mMatrixOrigin;
 				if (applyRotationLocaly)
 				{
-					cumulativeDelta.TransformVector(gContext.mModelSourceInverse);
+					matrix_t modelSourceNormalized = gContext.mModelSource;
+					modelSourceNormalized.OrthoNormalize();
+					matrix_t modelSourceNormalizedInverse;
+					modelSourceNormalizedInverse.Inverse(modelSourceNormalized);
+					cumulativeDelta.TransformVector(modelSourceNormalizedInverse);
 					ComputeSnap(cumulativeDelta, snap);
-					cumulativeDelta.TransformVector(gContext.mModelSource);
+					cumulativeDelta.TransformVector(modelSourceNormalized);
 				}
 				else
 				{
