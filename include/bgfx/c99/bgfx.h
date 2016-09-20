@@ -418,11 +418,11 @@ typedef struct bgfx_caps
     uint16_t maxViews;
     uint8_t  maxFBAttachments;
     uint8_t  numGPUs;
+    uint16_t vendorId;
+    uint16_t deviceId;
     bool     homogeneousDepth;
     bool     originBottomLeft;
 
-    uint16_t vendorId;
-    uint16_t deviceId;
     bgfx_caps_gpu_t gpu[4];
 
     uint16_t formats[BGFX_TEXTURE_FORMAT_COUNT];
