@@ -48,12 +48,12 @@ struct xlatMtlShaderUniform {
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-float4 phase0_Output0_1;
-float4 Temp_0_2;
-float4 Temp_1_3;
-float4 Temp_2_4;
-float4 Temp_3_5;
-int4 Temp_int_0_6;
+float4 phase0_Output0_1 = 0;
+float4 Temp_0_2 = 0;
+float4 Temp_1_3 = 0;
+float4 Temp_2_4 = 0;
+float4 Temp_3_5 = 0;
+int4 Temp_int_0_6 = 0;
   Temp_0_2 = (_mtl_i.dcl_Input0_POSITION0.yyyy * _mtl_u.glstate_matrix_mvp[1]);
   Temp_0_2 = ((_mtl_u.glstate_matrix_mvp[0] * _mtl_i.dcl_Input0_POSITION0.xxxx) + Temp_0_2);
   Temp_0_2 = ((_mtl_u.glstate_matrix_mvp[2] * _mtl_i.dcl_Input0_POSITION0.zzzz) + Temp_0_2);

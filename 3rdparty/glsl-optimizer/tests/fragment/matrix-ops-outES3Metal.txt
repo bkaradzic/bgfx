@@ -28,11 +28,11 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   xlatMtlShaderOutput _mtl_o;
   half2x2 halfMatrix_1;
   float2x2 rotationMatrix_2;
-  float tmpvar_3;
-  float tmpvar_4;
+  float tmpvar_3 = 0;
+  float tmpvar_4 = 0;
   tmpvar_4 = (_mtl_u._Speed * _mtl_u._Time.x);
   tmpvar_3 = sin(tmpvar_4);
-  float tmpvar_5;
+  float tmpvar_5 = 0;
   tmpvar_5 = cos(tmpvar_4);
   float2x2 tmpvar_6;
   tmpvar_6[0].x = tmpvar_5;
@@ -50,14 +50,14 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   tmpvar_7[1].x = -(tmpvar_3);
   tmpvar_7[1].y = tmpvar_5;
   halfMatrix_1 = _xlcast_half2x2(tmpvar_7);
-  halfMatrix_1 = (halfMatrix_1 * (half)2.0);
+  halfMatrix_1 = (halfMatrix_1 * (half)(2.0));
   halfMatrix_1 = (halfMatrix_1 - _xlinit_half2x2(1.0));
   halfMatrix_1 = _xlcast_half2x2(((float2x2)(_xlinit_half2x2(tmpvar_3) - halfMatrix_1)));
   halfMatrix_1 = _xlcast_half2x2(((float2x2)(_xlinit_half2x2(tmpvar_5) + halfMatrix_1)));
   halfMatrix_1 = _xlcast_half2x2(((float2x2)(halfMatrix_1 * (1.0h/half(tmpvar_3)))));
-  float4 tmpvar_8;
+  float4 tmpvar_8 = 0;
   tmpvar_8.xy = (rotationMatrix_2 * _mtl_i.uv);
-  tmpvar_8.zw = ((float2)(halfMatrix_1 * (half2)_mtl_i.uv));
+  tmpvar_8.zw = ((float2)(halfMatrix_1 * (half2)(_mtl_i.uv)));
   _mtl_o._fragData = half4(tmpvar_8);
   return _mtl_o;
 }

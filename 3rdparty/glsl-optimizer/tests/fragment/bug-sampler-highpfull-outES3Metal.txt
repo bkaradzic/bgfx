@@ -23,48 +23,48 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   ,   texture2d<half> _NoiseTex [[texture(4)]], sampler _mtlsmp__NoiseTex [[sampler(4)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float2 tmpvar_1;
+  float2 tmpvar_1 = 0;
   tmpvar_1 = _mtl_i.xlv_TEXCOORD0;
-  float4 jitteredDir_3;
-  float4 sum_4;
-  float weight_5;
-  float zx_6;
-  float2 vx_7;
-  float2 x_8;
-  float2 xf_9;
+  float4 jitteredDir_3 = 0;
+  float4 sum_4 = 0;
+  float weight_5 = 0;
+  float zx_6 = 0;
+  float2 vx_7 = 0;
+  float2 x_8 = 0;
+  float2 xf_9 = 0;
   xf_9 = _mtl_i.xlv_TEXCOORD0;
   x_8 = _mtl_i.xlv_TEXCOORD0;
   if ((_mtl_u._MainTex_TexelSize.y < 0.0)) {
     xf_9.y = (1.0 - _mtl_i.xlv_TEXCOORD0.y);
   };
-  half4 tmpvar_10;
+  half4 tmpvar_10 = 0;
   tmpvar_10 = _NeighbourMaxTex.sample(_mtlsmp__NeighbourMaxTex, (float2)(xf_9), level(0.0));
-  float2 tmpvar_11;
+  float2 tmpvar_11 = 0;
   tmpvar_11 = float2(tmpvar_10.xy);
-  half4 tmpvar_12;
+  half4 tmpvar_12 = 0;
   tmpvar_12 = _MainTex.sample(_mtlsmp__MainTex, (float2)(_mtl_i.xlv_TEXCOORD0), level(0.0));
-  float4 tmpvar_13;
+  float4 tmpvar_13 = 0;
   tmpvar_13 = float4(tmpvar_12);
-  half4 tmpvar_14;
+  half4 tmpvar_14 = 0;
   tmpvar_14 = _VelTex.sample(_mtlsmp__VelTex, (float2)(xf_9), level(0.0));
-  float2 tmpvar_15;
+  float2 tmpvar_15 = 0;
   tmpvar_15 = float2(tmpvar_14.xy);
   vx_7 = tmpvar_15;
-  float4 tmpvar_16;
+  float4 tmpvar_16 = 0;
   tmpvar_16.zw = float2(0.0, 0.0);
   tmpvar_16.xy = _mtl_i.xlv_TEXCOORD0;
-  float4 coord_17;
+  float4 coord_17 = 0;
   coord_17 = (tmpvar_16 * 11.0);
-  half4 tmpvar_18;
+  half4 tmpvar_18 = 0;
   tmpvar_18 = _NoiseTex.sample(_mtlsmp__NoiseTex, (float2)(coord_17.xy), level(coord_17.w));
-  float4 tmpvar_19;
-  tmpvar_19 = float4(((tmpvar_18 * (half)2.0) - (half)1.0));
+  float4 tmpvar_19 = 0;
+  tmpvar_19 = float4(((tmpvar_18 * (half)(2.0)) - (half)(1.0)));
   zx_6 = -((1.0/((
     (_mtl_u._ZBufferParams.x * _CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)(_mtl_i.xlv_TEXCOORD0), level(0.0)).x)
    + _mtl_u._ZBufferParams.y))));
   weight_5 = 1.0;
   sum_4 = tmpvar_13;
-  float4 tmpvar_20;
+  float4 tmpvar_20 = 0;
   tmpvar_20 = (tmpvar_11.xyxy + (tmpvar_19 * (_mtl_u._MainTex_TexelSize.xyxy * _mtl_u._Jitter)).xyyz);
   jitteredDir_3 = ((max (
     abs(tmpvar_20.xyxy)
@@ -72,50 +72,50 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
     ((_mtl_u._MainTex_TexelSize.xyxy * _mtl_u._MaxVelocity) * 0.15)
   ) * sign(tmpvar_20.xyxy)) * float4(1.0, 1.0, -1.0, -1.0));
   for (int l_2 = 0; l_2 < 12; l_2++) {
-    float zy_21;
-    float4 yf_22;
-    float4 tmpvar_23;
+    float zy_21 = 0;
+    float4 yf_22 = 0;
+    float4 tmpvar_23 = 0;
     tmpvar_23 = (tmpvar_1.xyxy + ((jitteredDir_3.xyxy * _xlat_mtl_const1[l_2].xyxy) * float4(1.0, 1.0, -1.0, -1.0)));
     yf_22 = tmpvar_23;
     if ((_mtl_u._MainTex_TexelSize.y < 0.0)) {
       yf_22.yw = (1.0 - tmpvar_23.yw);
     };
-    half4 tmpvar_24;
+    half4 tmpvar_24 = 0;
     tmpvar_24 = _VelTex.sample(_mtlsmp__VelTex, (float2)(yf_22.xy), level(0.0));
-    float2 tmpvar_25;
+    float2 tmpvar_25 = 0;
     tmpvar_25 = float2(tmpvar_24.xy);
     zy_21 = -((1.0/((
       (_mtl_u._ZBufferParams.x * _CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)(tmpvar_23.xy), level(0.0)).x)
      + _mtl_u._ZBufferParams.y))));
-    float2 x_26;
+    float2 x_26 = 0;
     x_26 = (x_8 - tmpvar_23.xy);
-    float2 x_27;
+    float2 x_27 = 0;
     x_27 = (tmpvar_23.xy - x_8);
-    float tmpvar_28;
+    float tmpvar_28 = 0;
     tmpvar_28 = sqrt(dot (tmpvar_25, tmpvar_25));
-    float2 x_29;
+    float2 x_29 = 0;
     x_29 = (tmpvar_23.xy - x_8);
-    float edge0_30;
+    float edge0_30 = 0;
     edge0_30 = (0.95 * tmpvar_28);
-    float tmpvar_31;
+    float tmpvar_31 = 0;
     tmpvar_31 = clamp (((
       sqrt(dot (x_29, x_29))
      - edge0_30) / (
       (1.05 * tmpvar_28)
      - edge0_30)), 0.0, 1.0);
-    float tmpvar_32;
+    float tmpvar_32 = 0;
     tmpvar_32 = sqrt(dot (vx_7, vx_7));
-    float2 x_33;
+    float2 x_33 = 0;
     x_33 = (x_8 - tmpvar_23.xy);
-    float edge0_34;
+    float edge0_34 = 0;
     edge0_34 = (0.95 * tmpvar_32);
-    float tmpvar_35;
+    float tmpvar_35 = 0;
     tmpvar_35 = clamp (((
       sqrt(dot (x_33, x_33))
      - edge0_34) / (
       (1.05 * tmpvar_32)
      - edge0_34)), 0.0, 1.0);
-    float tmpvar_36;
+    float tmpvar_36 = 0;
     tmpvar_36 = (((
       clamp ((1.0 - ((zy_21 - zx_6) / _mtl_u._SoftZDistance)), 0.0, 1.0)
      * 
@@ -141,14 +141,14 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
         (2.0 * tmpvar_35)
       ))))
     ) * 2.0));
-    half4 tmpvar_37;
+    half4 tmpvar_37 = 0;
     tmpvar_37 = _MainTex.sample(_mtlsmp__MainTex, (float2)(tmpvar_23.xy), level(0.0));
-    float4 tmpvar_38;
+    float4 tmpvar_38 = 0;
     tmpvar_38 = float4(tmpvar_37);
     sum_4 = (sum_4 + (tmpvar_38 * tmpvar_36));
     weight_5 = (weight_5 + tmpvar_36);
   };
-  float4 tmpvar_39;
+  float4 tmpvar_39 = 0;
   tmpvar_39 = (sum_4 / weight_5);
   _mtl_o._fragData = half4(tmpvar_39);
   return _mtl_o;

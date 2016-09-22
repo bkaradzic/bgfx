@@ -17,14 +17,14 @@ struct xlatMtlShaderUniform {
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half2 tmpvar_1;
+  half2 tmpvar_1 = 0;
   tmpvar_1 = half2(_mtl_i._glesMultiTexCoord0.xy);
-  float4 tmpvar_2;
+  float4 tmpvar_2 = 0;
   tmpvar_2.xyz = normalize(_mtl_i._glesTANGENT.xyz);
   tmpvar_2.w = _mtl_i._glesTANGENT.w;
-  half4 tmpvar_3;
-  tmpvar_3.xy = (tmpvar_1 * (half)0.3);
-  tmpvar_3.xyz = half3(((float3)tmpvar_3.xyz + ((tmpvar_2.xyz * 0.5) + 0.5)));
+  half4 tmpvar_3 = 0;
+  tmpvar_3.xy = (tmpvar_1 * (half)(0.3));
+  tmpvar_3.xyz = half3(((float3)(tmpvar_3.xyz) + ((tmpvar_2.xyz * 0.5) + 0.5)));
   tmpvar_3.w = half(0.0);
   _mtl_o.gl_Position = (_mtl_u.glstate_matrix_mvp * _mtl_i._glesVertex);
   _mtl_o.xlv_TEXCOORD0 = tmpvar_1;

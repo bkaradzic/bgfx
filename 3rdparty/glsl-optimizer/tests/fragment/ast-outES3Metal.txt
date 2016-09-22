@@ -12,7 +12,7 @@ struct xlatMtlShaderUniform {
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float a_2;
+  float a_2 = 0;
   if ((_mtl_i.gl_FragCoord.x == 1.0)) {
     discard_fragment();
   };

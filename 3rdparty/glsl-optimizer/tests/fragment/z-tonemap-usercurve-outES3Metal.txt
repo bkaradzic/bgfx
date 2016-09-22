@@ -15,26 +15,26 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   ,   texture2d<half> _Curve [[texture(1)]], sampler _mtlsmp__Curve [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float newLum_1;
-  float3 cie_2;
-  float4 color_3;
-  half4 tmpvar_4;
+  float newLum_1 = 0;
+  float3 cie_2 = 0;
+  float4 color_3 = 0;
+  half4 tmpvar_4 = 0;
   tmpvar_4 = _MainTex.sample(_mtlsmp__MainTex, (float2)(_mtl_i.xlv_TEXCOORD0));
   color_3 = float4(tmpvar_4);
-  float3 Yxy_5;
-  float3 tmpvar_6;
+  float3 Yxy_5 = 0;
+  float3 tmpvar_6 = 0;
   tmpvar_6 = (float3x3(float3(0.514136, 0.265068, 0.0241188), float3(0.323879, 0.670234, 0.122818), float3(0.160364, 0.0640916, 0.844427)) * color_3.xyz);
   Yxy_5.x = tmpvar_6.y;
   Yxy_5.yz = (tmpvar_6.xy / dot (float3(1.0, 1.0, 1.0), tmpvar_6));
   cie_2.yz = Yxy_5.yz;
-  float2 tmpvar_7;
+  float2 tmpvar_7 = 0;
   tmpvar_7.y = 0.5;
   tmpvar_7.x = (tmpvar_6.y * _mtl_u._RangeScale);
-  half tmpvar_8;
+  half tmpvar_8 = 0;
   tmpvar_8 = _Curve.sample(_mtlsmp__Curve, (float2)(tmpvar_7)).x;
   newLum_1 = float(tmpvar_8);
   cie_2.x = newLum_1;
-  float3 XYZ_9;
+  float3 XYZ_9 = 0;
   XYZ_9.x = ((newLum_1 * Yxy_5.y) / Yxy_5.z);
   XYZ_9.y = cie_2.x;
   XYZ_9.z = ((newLum_1 * (

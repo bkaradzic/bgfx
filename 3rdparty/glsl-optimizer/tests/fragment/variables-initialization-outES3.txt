@@ -1,0 +1,32 @@
+#version 300 es
+layout(location=0) out mediump vec4 _glesFragData[1];
+uniform sampler2D _MainTex;
+in mediump vec2 xlv_TEXCOORD0;
+void main ()
+{
+  mediump vec4 xl_retval_1;
+  lowp vec4 col_2;
+  highp vec4 mat_0_3;
+  bool bar_4;
+  highp vec4 foo_5;
+  lowp vec4 tmpvar_6;
+  tmpvar_6 = texture (_MainTex, xlv_TEXCOORD0);
+  col_2 = tmpvar_6;
+  highp vec4 tmpvar_7;
+  if (bar_4) {
+    tmpvar_7 = foo_5;
+  } else {
+    tmpvar_7 = vec4(0.5, 0.5, 0.5, 0.5);
+  };
+  col_2 = (tmpvar_6 + tmpvar_7);
+  col_2 = (col_2 + mat_0_3);
+  xl_retval_1 = col_2;
+  _glesFragData[0] = xl_retval_1;
+}
+
+
+// stats: 3 alu 1 tex 1 flow
+// inputs: 1
+//  #0: xlv_TEXCOORD0 (medium float) 2x1 [-1]
+// textures: 1
+//  #0: _MainTex (low 2d) 0x0 [-1]

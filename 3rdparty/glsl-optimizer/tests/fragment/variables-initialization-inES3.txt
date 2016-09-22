@@ -1,0 +1,44 @@
+#version 300 es
+#define gl_FragData _glesFragData
+layout(location = 0) out mediump vec4 _glesFragData[1];
+
+uniform sampler2D _MainTex;
+
+struct u2v {
+	vec4 pos;
+	vec2 uv;
+};
+
+struct v2f {
+	vec4 pos;
+	vec2 uv;
+};
+
+v2f vert (u2v v) {
+	v2f o;
+	o.pos = v.pos;
+	o.uv = v.uv;
+	return o;
+}
+
+vec4 frag (in v2f i) {
+	vec4 foo;
+	bool bar;
+	mat4 mat;
+	vec4 leet = vec4(0.5);
+	vec4 col = texture(_MainTex, i.uv);
+	col += bar ? foo : leet;
+	col += mat[0];
+	return col;
+}
+
+in mediump vec2 xlv_TEXCOORD0;
+void main() {
+    mediump vec4 xl_retval;
+    v2f xlt_i;
+    xlt_i.pos = vec4(0.0);
+    xlt_i.uv = vec2(xlv_TEXCOORD0);
+    xl_retval = frag(xlt_i);
+    gl_FragData[0] = vec4(xl_retval);
+}
+

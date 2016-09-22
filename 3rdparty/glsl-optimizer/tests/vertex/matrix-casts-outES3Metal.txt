@@ -27,13 +27,13 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
   float4x4 htof4_3;
   half2x2 ftoh2_4;
   half4x4 ftoh4_5;
-  float4 r_6;
+  float4 r_6 = 0;
   r_6.yzw = float3(0.0, 0.0, 0.0);
   ftoh4_5 = _xlcast_half4x4(_mtl_u.uniMat4F);
   r_6.x = float(ftoh4_5[0].x);
-  r_6.x = (r_6.x + (float)ftoh4_5[0].x);
+  r_6.x = (r_6.x + (float)(ftoh4_5[0].x));
   ftoh2_4 = _xlcast_half2x2(_mtl_u.uniMat2F);
-  r_6.x = (r_6.x + (float)ftoh2_4[0].x);
+  r_6.x = (r_6.x + (float)(ftoh2_4[0].x));
   htof4_3 = _xlcast_float4x4(_mtl_u.uniMat4H);
   r_6.x = (r_6.x + htof4_3[0].x);
   htof3_2 = _xlcast_float3x3(_mtl_u.uniMat3H);

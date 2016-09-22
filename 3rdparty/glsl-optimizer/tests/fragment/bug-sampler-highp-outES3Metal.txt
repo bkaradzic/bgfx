@@ -13,7 +13,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   ,   texture2d<float> _CameraDepthTexture [[texture(0)]], sampler _mtlsmp__CameraDepthTexture [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float4 tmpvar_1;
+  float4 tmpvar_1 = 0;
   tmpvar_1 = _CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)(_mtl_i.varUV), level(0.0)).xxxx;
   _mtl_o._fragData = half4(tmpvar_1);
   return _mtl_o;

@@ -24,6 +24,7 @@ mediump vec4 frag( in v2f i ) {
         h += ha[j];
         f += fa[j];
         f += (p * ha[0]);
+		f += (ha[1] * p);
     }
     return vec4( h.xy, f.xy);
 }

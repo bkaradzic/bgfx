@@ -14,7 +14,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   ,   texture3d<half> vol [[texture(1)]], sampler _mtlsmp_vol [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 c_1;
+  half4 c_1 = 0;
   c_1 = (tex.sample(_mtlsmp_tex, (float2)(_mtl_i.uv.xy)) + tex.sample(_mtlsmp_tex, (float2)(_mtl_i.uv.xy), bias(0.5)));
   c_1 = (c_1 + vol.sample(_mtlsmp_vol, (float3)(_mtl_i.uv)));
   c_1 = (c_1 + vol.sample(_mtlsmp_vol, (float3)(_mtl_i.uv), bias(-0.5)));

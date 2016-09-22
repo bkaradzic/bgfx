@@ -15,13 +15,13 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   ,   texture2d<half> tex [[texture(0)]], sampler _mtlsmp_tex [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half2 tmpvar_1;
+  half2 tmpvar_1 = 0;
   tmpvar_1 = dfdx(_mtl_i.uv1.xy);
-  half2 tmpvar_2;
+  half2 tmpvar_2 = 0;
   tmpvar_2 = dfdy(_mtl_i.uv1.xy);
-  float2 tmpvar_3;
+  float2 tmpvar_3 = 0;
   tmpvar_3 = dfdx(_mtl_i.uv2.xy);
-  float2 tmpvar_4;
+  float2 tmpvar_4 = 0;
   tmpvar_4 = dfdy(_mtl_i.uv2.xy);
   _mtl_o._fragColor = ((tex.sample(_mtlsmp_tex, (float2)(_mtl_i.uv1.xy), gradient2d((float2)(tmpvar_1), (float2)(tmpvar_2))) + tex.sample(_mtlsmp_tex, (float2)(_mtl_i.uv2.xy), gradient2d((float2)(tmpvar_3), (float2)(tmpvar_4)))) + tex.sample(_mtlsmp_tex, (float2)(_mtl_i.uv2.xy), gradient2d((float2)(_mtl_i.uv1.xy), (float2)(_mtl_i.uv1.xy))));
   return _mtl_o;

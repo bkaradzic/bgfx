@@ -13,9 +13,9 @@ struct xlatMtlShaderUniform {
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 c_1;
-  float4 tmpvar_2;
-  tmpvar_2 = ((float4)_mtl_i.xlv_COLOR0 * _mtl_u._Color);
+  half4 c_1 = 0;
+  float4 tmpvar_2 = 0;
+  tmpvar_2 = ((float4)(_mtl_i.xlv_COLOR0) * _mtl_u._Color);
   c_1 = half4(tmpvar_2);
   _mtl_o._glesFragData_0 = c_1;
   return _mtl_o;

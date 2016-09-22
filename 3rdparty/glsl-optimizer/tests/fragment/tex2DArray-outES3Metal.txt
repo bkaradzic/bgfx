@@ -13,21 +13,21 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   ,   texture2d_array<half> myarr [[texture(0)]], sampler _mtlsmp_myarr [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 tmpvar_1;
-  float4 slod_2;
-  half4 tmpvar_3;
+  half4 tmpvar_1 = 0;
+  float4 slod_2 = 0;
+  half4 tmpvar_3 = 0;
   tmpvar_3 = myarr.sample(_mtlsmp_myarr, (float2)((_mtl_i.uv.xyz).xy), (uint)((_mtl_i.uv.xyz).z));
-  float4 tmpvar_4;
+  float4 tmpvar_4 = 0;
   tmpvar_4 = float4(tmpvar_3);
-  half4 tmpvar_5;
+  half4 tmpvar_5 = 0;
   tmpvar_5 = myarr.sample(_mtlsmp_myarr, (float2)((_mtl_i.uv.xyw).xy), (uint)((_mtl_i.uv.xyw).z));
-  float4 tmpvar_6;
+  float4 tmpvar_6 = 0;
   tmpvar_6 = float4(tmpvar_5);
-  half4 tmpvar_7;
+  half4 tmpvar_7 = 0;
   tmpvar_7 = myarr.sample(_mtlsmp_myarr, (float2)((_mtl_i.uv.xyz).xy), (uint)((_mtl_i.uv.xyz).z), bias(1.5));
-  float4 tmpvar_8;
+  float4 tmpvar_8 = 0;
   tmpvar_8 = float4(tmpvar_7);
-  half4 tmpvar_9;
+  half4 tmpvar_9 = 0;
   tmpvar_9 = myarr.sample(_mtlsmp_myarr, (float2)((_mtl_i.uv.xyz).xy), (uint)((_mtl_i.uv.xyz).z), level(2.5));
   slod_2 = float4(tmpvar_9);
   tmpvar_1 = half4(((tmpvar_4 + tmpvar_6) + (tmpvar_8 + slod_2)));

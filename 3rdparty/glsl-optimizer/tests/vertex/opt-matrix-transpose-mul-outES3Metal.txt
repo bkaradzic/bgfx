@@ -23,21 +23,21 @@ struct xlatMtlShaderUniform {
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half3 lightDir_1;
-  float3 worldN_2;
-  half3 tmpvar_3;
-  half3 tmpvar_4;
-  half3 tmpvar_5;
+  half3 lightDir_1 = 0;
+  float3 worldN_2 = 0;
+  half3 tmpvar_3 = 0;
+  half3 tmpvar_4 = 0;
+  half3 tmpvar_5 = 0;
   float3x3 tmpvar_6;
   tmpvar_6[0] = _mtl_u._Object2World[0].xyz;
   tmpvar_6[1] = _mtl_u._Object2World[1].xyz;
   tmpvar_6[2] = _mtl_u._Object2World[2].xyz;
-  half3 tmpvar_7;
-  tmpvar_7 = ((half3)(tmpvar_6 * (float3)_mtl_i.attrNormal));
+  half3 tmpvar_7 = 0;
+  tmpvar_7 = ((half3)(tmpvar_6 * (float3)(_mtl_i.attrNormal)));
   worldN_2 = float3(tmpvar_7);
   tmpvar_5 = half3(worldN_2);
-  half3 tmpvar_8;
-  half3 tmpvar_9;
+  half3 tmpvar_8 = 0;
+  half3 tmpvar_9 = 0;
   tmpvar_8 = _mtl_i.attrTangent.xyz;
   tmpvar_9 = (((_mtl_i.attrNormal.yzx * _mtl_i.attrTangent.zxy) - (_mtl_i.attrNormal.zxy * _mtl_i.attrTangent.yzx)) * _mtl_i.attrTangent.w);
   half3x3 tmpvar_10;
@@ -50,16 +50,16 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
   tmpvar_10[2].x = tmpvar_8.z;
   tmpvar_10[2].y = tmpvar_9.z;
   tmpvar_10[2].z = _mtl_i.attrNormal.z;
-  float3 tmpvar_11;
-  tmpvar_11 = ((float3)(tmpvar_10 * (half3)(_mtl_u._World2Object * (float4)_mtl_u._WorldSpaceLightPos0).xyz));
+  float3 tmpvar_11 = 0;
+  tmpvar_11 = ((float3)(tmpvar_10 * (half3)((_mtl_u._World2Object * (float4)(_mtl_u._WorldSpaceLightPos0)).xyz)));
   lightDir_1 = half3(tmpvar_11);
   tmpvar_3 = lightDir_1;
-  float4 tmpvar_12;
+  float4 tmpvar_12 = 0;
   tmpvar_12.w = 1.0;
   tmpvar_12.xyz = _mtl_u._WorldSpaceCameraPos;
-  float3 tmpvar_13;
-  tmpvar_13 = normalize(((float3)lightDir_1 + normalize(
-    ((float3)(tmpvar_10 * (half3)(((_mtl_u._World2Object * tmpvar_12).xyz * _mtl_u.unity_Scale.w) - _mtl_i.attrVertex.xyz)))
+  float3 tmpvar_13 = 0;
+  tmpvar_13 = normalize(((float3)(lightDir_1) + normalize(
+    ((float3)(tmpvar_10 * (half3)((((_mtl_u._World2Object * tmpvar_12).xyz * _mtl_u.unity_Scale.w) - _mtl_i.attrVertex.xyz))))
   )));
   tmpvar_4 = half3(tmpvar_13);
   _mtl_o.gl_Position = (_mtl_u.glstate_matrix_mvp * _mtl_i.attrVertex);

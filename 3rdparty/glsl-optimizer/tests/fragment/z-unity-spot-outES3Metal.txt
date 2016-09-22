@@ -20,44 +20,44 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   ,   texture2d<half> _MainTex [[texture(2)]], sampler _mtlsmp__MainTex [[sampler(2)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 c_1;
-  half atten_2;
-  half4 lightCoord_3;
-  float3 tmpvar_4;
+  half4 c_1 = 0;
+  half atten_2 = 0;
+  half4 lightCoord_3 = 0;
+  float3 tmpvar_4 = 0;
   tmpvar_4 = normalize((_mtl_u._WorldSpaceLightPos0.xyz - _mtl_i.xlv_TEXCOORD2));
-  half3 tmpvar_5;
-  half tmpvar_6;
-  half4 c_7;
-  half4 tmpvar_8;
+  half3 tmpvar_5 = 0;
+  half tmpvar_6 = 0;
+  half4 c_7 = 0;
+  half4 tmpvar_8 = 0;
   tmpvar_8 = _MainTex.sample(_mtlsmp__MainTex, (float2)(_mtl_i.xlv_TEXCOORD0));
   c_7 = tmpvar_8;
   tmpvar_5 = c_7.xyz;
   tmpvar_6 = c_7.w;
-  float4 tmpvar_9;
+  float4 tmpvar_9 = 0;
   tmpvar_9.w = 1.0;
   tmpvar_9.xyz = _mtl_i.xlv_TEXCOORD2;
-  float4 tmpvar_10;
-  tmpvar_10 = ((float4)(_mtl_u._LightMatrix0 * (half4)tmpvar_9));
+  float4 tmpvar_10 = 0;
+  tmpvar_10 = ((float4)(_mtl_u._LightMatrix0 * (half4)(tmpvar_9)));
   lightCoord_3 = half4(tmpvar_10);
-  half4 tmpvar_11;
-  half2 P_12;
-  P_12 = ((lightCoord_3.xy / lightCoord_3.w) + (half)0.5);
+  half4 tmpvar_11 = 0;
+  half2 P_12 = 0;
+  P_12 = ((lightCoord_3.xy / lightCoord_3.w) + (half)(0.5));
   tmpvar_11 = _LightTexture0.sample(_mtlsmp__LightTexture0, (float2)(P_12));
-  half tmpvar_13;
+  half tmpvar_13 = 0;
   tmpvar_13 = dot (lightCoord_3.xyz, lightCoord_3.xyz);
-  half4 tmpvar_14;
+  half4 tmpvar_14 = 0;
   tmpvar_14 = _LightTextureB0.sample(_mtlsmp__LightTextureB0, (float2)(half2(tmpvar_13)));
-  half tmpvar_15;
+  half tmpvar_15 = 0;
   tmpvar_15 = ((half(
-    (lightCoord_3.z > (half)0.0)
+    (lightCoord_3.z > (half)(0.0))
   ) * tmpvar_11.w) * tmpvar_14.w);
   atten_2 = tmpvar_15;
-  half3 lightDir_16;
+  half3 lightDir_16 = 0;
   lightDir_16 = half3(tmpvar_4);
-  half4 c_17;
+  half4 c_17 = 0;
   c_17.xyz = ((tmpvar_5 * _mtl_u._LightColor0.xyz) * ((
     max ((half)0.0, dot (_mtl_i.xlv_TEXCOORD1, lightDir_16))
-   * atten_2) * (half)2.0));
+   * atten_2) * (half)(2.0)));
   c_17.w = tmpvar_6;
   c_1.xyz = c_17.xyz;
   c_1.w = half(0.0);

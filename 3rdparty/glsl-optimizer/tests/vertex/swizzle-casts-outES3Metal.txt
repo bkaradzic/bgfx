@@ -16,9 +16,9 @@ struct xlatMtlShaderUniform {
 vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 tmpvar_1;
+  half4 tmpvar_1 = 0;
   tmpvar_1 = half4(_mtl_i._glesMultiTexCoord0);
-  float4 tmpvar_2;
+  float4 tmpvar_2 = 0;
   tmpvar_2 = (_mtl_u.glstate_matrix_mvp * _mtl_i._glesVertex);
   tmpvar_2.z = (tmpvar_2.z + clamp ((_mtl_u.unity_LightShadowBias.x / tmpvar_2.w), 0.0, 1.0));
   tmpvar_2.z = mix (tmpvar_2.z, max (tmpvar_2.z, -(tmpvar_2.w)), _mtl_u.unity_LightShadowBias.y);

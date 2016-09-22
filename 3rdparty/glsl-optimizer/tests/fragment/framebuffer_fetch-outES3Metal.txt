@@ -13,12 +13,12 @@ struct xlatMtlShaderUniform {
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 xlt_ocol_1;
+  half4 xlt_ocol_1 = 0;
   xlt_ocol_1 = _mtl_i._glesFragData_0;
-  half4 ocol_2;
+  half4 ocol_2 = 0;
   ocol_2.w = xlt_ocol_1.w;
   ocol_2.xy = _mtl_i.xlv_TEXCOORD0.xy;
-  ocol_2.z = (xlt_ocol_1.z * (half)2.0);
+  ocol_2.z = (xlt_ocol_1.z * (half)(2.0));
   xlt_ocol_1 = ocol_2;
   _mtl_o._glesFragData_0 = ocol_2;
   return _mtl_o;

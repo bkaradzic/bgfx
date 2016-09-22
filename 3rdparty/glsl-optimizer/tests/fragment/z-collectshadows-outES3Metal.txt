@@ -23,34 +23,34 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   ,   texture2d<half> _ShadowMapTexture [[texture(1)]], sampler _mtlsmp__ShadowMapTexture [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 tmpvar_1;
-  float4 res_2;
-  float depth_3;
-  half4 tmpvar_4;
+  half4 tmpvar_1 = 0;
+  float4 res_2 = 0;
+  float depth_3 = 0;
+  half4 tmpvar_4 = 0;
   tmpvar_4 = _CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)(_mtl_i.xlv_TEXCOORD0));
   depth_3 = float(tmpvar_4.x);
-  float tmpvar_5;
+  float tmpvar_5 = 0;
   tmpvar_5 = (1.0/(((_mtl_u._ZBufferParams.x * depth_3) + _mtl_u._ZBufferParams.y)));
   depth_3 = tmpvar_5;
-  float4 tmpvar_6;
+  float4 tmpvar_6 = 0;
   tmpvar_6.w = 1.0;
   tmpvar_6.xyz = (_mtl_i.xlv_TEXCOORD1 * tmpvar_5);
-  half shadow_7;
-  float4 weights_8;
-  float4 far_9;
-  float4 near_10;
-  bool4 tmpvar_11;
+  half shadow_7 = 0;
+  float4 weights_8 = 0;
+  float4 far_9 = 0;
+  float4 near_10 = 0;
+  bool4 tmpvar_11 = false;
   tmpvar_11 = bool4((tmpvar_6.zzzz >= _mtl_u._LightSplitsNear));
-  half4 tmpvar_12;
+  half4 tmpvar_12 = 0;
   tmpvar_12 = half4(tmpvar_11);
   near_10 = float4(tmpvar_12);
-  bool4 tmpvar_13;
+  bool4 tmpvar_13 = false;
   tmpvar_13 = bool4((tmpvar_6.zzzz < _mtl_u._LightSplitsFar));
-  half4 tmpvar_14;
+  half4 tmpvar_14 = 0;
   tmpvar_14 = half4(tmpvar_13);
   far_9 = float4(tmpvar_14);
   weights_8 = (near_10 * far_9);
-  float4 tmpvar_15;
+  float4 tmpvar_15 = 0;
   tmpvar_15.w = 1.0;
   tmpvar_15.xyz = (((
     ((_mtl_u._View2Shadow * tmpvar_6).xyz * weights_8.x)
@@ -59,10 +59,10 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   ) + (
     (_mtl_u._View2Shadow2 * tmpvar_6)
   .xyz * weights_8.z)) + ((_mtl_u._View2Shadow3 * tmpvar_6).xyz * weights_8.w));
-  half4 tmpvar_16;
+  half4 tmpvar_16 = 0;
   tmpvar_16 = _ShadowMapTexture.sample(_mtlsmp__ShadowMapTexture, (float2)(tmpvar_15.xy));
-  float tmpvar_17;
-  if (((float)tmpvar_16.x < tmpvar_15.z)) {
+  float tmpvar_17 = 0;
+  if (((float)(tmpvar_16.x) < tmpvar_15.z)) {
     tmpvar_17 = _mtl_u._LightShadowData.x;
   } else {
     tmpvar_17 = 1.0;
@@ -70,9 +70,9 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   shadow_7 = half(tmpvar_17);
   res_2.x = float(shadow_7);
   res_2.y = 1.0;
-  float2 enc_18;
+  float2 enc_18 = 0;
   enc_18 = (float2(1.0, 255.0) * (1.0 - tmpvar_5));
-  float2 tmpvar_19;
+  float2 tmpvar_19 = 0;
   tmpvar_19 = fract(enc_18);
   enc_18.y = tmpvar_19.y;
   enc_18.x = (tmpvar_19.x - (tmpvar_19.y * 0.00392157));

@@ -20,101 +20,101 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   ,   texture2d<half> _CameraDepthTexture [[texture(0)]], sampler _mtlsmp__CameraDepthTexture [[sampler(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  float4 depth_1;
-  float2 coordTemp_2;
-  float sampleOnEpipolarLine_3;
-  float tmpvar_4;
+  float4 depth_1 = 0;
+  float2 coordTemp_2 = 0;
+  float sampleOnEpipolarLine_3 = 0;
+  float tmpvar_4 = 0;
   tmpvar_4 = clamp ((_mtl_i.xlv_TEXCOORD0.y - (0.5 / _mtl_u._CoordTexDim.y)), 0.0, 1.0);
   sampleOnEpipolarLine_3 = ((_mtl_i.xlv_TEXCOORD0.x - (0.5 / _mtl_u._CoordTexDim.x)) * (_mtl_u._CoordTexDim.x / (_mtl_u._CoordTexDim.x - 1.0)));
-  float tmpvar_5;
+  float tmpvar_5 = 0;
   tmpvar_5 = clamp (sampleOnEpipolarLine_3, 0.0, 1.0);
   sampleOnEpipolarLine_3 = tmpvar_5;
-  int tmpvar_6;
+  int tmpvar_6 = 0;
   tmpvar_6 = int(clamp (floor(
     (tmpvar_4 * 4.0)
   ), 0.0, 3.0));
-  float tmpvar_7;
+  float tmpvar_7 = 0;
   tmpvar_7 = (-1.0 + (2.0 * fract(
     (tmpvar_4 * 4.0)
   )));
-  float4 tmpvar_8;
+  float4 tmpvar_8 = 0;
   tmpvar_8.xz = float2(-1.0, 1.0);
   tmpvar_8.y = tmpvar_7;
   tmpvar_8.w = -(tmpvar_7);
-  float4 tmpvar_9;
+  float4 tmpvar_9 = 0;
   tmpvar_9.yw = float2(-1.0, 1.0);
   tmpvar_9.x = -(tmpvar_7);
   tmpvar_9.z = tmpvar_7;
-  bool4 tmpvar_10;
+  bool4 tmpvar_10 = false;
   tmpvar_10 = bool4((int4(tmpvar_6) == int4(0, 1, 2, 3)));
-  half4 tmpvar_11;
+  half4 tmpvar_11 = 0;
   tmpvar_11 = half4(tmpvar_10);
-  half4 tmpvar_12;
+  half4 tmpvar_12 = 0;
   tmpvar_12 = half4(tmpvar_10);
-  float2 tmpvar_13;
+  float2 tmpvar_13 = 0;
   tmpvar_13.x = dot (tmpvar_9, (float4)tmpvar_11);
   tmpvar_13.y = dot (tmpvar_8, (float4)tmpvar_12);
   coordTemp_2 = ((mix (_mtl_u._LightPos.xy, 
     -(tmpvar_13)
   , float2(tmpvar_5)) * 0.5) + 0.5);
-  float4 tmpvar_14;
+  float4 tmpvar_14 = 0;
   tmpvar_14.zw = float2(0.0, 0.0);
   tmpvar_14.xy = coordTemp_2;
   coordTemp_2 = ((floor(
     (coordTemp_2 * _mtl_u._ScreenTexDim.xy)
   ) + 0.5) * _mtl_u._ScreenTexDim.zw);
-  half4 tmpvar_15;
+  half4 tmpvar_15 = 0;
   tmpvar_15 = _CameraDepthTexture.sample(_mtlsmp__CameraDepthTexture, (float2)(coordTemp_2));
-  float tmpvar_16;
-  float z_17;
+  float tmpvar_16 = 0;
+  float z_17 = 0;
   z_17 = float(tmpvar_15.x);
   tmpvar_16 = (1.0/(((_mtl_u._ZBufferParams.x * z_17) + _mtl_u._ZBufferParams.y)));
   depth_1 = float4(tmpvar_16);
-  float4 v_18;
+  float4 v_18 = 0;
   v_18.x = _mtl_u._FrustumRays[0].x;
   v_18.y = _mtl_u._FrustumRays[1].x;
   v_18.z = _mtl_u._FrustumRays[2].x;
   v_18.w = _mtl_u._FrustumRays[3].x;
-  float4 v_19;
+  float4 v_19 = 0;
   v_19.x = _mtl_u._FrustumRays[0].y;
   v_19.y = _mtl_u._FrustumRays[1].y;
   v_19.z = _mtl_u._FrustumRays[2].y;
   v_19.w = _mtl_u._FrustumRays[3].y;
-  float4 v_20;
+  float4 v_20 = 0;
   v_20.x = _mtl_u._FrustumRays[0].w;
   v_20.y = _mtl_u._FrustumRays[1].w;
   v_20.z = _mtl_u._FrustumRays[2].w;
   v_20.w = _mtl_u._FrustumRays[3].w;
-  float4 v_21;
+  float4 v_21 = 0;
   v_21.x = _mtl_u._FrustumRays[0].z;
   v_21.y = _mtl_u._FrustumRays[1].z;
   v_21.z = _mtl_u._FrustumRays[2].z;
   v_21.w = _mtl_u._FrustumRays[3].z;
-  float3 tmpvar_22;
+  float3 tmpvar_22 = 0;
   tmpvar_22 = mix (mix (v_18.xyz, v_19.xyz, tmpvar_14.xxx), mix (v_20.xyz, v_21.xyz, tmpvar_14.xxx), tmpvar_14.yyy);
-  float tmpvar_23;
+  float tmpvar_23 = 0;
   tmpvar_23 = sqrt(dot (tmpvar_22, tmpvar_22));
-  bool tmpvar_24;
-  float3 tmpvar_25;
+  bool tmpvar_24 = false;
+  float3 tmpvar_25 = 0;
   tmpvar_25 = (1.0/((tmpvar_22 / tmpvar_23)));
-  float3 tmpvar_26;
+  float3 tmpvar_26 = 0;
   tmpvar_26 = (tmpvar_25 * (-0.5 - _mtl_u._CameraPosLocal.xyz));
-  float3 tmpvar_27;
+  float3 tmpvar_27 = 0;
   tmpvar_27 = (tmpvar_25 * (0.5 - _mtl_u._CameraPosLocal.xyz));
-  float3 tmpvar_28;
+  float3 tmpvar_28 = 0;
   tmpvar_28 = min (tmpvar_27, tmpvar_26);
-  float3 tmpvar_29;
+  float3 tmpvar_29 = 0;
   tmpvar_29 = max (tmpvar_27, tmpvar_26);
-  float2 tmpvar_30;
+  float2 tmpvar_30 = 0;
   tmpvar_30 = max (tmpvar_28.xx, tmpvar_28.yz);
-  float tmpvar_31;
+  float tmpvar_31 = 0;
   tmpvar_31 = max (tmpvar_30.x, tmpvar_30.y);
-  float2 tmpvar_32;
+  float2 tmpvar_32 = 0;
   tmpvar_32 = min (tmpvar_29.xx, tmpvar_29.yz);
-  float tmpvar_33;
+  float tmpvar_33 = 0;
   tmpvar_33 = min (tmpvar_32.x, tmpvar_32.y);
   tmpvar_24 = bool(((tmpvar_31 < tmpvar_33) && (tmpvar_33 > 0.0)));
-  if (((bool)!(tmpvar_24) || (tmpvar_16 < (tmpvar_31 / tmpvar_23)))) {
+  if (((bool)(!(tmpvar_24)) || (tmpvar_16 < (tmpvar_31 / tmpvar_23)))) {
     depth_1 = -(float4(tmpvar_16));
   } else {
     depth_1 = min (depth_1, float4((tmpvar_33 / tmpvar_23)));

@@ -23,18 +23,18 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   ,   texture2d<half> _DecalNorm [[texture(1)]], sampler _mtlsmp__DecalNorm [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 res_1;
-  half3 worldN_2;
-  half3 combinedNormal_3;
-  half3 tmpvar_4;
-  tmpvar_4 = ((_DecalNorm.sample(_mtlsmp__DecalNorm, (float2)(_mtl_i.xlv_TEXCOORD0.zw)).xyz * (half)2.0) - (half)1.0);
-  half3 tmpvar_5;
-  tmpvar_5 = ((_PanelNorm.sample(_mtlsmp__PanelNorm, (float2)(_mtl_i.xlv_TEXCOORD0.xy)).xyz * (half)2.0) - (half)1.0);
-  half3 tmpvar_6;
+  half4 res_1 = 0;
+  half3 worldN_2 = 0;
+  half3 combinedNormal_3 = 0;
+  half3 tmpvar_4 = 0;
+  tmpvar_4 = ((_DecalNorm.sample(_mtlsmp__DecalNorm, (float2)(_mtl_i.xlv_TEXCOORD0.zw)).xyz * (half)(2.0)) - (half)(1.0));
+  half3 tmpvar_5 = 0;
+  tmpvar_5 = ((_PanelNorm.sample(_mtlsmp__PanelNorm, (float2)(_mtl_i.xlv_TEXCOORD0.xy)).xyz * (half)(2.0)) - (half)(1.0));
+  half3 tmpvar_6 = 0;
   tmpvar_6.x = tmpvar_4.z;
   tmpvar_6.y = tmpvar_4.y;
   tmpvar_6.z = -(tmpvar_4.x);
-  half3 tmpvar_7;
+  half3 tmpvar_7 = 0;
   tmpvar_7.x = tmpvar_4.x;
   tmpvar_7.y = tmpvar_4.z;
   tmpvar_7.z = -(tmpvar_4.y);
@@ -50,33 +50,33 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   tmpvar_9[2].y = tmpvar_7.z;
   tmpvar_9[2].z = tmpvar_4.z;
   tmpvar_8 = _xlcast_float3x3(tmpvar_9);
-  float3 v_10;
+  float3 v_10 = 0;
   v_10.x = tmpvar_8[0].x;
   v_10.y = tmpvar_8[1].x;
   v_10.z = tmpvar_8[2].x;
-  float3 v_11;
+  float3 v_11 = 0;
   v_11.x = tmpvar_8[0].y;
   v_11.y = tmpvar_8[1].y;
   v_11.z = tmpvar_8[2].y;
-  float3 v_12;
+  float3 v_12 = 0;
   v_12.x = tmpvar_8[0].z;
   v_12.y = tmpvar_8[1].z;
   v_12.z = tmpvar_8[2].z;
   combinedNormal_3 = normalize(((
-    ((half3)((float)tmpvar_5.x * v_10))
+    ((half3)((float)(tmpvar_5.x) * v_10))
    + 
-    ((half3)((float)tmpvar_5.y * v_11))
-  ) + ((half3)((float)tmpvar_5.z * v_12))));
-  float tmpvar_13;
+    ((half3)((float)(tmpvar_5.y) * v_11))
+  ) + ((half3)((float)(tmpvar_5.z) * v_12))));
+  float tmpvar_13 = 0;
   tmpvar_13 = dot (_mtl_i.xlv_TEXCOORD1.xyz, (float3)combinedNormal_3);
   worldN_2.x = half(tmpvar_13);
-  float tmpvar_14;
+  float tmpvar_14 = 0;
   tmpvar_14 = dot (_mtl_i.xlv_TEXCOORD2.xyz, (float3)combinedNormal_3);
   worldN_2.y = half(tmpvar_14);
-  float tmpvar_15;
+  float tmpvar_15 = 0;
   tmpvar_15 = dot (_mtl_i.xlv_TEXCOORD3.xyz, (float3)combinedNormal_3);
   worldN_2.z = half(tmpvar_15);
-  res_1.xyz = ((worldN_2 * (half)0.5) + (half)0.5);
+  res_1.xyz = ((worldN_2 * (half)(0.5)) + (half)(0.5));
   res_1.w = half(0.0);
   _mtl_o._fragData = res_1;
   return _mtl_o;

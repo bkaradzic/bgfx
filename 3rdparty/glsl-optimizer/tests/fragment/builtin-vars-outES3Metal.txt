@@ -15,16 +15,16 @@ struct xlatMtlShaderUniform {
 fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], constant xlatMtlShaderUniform& _mtl_u [[buffer(0)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 c_1;
-  c_1 = half4(((float4)_mtl_i.uv + _mtl_i.gl_FragCoord));
-  float tmpvar_2;
+  half4 c_1 = 0;
+  c_1 = half4(((float4)(_mtl_i.uv) + _mtl_i.gl_FragCoord));
+  float tmpvar_2 = 0;
   if (_mtl_i.gl_FrontFacing) {
     tmpvar_2 = 1.0;
   } else {
     tmpvar_2 = 0.0;
   };
-  c_1.x = (c_1.x + (half)tmpvar_2);
-  c_1.xy = half2(((float2)c_1.xy + _mtl_i.gl_PointCoord));
+  c_1.x = (c_1.x + (half)(tmpvar_2));
+  c_1.xy = half2(((float2)(c_1.xy) + _mtl_i.gl_PointCoord));
   _mtl_o._fragData = c_1;
   return _mtl_o;
 }

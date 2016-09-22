@@ -21,26 +21,26 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   ,   texture2d<half> _MainTex [[texture(1)]], sampler _mtlsmp__MainTex [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 c_1;
-  half3 tmpvar_2;
-  half tmpvar_3;
-  half4 tmpvar_4;
+  half4 c_1 = 0;
+  half3 tmpvar_2 = 0;
+  half tmpvar_3 = 0;
+  half4 tmpvar_4 = 0;
   tmpvar_4 = _MainTex.sample(_mtlsmp__MainTex, (float2)(_mtl_i._uv0.xy));
   tmpvar_2 = (tmpvar_4.xyz * _mtl_u._Color.xyz);
   tmpvar_3 = (tmpvar_4.w * _mtl_u._Color.w);
-  half4 tmpvar_5;
+  half4 tmpvar_5 = 0;
   tmpvar_5 = _BumpMap.sample(_mtlsmp__BumpMap, (float2)(_mtl_i._uv0.zw));
-  half4 packednormal_6;
+  half4 packednormal_6 = 0;
   packednormal_6 = tmpvar_5;
-  half4 normal_7;
-  normal_7.xy = ((packednormal_6.wy * (half)2.0) - (half)1.0);
-  normal_7.z = sqrt((((half)1.0 - 
+  half4 normal_7 = 0;
+  normal_7.xy = ((packednormal_6.wy * (half)(2.0)) - (half)(1.0));
+  normal_7.z = sqrt((((half)(1.0) - 
     (normal_7.x * normal_7.x)
   ) - (normal_7.y * normal_7.y)));
-  half4 c_8;
-  half spec_9;
-  half tmpvar_10;
-  float y_11;
+  half4 c_8 = 0;
+  half spec_9 = 0;
+  half tmpvar_10 = 0;
+  float y_11 = 0;
   y_11 = (_mtl_u._Shininess * 128.0);
   tmpvar_10 = ((half)pow ((float)max ((half)0.0, dot (normal_7.xyz, 
     normalize((_mtl_i._uv2 + normalize(_mtl_i._uv1)))
@@ -52,11 +52,11 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
     max ((half)0.0, dot (normal_7.xyz, _mtl_i._uv2))
   ) + (
     (_mtl_u._LightColor0.xyz * _mtl_u._SpecColor.xyz)
-   * spec_9)) * (half)2.0);
+   * spec_9)) * (half)(2.0));
   c_8.w = (tmpvar_3 + ((_mtl_u._LightColor0.w * _mtl_u._SpecColor.w) * spec_9));
   c_1.xyz = (c_8.xyz + (tmpvar_2 * _mtl_i._uv3));
   c_1.w = tmpvar_3;
-  half4 tmpvar_12;
+  half4 tmpvar_12 = 0;
   tmpvar_12 = c_1;
   _mtl_o._fragData = tmpvar_12;
   return _mtl_o;

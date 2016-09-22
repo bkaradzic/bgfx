@@ -1,7 +1,7 @@
 #include <metal_stdlib>
 #pragma clang diagnostic ignored "-Wparentheses-equality"
 using namespace metal;
-constexpr sampler _mtl_xl_shadow_sampler(address::clamp_to_edge, filter::linear, compare_func::less);
+constexpr sampler _mtl_xl_shadow_sampler(address::clamp_to_edge, filter::linear, compare_func::less_equal);
 struct xlatMtlShaderInput {
   float4 uv;
 };
@@ -15,12 +15,12 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   ,   depth2d<float> shadowmap [[texture(1)]], sampler _mtlsmp_shadowmap [[sampler(1)]])
 {
   xlatMtlShaderOutput _mtl_o;
-  half4 c_1;
+  half4 c_1 = 0;
   c_1 = (tex.sample(_mtlsmp_tex, ((float2)(_mtl_i.uv).xy / (float)(_mtl_i.uv).w)) + tex.sample(_mtlsmp_tex, ((float2)(_mtl_i.uv.xyz).xy / (float)(_mtl_i.uv.xyz).z)));
   c_1 = (c_1 + tex.sample(_mtlsmp_tex, ((float2)(_mtl_i.uv).xy / (float)(_mtl_i.uv).w), level(1.0)));
   c_1 = (c_1 + tex.sample(_mtlsmp_tex, ((float2)(_mtl_i.uv.xyz).xy / (float)(_mtl_i.uv.xyz).z), level(1.0)));
-  c_1 = (c_1 + half4(shadowmap.sample_compare(_mtl_xl_shadow_sampler, (float2)(_mtl_i.uv.xyz).xy, (float)(_mtl_i.uv.xyz).z)));
-  c_1 = (c_1 + half4(shadowmap.sample_compare(_mtl_xl_shadow_sampler, (float2)(_mtl_i.uv).xy / (float)(_mtl_i.uv).w, (float)(_mtl_i.uv).z / (float)(_mtl_i.uv).w)));
+  c_1 = (c_1 + half4(shadowmap.sample_compare(_mtl_xl_shadow_sampler, (float2)(_mtl_i.uv.xyz).xy, saturate((float)(_mtl_i.uv.xyz).z))));
+  c_1 = (c_1 + half4(shadowmap.sample_compare(_mtl_xl_shadow_sampler, (float2)(_mtl_i.uv).xy / (float)(_mtl_i.uv).w, saturate((float)(_mtl_i.uv).z / (float)(_mtl_i.uv).w))));
   _mtl_o._fragData = c_1;
   return _mtl_o;
 }
