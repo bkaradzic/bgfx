@@ -137,7 +137,7 @@ function bgfxProject(_name, _kind, _defines)
 				path.join(BGFX_DIR, "src/image.cpp"),
 				path.join(BGFX_DIR, "src/hmd**.cpp"),
 				path.join(BGFX_DIR, "src/renderer_**.cpp"),
-				path.join(BGFX_DIR, "src/shader_**.cpp"),
+				path.join(BGFX_DIR, "src/shader**.cpp"),
 				path.join(BGFX_DIR, "src/topology.cpp"),
 				path.join(BGFX_DIR, "src/vertexdecl.cpp"),
 			}
@@ -151,6 +151,11 @@ function bgfxProject(_name, _kind, _defines)
 					path.join(BGFX_DIR, "src/glcontext_**.mm"),
 					path.join(BGFX_DIR, "src/renderer_**.mm"),
 					path.join(BGFX_DIR, "src/amalgamated.cpp"),
+				}
+
+			configuration { "not (xcode* or osx or ios*)" }
+				excludes {
+					path.join(BGFX_DIR, "src/**.mm"),
 				}
 
 			configuration {}
