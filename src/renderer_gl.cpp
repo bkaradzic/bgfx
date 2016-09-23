@@ -1381,6 +1381,19 @@ namespace bgfx { namespace gl
 	};
 #endif // BGFX_CONFIG_USE_OVR
 
+	struct VendorId
+	{
+		const char* name;
+		uint16_t id;
+	};
+
+	static const VendorId s_vendorIds[] =
+	{
+		{ "NVIDIA Corporation",           BGFX_PCI_ID_NVIDIA },
+		{ "Advanced Micro Devices, Inc.", BGFX_PCI_ID_AMD    },
+		{ "Intel",                        BGFX_PCI_ID_INTEL  },
+	};
+
 	struct RendererContextGL : public RendererContextI
 	{
 		RendererContextGL()
@@ -1440,6 +1453,15 @@ namespace bgfx { namespace gl
 			m_renderer    = getGLString(GL_RENDERER);
 			m_version     = getGLString(GL_VERSION);
 			m_glslVersion = getGLString(GL_SHADING_LANGUAGE_VERSION);
+
+			for (uint32_t ii = 0; ii < BX_COUNTOF(s_vendorIds); ++ii)
+			{
+				const VendorId& vendorId = s_vendorIds[ii];
+				if (0 == strncmp(vendorId.name, m_vendor, strlen(vendorId.name) ) )
+				{
+					g_caps.vendorId = vendorId.id;
+				}
+			}
 
 			GLint numCmpFormats = 0;
 			GL_CHECK(glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &numCmpFormats) );
