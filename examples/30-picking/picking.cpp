@@ -224,9 +224,9 @@ class ExamplePicking : public entry::AppI
 			// Mouse coord in NDC
 			float mouseXNDC = (m_mouseState.m_mx / (float)m_width) * 2.0f - 1.0f;
 			float mouseYNDC = ((m_height - m_mouseState.m_my) / (float)m_height) * 2.0f - 1.0f;
-			float mousePosNDC[4] = { mouseXNDC, mouseYNDC, 0, 1.0f };
+			float mousePosNDCEnd[4] = { mouseXNDC, mouseYNDC, 1.0f, 1.0f };
 			// Unproject and perspective divide
-			bx::vec4MulMtx(pickAt, mousePosNDC, invViewProj);
+			bx::vec4MulMtx(pickAt, mousePosNDCEnd, invViewProj);
 			pickAt[3] = 1.0f / pickAt[3];
 			pickAt[0] *= pickAt[3];
 			pickAt[1] *= pickAt[3];
