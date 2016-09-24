@@ -53,6 +53,7 @@ namespace bgfx
 		&s_attribTypeSizeGl,   // OpenGLES
 		&s_attribTypeSizeGl,   // OpenGL
 		&s_attribTypeSizeGl,   // Vulkan
+		&s_attribTypeSizeGl,   // GNM
 		&s_attribTypeSizeDx9,  // Count
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_attribTypeSize) == RendererType::Count+1);
