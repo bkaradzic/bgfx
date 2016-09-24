@@ -93,9 +93,9 @@ namespace bgfx
 		{  24, 1, 1,  3, 1, 1, 24, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // D24
 		{  32, 1, 1,  4, 1, 1, 24, 8,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // D24S8
 		{  32, 1, 1,  4, 1, 1, 32, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // D32
-		{  16, 1, 1,  2, 1, 1, 16, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // D16F
-		{  24, 1, 1,  3, 1, 1, 24, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // D24F
-		{  32, 1, 1,  4, 1, 1, 32, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // D32F
+		{  16, 1, 1,  2, 1, 1, 16, 0,  0,  0,  0,  0, uint8_t(EncodingType::Float) }, // D16F
+		{  24, 1, 1,  3, 1, 1, 24, 0,  0,  0,  0,  0, uint8_t(EncodingType::Float) }, // D24F
+		{  32, 1, 1,  4, 1, 1, 32, 0,  0,  0,  0,  0, uint8_t(EncodingType::Float) }, // D32F
 		{   8, 1, 1,  1, 1, 1,  0, 8,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // D0S8
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_imageBlockInfo) );
@@ -1251,6 +1251,57 @@ namespace bgfx
 		_dst[3] = bx::halfToFloat(src[3]);
 	}
 
+	// R24
+	void packR24(void* _dst, const float* _src)
+	{
+		uint8_t* dst = (uint8_t*)_dst;
+		const uint32_t rr = uint32_t(toUnorm(_src[0], 16777216.0f) );
+		dst[0] = uint8_t(rr    );
+		dst[1] = uint8_t(rr>> 8);
+		dst[2] = uint8_t(rr>>16);
+	}
+
+	void unpackR24(float* _dst, const void* _src)
+	{
+		const uint8_t* src = (const uint8_t*)_src;
+		const uint32_t rr = 0
+			| (src[0]    )
+			| (src[1]<< 8)
+			| (src[2]<<16)
+			;
+
+		_dst[0] = fromUnorm(rr, 16777216.0f);
+		_dst[1] = 0.0f;
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
+	}
+
+	// R24G8
+	void packR24G8(void* _dst, const float* _src)
+	{
+		uint8_t* dst = (uint8_t*)_dst;
+		const uint32_t rr = uint32_t(toUnorm(_src[0], 16777216.0f) );
+		dst[0] = uint8_t(rr    );
+		dst[1] = uint8_t(rr>> 8);
+		dst[2] = uint8_t(rr>>16);
+		dst[3] = uint8_t(toUnorm(_src[1], 255.0f) );
+	}
+
+	void unpackR24G8(float* _dst, const void* _src)
+	{
+		const uint8_t* src = (const uint8_t*)_src;
+		const uint32_t rr = 0
+			| (src[0]    )
+			| (src[1]<< 8)
+			| (src[2]<<16)
+			;
+
+		_dst[0] = fromUnorm(rr, 16777216.0f);
+		_dst[1] = fromUnorm(src[3], 255.0f);
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
+	}
+
 	// R32I
 	void packR32I(void* _dst, const float* _src)
 	{
@@ -1632,14 +1683,14 @@ namespace bgfx
 		{ packRgb10A2,    unpackRgb10A2    }, // RGB10A2
 		{ packR11G11B10F, unpackR11G11B10F }, // R11G11B10F
 		{ NULL,           NULL             }, // UnknownDepth
-		{ NULL,           NULL             }, // D16
-		{ NULL,           NULL             }, // D24
-		{ NULL,           NULL             }, // D24S8
+		{ packR16,        unpackR16        }, // D16
+		{ packR24,        unpackR24        }, // D24
+		{ packR24G8,      unpackR24G8      }, // D24S8
 		{ NULL,           NULL             }, // D32
-		{ NULL,           NULL             }, // D16F
+		{ packR16F,       unpackR16F       }, // D16F
 		{ NULL,           NULL             }, // D24F
-		{ NULL,           NULL             }, // D32F
-		{ NULL,           NULL             }, // D0S8
+		{ packR32F,       unpackR32F       }, // D32F
+		{ packR8,         unpackR8         }, // D0S8
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_packUnpack) );
 
