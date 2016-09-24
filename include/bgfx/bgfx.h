@@ -520,15 +520,11 @@ namespace bgfx
 		///
 		uint64_t supported;
 
-		uint32_t maxDrawCalls;     //!< Maximum draw calls.
-		uint16_t maxTextureSize;   //!< Maximum texture size.
-		uint16_t maxViews;         //!< Maximum views.
-		uint8_t  maxFBAttachments; //!< Maximum frame buffer attachments.
-		uint8_t  numGPUs;          //!< Number of enumerated GPUs.
 		uint16_t vendorId;         //!< Selected GPU vendor id.
 		uint16_t deviceId;         //!< Selected GPU device id.
 		bool     homogeneousDepth; //!< True when NDC depth is in [-1, 1] range.
 		bool     originBottomLeft; //!< True when NDC origin is at bottom left.
+		uint8_t  numGPUs;          //!< Number of enumerated GPUs.
 
 		/// GPU info.
 		///
@@ -541,6 +537,30 @@ namespace bgfx
 		};
 
 		GPU gpu[4]; //!< Enumerated GPUs.
+
+		struct Limits
+		{
+			uint32_t maxDrawCalls;            //!< Maximum draw calls.
+			uint32_t maxBlits;                //!<
+			uint32_t maxTextureSize;          //!< Maximum texture size.
+			uint32_t maxViews;                //!< Maximum views.
+			uint32_t maxFrameBuffers;         //!<
+			uint32_t maxFBAttachments;        //!< Maximum frame buffer attachments.
+			uint32_t maxPrograms;             //!<
+			uint32_t maxShaders;              //!<
+			uint32_t maxTextures;             //!<
+			uint32_t maxTextureSamplers;      //!<
+			uint32_t maxVertexDecls;          //!<
+			uint32_t maxVertexStreams;        //!<
+			uint32_t maxIndexBuffers;         //!<
+			uint32_t maxVertexBuffers;        //!<
+			uint32_t maxDynamicIndexBuffers;  //!<
+			uint32_t maxDynamicVertexBuffers; //!<
+			uint32_t maxUniforms;             //!<
+			uint32_t maxOcclusionQueries;     //!<
+		};
+
+		Limits limits;
 
 		/// Supported texture formats.
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_NONE` - Texture format is not supported.

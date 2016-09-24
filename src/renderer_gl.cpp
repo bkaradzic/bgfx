@@ -1460,6 +1460,7 @@ namespace bgfx { namespace gl
 				if (0 == strncmp(vendorId.name, m_vendor, strlen(vendorId.name) ) )
 				{
 					g_caps.vendorId = vendorId.id;
+					break;
 				}
 			}
 
@@ -1959,14 +1960,14 @@ namespace bgfx { namespace gl
 				: 0
 				;
 
-			g_caps.maxTextureSize = uint16_t(glGet(GL_MAX_TEXTURE_SIZE) );
+			g_caps.limits.maxTextureSize = uint16_t(glGet(GL_MAX_TEXTURE_SIZE) );
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
 			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 			||  s_extension[Extension::EXT_draw_buffers  ].m_supported
 			||  s_extension[Extension::WEBGL_draw_buffers].m_supported)
 			{
-				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(glGet(GL_MAX_DRAW_BUFFERS)
+				g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(glGet(GL_MAX_DRAW_BUFFERS)
 						, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS)
 						);
 			}
@@ -5520,7 +5521,7 @@ namespace bgfx { namespace gl
 
 						if (!!bx::findIdentifierMatch(code, "gl_FragData") )
 						{
-							for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
+							for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
 							{
 								char tmpFragData[16];
 								bx::snprintf(tmpFragData, BX_COUNTOF(tmpFragData), "gl_FragData[%d]", ii);
@@ -5610,7 +5611,7 @@ namespace bgfx { namespace gl
 
 						if (!!bx::findIdentifierMatch(code, "gl_FragData") )
 						{
-							for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
+							for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
 							{
 								char tmpFragData[16];
 								bx::snprintf(tmpFragData, BX_COUNTOF(tmpFragData), "gl_FragData[%d]", ii);

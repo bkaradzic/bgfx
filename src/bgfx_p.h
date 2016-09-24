@@ -3303,7 +3303,7 @@ namespace bgfx
 				}
 			}
 
-			return color <= g_caps.maxFBAttachments
+			return color <= g_caps.limits.maxFBAttachments
 				&& depth <= 1
 				;
 		}
@@ -3313,7 +3313,7 @@ namespace bgfx
 			BX_CHECK(checkFrameBuffer(_num, _attachment)
 				, "Too many frame buffer attachments (num attachments: %d, max color attachments %d)!"
 				, _num
-				, g_caps.maxFBAttachments
+				, g_caps.limits.maxFBAttachments
 				);
 
 			FrameBufferHandle handle = { m_frameBufferHandle.alloc() };

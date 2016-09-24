@@ -406,6 +406,29 @@ typedef struct bgfx_caps_gpu
 
 } bgfx_caps_gpu_t;
 
+typedef struct bgfx_caps_limits
+{
+    uint32_t maxDrawCalls;
+    uint32_t maxBlits;
+    uint32_t maxTextureSize;
+    uint32_t maxViews;
+    uint32_t maxFrameBuffers;
+    uint32_t maxFBAttachments;
+    uint32_t maxPrograms;
+    uint32_t maxShaders;
+    uint32_t maxTextures;
+    uint32_t maxTextureSamplers;
+    uint32_t maxVertexDecls;
+    uint32_t maxVertexStreams;
+    uint32_t maxIndexBuffers;
+    uint32_t maxVertexBuffers;
+    uint32_t maxDynamicIndexBuffers;
+    uint32_t maxDynamicVertexBuffers;
+    uint32_t maxUniforms;
+    uint32_t maxOcclusionQueries;
+
+} bgfx_caps_limits_t;
+
 /**/
 typedef struct bgfx_caps
 {
@@ -413,17 +436,14 @@ typedef struct bgfx_caps
 
     uint64_t supported;
 
-    uint32_t maxDrawCalls;
-    uint16_t maxTextureSize;
-    uint16_t maxViews;
-    uint8_t  maxFBAttachments;
-    uint8_t  numGPUs;
     uint16_t vendorId;
     uint16_t deviceId;
     bool     homogeneousDepth;
     bool     originBottomLeft;
+    uint8_t  numGPUs;
 
     bgfx_caps_gpu_t gpu[4];
+    bgfx_caps_limits_t limits;
 
     uint16_t formats[BGFX_TEXTURE_FORMAT_COUNT];
 

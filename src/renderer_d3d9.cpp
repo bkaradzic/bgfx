@@ -578,11 +578,10 @@ namespace bgfx { namespace d3d9
 				| BGFX_CAPS_TEXTURE_READ_BACK
 				| (m_occlusionQuerySupport ? BGFX_CAPS_OCCLUSION_QUERY : 0)
 				);
-			g_caps.maxTextureSize = uint16_t(bx::uint32_min(m_caps.MaxTextureWidth, m_caps.MaxTextureHeight) );
-//			g_caps.maxVertexIndex = m_caps.MaxVertexIndex;
+			g_caps.limits.maxTextureSize = uint16_t(bx::uint32_min(m_caps.MaxTextureWidth, m_caps.MaxTextureHeight) );
 
 			m_caps.NumSimultaneousRTs = uint8_t(bx::uint32_min(m_caps.NumSimultaneousRTs, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
-			g_caps.maxFBAttachments   = uint8_t(m_caps.NumSimultaneousRTs);
+			g_caps.limits.maxFBAttachments = uint8_t(m_caps.NumSimultaneousRTs);
 
 			m_caps.MaxAnisotropy = bx::uint32_max(m_caps.MaxAnisotropy, 1);
 
@@ -1358,7 +1357,7 @@ namespace bgfx { namespace d3d9
 			if (!isValid(_fbh) )
 			{
 				DX_CHECK(m_device->SetRenderTarget(0, m_backBufferColor) );
-				for (uint32_t ii = 1, num = g_caps.maxFBAttachments; ii < num; ++ii)
+				for (uint32_t ii = 1, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
 				{
 					DX_CHECK(m_device->SetRenderTarget(ii, NULL) );
 				}
@@ -1391,7 +1390,7 @@ namespace bgfx { namespace d3d9
 					}
 				}
 
-				for (uint32_t ii = rtIdx, num = g_caps.maxFBAttachments; ii < num; ++ii)
+				for (uint32_t ii = rtIdx, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
 				{
 					DX_CHECK(m_device->SetRenderTarget(ii, NULL) );
 				}
@@ -1508,7 +1507,7 @@ namespace bgfx { namespace d3d9
 			}
 
 			DX_CHECK(m_device->SetRenderTarget(0, m_backBufferColor) );
-			for (uint32_t ii = 1, num = g_caps.maxFBAttachments; ii < num; ++ii)
+			for (uint32_t ii = 1, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
 			{
 				DX_CHECK(m_device->SetRenderTarget(ii, NULL) );
 			}

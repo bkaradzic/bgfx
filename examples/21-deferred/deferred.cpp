@@ -393,7 +393,7 @@ class ExampleDeferred : public entry::AppI
 			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: MRT rendering and deferred shading.");
 			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
-			if (2 > m_caps->maxFBAttachments)
+			if (2 > m_caps->limits.maxFBAttachments)
 			{
 				// When multiple render targets (MRT) is not supported by GPU,
 				// implement alternative code path that doesn't use MRT.

@@ -504,19 +504,19 @@ namespace bgfx { namespace mtl
 			{
 				if (iOSVersionEqualOrGreater("9.0.0") )
 				{
-					g_caps.maxTextureSize = m_device.supportsFeatureSet((MTLFeatureSet)4 /* iOS_GPUFamily3_v1 */) ? 16384 : 8192;
+					g_caps.limits.maxTextureSize = m_device.supportsFeatureSet((MTLFeatureSet)4 /* iOS_GPUFamily3_v1 */) ? 16384 : 8192;
 				}
 				else
 				{
-					g_caps.maxTextureSize = 4096;
+					g_caps.limits.maxTextureSize = 4096;
 				}
 
-				g_caps.maxFBAttachments = uint8_t(bx::uint32_min(m_device.supportsFeatureSet((MTLFeatureSet)1 /* MTLFeatureSet_iOS_GPUFamily2_v1 */) ? 8 : 4, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS));
+				g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(m_device.supportsFeatureSet((MTLFeatureSet)1 /* MTLFeatureSet_iOS_GPUFamily2_v1 */) ? 8 : 4, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS));
 			}
 			else if (BX_ENABLED(BX_PLATFORM_OSX) )
 			{
-				g_caps.maxTextureSize   = 16384;
-				g_caps.maxFBAttachments = 8;
+				g_caps.limits.maxTextureSize   = 16384;
+				g_caps.limits.maxFBAttachments = 8;
 				g_caps.supported |= BGFX_CAPS_TEXTURE_CUBE_ARRAY;
 			}
 
@@ -1269,7 +1269,7 @@ namespace bgfx { namespace mtl
 				RenderPassDescriptor renderPassDescriptor = newRenderPassDescriptor();
 				setFrameBuffer(renderPassDescriptor, m_renderCommandEncoderFrameBufferHandle);
 
-				for(uint32_t ii = 0; ii < g_caps.maxFBAttachments; ++ii)
+				for(uint32_t ii = 0; ii < g_caps.limits.maxFBAttachments; ++ii)
 				{
 					MTLRenderPassColorAttachmentDescriptor* desc = renderPassDescriptor.colorAttachments[ii];
 					if ( desc.texture != NULL)
@@ -3128,7 +3128,7 @@ namespace bgfx { namespace mtl
 
 						if ( clearWithRenderPass )
 						{
-							for(uint32_t ii = 0; ii < g_caps.maxFBAttachments; ++ii)
+							for(uint32_t ii = 0; ii < g_caps.limits.maxFBAttachments; ++ii)
 							{
 								MTLRenderPassColorAttachmentDescriptor* desc = renderPassDescriptor.colorAttachments[ii];
 
@@ -3190,7 +3190,7 @@ namespace bgfx { namespace mtl
 						}
 						else
 						{
-							for(uint32_t ii = 0; ii < g_caps.maxFBAttachments; ++ii)
+							for(uint32_t ii = 0; ii < g_caps.limits.maxFBAttachments; ++ii)
 							{
 								MTLRenderPassColorAttachmentDescriptor* desc = renderPassDescriptor.colorAttachments[ii];
 								if ( desc.texture != NULL)

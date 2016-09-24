@@ -97,7 +97,7 @@ class ExampleDrawStress : public entry::AppI
 		bgfx::reset(m_width, m_height, m_reset);
 
 		const bgfx::Caps* caps = bgfx::getCaps();
-		m_maxDim = (int32_t)powf(float(caps->maxDrawCalls), 1.0f/3.0f);
+		m_maxDim = (int32_t)bx::fpow(float(caps->limits.maxDrawCalls), 1.0f/3.0f);
 
 		// Enable debug text.
 		bgfx::setDebug(m_debug);

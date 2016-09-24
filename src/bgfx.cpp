@@ -689,7 +689,7 @@ namespace bgfx
 					Mem(fs_clear7_dx9, sizeof(fs_clear7_dx9) ),
 				};
 
-				for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
+				for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
 				{
 					fragMem[ii] = makeRef(mem[ii].data, uint32_t(mem[ii].size) );
 				}
@@ -711,7 +711,7 @@ namespace bgfx
 					Mem(fs_clear7_dx11, sizeof(fs_clear7_dx11) ),
 				};
 
-				for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
+				for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
 				{
 					fragMem[ii] = makeRef(mem[ii].data, uint32_t(mem[ii].size) );
 				}
@@ -734,7 +734,7 @@ namespace bgfx
 					Mem(fs_clear7_glsl, sizeof(fs_clear7_glsl) ),
 				};
 
-				for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
+				for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
 				{
 					fragMem[ii] = makeRef(mem[ii].data, uint32_t(mem[ii].size) );
 				}
@@ -755,7 +755,7 @@ namespace bgfx
 					Mem(fs_clear7_mtl, sizeof(fs_clear7_mtl) ),
 				};
 
-				for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
+				for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
 				{
 					fragMem[ii] = makeRef(mem[ii].data, uint32_t(mem[ii].size) );
 				}
@@ -765,7 +765,7 @@ namespace bgfx
 				BGFX_FATAL(false, Fatal::UnableToInitialize, "Unknown renderer type %d", g_caps.rendererType);
 			}
 
-			for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
+			for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
 			{
 				ShaderHandle fsh = createShader(fragMem[ii]);
 				m_program[ii] = createProgram(vsh, fsh);
@@ -785,7 +785,7 @@ namespace bgfx
 
 		if (RendererType::Null != g_caps.rendererType)
 		{
-			for (uint32_t ii = 0, num = g_caps.maxFBAttachments; ii < num; ++ii)
+			for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
 			{
 				if (isValid(m_program[ii]) )
 				{
@@ -1121,6 +1121,7 @@ namespace bgfx
 
 	static void dumpCaps()
 	{
+		BX_TRACE("");
 		BX_TRACE("Sort key masks:");
 		BX_TRACE("\t  View     %016" PRIx64, SORT_KEY_VIEW_MASK);
 		BX_TRACE("\t  Draw bit %016" PRIx64, SORT_KEY_DRAW_BIT);
@@ -1130,6 +1131,7 @@ namespace bgfx
 		BX_TRACE("\tC Program  %016" PRIx64, SORT_KEY_COMPUTE_PROGRAM_MASK);
 		BX_TRACE("\tD Depth    %016" PRIx64, SORT_KEY_DRAW_DEPTH_MASK);
 
+		BX_TRACE("");
 		BX_TRACE("Supported capabilities (renderer %s, vendor 0x%04x, device 0x%04x):"
 				, s_ctx->m_renderCtx->getRendererName()
 				, g_caps.vendorId
@@ -1143,6 +1145,30 @@ namespace bgfx
 			}
 		}
 
+		BX_TRACE("");
+		BX_TRACE("Limits:");
+#define LIMITS(_x) BX_TRACE("\t%-24s %d", #_x, g_caps.limits._x)
+		LIMITS(maxDrawCalls);
+		LIMITS(maxBlits);
+		LIMITS(maxTextureSize);
+		LIMITS(maxViews);
+		LIMITS(maxFrameBuffers);
+		LIMITS(maxFBAttachments);
+		LIMITS(maxPrograms);
+		LIMITS(maxShaders);
+		LIMITS(maxTextures);
+		LIMITS(maxTextureSamplers);
+		LIMITS(maxVertexDecls);
+		LIMITS(maxVertexStreams);
+		LIMITS(maxIndexBuffers);
+		LIMITS(maxVertexBuffers);
+		LIMITS(maxDynamicIndexBuffers);
+		LIMITS(maxDynamicVertexBuffers);
+		LIMITS(maxUniforms);
+		LIMITS(maxOcclusionQueries);
+#undef LIMITS
+
+		BX_TRACE("");
 		BX_TRACE("Supported texture formats:");
 		BX_TRACE("\t +----------------   2D: x = supported / * = emulated");
 		BX_TRACE("\t |+---------------   2D: sRGB format");
@@ -1182,11 +1208,13 @@ namespace bgfx
 			}
 		}
 
-		BX_TRACE("Max FB attachments: %d", g_caps.maxFBAttachments);
+		BX_TRACE("");
 		BX_TRACE("NDC depth [%d, 1], origin %s left."
 			, g_caps.homogeneousDepth ? -1 : 0
 			, g_caps.originBottomLeft ? "bottom" : "top"
 			);
+
+		BX_TRACE("");
 	}
 
 	TextureFormat::Enum getViableTextureFormat(const ImageContainer& _imageContainer)
@@ -2470,9 +2498,24 @@ namespace bgfx
 		}
 
 		memset(&g_caps, 0, sizeof(g_caps) );
-		g_caps.maxViews     = BGFX_CONFIG_MAX_VIEWS;
-		g_caps.maxDrawCalls = BGFX_CONFIG_MAX_DRAW_CALLS;
-		g_caps.maxFBAttachments = 1;
+		g_caps.limits.maxDrawCalls            = BGFX_CONFIG_MAX_DRAW_CALLS;
+		g_caps.limits.maxBlits                = BGFX_CONFIG_MAX_BLIT_ITEMS;
+		g_caps.limits.maxViews                = BGFX_CONFIG_MAX_VIEWS;
+		g_caps.limits.maxFrameBuffers         = BGFX_CONFIG_MAX_FRAME_BUFFERS;
+		g_caps.limits.maxPrograms             = BGFX_CONFIG_MAX_PROGRAMS;
+		g_caps.limits.maxShaders              = BGFX_CONFIG_MAX_SHADERS;
+		g_caps.limits.maxTextures             = BGFX_CONFIG_MAX_TEXTURES;
+		g_caps.limits.maxTextureSamplers      = BGFX_CONFIG_MAX_TEXTURE_SAMPLERS;
+		g_caps.limits.maxVertexDecls          = BGFX_CONFIG_MAX_VERTEX_DECLS;
+		g_caps.limits.maxVertexStreams        = BGFX_CONFIG_MAX_VERTEX_STREAMS;
+		g_caps.limits.maxIndexBuffers         = BGFX_CONFIG_MAX_INDEX_BUFFERS;
+		g_caps.limits.maxVertexBuffers        = BGFX_CONFIG_MAX_VERTEX_BUFFERS;
+		g_caps.limits.maxDynamicIndexBuffers  = BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS;
+		g_caps.limits.maxDynamicVertexBuffers = BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS;
+		g_caps.limits.maxUniforms             = BGFX_CONFIG_MAX_UNIFORMS;
+		g_caps.limits.maxOcclusionQueries     = BGFX_CONFIG_MAX_OCCUSION_QUERIES;
+		g_caps.limits.maxFBAttachments        = 1;
+
 		g_caps.vendorId = _vendorId;
 		g_caps.deviceId = _deviceId;
 
@@ -3565,7 +3608,7 @@ error:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(_stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, "Invalid stage %d (max %d).", _stage, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
-		BX_CHECK(_attachment < g_caps.maxFBAttachments, "Frame buffer attachment index %d is invalid.", _attachment);
+		BX_CHECK(_attachment < g_caps.limits.maxFBAttachments, "Frame buffer attachment index %d is invalid.", _attachment);
 		s_ctx->setTexture(_stage, _sampler, _handle, _attachment, _flags);
 	}
 
@@ -3644,7 +3687,7 @@ error:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(_stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, "Invalid stage %d (max %d).", _stage, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
-		BX_CHECK(_attachment < g_caps.maxFBAttachments, "Frame buffer attachment index %d is invalid.", _attachment);
+		BX_CHECK(_attachment < g_caps.limits.maxFBAttachments, "Frame buffer attachment index %d is invalid.", _attachment);
 		s_ctx->setImage(_stage, _sampler, _handle, _attachment, _access, _format);
 	}
 
@@ -3687,7 +3730,7 @@ error:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_BLIT, "Texture blit is not supported!");
-		BX_CHECK(_attachment < g_caps.maxFBAttachments, "Frame buffer attachment index %d is invalid.", _attachment);
+		BX_CHECK(_attachment < g_caps.limits.maxFBAttachments, "Frame buffer attachment index %d is invalid.", _attachment);
 		s_ctx->blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _attachment, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
 	}
 
@@ -3757,6 +3800,7 @@ BGFX_C99_STRUCT_SIZE_CHECK(bgfx::InstanceDataBuffer,    bgfx_instance_data_buffe
 BGFX_C99_STRUCT_SIZE_CHECK(bgfx::TextureInfo,           bgfx_texture_info_t);
 BGFX_C99_STRUCT_SIZE_CHECK(bgfx::Attachment,            bgfx_attachment_t);
 BGFX_C99_STRUCT_SIZE_CHECK(bgfx::Caps::GPU,             bgfx_caps_gpu_t);
+BGFX_C99_STRUCT_SIZE_CHECK(bgfx::Caps::Limits,          bgfx_caps_limits_t);
 BGFX_C99_STRUCT_SIZE_CHECK(bgfx::Caps,                  bgfx_caps_t);
 BGFX_C99_STRUCT_SIZE_CHECK(bgfx::PlatformData,          bgfx_platform_data_t);
 BGFX_C99_STRUCT_SIZE_CHECK(bgfx::InternalData,          bgfx_internal_data_t);
