@@ -647,7 +647,14 @@ namespace ImGuiWM
 
                 pDrawList->PathClear();
 
-                ImGui::RenderTextClipped(oRectMin, ImVec2(oRectMax.x, oRectMax.y), (*it)->GetTitle(), NULL, &oTextSize, ImGuiAlign_Center | ImGuiAlign_VCenter);
+                ImGui::RenderTextClipped(
+                      oRectMin
+                    , ImVec2(oRectMax.x, oRectMax.y)
+                    , (*it)->GetTitle()
+                    , NULL
+                    , &oTextSize
+                    , ImVec2(0.5f, 0.5f)
+                );
 
                 if (ImGui::BeginPopupContextItem("TabMenu"))
                 {
