@@ -5005,6 +5005,61 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
+<dl class="class">
+<dt id="_CPPv2N4bgfx10AttachmentE">
+<span id="bgfx::Attachment"></span><span class="target" id="bgfxstructbgfx_1_1_attachment"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">Attachment</code><a class="headerlink" href="#_CPPv2N4bgfx10AttachmentE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Frame buffer texture attachemnt info. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_attachment_t</span></code>. </dd>
+</dl>
+</p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N4bgfx10Attachment6handleE">
+<span id="bgfx::Attachment::handle__TextureHandle"></span><span class="target" id="bgfxstructbgfx_1_1_attachment_1a9eb8a8e6925c92291c43781a304f2acb"></span>TextureHandle <code class="descname">handle</code><a class="headerlink" href="#_CPPv2N4bgfx10Attachment6handleE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Texture handle. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx10Attachment3mipE">
+<span id="bgfx::Attachment::mip__uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_attachment_1add533a2475b7340c010a2718f7f5ed1e"></span>uint16_t <code class="descname">mip</code><a class="headerlink" href="#_CPPv2N4bgfx10Attachment3mipE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mip level. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx10Attachment5layerE">
+<span id="bgfx::Attachment::layer__uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_attachment_1aea8de271c840deb81f0d0d8743f034b2"></span>uint16_t <code class="descname">layer</code><a class="headerlink" href="#_CPPv2N4bgfx10Attachment5layerE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cubemap side or depth layer/slice. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx17createFrameBufferE7uint8_tPK10Attachmentb">
+<span id="bgfx::createFrameBuffer__uint8_t.AttachmentCP.b"></span><span class="target" id="bgfxnamespacebgfx_1abbcc1474325bfa2c48d24e8fa4d28459"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>uint8_t <em>_num</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx10AttachmentE" title="bgfx::Attachment">Attachment</a> *<em>_attachment</em>, bool <em>_destroyTextures</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferE7uint8_tPK10Attachmentb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create frame buffer. </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Handle to frame buffer object.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_frame_buffer_from_attachment</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of texture attachments. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_attachment</span></code> - <p><a class="reference internal" href="#bgfxstructbgfx_1_1_attachment"><span>Attachment</span></a> texture info. See: <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_attachment"><span><span class="pre">Attachment</span></span></a></code>. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_destroyTextures</span></code> - <p>If true, textures will be destroyed when frame buffer is destroyed.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
 <dl class="function">
 <dt id="_CPPv2N4bgfx18destroyFrameBufferE17FrameBufferHandle">
 <span id="bgfx::destroyFrameBuffer__FrameBufferHandle"></span><span class="target" id="bgfxnamespacebgfx_1a17b93a8b3a39ae31081bcdde3f971674"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyFrameBuffer</code><span class="sig-paren">(</span>FrameBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx18destroyFrameBufferE17FrameBufferHandle" title="Permalink to this definition">¶</a></dt>
