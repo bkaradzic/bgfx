@@ -153,7 +153,7 @@ namespace bgfx
 						case LCT_GREY:
 							for (uint32_t ii = 0, num = width*height; ii < num; ++ii)
 							{
-								uint16_t* rgba = (uint16_t*)out + ii*4;
+								uint16_t* rgba = (uint16_t*)out + ii;
 								rgba[0] = bx::toHostEndian(rgba[0], false);
 							}
 							format = bgfx::TextureFormat::R16;
@@ -163,12 +163,12 @@ namespace bgfx
 						case LCT_GREY_ALPHA:
 							for (uint32_t ii = 0, num = width*height; ii < num; ++ii)
 							{
-								uint16_t* rgba = (uint16_t*)out + ii*4;
+								uint16_t* rgba = (uint16_t*)out + ii*2;
 								rgba[0] = bx::toHostEndian(rgba[0], false);
 								rgba[1] = bx::toHostEndian(rgba[1], false);
 							}
-							format = bgfx::TextureFormat::R16;
-							bpp    = 16;
+							format = bgfx::TextureFormat::RG16;
+							bpp    = 32;
 							break;
 
 						case LCT_RGBA:
