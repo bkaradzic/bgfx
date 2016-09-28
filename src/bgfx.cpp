@@ -426,6 +426,87 @@ namespace bgfx
 		va_end(argList);
 	}
 
+#include "vs_debugfont.bin.h"
+#include "fs_debugfont.bin.h"
+#include "vs_clear.bin.h"
+#include "fs_clear0.bin.h"
+#include "fs_clear1.bin.h"
+#include "fs_clear2.bin.h"
+#include "fs_clear3.bin.h"
+#include "fs_clear4.bin.h"
+#include "fs_clear5.bin.h"
+#include "fs_clear6.bin.h"
+#include "fs_clear7.bin.h"
+
+	struct EmbeddedShader
+	{
+		struct Data
+		{
+			bgfx::RendererType::Enum type;
+			const uint8_t* data;
+			uint32_t size;
+		};
+
+		const char* name;
+		Data data[RendererType::Count];
+	};
+
+#define BGFX_DECLARE_SHADER_EMBEDDED(_name)                                                                           \
+	{                                                                                                                 \
+		#_name,                                                                                                       \
+		{                                                                                                             \
+			{ bgfx::RendererType::Direct3D9,  BX_CONCATENATE(_name, _dx9 ),  sizeof(BX_CONCATENATE(_name, _dx9 ) ) }, \
+			{ bgfx::RendererType::Direct3D11, BX_CONCATENATE(_name, _dx11),  sizeof(BX_CONCATENATE(_name, _dx11) ) }, \
+			{ bgfx::RendererType::Direct3D12, BX_CONCATENATE(_name, _dx11),  sizeof(BX_CONCATENATE(_name, _dx11) ) }, \
+			{ bgfx::RendererType::Gnm,        BX_CONCATENATE(_name, _glsl),  sizeof(BX_CONCATENATE(_name, _glsl) ) }, \
+			{ bgfx::RendererType::Metal,      BX_CONCATENATE(_name, _mtl ),  sizeof(BX_CONCATENATE(_name, _mtl ) ) }, \
+			{ bgfx::RendererType::OpenGL,     BX_CONCATENATE(_name, _glsl),  sizeof(BX_CONCATENATE(_name, _glsl) ) }, \
+			{ bgfx::RendererType::OpenGLES,   BX_CONCATENATE(_name, _glsl),  sizeof(BX_CONCATENATE(_name, _glsl) ) }, \
+			{ bgfx::RendererType::Vulkan,     BX_CONCATENATE(_name, _glsl),  sizeof(BX_CONCATENATE(_name, _glsl) ) }, \
+			{ bgfx::RendererType::Count,      NULL,                          0                                     }, \
+		}                                                                                                             \
+	}
+
+	static const EmbeddedShader s_embeddedShaders[] =
+	{
+		BGFX_DECLARE_SHADER_EMBEDDED(vs_debugfont),
+		BGFX_DECLARE_SHADER_EMBEDDED(fs_debugfont),
+
+		BGFX_DECLARE_SHADER_EMBEDDED(vs_clear),
+
+		BGFX_DECLARE_SHADER_EMBEDDED(fs_clear0),
+		BGFX_DECLARE_SHADER_EMBEDDED(fs_clear1),
+		BGFX_DECLARE_SHADER_EMBEDDED(fs_clear2),
+		BGFX_DECLARE_SHADER_EMBEDDED(fs_clear3),
+		BGFX_DECLARE_SHADER_EMBEDDED(fs_clear4),
+		BGFX_DECLARE_SHADER_EMBEDDED(fs_clear5),
+		BGFX_DECLARE_SHADER_EMBEDDED(fs_clear6),
+		BGFX_DECLARE_SHADER_EMBEDDED(fs_clear7),
+
+		{ NULL, { bgfx::RendererType::Count, NULL, 0 } }
+	};
+
+	static ShaderHandle createEmbeddedShader(RendererType::Enum _type, const char* _name)
+	{
+		for (const EmbeddedShader* es = s_embeddedShaders; NULL != es->name; ++es)
+		{
+			if (0 == strcmp(_name, es->name) )
+			{
+				for (const EmbeddedShader::Data* esd = es->data; RendererType::Count != esd->type; ++esd)
+				{
+					if (_type == esd->type)
+					{
+						return createShader(makeRef(esd->data, esd->size) );
+					}
+				}
+			}
+		}
+
+		ShaderHandle handle = BGFX_INVALID_HANDLE;
+		return handle;
+	}
+
+
 #include "charset.h"
 
 	void charsetFillTexture(const uint8_t* _charset, uint8_t* _rgba, uint32_t _height, uint32_t _pitch, uint32_t _bpp)
@@ -481,49 +562,8 @@ namespace bgfx
 						, mem
 						);
 
-		switch (g_caps.rendererType)
-		{
-		case RendererType::Direct3D9:
-			mem = makeRef(vs_debugfont_dx9, sizeof(vs_debugfont_dx9) );
-			break;
-
-		case RendererType::Direct3D11:
-		case RendererType::Direct3D12:
-			mem = makeRef(vs_debugfont_dx11, sizeof(vs_debugfont_dx11) );
-			break;
-
-		case RendererType::Metal:
-			mem = makeRef(vs_debugfont_mtl, sizeof(vs_debugfont_mtl) );
-			break;
-
-		default:
-			mem = makeRef(vs_debugfont_glsl, sizeof(vs_debugfont_glsl) );
-			break;
-		}
-
-		ShaderHandle vsh = createShader(mem);
-
-		switch (g_caps.rendererType)
-		{
-		case RendererType::Direct3D9:
-			mem = makeRef(fs_debugfont_dx9, sizeof(fs_debugfont_dx9) );
-			break;
-
-		case RendererType::Direct3D11:
-		case RendererType::Direct3D12:
-			mem = makeRef(fs_debugfont_dx11, sizeof(fs_debugfont_dx11) );
-			break;
-
-		case RendererType::Metal:
-			mem = makeRef(fs_debugfont_mtl, sizeof(fs_debugfont_mtl) );
-			break;
-
-		default:
-			mem = makeRef(fs_debugfont_glsl, sizeof(fs_debugfont_glsl) );
-			break;
-		}
-
-		ShaderHandle fsh = createShader(mem);
+		ShaderHandle vsh = createEmbeddedShader(g_caps.rendererType, "vs_debugfont");
+		ShaderHandle fsh = createEmbeddedShader(g_caps.rendererType, "fs_debugfont");
 
 		m_program = createProgram(vsh, fsh, true);
 
@@ -651,124 +691,21 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 
-		if (RendererType::Null != g_caps.rendererType)
+		if (RendererType::Noop != g_caps.rendererType)
 		{
 			m_decl
 				.begin()
 				.add(Attrib::Position, 3, AttribType::Float)
 				.end();
 
-			ShaderHandle vsh = BGFX_INVALID_HANDLE;
-
-			struct Mem
-			{
-				Mem(const void* _data, size_t _size)
-					: data(_data)
-					, size(_size)
-				{
-				}
-
-				const void*  data;
-				size_t size;
-			};
-
-			const Memory* fragMem[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
-			if (RendererType::Direct3D9 == g_caps.rendererType)
-			{
-				vsh = createShader(makeRef(vs_clear_dx9, sizeof(vs_clear_dx9) ) );
-
-				const Mem mem[] =
-				{
-					Mem(fs_clear0_dx9, sizeof(fs_clear0_dx9) ),
-					Mem(fs_clear1_dx9, sizeof(fs_clear1_dx9) ),
-					Mem(fs_clear2_dx9, sizeof(fs_clear2_dx9) ),
-					Mem(fs_clear3_dx9, sizeof(fs_clear3_dx9) ),
-					Mem(fs_clear4_dx9, sizeof(fs_clear4_dx9) ),
-					Mem(fs_clear5_dx9, sizeof(fs_clear5_dx9) ),
-					Mem(fs_clear6_dx9, sizeof(fs_clear6_dx9) ),
-					Mem(fs_clear7_dx9, sizeof(fs_clear7_dx9) ),
-				};
-
-				for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
-				{
-					fragMem[ii] = makeRef(mem[ii].data, uint32_t(mem[ii].size) );
-				}
-			}
-			else if (RendererType::Direct3D11 == g_caps.rendererType
-				 ||  RendererType::Direct3D12 == g_caps.rendererType)
-			{
-				vsh = createShader(makeRef(vs_clear_dx11, sizeof(vs_clear_dx11) ) );
-
-				const Mem mem[] =
-				{
-					Mem(fs_clear0_dx11, sizeof(fs_clear0_dx11) ),
-					Mem(fs_clear1_dx11, sizeof(fs_clear1_dx11) ),
-					Mem(fs_clear2_dx11, sizeof(fs_clear2_dx11) ),
-					Mem(fs_clear3_dx11, sizeof(fs_clear3_dx11) ),
-					Mem(fs_clear4_dx11, sizeof(fs_clear4_dx11) ),
-					Mem(fs_clear5_dx11, sizeof(fs_clear5_dx11) ),
-					Mem(fs_clear6_dx11, sizeof(fs_clear6_dx11) ),
-					Mem(fs_clear7_dx11, sizeof(fs_clear7_dx11) ),
-				};
-
-				for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
-				{
-					fragMem[ii] = makeRef(mem[ii].data, uint32_t(mem[ii].size) );
-				}
-			}
-			else if (RendererType::OpenGLES == g_caps.rendererType
-				 ||  RendererType::OpenGL   == g_caps.rendererType
-				 ||  RendererType::Vulkan   == g_caps.rendererType
-				 ||  RendererType::GNM      == g_caps.rendererType)
-			{
-				vsh = createShader(makeRef(vs_clear_glsl, sizeof(vs_clear_glsl) ) );
-
-				const Mem mem[] =
-				{
-					Mem(fs_clear0_glsl, sizeof(fs_clear0_glsl) ),
-					Mem(fs_clear1_glsl, sizeof(fs_clear1_glsl) ),
-					Mem(fs_clear2_glsl, sizeof(fs_clear2_glsl) ),
-					Mem(fs_clear3_glsl, sizeof(fs_clear3_glsl) ),
-					Mem(fs_clear4_glsl, sizeof(fs_clear4_glsl) ),
-					Mem(fs_clear5_glsl, sizeof(fs_clear5_glsl) ),
-					Mem(fs_clear6_glsl, sizeof(fs_clear6_glsl) ),
-					Mem(fs_clear7_glsl, sizeof(fs_clear7_glsl) ),
-				};
-
-				for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
-				{
-					fragMem[ii] = makeRef(mem[ii].data, uint32_t(mem[ii].size) );
-				}
-			}
-			else if (RendererType::Metal == g_caps.rendererType)
-			{
-				vsh = createShader(makeRef(vs_clear_mtl, sizeof(vs_clear_mtl) ) );
-
-				const Mem mem[] =
-				{
-					Mem(fs_clear0_mtl, sizeof(fs_clear0_mtl) ),
-					Mem(fs_clear1_mtl, sizeof(fs_clear1_mtl) ),
-					Mem(fs_clear2_mtl, sizeof(fs_clear2_mtl) ),
-					Mem(fs_clear3_mtl, sizeof(fs_clear3_mtl) ),
-					Mem(fs_clear4_mtl, sizeof(fs_clear4_mtl) ),
-					Mem(fs_clear5_mtl, sizeof(fs_clear5_mtl) ),
-					Mem(fs_clear6_mtl, sizeof(fs_clear6_mtl) ),
-					Mem(fs_clear7_mtl, sizeof(fs_clear7_mtl) ),
-				};
-
-				for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
-				{
-					fragMem[ii] = makeRef(mem[ii].data, uint32_t(mem[ii].size) );
-				}
-			}
-			else
-			{
-				BGFX_FATAL(false, Fatal::UnableToInitialize, "Unknown renderer type %d", g_caps.rendererType);
-			}
+			ShaderHandle vsh = createEmbeddedShader(g_caps.rendererType, "vs_clear");
 
 			for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
 			{
-				ShaderHandle fsh = createShader(fragMem[ii]);
+				char name[32];
+				bx::snprintf(name, BX_COUNTOF(name), "fs_clear%d", ii);
+				ShaderHandle fsh = createEmbeddedShader(g_caps.rendererType, name);
+
 				m_program[ii] = createProgram(vsh, fsh);
 				BX_CHECK(isValid(m_program[ii]), "Failed to create clear quad program.");
 				destroyShader(fsh);
@@ -784,7 +721,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 
-		if (RendererType::Null != g_caps.rendererType)
+		if (RendererType::Noop != g_caps.rendererType)
 		{
 			for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
 			{
@@ -1849,7 +1786,7 @@ namespace bgfx
 					score += 1000;
 				}
 
-				score += RendererType::Null != renderer ? 1 : 0;
+				score += RendererType::Noop != renderer ? 1 : 0;
 
 				if (BX_ENABLED(BX_PLATFORM_WINDOWS) )
 				{

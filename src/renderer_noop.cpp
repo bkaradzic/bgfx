@@ -21,7 +21,7 @@ namespace bgfx { namespace noop
 
 		RendererType::Enum getRendererType() const BX_OVERRIDE
 		{
-			return RendererType::Null;
+			return RendererType::Noop;
 		}
 
 		const char* getRendererName() const BX_OVERRIDE

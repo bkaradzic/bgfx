@@ -49,11 +49,11 @@ namespace bgfx
 		&s_attribTypeSizeDx9,  // Direct3D9
 		&s_attribTypeSizeDx1x, // Direct3D11
 		&s_attribTypeSizeDx1x, // Direct3D12
+		&s_attribTypeSizeGl,   // Gnm
 		&s_attribTypeSizeGl,   // Metal
 		&s_attribTypeSizeGl,   // OpenGLES
 		&s_attribTypeSizeGl,   // OpenGL
 		&s_attribTypeSizeGl,   // Vulkan
-		&s_attribTypeSizeGl,   // GNM
 		&s_attribTypeSizeDx9,  // Count
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_attribTypeSize) == RendererType::Count+1);

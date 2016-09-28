@@ -52,15 +52,15 @@ namespace bgfx
 		/// Renderer types:
 		enum Enum
 		{
-			Null,         //!< No rendering.
+			Noop,         //!< No rendering.
 			Direct3D9,    //!< Direct3D 9.0
 			Direct3D11,   //!< Direct3D 11.0
 			Direct3D12,   //!< Direct3D 12.0
+			Gnm,          //!< GNM
 			Metal,        //!< Metal
 			OpenGLES,     //!< OpenGL ES 2.0+
 			OpenGL,       //!< OpenGL 2.1+
 			Vulkan,       //!< Vulkan
-			GNM,          //!< GNM
 
 			Count
 		};
@@ -722,7 +722,7 @@ namespace bgfx
 		///
 		/// @attention C99 equivalent is `bgfx_vertex_decl_begin`.
 		///
-		VertexDecl& begin(RendererType::Enum _renderer = RendererType::Null);
+		VertexDecl& begin(RendererType::Enum _renderer = RendererType::Noop);
 
 		/// End VertexDecl.
 		///

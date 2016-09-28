@@ -760,7 +760,7 @@ Args::Args(int _argc, char** _argv)
 	}
 	else if (cmdLine.hasArg("noop") )
 	{
-		m_type = bgfx::RendererType::Null;
+		m_type = bgfx::RendererType::Noop;
 	}
 	else if (BX_ENABLED(BX_PLATFORM_WINDOWS) )
 	{
