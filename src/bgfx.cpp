@@ -483,7 +483,7 @@ namespace bgfx
 		BGFX_DECLARE_SHADER_EMBEDDED(fs_clear6),
 		BGFX_DECLARE_SHADER_EMBEDDED(fs_clear7),
 
-		{ NULL, { bgfx::RendererType::Count, NULL, 0 } }
+		{ NULL, { { bgfx::RendererType::Count, NULL, 0 } } }
 	};
 
 	static ShaderHandle createEmbeddedShader(RendererType::Enum _type, const char* _name)
@@ -1291,7 +1291,7 @@ namespace bgfx
 			g_caps.formats[fmt] |= 0 == (g_caps.formats[fmt] & BGFX_CAPS_FORMAT_TEXTURE_CUBE) ? BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED : 0;
 		}
 
-		for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
+		for (uint32_t ii = 0; ii < TextureFormat::UnknownDepth; ++ii)
 		{
 			bool convertable = imageConvert(TextureFormat::BGRA8, TextureFormat::Enum(ii) );
 			g_caps.formats[ii] |= 0 == (g_caps.formats[ii] & BGFX_CAPS_FORMAT_TEXTURE_2D  ) && convertable ? BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED   : 0;

@@ -138,7 +138,13 @@ namespace bgfx
 
 	const char* getUniformTypeName(UniformType::Enum _enum)
 	{
-		return s_uniformTypeName[_enum];
+		uint32_t idx = _enum & ~(BGFX_UNIFORM_FRAGMENTBIT|BGFX_UNIFORM_SAMPLERBIT);
+		if (idx < UniformType::Count)
+		{
+			return s_uniformTypeName[idx];
+		}
+
+		return "Unknown uniform type?!";
 	}
 
 	UniformType::Enum nameToUniformTypeEnum(const char* _name)

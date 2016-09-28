@@ -662,10 +662,10 @@ int main(int _argc, const char* _argv[])
 							{
 								const uint32_t offset = (yy*mip.m_width + xx) * 4;
 								float* inout = &rgba[offset];
-								inout[0] = inout[0] * 2.0f/255.0f - 1.0f;
-								inout[1] = inout[1] * 2.0f/255.0f - 1.0f;
-								inout[2] = inout[2] * 2.0f/255.0f - 1.0f;
-								inout[3] = inout[3] * 2.0f/255.0f - 1.0f;
+								inout[0] = inout[0] * 2.0f - 1.0f;
+								inout[1] = inout[1] * 2.0f - 1.0f;
+								inout[2] = inout[2] * 2.0f - 1.0f;
+								inout[3] = inout[3] * 2.0f - 1.0f;
 							}
 						}
 					}
