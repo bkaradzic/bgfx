@@ -718,7 +718,8 @@ namespace bgfx
 			}
 			else if (RendererType::OpenGLES == g_caps.rendererType
 				 ||  RendererType::OpenGL   == g_caps.rendererType
-				 ||  RendererType::Vulkan   == g_caps.rendererType)
+				 ||  RendererType::Vulkan   == g_caps.rendererType
+				 ||  RendererType::GNM      == g_caps.rendererType)
 			{
 				vsh = createShader(makeRef(vs_clear_glsl, sizeof(vs_clear_glsl) ) );
 
@@ -1754,6 +1755,7 @@ namespace bgfx
 	BGFX_RENDERER_CONTEXT(mtl);
 	BGFX_RENDERER_CONTEXT(gl);
 	BGFX_RENDERER_CONTEXT(vk);
+	BGFX_RENDERER_CONTEXT(gnm);
 
 #undef BGFX_RENDERER_CONTEXT
 
@@ -2491,7 +2493,7 @@ namespace bgfx
 				s_callbackStub = BX_NEW(g_allocator, CallbackStub);
 		}
 
-		if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_NACL)
+		if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_NACL || BX_PLATFORM_PS4)
 		&&  NULL == g_platformData.ndt
 		&&  NULL == g_platformData.nwh
 		&&  NULL == g_platformData.context
