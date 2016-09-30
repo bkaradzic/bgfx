@@ -5229,7 +5229,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		_render->m_hmdInitialized = m_ovr.isInitialized();
 
 		const bool hmdEnabled = m_ovr.isEnabled();
-		ViewState viewState(_render, hmdEnabled);
+		static ViewState viewState;
+		viewState.reset(_render, hmdEnabled);
 
 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
 		bool scissorEnabled = false;

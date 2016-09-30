@@ -6100,7 +6100,8 @@ namespace bgfx { namespace gl
 		_render->m_hmdInitialized = m_ovr.isInitialized();
 
 		const bool hmdEnabled = m_ovr.isEnabled();
-		ViewState viewState(_render, hmdEnabled);
+		static ViewState viewState;
+		viewState.reset(_render, hmdEnabled);
 
 		uint16_t programIdx = invalidHandle;
 		SortKey key;

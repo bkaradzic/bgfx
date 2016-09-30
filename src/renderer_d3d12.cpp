@@ -4761,7 +4761,7 @@ data.NumQualityLevels = 0;
 		_render->m_hmdInitialized = false;
 
 		const bool hmdEnabled = false;
-		ViewState viewState(_render, hmdEnabled);
+		static ViewState viewState;
 		viewState.reset(_render, hmdEnabled);
 
 // 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);

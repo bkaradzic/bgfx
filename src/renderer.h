@@ -12,7 +12,10 @@ namespace bgfx
 {
 	struct ViewState
 	{
-		ViewState() { }
+		ViewState()
+		{
+		}
+
 		ViewState(Frame* _render, bool _hmdEnabled)
 		{
 			reset(_render, _hmdEnabled);
