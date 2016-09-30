@@ -6,8 +6,6 @@
 #include "bgfx_p.h"
 
 #if BGFX_CONFIG_RENDERER_GNM
-#	include "../../bgfx-ext/src/renderer_gnm1.cpp"
-#else
 
 namespace bgfx { namespace gnm
 {

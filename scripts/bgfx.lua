@@ -3,6 +3,28 @@
 -- License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 --
 
+function overridefiles(_srcPath, _dstPath, _files)
+
+	local remove = {}
+	local add = {}
+	for _, file in ipairs(_files) do
+		file = path.getrelative(_srcPath, file)
+		local filePath = path.join(BGFX_DIR, "../bgfx-ext", file)
+		if not os.isfile(filePath) then print(filePath .. " not found") return end
+
+		table.insert(remove, path.join(_srcPath, file))
+		table.insert(add, filePath)
+	end
+
+	removefiles {
+		remove,
+	}
+
+	files {
+		add,
+	}
+end
+
 function bgfxProject(_name, _kind, _defines)
 
 	project ("bgfx" .. _name)
@@ -128,6 +150,16 @@ function bgfxProject(_name, _kind, _defines)
 		removefiles {
 			path.join(BGFX_DIR, "src/**.bin.h"),
 		}
+
+		overridefiles(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
+			path.join(BGFX_DIR, "src/renderer_vk.cpp"),
+			path.join(BGFX_DIR, "src/renderer_vk.h"),
+		})
+
+		overridefiles(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
+			path.join(BGFX_DIR, "src/renderer_gnm.cpp"),
+			path.join(BGFX_DIR, "src/renderer_gnm.h"),
+		})
 
 		if _OPTIONS["with-amalgamated"] then
 			excludes {
