@@ -395,7 +395,7 @@ namespace bgfx
 	void imageDecodeToRgba32f(bx::AllocatorI* _allocator, void* _dst, const void* _src, uint32_t _width, uint32_t _height, uint32_t _pitch, TextureFormat::Enum _format);
 
 	///
-	bool imageGetRawData(const ImageContainer& _imageContainer, uint16_t _side, uint8_t _index, const void* _data, uint32_t _size, ImageMip& _mip);
+	bool imageGetRawData(const ImageContainer& _imageContainer, uint16_t _side, uint8_t _lod, const void* _data, uint32_t _size, ImageMip& _mip);
 
 } // namespace bgfx
 

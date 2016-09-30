@@ -207,19 +207,20 @@ namespace bgfx
 
 			if (loaded)
 			{
-				_imageContainer.m_data     = *_out;
-				_imageContainer.m_size     = width*height*bpp/8;
-				_imageContainer.m_offset   = 0;
-				_imageContainer.m_width    = width;
-				_imageContainer.m_height   = height;
-				_imageContainer.m_depth    = 1;
-				_imageContainer.m_format   = format;
-				_imageContainer.m_numMips  = 1;
-				_imageContainer.m_hasAlpha = true;
-				_imageContainer.m_cubeMap  = false;
-				_imageContainer.m_ktx      = false;
-				_imageContainer.m_ktxLE    = false;
-				_imageContainer.m_srgb     = false;
+				_imageContainer.m_data      = *_out;
+				_imageContainer.m_size      = width*height*bpp/8;
+				_imageContainer.m_offset    = 0;
+				_imageContainer.m_width     = width;
+				_imageContainer.m_height    = height;
+				_imageContainer.m_depth     = 1;
+				_imageContainer.m_numLayers = 1;
+				_imageContainer.m_format    = format;
+				_imageContainer.m_numMips   = 1;
+				_imageContainer.m_hasAlpha  = true;
+				_imageContainer.m_cubeMap   = false;
+				_imageContainer.m_ktx       = false;
+				_imageContainer.m_ktxLE     = false;
+				_imageContainer.m_srgb      = false;
 			}
 		}
 
@@ -851,6 +852,11 @@ int main(int _argc, const char* _argv[])
 				}
 
 				imageFree(output);
+			}
+			else
+			{
+				help("No output generated.");
+				return EXIT_FAILURE;
 			}
 		}
 		else
