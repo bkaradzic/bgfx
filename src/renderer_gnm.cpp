@@ -5,8 +5,6 @@
 
 #include "bgfx_p.h"
 
-#if BGFX_CONFIG_RENDERER_GNM
-
 namespace bgfx { namespace gnm
 {
 	RendererContextI* rendererCreate()
@@ -18,5 +16,3 @@ namespace bgfx { namespace gnm
 	{
 	}
 } /* namespace gnm */ } // namespace bgfx
-
-#endif // BGFX_CONFIG_RENDERER_GNM
