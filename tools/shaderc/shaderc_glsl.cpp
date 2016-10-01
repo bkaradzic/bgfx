@@ -42,20 +42,24 @@ namespace bgfx { namespace glsl
 		if (!glslopt_get_status(shader) )
 		{
 			const char* log = glslopt_get_log(shader);
-			int32_t source = 0;
-			int32_t line = 0;
-			int32_t column = 0;
-			int32_t start = 0;
-			int32_t end = INT32_MAX;
+			int32_t source  = 0;
+			int32_t line    = 0;
+			int32_t column  = 0;
+			int32_t start   = 0;
+			int32_t end     = INT32_MAX;
 
-			if (3 == sscanf(log, "%u:%u(%u):", &source, &line, &column)
+			bool found = false
+				|| 3 == sscanf(log, "%u:%u(%u):", &source, &line, &column)
+				;
+
+			if (found
 			&&  0 != line)
 			{
 				start = bx::uint32_imax(1, line-10);
-				end = start + 20;
+				end   = start + 20;
 			}
 
-			printCode(_code.c_str(), line, start, end);
+			printCode(_code.c_str(), line, start, end, column);
 			fprintf(stderr, "Error: %s\n", log);
 			glslopt_cleanup(ctx);
 			return false;

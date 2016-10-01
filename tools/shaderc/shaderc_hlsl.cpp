@@ -13,6 +13,7 @@
 #	define __out
 #endif // defined(__MINGW32__)
 
+#define COM_NO_WINDOWS_H
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
 #include <bx/os.h>
@@ -67,7 +68,7 @@ namespace bgfx { namespace hlsl
 	};
 
 	static const D3DCompiler s_d3dcompiler[] =
-	{ // BK - the only different in interface is GetRequiresFlags at the end
+	{ // BK - the only different method in interface is GetRequiresFlags at the end
 	  //      of IID_ID3D11ShaderReflection47 (which is not used anyway).
 		{ "D3DCompiler_47.dll", { 0x8d536ca1, 0x0cca, 0x4956, { 0xa8, 0x37, 0x78, 0x69, 0x63, 0x75, 0x55, 0x84 } } },
 		{ "D3DCompiler_46.dll", { 0x0a233719, 0x3960, 0x4578, { 0x9d, 0x7c, 0x20, 0x3b, 0x8b, 0x1d, 0x9c, 0xc1 } } },
@@ -536,7 +537,7 @@ namespace bgfx { namespace hlsl
 		return true;
 	}
 
-	static bool compile(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::string& _code, bx::WriterI* _writer, bool _firstPass)
+	static bool compile(bx::CommandLine& _cmdLine, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bool _firstPass)
 	{
 		const char* profile = _cmdLine.findOption('p', "profile");
 		if (NULL == profile)
@@ -611,19 +612,24 @@ namespace bgfx { namespace hlsl
 		{
 			const char* log = (char*)errorMsg->GetBufferPointer();
 
-			int32_t line = 0;
+			int32_t line   = 0;
 			int32_t column = 0;
-			int32_t start = 0;
-			int32_t end = INT32_MAX;
+			int32_t start  = 0;
+			int32_t end    = INT32_MAX;
 
-			if (2 == sscanf(log, "(%u,%u):", &line, &column)
+			bool found = false
+				|| 2 == sscanf(log, "(%u,%u):", &line, &column)
+				|| 2 == sscanf(log, " :%u:%u: ", &line, &column)
+				;
+
+			if (found
 			&&  0 != line)
 			{
 				start = bx::uint32_imax(1, line - 10);
-				end = start + 20;
+				end   = start + 20;
 			}
 
-			printCode(_code.c_str(), line, start, end);
+			printCode(_code.c_str(), line, start, end, column);
 			fprintf(stderr, "Error: D3DCompile failed 0x%08x %s\n", (uint32_t)hr, log);
 			errorMsg->Release();
 			return false;
@@ -634,7 +640,7 @@ namespace bgfx { namespace hlsl
 		uint16_t attrs[bgfx::Attrib::Count];
 		uint16_t size = 0;
 
-		if (_d3d == 9)
+		if (_version == 9)
 		{
 			if (!getReflectionDataD3D9(code, uniforms) )
 			{
@@ -687,7 +693,7 @@ namespace bgfx { namespace hlsl
 				}
 
 				// recompile with the unused uniforms converted to statics
-				return compileHLSLShader(_cmdLine, _d3d, output.c_str(), _writer);
+				return compileHLSLShader(_cmdLine, _version, output.c_str(), _writer);
 			}
 		}
 
@@ -742,7 +748,7 @@ namespace bgfx { namespace hlsl
 			bx::write(_writer, nul);
 		}
 
-		if (_d3d > 9)
+		if (_version > 9)
 		{
 			bx::write(_writer, numAttrs);
 			bx::write(_writer, attrs, numAttrs*sizeof(uint16_t) );

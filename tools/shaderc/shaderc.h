@@ -15,7 +15,7 @@ namespace bgfx
 				BX_MACRO_BLOCK_BEGIN \
 					if (bgfx::g_verbose) \
 					{ \
-						fprintf(stderr, BX_FILE_LINE_LITERAL "" _format "\n", ##__VA_ARGS__); \
+						fprintf(stdout, BX_FILE_LINE_LITERAL "" _format "\n", ##__VA_ARGS__); \
 					} \
 				BX_MACRO_BLOCK_END
 
@@ -107,8 +107,8 @@ namespace bgfx
 		uint32_t m_size;
 	};
 
-	#define BGFX_UNIFORM_FRAGMENTBIT UINT8_C(0x10)
-	#define BGFX_UNIFORM_SAMPLERBIT  UINT8_C(0x20)
+#define BGFX_UNIFORM_FRAGMENTBIT UINT8_C(0x10)
+#define BGFX_UNIFORM_SAMPLERBIT  UINT8_C(0x20)
 
 	const char* getUniformTypeName(UniformType::Enum _enum);
 	UniformType::Enum nameToUniformTypeEnum(const char* _name);
@@ -124,7 +124,7 @@ namespace bgfx
 
 	typedef std::vector<Uniform> UniformArray;
 
-	void printCode(const char* _code, int32_t _line = 0, int32_t _start = 0, int32_t _end = INT32_MAX);
+	void printCode(const char* _code, int32_t _line = 0, int32_t _start = 0, int32_t _end = INT32_MAX, int32_t _column = -1);
 	void strReplace(char* _str, const char* _find, const char* _replace);
 	int32_t writef(bx::WriterI* _writer, const char* _format, ...);
 	void writeFile(const char* _filePath, const void* _data, int32_t _size);

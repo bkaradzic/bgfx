@@ -377,7 +377,7 @@ namespace bgfx
 		strReplace(_str, "\r",   "\n");
 	}
 
-	void printCode(const char* _code, int32_t _line, int32_t _start, int32_t _end)
+	void printCode(const char* _code, int32_t _line, int32_t _start, int32_t _end, int32_t _column)
 	{
 		fprintf(stderr, "Code:\n---\n");
 
@@ -386,7 +386,20 @@ namespace bgfx
 		{
 			if (line >= _start)
 			{
-				fprintf(stderr, "%s%3d: %s", _line == line ? ">>> " : "    ", line, lr.getLine().c_str() );
+				if (_line == line)
+				{
+					fprintf(stderr, "\n");
+					fprintf(stderr, ">>> %3d: %s", line, lr.getLine().c_str() );
+					if (-1 != _column)
+					{
+						fprintf(stderr, ">>> %3d: %*s\n", _column, _column, "^");
+					}
+					fprintf(stderr, "\n");
+				}
+				else
+				{
+					fprintf(stderr, "    %3d: %s", line, lr.getLine().c_str() );
+				}
 			}
 			else
 			{

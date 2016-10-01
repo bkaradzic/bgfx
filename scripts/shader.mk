@@ -15,14 +15,14 @@ ifndef TARGET
 .PHONY: all
 all:
 	@echo Usage: make TARGET=# [clean, all, rebuild]
-	@echo "  TARGET=0 (hlsl  - dx9)"
-	@echo "  TARGET=1 (hlsl  - dx11)"
+	@echo "  TARGET=0 (hlsl  - d3d9)"
+	@echo "  TARGET=1 (hlsl  - d3d11)"
 	@echo "  TARGET=2 (essl  - nacl)"
 	@echo "  TARGET=3 (essl  - android)"
-	@echo "  TARGET=4 (glsl  - linux)"
-	@echo "  TARGET=5 (metal - osx/ios)"
-	@echo "  TARGET=6 (pssl  - ps4)"
-	@echo "  VERBOSE=1 show build commands."
+	@echo "  TARGET=4 (glsl)"
+	@echo "  TARGET=5 (metal)"
+	@echo "  TARGET=6 (pssl)"
+	@echo "  TARGET=7 (spriv)"
 else
 
 ifeq ($(TARGET), 0)
