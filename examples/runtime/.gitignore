@@ -2,3 +2,5 @@
 *.so
 *.pdb
 imgui*
+shaders/pssl/*
+shaders/spirv/*

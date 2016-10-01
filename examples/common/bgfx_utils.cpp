@@ -108,28 +108,22 @@ static bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name
 {
 	char filePath[512];
 
-	const char* shaderPath = "shaders/dx9/";
+	const char* shaderPath = "???";
 
 	switch (bgfx::getRendererType() )
 	{
+	case bgfx::RendererType::Noop:
+	case bgfx::RendererType::Direct3D9:  shaderPath = "shaders/dx9/";   break;
 	case bgfx::RendererType::Direct3D11:
-	case bgfx::RendererType::Direct3D12:
-		shaderPath = "shaders/dx11/";
-		break;
+	case bgfx::RendererType::Direct3D12: shaderPath = "shaders/dx11/";  break;
+	case bgfx::RendererType::Gnm:        shaderPath = "shaders/pssl/";  break;
+	case bgfx::RendererType::Metal:      shaderPath = "shaders/metal/"; break;
+	case bgfx::RendererType::OpenGL:     shaderPath = "shaders/glsl/";  break;
+	case bgfx::RendererType::OpenGLES:   shaderPath = "shaders/essl/";  break;
+	case bgfx::RendererType::Vulkan:     shaderPath = "shaders/spirv/"; break;
 
-	case bgfx::RendererType::OpenGL:
-		shaderPath = "shaders/glsl/";
-		break;
-
-	case bgfx::RendererType::Metal:
-		shaderPath = "shaders/metal/";
-		break;
-
-	case bgfx::RendererType::OpenGLES:
-		shaderPath = "shaders/gles/";
-		break;
-
-	default:
+	case bgfx::RendererType::Count:
+		BX_CHECK(false, "You should not be here!");
 		break;
 	}
 

@@ -17,8 +17,8 @@ all:
 	@echo Usage: make TARGET=# [clean, all, rebuild]
 	@echo "  TARGET=0 (hlsl  - dx9)"
 	@echo "  TARGET=1 (hlsl  - dx11)"
-	@echo "  TARGET=2 (glsl  - nacl)"
-	@echo "  TARGET=3 (glsl  - android)"
+	@echo "  TARGET=2 (essl  - nacl)"
+	@echo "  TARGET=3 (essl  - android)"
 	@echo "  TARGET=4 (glsl  - linux)"
 	@echo "  TARGET=5 (metal - osx/ios)"
 	@echo "  TARGET=6 (pssl  - ps4)"
@@ -39,13 +39,13 @@ else
 ifeq ($(TARGET), 2)
 VS_FLAGS=--platform nacl
 FS_FLAGS=--platform nacl
-SHADER_PATH=shaders/gles
+SHADER_PATH=shaders/essl
 else
 ifeq ($(TARGET), 3)
 VS_FLAGS=--platform android
 FS_FLAGS=--platform android
 CS_FLAGS=--platform android
-SHADER_PATH=shaders/gles
+SHADER_PATH=shaders/essl
 else
 ifeq ($(TARGET), 4)
 VS_FLAGS=--platform linux -p 120
@@ -64,6 +64,13 @@ VS_FLAGS=--platform orbis -p pssl
 FS_FLAGS=--platform orbis -p pssl
 CS_FLAGS=--platform orbis -p pssl
 SHADER_PATH=shaders/pssl
+else
+ifeq ($(TARGET), 7)
+VS_FLAGS=--platform linux -p spirv
+FS_FLAGS=--platform linux -p spirv
+CS_FLAGS=--platform linux -p spirv
+SHADER_PATH=shaders/spirv
+endif
 endif
 endif
 endif
