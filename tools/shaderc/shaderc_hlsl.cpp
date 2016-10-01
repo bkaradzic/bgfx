@@ -21,7 +21,7 @@
 #	define D3D_SVF_USED 2
 #endif // D3D_SVF_USED
 
-namespace bgfx
+namespace bgfx { namespace hlsl
 {
 	typedef HRESULT(WINAPI* PFN_D3D_COMPILE)(_In_reads_bytes_(SrcDataSize) LPCVOID pSrcData
 		, _In_ SIZE_T SrcDataSize
@@ -536,7 +536,7 @@ namespace bgfx
 		return true;
 	}
 
-	bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::string& _code, bx::WriterI* _writer, bool _firstPass)
+	static bool compile(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::string& _code, bx::WriterI* _writer, bool _firstPass)
 	{
 		const char* profile = _cmdLine.findOption('p', "profile");
 		if (NULL == profile)
@@ -687,7 +687,7 @@ namespace bgfx
 				}
 
 				// recompile with the unused uniforms converted to statics
-				return compileHLSLShader(_cmdLine, _d3d, output.c_str(), _writer, false);
+				return compileHLSLShader(_cmdLine, _d3d, output.c_str(), _writer);
 			}
 		}
 
@@ -783,16 +783,22 @@ namespace bgfx
 		return result;
 	}
 
+} // namespace hlsl
+
+	bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
+	{
+		return hlsl::compile(_cmdLine, _version, _code, _writer, true);
+	}
+
 } // namespace bgfx
 
 #else
 
 namespace bgfx
 {
-
-	bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _d3d, const std::string& _code, bx::WriterI* _writer, bool _firstPass)
+	bool compileHLSLShader(bx::CommandLine& _cmdLine, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
 	{
-		BX_UNUSED(_cmdLine, _d3d, _code, _writer, _firstPass);
+		BX_UNUSED(_cmdLine, _version, _code, _writer);
 		fprintf(stderr, "HLSL compiler is not supported on this platform.\n");
 		return false;
 	}

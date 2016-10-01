@@ -114,4 +114,8 @@ project "shaderc"
 		path.join(GLSL_OPTIMIZER, "src/glsl/builtin_stubs.cpp"),
 	}
 
+	overridefiles(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
+			path.join(BGFX_DIR, "tools/shaderc/shaderc_pssl.cpp"),
+	})
+
 	strip()

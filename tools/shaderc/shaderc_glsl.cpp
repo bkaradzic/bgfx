@@ -6,9 +6,9 @@
 #include "shaderc.h"
 #include "glsl_optimizer.h"
 
-namespace bgfx
+namespace bgfx { namespace glsl
 {
-	bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _gles, const std::string& _code, bx::WriterI* _writer)
+	static bool compile(bx::CommandLine& _cmdLine, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
 	{
 		char ch = char(tolower(_cmdLine.findOption('\0', "type")[0]) );
 		const glslopt_shader_type type = ch == 'f'
@@ -16,7 +16,7 @@ namespace bgfx
 			: (ch == 'c' ? kGlslOptShaderCompute : kGlslOptShaderVertex);
 
 		glslopt_target target = kGlslTargetOpenGL;
-		switch (_gles)
+		switch (_version)
 		{
 		case BX_MAKEFOURCC('M', 'T', 'L', 0):
 			target = kGlslTargetMetal;
@@ -69,7 +69,7 @@ namespace bgfx
 			optimizedShader = bx::strnl(optimizedShader);
 		}
 
-		if (0 != _gles)
+		if (0 != _version)
 		{
 			char* code = const_cast<char*>(optimizedShader);
 			strReplace(code, "gl_FragDepthEXT", "gl_FragDepth");
@@ -218,6 +218,13 @@ namespace bgfx
 		glslopt_cleanup(ctx);
 
 		return true;
+	}
+
+} // namespace glsl
+
+	bool compileGLSLShader(bx::CommandLine& _cmdLine, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
+	{
+		return glsl::compile(_cmdLine, _version, _code, _writer);
 	}
 
 } // namespace bgfx

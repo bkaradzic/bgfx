@@ -20,7 +20,8 @@ all:
 	@echo "  TARGET=2 (glsl  - nacl)"
 	@echo "  TARGET=3 (glsl  - android)"
 	@echo "  TARGET=4 (glsl  - linux)"
-	@echo "  TARGET=5 (metal - OSX/iOS)"
+	@echo "  TARGET=5 (metal - osx/ios)"
+	@echo "  TARGET=6 (pssl  - ps4)"
 	@echo "  VERBOSE=1 show build commands."
 else
 
@@ -57,6 +58,13 @@ VS_FLAGS=--platform osx -p metal
 FS_FLAGS=--platform osx -p metal
 CS_FLAGS=--platform osx -p metal
 SHADER_PATH=shaders/metal
+else
+ifeq ($(TARGET), 6)
+VS_FLAGS=--platform orbis -p pssl
+FS_FLAGS=--platform orbis -p pssl
+CS_FLAGS=--platform orbis -p pssl
+SHADER_PATH=shaders/pssl
+endif
 endif
 endif
 endif

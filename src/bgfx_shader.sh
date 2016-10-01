@@ -28,7 +28,7 @@
 #	define EARLY_DEPTH_STENCIL
 #endif // BGFX_SHADER_LANGUAGE_HLSL > 3 && BGFX_SHADER_TYPE_FRAGMENT
 
-#if BGFX_SHADER_LANGUAGE_HLSL
+#if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL
 #	define CONST(_x) static const _x
 #	define dFdx(_x) ddx(_x)
 #	define dFdy(_y) ddy(-_y)
@@ -39,18 +39,20 @@
 #	define bvec3 bool3
 #	define bvec4 bool4
 
-#	if BGFX_SHADER_LANGUAGE_HLSL > 3
-#		if BGFX_SHADER_LANGUAGE_HLSL > 4
+#	if BGFX_SHADER_LANGUAGE_HLSL > 3 || BGFX_SHADER_LANGUAGE_PSSL
+#		if BGFX_SHADER_LANGUAGE_HLSL > 4 || BGFX_SHADER_LANGUAGE_PSSL
 #			define dFdxCoarse(_x) ddx_coarse(_x)
 #			define dFdxFine(_x)   ddx_fine(_x)
 #			define dFdyCoarse(_y) ddy_coarse(-_y)
 #			define dFdyFine(_y)   ddy_fine(-_y)
 #		endif // BGFX_SHADER_LANGUAGE_HLSL > 4
 
+#	if BGFX_SHADER_LANGUAGE_HLSL
 float intBitsToFloat(int   _x) { return asfloat(_x); }
 vec2  intBitsToFloat(uint2 _x) { return asfloat(_x); }
 vec3  intBitsToFloat(uint3 _x) { return asfloat(_x); }
 vec4  intBitsToFloat(uint4 _x) { return asfloat(_x); }
+#	endif // BGFX_SHADER_LANGUAGE_HLSL
 
 float uintBitsToFloat(uint  _x) { return asfloat(_x); }
 vec2  uintBitsToFloat(uint2 _x) { return asfloat(_x); }
@@ -192,7 +194,7 @@ vec4 bgfxTexture3DLod(BgfxSampler3D _sampler, vec3 _coord, float _level)
 
 ivec4 bgfxTexture3D(BgfxISampler3D _sampler, vec3 _coord)
 {
-	ivec3 size;
+	uvec3 size;
 	_sampler.m_texture.GetDimensions(size.x, size.y, size.z);
 	return _sampler.m_texture.Load(ivec4(_coord * size, 0) );
 }
@@ -201,7 +203,7 @@ uvec4 bgfxTexture3D(BgfxUSampler3D _sampler, vec3 _coord)
 {
 	uvec3 size;
 	_sampler.m_texture.GetDimensions(size.x, size.y, size.z);
-	return _sampler.m_texture.Load(uvec4(_coord * size, 0) );
+	return _sampler.m_texture.Load(ivec4(_coord * size, 0) );
 }
 
 vec4 bgfxTextureCube(BgfxSamplerCube _sampler, vec3 _coord)
@@ -441,11 +443,11 @@ vec2 vec2_splat(float _x) { return vec2(_x, _x); }
 vec3 vec3_splat(float _x) { return vec3(_x, _x, _x); }
 vec4 vec4_splat(float _x) { return vec4(_x, _x, _x, _x); }
 
-#if BGFX_SHADER_LANGUAGE_GLSL >= 130 || BGFX_SHADER_LANGUAGE_HLSL
+#if BGFX_SHADER_LANGUAGE_GLSL >= 130 || BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL
 uvec2 uvec2_splat(uint _x) { return uvec2(_x, _x); }
 uvec3 uvec3_splat(uint _x) { return uvec3(_x, _x, _x); }
 uvec4 uvec4_splat(uint _x) { return uvec4(_x, _x, _x, _x); }
-#endif // BGFX_SHADER_LANGUAGE_GLSL >= 130 || BGFX_SHADER_LANGUAGE_HLSL
+#endif // BGFX_SHADER_LANGUAGE_GLSL >= 130 || BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL
 
 uniform vec4  u_viewRect;
 uniform vec4  u_viewTexel;
