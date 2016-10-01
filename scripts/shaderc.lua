@@ -118,4 +118,8 @@ project "shaderc"
 			path.join(BGFX_DIR, "tools/shaderc/shaderc_pssl.cpp"),
 	})
 
+	overridefiles(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
+			path.join(BGFX_DIR, "tools/shaderc/shaderc_spirv.cpp"),
+	})
+
 	strip()

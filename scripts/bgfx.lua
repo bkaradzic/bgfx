@@ -10,7 +10,7 @@ function overridefiles(_srcPath, _dstPath, _files)
 	for _, file in ipairs(_files) do
 		file = path.getrelative(_srcPath, file)
 		local filePath = path.join(BGFX_DIR, "../bgfx-ext", file)
-		if not os.isfile(filePath) then print(filePath .. " not found") return end
+		if not os.isfile(filePath) then return end
 
 		table.insert(remove, path.join(_srcPath, file))
 		table.insert(add, filePath)
