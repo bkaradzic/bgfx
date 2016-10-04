@@ -575,7 +575,11 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 
-		destroyProgram(m_program);
+		if (isValid(m_program) )
+		{
+			destroyProgram(m_program);
+		}
+
 		destroyTexture(m_texture);
 		s_ctx->destroyTransientVertexBuffer(m_vb);
 		s_ctx->destroyTransientIndexBuffer(m_ib);
@@ -2446,12 +2450,15 @@ namespace bgfx
 				s_callbackStub = BX_NEW(g_allocator, CallbackStub);
 		}
 
-		if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_NACL || BX_PLATFORM_PS4)
+		if (true
+		&&  !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_NACL || BX_PLATFORM_PS4)
+		&&  RendererType::Noop != _type
 		&&  NULL == g_platformData.ndt
 		&&  NULL == g_platformData.nwh
 		&&  NULL == g_platformData.context
 		&&  NULL == g_platformData.backBuffer
-		&&  NULL == g_platformData.backBufferDS)
+		&&  NULL == g_platformData.backBufferDS
+		   )
 		{
 			BX_TRACE("bgfx platform data like window handle or backbuffer must be set.");
 			goto error;

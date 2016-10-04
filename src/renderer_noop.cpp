@@ -13,6 +13,29 @@ namespace bgfx { namespace noop
 	{
 		RendererContextNOOP()
 		{
+			// Pretend all features that are not returning results to CPU
+			// are available.
+			g_caps.supported = 0
+				| BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
+				| BGFX_CAPS_TEXTURE_COMPARE_ALL
+				| BGFX_CAPS_TEXTURE_3D
+				| BGFX_CAPS_VERTEX_ATTRIB_HALF
+				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
+				| BGFX_CAPS_INSTANCING
+				| BGFX_CAPS_FRAGMENT_DEPTH
+				| BGFX_CAPS_BLEND_INDEPENDENT
+				| BGFX_CAPS_COMPUTE
+				| BGFX_CAPS_FRAGMENT_ORDERING
+				| BGFX_CAPS_SWAP_CHAIN
+				| BGFX_CAPS_INDEX32
+				| BGFX_CAPS_DRAW_INDIRECT
+				| BGFX_CAPS_HIDPI
+				| BGFX_CAPS_TEXTURE_BLIT
+				| BGFX_CAPS_ALPHA_TO_COVERAGE
+				| BGFX_CAPS_CONSERVATIVE_RASTER
+				| BGFX_CAPS_TEXTURE_2D_ARRAY
+				| BGFX_CAPS_TEXTURE_CUBE_ARRAY
+				;
 		}
 
 		~RendererContextNOOP()
