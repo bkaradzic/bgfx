@@ -33,7 +33,6 @@ namespace bgfx
 		enum Enum
 		{
 			DebugCheck,
-			MinimumRequiredSpecs,
 			InvalidShader,
 			UnableToInitialize,
 			UnableToCreateTexture,
