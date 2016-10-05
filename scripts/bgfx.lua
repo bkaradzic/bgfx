@@ -3,13 +3,23 @@
 -- License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 --
 
+function filesexist(_srcPath, _dstPath, _files)
+	for _, file in ipairs(_files) do
+		file = path.getrelative(_srcPath, file)
+		local filePath = path.join(_dstPath, file)
+		if not os.isfile(filePath) then return false end
+	end
+
+	return true
+end
+
 function overridefiles(_srcPath, _dstPath, _files)
 
 	local remove = {}
 	local add = {}
 	for _, file in ipairs(_files) do
 		file = path.getrelative(_srcPath, file)
-		local filePath = path.join(BGFX_DIR, "../bgfx-ext", file)
+		local filePath = path.join(_dstPath, file)
 		if not os.isfile(filePath) then return end
 
 		table.insert(remove, path.join(_srcPath, file))

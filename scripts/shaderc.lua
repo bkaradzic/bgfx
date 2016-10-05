@@ -118,8 +118,14 @@ project "shaderc"
 			path.join(BGFX_DIR, "tools/shaderc/shaderc_pssl.cpp"),
 	})
 
-	overridefiles(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
+	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
+		path.join(BGFX_DIR, "scripts/shaderc.lua"), }) then
+
+		removefiles {
 			path.join(BGFX_DIR, "tools/shaderc/shaderc_spirv.cpp"),
-	})
+		}
+
+		dofile(path.join(BGFX_DIR, "../bgfx-ext/scripts/shaderc.lua") )
+	end
 
 	strip()
