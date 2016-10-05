@@ -39,6 +39,12 @@
 #	define bvec3 bool3
 #	define bvec4 bool4
 
+#	if BGFX_SHADER_LANGUAGE_HLSL > 4
+#		define REGISTER(_type, _reg) register(_type[_reg])
+#	else
+#		define REGISTER(_type, _reg) register(_type ## _reg)
+#	endif // BGFX_SHADER_LANGUAGE_HLSL
+
 #	if BGFX_SHADER_LANGUAGE_HLSL > 3 || BGFX_SHADER_LANGUAGE_PSSL
 #		if BGFX_SHADER_LANGUAGE_HLSL > 4 || BGFX_SHADER_LANGUAGE_PSSL
 #			define dFdxCoarse(_x) ddx_coarse(_x)
@@ -242,14 +248,14 @@ vec4 bgfxTexelFetch(BgfxSampler3D _sampler, ivec3 _coord, int _lod)
 }
 
 #		define SAMPLER2D(_name, _reg) \
-			uniform SamplerState _name ## Sampler : register(s[_reg]); \
-			uniform Texture2D _name ## Texture : register(t[_reg]); \
+			uniform SamplerState _name ## Sampler : REGISTER(s, _reg); \
+			uniform Texture2D _name ## Texture : REGISTER(t, _reg); \
 			static BgfxSampler2D _name = { _name ## Sampler, _name ## Texture }
 #		define ISAMPLER2D(_name, _reg) \
-			uniform Texture2D<ivec4> _name ## Texture : register(t[_reg]); \
+			uniform Texture2D<ivec4> _name ## Texture : REGISTER(t, _reg); \
 			static BgfxISampler2D _name = { _name ## Texture }
 #		define USAMPLER2D(_name, _reg) \
-			uniform Texture2D<uvec4> _name ## Texture : register(t[_reg]); \
+			uniform Texture2D<uvec4> _name ## Texture : REGISTER(t, _reg); \
 			static BgfxUSampler2D _name = { _name ## Texture }
 #		define sampler2D BgfxSampler2D
 #		define texture2D(_sampler, _coord) bgfxTexture2D(_sampler, _coord)
@@ -257,43 +263,43 @@ vec4 bgfxTexelFetch(BgfxSampler3D _sampler, ivec3 _coord, int _lod)
 #		define texture2DProj(_sampler, _coord) bgfxTexture2DProj(_sampler, _coord)
 
 #		define SAMPLER2DARRAY(_name, _reg) \
-			uniform SamplerState _name ## Sampler : register(s[_reg]); \
-			uniform Texture2DArray _name ## Texture : register(t[_reg]); \
+			uniform SamplerState _name ## Sampler : REGISTER(s, _reg); \
+			uniform Texture2DArray _name ## Texture : REGISTER(t, _reg); \
 			static BgfxSampler2DArray _name = { _name ## Sampler, _name ## Texture }
 #		define sampler2DArray BgfxSampler2DArray
 #		define texture2DArray(_sampler, _coord) bgfxTexture2DArray(_sampler, _coord)
 #		define texture2DArrayLod(_sampler, _coord, _lod) bgfxTexture2DArrayLod(_sampler, _coord, _lod)
 
 #		define SAMPLER2DMS(_name, _reg) \
-			uniform Texture2DMS<vec4> _name ## Texture : register(t[_reg]); \
+			uniform Texture2DMS<vec4> _name ## Texture : REGISTER(t, _reg); \
 			static BgfxSampler2DMS _name = { _name ## Texture }
 #		define sampler2DMS BgfxSampler2DMS
 
 #		define SAMPLER2DSHADOW(_name, _reg) \
-			uniform SamplerComparisonState _name ## Sampler : register(s[_reg]); \
-			uniform Texture2D _name ## Texture : register(t[_reg]); \
+			uniform SamplerComparisonState _name ## Sampler : REGISTER(s, _reg); \
+			uniform Texture2D _name ## Texture : REGISTER(t, _reg); \
 			static BgfxSampler2DShadow _name = { _name ## Sampler, _name ## Texture }
 #		define sampler2DShadow BgfxSampler2DShadow
 #		define shadow2D(_sampler, _coord) bgfxShadow2D(_sampler, _coord)
 #		define shadow2DProj(_sampler, _coord) bgfxShadow2DProj(_sampler, _coord)
 
 #		define SAMPLER3D(_name, _reg) \
-			uniform SamplerState _name ## Sampler : register(s[_reg]); \
-			uniform Texture3D _name ## Texture : register(t[_reg]); \
+			uniform SamplerState _name ## Sampler : REGISTER(s, _reg); \
+			uniform Texture3D _name ## Texture : REGISTER(t[_reg]); \
 			static BgfxSampler3D _name = { _name ## Sampler, _name ## Texture }
 #		define ISAMPLER3D(_name, _reg) \
-			uniform Texture3D<ivec4> _name ## Texture : register(t[_reg]); \
+			uniform Texture3D<ivec4> _name ## Texture : REGISTER(t, _reg); \
 			static BgfxISampler3D _name = { _name ## Texture }
 #		define USAMPLER3D(_name, _reg) \
-			uniform Texture3D<uvec4> _name ## Texture : register(t[_reg]); \
+			uniform Texture3D<uvec4> _name ## Texture : REGISTER(t, _reg); \
 			static BgfxUSampler3D _name = { _name ## Texture }
 #		define sampler3D BgfxSampler3D
 #		define texture3D(_sampler, _coord) bgfxTexture3D(_sampler, _coord)
 #		define texture3DLod(_sampler, _coord, _level) bgfxTexture3DLod(_sampler, _coord, _level)
 
 #		define SAMPLERCUBE(_name, _reg) \
-			uniform SamplerState _name ## Sampler : register(s[_reg]); \
-			uniform TextureCube _name ## Texture : register(t[_reg]); \
+			uniform SamplerState _name ## Sampler : REGISTER(s, _reg); \
+			uniform TextureCube _name ## Texture : REGISTER(t, _reg); \
 			static BgfxSamplerCube _name = { _name ## Sampler, _name ## Texture }
 #		define samplerCube BgfxSamplerCube
 #		define textureCube(_sampler, _coord) bgfxTextureCube(_sampler, _coord)
@@ -335,19 +341,19 @@ float bgfxShadow2DProj(sampler2DShadow _sampler, vec4 _coord)
 #endif // 0
 }
 
-#		define SAMPLER2D(_name, _reg) uniform sampler2D _name : register(s ## _reg)
-#		define SAMPLER2DMS(_name, _reg) uniform sampler2DMS _name : register(s ## _reg)
+#		define SAMPLER2D(_name, _reg) uniform sampler2D _name : REGISTER(s, _reg)
+#		define SAMPLER2DMS(_name, _reg) uniform sampler2DMS _name : REGISTER(s, _reg)
 #		define texture2D(_sampler, _coord) tex2D(_sampler, _coord)
 #		define texture2DProj(_sampler, _coord) bgfxTexture2DProj(_sampler, _coord)
 
-#		define SAMPLER2DSHADOW(_name, _reg) uniform sampler2DShadow _name : register(s ## _reg)
+#		define SAMPLER2DSHADOW(_name, _reg) uniform sampler2DShadow _name : REGISTER(s, _reg)
 #		define shadow2D(_sampler, _coord) bgfxShadow2D(_sampler, _coord)
 #		define shadow2DProj(_sampler, _coord) bgfxShadow2DProj(_sampler, _coord)
 
-#		define SAMPLER3D(_name, _reg) uniform sampler3D _name : register(s ## _reg)
+#		define SAMPLER3D(_name, _reg) uniform sampler3D _name : REGISTER(s, _reg)
 #		define texture3D(_sampler, _coord) tex3D(_sampler, _coord)
 
-#		define SAMPLERCUBE(_name, _reg) uniform samplerCUBE _name : register(s[_reg])
+#		define SAMPLERCUBE(_name, _reg) uniform samplerCUBE _name : REGISTER(s, _reg)
 #		define textureCube(_sampler, _coord) texCUBE(_sampler, _coord)
 
 #		if BGFX_SHADER_LANGUAGE_HLSL == 2
