@@ -8,10 +8,11 @@
 namespace bgfx
 {
 
-#define BGFX_DECLARE_EMBEDDED_SHADER(_name)                          \
-			extern const uint8_t  BX_CONCATENATE(_name, _pssl[]);    \
-			extern const uint32_t BX_CONCATENATE(_name, _pssl_size); \
-			const uint8_t  BX_CONCATENATE(_name, _pssl[]) = { 0 };   \
+#define BGFX_DECLARE_EMBEDDED_SHADER(_name)                                                     \
+			extern const uint8_t* BX_CONCATENATE(_name, _pssl);                                 \
+			extern const uint32_t BX_CONCATENATE(_name, _pssl_size);                            \
+			static const uint8_t  BX_CONCATENATE(_name, _int_pssl)[] = { 0 };                   \
+			const uint8_t* BX_CONCATENATE(_name, _pssl) = &BX_CONCATENATE(_name, _int_pssl)[0]; \
 			const uint32_t BX_CONCATENATE(_name, _pssl_size) = 1
 
 BGFX_DECLARE_EMBEDDED_SHADER(vs_debugfont);
