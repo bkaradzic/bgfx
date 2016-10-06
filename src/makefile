@@ -25,7 +25,7 @@ all: $(BIN)
 
 define shader-embedded
 	@echo [$(<)]
-	 $(SILENT) $(SHADERC) --type $(1) --platform linux                  -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_glsl
+	 $(SILENT) $(SHADERC) --type $(1) --platform linux                 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_glsl
 	 @cat $(SHADER_TMP) > $(@)
 	-$(SILENT) $(SHADERC) --type $(1) --platform windows -p $(2)  -O 3 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_dx9
 	-@cat $(SHADER_TMP) >> $(@)
@@ -33,6 +33,8 @@ define shader-embedded
 	-@cat $(SHADER_TMP) >> $(@)
 	-$(SILENT) $(SHADERC) --type $(1) --platform ios     -p metal -O 3 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_mtl
 	-@cat $(SHADER_TMP) >> $(@)
+	-@echo extern const uint8_t* $(basename $(<))_pssl;>> $(@)
+	-@echo extern const uint32_t $(basename $(<))_pssl_size;>> $(@)
 endef
 
 vs_debugfont.bin.h : vs_debugfont.sc

@@ -2836,8 +2836,16 @@ namespace bgfx
 		{
 			bx::MemoryReader reader(_mem->data, _mem->size);
 
+			bx::Error err;
+
 			uint32_t magic;
-			bx::read(&reader, magic);
+			bx::read(&reader, magic, &err);
+
+			if (!err.isOk() )
+			{
+				ShaderHandle invalid = BGFX_INVALID_HANDLE;
+				return invalid;
+			}
 
 			if (BGFX_CHUNK_MAGIC_CSH != magic
 			&&  BGFX_CHUNK_MAGIC_FSH != magic

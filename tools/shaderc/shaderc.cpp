@@ -963,6 +963,7 @@ namespace bgfx
 		{
 			preprocessor.setDefine("BX_PLATFORM_PS4=1");
 			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_PSSL=1");
+			preprocessor.setDefine("lit=lit_reserved");
 		}
 		else
 		{
