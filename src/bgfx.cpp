@@ -1066,7 +1066,7 @@ namespace bgfx
 		BX_TRACE("");
 
 		RendererType::Enum renderers[RendererType::Count];
-		uint8_t num = getSupportedRenderers(renderers);
+		uint8_t num = getSupportedRenderers(BX_COUNTOF(renderers), renderers);
 
 		BX_TRACE("Supported renderer backends (%d):", num);
 		for (uint32_t ii = 0; ii < num; ++ii)
@@ -2384,10 +2384,12 @@ namespace bgfx
 		topologySortTriList(_sort, _dst, _dstSize, _dir, _pos, _vertices, _stride, _indices, _numIndices, _index32, g_allocator);
 	}
 
-	uint8_t getSupportedRenderers(RendererType::Enum _enum[RendererType::Count])
+	uint8_t getSupportedRenderers(uint8_t _max, RendererType::Enum* _enum)
 	{
+		_enum = _max == 0 ? NULL : _enum;
+
 		uint8_t num = 0;
-		for (uint8_t ii = 0; ii < uint8_t(RendererType::Count); ++ii)
+		for (uint8_t ii = 0; ii < RendererType::Count; ++ii)
 		{
 			if ( (RendererType::Direct3D11 == ii || RendererType::Direct3D12 == ii)
 			&&  windowsVersionIs(Condition::LessEqual, 0x0502) )
@@ -2395,9 +2397,17 @@ namespace bgfx
 				continue;
 			}
 
-			if (s_rendererCreator[ii].supported)
+			if (NULL == _enum)
 			{
-				_enum[num++] = RendererType::Enum(ii);
+				num++;
+			}
+			else
+			{
+				if (num < _max
+				&&  s_rendererCreator[ii].supported)
+				{
+					_enum[num++] = RendererType::Enum(ii);
+				}
 			}
 		}
 
@@ -3920,9 +3930,9 @@ BGFX_C_API void bgfx_image_rgba8_downsample_2x2(uint32_t _width, uint32_t _heigh
 	bgfx::imageRgba8Downsample2x2(_width, _height, _pitch, _src, _dst);
 }
 
-BGFX_C_API uint8_t bgfx_get_supported_renderers(bgfx_renderer_type_t _enum[BGFX_RENDERER_TYPE_COUNT])
+BGFX_C_API uint8_t bgfx_get_supported_renderers(uint8_t _max, bgfx_renderer_type_t* _enum)
 {
-	return bgfx::getSupportedRenderers( (bgfx::RendererType::Enum*)_enum);
+	return bgfx::getSupportedRenderers(_max, (bgfx::RendererType::Enum*)_enum);
 }
 
 BGFX_C_API const char* bgfx_get_renderer_name(bgfx_renderer_type_t _type)

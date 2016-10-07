@@ -951,9 +951,14 @@ namespace bgfx
 
 	/// Returns supported backend API renderers.
 	///
+	/// @param[in] _max Maximum number of elements in _enum array.
+	/// @param[inout] _enum Array where supported renderers will be written.
+	///
+	/// @returns Number of supported renderers.
+	///
 	/// @attention C99 equivalent is `bgfx_get_supported_renderers`.
 	///
-	uint8_t getSupportedRenderers(RendererType::Enum _enum[RendererType::Count]);
+	uint8_t getSupportedRenderers(uint8_t _max = 0, RendererType::Enum* _enum = NULL);
 
 	/// Returns name of renderer.
 	///

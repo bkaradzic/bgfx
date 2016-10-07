@@ -81,7 +81,7 @@ typedef struct bgfx_interface_vtbl
     void (*topology_sort_tri_list)(bgfx_topology_sort_t _sort, void* _dst, uint32_t _dstSize, const float _dir[3], const float _pos[3], const void* _vertices, uint32_t _stride, const void* _indices, uint32_t _numIndices, bool _index32);
     void (*image_swizzle_bgra8)(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst);
     void (*image_rgba8_downsample_2x2)(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst);
-    uint8_t (*get_supported_renderers)(bgfx_renderer_type_t _enum[BGFX_RENDERER_TYPE_COUNT]);
+    uint8_t (*get_supported_renderers)(uint8_t _max, bgfx_renderer_type_t* _enum);
     const char* (*get_renderer_name)(bgfx_renderer_type_t _type);
     bool (*init)(bgfx_renderer_type_t _type, uint16_t _vendorId, uint16_t _deviceId, bgfx_callback_interface_t* _callback, bgfx_allocator_interface_t* _allocator);
     void (*shutdown)();

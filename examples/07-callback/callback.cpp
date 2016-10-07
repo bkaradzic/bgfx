@@ -377,7 +377,7 @@ int _main_(int _argc, char** _argv)
 
 	// Enumerate supported backend renderers.
 	bgfx::RendererType::Enum renderers[bgfx::RendererType::Count];
-	uint8_t numRenderers = bgfx::getSupportedRenderers(renderers);
+	uint8_t numRenderers = bgfx::getSupportedRenderers(BX_COUNTOF(renderers), renderers);
 
 	bgfx::init(bgfx::RendererType::Count == args.m_type
 		? renderers[bx::getHPCounter() % numRenderers] /* randomize renderer */

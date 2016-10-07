@@ -536,7 +536,7 @@ BGFX_C_API void bgfx_image_swizzle_bgra8(uint32_t _width, uint32_t _height, uint
 BGFX_C_API void bgfx_image_rgba8_downsample_2x2(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst);
 
 /**/
-BGFX_C_API uint8_t bgfx_get_supported_renderers(bgfx_renderer_type_t _enum[BGFX_RENDERER_TYPE_COUNT]);
+BGFX_C_API uint8_t bgfx_get_supported_renderers(uint8_t _max, bgfx_renderer_type_t* _enum);
 
 /**/
 BGFX_C_API const char* bgfx_get_renderer_name(bgfx_renderer_type_t _type);
