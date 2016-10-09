@@ -126,7 +126,7 @@ namespace bgfx { namespace gl
 			[glContext makeCurrentContext];
 			GLint interval = 0;
 			[glContext setValues:&interval forParameter:NSOpenGLCPSwapInterval];
-            
+
             // When initializing NSOpenGLView programatically (as we are), this sometimes doesn't
             // get hooked up properly (especially when there are existing window elements). This ensures
             // we are valid. Otherwise, you'll probably get a GL_INVALID_FRAMEBUFFER_OPERATION when
