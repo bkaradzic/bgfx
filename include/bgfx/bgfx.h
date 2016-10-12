@@ -520,7 +520,7 @@ namespace bgfx
 		///
 		uint64_t supported;
 
-		uint16_t vendorId;         //!< Selected GPU vendor id.
+		uint16_t vendorId;         //!< Selected GPU vendor PCI id.
 		uint16_t deviceId;         //!< Selected GPU device id.
 		bool     homogeneousDepth; //!< True when NDC depth is in [-1, 1] range.
 		bool     originBottomLeft; //!< True when NDC origin is at bottom left.
@@ -532,8 +532,8 @@ namespace bgfx
 		///
 		struct GPU
 		{
-			uint16_t vendorId;
-			uint16_t deviceId;
+			uint16_t vendorId; //!< Vendor PCI id. See `BGFX_PCI_ID_*`.
+			uint16_t deviceId; //!< Device id.
 		};
 
 		GPU gpu[4]; //!< Enumerated GPUs.
@@ -541,23 +541,23 @@ namespace bgfx
 		struct Limits
 		{
 			uint32_t maxDrawCalls;            //!< Maximum draw calls.
-			uint32_t maxBlits;                //!<
+			uint32_t maxBlits;                //!< Maximum number of blit calls.
 			uint32_t maxTextureSize;          //!< Maximum texture size.
 			uint32_t maxViews;                //!< Maximum views.
-			uint32_t maxFrameBuffers;         //!<
+			uint32_t maxFrameBuffers;         //!< Maximum number of frame buffer handles.
 			uint32_t maxFBAttachments;        //!< Maximum frame buffer attachments.
-			uint32_t maxPrograms;             //!<
-			uint32_t maxShaders;              //!<
-			uint32_t maxTextures;             //!<
-			uint32_t maxTextureSamplers;      //!<
-			uint32_t maxVertexDecls;          //!<
-			uint32_t maxVertexStreams;        //!<
-			uint32_t maxIndexBuffers;         //!<
-			uint32_t maxVertexBuffers;        //!<
-			uint32_t maxDynamicIndexBuffers;  //!<
-			uint32_t maxDynamicVertexBuffers; //!<
-			uint32_t maxUniforms;             //!<
-			uint32_t maxOcclusionQueries;     //!<
+			uint32_t maxPrograms;             //!< Maximum number of program handles.
+			uint32_t maxShaders;              //!< Maximum number of shader handles.
+			uint32_t maxTextures;             //!< Maximum number of texture handles.
+			uint32_t maxTextureSamplers;      //!< Maximum number of texture samplers.
+			uint32_t maxVertexDecls;          //!< Maximum number of vertex format declarations.
+			uint32_t maxVertexStreams;        //!< Maximum number of vertex streams.
+			uint32_t maxIndexBuffers;         //!< Maximum number of index buffer handles.
+			uint32_t maxVertexBuffers;        //!< Maximum number of vertex buffer handles.
+			uint32_t maxDynamicIndexBuffers;  //!< Maximum number of dynamic index buffer handles.
+			uint32_t maxDynamicVertexBuffers; //!< Maximum number of dynamic vertex buffer handles.
+			uint32_t maxUniforms;             //!< Maximum number of uniform handles.
+			uint32_t maxOcclusionQueries;     //!< Maximum number of occlusion query handles.
 		};
 
 		Limits limits;
