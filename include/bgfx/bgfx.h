@@ -725,7 +725,7 @@ namespace bgfx
 
 		/// End VertexDecl.
 		///
-		/// @attention C99 equivalent is `bgfx_vertex_decl_begin`.
+		/// @attention C99 equivalent is `bgfx_vertex_decl_end`.
 		///
 		void end();
 
