@@ -30,11 +30,21 @@ namespace bgfx
 
 	VRImplOVR::~VRImplOVR()
 	{
+		if (NULL != g_platformData.session)
+		{
+			return;
+		}
+
 		BX_CHECK(NULL == m_session, "OVR not shutdown properly.");
 	}
 
 	bool VRImplOVR::init()
 	{
+		if (NULL != g_platformData.session)
+		{
+			return true;
+		}
+
 		ovrResult initialized = ovr_Initialize(NULL);
 		if (!OVR_SUCCESS(initialized))
 		{
@@ -47,21 +57,30 @@ namespace bgfx
 
 	void VRImplOVR::shutdown()
 	{
+		if (NULL != g_platformData.session)
+		{
+			return;
+		}
+
 		ovr_Shutdown();
 	}
 
 	void VRImplOVR::connect(VRDesc* _desc)
 	{
-		ovrGraphicsLuid luid;
-		ovrResult result = ovr_Create(&m_session, &luid);
-		if (!OVR_SUCCESS(result))
+		if (NULL == g_platformData.session)
 		{
-			BX_TRACE("Failed to create OVR device.");
-			return;
+			ovrGraphicsLuid luid;
+			ovrResult result = ovr_Create(&m_session, &luid);
+			if (!OVR_SUCCESS(result))
+			{
+				BX_TRACE("Failed to create OVR device.");
+				return;
+			}
 		}
-
-		BX_STATIC_ASSERT(sizeof(_desc->m_adapterLuid) >= sizeof(luid));
-		memcpy(&_desc->m_adapterLuid, &luid, sizeof(luid));
+		else
+		{
+			m_session = (ovrSession)g_platformData.session;
+		}
 
 		ovrHmdDesc hmdDesc = ovr_GetHmdDesc(m_session);
 		_desc->m_deviceType = hmdDesc.Type;
@@ -118,6 +137,11 @@ namespace bgfx
 
 	void VRImplOVR::disconnect()
 	{
+		if (NULL != g_platformData.session)
+		{
+			return;
+		}
+
 		if (NULL != m_session)
 		{
 			ovr_Destroy(m_session);
