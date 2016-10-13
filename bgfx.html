@@ -814,8 +814,8 @@
 <dd><p>Renderer types: </p>
 <p><em>Values:</em></p>
 <dl class="member">
-<dt id="_CPPv2N4bgfx12RendererType4NullE">
-<span id="bgfx::RendererType::Null"></span><span class="target" id="bgfxstructbgfx_1_1_renderer_type_1a23d258e890027d7deff9d971e2493a32ab2e5390624b2fd978b59099c1b65763d"></span><code class="descname">Null</code><a class="headerlink" href="#_CPPv2N4bgfx12RendererType4NullE" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx12RendererType4NoopE">
+<span id="bgfx::RendererType::Noop"></span><span class="target" id="bgfxstructbgfx_1_1_renderer_type_1a23d258e890027d7deff9d971e2493a32ae119c2ac9204cc917b956053d53110e6"></span><code class="descname">Noop</code><a class="headerlink" href="#_CPPv2N4bgfx12RendererType4NoopE" title="Permalink to this definition">¶</a></dt>
 <dd><p>No rendering. </p>
 </dd></dl>
 
@@ -835,6 +835,12 @@
 <dt id="_CPPv2N4bgfx12RendererType10Direct3D12E">
 <span id="bgfx::RendererType::Direct3D12"></span><span class="target" id="bgfxstructbgfx_1_1_renderer_type_1a23d258e890027d7deff9d971e2493a32a97ff664bd1c66a64c4bfcf2b1397a62c"></span><code class="descname">Direct3D12</code><a class="headerlink" href="#_CPPv2N4bgfx12RendererType10Direct3D12E" title="Permalink to this definition">¶</a></dt>
 <dd><p>Direct3D 12.0. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx12RendererType3GnmE">
+<span id="bgfx::RendererType::Gnm"></span><span class="target" id="bgfxstructbgfx_1_1_renderer_type_1a23d258e890027d7deff9d971e2493a32a960f8f39bfa96702800236af4add67b5"></span><code class="descname">Gnm</code><a class="headerlink" href="#_CPPv2N4bgfx12RendererType3GnmE" title="Permalink to this definition">¶</a></dt>
+<dd><p>GNM. </p>
 </dd></dl>
 
 <dl class="member">
@@ -859,12 +865,6 @@
 <dt id="_CPPv2N4bgfx12RendererType6VulkanE">
 <span id="bgfx::RendererType::Vulkan"></span><span class="target" id="bgfxstructbgfx_1_1_renderer_type_1a23d258e890027d7deff9d971e2493a32a427ffdf300bed8d7951452ffb21a7638"></span><code class="descname">Vulkan</code><a class="headerlink" href="#_CPPv2N4bgfx12RendererType6VulkanE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Vulkan. </p>
-</dd></dl>
-
-<dl class="member">
-<dt id="_CPPv2N4bgfx12RendererType3GNME">
-<span id="bgfx::RendererType::GNM"></span><span class="target" id="bgfxstructbgfx_1_1_renderer_type_1a23d258e890027d7deff9d971e2493a32a7ead435c9463228e316227e7784c50cd"></span><code class="descname">GNM</code><a class="headerlink" href="#_CPPv2N4bgfx12RendererType3GNME" title="Permalink to this definition">¶</a></dt>
-<dd><p>GNM. </p>
 </dd></dl>
 
 <dl class="member">
@@ -926,7 +926,7 @@
 <dl class="member">
 <dt id="_CPPv2N4bgfx4Caps8vendorIdE">
 <span id="bgfx::Caps::vendorId__uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1ac51fdd2bed74e1e71480409bd40bc4bc"></span>uint16_t <code class="descname">vendorId</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps8vendorIdE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Selected <a class="reference internal" href="#bgfxstructbgfx_1_1_caps_1_1_g_p_u"><span>GPU</span></a> vendor id. </p>
+<dd><p>Selected <a class="reference internal" href="#bgfxstructbgfx_1_1_caps_1_1_g_p_u"><span>GPU</span></a> vendor PCI id. </p>
 </dd></dl>
 
 <dl class="member">
@@ -993,6 +993,21 @@
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_caps_gpu_t</span></code>. </dd>
 </dl>
 </p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N4bgfx4Caps3GPU8vendorIdE">
+<span id="bgfx::Caps::GPU::vendorId__uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_g_p_u_1a77f4cadafbf81c74f4fb7111a2977f3b"></span>uint16_t <code class="descname">vendorId</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps3GPU8vendorIdE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Vendor PCI id. See <code class="docutils literal"><span class="pre">BGFX_PCI_ID_*</span></code>. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx4Caps3GPU8deviceIdE">
+<span id="bgfx::Caps::GPU::deviceId__uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_g_p_u_1ade4c6123ad7964f039b5c5df9de7e6a8"></span>uint16_t <code class="descname">deviceId</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps3GPU8deviceIdE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Device id. </p>
+</dd></dl>
+
+</div>
 </dd></dl>
 
 <dl class="class">
@@ -1004,6 +1019,12 @@
 <dt id="_CPPv2N4bgfx4Caps6Limits12maxDrawCallsE">
 <span id="bgfx::Caps::Limits::maxDrawCalls__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1ac324029c23579396238cca5af3027a64"></span>uint32_t <code class="descname">maxDrawCalls</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits12maxDrawCallsE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Maximum draw calls. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx4Caps6Limits8maxBlitsE">
+<span id="bgfx::Caps::Limits::maxBlits__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1a98c1429581326942d9d795b732f8d65b"></span>uint32_t <code class="descname">maxBlits</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits8maxBlitsE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of blit calls. </p>
 </dd></dl>
 
 <dl class="member">
@@ -1019,9 +1040,87 @@
 </dd></dl>
 
 <dl class="member">
+<dt id="_CPPv2N4bgfx4Caps6Limits15maxFrameBuffersE">
+<span id="bgfx::Caps::Limits::maxFrameBuffers__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1a1af60c77dfe82892b03082c623069128"></span>uint32_t <code class="descname">maxFrameBuffers</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits15maxFrameBuffersE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of frame buffer handles. </p>
+</dd></dl>
+
+<dl class="member">
 <dt id="_CPPv2N4bgfx4Caps6Limits16maxFBAttachmentsE">
 <span id="bgfx::Caps::Limits::maxFBAttachments__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1af7cd37b90264f803a0cd32feb38eef15"></span>uint32_t <code class="descname">maxFBAttachments</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits16maxFBAttachmentsE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Maximum frame buffer attachments. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx4Caps6Limits11maxProgramsE">
+<span id="bgfx::Caps::Limits::maxPrograms__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1af127d6a3eab65655bf39570ff4b11734"></span>uint32_t <code class="descname">maxPrograms</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits11maxProgramsE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of program handles. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx4Caps6Limits10maxShadersE">
+<span id="bgfx::Caps::Limits::maxShaders__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1a53e281859a518d7791a8b1246209e1e9"></span>uint32_t <code class="descname">maxShaders</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits10maxShadersE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of shader handles. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx4Caps6Limits11maxTexturesE">
+<span id="bgfx::Caps::Limits::maxTextures__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1a2bcb4e498ce04ceae93ef8a8b54f65f7"></span>uint32_t <code class="descname">maxTextures</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits11maxTexturesE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of texture handles. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx4Caps6Limits18maxTextureSamplersE">
+<span id="bgfx::Caps::Limits::maxTextureSamplers__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1a7fcc0f7cfdb9557ae37e5bde1d1a2a1f"></span>uint32_t <code class="descname">maxTextureSamplers</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits18maxTextureSamplersE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of texture samplers. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx4Caps6Limits14maxVertexDeclsE">
+<span id="bgfx::Caps::Limits::maxVertexDecls__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1a94bbdf9e33aa717cc93d3984952ac8a9"></span>uint32_t <code class="descname">maxVertexDecls</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits14maxVertexDeclsE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of vertex format declarations. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx4Caps6Limits16maxVertexStreamsE">
+<span id="bgfx::Caps::Limits::maxVertexStreams__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1ae3b60d96f126e89d57a177872f489527"></span>uint32_t <code class="descname">maxVertexStreams</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits16maxVertexStreamsE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of vertex streams. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx4Caps6Limits15maxIndexBuffersE">
+<span id="bgfx::Caps::Limits::maxIndexBuffers__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1a91d6bc8e86abd9eca8cc0fe303d3cf6c"></span>uint32_t <code class="descname">maxIndexBuffers</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits15maxIndexBuffersE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of index buffer handles. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx4Caps6Limits16maxVertexBuffersE">
+<span id="bgfx::Caps::Limits::maxVertexBuffers__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1af9f48ed16a60e74e3815daf6df3ed25f"></span>uint32_t <code class="descname">maxVertexBuffers</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits16maxVertexBuffersE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of vertex buffer handles. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx4Caps6Limits22maxDynamicIndexBuffersE">
+<span id="bgfx::Caps::Limits::maxDynamicIndexBuffers__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1ad64d97f5d9cb0fa5994148656eb2cbaa"></span>uint32_t <code class="descname">maxDynamicIndexBuffers</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits22maxDynamicIndexBuffersE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of dynamic index buffer handles. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx4Caps6Limits23maxDynamicVertexBuffersE">
+<span id="bgfx::Caps::Limits::maxDynamicVertexBuffers__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1a1e5f37cc9f8e05729852ee2ae363d3c2"></span>uint32_t <code class="descname">maxDynamicVertexBuffers</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits23maxDynamicVertexBuffersE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of dynamic vertex buffer handles. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx4Caps6Limits11maxUniformsE">
+<span id="bgfx::Caps::Limits::maxUniforms__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1af9f56afc24d7287d577c948f8e848f06"></span>uint32_t <code class="descname">maxUniforms</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits11maxUniformsE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of uniform handles. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx4Caps6Limits19maxOcclusionQueriesE">
+<span id="bgfx::Caps::Limits::maxOcclusionQueries__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1a64c6f40f46021e9d5fbec9c27d3fbece"></span>uint32_t <code class="descname">maxOcclusionQueries</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits19maxOcclusionQueriesE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of occlusion query handles. </p>
 </dd></dl>
 
 </div>
@@ -3557,7 +3656,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <p class="breathe-sectiondef-title rubric">Public Functions</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx10VertexDecl5beginEN12RendererType4EnumE">
-<span id="bgfx::VertexDecl::begin__RendererType::Enum"></span><span class="target" id="bgfxstructbgfx_1_1_vertex_decl_1a0d711e9b9451ee68d20acddc7ae824bc"></span><a class="reference internal" href="#_CPPv2N4bgfx10VertexDeclE" title="bgfx::VertexDecl">VertexDecl</a> &amp;<code class="descname">begin</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv2N4bgfx12RendererTypeE" title="bgfx::RendererType">RendererType</a>::<a class="reference internal" href="#_CPPv2N4bgfx12RendererType4EnumE" title="bgfx::RendererType::Enum">Enum</a> <em>_renderer</em> = RendererType::Null<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx10VertexDecl5beginEN12RendererType4EnumE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::VertexDecl::begin__RendererType::Enum"></span><span class="target" id="bgfxstructbgfx_1_1_vertex_decl_1ab5794ea5c4dab7dfb20f0e125b64733d"></span><a class="reference internal" href="#_CPPv2N4bgfx10VertexDeclE" title="bgfx::VertexDecl">VertexDecl</a> &amp;<code class="descname">begin</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv2N4bgfx12RendererTypeE" title="bgfx::RendererType">RendererType</a>::<a class="reference internal" href="#_CPPv2N4bgfx12RendererType4EnumE" title="bgfx::RendererType::Enum">Enum</a> <em>_renderer</em> = RendererType::Noop<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx10VertexDecl5beginEN12RendererType4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start <a class="reference internal" href="#bgfxstructbgfx_1_1_vertex_decl"><span>VertexDecl</span></a>. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3572,7 +3671,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dd><p>End <a class="reference internal" href="#bgfxstructbgfx_1_1_vertex_decl"><span>VertexDecl</span></a>. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_vertex_decl_begin</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_vertex_decl_end</span></code>. </dd>
 </dl>
 </p>
 </dd></dl>
