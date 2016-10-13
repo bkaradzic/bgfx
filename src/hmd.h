@@ -26,7 +26,6 @@ namespace bgfx
 
 	struct VRDesc
 	{
-		uint64_t m_adapterLuid;
 		uint32_t m_deviceType;
 		float m_refreshRate;
 		VRSize m_deviceSize;

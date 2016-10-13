@@ -51,6 +51,7 @@ namespace bgfx
 		void* context;      //!< GL context, or D3D device.
 		void* backBuffer;   //!< GL backbuffer, or D3D render target view.
 		void* backBufferDS; //!< Backbuffer depth/stencil.
+		void* session;      //!< ovrSession, for Oculus SDK
 	};
 
 	/// Set platform data.
