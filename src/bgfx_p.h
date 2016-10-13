@@ -3976,21 +3976,28 @@ namespace bgfx
 		{
 			if (!m_singleThreaded)
 			{
-				m_gameSem.post();
+				m_apiSem.post();
 			}
 		}
 
-		void gameSemWait()
+		bool apiSemWait(int32_t _msecs = -1)
 		{
-			if (!m_singleThreaded)
+			if (m_singleThreaded)
 			{
-				BGFX_PROFILER_SCOPE(bgfx, main_thread_wait, 0xff2040ff);
-				int64_t start = bx::getHPCounter();
-				bool ok = m_gameSem.wait();
-				BX_CHECK(ok, "Semaphore wait failed."); BX_UNUSED(ok);
+				return true;
+			}
+
+			BGFX_PROFILER_SCOPE(bgfx, main_thread_wait, 0xff2040ff);
+			int64_t start = bx::getHPCounter();
+			bool ok = m_apiSem.wait(_msecs);
+			if (ok)
+			{
 				m_render->m_waitSubmit = bx::getHPCounter()-start;
 				m_submit->m_perfStats.waitSubmit = m_submit->m_waitSubmit;
+				return true;
 			}
+
+			return false;
 		}
 
 		void renderSemPost()
@@ -4015,15 +4022,16 @@ namespace bgfx
 		}
 
 		bx::Semaphore m_renderSem;
-		bx::Semaphore m_gameSem;
+		bx::Semaphore m_apiSem;
 		bx::Thread m_thread;
 #else
 		void gameSemPost()
 		{
 		}
 
-		void gameSemWait()
+		bool apiSemWait()
 		{
+			return true;
 		}
 
 		void renderSemPost()

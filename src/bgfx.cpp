@@ -980,7 +980,7 @@ namespace bgfx
 			if (s_ctx->renderFrame() )
 			{
 				Context* ctx = s_ctx;
-				ctx->gameSemWait();
+				ctx->apiSemWait();
 				s_ctx = NULL;
 				ctx->renderSemPost();
 				return RenderFrame::Exiting;
@@ -1568,22 +1568,23 @@ namespace bgfx
 			m_renderCtx->flip(m_render->m_hmd);
 		}
 
-		gameSemWait();
-
-		rendererExecCommands(m_render->m_cmdPre);
-		if (m_rendererInitialized)
+		if (apiSemWait(BGFX_CONFIG_API_SEMAPHORE_TIMEOUT) )
 		{
-			BGFX_PROFILER_SCOPE(bgfx, render_submit, 0xff2040ff);
-			m_renderCtx->submit(m_render, m_clearQuad, m_textVideoMemBlitter);
-		}
-		rendererExecCommands(m_render->m_cmdPost);
+			rendererExecCommands(m_render->m_cmdPre);
+			if (m_rendererInitialized)
+			{
+				BGFX_PROFILER_SCOPE(bgfx, render_submit, 0xff2040ff);
+				m_renderCtx->submit(m_render, m_clearQuad, m_textVideoMemBlitter);
+			}
+			rendererExecCommands(m_render->m_cmdPost);
 
-		renderSemPost();
+			renderSemPost();
 
-		if (m_rendererInitialized
-		&&  m_flipAfterRender)
-		{
-			m_renderCtx->flip(m_render->m_hmd);
+			if (m_rendererInitialized
+			&&  m_flipAfterRender)
+			{
+				m_renderCtx->flip(m_render->m_hmd);
+			}
 		}
 
 		return m_exit;
