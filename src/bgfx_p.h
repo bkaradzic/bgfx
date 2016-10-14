@@ -4029,8 +4029,9 @@ namespace bgfx
 		{
 		}
 
-		bool apiSemWait()
+		bool apiSemWait(int32_t _msecs = -1)
 		{
+			BX_UNUSED(_msecs);
 			return true;
 		}
 
