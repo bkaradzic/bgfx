@@ -2563,7 +2563,7 @@ namespace bgfx
 	///   call submit.
 	/// @returns Number of draw calls.
 	///
-	/// @attention C99 equivalent is `bgfx_submit_occlusion_query.
+	/// @attention C99 equivalent is `bgfx_submit_occlusion_query`.
 	///
 	uint32_t submit(
 		  uint8_t _id
