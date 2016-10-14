@@ -986,7 +986,7 @@ namespace bgfx
 	/// @param[in] _callback Provide application specific callback interface.
 	///   See: `bgfx::CallbackI`
 	///
-	/// @param[in] _reallocator Custom allocator. When custom allocator is not
+	/// @param[in] _allocator Custom allocator. When custom allocator is not
 	///   specified, library uses default CRT allocator. The library assumes
 	///   custom allocator is thread safe.
 	///
@@ -999,7 +999,7 @@ namespace bgfx
 		, uint16_t _vendorId = BGFX_PCI_ID_NONE
 		, uint16_t _deviceId = 0
 		, CallbackI* _callback = NULL
-		, bx::AllocatorI* _reallocator = NULL
+		, bx::AllocatorI* _allocator = NULL
 		);
 
 	/// Shutdown bgfx library.
