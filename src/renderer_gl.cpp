@@ -4350,6 +4350,11 @@ namespace bgfx { namespace gl
 		, const GLvoid* _data
 	)
 	{
+		if (NULL == _data)
+		{
+			return;
+		}
+		
 		if (_target == GL_TEXTURE_3D
 		||  _target == GL_TEXTURE_2D_ARRAY
 		||  _target == GL_TEXTURE_CUBE_MAP_ARRAY)
@@ -4420,7 +4425,19 @@ namespace bgfx { namespace gl
 		else if (_target == GL_TEXTURE_2D_ARRAY
 			 ||  _target == GL_TEXTURE_CUBE_MAP_ARRAY)
 		{
-			texSubImage(_target, _level, 0, 0, _depth, _width, _height, 1, _format, _type, _data);
+			texSubImage(
+				  _target
+				, _level
+				, 0
+				, 0
+				, _depth
+				, _width
+				, _height
+				, 1
+				, _format
+				, _type
+				, _data
+				);
 		}
 		else if (_target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY)
 		{
