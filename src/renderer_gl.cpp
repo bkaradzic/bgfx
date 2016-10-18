@@ -4354,7 +4354,7 @@ namespace bgfx { namespace gl
 		{
 			return;
 		}
-		
+
 		if (_target == GL_TEXTURE_3D
 		||  _target == GL_TEXTURE_2D_ARRAY
 		||  _target == GL_TEXTURE_CUBE_MAP_ARRAY)
@@ -5980,7 +5980,8 @@ namespace bgfx { namespace gl
 		uint32_t dsFlags = _flags & (BGFX_CLEAR_DISCARD_DEPTH|BGFX_CLEAR_DISCARD_STENCIL);
 		if (BGFX_CLEAR_NONE != dsFlags)
 		{
-			if ( (BGFX_CLEAR_DISCARD_DEPTH|BGFX_CLEAR_DISCARD_STENCIL) == dsFlags)
+			if (!BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
+			&&  (BGFX_CLEAR_DISCARD_DEPTH|BGFX_CLEAR_DISCARD_STENCIL) == dsFlags)
 			{
 				buffers[idx++] = GL_DEPTH_STENCIL_ATTACHMENT;
 			}
