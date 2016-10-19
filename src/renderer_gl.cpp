@@ -4350,6 +4350,11 @@ namespace bgfx { namespace gl
 		, const GLvoid* _data
 	)
 	{
+		if (NULL == _data)
+		{
+			return;
+		}
+
 		if (_target == GL_TEXTURE_3D
 		||  _target == GL_TEXTURE_2D_ARRAY
 		||  _target == GL_TEXTURE_CUBE_MAP_ARRAY)
@@ -4420,7 +4425,19 @@ namespace bgfx { namespace gl
 		else if (_target == GL_TEXTURE_2D_ARRAY
 			 ||  _target == GL_TEXTURE_CUBE_MAP_ARRAY)
 		{
-			texSubImage(_target, _level, 0, 0, _depth, _width, _height, 1, _format, _type, _data);
+			texSubImage(
+				  _target
+				, _level
+				, 0
+				, 0
+				, _depth
+				, _width
+				, _height
+				, 1
+				, _format
+				, _type
+				, _data
+				);
 		}
 		else if (_target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY)
 		{
@@ -5963,7 +5980,8 @@ namespace bgfx { namespace gl
 		uint32_t dsFlags = _flags & (BGFX_CLEAR_DISCARD_DEPTH|BGFX_CLEAR_DISCARD_STENCIL);
 		if (BGFX_CLEAR_NONE != dsFlags)
 		{
-			if ( (BGFX_CLEAR_DISCARD_DEPTH|BGFX_CLEAR_DISCARD_STENCIL) == dsFlags)
+			if (!BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
+			&&  (BGFX_CLEAR_DISCARD_DEPTH|BGFX_CLEAR_DISCARD_STENCIL) == dsFlags)
 			{
 				buffers[idx++] = GL_DEPTH_STENCIL_ATTACHMENT;
 			}
