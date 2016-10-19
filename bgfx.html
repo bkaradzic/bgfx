@@ -201,7 +201,7 @@
 <h3>Initialization and Shutdown<a class="headerlink" href="#initialization-and-shutdown" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="_CPPv2N4bgfx4initEN12RendererType4EnumE8uint16_t8uint16_tP9CallbackIPN2bx10AllocatorIE">
-<span id="bgfx::init__RendererType::Enum.uint16_t.uint16_t.CallbackIP.bx::AllocatorIP"></span><span class="target" id="bgfxnamespacebgfx_1a61064c8132d185e4e48ea9366a40fdd5"></span>bool <code class="descclassname">bgfx::</code><code class="descname">init</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv2N4bgfx12RendererTypeE" title="bgfx::RendererType">RendererType</a>::<a class="reference internal" href="#_CPPv2N4bgfx12RendererType4EnumE" title="bgfx::RendererType::Enum">Enum</a> <em>_type</em> = RendererType::Count, uint16_t <em>_vendorId</em> = BGFX_PCI_ID_NONE, uint16_t <em>_deviceId</em> = 0, <a class="reference internal" href="#_CPPv2N4bgfx9CallbackIE" title="bgfx::CallbackI">CallbackI</a> *<em>_callback</em> = NULL, bx::AllocatorI *<em>_reallocator</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx4initEN12RendererType4EnumE8uint16_t8uint16_tP9CallbackIPN2bx10AllocatorIE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::init__RendererType::Enum.uint16_t.uint16_t.CallbackIP.bx::AllocatorIP"></span><span class="target" id="bgfxnamespacebgfx_1a7b8a6d9f8eaf252f1b1f62d2a5c5d548"></span>bool <code class="descclassname">bgfx::</code><code class="descname">init</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv2N4bgfx12RendererTypeE" title="bgfx::RendererType">RendererType</a>::<a class="reference internal" href="#_CPPv2N4bgfx12RendererType4EnumE" title="bgfx::RendererType::Enum">Enum</a> <em>_type</em> = RendererType::Count, uint16_t <em>_vendorId</em> = BGFX_PCI_ID_NONE, uint16_t <em>_deviceId</em> = 0, <a class="reference internal" href="#_CPPv2N4bgfx9CallbackIE" title="bgfx::CallbackI">CallbackI</a> *<em>_callback</em> = NULL, bx::AllocatorI *<em>_allocator</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx4initEN12RendererType4EnumE8uint16_t8uint16_tP9CallbackIPN2bx10AllocatorIE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize bgfx library. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
@@ -225,7 +225,7 @@
 </li>
 <li><code class="first docutils literal"><span class="pre">_callback</span></code> - <p>Provide application specific callback interface. See: <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_callback_i"><span><span class="pre">bgfx::CallbackI</span></span></a></code></p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_reallocator</span></code> - <p>Custom allocator. When custom allocator is not specified, library uses default CRT allocator. The library assumes custom allocator is thread safe.</p>
+<li><code class="first docutils literal"><span class="pre">_allocator</span></code> - <p>Custom allocator. When custom allocator is not specified, library uses default CRT allocator. The library assumes custom allocator is thread safe.</p>
 </li>
 </ul>
 </dd>
@@ -1246,6 +1246,11 @@
 <dt id="_CPPv2N4bgfx8getStatsEv">
 <span id="bgfx::getStats"></span><span class="target" id="bgfxnamespacebgfx_1a404b74593c7c8fd8e591703ec7e8bd4e"></span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx5StatsE" title="bgfx::Stats">Stats</a> *<code class="descclassname">bgfx::</code><code class="descname">getStats</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8getStatsEv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns performance counters. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_get_stats</span></code>. </dd>
+</dl>
+</p>
 </dd></dl>
 
 <dl class="class">
@@ -1444,7 +1449,7 @@ creating windows.</p>
 <dt><strong>Return</strong></dt>
 <dd>Current renderer state. See: <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_render_frame"><span><span class="pre">bgfx::RenderFrame</span></span></a></code>.</dd>
 <dt><strong>Warning</strong></dt>
-<dd>This call should be only used on platforms that don&#8217;t allow creating separate rendering thread. If it is called before to <a class="reference internal" href="#bgfxnamespacebgfx_1a61064c8132d185e4e48ea9366a40fdd5"><span>bgfx::init</span></a>, render thread won&#8217;t be created by <a class="reference internal" href="#bgfxnamespacebgfx_1a61064c8132d185e4e48ea9366a40fdd5"><span>bgfx::init</span></a> call. </dd>
+<dd>This call should be only used on platforms that don&#8217;t allow creating separate rendering thread. If it is called before to <a class="reference internal" href="#bgfxnamespacebgfx_1a7b8a6d9f8eaf252f1b1f62d2a5c5d548"><span>bgfx::init</span></a>, render thread won&#8217;t be created by <a class="reference internal" href="#bgfxnamespacebgfx_1a7b8a6d9f8eaf252f1b1f62d2a5c5d548"><span>bgfx::init</span></a> call. </dd>
 </dl>
 </p>
 </dd></dl>
@@ -1466,7 +1471,7 @@ creating windows.</p>
 <dd><p>Set platform data. </p>
 <p><dl class="docutils">
 <dt><strong>Warning</strong></dt>
-<dd>Must be called before <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a61064c8132d185e4e48ea9366a40fdd5"><span><span class="pre">bgfx::init</span></span></a></code>.</dd>
+<dd>Must be called before <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a7b8a6d9f8eaf252f1b1f62d2a5c5d548"><span><span class="pre">bgfx::init</span></span></a></code>.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_platform_data</span></code>. </dd>
 </dl>
@@ -1512,6 +1517,12 @@ creating windows.</p>
 <dt id="_CPPv2N4bgfx12PlatformData12backBufferDSE">
 <span id="bgfx::PlatformData::backBufferDS__voidP"></span><span class="target" id="bgfxstructbgfx_1_1_platform_data_1ae1dce3718ab484415ac7b8377aec5dab"></span>void *<code class="descname">backBufferDS</code><a class="headerlink" href="#_CPPv2N4bgfx12PlatformData12backBufferDSE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Backbuffer depth/stencil. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx12PlatformData7sessionE">
+<span id="bgfx::PlatformData::session__voidP"></span><span class="target" id="bgfxstructbgfx_1_1_platform_data_1ac20194808c87a77350d67f75484d6e97"></span>void *<code class="descname">session</code><a class="headerlink" href="#_CPPv2N4bgfx12PlatformData7sessionE" title="Permalink to this definition">¶</a></dt>
+<dd><p>ovrSession, for Oculus SDK </p>
 </dd></dl>
 
 </div>
@@ -2868,7 +2879,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dt><strong>Return</strong></dt>
 <dd>Number of draw calls.</dd>
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is `bgfx_submit_occlusion_query. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_submit_occlusion_query</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
