@@ -1077,6 +1077,8 @@ namespace bgfx
 
 	/// Returns performance counters.
 	///
+	/// @attention C99 equivalent is `bgfx_get_stats`.
+	///
 	const Stats* getStats();
 
 	/// Allocate buffer to pass to bgfx calls. Data will be freed inside bgfx.
