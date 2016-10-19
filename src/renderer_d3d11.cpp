@@ -3088,9 +3088,15 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				switch (texture.m_type)
 				{
 				case TextureD3D11::Texture2D:
-				case TextureD3D11::TextureCube:
 					desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
 					desc.Texture2D.MipSlice = _mip;
+					break;
+
+				case TextureD3D11::TextureCube:
+					desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2DARRAY;
+					desc.Texture2DArray.ArraySize = 6;
+					desc.Texture2DArray.FirstArraySlice = 0;
+					desc.Texture2DArray.MipSlice = _mip;
 					break;
 
 				case TextureD3D11::Texture3D:

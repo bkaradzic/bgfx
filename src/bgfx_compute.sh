@@ -27,6 +27,13 @@
 #define IMAGE2D_RW( _name, _reg) RWTexture2D<float> _name : register(u[_reg])
 #define UIMAGE2D_RW(_name, _reg) RWTexture2D<uint>  _name : register(u[_reg])
 
+#define IMAGE2D_ARRAY_RO( _name, _format, _reg) Texture2DArray<_format>   _name : register(t[_reg])
+#define UIMAGE2D_ARRAY_RO(_name, _format, _reg) Texture2DArray<_format>   _name : register(t[_reg])
+#define IMAGE2D_ARRAY_WR( _name, _format, _reg) RWTexture2DArray<_format> _name : register(u[_reg])
+#define UIMAGE2D_ARRAY_WR(_name, _format, _reg) RWTexture2DArray<_format> _name : register(u[_reg])
+#define IMAGE2D_ARRAY_RW( _name, _reg) RWTexture2DArray<float> _name : register(u[_reg])
+#define UIMAGE2D_ARRAY_RW(_name, _reg) RWTexture2DArray<uint>  _name : register(u[_reg])
+
 #define IMAGE3D_RO( _name, _format, _reg) Texture3D<_format>   _name : register(t[_reg])
 #define UIMAGE3D_RO(_name, _format, _reg) Texture3D<_format>   _name : register(t[_reg])
 #define IMAGE3D_WR( _name, _format, _reg) RWTexture3D<_format> _name : register(u[_reg])
@@ -41,12 +48,15 @@
 #define NUM_THREADS(_x, _y, _z) [numthreads(_x, _y, _z)]
 
 #define __IMAGE_IMPL(_textureType, _storeComponents, _type, _loadComponents) \
-	_type imageLoad(  Texture2D<_textureType> _image, ivec2 _uv)                { return _image[_uv ]._loadComponents;    } \
-	_type imageLoad(  Texture3D<_textureType> _image, ivec3 _uvw)               { return _image[_uvw]._loadComponents;    } \
-	_type imageLoad(RWTexture2D<_textureType> _image, ivec2 _uv)                { return _image[_uv ]._loadComponents;    } \
-	_type imageLoad(RWTexture3D<_textureType> _image, ivec3 _uvw, _type _value) { return _image[_uvw]._loadComponents;    } \
-	void imageStore(RWTexture2D<_textureType> _image, ivec2 _uv,  _type _value) { _image[_uv ] = _value._storeComponents; } \
-	void imageStore(RWTexture3D<_textureType> _image, ivec3 _uvw, _type _value) { _image[_uvw] = _value._storeComponents; }
+	_type imageLoad(       Texture2D<_textureType> _image, ivec2 _uv)                { return _image[_uv ]._loadComponents;    } \
+	_type imageLoad(RWTexture2DArray<_textureType> _image, ivec3 _uvw)                { return _image[_uvw ]._loadComponents;  } \
+	_type imageLoad(       Texture3D<_textureType> _image, ivec3 _uvw)               { return _image[_uvw]._loadComponents;    } \
+	_type imageLoad(     RWTexture2D<_textureType> _image, ivec2 _uv)                { return _image[_uv ]._loadComponents;    } \
+	_type imageLoad(RWTexture2DArray<_textureType> _image, ivec3 _uvw, _type _value) { return _image[_uvw]._loadComponents;    } \
+	_type imageLoad(     RWTexture3D<_textureType> _image, ivec3 _uvw, _type _value) { return _image[_uvw]._loadComponents;    } \
+	void imageStore(     RWTexture2D<_textureType> _image, ivec2 _uv,  _type _value) { _image[_uv ] = _value._storeComponents; } \
+	void imageStore(RWTexture2DArray<_textureType> _image, ivec3 _uvw, _type _value) { _image[_uvw] = _value._storeComponents; } \
+	void imageStore(     RWTexture3D<_textureType> _image, ivec3 _uvw, _type _value) { _image[_uvw] = _value._storeComponents; } 
 
 __IMAGE_IMPL(float, x,    vec4,  xxxx)
 __IMAGE_IMPL(vec2,  xy,   vec4,  xyyy)
@@ -143,6 +153,7 @@ uint atomicCompSwap(uint _mem, uint _compare, uint _data)
 #define readwrite
 #define IMAGE2D_RO( _name, _format, _reg) __IMAGE_XX(_name, _format, _reg, image2D,  readonly)
 #define UIMAGE2D_RO(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, uimage2D, readonly)
+
 #define IMAGE2D_WR( _name, _format, _reg) __IMAGE_XX(_name, _format, _reg, image2D,  writeonly)
 #define UIMAGE2D_WR(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, uimage2D, writeonly)
 #define IMAGE2D_RW( _name, _reg) __IMAGE_XX(_name, r32f,  _reg, image2D,  readwrite)
