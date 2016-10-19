@@ -542,10 +542,10 @@ namespace bgfx
 			.add(Attrib::TexCoord0, 2, AttribType::Float)
 			.end();
 
-		uint16_t width = 2048;
+		uint16_t width  = 2048;
 		uint16_t height = 24;
-		uint8_t bpp = 1;
-		uint32_t pitch = width*bpp;
+		uint8_t  bpp    = 1;
+		uint32_t pitch  = width*bpp;
 
 		const Memory* mem;
 
@@ -1730,7 +1730,7 @@ namespace bgfx
 #if BX_PLATFORM_OSX || BX_PLATFORM_IOS
 		{ mtl::rendererCreate,   mtl::rendererDestroy,   BGFX_RENDERER_METAL_NAME,      !!BGFX_CONFIG_RENDERER_METAL      }, // Metal
 #else
-		{ noop::rendererCreate,  noop::rendererDestroy,  BGFX_RENDERER_NOOP_NAME,       !!BGFX_CONFIG_RENDERER_NOOP       }, // Noop
+		{ noop::rendererCreate,  noop::rendererDestroy,  BGFX_RENDERER_NOOP_NAME,       false                             }, // Noop
 #endif // BX_PLATFORM_OSX || BX_PLATFORM_IOS
 		{ gl::rendererCreate,    gl::rendererDestroy,    BGFX_RENDERER_OPENGL_NAME,     !!BGFX_CONFIG_RENDERER_OPENGLES   }, // OpenGLES
 		{ gl::rendererCreate,    gl::rendererDestroy,    BGFX_RENDERER_OPENGL_NAME,     !!BGFX_CONFIG_RENDERER_OPENGL     }, // OpenGL
@@ -1836,6 +1836,10 @@ namespace bgfx
 					 ) )
 				{
 					score += RendererType::OpenGLES == renderer ? 20 : 0;
+				}
+				else if (BX_ENABLED(BX_PLATFORM_PS4) )
+				{
+					score += RendererType::Gnm      == renderer ? 20 : 0;
 				}
 				else if (BX_ENABLED(0
 					 ||  BX_PLATFORM_XBOXONE
@@ -3159,7 +3163,7 @@ error:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
-		if (_width == 0
+		if (_width  == 0
 		||  _height == 0)
 		{
 			release(_mem);

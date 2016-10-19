@@ -402,13 +402,13 @@ namespace bgfx
 
 		void resize(bool _small = false, uint32_t _width = BGFX_DEFAULT_WIDTH, uint32_t _height = BGFX_DEFAULT_HEIGHT)
 		{
-			uint32_t width = bx::uint32_max(1, _width/8);
-			uint32_t height = bx::uint32_max(1, _height/(_small ? 8 : 16) );
+			uint32_t width  = bx::uint32_imax(1, _width/8);
+			uint32_t height = bx::uint32_imax(1, _height/(_small ? 8 : 16) );
 
 			if (NULL == m_mem
-			||  m_width != width
+			||  m_width  != width
 			||  m_height != height
-			||  m_small != _small)
+			||  m_small  != _small)
 			{
 				m_small  = _small;
 				m_width  = (uint16_t)width;
@@ -2187,9 +2187,14 @@ namespace bgfx
 
 		BGFX_API_FUNC(void reset(uint32_t _width, uint32_t _height, uint32_t _flags) )
 		{
-			BX_WARN(0 != _width && 0 != _height, "Frame buffer resolution width or height cannot be 0 (width %d, height %d).", _width, _height);
-			m_resolution.m_width  = bx::uint32_max(1, _width);
-			m_resolution.m_height = bx::uint32_max(1, _height);
+			BX_WARN(1 <= int32_t(_width)
+				&&  1 <= int32_t(_height)
+				, "Frame buffer resolution width or height cannot be 0 (width %d, height %d)."
+				, _width
+				, _height
+				);
+			m_resolution.m_width  = bx::uint32_imax(1, _width);
+			m_resolution.m_height = bx::uint32_imax(1, _height);
 			m_resolution.m_flags  = 0
 				| _flags
 				| (g_platformDataChangedSinceReset ? BGFX_RESET_INTERNAL_FORCE : 0)
