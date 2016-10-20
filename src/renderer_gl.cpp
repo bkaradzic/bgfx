@@ -1015,6 +1015,10 @@ namespace bgfx { namespace gl
 		}
 	}
 
+	static void GL_APIENTRY stubPolygonMode(GLenum /*_face*/, GLenum /*_mode*/)
+	{
+	}
+
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
 
 	static const char* getGLString(GLenum _name)
@@ -1927,6 +1931,11 @@ namespace bgfx { namespace gl
 				? BGFX_CAPS_DRAW_INDIRECT
 				: 0
 				;
+
+			if (NULL == glPolygonMode)
+			{
+				glPolygonMode = stubPolygonMode;
+			}
 
 			if (s_extension[Extension::ARB_copy_image].m_supported
 			||  s_extension[Extension::EXT_copy_image].m_supported
@@ -6139,10 +6148,16 @@ namespace bgfx { namespace gl
 
 		uint8_t primIndex;
 		{
-			const uint64_t pt = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
+			const uint64_t pt = 0;
 			primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
 		}
 		PrimInfo prim = s_primInfo[primIndex];
+
+		GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK
+			, _render->m_debug&BGFX_DEBUG_WIREFRAME
+			? GL_LINE
+			: GL_FILL
+			) );
 
 		uint32_t baseVertex = 0;
 		GLuint currentVao = 0;
@@ -6643,38 +6658,39 @@ namespace bgfx { namespace gl
 						viewState.m_alphaRef = ref/255.0f;
 					}
 
-#if BGFX_CONFIG_RENDERER_OPENGL
-					if ( (BGFX_STATE_PT_POINTS|BGFX_STATE_POINT_SIZE_MASK) & changedFlags)
+					if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 					{
-						float pointSize = (float)(bx::uint32_max(1, (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT) );
-						GL_CHECK(glPointSize(pointSize) );
-					}
+						if ( (BGFX_STATE_PT_POINTS|BGFX_STATE_POINT_SIZE_MASK) & changedFlags)
+						{
+							float pointSize = (float)(bx::uint32_max(1, (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT) );
+							GL_CHECK(glPointSize(pointSize) );
+						}
 
-					if (BGFX_STATE_MSAA & changedFlags)
-					{
-						GL_CHECK(BGFX_STATE_MSAA & newFlags
-							? glEnable(GL_MULTISAMPLE)
-							: glDisable(GL_MULTISAMPLE)
-							);
-					}
+						if (BGFX_STATE_MSAA & changedFlags)
+						{
+							GL_CHECK(BGFX_STATE_MSAA & newFlags
+								? glEnable(GL_MULTISAMPLE)
+								: glDisable(GL_MULTISAMPLE)
+								);
+						}
 
-					if (BGFX_STATE_LINEAA & changedFlags)
-					{
-						GL_CHECK(BGFX_STATE_LINEAA & newFlags
-							? glEnable(GL_LINE_SMOOTH)
-							: glDisable(GL_LINE_SMOOTH)
-							);
-					}
+						if (BGFX_STATE_LINEAA & changedFlags)
+						{
+							GL_CHECK(BGFX_STATE_LINEAA & newFlags
+								? glEnable(GL_LINE_SMOOTH)
+								: glDisable(GL_LINE_SMOOTH)
+								);
+						}
 
-					if (m_conservativeRasterSupport
-					&&  BGFX_STATE_CONSERVATIVE_RASTER & changedFlags)
-					{
-						GL_CHECK(BGFX_STATE_CONSERVATIVE_RASTER & newFlags
-							? glEnable(GL_CONSERVATIVE_RASTERIZATION_NV)
-							: glDisable(GL_CONSERVATIVE_RASTERIZATION_NV)
-							);
+						if (m_conservativeRasterSupport
+						&&  BGFX_STATE_CONSERVATIVE_RASTER & changedFlags)
+						{
+							GL_CHECK(BGFX_STATE_CONSERVATIVE_RASTER & newFlags
+								? glEnable(GL_CONSERVATIVE_RASTERIZATION_NV)
+								: glDisable(GL_CONSERVATIVE_RASTERIZATION_NV)
+								);
+						}
 					}
-#endif // BGFX_CONFIG_RENDERER_OPENGL
 
 					if ( (BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE) & changedFlags)
 					{
@@ -6804,7 +6820,7 @@ namespace bgfx { namespace gl
 						blendFactor = draw.m_rgba;
 					}
 
-					const uint64_t pt = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : newFlags&BGFX_STATE_PT_MASK;
+					const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
 					primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
 					prim = s_primInfo[primIndex];
 				}

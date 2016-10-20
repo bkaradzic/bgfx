@@ -915,6 +915,22 @@ typedef uint64_t GLuint64;
 #	define GL_DEBUG_SEVERITY_NOTIFICATION 0x826b
 #endif // GL_DEBUG_SEVERITY_NOTIFICATION
 
+#ifndef GL_LINE
+#	define GL_LINE 0x1B01
+#endif // GL_LINE
+
+#ifndef GL_FILL
+#	define GL_FILL 0x1B02
+#endif // GL_FILL
+
+#ifndef GL_MULTISAMPLE
+#	define GL_MULTISAMPLE 0x809D
+#endif // GL_MULTISAMPLE
+
+#ifndef GL_LINE_SMOOTH
+#	define GL_LINE_SMOOTH 0x0B20
+#endif // GL_LINE_SMOOTH
+
 #if BX_PLATFORM_NACL
 #	include "glcontext_ppapi.h"
 #elif BX_PLATFORM_WINDOWS

@@ -385,6 +385,7 @@ int _main_(int _argc, char** _argv)
 	bgfx::destroyUniform(u_shadowMap);
 	bgfx::destroyUniform(u_lightPos);
 	bgfx::destroyUniform(u_lightMtx);
+	bgfx::destroyUniform(u_depthScaleOffset);
 
 	// Shutdown bgfx.
 	bgfx::shutdown();

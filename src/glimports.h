@@ -162,6 +162,7 @@ typedef void           (GL_APIENTRYP PFNGLOBJECTLABELPROC) (GLenum identifier, G
 typedef void           (GL_APIENTRYP PFNGLOBJECTPTRLABELPROC) (const void *ptr, GLsizei length, const GLchar *label);
 typedef void           (GL_APIENTRYP PFNGLPIXELSTOREIPROC) (GLenum pname, GLint param);
 typedef void           (GL_APIENTRYP PFNGLPOINTSIZEPROC) (GLfloat size);
+typedef void           (GL_APIENTRYP PFNGLPOLYGONMODEPROC) (GLenum face, GLenum mode);
 typedef void           (GL_APIENTRYP PFNGLPOPDEBUGGROUPPROC) (void);
 typedef void           (GL_APIENTRYP PFNGLPROGRAMBINARYPROC) (GLuint program, GLenum binaryFormat, const void *binary, GLsizei length);
 typedef void           (GL_APIENTRYP PFNGLPROGRAMPARAMETERIPROC) (GLuint program, GLenum pname, GLint value);
@@ -404,7 +405,8 @@ GL_IMPORT______(false, PFNGLVIEWPORTPROC,                          glViewport);
 
 #	if BGFX_CONFIG_RENDERER_OPENGL
 GL_IMPORT______(false, PFNGLCLEARDEPTHPROC,                        glClearDepth);
-GL_IMPORT______(false, PFNGLPOINTSIZEPROC,                         glPointSize);
+GL_IMPORT______(true,  PFNGLPOINTSIZEPROC,                         glPointSize);
+GL_IMPORT______(true,  PFNGLPOLYGONMODEPROC,                       glPolygonMode);
 
 GL_IMPORT_ARB__(true,  PFNGLDEBUGMESSAGECONTROLPROC,               glDebugMessageControl);
 GL_IMPORT_ARB__(true,  PFNGLDEBUGMESSAGEINSERTPROC,                glDebugMessageInsert);
@@ -467,6 +469,8 @@ GL_IMPORT______(true,  PFNGLFRAMETERMINATORGREMEDYPROC,            glFrameTermin
 GL_IMPORT______(true,  PFNGLGETTRANSLATEDSHADERSOURCEANGLEPROC,    glGetTranslatedShaderSourceANGLE);
 
 #if !BGFX_CONFIG_RENDERER_OPENGL
+GL_IMPORT______(true,  PFNGLPOINTSIZEPROC,                         glPointSize);
+GL_IMPORT______(true,  PFNGLPOLYGONMODEPROC,                       glPolygonMode);
 GL_IMPORT_ANGLE(true,  PFNGLBLITFRAMEBUFFERPROC,                   glBlitFramebuffer);
 GL_IMPORT_ANGLE(true,  PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC,    glRenderbufferStorageMultisample);
 
