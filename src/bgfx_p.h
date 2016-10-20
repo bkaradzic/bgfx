@@ -3006,7 +3006,7 @@ namespace bgfx
 			if (!isValid(_vsh)
 			||  !isValid(_fsh) )
 			{
-				BX_WARN(false, "Vertex/fragment shader is invalid (vsh %d, fsh %d).", _vsh.idx, _fsh.idx);
+				BX_TRACE("Vertex/fragment shader is invalid (vsh %d, fsh %d).", _vsh.idx, _fsh.idx);
 				ProgramHandle invalid = BGFX_INVALID_HANDLE;
 				return invalid;
 			}
@@ -3024,7 +3024,7 @@ namespace bgfx
 			const ShaderRef& fsr = m_shaderRef[_fsh.idx];
 			if (vsr.m_hash != fsr.m_hash)
 			{
-				BX_WARN(vsr.m_hash == fsr.m_hash, "Vertex shader output doesn't match fragment shader input.");
+				BX_TRACE("Vertex shader output doesn't match fragment shader input.");
 				ProgramHandle invalid = BGFX_INVALID_HANDLE;
 				return invalid;
 			}

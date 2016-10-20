@@ -422,7 +422,7 @@ namespace bgfx
 
 	struct Preprocessor
 	{
-		Preprocessor(const char* _filePath, bool _essl, const char* _includeDir = NULL)
+		Preprocessor(const char* _filePath, bool _essl)
 			: m_tagptr(m_tags)
 			, m_scratchPos(0)
 			, m_fgetsPos(0)
@@ -458,11 +458,6 @@ namespace bgfx
 			m_tagptr->tag = FPPTAG_INPUT_NAME;
 			m_tagptr->data = scratch(_filePath);
 			m_tagptr++;
-
-			if (NULL != _includeDir)
-			{
-				addInclude(_includeDir);
-			}
 
 			if (!_essl)
 			{
@@ -869,7 +864,13 @@ namespace bgfx
 		bool preprocessOnly = cmdLine.hasArg("preprocess");
 		const char* includeDir = cmdLine.findOption('i');
 
-		Preprocessor preprocessor(filePath, 0 != essl, includeDir);
+		Preprocessor preprocessor(filePath, 0 != essl);
+
+		for (int ii = 1; NULL != includeDir; ++ii)
+		{
+			preprocessor.addInclude(includeDir);
+			includeDir = cmdLine.findOption(ii, 'i');
+		}
 
 		std::string dir;
 		{
