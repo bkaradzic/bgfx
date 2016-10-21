@@ -3012,6 +3012,7 @@ data.NumQualityLevels = 0;
 
 		D3D12_UNORDERED_ACCESS_VIEW_DESC tmpUavd;
 		D3D12_UNORDERED_ACCESS_VIEW_DESC* uavd = &_texture.m_uavd;
+
 		if (0 != _mip)
 		{
 			memcpy(&tmpUavd, uavd, sizeof(tmpUavd) );
@@ -3023,6 +3024,10 @@ data.NumQualityLevels = 0;
 			case D3D12_UAV_DIMENSION_TEXTURE2D:
 				uavd->Texture2D.MipSlice   = _mip;
 				uavd->Texture2D.PlaneSlice = 0;
+				break;
+			case D3D12_UAV_DIMENSION_TEXTURE2DARRAY:
+				uavd->Texture2DArray.MipSlice   = _mip;
+				uavd->Texture2DArray.PlaneSlice = 0;
 				break;
 
 			case D3D12_UAV_DIMENSION_TEXTURE3D:
@@ -4239,6 +4244,14 @@ data.NumQualityLevels = 0;
 					m_uavd.Texture2D.MipSlice   = 0;
 					m_uavd.Texture2D.PlaneSlice = 0;
 				}
+
+				if( m_type==TextureCube )
+				{
+					m_uavd.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+					m_uavd.Texture2DArray.MipSlice   = 0;
+					m_uavd.Texture2DArray.ArraySize = 6;
+				}
+
 				break;
 
 			case Texture3D:
