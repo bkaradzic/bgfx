@@ -67,6 +67,10 @@ BX_PRAGMA_DIAGNOSTIC_PUSH();
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wmissing-field-initializers");
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow");
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wint-to-pointer-cast")
+#if BX_COMPILER_GCC >= 60000
+BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wmisleading-indentation");
+BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wshift-negative-value");
+#endif // BX_COMPILER_GCC >= 60000_
 #define STBI_MALLOC(_size)        lodepng_malloc(_size)
 #define STBI_REALLOC(_ptr, _size) lodepng_realloc(_ptr, _size)
 #define STBI_FREE(_ptr)           lodepng_free(_ptr)
