@@ -211,7 +211,8 @@ namespace ImGui
 			bool  first;
 		};
 
-		ImVector<Dock*> m_docks;
+		typedef ImVector<Dock*> DockVector;
+		DockVector m_docks;
 		ImVec2 m_drag_offset;
 		Dock* m_current;
 		int m_last_frame;
@@ -340,8 +341,9 @@ namespace ImGui
 		void checkNonexistent()
 		{
 			int frame_limit = ImMax(0, ImGui::GetFrameCount() - 2);
-			for (Dock* dock : m_docks)
+			for (DockVector::iterator it = m_docks.begin(), itEnd = m_docks.end(); it != itEnd; ++it)
 			{
+				Dock* dock = *it;
 				if (dock->isContainer()) continue;
 				if (dock->status == Status_Float) continue;
 				if (dock->last_frame < frame_limit)
