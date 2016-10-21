@@ -2370,10 +2370,11 @@ namespace bgfx { namespace gl
 		{
 		}
 
-		void readTexture(TextureHandle _handle, void* _data) BX_OVERRIDE
+		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) BX_OVERRIDE
 		{
 			if (m_readBackSupported)
 			{
+				_mip;
 				const TextureGL& texture = m_textures[_handle.idx];
 				const bool compressed    = isCompressed(TextureFormat::Enum(texture.m_textureFormat) );
 
