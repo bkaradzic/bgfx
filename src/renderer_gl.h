@@ -720,6 +720,10 @@ typedef uint64_t GLuint64;
 #	define GL_IMAGE_2D 0x904D
 #endif // GL_IMAGE_2D
 
+#ifndef GL_IMAGE_2D_ARRAY
+#	define GL_IMAGE_2D_ARRAY 0x9053
+#endif // GL_IMAGE_2D_ARRAY
+
 #ifndef GL_IMAGE_3D
 #	define GL_IMAGE_3D 0x904E
 #endif // GL_IMAGE_3D
