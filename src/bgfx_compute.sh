@@ -19,6 +19,7 @@
 #define rg16f   float2
 #define rgba16f float4
 #define rgba8   float4
+#define rgba32f float4
 
 #define IMAGE2D_RO( _name, _format, _reg) Texture2D<_format>   _name : register(t[_reg])
 #define UIMAGE2D_RO(_name, _format, _reg) Texture2D<_format>   _name : register(t[_reg])
@@ -153,11 +154,17 @@ uint atomicCompSwap(uint _mem, uint _compare, uint _data)
 #define readwrite
 #define IMAGE2D_RO( _name, _format, _reg) __IMAGE_XX(_name, _format, _reg, image2D,  readonly)
 #define UIMAGE2D_RO(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, uimage2D, readonly)
-
 #define IMAGE2D_WR( _name, _format, _reg) __IMAGE_XX(_name, _format, _reg, image2D,  writeonly)
 #define UIMAGE2D_WR(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, uimage2D, writeonly)
 #define IMAGE2D_RW( _name, _reg) __IMAGE_XX(_name, r32f,  _reg, image2D,  readwrite)
 #define UIMAGE2D_RW(_name, _reg) __IMAGE_XX(_name, r32ui, _reg, uimage2D, readwrite)
+
+#define IMAGE2D_ARRAY_RO( _name, _format, _reg) __IMAGE_XX(_name, _format, _reg, image2DArray,  readonly)
+#define UIMAGE2D_ARRAY_RO(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, uimage2DArray, readonly)
+#define IMAGE2D_ARRAY_WR( _name, _format, _reg) __IMAGE_XX(_name, _format, _reg, image2DArray,  writeonly)
+#define UIMAGE2D_ARRAY_WR(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, uimage2DArray, writeonly)
+#define IMAGE2D_ARRAY_RW( _name, _reg) __IMAGE_XX(_name, r32f,  _reg, image2DArray,  readwrite)
+#define UIMAGE2D_ARRAY_RW(_name, _reg) __IMAGE_XX(_name, r32ui, _reg, uimage2DArray, readwrite)
 
 #define IMAGE3D_RO( _name, _format, _reg) __IMAGE_XX(_name, _format, _reg, image3D,  readonly)
 #define UIMAGE3D_RO(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, uimage3D, readonly)

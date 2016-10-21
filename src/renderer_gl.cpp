@@ -3754,6 +3754,7 @@ namespace bgfx { namespace gl
 			GLSL_TYPE(GL_UNSIGNED_INT_IMAGE_1D);
 
 			GLSL_TYPE(GL_IMAGE_2D);
+			GLSL_TYPE(GL_IMAGE_2D_ARRAY);
 			GLSL_TYPE(GL_INT_IMAGE_2D);
 			GLSL_TYPE(GL_UNSIGNED_INT_IMAGE_2D);
 
@@ -3851,6 +3852,7 @@ namespace bgfx { namespace gl
 		case GL_UNSIGNED_INT_IMAGE_1D:
 
 		case GL_IMAGE_2D:
+		case GL_IMAGE_2D_ARRAY:
 		case GL_INT_IMAGE_2D:
 		case GL_UNSIGNED_INT_IMAGE_2D:
 
@@ -6356,7 +6358,7 @@ namespace bgfx { namespace gl
 										GL_CHECK(glBindImageTexture(ii
 											, texture.m_id
 											, bind.m_un.m_compute.m_mip
-											, GL_FALSE
+											, texture.isCubeMap()?GL_TRUE:GL_FALSE
 											, 0
 											, s_access[bind.m_un.m_compute.m_access]
 											, s_imageFormat[bind.m_un.m_compute.m_format])
