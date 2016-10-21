@@ -914,14 +914,18 @@ namespace bgfx
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_HLSL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_METAL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_PSSL");
-		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_SPIRV");
 
 		preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_COMPUTE");
 		preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_FRAGMENT");
 		preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_VERTEX");
 
 		char glslDefine[128];
-		bx::snprintf(glslDefine, BX_COUNTOF(glslDefine), "BGFX_SHADER_LANGUAGE_GLSL=%d", essl ? 1 : glsl);
+		bx::snprintf(glslDefine, BX_COUNTOF(glslDefine)
+				, "BGFX_SHADER_LANGUAGE_GLSL=%d"
+				, essl  ? 1
+				: spirv ? 130
+				: glsl
+				);
 
 		if (0 == bx::stricmp(platform, "android") )
 		{
@@ -1246,7 +1250,8 @@ namespace bgfx
 				{
 					if (0 != glsl
 					||  0 != essl
-					||  0 != metal)
+					||  0 != metal
+					||  0 != spirv)
 					{
 					}
 					else
@@ -1433,7 +1438,8 @@ namespace bgfx
 				{
 					if (0 != glsl
 					||  0 != essl
-					||  0 != metal)
+					||  0 != metal
+					||  0 != spirv)
 					{
 						if (0 == essl)
 						{
@@ -1837,6 +1843,10 @@ namespace bgfx
 									if (0 != metal)
 									{
 										bx::stringPrintf(code, "#version 120\n");
+									}
+									else if (0 != spirv)
+									{
+										bx::stringPrintf(code, "#version 130\n");
 									}
 									else
 									{
