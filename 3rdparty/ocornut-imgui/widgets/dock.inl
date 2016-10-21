@@ -43,7 +43,6 @@ namespace ImGui
 			Slot_None
 		};
 
-
 		enum EndAction_
 		{
 			EndAction_None,
@@ -52,14 +51,12 @@ namespace ImGui
 			EndAction_EndChild
 		};
 
-
 		enum Status_
 		{
 			Status_Docked,
 			Status_Float,
 			Status_Dragged
 		};
-
 
 		struct Dock
 		{
@@ -79,9 +76,10 @@ namespace ImGui
 				children[0] = children[1] = NULL;
 			}
 
-
-			~Dock() { MemFree(label); }
-
+			~Dock()
+			{
+				MemFree(label);
+			}
 
 			ImVec2 getMinSize() const
 			{
@@ -93,9 +91,10 @@ namespace ImGui
 					: ImVec2(ImMax(s0.x, s1.x), s0.y + s1.y);
 			}
 
-
-			bool isHorizontal() const { return children[0]->pos.x < children[1]->pos.x; }
-
+			bool isHorizontal() const
+			{
+				return children[0]->pos.x < children[1]->pos.x;
+			}
 
 			void setParent(Dock* dock)
 			{
@@ -104,14 +103,12 @@ namespace ImGui
 				for (Dock* tmp = next_tab; tmp; tmp = tmp->next_tab) tmp->parent = dock;
 			}
 
-
 			Dock& getSibling()
 			{
 				IM_ASSERT(parent);
 				if (parent->children[0] == &getFirstTab()) return *parent->children[1];
 				return *parent->children[0];
 			}
-
 
 			Dock& getFirstTab()
 			{
@@ -120,7 +117,6 @@ namespace ImGui
 				return *tmp;
 			}
 
-
 			void setActive()
 			{
 				active = true;
@@ -128,9 +124,10 @@ namespace ImGui
 				for (Dock* tmp = next_tab; tmp; tmp = tmp->next_tab) tmp->active = false;
 			}
 
-
-			bool isContainer() const { return children[0] != NULL; }
-
+			bool isContainer() const
+			{
+				return children[0] != NULL;
+			}
 
 			void setChildrenPosSize(const ImVec2& _pos, const ImVec2& _size)
 			{
@@ -196,7 +193,6 @@ namespace ImGui
 				setChildrenPosSize(_pos, _size);
 			}
 
-
 			ImU32   id;
 			char*   label;
 			Dock*   next_tab;
@@ -215,16 +211,21 @@ namespace ImGui
 			bool  first;
 		};
 
-
 		ImVector<Dock*> m_docks;
 		ImVec2 m_drag_offset;
-		Dock* m_current = NULL;
-		int m_last_frame = 0;
+		Dock* m_current;
+		int m_last_frame;
 		EndAction_ m_end_action;
 
+		DockContext()
+			: m_current(NULL)
+			, m_last_frame(0)
+		{
+		}
 
-		~DockContext() {}
-
+		~DockContext()
+		{
+		}
 
 		Dock& getDock(const char* label, bool opened)
 		{
@@ -252,7 +253,6 @@ namespace ImGui
 			return *new_dock;
 		}
 
-
 		void putInBackground()
 		{
 			ImGuiWindow* win = GetCurrentWindow();
@@ -272,7 +272,6 @@ namespace ImGui
 				}
 			}
 		}
-
 
 		void splits()
 		{
@@ -338,7 +337,6 @@ namespace ImGui
 			}
 		}
 
-
 		void checkNonexistent()
 		{
 			int frame_limit = ImMax(0, ImGui::GetFrameCount() - 2);
@@ -359,7 +357,6 @@ namespace ImGui
 				dock->invalid_frames = 0;
 			}
 		}
-
 
 		void beginPanel()
 		{
@@ -386,7 +383,6 @@ namespace ImGui
 			checkNonexistent();
 		}
 
-
 		void endPanel()
 		{
 			End();
@@ -410,7 +406,6 @@ namespace ImGui
 			return NULL;
 		}
 
-
 		static ImRect getDockedRect(const ImRect& rect, Slot_ dock_slot)
 		{
 			ImVec2 half_size = rect.GetSize() * 0.5f;
@@ -423,7 +418,6 @@ namespace ImGui
 				case Slot_Left: return ImRect(rect.Min, rect.Min + ImVec2(half_size.x, rect.Max.y));
 			}
 		}
-
 
 		static ImRect getSlotRect(ImRect parent_rect, Slot_ dock_slot)
 		{
@@ -438,7 +432,6 @@ namespace ImGui
 				case Slot_Left: return ImRect(center + ImVec2(-50, -20), center + ImVec2(-30, 20));
 			}
 		}
-
 
 		static ImRect getSlotRectOnBorder(ImRect parent_rect, Slot_ dock_slot)
 		{
@@ -464,7 +457,6 @@ namespace ImGui
 			return ImRect();
 		}
 
-
 		Dock* getRootDock()
 		{
 			for (int i = 0; i < m_docks.size(); ++i)
@@ -477,7 +469,6 @@ namespace ImGui
 			}
 			return NULL;
 		}
-
 
 		bool dockSlots(Dock& dock, Dock* dest_dock, const ImRect& rect, bool on_border)
 		{
@@ -504,7 +495,6 @@ namespace ImGui
 			}
 			return false;
 		}
-
 
 		void handleDrag(Dock& dock)
 		{
@@ -555,7 +545,6 @@ namespace ImGui
 			End();
 		}
 
-
 		void fillLocation(Dock& dock)
 		{
 			if (dock.status == Status_Float) return;
@@ -569,7 +558,6 @@ namespace ImGui
 			}
 			*c = 0;
 		}
-
 
 		void doUndock(Dock& dock)
 		{
@@ -636,7 +624,6 @@ namespace ImGui
 			dock.prev_tab = dock.next_tab = NULL;
 		}
 
-
 		void drawTabbarListButton(Dock& dock)
 		{
 			if (!dock.next_tab) return;
@@ -675,7 +662,6 @@ namespace ImGui
 					ImVec2(center.x, min.y + 12),
 					hovered ? color_active : text_color);
 		}
-
 
 		bool tabbar(Dock& dock, bool close_button)
 		{
@@ -758,7 +744,6 @@ namespace ImGui
 			return tab_closed;
 		}
 
-
 		static void setDockPosSize(Dock& dest, Dock& dock, Slot_ dock_slot, Dock& container)
 		{
 			IM_ASSERT(!dock.prev_tab && !dock.next_tab && !dock.children[0] && !dock.children[1]);
@@ -802,7 +787,6 @@ namespace ImGui
 				container.children[1] = tmp;
 			}
 		}
-
 
 		void doDock(Dock& dock, Dock* dest, Slot_ dock_slot)
 		{
@@ -867,7 +851,6 @@ namespace ImGui
 			dock.setActive();
 		}
 
-
 		void rootDock(const ImVec2& pos, const ImVec2& size)
 		{
 			Dock* root = getRootDock();
@@ -878,13 +861,11 @@ namespace ImGui
 			root->setPosSize(pos, ImMax(min_size, requested_size));
 		}
 
-
 		void setDockActive()
 		{
 			IM_ASSERT(m_current);
 			if (m_current) m_current->setActive();
 		}
-
 
 		static Slot_ getSlotFromLocationCode(char code)
 		{
@@ -896,7 +877,6 @@ namespace ImGui
 				default: return Slot_Right;
 			}
 		}
-
 
 		static char getLocationCode(Dock* dock)
 		{
@@ -915,7 +895,6 @@ namespace ImGui
 				return '3';
 			}
 		}
-
 
 		void tryDockToStoredLocation(Dock& dock)
 		{
@@ -936,7 +915,6 @@ namespace ImGui
 			if (tmp && tmp->children[0]) tmp = tmp->parent;
 			doDock(dock, tmp ? tmp : prev, tmp && !tmp->children[0] ? Slot_Tab : getSlotFromLocationCode(*c));
 		}
-
 
 		bool begin(const char* label, bool* opened, ImGuiWindowFlags extra_flags)
 		{
@@ -1028,7 +1006,6 @@ namespace ImGui
 			PopStyleColor();
 			return ret;
 		}
-
 
 		void end()
 		{
