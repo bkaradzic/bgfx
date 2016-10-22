@@ -114,16 +114,24 @@ project "shaderc"
 		path.join(GLSL_OPTIMIZER, "src/glsl/builtin_stubs.cpp"),
 	}
 
-	overridefiles(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
-			path.join(BGFX_DIR, "tools/shaderc/shaderc_pssl.cpp"),
-	})
-
 	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
 		path.join(BGFX_DIR, "scripts/shaderc.lua"), }) then
 
-		removefiles {
-			path.join(BGFX_DIR, "tools/shaderc/shaderc_spirv.cpp"),
-		}
+		if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
+			path.join(BGFX_DIR, "tools/shaderc/shaderc_pssl.cpp"), }) then
+
+			removefiles {
+				path.join(BGFX_DIR, "tools/shaderc/shaderc_pssl.cpp"),
+			}
+		end
+
+		if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
+			path.join(BGFX_DIR, "tools/shaderc/shaderc_spirv.cpp"), }) then
+
+			removefiles {
+				path.join(BGFX_DIR, "tools/shaderc/shaderc_spirv.cpp"),
+			}
+		end
 
 		dofile(path.join(BGFX_DIR, "../bgfx-ext/scripts/shaderc.lua") )
 	end

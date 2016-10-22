@@ -285,7 +285,7 @@ vec4 bgfxTexelFetch(BgfxSampler3D _sampler, ivec3 _coord, int _lod)
 
 #		define SAMPLER3D(_name, _reg) \
 			uniform SamplerState _name ## Sampler : REGISTER(s, _reg); \
-			uniform Texture3D _name ## Texture : REGISTER(t[_reg]); \
+			uniform Texture3D _name ## Texture : REGISTER(t, _reg); \
 			static BgfxSampler3D _name = { _name ## Sampler, _name ## Texture }
 #		define ISAMPLER3D(_name, _reg) \
 			uniform Texture3D<ivec4> _name ## Texture : REGISTER(t, _reg); \

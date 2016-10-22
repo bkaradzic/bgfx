@@ -720,6 +720,10 @@ typedef uint64_t GLuint64;
 #	define GL_IMAGE_2D 0x904D
 #endif // GL_IMAGE_2D
 
+#ifndef GL_IMAGE_2D_ARRAY
+#	define GL_IMAGE_2D_ARRAY 0x9053
+#endif // GL_IMAGE_2D_ARRAY
+
 #ifndef GL_IMAGE_3D
 #	define GL_IMAGE_3D 0x904E
 #endif // GL_IMAGE_3D
@@ -914,6 +918,22 @@ typedef uint64_t GLuint64;
 #ifndef GL_DEBUG_SEVERITY_NOTIFICATION
 #	define GL_DEBUG_SEVERITY_NOTIFICATION 0x826b
 #endif // GL_DEBUG_SEVERITY_NOTIFICATION
+
+#ifndef GL_LINE
+#	define GL_LINE 0x1B01
+#endif // GL_LINE
+
+#ifndef GL_FILL
+#	define GL_FILL 0x1B02
+#endif // GL_FILL
+
+#ifndef GL_MULTISAMPLE
+#	define GL_MULTISAMPLE 0x809D
+#endif // GL_MULTISAMPLE
+
+#ifndef GL_LINE_SMOOTH
+#	define GL_LINE_SMOOTH 0x0B20
+#endif // GL_LINE_SMOOTH
 
 #if BX_PLATFORM_NACL
 #	include "glcontext_ppapi.h"

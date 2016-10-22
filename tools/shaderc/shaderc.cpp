@@ -422,7 +422,7 @@ namespace bgfx
 
 	struct Preprocessor
 	{
-		Preprocessor(const char* _filePath, bool _essl, const char* _includeDir = NULL)
+		Preprocessor(const char* _filePath, bool _essl)
 			: m_tagptr(m_tags)
 			, m_scratchPos(0)
 			, m_fgetsPos(0)
@@ -458,11 +458,6 @@ namespace bgfx
 			m_tagptr->tag = FPPTAG_INPUT_NAME;
 			m_tagptr->data = scratch(_filePath);
 			m_tagptr++;
-
-			if (NULL != _includeDir)
-			{
-				addInclude(_includeDir);
-			}
 
 			if (!_essl)
 			{
@@ -784,8 +779,7 @@ namespace bgfx
 		const char* platform = cmdLine.findOption('\0', "platform");
 		if (NULL == platform)
 		{
-			help("Must specify platform.");
-			return EXIT_FAILURE;
+			platform = "";
 		}
 
 		bool raw = cmdLine.hasArg('\0', "raw");
@@ -796,6 +790,7 @@ namespace bgfx
 		uint32_t d3d   = 11;
 		uint32_t metal = 0;
 		uint32_t pssl  = 0;
+		uint32_t spirv = 0;
 		const char* profile = cmdLine.findOption('p', "profile");
 		if (NULL != profile)
 		{
@@ -823,6 +818,10 @@ namespace bgfx
 			else if (0 == strcmp(profile, "pssl") )
 			{
 				pssl = 1;
+			}
+			else if (0 == strcmp(profile, "spirv") )
+			{
+				spirv = 1;
 			}
 			else
 			{
@@ -865,7 +864,13 @@ namespace bgfx
 		bool preprocessOnly = cmdLine.hasArg("preprocess");
 		const char* includeDir = cmdLine.findOption('i');
 
-		Preprocessor preprocessor(filePath, 0 != essl, includeDir);
+		Preprocessor preprocessor(filePath, 0 != essl);
+
+		for (int ii = 1; NULL != includeDir; ++ii)
+		{
+			preprocessor.addInclude(includeDir);
+			includeDir = cmdLine.findOption(ii, 'i');
+		}
 
 		std::string dir;
 		{
@@ -902,17 +907,25 @@ namespace bgfx
 		preprocessor.setDefaultDefine("BX_PLATFORM_PS4");
 		preprocessor.setDefaultDefine("BX_PLATFORM_WINDOWS");
 		preprocessor.setDefaultDefine("BX_PLATFORM_XBOX360");
+		preprocessor.setDefaultDefine("BX_PLATFORM_XBOXONE");
+
 //		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_ESSL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_GLSL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_HLSL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_METAL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_PSSL");
+
 		preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_COMPUTE");
 		preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_FRAGMENT");
 		preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_VERTEX");
 
 		char glslDefine[128];
-		bx::snprintf(glslDefine, BX_COUNTOF(glslDefine), "BGFX_SHADER_LANGUAGE_GLSL=%d", essl ? 1 : glsl);
+		bx::snprintf(glslDefine, BX_COUNTOF(glslDefine)
+				, "BGFX_SHADER_LANGUAGE_GLSL=%d"
+				, essl  ? 1
+				: spirv ? 130
+				: glsl
+				);
 
 		if (0 == bx::stricmp(platform, "android") )
 		{
@@ -964,11 +977,6 @@ namespace bgfx
 			preprocessor.setDefine("BX_PLATFORM_PS4=1");
 			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_PSSL=1");
 			preprocessor.setDefine("lit=lit_reserved");
-		}
-		else
-		{
-			fprintf(stderr, "Unknown platform %s?!", platform);
-			return EXIT_FAILURE;
 		}
 
 		preprocessor.setDefine("M_PI=3.1415926535897932384626433832795");
@@ -1242,7 +1250,8 @@ namespace bgfx
 				{
 					if (0 != glsl
 					||  0 != essl
-					||  0 != metal)
+					||  0 != metal
+					||  0 != spirv)
 					{
 					}
 					else
@@ -1384,6 +1393,10 @@ namespace bgfx
 								compiled = compileGLSLShader(cmdLine, essl, code, writer);
 	#endif // 0
 							}
+							else if (0 != spirv)
+							{
+								compiled = compileSPIRVShader(cmdLine, 0, preprocessor.m_preprocessed, writer);
+							}
 							else if (0 != pssl)
 							{
 								compiled = compilePSSLShader(cmdLine, 0, preprocessor.m_preprocessed, writer);
@@ -1425,7 +1438,8 @@ namespace bgfx
 				{
 					if (0 != glsl
 					||  0 != essl
-					||  0 != metal)
+					||  0 != metal
+					||  0 != spirv)
 					{
 						if (0 == essl)
 						{
@@ -1807,7 +1821,8 @@ namespace bgfx
 
 							if (0 != glsl
 							||  0 != essl
-							||  0 != metal)
+							||  0 != metal
+							||  0 != spirv )
 							{
 								std::string code;
 
@@ -1828,6 +1843,10 @@ namespace bgfx
 									if (0 != metal)
 									{
 										bx::stringPrintf(code, "#version 120\n");
+									}
+									else if (0 != spirv)
+									{
+										bx::stringPrintf(code, "#version 130\n");
 									}
 									else
 									{
@@ -1957,11 +1976,23 @@ namespace bgfx
 								}
 
 								code += preprocessor.m_preprocessed;
-								compiled = compileGLSLShader(cmdLine
-									, metal ? BX_MAKEFOURCC('M', 'T', 'L', 0) : essl
-									, code
-									, writer
-									);
+
+								if (0 != spirv)
+								{
+									compiled = compileSPIRVShader(cmdLine
+										, 0
+										, code
+										, writer
+										);
+								}
+								else
+								{
+									compiled = compileGLSLShader(cmdLine
+										, metal ? BX_MAKEFOURCC('M', 'T', 'L', 0) : essl
+										, code
+										, writer
+										);
+								}
 							}
 							else if (0 != pssl)
 							{

@@ -34,11 +34,8 @@ namespace entry
 	inline void winSetHwnd(::HWND _window)
 	{
 		bgfx::PlatformData pd;
-		pd.ndt          = NULL;
-		pd.nwh          = _window;
-		pd.context      = NULL;
-		pd.backBuffer   = NULL;
-		pd.backBufferDS = NULL;
+		memset(&pd, 0, sizeof(pd) );
+		pd.nwh = _window;
 		bgfx::setPlatformData(pd);
 	}
 

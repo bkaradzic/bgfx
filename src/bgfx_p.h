@@ -402,13 +402,13 @@ namespace bgfx
 
 		void resize(bool _small = false, uint32_t _width = BGFX_DEFAULT_WIDTH, uint32_t _height = BGFX_DEFAULT_HEIGHT)
 		{
-			uint32_t width = bx::uint32_max(1, _width/8);
-			uint32_t height = bx::uint32_max(1, _height/(_small ? 8 : 16) );
+			uint32_t width  = bx::uint32_imax(1, _width/8);
+			uint32_t height = bx::uint32_imax(1, _height/(_small ? 8 : 16) );
 
 			if (NULL == m_mem
-			||  m_width != width
+			||  m_width  != width
 			||  m_height != height
-			||  m_small != _small)
+			||  m_small  != _small)
 			{
 				m_small  = _small;
 				m_width  = (uint16_t)width;
@@ -2187,9 +2187,14 @@ namespace bgfx
 
 		BGFX_API_FUNC(void reset(uint32_t _width, uint32_t _height, uint32_t _flags) )
 		{
-			BX_WARN(0 != _width && 0 != _height, "Frame buffer resolution width or height cannot be 0 (width %d, height %d).", _width, _height);
-			m_resolution.m_width  = bx::uint32_max(1, _width);
-			m_resolution.m_height = bx::uint32_max(1, _height);
+			BX_WARN(1 <= int32_t(_width)
+				&&  1 <= int32_t(_height)
+				, "Frame buffer resolution width or height cannot be 0 (width %d, height %d)."
+				, _width
+				, _height
+				);
+			m_resolution.m_width  = bx::uint32_imax(1, _width);
+			m_resolution.m_height = bx::uint32_imax(1, _height);
 			m_resolution.m_flags  = 0
 				| _flags
 				| (g_platformDataChangedSinceReset ? BGFX_RESET_INTERNAL_FORCE : 0)
@@ -3001,7 +3006,7 @@ namespace bgfx
 			if (!isValid(_vsh)
 			||  !isValid(_fsh) )
 			{
-				BX_WARN(false, "Vertex/fragment shader is invalid (vsh %d, fsh %d).", _vsh.idx, _fsh.idx);
+				BX_TRACE("Vertex/fragment shader is invalid (vsh %d, fsh %d).", _vsh.idx, _fsh.idx);
 				ProgramHandle invalid = BGFX_INVALID_HANDLE;
 				return invalid;
 			}
@@ -3019,7 +3024,7 @@ namespace bgfx
 			const ShaderRef& fsr = m_shaderRef[_fsh.idx];
 			if (vsr.m_hash != fsr.m_hash)
 			{
-				BX_WARN(vsr.m_hash == fsr.m_hash, "Vertex shader output doesn't match fragment shader input.");
+				BX_TRACE("Vertex shader output doesn't match fragment shader input.");
 				ProgramHandle invalid = BGFX_INVALID_HANDLE;
 				return invalid;
 			}
@@ -3977,21 +3982,28 @@ namespace bgfx
 		{
 			if (!m_singleThreaded)
 			{
-				m_gameSem.post();
+				m_apiSem.post();
 			}
 		}
 
-		void gameSemWait()
+		bool apiSemWait(int32_t _msecs = -1)
 		{
-			if (!m_singleThreaded)
+			if (m_singleThreaded)
 			{
-				BGFX_PROFILER_SCOPE(bgfx, main_thread_wait, 0xff2040ff);
-				int64_t start = bx::getHPCounter();
-				bool ok = m_gameSem.wait();
-				BX_CHECK(ok, "Semaphore wait failed."); BX_UNUSED(ok);
+				return true;
+			}
+
+			BGFX_PROFILER_SCOPE(bgfx, main_thread_wait, 0xff2040ff);
+			int64_t start = bx::getHPCounter();
+			bool ok = m_apiSem.wait(_msecs);
+			if (ok)
+			{
 				m_render->m_waitSubmit = bx::getHPCounter()-start;
 				m_submit->m_perfStats.waitSubmit = m_submit->m_waitSubmit;
+				return true;
 			}
+
+			return false;
 		}
 
 		void renderSemPost()
@@ -4016,15 +4028,17 @@ namespace bgfx
 		}
 
 		bx::Semaphore m_renderSem;
-		bx::Semaphore m_gameSem;
+		bx::Semaphore m_apiSem;
 		bx::Thread m_thread;
 #else
 		void gameSemPost()
 		{
 		}
 
-		void gameSemWait()
+		bool apiSemWait(int32_t _msecs = -1)
 		{
+			BX_UNUSED(_msecs);
+			return true;
 		}
 
 		void renderSemPost()

@@ -25,6 +25,8 @@ all:
 	@echo "  TARGET=7 (spriv)"
 else
 
+ADDITIONAL_INCLUDES?=
+
 ifeq ($(TARGET), 0)
 VS_FLAGS=--platform windows -p vs_3_0 -O 3
 FS_FLAGS=--platform windows -p ps_3_0 -O 3
@@ -80,9 +82,9 @@ endif
 endif
 
 THISDIR := $(dir $(lastword $(MAKEFILE_LIST)))
-VS_FLAGS+=-i $(THISDIR)../src/
-FS_FLAGS+=-i $(THISDIR)../src/
-CS_FLAGS+=-i $(THISDIR)../src/
+VS_FLAGS+=-i $(THISDIR)../src/ $(ADDITIONAL_INCLUDES)
+FS_FLAGS+=-i $(THISDIR)../src/ $(ADDITIONAL_INCLUDES)
+CS_FLAGS+=-i $(THISDIR)../src/ $(ADDITIONAL_INCLUDES)
 
 BUILD_OUTPUT_DIR=$(addprefix ./, $(RUNTIME_DIR)/$(SHADER_PATH))
 BUILD_INTERMEDIATE_DIR=$(addprefix $(BUILD_DIR)/, $(SHADER_PATH))

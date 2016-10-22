@@ -75,3 +75,4 @@ namespace ImGui
 #include "widgets/file_list.inl"
 #include "widgets/memory_editor.inl"
 #include "widgets/gizmo.inl"
+#include "widgets/dock.inl"

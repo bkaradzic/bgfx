@@ -258,9 +258,9 @@ namespace bgfx
 		_depth  = bx::uint16_max(1, _depth);
 
 		uint32_t max = bx::uint32_max(_width, bx::uint32_max(_height, _depth) );
-		uint8_t numMips = uint8_t(bx::flog2(float(max) ) );
+		uint32_t numMips = bx::uint32_max(1, uint8_t(bx::flog2(float(max) ) ) );
 
-		return numMips;
+		return uint8_t(numMips);
 	}
 
 	uint32_t imageGetSize(TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth, uint16_t _numLayers, bool _cubeMap, uint8_t _numMips)

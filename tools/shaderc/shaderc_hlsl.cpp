@@ -659,7 +659,7 @@ namespace bgfx { namespace hlsl
 			UniformNameList unusedUniforms;
 			if (!getReflectionDataD3D11(code, profile[0] == 'v', uniforms, numAttrs, attrs, size, unusedUniforms) )
 			{
-				fprintf(stderr, "Unable to get D3D11 reflection data.\n");
+				fprintf(stderr, "Error: Unable to get D3D11 reflection data.\n");
 				goto error;
 			}
 
@@ -699,7 +699,7 @@ namespace bgfx { namespace hlsl
 				}
 
 				// recompile with the unused uniforms converted to statics
-				return compileHLSLShader(_cmdLine, _version, output.c_str(), _writer);
+				return compile(_cmdLine, _version, output.c_str(), _writer, false);
 			}
 		}
 
