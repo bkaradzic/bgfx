@@ -163,7 +163,7 @@ public:
 		m_texture3DSupported = !!(caps->supported & BGFX_CAPS_TEXTURE_3D);
 		m_blitSupported      = !!(caps->supported & BGFX_CAPS_TEXTURE_BLIT);
 		m_computeSupported   = !!(caps->supported & BGFX_CAPS_COMPUTE);
-		m_numm_textures3d    = 0;
+		m_numTextures3d      = 0;
 
 		if (m_texture3DSupported)
 		{
@@ -187,17 +187,17 @@ public:
 
 			if (0 != (BGFX_CAPS_FORMAT_TEXTURE_2D & caps->formats[bgfx::TextureFormat::R8]) )
 			{
-				m_textures3d[m_numm_textures3d++] = bgfx::createTexture3D(32, 32, 32, false, bgfx::TextureFormat::R8,   BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem8);
+				m_textures3d[m_numTextures3d++] = bgfx::createTexture3D(32, 32, 32, false, bgfx::TextureFormat::R8,   BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem8);
 			}
 
 			if (0 != (BGFX_CAPS_FORMAT_TEXTURE_2D & caps->formats[bgfx::TextureFormat::R16F]) )
 			{
-				m_textures3d[m_numm_textures3d++] = bgfx::createTexture3D(32, 32, 32, false, bgfx::TextureFormat::R16F, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem16f);
+				m_textures3d[m_numTextures3d++] = bgfx::createTexture3D(32, 32, 32, false, bgfx::TextureFormat::R16F, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem16f);
 			}
 
 			if (0 != (BGFX_CAPS_FORMAT_TEXTURE_2D & caps->formats[bgfx::TextureFormat::R32F]) )
 			{
-				m_textures3d[m_numm_textures3d++] = bgfx::createTexture3D(32, 32, 32, false, bgfx::TextureFormat::R32F, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem32f);
+				m_textures3d[m_numTextures3d++] = bgfx::createTexture3D(32, 32, 32, false, bgfx::TextureFormat::R32F, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem32f);
 			}
 		}
 
@@ -253,7 +253,7 @@ public:
 					);
 		}
 
-		if (m_computeSupported) 
+		if (m_computeSupported)
 		{
 			m_textureCube[2] = bgfx::createTextureCube(
 				textureside
@@ -301,7 +301,7 @@ public:
 			bgfx::destroyTexture(m_textures[ii]);
 		}
 
-		for (uint32_t ii = 0; ii < m_numm_textures3d; ++ii)
+		for (uint32_t ii = 0; ii < m_numTextures3d; ++ii)
 		{
 			bgfx::destroyTexture(m_textures3d[ii]);
 		}
@@ -458,15 +458,15 @@ public:
 			bgfx::setViewTransform(0, view, proj);
 
 			// Update texturecube using compute shader
-			if (m_computeSupported )
+			if (bgfx::isValid(m_programCompute) )
 			{
-				bgfx::setImage( 0, s_texCube, m_textureCube[2], 0, bgfx::Access::Write );
-				bgfx::dispatch( 0, m_programCompute, textureside/16, textureside/16 );
+				bgfx::setImage(0, s_texCube, m_textureCube[2], 0, bgfx::Access::Write);
+				bgfx::dispatch(0, m_programCompute, textureside/16, textureside/16);
 			}
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textureCube); ++ii)
 			{
-				if (bgfx::isValid(m_textureCube[ii])) 
+				if (bgfx::isValid(m_textureCube[ii]))
 				{
 					float mtx[16];
 					bx::mtxSRT( mtx, 0.7f, 0.7f, 0.7f, time, time*0.37f, 0.0f, -2.0f +ii*2.0f, 0.0f, 0.0f );
@@ -537,7 +537,7 @@ public:
 				bgfx::submit(1, m_programCmp);
 			}
 
-			for (uint32_t ii = 0; ii < m_numm_textures3d; ++ii)
+			for (uint32_t ii = 0; ii < m_numTextures3d; ++ii)
 			{
 				bx::mtxTranslate(mtx, xpos + ii*2.1f, -size+6.5f, 0.0f);
 
@@ -595,7 +595,7 @@ public:
 	uint32_t m_debug;
 	uint32_t m_reset;
 
-	uint32_t m_numm_textures3d;
+	uint32_t m_numTextures3d;
 	bool m_texture3DSupported;
 	bool m_blitSupported;
 	bool m_computeSupported;
