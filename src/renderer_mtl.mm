@@ -979,8 +979,8 @@ namespace bgfx { namespace mtl
 		{
 			RenderCommandEncoder rce = m_renderCommandEncoder;
 
-			uint32_t width  = getBufferWidth();
-			uint32_t height = getBufferHeight();
+			uint32_t width  = m_resolution.m_width;
+			uint32_t height  = m_resolution.m_height;
 
 			//if (m_ovr.isEnabled() )
 			//{
@@ -1422,8 +1422,8 @@ namespace bgfx { namespace mtl
 			}
 			else
 			{
-				width  = getBufferWidth();
-				height = getBufferHeight();
+				width  = m_resolution.m_width;
+				height = m_resolution.m_height;
 			}
 
 
@@ -1679,7 +1679,7 @@ namespace bgfx { namespace mtl
 				m_samplerDescriptor.lodMinClamp = 0;
 				m_samplerDescriptor.lodMaxClamp = FLT_MAX;
 				m_samplerDescriptor.normalizedCoordinates = TRUE;
-				m_samplerDescriptor.maxAnisotropy =  m_maxAnisotropy;
+				m_samplerDescriptor.maxAnisotropy =  (0 != (_flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) ) ) ? m_maxAnisotropy : 1;
 
 				//NOTE: Comparison function can be specified in shader on all metal hw.
 				if ( m_macOS11Runtime || [m_device supportsFeatureSet:(MTLFeatureSet)4/*MTLFeatureSet_iOS_GPUFamily3_v1*/])
@@ -1699,16 +1699,6 @@ namespace bgfx { namespace mtl
 		{
 			m_occlusionQuery.resolve(_render);
 			return _visible == (0 != _render->m_occlusion[_handle.idx]);
-		}
-
-		uint32_t getBufferWidth()
-		{
-			return m_backBufferDepth.width();
-		}
-
-		uint32_t getBufferHeight()
-		{
-			return m_backBufferDepth.height();
 		}
 
 		void sync()
@@ -2697,12 +2687,20 @@ namespace bgfx { namespace mtl
 	void FrameBufferMtl::create(uint8_t _num, const Attachment* _attachment)
 	{
 		m_num = 0;
+		m_width = 0;
+		m_height = 0;
 		for (uint32_t ii = 0; ii < _num; ++ii)
 		{
 			TextureHandle handle = _attachment[ii].handle;
 			if (isValid(handle) )
 			{
 				const TextureMtl& texture = s_renderMtl->m_textures[handle.idx];
+
+				if ( 0 == m_width )
+				{
+					m_width = texture.m_width;
+					m_height = texture.m_height;
+				}
 
 				if (isDepth( (TextureFormat::Enum)texture.m_textureFormat) )
 				{
@@ -3104,15 +3102,8 @@ namespace bgfx { namespace mtl
 					viewScissorRect = viewHasScissor ? scissorRect : viewState.m_rect;
 					Clear& clr = _render->m_clear[view];
 
-					uint32_t width  = getBufferWidth();
-					uint32_t height = getBufferHeight();
 					Rect viewRect = viewState.m_rect;
-					bool clearWithRenderPass = true
-						&& 0      == viewRect.m_x
-						&& 0      == viewRect.m_y
-						&& width  == viewRect.m_width
-						&& height == viewRect.m_height
-						;
+					bool clearWithRenderPass = false;
 
 					if ( NULL == m_renderCommandEncoder || fbh.idx != _render->m_fb[view].idx )
 					{
@@ -3125,10 +3116,28 @@ namespace bgfx { namespace mtl
 						renderPassDescriptor.visibilityResultBuffer = m_occlusionQuery.m_buffer;
 
 						fbh = _render->m_fb[view];
+
+						uint32_t width  = m_resolution.m_width;
+						uint32_t height = m_resolution.m_height;
+
+						if ( isValid(fbh) )
+						{
+							FrameBufferMtl& frameBuffer = m_frameBuffers[fbh.idx];
+							width = frameBuffer.m_width;
+							height = frameBuffer.m_height;
+						}
+
+						clearWithRenderPass = true
+						&& 0 == viewRect.m_x
+						&& 0      == viewRect.m_y
+						&& width  == viewRect.m_width
+						&& height == viewRect.m_height;
+
 						setFrameBuffer(renderPassDescriptor, fbh);
 
 						if ( clearWithRenderPass )
 						{
+
 							for(uint32_t ii = 0; ii < g_caps.limits.maxFBAttachments; ++ii)
 							{
 								MTLRenderPassColorAttachmentDescriptor* desc = renderPassDescriptor.colorAttachments[ii];
@@ -3218,10 +3227,6 @@ namespace bgfx { namespace mtl
 						m_renderCommandEncoder = rce;
 						m_renderCommandEncoderFrameBufferHandle = fbh;
 						MTL_RELEASE(renderPassDescriptor);
-					}
-					else
-					{
-						clearWithRenderPass = false;
 					}
 
 					rce.setTriangleFillMode(wireframe? MTLTriangleFillModeLines : MTLTriangleFillModeFill);
