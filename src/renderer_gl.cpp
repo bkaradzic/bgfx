@@ -2383,7 +2383,6 @@ namespace bgfx { namespace gl
 		{
 			if (m_readBackSupported)
 			{
-				_mip;
 				const TextureGL& texture = m_textures[_handle.idx];
 				const bool compressed    = isCompressed(TextureFormat::Enum(texture.m_textureFormat) );
 
@@ -2392,14 +2391,14 @@ namespace bgfx { namespace gl
 				if (compressed)
 				{
 					GL_CHECK(glGetCompressedTexImage(texture.m_target
-						, 0
+						, _mip
 						, _data
 						) );
 				}
 				else
 				{
 					GL_CHECK(glGetTexImage(texture.m_target
-						, 0
+						, _mip
 						, texture.m_fmt
 						, texture.m_type
 						, _data

@@ -796,7 +796,7 @@ namespace bgfx { namespace mtl
 		{
 		}
 
-		void readTexture(TextureHandle _handle, void* _data) BX_OVERRIDE
+		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) BX_OVERRIDE
 		{
 			m_commandBuffer.commit();
 			m_commandBuffer.waitUntilCompleted();
@@ -804,13 +804,15 @@ namespace bgfx { namespace mtl
 
 			const TextureMtl& texture = m_textures[_handle.idx];
 
-			uint32_t width  = texture.m_ptr.width();
-			uint32_t height = texture.m_ptr.height();
+			BX_CHECK(_mip<texture.m_numMips,"Invalid mip: %d num mips:",_mip,texture.m_numMips);
+
+			uint32_t width  = texture.m_ptr.width() >> _mip;
+			uint32_t height = texture.m_ptr.height() >> _mip;
 			const uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(texture.m_textureFormat) );
 
 			MTLRegion region = { { 0, 0, 0 }, { width, height, 1 } };
 
-			texture.m_ptr.getBytes(_data, width*bpp/8, 0, region, 0, 0);
+			texture.m_ptr.getBytes(_data, width*bpp/8, 0, region, _mip, 0);
 
 			m_commandBuffer = m_commandQueue.commandBuffer();
 			retain(m_commandBuffer); //NOTE: keep alive to be useable at 'flip'
