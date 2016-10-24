@@ -3204,6 +3204,11 @@ namespace bgfx
 
 		BGFX_API_FUNC(uint32_t readTexture(TextureHandle _handle, void* _data, uint8_t _mip) )
 		{
+			BGFX_CHECK_HANDLE("readTexture", m_textureHandle, _handle);
+
+			const TextureRef& ref = m_textureRef[_handle.idx];
+			BX_CHECK(_mip < ref.m_numMips, "Invalid mip: %d num mips:", _mip, ref.m_numMips); BX_UNUSED(ref);
+
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::ReadTexture);
 			cmdbuf.write(_handle);
 			cmdbuf.write(_data);
@@ -3215,8 +3220,10 @@ namespace bgfx
 		{
 			const FrameBufferRef& ref = m_frameBufferRef[_handle.idx];
 			BX_CHECK(!ref.m_window, "Can't sample window frame buffer.");
+
 			TextureHandle textureHandle = ref.un.m_th[_attachment];
-			BX_CHECK(isValid(textureHandle), "Frame buffer texture %d is invalid.", _attachment);
+			BGFX_CHECK_HANDLE("readTexture", m_textureHandle, textureHandle);
+
 			return readTexture(textureHandle, _data,0);
 		}
 

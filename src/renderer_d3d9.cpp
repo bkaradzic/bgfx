@@ -990,7 +990,6 @@ namespace bgfx { namespace d3d9
 		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) BX_OVERRIDE
 		{
 			TextureD3D9& texture = m_textures[_handle.idx];
-			BX_CHECK( _mip<texture.m_numMips, "Invalid mip: %d num mips:", _mip, texture.m_numMips );
 
 			D3DLOCKED_RECT lockedRect;
 			DX_CHECK(texture.m_texture2d->LockRect(_mip
@@ -999,8 +998,8 @@ namespace bgfx { namespace d3d9
 				, D3DLOCK_NO_DIRTY_UPDATE|D3DLOCK_NOSYSLOCK|D3DLOCK_READONLY
 				) );
 
-			uint32_t srcWidth  = texture.m_width>>_mip;
-			uint32_t srcHeight = texture.m_height>>_mip;
+			uint32_t srcWidth  = bx::uint32_max(1, texture.m_width >>_mip);
+			uint32_t srcHeight = bx::uint32_max(1, texture.m_height>>_mip);
 			uint32_t srcPitch  = lockedRect.Pitch;
 			uint8_t* src       = (uint8_t*)lockedRect.pBits;
 
