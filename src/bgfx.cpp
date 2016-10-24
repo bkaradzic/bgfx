@@ -2239,7 +2239,10 @@ namespace bgfx
 					void* data;
 					_cmdbuf.read(data);
 
-					m_renderCtx->readTexture(handle, data);
+					uint8_t mip;
+					_cmdbuf.read(mip);
+
+					m_renderCtx->readTexture(handle, data,mip);
 				}
 				break;
 
@@ -3208,12 +3211,12 @@ error:
 		}
 	}
 
-	uint32_t readTexture(TextureHandle _handle, void* _data)
+	uint32_t readTexture(TextureHandle _handle, void* _data, uint8_t _mip)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _data, "_data can't be NULL");
 		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_READ_BACK, "Texture read-back is not supported!");
-		return s_ctx->readTexture(_handle, _data);
+		return s_ctx->readTexture(_handle, _data, _mip);
 	}
 
 	uint32_t readTexture(FrameBufferHandle _handle, uint8_t _attachment, void* _data)

@@ -987,27 +987,30 @@ namespace bgfx { namespace d3d9
 			m_updateTexture = NULL;
 		}
 
-		void readTexture(TextureHandle _handle, void* _data) BX_OVERRIDE
+		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) BX_OVERRIDE
 		{
 			TextureD3D9& texture = m_textures[_handle.idx];
+			BX_CHECK( _mip<texture.m_numMips, "Invalid mip: %d num mips:", _mip, texture.m_numMips );
 
 			D3DLOCKED_RECT lockedRect;
-			DX_CHECK(texture.m_texture2d->LockRect(0
+			DX_CHECK(texture.m_texture2d->LockRect(_mip
 				, &lockedRect
 				, NULL
 				, D3DLOCK_NO_DIRTY_UPDATE|D3DLOCK_NOSYSLOCK|D3DLOCK_READONLY
 				) );
 
-			uint32_t srcPitch = lockedRect.Pitch;
-			uint8_t* src      = (uint8_t*)lockedRect.pBits;
+			uint32_t srcWidth  = texture.m_width>>_mip;
+			uint32_t srcHeight = texture.m_height>>_mip;
+			uint32_t srcPitch  = lockedRect.Pitch;
+			uint8_t* src       = (uint8_t*)lockedRect.pBits;
 
 			const uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(texture.m_textureFormat) );
 			uint8_t* dst      = (uint8_t*)_data;
-			uint32_t dstPitch = texture.m_width*bpp/8;
+			uint32_t dstPitch = srcWidth*bpp/8;
 
 			uint32_t pitch = bx::uint32_min(srcPitch, dstPitch);
 
-			for (uint32_t yy = 0, height = texture.m_height; yy < height; ++yy)
+			for (uint32_t yy = 0, height = srcHeight; yy < height; ++yy)
 			{
 				memcpy(dst, src, pitch);
 

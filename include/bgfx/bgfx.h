@@ -1824,7 +1824,7 @@ namespace bgfx
 	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_READ_BACK`.
 	/// @attention C99 equivalent is `bgfx_read_texture`.
 	///
-	uint32_t readTexture(TextureHandle _handle, void* _data);
+	uint32_t readTexture(TextureHandle _handle, void* _data, uint8_t _mip = 0);
 
 	/// Read back texture content.
 	///

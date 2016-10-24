@@ -1840,22 +1840,25 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 		}
 
-		void readTexture(TextureHandle _handle, void* _data) BX_OVERRIDE
+		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) BX_OVERRIDE
 		{
 			const TextureD3D11& texture = m_textures[_handle.idx];
 			D3D11_MAPPED_SUBRESOURCE mapped;
-			DX_CHECK(m_deviceCtx->Map(texture.m_ptr, 0, D3D11_MAP_READ, 0, &mapped) );
+			BX_CHECK(_mip<texture.m_numMips,"Invalid mip: %d num mips:",_mip,texture.m_numMips);
+			DX_CHECK(m_deviceCtx->Map(texture.m_ptr, _mip, D3D11_MAP_READ, 0, &mapped) );
 
-			uint8_t* src      = (uint8_t*)mapped.pData;
-			uint32_t srcPitch = mapped.RowPitch;
+			uint32_t srcWidth  = texture.m_width>>_mip;
+			uint32_t srcHeight = texture.m_height>>_mip;
+			uint8_t* src       = (uint8_t*)mapped.pData;
+			uint32_t srcPitch  = mapped.RowPitch;
 
 			const uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(texture.m_textureFormat) );
 			uint8_t* dst      = (uint8_t*)_data;
-			uint32_t dstPitch = texture.m_width*bpp/8;
+			uint32_t dstPitch = srcWidth*bpp/8;
 
 			uint32_t pitch = bx::uint32_min(srcPitch, dstPitch);
 
-			for (uint32_t yy = 0, height = texture.m_height; yy < height; ++yy)
+			for (uint32_t yy = 0, height = srcHeight; yy < height; ++yy)
 			{
 				memcpy(dst, src, pitch);
 

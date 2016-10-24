@@ -136,7 +136,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void readTexture(TextureHandle /*_handle*/, void* /*_data*/) BX_OVERRIDE
+		void readTexture(TextureHandle /*_handle*/, void* /*_data*/, uint8_t /*_mip*/) BX_OVERRIDE
 		{
 		}
 

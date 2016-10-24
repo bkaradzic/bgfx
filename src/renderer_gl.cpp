@@ -2379,7 +2379,7 @@ namespace bgfx { namespace gl
 		{
 		}
 
-		void readTexture(TextureHandle _handle, void* _data) BX_OVERRIDE
+		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) BX_OVERRIDE
 		{
 			if (m_readBackSupported)
 			{
@@ -2391,14 +2391,14 @@ namespace bgfx { namespace gl
 				if (compressed)
 				{
 					GL_CHECK(glGetCompressedTexImage(texture.m_target
-						, 0
+						, _mip
 						, _data
 						) );
 				}
 				else
 				{
 					GL_CHECK(glGetTexImage(texture.m_target
-						, 0
+						, _mip
 						, texture.m_fmt
 						, texture.m_type
 						, _data
