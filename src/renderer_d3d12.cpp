@@ -1403,7 +1403,6 @@ namespace bgfx { namespace d3d12
 
 		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip ) BX_OVERRIDE
 		{
-			_mip;
 			const TextureD3D12& texture = m_textures[_handle.idx];
 
 			D3D12_RESOURCE_DESC desc = texture.m_ptr->GetDesc();
@@ -1413,7 +1412,7 @@ namespace bgfx { namespace d3d12
 			uint64_t total;
 			uint64_t srcPitch;
 			m_device->GetCopyableFootprints(&desc
-				, 0
+				, _mip
 				, 1
 				, 0
 				, &layout
@@ -1439,16 +1438,18 @@ namespace bgfx { namespace d3d12
 			finish();
 			m_commandList = m_cmd.alloc();
 
+			uint32_t srcWidth  = bx::uint32_max(1, texture.m_width >>_mip);
+			uint32_t srcHeight = bx::uint32_max(1, texture.m_height>>_mip);
 			uint8_t* src;
 			readback->Map(0, NULL, (void**)&src);
 
 			const uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(texture.m_textureFormat) );
 			uint8_t* dst      = (uint8_t*)_data;
-			uint32_t dstPitch = texture.m_width*bpp/8;
+			uint32_t dstPitch = srcWidth*bpp/8;
 
 			uint32_t pitch = bx::uint32_min(uint32_t(srcPitch), dstPitch);
 
-			for (uint32_t yy = 0, height = texture.m_height; yy < height; ++yy)
+			for (uint32_t yy = 0, height = srcHeight; yy < height; ++yy)
 			{
 				memcpy(dst, src, pitch);
 

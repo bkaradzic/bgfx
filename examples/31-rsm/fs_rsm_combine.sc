@@ -115,7 +115,11 @@ void main()
 	vec2 texelSize = vec2_splat(u_shadowDimsInv.x);
 
 	shadowCoord.xy /= shadowCoord.w;
-	shadowCoord.xy = shadowCoord.xy*0.5+0.5;
+	shadowCoord.xy = shadowCoord.xy*0.5 + 0.5;
+
+#if BGFX_SHADER_LANGUAGE_GLSL
+	shadowCoord.z = shadowCoord.z*0.5 + 0.5;
+#endif // BGFX_SHADER_LANGUAGE_GLSL
 
 	float visibility = PCF(s_shadowMap, shadowCoord, shadowMapBias, texelSize);
 

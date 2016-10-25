@@ -1844,11 +1844,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			const TextureD3D11& texture = m_textures[_handle.idx];
 			D3D11_MAPPED_SUBRESOURCE mapped;
-			BX_CHECK(_mip<texture.m_numMips,"Invalid mip: %d num mips:",_mip,texture.m_numMips);
 			DX_CHECK(m_deviceCtx->Map(texture.m_ptr, _mip, D3D11_MAP_READ, 0, &mapped) );
 
-			uint32_t srcWidth  = texture.m_width>>_mip;
-			uint32_t srcHeight = texture.m_height>>_mip;
+			uint32_t srcWidth  = bx::uint32_max(1, texture.m_width >>_mip);
+			uint32_t srcHeight = bx::uint32_max(1, texture.m_height>>_mip);
 			uint8_t* src       = (uint8_t*)mapped.pData;
 			uint32_t srcPitch  = mapped.RowPitch;
 

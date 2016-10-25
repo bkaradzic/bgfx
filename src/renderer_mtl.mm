@@ -806,13 +806,13 @@ namespace bgfx { namespace mtl
 
 			BX_CHECK(_mip<texture.m_numMips,"Invalid mip: %d num mips:",_mip,texture.m_numMips);
 
-			uint32_t width  = texture.m_ptr.width() >> _mip;
-			uint32_t height = texture.m_ptr.height() >> _mip;
+			uint32_t srcWidth  = bx::uint32_max(1, texture.m_ptr.width()  >> _mip);
+			uint32_t srcHeight = bx::uint32_max(1, texture.m_ptr.height() >> _mip);
 			const uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(texture.m_textureFormat) );
 
-			MTLRegion region = { { 0, 0, 0 }, { width, height, 1 } };
+			MTLRegion region = { { 0, 0, 0 }, { srcWidth, srcHeight, 1 } };
 
-			texture.m_ptr.getBytes(_data, width*bpp/8, 0, region, _mip, 0);
+			texture.m_ptr.getBytes(_data, srcWidth*bpp/8, 0, region, _mip, 0);
 
 			m_commandBuffer = m_commandQueue.commandBuffer();
 			retain(m_commandBuffer); //NOTE: keep alive to be useable at 'flip'
