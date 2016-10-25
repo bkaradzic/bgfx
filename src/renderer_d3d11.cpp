@@ -1865,7 +1865,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				dst += dstPitch;
 			}
 
-			m_deviceCtx->Unmap(texture.m_ptr, 0);
+			m_deviceCtx->Unmap(texture.m_ptr, _mip);
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips) BX_OVERRIDE
