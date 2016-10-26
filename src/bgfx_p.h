@@ -3436,6 +3436,11 @@ namespace bgfx
 			{
 				UniformHandle handle = { idx };
 				UniformRef& uniform = m_uniformRef[handle.idx];
+				BX_CHECK(uniform.m_type == _type
+					, "Uniform type mismatch (type: %d, expected %d)."
+					, _type
+					, uniform.m_type
+					);
 
 				uint32_t oldsize = g_uniformTypeSize[uniform.m_type];
 				uint32_t newsize = g_uniformTypeSize[_type];
@@ -3461,7 +3466,6 @@ namespace bgfx
 
 			UniformHandle handle = { m_uniformHandle.alloc() };
 
-			BX_WARN(isValid(handle), "Failed to allocate uniform handle.");
 			if (isValid(handle) )
 			{
 				BX_TRACE("Creating uniform (handle %3d) %s", handle.idx, _name);
@@ -3482,6 +3486,10 @@ namespace bgfx
 				uint8_t len = (uint8_t)strlen(_name)+1;
 				cmdbuf.write(len);
 				cmdbuf.write(_name, len);
+			}
+			else
+			{
+				BX_TRACE("Failed to allocate uniform handle.");
 			}
 
 			return handle;
