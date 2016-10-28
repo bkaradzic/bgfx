@@ -4938,8 +4938,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx11readTextureE13TextureHandlePv">
-<span id="bgfx::readTexture__TextureHandle.voidP"></span><span class="target" id="bgfxnamespacebgfx_1a6e6d88f74de73c87ca9644fd89eb6123"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">readTexture</code><span class="sig-paren">(</span>TextureHandle <em>_handle</em>, void *<em>_data</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11readTextureE13TextureHandlePv" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx11readTextureE13TextureHandlePv7uint8_t">
+<span id="bgfx::readTexture__TextureHandle.voidP.uint8_t"></span><span class="target" id="bgfxnamespacebgfx_1a917250df0398e10837853d1a2d416279"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">readTexture</code><span class="sig-paren">(</span>TextureHandle <em>_handle</em>, void *<em>_data</em>, uint8_t <em>_mip</em> = 0<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11readTextureE13TextureHandlePv7uint8_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read back texture content. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
@@ -4954,7 +4954,9 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Texture handle. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_data</span></code> - <p>Destination buffer.</p>
+<li><code class="first docutils literal"><span class="pre">_data</span></code> - <p>Destination buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_mip</span></code> - <p>Mip level.</p>
 </li>
 </ul>
 </dd>
