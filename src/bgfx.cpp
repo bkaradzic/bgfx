@@ -1490,6 +1490,11 @@ namespace bgfx
 			m_occlusionQuerySet.clear();
 		}
 
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
+		{
+			m_uniformSet.clear();
+		}
+
 		m_submit->m_capture = _capture;
 
 		BGFX_PROFILER_SCOPE(bgfx, main_thread_frame, 0xff2040ff);
