@@ -1817,6 +1817,7 @@ namespace bgfx
 	///
 	/// @param[in] _handle Texture handle.
 	/// @param[in] _data Destination buffer.
+	/// @param[in] _mip Mip level.
 	///
 	/// @returns Frame number when the result will be available. See: `bgfx::frame`.
 	///
