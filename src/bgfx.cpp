@@ -2513,7 +2513,7 @@ namespace bgfx
 
 		errorState = ErrorState::ContextAllocated;
 
-		s_ctx = BX_ALIGNED_NEW(g_allocator, Context, 16);
+		s_ctx = BX_ALIGNED_NEW(g_allocator, Context, 64);
 		if (s_ctx->init(_type) )
 		{
 			BX_TRACE("Init complete.");
@@ -2526,7 +2526,7 @@ error:
 		switch (errorState)
 		{
 		case ErrorState::ContextAllocated:
-			BX_ALIGNED_DELETE(g_allocator, s_ctx, 16);
+			BX_ALIGNED_DELETE(g_allocator, s_ctx, 64);
 			s_ctx = NULL;
 
 		case ErrorState::Default:

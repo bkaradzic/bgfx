@@ -30,7 +30,7 @@
 #endif
 
 // Some compilers support applying printf-style warnings to user functions.
-#if defined(__clang__) || defined(__GNUC__)
+#if 0 //defined(__clang__) || defined(__GNUC__)
 #define IM_PRINTFARGS(FMT) __attribute__((format(printf, FMT, (FMT+1))))
 #else
 #define IM_PRINTFARGS(FMT)
