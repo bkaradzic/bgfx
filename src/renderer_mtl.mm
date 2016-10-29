@@ -1730,9 +1730,7 @@ namespace bgfx { namespace mtl
 			if (m_drawable == nil)
 			{
 				m_drawable = m_metalLayer.nextDrawable;
-#if BX_PLATFORM_IOS
 				retain(m_drawable); // keep alive to be useable at 'flip'
-#endif
 			}
 
 			return m_drawable;
