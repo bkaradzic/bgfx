@@ -13,9 +13,6 @@
 #include <tinystl/unordered_map.h>
 namespace stl = tinystl;
 
-namespace std { namespace tr1 {} }
-using namespace std::tr1;
-
 #include "common.h"
 #include "bgfx_utils.h"
 
