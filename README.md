@@ -48,7 +48,7 @@ Supported compilers:
 
  * Clang 3.3 and above
  * GCC 4.6 and above
- * vs2008 and above
+ * vs2012 and above
 
 Languages:
 
