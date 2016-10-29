@@ -39,8 +39,6 @@ clean: ## Clean all intermediate files.
 	@mkdir .build
 
 projgen: ## Generate project files for all configurations.
-	$(GENIE) --with-tools --with-examples --with-shared-lib                     vs2008
-	$(GENIE) --with-tools --with-examples --with-shared-lib                     vs2010
 	$(GENIE) --with-tools --with-examples --with-shared-lib                     vs2012
 	$(GENIE) --with-tools --with-examples --with-shared-lib                     vs2013
 	$(GENIE) --with-tools --with-examples --with-shared-lib                     vs2015
@@ -141,30 +139,6 @@ mingw-clang-debug64: .build/projects/gmake-mingw-clang ## Build - MinGW Clang x6
 mingw-clang-release64: .build/projects/gmake-mingw-clang ## Build - MinGW Clang x64 Release
 	$(MAKE) -R -C .build/projects/gmake-mingw-clang config=release64
 mingw-clang: mingw-clang-debug32 mingw-clang-release32 mingw-clang-debug64 mingw-clang-release64 ## Build - MinGW Clang x86/x64 Debug and Release
-
-.build/projects/vs2008:
-	$(GENIE) --with-tools --with-examples --with-shared-lib vs2008
-vs2008-debug32: .build/projects/vs2008 ## Build - VS2008 x86 Debug
-	devenv .build/projects/vs2008/bgfx.sln /Build "Debug|Win32"
-vs2008-release32: .build/projects/vs2008 ## Build - VS2008 x86 Release
-	devenv .build/projects/vs2008/bgfx.sln /Build "Release|Win32"
-vs2008-debug64: .build/projects/vs2008 ## Build - VS2008 x64 Debug
-	devenv .build/projects/vs2008/bgfx.sln /Build "Debug|x64"
-vs2008-release64: .build/projects/vs2008 ## Build - VS2008 x64 Release
-	devenv .build/projects/vs2008/bgfx.sln /Build "Release|x64"
-vs2008: vs2008-debug32 vs2008-release32 vs2008-debug64 vs2008-release64 ## Build - VS2008 x86/x64 Debug and Release
-
-.build/projects/vs2010:
-	$(GENIE) --with-tools --with-examples --with-shared-lib vs2010
-vs2010-debug32: .build/projects/vs2010 ## Build - VS2010 x86 Debug
-	devenv .build/projects/vs2010/bgfx.sln /Build "Debug|Win32"
-vs2010-release32: .build/projects/vs2010 ## Build - VS2010 x86 Release
-	devenv .build/projects/vs2010/bgfx.sln /Build "Release|Win32"
-vs2010-debug64: .build/projects/vs2010 ## Build - VS2010 x64 Debug
-	devenv .build/projects/vs2010/bgfx.sln /Build "Debug|x64"
-vs2010-release64: .build/projects/vs2010 ## Build - VS2010 x64 Release
-	devenv .build/projects/vs2010/bgfx.sln /Build "Release|x64"
-vs2010: vs2010-debug32 vs2010-release32 vs2010-debug64 vs2010-release64 ## Build - VS2010 x86/x64 Debug and Release
 
 .build/projects/vs2012:
 	$(GENIE) --with-tools --with-examples --with-shared-lib vs2012
