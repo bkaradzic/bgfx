@@ -378,12 +378,14 @@ namespace bgfx { namespace mtl
 			memset(m_uniforms, 0, sizeof(m_uniforms) );
 			memset(&m_resolution, 0, sizeof(m_resolution) );
 
-            if (NULL != NSClassFromString(@"MTKView")) {
-                MTKView *view = (MTKView *)g_platformData.nwh;
-                if (NULL != view && [view isKindOfClass:NSClassFromString(@"MTKView")]) {
-                    m_metalLayer = (CAMetalLayer *)view.layer;
-                }
-            }
+			if (NULL != NSClassFromString(@"MTKView") )
+			{
+				MTKView *view = (MTKView *)g_platformData.nwh;
+				if (NULL != view && [view isKindOfClass:NSClassFromString(@"MTKView")])
+				{
+					m_metalLayer = (CAMetalLayer *)view.layer;
+				}
+			}
 
 			if (NULL != NSClassFromString(@"CAMetalLayer") )
 			{
@@ -1730,7 +1732,10 @@ namespace bgfx { namespace mtl
 			if (m_drawable == nil)
 			{
 				m_drawable = m_metalLayer.nextDrawable;
-				retain(m_drawable); // keep alive to be useable at 'flip'
+				if (BX_ENABLED(BX_PLATFORM_IOS) )
+				{
+					retain(m_drawable); // keep alive to be useable at 'flip'
+				}
 			}
 
 			return m_drawable;
@@ -1897,7 +1902,6 @@ namespace bgfx { namespace mtl
 		const char* code = (const char*)reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
 
-			//TODO: use binary format
 		Library lib = s_renderMtl->m_device.newLibraryWithSource(code);
 
 		if (NULL != lib)
@@ -1905,8 +1909,11 @@ namespace bgfx { namespace mtl
 			m_function = lib.newFunctionWithName(SHADER_FUNCTION_NAME);
 		}
 
-		BGFX_FATAL(NULL != m_function, bgfx::Fatal::InvalidShader, "Failed to create %s shader."
-				   , BGFX_CHUNK_MAGIC_FSH == magic ? "Fragment" : BGFX_CHUNK_MAGIC_VSH == magic ? "Vertex" : "Compute");
+		BGFX_FATAL(NULL != m_function
+			, bgfx::Fatal::InvalidShader
+			, "Failed to create %s shader."
+			, BGFX_CHUNK_MAGIC_FSH == magic ? "Fragment" : BGFX_CHUNK_MAGIC_VSH == magic ? "Vertex" : "Compute"
+			);
 	}
 
 	void ProgramMtl::create(const ShaderMtl* _vsh, const ShaderMtl* _fsh)
