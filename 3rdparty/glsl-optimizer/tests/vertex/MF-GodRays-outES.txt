@@ -20,7 +20,6 @@ uniform highp float _VerticalBillboarding;
 uniform highp mat4 _World2Object;
 uniform highp vec3 _WorldSpaceCameraPos;
 uniform highp mat4 glstate_matrix_mvp;
-varying highp vec4 xlv_SV_POSITION;
 varying highp vec2 xlv_TEXCOORD0;
 varying lowp vec4 xlv_TEXCOORD1;
 void main ()
@@ -135,7 +134,7 @@ void main ()
   nfadeout_31 = (nfadeout_31 * nfadeout_31);
   nfadeout_31 = (nfadeout_31 * ffadeout_30);
   tmpvar_3 = ((nfadeout_31 * _Color) * (_Multiplier * wave_6));
-  xlv_SV_POSITION = (glstate_matrix_mvp * tmpvar_29);
+  gl_Position = (glstate_matrix_mvp * tmpvar_29);
   xlv_TEXCOORD0 = _glesMultiTexCoord0.xy;
   xlv_TEXCOORD1 = tmpvar_3;
 }

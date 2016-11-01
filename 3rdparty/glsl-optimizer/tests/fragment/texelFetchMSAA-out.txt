@@ -1,0 +1,15 @@
+#version 150
+uniform sampler2DMS tex;
+in vec2 uv;
+out vec4 color;
+void main ()
+{
+  color = texelFetch (tex, ivec2(uv), 3);
+}
+
+
+// stats: 1 alu 1 tex 0 flow
+// inputs: 1
+//  #0: uv (high float) 2x1 [-1]
+// textures: 1
+//  #0: tex (high other) 0x0 [-1]

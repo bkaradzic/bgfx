@@ -81,7 +81,7 @@ do_dead_code(exec_list *instructions, bool uniform_locations_assigned)
 	  */
 	 if (entry->var->data.mode != ir_var_function_out &&
 	     entry->var->data.mode != ir_var_function_inout &&
-             entry->var->data.mode != ir_var_shader_out) {
+             entry->var->data.mode != ir_var_shader_out && entry->var->data.mode != ir_var_shader_inout) {
 	    entry->assign->remove();
 	    progress = true;
 

@@ -9,7 +9,7 @@ struct xlatMtlShaderInput {
   half4 _color [[attribute(4)]];
 };
 struct xlatMtlShaderOutput {
-  float4 xlv_SV_POSITION;
+  float4 gl_Position [[position]];
   float2 xlv_TEXCOORD0;
   half4 xlv_TEXCOORD1;
 };
@@ -145,7 +145,7 @@ vertex xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]], 
   nfadeout_31 = (nfadeout_31 * nfadeout_31);
   nfadeout_31 = (nfadeout_31 * ffadeout_30);
   tmpvar_3 = half4(((nfadeout_31 * _mtl_u._Color) * (_mtl_u._Multiplier * wave_6)));
-  _mtl_o.xlv_SV_POSITION = (_mtl_u.glstate_matrix_mvp * tmpvar_29);
+  _mtl_o.gl_Position = (_mtl_u.glstate_matrix_mvp * tmpvar_29);
   _mtl_o.xlv_TEXCOORD0 = _mtl_i._uv0.xy;
   _mtl_o.xlv_TEXCOORD1 = tmpvar_3;
   return _mtl_o;

@@ -1410,6 +1410,22 @@ ir_texture::set_sampler(ir_dereference *sampler, const glsl_type *type)
 }
 
 
+bool
+ir_texture::has_lod(const glsl_type *sampler_type)
+{
+	assert(sampler_type->is_sampler());
+
+	switch (sampler_type->sampler_dimensionality) {
+		case GLSL_SAMPLER_DIM_RECT:
+		case GLSL_SAMPLER_DIM_BUF:
+		case GLSL_SAMPLER_DIM_MS:
+			return false;
+		default:
+			return true;
+	}
+}
+
+
 void
 ir_swizzle::init_mask(const unsigned *comp, unsigned count)
 {

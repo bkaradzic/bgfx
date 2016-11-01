@@ -1,0 +1,7 @@
+#version 150
+uniform sampler2DMS tex;
+in vec2 uv;
+out vec4 color;
+void main() {
+	color = texelFetch(tex, ivec2(uv), 3);
+}

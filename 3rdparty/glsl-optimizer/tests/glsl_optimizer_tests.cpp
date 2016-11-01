@@ -48,6 +48,7 @@ static PFNGLGETSHADERIVPROC glGetShaderiv;
 #include <OpenGL/gl.h>
 #include <OpenGL/CGLTypes.h>
 #include <dirent.h>
+#include <stdlib.h>
 static CGLContextObj s_GLContext;
 static CGLContextObj s_GLContext3;
 static bool s_GL3Active = false;

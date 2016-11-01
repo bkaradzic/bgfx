@@ -1260,6 +1260,18 @@ static void print_texture_uv (ir_print_metal_visitor* vis, ir_texture* ir, bool 
 
 void ir_print_metal_visitor::visit(ir_texture *ir)
 {
+	if (ir->op == ir_txs)
+	{
+		ir->sampler->accept(this);
+		buffer.asprintf_append (".get_width(");
+		ir->lod_info.lod->accept(this);
+		buffer.asprintf_append ("), ");
+		ir->sampler->accept(this);
+		buffer.asprintf_append (".get_height(");
+		ir->lod_info.lod->accept(this);
+		buffer.asprintf_append (")");
+		return;
+	}
 	glsl_sampler_dim sampler_dim = (glsl_sampler_dim)ir->sampler->type->sampler_dimensionality;
 	const bool is_shadow = ir->sampler->type->sampler_shadow;
 	const bool is_array = ir->sampler->type->sampler_array;

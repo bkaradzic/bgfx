@@ -76,6 +76,12 @@ Notes
 1.20. Higher GLSL versions might work, but aren't tested now.
 * GLSL ES versions 1.00 and 3.00 are supported.
 
+Status and Future
+-----------------
+
+**Note**: As of mid-2016, the project is unlikely to have any significant developments. At Unity we are largely moving to a different
+shader compilation pipeline, with glsl-optimizer mostly not used. So from my side there won't be significant work done on it :(
+
 
 Dev Notes
 ---------

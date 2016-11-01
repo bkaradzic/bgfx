@@ -48,7 +48,7 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
 	{
 	default:
 	case kGlslTargetOpenGL:
-		ctx->Const.GLSLVersion = 140;
+		ctx->Const.GLSLVersion = 150;
 		break;
 	case kGlslTargetOpenGLES20:
 		ctx->Extensions.OES_standard_derivatives = true;

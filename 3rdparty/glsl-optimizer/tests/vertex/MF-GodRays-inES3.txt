@@ -143,7 +143,6 @@ in highp vec4 _uv0;
 in highp vec4 _uv1;
 in lowp vec4 _color;
 in vec4 TANGENT;
-out highp vec4 xlv_SV_POSITION;
 out highp vec2 xlv_TEXCOORD0;
 out lowp vec4 xlv_TEXCOORD1;
 void main() {
@@ -156,7 +155,7 @@ void main() {
     xlt_v.texcoord1 = _uv1;
     xlt_v.color = _color;
     xl_retval = xlat_main( xlt_v);
-    xlv_SV_POSITION = vec4( xl_retval.pos);
+    gl_Position = vec4(xl_retval.pos);
     xlv_TEXCOORD0 = vec2( xl_retval.uv);
     xlv_TEXCOORD1 = vec4( xl_retval.color);
 }

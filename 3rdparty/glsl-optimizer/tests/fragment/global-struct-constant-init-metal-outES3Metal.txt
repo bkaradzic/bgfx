@@ -68,7 +68,7 @@ fragment xlatMtlShaderOutput xlatMtlMain (xlatMtlShaderInput _mtl_i [[stage_in]]
   tmpvar_11 = _mtl_u._LightColor0.xyz;
   half shadow_12 = 0;
   half tmpvar_13 = 0;
-  tmpvar_13 = _ShadowMapTexture.sample_compare(_mtl_xl_shadow_sampler, (float2)(_mtl_i.xlv_TEXCOORD6.xyz).xy, (float)(_mtl_i.xlv_TEXCOORD6.xyz).z);
+  tmpvar_13 = _ShadowMapTexture.sample_compare(_mtl_xl_shadow_sampler, (float2)(_mtl_i.xlv_TEXCOORD6.xyz).xy, saturate((float)(_mtl_i.xlv_TEXCOORD6.xyz).z));
   half tmpvar_14 = 0;
   tmpvar_14 = tmpvar_13;
   shadow_12 = (_mtl_u._LightShadowData.x + (tmpvar_14 * ((half)(1.0) - _mtl_u._LightShadowData.x)));

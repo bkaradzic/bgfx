@@ -1922,6 +1922,8 @@ public:
    /** Set the sampler and type. */
    void set_sampler(ir_dereference *sampler, const glsl_type *type);
 
+   static bool has_lod(const glsl_type *sampler_type);
+
    /**
     * Do a reverse-lookup to translate a string into an ir_texture_opcode.
     */

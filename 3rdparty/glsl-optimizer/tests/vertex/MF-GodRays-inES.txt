@@ -136,7 +136,6 @@ v2f xlat_main( in appdata_full v ) {
     return o;
 }
 attribute vec4 TANGENT;
-varying highp vec4 xlv_SV_POSITION;
 varying highp vec2 xlv_TEXCOORD0;
 varying lowp vec4 xlv_TEXCOORD1;
 void main() {
@@ -149,7 +148,7 @@ void main() {
     xlt_v.texcoord1 = vec4( gl_MultiTexCoord1);
     xlt_v.color = vec4( gl_Color);
     xl_retval = xlat_main( xlt_v);
-    xlv_SV_POSITION = vec4( xl_retval.pos);
+    gl_Position = vec4(xl_retval.pos);
     xlv_TEXCOORD0 = vec2( xl_retval.uv);
     xlv_TEXCOORD1 = vec4( xl_retval.color);
 }
