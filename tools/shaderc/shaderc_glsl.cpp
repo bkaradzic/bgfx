@@ -91,6 +91,7 @@ namespace bgfx { namespace glsl
 
 		UniformArray uniforms;
 
+		if (target != kGlslTargetMetal)
 		{
 			const char* parse = optimizedShader;
 
@@ -144,6 +145,65 @@ namespace bgfx { namespace glsl
 						bx::strlcpy(uniformType, typen, parse-typen+1);
 					}
 
+					const char* name = parse = bx::strws(parse);
+
+					char uniformName[256];
+					uint8_t num = 1;
+					const char* array = bx::strnstr(name, "[", eol-parse);
+					if (NULL != array)
+					{
+						bx::strlcpy(uniformName, name, array-name+1);
+
+						char arraySize[32];
+						const char* end = bx::strnstr(array, "]", eol-array);
+						bx::strlcpy(arraySize, array+1, end-array);
+						num = uint8_t(atoi(arraySize) );
+					}
+					else
+					{
+						bx::strlcpy(uniformName, name, eol-name+1);
+					}
+
+					Uniform un;
+					un.type = nameToUniformTypeEnum(uniformType);
+
+					if (UniformType::Count != un.type)
+					{
+						BX_TRACE("name: %s (type %d, num %d)", uniformName, un.type, num);
+
+						un.name = uniformName;
+						un.num = num;
+						un.regIndex = 0;
+						un.regCount = num;
+						uniforms.push_back(un);
+					}
+
+					parse = eol + 1;
+				}
+			}
+		}
+		else
+		{
+			const char* parse = strstr(optimizedShader, "struct xlatMtlShaderUniform {");
+			const char* end   = parse;
+			if (NULL != parse)
+			{
+				parse += strlen("struct xlatMtlShaderUniform {");
+				end   = strstr(parse, "};");
+			}
+
+			while ( parse < end
+			&&     *parse != '\0')
+			{
+				parse = bx::strws(parse);
+				const char* eol = strchr(parse, ';');
+				if (NULL != eol)
+				{
+					const char* typen = parse;
+
+					char uniformType[256];
+					parse = bx::strword(parse);
+					bx::strlcpy(uniformType, typen, parse-typen+1);
 					const char* name = parse = bx::strws(parse);
 
 					char uniformName[256];

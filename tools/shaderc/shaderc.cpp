@@ -113,14 +113,15 @@ namespace bgfx
 		NULL
 	};
 
-	const char* s_uniformTypeName[UniformType::Count] =
+	const char* s_uniformTypeName[] =
 	{
-		"int",
-		NULL,
-		"vec4",
-		"mat3",
-		"mat4",
+		"int",  "int",
+		NULL,   NULL,
+		"vec4", "float4",
+		"mat3", "float3x3",
+		"mat4", "float4x4",
 	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_uniformTypeName) == UniformType::Count*2);
 
 	const char* interpolationDx11(const char* _glsl)
 	{
@@ -149,12 +150,12 @@ namespace bgfx
 
 	UniformType::Enum nameToUniformTypeEnum(const char* _name)
 	{
-		for (uint32_t ii = 0; ii < UniformType::Count; ++ii)
+		for (uint32_t ii = 0; ii < UniformType::Count*2; ++ii)
 		{
 			if (NULL != s_uniformTypeName[ii]
 			&&  0 == strcmp(_name, s_uniformTypeName[ii]) )
 			{
-				return UniformType::Enum(ii);
+				return UniformType::Enum(ii/2);
 			}
 		}
 
