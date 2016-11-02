@@ -3381,7 +3381,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx7makeRefEPKv8uint32_t9ReleaseFnPv">
 <span id="bgfx::makeRef__voidCP.uint32_t.ReleaseFn.voidP"></span><span class="target" id="bgfxnamespacebgfx_1a8dc7bf9f26afcc6f61dc602dfed09044"></span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<code class="descclassname">bgfx::</code><code class="descname">makeRef</code><span class="sig-paren">(</span><em class="property">const</em> void *<em>_data</em>, uint32_t <em>_size</em>, ReleaseFn <em>_releaseFn</em> = NULL, void *<em>_userData</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7makeRefEPKv8uint32_t9ReleaseFnPv" title="Permalink to this definition">¶</a></dt>
-<dd><p>Make reference to data to pass to bgfx. Unlike <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1aef1ce8b4b2523171deb7a0dd48cafe38"><span><span class="pre">bgfx::alloc</span></span></a></code> this call doesn&#8217;t allocate memory for data. It just copies pointer to data. You can pass <code class="docutils literal"><span class="pre">ReleaseFn</span></code> function pointer to release this memory after it&#8217;s consumed, or you must make sure data is available for at least 2 <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a7b228b3e83595148e428a248d73480e8"><span><span class="pre">bgfx::frame</span></span></a></code> calls. <code class="docutils literal"><span class="pre">ReleaseFn</span></code> function must be able to be called called from any thread. </p>
+<dd><p>Make reference to data to pass to bgfx. Unlike <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1aef1ce8b4b2523171deb7a0dd48cafe38"><span><span class="pre">bgfx::alloc</span></span></a></code> this call doesn&#8217;t allocate memory for data. It just copies pointer to data. You can pass <code class="docutils literal"><span class="pre">ReleaseFn</span></code> function pointer to release this memory after it&#8217;s consumed, or you must make sure data is available for at least 2 <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a7b228b3e83595148e428a248d73480e8"><span><span class="pre">bgfx::frame</span></span></a></code> calls. <code class="docutils literal"><span class="pre">ReleaseFn</span></code> function must be able to be called from any thread. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent are <code class="docutils literal"><span class="pre">bgfx_make_ref</span></code>, <code class="docutils literal"><span class="pre">bgfx_make_ref_release</span></code>. </dd>
@@ -3536,6 +3536,25 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="_CPPv2N4bgfx14getUniformInfoE13UniformHandleR11UniformInfo">
+<span id="bgfx::getUniformInfo__UniformHandle.UniformInfoR"></span><span class="target" id="bgfxnamespacebgfx_1aa57213d4971e397983c217ee97326e37"></span>void <code class="descclassname">bgfx::</code><code class="descname">getUniformInfo</code><span class="sig-paren">(</span>UniformHandle <em>_handle</em>, <a class="reference internal" href="#_CPPv2N4bgfx11UniformInfoE" title="bgfx::UniformInfo">UniformInfo</a> &amp;<em>_info</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14getUniformInfoE13UniformHandleR11UniformInfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve uniform info. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_get_uniform_info</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Handle to uniform object. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_info</span></code> - <p>Uniform info.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="_CPPv2N4bgfx14destroyUniformE13UniformHandle">
 <span id="bgfx::destroyUniform__UniformHandle"></span><span class="target" id="bgfxnamespacebgfx_1a55c0d21cc00b4d7f8a05879e2114d37b"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyUniform</code><span class="sig-paren">(</span>UniformHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14destroyUniformE13UniformHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Destroy shader uniform parameter. </p>
@@ -3598,6 +3617,38 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="bgfx::UniformType::Count"></span><span class="target" id="bgfxstructbgfx_1_1_uniform_type_1a50bf3685e07ddb0cbcf34b4a2e134c79aa7cf5e8e3c979dcb60476fe4dc891dd1"></span><code class="descname">Count</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformType5CountE" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv2N4bgfx11UniformInfoE">
+<span id="bgfx::UniformInfo"></span><span class="target" id="bgfxstructbgfx_1_1_uniform_info"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">UniformInfo</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformInfoE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uniform info. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_uniform_info_t</span></code>. </dd>
+</dl>
+</p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N4bgfx11UniformInfo4nameE">
+<span id="bgfx::UniformInfo::name__cA"></span><span class="target" id="bgfxstructbgfx_1_1_uniform_info_1a31297c5b74a406c6a3aeb992524076ad"></span>char <code class="descname">name</code>[256]<a class="headerlink" href="#_CPPv2N4bgfx11UniformInfo4nameE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uniform name. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx11UniformInfo4typeE">
+<span id="bgfx::UniformInfo::type__UniformType::Enum"></span><span class="target" id="bgfxstructbgfx_1_1_uniform_info_1a0f485153be537102d0350111bb58efbd"></span><a class="reference internal" href="#_CPPv2N4bgfx11UniformTypeE" title="bgfx::UniformType">UniformType</a>::<a class="reference internal" href="#_CPPv2N4bgfx11UniformType4EnumE" title="bgfx::UniformType::Enum">Enum</a> <code class="descname">type</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformInfo4typeE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uniform type. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx11UniformInfo3numE">
+<span id="bgfx::UniformInfo::num__uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_uniform_info_1acab624b397b0c788e6bd011f92823e88"></span>uint16_t <code class="descname">num</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformInfo3numE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of elements in array. </p>
 </dd></dl>
 
 </div>
