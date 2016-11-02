@@ -1098,7 +1098,7 @@ namespace bgfx
 	/// can pass `ReleaseFn` function pointer to release this memory after it's
 	/// consumed, or you must make sure data is available for at least 2
 	/// `bgfx::frame` calls. `ReleaseFn` function must be able to be called
-	/// called from any thread.
+	/// from any thread.
 	///
 	/// @attention C99 equivalent are `bgfx_make_ref`, `bgfx_make_ref_release`.
 	///
