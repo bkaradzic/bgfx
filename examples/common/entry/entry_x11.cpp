@@ -459,7 +459,7 @@ namespace entry
 									m_eventQueue.postMouseEvent(handle
 										, xbutton.x
 										, xbutton.y
-										, 0
+										, m_mz
 										, mb
 										, event.type == ButtonPress
 										);
