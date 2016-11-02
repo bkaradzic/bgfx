@@ -4161,7 +4161,7 @@ namespace bgfx { namespace gl
 			}
 			else
 			{
-				const UniformInfo* info = s_renderGL->m_uniformReg.find(name);
+				const UniformRegInfo* info = s_renderGL->m_uniformReg.find(name);
 				BX_WARN(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
 
 				if (NULL != info)

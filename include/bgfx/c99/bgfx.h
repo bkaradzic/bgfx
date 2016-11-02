@@ -391,6 +391,15 @@ typedef struct bgfx_texture_info
 } bgfx_texture_info_t;
 
 /**/
+typedef struct bgfx_uniform_info
+{
+    char name[256];
+    bgfx_uniform_type_t type;
+    uint16_t num;
+
+} bgfx_uniform_info_t;
+
+/**/
 typedef struct bgfx_attachment
 {
     bgfx_texture_handle_t handle;

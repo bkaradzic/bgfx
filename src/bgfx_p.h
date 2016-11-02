@@ -1127,7 +1127,7 @@ namespace bgfx
 		char m_buffer[8];
 	};
 
-	struct UniformInfo
+	struct UniformRegInfo
 	{
 		const void* m_data;
 		UniformHandle m_handle;
@@ -1144,7 +1144,7 @@ namespace bgfx
 		{
 		}
 
-		const UniformInfo* find(const char* _name) const
+		const UniformRegInfo* find(const char* _name) const
 		{
 			uint16_t handle = m_uniforms.find(bx::hashMurmur2A(_name) );
 			if (UniformHashMap::invalid != handle)
@@ -1155,14 +1155,14 @@ namespace bgfx
 			return NULL;
 		}
 
-		const UniformInfo& add(UniformHandle _handle, const char* _name, const void* _data)
+		const UniformRegInfo& add(UniformHandle _handle, const char* _name, const void* _data)
 		{
 			BX_CHECK(isValid(_handle), "Uniform handle is invalid (name: %s)!", _name);
 			const uint32_t key = bx::hashMurmur2A(_name);
 			m_uniforms.removeByKey(key);
 			m_uniforms.insert(key, _handle.idx);
 
-			UniformInfo& info = m_info[_handle.idx];
+			UniformRegInfo& info = m_info[_handle.idx];
 			info.m_data   = _data;
 			info.m_handle = _handle;
 
@@ -1177,7 +1177,7 @@ namespace bgfx
 	private:
 		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_UNIFORMS*2> UniformHashMap;
 		UniformHashMap m_uniforms;
-		UniformInfo m_info[BGFX_CONFIG_MAX_UNIFORMS];
+		UniformRegInfo m_info[BGFX_CONFIG_MAX_UNIFORMS];
 	};
 
 	struct Binding
@@ -3488,6 +3488,16 @@ namespace bgfx
 			}
 
 			return handle;
+		}
+
+		BGFX_API_FUNC(void getUniformInfo(UniformHandle _handle, UniformInfo& _info) )
+		{
+			BGFX_CHECK_HANDLE("getUniformInfo", m_uniformHandle, _handle);
+
+			UniformRef& uniform = m_uniformRef[_handle.idx];
+			bx::strlcpy(_info.name, uniform.m_name.getPtr(), sizeof(_info.name) );
+			_info.type = uniform.m_type;
+			_info.num  = uniform.m_num;
 		}
 
 		BGFX_API_FUNC(void destroyUniform(UniformHandle _handle) )

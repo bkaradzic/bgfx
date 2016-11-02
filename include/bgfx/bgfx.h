@@ -641,6 +641,17 @@ namespace bgfx
 		bool    cubeMap;            //!< Texture is cubemap.
 	};
 
+	/// Uniform info.
+	///
+	/// @attention C99 equivalent is `bgfx_uniform_info_t`.
+	///
+	struct UniformInfo
+	{
+		char name[256];         //!< Uniform name.
+		UniformType::Enum type; //!< Uniform type.
+		uint16_t num;           //!< Number of elements in array.
+	};
+
 	/// Frame buffer texture attachemnt info.
 	///
 	/// @attention C99 equivalent is `bgfx_attachment_t`.
@@ -1985,6 +1996,15 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_create_uniform`.
 	///
 	UniformHandle createUniform(const char* _name, UniformType::Enum _type, uint16_t _num = 1);
+
+	/// Retrieve uniform info.
+	///
+	/// @param[in] _handle Handle to uniform object.
+	/// @param[out] _info Uniform info.
+	///
+	/// @attention C99 equivalent is `bgfx_get_uniform_info`.
+	///
+	void getUniformInfo(UniformHandle _handle, UniformInfo& _info);
 
 	/// Destroy shader uniform parameter.
 	///
