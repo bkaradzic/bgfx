@@ -1757,64 +1757,56 @@ namespace bgfx
 			m_uniformBuffer->writeUniform(_type, _handle.idx, _value, _num);
 		}
 
-		void free(IndexBufferHandle _handle)
+		bool free(IndexBufferHandle _handle)
 		{
-			m_freeIndexBufferHandle[m_numFreeIndexBufferHandles] = _handle;
-			++m_numFreeIndexBufferHandles;
+			return m_freeIndexBuffer.queue(_handle);
 		}
 
-		void free(VertexDeclHandle _handle)
+		bool free(VertexDeclHandle _handle)
 		{
-			m_freeVertexDeclHandle[m_numFreeVertexDeclHandles] = _handle;
-			++m_numFreeVertexDeclHandles;
+			return m_freeVertexDecl.queue(_handle);
 		}
 
-		void free(VertexBufferHandle _handle)
+		bool free(VertexBufferHandle _handle)
 		{
-			m_freeVertexBufferHandle[m_numFreeVertexBufferHandles] = _handle;
-			++m_numFreeVertexBufferHandles;
+			return m_freeVertexBuffer.queue(_handle);
 		}
 
-		void free(ShaderHandle _handle)
+		bool free(ShaderHandle _handle)
 		{
-			m_freeShaderHandle[m_numFreeShaderHandles] = _handle;
-			++m_numFreeShaderHandles;
+			return m_freeShader.queue(_handle);
 		}
 
-		void free(ProgramHandle _handle)
+		bool free(ProgramHandle _handle)
 		{
-			m_freeProgramHandle[m_numFreeProgramHandles] = _handle;
-			++m_numFreeProgramHandles;
+			return m_freeProgram.queue(_handle);
 		}
 
-		void free(TextureHandle _handle)
+		bool free(TextureHandle _handle)
 		{
-			m_freeTextureHandle[m_numFreeTextureHandles] = _handle;
-			++m_numFreeTextureHandles;
+			return m_freeTexture.queue(_handle);
 		}
 
-		void free(FrameBufferHandle _handle)
+		bool free(FrameBufferHandle _handle)
 		{
-			m_freeFrameBufferHandle[m_numFreeFrameBufferHandles] = _handle;
-			++m_numFreeFrameBufferHandles;
+			return m_freeFrameBuffer.queue(_handle);
 		}
 
-		void free(UniformHandle _handle)
+		bool free(UniformHandle _handle)
 		{
-			m_freeUniformHandle[m_numFreeUniformHandles] = _handle;
-			++m_numFreeUniformHandles;
+			return m_freeUniform.queue(_handle);
 		}
 
 		void resetFreeHandles()
 		{
-			m_numFreeIndexBufferHandles  = 0;
-			m_numFreeVertexDeclHandles   = 0;
-			m_numFreeVertexBufferHandles = 0;
-			m_numFreeShaderHandles       = 0;
-			m_numFreeProgramHandles      = 0;
-			m_numFreeTextureHandles      = 0;
-			m_numFreeFrameBufferHandles  = 0;
-			m_numFreeUniformHandles      = 0;
+			m_freeIndexBuffer.reset();
+			m_freeVertexDecl.reset();
+			m_freeVertexBuffer.reset();
+			m_freeShader.reset();
+			m_freeProgram.reset();
+			m_freeTexture.reset();
+			m_freeFrameBuffer.reset();
+			m_freeUniform.reset();
 		}
 
 		SortKey m_key;
@@ -1864,24 +1856,71 @@ namespace bgfx
 		CommandBuffer m_cmdPre;
 		CommandBuffer m_cmdPost;
 
-		uint16_t m_numFreeIndexBufferHandles;
-		uint16_t m_numFreeVertexDeclHandles;
-		uint16_t m_numFreeVertexBufferHandles;
-		uint16_t m_numFreeShaderHandles;
-		uint16_t m_numFreeProgramHandles;
-		uint16_t m_numFreeTextureHandles;
-		uint16_t m_numFreeFrameBufferHandles;
-		uint16_t m_numFreeUniformHandles;
-		uint16_t m_numFreeWindowHandles;
+		template<typename Ty, uint32_t Max>
+		struct FreeHandle
+		{
+			FreeHandle()
+				: m_num(0)
+			{
+			}
 
-		IndexBufferHandle m_freeIndexBufferHandle[BGFX_CONFIG_MAX_INDEX_BUFFERS];
-		VertexDeclHandle m_freeVertexDeclHandle[BGFX_CONFIG_MAX_VERTEX_DECLS];
-		VertexBufferHandle m_freeVertexBufferHandle[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
-		ShaderHandle m_freeShaderHandle[BGFX_CONFIG_MAX_SHADERS];
-		ProgramHandle m_freeProgramHandle[BGFX_CONFIG_MAX_PROGRAMS];
-		TextureHandle m_freeTextureHandle[BGFX_CONFIG_MAX_TEXTURES];
-		FrameBufferHandle m_freeFrameBufferHandle[BGFX_CONFIG_MAX_FRAME_BUFFERS];
-		UniformHandle m_freeUniformHandle[BGFX_CONFIG_MAX_UNIFORMS];
+			bool isQueued(Ty _handle)
+			{
+				for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
+				{
+					if (m_queue[ii].idx == _handle.idx)
+					{
+						return true;
+					}
+				}
+
+				return false;
+			}
+
+			bool queue(Ty _handle)
+			{
+				if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+				{
+					if (isQueued(_handle) )
+					{
+						return false;
+					}
+				}
+
+				m_queue[m_num] = _handle;
+				++m_num;
+
+				return true;
+			}
+
+			void reset()
+			{
+				m_num = 0;
+			}
+
+			Ty get(uint16_t _idx) const
+			{
+				return m_queue[_idx];
+			}
+
+			uint16_t getNumQueued() const
+			{
+				return m_num;
+			}
+
+			Ty m_queue[Max];
+			uint16_t m_num;
+		};
+
+		FreeHandle<IndexBufferHandle,  BGFX_CONFIG_MAX_INDEX_BUFFERS>  m_freeIndexBuffer;
+		FreeHandle<VertexDeclHandle,   BGFX_CONFIG_MAX_VERTEX_DECLS>   m_freeVertexDecl;
+		FreeHandle<VertexBufferHandle, BGFX_CONFIG_MAX_VERTEX_BUFFERS> m_freeVertexBuffer;
+		FreeHandle<ShaderHandle,       BGFX_CONFIG_MAX_SHADERS>        m_freeShader;
+		FreeHandle<ProgramHandle,      BGFX_CONFIG_MAX_PROGRAMS>       m_freeProgram;
+		FreeHandle<TextureHandle,      BGFX_CONFIG_MAX_TEXTURES>       m_freeTexture;
+		FreeHandle<FrameBufferHandle,  BGFX_CONFIG_MAX_FRAME_BUFFERS>  m_freeFrameBuffer;
+		FreeHandle<UniformHandle,      BGFX_CONFIG_MAX_UNIFORMS>       m_freeUniform;
+
 		TextVideoMem* m_textVideoMem;
 		HMD m_hmd;
 		Stats m_perfStats;
@@ -2184,7 +2223,7 @@ namespace bgfx
 		{
 			BX_WARN(1 <= int32_t(_width)
 				&&  1 <= int32_t(_height)
-				, "Frame buffer resolution width or height cannot be 0 (width %d, height %d)."
+				, "Frame buffer resolution width or height must be larger than 0 (width %d, height %d)."
 				, _width
 				, _height
 				);
@@ -2272,10 +2311,11 @@ namespace bgfx
 		BGFX_API_FUNC(void destroyIndexBuffer(IndexBufferHandle _handle) )
 		{
 			BGFX_CHECK_HANDLE("destroyIndexBuffer", m_indexBufferHandle, _handle);
+			bool ok = m_submit->free(_handle); BX_UNUSED(ok);
+			BX_CHECK(ok, "Index buffer handle %d is already destroyed!", _handle.idx);
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyIndexBuffer);
 			cmdbuf.write(_handle);
-			m_submit->free(_handle);
 		}
 
 		VertexDeclHandle findVertexDecl(const VertexDecl& _decl)
@@ -2319,10 +2359,11 @@ namespace bgfx
 		BGFX_API_FUNC(void destroyVertexBuffer(VertexBufferHandle _handle) )
 		{
 			BGFX_CHECK_HANDLE("destroyVertexBuffer", m_vertexBufferHandle, _handle);
+			bool ok = m_submit->free(_handle); BX_UNUSED(ok);
+			BX_CHECK(ok, "Vertex buffer handle %d is already destroyed!", _handle.idx);
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexBuffer);
 			cmdbuf.write(_handle);
-			m_submit->free(_handle);
 		}
 
 		void destroyVertexBufferInternal(VertexBufferHandle _handle)
@@ -2978,9 +3019,11 @@ namespace bgfx
 			int32_t refs = --sr.m_refCount;
 			if (0 == refs)
 			{
+				bool ok = m_submit->free(_handle); BX_UNUSED(ok);
+				BX_CHECK(ok, "Shader handle %d is already destroyed!", _handle.idx);
+
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyShader);
 				cmdbuf.write(_handle);
-				m_submit->free(_handle);
 
 				if (0 != sr.m_num)
 				{
@@ -3060,7 +3103,7 @@ namespace bgfx
 		{
 			if (!isValid(_vsh) )
 			{
-				BX_WARN(false, "Vertex/fragment shader is invalid (vsh %d).", _vsh.idx);
+				BX_WARN(false, "Compute shader is invalid (vsh %d).", _vsh.idx);
 				ProgramHandle invalid = BGFX_INVALID_HANDLE;
 				return invalid;
 			}
@@ -3113,9 +3156,11 @@ namespace bgfx
 			int32_t refs = --pr.m_refCount;
 			if (0 == refs)
 			{
+				bool ok = m_submit->free(_handle); BX_UNUSED(ok);
+				BX_CHECK(ok, "Program handle %d is already destroyed!", _handle.idx);
+
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyProgram);
 				cmdbuf.write(_handle);
-				m_submit->free(_handle);
 
 				shaderDecRef(pr.m_vsh);
 				uint32_t hash = pr.m_vsh.idx;
@@ -3266,9 +3311,11 @@ namespace bgfx
 			int32_t refs = --ref.m_refCount;
 			if (0 == refs)
 			{
+				bool ok = m_submit->free(_handle); BX_UNUSED(ok);
+				BX_CHECK(ok, "Texture handle %d is already destroyed!", _handle.idx);
+
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyTexture);
 				cmdbuf.write(_handle);
-				m_submit->free(_handle);
 			}
 		}
 
@@ -3398,10 +3445,11 @@ namespace bgfx
 		BGFX_API_FUNC(void destroyFrameBuffer(FrameBufferHandle _handle) )
 		{
 			BGFX_CHECK_HANDLE("destroyFrameBuffer", m_frameBufferHandle, _handle);
+			bool ok = m_submit->free(_handle); BX_UNUSED(ok);
+			BX_CHECK(ok, "Frame buffer handle %d is already destroyed!", _handle.idx);
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyFrameBuffer);
 			cmdbuf.write(_handle);
-			m_submit->free(_handle);
 
 			FrameBufferRef& ref = m_frameBufferRef[_handle.idx];
 			if (!ref.m_window)
@@ -3510,12 +3558,14 @@ namespace bgfx
 
 			if (0 == refs)
 			{
+				bool ok = m_submit->free(_handle); BX_UNUSED(ok);
+				BX_CHECK(ok, "Uniform handle %d is already destroyed!", _handle.idx);
+
 				uniform.m_name.clear();
 				m_uniformHashMap.removeByHandle(_handle.idx);
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyUniform);
 				cmdbuf.write(_handle);
-				m_submit->free(_handle);
 			}
 		}
 
