@@ -30,6 +30,9 @@
   
 
   
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="bgfx 1.0 documentation" href="index.html"/>
         <link rel="next" title="Examples" href="examples.html"/>
         <link rel="prev" title="Overview" href="overview.html"/> 
@@ -83,7 +86,7 @@
             
                 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Building</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Building</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#getting-source">Getting Source</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#quick-start">Quick Start</a></li>
@@ -162,8 +165,8 @@
 </div>
 <div class="section" id="getting-source">
 <h2>Getting Source<a class="headerlink" href="#getting-source" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-python"><div class="highlight"><pre>git clone git://github.com/bkaradzic/bx.git
-git clone git://github.com/bkaradzic/bgfx.git
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">git</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">bkaradzic</span><span class="o">/</span><span class="n">bx</span><span class="o">.</span><span class="n">git</span>
+<span class="n">git</span> <span class="n">clone</span> <span class="n">git</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">bkaradzic</span><span class="o">/</span><span class="n">bgfx</span><span class="o">.</span><span class="n">git</span>
 </pre></div>
 </div>
 </div>
@@ -171,15 +174,15 @@ git clone git://github.com/bkaradzic/bgfx.git
 <h2>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h2>
 <p>These are step for users who use Windows with Visual Studio.</p>
 <p>Enter bgfx directory:</p>
-<div class="highlight-python"><div class="highlight"><pre>cd bgfx
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">bgfx</span>
 </pre></div>
 </div>
 <p>Generate Visual Studio 2015 project files:</p>
-<div class="highlight-python"><div class="highlight"><pre>..\bx\tools\bin\windows\genie --with-examples vs2015
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">..</span>\<span class="n">bx</span>\<span class="n">tools</span>\<span class="nb">bin</span>\<span class="n">windows</span>\<span class="n">genie</span> <span class="o">--</span><span class="k">with</span><span class="o">-</span><span class="n">examples</span> <span class="n">vs2015</span>
 </pre></div>
 </div>
 <p>Open bgfx solution in Visual Studio 2015:</p>
-<div class="highlight-python"><div class="highlight"><pre>start .build\projects\vs2015\bgfx.sln
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">start</span> <span class="o">.</span><span class="n">build</span>\<span class="n">projects</span>\<span class="n">vs2015</span>\<span class="n">bgfx</span><span class="o">.</span><span class="n">sln</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -198,10 +201,10 @@ git clone git://github.com/bkaradzic/bgfx.git
 </ul>
 </div></blockquote>
 <p>Set following enironment variables:</p>
-<div class="highlight-python"><div class="highlight"><pre>setx ANDROID_NDK_ROOT &lt;path to AndroidNDK directory&gt;
-setx ANDROID_NDK_ARM &lt;path to AndroidNDK directory&gt;\toolchains\arm-linux-androideabi-4.7\prebuilt\windows-x86_64
-setx ANDROID_NDK_MIPS &lt;path to AndroidNDK directory&gt;\toolchains\mipsel-linux-android-4.7\prebuilt\windows-x86_64
-setx ANDROID_NDK_X86 &lt;path to AndroidNDK directory&gt;\toolchains\x86-4.7\prebuilt\windows-x86_64
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">setx</span> <span class="n">ANDROID_NDK_ROOT</span> <span class="o">&lt;</span><span class="n">path</span> <span class="n">to</span> <span class="n">AndroidNDK</span> <span class="n">directory</span><span class="o">&gt;</span>
+<span class="n">setx</span> <span class="n">ANDROID_NDK_ARM</span> <span class="o">&lt;</span><span class="n">path</span> <span class="n">to</span> <span class="n">AndroidNDK</span> <span class="n">directory</span><span class="o">&gt;</span>\<span class="n">toolchains</span>\<span class="n">arm</span><span class="o">-</span><span class="n">linux</span><span class="o">-</span><span class="n">androideabi</span><span class="o">-</span><span class="mf">4.7</span>\<span class="n">prebuilt</span>\<span class="n">windows</span><span class="o">-</span><span class="n">x86_64</span>
+<span class="n">setx</span> <span class="n">ANDROID_NDK_MIPS</span> <span class="o">&lt;</span><span class="n">path</span> <span class="n">to</span> <span class="n">AndroidNDK</span> <span class="n">directory</span><span class="o">&gt;</span>\<span class="n">toolchains</span>\<span class="n">mipsel</span><span class="o">-</span><span class="n">linux</span><span class="o">-</span><span class="n">android</span><span class="o">-</span><span class="mf">4.7</span>\<span class="n">prebuilt</span>\<span class="n">windows</span><span class="o">-</span><span class="n">x86_64</span>
+<span class="n">setx</span> <span class="n">ANDROID_NDK_X86</span> <span class="o">&lt;</span><span class="n">path</span> <span class="n">to</span> <span class="n">AndroidNDK</span> <span class="n">directory</span><span class="o">&gt;</span>\<span class="n">toolchains</span>\<span class="n">x86</span><span class="o">-</span><span class="mf">4.7</span>\<span class="n">prebuilt</span>\<span class="n">windows</span><span class="o">-</span><span class="n">x86_64</span>
 </pre></div>
 </div>
 <p>To deploy on Android you can use bgfx android activity:</p>
@@ -213,7 +216,7 @@ setx ANDROID_NDK_X86 &lt;path to AndroidNDK directory&gt;\toolchains\x86-4.7\pre
 </div>
 <div class="section" id="linux">
 <h3>Linux<a class="headerlink" href="#linux" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-python"><div class="highlight"><pre>sudo apt-get install libgl1-mesa-dev x11proto-core-dev libx11-dev
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">libgl1</span><span class="o">-</span><span class="n">mesa</span><span class="o">-</span><span class="n">dev</span> <span class="n">x11proto</span><span class="o">-</span><span class="n">core</span><span class="o">-</span><span class="n">dev</span> <span class="n">libx11</span><span class="o">-</span><span class="n">dev</span>
 </pre></div>
 </div>
 </div>
@@ -226,7 +229,7 @@ setx ANDROID_NDK_X86 &lt;path to AndroidNDK directory&gt;\toolchains\x86-4.7\pre
 </ul>
 </div></blockquote>
 <p>Set following enironment variables:</p>
-<div class="highlight-python"><div class="highlight"><pre>setx NACL_SDK_ROOT &lt;path to Native Client SDK directory&gt;
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">setx</span> <span class="n">NACL_SDK_ROOT</span> <span class="o">&lt;</span><span class="n">path</span> <span class="n">to</span> <span class="n">Native</span> <span class="n">Client</span> <span class="n">SDK</span> <span class="n">directory</span><span class="o">&gt;</span>
 </pre></div>
 </div>
 </div>
@@ -254,36 +257,36 @@ to generate project files for various platform. Binaries for Linux, OSX, and Win
 bx repository.</p>
 <div class="section" id="general">
 <h3>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-python"><div class="highlight"><pre>cd bgfx
-make
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">bgfx</span>
+<span class="n">make</span>
 </pre></div>
 </div>
 <p>After calling <code class="docutils literal"><span class="pre">make</span></code>, .build/projects/* directory will be generated.
 All intermediate files generated by compiler will be inside .build
 directory structure. Deleting .build directory at any time is safe.</p>
-<div class="highlight-python"><div class="highlight"><pre>make &lt;configuration&gt;
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="o">&lt;</span><span class="n">configuration</span><span class="o">&gt;</span>
 </pre></div>
 </div>
 <p>Configuration is <code class="docutils literal"><span class="pre">&lt;platform&gt;-&lt;debug/release&gt;[32/64]</span></code>. For example:</p>
-<div class="highlight-python"><div class="highlight"><pre>linux-release32, nacl-debug64, nacl-arm-debug, pnacl-release,
-android-release, etc.
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">linux</span><span class="o">-</span><span class="n">release32</span><span class="p">,</span> <span class="n">nacl</span><span class="o">-</span><span class="n">debug64</span><span class="p">,</span> <span class="n">nacl</span><span class="o">-</span><span class="n">arm</span><span class="o">-</span><span class="n">debug</span><span class="p">,</span> <span class="n">pnacl</span><span class="o">-</span><span class="n">release</span><span class="p">,</span>
+<span class="n">android</span><span class="o">-</span><span class="n">release</span><span class="p">,</span> <span class="n">etc</span><span class="o">.</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="id1">
 <h3>Windows<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <p>Visual Studio 2008 command line:</p>
-<div class="highlight-python"><div class="highlight"><pre>make vs2008-release64
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">vs2008</span><span class="o">-</span><span class="n">release64</span>
 </pre></div>
 </div>
 <p>Visual Studio 2008 IDE:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">start</span> <span class="o">.</span><span class="n">build</span><span class="o">/</span><span class="n">projects</span><span class="o">/</span><span class="n">vs2008</span><span class="o">/</span><span class="n">bgfx</span><span class="o">.</span><span class="n">sln</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">start</span> <span class="o">.</span><span class="n">build</span><span class="o">/</span><span class="n">projects</span><span class="o">/</span><span class="n">vs2008</span><span class="o">/</span><span class="n">bgfx</span><span class="o">.</span><span class="n">sln</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="xcode">
 <h3>Xcode<a class="headerlink" href="#xcode" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-python"><div class="highlight"><pre><span class="nb">open</span> <span class="o">.</span><span class="n">build</span><span class="o">/</span><span class="n">projects</span><span class="o">/</span><span class="n">xcode4</span><span class="o">-</span><span class="n">osx</span><span class="o">/</span><span class="n">bgfx</span><span class="o">.</span><span class="n">xcworkspace</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">open</span> <span class="o">.</span><span class="n">build</span><span class="o">/</span><span class="n">projects</span><span class="o">/</span><span class="n">xcode4</span><span class="o">-</span><span class="n">osx</span><span class="o">/</span><span class="n">bgfx</span><span class="o">.</span><span class="n">xcworkspace</span>
 </pre></div>
 </div>
 <p>Due to <a class="reference external" href="https://github.com/bkaradzic/genie/blob/master/docs/scripting-reference.md#debugdirpath">inability</a>
@@ -298,13 +301,13 @@ configuration file, it has to be set manually for each example project:</p>
 </div>
 <div class="section" id="id2">
 <h3>Linux<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-python"><div class="highlight"><pre>make linux-release64
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">linux</span><span class="o">-</span><span class="n">release64</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="winrt-windows-phone-8-1">
 <h3>WinRT / Windows Phone 8.1<a class="headerlink" href="#winrt-windows-phone-8-1" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-python"><div class="highlight"><pre>../bx/tools/bin/windows/genie --vs=winphone81 vs2015
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">../</span><span class="n">bx</span><span class="o">/</span><span class="n">tools</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">windows</span><span class="o">/</span><span class="n">genie</span> <span class="o">--</span><span class="n">vs</span><span class="o">=</span><span class="n">winphone81</span> <span class="n">vs2015</span>
 </pre></div>
 </div>
 <p>Build the resulting solution and deploy to device.</p>
@@ -326,18 +329,18 @@ instead) inside different build system.</p>
 <div class="section" id="oculusvr-integration">
 <h2>OculusVR Integration<a class="headerlink" href="#oculusvr-integration" title="Permalink to this headline">¶</a></h2>
 <p>To build with OculusVR HMD support enabled you must set <code class="docutils literal"><span class="pre">OVR_DIR</span></code> enviroment variable:</p>
-<div class="highlight-python"><div class="highlight"><pre>set OVR_DIR=&lt;path to OculusSDK&gt;
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">set</span> <span class="n">OVR_DIR</span><span class="o">=&lt;</span><span class="n">path</span> <span class="n">to</span> <span class="n">OculusSDK</span><span class="o">&gt;</span>
 </pre></div>
 </div>
 <p>And generate project files with <code class="docutils literal"><span class="pre">--with-ovr</span></code> option:</p>
-<div class="highlight-python"><div class="highlight"><pre>genie --with-ovr vs2015
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">genie</span> <span class="o">--</span><span class="k">with</span><span class="o">-</span><span class="n">ovr</span> <span class="n">vs2015</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="tools">
 <h2>Tools<a class="headerlink" href="#tools" title="Permalink to this headline">¶</a></h2>
 <p>To build bgfx project files for tools, use <code class="docutils literal"><span class="pre">--with-tools</span></code> option:</p>
-<div class="highlight-python"><div class="highlight"><pre>genie --with-tools vs2015
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">genie</span> <span class="o">--</span><span class="k">with</span><span class="o">-</span><span class="n">tools</span> <span class="n">vs2015</span>
 </pre></div>
 </div>
 </div>

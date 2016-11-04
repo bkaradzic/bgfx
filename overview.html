@@ -30,6 +30,9 @@
   
 
   
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="bgfx 1.0 documentation" href="index.html"/>
         <link rel="next" title="Building" href="build.html"/>
         <link rel="prev" title="Documentation" href="index.html"/> 
@@ -82,7 +85,7 @@
             
             
                 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="">Overview</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Overview</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#what-is-it">What is it?</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#supported-rendering-backends">Supported rendering backends</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#supported-hmd">Supported HMD</a></li>
@@ -457,20 +460,20 @@ windowing libraries. The main requirement is that windowing library
 provides access to native window handle that&#8217;s used to create Direct3D
 device or OpenGL context.</p>
 <p>Using bgfx with SDL example:</p>
-<div class="highlight-python"><div class="highlight"><pre>#include &lt;SDL.h&gt;
-#include &lt;bgfx/bgfxplatform.h&gt; // it must be included after SDL to enable SDL
-                               // integration code path.
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">#include &lt;SDL.h&gt;</span>
+<span class="c1">#include &lt;bgfx/bgfxplatform.h&gt; // it must be included after SDL to enable SDL</span>
+                               <span class="o">//</span> <span class="n">integration</span> <span class="n">code</span> <span class="n">path</span><span class="o">.</span>
 
-#include &lt;bgfx/bgfx.h&gt;
-...
+<span class="c1">#include &lt;bgfx/bgfx.h&gt;</span>
+<span class="o">...</span>
 
-int main(...
-{
-    SDL_window* window = SDL_CreateWindow(...
-    bgfx::sdlSetWindow(window);
+<span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="o">...</span>
+<span class="p">{</span>
+    <span class="n">SDL_window</span><span class="o">*</span> <span class="n">window</span> <span class="o">=</span> <span class="n">SDL_CreateWindow</span><span class="p">(</span><span class="o">...</span>
+    <span class="n">bgfx</span><span class="p">::</span><span class="n">sdlSetWindow</span><span class="p">(</span><span class="n">window</span><span class="p">);</span>
 
-    ...
-    bgfx::init();
+    <span class="o">...</span>
+    <span class="n">bgfx</span><span class="p">::</span><span class="n">init</span><span class="p">();</span>
 </pre></div>
 </div>
 <div class="admonition note">
