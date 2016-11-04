@@ -28,7 +28,7 @@
 #	define EARLY_DEPTH_STENCIL
 #endif // BGFX_SHADER_LANGUAGE_HLSL > 3 && BGFX_SHADER_TYPE_FRAGMENT
 
-#if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL
+#if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV
 #	define CONST(_x) static const _x
 #	define dFdx(_x) ddx(_x)
 #	define dFdy(_y) ddy(-_y)
@@ -45,8 +45,8 @@
 #		define REGISTER(_type, _reg) register(_type ## _reg)
 #	endif // BGFX_SHADER_LANGUAGE_HLSL
 
-#	if BGFX_SHADER_LANGUAGE_HLSL > 3 || BGFX_SHADER_LANGUAGE_PSSL
-#		if BGFX_SHADER_LANGUAGE_HLSL > 4 || BGFX_SHADER_LANGUAGE_PSSL
+#	if BGFX_SHADER_LANGUAGE_HLSL > 3 || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV
+#		if BGFX_SHADER_LANGUAGE_HLSL > 4 || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV
 #			define dFdxCoarse(_x) ddx_coarse(_x)
 #			define dFdxFine(_x)   ddx_fine(_x)
 #			define dFdyCoarse(_y) ddy_coarse(-_y)
@@ -80,6 +80,7 @@ uint2 bitfieldReverse(uint2 _x) { return reversebits(_x); }
 uint3 bitfieldReverse(uint3 _x) { return reversebits(_x); }
 uint4 bitfieldReverse(uint4 _x) { return reversebits(_x); }
 
+#if !BGFX_SHADER_LANGUAGE_SPIRV
 uint packHalf2x16(vec2 _x)
 {
 	return (f32tof16(_x.x)<<16) | f32tof16(_x.y);
@@ -89,6 +90,7 @@ vec2 unpackHalf2x16(uint _x)
 {
 	return vec2(f16tof32(_x >> 16), f16tof32(_x) );
 }
+#endif // !BGFX_SHADER_LANGUAGE_SPIRV
 
 struct BgfxSampler2D
 {
@@ -449,11 +451,11 @@ vec2 vec2_splat(float _x) { return vec2(_x, _x); }
 vec3 vec3_splat(float _x) { return vec3(_x, _x, _x); }
 vec4 vec4_splat(float _x) { return vec4(_x, _x, _x, _x); }
 
-#if BGFX_SHADER_LANGUAGE_GLSL >= 130 || BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL
+#if BGFX_SHADER_LANGUAGE_GLSL >= 130 || BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV
 uvec2 uvec2_splat(uint _x) { return uvec2(_x, _x); }
 uvec3 uvec3_splat(uint _x) { return uvec3(_x, _x, _x); }
 uvec4 uvec4_splat(uint _x) { return uvec4(_x, _x, _x, _x); }
-#endif // BGFX_SHADER_LANGUAGE_GLSL >= 130 || BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL
+#endif // BGFX_SHADER_LANGUAGE_GLSL >= 130 || BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV
 
 uniform vec4  u_viewRect;
 uniform vec4  u_viewTexel;

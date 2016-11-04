@@ -915,6 +915,7 @@ namespace bgfx
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_HLSL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_METAL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_PSSL");
+		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_SPIRV");
 
 		preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_COMPUTE");
 		preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_FRAGMENT");
@@ -923,9 +924,7 @@ namespace bgfx
 		char glslDefine[128];
 		bx::snprintf(glslDefine, BX_COUNTOF(glslDefine)
 				, "BGFX_SHADER_LANGUAGE_GLSL=%d"
-				, essl  ? 1
-				: spirv ? 130
-				: glsl
+				, essl ? 1 : glsl
 				);
 
 		if (0 == bx::stricmp(platform, "android") )
@@ -946,7 +945,14 @@ namespace bgfx
 		else if (0 == bx::stricmp(platform, "linux") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_LINUX=1");
-			preprocessor.setDefine(glslDefine);
+			if (0 != spirv)
+			{
+				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
+			}
+			else
+			{
+				preprocessor.setDefine(glslDefine);
+			}
 		}
 		else if (0 == bx::stricmp(platform, "nacl") )
 		{
@@ -1251,8 +1257,7 @@ namespace bgfx
 				{
 					if (0 != glsl
 					||  0 != essl
-					||  0 != metal
-					||  0 != spirv)
+					||  0 != metal)
 					{
 					}
 					else
@@ -1439,8 +1444,7 @@ namespace bgfx
 				{
 					if (0 != glsl
 					||  0 != essl
-					||  0 != metal
-					||  0 != spirv)
+					||  0 != metal)
 					{
 						if (0 == essl)
 						{
@@ -1822,8 +1826,7 @@ namespace bgfx
 
 							if (0 != glsl
 							||  0 != essl
-							||  0 != metal
-							||  0 != spirv )
+							||  0 != metal)
 							{
 								std::string code;
 
@@ -1844,10 +1847,6 @@ namespace bgfx
 									if (0 != metal)
 									{
 										bx::stringPrintf(code, "#version 120\n");
-									}
-									else if (0 != spirv)
-									{
-										bx::stringPrintf(code, "#version 130\n");
 									}
 									else
 									{
@@ -1978,22 +1977,19 @@ namespace bgfx
 
 								code += preprocessor.m_preprocessed;
 
-								if (0 != spirv)
-								{
-									compiled = compileSPIRVShader(cmdLine
-										, 0
-										, code
-										, writer
-										);
-								}
-								else
-								{
-									compiled = compileGLSLShader(cmdLine
-										, metal ? BX_MAKEFOURCC('M', 'T', 'L', 0) : essl
-										, code
-										, writer
-										);
-								}
+								compiled = compileGLSLShader(cmdLine
+									, metal ? BX_MAKEFOURCC('M', 'T', 'L', 0) : essl
+									, code
+									, writer
+									);
+							}
+							else if (0 != spirv)
+							{
+								compiled = compileSPIRVShader(cmdLine
+									, 0
+									, preprocessor.m_preprocessed
+									, writer
+									);
 							}
 							else if (0 != pssl)
 							{
