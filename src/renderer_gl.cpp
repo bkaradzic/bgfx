@@ -1148,7 +1148,17 @@ namespace bgfx { namespace gl
 			;
 
 		GLsizei size = (16*16*getBitsPerPixel(_format) )/8;
-		void* data = bx::alignPtr(alloca(size+16), 0, 16);
+		void* data = NULL;
+
+		if (isDepth(_format) )
+		{
+			_srgb    = false;
+			_mipmaps = false;
+		}
+		else
+		{
+			data = bx::alignPtr(alloca(size+16), 0, 16);
+		}
 
 		flushGlError();
 		GLenum err = 0;
