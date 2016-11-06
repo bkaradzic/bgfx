@@ -3664,9 +3664,6 @@ namespace bgfx { namespace gl
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_eyeFbo[_eye]) );
 			GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_eyeTexId[_eye][texIndex], 0) );
 		}
-
-		GL_CHECK(glViewport(0, 0, _desc.m_eyeSize[_eye].m_w, _desc.m_eyeSize[_eye].m_h) );
-		GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT) );
 	}
 
 	bool VRImplOVRGL::submitSwapChain(const VRDesc& _desc)

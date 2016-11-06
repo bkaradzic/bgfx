@@ -3808,26 +3808,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		if (NULL != m_msaaTexture[_eye])
 		{
 			deviceCtx->OMSetRenderTargets(1, &m_msaaRtv[_eye], m_depthBuffer[_eye]);
-			deviceCtx->ClearRenderTargetView(m_msaaRtv[_eye], black);
-			deviceCtx->ClearDepthStencilView(m_depthBuffer[_eye], D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);
 		}
 		else // MSAA disabled? render directly to eye buffer
 		{
 			int texIndex = 0;
 			ovr_GetTextureSwapChainCurrentIndex(m_session, m_textureSwapChain[_eye], &texIndex);
-
 			deviceCtx->OMSetRenderTargets(1, &m_eyeRtv[_eye][texIndex], m_depthBuffer[_eye]);
-			deviceCtx->ClearRenderTargetView(m_eyeRtv[_eye][texIndex], black);
-			deviceCtx->ClearDepthStencilView(m_depthBuffer[_eye], D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);
-
-			D3D11_VIEWPORT D3Dvp;
-			D3Dvp.TopLeftX = 0;
-			D3Dvp.TopLeftY = 0;
-			D3Dvp.Width = (FLOAT)_desc.m_eyeSize[_eye].m_w;
-			D3Dvp.Height = (FLOAT)_desc.m_eyeSize[_eye].m_h;
-			D3Dvp.MinDepth = 0;
-			D3Dvp.MaxDepth = 1;
-			deviceCtx->RSSetViewports(1, &D3Dvp);
 		}
 	}
 
