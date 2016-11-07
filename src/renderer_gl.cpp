@@ -1181,7 +1181,7 @@ namespace bgfx { namespace gl
 		}
 		else
 		{
-			glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, 16, 16, 0, tfi.m_fmt, tfi.m_type, data);
+			glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, 16, 16, 0, tfi.m_fmt, tfi.m_type, NULL);
 			err |= glGetError();
 			if (_mipmaps)
 			{
