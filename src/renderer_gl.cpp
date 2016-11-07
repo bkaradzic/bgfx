@@ -2419,7 +2419,7 @@ namespace bgfx { namespace gl
 			}
 		}
 
-        void readPixels(FrameBufferHandle _handle, void* _data) BX_OVERRIDE
+		void readPixels(FrameBufferHandle _handle, void* _data) BX_OVERRIDE
 		{
 			if (isValid(_handle))
 			{

@@ -3257,7 +3257,7 @@ namespace bgfx
 			cmdbuf.write(_mip);
 			return m_frames + 2;
 		}
-        
+
 		BGFX_API_FUNC(uint32_t readTexture(FrameBufferHandle _handle, uint8_t _attachment, void* _data) )
 		{
 			const FrameBufferRef& ref = m_frameBufferRef[_handle.idx];
@@ -3269,9 +3269,9 @@ namespace bgfx
 			return readTexture(textureHandle, _data,0);
 		}
 
-        BGFX_API_FUNC(uint32_t readPixels(FrameBufferHandle _handle, void* _data))
-        {
-            const FrameBufferRef& ref = m_frameBufferRef[_handle.idx];
+		BGFX_API_FUNC(uint32_t readPixels(FrameBufferHandle _handle, void* _data))
+		{
+			const FrameBufferRef& ref = m_frameBufferRef[_handle.idx];
 			BX_CHECK(!ref.m_window, "Can't sample window frame buffer.");
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::ReadPixels);

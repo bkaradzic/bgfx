@@ -1019,8 +1019,8 @@ namespace bgfx { namespace d3d9
 
 			DX_CHECK(texture.m_texture2d->UnlockRect(_mip) );
 		}
-        
-        void readPixels(FrameBufferHandle _handle, void* _data) BX_OVERRIDE
+
+		void readPixels(FrameBufferHandle _handle, void* _data) BX_OVERRIDE
 		{
 			BX_WARN(false, "readPixels d3d12 is not implemented.");
 		}
