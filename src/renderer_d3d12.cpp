@@ -1464,6 +1464,7 @@ namespace bgfx { namespace d3d12
 
 		void readPixels(FrameBufferHandle _handle, void* _data) BX_OVERRIDE
 		{
+			BX_UNUSED(_handle, _data);
 			BX_WARN(false, "readPixels d3d12 is not implemented.");
 		}
 

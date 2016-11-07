@@ -3272,7 +3272,7 @@ namespace bgfx
 		BGFX_API_FUNC(uint32_t readPixels(FrameBufferHandle _handle, void* _data))
 		{
 			const FrameBufferRef& ref = m_frameBufferRef[_handle.idx];
-			BX_CHECK(!ref.m_window, "Can't sample window frame buffer.");
+			BX_CHECK(!ref.m_window, "Can't sample window frame buffer."); BX_UNUSED(ref);
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::ReadPixels);
 			cmdbuf.write(_handle);

@@ -1870,6 +1870,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		void readPixels(FrameBufferHandle _handle, void* _data) BX_OVERRIDE
 		{
+			BX_UNUSED(_handle, _data);
 			BX_WARN(false, "readPixels d3d11 is not implemented.");
 		}
 
