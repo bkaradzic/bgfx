@@ -820,6 +820,12 @@ namespace bgfx { namespace mtl
 			retain(m_commandBuffer); //NOTE: keep alive to be useable at 'flip'
 		}
 
+		void readPixels(FrameBufferHandle _handle, void* _data) BX_OVERRIDE
+		{
+			BX_UNUSED(_handle, _data);
+			BX_WARN(false, "readPixels mtl is not implemented.");
+		}
+
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips) BX_OVERRIDE
 		{
 			TextureMtl& texture = m_textures[_handle.idx];
