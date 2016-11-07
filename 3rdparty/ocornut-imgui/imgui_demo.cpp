@@ -1733,7 +1733,7 @@ void ImGui::ShowStyleEditor(ImGuiStyle* ref)
             ImFont* font = atlas->Fonts[i];
             ImGui::BulletText("Font %d: \'%s\', %.2f px, %d glyphs", i, font->ConfigData ? font->ConfigData[0].Name : "", font->FontSize, font->Glyphs.Size);
             ImGui::TreePush((void*)(intptr_t)i);
-            if (i > 0) { ImGui::SameLine(); if (ImGui::SmallButton("Set as default")) { atlas->Fonts[i] = atlas->Fonts[0]; atlas->Fonts[0] = font; } }
+            ImGui::SameLine(); if (ImGui::SmallButton("Set as default")) ImGui::GetIO().FontDefault = font;
             ImGui::PushFont(font);
             ImGui::Text("The quick brown fox jumps over the lazy dog");
             ImGui::PopFont();
@@ -2041,20 +2041,20 @@ static void ShowExampleAppCustomRendering(bool* p_open)
 
         bool adding_preview = false;
         ImGui::InvisibleButton("canvas", canvas_size);
+        ImVec2 mouse_pos_in_canvas = ImVec2(ImGui::GetIO().MousePos.x - canvas_pos.x, ImGui::GetIO().MousePos.y - canvas_pos.y);
+        if (adding_line)
+        {
+            adding_preview = true;
+            points.push_back(mouse_pos_in_canvas);
+            if (!ImGui::GetIO().MouseDown[0])
+                adding_line = adding_preview = false;
+        }
         if (ImGui::IsItemHovered())
         {
-            ImVec2 mouse_pos_in_canvas = ImVec2(ImGui::GetIO().MousePos.x - canvas_pos.x, ImGui::GetIO().MousePos.y - canvas_pos.y);
             if (!adding_line && ImGui::IsMouseClicked(0))
             {
                 points.push_back(mouse_pos_in_canvas);
                 adding_line = true;
-            }
-            if (adding_line)
-            {
-                adding_preview = true;
-                points.push_back(mouse_pos_in_canvas);
-                if (!ImGui::GetIO().MouseDown[0])
-                    adding_line = adding_preview = false;
             }
             if (ImGui::IsMouseClicked(1) && !points.empty())
             {
