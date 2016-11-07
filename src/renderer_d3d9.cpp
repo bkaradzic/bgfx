@@ -1022,7 +1022,7 @@ namespace bgfx { namespace d3d9
 
 		void readPixels(FrameBufferHandle _handle, void* _data) BX_OVERRIDE
 		{
-			BX_WARN(false, "readPixels d3d12 is not implemented.");
+			BX_WARN(false, "readPixels d3d9 is not implemented.");
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips) BX_OVERRIDE
