@@ -1727,7 +1727,7 @@ namespace bgfx { namespace gl
 						s_textureFilter[TextureFormat::RGBA32F] = linear32F;
 					}
 
-					if (BX_ENABLED(BX_PLATFORM_IOS) )
+					if (BX_ENABLED(BX_PLATFORM_IOS) || BX_ENABLED(BX_PLATFORM_EMSCRIPTEN))
 					{
 						setTextureFormat(TextureFormat::D16,   GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT);
 						setTextureFormat(TextureFormat::D24S8, GL_DEPTH_STENCIL,   GL_DEPTH_STENCIL,   GL_UNSIGNED_INT_24_8);
