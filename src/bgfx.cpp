@@ -29,7 +29,7 @@ namespace bgfx
 #	define BGFX_CHECK_MAIN_THREAD() \
 				BX_CHECK(NULL != s_ctx, "Library is not initialized yet."); \
 				BX_CHECK(BGFX_MAIN_THREAD_MAGIC == s_threadIndex, "Must be called from main thread.")
-#	define BGFX_CHECK_RENDER_THREAD() BX_CHECK(BGFX_MAIN_THREAD_MAGIC != s_threadIndex, "Must be called from render thread.")
+#	define BGFX_CHECK_RENDER_THREAD() BX_CHECK(s_ctx->m_singleThreaded || BGFX_MAIN_THREAD_MAGIC != s_threadIndex, "Must be called from render thread.")
 #else
 #	define BGFX_CHECK_MAIN_THREAD()
 #	define BGFX_CHECK_RENDER_THREAD()
