@@ -1868,6 +1868,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			m_deviceCtx->Unmap(texture.m_ptr, _mip);
 		}
 
+		void readPixels(FrameBufferHandle _handle, void* _data) BX_OVERRIDE
+		{
+			BX_UNUSED(_handle, _data);
+			BX_WARN(false, "readPixels d3d11 is not implemented.");
+		}
+
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips) BX_OVERRIDE
 		{
 			TextureD3D11& texture = m_textures[_handle.idx];

@@ -637,6 +637,7 @@ namespace bgfx
 			DestroyFrameBuffer,
 			DestroyUniform,
 			ReadTexture,
+			ReadPixels,
 			SaveScreenShot,
 		};
 
@@ -2145,6 +2146,7 @@ namespace bgfx
 		virtual void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) = 0;
 		virtual void updateTextureEnd() = 0;
 		virtual void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) = 0;
+		virtual void readPixels(FrameBufferHandle _handle, void* _data) = 0;
 		virtual void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips) = 0;
 		virtual void overrideInternal(TextureHandle _handle, uintptr_t _ptr) = 0;
 		virtual uintptr_t getInternal(TextureHandle _handle) = 0;
@@ -3265,6 +3267,17 @@ namespace bgfx
 			BGFX_CHECK_HANDLE("readTexture", m_textureHandle, textureHandle);
 
 			return readTexture(textureHandle, _data,0);
+		}
+
+		BGFX_API_FUNC(uint32_t readPixels(FrameBufferHandle _handle, void* _data))
+		{
+			const FrameBufferRef& ref = m_frameBufferRef[_handle.idx];
+			BX_CHECK(!ref.m_window, "Can't sample window frame buffer."); BX_UNUSED(ref);
+
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::ReadPixels);
+			cmdbuf.write(_handle);
+			cmdbuf.write(_data);
+			return m_frames + 2;
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips)

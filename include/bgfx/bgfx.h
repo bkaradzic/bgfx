@@ -1838,6 +1838,17 @@ namespace bgfx
 	///
 	uint32_t readTexture(TextureHandle _handle, void* _data, uint8_t _mip = 0);
 
+  	/// Read back frame buffer pixels content.
+	///
+	/// @param[in] _handle Frame buffer handle.
+	/// @param[in] _data Destination buffer.
+	///
+	/// @returns Frame number when the result will be available. See: `bgfx::frame`.
+	///
+	/// @attention C99 equivalent is `bgfx_read_frame_buffer_pixels`.
+	///
+	uint32_t readPixels(FrameBufferHandle _handle, void* _data);
+    
 	/// Read back texture content.
 	///
 	/// @param[in] _handle Frame buffer handle.

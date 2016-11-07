@@ -2251,6 +2251,18 @@ namespace bgfx
 				}
 				break;
 
+            case CommandBuffer::ReadPixels:
+                {
+                    FrameBufferHandle handle;
+                    _cmdbuf.read(handle);
+
+                    void* data;
+                    _cmdbuf.read(data);
+
+                    m_renderCtx->readPixels(handle, data);
+                }
+                break;
+                
 			case CommandBuffer::ResizeTexture:
 				{
 					TextureHandle handle;
@@ -3232,6 +3244,13 @@ error:
 		return s_ctx->readTexture(_handle, _attachment, _data);
 	}
 
+	uint32_t readPixels(FrameBufferHandle _handle, void* _data)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(NULL != _data, "_data can't be NULL");
+		return s_ctx->readPixels(_handle, _data);
+	}
+    
 	FrameBufferHandle createFrameBuffer(uint16_t _width, uint16_t _height, TextureFormat::Enum _format, uint32_t _textureFlags)
 	{
 		_textureFlags |= _textureFlags&BGFX_TEXTURE_RT_MSAA_MASK ? 0 : BGFX_TEXTURE_RT;
