@@ -2419,6 +2419,32 @@ namespace bgfx { namespace gl
 			}
 		}
 
+        void readPixels(FrameBufferHandle _handle, void* _data) BX_OVERRIDE
+		{
+			if (isValid(_handle))
+			{
+				uint16_t discardFlags = BGFX_CLEAR_NONE;
+
+				FrameBufferGL& frameBuffer = m_frameBuffers[_handle.idx];
+				uint32_t width = frameBuffer.m_width;
+				uint32_t height = frameBuffer.m_height;
+
+				height = setFrameBuffer(_handle, height, discardFlags);
+
+				if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN))
+					GL_CHECK(glReadBuffer(GL_COLOR_ATTACHMENT0));
+                
+				GL_CHECK(glReadPixels(0
+					, 0
+					, width
+					, height
+					, m_readPixelsFmt
+					, GL_UNSIGNED_BYTE
+					, _data
+					));
+			}
+		}
+        
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips) BX_OVERRIDE
 		{
 			TextureGL& texture = m_textures[_handle.idx];
