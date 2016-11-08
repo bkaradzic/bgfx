@@ -3723,7 +3723,7 @@ namespace bgfx
 			setViewScissor(_id, 0, 0, 0, 0);
 			setViewClear(_id, BGFX_CLEAR_NONE, 0, 0.0f, 0);
 			setViewSeq(_id, false);
-			bgfx::FrameBufferHandle invalid = BGFX_INVALID_HANDLE;
+			FrameBufferHandle invalid = BGFX_INVALID_HANDLE;
 			setViewFrameBuffer(_id, invalid);
 			setViewTransform(_id, NULL, NULL, BGFX_VIEW_NONE, NULL);
 		}
