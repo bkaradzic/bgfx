@@ -1223,9 +1223,10 @@ namespace bgfx
 	{
 		BX_CHECK(!m_rendererInitialized, "Already initialized?");
 
-		m_exit   = false;
-		m_frames = 0;
-		m_debug  = BGFX_DEBUG_NONE;
+		m_exit    = false;
+		m_flipped = true;
+		m_frames  = 0;
+		m_debug   = BGFX_DEBUG_NONE;
 
 		m_submit->create();
 
@@ -1568,9 +1569,11 @@ namespace bgfx
 		BGFX_PROFILER_SCOPE(bgfx, render_frame, 0xff2040ff);
 
 		if (m_rendererInitialized
-		&& !m_flipAfterRender)
+		&& !m_flipAfterRender
+		&& !m_flipped)
 		{
 			m_renderCtx->flip(m_render->m_hmd);
+			m_flipped = true;
 		}
 
 		if (apiSemWait(BGFX_CONFIG_API_SEMAPHORE_TIMEOUT) )
@@ -1580,6 +1583,7 @@ namespace bgfx
 			{
 				BGFX_PROFILER_SCOPE(bgfx, render_submit, 0xff2040ff);
 				m_renderCtx->submit(m_render, m_clearQuad, m_textVideoMemBlitter);
+				m_flipped = false;
 			}
 			rendererExecCommands(m_render->m_cmdPost);
 
@@ -1589,6 +1593,7 @@ namespace bgfx
 			&&  m_flipAfterRender)
 			{
 				m_renderCtx->flip(m_render->m_hmd);
+				m_flipped = true;
 			}
 		}
 

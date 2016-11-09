@@ -4243,6 +4243,7 @@ namespace bgfx
 		bool m_exit;
 		bool m_flipAfterRender;
 		bool m_singleThreaded;
+		bool m_flipped;
 
 		typedef UpdateBatchT<256> TextureUpdateBatch;
 		BX_ALIGN_DECL_CACHE_LINE(TextureUpdateBatch m_textureUpdateBatch);
