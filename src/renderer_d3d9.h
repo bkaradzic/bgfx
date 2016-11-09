@@ -393,10 +393,11 @@ namespace bgfx { namespace d3d9
 		FrameBufferD3D9()
 			: m_hwnd(NULL)
 			, m_denseIdx(UINT16_MAX)
-			, m_needResolve(0)
 			, m_num(0)
 			, m_numTh(0)
 			, m_dsIdx(UINT8_MAX)
+			, m_needResolve(false)
+			, m_needPresent(false)
 		{
 		}
 
@@ -408,6 +409,7 @@ namespace bgfx { namespace d3d9
 		void preReset();
 		void postReset();
 		void createNullColorRT();
+		void set();
 
 		IDirect3DSurface9* m_surface[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
 		IDirect3DSwapChain9* m_swapChain;
@@ -417,10 +419,11 @@ namespace bgfx { namespace d3d9
 
 		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		uint16_t m_denseIdx;
-		bool m_needResolve;
 		uint8_t m_num;
 		uint8_t m_numTh;
 		uint8_t m_dsIdx;
+		bool m_needResolve;
+		bool m_needPresent;
 	};
 
 	struct TimerQueryD3D9

@@ -1369,35 +1369,7 @@ namespace bgfx { namespace d3d9
 			}
 			else
 			{
-				const FrameBufferD3D9& frameBuffer = m_frameBuffers[_fbh.idx];
-
-				// If frame buffer has only depth attachment D3DFMT_NULL
-				// render target is created.
-				const uint32_t fbnum = bx::uint32_max(2, frameBuffer.m_numTh);
-				const uint8_t  dsIdx = frameBuffer.m_dsIdx;
-
-				DX_CHECK(m_device->SetDepthStencilSurface(UINT8_MAX == dsIdx
-						? m_backBufferDepthStencil
-						: frameBuffer.m_surface[dsIdx]
-						) );
-
-				uint32_t rtIdx = 0;
-				for (uint32_t ii = 0; ii < fbnum; ++ii)
-				{
-					IDirect3DSurface9* surface = frameBuffer.m_surface[ii];
-					if (ii != dsIdx)
-					{
-						DX_CHECK(m_device->SetRenderTarget(rtIdx, surface) );
-						++rtIdx;
-					}
-				}
-
-				for (uint32_t ii = rtIdx, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
-				{
-					DX_CHECK(m_device->SetRenderTarget(ii, NULL) );
-				}
-
-				DX_CHECK(m_device->SetRenderState(D3DRS_SRGBWRITEENABLE, FALSE) );
+				m_frameBuffers[_fbh.idx].set();
 			}
 
 			m_fbh = _fbh;
@@ -3245,6 +3217,7 @@ namespace bgfx { namespace d3d9
 		m_denseIdx = _denseIdx;
 		m_num = 1;
 		m_needResolve = false;
+		m_needPresent = false;
 	}
 
 	uint16_t FrameBufferD3D9::destroy()
@@ -3274,6 +3247,7 @@ namespace bgfx { namespace d3d9
 		m_hwnd  = NULL;
 		m_num   = 0;
 		m_numTh = 0;
+		m_needPresent = false;
 
 		uint16_t denseIdx = m_denseIdx;
 		m_denseIdx = UINT16_MAX;
@@ -3283,7 +3257,14 @@ namespace bgfx { namespace d3d9
 
 	HRESULT FrameBufferD3D9::present()
 	{
-		return m_swapChain->Present(NULL, NULL, m_hwnd, NULL, 0);
+		if (m_needPresent)
+		{
+			HRESULT hr = m_swapChain->Present(NULL, NULL, m_hwnd, NULL, 0);
+			m_needPresent = false;
+			return hr;
+		}
+
+		return S_OK;
 	}
 
 	void FrameBufferD3D9::resolve() const
@@ -3380,6 +3361,41 @@ namespace bgfx { namespace d3d9
 			, &m_surface[1]
 			, NULL
 			) );
+	}
+
+	void FrameBufferD3D9::set()
+	{
+		m_needPresent = UINT16_MAX != m_denseIdx;
+
+		// If frame buffer has only depth attachment D3DFMT_NULL
+		// render target is created.
+		const uint32_t fbnum = bx::uint32_max(2, m_numTh);
+		const uint8_t  dsIdx = m_dsIdx;
+
+		IDirect3DDevice9* device = s_renderD3D9->m_device;
+
+		DX_CHECK(device->SetDepthStencilSurface(UINT8_MAX == dsIdx
+			? s_renderD3D9->m_backBufferDepthStencil
+			: m_surface[dsIdx]
+			) );
+
+		uint32_t rtIdx = 0;
+		for (uint32_t ii = 0; ii < fbnum; ++ii)
+		{
+			IDirect3DSurface9* surface = m_surface[ii];
+			if (ii != dsIdx)
+			{
+				DX_CHECK(device->SetRenderTarget(rtIdx, surface) );
+				++rtIdx;
+			}
+		}
+
+		for (uint32_t ii = rtIdx, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
+		{
+			DX_CHECK(device->SetRenderTarget(ii, NULL) );
+		}
+
+		DX_CHECK(device->SetRenderState(D3DRS_SRGBWRITEENABLE, FALSE) );
 	}
 
 	void TimerQueryD3D9::postReset()

@@ -269,6 +269,7 @@ namespace bgfx { namespace d3d11
 			, m_denseIdx(UINT16_MAX)
 			, m_num(0)
 			, m_numTh(0)
+			, m_needPresent(false)
 		{
 		}
 
@@ -279,6 +280,8 @@ namespace bgfx { namespace d3d11
 		void postReset();
 		void resolve();
 		void clear(const Clear& _clear, const float _palette[][4]);
+		void set();
+		HRESULT present(uint32_t _syncInterval);
 
 		ID3D11RenderTargetView* m_rtv[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
 		ID3D11ShaderResourceView* m_srv[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
@@ -291,6 +294,7 @@ namespace bgfx { namespace d3d11
 		uint16_t m_denseIdx;
 		uint8_t m_num;
 		uint8_t m_numTh;
+		bool m_needPresent;
 	};
 
 	struct TimerQueryD3D11
