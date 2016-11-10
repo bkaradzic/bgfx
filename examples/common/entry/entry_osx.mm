@@ -58,7 +58,7 @@ namespace entry
 		bgfx::setPlatformData(pd);
 	}
 
-	static WindowHandle s_defaultWindow = { 0 };	// TODO: Add support for more windows
+	static WindowHandle s_defaultWindow = { 0 };
 	static uint8_t s_translateKey[256];
 
 	struct MainThreadEntry
@@ -283,7 +283,6 @@ namespace entry
 
 					case NSLeftMouseDown:
 					{
-						// TODO: remove!
 						// Command + Left Mouse Button acts as middle! This just a temporary solution!
 						// This is because the average OSX user doesn't have middle mouse click.
 						MouseButton::Enum mb = ([event modifierFlags] & NSCommandKeyMask) ? MouseButton::Middle : MouseButton::Left;
