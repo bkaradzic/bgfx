@@ -3565,14 +3565,13 @@ namespace bgfx { namespace gl
 					setDefaultSamplerState();
 
 					// create MSAA depth buffer
-					GL_CHECK(glGenTextures(1, &m_msaaDepthBuffer[eye]) );
-					GL_CHECK(glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_depthBuffer[eye]) );
-					GL_CHECK(glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, _msaaSamples, GL_DEPTH_COMPONENT, _desc.m_eyeSize[eye].m_w, _desc.m_eyeSize[eye].m_h, false) );
-					setDefaultSamplerState();
+					GL_CHECK(glGenRenderbuffers(1, &m_msaaDepthBuffer[eye]));
+					GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_msaaDepthBuffer[eye]));
+					GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, _msaaSamples, GL_DEPTH24_STENCIL8, _desc.m_eyeSize[eye].m_w, _desc.m_eyeSize[eye].m_h));
 
 					GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_msaaEyeFbo[eye]) );
 					GL_CHECK(glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, m_msaaEyeTexId[eye], 0) );
-					GL_CHECK(glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0) );
+					GL_CHECK(glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_msaaDepthBuffer[eye]));
 					GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0) );
 				}
 
@@ -3657,6 +3656,9 @@ namespace bgfx { namespace gl
 
 	void VRImplOVRGL::renderEyeStart(const VRDesc& _desc, uint8_t _eye)
 	{
+		int texIndex;
+		ovr_GetTextureSwapChainCurrentIndex(m_session, m_textureSwapChain[_eye], &texIndex);
+
 		// set the current eye texture in the swap chain
 		if (0 != m_msaaEyeFbo[_eye])
 		{
@@ -3664,12 +3666,9 @@ namespace bgfx { namespace gl
 		}
 		else
 		{
-			int texIndex;
-			ovr_GetTextureSwapChainCurrentIndex(m_session, m_textureSwapChain[_eye], &texIndex);
-
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_eyeFbo[_eye]) );
-			GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_eyeTexId[_eye][texIndex], 0) );
 		}
+		GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_eyeTexId[_eye][texIndex], 0));
 	}
 
 	bool VRImplOVRGL::submitSwapChain(const VRDesc& _desc)
@@ -3678,7 +3677,7 @@ namespace bgfx { namespace gl
 		{
 			if (0 != m_msaaEyeFbo[eye])
 			{
-				// blit the contents of MSAA FBO to the regulare eye buffer "connected" to the HMD
+				// blit the contents of MSAA FBO to the regular eye buffer "connected" to the HMD
 				int destIndex;
 				ovr_GetTextureSwapChainCurrentIndex(m_session, m_textureSwapChain[eye], &destIndex);
 
