@@ -601,7 +601,7 @@ namespace bgfx
 		bool hasType;
 		bool hasResult;
 
-		SpvOperand operand[8];
+		SpvOperand operand[10];
 	};
 
 	int32_t read(bx::ReaderI* _reader, SpvInstruction& _instruction, bx::Error* _err);

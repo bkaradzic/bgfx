@@ -990,7 +990,11 @@ namespace bgfx
 			break;
 
 		default:
-			for (;size/4 != _instruction.length && _err->isOk(); ++currOp)
+			for (
+				;  size/4 != _instruction.length
+				&& _err->isOk()
+				&& currOp < BX_COUNTOF(_instruction.operand)
+				; ++currOp)
 			{
 				_instruction.operand[currOp].type = info.operands[currOp];
 				size += read(_reader, _instruction.operand[currOp], _err);
