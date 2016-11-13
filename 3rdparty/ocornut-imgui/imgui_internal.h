@@ -67,7 +67,9 @@ namespace ImGuiStb
 // Context
 //-----------------------------------------------------------------------------
 
-extern IMGUI_API ImGuiContext*  GImGui;     // current implicit ImGui context pointer
+#ifndef GImGui
+extern IMGUI_API ImGuiContext* GImGui;  // Current implicit ImGui context pointer
+#endif
 
 //-----------------------------------------------------------------------------
 // Helpers
@@ -488,9 +490,11 @@ struct ImGuiContext
         SetNextWindowSizeCond = 0;
         SetNextWindowContentSizeCond = 0;
         SetNextWindowCollapsedCond = 0;
-        SetNextWindowFocus = false;
+        SetNextWindowSizeConstraintRect = ImRect();
         SetNextWindowSizeConstraintCallback = NULL;
         SetNextWindowSizeConstraintCallbackUserData = NULL;
+        SetNextWindowSizeConstraint = false;
+        SetNextWindowFocus = false;
         SetNextTreeNodeOpenVal = false;
         SetNextTreeNodeOpenCond = 0;
 
@@ -597,6 +601,7 @@ struct IMGUI_API ImGuiDrawContext
         memset(StackSizesBackup, 0, sizeof(StackSizesBackup));
 
         IndentX = 0.0f;
+        GroupOffsetX = 0.0f;
         ColumnsOffsetX = 0.0f;
         ColumnsCurrent = 0;
         ColumnsCount = 1;
