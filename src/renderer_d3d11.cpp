@@ -444,6 +444,17 @@ namespace bgfx { namespace d3d11
 		IID_IDXGIDevice0,
 	};
 
+	inline bool isLost(HRESULT _hr)
+	{
+		return false
+			|| _hr == DXGI_ERROR_DEVICE_REMOVED
+			|| _hr == DXGI_ERROR_DEVICE_HUNG
+			|| _hr == DXGI_ERROR_DEVICE_RESET
+			|| _hr == DXGI_ERROR_DRIVER_INTERNAL_ERROR
+			|| _hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE
+			;
+	}
+
 	template <typename Ty>
 	static BX_NO_INLINE void setDebugObjectName(Ty* _interface, const char* _format, ...)
 	{
@@ -2075,7 +2086,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			uint32_t height = getBufferHeight();
 
 			FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
-			setFrameBuffer(fbh, false);
+			setFrameBuffer(fbh, false, false);
 
 			D3D11_VIEWPORT vp;
 			vp.TopLeftX = 0;
@@ -2141,6 +2152,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		void preReset()
 		{
+			m_needPresent = false;
+
 			ovrPreReset();
 
 			if (m_timerQuerySupport)
@@ -2233,16 +2246,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			capturePostReset();
 		}
 
-		static bool isLost(HRESULT _hr)
-		{
-			return DXGI_ERROR_DEVICE_REMOVED == _hr
-				|| DXGI_ERROR_DEVICE_HUNG == _hr
-				|| DXGI_ERROR_DEVICE_RESET == _hr
-				|| DXGI_ERROR_DRIVER_INTERNAL_ERROR == _hr
-				|| DXGI_ERROR_NOT_CURRENTLY_AVAILABLE == _hr
-				;
-		}
-
 		void flip(HMD& _hmd) BX_OVERRIDE
 		{
 			if (NULL != m_swapChain)
@@ -2258,19 +2261,21 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					hr = m_frameBuffers[m_windows[ii].idx].present(syncInterval);
 				}
 
-				if (SUCCEEDED(hr) )
+				if (SUCCEEDED(hr)
+				&&  m_needPresent)
 				{
 					m_ovr.flip();
 					m_ovr.swap(_hmd);
 
-					if (!m_ovr.isEnabled())
+					if (!m_ovr.isEnabled() )
 					{
 						hr = m_swapChain->Present(syncInterval, 0);
 					}
+
+					m_needPresent = false;
 				}
 
-				if (FAILED(hr)
-				&&  isLost(hr) )
+				if (isLost(hr) )
 				{
 					++m_lost;
 					BGFX_FATAL(10 > m_lost, bgfx::Fatal::DeviceLost, "Device is lost. FAILED 0x%08x", hr);
@@ -2552,7 +2557,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			}
 		}
 
-		void setFrameBuffer(FrameBufferHandle _fbh, bool _msaa = true)
+		void setFrameBuffer(FrameBufferHandle _fbh, bool _msaa = true, bool _needPresent = true)
 		{
 			if (isValid(m_fbh)
 			&&  m_fbh.idx != _fbh.idx
@@ -2566,6 +2571,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			{
 				m_deviceCtx->OMSetRenderTargets(1, &m_backBufferColor, m_backBufferDepthStencil);
 
+				m_needPresent |= _needPresent;
 				m_currentColor = m_backBufferColor;
 				m_currentDepthStencil = m_backBufferDepthStencil;
 			}
@@ -3513,6 +3519,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		IDXGISwapChain1*  m_swapChain;
 #endif // BX_PLATFORM_WINDOWS
 
+		bool m_needPresent;
 		uint16_t m_lost;
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
@@ -5030,6 +5037,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		if (m_needPresent)
 		{
 			HRESULT hr = m_swapChain->Present(_syncInterval, 0);
+			hr = !isLost(hr) ? S_OK : hr;
 			m_needPresent = false;
 			return hr;
 		}
@@ -5103,7 +5111,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			uint64_t timeEnd;
 			HRESULT hr = deviceCtx->GetData(frame.m_end, &timeEnd, sizeof(timeEnd), D3D11_ASYNC_GETDATA_DONOTFLUSH);
-			if (S_OK == hr)
+			if (S_OK == hr
+			||  isLost(hr) )
 			{
 				m_control.consume(1);
 
@@ -5283,7 +5292,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			// reset the framebuffer to be the backbuffer; depending on the swap effect,
 			// if we don't do this we'll only see one frame of output and then nothing
 			FrameBufferHandle invalid = BGFX_INVALID_HANDLE;
-			setFrameBuffer(invalid);
+			setFrameBuffer(invalid, true, false);
 
 			bool viewRestart = false;
 			uint8_t eye = 0;

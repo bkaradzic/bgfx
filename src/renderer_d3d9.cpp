@@ -1206,7 +1206,7 @@ namespace bgfx { namespace d3d9
 			uint32_t height = m_params.BackBufferHeight;
 
 			FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
-			setFrameBuffer(fbh, false);
+			setFrameBuffer(fbh, false, false);
 
 			D3DVIEWPORT9 vp;
 			vp.X = 0;
@@ -1347,7 +1347,7 @@ namespace bgfx { namespace d3d9
 			}
 		}
 
-		void setFrameBuffer(FrameBufferHandle _fbh, bool _msaa = true)
+		void setFrameBuffer(FrameBufferHandle _fbh, bool _msaa = true, bool _needPresent = true)
 		{
 			if (isValid(m_fbh)
 			&&  m_fbh.idx != _fbh.idx)
@@ -1358,6 +1358,7 @@ namespace bgfx { namespace d3d9
 
 			if (!isValid(_fbh) )
 			{
+				m_needPresent |= _needPresent;
 				DX_CHECK(m_device->SetRenderTarget(0, m_backBufferColor) );
 				for (uint32_t ii = 1, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
 				{
@@ -1434,10 +1435,14 @@ namespace bgfx { namespace d3d9
 
 				for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
 				{
-					HRESULT hr;
+					HRESULT hr = S_OK;
 					if (0 == ii)
 					{
-						hr = m_swapChain->Present(NULL, NULL, (HWND)g_platformData.nwh, NULL, 0);
+						if (m_needPresent)
+						{
+							hr = m_swapChain->Present(NULL, NULL, (HWND)g_platformData.nwh, NULL, 0);
+							m_needPresent = false;
+						}
 					}
 					else
 					{
@@ -1473,6 +1478,8 @@ namespace bgfx { namespace d3d9
 
 		void preReset()
 		{
+			m_needPresent = false;
+
 			invalidateSamplerState();
 
 			for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
@@ -2034,6 +2041,8 @@ namespace bgfx { namespace d3d9
 		D3DPOOL m_pool;
 
 		IDirect3DSwapChain9* m_swapChain;
+
+		bool m_needPresent;
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 

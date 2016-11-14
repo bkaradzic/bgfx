@@ -2217,6 +2217,8 @@ namespace bgfx { namespace gl
 
 			ovrPostReset();
 
+			m_needPresent = false;
+
 			BGFX_GPU_PROFILER_BIND();
 		}
 
@@ -2285,11 +2287,16 @@ namespace bgfx { namespace gl
 					}
 				}
 
-				m_ovr.flip();
-				m_ovr.swap(_hmd);
+				if (m_needPresent)
+				{
+					m_ovr.flip();
+					m_ovr.swap(_hmd);
 
-				// need to swap GL render context even if OVR is enabled to get the mirror texture in the output
-				m_glctx.swap();
+					// need to swap GL render context even if OVR is enabled to get
+					// the mirror texture in the output
+					m_glctx.swap();
+					m_needPresent = false;
+				}
 			}
 		}
 
@@ -2745,6 +2752,7 @@ namespace bgfx { namespace gl
 
 			if (!isValid(_fbh) )
 			{
+				m_needPresent |= true;
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
 
 				if (m_srgbWriteControlSupport)
@@ -3457,6 +3465,7 @@ namespace bgfx { namespace gl
 		GLuint m_msaaBackBufferFbo;
 		GLuint m_msaaBackBufferRbos[2];
 		GlContext m_glctx;
+		bool m_needPresent;
 
 		const char* m_vendor;
 		const char* m_renderer;
