@@ -293,10 +293,11 @@ struct EmbeddedShader
 				{ bgfx::RendererType::OpenGLES,   BX_CONCATENATE(_name, _glsl),  sizeof(BX_CONCATENATE(_name, _glsl) ) }, \
 				{ bgfx::RendererType::Vulkan,     BX_CONCATENATE(_name, _glsl),  sizeof(BX_CONCATENATE(_name, _glsl) ) }, \
 				{ bgfx::RendererType::Metal,      BX_CONCATENATE(_name, _mtl ),  sizeof(BX_CONCATENATE(_name, _mtl ) ) }, \
+				{ bgfx::RendererType::Noop,       BX_CONCATENATE(_name, _glsl),  sizeof(BX_CONCATENATE(_name, _glsl) ) }, \
 				{ bgfx::RendererType::Count,      NULL,                          0                                     }, \
 			}
 
-static const EmbeddedShader s_embeddedShaders[][8] =
+static const EmbeddedShader s_embeddedShaders[][9] =
 {
 	BGFX_DECLARE_SHADER_EMBEDDED(vs_debugdraw_lines),
 	BGFX_DECLARE_SHADER_EMBEDDED(fs_debugdraw_lines),
