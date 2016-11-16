@@ -259,6 +259,7 @@ namespace bgfx { namespace gl
 	void GlContext::destroySwapChain(SwapChainGL* _swapChain)
 	{
 		BX_DELETE(g_allocator, _swapChain);
+		glXMakeCurrent( (::Display*)g_platformData.ndt, (::Window)g_platformData.nwh, m_context);
 	}
 
 	void GlContext::swap(SwapChainGL* _swapChain)
