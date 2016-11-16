@@ -117,13 +117,16 @@ namespace bgfx
 		// build constant layer settings
 		m_renderLayer.Header.Type = ovrLayerType_EyeFov;
 		m_renderLayer.Header.Flags = 0;
-		for (int eye = 0; eye < 2; ++eye)
-		{
-			m_renderLayer.Fov[eye] = hmdDesc.DefaultEyeFov[eye];
-			m_renderLayer.Viewport[eye].Pos.x = 0;
-			m_renderLayer.Viewport[eye].Pos.y = 0;
-			m_renderLayer.Viewport[eye].Size = eyeSize[eye];
-		}
+		m_renderLayer.Fov[0] = hmdDesc.DefaultEyeFov[0];
+		m_renderLayer.Fov[1] = hmdDesc.DefaultEyeFov[1];
+		m_renderLayer.Viewport[0].Pos.x = 0;
+		m_renderLayer.Viewport[0].Pos.y = 0;
+		m_renderLayer.Viewport[0].Size.w = _desc->m_eyeSize[0].m_w;
+		m_renderLayer.Viewport[0].Size.h = _desc->m_eyeSize[0].m_h;
+		m_renderLayer.Viewport[1].Pos.x = _desc->m_eyeSize[0].m_w+1;
+		m_renderLayer.Viewport[1].Pos.y = 0;
+		m_renderLayer.Viewport[1].Size.w = _desc->m_eyeSize[1].m_w;
+		m_renderLayer.Viewport[1].Size.h = _desc->m_eyeSize[1].m_h;
 
 		m_viewScale.HmdSpaceToWorldScaleInMeters = 1.0f;
 		for (int eye = 0; eye < 2; ++eye)

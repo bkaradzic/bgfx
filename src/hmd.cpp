@@ -58,16 +58,22 @@ namespace bgfx
 		m_enabled = false;
 	}
 
-	void VR::renderEyeStart(uint8_t _eye, Rect* _viewport)
+	void VR::getViewport(uint8_t _eye, Rect* _viewport) const
+	{
+		_viewport->m_width = m_desc.m_eyeSize[_eye].m_w;
+		_viewport->m_x = _eye * (m_desc.m_eyeSize[_eye].m_w + 1);
+		_viewport->m_height = (uint16_t)m_desc.m_eyeSize[_eye].m_h;
+		_viewport->m_y = 0;
+	}
+
+	void VR::makeRenderTargetActive()
 	{
 		BX_CHECK(m_enabled, "VR::renderEyeStart called while not enabled - render usage error");
 
-		_viewport->m_x      = 0;
-		_viewport->m_y      = 0;
-		_viewport->m_width  = uint16_t(m_desc.m_eyeSize[_eye].m_w);
-		_viewport->m_height = uint16_t(m_desc.m_eyeSize[_eye].m_h);
-
-		m_impl->renderEyeStart(m_desc, _eye);
+		if (NULL != m_impl)
+		{
+			m_impl->makeRenderTargetActive(m_desc);
+		}
 	}
 
 	void VR::recenter()
