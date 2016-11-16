@@ -1838,20 +1838,6 @@ namespace bgfx
 	///
 	uint32_t readTexture(TextureHandle _handle, void* _data, uint8_t _mip = 0);
 
-	/// Read back texture content.
-	///
-	/// @param[in] _handle Frame buffer handle.
-	/// @param[in] _attachment Frame buffer attachment index.
-	/// @param[in] _data Destination buffer.
-	///
-	/// @returns Frame number when the result will be available. See: `bgfx::frame`.
-	///
-	/// @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
-	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_READ_BACK`.
-	/// @attention C99 equivalent is `bgfx_read_frame_buffer`.
-	///
-	uint32_t readTexture(FrameBufferHandle _handle, uint8_t _attachment, void* _data);
-
 	/// Destroy texture.
 	///
 	/// @param[in] _handle Texture handle.
@@ -1960,6 +1946,16 @@ namespace bgfx
 		, uint16_t _height
 		, TextureFormat::Enum _depthFormat = TextureFormat::UnknownDepth
 		);
+
+	/// Obtain texture handle of frame buffer attachment.
+	///
+	/// @param[in] _handle Frame buffer handle.
+	/// @param[in] _attachment Frame buffer attachment index.
+	///
+	/// @returns Returns invalid texture handle if attachment index is not
+	///   correct, or frame buffer is created with native window handle.
+	///
+	TextureHandle getTexture(FrameBufferHandle _handle, uint8_t _attachment = 0);
 
 	/// Destroy frame buffer.
 	///
@@ -2525,29 +2521,6 @@ namespace bgfx
 		, uint32_t _flags = UINT32_MAX
 		);
 
-	/// Set texture stage for draw primitive.
-	///
-	/// @param[in] _stage Texture unit.
-	/// @param[in] _sampler Program sampler.
-	/// @param[in] _handle Frame buffer handle.
-	/// @param[in] _attachment Frame buffer attachment index.
-	/// @param[in] _flags Texture sampling mode. Default value UINT32_MAX uses
-	///   texture sampling settings from the texture.
-	///   - `BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
-	///     mode.
-	///   - `BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
-	///     sampling.
-	///
-	/// @attention C99 equivalent is `bgfx_set_texture_from_frame_buffer`.
-	///
-	void setTexture(
-		  uint8_t _stage
-		, UniformHandle _sampler
-		, FrameBufferHandle _handle
-		, uint8_t _attachment = 0
-		, uint32_t _flags = UINT32_MAX
-		);
-
 	/// Submit an empty primitive for rendering. Uniforms and draw state
 	/// will be applied but no geometry will be submitted.
 	///
@@ -2691,26 +2664,6 @@ namespace bgfx
 		, TextureFormat::Enum _format = TextureFormat::Count
 		);
 
-	/// Set compute image from frame buffer texture.
-	///
-	/// @param[in] _stage Texture unit.
-	/// @param[in] _sampler Program sampler.
-	/// @param[in] _handle Frame buffer handle.
-	/// @param[in] _attachment Frame buffer attachment index.
-	/// @param[in] _access Texture access. See `Access::Enum`.
-	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
-	///
-	/// @attention C99 equivalent is `bgfx_set_image_from_frame_buffer`.
-	///
-	void setImage(
-		  uint8_t _stage
-		, UniformHandle _sampler
-		, FrameBufferHandle _handle
-		, uint8_t _attachment
-		, Access::Enum _access
-		, TextureFormat::Enum _format = TextureFormat::Count
-		);
-
 	/// Dispatch compute.
 	///
 	/// @param[in] _id View id.
@@ -2791,36 +2744,6 @@ namespace bgfx
 		, uint16_t _height = UINT16_MAX
 		);
 
-	/// Blit texture 2D region between 2D frame buffer and 2D texture.
-	///
-	/// @param[in] _id View id.
-	/// @param[in] _dst Destination texture handle.
-	/// @param[in] _dstX Destination texture X position.
-	/// @param[in] _dstY Destination texture Y position.
-	/// @param[in] _src Source frame buffer handle.
-	/// @param[in] _attachment Source frame buffer attachment index.
-	/// @param[in] _srcX Source texture X position.
-	/// @param[in] _srcY Source texture Y position.
-	/// @param[in] _width Width of region.
-	/// @param[in] _height Height of region.
-	///
-	/// @attention Destination texture must be create with `BGFX_TEXTURE_BLIT_DST` flag.
-	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
-	/// @attention C99 equivalent is `bgfx_blit`.
-	///
-	void blit(
-		  uint8_t _id
-		, TextureHandle _dst
-		, uint16_t _dstX
-		, uint16_t _dstY
-		, FrameBufferHandle _src
-		, uint8_t _attachment = 0
-		, uint16_t _srcX = 0
-		, uint16_t _srcY = 0
-		, uint16_t _width = UINT16_MAX
-		, uint16_t _height = UINT16_MAX
-		);
-
 	/// Blit texture region between two textures.
 	///
 	/// @param[in] _id View id.
@@ -2855,51 +2778,6 @@ namespace bgfx
 		, uint16_t _dstY
 		, uint16_t _dstZ
 		, TextureHandle _src
-		, uint8_t _srcMip = 0
-		, uint16_t _srcX = 0
-		, uint16_t _srcY = 0
-		, uint16_t _srcZ = 0
-		, uint16_t _width = UINT16_MAX
-		, uint16_t _height = UINT16_MAX
-		, uint16_t _depth = UINT16_MAX
-		);
-
-	/// Blit texture region between frame buffer and texture.
-	///
-	/// @param[in] _id View id.
-	/// @param[in] _dst Destination texture handle.
-	/// @param[in] _dstMip Destination texture mip level.
-	/// @param[in] _dstX Destination texture X position.
-	/// @param[in] _dstY Destination texture Y position.
-	/// @param[in] _dstZ If texture is 2D this argument should be 0. If destination texture is cube
-	///   this argument represent destination texture cube face. For 3D texture this argument
-	///   represent destination texture Z position.
-	/// @param[in] _src Source frame buffer handle.
-	/// @param[in] _attachment Source frame buffer attachment index.
-	/// @param[in] _srcMip Source texture mip level.
-	/// @param[in] _srcX Source texture X position.
-	/// @param[in] _srcY Source texture Y position.
-	/// @param[in] _srcZ If texture is 2D this argument should be 0. If source texture is cube
-	///   this argument represent source texture cube face. For 3D texture this argument
-	///   represent source texture Z position.
-	/// @param[in] _width Width of region.
-	/// @param[in] _height Height of region.
-	/// @param[in] _depth If texture is 3D this argument represent depth of region, otherwise is
-	///   unused.
-	///
-	/// @attention Destination texture must be create with `BGFX_TEXTURE_BLIT_DST` flag.
-	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
-	/// @attention C99 equivalent is `bgfx_blit`.
-	///
-	void blit(
-		  uint8_t _id
-		, TextureHandle _dst
-		, uint8_t _dstMip
-		, uint16_t _dstX
-		, uint16_t _dstY
-		, uint16_t _dstZ
-		, FrameBufferHandle _src
-		, uint8_t _attachment = 0
 		, uint8_t _srcMip = 0
 		, uint16_t _srcX = 0
 		, uint16_t _srcY = 0

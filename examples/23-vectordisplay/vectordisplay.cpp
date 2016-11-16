@@ -136,7 +136,7 @@ void VectorDisplay::endFrame()
 	bx::mtxOrtho(proj, 0.0f, (float)m_screenWidth, (float)m_screenHeight, 0.0f, 0.0f, 1000.0f);
 
 	bgfx::setViewRect(m_view, 0, 0, m_screenWidth, m_screenHeight);
-	bgfx::setViewFrameBuffer(m_view, m_sceneFrameBuffer);              //render all geometry to this framebuffer
+	bgfx::setViewFrameBuffer(m_view, m_sceneFrameBuffer);
 	bgfx::setViewTransform(m_view, NULL, proj);
 
 	// advance step
@@ -155,7 +155,7 @@ void VectorDisplay::endFrame()
 		int stepi = m_numberDecaySteps - loopvar - 1;
 		int i = (m_currentDrawStep + m_numberDecaySteps - stepi) % m_numberDecaySteps;
 
-		if (m_vertexBuffersSize[i] != 0)                  //only draw if something is in the buffer
+		if (m_vertexBuffersSize[i] != 0)
 		{
 			float alpha;
 			if (stepi == 0)
@@ -200,14 +200,14 @@ void VectorDisplay::endFrame()
 
 	if (m_brightness > 0)
 	{
-		bgfx::setTexture(0, s_texColor, m_sceneFrameBuffer);
+		bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_sceneFrameBuffer) );
 
 		int npasses = (int)(m_brightness * 4);
 		for (int pass = 0; pass < npasses; pass++)
 		{
 			// render the glow1 texture to the glow0 buffer with horizontal blur
 
-			bgfx::setViewFrameBuffer(viewCounter, m_glow0FrameBuffer);            //first glow pass
+			bgfx::setViewFrameBuffer(viewCounter, m_glow0FrameBuffer);
 			bgfx::setViewRect(viewCounter, 0, 0, m_glowWidth, m_glowHeight);
 			bgfx::setState(0
 				| BGFX_STATE_RGB_WRITE
@@ -224,9 +224,9 @@ void VectorDisplay::endFrame()
 
 			viewCounter++;
 
-			bgfx::setViewFrameBuffer(viewCounter, m_glow1FrameBuffer);            //second glow pass
+			bgfx::setViewFrameBuffer(viewCounter, m_glow1FrameBuffer);
 			bgfx::setViewRect(viewCounter, 0, 0, m_glowWidth, m_glowHeight);
-			bgfx::setTexture(0, s_texColor, m_glow0FrameBuffer);
+			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_glow0FrameBuffer) );
 
 			bgfx::setViewTransform(viewCounter, NULL, proj);
 			screenSpaceQuad(m_glowWidth, m_glowHeight);
@@ -248,7 +248,7 @@ void VectorDisplay::endFrame()
 			viewCounter++;
 
 			//set for next iteration
-			bgfx::setTexture(0, s_texColor, m_glow1FrameBuffer);
+			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_glow1FrameBuffer) );
 		}
 	}
 
@@ -257,7 +257,7 @@ void VectorDisplay::endFrame()
 	//now do last pass, combination of blur and normal buffer to screen
 	bgfx::setViewTransform(viewCounter, NULL, proj);
 	bgfx::setViewRect(viewCounter, 0, 0, m_screenWidth, m_screenHeight);
-	bgfx::setTexture(0, s_texColor, m_sceneFrameBuffer);
+	bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_sceneFrameBuffer) );
 	bgfx::setState(0
 		| BGFX_STATE_RGB_WRITE
 		| BGFX_STATE_ALPHA_WRITE
@@ -277,7 +277,7 @@ void VectorDisplay::endFrame()
 		// blend in the glow
 		bgfx::setViewTransform(viewCounter, NULL, proj);
 		bgfx::setViewRect(viewCounter, 0, 0, m_screenWidth, m_screenHeight);
-		bgfx::setTexture(0, s_texColor, m_glow1FrameBuffer);
+		bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_glow1FrameBuffer) );
 		bgfx::setState(0
 			| BGFX_STATE_RGB_WRITE
 			| BGFX_STATE_ALPHA_WRITE

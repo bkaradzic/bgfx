@@ -444,28 +444,28 @@ class ExampleHDR : public entry::AppI
 
 			// Downscale luminance 0.
 			setOffsets4x4Lum(u_offset, 128, 128);
-			bgfx::setTexture(0, s_texColor, m_lum[0]);
+			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_lum[0]) );
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad(64.0f, 64.0f, m_caps->originBottomLeft);
 			bgfx::submit(3, m_lumAvgProgram);
 
 			// Downscale luminance 1.
 			setOffsets4x4Lum(u_offset, 64, 64);
-			bgfx::setTexture(0, s_texColor, m_lum[1]);
+			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_lum[1]) );
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad(16.0f, 16.0f, m_caps->originBottomLeft);
 			bgfx::submit(4, m_lumAvgProgram);
 
 			// Downscale luminance 2.
 			setOffsets4x4Lum(u_offset, 16, 16);
-			bgfx::setTexture(0, s_texColor, m_lum[2]);
+			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_lum[2]) );
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad(4.0f, 4.0f, m_caps->originBottomLeft);
 			bgfx::submit(5, m_lumAvgProgram);
 
 			// Downscale luminance 3.
 			setOffsets4x4Lum(u_offset, 4, 4);
-			bgfx::setTexture(0, s_texColor, m_lum[3]);
+			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_lum[3]) );
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad(1.0f, 1.0f, m_caps->originBottomLeft);
 			bgfx::submit(6, m_lumAvgProgram);
@@ -476,28 +476,28 @@ class ExampleHDR : public entry::AppI
 			// m_bright pass m_threshold is tonemap[3].
 			setOffsets4x4Lum(u_offset, m_width/2, m_height/2);
 			bgfx::setTexture(0, s_texColor, m_fbtextures[0]);
-			bgfx::setTexture(1, s_texLum, m_lum[4]);
+			bgfx::setTexture(1, s_texLum, bgfx::getTexture(m_lum[4]) );
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad( (float)m_width/2.0f, (float)m_height/2.0f, m_caps->originBottomLeft);
 			bgfx::submit(7, m_brightProgram);
 
 			// m_blur m_bright pass vertically.
-			bgfx::setTexture(0, s_texColor, m_bright);
+			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_bright) );
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad( (float)m_width/8.0f, (float)m_height/8.0f, m_caps->originBottomLeft);
 			bgfx::submit(8, m_blurProgram);
 
 			// m_blur m_bright pass horizontally, do tonemaping and combine.
 			bgfx::setTexture(0, s_texColor, m_fbtextures[0]);
-			bgfx::setTexture(1, s_texLum, m_lum[4]);
-			bgfx::setTexture(2, s_texBlur, m_blur);
+			bgfx::setTexture(1, s_texLum, bgfx::getTexture(m_lum[4]) );
+			bgfx::setTexture(2, s_texBlur, bgfx::getTexture(m_blur) );
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad( (float)m_width, (float)m_height, m_caps->originBottomLeft);
 			bgfx::submit(9, m_tonemapProgram);
 
 			if (bgfx::isValid(m_rb) )
 			{
-				bgfx::blit(9, m_rb, 0, 0, m_lum[4]);
+				bgfx::blit(9, m_rb, 0, 0, bgfx::getTexture(m_lum[4]) );
 				bgfx::readTexture(m_rb, &m_lumBgra8);
 			}
 

@@ -1013,7 +1013,7 @@ struct Mesh
 			{
 				for (uint8_t ii = 0; ii < ShadowMapRenderTargets::Count; ++ii)
 				{
-					bgfx::setTexture(4 + ii, s_shadowMap[ii], s_rtShadowMap[ii]);
+					bgfx::setTexture(4 + ii, s_shadowMap[ii], bgfx::getTexture(s_rtShadowMap[ii]) );
 				}
 			}
 
@@ -2816,12 +2816,12 @@ int _main_(int _argc, char** _argv)
 		if (bVsmOrEsm
 		&&  currentSmSettings->m_doBlur)
 		{
-			bgfx::setTexture(4, s_shadowMap[0], s_rtShadowMap[0]);
+			bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtShadowMap[0]) );
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 			bgfx::submit(RENDERVIEW_VBLUR_0_ID, s_programs.m_vBlur[depthType]);
 
-			bgfx::setTexture(4, s_shadowMap[0], s_rtBlur);
+			bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtBlur) );
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 			bgfx::submit(RENDERVIEW_HBLUR_0_ID, s_programs.m_hBlur[depthType]);
@@ -2832,12 +2832,12 @@ int _main_(int _argc, char** _argv)
 				{
 					const uint8_t viewId = RENDERVIEW_VBLUR_0_ID + jj;
 
-					bgfx::setTexture(4, s_shadowMap[0], s_rtShadowMap[ii]);
+					bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtShadowMap[ii]) );
 					bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 					screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 					bgfx::submit(viewId, s_programs.m_vBlur[depthType]);
 
-					bgfx::setTexture(4, s_shadowMap[0], s_rtBlur);
+					bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtBlur) );
 					bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 					screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 					bgfx::submit(viewId+1, s_programs.m_hBlur[depthType]);
@@ -3072,7 +3072,7 @@ int _main_(int _argc, char** _argv)
 		// Draw depth rect.
 		if (settings.m_drawDepthBuffer)
 		{
-			bgfx::setTexture(4, s_shadowMap[0], s_rtShadowMap[0]);
+			bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtShadowMap[0]) );
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 			bgfx::submit(RENDERVIEW_DRAWDEPTH_0_ID, s_programs.m_drawDepth[depthType]);
@@ -3081,7 +3081,7 @@ int _main_(int _argc, char** _argv)
 			{
 				for (uint8_t ii = 1; ii < settings.m_numSplits; ++ii)
 				{
-					bgfx::setTexture(4, s_shadowMap[0], s_rtShadowMap[ii]);
+					bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtShadowMap[ii]) );
 					bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 					screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 					bgfx::submit(RENDERVIEW_DRAWDEPTH_0_ID+ii, s_programs.m_drawDepth[depthType]);

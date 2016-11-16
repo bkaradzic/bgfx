@@ -737,6 +737,9 @@ BGFX_C_API bgfx_frame_buffer_handle_t bgfx_create_frame_buffer_from_attachment(u
 BGFX_C_API bgfx_frame_buffer_handle_t bgfx_create_frame_buffer_from_nwh(void* _nwh, uint16_t _width, uint16_t _height, bgfx_texture_format_t _depthFormat);
 
 /**/
+BGFX_C_API bgfx_texture_handle_t bgfx_get_texture(bgfx_frame_buffer_handle_t _handle, uint8_t _attachment);
+
+/**/
 BGFX_C_API void bgfx_destroy_frame_buffer(bgfx_frame_buffer_handle_t _handle);
 
 /**/

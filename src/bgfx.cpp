@@ -3229,14 +3229,6 @@ error:
 		return s_ctx->readTexture(_handle, _data, _mip);
 	}
 
-	uint32_t readTexture(FrameBufferHandle _handle, uint8_t _attachment, void* _data)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(NULL != _data, "_data can't be NULL");
-		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_READ_BACK, "Texture read-back is not supported!");
-		return s_ctx->readTexture(_handle, _attachment, _data);
-	}
-
 	FrameBufferHandle createFrameBuffer(uint16_t _width, uint16_t _height, TextureFormat::Enum _format, uint32_t _textureFlags)
 	{
 		_textureFlags |= _textureFlags&BGFX_TEXTURE_RT_MSAA_MASK ? 0 : BGFX_TEXTURE_RT;
@@ -3281,6 +3273,12 @@ error:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		return s_ctx->createFrameBuffer(_nwh, _width, _height, _depthFormat);
+	}
+
+	TextureHandle getTexture(FrameBufferHandle _handle, uint8_t _attachment)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		return s_ctx->getTexture(_handle, _attachment);
 	}
 
 	void destroyFrameBuffer(FrameBufferHandle _handle)
@@ -3605,14 +3603,6 @@ error:
 		s_ctx->setTexture(_stage, _sampler, _handle, _flags);
 	}
 
-	void setTexture(uint8_t _stage, UniformHandle _sampler, FrameBufferHandle _handle, uint8_t _attachment, uint32_t _flags)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(_stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, "Invalid stage %d (max %d).", _stage, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
-		BX_CHECK(_attachment < g_caps.limits.maxFBAttachments, "Frame buffer attachment index %d is invalid.", _attachment);
-		s_ctx->setTexture(_stage, _sampler, _handle, _attachment, _flags);
-	}
-
 	uint32_t touch(uint8_t _id)
 	{
 		ProgramHandle handle = BGFX_INVALID_HANDLE;
@@ -3684,14 +3674,6 @@ error:
 		s_ctx->setImage(_stage, _sampler, _handle, _mip, _access, _format);
 	}
 
-	void setImage(uint8_t _stage, UniformHandle _sampler, FrameBufferHandle _handle, uint8_t _attachment, Access::Enum _access, TextureFormat::Enum _format)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(_stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, "Invalid stage %d (max %d).", _stage, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
-		BX_CHECK(_attachment < g_caps.limits.maxFBAttachments, "Frame buffer attachment index %d is invalid.", _attachment);
-		s_ctx->setImage(_stage, _sampler, _handle, _attachment, _access, _format);
-	}
-
 	uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _numX, uint16_t _numY, uint16_t _numZ, uint8_t _flags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
@@ -3715,24 +3697,11 @@ error:
 		blit(_id, _dst, 0, _dstX, _dstY, 0, _src, 0, _srcX, _srcY, 0, _width, _height, 0);
 	}
 
-	void blit(uint8_t _id, TextureHandle _dst, uint16_t _dstX, uint16_t _dstY, FrameBufferHandle _src, uint8_t _attachment, uint16_t _srcX, uint16_t _srcY, uint16_t _width, uint16_t _height)
-	{
-		blit(_id, _dst, 0, _dstX, _dstY, 0, _src, _attachment, 0, _srcX, _srcY, 0, _width, _height, 0);
-	}
-
 	void blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_BLIT, "Texture blit is not supported!");
 		s_ctx->blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
-	}
-
-	void blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, FrameBufferHandle _src, uint8_t _attachment, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_BLIT, "Texture blit is not supported!");
-		BX_CHECK(_attachment < g_caps.limits.maxFBAttachments, "Frame buffer attachment index %d is invalid.", _attachment);
-		s_ctx->blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _attachment, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
 	}
 
 	void saveScreenShot(const char* _filePath)
@@ -4310,12 +4279,6 @@ BGFX_C_API uint32_t bgfx_read_texture(bgfx_texture_handle_t _handle, void* _data
 	return bgfx::readTexture(handle.cpp, _data, _mip);
 }
 
-BGFX_C_API uint32_t bgfx_read_frame_buffer(bgfx_frame_buffer_handle_t _handle, uint8_t _attachment, void* _data)
-{
-	union { bgfx_frame_buffer_handle_t c; bgfx::FrameBufferHandle cpp; } handle = { _handle };
-	return bgfx::readTexture(handle.cpp, _attachment, _data);
-}
-
 BGFX_C_API void bgfx_destroy_texture(bgfx_texture_handle_t _handle)
 {
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
@@ -4355,6 +4318,14 @@ BGFX_C_API bgfx_frame_buffer_handle_t bgfx_create_frame_buffer_from_nwh(void* _n
 	union { bgfx_frame_buffer_handle_t c; bgfx::FrameBufferHandle cpp; } handle;
 	handle.cpp = bgfx::createFrameBuffer(_nwh, _width, _height, bgfx::TextureFormat::Enum(_depthFormat) );
 	return handle.c;
+}
+
+BGFX_C_API bgfx_texture_handle_t bgfx_get_texture(bgfx_frame_buffer_handle_t _handle, uint8_t _attachment)
+{
+	union { bgfx_frame_buffer_handle_t c; bgfx::FrameBufferHandle cpp; } handle = { _handle };
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } textureHandle;
+	textureHandle.cpp = bgfx::getTexture(handle.cpp, _attachment);
+	return textureHandle.c;
 }
 
 BGFX_C_API void bgfx_destroy_frame_buffer(bgfx_frame_buffer_handle_t _handle)
@@ -4578,13 +4549,6 @@ BGFX_C_API void bgfx_set_texture(uint8_t _stage, bgfx_uniform_handle_t _sampler,
 	bgfx::setTexture(_stage, sampler.cpp, handle.cpp, _flags);
 }
 
-BGFX_C_API void bgfx_set_texture_from_frame_buffer(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_frame_buffer_handle_t _handle, uint8_t _attachment, uint32_t _flags)
-{
-	union { bgfx_uniform_handle_t c;      bgfx::UniformHandle cpp;     } sampler = { _sampler };
-	union { bgfx_frame_buffer_handle_t c; bgfx::FrameBufferHandle cpp; } handle  = { _handle };
-	bgfx::setTexture(_stage, sampler.cpp, handle.cpp, _attachment, _flags);
-}
-
 BGFX_C_API uint32_t bgfx_touch(uint8_t _id)
 {
 	return bgfx::touch(_id);
@@ -4615,13 +4579,6 @@ BGFX_C_API void bgfx_set_image(uint8_t _stage, bgfx_uniform_handle_t _sampler, b
 	union { bgfx_uniform_handle_t c; bgfx::UniformHandle cpp; } sampler = { _sampler };
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle  = { _handle  };
 	bgfx::setImage(_stage, sampler.cpp, handle.cpp, _mip, bgfx::Access::Enum(_access), bgfx::TextureFormat::Enum(_format) );
-}
-
-BGFX_C_API void bgfx_set_image_from_frame_buffer(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_frame_buffer_handle_t _handle, uint8_t _attachment, bgfx_access_t _access, bgfx_texture_format_t _format)
-{
-	union { bgfx_uniform_handle_t c;      bgfx::UniformHandle cpp;     } sampler = { _sampler };
-	union { bgfx_frame_buffer_handle_t c; bgfx::FrameBufferHandle cpp; } handle  = { _handle };
-	bgfx::setImage(_stage, sampler.cpp, handle.cpp, _attachment, bgfx::Access::Enum(_access), bgfx::TextureFormat::Enum(_format) );
 }
 
 BGFX_C_API void bgfx_set_compute_index_buffer(uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access)
@@ -4677,13 +4634,6 @@ BGFX_C_API void bgfx_blit(uint8_t _id, bgfx_texture_handle_t _dst, uint8_t _dstM
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } dst = { _dst };
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } src = { _src };
 	bgfx::blit(_id, dst.cpp, _dstMip, _dstX, _dstY, _dstZ, src.cpp, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
-}
-
-BGFX_C_API void bgfx_blit_frame_buffer(uint8_t _id, bgfx_texture_handle_t _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, bgfx_frame_buffer_handle_t _src, uint8_t _attachment, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
-{
-	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } dst = { _dst };
-	union { bgfx_frame_buffer_handle_t c; bgfx::FrameBufferHandle cpp; } src = { _src };
-	bgfx::blit(_id, dst.cpp, _dstMip, _dstX, _dstY, _dstZ, src.cpp, _attachment, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
 }
 
 BGFX_C_API void bgfx_save_screen_shot(const char* _filePath)
@@ -4797,12 +4747,12 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 	BGFX_IMPORT_FUNC(update_texture_3d) \
 	BGFX_IMPORT_FUNC(update_texture_cube) \
 	BGFX_IMPORT_FUNC(read_texture) \
-	BGFX_IMPORT_FUNC(read_frame_buffer) \
 	BGFX_IMPORT_FUNC(destroy_texture) \
 	BGFX_IMPORT_FUNC(create_frame_buffer) \
 	BGFX_IMPORT_FUNC(create_frame_buffer_scaled) \
 	BGFX_IMPORT_FUNC(create_frame_buffer_from_attachment) \
 	BGFX_IMPORT_FUNC(create_frame_buffer_from_nwh) \
+	BGFX_IMPORT_FUNC(get_texture) \
 	BGFX_IMPORT_FUNC(destroy_frame_buffer) \
 	BGFX_IMPORT_FUNC(create_uniform) \
 	BGFX_IMPORT_FUNC(get_uniform_info) \
@@ -4841,13 +4791,11 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 	BGFX_IMPORT_FUNC(set_instance_data_from_vertex_buffer) \
 	BGFX_IMPORT_FUNC(set_instance_data_from_dynamic_vertex_buffer) \
 	BGFX_IMPORT_FUNC(set_texture) \
-	BGFX_IMPORT_FUNC(set_texture_from_frame_buffer) \
 	BGFX_IMPORT_FUNC(touch) \
 	BGFX_IMPORT_FUNC(submit) \
 	BGFX_IMPORT_FUNC(submit_occlusion_query) \
 	BGFX_IMPORT_FUNC(submit_indirect) \
 	BGFX_IMPORT_FUNC(set_image) \
-	BGFX_IMPORT_FUNC(set_image_from_frame_buffer) \
 	BGFX_IMPORT_FUNC(set_compute_index_buffer) \
 	BGFX_IMPORT_FUNC(set_compute_vertex_buffer) \
 	BGFX_IMPORT_FUNC(set_compute_dynamic_index_buffer) \

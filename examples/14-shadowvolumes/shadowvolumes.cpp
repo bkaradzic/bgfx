@@ -1176,7 +1176,7 @@ struct Model
 			{
 				bgfx::setTexture(0, s_texColor, m_texture);
 			}
-			bgfx::setTexture(1, s_texStencil, s_stencilFb);
+			bgfx::setTexture(1, s_texStencil, bgfx::getTexture(s_stencilFb) );
 
 			// Apply render state
 			::setRenderState(_renderState);
