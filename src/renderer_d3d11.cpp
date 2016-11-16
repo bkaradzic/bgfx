@@ -3809,7 +3809,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		}
 	}
 
-	void VRImplOVRD3D11::renderEyeStart(const VRDesc& _desc, uint8_t _eye)
+	void VRImplOVRD3D11::renderEyeStart(const VRDesc& /*_desc*/, uint8_t _eye)
 	{
 		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
 		float black[] = { 0.0f, 0.0f, 0.0f, 0.0f }; // Important that alpha=0, if want pixels to be transparent, for manual layers
