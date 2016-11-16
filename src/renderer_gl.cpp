@@ -3664,7 +3664,7 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	void VRImplOVRGL::renderEyeStart(const VRDesc& _desc, uint8_t _eye)
+	void VRImplOVRGL::renderEyeStart(const VRDesc& /*_desc*/, uint8_t _eye)
 	{
 		// set the current eye texture in the swap chain
 		if (0 != m_msaaEyeFbo[_eye])
