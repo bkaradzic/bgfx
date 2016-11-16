@@ -275,6 +275,18 @@ namespace bgfx { namespace d3d9
 	static PFN_D3DPERF_BEGIN_EVENT D3DPERF_BeginEvent;
 	static PFN_D3DPERF_END_EVENT   D3DPERF_EndEvent;
 
+	inline bool isLost(HRESULT _hr)
+	{
+		return false
+			|| _hr == D3DERR_DEVICELOST
+			|| _hr == D3DERR_DRIVERINTERNALERROR
+#if !defined(D3D_DISABLE_9EX)
+			|| _hr == D3DERR_DEVICEHUNG
+			|| _hr == D3DERR_DEVICEREMOVED
+#endif // !defined(D3D_DISABLE_9EX)
+			;
+	}
+
 	struct RendererContextD3D9 : public RendererContextI
 	{
 		RendererContextD3D9()
@@ -1413,15 +1425,10 @@ namespace bgfx { namespace d3d9
 			postReset();
 		}
 
-		static bool isLost(HRESULT _hr)
+		void flush()
 		{
-			return D3DERR_DEVICELOST == _hr
-				|| D3DERR_DRIVERINTERNALERROR == _hr
-#if !defined(D3D_DISABLE_9EX)
-				|| D3DERR_DEVICEHUNG == _hr
-				|| D3DERR_DEVICEREMOVED == _hr
-#endif // !defined(D3D_DISABLE_9EX)
-				;
+			m_flushQuery->Issue(D3DISSUE_END);
+			m_flushQuery->GetData(NULL, 0, D3DGETDATA_FLUSH);
 		}
 
 		void flip(HMD& /*_hmd*/) BX_OVERRIDE
@@ -1442,6 +1449,10 @@ namespace bgfx { namespace d3d9
 						{
 							hr = m_swapChain->Present(NULL, NULL, (HWND)g_platformData.nwh, NULL, 0);
 							m_needPresent = false;
+						}
+						else
+						{
+							flush();
 						}
 					}
 					else
@@ -3465,8 +3476,10 @@ namespace bgfx { namespace d3d9
 			Frame& frame = m_frame[m_control.m_read];
 
 			uint64_t timeEnd;
-			HRESULT hr = frame.m_end->GetData(&timeEnd, sizeof(timeEnd), 0);
-			if (S_OK == hr)
+			const bool flush = BX_COUNTOF(m_frame)-1 == m_control.available();
+			HRESULT hr = frame.m_end->GetData(&timeEnd, sizeof(timeEnd), flush ? D3DGETDATA_FLUSH : 0);
+			if (S_OK == hr
+			||  isLost(hr) )
 			{
 				m_control.consume(1);
 
@@ -4194,8 +4207,7 @@ namespace bgfx { namespace d3d9
 			{
 				if (0 != (m_resolution.m_flags & BGFX_RESET_FLUSH_AFTER_RENDER) )
 				{
-					m_flushQuery->Issue(D3DISSUE_END);
-					m_flushQuery->GetData(NULL, 0, D3DGETDATA_FLUSH);
+					flush();
 				}
 
 				captureElapsed = -bx::getHPCounter();

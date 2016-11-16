@@ -2261,18 +2261,24 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					hr = m_frameBuffers[m_windows[ii].idx].present(syncInterval);
 				}
 
-				if (SUCCEEDED(hr)
-				&&  m_needPresent)
+				if (SUCCEEDED(hr) )
 				{
-					m_ovr.flip();
-					m_ovr.swap(_hmd);
-
-					if (!m_ovr.isEnabled() )
+					if (m_needPresent)
 					{
-						hr = m_swapChain->Present(syncInterval, 0);
-					}
+						m_ovr.flip();
+						m_ovr.swap(_hmd);
 
-					m_needPresent = false;
+						if (!m_ovr.isEnabled() )
+						{
+							hr = m_swapChain->Present(syncInterval, 0);
+						}
+
+						m_needPresent = false;
+					}
+					else
+					{
+						m_deviceCtx->Flush();
+					}
 				}
 
 				if (isLost(hr) )
