@@ -2816,35 +2816,6 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
-<dl class="function">
-<dt id="_CPPv2N4bgfx10setTextureE7uint8_t13UniformHandle17FrameBufferHandle7uint8_t8uint32_t">
-<span id="bgfx::setTexture__uint8_t.UniformHandle.FrameBufferHandle.uint8_t.uint32_t"></span><span class="target" id="bgfxnamespacebgfx_1a95af3e2cb424a4eed41bd038ba93825a"></span>void <code class="descclassname">bgfx::</code><code class="descname">setTexture</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, UniformHandle <em>_sampler</em>, FrameBufferHandle <em>_handle</em>, uint8_t <em>_attachment</em> = 0, uint32_t <em>_flags</em> = UINT32_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx10setTextureE7uint8_t13UniformHandle17FrameBufferHandle7uint8_t8uint32_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set texture stage for draw primitive. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_texture_from_frame_buffer</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_stage</span></code> - <p>Texture unit. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_sampler</span></code> - <p>Program sampler. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Frame buffer handle. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_attachment</span></code> - <p>Frame buffer attachment index. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p>Texture sampling mode. Default value UINT32_MAX uses texture sampling settings from the texture.<ul class="simple">
-<li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]</span></code> - Point or anisotropic sampling.</li>
-</ul>
-</p>
-</li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd></dl>
-
 </div>
 <div class="section" id="submit">
 <h3>Submit<a class="headerlink" href="#submit" title="Permalink to this headline">¶</a></h3>
@@ -3075,33 +3046,6 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
-<dl class="function">
-<dt id="_CPPv2N4bgfx8setImageE7uint8_t13UniformHandle17FrameBufferHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE">
-<span id="bgfx::setImage__uint8_t.UniformHandle.FrameBufferHandle.uint8_t.Access::Enum.TextureFormat::Enum"></span><span class="target" id="bgfxnamespacebgfx_1a66009acaf4cddffc483e7192367914db"></span>void <code class="descclassname">bgfx::</code><code class="descname">setImage</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, UniformHandle <em>_sampler</em>, FrameBufferHandle <em>_handle</em>, uint8_t <em>_attachment</em>, Access::Enum <em>_access</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em> = TextureFormat::Count<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8setImageE7uint8_t13UniformHandle17FrameBufferHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set compute image from frame buffer texture. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_image_from_frame_buffer</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_stage</span></code> - <p>Texture unit. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_sampler</span></code> - <p>Program sampler. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Frame buffer handle. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_attachment</span></code> - <p>Frame buffer attachment index. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Texture access. See <code class="docutils literal"><span class="pre">Access::Enum</span></code>. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span class="std std-ref"><span class="pre">TextureFormat::Enum</span></span></a></code>.</p>
-</li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd></dl>
-
 </div>
 <div class="section" id="dispatch">
 <h3>Dispatch<a class="headerlink" href="#dispatch" title="Permalink to this headline">¶</a></h3>
@@ -3211,45 +3155,6 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx4blitE7uint8_t13TextureHandle8uint16_t8uint16_t17FrameBufferHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t">
-<span id="bgfx::blit__uint8_t.TextureHandle.uint16_t.uint16_t.FrameBufferHandle.uint8_t.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1aacf82edb73efb1fcb751f47a013e0999"></span>void <code class="descclassname">bgfx::</code><code class="descname">blit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, TextureHandle <em>_dst</em>, uint16_t <em>_dstX</em>, uint16_t <em>_dstY</em>, FrameBufferHandle <em>_src</em>, uint8_t <em>_attachment</em> = 0, uint16_t <em>_srcX</em> = 0, uint16_t <em>_srcY</em> = 0, uint16_t <em>_width</em> = UINT16_MAX, uint16_t <em>_height</em> = UINT16_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx4blitE7uint8_t13TextureHandle8uint16_t8uint16_t17FrameBufferHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Blit texture 2D region between 2D frame buffer and 2D texture. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>Destination texture must be create with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_BLIT_DST</span></code> flag. </dd>
-<dt><strong>Attention</strong></dt>
-<dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_BLIT</span></code>. </dd>
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_blit</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_dst</span></code> - <p>Destination texture handle. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_dstX</span></code> - <p>Destination texture X position. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_dstY</span></code> - <p>Destination texture Y position. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_src</span></code> - <p>Source frame buffer handle. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_attachment</span></code> - <p>Source frame buffer attachment index. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_srcX</span></code> - <p>Source texture X position. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_srcY</span></code> - <p>Source texture Y position. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_width</span></code> - <p>Width of region. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Height of region.</p>
-</li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="_CPPv2N4bgfx4blitE7uint8_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t">
 <span id="bgfx::blit__uint8_t.TextureHandle.uint8_t.uint16_t.uint16_t.uint16_t.TextureHandle.uint8_t.uint16_t.uint16_t.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1aa14664b2fd3aafb69138fe6ccfe3ca1f"></span>void <code class="descclassname">bgfx::</code><code class="descname">blit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, TextureHandle <em>_dst</em>, uint8_t <em>_dstMip</em>, uint16_t <em>_dstX</em>, uint16_t <em>_dstY</em>, uint16_t <em>_dstZ</em>, TextureHandle <em>_src</em>, uint8_t <em>_srcMip</em> = 0, uint16_t <em>_srcX</em> = 0, uint16_t <em>_srcY</em> = 0, uint16_t <em>_srcZ</em> = 0, uint16_t <em>_width</em> = UINT16_MAX, uint16_t <em>_height</em> = UINT16_MAX, uint16_t <em>_depth</em> = UINT16_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx4blitE7uint8_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Blit texture region between two textures. </p>
@@ -3275,55 +3180,6 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><code class="first docutils literal"><span class="pre">_dstZ</span></code> - <p>If texture is 2D this argument should be 0. If destination texture is cube this argument represent destination texture cube face. For 3D texture this argument represent destination texture Z position. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_src</span></code> - <p>Source texture handle. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_srcMip</span></code> - <p>Source texture mip level. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_srcX</span></code> - <p>Source texture X position. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_srcY</span></code> - <p>Source texture Y position. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_srcZ</span></code> - <p>If texture is 2D this argument should be 0. If source texture is cube this argument represent source texture cube face. For 3D texture this argument represent source texture Z position. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_width</span></code> - <p>Width of region. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Height of region. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>If texture is 3D this argument represent depth of region, otherwise is unused.</p>
-</li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv2N4bgfx4blitE7uint8_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t17FrameBufferHandle7uint8_t7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t">
-<span id="bgfx::blit__uint8_t.TextureHandle.uint8_t.uint16_t.uint16_t.uint16_t.FrameBufferHandle.uint8_t.uint8_t.uint16_t.uint16_t.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1a5ac694ecc0ee68d3fcf50a078e4ccf2d"></span>void <code class="descclassname">bgfx::</code><code class="descname">blit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, TextureHandle <em>_dst</em>, uint8_t <em>_dstMip</em>, uint16_t <em>_dstX</em>, uint16_t <em>_dstY</em>, uint16_t <em>_dstZ</em>, FrameBufferHandle <em>_src</em>, uint8_t <em>_attachment</em> = 0, uint8_t <em>_srcMip</em> = 0, uint16_t <em>_srcX</em> = 0, uint16_t <em>_srcY</em> = 0, uint16_t <em>_srcZ</em> = 0, uint16_t <em>_width</em> = UINT16_MAX, uint16_t <em>_height</em> = UINT16_MAX, uint16_t <em>_depth</em> = UINT16_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx4blitE7uint8_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t17FrameBufferHandle7uint8_t7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Blit texture region between frame buffer and texture. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>Destination texture must be create with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_BLIT_DST</span></code> flag. </dd>
-<dt><strong>Attention</strong></dt>
-<dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_BLIT</span></code>. </dd>
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_blit</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_dst</span></code> - <p>Destination texture handle. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_dstMip</span></code> - <p>Destination texture mip level. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_dstX</span></code> - <p>Destination texture X position. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_dstY</span></code> - <p>Destination texture Y position. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_dstZ</span></code> - <p>If texture is 2D this argument should be 0. If destination texture is cube this argument represent destination texture cube face. For 3D texture this argument represent destination texture Z position. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_src</span></code> - <p>Source frame buffer handle. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_attachment</span></code> - <p>Source frame buffer attachment index. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_srcMip</span></code> - <p>Source texture mip level. </p>
 </li>
@@ -5019,33 +4875,6 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx11readTextureE17FrameBufferHandle7uint8_tPv">
-<span id="bgfx::readTexture__FrameBufferHandle.uint8_t.voidP"></span><span class="target" id="bgfxnamespacebgfx_1a12fcff3a4cc55f59e90c8701224725b8"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">readTexture</code><span class="sig-paren">(</span>FrameBufferHandle <em>_handle</em>, uint8_t <em>_attachment</em>, void *<em>_data</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11readTextureE17FrameBufferHandle7uint8_tPv" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read back texture content. </p>
-<p><dl class="docutils">
-<dt><strong>Return</strong></dt>
-<dd>Frame number when the result will be available. See: <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a7b228b3e83595148e428a248d73480e8"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code>.</dd>
-<dt><strong>Attention</strong></dt>
-<dd>Texture must be created with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_READ_BACK</span></code> flag. </dd>
-<dt><strong>Attention</strong></dt>
-<dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_READ_BACK</span></code>. </dd>
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_read_frame_buffer</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Frame buffer handle. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_attachment</span></code> - <p>Frame buffer attachment index. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">_data</span></code> - <p>Destination buffer.</p>
-</li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="_CPPv2N4bgfx14destroyTextureE13TextureHandle">
 <span id="bgfx::destroyTexture__TextureHandle"></span><span class="target" id="bgfxnamespacebgfx_1a3cc8f5416512b46cedee40d444f1bc0e"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyTexture</code><span class="sig-paren">(</span>TextureHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14destroyTextureE13TextureHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Destroy texture. </p>
@@ -5219,6 +5048,25 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><code class="first docutils literal"><span class="pre">_attachment</span></code> - <p><a class="reference internal" href="#bgfxstructbgfx_1_1_attachment"><span class="std std-ref">Attachment</span></a> texture info. See: <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_attachment"><span class="std std-ref"><span class="pre">Attachment</span></span></a></code>. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_destroyTextures</span></code> - <p>If true, textures will be destroyed when frame buffer is destroyed.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx10getTextureE17FrameBufferHandle7uint8_t">
+<span id="bgfx::getTexture__FrameBufferHandle.uint8_t"></span><span class="target" id="bgfxnamespacebgfx_1a2da13e6e8e942839d08390db8374b9e7"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">getTexture</code><span class="sig-paren">(</span>FrameBufferHandle <em>_handle</em>, uint8_t <em>_attachment</em> = 0<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx10getTextureE17FrameBufferHandle7uint8_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Obtain texture handle of frame buffer attachment. </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Returns invalid texture handle if attachment index is not correct, or frame buffer is created with native window handle. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Frame buffer handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_attachment</span></code> - <p>Frame buffer attachment index.</p>
 </li>
 </ul>
 </dd>
