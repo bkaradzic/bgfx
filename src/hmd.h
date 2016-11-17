@@ -51,7 +51,7 @@ namespace bgfx
 		virtual bool createSwapChain(const VRDesc& _desc, int _msaaSamples, int _mirrorWidth, int _mirrorHeight);
 		virtual void destroySwapChain() = 0;
 		virtual void destroyMirror() = 0;
-		virtual void renderEyeStart(const VRDesc& _desc, uint8_t _eye) = 0;
+		virtual void makeRenderTargetActive(const VRDesc& _desc) = 0;
 		virtual bool submitSwapChain(const VRDesc& _desc) = 0;
 	};
 
@@ -77,7 +77,8 @@ namespace bgfx
 			return m_enabled;
 		}
 
-		void renderEyeStart(uint8_t _eye, Rect* _viewport);
+		void getViewport(uint8_t _eye, Rect* _viewport) const;
+		void makeRenderTargetActive();
 		void recenter();
 
 		void preReset();
