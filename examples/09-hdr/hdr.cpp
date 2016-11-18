@@ -357,7 +357,7 @@ class ExampleHDR : public entry::AppI
 			// Use m_debug font to print information about this example.
 			bgfx::dbgTextClear();
 			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/09-hdr");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Using multiple views and frame buffers.");
+			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Using multiple views with frame buffers, and view order remapping.");
 			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			// Set views.
