@@ -60,10 +60,10 @@ namespace bgfx
 
 	void VR::getViewport(uint8_t _eye, Rect* _viewport) const
 	{
-		_viewport->m_width = m_desc.m_eyeSize[_eye].m_w;
-		_viewport->m_x = _eye * (m_desc.m_eyeSize[_eye].m_w + 1);
-		_viewport->m_height = (uint16_t)m_desc.m_eyeSize[_eye].m_h;
-		_viewport->m_y = 0;
+		_viewport->m_x      = uint16_t(_eye * (m_desc.m_eyeSize[_eye].m_w + 1) );
+		_viewport->m_y      = 0;
+		_viewport->m_width  = uint16_t(m_desc.m_eyeSize[_eye].m_w);
+		_viewport->m_height = uint16_t(m_desc.m_eyeSize[_eye].m_h);
 	}
 
 	void VR::makeRenderTargetActive()
