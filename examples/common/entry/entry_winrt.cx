@@ -9,6 +9,7 @@
 
 #include <bgfx/bgfxplatform.h>
 #include <bx/thread.h>
+#include <bx/fpumath.h>
 #include <Unknwn.h>
 
 using namespace Windows::ApplicationModel;
