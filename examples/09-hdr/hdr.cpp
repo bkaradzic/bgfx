@@ -156,7 +156,7 @@ class ExampleHDR : public entry::AppI
 		bgfx::setDebug(m_debug);
 
 		// Set view 0 clear state.
-		bgfx::setViewClear(0
+		bgfx::setViewClear(9
 				, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
 				, 0x303030ff
 				, 1.0f
@@ -167,7 +167,7 @@ class ExampleHDR : public entry::AppI
 		PosColorTexCoord0Vertex::init();
 
 		// Set view m_debug names.
-		bgfx::setViewName(0, "Skybox");
+		bgfx::setViewName(9, "Skybox");
 		bgfx::setViewName(1, "Mesh");
 		bgfx::setViewName(2, "Luminance");
 		bgfx::setViewName(3, "Downscale luminance 0");
@@ -176,7 +176,7 @@ class ExampleHDR : public entry::AppI
 		bgfx::setViewName(6, "Downscale luminance 3");
 		bgfx::setViewName(7, "Brightness");
 		bgfx::setViewName(8, "Blur vertical");
-		bgfx::setViewName(9, "Blur horizontal + tonemap");
+		bgfx::setViewName(0, "Blur horizontal + tonemap");
 
 		m_uffizi = loadTexture("textures/uffizi.dds"
 				, 0
@@ -361,11 +361,13 @@ class ExampleHDR : public entry::AppI
 			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			// Set views.
-			for (uint32_t ii = 0; ii < 6; ++ii)
-			{
-				bgfx::setViewRect(ii, 0, 0, bgfx::BackbufferRatio::Equal);
-			}
-			bgfx::setViewFrameBuffer(0, m_fbh);
+			bgfx::setViewRect(9, 0, 0, bgfx::BackbufferRatio::Equal);
+			bgfx::setViewRect(1, 0, 0, bgfx::BackbufferRatio::Equal);
+			bgfx::setViewRect(2, 0, 0, bgfx::BackbufferRatio::Equal);
+			bgfx::setViewRect(3, 0, 0, bgfx::BackbufferRatio::Equal);
+			bgfx::setViewRect(4, 0, 0, bgfx::BackbufferRatio::Equal);
+			bgfx::setViewRect(5, 0, 0, bgfx::BackbufferRatio::Equal);
+			bgfx::setViewFrameBuffer(9, m_fbh);
 			bgfx::setViewFrameBuffer(1, m_fbh);
 			bgfx::setViewClear(1, BGFX_CLEAR_DISCARD_DEPTH|BGFX_CLEAR_DISCARD_STENCIL);
 
@@ -390,7 +392,7 @@ class ExampleHDR : public entry::AppI
 			bgfx::setViewRect(8, 0, 0, bgfx::BackbufferRatio::Eighth);
 			bgfx::setViewFrameBuffer(8, m_blur);
 
-			bgfx::setViewRect(9, 0, 0, bgfx::BackbufferRatio::Equal);
+			bgfx::setViewRect(0, 0, 0, bgfx::BackbufferRatio::Equal);
 
 			float view[16];
 			float proj[16];
@@ -404,7 +406,7 @@ class ExampleHDR : public entry::AppI
 				bgfx::setViewTransform(ii, view, proj);
 			}
 
-			float at[3] = { 0.0f, 1.0f, 0.0f };
+			float at[3]  = { 0.0f, 1.0f, 0.0f };
 			float eye[3] = { 0.0f, 1.0f, -2.5f };
 
 			float mtx[16];
@@ -429,7 +431,7 @@ class ExampleHDR : public entry::AppI
 
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad( (float)m_width, (float)m_height, true);
-			bgfx::submit(0, m_skyProgram);
+			bgfx::submit(9, m_skyProgram);
 
 			// Render m_mesh into view 1
 			bgfx::setTexture(0, s_texCube, m_uffizi);
@@ -493,13 +495,16 @@ class ExampleHDR : public entry::AppI
 			bgfx::setTexture(2, s_texBlur, bgfx::getTexture(m_blur) );
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad( (float)m_width, (float)m_height, m_caps->originBottomLeft);
-			bgfx::submit(9, m_tonemapProgram);
+			bgfx::submit(0, m_tonemapProgram);
 
 			if (bgfx::isValid(m_rb) )
 			{
-				bgfx::blit(9, m_rb, 0, 0, bgfx::getTexture(m_lum[4]) );
+				bgfx::blit(0, m_rb, 0, 0, bgfx::getTexture(m_lum[4]) );
 				bgfx::readTexture(m_rb, &m_lumBgra8);
 			}
+
+			uint8_t remap[] = { 9, 1, 2, 3, 4, 5, 6, 7, 8, 0 };
+			bgfx::setViewRemap(0, 10, remap);
 
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
