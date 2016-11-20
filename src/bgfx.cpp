@@ -952,15 +952,21 @@ namespace bgfx
 
 	void Frame::sort()
 	{
+		uint8_t viewRemap[BGFX_CONFIG_MAX_VIEWS];
+		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
+		{
+			viewRemap[m_viewRemap[ii] ] = ii;
+		}
+
 		for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
 		{
-			m_sortKeys[ii] = SortKey::remapView(m_sortKeys[ii], m_viewRemap);
+			m_sortKeys[ii] = SortKey::remapView(m_sortKeys[ii], viewRemap);
 		}
 		bx::radixSort(m_sortKeys, s_ctx->m_tempKeys, m_sortValues, s_ctx->m_tempValues, m_num);
 
 		for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
 		{
-			m_blitKeys[ii] = BlitKey::remapView(m_blitKeys[ii], m_viewRemap);
+			m_blitKeys[ii] = BlitKey::remapView(m_blitKeys[ii], viewRemap);
 		}
 		bx::radixSort(m_blitKeys, (uint32_t*)&s_ctx->m_tempKeys, m_numBlitItems);
 	}
