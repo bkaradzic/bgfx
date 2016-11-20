@@ -831,6 +831,11 @@ namespace bgfx
 			return true; // compute
 		}
 
+		static uint8_t decodeView(uint64_t _key)
+		{
+			return uint8_t( (_key & SORT_KEY_VIEW_MASK) >> SORT_KEY_VIEW_SHIFT);
+		}
+
 		static uint64_t remapView(uint64_t _key, uint8_t _viewRemap[BGFX_CONFIG_MAX_VIEWS])
 		{
 			const uint8_t  oldView  = uint8_t( (_key & SORT_KEY_VIEW_MASK) >> SORT_KEY_VIEW_SHIFT);

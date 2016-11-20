@@ -6259,7 +6259,8 @@ namespace bgfx { namespace gl
 			int32_t numItems = _render->m_num;
 			for (int32_t item = 0, restartItem = numItems; item < numItems || restartItem < numItems;)
 			{
-				const bool isCompute   = key.decode(_render->m_sortKeys[item], _render->m_viewRemap);
+				const uint64_t encodedKey = _render->m_sortKeys[item];
+				const bool isCompute = key.decode(encodedKey, _render->m_viewRemap);
 				statsKeyType[isCompute]++;
 
 				const bool viewChanged = 0
@@ -6379,7 +6380,8 @@ namespace bgfx { namespace gl
 
 					if (m_blitSupported)
 					{
-						for (; blitItem < numBlitItems && blitKey.m_view <= view; blitItem++)
+						const uint8_t blitView = SortKey::decodeView(encodedKey);
+						for (; blitItem < numBlitItems && blitKey.m_view <= blitView; blitItem++)
 						{
 							const BlitItem& bi = _render->m_blitItem[blitItem];
 							blitKey.decode(_render->m_blitKeys[blitItem + 1]);

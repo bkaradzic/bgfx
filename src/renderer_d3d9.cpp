@@ -3636,7 +3636,8 @@ namespace bgfx { namespace d3d9
 		{
 			for (uint32_t item = 0, numItems = _render->m_num; item < numItems; ++item)
 			{
-				const bool isCompute = key.decode(_render->m_sortKeys[item], _render->m_viewRemap);
+				const uint64_t encodedKey = _render->m_sortKeys[item];
+				const bool isCompute = key.decode(encodedKey, _render->m_viewRemap);
 				statsKeyType[isCompute]++;
 
 				if (isCompute)
@@ -3718,7 +3719,8 @@ namespace bgfx { namespace d3d9
 					DX_CHECK(device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE) );
 					DX_CHECK(device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER) );
 
-					for (; blitItem < numBlitItems && blitKey.m_view <= view; blitItem++)
+					const uint8_t blitView = SortKey::decodeView(encodedKey);
+					for (; blitItem < numBlitItems && blitKey.m_view <= blitView; blitItem++)
 					{
 						const BlitItem& blit = _render->m_blitItem[blitItem];
 						blitKey.decode(_render->m_blitKeys[blitItem+1]);
