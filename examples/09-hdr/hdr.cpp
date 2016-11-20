@@ -416,7 +416,7 @@ class ExampleHDR : public entry::AppI
 				hdrVBlur,
 				hdrHBlurTonemap
 			};
-			bgfx::setViewRemap(0, BX_COUNTOF(remap), remap);
+			bgfx::setViewOrder(0, BX_COUNTOF(remap), remap);
 
 			// Set view and projection matrix for view 0.
 			for (uint32_t ii = 0; ii < BX_COUNTOF(remap); ++ii)

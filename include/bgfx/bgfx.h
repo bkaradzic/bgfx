@@ -2224,7 +2224,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_set_view_remap`.
 	///
-	void setViewRemap(uint8_t _id = 0, uint8_t _num = UINT8_MAX, const void* _remap = NULL);
+	void setViewOrder(uint8_t _id = 0, uint8_t _num = UINT8_MAX, const void* _remap = NULL);
 
 	/// Reset all view settings to default.
 	///

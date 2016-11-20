@@ -3725,10 +3725,10 @@ namespace bgfx
 			setViewTransform(_id, NULL, NULL, BGFX_VIEW_NONE, NULL);
 		}
 
-		BGFX_API_FUNC(void setViewRemap(uint8_t _id, uint8_t _num, const void* _remap) )
+		BGFX_API_FUNC(void setViewOrder(uint8_t _id, uint8_t _num, const void* _order) )
 		{
 			const uint32_t num = bx::uint32_min(_id + _num, BGFX_CONFIG_MAX_VIEWS) - _id;
-			if (NULL == _remap)
+			if (NULL == _order)
 			{
 				for (uint32_t ii = 0; ii < num; ++ii)
 				{
@@ -3738,7 +3738,7 @@ namespace bgfx
 			}
 			else
 			{
-				memcpy(&m_viewRemap[_id], _remap, num);
+				memcpy(&m_viewRemap[_id], _order, num);
 			}
 		}
 

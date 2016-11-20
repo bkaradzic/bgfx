@@ -3438,11 +3438,11 @@ error:
 		s_ctx->setViewTransform(_id, _view, _projL, _flags, _projR);
 	}
 
-	void setViewRemap(uint8_t _id, uint8_t _num, const void* _remap)
+	void setViewOrder(uint8_t _id, uint8_t _num, const void* _order)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(checkView(_id), "Invalid view id: %d", _id);
-		s_ctx->setViewRemap(_id, _num, _remap);
+		s_ctx->setViewOrder(_id, _num, _order);
 	}
 
 	void resetView(uint8_t _id)
@@ -4435,9 +4435,9 @@ BGFX_C_API void bgfx_set_view_transform_stereo(uint8_t _id, const void* _view, c
 	bgfx::setViewTransform(_id, _view, _projL, _flags, _projR);
 }
 
-BGFX_C_API void bgfx_set_view_remap(uint8_t _id, uint8_t _num, const void* _remap)
+BGFX_C_API void bgfx_set_view_order(uint8_t _id, uint8_t _num, const void* _order)
 {
-	bgfx::setViewRemap(_id, _num, _remap);
+	bgfx::setViewOrder(_id, _num, _order);
 }
 
 BGFX_C_API void bgfx_reset_view(uint8_t _id)
@@ -4776,7 +4776,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 	BGFX_IMPORT_FUNC(set_view_frame_buffer) \
 	BGFX_IMPORT_FUNC(set_view_transform) \
 	BGFX_IMPORT_FUNC(set_view_transform_stereo) \
-	BGFX_IMPORT_FUNC(set_view_remap) \
+	BGFX_IMPORT_FUNC(set_view_order) \
 	BGFX_IMPORT_FUNC(set_marker) \
 	BGFX_IMPORT_FUNC(set_state) \
 	BGFX_IMPORT_FUNC(set_condition) \
