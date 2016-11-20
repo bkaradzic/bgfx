@@ -2029,7 +2029,7 @@ rendering GUIs), view can be set to be in sequential order. Sequential order is 
 because it doesn&#8217;t allow state change optimization, and should be avoided when possible.</p>
 <p>By default views ids are sorted in ascending order. For dynamic renderers where order might not be
 known until the last moment, view ids can be remaped to arbitrary order by calling
-<cite>bgfx::setViewRemap</cite>.</p>
+<cite>bgfx::setViewOrder</cite>.</p>
 <p>View state is preserved between multiple frames.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx11setViewNameE7uint8_tPKc">
@@ -2228,8 +2228,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx12setViewRemapE7uint8_t7uint8_tPKv">
-<span id="bgfx::setViewRemap__uint8_t.uint8_t.voidCP"></span><span class="target" id="bgfxnamespacebgfx_1aa38e5d04763c5473411055c7eb4c069c"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewRemap</code><span class="sig-paren">(</span>uint8_t <em>_id</em> = 0, uint8_t <em>_num</em> = UINT8_MAX, <em class="property">const</em> void *<em>_remap</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12setViewRemapE7uint8_t7uint8_tPKv" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx12setViewOrderE7uint8_t7uint8_tPKv">
+<span id="bgfx::setViewOrder__uint8_t.uint8_t.voidCP"></span><span class="target" id="bgfxnamespacebgfx_1a72a956ceb35612848b9424b7ddde7051"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewOrder</code><span class="sig-paren">(</span>uint8_t <em>_id</em> = 0, uint8_t <em>_num</em> = UINT8_MAX, <em class="property">const</em> void *<em>_remap</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12setViewOrderE7uint8_t7uint8_tPKv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Post submit view reordering. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
