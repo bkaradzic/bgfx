@@ -396,7 +396,8 @@ class ExampleHDR : public entry::AppI
 
 			bgfx::setViewName(hdrHBlurTonemap, "Blur horizontal + tonemap");
 			bgfx::setViewRect(hdrHBlurTonemap, 0, 0, bgfx::BackbufferRatio::Equal);
-			bgfx::setViewFrameBuffer(hdrHBlurTonemap, BGFX_INVALID_HANDLE);
+			bgfx::FrameBufferHandle invalid = BGFX_INVALID_HANDLE;
+			bgfx::setViewFrameBuffer(hdrHBlurTonemap, invalid);
 
 			float proj[16];
 			bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
