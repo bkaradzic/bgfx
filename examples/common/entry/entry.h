@@ -9,6 +9,7 @@
 #include "dbg.h"
 #include <string.h> // memset
 #include <bx/bx.h>
+#include <bx/string.h>
 
 namespace bx { struct FileReaderI; struct FileWriterI; struct AllocatorI; }
 
@@ -278,6 +279,32 @@ namespace entry
 	{
 	}
 
+	class App : public AppI
+	{
+	public:
+		App(const char* _name);
+
+		virtual ~App();
+
+		const char* getName() const
+		{
+			return m_name;
+		}
+
+		AppI* getNext()
+		{
+			return m_next;
+		}
+
+	private:
+		const char* m_name;
+		App* m_next;
+	};
+
+	///
+	App* getFirstApp();
+
+	///
 	int runApp(AppI* _app, int _argc, char** _argv);
 
 } // namespace entry

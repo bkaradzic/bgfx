@@ -339,6 +339,24 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	}
 #endif // BX_PLATFORM_EMSCRIPTEN
 
+	static App* s_apps = NULL;
+
+	App::App(const char* _name)
+	{
+		m_name = _name;
+		m_next = s_apps;
+		s_apps = this;
+	}
+
+	App::~App()
+	{
+	}
+
+	App* getFirstApp()
+	{
+		return s_apps;
+	}
+
 	int runApp(AppI* _app, int _argc, char** _argv)
 	{
 		_app->init(_argc, _argv);
@@ -485,7 +503,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 							_mouse->m_mx = mouse->m_mx;
 							_mouse->m_my = mouse->m_my;
 							_mouse->m_mz = mouse->m_mz;
-							if (!mouse->m_move) 
+							if (!mouse->m_move)
 							{
 								_mouse->m_buttons[mouse->m_button] = mouse->m_down;
 							}
