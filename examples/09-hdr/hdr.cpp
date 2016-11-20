@@ -6,6 +6,7 @@
 #include "common.h"
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"
+#include <bx/rng.h>
 
 static float s_texelHalf = 0.0f;
 
@@ -341,10 +342,7 @@ class ExampleHDR : public entry::AppI
 			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			uint8_t shuffle[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-			for (uint8_t ii = 0; ii < BX_COUNTOF(shuffle)-1; ++ii)
-			{
-				bx::xchg(shuffle[ii], shuffle[rand()%BX_COUNTOF(shuffle)]);
-			}
+			bx::shuffle(&m_rng, shuffle, BX_COUNTOF(shuffle) );
 
 			uint8_t hdrSkybox       = shuffle[0];
 			uint8_t hdrMesh         = shuffle[1];
@@ -559,6 +557,8 @@ class ExampleHDR : public entry::AppI
 	bgfx::FrameBufferHandle m_lum[5];
 	bgfx::FrameBufferHandle m_bright;
 	bgfx::FrameBufferHandle m_blur;
+
+	bx::RngMwc m_rng;
 
 	uint32_t m_width;
 	uint32_t m_height;
