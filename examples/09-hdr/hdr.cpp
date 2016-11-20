@@ -155,28 +155,8 @@ class ExampleHDR : public entry::AppI
 		// Enable m_debug text.
 		bgfx::setDebug(m_debug);
 
-		// Set view 0 clear state.
-		bgfx::setViewClear(9
-				, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-				, 0x303030ff
-				, 1.0f
-				, 0
-				);
-
 		// Create vertex stream declaration.
 		PosColorTexCoord0Vertex::init();
-
-		// Set view m_debug names.
-		bgfx::setViewName(9, "Skybox");
-		bgfx::setViewName(1, "Mesh");
-		bgfx::setViewName(2, "Luminance");
-		bgfx::setViewName(3, "Downscale luminance 0");
-		bgfx::setViewName(4, "Downscale luminance 1");
-		bgfx::setViewName(5, "Downscale luminance 2");
-		bgfx::setViewName(6, "Downscale luminance 3");
-		bgfx::setViewName(7, "Brightness");
-		bgfx::setViewName(8, "Blur vertical");
-		bgfx::setViewName(0, "Blur horizontal + tonemap");
 
 		m_uffizi = loadTexture("textures/uffizi.dds"
 				, 0
@@ -360,50 +340,88 @@ class ExampleHDR : public entry::AppI
 			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Using multiple views with frame buffers, and view order remapping.");
 			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
+			uint8_t shuffle[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+			for (uint8_t ii = 0; ii < BX_COUNTOF(shuffle)-1; ++ii)
+			{
+				bx::xchg(shuffle[ii], shuffle[rand()%BX_COUNTOF(shuffle)]);
+			}
+
+			uint8_t hdrSkybox       = shuffle[0];
+			uint8_t hdrMesh         = shuffle[1];
+			uint8_t hdrLuminance    = shuffle[2];
+			uint8_t hdrLumScale0    = shuffle[3];
+			uint8_t hdrLumScale1    = shuffle[4];
+			uint8_t hdrLumScale2    = shuffle[5];
+			uint8_t hdrLumScale3    = shuffle[6];
+			uint8_t hdrBrightness   = shuffle[7];
+			uint8_t hdrVBlur        = shuffle[8];
+			uint8_t hdrHBlurTonemap = shuffle[9];
+
 			// Set views.
-			bgfx::setViewRect(9, 0, 0, bgfx::BackbufferRatio::Equal);
-			bgfx::setViewRect(1, 0, 0, bgfx::BackbufferRatio::Equal);
-			bgfx::setViewRect(2, 0, 0, bgfx::BackbufferRatio::Equal);
-			bgfx::setViewRect(3, 0, 0, bgfx::BackbufferRatio::Equal);
-			bgfx::setViewRect(4, 0, 0, bgfx::BackbufferRatio::Equal);
-			bgfx::setViewRect(5, 0, 0, bgfx::BackbufferRatio::Equal);
-			bgfx::setViewFrameBuffer(9, m_fbh);
-			bgfx::setViewFrameBuffer(1, m_fbh);
-			bgfx::setViewClear(1, BGFX_CLEAR_DISCARD_DEPTH|BGFX_CLEAR_DISCARD_STENCIL);
+			bgfx::setViewName(hdrSkybox, "Skybox");
+			bgfx::setViewClear(hdrSkybox, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
+			bgfx::setViewRect(hdrSkybox, 0, 0, bgfx::BackbufferRatio::Equal);
+			bgfx::setViewFrameBuffer(hdrSkybox, m_fbh);
 
-			bgfx::setViewRect(2, 0, 0, 128, 128);
-			bgfx::setViewFrameBuffer(2, m_lum[0]);
+			bgfx::setViewName(hdrMesh, "Mesh");
+			bgfx::setViewClear(hdrMesh, BGFX_CLEAR_DISCARD_DEPTH | BGFX_CLEAR_DISCARD_STENCIL);
+			bgfx::setViewRect(hdrMesh, 0, 0, bgfx::BackbufferRatio::Equal);
+			bgfx::setViewFrameBuffer(hdrMesh, m_fbh);
 
-			bgfx::setViewRect(3, 0, 0, 64, 64);
-			bgfx::setViewFrameBuffer(3, m_lum[1]);
+			bgfx::setViewName(hdrLuminance, "Luminance");
+			bgfx::setViewRect(hdrLuminance, 0, 0, 128, 128);
+			bgfx::setViewFrameBuffer(hdrLuminance, m_lum[0]);
 
-			bgfx::setViewRect(4, 0, 0, 16, 16);
-			bgfx::setViewFrameBuffer(4, m_lum[2]);
+			bgfx::setViewName(hdrLumScale0, "Downscale luminance 0");
+			bgfx::setViewRect(hdrLumScale0, 0, 0, 64, 64);
+			bgfx::setViewFrameBuffer(hdrLumScale0, m_lum[1]);
 
-			bgfx::setViewRect(5, 0, 0, 4, 4);
-			bgfx::setViewFrameBuffer(5, m_lum[3]);
+			bgfx::setViewName(hdrLumScale1, "Downscale luminance 1");
+			bgfx::setViewRect(hdrLumScale1, 0, 0, 16, 16);
+			bgfx::setViewFrameBuffer(hdrLumScale1, m_lum[2]);
 
-			bgfx::setViewRect(6, 0, 0, 1, 1);
-			bgfx::setViewFrameBuffer(6, m_lum[4]);
+			bgfx::setViewName(hdrLumScale2, "Downscale luminance 2");
+			bgfx::setViewRect(hdrLumScale2, 0, 0, 4, 4);
+			bgfx::setViewFrameBuffer(hdrLumScale2, m_lum[3]);
 
-			bgfx::setViewRect(7, 0, 0, bgfx::BackbufferRatio::Half);
-			bgfx::setViewFrameBuffer(7, m_bright);
+			bgfx::setViewName(hdrLumScale3, "Downscale luminance 3");
+			bgfx::setViewRect(hdrLumScale3, 0, 0, 1, 1);
+			bgfx::setViewFrameBuffer(hdrLumScale3, m_lum[4]);
 
-			bgfx::setViewRect(8, 0, 0, bgfx::BackbufferRatio::Eighth);
-			bgfx::setViewFrameBuffer(8, m_blur);
+			bgfx::setViewName(hdrBrightness, "Brightness");
+			bgfx::setViewRect(hdrBrightness, 0, 0, bgfx::BackbufferRatio::Half);
+			bgfx::setViewFrameBuffer(hdrBrightness, m_bright);
 
-			bgfx::setViewRect(0, 0, 0, bgfx::BackbufferRatio::Equal);
+			bgfx::setViewName(hdrVBlur, "Blur vertical");
+			bgfx::setViewRect(hdrVBlur, 0, 0, bgfx::BackbufferRatio::Eighth);
+			bgfx::setViewFrameBuffer(hdrVBlur, m_blur);
 
-			float view[16];
+			bgfx::setViewName(hdrHBlurTonemap, "Blur horizontal + tonemap");
+			bgfx::setViewRect(hdrHBlurTonemap, 0, 0, bgfx::BackbufferRatio::Equal);
+			bgfx::setViewFrameBuffer(hdrHBlurTonemap, BGFX_INVALID_HANDLE);
+
 			float proj[16];
-
-			bx::mtxIdentity(view);
 			bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
 
-			// Set view and projection matrix for view 0.
-			for (uint32_t ii = 0; ii < 10; ++ii)
+			uint8_t remap[] =
 			{
-				bgfx::setViewTransform(ii, view, proj);
+				hdrSkybox,
+				hdrMesh,
+				hdrLuminance,
+				hdrLumScale0,
+				hdrLumScale1,
+				hdrLumScale2,
+				hdrLumScale3,
+				hdrBrightness,
+				hdrVBlur,
+				hdrHBlurTonemap
+			};
+			bgfx::setViewRemap(0, BX_COUNTOF(remap), remap);
+
+			// Set view and projection matrix for view 0.
+			for (uint32_t ii = 0; ii < BX_COUNTOF(remap); ++ii)
+			{
+				bgfx::setViewTransform(ii, NULL, proj);
 			}
 
 			float at[3]  = { 0.0f, 1.0f, 0.0f };
@@ -418,76 +436,77 @@ class ExampleHDR : public entry::AppI
 			float temp[4];
 			bx::vec3MulMtx(temp, eye, mtx);
 
+			float view[16];
 			bx::mtxLookAt(view, temp, at);
 			bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f);
 
-			// Set view and projection matrix for view 1.
-			bgfx::setViewTransform(1, view, proj);
+			// Set view and projection matrix for view hdrMesh.
+			bgfx::setViewTransform(hdrMesh, view, proj);
 
-			bgfx::setUniform(u_mtx, mtx);
+			float tonemap[4] = { m_middleGray, square(m_white), m_threshold, m_time };
 
-			// Render skybox into view 0.
+			// Render skybox into view hdrSkybox.
 			bgfx::setTexture(0, s_texCube, m_uffizi);
-
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setUniform(u_mtx, mtx);
 			screenSpaceQuad( (float)m_width, (float)m_height, true);
-			bgfx::submit(9, m_skyProgram);
+			bgfx::submit(hdrSkybox, m_skyProgram);
 
-			// Render m_mesh into view 1
+			// Render m_mesh into view hdrMesh.
 			bgfx::setTexture(0, s_texCube, m_uffizi);
-			meshSubmit(m_mesh, 1, m_meshProgram, NULL);
+			bgfx::setUniform(u_tonemap, tonemap);
+			meshSubmit(m_mesh, hdrMesh, m_meshProgram, NULL);
 
 			// Calculate luminance.
 			setOffsets2x2Lum(u_offset, 128, 128);
 			bgfx::setTexture(0, s_texColor, m_fbtextures[0]);
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad(128.0f, 128.0f, m_caps->originBottomLeft);
-			bgfx::submit(2, m_lumProgram);
+			bgfx::submit(hdrLuminance, m_lumProgram);
 
 			// Downscale luminance 0.
 			setOffsets4x4Lum(u_offset, 128, 128);
 			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_lum[0]) );
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad(64.0f, 64.0f, m_caps->originBottomLeft);
-			bgfx::submit(3, m_lumAvgProgram);
+			bgfx::submit(hdrLumScale0, m_lumAvgProgram);
 
 			// Downscale luminance 1.
 			setOffsets4x4Lum(u_offset, 64, 64);
 			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_lum[1]) );
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad(16.0f, 16.0f, m_caps->originBottomLeft);
-			bgfx::submit(4, m_lumAvgProgram);
+			bgfx::submit(hdrLumScale1, m_lumAvgProgram);
 
 			// Downscale luminance 2.
 			setOffsets4x4Lum(u_offset, 16, 16);
 			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_lum[2]) );
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad(4.0f, 4.0f, m_caps->originBottomLeft);
-			bgfx::submit(5, m_lumAvgProgram);
+			bgfx::submit(hdrLumScale2, m_lumAvgProgram);
 
 			// Downscale luminance 3.
 			setOffsets4x4Lum(u_offset, 4, 4);
 			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_lum[3]) );
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad(1.0f, 1.0f, m_caps->originBottomLeft);
-			bgfx::submit(6, m_lumAvgProgram);
-
-			float tonemap[4] = { m_middleGray, square(m_white), m_threshold, m_time };
-			bgfx::setUniform(u_tonemap, tonemap);
+			bgfx::submit(hdrLumScale3, m_lumAvgProgram);
 
 			// m_bright pass m_threshold is tonemap[3].
 			setOffsets4x4Lum(u_offset, m_width/2, m_height/2);
 			bgfx::setTexture(0, s_texColor, m_fbtextures[0]);
 			bgfx::setTexture(1, s_texLum, bgfx::getTexture(m_lum[4]) );
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setUniform(u_tonemap, tonemap);
 			screenSpaceQuad( (float)m_width/2.0f, (float)m_height/2.0f, m_caps->originBottomLeft);
-			bgfx::submit(7, m_brightProgram);
+			bgfx::submit(hdrBrightness, m_brightProgram);
 
 			// m_blur m_bright pass vertically.
 			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_bright) );
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setUniform(u_tonemap, tonemap);
 			screenSpaceQuad( (float)m_width/8.0f, (float)m_height/8.0f, m_caps->originBottomLeft);
-			bgfx::submit(8, m_blurProgram);
+			bgfx::submit(hdrVBlur, m_blurProgram);
 
 			// m_blur m_bright pass horizontally, do tonemaping and combine.
 			bgfx::setTexture(0, s_texColor, m_fbtextures[0]);
@@ -495,16 +514,13 @@ class ExampleHDR : public entry::AppI
 			bgfx::setTexture(2, s_texBlur, bgfx::getTexture(m_blur) );
 			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 			screenSpaceQuad( (float)m_width, (float)m_height, m_caps->originBottomLeft);
-			bgfx::submit(0, m_tonemapProgram);
+			bgfx::submit(hdrHBlurTonemap, m_tonemapProgram);
 
 			if (bgfx::isValid(m_rb) )
 			{
-				bgfx::blit(0, m_rb, 0, 0, bgfx::getTexture(m_lum[4]) );
+				bgfx::blit(hdrHBlurTonemap, m_rb, 0, 0, bgfx::getTexture(m_lum[4]) );
 				bgfx::readTexture(m_rb, &m_lumBgra8);
 			}
-
-			uint8_t remap[] = { 9, 1, 2, 3, 4, 5, 6, 7, 8, 0 };
-			bgfx::setViewRemap(0, 10, remap);
 
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
