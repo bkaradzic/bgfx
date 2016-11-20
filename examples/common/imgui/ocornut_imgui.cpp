@@ -67,43 +67,6 @@ struct OcornutImguiContext
 			bgfx::setViewTransform(m_viewId, NULL, ortho);
 		}
 
-#if USE_ENTRY
-		for (uint32_t ii = 1; ii < BX_COUNTOF(m_window); ++ii)
-		{
-			Window& window = m_window[ii];
-			if (bgfx::isValid(window.m_fbh) )
-			{
-				const uint8_t viewId = window.m_viewId;
-				bgfx::setViewClear(viewId
-					, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-					, 0x303030ff
-					, 1.0f
-					, 0
-					);
-				bgfx::setViewFrameBuffer(viewId, window.m_fbh);
-				bgfx::setViewRect(viewId
-					, 0
-					, 0
-					, window.m_state.m_width
-					, window.m_state.m_height
-					);
-				float ortho[16];
-				bx::mtxOrtho(ortho
-					, 0.0f
-					, float(window.m_state.m_width)
-					, float(window.m_state.m_height)
-					, 0.0f
-					, -1.0f
-					, 1.0f
-					);
-				bgfx::setViewTransform(viewId
-					, NULL
-					, ortho
-					);
-			}
-		}
-#endif // USE_ENTRY
-
 		// Render command lists
 		for (int32_t ii = 0, num = _drawData->CmdListsCount; ii < num; ++ii)
 		{
