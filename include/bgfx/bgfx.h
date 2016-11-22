@@ -1562,6 +1562,25 @@ namespace bgfx
 	///
 	void destroyProgram(ProgramHandle _handle);
 
+	/// Validate texture parameters.
+	///
+	/// @param[in] _depth Depth.
+	/// @param[in] _cubeMap Indicates that texture contains cubemap.
+	/// @param[in] _numLayers Number of layers in texture array.
+	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
+	/// @param[in] _flags Texture flags. See `BGFX_TEXTURE_*`.
+	/// @returns True if texture can be successfully created.
+	///
+	/// @attention C99 equivalent is `bgfx_is_texture_valid`.
+	///
+	bool isTextureValid(
+		  uint16_t _depth
+		, bool _cubeMap
+		, uint16_t _numLayers
+		, TextureFormat::Enum _format
+		, uint32_t _flags
+		);
+
 	/// Calculate amount of memory required for texture.
 	///
 	/// @param[out] _info Resulting texture info structure.

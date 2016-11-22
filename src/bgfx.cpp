@@ -21,6 +21,8 @@
 #include <bx/crtimpl.h>
 #include "topology.h"
 
+BX_ERROR_RESULT(BGFX_ERROR_TEXTURE_VALIDATION,  BX_MAKEFOURCC('b', 'g', 0, 1) );
+
 namespace bgfx
 {
 #define BGFX_MAIN_THREAD_MAGIC UINT32_C(0x78666762)
@@ -955,7 +957,7 @@ namespace bgfx
 		uint8_t viewRemap[BGFX_CONFIG_MAX_VIEWS];
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 		{
-			viewRemap[m_viewRemap[ii] ] = ii;
+			viewRemap[m_viewRemap[ii] ] = uint8_t(ii);
 		}
 
 		for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
@@ -2934,6 +2936,114 @@ error:
 		s_ctx->destroyProgram(_handle);
 	}
 
+	static void isTextureValid(uint16_t _depth, bool _cubeMap, uint16_t _numLayers, TextureFormat::Enum _format, uint32_t _flags, bx::Error* _err)
+	{
+		BX_ERROR_SCOPE(_err);
+
+		const bool hasDepth = 1 < _depth;
+
+		if (_cubeMap && hasDepth)
+		{
+			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
+				, "Texture can't be depth and cube map at the same time."
+				);
+			return;
+		}
+
+		if (hasDepth
+		&& 	0 == (g_caps.supported & BGFX_CAPS_TEXTURE_3D) )
+		{
+			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
+				, "Texture3D is not supported! "
+				  "Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_3D backend renderer capabilities."
+				);
+			return;
+		}
+
+		if (0 != (_flags & BGFX_TEXTURE_RT_MASK)
+		&&  0 != (_flags & BGFX_TEXTURE_READ_BACK) )
+		{
+			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
+				, "Can't create render target with BGFX_TEXTURE_READ_BACK flag."
+				);
+			return;
+		}
+
+		if (1 < _numLayers
+		&&  0 == (g_caps.supported & BGFX_CAPS_TEXTURE_2D_ARRAY) )
+		{
+			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
+				, "Texture array is not supported! "
+				  "Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_2D_ARRAY backend renderer capabilities."
+				);
+			return;
+		}
+
+		bool formatSupported = 0 != (g_caps.formats[_format] & (0
+				| BGFX_CAPS_FORMAT_TEXTURE_2D
+				| BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED
+				| BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
+				) );
+		uint16_t srgbCaps = BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB;
+
+		if (_cubeMap)
+		{
+			formatSupported = 0 != (g_caps.formats[_format] & (0
+				| BGFX_CAPS_FORMAT_TEXTURE_CUBE
+				| BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED
+				| BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
+				) );
+			srgbCaps = BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB;
+		}
+		else if (hasDepth)
+		{
+			formatSupported = 0 != (g_caps.formats[_format] & (0
+				| BGFX_CAPS_FORMAT_TEXTURE_3D
+				| BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED
+				| BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
+				) );
+			srgbCaps = BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB;
+		}
+
+		if (!formatSupported)
+		{
+			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
+				, "Texture array is not supported! "
+				  "Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_2D_ARRAY backend renderer capabilities."
+				);
+			return;
+		}
+
+		if (0 != (_flags & BGFX_TEXTURE_MSAA_SAMPLE)
+		&&  0 == (g_caps.supported & BGFX_CAPS_FORMAT_TEXTURE_MSAA) )
+		{
+			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
+				, "MSAA sampling for this texture format is not supported."
+				);
+			return;
+		}
+
+		if (0 != (_flags & BGFX_TEXTURE_SRGB)
+		&&  0 == (g_caps.supported & srgbCaps & (0
+				| BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
+				| BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
+				| BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
+				) ) )
+		{
+			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
+				, "sRGB sampling for this texture format is not supported."
+				);
+			return;
+		}
+	}
+
+	bool isTextureValid(uint16_t _depth, bool _cubeMap, uint16_t _numLayers, TextureFormat::Enum _format, uint32_t _flags)
+	{
+		bx::Error err;
+		isTextureValid(_depth, _cubeMap, _numLayers, _format, _flags, &err);
+		return err.isOk();
+	}
+
 	void calcTextureSize(TextureInfo& _info, uint16_t _width, uint16_t _height, uint16_t _depth, bool _cubeMap, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format)
 	{
 		const ImageBlockInfo& blockInfo = getBlockInfo(_format);
@@ -3009,19 +3119,9 @@ error:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 
-		BX_CHECK(0 == (_flags & BGFX_TEXTURE_RT_MASK) || 0 == (_flags & BGFX_TEXTURE_READ_BACK)
-			, "Can't create render target with BGFX_TEXTURE_READ_BACK flag."
-			);
-		BX_CHECK(0 != (g_caps.formats[_format] & (BGFX_CAPS_FORMAT_TEXTURE_2D|BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED|BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB) )
-			, "Format %s is not supported for 2D texture. Use bgfx::getCaps to check available texture formats."
-			, getName(_format)
-			);
-		BX_CHECK(false
-			|| 1 >= _numLayers
-			|| 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_2D_ARRAY)
-			, "_numLayers is %d. Texture 2D array is not supported! Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_2D_ARRAY backend renderer capabilities."
-			, _numLayers
-			);
+		bx::Error err;
+		isTextureValid(0, false, _numLayers, _format, _flags, &err);
+		BX_CHECK(err.isOk(), "%s", err.getMessage().getPtr() );
 
 		if (BackbufferRatio::Count != _ratio)
 		{
@@ -3081,11 +3181,10 @@ error:
 	TextureHandle createTexture3D(uint16_t _width, uint16_t _height, uint16_t _depth, bool _hasMips, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_3D, "Texture3D is not supported!");
-		BX_CHECK(0 != (g_caps.formats[_format] & (BGFX_CAPS_FORMAT_TEXTURE_3D|BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED|BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB) )
-			, "Format %s is not supported for 3D texture. Use bgfx::getCaps to check available texture formats."
-			, getName(_format)
-			);
+
+		bx::Error err;
+		isTextureValid(_depth, false, 1, _format, _flags, &err);
+		BX_CHECK(err.isOk(), "%s", err.getMessage().getPtr() );
 
 		const uint8_t numMips = calcNumMips(_hasMips, _width, _height, _depth);
 
@@ -3125,16 +3224,10 @@ error:
 	TextureHandle createTextureCube(uint16_t _size, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(0 != (g_caps.formats[_format] & (BGFX_CAPS_FORMAT_TEXTURE_CUBE|BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED|BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB) )
-			, "Format %s is not supported for cube texture. Use bgfx::getCaps to check available texture formats."
-			, getName(_format)
-			);
-		BX_CHECK(false
-			|| 1 >= _numLayers
-			|| 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_CUBE_ARRAY)
-			, "_numLayers is %d. Texture cube array is not supported! Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_CUBE_ARRAY backend renderer capabilities."
-			, _numLayers
-			);
+
+		bx::Error err;
+		isTextureValid(0, true, _numLayers, _format, _flags, &err);
+		BX_CHECK(err.isOk(), "%s", err.getMessage().getPtr() );
 
 		const uint8_t numMips = calcNumMips(_hasMips, _size, _size);
 		_numLayers = bx::uint16_max(_numLayers, 1);
@@ -4219,6 +4312,11 @@ BGFX_C_API void bgfx_destroy_program(bgfx_program_handle_t _handle)
 	bgfx::destroyProgram(handle.cpp);
 }
 
+BGFX_C_API bool bgfx_is_texture_valid(uint16_t _depth, bool _cubeMap, uint16_t _numLayers, bgfx_texture_format_t _format, uint32_t _flags)
+{
+	return bgfx::isTextureValid(_depth, _cubeMap, _numLayers, bgfx::TextureFormat::Enum(_format), _flags);
+}
+
 BGFX_C_API void bgfx_calc_texture_size(bgfx_texture_info_t* _info, uint16_t _width, uint16_t _height, uint16_t _depth, bool _cubeMap, bool _hasMips, uint16_t _numLayers, bgfx_texture_format_t _format)
 {
 	bgfx::TextureInfo& info = *(bgfx::TextureInfo*)_info;
@@ -4743,6 +4841,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 	BGFX_IMPORT_FUNC(create_program) \
 	BGFX_IMPORT_FUNC(create_compute_program) \
 	BGFX_IMPORT_FUNC(destroy_program) \
+	BGFX_IMPORT_FUNC(is_texture_valid) \
 	BGFX_IMPORT_FUNC(calc_texture_size) \
 	BGFX_IMPORT_FUNC(create_texture) \
 	BGFX_IMPORT_FUNC(create_texture_2d) \
