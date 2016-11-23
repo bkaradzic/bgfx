@@ -1389,7 +1389,7 @@ namespace bgfx
 #if BGFX_CONFIG_MULTITHREADED
 		// Render thread shutdown sequence.
 		renderSemWait(); // Wait for previous frame.
-		gameSemPost();   // OK to set context to NULL.
+		apiSemPost();   // OK to set context to NULL.
 		// s_ctx is NULL here.
 		renderSemWait(); // In RenderFrame::Exiting state.
 
@@ -1519,7 +1519,7 @@ namespace bgfx
 		swap();
 
 		// release render thread
-		gameSemPost();
+		apiSemPost();
 	}
 
 	void Context::swap()
