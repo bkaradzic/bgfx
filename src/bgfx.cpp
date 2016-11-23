@@ -2940,9 +2940,9 @@ error:
 	{
 		BX_ERROR_SCOPE(_err);
 
-		const bool hasDepth = 1 < _depth;
+		const bool is3DTexture = 1 < _depth;
 
-		if (_cubeMap && hasDepth)
+		if (_cubeMap && is3DTexture)
 		{
 			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
 				, "Texture can't be depth and cube map at the same time."
@@ -2950,7 +2950,7 @@ error:
 			return;
 		}
 
-		if (hasDepth
+		if (is3DTexture
 		&& 	0 == (g_caps.supported & BGFX_CAPS_TEXTURE_3D) )
 		{
 			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
@@ -2995,7 +2995,7 @@ error:
 				) );
 			srgbCaps = BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB;
 		}
-		else if (hasDepth)
+		else if (is3DTexture)
 		{
 			formatSupported = 0 != (g_caps.formats[_format] & (0
 				| BGFX_CAPS_FORMAT_TEXTURE_3D
