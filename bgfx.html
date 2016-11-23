@@ -4543,6 +4543,33 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="_CPPv2N4bgfx14isTextureValidE8uint16_tb8uint16_tN13TextureFormat4EnumE8uint32_t">
+<span id="bgfx::isTextureValid__uint16_t.b.uint16_t.TextureFormat::Enum.uint32_t"></span><span class="target" id="bgfxnamespacebgfx_1aa3df5384ecdb3bfc43d9cc969b28c160"></span>bool <code class="descclassname">bgfx::</code><code class="descname">isTextureValid</code><span class="sig-paren">(</span>uint16_t <em>_depth</em>, bool <em>_cubeMap</em>, uint16_t <em>_numLayers</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_flags</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14isTextureValidE8uint16_tb8uint16_tN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validate texture parameters. </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>True if texture can be successfully created.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_is_texture_valid</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>Depth. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_cubeMap</span></code> - <p>Indicates that texture contains cubemap. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_numLayers</span></code> - <p>Number of layers in texture array. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span class="std std-ref"><span class="pre">TextureFormat::Enum</span></span></a></code>. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p>Texture flags. See <code class="docutils literal"><span class="pre">BGFX_TEXTURE_*</span></code>. </p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="_CPPv2N4bgfx15calcTextureSizeER11TextureInfo8uint16_t8uint16_t8uint16_tbb8uint16_tN13TextureFormat4EnumE">
 <span id="bgfx::calcTextureSize__TextureInfoR.uint16_t.uint16_t.uint16_t.b.b.uint16_t.TextureFormat::Enum"></span><span class="target" id="bgfxnamespacebgfx_1afad0573ceede40bc76bb9fe7c938655c"></span>void <code class="descclassname">bgfx::</code><code class="descname">calcTextureSize</code><span class="sig-paren">(</span>TextureInfo &amp;<em>_info</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint16_t <em>_depth</em>, bool <em>_cubeMap</em>, bool <em>_hasMips</em>, uint16_t <em>_numLayers</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15calcTextureSizeER11TextureInfo8uint16_t8uint16_t8uint16_tbb8uint16_tN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate amount of memory required for texture. </p>
