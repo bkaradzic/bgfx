@@ -562,7 +562,7 @@ namespace bgfx
 
 		Limits limits;
 
-		/// Supported texture formats.
+		/// Supported texture format capabilities flags:
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_NONE` - Texture format is not supported.
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_2D` - Texture format is supported.
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB` - Texture as sRGB format is supported.
@@ -581,6 +581,8 @@ namespace bgfx
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA` - Texture format can be used as MSAA
 		///     frame buffer.
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_MSAA` - Texture can be sampled as MSAA.
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN` - Texture format supports auto-generated
+		///     mips.
 		uint16_t formats[TextureFormat::Count];
 	};
 
@@ -669,7 +671,7 @@ namespace bgfx
 	///
 	struct Transform
 	{
-		float* data;  //!< Pointer to first matrix.
+		float* data;  //!< Pointer to first 4x4 matrix.
 		uint16_t num; //!< Number of matrices.
 	};
 
@@ -690,7 +692,7 @@ namespace bgfx
 			float fov[4];               //!< Field of view (up, down, left, right).
 			float viewOffset[3];        //!< Eye view matrix translation adjustment.
 			float projection[16];       //!< Eye projection matrix
-			float pixelsPerTanAngle[2]; //!<
+			float pixelsPerTanAngle[2]; //!< Number of pixels that fit in tan(angle) = 1.
 		};
 
 		Eye eye[2];
