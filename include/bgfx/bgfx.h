@@ -1564,7 +1564,7 @@ namespace bgfx
 
 	/// Validate texture parameters.
 	///
-	/// @param[in] _depth Depth.
+	/// @param[in] _depth Depth dimension of volume texture.
 	/// @param[in] _cubeMap Indicates that texture contains cubemap.
 	/// @param[in] _numLayers Number of layers in texture array.
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
@@ -1586,7 +1586,7 @@ namespace bgfx
 	/// @param[out] _info Resulting texture info structure.
 	/// @param[in] _width Width.
 	/// @param[in] _height Height.
-	/// @param[in] _depth Depth.
+	/// @param[in] _depth Depth dimension of volume texture.
 	/// @param[in] _cubeMap Indicates that texture contains cubemap.
 	/// @param[in] _hasMips Indicates that texture contains full mip-map chain.
 	/// @param[in] _numLayers Number of layers in texture array.
@@ -1991,22 +1991,28 @@ namespace bgfx
 	/// @returns Handle to uniform object.
 	///
 	/// @remarks
-	/// Predefined uniforms (declared in `bgfx_shader.sh`):
-	///   - `u_viewRect vec4(x, y, width, height)` - view rectangle for current
-	///     view.
-	///   - `u_viewTexel vec4(1.0/width, 1.0/height, undef, undef)` - inverse
-	///     width and height
-	///   - `u_view mat4` - view matrix
-	///   - `u_invView mat4` - inverted view matrix
-	///   - `u_proj mat4` - projection matrix
-	///   - `u_invProj mat4` - inverted projection matrix
-	///   - `u_viewProj mat4` - concatenated view projection matrix
-	///   - `u_invViewProj mat4` - concatenated inverted view projection matrix
-	///   - `u_model mat4[BGFX_CONFIG_MAX_BONES]` - array of model matrices.
-	///   - `u_modelView mat4` - concatenated model view matrix, only first
-	///     model matrix from array is used.
-	///   - `u_modelViewProj mat4` - concatenated model view projection matrix.
-	///   - `u_alphaRef float` - alpha reference value for alpha test.
+	///   1. Uniform names are unique. It's valid to call `bgfx::createUniform`
+	///      multiple times with the same uniform name. The library will always
+	///      return the same handle, but the handle reference count will be
+	///      incremented. This means that the same number of `bgfx::destroyUniform`
+	///      must be called to proprely destroy the uniform.
+	///
+	///   2. Predefined uniforms (declared in `bgfx_shader.sh`):
+	///      - `u_viewRect vec4(x, y, width, height)` - view rectangle for current
+	///        view.
+	///      - `u_viewTexel vec4(1.0/width, 1.0/height, undef, undef)` - inverse
+	///        width and height
+	///      - `u_view mat4` - view matrix
+	///      - `u_invView mat4` - inverted view matrix
+	///      - `u_proj mat4` - projection matrix
+	///      - `u_invProj mat4` - inverted projection matrix
+	///      - `u_viewProj mat4` - concatenated view projection matrix
+	///      - `u_invViewProj mat4` - concatenated inverted view projection matrix
+	///      - `u_model mat4[BGFX_CONFIG_MAX_BONES]` - array of model matrices.
+	///      - `u_modelView mat4` - concatenated model view matrix, only first
+	///        model matrix from array is used.
+	///      - `u_modelViewProj mat4` - concatenated model view projection matrix.
+	///      - `u_alphaRef float` - alpha reference value for alpha test.
 	///
 	/// @attention C99 equivalent is `bgfx_create_uniform`.
 	///
