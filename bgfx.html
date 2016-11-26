@@ -965,7 +965,7 @@
 <dl class="member">
 <dt id="_CPPv2N4bgfx4Caps7formatsE">
 <span id="bgfx::Caps::formats__uint16_tA"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1a9d3d8445e5c828669c924e6fa38e9389"></span>uint16_t <code class="descname">formats</code>[TextureFormat::Count]<a class="headerlink" href="#_CPPv2N4bgfx4Caps7formatsE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Supported texture formats. </p>
+<dd><p>Supported texture format capabilities flags: </p>
 <p><ul class="simple">
 <li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_NONE</span></code> - Texture format is not supported.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_2D</span></code> - Texture format is supported.</li>
@@ -981,7 +981,8 @@
 <li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_IMAGE</span></code> - Texture format can be used as image from compute shader.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER</span></code> - Texture format can be used as frame buffer.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA</span></code> - Texture format can be used as MSAA frame buffer.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_MSAA</span></code> - Texture can be sampled as MSAA. </li>
+<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_MSAA</span></code> - Texture can be sampled as MSAA.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN</span></code> - Texture format supports auto-generated mips. </li>
 </ul>
 </p>
 </dd></dl>
@@ -1413,6 +1414,12 @@
 <dt id="_CPPv2N4bgfx3HMD3Eye10projectionE">
 <span id="bgfx::HMD::Eye::projection__floatA"></span><span class="target" id="bgfxstructbgfx_1_1_h_m_d_1_1_eye_1aba4db0b11b3793e075464e34e307eebb"></span>float <code class="descname">projection</code>[16]<a class="headerlink" href="#_CPPv2N4bgfx3HMD3Eye10projectionE" title="Permalink to this definition">¶</a></dt>
 <dd><p><a class="reference internal" href="#bgfxstructbgfx_1_1_h_m_d_1_1_eye"><span class="std std-ref">Eye</span></a> projection matrix. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx3HMD3Eye17pixelsPerTanAngleE">
+<span id="bgfx::HMD::Eye::pixelsPerTanAngle__floatA"></span><span class="target" id="bgfxstructbgfx_1_1_h_m_d_1_1_eye_1ab04298a85d1e180551392905ec5052b2"></span>float <code class="descname">pixelsPerTanAngle</code>[2]<a class="headerlink" href="#_CPPv2N4bgfx3HMD3Eye17pixelsPerTanAngleE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of pixels that fit in tan(angle) = 1. </p>
 </dd></dl>
 
 </div>
@@ -3363,7 +3370,9 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dt><strong>Return</strong></dt>
 <dd>Handle to uniform object.</dd>
 <dt><strong>Remark</strong></dt>
-<dd>Predefined uniforms (declared in <code class="docutils literal"><span class="pre">bgfx_shader.sh</span></code>):<ul class="simple">
+<dd><ol class="arabic simple">
+<li>Uniform names are unique. It&#8217;s valid to call <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a45614b96172b438fd644c858e2c434b2"><span class="std std-ref"><span class="pre">bgfx::createUniform</span></span></a></code> multiple times with the same uniform name. The library will always return the same handle, but the handle reference count will be incremented. This means that the same number of <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a55c0d21cc00b4d7f8a05879e2114d37b"><span class="std std-ref"><span class="pre">bgfx::destroyUniform</span></span></a></code> must be called to proprely destroy the uniform.</li>
+<li>Predefined uniforms (declared in <code class="docutils literal"><span class="pre">bgfx_shader.sh</span></code>):<ul>
 <li><code class="docutils literal"><span class="pre">u_viewRect</span> <span class="pre">vec4(x,</span> <span class="pre">y,</span> <span class="pre">width,</span> <span class="pre">height)</span></code> - view rectangle for current view.</li>
 <li><code class="docutils literal"><span class="pre">u_viewTexel</span> <span class="pre">vec4(1.0/width,</span> <span class="pre">1.0/height,</span> <span class="pre">undef,</span> <span class="pre">undef)</span></code> - inverse width and height</li>
 <li><code class="docutils literal"><span class="pre">u_view</span> <span class="pre">mat4</span></code> - view matrix</li>
@@ -3377,6 +3386,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><code class="docutils literal"><span class="pre">u_modelViewProj</span> <span class="pre">mat4</span></code> - concatenated model view projection matrix.</li>
 <li><code class="docutils literal"><span class="pre">u_alphaRef</span> <span class="pre">float</span></code> - alpha reference value for alpha test.</li>
 </ul>
+</li>
+</ol>
 </dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_uniform</span></code>. </dd>
@@ -4553,7 +4564,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_is_texture_valid</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>Depth. </p>
+<li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>Depth dimension of volume texture. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_cubeMap</span></code> - <p>Indicates that texture contains cubemap. </p>
 </li>
@@ -4584,7 +4595,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Height. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>Depth. </p>
+<li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>Depth dimension of volume texture. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_cubeMap</span></code> - <p>Indicates that texture contains cubemap. </p>
 </li>
