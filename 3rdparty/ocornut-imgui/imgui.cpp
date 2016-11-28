@@ -1298,6 +1298,22 @@ void ImGui::ColorConvertHSVtoRGB(float h, float s, float v, float& out_r, float&
     }
 }
 
+FILE* ImFileOpen(const char* filename, const char* mode)
+{
+#ifdef _MSC_VER
+    // We need a fopen() wrapper because MSVC/Windows fopen doesn't handle UTF-8 filenames. Converting both strings from UTF-8 to wchar format (using a single allocation, because we can)
+    const int filename_wsize = ImTextCountCharsFromUtf8(filename, NULL) + 1;
+    const int mode_wsize = ImTextCountCharsFromUtf8(mode, NULL) + 1;
+    ImVector<ImWchar> buf;
+    buf.resize(filename_wsize + mode_wsize);
+    ImTextStrFromUtf8(&buf[0], filename_wsize, filename, NULL);
+    ImTextStrFromUtf8(&buf[filename_wsize], mode_wsize, mode, NULL);
+    return _wfopen((wchar_t*)&buf[0], (wchar_t*)&buf[filename_wsize]);
+#else
+    return fopen(filename, mode);
+#endif
+}
+
 // Load file content into memory
 // Memory allocated with ImGui::MemAlloc(), must be freed by user using ImGui::MemFree()
 void* ImLoadFileToMemory(const char* filename, const char* file_open_mode, int* out_file_size, int padding_bytes)
@@ -1307,7 +1323,7 @@ void* ImLoadFileToMemory(const char* filename, const char* file_open_mode, int* 
         *out_file_size = 0;
 
     FILE* f;
-    if ((f = fopen(filename, file_open_mode)) == NULL)
+    if ((f = ImFileOpen(filename, file_open_mode)) == NULL)
         return NULL;
 
     long file_size_signed;
@@ -2506,7 +2522,7 @@ static void SaveSettings()
 
     // Write .ini file
     // If a window wasn't opened in this session we preserve its settings
-    FILE* f = fopen(filename, "wt");
+    FILE* f = ImFileOpen(filename, "wt");
     if (!f)
         return;
     for (int i = 0; i != g.Settings.Size; i++)
@@ -5790,7 +5806,7 @@ void ImGui::LogToFile(int max_depth, const char* filename)
             return;
     }
 
-    g.LogFile = fopen(filename, "ab");
+    g.LogFile = ImFileOpen(filename, "ab");
     if (!g.LogFile)
     {
         IM_ASSERT(g.LogFile != NULL); // Consider this an error
@@ -6436,6 +6452,28 @@ float ImGui::RoundScalar(float value, int decimal_precision)
     return negative ? -value : value;
 }
 
+static inline float SliderBehaviorCalcRatioFromValue(float v, float v_min, float v_max, float power, float linear_zero_pos)
+{
+    const bool is_non_linear = (power < 1.0f-0.00001f) || (power > 1.0f+0.00001f);
+    const float v_clamped = (v_min < v_max) ? ImClamp(v, v_min, v_max) : ImClamp(v, v_max, v_min);
+    if (is_non_linear)
+    {
+        if (v_clamped < 0.0f)
+        {
+            const float f = 1.0f - (v_clamped - v_min) / (ImMin(0.0f,v_max) - v_min);
+            return (1.0f - powf(f, 1.0f/power)) * linear_zero_pos;
+        }
+        else
+        {
+            const float f = (v_clamped - ImMax(0.0f,v_min)) / (v_max - ImMax(0.0f,v_min));
+            return linear_zero_pos + powf(f, 1.0f/power) * (1.0f - linear_zero_pos);
+        }
+    }
+
+    // Linear slider
+    return (v_clamped - v_min) / (v_max - v_min);
+}
+
 bool ImGui::SliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v, float v_min, float v_max, float power, int decimal_precision, ImGuiSliderFlags flags)
 {
     ImGuiContext& g = *GImGui;
@@ -6445,7 +6483,7 @@ bool ImGui::SliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v, float v
     // Draw frame
     RenderFrame(frame_bb.Min, frame_bb.Max, GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
 
-    const bool is_non_linear = fabsf(power - 1.0f) > 0.0001f;
+    const bool is_non_linear = (power < 1.0f-0.00001f) || (power > 1.0f+0.00001f);
     const bool is_horizontal = (flags & ImGuiSliderFlags_Vertical) == 0;
 
     const float grab_padding = 2.0f;
@@ -6481,18 +6519,18 @@ bool ImGui::SliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v, float v
         if (g.IO.MouseDown[0])
         {
             const float mouse_abs_pos = is_horizontal ? g.IO.MousePos.x : g.IO.MousePos.y;
-            float normalized_pos = ImClamp((mouse_abs_pos - slider_usable_pos_min) / slider_usable_sz, 0.0f, 1.0f);
+            float clicked_t = ImClamp((mouse_abs_pos - slider_usable_pos_min) / slider_usable_sz, 0.0f, 1.0f);
             if (!is_horizontal)
-                normalized_pos = 1.0f - normalized_pos;
+                clicked_t = 1.0f - clicked_t;
 
             float new_value;
             if (is_non_linear)
             {
                 // Account for logarithmic scale on both sides of the zero
-                if (normalized_pos < linear_zero_pos)
+                if (clicked_t < linear_zero_pos)
                 {
                     // Negative: rescale to the negative range before powering
-                    float a = 1.0f - (normalized_pos / linear_zero_pos);
+                    float a = 1.0f - (clicked_t / linear_zero_pos);
                     a = powf(a, power);
                     new_value = ImLerp(ImMin(v_max,0.0f), v_min, a);
                 }
@@ -6501,9 +6539,9 @@ bool ImGui::SliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v, float v
                     // Positive: rescale to the positive range before powering
                     float a;
                     if (fabsf(linear_zero_pos - 1.0f) > 1.e-6f)
-                        a = (normalized_pos - linear_zero_pos) / (1.0f - linear_zero_pos);
+                        a = (clicked_t - linear_zero_pos) / (1.0f - linear_zero_pos);
                     else
-                        a = normalized_pos;
+                        a = clicked_t;
                     a = powf(a, power);
                     new_value = ImLerp(ImMax(v_min,0.0f), v_max, a);
                 }
@@ -6511,12 +6549,12 @@ bool ImGui::SliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v, float v
             else
             {
                 // Linear slider
-                new_value = ImLerp(v_min, v_max, normalized_pos);
+                new_value = ImLerp(v_min, v_max, clicked_t);
             }
 
             // Round past decimal precision
             new_value = RoundScalar(new_value, decimal_precision);
-            if (*v != new_value)
+            if (*v != new_value && (v_min != v_max))
             {
                 *v = new_value;
                 value_changed = true;
@@ -6529,26 +6567,7 @@ bool ImGui::SliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v, float v
     }
 
     // Calculate slider grab positioning
-    float grab_t;
-    if (is_non_linear)
-    {
-        float v_clamped = ImClamp(*v, v_min, v_max);
-        if (v_clamped < 0.0f)
-        {
-            const float f = 1.0f - (v_clamped - v_min) / (ImMin(0.0f,v_max) - v_min);
-            grab_t = (1.0f - powf(f, 1.0f/power)) * linear_zero_pos;
-        }
-        else
-        {
-            const float f = (v_clamped - ImMax(0.0f,v_min)) / (v_max - ImMax(0.0f,v_min));
-            grab_t = linear_zero_pos + powf(f, 1.0f/power) * (1.0f - linear_zero_pos);
-        }
-    }
-    else
-    {
-        // Linear slider
-        grab_t = (ImClamp(*v, v_min, v_max) - v_min) / (v_max - v_min);
-    }
+    float grab_t = SliderBehaviorCalcRatioFromValue(*v, v_min, v_max, power, linear_zero_pos);
 
     // Draw
     if (!is_horizontal)
