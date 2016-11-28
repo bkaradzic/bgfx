@@ -75,6 +75,8 @@ class ExampleCubes : public entry::AppI
 {
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
+		BX_UNUSED(s_cubeTriList, s_cubeTriStrip);
+
 		Args args(_argc, _argv);
 
 		m_width  = 1280;
