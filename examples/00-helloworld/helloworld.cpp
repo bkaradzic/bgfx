@@ -65,7 +65,7 @@ class ExampleHelloWorld : public entry::AppI
 			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/00-helloworld");
 			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Initialization and debug text.");
 
-			bgfx::dbgTextPrintf(0, 4, 0x0f, "Color can be changed with ANSI \e[9;me\e[10;ms\e[11;mc\e[12;ma\e[13;mp\e[14;me\e[0m code too.");
+			bgfx::dbgTextPrintf(0, 4, 0x0f, "Color can be changed with ANSI \x1b[9;me\x1b[10;ms\x1b[11;mc\x1b[12;ma\x1b[13;mp\x1b[14;me\x1b[0m code too.");
 
 			const bgfx::Stats* stats = bgfx::getStats();
 			bgfx::dbgTextPrintf(0, 6, 0x0f, "Backbuffer %dW x %dH in pixels, debug text %dW x %dH in characters."

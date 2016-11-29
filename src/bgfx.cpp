@@ -585,7 +585,7 @@ namespace bgfx
 			for (uint32_t ii = 0, xx = _x; ii < num && xx < m_width; ++ii, ++xx)
 			{
 				char ch = temp[ii];
-				if (BX_UNLIKELY(ch == '\e') )
+				if (BX_UNLIKELY(ch == '\x1b') )
 				{
 					char* ptr = &temp[ii+1];
 					attr = parseAttr(ptr, _attr);
