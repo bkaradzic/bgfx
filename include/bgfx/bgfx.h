@@ -720,6 +720,11 @@ namespace bgfx
 		int64_t waitRender;    //!< Time spent waiting for render backend thread to finish issuing
 		                       //!  draw commands to underlying graphics API.
 		int64_t waitSubmit;    //!< Time spent waiting for submit thread to advance to next frame.
+
+		uint16_t width;
+		uint16_t height;
+		uint16_t textWidth;
+		uint16_t textHeight;
 	};
 
 	/// Vertex declaration.

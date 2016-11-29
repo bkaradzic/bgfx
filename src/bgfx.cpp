@@ -529,6 +529,78 @@ namespace bgfx
 		}
 	}
 
+	static uint8_t parseAttrTo(char*& _ptr, char _to, uint8_t _default)
+	{
+		const char* str = strchr(_ptr, _to);
+		if (NULL != str
+		&&  3 > str-_ptr)
+		{
+			char tmp[4];
+			uint32_t len = uint32_t(str-_ptr);
+
+			len = bx::uint32_min(BX_COUNTOF(tmp), len);
+			strncpy(tmp, _ptr, len);
+			tmp[len] = '\0';
+
+			uint8_t attr = uint8_t(atoi(tmp) );
+			_ptr += len+1;
+			return attr;
+		}
+
+		return _default;
+	}
+
+	static uint8_t parseAttr(char*& _ptr, uint8_t _default)
+	{
+		char* ptr = _ptr;
+		if (*ptr++ != '[')
+		{
+			return _default;
+		}
+
+		if (0 == strncmp(ptr, "0m", 2) )
+		{
+			_ptr = ptr + 2;
+			return _default;
+		}
+
+		uint8_t fg = parseAttrTo(ptr, ';', _default & 0xf);
+		uint8_t bg = parseAttrTo(ptr, 'm', _default >> 4);
+
+		uint8_t attr = (bg<<4) | fg;
+		_ptr = ptr;
+		return attr;
+	}
+
+	void TextVideoMem::printfVargs(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, va_list _argList)
+	{
+		if (_x < m_width && _y < m_height)
+		{
+			char* temp = (char*)alloca(m_width);
+
+			uint32_t num = bx::vsnprintf(temp, m_width, _format, _argList);
+
+			uint8_t attr = _attr;
+			uint8_t* mem = &m_mem[(_y*m_width+_x)*2];
+			for (uint32_t ii = 0, xx = _x; ii < num && xx < m_width; ++ii, ++xx)
+			{
+				char ch = temp[ii];
+				if (BX_UNLIKELY(ch == '\e') )
+				{
+					char* ptr = &temp[ii+1];
+					attr = parseAttr(ptr, _attr);
+					ii += uint32_t(ptr - &temp[ii+1]);
+				}
+				else
+				{
+					mem[0] = ch;
+					mem[1] = attr;
+					mem += 2;
+				}
+			}
+		}
+	}
+
 	static const uint32_t numCharsPerBatch = 1024;
 	static const uint32_t numBatchVertices = numCharsPerBatch*4;
 	static const uint32_t numBatchIndices  = numCharsPerBatch*6;

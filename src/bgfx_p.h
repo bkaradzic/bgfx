@@ -433,23 +433,7 @@ namespace bgfx
 			}
 		}
 
-		void printfVargs(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, va_list _argList)
-		{
-			if (_x < m_width && _y < m_height)
-			{
-				char* temp = (char*)alloca(m_width);
-
-				uint32_t num = bx::vsnprintf(temp, m_width, _format, _argList);
-
-				uint8_t* mem = &m_mem[(_y*m_width+_x)*2];
-				for (uint32_t ii = 0, xx = _x; ii < num && xx < m_width; ++ii, ++xx)
-				{
-					mem[0] = temp[ii];
-					mem[1] = _attr;
-					mem += 2;
-				}
-			}
-		}
+		void printfVargs(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, va_list _argList);
 
 		void printf(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, ...)
 		{
@@ -2288,7 +2272,14 @@ namespace bgfx
 
 		BGFX_API_FUNC(const Stats* getPerfStats() )
 		{
-			return &m_submit->m_perfStats;
+			Stats& stats = m_submit->m_perfStats;
+			const Resolution& resolution = m_submit->m_resolution;
+			stats.width  = uint16_t(resolution.m_width);
+			stats.height = uint16_t(resolution.m_height);
+			const TextVideoMem* tvm = m_submit->m_textVideoMem;
+			stats.textWidth  = tvm->m_width;
+			stats.textHeight = tvm->m_height;
+			return &stats;
 		}
 
 		BGFX_API_FUNC(IndexBufferHandle createIndexBuffer(const Memory* _mem, uint16_t _flags) )

@@ -329,6 +329,12 @@ typedef struct bgfx_stats
 
     int64_t waitRender;
     int64_t waitSubmit;
+
+    uint16_t width;
+    uint16_t height;
+    uint16_t textWidth;
+    uint16_t textHeight;
+
 } bgfx_stats_t;
 
 /**/
