@@ -1300,7 +1300,7 @@ void ImGui::ColorConvertHSVtoRGB(float h, float s, float v, float& out_r, float&
 
 FILE* ImFileOpen(const char* filename, const char* mode)
 {
-#ifdef _MSC_VER
+#if defined(_WIN32) && !defined(__CYGWIN__)
     // We need a fopen() wrapper because MSVC/Windows fopen doesn't handle UTF-8 filenames. Converting both strings from UTF-8 to wchar format (using a single allocation, because we can)
     const int filename_wsize = ImTextCountCharsFromUtf8(filename, NULL) + 1;
     const int mode_wsize = ImTextCountCharsFromUtf8(mode, NULL) + 1;
@@ -6454,6 +6454,9 @@ float ImGui::RoundScalar(float value, int decimal_precision)
 
 static inline float SliderBehaviorCalcRatioFromValue(float v, float v_min, float v_max, float power, float linear_zero_pos)
 {
+    if (v_min == v_max)
+        return 0.0f;
+
     const bool is_non_linear = (power < 1.0f-0.00001f) || (power > 1.0f+0.00001f);
     const float v_clamped = (v_min < v_max) ? ImClamp(v, v_min, v_max) : ImClamp(v, v_max, v_min);
     if (is_non_linear)
@@ -6492,7 +6495,7 @@ bool ImGui::SliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v, float v
     if (decimal_precision > 0)
         grab_sz = ImMin(style.GrabMinSize, slider_sz);
     else
-        grab_sz = ImMin(ImMax(1.0f * (slider_sz / (v_max-v_min+1.0f)), style.GrabMinSize), slider_sz);  // Integer sliders, if possible have the grab size represent 1 unit
+        grab_sz = ImMin(ImMax(1.0f * (slider_sz / ((v_min < v_max ? v_max - v_min : v_min - v_max) + 1.0f)), style.GrabMinSize), slider_sz);  // Integer sliders, if possible have the grab size represent 1 unit
     const float slider_usable_sz = slider_sz - grab_sz;
     const float slider_usable_pos_min = (is_horizontal ? frame_bb.Min.x : frame_bb.Min.y) + grab_padding + grab_sz*0.5f;
     const float slider_usable_pos_max = (is_horizontal ? frame_bb.Max.x : frame_bb.Max.y) - grab_padding - grab_sz*0.5f;
@@ -6554,7 +6557,7 @@ bool ImGui::SliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v, float v
 
             // Round past decimal precision
             new_value = RoundScalar(new_value, decimal_precision);
-            if (*v != new_value && (v_min != v_max))
+            if (*v != new_value)
             {
                 *v = new_value;
                 value_changed = true;
