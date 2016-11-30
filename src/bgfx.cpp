@@ -536,11 +536,9 @@ namespace bgfx
 		&&  3 > str-_ptr)
 		{
 			char tmp[4];
-			uint32_t len = uint32_t(str-_ptr);
 
-			len = bx::uint32_min(BX_COUNTOF(tmp), len);
+			ptrdiff_t len = str-_ptr;
 			bx::strlncpy(tmp, sizeof(tmp), _ptr, len);
-			tmp[len] = '\0';
 
 			uint8_t attr = uint8_t(atoi(tmp) );
 			_ptr += len+1;
