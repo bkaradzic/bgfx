@@ -3149,7 +3149,7 @@ namespace bgfx
 
 	static const KtxFormatInfo2 s_translateKtxFormat2[] =
 	{
-        { KTX_A8, TextureFormat::A8    },
+		{ KTX_A8,  TextureFormat::A8   },
 		{ KTX_RED, TextureFormat::R8   },
 		{ KTX_RGB, TextureFormat::RGB8 },
 	};
