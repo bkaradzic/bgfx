@@ -2980,6 +2980,7 @@ namespace bgfx
 #define KTX_COMPRESSED_SRGB_ALPHA_PVRTC_2BPPV1_EXT    0x8A56
 #define KTX_COMPRESSED_SRGB_ALPHA_PVRTC_4BPPV1_EXT    0x8A57
 
+#define KTX_A8                                        0x803C
 #define KTX_R8                                        0x8229
 #define KTX_R16                                       0x822A
 #define KTX_RG8                                       0x822B
@@ -3148,6 +3149,7 @@ namespace bgfx
 
 	static const KtxFormatInfo2 s_translateKtxFormat2[] =
 	{
+        { KTX_A8, TextureFormat::A8    },
 		{ KTX_RED, TextureFormat::R8   },
 		{ KTX_RGB, TextureFormat::RGB8 },
 	};
