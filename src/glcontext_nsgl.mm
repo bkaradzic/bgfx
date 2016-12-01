@@ -226,12 +226,7 @@ namespace bgfx { namespace gl
 	{
 		BX_TRACE("Import:");
 #	define GL_EXTENSION(_optional, _proto, _func, _import) \
-				{ \            // When initializing NSOpenGLView programatically (as we are), this sometimes doesn't
-            // get hooked up properly (especially when there are existing window elements). This ensures
-            // we are valid. Otherwise, you'll probably get a GL_INVALID_FRAMEBUFFER_OPERATION when
-            // trying to glClear() for the first time.
-            [glContext setView:glView];
-
+				{ \
 					if (_func == NULL) \
 					{ \
 						_func = (_proto)bx::dlsym(s_opengl, #_import); \
