@@ -4247,7 +4247,7 @@ data.NumQualityLevels = 0;
 					m_uavd.Texture2D.PlaneSlice = 0;
 				}
 
-				if( m_type==TextureCube )
+				if (TextureCube == m_type)
 				{
 					m_uavd.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
 					m_uavd.Texture2DArray.MipSlice   = 0;

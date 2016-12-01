@@ -122,7 +122,8 @@ namespace bgfx { namespace gl
 
 		void resize(GLint _width, GLint _height)
 		{
-			if(m_width == _width && m_height == _height)
+			if (m_width  == _width
+			&&  m_height == _height)
 			{
 				return;
 			}
