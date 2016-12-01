@@ -170,6 +170,10 @@ zEngine, used by the game "Gothic" and "Gothic II".
 alt="REGoth Engine"
 width="640" height="480" border="0" /></a>
 
+https://github.com/volcoma/EtherealEngine EtherealEngine C++ Game Engine and
+WYSIWYG Editor  
+![EtherealEngine screenshot](https://cloud.githubusercontent.com/assets/1499411/19988985/2a302204-a22c-11e6-98af-5f446d0c79ac.png)
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
