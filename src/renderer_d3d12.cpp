@@ -498,6 +498,8 @@ namespace bgfx { namespace d3d12
 			ErrorState::Enum errorState = ErrorState::Default;
 			LUID luid;
 
+//			m_renderdocdll = loadRenderDoc();
+
 			m_fbh.idx = invalidHandle;
 			memset(m_uniforms, 0, sizeof(m_uniforms) );
 			memset(&m_resolution, 0, sizeof(m_resolution) );
@@ -1181,6 +1183,7 @@ namespace bgfx { namespace d3d12
 #endif // USE_D3D12_DYNAMIC_LIB
 			case ErrorState::Default:
 			default:
+				unloadRenderDoc(m_renderdocdll);
 				break;
 			}
 
@@ -1237,6 +1240,8 @@ namespace bgfx { namespace d3d12
 			DX_RELEASE(m_device, 0);
 			DX_RELEASE(m_adapter, 0);
 			DX_RELEASE(m_factory, 0);
+
+			unloadRenderDoc(m_renderdocdll);
 
 #if USE_D3D12_DYNAMIC_LIB
 			bx::dlclose(m_dxgidll);
@@ -5607,10 +5612,10 @@ data.NumQualityLevels = 0;
 					, m_batch.m_stats.m_numImmediate[BatchD3D12::DrawIndexed]
 					);
 
-// 				if (NULL != m_renderdocdll)
-// 				{
-// 					tvm.printf(tvm.m_width-27, 0, 0x1f, " [F11 - RenderDoc capture] ");
-// 				}
+				if (NULL != m_renderdocdll)
+				{
+					tvm.printf(tvm.m_width-27, 0, 0x1f, " [F11 - RenderDoc capture] ");
+				}
 
 				tvm.printf(10, pos++, 0x8e, "      Indices: %7d ", statsNumIndices);
 				tvm.printf(10, pos++, 0x8e, " Uniform size: %7d, Max: %7d ", _render->m_uniformEnd, _render->m_uniformMax);

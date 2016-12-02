@@ -49,6 +49,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 #include "renderer.h"
 #include "renderer_d3d.h"
 #include "shader_dxbc.h"
+#include "debug_renderdoc.h"
 
 namespace bgfx { namespace d3d12
 {
