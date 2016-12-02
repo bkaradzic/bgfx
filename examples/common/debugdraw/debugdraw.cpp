@@ -776,32 +776,41 @@ struct DebugDraw
 
 	void setState(bool _depthTest, bool _depthWrite, bool _clockwise)
 	{
+		flush();
+
 		const uint64_t depthTest = m_depthTestLess
 			? BGFX_STATE_DEPTH_TEST_LESS
 			: BGFX_STATE_DEPTH_TEST_GREATER
 			;
 
-		m_attrib[m_stack].m_state &= ~(0
+		uint64_t state = m_attrib[m_stack].m_state & ~(0
 			| BGFX_STATE_DEPTH_TEST_MASK
 			| BGFX_STATE_DEPTH_WRITE
 			| BGFX_STATE_CULL_CW
 			| BGFX_STATE_CULL_CCW
 			);
 
-		m_attrib[m_stack].m_state |= _depthTest
+		state |= _depthTest
 			? depthTest
 			: 0
 			;
 
-		m_attrib[m_stack].m_state |= _depthWrite
+		state |= _depthWrite
 			? BGFX_STATE_DEPTH_WRITE
 			: 0
 			;
 
-		m_attrib[m_stack].m_state |= _clockwise
+		state |= _clockwise
 			? BGFX_STATE_CULL_CW
 			: BGFX_STATE_CULL_CCW
 			;
+
+		if (m_attrib[m_stack].m_state != state)
+		{
+			flush();
+		}
+
+		m_attrib[m_stack].m_state = state;
 	}
 
 	void setColor(uint32_t _abgr)
