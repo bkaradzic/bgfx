@@ -403,8 +403,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		}
 
 #if BX_CONFIG_CRT_FILE_READER_WRITER
-		s_fileReader = new bx::CrtFileReader;
-		s_fileWriter = new bx::CrtFileWriter;
+		s_fileReader = BX_NEW(s_allocator, bx::CrtFileReader);
+		s_fileWriter = BX_NEW(s_allocator, bx::CrtFileWriter);
 #endif // BX_CONFIG_CRT_FILE_READER_WRITER
 
 		cmdInit();
@@ -427,10 +427,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		cmdShutdown();
 
 #if BX_CONFIG_CRT_FILE_READER_WRITER
-		delete s_fileReader;
+		BX_DELETE(s_allocator, s_fileReader);
 		s_fileReader = NULL;
 
-		delete s_fileWriter;
+		BX_DELETE(s_allocator, s_fileWriter);
 		s_fileWriter = NULL;
 #endif // BX_CONFIG_CRT_FILE_READER_WRITER
 
