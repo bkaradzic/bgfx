@@ -4364,7 +4364,6 @@ data.NumQualityLevels = 0;
 		desc.Height = _rect.m_height;
 
 		uint32_t numRows;
-		uint64_t rowPitch;
 		uint64_t totalBytes;
 		D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
 		s_renderD3D12->m_device->GetCopyableFootprints(&desc
@@ -4373,11 +4372,11 @@ data.NumQualityLevels = 0;
 			, 0
 			, &layout
 			, &numRows
-			, &rowPitch
+			, NULL
 			, &totalBytes
 			);
 
-		rowPitch = bx::strideAlign(uint32_t(rowPitch), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+		const uint32_t rowPitch = layout.Footprint.RowPitch;
 
 		ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, totalBytes);
 		uint8_t* data;
