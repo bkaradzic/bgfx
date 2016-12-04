@@ -4377,8 +4377,9 @@ data.NumQualityLevels = 0;
 			, &totalBytes
 			);
 
-		ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, totalBytes);
+		rowPitch = bx::strideAlign(uint32_t(rowPitch), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 
+		ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, totalBytes);
 		uint8_t* data;
 
 		DX_CHECK(staging->Map(0, NULL, (void**)&data) );
