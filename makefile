@@ -42,6 +42,7 @@ projgen: ## Generate project files for all configurations.
 	$(GENIE) --with-tools --with-examples --with-shared-lib                     vs2012
 	$(GENIE) --with-tools --with-examples --with-shared-lib                     vs2013
 	$(GENIE) --with-tools --with-examples --with-shared-lib                     vs2015
+	$(GENIE) --with-tools --with-examples --with-shared-lib                     vs2017
 	$(GENIE) --with-tools --with-examples --with-shared-lib --gcc=mingw-gcc     gmake
 	$(GENIE) --with-tools --with-examples --with-shared-lib --gcc=linux-gcc     gmake
 	$(GENIE) --with-tools --with-examples --with-shared-lib --gcc=osx           gmake
@@ -175,6 +176,18 @@ vs2015-debug64: .build/projects/vs2015 ## Build - VS2015 x64 Debug
 vs2015-release64: .build/projects/vs2015 ## Build - VS2015 x64 Release
 	devenv .build/projects/vs2015/bgfx.sln /Build "Release|x64"
 vs2015: vs2015-debug32 vs2015-release32 vs2015-debug64 vs2015-release64 ## Build - VS2015 x86/x64 Debug and Release
+
+.build/projects/vs2017:
+	$(GENIE) --with-tools --with-examples --with-shared-lib vs2017
+vs2017-debug32: .build/projects/vs2017 ## Build - vs2017 x86 Debug
+	devenv .build/projects/vs2017/bgfx.sln /Build "Debug|Win32"
+vs2017-release32: .build/projects/vs2017 ## Build - vs2017 x86 Release
+	devenv .build/projects/vs2017/bgfx.sln /Build "Release|Win32"
+vs2017-debug64: .build/projects/vs2017 ## Build - vs2017 x64 Debug
+	devenv .build/projects/vs2017/bgfx.sln /Build "Debug|x64"
+vs2017-release64: .build/projects/vs2017 ## Build - vs2017 x64 Release
+	devenv .build/projects/vs2017/bgfx.sln /Build "Release|x64"
+vs2017: vs2017-debug32 vs2017-release32 vs2017-debug64 vs2017-release64 ## Build - vs2017 x86/x64 Debug and Release
 
 .build/projects/gmake-nacl:
 	$(GENIE) --gcc=nacl gmake
