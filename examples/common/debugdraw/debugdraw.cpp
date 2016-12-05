@@ -967,7 +967,7 @@ struct DebugDraw
 
 	void draw(const Disk& _disk)
 	{
-		BX_UNUSED(_disk);
+		drawCircle(_disk.m_normal, _disk.m_center, _disk.m_radius, 0.0f);
 	}
 
 	void draw(const Obb& _obb)

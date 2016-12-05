@@ -67,7 +67,13 @@ struct Intersection
 void aabbToObb(Obb& _obb, const Aabb& _aabb);
 
 /// Convert sphere to axis aligned bounding box.
-void sphereToAabb(Aabb& _aabb, const Sphere& _sphere);
+void toAabb(Aabb& _aabb, const Sphere& _sphere);
+
+/// Convert disk to axis aligned bounding box.
+void toAabb(Aabb& _aabb, const Disk& _disk);
+
+/// Convert cylinder to axis aligned bounding box.
+void toAabb(Aabb& _aabb, const Cylinder& _cylinder);
 
 /// Calculate surface area of axis aligned bounding box.
 float calcAabbArea(Aabb& _aabb);

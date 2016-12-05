@@ -206,6 +206,32 @@ class DebugDrawApp : public entry::AppI
 				}
 			ddPop();
 
+			ddPush();
+
+				float mtx[16];
+				bx::mtxSRT(mtx
+					, 1.0f, 1.0f, 1.0f
+					, 0.0f, time, time*0.53f
+					, -10.0f, 1.0f, 10.0f
+					);
+
+				Cylinder cylinder =
+				{
+					{ -10.0f, 1.0f, 10.0f },
+					{ 0.0f, 0.0f, 0.0f },
+					1.0f
+				};
+
+				float up[3] = { 0.0f, 4.0f, 0.0f };
+				bx::vec3MulMtx(cylinder.m_end, up, mtx);
+				ddDraw(cylinder);
+
+				toAabb(aabb, cylinder);
+				ddSetColor(0xff0000ff);
+				ddDraw(aabb);
+
+			ddPop();
+
 			ddDrawOrb(-11.0f, 0.0f, 0.0f, 1.0f);
 			ddEnd();
 

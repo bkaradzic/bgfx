@@ -19,11 +19,71 @@ void aabbToObb(Obb& _obb, const Aabb& _aabb)
 	_obb.m_mtx[15] = 1.0f;
 }
 
-void sphereToAabb(Aabb& _aabb, const Sphere& _sphere)
+void toAabb(Aabb& _aabb, const Sphere& _sphere)
 {
 	float radius = _sphere.m_radius;
 	bx::vec3Sub(_aabb.m_min, _sphere.m_center, radius);
 	bx::vec3Add(_aabb.m_max, _sphere.m_center, radius);
+}
+
+void toAabb(Aabb& _aabb, const Disk& _disk)
+{
+	// Reference: http://iquilezles.org/www/articles/diskbbox/diskbbox.htm
+	float nsq[3];
+	bx::vec3Mul(nsq, _disk.m_normal, _disk.m_normal);
+
+	float one[3] = { 1.0f, 1.0f, 1.0f };
+	float tmp[3];
+	bx::vec3Sub(tmp, one, nsq);
+
+	const float inv = 1.0f / (tmp[0]*tmp[1]*tmp[2]);
+
+	float extent[3];
+	extent[0] = _disk.m_radius * tmp[0] * bx::fsqrt( (nsq[0] + nsq[1] * nsq[2]) * inv);
+	extent[1] = _disk.m_radius * tmp[1] * bx::fsqrt( (nsq[1] + nsq[2] * nsq[0]) * inv);
+	extent[2] = _disk.m_radius * tmp[2] * bx::fsqrt( (nsq[2] + nsq[0] * nsq[1]) * inv);
+
+	bx::vec3Sub(_aabb.m_min, _disk.m_center, extent);
+	bx::vec3Add(_aabb.m_max, _disk.m_center, extent);
+}
+
+void toAabb(Aabb& _aabb, const Cylinder& _cylinder)
+{
+	// Reference: http://iquilezles.org/www/articles/diskbbox/diskbbox.htm
+	float axis[3];
+	bx::vec3Sub(axis, _cylinder.m_end, _cylinder.m_pos);
+
+	float asq[3];
+	bx::vec3Mul(asq, axis, axis);
+
+	float nsq[3];
+	bx::vec3Mul(nsq, asq, 1.0f/bx::vec3Dot(axis, axis) );
+
+	float one[3] = { 1.0f, 1.0f, 1.0f };
+	float tmp[3];
+	bx::vec3Sub(tmp, one, nsq);
+
+	const float inv = 1.0f / (tmp[0]*tmp[1]*tmp[2]);
+
+	float extent[3];
+	extent[0] = _cylinder.m_radius * tmp[0] * bx::fsqrt( (nsq[0] + nsq[1] * nsq[2]) * inv);
+	extent[1] = _cylinder.m_radius * tmp[1] * bx::fsqrt( (nsq[1] + nsq[2] * nsq[0]) * inv);
+	extent[2] = _cylinder.m_radius * tmp[2] * bx::fsqrt( (nsq[2] + nsq[0] * nsq[1]) * inv);
+
+	float minP[3];
+	bx::vec3Sub(minP, _cylinder.m_pos, extent);
+
+	float minE[3];
+	bx::vec3Sub(minE, _cylinder.m_end, extent);
+
+	float maxP[3];
+	bx::vec3Add(maxP, _cylinder.m_pos, extent);
+
+	float maxE[3];
+	bx::vec3Add(maxE, _cylinder.m_end, extent);
+
+	bx::vec3Min(_aabb.m_min, minP, minE);
+	bx::vec3Max(_aabb.m_max, maxP, maxE);
 }
 
 void aabbTransformToObb(Obb& _obb, const Aabb& _aabb, const float* _mtx)
