@@ -18,43 +18,43 @@
 #define BGFX_EMBEDDED_SHADER_METAL(...)
 
 #define BGFX_PLATFORM_SUPPORTS_DX9BC (0 \
-		|| BX_PLATFORM_WINDOWS \
-		|| BX_PLATFORM_XBOX360 \
+		|| BX_PLATFORM_WINDOWS          \
+		|| BX_PLATFORM_XBOX360          \
 		)
-#define BGFX_PLATFORM_SUPPORTS_DXBC (0 \
-		|| BX_PLATFORM_WINDOWS \
-		|| BX_PLATFORM_WINRT   \
-		|| BX_PLATFORM_XBOXONE \
+#define BGFX_PLATFORM_SUPPORTS_DXBC (0  \
+		|| BX_PLATFORM_WINDOWS          \
+		|| BX_PLATFORM_WINRT            \
+		|| BX_PLATFORM_XBOXONE          \
 		)
-#define BGFX_PLATFORM_SUPPORTS_PSSL (0 \
-		|| BX_PLATFORM_PS4 \
+#define BGFX_PLATFORM_SUPPORTS_PSSL (0  \
+		|| BX_PLATFORM_PS4              \
 		)
-#define BGFX_PLATFORM_SUPPORTS_ESSL (0 \
-		|| BX_PLATFORM_ANDROID    \
-		|| BX_PLATFORM_EMSCRIPTEN \
-		|| BX_PLATFORM_IOS        \
-		|| BX_PLATFORM_LINUX      \
-		|| BX_PLATFORM_NACL       \
-		|| BX_PLATFORM_OSX        \
-		|| BX_PLATFORM_QNX        \
-		|| BX_PLATFORM_RPI        \
-		|| BX_PLATFORM_STEAMLINK  \
-		|| BX_PLATFORM_WINDOWS    \
+#define BGFX_PLATFORM_SUPPORTS_ESSL (0  \
+		|| BX_PLATFORM_ANDROID          \
+		|| BX_PLATFORM_EMSCRIPTEN       \
+		|| BX_PLATFORM_IOS              \
+		|| BX_PLATFORM_LINUX            \
+		|| BX_PLATFORM_NACL             \
+		|| BX_PLATFORM_OSX              \
+		|| BX_PLATFORM_QNX              \
+		|| BX_PLATFORM_RPI              \
+		|| BX_PLATFORM_STEAMLINK        \
+		|| BX_PLATFORM_WINDOWS          \
 		)
-#define BGFX_PLATFORM_SUPPORTS_GLSL (0 \
-		|| BX_PLATFORM_BSD     \
-		|| BX_PLATFORM_LINUX   \
-		|| BX_PLATFORM_OSX     \
-		|| BX_PLATFORM_WINDOWS \
+#define BGFX_PLATFORM_SUPPORTS_GLSL (0  \
+		|| BX_PLATFORM_BSD              \
+		|| BX_PLATFORM_LINUX            \
+		|| BX_PLATFORM_OSX              \
+		|| BX_PLATFORM_WINDOWS          \
 		)
 #define BGFX_PLATFORM_SUPPORTS_METAL (0 \
-		|| BX_PLATFORM_IOS \
-		|| BX_PLATFORM_OSX \
+		|| BX_PLATFORM_IOS              \
+		|| BX_PLATFORM_OSX              \
 		)
 #define BGFX_PLATFORM_SUPPORTS_SPIRV (0 \
-		|| BX_PLATFORM_ANDROID \
-		|| BX_PLATFORM_LINUX   \
-		|| BX_PLATFORM_WINDOWS \
+		|| BX_PLATFORM_ANDROID          \
+		|| BX_PLATFORM_LINUX            \
+		|| BX_PLATFORM_WINDOWS          \
 		)
 
 #if BGFX_PLATFORM_SUPPORTS_DX9BC
