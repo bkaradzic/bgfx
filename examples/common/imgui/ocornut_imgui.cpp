@@ -4,6 +4,7 @@
  */
 
 #include <bgfx/bgfx.h>
+#include <bgfx/embedded_shader.h>
 #include <bx/allocator.h>
 #include <bx/fpumath.h>
 #include <bx/timer.h>
@@ -35,6 +36,12 @@
 #include "robotomono_regular.ttf.h"
 #include "icons_kenney.ttf.h"
 #include "icons_font_awesome.ttf.h"
+
+static const bgfx::EmbeddedShader s_embeddedShaders[] =
+{
+	BGFX_EMBEDDED_SHADER(vs_ocornut_imgui),
+	BGFX_EMBEDDED_SHADER(fs_ocornut_imgui),
+};
 
 struct FontRangeMerge
 {
@@ -190,36 +197,12 @@ struct OcornutImguiContext
 		io.KeyMap[ImGuiKey_Z]          = (int)entry::Key::KeyZ;
 #endif // defined(SCI_NAMESPACE)
 
-		const bgfx::Memory* vsmem;
-		const bgfx::Memory* fsmem;
-
-		switch (bgfx::getRendererType() )
-		{
-		case bgfx::RendererType::Direct3D9:
-			vsmem = bgfx::makeRef(vs_ocornut_imgui_dx9, sizeof(vs_ocornut_imgui_dx9) );
-			fsmem = bgfx::makeRef(fs_ocornut_imgui_dx9, sizeof(fs_ocornut_imgui_dx9) );
-			break;
-
-		case bgfx::RendererType::Direct3D11:
-		case bgfx::RendererType::Direct3D12:
-			vsmem = bgfx::makeRef(vs_ocornut_imgui_dx11, sizeof(vs_ocornut_imgui_dx11) );
-			fsmem = bgfx::makeRef(fs_ocornut_imgui_dx11, sizeof(fs_ocornut_imgui_dx11) );
-			break;
-
-		case bgfx::RendererType::Metal:
-			vsmem = bgfx::makeRef(vs_ocornut_imgui_mtl, sizeof(vs_ocornut_imgui_mtl) );
-			fsmem = bgfx::makeRef(fs_ocornut_imgui_mtl, sizeof(fs_ocornut_imgui_mtl) );
-			break;
-
-		default:
-			vsmem = bgfx::makeRef(vs_ocornut_imgui_glsl, sizeof(vs_ocornut_imgui_glsl) );
-			fsmem = bgfx::makeRef(fs_ocornut_imgui_glsl, sizeof(fs_ocornut_imgui_glsl) );
-			break;
-		}
-
-		bgfx::ShaderHandle vsh = bgfx::createShader(vsmem);
-		bgfx::ShaderHandle fsh = bgfx::createShader(fsmem);
-		m_program = bgfx::createProgram(vsh, fsh, true);
+		bgfx::RendererType::Enum type = bgfx::getRendererType();
+		m_program = bgfx::createProgram(
+			  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_ocornut_imgui")
+			, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_ocornut_imgui")
+			, true
+			);
 
 		m_decl
 			.begin()
