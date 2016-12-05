@@ -11,6 +11,7 @@
 #endif // BX_PLATFORM_WINDOWS
 
 #include "bgfx_p.h"
+#include <bgfx/embedded_shader.h>
 
 #if BGFX_CONFIG_PROFILER_REMOTERY_BUILD_LIB
 #	define RMT_USE_D3D11 BGFX_CONFIG_RENDERER_DIRECT3D11
@@ -440,65 +441,34 @@ namespace bgfx
 #include "fs_clear6.bin.h"
 #include "fs_clear7.bin.h"
 
-	struct EmbeddedShader
-	{
-		struct Data
-		{
-			bgfx::RendererType::Enum type;
-			const uint8_t* data;
-			uint32_t size;
-		};
-
-		const char* name;
-		Data data[RendererType::Count];
-	};
-
-#define BGFX_DECLARE_SHADER_EMBEDDED(_name)                                                                           \
-	{                                                                                                                 \
-		#_name,                                                                                                       \
-		{                                                                                                             \
-			{ bgfx::RendererType::Direct3D9,  BX_CONCATENATE(_name, _dx9 ),  sizeof(BX_CONCATENATE(_name, _dx9 ) ) }, \
-			{ bgfx::RendererType::Direct3D11, BX_CONCATENATE(_name, _dx11),  sizeof(BX_CONCATENATE(_name, _dx11) ) }, \
-			{ bgfx::RendererType::Direct3D12, BX_CONCATENATE(_name, _dx11),  sizeof(BX_CONCATENATE(_name, _dx11) ) }, \
-			{ bgfx::RendererType::Gnm,        BX_CONCATENATE(_name, _pssl),  BX_CONCATENATE(_name, _pssl_size)     }, \
-			{ bgfx::RendererType::Metal,      BX_CONCATENATE(_name, _mtl ),  sizeof(BX_CONCATENATE(_name, _mtl ) ) }, \
-			{ bgfx::RendererType::OpenGL,     BX_CONCATENATE(_name, _glsl),  sizeof(BX_CONCATENATE(_name, _glsl) ) }, \
-			{ bgfx::RendererType::OpenGLES,   BX_CONCATENATE(_name, _glsl),  sizeof(BX_CONCATENATE(_name, _glsl) ) }, \
-			{ bgfx::RendererType::Vulkan,     BX_CONCATENATE(_name, _glsl),  sizeof(BX_CONCATENATE(_name, _glsl) ) }, \
-			{ bgfx::RendererType::Count,      NULL,                          0                                     }, \
-		}                                                                                                             \
-	}
-
 	static const EmbeddedShader s_embeddedShaders[] =
 	{
-		BGFX_DECLARE_SHADER_EMBEDDED(vs_debugfont),
-		BGFX_DECLARE_SHADER_EMBEDDED(fs_debugfont),
+		BGFX_EMBEDDED_SHADER(vs_debugfont),
+		BGFX_EMBEDDED_SHADER(fs_debugfont),
+		BGFX_EMBEDDED_SHADER(vs_clear),
+		BGFX_EMBEDDED_SHADER(fs_clear0),
+		BGFX_EMBEDDED_SHADER(fs_clear1),
+		BGFX_EMBEDDED_SHADER(fs_clear2),
+		BGFX_EMBEDDED_SHADER(fs_clear3),
+		BGFX_EMBEDDED_SHADER(fs_clear4),
+		BGFX_EMBEDDED_SHADER(fs_clear5),
+		BGFX_EMBEDDED_SHADER(fs_clear6),
+		BGFX_EMBEDDED_SHADER(fs_clear7),
 
-		BGFX_DECLARE_SHADER_EMBEDDED(vs_clear),
-
-		BGFX_DECLARE_SHADER_EMBEDDED(fs_clear0),
-		BGFX_DECLARE_SHADER_EMBEDDED(fs_clear1),
-		BGFX_DECLARE_SHADER_EMBEDDED(fs_clear2),
-		BGFX_DECLARE_SHADER_EMBEDDED(fs_clear3),
-		BGFX_DECLARE_SHADER_EMBEDDED(fs_clear4),
-		BGFX_DECLARE_SHADER_EMBEDDED(fs_clear5),
-		BGFX_DECLARE_SHADER_EMBEDDED(fs_clear6),
-		BGFX_DECLARE_SHADER_EMBEDDED(fs_clear7),
-
-		{ NULL, { { bgfx::RendererType::Count, NULL, 0 } } }
+		BGFX_EMBEDDED_SHADER_END()
 	};
 
-	static ShaderHandle createEmbeddedShader(RendererType::Enum _type, const char* _name)
+	ShaderHandle createEmbeddedShader(const EmbeddedShader* _es, RendererType::Enum _type, const char* _name)
 	{
-		for (const EmbeddedShader* es = s_embeddedShaders; NULL != es->name; ++es)
+		for (const EmbeddedShader* es = _es; NULL != es->name; ++es)
 		{
-			if (0 == strcmp(_name, es->name) )
+			if (0 == strcmp(_name, es->name))
 			{
 				for (const EmbeddedShader::Data* esd = es->data; RendererType::Count != esd->type; ++esd)
 				{
 					if (_type == esd->type)
 					{
-						return createShader(makeRef(esd->data, esd->size) );
+						return createShader(makeRef(esd->data, esd->size));
 					}
 				}
 			}
@@ -634,8 +604,8 @@ namespace bgfx
 						, mem
 						);
 
-		ShaderHandle vsh = createEmbeddedShader(g_caps.rendererType, "vs_debugfont");
-		ShaderHandle fsh = createEmbeddedShader(g_caps.rendererType, "fs_debugfont");
+		ShaderHandle vsh = createEmbeddedShader(s_embeddedShaders, g_caps.rendererType, "vs_debugfont");
+		ShaderHandle fsh = createEmbeddedShader(s_embeddedShaders, g_caps.rendererType, "fs_debugfont");
 
 		m_program = createProgram(vsh, fsh, true);
 
@@ -774,13 +744,13 @@ namespace bgfx
 				.add(Attrib::Position, 3, AttribType::Float)
 				.end();
 
-			ShaderHandle vsh = createEmbeddedShader(g_caps.rendererType, "vs_clear");
+			ShaderHandle vsh = createEmbeddedShader(s_embeddedShaders, g_caps.rendererType, "vs_clear");
 
 			for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
 			{
 				char name[32];
 				bx::snprintf(name, BX_COUNTOF(name), "fs_clear%d", ii);
-				ShaderHandle fsh = createEmbeddedShader(g_caps.rendererType, name);
+				ShaderHandle fsh = createEmbeddedShader(s_embeddedShaders, g_caps.rendererType, name);
 
 				m_program[ii] = createProgram(vsh, fsh);
 				BX_CHECK(isValid(m_program[ii]), "Failed to create clear quad program.");

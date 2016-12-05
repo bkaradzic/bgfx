@@ -4,6 +4,7 @@
  */
 
 #include <bgfx/bgfx.h>
+#include <bgfx/embedded_shader.h>
 #include "debugdraw.h"
 
 #include <bx/fpumath.h>
@@ -277,51 +278,18 @@ void getPoint(float* _result, Axis::Enum _axis, float _x, float _y)
 #include "vs_debugdraw_fill_lit.bin.h"
 #include "fs_debugdraw_fill_lit.bin.h"
 
-struct EmbeddedShader
+static const bgfx::EmbeddedShader s_embeddedShaders[] =
 {
-	bgfx::RendererType::Enum type;
-	const uint8_t* data;
-	uint32_t size;
+	BGFX_EMBEDDED_SHADER(vs_debugdraw_lines),
+	BGFX_EMBEDDED_SHADER(fs_debugdraw_lines),
+	BGFX_EMBEDDED_SHADER(vs_debugdraw_lines_stipple),
+	BGFX_EMBEDDED_SHADER(fs_debugdraw_lines_stipple),
+	BGFX_EMBEDDED_SHADER(vs_debugdraw_fill),
+	BGFX_EMBEDDED_SHADER(fs_debugdraw_fill),
+	BGFX_EMBEDDED_SHADER(vs_debugdraw_fill_lit),
+	BGFX_EMBEDDED_SHADER(fs_debugdraw_fill_lit),
+	BGFX_EMBEDDED_SHADER_END()
 };
-
-#define BGFX_DECLARE_SHADER_EMBEDDED(_name) \
-			{ \
-				{ bgfx::RendererType::Direct3D9,  BX_CONCATENATE(_name, _dx9 ),  sizeof(BX_CONCATENATE(_name, _dx9 ) ) }, \
-				{ bgfx::RendererType::Direct3D11, BX_CONCATENATE(_name, _dx11),  sizeof(BX_CONCATENATE(_name, _dx11) ) }, \
-				{ bgfx::RendererType::Direct3D12, BX_CONCATENATE(_name, _dx11),  sizeof(BX_CONCATENATE(_name, _dx11) ) }, \
-				{ bgfx::RendererType::OpenGL,     BX_CONCATENATE(_name, _glsl),  sizeof(BX_CONCATENATE(_name, _glsl) ) }, \
-				{ bgfx::RendererType::OpenGLES,   BX_CONCATENATE(_name, _glsl),  sizeof(BX_CONCATENATE(_name, _glsl) ) }, \
-				{ bgfx::RendererType::Vulkan,     BX_CONCATENATE(_name, _glsl),  sizeof(BX_CONCATENATE(_name, _glsl) ) }, \
-				{ bgfx::RendererType::Metal,      BX_CONCATENATE(_name, _mtl ),  sizeof(BX_CONCATENATE(_name, _mtl ) ) }, \
-				{ bgfx::RendererType::Noop,       BX_CONCATENATE(_name, _glsl),  sizeof(BX_CONCATENATE(_name, _glsl) ) }, \
-				{ bgfx::RendererType::Count,      NULL,                          0                                     }, \
-			}
-
-static const EmbeddedShader s_embeddedShaders[][9] =
-{
-	BGFX_DECLARE_SHADER_EMBEDDED(vs_debugdraw_lines),
-	BGFX_DECLARE_SHADER_EMBEDDED(fs_debugdraw_lines),
-	BGFX_DECLARE_SHADER_EMBEDDED(vs_debugdraw_lines_stipple),
-	BGFX_DECLARE_SHADER_EMBEDDED(fs_debugdraw_lines_stipple),
-	BGFX_DECLARE_SHADER_EMBEDDED(vs_debugdraw_fill),
-	BGFX_DECLARE_SHADER_EMBEDDED(fs_debugdraw_fill),
-	BGFX_DECLARE_SHADER_EMBEDDED(vs_debugdraw_fill_lit),
-	BGFX_DECLARE_SHADER_EMBEDDED(fs_debugdraw_fill_lit),
-};
-
-static bgfx::ShaderHandle createEmbeddedShader(bgfx::RendererType::Enum _type, uint32_t _index)
-{
-	for (const EmbeddedShader* es = s_embeddedShaders[_index]; bgfx::RendererType::Count != es->type; ++es)
-	{
-		if (_type == es->type)
-		{
-			return bgfx::createShader(bgfx::makeRef(es->data, es->size) );
-		}
-	}
-
-	bgfx::ShaderHandle handle = BGFX_INVALID_HANDLE;
-	return handle;
-}
 
 struct DebugDraw
 {
@@ -350,28 +318,32 @@ struct DebugDraw
 		bgfx::RendererType::Enum type = bgfx::getRendererType();
 
 		m_program[Program::Lines] =
-			bgfx::createProgram(createEmbeddedShader(type, 0)
-							, createEmbeddedShader(type, 1)
-							, true
-							);
+			bgfx::createProgram(
+				  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_debugdraw_lines")
+				, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_debugdraw_lines")
+				, true
+				);
 
 		m_program[Program::LinesStipple] =
-			bgfx::createProgram(createEmbeddedShader(type, 2)
-							, createEmbeddedShader(type, 3)
-							, true
-							);
+			bgfx::createProgram(
+				  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_debugdraw_lines_stipple")
+				, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_debugdraw_lines_stipple")
+				, true
+				);
 
 		m_program[Program::Fill] =
-			bgfx::createProgram(createEmbeddedShader(type, 4)
-							, createEmbeddedShader(type, 5)
-							, true
-							);
+			bgfx::createProgram(
+				  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_debugdraw_fill")
+				, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_debugdraw_fill")
+				, true
+				);
 
 		m_program[Program::FillLit] =
-			bgfx::createProgram(createEmbeddedShader(type, 6)
-							, createEmbeddedShader(type, 7)
-							, true
-							);
+			bgfx::createProgram(
+				  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_debugdraw_fill_lit")
+				, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_debugdraw_fill_lit")
+				, true
+				);
 
 		u_params = bgfx::createUniform("u_params", bgfx::UniformType::Vec4, 4);
 
