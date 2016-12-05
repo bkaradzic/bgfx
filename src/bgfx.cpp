@@ -478,7 +478,6 @@ namespace bgfx
 		return handle;
 	}
 
-
 #include "charset.h"
 
 	void charsetFillTexture(const uint8_t* _charset, uint8_t* _rgba, uint32_t _height, uint32_t _pitch, uint32_t _bpp)
