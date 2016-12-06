@@ -62,6 +62,8 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] =
 	BGFX_EMBEDDED_SHADER(vs_imgui_image),
 	BGFX_EMBEDDED_SHADER(fs_imgui_image),
 	BGFX_EMBEDDED_SHADER(fs_imgui_image_swizz),
+
+	BGFX_EMBEDDED_SHADER_END()
 };
 
 // embedded font

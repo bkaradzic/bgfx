@@ -199,3 +199,5 @@ static const uint8_t vs_debugdraw_fill_lit_mtl[881] =
 	0x74, 0x75, 0x72, 0x6e, 0x20, 0x5f, 0x6d, 0x74, 0x6c, 0x5f, 0x6f, 0x3b, 0x0a, 0x7d, 0x0a, 0x0a, // turn _mtl_o;.}..
 	0x00,                                                                                           // .
 };
+extern const uint8_t* vs_debugdraw_fill_lit_pssl;
+extern const uint32_t vs_debugdraw_fill_lit_pssl_size;

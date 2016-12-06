@@ -288,6 +288,7 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] =
 	BGFX_EMBEDDED_SHADER(fs_debugdraw_fill),
 	BGFX_EMBEDDED_SHADER(vs_debugdraw_fill_lit),
 	BGFX_EMBEDDED_SHADER(fs_debugdraw_fill_lit),
+
 	BGFX_EMBEDDED_SHADER_END()
 };
 

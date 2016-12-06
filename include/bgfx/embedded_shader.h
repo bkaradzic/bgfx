@@ -122,7 +122,7 @@ namespace bgfx
 	{
 		struct Data
 		{
-			bgfx::RendererType::Enum type;
+			RendererType::Enum type;
 			const uint8_t* data;
 			uint32_t size;
 		};

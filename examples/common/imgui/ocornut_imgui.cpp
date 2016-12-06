@@ -41,6 +41,8 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] =
 {
 	BGFX_EMBEDDED_SHADER(vs_ocornut_imgui),
 	BGFX_EMBEDDED_SHADER(fs_ocornut_imgui),
+
+	BGFX_EMBEDDED_SHADER_END()
 };
 
 struct FontRangeMerge

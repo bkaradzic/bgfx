@@ -36,17 +36,19 @@
 
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4244); // warning C4244: '=' : conversion from '' to '', possible loss of data
 
-namespace
-{
 #include "vs_nanovg_fill.bin.h"
 #include "fs_nanovg_fill.bin.h"
 
-	static const bgfx::EmbeddedShader s_embeddedShaders[] =
-	{
-		BGFX_EMBEDDED_SHADER(vs_nanovg_fill),
-		BGFX_EMBEDDED_SHADER(fs_nanovg_fill),
-	};
+static const bgfx::EmbeddedShader s_embeddedShaders[] =
+{
+	BGFX_EMBEDDED_SHADER(vs_nanovg_fill),
+	BGFX_EMBEDDED_SHADER(fs_nanovg_fill),
 
+	BGFX_EMBEDDED_SHADER_END()
+};
+
+namespace
+{
 	static bgfx::VertexDecl s_nvgDecl;
 
 	enum GLNVGshaderType

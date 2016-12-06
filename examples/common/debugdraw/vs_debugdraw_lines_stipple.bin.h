@@ -147,3 +147,5 @@ static const uint8_t vs_debugdraw_lines_stipple_mtl[771] =
 	0x72, 0x65, 0x74, 0x75, 0x72, 0x6e, 0x20, 0x5f, 0x6d, 0x74, 0x6c, 0x5f, 0x6f, 0x3b, 0x0a, 0x7d, // return _mtl_o;.}
 	0x0a, 0x0a, 0x00,                                                                               // ...
 };
+extern const uint8_t* vs_debugdraw_lines_stipple_pssl;
+extern const uint32_t vs_debugdraw_lines_stipple_pssl_size;
