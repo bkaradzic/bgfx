@@ -94,15 +94,7 @@ void aabbTransformToObb(Obb& _obb, const Aabb& _aabb, const float* _mtx)
 	memcpy(_obb.m_mtx, result, sizeof(result) );
 }
 
-float calcAreaAabb(Aabb& _aabb)
-{
-	float ww = _aabb.m_max[0] - _aabb.m_min[0];
-	float hh = _aabb.m_max[1] - _aabb.m_min[1];
-	float dd = _aabb.m_max[2] - _aabb.m_min[2];
-	return 2.0f * (ww*hh + ww*dd + hh*dd);
-}
-
-void calcAabb(Aabb& _aabb, const void* _vertices, uint32_t _numVertices, uint32_t _stride)
+void toAabb(Aabb& _aabb, const void* _vertices, uint32_t _numVertices, uint32_t _stride)
 {
 	float min[3], max[3];
 	uint8_t* vertex = (uint8_t*)_vertices;
@@ -136,7 +128,7 @@ void calcAabb(Aabb& _aabb, const void* _vertices, uint32_t _numVertices, uint32_
 	_aabb.m_max[2] = max[2];
 }
 
-void calcAabb(Aabb& _aabb, const float* _mtx, const void* _vertices, uint32_t _numVertices, uint32_t _stride)
+void toAabb(Aabb& _aabb, const float* _mtx, const void* _vertices, uint32_t _numVertices, uint32_t _stride)
 {
 	float min[3], max[3];
 	uint8_t* vertex = (uint8_t*)_vertices;
@@ -172,6 +164,14 @@ void calcAabb(Aabb& _aabb, const float* _mtx, const void* _vertices, uint32_t _n
 	_aabb.m_max[2] = max[2];
 }
 
+float calcAreaAabb(const Aabb& _aabb)
+{
+	float ww = _aabb.m_max[0] - _aabb.m_min[0];
+	float hh = _aabb.m_max[1] - _aabb.m_min[1];
+	float dd = _aabb.m_max[2] - _aabb.m_min[2];
+	return 2.0f * (ww*hh + ww*dd + hh*dd);
+}
+
 void aabbExpand(Aabb& _aabb, float _factor)
 {
 	_aabb.m_min[0] -= _factor;
@@ -204,7 +204,7 @@ uint32_t aabbOverlapTest(const Aabb& _aabb0, const Aabb& _aabb1)
 void calcObb(Obb& _obb, const void* _vertices, uint32_t _numVertices, uint32_t _stride, uint32_t _steps)
 {
 	Aabb aabb;
-	calcAabb(aabb, _vertices, _numVertices, _stride);
+	toAabb(aabb, _vertices, _numVertices, _stride);
 	float minArea = calcAreaAabb(aabb);
 
 	Obb best;
@@ -228,7 +228,7 @@ void calcObb(Obb& _obb, const void* _vertices, uint32_t _numVertices, uint32_t _
 
 				float mtxT[16];
 				bx::mtxTranspose(mtxT, mtx);
-				calcAabb(aabb, mtxT, _vertices, _numVertices, _stride);
+				toAabb(aabb, mtxT, _vertices, _numVertices, _stride);
 
 				float area = calcAreaAabb(aabb);
 				if (area < minArea)
@@ -252,7 +252,7 @@ void calcObb(Obb& _obb, const void* _vertices, uint32_t _numVertices, uint32_t _
 void calcMaxBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _numVertices, uint32_t _stride)
 {
 	Aabb aabb;
-	calcAabb(aabb, _vertices, _numVertices, _stride);
+	toAabb(aabb, _vertices, _numVertices, _stride);
 
 	float center[3];
 	center[0] = (aabb.m_min[0] + aabb.m_max[0]) * 0.5f;

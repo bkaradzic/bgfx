@@ -75,17 +75,17 @@ void toAabb(Aabb& _aabb, const Disk& _disk);
 /// Convert cylinder to axis aligned bounding box.
 void toAabb(Aabb& _aabb, const Cylinder& _cylinder);
 
-/// Calculate surface area of axis aligned bounding box.
-float calcAabbArea(Aabb& _aabb);
-
 /// Calculate axis aligned bounding box.
-void calcAabb(Aabb& _aabb, const void* _vertices, uint32_t _numVertices, uint32_t _stride);
+void toAabb(Aabb& _aabb, const void* _vertices, uint32_t _numVertices, uint32_t _stride);
 
 /// Transform vertices and calculate axis aligned bounding box.
-void calcAabb(Aabb& _aabb, const float* _mtx, const void* _vertices, uint32_t _numVertices, uint32_t _stride);
+void toAabb(Aabb& _aabb, const float* _mtx, const void* _vertices, uint32_t _numVertices, uint32_t _stride);
 
 /// Expand AABB.
 void aabbExpand(Aabb& _aabb, float _factor);
+
+/// Calculate surface area of axis aligned bounding box.
+float calcAreaAabb(const Aabb& _aabb);
 
 /// Returns 0 is two AABB don't overlap, otherwise returns flags of overlap
 /// test.
