@@ -907,7 +907,10 @@ namespace bgfx
 			uint32_t num = *_num;
 			BX_WARN(m_num+num < BGFX_CONFIG_MAX_MATRIX_CACHE, "Matrix cache overflow. %d (max: %d)", m_num+num, BGFX_CONFIG_MAX_MATRIX_CACHE);
 			num = bx::uint32_min(num, BGFX_CONFIG_MAX_MATRIX_CACHE-m_num);
-			uint32_t first = m_num;
+			uint32_t first = m_num < BGFX_CONFIG_MAX_MATRIX_CACHE
+				? m_num
+				: BGFX_CONFIG_MAX_MATRIX_CACHE - 1
+				;
 			m_num += num;
 			*_num = (uint16_t)num;
 			return first;
