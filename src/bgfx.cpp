@@ -467,7 +467,7 @@ namespace bgfx
 				for (const EmbeddedShader::Data* esd = es->data; RendererType::Count != esd->type; ++esd)
 				{
 					if (_type == esd->type
-					&&  0 < esd->size)
+					&&  1 < esd->size)
 					{
 						return createShader(makeRef(esd->data, esd->size) );
 					}
