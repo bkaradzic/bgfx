@@ -139,7 +139,7 @@ namespace bgfx
 #include <bx/os.h>
 #include <bx/maputil.h>
 
-#include <bgfx/bgfxplatform.h>
+#include <bgfx/platform.h>
 #include "image.h"
 #include "shader.h"
 

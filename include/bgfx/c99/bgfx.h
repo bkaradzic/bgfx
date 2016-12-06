@@ -39,7 +39,7 @@
 #   define BGFX_C_API BGFX_SHARED_LIB_API
 #endif // defined(__cplusplus)
 
-#include <bgfx/bgfxdefines.h>
+#include <bgfx/defines.h>
 
 typedef enum bgfx_renderer_type
 {

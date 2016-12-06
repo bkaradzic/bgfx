@@ -20,7 +20,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wextern-c-compat")
 #include <SDL2/SDL_syswm.h>
 BX_PRAGMA_DIAGNOSTIC_POP()
 
-#include <bgfx/bgfxplatform.h>
+#include <bgfx/platform.h>
 #if defined(None) // X11 defines this...
 #	undef None
 #endif // defined(None)

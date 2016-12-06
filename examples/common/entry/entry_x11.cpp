@@ -11,7 +11,7 @@
 #define XK_LATIN1
 #include <X11/keysymdef.h>
 #include <X11/Xlib.h> // will include X11 which #defines None... Don't mess with order of includes.
-#include <bgfx/bgfxplatform.h>
+#include <bgfx/platform.h>
 
 #undef None
 #include <bx/thread.h>

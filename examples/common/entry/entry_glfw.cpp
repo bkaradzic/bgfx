@@ -26,7 +26,7 @@
 #endif //
 #include <GLFW/glfw3native.h>
 
-#include <bgfx/bgfxplatform.h>
+#include <bgfx/platform.h>
 
 #include <bx/thread.h>
 #include <bx/handlealloc.h>

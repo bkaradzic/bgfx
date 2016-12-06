@@ -7,7 +7,7 @@
 
 #if BX_PLATFORM_WINRT || BX_PLATFORM_XBOXONE
 
-#include <bgfx/bgfxplatform.h>
+#include <bgfx/platform.h>
 #include <bx/thread.h>
 #include <bx/fpumath.h>
 #include <Unknwn.h>
