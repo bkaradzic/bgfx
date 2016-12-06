@@ -286,7 +286,7 @@ void write(bx::WriterI* _writer, const void* _vertices, uint32_t _numVertices, u
 	}
 
 	Aabb aabb;
-	calcAabb(aabb, _vertices, _numVertices, _stride);
+	toAabb(aabb, _vertices, _numVertices, _stride);
 	bx::write(_writer, aabb);
 
 	Obb obb;
