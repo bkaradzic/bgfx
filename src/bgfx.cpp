@@ -462,13 +462,14 @@ namespace bgfx
 	{
 		for (const EmbeddedShader* es = _es; NULL != es->name; ++es)
 		{
-			if (0 == strcmp(_name, es->name))
+			if (0 == strcmp(_name, es->name) )
 			{
 				for (const EmbeddedShader::Data* esd = es->data; RendererType::Count != esd->type; ++esd)
 				{
-					if (_type == esd->type)
+					if (_type == esd->type
+					&&  0 < esd->size)
 					{
-						return createShader(makeRef(esd->data, esd->size));
+						return createShader(makeRef(esd->data, esd->size) );
 					}
 				}
 			}
