@@ -578,7 +578,7 @@ class ExampleDeferred : public entry::AppI
 					lightPosRadius.m_radius = 2.0f;
 
 					Aabb aabb;
-					sphereToAabb(aabb, lightPosRadius);
+					toAabb(aabb, lightPosRadius);
 
 					float box[8][3] =
 					{
