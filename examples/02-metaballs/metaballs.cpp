@@ -6,9 +6,19 @@
 #include "common.h"
 #include "bgfx_utils.h"
 
+#include <bgfx/embedded_shader.h>
+
 // embedded shaders
 #include "vs_metaballs.bin.h"
 #include "fs_metaballs.bin.h"
+
+static const bgfx::EmbeddedShader s_embeddedShaders[] =
+{
+	BGFX_EMBEDDED_SHADER(vs_metaballs),
+	BGFX_EMBEDDED_SHADER(fs_metaballs),
+
+	BGFX_EMBEDDED_SHADER_END()
+};
 
 struct PosNormalColorVertex
 {
@@ -490,35 +500,10 @@ class ExampleMetaballs : public entry::AppI
 		// Create vertex stream declaration.
 		PosNormalColorVertex::init();
 
-		const bgfx::Memory* vs_metaballs;
-		const bgfx::Memory* fs_metaballs;
+		bgfx::RendererType::Enum type = bgfx::getRendererType();
 
-		switch (bgfx::getRendererType() )
-		{
-			case bgfx::RendererType::Direct3D9:
-				vs_metaballs = bgfx::makeRef(vs_metaballs_dx9, sizeof(vs_metaballs_dx9) );
-				fs_metaballs = bgfx::makeRef(fs_metaballs_dx9, sizeof(fs_metaballs_dx9) );
-				break;
-
-			case bgfx::RendererType::Direct3D11:
-			case bgfx::RendererType::Direct3D12:
-				vs_metaballs = bgfx::makeRef(vs_metaballs_dx11, sizeof(vs_metaballs_dx11) );
-				fs_metaballs = bgfx::makeRef(fs_metaballs_dx11, sizeof(fs_metaballs_dx11) );
-				break;
-
-			case bgfx::RendererType::Metal:
-				vs_metaballs = bgfx::makeRef(vs_metaballs_mtl, sizeof(vs_metaballs_mtl) );
-				fs_metaballs = bgfx::makeRef(fs_metaballs_mtl, sizeof(fs_metaballs_mtl) );
-				break;
-
-			default:
-				vs_metaballs = bgfx::makeRef(vs_metaballs_glsl, sizeof(vs_metaballs_glsl) );
-				fs_metaballs = bgfx::makeRef(fs_metaballs_glsl, sizeof(fs_metaballs_glsl) );
-				break;
-		}
-
-		bgfx::ShaderHandle vsh = bgfx::createShader(vs_metaballs);
-		bgfx::ShaderHandle fsh = bgfx::createShader(fs_metaballs);
+		bgfx::ShaderHandle vsh = bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_metaballs");
+		bgfx::ShaderHandle fsh = bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_metaballs");
 
 		// Create program from shaders.
 		m_program = bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);
