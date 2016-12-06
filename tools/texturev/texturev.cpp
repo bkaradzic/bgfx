@@ -17,12 +17,6 @@
 
 #include <dirent.h>
 
-#include "vs_texture.bin.h"
-#include "fs_texture.bin.h"
-#include "fs_texture_array.bin.h"
-#include "vs_texture_cube.bin.h"
-#include "fs_texture_cube.bin.h"
-
 #include <bx/crtimpl.h>
 
 #include <tinystl/allocator.h>
@@ -31,6 +25,25 @@
 namespace stl = tinystl;
 
 #include "image.h"
+
+#include <bgfx/embedded_shader.h>
+
+#include "vs_texture.bin.h"
+#include "fs_texture.bin.h"
+#include "fs_texture_array.bin.h"
+#include "vs_texture_cube.bin.h"
+#include "fs_texture_cube.bin.h"
+
+static const bgfx::EmbeddedShader s_embeddedShaders[] =
+{
+	BGFX_EMBEDDED_SHADER(vs_texture),
+	BGFX_EMBEDDED_SHADER(fs_texture),
+	BGFX_EMBEDDED_SHADER(fs_texture_array),
+	BGFX_EMBEDDED_SHADER(vs_texture_cube),
+	BGFX_EMBEDDED_SHADER(fs_texture_cube),
+
+	BGFX_EMBEDDED_SHADER_END()
+};
 
 static const char* s_supportedExt[] =
 {
@@ -644,43 +657,11 @@ int _main_(int _argc, char** _argv)
 
 	PosUvColorVertex::init();
 
-	const bgfx::Memory* vs_texture;
-	const bgfx::Memory* fs_texture;
-	const bgfx::Memory* fs_texture_array;
-	const bgfx::Memory* vs_texture_cube;
-	const bgfx::Memory* fs_texture_cube;
+	bgfx::RendererType::Enum type = bgfx::getRendererType();
 
-	switch (bgfx::getRendererType())
-	{
-	case bgfx::RendererType::Direct3D9:
-		vs_texture       = bgfx::makeRef(vs_texture_dx9,      sizeof(vs_texture_dx9) );
-		fs_texture       = bgfx::makeRef(fs_texture_dx9,      sizeof(fs_texture_dx9) );
-		fs_texture_array = NULL;
-		vs_texture_cube  = bgfx::makeRef(vs_texture_cube_dx9, sizeof(vs_texture_cube_dx9) );
-		fs_texture_cube  = bgfx::makeRef(fs_texture_cube_dx9, sizeof(fs_texture_cube_dx9) );
-		break;
-
-	case bgfx::RendererType::Direct3D11:
-	case bgfx::RendererType::Direct3D12:
-		vs_texture       = bgfx::makeRef(vs_texture_dx11,       sizeof(vs_texture_dx11) );
-		fs_texture       = bgfx::makeRef(fs_texture_dx11,       sizeof(fs_texture_dx11) );
-		fs_texture_array = bgfx::makeRef(fs_texture_array_dx11, sizeof(fs_texture_dx11) );
-		vs_texture_cube  = bgfx::makeRef(vs_texture_cube_dx11,  sizeof(vs_texture_cube_dx11) );
-		fs_texture_cube  = bgfx::makeRef(fs_texture_cube_dx11,  sizeof(fs_texture_cube_dx11) );
-		break;
-
-	default:
-		vs_texture       = bgfx::makeRef(vs_texture_glsl,       sizeof(vs_texture_glsl) );
-		fs_texture       = bgfx::makeRef(fs_texture_glsl,       sizeof(fs_texture_glsl) );
-		fs_texture_array = bgfx::makeRef(fs_texture_array_glsl, sizeof(fs_texture_array_glsl) );
-		fs_texture       = bgfx::makeRef(fs_texture_glsl,       sizeof(fs_texture_glsl) );
-		vs_texture_cube  = bgfx::makeRef(vs_texture_cube_glsl,  sizeof(vs_texture_cube_glsl) );
-		fs_texture_cube  = bgfx::makeRef(fs_texture_cube_glsl,  sizeof(fs_texture_cube_glsl) );
-		break;
-	}
-
-	bgfx::ShaderHandle vsTexture = bgfx::createShader(vs_texture);
-	bgfx::ShaderHandle fsTexture = bgfx::createShader(fs_texture);
+	bgfx::ShaderHandle vsTexture      = bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_texture");
+	bgfx::ShaderHandle fsTexture      = bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_texture");
+	bgfx::ShaderHandle fsTextureArray = bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_texture_array");
 
 	bgfx::ProgramHandle textureProgram = bgfx::createProgram(
 			  vsTexture
@@ -690,15 +671,15 @@ int _main_(int _argc, char** _argv)
 
 	bgfx::ProgramHandle textureArrayProgram = bgfx::createProgram(
 			  vsTexture
-			, NULL != fs_texture_array
-			? bgfx::createShader(fs_texture_array)
+			, bgfx::isValid(fsTextureArray)
+			? fsTextureArray
 			: fsTexture
 			, true
 			);
 
 	bgfx::ProgramHandle textureCubeProgram = bgfx::createProgram(
-			  bgfx::createShader(vs_texture_cube)
-			, bgfx::createShader(fs_texture_cube)
+			  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_texture_cube")
+			, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_texture_cube")
 			, true
 			);
 
