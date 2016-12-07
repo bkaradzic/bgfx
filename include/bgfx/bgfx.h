@@ -2002,7 +2002,7 @@ namespace bgfx
 	///      multiple times with the same uniform name. The library will always
 	///      return the same handle, but the handle reference count will be
 	///      incremented. This means that the same number of `bgfx::destroyUniform`
-	///      must be called to proprely destroy the uniform.
+	///      must be called to properly destroy the uniform.
 	///
 	///   2. Predefined uniforms (declared in `bgfx_shader.sh`):
 	///      - `u_viewRect vec4(x, y, width, height)` - view rectangle for current
