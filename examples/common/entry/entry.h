@@ -247,6 +247,7 @@ namespace entry
 	void toggleWindowFrame(WindowHandle _handle);
 	void toggleFullscreen(WindowHandle _handle);
 	void setMouseLock(WindowHandle _handle, bool _lock);
+	void setCurrentDir(const char* _dir);
 
 	struct WindowState
 	{

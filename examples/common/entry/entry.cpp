@@ -37,6 +37,8 @@ namespace entry
 	extern bx::AllocatorI* getDefaultAllocator();
 	static bx::AllocatorI* s_allocator = getDefaultAllocator();
 
+	typedef bx::StringT<&s_allocator> String;
+
 	void* rmtMalloc(void* /*_context*/, rmtU32 _size)
 	{
 		return BX_ALLOC(s_allocator, _size);
@@ -50,6 +52,39 @@ namespace entry
 	void rmtFree(void* /*_context*/, void* _ptr)
 	{
 		BX_FREE(s_allocator, _ptr);
+	}
+
+	static String s_currentDir;
+
+	class FileReader : public bx::CrtFileReader
+	{
+		typedef bx::CrtFileReader super;
+
+	public:
+		virtual bool open(const char* _filePath, bx::Error* _err) BX_OVERRIDE
+		{
+			String filePath(s_currentDir);
+			filePath.append(_filePath);
+			return super::open(filePath.getPtr(), _err);
+		}
+	};
+
+	class FileWriter : public bx::CrtFileWriter
+	{
+		typedef bx::CrtFileWriter super;
+
+	public:
+		virtual bool open(const char* _filePath, bool _append, bx::Error* _err) BX_OVERRIDE
+		{
+			String filePath(s_currentDir);
+			filePath.append(_filePath);
+			return super::open(filePath.getPtr(), _append, _err);
+		}
+	};
+
+	void setCurrentDir(const char* _dir)
+	{
+		s_currentDir.set(_dir);
 	}
 
 #if ENTRY_CONFIG_IMPLEMENT_DEFAULT_ALLOCATOR
@@ -403,8 +438,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		}
 
 #if BX_CONFIG_CRT_FILE_READER_WRITER
-		s_fileReader = BX_NEW(s_allocator, bx::CrtFileReader);
-		s_fileWriter = BX_NEW(s_allocator, bx::CrtFileWriter);
+		s_fileReader = BX_NEW(s_allocator, FileReader);
+		s_fileWriter = BX_NEW(s_allocator, FileWriter);
 #endif // BX_CONFIG_CRT_FILE_READER_WRITER
 
 		cmdInit();
@@ -420,6 +455,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		setWindowSize(defaultWindow, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
 
 		int32_t result = ::_main_(_argc, _argv);
+		setCurrentDir("");
 
 		inputRemoveBindings("bindings");
 		inputShutdown();
