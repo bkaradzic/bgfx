@@ -35,23 +35,23 @@ namespace entry
 	static bx::FileWriterI* s_fileWriter = NULL;
 
 	extern bx::AllocatorI* getDefaultAllocator();
-	static bx::AllocatorI* s_allocator = getDefaultAllocator();
+	bx::AllocatorI* g_allocator = getDefaultAllocator();
 
-	typedef bx::StringT<&s_allocator> String;
+	typedef bx::StringT<&g_allocator> String;
 
 	void* rmtMalloc(void* /*_context*/, rmtU32 _size)
 	{
-		return BX_ALLOC(s_allocator, _size);
+		return BX_ALLOC(g_allocator, _size);
 	}
 
 	void* rmtRealloc(void* /*_context*/, void* _ptr, rmtU32 _size)
 	{
-		return BX_REALLOC(s_allocator, _ptr, _size);
+		return BX_REALLOC(g_allocator, _ptr, _size);
 	}
 
 	void rmtFree(void* /*_context*/, void* _ptr)
 	{
-		BX_FREE(s_allocator, _ptr);
+		BX_FREE(g_allocator, _ptr);
 	}
 
 	static String s_currentDir;
@@ -438,8 +438,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		}
 
 #if BX_CONFIG_CRT_FILE_READER_WRITER
-		s_fileReader = BX_NEW(s_allocator, FileReader);
-		s_fileWriter = BX_NEW(s_allocator, FileWriter);
+		s_fileReader = BX_NEW(g_allocator, FileReader);
+		s_fileWriter = BX_NEW(g_allocator, FileWriter);
 #endif // BX_CONFIG_CRT_FILE_READER_WRITER
 
 		cmdInit();
@@ -463,10 +463,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		cmdShutdown();
 
 #if BX_CONFIG_CRT_FILE_READER_WRITER
-		BX_DELETE(s_allocator, s_fileReader);
+		BX_DELETE(g_allocator, s_fileReader);
 		s_fileReader = NULL;
 
-		BX_DELETE(s_allocator, s_fileWriter);
+		BX_DELETE(g_allocator, s_fileWriter);
 		s_fileWriter = NULL;
 #endif // BX_CONFIG_CRT_FILE_READER_WRITER
 
@@ -768,7 +768,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	bx::AllocatorI* getAllocator()
 	{
-		return s_allocator;
+		return g_allocator;
 	}
 
 	void* TinyStlAllocator::static_allocate(size_t _bytes)
