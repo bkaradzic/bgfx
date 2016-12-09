@@ -8,6 +8,8 @@
 
 #include <bx/allocator.h>
 #include <bx/string.h>
+#include <bx/crtimpl.h>
+
 #include "aviwriter.h"
 
 #include <inttypes.h>
@@ -61,64 +63,58 @@ static const uint16_t s_cubeIndices[36] =
 	6, 3, 7,
 };
 
-void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale, bool _yflip)
+void imageWriteTga(bx::WriterI* _writer, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, bool _grayscale, bool _yflip, bx::Error* _err)
 {
-	FILE* file = fopen(_filePath, "wb");
-	if (NULL != file)
+	BX_ERROR_SCOPE(_err);
+
+	uint8_t type = _grayscale ? 3 :  2;
+	uint8_t bpp  = _grayscale ? 8 : 32;
+
+	uint8_t header[18] = {};
+	header[ 2] = type;
+	header[12] =  _width     &0xff;
+	header[13] = (_width >>8)&0xff;
+	header[14] =  _height    &0xff;
+	header[15] = (_height>>8)&0xff;
+	header[16] = bpp;
+	header[17] = 32;
+
+	bx::write(_writer, header, sizeof(header), _err);
+
+	uint32_t dstPitch = _width*bpp/8;
+	if (_yflip)
 	{
-		uint8_t type = _grayscale ? 3 : 2;
-		uint8_t bpp = _grayscale ? 8 : 32;
-
-		putc(0, file);
-		putc(0, file);
-		putc(type, file);
-		putc(0, file);
-		putc(0, file);
-		putc(0, file);
-		putc(0, file);
-		putc(0, file);
-		putc(0, file);
-		putc(0, file);
-		putc(0, file);
-		putc(0, file);
-		putc(_width&0xff, file);
-		putc( (_width>>8)&0xff, file);
-		putc(_height&0xff, file);
-		putc( (_height>>8)&0xff, file);
-		putc(bpp, file);
-		putc(32, file);
-
-		uint32_t dstPitch = _width*bpp/8;
-		if (_yflip)
+		uint8_t* data = (uint8_t*)_src + _pitch*_height - _pitch;
+		for (uint32_t yy = 0; yy < _height; ++yy)
 		{
-			uint8_t* data = (uint8_t*)_src + _srcPitch*_height - _srcPitch;
-			for (uint32_t yy = 0; yy < _height; ++yy)
-			{
-				fwrite(data, dstPitch, 1, file);
-				data -= _srcPitch;
-			}
+			bx::write(_writer, data, dstPitch, _err);
+			data -= _pitch;
 		}
-		else
+	}
+	else if (_pitch == dstPitch)
+	{
+		bx::write(_writer, _src, _height*_pitch, _err);
+	}
+	else
+	{
+		uint8_t* data = (uint8_t*)_src;
+		for (uint32_t yy = 0; yy < _height; ++yy)
 		{
-			uint8_t* data = (uint8_t*)_src;
-			for (uint32_t yy = 0; yy < _height; ++yy)
-			{
-				fwrite(data, dstPitch, 1, file);
-				data += _srcPitch;
-			}
+			bx::write(_writer, data, dstPitch, _err);
+			data += _pitch;
 		}
-
-		fclose(file);
 	}
 }
 
-long int fsize(FILE* _file)
+void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale, bool _yflip)
 {
-	long int pos = ftell(_file);
-	fseek(_file, 0L, SEEK_END);
-	long int size = ftell(_file);
-	fseek(_file, pos, SEEK_SET);
-	return size;
+	bx::CrtFileWriter writer;
+	bx::Error err;
+	if (bx::open(&writer, _filePath, false, &err) )
+	{
+		imageWriteTga(&writer, _width, _height, _srcPitch, _src, _grayscale, _yflip, &err);
+		bx::close(&writer);
+	}
 }
 
 struct BgfxCallback : public bgfx::CallbackI
@@ -148,11 +144,12 @@ struct BgfxCallback : public bgfx::CallbackI
 		bx::snprintf(filePath, sizeof(filePath), "temp/%016" PRIx64, _id);
 
 		// Use cache id as filename.
-		FILE* file = fopen(filePath, "rb");
-		if (NULL != file)
+		bx::FileReaderI* reader = entry::getFileReader();
+		bx::Error err;
+		if (bx::open(reader, filePath, &err) )
 		{
-			uint32_t size = fsize(file);
-			fclose(file);
+			uint32_t size = bx::getSize(reader);
+			bx::close(reader);
 			// Return size of shader file.
 			return size;
 		}
@@ -167,12 +164,13 @@ struct BgfxCallback : public bgfx::CallbackI
 		bx::snprintf(filePath, sizeof(filePath), "temp/%016" PRIx64, _id);
 
 		// Use cache id as filename.
-		FILE* file = fopen(filePath, "rb");
-		if (NULL != file)
+		bx::FileReaderI* reader = entry::getFileReader();
+		bx::Error err;
+		if (bx::open(reader, filePath, &err) )
 		{
 			// Read shader.
-			size_t result = fread(_data, 1, _size, file);
-			fclose(file);
+			uint32_t result = bx::read(reader, _data, _size, &err);
+			bx::close(reader);
 
 			// Make sure that read size matches requested size.
 			return result == _size;
@@ -188,12 +186,13 @@ struct BgfxCallback : public bgfx::CallbackI
 		bx::snprintf(filePath, sizeof(filePath), "temp/%016" PRIx64, _id);
 
 		// Use cache id as filename.
-		FILE* file = fopen(filePath, "wb");
-		if (NULL != file)
+		bx::FileWriterI* writer = entry::getFileWriter();
+		bx::Error err;
+		if (bx::open(writer, filePath, false, &err) )
 		{
 			// Write shader to cache location.
-			fwrite(_data, 1, _size, file);
-			fclose(file);
+			bx::write(writer, _data, _size, &err);
+			bx::close(writer);
 		}
 	}
 
@@ -202,70 +201,16 @@ struct BgfxCallback : public bgfx::CallbackI
 		char temp[1024];
 
 		// Save screen shot as TGA.
-		bx::snprintf(temp, BX_COUNTOF(temp), "%s.mip0.tga", _filePath);
+		bx::snprintf(temp, BX_COUNTOF(temp), "%s.tga", _filePath);
 		saveTga(temp, _width, _height, _pitch, _data, false, _yflip);
-
-		uint32_t width = _width;
-		uint32_t height = _height;
-		uint32_t pitch = _pitch;
-
-		uint8_t* data = (uint8_t*)_data;
-
-		// Generate mip maps.
-		uint32_t mip = 1;
-		for (; 2 <= width && 2 <= height; ++mip)
-		{
-			bx::snprintf(temp, BX_COUNTOF(temp), "%s.mip%d.tga", _filePath, mip);
-			bgfx::imageRgba8Downsample2x2(width, height, pitch, data, data);
-
-			width >>= 1;
-			height >>= 1;
-			pitch = width*4;
-
-			saveTga(temp, width, height, pitch, _data, false, _yflip);
-		}
-
-		if (width > height)
-		{
-			for (; 2 <= width; ++mip)
-			{
-				memcpy(&data[width*4], data, width*4);
-
-				bx::snprintf(temp, BX_COUNTOF(temp), "%s.mip%d.tga", _filePath, mip);
-				bgfx::imageRgba8Downsample2x2(width, 2, pitch, data, data);
-
-				width >>= 1;
-				pitch = width*4;
-
-				saveTga(temp, width, 2, pitch, _data, false, _yflip);
-			}
-		}
-		else
-		{
-			for (; 2 <= height; ++mip)
-			{
-				uint32_t* src = (uint32_t*)data;
-				for (uint32_t ii = 0; ii < height; ++ii, src += 2)
-				{
-					src[1] = src[0];
-				}
-
-				bx::snprintf(temp, BX_COUNTOF(temp), "%s.mip%d.tga", _filePath, mip);
-				bgfx::imageRgba8Downsample2x2(2, height, 8, data, data);
-
-				height >>= 1;
-
-				saveTga(temp, 2, height, 8, _data, false, _yflip);
-			}
-		}
 	}
 
 	virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t /*_pitch*/, bgfx::TextureFormat::Enum /*_format*/, bool _yflip) BX_OVERRIDE
 	{
-		m_writer = new AviWriter(entry::getFileWriter() );
+		m_writer = BX_NEW(entry::getAllocator(), AviWriter)(entry::getFileWriter() );
 		if (!m_writer->open("temp/capture.avi", _width, _height, 60, _yflip) )
 		{
-			delete m_writer;
+			BX_DELETE(entry::getAllocator(), m_writer);
 			m_writer = NULL;
 		}
 	}
@@ -275,7 +220,7 @@ struct BgfxCallback : public bgfx::CallbackI
 		if (NULL != m_writer)
 		{
 			m_writer->close();
-			delete m_writer;
+			BX_DELETE(entry::getAllocator(), m_writer);
 			m_writer = NULL;
 		}
 	}

@@ -20,28 +20,15 @@
 #include <stdio.h>
 #include <wchar.h>
 
-long int fsize(FILE* _file)
-{
-	long int pos = ftell(_file);
-	fseek(_file, 0L, SEEK_END);
-	long int size = ftell(_file);
-	fseek(_file, pos, SEEK_SET);
-	return size;
-}
-
 TrueTypeHandle loadTtf(FontManager* _fm, const char* _filePath)
 {
-	FILE* file = fopen(_filePath, "rb");
-	if (NULL != file)
+	uint32_t size;
+	void* data = load(_filePath, &size);
+
+	if (NULL != data)
 	{
-		uint32_t size = (uint32_t)fsize(file);
-		uint8_t* mem = (uint8_t*)malloc(size+1);
-		size_t ignore = fread(mem, 1, size, file);
-		BX_UNUSED(ignore);
-		fclose(file);
-		mem[size-1] = '\0';
-		TrueTypeHandle handle = _fm->createTtf(mem, size);
-		free(mem);
+		TrueTypeHandle handle = _fm->createTtf( (uint8_t*)data, size);
+		BX_FREE(entry::getAllocator(), data);
 		return handle;
 	}
 

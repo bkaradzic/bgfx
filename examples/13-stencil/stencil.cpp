@@ -674,29 +674,29 @@ struct Mesh
 #define BGFX_CHUNK_MAGIC_IB  BX_MAKEFOURCC('I', 'B', ' ', 0x0)
 #define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
 
-		bx::CrtFileReader reader;
-		bx::open(&reader, _filePath);
+		bx::FileReaderI* reader = entry::getFileReader();
+		bx::open(reader, _filePath);
 
 		Group group;
 
 		uint32_t chunk;
-		while (4 == bx::read(&reader, chunk) )
+		while (4 == bx::read(reader, chunk) )
 		{
 			switch (chunk)
 			{
 			case BGFX_CHUNK_MAGIC_VB:
 				{
-					bx::read(&reader, group.m_sphere);
-					bx::read(&reader, group.m_aabb);
-					bx::read(&reader, group.m_obb);
+					bx::read(reader, group.m_sphere);
+					bx::read(reader, group.m_aabb);
+					bx::read(reader, group.m_obb);
 
-					bgfx::read(&reader, m_decl);
+					bgfx::read(reader, m_decl);
 					uint16_t stride = m_decl.getStride();
 
 					uint16_t numVertices;
-					bx::read(&reader, numVertices);
+					bx::read(reader, numVertices);
 					const bgfx::Memory* mem = bgfx::alloc(numVertices*stride);
-					bx::read(&reader, mem->data, mem->size);
+					bx::read(reader, mem->data, mem->size);
 
 					group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
 				}
@@ -705,9 +705,9 @@ struct Mesh
 			case BGFX_CHUNK_MAGIC_IB:
 				{
 					uint32_t numIndices;
-					bx::read(&reader, numIndices);
+					bx::read(reader, numIndices);
 					const bgfx::Memory* mem = bgfx::alloc(numIndices*2);
-					bx::read(&reader, mem->data, mem->size);
+					bx::read(reader, mem->data, mem->size);
 					group.m_ibh = bgfx::createIndexBuffer(mem);
 				}
 				break;
@@ -715,31 +715,31 @@ struct Mesh
 			case BGFX_CHUNK_MAGIC_PRI:
 				{
 					uint16_t len;
-					bx::read(&reader, len);
+					bx::read(reader, len);
 
 					std::string material;
 					material.resize(len);
-					bx::read(&reader, const_cast<char*>(material.c_str() ), len);
+					bx::read(reader, const_cast<char*>(material.c_str() ), len);
 
 					uint16_t num;
-					bx::read(&reader, num);
+					bx::read(reader, num);
 
 					for (uint32_t ii = 0; ii < num; ++ii)
 					{
-						bx::read(&reader, len);
+						bx::read(reader, len);
 
 						std::string name;
 						name.resize(len);
-						bx::read(&reader, const_cast<char*>(name.c_str() ), len);
+						bx::read(reader, const_cast<char*>(name.c_str() ), len);
 
 						Primitive prim;
-						bx::read(&reader, prim.m_startIndex);
-						bx::read(&reader, prim.m_numIndices);
-						bx::read(&reader, prim.m_startVertex);
-						bx::read(&reader, prim.m_numVertices);
-						bx::read(&reader, prim.m_sphere);
-						bx::read(&reader, prim.m_aabb);
-						bx::read(&reader, prim.m_obb);
+						bx::read(reader, prim.m_startIndex);
+						bx::read(reader, prim.m_numIndices);
+						bx::read(reader, prim.m_startVertex);
+						bx::read(reader, prim.m_numVertices);
+						bx::read(reader, prim.m_sphere);
+						bx::read(reader, prim.m_aabb);
+						bx::read(reader, prim.m_obb);
 
 						group.m_prims.push_back(prim);
 					}
@@ -750,13 +750,13 @@ struct Mesh
 				break;
 
 			default:
-				DBG("%08x at %d", chunk, reader.seek() );
+				DBG("%08x at %d", chunk, bx::seek(reader) );
 				abort();
 				break;
 			}
 		}
 
-		bx::close(&reader);
+		bx::close(reader);
 	}
 
 	void unload()

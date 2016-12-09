@@ -486,7 +486,7 @@ namespace entry
 			WindowHandle defaultWindow = { 0 };
 			setWindowSize(defaultWindow, m_width, m_height, true);
 
-			bx::CrtFileReader reader;
+			bx::FileReaderI* reader = getEileReader();
 			if (bx::open(&reader, "gamecontrollerdb.txt") )
 			{
 				bx::AllocatorI* allocator = getAllocator();
