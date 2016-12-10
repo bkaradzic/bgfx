@@ -1006,7 +1006,7 @@ namespace bgfx
 		}
 		bx::radixSort(m_sortKeys, s_ctx->m_tempKeys, m_sortValues, s_ctx->m_tempValues, m_num);
 
-		for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
+		for (uint32_t ii = 0, num = m_numBlitItems; ii < num; ++ii)
 		{
 			m_blitKeys[ii] = BlitKey::remapView(m_blitKeys[ii], viewRemap);
 		}
