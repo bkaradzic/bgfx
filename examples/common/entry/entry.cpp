@@ -56,6 +56,7 @@ namespace entry
 
 	static String s_currentDir;
 
+#if BX_CONFIG_CRT_FILE_READER_WRITER
 	class FileReader : public bx::CrtFileReader
 	{
 		typedef bx::CrtFileReader super;
@@ -81,6 +82,7 @@ namespace entry
 			return super::open(filePath.getPtr(), _append, _err);
 		}
 	};
+#endif // BX_CONFIG_CRT_FILE_READER_WRITER
 
 	void setCurrentDir(const char* _dir)
 	{
