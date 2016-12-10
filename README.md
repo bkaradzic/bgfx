@@ -83,17 +83,25 @@ Languages:
 Who is using it?
 ----------------
 
+## Airmech
+
 http://airmech.com/ AirMech is a free-to-play futuristic action real-time
 strategy video game developed and published by Carbon Games.  
 ![airmech](https://www.mobygames.com/images/shots/l/830630-airmech-playstation-4-screenshot-blue-bar-on-your-mech-indicates.jpg)
 
+## cmftStudio
+
 https://github.com/dariomanesku/cmftStudio cmftStudio - cubemap filtering tool.  
 ![cmftStudio](https://github.com/dariomanesku/cmftStudio/raw/master/screenshots/cmftStudio_small.jpg)
+
+## Crown
 
 https://github.com/taylor001/crown Crown is a general purpose data-driven game
 engine, written from scratch with a minimalistic and data-oriented design
 philosophy in mind.  
 ![Crown screenshot](https://raw.githubusercontent.com/taylor001/crown/master/docs/shots/level-editor.png)
+
+## ProDBG
 
 https://github.com/emoon/ProDBG - ProDBG is a new debugger under development
 that will support a variety of targets and operating systems. Currently it's in
@@ -101,9 +109,13 @@ very early development and primary focusing on Mac as primary target. This is
 how it currently looks.  
 ![ProDBG_screenshot](https://raw.githubusercontent.com/emoon/ProDBG/master/data/screens/mac_screenshot.png)
 
+## Offroad Legends 2
+
 http://www.dogbytegames.com/ Dogbyte Games is an indie mobile developer studio
 focusing on racing games.  
 ![ios](http://www.dogbytegames.com/bgfx/offroadlegends2_bgfx_ipad2.jpg)
+
+## Torque6
 
 https://github.com/andr3wmac/Torque6 Torque 6 is an MIT licensed 3D engine
 loosely based on Torque2D. Being neither Torque2D or Torque3D it is the 6th
@@ -112,31 +124,47 @@ derivative of the original Torque Engine.
 " target="_blank"><img src="http://img.youtube.com/vi/p4LTM_QGK34/0.jpg" 
 alt="Torque 6 Material Editor" width="640" height="480" border="0" /></a>
 
+## twinkle
+
 https://github.com/cgbystrom/twinkle GPU-accelerated UI framework powered by
 JavaScript for desktop/mobile apps. Idea is to combine the fast workflow and
 deployment model of web with the performance of native code and GPU acceleration.
+
+## Lumix Engine
 
 https://github.com/nem0/LumixEngine LumixEngine is a MIT licensed 3D engine.
 The main goal is performance and Unity-like usability.  
 ![LumixEngine screenshot](https://cloud.githubusercontent.com/assets/153526/12904252/3fcf130e-cece-11e5-878b-c9fe24c1b11a.png)
 
+## Kepler Orbits
+
 https://github.com/podgorskiy/KeplerOrbits KeplerOrbits - Tool that calculates
 positions of celestial bodies using their orbital elements. [Web Demo](http://podgorskiy.com/KeplerOrbits/KeplerOrbits.html)
+
+## CETech
 
 https://github.com/cyberegoorg/cetech - CETech is Data-Driven game engine and
 toolbox inspired by Bitsquid/Stingray engine.  
 ![CETech screenshot](https://github.com/cyberegoorg/cetech/raw/master/docs/img/prototyp.png)
 
+## ioquake3
+
 https://github.com/jpcy/ioq3-renderer-bgfx - A renderer for ioquake3 written in
 C++ and using bgfx to support multiple rendering APIs.  
 ![ioq3-renderer-bgfx screenshot](https://camo.githubusercontent.com/052aa40c05120e56306294d3a1bb5f99f97de8c8/687474703a2f2f692e696d6775722e636f6d2f64364f6856594b2e6a7067)
 
+## DLS
+
 http://makingartstudios.itch.io/dls - DLS the digital logic simulator game.  
 ![dls-screenshot](https://img.itch.io/aW1hZ2UvMzk3MTgvMTc5MjQ4LnBuZw==/original/kA%2FQPb.png)
+
+## MAME
 
 https://github.com/mamedev/mame MAME - Multiple Arcade Machine Emulator
 [Try MAME in Browser!](http://fos.textfiles.com/dfjustin/pacman/pacman/)  
 ![mame-screenshot](https://raw.githubusercontent.com/mamedev/www.mamedev.org/d8d716dbb63919a11964b5d47b9b7f6cfa006b56/bgfx/Raiden.png)
+
+## Blackshift
 
 https://blackshift.itch.io/blackshift - Blackshift is a grid-based, space-themed
 action puzzle game which isn't afraid of complexity — think Chip's Challenge on
@@ -146,6 +174,8 @@ crack.
 alt="Blackshift Trailer, May 2016"
 width="640" height="480" border="0" /></a>
 
+## Real-Time Polygonal-Light Shading with Linearly Transformed Cosines
+
 https://eheitzresearch.wordpress.com/415-2/ - Real-Time Polygonal-Light Shading
 with Linearly Transformed Cosines, Eric Heitz, Jonathan Dupuy, Stephen Hill and
 David Neubelt, ACM SIGGRAPH 2016
@@ -153,6 +183,8 @@ David Neubelt, ACM SIGGRAPH 2016
 " target="_blank"><img src="http://img.youtube.com/vi/ZLRgEN7AQgM/0.jpg" 
 alt="Real-Time Polygonal-Light Shading with Linearly Transformed Cosines"
 width="640" height="480" border="0" /></a>
+
+## Dead Venture
 
 http://www.dogbytegames.com/dead_venture.html - Dead Venture is a new Drive 'N
 Gun game where you help a handful of survivals reach the safe haven: a military
@@ -162,6 +194,8 @@ base on a far island.
 alt="Dead Venture - Gameplay Teaser (iOS / Android)"
 width="640" height="480" border="0" /></a>
 
+## REGoth
+
 https://github.com/degenerated1123/REGoth - Open source reimplementation of the
 zEngine, used by the game "Gothic" and "Gothic II".
 
@@ -170,9 +204,13 @@ zEngine, used by the game "Gothic" and "Gothic II".
 alt="REGoth Engine"
 width="640" height="480" border="0" /></a>
 
+## Ethereal Engine
+
 https://github.com/volcoma/EtherealEngine EtherealEngine C++ Game Engine and
 WYSIWYG Editor  
 ![EtherealEngine screenshot](https://cloud.githubusercontent.com/assets/1499411/19988985/2a302204-a22c-11e6-98af-5f446d0c79ac.png)
+
+## Go Rally
 
 http://gorallygame.com/ - Go Rally is top-down rally game with a career mode,
 multiplayer time challenges, and a track creator.
