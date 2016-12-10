@@ -2207,14 +2207,15 @@ namespace bgfx
 
 		BGFX_API_FUNC(void reset(uint32_t _width, uint32_t _height, uint32_t _flags) )
 		{
-			BX_WARN(1 <= int32_t(_width)
-				&&  1 <= int32_t(_height)
-				, "Frame buffer resolution width or height must be larger than 0 (width %d, height %d)."
+			BX_WARN(g_caps.limits.maxTextureSize < _width
+				&&  g_caps.limits.maxTextureSize < _height
+				, "Frame buffer resolution width or height can't be larger than limits.maxTextureSize %d (width %d, height %d)."
+				, g_caps.limits.maxTextureSize
 				, _width
 				, _height
 				);
-			m_resolution.m_width  = bx::uint32_imax(1, _width);
-			m_resolution.m_height = bx::uint32_imax(1, _height);
+			m_resolution.m_width  = bx::uint32_min(g_caps.limits.maxTextureSize, _width);
+			m_resolution.m_height = bx::uint32_min(g_caps.limits.maxTextureSize, _height);
 			m_resolution.m_flags  = 0
 				| _flags
 				| (g_platformDataChangedSinceReset ? BGFX_RESET_INTERNAL_FORCE : 0)
