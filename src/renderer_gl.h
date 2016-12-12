@@ -1343,8 +1343,24 @@ namespace bgfx { namespace gl
 		void create(const ShaderGL& _vsh, const ShaderGL& _fsh);
 		void destroy();
 		void init();
-		void bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex = 0) const;
 		void bindInstanceData(uint32_t _stride, uint32_t _baseVertex = 0) const;
+		void bindAttributesBegin()
+		{
+			memcpy(m_unboundUsedAttrib, m_used, sizeof(m_unboundUsedAttrib) );
+		}
+		void bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex = 0);
+		void bindAttributesEnd()
+		{
+			for (uint32_t ii = 0, iiEnd = m_usedCount; ii < iiEnd; ++ii)
+			{
+				if (Attrib::Count != m_unboundUsedAttrib[ii])
+				{
+					Attrib::Enum attr = Attrib::Enum(m_unboundUsedAttrib[ii]);
+					GLint loc = m_attributes[attr];
+					GL_CHECK(glDisableVertexAttribArray(loc) );
+				}
+			}
+		}
 
 		void add(uint32_t _hash)
 		{
@@ -1353,8 +1369,10 @@ namespace bgfx { namespace gl
 
 		GLuint m_id;
 
-		uint8_t m_used[Attrib::Count+1]; // dense
-		GLint m_attributes[Attrib::Count]; // sparse
+		uint8_t m_unboundUsedAttrib[Attrib::Count]; // For tracking unbound used attributes between begin()/end().
+		uint8_t m_usedCount;
+		uint8_t m_used[Attrib::Count]; // Dense.
+		GLint m_attributes[Attrib::Count]; // Sparse.
 		GLint m_instanceData[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT+1];
 
 		GLint m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
