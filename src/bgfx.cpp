@@ -1113,6 +1113,23 @@ namespace bgfx
 	{
 		BX_TRACE("");
 
+		BX_TRACE("Detected GPUs (%d):", g_caps.numGPUs);
+		BX_TRACE("\t +----------------   Index");
+		BX_TRACE("\t |  +-------------   Device ID");
+		BX_TRACE("\t |  |    +--------   Vendor ID");
+		for (uint32_t ii = 0; ii < g_caps.numGPUs; ++ii)
+		{
+			const Caps::GPU& gpu = g_caps.gpu[ii];
+
+			BX_TRACE("\t %d: %04x %04x"
+				, ii
+				, gpu.deviceId
+				, gpu.vendorId
+				);
+		}
+
+		BX_TRACE("");
+
 		RendererType::Enum renderers[RendererType::Count];
 		uint8_t num = getSupportedRenderers(BX_COUNTOF(renderers), renderers);
 
