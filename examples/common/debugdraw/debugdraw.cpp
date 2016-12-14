@@ -683,6 +683,7 @@ struct DebugDraw
 			| BGFX_STATE_DEPTH_WRITE
 			;
 		attrib.m_scale     = 1.0f;
+		attrib.m_spin      = 0.0f;
 		attrib.m_offset    = 0.0f;
 		attrib.m_abgr      = UINT32_MAX;
 		attrib.m_stipple   = false;
@@ -818,6 +819,12 @@ struct DebugDraw
 		attrib.m_stipple = _stipple;
 		attrib.m_offset  = _offset;
 		attrib.m_scale   = _scale;
+	}
+
+	void setSpin(float _spin)
+	{
+		Attrib& attrib = m_attrib[m_stack];
+		attrib.m_spin = _spin;
 	}
 
 	void moveTo(float _x, float _y, float _z = 0.0f)
@@ -1126,10 +1133,9 @@ struct DebugDraw
 		const float step = bx::pi * 2.0f / num;
 		_weight = bx::fclamp(_weight, 0.0f, 2.0f);
 
-		Plane plane = { { _normal[0], _normal[1], _normal[2] }, 0.0f };
 		float udir[3];
 		float vdir[3];
-		calcPlaneUv(plane, udir, vdir);
+		bx::vec3TangentFrame(_normal, udir, vdir, attrib.m_spin);
 
 		float pos[3];
 		float tmp0[3];
@@ -1201,6 +1207,50 @@ struct DebugDraw
 		close();
 	}
 
+	void drawQuad(const float* _normal, const float* _center, float _size)
+	{
+		const Attrib& attrib = m_attrib[m_stack];
+
+		float udir[3];
+		float vdir[3];
+
+		bx::vec3TangentFrame(_normal, udir, vdir, attrib.m_spin);
+
+		const float halfExtent = _size*0.5f;
+
+		float umin[3];
+		bx::vec3Mul(umin, udir, -halfExtent);
+
+		float umax[3];
+		bx::vec3Mul(umax, udir,  halfExtent);
+
+		float vmin[3];
+		bx::vec3Mul(vmin, vdir, -halfExtent);
+
+		float vmax[3];
+		bx::vec3Mul(vmax, vdir,  halfExtent);
+
+		float pt[3];
+		float tmp[3];
+		bx::vec3Add(tmp, umin, vmin);
+		bx::vec3Add(pt, _center, tmp);
+		moveTo(pt);
+
+		bx::vec3Add(tmp, umax, vmin);
+		bx::vec3Add(pt, _center, tmp);
+		lineTo(pt);
+
+		bx::vec3Add(tmp, umax, vmax);
+		bx::vec3Add(pt, _center, tmp);
+		lineTo(pt);
+
+		bx::vec3Add(tmp, umin, vmax);
+		bx::vec3Add(pt, _center, tmp);
+		lineTo(pt);
+
+		close();
+	}
+
 	void drawCone(const float* _from, const float* _to, float _radius)
 	{
 		const Attrib& attrib = m_attrib[m_stack];
@@ -1212,7 +1262,7 @@ struct DebugDraw
 		bx::vec3Norm(normal, tmp0);
 
 		float mtx[2][16];
-		bx::mtxFromNormal(mtx[0], normal, _radius, _from);
+		bx::mtxFromNormal(mtx[0], normal, _radius, _from, attrib.m_spin);
 
 		memcpy(mtx[1], mtx[0], 64);
 		mtx[1][12] = _to[0];
@@ -1242,7 +1292,7 @@ struct DebugDraw
 		bx::vec3Norm(normal, tmp0);
 
 		float mtx[2][16];
-		bx::mtxFromNormal(mtx[0], normal, _radius, _from);
+		bx::mtxFromNormal(mtx[0], normal, _radius, _from, attrib.m_spin);
 
 		memcpy(mtx[1], mtx[0], 64);
 		mtx[1][12] = _to[0];
@@ -1340,10 +1390,11 @@ struct DebugDraw
 
 	void drawGrid(const float* _normal, const float* _center, uint32_t _size, float _step)
 	{
+		const Attrib& attrib = m_attrib[m_stack];
+
 		float udir[3];
 		float vdir[3];
-		Plane plane = { { _normal[0], _normal[1], _normal[2] }, 0.0f };
-		calcPlaneUv(plane, udir, vdir);
+		bx::vec3TangentFrame(_normal, udir, vdir, attrib.m_spin);
 
 		bx::vec3Mul(udir, udir, _step);
 		bx::vec3Mul(vdir, vdir, _step);
@@ -1648,6 +1699,7 @@ private:
 		uint64_t m_state;
 		float    m_offset;
 		float    m_scale;
+		float    m_spin;
 		uint32_t m_abgr;
 		bool     m_stipple;
 		bool     m_wireframe;
@@ -1724,6 +1776,11 @@ void ddSetWireframe(bool _wireframe)
 void ddSetStipple(bool _stipple, float _scale, float _offset)
 {
 	s_dd.setStipple(_stipple, _scale, _offset);
+}
+
+void ddSetSpin(float _spin)
+{
+	s_dd.setSpin(_spin);
 }
 
 void ddSetTransform(const void* _mtx)
@@ -1804,6 +1861,11 @@ void ddDrawCircle(const void* _normal, const void* _center, float _radius, float
 void ddDrawCircle(Axis::Enum _axis, float _x, float _y, float _z, float _radius, float _weight)
 {
 	s_dd.drawCircle(_axis, _x, _y, _z, _radius, _weight);
+}
+
+void ddDrawQuad(const float* _normal, const float* _center, float _size)
+{
+	s_dd.drawQuad(_normal, _center, _size);
 }
 
 void ddDrawCone(const void* _from, const void* _to, float _radius)

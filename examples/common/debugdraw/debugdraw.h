@@ -55,6 +55,9 @@ void ddSetWireframe(bool _wireframe);
 void ddSetStipple(bool _stipple, float _scale = 1.0f, float _offset = 0.0f);
 
 ///
+void ddSetSpin(float _spin);
+
+///
 void ddSetTransform(const void* _mtx);
 
 ///
@@ -101,6 +104,9 @@ void ddDrawCircle(const void* _normal, const void* _center, float _radius, float
 
 ///
 void ddDrawCircle(Axis::Enum _axis, float _x, float _y, float _z, float _radius, float _weight = 0.0f);
+
+///
+void ddDrawQuad(const float* _normal, const float* _center, float _size);
 
 ///
 void ddDrawCone(const void* _from, const void* _to, float _radius);
