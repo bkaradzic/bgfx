@@ -192,18 +192,21 @@ class DebugDrawApp : public entry::AppI
 
 			ddPush();
 				ddSetLod(UINT8_MAX);
-				ddSetSpin(time*0.3f);
-				{
-					float from[3] = { -11.0f, 4.0f,  0.0f };
-					float to[3]   = { -13.0f, 6.0f,  1.0f };
-					ddDrawCone(from, to, 1.0f );
-				}
 
-				{
-					float from[3] = {  -9.0f, 2.0f, -1.0f };
-					float to[3]   = { -11.0f, 4.0f,  0.0f };
-					ddDrawCylinder(from, to, 0.5f );
-				}
+				ddPush();
+					ddSetSpin(time*0.3f);
+					{
+						float from[3] = { -11.0f, 4.0f,  0.0f };
+						float to[3]   = { -13.0f, 6.0f,  1.0f };
+						ddDrawCone(from, to, 1.0f );
+					}
+
+					{
+						float from[3] = {  -9.0f, 2.0f, -1.0f };
+						float to[3]   = { -11.0f, 4.0f,  0.0f };
+						ddDrawCylinder(from, to, 0.5f );
+					}
+				ddPop();
 
 				{
 					float from[3] = {  0.0f, 7.0f, 0.0f };
