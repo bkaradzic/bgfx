@@ -1,0 +1,18 @@
+450.comp
+Warning, version 450 is not yet complete; most version-specific features are present, but some are missing.
+
+Shader version: 450
+local_size = (1, 1, 1)
+0:? Sequence
+0:?   Linker Objects
+
+
+Linked compute stage:
+
+ERROR: Linking compute stage: Missing entry point: Each stage requires one entry point
+
+Shader version: 450
+local_size = (1, 1, 1)
+0:? Sequence
+0:?   Linker Objects
+

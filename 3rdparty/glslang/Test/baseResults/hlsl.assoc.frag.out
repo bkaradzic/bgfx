@@ -1,0 +1,140 @@
+hlsl.assoc.frag
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:8  Function Definition: PixelShaderFunction(vf4;vf4;vf4;vf4;vf4; (temp 4-component vector of float)
+0:8    Function Parameters: 
+0:8      'a1' (layout(location=0 ) in 4-component vector of float)
+0:8      'a2' (layout(location=1 ) in 4-component vector of float)
+0:8      'a3' (layout(location=2 ) in 4-component vector of float)
+0:8      'a4' (layout(location=3 ) in 4-component vector of float)
+0:8      'a5' (layout(location=4 ) in 4-component vector of float)
+0:?     Sequence
+0:9      move second child to first child (temp 4-component vector of float)
+0:9        'a1' (layout(location=0 ) in 4-component vector of float)
+0:9        move second child to first child (temp 4-component vector of float)
+0:9          'a2' (layout(location=1 ) in 4-component vector of float)
+0:9          move second child to first child (temp 4-component vector of float)
+0:9            'a3' (layout(location=2 ) in 4-component vector of float)
+0:9            move second child to first child (temp 4-component vector of float)
+0:9              'a4' (layout(location=3 ) in 4-component vector of float)
+0:9              'a5' (layout(location=4 ) in 4-component vector of float)
+0:10      Sequence
+0:10        move second child to first child (temp 4-component vector of float)
+0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:10          add (temp 4-component vector of float)
+0:10            add (temp 4-component vector of float)
+0:10              add (temp 4-component vector of float)
+0:10                add (temp 4-component vector of float)
+0:10                  'a1' (layout(location=0 ) in 4-component vector of float)
+0:10                  'a2' (layout(location=1 ) in 4-component vector of float)
+0:10                'a3' (layout(location=2 ) in 4-component vector of float)
+0:10              'a4' (layout(location=3 ) in 4-component vector of float)
+0:10            'a5' (layout(location=4 ) in 4-component vector of float)
+0:10        Branch: Return
+0:?   Linker Objects
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'a1' (layout(location=0 ) in 4-component vector of float)
+0:?     'a2' (layout(location=1 ) in 4-component vector of float)
+0:?     'a3' (layout(location=2 ) in 4-component vector of float)
+0:?     'a4' (layout(location=3 ) in 4-component vector of float)
+0:?     'a5' (layout(location=4 ) in 4-component vector of float)
+
+
+Linked fragment stage:
+
+
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:8  Function Definition: PixelShaderFunction(vf4;vf4;vf4;vf4;vf4; (temp 4-component vector of float)
+0:8    Function Parameters: 
+0:8      'a1' (layout(location=0 ) in 4-component vector of float)
+0:8      'a2' (layout(location=1 ) in 4-component vector of float)
+0:8      'a3' (layout(location=2 ) in 4-component vector of float)
+0:8      'a4' (layout(location=3 ) in 4-component vector of float)
+0:8      'a5' (layout(location=4 ) in 4-component vector of float)
+0:?     Sequence
+0:9      move second child to first child (temp 4-component vector of float)
+0:9        'a1' (layout(location=0 ) in 4-component vector of float)
+0:9        move second child to first child (temp 4-component vector of float)
+0:9          'a2' (layout(location=1 ) in 4-component vector of float)
+0:9          move second child to first child (temp 4-component vector of float)
+0:9            'a3' (layout(location=2 ) in 4-component vector of float)
+0:9            move second child to first child (temp 4-component vector of float)
+0:9              'a4' (layout(location=3 ) in 4-component vector of float)
+0:9              'a5' (layout(location=4 ) in 4-component vector of float)
+0:10      Sequence
+0:10        move second child to first child (temp 4-component vector of float)
+0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:10          add (temp 4-component vector of float)
+0:10            add (temp 4-component vector of float)
+0:10              add (temp 4-component vector of float)
+0:10                add (temp 4-component vector of float)
+0:10                  'a1' (layout(location=0 ) in 4-component vector of float)
+0:10                  'a2' (layout(location=1 ) in 4-component vector of float)
+0:10                'a3' (layout(location=2 ) in 4-component vector of float)
+0:10              'a4' (layout(location=3 ) in 4-component vector of float)
+0:10            'a5' (layout(location=4 ) in 4-component vector of float)
+0:10        Branch: Return
+0:?   Linker Objects
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'a1' (layout(location=0 ) in 4-component vector of float)
+0:?     'a2' (layout(location=1 ) in 4-component vector of float)
+0:?     'a3' (layout(location=2 ) in 4-component vector of float)
+0:?     'a4' (layout(location=3 ) in 4-component vector of float)
+0:?     'a5' (layout(location=4 ) in 4-component vector of float)
+
+// Module Version 10000
+// Generated by (magic number): 80001
+// Id's are bound by 27
+
+                              Capability Shader
+               1:             ExtInstImport  "GLSL.std.450"
+                              MemoryModel Logical GLSL450
+                              EntryPoint Fragment 4  "PixelShaderFunction" 9 10 11 12 13 16
+                              ExecutionMode 4 OriginUpperLeft
+                              Name 4  "PixelShaderFunction"
+                              Name 9  "a1"
+                              Name 10  "a2"
+                              Name 11  "a3"
+                              Name 12  "a4"
+                              Name 13  "a5"
+                              Name 16  "@entryPointOutput"
+                              Decorate 9(a1) Location 0
+                              Decorate 10(a2) Location 1
+                              Decorate 11(a3) Location 2
+                              Decorate 12(a4) Location 3
+                              Decorate 13(a5) Location 4
+                              Decorate 16(@entryPointOutput) Location 0
+               2:             TypeVoid
+               3:             TypeFunction 2
+               6:             TypeFloat 32
+               7:             TypeVector 6(float) 4
+               8:             TypePointer Input 7(fvec4)
+           9(a1):      8(ptr) Variable Input
+          10(a2):      8(ptr) Variable Input
+          11(a3):      8(ptr) Variable Input
+          12(a4):      8(ptr) Variable Input
+          13(a5):      8(ptr) Variable Input
+              15:             TypePointer Output 7(fvec4)
+16(@entryPointOutput):     15(ptr) Variable Output
+4(PixelShaderFunction):           2 Function None 3
+               5:             Label
+              14:    7(fvec4) Load 13(a5)
+                              Store 12(a4) 14
+                              Store 11(a3) 14
+                              Store 10(a2) 14
+                              Store 9(a1) 14
+              17:    7(fvec4) Load 9(a1)
+              18:    7(fvec4) Load 10(a2)
+              19:    7(fvec4) FAdd 17 18
+              20:    7(fvec4) Load 11(a3)
+              21:    7(fvec4) FAdd 19 20
+              22:    7(fvec4) Load 12(a4)
+              23:    7(fvec4) FAdd 21 22
+              24:    7(fvec4) Load 13(a5)
+              25:    7(fvec4) FAdd 23 24
+                              Store 16(@entryPointOutput) 25
+                              Return
+                              FunctionEnd

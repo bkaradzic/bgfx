@@ -1,0 +1,18 @@
+glspv.vert
+Warning, version 450 is not yet complete; most version-specific features are present, but some are missing.
+ERROR: 0:3: 'push_constant' : only allowed when using GLSL for Vulkan 
+ERROR: 0:6: 'descriptor set' : only allowed when using GLSL for Vulkan 
+ERROR: 0:8: 'shared' : not allowed when generating SPIR-V 
+ERROR: 0:9: 'packed' : not allowed when generating SPIR-V 
+ERROR: 0:13: 'gl_VertexIndex' : undeclared identifier 
+ERROR: 0:14: 'gl_InstanceIndex' : undeclared identifier 
+ERROR: 0:17: 'gl_DepthRangeParameters' : undeclared identifier 
+ERROR: 0:20: '' :  syntax error
+ERROR: 8 compilation errors.  No code generated.
+
+
+
+Linked vertex stage:
+
+
+SPIR-V is not generated for failed compile or link

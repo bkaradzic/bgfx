@@ -1,0 +1,480 @@
+hlsl.init.frag
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:1  Sequence
+0:1    move second child to first child (temp 4-component vector of float)
+0:1      'a1' (global 4-component vector of float)
+0:?       Constant:
+0:?         1.000000
+0:?         0.500000
+0:?         0.000000
+0:?         1.000000
+0:1    move second child to first child (temp 4-component vector of float)
+0:1      'b1' (global 4-component vector of float)
+0:?       Constant:
+0:?         2.000000
+0:?         2.500000
+0:?         2.100000
+0:?         2.200000
+0:2  Sequence
+0:2    move second child to first child (temp 4-component vector of float)
+0:2      'a1i' (global 4-component vector of float)
+0:2      Constant:
+0:2        1.000000
+0:2        0.500000
+0:2        0.000000
+0:2        1.000000
+0:2    move second child to first child (temp 4-component vector of float)
+0:2      'b1i' (global 4-component vector of float)
+0:2      Constant:
+0:2        2.000000
+0:2        2.500000
+0:2        2.100000
+0:2        2.200000
+0:3  Sequence
+0:3    move second child to first child (temp float)
+0:3      'a2' (global float)
+0:3      Constant:
+0:3        0.200000
+0:4  Sequence
+0:4    move second child to first child (temp float)
+0:4      'b3' (global float)
+0:4      Constant:
+0:4        0.300000
+0:5  Sequence
+0:5    move second child to first child (temp float)
+0:5      'b4' (global float)
+0:5      Constant:
+0:5        0.400000
+0:6  Sequence
+0:6    move second child to first child (temp float)
+0:6      'a5' (global float)
+0:6      Constant:
+0:6        0.500000
+0:6    move second child to first child (temp float)
+0:6      'c5' (global float)
+0:6      Constant:
+0:6        1.500000
+0:9  Sequence
+0:9    move second child to first child (temp structure{temp int f})
+0:9      'single1' (global structure{temp int f})
+0:9      Constant:
+0:9        10 (const int)
+0:12  Sequence
+0:12    move second child to first child (temp structure{temp 2-component vector of uint v})
+0:12      'single2' (global structure{temp 2-component vector of uint v})
+0:12      Constant:
+0:12        1 (const uint)
+0:12        2 (const uint)
+0:15  Sequence
+0:15    move second child to first child (temp structure{temp structure{temp int f} s1})
+0:15      'single3' (global structure{temp structure{temp int f} s1})
+0:15      Constant:
+0:15        3 (const int)
+0:18  Sequence
+0:18    move second child to first child (temp structure{temp structure{temp 2-component vector of uint v} s1})
+0:18      'single4' (global structure{temp structure{temp 2-component vector of uint v} s1})
+0:18      Constant:
+0:18        4 (const uint)
+0:18        5 (const uint)
+0:21  Function Definition: ShaderFunction(vf4; (temp 4-component vector of float)
+0:21    Function Parameters: 
+0:21      'input' (layout(location=0 ) in 4-component vector of float)
+0:?     Sequence
+0:22      Sequence
+0:22        move second child to first child (temp 4-component vector of float)
+0:22          'a2' (temp 4-component vector of float)
+0:?           Constant:
+0:?             0.200000
+0:?             0.300000
+0:?             0.400000
+0:?             0.500000
+0:32      Sequence
+0:32        move second child to first child (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
+0:32          's2i' (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
+0:32          Construct structure (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
+0:32            Constant:
+0:32              9 (const int)
+0:32            'a5' (global float)
+0:32            Construct structure (temp structure{temp float f, temp int i})
+0:32              Comma (temp float)
+0:32                'a3' (global float)
+0:32                'a4' (global float)
+0:32              Constant:
+0:32                12 (const int)
+0:32        move second child to first child (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
+0:32          's2' (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
+0:?           Construct structure (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
+0:32            Constant:
+0:32              9 (const int)
+0:32            'a5' (global float)
+0:?             Construct structure (temp structure{temp float f, temp int i})
+0:32              Comma (temp float)
+0:32                'a3' (global float)
+0:32                'a4' (global float)
+0:32              Constant:
+0:32                12 (const int)
+0:33      Sequence
+0:33        move second child to first child (temp float)
+0:33          'a8' (temp float)
+0:33          Comma (temp float)
+0:33            'a2' (temp 4-component vector of float)
+0:33            'b2' (global float)
+0:33        move second child to first child (temp float)
+0:33          'a9' (temp float)
+0:33          'a5' (global float)
+0:35      Sequence
+0:35        move second child to first child (temp 4-component vector of float)
+0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:35          component-wise multiply (temp 4-component vector of float)
+0:35            'input' (layout(location=0 ) in 4-component vector of float)
+0:35            'a1' (global 4-component vector of float)
+0:35        Branch: Return
+0:?   Linker Objects
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'input' (layout(location=0 ) in 4-component vector of float)
+0:?     'a1' (global 4-component vector of float)
+0:?     'b1' (global 4-component vector of float)
+0:?     'a1i' (global 4-component vector of float)
+0:?     'b1i' (global 4-component vector of float)
+0:?     'a2' (global float)
+0:?     'b2' (global float)
+0:?     'a3' (global float)
+0:?     'b3' (global float)
+0:?     'a4' (global float)
+0:?     'b4' (global float)
+0:?     'c4' (global float)
+0:?     'a5' (global float)
+0:?     'b5' (global float)
+0:?     'c5' (global float)
+0:?     'single1' (global structure{temp int f})
+0:?     'single2' (global structure{temp 2-component vector of uint v})
+0:?     'single3' (global structure{temp structure{temp int f} s1})
+0:?     'single4' (global structure{temp structure{temp 2-component vector of uint v} s1})
+
+
+Linked fragment stage:
+
+
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:1  Sequence
+0:1    move second child to first child (temp 4-component vector of float)
+0:1      'a1' (global 4-component vector of float)
+0:?       Constant:
+0:?         1.000000
+0:?         0.500000
+0:?         0.000000
+0:?         1.000000
+0:1    move second child to first child (temp 4-component vector of float)
+0:1      'b1' (global 4-component vector of float)
+0:?       Constant:
+0:?         2.000000
+0:?         2.500000
+0:?         2.100000
+0:?         2.200000
+0:2  Sequence
+0:2    move second child to first child (temp 4-component vector of float)
+0:2      'a1i' (global 4-component vector of float)
+0:2      Constant:
+0:2        1.000000
+0:2        0.500000
+0:2        0.000000
+0:2        1.000000
+0:2    move second child to first child (temp 4-component vector of float)
+0:2      'b1i' (global 4-component vector of float)
+0:2      Constant:
+0:2        2.000000
+0:2        2.500000
+0:2        2.100000
+0:2        2.200000
+0:3  Sequence
+0:3    move second child to first child (temp float)
+0:3      'a2' (global float)
+0:3      Constant:
+0:3        0.200000
+0:4  Sequence
+0:4    move second child to first child (temp float)
+0:4      'b3' (global float)
+0:4      Constant:
+0:4        0.300000
+0:5  Sequence
+0:5    move second child to first child (temp float)
+0:5      'b4' (global float)
+0:5      Constant:
+0:5        0.400000
+0:6  Sequence
+0:6    move second child to first child (temp float)
+0:6      'a5' (global float)
+0:6      Constant:
+0:6        0.500000
+0:6    move second child to first child (temp float)
+0:6      'c5' (global float)
+0:6      Constant:
+0:6        1.500000
+0:9  Sequence
+0:9    move second child to first child (temp structure{temp int f})
+0:9      'single1' (global structure{temp int f})
+0:9      Constant:
+0:9        10 (const int)
+0:12  Sequence
+0:12    move second child to first child (temp structure{temp 2-component vector of uint v})
+0:12      'single2' (global structure{temp 2-component vector of uint v})
+0:12      Constant:
+0:12        1 (const uint)
+0:12        2 (const uint)
+0:15  Sequence
+0:15    move second child to first child (temp structure{temp structure{temp int f} s1})
+0:15      'single3' (global structure{temp structure{temp int f} s1})
+0:15      Constant:
+0:15        3 (const int)
+0:18  Sequence
+0:18    move second child to first child (temp structure{temp structure{temp 2-component vector of uint v} s1})
+0:18      'single4' (global structure{temp structure{temp 2-component vector of uint v} s1})
+0:18      Constant:
+0:18        4 (const uint)
+0:18        5 (const uint)
+0:21  Function Definition: ShaderFunction(vf4; (temp 4-component vector of float)
+0:21    Function Parameters: 
+0:21      'input' (layout(location=0 ) in 4-component vector of float)
+0:?     Sequence
+0:22      Sequence
+0:22        move second child to first child (temp 4-component vector of float)
+0:22          'a2' (temp 4-component vector of float)
+0:?           Constant:
+0:?             0.200000
+0:?             0.300000
+0:?             0.400000
+0:?             0.500000
+0:32      Sequence
+0:32        move second child to first child (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
+0:32          's2i' (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
+0:32          Construct structure (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
+0:32            Constant:
+0:32              9 (const int)
+0:32            'a5' (global float)
+0:32            Construct structure (temp structure{temp float f, temp int i})
+0:32              Comma (temp float)
+0:32                'a3' (global float)
+0:32                'a4' (global float)
+0:32              Constant:
+0:32                12 (const int)
+0:32        move second child to first child (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
+0:32          's2' (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
+0:?           Construct structure (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
+0:32            Constant:
+0:32              9 (const int)
+0:32            'a5' (global float)
+0:?             Construct structure (temp structure{temp float f, temp int i})
+0:32              Comma (temp float)
+0:32                'a3' (global float)
+0:32                'a4' (global float)
+0:32              Constant:
+0:32                12 (const int)
+0:33      Sequence
+0:33        move second child to first child (temp float)
+0:33          'a8' (temp float)
+0:33          Comma (temp float)
+0:33            'a2' (temp 4-component vector of float)
+0:33            'b2' (global float)
+0:33        move second child to first child (temp float)
+0:33          'a9' (temp float)
+0:33          'a5' (global float)
+0:35      Sequence
+0:35        move second child to first child (temp 4-component vector of float)
+0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:35          component-wise multiply (temp 4-component vector of float)
+0:35            'input' (layout(location=0 ) in 4-component vector of float)
+0:35            'a1' (global 4-component vector of float)
+0:35        Branch: Return
+0:?   Linker Objects
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'input' (layout(location=0 ) in 4-component vector of float)
+0:?     'a1' (global 4-component vector of float)
+0:?     'b1' (global 4-component vector of float)
+0:?     'a1i' (global 4-component vector of float)
+0:?     'b1i' (global 4-component vector of float)
+0:?     'a2' (global float)
+0:?     'b2' (global float)
+0:?     'a3' (global float)
+0:?     'b3' (global float)
+0:?     'a4' (global float)
+0:?     'b4' (global float)
+0:?     'c4' (global float)
+0:?     'a5' (global float)
+0:?     'b5' (global float)
+0:?     'c5' (global float)
+0:?     'single1' (global structure{temp int f})
+0:?     'single2' (global structure{temp 2-component vector of uint v})
+0:?     'single3' (global structure{temp structure{temp int f} s1})
+0:?     'single4' (global structure{temp structure{temp 2-component vector of uint v} s1})
+
+// Module Version 10000
+// Generated by (magic number): 80001
+// Id's are bound by 97
+
+                              Capability Shader
+               1:             ExtInstImport  "GLSL.std.450"
+                              MemoryModel Logical GLSL450
+                              EntryPoint Fragment 4  "ShaderFunction" 88 90
+                              ExecutionMode 4 OriginUpperLeft
+                              Name 4  "ShaderFunction"
+                              Name 9  "a1"
+                              Name 14  "b1"
+                              Name 20  "a1i"
+                              Name 21  "b1i"
+                              Name 23  "a2"
+                              Name 25  "b3"
+                              Name 27  "b4"
+                              Name 29  "a5"
+                              Name 30  "c5"
+                              Name 33  "Single1"
+                              MemberName 33(Single1) 0  "f"
+                              Name 35  "single1"
+                              Name 40  "Single2"
+                              MemberName 40(Single2) 0  "v"
+                              Name 42  "single2"
+                              Name 47  "Single3"
+                              MemberName 47(Single3) 0  "s1"
+                              Name 49  "single3"
+                              Name 53  "Single4"
+                              MemberName 53(Single4) 0  "s1"
+                              Name 55  "single4"
+                              Name 62  "a2"
+                              Name 64  "S1"
+                              MemberName 64(S1) 0  "f"
+                              MemberName 64(S1) 1  "i"
+                              Name 65  "S2"
+                              MemberName 65(S2) 0  "j"
+                              MemberName 65(S2) 1  "g"
+                              MemberName 65(S2) 2  "s1"
+                              Name 67  "s2i"
+                              Name 70  "a3"
+                              Name 71  "a4"
+                              Name 76  "s2"
+                              Name 82  "a8"
+                              Name 83  "b2"
+                              Name 85  "a9"
+                              Name 88  "@entryPointOutput"
+                              Name 90  "input"
+                              Name 95  "c4"
+                              Name 96  "b5"
+                              Decorate 88(@entryPointOutput) Location 0
+                              Decorate 90(input) Location 0
+               2:             TypeVoid
+               3:             TypeFunction 2
+               6:             TypeFloat 32
+               7:             TypeVector 6(float) 4
+               8:             TypePointer Private 7(fvec4)
+           9(a1):      8(ptr) Variable Private
+              10:    6(float) Constant 1065353216
+              11:    6(float) Constant 1056964608
+              12:    6(float) Constant 0
+              13:    7(fvec4) ConstantComposite 10 11 12 10
+          14(b1):      8(ptr) Variable Private
+              15:    6(float) Constant 1073741824
+              16:    6(float) Constant 1075838976
+              17:    6(float) Constant 1074161254
+              18:    6(float) Constant 1074580685
+              19:    7(fvec4) ConstantComposite 15 16 17 18
+         20(a1i):      8(ptr) Variable Private
+         21(b1i):      8(ptr) Variable Private
+              22:             TypePointer Private 6(float)
+          23(a2):     22(ptr) Variable Private
+              24:    6(float) Constant 1045220557
+          25(b3):     22(ptr) Variable Private
+              26:    6(float) Constant 1050253722
+          27(b4):     22(ptr) Variable Private
+              28:    6(float) Constant 1053609165
+          29(a5):     22(ptr) Variable Private
+          30(c5):     22(ptr) Variable Private
+              31:    6(float) Constant 1069547520
+              32:             TypeInt 32 1
+     33(Single1):             TypeStruct 32(int)
+              34:             TypePointer Private 33(Single1)
+     35(single1):     34(ptr) Variable Private
+              36:     32(int) Constant 10
+              37: 33(Single1) ConstantComposite 36
+              38:             TypeInt 32 0
+              39:             TypeVector 38(int) 2
+     40(Single2):             TypeStruct 39(ivec2)
+              41:             TypePointer Private 40(Single2)
+     42(single2):     41(ptr) Variable Private
+              43:     38(int) Constant 1
+              44:     38(int) Constant 2
+              45:   39(ivec2) ConstantComposite 43 44
+              46: 40(Single2) ConstantComposite 45
+     47(Single3):             TypeStruct 33(Single1)
+              48:             TypePointer Private 47(Single3)
+     49(single3):     48(ptr) Variable Private
+              50:     32(int) Constant 3
+              51: 33(Single1) ConstantComposite 50
+              52: 47(Single3) ConstantComposite 51
+     53(Single4):             TypeStruct 40(Single2)
+              54:             TypePointer Private 53(Single4)
+     55(single4):     54(ptr) Variable Private
+              56:     38(int) Constant 4
+              57:     38(int) Constant 5
+              58:   39(ivec2) ConstantComposite 56 57
+              59: 40(Single2) ConstantComposite 58
+              60: 53(Single4) ConstantComposite 59
+              61:             TypePointer Function 7(fvec4)
+              63:    7(fvec4) ConstantComposite 24 26 28 11
+          64(S1):             TypeStruct 6(float) 32(int)
+          65(S2):             TypeStruct 32(int) 6(float) 64(S1)
+              66:             TypePointer Function 65(S2)
+              68:     32(int) Constant 9
+          70(a3):     22(ptr) Variable Private
+          71(a4):     22(ptr) Variable Private
+              73:     32(int) Constant 12
+              81:             TypePointer Function 6(float)
+          83(b2):     22(ptr) Variable Private
+              87:             TypePointer Output 7(fvec4)
+88(@entryPointOutput):     87(ptr) Variable Output
+              89:             TypePointer Input 7(fvec4)
+       90(input):     89(ptr) Variable Input
+          95(c4):     22(ptr) Variable Private
+          96(b5):     22(ptr) Variable Private
+4(ShaderFunction):           2 Function None 3
+               5:             Label
+          62(a2):     61(ptr) Variable Function
+         67(s2i):     66(ptr) Variable Function
+          76(s2):     66(ptr) Variable Function
+          82(a8):     81(ptr) Variable Function
+          85(a9):     81(ptr) Variable Function
+                              Store 9(a1) 13
+                              Store 14(b1) 19
+                              Store 20(a1i) 13
+                              Store 21(b1i) 19
+                              Store 23(a2) 24
+                              Store 25(b3) 26
+                              Store 27(b4) 28
+                              Store 29(a5) 11
+                              Store 30(c5) 31
+                              Store 35(single1) 37
+                              Store 42(single2) 46
+                              Store 49(single3) 52
+                              Store 55(single4) 60
+                              Store 62(a2) 63
+              69:    6(float) Load 29(a5)
+              72:    6(float) Load 71(a4)
+              74:      64(S1) CompositeConstruct 72 73
+              75:      65(S2) CompositeConstruct 68 69 74
+                              Store 67(s2i) 75
+              77:    6(float) Load 29(a5)
+              78:    6(float) Load 71(a4)
+              79:      64(S1) CompositeConstruct 78 73
+              80:      65(S2) CompositeConstruct 68 77 79
+                              Store 76(s2) 80
+              84:    6(float) Load 83(b2)
+                              Store 82(a8) 84
+              86:    6(float) Load 29(a5)
+                              Store 85(a9) 86
+              91:    7(fvec4) Load 90(input)
+              92:    7(fvec4) Load 9(a1)
+              93:    7(fvec4) FMul 91 92
+                              Store 88(@entryPointOutput) 93
+                              Return
+                              FunctionEnd

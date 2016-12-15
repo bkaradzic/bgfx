@@ -1,0 +1,397 @@
+hlsl.switch.frag
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:2  Function Definition: PixelShaderFunction(vf4;i1;i1; (temp 4-component vector of float)
+0:2    Function Parameters: 
+0:2      'input' (layout(location=0 ) in 4-component vector of float)
+0:2      'c' (layout(location=1 ) in int)
+0:2      'd' (layout(location=2 ) in int)
+0:?     Sequence
+0:3      'c' (layout(location=1 ) in int)
+0:7      switch
+0:7      condition
+0:7        'c' (layout(location=1 ) in int)
+0:7      body
+0:7        Sequence
+0:9          default: 
+0:7          Sequence
+0:7            Branch: Break
+0:12      switch
+0:12      condition
+0:12        'c' (layout(location=1 ) in int)
+0:12      body
+0:12        Sequence
+0:13          case:  with expression
+0:13            Constant:
+0:13              1 (const int)
+0:?           Sequence
+0:14            Pre-Increment (temp 4-component vector of float)
+0:14              'input' (layout(location=0 ) in 4-component vector of float)
+0:15            Branch: Break
+0:16          case:  with expression
+0:16            Constant:
+0:16              2 (const int)
+0:?           Sequence
+0:17            Pre-Decrement (temp 4-component vector of float)
+0:17              'input' (layout(location=0 ) in 4-component vector of float)
+0:18            Branch: Break
+0:21      switch
+0:21      condition
+0:21        'c' (layout(location=1 ) in int)
+0:21      body
+0:21        Sequence
+0:22          case:  with expression
+0:22            Constant:
+0:22              1 (const int)
+0:?           Sequence
+0:23            Pre-Increment (temp 4-component vector of float)
+0:23              'input' (layout(location=0 ) in 4-component vector of float)
+0:24            Branch: Break
+0:25          case:  with expression
+0:25            Constant:
+0:25              2 (const int)
+0:?           Sequence
+0:26            switch
+0:26            condition
+0:26              'd' (layout(location=2 ) in int)
+0:26            body
+0:26              Sequence
+0:27                case:  with expression
+0:27                  Constant:
+0:27                    2 (const int)
+0:?                 Sequence
+0:28                  add second child into first child (temp 4-component vector of float)
+0:28                    'input' (layout(location=0 ) in 4-component vector of float)
+0:28                    Constant:
+0:28                      2.000000
+0:29                  Branch: Break
+0:30                case:  with expression
+0:30                  Constant:
+0:30                    3 (const int)
+0:?                 Sequence
+0:31                  add second child into first child (temp 4-component vector of float)
+0:31                    'input' (layout(location=0 ) in 4-component vector of float)
+0:31                    Constant:
+0:31                      3.000000
+0:32                  Branch: Break
+0:34            Branch: Break
+0:35          default: 
+0:?           Sequence
+0:36            add second child into first child (temp 4-component vector of float)
+0:36              'input' (layout(location=0 ) in 4-component vector of float)
+0:36              Constant:
+0:36                4.000000
+0:39      switch
+0:39      condition
+0:39        'c' (layout(location=1 ) in int)
+0:39      body
+0:39        Sequence
+0:40          case:  with expression
+0:40            Constant:
+0:40              1 (const int)
+0:39          Sequence
+0:39            Branch: Break
+0:43      switch
+0:43      condition
+0:43        'c' (layout(location=1 ) in int)
+0:43      body
+0:43        Sequence
+0:44          case:  with expression
+0:44            Constant:
+0:44              1 (const int)
+0:45          case:  with expression
+0:45            Constant:
+0:45              2 (const int)
+0:46          case:  with expression
+0:46            Constant:
+0:46              3 (const int)
+0:?           Sequence
+0:47            Pre-Increment (temp 4-component vector of float)
+0:47              'input' (layout(location=0 ) in 4-component vector of float)
+0:48            Branch: Break
+0:49          case:  with expression
+0:49            Constant:
+0:49              4 (const int)
+0:50          case:  with expression
+0:50            Constant:
+0:50              5 (const int)
+0:?           Sequence
+0:51            Pre-Decrement (temp 4-component vector of float)
+0:51              'input' (layout(location=0 ) in 4-component vector of float)
+0:54      Sequence
+0:54        move second child to first child (temp 4-component vector of float)
+0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:54          'input' (layout(location=0 ) in 4-component vector of float)
+0:54        Branch: Return
+0:?   Linker Objects
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'input' (layout(location=0 ) in 4-component vector of float)
+0:?     'c' (layout(location=1 ) in int)
+0:?     'd' (layout(location=2 ) in int)
+
+
+Linked fragment stage:
+
+
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:2  Function Definition: PixelShaderFunction(vf4;i1;i1; (temp 4-component vector of float)
+0:2    Function Parameters: 
+0:2      'input' (layout(location=0 ) in 4-component vector of float)
+0:2      'c' (layout(location=1 ) in int)
+0:2      'd' (layout(location=2 ) in int)
+0:?     Sequence
+0:3      'c' (layout(location=1 ) in int)
+0:7      switch
+0:7      condition
+0:7        'c' (layout(location=1 ) in int)
+0:7      body
+0:7        Sequence
+0:9          default: 
+0:7          Sequence
+0:7            Branch: Break
+0:12      switch
+0:12      condition
+0:12        'c' (layout(location=1 ) in int)
+0:12      body
+0:12        Sequence
+0:13          case:  with expression
+0:13            Constant:
+0:13              1 (const int)
+0:?           Sequence
+0:14            Pre-Increment (temp 4-component vector of float)
+0:14              'input' (layout(location=0 ) in 4-component vector of float)
+0:15            Branch: Break
+0:16          case:  with expression
+0:16            Constant:
+0:16              2 (const int)
+0:?           Sequence
+0:17            Pre-Decrement (temp 4-component vector of float)
+0:17              'input' (layout(location=0 ) in 4-component vector of float)
+0:18            Branch: Break
+0:21      switch
+0:21      condition
+0:21        'c' (layout(location=1 ) in int)
+0:21      body
+0:21        Sequence
+0:22          case:  with expression
+0:22            Constant:
+0:22              1 (const int)
+0:?           Sequence
+0:23            Pre-Increment (temp 4-component vector of float)
+0:23              'input' (layout(location=0 ) in 4-component vector of float)
+0:24            Branch: Break
+0:25          case:  with expression
+0:25            Constant:
+0:25              2 (const int)
+0:?           Sequence
+0:26            switch
+0:26            condition
+0:26              'd' (layout(location=2 ) in int)
+0:26            body
+0:26              Sequence
+0:27                case:  with expression
+0:27                  Constant:
+0:27                    2 (const int)
+0:?                 Sequence
+0:28                  add second child into first child (temp 4-component vector of float)
+0:28                    'input' (layout(location=0 ) in 4-component vector of float)
+0:28                    Constant:
+0:28                      2.000000
+0:29                  Branch: Break
+0:30                case:  with expression
+0:30                  Constant:
+0:30                    3 (const int)
+0:?                 Sequence
+0:31                  add second child into first child (temp 4-component vector of float)
+0:31                    'input' (layout(location=0 ) in 4-component vector of float)
+0:31                    Constant:
+0:31                      3.000000
+0:32                  Branch: Break
+0:34            Branch: Break
+0:35          default: 
+0:?           Sequence
+0:36            add second child into first child (temp 4-component vector of float)
+0:36              'input' (layout(location=0 ) in 4-component vector of float)
+0:36              Constant:
+0:36                4.000000
+0:39      switch
+0:39      condition
+0:39        'c' (layout(location=1 ) in int)
+0:39      body
+0:39        Sequence
+0:40          case:  with expression
+0:40            Constant:
+0:40              1 (const int)
+0:39          Sequence
+0:39            Branch: Break
+0:43      switch
+0:43      condition
+0:43        'c' (layout(location=1 ) in int)
+0:43      body
+0:43        Sequence
+0:44          case:  with expression
+0:44            Constant:
+0:44              1 (const int)
+0:45          case:  with expression
+0:45            Constant:
+0:45              2 (const int)
+0:46          case:  with expression
+0:46            Constant:
+0:46              3 (const int)
+0:?           Sequence
+0:47            Pre-Increment (temp 4-component vector of float)
+0:47              'input' (layout(location=0 ) in 4-component vector of float)
+0:48            Branch: Break
+0:49          case:  with expression
+0:49            Constant:
+0:49              4 (const int)
+0:50          case:  with expression
+0:50            Constant:
+0:50              5 (const int)
+0:?           Sequence
+0:51            Pre-Decrement (temp 4-component vector of float)
+0:51              'input' (layout(location=0 ) in 4-component vector of float)
+0:54      Sequence
+0:54        move second child to first child (temp 4-component vector of float)
+0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:54          'input' (layout(location=0 ) in 4-component vector of float)
+0:54        Branch: Return
+0:?   Linker Objects
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'input' (layout(location=0 ) in 4-component vector of float)
+0:?     'c' (layout(location=1 ) in int)
+0:?     'd' (layout(location=2 ) in int)
+
+// Module Version 10000
+// Generated by (magic number): 80001
+// Id's are bound by 84
+
+                              Capability Shader
+               1:             ExtInstImport  "GLSL.std.450"
+                              MemoryModel Logical GLSL450
+                              EntryPoint Fragment 4  "PixelShaderFunction" 8 21 41 81
+                              ExecutionMode 4 OriginUpperLeft
+                              Name 4  "PixelShaderFunction"
+                              Name 8  "c"
+                              Name 21  "input"
+                              Name 41  "d"
+                              Name 81  "@entryPointOutput"
+                              Decorate 8(c) Location 1
+                              Decorate 21(input) Location 0
+                              Decorate 41(d) Location 2
+                              Decorate 81(@entryPointOutput) Location 0
+               2:             TypeVoid
+               3:             TypeFunction 2
+               6:             TypeInt 32 1
+               7:             TypePointer Input 6(int)
+            8(c):      7(ptr) Variable Input
+              18:             TypeFloat 32
+              19:             TypeVector 18(float) 4
+              20:             TypePointer Input 19(fvec4)
+       21(input):     20(ptr) Variable Input
+              23:   18(float) Constant 1065353216
+           41(d):      7(ptr) Variable Input
+              46:   18(float) Constant 1073741824
+              51:   18(float) Constant 1077936128
+              58:   18(float) Constant 1082130432
+              80:             TypePointer Output 19(fvec4)
+81(@entryPointOutput):     80(ptr) Variable Output
+4(PixelShaderFunction):           2 Function None 3
+               5:             Label
+               9:      6(int) Load 8(c)
+                              SelectionMerge 11 None
+                              Switch 9 10
+              10:               Label
+                                Branch 11
+              11:             Label
+              14:      6(int) Load 8(c)
+                              SelectionMerge 17 None
+                              Switch 14 17 
+                                     case 1: 15
+                                     case 2: 16
+              15:               Label
+              22:   19(fvec4)   Load 21(input)
+              24:   19(fvec4)   CompositeConstruct 23 23 23 23
+              25:   19(fvec4)   FAdd 22 24
+                                Store 21(input) 25
+                                Branch 17
+              16:               Label
+              27:   19(fvec4)   Load 21(input)
+              28:   19(fvec4)   CompositeConstruct 23 23 23 23
+              29:   19(fvec4)   FSub 27 28
+                                Store 21(input) 29
+                                Branch 17
+              17:             Label
+              32:      6(int) Load 8(c)
+                              SelectionMerge 36 None
+                              Switch 32 35 
+                                     case 1: 33
+                                     case 2: 34
+              35:               Label
+              59:   19(fvec4)   Load 21(input)
+              60:   19(fvec4)   CompositeConstruct 58 58 58 58
+              61:   19(fvec4)   FAdd 59 60
+                                Store 21(input) 61
+                                Branch 36
+              33:               Label
+              37:   19(fvec4)   Load 21(input)
+              38:   19(fvec4)   CompositeConstruct 23 23 23 23
+              39:   19(fvec4)   FAdd 37 38
+                                Store 21(input) 39
+                                Branch 36
+              34:               Label
+              42:      6(int)   Load 41(d)
+                                SelectionMerge 45 None
+                                Switch 42 45 
+                                       case 2: 43
+                                       case 3: 44
+              43:                 Label
+              47:   19(fvec4)     Load 21(input)
+              48:   19(fvec4)     CompositeConstruct 46 46 46 46
+              49:   19(fvec4)     FAdd 47 48
+                                  Store 21(input) 49
+                                  Branch 45
+              44:                 Label
+              52:   19(fvec4)     Load 21(input)
+              53:   19(fvec4)     CompositeConstruct 51 51 51 51
+              54:   19(fvec4)     FAdd 52 53
+                                  Store 21(input) 54
+                                  Branch 45
+              45:               Label
+                                Branch 36
+              36:             Label
+              63:      6(int) Load 8(c)
+                              SelectionMerge 65 None
+                              Switch 63 65 
+                                     case 1: 64
+              64:               Label
+                                Branch 65
+              65:             Label
+              68:      6(int) Load 8(c)
+                              SelectionMerge 71 None
+                              Switch 68 71 
+                                     case 1: 69
+                                     case 2: 69
+                                     case 3: 69
+                                     case 4: 70
+                                     case 5: 70
+              69:               Label
+              72:   19(fvec4)   Load 21(input)
+              73:   19(fvec4)   CompositeConstruct 23 23 23 23
+              74:   19(fvec4)   FAdd 72 73
+                                Store 21(input) 74
+                                Branch 71
+              70:               Label
+              76:   19(fvec4)   Load 21(input)
+              77:   19(fvec4)   CompositeConstruct 23 23 23 23
+              78:   19(fvec4)   FSub 76 77
+                                Store 21(input) 78
+                                Branch 71
+              71:             Label
+              82:   19(fvec4) Load 21(input)
+                              Store 81(@entryPointOutput) 82
+                              Return
+                              FunctionEnd

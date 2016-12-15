@@ -1,0 +1,13 @@
+glspv.frag
+ERROR: 0:4: '#error' : GL_SPIRV is set ( correct , not an error )  
+ERROR: 0:6: '#error' : GL_SPIR is 100  
+ERROR: 0:14: 'input_attachment_index' : only allowed when using GLSL for Vulkan 
+ERROR: 0:14: '' :  syntax error
+ERROR: 4 compilation errors.  No code generated.
+
+
+
+Linked fragment stage:
+
+
+SPIR-V is not generated for failed compile or link

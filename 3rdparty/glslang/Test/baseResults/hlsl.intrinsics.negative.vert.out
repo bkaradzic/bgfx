@@ -1,0 +1,462 @@
+hlsl.intrinsics.negative.vert
+Shader version: 450
+0:? Sequence
+0:15  Function Definition: VertexShaderFunctionS(f1;f1;f1;i1; (temp float)
+0:15    Function Parameters: 
+0:15      'inF0' (in float)
+0:15      'inF1' (in float)
+0:15      'inF2' (in float)
+0:15      'inI0' (in int)
+0:?     Sequence
+0:71      Branch: Return with expression
+0:71        Constant:
+0:71          0.000000
+0:75  Function Definition: VertexShaderFunction1(vf1;vf1;vf1;vi1; (temp 1-component vector of float)
+0:75    Function Parameters: 
+0:75      'inF0' (in 1-component vector of float)
+0:75      'inF1' (in 1-component vector of float)
+0:75      'inF2' (in 1-component vector of float)
+0:75      'inI0' (in 1-component vector of int)
+0:?     Sequence
+0:80      Branch: Return with expression
+0:80        Constant:
+0:80          0.000000
+0:84  Function Definition: VertexShaderFunction2(vf2;vf2;vf2;vi2; (temp 2-component vector of float)
+0:84    Function Parameters: 
+0:84      'inF0' (in 2-component vector of float)
+0:84      'inF1' (in 2-component vector of float)
+0:84      'inF2' (in 2-component vector of float)
+0:84      'inI0' (in 2-component vector of int)
+0:?     Sequence
+0:127      Branch: Return with expression
+0:?         Constant:
+0:?           1.000000
+0:?           2.000000
+0:131  Function Definition: VertexShaderFunction3(vf3;vf3;vf3;vi3; (temp 3-component vector of float)
+0:131    Function Parameters: 
+0:131      'inF0' (in 3-component vector of float)
+0:131      'inF1' (in 3-component vector of float)
+0:131      'inF2' (in 3-component vector of float)
+0:131      'inI0' (in 3-component vector of int)
+0:?     Sequence
+0:172      Branch: Return with expression
+0:?         Constant:
+0:?           1.000000
+0:?           2.000000
+0:?           3.000000
+0:176  Function Definition: VertexShaderFunction(vf4;vf4;vf4;vi4; (temp 4-component vector of float)
+0:176    Function Parameters: 
+0:176      'inF0' (layout(location=0 ) in 4-component vector of float)
+0:176      'inF1' (layout(location=1 ) in 4-component vector of float)
+0:176      'inF2' (layout(location=2 ) in 4-component vector of float)
+0:176      'inI0' (layout(location=3 ) in 4-component vector of int)
+0:?     Sequence
+0:217      Sequence
+0:217        move second child to first child (temp 4-component vector of float)
+0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?           Constant:
+0:?             1.000000
+0:?             2.000000
+0:?             3.000000
+0:?             4.000000
+0:217        Branch: Return
+0:226  Function Definition: VertexShaderFunction2x2(mf22;mf22;mf22; (temp 2X2 matrix of float)
+0:226    Function Parameters: 
+0:226      'inF0' (in 2X2 matrix of float)
+0:226      'inF1' (in 2X2 matrix of float)
+0:226      'inF2' (in 2X2 matrix of float)
+0:?     Sequence
+0:230      Branch: Return with expression
+0:?         Constant:
+0:?           2.000000
+0:?           2.000000
+0:?           2.000000
+0:?           2.000000
+0:234  Function Definition: VertexShaderFunction3x3(mf33;mf33;mf33; (temp 3X3 matrix of float)
+0:234    Function Parameters: 
+0:234      'inF0' (in 3X3 matrix of float)
+0:234      'inF1' (in 3X3 matrix of float)
+0:234      'inF2' (in 3X3 matrix of float)
+0:?     Sequence
+0:238      Branch: Return with expression
+0:?         Constant:
+0:?           3.000000
+0:?           3.000000
+0:?           3.000000
+0:?           3.000000
+0:?           3.000000
+0:?           3.000000
+0:?           3.000000
+0:?           3.000000
+0:?           3.000000
+0:242  Function Definition: VertexShaderFunction4x4(mf44;mf44;mf44; (temp 4X4 matrix of float)
+0:242    Function Parameters: 
+0:242      'inF0' (in 4X4 matrix of float)
+0:242      'inF1' (in 4X4 matrix of float)
+0:242      'inF2' (in 4X4 matrix of float)
+0:?     Sequence
+0:246      Branch: Return with expression
+0:?         Constant:
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?   Linker Objects
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'inF0' (layout(location=0 ) in 4-component vector of float)
+0:?     'inF1' (layout(location=1 ) in 4-component vector of float)
+0:?     'inF2' (layout(location=2 ) in 4-component vector of float)
+0:?     'inI0' (layout(location=3 ) in 4-component vector of int)
+0:?     'gs_ua' (global uint)
+0:?     'gs_ub' (global uint)
+0:?     'gs_uc' (global uint)
+0:?     'gs_ua2' (global 2-component vector of uint)
+0:?     'gs_ub2' (global 2-component vector of uint)
+0:?     'gs_uc2' (global 2-component vector of uint)
+0:?     'gs_ua3' (global 3-component vector of uint)
+0:?     'gs_ub3' (global 3-component vector of uint)
+0:?     'gs_uc3' (global 3-component vector of uint)
+0:?     'gs_ua4' (global 4-component vector of uint)
+0:?     'gs_ub4' (global 4-component vector of uint)
+0:?     'gs_uc4' (global 4-component vector of uint)
+
+
+Linked vertex stage:
+
+
+Shader version: 450
+0:? Sequence
+0:15  Function Definition: VertexShaderFunctionS(f1;f1;f1;i1; (temp float)
+0:15    Function Parameters: 
+0:15      'inF0' (in float)
+0:15      'inF1' (in float)
+0:15      'inF2' (in float)
+0:15      'inI0' (in int)
+0:?     Sequence
+0:71      Branch: Return with expression
+0:71        Constant:
+0:71          0.000000
+0:75  Function Definition: VertexShaderFunction1(vf1;vf1;vf1;vi1; (temp 1-component vector of float)
+0:75    Function Parameters: 
+0:75      'inF0' (in 1-component vector of float)
+0:75      'inF1' (in 1-component vector of float)
+0:75      'inF2' (in 1-component vector of float)
+0:75      'inI0' (in 1-component vector of int)
+0:?     Sequence
+0:80      Branch: Return with expression
+0:80        Constant:
+0:80          0.000000
+0:84  Function Definition: VertexShaderFunction2(vf2;vf2;vf2;vi2; (temp 2-component vector of float)
+0:84    Function Parameters: 
+0:84      'inF0' (in 2-component vector of float)
+0:84      'inF1' (in 2-component vector of float)
+0:84      'inF2' (in 2-component vector of float)
+0:84      'inI0' (in 2-component vector of int)
+0:?     Sequence
+0:127      Branch: Return with expression
+0:?         Constant:
+0:?           1.000000
+0:?           2.000000
+0:131  Function Definition: VertexShaderFunction3(vf3;vf3;vf3;vi3; (temp 3-component vector of float)
+0:131    Function Parameters: 
+0:131      'inF0' (in 3-component vector of float)
+0:131      'inF1' (in 3-component vector of float)
+0:131      'inF2' (in 3-component vector of float)
+0:131      'inI0' (in 3-component vector of int)
+0:?     Sequence
+0:172      Branch: Return with expression
+0:?         Constant:
+0:?           1.000000
+0:?           2.000000
+0:?           3.000000
+0:176  Function Definition: VertexShaderFunction(vf4;vf4;vf4;vi4; (temp 4-component vector of float)
+0:176    Function Parameters: 
+0:176      'inF0' (layout(location=0 ) in 4-component vector of float)
+0:176      'inF1' (layout(location=1 ) in 4-component vector of float)
+0:176      'inF2' (layout(location=2 ) in 4-component vector of float)
+0:176      'inI0' (layout(location=3 ) in 4-component vector of int)
+0:?     Sequence
+0:217      Sequence
+0:217        move second child to first child (temp 4-component vector of float)
+0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?           Constant:
+0:?             1.000000
+0:?             2.000000
+0:?             3.000000
+0:?             4.000000
+0:217        Branch: Return
+0:226  Function Definition: VertexShaderFunction2x2(mf22;mf22;mf22; (temp 2X2 matrix of float)
+0:226    Function Parameters: 
+0:226      'inF0' (in 2X2 matrix of float)
+0:226      'inF1' (in 2X2 matrix of float)
+0:226      'inF2' (in 2X2 matrix of float)
+0:?     Sequence
+0:230      Branch: Return with expression
+0:?         Constant:
+0:?           2.000000
+0:?           2.000000
+0:?           2.000000
+0:?           2.000000
+0:234  Function Definition: VertexShaderFunction3x3(mf33;mf33;mf33; (temp 3X3 matrix of float)
+0:234    Function Parameters: 
+0:234      'inF0' (in 3X3 matrix of float)
+0:234      'inF1' (in 3X3 matrix of float)
+0:234      'inF2' (in 3X3 matrix of float)
+0:?     Sequence
+0:238      Branch: Return with expression
+0:?         Constant:
+0:?           3.000000
+0:?           3.000000
+0:?           3.000000
+0:?           3.000000
+0:?           3.000000
+0:?           3.000000
+0:?           3.000000
+0:?           3.000000
+0:?           3.000000
+0:242  Function Definition: VertexShaderFunction4x4(mf44;mf44;mf44; (temp 4X4 matrix of float)
+0:242    Function Parameters: 
+0:242      'inF0' (in 4X4 matrix of float)
+0:242      'inF1' (in 4X4 matrix of float)
+0:242      'inF2' (in 4X4 matrix of float)
+0:?     Sequence
+0:246      Branch: Return with expression
+0:?         Constant:
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?           4.000000
+0:?   Linker Objects
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'inF0' (layout(location=0 ) in 4-component vector of float)
+0:?     'inF1' (layout(location=1 ) in 4-component vector of float)
+0:?     'inF2' (layout(location=2 ) in 4-component vector of float)
+0:?     'inI0' (layout(location=3 ) in 4-component vector of int)
+0:?     'gs_ua' (global uint)
+0:?     'gs_ub' (global uint)
+0:?     'gs_uc' (global uint)
+0:?     'gs_ua2' (global 2-component vector of uint)
+0:?     'gs_ub2' (global 2-component vector of uint)
+0:?     'gs_uc2' (global 2-component vector of uint)
+0:?     'gs_ua3' (global 3-component vector of uint)
+0:?     'gs_ub3' (global 3-component vector of uint)
+0:?     'gs_uc3' (global 3-component vector of uint)
+0:?     'gs_ua4' (global 4-component vector of uint)
+0:?     'gs_ub4' (global 4-component vector of uint)
+0:?     'gs_uc4' (global 4-component vector of uint)
+
+// Module Version 10000
+// Generated by (magic number): 80001
+// Id's are bound by 128
+
+                              Capability Shader
+               1:             ExtInstImport  "GLSL.std.450"
+                              MemoryModel Logical GLSL450
+                              EntryPoint Vertex 4  "VertexShaderFunction" 85 102 103 104 107
+                              Name 4  "VertexShaderFunction"
+                              Name 15  "VertexShaderFunctionS(f1;f1;f1;i1;"
+                              Name 11  "inF0"
+                              Name 12  "inF1"
+                              Name 13  "inF2"
+                              Name 14  "inI0"
+                              Name 21  "VertexShaderFunction1(vf1;vf1;vf1;vi1;"
+                              Name 17  "inF0"
+                              Name 18  "inF1"
+                              Name 19  "inF2"
+                              Name 20  "inI0"
+                              Name 32  "VertexShaderFunction2(vf2;vf2;vf2;vi2;"
+                              Name 28  "inF0"
+                              Name 29  "inF1"
+                              Name 30  "inF2"
+                              Name 31  "inI0"
+                              Name 43  "VertexShaderFunction3(vf3;vf3;vf3;vi3;"
+                              Name 39  "inF0"
+                              Name 40  "inF1"
+                              Name 41  "inF2"
+                              Name 42  "inI0"
+                              Name 51  "VertexShaderFunction2x2(mf22;mf22;mf22;"
+                              Name 48  "inF0"
+                              Name 49  "inF1"
+                              Name 50  "inF2"
+                              Name 59  "VertexShaderFunction3x3(mf33;mf33;mf33;"
+                              Name 56  "inF0"
+                              Name 57  "inF1"
+                              Name 58  "inF2"
+                              Name 68  "VertexShaderFunction4x4(mf44;mf44;mf44;"
+                              Name 65  "inF0"
+                              Name 66  "inF1"
+                              Name 67  "inF2"
+                              Name 85  "@entryPointOutput"
+                              Name 102  "inF0"
+                              Name 103  "inF1"
+                              Name 104  "inF2"
+                              Name 107  "inI0"
+                              Name 110  "gs_ua"
+                              Name 111  "gs_ub"
+                              Name 112  "gs_uc"
+                              Name 115  "gs_ua2"
+                              Name 116  "gs_ub2"
+                              Name 117  "gs_uc2"
+                              Name 120  "gs_ua3"
+                              Name 121  "gs_ub3"
+                              Name 122  "gs_uc3"
+                              Name 125  "gs_ua4"
+                              Name 126  "gs_ub4"
+                              Name 127  "gs_uc4"
+                              Decorate 85(@entryPointOutput) Location 0
+                              Decorate 102(inF0) Location 0
+                              Decorate 103(inF1) Location 1
+                              Decorate 104(inF2) Location 2
+                              Decorate 107(inI0) Location 3
+               2:             TypeVoid
+               3:             TypeFunction 2
+               6:             TypeFloat 32
+               7:             TypePointer Function 6(float)
+               8:             TypeInt 32 1
+               9:             TypePointer Function 8(int)
+              10:             TypeFunction 6(float) 7(ptr) 7(ptr) 7(ptr) 9(ptr)
+              23:             TypeVector 6(float) 2
+              24:             TypePointer Function 23(fvec2)
+              25:             TypeVector 8(int) 2
+              26:             TypePointer Function 25(ivec2)
+              27:             TypeFunction 23(fvec2) 24(ptr) 24(ptr) 24(ptr) 26(ptr)
+              34:             TypeVector 6(float) 3
+              35:             TypePointer Function 34(fvec3)
+              36:             TypeVector 8(int) 3
+              37:             TypePointer Function 36(ivec3)
+              38:             TypeFunction 34(fvec3) 35(ptr) 35(ptr) 35(ptr) 37(ptr)
+              45:             TypeMatrix 23(fvec2) 2
+              46:             TypePointer Function 45
+              47:             TypeFunction 45 46(ptr) 46(ptr) 46(ptr)
+              53:             TypeMatrix 34(fvec3) 3
+              54:             TypePointer Function 53
+              55:             TypeFunction 53 54(ptr) 54(ptr) 54(ptr)
+              61:             TypeVector 6(float) 4
+              62:             TypeMatrix 61(fvec4) 4
+              63:             TypePointer Function 62
+              64:             TypeFunction 62 63(ptr) 63(ptr) 63(ptr)
+              70:    6(float) Constant 0
+              75:    6(float) Constant 1065353216
+              76:    6(float) Constant 1073741824
+              77:   23(fvec2) ConstantComposite 75 76
+              80:    6(float) Constant 1077936128
+              81:   34(fvec3) ConstantComposite 75 76 80
+              84:             TypePointer Output 61(fvec4)
+85(@entryPointOutput):     84(ptr) Variable Output
+              86:    6(float) Constant 1082130432
+              87:   61(fvec4) ConstantComposite 75 76 80 86
+              89:   23(fvec2) ConstantComposite 76 76
+              90:          45 ConstantComposite 89 89
+              93:   34(fvec3) ConstantComposite 80 80 80
+              94:          53 ConstantComposite 93 93 93
+              97:   61(fvec4) ConstantComposite 86 86 86 86
+              98:          62 ConstantComposite 97 97 97 97
+             101:             TypePointer Input 61(fvec4)
+       102(inF0):    101(ptr) Variable Input
+       103(inF1):    101(ptr) Variable Input
+       104(inF2):    101(ptr) Variable Input
+             105:             TypeVector 8(int) 4
+             106:             TypePointer Input 105(ivec4)
+       107(inI0):    106(ptr) Variable Input
+             108:             TypeInt 32 0
+             109:             TypePointer Private 108(int)
+      110(gs_ua):    109(ptr) Variable Private
+      111(gs_ub):    109(ptr) Variable Private
+      112(gs_uc):    109(ptr) Variable Private
+             113:             TypeVector 108(int) 2
+             114:             TypePointer Private 113(ivec2)
+     115(gs_ua2):    114(ptr) Variable Private
+     116(gs_ub2):    114(ptr) Variable Private
+     117(gs_uc2):    114(ptr) Variable Private
+             118:             TypeVector 108(int) 3
+             119:             TypePointer Private 118(ivec3)
+     120(gs_ua3):    119(ptr) Variable Private
+     121(gs_ub3):    119(ptr) Variable Private
+     122(gs_uc3):    119(ptr) Variable Private
+             123:             TypeVector 108(int) 4
+             124:             TypePointer Private 123(ivec4)
+     125(gs_ua4):    124(ptr) Variable Private
+     126(gs_ub4):    124(ptr) Variable Private
+     127(gs_uc4):    124(ptr) Variable Private
+4(VertexShaderFunction):           2 Function None 3
+               5:             Label
+                              Store 85(@entryPointOutput) 87
+                              Return
+                              FunctionEnd
+15(VertexShaderFunctionS(f1;f1;f1;i1;):    6(float) Function None 10
+        11(inF0):      7(ptr) FunctionParameter
+        12(inF1):      7(ptr) FunctionParameter
+        13(inF2):      7(ptr) FunctionParameter
+        14(inI0):      9(ptr) FunctionParameter
+              16:             Label
+                              ReturnValue 70
+                              FunctionEnd
+21(VertexShaderFunction1(vf1;vf1;vf1;vi1;):    6(float) Function None 10
+        17(inF0):      7(ptr) FunctionParameter
+        18(inF1):      7(ptr) FunctionParameter
+        19(inF2):      7(ptr) FunctionParameter
+        20(inI0):      9(ptr) FunctionParameter
+              22:             Label
+                              ReturnValue 70
+                              FunctionEnd
+32(VertexShaderFunction2(vf2;vf2;vf2;vi2;):   23(fvec2) Function None 27
+        28(inF0):     24(ptr) FunctionParameter
+        29(inF1):     24(ptr) FunctionParameter
+        30(inF2):     24(ptr) FunctionParameter
+        31(inI0):     26(ptr) FunctionParameter
+              33:             Label
+                              ReturnValue 77
+                              FunctionEnd
+43(VertexShaderFunction3(vf3;vf3;vf3;vi3;):   34(fvec3) Function None 38
+        39(inF0):     35(ptr) FunctionParameter
+        40(inF1):     35(ptr) FunctionParameter
+        41(inF2):     35(ptr) FunctionParameter
+        42(inI0):     37(ptr) FunctionParameter
+              44:             Label
+                              ReturnValue 81
+                              FunctionEnd
+51(VertexShaderFunction2x2(mf22;mf22;mf22;):          45 Function None 47
+        48(inF0):     46(ptr) FunctionParameter
+        49(inF1):     46(ptr) FunctionParameter
+        50(inF2):     46(ptr) FunctionParameter
+              52:             Label
+                              ReturnValue 90
+                              FunctionEnd
+59(VertexShaderFunction3x3(mf33;mf33;mf33;):          53 Function None 55
+        56(inF0):     54(ptr) FunctionParameter
+        57(inF1):     54(ptr) FunctionParameter
+        58(inF2):     54(ptr) FunctionParameter
+              60:             Label
+                              ReturnValue 94
+                              FunctionEnd
+68(VertexShaderFunction4x4(mf44;mf44;mf44;):          62 Function None 64
+        65(inF0):     63(ptr) FunctionParameter
+        66(inF1):     63(ptr) FunctionParameter
+        67(inF2):     63(ptr) FunctionParameter
+              69:             Label
+                              ReturnValue 98
+                              FunctionEnd

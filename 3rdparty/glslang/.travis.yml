@@ -1,0 +1,60 @@
+# Linux and Mac Build Configuration for Travis
+
+language: cpp
+
+os:
+  - linux
+  - osx
+
+# Use Ubuntu 14.04 LTS (Trusty) as the Linux testing environment.
+sudo: required
+dist: trusty
+
+env:
+  - GLSLANG_BUILD_TYPE=Release
+  - GLSLANG_BUILD_TYPE=Debug
+
+compiler:
+  - clang
+  - gcc
+
+matrix:
+  fast_finish: true # Show final status immediately if a test fails.
+  exclude:
+    # Skip GCC builds on Mac OS X.
+    - os: osx
+      compiler: gcc
+
+cache:
+  apt: true
+
+branches:
+  only:
+    - master
+
+addons:
+  apt:
+    packages:
+      - clang-3.6
+      - ninja-build
+
+install:
+  # Install ninja on Mac OS X.
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update && brew install ninja; fi
+  # Make sure that clang-3.6 is selected.
+  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "clang" ]]; then
+      export CC=clang-3.6 CXX=clang++-3.6;
+    fi
+
+before_script:
+  - git clone https://github.com/google/googletest.git External/googletest
+
+script:
+  - mkdir build && cd build
+  # We need to install the compiled binaries so the paths in the runtests script can resolve correctly.
+  - cmake -GNinja -DCMAKE_BUILD_TYPE=${GLSLANG_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=`pwd`/install ..
+  - ninja install
+  # Run Google-Test-based tests.
+  - ctest --output-on-failure
+  # Run runtests-based tests.
+  - cd ../Test && ./runtests

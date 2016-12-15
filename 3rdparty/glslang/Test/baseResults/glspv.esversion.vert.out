@@ -1,0 +1,11 @@
+glspv.esversion.vert
+ERROR: #version: ES shaders for OpenGL SPIR-V are not supported
+Warning, version 310 is not yet complete; most version-specific features are present, but some are missing.
+ERROR: 1 compilation errors.  No code generated.
+
+
+
+Linked vertex stage:
+
+
+SPIR-V is not generated for failed compile or link
