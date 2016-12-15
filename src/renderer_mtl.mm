@@ -44,7 +44,6 @@ Known issues(driver problems??):
 			Only on this device ( no problem on iPad Air 2 with iOS9.3.1)
 
   TODOs:
- - remove sync points at mesh update. clearquad: 13-stencil, 26-occlusion, 30-picking
  - framebufferMtl and TextureMtl resolve
 
  - FrameBufferMtl::postReset recreate framebuffer???
@@ -65,9 +64,6 @@ Known issues(driver problems??):
  INFO:
   - 15-shadowmaps-simple (example needs modification mtxCrop znew = z * 0.5 + 0.5 is not needed ) could be hacked in shader too
 
- ASK:
-	BGFX_RESET_FLIP_AFTER_RENDER on low level renderers should be true?
-	Do I have absolutely need to send result to screen at flip or can I do it in submit?
  */
 
 namespace bgfx { namespace mtl
@@ -429,8 +425,8 @@ namespace bgfx { namespace mtl
 			m_metalLayer.device      = m_device;
 			m_metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
 
-			m_commandQueue = m_device.newCommandQueue();
-			BGFX_FATAL(NULL != m_commandQueue, Fatal::UnableToInitialize, "Unable to create Metal device.");
+			m_cmd.init(m_device);
+			BGFX_FATAL(NULL != m_cmd.m_commandQueue, Fatal::UnableToInitialize, "Unable to create Metal device.");
 
 			m_renderPipelineDescriptor   = newRenderPipelineDescriptor();
 			m_depthStencilDescriptor     = newDepthStencilDescriptor();
@@ -440,7 +436,6 @@ namespace bgfx { namespace mtl
 			m_textureDescriptor = newTextureDescriptor();
 			m_samplerDescriptor = newSamplerDescriptor();
 
-			m_framesSemaphore.post(MTL_MAX_FRAMES_IN_FLIGHT);
 			for (uint8_t i=0; i < MTL_MAX_FRAMES_IN_FLIGHT; ++i)
 			{
 				m_uniformBuffers[i] = m_device.newBufferWithLength(UNIFORM_BUFFER_SIZE, 0);
@@ -684,7 +679,7 @@ namespace bgfx { namespace mtl
 			{
 				MTL_RELEASE(m_uniformBuffers[i]);
 			}
-			MTL_RELEASE(m_commandQueue);
+			m_cmd.shutdown();
 			MTL_RELEASE(m_device);
 		}
 
@@ -800,9 +795,8 @@ namespace bgfx { namespace mtl
 
 		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) BX_OVERRIDE
 		{
-			m_commandBuffer.commit();
-			m_commandBuffer.waitUntilCompleted();
-			MTL_RELEASE(m_commandBuffer)
+			m_cmd.kick(false, true);
+			m_commandBuffer = m_cmd.alloc();
 
 			const TextureMtl& texture = m_textures[_handle.idx];
 
@@ -816,8 +810,6 @@ namespace bgfx { namespace mtl
 
 			texture.m_ptr.getBytes(_data, srcWidth*bpp/8, 0, region, _mip, 0);
 
-			m_commandBuffer = m_commandQueue.commandBuffer();
-			retain(m_commandBuffer); //NOTE: keep alive to be useable at 'flip'
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips) BX_OVERRIDE
@@ -925,9 +917,8 @@ namespace bgfx { namespace mtl
 			if (NULL == m_screenshotTarget)
 				return;
 
-			m_commandBuffer.commit();
-			m_commandBuffer.waitUntilCompleted();
-			MTL_RELEASE(m_commandBuffer)
+			m_cmd.kick(false, true);
+			m_commandBuffer = 0;
 
 			uint32_t width  = m_screenshotTarget.width();
 			uint32_t height = m_screenshotTarget.height();
@@ -949,8 +940,7 @@ namespace bgfx { namespace mtl
 
 			BX_FREE(g_allocator, data);
 
-			m_commandBuffer = m_commandQueue.commandBuffer();
-			retain(m_commandBuffer); //NOTE: keep alive to be useable at 'flip'
+			m_commandBuffer = m_cmd.alloc();
 		}
 
 		void updateViewName(uint8_t _id, const char* _name) BX_OVERRIDE
@@ -1071,13 +1061,6 @@ namespace bgfx { namespace mtl
 			}
 		}
 
-		static void commandBufferFinishedCallback(void* _data)
-		{
-			RendererContextMtl* renderer = (RendererContextMtl*)_data;
-			if ( renderer )
-				renderer->m_framesSemaphore.post();
-		}
-
 		void flip(HMD& /*_hmd*/) BX_OVERRIDE
 		{
 			if (NULL == m_commandBuffer)
@@ -1092,15 +1075,8 @@ namespace bgfx { namespace mtl
 				MTL_RELEASE(m_drawable);
 			}
 
-			m_commandBuffer.addCompletedHandler(commandBufferFinishedCallback, this);
-
-			m_commandBuffer.commit();
-
-			MTL_RELEASE(m_prevCommandBuffer);
-			m_prevCommandBuffer = m_commandBuffer;
-			retain(m_prevCommandBuffer);
-
-			MTL_RELEASE(m_commandBuffer);
+			m_cmd.kick(true);
+			m_commandBuffer = 0;
 
 			//TODO: support multiple windows on OSX
 			/*
@@ -1251,17 +1227,15 @@ namespace bgfx { namespace mtl
 
 				m_renderCommandEncoder.endEncoding();
 
-				m_commandBuffer.commit();
-				m_commandBuffer.waitUntilCompleted();
-				MTL_RELEASE(m_commandBuffer)
+				m_cmd.kick(false, true);
+				m_commandBuffer = 0;
 
 				MTLRegion region = { { 0, 0, 0 }, { m_resolution.m_width, m_resolution.m_height, 1 } };
 
 				//TODO: enable screenshot target when capturing
 				m_screenshotTarget.getBytes(m_capture, 4*m_resolution.m_width, 0, region, 0, 0);
 
-				m_commandBuffer = m_commandQueue.commandBuffer();
-				retain(m_commandBuffer); //NOTE: keep alive to be useable at 'flip'
+				m_commandBuffer = m_cmd.alloc();
 
 				if (m_screenshotTarget.pixelFormat() == MTLPixelFormatRGBA8Uint)
 				{
@@ -1705,11 +1679,6 @@ namespace bgfx { namespace mtl
 			return _visible == (0 != _render->m_occlusion[_handle.idx]);
 		}
 
-		void sync()
-		{
-			if ( m_prevCommandBuffer )
-				m_prevCommandBuffer.waitUntilCompleted();
-		}
 
 		BlitCommandEncoder getBlitCommandEncoder()
 		{
@@ -1717,8 +1686,7 @@ namespace bgfx { namespace mtl
 			{
 				if ( m_commandBuffer == NULL )
 				{
-					m_commandBuffer = m_commandQueue.commandBuffer();
-					retain(m_commandBuffer);
+					m_commandBuffer = m_cmd.alloc();
 				}
 
 				m_blitCommandEncoder = m_commandBuffer.blitCommandEncoder();
@@ -1732,10 +1700,7 @@ namespace bgfx { namespace mtl
 			if (m_drawable == nil)
 			{
 				m_drawable = m_metalLayer.nextDrawable;
-				if (BX_ENABLED(BX_PLATFORM_IOS) )
-				{
-					retain(m_drawable); // keep alive to be useable at 'flip'
-				}
+				retain(m_drawable); // keep alive to be useable at 'flip'
 			}
 
 			return m_drawable;
@@ -1745,8 +1710,8 @@ namespace bgfx { namespace mtl
 		Device				m_device;
 		OcclusionQueryMTL	m_occlusionQuery;
 		TimerQueryMtl		m_gpuTimer;
+		CommandQueueMtl		m_cmd;
 
-		CommandQueue  m_commandQueue;
 		CAMetalLayer* m_metalLayer;
 		Texture       m_backBufferColorMSAA;
 		Texture       m_backBufferDepth;
@@ -1757,10 +1722,6 @@ namespace bgfx { namespace mtl
 		bool m_iOS9Runtime;
 		bool m_macOS11Runtime;
 		bool m_hasPixelFormatDepth32Float_Stencil8;
-
-
-
-		bx::Semaphore m_framesSemaphore;
 
 		Buffer   m_uniformBuffer;
 		Buffer   m_uniformBuffers[MTL_MAX_FRAMES_IN_FLIGHT];
@@ -2365,10 +2326,17 @@ namespace bgfx { namespace mtl
 			memcpy( (uint8_t*)getBuffer().contents() + _offset, _data, _size);
 		}
 		else if ( NULL != s_renderMtl->m_renderCommandEncoder )
-		{	// NOTE: cannot blit while rendercommander is active. have to sync. slow. remove these.
-			// ClearQuad triggers this now
-			s_renderMtl->sync();
-			memcpy( (uint8_t*)getBuffer().contents() + _offset, _data, _size);
+		{
+			s_renderMtl->m_cmd.release(m_buffers[m_bufferIndex]);
+			
+			if (_offset == 0 && _size == m_size)
+				m_buffers[m_bufferIndex] = s_renderMtl->m_device.newBufferWithBytes(_data, _size, 0);
+			else
+			{
+				const void* oldContent = m_buffers[m_bufferIndex].contents();
+				m_buffers[m_bufferIndex] = s_renderMtl->m_device.newBufferWithBytes(oldContent, m_size, 0);
+				memcpy( (uint8_t*)m_buffers[m_bufferIndex].contents() + _offset, _data, _size);
+			}
 		}
 		else
 		{
@@ -2635,7 +2603,7 @@ namespace bgfx { namespace mtl
 
 		if ( NULL != s_renderMtl->m_renderCommandEncoder )
 		{
-			s_renderMtl->sync();
+			s_renderMtl->m_cmd.finish(true);
 
 			MTLRegion region =
 			{
@@ -2770,6 +2738,83 @@ namespace bgfx { namespace mtl
 		return denseIdx;
 	}
 
+	void CommandQueueMtl::init(Device _device)
+	{
+		m_commandQueue = _device.newCommandQueue();
+		m_framesSemaphore.post(MTL_MAX_FRAMES_IN_FLIGHT);
+	}
+
+	void CommandQueueMtl::shutdown()
+	{
+		MTL_RELEASE(m_commandQueue);
+	}
+
+	CommandBuffer CommandQueueMtl::alloc()
+	{
+		m_activeCommandBuffer = m_commandQueue.commandBuffer();
+		m_releaseWriteIndex = (m_releaseWriteIndex + 1) % MTL_MAX_FRAMES_IN_FLIGHT;
+		retain(m_activeCommandBuffer);
+		return m_activeCommandBuffer;
+	}
+
+	static void commandBufferFinishedCallback(void* _data)
+	{
+		CommandQueueMtl* queue = (CommandQueueMtl*)_data;
+		if ( queue )
+			queue->m_framesSemaphore.post();
+	}
+
+	void CommandQueueMtl::kick(bool _endFrame, bool _waitForFinish)
+	{
+		if ( m_activeCommandBuffer )
+		{
+			if ( _endFrame )
+				m_activeCommandBuffer.addCompletedHandler(commandBufferFinishedCallback, this);
+			
+			m_activeCommandBuffer.commit();
+			if ( _waitForFinish )
+				m_activeCommandBuffer.waitUntilCompleted();
+			MTL_RELEASE(m_activeCommandBuffer);
+		}
+	}
+
+	void CommandQueueMtl::finish(bool _finishAll)
+	{
+		if ( _finishAll)
+		{
+			int count = m_activeCommandBuffer != NULL ? 2 : 3;
+			
+			for( int i=0; i< count; ++i)
+			{
+				consume();
+			}
+			
+			m_framesSemaphore.post(count);
+		}
+		else
+		{
+			consume();
+		}
+	}
+
+	void CommandQueueMtl::release(NSObject* _ptr)
+	{
+		m_release[m_releaseWriteIndex].push_back(_ptr);
+	}
+
+	void CommandQueueMtl::consume()
+	{
+		m_framesSemaphore.wait();
+		m_releaseReadIndex = (m_releaseReadIndex + 1) % MTL_MAX_FRAMES_IN_FLIGHT;
+
+		ResourceArray& ra = m_release[m_releaseReadIndex];
+		for (ResourceArray::iterator it = ra.begin(), itEnd = ra.end(); it != itEnd; ++it)
+		{
+			bgfx::mtl::release(*it);
+		}
+		ra.clear();
+	}
+
 	void TimerQueryMtl::init()
 	{
 		m_frequency = bx::getHPFrequency();
@@ -2861,12 +2906,12 @@ namespace bgfx { namespace mtl
 
 	void RendererContextMtl::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) BX_OVERRIDE
 	{
-		m_framesSemaphore.wait();
+		m_cmd.finish(false);
+		
 
 		if ( m_commandBuffer == NULL )
 		{
-			m_commandBuffer = m_commandQueue.commandBuffer();
-			retain(m_commandBuffer); // keep alive to be useable at 'flip'
+			m_commandBuffer = m_cmd.alloc();
 		}
 
 		int64_t elapsed = -bx::getHPCounter();
@@ -2924,8 +2969,6 @@ namespace bgfx { namespace mtl
 		m_bufferIndex = (m_bufferIndex + 1) % MTL_MAX_FRAMES_IN_FLIGHT;
 		m_uniformBufferVertexOffset = 0;
 		m_uniformBufferFragmentOffset = 0;
-
-
 
 		if (0 < _render->m_iboffset)
 		{
