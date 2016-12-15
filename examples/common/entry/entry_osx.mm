@@ -485,9 +485,12 @@ namespace entry
 
 			while (!(m_exit = [dg applicationHasTerminated]) )
 			{
-				if (bgfx::RenderFrame::Exiting == bgfx::renderFrame() )
+				@autoreleasepool
 				{
-					break;
+					if (bgfx::RenderFrame::Exiting == bgfx::renderFrame() )
+					{
+						break;
+					}
 				}
 
 				while (dispatchEvent(peekEvent() ) )
