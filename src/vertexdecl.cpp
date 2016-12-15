@@ -16,7 +16,7 @@
 
 namespace bgfx
 {
-	static const uint8_t s_attribTypeSizeDx9[AttribType::Count][4] =
+	static const uint8_t s_attribTypeSizeD3D9[AttribType::Count][4] =
 	{
 		{  4,  4,  4,  4 }, // Uint8
 		{  4,  4,  4,  4 }, // Uint10
@@ -25,7 +25,7 @@ namespace bgfx
 		{  4,  8, 12, 16 }, // Float
 	};
 
-	static const uint8_t s_attribTypeSizeDx1x[AttribType::Count][4] =
+	static const uint8_t s_attribTypeSizeD3D1x[AttribType::Count][4] =
 	{
 		{  1,  2,  4,  4 }, // Uint8
 		{  4,  4,  4,  4 }, // Uint10
@@ -45,16 +45,16 @@ namespace bgfx
 
 	static const uint8_t (*s_attribTypeSize[])[AttribType::Count][4] =
 	{
-		&s_attribTypeSizeDx9,  // Noop
-		&s_attribTypeSizeDx9,  // Direct3D9
-		&s_attribTypeSizeDx1x, // Direct3D11
-		&s_attribTypeSizeDx1x, // Direct3D12
-		&s_attribTypeSizeGl,   // Gnm
-		&s_attribTypeSizeGl,   // Metal
-		&s_attribTypeSizeGl,   // OpenGLES
-		&s_attribTypeSizeGl,   // OpenGL
-		&s_attribTypeSizeGl,   // Vulkan
-		&s_attribTypeSizeDx9,  // Count
+		&s_attribTypeSizeD3D9,  // Noop
+		&s_attribTypeSizeD3D9,  // Direct3D9
+		&s_attribTypeSizeD3D1x, // Direct3D11
+		&s_attribTypeSizeD3D1x, // Direct3D12
+		&s_attribTypeSizeD3D1x, // Gnm
+		&s_attribTypeSizeGl,    // Metal
+		&s_attribTypeSizeGl,    // OpenGLES
+		&s_attribTypeSizeGl,    // OpenGL
+		&s_attribTypeSizeD3D1x, // Vulkan
+		&s_attribTypeSizeD3D9,  // Count
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_attribTypeSize) == RendererType::Count+1);
 
