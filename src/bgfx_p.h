@@ -2207,8 +2207,8 @@ namespace bgfx
 
 		BGFX_API_FUNC(void reset(uint32_t _width, uint32_t _height, uint32_t _flags) )
 		{
-			BX_WARN(g_caps.limits.maxTextureSize < _width
-				&&  g_caps.limits.maxTextureSize < _height
+			BX_WARN(g_caps.limits.maxTextureSize >= _width
+				&&  g_caps.limits.maxTextureSize >= _height
 				, "Frame buffer resolution width or height can't be larger than limits.maxTextureSize %d (width %d, height %d)."
 				, g_caps.limits.maxTextureSize
 				, _width
