@@ -2328,7 +2328,7 @@ namespace bgfx { namespace mtl
 		else if ( NULL != s_renderMtl->m_renderCommandEncoder )
 		{
 			s_renderMtl->m_cmd.release(m_buffers[m_bufferIndex]);
-			
+
 			if (_offset == 0 && _size == m_size)
 				m_buffers[m_bufferIndex] = s_renderMtl->m_device.newBufferWithBytes(_data, _size, 0);
 			else
@@ -2629,8 +2629,17 @@ namespace bgfx { namespace mtl
 				memcpy(dst, src, rectpitch);
 			}
 
-			bce.copyFromBuffer(tempBuffer, 0, dstpitch, dstpitch * _rect.m_height, MTLSizeMake(_rect.m_width, _rect.m_height, _depth),
-							   m_ptr, _side, _mip, MTLOriginMake(_rect.m_x, _rect.m_y, _z));
+			bce.copyFromBuffer(
+				  tempBuffer
+				, 0
+				, dstpitch
+				, dstpitch * _rect.m_height
+				, MTLSizeMake(_rect.m_width, _rect.m_height, _depth)
+				, m_ptr
+				, _side
+				, _mip
+				, MTLOriginMake(_rect.m_x, _rect.m_y, _z)
+				);
 			release(tempBuffer);
 		}
 
@@ -2645,17 +2654,19 @@ namespace bgfx { namespace mtl
 		if (_vertex)
 		{
 			s_renderMtl->m_renderCommandEncoder.setVertexTexture(m_ptr, _stage);
-			s_renderMtl->m_renderCommandEncoder.setVertexSamplerState(0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags)
-																	  ? s_renderMtl->getSamplerState(_flags)
-																	  : m_sampler, _stage);
+			s_renderMtl->m_renderCommandEncoder.setVertexSamplerState(
+					  0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags)
+					? s_renderMtl->getSamplerState(_flags)
+					: m_sampler, _stage);
 		}
 
 		if (_fragment)
 		{
 			s_renderMtl->m_renderCommandEncoder.setFragmentTexture(m_ptr, _stage);
-			s_renderMtl->m_renderCommandEncoder.setFragmentSamplerState(0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags)
-																		? s_renderMtl->getSamplerState(_flags)
-																		: m_sampler, _stage);
+			s_renderMtl->m_renderCommandEncoder.setFragmentSamplerState(
+					  0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags)
+					? s_renderMtl->getSamplerState(_flags)
+					: m_sampler, _stage);
 		}
 	}
 
@@ -2770,7 +2781,7 @@ namespace bgfx { namespace mtl
 		{
 			if ( _endFrame )
 				m_activeCommandBuffer.addCompletedHandler(commandBufferFinishedCallback, this);
-			
+
 			m_activeCommandBuffer.commit();
 			if ( _waitForFinish )
 				m_activeCommandBuffer.waitUntilCompleted();
@@ -2783,12 +2794,12 @@ namespace bgfx { namespace mtl
 		if ( _finishAll)
 		{
 			int count = m_activeCommandBuffer != NULL ? 2 : 3;
-			
+
 			for( int i=0; i< count; ++i)
 			{
 				consume();
 			}
-			
+
 			m_framesSemaphore.post(count);
 		}
 		else
@@ -2907,7 +2918,7 @@ namespace bgfx { namespace mtl
 	void RendererContextMtl::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) BX_OVERRIDE
 	{
 		m_cmd.finish(false);
-		
+
 
 		if ( m_commandBuffer == NULL )
 		{
