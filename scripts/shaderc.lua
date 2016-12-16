@@ -6,6 +6,11 @@
 project "glslang"
 	kind "StaticLib"
 
+	configuration { "vs*" }
+		buildoptions {
+			"/wd4005", -- warning C4005: '_CRT_SECURE_NO_WARNINGS': macro redefinition
+		}
+
 	configuration { "not vs*" }
 		buildoptions {
 			"-Wno-ignored-qualifiers",
@@ -55,11 +60,24 @@ project "glslang"
 	}
 
 	removefiles {
-		"../3rdparty/glslang/glslang/OSDependent/Windows/**.cpp",
-		"../3rdparty/glslang/glslang/OSDependent/Windows/**.h",
-
 		"../3rdparty/glsl-parser/main.cpp",
+		"../3rdparty/glslang/glslang/OSDependent/Unix/main.cpp",
+		"../3rdparty/glslang/glslang/OSDependent/Windows/main.cpp",
 	}
+
+	configuration { "windows" }
+		removefiles {
+			"../3rdparty/glslang/glslang/OSDependent/Unix/**.cpp",
+			"../3rdparty/glslang/glslang/OSDependent/Unix/**.h",
+		}
+
+	configuration { "not windows" }
+		removefiles {
+			"../3rdparty/glslang/glslang/OSDependent/Windows/**.cpp",
+			"../3rdparty/glslang/glslang/OSDependent/Windows/**.h",
+		}
+
+	configuration {}
 
 project "shaderc"
 	kind "ConsoleApp"
