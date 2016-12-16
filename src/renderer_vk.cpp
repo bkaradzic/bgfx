@@ -3490,7 +3490,7 @@ VK_DESTROY
 		uint32_t shaderSize;
 		bx::read(&reader, shaderSize);
 
-#if 0
+#if 1
 		const void* code = reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
 
