@@ -6,6 +6,8 @@
 project "glslang"
 	kind "StaticLib"
 
+	local GLSLANG = path.join(BGFX_DIR, "3rdparty/glslang")
+
 	configuration { "vs2012" }
 		defines {
 			"atoll=_atoi64",
@@ -45,43 +47,43 @@ project "glslang"
 
 	configuration {}
 
+	flags {
+		"Optimize",
+	}
+
 	includedirs {
-		"../3rdparty/glslang",
+		GLSLANG,
 	}
 
 	files {
-		"../3rdparty/glslang/glslang/**.cpp",
-		"../3rdparty/glslang/glslang/**.h",
+		path.join(GLSLANG, "glslang/**.cpp"),
+		path.join(GLSLANG, "glslang/**.h"),
 
-		"../3rdparty/glslang/hlsl/**.cpp",
-		"../3rdparty/glslang/hlsl/**.h",
+		path.join(GLSLANG, "hlsl/**.cpp"),
+		path.join(GLSLANG, "hlsl/**.h"),
 
-		"../3rdparty/glslang/SPIRV/**.cpp",
-		"../3rdparty/glslang/SPIRV/**.h",
+		path.join(GLSLANG, "SPIRV/**.cpp"),
+		path.join(GLSLANG, "SPIRV/**.h"),
 
-		"../3rdparty/glslang/OGLCompilersDLL/**.cpp",
-		"../3rdparty/glslang/OGLCompilersDLL/**.h",
-
-		"../3rdparty/glsl-parser/**.cpp",
-		"../3rdparty/glsl-parser/**.h",
+		path.join(GLSLANG, "OGLCompilersDLL/**.cpp"),
+		path.join(GLSLANG, "OGLCompilersDLL/**.h"),
 	}
 
 	removefiles {
-		"../3rdparty/glsl-parser/main.cpp",
-		"../3rdparty/glslang/glslang/OSDependent/Unix/main.cpp",
-		"../3rdparty/glslang/glslang/OSDependent/Windows/main.cpp",
+		path.join(GLSLANG, "glslang/OSDependent/Unix/main.cpp"),
+		path.join(GLSLANG, "glslang/OSDependent/Windows/main.cpp"),
 	}
 
 	configuration { "windows" }
 		removefiles {
-			"../3rdparty/glslang/glslang/OSDependent/Unix/**.cpp",
-			"../3rdparty/glslang/glslang/OSDependent/Unix/**.h",
+			path.join(GLSLANG, "glslang/OSDependent/Unix/**.cpp"),
+			path.join(GLSLANG, "glslang/OSDependent/Unix/**.h"),
 		}
 
 	configuration { "not windows" }
 		removefiles {
-			"../3rdparty/glslang/glslang/OSDependent/Windows/**.cpp",
-			"../3rdparty/glslang/glslang/OSDependent/Windows/**.h",
+			path.join(GLSLANG, "glslang/OSDependent/Windows/**.cpp"),
+			path.join(GLSLANG, "glslang/OSDependent/Windows/**.h"),
 		}
 
 	configuration {}
