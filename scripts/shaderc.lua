@@ -226,7 +226,7 @@ project "shaderc"
 		dofile(path.join(BGFX_DIR, "../bgfx-ext/scripts/shaderc.lua") )
 	end
 
-	configuration { "osx or linux-*" }
+	configuration { "osx or linux*" }
 		links {
 			"pthread",
 		}
