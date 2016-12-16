@@ -26,7 +26,7 @@ project "glslang"
 			"-Wno-unused-const-variable",
 		}
 
-	configuration { "not osx" }
+	configuration { "linux-*" }
 		buildoptions {
 			"-Wno-unused-but-set-variable",
 		}
