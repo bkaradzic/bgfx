@@ -2391,10 +2391,12 @@ namespace bgfx { namespace mtl
 				if (imageContainer.m_cubeMap)
 				{
 					desc.textureType = MTLTextureType(6); // MTLTextureTypeCubeArray
+					m_type = TextureCube;
 				}
 				else
 				{
 					desc.textureType = MTLTextureType2DArray;
+					m_type = Texture2D;
 				}
 
 				desc.arrayLength = numLayers;
@@ -2402,14 +2404,17 @@ namespace bgfx { namespace mtl
 			else if (imageContainer.m_cubeMap)
 			{
 				desc.textureType = MTLTextureTypeCube;
+				m_type = TextureCube;
 			}
 			else if (imageContainer.m_depth > 1)
 			{
 				desc.textureType = MTLTextureType3D;
+				m_type = Texture3D;
 			}
 			else
 			{
 				desc.textureType = MTLTextureType2D;
+				m_type = Texture2D;
 			}
 
 			m_numMips = numMips;
@@ -2582,6 +2587,8 @@ namespace bgfx { namespace mtl
 		const uint32_t bpp       = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
 		const uint32_t rectpitch = _rect.m_width*bpp/8;
 		const uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
+		const uint32_t slice = ((m_type == Texture3D) ? 0 : _side + _z * (m_type == TextureCube ? 6 : 1));
+		const uint16_t z = (m_type == Texture3D) ? _z : 0 ;
 
 		const bool convert = m_textureFormat != m_requestedFormat;
 
@@ -2607,11 +2614,11 @@ namespace bgfx { namespace mtl
 
 			MTLRegion region =
 			{
-				{ _rect.m_x,     _rect.m_y,      _z     },
+				{ _rect.m_x,     _rect.m_y,      z     },
 				{ _rect.m_width, _rect.m_height, _depth },
 			};
 
-			m_ptr.replaceRegion(region, _mip, _side, data, srcpitch, srcpitch * _rect.m_height);
+			m_ptr.replaceRegion(region, _mip, slice, data, srcpitch, srcpitch * _rect.m_height);
 		}
 		else
 		{
@@ -2636,9 +2643,9 @@ namespace bgfx { namespace mtl
 				, dstpitch * _rect.m_height
 				, MTLSizeMake(_rect.m_width, _rect.m_height, _depth)
 				, m_ptr
-				, _side
+				, slice
 				, _mip
-				, MTLOriginMake(_rect.m_x, _rect.m_y, _z)
+				, MTLOriginMake(_rect.m_x, _rect.m_y, z)
 				);
 			release(tempBuffer);
 		}
@@ -2763,7 +2770,6 @@ namespace bgfx { namespace mtl
 	CommandBuffer CommandQueueMtl::alloc()
 	{
 		m_activeCommandBuffer = m_commandQueue.commandBuffer();
-		m_releaseWriteIndex = (m_releaseWriteIndex + 1) % MTL_MAX_FRAMES_IN_FLIGHT;
 		retain(m_activeCommandBuffer);
 		return m_activeCommandBuffer;
 	}
@@ -2780,7 +2786,10 @@ namespace bgfx { namespace mtl
 		if ( m_activeCommandBuffer )
 		{
 			if ( _endFrame )
+			{
+				m_releaseWriteIndex = (m_releaseWriteIndex + 1) % MTL_MAX_FRAMES_IN_FLIGHT;
 				m_activeCommandBuffer.addCompletedHandler(commandBufferFinishedCallback, this);
+			}
 
 			m_activeCommandBuffer.commit();
 			if ( _waitForFinish )
