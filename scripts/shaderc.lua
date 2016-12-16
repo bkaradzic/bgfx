@@ -6,18 +6,19 @@
 project "glslang"
 	kind "StaticLib"
 
-	buildoptions {
-		"-Wno-ignored-qualifiers",
-		"-Wno-inconsistent-missing-override",
-		"-Wno-missing-field-initializers",
-		"-Wno-reorder",
-		"-Wno-shadow",
-		"-Wno-sign-compare",
-		"-Wno-undef",
-		"-Wno-unknown-pragmas",
-		"-Wno-unused-parameter",
-		"-Wno-unused-variable",
-	}
+	configuration { "not vs*" }
+		buildoptions {
+			"-Wno-ignored-qualifiers",
+			"-Wno-inconsistent-missing-override",
+			"-Wno-missing-field-initializers",
+			"-Wno-reorder",
+			"-Wno-shadow",
+			"-Wno-sign-compare",
+			"-Wno-undef",
+			"-Wno-unknown-pragmas",
+			"-Wno-unused-parameter",
+			"-Wno-unused-variable",
+		}
 
 	configuration { "osx" }
 		buildoptions {
