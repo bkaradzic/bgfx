@@ -6,6 +6,12 @@
 project "glslang"
 	kind "StaticLib"
 
+	configuration { "vs2012" }
+		defines {
+			"strtoll=_strtoi64",
+			"strtoull=_strtoui64",
+		}
+
 	configuration { "vs*" }
 		buildoptions {
 			"/wd4005", -- warning C4005: '_CRT_SECURE_NO_WARNINGS': macro redefinition
