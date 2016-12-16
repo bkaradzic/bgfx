@@ -96,6 +96,10 @@ project "shaderc"
 		path.join(GLSL_OPTIMIZER, "src"),
 	}
 
+	flags {
+		"Optimize",
+	}
+
 	removeflags {
 		-- GCC 4.9 -O2 + -fno-strict-aliasing don't work together...
 		"OptimizeSpeed",
