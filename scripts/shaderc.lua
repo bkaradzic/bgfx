@@ -17,7 +17,6 @@ project "glslang"
 		"-Wno-unknown-pragmas",
 		"-Wno-unused-parameter",
 		"-Wno-unused-variable",
-		"-std=c++11",
 	}
 
 	configuration { "osx" }
