@@ -8,6 +8,7 @@ project "glslang"
 
 	configuration { "vs2012" }
 		defines {
+			"atoll=_atoi64",
 			"strtoll=_strtoi64",
 			"strtoull=_strtoui64",
 		}
