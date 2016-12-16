@@ -162,11 +162,6 @@ function bgfxProject(_name, _kind, _defines)
 		}
 
 		overridefiles(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
-			path.join(BGFX_DIR, "src/renderer_vk.cpp"),
-			path.join(BGFX_DIR, "src/renderer_vk.h"),
-		})
-
-		overridefiles(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
 			path.join(BGFX_DIR, "src/renderer_gnm.cpp"),
 			path.join(BGFX_DIR, "src/renderer_gnm.h"),
 		})

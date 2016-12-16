@@ -3,8 +3,65 @@
 -- License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 --
 
+project "glslang"
+	kind "StaticLib"
+
+	buildoptions {
+		"-Wno-ignored-qualifiers",
+		"-Wno-inconsistent-missing-override",
+		"-Wno-missing-field-initializers",
+		"-Wno-reorder",
+		"-Wno-shadow",
+		"-Wno-sign-compare",
+		"-Wno-undef",
+		"-Wno-unknown-pragmas",
+		"-Wno-unused-parameter",
+		"-Wno-unused-variable",
+		"-std=c++11",
+	}
+
+	configuration { "osx" }
+		buildoptions {
+			"-Wno-c++11-extensions",
+			"-Wno-unused-const-variable",
+		}
+
+	configuration { "not osx" }
+		buildoptions {
+			"-Wno-unused-but-set-variable",
+		}
+
+	configuration {}
+
+	includedirs {
+		"../3rdparty/glslang",
+	}
+
+	files {
+		"../3rdparty/glslang/glslang/**.cpp",
+		"../3rdparty/glslang/glslang/**.h",
+
+		"../3rdparty/glslang/hlsl/**.cpp",
+		"../3rdparty/glslang/hlsl/**.h",
+
+		"../3rdparty/glslang/SPIRV/**.cpp",
+		"../3rdparty/glslang/SPIRV/**.h",
+
+		"../3rdparty/glslang/OGLCompilersDLL/**.cpp",
+		"../3rdparty/glslang/OGLCompilersDLL/**.h",
+
+		"../3rdparty/glsl-parser/**.cpp",
+		"../3rdparty/glsl-parser/**.h",
+	}
+
+	removefiles {
+		"../3rdparty/glslang/glslang/OSDependent/Windows/**.cpp",
+		"../3rdparty/glslang/glslang/OSDependent/Windows/**.h",
+
+		"../3rdparty/glsl-parser/main.cpp",
+	}
+
 project "shaderc"
-	uuid "f3cd2e90-52a4-11e1-b86c-0800200c9a66"
 	kind "ConsoleApp"
 
 	local GLSL_OPTIMIZER = path.join(BGFX_DIR, "3rdparty/glsl-optimizer")
@@ -74,6 +131,11 @@ project "shaderc"
 		path.join(BGFX_DIR, "3rdparty/dxsdk/include"),
 		FCPP_DIR,
 
+		path.join(BGFX_DIR, "3rdparty/glslang/glslang/Public"),
+		path.join(BGFX_DIR, "3rdparty/glslang/glslang/Include"),
+		path.join(BGFX_DIR, "3rdparty/glslang"),
+--		path.join(BGFX_DIR, "3rdparty/spirv-tools/include"),
+
 		path.join(GLSL_OPTIMIZER, "include"),
 		path.join(GLSL_OPTIMIZER, "src/mesa"),
 		path.join(GLSL_OPTIMIZER, "src/mapi"),
@@ -84,6 +146,7 @@ project "shaderc"
 		path.join(BGFX_DIR, "tools/shaderc/**.cpp"),
 		path.join(BGFX_DIR, "tools/shaderc/**.h"),
 		path.join(BGFX_DIR, "src/vertexdecl.**"),
+		path.join(BGFX_DIR, "src/shader_spirv.**"),
 
 		path.join(FCPP_DIR, "**.h"),
 		path.join(FCPP_DIR, "cpp1.c"),
@@ -114,6 +177,10 @@ project "shaderc"
 		path.join(GLSL_OPTIMIZER, "src/glsl/builtin_stubs.cpp"),
 	}
 
+	links {
+		"glslang",
+	}
+
 	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
 		path.join(BGFX_DIR, "scripts/shaderc.lua"), }) then
 
@@ -125,15 +192,14 @@ project "shaderc"
 			}
 		end
 
-		if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
-			path.join(BGFX_DIR, "tools/shaderc/shaderc_spirv.cpp"), }) then
-
-			removefiles {
-				path.join(BGFX_DIR, "tools/shaderc/shaderc_spirv.cpp"),
-			}
-		end
-
 		dofile(path.join(BGFX_DIR, "../bgfx-ext/scripts/shaderc.lua") )
 	end
+
+	configuration { "osx or linux-*" }
+		links {
+			"pthread",
+		}
+
+	configuration {}
 
 	strip()
