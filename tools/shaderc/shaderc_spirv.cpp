@@ -187,6 +187,7 @@ namespace bgfx { namespace spirv
 			TypeId()
 				: baseType(Enum::Count)
 				, type(Enum::Count)
+				, numComponents(0)
 			{
 			}
 
@@ -649,6 +650,8 @@ namespace bgfx { namespace spirv
 //					, program->getNumLiveUniformVariables()
 //					);
 //				program->dumpReflection();
+
+				BX_UNUSED(spv::MemorySemanticsAllMemory);
 
 				glslang::TIntermediate* intermediate = program->getIntermediate(stage);
 				std::vector<uint32_t> spirv;

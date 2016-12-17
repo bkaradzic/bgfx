@@ -33,7 +33,7 @@ float PixelShaderFunctionS(float inF0, float inF1, float inF2, uint inU0, uint i
     clip(inF0);
     float r014 = cos(inF0);
     float r015 = cosh(inF0);
-    uint r016 = countbits(7);
+    int r016 = countbits(7);
     float r017 = ddx(inF0);
     float r018 = ddx_coarse(inF0);
     float r019 = ddx_fine(inF0);
@@ -111,7 +111,7 @@ float2 PixelShaderFunction2(float2 inF0, float2 inF1, float2 inF2, uint2 inU0, u
     clip(inF0);
     float2 r013 = cos(inF0);
     float2 r015 = cosh(inF0);
-    uint2 r016 = countbits(int2(7,3));
+    int2 r016 = countbits(int2(7,3));
     float2 r017 = ddx(inF0);
     float2 r018 = ddx_coarse(inF0);
     float2 r019 = ddx_fine(inF0);

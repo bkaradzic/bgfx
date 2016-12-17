@@ -1,0 +1,100 @@
+hlsl.structarray.flatten.geom
+ERROR: 0:10: 'vin' : recursive type not yet supported in GS input 
+ERROR: 1 compilation errors.  No code generated.
+
+
+Shader version: 450
+invocations = -1
+max_vertices = 4
+input primitive = lines
+output primitive = triangle_strip
+ERROR: node is still EOpNull!
+0:10  Function Definition: main(struct-VertexData-vf4-vf4-vf21[2];struct-VertexData-vf4-vf4-vf21; (temp void)
+0:10    Function Parameters: 
+0:10      'vin' (in 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:10      'outStream' (out structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:?     Sequence
+0:13      move second child to first child (temp 4-component vector of float)
+0:13        color: direct index for structure (temp 4-component vector of float)
+0:13          'vout' (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:13          Constant:
+0:13            1 (const int)
+0:?         'vin[0].color' (layout(location=1 ) in 4-component vector of float)
+0:14      move second child to first child (temp 2-component vector of float)
+0:14        uv: direct index for structure (temp 2-component vector of float)
+0:14          'vout' (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:14          Constant:
+0:14            2 (const int)
+0:?         'vin[0].uv' (layout(location=2 ) in 2-component vector of float)
+0:15      move second child to first child (temp 4-component vector of float)
+0:15        position: direct index for structure (temp 4-component vector of float)
+0:15          'vout' (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:15          Constant:
+0:15            0 (const int)
+0:?         'vin[0].position' (layout(location=0 ) in 4-component vector of float)
+0:16      Sequence
+0:16        move second child to first child (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:16          'outStream' (out structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:16          'vout' (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:16        EmitVertex (temp void)
+0:?   Linker Objects
+0:?     'vin[0].position' (layout(location=0 ) in 4-component vector of float)
+0:?     'vin[0].color' (layout(location=1 ) in 4-component vector of float)
+0:?     'vin[0].uv' (layout(location=2 ) in 2-component vector of float)
+0:?     'vin[1].position' (layout(location=3 ) in 4-component vector of float)
+0:?     'vin[1].color' (layout(location=4 ) in 4-component vector of float)
+0:?     'vin[1].uv' (layout(location=5 ) in 2-component vector of float)
+0:?     'position' (layout(location=0 ) out 4-component vector of float)
+0:?     'color' (layout(location=1 ) out 4-component vector of float)
+0:?     'uv' (layout(location=2 ) out 2-component vector of float)
+
+
+Linked geometry stage:
+
+
+Shader version: 450
+invocations = 1
+max_vertices = 4
+input primitive = lines
+output primitive = triangle_strip
+ERROR: node is still EOpNull!
+0:10  Function Definition: main(struct-VertexData-vf4-vf4-vf21[2];struct-VertexData-vf4-vf4-vf21; (temp void)
+0:10    Function Parameters: 
+0:10      'vin' (in 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:10      'outStream' (out structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:?     Sequence
+0:13      move second child to first child (temp 4-component vector of float)
+0:13        color: direct index for structure (temp 4-component vector of float)
+0:13          'vout' (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:13          Constant:
+0:13            1 (const int)
+0:?         'vin[0].color' (layout(location=1 ) in 4-component vector of float)
+0:14      move second child to first child (temp 2-component vector of float)
+0:14        uv: direct index for structure (temp 2-component vector of float)
+0:14          'vout' (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:14          Constant:
+0:14            2 (const int)
+0:?         'vin[0].uv' (layout(location=2 ) in 2-component vector of float)
+0:15      move second child to first child (temp 4-component vector of float)
+0:15        position: direct index for structure (temp 4-component vector of float)
+0:15          'vout' (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:15          Constant:
+0:15            0 (const int)
+0:?         'vin[0].position' (layout(location=0 ) in 4-component vector of float)
+0:16      Sequence
+0:16        move second child to first child (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:16          'outStream' (out structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:16          'vout' (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:16        EmitVertex (temp void)
+0:?   Linker Objects
+0:?     'vin[0].position' (layout(location=0 ) in 4-component vector of float)
+0:?     'vin[0].color' (layout(location=1 ) in 4-component vector of float)
+0:?     'vin[0].uv' (layout(location=2 ) in 2-component vector of float)
+0:?     'vin[1].position' (layout(location=3 ) in 4-component vector of float)
+0:?     'vin[1].color' (layout(location=4 ) in 4-component vector of float)
+0:?     'vin[1].uv' (layout(location=5 ) in 2-component vector of float)
+0:?     'position' (layout(location=0 ) out 4-component vector of float)
+0:?     'color' (layout(location=1 ) out 4-component vector of float)
+0:?     'uv' (layout(location=2 ) out 2-component vector of float)
+
+SPIR-V is not generated for failed compile or link

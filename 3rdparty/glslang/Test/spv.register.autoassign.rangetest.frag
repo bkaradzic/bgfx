@@ -10,6 +10,6 @@ struct PS_OUTPUT
 
 void main(out PS_OUTPUT psout)
 {
-    psout.Color = g_tScene[0].Sample(g_tSamp, 0.3) +
-                  g_tScene[1].Sample(g_tSamp, 0.3);
+    psout.Color = g_tScene[0].Sample(g_tSamp, float2(0.3, 0.3)) +
+                  g_tScene[1].Sample(g_tSamp, float2(0.3, 0.3));
 }

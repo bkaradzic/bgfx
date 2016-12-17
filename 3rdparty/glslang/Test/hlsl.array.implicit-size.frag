@@ -26,6 +26,7 @@ void main(out PS_OUTPUT ps_output)
 {
     // local array sized from initializers
     float l_array[] = { 1, 2, 3 };
+    int idx;
 
     ps_output.color = g_array[0] + g_array[4] + l_array[1] + g_mystruct[0].f + g_array[idx];
 }

@@ -263,57 +263,6 @@ Shader version: 450
 0:34                'uin' (temp uint)
 0:34            Construct bvec3 (temp 3-component vector of bool)
 0:34              'b' (temp bool)
-0:42  Function Definition: foo( (global void)
-0:42    Function Parameters: 
-0:44    Sequence
-0:44      Sequence
-0:44        move second child to first child (temp int)
-0:44          's' (temp int)
-0:44          textureSamples (global int)
-0:44            's2dms' (uniform sampler2DMS)
-0:45      add second child into first child (temp int)
-0:45        's' (temp int)
-0:45        textureSamples (global int)
-0:45          'us2dmsa' (uniform usampler2DMSArray)
-0:46      add second child into first child (temp int)
-0:46        's' (temp int)
-0:46        imageQuerySamples (global int)
-0:46          'ii2dms' (layout(rgba32i ) uniform iimage2DMS)
-0:47      add second child into first child (temp int)
-0:47        's' (temp int)
-0:47        imageQuerySamples (global int)
-0:47          'i2dmsa' (layout(rgba32f ) uniform image2DMSArray)
-0:48      Sequence
-0:48        move second child to first child (temp float)
-0:48          'f' (temp float)
-0:48          imageAtomicExchange (global float)
-0:48            'i2dmsa' (layout(rgba32f ) uniform image2DMSArray)
-0:48            Convert float to int (temp 3-component vector of int)
-0:48              'in3' (smooth in 3-component vector of float)
-0:48            Constant:
-0:48              2 (const int)
-0:48            Constant:
-0:48              4.500000
-0:53  Function Definition: cull(i1; (global float)
-0:53    Function Parameters: 
-0:53      'i' (in int)
-0:55    Sequence
-0:55      Branch: Return with expression
-0:55        Test condition and select (temp float)
-0:55          Condition
-0:55          Compare Greater Than or Equal (temp bool)
-0:55            'i' (in int)
-0:55            Constant:
-0:55              6 (const int)
-0:55          true case
-0:55          direct index (smooth temp float CullDistance)
-0:55            'gl_CullDistance' (smooth in 6-element array of float CullDistance)
-0:55            Constant:
-0:55              5 (const int)
-0:55          false case
-0:55          indirect index (smooth temp float CullDistance)
-0:55            'gl_CullDistance' (smooth in 6-element array of float CullDistance)
-0:55            'i' (in int)
 0:?   Linker Objects
 0:?     'in1' (smooth in float)
 0:?     'in2' (smooth in 2-component vector of float)

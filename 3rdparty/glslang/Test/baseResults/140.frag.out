@@ -136,51 +136,6 @@ ERROR: node is still EOpNull!
 0:22      'patch' (global float)
 0:22      Constant:
 0:22        3.100000
-0:38  Function Definition: foo( (global void)
-0:38    Function Parameters: 
-0:40    Sequence
-0:40      Sequence
-0:40        move second child to first child (temp 2-component vector of float)
-0:40          'r1' (temp 2-component vector of float)
-0:40          modf (global 2-component vector of float)
-0:40            vector swizzle (temp 2-component vector of float)
-0:40              'v' (smooth in 4-component vector of float)
-0:40              Sequence
-0:40                Constant:
-0:40                  0 (const int)
-0:40                Constant:
-0:40                  1 (const int)
-0:40            vector swizzle (temp 2-component vector of float)
-0:40              'v' (smooth in 4-component vector of float)
-0:40              Sequence
-0:40                Constant:
-0:40                  2 (const int)
-0:40                Constant:
-0:40                  3 (const int)
-0:41      Sequence
-0:41        move second child to first child (temp 2-component vector of float)
-0:41          'r2' (temp 2-component vector of float)
-0:41          modf (global 2-component vector of float)
-0:41            vector swizzle (temp 2-component vector of float)
-0:41              'o' (out 4-component vector of float)
-0:41              Sequence
-0:41                Constant:
-0:41                  0 (const int)
-0:41                Constant:
-0:41                  1 (const int)
-0:41            vector swizzle (temp 2-component vector of float)
-0:41              'o' (out 4-component vector of float)
-0:41              Sequence
-0:41                Constant:
-0:41                  2 (const int)
-0:41                Constant:
-0:41                  3 (const int)
-0:42      move second child to first child (temp float)
-0:42        direct index (temp float)
-0:42          'o' (out 4-component vector of float)
-0:42          Constant:
-0:42            2 (const int)
-0:42        Function Call: fooi( (global float)
 0:47  Sequence
 0:47    move second child to first child (temp float)
 0:47      'i1' (global float)
@@ -198,13 +153,6 @@ ERROR: node is still EOpNull!
 0:48      'i2' (global float)
 0:48      Constant:
 0:48        102.000000
-0:50  Function Definition: fooi( (global float)
-0:50    Function Parameters: 
-0:52    Sequence
-0:52      Branch: Return with expression
-0:52        add (temp float)
-0:52          'i1' (global float)
-0:52          'i2' (global float)
 0:?   Linker Objects
 0:?     'v' (smooth in 4-component vector of float)
 0:?     'i' (smooth in 4-component vector of float)

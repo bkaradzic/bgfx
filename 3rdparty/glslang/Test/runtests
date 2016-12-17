@@ -45,6 +45,20 @@ $EXE -i -C *.vert *.geom *.frag *.tes* *.comp > singleThread.out
 $EXE -i -C *.vert *.geom *.frag *.tes* *.comp -t > multiThread.out
 diff singleThread.out multiThread.out || HASERROR=1
 
+#
+# entry point renaming tests
+#
+echo Running entry-point renaming tests
+$EXE -i -H -V -D -e main_in_spv --ku --source-entrypoint main hlsl.entry.rename.frag > $TARGETDIR/hlsl.entry.rename.frag.out
+diff -b $BASEDIR/hlsl.entry.rename.frag.out $TARGETDIR/hlsl.entry.rename.frag.out || HASERROR=1
+
+#
+# Testing ill-defined uncalled function
+#
+echo Running ill-defined uncalled function
+$EXE -D -e main -H hlsl.deadFunctionMissingBody.vert > $TARGETDIR/hlsl.deadFunctionMissingBody.vert.out
+diff -b $BASEDIR/hlsl.deadFunctionMissingBody.vert.out $TARGETDIR/hlsl.deadFunctionMissingBody.vert.out || HASERROR=1
+
 if [ $HASERROR -eq 0 ]
 then
     echo Tests Succeeded.

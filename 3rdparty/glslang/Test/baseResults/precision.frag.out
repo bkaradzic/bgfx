@@ -130,18 +130,6 @@ Linked fragment stage:
 
 Shader version: 100
 ERROR: node is still EOpNull!
-0:5  Function Definition: foo(vf3; (global lowp 2-component vector of float)
-0:5    Function Parameters: 
-0:5      'mv3' (in mediump 3-component vector of float)
-0:?     Sequence
-0:8      Branch: Return with expression
-0:8        vector swizzle (temp highp 2-component vector of float)
-0:8          'hv4' (temp highp 4-component vector of float)
-0:8          Sequence
-0:8            Constant:
-0:8              0 (const int)
-0:8            Constant:
-0:8              1 (const int)
 0:25  Function Definition: main( (global void)
 0:25    Function Parameters: 
 0:27    Sequence

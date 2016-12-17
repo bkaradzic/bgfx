@@ -126,35 +126,6 @@ ERROR: Linking fragment stage: Missing entry point: Each stage requires one entr
 
 Shader version: 440
 ERROR: node is still EOpNull!
-0:144  Function Definition: interp( (global void)
-0:144    Function Parameters: 
-0:146    Sequence
-0:146      interpolateAtCentroid (global 2-component vector of float)
-0:146        vector swizzle (temp 2-component vector of float)
-0:146          direct index (smooth sample temp 3-component vector of float)
-0:146            'sampInArray' (smooth sample in 4-element array of 3-component vector of float)
-0:146            Constant:
-0:146              2 (const int)
-0:146          Sequence
-0:146            Constant:
-0:146              0 (const int)
-0:146            Constant:
-0:146              1 (const int)
-0:147      interpolateAtSample (global float)
-0:147        direct index (temp float)
-0:147          direct index (smooth sample temp 3-component vector of float)
-0:147            'sampInArray' (smooth sample in 4-element array of 3-component vector of float)
-0:147            Constant:
-0:147              2 (const int)
-0:147          Constant:
-0:147            0 (const int)
-0:147        Constant:
-0:147          2 (const int)
-0:150  Function Definition: layer( (global int)
-0:150    Function Parameters: 
-0:152    Sequence
-0:152      Branch: Return with expression
-0:152        'gl_Layer' (flat in int Layer)
 0:?   Linker Objects
 0:?     'a' (layout(location=4 component=2 ) smooth in 2-component vector of float)
 0:?     'b' (layout(location=4 component=1 ) smooth in float)

@@ -255,39 +255,11 @@ ERROR: node is still EOpNull!
 0:37        'gl_Layer' (layout(stream=0 ) out int Layer)
 0:37        Constant:
 0:37          2 (const int)
-0:67  Function Definition: foo(i1; (global void)
-0:67    Function Parameters: 
-0:67      'a' (in int)
-0:69    Sequence
-0:69      move second child to first child (temp 4-component vector of float)
-0:69        a: direct index for structure (layout(stream=6 ) out 4-component vector of float)
-0:69          'ouuaa6' (layout(stream=6 ) out block{layout(stream=6 ) out 4-component vector of float a})
-0:69          Constant:
-0:69            0 (const int)
-0:69        Constant:
-0:69          1.000000
-0:69          1.000000
-0:69          1.000000
-0:69          1.000000
 0:107  Sequence
 0:107    move second child to first child (temp float)
 0:107      'summ' (global float)
 0:107      Constant:
 0:107        11332.000000
-0:127  Function Definition: fooe1( (global void)
-0:127    Function Parameters: 
-0:129    Sequence
-0:129      move second child to first child (temp int)
-0:129        'gl_ViewportIndex' (layout(stream=0 ) out int ViewportIndex)
-0:129        Constant:
-0:129          15 (const int)
-0:134  Function Definition: fooe2( (global void)
-0:134    Function Parameters: 
-0:136    Sequence
-0:136      move second child to first child (temp int)
-0:136        'gl_ViewportIndex' (layout(stream=0 ) out int ViewportIndex)
-0:136        Constant:
-0:136          15 (const int)
 0:?   Linker Objects
 0:?     'fromV' (in 4-element array of block{in 3-component vector of float color})
 0:?     'toF' (layout(stream=0 ) out block{layout(stream=0 ) out 3-component vector of float color})

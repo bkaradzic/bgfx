@@ -897,7 +897,9 @@ int TPpContext::readCPPline(TPpToken* ppToken)
             token = CPPifdef(0, ppToken);
             break;
         case PpAtomInclude:
-            parseContext.ppRequireExtensions(ppToken->loc, 1, &E_GL_GOOGLE_include_directive, "#include");
+            if(!parseContext.isReadingHLSL()) {
+                parseContext.ppRequireExtensions(ppToken->loc, 1, &E_GL_GOOGLE_include_directive, "#include");
+            }
             token = CPPinclude(ppToken);
             break;
         case PpAtomLine:

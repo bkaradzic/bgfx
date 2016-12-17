@@ -86,22 +86,6 @@ Linked fragment stage:
 
 Shader version: 420
 ERROR: node is still EOpNull!
-0:5  Function Definition: func(au1; (global uint)
-0:5    Function Parameters: 
-0:5      'c' (in atomic_uint)
-0:7    Sequence
-0:7      Branch: Return with expression
-0:7        AtomicCounterIncrement (global uint)
-0:7          'c' (in atomic_uint)
-0:10  Function Definition: func2(au1; (global uint)
-0:10    Function Parameters: 
-0:10      'c' (out atomic_uint)
-0:12    Sequence
-0:12      Branch: Return with expression
-0:12        'counter' (layout(binding=0 offset=0 ) uniform atomic_uint)
-0:13      Branch: Return with expression
-0:13        AtomicCounter (global uint)
-0:13          'counter' (layout(binding=0 offset=0 ) uniform atomic_uint)
 0:16  Function Definition: main( (global void)
 0:16    Function Parameters: 
 0:?     Sequence
@@ -112,22 +96,6 @@ ERROR: node is still EOpNull!
 0:19            'counter' (layout(binding=0 offset=0 ) uniform atomic_uint)
 0:20      AtomicCounterDecrement (global uint)
 0:20        'counter' (layout(binding=0 offset=0 ) uniform atomic_uint)
-0:26  Function Definition: opac( (global void)
-0:26    Function Parameters: 
-0:28    Sequence
-0:28      'counter' (layout(binding=0 offset=0 ) uniform atomic_uint)
-0:29      'counter' (layout(binding=0 offset=0 ) uniform atomic_uint)
-0:31      indirect index (temp int)
-0:31        'a' (temp 3-element array of int)
-0:31        'counter' (layout(binding=0 offset=0 ) uniform atomic_uint)
-0:32      direct index (layout(binding=1 offset=3 ) temp atomic_uint)
-0:32        'countArr' (layout(binding=1 offset=3 ) uniform 4-element array of atomic_uint)
-0:32        Constant:
-0:32          2 (const int)
-0:33      indirect index (layout(binding=1 offset=3 ) temp atomic_uint)
-0:33        'countArr' (layout(binding=1 offset=3 ) uniform 4-element array of atomic_uint)
-0:33        'i' (uniform int)
-0:34      'counter' (layout(binding=0 offset=0 ) uniform atomic_uint)
 0:?   Linker Objects
 0:?     'counter' (layout(binding=0 offset=0 ) uniform atomic_uint)
 0:?     'countArr' (layout(binding=1 offset=3 ) uniform 4-element array of atomic_uint)

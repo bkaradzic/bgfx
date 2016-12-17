@@ -308,8 +308,13 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& node)
     // identifier
     HlslToken idToken;
     while (acceptIdentifier(idToken)) {
+        TString* fnName = idToken.string;
+
+        // Potentially rename shader entry point function.  No-op most of the time.
+        parseContext.renameShaderFunction(fnName);
+
         // function_parameters
-        TFunction& function = *new TFunction(idToken.string, declaredType);
+        TFunction& function = *new TFunction(fnName, declaredType);
         if (acceptFunctionParameters(function)) {
             // post_decls
             acceptPostDecls(function.getWritableType().getQualifier());
@@ -384,7 +389,7 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& node)
                 else if (variableType.getBasicType() == EbtBlock)
                     parseContext.declareBlock(idToken.loc, variableType, idToken.string);
                 else {
-                    if (variableType.getQualifier().storage == EvqUniform && ! variableType.isOpaque()) {
+                    if (variableType.getQualifier().storage == EvqUniform && ! variableType.containsOpaque()) {
                         // this isn't really an individual variable, but a member of the $Global buffer
                         parseContext.growGlobalUniformBlock(idToken.loc, variableType, *idToken.string);
                     } else {
@@ -1896,7 +1901,8 @@ bool HlslGrammar::acceptExpression(TIntermTyped*& node)
 }
 
 // initializer
-//      : LEFT_BRACE initializer_list RIGHT_BRACE
+//      : LEFT_BRACE RIGHT_BRACE
+//      | LEFT_BRACE initializer_list RIGHT_BRACE
 //
 // initializer_list
 //      : assignment_expression COMMA assignment_expression COMMA ...
@@ -1907,8 +1913,15 @@ bool HlslGrammar::acceptInitializer(TIntermTyped*& node)
     if (! acceptTokenClass(EHTokLeftBrace))
         return false;
 
-    // initializer_list
+    // RIGHT_BRACE
     TSourceLoc loc = token.loc;
+    if (acceptTokenClass(EHTokRightBrace)) {
+        // a zero-length initializer list
+        node = intermediate.makeAggregate(loc);
+        return true;
+    }
+
+    // initializer_list
     node = nullptr;
     do {
         // assignment_expression
@@ -2202,6 +2215,20 @@ bool HlslGrammar::acceptPostfixExpression(TIntermTyped*& node)
         return false;
     }
 
+    // This is to guarantee we do this no matter how we get out of the stack frame.
+    // This way there's no bug if an early return forgets to do it.
+    struct tFinalize {
+        tFinalize(HlslParseContext& p) : parseContext(p) { }
+        ~tFinalize() { parseContext.finalizeFlattening(); }
+       HlslParseContext& parseContext;
+    } finalize(parseContext);
+
+    // Initialize the flattening accumulation data, so we can track data across multiple bracket or
+    // dot operators.  This can also be nested, e.g, for [], so we have to track each nesting
+    // level: hence the init and finalize.  Even though in practice these must be
+    // constants, they are parsed no matter what.
+    parseContext.initFlattening();
+
     // Something was found, chain as many postfix operations as exist.
     do {
         TSourceLoc loc = token.loc;
@@ -2235,7 +2262,7 @@ bool HlslGrammar::acceptPostfixExpression(TIntermTyped*& node)
             node = parseContext.handleDotDereference(field.loc, node, *field.string);
 
             // In the event of a method node, we look for an open paren and accept the function call.
-            if (node->getAsMethodNode() != nullptr && peekTokenClass(EHTokLeftParen)) {
+            if (node != nullptr && node->getAsMethodNode() != nullptr && peekTokenClass(EHTokLeftParen)) {
                 if (! acceptFunctionCall(field, node, base)) {
                     expected("function parameters");
                     return false;

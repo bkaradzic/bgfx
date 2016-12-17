@@ -304,7 +304,7 @@ TVariable* TParseContextBase::getEditableVariable(const char* name)
 const TFunction* TParseContextBase::selectFunction(
     const TVector<const TFunction*> candidateList,
     const TFunction& call,
-    std::function<bool(const TType& from, const TType& to)> convertible,
+    std::function<bool(const TType& from, const TType& to, TOperator op, int arg)> convertible,
     std::function<bool(const TType& from, const TType& to1, const TType& to2)> better,
     /* output */ bool& tie)
 {
@@ -356,13 +356,13 @@ const TFunction* TParseContextBase::selectFunction(
         bool viable = true;
         for (int param = 0; param < candidate.getParamCount(); ++param) {
             if (candidate[param].type->getQualifier().isParamInput()) {
-                if (! convertible(*call[param].type, *candidate[param].type)) {
+                if (! convertible(*call[param].type, *candidate[param].type, candidate.getBuiltInOp(), param)) {
                     viable = false;
                     break;
                 }
             }
             if (candidate[param].type->getQualifier().isParamOutput()) {
-                if (! convertible(*candidate[param].type, *call[param].type)) {
+                if (! convertible(*candidate[param].type, *call[param].type, candidate.getBuiltInOp(), param)) {
                     viable = false;
                     break;
                 }
@@ -472,7 +472,7 @@ bool TParseContextBase::insertGlobalUniformBlock()
 void TParseContextBase::finish()
 {
     if (!parsingBuiltins) {
-        // Transfer te linkage symbols to AST nodes
+        // Transfer the linkage symbols to AST nodes
         for (auto i = linkageSymbols.begin(); i != linkageSymbols.end(); ++i)
             intermediate.addSymbolLinkageNode(linkage, **i);
         intermediate.addSymbolLinkageNodes(linkage, getLanguage(), symbolTable);

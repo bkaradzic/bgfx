@@ -274,19 +274,6 @@ ERROR: node is still EOpNull!
 0:48        Constant:
 0:48          0.000000
 0:48        'cd' (temp highp float)
-0:117  Function Definition: pointSize2( (global void)
-0:117    Function Parameters: 
-0:?     Sequence
-0:120      move second child to first child (temp highp float)
-0:120        gl_PointSize: direct index for structure (gl_PointSize highp float PointSize)
-0:120          'anon@1' (out block{gl_Position highp 4-component vector of float Position gl_Position, gl_PointSize highp float PointSize gl_PointSize})
-0:120          Constant:
-0:120            1 (const uint)
-0:120        'ps' (temp highp float)
-0:125  Function Definition: bbbad( (global void)
-0:125    Function Parameters: 
-0:127    Sequence
-0:127      'gl_BoundingBoxOES' (temp float)
 0:?   Linker Objects
 0:?     'patchIn' (patch in highp 4-component vector of float)
 0:?     'patchOut' (patch out highp 4-component vector of float)

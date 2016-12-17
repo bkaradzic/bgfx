@@ -269,23 +269,6 @@ ERROR: node is still EOpNull!
 0:46            1 (const int)
 0:46        Constant:
 0:46          0.300000
-0:57  Function Definition: foo88( (global void)
-0:57    Function Parameters: 
-0:?     Sequence
-0:61      'id' (temp int)
-0:63      'gl_ClipVertex' (gl_ClipVertex 4-component vector of float ClipVertex)
-0:64      'gl_Color' (in 4-component vector of float Color)
-0:65      direct index (temp structure{global 4-component vector of float ambient, global 4-component vector of float diffuse, global 4-component vector of float specular, global 4-component vector of float position, global 4-component vector of float halfVector, global 3-component vector of float spotDirection, global float spotExponent, global float spotCutoff, global float spotCosCutoff, global float constantAttenuation, global float linearAttenuation, global float quadraticAttenuation})
-0:65        'gl_LightSource' (uniform 32-element array of structure{global 4-component vector of float ambient, global 4-component vector of float diffuse, global 4-component vector of float specular, global 4-component vector of float position, global 4-component vector of float halfVector, global 3-component vector of float spotDirection, global float spotExponent, global float spotCutoff, global float spotCosCutoff, global float constantAttenuation, global float linearAttenuation, global float quadraticAttenuation})
-0:65        Constant:
-0:65          0 (const int)
-0:66      far: direct index for structure (global float)
-0:66        'gl_DepthRange' (uniform structure{global float near, global float far, global float diff})
-0:66        Constant:
-0:66          1 (const int)
-0:67      'gl_TexCoord' (smooth out 1-element array of 4-component vector of float TexCoord)
-0:68      'gl_FogFragCoord' (smooth out float FogFragCoord)
-0:69      'gl_FrontColor' (smooth out 4-component vector of float FrontColor)
 0:?   Linker Objects
 0:?     'c' (uniform int)
 0:?     'us2D' (uniform usampler2D)

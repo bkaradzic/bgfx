@@ -45,6 +45,7 @@
 #include "propagateNoContraction.h"
 
 #include <cfloat>
+#include <utility>
 
 namespace glslang {
 
@@ -114,7 +115,7 @@ TIntermTyped* TIntermediate::addBinaryMath(TOperator op, TIntermTyped* left, TIn
 {
     // No operations work on blocks
     if (left->getType().getBasicType() == EbtBlock || right->getType().getBasicType() == EbtBlock)
-        return 0;
+        return nullptr;
 
     // Try converting the children's base types to compatible types.
     TIntermTyped* child = addConversion(op, left->getType(), right);
@@ -125,7 +126,7 @@ TIntermTyped* TIntermediate::addBinaryMath(TOperator op, TIntermTyped* left, TIn
         if (child)
             left = child;
         else
-            return 0;
+            return nullptr;
     }
 
     // Convert the children's type shape to be compatible.
@@ -275,10 +276,10 @@ TIntermTyped* TIntermediate::addIndex(TOperator op, TIntermTyped* base, TIntermT
 TIntermTyped* TIntermediate::addUnaryMath(TOperator op, TIntermTyped* child, TSourceLoc loc)
 {
     if (child == 0)
-        return 0;
+        return nullptr;
 
     if (child->getType().getBasicType() == EbtBlock)
-        return 0;
+        return nullptr;
 
     switch (op) {
     case EOpLogicalNot:
@@ -287,7 +288,7 @@ TIntermTyped* TIntermediate::addUnaryMath(TOperator op, TIntermTyped* child, TSo
         }
  
         if (child->getType().getBasicType() != EbtBool || child->getType().isMatrix() || child->getType().isArray() || child->getType().isVector()) {
-            return 0;
+            return nullptr;
         }
         break;
 
@@ -297,7 +298,7 @@ TIntermTyped* TIntermediate::addUnaryMath(TOperator op, TIntermTyped* child, TSo
     case EOpPreDecrement:
     case EOpNegative:
         if (child->getType().getBasicType() == EbtStruct || child->getType().isArray())
-            return 0;
+            return nullptr;
     default: break; // some compilers want this
     }
 
@@ -325,8 +326,8 @@ TIntermTyped* TIntermediate::addUnaryMath(TOperator op, TIntermTyped* child, TSo
                                                                child->getMatrixRows(),
                                                                child->isVector()),
                               child);
-        if (child == 0)
-            return 0;
+        if (child == nullptr)
+            return nullptr;
     }
 
     //
@@ -379,8 +380,8 @@ TIntermTyped* TIntermediate::addBuiltInFunctionCall(const TSourceLoc& loc, TOper
         // including constness (which would differ from the prototype).
         //
         TIntermTyped* child = childNode->getAsTyped();
-        if (child == 0)
-            return 0;
+        if (child == nullptr)
+            return nullptr;
 
         if (child->getAsConstantUnion()) {
             TIntermTyped* folded = child->getAsConstantUnion()->fold(op, returnType);
@@ -416,7 +417,7 @@ TIntermTyped* TIntermediate::setAggregateOperator(TIntermNode* node, TOperator o
     //
     if (node) {
         aggNode = node->getAsAggregate();
-        if (aggNode == 0 || aggNode->getOp() != EOpNull) {
+        if (aggNode == nullptr || aggNode->getOp() != EOpNull) {
             //
             // Make an aggregate containing this node.
             //
@@ -451,7 +452,7 @@ TIntermTyped* TIntermediate::setAggregateOperator(TIntermNode* node, TOperator o
 // Generally, this is focused on basic type conversion, not shape conversion.
 // See addShapeConversion().
 //
-// Return 0 if a conversion can't be done.
+// Return nullptr if a conversion can't be done.
 //
 TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TIntermTyped* node) const
 {
@@ -460,7 +461,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
     //
     switch (node->getBasicType()) {
     case EbtVoid:
-        return 0;
+        return nullptr;
     case EbtAtomicUint:
     case EbtSampler:
         // opaque types can be passed to functions
@@ -478,7 +479,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
             break;
 
         // otherwise, opaque types can't even be operated on, let alone converted
-        return 0;
+        return nullptr;
     default:
         break;
     }
@@ -489,11 +490,11 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
 
     // If one's a structure, then no conversions.
     if (type.isStruct() || node->isStruct())
-        return 0;
+        return nullptr;
 
     // If one's an array, then no conversions.
     if (type.isArray() || node->getType().isArray())
-        return 0;
+        return nullptr;
 
     // Note: callers are responsible for other aspects of shape,
     // like vector and matrix sizes.
@@ -575,6 +576,27 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
     case EOpDivAssign:
     case EOpModAssign:
 
+    case EOpAtan:
+    case EOpClamp:
+    case EOpCross:
+    case EOpDistance:
+    case EOpDot:
+    case EOpDst:
+    case EOpFaceForward:
+    case EOpFma:
+    case EOpFrexp:
+    case EOpLdexp:
+    case EOpMix:
+    case EOpLit:
+    case EOpMax:
+    case EOpMin:
+    case EOpModf:
+    case EOpPow:
+    case EOpReflect:
+    case EOpRefract:
+    case EOpSmoothStep:
+    case EOpStep:
+
     case EOpSequence:
     case EOpConstructStruct:
 
@@ -584,7 +606,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
         if (canImplicitlyPromote(node->getType().getBasicType(), type.getBasicType(), op))
             promoteTo = type.getBasicType();
         else
-            return 0;
+            return nullptr;
 
         break;
 
@@ -606,7 +628,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
 
             return node;
         else
-            return 0;
+            return nullptr;
 
     default:
         // default is to require a match; all exceptions should have case statements above
@@ -614,7 +636,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
         if (type.getBasicType() == node->getType().getBasicType())
             return node;
         else
-            return 0;
+            return nullptr;
     }
 
     if (node->getAsConstantUnion())
@@ -623,7 +645,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
     //
     // Add a new newNode for the conversion.
     //
-    TIntermUnary* newNode = 0;
+    TIntermUnary* newNode = nullptr;
 
     TOperator newOp = EOpNull;
 
@@ -642,7 +664,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
         case EbtInt64: newOp = EOpConvInt64ToDouble; break;
         case EbtUint64: newOp = EOpConvUint64ToDouble; break;
         default:
-            return 0;
+            return nullptr;
         }
         break;
     case EbtFloat:
@@ -657,7 +679,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
         case EbtInt64:  newOp = EOpConvInt64ToFloat;  break;
         case EbtUint64: newOp = EOpConvUint64ToFloat; break;
         default:
-            return 0;
+            return nullptr;
         }
         break;
 #ifdef AMD_EXTENSIONS
@@ -671,7 +693,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
         case EbtInt64:  newOp = EOpConvInt64ToFloat16;  break;
         case EbtUint64: newOp = EOpConvUint64ToFloat16; break;
         default:
-            return 0;
+            return nullptr;
         }
         break;
 #endif
@@ -687,7 +709,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
         case EbtInt64:  newOp = EOpConvInt64ToBool;  break;
         case EbtUint64: newOp = EOpConvUint64ToBool; break;
         default:
-            return 0;
+            return nullptr;
         }
         break;
     case EbtInt:
@@ -702,7 +724,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
         case EbtInt64:  newOp = EOpConvInt64ToInt;  break;
         case EbtUint64: newOp = EOpConvUint64ToInt; break;
         default:
-            return 0;
+            return nullptr;
         }
         break;
     case EbtUint:
@@ -717,7 +739,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
         case EbtInt64:  newOp = EOpConvInt64ToUint;  break;
         case EbtUint64: newOp = EOpConvUint64ToUint; break;
         default:
-            return 0;
+            return nullptr;
         }
         break;
     case EbtInt64:
@@ -732,7 +754,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
 #endif
         case EbtUint64: newOp = EOpConvUint64ToInt64; break;
         default:
-            return 0;
+            return nullptr;
         }
         break;
     case EbtUint64:
@@ -747,11 +769,11 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
 #endif
         case EbtInt64:  newOp = EOpConvInt64ToUint64;  break;
         default:
-            return 0;
+            return nullptr;
         }
         break;
     default:
-        return 0;
+        return nullptr;
     }
 
     TType newType(promoteTo, EvqTemporary, node->getVectorSize(), node->getMatrixCols(), node->getMatrixRows());
@@ -833,6 +855,9 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
     if (profile == EEsProfile || version == 110)
         return false;
 
+    if (from == to)
+        return true;
+
     // TODO: Move more policies into language-specific handlers.
     // Some languages allow more general (or potentially, more specific) conversions under some conditions.
     if (source == EShSourceHlsl) {
@@ -858,6 +883,7 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
             case EOpLogicalAnd:
             case EOpLogicalOr:
             case EOpLogicalXor:
+            case EOpConstructStruct:
                 return true;
             default:
                 break;
@@ -901,6 +927,8 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
             return version >= 400;
         case EbtUint:
             return true;
+        case EbtBool:
+            return (source == EShSourceHlsl);
         default:
             return false;
         }
@@ -908,6 +936,8 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
         switch (from) {
         case EbtInt:
             return true;
+        case EbtBool:
+            return (source == EShSourceHlsl);
         default:
             return false;
         }
@@ -1123,15 +1153,15 @@ TOperator TIntermediate::mapTypeToConstructorOp(const TType& type) const
 // Safe way to combine two nodes into an aggregate.  Works with null pointers,
 // a node that's not a aggregate yet, etc.
 //
-// Returns the resulting aggregate, unless 0 was passed in for
+// Returns the resulting aggregate, unless nullptr was passed in for
 // both existing nodes.
 //
 TIntermAggregate* TIntermediate::growAggregate(TIntermNode* left, TIntermNode* right)
 {
-    if (left == 0 && right == 0)
-        return 0;
+    if (left == nullptr && right == nullptr)
+        return nullptr;
 
-    TIntermAggregate* aggNode = 0;
+    TIntermAggregate* aggNode = nullptr;
     if (left)
         aggNode = left->getAsAggregate();
     if (! aggNode || aggNode->getOp() != EOpNull) {
@@ -1158,12 +1188,12 @@ TIntermAggregate* TIntermediate::growAggregate(TIntermNode* left, TIntermNode* r
 //
 // Turn an existing node into an aggregate.
 //
-// Returns an aggregate, unless 0 was passed in for the existing node.
+// Returns an aggregate, unless nullptr was passed in for the existing node.
 //
 TIntermAggregate* TIntermediate::makeAggregate(TIntermNode* node)
 {
-    if (node == 0)
-        return 0;
+    if (node == nullptr)
+        return nullptr;
 
     TIntermAggregate* aggNode = new TIntermAggregate;
     aggNode->getSequence().push_back(node);
@@ -1174,11 +1204,22 @@ TIntermAggregate* TIntermediate::makeAggregate(TIntermNode* node)
 
 TIntermAggregate* TIntermediate::makeAggregate(TIntermNode* node, const TSourceLoc& loc)
 {
-    if (node == 0)
-        return 0;
+    if (node == nullptr)
+        return nullptr;
 
     TIntermAggregate* aggNode = new TIntermAggregate;
     aggNode->getSequence().push_back(node);
+    aggNode->setLoc(loc);
+
+    return aggNode;
+}
+
+//
+// Make an aggregate with an empty sequence.
+//
+TIntermAggregate* TIntermediate::makeAggregate(const TSourceLoc& loc)
+{
+    TIntermAggregate* aggNode = new TIntermAggregate;
     aggNode->setLoc(loc);
 
     return aggNode;
@@ -1237,7 +1278,7 @@ TIntermTyped* TIntermediate::addMethod(TIntermTyped* object, const TType& type, 
 // a true path, and a false path.  The two paths are specified
 // as separate parameters.
 //
-// Returns the selection node created, or 0 if one could not be.
+// Returns the selection node created, or nullptr if one could not be.
 //
 TIntermTyped* TIntermediate::addSelection(TIntermTyped* cond, TIntermTyped* trueBlock, TIntermTyped* falseBlock, const TSourceLoc& loc)
 {
@@ -1252,12 +1293,12 @@ TIntermTyped* TIntermediate::addSelection(TIntermTyped* cond, TIntermTyped* true
         if (child)
             trueBlock = child;
         else
-            return 0;
+            return nullptr;
     }
 
     // After conversion, types have to match.
     if (falseBlock->getType() != trueBlock->getType())
-        return 0;
+        return nullptr;
 
     //
     // See if all the operands are constant, then fold it otherwise not.
@@ -1431,7 +1472,7 @@ TIntermAggregate* TIntermediate::addForLoop(TIntermNode* body, TIntermNode* init
 //
 TIntermBranch* TIntermediate::addBranch(TOperator branchOp, const TSourceLoc& loc)
 {
-    return addBranch(branchOp, 0, loc);
+    return addBranch(branchOp, nullptr, loc);
 }
 
 TIntermBranch* TIntermediate::addBranch(TOperator branchOp, TIntermTyped* expression, const TSourceLoc& loc)
@@ -1448,7 +1489,7 @@ TIntermBranch* TIntermediate::addBranch(TOperator branchOp, TIntermTyped* expres
 //
 bool TIntermediate::postProcess(TIntermNode* root, EShLanguage /*language*/)
 {
-    if (root == 0)
+    if (root == nullptr)
         return true;
 
     // Finish off the top-level sequence
@@ -1746,6 +1787,9 @@ bool TIntermediate::promote(TIntermOperator* node)
 
     if (node->getAsBinaryNode())
         return promoteBinary(*node->getAsBinaryNode());
+
+    if (node->getAsAggregate())
+        return promoteAggregate(*node->getAsAggregate());
 
     return false;
 }
@@ -2189,6 +2233,77 @@ bool TIntermediate::promoteBinary(TIntermBinary& node)
 
     return true;
 }
+
+//
+// See TIntermediate::promote
+//
+bool TIntermediate::promoteAggregate(TIntermAggregate& node)
+{
+    TOperator op = node.getOp();
+    TIntermSequence& args = node.getSequence();
+    const int numArgs = static_cast<int>(args.size());
+
+    // Presently, only hlsl does intrinsic promotions.
+    if (getSource() != EShSourceHlsl)
+        return true;
+
+    // set of opcodes that can be promoted in this manner.
+    switch (op) {
+    case EOpAtan:
+    case EOpClamp:
+    case EOpCross:
+    case EOpDistance:
+    case EOpDot:
+    case EOpDst:
+    case EOpFaceForward:
+        // case EOpFindMSB: TODO: ?? 
+        // case EOpFindLSB: TODO: ??
+    case EOpFma:
+    case EOpMod:
+    case EOpFrexp:
+    case EOpLdexp:
+    case EOpMix:
+    case EOpLit:
+    case EOpMax:
+    case EOpMin:
+    case EOpModf:
+        // case EOpGenMul: TODO: ??
+    case EOpPow:
+    case EOpReflect:
+    case EOpRefract:
+    // case EOpSinCos: TODO: ??
+    case EOpSmoothStep:
+    case EOpStep:
+        break;
+    default:
+        return true;
+    }
+
+    // TODO: array and struct behavior
+
+    // Try converting all nodes to the given node's type
+    TIntermSequence convertedArgs(numArgs, nullptr);
+
+    // Try to convert all types to the nonConvArg type.
+    for (int nonConvArg = 0; nonConvArg < numArgs; ++nonConvArg) {
+        // Try converting all args to this arg's type
+        for (int convArg = 0; convArg < numArgs; ++convArg) {
+            convertedArgs[convArg] = addConversion(op, args[nonConvArg]->getAsTyped()->getType(),
+                                                   args[convArg]->getAsTyped());
+        }
+
+        // If we successfully converted all the args, use the result.
+        if (std::all_of(convertedArgs.begin(), convertedArgs.end(),
+                        [](const TIntermNode* node) { return node != nullptr; })) {
+
+            std::swap(args, convertedArgs);
+            return true;
+        }
+    }
+
+    return false;
+}
+
 
 void TIntermBinary::updatePrecision()
 {

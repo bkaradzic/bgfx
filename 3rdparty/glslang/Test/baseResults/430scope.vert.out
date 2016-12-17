@@ -127,6 +127,8 @@ ERROR: node is still EOpNull!
 
 Linked vertex stage:
 
+ERROR: Linking vertex stage: No function definition (body) found: 
+    g(
 
 Shader version: 430
 ERROR: node is still EOpNull!
@@ -147,20 +149,6 @@ ERROR: node is still EOpNull!
 0:8                1.000000
 0:11      Branch: Return with expression
 0:11        'a' (in int)
-0:25  Function Definition: cos(f1; (global float)
-0:25    Function Parameters: 
-0:25      'x' (in float)
-0:27    Sequence
-0:27      Branch: Return with expression
-0:27        Constant:
-0:27          1.000000
-0:29  Function Definition: radians(b1; (global bool)
-0:29    Function Parameters: 
-0:29      'x' (in bool)
-0:31    Sequence
-0:31      Branch: Return with expression
-0:31        Constant:
-0:31          true (const bool)
 0:36  Function Definition: main( (global void)
 0:36    Function Parameters: 
 0:?     Sequence

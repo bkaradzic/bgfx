@@ -43,9 +43,6 @@ ERROR: 0:94: 'call argument' : sampler constructor must appear at point of use
 ERROR: 38 compilation errors.  No code generated.
 
 
-
-Linked fragment stage:
-
 ERROR: Linking fragment stage: Only one push_constant block is allowed per stage
 
 SPIR-V is not generated for failed compile or link

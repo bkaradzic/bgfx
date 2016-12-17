@@ -184,41 +184,6 @@ ERROR: node is still EOpNull!
 0:26      indirect index (temp block{out 4-component vector of float Position gl_Position})
 0:26        'gl_out' (out 3-element array of block{out 4-component vector of float Position gl_Position})
 0:26        'gl_InvocationID' (in int InvocationID)
-0:34  Function Definition: foo( (global void)
-0:34    Function Parameters: 
-0:36    Sequence
-0:36      Test condition and select (temp void)
-0:36        Condition
-0:36        logical-or (temp bool)
-0:36          Compare Not Equal (temp bool)
-0:36            Constant:
-0:36              -0.625000
-0:36              -0.500000
-0:36              -0.375000
-0:36              -0.250000
-0:36              -0.375000
-0:36              -0.250000
-0:36              -0.125000
-0:36              0.000000
-0:36            direct index (layout(location=0 ) temp 2X4 matrix of double)
-0:36              'vs_tcs_first' (layout(location=0 ) in 32-element array of 2X4 matrix of double)
-0:36              Constant:
-0:36                0 (const int)
-0:37          Compare Not Equal (temp bool)
-0:37            Constant:
-0:37              0.375000
-0:37              0.500000
-0:37              0.625000
-0:37              0.750000
-0:37              0.625000
-0:37              0.750000
-0:37              0.875000
-0:37              -0.625000
-0:37            direct index (layout(location=12 ) temp 2X4 matrix of double)
-0:37              'vs_tcs_last' (layout(location=12 ) in 32-element array of 2X4 matrix of double)
-0:37              Constant:
-0:37                0 (const int)
-0:36        true case is null
 0:?   Linker Objects
 0:?     'gl_out' (out 3-element array of block{out 4-component vector of float Position gl_Position})
 0:?     'a' (out 3-element array of int)

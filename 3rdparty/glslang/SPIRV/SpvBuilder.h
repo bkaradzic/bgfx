@@ -564,7 +564,7 @@ public:
     Module module;
     Block* buildPoint;
     Id uniqueId;
-    Function* mainFunction;
+    Function* entryPointFunction;
     bool generatingOpCodeForSpecConst;
     AccessChain accessChain;
 

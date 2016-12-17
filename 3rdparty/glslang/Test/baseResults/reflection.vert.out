@@ -1,10 +1,6 @@
 reflection.vert
 Warning, version 440 is not yet complete; most version-specific features are present, but some are missing.
 
-
-Linked vertex stage:
-
-
 Uniform reflection:
 image_ui2D: offset -1, type 9063, size 1, index -1, binding -1
 sampler_2D: offset -1, type 8b5e, size 1, index -1, binding -1

@@ -26,8 +26,4 @@ ERROR: 0:39: 'set' : cannot be used with push_constant
 ERROR: 23 compilation errors.  No code generated.
 
 
-
-Linked vertex stage:
-
-
 SPIR-V is not generated for failed compile or link

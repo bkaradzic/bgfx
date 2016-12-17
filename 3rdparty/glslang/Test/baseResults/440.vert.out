@@ -174,37 +174,6 @@ Shader version: 440
 Requested GL_ARB_shader_draw_parameters
 in xfb mode
 ERROR: node is still EOpNull!
-0:177  Function Definition: drawParamsBad( (global int)
-0:177    Function Parameters: 
-0:179    Sequence
-0:179      Branch: Return with expression
-0:179        add (temp int)
-0:179          add (temp int)
-0:179            'gl_BaseVertexARB' (in int BaseVertex)
-0:179            'gl_BaseInstanceARB' (in int BaseInstance)
-0:179          'gl_DrawIDARB' (in int DrawId)
-0:184  Function Definition: drawParams( (global int)
-0:184    Function Parameters: 
-0:186    Sequence
-0:186      Branch: Return with expression
-0:186        add (temp int)
-0:186          add (temp int)
-0:186            'gl_BaseVertexARB' (in int BaseVertex)
-0:186            'gl_BaseInstanceARB' (in int BaseInstance)
-0:186          'gl_DrawIDARB' (in int DrawId)
-0:187      move second child to first child (temp int)
-0:187        'gl_BaseVertexARB' (in int BaseVertex)
-0:187        Constant:
-0:187          3 (const int)
-0:188      move second child to first child (temp int)
-0:188        'gl_BaseInstanceARB' (in int BaseInstance)
-0:188        Constant:
-0:188          3 (const int)
-0:189      move second child to first child (temp int)
-0:189        'gl_DrawIDARB' (in int DrawId)
-0:189        Constant:
-0:189          3 (const int)
-0:190      'glBaseInstanceARB' (temp float)
 0:?   Linker Objects
 0:?     'a' (layout(location=2 component=2 ) in 2-component vector of float)
 0:?     'b' (layout(location=2 component=1 ) in float)

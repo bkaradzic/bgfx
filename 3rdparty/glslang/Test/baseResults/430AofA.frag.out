@@ -2,7 +2,7 @@
 Warning, version 430 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:6: '[]' : only outermost dimension of an array of arrays can be implicitly sized 
 ERROR: 0:14: 'constructor' : constructing non-array constituent from array argument 
-ERROR: 0:15: 'constructior' : array constructor argument not correct type to construct array element 
+ERROR: 0:15: 'constructor' : array constructor argument not correct type to construct array element 
 ERROR: 0:28: '[' :  array index out of range '4'
 ERROR: 0:56: 'constructor' :  cannot convert parameter 2 from 'const 3-element array of 4-component vector of float' to 'temp 2-element array of 4-component vector of float'
 ERROR: 0:60: 'constructor' :  cannot convert parameter 2 from 'const 2-element array of 4-component vector of float' to 'temp 3-element array of 4-component vector of float'
@@ -766,34 +766,6 @@ ERROR: node is still EOpNull!
 0:84          5.000000
 0:85      Function Call: foo(f1[5][7]; (global 4-element array of 7-element array of float)
 0:85        'u' (temp 5-element array of 7-element array of float)
-0:88  Function Definition: foo3( (global void)
-0:88    Function Parameters: 
-0:?     Sequence
-0:91      Constant:
-0:91        1 (const int)
-0:92      move second child to first child (temp float)
-0:92        direct index (temp float)
-0:92          direct index (temp 7-element array of float)
-0:92            direct index (temp 5-element array of 7-element array of float)
-0:92              'resize1' (temp 3-element array of 5-element array of 7-element array of float)
-0:92              Constant:
-0:92                1 (const int)
-0:92            Constant:
-0:92              4 (const int)
-0:92          Constant:
-0:92            5 (const int)
-0:92        Constant:
-0:92          2.000000
-0:93      Constant:
-0:93        1 (const int)
-0:95      Constant:
-0:95        3 (const int)
-0:96      Constant:
-0:96        5 (const int)
-0:97      Constant:
-0:97        7 (const int)
-0:98      Constant:
-0:98        0.000000
 0:?   Linker Objects
 0:?     'many' (global 1-element array of 2-element array of 3-element array of 4-element array of 5-element array of 6-element array of float)
 0:?     'gu' (global 1-element array of 7-element array of float)

@@ -110,6 +110,7 @@ public:
     void getPreamble(std::string&);
     bool relaxedErrors()    const { return (messages & EShMsgRelaxedErrors) != 0; }
     bool suppressWarnings() const { return (messages & EShMsgSuppressWarnings) != 0; }
+    bool isReadingHLSL()    const { return (messages & EShMsgReadHlsl) == EShMsgReadHlsl; }
 
     TInfoSink& infoSink;
 

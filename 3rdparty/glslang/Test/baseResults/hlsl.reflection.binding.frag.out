@@ -1,8 +1,4 @@
 hlsl.reflection.binding.frag
-
-Linked fragment stage:
-
-
 Uniform reflection:
 t1: offset -1, type 8b5d, size 1, index -1, binding 15
 s1: offset -1, type 0, size 1, index -1, binding 5

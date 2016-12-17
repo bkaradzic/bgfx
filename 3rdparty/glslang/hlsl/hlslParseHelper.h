@@ -47,6 +47,7 @@ class HlslParseContext : public TParseContextBase {
 public:
     HlslParseContext(TSymbolTable&, TIntermediate&, bool parsingBuiltins,
                      int version, EProfile, const SpvVersion& spvVersion, EShLanguage, TInfoSink&,
+                     const TString sourceEntryPointName,
                      bool forwardCompatible = false, EShMessages messages = EShMsgDefault);
     virtual ~HlslParseContext();
     void initializeExtensionBehavior();
@@ -83,8 +84,8 @@ public:
     void decomposeSampleMethods(const TSourceLoc&, TIntermTyped*& node, TIntermNode* arguments);
     void decomposeGeometryMethods(const TSourceLoc&, TIntermTyped*& node, TIntermNode* arguments);
     TIntermTyped* handleLengthMethod(const TSourceLoc&, TFunction*, TIntermNode*);
-    void addInputArgumentConversions(const TFunction&, TIntermNode*&) const;
-    TIntermTyped* addOutputArgumentConversions(const TFunction&, TIntermAggregate&);
+    void addInputArgumentConversions(const TFunction&, TIntermNode*&);
+    TIntermTyped* addOutputArgumentConversions(const TFunction&, TIntermOperator&);
     void builtInOpCheck(const TSourceLoc&, const TFunction&, TIntermOperator&);
     TFunction* handleConstructorCall(const TSourceLoc&, const TType&);
     void handleSemantic(TSourceLoc, TQualifier&, const TString& semantic);
@@ -125,9 +126,10 @@ public:
     void mergeObjectLayoutQualifiers(TQualifier& dest, const TQualifier& src, bool inheritOnly);
     void checkNoShaderLayouts(const TSourceLoc&, const TShaderQualifiers&);
 
-    const TFunction* findFunction(const TSourceLoc& loc, const TFunction& call, bool& builtIn);
+    const TFunction* findFunction(const TSourceLoc& loc, const TFunction& call, bool& builtIn, TIntermNode* args);
     void declareTypedef(const TSourceLoc&, TString& identifier, const TType&, TArraySizes* typeArray = 0);
     TIntermNode* declareVariable(const TSourceLoc&, TString& identifier, TType&, TIntermTyped* initializer = 0);
+    void lengthenList(const TSourceLoc&, TIntermSequence& list, int size);
     TIntermTyped* addConstructor(const TSourceLoc&, TIntermNode*, const TType&);
     TIntermTyped* constructAggregate(TIntermNode*, const TType&, int, const TSourceLoc&);
     TIntermTyped* constructBuiltIn(const TType&, TOperator, TIntermTyped*, const TSourceLoc&, bool subset);
@@ -164,26 +166,49 @@ public:
     bool handleOutputGeometry(const TSourceLoc&, const TLayoutGeometry& geometry);
     bool handleInputGeometry(const TSourceLoc&, const TLayoutGeometry& geometry);
 
+    // Potentially rename shader entry point function
+    void renameShaderFunction(TString*& name) const;
+
+    // Reset data for incrementally built referencing of flattened composite structures
+    void initFlattening() { flattenLevel.push_back(0); flattenOffset.push_back(0); }
+    void finalizeFlattening() { flattenLevel.pop_back(); flattenOffset.pop_back(); }
+
 protected:
+    struct TFlattenData {
+        TFlattenData() : nextBinding(TQualifier::layoutBindingEnd) { }
+        TFlattenData(int nb) : nextBinding(nb) { }
+
+        TVector<TVariable*> members;     // individual flattened variables
+        TVector<int>        offsets;     // offset to next tree level
+        int                 nextBinding; // next binding to use.
+    };
+
     void inheritGlobalDefaults(TQualifier& dst) const;
     TVariable* makeInternalVariable(const char* name, const TType&) const;
-    TVariable* declareNonArray(const TSourceLoc&, TString& identifier, TType&);
+    TVariable* declareNonArray(const TSourceLoc&, TString& identifier, TType&, bool track);
     void declareArray(const TSourceLoc&, TString& identifier, const TType&, TSymbol*&, bool track);
     TIntermNode* executeInitializer(const TSourceLoc&, TIntermTyped* initializer, TVariable* variable);
     TIntermTyped* convertInitializerList(const TSourceLoc&, const TType&, TIntermTyped* initializer);
+    bool isZeroConstructor(const TIntermNode*);
     TOperator mapAtomicOp(const TSourceLoc& loc, TOperator op, bool isImage);
 
     // Return true if this node requires L-value conversion (e.g, to an imageStore).
     bool shouldConvertLValue(const TIntermNode*) const;
 
     // Array and struct flattening
-    bool shouldFlatten(const TType& type) const { return shouldFlattenIO(type) || shouldFlattenUniform(type); }
-    TIntermTyped* flattenAccess(TIntermTyped* base, int member);
+    bool shouldFlatten(const TType& type) const;
+    TIntermTyped* flattenAccess(const TSourceLoc&, TIntermTyped* base, int member);
     bool shouldFlattenIO(const TType&) const;
     bool shouldFlattenUniform(const TType&) const;
+    bool wasFlattened(const TIntermTyped* node) const;
+    bool wasFlattened(int id) const { return flattenMap.find(id) != flattenMap.end(); }
+    int  addFlattenedMember(const TSourceLoc& loc, const TVariable&, const TType&, TFlattenData&, const TString& name, bool track);
+    bool isFinalFlattening(const TType& type) const { return !(type.isStruct() || type.isArray()); }
+
     void flatten(const TSourceLoc& loc, const TVariable& variable);
-    void flattenStruct(const TVariable& variable);
-    void flattenArray(const TSourceLoc& loc, const TVariable& variable);
+    int flatten(const TSourceLoc& loc, const TVariable& variable, const TType&, TFlattenData&, TString name);
+    int flattenStruct(const TSourceLoc& loc, const TVariable& variable, const TType&, TFlattenData&, TString name);
+    int flattenArray(const TSourceLoc& loc, const TVariable& variable, const TType&, TFlattenData&, TString name);
 
     // Current state of parsing
     struct TPragma contextPragma;
@@ -193,7 +218,7 @@ protected:
     int controlFlowNestingLevel; // 0 if outside all flow control
     TList<TIntermSequence*> switchSequenceStack;  // case, node, case, case, node, ...; ensure only one node between cases;   stack of them for nesting
     bool inEntryPoint;           // if inside a function, true if the function is the entry point
-    bool postMainReturn;         // if inside a function, true if the function is the entry point and this is after a return statement
+    bool postEntryPointReturn;         // if inside a function, true if the function is the entry point and this is after a return statement
     const TType* currentFunctionType;  // the return type of the function that's currently being parsed
     bool functionReturnsValue;   // true if a non-void function has a return
     TBuiltInResource resources;
@@ -246,9 +271,14 @@ protected:
     //
     TVector<TSymbol*> ioArraySymbolResizeList;
 
-    TMap<int, TVector<TVariable*>> flattenMap;
+    TMap<int, TFlattenData> flattenMap;
+    TVector<int> flattenLevel;  // nested postfix operator level for flattening
+    TVector<int> flattenOffset; // cumulative offset for flattening
+
     unsigned int nextInLocation;
     unsigned int nextOutLocation;
+
+    TString sourceEntryPointName;
 };
 
 } // end namespace glslang

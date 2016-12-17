@@ -397,19 +397,6 @@ ERROR: node is still EOpNull!
 0:62        Construct vec4 (temp 4-component vector of float)
 0:62          Convert int to float (temp float)
 0:62            'color' (temp int)
-0:66  Function Definition: aggCall( (global void)
-0:66    Function Parameters: 
-0:?     Sequence
-0:69      Function Call: m(vf2; (global 3-component vector of float)
-0:69        Convert int to float (temp 2-component vector of float)
-0:69          Construct ivec2 (temp 2-component vector of int)
-0:69            Convert float to int (temp int)
-0:69              'F' (temp float)
-0:72  Function Definition: badConv( (global 4-component vector of float)
-0:72    Function Parameters: 
-0:74    Sequence
-0:74      Branch: Return with expression
-0:74        'u' (uniform float)
 0:?   Linker Objects
 0:?     'u' (uniform float)
 

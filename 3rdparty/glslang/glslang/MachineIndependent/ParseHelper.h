@@ -167,7 +167,7 @@ protected:
 
     // see implementation for detail
     const TFunction* selectFunction(const TVector<const TFunction*>, const TFunction&,
-        std::function<bool(const TType&, const TType&)>,
+        std::function<bool(const TType&, const TType&, TOperator, int arg)>,
         std::function<bool(const TType&, const TType&, const TType&)>,
         /* output */ bool& tie);
 

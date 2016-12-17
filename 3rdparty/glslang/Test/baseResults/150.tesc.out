@@ -910,8 +910,10 @@ ERROR: node is still EOpNull!
 
 Linked tessellation control stage:
 
+ERROR: Linking tessellation control stage: can't handle multiple entry points per stage
 ERROR: Linking tessellation control stage: Multiple function bodies in multiple compilation units for the same signature in the same stage:
     main(
+ERROR: Linking tessellation control stage: can't handle multiple entry points per stage
 ERROR: Linking tessellation control stage: Contradictory layout vertices values
 ERROR: Linking tessellation control stage: Multiple function bodies in multiple compilation units for the same signature in the same stage:
     main(
@@ -921,6 +923,7 @@ ERROR: Linking tessellation control stage: Types must match:
     gl_out: "out 4-element array of block{out 4-component vector of float Position gl_Position, out float PointSize gl_PointSize, out implicitly-sized array of float ClipDistance gl_ClipDistance}" versus "out implicitly-sized array of block{out 4-component vector of float Position gl_Position, out float PointSize gl_PointSize, out implicitly-sized array of float ClipDistance gl_ClipDistance}"
 ERROR: Linking tessellation control stage: Types must match:
     outa: "global 4-element array of int" versus "global 1-element array of int"
+ERROR: Linking tessellation control stage: can't handle multiple entry points per stage
 ERROR: Linking tessellation control stage: Multiple function bodies in multiple compilation units for the same signature in the same stage:
     main(
 ERROR: Linking tessellation control stage: Multiple function bodies in multiple compilation units for the same signature in the same stage:
@@ -934,8 +937,10 @@ ERROR: Linking tessellation control stage: Types must match:
 
 Linked tessellation evaluation stage:
 
+ERROR: Linking tessellation evaluation stage: can't handle multiple entry points per stage
 ERROR: Linking tessellation evaluation stage: Multiple function bodies in multiple compilation units for the same signature in the same stage:
     main(
+ERROR: Linking tessellation evaluation stage: can't handle multiple entry points per stage
 ERROR: Linking tessellation evaluation stage: Contradictory input layout primitives
 ERROR: Linking tessellation evaluation stage: Contradictory input vertex spacing
 ERROR: Linking tessellation evaluation stage: Contradictory triangle ordering
@@ -1184,35 +1189,6 @@ vertices = 4
 0:56        Barrier (global void)
 0:59      Branch: Return
 0:61      Barrier (global void)
-0:67  Function Definition: foo( (global void)
-0:67    Function Parameters: 
-0:69    Sequence
-0:69      gl_PointSize: direct index for structure (out float PointSize)
-0:69        direct index (temp block{out 4-component vector of float Position gl_Position, out float PointSize gl_PointSize, out 2-element array of float ClipDistance gl_ClipDistance})
-0:69          'gl_out' (out 4-element array of block{out 4-component vector of float Position gl_Position, out float PointSize gl_PointSize, out 2-element array of float ClipDistance gl_ClipDistance})
-0:69          Constant:
-0:69            4 (const int)
-0:69        Constant:
-0:69          1 (const int)
-0:71      Barrier (global void)
-0:91  Function Definition: foop( (global void)
-0:91    Function Parameters: 
-0:?     Sequence
-0:95      multiply second child into first child (temp 3-component vector of float)
-0:95        'pv3' (noContraction temp 3-component vector of float)
-0:95        'pv3' (noContraction temp 3-component vector of float)
-0:96      move second child to first child (temp 3-component vector of float)
-0:96        'pv3' (noContraction temp 3-component vector of float)
-0:96        fma (global 3-component vector of float)
-0:96          'pv3' (noContraction temp 3-component vector of float)
-0:96          'pv3' (noContraction temp 3-component vector of float)
-0:96          'pv3' (noContraction temp 3-component vector of float)
-0:97      move second child to first child (temp double)
-0:97        'd' (noContraction temp double)
-0:97        fma (global double)
-0:97          'd' (noContraction temp double)
-0:97          'd' (noContraction temp double)
-0:97          'd' (noContraction temp double)
 0:8  Function Definition: main( (global void)
 0:8    Function Parameters: 
 0:15  Function Definition: main( (global void)
@@ -1274,41 +1250,6 @@ vertices = 4
 0:26      indirect index (temp block{out 4-component vector of float Position gl_Position})
 0:26        'gl_out' (out 3-element array of block{out 4-component vector of float Position gl_Position})
 0:26        'gl_InvocationID' (in int InvocationID)
-0:34  Function Definition: foo( (global void)
-0:34    Function Parameters: 
-0:36    Sequence
-0:36      Test condition and select (temp void)
-0:36        Condition
-0:36        logical-or (temp bool)
-0:36          Compare Not Equal (temp bool)
-0:36            Constant:
-0:36              -0.625000
-0:36              -0.500000
-0:36              -0.375000
-0:36              -0.250000
-0:36              -0.375000
-0:36              -0.250000
-0:36              -0.125000
-0:36              0.000000
-0:36            direct index (layout(location=0 ) temp 2X4 matrix of double)
-0:36              'vs_tcs_first' (layout(location=0 ) in 32-element array of 2X4 matrix of double)
-0:36              Constant:
-0:36                0 (const int)
-0:37          Compare Not Equal (temp bool)
-0:37            Constant:
-0:37              0.375000
-0:37              0.500000
-0:37              0.625000
-0:37              0.750000
-0:37              0.625000
-0:37              0.750000
-0:37              0.875000
-0:37              -0.625000
-0:37            direct index (layout(location=12 ) temp 2X4 matrix of double)
-0:37              'vs_tcs_last' (layout(location=12 ) in 32-element array of 2X4 matrix of double)
-0:37              Constant:
-0:37                0 (const int)
-0:36        true case is null
 0:?   Linker Objects
 0:?     'gl_out' (out 4-element array of block{out 4-component vector of float Position gl_Position, out float PointSize gl_PointSize, out 2-element array of float ClipDistance gl_ClipDistance})
 0:?     'outa' (global 4-element array of int)

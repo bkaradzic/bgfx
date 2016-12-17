@@ -399,17 +399,6 @@ ERROR: node is still EOpNull!
 0:26      'fd' (global double)
 0:26      Constant:
 0:26        2.000000
-0:127  Function Definition: foo(f1[5]; (global 5-element array of float)
-0:127    Function Parameters: 
-0:127      '' (in 5-element array of float)
-0:129    Sequence
-0:129      Branch: Return with expression
-0:129        Constant:
-0:129          3.400000
-0:129          4.200000
-0:129          5.000000
-0:129          5.200000
-0:129          1.100000
 0:137  Function Definition: main( (global void)
 0:137    Function Parameters: 
 0:140    Sequence

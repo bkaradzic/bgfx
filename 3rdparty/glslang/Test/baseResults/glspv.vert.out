@@ -11,8 +11,4 @@ ERROR: 0:20: '' :  syntax error
 ERROR: 8 compilation errors.  No code generated.
 
 
-
-Linked vertex stage:
-
-
 SPIR-V is not generated for failed compile or link

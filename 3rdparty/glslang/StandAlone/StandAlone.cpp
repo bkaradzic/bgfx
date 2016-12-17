@@ -60,29 +60,30 @@ extern "C" {
 
 // Command-line options
 enum TOptions {
-    EOptionNone               = 0,
-    EOptionIntermediate       = (1 <<  0),
-    EOptionSuppressInfolog    = (1 <<  1),
-    EOptionMemoryLeakMode     = (1 <<  2),
-    EOptionRelaxedErrors      = (1 <<  3),
-    EOptionGiveWarnings       = (1 <<  4),
-    EOptionLinkProgram        = (1 <<  5),
-    EOptionMultiThreaded      = (1 <<  6),
-    EOptionDumpConfig         = (1 <<  7),
-    EOptionDumpReflection     = (1 <<  8),
-    EOptionSuppressWarnings   = (1 <<  9),
-    EOptionDumpVersions       = (1 << 10),
-    EOptionSpv                = (1 << 11),
-    EOptionHumanReadableSpv   = (1 << 12),
-    EOptionVulkanRules        = (1 << 13),
-    EOptionDefaultDesktop     = (1 << 14),
-    EOptionOutputPreprocessed = (1 << 15),
-    EOptionOutputHexadecimal  = (1 << 16),
-    EOptionReadHlsl           = (1 << 17),
-    EOptionCascadingErrors    = (1 << 18),
-    EOptionAutoMapBindings    = (1 << 19),
+    EOptionNone                 = 0,
+    EOptionIntermediate         = (1 <<  0),
+    EOptionSuppressInfolog      = (1 <<  1),
+    EOptionMemoryLeakMode       = (1 <<  2),
+    EOptionRelaxedErrors        = (1 <<  3),
+    EOptionGiveWarnings         = (1 <<  4),
+    EOptionLinkProgram          = (1 <<  5),
+    EOptionMultiThreaded        = (1 <<  6),
+    EOptionDumpConfig           = (1 <<  7),
+    EOptionDumpReflection       = (1 <<  8),
+    EOptionSuppressWarnings     = (1 <<  9),
+    EOptionDumpVersions         = (1 << 10),
+    EOptionSpv                  = (1 << 11),
+    EOptionHumanReadableSpv     = (1 << 12),
+    EOptionVulkanRules          = (1 << 13),
+    EOptionDefaultDesktop       = (1 << 14),
+    EOptionOutputPreprocessed   = (1 << 15),
+    EOptionOutputHexadecimal    = (1 << 16),
+    EOptionReadHlsl             = (1 << 17),
+    EOptionCascadingErrors      = (1 << 18),
+    EOptionAutoMapBindings      = (1 << 19),
     EOptionFlattenUniformArrays = (1 << 20),
-    EOptionNoStorageFormat    = (1 << 21),
+    EOptionNoStorageFormat      = (1 << 21),
+    EOptionKeepUncalled         = (1 << 22),
 };
 
 //
@@ -160,6 +161,7 @@ int Options = 0;
 const char* ExecutableName = nullptr;
 const char* binaryFileName = nullptr;
 const char* entryPointName = nullptr;
+const char* sourceEntryPointName = nullptr;
 const char* shaderStageName = nullptr;
 
 std::array<unsigned int, EShLangCount> baseSamplerBinding;
@@ -300,6 +302,18 @@ void ProcessArguments(int argc, char* argv[])
                     } else if (lowerword == "no-storage-format" || // synonyms
                                lowerword == "nsf") {
                         Options |= EOptionNoStorageFormat;
+                    } else if (lowerword == "source-entrypoint" || // synonyms
+                               lowerword == "sep") {
+                        sourceEntryPointName = argv[1];
+                        if (argc > 0) {
+                            argc--;
+                            argv++;
+                        } else
+                            Error("no <entry-point> provided for --source-entrypoint");
+                        break;
+                    } else if (lowerword == "keep-uncalled" || // synonyms
+                               lowerword == "ku") {
+                        Options |= EOptionKeepUncalled;
                     } else {
                         usage();
                     }
@@ -449,6 +463,8 @@ void SetMessageOptions(EShMessages& messages)
         messages = (EShMessages)(messages | EShMsgReadHlsl);
     if (Options & EOptionCascadingErrors)
         messages = (EShMessages)(messages | EShMsgCascadingErrors);
+    if (Options & EOptionKeepUncalled)
+        messages = (EShMessages)(messages | EShMsgKeepUncalled);
 }
 
 //
@@ -547,6 +563,8 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
         shader->setStringsWithLengthsAndNames(compUnit.text, NULL, compUnit.fileNameList, 1);
         if (entryPointName) // HLSL todo: this needs to be tracked per compUnits
             shader->setEntryPoint(entryPointName);
+        if (sourceEntryPointName)
+            shader->setSourceEntryPoint(sourceEntryPointName);
 
         shader->setShiftSamplerBinding(baseSamplerBinding[compUnit.stage]);
         shader->setShiftTextureBinding(baseTextureBinding[compUnit.stage]);
@@ -963,6 +981,12 @@ void usage()
            "\n"
            "  --no-storage-format                     use Unknown image format\n"
            "  --nsf                                   synonym for --no-storage-format\n"
+           "\n"
+           "  --source-entrypoint name                the given shader source function is renamed to be the entry point given in -e\n"
+           "  --sep                                   synonym for --source-entrypoint\n"
+           "\n"
+           "  --keep-uncalled                         don't eliminate uncalled functions when linking\n"
+           "  --ku                                    synonym for --keep-uncalled\n"
            );
 
     exit(EFailUsage);

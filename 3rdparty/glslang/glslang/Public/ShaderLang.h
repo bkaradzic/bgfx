@@ -146,6 +146,7 @@ enum EShMessages {
     EShMsgOnlyPreprocessor = (1 << 5),  // only print out errors produced by the preprocessor
     EShMsgReadHlsl         = (1 << 6),  // use HLSL parsing rules and semantics
     EShMsgCascadingErrors  = (1 << 7),  // get cascading errors; risks error-recovery issues, instead of an early exit
+    EShMsgKeepUncalled     = (1 << 8),  // for testing, don't eliminate uncalled functions
 };
 
 //
@@ -304,6 +305,7 @@ public:
         const char* const* s, const int* l, const char* const* names, int n);
     void setPreamble(const char* s) { preamble = s; }
     void setEntryPoint(const char* entryPoint);
+    void setSourceEntryPoint(const char* sourceEntryPointName);
     void setShiftSamplerBinding(unsigned int base);
     void setShiftTextureBinding(unsigned int base);
     void setShiftImageBinding(unsigned int base);
@@ -374,9 +376,7 @@ public:
         // Signals that the parser will no longer use the contents of the
         // specified IncludeResult.
         virtual void releaseInclude(IncludeResult* result) = 0;
-#ifdef __ANDROID__
-        virtual ~Includer() {} // Pacify -Werror=non-virtual-dtor
-#endif
+        virtual ~Includer() {}
     };
 
     // Returns an error message for any #include directive.
@@ -436,6 +436,9 @@ protected:
     const char* const* stringNames;
     const char* preamble;
     int numStrings;
+
+    // a function in the source string can be renamed FROM this TO the name given in setEntryPoint.
+    std::string sourceEntryPointName;
 
     friend class TProgram;
 

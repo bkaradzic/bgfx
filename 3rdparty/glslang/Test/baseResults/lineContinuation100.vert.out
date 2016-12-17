@@ -90,16 +90,6 @@ ERROR: node is still EOpNull!
 0:20        'gl_Position' (gl_Position highp 4-component vector of float Position)
 0:20        Construct vec4 (temp highp 4-component vector of float)
 0:20          'foo' (global highp float)
-0:22  Function Definition: foo2(vf4; (global highp 4-component vector of float)
-0:22    Function Parameters: 
-0:22      'a' (in highp 4-component vector of float)
-0:24    Sequence
-0:24      Sequence
-0:24        move second child to first child (temp highp 4-component vector of float)
-0:24          'b' (temp highp 4-component vector of float)
-0:24          'a' (in highp 4-component vector of float)
-0:25      Branch: Return with expression
-0:25        'b' (temp highp 4-component vector of float)
 0:45  Sequence
 0:45    move second child to first child (temp highp int)
 0:45      'q1' (global highp int)

@@ -84,9 +84,11 @@ EShMessages DeriveOptions(Source source, Semantics semantics, Target target)
             break;
         case Target::Spv:
             result = static_cast<EShMessages>(result | EShMsgSpvRules);
+            result = static_cast<EShMessages>(result | EShMsgKeepUncalled);
             break;
         case Target::BothASTAndSpv:
             result = static_cast<EShMessages>(result | EShMsgSpvRules | EShMsgAST);
+            result = static_cast<EShMessages>(result | EShMsgKeepUncalled);
             break;
     };
 

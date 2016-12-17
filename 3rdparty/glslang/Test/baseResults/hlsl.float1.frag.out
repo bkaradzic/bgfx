@@ -32,6 +32,7 @@ gl_FragCoord origin is upper left
 
 Linked fragment stage:
 
+WARNING: Linking fragment stage: Entry point not found
 
 Shader version: 450
 gl_FragCoord origin is upper left
@@ -92,6 +93,7 @@ gl_FragCoord origin is upper left
                5:             Label
                               Store 14(f1) 15
                               Store 16(scalar) 17
+                              Return
                               FunctionEnd
 11(ShaderFunction(vf1;f1;):    6(float) Function None 8
      9(inFloat1):      7(ptr) FunctionParameter

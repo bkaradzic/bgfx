@@ -364,35 +364,6 @@ ERROR: node is still EOpNull!
 0:56        Barrier (global void)
 0:59      Branch: Return
 0:61      Barrier (global void)
-0:67  Function Definition: foo( (global void)
-0:67    Function Parameters: 
-0:69    Sequence
-0:69      gl_PointSize: direct index for structure (out float PointSize)
-0:69        direct index (temp block{out 4-component vector of float Position gl_Position, out float PointSize gl_PointSize, out 2-element array of float ClipDistance gl_ClipDistance})
-0:69          'gl_out' (out 4-element array of block{out 4-component vector of float Position gl_Position, out float PointSize gl_PointSize, out 2-element array of float ClipDistance gl_ClipDistance})
-0:69          Constant:
-0:69            4 (const int)
-0:69        Constant:
-0:69          1 (const int)
-0:71      Barrier (global void)
-0:91  Function Definition: foop( (global void)
-0:91    Function Parameters: 
-0:?     Sequence
-0:95      multiply second child into first child (temp 3-component vector of float)
-0:95        'pv3' (noContraction temp 3-component vector of float)
-0:95        'pv3' (noContraction temp 3-component vector of float)
-0:96      move second child to first child (temp 3-component vector of float)
-0:96        'pv3' (noContraction temp 3-component vector of float)
-0:96        fma (global 3-component vector of float)
-0:96          'pv3' (noContraction temp 3-component vector of float)
-0:96          'pv3' (noContraction temp 3-component vector of float)
-0:96          'pv3' (noContraction temp 3-component vector of float)
-0:97      move second child to first child (temp double)
-0:97        'd' (noContraction temp double)
-0:97        fma (global double)
-0:97          'd' (noContraction temp double)
-0:97          'd' (noContraction temp double)
-0:97          'd' (noContraction temp double)
 0:?   Linker Objects
 0:?     'gl_out' (out 4-element array of block{out 4-component vector of float Position gl_Position, out float PointSize gl_PointSize, out 2-element array of float ClipDistance gl_ClipDistance})
 0:?     'outa' (global 4-element array of int)

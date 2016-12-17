@@ -6,8 +6,4 @@ ERROR: 0:14: '' :  syntax error
 ERROR: 4 compilation errors.  No code generated.
 
 
-
-Linked fragment stage:
-
-
 SPIR-V is not generated for failed compile or link

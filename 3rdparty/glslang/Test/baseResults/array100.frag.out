@@ -265,29 +265,6 @@ ERROR: node is still EOpNull!
 0:40          1.000000
 0:40          1.000000
 0:40          1.000000
-0:53  Function Definition: bar9( (global structure{global mediump 4-component vector of float v4, global structure{global mediump 3-component vector of float v3, global 4-element array of mediump 2-component vector of float v2} sa})
-0:53    Function Parameters: 
-0:?     Sequence
-0:56      Branch: Return with expression
-0:56        's' (temp structure{global mediump 4-component vector of float v4, global structure{global mediump 3-component vector of float v3, global 4-element array of mediump 2-component vector of float v2} sa})
-0:59  Function Definition: bar10(struct-SB-vf4-struct-SA-vf3-vf2[4]11; (global void)
-0:59    Function Parameters: 
-0:59      's' (in structure{global mediump 4-component vector of float v4, global structure{global mediump 3-component vector of float v3, global 4-element array of mediump 2-component vector of float v2} sa})
-0:63  Function Definition: bar11( (global void)
-0:63    Function Parameters: 
-0:?     Sequence
-0:66      move second child to first child (temp structure{global mediump 4-component vector of float v4, global structure{global mediump 3-component vector of float v3, global 4-element array of mediump 2-component vector of float v2} sa})
-0:66        's1' (temp structure{global mediump 4-component vector of float v4, global structure{global mediump 3-component vector of float v3, global 4-element array of mediump 2-component vector of float v2} sa})
-0:66        's2' (temp structure{global mediump 4-component vector of float v4, global structure{global mediump 3-component vector of float v3, global 4-element array of mediump 2-component vector of float v2} sa})
-0:67      Function Call: bar10(struct-SB-vf4-struct-SA-vf3-vf2[4]11; (global void)
-0:67        's1' (temp structure{global mediump 4-component vector of float v4, global structure{global mediump 3-component vector of float v3, global 4-element array of mediump 2-component vector of float v2} sa})
-0:68      move second child to first child (temp structure{global mediump 4-component vector of float v4, global structure{global mediump 3-component vector of float v3, global 4-element array of mediump 2-component vector of float v2} sa})
-0:68        's2' (temp structure{global mediump 4-component vector of float v4, global structure{global mediump 3-component vector of float v3, global 4-element array of mediump 2-component vector of float v2} sa})
-0:68        Function Call: bar9( (global structure{global mediump 4-component vector of float v4, global structure{global mediump 3-component vector of float v3, global 4-element array of mediump 2-component vector of float v2} sa})
-0:69      Sequence
-0:69        move second child to first child (temp structure{global mediump 4-component vector of float v4, global structure{global mediump 3-component vector of float v3, global 4-element array of mediump 2-component vector of float v2} sa})
-0:69          'initSb' (temp structure{global mediump 4-component vector of float v4, global structure{global mediump 3-component vector of float v3, global 4-element array of mediump 2-component vector of float v2} sa})
-0:69          's1' (temp structure{global mediump 4-component vector of float v4, global structure{global mediump 3-component vector of float v3, global 4-element array of mediump 2-component vector of float v2} sa})
 0:?   Linker Objects
 0:?     'gu' (global 1-element array of mediump float)
 0:?     'g4' (global 4-element array of mediump float)

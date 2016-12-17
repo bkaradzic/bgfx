@@ -22,7 +22,3 @@ ERROR: 0:65: 'limitations' : Non-constant-index-expression
 ERROR: 20 compilation errors.  No code generated.
 
 
-
-Linked vertex stage:
-
-

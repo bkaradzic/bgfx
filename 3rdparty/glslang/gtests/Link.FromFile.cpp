@@ -99,6 +99,7 @@ INSTANTIATE_TEST_CASE_P(
         {"150.tesc", "150.tese", "400.tesc", "400.tese", "410.tesc", "420.tesc", "420.tese"},
         {"max_vertices_0.geom"},
         {"es-link1.frag", "es-link2.frag"},
+        {"missingBodies.vert"}
     })),
 );
 // clang-format on

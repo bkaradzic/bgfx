@@ -16,14 +16,8 @@ Shader version: 450
 0:11          add (temp 4-component vector of float)
 0:11            add (temp 4-component vector of float)
 0:11              add (temp 4-component vector of float)
-0:11                direct index (layout(location=1 ) temp 4-component vector of float)
-0:?                   'm' (layout(location=1 ) in 2-element array of 4-component vector of float)
-0:11                  Constant:
-0:11                    1 (const int)
-0:11                direct index (layout(location=1 ) temp 4-component vector of float)
-0:?                   'm' (layout(location=1 ) in 2-element array of 4-component vector of float)
-0:11                  Constant:
-0:11                    0 (const int)
+0:?                 'm[1]' (layout(location=2 ) in 4-component vector of float)
+0:?                 'm[0]' (layout(location=1 ) in 4-component vector of float)
 0:11              Construct vec4 (temp 4-component vector of float)
 0:11                Convert uint to float (temp float)
 0:11                  direct index (temp uint)
@@ -34,12 +28,24 @@ Shader version: 450
 0:11          'e' (layout(location=5 ) in 4-component vector of float)
 0:13      Sequence
 0:13        Sequence
-0:13          move second child to first child (temp 2-element array of 4-component vector of float)
-0:?             'm' (layout(location=0 ) out 2-element array of 4-component vector of float)
-0:13            m: direct index for structure (temp 2-element array of 4-component vector of float)
-0:13              'local' (temp structure{temp 2-element array of 4-component vector of float m, temp 2-component vector of uint coord, temp 4-component vector of float b})
+0:13          move second child to first child (temp 4-component vector of float)
+0:?             'm[0]' (layout(location=0 ) out 4-component vector of float)
+0:13            direct index (temp 4-component vector of float)
+0:13              m: direct index for structure (temp 2-element array of 4-component vector of float)
+0:13                'local' (temp structure{temp 2-element array of 4-component vector of float m, temp 2-component vector of uint coord, temp 4-component vector of float b})
+0:13                Constant:
+0:13                  0 (const int)
 0:13              Constant:
 0:13                0 (const int)
+0:13          move second child to first child (temp 4-component vector of float)
+0:?             'm[1]' (layout(location=1 ) out 4-component vector of float)
+0:13            direct index (temp 4-component vector of float)
+0:13              m: direct index for structure (temp 2-element array of 4-component vector of float)
+0:13                'local' (temp structure{temp 2-element array of 4-component vector of float m, temp 2-component vector of uint coord, temp 4-component vector of float b})
+0:13                Constant:
+0:13                  0 (const int)
+0:13              Constant:
+0:13                1 (const int)
 0:13          move second child to first child (temp 2-component vector of uint)
 0:?             'coord' (layout(location=2 ) out 2-component vector of uint)
 0:13            coord: direct index for structure (temp 2-component vector of uint)
@@ -54,14 +60,20 @@ Shader version: 450
 0:13                2 (const int)
 0:13        Branch: Return
 0:?   Linker Objects
-0:?     'm' (layout(location=0 ) out 2-element array of 4-component vector of float)
+0:?     'm[0]' (layout(location=0 ) out 4-component vector of float)
+0:?     'm[1]' (layout(location=1 ) out 4-component vector of float)
 0:?     'coord' (layout(location=2 ) out 2-component vector of uint)
 0:?     'b' (layout(location=3 ) smooth out 4-component vector of float)
 0:?     'd' (layout(location=0 ) in 4-component vector of float)
-0:?     'm' (layout(location=1 ) in 2-element array of 4-component vector of float)
+0:?     'm[0]' (layout(location=1 ) in 4-component vector of float)
+0:?     'm[1]' (layout(location=2 ) in 4-component vector of float)
 0:?     'coord' (layout(location=3 ) in 2-component vector of uint)
 0:?     'b' (layout(location=4 ) in 4-component vector of float)
 0:?     'e' (layout(location=5 ) in 4-component vector of float)
+0:?     'm[0]' (layout(location=0 ) out 4-component vector of float)
+0:?     'm[1]' (layout(location=1 ) out 4-component vector of float)
+0:?     'm[0]' (layout(location=1 ) in 4-component vector of float)
+0:?     'm[1]' (layout(location=2 ) in 4-component vector of float)
 
 
 Linked vertex stage:
@@ -84,14 +96,8 @@ Shader version: 450
 0:11          add (temp 4-component vector of float)
 0:11            add (temp 4-component vector of float)
 0:11              add (temp 4-component vector of float)
-0:11                direct index (layout(location=1 ) temp 4-component vector of float)
-0:?                   'm' (layout(location=1 ) in 2-element array of 4-component vector of float)
-0:11                  Constant:
-0:11                    1 (const int)
-0:11                direct index (layout(location=1 ) temp 4-component vector of float)
-0:?                   'm' (layout(location=1 ) in 2-element array of 4-component vector of float)
-0:11                  Constant:
-0:11                    0 (const int)
+0:?                 'm[1]' (layout(location=2 ) in 4-component vector of float)
+0:?                 'm[0]' (layout(location=1 ) in 4-component vector of float)
 0:11              Construct vec4 (temp 4-component vector of float)
 0:11                Convert uint to float (temp float)
 0:11                  direct index (temp uint)
@@ -102,12 +108,24 @@ Shader version: 450
 0:11          'e' (layout(location=5 ) in 4-component vector of float)
 0:13      Sequence
 0:13        Sequence
-0:13          move second child to first child (temp 2-element array of 4-component vector of float)
-0:?             'm' (layout(location=0 ) out 2-element array of 4-component vector of float)
-0:13            m: direct index for structure (temp 2-element array of 4-component vector of float)
-0:13              'local' (temp structure{temp 2-element array of 4-component vector of float m, temp 2-component vector of uint coord, temp 4-component vector of float b})
+0:13          move second child to first child (temp 4-component vector of float)
+0:?             'm[0]' (layout(location=0 ) out 4-component vector of float)
+0:13            direct index (temp 4-component vector of float)
+0:13              m: direct index for structure (temp 2-element array of 4-component vector of float)
+0:13                'local' (temp structure{temp 2-element array of 4-component vector of float m, temp 2-component vector of uint coord, temp 4-component vector of float b})
+0:13                Constant:
+0:13                  0 (const int)
 0:13              Constant:
 0:13                0 (const int)
+0:13          move second child to first child (temp 4-component vector of float)
+0:?             'm[1]' (layout(location=1 ) out 4-component vector of float)
+0:13            direct index (temp 4-component vector of float)
+0:13              m: direct index for structure (temp 2-element array of 4-component vector of float)
+0:13                'local' (temp structure{temp 2-element array of 4-component vector of float m, temp 2-component vector of uint coord, temp 4-component vector of float b})
+0:13                Constant:
+0:13                  0 (const int)
+0:13              Constant:
+0:13                1 (const int)
 0:13          move second child to first child (temp 2-component vector of uint)
 0:?             'coord' (layout(location=2 ) out 2-component vector of uint)
 0:13            coord: direct index for structure (temp 2-component vector of uint)
@@ -122,45 +140,55 @@ Shader version: 450
 0:13                2 (const int)
 0:13        Branch: Return
 0:?   Linker Objects
-0:?     'm' (layout(location=0 ) out 2-element array of 4-component vector of float)
+0:?     'm[0]' (layout(location=0 ) out 4-component vector of float)
+0:?     'm[1]' (layout(location=1 ) out 4-component vector of float)
 0:?     'coord' (layout(location=2 ) out 2-component vector of uint)
 0:?     'b' (layout(location=3 ) smooth out 4-component vector of float)
 0:?     'd' (layout(location=0 ) in 4-component vector of float)
-0:?     'm' (layout(location=1 ) in 2-element array of 4-component vector of float)
+0:?     'm[0]' (layout(location=1 ) in 4-component vector of float)
+0:?     'm[1]' (layout(location=2 ) in 4-component vector of float)
 0:?     'coord' (layout(location=3 ) in 2-component vector of uint)
 0:?     'b' (layout(location=4 ) in 4-component vector of float)
 0:?     'e' (layout(location=5 ) in 4-component vector of float)
+0:?     'm[0]' (layout(location=0 ) out 4-component vector of float)
+0:?     'm[1]' (layout(location=1 ) out 4-component vector of float)
+0:?     'm[0]' (layout(location=1 ) in 4-component vector of float)
+0:?     'm[1]' (layout(location=2 ) in 4-component vector of float)
 
 // Module Version 10000
 // Generated by (magic number): 80001
-// Id's are bound by 60
+// Id's are bound by 59
 
                               Capability Shader
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
-                              EntryPoint Vertex 4  "main" 18 28 36 39 45 50 55 59
+                              EntryPoint Vertex 4  "main" 18 20 24 32 35 41 45 50 54 58
                               Name 4  "main"
                               Name 12  "VI"
                               MemberName 12(VI) 0  "m"
                               MemberName 12(VI) 1  "coord"
                               MemberName 12(VI) 2  "b"
                               Name 14  "local"
-                              Name 18  "m"
-                              Name 28  "coord"
-                              Name 36  "d"
-                              Name 39  "e"
-                              Name 45  "m"
+                              Name 18  "m[1]"
+                              Name 20  "m[0]"
+                              Name 24  "coord"
+                              Name 32  "d"
+                              Name 35  "e"
+                              Name 41  "m[0]"
+                              Name 45  "m[1]"
                               Name 50  "coord"
-                              Name 55  "b"
-                              Name 59  "b"
-                              Decorate 18(m) Location 1
-                              Decorate 28(coord) Location 3
-                              Decorate 36(d) Location 0
-                              Decorate 39(e) Location 5
-                              Decorate 45(m) Location 0
+                              Name 54  "b"
+                              Name 58  "b"
+                              Decorate 18(m[1]) Location 2
+                              Decorate 20(m[0]) Location 1
+                              Decorate 24(coord) Location 3
+                              Decorate 32(d) Location 0
+                              Decorate 35(e) Location 5
+                              Decorate 41(m[0]) Location 0
+                              Decorate 45(m[1]) Location 1
                               Decorate 50(coord) Location 2
-                              Decorate 55(b) Location 3
-                              Decorate 59(b) Location 4
+                              Decorate 54(b) Location 3
+                              Decorate 58(b) Location 4
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
@@ -173,54 +201,54 @@ Shader version: 450
               13:             TypePointer Function 12(VI)
               15:             TypeInt 32 1
               16:     15(int) Constant 2
-              17:             TypePointer Input 10
-           18(m):     17(ptr) Variable Input
-              19:     15(int) Constant 1
-              20:             TypePointer Input 7(fvec4)
-              23:     15(int) Constant 0
-              27:             TypePointer Input 11(ivec2)
-       28(coord):     27(ptr) Variable Input
-              29:      8(int) Constant 0
-              30:             TypePointer Input 8(int)
-           36(d):     20(ptr) Variable Input
-           39(e):     20(ptr) Variable Input
-              42:             TypePointer Function 7(fvec4)
-              44:             TypePointer Output 10
-           45(m):     44(ptr) Variable Output
-              46:             TypePointer Function 10
+              17:             TypePointer Input 7(fvec4)
+        18(m[1]):     17(ptr) Variable Input
+        20(m[0]):     17(ptr) Variable Input
+              23:             TypePointer Input 11(ivec2)
+       24(coord):     23(ptr) Variable Input
+              25:      8(int) Constant 0
+              26:             TypePointer Input 8(int)
+           32(d):     17(ptr) Variable Input
+           35(e):     17(ptr) Variable Input
+              38:             TypePointer Function 7(fvec4)
+              40:             TypePointer Output 7(fvec4)
+        41(m[0]):     40(ptr) Variable Output
+              42:     15(int) Constant 0
+        45(m[1]):     40(ptr) Variable Output
+              46:     15(int) Constant 1
               49:             TypePointer Output 11(ivec2)
        50(coord):     49(ptr) Variable Output
               51:             TypePointer Function 11(ivec2)
-              54:             TypePointer Output 7(fvec4)
-           55(b):     54(ptr) Variable Output
-           59(b):     20(ptr) Variable Input
+           54(b):     40(ptr) Variable Output
+           58(b):     17(ptr) Variable Input
          4(main):           2 Function None 3
                5:             Label
        14(local):     13(ptr) Variable Function
-              21:     20(ptr) AccessChain 18(m) 19
-              22:    7(fvec4) Load 21
-              24:     20(ptr) AccessChain 18(m) 23
-              25:    7(fvec4) Load 24
-              26:    7(fvec4) FAdd 22 25
-              31:     30(ptr) AccessChain 28(coord) 29
-              32:      8(int) Load 31
-              33:    6(float) ConvertUToF 32
-              34:    7(fvec4) CompositeConstruct 33 33 33 33
-              35:    7(fvec4) FAdd 26 34
-              37:    7(fvec4) Load 36(d)
-              38:    7(fvec4) FAdd 35 37
-              40:    7(fvec4) Load 39(e)
-              41:    7(fvec4) FAdd 38 40
-              43:     42(ptr) AccessChain 14(local) 16
-                              Store 43 41
-              47:     46(ptr) AccessChain 14(local) 23
-              48:          10 Load 47
-                              Store 45(m) 48
-              52:     51(ptr) AccessChain 14(local) 19
+              19:    7(fvec4) Load 18(m[1])
+              21:    7(fvec4) Load 20(m[0])
+              22:    7(fvec4) FAdd 19 21
+              27:     26(ptr) AccessChain 24(coord) 25
+              28:      8(int) Load 27
+              29:    6(float) ConvertUToF 28
+              30:    7(fvec4) CompositeConstruct 29 29 29 29
+              31:    7(fvec4) FAdd 22 30
+              33:    7(fvec4) Load 32(d)
+              34:    7(fvec4) FAdd 31 33
+              36:    7(fvec4) Load 35(e)
+              37:    7(fvec4) FAdd 34 36
+              39:     38(ptr) AccessChain 14(local) 16
+                              Store 39 37
+              43:     38(ptr) AccessChain 14(local) 42 42
+              44:    7(fvec4) Load 43
+                              Store 41(m[0]) 44
+              47:     38(ptr) AccessChain 14(local) 42 46
+              48:    7(fvec4) Load 47
+                              Store 45(m[1]) 48
+              52:     51(ptr) AccessChain 14(local) 46
               53:   11(ivec2) Load 52
                               Store 50(coord) 53
-              56:     42(ptr) AccessChain 14(local) 16
-              57:    7(fvec4) Load 56
-                              Store 55(b) 57
+              55:     38(ptr) AccessChain 14(local) 16
+              56:    7(fvec4) Load 55
+                              Store 54(b) 56
                               Return
                               FunctionEnd

@@ -86,7 +86,7 @@ TParseContextBase* CreateParseContext(TSymbolTable& symbolTable, TIntermediate& 
                                       int version, EProfile profile, EShSource source,
                                       EShLanguage language, TInfoSink& infoSink,
                                       SpvVersion spvVersion, bool forwardCompatible, EShMessages messages,
-                                      bool parsingBuiltIns)
+                                      bool parsingBuiltIns, const std::string sourceEntryPointName = "")
 {
     switch (source) {
     case EShSourceGlsl:
@@ -96,7 +96,7 @@ TParseContextBase* CreateParseContext(TSymbolTable& symbolTable, TIntermediate& 
 
     case EShSourceHlsl:
         return new HlslParseContext(symbolTable, intermediate, parsingBuiltIns, version, profile, spvVersion,
-                                    language, infoSink, forwardCompatible, messages);
+                                    language, infoSink, sourceEntryPointName.c_str(), forwardCompatible, messages);
     default:
         infoSink.info.message(EPrefixInternalError, "Unable to determine source language");
         return nullptr;
@@ -616,7 +616,8 @@ bool ProcessDeferred(
     TIntermediate& intermediate, // returned tree, etc.
     ProcessingContext& processingContext,
     bool requireNonempty,
-    TShader::Includer& includer
+    TShader::Includer& includer,
+    const std::string sourceEntryPointName = ""
     )
 {
     if (! InitThread())
@@ -733,7 +734,7 @@ bool ProcessDeferred(
 
     TParseContextBase* parseContext = CreateParseContext(symbolTable, intermediate, version, profile, source,
                                                          compiler->getLanguage(), compiler->infoSink,
-                                                         spvVersion, forwardCompatible, messages, false);
+                                                         spvVersion, forwardCompatible, messages, false, sourceEntryPointName);
 
     TPpContext ppContext(*parseContext, names[numPre]? names[numPre]: "", includer);
 
@@ -1054,14 +1055,15 @@ bool CompileDeferred(
     bool forwardCompatible,     // give errors for use of deprecated features
     EShMessages messages,       // warnings/errors/AST; things to print out
     TIntermediate& intermediate,// returned tree, etc.
-    TShader::Includer& includer)
+    TShader::Includer& includer,
+    const std::string sourceEntryPointName = "")
 {
     DoFullParse parser;
     return ProcessDeferred(compiler, shaderStrings, numStrings, inputLengths, stringNames,
                            preamble, optLevel, resources, defaultVersion,
                            defaultProfile, forceDefaultVersionAndProfile,
                            forwardCompatible, messages, intermediate, parser,
-                           true, includer);
+                           true, includer, sourceEntryPointName);
 }
 
 } // end anonymous namespace for local functions
@@ -1479,7 +1481,7 @@ public:
     virtual bool compile(TIntermNode*, int = 0, EProfile = ENoProfile) { return true; }
 };
 
-TShader::TShader(EShLanguage s) 
+TShader::TShader(EShLanguage s)
     : pool(0), stage(s), lengths(nullptr), stringNames(nullptr), preamble("")
 {
     infoSink = new TInfoSink;
@@ -1523,6 +1525,11 @@ void TShader::setEntryPoint(const char* entryPoint)
     intermediate->setEntryPointName(entryPoint);
 }
 
+void TShader::setSourceEntryPoint(const char* name)
+{
+    sourceEntryPointName = name;
+}
+
 void TShader::setShiftSamplerBinding(unsigned int base) { intermediate->setShiftSamplerBinding(base); }
 void TShader::setShiftTextureBinding(unsigned int base) { intermediate->setShiftTextureBinding(base); }
 void TShader::setShiftImageBinding(unsigned int base)   { intermediate->setShiftImageBinding(base); }
@@ -1550,7 +1557,7 @@ bool TShader::parse(const TBuiltInResource* builtInResources, int defaultVersion
     return CompileDeferred(compiler, strings, numStrings, lengths, stringNames,
                            preamble, EShOptNone, builtInResources, defaultVersion,
                            defaultProfile, forceDefaultVersionAndProfile,
-                           forwardCompatible, messages, *intermediate, includer);
+                           forwardCompatible, messages, *intermediate, includer, sourceEntryPointName);
 }
 
 bool TShader::parse(const TBuiltInResource* builtInResources, int defaultVersion, bool forwardCompatible, EShMessages messages)
@@ -1680,7 +1687,8 @@ bool TProgram::linkStage(EShLanguage stage, EShMessages messages)
         newedIntermediate[stage] = true;
     }
 
-    infoSink->info << "\nLinked " << StageName(stage) << " stage:\n\n";
+    if (messages & EShMsgAST)
+        infoSink->info << "\nLinked " << StageName(stage) << " stage:\n\n";
 
     if (stages[stage].size() > 1) {
         std::list<TShader*>::const_iterator it;
@@ -1688,7 +1696,7 @@ bool TProgram::linkStage(EShLanguage stage, EShMessages messages)
             intermediate[stage]->merge(*infoSink, *(*it)->intermediate);
     }
 
-    intermediate[stage]->finalCheck(*infoSink);
+    intermediate[stage]->finalCheck(*infoSink, (messages & EShMsgKeepUncalled) != 0);
 
     if (messages & EShMsgAST)
         intermediate[stage]->output(*infoSink, true);

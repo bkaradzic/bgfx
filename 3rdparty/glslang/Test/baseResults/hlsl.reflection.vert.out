@@ -1,8 +1,4 @@
 hlsl.reflection.vert
-
-Linked vertex stage:
-
-
 Uniform reflection:
 anonMember3: offset 80, type 8b52, size 1, index 0, binding -1
 s.a: offset 0, type 1404, size 1, index 1, binding -1

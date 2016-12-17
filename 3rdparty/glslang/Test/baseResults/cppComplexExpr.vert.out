@@ -152,41 +152,6 @@ ERROR: node is still EOpNull!
 0:39        'gl_Position' (gl_Position highp 4-component vector of float Position)
 0:39        Construct vec4 (temp highp 4-component vector of float)
 0:39          'sum' (global highp float)
-0:44  Function Definition: foo( (global highp float)
-0:44    Function Parameters: 
-0:46    Sequence
-0:46      Branch: Return with expression
-0:46        add (temp highp float)
-0:46          add (temp highp float)
-0:46            direct index (temp highp float)
-0:46              'gl_Position' (gl_Position highp 4-component vector of float Position)
-0:46              Constant:
-0:46                0 (const int)
-0:46            Constant:
-0:46              3.000000
-0:46          add (temp highp float)
-0:46            direct index (temp highp float)
-0:46              'gl_Position' (gl_Position highp 4-component vector of float Position)
-0:46              Constant:
-0:46                0 (const int)
-0:46            Constant:
-0:46              3.000000
-0:47      Branch: Return with expression
-0:47        add (temp highp float)
-0:47          add (temp highp float)
-0:47            direct index (temp highp float)
-0:47              'gl_Position' (gl_Position highp 4-component vector of float Position)
-0:47              Constant:
-0:47                1 (const int)
-0:47            Constant:
-0:47              3.000000
-0:47          add (temp highp float)
-0:47            direct index (temp highp float)
-0:47              'gl_Position' (gl_Position highp 4-component vector of float Position)
-0:47              Constant:
-0:47                1 (const int)
-0:47            Constant:
-0:47              3.000000
 0:97  Sequence
 0:97    move second child to first child (temp highp float)
 0:97      'c' (global highp float)

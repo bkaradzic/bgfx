@@ -4,8 +4,4 @@ ERROR: 0:5: 'local_size' : cannot change previously set size
 ERROR: 1 compilation errors.  No code generated.
 
 
-
-Linked compute stage:
-
-
 SPIR-V is not generated for failed compile or link

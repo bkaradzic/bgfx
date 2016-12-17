@@ -1,9 +1,8 @@
 110scope.vert
 ERROR: 0:5: 'a' : redefinition 
-ERROR: 0:34: 'f' : can't call user function from global scope 
 ERROR: 0:57: 'z' : undeclared identifier 
 ERROR: 0:57: 'z' : redefinition 
-ERROR: 4 compilation errors.  No code generated.
+ERROR: 3 compilation errors.  No code generated.
 
 
 Shader version: 110
@@ -131,6 +130,10 @@ ERROR: node is still EOpNull!
 
 Linked vertex stage:
 
+ERROR: Linking vertex stage: No function definition (body) found: 
+    sin(f1;
+ERROR: Linking vertex stage: No function definition (body) found: 
+    g(
 
 Shader version: 110
 ERROR: node is still EOpNull!
@@ -151,20 +154,6 @@ ERROR: node is still EOpNull!
 0:8                1.000000
 0:11      Branch: Return with expression
 0:11        'a' (in int)
-0:25  Function Definition: cos(f1; (global float)
-0:25    Function Parameters: 
-0:25      'x' (in float)
-0:27    Sequence
-0:27      Branch: Return with expression
-0:27        Constant:
-0:27          1.000000
-0:29  Function Definition: radians(b1; (global bool)
-0:29    Function Parameters: 
-0:29      'x' (in bool)
-0:31    Sequence
-0:31      Branch: Return with expression
-0:31        Constant:
-0:31          true (const bool)
 0:34  Sequence
 0:34    move second child to first child (temp int)
 0:34      'gi' (global int)

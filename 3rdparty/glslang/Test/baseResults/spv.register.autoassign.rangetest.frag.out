@@ -1,7 +1,4 @@
 spv.register.autoassign.rangetest.frag
-
-Linked fragment stage:
-
 INTERNAL ERROR: mapped binding out of range: g_tSamp
 INTERNAL ERROR: mapped binding out of range: g_tScene
 

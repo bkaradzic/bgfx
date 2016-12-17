@@ -340,11 +340,6 @@ ERROR: node is still EOpNull!
 0:20      '' (in uint)
 0:20      '' (in float)
 0:20      '' (in double)
-0:21  Function Definition: ftd(f1;d1;d1; (global void)
-0:21    Function Parameters: 
-0:21      '' (in float)
-0:21      '' (in double)
-0:21      '' (in double)
 0:23  Function Definition: main( (global void)
 0:23    Function Parameters: 
 0:?     Sequence
@@ -552,19 +547,6 @@ ERROR: node is still EOpNull!
 0:91        'f' (temp float)
 0:91        Convert float to double (temp double)
 0:91          'f' (temp float)
-0:97  Function Definition: tf( (global void)
-0:97    Function Parameters: 
-0:?     Sequence
-0:104      Function Call: itf(i1;f1;i1; (global void)
-0:104        'i' (temp int)
-0:104        Convert int to float (temp float)
-0:104          'i' (temp int)
-0:104        'i' (temp int)
-0:105      Function Call: itf(i1;f1;i1; (global void)
-0:105        'i' (temp int)
-0:105        Convert uint to float (temp float)
-0:105          'u' (temp uint)
-0:105        'i' (temp int)
 0:?   Linker Objects
 0:?     'd' (in double)
 0:?     'd3' (in 3-component vector of double)

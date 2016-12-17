@@ -4,8 +4,4 @@ Warning, version 310 is not yet complete; most version-specific features are pre
 ERROR: 1 compilation errors.  No code generated.
 
 
-
-Linked vertex stage:
-
-
 SPIR-V is not generated for failed compile or link

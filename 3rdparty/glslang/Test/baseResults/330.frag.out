@@ -152,31 +152,6 @@ ERROR: node is still EOpNull!
 0:12          'buffer' (temp int)
 0:12          Constant:
 0:12            4 (const int)
-0:21  Function Definition: foo( (global void)
-0:21    Function Parameters: 
-0:23    Sequence
-0:23      Sequence
-0:23        move second child to first child (temp 4-component vector of float)
-0:23          'c' (temp 4-component vector of float)
-0:23          gl_Color: direct index for structure (in 4-component vector of float Color)
-0:23            'anon@0' (in block{in 4-component vector of float Color gl_Color, })
-0:23            Constant:
-0:23              2 (const uint)
-0:24      move second child to first child (temp 4-component vector of float)
-0:24        'outVar' (layout(location=0 index=0 ) out 4-component vector of float)
-0:24        'inVar' (smooth in 4-component vector of float)
-0:133  Function Definition: qlod( (global void)
-0:133    Function Parameters: 
-0:?     Sequence
-0:140      'lod' (temp 2-component vector of float)
-0:141      'lod' (temp 2-component vector of float)
-0:147  Function Definition: fooKeyMem( (global void)
-0:147    Function Parameters: 
-0:149    Sequence
-0:149      precise: direct index for structure (global int)
-0:149        'KeyMem' (global structure{global int precise})
-0:149        Constant:
-0:149          0 (const int)
 0:?   Linker Objects
 0:?     'inVar' (smooth in 4-component vector of float)
 0:?     'outVar' (layout(location=0 index=0 ) out 4-component vector of float)

@@ -538,7 +538,7 @@ private:
 };
 
 // Encapsulate having a pointer to an array of TConstUnion,
-// which only needs to be allocated if it's size is going to be
+// which only needs to be allocated if its size is going to be
 // bigger than 0.
 //
 // One convenience is being able to use [] to go inside the array, instead

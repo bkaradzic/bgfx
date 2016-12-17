@@ -64,7 +64,7 @@ Builder::Builder(unsigned int magicNumber, SpvBuildLogger* buildLogger) :
     builderNumber(magicNumber),
     buildPoint(0),
     uniqueId(0),
-    mainFunction(0),
+    entryPointFunction(0),
     generatingOpCodeForSpecConst(false),
     logger(buildLogger)
 {
@@ -967,15 +967,15 @@ void Builder::addMemberDecoration(Id id, unsigned int member, Decoration decorat
 // Comments in header
 Function* Builder::makeEntryPoint(const char* entryPoint)
 {
-    assert(! mainFunction);
+    assert(! entryPointFunction);
 
     Block* entry;
     std::vector<Id> params;
     std::vector<Decoration> precisions;
 
-    mainFunction = makeFunctionEntry(NoPrecision, makeVoidType(), entryPoint, params, precisions, &entry);
+    entryPointFunction = makeFunctionEntry(NoPrecision, makeVoidType(), entryPoint, params, precisions, &entry);
 
-    return mainFunction;
+    return entryPointFunction;
 }
 
 // Comments in header
@@ -2144,6 +2144,7 @@ void Builder::accessChainPushSwizzle(std::vector<unsigned>& swizzle, Id preSwizz
         std::vector<unsigned> oldSwizzle = accessChain.swizzle;
         accessChain.swizzle.resize(0);
         for (unsigned int i = 0; i < swizzle.size(); ++i) {
+            assert(swizzle[i] < oldSwizzle.size());
             accessChain.swizzle.push_back(oldSwizzle[swizzle[i]]);
         }
     } else

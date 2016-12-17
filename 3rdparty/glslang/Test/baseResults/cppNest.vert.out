@@ -135,17 +135,6 @@ ERROR: node is still EOpNull!
 0:133      'selected3' (global int)
 0:133      Constant:
 0:133        3 (const int)
-0:175  Function Definition: foo985( (global void)
-0:175    Function Parameters: 
-0:175    Sequence
-0:175      add (temp int)
-0:175        Constant:
-0:175          2 (const int)
-0:175        Comma (temp int)
-0:175          Constant:
-0:175            3 (const int)
-0:175          Constant:
-0:175            4 (const int)
 0:?   Linker Objects
 0:?     'sum' (global float)
 0:?     'selected4' (global int)
