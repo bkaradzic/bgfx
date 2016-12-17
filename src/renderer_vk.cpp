@@ -957,7 +957,7 @@ VK_IMPORT_INSTANCE
 				}
 
 				vkGetPhysicalDeviceProperties(m_physicalDevice, &m_deviceProperties);
-				g_caps.vendorId = uint16_t(tm_deviceProperties.vendorID);
+				g_caps.vendorId = uint16_t(m_deviceProperties.vendorID);
 				g_caps.deviceId = uint16_t(m_deviceProperties.deviceID);
 
 
