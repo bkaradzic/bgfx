@@ -912,8 +912,8 @@ VK_IMPORT_INSTANCE
 					BX_TRACE("\t      DeviceId: %x", pdp.deviceID);
 					BX_TRACE("\t          Type: %d", pdp.deviceType);
 
-					g_caps.gpu[ii].vendorId = (uint16_t)pdp.vendorID;
-					g_caps.gpu[ii].deviceId = (uint16_t)pdp.deviceID;
+					g_caps.gpu[ii].vendorId = uint16_t(pdp.vendorID);
+					g_caps.gpu[ii].deviceId = uint16_t(pdp.deviceID);
 					++g_caps.numGPUs;
 
 					if ( (BGFX_PCI_ID_NONE != g_caps.vendorId ||            0 != g_caps.deviceId)
@@ -957,8 +957,8 @@ VK_IMPORT_INSTANCE
 				}
 
 				vkGetPhysicalDeviceProperties(m_physicalDevice, &m_deviceProperties);
-				g_caps.vendorId = m_deviceProperties.vendorID;
-				g_caps.deviceId = m_deviceProperties.deviceID;
+				g_caps.vendorId = uint16_t(tm_deviceProperties.vendorID);
+				g_caps.deviceId = uint16_t(m_deviceProperties.deviceID);
 
 
 				{
