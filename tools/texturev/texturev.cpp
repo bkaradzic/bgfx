@@ -49,6 +49,7 @@ static const char* s_supportedExt[] =
 {
 	"bmp",
 	"dds",
+	"exr",
 	"jpg",
 	"jpeg",
 	"hdr",

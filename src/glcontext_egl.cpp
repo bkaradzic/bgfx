@@ -262,7 +262,7 @@ EGL_IMPORT
 
 #	if BX_PLATFORM_RPI
 				BX_UNUSED(hasEglKhrCreateContext, hasEglKhrNoError);
-#else
+#	else
 				if (hasEglKhrCreateContext)
 				{
 					bx::write(&writer, EGLint(EGL_CONTEXT_MAJOR_VERSION_KHR) );
