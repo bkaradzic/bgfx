@@ -100,14 +100,6 @@ engine, written from scratch with a minimalistic and data-oriented design
 philosophy in mind.  
 ![Crown screenshot](https://raw.githubusercontent.com/taylor001/crown/master/docs/shots/level-editor.png)
 
-## ProDBG
-
-https://github.com/emoon/ProDBG - ProDBG is a new debugger under development
-that will support a variety of targets and operating systems. Currently it's in
-very early development and primary focusing on Mac as primary target. This is
-how it currently looks.  
-![ProDBG_screenshot](https://raw.githubusercontent.com/emoon/ProDBG/master/data/screens/mac_screenshot.png)
-
 ## Offroad Legends 2
 
 http://www.dogbytegames.com/ Dogbyte Games is an indie mobile developer studio
