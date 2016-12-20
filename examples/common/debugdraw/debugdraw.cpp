@@ -35,6 +35,30 @@ struct DebugVertex
 
 bgfx::VertexDecl DebugVertex::ms_decl;
 
+struct DebugUvVertex
+{
+	float m_x;
+	float m_y;
+	float m_z;
+	float m_u;
+	float m_v;
+	uint32_t m_abgr;
+
+	static void init()
+	{
+		ms_decl
+			.begin()
+			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
+			.end();
+	}
+
+	static bgfx::VertexDecl ms_decl;
+};
+
+bgfx::VertexDecl DebugUvVertex::ms_decl;
+
 struct DebugShapeVertex
 {
 	float m_x;
@@ -277,6 +301,8 @@ void getPoint(float* _result, Axis::Enum _axis, float _x, float _y)
 #include "fs_debugdraw_fill.bin.h"
 #include "vs_debugdraw_fill_lit.bin.h"
 #include "fs_debugdraw_fill_lit.bin.h"
+#include "vs_debugdraw_fill_texture.bin.h"
+#include "fs_debugdraw_fill_texture.bin.h"
 
 static const bgfx::EmbeddedShader s_embeddedShaders[] =
 {
@@ -288,6 +314,8 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] =
 	BGFX_EMBEDDED_SHADER(fs_debugdraw_fill),
 	BGFX_EMBEDDED_SHADER(vs_debugdraw_fill_lit),
 	BGFX_EMBEDDED_SHADER(fs_debugdraw_fill_lit),
+	BGFX_EMBEDDED_SHADER(vs_debugdraw_fill_texture),
+	BGFX_EMBEDDED_SHADER(fs_debugdraw_fill_texture),
 
 	BGFX_EMBEDDED_SHADER_END()
 };
@@ -314,6 +342,7 @@ struct DebugDraw
 #endif // BX_CONFIG_ALLOCATOR_CRT
 
 		DebugVertex::init();
+		DebugUvVertex::init();
 		DebugShapeVertex::init();
 
 		bgfx::RendererType::Enum type = bgfx::getRendererType();
@@ -346,7 +375,16 @@ struct DebugDraw
 				, true
 				);
 
-		u_params = bgfx::createUniform("u_params", bgfx::UniformType::Vec4, 4);
+		m_program[Program::FillTexture] =
+			bgfx::createProgram(
+				  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_debugdraw_fill_texture")
+				, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_debugdraw_fill_texture")
+				, true
+				);
+
+		u_params   = bgfx::createUniform("u_params", bgfx::UniformType::Vec4, 4);
+		s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
+		m_texture  = bgfx::createTexture2D(2048, 2048, false, 1, bgfx::TextureFormat::BGRA8);
 
 		void* vertices[Mesh::Count] = {};
 		uint16_t* indices[Mesh::Count] = {};
@@ -664,6 +702,8 @@ struct DebugDraw
 			bgfx::destroyProgram(m_program[ii]);
 		}
 		bgfx::destroyUniform(u_params);
+		bgfx::destroyUniform(s_texColor);
+		bgfx::destroyTexture(m_texture);
 	}
 
 	void begin(uint8_t _viewId)
@@ -1560,6 +1600,7 @@ private:
 			LinesStipple,
 			Fill,
 			FillLit,
+			FillTexture,
 
 			Count
 		};
@@ -1711,7 +1752,9 @@ private:
 	State::Enum m_state;
 
 	Mesh m_mesh[Mesh::Count];
-
+	
+	bgfx::UniformHandle s_texColor;
+	bgfx::TextureHandle m_texture;
 	bgfx::ProgramHandle m_program[Program::Count];
 	bgfx::UniformHandle u_params;
 
