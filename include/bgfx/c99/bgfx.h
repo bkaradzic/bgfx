@@ -330,6 +330,10 @@ typedef struct bgfx_stats
     int64_t waitRender;
     int64_t waitSubmit;
 
+    uint32_t numDraw;
+    uint32_t numCompute;
+    uint32_t maxGpuLatency;
+
     uint16_t width;
     uint16_t height;
     uint16_t textWidth;
