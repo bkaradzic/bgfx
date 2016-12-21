@@ -200,7 +200,7 @@ class DebugDrawApp : public entry::AppI
 					ddDrawCircle(normal, center, 1.0f, 0.5f + bx::fsin(time*10.0f) );
 				ddPop();
 
-				//ddSetSpin(time);
+				ddSetSpin(time);
 				ddDrawQuad(m_sprite, normal, center, 2.0f);
 			}
 			ddPop();
