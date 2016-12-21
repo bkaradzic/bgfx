@@ -21,11 +21,21 @@ struct Axis
 	};
 };
 
+struct SpriteHandle { uint16_t idx; };
+
+inline bool isValid(SpriteHandle _handle) { return _handle.idx != UINT16_MAX; }
+
 ///
 void ddInit(bool _depthTestLess = true, bx::AllocatorI* _allocator = NULL);
 
 ///
 void ddShutdown();
+
+///
+SpriteHandle ddCreateSprite(uint16_t _width, uint16_t _height, const void* _data);
+
+///
+void ddDestroy(SpriteHandle _handle);
 
 ///
 void ddBegin(uint8_t _viewId);
@@ -107,6 +117,12 @@ void ddDrawCircle(Axis::Enum _axis, float _x, float _y, float _z, float _radius,
 
 ///
 void ddDrawQuad(const float* _normal, const float* _center, float _size);
+
+///
+void ddDrawQuad(SpriteHandle _handle, const float* _normal, const float* _center, float _size);
+
+///
+void ddDrawQuad(bgfx::TextureHandle _handle, const float* _normal, const float* _center, float _size);
 
 ///
 void ddDrawCone(const void* _from, const void* _to, float _radius);

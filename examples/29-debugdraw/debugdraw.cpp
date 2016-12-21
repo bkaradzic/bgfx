@@ -12,6 +12,19 @@
 
 #include <bx/uint32_t.h>
 
+void imageCheckerboard(void* _dst, uint32_t _width, uint32_t _height, uint32_t _step, uint32_t _0, uint32_t _1)
+{
+	uint32_t* dst = (uint32_t*)_dst;
+	for (uint32_t yy = 0; yy < _height; ++yy)
+	{
+		for (uint32_t xx = 0; xx < _width; ++xx)
+		{
+			uint32_t abgr = ( (xx/_step)&1) ^ ( (yy/_step)&1) ? _1 : _0;
+			*dst++ = abgr;
+		}
+	}
+}
+
 class DebugDrawApp : public entry::AppI
 {
 	void init(int _argc, char** _argv) BX_OVERRIDE
@@ -46,10 +59,17 @@ class DebugDrawApp : public entry::AppI
 		cameraSetVerticalAngle(0.0f);
 
 		ddInit();
+
+		uint8_t data[32*32*4];
+		imageCheckerboard(data, 32, 32, 4, 0xff808080, 0xffc0c0c0);
+
+		m_sprite = ddCreateSprite(32, 32, data);
 	}
 
 	virtual int shutdown() BX_OVERRIDE
 	{
+		ddDestroy(m_sprite);
+
 		ddShutdown();
 
 		cameraDestroy();
@@ -180,8 +200,8 @@ class DebugDrawApp : public entry::AppI
 					ddDrawCircle(normal, center, 1.0f, 0.5f + bx::fsin(time*10.0f) );
 				ddPop();
 
-				ddSetSpin(time);
-				ddDrawQuad(normal, center, 2.0f);
+				//ddSetSpin(time);
+				ddDrawQuad(m_sprite, normal, center, 2.0f);
 			}
 			ddPop();
 
@@ -256,6 +276,7 @@ class DebugDrawApp : public entry::AppI
 	}
 
 	entry::MouseState m_mouseState;
+	SpriteHandle m_sprite;
 
 	int64_t m_timeOffset;
 
