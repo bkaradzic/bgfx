@@ -3,9 +3,7 @@ ERROR: 0:59: 'gl_InstanceID' : undeclared identifier
 ERROR: 0:59: '=' :  cannot convert from 'temp float' to 'temp int'
 ERROR: 0:61: 'texelFetch' : no matching overloaded function found 
 ERROR: 0:61: 'assign' :  cannot convert from 'const float' to 'temp int'
-ERROR: 0:75: '##' : token pasting not implemented (internal error) 
-ERROR: 0:75: '' :  syntax error
-ERROR: 6 compilation errors.  No code generated.
+ERROR: 4 compilation errors.  No code generated.
 
 
 Shader version: 130
@@ -149,7 +147,8 @@ ERROR: node is still EOpNull!
 0:?     'v4' (uniform 4-component vector of float)
 0:?     'gl_ClipDistance' (smooth out implicitly-sized array of float ClipDistance)
 0:?     'gl_TexCoord' (smooth out implicitly-sized array of 4-component vector of float TexCoord)
-0:?     'abc' (global int)
+0:?     'abcdef' (global int)
+0:?     'qrstuv' (global int)
 0:?     'gl_VertexID' (gl_VertexId int VertexId)
 
 
@@ -281,6 +280,7 @@ ERROR: node is still EOpNull!
 0:?     'v4' (uniform 4-component vector of float)
 0:?     'gl_ClipDistance' (smooth out 2-element array of float ClipDistance)
 0:?     'gl_TexCoord' (smooth out 1-element array of 4-component vector of float TexCoord)
-0:?     'abc' (global int)
+0:?     'abcdef' (global int)
+0:?     'qrstuv' (global int)
 0:?     'gl_VertexID' (gl_VertexId int VertexId)
 

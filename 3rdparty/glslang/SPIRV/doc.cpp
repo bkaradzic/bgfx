@@ -51,6 +51,9 @@ namespace spv {
 #ifdef AMD_EXTENSIONS
         #include "GLSL.ext.AMD.h"
 #endif
+#ifdef NV_EXTENSIONS
+        #include "GLSL.ext.NV.h"
+#endif
     }
 }
 
@@ -255,6 +258,10 @@ const char* DecorationString(int decoration)
 
 #ifdef AMD_EXTENSIONS
     case 4999: return "ExplicitInterpAMD";
+#endif
+#ifdef NV_EXTENSIONS
+    case 5248: return "OverrideCoverageNV";
+    case 5250: return "PassthroughNV";
 #endif
     }
 }
@@ -812,6 +819,11 @@ const char* CapabilityString(int info)
 
     case 4423: return "SubgroupBallotKHR";
     case 4427: return "DrawParameters";
+
+#ifdef NV_EXTENSIONS
+    case 5251: return "GeometryShaderPassthroughNV";
+#endif
+
     }
 }
 
@@ -1146,6 +1158,7 @@ const char* OpcodeString(int op)
 
     case 4421: return "OpSubgroupBallotKHR";
     case 4422: return "OpSubgroupFirstInvocationKHR";
+    case 4432: return "OpSubgroupReadInvocationKHR";
 
 #ifdef AMD_EXTENSIONS
     case 5000: return "OpGroupIAddNonUniformAMD";
@@ -2757,6 +2770,10 @@ void Parameterize()
     InstructionDesc[OpSubgroupBallotKHR].operands.push(OperandId, "'Predicate'");
 
     InstructionDesc[OpSubgroupFirstInvocationKHR].operands.push(OperandId, "'Value'");
+
+    InstructionDesc[OpSubgroupReadInvocationKHR].capabilities.push_back(CapabilityGroups);
+    InstructionDesc[OpSubgroupReadInvocationKHR].operands.push(OperandId, "'Value'");
+    InstructionDesc[OpSubgroupReadInvocationKHR].operands.push(OperandId, "'Index'");
 
 #ifdef AMD_EXTENSIONS
     InstructionDesc[OpGroupIAddNonUniformAMD].capabilities.push_back(CapabilityGroups);

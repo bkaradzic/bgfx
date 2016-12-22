@@ -50,18 +50,18 @@ public:
                      const TString sourceEntryPointName,
                      bool forwardCompatible = false, EShMessages messages = EShMsgDefault);
     virtual ~HlslParseContext();
-    void initializeExtensionBehavior();
+    void initializeExtensionBehavior() override;
 
-    void setLimits(const TBuiltInResource&);
-    bool parseShaderStrings(TPpContext&, TInputScanner& input, bool versionWillBeError = false);
-    virtual const char* getGlobalUniformBlockName() { return "$Global"; }
+    void setLimits(const TBuiltInResource&) override;
+    bool parseShaderStrings(TPpContext&, TInputScanner& input, bool versionWillBeError = false) override;
+    virtual const char* getGlobalUniformBlockName() override { return "$Global"; }
 
-    void reservedPpErrorCheck(const TSourceLoc&, const char* /*name*/, const char* /*op*/) { }
-    bool lineContinuationCheck(const TSourceLoc&, bool /*endOfComment*/) { return true; }
-    bool lineDirectiveShouldSetNextLine() const { return true; }
+    void reservedPpErrorCheck(const TSourceLoc&, const char* /*name*/, const char* /*op*/) override { }
+    bool lineContinuationCheck(const TSourceLoc&, bool /*endOfComment*/) override { return true; }
+    bool lineDirectiveShouldSetNextLine() const override { return true; }
     bool builtInName(const TString&);
 
-    void handlePragma(const TSourceLoc&, const TVector<TString>&);
+    void handlePragma(const TSourceLoc&, const TVector<TString>&) override;
     TIntermTyped* handleVariable(const TSourceLoc&, TSymbol* symbol,  const TString* string);
     TIntermTyped* handleBracketDereference(const TSourceLoc&, TIntermTyped* base, TIntermTyped* index);
     TIntermTyped* handleBracketOperator(const TSourceLoc&, TIntermTyped* base, TIntermTyped* index);
@@ -134,7 +134,7 @@ public:
     TIntermTyped* constructAggregate(TIntermNode*, const TType&, int, const TSourceLoc&);
     TIntermTyped* constructBuiltIn(const TType&, TOperator, TIntermTyped*, const TSourceLoc&, bool subset);
     void declareBlock(const TSourceLoc&, TType&, const TString* instanceName = 0, TArraySizes* arraySizes = 0);
-    void finalizeGlobalUniformBlockLayout(TVariable& block);
+    void finalizeGlobalUniformBlockLayout(TVariable& block) override;
     void fixBlockLocations(const TSourceLoc&, TQualifier&, TTypeList&, bool memberWithLocation, bool memberWithoutLocation);
     void fixBlockXfbOffsets(TQualifier&, TTypeList&);
     void fixBlockUniformOffsets(const TQualifier&, TTypeList&);

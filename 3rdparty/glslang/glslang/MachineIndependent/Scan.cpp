@@ -638,13 +638,14 @@ int TScanContext::tokenize(TPpContext* pp, TParserToken& token)
     do {
         parserToken = &token;
         TPpToken ppToken;
-        tokenText = pp->tokenize(&ppToken);
-        if (tokenText == nullptr || tokenText[0] == 0)
+        int token = pp->tokenize(ppToken);
+        if (token == EndOfInput)
             return 0;
 
+        tokenText = ppToken.name;
         loc = ppToken.loc;
         parserToken->sType.lex.loc = loc;
-        switch (ppToken.token) {
+        switch (token) {
         case ';':  afterType = false;   return SEMICOLON;
         case ',':  afterType = false;   return COMMA;
         case ':':                       return COLON;
@@ -673,11 +674,11 @@ int TScanContext::tokenize(TPpContext* pp, TParserToken& token)
             parseContext.error(loc, "illegal use of escape character", "\\", "");
             break;
 
-        case PpAtomAdd:                return ADD_ASSIGN;
-        case PpAtomSub:                return SUB_ASSIGN;
-        case PpAtomMul:                return MUL_ASSIGN;
-        case PpAtomDiv:                return DIV_ASSIGN;
-        case PpAtomMod:                return MOD_ASSIGN;
+        case PPAtomAddAssign:          return ADD_ASSIGN;
+        case PPAtomSubAssign:          return SUB_ASSIGN;
+        case PPAtomMulAssign:          return MUL_ASSIGN;
+        case PPAtomDivAssign:          return DIV_ASSIGN;
+        case PPAtomModAssign:          return MOD_ASSIGN;
 
         case PpAtomRight:              return RIGHT_OP;
         case PpAtomLeft:               return LEFT_OP;
@@ -720,7 +721,7 @@ int TScanContext::tokenize(TPpContext* pp, TParserToken& token)
 
         default:
             char buf[2];
-            buf[0] = (char)ppToken.token;
+            buf[0] = token;
             buf[1] = 0;
             parseContext.error(loc, "unexpected token", buf, "");
             break;

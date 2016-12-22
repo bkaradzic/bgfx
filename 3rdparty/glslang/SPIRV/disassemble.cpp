@@ -54,6 +54,9 @@ namespace spv {
 #ifdef AMD_EXTENSIONS
         #include "GLSL.ext.AMD.h"
 #endif
+#ifdef NV_EXTENSIONS
+        #include "GLSL.ext.NV.h"
+#endif
     }
 }
 const char* GlslStd450DebugNames[spv::GLSLstd450Count];
@@ -62,6 +65,10 @@ namespace spv {
 
 #ifdef AMD_EXTENSIONS
 static const char* GLSLextAMDGetDebugNames(const char*, unsigned);
+#endif
+
+#ifdef NV_EXTENSIONS
+static const char* GLSLextNVGetDebugNames(const char*, unsigned);
 #endif
 
 static void Kill(std::ostream& out, const char* message)
@@ -75,6 +82,9 @@ enum ExtInstSet {
     GLSL450Inst,
 #ifdef AMD_EXTENSIONS
     GLSLextAMDInst,
+#endif
+#ifdef NV_EXTENSIONS
+    GLSLextNVInst,
 #endif
     OpenCLExtInst,
 };
@@ -470,6 +480,11 @@ void SpirvStream::disassembleInstruction(Id resultId, Id /*typeId*/, Op opCode, 
                            strcmp(spv::E_SPV_AMD_gcn_shader, name) == 0) {
                     extInstSet = GLSLextAMDInst;
 #endif
+#ifdef NV_EXTENSIONS
+                }else if (strcmp(spv::E_SPV_NV_sample_mask_override_coverage, name) == 0 ||
+                          strcmp(spv::E_SPV_NV_geometry_shader_passthrough, name) == 0) {
+                    extInstSet = GLSLextNVInst;
+#endif
                 }
                 unsigned entrypoint = stream[word - 1];
                 if (extInstSet == GLSL450Inst) {
@@ -479,6 +494,11 @@ void SpirvStream::disassembleInstruction(Id resultId, Id /*typeId*/, Op opCode, 
 #ifdef AMD_EXTENSIONS
                 } else if (extInstSet == GLSLextAMDInst) {
                     out << "(" << GLSLextAMDGetDebugNames(name, entrypoint) << ")";
+#endif
+#ifdef NV_EXTENSIONS
+                }
+                else if (extInstSet == GLSLextNVInst) {
+                    out << "(" << GLSLextNVGetDebugNames(name, entrypoint) << ")";
 #endif
                 }
             }
@@ -627,6 +647,23 @@ static const char* GLSLextAMDGetDebugNames(const char* name, unsigned entrypoint
         }
     }
 
+    return "Bad";
+}
+#endif
+
+
+#ifdef NV_EXTENSIONS
+static const char* GLSLextNVGetDebugNames(const char* name, unsigned entrypoint)
+{
+    if (strcmp(name, spv::E_SPV_NV_sample_mask_override_coverage) == 0 ||
+        strcmp(name, spv::E_SPV_NV_geometry_shader_passthrough) == 0) {
+        switch (entrypoint) {
+        case OverrideCoverageNV:          return "OverrideCoverageNV";
+        case PassthroughNV:               return "PassthroughNV";
+        case GeometryShaderPassthroughNV: return "GeometryShaderPassthroughNV";
+        default:                          return "Bad";
+        }
+    }
     return "Bad";
 }
 #endif

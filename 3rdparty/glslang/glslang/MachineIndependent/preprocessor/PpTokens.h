@@ -86,11 +86,11 @@ enum EFixedAtoms {
 
     // Operators
 
-    PpAtomAdd,
-    PpAtomSub,
-    PpAtomMul,
-    PpAtomDiv,
-    PpAtomMod,
+    PPAtomAddAssign,
+    PPAtomSubAssign,
+    PPAtomMulAssign,
+    PPAtomDivAssign,
+    PPAtomModAssign,
 
     PpAtomRight,
     PpAtomLeft,
@@ -134,7 +134,6 @@ enum EFixedAtoms {
     // preprocessor "keywords"
 
     PpAtomDefine,
-    PpAtomDefined,
     PpAtomUndef,
 
     PpAtomIf,

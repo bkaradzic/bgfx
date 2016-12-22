@@ -142,6 +142,10 @@ const char* const E_GL_AMD_shader_explicit_vertex_parameter     = "GL_AMD_shader
 const char* const E_GL_AMD_gcn_shader                           = "GL_AMD_gcn_shader";
 const char* const E_GL_AMD_gpu_shader_half_float                = "GL_AMD_gpu_shader_half_float";
 #endif
+#ifdef NV_EXTENSIONS
+const char* const E_GL_NV_sample_mask_override_coverage = "GL_NV_sample_mask_override_coverage";
+const char* const E_SPV_NV_geometry_shader_passthrough = "GL_NV_geometry_shader_passthrough";
+#endif
 
 // AEP
 const char* const E_GL_ANDROID_extension_pack_es31a             = "GL_ANDROID_extension_pack_es31a";

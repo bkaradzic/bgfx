@@ -195,6 +195,11 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_AMD_gpu_shader_half_float]                = EBhDisable;
 #endif
 
+#ifdef NV_EXTENSIONS 
+    extensionBehavior[E_GL_NV_sample_mask_override_coverage]         = EBhDisable;
+    extensionBehavior[E_SPV_NV_geometry_shader_passthrough]          = EBhDisable;
+#endif
+
     // AEP
     extensionBehavior[E_GL_ANDROID_extension_pack_es31a]             = EBhDisable;
     extensionBehavior[E_GL_KHR_blend_equation_advanced]              = EBhDisable;
@@ -301,6 +306,11 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_AMD_shader_explicit_vertex_parameter 1\n"
             "#define GL_AMD_gcn_shader 1\n"
             "#define GL_AMD_gpu_shader_half_float 1\n"
+#endif
+
+#ifdef NV_EXTENSIONS 
+            "#define GL_NV_sample_mask_override_coverage 1\n"
+            "#define GL_NV_geometry_shader_passthrough 1\n"
 #endif
             ;
     }

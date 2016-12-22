@@ -239,7 +239,8 @@ private:
 
    void        applyMap();            // remap per local name map
    void        mapRemainder();        // map any IDs we haven't touched yet
-   void        stripDebug();          // strip debug info
+   void        stripDebug();          // strip all debug info
+   void        stripDeadRefs();       // strips debug info for now-dead references after DCE
    void        strip();               // remove debug symbols
    
    std::vector<spirword_t> spv;      // SPIR words
@@ -264,7 +265,6 @@ private:
    // Function start and end.  use unordered_map because we'll have
    // many fewer functions than IDs.
    std::unordered_map<spv::Id, range_t> fnPos;
-   std::unordered_map<spv::Id, range_t> fnPosDCE; // deleted functions
 
    // Which functions are called, anywhere in the module, with a call count
    std::unordered_map<spv::Id, int> fnCalls;

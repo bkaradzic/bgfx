@@ -178,6 +178,7 @@ INSTANTIATE_TEST_CASE_P(
         "syntaxError.frag",
         "test.frag",
         "texture.frag",
+        "tokenPaste.vert",
         "types.frag",
         "uniformArray.frag",
         "variableArrayIndex.frag",

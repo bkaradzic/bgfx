@@ -47,6 +47,9 @@ namespace spv {
 #ifdef AMD_EXTENSIONS
     #include "GLSL.ext.AMD.h"
 #endif
+#ifdef NV_EXTENSIONS
+    #include "GLSL.ext.NV.h"
+#endif
 }
 
 // Glslang includes
@@ -435,6 +438,7 @@ spv::Decoration TranslateNoContractionDecoration(const glslang::TQualifier& qual
     else
         return spv::DecorationMax;
 }
+
 
 // Translate a glslang built-in variable to a SPIR-V built in decoration.  Also generate
 // associated capabilities when required.  For some built-in variables, a capability
@@ -4127,7 +4131,8 @@ spv::Id TGlslangToSpvTraverser::createInvocationsOperation(glslang::TOperator op
     spv::Op opCode = spv::OpNop;
 
     std::vector<spv::Id> spvGroupOperands;
-    if (op == glslang::EOpBallot || op == glslang::EOpReadFirstInvocation) {
+    if (op == glslang::EOpBallot || op == glslang::EOpReadFirstInvocation ||
+        op == glslang::EOpReadInvocation) {
         builder.addExtension(spv::E_SPV_KHR_shader_ballot);
         builder.addCapability(spv::CapabilitySubgroupBallotKHR);
     } else {
@@ -4167,7 +4172,7 @@ spv::Id TGlslangToSpvTraverser::createInvocationsOperation(glslang::TOperator op
     }
 
     case glslang::EOpReadInvocation:
-        opCode = spv::OpGroupBroadcast;
+        opCode = spv::OpSubgroupReadInvocationKHR;
         if (builder.isVectorType(typeId))
             return CreateInvocationsVectorOperation(opCode, typeId, operands);
         break;
@@ -4279,13 +4284,15 @@ spv::Id TGlslangToSpvTraverser::CreateInvocationsVectorOperation(spv::Op op, spv
     assert(op == spv::OpGroupFMin || op == spv::OpGroupUMin || op == spv::OpGroupSMin ||
            op == spv::OpGroupFMax || op == spv::OpGroupUMax || op == spv::OpGroupSMax ||
            op == spv::OpGroupFAdd || op == spv::OpGroupIAdd || op == spv::OpGroupBroadcast ||
+           op == spv::OpSubgroupReadInvocationKHR ||
            op == spv::OpGroupFMinNonUniformAMD || op == spv::OpGroupUMinNonUniformAMD || op == spv::OpGroupSMinNonUniformAMD ||
            op == spv::OpGroupFMaxNonUniformAMD || op == spv::OpGroupUMaxNonUniformAMD || op == spv::OpGroupSMaxNonUniformAMD ||
            op == spv::OpGroupFAddNonUniformAMD || op == spv::OpGroupIAddNonUniformAMD);
 #else
     assert(op == spv::OpGroupFMin || op == spv::OpGroupUMin || op == spv::OpGroupSMin ||
            op == spv::OpGroupFMax || op == spv::OpGroupUMax || op == spv::OpGroupSMax ||
-           op == spv::OpGroupFAdd || op == spv::OpGroupIAdd || op == spv::OpGroupBroadcast);
+           op == spv::OpGroupFAdd || op == spv::OpGroupIAdd || op == spv::OpGroupBroadcast ||
+           op == spv::OpSubgroupReadInvocationKHR);
 #endif
 
     // Handle group invocation operations scalar by scalar.
@@ -4305,13 +4312,16 @@ spv::Id TGlslangToSpvTraverser::CreateInvocationsVectorOperation(spv::Op op, spv
         std::vector<unsigned int> indexes;
         indexes.push_back(comp);
         spv::Id scalar = builder.createCompositeExtract(operands[0], scalarType, indexes);
-
         std::vector<spv::Id> spvGroupOperands;
-        spvGroupOperands.push_back(builder.makeUintConstant(spv::ScopeSubgroup));
-        if (op == spv::OpGroupBroadcast) {
+        if (op == spv::OpSubgroupReadInvocationKHR) {
+            spvGroupOperands.push_back(scalar);
+            spvGroupOperands.push_back(operands[1]);
+        } else if (op == spv::OpGroupBroadcast) {
+            spvGroupOperands.push_back(builder.makeUintConstant(spv::ScopeSubgroup));
             spvGroupOperands.push_back(scalar);
             spvGroupOperands.push_back(operands[1]);
         } else {
+            spvGroupOperands.push_back(builder.makeUintConstant(spv::ScopeSubgroup));
             spvGroupOperands.push_back(spv::GroupOperationReduce);
             spvGroupOperands.push_back(scalar);
         }
@@ -4720,6 +4730,26 @@ spv::Id TGlslangToSpvTraverser::getSymbolId(const glslang::TIntermSymbol* symbol
     spv::BuiltIn builtIn = TranslateBuiltInDecoration(symbol->getQualifier().builtIn, false);
     if (builtIn != spv::BuiltInMax)
         addDecoration(id, spv::DecorationBuiltIn, (int)builtIn);
+
+#ifdef NV_EXTENSIONS 
+    if (builtIn == spv::BuiltInSampleMask) {
+          spv::Decoration decoration;
+          // GL_NV_sample_mask_override_coverage extension
+          if (glslangIntermediate->getLayoutOverrideCoverage())
+              decoration = (spv::Decoration)spv::OverrideCoverageNV;
+          else
+              decoration = (spv::Decoration)spv::DecorationMax;
+        addDecoration(id, decoration);
+        if (decoration != spv::DecorationMax) {
+            builder.addExtension(spv::E_SPV_NV_sample_mask_override_coverage);
+        }
+    }
+    if (symbol->getQualifier().layoutPassthrough) {
+        addDecoration(id, spv::PassthroughNV);
+        builder.addCapability(spv::GeometryShaderPassthroughNV);
+        builder.addExtension(spv::E_SPV_NV_geometry_shader_passthrough);
+    }
+#endif
 
     return id;
 }

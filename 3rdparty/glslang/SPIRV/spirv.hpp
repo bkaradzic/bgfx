@@ -905,6 +905,7 @@ enum Op {
     OpImageSparseRead = 320,
     OpSubgroupBallotKHR = 4421,
     OpSubgroupFirstInvocationKHR = 4422,
+    OpSubgroupReadInvocationKHR = 4432,
     OpMax = 0x7fffffff,
 };
 

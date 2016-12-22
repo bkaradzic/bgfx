@@ -76,10 +76,6 @@ TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \****************************************************************************/
 
-//
-// atom.c
-//
-
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <cassert>
@@ -98,11 +94,12 @@ const struct {
     const char* str;
 } tokens[] = {
 
-    { PpAtomAdd,            "+=" },
-    { PpAtomSub,            "-=" },
-    { PpAtomMul,            "*=" },
-    { PpAtomDiv,            "/=" },
-    { PpAtomMod,            "%=" },
+    { PPAtomAddAssign,      "+=" },
+    { PPAtomSubAssign,      "-=" },
+    { PPAtomMulAssign,      "*=" },
+    { PPAtomDivAssign,      "/=" },
+    { PPAtomModAssign,      "%=" },
+
     { PpAtomRight,          ">>" },
     { PpAtomLeft,           "<<" },
     { PpAtomAnd,            "&&" },
@@ -124,7 +121,6 @@ const struct {
     { PpAtomIncrement,      "++" },
 
     { PpAtomDefine,         "define" },
-    { PpAtomDefined,        "defined" },
     { PpAtomUndef,          "undef" },
     { PpAtomIf,             "if" },
     { PpAtomElif,           "elif" },
@@ -154,47 +150,12 @@ const struct {
 namespace glslang {
 
 //
-// Map a new or existing string to an atom, inventing a new atom if necessary.
-//
-int TPpContext::LookUpAddString(const char* s)
-{
-    auto it = atomMap.find(s);
-    if (it == atomMap.end()) {
-        AddAtomFixed(s, nextAtom);
-        return nextAtom++;
-    } else
-        return it->second;
-}
-
-//
-// Map an already created atom to its string.
-//
-const char* TPpContext::GetAtomString(int atom)
-{
-    if ((size_t)atom >= stringMap.size())
-        return "<bad token>";
-
-    const TString* atomString = stringMap[atom];
-
-    return atomString ? atomString->c_str() : "<bad token>";
-}
-
-//
-// Add forced mapping of string to atom.
-//
-void TPpContext::AddAtomFixed(const char* s, int atom)
-{
-    auto it = atomMap.insert(std::pair<TString, int>(s, atom)).first;
-    if (stringMap.size() < (size_t)atom + 1)
-        stringMap.resize(atom + 100, 0);
-    stringMap[atom] = &it->first;
-}
-
-//
 // Initialize the atom table.
 //
-void TPpContext::InitAtomTable()
+TStringAtomMap::TStringAtomMap()
 {
+    badToken.assign("<bad token>");
+
     // Add single character tokens to the atom table:
     const char* s = "~!%^&*()-+=|,.<>/?;:[]{}#\\";
     char t[2];
@@ -202,13 +163,13 @@ void TPpContext::InitAtomTable()
     t[1] = '\0';
     while (*s) {
         t[0] = *s;
-        AddAtomFixed(t, s[0]);
+        addAtomFixed(t, s[0]);
         s++;
     }
 
     // Add multiple character scanner tokens :
     for (size_t ii = 0; ii < sizeof(tokens)/sizeof(tokens[0]); ii++)
-        AddAtomFixed(tokens[ii].str, tokens[ii].val);
+        addAtomFixed(tokens[ii].str, tokens[ii].val);
 
     nextAtom = PpAtomLast;
 }

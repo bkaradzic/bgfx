@@ -151,6 +151,10 @@ public:
         shiftUboBinding(0),
         autoMapBindings(false),
         flattenUniformArrays(false),
+#ifdef NV_EXTENSIONS 
+        layoutOverrideCoverage(false),
+        geoPassthroughEXT(false),
+#endif
         useUnknownFormat(false)
     {
         localSize[0] = 1;
@@ -387,6 +391,13 @@ public:
     static int getBaseAlignment(const TType&, int& size, int& stride, bool std140, bool rowMajor);
     bool promote(TIntermOperator*);
 
+#ifdef NV_EXTENSIONS 
+    void setLayoutOverrideCoverage() { layoutOverrideCoverage = true; }
+    bool getLayoutOverrideCoverage() const { return layoutOverrideCoverage; }
+    void setGeoPassthroughEXT() { geoPassthroughEXT = true; }
+    bool getGeoPassthroughEXT() const { return geoPassthroughEXT; }
+#endif
+
 protected:
     TIntermSymbol* addSymbol(int Id, const TString&, const TType&, const TConstUnionArray&, TIntermTyped* subtree, const TSourceLoc&);
     void error(TInfoSink& infoSink, const char*);
@@ -446,6 +457,11 @@ protected:
     int blendEquations;        // an 'or'ing of masks of shifts of TBlendEquationShift
     bool xfbMode;
     bool multiStream;
+
+#ifdef NV_EXTENSIONS 
+    bool layoutOverrideCoverage;
+    bool geoPassthroughEXT;
+#endif
 
     typedef std::list<TCall> TGraph;
     TGraph callGraph;

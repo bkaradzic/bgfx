@@ -12,7 +12,7 @@ float4 main() : SV_Target0
 {
     // HLSL allows this as an identifier as well.
     // However, this is not true of other qualifier keywords such as "linear".
-    int sample = 3;
+    float4 sample = float4(3,4,5,6);
 
-    return float4(0,0,0,0);
+    return sample.rgba; // 'sample' can participate in an expression.
 }

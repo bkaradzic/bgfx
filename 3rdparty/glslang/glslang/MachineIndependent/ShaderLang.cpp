@@ -868,7 +868,7 @@ struct DoPreprocessing {
         // This is a list of tokens that do not require a space before or after.
         static const std::string unNeededSpaceTokens = ";()[]";
         static const std::string noSpaceBeforeTokens = ",";
-        glslang::TPpToken token;
+        glslang::TPpToken ppToken;
 
         parseContext.setScanner(&input);
         ppContext.setInput(input, versionWillBeError);
@@ -931,29 +931,33 @@ struct DoPreprocessing {
         });
 
         int lastToken = EndOfInput; // lastToken records the last token processed.
-        while (const char* tok = ppContext.tokenize(&token)) {
+        do {
+            int token = ppContext.tokenize(ppToken);
+            if (token == EndOfInput)
+                break;
+
             bool isNewString = lineSync.syncToMostRecentString();
-            bool isNewLine = lineSync.syncToLine(token.loc.line);
+            bool isNewLine = lineSync.syncToLine(ppToken.loc.line);
 
             if (isNewLine) {
                 // Don't emit whitespace onto empty lines.
                 // Copy any whitespace characters at the start of a line
                 // from the input to the output.
-                outputStream << std::string(token.loc.column - 1, ' ');
+                outputStream << std::string(ppToken.loc.column - 1, ' ');
             }
 
             // Output a space in between tokens, but not at the start of a line,
             // and also not around special tokens. This helps with readability
             // and consistency.
             if (!isNewString && !isNewLine && lastToken != EndOfInput &&
-                (unNeededSpaceTokens.find((char)token.token) == std::string::npos) &&
+                (unNeededSpaceTokens.find((char)token) == std::string::npos) &&
                 (unNeededSpaceTokens.find((char)lastToken) == std::string::npos) &&
-                (noSpaceBeforeTokens.find((char)token.token) == std::string::npos)) {
+                (noSpaceBeforeTokens.find((char)token) == std::string::npos)) {
                 outputStream << " ";
             }
-            lastToken = token.token;
-            outputStream << tok;
-        }
+            lastToken = token;
+            outputStream << ppToken.name;
+        } while (true);
         outputStream << std::endl;
         *outputString = outputStream.str();
 

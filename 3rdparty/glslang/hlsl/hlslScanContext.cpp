@@ -394,13 +394,14 @@ EHlslTokenClass HlslScanContext::tokenizeClass(HlslToken& token)
     do {
         parserToken = &token;
         TPpToken ppToken;
-        tokenText = ppContext.tokenize(&ppToken);
-        if (tokenText == nullptr)
+        int token = ppContext.tokenize(ppToken);
+        if (token == EndOfInput)
             return EHTokNone;
 
+        tokenText = ppToken.name;
         loc = ppToken.loc;
         parserToken->loc = loc;
-        switch (ppToken.token) {
+        switch (token) {
         case ';':                       return EHTokSemicolon;
         case ',':                       return EHTokComma;
         case ':':                       return EHTokColon;
@@ -429,11 +430,11 @@ EHlslTokenClass HlslScanContext::tokenizeClass(HlslToken& token)
             parseContext.error(loc, "illegal use of escape character", "\\", "");
             break;
 
-        case PpAtomAdd:                return EHTokAddAssign;
-        case PpAtomSub:                return EHTokSubAssign;
-        case PpAtomMul:                return EHTokMulAssign;
-        case PpAtomDiv:                return EHTokDivAssign;
-        case PpAtomMod:                return EHTokModAssign;
+        case PPAtomAddAssign:          return EHTokAddAssign;
+        case PPAtomSubAssign:          return EHTokSubAssign;
+        case PPAtomMulAssign:          return EHTokMulAssign;
+        case PPAtomDivAssign:          return EHTokDivAssign;
+        case PPAtomModAssign:          return EHTokModAssign;
 
         case PpAtomRight:              return EHTokRightOp;
         case PpAtomLeft:               return EHTokLeftOp;
@@ -467,7 +468,7 @@ EHlslTokenClass HlslScanContext::tokenizeClass(HlslToken& token)
         }
 
         case PpAtomConstString: {
-            parserToken->string = NewPoolTString(ppToken.name);
+            parserToken->string = NewPoolTString(tokenText);
             return EHTokStringConstant;
         }
 
@@ -475,7 +476,7 @@ EHlslTokenClass HlslScanContext::tokenizeClass(HlslToken& token)
 
         default:
             char buf[2];
-            buf[0] = (char)ppToken.token;
+            buf[0] = (char)token;
             buf[1] = 0;
             parseContext.error(loc, "unexpected token", buf, "");
             break;

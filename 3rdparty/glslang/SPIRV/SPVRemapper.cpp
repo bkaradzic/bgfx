@@ -327,12 +327,10 @@ namespace spv {
         bound(maxBound); // reset header ID bound to as big as it now needs to be
     }
 
+    // Mark debug instructions for stripping
     void spirvbin_t::stripDebug()
     {
-        if ((options & STRIP) == 0)
-            return;
-
-        // build local Id and name maps
+        // Strip instructions in the stripOp set: debug info.
         process(
             [&](spv::Op opCode, unsigned start) {
                 // remember opcodes we want to strip later
@@ -343,6 +341,32 @@ namespace spv {
             op_fn_nop);
     }
 
+    // Mark instructions that refer to now-removed IDs for stripping
+    void spirvbin_t::stripDeadRefs()
+    {
+        process(
+            [&](spv::Op opCode, unsigned start) {
+                // strip opcodes pointing to removed data
+                switch (opCode) {
+                case spv::OpName:
+                case spv::OpMemberName:
+                case spv::OpDecorate:
+                case spv::OpMemberDecorate:
+                    if (idPosR.find(asId(start+1)) == idPosR.end())
+                        stripInst(start);
+                    break;
+                default: 
+                    break; // leave it alone
+                }
+
+                return true;
+            },
+            op_fn_nop);
+
+        strip();
+    }
+
+    // Update local maps of ID, type, etc positions
     void spirvbin_t::buildLocalMaps()
     {
         msg(2, 2, std::string("build local maps: "));
@@ -351,7 +375,6 @@ namespace spv {
         idMapL.clear();
 //      preserve nameMap, so we don't clear that.
         fnPos.clear();
-        fnPosDCE.clear();
         fnCalls.clear();
         typeConstPos.clear();
         idPosR.clear();
@@ -366,10 +389,6 @@ namespace spv {
         // build local Id and name maps
         process(
             [&](spv::Op opCode, unsigned start) {
-                // remember opcodes we want to strip later
-                if ((options & STRIP) && isStripOp(opCode))
-                    stripInst(start);
-
                 unsigned word = start+1;
                 spv::Id  typeId = spv::NoResult;
 
@@ -957,7 +976,6 @@ namespace spv {
                 if (call_it == fnCalls.end() || call_it->second == 0) {
                     changed = true;
                     stripRange.push_back(fn->second);
-                    fnPosDCE.insert(*fn);
 
                     // decrease counts of called functions
                     process(
@@ -1011,11 +1029,15 @@ namespace spv {
         // Remove single-use function variables + associated decorations and names
         process(
             [&](spv::Op opCode, unsigned start) {
-                if ((opCode == spv::OpVariable && varUseCount[asId(start+2)] == 1)  ||
-                    (opCode == spv::OpDecorate && varUseCount[asId(start+1)] == 1)  ||
-                    (opCode == spv::OpName     && varUseCount[asId(start+1)] == 1)) {
-                        stripInst(start);
-                }
+                spv::Id id = spv::NoResult;
+                if (opCode == spv::OpVariable)
+                    id = asId(start+2);
+                if (opCode == spv::OpDecorate || opCode == spv::OpName)
+                    id = asId(start+1);
+
+                if (id != spv::NoResult && varUseCount[id] == 1)
+                    stripInst(start);
+
                 return true;
             },
             op_fn_nop);
@@ -1276,25 +1298,31 @@ namespace spv {
         // Set up opcode tables from SpvDoc
         spv::Parameterize();
 
-        validate();  // validate header
-        buildLocalMaps();
+        validate();       // validate header
+        buildLocalMaps(); // build ID maps
 
         msg(3, 4, std::string("ID bound: ") + std::to_string(bound()));
 
+        if (options & STRIP)         stripDebug();
         strip();        // strip out data we decided to eliminate
         if (options & OPT_LOADSTORE) optLoadStore();
         if (options & OPT_FWD_LS)    forwardLoadStores();
         if (options & DCE_FUNCS)     dceFuncs();
         if (options & DCE_VARS)      dceVars();
         if (options & DCE_TYPES)     dceTypes();
-        strip();        // strip out data we decided to eliminate
+
+        strip();         // strip out data we decided to eliminate
+        stripDeadRefs(); // remove references to things we DCEed
+        // after the last strip, we must clean any debug info referring to now-deleted data
 
         if (options & MAP_TYPES)     mapTypeConst();
         if (options & MAP_NAMES)     mapNames();
         if (options & MAP_FUNCS)     mapFnBodies();
 
-        mapRemainder(); // map any unmapped IDs
-        applyMap();     // Now remap each shader to the new IDs we've come up with
+        if (options & MAP_ALL) {
+            mapRemainder(); // map any unmapped IDs
+            applyMap();     // Now remap each shader to the new IDs we've come up with
+        }
     }
 
     // remap from a memory image

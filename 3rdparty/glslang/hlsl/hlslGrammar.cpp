@@ -90,10 +90,11 @@ bool HlslGrammar::acceptIdentifier(HlslToken& idToken)
     // as "linear" or "centroid" NOT valid identifiers.  This code special cases "sample",
     // so e.g, "int sample;" is accepted.
     if (peekTokenClass(EHTokSample)) {
-        idToken.string     = NewPoolTString("sample");
-        idToken.tokenClass = EHTokIdentifier;
-        idToken.symbol     = nullptr;
-        idToken.loc        = token.loc;
+        token.string     = NewPoolTString("sample");
+        token.tokenClass = EHTokIdentifier;
+        token.symbol     = nullptr;
+
+        idToken          = token;
         advanceToken();
         return true;
     }
@@ -475,8 +476,15 @@ bool HlslGrammar::acceptFullySpecifiedType(TType& type)
     TSourceLoc loc = token.loc;
 
     // type_specifier
-    if (! acceptType(type))
+    if (! acceptType(type)) {
+        // If this is not a type, we may have inadvertently gone down a wrong path
+        // py parsing "sample", which can be treated like either an identifier or a
+        // qualifier.  Back it out, if we did.
+        if (qualifier.sample)
+            recedeToken();
+
         return false;
+    }
     if (type.getBasicType() == EbtBlock) {
         // the type was a block, which set some parts of the qualifier
         parseContext.mergeQualifiers(type.getQualifier(), qualifier);
@@ -2203,7 +2211,7 @@ bool HlslGrammar::acceptPostfixExpression(TIntermTyped*& node)
     } else if (acceptIdentifier(idToken)) {
         // identifier or function_call name
         if (! peekTokenClass(EHTokLeftParen)) {
-            node = parseContext.handleVariable(idToken.loc, idToken.symbol, token.string);
+            node = parseContext.handleVariable(idToken.loc, idToken.symbol, idToken.string);
         } else if (acceptFunctionCall(idToken, node)) {
             // function_call (nothing else to do yet)
         } else {

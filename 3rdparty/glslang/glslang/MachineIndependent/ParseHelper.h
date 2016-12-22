@@ -49,8 +49,7 @@
 #include "SymbolTable.h"
 #include "localintermediate.h"
 #include "Scan.h"
-#include <functional>
-
+#include <cstdarg>
 #include <functional>
 
 namespace glslang {
@@ -238,23 +237,23 @@ public:
     bool obeyPrecisionQualifiers() const { return precisionManager.respectingPrecisionQualifiers(); };
     void setPrecisionDefaults();
 
-    void setLimits(const TBuiltInResource&);
-    bool parseShaderStrings(TPpContext&, TInputScanner& input, bool versionWillBeError = false);
+    void setLimits(const TBuiltInResource&) override;
+    bool parseShaderStrings(TPpContext&, TInputScanner& input, bool versionWillBeError = false) override;
     void parserError(const char* s);     // for bison's yyerror
 
     void reservedErrorCheck(const TSourceLoc&, const TString&);
-    void reservedPpErrorCheck(const TSourceLoc&, const char* name, const char* op);
-    bool lineContinuationCheck(const TSourceLoc&, bool endOfComment);
-    bool lineDirectiveShouldSetNextLine() const;
+    void reservedPpErrorCheck(const TSourceLoc&, const char* name, const char* op) override;
+    bool lineContinuationCheck(const TSourceLoc&, bool endOfComment) override;
+    bool lineDirectiveShouldSetNextLine() const override;
     bool builtInName(const TString&);
 
-    void handlePragma(const TSourceLoc&, const TVector<TString>&);
+    void handlePragma(const TSourceLoc&, const TVector<TString>&) override;
     TIntermTyped* handleVariable(const TSourceLoc&, TSymbol* symbol, const TString* string);
     TIntermTyped* handleBracketDereference(const TSourceLoc&, TIntermTyped* base, TIntermTyped* index);
     void checkIndex(const TSourceLoc&, const TType&, int& index);
     void handleIndexLimits(const TSourceLoc&, TIntermTyped* base, TIntermTyped* index);
 
-    void makeEditable(TSymbol*&);
+    void makeEditable(TSymbol*&) override;
     bool isIoResizeArray(const TType&) const;
     void fixIoArraySize(const TSourceLoc&, TType&);
     void ioArrayCheck(const TSourceLoc&, const TType&, const TString& identifier);

@@ -77,9 +77,8 @@ ERROR: 0:192: 'gl_ClipDistance' :  left of '[' is not of type array, matrix, or 
 ERROR: 0:192: 'assign' :  l-value required (can't modify a const)
 ERROR: 0:195: 'gl_ModelViewMatrix' : identifiers starting with "gl_" are reserved 
 ERROR: 0:200: 'token pasting (##)' : not supported for this version or the enabled extensions 
-ERROR: 0:200: '##' : token pasting not implemented (internal error) 
-ERROR: 0:200: '' :  syntax error
-ERROR: 80 compilation errors.  No code generated.
+ERROR: 0:203: 'token pasting (##)' : not supported for this version or the enabled extensions 
+ERROR: 79 compilation errors.  No code generated.
 
 
 Shader version: 120
@@ -427,7 +426,8 @@ ERROR: node is still EOpNull!
 0:?     'c2D' (in 2-component vector of float)
 0:?     'c3D' (in 3-component vector of float)
 0:?     'v4' (uniform 4-component vector of float)
-0:?     'abc' (global int)
+0:?     'abcdef' (global int)
+0:?     'qrstuv' (global int)
 
 
 Linked vertex stage:
@@ -499,5 +499,6 @@ ERROR: node is still EOpNull!
 0:?     'c2D' (in 2-component vector of float)
 0:?     'c3D' (in 3-component vector of float)
 0:?     'v4' (uniform 4-component vector of float)
-0:?     'abc' (global int)
+0:?     'abcdef' (global int)
+0:?     'qrstuv' (global int)
 

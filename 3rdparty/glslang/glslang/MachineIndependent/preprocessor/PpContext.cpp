@@ -83,13 +83,10 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace glslang {
 
 TPpContext::TPpContext(TParseContextBase& pc, const std::string& rootFileName, TShader::Includer& inclr) : 
-    preamble(0), strings(0), parseContext(pc), includer(inclr), inComment(false),
+    preamble(0), strings(0), previous_token('\n'), parseContext(pc), includer(inclr), inComment(false),
     rootFileName(rootFileName),
     currentSourceFile(rootFileName)
 {
-    InitAtomTable();
-    InitScanner();
-
     ifdepth = 0;
     for (elsetracker = 0; elsetracker < maxIfNesting; elsetracker++)
         elseSeen[elsetracker] = false;
@@ -98,9 +95,6 @@ TPpContext::TPpContext(TParseContextBase& pc, const std::string& rootFileName, T
 
 TPpContext::~TPpContext()
 {
-    for (TSymbolMap::iterator it = symbols.begin(); it != symbols.end(); ++it)
-        delete it->second->mac.body;
-    mem_FreePool(pool);
     delete [] preamble;
 
     // free up the inputStack

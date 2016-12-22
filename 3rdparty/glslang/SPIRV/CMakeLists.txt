@@ -33,6 +33,11 @@ if(ENABLE_AMD_EXTENSIONS)
          GLSL.ext.AMD.h)
 endif(ENABLE_AMD_EXTENSIONS)
 
+if(ENABLE_NV_EXTENSIONS)
+    set(HEADERS
+        GLSL.ext.NV.h)
+endif(ENABLE_NV_EXTENSIONS)
+
 add_library(SPIRV STATIC ${SOURCES} ${HEADERS})
 set_property(TARGET SPIRV PROPERTY FOLDER glslang)
 

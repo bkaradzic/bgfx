@@ -75,9 +75,6 @@ NVIDIA SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT,
 TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \****************************************************************************/
-//
-// scanner.c
-//
 
 #define _CRT_SECURE_NO_WARNINGS
 
@@ -89,17 +86,6 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../Scan.h"
 
 namespace glslang {
-
-int TPpContext::InitScanner()
-{
-    // Add various atoms needed by the CPP line scanner:
-    if (!InitCPP())
-        return 0;
-
-    previous_token = '\n';
-
-    return 1;
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////// Floating point constants: /////////////////////////////////
@@ -261,7 +247,6 @@ int TPpContext::lFloatConst(int len, int ch, TPpToken* ppToken)
 //
 int TPpContext::tStringInput::scan(TPpToken* ppToken)
 {
-    char* tokenText = ppToken->name;
     int AlreadyComplained = 0;
     int len = 0;
     int ch = 0;
@@ -300,7 +285,7 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
         case 'z':
             do {
                 if (len < MaxTokenLength) {
-                    tokenText[len++] = (char)ch;
+                    ppToken->name[len++] = (char)ch;
                     ch = getch();
                 } else {
                     if (! AlreadyComplained) {
@@ -318,9 +303,8 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
             if (len == 0)
                 continue;
 
-            tokenText[len] = '\0';
+            ppToken->name[len] = '\0';
             ungetch();
-            ppToken->atom = pp->LookUpAddString(tokenText);
             return PpAtomIdentifier;
         case '0':
             ppToken->name[len++] = (char)ch;
@@ -545,7 +529,7 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
             if (ch == '-') {
                 return PpAtomDecrement;
             } else if (ch == '=') {
-                return PpAtomSub;
+                return PPAtomSubAssign;
             } else {
                 ungetch();
                 return '-';
@@ -555,7 +539,7 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
             if (ch == '+') {
                 return PpAtomIncrement;
             } else if (ch == '=') {
-                return PpAtomAdd;
+                return PPAtomAddAssign;
             } else {
                 ungetch();
                 return '+';
@@ -563,7 +547,7 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
         case '*':
             ch = getch();
             if (ch == '=') {
-                return PpAtomMul;
+                return PPAtomMulAssign;
             } else {
                 ungetch();
                 return '*';
@@ -571,7 +555,7 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
         case '%':
             ch = getch();
             if (ch == '=') {
-                return PpAtomMod;
+                return PPAtomModAssign;
             } else {
                 ungetch();
                 return '%';
@@ -697,7 +681,7 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
                 // loop again to get the next token...
                 break;
             } else if (ch == '=') {
-                return PpAtomDiv;
+                return PPAtomDivAssign;
             } else {
                 ungetch();
                 return '/';
@@ -707,13 +691,13 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
             ch = getch();
             while (ch != '"' && ch != '\n' && ch != EndOfInput) {
                 if (len < MaxTokenLength) {
-                    tokenText[len] = (char)ch;
+                    ppToken->name[len] = (char)ch;
                     len++;
                     ch = getch();
                 } else
                     break;
             };
-            tokenText[len] = '\0';
+            ppToken->name[len] = '\0';
             if (ch != '"') {
                 ungetch();
                 pp->parseContext.ppError(ppToken->loc, "End of line in string", "string", "");
@@ -729,31 +713,31 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
 // The main functional entry point into the preprocessor, which will
 // scan the source strings to figure out and return the next processing token.
 //
-// Return string pointer to next token.
-// Return 0 when no more tokens.
+// Return the token, or EndOfInput when no more tokens.
 //
-const char* TPpContext::tokenize(TPpToken* ppToken)
+int TPpContext::tokenize(TPpToken& ppToken)
 {
-    int token = '\n';
-
     for(;;) {
-        token = scanToken(ppToken);
-        ppToken->token = token;
+        int token = scanToken(&ppToken);
+
+        // Handle token-pasting logic
+        token = tokenPaste(token, ppToken);
+
         if (token == EndOfInput) {
             missingEndifCheck();
-            return nullptr;
+            return EndOfInput;
         }
         if (token == '#') {
             if (previous_token == '\n') {
-                token = readCPPline(ppToken);
+                token = readCPPline(&ppToken);
                 if (token == EndOfInput) {
                     missingEndifCheck();
-                    return nullptr;
+                    return EndOfInput;
                 }
                 continue;
             } else {
-                parseContext.ppError(ppToken->loc, "preprocessor directive cannot be preceded by another token", "#", "");
-                return nullptr;
+                parseContext.ppError(ppToken.loc, "preprocessor directive cannot be preceded by another token", "#", "");
+                return EndOfInput;
             }
         }
         previous_token = token;
@@ -762,10 +746,9 @@ const char* TPpContext::tokenize(TPpToken* ppToken)
             continue;
 
         // expand macros
-        if (token == PpAtomIdentifier && MacroExpand(ppToken->atom, ppToken, false, true) != 0)
+        if (token == PpAtomIdentifier && MacroExpand(&ppToken, false, true) != 0)
             continue;
 
-        const char* tokenString = nullptr;
         switch (token) {
         case PpAtomIdentifier:
         case PpAtomConstInt:
@@ -777,27 +760,108 @@ const char* TPpContext::tokenize(TPpToken* ppToken)
 #ifdef AMD_EXTENSIONS
         case PpAtomConstFloat16:
 #endif
-            tokenString = ppToken->name;
+            if (ppToken.name[0] == '\0')
+                continue;
             break;
         case PpAtomConstString:
-            if (parseContext.intermediate.getSource() == EShSourceHlsl) {
+            if (parseContext.intermediate.getSource() != EShSourceHlsl) {
                 // HLSL allows string literals.
-                tokenString = ppToken->name;
-            } else {
-                parseContext.ppError(ppToken->loc, "string literals not supported", "\"\"", "");
+                parseContext.ppError(ppToken.loc, "string literals not supported", "\"\"", "");
+                continue;
             }
             break;
         case '\'':
-            parseContext.ppError(ppToken->loc, "character literals not supported", "\'", "");
-            break;
+            parseContext.ppError(ppToken.loc, "character literals not supported", "\'", "");
+            continue;
         default:
-            tokenString = GetAtomString(token);
+            strcpy(ppToken.name, atomStrings.getString(token));
             break;
         }
 
-        if (tokenString)
-            return tokenString;
+        return token;
     }
+}
+
+//
+// Do all token-pasting related combining of two pasted tokens when getting a
+// stream of tokens from a replacement list. Degenerates to no processing if a
+// replacement list is not the source of the token stream.
+//
+int TPpContext::tokenPaste(int token, TPpToken& ppToken)
+{
+    // starting with ## is illegal, skip to next token
+    if (token == PpAtomPaste) {
+        parseContext.ppError(ppToken.loc, "unexpected location", "##", "");
+        return scanToken(&ppToken);
+    }
+
+    int resultToken = token; // "foo" pasted with "35" is an identifier, not a number
+
+    // ## can be chained, process all in the chain at once
+    while (peekPasting()) {
+        TPpToken pastedPpToken;
+
+        // next token has to be ##
+        token = scanToken(&pastedPpToken);
+        assert(token == PpAtomPaste);
+
+        if (endOfReplacementList()) {
+            parseContext.ppError(ppToken.loc, "unexpected location; end of replacement list", "##", "");
+            break;
+        }
+
+        // get the token after the ##
+        token = scanToken(&pastedPpToken);
+
+        // get the token text
+        switch (resultToken) {
+        case PpAtomIdentifier:
+            // already have the correct text in token.names
+            break;
+        case '=':
+        case '!':
+        case '-':
+        case '~':
+        case '+':
+        case '*':
+        case '/':
+        case '%':
+        case '<':
+        case '>':
+        case '|':
+        case '^':
+        case '&':
+        case PpAtomRight:
+        case PpAtomLeft:
+        case PpAtomAnd:
+        case PpAtomOr:
+        case PpAtomXor:
+            strcpy(ppToken.name, atomStrings.getString(resultToken));
+            strcpy(pastedPpToken.name, atomStrings.getString(token));
+            break;
+        default:
+            parseContext.ppError(ppToken.loc, "not supported for these tokens", "##", "");
+            return resultToken;
+        }
+
+        // combine the tokens
+        if (strlen(ppToken.name) + strlen(pastedPpToken.name) > MaxTokenLength) {
+            parseContext.ppError(ppToken.loc, "combined tokens are too long", "##", "");
+            return resultToken;
+        }
+        strncat(ppToken.name, pastedPpToken.name, MaxTokenLength - strlen(ppToken.name));
+
+        // correct the kind of token we are making, if needed (identifiers stay identifiers)
+        if (resultToken != PpAtomIdentifier) {
+            int newToken = atomStrings.getAtom(ppToken.name);
+            if (newToken > 0)
+                resultToken = newToken;
+            else
+                parseContext.ppError(ppToken.loc, "combined token is invalid", "##", "");
+        }
+    }
+
+    return resultToken;
 }
 
 // Checks if we've seen balanced #if...#endif

@@ -95,32 +95,32 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace glslang {
 
-void TPpContext::lAddByte(TokenStream *fTok, unsigned char fVal)
+void TPpContext::lAddByte(TokenStream& fTok, unsigned char fVal)
 {
-    fTok->data.push_back(fVal);
+    fTok.data.push_back(fVal);
 }
 
 /*
 * Get the next byte from a stream.
 */
-int TPpContext::lReadByte(TokenStream *pTok)
+int TPpContext::lReadByte(TokenStream& pTok)
 {
-    if (pTok->current < pTok->data.size())
-        return pTok->data[pTok->current++];
+    if (pTok.current < pTok.data.size())
+        return pTok.data[pTok.current++];
     else
         return EndOfInput;
 }
 
-void TPpContext::lUnreadByte(TokenStream *pTok)
+void TPpContext::lUnreadByte(TokenStream& pTok)
 {
-    if (pTok->current > 0)
-        --pTok->current;
+    if (pTok.current > 0)
+        --pTok.current;
 }
 
 /*
 * Add a token to the end of a list for later playback.
 */
-void TPpContext::RecordToken(TokenStream *pTok, int token, TPpToken* ppToken)
+void TPpContext::RecordToken(TokenStream& pTok, int token, TPpToken* ppToken)
 {
     const char* s;
     char* str = NULL;
@@ -160,19 +160,18 @@ void TPpContext::RecordToken(TokenStream *pTok, int token, TPpToken* ppToken)
 }
 
 /*
-* Reset a token stream in preperation for reading.
+* Reset a token stream in preparation for reading.
 */
-void TPpContext::RewindTokenStream(TokenStream *pTok)
+void TPpContext::RewindTokenStream(TokenStream& pTok)
 {
-    pTok->current = 0;
+    pTok.current = 0;
 }
 
 /*
 * Read the next token from a token stream (not the source stream, but stream used to hold a tokenized macro).
 */
-int TPpContext::ReadToken(TokenStream *pTok, TPpToken *ppToken)
+int TPpContext::ReadToken(TokenStream& pTok, TPpToken *ppToken)
 {
-    char* tokenText = ppToken->name;
     int ltoken, len;
     int ch;
 
@@ -183,13 +182,11 @@ int TPpContext::ReadToken(TokenStream *pTok, TPpToken *ppToken)
     switch (ltoken) {
     case '#':
         // Check for ##, unless the current # is the last character
-        if (pTok->current < pTok->data.size()) {
+        if (pTok.current < pTok.data.size()) {
             if (lReadByte(pTok) == '#') {
                 parseContext.requireProfile(ppToken->loc, ~EEsProfile, "token pasting (##)");
                 parseContext.profileRequires(ppToken->loc, ~EEsProfile, 130, 0, "token pasting (##)");
-                parseContext.error(ppToken->loc, "token pasting not implemented (internal error)", "##", "");
-                //return PpAtomPaste;
-                return ReadToken(pTok, ppToken);
+                ltoken = PpAtomPaste;
             } else
                 lUnreadByte(pTok);
         }
@@ -209,7 +206,7 @@ int TPpContext::ReadToken(TokenStream *pTok, TPpToken *ppToken)
         ch = lReadByte(pTok);
         while (ch != 0 && ch != EndOfInput) {
             if (len < MaxTokenLength) {
-                tokenText[len] = (char)ch;
+                ppToken->name[len] = (char)ch;
                 len++;
                 ch = lReadByte(pTok);
             } else {
@@ -217,11 +214,10 @@ int TPpContext::ReadToken(TokenStream *pTok, TPpToken *ppToken)
                 break;
             }
         }
-        tokenText[len] = 0;
+        ppToken->name[len] = 0;
 
         switch (ltoken) {
         case PpAtomIdentifier:
-            ppToken->atom = LookUpAddString(tokenText);
             break;
         case PpAtomConstString:
             break;
@@ -233,8 +229,8 @@ int TPpContext::ReadToken(TokenStream *pTok, TPpToken *ppToken)
             ppToken->dval = atof(ppToken->name);
             break;
         case PpAtomConstInt:
-            if (len > 0 && tokenText[0] == '0') {
-                if (len > 1 && (tokenText[1] == 'x' || tokenText[1] == 'X'))
+            if (len > 0 && ppToken->name[0] == '0') {
+                if (len > 1 && (ppToken->name[1] == 'x' || ppToken->name[1] == 'X'))
                     ppToken->ival = (int)strtol(ppToken->name, 0, 16);
                 else
                     ppToken->ival = (int)strtol(ppToken->name, 0, 8);
@@ -242,8 +238,8 @@ int TPpContext::ReadToken(TokenStream *pTok, TPpToken *ppToken)
                 ppToken->ival = atoi(ppToken->name);
             break;
         case PpAtomConstUint:
-            if (len > 0 && tokenText[0] == '0') {
-                if (len > 1 && (tokenText[1] == 'x' || tokenText[1] == 'X'))
+            if (len > 0 && ppToken->name[0] == '0') {
+                if (len > 1 && (ppToken->name[1] == 'x' || ppToken->name[1] == 'X'))
                     ppToken->ival = (int)strtoul(ppToken->name, 0, 16);
                 else
                     ppToken->ival = (int)strtoul(ppToken->name, 0, 8);
@@ -251,8 +247,8 @@ int TPpContext::ReadToken(TokenStream *pTok, TPpToken *ppToken)
                 ppToken->ival = (int)strtoul(ppToken->name, 0, 10);
             break;
         case PpAtomConstInt64:
-            if (len > 0 && tokenText[0] == '0') {
-                if (len > 1 && (tokenText[1] == 'x' || tokenText[1] == 'X'))
+            if (len > 0 && ppToken->name[0] == '0') {
+                if (len > 1 && (ppToken->name[1] == 'x' || ppToken->name[1] == 'X'))
                     ppToken->i64val = strtoll(ppToken->name, nullptr, 16);
                 else
                     ppToken->i64val = strtoll(ppToken->name, nullptr, 8);
@@ -260,8 +256,8 @@ int TPpContext::ReadToken(TokenStream *pTok, TPpToken *ppToken)
                 ppToken->i64val = atoll(ppToken->name);
             break;
         case PpAtomConstUint64:
-            if (len > 0 && tokenText[0] == '0') {
-                if (len > 1 && (tokenText[1] == 'x' || tokenText[1] == 'X'))
+            if (len > 0 && ppToken->name[0] == '0') {
+                if (len > 1 && (ppToken->name[1] == 'x' || ppToken->name[1] == 'X'))
                     ppToken->i64val = (long long)strtoull(ppToken->name, nullptr, 16);
                 else
                     ppToken->i64val = (long long)strtoull(ppToken->name, nullptr, 8);
@@ -276,12 +272,37 @@ int TPpContext::ReadToken(TokenStream *pTok, TPpToken *ppToken)
 
 int TPpContext::tTokenInput::scan(TPpToken* ppToken)
 {
-    return pp->ReadToken(tokens, ppToken);
+    return pp->ReadToken(*tokens, ppToken);
 }
 
-void TPpContext::pushTokenStreamInput(TokenStream* ts)
+// We are pasting if the entire macro is preceding a pasting operator
+// (lastTokenPastes) and we are also on the last token.
+bool TPpContext::tTokenInput::peekPasting()
 {
-    pushInput(new tTokenInput(this, ts));
+    if (! lastTokenPastes)
+        return false;
+    // Getting here means the last token will be pasted.
+
+    // Are we at the last non-whitespace token?
+    size_t savePos = tokens->current;
+    bool moreTokens = false;
+    do {
+        int byte = pp->lReadByte(*tokens);
+        if (byte == EndOfInput)
+            break;
+        if (byte != ' ') {
+            moreTokens = true;
+            break;
+        }
+    } while (true);
+    tokens->current = savePos;
+
+    return !moreTokens;
+}
+
+void TPpContext::pushTokenStreamInput(TokenStream& ts, bool prepasting)
+{
+    pushInput(new tTokenInput(this, &ts, prepasting));
     RewindTokenStream(ts);
 }
 
