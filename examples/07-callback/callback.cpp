@@ -148,7 +148,7 @@ struct BgfxCallback : public bgfx::CallbackI
 		bx::Error err;
 		if (bx::open(reader, filePath, &err) )
 		{
-			uint32_t size = bx::getSize(reader);
+			uint32_t size = (uint32_t)bx::getSize(reader);
 			bx::close(reader);
 			// Return size of shader file.
 			return size;

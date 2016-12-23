@@ -1391,46 +1391,31 @@ namespace bgfx
 	///
 	void destroyDynamicVertexBuffer(DynamicVertexBufferHandle _handle);
 
-	/// Returns true if internal transient index buffer has enough space.
+	/// Returns number of available indices.
 	///
-	/// @param[in] _num Number of indices.
+	/// @param[in] _num Number of required indices.
 	///
-	/// @attention C99 equivalent is `bgfx_check_avail_transient_index_buffer`.
+	/// @attention C99 equivalent is `bgfx_get_avail_transient_index_buffer`.
 	///
-	bool checkAvailTransientIndexBuffer(uint32_t _num);
+	uint32_t getAvailTransientIndexBuffer(uint32_t _num);
 
-	/// Returns true if internal transient vertex buffer has enough space.
+	/// Returns number of available vertices.
 	///
-	/// @param[in] _num Number of vertices.
+	/// @param[in] _num Number of required vertices.
 	/// @param[in] _decl Vertex declaration.
 	///
 	/// @attention C99 equivalent is `bgfx_check_avail_transient_vertex_buffer`.
 	///
-	bool checkAvailTransientVertexBuffer(uint32_t _num, const VertexDecl& _decl);
+	uint32_t getAvailTransientVertexBuffer(uint32_t _num, const VertexDecl& _decl);
 
-	/// Returns true if internal instance data buffer has enough space.
+	/// Returns number of available instance buffer slots.
 	///
-	/// @param[in] _num Number of instances.
+	/// @param[in] _num Number of required instances.
 	/// @param[in] _stride Stride per instance.
 	///
 	/// @attention C99 equivalent is `bgfx_check_avail_instance_data_buffer`.
 	///
-	bool checkAvailInstanceDataBuffer(uint32_t _num, uint16_t _stride);
-
-	/// Returns true if both internal transient index and vertex buffer have
-	/// enough space.
-	///
-	/// @param[in] _numVertices Number of vertices.
-	/// @param[in] _decl Vertex declaration.
-	/// @param[in] _numIndices Number of indices.
-	///
-	/// @attention C99 equivalent is `bgfx_check_avail_transient_buffers`.
-	///
-	bool checkAvailTransientBuffers(
-		  uint32_t _numVertices
-		, const VertexDecl& _decl
-		, uint32_t _numIndices
-		);
+	uint32_t getAvailInstanceDataBuffer(uint32_t _num, uint16_t _stride);
 
 	/// Allocate transient index buffer.
 	///

@@ -741,7 +741,7 @@ void VectorDisplay::getSize(float* _outWidth, float* _outHeight)
 
 void VectorDisplay::screenSpaceQuad(float _textureWidth, float _textureHeight, float _width, float _height)
 {
-	if (bgfx::checkAvailTransientVertexBuffer(3, PosColorUvVertex::ms_decl) )
+	if (3 == getAvailTransientVertexBuffer(3, PosColorUvVertex::ms_decl) )
 	{
 		bgfx::TransientVertexBuffer vb;
 		bgfx::allocTransientVertexBuffer(&vb, 3, PosColorUvVertex::ms_decl);

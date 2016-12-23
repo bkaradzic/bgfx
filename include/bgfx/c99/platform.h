@@ -113,10 +113,9 @@ typedef struct bgfx_interface_vtbl
     bgfx_dynamic_vertex_buffer_handle_t (*create_dynamic_vertex_buffer_mem)(const bgfx_memory_t* _mem, const bgfx_vertex_decl_t* _decl, uint16_t _flags);
     void (*update_dynamic_vertex_buffer)(bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, const bgfx_memory_t* _mem);
     void (*destroy_dynamic_vertex_buffer)(bgfx_dynamic_vertex_buffer_handle_t _handle);
-    bool (*check_avail_transient_index_buffer)(uint32_t _num);
-    bool (*check_avail_transient_vertex_buffer)(uint32_t _num, const bgfx_vertex_decl_t* _decl);
-    bool (*check_avail_instance_data_buffer)(uint32_t _num, uint16_t _stride);
-    bool (*check_avail_transient_buffers)(uint32_t _numVertices, const bgfx_vertex_decl_t* _decl, uint32_t _numIndices);
+    uint32_t (*get_avail_transient_index_buffer)(uint32_t _num);
+    uint32_t (*get_avail_transient_vertex_buffer)(uint32_t _num, const bgfx_vertex_decl_t* _decl);
+    uint32_t (*get_avail_instance_data_buffer)(uint32_t _num, uint16_t _stride);
     void (*alloc_transient_index_buffer)(bgfx_transient_index_buffer_t* _tib, uint32_t _num);
     void (*alloc_transient_vertex_buffer)(bgfx_transient_vertex_buffer_t* _tvb, uint32_t _num, const bgfx_vertex_decl_t* _decl);
     bool (*alloc_transient_buffers)(bgfx_transient_vertex_buffer_t* _tvb, const bgfx_vertex_decl_t* _decl, uint32_t _numVertices, bgfx_transient_index_buffer_t* _tib, uint32_t _numIndices);

@@ -384,7 +384,7 @@ bgfx::VertexDecl PosUvColorVertex::ms_decl;
 
 bool screenQuad(int32_t _x, int32_t _y, int32_t _width, uint32_t _height, uint32_t _abgr, bool _originBottomLeft = false)
 {
-	if (bgfx::checkAvailTransientVertexBuffer(6, PosUvColorVertex::ms_decl) )
+	if (6 == bgfx::getAvailTransientVertexBuffer(6, PosUvColorVertex::ms_decl) )
 	{
 		bgfx::TransientVertexBuffer vb;
 		bgfx::allocTransientVertexBuffer(&vb, 6, PosUvColorVertex::ms_decl);

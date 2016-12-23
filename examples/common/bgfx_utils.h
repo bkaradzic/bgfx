@@ -15,6 +15,20 @@ bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName);
 bgfx::TextureHandle loadTexture(const char* _name, uint32_t _flags = BGFX_TEXTURE_NONE, uint8_t _skip = 0, bgfx::TextureInfo* _info = NULL);
 void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices);
 
+/// Returns true if both internal transient index and vertex buffer have
+/// enough space.
+///
+/// @param[in] _numVertices Number of vertices.
+/// @param[in] _decl Vertex declaration.
+/// @param[in] _numIndices Number of indices.
+///
+inline bool checkAvailTransientBuffers(uint32_t _numVertices, const bgfx::VertexDecl& _decl, uint32_t _numIndices)
+{
+	return _numVertices == bgfx::getAvailTransientVertexBuffer(_numVertices, _decl)
+		&& _numIndices  == bgfx::getAvailTransientIndexBuffer(_numIndices)
+		;
+}
+
 struct MeshState
 {
 	struct Texture
