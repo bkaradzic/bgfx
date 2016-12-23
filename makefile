@@ -340,6 +340,9 @@ texturev: .build/projects/$(BUILD_PROJECT_DIR) ## Build texturev tool.
 
 tools: geometryc shaderc texturec texturev ## Build tools.
 
+clean-tools: ## Clean tools projects.
+	-$(SILENT) rm -r .build/projects/$(BUILD_PROJECT_DIR)
+
 dist-windows: .build/projects/gmake-mingw-gcc
 	$(SILENT) $(MAKE) -C .build/projects/gmake-mingw-gcc config=release64 -j 6 geometryc
 	$(SILENT) cp .build/win64_mingw-gcc/bin/geometrycRelease.exe tools/bin/windows/geometryc.exe

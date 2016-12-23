@@ -16,7 +16,7 @@
 #include <etc2/ProcessRGB.hpp>
 #include <nvtt/nvtt.h>
 #include <pvrtc/PvrTcEncoder.h>
-#include <tinyexr/tinyexr.h>
+
 #include <edtaa3/edtaa3func.h>
 
 extern "C" {
@@ -56,6 +56,13 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wint-to-pointer-cast")
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.c>
 BX_PRAGMA_DIAGNOSTIC_POP();
+
+BX_PRAGMA_DIAGNOSTIC_PUSH()
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wtype-limits")
+#define MINIZ_NO_STDIO
+#define TINYEXR_IMPLEMENTATION
+#include <tinyexr/tinyexr.h>
+BX_PRAGMA_DIAGNOSTIC_POP()
 
 #if 0
 #	define BX_TRACE(_format, ...) fprintf(stderr, "" _format "\n", ##__VA_ARGS__)
