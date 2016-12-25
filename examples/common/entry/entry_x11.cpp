@@ -25,6 +25,9 @@
 
 namespace entry
 {
+	static const char* s_applicationName  = "BGFX";
+	static const char* s_applicationClass = "bgfx";
+
 	///
 	inline void x11SetDisplayWindow(void* _display, uint32_t _window, void* _glx = NULL)
 	{
@@ -383,13 +386,13 @@ namespace entry
 			XSetWMProtocols(m_display, m_window[0], &wmDeleteWindow, 1);
 
 			XMapWindow(m_display, m_window[0]);
-			XStoreName(m_display, m_window[0], "BGFX");
+			XStoreName(m_display, m_window[0], s_applicationName);
 
-            XClassHint* hint = XAllocClassHint();
-            hint->res_name = (char*)"BGFX";
-            hint->res_class = (char*)"BGFX";
-            XSetClassHint(m_display, m_window[0], hint);
-            XFree(hint);
+			XClassHint* hint = XAllocClassHint();
+			hint->res_name  = (char*)s_applicationName;
+			hint->res_class = (char*)s_applicationClass;
+			XSetClassHint(m_display, m_window[0], hint);
+			XFree(hint);
 
 			XIM im;
 			im = XOpenIM(m_display, NULL, NULL, NULL);
@@ -611,11 +614,11 @@ namespace entry
 			XMapWindow(m_display, window);
 			XStoreName(m_display, window, msg->m_title.c_str() );
 
-            XClassHint* hint = XAllocClassHint();
-            hint->res_name = (char*)"BGFX";
-            hint->res_class = (char*)"BGFX";
-            XSetClassHint(m_display, window, hint);
-            XFree(hint);
+			XClassHint* hint = XAllocClassHint();
+			hint->res_name  = (char*)msg->m_title.c_str();
+			hint->res_class = (char*)s_applicationClass;
+			XSetClassHint(m_display, window, hint);
+			XFree(hint);
 
 			m_eventQueue.postSizeEvent(_handle, msg->m_width, msg->m_height);
 
