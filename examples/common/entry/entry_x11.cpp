@@ -11,6 +11,7 @@
 #define XK_LATIN1
 #include <X11/keysymdef.h>
 #include <X11/Xlib.h> // will include X11 which #defines None... Don't mess with order of includes.
+#include <X11/Xutil.h>
 #include <bgfx/platform.h>
 
 #undef None
@@ -384,6 +385,12 @@ namespace entry
 			XMapWindow(m_display, m_window[0]);
 			XStoreName(m_display, m_window[0], "BGFX");
 
+            XClassHint* hint = XAllocClassHint();
+            hint->res_name = (char*)"BGFX";
+            hint->res_class = (char*)"BGFX";
+            XSetClassHint(m_display, m_window[0], hint);
+            XFree(hint);
+
 			XIM im;
 			im = XOpenIM(m_display, NULL, NULL, NULL);
 
@@ -603,6 +610,12 @@ namespace entry
 
 			XMapWindow(m_display, window);
 			XStoreName(m_display, window, msg->m_title.c_str() );
+
+            XClassHint* hint = XAllocClassHint();
+            hint->res_name = (char*)"BGFX";
+            hint->res_class = (char*)"BGFX";
+            XSetClassHint(m_display, window, hint);
+            XFree(hint);
 
 			m_eventQueue.postSizeEvent(_handle, msg->m_width, msg->m_height);
 
