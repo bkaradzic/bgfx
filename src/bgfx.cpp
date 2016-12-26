@@ -324,6 +324,13 @@ namespace bgfx
 		return &g_internalData;
 	}
 
+	uintptr_t getInternal(TextureHandle _handle)
+	{
+		BGFX_CHECK_RENDER_THREAD();
+		RendererContextI* rci = s_ctx->m_renderCtx;
+		return rci->getInternal(_handle);
+	}
+
 	uintptr_t overrideInternal(TextureHandle _handle, uintptr_t _ptr)
 	{
 		BGFX_CHECK_RENDER_THREAD();
@@ -4808,6 +4815,12 @@ BGFX_C_API const bgfx_internal_data_t* bgfx_get_internal_data()
 	return (const bgfx_internal_data_t*)bgfx::getInternalData();
 }
 
+BGFX_C_API uintptr_t bgfx_get_internal_texture_ptr(bgfx_texture_handle_t _handle)
+{
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
+	return bgfx::getInternal(handle.cpp);
+}
+
 BGFX_C_API uintptr_t bgfx_override_internal_texture_ptr(bgfx_texture_handle_t _handle, uintptr_t _ptr)
 {
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
@@ -4828,6 +4841,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 	BGFX_IMPORT_FUNC(render_frame) \
 	BGFX_IMPORT_FUNC(set_platform_data) \
 	BGFX_IMPORT_FUNC(get_internal_data) \
+	BGFX_IMPORT_FUNC(get_internal_texture_ptr) \
 	BGFX_IMPORT_FUNC(override_internal_texture_ptr) \
 	BGFX_IMPORT_FUNC(override_internal_texture) \
 	BGFX_IMPORT_FUNC(vertex_decl_begin) \
