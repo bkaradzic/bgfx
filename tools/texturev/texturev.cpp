@@ -33,6 +33,7 @@ namespace stl = tinystl;
 #include "fs_texture_array.bin.h"
 #include "vs_texture_cube.bin.h"
 #include "fs_texture_cube.bin.h"
+#include "fs_texture_sdf.bin.h"
 
 static const bgfx::EmbeddedShader s_embeddedShaders[] =
 {
@@ -41,6 +42,7 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] =
 	BGFX_EMBEDDED_SHADER(fs_texture_array),
 	BGFX_EMBEDDED_SHADER(vs_texture_cube),
 	BGFX_EMBEDDED_SHADER(fs_texture_cube),
+	BGFX_EMBEDDED_SHADER(fs_texture_sdf),
 
 	BGFX_EMBEDDED_SHADER_END()
 };
@@ -108,6 +110,8 @@ static const InputBinding s_bindingView[] =
 
 	{ entry::Key::KeyH,      entry::Modifier::None,       1, NULL, "view help"        },
 
+	{ entry::Key::KeyS,      entry::Modifier::None,       1, NULL, "view sdf"         },
+
 	INPUT_BINDING_END
 };
 
@@ -137,6 +141,7 @@ struct View
 		, m_filter(true)
 		, m_alpha(false)
 		, m_help(false)
+		, m_sdf(false)
 	{
 	}
 
@@ -276,6 +281,10 @@ struct View
 					m_alpha = false;
 				}
 			}
+			else if (0 == strcmp(_argv[1], "sdf")) 
+			{
+				m_sdf ^= true;
+			}
 			else if (0 == strcmp(_argv[1], "help") )
 			{
 				m_help ^= true;
@@ -351,6 +360,7 @@ struct View
 	bool     m_filter;
 	bool     m_alpha;
 	bool     m_help;
+	bool     m_sdf;
 };
 
 int cmdView(CmdContext* /*_context*/, void* _userData, int _argc, char const* const* _argv)
@@ -685,6 +695,11 @@ int _main_(int _argc, char** _argv)
 			, true
 			);
 
+	bgfx::ProgramHandle textureSDFProgram = bgfx::createProgram(
+			  vsTexture
+			, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_texture_sdf")
+			, true);
+
 	bgfx::UniformHandle s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
 	bgfx::UniformHandle u_mtx      = bgfx::createUniform("u_mtx",      bgfx::UniformType::Mat4);
 	bgfx::UniformHandle u_params   = bgfx::createUniform("u_params",   bgfx::UniformType::Vec4);
@@ -795,6 +810,10 @@ int _main_(int _argc, char** _argv)
 
 				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "r/g/b"); ImGui::SameLine(64); ImGui::Text("Toggle R, G, or B color channel.");
 				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "a");     ImGui::SameLine(64); ImGui::Text("Toggle alpha blending.");
+				ImGui::NextLine();
+
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "s");     ImGui::SameLine(64); ImGui::Text("Toggle Multi-channel SDF rendering");
+
 				ImGui::PopFont();
 
 				ImGui::NextLine();
@@ -911,7 +930,7 @@ int _main_(int _argc, char** _argv)
 				);
 			bgfx::submit(0, view.m_info.cubeMap ? textureCubeProgram
 					: 1 < view.m_info.numLayers ? textureArrayProgram
-												: textureProgram
+					: view.m_sdf ? textureSDFProgram : textureProgram
 					);
 
 			bgfx::frame();
