@@ -205,7 +205,7 @@ void ProcessAverages( v4i* a )
 #ifdef __SSE4_1__
     for( int i=0; i<2; i++ )
     {
-        __m128i d = _mm_loadu_si128((__m128i*)a[i*2].data());
+        __m128i d = _mm_loadu_si128((__m128i*)a[i*2]);
 
         __m128i t = _mm_add_epi16(_mm_mullo_epi16(d, _mm_set1_epi16(31)), _mm_set1_epi16(128));
 
@@ -222,19 +222,19 @@ void ProcessAverages( v4i* a )
 
         __m128i a0 = _mm_or_si128(_mm_slli_epi16(c, 3), _mm_srli_epi16(c, 2));
 
-        _mm_storeu_si128((__m128i*)a[4+i*2].data(), a0);
+        _mm_storeu_si128((__m128i*)a[4+i*2], a0);
     }
 
     for( int i=0; i<2; i++ )
     {
-        __m128i d = _mm_loadu_si128((__m128i*)a[i*2].data());
+        __m128i d = _mm_loadu_si128((__m128i*)a[i*2]);
 
         __m128i t0 = _mm_add_epi16(_mm_mullo_epi16(d, _mm_set1_epi16(15)), _mm_set1_epi16(128));
         __m128i t1 = _mm_srli_epi16(_mm_add_epi16(t0, _mm_srli_epi16(t0, 8)), 8);
 
         __m128i t2 = _mm_or_si128(t1, _mm_slli_epi16(t1, 4));
 
-        _mm_storeu_si128((__m128i*)a[i*2].data(), t2);
+        _mm_storeu_si128((__m128i*)a[i*2], t2);
     }
 #else
     for( int i=0; i<2; i++ )
