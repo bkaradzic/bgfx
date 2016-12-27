@@ -311,19 +311,19 @@ VK_IMPORT_DEVICE
 	};
 	BX_STATIC_ASSERT(VK_SYSTEM_ALLOCATION_SCOPE_RANGE_SIZE == BX_COUNTOF(s_allocScopeName) );
 
-	static void* VKAPI_CALL allocationFunction(void* _userData, size_t _size, size_t _alignment, VkSystemAllocationScope _allocationScope)
+	static void* VKAPI_PTR allocationFunction(void* _userData, size_t _size, size_t _alignment, VkSystemAllocationScope _allocationScope)
 	{
 		BX_UNUSED(_userData, _allocationScope);
 		return bx::alignedAlloc(g_allocator, _size, _alignment, s_allocScopeName[_allocationScope]);
 	}
 
-	void* VKAPI_CALL reallocationFunction(void* _userData, void* _original, size_t _size, size_t _alignment, VkSystemAllocationScope _allocationScope)
+	static void* VKAPI_PTR reallocationFunction(void* _userData, void* _original, size_t _size, size_t _alignment, VkSystemAllocationScope _allocationScope)
 	{
 		BX_UNUSED(_userData, _allocationScope);
 		return bx::alignedRealloc(g_allocator, _original, _size, _alignment, s_allocScopeName[_allocationScope]);
 	}
 
-	void VKAPI_CALL freeFunction(void* _userData, void* _memory)
+	static void VKAPI_PTR freeFunction(void* _userData, void* _memory)
 	{
 		BX_UNUSED(_userData);
 
@@ -335,12 +335,12 @@ VK_IMPORT_DEVICE
 		bx::alignedFree(g_allocator, _memory, BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT);
 	}
 
-	static void VKAPI_CALL internalAllocationNotification(void* _userData, size_t _size, VkInternalAllocationType _allocationType, VkSystemAllocationScope _allocationScope)
+	static void VKAPI_PTR internalAllocationNotification(void* _userData, size_t _size, VkInternalAllocationType _allocationType, VkSystemAllocationScope _allocationScope)
 	{
 		BX_UNUSED(_userData, _size, _allocationType, _allocationScope);
 	}
 
-	static void VKAPI_CALL internalFreeNotification(void* _userData, size_t _size, VkInternalAllocationType _allocationType, VkSystemAllocationScope _allocationScope)
+	static void VKAPI_PTR internalFreeNotification(void* _userData, size_t _size, VkInternalAllocationType _allocationType, VkSystemAllocationScope _allocationScope)
 	{
 		BX_UNUSED(_userData, _size, _allocationType, _allocationScope);
 	}
@@ -705,6 +705,7 @@ VK_IMPORT_DEVICE
 
 		bool init()
 		{
+			BX_UNUSED(s_checkMsaa, s_textureAddress);
 
 			struct ErrorState
 			{
