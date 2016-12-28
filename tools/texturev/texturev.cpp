@@ -281,7 +281,7 @@ struct View
 					m_alpha = false;
 				}
 			}
-			else if (0 == strcmp(_argv[1], "sdf")) 
+			else if (0 == strcmp(_argv[1], "sdf") )
 			{
 				m_sdf ^= true;
 			}
@@ -832,9 +832,6 @@ int _main_(int _argc, char** _argv)
 
 			help = view.m_help;
 
-//			bool b;
-//			ImGui::ShowTestWindow(&b);
-
 			imguiEndFrame();
 
 			if (!bgfx::isValid(texture)
@@ -928,9 +925,11 @@ int _main_(int _argc, char** _argv)
 				| BGFX_STATE_ALPHA_WRITE
 				| (view.m_alpha ? BGFX_STATE_BLEND_ALPHA : BGFX_STATE_NONE)
 				);
-			bgfx::submit(0, view.m_info.cubeMap ? textureCubeProgram
+			bgfx::submit(0
+					,     view.m_info.cubeMap   ? textureCubeProgram
 					: 1 < view.m_info.numLayers ? textureArrayProgram
-					: view.m_sdf ? textureSDFProgram : textureProgram
+					:     view.m_sdf            ? textureSDFProgram
+					:                             textureProgram
 					);
 
 			bgfx::frame();
