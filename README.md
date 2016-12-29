@@ -211,6 +211,12 @@ multiplayer time challenges, and a track creator.
 alt="Go Rally"
 width="640" height="480" border="0" /></a>
 
+## Fiber2D
+
+https://github.com/s1ddok/Fiber2D#fiber2d - Fiber2D - Cross-platform 2D Game
+Engine in pure Swift  
+![Fiber2D Demo Gif](http://imgur.com/CP6d9kT.gif)
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
