@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
- * License: http://www.opensource.org/licenses/BSD-2-Clause
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
 #include "common.h"
@@ -518,7 +518,7 @@ void help(const char* _error = NULL)
 
 	fprintf(stderr
 		, "texturev, bgfx texture viewer tool\n"
-		  "Copyright 2011-2016 Branimir Karadzic. All rights reserved.\n"
+		  "Copyright 2011-2017 Branimir Karadzic. All rights reserved.\n"
 		  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
 		);
 
@@ -777,7 +777,7 @@ int _main_(int _argc, char** _argv)
 
 				ImGui::Text(
 					"texturev, bgfx texture viewer tool " ICON_KI_WRENCH "\n"
-					"Copyright 2011-2016 Branimir Karadzic. All rights reserved.\n"
+					"Copyright 2011-2017 Branimir Karadzic. All rights reserved.\n"
 					"License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n"
 					);
 				ImGui::Separator();
