@@ -1317,6 +1317,24 @@
 </dd></dl>
 
 <dl class="member">
+<dt id="_CPPv2N4bgfx5Stats7numDrawE">
+<span id="bgfx::Stats::numDraw__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_stats_1aa46abb090da88e02c64abb90c3679d73"></span>uint32_t <code class="descname">numDraw</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats7numDrawE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of draw calls submitted. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx5Stats10numComputeE">
+<span id="bgfx::Stats::numCompute__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_stats_1ae9366cfaad6f24d4ab620b3570282c12"></span>uint32_t <code class="descname">numCompute</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats10numComputeE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of compute calls submitted. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx5Stats13maxGpuLatencyE">
+<span id="bgfx::Stats::maxGpuLatency__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_stats_1a009e15fb4e8339ed5259d6451d180de5"></span>uint32_t <code class="descname">maxGpuLatency</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats13maxGpuLatencyE" title="Permalink to this definition">¶</a></dt>
+<dd><p>GPU driver latency. </p>
+</dd></dl>
+
+<dl class="member">
 <dt id="_CPPv2N4bgfx5Stats5widthE">
 <span id="bgfx::Stats::width__uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_stats_1a8a225ad7ff3fad833cd7fb783550d4f3"></span>uint16_t <code class="descname">width</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats5widthE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Backbuffer width in pixels. </p>
@@ -3921,15 +3939,15 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx31checkAvailTransientVertexBufferE8uint32_tRK10VertexDecl">
-<span id="bgfx::checkAvailTransientVertexBuffer__uint32_t.VertexDeclCR"></span><span class="target" id="bgfxnamespacebgfx_1a868cc4f683f9f16e6c3108cfed15ede9"></span>bool <code class="descclassname">bgfx::</code><code class="descname">checkAvailTransientVertexBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx10VertexDeclE" title="bgfx::VertexDecl">VertexDecl</a> &amp;<em>_decl</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx31checkAvailTransientVertexBufferE8uint32_tRK10VertexDecl" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns true if internal transient vertex buffer has enough space. </p>
+<dt id="_CPPv2N4bgfx29getAvailTransientVertexBufferE8uint32_tRK10VertexDecl">
+<span id="bgfx::getAvailTransientVertexBuffer__uint32_t.VertexDeclCR"></span><span class="target" id="bgfxnamespacebgfx_1ae0e28bf67e70d4f7d7fa9d9f1740e2f8"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">getAvailTransientVertexBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx10VertexDeclE" title="bgfx::VertexDecl">VertexDecl</a> &amp;<em>_decl</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx29getAvailTransientVertexBufferE8uint32_tRK10VertexDecl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns number of available vertices. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_check_avail_transient_vertex_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of vertices. </p>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of required vertices. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_decl</span></code> - <p>Vertex declaration.</p>
 </li>
@@ -4096,15 +4114,15 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx30checkAvailTransientIndexBufferE8uint32_t">
-<span id="bgfx::checkAvailTransientIndexBuffer__uint32_t"></span><span class="target" id="bgfxnamespacebgfx_1a911a3c697fd9f340278419b3387034e2"></span>bool <code class="descclassname">bgfx::</code><code class="descname">checkAvailTransientIndexBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx30checkAvailTransientIndexBufferE8uint32_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns true if internal transient index buffer has enough space. </p>
+<dt id="_CPPv2N4bgfx28getAvailTransientIndexBufferE8uint32_t">
+<span id="bgfx::getAvailTransientIndexBuffer__uint32_t"></span><span class="target" id="bgfxnamespacebgfx_1a6f7d3cc2105f88d41cbc1f2f1d0c2bd6"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">getAvailTransientIndexBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx28getAvailTransientIndexBufferE8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns number of available indices. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_check_avail_transient_index_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_get_avail_transient_index_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of indices.</p>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of required indices.</p>
 </li>
 </ul>
 </dd>
@@ -5151,15 +5169,15 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <div class="section" id="instance-buffer">
 <h3>Instance Buffer<a class="headerlink" href="#instance-buffer" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
-<dt id="_CPPv2N4bgfx28checkAvailInstanceDataBufferE8uint32_t8uint16_t">
-<span id="bgfx::checkAvailInstanceDataBuffer__uint32_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1a38f2fee92a6561565993968a371d990f"></span>bool <code class="descclassname">bgfx::</code><code class="descname">checkAvailInstanceDataBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, uint16_t <em>_stride</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx28checkAvailInstanceDataBufferE8uint32_t8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns true if internal instance data buffer has enough space. </p>
+<dt id="_CPPv2N4bgfx26getAvailInstanceDataBufferE8uint32_t8uint16_t">
+<span id="bgfx::getAvailInstanceDataBuffer__uint32_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1abf9468e87a327e237d561229b5b917cb"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">getAvailInstanceDataBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, uint16_t <em>_stride</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx26getAvailInstanceDataBufferE8uint32_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns number of available instance buffer slots. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_check_avail_instance_data_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of instances. </p>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of required instances. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_stride</span></code> - <p>Stride per instance.</p>
 </li>
