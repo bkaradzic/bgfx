@@ -305,7 +305,7 @@ class Particles : public entry::AppI
 
 			// Use debug font to print information about this example.
 			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/xx-particles");
+			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/32-particles");
 			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Particles.");
 			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
