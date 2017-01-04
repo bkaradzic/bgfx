@@ -63,7 +63,7 @@ struct EmitterUniforms
 struct EmitterHandle { uint16_t idx; };
 
 ///
-void psInit(bx::AllocatorI* _allocator = NULL);
+void psInit(uint16_t _maxEmitters = 64, bx::AllocatorI* _allocator = NULL);
 
 ///
 void psShutdown();

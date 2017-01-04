@@ -110,7 +110,7 @@ struct Emitter
 //		if (ImGui::CollapsingHeader("General") )
 		{
 			if (ImGui::Combo("Shape", (int*)&m_shape, s_shapeNames, BX_COUNTOF(s_shapeNames) )
-					||  ImGui::Combo("Direction", (int*)&m_direction, s_directionName, BX_COUNTOF(s_directionName) ) )
+			||  ImGui::Combo("Direction", (int*)&m_direction, s_directionName, BX_COUNTOF(s_directionName) ) )
 			{
 				psDestroyEmitter(m_handle);
 				m_handle = psCreateEmitter(m_shape, m_direction, 1024);
