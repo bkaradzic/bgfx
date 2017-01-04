@@ -440,11 +440,15 @@ extern int LoadEXRFromMemory(float *out_rgba, const unsigned char *memory,
 #include "zfp.h"
 #endif
 
+#if __cplusplus > 199711L
+// C++11
+#include <cstdint>
+#endif // __cplusplus > 199711L
+
 namespace tinyexr {
 
 #if __cplusplus > 199711L
 // C++11
-#include <cstdint>
 typedef uint64_t tinyexr_uint64;
 typedef int64_t tinyexr_int64;
 #else
