@@ -275,14 +275,17 @@ struct Emitter
 		}
 	}
 
-	uint32_t render(const float* _mtxView, const float* _eye, uint32_t _first, ParticleSort* _outSort, PosColorTexCoord0Vertex* _outVertices) const
+	uint32_t render(const float* _mtxView, const float* _eye, uint32_t _first, uint32_t _max, ParticleSort* _outSort, PosColorTexCoord0Vertex* _outVertices) const
 	{
 		bx::EaseFn easeRgba  = s_easeFunc[m_uniforms.m_easeRgba];
 		bx::EaseFn easePos   = s_easeFunc[m_uniforms.m_easePos];
 		bx::EaseFn easeBlend = s_easeFunc[m_uniforms.m_easeBlend];
 		bx::EaseFn easeScale = s_easeFunc[m_uniforms.m_easeScale];
 
-		for (uint32_t jj = 0, num = m_num; jj < num; ++jj)
+		for (uint32_t jj = 0, num = m_num, current = _first
+			; jj < num && current < _max
+			; ++jj, ++current
+			)
 		{
 			const Particle& particle = m_particles[jj];
 
@@ -300,7 +303,6 @@ struct Emitter
 			float pos[3];
 			bx::vec3Lerp(pos, p0, p1, ttPos);
 
-			const uint32_t current = _first + jj;
 			ParticleSort& sort = _outSort[current];
 			float tmp[3];
 			bx::vec3Sub(tmp, _eye, pos);
@@ -483,57 +485,70 @@ struct ParticleSystem
 		{
 			bgfx::TransientVertexBuffer tvb;
 			bgfx::TransientIndexBuffer tib;
-			bgfx::allocTransientBuffers(&tvb
-					, PosColorTexCoord0Vertex::ms_decl
-					, m_num*4
-					, &tib
-					, m_num*6
-					);
-			PosColorTexCoord0Vertex* vertices = (PosColorTexCoord0Vertex*)tvb.data;
 
-			ParticleSort* particleSort = (ParticleSort*)BX_ALLOC(m_allocator, m_num*sizeof(ParticleSort) );
-
-			uint32_t pos = 0;
-			for (uint16_t ii = 0, num = m_emitterAlloc.getNumHandles(); ii < num; ++ii)
-			{
-				const uint16_t idx = m_emitterAlloc.getHandleAt(ii);
-				const Emitter& emitter = m_emitter[idx];
-				pos += emitter.render(_mtxView, _eye, pos, particleSort, vertices);
-			}
-
-			qsort(particleSort
+			const uint32_t numVertices = bgfx::getAvailTransientVertexBuffer(m_num*4, PosColorTexCoord0Vertex::ms_decl);
+			const uint32_t numIndices  = bgfx::getAvailTransientIndexBuffer(m_num*6);
+			const uint32_t max = bx::uint32_min(numVertices/4, numIndices/6);
+			BX_WARN(m_num == max
+				, "Truncating transient buffer for particles to maximum available (requested %d, available %d)."
 				, m_num
-				, sizeof(ParticleSort)
-				, particleSortFn
+				, max
 				);
 
-			uint16_t* indices = (uint16_t*)tib.data;
-			for (uint32_t ii = 0; ii < m_num; ++ii)
+			if (0 < max)
 			{
-				const ParticleSort& sort = particleSort[ii];
-				uint16_t* index = &indices[ii*6];
-				uint16_t idx = (uint16_t)sort.idx;
-				index[0] = idx*4+0;
-				index[1] = idx*4+1;
-				index[2] = idx*4+2;
-				index[3] = idx*4+2;
-				index[4] = idx*4+3;
-				index[5] = idx*4+0;
+				bgfx::allocTransientBuffers(&tvb
+					, PosColorTexCoord0Vertex::ms_decl
+					, max*4
+					, &tib
+					, max*6
+					);
+				PosColorTexCoord0Vertex* vertices = (PosColorTexCoord0Vertex*)tvb.data;
+
+				ParticleSort* particleSort = (ParticleSort*)BX_ALLOC(m_allocator, max*sizeof(ParticleSort) );
+
+				uint32_t pos = 0;
+				for (uint16_t ii = 0, numEmitters = m_emitterAlloc.getNumHandles(); ii < numEmitters; ++ii)
+				{
+					const uint16_t idx = m_emitterAlloc.getHandleAt(ii);
+					const Emitter& emitter = m_emitter[idx];
+					pos += emitter.render(_mtxView, _eye, pos, max, particleSort, vertices);
+				}
+
+				qsort(particleSort
+					, max
+					, sizeof(ParticleSort)
+					, particleSortFn
+					);
+
+				uint16_t* indices = (uint16_t*)tib.data;
+				for (uint32_t ii = 0; ii < max; ++ii)
+				{
+					const ParticleSort& sort = particleSort[ii];
+					uint16_t* index = &indices[ii*6];
+					uint16_t idx = (uint16_t)sort.idx;
+					index[0] = idx*4+0;
+					index[1] = idx*4+1;
+					index[2] = idx*4+2;
+					index[3] = idx*4+2;
+					index[4] = idx*4+3;
+					index[5] = idx*4+0;
+				}
+
+				BX_FREE(m_allocator, particleSort);
+
+				bgfx::setState(0
+					| BGFX_STATE_RGB_WRITE
+					| BGFX_STATE_ALPHA_WRITE
+					| BGFX_STATE_DEPTH_TEST_LESS
+					| BGFX_STATE_CULL_CW
+					| BGFX_STATE_BLEND_NORMAL
+					);
+				bgfx::setVertexBuffer(&tvb);
+				bgfx::setIndexBuffer(&tib);
+				bgfx::setTexture(0, s_texColor, m_particleTexture);
+				bgfx::submit(_view, m_particleProgram);
 			}
-
-			BX_FREE(m_allocator, particleSort);
-
-			bgfx::setState(0
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
-				| BGFX_STATE_DEPTH_TEST_LESS
-				| BGFX_STATE_CULL_CW
-				| BGFX_STATE_BLEND_NORMAL
-				);
-			bgfx::setVertexBuffer(&tvb);
-			bgfx::setIndexBuffer(&tib);
-			bgfx::setTexture(0, s_texColor, m_particleTexture);
-			bgfx::submit(_view, m_particleProgram);
 		}
 	}
 
