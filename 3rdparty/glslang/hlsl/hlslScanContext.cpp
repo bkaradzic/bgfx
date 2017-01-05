@@ -169,6 +169,10 @@ void HlslScanContext::fillInKeywordMap()
     (*KeywordMap)["uint3"] =                   EHTokUint3;
     (*KeywordMap)["uint4"] =                   EHTokUint4;
 
+    (*KeywordMap)["half1"] =                   EHTokHalf1;
+    (*KeywordMap)["half2"] =                   EHTokHalf2;
+    (*KeywordMap)["half3"] =                   EHTokHalf3;
+    (*KeywordMap)["half4"] =                   EHTokHalf4;
     (*KeywordMap)["min16float1"] =             EHTokMin16float1;
     (*KeywordMap)["min16float2"] =             EHTokMin16float2;
     (*KeywordMap)["min16float3"] =             EHTokMin16float3;
@@ -579,6 +583,10 @@ EHlslTokenClass HlslScanContext::tokenizeIdentifier()
     case EHTokUint2:
     case EHTokUint3:
     case EHTokUint4:
+    case EHTokHalf1:
+    case EHTokHalf2:
+    case EHTokHalf3:
+    case EHTokHalf4:
     case EHTokMin16float1:
     case EHTokMin16float2:
     case EHTokMin16float3:

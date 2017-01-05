@@ -571,46 +571,61 @@ int TPpContext::CPPifdef(int defined, TPpToken* ppToken)
     return token;
 }
 
-// Handle #include
+// Handle #include ...
+// TODO: Handle macro expansions for the header name
 int TPpContext::CPPinclude(TPpToken* ppToken)
 {
     const TSourceLoc directiveLoc = ppToken->loc;
+    TShader::Includer::IncludeType includeType = TShader::Includer::EIncludeRelative;
     int token = scanToken(ppToken);
+
+    // handle <header-name>-style #include
+    if (token == '<') {
+        includeType = TShader::Includer::EIncludeStandard;
+        token = scanHeaderName(ppToken, '>');
+    }
+    // otherwise ppToken already has the header name and it was "header-name" style
+
     if (token != PpAtomConstString) {
-        // TODO: handle angle brackets.
-        parseContext.ppError(directiveLoc, "must be followed by a file designation", "#include", "");
+        parseContext.ppError(directiveLoc, "must be followed by a header name", "#include", "");
+        return token;
+    }
+
+    // Make a copy of the name because it will be overwritten by the next token scan.
+    const std::string filename = ppToken->name;
+    token = scanToken(ppToken);
+    if (token != '\n') {
+        if (token == EndOfInput)
+            parseContext.ppError(ppToken->loc, "expected newline", "#include", "");
+        else
+            parseContext.ppError(ppToken->loc, "extra content after header name", "#include", "");
     } else {
-        // Make a copy of the name because it will be overwritten by the next token scan.
-        const std::string filename = ppToken->name;
-        token = scanToken(ppToken);
-        if (token != '\n' && token != EndOfInput) {
-            parseContext.ppError(ppToken->loc, "extra content after file designation", "#include", "");
+        TShader::Includer::IncludeResult* res = includer.include(filename.c_str(), includeType, currentSourceFile.c_str(), includeStack.size() + 1);
+        if (res && !res->file_name.empty()) {
+            if (res->file_data && res->file_length) {
+                const bool forNextLine = parseContext.lineDirectiveShouldSetNextLine();
+                std::ostringstream prologue;
+                std::ostringstream epilogue;
+                prologue << "#line " << forNextLine << " " << "\"" << res->file_name << "\"\n";
+                epilogue << (res->file_data[res->file_length - 1] == '\n'? "" : "\n") << "#line " << directiveLoc.line + forNextLine << " " << directiveLoc.getStringNameOrNum() << "\n";
+                pushInput(new TokenizableIncludeFile(directiveLoc, prologue.str(), res, epilogue.str(), this));
+            }
+            // At EOF, there's no "current" location anymore.
+            if (token != EndOfInput)
+                parseContext.setCurrentColumn(0);
+            // Don't accidentally return EndOfInput, which will end all preprocessing.
+            return '\n';
         } else {
-            TShader::Includer::IncludeResult* res = includer.include(filename.c_str(), TShader::Includer::EIncludeRelative, currentSourceFile.c_str(), includeStack.size() + 1);
-            if (res && !res->file_name.empty()) {
-                if (res->file_data && res->file_length) {
-                    const bool forNextLine = parseContext.lineDirectiveShouldSetNextLine();
-                    std::ostringstream prologue;
-                    std::ostringstream epilogue;
-                    prologue << "#line " << forNextLine << " " << "\"" << res->file_name << "\"\n";
-                    epilogue << (res->file_data[res->file_length - 1] == '\n'? "" : "\n") << "#line " << directiveLoc.line + forNextLine << " " << directiveLoc.getStringNameOrNum() << "\n";
-                    pushInput(new TokenizableIncludeFile(directiveLoc, prologue.str(), res, epilogue.str(), this));
-                }
-                // At EOF, there's no "current" location anymore.
-                if (token != EndOfInput) parseContext.setCurrentColumn(0);
-                // Don't accidentally return EndOfInput, which will end all preprocessing.
-                return '\n';
-            } else {
-                std::string message =
-                    res ? std::string(res->file_data, res->file_length)
-                        : std::string("Could not process include directive");
-                parseContext.ppError(directiveLoc, message.c_str(), "#include", "");
-                if (res) {
-                    includer.releaseInclude(res);
-                }
+            std::string message =
+                res ? std::string(res->file_data, res->file_length)
+                    : std::string("Could not process include directive");
+            parseContext.ppError(directiveLoc, message.c_str(), "#include", "");
+            if (res) {
+                includer.releaseInclude(res);
             }
         }
     }
+
     return token;
 }
 
@@ -911,6 +926,38 @@ int TPpContext::readCPPline(TPpToken* ppToken)
     return token;
 }
 
+// Context-dependent parsing of a #include <header-name>.
+// Assumes no macro expansions etc. are being done; the name is just on the current input.
+// Always creates a name and returns PpAtomicConstString, unless we run out of input.
+int TPpContext::scanHeaderName(TPpToken* ppToken, char delimit)
+{
+    bool tooLong = false;
+
+    if (inputStack.empty())
+        return EndOfInput;
+
+    int len = 0;
+    ppToken->name[0] = '\0';
+    do {
+        int ch = inputStack.back()->getch();
+
+        // done yet?
+        if (ch == delimit) {
+            ppToken->name[len] = '\0';
+            if (tooLong)
+                parseContext.ppError(ppToken->loc, "header name too long", "", "");
+            return PpAtomConstString;
+        } else if (ch == EndOfInput)
+            return EndOfInput;
+
+        // found a character to expand the name with
+        if (len < MaxTokenLength)
+            ppToken->name[len++] = ch;
+        else
+            tooLong = true;
+    } while (true);
+}
+
 // Macro-expand a macro argument 'arg' to create 'expandedArg'.
 // Does not replace 'arg'.
 // Returns nullptr if no expanded argument is created.
@@ -934,12 +981,20 @@ TPpContext::TokenStream* TPpContext::PrescanMacroArg(TokenStream& arg, TPpToken*
     TokenStream* expandedArg = new TokenStream;
     pushInput(new tMarkerInput(this));
     pushTokenStreamInput(arg);
-    while ((token = scanToken(ppToken)) != tMarkerInput::marker) {
+    while ((token = scanToken(ppToken)) != tMarkerInput::marker && token != EndOfInput) {
         if (token == PpAtomIdentifier && MacroExpand(ppToken, false, newLineOkay) != 0)
             continue;
         RecordToken(*expandedArg, token, ppToken);
     }
-    popInput();
+
+    if (token == EndOfInput) {
+        // MacroExpand ate the marker, so had bad input, recover
+        delete expandedArg;
+        expandedArg = nullptr;
+    } else {
+        // remove the marker
+        popInput();
+    }
 
     return expandedArg;
 }
@@ -1133,7 +1188,7 @@ int TPpContext::MacroExpand(TPpToken* ppToken, bool expandUndef, bool newLineOka
             depth = 0;
             while (1) {
                 token = scanToken(ppToken);
-                if (token == EndOfInput) {
+                if (token == EndOfInput || token == tMarkerInput::marker) {
                     parseContext.ppError(loc, "End of input in macro", "macro expansion", atomStrings.getString(macroAtom));
                     delete in;
                     return 0;

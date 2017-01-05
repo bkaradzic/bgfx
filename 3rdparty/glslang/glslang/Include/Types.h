@@ -1223,6 +1223,16 @@ public:
             typeName = NewPoolTString(copyOf.typeName->c_str());
     }
 
+    // Recursively make temporary
+    void makeTemporary()
+    {
+        getQualifier().makeTemporary();
+
+        if (isStruct())
+            for (unsigned int i = 0; i < structure->size(); ++i)
+                (*structure)[i].type->makeTemporary();
+    }
+
     TType* clone() const
     {
         TType *newType = new TType();
@@ -1309,6 +1319,20 @@ public:
     virtual bool isImage() const   { return basicType == EbtSampler && getSampler().isImage(); }
     virtual bool isSubpass() const { return basicType == EbtSampler && getSampler().isSubpass(); }
 
+    // Return true if this is interstage IO
+    virtual bool isBuiltInInterstageIO() const
+    {
+        switch (getQualifier().builtIn) {
+        case EbvPosition:
+        case EbvPointSize:
+        case EbvClipDistance:
+        case EbvCullDistance:
+            return true;
+        default:
+            return false;
+        }
+    }
+ 
     // Recursively checks if the type contains the given basic type
     virtual bool containsBasicType(TBasicType checkType) const
     {
@@ -1374,6 +1398,34 @@ public:
                 return true;
         }
         return false;
+    }
+
+    // Recursively checks if the type contains an interstage IO builtin
+    virtual bool containsBuiltInInterstageIO() const
+    {
+        if (isBuiltInInterstageIO())
+            return true;
+
+        if (! structure)
+            return false;
+        for (unsigned int i = 0; i < structure->size(); ++i) {
+            if ((*structure)[i].type->containsBuiltInInterstageIO())
+                return true;
+        }
+        return false;
+    }
+
+    // Recursively checks whether a struct contains only interstage IO
+    virtual bool containsOnlyBuiltInInterstageIO() const
+    {
+        if (! structure)
+            return isBuiltInInterstageIO();
+
+        for (unsigned int i = 0; i < structure->size(); ++i) {
+            if (!(*structure)[i].type->containsOnlyBuiltInInterstageIO())
+                return false;
+        }
+        return true;
     }
 
     virtual bool containsNonOpaque() const

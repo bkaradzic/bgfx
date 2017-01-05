@@ -1,8 +1,13 @@
-ERROR: 0:8000: '#include' : must be followed by a file designation 
-ERROR: 0:8001: '#include' : must be followed by a file designation 
+ERROR: 0:8000: '#include' : must be followed by a header name 
+ERROR: 0:8001: '#include' : must be followed by a header name 
 ERROR: 0:8002: '#include' : unexpected include directive 
-ERROR: 0:8003: '#include' : extra content after file designation 
-ERROR: 0:8004: '#include' : unexpected include directive 
-ERROR: 5 compilation errors.  No code generated.
+ERROR: 0:8003: '#include' : unexpected include directive 
+ERROR: 0:8004: '#include' : extra content after header name 
+ERROR: 0:8005: '#include' : extra content after header name 
+ERROR: 0:8007: '#include' : unexpected include directive 
+ERROR: 0:8009: '' : header name too long 
+ERROR: 0:8009: '#include' : unexpected include directive 
+ERROR: 0:8010: '#include' : expected newline 
+ERROR: 10 compilation errors.  No code generated.
 
 

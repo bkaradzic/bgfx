@@ -111,6 +111,7 @@ namespace glslang {
         bool acceptDefaultLabel(TIntermNode*&);
         void acceptArraySpecifier(TArraySizes*&);
         void acceptPostDecls(TQualifier&);
+        bool acceptDefaultParameterDeclaration(const TType&, TIntermTyped*&);
 
         HlslParseContext& parseContext;  // state of parsing and helper functions for building the intermediate
         TIntermediate& intermediate;     // the final product, the intermediate representation, includes the AST

@@ -4,4 +4,3 @@
 #include "foo"
 #include "foo" garbage
 #include "no-eol"
-

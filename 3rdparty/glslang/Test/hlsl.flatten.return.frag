@@ -9,7 +9,7 @@ struct PS_OUTPUT
 
 PS_OUTPUT Func1()
 {
-    return PS_OUTPUT(float4(1), 2, 3, 4);
+    return PS_OUTPUT(float4(1,1,1,1), 2, 3, 4);
 }
 
 PS_OUTPUT main()

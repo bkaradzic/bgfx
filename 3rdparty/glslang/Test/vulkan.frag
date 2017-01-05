@@ -92,4 +92,6 @@ void callUserTexture()
     userTexture((sampler2D(t2d,s)), vTexCoord);                          // ERROR, not point of use
     userTexture((sampler2D(t2d,s), sampler2D(t2d,s)), vTexCoord);        // ERROR, not point of use
     userTexture(cond ? sampler2D(t2d,s) : sampler2D(t2d,s), vTexCoord);  // ERROR, no ?:, not point of use
+
+    gl_NumSamples;   // ERROR, not for Vulkan
 }

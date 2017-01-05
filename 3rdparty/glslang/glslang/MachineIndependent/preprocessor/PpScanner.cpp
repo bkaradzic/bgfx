@@ -688,6 +688,9 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
             }
             break;
         case '"':
+            // TODO: If this gets enhanced to handle escape sequences, or
+            // anything that is different than what #include needs, then
+            // #include needs to use scanHeaderName() for this.
             ch = getch();
             while (ch != '"' && ch != '\n' && ch != EndOfInput) {
                 if (len < MaxTokenLength) {

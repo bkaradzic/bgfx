@@ -9,7 +9,7 @@ gl_FragCoord origin is upper left
 0:34  Function Definition: PixelShaderFunction(vf4;struct-IN_S-vf4-b1-vf1-vf2-b1-b1-b1-vf41; (temp 4-component vector of float)
 0:34    Function Parameters: 
 0:34      'input' (layout(location=0 ) in 4-component vector of float)
-0:34      's' (in structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:34      's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool Face ff1, layout(offset=4 ) temp bool ff2, layout(binding=0 offset=4 ) temp bool ff3, layout(binding=0 offset=4 ) temp 4-component vector of float ff4})
 0:?     Sequence
 0:39      Compare Equal (temp bool)
 0:39        's3' (temp structure{temp 3-component vector of bool b3})
@@ -19,7 +19,10 @@ gl_FragCoord origin is upper left
 0:40          's2' (global structure{temp 4-component vector of float i})
 0:40          Constant:
 0:40            0 (const int)
-0:?         'ff4' (layout(location=7 binding=0 offset=4 ) in 4-component vector of float)
+0:40        ff4: direct index for structure (layout(binding=0 offset=4 ) temp 4-component vector of float)
+0:40          's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool Face ff1, layout(offset=4 ) temp bool ff2, layout(binding=0 offset=4 ) temp bool ff3, layout(binding=0 offset=4 ) temp 4-component vector of float ff4})
+0:40          Constant:
+0:40            7 (const int)
 0:42      Sequence
 0:42        move second child to first child (temp 4-component vector of float)
 0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
@@ -28,14 +31,7 @@ gl_FragCoord origin is upper left
 0:?   Linker Objects
 0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
 0:?     'input' (layout(location=0 ) in 4-component vector of float)
-0:?     'a' (layout(location=1 ) smooth in 4-component vector of float)
-0:?     'b' (layout(location=2 ) flat in bool)
-0:?     'c' (layout(location=3 ) centroid noperspective in 1-component vector of float)
-0:?     'd' (layout(location=4 ) centroid sample in 2-component vector of float)
-0:?     'ff1' (in bool Face)
-0:?     'ff2' (layout(location=5 offset=4 ) in bool)
-0:?     'ff3' (layout(location=6 binding=0 offset=4 ) in bool)
-0:?     'ff4' (layout(location=7 binding=0 offset=4 ) in 4-component vector of float)
+0:?     's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool Face ff1, layout(offset=4 ) temp bool ff2, layout(binding=0 offset=4 ) temp bool ff3, layout(binding=0 offset=4 ) temp 4-component vector of float ff4})
 0:?     's2' (global structure{temp 4-component vector of float i})
 0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform structure{temp bool b, temp bool c, temp 4-component vector of float a, temp 4-component vector of float d} s1, layout(binding=5 offset=1620 ) uniform float ff5, layout(binding=8 offset=1636 ) uniform float ff6})
 
@@ -49,7 +45,7 @@ gl_FragCoord origin is upper left
 0:34  Function Definition: PixelShaderFunction(vf4;struct-IN_S-vf4-b1-vf1-vf2-b1-b1-b1-vf41; (temp 4-component vector of float)
 0:34    Function Parameters: 
 0:34      'input' (layout(location=0 ) in 4-component vector of float)
-0:34      's' (in structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:34      's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool Face ff1, layout(offset=4 ) temp bool ff2, layout(binding=0 offset=4 ) temp bool ff3, layout(binding=0 offset=4 ) temp 4-component vector of float ff4})
 0:?     Sequence
 0:39      Compare Equal (temp bool)
 0:39        's3' (temp structure{temp 3-component vector of bool b3})
@@ -59,7 +55,10 @@ gl_FragCoord origin is upper left
 0:40          's2' (global structure{temp 4-component vector of float i})
 0:40          Constant:
 0:40            0 (const int)
-0:?         'ff4' (layout(location=7 binding=0 offset=4 ) in 4-component vector of float)
+0:40        ff4: direct index for structure (layout(binding=0 offset=4 ) temp 4-component vector of float)
+0:40          's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool Face ff1, layout(offset=4 ) temp bool ff2, layout(binding=0 offset=4 ) temp bool ff3, layout(binding=0 offset=4 ) temp 4-component vector of float ff4})
+0:40          Constant:
+0:40            7 (const int)
 0:42      Sequence
 0:42        move second child to first child (temp 4-component vector of float)
 0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
@@ -68,25 +67,18 @@ gl_FragCoord origin is upper left
 0:?   Linker Objects
 0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
 0:?     'input' (layout(location=0 ) in 4-component vector of float)
-0:?     'a' (layout(location=1 ) smooth in 4-component vector of float)
-0:?     'b' (layout(location=2 ) flat in bool)
-0:?     'c' (layout(location=3 ) centroid noperspective in 1-component vector of float)
-0:?     'd' (layout(location=4 ) centroid sample in 2-component vector of float)
-0:?     'ff1' (in bool Face)
-0:?     'ff2' (layout(location=5 offset=4 ) in bool)
-0:?     'ff3' (layout(location=6 binding=0 offset=4 ) in bool)
-0:?     'ff4' (layout(location=7 binding=0 offset=4 ) in 4-component vector of float)
+0:?     's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool Face ff1, layout(offset=4 ) temp bool ff2, layout(binding=0 offset=4 ) temp bool ff3, layout(binding=0 offset=4 ) temp 4-component vector of float ff4})
 0:?     's2' (global structure{temp 4-component vector of float i})
 0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform structure{temp bool b, temp bool c, temp 4-component vector of float a, temp 4-component vector of float d} s1, layout(binding=5 offset=1620 ) uniform float ff5, layout(binding=8 offset=1636 ) uniform float ff6})
 
 // Module Version 10000
 // Generated by (magic number): 80001
-// Id's are bound by 50
+// Id's are bound by 44
 
                               Capability Shader
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
-                              EntryPoint Fragment 4  "PixelShaderFunction" 25 30 31 34 36 38 41 42 43 44
+                              EntryPoint Fragment 4  "PixelShaderFunction" 27 35 36
                               ExecutionMode 4 OriginUpperLeft
                               Name 4  "PixelShaderFunction"
                               Name 8  "FS"
@@ -95,54 +87,41 @@ gl_FragCoord origin is upper left
                               Name 19  ""
                               MemberName 19 0  "i"
                               Name 21  "s2"
-                              Name 25  "ff4"
-                              Name 30  "@entryPointOutput"
-                              Name 31  "input"
-                              Name 34  "a"
-                              Name 36  "b"
-                              Name 38  "c"
-                              Name 41  "d"
-                              Name 42  "ff1"
-                              Name 43  "ff2"
-                              Name 44  "ff3"
-                              Name 46  "myS"
-                              MemberName 46(myS) 0  "b"
-                              MemberName 46(myS) 1  "c"
-                              MemberName 46(myS) 2  "a"
-                              MemberName 46(myS) 3  "d"
-                              Name 47  "$Global"
-                              MemberName 47($Global) 0  "s1"
-                              MemberName 47($Global) 1  "ff5"
-                              MemberName 47($Global) 2  "ff6"
-                              Name 49  ""
-                              Decorate 25(ff4) Offset 4
-                              Decorate 25(ff4) Location 7
-                              Decorate 25(ff4) Binding 0
-                              Decorate 30(@entryPointOutput) Location 0
-                              Decorate 31(input) Location 0
-                              Decorate 34(a) Location 1
-                              Decorate 36(b) Flat
-                              Decorate 36(b) Location 2
-                              Decorate 38(c) NoPerspective
-                              Decorate 38(c) Centroid
-                              Decorate 38(c) Location 3
-                              Decorate 41(d) Centroid
-                              Decorate 41(d) Location 4
-                              Decorate 42(ff1) BuiltIn FrontFacing
-                              Decorate 43(ff2) Offset 4
-                              Decorate 43(ff2) Location 5
-                              Decorate 44(ff3) Offset 4
-                              Decorate 44(ff3) Location 6
-                              Decorate 44(ff3) Binding 0
-                              MemberDecorate 46(myS) 0 Offset 0
-                              MemberDecorate 46(myS) 1 Offset 4
-                              MemberDecorate 46(myS) 2 Offset 16
-                              MemberDecorate 46(myS) 3 Offset 32
-                              MemberDecorate 47($Global) 0 Offset 0
-                              MemberDecorate 47($Global) 1 Offset 1620
-                              MemberDecorate 47($Global) 2 Offset 1636
-                              Decorate 47($Global) Block
-                              Decorate 49 DescriptorSet 0
+                              Name 25  "IN_S"
+                              MemberName 25(IN_S) 0  "a"
+                              MemberName 25(IN_S) 1  "b"
+                              MemberName 25(IN_S) 2  "c"
+                              MemberName 25(IN_S) 3  "d"
+                              MemberName 25(IN_S) 4  "ff1"
+                              MemberName 25(IN_S) 5  "ff2"
+                              MemberName 25(IN_S) 6  "ff3"
+                              MemberName 25(IN_S) 7  "ff4"
+                              Name 27  "s"
+                              Name 35  "@entryPointOutput"
+                              Name 36  "input"
+                              Name 40  "myS"
+                              MemberName 40(myS) 0  "b"
+                              MemberName 40(myS) 1  "c"
+                              MemberName 40(myS) 2  "a"
+                              MemberName 40(myS) 3  "d"
+                              Name 41  "$Global"
+                              MemberName 41($Global) 0  "s1"
+                              MemberName 41($Global) 1  "ff5"
+                              MemberName 41($Global) 2  "ff6"
+                              Name 43  ""
+                              MemberDecorate 25(IN_S) 4 BuiltIn FrontFacing
+                              Decorate 27(s) Location 1
+                              Decorate 35(@entryPointOutput) Location 0
+                              Decorate 36(input) Location 0
+                              MemberDecorate 40(myS) 0 Offset 0
+                              MemberDecorate 40(myS) 1 Offset 4
+                              MemberDecorate 40(myS) 2 Offset 16
+                              MemberDecorate 40(myS) 3 Offset 32
+                              MemberDecorate 41($Global) 0 Offset 0
+                              MemberDecorate 41($Global) 1 Offset 1620
+                              MemberDecorate 41($Global) 2 Offset 1636
+                              Decorate 41($Global) Block
+                              Decorate 43 DescriptorSet 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeBool
@@ -156,28 +135,21 @@ gl_FragCoord origin is upper left
           21(s2):     20(ptr) Variable Private
               22:             TypeInt 32 1
               23:     22(int) Constant 0
-              24:             TypePointer Input 18(fvec4)
-         25(ff4):     24(ptr) Variable Input
-              27:             TypePointer Private 18(fvec4)
-              29:             TypePointer Output 18(fvec4)
-30(@entryPointOutput):     29(ptr) Variable Output
-       31(input):     24(ptr) Variable Input
-           34(a):     24(ptr) Variable Input
-              35:             TypePointer Input 6(bool)
-           36(b):     35(ptr) Variable Input
-              37:             TypePointer Input 17(float)
-           38(c):     37(ptr) Variable Input
-              39:             TypeVector 17(float) 2
-              40:             TypePointer Input 39(fvec2)
-           41(d):     40(ptr) Variable Input
-         42(ff1):     35(ptr) Variable Input
-         43(ff2):     35(ptr) Variable Input
-         44(ff3):     35(ptr) Variable Input
-              45:             TypeInt 32 0
-         46(myS):             TypeStruct 45(int) 45(int) 18(fvec4) 18(fvec4)
-     47($Global):             TypeStruct 46(myS) 17(float) 17(float)
-              48:             TypePointer Uniform 47($Global)
-              49:     48(ptr) Variable Uniform
+              24:             TypeVector 17(float) 2
+        25(IN_S):             TypeStruct 18(fvec4) 6(bool) 17(float) 24(fvec2) 6(bool) 6(bool) 6(bool) 18(fvec4)
+              26:             TypePointer Input 25(IN_S)
+           27(s):     26(ptr) Variable Input
+              28:     22(int) Constant 7
+              29:             TypePointer Input 18(fvec4)
+              32:             TypePointer Private 18(fvec4)
+              34:             TypePointer Output 18(fvec4)
+35(@entryPointOutput):     34(ptr) Variable Output
+       36(input):     29(ptr) Variable Input
+              39:             TypeInt 32 0
+         40(myS):             TypeStruct 39(int) 39(int) 18(fvec4) 18(fvec4)
+     41($Global):             TypeStruct 40(myS) 17(float) 17(float)
+              42:             TypePointer Uniform 41($Global)
+              43:     42(ptr) Variable Uniform
 4(PixelShaderFunction):           2 Function None 3
                5:             Label
           10(s3):      9(ptr) Variable Function
@@ -187,10 +159,11 @@ gl_FragCoord origin is upper left
               14:    7(bvec3) CompositeExtract 12 0
               15:    7(bvec3) LogicalEqual 13 14
               16:     6(bool) All 15
-              26:   18(fvec4) Load 25(ff4)
-              28:     27(ptr) AccessChain 21(s2) 23
-                              Store 28 26
-              32:   18(fvec4) Load 31(input)
-                              Store 30(@entryPointOutput) 32
+              30:     29(ptr) AccessChain 27(s) 28
+              31:   18(fvec4) Load 30
+              33:     32(ptr) AccessChain 21(s2) 23
+                              Store 33 31
+              37:   18(fvec4) Load 36(input)
+                              Store 35(@entryPointOutput) 37
                               Return
                               FunctionEnd

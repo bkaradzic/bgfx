@@ -368,6 +368,7 @@ protected:
     int CPPversion(TPpToken * ppToken);
     int CPPextension(TPpToken * ppToken);
     int readCPPline(TPpToken * ppToken);
+    int scanHeaderName(TPpToken* ppToken, char delimit);
     TokenStream* PrescanMacroArg(TokenStream&, TPpToken*, bool newLineOkay);
     int MacroExpand(TPpToken* ppToken, bool expandUndef, bool newLineOkay);
 

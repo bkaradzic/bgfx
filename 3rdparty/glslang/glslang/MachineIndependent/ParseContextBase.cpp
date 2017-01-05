@@ -348,13 +348,18 @@ const TFunction* TParseContextBase::selectFunction(
     for (auto it = candidateList.begin(); it != candidateList.end(); ++it) {
         const TFunction& candidate = *(*it);
 
-        // to even be a potential match, number of arguments has to match
-        if (call.getParamCount() != candidate.getParamCount())
+        // to even be a potential match, number of arguments must be >= the number of
+        // fixed (non-default) parameters, and <= the total (including parameter with defaults).
+        if (call.getParamCount() < candidate.getFixedParamCount() ||
+            call.getParamCount() > candidate.getParamCount())
             continue;
 
         // see if arguments are convertible
         bool viable = true;
-        for (int param = 0; param < candidate.getParamCount(); ++param) {
+
+        // The call can have fewer parameters than the candidate, if some have defaults.
+        const int paramCount = std::min(call.getParamCount(), candidate.getParamCount());
+        for (int param = 0; param < paramCount; ++param) {
             if (candidate[param].type->getQualifier().isParamInput()) {
                 if (! convertible(*call[param].type, *candidate[param].type, candidate.getBuiltInOp(), param)) {
                     viable = false;
@@ -382,7 +387,7 @@ const TFunction* TParseContextBase::selectFunction(
         return viableCandidates.front();
 
     // 4. find best...
-    auto betterParam = [&call, &better](const TFunction& can1, const TFunction& can2) -> bool {
+    const auto betterParam = [&call, &better](const TFunction& can1, const TFunction& can2) -> bool {
         // is call -> can2 better than call -> can1 for any parameter
         bool hasBetterParam = false;
         for (int param = 0; param < call.getParamCount(); ++param) {
@@ -394,6 +399,16 @@ const TFunction* TParseContextBase::selectFunction(
         return hasBetterParam;
     };
 
+    const auto equivalentParams = [&call, &better](const TFunction& can1, const TFunction& can2) -> bool {
+        // is call -> can2 equivalent to call -> can1 for all the call parameters?
+        for (int param = 0; param < call.getParamCount(); ++param) {
+            if (better(*call[param].type, *can1[param].type, *can2[param].type) ||
+                better(*call[param].type, *can2[param].type, *can1[param].type))
+                return false;
+        }
+        return true;
+    };
+    
     const TFunction* incumbent = viableCandidates.front();
     for (auto it = viableCandidates.begin() + 1; it != viableCandidates.end(); ++it) {
         const TFunction& candidate = *(*it);
@@ -406,7 +421,10 @@ const TFunction* TParseContextBase::selectFunction(
         if (incumbent == *it)
             continue;
         const TFunction& candidate = *(*it);
-        if (betterParam(*incumbent, candidate))
+        
+        // In the case of default parameters, it may have an identical initial set, which is
+        // also ambiguous
+        if (betterParam(*incumbent, candidate) || equivalentParams(*incumbent, candidate))
             tie = true;
     }
 

@@ -597,6 +597,7 @@ enum TOperator {
     EOpLit,                              // HLSL lighting coefficient vector
     EOpTextureBias,                      // HLSL texture bias: will be lowered to EOpTexture
     EOpAsDouble,                         // slightly different from EOpUint64BitsToDouble
+    EOpD3DCOLORtoUBYTE4,                 // convert and swizzle 4-component color to UBYTE4 range
 
     EOpMethodSample,                     // Texture object methods.  These are translated to existing
     EOpMethodSampleBias,                 // AST methods, and exist to represent HLSL semantics until that

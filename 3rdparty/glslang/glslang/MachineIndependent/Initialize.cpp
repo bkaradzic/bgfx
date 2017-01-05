@@ -3010,14 +3010,18 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "flat in int gl_PrimitiveID;"
                 );
 
-        if (version >= 400)
+        if (version >= 400) {
             stageBuiltins[EShLangFragment].append(
                 "flat in  int  gl_SampleID;"
                 "     in  vec2 gl_SamplePosition;"
                 "flat in  int  gl_SampleMaskIn[];"
                 "     out int  gl_SampleMask[];"
-                "uniform int gl_NumSamples;"
                 );
+            if (spvVersion.spv == 0)
+                stageBuiltins[EShLangFragment].append(
+                    "uniform int gl_NumSamples;"
+                    );
+        }
 
         if (version >= 430)
             stageBuiltins[EShLangFragment].append(
@@ -3074,8 +3078,11 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "      in mediump vec2 gl_SamplePosition;"
                 "flat  in highp    int gl_SampleMaskIn[];"
                 "     out highp    int gl_SampleMask[];"
-                "uniform lowp int gl_NumSamples;"
                 );
+            if (spvVersion.spv == 0)
+                stageBuiltins[EShLangFragment].append(  // GL_OES_sample_variables
+                    "uniform lowp int gl_NumSamples;"
+                    );
         }
         stageBuiltins[EShLangFragment].append(
             "highp float gl_FragDepthEXT;"       // GL_EXT_frag_depth

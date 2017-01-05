@@ -1,0 +1,639 @@
+hlsl.params.default.frag
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:9  Function Definition: fn1(vi4;b1;b1; (temp 4-component vector of int)
+0:9    Function Parameters: 
+0:9      'p0' (in 4-component vector of int)
+0:9      'b1' (in bool)
+0:9      'b2' (in bool)
+0:?     Sequence
+0:10      Branch: Return with expression
+0:10        'p0' (in 4-component vector of int)
+0:17  Function Definition: fn1(vi4;vi4;i1[2];i1; (temp 4-component vector of int)
+0:17    Function Parameters: 
+0:17      'p0' (in 4-component vector of int)
+0:17      'p1' (in 4-component vector of int)
+0:17      'p2' (in 2-element array of int)
+0:17      'p3' (in int)
+0:?     Sequence
+0:18      Branch: Return with expression
+0:18        add (temp 4-component vector of int)
+0:18          add (temp 4-component vector of int)
+0:18            add (temp 4-component vector of int)
+0:18              'p0' (in 4-component vector of int)
+0:18              'p1' (in 4-component vector of int)
+0:18            direct index (temp int)
+0:18              'p2' (in 2-element array of int)
+0:18              Constant:
+0:18                0 (const int)
+0:18          'p3' (in int)
+0:23  Function Definition: fn2(vi4;i1; (temp 4-component vector of int)
+0:23    Function Parameters: 
+0:23      'p0' (in 4-component vector of int)
+0:23      'x' (in int)
+0:?     Sequence
+0:24      Branch: Return with expression
+0:?         Constant:
+0:?           10 (const int)
+0:?           11 (const int)
+0:?           12 (const int)
+0:?           13 (const int)
+0:28  Function Definition: fn2(vi4;f1; (temp 4-component vector of int)
+0:28    Function Parameters: 
+0:28      'p0' (in 4-component vector of int)
+0:28      'x' (in float)
+0:?     Sequence
+0:29      Branch: Return with expression
+0:29        add (temp 4-component vector of int)
+0:29          'p0' (in 4-component vector of int)
+0:?           Constant:
+0:?             20 (const int)
+0:?             21 (const int)
+0:?             22 (const int)
+0:?             23 (const int)
+0:32  Function Definition: fn3(i1; (temp void)
+0:32    Function Parameters: 
+0:32      'p0' (in int)
+0:36  Function Definition: main( (temp 4-component vector of int)
+0:36    Function Parameters: 
+0:?     Sequence
+0:37      Sequence
+0:37        move second child to first child (temp 2-element array of int)
+0:37          'myarray' (temp 2-element array of int)
+0:37          Constant:
+0:37            30 (const int)
+0:37            31 (const int)
+0:39      Function Call: fn3(i1; (temp void)
+0:32        Constant:
+0:32          3 (const int)
+0:40      Function Call: fn3(i1; (temp void)
+0:40        Constant:
+0:40          5 (const int)
+0:50      Sequence
+0:50        move second child to first child (temp 4-component vector of int)
+0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of int)
+0:49          add (temp 4-component vector of int)
+0:47            add (temp 4-component vector of int)
+0:46              add (temp 4-component vector of int)
+0:45                add (temp 4-component vector of int)
+0:44                  add (temp 4-component vector of int)
+0:43                    add (temp 4-component vector of int)
+0:42                      add (temp 4-component vector of int)
+0:42                        Function Call: fn1(vi4;vi4;i1[2];i1; (temp 4-component vector of int)
+0:42                          Constant:
+0:42                            100 (const int)
+0:42                            100 (const int)
+0:42                            100 (const int)
+0:42                            100 (const int)
+0:?                           Constant:
+0:?                             -1 (const int)
+0:?                             -2 (const int)
+0:?                             -3 (const int)
+0:?                             -4 (const int)
+0:15                          Constant:
+0:15                            1 (const int)
+0:15                            2 (const int)
+0:16                          Constant:
+0:16                            42 (const int)
+0:43                        Function Call: fn1(vi4;vi4;i1[2];i1; (temp 4-component vector of int)
+0:43                          Constant:
+0:43                            101 (const int)
+0:43                            101 (const int)
+0:43                            101 (const int)
+0:43                            101 (const int)
+0:43                          ui4: direct index for structure (layout(offset=0 ) uniform 4-component vector of int)
+0:43                            'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of int ui4})
+0:43                            Constant:
+0:43                              0 (const uint)
+0:15                          Constant:
+0:15                            1 (const int)
+0:15                            2 (const int)
+0:16                          Constant:
+0:16                            42 (const int)
+0:44                      Function Call: fn1(vi4;vi4;i1[2];i1; (temp 4-component vector of int)
+0:44                        Constant:
+0:44                          102 (const int)
+0:44                          102 (const int)
+0:44                          102 (const int)
+0:44                          102 (const int)
+0:44                        ui4: direct index for structure (layout(offset=0 ) uniform 4-component vector of int)
+0:44                          'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of int ui4})
+0:44                          Constant:
+0:44                            0 (const uint)
+0:44                        'myarray' (temp 2-element array of int)
+0:16                        Constant:
+0:16                          42 (const int)
+0:45                    Function Call: fn1(vi4;vi4;i1[2];i1; (temp 4-component vector of int)
+0:45                      Constant:
+0:45                        103 (const int)
+0:45                        103 (const int)
+0:45                        103 (const int)
+0:45                        103 (const int)
+0:45                      ui4: direct index for structure (layout(offset=0 ) uniform 4-component vector of int)
+0:45                        'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of int ui4})
+0:45                        Constant:
+0:45                          0 (const uint)
+0:45                      'myarray' (temp 2-element array of int)
+0:45                      Constant:
+0:45                        99 (const int)
+0:46                  Function Call: fn1(vi4;b1;b1; (temp 4-component vector of int)
+0:46                    Constant:
+0:46                      104 (const int)
+0:46                      104 (const int)
+0:46                      104 (const int)
+0:46                      104 (const int)
+0:46                    Constant:
+0:46                      false (const bool)
+0:9                    Constant:
+0:9                      false (const bool)
+0:47                Function Call: fn1(vi4;b1;b1; (temp 4-component vector of int)
+0:47                  Constant:
+0:47                    105 (const int)
+0:47                    105 (const int)
+0:47                    105 (const int)
+0:47                    105 (const int)
+0:47                  Constant:
+0:47                    false (const bool)
+0:47                  Constant:
+0:47                    true (const bool)
+0:49              Function Call: fn2(vi4;f1; (temp 4-component vector of int)
+0:49                Constant:
+0:49                  110 (const int)
+0:49                  110 (const int)
+0:49                  110 (const int)
+0:49                  110 (const int)
+0:49                Constant:
+0:49                  11.110000
+0:50            Function Call: fn2(vi4;i1; (temp 4-component vector of int)
+0:50              Constant:
+0:50                111 (const int)
+0:50                111 (const int)
+0:50                111 (const int)
+0:50                111 (const int)
+0:50              Constant:
+0:50                12 (const int)
+0:50        Branch: Return
+0:?   Linker Objects
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of int)
+0:?     'cia' (const int)
+0:?       -4 (const int)
+0:?     'cib' (const int)
+0:?       -42 (const int)
+0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of int ui4})
+
+
+Linked fragment stage:
+
+
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:9  Function Definition: fn1(vi4;b1;b1; (temp 4-component vector of int)
+0:9    Function Parameters: 
+0:9      'p0' (in 4-component vector of int)
+0:9      'b1' (in bool)
+0:9      'b2' (in bool)
+0:?     Sequence
+0:10      Branch: Return with expression
+0:10        'p0' (in 4-component vector of int)
+0:17  Function Definition: fn1(vi4;vi4;i1[2];i1; (temp 4-component vector of int)
+0:17    Function Parameters: 
+0:17      'p0' (in 4-component vector of int)
+0:17      'p1' (in 4-component vector of int)
+0:17      'p2' (in 2-element array of int)
+0:17      'p3' (in int)
+0:?     Sequence
+0:18      Branch: Return with expression
+0:18        add (temp 4-component vector of int)
+0:18          add (temp 4-component vector of int)
+0:18            add (temp 4-component vector of int)
+0:18              'p0' (in 4-component vector of int)
+0:18              'p1' (in 4-component vector of int)
+0:18            direct index (temp int)
+0:18              'p2' (in 2-element array of int)
+0:18              Constant:
+0:18                0 (const int)
+0:18          'p3' (in int)
+0:23  Function Definition: fn2(vi4;i1; (temp 4-component vector of int)
+0:23    Function Parameters: 
+0:23      'p0' (in 4-component vector of int)
+0:23      'x' (in int)
+0:?     Sequence
+0:24      Branch: Return with expression
+0:?         Constant:
+0:?           10 (const int)
+0:?           11 (const int)
+0:?           12 (const int)
+0:?           13 (const int)
+0:28  Function Definition: fn2(vi4;f1; (temp 4-component vector of int)
+0:28    Function Parameters: 
+0:28      'p0' (in 4-component vector of int)
+0:28      'x' (in float)
+0:?     Sequence
+0:29      Branch: Return with expression
+0:29        add (temp 4-component vector of int)
+0:29          'p0' (in 4-component vector of int)
+0:?           Constant:
+0:?             20 (const int)
+0:?             21 (const int)
+0:?             22 (const int)
+0:?             23 (const int)
+0:32  Function Definition: fn3(i1; (temp void)
+0:32    Function Parameters: 
+0:32      'p0' (in int)
+0:36  Function Definition: main( (temp 4-component vector of int)
+0:36    Function Parameters: 
+0:?     Sequence
+0:37      Sequence
+0:37        move second child to first child (temp 2-element array of int)
+0:37          'myarray' (temp 2-element array of int)
+0:37          Constant:
+0:37            30 (const int)
+0:37            31 (const int)
+0:39      Function Call: fn3(i1; (temp void)
+0:32        Constant:
+0:32          3 (const int)
+0:40      Function Call: fn3(i1; (temp void)
+0:40        Constant:
+0:40          5 (const int)
+0:50      Sequence
+0:50        move second child to first child (temp 4-component vector of int)
+0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of int)
+0:49          add (temp 4-component vector of int)
+0:47            add (temp 4-component vector of int)
+0:46              add (temp 4-component vector of int)
+0:45                add (temp 4-component vector of int)
+0:44                  add (temp 4-component vector of int)
+0:43                    add (temp 4-component vector of int)
+0:42                      add (temp 4-component vector of int)
+0:42                        Function Call: fn1(vi4;vi4;i1[2];i1; (temp 4-component vector of int)
+0:42                          Constant:
+0:42                            100 (const int)
+0:42                            100 (const int)
+0:42                            100 (const int)
+0:42                            100 (const int)
+0:?                           Constant:
+0:?                             -1 (const int)
+0:?                             -2 (const int)
+0:?                             -3 (const int)
+0:?                             -4 (const int)
+0:15                          Constant:
+0:15                            1 (const int)
+0:15                            2 (const int)
+0:16                          Constant:
+0:16                            42 (const int)
+0:43                        Function Call: fn1(vi4;vi4;i1[2];i1; (temp 4-component vector of int)
+0:43                          Constant:
+0:43                            101 (const int)
+0:43                            101 (const int)
+0:43                            101 (const int)
+0:43                            101 (const int)
+0:43                          ui4: direct index for structure (layout(offset=0 ) uniform 4-component vector of int)
+0:43                            'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of int ui4})
+0:43                            Constant:
+0:43                              0 (const uint)
+0:15                          Constant:
+0:15                            1 (const int)
+0:15                            2 (const int)
+0:16                          Constant:
+0:16                            42 (const int)
+0:44                      Function Call: fn1(vi4;vi4;i1[2];i1; (temp 4-component vector of int)
+0:44                        Constant:
+0:44                          102 (const int)
+0:44                          102 (const int)
+0:44                          102 (const int)
+0:44                          102 (const int)
+0:44                        ui4: direct index for structure (layout(offset=0 ) uniform 4-component vector of int)
+0:44                          'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of int ui4})
+0:44                          Constant:
+0:44                            0 (const uint)
+0:44                        'myarray' (temp 2-element array of int)
+0:16                        Constant:
+0:16                          42 (const int)
+0:45                    Function Call: fn1(vi4;vi4;i1[2];i1; (temp 4-component vector of int)
+0:45                      Constant:
+0:45                        103 (const int)
+0:45                        103 (const int)
+0:45                        103 (const int)
+0:45                        103 (const int)
+0:45                      ui4: direct index for structure (layout(offset=0 ) uniform 4-component vector of int)
+0:45                        'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of int ui4})
+0:45                        Constant:
+0:45                          0 (const uint)
+0:45                      'myarray' (temp 2-element array of int)
+0:45                      Constant:
+0:45                        99 (const int)
+0:46                  Function Call: fn1(vi4;b1;b1; (temp 4-component vector of int)
+0:46                    Constant:
+0:46                      104 (const int)
+0:46                      104 (const int)
+0:46                      104 (const int)
+0:46                      104 (const int)
+0:46                    Constant:
+0:46                      false (const bool)
+0:9                    Constant:
+0:9                      false (const bool)
+0:47                Function Call: fn1(vi4;b1;b1; (temp 4-component vector of int)
+0:47                  Constant:
+0:47                    105 (const int)
+0:47                    105 (const int)
+0:47                    105 (const int)
+0:47                    105 (const int)
+0:47                  Constant:
+0:47                    false (const bool)
+0:47                  Constant:
+0:47                    true (const bool)
+0:49              Function Call: fn2(vi4;f1; (temp 4-component vector of int)
+0:49                Constant:
+0:49                  110 (const int)
+0:49                  110 (const int)
+0:49                  110 (const int)
+0:49                  110 (const int)
+0:49                Constant:
+0:49                  11.110000
+0:50            Function Call: fn2(vi4;i1; (temp 4-component vector of int)
+0:50              Constant:
+0:50                111 (const int)
+0:50                111 (const int)
+0:50                111 (const int)
+0:50                111 (const int)
+0:50              Constant:
+0:50                12 (const int)
+0:50        Branch: Return
+0:?   Linker Objects
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of int)
+0:?     'cia' (const int)
+0:?       -4 (const int)
+0:?     'cib' (const int)
+0:?       -42 (const int)
+0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of int ui4})
+
+// Module Version 10000
+// Generated by (magic number): 80001
+// Id's are bound by 173
+
+                              Capability Shader
+               1:             ExtInstImport  "GLSL.std.450"
+                              MemoryModel Logical GLSL450
+                              EntryPoint Fragment 4  "main" 88
+                              ExecutionMode 4 OriginUpperLeft
+                              Name 4  "main"
+                              Name 15  "fn1(vi4;b1;b1;"
+                              Name 12  "p0"
+                              Name 13  "b1"
+                              Name 14  "b2"
+                              Name 27  "fn1(vi4;vi4;i1[2];i1;"
+                              Name 23  "p0"
+                              Name 24  "p1"
+                              Name 25  "p2"
+                              Name 26  "p3"
+                              Name 32  "fn2(vi4;i1;"
+                              Name 30  "p0"
+                              Name 31  "x"
+                              Name 39  "fn2(vi4;f1;"
+                              Name 37  "p0"
+                              Name 38  "x"
+                              Name 43  "fn3(i1;"
+                              Name 42  "p0"
+                              Name 77  "myarray"
+                              Name 82  "param"
+                              Name 85  "param"
+                              Name 88  "@entryPointOutput"
+                              Name 100  "param"
+                              Name 101  "param"
+                              Name 102  "param"
+                              Name 103  "param"
+                              Name 107  "$Global"
+                              MemberName 107($Global) 0  "ui4"
+                              Name 109  ""
+                              Name 110  "param"
+                              Name 111  "param"
+                              Name 115  "param"
+                              Name 116  "param"
+                              Name 121  "param"
+                              Name 122  "param"
+                              Name 125  "param"
+                              Name 127  "param"
+                              Name 133  "param"
+                              Name 134  "param"
+                              Name 137  "param"
+                              Name 139  "param"
+                              Name 145  "param"
+                              Name 146  "param"
+                              Name 147  "param"
+                              Name 153  "param"
+                              Name 154  "param"
+                              Name 155  "param"
+                              Name 161  "param"
+                              Name 162  "param"
+                              Name 167  "param"
+                              Name 168  "param"
+                              Decorate 88(@entryPointOutput) Location 0
+                              MemberDecorate 107($Global) 0 Offset 0
+                              Decorate 107($Global) Block
+                              Decorate 109 DescriptorSet 0
+               2:             TypeVoid
+               3:             TypeFunction 2
+               6:             TypeInt 32 1
+               7:             TypeVector 6(int) 4
+               8:             TypePointer Function 7(ivec4)
+               9:             TypeBool
+              10:             TypePointer Function 9(bool)
+              11:             TypeFunction 7(ivec4) 8(ptr) 10(ptr) 10(ptr)
+              17:             TypeInt 32 0
+              18:     17(int) Constant 2
+              19:             TypeArray 6(int) 18
+              20:             TypePointer Function 19
+              21:             TypePointer Function 6(int)
+              22:             TypeFunction 7(ivec4) 8(ptr) 8(ptr) 20(ptr) 21(ptr)
+              29:             TypeFunction 7(ivec4) 8(ptr) 21(ptr)
+              34:             TypeFloat 32
+              35:             TypePointer Function 34(float)
+              36:             TypeFunction 7(ivec4) 8(ptr) 35(ptr)
+              41:             TypeFunction 2 21(ptr)
+              51:      6(int) Constant 0
+              61:      6(int) Constant 10
+              62:      6(int) Constant 11
+              63:      6(int) Constant 12
+              64:      6(int) Constant 13
+              65:    7(ivec4) ConstantComposite 61 62 63 64
+              69:      6(int) Constant 20
+              70:      6(int) Constant 21
+              71:      6(int) Constant 22
+              72:      6(int) Constant 23
+              73:    7(ivec4) ConstantComposite 69 70 71 72
+              78:      6(int) Constant 30
+              79:      6(int) Constant 31
+              80:          19 ConstantComposite 78 79
+              81:      6(int) Constant 3
+              84:      6(int) Constant 5
+              87:             TypePointer Output 7(ivec4)
+88(@entryPointOutput):     87(ptr) Variable Output
+              89:      6(int) Constant 100
+              90:    7(ivec4) ConstantComposite 89 89 89 89
+              91:      6(int) Constant 4294967295
+              92:      6(int) Constant 4294967294
+              93:      6(int) Constant 4294967293
+              94:      6(int) Constant 4294967292
+              95:    7(ivec4) ConstantComposite 91 92 93 94
+              96:      6(int) Constant 1
+              97:      6(int) Constant 2
+              98:          19 ConstantComposite 96 97
+              99:      6(int) Constant 42
+             105:      6(int) Constant 101
+             106:    7(ivec4) ConstantComposite 105 105 105 105
+    107($Global):             TypeStruct 7(ivec4)
+             108:             TypePointer Uniform 107($Global)
+             109:    108(ptr) Variable Uniform
+             112:             TypePointer Uniform 7(ivec4)
+             119:      6(int) Constant 102
+             120:    7(ivec4) ConstantComposite 119 119 119 119
+             130:      6(int) Constant 103
+             131:    7(ivec4) ConstantComposite 130 130 130 130
+             132:      6(int) Constant 99
+             142:      6(int) Constant 104
+             143:    7(ivec4) ConstantComposite 142 142 142 142
+             144:     9(bool) ConstantFalse
+             150:      6(int) Constant 105
+             151:    7(ivec4) ConstantComposite 150 150 150 150
+             152:     9(bool) ConstantTrue
+             158:      6(int) Constant 110
+             159:    7(ivec4) ConstantComposite 158 158 158 158
+             160:   34(float) Constant 1093780111
+             165:      6(int) Constant 111
+             166:    7(ivec4) ConstantComposite 165 165 165 165
+             172:      6(int) Constant 4294967254
+         4(main):           2 Function None 3
+               5:             Label
+     77(myarray):     20(ptr) Variable Function
+       82(param):     21(ptr) Variable Function
+       85(param):     21(ptr) Variable Function
+      100(param):      8(ptr) Variable Function
+      101(param):      8(ptr) Variable Function
+      102(param):     20(ptr) Variable Function
+      103(param):     21(ptr) Variable Function
+      110(param):      8(ptr) Variable Function
+      111(param):      8(ptr) Variable Function
+      115(param):     20(ptr) Variable Function
+      116(param):     21(ptr) Variable Function
+      121(param):      8(ptr) Variable Function
+      122(param):      8(ptr) Variable Function
+      125(param):     20(ptr) Variable Function
+      127(param):     21(ptr) Variable Function
+      133(param):      8(ptr) Variable Function
+      134(param):      8(ptr) Variable Function
+      137(param):     20(ptr) Variable Function
+      139(param):     21(ptr) Variable Function
+      145(param):      8(ptr) Variable Function
+      146(param):     10(ptr) Variable Function
+      147(param):     10(ptr) Variable Function
+      153(param):      8(ptr) Variable Function
+      154(param):     10(ptr) Variable Function
+      155(param):     10(ptr) Variable Function
+      161(param):      8(ptr) Variable Function
+      162(param):     35(ptr) Variable Function
+      167(param):      8(ptr) Variable Function
+      168(param):     21(ptr) Variable Function
+                              Store 77(myarray) 80
+                              Store 82(param) 81
+              83:           2 FunctionCall 43(fn3(i1;) 82(param)
+                              Store 85(param) 84
+              86:           2 FunctionCall 43(fn3(i1;) 85(param)
+                              Store 100(param) 90
+                              Store 101(param) 95
+                              Store 102(param) 98
+                              Store 103(param) 99
+             104:    7(ivec4) FunctionCall 27(fn1(vi4;vi4;i1[2];i1;) 100(param) 101(param) 102(param) 103(param)
+                              Store 110(param) 106
+             113:    112(ptr) AccessChain 109 51
+             114:    7(ivec4) Load 113
+                              Store 111(param) 114
+                              Store 115(param) 98
+                              Store 116(param) 99
+             117:    7(ivec4) FunctionCall 27(fn1(vi4;vi4;i1[2];i1;) 110(param) 111(param) 115(param) 116(param)
+             118:    7(ivec4) IAdd 104 117
+                              Store 121(param) 120
+             123:    112(ptr) AccessChain 109 51
+             124:    7(ivec4) Load 123
+                              Store 122(param) 124
+             126:          19 Load 77(myarray)
+                              Store 125(param) 126
+                              Store 127(param) 99
+             128:    7(ivec4) FunctionCall 27(fn1(vi4;vi4;i1[2];i1;) 121(param) 122(param) 125(param) 127(param)
+             129:    7(ivec4) IAdd 118 128
+                              Store 133(param) 131
+             135:    112(ptr) AccessChain 109 51
+             136:    7(ivec4) Load 135
+                              Store 134(param) 136
+             138:          19 Load 77(myarray)
+                              Store 137(param) 138
+                              Store 139(param) 132
+             140:    7(ivec4) FunctionCall 27(fn1(vi4;vi4;i1[2];i1;) 133(param) 134(param) 137(param) 139(param)
+             141:    7(ivec4) IAdd 129 140
+                              Store 145(param) 143
+                              Store 146(param) 144
+                              Store 147(param) 144
+             148:    7(ivec4) FunctionCall 15(fn1(vi4;b1;b1;) 145(param) 146(param) 147(param)
+             149:    7(ivec4) IAdd 141 148
+                              Store 153(param) 151
+                              Store 154(param) 144
+                              Store 155(param) 152
+             156:    7(ivec4) FunctionCall 15(fn1(vi4;b1;b1;) 153(param) 154(param) 155(param)
+             157:    7(ivec4) IAdd 149 156
+                              Store 161(param) 159
+                              Store 162(param) 160
+             163:    7(ivec4) FunctionCall 39(fn2(vi4;f1;) 161(param) 162(param)
+             164:    7(ivec4) IAdd 157 163
+                              Store 167(param) 166
+                              Store 168(param) 63
+             169:    7(ivec4) FunctionCall 32(fn2(vi4;i1;) 167(param) 168(param)
+             170:    7(ivec4) IAdd 164 169
+                              Store 88(@entryPointOutput) 170
+                              Return
+                              FunctionEnd
+15(fn1(vi4;b1;b1;):    7(ivec4) Function None 11
+          12(p0):      8(ptr) FunctionParameter
+          13(b1):     10(ptr) FunctionParameter
+          14(b2):     10(ptr) FunctionParameter
+              16:             Label
+              45:    7(ivec4) Load 12(p0)
+                              ReturnValue 45
+                              FunctionEnd
+27(fn1(vi4;vi4;i1[2];i1;):    7(ivec4) Function None 22
+          23(p0):      8(ptr) FunctionParameter
+          24(p1):      8(ptr) FunctionParameter
+          25(p2):     20(ptr) FunctionParameter
+          26(p3):     21(ptr) FunctionParameter
+              28:             Label
+              48:    7(ivec4) Load 23(p0)
+              49:    7(ivec4) Load 24(p1)
+              50:    7(ivec4) IAdd 48 49
+              52:     21(ptr) AccessChain 25(p2) 51
+              53:      6(int) Load 52
+              54:    7(ivec4) CompositeConstruct 53 53 53 53
+              55:    7(ivec4) IAdd 50 54
+              56:      6(int) Load 26(p3)
+              57:    7(ivec4) CompositeConstruct 56 56 56 56
+              58:    7(ivec4) IAdd 55 57
+                              ReturnValue 58
+                              FunctionEnd
+ 32(fn2(vi4;i1;):    7(ivec4) Function None 29
+          30(p0):      8(ptr) FunctionParameter
+           31(x):     21(ptr) FunctionParameter
+              33:             Label
+                              ReturnValue 65
+                              FunctionEnd
+ 39(fn2(vi4;f1;):    7(ivec4) Function None 36
+          37(p0):      8(ptr) FunctionParameter
+           38(x):     35(ptr) FunctionParameter
+              40:             Label
+              68:    7(ivec4) Load 37(p0)
+              74:    7(ivec4) IAdd 68 73
+                              ReturnValue 74
+                              FunctionEnd
+     43(fn3(i1;):           2 Function None 41
+          42(p0):     21(ptr) FunctionParameter
+              44:             Label
+                              Return
+                              FunctionEnd

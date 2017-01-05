@@ -295,6 +295,7 @@ TFunction::TFunction(const TFunction& copyOf) : TSymbol(copyOf)
     op = copyOf.op;
     defined = copyOf.defined;
     prototyped = copyOf.prototyped;
+    defaultParamCount = copyOf.defaultParamCount;
 }
 
 TFunction* TFunction::clone() const
