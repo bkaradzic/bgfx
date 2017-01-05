@@ -182,6 +182,12 @@ void aabbExpand(Aabb& _aabb, float _factor)
 	_aabb.m_max[2] += _factor;
 }
 
+void aabbExpand(Aabb& _aabb, const float* _pos)
+{
+	bx::vec3Min(_aabb.m_min, _aabb.m_min, _pos);
+	bx::vec3Max(_aabb.m_max, _aabb.m_max, _pos);
+}
+
 uint32_t aabbOverlapTest(const Aabb& _aabb0, const Aabb& _aabb1)
 {
 	const uint32_t ltMinX = _aabb0.m_max[0] < _aabb1.m_min[0];

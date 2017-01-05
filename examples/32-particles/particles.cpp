@@ -393,11 +393,10 @@ class Particles : public entry::AppI
 
 			if (showBounds)
 			{
-//				Aabb aabb;
-//				toAabb(aabb, tvb.data, tvb.size/tvb.stride, tvb.stride);
-
-//				ddSetColor(0xff0000ff);
-//				ddDraw(aabb);
+				Aabb aabb;
+				psGetAabb(m_emitter[currentEmitter].m_handle, aabb);
+				ddSetColor(0xff0000ff);
+				ddDraw(aabb);
 			}
 
 

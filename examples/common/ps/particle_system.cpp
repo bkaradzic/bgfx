@@ -191,6 +191,7 @@ namespace ps
 		void reset()
 		{
 			m_num = 0;
+			memset(&m_aabb, 0, sizeof(Aabb) );
 		}
 
 		void update(float _dt)
@@ -321,12 +322,18 @@ namespace ps
 			}
 		}
 
-		uint32_t render(const float* _mtxView, const float* _eye, uint32_t _first, uint32_t _max, ParticleSort* _outSort, PosColorTexCoord0Vertex* _outVertices) const
+		uint32_t render(const float* _mtxView, const float* _eye, uint32_t _first, uint32_t _max, ParticleSort* _outSort, PosColorTexCoord0Vertex* _outVertices)
 		{
 			bx::EaseFn easeRgba  = s_easeFunc[m_uniforms.m_easeRgba];
 			bx::EaseFn easePos   = s_easeFunc[m_uniforms.m_easePos];
 			bx::EaseFn easeBlend = s_easeFunc[m_uniforms.m_easeBlend];
 			bx::EaseFn easeScale = s_easeFunc[m_uniforms.m_easeScale];
+
+			Aabb aabb =
+			{
+				{  HUGE_VALF,  HUGE_VALF,  HUGE_VALF },
+				{ -HUGE_VALF, -HUGE_VALF, -HUGE_VALF },
+			};
 
 			for (uint32_t jj = 0, num = m_num, current = _first
 				; jj < num && current < _max
@@ -376,6 +383,7 @@ namespace ps
 				PosColorTexCoord0Vertex* vertex = &_outVertices[current*4];
 				bx::vec3Sub(tmp, pos, udir);
 				bx::vec3Sub(&vertex->m_x, tmp, vdir);
+				aabbExpand(aabb, &vertex->m_x);
 				vertex->m_abgr  = abgr;
 				vertex->m_u     = 0.0f;
 				vertex->m_v     = 0.0f;
@@ -384,6 +392,7 @@ namespace ps
 
 				bx::vec3Add(tmp, pos, udir);
 				bx::vec3Sub(&vertex->m_x, tmp, vdir);
+				aabbExpand(aabb, &vertex->m_x);
 				vertex->m_abgr  = abgr;
 				vertex->m_u     = 1.0f;
 				vertex->m_v     = 0.0f;
@@ -392,6 +401,7 @@ namespace ps
 
 				bx::vec3Add(tmp, pos, udir);
 				bx::vec3Add(&vertex->m_x, tmp, vdir);
+				aabbExpand(aabb, &vertex->m_x);
 				vertex->m_abgr  = abgr;
 				vertex->m_u     = 1.0f;
 				vertex->m_v     = 1.0f;
@@ -400,12 +410,15 @@ namespace ps
 
 				bx::vec3Sub(tmp, pos, udir);
 				bx::vec3Add(&vertex->m_x, tmp, vdir);
+				aabbExpand(aabb, &vertex->m_x);
 				vertex->m_abgr  = abgr;
 				vertex->m_u     = 0.0f;
 				vertex->m_v     = 1.0f;
 				vertex->m_blend = blend;
 				++vertex;
 			}
+
+			m_aabb = aabb;
 
 			return m_num;
 		}
@@ -416,6 +429,8 @@ namespace ps
 		float           m_dt;
 		bx::RngMwc      m_rng;
 		EmitterUniforms m_uniforms;
+
+		Aabb m_aabb;
 
 		Particle* m_particles;
 		uint32_t m_num;
@@ -455,7 +470,7 @@ namespace ps
 
 			bgfx::RendererType::Enum type = bgfx::getRendererType();
 			m_particleProgram = bgfx::createProgram(
-				bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_particle")
+				  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_particle")
 				, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_particle")
 				, true
 				);
@@ -519,7 +534,7 @@ namespace ps
 					for (uint16_t ii = 0, numEmitters = m_emitterAlloc->getNumHandles(); ii < numEmitters; ++ii)
 					{
 						const uint16_t idx = m_emitterAlloc->getHandleAt(ii);
-						const Emitter& emitter = m_emitter[idx];
+						Emitter& emitter = m_emitter[idx];
 						pos += emitter.render(_mtxView, _eye, pos, max, particleSort, vertices);
 					}
 
@@ -591,6 +606,15 @@ namespace ps
 			}
 		}
 
+		void getAabb(EmitterHandle _handle, Aabb& _outAabb)
+		{
+			BX_CHECK(m_emitterAlloc.isValid(_handle.idx)
+				, "getAabb handle %d is not valid."
+				, _handle.idx
+				);
+			_outAabb = m_emitter[_handle.idx].m_aabb;
+		}
+
 		void destroyEmitter(EmitterHandle _handle)
 		{
 			BX_CHECK(m_emitterAlloc.isValid(_handle.idx)
@@ -656,6 +680,11 @@ EmitterHandle psCreateEmitter(EmitterShape::Enum _shape, EmitterDirection::Enum 
 void psUpdateEmitter(EmitterHandle _handle, const EmitterUniforms* _uniforms)
 {
 	s_ctx.updateEmitter(_handle, _uniforms);
+}
+
+void psGetAabb(EmitterHandle _handle, Aabb& _outAabb)
+{
+	s_ctx.getAabb(_handle, _outAabb);
 }
 
 void psDestroyEmitter(EmitterHandle _handle)

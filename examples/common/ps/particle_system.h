@@ -10,6 +10,8 @@
 #include <bx/easing.h>
 #include <bx/rng.h>
 
+#include "../bounds.h"
+
 struct EmitterShape
 {
 	enum Enum
@@ -73,6 +75,9 @@ EmitterHandle psCreateEmitter(EmitterShape::Enum _shape, EmitterDirection::Enum 
 
 ///
 void psUpdateEmitter(EmitterHandle _handle, const EmitterUniforms* _uniforms = NULL);
+
+///
+void psGetAabb(EmitterHandle _handle, Aabb& _outAabb);
 
 ///
 void psDestroyEmitter(EmitterHandle _handle);
