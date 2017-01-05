@@ -399,7 +399,6 @@ class Particles : public entry::AppI
 				ddDraw(aabb);
 			}
 
-
 			ddEnd();
 
 			// Advance to next frame. Rendering thread will be kicked to
