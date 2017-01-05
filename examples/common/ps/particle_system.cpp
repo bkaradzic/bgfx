@@ -331,8 +331,8 @@ namespace ps
 
 			Aabb aabb =
 			{
-				{  HUGE_VALF,  HUGE_VALF,  HUGE_VALF },
-				{ -HUGE_VALF, -HUGE_VALF, -HUGE_VALF },
+				{  bx::huge,  bx::huge,  bx::huge },
+				{ -bx::huge, -bx::huge, -bx::huge },
 			};
 
 			for (uint32_t jj = 0, num = m_num, current = _first
