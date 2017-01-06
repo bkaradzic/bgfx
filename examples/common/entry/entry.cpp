@@ -364,7 +364,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{ entry::Key::F9,           entry::Modifier::None,      1, NULL, "graphics flush"                    },
 		{ entry::Key::F10,          entry::Modifier::None,      1, NULL, "graphics hidpi"                    },
 		{ entry::Key::Print,        entry::Modifier::None,      1, NULL, "graphics screenshot"               },
-
+		{ entry::Key::KeyP,         entry::Modifier::LeftCtrl,  1, NULL, "graphics screenshot"               },
+		
 		INPUT_BINDING_END
 	};
 
