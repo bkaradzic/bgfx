@@ -7077,44 +7077,15 @@ namespace bgfx { namespace gl
 							currentVao = 0;
 						}
 
-						bool diffStreamHandles = false;
-						for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
-							; 0 != streamMask
-							; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
-							)
-						{
-							streamMask >>= ntz;
-							idx         += ntz;
-
-							if (currentState.m_stream[idx].m_handle.idx != draw.m_stream[idx].m_handle.idx)
-							{
-								diffStreamHandles = true;
-								break;
-							}
-						}
-
 						if (programChanged
-						||  currentState.m_streamMask             != draw.m_streamMask
 						||  currentState.m_instanceDataBuffer.idx != draw.m_instanceDataBuffer.idx
 						||  currentState.m_instanceDataOffset     != draw.m_instanceDataOffset
-						||  currentState.m_instanceDataStride     != draw.m_instanceDataStride
-						||  diffStreamHandles)
+						||  currentState.m_instanceDataStride     != draw.m_instanceDataStride)
 						{
 							currentState.m_streamMask             = draw.m_streamMask;
 							currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
 							currentState.m_instanceDataOffset     = draw.m_instanceDataOffset;
 							currentState.m_instanceDataStride     = draw.m_instanceDataStride;
-
-							for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
-								; 0 != streamMask
-								; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
-								)
-							{
-								streamMask >>= ntz;
-								idx         += ntz;
-
-								currentState.m_stream[idx].m_handle = draw.m_stream[idx].m_handle;
-							}
 						}
 
 						if (currentState.m_indexBuffer.idx != draw.m_indexBuffer.idx)
@@ -7133,25 +7104,26 @@ namespace bgfx { namespace gl
 							}
 						}
 
+						bool streamChanged      = draw.m_streamMask != currentState.m_streamMask;
+						bool vertexStartChanged = streamChanged;
+						for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
+							; 0 != streamMask
+							; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
+							)
+						{
+							streamMask >>= ntz;
+							idx         += ntz;
+
+							streamChanged      |= currentState.m_stream[idx].m_handle.idx  != draw.m_stream[idx].m_handle.idx;
+							vertexStartChanged |= currentState.m_stream[idx].m_startVertex != draw.m_stream[idx].m_startVertex;
+							currentState.m_stream[idx].m_handle      = draw.m_stream[idx].m_handle;
+							currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
+						}
+
 						if (0 != currentState.m_streamMask)
 						{
-							bool diffStartVertex = false;
-							for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
-								; 0 != streamMask
-								; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
-								)
-							{
-								streamMask >>= ntz;
-								idx         += ntz;
-
-								if (currentState.m_stream[idx].m_startVertex != draw.m_stream[idx].m_startVertex)
-								{
-									diffStartVertex = true;
-									break;
-								}
-							}
-
-							if (bindAttribs || diffStartVertex)
+							if (bindAttribs
+							||  vertexStartChanged)
 							{
 								program.bindAttributesBegin();
 								for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
