@@ -75,6 +75,10 @@ function bgfxProject(_name, _kind, _defines)
 			_defines,
 		}
 
+		links {
+			"bx",
+		}
+
 		if _OPTIONS["with-glfw"] then
 			defines {
 				"BGFX_CONFIG_MULTITHREADED=0",

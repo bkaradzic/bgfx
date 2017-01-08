@@ -14,6 +14,8 @@
 #include <X11/Xutil.h>
 #include <bgfx/platform.h>
 
+#include <unistd.h> // syscall
+
 #undef None
 #include <bx/thread.h>
 #include <bx/os.h>
