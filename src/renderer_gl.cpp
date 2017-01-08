@@ -2638,9 +2638,7 @@ namespace bgfx { namespace gl
 				GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
 
 				ProgramGL& program = m_program[_blitter.m_program.idx];
-				program.bindAttributesBegin();
 				program.bindAttributes(_blitter.m_decl, 0);
-				program.bindAttributesEnd();
 
 				GL_CHECK(glDrawElements(GL_TRIANGLES
 					, _numIndices
@@ -3393,9 +3391,7 @@ namespace bgfx { namespace gl
 
 				ProgramGL& program = m_program[_clearQuad.m_program[numMrt-1].idx];
 				GL_CHECK(glUseProgram(program.m_id) );
-				program.bindAttributesBegin();
 				program.bindAttributes(vertexDecl, 0);
-				program.bindAttributesEnd();
 
 				float mrtClear[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS][4];
 
@@ -3984,7 +3980,7 @@ namespace bgfx { namespace gl
 			{
 				BX_WARN(0 != _vsh.m_id, "Invalid vertex/compute shader.");
 				GL_CHECK(glDeleteProgram(m_id) );
-				m_usedCount = 0;
+				m_used[0] = Attrib::Count;
 				m_id = 0;
 				return;
 			}
@@ -4314,8 +4310,11 @@ namespace bgfx { namespace gl
 				m_used[used++] = ii;
 			}
 		}
-		BX_CHECK(used < BX_COUNTOF(m_used), "Out of bounds %d > array size %d.", used, Attrib::Count);
-		m_usedCount = (uint8_t)used;
+		BX_CHECK(used < BX_COUNTOF(m_used), "Out of bounds %d > array size %d."
+				, used
+				, BX_COUNTOF(m_used)
+				);
+		m_used[used] = Attrib::Count;
 
 		used = 0;
 		for (uint32_t ii = 0; ii < BX_COUNTOF(s_instanceDataName); ++ii)
@@ -4334,9 +4333,9 @@ namespace bgfx { namespace gl
 		m_instanceData[used] = 0xffff;
 	}
 
-	void ProgramGL::bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex)
+	void ProgramGL::bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex) const
 	{
-		for (uint32_t ii = 0, iiEnd = m_usedCount; ii < iiEnd; ++ii)
+		for (uint32_t ii = 0; Attrib::Count != m_used[ii]; ++ii)
 		{
 			Attrib::Enum attr = Attrib::Enum(m_used[ii]);
 			GLint loc = m_attributes[attr];
@@ -4376,8 +4375,10 @@ namespace bgfx { namespace gl
 								, (void*)(uintptr_t)baseVertex)
 								);
 					}
-
-					m_unboundUsedAttrib[ii] = Attrib::Count;
+				}
+				else
+				{
+					GL_CHECK(glDisableVertexAttribArray(loc) );
 				}
 			}
 		}
@@ -6221,6 +6222,7 @@ namespace bgfx { namespace gl
 			: GL_FILL
 			) );
 
+		uint32_t baseVertex = 0;
 		GLuint currentVao = 0;
 		bool wasCompute = false;
 		bool viewHasScissor = false;
@@ -6943,54 +6945,27 @@ namespace bgfx { namespace gl
 					&&  0 == draw.m_stream[0].m_startVertex
 					&&  0 == draw.m_instanceDataOffset)
 					{
-						bool diffStreamHandles = false;
-						for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
-							; 0 != streamMask
-							; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
-							)
-						{
-							streamMask >>= ntz;
-							idx         += ntz;
-
-							if (currentState.m_stream[idx].m_handle.idx != draw.m_stream[idx].m_handle.idx)
-							{
-								diffStreamHandles = true;
-								break;
-							}
-						}
-
 						if (programChanged
+						||  baseVertex                            != draw.m_stream[0].m_startVertex
 						||  currentState.m_streamMask             != draw.m_streamMask
+						||  currentState.m_stream[0].m_handle.idx != draw.m_stream[0].m_handle.idx
 						||  currentState.m_indexBuffer.idx        != draw.m_indexBuffer.idx
 						||  currentState.m_instanceDataOffset     != draw.m_instanceDataOffset
 						||  currentState.m_instanceDataStride     != draw.m_instanceDataStride
-						||  currentState.m_instanceDataBuffer.idx != draw.m_instanceDataBuffer.idx
-						||  diffStreamHandles)
+						||  currentState.m_instanceDataBuffer.idx != draw.m_instanceDataBuffer.idx)
 						{
 							bx::HashMurmur2A murmur;
 							murmur.begin();
 
-							for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
-								; 0 != streamMask
-								; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
-								)
+							const Stream& stream = draw.m_stream[0];
+							murmur.add(stream.m_handle.idx);
+
+							if (isValid(stream.m_handle) )
 							{
-								streamMask >>= ntz;
-								idx         += ntz;
-
-								const Stream& stream = draw.m_stream[idx];
-								murmur.add(stream.m_handle.idx);
-
-								if (isValid(stream.m_handle) )
-								{
-									const VertexBufferGL& vb = m_vertexBuffers[stream.m_handle.idx];
-									uint16_t decl = !isValid(vb.m_decl) ? stream.m_decl.idx : vb.m_decl.idx;
-									murmur.add(decl);
-								}
-
-								currentState.m_stream[idx].m_handle = stream.m_handle;
+								const VertexBufferGL& vb = m_vertexBuffers[stream.m_handle.idx];
+								uint16_t decl = !isValid(vb.m_decl) ? stream.m_decl.idx : vb.m_decl.idx;
+								murmur.add(decl);
 							}
-							currentState.m_streamMask = draw.m_streamMask;
 
 							murmur.add(draw.m_indexBuffer.idx);
 							murmur.add(draw.m_instanceDataBuffer.idx);
@@ -6999,7 +6974,11 @@ namespace bgfx { namespace gl
 							murmur.add(programIdx);
 							uint32_t hash = murmur.end();
 
-							currentState.m_indexBuffer        = draw.m_indexBuffer;
+							currentState.m_streamMask         = draw.m_streamMask;
+							currentState.m_stream[0].m_handle = stream.m_handle;
+							baseVertex                        = stream.m_startVertex;
+
+							currentState.m_indexBuffer = draw.m_indexBuffer;
 							currentState.m_instanceDataOffset = draw.m_instanceDataOffset;
 							currentState.m_instanceDataStride = draw.m_instanceDataStride;
 
@@ -7017,26 +6996,14 @@ namespace bgfx { namespace gl
 
 								program.add(hash);
 
-								program.bindAttributesBegin();
-								for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
-									; 0 != streamMask
-									; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
-									)
+								if (isValid(stream.m_handle) )
 								{
-									streamMask >>= ntz;
-									idx         += ntz;
+									VertexBufferGL& vb = m_vertexBuffers[stream.m_handle.idx];
+									vb.add(hash);
+									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
 
-									const Stream& stream = draw.m_stream[idx];
-
-									if (isValid(stream.m_handle) )
-									{
-										VertexBufferGL& vb = m_vertexBuffers[stream.m_handle.idx];
-										vb.add(hash);
-
-										uint16_t decl = !isValid(vb.m_decl) ? stream.m_decl.idx : vb.m_decl.idx;
-										GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
-										program.bindAttributes(m_vertexDecls[decl], stream.m_startVertex);
-									}
+									uint16_t decl = !isValid(vb.m_decl) ? stream.m_decl.idx : vb.m_decl.idx;
+									program.bindAttributes(m_vertexDecls[decl], stream.m_startVertex);
 
 									if (isValid(draw.m_instanceDataBuffer) )
 									{
@@ -7046,7 +7013,10 @@ namespace bgfx { namespace gl
 										program.bindInstanceData(draw.m_instanceDataStride, draw.m_instanceDataOffset);
 									}
 								}
-								program.bindAttributesEnd();
+								else
+								{
+									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0) );
+								}
 
 								if (isValid(draw.m_indexBuffer) )
 								{
@@ -7067,25 +7037,37 @@ namespace bgfx { namespace gl
 						&&  0 != currentVao)
 						{
 							GL_CHECK(glBindVertexArray(defaultVao) );
-							currentState.m_streamMask = 0;
-							for (size_t ii = 0; ii < BGFX_CONFIG_MAX_VERTEX_STREAMS; ++ii)
-							{
-								currentState.m_stream[ii].m_handle.idx = invalidHandle;
-							}
-							currentState.m_indexBuffer.idx = invalidHandle;
+							currentState.m_streamMask             = 0;
+							currentState.m_stream[0].m_handle.idx = invalidHandle;
+							currentState.m_indexBuffer.idx        = invalidHandle;
 							bindAttribs = true;
 							currentVao = 0;
 						}
 
 						if (programChanged
+						||  currentState.m_streamMask             != draw.m_streamMask
+						||  currentState.m_stream[0].m_handle.idx != draw.m_stream[0].m_handle.idx
 						||  currentState.m_instanceDataBuffer.idx != draw.m_instanceDataBuffer.idx
 						||  currentState.m_instanceDataOffset     != draw.m_instanceDataOffset
 						||  currentState.m_instanceDataStride     != draw.m_instanceDataStride)
 						{
 							currentState.m_streamMask             = draw.m_streamMask;
+							currentState.m_stream[0].m_handle     = draw.m_stream[0].m_handle;
 							currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
 							currentState.m_instanceDataOffset     = draw.m_instanceDataOffset;
 							currentState.m_instanceDataStride     = draw.m_instanceDataStride;
+
+							uint16_t handle = draw.m_stream[0].m_handle.idx;
+							if (invalidHandle != handle)
+							{
+								VertexBufferGL& vb = m_vertexBuffers[handle];
+								GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
+								bindAttribs = true;
+							}
+							else
+							{
+								GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0) );
+							}
 						}
 
 						if (currentState.m_indexBuffer.idx != draw.m_indexBuffer.idx)
@@ -7104,44 +7086,15 @@ namespace bgfx { namespace gl
 							}
 						}
 
-						bool streamChanged      = draw.m_streamMask != currentState.m_streamMask;
-						bool vertexStartChanged = streamChanged;
-						for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
-							; 0 != streamMask
-							; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
-							)
-						{
-							streamMask >>= ntz;
-							idx         += ntz;
-
-							streamChanged      |= currentState.m_stream[idx].m_handle.idx  != draw.m_stream[idx].m_handle.idx;
-							vertexStartChanged |= currentState.m_stream[idx].m_startVertex != draw.m_stream[idx].m_startVertex;
-							currentState.m_stream[idx].m_handle      = draw.m_stream[idx].m_handle;
-							currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
-						}
-
 						if (0 != currentState.m_streamMask)
 						{
-							if (bindAttribs
-							||  vertexStartChanged)
+							if (baseVertex != draw.m_stream[0].m_startVertex
+							||  bindAttribs)
 							{
-								program.bindAttributesBegin();
-								for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
-									; 0 != streamMask
-									; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
-									)
-								{
-									streamMask >>= ntz;
-									idx         += ntz;
-
-									const Stream& stream = draw.m_stream[idx];
-
-									const VertexBufferGL& vb = m_vertexBuffers[stream.m_handle.idx];
-									uint16_t decl = !isValid(vb.m_decl) ? stream.m_decl.idx : vb.m_decl.idx;
-									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
-									program.bindAttributes(m_vertexDecls[decl], stream.m_startVertex);
-								}
-								program.bindAttributesEnd();
+								baseVertex = draw.m_stream[0].m_startVertex;
+								const VertexBufferGL& vb = m_vertexBuffers[draw.m_stream[0].m_handle.idx];
+								uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[0].m_decl.idx : vb.m_decl.idx;
+								program.bindAttributes(m_vertexDecls[decl], draw.m_stream[0].m_startVertex);
 
 								if (isValid(draw.m_instanceDataBuffer) )
 								{
@@ -7157,22 +7110,10 @@ namespace bgfx { namespace gl
 						uint32_t numVertices = draw.m_numVertices;
 						if (UINT32_MAX == numVertices)
 						{
-							for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
-								; 0 != streamMask
-								; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
-								)
-							{
-								streamMask >>= ntz;
-								idx         += ntz;
-
-								const Stream& stream = currentState.m_stream[idx];
-
-								const VertexBufferGL& vb = m_vertexBuffers[stream.m_handle.idx];
-								uint16_t decl = !isValid(vb.m_decl) ? stream.m_decl.idx : vb.m_decl.idx;
-								const VertexDecl& vertexDecl = m_vertexDecls[decl];
-
-								numVertices = bx::uint32_min(numVertices, vb.m_size/vertexDecl.m_stride);
-							}
+							const VertexBufferGL& vb = m_vertexBuffers[currentState.m_stream[0].m_handle.idx];
+							uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[0].m_decl.idx : vb.m_decl.idx;
+							const VertexDecl& vertexDecl = m_vertexDecls[decl];
+							numVertices = vb.m_size/vertexDecl.m_stride;
 						}
 
 						uint32_t numIndices        = 0;
