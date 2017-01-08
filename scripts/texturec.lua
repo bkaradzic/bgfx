@@ -37,6 +37,10 @@ project "texturec"
 		path.join(BGFX_DIR, "tools/texturec/**.h"),
 	}
 
+	links {
+		"bx",
+	}
+
 	configuration { "mingw-*" }
 		targetextension ".exe"
 

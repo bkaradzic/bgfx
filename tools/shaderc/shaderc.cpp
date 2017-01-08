@@ -4,7 +4,7 @@
  */
 
 #include "shaderc.h"
-#include <bx/tokenizecmd.h>
+#include <bx/commandline.h>
 
 #define MAX_TAGS 256
 extern "C"

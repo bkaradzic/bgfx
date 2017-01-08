@@ -25,6 +25,10 @@ project "geometryc"
 		path.join(BGFX_DIR, "examples/common/bounds.**"),
 	}
 
+	links {
+		"bx",
+	}
+
 	configuration { "mingw-*" }
 		targetextension ".exe"
 

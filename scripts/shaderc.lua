@@ -107,6 +107,10 @@ project "shaderc"
 		"OptimizeSpeed",
 	}
 
+	links {
+		"bx",
+	}
+
 	configuration { "vs*" }
 		includedirs {
 			path.join(GLSL_OPTIMIZER, "src/glsl/msvc"),

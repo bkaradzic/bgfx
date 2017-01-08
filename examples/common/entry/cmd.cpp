@@ -10,7 +10,7 @@
 
 #include <bx/allocator.h>
 #include <bx/hash.h>
-#include <bx/tokenizecmd.h>
+#include <bx/commandline.h>
 
 #include "dbg.h"
 #include "cmd.h"
