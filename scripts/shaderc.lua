@@ -147,6 +147,11 @@ project "shaderc"
 			path.join(GLSL_OPTIMIZER, "include/c99"),
 		}
 
+	configuration { "vs20* or mingw*" }
+		links {
+			"psapi",
+		}
+
 	configuration {}
 
 	defines { -- fcpp
