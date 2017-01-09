@@ -47,10 +47,6 @@ project "glslang"
 
 	configuration {}
 
-	flags {
-		"Optimize",
-	}
-
 	includedirs {
 		GLSLANG,
 	}
@@ -98,18 +94,19 @@ project "shaderc"
 		path.join(GLSL_OPTIMIZER, "src"),
 	}
 
-	flags {
-		"Optimize",
-	}
-
-	removeflags {
-		-- GCC 4.9 -O2 + -fno-strict-aliasing don't work together...
-		"OptimizeSpeed",
-	}
-
 	links {
 		"bx",
 	}
+
+	configuration { "Release" }
+		flags {
+			"Optimize",
+		}
+
+		removeflags {
+			-- GCC 4.9 -O2 + -fno-strict-aliasing don't work together...
+			"OptimizeSpeed",
+		}
 
 	configuration { "vs*" }
 		includedirs {
