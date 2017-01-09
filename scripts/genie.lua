@@ -142,9 +142,9 @@ function exampleProject(_name)
 	}
 
 	links {
+		"example-common",
 		"bgfx",
 		"bx",
-		"example-common",
 	}
 
 	if _OPTIONS["with-sdl"] then

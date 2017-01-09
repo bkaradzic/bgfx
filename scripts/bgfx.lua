@@ -46,6 +46,10 @@ function bgfxProject(_name, _kind, _defines)
 				"BGFX_SHARED_LIB_BUILD=1",
 			}
 
+			links {
+				"bx",
+			}
+
 			configuration { "vs20* or mingw*" }
 				links {
 					"gdi32",
