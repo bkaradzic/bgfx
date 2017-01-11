@@ -6195,6 +6195,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			PIX_BEGINEVENT(D3DCOLOR_FRAME, L"debugstats");
 
+			m_needPresent = true;
 			TextVideoMem& tvm = m_textVideoMem;
 
 			static int64_t next = now;

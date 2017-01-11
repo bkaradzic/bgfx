@@ -353,6 +353,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{ entry::Key::KeyF,         entry::Modifier::RightCtrl, 1, NULL, "graphics fullscreen"               },
 		{ entry::Key::Return,       entry::Modifier::RightAlt,  1, NULL, "graphics fullscreen"               },
 		{ entry::Key::F1,           entry::Modifier::None,      1, NULL, "graphics stats"                    },
+		{ entry::Key::F1,           entry::Modifier::LeftCtrl,  1, NULL, "graphics ifh"                      },
 		{ entry::Key::GamepadStart, entry::Modifier::None,      1, NULL, "graphics stats"                    },
 		{ entry::Key::F1,           entry::Modifier::LeftShift, 1, NULL, "graphics stats 0\ngraphics text 0" },
 		{ entry::Key::F3,           entry::Modifier::None,      1, NULL, "graphics wireframe"                },
@@ -365,7 +366,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{ entry::Key::F10,          entry::Modifier::None,      1, NULL, "graphics hidpi"                    },
 		{ entry::Key::Print,        entry::Modifier::None,      1, NULL, "graphics screenshot"               },
 		{ entry::Key::KeyP,         entry::Modifier::LeftCtrl,  1, NULL, "graphics screenshot"               },
-		
+
 		INPUT_BINDING_END
 	};
 

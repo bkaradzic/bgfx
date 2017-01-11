@@ -4272,6 +4272,7 @@ namespace bgfx { namespace d3d9
 		{
 			PIX_BEGINEVENT(D3DCOLOR_FRAME, L"debugstats");
 
+			m_needPresent = true;
 			TextVideoMem& tvm = m_textVideoMem;
 
 			static int64_t next = now;
