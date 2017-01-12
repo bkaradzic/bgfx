@@ -18,6 +18,7 @@ project "glslang"
 	configuration { "vs*" }
 		buildoptions {
 			"/wd4005", -- warning C4005: '_CRT_SECURE_NO_WARNINGS': macro redefinition
+			"/wd4100", -- error C4100: 'inclusionDepth' : unreferenced formal parameter
 		}
 
 	configuration { "not vs*" }
