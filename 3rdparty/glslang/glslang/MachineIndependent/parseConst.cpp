@@ -1,10 +1,10 @@
 //
-//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
-//All rights reserved.
+// Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
+// All rights reserved.
 //
-//Redistribution and use in source and binary forms, with or without
-//modification, are permitted provided that the following conditions
-//are met:
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
 //
 //    Redistributions of source code must retain the above copyright
 //    notice, this list of conditions and the following disclaimer.
@@ -18,22 +18,22 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-//POSSIBILITY OF SUCH DAMAGE.
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
 
 //
-// Travarse a tree of constants to create a single folded constant.
+// Traverse a tree of constants to create a single folded constant.
 // It should only be used when the whole tree is known to be constant.
 //
 
@@ -45,7 +45,7 @@ class TConstTraverser : public TIntermTraverser {
 public:
     TConstTraverser(const TConstUnionArray& cUnion, bool singleConstParam, TOperator constructType, const TType& t)
       : unionArray(cUnion), type(t),
-        constructorType(constructType), singleConstantParam(singleConstParam), error(false), isMatrix(false), 
+        constructorType(constructType), singleConstantParam(singleConstParam), error(false), isMatrix(false),
         matrixCols(0), matrixRows(0) {  index = 0; tOp = EOpNull; }
 
     virtual void visitConstantUnion(TIntermConstantUnion* node);
@@ -73,7 +73,7 @@ bool TConstTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node)
     if (! node->isConstructor() && node->getOp() != EOpComma) {
         error = true;
 
-        return false;  
+        return false;
     }
 
     if (node->getSequence().size() == 0) {
@@ -84,7 +84,7 @@ bool TConstTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node)
 
     bool flag = node->getSequence().size() == 1 && node->getSequence()[0]->getAsTyped()->getAsConstantUnion();
     if (flag) {
-        singleConstantParam = true; 
+        singleConstantParam = true;
         constructorType = node->getOp();
         size = node->getType().computeNumComponents();
 
@@ -93,19 +93,19 @@ bool TConstTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node)
             matrixCols = node->getType().getMatrixCols();
             matrixRows = node->getType().getMatrixRows();
         }
-    }       
+    }
 
-    for (TIntermSequence::iterator p = node->getSequence().begin(); 
+    for (TIntermSequence::iterator p = node->getSequence().begin();
                                    p != node->getSequence().end(); p++) {
 
         if (node->getOp() == EOpComma)
-            index = 0;           
+            index = 0;
 
         (*p)->traverse(this);
-    }   
-    if (flag) 
+    }
+    if (flag)
     {
-        singleConstantParam = false;   
+        singleConstantParam = false;
         constructorType = EOpNull;
         size = 0;
         isMatrix = false;
@@ -126,7 +126,7 @@ void TConstTraverser::visitConstantUnion(TIntermConstantUnion* node)
 
     if (! singleConstantParam) {
         int rightUnionSize = node->getType().computeNumComponents();
-    
+
         const TConstUnionArray& rightUnionArray = node->getConstArray();
         for (int i = 0; i < rightUnionSize; i++) {
             if (index >= instanceSize)
@@ -148,7 +148,7 @@ void TConstTraverser::visitConstantUnion(TIntermConstantUnion* node)
                 leftUnionArray[i] = rightUnionArray[count];
 
                 (index)++;
-                
+
                 if (nodeComps > 1)
                     count++;
             }
@@ -180,13 +180,13 @@ void TConstTraverser::visitConstantUnion(TIntermConstantUnion* node)
                         return;
                     if (i == startIndex || (i - startIndex) % (matrixRows + 1) == 0 )
                         leftUnionArray[i] = rightUnionArray[count];
-                    else 
+                    else
                         leftUnionArray[i].setDConst(0.0);
 
                     index++;
 
                     if (nodeComps > 1)
-                        count++;                
+                        count++;
                 }
             }
         }
@@ -199,7 +199,7 @@ bool TIntermediate::parseConstTree(TIntermNode* root, TConstUnionArray unionArra
         return false;
 
     TConstTraverser it(unionArray, singleConstantParam, constructorType, t);
-    
+
     root->traverse(&it);
     if (it.error)
         return true;

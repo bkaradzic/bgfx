@@ -1,12 +1,12 @@
 //
-//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
-//Copyright (C) 2012-2016 LunarG, Inc.
+// Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
+// Copyright (C) 2012-2016 LunarG, Inc.
 //
-//All rights reserved.
+// All rights reserved.
 //
-//Redistribution and use in source and binary forms, with or without
-//modification, are permitted provided that the following conditions
-//are met:
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
 //
 //    Redistributions of source code must retain the above copyright
 //    notice, this list of conditions and the following disclaimer.
@@ -20,25 +20,25 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-//POSSIBILITY OF SUCH DAMAGE.
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
 
 //
 // Definition of the in-memory high-level intermediate representation
 // of shaders.  This is a tree that parser creates.
 //
-// Nodes in the tree are defined as a hierarchy of classes derived from 
+// Nodes in the tree are defined as a hierarchy of classes derived from
 // TIntermNode. Each is a node in a tree.  There is no preset branching factor;
 // each node can have it's own type of list of children.
 //
@@ -66,14 +66,14 @@ enum TOperator {
     EOpNull,            // if in a node, should only mean a node is still being built
     EOpSequence,        // denotes a list of statements, or parameters, etc.
     EOpLinkerObjects,   // for aggregate node of objects the linker may need, if not reference by the rest of the AST
-    EOpFunctionCall,    
+    EOpFunctionCall,
     EOpFunction,        // For function definition
     EOpParameters,      // an aggregate listing the parameters to a function
 
     //
     // Unary operators
     //
-    
+
     EOpNegative,
     EOpLogicalNot,
     EOpVectorLogicalNot,
@@ -445,7 +445,7 @@ enum TOperator {
     //
     // moves
     //
-    
+
     EOpAssign,
     EOpAddAssign,
     EOpSubAssign,
@@ -709,7 +709,7 @@ public:
     virtual void setType(const TType& t) { type.shallowCopy(t); }
     virtual const TType& getType() const { return type; }
     virtual TType& getWritableType() { return type; }
-    
+
     virtual TBasicType getBasicType() const { return type.getBasicType(); }
     virtual TQualifier& getQualifier() { return type.getQualifier(); }
     virtual const TQualifier& getQualifier() const { return type.getQualifier(); }
@@ -734,7 +734,7 @@ protected:
 //
 class TIntermLoop : public TIntermNode {
 public:
-    TIntermLoop(TIntermNode* aBody, TIntermTyped* aTest, TIntermTyped* aTerminal, bool testFirst) : 
+    TIntermLoop(TIntermNode* aBody, TIntermTyped* aTest, TIntermTyped* aTerminal, bool testFirst) :
         body(aBody),
         test(aTest),
         terminal(aTerminal),
@@ -1148,7 +1148,7 @@ enum TVisit
 };
 
 //
-// For traversing the tree.  User should derive from this, 
+// For traversing the tree.  User should derive from this,
 // put their traversal specific data in it, and then pass
 // it to a Traverse method.
 //
@@ -1160,10 +1160,10 @@ enum TVisit
 // the subtree).  Similarly for inVisit for in-order visiting of nodes with
 // multiple children.
 //
-// If you only want post-visits, explicitly turn off preVisit (and inVisit) 
+// If you only want post-visits, explicitly turn off preVisit (and inVisit)
 // and turn on postVisit.
 //
-// In general, for the visit*() methods, return true from interior nodes 
+// In general, for the visit*() methods, return true from interior nodes
 // to have the traversal continue on to children.
 //
 // If you process children yourself, or don't want them processed, return false.

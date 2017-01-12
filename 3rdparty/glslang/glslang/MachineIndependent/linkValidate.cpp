@@ -1,11 +1,11 @@
 //
-//Copyright (C) 2013 LunarG, Inc.
+// Copyright (C) 2013 LunarG, Inc.
 //
-//All rights reserved.
+// All rights reserved.
 //
-//Redistribution and use in source and binary forms, with or without
-//modification, are permitted provided that the following conditions
-//are met:
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
 //
 //    Redistributions of source code must retain the above copyright
 //    notice, this list of conditions and the following disclaimer.
@@ -19,18 +19,18 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-//POSSIBILITY OF SUCH DAMAGE.
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
 
 //
@@ -48,7 +48,7 @@
 #include "../Include/InfoSink.h"
 
 namespace glslang {
-    
+
 //
 // Link-time error emitter.
 //
@@ -67,8 +67,8 @@ void TIntermediate::warn(TInfoSink& infoSink, const char* message)
     infoSink.info << "Linking " << StageName(language) << " stage: " << message << "\n";
 }
 
-// TODO: 4.4 offset/align:  "Two blocks linked together in the same program with the same block 
-// name must have the exact same set of members qualified with offset and their integral-constant 
+// TODO: 4.4 offset/align:  "Two blocks linked together in the same program with the same block
+// name must have the exact same set of members qualified with offset and their integral-constant
 // expression values must be the same, or a link-time error results."
 
 //
@@ -112,12 +112,12 @@ void TIntermediate::merge(TInfoSink& infoSink, TIntermediate& unit)
         inputPrimitive = unit.inputPrimitive;
     else if (inputPrimitive != unit.inputPrimitive)
         error(infoSink, "Contradictory input layout primitives");
-    
+
     if (outputPrimitive == ElgNone)
         outputPrimitive = unit.outputPrimitive;
     else if (outputPrimitive != unit.outputPrimitive)
         error(infoSink, "Contradictory output layout primitives");
-    
+
     if (vertices == TQualifier::layoutNotSet)
         vertices = unit.vertices;
     else if (vertices != unit.vertices) {
@@ -178,7 +178,7 @@ void TIntermediate::merge(TInfoSink& infoSink, TIntermediate& unit)
     }
 
     // Getting this far means we have two existing trees to merge...
-    
+
     version = std::max(version, unit.version);
     requestedExtensions.insert(unit.requestedExtensions.begin(), unit.requestedExtensions.end());
 
@@ -341,9 +341,9 @@ void TIntermediate::mergeErrorCheck(TInfoSink& infoSink, const TIntermSymbol& sy
         writeTypeComparison = true;
     }
 
-    // Layouts... 
-    // TODO: 4.4 enhanced layouts: Generalize to include offset/align: current spec 
-    //       requires separate user-supplied offset from actual computed offset, but 
+    // Layouts...
+    // TODO: 4.4 enhanced layouts: Generalize to include offset/align: current spec
+    //       requires separate user-supplied offset from actual computed offset, but
     //       current implementation only has one offset.
     if (symbol.getQualifier().layoutMatrix    != unitSymbol.getQualifier().layoutMatrix ||
         symbol.getQualifier().layoutPacking   != unitSymbol.getQualifier().layoutPacking ||
@@ -417,7 +417,7 @@ void TIntermediate::finalCheck(TInfoSink& infoSink, bool keepUncalled)
         if (xfbBuffers[b].containsDouble)
             RoundToPow2(xfbBuffers[b].implicitStride, 8);
 
-        // "It is a compile-time or link-time error to have 
+        // "It is a compile-time or link-time error to have
         // any xfb_offset that overflows xfb_stride, whether stated on declarations before or after the xfb_stride, or
         // in different compilation units. While xfb_stride can be declared multiple times for the same buffer, it is a
         // compile-time or link-time error to have different values specified for the stride for the same buffer."
@@ -429,8 +429,8 @@ void TIntermediate::finalCheck(TInfoSink& infoSink, bool keepUncalled)
         if (xfbBuffers[b].stride == TQualifier::layoutXfbStrideEnd)
             xfbBuffers[b].stride = xfbBuffers[b].implicitStride;
 
-        // "If the buffer is capturing any 
-        // outputs with double-precision components, the stride must be a multiple of 8, otherwise it must be a 
+        // "If the buffer is capturing any
+        // outputs with double-precision components, the stride must be a multiple of 8, otherwise it must be a
         // multiple of 4, or a compile-time or link-time error results."
         if (xfbBuffers[b].containsDouble && ! IsMultipleOfPow2(xfbBuffers[b].stride, 8)) {
             error(infoSink, "xfb_stride must be multiple of 8 for buffer holding a double:");
@@ -442,7 +442,7 @@ void TIntermediate::finalCheck(TInfoSink& infoSink, bool keepUncalled)
             infoSink.info << "    xfb_buffer " << (unsigned int)b << ", xfb_stride " << xfbBuffers[b].stride << "\n";
         }
 
-        // "The resulting stride (implicit or explicit), when divided by 4, must be less than or equal to the 
+        // "The resulting stride (implicit or explicit), when divided by 4, must be less than or equal to the
         // implementation-dependent constant gl_MaxTransformFeedbackInterleavedComponents."
         if (xfbBuffers[b].stride > (unsigned int)(4 * resources.maxTransformFeedbackInterleavedComponents)) {
             error(infoSink, "xfb_stride is too large:");
@@ -540,7 +540,7 @@ void TIntermediate::checkCallGraphCycles(TInfoSink& infoSink)
             break;
 
         // Otherwise, we found a new subgraph, process it:
-        // See what all can be reached by this new root, and if any of 
+        // See what all can be reached by this new root, and if any of
         // that is recursive.  This is done by depth-first traversals, seeing
         // if a new call is found that was already in the currentPath (a back edge),
         // thereby detecting recursion.
@@ -709,7 +709,7 @@ TIntermSequence& TIntermediate::findLinkerObjects() const
 }
 
 // See if a variable was both a user-declared output and used.
-// Note: the spec discusses writing to one, but this looks at read or write, which 
+// Note: the spec discusses writing to one, but this looks at read or write, which
 // is more useful, and perhaps the spec should be changed to reflect that.
 bool TIntermediate::userOutputUsed() const
 {
@@ -720,7 +720,7 @@ bool TIntermediate::userOutputUsed() const
         const TIntermSymbol& symbolNode = *linkerObjects[i]->getAsSymbolNode();
         if (symbolNode.getQualifier().storage == EvqVaryingOut &&
             symbolNode.getName().compare(0, 3, "gl_") != 0 &&
-            inIoAccessed(symbolNode.getName())) {            
+            inIoAccessed(symbolNode.getName())) {
             found = true;
             break;
         }
@@ -899,7 +899,7 @@ bool TIntermediate::addUsedConstantId(int id)
 // Return the size of type, as measured by "locations".
 int TIntermediate::computeTypeLocationSize(const TType& type) const
 {
-    // "If the declared input is an array of size n and each element takes m locations, it will be assigned m * n 
+    // "If the declared input is an array of size n and each element takes m locations, it will be assigned m * n
     // consecutive locations..."
     if (type.isArray()) {
         // TODO: perf: this can be flattened by using getCumulativeArraySize(), and a deref that discards all arrayness
@@ -911,8 +911,8 @@ int TIntermediate::computeTypeLocationSize(const TType& type) const
             return type.getOuterArraySize() * computeTypeLocationSize(elementType);
     }
 
-    // "The locations consumed by block and structure members are determined by applying the rules above 
-    // recursively..."    
+    // "The locations consumed by block and structure members are determined by applying the rules above
+    // recursively..."
     if (type.isStruct()) {
         int size = 0;
         for (int member = 0; member < (int)type.getStruct()->size(); ++member) {
@@ -924,9 +924,9 @@ int TIntermediate::computeTypeLocationSize(const TType& type) const
 
     // ES: "If a shader input is any scalar or vector type, it will consume a single location."
 
-    // Desktop: "If a vertex shader input is any scalar or vector type, it will consume a single location. If a non-vertex 
-    // shader input is a scalar or vector type other than dvec3 or dvec4, it will consume a single location, while 
-    // types dvec3 or dvec4 will consume two consecutive locations. Inputs of type double and dvec2 will 
+    // Desktop: "If a vertex shader input is any scalar or vector type, it will consume a single location. If a non-vertex
+    // shader input is a scalar or vector type other than dvec3 or dvec4, it will consume a single location, while
+    // types dvec3 or dvec4 will consume two consecutive locations. Inputs of type double and dvec2 will
     // consume only a single location, in all stages."
     if (type.isScalar())
         return 1;
@@ -940,7 +940,7 @@ int TIntermediate::computeTypeLocationSize(const TType& type) const
     }
 
     // "If the declared input is an n x m single- or double-precision matrix, ...
-    // The number of locations assigned for each matrix will be the same as 
+    // The number of locations assigned for each matrix will be the same as
     // for an n-element array of m-component vectors..."
     if (type.isMatrix()) {
         TType columnType(type, 0);
@@ -986,14 +986,14 @@ int TIntermediate::addXfbBufferOffset(const TType& type)
 // N.B. Caller must set containsDouble to false before calling.
 unsigned int TIntermediate::computeTypeXfbSize(const TType& type, bool& containsDouble) const
 {
-    // "...if applied to an aggregate containing a double, the offset must also be a multiple of 8, 
+    // "...if applied to an aggregate containing a double, the offset must also be a multiple of 8,
     // and the space taken in the buffer will be a multiple of 8.
-    // ...within the qualified entity, subsequent components are each 
+    // ...within the qualified entity, subsequent components are each
     // assigned, in order, to the next available offset aligned to a multiple of
     // that component's size.  Aggregate types are flattened down to the component
     // level to get this sequence of components."
 
-    if (type.isArray()) {        
+    if (type.isArray()) {
         // TODO: perf: this can be flattened by using getCumulativeArraySize(), and a deref that discards all arrayness
         assert(type.isExplicitlySizedArray());
         TType elementType(type, 0);
@@ -1005,8 +1005,8 @@ unsigned int TIntermediate::computeTypeXfbSize(const TType& type, bool& contains
         bool structContainsDouble = false;
         for (int member = 0; member < (int)type.getStruct()->size(); ++member) {
             TType memberType(type, member);
-            // "... if applied to 
-            // an aggregate containing a double, the offset must also be a multiple of 8, 
+            // "... if applied to
+            // an aggregate containing a double, the offset must also be a multiple of 8,
             // and the space taken in the buffer will be a multiple of 8."
             bool memberContainsDouble = false;
             int memberSize = computeTypeXfbSize(memberType, memberContainsDouble);
@@ -1064,7 +1064,7 @@ int TIntermediate::getBaseAlignmentScalar(const TType& type, int& size)
 // Implement base-alignment and size rules from section 7.6.2.2 Standard Uniform Block Layout
 // Operates recursively.
 //
-// If std140 is true, it does the rounding up to vec4 size required by std140, 
+// If std140 is true, it does the rounding up to vec4 size required by std140,
 // otherwise it does not, yielding std430 rules.
 //
 // The size is returned in the 'size' parameter
@@ -1093,7 +1093,7 @@ int TIntermediate::getBaseAlignment(const TType& type, int& size, int& stride, b
     //
     //   1. If the member is a scalar consuming N basic machine units, the base alignment is N.
     //
-    //   2. If the member is a two- or four-component vector with components consuming N basic 
+    //   2. If the member is a two- or four-component vector with components consuming N basic
     //      machine units, the base alignment is 2N or 4N, respectively.
     //
     //   3. If the member is a three-component vector with components consuming N
@@ -1106,7 +1106,7 @@ int TIntermediate::getBaseAlignment(const TType& type, int& size, int& stride, b
     //      the array is rounded up to the next multiple of the base alignment.
     //
     //   5. If the member is a column-major matrix with C columns and R rows, the
-    //      matrix is stored identically to an array of C column vectors with R 
+    //      matrix is stored identically to an array of C column vectors with R
     //      components each, according to rule (4).
     //
     //   6. If the member is an array of S column-major matrices with C columns and
@@ -1123,7 +1123,7 @@ int TIntermediate::getBaseAlignment(const TType& type, int& size, int& stride, b
     //
     //   9. If the member is a structure, the base alignment of the structure is N , where
     //      N is the largest base alignment value of any    of its members, and rounded
-    //      up to the base alignment of a vec4. The individual members of this substructure 
+    //      up to the base alignment of a vec4. The individual members of this substructure
     //      are then assigned offsets by applying this set of rules recursively,
     //      where the base offset of the first member of the sub-structure is equal to the
     //      aligned offset of the structure. The structure may have padding at the end;
@@ -1165,7 +1165,7 @@ int TIntermediate::getBaseAlignment(const TType& type, int& size, int& stride, b
             int memberAlignment = getBaseAlignment(*memberList[m].type, memberSize, dummyStride, std140,
                                                    (subMatrixLayout != ElmNone) ? (subMatrixLayout == ElmRowMajor) : rowMajor);
             maxAlignment = std::max(maxAlignment, memberAlignment);
-            RoundToPow2(size, memberAlignment);         
+            RoundToPow2(size, memberAlignment);
             size += memberSize;
         }
 
@@ -1188,7 +1188,7 @@ int TIntermediate::getBaseAlignment(const TType& type, int& size, int& stride, b
         case 2:
             size *= 2;
             return 2 * scalarAlign;
-        default: 
+        default:
             size *= type.getVectorSize();
             return 4 * scalarAlign;
         }
@@ -1198,7 +1198,7 @@ int TIntermediate::getBaseAlignment(const TType& type, int& size, int& stride, b
     if (type.isMatrix()) {
         // rule 5: deref to row, not to column, meaning the size of vector is num columns instead of num rows
         TType derefType(type, 0, rowMajor);
-            
+
         alignment = getBaseAlignment(derefType, size, dummyStride, std140, rowMajor);
         if (std140)
             alignment = std::max(baseAlignmentVec4Std140, alignment);

@@ -1,12 +1,12 @@
 //
-//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
-//Copyright (C) 2012-2013 LunarG, Inc.
+// Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
+// Copyright (C) 2012-2013 LunarG, Inc.
 //
-//All rights reserved.
+// All rights reserved.
 //
-//Redistribution and use in source and binary forms, with or without
-//modification, are permitted provided that the following conditions
-//are met:
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
 //
 //    Redistributions of source code must retain the above copyright
 //    notice, this list of conditions and the following disclaimer.
@@ -20,18 +20,18 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-//POSSIBILITY OF SUCH DAMAGE.
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
 
 #ifndef _POOLALLOC_INCLUDED_
@@ -43,8 +43,8 @@
 
 //
 // This header defines an allocator that can be used to efficiently
-// allocate a large number of small requests for heap memory, with the 
-// intention that they are not individually deallocated, but rather 
+// allocate a large number of small requests for heap memory, with the
+// intention that they are not individually deallocated, but rather
 // collectively deallocated at one time.
 //
 // This simultaneously
@@ -70,7 +70,7 @@ namespace glslang {
 // If we are using guard blocks, we must track each individual
 // allocation.  If we aren't using guard blocks, these
 // never get instantiated, so won't have any impact.
-// 
+//
 
 class TAllocation {
 public:
@@ -87,7 +87,7 @@ public:
             memset(postGuard(), guardBlockEndVal,   guardBlockSize);
 #       endif
     }
-    
+
     void check() const {
         checkGuardBlock(preGuard(),  guardBlockBeginVal, "before");
         checkGuardBlock(postGuard(), guardBlockEndVal,   "after");
@@ -100,7 +100,7 @@ public:
     inline static size_t allocationSize(size_t size) {
         return size + 2 * guardBlockSize + headerSize();
     }
-    
+
     // Offset from surrounding buffer to get to user data buffer.
     inline static unsigned char* offsetAllocation(unsigned char* m) {
         return m + guardBlockSize + headerSize();
@@ -123,16 +123,16 @@ private:
     const static unsigned char userDataFill;
 
     const static size_t guardBlockSize;
-#   ifdef GUARD_BLOCKS    
+#   ifdef GUARD_BLOCKS
     inline static size_t headerSize() { return sizeof(TAllocation); }
 #   else
     inline static size_t headerSize() { return 0; }
 #   endif
 };
-    
+
 //
 // There are several stacks.  One is to track the pushing and popping
-// of the user, and not yet implemented.  The others are simply a 
+// of the user, and not yet implemented.  The others are simply a
 // repositories of free pages or used pages.
 //
 // Page stacks are linked together with a simple header at the beginning
@@ -141,7 +141,7 @@ private:
 // re-use.
 //
 // The "page size" used is not, nor must it match, the underlying OS
-// page size.  But, having it be about that size or equal to a set of 
+// page size.  But, having it be about that size or equal to a set of
 // pages is likely most optimal.
 //
 class TPoolAllocator {
@@ -185,7 +185,7 @@ public:
 
 protected:
     friend struct tHeader;
-    
+
     struct tHeader {
         tHeader(tHeader* nextPage, size_t pageCount) :
 #ifdef GUARD_BLOCKS
@@ -227,7 +227,7 @@ protected:
     }
 
     size_t pageSize;        // granularity of allocation from the OS
-    size_t alignment;       // all returned allocations will be aligned at 
+    size_t alignment;       // all returned allocations will be aligned at
                             //      this granularity, which will be a power of 2
     size_t alignmentMask;
     size_t headerSkip;      // amount of memory to skip to make room for the
@@ -244,7 +244,6 @@ private:
     TPoolAllocator& operator=(const TPoolAllocator&);  // don't allow assignment operator
     TPoolAllocator(const TPoolAllocator&);  // don't allow default copy constructor
 };
-
 
 //
 // There could potentially be many pools with pops happening at
@@ -278,7 +277,7 @@ public:
     typedef T& reference;
     typedef const T& const_reference;
     typedef T value_type;
-    template<class Other> 
+    template<class Other>
         struct rebind {
             typedef pool_allocator<Other> other;
         };
@@ -292,9 +291,9 @@ public:
     template<class Other>
         pool_allocator(const pool_allocator<Other>& p) : allocator(p.getAllocator()) { }
 
-    pointer allocate(size_type n) { 
+    pointer allocate(size_type n) {
         return reinterpret_cast<pointer>(getAllocator().allocate(n * sizeof(T))); }
-    pointer allocate(size_type n, const void*) { 
+    pointer allocate(size_type n, const void*) {
         return reinterpret_cast<pointer>(getAllocator().allocate(n * sizeof(T))); }
 
     void deallocate(void*, size_type) { }

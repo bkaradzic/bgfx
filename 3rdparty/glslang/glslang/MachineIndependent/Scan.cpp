@@ -1,12 +1,12 @@
 //
-//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
-//Copyright (C) 2013 LunarG, Inc.
+// Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
+// Copyright (C) 2013 LunarG, Inc.
 //
-//All rights reserved.
+// All rights reserved.
 //
-//Redistribution and use in source and binary forms, with or without
-//modification, are permitted provided that the following conditions
-//are met:
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
 //
 //    Redistributions of source code must retain the above copyright
 //    notice, this list of conditions and the following disclaimer.
@@ -20,18 +20,18 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-//POSSIBILITY OF SUCH DAMAGE.
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
 
 //
@@ -142,13 +142,13 @@ void TInputScanner::consumeWhitespaceComment(bool& foundNonSpaceTab)
 {
     do {
         consumeWhiteSpace(foundNonSpaceTab);
- 
+
         // if not starting a comment now, then done
         int c = peek();
         if (c != '/' || c == EndOfInput)
             return;
 
-        // skip potential comment 
+        // skip potential comment
         foundNonSpaceTab = true;
         if (! consumeComment())
             return;
@@ -199,10 +199,10 @@ bool TInputScanner::scanVersion(int& version, EProfile& profile, bool& notFirstT
         }
         lookingInMiddle = true;
 
-        // Nominal start, skipping the desktop allowed comments and white space, but tracking if 
+        // Nominal start, skipping the desktop allowed comments and white space, but tracking if
         // something else was found for ES:
         consumeWhitespaceComment(foundNonSpaceTab);
-        if (foundNonSpaceTab) 
+        if (foundNonSpaceTab)
             versionNotFirst = true;
 
         // "#"
@@ -802,7 +802,7 @@ int TScanContext::tokenizeIdentifier()
         return keyword;
 
     case BUFFER:
-        if ((parseContext.profile == EEsProfile && parseContext.version < 310) || 
+        if ((parseContext.profile == EEsProfile && parseContext.version < 310) ||
             (parseContext.profile != EEsProfile && parseContext.version < 430))
             return identifierOrType();
         return keyword;
@@ -962,7 +962,7 @@ int TScanContext::tokenizeIdentifier()
     case U64VEC3:
     case U64VEC4:
         afterType = true;
-        if (parseContext.symbolTable.atBuiltInLevel() || 
+        if (parseContext.symbolTable.atBuiltInLevel() ||
             (parseContext.extensionTurnedOn(E_GL_ARB_gpu_shader_int64) &&
              parseContext.profile != EEsProfile && parseContext.version >= 450))
             return keyword;
@@ -1194,7 +1194,7 @@ int TScanContext::tokenizeIdentifier()
         return keyword;
 
     case PRECISE:
-        if ((parseContext.profile == EEsProfile && parseContext.extensionsTurnedOn(Num_AEP_gpu_shader5, AEP_gpu_shader5)) || 
+        if ((parseContext.profile == EEsProfile && parseContext.extensionsTurnedOn(Num_AEP_gpu_shader5, AEP_gpu_shader5)) ||
             (parseContext.profile != EEsProfile && parseContext.version >= 400))
             return keyword;
         if (parseContext.profile == EEsProfile && parseContext.version == 310) {
@@ -1356,7 +1356,7 @@ int TScanContext::dMat()
 
 int TScanContext::firstGenerationImage(bool inEs310)
 {
-    if (parseContext.symbolTable.atBuiltInLevel() || 
+    if (parseContext.symbolTable.atBuiltInLevel() ||
         (parseContext.profile != EEsProfile && (parseContext.version >= 420 || parseContext.extensionTurnedOn(E_GL_ARB_shader_image_load_store))) ||
         (inEs310 && parseContext.profile == EEsProfile && parseContext.version >= 310))
         return keyword;
@@ -1381,8 +1381,8 @@ int TScanContext::secondGenerationImage()
         return keyword;
     }
 
-    if (parseContext.symbolTable.atBuiltInLevel() || 
-        (parseContext.profile != EEsProfile && 
+    if (parseContext.symbolTable.atBuiltInLevel() ||
+        (parseContext.profile != EEsProfile &&
          (parseContext.version >= 420 || parseContext.extensionTurnedOn(E_GL_ARB_shader_image_load_store))))
         return keyword;
 

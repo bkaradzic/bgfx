@@ -1,13 +1,13 @@
 //
-//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
-//Copyright (C) 2012-2015 LunarG, Inc.
-//Copyright (C) 2015-2016 Google, Inc.
+// Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
+// Copyright (C) 2012-2015 LunarG, Inc.
+// Copyright (C) 2015-2016 Google, Inc.
 //
-//All rights reserved.
+// All rights reserved.
 //
-//Redistribution and use in source and binary forms, with or without
-//modification, are permitted provided that the following conditions
-//are met:
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
 //
 //    Redistributions of source code must retain the above copyright
 //    notice, this list of conditions and the following disclaimer.
@@ -21,18 +21,18 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-//POSSIBILITY OF SUCH DAMAGE.
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
 
 #include "ParseHelper.h"
@@ -50,7 +50,7 @@ namespace glslang {
 TParseContext::TParseContext(TSymbolTable& symbolTable, TIntermediate& interm, bool parsingBuiltins,
                              int version, EProfile profile, const SpvVersion& spvVersion, EShLanguage language,
                              TInfoSink& infoSink, bool forwardCompatible, EShMessages messages) :
-            TParseContextBase(symbolTable, interm, parsingBuiltins, version, profile, spvVersion, language, infoSink, forwardCompatible, messages), 
+            TParseContextBase(symbolTable, interm, parsingBuiltins, version, profile, spvVersion, language, infoSink, forwardCompatible, messages),
             contextPragma(true, false), loopNestingLevel(0), structNestingLevel(0), controlFlowNestingLevel(0), statementNestingLevel(0),
             inMain(false), postMainReturn(false), currentFunctionType(nullptr), blockName(nullptr),
             limits(resources.limits),
@@ -76,7 +76,7 @@ TParseContext::TParseContext(TSymbolTable& symbolTable, TIntermediate& interm, b
     globalInputDefaults.clear();
     globalOutputDefaults.clear();
 
-    // "Shaders in the transform 
+    // "Shaders in the transform
     // feedback capturing mode have an initial global default of
     //     layout(xfb_buffer = 0) out;"
     if (language == EShLangVertex ||
@@ -370,12 +370,12 @@ TIntermTyped* TParseContext::handleVariable(const TSourceLoc& loc, TSymbol* symb
         requireExtensions(loc, symbol->getNumExtensions(), symbol->getExtensions(), symbol->getName().c_str());
 
     if (symbol && symbol->isReadOnly()) {
-        // All shared things containing an implicitly sized array must be copied up 
+        // All shared things containing an implicitly sized array must be copied up
         // on first use, so that all future references will share its array structure,
         // so that editing the implicit size will effect all nodes consuming it,
         // and so that editing the implicit size won't change the shared one.
         //
-        // If this is a variable or a block, check it and all it contains, but if this 
+        // If this is a variable or a block, check it and all it contains, but if this
         // is a member of an anonymous block, check the whole block, as the whole block
         // will need to be copied up if it contains an implicitly-sized array.
         if (symbol->getType().containsImplicitlySizedArray() ||
@@ -537,7 +537,7 @@ void TParseContext::checkIndex(const TSourceLoc& loc, const TType& type, int& in
             error(loc, "", "[", "matrix index out of range '%d'", index);
             index = type.getMatrixCols() - 1;
         }
-    }           
+    }
 }
 
 // for ES 2.0 (version 100) limitations for almost all index operations except vertex-shader uniforms
@@ -558,7 +558,7 @@ void TParseContext::handleIndexLimits(const TSourceLoc& /*loc*/, TIntermTyped* b
     }
 }
 
-// Make a shared symbol have a non-shared version that can be edited by the current 
+// Make a shared symbol have a non-shared version that can be edited by the current
 // compile, such that editing its type will not change the shared version and will
 // effect all nodes sharing it.
 void TParseContext::makeEditable(TSymbol*& symbol)
@@ -600,7 +600,7 @@ void TParseContext::fixIoArraySize(const TSourceLoc& loc, TType& type)
 
 // Issue any errors if the non-array object is missing arrayness WRT
 // shader I/O that has array requirements.
-// All arrayness checking is handled in array paths, this is for 
+// All arrayness checking is handled in array paths, this is for
 void TParseContext::ioArrayCheck(const TSourceLoc& loc, const TType& type, const TString& identifier)
 {
     if (! type.isArray() && ! symbolTable.atBuiltInLevel()) {
@@ -633,7 +633,7 @@ void TParseContext::handleIoResizeArrayAccess(const TSourceLoc& /*loc*/, TInterm
 
 // If there has been an input primitive declaration (geometry shader) or an output
 // number of vertices declaration(tessellation shader), make sure all input array types
-// match it in size.  Types come either from nodes in the AST or symbols in the 
+// match it in size.  Types come either from nodes in the AST or symbols in the
 // symbol table.
 //
 // Types without an array size will be given one.
@@ -729,7 +729,7 @@ TIntermTyped* TParseContext::handleUnaryMath(const TSourceLoc& loc, const char* 
         return result;
     else
         unaryOpError(loc, str, childNode->getCompleteString());
-        
+
     return childNode;
 }
 
@@ -742,7 +742,7 @@ TIntermTyped* TParseContext::handleDotDereference(const TSourceLoc& loc, TInterm
 
     //
     // .length() can't be resolved until we later see the function-calling syntax.
-    // Save away the name in the AST for now.  Processing is completed in 
+    // Save away the name in the AST for now.  Processing is completed in
     // handleLengthMethod().
     //
     if (field == "length") {
@@ -906,7 +906,7 @@ TFunction* TParseContext::handleFunctionDeclarator(const TSourceLoc& loc, TFunct
         if (symbolTable.atBuiltInLevel())
             function.setDefined();
         else {
-            if (prevDec && ! builtIn)                
+            if (prevDec && ! builtIn)
                 symbol->getAsFunction()->setPrototyped();  // need a writable one, but like having prevDec as a const
             function.setPrototyped();
         }
@@ -926,7 +926,7 @@ TFunction* TParseContext::handleFunctionDeclarator(const TSourceLoc& loc, TFunct
 }
 
 //
-// Handle seeing the function prototype in front of a function definition in the grammar.  
+// Handle seeing the function prototype in front of a function definition in the grammar.
 // The body is handled after this function returns.
 //
 TIntermAggregate* TParseContext::handleFunctionDefinition(const TSourceLoc& loc, TFunction& function)
@@ -1087,10 +1087,10 @@ TIntermTyped* TParseContext::handleFunctionCall(const TSourceLoc& loc, TFunction
                         if (argQualifier.writeonly && ! formalQualifier.writeonly)
                             error(arguments->getLoc(), message, "writeonly", "");
                     }
-                    // TODO 4.5 functionality:  A shader will fail to compile 
+                    // TODO 4.5 functionality:  A shader will fail to compile
                     // if the value passed to the memargument of an atomic memory function does not correspond to a buffer or
-                    // shared variable. It is acceptable to pass an element of an array or a single component of a vector to the 
-                    // memargument of an atomic memory function, as long as the underlying array or vector is a buffer or 
+                    // shared variable. It is acceptable to pass an element of an array or a single component of a vector to the
+                    // memargument of an atomic memory function, as long as the underlying array or vector is a buffer or
                     // shared variable.
                 }
 
@@ -1213,7 +1213,7 @@ void TParseContext::computeBuiltinPrecisions(TIntermTyped& node, const TFunction
         operationPrecision = std::max(function[0].type->getQualifier().precision,
                                       unaryNode->getOperand()->getType().getQualifier().precision);
         if (function.getType().getBasicType() != EbtBool)
-            resultPrecision = function.getType().getQualifier().precision == EpqNone ? 
+            resultPrecision = function.getType().getQualifier().precision == EpqNone ?
                                         operationPrecision :
                                         function.getType().getQualifier().precision;
     } else if (TIntermAggregate* agg = node.getAsAggregate()) {
@@ -1243,7 +1243,7 @@ void TParseContext::computeBuiltinPrecisions(TIntermTyped& node, const TFunction
         if (agg->isSampling() || agg->getOp() == EOpImageLoad || agg->getOp() == EOpImageStore)
             resultPrecision = sequence[0]->getAsTyped()->getQualifier().precision;
         else if (function.getType().getBasicType() != EbtBool)
-            resultPrecision = function.getType().getQualifier().precision == EpqNone ? 
+            resultPrecision = function.getType().getQualifier().precision == EpqNone ?
                                         operationPrecision :
                                         function.getType().getQualifier().precision;
     }
@@ -1301,7 +1301,7 @@ void TParseContext::checkLocation(const TSourceLoc& loc, TOperator op)
 }
 
 // Finish processing object.length(). This started earlier in handleDotDereference(), where
-// the ".length" part was recognized and semantically checked, and finished here where the 
+// the ".length" part was recognized and semantically checked, and finished here where the
 // function syntax "()" is recognized.
 //
 // Return resulting tree node.
@@ -1319,8 +1319,8 @@ TIntermTyped* TParseContext::handleLengthMethod(const TSourceLoc& loc, TFunction
                 return intermediate.addBuiltInFunctionCall(loc, EOpArrayLength, true, intermNode, TType(EbtInt));
             } else if (type.isImplicitlySizedArray()) {
                 if (intermNode->getAsSymbolNode() && isIoResizeArray(type)) {
-                    // We could be between a layout declaration that gives a built-in io array implicit size and 
-                    // a user redeclaration of that array, meaning we have to substitute its implicit size here 
+                    // We could be between a layout declaration that gives a built-in io array implicit size and
+                    // a user redeclaration of that array, meaning we have to substitute its implicit size here
                     // without actually redeclaring the array.  (It is an error to use a member before the
                     // redeclaration, but not an error to use the array name itself.)
                     const TString& name = intermNode->getAsSymbolNode()->getName();
@@ -1604,7 +1604,7 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
             if (imageType.getQualifier().layoutFormat != ElfR32i && imageType.getQualifier().layoutFormat != ElfR32ui)
                 error(loc, "only supported on image with format r32i or r32ui", fnCandidate.getName().c_str(), "");
         } else {
-            if (fnCandidate.getName().compare(0, 19, "imageAtomicExchange") != 0) 
+            if (fnCandidate.getName().compare(0, 19, "imageAtomicExchange") != 0)
                 error(loc, "only supported on integer images", fnCandidate.getName().c_str(), "");
             else if (imageType.getQualifier().layoutFormat != ElfR32f && profile == EEsProfile)
                 error(loc, "only supported on image with format r32f", fnCandidate.getName().c_str(), "");
@@ -1654,7 +1654,7 @@ extern bool PureOperatorBuiltins;
 //
 void TParseContext::nonOpBuiltInCheck(const TSourceLoc& loc, const TFunction& fnCandidate, TIntermAggregate& callNode)
 {
-    // Further maintenance of this function is deprecated, because the "correct" 
+    // Further maintenance of this function is deprecated, because the "correct"
     // future-oriented design is to not have to do string compares on function names.
 
     // If PureOperatorBuiltins == true, then all built-ins should be mapped
@@ -1759,7 +1759,7 @@ void TParseContext::nonOpBuiltInCheck(const TSourceLoc& loc, const TFunction& fn
             if (imageType.getQualifier().layoutFormat != ElfR32i && imageType.getQualifier().layoutFormat != ElfR32ui)
                 error(loc, "only supported on image with format r32i or r32ui", fnCandidate.getName().c_str(), "");
         } else {
-            if (fnCandidate.getName().compare(0, 19, "imageAtomicExchange") != 0) 
+            if (fnCandidate.getName().compare(0, 19, "imageAtomicExchange") != 0)
                 error(loc, "only supported on integer images", fnCandidate.getName().c_str(), "");
             else if (imageType.getQualifier().layoutFormat != ElfR32f && profile == EEsProfile)
                 error(loc, "only supported on image with format r32f", fnCandidate.getName().c_str(), "");
@@ -2412,8 +2412,8 @@ bool TParseContext::constructorTextureSamplerError(const TSourceLoc& loc, const 
     //    of the texture type must match that of the constructed sampler type
     //    (that is, the suffixes of the type of the first argument and the
     //    type of the constructor will be spelled the same way)
-    if (function[0].type->getBasicType() != EbtSampler || 
-        ! function[0].type->getSampler().isTexture() || 
+    if (function[0].type->getBasicType() != EbtSampler ||
+        ! function[0].type->getSampler().isTexture() ||
         function[0].type->isArray()) {
         error(loc, "sampler-constructor first argument must be a scalar textureXXX type", token, "");
         return true;
@@ -2720,7 +2720,7 @@ void TParseContext::mergeQualifiers(const TSourceLoc& loc, TQualifier& dst, cons
 #endif
 
     // Ordering
-    if (! force && ((profile != EEsProfile && version < 420) || 
+    if (! force && ((profile != EEsProfile && version < 420) ||
                     (profile == EEsProfile && version < 310))
                 && ! extensionTurnedOn(E_GL_ARB_shading_language_420pack)) {
         // non-function parameters
@@ -3330,7 +3330,7 @@ TSymbol* TParseContext::redeclareBuiltinVariable(const TSourceLoc& loc, const TS
         // Now, modify the type of the copy, as per the type of the current redeclaration.
 
         TQualifier& symbolQualifier = symbol->getWritableType().getQualifier();
-        if (ssoPre150) {            
+        if (ssoPre150) {
             if (intermediate.inIoAccessed(identifier))
                 error(loc, "cannot redeclare after use", identifier.c_str(), "");
             if (qualifier.hasLayout())
@@ -3368,7 +3368,7 @@ TSymbol* TParseContext::redeclareBuiltinVariable(const TSourceLoc& loc, const TS
                 error(loc, "can only change layout qualification of", "redeclaration", symbol->getName().c_str());
             if (qualifier.storage != EvqVaryingIn)
                 error(loc, "cannot change input storage qualification of", "redeclaration", symbol->getName().c_str());
-            if (! builtIn && (publicType.pixelCenterInteger != intermediate.getPixelCenterInteger() || 
+            if (! builtIn && (publicType.pixelCenterInteger != intermediate.getPixelCenterInteger() ||
                               publicType.originUpperLeft != intermediate.getOriginUpperLeft()))
                 error(loc, "cannot redeclare with different qualification:", "redeclaration", symbol->getName().c_str());
             if (publicType.pixelCenterInteger)
@@ -3388,7 +3388,7 @@ TSymbol* TParseContext::redeclareBuiltinVariable(const TSourceLoc& loc, const TS
                     error(loc, "all redeclarations must use the same depth layout on", "redeclaration", symbol->getName().c_str());
             }
         }
-#ifdef NV_EXTENSIONS 
+#ifdef NV_EXTENSIONS
         else if (identifier == "gl_SampleMask") {
             if (!publicType.layoutOverrideCoverage) {
                 error(loc, "redeclaration only allowed for override_coverage layout", "redeclaration", symbol->getName().c_str());
@@ -3526,7 +3526,7 @@ void TParseContext::redeclareBuiltinBlock(const TSourceLoc& loc, TTypeList& newT
 
             // go to next member
             ++member;
-        } else {    
+        } else {
             // For missing members of anonymous blocks that have been redeclared,
             // hide the original (shared) declaration.
             // Instance-named blocks can just have the member removed.
@@ -3659,7 +3659,7 @@ void TParseContext::structTypeCheck(const TSourceLoc& /*loc*/, TPublicType& publ
 
     // fix and check for member storage qualifiers and types that don't belong within a structure
     for (unsigned int member = 0; member < typeList.size(); ++member) {
-        TQualifier& memberQualifier = typeList[member].type->getQualifier();        
+        TQualifier& memberQualifier = typeList[member].type->getQualifier();
         const TSourceLoc& memberLoc = typeList[member].loc;
         if (memberQualifier.isAuxiliary() ||
             memberQualifier.isInterpolation() ||
@@ -3833,7 +3833,7 @@ void TParseContext::finish()
     // Check for stages that are enabled by extension.
     // Can't do this at the beginning, it is chicken and egg to add a stage by
     // extension.
-    // Stage-specific features were correctly tested for already, this is just 
+    // Stage-specific features were correctly tested for already, this is just
     // about the stage itself.
     switch (language) {
     case EShLangGeometry:
@@ -4041,7 +4041,7 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
                 error(loc, "unknown blend equation", "blend_support", "");
             return;
         }
-#ifdef NV_EXTENSIONS 
+#ifdef NV_EXTENSIONS
         if (id == "override_coverage") {
             requireExtensions(loc, 1, &E_GL_NV_sample_mask_override_coverage, "sample mask override coverage");
             publicType.shaderQualifiers.layoutOverrideCoverage = true;
@@ -4079,7 +4079,7 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
     }
 
     std::transform(id.begin(), id.end(), id.begin(), ::tolower);
-    
+
     if (id == "offset") {
         // "offset" can be for either
         //  - uniform offsets
@@ -4135,9 +4135,9 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
             publicType.qualifier.layoutComponent = value;
         return;
     } else if (id.compare(0, 4, "xfb_") == 0) {
-        // "Any shader making any static use (after preprocessing) of any of these 
-        // *xfb_* qualifiers will cause the shader to be in a transform feedback 
-        // capturing mode and hence responsible for describing the transform feedback 
+        // "Any shader making any static use (after preprocessing) of any of these
+        // *xfb_* qualifiers will cause the shader to be in a transform feedback
+        // capturing mode and hence responsible for describing the transform feedback
         // setup."
         intermediate.setXfbMode();
         const char* feature = "transform feedback qualifier";
@@ -4148,7 +4148,7 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
             // "It is a compile-time error to specify an *xfb_buffer* that is greater than
             // the implementation-dependent constant gl_MaxTransformFeedbackBuffers."
             if (value >= resources.maxTransformFeedbackBuffers)
-                error(loc, "buffer is too large:", id.c_str(), "gl_MaxTransformFeedbackBuffers is %d", resources.maxTransformFeedbackBuffers);                
+                error(loc, "buffer is too large:", id.c_str(), "gl_MaxTransformFeedbackBuffers is %d", resources.maxTransformFeedbackBuffers);
             if (value >= (int)TQualifier::layoutXfbBufferEnd)
                 error(loc, "buffer is too large:", id.c_str(), "internal max is %d", TQualifier::layoutXfbBufferEnd-1);
             else
@@ -4161,7 +4161,7 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
                 publicType.qualifier.layoutXfbOffset = value;
             return;
         } else if (id == "xfb_stride") {
-            // "The resulting stride (implicit or explicit), when divided by 4, must be less than or equal to the 
+            // "The resulting stride (implicit or explicit), when divided by 4, must be less than or equal to the
             // implementation-dependent constant gl_MaxTransformFeedbackInterleavedComponents."
             if (value > 4 * resources.maxTransformFeedbackInterleavedComponents)
                 error(loc, "1/4 stride is too large:", id.c_str(), "gl_MaxTransformFeedbackInterleavedComponents is %d", resources.maxTransformFeedbackInterleavedComponents);
@@ -4295,17 +4295,17 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
 // Merge any layout qualifier information from src into dst, leaving everything else in dst alone
 //
 // "More than one layout qualifier may appear in a single declaration.
-// Additionally, the same layout-qualifier-name can occur multiple times 
-// within a layout qualifier or across multiple layout qualifiers in the 
-// same declaration. When the same layout-qualifier-name occurs 
-// multiple times, in a single declaration, the last occurrence overrides 
-// the former occurrence(s).  Further, if such a layout-qualifier-name 
-// will effect subsequent declarations or other observable behavior, it 
-// is only the last occurrence that will have any effect, behaving as if 
-// the earlier occurrence(s) within the declaration are not present.  
-// This is also true for overriding layout-qualifier-names, where one 
-// overrides the other (e.g., row_major vs. column_major); only the last 
-// occurrence has any effect."    
+// Additionally, the same layout-qualifier-name can occur multiple times
+// within a layout qualifier or across multiple layout qualifiers in the
+// same declaration. When the same layout-qualifier-name occurs
+// multiple times, in a single declaration, the last occurrence overrides
+// the former occurrence(s).  Further, if such a layout-qualifier-name
+// will effect subsequent declarations or other observable behavior, it
+// is only the last occurrence that will have any effect, behaving as if
+// the earlier occurrence(s) within the declaration are not present.
+// This is also true for overriding layout-qualifier-names, where one
+// overrides the other (e.g., row_major vs. column_major); only the last
+// occurrence has any effect."
 //
 void TParseContext::mergeObjectLayoutQualifiers(TQualifier& dst, const TQualifier& src, bool inheritOnly)
 {
@@ -4384,7 +4384,7 @@ void TParseContext::layoutObjectCheck(const TSourceLoc& loc, const TSymbol& symb
         }
     }
 
-    // Check packing and matrix 
+    // Check packing and matrix
     if (qualifier.hasUniformLayout()) {
         switch (qualifier.storage) {
         case EvqUniform:
@@ -4472,8 +4472,8 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
         if (repeated >= 0)
             error(loc, "overlapping offsets at", "xfb_offset", "offset %d in buffer %d", repeated, qualifier.layoutXfbBuffer);
 
-        // "The offset must be a multiple of the size of the first component of the first 
-        // qualified variable or block member, or a compile-time error results. Further, if applied to an aggregate 
+        // "The offset must be a multiple of the size of the first component of the first
+        // qualified variable or block member, or a compile-time error results. Further, if applied to an aggregate
         // containing a double, the offset must also be a multiple of 8..."
         if (type.containsBasicType(EbtDouble) && ! IsMultipleOfPow2(qualifier.layoutXfbOffset, 8))
             error(loc, "type contains double; xfb_offset must be a multiple of 8", "xfb_offset", "");
@@ -4547,7 +4547,7 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
                 error(loc, "does not apply to unsigned integer images", TQualifier::getLayoutFormatString(qualifier.layoutFormat), "");
 
             if (profile == EEsProfile) {
-                // "Except for image variables qualified with the format qualifiers r32f, r32i, and r32ui, image variables must 
+                // "Except for image variables qualified with the format qualifiers r32f, r32i, and r32ui, image variables must
                 // specify either memory qualifier readonly or the memory qualifier writeonly."
                 if (! (qualifier.layoutFormat == ElfR32f || qualifier.layoutFormat == ElfR32i || qualifier.layoutFormat == ElfR32ui)) {
                     if (! qualifier.readonly && ! qualifier.writeonly)
@@ -4609,8 +4609,8 @@ void TParseContext::layoutQualifierCheck(const TSourceLoc& loc, const TQualifier
 
     if (qualifier.hasAnyLocation()) {
 
-        // "As with input layout qualifiers, all shaders except compute shaders 
-        // allow *location* layout qualifiers on output variable declarations, 
+        // "As with input layout qualifiers, all shaders except compute shaders
+        // allow *location* layout qualifiers on output variable declarations,
         // output block declarations, and output block member declarations."
 
         switch (qualifier.storage) {
@@ -4921,7 +4921,7 @@ const TFunction* TParseContext::findFunction400(const TSourceLoc& loc, const TFu
     // create list of candidates to send
     TVector<const TFunction*> candidateList;
     symbolTable.findFunctionNameList(call.getMangledName(), candidateList, builtIn);
-    
+
     // can 'from' convert to 'to'?
     const auto convertible = [this](const TType& from, const TType& to, TOperator, int) -> bool {
         if (from == to)
@@ -4953,7 +4953,7 @@ const TFunction* TParseContext::findFunction400(const TSourceLoc& loc, const TFu
 
     // for ambiguity reporting
     bool tie = false;
-    
+
     // send to the generic selector
     const TFunction* bestMatch = selectFunction(candidateList, call, convertible, better, tie);
 
@@ -4965,7 +4965,7 @@ const TFunction* TParseContext::findFunction400(const TSourceLoc& loc, const TFu
     return bestMatch;
 }
 
-// When a declaration includes a type, but not a variable name, it can be 
+// When a declaration includes a type, but not a variable name, it can be
 // to establish defaults.
 void TParseContext::declareTypeDefaults(const TSourceLoc& loc, const TPublicType& publicType)
 {
@@ -5029,7 +5029,7 @@ TIntermNode* TParseContext::declareVariable(const TSourceLoc& loc, TString& iden
 
     // Declare the variable
     if (arraySizes || type.isArray()) {
-        // Arrayness is potentially coming both from the type and from the 
+        // Arrayness is potentially coming both from the type and from the
         // variable: "int[] a[];" or just one or the other.
         // Merge it all to the type, so all arrayness is part of the type.
         arrayDimCheck(loc, &type, arraySizes);
@@ -5667,9 +5667,9 @@ void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, con
                 error(memberLoc, "member cannot contradict block", "stream", "");
         }
 
-        // "This includes a block's inheritance of the 
-        // current global default buffer, a block member's inheritance of the block's 
-        // buffer, and the requirement that any *xfb_buffer* declared on a block 
+        // "This includes a block's inheritance of the
+        // current global default buffer, a block member's inheritance of the block's
+        // buffer, and the requirement that any *xfb_buffer* declared on a block
         // member must match the buffer inherited from the block."
         if (memberQualifier.hasXfbBuffer()) {
             if (defaultQualification.layoutXfbBuffer != memberQualifier.layoutXfbBuffer)
@@ -5854,15 +5854,15 @@ void TParseContext::blockQualifierCheck(const TSourceLoc& loc, const TQualifier&
 }
 
 //
-// "For a block, this process applies to the entire block, or until the first member 
-// is reached that has a location layout qualifier. When a block member is declared with a location 
+// "For a block, this process applies to the entire block, or until the first member
+// is reached that has a location layout qualifier. When a block member is declared with a location
 // qualifier, its location comes from that qualifier: The member's location qualifier overrides the block-level
-// declaration. Subsequent members are again assigned consecutive locations, based on the newest location, 
-// until the next member declared with a location qualifier. The values used for locations do not have to be 
+// declaration. Subsequent members are again assigned consecutive locations, based on the newest location,
+// until the next member declared with a location qualifier. The values used for locations do not have to be
 // declared in increasing order."
 void TParseContext::fixBlockLocations(const TSourceLoc& loc, TQualifier& qualifier, TTypeList& typeList, bool memberWithLocation, bool memberWithoutLocation)
 {
-    // "If a block has no block-level location layout qualifier, it is required that either all or none of its members 
+    // "If a block has no block-level location layout qualifier, it is required that either all or none of its members
     // have a location layout qualifier, or a compile-time error results."
     if (! qualifier.hasLocation() && memberWithLocation && memberWithoutLocation)
         error(loc, "either the block needs a location, or all members need a location, or no members have a location", "location", "");
@@ -5898,9 +5898,9 @@ void TParseContext::fixBlockLocations(const TSourceLoc& loc, TQualifier& qualifi
 
 void TParseContext::fixBlockXfbOffsets(TQualifier& qualifier, TTypeList& typeList)
 {
-    // "If a block is qualified with xfb_offset, all its 
-    // members are assigned transform feedback buffer offsets. If a block is not qualified with xfb_offset, any 
-    // members of that block not qualified with an xfb_offset will not be assigned transform feedback buffer 
+    // "If a block is qualified with xfb_offset, all its
+    // members are assigned transform feedback buffer offsets. If a block is not qualified with xfb_offset, any
+    // members of that block not qualified with an xfb_offset will not be assigned transform feedback buffer
     // offsets."
 
     if (! qualifier.hasXfbBuffer() || ! qualifier.hasXfbOffset())
@@ -5927,10 +5927,10 @@ void TParseContext::fixBlockXfbOffsets(TQualifier& qualifier, TTypeList& typeLis
     qualifier.layoutXfbOffset = TQualifier::layoutXfbOffsetEnd;
 }
 
-// Calculate and save the offset of each block member, using the recursively 
+// Calculate and save the offset of each block member, using the recursively
 // defined block offset rules and the user-provided offset and align.
 //
-// Also, compute and save the total size of the block. For the block's size, arrayness 
+// Also, compute and save the total size of the block. For the block's size, arrayness
 // is not taken into account, as each element is backed by a separate buffer.
 //
 void TParseContext::fixBlockUniformOffsets(TQualifier& qualifier, TTypeList& typeList)
@@ -5954,20 +5954,20 @@ void TParseContext::fixBlockUniformOffsets(TQualifier& qualifier, TTypeList& typ
         int memberAlignment = intermediate.getBaseAlignment(*typeList[member].type, memberSize, dummyStride, qualifier.layoutPacking == ElpStd140,
                                                             subMatrixLayout != ElmNone ? subMatrixLayout == ElmRowMajor : qualifier.layoutMatrix == ElmRowMajor);
         if (memberQualifier.hasOffset()) {
-            // "The specified offset must be a multiple 
+            // "The specified offset must be a multiple
             // of the base alignment of the type of the block member it qualifies, or a compile-time error results."
             if (! IsMultipleOfPow2(memberQualifier.layoutOffset, memberAlignment))
                 error(memberLoc, "must be a multiple of the member's alignment", "offset", "");
 
-            // GLSL: "It is a compile-time error to specify an offset that is smaller than the offset of the previous 
+            // GLSL: "It is a compile-time error to specify an offset that is smaller than the offset of the previous
             // member in the block or that lies within the previous member of the block"
             if (spvVersion.spv == 0) {
                 if (memberQualifier.layoutOffset < offset)
                     error(memberLoc, "cannot lie in previous members", "offset", "");
 
-                // "The offset qualifier forces the qualified member to start at or after the specified 
-                // integral-constant expression, which will be its byte offset from the beginning of the buffer. 
-                // "The actual offset of a member is computed as 
+                // "The offset qualifier forces the qualified member to start at or after the specified
+                // integral-constant expression, which will be its byte offset from the beginning of the buffer.
+                // "The actual offset of a member is computed as
                 // follows: If offset was declared, start with that offset, otherwise start with the next available offset."
                 offset = std::max(offset, memberQualifier.layoutOffset);
             } else {
@@ -5978,13 +5978,13 @@ void TParseContext::fixBlockUniformOffsets(TQualifier& qualifier, TTypeList& typ
             }
         }
 
-        // "The actual alignment of a member will be the greater of the specified align alignment and the standard 
+        // "The actual alignment of a member will be the greater of the specified align alignment and the standard
         // (e.g., std140) base alignment for the member's type."
         if (memberQualifier.hasAlign())
             memberAlignment = std::max(memberAlignment, memberQualifier.layoutAlign);
 
         // "If the resulting offset is not a multiple of the actual alignment,
-        // increase it to the first offset that is a multiple of 
+        // increase it to the first offset that is a multiple of
         // the actual alignment."
         RoundToPow2(offset, memberAlignment);
         typeList[member].type->getQualifier().layoutOffset = offset;
@@ -6074,7 +6074,7 @@ void TParseContext::updateStandaloneQualifierDefaults(const TSourceLoc& loc, con
             error(loc, "can only apply to 'out'", id, "");
         if (! intermediate.setVertices(publicType.shaderQualifiers.vertices))
             error(loc, "cannot change previously set layout value", id, "");
-        
+
         if (language == EShLangTessControl)
             checkIoArraysConsistency(loc);
     }

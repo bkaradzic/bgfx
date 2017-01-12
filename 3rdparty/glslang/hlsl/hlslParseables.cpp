@@ -1,11 +1,11 @@
 //
-//Copyright (C) 2016 LunarG, Inc.
+// Copyright (C) 2016 LunarG, Inc.
 //
-//All rights reserved.
+// All rights reserved.
 //
-//Redistribution and use in source and binary forms, with or without
-//modification, are permitted provided that the following conditions
-//are met:
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
 //
 //    Redistributions of source code must retain the above copyright
 //    notice, this list of conditions and the following disclaimer.
@@ -19,22 +19,22 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-//POSSIBILITY OF SUCH DAMAGE.
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
 
 //
-// Create strings that declare built-in definitions, add built-ins programmatically 
+// Create strings that declare built-in definitions, add built-ins programmatically
 // that cannot be expressed in the strings, and establish mappings between
 // built-in functions and operators.
 //
@@ -102,14 +102,14 @@ bool IsIllegalSample(const glslang::TString& name, const char* argOrder, int dim
             return true;
     }
 
-    const bool isGather = 
-        (name == "Gather" || 
+    const bool isGather =
+        (name == "Gather" ||
          name == "GatherRed" ||
-         name == "GatherGreen" || 
+         name == "GatherGreen" ||
          name == "GatherBlue"  ||
          name == "GatherAlpha");
 
-    const bool isGatherCmp = 
+    const bool isGatherCmp =
         (name == "GatherCmpRed"   ||
          name == "GatherCmpGreen" ||
          name == "GatherCmpBlue"  ||
@@ -174,7 +174,7 @@ const char* IoParam(glslang::TString& s, const char* nthArgOrder)
     } else if (*nthArgOrder == '<') {    // input params
         ++nthArgOrder;
         s.append("in ");
-    } 
+    }
 
     return nthArgOrder;
 }
@@ -195,9 +195,8 @@ inline bool IsEndOfArg(const char* arg)
     return arg == nullptr || *arg == '\0' || *arg == ',';
 }
 
-
 // If this is a fixed vector size, such as V3, return the size.  Else return 0.
-int FixedVecSize(const char* arg) 
+int FixedVecSize(const char* arg)
 {
     while (!IsEndOfArg(arg)) {
         if (isdigit(*arg))
@@ -207,7 +206,6 @@ int FixedVecSize(const char* arg)
 
     return 0; // none found.
 }
-
 
 // Create and return a type name.  This is done in GLSL, not HLSL conventions, until such
 // time as builtins are parsed using the HLSL parser.
@@ -229,7 +227,7 @@ glslang::TString& AppendTypeName(glslang::TString& s, const char* argOrder, cons
     char type  = *argType;
 
     if (isTranspose) {  // Take transpose of matrix dimensions
-        std::swap(dim0, dim1); 
+        std::swap(dim0, dim1);
     } else if (isTexture) {
         if (type == 'F')       // map base type to texture of that type.
             type = 'T';        // e.g, int -> itexture, uint -> utexture, etc.
@@ -255,10 +253,10 @@ glslang::TString& AppendTypeName(glslang::TString& s, const char* argOrder, cons
         case 'S': s += "sampler";                             break;
         case 's': s += "SamplerComparisonState";              break;
         case 'T': s += ((isBuffer && isImage) ? "RWBuffer" :
-                        isBuffer ? "Buffer" : 
+                        isBuffer ? "Buffer" :
                         isImage  ? "RWTexture" : "Texture");  break;
         case 'i': s += ((isBuffer && isImage) ? "RWBuffer" :
-                        isBuffer ? "Buffer" : 
+                        isBuffer ? "Buffer" :
                         isImage ? "RWTexture" : "Texture");   break;
         case 'u': s += ((isBuffer && isImage) ? "RWBuffer" :
                         isBuffer ? "Buffer" :
@@ -322,7 +320,7 @@ glslang::TString& AppendTypeName(glslang::TString& s, const char* argOrder, cons
         case 'V':
             s += ('0' + char(dim0));
             break;
-        case 'M': 
+        case 'M':
             s += ('0' + char(dim0));
             s += 'x';
             s += ('0' + char(dim1));
@@ -389,7 +387,6 @@ inline bool IsValid(const char* cname, char retOrder, char retType, char argOrde
     return true;
 }
 
-
 // return position of end of argument specifier
 inline const char* FindEndOfArg(const char* arg)
 {
@@ -424,7 +421,7 @@ inline void FindVectorMatrixBounds(const char* argOrder, int fixedVecSize, int& 
     if (fixedVecSize > 0) // handle fixed sized vectors
         dim0Min = dim0Max = fixedVecSize;
 }
-    
+
 } // end anonymous namespace
 
 namespace glslang {
@@ -432,7 +429,6 @@ namespace glslang {
 TBuiltInParseablesHlsl::TBuiltInParseablesHlsl()
 {
 }
-
 
 //
 // Handle creation of mat*mat specially, since it doesn't fall conveniently out of
@@ -476,7 +472,6 @@ void TBuiltInParseablesHlsl::createMatTimesMat()
 
             s.append(");\n");                               // close paren
 
-
             // Create V*M
             AppendTypeName(s, "V", "F", xCols, 1);          // add return type
             s.append(" ");                                  // space between type and name
@@ -508,7 +503,7 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
     // needed for furture validation.  For now, they are commented out, and set below
     // to EShLangAll, to allow any intrinsic to be used in any shader, which is legal
     // if it is not called.
-    // 
+    //
     // static const EShLanguageMask EShLangPSCS   = EShLanguageMask(EShLangFragmentMask | EShLangComputeMask);
     // static const EShLanguageMask EShLangVSPSGS = EShLanguageMask(EShLangVertexMask | EShLangFragmentMask | EShLangGeometryMask);
     // static const EShLanguageMask EShLangCS     = EShLangComputeMask;
@@ -745,7 +740,7 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
 
         { "GetSamplePosition",                "V2",    "F",       "$&2,S",          "FUI,I",         EShLangVSPSGS },
 
-        // 
+        //
         // UINT Width
         // UINT MipLevel, UINT Width, UINT NumberOfLevels
         { "GetDimensions",   /* 1D */         "-",     "-",       "%!~1,>S",        "FUI,U",         EShLangAll },
@@ -947,7 +942,7 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
 
                                 AppendTypeName(s, nthArgOrder, nthArgType, argDim0, dim1); // Add arguments
                             }
-                            
+
                             s.append(");\n");            // close paren and trailing semicolon
                         } // dim 1 loop
                     } // dim 0 loop
@@ -956,10 +951,10 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
                 // skip over special characters
                 if (isTexture && isalpha(argOrder[1]))
                     ++argOrder;
-                if (isdigit(argOrder[1]))  
+                if (isdigit(argOrder[1]))
                     ++argOrder;
             } // arg order loop
-            
+
             if (intrinsic.stage == EShLangAll) // common builtins are only added once.
                 break;
         }
@@ -987,7 +982,6 @@ void TBuiltInParseablesHlsl::initialize(const TBuiltInResource& /*resources*/, i
                                         const SpvVersion& /*spvVersion*/, EShLanguage /*language*/)
 {
 }
-
 
 //
 // Finish adding/processing context-independent built-in symbols.
@@ -1167,7 +1161,7 @@ void TBuiltInParseablesHlsl::identifyBuiltIns(int /*version*/, EProfile /*profil
 
 //
 // Add context-dependent (resource-specific) built-ins not handled by the above.  These
-// would be ones that need to be programmatically added because they cannot 
+// would be ones that need to be programmatically added because they cannot
 // be added by simple text strings.  For these, also
 // 1) Map built-in functions to operators, for those that will turn into an operation node
 //    instead of remaining a function call.
@@ -1178,6 +1172,5 @@ void TBuiltInParseablesHlsl::identifyBuiltIns(int /*version*/, EProfile /*profil
                                               TSymbolTable& /*symbolTable*/, const TBuiltInResource& /*resources*/)
 {
 }
-
 
 } // end namespace glslang

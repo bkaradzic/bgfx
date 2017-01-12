@@ -174,6 +174,7 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.rw.bracket.frag", "main"},
         {"hlsl.rw.register.frag", "main"},
         {"hlsl.rw.scalar.bracket.frag", "main"},
+        {"hlsl.rw.swizzle.frag", "main"},
         {"hlsl.rw.vec2.bracket.frag", "main"},
         {"hlsl.sample.array.dx10.frag", "main"},
         {"hlsl.sample.basic.dx10.frag", "main"},

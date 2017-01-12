@@ -1,12 +1,12 @@
 //
-//Copyright (C) 2016 Google, Inc.
-//Copyright (C) 2016 LunarG, Inc.
+// Copyright (C) 2016 Google, Inc.
+// Copyright (C) 2016 LunarG, Inc.
 //
-//All rights reserved.
+// All rights reserved.
 //
-//Redistribution and use in source and binary forms, with or without
-//modification, are permitted provided that the following conditions
-//are met:
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
 //
 //    Redistributions of source code must retain the above copyright
 //    notice, this list of conditions and the following disclaimer.
@@ -20,18 +20,18 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-//POSSIBILITY OF SUCH DAMAGE.
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
 
 //
@@ -89,7 +89,7 @@ bool HlslGrammar::acceptIdentifier(HlslToken& idToken)
     // they ARE still accepted as identifiers.  This is not a dense space: e.g, "void" is not a
     // valid identifier, nor is "linear".  This code special cases the known instances of this, so
     // e.g, "int sample;" or "float float;" is accepted.  Other cases can be added here if needed.
-    
+
     TString* idString = nullptr;
     switch (peek()) {
     case EHTokSample:     idString = NewPoolTString("sample");     break;
@@ -146,7 +146,7 @@ bool HlslGrammar::acceptCompilationUnit()
 }
 
 // sampler_state
-//      : LEFT_BRACE [sampler_state_assignment ... ] RIGHT_BRACE 
+//      : LEFT_BRACE [sampler_state_assignment ... ] RIGHT_BRACE
 //
 // sampler_state_assignment
 //     : sampler_state_identifier EQUAL value SEMICOLON
@@ -171,7 +171,7 @@ bool HlslGrammar::acceptSamplerState()
         return true;
 
     parseContext.warn(token.loc, "unimplemented", "immediate sampler state", "");
-    
+
     do {
         // read state name
         HlslToken state;
@@ -250,7 +250,7 @@ bool HlslGrammar::acceptSamplerDeclarationDX9(TType& /*type*/)
 {
     if (! acceptTokenClass(EHTokSampler))
         return false;
- 
+
     // TODO: remove this when DX9 style declarations are implemented.
     unimplemented("Direct3D 9 sampler declaration");
 
@@ -268,7 +268,6 @@ bool HlslGrammar::acceptSamplerDeclarationDX9(TType& /*type*/)
 
     return false;
 }
-
 
 // declaration
 //      : sampler_declaration_dx9 post_decls SEMICOLON
@@ -312,7 +311,7 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& node)
     // be possible to simultaneously compile D3D10+ style shaders and DX9 shaders. If we want to compile DX9
     // HLSL shaders, this will have to be a master level switch
     // As such, the sampler keyword in D3D10+ turns into an automatic sampler type, and is commonly used
-    // For that reason, this line is commented out 
+    // For that reason, this line is commented out
 
    // if (acceptSamplerDeclarationDX9(declaredType))
    //     return true;
@@ -352,7 +351,7 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& node)
             if (declaredType.getQualifier().storage == EvqTemporary && parseContext.symbolTable.atGlobalLevel())
                 declaredType.getQualifier().storage = EvqUniform;
 
-            // We can handle multiple variables per type declaration, so 
+            // We can handle multiple variables per type declaration, so
             // the number of types can expand when arrayness is different.
             TType variableType;
             variableType.shallowCopy(declaredType);
@@ -444,7 +443,7 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& node)
             expected(";");
         return false;
     }
-    
+
     return true;
 }
 
@@ -620,13 +619,13 @@ bool HlslGrammar::acceptQualifier(TQualifier& qualifier)
             qualifier.storage = EvqIn;
             if (!parseContext.handleInputGeometry(token.loc, ElgLinesAdjacency))
                 return false;
-            break; 
+            break;
         case EHTokTriangleAdj:
             qualifier.storage = EvqIn;
             if (!parseContext.handleInputGeometry(token.loc, ElgTrianglesAdjacency))
                 return false;
-            break; 
-            
+            break;
+
         default:
             return true;
         }
@@ -813,7 +812,7 @@ bool HlslGrammar::acceptMatrixTemplateType(TType& type)
         expected(",");
         return false;
     }
-    
+
     // integer cols
     if (! peekTokenClass(EHTokIntConstant)) {
         expected("literal integer");
@@ -870,7 +869,7 @@ bool HlslGrammar::acceptStreamOutTemplateType(TType& type, TLayoutGeometry& geom
 
     if (! acceptTokenClass(EHTokLeftAngle))
         return false;
-    
+
     if (! acceptType(type)) {
         expected("stream output type");
         return false;
@@ -885,7 +884,7 @@ bool HlslGrammar::acceptStreamOutTemplateType(TType& type, TLayoutGeometry& geom
 
     return true;
 }
-    
+
 // annotations
 //      : LEFT_ANGLE declaration SEMI_COLON ... declaration SEMICOLON RIGHT_ANGLE
 //
@@ -993,7 +992,7 @@ bool HlslGrammar::acceptTextureType(TType& type)
     case EHTokTexture1darray:    dim = Esd1D; array = true;            break;
     case EHTokTexture2d:         dim = Esd2D;                          break;
     case EHTokTexture2darray:    dim = Esd2D; array = true;            break;
-    case EHTokTexture3d:         dim = Esd3D;                          break; 
+    case EHTokTexture3d:         dim = Esd3D;                          break;
     case EHTokTextureCube:       dim = EsdCube;                        break;
     case EHTokTextureCubearray:  dim = EsdCube; array = true;          break;
     case EHTokTexture2DMS:       dim = Esd2D; ms = true;               break;
@@ -1011,7 +1010,7 @@ bool HlslGrammar::acceptTextureType(TType& type)
     advanceToken();  // consume the texture object keyword
 
     TType txType(EbtFloat, EvqUniform, 4); // default type is float4
-    
+
     TIntermTyped* msCount = nullptr;
 
     // texture type: required for multisample types and RWBuffer/RWTextures!
@@ -1092,13 +1091,12 @@ bool HlslGrammar::acceptTextureType(TType& type)
 
     // Remember the declared vector size.
     sampler.vectorSize = txType.getVectorSize();
-    
+
     type.shallowCopy(TType(sampler, EvqUniform, arraySizes));
     type.getQualifier().layoutFormat = format;
 
     return true;
 }
-
 
 // If token is for a type, update 'type' with the type information,
 // and return true and advance.
@@ -1133,7 +1131,7 @@ bool HlslGrammar::acceptType(TType& type)
 
             if (! parseContext.handleOutputGeometry(token.loc, geometry))
                 return false;
-            
+
             return true;
         }
 
@@ -1261,7 +1259,6 @@ bool HlslGrammar::acceptType(TType& type)
         new(&type) TType(EbtUint, EvqTemporary, 4);
         break;
 
-
     case EHTokBool:
         new(&type) TType(EbtBool);
         break;
@@ -1295,7 +1292,7 @@ bool HlslGrammar::acceptType(TType& type)
     case EHTokHalf4:
         new(&type) TType(half_bt, EvqTemporary, EpqMedium, 4);
         break;
-        
+
     case EHTokMin16float:
         new(&type) TType(min16float_bt, EvqTemporary, EpqMedium);
         break;
@@ -1312,7 +1309,7 @@ bool HlslGrammar::acceptType(TType& type)
     case EHTokMin16float4:
         new(&type) TType(min16float_bt, EvqTemporary, EpqMedium, 4);
         break;
-        
+
     case EHTokMin10float:
         new(&type) TType(min10float_bt, EvqTemporary, EpqMedium);
         break;
@@ -1329,7 +1326,7 @@ bool HlslGrammar::acceptType(TType& type)
     case EHTokMin10float4:
         new(&type) TType(min10float_bt, EvqTemporary, EpqMedium, 4);
         break;
-        
+
     case EHTokMin16int:
         new(&type) TType(min16int_bt, EvqTemporary, EpqMedium);
         break;
@@ -1346,7 +1343,7 @@ bool HlslGrammar::acceptType(TType& type)
     case EHTokMin16int4:
         new(&type) TType(min16int_bt, EvqTemporary, EpqMedium, 4);
         break;
-        
+
     case EHTokMin12int:
         new(&type) TType(min12int_bt, EvqTemporary, EpqMedium);
         break;
@@ -1363,7 +1360,7 @@ bool HlslGrammar::acceptType(TType& type)
     case EHTokMin12int4:
         new(&type) TType(min12int_bt, EvqTemporary, EpqMedium, 4);
         break;
-        
+
     case EHTokMin16uint:
         new(&type) TType(min16uint_bt, EvqTemporary, EpqMedium);
         break;
@@ -1814,7 +1811,6 @@ bool HlslGrammar::acceptFunctionParameters(TFunction& function)
     return true;
 }
 
-
 // default_parameter_declaration
 //      : EQUAL conditional_expression
 //      : EQUAL initializer
@@ -1837,9 +1833,9 @@ bool HlslGrammar::acceptDefaultParameterDeclaration(const TType& type, TIntermTy
             return false;
 
         TIntermTyped* arguments = nullptr;
-        for (int i=0; i<int(node->getAsAggregate()->getSequence().size()); i++)
+        for (int i = 0; i < int(node->getAsAggregate()->getSequence().size()); i++)
             parseContext.handleFunctionArgument(constructor, arguments, node->getAsAggregate()->getSequence()[i]->getAsTyped());
-        
+
         node = parseContext.handleFunctionCall(token.loc, constructor, node);
     }
 
@@ -2243,7 +2239,7 @@ bool HlslGrammar::acceptUnaryExpression(TIntermTyped*& node)
 
     // peek for "op unary_expression"
     TOperator unaryOp = HlslOpMap::preUnary(peek());
-    
+
     // postfix_expression (if no unary operator)
     if (unaryOp == EOpNull)
         return acceptPostfixExpression(node);
@@ -2299,7 +2295,7 @@ bool HlslGrammar::acceptPostfixExpression(TIntermTyped*& node)
             return false;
         }
     } else if (acceptLiteral(node)) {
-        // literal (nothing else to do yet), go on to the 
+        // literal (nothing else to do yet), go on to the
     } else if (acceptConstructor(node)) {
         // constructor (nothing else to do yet)
     } else if (acceptIdentifier(idToken)) {
@@ -2703,7 +2699,7 @@ void HlslGrammar::acceptAttributes(TAttributeMap& attributes)
 
             TIntermTyped* node;
             bool expectingExpression = false;
-            
+
             while (acceptAssignmentExpression(node)) {
                 expectingExpression = false;
                 expressions->getSequence().push_back(node);
@@ -2990,7 +2986,7 @@ bool HlslGrammar::acceptJumpStatement(TIntermNode*& statement)
     // SEMICOLON
     if (! acceptTokenClass(EHTokSemicolon))
         expected(";");
-    
+
     return true;
 }
 
@@ -3086,7 +3082,7 @@ void HlslGrammar::acceptArraySpecifier(TArraySizes*& arraySizes)
 void HlslGrammar::acceptPostDecls(TQualifier& qualifier)
 {
     do {
-        // COLON 
+        // COLON
         if (acceptTokenClass(EHTokColon)) {
             HlslToken idToken;
             if (peekTokenClass(EHTokLayout))

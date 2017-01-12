@@ -1,13 +1,13 @@
 //
-//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
-//Copyright (C) 2012-2016 LunarG, Inc.
-//Copyright (C) 2015-2016 Google, Inc.
+// Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
+// Copyright (C) 2012-2016 LunarG, Inc.
+// Copyright (C) 2015-2016 Google, Inc.
 //
-//All rights reserved.
+// All rights reserved.
 //
-//Redistribution and use in source and binary forms, with or without
-//modification, are permitted provided that the following conditions
-//are met:
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
 //
 //    Redistributions of source code must retain the above copyright
 //    notice, this list of conditions and the following disclaimer.
@@ -21,22 +21,22 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-//POSSIBILITY OF SUCH DAMAGE.
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
 
 //
-// Create strings that declare built-in definitions, add built-ins programmatically 
+// Create strings that declare built-in definitions, add built-ins programmatically
 // that cannot be expressed in the strings, and establish mappings between
 // built-in functions and operators.
 //
@@ -103,7 +103,6 @@ TBuiltIns::~TBuiltIns()
 {
 }
 
-
 //
 // Add all context-independent built-in functions and variables that are present
 // for the given version and profile.  Share common ones across stages, otherwise
@@ -128,47 +127,47 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         "vec2  radians(vec2  degrees);"
         "vec3  radians(vec3  degrees);"
         "vec4  radians(vec4  degrees);"
-                 
+
         "float degrees(float radians);"
         "vec2  degrees(vec2  radians);"
         "vec3  degrees(vec3  radians);"
         "vec4  degrees(vec4  radians);"
-                 
+
         "float sin(float angle);"
         "vec2  sin(vec2  angle);"
         "vec3  sin(vec3  angle);"
         "vec4  sin(vec4  angle);"
-                 
+
         "float cos(float angle);"
         "vec2  cos(vec2  angle);"
         "vec3  cos(vec3  angle);"
         "vec4  cos(vec4  angle);"
-                 
+
         "float tan(float angle);"
         "vec2  tan(vec2  angle);"
         "vec3  tan(vec3  angle);"
         "vec4  tan(vec4  angle);"
-                 
+
         "float asin(float x);"
         "vec2  asin(vec2  x);"
         "vec3  asin(vec3  x);"
         "vec4  asin(vec4  x);"
-                 
+
         "float acos(float x);"
         "vec2  acos(vec2  x);"
         "vec3  acos(vec3  x);"
         "vec4  acos(vec4  x);"
-                 
+
         "float atan(float y, float x);"
         "vec2  atan(vec2  y, vec2  x);"
         "vec3  atan(vec3  y, vec3  x);"
         "vec4  atan(vec4  y, vec4  x);"
-                 
+
         "float atan(float y_over_x);"
         "vec2  atan(vec2  y_over_x);"
         "vec3  atan(vec3  y_over_x);"
         "vec4  atan(vec4  y_over_x);"
-            
+
         "\n");
 
     if (version >= 130) {
@@ -177,32 +176,32 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "vec2  sinh(vec2  angle);"
             "vec3  sinh(vec3  angle);"
             "vec4  sinh(vec4  angle);"
-                 
+
             "float cosh(float angle);"
             "vec2  cosh(vec2  angle);"
             "vec3  cosh(vec3  angle);"
             "vec4  cosh(vec4  angle);"
-                 
+
             "float tanh(float angle);"
             "vec2  tanh(vec2  angle);"
             "vec3  tanh(vec3  angle);"
             "vec4  tanh(vec4  angle);"
-                 
+
             "float asinh(float x);"
             "vec2  asinh(vec2  x);"
             "vec3  asinh(vec3  x);"
             "vec4  asinh(vec4  x);"
-                 
+
             "float acosh(float x);"
             "vec2  acosh(vec2  x);"
             "vec3  acosh(vec3  x);"
             "vec4  acosh(vec4  x);"
-                 
+
             "float atanh(float y_over_x);"
             "vec2  atanh(vec2  y_over_x);"
             "vec3  atanh(vec3  y_over_x);"
             "vec4  atanh(vec4  y_over_x);"
-            
+
             "\n");
     }
 
@@ -214,37 +213,37 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         "vec2  pow(vec2  x, vec2  y);"
         "vec3  pow(vec3  x, vec3  y);"
         "vec4  pow(vec4  x, vec4  y);"
-                 
+
         "float exp(float x);"
         "vec2  exp(vec2  x);"
         "vec3  exp(vec3  x);"
         "vec4  exp(vec4  x);"
-                 
+
         "float log(float x);"
         "vec2  log(vec2  x);"
         "vec3  log(vec3  x);"
         "vec4  log(vec4  x);"
-                 
+
         "float exp2(float x);"
         "vec2  exp2(vec2  x);"
         "vec3  exp2(vec3  x);"
         "vec4  exp2(vec4  x);"
-                 
+
         "float log2(float x);"
         "vec2  log2(vec2  x);"
         "vec3  log2(vec3  x);"
         "vec4  log2(vec4  x);"
-                 
+
         "float sqrt(float x);"
         "vec2  sqrt(vec2  x);"
         "vec3  sqrt(vec3  x);"
         "vec4  sqrt(vec4  x);"
-                 
+
         "float inversesqrt(float x);"
         "vec2  inversesqrt(vec2  x);"
         "vec3  inversesqrt(vec3  x);"
         "vec4  inversesqrt(vec4  x);"
-            
+
         "\n");
 
     //
@@ -255,27 +254,27 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         "vec2  abs(vec2  x);"
         "vec3  abs(vec3  x);"
         "vec4  abs(vec4  x);"
-                 
+
         "float sign(float x);"
         "vec2  sign(vec2  x);"
         "vec3  sign(vec3  x);"
         "vec4  sign(vec4  x);"
-                 
+
         "float floor(float x);"
         "vec2  floor(vec2  x);"
         "vec3  floor(vec3  x);"
         "vec4  floor(vec4  x);"
-                 
+
         "float ceil(float x);"
         "vec2  ceil(vec2  x);"
         "vec3  ceil(vec3  x);"
         "vec4  ceil(vec4  x);"
-                 
+
         "float fract(float x);"
         "vec2  fract(vec2  x);"
         "vec3  fract(vec3  x);"
         "vec4  fract(vec4  x);"
-                 
+
         "float mod(float x, float y);"
         "vec2  mod(vec2  x, float y);"
         "vec3  mod(vec3  x, float y);"
@@ -283,7 +282,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         "vec2  mod(vec2  x, vec2  y);"
         "vec3  mod(vec3  x, vec3  y);"
         "vec4  mod(vec4  x, vec4  y);"
-                 
+
         "float min(float x, float y);"
         "vec2  min(vec2  x, float y);"
         "vec3  min(vec3  x, float y);"
@@ -291,7 +290,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         "vec2  min(vec2  x, vec2  y);"
         "vec3  min(vec3  x, vec3  y);"
         "vec4  min(vec4  x, vec4  y);"
-                 
+
         "float max(float x, float y);"
         "vec2  max(vec2  x, float y);"
         "vec3  max(vec3  x, float y);"
@@ -299,7 +298,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         "vec2  max(vec2  x, vec2  y);"
         "vec3  max(vec3  x, vec3  y);"
         "vec4  max(vec4  x, vec4  y);"
-                 
+
         "float clamp(float x, float minVal, float maxVal);"
         "vec2  clamp(vec2  x, float minVal, float maxVal);"
         "vec3  clamp(vec3  x, float minVal, float maxVal);"
@@ -307,7 +306,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         "vec2  clamp(vec2  x, vec2  minVal, vec2  maxVal);"
         "vec3  clamp(vec3  x, vec3  minVal, vec3  maxVal);"
         "vec4  clamp(vec4  x, vec4  minVal, vec4  maxVal);"
-                 
+
         "float mix(float x, float y, float a);"
         "vec2  mix(vec2  x, vec2  y, float a);"
         "vec3  mix(vec3  x, vec3  y, float a);"
@@ -323,7 +322,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         "vec2  step(float edge, vec2  x);"
         "vec3  step(float edge, vec3  x);"
         "vec4  step(float edge, vec4  x);"
-                 
+
         "float smoothstep(float edge0, float edge1, float x);"
         "vec2  smoothstep(vec2  edge0, vec2  edge1, vec2  x);"
         "vec3  smoothstep(vec3  edge0, vec3  edge1, vec3  x);"
@@ -331,7 +330,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         "vec2  smoothstep(float edge0, float edge1, vec2  x);"
         "vec3  smoothstep(float edge0, float edge1, vec3  x);"
         "vec4  smoothstep(float edge0, float edge1, vec4  x);"
-            
+
         "\n");
 
     if (version >= 130) {
@@ -350,22 +349,22 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "vec2  trunc(vec2  x);"
             "vec3  trunc(vec3  x);"
             "vec4  trunc(vec4  x);"
-                     
+
             "float round(float x);"
             "vec2  round(vec2  x);"
             "vec3  round(vec3  x);"
             "vec4  round(vec4  x);"
-                     
+
             "float roundEven(float x);"
             "vec2  roundEven(vec2  x);"
             "vec3  roundEven(vec3  x);"
             "vec4  roundEven(vec4  x);"
-                     
+
             "float modf(float, out float);"
             "vec2  modf(vec2,  out vec2 );"
             "vec3  modf(vec3,  out vec3 );"
             "vec4  modf(vec4,  out vec4 );"
-                     
+
             "  int min(int    x, int y);"
             "ivec2 min(ivec2  x, int y);"
             "ivec3 min(ivec3  x, int y);"
@@ -373,7 +372,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "ivec2 min(ivec2  x, ivec2  y);"
             "ivec3 min(ivec3  x, ivec3  y);"
             "ivec4 min(ivec4  x, ivec4  y);"
-                     
+
             " uint min(uint   x, uint y);"
             "uvec2 min(uvec2  x, uint y);"
             "uvec3 min(uvec3  x, uint y);"
@@ -381,7 +380,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "uvec2 min(uvec2  x, uvec2  y);"
             "uvec3 min(uvec3  x, uvec3  y);"
             "uvec4 min(uvec4  x, uvec4  y);"
-                     
+
             "  int max(int    x, int y);"
             "ivec2 max(ivec2  x, int y);"
             "ivec3 max(ivec3  x, int y);"
@@ -589,12 +588,12 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "dvec2  faceforward(dvec2,  dvec2,  dvec2);"
             "dvec3  faceforward(dvec3,  dvec3,  dvec3);"
             "dvec4  faceforward(dvec4,  dvec4,  dvec4);"
-                 
+
             "double reflect(double, double);"
             "dvec2  reflect(dvec2 , dvec2 );"
             "dvec3  reflect(dvec3 , dvec3 );"
             "dvec4  reflect(dvec4 , dvec4 );"
-                 
+
             "double refract(double, double, double);"
             "dvec2  refract(dvec2 , dvec2 , double);"
             "dvec3  refract(dvec3 , dvec3 , double);"
@@ -1079,38 +1078,38 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         "float length(vec2  x);"
         "float length(vec3  x);"
         "float length(vec4  x);"
-                 
+
         "float distance(float p0, float p1);"
         "float distance(vec2  p0, vec2  p1);"
         "float distance(vec3  p0, vec3  p1);"
         "float distance(vec4  p0, vec4  p1);"
-                 
+
         "float dot(float x, float y);"
         "float dot(vec2  x, vec2  y);"
         "float dot(vec3  x, vec3  y);"
         "float dot(vec4  x, vec4  y);"
-                 
+
         "vec3 cross(vec3 x, vec3 y);"
         "float normalize(float x);"
         "vec2  normalize(vec2  x);"
         "vec3  normalize(vec3  x);"
         "vec4  normalize(vec4  x);"
-                 
+
         "float faceforward(float N, float I, float Nref);"
         "vec2  faceforward(vec2  N, vec2  I, vec2  Nref);"
         "vec3  faceforward(vec3  N, vec3  I, vec3  Nref);"
         "vec4  faceforward(vec4  N, vec4  I, vec4  Nref);"
-                 
+
         "float reflect(float I, float N);"
         "vec2  reflect(vec2  I, vec2  N);"
         "vec3  reflect(vec3  I, vec3  N);"
         "vec4  reflect(vec4  I, vec4  N);"
-                 
+
         "float refract(float I, float N, float eta);"
         "vec2  refract(vec2  I, vec2  N, float eta);"
         "vec3  refract(vec3  I, vec3  N, float eta);"
         "vec4  refract(vec4  I, vec4  N, float eta);"
-            
+
         "\n");
 
     //
@@ -1120,7 +1119,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         "mat2 matrixCompMult(mat2 x, mat2 y);"
         "mat3 matrixCompMult(mat3 x, mat3 y);"
         "mat4 matrixCompMult(mat4 x, mat4 y);"
-            
+
         "\n");
 
     // 120 is correct for both ES and desktop
@@ -1135,7 +1134,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "mat4x2 outerProduct(vec2 c, vec4 r);"
             "mat3x4 outerProduct(vec4 c, vec3 r);"
             "mat4x3 outerProduct(vec3 c, vec4 r);"
-                     
+
             "mat2   transpose(mat2   m);"
             "mat3   transpose(mat3   m);"
             "mat4   transpose(mat4   m);"
@@ -1151,8 +1150,8 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "mat3x2 matrixCompMult(mat3x2, mat3x2);"
             "mat3x4 matrixCompMult(mat3x4, mat3x4);"
             "mat4x2 matrixCompMult(mat4x2, mat4x2);"
-            "mat4x3 matrixCompMult(mat4x3, mat4x3);"          
-            
+            "mat4x3 matrixCompMult(mat4x3, mat4x3);"
+
             "\n");
 
         // 150 is correct for both ES and desktop
@@ -1161,11 +1160,11 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "float determinant(mat2 m);"
                 "float determinant(mat3 m);"
                 "float determinant(mat4 m);"
-                         
+
                 "mat2 inverse(mat2 m);"
                 "mat3 inverse(mat3 m);"
                 "mat4 inverse(mat4 m);"
-            
+
                 "\n");
         }
     }
@@ -1177,71 +1176,71 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         "bvec2 lessThan(vec2 x, vec2 y);"
         "bvec3 lessThan(vec3 x, vec3 y);"
         "bvec4 lessThan(vec4 x, vec4 y);"
-                 
+
         "bvec2 lessThan(ivec2 x, ivec2 y);"
         "bvec3 lessThan(ivec3 x, ivec3 y);"
         "bvec4 lessThan(ivec4 x, ivec4 y);"
-                 
+
         "bvec2 lessThanEqual(vec2 x, vec2 y);"
         "bvec3 lessThanEqual(vec3 x, vec3 y);"
         "bvec4 lessThanEqual(vec4 x, vec4 y);"
-                 
+
         "bvec2 lessThanEqual(ivec2 x, ivec2 y);"
         "bvec3 lessThanEqual(ivec3 x, ivec3 y);"
         "bvec4 lessThanEqual(ivec4 x, ivec4 y);"
-                 
+
         "bvec2 greaterThan(vec2 x, vec2 y);"
         "bvec3 greaterThan(vec3 x, vec3 y);"
         "bvec4 greaterThan(vec4 x, vec4 y);"
-                 
+
         "bvec2 greaterThan(ivec2 x, ivec2 y);"
         "bvec3 greaterThan(ivec3 x, ivec3 y);"
         "bvec4 greaterThan(ivec4 x, ivec4 y);"
-                 
+
         "bvec2 greaterThanEqual(vec2 x, vec2 y);"
         "bvec3 greaterThanEqual(vec3 x, vec3 y);"
         "bvec4 greaterThanEqual(vec4 x, vec4 y);"
-                 
+
         "bvec2 greaterThanEqual(ivec2 x, ivec2 y);"
         "bvec3 greaterThanEqual(ivec3 x, ivec3 y);"
         "bvec4 greaterThanEqual(ivec4 x, ivec4 y);"
-                 
+
         "bvec2 equal(vec2 x, vec2 y);"
         "bvec3 equal(vec3 x, vec3 y);"
         "bvec4 equal(vec4 x, vec4 y);"
-                 
+
         "bvec2 equal(ivec2 x, ivec2 y);"
         "bvec3 equal(ivec3 x, ivec3 y);"
         "bvec4 equal(ivec4 x, ivec4 y);"
-                 
+
         "bvec2 equal(bvec2 x, bvec2 y);"
         "bvec3 equal(bvec3 x, bvec3 y);"
         "bvec4 equal(bvec4 x, bvec4 y);"
-                 
+
         "bvec2 notEqual(vec2 x, vec2 y);"
         "bvec3 notEqual(vec3 x, vec3 y);"
         "bvec4 notEqual(vec4 x, vec4 y);"
-                 
+
         "bvec2 notEqual(ivec2 x, ivec2 y);"
         "bvec3 notEqual(ivec3 x, ivec3 y);"
         "bvec4 notEqual(ivec4 x, ivec4 y);"
-                 
+
         "bvec2 notEqual(bvec2 x, bvec2 y);"
         "bvec3 notEqual(bvec3 x, bvec3 y);"
         "bvec4 notEqual(bvec4 x, bvec4 y);"
-                 
+
         "bool any(bvec2 x);"
         "bool any(bvec3 x);"
         "bool any(bvec4 x);"
-                 
+
         "bool all(bvec2 x);"
         "bool all(bvec3 x);"
         "bool all(bvec4 x);"
-                 
+
         "bvec2 not(bvec2 x);"
         "bvec3 not(bvec3 x);"
         "bvec4 not(bvec4 x);"
-                 
+
         "\n");
 
     if (version >= 130) {
@@ -1249,27 +1248,27 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "bvec2 lessThan(uvec2 x, uvec2 y);"
             "bvec3 lessThan(uvec3 x, uvec3 y);"
             "bvec4 lessThan(uvec4 x, uvec4 y);"
-                 
+
             "bvec2 lessThanEqual(uvec2 x, uvec2 y);"
             "bvec3 lessThanEqual(uvec3 x, uvec3 y);"
             "bvec4 lessThanEqual(uvec4 x, uvec4 y);"
-                 
+
             "bvec2 greaterThan(uvec2 x, uvec2 y);"
             "bvec3 greaterThan(uvec3 x, uvec3 y);"
             "bvec4 greaterThan(uvec4 x, uvec4 y);"
-                 
+
             "bvec2 greaterThanEqual(uvec2 x, uvec2 y);"
             "bvec3 greaterThanEqual(uvec3 x, uvec3 y);"
             "bvec4 greaterThanEqual(uvec4 x, uvec4 y);"
-                 
+
             "bvec2 equal(uvec2 x, uvec2 y);"
             "bvec3 equal(uvec3 x, uvec3 y);"
             "bvec4 equal(uvec4 x, uvec4 y);"
 
             "bvec2 notEqual(uvec2 x, uvec2 y);"
             "bvec3 notEqual(uvec3 x, uvec3 y);"
-            "bvec4 notEqual(uvec4 x, uvec4 y);"                 
-            
+            "bvec4 notEqual(uvec4 x, uvec4 y);"
+
             "\n");
     }
 
@@ -1292,7 +1291,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "vec4 texture3DProj(sampler3D, vec4);" // OES_texture_3D, but caught by keyword check
 
                 "vec4 textureCube(samplerCube, vec3);"
-            
+
                 "\n");
         }
     }
@@ -1306,7 +1305,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
                 "vec4 texture1DProj(sampler1D, vec2);"
                 "vec4 texture1DProj(sampler1D, vec4);"
-                     
+
                 "vec4 shadow1D(sampler1DShadow, vec3);"
                 "vec4 shadow2D(sampler2DShadow, vec3);"
                 "vec4 shadow1DProj(sampler1DShadow, vec4);"
@@ -1346,22 +1345,22 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "float noise1(vec2  x);"
             "float noise1(vec3  x);"
             "float noise1(vec4  x);"
-                     
+
             "vec2 noise2(float x);"
             "vec2 noise2(vec2  x);"
             "vec2 noise2(vec3  x);"
             "vec2 noise2(vec4  x);"
-                     
+
             "vec3 noise3(float x);"
             "vec3 noise3(vec2  x);"
             "vec3 noise3(vec3  x);"
             "vec3 noise3(vec4  x);"
-                     
+
             "vec4 noise4(float x);"
             "vec4 noise4(vec2  x);"
             "vec4 noise4(vec3  x);"
             "vec4 noise4(vec4  x);"
-                     
+
             "\n");
     }
 
@@ -1517,7 +1516,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "lowp ivec2 findMSB(highp uvec2);"
             "lowp ivec3 findMSB(highp uvec3);"
             "lowp ivec4 findMSB(highp uvec4);"
-            
+
             "\n");
     }
 
@@ -2243,7 +2242,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         "vec2  dFdx(vec2  p);"
         "vec3  dFdx(vec3  p);"
         "vec4  dFdx(vec4  p);"
-                 
+
         "float dFdy(float p);"
         "vec2  dFdy(vec2  p);"
         "vec3  dFdy(vec3  p);"
@@ -2286,12 +2285,12 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "vec2  dFdyCoarse(vec2  p);"
             "vec3  dFdyCoarse(vec3  p);"
             "vec4  dFdyCoarse(vec4  p);"
-                 
+
             "float fwidthCoarse(float p);"
             "vec2  fwidthCoarse(vec2  p);"
             "vec3  fwidthCoarse(vec3  p);"
             "vec4  fwidthCoarse(vec4  p);"
-            
+
             "\n");
     }
 
@@ -2462,11 +2461,11 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "uniform mat4  gl_ModelViewMatrixInverse;"
             "uniform mat4  gl_ProjectionMatrixInverse;"
             "uniform mat4  gl_ModelViewProjectionMatrixInverse;"
-                     
+
             "uniform mat4  gl_ModelViewMatrixTranspose;"
             "uniform mat4  gl_ProjectionMatrixTranspose;"
             "uniform mat4  gl_ModelViewProjectionMatrixTranspose;"
-                     
+
             "uniform mat4  gl_ModelViewMatrixInverseTranspose;"
             "uniform mat4  gl_ProjectionMatrixInverseTranspose;"
             "uniform mat4  gl_ModelViewProjectionMatrixInverseTranspose;"
@@ -2524,7 +2523,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "float quadraticAttenuation;"// K2
             "};"
 
-
             "struct gl_LightModelParameters {"
                 "vec4  ambient;"       // Acs
             "};"
@@ -2559,7 +2557,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "};"
 
             "uniform gl_FogParameters gl_Fog;"
-            
+
             "\n");
     }
 
@@ -2589,7 +2587,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     // Define the interface to the vertex shader.
     //
     //============================================================================
-    
+
     if (profile != EEsProfile) {
         if (version < 130) {
             stageBuiltins[EShLangVertex].append(
@@ -2621,7 +2619,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "in vec4  gl_MultiTexCoord5;"
                 "in vec4  gl_MultiTexCoord6;"
                 "in vec4  gl_MultiTexCoord7;"
-                "in float gl_FogCoord;"            
+                "in float gl_FogCoord;"
                 "\n");
         }
 
@@ -2663,7 +2661,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                     "vec4 gl_Position;"     // needs qualifier fixed later
                     "float gl_PointSize;"   // needs qualifier fixed later
                     "float gl_ClipDistance[];"
-                    );            
+                    );
             if (IncludeLegacy(version, profile, spvVersion))
                 stageBuiltins[EShLangVertex].append(
                     "vec4 gl_ClipVertex;"   // needs qualifier fixed later
@@ -2827,7 +2825,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             );
     }
 
-
     //============================================================================
     //
     // Define the interface to the tessellation control shader.
@@ -2907,7 +2904,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
             "patch in float gl_TessLevelOuter[4];"
             "patch in float gl_TessLevelInner[2];"
-                
+
             "out gl_PerVertex {"
                 "vec4 gl_Position;"
                 "float gl_PointSize;"
@@ -2941,7 +2938,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
             "patch in highp float gl_TessLevelOuter[4];"
             "patch in highp float gl_TessLevelInner[2];"
-                
+
             "out gl_PerVertex {"
                 "highp vec4 gl_Position;"
                 "highp float gl_PointSize;"
@@ -3108,12 +3105,12 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
-    //printf("%s\n", commonBuiltins.c_str());
-    //printf("%s\n", stageBuiltins[EShLangFragment].c_str());
+    // printf("%s\n", commonBuiltins.c_str());
+    // printf("%s\n", stageBuiltins[EShLangFragment].c_str());
 }
 
 //
-// Helper function for initialize(), to add the second set of names for texturing, 
+// Helper function for initialize(), to add the second set of names for texturing,
 // when adding context-independent built-in functions.
 //
 void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, const SpvVersion& spvVersion)
@@ -3221,7 +3218,7 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
 }
 
 //
-// Helper function for add2ndGenerationSamplingImaging(), 
+// Helper function for add2ndGenerationSamplingImaging(),
 // when adding context-independent built-in functions.
 //
 // Add all the query functions for the given type.
@@ -3298,7 +3295,7 @@ void TBuiltIns::addQueryFunctions(TSampler sampler, TString& typeName, int versi
 }
 
 //
-// Helper function for add2ndGenerationSamplingImaging(), 
+// Helper function for add2ndGenerationSamplingImaging(),
 // when adding context-independent built-in functions.
 //
 // Add all the image access functions for the given type.
@@ -3357,7 +3354,7 @@ void TBuiltIns::addImageFunctions(TSampler sampler, TString& typeName, int versi
                 " imageAtomicOr(volatile coherent ",
                 " imageAtomicXor(volatile coherent ",
                 " imageAtomicExchange(volatile coherent "
-            }; 
+            };
 
             for (size_t i = 0; i < numBuiltins; ++i) {
                 commonBuiltins.append(dataType);
@@ -3408,7 +3405,7 @@ void TBuiltIns::addSubpassSampling(TSampler sampler, TString& typeName, int /*ve
 }
 
 //
-// Helper function for add2ndGenerationSamplingImaging(), 
+// Helper function for add2ndGenerationSamplingImaging(),
 // when adding context-independent built-in functions.
 //
 // Add all the texture lookup functions for the given type.
@@ -3637,9 +3634,8 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, TString& typeName, int ve
     }
 }
 
-
 //
-// Helper function for add2ndGenerationSamplingImaging(), 
+// Helper function for add2ndGenerationSamplingImaging(),
 // when adding context-independent built-in functions.
 //
 // Add all the texture gather functions for the given type.
@@ -3840,7 +3836,7 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
             s.append(builtInConstant);
             snprintf(builtInConstant, maxSize, "const int gl_MaxTessControlTotalOutputComponents = %d;", resources.maxTessControlTotalOutputComponents);
             s.append(builtInConstant);
-                
+
             snprintf(builtInConstant, maxSize, "const int gl_MaxTessEvaluationInputComponents = %d;", resources.maxTessEvaluationInputComponents);
             s.append(builtInConstant);
             snprintf(builtInConstant, maxSize, "const int gl_MaxTessEvaluationOutputComponents = %d;", resources.maxTessEvaluationOutputComponents);
@@ -3849,7 +3845,7 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
             s.append(builtInConstant);
             snprintf(builtInConstant, maxSize, "const int gl_MaxTessEvaluationUniformComponents = %d;", resources.maxTessEvaluationUniformComponents);
             s.append(builtInConstant);
-                
+
             snprintf(builtInConstant, maxSize, "const int gl_MaxTessPatchComponents = %d;", resources.maxTessPatchComponents);
             s.append(builtInConstant);
 
@@ -4012,7 +4008,7 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
             s.append(builtInConstant);
             snprintf(builtInConstant, maxSize, "const int gl_MaxTessControlTotalOutputComponents = %d;", resources.maxTessControlTotalOutputComponents);
             s.append(builtInConstant);
-                
+
             snprintf(builtInConstant, maxSize, "const int gl_MaxTessEvaluationInputComponents = %d;", resources.maxTessEvaluationInputComponents);
             s.append(builtInConstant);
             snprintf(builtInConstant, maxSize, "const int gl_MaxTessEvaluationOutputComponents = %d;", resources.maxTessEvaluationOutputComponents);
@@ -4021,7 +4017,7 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
             s.append(builtInConstant);
             snprintf(builtInConstant, maxSize, "const int gl_MaxTessEvaluationUniformComponents = %d;", resources.maxTessEvaluationUniformComponents);
             s.append(builtInConstant);
-                
+
             snprintf(builtInConstant, maxSize, "const int gl_MaxTessPatchComponents = %d;", resources.maxTessPatchComponents);
             s.append(builtInConstant);
             snprintf(builtInConstant, maxSize, "const int gl_MaxTessGenLevel = %d;", resources.maxTessGenLevel);
@@ -4086,7 +4082,7 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
     }
 
     // images (some in compute below)
-    if ((profile == EEsProfile && version >= 310) || 
+    if ((profile == EEsProfile && version >= 310) ||
         (profile != EEsProfile && version >= 130)) {
         snprintf(builtInConstant, maxSize, "const int gl_MaxImageUnits = %d;", resources.maxImageUnits);
         s.append(builtInConstant);
@@ -4101,7 +4097,7 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
     }
 
     // atomic counters (some in compute below)
-    if ((profile == EEsProfile && version >= 310) || 
+    if ((profile == EEsProfile && version >= 310) ||
         (profile != EEsProfile && version >= 420)) {
         snprintf(builtInConstant, maxSize, "const int gl_MaxVertexAtomicCounters = %d;", resources.               maxVertexAtomicCounters);
         s.append(builtInConstant);
@@ -4137,12 +4133,11 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
         s.append("\n");
     }
 
-
     // compute
     if ((profile == EEsProfile && version >= 310) || (profile != EEsProfile && version >= 420)) {
         snprintf(builtInConstant, maxSize, "const ivec3 gl_MaxComputeWorkGroupCount = ivec3(%d,%d,%d);", resources.maxComputeWorkGroupCountX,
                                                                                                          resources.maxComputeWorkGroupCountY,
-                                                                                                         resources.maxComputeWorkGroupCountZ);                
+                                                                                                         resources.maxComputeWorkGroupCountZ);
         s.append(builtInConstant);
         snprintf(builtInConstant, maxSize, "const ivec3 gl_MaxComputeWorkGroupSize = ivec3(%d,%d,%d);", resources.maxComputeWorkGroupSizeX,
                                                                                                         resources.maxComputeWorkGroupSizeY,
@@ -4272,7 +4267,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     // N.B.: a symbol should only be tagged once, and this function is called multiple times, once
     // per stage that's used for this profile.  So
     //  - generally, stick common ones in the fragment stage to ensure they are tagged exactly once
-    //  - for ES, which has different precisions for different stages, the coarsest-grained tagging 
+    //  - for ES, which has different precisions for different stages, the coarsest-grained tagging
     //    for a built-in used in many stages needs to be once for the fragment stage and once for
     //    the vertex stage
 
@@ -4465,7 +4460,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         // However, the current automatic extension scheme does not work per block member,
         // so for now check when parsing.
         //
-        //if (profile == EEsProfile) {
+        // if (profile == EEsProfile) {
         //    if (language == EShLangGeometry)
         //        symbolTable.setVariableExtensions("gl_PointSize", Num_AEP_geometry_point_size, AEP_geometry_point_size);
         //    else if (language == EShLangTessEvaluation || language == EShLangTessControl)
@@ -4501,7 +4496,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
                 symbolTable.setVariableExtensions("gl_NumSamples",     1, &E_GL_OES_sample_variables);
             }
         }
-        
+
         BuiltInVariable("gl_Layer",           EbvLayer,          symbolTable);
         BuiltInVariable("gl_ViewportIndex",   EbvViewportIndex,  symbolTable);
 
@@ -5062,7 +5057,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
 
 //
 // Add context-dependent (resource-specific) built-ins not handled by the above.  These
-// would be ones that need to be programmatically added because they cannot 
+// would be ones that need to be programmatically added because they cannot
 // be added by simple text strings.  For these, also
 // 1) Map built-in functions to operators, for those that will turn into an operation node
 //    instead of remaining a function call.

@@ -1,11 +1,11 @@
 //
-//Copyright (C) 2013-2016 LunarG, Inc.
+// Copyright (C) 2013-2016 LunarG, Inc.
 //
-//All rights reserved.
+// All rights reserved.
 //
-//Redistribution and use in source and binary forms, with or without
-//modification, are permitted provided that the following conditions
-//are met:
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
 //
 //    Redistributions of source code must retain the above copyright
 //    notice, this list of conditions and the following disclaimer.
@@ -19,18 +19,18 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-//POSSIBILITY OF SUCH DAMAGE.
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
 
 #ifndef _REFLECTION_INCLUDED
@@ -55,9 +55,9 @@ class TReflectionTraverser;
 // Data needed for just a single object at the granularity exchanged by the reflection API
 class TObjectReflection {
 public:
-    TObjectReflection(const TString& pName, const TType& pType, int pOffset, int pGLDefineType, int pSize, int pIndex) : 
-        name(pName), type(pType.clone()),
-        offset(pOffset), glDefineType(pGLDefineType), size(pSize), index(pIndex) { }
+    TObjectReflection(const TString& pName, const TType& pType, int pOffset, int pGLDefineType, int pSize, int pIndex) :
+        name(pName), offset(pOffset),
+        glDefineType(pGLDefineType), size(pSize), index(pIndex), type(pType.clone()) { }
 
     void dump() const {
         printf("%s: offset %d, type %x, size %d, index %d, binding %d\n",
@@ -81,7 +81,7 @@ protected:
         return type->getQualifier().layoutBinding;
     }
 
-    TObjectReflection() : type(nullptr), offset(-1), glDefineType(-1), size(-1), index(-1) { }
+    TObjectReflection() : offset(-1), glDefineType(-1), size(-1), index(-1), type(nullptr) { }
 
     const TType* type;
 };
@@ -107,7 +107,7 @@ public:
 
     // for mapping a block index to the block's description
     int getNumUniformBlocks() const { return (int)indexToUniformBlock.size(); }
-    const TObjectReflection& getUniformBlock(int i) const 
+    const TObjectReflection& getUniformBlock(int i) const
     {
         if (i >= 0 && i < (int)indexToUniformBlock.size())
             return indexToUniformBlock[i];
@@ -126,7 +126,7 @@ public:
     }
 
     // for mapping any name to its index (block names, uniform names and attribute names)
-    int getIndex(const char* name) const 
+    int getIndex(const char* name) const
     {
         TNameToIndex::const_iterator it = nameToIndex.find(name);
         if (it == nameToIndex.end())

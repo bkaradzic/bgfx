@@ -1,11 +1,11 @@
 //
-//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
-//Copyright (C) 2016 LunarG, Inc.
-//All rights reserved.
+// Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
+// Copyright (C) 2016 LunarG, Inc.
+// All rights reserved.
 //
-//Redistribution and use in source and binary forms, with or without
-//modification, are permitted provided that the following conditions
-//are met:
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
 //
 //    Redistributions of source code must retain the above copyright
 //    notice, this list of conditions and the following disclaimer.
@@ -19,18 +19,18 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-//POSSIBILITY OF SUCH DAMAGE.
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
 
 #ifndef _LOCAL_INTERMEDIATE_INCLUDED_
@@ -83,7 +83,7 @@ struct TCall {
 // A generic 1-D range.
 struct TRange {
     TRange(int start, int last) : start(start), last(last) { }
-    bool overlap(const TRange& rhs) const 
+    bool overlap(const TRange& rhs) const
     {
         return last >= rhs.start && start <= rhs.last;
     }
@@ -139,22 +139,22 @@ class TVariable;
 class TIntermediate {
 public:
     explicit TIntermediate(EShLanguage l, int v = 0, EProfile p = ENoProfile) :
-        source(EShSourceNone), language(l), profile(p), version(v), treeRoot(0),
+        language(l), source(EShSourceNone), profile(p), version(v), treeRoot(0),
         numEntryPoints(0), numErrors(0), numPushConstants(0), recursive(false),
         invocations(TQualifier::layoutNotSet), vertices(TQualifier::layoutNotSet), inputPrimitive(ElgNone), outputPrimitive(ElgNone),
         pixelCenterInteger(false), originUpperLeft(false),
         vertexSpacing(EvsNone), vertexOrder(EvoNone), pointMode(false), earlyFragmentTests(false), depthLayout(EldNone), depthReplacing(false), blendEquations(0),
-        multiStream(false), xfbMode(false),
+        xfbMode(false), multiStream(false),
+#ifdef NV_EXTENSIONS
+        layoutOverrideCoverage(false),
+        geoPassthroughEXT(false),
+#endif
         shiftSamplerBinding(0),
         shiftTextureBinding(0),
         shiftImageBinding(0),
         shiftUboBinding(0),
         autoMapBindings(false),
         flattenUniformArrays(false),
-#ifdef NV_EXTENSIONS 
-        layoutOverrideCoverage(false),
-        geoPassthroughEXT(false),
-#endif
         useUnknownFormat(false)
     {
         localSize[0] = 1;
@@ -192,7 +192,7 @@ public:
     bool getFlattenUniformArrays()        const { return flattenUniformArrays; }
     void setNoStorageFormat(bool b)             { useUnknownFormat = b; }
     bool getNoStorageFormat()             const { return useUnknownFormat; }
-    
+
     void setVersion(int v) { version = v; }
     int getVersion() const { return version; }
     void setProfile(EProfile p) { profile = p; }
@@ -273,7 +273,7 @@ public:
     void addSymbolLinkageNodes(TIntermAggregate*& linkage, EShLanguage, TSymbolTable&);
     void addSymbolLinkageNode(TIntermAggregate*& linkage, const TSymbol&);
 
-    bool setInvocations(int i) 
+    bool setInvocations(int i)
     {
         if (invocations != TQualifier::layoutNotSet)
             return invocations == i;
@@ -315,7 +315,7 @@ public:
     TVertexOrder getVertexOrder() const { return vertexOrder; }
     void setPointMode() { pointMode = true; }
     bool getPointMode() const { return pointMode; }
-    
+
     bool setLocalSize(int dim, int size)
     {
         if (localSize[dim] > 1)
@@ -391,7 +391,7 @@ public:
     static int getBaseAlignment(const TType&, int& size, int& stride, bool std140, bool rowMajor);
     bool promote(TIntermOperator*);
 
-#ifdef NV_EXTENSIONS 
+#ifdef NV_EXTENSIONS
     void setLayoutOverrideCoverage() { layoutOverrideCoverage = true; }
     bool getLayoutOverrideCoverage() const { return layoutOverrideCoverage; }
     void setGeoPassthroughEXT() { geoPassthroughEXT = true; }
@@ -417,18 +417,11 @@ protected:
     bool promoteBinary(TIntermBinary&);
     void addSymbolLinkageNode(TIntermAggregate*& linkage, TSymbolTable&, const TString&);
     bool promoteAggregate(TIntermAggregate&);
-    
+
     const EShLanguage language;  // stage, known at construction time
     EShSource source;            // source language, known a bit later
     std::string entryPointName;
     std::string entryPointMangledName;
-    unsigned int shiftSamplerBinding;
-    unsigned int shiftTextureBinding;
-    unsigned int shiftImageBinding;
-    unsigned int shiftUboBinding;
-    bool autoMapBindings;
-    bool flattenUniformArrays;
-    bool useUnknownFormat;
 
     EProfile profile;
     int version;
@@ -458,10 +451,18 @@ protected:
     bool xfbMode;
     bool multiStream;
 
-#ifdef NV_EXTENSIONS 
+#ifdef NV_EXTENSIONS
     bool layoutOverrideCoverage;
     bool geoPassthroughEXT;
 #endif
+
+    unsigned int shiftSamplerBinding;
+    unsigned int shiftTextureBinding;
+    unsigned int shiftImageBinding;
+    unsigned int shiftUboBinding;
+    bool autoMapBindings;
+    bool flattenUniformArrays;
+    bool useUnknownFormat;
 
     typedef std::list<TCall> TGraph;
     TGraph callGraph;

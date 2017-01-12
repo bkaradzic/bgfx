@@ -1,13 +1,13 @@
 //
-//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
-//Copyright (C) 2013-2016 LunarG, Inc.
-//Copyright (C) 2015-2016 Google, Inc.
+// Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
+// Copyright (C) 2013-2016 LunarG, Inc.
+// Copyright (C) 2015-2016 Google, Inc.
 //
-//All rights reserved.
+// All rights reserved.
 //
-//Redistribution and use in source and binary forms, with or without
-//modification, are permitted provided that the following conditions
-//are met:
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
 //
 //    Redistributions of source code must retain the above copyright
 //    notice, this list of conditions and the following disclaimer.
@@ -21,18 +21,18 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-//POSSIBILITY OF SUCH DAMAGE.
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
 
 //
@@ -47,11 +47,14 @@
 #include <memory>
 #include "SymbolTable.h"
 #include "ParseHelper.h"
-#include "../../hlsl/hlslParseHelper.h"
-#include "../../hlsl/hlslParseables.h"
 #include "Scan.h"
 #include "ScanContext.h"
+
+#ifdef ENABLE_HLSL
+#include "../../hlsl/hlslParseHelper.h"
+#include "../../hlsl/hlslParseables.h"
 #include "../../hlsl/hlslScanContext.h"
+#endif
 
 #include "../Include/ShHandle.h"
 #include "../../OGLCompilersDLL/InitializeDll.h"
@@ -73,7 +76,9 @@ TBuiltInParseables* CreateBuiltInParseables(TInfoSink& infoSink, EShSource sourc
 {
     switch (source) {
     case EShSourceGlsl: return new TBuiltIns();              // GLSL builtIns
+#ifdef ENABLE_HLSL
     case EShSourceHlsl: return new TBuiltInParseablesHlsl(); // HLSL intrinsics
+#endif
 
     default:
         infoSink.info.message(EPrefixInternalError, "Unable to determine source language");
@@ -88,15 +93,21 @@ TParseContextBase* CreateParseContext(TSymbolTable& symbolTable, TIntermediate& 
                                       SpvVersion spvVersion, bool forwardCompatible, EShMessages messages,
                                       bool parsingBuiltIns, const std::string sourceEntryPointName = "")
 {
+#ifndef ENABLE_HLSL
+    (void)sourceEntryPointName; // Unused argument.
+#endif
+
     switch (source) {
     case EShSourceGlsl:
         intermediate.setEntryPointName("main");
         return new TParseContext(symbolTable, intermediate, parsingBuiltIns, version, profile, spvVersion,
                                  language, infoSink, forwardCompatible, messages);
 
+#ifdef ENABLE_HLSL
     case EShSourceHlsl:
         return new HlslParseContext(symbolTable, intermediate, parsingBuiltIns, version, profile, spvVersion,
                                     language, infoSink, sourceEntryPointName.c_str(), forwardCompatible, messages);
+#endif
     default:
         infoSink.info.message(EPrefixInternalError, "Unable to determine source language");
         return nullptr;
@@ -194,11 +205,11 @@ enum EPrecisionClass {
     EPcCount
 };
 
-// A process-global symbol table per version per profile for built-ins common 
-// to multiple stages (languages), and a process-global symbol table per version 
+// A process-global symbol table per version per profile for built-ins common
+// to multiple stages (languages), and a process-global symbol table per version
 // per profile per stage for built-ins unique to each stage.  They will be sparsely
 // populated, so they will only be generated as needed.
-// 
+//
 // Each has a different set of built-ins, and we want to preserve that from
 // compile to compile.
 //
@@ -214,19 +225,19 @@ bool InitializeSymbolTable(const TString& builtIns, int version, EProfile profil
                            EShSource source, TInfoSink& infoSink, TSymbolTable& symbolTable)
 {
     TIntermediate intermediate(language, version, profile);
-    
+
     intermediate.setSource(source);
 
-    std::unique_ptr<TParseContextBase> parseContext(CreateParseContext(symbolTable, intermediate, version, profile, source, 
+    std::unique_ptr<TParseContextBase> parseContext(CreateParseContext(symbolTable, intermediate, version, profile, source,
                                                                        language, infoSink, spvVersion, true, EShMsgDefault,
                                                                        true));
 
-    TShader::ForbidInclude includer;
+    TShader::ForbidIncluder includer;
     TPpContext ppContext(*parseContext, "", includer);
     TScanContext scanContext(*parseContext);
     parseContext->setScanContext(&scanContext);
     parseContext->setPpContext(&ppContext);
-    
+
     //
     // Push the symbol table to give it an initial scope.  This
     // push should not have a corresponding pop, so that built-ins
@@ -242,7 +253,7 @@ bool InitializeSymbolTable(const TString& builtIns, int version, EProfile profil
 
     if (builtInLengths[0] == 0)
         return true;
-    
+
     TInputScanner input(1, builtInShaders, builtInLengths);
     if (! parseContext->parseShaderStrings(ppContext, input) != 0) {
         infoSink.info.message(EPrefixInternalError, "Unable to parse built-ins");
@@ -284,6 +295,9 @@ void InitializeStageSymbolTable(TBuiltInParseables& builtInParseables, int versi
 bool InitializeSymbolTables(TInfoSink& infoSink, TSymbolTable** commonTable,  TSymbolTable** symbolTables, int version, EProfile profile, const SpvVersion& spvVersion, EShSource source)
 {
     std::unique_ptr<TBuiltInParseables> builtInParseables(CreateBuiltInParseables(infoSink, source));
+
+    if (builtInParseables == nullptr)
+        return false;
 
     builtInParseables->initialize(version, profile, spvVersion);
 
@@ -330,7 +344,10 @@ bool AddContextSpecificSymbols(const TBuiltInResource* resources, TInfoSink& inf
                                EProfile profile, const SpvVersion& spvVersion, EShLanguage language, EShSource source)
 {
     std::unique_ptr<TBuiltInParseables> builtInParseables(CreateBuiltInParseables(infoSink, source));
-    
+
+    if (builtInParseables == nullptr)
+        return false;
+
     builtInParseables->initialize(*resources, version, profile, spvVersion, language);
     InitializeSymbolTable(builtInParseables->getCommonString(), version, profile, spvVersion, language, source, infoSink, symbolTable);
     builtInParseables->identifyBuiltIns(version, profile, spvVersion, language, symbolTable, *resources);
@@ -339,7 +356,7 @@ bool AddContextSpecificSymbols(const TBuiltInResource* resources, TInfoSink& inf
 }
 
 //
-// To do this on the fly, we want to leave the current state of our thread's 
+// To do this on the fly, we want to leave the current state of our thread's
 // pool allocator intact, so:
 //  - Switch to a new pool for parsing the built-ins
 //  - Do the parsing, which builds the symbol table, using the new pool
@@ -402,7 +419,7 @@ void SetupBuiltinSymbolTable(int version, EProfile profile, const SpvVersion& sp
                               [versionIndex][spvVersionIndex][profileIndex][sourceIndex][CommonIndex(profile, (EShLanguage)stage)]);
             SharedSymbolTables[versionIndex][spvVersionIndex][profileIndex][sourceIndex][stage]->copyTable(*stageTables[stage]);
             SharedSymbolTables[versionIndex][spvVersionIndex][profileIndex][sourceIndex][stage]->readOnly();
-        }    
+        }
     }
 
     // Clean up the local tables before deleting the pool they used.
@@ -471,7 +488,7 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
                     profile = ECoreProfile;
                 else
                     profile = ENoProfile;
-            } 
+            }
             // else: typical desktop case... e.g., "#version 410 core"
         }
     }
@@ -628,7 +645,7 @@ bool ProcessDeferred(
 
     if (numStrings == 0)
         return true;
-    
+
     // Move to length-based strings, rather than null-terminated strings.
     // Also, add strings to include the preamble and to ensure the shader is not null,
     // which lets the grammar accept what was a null (post preprocessing) shader.
@@ -710,24 +727,25 @@ bool ProcessDeferred(
     if (spvVersion.vulkan >= 100)
         intermediate.setOriginUpperLeft();
     SetupBuiltinSymbolTable(version, profile, spvVersion, source);
-    
+
     TSymbolTable* cachedTable = SharedSymbolTables[MapVersionToIndex(version)]
                                                   [MapSpvVersionToIndex(spvVersion)]
                                                   [MapProfileToIndex(profile)]
                                                   [MapSourceToIndex(source)]
                                                   [compiler->getLanguage()];
-    
+
     // Dynamically allocate the symbol table so we can control when it is deallocated WRT the pool.
     TSymbolTable* symbolTableMemory = new TSymbolTable;
     TSymbolTable& symbolTable = *symbolTableMemory;
     if (cachedTable)
         symbolTable.adoptLevels(*cachedTable);
-    
+
     // Add built-in symbols that are potentially context dependent;
     // they get popped again further down.
-    AddContextSpecificSymbols(resources, compiler->infoSink, symbolTable, version, profile, spvVersion,
-                              compiler->getLanguage(), source);
-    
+    if (! AddContextSpecificSymbols(resources, compiler->infoSink, symbolTable, version, profile, spvVersion,
+                                    compiler->getLanguage(), source))
+        return false;
+
     //
     // Now we can process the full shader under proper symbols and rules.
     //
@@ -754,7 +772,7 @@ bool ProcessDeferred(
     }
 
     parseContext->initializeExtensionBehavior();
-    
+
     // Fill in the strings as outlined above.
     std::string preamble;
     parseContext->getPreamble(preamble);
@@ -978,7 +996,7 @@ struct DoFullParse{
   bool operator()(TParseContextBase& parseContext, TPpContext& ppContext,
                   TInputScanner& fullInput, bool versionWillBeError,
                   TSymbolTable&, TIntermediate& intermediate,
-                  EShOptimizationLevel optLevel, EShMessages messages) 
+                  EShOptimizationLevel optLevel, EShMessages messages)
     {
         bool success = true;
         // Parse the full shader.
@@ -1032,7 +1050,6 @@ bool PreprocessDeferred(
                            false, includer);
 }
 
-
 //
 // do a partial compile on the given strings for a single compilation unit
 // for a potential deferred link into a single stage (and deferred full compile of that
@@ -1041,7 +1058,7 @@ bool PreprocessDeferred(
 // all preprocessing, parsing, semantic checks, etc. for a single compilation unit
 // are done here.
 //
-// return:  the tree and other information is filled into the intermediate argument, 
+// return:  the tree and other information is filled into the intermediate argument,
 //          and true is returned by the function for success.
 //
 bool CompileDeferred(
@@ -1072,7 +1089,6 @@ bool CompileDeferred(
 
 } // end anonymous namespace for local functions
 
-
 //
 // ShInitialize() should be called exactly once per process, not per thread.
 //
@@ -1087,7 +1103,9 @@ int ShInitialize()
         PerProcessGPA = new TPoolAllocator();
 
     glslang::TScanContext::fillInKeywordMap();
+#ifdef ENABLE_HLSL
     glslang::HlslScanContext::fillInKeywordMap();
+#endif
 
     return 1;
 }
@@ -1103,7 +1121,7 @@ ShHandle ShConstructCompiler(const EShLanguage language, int debugOptions)
         return 0;
 
     TShHandleBase* base = static_cast<TShHandleBase*>(ConstructCompiler(language, debugOptions));
-    
+
     return reinterpret_cast<void*>(base);
 }
 
@@ -1180,7 +1198,9 @@ int __fastcall ShFinalize()
     }
 
     glslang::TScanContext::deleteKeywordMap();
+#ifdef ENABLE_HLSL
     glslang::HlslScanContext::deleteKeywordMap();
+#endif
 
     return 1;
 }
@@ -1219,7 +1239,7 @@ int ShCompile(
     compiler->infoSink.debug.erase();
 
     TIntermediate intermediate(compiler->getLanguage());
-    TShader::ForbidInclude includer;
+    TShader::ForbidIncluder includer;
     bool success = CompileDeferred(compiler, shaderStrings, numStrings, inputLengths, nullptr,
                                    "", optLevel, resources, defaultVersion, ENoProfile, false,
                                    forwardCompatible, messages, intermediate, includer);
@@ -1264,8 +1284,7 @@ int ShLinkExt(
         }
         if (base->getAsCompiler())
             cObjects.push_back(base->getAsCompiler());
-    
-    
+
         if (cObjects[i] == 0)
             return 0;
     }
@@ -1281,7 +1300,7 @@ int ShLinkExt(
     for (int i = 0; i < numHandles; ++i) {
         if (cObjects[i]->getAsCompiler()) {
             if (! cObjects[i]->getAsCompiler()->linkable()) {
-                linker->infoSink.info.message(EPrefixError, "Not all shaders have valid object code.");                
+                linker->infoSink.info.message(EPrefixError, "Not all shaders have valid object code.");
                 return 0;
             }
         }
@@ -1340,7 +1359,7 @@ const void* ShGetExecutable(const ShHandle handle)
         return 0;
 
     TShHandleBase* base = reinterpret_cast<TShHandleBase*>(handle);
-    
+
     TLinker* linker = static_cast<TLinker*>(base->getAsLinker());
     if (linker == 0)
         return 0;
@@ -1357,7 +1376,7 @@ const void* ShGetExecutable(const ShHandle handle)
 // success or failure.
 //
 int ShSetVirtualAttributeBindings(const ShHandle handle, const ShBindingTable* table)
-{    
+{
     if (!InitThread())
         return 0;
 
@@ -1369,7 +1388,7 @@ int ShSetVirtualAttributeBindings(const ShHandle handle, const ShBindingTable* t
 
     if (linker == 0)
         return 0;
-   
+
     linker->setAppAttributeBindings(table);
 
     return 1;
@@ -1446,7 +1465,7 @@ int ShGetUniformLocation(const ShHandle handle, const char* name)
 //
 // Below is a new alternate C++ interface that might potentially replace the above
 // opaque handle-based interface.
-//    
+//
 // See more detailed comment in ShaderLang.h
 //
 
@@ -1552,7 +1571,7 @@ bool TShader::parse(const TBuiltInResource* builtInResources, int defaultVersion
 {
     if (! InitThread())
         return false;
-    
+
     pool = new TPoolAllocator();
     SetThreadPoolAllocator(*pool);
     if (! preamble)
@@ -1636,7 +1655,7 @@ bool TProgram::link(EShMessages messages)
     linked = true;
 
     bool error = false;
-    
+
     pool = new TPoolAllocator();
     SetThreadPoolAllocator(*pool);
 
@@ -1723,7 +1742,7 @@ const char* TProgram::getInfoDebugLog()
 //
 
 bool TProgram::buildReflection()
-{    
+{
     if (! linked || reflection)
         return false;
 
