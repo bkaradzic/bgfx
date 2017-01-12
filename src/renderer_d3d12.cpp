@@ -5371,6 +5371,11 @@ data.NumQualityLevels = 0;
 							restoreScissor = true;
 							Rect scissorRect;
 							scissorRect.intersect(viewScissorRect,_render->m_rectCache.m_cache[scissor]);
+							if (scissorRect.isZeroArea() )
+							{
+								continue;
+							}
+
 							D3D12_RECT rc;
 							rc.left   = scissorRect.m_x;
 							rc.top    = scissorRect.m_y;

@@ -4262,6 +4262,11 @@ BX_UNUSED(currentSamplerStateIdx);
 							restoreScissor = true;
 							Rect scissorRect;
 							scissorRect.intersect(viewScissorRect,_render->m_rectCache.m_cache[scissor]);
+							if (scissorRect.isZeroArea() )
+							{
+								continue;
+							}
+
 							VkRect2D rc;
 							rc.offset.x      = scissorRect.m_x;
 							rc.offset.x      = scissorRect.m_y;

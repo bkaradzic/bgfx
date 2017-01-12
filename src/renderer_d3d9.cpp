@@ -3795,6 +3795,11 @@ namespace bgfx { namespace d3d9
 					{
 						Rect scissorRect;
 						scissorRect.intersect(viewScissorRect, _render->m_rectCache.m_cache[scissor]);
+						if (scissorRect.isZeroArea() )
+						{
+							continue;
+						}
+
 						DX_CHECK(device->SetRenderState(D3DRS_SCISSORTESTENABLE, true) );
 						RECT rc;
 						rc.left   = scissorRect.m_x;

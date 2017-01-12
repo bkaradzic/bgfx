@@ -5744,6 +5744,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					{
 						Rect scissorRect;
 						scissorRect.intersect(viewScissorRect, _render->m_rectCache.m_cache[scissor]);
+						if (scissorRect.isZeroArea() )
+						{
+							continue;
+						}
+
 						scissorEnabled = true;
 						D3D11_RECT rc;
 						rc.left   = scissorRect.m_x;
