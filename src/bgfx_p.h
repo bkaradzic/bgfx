@@ -293,6 +293,13 @@ namespace bgfx
 			return UINT64_C(0) == ui64;
 		}
 
+		bool isZeroArea() const
+		{
+			return 0 == m_width
+				|| 0 == m_height
+				;
+		}
+
 		void intersect(const Rect& _a, const Rect& _b)
 		{
 			using namespace bx;
@@ -2216,8 +2223,8 @@ namespace bgfx
 				, _width
 				, _height
 				);
-			m_resolution.m_width  = bx::uint32_min(g_caps.limits.maxTextureSize, _width);
-			m_resolution.m_height = bx::uint32_min(g_caps.limits.maxTextureSize, _height);
+			m_resolution.m_width  = bx::uint32_clamp(_width,  1, g_caps.limits.maxTextureSize);
+			m_resolution.m_height = bx::uint32_clamp(_height, 1, g_caps.limits.maxTextureSize);
 			m_resolution.m_flags  = 0
 				| _flags
 				| (g_platformDataChangedSinceReset ? BGFX_RESET_INTERNAL_FORCE : 0)

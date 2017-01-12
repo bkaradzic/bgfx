@@ -3062,8 +3062,8 @@ error:
 		if (!formatSupported)
 		{
 			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
-				, "Texture array is not supported! "
-				  "Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_2D_ARRAY backend renderer capabilities."
+				, "Texture format is not supported! "
+				  "Use bgfx::isTextureValid to check support for texture format before creating it."
 				);
 			return;
 		}

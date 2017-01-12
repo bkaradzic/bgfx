@@ -85,7 +85,7 @@ namespace bgfx
 
 			for (uint32_t ii = 0; ii < count; ++ii)
 			{
-				uint8_t nameSize;
+				uint8_t nameSize = 0;
 				bx::read(_reader, nameSize, _err);
 
 				if (!_err->isOk() ) { return; }
