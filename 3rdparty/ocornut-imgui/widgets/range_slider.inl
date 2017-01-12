@@ -100,7 +100,7 @@ bool RangeSliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v1, float* v
         }
         else
         {
-            SetActiveID(0);
+            ClearActiveID();
         }
     }
 
