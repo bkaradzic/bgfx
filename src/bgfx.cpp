@@ -544,13 +544,16 @@ namespace bgfx
 	{
 		if (_x < m_width && _y < m_height)
 		{
-			char* temp = (char*)alloca(m_width);
-
-			uint32_t num = bx::vsnprintf(temp, m_width, _format, _argList);
+			va_list argListCopy;
+			va_copy(argListCopy, _argList);
+			uint32_t num = bx::vsnprintf(NULL, 0, _format, argListCopy) + 1;
+			char* temp = (char*)alloca(num);
+			va_copy(argListCopy, _argList);
+			num = bx::vsnprintf(temp, num, _format, argListCopy);
 
 			uint8_t attr = _attr;
 			uint8_t* mem = &m_mem[(_y*m_width+_x)*2];
-			for (uint32_t ii = 0, xx = _x; ii < num && xx < m_width; ++ii, ++xx)
+			for (uint32_t ii = 0, xx = _x; ii < num && xx < m_width; ++ii)
 			{
 				char ch = temp[ii];
 				if (BX_UNLIKELY(ch == '\x1b') )
@@ -564,6 +567,7 @@ namespace bgfx
 					mem[0] = ch;
 					mem[1] = attr;
 					mem += 2;
+					++xx;
 				}
 			}
 		}
