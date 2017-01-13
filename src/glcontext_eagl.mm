@@ -41,27 +41,10 @@ namespace bgfx { namespace gl
 				];
 
 			[EAGLContext setCurrentContext:_context];
+			[CATransaction flush];
 
-			GL_CHECK(glGenFramebuffers(1, &m_fbo) );
-			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo) );
-
-			GL_CHECK(glGenRenderbuffers(1, &m_colorRbo) );
-			GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_colorRbo) );
-
-			[_context renderbufferStorage:GL_RENDERBUFFER fromDrawable:_layer];
-			GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_colorRbo) );
-
-			GLint width;
-			GLint height;
-			GL_CHECK(glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &width) );
-			GL_CHECK(glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &height) );
-			BX_TRACE("Screen size: %d x %d", width, height);
-
-			m_width = width;
-			m_height = height;
 			m_layer = _layer;
-
-			createFrameBuffers(m_width, m_height);
+			createFrameBuffers();
 		}
 
 		~SwapChainGL()
@@ -93,17 +76,35 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		void createFrameBuffers(GLint _width, GLint _height)
+		void createFrameBuffers()
 		{
+			GL_CHECK(glGenFramebuffers(1, &m_fbo) );
+			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo) );
+
+			GL_CHECK(glGenRenderbuffers(1, &m_colorRbo) );
+			GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_colorRbo) );
+
+			[m_context renderbufferStorage:GL_RENDERBUFFER fromDrawable:m_layer];
+			GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_colorRbo) );
+
+			GLint width;
+			GLint height;
+			GL_CHECK(glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &width) );
+			GL_CHECK(glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &height) );
+			BX_TRACE("Screen size: %d x %d", width, height);
+
 			GL_CHECK(glGenRenderbuffers(1, &m_depthStencilRbo) );
 			GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_depthStencilRbo) );
-			GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _width, _height) );
+			GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8_OES, width, height) ); // from OES_packed_depth_stencil
 			GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depthStencilRbo) );
 			GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depthStencilRbo) );
 
 			GLenum err = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 			BX_CHECK(GL_FRAMEBUFFER_COMPLETE == err, "glCheckFramebufferStatus failed 0x%08x", err);
 			BX_UNUSED(err);
+
+			m_width = width;
+			m_height = height;
 
 			makeCurrent();
 
@@ -136,11 +137,7 @@ namespace bgfx { namespace gl
 			}
 
 			destroyFrameBuffers();
-
-			m_width = _width;
-			m_height = _height;
-
-			createFrameBuffers(m_width, m_height);
+			createFrameBuffers();
 		}
 
 		void swapBuffers()
@@ -332,7 +329,7 @@ namespace bgfx { namespace gl
 		}
 		else
 		{
-		    _swapChain->swapBuffers();
+			_swapChain->swapBuffers();
 		}
 	}
 
