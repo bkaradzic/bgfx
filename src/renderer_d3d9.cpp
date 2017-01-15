@@ -2982,11 +2982,11 @@ namespace bgfx { namespace d3d9
 							switch (m_textureFormat)
 							{
 							case TextureFormat::RGB5A1:
-								imageConvert(bits, 16, packBgr5a1, mip.m_data, unpackRgb5a1, size);
+								imageConvert(bits, 16, bx::packBgr5a1, mip.m_data, bx::unpackRgb5a1, size);
 								break;
 
 							case TextureFormat::RGBA4:
-								imageConvert(bits, 16, packBgra4, mip.m_data, unpackRgba4, size);
+								imageConvert(bits, 16, bx::packBgra4, mip.m_data, bx::unpackRgba4, size);
 								break;
 
 							default:
@@ -3044,11 +3044,11 @@ namespace bgfx { namespace d3d9
 				switch (m_textureFormat)
 				{
 				case TextureFormat::RGB5A1:
-					imageConvert(dst, 16, packBgr5a1, src, unpackRgb5a1, rectpitch);
+					imageConvert(dst, 16, bx::packBgr5a1, src, bx::unpackRgb5a1, rectpitch);
 					break;
 
 				case TextureFormat::RGBA4:
-					imageConvert(dst, 16, packBgra4, src, unpackRgba4, rectpitch);
+					imageConvert(dst, 16, bx::packBgra4, src, bx::unpackRgba4, rectpitch);
 					break;
 
 				default:
