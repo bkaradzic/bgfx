@@ -1223,7 +1223,9 @@ namespace bgfx { namespace mtl
 			if (NULL != m_capture)
 			{
 				if (NULL == m_screenshotTarget)
+				{
 					return;
+				}
 
 				m_renderCommandEncoder.endEncoding();
 
@@ -1239,7 +1241,13 @@ namespace bgfx { namespace mtl
 
 				if (m_screenshotTarget.pixelFormat() == MTLPixelFormatRGBA8Uint)
 				{
-					imageSwizzleBgra8(m_resolution.m_width, m_resolution.m_height, m_resolution.m_width*4, m_capture, m_capture);
+					imageSwizzleBgra8(
+						  m_capture
+						, m_resolution.m_width
+						, m_resolution.m_height
+						, m_resolution.m_width*4
+						, m_capture
+						);
 				}
 
 				g_callback->captureFrame(m_capture, m_captureSize);
@@ -1247,11 +1255,13 @@ namespace bgfx { namespace mtl
 				RenderPassDescriptor renderPassDescriptor = newRenderPassDescriptor();
 				setFrameBuffer(renderPassDescriptor, m_renderCommandEncoderFrameBufferHandle);
 
-				for(uint32_t ii = 0; ii < g_caps.limits.maxFBAttachments; ++ii)
+				for (uint32_t ii = 0; ii < g_caps.limits.maxFBAttachments; ++ii)
 				{
 					MTLRenderPassColorAttachmentDescriptor* desc = renderPassDescriptor.colorAttachments[ii];
-					if ( desc.texture != NULL)
+					if (NULL != desc.texture)
+					{
 						desc.loadAction = MTLLoadActionLoad;
+					}
 				}
 
 				RenderPassDepthAttachmentDescriptor depthAttachment = renderPassDescriptor.depthAttachment;

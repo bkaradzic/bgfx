@@ -318,7 +318,7 @@ namespace bgfx
 			return true;
 
 		case TextureFormat::BGRA8:
-			imageSwizzleBgra8(_width, _height, _width*4, _src, _dst);
+			imageSwizzleBgra8(_dst, _width, _height, _width*4, _src);
 			return true;
 
 		case TextureFormat::RGBA8:
@@ -684,7 +684,7 @@ int main(int _argc, const char* _argv[])
 
 					for (uint8_t lod = 1; lod < numMips; ++lod)
 					{
-						imageRgba32fDownsample2x2NormalMap(dstMip.m_width, dstMip.m_height, dstMip.m_width*16, rgba, rgba);
+						imageRgba32fDownsample2x2NormalMap(rgba, dstMip.m_width, dstMip.m_height, dstMip.m_width*16, rgba);
 						imageRgba32f11to01(rgbaDst, dstMip.m_width, dstMip.m_height, dstMip.m_width*16, rgba);
 						imageGetRawData(imageContainer, 0, lod, output->data, output->size, dstMip);
 						uint8_t* data = const_cast<uint8_t*>(dstMip.m_data);
@@ -737,7 +737,7 @@ int main(int _argc, const char* _argv[])
 
 					for (uint8_t lod = 1; lod < numMips; ++lod)
 					{
-						imageRgba32fLinearDownsample2x2(dstMip.m_width, dstMip.m_height, dstMip.m_width*16, rgba, rgba);
+						imageRgba32fLinearDownsample2x2(rgba, dstMip.m_width, dstMip.m_height, dstMip.m_width*16, rgba);
 						imageGetRawData(imageContainer, 0, lod, output->data, output->size, dstMip);
 						uint8_t* data = const_cast<uint8_t*>(dstMip.m_data);
 
@@ -797,7 +797,7 @@ int main(int _argc, const char* _argv[])
 
 					for (uint8_t lod = 1; lod < numMips; ++lod)
 					{
-						imageRgba8Downsample2x2(dstMip.m_width, dstMip.m_height, dstMip.m_width*4, rgba, rgba);
+						imageRgba8Downsample2x2(rgba, dstMip.m_width, dstMip.m_height, dstMip.m_width*4, rgba);
 						imageGetRawData(imageContainer, 0, lod, output->data, output->size, dstMip);
 						uint8_t* data = const_cast<uint8_t*>(dstMip.m_data);
 						imageEncodeFromRgba8(data, rgba, dstMip.m_width, dstMip.m_height, format);

@@ -2021,10 +2021,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				D3D11_MAPPED_SUBRESOURCE mapped;
 				DX_CHECK(m_deviceCtx->Map(texture, 0, D3D11_MAP_READ, 0, &mapped) );
-				imageSwizzleBgra8(backBufferDesc.Width
+				imageSwizzleBgra8(
+					  mapped.pData
+					, backBufferDesc.Width
 					, backBufferDesc.Height
 					, mapped.RowPitch
-					, mapped.pData
 					, mapped.pData
 					);
 				g_callback->screenShot(_filePath
@@ -3283,10 +3284,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				D3D11_MAPPED_SUBRESOURCE mapped;
 				DX_CHECK(m_deviceCtx->Map(m_captureTexture, 0, D3D11_MAP_READ, 0, &mapped) );
 
-				imageSwizzleBgra8(getBufferWidth()
+				imageSwizzleBgra8(
+					  mapped.pData
+					, getBufferWidth()
 					, getBufferHeight()
 					, mapped.RowPitch
-					, mapped.pData
 					, mapped.pData
 					);
 
@@ -4402,7 +4404,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
  						if (swizzle)
  						{
-// 							imageSwizzleBgra8(width, height, mip.m_width*4, data, temp);
+// 							imageSwizzleBgra8(temp, width, height, mip.m_width*4, data);
  						}
 
 						srd[kk].SysMemSlicePitch = mip.m_height*srd[kk].SysMemPitch;

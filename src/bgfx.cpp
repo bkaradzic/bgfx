@@ -4071,14 +4071,14 @@ void bgfx_topology_sort_tri_list(bgfx_topology_sort_t _sort, void* _dst, uint32_
 	bgfx::topologySortTriList(bgfx::TopologySort::Enum(_sort), _dst, _dstSize, _dir, _pos, _vertices, _stride, _indices, _numIndices, _index32);
 }
 
-BGFX_C_API void bgfx_image_swizzle_bgra8(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+BGFX_C_API void bgfx_image_swizzle_bgra8(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src)
 {
-	bgfx::imageSwizzleBgra8(_width, _height, _pitch, _src, _dst);
+	bgfx::imageSwizzleBgra8(_dst, _width, _height, _pitch, _src);
 }
 
-BGFX_C_API void bgfx_image_rgba8_downsample_2x2(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+BGFX_C_API void bgfx_image_rgba8_downsample_2x2(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src)
 {
-	bgfx::imageRgba8Downsample2x2(_width, _height, _pitch, _src, _dst);
+	bgfx::imageRgba8Downsample2x2(_dst, _width, _height, _pitch, _src);
 }
 
 BGFX_C_API uint8_t bgfx_get_supported_renderers(uint8_t _max, bgfx_renderer_type_t* _enum)

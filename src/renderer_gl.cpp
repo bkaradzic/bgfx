@@ -2539,7 +2539,7 @@ namespace bgfx { namespace gl
 
 			if (GL_RGBA == m_readPixelsFmt)
 			{
-				imageSwizzleBgra8(width, height, width*4, data, data);
+				imageSwizzleBgra8(data, width, height, width*4, data);
 			}
 
 			g_callback->screenShot(_filePath
@@ -3101,7 +3101,7 @@ namespace bgfx { namespace gl
 
 				if (GL_RGBA == m_readPixelsFmt)
 				{
-					imageSwizzleBgra8(m_resolution.m_width, m_resolution.m_height, m_resolution.m_width*4, m_capture, m_capture);
+					imageSwizzleBgra8(m_capture, m_resolution.m_width, m_resolution.m_height, m_resolution.m_width*4, m_capture);
 				}
 
 				g_callback->captureFrame(m_capture, m_captureSize);
@@ -5086,7 +5086,7 @@ namespace bgfx { namespace gl
 
 			if (!unpackRowLength)
 			{
-				imageCopy(width, height, bpp, srcpitch, data, temp);
+				imageCopy(temp, width, height, bpp, srcpitch, data);
 				data = temp;
 			}
 
@@ -5117,7 +5117,7 @@ namespace bgfx { namespace gl
 			if (!unpackRowLength
 			&&  !convert)
 			{
-				imageCopy(width, height, bpp, srcpitch, data, temp);
+				imageCopy(temp, width, height, bpp, srcpitch, data);
 				data = temp;
 			}
 

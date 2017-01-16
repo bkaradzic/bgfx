@@ -298,7 +298,7 @@ namespace bgfx
 		return size * _numLayers;
 	}
 
-	void imageSolid(uint32_t _width, uint32_t _height, uint32_t _solid, void* _dst)
+	void imageSolid(void* _dst, uint32_t _width, uint32_t _height, uint32_t _solid)
 	{
 		uint32_t* dst = (uint32_t*)_dst;
 		for (uint32_t ii = 0, num = _width*_height; ii < num; ++ii)
@@ -307,7 +307,7 @@ namespace bgfx
 		}
 	}
 
-	void imageCheckerboard(uint32_t _width, uint32_t _height, uint32_t _step, uint32_t _0, uint32_t _1, void* _dst)
+	void imageCheckerboard(void* _dst, uint32_t _width, uint32_t _height, uint32_t _step, uint32_t _0, uint32_t _1)
 	{
 		uint32_t* dst = (uint32_t*)_dst;
 		for (uint32_t yy = 0; yy < _height; ++yy)
@@ -320,7 +320,7 @@ namespace bgfx
 		}
 	}
 
-	void imageRgba8Downsample2x2Ref(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+	void imageRgba8Downsample2x2Ref(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src)
 	{
 		const uint32_t dstwidth  = _width/2;
 		const uint32_t dstheight = _height/2;
@@ -371,7 +371,7 @@ namespace bgfx
 		}
 	}
 
-	void imageRgba8Downsample2x2(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+	void imageRgba8Downsample2x2(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src)
 	{
 		const uint32_t dstwidth  = _width/2;
 		const uint32_t dstheight = _height/2;
@@ -492,7 +492,7 @@ namespace bgfx
 		}
 	}
 
-	void imageRgba32fLinearDownsample2x2Ref(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+	void imageRgba32fLinearDownsample2x2Ref(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src)
 	{
 		const uint32_t dstwidth  = _width/2;
 		const uint32_t dstheight = _height/2;
@@ -541,12 +541,12 @@ namespace bgfx
 		}
 	}
 
-	void imageRgba32fLinearDownsample2x2(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+	void imageRgba32fLinearDownsample2x2(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src)
 	{
-		imageRgba32fLinearDownsample2x2Ref(_width, _height, _pitch, _src, _dst);
+		imageRgba32fLinearDownsample2x2Ref(_dst, _width, _height, _pitch, _src);
 	}
 
-	void imageRgba32fDownsample2x2NormalMapRef(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+	void imageRgba32fDownsample2x2NormalMapRef(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src)
 	{
 		const uint32_t dstwidth  = _width/2;
 		const uint32_t dstheight = _height/2;
@@ -584,12 +584,12 @@ namespace bgfx
 		}
 	}
 
-	void imageRgba32fDownsample2x2NormalMap(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+	void imageRgba32fDownsample2x2NormalMap(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src)
 	{
-		imageRgba32fDownsample2x2NormalMapRef(_width, _height, _pitch, _src, _dst);
+		imageRgba32fDownsample2x2NormalMapRef(_dst, _width, _height, _pitch, _src);
 	}
 
-	void imageSwizzleBgra8Ref(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+	void imageSwizzleBgra8Ref(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src)
 	{
 		const uint8_t* src = (uint8_t*) _src;
 		const uint8_t* next = src + _pitch;
@@ -611,7 +611,7 @@ namespace bgfx
 		}
 	}
 
-	void imageSwizzleBgra8(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+	void imageSwizzleBgra8(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src)
 	{
 		// Test can we do four 4-byte pixels at the time.
 		if (0 != (_width&0x3)
@@ -623,7 +623,7 @@ namespace bgfx
 			BX_WARN(bx::isPtrAligned(_src, 16), "Source %p is not 16-byte aligned.", _src);
 			BX_WARN(bx::isPtrAligned(_dst, 16), "Destination %p is not 16-byte aligned.", _dst);
 			BX_WARN(_width < 4, "Image width must be multiple of 4 (width %d).", _width);
-			imageSwizzleBgra8Ref(_width, _height, _pitch, _src, _dst);
+			imageSwizzleBgra8Ref(_dst, _width, _height, _pitch, _src);
 			return;
 		}
 
@@ -653,7 +653,7 @@ namespace bgfx
 		}
 	}
 
-	void imageCopy(uint32_t _height, uint32_t _srcPitch, const void* _src, uint32_t _dstPitch, void* _dst)
+	void imageCopy(void* _dst, uint32_t _height, uint32_t _srcPitch, const void* _src, uint32_t _dstPitch)
 	{
 		const uint32_t pitch = bx::uint32_min(_srcPitch, _dstPitch);
 		const uint8_t* src = (uint8_t*)_src;
@@ -665,10 +665,10 @@ namespace bgfx
 		}
 	}
 
-	void imageCopy(uint32_t _width, uint32_t _height, uint32_t _bpp, uint32_t _pitch, const void* _src, void* _dst)
+	void imageCopy(void* _dst, uint32_t _width, uint32_t _height, uint32_t _bpp, uint32_t _pitch, const void* _src)
 	{
 		const uint32_t dstPitch = _width*_bpp/8;
-		imageCopy(_height, _pitch, _src, dstPitch, _dst);
+		imageCopy(_dst, _height, _pitch, _src, dstPitch);
 	}
 
 	struct PackUnpack
@@ -2655,22 +2655,22 @@ namespace bgfx
 
 		case TextureFormat::ETC2A:
 			BX_WARN(false, "ETC2A decoder is not implemented.");
-			imageCheckerboard(_width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xff00ff00), _dst);
+			imageCheckerboard(_dst, _width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xff00ff00) );
 			break;
 
 		case TextureFormat::ETC2A1:
 			BX_WARN(false, "ETC2A1 decoder is not implemented.");
-			imageCheckerboard(_width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xffff0000), _dst);
+			imageCheckerboard(_dst, _width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xffff0000) );
 			break;
 
 		case TextureFormat::PTC12:
 			BX_WARN(false, "PTC12 decoder is not implemented.");
-			imageCheckerboard(_width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xffff00ff), _dst);
+			imageCheckerboard(_dst, _width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xffff00ff) );
 			break;
 
 		case TextureFormat::PTC12A:
 			BX_WARN(false, "PTC12A decoder is not implemented.");
-			imageCheckerboard(_width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xffffff00), _dst);
+			imageCheckerboard(_dst, _width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xffffff00) );
 			break;
 
 		case TextureFormat::PTC14:
@@ -2707,16 +2707,16 @@ namespace bgfx
 
 		case TextureFormat::PTC22:
 			BX_WARN(false, "PTC22 decoder is not implemented.");
-			imageCheckerboard(_width, _height, 16, UINT32_C(0xff00ff00), UINT32_C(0xff0000ff), _dst);
+			imageCheckerboard(_dst, _width, _height, 16, UINT32_C(0xff00ff00), UINT32_C(0xff0000ff) );
 			break;
 
 		case TextureFormat::PTC24:
 			BX_WARN(false, "PTC24 decoder is not implemented.");
-			imageCheckerboard(_width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xffffffff), _dst);
+			imageCheckerboard(_dst, _width, _height, 16, UINT32_C(0xff000000), UINT32_C(0xffffffff) );
 			break;
 
 		case TextureFormat::RGBA8:
-			imageSwizzleBgra8(_width, _height, _pitch, _src, _dst);
+			imageSwizzleBgra8(_dst, _width, _height, _pitch, _src);
 			break;
 
 		case TextureFormat::BGRA8:
@@ -2730,7 +2730,7 @@ namespace bgfx
 				if (!imageConvert(_dst, TextureFormat::BGRA8, _src, _format, _width, _height, srcPitch) )
 				{
 					// Failed to convert, just make ugly red-yellow checkerboard texture.
-					imageCheckerboard(_width, _height, 16, UINT32_C(0xffff0000), UINT32_C(0xffffff00), _dst);
+					imageCheckerboard(_dst, _width, _height, 16, UINT32_C(0xffff0000), UINT32_C(0xffffff00) );
 				}
 			}
 			break;
@@ -2746,12 +2746,12 @@ namespace bgfx
 			break;
 
 		case TextureFormat::BGRA8:
-			imageSwizzleBgra8(_width, _height, _pitch, _src, _dst);
+			imageSwizzleBgra8(_dst, _width, _height, _pitch, _src);
 			break;
 
 		default:
 			imageDecodeToBgra8(_dst, _src, _width, _height, _pitch, _format);
-			imageSwizzleBgra8(_width, _height, _width*4, _dst, _dst);
+			imageSwizzleBgra8(_dst, _width, _height, _width*4, _dst);
 			break;
 		}
 	}
