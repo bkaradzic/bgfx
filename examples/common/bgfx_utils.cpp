@@ -24,6 +24,7 @@ namespace stl = tinystl;
 BX_PRAGMA_DIAGNOSTIC_PUSH()
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wtype-limits")
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-value")
+BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4100) // error C4100: '' : unreferenced formal parameter
 #define MINIZ_NO_STDIO
 #define TINYEXR_IMPLEMENTATION
 #include <tinyexr/tinyexr.h>
