@@ -23,7 +23,7 @@ Compiling
   directories to add Remotery/lib path. The required library ws2_32.lib should be picked
   up through the use of the #pragma comment(lib, "ws2_32.lib") directive in Remotery.c.
 
-* Mac OS X (XCode) - simply add lib/Remotery.c and lib/Remotery.h to your program.
+* Mac OS X (XCode) - simply add lib/Remotery.c, lib/Remotery.h and lib/Remotery.mm to your program.
 
 * Linux (GCC) - add the source in lib folder. Compilation of the code requires -pthreads for
   library linkage. For example to compile the same run: cc lib/Remotery.c sample/sample.c
@@ -37,7 +37,8 @@ You can define some extra macros to modify what features are compiled into Remot
     RMT_USE_TINYCRT     0           Used by the Celtoys TinyCRT library (not released yet)
     RMT_USE_CUDA        0           Assuming CUDA headers/libs are setup, allow CUDA profiling
     RMT_USE_D3D11       0           Assuming Direct3D 11 headers/libs are setup, allow D3D11 GPU profiling
-    RMT_USE_OPENGL      0           Allow OpenGL GPU profiling (standalone except you must link to OpenGL which you already do if you use it)
+    RMT_USE_OPENGL      0           Allow OpenGL GPU profiling (dynamically links OpenGL libraries on available platforms)
+    RMT_USE_METAL       0           Allow Metal profiling of command buffers
 
 
 Basic Use
@@ -174,6 +175,24 @@ Support for multiple contexts can be added pretty easily if there is demand for 
 your OpenGL device and context, ensure you notify Remotery before shutting down Remotery itself:
 
     rmt_UnbindOpenGL();
+
+
+Sampling Metal GPU activity
+---------------------------
+
+Remotery can sample Metal command buffers issued to the GPU from multiple threads. As the Metal API does not
+support finer grained profiling, samples will return only the timing of the bound command buffer, irrespective
+of how many you issue. As such, make sure you bind and sample the command buffer for each call site:
+
+    rmt_BindMetal(mtl_command_buffer);
+    rmt_ScopedMetalSample(command_buffer_name);
+
+The C API supports begin/end also:
+
+    rmt_BindMetal(mtl_command_buffer);
+    rmt_BeginMetalSample(command_buffer_name);
+    ...
+    rmt_EndMetalSample();
 
 
 Applying Configuration Settings

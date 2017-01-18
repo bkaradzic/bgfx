@@ -36,7 +36,7 @@ Console = (function()
 		// Setup log requests from the server
 		this.Server = server;
 		server.SetConsole(this);
-		server.AddMessageHandler("LOG", Bind(OnLog, this));
+		server.AddMessageHandler("LOGM", Bind(OnLog, this));
 	}
 
 
@@ -65,9 +65,11 @@ Console = (function()
 	}
 
 
-	function OnLog(self, socket, message)
+	function OnLog(self, socket, data_view)
 	{
-		self.AppTextBuffer = LogText(self.AppTextBuffer, message.text);
+	    var data_view_reader = new DataViewReader(data_view, 4);
+	    var text = data_view_reader.GetString();
+	    self.AppTextBuffer = LogText(self.AppTextBuffer, text);
 	}
 
 

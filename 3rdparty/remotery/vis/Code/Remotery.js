@@ -20,12 +20,37 @@ Settings = (function()
 
 Remotery = (function()
 {
+	// crack the url and get the parameter we want
+	var getUrlParameter = function getUrlParameter( search_param) 
+	{
+		var page_url = decodeURIComponent( window.location.search.substring(1) ),
+						url_vars = page_url.split('&'),
+						param_name,
+						i;
+
+		for (i = 0; i < url_vars.length; i++) 
+		{
+			param_name = url_vars[i].split('=');
+
+			if (param_name[0] === search_param) 
+			{
+				return param_name[1] === undefined ? true : param_name[1];
+			}
+		}
+	};
+
 	function Remotery()
 	{
 		this.WindowManager = new WM.WindowManager();
 		this.Settings = new Settings();
 
-		this.ConnectionAddress = LocalStore.Get("App", "Global", "ConnectionAddress", "ws://127.0.0.1:17815/rmt");
+		// "addr" param is ip:port and will override the local store version if passed in the URL
+		var addr = getUrlParameter( "addr" );
+		if ( addr != null )
+			this.ConnectionAddress = "ws://" + addr + "/rmt";
+		else
+			this.ConnectionAddress = LocalStore.Get("App", "Global", "ConnectionAddress", "ws://127.0.0.1:17815/rmt");
+
 		this.Server = new WebSocketConnection();
 		this.Server.AddConnectHandler(Bind(OnConnect, this));
 
@@ -43,8 +68,10 @@ Remotery = (function()
 		this.SampleWindows = { };
 		this.FrameHistory = { };
 		this.SelectedFrames = { };
+		this.NameMap = { };
 
-		this.Server.AddMessageHandler("SAMPLES", Bind(OnSamples, this));
+		this.Server.AddMessageHandler("SMPL", Bind(OnSamples, this));
+		this.Server.AddMessageHandler("SSMP", Bind(OnSampleName, this));
 
 		// Kick-off the auto-connect loop
 		AutoConnect(this);
@@ -80,10 +107,6 @@ Remotery = (function()
 	{
 		// Connection address has been validated
 		LocalStore.Set("App", "Global", "ConnectionAddress", self.ConnectionAddress);
-
-		self.TimelineWindow.ResetTimeRange();
-		self.FrameHistory = { };
-		self.SelectedFrames = { };
 	}
 
 
@@ -115,7 +138,8 @@ Remotery = (function()
 
 		// requestAnimationFrame can run up to 60hz which is way too much for drawing the timeline
 		// Assume it's running at 60hz and skip frames to achieve 10hz instead
-		// Doing this instead of using setTimeout because it's better for browser rendering (or; will be once WebGL is in use)
+	    // Doing this instead of using setTimeout because it's better for browser rendering (or; will be once WebGL is in use)
+        // TODO: Expose as config variable because high refresh rate is great when using a separate viewiing machine
 		if ((self.DisplayFrame % 10) == 0)
 			self.TimelineWindow.DrawAllRows();
 
@@ -123,15 +147,74 @@ Remotery = (function()
 	}
 
 
-	function OnSamples(self, socket, message)
+	function DecodeSample(self, data_view_reader)
 	{
-		var name = message.thread_name;
+	    var sample = {};
 
+        // Get name hash and lookup name it map
+	    sample.name_hash = data_view_reader.GetUInt32();
+	    sample.name = self.NameMap[sample.name_hash];
+
+        // If the name doesn't exist in the map yet, request it from the server
+	    if (sample.name == undefined)
+	    {
+            // Meanwhile, store the hash as the name
+	        sample.name = sample.name_hash;
+	        self.Server.Send("GSMP" + sample.name);
+	    }
+
+        // Get the rest of the sample data
+	    sample.id = data_view_reader.GetUInt32();
+	    sample.colour = data_view_reader.GetStringOfLength(7);
+	    sample.us_start = data_view_reader.GetUInt64();
+	    sample.us_length = data_view_reader.GetUInt64();
+
+        // Recurse into children
+	    sample.children = [];
+	    DecodeSampleArray(self, data_view_reader, sample.children);
+
+	    return sample;
+	}
+
+
+	function DecodeSampleArray(self, data_view_reader, samples)
+	{
+	    var nb_samples = data_view_reader.GetUInt32();
+	    for (var i = 0; i < nb_samples; i++)
+	    {
+	        var sample = DecodeSample(self, data_view_reader);
+            samples.push(sample)
+	    }
+	}
+
+
+	function DecodeSamples(self, data_view_reader)
+	{
+        // Message-specific header
+	    var message = { };
+	    message.thread_name = data_view_reader.GetString();
+	    message.nb_samples = data_view_reader.GetUInt32();
+	    message.sample_digest = data_view_reader.GetUInt32();
+
+        // Read samples
+	    message.samples = [];
+	    message.samples.push(DecodeSample(self, data_view_reader));
+
+	    return message;
+	}
+
+
+	function OnSamples(self, socket, data_view)
+	{
 		// Discard any new samples while paused
 		if (self.Settings.IsPaused)
-			return;
+		    return;
 
-		// Add to frame history for this thread
+        // Binary decode incoming sample data
+		var message = DecodeSamples(self, new DataViewReader(data_view, 8));
+		var name = message.thread_name;
+
+	    // Add to frame history for this thread
 		var thread_frame = new ThreadFrame(message);
 		if (!(name in self.FrameHistory))
 			self.FrameHistory[name] = [ ];
@@ -142,7 +225,7 @@ Remotery = (function()
 		var max_nb_frames = 10000;
 		var extra_frames = frame_history.length - max_nb_frames;
 		if (extra_frames > 0)
-			frame_history.splice(0, extra_frames);
+		    frame_history.splice(0, extra_frames);
 
 		// Create sample windows on-demand
 		if (!(name in self.SampleWindows))
@@ -156,6 +239,16 @@ Remotery = (function()
 		// Set on the window and timeline
 		self.SampleWindows[name].OnSamples(message.nb_samples, message.sample_digest, message.samples);
 		self.TimelineWindow.OnSamples(name, frame_history);
+	}
+
+
+	function OnSampleName(self, socket, data_view)
+	{
+        // Add any names sent by the server to the local map
+	    var data_view_reader = new DataViewReader(data_view, 4);
+	    var name_hash = data_view_reader.GetUInt32();
+	    var name = data_view_reader.GetString();
+	    self.NameMap[name_hash] = name;
 	}
 
 
