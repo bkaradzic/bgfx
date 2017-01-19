@@ -616,12 +616,12 @@ namespace bgfx
 		// Test can we do four 4-byte pixels at the time.
 		if (0 != (_width&0x3)
 		||  _width < 4
-		||  !bx::isPtrAligned(_src, 16)
-		||  !bx::isPtrAligned(_dst, 16) )
+		||  !bx::isAligned(_src, 16)
+		||  !bx::isAligned(_dst, 16) )
 		{
 			BX_WARN(false, "Image swizzle is taking slow path.");
-			BX_WARN(bx::isPtrAligned(_src, 16), "Source %p is not 16-byte aligned.", _src);
-			BX_WARN(bx::isPtrAligned(_dst, 16), "Destination %p is not 16-byte aligned.", _dst);
+			BX_WARN(bx::isAligned(_src, 16), "Source %p is not 16-byte aligned.", _src);
+			BX_WARN(bx::isAligned(_dst, 16), "Destination %p is not 16-byte aligned.", _dst);
 			BX_WARN(_width < 4, "Image width must be multiple of 4 (width %d).", _width);
 			imageSwizzleBgra8Ref(_dst, _width, _height, _pitch, _src);
 			return;
