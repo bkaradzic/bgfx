@@ -1,0 +1,3 @@
+Warning, version 310 is not yet complete; most version-specific features are present, but some are missing.
+WARNING: 0:6: '#extension' : extension not supported: GL_EXT_shader_texture_image_samples
+

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -2982,11 +2982,11 @@ namespace bgfx { namespace d3d9
 							switch (m_textureFormat)
 							{
 							case TextureFormat::RGB5A1:
-								imageConvert(bits, 16, packBgr5a1, mip.m_data, unpackRgb5a1, size);
+								imageConvert(bits, 16, bx::packBgr5a1, mip.m_data, bx::unpackRgb5a1, size);
 								break;
 
 							case TextureFormat::RGBA4:
-								imageConvert(bits, 16, packBgra4, mip.m_data, unpackRgba4, size);
+								imageConvert(bits, 16, bx::packBgra4, mip.m_data, bx::unpackRgba4, size);
 								break;
 
 							default:
@@ -3044,11 +3044,11 @@ namespace bgfx { namespace d3d9
 				switch (m_textureFormat)
 				{
 				case TextureFormat::RGB5A1:
-					imageConvert(dst, 16, packBgr5a1, src, unpackRgb5a1, rectpitch);
+					imageConvert(dst, 16, bx::packBgr5a1, src, bx::unpackRgb5a1, rectpitch);
 					break;
 
 				case TextureFormat::RGBA4:
-					imageConvert(dst, 16, packBgra4, src, unpackRgba4, rectpitch);
+					imageConvert(dst, 16, bx::packBgra4, src, bx::unpackRgba4, rectpitch);
 					break;
 
 				default:
@@ -3795,6 +3795,11 @@ namespace bgfx { namespace d3d9
 					{
 						Rect scissorRect;
 						scissorRect.intersect(viewScissorRect, _render->m_rectCache.m_cache[scissor]);
+						if (scissorRect.isZeroArea() )
+						{
+							continue;
+						}
+
 						DX_CHECK(device->SetRenderState(D3DRS_SCISSORTESTENABLE, true) );
 						RECT rc;
 						rc.left   = scissorRect.m_x;
@@ -4259,16 +4264,20 @@ namespace bgfx { namespace d3d9
 
 		const int64_t timerFreq = bx::getHPFrequency();
 
-		perfStats.cpuTimeEnd   = now;
-		perfStats.cpuTimerFreq = timerFreq;
-		perfStats.gpuTimeBegin = m_gpuTimer.m_begin;
-		perfStats.gpuTimeEnd   = m_gpuTimer.m_end;
-		perfStats.gpuTimerFreq = m_gpuTimer.m_frequency;
+		perfStats.cpuTimeEnd    = now;
+		perfStats.cpuTimerFreq  = timerFreq;
+		perfStats.gpuTimeBegin  = m_gpuTimer.m_begin;
+		perfStats.gpuTimeEnd    = m_gpuTimer.m_end;
+		perfStats.gpuTimerFreq  = m_gpuTimer.m_frequency;
+		perfStats.numDraw       = statsKeyType[0];
+		perfStats.numCompute    = statsKeyType[1];
+		perfStats.maxGpuLatency = maxGpuLatency;
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
 			PIX_BEGINEVENT(D3DCOLOR_FRAME, L"debugstats");
 
+			m_needPresent = true;
 			TextVideoMem& tvm = m_textVideoMem;
 
 			static int64_t next = now;

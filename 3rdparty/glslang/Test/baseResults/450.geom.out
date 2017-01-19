@@ -1,0 +1,72 @@
+450.geom
+Warning, version 450 is not yet complete; most version-specific features are present, but some are missing.
+
+Shader version: 450
+invocations = -1
+max_vertices = -1
+input primitive = none
+output primitive = none
+0:? Sequence
+0:11  Function Definition: main( (global void)
+0:11    Function Parameters: 
+0:13    Sequence
+0:13      move second child to first child (temp float)
+0:13        direct index (layout(stream=0 ) temp float CullDistance)
+0:13          gl_CullDistance: direct index for structure (layout(stream=0 ) out 3-element array of float CullDistance)
+0:13            'anon@0' (layout(stream=0 ) out block{layout(stream=0 ) out 3-element array of float CullDistance gl_CullDistance})
+0:13            Constant:
+0:13              3 (const uint)
+0:13          Constant:
+0:13            2 (const int)
+0:13        direct index (temp float CullDistance)
+0:13          gl_CullDistance: direct index for structure (in 3-element array of float CullDistance)
+0:13            direct index (temp block{in 3-element array of float CullDistance gl_CullDistance})
+0:13              'gl_in' (in implicitly-sized array of block{in 3-element array of float CullDistance gl_CullDistance})
+0:13              Constant:
+0:13                1 (const int)
+0:13            Constant:
+0:13              0 (const int)
+0:13          Constant:
+0:13            2 (const int)
+0:?   Linker Objects
+0:?     'gl_in' (in implicitly-sized array of block{in 3-element array of float CullDistance gl_CullDistance})
+0:?     'anon@0' (layout(stream=0 ) out block{layout(stream=0 ) out 3-element array of float CullDistance gl_CullDistance})
+
+
+Linked geometry stage:
+
+ERROR: Linking geometry stage: At least one shader must specify an input layout primitive
+ERROR: Linking geometry stage: At least one shader must specify an output layout primitive
+ERROR: Linking geometry stage: At least one shader must specify a layout(max_vertices = value)
+
+Shader version: 450
+invocations = 1
+max_vertices = -1
+input primitive = none
+output primitive = none
+0:? Sequence
+0:11  Function Definition: main( (global void)
+0:11    Function Parameters: 
+0:13    Sequence
+0:13      move second child to first child (temp float)
+0:13        direct index (layout(stream=0 ) temp float CullDistance)
+0:13          gl_CullDistance: direct index for structure (layout(stream=0 ) out 3-element array of float CullDistance)
+0:13            'anon@0' (layout(stream=0 ) out block{layout(stream=0 ) out 3-element array of float CullDistance gl_CullDistance})
+0:13            Constant:
+0:13              3 (const uint)
+0:13          Constant:
+0:13            2 (const int)
+0:13        direct index (temp float CullDistance)
+0:13          gl_CullDistance: direct index for structure (in 3-element array of float CullDistance)
+0:13            direct index (temp block{in 3-element array of float CullDistance gl_CullDistance})
+0:13              'gl_in' (in 2-element array of block{in 3-element array of float CullDistance gl_CullDistance})
+0:13              Constant:
+0:13                1 (const int)
+0:13            Constant:
+0:13              0 (const int)
+0:13          Constant:
+0:13            2 (const int)
+0:?   Linker Objects
+0:?     'gl_in' (in 2-element array of block{in 3-element array of float CullDistance gl_CullDistance})
+0:?     'anon@0' (layout(stream=0 ) out block{layout(stream=0 ) out 3-element array of float CullDistance gl_CullDistance})
+

@@ -1,0 +1,526 @@
+hlsl.array.flatten.frag
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:17  Function Definition: TestFn1( (temp 4-component vector of float)
+0:17    Function Parameters: 
+0:?     Sequence
+0:18      Branch: Return with expression
+0:18        texture (temp 4-component vector of float)
+0:18          Construct combined texture-sampler (temp sampler1D)
+0:?             'g_tex[1]' (uniform texture1D)
+0:?             'g_samp[1]' (uniform sampler)
+0:18          Constant:
+0:18            0.200000
+0:22  Function Definition: TestFn2(t11[3];p1[3]; (temp 4-component vector of float)
+0:22    Function Parameters: 
+0:22      'l_tex' (in 3-element array of texture1D)
+0:22      'l_samp' (in 3-element array of sampler)
+0:?     Sequence
+0:23      Branch: Return with expression
+0:23        texture (temp 4-component vector of float)
+0:23          Construct combined texture-sampler (temp sampler1D)
+0:23            direct index (temp texture1D)
+0:23              'l_tex' (in 3-element array of texture1D)
+0:23              Constant:
+0:23                2 (const int)
+0:23            direct index (temp sampler)
+0:23              'l_samp' (in 3-element array of sampler)
+0:23              Constant:
+0:23                2 (const int)
+0:23          Constant:
+0:23            0.200000
+0:26  Sequence
+0:26    move second child to first child (temp 5-element array of int)
+0:26      'not_flattened_a' (global 5-element array of int)
+0:26      Constant:
+0:26        1 (const int)
+0:26        2 (const int)
+0:26        3 (const int)
+0:26        4 (const int)
+0:26        5 (const int)
+0:31  Function Definition: main(struct-PS_OUTPUT-vf41; (temp void)
+0:31    Function Parameters: 
+0:31      'ps_output' (out structure{temp 4-component vector of float color})
+0:?     Sequence
+0:33      Sequence
+0:33        Sequence
+0:33          move second child to first child (temp sampler)
+0:33            direct index (temp sampler)
+0:33              'local_sampler_array' (temp 3-element array of sampler)
+0:33              Constant:
+0:33                0 (const int)
+0:?             'g_samp[0]' (uniform sampler)
+0:33          move second child to first child (temp sampler)
+0:33            direct index (temp sampler)
+0:33              'local_sampler_array' (temp 3-element array of sampler)
+0:33              Constant:
+0:33                1 (const int)
+0:?             'g_samp[1]' (uniform sampler)
+0:33          move second child to first child (temp sampler)
+0:33            direct index (temp sampler)
+0:33              'local_sampler_array' (temp 3-element array of sampler)
+0:33              Constant:
+0:33                2 (const int)
+0:?             'g_samp[2]' (uniform sampler)
+0:34      Sequence
+0:34        Sequence
+0:34          move second child to first child (temp texture1D)
+0:34            direct index (temp texture1D)
+0:34              'local_texture_array' (temp 3-element array of texture1D)
+0:34              Constant:
+0:34                0 (const int)
+0:?             'g_tex[0]' (uniform texture1D)
+0:34          move second child to first child (temp texture1D)
+0:34            direct index (temp texture1D)
+0:34              'local_texture_array' (temp 3-element array of texture1D)
+0:34              Constant:
+0:34                1 (const int)
+0:?             'g_tex[1]' (uniform texture1D)
+0:34          move second child to first child (temp texture1D)
+0:34            direct index (temp texture1D)
+0:34              'local_texture_array' (temp 3-element array of texture1D)
+0:34              Constant:
+0:34                2 (const int)
+0:?             'g_tex[2]' (uniform texture1D)
+0:35      Sequence
+0:35        move second child to first child (temp 4-element array of float)
+0:35          'local_float_array' (temp 4-element array of float)
+0:35          g_floats: direct index for structure (layout(offset=384 ) uniform 4-element array of float)
+0:35            'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-element array of 3X3 matrix of float g_mats, layout(binding=10 offset=192 ) uniform 4-element array of 3X3 matrix of float g_mats_explicit, layout(offset=384 ) uniform 4-element array of float g_floats})
+0:35            Constant:
+0:35              2 (const uint)
+0:37      move second child to first child (temp 4-component vector of float)
+0:?         'color' (layout(location=0 ) out 4-component vector of float)
+0:37        add (temp 4-component vector of float)
+0:37          Function Call: TestFn1( (temp 4-component vector of float)
+0:37          Function Call: TestFn2(t11[3];p1[3]; (temp 4-component vector of float)
+0:37            Comma (temp 3-element array of texture1D)
+0:37              Sequence
+0:37                move second child to first child (temp texture1D)
+0:37                  direct index (temp texture1D)
+0:37                    'aggShadow' (temp 3-element array of texture1D)
+0:37                    Constant:
+0:37                      0 (const int)
+0:?                   'g_tex[0]' (uniform texture1D)
+0:37                move second child to first child (temp texture1D)
+0:37                  direct index (temp texture1D)
+0:37                    'aggShadow' (temp 3-element array of texture1D)
+0:37                    Constant:
+0:37                      1 (const int)
+0:?                   'g_tex[1]' (uniform texture1D)
+0:37                move second child to first child (temp texture1D)
+0:37                  direct index (temp texture1D)
+0:37                    'aggShadow' (temp 3-element array of texture1D)
+0:37                    Constant:
+0:37                      2 (const int)
+0:?                   'g_tex[2]' (uniform texture1D)
+0:37              'aggShadow' (temp 3-element array of texture1D)
+0:37            Comma (temp 3-element array of sampler)
+0:37              Sequence
+0:37                move second child to first child (temp sampler)
+0:37                  direct index (temp sampler)
+0:37                    'aggShadow' (temp 3-element array of sampler)
+0:37                    Constant:
+0:37                      0 (const int)
+0:?                   'g_samp[0]' (uniform sampler)
+0:37                move second child to first child (temp sampler)
+0:37                  direct index (temp sampler)
+0:37                    'aggShadow' (temp 3-element array of sampler)
+0:37                    Constant:
+0:37                      1 (const int)
+0:?                   'g_samp[1]' (uniform sampler)
+0:37                move second child to first child (temp sampler)
+0:37                  direct index (temp sampler)
+0:37                    'aggShadow' (temp 3-element array of sampler)
+0:37                    Constant:
+0:37                      2 (const int)
+0:?                   'g_samp[2]' (uniform sampler)
+0:37              'aggShadow' (temp 3-element array of sampler)
+0:?   Linker Objects
+0:?     'color' (layout(location=0 ) out 4-component vector of float)
+0:?     'g_tex[0]' (uniform texture1D)
+0:?     'g_tex[1]' (uniform texture1D)
+0:?     'g_tex[2]' (uniform texture1D)
+0:?     'g_tex_explicit[0]' (layout(binding=1 ) uniform texture1D)
+0:?     'g_tex_explicit[1]' (layout(binding=2 ) uniform texture1D)
+0:?     'g_tex_explicit[2]' (layout(binding=3 ) uniform texture1D)
+0:?     'g_samp[0]' (uniform sampler)
+0:?     'g_samp[1]' (uniform sampler)
+0:?     'g_samp[2]' (uniform sampler)
+0:?     'g_samp_explicit[0]' (layout(binding=5 ) uniform sampler)
+0:?     'g_samp_explicit[1]' (layout(binding=6 ) uniform sampler)
+0:?     'g_samp_explicit[2]' (layout(binding=7 ) uniform sampler)
+0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-element array of 3X3 matrix of float g_mats, layout(binding=10 offset=192 ) uniform 4-element array of 3X3 matrix of float g_mats_explicit, layout(offset=384 ) uniform 4-element array of float g_floats})
+0:?     'not_flattened_a' (global 5-element array of int)
+
+
+Linked fragment stage:
+
+
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:17  Function Definition: TestFn1( (temp 4-component vector of float)
+0:17    Function Parameters: 
+0:?     Sequence
+0:18      Branch: Return with expression
+0:18        texture (temp 4-component vector of float)
+0:18          Construct combined texture-sampler (temp sampler1D)
+0:?             'g_tex[1]' (uniform texture1D)
+0:?             'g_samp[1]' (uniform sampler)
+0:18          Constant:
+0:18            0.200000
+0:22  Function Definition: TestFn2(t11[3];p1[3]; (temp 4-component vector of float)
+0:22    Function Parameters: 
+0:22      'l_tex' (in 3-element array of texture1D)
+0:22      'l_samp' (in 3-element array of sampler)
+0:?     Sequence
+0:23      Branch: Return with expression
+0:23        texture (temp 4-component vector of float)
+0:23          Construct combined texture-sampler (temp sampler1D)
+0:23            direct index (temp texture1D)
+0:23              'l_tex' (in 3-element array of texture1D)
+0:23              Constant:
+0:23                2 (const int)
+0:23            direct index (temp sampler)
+0:23              'l_samp' (in 3-element array of sampler)
+0:23              Constant:
+0:23                2 (const int)
+0:23          Constant:
+0:23            0.200000
+0:26  Sequence
+0:26    move second child to first child (temp 5-element array of int)
+0:26      'not_flattened_a' (global 5-element array of int)
+0:26      Constant:
+0:26        1 (const int)
+0:26        2 (const int)
+0:26        3 (const int)
+0:26        4 (const int)
+0:26        5 (const int)
+0:31  Function Definition: main(struct-PS_OUTPUT-vf41; (temp void)
+0:31    Function Parameters: 
+0:31      'ps_output' (out structure{temp 4-component vector of float color})
+0:?     Sequence
+0:33      Sequence
+0:33        Sequence
+0:33          move second child to first child (temp sampler)
+0:33            direct index (temp sampler)
+0:33              'local_sampler_array' (temp 3-element array of sampler)
+0:33              Constant:
+0:33                0 (const int)
+0:?             'g_samp[0]' (uniform sampler)
+0:33          move second child to first child (temp sampler)
+0:33            direct index (temp sampler)
+0:33              'local_sampler_array' (temp 3-element array of sampler)
+0:33              Constant:
+0:33                1 (const int)
+0:?             'g_samp[1]' (uniform sampler)
+0:33          move second child to first child (temp sampler)
+0:33            direct index (temp sampler)
+0:33              'local_sampler_array' (temp 3-element array of sampler)
+0:33              Constant:
+0:33                2 (const int)
+0:?             'g_samp[2]' (uniform sampler)
+0:34      Sequence
+0:34        Sequence
+0:34          move second child to first child (temp texture1D)
+0:34            direct index (temp texture1D)
+0:34              'local_texture_array' (temp 3-element array of texture1D)
+0:34              Constant:
+0:34                0 (const int)
+0:?             'g_tex[0]' (uniform texture1D)
+0:34          move second child to first child (temp texture1D)
+0:34            direct index (temp texture1D)
+0:34              'local_texture_array' (temp 3-element array of texture1D)
+0:34              Constant:
+0:34                1 (const int)
+0:?             'g_tex[1]' (uniform texture1D)
+0:34          move second child to first child (temp texture1D)
+0:34            direct index (temp texture1D)
+0:34              'local_texture_array' (temp 3-element array of texture1D)
+0:34              Constant:
+0:34                2 (const int)
+0:?             'g_tex[2]' (uniform texture1D)
+0:35      Sequence
+0:35        move second child to first child (temp 4-element array of float)
+0:35          'local_float_array' (temp 4-element array of float)
+0:35          g_floats: direct index for structure (layout(offset=384 ) uniform 4-element array of float)
+0:35            'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-element array of 3X3 matrix of float g_mats, layout(binding=10 offset=192 ) uniform 4-element array of 3X3 matrix of float g_mats_explicit, layout(offset=384 ) uniform 4-element array of float g_floats})
+0:35            Constant:
+0:35              2 (const uint)
+0:37      move second child to first child (temp 4-component vector of float)
+0:?         'color' (layout(location=0 ) out 4-component vector of float)
+0:37        add (temp 4-component vector of float)
+0:37          Function Call: TestFn1( (temp 4-component vector of float)
+0:37          Function Call: TestFn2(t11[3];p1[3]; (temp 4-component vector of float)
+0:37            Comma (temp 3-element array of texture1D)
+0:37              Sequence
+0:37                move second child to first child (temp texture1D)
+0:37                  direct index (temp texture1D)
+0:37                    'aggShadow' (temp 3-element array of texture1D)
+0:37                    Constant:
+0:37                      0 (const int)
+0:?                   'g_tex[0]' (uniform texture1D)
+0:37                move second child to first child (temp texture1D)
+0:37                  direct index (temp texture1D)
+0:37                    'aggShadow' (temp 3-element array of texture1D)
+0:37                    Constant:
+0:37                      1 (const int)
+0:?                   'g_tex[1]' (uniform texture1D)
+0:37                move second child to first child (temp texture1D)
+0:37                  direct index (temp texture1D)
+0:37                    'aggShadow' (temp 3-element array of texture1D)
+0:37                    Constant:
+0:37                      2 (const int)
+0:?                   'g_tex[2]' (uniform texture1D)
+0:37              'aggShadow' (temp 3-element array of texture1D)
+0:37            Comma (temp 3-element array of sampler)
+0:37              Sequence
+0:37                move second child to first child (temp sampler)
+0:37                  direct index (temp sampler)
+0:37                    'aggShadow' (temp 3-element array of sampler)
+0:37                    Constant:
+0:37                      0 (const int)
+0:?                   'g_samp[0]' (uniform sampler)
+0:37                move second child to first child (temp sampler)
+0:37                  direct index (temp sampler)
+0:37                    'aggShadow' (temp 3-element array of sampler)
+0:37                    Constant:
+0:37                      1 (const int)
+0:?                   'g_samp[1]' (uniform sampler)
+0:37                move second child to first child (temp sampler)
+0:37                  direct index (temp sampler)
+0:37                    'aggShadow' (temp 3-element array of sampler)
+0:37                    Constant:
+0:37                      2 (const int)
+0:?                   'g_samp[2]' (uniform sampler)
+0:37              'aggShadow' (temp 3-element array of sampler)
+0:?   Linker Objects
+0:?     'color' (layout(location=0 ) out 4-component vector of float)
+0:?     'g_tex[0]' (uniform texture1D)
+0:?     'g_tex[1]' (uniform texture1D)
+0:?     'g_tex[2]' (uniform texture1D)
+0:?     'g_tex_explicit[0]' (layout(binding=1 ) uniform texture1D)
+0:?     'g_tex_explicit[1]' (layout(binding=2 ) uniform texture1D)
+0:?     'g_tex_explicit[2]' (layout(binding=3 ) uniform texture1D)
+0:?     'g_samp[0]' (uniform sampler)
+0:?     'g_samp[1]' (uniform sampler)
+0:?     'g_samp[2]' (uniform sampler)
+0:?     'g_samp_explicit[0]' (layout(binding=5 ) uniform sampler)
+0:?     'g_samp_explicit[1]' (layout(binding=6 ) uniform sampler)
+0:?     'g_samp_explicit[2]' (layout(binding=7 ) uniform sampler)
+0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-element array of 3X3 matrix of float g_mats, layout(binding=10 offset=192 ) uniform 4-element array of 3X3 matrix of float g_mats_explicit, layout(offset=384 ) uniform 4-element array of float g_floats})
+0:?     'not_flattened_a' (global 5-element array of int)
+
+// Module Version 10000
+// Generated by (magic number): 80001
+// Id's are bound by 123
+
+                              Capability Shader
+                              Capability Sampled1D
+               1:             ExtInstImport  "GLSL.std.450"
+                              MemoryModel Logical GLSL450
+                              EntryPoint Fragment 4  "main" 99
+                              ExecutionMode 4 OriginUpperLeft
+                              Name 4  "main"
+                              Name 9  "TestFn1("
+                              Name 22  "TestFn2(t11[3];p1[3];"
+                              Name 20  "l_tex"
+                              Name 21  "l_samp"
+                              Name 28  "not_flattened_a"
+                              Name 36  "g_tex[1]"
+                              Name 39  "g_samp[1]"
+                              Name 55  "local_sampler_array"
+                              Name 57  "g_samp[0]"
+                              Name 62  "g_samp[2]"
+                              Name 65  "local_texture_array"
+                              Name 66  "g_tex[0]"
+                              Name 71  "g_tex[2]"
+                              Name 77  "local_float_array"
+                              Name 83  "$Global"
+                              MemberName 83($Global) 0  "g_mats"
+                              MemberName 83($Global) 1  "g_mats_explicit"
+                              MemberName 83($Global) 2  "g_floats"
+                              Name 85  ""
+                              Name 99  "color"
+                              Name 101  "aggShadow"
+                              Name 108  "aggShadow"
+                              Name 117  "g_tex_explicit[0]"
+                              Name 118  "g_tex_explicit[1]"
+                              Name 119  "g_tex_explicit[2]"
+                              Name 120  "g_samp_explicit[0]"
+                              Name 121  "g_samp_explicit[1]"
+                              Name 122  "g_samp_explicit[2]"
+                              Decorate 36(g_tex[1]) DescriptorSet 0
+                              Decorate 39(g_samp[1]) DescriptorSet 0
+                              Decorate 57(g_samp[0]) DescriptorSet 0
+                              Decorate 62(g_samp[2]) DescriptorSet 0
+                              Decorate 66(g_tex[0]) DescriptorSet 0
+                              Decorate 71(g_tex[2]) DescriptorSet 0
+                              Decorate 80 ArrayStride 48
+                              Decorate 81 ArrayStride 48
+                              Decorate 82 ArrayStride 16
+                              MemberDecorate 83($Global) 0 RowMajor
+                              MemberDecorate 83($Global) 0 Offset 0
+                              MemberDecorate 83($Global) 0 MatrixStride 16
+                              MemberDecorate 83($Global) 1 RowMajor
+                              MemberDecorate 83($Global) 1 Offset 192
+                              MemberDecorate 83($Global) 1 MatrixStride 16
+                              MemberDecorate 83($Global) 2 Offset 384
+                              Decorate 83($Global) Block
+                              Decorate 85 DescriptorSet 0
+                              Decorate 99(color) Location 0
+                              Decorate 117(g_tex_explicit[0]) DescriptorSet 0
+                              Decorate 117(g_tex_explicit[0]) Binding 1
+                              Decorate 118(g_tex_explicit[1]) DescriptorSet 0
+                              Decorate 118(g_tex_explicit[1]) Binding 2
+                              Decorate 119(g_tex_explicit[2]) DescriptorSet 0
+                              Decorate 119(g_tex_explicit[2]) Binding 3
+                              Decorate 120(g_samp_explicit[0]) DescriptorSet 0
+                              Decorate 120(g_samp_explicit[0]) Binding 5
+                              Decorate 121(g_samp_explicit[1]) DescriptorSet 0
+                              Decorate 121(g_samp_explicit[1]) Binding 6
+                              Decorate 122(g_samp_explicit[2]) DescriptorSet 0
+                              Decorate 122(g_samp_explicit[2]) Binding 7
+               2:             TypeVoid
+               3:             TypeFunction 2
+               6:             TypeFloat 32
+               7:             TypeVector 6(float) 4
+               8:             TypeFunction 7(fvec4)
+              11:             TypeImage 6(float) 1D sampled format:Unknown
+              12:             TypeInt 32 0
+              13:     12(int) Constant 3
+              14:             TypeArray 11 13
+              15:             TypePointer UniformConstant 14
+              16:             TypeSampler
+              17:             TypeArray 16 13
+              18:             TypePointer UniformConstant 17
+              19:             TypeFunction 7(fvec4) 15(ptr) 18(ptr)
+              24:             TypeInt 32 1
+              25:     12(int) Constant 5
+              26:             TypeArray 24(int) 25
+              27:             TypePointer Private 26
+28(not_flattened_a):     27(ptr) Variable Private
+              29:     24(int) Constant 1
+              30:     24(int) Constant 2
+              31:     24(int) Constant 3
+              32:     24(int) Constant 4
+              33:     24(int) Constant 5
+              34:          26 ConstantComposite 29 30 31 32 33
+              35:             TypePointer UniformConstant 11
+    36(g_tex[1]):     35(ptr) Variable UniformConstant
+              38:             TypePointer UniformConstant 16
+   39(g_samp[1]):     38(ptr) Variable UniformConstant
+              41:             TypeSampledImage 11
+              43:    6(float) Constant 1045220557
+55(local_sampler_array):     18(ptr) Variable UniformConstant
+              56:     24(int) Constant 0
+   57(g_samp[0]):     38(ptr) Variable UniformConstant
+   62(g_samp[2]):     38(ptr) Variable UniformConstant
+65(local_texture_array):     15(ptr) Variable UniformConstant
+    66(g_tex[0]):     35(ptr) Variable UniformConstant
+    71(g_tex[2]):     35(ptr) Variable UniformConstant
+              74:     12(int) Constant 4
+              75:             TypeArray 6(float) 74
+              76:             TypePointer Function 75
+              78:             TypeVector 6(float) 3
+              79:             TypeMatrix 78(fvec3) 3
+              80:             TypeArray 79 74
+              81:             TypeArray 79 74
+              82:             TypeArray 6(float) 74
+     83($Global):             TypeStruct 80 81 82
+              84:             TypePointer Uniform 83($Global)
+              85:     84(ptr) Variable Uniform
+              86:             TypePointer Uniform 82
+              90:             TypePointer Function 6(float)
+              98:             TypePointer Output 7(fvec4)
+       99(color):     98(ptr) Variable Output
+  101(aggShadow):     15(ptr) Variable UniformConstant
+  108(aggShadow):     18(ptr) Variable UniformConstant
+117(g_tex_explicit[0]):     35(ptr) Variable UniformConstant
+118(g_tex_explicit[1]):     35(ptr) Variable UniformConstant
+119(g_tex_explicit[2]):     35(ptr) Variable UniformConstant
+120(g_samp_explicit[0]):     38(ptr) Variable UniformConstant
+121(g_samp_explicit[1]):     38(ptr) Variable UniformConstant
+122(g_samp_explicit[2]):     38(ptr) Variable UniformConstant
+         4(main):           2 Function None 3
+               5:             Label
+77(local_float_array):     76(ptr) Variable Function
+                              Store 28(not_flattened_a) 34
+              58:          16 Load 57(g_samp[0])
+              59:     38(ptr) AccessChain 55(local_sampler_array) 56
+                              Store 59 58
+              60:          16 Load 39(g_samp[1])
+              61:     38(ptr) AccessChain 55(local_sampler_array) 29
+                              Store 61 60
+              63:          16 Load 62(g_samp[2])
+              64:     38(ptr) AccessChain 55(local_sampler_array) 30
+                              Store 64 63
+              67:          11 Load 66(g_tex[0])
+              68:     35(ptr) AccessChain 65(local_texture_array) 56
+                              Store 68 67
+              69:          11 Load 36(g_tex[1])
+              70:     35(ptr) AccessChain 65(local_texture_array) 29
+                              Store 70 69
+              72:          11 Load 71(g_tex[2])
+              73:     35(ptr) AccessChain 65(local_texture_array) 30
+                              Store 73 72
+              87:     86(ptr) AccessChain 85 30
+              88:          82 Load 87
+              89:    6(float) CompositeExtract 88 0
+              91:     90(ptr) AccessChain 77(local_float_array) 56
+                              Store 91 89
+              92:    6(float) CompositeExtract 88 1
+              93:     90(ptr) AccessChain 77(local_float_array) 29
+                              Store 93 92
+              94:    6(float) CompositeExtract 88 2
+              95:     90(ptr) AccessChain 77(local_float_array) 30
+                              Store 95 94
+              96:    6(float) CompositeExtract 88 3
+              97:     90(ptr) AccessChain 77(local_float_array) 31
+                              Store 97 96
+             100:    7(fvec4) FunctionCall 9(TestFn1()
+             102:          11 Load 66(g_tex[0])
+             103:     35(ptr) AccessChain 101(aggShadow) 56
+                              Store 103 102
+             104:          11 Load 36(g_tex[1])
+             105:     35(ptr) AccessChain 101(aggShadow) 29
+                              Store 105 104
+             106:          11 Load 71(g_tex[2])
+             107:     35(ptr) AccessChain 101(aggShadow) 30
+                              Store 107 106
+             109:          16 Load 57(g_samp[0])
+             110:     38(ptr) AccessChain 108(aggShadow) 56
+                              Store 110 109
+             111:          16 Load 39(g_samp[1])
+             112:     38(ptr) AccessChain 108(aggShadow) 29
+                              Store 112 111
+             113:          16 Load 62(g_samp[2])
+             114:     38(ptr) AccessChain 108(aggShadow) 30
+                              Store 114 113
+             115:    7(fvec4) FunctionCall 22(TestFn2(t11[3];p1[3];) 101(aggShadow) 108(aggShadow)
+             116:    7(fvec4) FAdd 100 115
+                              Store 99(color) 116
+                              Return
+                              FunctionEnd
+     9(TestFn1():    7(fvec4) Function None 8
+              10:             Label
+              37:          11 Load 36(g_tex[1])
+              40:          16 Load 39(g_samp[1])
+              42:          41 SampledImage 37 40
+              44:    7(fvec4) ImageSampleImplicitLod 42 43
+                              ReturnValue 44
+                              FunctionEnd
+22(TestFn2(t11[3];p1[3];):    7(fvec4) Function None 19
+       20(l_tex):     15(ptr) FunctionParameter
+      21(l_samp):     18(ptr) FunctionParameter
+              23:             Label
+              47:     35(ptr) AccessChain 20(l_tex) 30
+              48:          11 Load 47
+              49:     38(ptr) AccessChain 21(l_samp) 30
+              50:          16 Load 49
+              51:          41 SampledImage 48 50
+              52:    7(fvec4) ImageSampleImplicitLod 51 43
+                              ReturnValue 52
+                              FunctionEnd

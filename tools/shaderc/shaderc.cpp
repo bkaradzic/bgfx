@@ -1,10 +1,10 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
 #include "shaderc.h"
-#include <bx/tokenizecmd.h>
+#include <bx/commandline.h>
 
 #define MAX_TAGS 256
 extern "C"
@@ -700,7 +700,7 @@ namespace bgfx
 
 		fprintf(stderr
 			, "shaderc, bgfx shader compiler tool\n"
-			  "Copyright 2011-2016 Branimir Karadzic. All rights reserved.\n"
+			  "Copyright 2011-2017 Branimir Karadzic. All rights reserved.\n"
 			  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
 			);
 
@@ -710,7 +710,7 @@ namespace bgfx
 			  "\n"
 			  "Options:\n"
 			  "  -f <file path>                Input file path.\n"
-			  "  -i <include path>             Include path (for multiple paths use semicolon).\n"
+			  "  -i <include path>             Include path (for multiple paths use use -i multiple times).\n"
 			  "  -o <file path>                Output file path.\n"
 			  "      --bin2c <file path>       Generate C header file.\n"
 			  "      --depends                 Generate makefile style depends file.\n"
@@ -927,22 +927,22 @@ namespace bgfx
 				, essl ? 1 : glsl
 				);
 
-		if (0 == bx::stricmp(platform, "android") )
+		if (0 == bx::strincmp(platform, "android") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_ANDROID=1");
 			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
 		}
-		else if (0 == bx::stricmp(platform, "asm.js") )
+		else if (0 == bx::strincmp(platform, "asm.js") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_EMSCRIPTEN=1");
 			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
 		}
-		else if (0 == bx::stricmp(platform, "ios") )
+		else if (0 == bx::strincmp(platform, "ios") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_IOS=1");
 			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
 		}
-		else if (0 == bx::stricmp(platform, "linux") )
+		else if (0 == bx::strincmp(platform, "linux") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_LINUX=1");
 			if (0 != spirv)
@@ -954,12 +954,12 @@ namespace bgfx
 				preprocessor.setDefine(glslDefine);
 			}
 		}
-		else if (0 == bx::stricmp(platform, "nacl") )
+		else if (0 == bx::strincmp(platform, "nacl") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_NACL=1");
 			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
 		}
-		else if (0 == bx::stricmp(platform, "osx") )
+		else if (0 == bx::strincmp(platform, "osx") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_OSX=1");
 			preprocessor.setDefine(glslDefine);
@@ -967,19 +967,19 @@ namespace bgfx
 			bx::snprintf(temp, sizeof(temp), "BGFX_SHADER_LANGUAGE_METAL=%d", metal);
 			preprocessor.setDefine(temp);
 		}
-		else if (0 == bx::stricmp(platform, "windows") )
+		else if (0 == bx::strincmp(platform, "windows") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_WINDOWS=1");
 			char temp[256];
 			bx::snprintf(temp, sizeof(temp), "BGFX_SHADER_LANGUAGE_HLSL=%d", hlsl);
 			preprocessor.setDefine(temp);
 		}
-		else if (0 == bx::stricmp(platform, "xbox360") )
+		else if (0 == bx::strincmp(platform, "xbox360") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_XBOX360=1");
 			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_HLSL=3");
 		}
-		else if (0 == bx::stricmp(platform, "orbis") )
+		else if (0 == bx::strincmp(platform, "orbis") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_PS4=1");
 			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_PSSL=1");

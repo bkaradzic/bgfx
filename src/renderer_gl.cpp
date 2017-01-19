@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -2539,7 +2539,7 @@ namespace bgfx { namespace gl
 
 			if (GL_RGBA == m_readPixelsFmt)
 			{
-				imageSwizzleBgra8(width, height, width*4, data, data);
+				imageSwizzleBgra8(data, width, height, width*4, data);
 			}
 
 			g_callback->screenShot(_filePath
@@ -3101,7 +3101,7 @@ namespace bgfx { namespace gl
 
 				if (GL_RGBA == m_readPixelsFmt)
 				{
-					imageSwizzleBgra8(m_resolution.m_width, m_resolution.m_height, m_resolution.m_width*4, m_capture, m_capture);
+					imageSwizzleBgra8(m_capture, m_resolution.m_width, m_resolution.m_height, m_resolution.m_width*4, m_capture);
 				}
 
 				g_callback->captureFrame(m_capture, m_captureSize);
@@ -5086,7 +5086,7 @@ namespace bgfx { namespace gl
 
 			if (!unpackRowLength)
 			{
-				imageCopy(width, height, bpp, srcpitch, data, temp);
+				imageCopy(temp, width, height, bpp, srcpitch, data);
 				data = temp;
 			}
 
@@ -5117,7 +5117,7 @@ namespace bgfx { namespace gl
 			if (!unpackRowLength
 			&&  !convert)
 			{
-				imageCopy(width, height, bpp, srcpitch, data, temp);
+				imageCopy(temp, width, height, bpp, srcpitch, data);
 				data = temp;
 			}
 
@@ -6601,6 +6601,11 @@ namespace bgfx { namespace gl
 					{
 						Rect scissorRect;
 						scissorRect.intersect(viewScissorRect, _render->m_rectCache.m_cache[scissor]);
+						if (scissorRect.isZeroArea() )
+						{
+							continue;
+						}
+
 						GL_CHECK(glEnable(GL_SCISSOR_TEST) );
 						GL_CHECK(glScissor(scissorRect.m_x
 							, resolutionHeight-scissorRect.m_height-scissorRect.m_y
@@ -7309,14 +7314,18 @@ namespace bgfx { namespace gl
 
 		const int64_t timerFreq = bx::getHPFrequency();
 
-		perfStats.cpuTimeEnd   = now;
-		perfStats.cpuTimerFreq = timerFreq;
-		perfStats.gpuTimeBegin = m_gpuTimer.m_begin;
-		perfStats.gpuTimeEnd   = m_gpuTimer.m_end;
-		perfStats.gpuTimerFreq = 1000000000;
+		perfStats.cpuTimeEnd    = now;
+		perfStats.cpuTimerFreq  = timerFreq;
+		perfStats.gpuTimeBegin  = m_gpuTimer.m_begin;
+		perfStats.gpuTimeEnd    = m_gpuTimer.m_end;
+		perfStats.gpuTimerFreq  = 1000000000;
+		perfStats.numDraw       = statsKeyType[0];
+		perfStats.numCompute    = statsKeyType[1];
+		perfStats.maxGpuLatency = maxGpuLatency;
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
+			m_needPresent = true;
 			TextVideoMem& tvm = m_textVideoMem;
 
 			static int64_t next = now;

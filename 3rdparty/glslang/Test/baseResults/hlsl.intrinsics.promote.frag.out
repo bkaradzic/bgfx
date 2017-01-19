@@ -1,0 +1,1313 @@
+hlsl.intrinsics.promote.frag
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:20  Function Definition: main( (temp structure{temp 4-component vector of float color})
+0:20    Function Parameters: 
+0:?     Sequence
+0:23      Sequence
+0:23        move second child to first child (temp float)
+0:23          'r00' (temp float)
+0:23          max (temp float)
+0:23            Convert bool to float (temp float)
+0:23              b: direct index for structure (layout(offset=12 ) uniform bool)
+0:23                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:23                Constant:
+0:23                  3 (const uint)
+0:23            f: direct index for structure (layout(offset=8 ) uniform float)
+0:23              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:23              Constant:
+0:23                2 (const uint)
+0:24      Sequence
+0:24        move second child to first child (temp uint)
+0:24          'r01' (temp uint)
+0:24          max (temp uint)
+0:24            Convert bool to uint (temp uint)
+0:24              b: direct index for structure (layout(offset=12 ) uniform bool)
+0:24                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:24                Constant:
+0:24                  3 (const uint)
+0:24            u: direct index for structure (layout(offset=4 ) uniform uint)
+0:24              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:24              Constant:
+0:24                1 (const uint)
+0:25      Sequence
+0:25        move second child to first child (temp int)
+0:25          'r02' (temp int)
+0:25          max (temp int)
+0:25            Convert bool to int (temp int)
+0:25              b: direct index for structure (layout(offset=12 ) uniform bool)
+0:25                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:25                Constant:
+0:25                  3 (const uint)
+0:25            i: direct index for structure (layout(offset=0 ) uniform int)
+0:25              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:25              Constant:
+0:25                0 (const uint)
+0:26      Sequence
+0:26        move second child to first child (temp float)
+0:26          'r03' (temp float)
+0:26          max (temp float)
+0:26            Convert int to float (temp float)
+0:26              i: direct index for structure (layout(offset=0 ) uniform int)
+0:26                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:26                Constant:
+0:26                  0 (const uint)
+0:26            f: direct index for structure (layout(offset=8 ) uniform float)
+0:26              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:26              Constant:
+0:26                2 (const uint)
+0:27      Sequence
+0:27        move second child to first child (temp float)
+0:27          'r04' (temp float)
+0:27          max (temp float)
+0:27            Convert uint to float (temp float)
+0:27              u: direct index for structure (layout(offset=4 ) uniform uint)
+0:27                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:27                Constant:
+0:27                  1 (const uint)
+0:27            f: direct index for structure (layout(offset=8 ) uniform float)
+0:27              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:27              Constant:
+0:27                2 (const uint)
+0:29      Sequence
+0:29        move second child to first child (temp 2-component vector of float)
+0:29          'r10' (temp 2-component vector of float)
+0:29          max (temp 2-component vector of float)
+0:29            Convert bool to float (temp 2-component vector of float)
+0:29              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:29                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:29                Constant:
+0:29                  7 (const uint)
+0:29            f2: direct index for structure (layout(offset=32 ) uniform 2-component vector of float)
+0:29              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:29              Constant:
+0:29                6 (const uint)
+0:30      Sequence
+0:30        move second child to first child (temp 2-component vector of uint)
+0:30          'r11' (temp 2-component vector of uint)
+0:30          max (temp 2-component vector of uint)
+0:30            Convert bool to uint (temp 2-component vector of uint)
+0:30              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:30                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:30                Constant:
+0:30                  7 (const uint)
+0:30            u2: direct index for structure (layout(offset=24 ) uniform 2-component vector of uint)
+0:30              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:30              Constant:
+0:30                5 (const uint)
+0:31      Sequence
+0:31        move second child to first child (temp 2-component vector of int)
+0:31          'r12' (temp 2-component vector of int)
+0:31          max (temp 2-component vector of int)
+0:31            Convert bool to int (temp 2-component vector of int)
+0:31              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:31                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:31                Constant:
+0:31                  7 (const uint)
+0:31            i2: direct index for structure (layout(offset=16 ) uniform 2-component vector of int)
+0:31              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:31              Constant:
+0:31                4 (const uint)
+0:32      Sequence
+0:32        move second child to first child (temp 2-component vector of float)
+0:32          'r13' (temp 2-component vector of float)
+0:32          max (temp 2-component vector of float)
+0:32            Convert int to float (temp 2-component vector of float)
+0:32              i2: direct index for structure (layout(offset=16 ) uniform 2-component vector of int)
+0:32                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:32                Constant:
+0:32                  4 (const uint)
+0:32            f2: direct index for structure (layout(offset=32 ) uniform 2-component vector of float)
+0:32              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:32              Constant:
+0:32                6 (const uint)
+0:33      Sequence
+0:33        move second child to first child (temp 2-component vector of float)
+0:33          'r14' (temp 2-component vector of float)
+0:33          max (temp 2-component vector of float)
+0:33            Convert uint to float (temp 2-component vector of float)
+0:33              u2: direct index for structure (layout(offset=24 ) uniform 2-component vector of uint)
+0:33                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:33                Constant:
+0:33                  5 (const uint)
+0:33            f2: direct index for structure (layout(offset=32 ) uniform 2-component vector of float)
+0:33              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:33              Constant:
+0:33                6 (const uint)
+0:35      Sequence
+0:35        move second child to first child (temp 2-component vector of float)
+0:35          'r20' (temp 2-component vector of float)
+0:35          clamp (temp 2-component vector of float)
+0:35            Convert int to float (temp 2-component vector of float)
+0:35              i2: direct index for structure (layout(offset=16 ) uniform 2-component vector of int)
+0:35                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:35                Constant:
+0:35                  4 (const uint)
+0:35            Convert uint to float (temp 2-component vector of float)
+0:35              u2: direct index for structure (layout(offset=24 ) uniform 2-component vector of uint)
+0:35                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:35                Constant:
+0:35                  5 (const uint)
+0:35            f2: direct index for structure (layout(offset=32 ) uniform 2-component vector of float)
+0:35              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:35              Constant:
+0:35                6 (const uint)
+0:36      Sequence
+0:36        move second child to first child (temp 2-component vector of uint)
+0:36          'r21' (temp 2-component vector of uint)
+0:36          clamp (temp 2-component vector of uint)
+0:36            Convert bool to uint (temp 2-component vector of uint)
+0:36              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:36                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:36                Constant:
+0:36                  7 (const uint)
+0:36            u2: direct index for structure (layout(offset=24 ) uniform 2-component vector of uint)
+0:36              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:36              Constant:
+0:36                5 (const uint)
+0:36            Convert bool to uint (temp 2-component vector of uint)
+0:36              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:36                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:36                Constant:
+0:36                  7 (const uint)
+0:37      Sequence
+0:37        move second child to first child (temp 2-component vector of float)
+0:37          'r22' (temp 2-component vector of float)
+0:37          clamp (temp 2-component vector of float)
+0:37            Convert bool to float (temp 2-component vector of float)
+0:37              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:37                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:37                Constant:
+0:37                  7 (const uint)
+0:37            f2: direct index for structure (layout(offset=32 ) uniform 2-component vector of float)
+0:37              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:37              Constant:
+0:37                6 (const uint)
+0:37            Convert bool to float (temp 2-component vector of float)
+0:37              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:37                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:37                Constant:
+0:37                  7 (const uint)
+0:40      Sequence
+0:40        move second child to first child (temp 2-component vector of float)
+0:40          'r30' (temp 2-component vector of float)
+0:40          max (temp 2-component vector of float)
+0:40            Construct vec2 (in 2-component vector of float)
+0:40              Convert bool to float (temp float)
+0:40                b: direct index for structure (layout(offset=12 ) uniform bool)
+0:40                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:40                  Constant:
+0:40                    3 (const uint)
+0:40            f2: direct index for structure (layout(offset=32 ) uniform 2-component vector of float)
+0:40              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:40              Constant:
+0:40                6 (const uint)
+0:41      Sequence
+0:41        move second child to first child (temp 2-component vector of uint)
+0:41          'r31' (temp 2-component vector of uint)
+0:41          max (temp 2-component vector of uint)
+0:41            Construct uvec2 (in 2-component vector of uint)
+0:41              Convert bool to uint (temp uint)
+0:41                b: direct index for structure (layout(offset=12 ) uniform bool)
+0:41                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:41                  Constant:
+0:41                    3 (const uint)
+0:41            u2: direct index for structure (layout(offset=24 ) uniform 2-component vector of uint)
+0:41              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:41              Constant:
+0:41                5 (const uint)
+0:42      Sequence
+0:42        move second child to first child (temp 2-component vector of int)
+0:42          'r32' (temp 2-component vector of int)
+0:42          max (temp 2-component vector of int)
+0:42            Construct ivec2 (in 2-component vector of int)
+0:42              Convert bool to int (temp int)
+0:42                b: direct index for structure (layout(offset=12 ) uniform bool)
+0:42                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:42                  Constant:
+0:42                    3 (const uint)
+0:42            i2: direct index for structure (layout(offset=16 ) uniform 2-component vector of int)
+0:42              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:42              Constant:
+0:42                4 (const uint)
+0:43      Sequence
+0:43        move second child to first child (temp 2-component vector of float)
+0:43          'r33' (temp 2-component vector of float)
+0:43          max (temp 2-component vector of float)
+0:43            Construct vec2 (in 2-component vector of float)
+0:43              Convert int to float (temp float)
+0:43                i: direct index for structure (layout(offset=0 ) uniform int)
+0:43                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:43                  Constant:
+0:43                    0 (const uint)
+0:43            f2: direct index for structure (layout(offset=32 ) uniform 2-component vector of float)
+0:43              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:43              Constant:
+0:43                6 (const uint)
+0:44      Sequence
+0:44        move second child to first child (temp 2-component vector of float)
+0:44          'r34' (temp 2-component vector of float)
+0:44          max (temp 2-component vector of float)
+0:44            Construct vec2 (in 2-component vector of float)
+0:44              Convert uint to float (temp float)
+0:44                u: direct index for structure (layout(offset=4 ) uniform uint)
+0:44                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:44                  Constant:
+0:44                    1 (const uint)
+0:44            f2: direct index for structure (layout(offset=32 ) uniform 2-component vector of float)
+0:44              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:44              Constant:
+0:44                6 (const uint)
+0:46      Sequence
+0:46        move second child to first child (temp 2-component vector of float)
+0:46          'r40' (temp 2-component vector of float)
+0:46          clamp (temp 2-component vector of float)
+0:46            Construct vec2 (in 2-component vector of float)
+0:46              Convert int to float (temp float)
+0:46                i: direct index for structure (layout(offset=0 ) uniform int)
+0:46                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:46                  Constant:
+0:46                    0 (const uint)
+0:46            Convert uint to float (temp 2-component vector of float)
+0:46              u2: direct index for structure (layout(offset=24 ) uniform 2-component vector of uint)
+0:46                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:46                Constant:
+0:46                  5 (const uint)
+0:46            f2: direct index for structure (layout(offset=32 ) uniform 2-component vector of float)
+0:46              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:46              Constant:
+0:46                6 (const uint)
+0:47      Sequence
+0:47        move second child to first child (temp 2-component vector of uint)
+0:47          'r41' (temp 2-component vector of uint)
+0:47          clamp (temp 2-component vector of uint)
+0:47            Convert bool to uint (temp 2-component vector of uint)
+0:47              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:47                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:47                Constant:
+0:47                  7 (const uint)
+0:47            Construct uvec2 (in 2-component vector of uint)
+0:47              u: direct index for structure (layout(offset=4 ) uniform uint)
+0:47                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:47                Constant:
+0:47                  1 (const uint)
+0:47            Convert bool to uint (temp 2-component vector of uint)
+0:47              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:47                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:47                Constant:
+0:47                  7 (const uint)
+0:48      Sequence
+0:48        move second child to first child (temp 2-component vector of float)
+0:48          'r42' (temp 2-component vector of float)
+0:48          clamp (temp 2-component vector of float)
+0:48            Convert bool to float (temp 2-component vector of float)
+0:48              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:48                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:48                Constant:
+0:48                  7 (const uint)
+0:48            Construct vec2 (in 2-component vector of float)
+0:48              f: direct index for structure (layout(offset=8 ) uniform float)
+0:48                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:48                Constant:
+0:48                  2 (const uint)
+0:48            Construct vec2 (in 2-component vector of float)
+0:48              Convert bool to float (temp float)
+0:48                b: direct index for structure (layout(offset=12 ) uniform bool)
+0:48                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:48                  Constant:
+0:48                    3 (const uint)
+0:49      Sequence
+0:49        move second child to first child (temp 2-component vector of int)
+0:49          'r43' (temp 2-component vector of int)
+0:49          Convert uint to int (temp 2-component vector of int)
+0:49            clamp (temp 2-component vector of uint)
+0:49              Construct uvec2 (in 2-component vector of uint)
+0:49                Convert int to uint (temp uint)
+0:49                  i: direct index for structure (layout(offset=0 ) uniform int)
+0:49                    'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:49                    Constant:
+0:49                      0 (const uint)
+0:49              Convert int to uint (temp 2-component vector of uint)
+0:49                i2: direct index for structure (layout(offset=16 ) uniform 2-component vector of int)
+0:49                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:49                  Constant:
+0:49                    4 (const uint)
+0:49              u2: direct index for structure (layout(offset=24 ) uniform 2-component vector of uint)
+0:49                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:49                Constant:
+0:49                  5 (const uint)
+0:51      Sequence
+0:51        move second child to first child (temp float)
+0:51          'r50' (temp float)
+0:51          Construct float (temp float)
+0:?             textureFetch (temp 4-component vector of float)
+0:51              'g_tTexbfs' (layout(r32f ) uniform samplerBuffer)
+0:51              Convert uint to int (temp int)
+0:51                upos: direct index for structure (layout(offset=48 ) uniform uint)
+0:51                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:51                  Constant:
+0:51                    8 (const uint)
+0:52      Sequence
+0:52        move second child to first child (temp float)
+0:52          'r51' (temp float)
+0:52          Construct float (temp float)
+0:?             textureFetch (temp 4-component vector of float)
+0:52              'g_tTexbfs' (layout(r32f ) uniform samplerBuffer)
+0:52              Convert float to int (temp int)
+0:52                fpos: direct index for structure (layout(offset=52 ) uniform float)
+0:52                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:52                  Constant:
+0:52                    9 (const uint)
+0:70      Sequence
+0:70        move second child to first child (temp uint)
+0:70          'sizeQueryTemp' (temp uint)
+0:70          textureSize (temp uint)
+0:70            'g_tTex1df4' (uniform texture1D)
+0:70        move second child to first child (temp int)
+0:70          'WidthI' (temp int)
+0:70          Convert uint to int (temp int)
+0:70            'sizeQueryTemp' (temp uint)
+0:71      Sequence
+0:71        move second child to first child (temp uint)
+0:71          'sizeQueryTemp' (temp uint)
+0:71          textureSize (temp uint)
+0:71            'g_tTex1df4' (uniform texture1D)
+0:71            Constant:
+0:71              6 (const uint)
+0:71        move second child to first child (temp int)
+0:71          'WidthI' (temp int)
+0:71          Convert uint to int (temp int)
+0:71            'sizeQueryTemp' (temp uint)
+0:71        move second child to first child (temp uint)
+0:71          'NumberOfLevelsU' (temp uint)
+0:71          textureQueryLevels (temp uint)
+0:71            'g_tTex1df4' (uniform texture1D)
+0:72      Sequence
+0:72        move second child to first child (temp uint)
+0:72          'sizeQueryTemp' (temp uint)
+0:72          textureSize (temp uint)
+0:72            'g_tTex1df4' (uniform texture1D)
+0:72            Constant:
+0:72              6 (const uint)
+0:72        move second child to first child (temp uint)
+0:72          'WidthU' (temp uint)
+0:72          'sizeQueryTemp' (temp uint)
+0:72        move second child to first child (temp int)
+0:72          'NumberOfLevelsI' (temp int)
+0:72          Convert uint to int (temp int)
+0:72            textureQueryLevels (temp uint)
+0:72              'g_tTex1df4' (uniform texture1D)
+0:73      Sequence
+0:73        move second child to first child (temp uint)
+0:73          'sizeQueryTemp' (temp uint)
+0:73          textureSize (temp uint)
+0:73            'g_tTex1df4' (uniform texture1D)
+0:73            Constant:
+0:73              6 (const uint)
+0:73        move second child to first child (temp int)
+0:73          'WidthI' (temp int)
+0:73          Convert uint to int (temp int)
+0:73            'sizeQueryTemp' (temp uint)
+0:73        move second child to first child (temp int)
+0:73          'NumberOfLevelsI' (temp int)
+0:73          Convert uint to int (temp int)
+0:73            textureQueryLevels (temp uint)
+0:73              'g_tTex1df4' (uniform texture1D)
+0:77      move second child to first child (temp 4-component vector of float)
+0:77        color: direct index for structure (temp 4-component vector of float)
+0:77          'ps_output' (temp structure{temp 4-component vector of float color})
+0:77          Constant:
+0:77            0 (const int)
+0:77        Construct vec4 (temp 4-component vector of float)
+0:77          'r00' (temp float)
+0:78      Sequence
+0:78        Sequence
+0:78          move second child to first child (temp 4-component vector of float)
+0:?             'color' (layout(location=0 ) out 4-component vector of float)
+0:78            color: direct index for structure (temp 4-component vector of float)
+0:78              'ps_output' (temp structure{temp 4-component vector of float color})
+0:78              Constant:
+0:78                0 (const int)
+0:78        Branch: Return
+0:?   Linker Objects
+0:?     'color' (layout(location=0 ) out 4-component vector of float)
+0:?     'g_tTexbfs' (layout(r32f ) uniform samplerBuffer)
+0:?     'g_tTex1df4' (uniform texture1D)
+0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+
+
+Linked fragment stage:
+
+
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:20  Function Definition: main( (temp structure{temp 4-component vector of float color})
+0:20    Function Parameters: 
+0:?     Sequence
+0:23      Sequence
+0:23        move second child to first child (temp float)
+0:23          'r00' (temp float)
+0:23          max (temp float)
+0:23            Convert bool to float (temp float)
+0:23              b: direct index for structure (layout(offset=12 ) uniform bool)
+0:23                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:23                Constant:
+0:23                  3 (const uint)
+0:23            f: direct index for structure (layout(offset=8 ) uniform float)
+0:23              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:23              Constant:
+0:23                2 (const uint)
+0:24      Sequence
+0:24        move second child to first child (temp uint)
+0:24          'r01' (temp uint)
+0:24          max (temp uint)
+0:24            Convert bool to uint (temp uint)
+0:24              b: direct index for structure (layout(offset=12 ) uniform bool)
+0:24                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:24                Constant:
+0:24                  3 (const uint)
+0:24            u: direct index for structure (layout(offset=4 ) uniform uint)
+0:24              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:24              Constant:
+0:24                1 (const uint)
+0:25      Sequence
+0:25        move second child to first child (temp int)
+0:25          'r02' (temp int)
+0:25          max (temp int)
+0:25            Convert bool to int (temp int)
+0:25              b: direct index for structure (layout(offset=12 ) uniform bool)
+0:25                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:25                Constant:
+0:25                  3 (const uint)
+0:25            i: direct index for structure (layout(offset=0 ) uniform int)
+0:25              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:25              Constant:
+0:25                0 (const uint)
+0:26      Sequence
+0:26        move second child to first child (temp float)
+0:26          'r03' (temp float)
+0:26          max (temp float)
+0:26            Convert int to float (temp float)
+0:26              i: direct index for structure (layout(offset=0 ) uniform int)
+0:26                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:26                Constant:
+0:26                  0 (const uint)
+0:26            f: direct index for structure (layout(offset=8 ) uniform float)
+0:26              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:26              Constant:
+0:26                2 (const uint)
+0:27      Sequence
+0:27        move second child to first child (temp float)
+0:27          'r04' (temp float)
+0:27          max (temp float)
+0:27            Convert uint to float (temp float)
+0:27              u: direct index for structure (layout(offset=4 ) uniform uint)
+0:27                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:27                Constant:
+0:27                  1 (const uint)
+0:27            f: direct index for structure (layout(offset=8 ) uniform float)
+0:27              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:27              Constant:
+0:27                2 (const uint)
+0:29      Sequence
+0:29        move second child to first child (temp 2-component vector of float)
+0:29          'r10' (temp 2-component vector of float)
+0:29          max (temp 2-component vector of float)
+0:29            Convert bool to float (temp 2-component vector of float)
+0:29              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:29                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:29                Constant:
+0:29                  7 (const uint)
+0:29            f2: direct index for structure (layout(offset=32 ) uniform 2-component vector of float)
+0:29              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:29              Constant:
+0:29                6 (const uint)
+0:30      Sequence
+0:30        move second child to first child (temp 2-component vector of uint)
+0:30          'r11' (temp 2-component vector of uint)
+0:30          max (temp 2-component vector of uint)
+0:30            Convert bool to uint (temp 2-component vector of uint)
+0:30              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:30                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:30                Constant:
+0:30                  7 (const uint)
+0:30            u2: direct index for structure (layout(offset=24 ) uniform 2-component vector of uint)
+0:30              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:30              Constant:
+0:30                5 (const uint)
+0:31      Sequence
+0:31        move second child to first child (temp 2-component vector of int)
+0:31          'r12' (temp 2-component vector of int)
+0:31          max (temp 2-component vector of int)
+0:31            Convert bool to int (temp 2-component vector of int)
+0:31              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:31                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:31                Constant:
+0:31                  7 (const uint)
+0:31            i2: direct index for structure (layout(offset=16 ) uniform 2-component vector of int)
+0:31              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:31              Constant:
+0:31                4 (const uint)
+0:32      Sequence
+0:32        move second child to first child (temp 2-component vector of float)
+0:32          'r13' (temp 2-component vector of float)
+0:32          max (temp 2-component vector of float)
+0:32            Convert int to float (temp 2-component vector of float)
+0:32              i2: direct index for structure (layout(offset=16 ) uniform 2-component vector of int)
+0:32                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:32                Constant:
+0:32                  4 (const uint)
+0:32            f2: direct index for structure (layout(offset=32 ) uniform 2-component vector of float)
+0:32              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:32              Constant:
+0:32                6 (const uint)
+0:33      Sequence
+0:33        move second child to first child (temp 2-component vector of float)
+0:33          'r14' (temp 2-component vector of float)
+0:33          max (temp 2-component vector of float)
+0:33            Convert uint to float (temp 2-component vector of float)
+0:33              u2: direct index for structure (layout(offset=24 ) uniform 2-component vector of uint)
+0:33                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:33                Constant:
+0:33                  5 (const uint)
+0:33            f2: direct index for structure (layout(offset=32 ) uniform 2-component vector of float)
+0:33              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:33              Constant:
+0:33                6 (const uint)
+0:35      Sequence
+0:35        move second child to first child (temp 2-component vector of float)
+0:35          'r20' (temp 2-component vector of float)
+0:35          clamp (temp 2-component vector of float)
+0:35            Convert int to float (temp 2-component vector of float)
+0:35              i2: direct index for structure (layout(offset=16 ) uniform 2-component vector of int)
+0:35                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:35                Constant:
+0:35                  4 (const uint)
+0:35            Convert uint to float (temp 2-component vector of float)
+0:35              u2: direct index for structure (layout(offset=24 ) uniform 2-component vector of uint)
+0:35                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:35                Constant:
+0:35                  5 (const uint)
+0:35            f2: direct index for structure (layout(offset=32 ) uniform 2-component vector of float)
+0:35              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:35              Constant:
+0:35                6 (const uint)
+0:36      Sequence
+0:36        move second child to first child (temp 2-component vector of uint)
+0:36          'r21' (temp 2-component vector of uint)
+0:36          clamp (temp 2-component vector of uint)
+0:36            Convert bool to uint (temp 2-component vector of uint)
+0:36              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:36                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:36                Constant:
+0:36                  7 (const uint)
+0:36            u2: direct index for structure (layout(offset=24 ) uniform 2-component vector of uint)
+0:36              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:36              Constant:
+0:36                5 (const uint)
+0:36            Convert bool to uint (temp 2-component vector of uint)
+0:36              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:36                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:36                Constant:
+0:36                  7 (const uint)
+0:37      Sequence
+0:37        move second child to first child (temp 2-component vector of float)
+0:37          'r22' (temp 2-component vector of float)
+0:37          clamp (temp 2-component vector of float)
+0:37            Convert bool to float (temp 2-component vector of float)
+0:37              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:37                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:37                Constant:
+0:37                  7 (const uint)
+0:37            f2: direct index for structure (layout(offset=32 ) uniform 2-component vector of float)
+0:37              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:37              Constant:
+0:37                6 (const uint)
+0:37            Convert bool to float (temp 2-component vector of float)
+0:37              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:37                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:37                Constant:
+0:37                  7 (const uint)
+0:40      Sequence
+0:40        move second child to first child (temp 2-component vector of float)
+0:40          'r30' (temp 2-component vector of float)
+0:40          max (temp 2-component vector of float)
+0:40            Construct vec2 (in 2-component vector of float)
+0:40              Convert bool to float (temp float)
+0:40                b: direct index for structure (layout(offset=12 ) uniform bool)
+0:40                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:40                  Constant:
+0:40                    3 (const uint)
+0:40            f2: direct index for structure (layout(offset=32 ) uniform 2-component vector of float)
+0:40              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:40              Constant:
+0:40                6 (const uint)
+0:41      Sequence
+0:41        move second child to first child (temp 2-component vector of uint)
+0:41          'r31' (temp 2-component vector of uint)
+0:41          max (temp 2-component vector of uint)
+0:41            Construct uvec2 (in 2-component vector of uint)
+0:41              Convert bool to uint (temp uint)
+0:41                b: direct index for structure (layout(offset=12 ) uniform bool)
+0:41                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:41                  Constant:
+0:41                    3 (const uint)
+0:41            u2: direct index for structure (layout(offset=24 ) uniform 2-component vector of uint)
+0:41              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:41              Constant:
+0:41                5 (const uint)
+0:42      Sequence
+0:42        move second child to first child (temp 2-component vector of int)
+0:42          'r32' (temp 2-component vector of int)
+0:42          max (temp 2-component vector of int)
+0:42            Construct ivec2 (in 2-component vector of int)
+0:42              Convert bool to int (temp int)
+0:42                b: direct index for structure (layout(offset=12 ) uniform bool)
+0:42                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:42                  Constant:
+0:42                    3 (const uint)
+0:42            i2: direct index for structure (layout(offset=16 ) uniform 2-component vector of int)
+0:42              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:42              Constant:
+0:42                4 (const uint)
+0:43      Sequence
+0:43        move second child to first child (temp 2-component vector of float)
+0:43          'r33' (temp 2-component vector of float)
+0:43          max (temp 2-component vector of float)
+0:43            Construct vec2 (in 2-component vector of float)
+0:43              Convert int to float (temp float)
+0:43                i: direct index for structure (layout(offset=0 ) uniform int)
+0:43                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:43                  Constant:
+0:43                    0 (const uint)
+0:43            f2: direct index for structure (layout(offset=32 ) uniform 2-component vector of float)
+0:43              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:43              Constant:
+0:43                6 (const uint)
+0:44      Sequence
+0:44        move second child to first child (temp 2-component vector of float)
+0:44          'r34' (temp 2-component vector of float)
+0:44          max (temp 2-component vector of float)
+0:44            Construct vec2 (in 2-component vector of float)
+0:44              Convert uint to float (temp float)
+0:44                u: direct index for structure (layout(offset=4 ) uniform uint)
+0:44                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:44                  Constant:
+0:44                    1 (const uint)
+0:44            f2: direct index for structure (layout(offset=32 ) uniform 2-component vector of float)
+0:44              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:44              Constant:
+0:44                6 (const uint)
+0:46      Sequence
+0:46        move second child to first child (temp 2-component vector of float)
+0:46          'r40' (temp 2-component vector of float)
+0:46          clamp (temp 2-component vector of float)
+0:46            Construct vec2 (in 2-component vector of float)
+0:46              Convert int to float (temp float)
+0:46                i: direct index for structure (layout(offset=0 ) uniform int)
+0:46                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:46                  Constant:
+0:46                    0 (const uint)
+0:46            Convert uint to float (temp 2-component vector of float)
+0:46              u2: direct index for structure (layout(offset=24 ) uniform 2-component vector of uint)
+0:46                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:46                Constant:
+0:46                  5 (const uint)
+0:46            f2: direct index for structure (layout(offset=32 ) uniform 2-component vector of float)
+0:46              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:46              Constant:
+0:46                6 (const uint)
+0:47      Sequence
+0:47        move second child to first child (temp 2-component vector of uint)
+0:47          'r41' (temp 2-component vector of uint)
+0:47          clamp (temp 2-component vector of uint)
+0:47            Convert bool to uint (temp 2-component vector of uint)
+0:47              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:47                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:47                Constant:
+0:47                  7 (const uint)
+0:47            Construct uvec2 (in 2-component vector of uint)
+0:47              u: direct index for structure (layout(offset=4 ) uniform uint)
+0:47                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:47                Constant:
+0:47                  1 (const uint)
+0:47            Convert bool to uint (temp 2-component vector of uint)
+0:47              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:47                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:47                Constant:
+0:47                  7 (const uint)
+0:48      Sequence
+0:48        move second child to first child (temp 2-component vector of float)
+0:48          'r42' (temp 2-component vector of float)
+0:48          clamp (temp 2-component vector of float)
+0:48            Convert bool to float (temp 2-component vector of float)
+0:48              b2: direct index for structure (layout(offset=40 ) uniform 2-component vector of bool)
+0:48                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:48                Constant:
+0:48                  7 (const uint)
+0:48            Construct vec2 (in 2-component vector of float)
+0:48              f: direct index for structure (layout(offset=8 ) uniform float)
+0:48                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:48                Constant:
+0:48                  2 (const uint)
+0:48            Construct vec2 (in 2-component vector of float)
+0:48              Convert bool to float (temp float)
+0:48                b: direct index for structure (layout(offset=12 ) uniform bool)
+0:48                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:48                  Constant:
+0:48                    3 (const uint)
+0:49      Sequence
+0:49        move second child to first child (temp 2-component vector of int)
+0:49          'r43' (temp 2-component vector of int)
+0:49          Convert uint to int (temp 2-component vector of int)
+0:49            clamp (temp 2-component vector of uint)
+0:49              Construct uvec2 (in 2-component vector of uint)
+0:49                Convert int to uint (temp uint)
+0:49                  i: direct index for structure (layout(offset=0 ) uniform int)
+0:49                    'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:49                    Constant:
+0:49                      0 (const uint)
+0:49              Convert int to uint (temp 2-component vector of uint)
+0:49                i2: direct index for structure (layout(offset=16 ) uniform 2-component vector of int)
+0:49                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:49                  Constant:
+0:49                    4 (const uint)
+0:49              u2: direct index for structure (layout(offset=24 ) uniform 2-component vector of uint)
+0:49                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:49                Constant:
+0:49                  5 (const uint)
+0:51      Sequence
+0:51        move second child to first child (temp float)
+0:51          'r50' (temp float)
+0:51          Construct float (temp float)
+0:?             textureFetch (temp 4-component vector of float)
+0:51              'g_tTexbfs' (layout(r32f ) uniform samplerBuffer)
+0:51              Convert uint to int (temp int)
+0:51                upos: direct index for structure (layout(offset=48 ) uniform uint)
+0:51                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:51                  Constant:
+0:51                    8 (const uint)
+0:52      Sequence
+0:52        move second child to first child (temp float)
+0:52          'r51' (temp float)
+0:52          Construct float (temp float)
+0:?             textureFetch (temp 4-component vector of float)
+0:52              'g_tTexbfs' (layout(r32f ) uniform samplerBuffer)
+0:52              Convert float to int (temp int)
+0:52                fpos: direct index for structure (layout(offset=52 ) uniform float)
+0:52                  'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+0:52                  Constant:
+0:52                    9 (const uint)
+0:70      Sequence
+0:70        move second child to first child (temp uint)
+0:70          'sizeQueryTemp' (temp uint)
+0:70          textureSize (temp uint)
+0:70            'g_tTex1df4' (uniform texture1D)
+0:70        move second child to first child (temp int)
+0:70          'WidthI' (temp int)
+0:70          Convert uint to int (temp int)
+0:70            'sizeQueryTemp' (temp uint)
+0:71      Sequence
+0:71        move second child to first child (temp uint)
+0:71          'sizeQueryTemp' (temp uint)
+0:71          textureSize (temp uint)
+0:71            'g_tTex1df4' (uniform texture1D)
+0:71            Constant:
+0:71              6 (const uint)
+0:71        move second child to first child (temp int)
+0:71          'WidthI' (temp int)
+0:71          Convert uint to int (temp int)
+0:71            'sizeQueryTemp' (temp uint)
+0:71        move second child to first child (temp uint)
+0:71          'NumberOfLevelsU' (temp uint)
+0:71          textureQueryLevels (temp uint)
+0:71            'g_tTex1df4' (uniform texture1D)
+0:72      Sequence
+0:72        move second child to first child (temp uint)
+0:72          'sizeQueryTemp' (temp uint)
+0:72          textureSize (temp uint)
+0:72            'g_tTex1df4' (uniform texture1D)
+0:72            Constant:
+0:72              6 (const uint)
+0:72        move second child to first child (temp uint)
+0:72          'WidthU' (temp uint)
+0:72          'sizeQueryTemp' (temp uint)
+0:72        move second child to first child (temp int)
+0:72          'NumberOfLevelsI' (temp int)
+0:72          Convert uint to int (temp int)
+0:72            textureQueryLevels (temp uint)
+0:72              'g_tTex1df4' (uniform texture1D)
+0:73      Sequence
+0:73        move second child to first child (temp uint)
+0:73          'sizeQueryTemp' (temp uint)
+0:73          textureSize (temp uint)
+0:73            'g_tTex1df4' (uniform texture1D)
+0:73            Constant:
+0:73              6 (const uint)
+0:73        move second child to first child (temp int)
+0:73          'WidthI' (temp int)
+0:73          Convert uint to int (temp int)
+0:73            'sizeQueryTemp' (temp uint)
+0:73        move second child to first child (temp int)
+0:73          'NumberOfLevelsI' (temp int)
+0:73          Convert uint to int (temp int)
+0:73            textureQueryLevels (temp uint)
+0:73              'g_tTex1df4' (uniform texture1D)
+0:77      move second child to first child (temp 4-component vector of float)
+0:77        color: direct index for structure (temp 4-component vector of float)
+0:77          'ps_output' (temp structure{temp 4-component vector of float color})
+0:77          Constant:
+0:77            0 (const int)
+0:77        Construct vec4 (temp 4-component vector of float)
+0:77          'r00' (temp float)
+0:78      Sequence
+0:78        Sequence
+0:78          move second child to first child (temp 4-component vector of float)
+0:?             'color' (layout(location=0 ) out 4-component vector of float)
+0:78            color: direct index for structure (temp 4-component vector of float)
+0:78              'ps_output' (temp structure{temp 4-component vector of float color})
+0:78              Constant:
+0:78                0 (const int)
+0:78        Branch: Return
+0:?   Linker Objects
+0:?     'color' (layout(location=0 ) out 4-component vector of float)
+0:?     'g_tTexbfs' (layout(r32f ) uniform samplerBuffer)
+0:?     'g_tTex1df4' (uniform texture1D)
+0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int i, layout(offset=4 ) uniform uint u, layout(offset=8 ) uniform float f, layout(offset=12 ) uniform bool b, layout(offset=16 ) uniform 2-component vector of int i2, layout(offset=24 ) uniform 2-component vector of uint u2, layout(offset=32 ) uniform 2-component vector of float f2, layout(offset=40 ) uniform 2-component vector of bool b2, layout(offset=48 ) uniform uint upos, layout(offset=52 ) uniform float fpos})
+
+// Module Version 10000
+// Generated by (magic number): 80001
+// Id's are bound by 320
+
+                              Capability Shader
+                              Capability Sampled1D
+                              Capability SampledBuffer
+                              Capability ImageQuery
+               1:             ExtInstImport  "GLSL.std.450"
+                              MemoryModel Logical GLSL450
+                              EntryPoint Fragment 4  "main" 316
+                              ExecutionMode 4 OriginUpperLeft
+                              Name 4  "main"
+                              Name 8  "r00"
+                              Name 14  "$Global"
+                              MemberName 14($Global) 0  "i"
+                              MemberName 14($Global) 1  "u"
+                              MemberName 14($Global) 2  "f"
+                              MemberName 14($Global) 3  "b"
+                              MemberName 14($Global) 4  "i2"
+                              MemberName 14($Global) 5  "u2"
+                              MemberName 14($Global) 6  "f2"
+                              MemberName 14($Global) 7  "b2"
+                              MemberName 14($Global) 8  "upos"
+                              MemberName 14($Global) 9  "fpos"
+                              Name 16  ""
+                              Name 33  "r01"
+                              Name 44  "r02"
+                              Name 54  "r03"
+                              Name 61  "r04"
+                              Name 69  "r10"
+                              Name 86  "r11"
+                              Name 97  "r12"
+                              Name 109  "r13"
+                              Name 116  "r14"
+                              Name 123  "r20"
+                              Name 133  "r21"
+                              Name 145  "r22"
+                              Name 157  "r30"
+                              Name 166  "r31"
+                              Name 175  "r32"
+                              Name 184  "r33"
+                              Name 192  "r34"
+                              Name 200  "r40"
+                              Name 211  "r41"
+                              Name 224  "r42"
+                              Name 238  "r43"
+                              Name 250  "r50"
+                              Name 254  "g_tTexbfs"
+                              Name 264  "r51"
+                              Name 273  "sizeQueryTemp"
+                              Name 276  "g_tTex1df4"
+                              Name 279  "WidthI"
+                              Name 282  "sizeQueryTemp"
+                              Name 288  "NumberOfLevelsU"
+                              Name 291  "sizeQueryTemp"
+                              Name 294  "WidthU"
+                              Name 296  "NumberOfLevelsI"
+                              Name 300  "sizeQueryTemp"
+                              Name 308  "PS_OUTPUT"
+                              MemberName 308(PS_OUTPUT) 0  "color"
+                              Name 310  "ps_output"
+                              Name 316  "color"
+                              MemberDecorate 14($Global) 0 Offset 0
+                              MemberDecorate 14($Global) 1 Offset 4
+                              MemberDecorate 14($Global) 2 Offset 8
+                              MemberDecorate 14($Global) 3 Offset 12
+                              MemberDecorate 14($Global) 4 Offset 16
+                              MemberDecorate 14($Global) 5 Offset 24
+                              MemberDecorate 14($Global) 6 Offset 32
+                              MemberDecorate 14($Global) 7 Offset 40
+                              MemberDecorate 14($Global) 8 Offset 48
+                              MemberDecorate 14($Global) 9 Offset 52
+                              Decorate 14($Global) Block
+                              Decorate 16 DescriptorSet 0
+                              Decorate 254(g_tTexbfs) DescriptorSet 0
+                              Decorate 276(g_tTex1df4) DescriptorSet 0
+                              Decorate 316(color) Location 0
+               2:             TypeVoid
+               3:             TypeFunction 2
+               6:             TypeFloat 32
+               7:             TypePointer Function 6(float)
+               9:             TypeInt 32 1
+              10:             TypeInt 32 0
+              11:             TypeVector 9(int) 2
+              12:             TypeVector 10(int) 2
+              13:             TypeVector 6(float) 2
+     14($Global):             TypeStruct 9(int) 10(int) 6(float) 10(int) 11(ivec2) 12(ivec2) 13(fvec2) 12(ivec2) 10(int) 6(float)
+              15:             TypePointer Uniform 14($Global)
+              16:     15(ptr) Variable Uniform
+              17:      9(int) Constant 3
+              18:             TypePointer Uniform 10(int)
+              21:             TypeBool
+              22:     10(int) Constant 0
+              24:    6(float) Constant 0
+              25:    6(float) Constant 1065353216
+              27:      9(int) Constant 2
+              28:             TypePointer Uniform 6(float)
+              32:             TypePointer Function 10(int)
+              37:     10(int) Constant 1
+              39:      9(int) Constant 1
+              43:             TypePointer Function 9(int)
+              48:      9(int) Constant 0
+              50:             TypePointer Uniform 9(int)
+              68:             TypePointer Function 13(fvec2)
+              70:      9(int) Constant 7
+              71:             TypePointer Uniform 12(ivec2)
+              74:             TypeVector 21(bool) 2
+              75:   12(ivec2) ConstantComposite 22 22
+              77:   13(fvec2) ConstantComposite 24 24
+              78:   13(fvec2) ConstantComposite 25 25
+              80:      9(int) Constant 6
+              81:             TypePointer Uniform 13(fvec2)
+              85:             TypePointer Function 12(ivec2)
+              90:   12(ivec2) ConstantComposite 37 37
+              92:      9(int) Constant 5
+              96:             TypePointer Function 11(ivec2)
+             101:   11(ivec2) ConstantComposite 48 48
+             102:   11(ivec2) ConstantComposite 39 39
+             104:      9(int) Constant 4
+             105:             TypePointer Uniform 11(ivec2)
+             251:             TypeImage 6(float) Buffer sampled format:R32f
+             252:             TypeSampledImage 251
+             253:             TypePointer UniformConstant 252
+  254(g_tTexbfs):    253(ptr) Variable UniformConstant
+             256:      9(int) Constant 8
+             261:             TypeVector 6(float) 4
+             266:      9(int) Constant 9
+             274:             TypeImage 6(float) 1D sampled format:Unknown
+             275:             TypePointer UniformConstant 274
+ 276(g_tTex1df4):    275(ptr) Variable UniformConstant
+             284:     10(int) Constant 6
+  308(PS_OUTPUT):             TypeStruct 261(fvec4)
+             309:             TypePointer Function 308(PS_OUTPUT)
+             313:             TypePointer Function 261(fvec4)
+             315:             TypePointer Output 261(fvec4)
+      316(color):    315(ptr) Variable Output
+         4(main):           2 Function None 3
+               5:             Label
+          8(r00):      7(ptr) Variable Function
+         33(r01):     32(ptr) Variable Function
+         44(r02):     43(ptr) Variable Function
+         54(r03):      7(ptr) Variable Function
+         61(r04):      7(ptr) Variable Function
+         69(r10):     68(ptr) Variable Function
+         86(r11):     85(ptr) Variable Function
+         97(r12):     96(ptr) Variable Function
+        109(r13):     68(ptr) Variable Function
+        116(r14):     68(ptr) Variable Function
+        123(r20):     68(ptr) Variable Function
+        133(r21):     85(ptr) Variable Function
+        145(r22):     68(ptr) Variable Function
+        157(r30):     68(ptr) Variable Function
+        166(r31):     85(ptr) Variable Function
+        175(r32):     96(ptr) Variable Function
+        184(r33):     68(ptr) Variable Function
+        192(r34):     68(ptr) Variable Function
+        200(r40):     68(ptr) Variable Function
+        211(r41):     85(ptr) Variable Function
+        224(r42):     68(ptr) Variable Function
+        238(r43):     96(ptr) Variable Function
+        250(r50):      7(ptr) Variable Function
+        264(r51):      7(ptr) Variable Function
+273(sizeQueryTemp):     32(ptr) Variable Function
+     279(WidthI):     43(ptr) Variable Function
+282(sizeQueryTemp):     32(ptr) Variable Function
+288(NumberOfLevelsU):     32(ptr) Variable Function
+291(sizeQueryTemp):     32(ptr) Variable Function
+     294(WidthU):     32(ptr) Variable Function
+296(NumberOfLevelsI):     43(ptr) Variable Function
+300(sizeQueryTemp):     32(ptr) Variable Function
+  310(ps_output):    309(ptr) Variable Function
+              19:     18(ptr) AccessChain 16 17
+              20:     10(int) Load 19
+              23:    21(bool) INotEqual 20 22
+              26:    6(float) Select 23 25 24
+              29:     28(ptr) AccessChain 16 27
+              30:    6(float) Load 29
+              31:    6(float) ExtInst 1(GLSL.std.450) 40(FMax) 26 30
+                              Store 8(r00) 31
+              34:     18(ptr) AccessChain 16 17
+              35:     10(int) Load 34
+              36:    21(bool) INotEqual 35 22
+              38:     10(int) Select 36 37 22
+              40:     18(ptr) AccessChain 16 39
+              41:     10(int) Load 40
+              42:     10(int) ExtInst 1(GLSL.std.450) 41(UMax) 38 41
+                              Store 33(r01) 42
+              45:     18(ptr) AccessChain 16 17
+              46:     10(int) Load 45
+              47:    21(bool) INotEqual 46 22
+              49:      9(int) Select 47 39 48
+              51:     50(ptr) AccessChain 16 48
+              52:      9(int) Load 51
+              53:      9(int) ExtInst 1(GLSL.std.450) 42(SMax) 49 52
+                              Store 44(r02) 53
+              55:     50(ptr) AccessChain 16 48
+              56:      9(int) Load 55
+              57:    6(float) ConvertSToF 56
+              58:     28(ptr) AccessChain 16 27
+              59:    6(float) Load 58
+              60:    6(float) ExtInst 1(GLSL.std.450) 40(FMax) 57 59
+                              Store 54(r03) 60
+              62:     18(ptr) AccessChain 16 39
+              63:     10(int) Load 62
+              64:    6(float) ConvertUToF 63
+              65:     28(ptr) AccessChain 16 27
+              66:    6(float) Load 65
+              67:    6(float) ExtInst 1(GLSL.std.450) 40(FMax) 64 66
+                              Store 61(r04) 67
+              72:     71(ptr) AccessChain 16 70
+              73:   12(ivec2) Load 72
+              76:   74(bvec2) INotEqual 73 75
+              79:   13(fvec2) Select 76 78 77
+              82:     81(ptr) AccessChain 16 80
+              83:   13(fvec2) Load 82
+              84:   13(fvec2) ExtInst 1(GLSL.std.450) 40(FMax) 79 83
+                              Store 69(r10) 84
+              87:     71(ptr) AccessChain 16 70
+              88:   12(ivec2) Load 87
+              89:   74(bvec2) INotEqual 88 75
+              91:   12(ivec2) Select 89 90 75
+              93:     71(ptr) AccessChain 16 92
+              94:   12(ivec2) Load 93
+              95:   12(ivec2) ExtInst 1(GLSL.std.450) 41(UMax) 91 94
+                              Store 86(r11) 95
+              98:     71(ptr) AccessChain 16 70
+              99:   12(ivec2) Load 98
+             100:   74(bvec2) INotEqual 99 75
+             103:   11(ivec2) Select 100 102 101
+             106:    105(ptr) AccessChain 16 104
+             107:   11(ivec2) Load 106
+             108:   11(ivec2) ExtInst 1(GLSL.std.450) 42(SMax) 103 107
+                              Store 97(r12) 108
+             110:    105(ptr) AccessChain 16 104
+             111:   11(ivec2) Load 110
+             112:   13(fvec2) ConvertSToF 111
+             113:     81(ptr) AccessChain 16 80
+             114:   13(fvec2) Load 113
+             115:   13(fvec2) ExtInst 1(GLSL.std.450) 40(FMax) 112 114
+                              Store 109(r13) 115
+             117:     71(ptr) AccessChain 16 92
+             118:   12(ivec2) Load 117
+             119:   13(fvec2) ConvertUToF 118
+             120:     81(ptr) AccessChain 16 80
+             121:   13(fvec2) Load 120
+             122:   13(fvec2) ExtInst 1(GLSL.std.450) 40(FMax) 119 121
+                              Store 116(r14) 122
+             124:    105(ptr) AccessChain 16 104
+             125:   11(ivec2) Load 124
+             126:   13(fvec2) ConvertSToF 125
+             127:     71(ptr) AccessChain 16 92
+             128:   12(ivec2) Load 127
+             129:   13(fvec2) ConvertUToF 128
+             130:     81(ptr) AccessChain 16 80
+             131:   13(fvec2) Load 130
+             132:   13(fvec2) ExtInst 1(GLSL.std.450) 43(FClamp) 126 129 131
+                              Store 123(r20) 132
+             134:     71(ptr) AccessChain 16 70
+             135:   12(ivec2) Load 134
+             136:   74(bvec2) INotEqual 135 75
+             137:   12(ivec2) Select 136 90 75
+             138:     71(ptr) AccessChain 16 92
+             139:   12(ivec2) Load 138
+             140:     71(ptr) AccessChain 16 70
+             141:   12(ivec2) Load 140
+             142:   74(bvec2) INotEqual 141 75
+             143:   12(ivec2) Select 142 90 75
+             144:   12(ivec2) ExtInst 1(GLSL.std.450) 44(UClamp) 137 139 143
+                              Store 133(r21) 144
+             146:     71(ptr) AccessChain 16 70
+             147:   12(ivec2) Load 146
+             148:   74(bvec2) INotEqual 147 75
+             149:   13(fvec2) Select 148 78 77
+             150:     81(ptr) AccessChain 16 80
+             151:   13(fvec2) Load 150
+             152:     71(ptr) AccessChain 16 70
+             153:   12(ivec2) Load 152
+             154:   74(bvec2) INotEqual 153 75
+             155:   13(fvec2) Select 154 78 77
+             156:   13(fvec2) ExtInst 1(GLSL.std.450) 43(FClamp) 149 151 155
+                              Store 145(r22) 156
+             158:     18(ptr) AccessChain 16 17
+             159:     10(int) Load 158
+             160:    21(bool) INotEqual 159 22
+             161:    6(float) Select 160 25 24
+             162:   13(fvec2) CompositeConstruct 161 161
+             163:     81(ptr) AccessChain 16 80
+             164:   13(fvec2) Load 163
+             165:   13(fvec2) ExtInst 1(GLSL.std.450) 40(FMax) 162 164
+                              Store 157(r30) 165
+             167:     18(ptr) AccessChain 16 17
+             168:     10(int) Load 167
+             169:    21(bool) INotEqual 168 22
+             170:     10(int) Select 169 37 22
+             171:   12(ivec2) CompositeConstruct 170 170
+             172:     71(ptr) AccessChain 16 92
+             173:   12(ivec2) Load 172
+             174:   12(ivec2) ExtInst 1(GLSL.std.450) 41(UMax) 171 173
+                              Store 166(r31) 174
+             176:     18(ptr) AccessChain 16 17
+             177:     10(int) Load 176
+             178:    21(bool) INotEqual 177 22
+             179:      9(int) Select 178 39 48
+             180:   11(ivec2) CompositeConstruct 179 179
+             181:    105(ptr) AccessChain 16 104
+             182:   11(ivec2) Load 181
+             183:   11(ivec2) ExtInst 1(GLSL.std.450) 42(SMax) 180 182
+                              Store 175(r32) 183
+             185:     50(ptr) AccessChain 16 48
+             186:      9(int) Load 185
+             187:    6(float) ConvertSToF 186
+             188:   13(fvec2) CompositeConstruct 187 187
+             189:     81(ptr) AccessChain 16 80
+             190:   13(fvec2) Load 189
+             191:   13(fvec2) ExtInst 1(GLSL.std.450) 40(FMax) 188 190
+                              Store 184(r33) 191
+             193:     18(ptr) AccessChain 16 39
+             194:     10(int) Load 193
+             195:    6(float) ConvertUToF 194
+             196:   13(fvec2) CompositeConstruct 195 195
+             197:     81(ptr) AccessChain 16 80
+             198:   13(fvec2) Load 197
+             199:   13(fvec2) ExtInst 1(GLSL.std.450) 40(FMax) 196 198
+                              Store 192(r34) 199
+             201:     50(ptr) AccessChain 16 48
+             202:      9(int) Load 201
+             203:    6(float) ConvertSToF 202
+             204:   13(fvec2) CompositeConstruct 203 203
+             205:     71(ptr) AccessChain 16 92
+             206:   12(ivec2) Load 205
+             207:   13(fvec2) ConvertUToF 206
+             208:     81(ptr) AccessChain 16 80
+             209:   13(fvec2) Load 208
+             210:   13(fvec2) ExtInst 1(GLSL.std.450) 43(FClamp) 204 207 209
+                              Store 200(r40) 210
+             212:     71(ptr) AccessChain 16 70
+             213:   12(ivec2) Load 212
+             214:   74(bvec2) INotEqual 213 75
+             215:   12(ivec2) Select 214 90 75
+             216:     18(ptr) AccessChain 16 39
+             217:     10(int) Load 216
+             218:   12(ivec2) CompositeConstruct 217 217
+             219:     71(ptr) AccessChain 16 70
+             220:   12(ivec2) Load 219
+             221:   74(bvec2) INotEqual 220 75
+             222:   12(ivec2) Select 221 90 75
+             223:   12(ivec2) ExtInst 1(GLSL.std.450) 44(UClamp) 215 218 222
+                              Store 211(r41) 223
+             225:     71(ptr) AccessChain 16 70
+             226:   12(ivec2) Load 225
+             227:   74(bvec2) INotEqual 226 75
+             228:   13(fvec2) Select 227 78 77
+             229:     28(ptr) AccessChain 16 27
+             230:    6(float) Load 229
+             231:   13(fvec2) CompositeConstruct 230 230
+             232:     18(ptr) AccessChain 16 17
+             233:     10(int) Load 232
+             234:    21(bool) INotEqual 233 22
+             235:    6(float) Select 234 25 24
+             236:   13(fvec2) CompositeConstruct 235 235
+             237:   13(fvec2) ExtInst 1(GLSL.std.450) 43(FClamp) 228 231 236
+                              Store 224(r42) 237
+             239:     50(ptr) AccessChain 16 48
+             240:      9(int) Load 239
+             241:     10(int) Bitcast 240
+             242:   12(ivec2) CompositeConstruct 241 241
+             243:    105(ptr) AccessChain 16 104
+             244:   11(ivec2) Load 243
+             245:   12(ivec2) Bitcast 244
+             246:     71(ptr) AccessChain 16 92
+             247:   12(ivec2) Load 246
+             248:   12(ivec2) ExtInst 1(GLSL.std.450) 44(UClamp) 242 245 247
+             249:   11(ivec2) Bitcast 248
+                              Store 238(r43) 249
+             255:         252 Load 254(g_tTexbfs)
+             257:     18(ptr) AccessChain 16 256
+             258:     10(int) Load 257
+             259:      9(int) Bitcast 258
+             260:         251 Image 255
+             262:  261(fvec4) ImageFetch 260 259
+             263:    6(float) CompositeExtract 262 0
+                              Store 250(r50) 263
+             265:         252 Load 254(g_tTexbfs)
+             267:     28(ptr) AccessChain 16 266
+             268:    6(float) Load 267
+             269:      9(int) ConvertFToS 268
+             270:         251 Image 265
+             271:  261(fvec4) ImageFetch 270 269
+             272:    6(float) CompositeExtract 271 0
+                              Store 264(r51) 272
+             277:         274 Load 276(g_tTex1df4)
+             278:      9(int) ImageQuerySize 277
+                              Store 273(sizeQueryTemp) 278
+             280:     10(int) Load 273(sizeQueryTemp)
+             281:      9(int) Bitcast 280
+                              Store 279(WidthI) 281
+             283:         274 Load 276(g_tTex1df4)
+             285:      9(int) ImageQuerySizeLod 283 284
+                              Store 282(sizeQueryTemp) 285
+             286:     10(int) Load 282(sizeQueryTemp)
+             287:      9(int) Bitcast 286
+                              Store 279(WidthI) 287
+             289:         274 Load 276(g_tTex1df4)
+             290:      9(int) ImageQueryLevels 289
+                              Store 288(NumberOfLevelsU) 290
+             292:         274 Load 276(g_tTex1df4)
+             293:      9(int) ImageQuerySizeLod 292 284
+                              Store 291(sizeQueryTemp) 293
+             295:     10(int) Load 291(sizeQueryTemp)
+                              Store 294(WidthU) 295
+             297:         274 Load 276(g_tTex1df4)
+             298:      9(int) ImageQueryLevels 297
+             299:      9(int) Bitcast 298
+                              Store 296(NumberOfLevelsI) 299
+             301:         274 Load 276(g_tTex1df4)
+             302:      9(int) ImageQuerySizeLod 301 284
+                              Store 300(sizeQueryTemp) 302
+             303:     10(int) Load 300(sizeQueryTemp)
+             304:      9(int) Bitcast 303
+                              Store 279(WidthI) 304
+             305:         274 Load 276(g_tTex1df4)
+             306:      9(int) ImageQueryLevels 305
+             307:      9(int) Bitcast 306
+                              Store 296(NumberOfLevelsI) 307
+             311:    6(float) Load 8(r00)
+             312:  261(fvec4) CompositeConstruct 311 311 311 311
+             314:    313(ptr) AccessChain 310(ps_output) 48
+                              Store 314 312
+             317:    313(ptr) AccessChain 310(ps_output) 48
+             318:  261(fvec4) Load 317
+                              Store 316(color) 318
+                              Return
+                              FunctionEnd

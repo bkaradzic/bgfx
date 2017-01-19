@@ -1,0 +1,979 @@
+hlsl.intrinsics.comp
+Shader version: 450
+local_size = (1, 1, 1)
+0:? Sequence
+0:17  Function Definition: ComputeShaderFunctionS(f1;f1;f1;u1;u1; (temp float)
+0:17    Function Parameters: 
+0:17      'inF0' (in float)
+0:17      'inF1' (in float)
+0:17      'inF2' (in float)
+0:17      'inU0' (in uint)
+0:17      'inU1' (in uint)
+0:?     Sequence
+0:21      all (temp bool)
+0:21        'inF0' (in float)
+0:24      AtomicAdd (temp void)
+0:24        'gs_ua' (shared uint)
+0:24        'gs_ub' (shared uint)
+0:25      move second child to first child (temp uint)
+0:25        'out_u1' (temp uint)
+0:25        AtomicAdd (temp uint)
+0:25          'gs_ua' (shared uint)
+0:25          'gs_ub' (shared uint)
+0:26      AtomicAnd (temp void)
+0:26        'gs_ua' (shared uint)
+0:26        'gs_ub' (shared uint)
+0:27      move second child to first child (temp uint)
+0:27        'out_u1' (temp uint)
+0:27        AtomicAnd (temp uint)
+0:27          'gs_ua' (shared uint)
+0:27          'gs_ub' (shared uint)
+0:28      move second child to first child (temp uint)
+0:28        'out_u1' (temp uint)
+0:28        AtomicCompSwap (temp uint)
+0:28          'gs_ua' (shared uint)
+0:28          'gs_ub' (shared uint)
+0:28          'gs_uc' (shared uint)
+0:29      move second child to first child (temp uint)
+0:29        'out_u1' (temp uint)
+0:29        AtomicExchange (temp uint)
+0:29          'gs_ua' (shared uint)
+0:29          'gs_ub' (shared uint)
+0:30      AtomicMax (temp void)
+0:30        'gs_ua' (shared uint)
+0:30        'gs_ub' (shared uint)
+0:31      move second child to first child (temp uint)
+0:31        'out_u1' (temp uint)
+0:31        AtomicMax (temp uint)
+0:31          'gs_ua' (shared uint)
+0:31          'gs_ub' (shared uint)
+0:32      AtomicMin (temp void)
+0:32        'gs_ua' (shared uint)
+0:32        'gs_ub' (shared uint)
+0:33      move second child to first child (temp uint)
+0:33        'out_u1' (temp uint)
+0:33        AtomicMin (temp uint)
+0:33          'gs_ua' (shared uint)
+0:33          'gs_ub' (shared uint)
+0:34      AtomicOr (temp void)
+0:34        'gs_ua' (shared uint)
+0:34        'gs_ub' (shared uint)
+0:35      move second child to first child (temp uint)
+0:35        'out_u1' (temp uint)
+0:35        AtomicOr (temp uint)
+0:35          'gs_ua' (shared uint)
+0:35          'gs_ub' (shared uint)
+0:36      AtomicXor (temp void)
+0:36        'gs_ua' (shared uint)
+0:36        'gs_ub' (shared uint)
+0:37      move second child to first child (temp uint)
+0:37        'out_u1' (temp uint)
+0:37        AtomicXor (temp uint)
+0:37          'gs_ua' (shared uint)
+0:37          'gs_ub' (shared uint)
+0:41      Branch: Return with expression
+0:41        Constant:
+0:41          0.000000
+0:45  Function Definition: ComputeShaderFunction1(vf1;vf1;vf1; (temp 1-component vector of float)
+0:45    Function Parameters: 
+0:45      'inF0' (in 1-component vector of float)
+0:45      'inF1' (in 1-component vector of float)
+0:45      'inF2' (in 1-component vector of float)
+0:?     Sequence
+0:47      Branch: Return with expression
+0:47        Constant:
+0:47          0.000000
+0:51  Function Definition: ComputeShaderFunction2(vf2;vf2;vf2;vu2;vu2; (temp 2-component vector of float)
+0:51    Function Parameters: 
+0:51      'inF0' (in 2-component vector of float)
+0:51      'inF1' (in 2-component vector of float)
+0:51      'inF2' (in 2-component vector of float)
+0:51      'inU0' (in 2-component vector of uint)
+0:51      'inU1' (in 2-component vector of uint)
+0:?     Sequence
+0:55      all (temp bool)
+0:55        'inF0' (in 2-component vector of float)
+0:58      AtomicAdd (temp void)
+0:58        'gs_ua2' (shared 2-component vector of uint)
+0:58        'gs_ub2' (shared 2-component vector of uint)
+0:59      move second child to first child (temp 2-component vector of uint)
+0:59        'out_u2' (temp 2-component vector of uint)
+0:59        AtomicAdd (temp 2-component vector of uint)
+0:59          'gs_ua2' (shared 2-component vector of uint)
+0:59          'gs_ub2' (shared 2-component vector of uint)
+0:60      AtomicAnd (temp void)
+0:60        'gs_ua2' (shared 2-component vector of uint)
+0:60        'gs_ub2' (shared 2-component vector of uint)
+0:61      move second child to first child (temp 2-component vector of uint)
+0:61        'out_u2' (temp 2-component vector of uint)
+0:61        AtomicAnd (temp 2-component vector of uint)
+0:61          'gs_ua2' (shared 2-component vector of uint)
+0:61          'gs_ub2' (shared 2-component vector of uint)
+0:62      move second child to first child (temp 2-component vector of uint)
+0:62        'out_u2' (temp 2-component vector of uint)
+0:62        AtomicCompSwap (temp 2-component vector of uint)
+0:62          'gs_ua2' (shared 2-component vector of uint)
+0:62          'gs_ub2' (shared 2-component vector of uint)
+0:62          'gs_uc2' (shared 2-component vector of uint)
+0:63      move second child to first child (temp 2-component vector of uint)
+0:63        'out_u2' (temp 2-component vector of uint)
+0:63        AtomicExchange (temp 2-component vector of uint)
+0:63          'gs_ua2' (shared 2-component vector of uint)
+0:63          'gs_ub2' (shared 2-component vector of uint)
+0:64      AtomicMax (temp void)
+0:64        'gs_ua2' (shared 2-component vector of uint)
+0:64        'gs_ub2' (shared 2-component vector of uint)
+0:65      move second child to first child (temp 2-component vector of uint)
+0:65        'out_u2' (temp 2-component vector of uint)
+0:65        AtomicMax (temp 2-component vector of uint)
+0:65          'gs_ua2' (shared 2-component vector of uint)
+0:65          'gs_ub2' (shared 2-component vector of uint)
+0:66      AtomicMin (temp void)
+0:66        'gs_ua2' (shared 2-component vector of uint)
+0:66        'gs_ub2' (shared 2-component vector of uint)
+0:67      move second child to first child (temp 2-component vector of uint)
+0:67        'out_u2' (temp 2-component vector of uint)
+0:67        AtomicMin (temp 2-component vector of uint)
+0:67          'gs_ua2' (shared 2-component vector of uint)
+0:67          'gs_ub2' (shared 2-component vector of uint)
+0:68      AtomicOr (temp void)
+0:68        'gs_ua2' (shared 2-component vector of uint)
+0:68        'gs_ub2' (shared 2-component vector of uint)
+0:69      move second child to first child (temp 2-component vector of uint)
+0:69        'out_u2' (temp 2-component vector of uint)
+0:69        AtomicOr (temp 2-component vector of uint)
+0:69          'gs_ua2' (shared 2-component vector of uint)
+0:69          'gs_ub2' (shared 2-component vector of uint)
+0:70      AtomicXor (temp void)
+0:70        'gs_ua2' (shared 2-component vector of uint)
+0:70        'gs_ub2' (shared 2-component vector of uint)
+0:71      move second child to first child (temp 2-component vector of uint)
+0:71        'out_u2' (temp 2-component vector of uint)
+0:71        AtomicXor (temp 2-component vector of uint)
+0:71          'gs_ua2' (shared 2-component vector of uint)
+0:71          'gs_ub2' (shared 2-component vector of uint)
+0:74      Branch: Return with expression
+0:?         Constant:
+0:?           1.000000
+0:?           2.000000
+0:78  Function Definition: ComputeShaderFunction3(vf3;vf3;vf3;vu3;vu3; (temp 3-component vector of float)
+0:78    Function Parameters: 
+0:78      'inF0' (in 3-component vector of float)
+0:78      'inF1' (in 3-component vector of float)
+0:78      'inF2' (in 3-component vector of float)
+0:78      'inU0' (in 3-component vector of uint)
+0:78      'inU1' (in 3-component vector of uint)
+0:?     Sequence
+0:82      all (temp bool)
+0:82        'inF0' (in 3-component vector of float)
+0:85      AtomicAdd (temp void)
+0:85        'gs_ua3' (shared 3-component vector of uint)
+0:85        'gs_ub3' (shared 3-component vector of uint)
+0:86      move second child to first child (temp 3-component vector of uint)
+0:86        'out_u3' (temp 3-component vector of uint)
+0:86        AtomicAdd (temp 3-component vector of uint)
+0:86          'gs_ua3' (shared 3-component vector of uint)
+0:86          'gs_ub3' (shared 3-component vector of uint)
+0:87      AtomicAnd (temp void)
+0:87        'gs_ua3' (shared 3-component vector of uint)
+0:87        'gs_ub3' (shared 3-component vector of uint)
+0:88      move second child to first child (temp 3-component vector of uint)
+0:88        'out_u3' (temp 3-component vector of uint)
+0:88        AtomicAnd (temp 3-component vector of uint)
+0:88          'gs_ua3' (shared 3-component vector of uint)
+0:88          'gs_ub3' (shared 3-component vector of uint)
+0:89      move second child to first child (temp 3-component vector of uint)
+0:89        'out_u3' (temp 3-component vector of uint)
+0:89        AtomicCompSwap (temp 3-component vector of uint)
+0:89          'gs_ua3' (shared 3-component vector of uint)
+0:89          'gs_ub3' (shared 3-component vector of uint)
+0:89          'gs_uc3' (shared 3-component vector of uint)
+0:90      move second child to first child (temp 3-component vector of uint)
+0:90        'out_u3' (temp 3-component vector of uint)
+0:90        AtomicExchange (temp 3-component vector of uint)
+0:90          'gs_ua3' (shared 3-component vector of uint)
+0:90          'gs_ub3' (shared 3-component vector of uint)
+0:91      AtomicMax (temp void)
+0:91        'gs_ua3' (shared 3-component vector of uint)
+0:91        'gs_ub3' (shared 3-component vector of uint)
+0:92      move second child to first child (temp 3-component vector of uint)
+0:92        'out_u3' (temp 3-component vector of uint)
+0:92        AtomicMax (temp 3-component vector of uint)
+0:92          'gs_ua3' (shared 3-component vector of uint)
+0:92          'gs_ub3' (shared 3-component vector of uint)
+0:93      AtomicMin (temp void)
+0:93        'gs_ua3' (shared 3-component vector of uint)
+0:93        'gs_ub3' (shared 3-component vector of uint)
+0:94      move second child to first child (temp 3-component vector of uint)
+0:94        'out_u3' (temp 3-component vector of uint)
+0:94        AtomicMin (temp 3-component vector of uint)
+0:94          'gs_ua3' (shared 3-component vector of uint)
+0:94          'gs_ub3' (shared 3-component vector of uint)
+0:95      AtomicOr (temp void)
+0:95        'gs_ua3' (shared 3-component vector of uint)
+0:95        'gs_ub3' (shared 3-component vector of uint)
+0:96      move second child to first child (temp 3-component vector of uint)
+0:96        'out_u3' (temp 3-component vector of uint)
+0:96        AtomicOr (temp 3-component vector of uint)
+0:96          'gs_ua3' (shared 3-component vector of uint)
+0:96          'gs_ub3' (shared 3-component vector of uint)
+0:97      AtomicXor (temp void)
+0:97        'gs_ua3' (shared 3-component vector of uint)
+0:97        'gs_ub3' (shared 3-component vector of uint)
+0:98      move second child to first child (temp 3-component vector of uint)
+0:98        'out_u3' (temp 3-component vector of uint)
+0:98        AtomicXor (temp 3-component vector of uint)
+0:98          'gs_ua3' (shared 3-component vector of uint)
+0:98          'gs_ub3' (shared 3-component vector of uint)
+0:101      Branch: Return with expression
+0:?         Constant:
+0:?           1.000000
+0:?           2.000000
+0:?           3.000000
+0:105  Function Definition: ComputeShaderFunction(vf4;vf4;vf4;vu4;vu4; (temp 4-component vector of float)
+0:105    Function Parameters: 
+0:105      'inF0' (layout(location=0 ) in 4-component vector of float)
+0:105      'inF1' (layout(location=1 ) in 4-component vector of float)
+0:105      'inF2' (layout(location=2 ) in 4-component vector of float)
+0:105      'inU0' (layout(location=3 ) in 4-component vector of uint)
+0:105      'inU1' (layout(location=4 ) in 4-component vector of uint)
+0:?     Sequence
+0:109      all (temp bool)
+0:109        'inF0' (layout(location=0 ) in 4-component vector of float)
+0:112      AtomicAdd (temp void)
+0:112        'gs_ua4' (shared 4-component vector of uint)
+0:112        'gs_ub4' (shared 4-component vector of uint)
+0:113      move second child to first child (temp 4-component vector of uint)
+0:113        'out_u4' (temp 4-component vector of uint)
+0:113        AtomicAdd (temp 4-component vector of uint)
+0:113          'gs_ua4' (shared 4-component vector of uint)
+0:113          'gs_ub4' (shared 4-component vector of uint)
+0:114      AtomicAnd (temp void)
+0:114        'gs_ua4' (shared 4-component vector of uint)
+0:114        'gs_ub4' (shared 4-component vector of uint)
+0:115      move second child to first child (temp 4-component vector of uint)
+0:115        'out_u4' (temp 4-component vector of uint)
+0:115        AtomicAnd (temp 4-component vector of uint)
+0:115          'gs_ua4' (shared 4-component vector of uint)
+0:115          'gs_ub4' (shared 4-component vector of uint)
+0:116      move second child to first child (temp 4-component vector of uint)
+0:116        'out_u4' (temp 4-component vector of uint)
+0:116        AtomicCompSwap (temp 4-component vector of uint)
+0:116          'gs_ua4' (shared 4-component vector of uint)
+0:116          'gs_ub4' (shared 4-component vector of uint)
+0:116          'gs_uc4' (shared 4-component vector of uint)
+0:117      move second child to first child (temp 4-component vector of uint)
+0:117        'out_u4' (temp 4-component vector of uint)
+0:117        AtomicExchange (temp 4-component vector of uint)
+0:117          'gs_ua4' (shared 4-component vector of uint)
+0:117          'gs_ub4' (shared 4-component vector of uint)
+0:118      AtomicMax (temp void)
+0:118        'gs_ua4' (shared 4-component vector of uint)
+0:118        'gs_ub4' (shared 4-component vector of uint)
+0:119      move second child to first child (temp 4-component vector of uint)
+0:119        'out_u4' (temp 4-component vector of uint)
+0:119        AtomicMax (temp 4-component vector of uint)
+0:119          'gs_ua4' (shared 4-component vector of uint)
+0:119          'gs_ub4' (shared 4-component vector of uint)
+0:120      AtomicMin (temp void)
+0:120        'gs_ua4' (shared 4-component vector of uint)
+0:120        'gs_ub4' (shared 4-component vector of uint)
+0:121      move second child to first child (temp 4-component vector of uint)
+0:121        'out_u4' (temp 4-component vector of uint)
+0:121        AtomicMin (temp 4-component vector of uint)
+0:121          'gs_ua4' (shared 4-component vector of uint)
+0:121          'gs_ub4' (shared 4-component vector of uint)
+0:122      AtomicOr (temp void)
+0:122        'gs_ua4' (shared 4-component vector of uint)
+0:122        'gs_ub4' (shared 4-component vector of uint)
+0:123      move second child to first child (temp 4-component vector of uint)
+0:123        'out_u4' (temp 4-component vector of uint)
+0:123        AtomicOr (temp 4-component vector of uint)
+0:123          'gs_ua4' (shared 4-component vector of uint)
+0:123          'gs_ub4' (shared 4-component vector of uint)
+0:124      AtomicXor (temp void)
+0:124        'gs_ua4' (shared 4-component vector of uint)
+0:124        'gs_ub4' (shared 4-component vector of uint)
+0:125      move second child to first child (temp 4-component vector of uint)
+0:125        'out_u4' (temp 4-component vector of uint)
+0:125        AtomicXor (temp 4-component vector of uint)
+0:125          'gs_ua4' (shared 4-component vector of uint)
+0:125          'gs_ub4' (shared 4-component vector of uint)
+0:128      Sequence
+0:128        move second child to first child (temp 4-component vector of float)
+0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?           Constant:
+0:?             1.000000
+0:?             2.000000
+0:?             3.000000
+0:?             4.000000
+0:128        Branch: Return
+0:?   Linker Objects
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'inF0' (layout(location=0 ) in 4-component vector of float)
+0:?     'inF1' (layout(location=1 ) in 4-component vector of float)
+0:?     'inF2' (layout(location=2 ) in 4-component vector of float)
+0:?     'inU0' (layout(location=3 ) in 4-component vector of uint)
+0:?     'inU1' (layout(location=4 ) in 4-component vector of uint)
+0:?     'gs_ua' (shared uint)
+0:?     'gs_ub' (shared uint)
+0:?     'gs_uc' (shared uint)
+0:?     'gs_ua2' (shared 2-component vector of uint)
+0:?     'gs_ub2' (shared 2-component vector of uint)
+0:?     'gs_uc2' (shared 2-component vector of uint)
+0:?     'gs_ua3' (shared 3-component vector of uint)
+0:?     'gs_ub3' (shared 3-component vector of uint)
+0:?     'gs_uc3' (shared 3-component vector of uint)
+0:?     'gs_ua4' (shared 4-component vector of uint)
+0:?     'gs_ub4' (shared 4-component vector of uint)
+0:?     'gs_uc4' (shared 4-component vector of uint)
+
+
+Linked compute stage:
+
+
+Shader version: 450
+local_size = (1, 1, 1)
+0:? Sequence
+0:17  Function Definition: ComputeShaderFunctionS(f1;f1;f1;u1;u1; (temp float)
+0:17    Function Parameters: 
+0:17      'inF0' (in float)
+0:17      'inF1' (in float)
+0:17      'inF2' (in float)
+0:17      'inU0' (in uint)
+0:17      'inU1' (in uint)
+0:?     Sequence
+0:21      all (temp bool)
+0:21        'inF0' (in float)
+0:24      AtomicAdd (temp void)
+0:24        'gs_ua' (shared uint)
+0:24        'gs_ub' (shared uint)
+0:25      move second child to first child (temp uint)
+0:25        'out_u1' (temp uint)
+0:25        AtomicAdd (temp uint)
+0:25          'gs_ua' (shared uint)
+0:25          'gs_ub' (shared uint)
+0:26      AtomicAnd (temp void)
+0:26        'gs_ua' (shared uint)
+0:26        'gs_ub' (shared uint)
+0:27      move second child to first child (temp uint)
+0:27        'out_u1' (temp uint)
+0:27        AtomicAnd (temp uint)
+0:27          'gs_ua' (shared uint)
+0:27          'gs_ub' (shared uint)
+0:28      move second child to first child (temp uint)
+0:28        'out_u1' (temp uint)
+0:28        AtomicCompSwap (temp uint)
+0:28          'gs_ua' (shared uint)
+0:28          'gs_ub' (shared uint)
+0:28          'gs_uc' (shared uint)
+0:29      move second child to first child (temp uint)
+0:29        'out_u1' (temp uint)
+0:29        AtomicExchange (temp uint)
+0:29          'gs_ua' (shared uint)
+0:29          'gs_ub' (shared uint)
+0:30      AtomicMax (temp void)
+0:30        'gs_ua' (shared uint)
+0:30        'gs_ub' (shared uint)
+0:31      move second child to first child (temp uint)
+0:31        'out_u1' (temp uint)
+0:31        AtomicMax (temp uint)
+0:31          'gs_ua' (shared uint)
+0:31          'gs_ub' (shared uint)
+0:32      AtomicMin (temp void)
+0:32        'gs_ua' (shared uint)
+0:32        'gs_ub' (shared uint)
+0:33      move second child to first child (temp uint)
+0:33        'out_u1' (temp uint)
+0:33        AtomicMin (temp uint)
+0:33          'gs_ua' (shared uint)
+0:33          'gs_ub' (shared uint)
+0:34      AtomicOr (temp void)
+0:34        'gs_ua' (shared uint)
+0:34        'gs_ub' (shared uint)
+0:35      move second child to first child (temp uint)
+0:35        'out_u1' (temp uint)
+0:35        AtomicOr (temp uint)
+0:35          'gs_ua' (shared uint)
+0:35          'gs_ub' (shared uint)
+0:36      AtomicXor (temp void)
+0:36        'gs_ua' (shared uint)
+0:36        'gs_ub' (shared uint)
+0:37      move second child to first child (temp uint)
+0:37        'out_u1' (temp uint)
+0:37        AtomicXor (temp uint)
+0:37          'gs_ua' (shared uint)
+0:37          'gs_ub' (shared uint)
+0:41      Branch: Return with expression
+0:41        Constant:
+0:41          0.000000
+0:45  Function Definition: ComputeShaderFunction1(vf1;vf1;vf1; (temp 1-component vector of float)
+0:45    Function Parameters: 
+0:45      'inF0' (in 1-component vector of float)
+0:45      'inF1' (in 1-component vector of float)
+0:45      'inF2' (in 1-component vector of float)
+0:?     Sequence
+0:47      Branch: Return with expression
+0:47        Constant:
+0:47          0.000000
+0:51  Function Definition: ComputeShaderFunction2(vf2;vf2;vf2;vu2;vu2; (temp 2-component vector of float)
+0:51    Function Parameters: 
+0:51      'inF0' (in 2-component vector of float)
+0:51      'inF1' (in 2-component vector of float)
+0:51      'inF2' (in 2-component vector of float)
+0:51      'inU0' (in 2-component vector of uint)
+0:51      'inU1' (in 2-component vector of uint)
+0:?     Sequence
+0:55      all (temp bool)
+0:55        'inF0' (in 2-component vector of float)
+0:58      AtomicAdd (temp void)
+0:58        'gs_ua2' (shared 2-component vector of uint)
+0:58        'gs_ub2' (shared 2-component vector of uint)
+0:59      move second child to first child (temp 2-component vector of uint)
+0:59        'out_u2' (temp 2-component vector of uint)
+0:59        AtomicAdd (temp 2-component vector of uint)
+0:59          'gs_ua2' (shared 2-component vector of uint)
+0:59          'gs_ub2' (shared 2-component vector of uint)
+0:60      AtomicAnd (temp void)
+0:60        'gs_ua2' (shared 2-component vector of uint)
+0:60        'gs_ub2' (shared 2-component vector of uint)
+0:61      move second child to first child (temp 2-component vector of uint)
+0:61        'out_u2' (temp 2-component vector of uint)
+0:61        AtomicAnd (temp 2-component vector of uint)
+0:61          'gs_ua2' (shared 2-component vector of uint)
+0:61          'gs_ub2' (shared 2-component vector of uint)
+0:62      move second child to first child (temp 2-component vector of uint)
+0:62        'out_u2' (temp 2-component vector of uint)
+0:62        AtomicCompSwap (temp 2-component vector of uint)
+0:62          'gs_ua2' (shared 2-component vector of uint)
+0:62          'gs_ub2' (shared 2-component vector of uint)
+0:62          'gs_uc2' (shared 2-component vector of uint)
+0:63      move second child to first child (temp 2-component vector of uint)
+0:63        'out_u2' (temp 2-component vector of uint)
+0:63        AtomicExchange (temp 2-component vector of uint)
+0:63          'gs_ua2' (shared 2-component vector of uint)
+0:63          'gs_ub2' (shared 2-component vector of uint)
+0:64      AtomicMax (temp void)
+0:64        'gs_ua2' (shared 2-component vector of uint)
+0:64        'gs_ub2' (shared 2-component vector of uint)
+0:65      move second child to first child (temp 2-component vector of uint)
+0:65        'out_u2' (temp 2-component vector of uint)
+0:65        AtomicMax (temp 2-component vector of uint)
+0:65          'gs_ua2' (shared 2-component vector of uint)
+0:65          'gs_ub2' (shared 2-component vector of uint)
+0:66      AtomicMin (temp void)
+0:66        'gs_ua2' (shared 2-component vector of uint)
+0:66        'gs_ub2' (shared 2-component vector of uint)
+0:67      move second child to first child (temp 2-component vector of uint)
+0:67        'out_u2' (temp 2-component vector of uint)
+0:67        AtomicMin (temp 2-component vector of uint)
+0:67          'gs_ua2' (shared 2-component vector of uint)
+0:67          'gs_ub2' (shared 2-component vector of uint)
+0:68      AtomicOr (temp void)
+0:68        'gs_ua2' (shared 2-component vector of uint)
+0:68        'gs_ub2' (shared 2-component vector of uint)
+0:69      move second child to first child (temp 2-component vector of uint)
+0:69        'out_u2' (temp 2-component vector of uint)
+0:69        AtomicOr (temp 2-component vector of uint)
+0:69          'gs_ua2' (shared 2-component vector of uint)
+0:69          'gs_ub2' (shared 2-component vector of uint)
+0:70      AtomicXor (temp void)
+0:70        'gs_ua2' (shared 2-component vector of uint)
+0:70        'gs_ub2' (shared 2-component vector of uint)
+0:71      move second child to first child (temp 2-component vector of uint)
+0:71        'out_u2' (temp 2-component vector of uint)
+0:71        AtomicXor (temp 2-component vector of uint)
+0:71          'gs_ua2' (shared 2-component vector of uint)
+0:71          'gs_ub2' (shared 2-component vector of uint)
+0:74      Branch: Return with expression
+0:?         Constant:
+0:?           1.000000
+0:?           2.000000
+0:78  Function Definition: ComputeShaderFunction3(vf3;vf3;vf3;vu3;vu3; (temp 3-component vector of float)
+0:78    Function Parameters: 
+0:78      'inF0' (in 3-component vector of float)
+0:78      'inF1' (in 3-component vector of float)
+0:78      'inF2' (in 3-component vector of float)
+0:78      'inU0' (in 3-component vector of uint)
+0:78      'inU1' (in 3-component vector of uint)
+0:?     Sequence
+0:82      all (temp bool)
+0:82        'inF0' (in 3-component vector of float)
+0:85      AtomicAdd (temp void)
+0:85        'gs_ua3' (shared 3-component vector of uint)
+0:85        'gs_ub3' (shared 3-component vector of uint)
+0:86      move second child to first child (temp 3-component vector of uint)
+0:86        'out_u3' (temp 3-component vector of uint)
+0:86        AtomicAdd (temp 3-component vector of uint)
+0:86          'gs_ua3' (shared 3-component vector of uint)
+0:86          'gs_ub3' (shared 3-component vector of uint)
+0:87      AtomicAnd (temp void)
+0:87        'gs_ua3' (shared 3-component vector of uint)
+0:87        'gs_ub3' (shared 3-component vector of uint)
+0:88      move second child to first child (temp 3-component vector of uint)
+0:88        'out_u3' (temp 3-component vector of uint)
+0:88        AtomicAnd (temp 3-component vector of uint)
+0:88          'gs_ua3' (shared 3-component vector of uint)
+0:88          'gs_ub3' (shared 3-component vector of uint)
+0:89      move second child to first child (temp 3-component vector of uint)
+0:89        'out_u3' (temp 3-component vector of uint)
+0:89        AtomicCompSwap (temp 3-component vector of uint)
+0:89          'gs_ua3' (shared 3-component vector of uint)
+0:89          'gs_ub3' (shared 3-component vector of uint)
+0:89          'gs_uc3' (shared 3-component vector of uint)
+0:90      move second child to first child (temp 3-component vector of uint)
+0:90        'out_u3' (temp 3-component vector of uint)
+0:90        AtomicExchange (temp 3-component vector of uint)
+0:90          'gs_ua3' (shared 3-component vector of uint)
+0:90          'gs_ub3' (shared 3-component vector of uint)
+0:91      AtomicMax (temp void)
+0:91        'gs_ua3' (shared 3-component vector of uint)
+0:91        'gs_ub3' (shared 3-component vector of uint)
+0:92      move second child to first child (temp 3-component vector of uint)
+0:92        'out_u3' (temp 3-component vector of uint)
+0:92        AtomicMax (temp 3-component vector of uint)
+0:92          'gs_ua3' (shared 3-component vector of uint)
+0:92          'gs_ub3' (shared 3-component vector of uint)
+0:93      AtomicMin (temp void)
+0:93        'gs_ua3' (shared 3-component vector of uint)
+0:93        'gs_ub3' (shared 3-component vector of uint)
+0:94      move second child to first child (temp 3-component vector of uint)
+0:94        'out_u3' (temp 3-component vector of uint)
+0:94        AtomicMin (temp 3-component vector of uint)
+0:94          'gs_ua3' (shared 3-component vector of uint)
+0:94          'gs_ub3' (shared 3-component vector of uint)
+0:95      AtomicOr (temp void)
+0:95        'gs_ua3' (shared 3-component vector of uint)
+0:95        'gs_ub3' (shared 3-component vector of uint)
+0:96      move second child to first child (temp 3-component vector of uint)
+0:96        'out_u3' (temp 3-component vector of uint)
+0:96        AtomicOr (temp 3-component vector of uint)
+0:96          'gs_ua3' (shared 3-component vector of uint)
+0:96          'gs_ub3' (shared 3-component vector of uint)
+0:97      AtomicXor (temp void)
+0:97        'gs_ua3' (shared 3-component vector of uint)
+0:97        'gs_ub3' (shared 3-component vector of uint)
+0:98      move second child to first child (temp 3-component vector of uint)
+0:98        'out_u3' (temp 3-component vector of uint)
+0:98        AtomicXor (temp 3-component vector of uint)
+0:98          'gs_ua3' (shared 3-component vector of uint)
+0:98          'gs_ub3' (shared 3-component vector of uint)
+0:101      Branch: Return with expression
+0:?         Constant:
+0:?           1.000000
+0:?           2.000000
+0:?           3.000000
+0:105  Function Definition: ComputeShaderFunction(vf4;vf4;vf4;vu4;vu4; (temp 4-component vector of float)
+0:105    Function Parameters: 
+0:105      'inF0' (layout(location=0 ) in 4-component vector of float)
+0:105      'inF1' (layout(location=1 ) in 4-component vector of float)
+0:105      'inF2' (layout(location=2 ) in 4-component vector of float)
+0:105      'inU0' (layout(location=3 ) in 4-component vector of uint)
+0:105      'inU1' (layout(location=4 ) in 4-component vector of uint)
+0:?     Sequence
+0:109      all (temp bool)
+0:109        'inF0' (layout(location=0 ) in 4-component vector of float)
+0:112      AtomicAdd (temp void)
+0:112        'gs_ua4' (shared 4-component vector of uint)
+0:112        'gs_ub4' (shared 4-component vector of uint)
+0:113      move second child to first child (temp 4-component vector of uint)
+0:113        'out_u4' (temp 4-component vector of uint)
+0:113        AtomicAdd (temp 4-component vector of uint)
+0:113          'gs_ua4' (shared 4-component vector of uint)
+0:113          'gs_ub4' (shared 4-component vector of uint)
+0:114      AtomicAnd (temp void)
+0:114        'gs_ua4' (shared 4-component vector of uint)
+0:114        'gs_ub4' (shared 4-component vector of uint)
+0:115      move second child to first child (temp 4-component vector of uint)
+0:115        'out_u4' (temp 4-component vector of uint)
+0:115        AtomicAnd (temp 4-component vector of uint)
+0:115          'gs_ua4' (shared 4-component vector of uint)
+0:115          'gs_ub4' (shared 4-component vector of uint)
+0:116      move second child to first child (temp 4-component vector of uint)
+0:116        'out_u4' (temp 4-component vector of uint)
+0:116        AtomicCompSwap (temp 4-component vector of uint)
+0:116          'gs_ua4' (shared 4-component vector of uint)
+0:116          'gs_ub4' (shared 4-component vector of uint)
+0:116          'gs_uc4' (shared 4-component vector of uint)
+0:117      move second child to first child (temp 4-component vector of uint)
+0:117        'out_u4' (temp 4-component vector of uint)
+0:117        AtomicExchange (temp 4-component vector of uint)
+0:117          'gs_ua4' (shared 4-component vector of uint)
+0:117          'gs_ub4' (shared 4-component vector of uint)
+0:118      AtomicMax (temp void)
+0:118        'gs_ua4' (shared 4-component vector of uint)
+0:118        'gs_ub4' (shared 4-component vector of uint)
+0:119      move second child to first child (temp 4-component vector of uint)
+0:119        'out_u4' (temp 4-component vector of uint)
+0:119        AtomicMax (temp 4-component vector of uint)
+0:119          'gs_ua4' (shared 4-component vector of uint)
+0:119          'gs_ub4' (shared 4-component vector of uint)
+0:120      AtomicMin (temp void)
+0:120        'gs_ua4' (shared 4-component vector of uint)
+0:120        'gs_ub4' (shared 4-component vector of uint)
+0:121      move second child to first child (temp 4-component vector of uint)
+0:121        'out_u4' (temp 4-component vector of uint)
+0:121        AtomicMin (temp 4-component vector of uint)
+0:121          'gs_ua4' (shared 4-component vector of uint)
+0:121          'gs_ub4' (shared 4-component vector of uint)
+0:122      AtomicOr (temp void)
+0:122        'gs_ua4' (shared 4-component vector of uint)
+0:122        'gs_ub4' (shared 4-component vector of uint)
+0:123      move second child to first child (temp 4-component vector of uint)
+0:123        'out_u4' (temp 4-component vector of uint)
+0:123        AtomicOr (temp 4-component vector of uint)
+0:123          'gs_ua4' (shared 4-component vector of uint)
+0:123          'gs_ub4' (shared 4-component vector of uint)
+0:124      AtomicXor (temp void)
+0:124        'gs_ua4' (shared 4-component vector of uint)
+0:124        'gs_ub4' (shared 4-component vector of uint)
+0:125      move second child to first child (temp 4-component vector of uint)
+0:125        'out_u4' (temp 4-component vector of uint)
+0:125        AtomicXor (temp 4-component vector of uint)
+0:125          'gs_ua4' (shared 4-component vector of uint)
+0:125          'gs_ub4' (shared 4-component vector of uint)
+0:128      Sequence
+0:128        move second child to first child (temp 4-component vector of float)
+0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?           Constant:
+0:?             1.000000
+0:?             2.000000
+0:?             3.000000
+0:?             4.000000
+0:128        Branch: Return
+0:?   Linker Objects
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'inF0' (layout(location=0 ) in 4-component vector of float)
+0:?     'inF1' (layout(location=1 ) in 4-component vector of float)
+0:?     'inF2' (layout(location=2 ) in 4-component vector of float)
+0:?     'inU0' (layout(location=3 ) in 4-component vector of uint)
+0:?     'inU1' (layout(location=4 ) in 4-component vector of uint)
+0:?     'gs_ua' (shared uint)
+0:?     'gs_ub' (shared uint)
+0:?     'gs_uc' (shared uint)
+0:?     'gs_ua2' (shared 2-component vector of uint)
+0:?     'gs_ub2' (shared 2-component vector of uint)
+0:?     'gs_uc2' (shared 2-component vector of uint)
+0:?     'gs_ua3' (shared 3-component vector of uint)
+0:?     'gs_ub3' (shared 3-component vector of uint)
+0:?     'gs_uc3' (shared 3-component vector of uint)
+0:?     'gs_ua4' (shared 4-component vector of uint)
+0:?     'gs_ub4' (shared 4-component vector of uint)
+0:?     'gs_uc4' (shared 4-component vector of uint)
+
+// Module Version 10000
+// Generated by (magic number): 80001
+// Id's are bound by 224
+
+                              Capability Shader
+               1:             ExtInstImport  "GLSL.std.450"
+                              MemoryModel Logical GLSL450
+                              EntryPoint GLCompute 4  "ComputeShaderFunction" 175 215 219 220 222 223
+                              ExecutionMode 4 LocalSize 1 1 1
+                              Name 4  "ComputeShaderFunction"
+                              Name 16  "ComputeShaderFunctionS(f1;f1;f1;u1;u1;"
+                              Name 11  "inF0"
+                              Name 12  "inF1"
+                              Name 13  "inF2"
+                              Name 14  "inU0"
+                              Name 15  "inU1"
+                              Name 22  "ComputeShaderFunction1(vf1;vf1;vf1;"
+                              Name 19  "inF0"
+                              Name 20  "inF1"
+                              Name 21  "inF2"
+                              Name 34  "ComputeShaderFunction2(vf2;vf2;vf2;vu2;vu2;"
+                              Name 29  "inF0"
+                              Name 30  "inF1"
+                              Name 31  "inF2"
+                              Name 32  "inU0"
+                              Name 33  "inU1"
+                              Name 46  "ComputeShaderFunction3(vf3;vf3;vf3;vu3;vu3;"
+                              Name 41  "inF0"
+                              Name 42  "inF1"
+                              Name 43  "inF2"
+                              Name 44  "inU0"
+                              Name 45  "inU1"
+                              Name 52  "gs_ua"
+                              Name 53  "gs_ub"
+                              Name 58  "out_u1"
+                              Name 66  "gs_uc"
+                              Name 95  "gs_ua2"
+                              Name 96  "gs_ub2"
+                              Name 99  "out_u2"
+                              Name 107  "gs_uc2"
+                              Name 136  "gs_ua3"
+                              Name 137  "gs_ub3"
+                              Name 140  "out_u3"
+                              Name 148  "gs_uc3"
+                              Name 175  "inF0"
+                              Name 180  "gs_ua4"
+                              Name 181  "gs_ub4"
+                              Name 185  "out_u4"
+                              Name 193  "gs_uc4"
+                              Name 215  "@entryPointOutput"
+                              Name 219  "inF1"
+                              Name 220  "inF2"
+                              Name 222  "inU0"
+                              Name 223  "inU1"
+                              Decorate 175(inF0) Location 0
+                              Decorate 215(@entryPointOutput) Location 0
+                              Decorate 219(inF1) Location 1
+                              Decorate 220(inF2) Location 2
+                              Decorate 222(inU0) Location 3
+                              Decorate 223(inU1) Location 4
+               2:             TypeVoid
+               3:             TypeFunction 2
+               6:             TypeFloat 32
+               7:             TypePointer Function 6(float)
+               8:             TypeInt 32 0
+               9:             TypePointer Function 8(int)
+              10:             TypeFunction 6(float) 7(ptr) 7(ptr) 7(ptr) 9(ptr) 9(ptr)
+              18:             TypeFunction 6(float) 7(ptr) 7(ptr) 7(ptr)
+              24:             TypeVector 6(float) 2
+              25:             TypePointer Function 24(fvec2)
+              26:             TypeVector 8(int) 2
+              27:             TypePointer Function 26(ivec2)
+              28:             TypeFunction 24(fvec2) 25(ptr) 25(ptr) 25(ptr) 27(ptr) 27(ptr)
+              36:             TypeVector 6(float) 3
+              37:             TypePointer Function 36(fvec3)
+              38:             TypeVector 8(int) 3
+              39:             TypePointer Function 38(ivec3)
+              40:             TypeFunction 36(fvec3) 37(ptr) 37(ptr) 37(ptr) 39(ptr) 39(ptr)
+              49:             TypeBool
+              51:             TypePointer Workgroup 8(int)
+       52(gs_ua):     51(ptr) Variable Workgroup
+       53(gs_ub):     51(ptr) Variable Workgroup
+              55:      8(int) Constant 1
+              56:      8(int) Constant 0
+       66(gs_uc):     51(ptr) Variable Workgroup
+              87:    6(float) Constant 0
+              94:             TypePointer Workgroup 26(ivec2)
+      95(gs_ua2):     94(ptr) Variable Workgroup
+      96(gs_ub2):     94(ptr) Variable Workgroup
+     107(gs_uc2):     94(ptr) Variable Workgroup
+             128:    6(float) Constant 1065353216
+             129:    6(float) Constant 1073741824
+             130:   24(fvec2) ConstantComposite 128 129
+             135:             TypePointer Workgroup 38(ivec3)
+     136(gs_ua3):    135(ptr) Variable Workgroup
+     137(gs_ub3):    135(ptr) Variable Workgroup
+     148(gs_uc3):    135(ptr) Variable Workgroup
+             169:    6(float) Constant 1077936128
+             170:   36(fvec3) ConstantComposite 128 129 169
+             173:             TypeVector 6(float) 4
+             174:             TypePointer Input 173(fvec4)
+       175(inF0):    174(ptr) Variable Input
+             178:             TypeVector 8(int) 4
+             179:             TypePointer Workgroup 178(ivec4)
+     180(gs_ua4):    179(ptr) Variable Workgroup
+     181(gs_ub4):    179(ptr) Variable Workgroup
+             184:             TypePointer Function 178(ivec4)
+     193(gs_uc4):    179(ptr) Variable Workgroup
+             214:             TypePointer Output 173(fvec4)
+215(@entryPointOutput):    214(ptr) Variable Output
+             216:    6(float) Constant 1082130432
+             217:  173(fvec4) ConstantComposite 128 129 169 216
+       219(inF1):    174(ptr) Variable Input
+       220(inF2):    174(ptr) Variable Input
+             221:             TypePointer Input 178(ivec4)
+       222(inU0):    221(ptr) Variable Input
+       223(inU1):    221(ptr) Variable Input
+4(ComputeShaderFunction):           2 Function None 3
+               5:             Label
+     185(out_u4):    184(ptr) Variable Function
+             176:  173(fvec4) Load 175(inF0)
+             177:    49(bool) All 176
+             182:  178(ivec4) Load 181(gs_ub4)
+             183:           2 AtomicIAdd 180(gs_ua4) 55 56 182
+             186:  178(ivec4) Load 181(gs_ub4)
+             187:  178(ivec4) AtomicIAdd 180(gs_ua4) 55 56 186
+                              Store 185(out_u4) 187
+             188:  178(ivec4) Load 181(gs_ub4)
+             189:           2 AtomicAnd 180(gs_ua4) 55 56 188
+             190:  178(ivec4) Load 181(gs_ub4)
+             191:  178(ivec4) AtomicAnd 180(gs_ua4) 55 56 190
+                              Store 185(out_u4) 191
+             192:  178(ivec4) Load 181(gs_ub4)
+             194:  178(ivec4) Load 193(gs_uc4)
+             195:  178(ivec4) AtomicCompareExchange 180(gs_ua4) 55 56 56 194 192
+                              Store 185(out_u4) 195
+             196:  178(ivec4) Load 181(gs_ub4)
+             197:  178(ivec4) AtomicExchange 180(gs_ua4) 55 56 196
+                              Store 185(out_u4) 197
+             198:  178(ivec4) Load 181(gs_ub4)
+             199:           2 AtomicSMax 180(gs_ua4) 55 56 198
+             200:  178(ivec4) Load 181(gs_ub4)
+             201:  178(ivec4) AtomicUMax 180(gs_ua4) 55 56 200
+                              Store 185(out_u4) 201
+             202:  178(ivec4) Load 181(gs_ub4)
+             203:           2 AtomicSMin 180(gs_ua4) 55 56 202
+             204:  178(ivec4) Load 181(gs_ub4)
+             205:  178(ivec4) AtomicUMin 180(gs_ua4) 55 56 204
+                              Store 185(out_u4) 205
+             206:  178(ivec4) Load 181(gs_ub4)
+             207:           2 AtomicOr 180(gs_ua4) 55 56 206
+             208:  178(ivec4) Load 181(gs_ub4)
+             209:  178(ivec4) AtomicOr 180(gs_ua4) 55 56 208
+                              Store 185(out_u4) 209
+             210:  178(ivec4) Load 181(gs_ub4)
+             211:           2 AtomicXor 180(gs_ua4) 55 56 210
+             212:  178(ivec4) Load 181(gs_ub4)
+             213:  178(ivec4) AtomicXor 180(gs_ua4) 55 56 212
+                              Store 185(out_u4) 213
+                              Store 215(@entryPointOutput) 217
+                              Return
+                              FunctionEnd
+16(ComputeShaderFunctionS(f1;f1;f1;u1;u1;):    6(float) Function None 10
+        11(inF0):      7(ptr) FunctionParameter
+        12(inF1):      7(ptr) FunctionParameter
+        13(inF2):      7(ptr) FunctionParameter
+        14(inU0):      9(ptr) FunctionParameter
+        15(inU1):      9(ptr) FunctionParameter
+              17:             Label
+      58(out_u1):      9(ptr) Variable Function
+              48:    6(float) Load 11(inF0)
+              50:    49(bool) All 48
+              54:      8(int) Load 53(gs_ub)
+              57:           2 AtomicIAdd 52(gs_ua) 55 56 54
+              59:      8(int) Load 53(gs_ub)
+              60:      8(int) AtomicIAdd 52(gs_ua) 55 56 59
+                              Store 58(out_u1) 60
+              61:      8(int) Load 53(gs_ub)
+              62:           2 AtomicAnd 52(gs_ua) 55 56 61
+              63:      8(int) Load 53(gs_ub)
+              64:      8(int) AtomicAnd 52(gs_ua) 55 56 63
+                              Store 58(out_u1) 64
+              65:      8(int) Load 53(gs_ub)
+              67:      8(int) Load 66(gs_uc)
+              68:      8(int) AtomicCompareExchange 52(gs_ua) 55 56 56 67 65
+                              Store 58(out_u1) 68
+              69:      8(int) Load 53(gs_ub)
+              70:      8(int) AtomicExchange 52(gs_ua) 55 56 69
+                              Store 58(out_u1) 70
+              71:      8(int) Load 53(gs_ub)
+              72:           2 AtomicSMax 52(gs_ua) 55 56 71
+              73:      8(int) Load 53(gs_ub)
+              74:      8(int) AtomicUMax 52(gs_ua) 55 56 73
+                              Store 58(out_u1) 74
+              75:      8(int) Load 53(gs_ub)
+              76:           2 AtomicSMin 52(gs_ua) 55 56 75
+              77:      8(int) Load 53(gs_ub)
+              78:      8(int) AtomicUMin 52(gs_ua) 55 56 77
+                              Store 58(out_u1) 78
+              79:      8(int) Load 53(gs_ub)
+              80:           2 AtomicOr 52(gs_ua) 55 56 79
+              81:      8(int) Load 53(gs_ub)
+              82:      8(int) AtomicOr 52(gs_ua) 55 56 81
+                              Store 58(out_u1) 82
+              83:      8(int) Load 53(gs_ub)
+              84:           2 AtomicXor 52(gs_ua) 55 56 83
+              85:      8(int) Load 53(gs_ub)
+              86:      8(int) AtomicXor 52(gs_ua) 55 56 85
+                              Store 58(out_u1) 86
+                              ReturnValue 87
+                              FunctionEnd
+22(ComputeShaderFunction1(vf1;vf1;vf1;):    6(float) Function None 18
+        19(inF0):      7(ptr) FunctionParameter
+        20(inF1):      7(ptr) FunctionParameter
+        21(inF2):      7(ptr) FunctionParameter
+              23:             Label
+                              ReturnValue 87
+                              FunctionEnd
+34(ComputeShaderFunction2(vf2;vf2;vf2;vu2;vu2;):   24(fvec2) Function None 28
+        29(inF0):     25(ptr) FunctionParameter
+        30(inF1):     25(ptr) FunctionParameter
+        31(inF2):     25(ptr) FunctionParameter
+        32(inU0):     27(ptr) FunctionParameter
+        33(inU1):     27(ptr) FunctionParameter
+              35:             Label
+      99(out_u2):     27(ptr) Variable Function
+              92:   24(fvec2) Load 29(inF0)
+              93:    49(bool) All 92
+              97:   26(ivec2) Load 96(gs_ub2)
+              98:           2 AtomicIAdd 95(gs_ua2) 55 56 97
+             100:   26(ivec2) Load 96(gs_ub2)
+             101:   26(ivec2) AtomicIAdd 95(gs_ua2) 55 56 100
+                              Store 99(out_u2) 101
+             102:   26(ivec2) Load 96(gs_ub2)
+             103:           2 AtomicAnd 95(gs_ua2) 55 56 102
+             104:   26(ivec2) Load 96(gs_ub2)
+             105:   26(ivec2) AtomicAnd 95(gs_ua2) 55 56 104
+                              Store 99(out_u2) 105
+             106:   26(ivec2) Load 96(gs_ub2)
+             108:   26(ivec2) Load 107(gs_uc2)
+             109:   26(ivec2) AtomicCompareExchange 95(gs_ua2) 55 56 56 108 106
+                              Store 99(out_u2) 109
+             110:   26(ivec2) Load 96(gs_ub2)
+             111:   26(ivec2) AtomicExchange 95(gs_ua2) 55 56 110
+                              Store 99(out_u2) 111
+             112:   26(ivec2) Load 96(gs_ub2)
+             113:           2 AtomicSMax 95(gs_ua2) 55 56 112
+             114:   26(ivec2) Load 96(gs_ub2)
+             115:   26(ivec2) AtomicUMax 95(gs_ua2) 55 56 114
+                              Store 99(out_u2) 115
+             116:   26(ivec2) Load 96(gs_ub2)
+             117:           2 AtomicSMin 95(gs_ua2) 55 56 116
+             118:   26(ivec2) Load 96(gs_ub2)
+             119:   26(ivec2) AtomicUMin 95(gs_ua2) 55 56 118
+                              Store 99(out_u2) 119
+             120:   26(ivec2) Load 96(gs_ub2)
+             121:           2 AtomicOr 95(gs_ua2) 55 56 120
+             122:   26(ivec2) Load 96(gs_ub2)
+             123:   26(ivec2) AtomicOr 95(gs_ua2) 55 56 122
+                              Store 99(out_u2) 123
+             124:   26(ivec2) Load 96(gs_ub2)
+             125:           2 AtomicXor 95(gs_ua2) 55 56 124
+             126:   26(ivec2) Load 96(gs_ub2)
+             127:   26(ivec2) AtomicXor 95(gs_ua2) 55 56 126
+                              Store 99(out_u2) 127
+                              ReturnValue 130
+                              FunctionEnd
+46(ComputeShaderFunction3(vf3;vf3;vf3;vu3;vu3;):   36(fvec3) Function None 40
+        41(inF0):     37(ptr) FunctionParameter
+        42(inF1):     37(ptr) FunctionParameter
+        43(inF2):     37(ptr) FunctionParameter
+        44(inU0):     39(ptr) FunctionParameter
+        45(inU1):     39(ptr) FunctionParameter
+              47:             Label
+     140(out_u3):     39(ptr) Variable Function
+             133:   36(fvec3) Load 41(inF0)
+             134:    49(bool) All 133
+             138:   38(ivec3) Load 137(gs_ub3)
+             139:           2 AtomicIAdd 136(gs_ua3) 55 56 138
+             141:   38(ivec3) Load 137(gs_ub3)
+             142:   38(ivec3) AtomicIAdd 136(gs_ua3) 55 56 141
+                              Store 140(out_u3) 142
+             143:   38(ivec3) Load 137(gs_ub3)
+             144:           2 AtomicAnd 136(gs_ua3) 55 56 143
+             145:   38(ivec3) Load 137(gs_ub3)
+             146:   38(ivec3) AtomicAnd 136(gs_ua3) 55 56 145
+                              Store 140(out_u3) 146
+             147:   38(ivec3) Load 137(gs_ub3)
+             149:   38(ivec3) Load 148(gs_uc3)
+             150:   38(ivec3) AtomicCompareExchange 136(gs_ua3) 55 56 56 149 147
+                              Store 140(out_u3) 150
+             151:   38(ivec3) Load 137(gs_ub3)
+             152:   38(ivec3) AtomicExchange 136(gs_ua3) 55 56 151
+                              Store 140(out_u3) 152
+             153:   38(ivec3) Load 137(gs_ub3)
+             154:           2 AtomicSMax 136(gs_ua3) 55 56 153
+             155:   38(ivec3) Load 137(gs_ub3)
+             156:   38(ivec3) AtomicUMax 136(gs_ua3) 55 56 155
+                              Store 140(out_u3) 156
+             157:   38(ivec3) Load 137(gs_ub3)
+             158:           2 AtomicSMin 136(gs_ua3) 55 56 157
+             159:   38(ivec3) Load 137(gs_ub3)
+             160:   38(ivec3) AtomicUMin 136(gs_ua3) 55 56 159
+                              Store 140(out_u3) 160
+             161:   38(ivec3) Load 137(gs_ub3)
+             162:           2 AtomicOr 136(gs_ua3) 55 56 161
+             163:   38(ivec3) Load 137(gs_ub3)
+             164:   38(ivec3) AtomicOr 136(gs_ua3) 55 56 163
+                              Store 140(out_u3) 164
+             165:   38(ivec3) Load 137(gs_ub3)
+             166:           2 AtomicXor 136(gs_ua3) 55 56 165
+             167:   38(ivec3) Load 137(gs_ub3)
+             168:   38(ivec3) AtomicXor 136(gs_ua3) 55 56 167
+                              Store 140(out_u3) 168
+                              ReturnValue 170
+                              FunctionEnd

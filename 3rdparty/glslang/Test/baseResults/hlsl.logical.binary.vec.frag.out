@@ -1,0 +1,412 @@
+hlsl.logical.binary.vec.frag
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:10  Function Definition: main( (temp structure{temp 4-component vector of float Color})
+0:10    Function Parameters: 
+0:?     Sequence
+0:11      Sequence
+0:11        move second child to first child (temp 4-component vector of bool)
+0:11          'r00' (temp 4-component vector of bool)
+0:11          Negate conditional (temp 4-component vector of bool)
+0:11            b4a: direct index for structure (layout(offset=0 ) uniform 4-component vector of bool)
+0:11              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:11              Constant:
+0:11                0 (const uint)
+0:12      Sequence
+0:12        move second child to first child (temp 4-component vector of bool)
+0:12          'r01' (temp 4-component vector of bool)
+0:12          logical-and (temp 4-component vector of bool)
+0:12            b4a: direct index for structure (layout(offset=0 ) uniform 4-component vector of bool)
+0:12              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:12              Constant:
+0:12                0 (const uint)
+0:12            b4b: direct index for structure (layout(offset=16 ) uniform 4-component vector of bool)
+0:12              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:12              Constant:
+0:12                1 (const uint)
+0:13      Sequence
+0:13        move second child to first child (temp 4-component vector of bool)
+0:13          'r02' (temp 4-component vector of bool)
+0:13          logical-or (temp 4-component vector of bool)
+0:13            b4a: direct index for structure (layout(offset=0 ) uniform 4-component vector of bool)
+0:13              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:13              Constant:
+0:13                0 (const uint)
+0:13            b4b: direct index for structure (layout(offset=16 ) uniform 4-component vector of bool)
+0:13              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:13              Constant:
+0:13                1 (const uint)
+0:15      Sequence
+0:15        move second child to first child (temp 4-component vector of bool)
+0:15          'r10' (temp 4-component vector of bool)
+0:15          logical-and (temp 4-component vector of bool)
+0:15            Construct bvec4 (layout(offset=16 ) uniform 4-component vector of bool)
+0:15              b1a: direct index for structure (layout(offset=32 ) uniform bool)
+0:15                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:15                Constant:
+0:15                  2 (const uint)
+0:15            b4b: direct index for structure (layout(offset=16 ) uniform 4-component vector of bool)
+0:15              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:15              Constant:
+0:15                1 (const uint)
+0:16      Sequence
+0:16        move second child to first child (temp 4-component vector of bool)
+0:16          'r11' (temp 4-component vector of bool)
+0:16          logical-or (temp 4-component vector of bool)
+0:16            Construct bvec4 (layout(offset=16 ) uniform 4-component vector of bool)
+0:16              b1a: direct index for structure (layout(offset=32 ) uniform bool)
+0:16                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:16                Constant:
+0:16                  2 (const uint)
+0:16            b4b: direct index for structure (layout(offset=16 ) uniform 4-component vector of bool)
+0:16              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:16              Constant:
+0:16                1 (const uint)
+0:18      Sequence
+0:18        move second child to first child (temp 4-component vector of bool)
+0:18          'r20' (temp 4-component vector of bool)
+0:18          logical-and (temp 4-component vector of bool)
+0:18            b4a: direct index for structure (layout(offset=0 ) uniform 4-component vector of bool)
+0:18              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:18              Constant:
+0:18                0 (const uint)
+0:18            Construct bvec4 (layout(offset=0 ) uniform 4-component vector of bool)
+0:18              b1b: direct index for structure (layout(offset=36 ) uniform bool)
+0:18                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:18                Constant:
+0:18                  3 (const uint)
+0:19      Sequence
+0:19        move second child to first child (temp 4-component vector of bool)
+0:19          'r21' (temp 4-component vector of bool)
+0:19          logical-or (temp 4-component vector of bool)
+0:19            b4a: direct index for structure (layout(offset=0 ) uniform 4-component vector of bool)
+0:19              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:19              Constant:
+0:19                0 (const uint)
+0:19            Construct bvec4 (layout(offset=0 ) uniform 4-component vector of bool)
+0:19              b1b: direct index for structure (layout(offset=36 ) uniform bool)
+0:19                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:19                Constant:
+0:19                  3 (const uint)
+0:22      move second child to first child (temp 4-component vector of float)
+0:22        Color: direct index for structure (temp 4-component vector of float)
+0:22          'psout' (temp structure{temp 4-component vector of float Color})
+0:22          Constant:
+0:22            0 (const int)
+0:22        Convert bool to float (temp 4-component vector of float)
+0:22          logical-or (temp 4-component vector of bool)
+0:22            logical-or (temp 4-component vector of bool)
+0:22              logical-or (temp 4-component vector of bool)
+0:22                logical-or (temp 4-component vector of bool)
+0:22                  logical-or (temp 4-component vector of bool)
+0:22                    logical-or (temp 4-component vector of bool)
+0:22                      'r00' (temp 4-component vector of bool)
+0:22                      'r01' (temp 4-component vector of bool)
+0:22                    'r02' (temp 4-component vector of bool)
+0:22                  'r10' (temp 4-component vector of bool)
+0:22                'r11' (temp 4-component vector of bool)
+0:22              'r20' (temp 4-component vector of bool)
+0:22            'r21' (temp 4-component vector of bool)
+0:23      Sequence
+0:23        Sequence
+0:23          move second child to first child (temp 4-component vector of float)
+0:?             'Color' (layout(location=0 ) out 4-component vector of float)
+0:23            Color: direct index for structure (temp 4-component vector of float)
+0:23              'psout' (temp structure{temp 4-component vector of float Color})
+0:23              Constant:
+0:23                0 (const int)
+0:23        Branch: Return
+0:?   Linker Objects
+0:?     'Color' (layout(location=0 ) out 4-component vector of float)
+0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+
+
+Linked fragment stage:
+
+
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:10  Function Definition: main( (temp structure{temp 4-component vector of float Color})
+0:10    Function Parameters: 
+0:?     Sequence
+0:11      Sequence
+0:11        move second child to first child (temp 4-component vector of bool)
+0:11          'r00' (temp 4-component vector of bool)
+0:11          Negate conditional (temp 4-component vector of bool)
+0:11            b4a: direct index for structure (layout(offset=0 ) uniform 4-component vector of bool)
+0:11              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:11              Constant:
+0:11                0 (const uint)
+0:12      Sequence
+0:12        move second child to first child (temp 4-component vector of bool)
+0:12          'r01' (temp 4-component vector of bool)
+0:12          logical-and (temp 4-component vector of bool)
+0:12            b4a: direct index for structure (layout(offset=0 ) uniform 4-component vector of bool)
+0:12              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:12              Constant:
+0:12                0 (const uint)
+0:12            b4b: direct index for structure (layout(offset=16 ) uniform 4-component vector of bool)
+0:12              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:12              Constant:
+0:12                1 (const uint)
+0:13      Sequence
+0:13        move second child to first child (temp 4-component vector of bool)
+0:13          'r02' (temp 4-component vector of bool)
+0:13          logical-or (temp 4-component vector of bool)
+0:13            b4a: direct index for structure (layout(offset=0 ) uniform 4-component vector of bool)
+0:13              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:13              Constant:
+0:13                0 (const uint)
+0:13            b4b: direct index for structure (layout(offset=16 ) uniform 4-component vector of bool)
+0:13              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:13              Constant:
+0:13                1 (const uint)
+0:15      Sequence
+0:15        move second child to first child (temp 4-component vector of bool)
+0:15          'r10' (temp 4-component vector of bool)
+0:15          logical-and (temp 4-component vector of bool)
+0:15            Construct bvec4 (layout(offset=16 ) uniform 4-component vector of bool)
+0:15              b1a: direct index for structure (layout(offset=32 ) uniform bool)
+0:15                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:15                Constant:
+0:15                  2 (const uint)
+0:15            b4b: direct index for structure (layout(offset=16 ) uniform 4-component vector of bool)
+0:15              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:15              Constant:
+0:15                1 (const uint)
+0:16      Sequence
+0:16        move second child to first child (temp 4-component vector of bool)
+0:16          'r11' (temp 4-component vector of bool)
+0:16          logical-or (temp 4-component vector of bool)
+0:16            Construct bvec4 (layout(offset=16 ) uniform 4-component vector of bool)
+0:16              b1a: direct index for structure (layout(offset=32 ) uniform bool)
+0:16                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:16                Constant:
+0:16                  2 (const uint)
+0:16            b4b: direct index for structure (layout(offset=16 ) uniform 4-component vector of bool)
+0:16              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:16              Constant:
+0:16                1 (const uint)
+0:18      Sequence
+0:18        move second child to first child (temp 4-component vector of bool)
+0:18          'r20' (temp 4-component vector of bool)
+0:18          logical-and (temp 4-component vector of bool)
+0:18            b4a: direct index for structure (layout(offset=0 ) uniform 4-component vector of bool)
+0:18              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:18              Constant:
+0:18                0 (const uint)
+0:18            Construct bvec4 (layout(offset=0 ) uniform 4-component vector of bool)
+0:18              b1b: direct index for structure (layout(offset=36 ) uniform bool)
+0:18                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:18                Constant:
+0:18                  3 (const uint)
+0:19      Sequence
+0:19        move second child to first child (temp 4-component vector of bool)
+0:19          'r21' (temp 4-component vector of bool)
+0:19          logical-or (temp 4-component vector of bool)
+0:19            b4a: direct index for structure (layout(offset=0 ) uniform 4-component vector of bool)
+0:19              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:19              Constant:
+0:19                0 (const uint)
+0:19            Construct bvec4 (layout(offset=0 ) uniform 4-component vector of bool)
+0:19              b1b: direct index for structure (layout(offset=36 ) uniform bool)
+0:19                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+0:19                Constant:
+0:19                  3 (const uint)
+0:22      move second child to first child (temp 4-component vector of float)
+0:22        Color: direct index for structure (temp 4-component vector of float)
+0:22          'psout' (temp structure{temp 4-component vector of float Color})
+0:22          Constant:
+0:22            0 (const int)
+0:22        Convert bool to float (temp 4-component vector of float)
+0:22          logical-or (temp 4-component vector of bool)
+0:22            logical-or (temp 4-component vector of bool)
+0:22              logical-or (temp 4-component vector of bool)
+0:22                logical-or (temp 4-component vector of bool)
+0:22                  logical-or (temp 4-component vector of bool)
+0:22                    logical-or (temp 4-component vector of bool)
+0:22                      'r00' (temp 4-component vector of bool)
+0:22                      'r01' (temp 4-component vector of bool)
+0:22                    'r02' (temp 4-component vector of bool)
+0:22                  'r10' (temp 4-component vector of bool)
+0:22                'r11' (temp 4-component vector of bool)
+0:22              'r20' (temp 4-component vector of bool)
+0:22            'r21' (temp 4-component vector of bool)
+0:23      Sequence
+0:23        Sequence
+0:23          move second child to first child (temp 4-component vector of float)
+0:?             'Color' (layout(location=0 ) out 4-component vector of float)
+0:23            Color: direct index for structure (temp 4-component vector of float)
+0:23              'psout' (temp structure{temp 4-component vector of float Color})
+0:23              Constant:
+0:23                0 (const int)
+0:23        Branch: Return
+0:?   Linker Objects
+0:?     'Color' (layout(location=0 ) out 4-component vector of float)
+0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of bool b4a, layout(offset=16 ) uniform 4-component vector of bool b4b, layout(offset=32 ) uniform bool b1a, layout(offset=36 ) uniform bool b1b})
+
+// Module Version 10000
+// Generated by (magic number): 80001
+// Id's are bound by 115
+
+                              Capability Shader
+               1:             ExtInstImport  "GLSL.std.450"
+                              MemoryModel Logical GLSL450
+                              EntryPoint Fragment 4  "main" 111
+                              ExecutionMode 4 OriginUpperLeft
+                              Name 4  "main"
+                              Name 9  "r00"
+                              Name 12  "$Global"
+                              MemberName 12($Global) 0  "b4a"
+                              MemberName 12($Global) 1  "b4b"
+                              MemberName 12($Global) 2  "b1a"
+                              MemberName 12($Global) 3  "b1b"
+                              Name 14  ""
+                              Name 24  "r01"
+                              Name 33  "r02"
+                              Name 41  "r10"
+                              Name 52  "r11"
+                              Name 61  "r20"
+                              Name 73  "r21"
+                              Name 87  "PS_OUTPUT"
+                              MemberName 87(PS_OUTPUT) 0  "Color"
+                              Name 89  "psout"
+                              Name 111  "Color"
+                              MemberDecorate 12($Global) 0 Offset 0
+                              MemberDecorate 12($Global) 1 Offset 16
+                              MemberDecorate 12($Global) 2 Offset 32
+                              MemberDecorate 12($Global) 3 Offset 36
+                              Decorate 12($Global) Block
+                              Decorate 14 DescriptorSet 0
+                              Decorate 111(Color) Location 0
+               2:             TypeVoid
+               3:             TypeFunction 2
+               6:             TypeBool
+               7:             TypeVector 6(bool) 4
+               8:             TypePointer Function 7(bvec4)
+              10:             TypeInt 32 0
+              11:             TypeVector 10(int) 4
+     12($Global):             TypeStruct 11(ivec4) 11(ivec4) 10(int) 10(int)
+              13:             TypePointer Uniform 12($Global)
+              14:     13(ptr) Variable Uniform
+              15:             TypeInt 32 1
+              16:     15(int) Constant 0
+              17:             TypePointer Uniform 11(ivec4)
+              20:     10(int) Constant 0
+              21:   11(ivec4) ConstantComposite 20 20 20 20
+              28:     15(int) Constant 1
+              42:     15(int) Constant 2
+              43:             TypePointer Uniform 10(int)
+              67:     15(int) Constant 3
+              85:             TypeFloat 32
+              86:             TypeVector 85(float) 4
+   87(PS_OUTPUT):             TypeStruct 86(fvec4)
+              88:             TypePointer Function 87(PS_OUTPUT)
+             103:   85(float) Constant 0
+             104:   85(float) Constant 1065353216
+             105:   86(fvec4) ConstantComposite 103 103 103 103
+             106:   86(fvec4) ConstantComposite 104 104 104 104
+             108:             TypePointer Function 86(fvec4)
+             110:             TypePointer Output 86(fvec4)
+      111(Color):    110(ptr) Variable Output
+         4(main):           2 Function None 3
+               5:             Label
+          9(r00):      8(ptr) Variable Function
+         24(r01):      8(ptr) Variable Function
+         33(r02):      8(ptr) Variable Function
+         41(r10):      8(ptr) Variable Function
+         52(r11):      8(ptr) Variable Function
+         61(r20):      8(ptr) Variable Function
+         73(r21):      8(ptr) Variable Function
+       89(psout):     88(ptr) Variable Function
+              18:     17(ptr) AccessChain 14 16
+              19:   11(ivec4) Load 18
+              22:    7(bvec4) INotEqual 19 21
+              23:    7(bvec4) LogicalNot 22
+                              Store 9(r00) 23
+              25:     17(ptr) AccessChain 14 16
+              26:   11(ivec4) Load 25
+              27:    7(bvec4) INotEqual 26 21
+              29:     17(ptr) AccessChain 14 28
+              30:   11(ivec4) Load 29
+              31:    7(bvec4) INotEqual 30 21
+              32:    7(bvec4) LogicalAnd 27 31
+                              Store 24(r01) 32
+              34:     17(ptr) AccessChain 14 16
+              35:   11(ivec4) Load 34
+              36:    7(bvec4) INotEqual 35 21
+              37:     17(ptr) AccessChain 14 28
+              38:   11(ivec4) Load 37
+              39:    7(bvec4) INotEqual 38 21
+              40:    7(bvec4) LogicalOr 36 39
+                              Store 33(r02) 40
+              44:     43(ptr) AccessChain 14 42
+              45:     10(int) Load 44
+              46:     6(bool) INotEqual 45 20
+              47:    7(bvec4) CompositeConstruct 46 46 46 46
+              48:     17(ptr) AccessChain 14 28
+              49:   11(ivec4) Load 48
+              50:    7(bvec4) INotEqual 49 21
+              51:    7(bvec4) LogicalAnd 47 50
+                              Store 41(r10) 51
+              53:     43(ptr) AccessChain 14 42
+              54:     10(int) Load 53
+              55:     6(bool) INotEqual 54 20
+              56:    7(bvec4) CompositeConstruct 55 55 55 55
+              57:     17(ptr) AccessChain 14 28
+              58:   11(ivec4) Load 57
+              59:    7(bvec4) INotEqual 58 21
+              60:    7(bvec4) LogicalOr 56 59
+                              Store 52(r11) 60
+              62:     17(ptr) AccessChain 14 16
+              63:   11(ivec4) Load 62
+              64:    7(bvec4) INotEqual 63 21
+                              SelectionMerge 66 None
+                              BranchConditional 64 65 66
+              65:               Label
+              68:     43(ptr)   AccessChain 14 67
+              69:     10(int)   Load 68
+              70:     6(bool)   INotEqual 69 20
+              71:    7(bvec4)   CompositeConstruct 70 70 70 70
+                                Branch 66
+              66:             Label
+              72:     6(bool) Phi 64 5 71 65
+                              Store 61(r20) 72
+              74:     17(ptr) AccessChain 14 16
+              75:   11(ivec4) Load 74
+              76:    7(bvec4) INotEqual 75 21
+              77:     6(bool) LogicalNot 76
+                              SelectionMerge 79 None
+                              BranchConditional 77 78 79
+              78:               Label
+              80:     43(ptr)   AccessChain 14 67
+              81:     10(int)   Load 80
+              82:     6(bool)   INotEqual 81 20
+              83:    7(bvec4)   CompositeConstruct 82 82 82 82
+                                Branch 79
+              79:             Label
+              84:     6(bool) Phi 76 66 83 78
+                              Store 73(r21) 84
+              90:    7(bvec4) Load 9(r00)
+              91:    7(bvec4) Load 24(r01)
+              92:    7(bvec4) LogicalOr 90 91
+              93:    7(bvec4) Load 33(r02)
+              94:    7(bvec4) LogicalOr 92 93
+              95:    7(bvec4) Load 41(r10)
+              96:    7(bvec4) LogicalOr 94 95
+              97:    7(bvec4) Load 52(r11)
+              98:    7(bvec4) LogicalOr 96 97
+              99:    7(bvec4) Load 61(r20)
+             100:    7(bvec4) LogicalOr 98 99
+             101:    7(bvec4) Load 73(r21)
+             102:    7(bvec4) LogicalOr 100 101
+             107:   86(fvec4) Select 102 106 105
+             109:    108(ptr) AccessChain 89(psout) 16
+                              Store 109 107
+             112:    108(ptr) AccessChain 89(psout) 16
+             113:   86(fvec4) Load 112
+                              Store 111(Color) 113
+                              Return
+                              FunctionEnd

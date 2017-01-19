@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  *
  * vim: set tabstop=4 expandtab:
@@ -330,6 +330,10 @@ typedef struct bgfx_stats
     int64_t waitRender;
     int64_t waitSubmit;
 
+    uint32_t numDraw;
+    uint32_t numCompute;
+    uint32_t maxGpuLatency;
+
     uint16_t width;
     uint16_t height;
     uint16_t textWidth;
@@ -545,10 +549,10 @@ BGFX_C_API uint32_t bgfx_topology_convert(bgfx_topology_convert_t _conversion, v
 BGFX_C_API void bgfx_topology_sort_tri_list(bgfx_topology_sort_t _sort, void* _dst, uint32_t _dstSize, const float _dir[3], const float _pos[3], const void* _vertices, uint32_t _stride, const void* _indices, uint32_t _numIndices, bool _index32);
 
 /**/
-BGFX_C_API void bgfx_image_swizzle_bgra8(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst);
+BGFX_C_API void bgfx_image_swizzle_bgra8(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src);
 
 /**/
-BGFX_C_API void bgfx_image_rgba8_downsample_2x2(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst);
+BGFX_C_API void bgfx_image_rgba8_downsample_2x2(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src);
 
 /**/
 BGFX_C_API uint8_t bgfx_get_supported_renderers(uint8_t _max, bgfx_renderer_type_t* _enum);
@@ -644,16 +648,13 @@ BGFX_C_API void bgfx_update_dynamic_vertex_buffer(bgfx_dynamic_vertex_buffer_han
 BGFX_C_API void bgfx_destroy_dynamic_vertex_buffer(bgfx_dynamic_vertex_buffer_handle_t _handle);
 
 /**/
-BGFX_C_API bool bgfx_check_avail_transient_index_buffer(uint32_t _num);
+BGFX_C_API uint32_t bgfx_get_avail_transient_index_buffer(uint32_t _num);
 
 /**/
-BGFX_C_API bool bgfx_check_avail_transient_vertex_buffer(uint32_t _num, const bgfx_vertex_decl_t* _decl);
+BGFX_C_API uint32_t bgfx_get_avail_transient_vertex_buffer(uint32_t _num, const bgfx_vertex_decl_t* _decl);
 
 /**/
-BGFX_C_API bool bgfx_check_avail_instance_data_buffer(uint32_t _num, uint16_t _stride);
-
-/**/
-BGFX_C_API bool bgfx_check_avail_transient_buffers(uint32_t _numVertices, const bgfx_vertex_decl_t* _decl, uint32_t _numIndices);
+BGFX_C_API uint32_t bgfx_get_avail_instance_data_buffer(uint32_t _num, uint16_t _stride);
 
 /**/
 BGFX_C_API void bgfx_alloc_transient_index_buffer(bgfx_transient_index_buffer_t* _tib, uint32_t _num);

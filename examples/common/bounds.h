@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -83,6 +83,9 @@ void toAabb(Aabb& _aabb, const float* _mtx, const void* _vertices, uint32_t _num
 
 /// Expand AABB.
 void aabbExpand(Aabb& _aabb, float _factor);
+
+/// Expand AABB with xyz.
+void aabbExpand(Aabb& _aabb, const float* _pos);
 
 /// Calculate surface area of axis aligned bounding box.
 float calcAreaAabb(const Aabb& _aabb);

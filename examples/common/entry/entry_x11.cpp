@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -11,7 +11,10 @@
 #define XK_LATIN1
 #include <X11/keysymdef.h>
 #include <X11/Xlib.h> // will include X11 which #defines None... Don't mess with order of includes.
+#include <X11/Xutil.h>
 #include <bgfx/platform.h>
+
+#include <unistd.h> // syscall
 
 #undef None
 #include <bx/thread.h>
@@ -24,6 +27,9 @@
 
 namespace entry
 {
+	static const char* s_applicationName  = "BGFX";
+	static const char* s_applicationClass = "bgfx";
+
 	///
 	inline void x11SetDisplayWindow(void* _display, uint32_t _window, void* _glx = NULL)
 	{
@@ -382,7 +388,13 @@ namespace entry
 			XSetWMProtocols(m_display, m_window[0], &wmDeleteWindow, 1);
 
 			XMapWindow(m_display, m_window[0]);
-			XStoreName(m_display, m_window[0], "BGFX");
+			XStoreName(m_display, m_window[0], s_applicationName);
+
+			XClassHint* hint = XAllocClassHint();
+			hint->res_name  = (char*)s_applicationName;
+			hint->res_class = (char*)s_applicationClass;
+			XSetClassHint(m_display, m_window[0], hint);
+			XFree(hint);
 
 			XIM im;
 			im = XOpenIM(m_display, NULL, NULL, NULL);
@@ -603,6 +615,12 @@ namespace entry
 
 			XMapWindow(m_display, window);
 			XStoreName(m_display, window, msg->m_title.c_str() );
+
+			XClassHint* hint = XAllocClassHint();
+			hint->res_name  = (char*)msg->m_title.c_str();
+			hint->res_class = (char*)s_applicationClass;
+			XSetClassHint(m_display, window, hint);
+			XFree(hint);
 
 			m_eventQueue.postSizeEvent(_handle, msg->m_width, msg->m_height);
 

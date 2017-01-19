@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -2021,10 +2021,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				D3D11_MAPPED_SUBRESOURCE mapped;
 				DX_CHECK(m_deviceCtx->Map(texture, 0, D3D11_MAP_READ, 0, &mapped) );
-				imageSwizzleBgra8(backBufferDesc.Width
+				imageSwizzleBgra8(
+					  mapped.pData
+					, backBufferDesc.Width
 					, backBufferDesc.Height
 					, mapped.RowPitch
-					, mapped.pData
 					, mapped.pData
 					);
 				g_callback->screenShot(_filePath
@@ -3283,10 +3284,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				D3D11_MAPPED_SUBRESOURCE mapped;
 				DX_CHECK(m_deviceCtx->Map(m_captureTexture, 0, D3D11_MAP_READ, 0, &mapped) );
 
-				imageSwizzleBgra8(getBufferWidth()
+				imageSwizzleBgra8(
+					  mapped.pData
+					, getBufferWidth()
 					, getBufferHeight()
 					, mapped.RowPitch
-					, mapped.pData
 					, mapped.pData
 					);
 
@@ -4402,7 +4404,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
  						if (swizzle)
  						{
-// 							imageSwizzleBgra8(width, height, mip.m_width*4, data, temp);
+// 							imageSwizzleBgra8(temp, width, height, mip.m_width*4, data);
  						}
 
 						srd[kk].SysMemSlicePitch = mip.m_height*srd[kk].SysMemPitch;
@@ -5744,6 +5746,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					{
 						Rect scissorRect;
 						scissorRect.intersect(viewScissorRect, _render->m_rectCache.m_cache[scissor]);
+						if (scissorRect.isZeroArea() )
+						{
+							continue;
+						}
+
 						scissorEnabled = true;
 						D3D11_RECT rc;
 						rc.left   = scissorRect.m_x;
@@ -6182,16 +6189,20 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		const int64_t timerFreq = bx::getHPFrequency();
 
-		perfStats.cpuTimeEnd   = now;
-		perfStats.cpuTimerFreq = timerFreq;
-		perfStats.gpuTimeBegin = m_gpuTimer.m_begin;
-		perfStats.gpuTimeEnd   = m_gpuTimer.m_end;
-		perfStats.gpuTimerFreq = m_gpuTimer.m_frequency;
+		perfStats.cpuTimeEnd    = now;
+		perfStats.cpuTimerFreq  = timerFreq;
+		perfStats.gpuTimeBegin  = m_gpuTimer.m_begin;
+		perfStats.gpuTimeEnd    = m_gpuTimer.m_end;
+		perfStats.gpuTimerFreq  = m_gpuTimer.m_frequency;
+		perfStats.numDraw       = statsKeyType[0];
+		perfStats.numCompute    = statsKeyType[1];
+		perfStats.maxGpuLatency = maxGpuLatency;
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
 			PIX_BEGINEVENT(D3DCOLOR_FRAME, L"debugstats");
 
+			m_needPresent = true;
 			TextVideoMem& tvm = m_textVideoMem;
 
 			static int64_t next = now;

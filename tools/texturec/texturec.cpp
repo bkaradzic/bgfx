@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -16,7 +16,7 @@
 #include <etc2/ProcessRGB.hpp>
 #include <nvtt/nvtt.h>
 #include <pvrtc/PvrTcEncoder.h>
-#include <tinyexr/tinyexr.h>
+
 #include <edtaa3/edtaa3func.h>
 
 extern "C" {
@@ -56,6 +56,16 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wint-to-pointer-cast")
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.c>
 BX_PRAGMA_DIAGNOSTIC_POP();
+
+BX_PRAGMA_DIAGNOSTIC_PUSH()
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wtype-limits")
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-parameter")
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-value")
+BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4100) // error C4100: '' : unreferenced formal parameter
+#define MINIZ_NO_STDIO
+#define TINYEXR_IMPLEMENTATION
+#include <tinyexr/tinyexr.h>
+BX_PRAGMA_DIAGNOSTIC_POP()
 
 #if 0
 #	define BX_TRACE(_format, ...) fprintf(stderr, "" _format "\n", ##__VA_ARGS__)
@@ -310,7 +320,7 @@ namespace bgfx
 			return true;
 
 		case TextureFormat::BGRA8:
-			imageSwizzleBgra8(_width, _height, _width*4, _src, _dst);
+			imageSwizzleBgra8(_dst, _width, _height, _width*4, _src);
 			return true;
 
 		case TextureFormat::RGBA8:
@@ -496,7 +506,7 @@ void help(const char* _error = NULL)
 
 	fprintf(stderr
 		, "texturec, bgfx texture compiler tool\n"
-		  "Copyright 2011-2016 Branimir Karadzic. All rights reserved.\n"
+		  "Copyright 2011-2017 Branimir Karadzic. All rights reserved.\n"
 		  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
 		);
 
@@ -676,7 +686,7 @@ int main(int _argc, const char* _argv[])
 
 					for (uint8_t lod = 1; lod < numMips; ++lod)
 					{
-						imageRgba32fDownsample2x2NormalMap(dstMip.m_width, dstMip.m_height, dstMip.m_width*16, rgba, rgba);
+						imageRgba32fDownsample2x2NormalMap(rgba, dstMip.m_width, dstMip.m_height, dstMip.m_width*16, rgba);
 						imageRgba32f11to01(rgbaDst, dstMip.m_width, dstMip.m_height, dstMip.m_width*16, rgba);
 						imageGetRawData(imageContainer, 0, lod, output->data, output->size, dstMip);
 						uint8_t* data = const_cast<uint8_t*>(dstMip.m_data);
@@ -729,7 +739,7 @@ int main(int _argc, const char* _argv[])
 
 					for (uint8_t lod = 1; lod < numMips; ++lod)
 					{
-						imageRgba32fLinearDownsample2x2(dstMip.m_width, dstMip.m_height, dstMip.m_width*16, rgba, rgba);
+						imageRgba32fLinearDownsample2x2(rgba, dstMip.m_width, dstMip.m_height, dstMip.m_width*16, rgba);
 						imageGetRawData(imageContainer, 0, lod, output->data, output->size, dstMip);
 						uint8_t* data = const_cast<uint8_t*>(dstMip.m_data);
 
@@ -789,7 +799,7 @@ int main(int _argc, const char* _argv[])
 
 					for (uint8_t lod = 1; lod < numMips; ++lod)
 					{
-						imageRgba8Downsample2x2(dstMip.m_width, dstMip.m_height, dstMip.m_width*4, rgba, rgba);
+						imageRgba8Downsample2x2(rgba, dstMip.m_width, dstMip.m_height, dstMip.m_width*4, rgba);
 						imageGetRawData(imageContainer, 0, lod, output->data, output->size, dstMip);
 						uint8_t* data = const_cast<uint8_t*>(dstMip.m_data);
 						imageEncodeFromRgba8(data, rgba, dstMip.m_width, dstMip.m_height, format);

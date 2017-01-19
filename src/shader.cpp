@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
- * License: http://www.opensource.org/licenses/BSD-2-Clause
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
 #include "bgfx_p.h"
@@ -85,7 +85,7 @@ namespace bgfx
 
 			for (uint32_t ii = 0; ii < count; ++ii)
 			{
-				uint8_t nameSize;
+				uint8_t nameSize = 0;
 				bx::read(_reader, nameSize, _err);
 
 				if (!_err->isOk() ) { return; }

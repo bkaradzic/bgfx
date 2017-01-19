@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -486,7 +486,7 @@ namespace entry
 			WindowHandle defaultWindow = { 0 };
 			setWindowSize(defaultWindow, m_width, m_height, true);
 
-			bx::FileReaderI* reader = getEileReader();
+			bx::FileReaderI* reader = getFileReader();
 			if (bx::open(&reader, "gamecontrollerdb.txt") )
 			{
 				bx::AllocatorI* allocator = getAllocator();

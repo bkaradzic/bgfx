@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -61,7 +61,6 @@ namespace stl = tinystl;
 #include <bx/hash.h>
 #include <bx/uint32_t.h>
 #include <bx/fpumath.h>
-#include <bx/tokenizecmd.h>
 #include <bx/crtimpl.h>
 
 #include "bounds.h"
@@ -360,7 +359,7 @@ void help(const char* _error = NULL)
 
 	fprintf(stderr
 		, "geometryc, bgfx geometry compiler tool\n"
-		  "Copyright 2011-2016 Branimir Karadzic. All rights reserved.\n"
+		  "Copyright 2011-2017 Branimir Karadzic. All rights reserved.\n"
 		  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
 		);
 

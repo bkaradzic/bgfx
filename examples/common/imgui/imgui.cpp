@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -32,6 +32,7 @@
 
 #include "imgui.h"
 #include "ocornut_imgui.h"
+#include "../bgfx_utils.h"
 #include "../nanovg/nanovg.h"
 
 #include <bgfx/embedded_shader.h>
@@ -1800,7 +1801,7 @@ struct Imgui
 
 		const uint32_t numVertices = 14;
 		const uint32_t numIndices  = 36;
-		if (bgfx::checkAvailTransientBuffers(numVertices, PosNormalVertex::ms_decl, numIndices) )
+		if (checkAvailTransientBuffers(numVertices, PosNormalVertex::ms_decl, numIndices) )
 		{
 			bgfx::TransientVertexBuffer tvb;
 			bgfx::allocTransientVertexBuffer(&tvb, numVertices, PosNormalVertex::ms_decl);
@@ -2335,7 +2336,7 @@ struct Imgui
 		}
 
 		uint32_t numVertices = _numCoords*6 + (_numCoords-2)*3;
-		if (bgfx::checkAvailTransientVertexBuffer(numVertices, PosColorVertex::ms_decl) )
+		if (numVertices == bgfx::getAvailTransientVertexBuffer(numVertices, PosColorVertex::ms_decl) )
 		{
 			bgfx::TransientVertexBuffer tvb;
 			bgfx::allocTransientVertexBuffer(&tvb, numVertices, PosColorVertex::ms_decl);
@@ -2622,7 +2623,7 @@ struct Imgui
 			getTextLength(m_fonts[m_currentFontIdx].m_cdata, _text, numVertices);
 		}
 
-		if (bgfx::checkAvailTransientVertexBuffer(numVertices, PosColorUvVertex::ms_decl) )
+		if (numVertices == bgfx::getAvailTransientVertexBuffer(numVertices, PosColorUvVertex::ms_decl) )
 		{
 			bgfx::TransientVertexBuffer tvb;
 			bgfx::allocTransientVertexBuffer(&tvb, numVertices, PosColorUvVertex::ms_decl);
@@ -2712,7 +2713,7 @@ struct Imgui
 
 	bool screenQuad(int32_t _x, int32_t _y, int32_t _width, uint32_t _height, bool _originBottomLeft = false)
 	{
-		if (bgfx::checkAvailTransientVertexBuffer(6, PosUvVertex::ms_decl) )
+		if (6 == bgfx::getAvailTransientVertexBuffer(6, PosUvVertex::ms_decl) )
 		{
 			bgfx::TransientVertexBuffer vb;
 			bgfx::allocTransientVertexBuffer(&vb, 6, PosUvVertex::ms_decl);

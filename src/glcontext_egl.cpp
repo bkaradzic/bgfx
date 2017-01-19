@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -262,7 +262,7 @@ EGL_IMPORT
 
 #	if BX_PLATFORM_RPI
 				BX_UNUSED(hasEglKhrCreateContext, hasEglKhrNoError);
-#else
+#	else
 				if (hasEglKhrCreateContext)
 				{
 					bx::write(&writer, EGLint(EGL_CONTEXT_MAJOR_VERSION_KHR) );

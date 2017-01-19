@@ -1,12 +1,12 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(33)
+#define BGFX_API_VERSION UINT32_C(35)
 
 ///
 #define BGFX_STATE_RGB_WRITE               UINT64_C(0x0000000000000001) //!< Enable RGB write.

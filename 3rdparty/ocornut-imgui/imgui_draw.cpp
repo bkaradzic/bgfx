@@ -1197,7 +1197,7 @@ ImFont* ImFontAtlas::AddFontDefault(const ImFontConfig* font_cfg_template)
 ImFont* ImFontAtlas::AddFontFromFileTTF(const char* filename, float size_pixels, const ImFontConfig* font_cfg_template, const ImWchar* glyph_ranges)
 {
     int data_size = 0;
-    void* data = ImLoadFileToMemory(filename, "rb", &data_size, 0);
+    void* data = ImFileLoadToMemory(filename, "rb", &data_size, 0);
     if (!data)
     {
         IM_ASSERT(0); // Could not load file.
@@ -1853,6 +1853,7 @@ const char* ImFont::CalcWordWrapPositionA(float scale, const char* text, const c
             {
                 line_width += blank_width;
                 blank_width = 0.0f;
+                word_end = s;
             }
             blank_width += char_width;
             inside_word = false;

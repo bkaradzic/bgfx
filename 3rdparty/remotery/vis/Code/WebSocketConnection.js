@@ -52,6 +52,7 @@ WebSocketConnection = (function()
 		Log(this, "Connecting to " + address);
 
 		this.Socket = new WebSocket(address);
+		this.Socket.binaryType = "arraybuffer";
 		this.Socket.onopen = Bind(OnOpen, this);
 		this.Socket.onmessage = Bind(OnMessage, this);
 		this.Socket.onclose = Bind(OnClose, this);
@@ -80,13 +81,13 @@ WebSocketConnection = (function()
 	}
 
 
-	function CallMessageHandlers(self, message_name, message)
+	function CallMessageHandlers(self, message_name, data_view)
 	{
 		if (message_name in self.MessageHandlers)
 		{
 			var handlers = self.MessageHandlers[message_name];
 			for (var i in handlers)
-				handlers[i](self, message);
+			    handlers[i](self, data_view);
 		}
 	}
 
@@ -120,9 +121,15 @@ WebSocketConnection = (function()
 
 	function OnMessage(self, event)
 	{
-		var message = JSON.parse(event.data);
-		if ("id" in message)
-			CallMessageHandlers(self, message.id, message);
+	    var data_view = new DataView(event.data);
+
+	    var id = String.fromCharCode(
+            data_view.getInt8(0),
+            data_view.getInt8(1),
+            data_view.getInt8(2),
+            data_view.getInt8(3));
+
+        CallMessageHandlers(self, id, data_view);
 	}
 
 

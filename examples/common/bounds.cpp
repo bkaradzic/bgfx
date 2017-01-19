@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -180,6 +180,12 @@ void aabbExpand(Aabb& _aabb, float _factor)
 	_aabb.m_max[0] += _factor;
 	_aabb.m_max[1] += _factor;
 	_aabb.m_max[2] += _factor;
+}
+
+void aabbExpand(Aabb& _aabb, const float* _pos)
+{
+	bx::vec3Min(_aabb.m_min, _aabb.m_min, _pos);
+	bx::vec3Max(_aabb.m_max, _aabb.m_max, _pos);
 }
 
 uint32_t aabbOverlapTest(const Aabb& _aabb0, const Aabb& _aabb1)

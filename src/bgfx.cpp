@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -544,13 +544,16 @@ namespace bgfx
 	{
 		if (_x < m_width && _y < m_height)
 		{
-			char* temp = (char*)alloca(m_width);
-
-			uint32_t num = bx::vsnprintf(temp, m_width, _format, _argList);
+			va_list argListCopy;
+			va_copy(argListCopy, _argList);
+			uint32_t num = bx::vsnprintf(NULL, 0, _format, argListCopy) + 1;
+			char* temp = (char*)alloca(num);
+			va_copy(argListCopy, _argList);
+			num = bx::vsnprintf(temp, num, _format, argListCopy);
 
 			uint8_t attr = _attr;
 			uint8_t* mem = &m_mem[(_y*m_width+_x)*2];
-			for (uint32_t ii = 0, xx = _x; ii < num && xx < m_width; ++ii, ++xx)
+			for (uint32_t ii = 0, xx = _x; ii < num && xx < m_width; ++ii)
 			{
 				char ch = temp[ii];
 				if (BX_UNLIKELY(ch == '\x1b') )
@@ -564,6 +567,7 @@ namespace bgfx
 					mem[0] = ch;
 					mem[1] = attr;
 					mem += 2;
+					++xx;
 				}
 			}
 		}
@@ -2862,34 +2866,26 @@ error:
 		s_ctx->destroyDynamicVertexBuffer(_handle);
 	}
 
-	bool checkAvailTransientIndexBuffer(uint32_t _num)
+	uint32_t getAvailTransientIndexBuffer(uint32_t _num)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(0 < _num, "Requesting 0 indices.");
-		return s_ctx->checkAvailTransientIndexBuffer(_num);
+		return s_ctx->getAvailTransientIndexBuffer(_num);
 	}
 
-	bool checkAvailTransientVertexBuffer(uint32_t _num, const VertexDecl& _decl)
+	uint32_t getAvailTransientVertexBuffer(uint32_t _num, const VertexDecl& _decl)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(0 < _num, "Requesting 0 vertices.");
 		BX_CHECK(0 != _decl.m_stride, "Invalid VertexDecl.");
-		return s_ctx->checkAvailTransientVertexBuffer(_num, _decl.m_stride);
+		return s_ctx->getAvailTransientVertexBuffer(_num, _decl.m_stride);
 	}
 
-	bool checkAvailInstanceDataBuffer(uint32_t _num, uint16_t _stride)
+	uint32_t getAvailInstanceDataBuffer(uint32_t _num, uint16_t _stride)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(0 < _num, "Requesting 0 instances.");
-		return s_ctx->checkAvailTransientVertexBuffer(_num, _stride);
-	}
-
-	bool checkAvailTransientBuffers(uint32_t _numVertices, const VertexDecl& _decl, uint32_t _numIndices)
-	{
-		BX_CHECK(0 != _decl.m_stride, "Invalid VertexDecl.");
-		return checkAvailTransientVertexBuffer(_numVertices, _decl)
-			&& checkAvailTransientIndexBuffer(_numIndices)
-			;
+		return s_ctx->getAvailTransientVertexBuffer(_num, _stride);
 	}
 
 	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num)
@@ -2920,7 +2916,8 @@ error:
 
 	bool allocTransientBuffers(bgfx::TransientVertexBuffer* _tvb, const bgfx::VertexDecl& _decl, uint32_t _numVertices, bgfx::TransientIndexBuffer* _tib, uint32_t _numIndices)
 	{
-		if (checkAvailTransientBuffers(_numVertices, _decl, _numIndices) )
+		if (_numVertices == getAvailTransientVertexBuffer(_numVertices, _decl)
+		&&  _numIndices  == getAvailTransientIndexBuffer(_numIndices) )
 		{
 			allocTransientVertexBuffer(_tvb, _numVertices, _decl);
 			allocTransientIndexBuffer(_tib, _numIndices);
@@ -3069,8 +3066,8 @@ error:
 		if (!formatSupported)
 		{
 			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
-				, "Texture array is not supported! "
-				  "Use bgfx::getCaps to check BGFX_CAPS_TEXTURE_2D_ARRAY backend renderer capabilities."
+				, "Texture format is not supported! "
+				  "Use bgfx::isTextureValid to check support for texture format before creating it."
 				);
 			return;
 		}
@@ -4074,14 +4071,14 @@ void bgfx_topology_sort_tri_list(bgfx_topology_sort_t _sort, void* _dst, uint32_
 	bgfx::topologySortTriList(bgfx::TopologySort::Enum(_sort), _dst, _dstSize, _dir, _pos, _vertices, _stride, _indices, _numIndices, _index32);
 }
 
-BGFX_C_API void bgfx_image_swizzle_bgra8(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+BGFX_C_API void bgfx_image_swizzle_bgra8(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src)
 {
-	bgfx::imageSwizzleBgra8(_width, _height, _pitch, _src, _dst);
+	bgfx::imageSwizzleBgra8(_dst, _width, _height, _pitch, _src);
 }
 
-BGFX_C_API void bgfx_image_rgba8_downsample_2x2(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+BGFX_C_API void bgfx_image_rgba8_downsample_2x2(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src)
 {
-	bgfx::imageRgba8Downsample2x2(_width, _height, _pitch, _src, _dst);
+	bgfx::imageRgba8Downsample2x2(_dst, _width, _height, _pitch, _src);
 }
 
 BGFX_C_API uint8_t bgfx_get_supported_renderers(uint8_t _max, bgfx_renderer_type_t* _enum)
@@ -4274,26 +4271,20 @@ BGFX_C_API void bgfx_destroy_dynamic_vertex_buffer(bgfx_dynamic_vertex_buffer_ha
 	bgfx::destroyDynamicVertexBuffer(handle.cpp);
 }
 
-BGFX_C_API bool bgfx_check_avail_transient_index_buffer(uint32_t _num)
+BGFX_C_API uint32_t bgfx_get_avail_transient_index_buffer(uint32_t _num)
 {
-	return bgfx::checkAvailTransientIndexBuffer(_num);
+	return bgfx::getAvailTransientIndexBuffer(_num);
 }
 
-BGFX_C_API bool bgfx_check_avail_transient_vertex_buffer(uint32_t _num, const bgfx_vertex_decl_t* _decl)
+BGFX_C_API uint32_t bgfx_get_avail_transient_vertex_buffer(uint32_t _num, const bgfx_vertex_decl_t* _decl)
 {
 	const bgfx::VertexDecl& decl = *(const bgfx::VertexDecl*)_decl;
-	return bgfx::checkAvailTransientVertexBuffer(_num, decl);
+	return bgfx::getAvailTransientVertexBuffer(_num, decl);
 }
 
-BGFX_C_API bool bgfx_check_avail_instance_data_buffer(uint32_t _num, uint16_t _stride)
+BGFX_C_API uint32_t bgfx_get_avail_instance_data_buffer(uint32_t _num, uint16_t _stride)
 {
-	return bgfx::checkAvailInstanceDataBuffer(_num, _stride);
-}
-
-BGFX_C_API bool bgfx_check_avail_transient_buffers(uint32_t _numVertices, const bgfx_vertex_decl_t* _decl, uint32_t _numIndices)
-{
-	const bgfx::VertexDecl& decl = *(const bgfx::VertexDecl*)_decl;
-	return bgfx::checkAvailTransientBuffers(_numVertices, decl, _numIndices);
+	return bgfx::getAvailInstanceDataBuffer(_num, _stride);
 }
 
 BGFX_C_API void bgfx_alloc_transient_index_buffer(bgfx_transient_index_buffer_t* _tib, uint32_t _num)
@@ -4886,10 +4877,9 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 	BGFX_IMPORT_FUNC(create_dynamic_vertex_buffer_mem) \
 	BGFX_IMPORT_FUNC(update_dynamic_vertex_buffer) \
 	BGFX_IMPORT_FUNC(destroy_dynamic_vertex_buffer) \
-	BGFX_IMPORT_FUNC(check_avail_transient_index_buffer) \
-	BGFX_IMPORT_FUNC(check_avail_transient_vertex_buffer) \
-	BGFX_IMPORT_FUNC(check_avail_instance_data_buffer) \
-	BGFX_IMPORT_FUNC(check_avail_transient_buffers) \
+	BGFX_IMPORT_FUNC(get_avail_transient_index_buffer) \
+	BGFX_IMPORT_FUNC(get_avail_transient_vertex_buffer) \
+	BGFX_IMPORT_FUNC(get_avail_instance_data_buffer) \
 	BGFX_IMPORT_FUNC(alloc_transient_index_buffer) \
 	BGFX_IMPORT_FUNC(alloc_transient_vertex_buffer) \
 	BGFX_IMPORT_FUNC(alloc_transient_buffers) \

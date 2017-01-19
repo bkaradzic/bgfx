@@ -1,10 +1,91 @@
 --
--- Copyright 2010-2016 Branimir Karadzic. All rights reserved.
+-- Copyright 2010-2017 Branimir Karadzic. All rights reserved.
 -- License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 --
 
+project "glslang"
+	kind "StaticLib"
+
+	local GLSLANG = path.join(BGFX_DIR, "3rdparty/glslang")
+
+	configuration { "vs2012" }
+		defines {
+			"atoll=_atoi64",
+			"strtoll=_strtoi64",
+			"strtoull=_strtoui64",
+		}
+
+	configuration { "vs*" }
+		buildoptions {
+			"/wd4005", -- warning C4005: '_CRT_SECURE_NO_WARNINGS': macro redefinition
+			"/wd4100", -- error C4100: 'inclusionDepth' : unreferenced formal parameter
+		}
+
+	configuration { "not vs*" }
+		buildoptions {
+			"-Wno-ignored-qualifiers",
+			"-Wno-inconsistent-missing-override",
+			"-Wno-missing-field-initializers",
+			"-Wno-reorder",
+			"-Wno-shadow",
+			"-Wno-sign-compare",
+			"-Wno-undef",
+			"-Wno-unknown-pragmas",
+			"-Wno-unused-parameter",
+			"-Wno-unused-variable",
+		}
+
+	configuration { "osx" }
+		buildoptions {
+			"-Wno-c++11-extensions",
+			"-Wno-unused-const-variable",
+		}
+
+	configuration { "linux-*" }
+		buildoptions {
+			"-Wno-unused-but-set-variable",
+		}
+
+	configuration {}
+
+	includedirs {
+		GLSLANG,
+	}
+
+	files {
+		path.join(GLSLANG, "glslang/**.cpp"),
+		path.join(GLSLANG, "glslang/**.h"),
+
+		path.join(GLSLANG, "hlsl/**.cpp"),
+		path.join(GLSLANG, "hlsl/**.h"),
+
+		path.join(GLSLANG, "SPIRV/**.cpp"),
+		path.join(GLSLANG, "SPIRV/**.h"),
+
+		path.join(GLSLANG, "OGLCompilersDLL/**.cpp"),
+		path.join(GLSLANG, "OGLCompilersDLL/**.h"),
+	}
+
+	removefiles {
+		path.join(GLSLANG, "glslang/OSDependent/Unix/main.cpp"),
+		path.join(GLSLANG, "glslang/OSDependent/Windows/main.cpp"),
+	}
+
+	configuration { "windows" }
+		removefiles {
+			path.join(GLSLANG, "glslang/OSDependent/Unix/**.cpp"),
+			path.join(GLSLANG, "glslang/OSDependent/Unix/**.h"),
+		}
+
+	configuration { "not windows" }
+		removefiles {
+			path.join(GLSLANG, "glslang/OSDependent/Windows/**.cpp"),
+			path.join(GLSLANG, "glslang/OSDependent/Windows/**.h"),
+		}
+
+	configuration {}
+
 project "shaderc"
-	uuid "f3cd2e90-52a4-11e1-b86c-0800200c9a66"
 	kind "ConsoleApp"
 
 	local GLSL_OPTIMIZER = path.join(BGFX_DIR, "3rdparty/glsl-optimizer")
@@ -14,10 +95,19 @@ project "shaderc"
 		path.join(GLSL_OPTIMIZER, "src"),
 	}
 
-	removeflags {
-		-- GCC 4.9 -O2 + -fno-strict-aliasing don't work together...
-		"OptimizeSpeed",
+	links {
+		"bx",
 	}
+
+	configuration { "Release" }
+		flags {
+			"Optimize",
+		}
+
+		removeflags {
+			-- GCC 4.9 -O2 + -fno-strict-aliasing don't work together...
+			"OptimizeSpeed",
+		}
 
 	configuration { "vs*" }
 		includedirs {
@@ -58,6 +148,11 @@ project "shaderc"
 			path.join(GLSL_OPTIMIZER, "include/c99"),
 		}
 
+	configuration { "vs20* or mingw*" }
+		links {
+			"psapi",
+		}
+
 	configuration {}
 
 	defines { -- fcpp
@@ -74,6 +169,11 @@ project "shaderc"
 		path.join(BGFX_DIR, "3rdparty/dxsdk/include"),
 		FCPP_DIR,
 
+		path.join(BGFX_DIR, "3rdparty/glslang/glslang/Public"),
+		path.join(BGFX_DIR, "3rdparty/glslang/glslang/Include"),
+		path.join(BGFX_DIR, "3rdparty/glslang"),
+--		path.join(BGFX_DIR, "3rdparty/spirv-tools/include"),
+
 		path.join(GLSL_OPTIMIZER, "include"),
 		path.join(GLSL_OPTIMIZER, "src/mesa"),
 		path.join(GLSL_OPTIMIZER, "src/mapi"),
@@ -84,6 +184,7 @@ project "shaderc"
 		path.join(BGFX_DIR, "tools/shaderc/**.cpp"),
 		path.join(BGFX_DIR, "tools/shaderc/**.h"),
 		path.join(BGFX_DIR, "src/vertexdecl.**"),
+		path.join(BGFX_DIR, "src/shader_spirv.**"),
 
 		path.join(FCPP_DIR, "**.h"),
 		path.join(FCPP_DIR, "cpp1.c"),
@@ -114,6 +215,10 @@ project "shaderc"
 		path.join(GLSL_OPTIMIZER, "src/glsl/builtin_stubs.cpp"),
 	}
 
+	links {
+		"glslang",
+	}
+
 	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
 		path.join(BGFX_DIR, "scripts/shaderc.lua"), }) then
 
@@ -125,15 +230,14 @@ project "shaderc"
 			}
 		end
 
-		if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
-			path.join(BGFX_DIR, "tools/shaderc/shaderc_spirv.cpp"), }) then
-
-			removefiles {
-				path.join(BGFX_DIR, "tools/shaderc/shaderc_spirv.cpp"),
-			}
-		end
-
 		dofile(path.join(BGFX_DIR, "../bgfx-ext/scripts/shaderc.lua") )
 	end
+
+	configuration { "osx or linux*" }
+		links {
+			"pthread",
+		}
+
+	configuration {}
 
 	strip()

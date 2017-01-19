@@ -1,5 +1,5 @@
 --
--- Copyright 2010-2016 Branimir Karadzic. All rights reserved.
+-- Copyright 2010-2017 Branimir Karadzic. All rights reserved.
 -- License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 --
 
@@ -46,6 +46,10 @@ function bgfxProject(_name, _kind, _defines)
 				"BGFX_SHARED_LIB_BUILD=1",
 			}
 
+			links {
+				"bx",
+			}
+
 			configuration { "vs20* or mingw*" }
 				links {
 					"gdi32",
@@ -73,6 +77,10 @@ function bgfxProject(_name, _kind, _defines)
 
 		defines {
 			_defines,
+		}
+
+		links {
+			"bx",
 		}
 
 		if _OPTIONS["with-glfw"] then
@@ -160,11 +168,6 @@ function bgfxProject(_name, _kind, _defines)
 		removefiles {
 			path.join(BGFX_DIR, "src/**.bin.h"),
 		}
-
-		overridefiles(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
-			path.join(BGFX_DIR, "src/renderer_vk.cpp"),
-			path.join(BGFX_DIR, "src/renderer_vk.h"),
-		})
 
 		overridefiles(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
 			path.join(BGFX_DIR, "src/renderer_gnm.cpp"),

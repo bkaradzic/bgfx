@@ -1,6 +1,6 @@
 #
-# Copyright 2011-2016 Branimir Karadzic. All rights reserved.
-# License: http://www.opensource.org/licenses/BSD-2-Clause
+# Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+# License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 #
 
 UNAME := $(shell uname)
@@ -339,6 +339,9 @@ texturev: .build/projects/$(BUILD_PROJECT_DIR) ## Build texturev tool.
 	$(SILENT) cp .build/$(BUILD_OUTPUT_DIR)/bin/texturev$(BUILD_TOOLS_SUFFIX)$(EXE) tools/bin/$(OS)/texturev$(EXE)
 
 tools: geometryc shaderc texturec texturev ## Build tools.
+
+clean-tools: ## Clean tools projects.
+	-$(SILENT) rm -r .build/projects/$(BUILD_PROJECT_DIR)
 
 dist-windows: .build/projects/gmake-mingw-gcc
 	$(SILENT) $(MAKE) -C .build/projects/gmake-mingw-gcc config=release64 -j 6 geometryc

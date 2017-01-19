@@ -1,0 +1,286 @@
+hlsl.rw.swizzle.frag
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:4  Function Definition: SomeValue( (temp 3-component vector of float)
+0:4    Function Parameters: 
+0:?     Sequence
+0:4      Branch: Return with expression
+0:?         Constant:
+0:?           1.000000
+0:?           2.000000
+0:?           3.000000
+0:7  Function Definition: main( (temp 4-component vector of float)
+0:7    Function Parameters: 
+0:?     Sequence
+0:8      Sequence
+0:8        move second child to first child (temp 2-component vector of int)
+0:8          'tc2' (temp 2-component vector of int)
+0:8          Constant:
+0:8            0 (const int)
+0:8            0 (const int)
+0:9      Sequence
+0:9        move second child to first child (temp int)
+0:9          'tc' (temp int)
+0:9          Constant:
+0:9            0 (const int)
+0:12      Sequence
+0:12        move second child to first child (temp 3-component vector of float)
+0:12          vector swizzle (temp 3-component vector of float)
+0:12            'storeTemp' (temp 3-component vector of float)
+0:12            Sequence
+0:12              Constant:
+0:12                2 (const int)
+0:12              Constant:
+0:12                1 (const int)
+0:12              Constant:
+0:12                0 (const int)
+0:?           Constant:
+0:?             1.000000
+0:?             2.000000
+0:?             3.000000
+0:12        imageStore (temp void)
+0:12          'rwtx' (layout(rgba32f ) uniform image2D)
+0:12          'tc2' (temp 2-component vector of int)
+0:12          'storeTemp' (temp 3-component vector of float)
+0:12        'storeTemp' (temp 3-component vector of float)
+0:13      Sequence
+0:13        move second child to first child (temp 3-component vector of float)
+0:13          vector swizzle (temp 3-component vector of float)
+0:13            'storeTemp' (temp 3-component vector of float)
+0:13            Sequence
+0:13              Constant:
+0:13                2 (const int)
+0:13              Constant:
+0:13                1 (const int)
+0:13              Constant:
+0:13                0 (const int)
+0:13          Function Call: SomeValue( (temp 3-component vector of float)
+0:13        imageStore (temp void)
+0:13          'rwtx' (layout(rgba32f ) uniform image2D)
+0:13          'tc2' (temp 2-component vector of int)
+0:13          'storeTemp' (temp 3-component vector of float)
+0:13        'storeTemp' (temp 3-component vector of float)
+0:14      Sequence
+0:14        move second child to first child (temp 3-component vector of float)
+0:14          vector swizzle (temp 3-component vector of float)
+0:14            'storeTemp' (temp 3-component vector of float)
+0:14            Sequence
+0:14              Constant:
+0:14                2 (const int)
+0:14              Constant:
+0:14                1 (const int)
+0:14              Constant:
+0:14                0 (const int)
+0:14          Constant:
+0:14            2.000000
+0:14            2.000000
+0:14            2.000000
+0:14        imageStore (temp void)
+0:14          'rwtx' (layout(rgba32f ) uniform image2D)
+0:14          'tc2' (temp 2-component vector of int)
+0:14          'storeTemp' (temp 3-component vector of float)
+0:14        'storeTemp' (temp 3-component vector of float)
+0:27      Sequence
+0:27        move second child to first child (temp 4-component vector of float)
+0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:27          Constant:
+0:27            0.000000
+0:27            0.000000
+0:27            0.000000
+0:27            0.000000
+0:27        Branch: Return
+0:?   Linker Objects
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'rwtx' (layout(rgba32f ) uniform image2D)
+0:?     'buf' (layout(rgba32f ) uniform imageBuffer)
+
+
+Linked fragment stage:
+
+
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:4  Function Definition: SomeValue( (temp 3-component vector of float)
+0:4    Function Parameters: 
+0:?     Sequence
+0:4      Branch: Return with expression
+0:?         Constant:
+0:?           1.000000
+0:?           2.000000
+0:?           3.000000
+0:7  Function Definition: main( (temp 4-component vector of float)
+0:7    Function Parameters: 
+0:?     Sequence
+0:8      Sequence
+0:8        move second child to first child (temp 2-component vector of int)
+0:8          'tc2' (temp 2-component vector of int)
+0:8          Constant:
+0:8            0 (const int)
+0:8            0 (const int)
+0:9      Sequence
+0:9        move second child to first child (temp int)
+0:9          'tc' (temp int)
+0:9          Constant:
+0:9            0 (const int)
+0:12      Sequence
+0:12        move second child to first child (temp 3-component vector of float)
+0:12          vector swizzle (temp 3-component vector of float)
+0:12            'storeTemp' (temp 3-component vector of float)
+0:12            Sequence
+0:12              Constant:
+0:12                2 (const int)
+0:12              Constant:
+0:12                1 (const int)
+0:12              Constant:
+0:12                0 (const int)
+0:?           Constant:
+0:?             1.000000
+0:?             2.000000
+0:?             3.000000
+0:12        imageStore (temp void)
+0:12          'rwtx' (layout(rgba32f ) uniform image2D)
+0:12          'tc2' (temp 2-component vector of int)
+0:12          'storeTemp' (temp 3-component vector of float)
+0:12        'storeTemp' (temp 3-component vector of float)
+0:13      Sequence
+0:13        move second child to first child (temp 3-component vector of float)
+0:13          vector swizzle (temp 3-component vector of float)
+0:13            'storeTemp' (temp 3-component vector of float)
+0:13            Sequence
+0:13              Constant:
+0:13                2 (const int)
+0:13              Constant:
+0:13                1 (const int)
+0:13              Constant:
+0:13                0 (const int)
+0:13          Function Call: SomeValue( (temp 3-component vector of float)
+0:13        imageStore (temp void)
+0:13          'rwtx' (layout(rgba32f ) uniform image2D)
+0:13          'tc2' (temp 2-component vector of int)
+0:13          'storeTemp' (temp 3-component vector of float)
+0:13        'storeTemp' (temp 3-component vector of float)
+0:14      Sequence
+0:14        move second child to first child (temp 3-component vector of float)
+0:14          vector swizzle (temp 3-component vector of float)
+0:14            'storeTemp' (temp 3-component vector of float)
+0:14            Sequence
+0:14              Constant:
+0:14                2 (const int)
+0:14              Constant:
+0:14                1 (const int)
+0:14              Constant:
+0:14                0 (const int)
+0:14          Constant:
+0:14            2.000000
+0:14            2.000000
+0:14            2.000000
+0:14        imageStore (temp void)
+0:14          'rwtx' (layout(rgba32f ) uniform image2D)
+0:14          'tc2' (temp 2-component vector of int)
+0:14          'storeTemp' (temp 3-component vector of float)
+0:14        'storeTemp' (temp 3-component vector of float)
+0:27      Sequence
+0:27        move second child to first child (temp 4-component vector of float)
+0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:27          Constant:
+0:27            0.000000
+0:27            0.000000
+0:27            0.000000
+0:27            0.000000
+0:27        Branch: Return
+0:?   Linker Objects
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'rwtx' (layout(rgba32f ) uniform image2D)
+0:?     'buf' (layout(rgba32f ) uniform imageBuffer)
+
+// Module Version 10000
+// Generated by (magic number): 80001
+// Id's are bound by 58
+
+                              Capability Shader
+                              Capability SampledBuffer
+               1:             ExtInstImport  "GLSL.std.450"
+                              MemoryModel Logical GLSL450
+                              EntryPoint Fragment 4  "main" 51
+                              ExecutionMode 4 OriginUpperLeft
+                              Name 4  "main"
+                              Name 9  "SomeValue("
+                              Name 20  "tc2"
+                              Name 24  "tc"
+                              Name 26  "storeTemp"
+                              Name 31  "rwtx"
+                              Name 35  "storeTemp"
+                              Name 42  "storeTemp"
+                              Name 51  "@entryPointOutput"
+                              Name 57  "buf"
+                              Decorate 31(rwtx) DescriptorSet 0
+                              Decorate 51(@entryPointOutput) Location 0
+                              Decorate 57(buf) DescriptorSet 0
+               2:             TypeVoid
+               3:             TypeFunction 2
+               6:             TypeFloat 32
+               7:             TypeVector 6(float) 3
+               8:             TypeFunction 7(fvec3)
+              11:    6(float) Constant 1065353216
+              12:    6(float) Constant 1073741824
+              13:    6(float) Constant 1077936128
+              14:    7(fvec3) ConstantComposite 11 12 13
+              17:             TypeInt 32 1
+              18:             TypeVector 17(int) 2
+              19:             TypePointer Function 18(ivec2)
+              21:     17(int) Constant 0
+              22:   18(ivec2) ConstantComposite 21 21
+              23:             TypePointer Function 17(int)
+              25:             TypePointer Function 7(fvec3)
+              29:             TypeImage 6(float) 2D nonsampled format:Rgba32f
+              30:             TypePointer UniformConstant 29
+        31(rwtx):     30(ptr) Variable UniformConstant
+              43:    7(fvec3) ConstantComposite 12 12 12
+              49:             TypeVector 6(float) 4
+              50:             TypePointer Output 49(fvec4)
+51(@entryPointOutput):     50(ptr) Variable Output
+              52:    6(float) Constant 0
+              53:   49(fvec4) ConstantComposite 52 52 52 52
+              55:             TypeImage 6(float) Buffer nonsampled format:Rgba32f
+              56:             TypePointer UniformConstant 55
+         57(buf):     56(ptr) Variable UniformConstant
+         4(main):           2 Function None 3
+               5:             Label
+         20(tc2):     19(ptr) Variable Function
+          24(tc):     23(ptr) Variable Function
+   26(storeTemp):     25(ptr) Variable Function
+   35(storeTemp):     25(ptr) Variable Function
+   42(storeTemp):     25(ptr) Variable Function
+                              Store 20(tc2) 22
+                              Store 24(tc) 21
+              27:    7(fvec3) Load 26(storeTemp)
+              28:    7(fvec3) VectorShuffle 27 14 5 4 3
+                              Store 26(storeTemp) 28
+              32:          29 Load 31(rwtx)
+              33:   18(ivec2) Load 20(tc2)
+              34:    7(fvec3) Load 26(storeTemp)
+                              ImageWrite 32 33 34
+              36:    7(fvec3) FunctionCall 9(SomeValue()
+              37:    7(fvec3) Load 35(storeTemp)
+              38:    7(fvec3) VectorShuffle 37 36 5 4 3
+                              Store 35(storeTemp) 38
+              39:          29 Load 31(rwtx)
+              40:   18(ivec2) Load 20(tc2)
+              41:    7(fvec3) Load 35(storeTemp)
+                              ImageWrite 39 40 41
+              44:    7(fvec3) Load 42(storeTemp)
+              45:    7(fvec3) VectorShuffle 44 43 5 4 3
+                              Store 42(storeTemp) 45
+              46:          29 Load 31(rwtx)
+              47:   18(ivec2) Load 20(tc2)
+              48:    7(fvec3) Load 42(storeTemp)
+                              ImageWrite 46 47 48
+                              Store 51(@entryPointOutput) 53
+                              Return
+                              FunctionEnd
+   9(SomeValue():    7(fvec3) Function None 8
+              10:             Label
+                              ReturnValue 14
+                              FunctionEnd

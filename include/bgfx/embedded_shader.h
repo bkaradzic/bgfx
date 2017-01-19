@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -92,20 +92,21 @@
 #	define BGFX_EMBEDDED_SHADER_METAL(_renderer, _name)  { _renderer, BX_CONCATENATE(_name, _mtl), sizeof(BX_CONCATENATE(_name, _mtl) ) },
 #endif // BGFX_PLATFORM_SUPPORTS_PSSL
 
-#define BGFX_EMBEDDED_SHADER(_name)                                                   \
-			{                                                                         \
-				#_name,                                                               \
-				{                                                                     \
-					BGFX_EMBEDDED_SHADER_DX9BC(bgfx::RendererType::Direct3D9,  _name) \
-					BGFX_EMBEDDED_SHADER_DXBC (bgfx::RendererType::Direct3D11, _name) \
-					BGFX_EMBEDDED_SHADER_DXBC (bgfx::RendererType::Direct3D12, _name) \
-					BGFX_EMBEDDED_SHADER_PSSL (bgfx::RendererType::Gnm,        _name) \
-					BGFX_EMBEDDED_SHADER_METAL(bgfx::RendererType::Metal,      _name) \
-					BGFX_EMBEDDED_SHADER_ESSL (bgfx::RendererType::OpenGLES,   _name) \
-					BGFX_EMBEDDED_SHADER_GLSL (bgfx::RendererType::OpenGL,     _name) \
-					BGFX_EMBEDDED_SHADER_SPIRV(bgfx::RendererType::Vulkan,     _name) \
-					{ bgfx::RendererType::Count, NULL, 0 }                            \
-				}                                                                     \
+#define BGFX_EMBEDDED_SHADER(_name)                                                                \
+			{                                                                                      \
+				#_name,                                                                            \
+				{                                                                                  \
+					BGFX_EMBEDDED_SHADER_DX9BC(bgfx::RendererType::Direct3D9,  _name)              \
+					BGFX_EMBEDDED_SHADER_DXBC (bgfx::RendererType::Direct3D11, _name)              \
+					BGFX_EMBEDDED_SHADER_DXBC (bgfx::RendererType::Direct3D12, _name)              \
+					BGFX_EMBEDDED_SHADER_PSSL (bgfx::RendererType::Gnm,        _name)              \
+					BGFX_EMBEDDED_SHADER_METAL(bgfx::RendererType::Metal,      _name)              \
+					BGFX_EMBEDDED_SHADER_ESSL (bgfx::RendererType::OpenGLES,   _name)              \
+					BGFX_EMBEDDED_SHADER_GLSL (bgfx::RendererType::OpenGL,     _name)              \
+					BGFX_EMBEDDED_SHADER_SPIRV(bgfx::RendererType::Vulkan,     _name)              \
+					{ bgfx::RendererType::Noop,  (const uint8_t*)"VSH\x4\x0\x0\x0\x0\x0\x0", 10 }, \
+					{ bgfx::RendererType::Count, NULL, 0 }                                         \
+				}                                                                                  \
 			}
 
 #define BGFX_EMBEDDED_SHADER_END()                         \

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -36,21 +36,30 @@
 
 namespace entry
 {
-	inline void glfwSetWindow(GLFWwindow* _window)
+	static void* glfwNativeWindowHandle(GLFWwindow* _window)
+	{
+#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+		return (void*)(uintptr_t)glfwGetX11Window(_window);
+#	elif BX_PLATFORM_OSX
+		return glfwGetCocoaWindow(_window);
+#	elif BX_PLATFORM_WINDOWS
+		return glfwGetWin32Window(_window);
+#	endif // BX_PLATFORM_
+	}
+
+	static void glfwSetWindow(GLFWwindow* _window)
 	{
 		bgfx::PlatformData pd;
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-		pd.ndt		= glfwGetX11Display();
-		pd.nwh		= (void*)(uintptr_t)glfwGetX11Window(_window);
+		pd.ndt      = glfwGetX11Display();
 #	elif BX_PLATFORM_OSX
-		pd.ndt		= NULL;
-		pd.nwh		= glfwGetCocoaWindow(_window);
+		pd.ndt      = NULL;
 #	elif BX_PLATFORM_WINDOWS
-		pd.ndt		= NULL;
-		pd.nwh		= glfwGetWin32Window(_window);
-		pd.context	= NULL;
+		pd.ndt      = NULL;
 #	endif // BX_PLATFORM_WINDOWS
-		pd.backBuffer = NULL;
+		pd.nwh          = glfwNativeWindowHandle(_window);
+		pd.context      = NULL;
+		pd.backBuffer   = NULL;
 		pd.backBufferDS = NULL;
 		bgfx::setPlatformData(pd);
 	}
@@ -223,17 +232,6 @@ namespace entry
 		static int32_t threadFunc(void* _userData);
 	};
 
-	static void* glfwNativeWindowHandle(GLFWwindow* _window)
-	{
-#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-		return (void*)(uintptr_t)glfwGetX11Window(_window);
-#	elif BX_PLATFORM_OSX
-		return glfwGetCocoaWindow(_window);
-#	elif BX_PLATFORM_WINDOWS
-		return glfwGetWin32Window(_window);
-#	endif // BX_PLATFORM_
-	}
-
 	enum MsgType
 	{
 		GLFW_WINDOW_CREATE,
@@ -395,13 +393,14 @@ namespace entry
 			m_mte.m_argv = _argv;
 
 			glfwSetErrorCallback(errorCb);
-			glfwSetJoystickCallback(joystickCb);
 
 			if (!glfwInit() )
 			{
 				DBG("glfwInit failed!");
 				return EXIT_FAILURE;
 			}
+
+			glfwSetJoystickCallback(joystickCb);
 
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
@@ -445,7 +444,7 @@ namespace entry
 			m_thread.init(MainThreadEntry::threadFunc, &m_mte);
 
 			while (NULL != m_windows[0]
-				&& !glfwWindowShouldClose(m_windows[0]))
+			&&     !glfwWindowShouldClose(m_windows[0]))
 			{
 				glfwWaitEvents();
 

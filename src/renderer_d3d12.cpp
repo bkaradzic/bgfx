@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -1604,10 +1604,11 @@ namespace bgfx { namespace d3d12
 
 			void* data;
 			readback->Map(0, NULL, (void**)&data);
-			imageSwizzleBgra8(width
+			imageSwizzleBgra8(
+				  data
+				, width
 				, height
 				, (uint32_t)pitch
-				, data
 				, data
 				);
 			g_callback->screenShot(_filePath
@@ -4070,11 +4071,11 @@ data.NumQualityLevels = 0;
 							uint32_t slice = bx::strideAlign( (mip.m_height/blockInfo.blockHeight)*pitch,           D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
 
 							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, slice);
-							imageCopy(mip.m_height/blockInfo.blockHeight
+							imageCopy(temp
+									, mip.m_height/blockInfo.blockHeight
 									, (mip.m_width /blockInfo.blockWidth )*mip.m_blockSize
 									, mip.m_data
 									, pitch
-									, temp
 									);
 
 							srd[kk].pData      = temp;
@@ -4088,11 +4089,11 @@ data.NumQualityLevels = 0;
 							const uint32_t slice = bx::strideAlign(pitch * mip.m_height,      D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
 
 							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, slice);
-							imageCopy(mip.m_height
+							imageCopy(temp
+									, mip.m_height
 									, mip.m_width*mip.m_bpp / 8
 									, mip.m_data
 									, pitch
-									, temp
 									);
 
 							srd[kk].pData = temp;
@@ -4103,7 +4104,7 @@ data.NumQualityLevels = 0;
 
  						if (swizzle)
  						{
-// 							imageSwizzleBgra8(width, height, mip.m_width*4, data, temp);
+// 							imageSwizzleBgra8(temp, width, height, mip.m_width*4, data);
  						}
 
 						srd[kk].SlicePitch = mip.m_height*srd[kk].RowPitch;
@@ -5371,6 +5372,11 @@ data.NumQualityLevels = 0;
 							restoreScissor = true;
 							Rect scissorRect;
 							scissorRect.intersect(viewScissorRect,_render->m_rectCache.m_cache[scissor]);
+							if (scissorRect.isZeroArea() )
+							{
+								continue;
+							}
+
 							D3D12_RECT rc;
 							rc.left   = scissorRect.m_x;
 							rc.top    = scissorRect.m_y;
@@ -5480,16 +5486,20 @@ data.NumQualityLevels = 0;
 
 		const int64_t timerFreq = bx::getHPFrequency();
 
-		perfStats.cpuTimeEnd   = now;
-		perfStats.cpuTimerFreq = timerFreq;
-		perfStats.gpuTimeBegin = m_gpuTimer.m_begin;
-		perfStats.gpuTimeEnd   = m_gpuTimer.m_end;
-		perfStats.gpuTimerFreq = m_gpuTimer.m_frequency;
+		perfStats.cpuTimeEnd    = now;
+		perfStats.cpuTimerFreq  = timerFreq;
+		perfStats.gpuTimeBegin  = m_gpuTimer.m_begin;
+		perfStats.gpuTimeEnd    = m_gpuTimer.m_end;
+		perfStats.gpuTimerFreq  = m_gpuTimer.m_frequency;
+		perfStats.numDraw       = statsKeyType[0];
+		perfStats.numCompute    = statsKeyType[1];
+		perfStats.maxGpuLatency = maxGpuLatency;
 
-		if (_render->m_debug & (BGFX_DEBUG_IFH | BGFX_DEBUG_STATS) )
+		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
 //			PIX_BEGINEVENT(D3DCOLOR_FRAME, L"debugstats");
 
+//			m_needPresent = true;
 			TextVideoMem& tvm = m_textVideoMem;
 
 			static int64_t next = now;

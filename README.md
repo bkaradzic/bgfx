@@ -100,14 +100,6 @@ engine, written from scratch with a minimalistic and data-oriented design
 philosophy in mind.  
 ![Crown screenshot](https://raw.githubusercontent.com/taylor001/crown/master/docs/shots/level-editor.png)
 
-## ProDBG
-
-https://github.com/emoon/ProDBG - ProDBG is a new debugger under development
-that will support a variety of targets and operating systems. Currently it's in
-very early development and primary focusing on Mac as primary target. This is
-how it currently looks.  
-![ProDBG_screenshot](https://raw.githubusercontent.com/emoon/ProDBG/master/data/screens/mac_screenshot.png)
-
 ## Offroad Legends 2
 
 http://www.dogbytegames.com/ Dogbyte Games is an indie mobile developer studio
@@ -219,6 +211,12 @@ multiplayer time challenges, and a track creator.
 alt="Go Rally"
 width="640" height="480" border="0" /></a>
 
+## Fiber2D
+
+https://github.com/s1ddok/Fiber2D#fiber2d - Fiber2D - Cross-platform 2D Game
+Engine in pure Swift  
+![Fiber2D Demo Gif](http://imgur.com/CP6d9kT.gif)
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
@@ -226,7 +224,7 @@ width="640" height="480" border="0" /></a>
 <img align="right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
 </a>
 
-	Copyright 2010-2016 Branimir Karadzic. All rights reserved.
+	Copyright 2010-2017 Branimir Karadzic. All rights reserved.
 	
 	https://github.com/bkaradzic/bgfx
 	

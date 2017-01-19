@@ -21,6 +21,7 @@ project ("texturev")
 	links {
 		"example-common",
 		"bgfx",
+		"bx",
 	}
 
 	if _OPTIONS["with-sdl"] then

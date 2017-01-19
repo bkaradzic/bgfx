@@ -1,5 +1,5 @@
 --
--- Copyright 2010-2016 Branimir Karadzic. All rights reserved.
+-- Copyright 2010-2017 Branimir Karadzic. All rights reserved.
 -- License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 --
 
@@ -142,8 +142,9 @@ function exampleProject(_name)
 	}
 
 	links {
-		"bgfx",
 		"example-common",
+		"bgfx",
+		"bx",
 	}
 
 	if _OPTIONS["with-sdl"] then
@@ -363,6 +364,8 @@ dofile "bgfx.lua"
 group "libs"
 bgfxProject("", "StaticLib", {})
 
+dofile(path.join(BX_DIR, "scripts/bx.lua"))
+
 if _OPTIONS["with-examples"] or _OPTIONS["with-tools"] then
 	group "examples"
 	dofile "example-common.lua"
@@ -401,6 +404,7 @@ if _OPTIONS["with-examples"] then
 	exampleProject("29-debugdraw")
 	exampleProject("30-picking")
 	exampleProject("31-rsm")
+	exampleProject("32-particles")
 
 	-- C99 source doesn't compile under WinRT settings
 	if not premake.vstudio.iswinrt() then

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -709,22 +709,26 @@ namespace bgfx
 	///
 	struct Stats
 	{
-		uint64_t cpuTimeBegin; //!< CPU frame begin time.
-		uint64_t cpuTimeEnd;   //!< CPU frame end time.
-		uint64_t cpuTimerFreq; //!< CPU timer frequency.
+		uint64_t cpuTimeBegin;  //!< CPU frame begin time.
+		uint64_t cpuTimeEnd;    //!< CPU frame end time.
+		uint64_t cpuTimerFreq;  //!< CPU timer frequency.
 
-		uint64_t gpuTimeBegin; //!< GPU frame begin time.
-		uint64_t gpuTimeEnd;   //!< GPU frame end time.
-		uint64_t gpuTimerFreq; //!< GPU timer frequency.
+		uint64_t gpuTimeBegin;  //!< GPU frame begin time.
+		uint64_t gpuTimeEnd;    //!< GPU frame end time.
+		uint64_t gpuTimerFreq;  //!< GPU timer frequency.
 
-		int64_t waitRender;    //!< Time spent waiting for render backend thread to finish issuing
-		                       //!  draw commands to underlying graphics API.
-		int64_t waitSubmit;    //!< Time spent waiting for submit thread to advance to next frame.
+		int64_t waitRender;     //!< Time spent waiting for render backend thread to finish issuing
+		                        //!  draw commands to underlying graphics API.
+		int64_t waitSubmit;     //!< Time spent waiting for submit thread to advance to next frame.
 
-		uint16_t width;        //!< Backbuffer width in pixels.
-		uint16_t height;       //!< Backbuffer height in pixels.
-		uint16_t textWidth;    //!< Debug text width in characters.
-		uint16_t textHeight;   //!< Debug text height in characters.
+		uint32_t numDraw;       //!< Number of draw calls submitted.
+		uint32_t numCompute;    //!< Number of compute calls submitted.
+		uint32_t maxGpuLatency; //!< GPU driver latency.
+
+		uint16_t width;         //!< Backbuffer width in pixels.
+		uint16_t height;        //!< Backbuffer height in pixels.
+		uint16_t textWidth;     //!< Debug text width in characters.
+		uint16_t textHeight;    //!< Debug text height in characters.
 	};
 
 	/// Vertex declaration.
@@ -931,40 +935,40 @@ namespace bgfx
 
 	/// Swizzle RGBA8 image to BGRA8.
 	///
+	/// @param[in] _dst Destination image. Must be the same size as input image.
+	///   _dst might be pointer to the same memory as _src.
 	/// @param[in] _width Width of input image (pixels).
 	/// @param[in] _height Height of input image (pixels).
 	/// @param[in] _pitch Pitch of input image (bytes).
 	/// @param[in] _src Source image.
-	/// @param[in] _dst Destination image. Must be the same size as input image.
-	///   _dst might be pointer to the same memory as _src.
 	///
 	/// @attention C99 equivalent is `bgfx_image_swizzle_bgra8`.
 	///
 	void imageSwizzleBgra8(
-		  uint32_t _width
+		  void* _dst
+		, uint32_t _width
 		, uint32_t _height
 		, uint32_t _pitch
 		, const void* _src
-		, void* _dst
 		);
 
 	/// Downsample RGBA8 image with 2x2 pixel average filter.
 	///
+	/// @param[in] _dst Destination image. Must be at least quarter size of
+	///   input image. _dst might be pointer to the same memory as _src.
 	/// @param[in] _width Width of input image (pixels).
 	/// @param[in] _height Height of input image (pixels).
 	/// @param[in] _pitch Pitch of input image (bytes).
 	/// @param[in] _src Source image.
-	/// @param[in] _dst Destination image. Must be at least quarter size of
-	///   input image. _dst might be pointer to the same memory as _src.
 	///
 	/// @attention C99 equivalent is `bgfx_image_rgba8_downsample_2x2`.
 	///
 	void imageRgba8Downsample2x2(
-		  uint32_t _width
+		  void* _dst
+		, uint32_t _width
 		, uint32_t _height
 		, uint32_t _pitch
 		, const void* _src
-		, void* _dst
 		);
 
 	/// Returns supported backend API renderers.
@@ -1387,46 +1391,31 @@ namespace bgfx
 	///
 	void destroyDynamicVertexBuffer(DynamicVertexBufferHandle _handle);
 
-	/// Returns true if internal transient index buffer has enough space.
+	/// Returns number of available indices.
 	///
-	/// @param[in] _num Number of indices.
+	/// @param[in] _num Number of required indices.
 	///
-	/// @attention C99 equivalent is `bgfx_check_avail_transient_index_buffer`.
+	/// @attention C99 equivalent is `bgfx_get_avail_transient_index_buffer`.
 	///
-	bool checkAvailTransientIndexBuffer(uint32_t _num);
+	uint32_t getAvailTransientIndexBuffer(uint32_t _num);
 
-	/// Returns true if internal transient vertex buffer has enough space.
+	/// Returns number of available vertices.
 	///
-	/// @param[in] _num Number of vertices.
+	/// @param[in] _num Number of required vertices.
 	/// @param[in] _decl Vertex declaration.
 	///
 	/// @attention C99 equivalent is `bgfx_check_avail_transient_vertex_buffer`.
 	///
-	bool checkAvailTransientVertexBuffer(uint32_t _num, const VertexDecl& _decl);
+	uint32_t getAvailTransientVertexBuffer(uint32_t _num, const VertexDecl& _decl);
 
-	/// Returns true if internal instance data buffer has enough space.
+	/// Returns number of available instance buffer slots.
 	///
-	/// @param[in] _num Number of instances.
+	/// @param[in] _num Number of required instances.
 	/// @param[in] _stride Stride per instance.
 	///
 	/// @attention C99 equivalent is `bgfx_check_avail_instance_data_buffer`.
 	///
-	bool checkAvailInstanceDataBuffer(uint32_t _num, uint16_t _stride);
-
-	/// Returns true if both internal transient index and vertex buffer have
-	/// enough space.
-	///
-	/// @param[in] _numVertices Number of vertices.
-	/// @param[in] _decl Vertex declaration.
-	/// @param[in] _numIndices Number of indices.
-	///
-	/// @attention C99 equivalent is `bgfx_check_avail_transient_buffers`.
-	///
-	bool checkAvailTransientBuffers(
-		  uint32_t _numVertices
-		, const VertexDecl& _decl
-		, uint32_t _numIndices
-		);
+	uint32_t getAvailInstanceDataBuffer(uint32_t _num, uint16_t _stride);
 
 	/// Allocate transient index buffer.
 	///

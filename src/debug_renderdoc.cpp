@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -43,7 +43,7 @@ namespace bgfx
 								, BX_COUNTOF(moduleName)
 								);
 					if (0 != result
-					&&  0 == bx::stricmp(_name, moduleName) )
+					&&  0 == bx::strincmp(_name, moduleName) )
 					{
 						return true;
 					}

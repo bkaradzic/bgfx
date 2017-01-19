@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -291,6 +291,13 @@ namespace bgfx
 		{
 			uint64_t ui64 = *( (uint64_t*)this);
 			return UINT64_C(0) == ui64;
+		}
+
+		bool isZeroArea() const
+		{
+			return 0 == m_width
+				|| 0 == m_height
+				;
 		}
 
 		void intersect(const Rect& _a, const Rect& _b)
@@ -1701,39 +1708,41 @@ namespace bgfx
 
 		void sort();
 
-		bool checkAvailTransientIndexBuffer(uint32_t _num)
+		uint32_t getAvailTransientIndexBuffer(uint32_t _num)
 		{
-			uint32_t offset = m_iboffset;
+			uint32_t offset   = bx::strideAlign(m_iboffset, sizeof(uint16_t) );
 			uint32_t iboffset = offset + _num*sizeof(uint16_t);
 			iboffset = bx::uint32_min(iboffset, BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE);
 			uint32_t num = (iboffset-offset)/sizeof(uint16_t);
-			return num == _num;
+			return num;
 		}
 
 		uint32_t allocTransientIndexBuffer(uint32_t& _num)
 		{
 			uint32_t offset = bx::strideAlign(m_iboffset, sizeof(uint16_t) );
-			m_iboffset = offset + _num*sizeof(uint16_t);
-			m_iboffset = bx::uint32_min(m_iboffset, BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE);
-			_num = (m_iboffset-offset)/sizeof(uint16_t);
+			uint32_t num    = getAvailTransientIndexBuffer(_num);
+			m_iboffset = offset + num*sizeof(uint16_t);
+			_num = num;
+
 			return offset;
 		}
 
-		bool checkAvailTransientVertexBuffer(uint32_t _num, uint16_t _stride)
+		uint32_t getAvailTransientVertexBuffer(uint32_t _num, uint16_t _stride)
 		{
-			uint32_t offset = bx::strideAlign(m_vboffset, _stride);
+			uint32_t offset   = bx::strideAlign(m_vboffset, _stride);
 			uint32_t vboffset = offset + _num * _stride;
 			vboffset = bx::uint32_min(vboffset, BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE);
 			uint32_t num = (vboffset-offset)/_stride;
-			return num == _num;
+			return num;
 		}
 
 		uint32_t allocTransientVertexBuffer(uint32_t& _num, uint16_t _stride)
 		{
 			uint32_t offset = bx::strideAlign(m_vboffset, _stride);
-			m_vboffset = offset + _num * _stride;
-			m_vboffset = bx::uint32_min(m_vboffset, BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE);
-			_num = (m_vboffset-offset)/_stride;
+			uint32_t num    = getAvailTransientVertexBuffer(_num, _stride);
+			m_vboffset = offset + num * _stride;
+			_num = num;
+
 			return offset;
 		}
 
@@ -2214,8 +2223,8 @@ namespace bgfx
 				, _width
 				, _height
 				);
-			m_resolution.m_width  = bx::uint32_min(g_caps.limits.maxTextureSize, _width);
-			m_resolution.m_height = bx::uint32_min(g_caps.limits.maxTextureSize, _height);
+			m_resolution.m_width  = bx::uint32_clamp(_width,  1, g_caps.limits.maxTextureSize);
+			m_resolution.m_height = bx::uint32_clamp(_height, 1, g_caps.limits.maxTextureSize);
 			m_resolution.m_flags  = 0
 				| _flags
 				| (g_platformDataChangedSinceReset ? BGFX_RESET_INTERNAL_FORCE : 0)
@@ -2689,14 +2698,14 @@ namespace bgfx
 			m_dynamicVertexBufferHandle.free(_handle.idx);
 		}
 
-		BGFX_API_FUNC(bool checkAvailTransientIndexBuffer(uint32_t _num) const)
+		BGFX_API_FUNC(uint32_t getAvailTransientIndexBuffer(uint32_t _num) const)
 		{
-			return m_submit->checkAvailTransientIndexBuffer(_num);
+			return m_submit->getAvailTransientIndexBuffer(_num);
 		}
 
-		BGFX_API_FUNC(bool checkAvailTransientVertexBuffer(uint32_t _num, uint16_t _stride) const)
+		BGFX_API_FUNC(uint32_t getAvailTransientVertexBuffer(uint32_t _num, uint16_t _stride) const)
 		{
-			return m_submit->checkAvailTransientVertexBuffer(_num, _stride);
+			return m_submit->getAvailTransientVertexBuffer(_num, _stride);
 		}
 
 		TransientIndexBuffer* createTransientIndexBuffer(uint32_t _size)

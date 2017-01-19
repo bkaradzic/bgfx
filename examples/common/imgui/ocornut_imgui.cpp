@@ -11,6 +11,7 @@
 #include <ocornut-imgui/imgui.h>
 #include "imgui.h"
 #include "ocornut_imgui.h"
+#include "../bgfx_utils.h"
 
 #ifndef USE_ENTRY
 #	if defined(SCI_NAMESPACE)
@@ -86,8 +87,7 @@ struct OcornutImguiContext
 			uint32_t numVertices = (uint32_t)drawList->VtxBuffer.size();
 			uint32_t numIndices  = (uint32_t)drawList->IdxBuffer.size();
 
-			if (!bgfx::checkAvailTransientVertexBuffer(numVertices, m_decl)
-			||  !bgfx::checkAvailTransientIndexBuffer(numIndices) )
+			if (!checkAvailTransientBuffers(numVertices, m_decl, numIndices) )
 			{
 				// not enough space in transient buffer just quit drawing the rest...
 				break;
