@@ -319,7 +319,7 @@ struct View
 						bool supported = false;
 						for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
 						{
-							if (0 == bx::stricmp(ext, s_supportedExt[ii]) )
+							if (0 == bx::strincmp(ext, s_supportedExt[ii]) )
 							{
 								supported = true;
 								break;
