@@ -865,6 +865,10 @@ namespace bgfx
 		bool preprocessOnly = cmdLine.hasArg("preprocess");
 		const char* includeDir = cmdLine.findOption('i');
 
+		BX_TRACE("depends: %d", depends);
+		BX_TRACE("preprocessOnly: %d", preprocessOnly);
+		BX_TRACE("includeDir: %s", includeDir);
+
 		Preprocessor preprocessor(filePath, 0 != essl);
 
 		for (int ii = 1; NULL != includeDir; ++ii)
