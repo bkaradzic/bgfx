@@ -47,6 +47,9 @@ project "glslang"
 		}
 
 	configuration {}
+		defines {
+			"ENABLE_HLSL=1",
+		}
 
 	includedirs {
 		GLSLANG,

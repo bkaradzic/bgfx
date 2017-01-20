@@ -26,6 +26,8 @@ vs_%.bin.h : vs_%.sc
 	@echo [$(<)]
 	 $(SILENT) $(SHADERC) $(VS_FLAGS) --platform linux                  -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_glsl
 	@cat $(SHADER_TMP) > $(@)
+	-$(SILENT) $(SHADERC) $(VS_FLAGS) --platform linux   -p spirv       -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_spv
+	-@cat $(SHADER_TMP) >> $(@)
 	-$(SILENT) $(SHADERC) $(VS_FLAGS) --platform windows -p vs_3_0 -O 3 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_dx9
 	-@cat $(SHADER_TMP) >> $(@)
 	-$(SILENT) $(SHADERC) $(VS_FLAGS) --platform windows -p vs_4_0 -O 3 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_dx11
@@ -39,6 +41,8 @@ fs_%.bin.h : fs_%.sc
 	@echo [$(<)]
 	 $(SILENT) $(SHADERC) $(FS_FLAGS) --platform linux                  -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_glsl
 	@cat $(SHADER_TMP) > $(@)
+	-$(SILENT) $(SHADERC) $(FS_FLAGS) --platform linux   -p spirv       -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_spv
+	-@cat $(SHADER_TMP) >> $(@)
 	-$(SILENT) $(SHADERC) $(FS_FLAGS) --platform windows -p ps_3_0 -O 3 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_dx9
 	-@cat $(SHADER_TMP) >> $(@)
 	-$(SILENT) $(SHADERC) $(FS_FLAGS) --platform windows -p ps_4_0 -O 3 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_dx11
@@ -52,6 +56,8 @@ cs_%.bin.h : cs_%.sc
 	@echo [$(<)]
 	 $(SILENT) $(SHADERC) $(CS_FLAGS) --platform linux -p 430           -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_glsl
 	@cat $(SHADER_TMP) > $(@)
+	-$(SILENT) $(SHADERC) $(CS_FLAGS) --platform linux   -p spirv       -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_spv
+	-@cat $(SHADER_TMP) >> $(@)
 	-$(SILENT) $(SHADERC) $(CS_FLAGS) --platform windows -p cs_5_0 -O 1 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_dx11
 	-@cat $(SHADER_TMP) >> $(@)
 	-@echo extern const uint8_t* $(basename $(<))_pssl;>> $(@)
