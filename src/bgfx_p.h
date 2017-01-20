@@ -24,9 +24,6 @@
 
 #include <inttypes.h>
 #include <stdarg.h> // va_list
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <alloca.h>
 
 // Check handle, cannot be bgfx::invalidHandle and must be valid.
