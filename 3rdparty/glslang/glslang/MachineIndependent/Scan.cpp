@@ -721,7 +721,7 @@ int TScanContext::tokenize(TPpContext* pp, TParserToken& token)
 
         default:
             char buf[2];
-            buf[0] = token;
+            buf[0] = (char)token;
             buf[1] = 0;
             parseContext.error(loc, "unexpected token", buf, "");
             break;

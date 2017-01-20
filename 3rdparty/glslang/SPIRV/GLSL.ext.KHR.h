@@ -32,5 +32,5 @@ static const char* const E_SPV_KHR_shader_ballot                = "SPV_KHR_shade
 
 // SPV_KHR_shader_draw_parameters
 static const char* const E_SPV_KHR_shader_draw_parameters       = "SPV_KHR_shader_draw_parameters";
-
+static const char* const E_SPV_KHR_subgroup_vote                = "SPV_KHR_subgroup_vote";
 #endif  // #ifndef GLSLextKHR_H

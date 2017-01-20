@@ -974,20 +974,20 @@ TIntermTyped* TIntermediate::foldDereference(TIntermTyped* node, int index, cons
 // Make a constant vector node or constant scalar node, representing a given
 // constant vector and constant swizzle into it.
 //
-TIntermTyped* TIntermediate::foldSwizzle(TIntermTyped* node, TVectorFields& fields, const TSourceLoc& loc)
+TIntermTyped* TIntermediate::foldSwizzle(TIntermTyped* node, TSwizzleSelectors<TVectorSelector>& selectors, const TSourceLoc& loc)
 {
     const TConstUnionArray& unionArray = node->getAsConstantUnion()->getConstArray();
-    TConstUnionArray constArray(fields.num);
+    TConstUnionArray constArray(selectors.size());
 
-    for (int i = 0; i < fields.num; i++)
-        constArray[i] = unionArray[fields.offsets[i]];
+    for (int i = 0; i < selectors.size(); i++)
+        constArray[i] = unionArray[selectors[i]];
 
     TIntermTyped* result = addConstantUnion(constArray, node->getType(), loc);
 
     if (result == 0)
         result = node;
     else
-        result->setType(TType(node->getBasicType(), EvqConst, fields.num));
+        result->setType(TType(node->getBasicType(), EvqConst, selectors.size()));
 
     return result;
 }

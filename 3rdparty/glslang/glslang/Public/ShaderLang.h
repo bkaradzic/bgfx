@@ -374,16 +374,16 @@ public:
         // the C++ specification.
 
         // For the "system" or <>-style includes; search the "system" paths.
-        virtual IncludeResult* includeSystem(const char* headerName,
-                                             const char* includerName,
-                                             size_t inclusionDepth) { return nullptr; }
+        virtual IncludeResult* includeSystem(const char* /*headerName*/,
+                                             const char* /*includerName*/,
+                                             size_t /*inclusionDepth*/) { return nullptr; }
 
         // For the "local"-only aspect of a "" include. Should not search in the
         // "system" paths, because on returning a failure, the parser will
         // call includeSystem() to look in the "system" locations.
-        virtual IncludeResult* includeLocal(const char* headerName,
-                                            const char* includerName,
-                                            size_t inclusionDepth) { return nullptr; }
+        virtual IncludeResult* includeLocal(const char* /*headerName*/,
+                                            const char* /*includerName*/,
+                                            size_t /*inclusionDepth*/) { return nullptr; }
 
         // Signals that the parser will no longer use the contents of the
         // specified IncludeResult.

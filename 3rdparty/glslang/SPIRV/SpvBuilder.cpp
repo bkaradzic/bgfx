@@ -2354,7 +2354,7 @@ void Builder::dump(std::vector<unsigned int>& out) const
 
     for (auto it = extensions.cbegin(); it != extensions.cend(); ++it) {
         Instruction extInst(0, 0, OpExtension);
-        extInst.addStringOperand(*it);
+        extInst.addStringOperand(it->c_str());
         extInst.dump(out);
     }
 

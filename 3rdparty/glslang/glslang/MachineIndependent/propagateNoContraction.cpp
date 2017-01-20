@@ -90,6 +90,7 @@ bool isDereferenceOperation(glslang::TOperator op)
     case glslang::EOpIndexDirectStruct:
     case glslang::EOpIndexIndirect:
     case glslang::EOpVectorSwizzle:
+    case glslang::EOpMatrixSwizzle:
         return true;
     default:
         return false;

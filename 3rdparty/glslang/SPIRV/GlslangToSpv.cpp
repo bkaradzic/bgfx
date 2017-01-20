@@ -161,7 +161,7 @@ protected:
     spv::Id makeSmearedConstant(spv::Id constant, int vectorSize);
     spv::Id createAtomicOperation(glslang::TOperator op, spv::Decoration precision, spv::Id typeId, std::vector<spv::Id>& operands, glslang::TBasicType typeProxy);
     spv::Id createInvocationsOperation(glslang::TOperator op, spv::Id typeId, std::vector<spv::Id>& operands, glslang::TBasicType typeProxy);
-    spv::Id CreateInvocationsVectorOperation(spv::Op op, spv::Id typeId, std::vector<spv::Id>& operands);
+    spv::Id CreateInvocationsVectorOperation(spv::Op op, spv::GroupOperation groupOperation, spv::Id typeId, std::vector<spv::Id>& operands);
     spv::Id createMiscOperation(glslang::TOperator op, spv::Decoration precision, spv::Id typeId, std::vector<spv::Id>& operands, glslang::TBasicType typeProxy);
     spv::Id createNoArgOperation(glslang::TOperator op, spv::Decoration precision, spv::Id typeId);
     spv::Id getSymbolId(const glslang::TIntermSymbol* node);
@@ -1115,6 +1115,9 @@ bool TGlslangToSpvTraverser::visitBinary(glslang::TVisit /* visit */, glslang::T
             builder.accessChainPushSwizzle(swizzle, convertGlslangToSpvType(node->getLeft()->getType()));
         }
         return false;
+    case glslang::EOpMatrixSwizzle:
+        logger->missingFunctionality("matrix swizzle");
+        return true;
     case glslang::EOpLogicalOr:
     case glslang::EOpLogicalAnd:
         {
@@ -2012,7 +2015,6 @@ spv::Id TGlslangToSpvTraverser::convertGlslangToSpvType(const glslang::TType& ty
 #ifdef AMD_EXTENSIONS
     case glslang::EbtFloat16:
         builder.addExtension(spv::E_SPV_AMD_gpu_shader_half_float);
-        builder.addCapability(spv::CapabilityFloat16);
         spvType = builder.makeFloatType(16);
         break;
 #endif
@@ -3740,6 +3742,18 @@ spv::Id TGlslangToSpvTraverser::createUnaryOperation(glslang::TOperator op, spv:
     case glslang::EOpMinInvocationsNonUniform:
     case glslang::EOpMaxInvocationsNonUniform:
     case glslang::EOpAddInvocationsNonUniform:
+    case glslang::EOpMinInvocationsInclusiveScan:
+    case glslang::EOpMaxInvocationsInclusiveScan:
+    case glslang::EOpAddInvocationsInclusiveScan:
+    case glslang::EOpMinInvocationsInclusiveScanNonUniform:
+    case glslang::EOpMaxInvocationsInclusiveScanNonUniform:
+    case glslang::EOpAddInvocationsInclusiveScanNonUniform:
+    case glslang::EOpMinInvocationsExclusiveScan:
+    case glslang::EOpMaxInvocationsExclusiveScan:
+    case glslang::EOpAddInvocationsExclusiveScan:
+    case glslang::EOpMinInvocationsExclusiveScanNonUniform:
+    case glslang::EOpMaxInvocationsExclusiveScanNonUniform:
+    case glslang::EOpAddInvocationsExclusiveScanNonUniform:
 #endif
     {
         std::vector<spv::Id> operands;
@@ -4127,26 +4141,64 @@ spv::Id TGlslangToSpvTraverser::createInvocationsOperation(glslang::TOperator op
 #endif
 
     spv::Op opCode = spv::OpNop;
-
     std::vector<spv::Id> spvGroupOperands;
+    spv::GroupOperation groupOperation = spv::GroupOperationMax;
+
     if (op == glslang::EOpBallot || op == glslang::EOpReadFirstInvocation ||
         op == glslang::EOpReadInvocation) {
         builder.addExtension(spv::E_SPV_KHR_shader_ballot);
         builder.addCapability(spv::CapabilitySubgroupBallotKHR);
+    } else if (op == glslang::EOpAnyInvocation ||
+        op == glslang::EOpAllInvocations ||
+        op == glslang::EOpAllInvocationsEqual) {
+        builder.addExtension(spv::E_SPV_KHR_subgroup_vote);
+        builder.addCapability(spv::CapabilitySubgroupVoteKHR);
     } else {
         builder.addCapability(spv::CapabilityGroups);
 #ifdef AMD_EXTENSIONS
         if (op == glslang::EOpMinInvocationsNonUniform ||
             op == glslang::EOpMaxInvocationsNonUniform ||
-            op == glslang::EOpAddInvocationsNonUniform)
+            op == glslang::EOpAddInvocationsNonUniform ||
+            op == glslang::EOpMinInvocationsInclusiveScanNonUniform ||
+            op == glslang::EOpMaxInvocationsInclusiveScanNonUniform ||
+            op == glslang::EOpAddInvocationsInclusiveScanNonUniform ||
+            op == glslang::EOpMinInvocationsExclusiveScanNonUniform ||
+            op == glslang::EOpMaxInvocationsExclusiveScanNonUniform ||
+            op == glslang::EOpAddInvocationsExclusiveScanNonUniform)
             builder.addExtension(spv::E_SPV_AMD_shader_ballot);
 #endif
 
         spvGroupOperands.push_back(builder.makeUintConstant(spv::ScopeSubgroup));
 #ifdef AMD_EXTENSIONS
-        if (op == glslang::EOpMinInvocations || op == glslang::EOpMaxInvocations || op == glslang::EOpAddInvocations ||
-            op == glslang::EOpMinInvocationsNonUniform || op == glslang::EOpMaxInvocationsNonUniform || op == glslang::EOpAddInvocationsNonUniform)
-            spvGroupOperands.push_back(spv::GroupOperationReduce);
+        switch (op) {
+        case glslang::EOpMinInvocations:
+        case glslang::EOpMaxInvocations:
+        case glslang::EOpAddInvocations:
+        case glslang::EOpMinInvocationsNonUniform:
+        case glslang::EOpMaxInvocationsNonUniform:
+        case glslang::EOpAddInvocationsNonUniform:
+            groupOperation = spv::GroupOperationReduce;
+            spvGroupOperands.push_back(groupOperation);
+            break;
+        case glslang::EOpMinInvocationsInclusiveScan:
+        case glslang::EOpMaxInvocationsInclusiveScan:
+        case glslang::EOpAddInvocationsInclusiveScan:
+        case glslang::EOpMinInvocationsInclusiveScanNonUniform:
+        case glslang::EOpMaxInvocationsInclusiveScanNonUniform:
+        case glslang::EOpAddInvocationsInclusiveScanNonUniform:
+            groupOperation = spv::GroupOperationInclusiveScan;
+            spvGroupOperands.push_back(groupOperation);
+            break;
+        case glslang::EOpMinInvocationsExclusiveScan:
+        case glslang::EOpMaxInvocationsExclusiveScan:
+        case glslang::EOpAddInvocationsExclusiveScan:
+        case glslang::EOpMinInvocationsExclusiveScanNonUniform:
+        case glslang::EOpMaxInvocationsExclusiveScanNonUniform:
+        case glslang::EOpAddInvocationsExclusiveScanNonUniform:
+            groupOperation = spv::GroupOperationExclusiveScan;
+            spvGroupOperands.push_back(groupOperation);
+            break;
+        }
 #endif
     }
 
@@ -4155,24 +4207,18 @@ spv::Id TGlslangToSpvTraverser::createInvocationsOperation(glslang::TOperator op
 
     switch (op) {
     case glslang::EOpAnyInvocation:
-        opCode = spv::OpGroupAny;
+        opCode = spv::OpSubgroupAnyKHR;
         break;
     case glslang::EOpAllInvocations:
-        opCode = spv::OpGroupAll;
+        opCode = spv::OpSubgroupAllKHR;
         break;
     case glslang::EOpAllInvocationsEqual:
-    {
-        spv::Id groupAll = builder.createOp(spv::OpGroupAll, typeId, spvGroupOperands);
-        spv::Id groupAny = builder.createOp(spv::OpGroupAny, typeId, spvGroupOperands);
-
-        return builder.createBinOp(spv::OpLogicalOr, typeId, groupAll,
-                                   builder.createUnaryOp(spv::OpLogicalNot, typeId, groupAny));
-    }
-
+        opCode = spv::OpSubgroupAllEqualKHR;
+        break;
     case glslang::EOpReadInvocation:
         opCode = spv::OpSubgroupReadInvocationKHR;
         if (builder.isVectorType(typeId))
-            return CreateInvocationsVectorOperation(opCode, typeId, operands);
+            return CreateInvocationsVectorOperation(opCode, groupOperation, typeId, operands);
         break;
     case glslang::EOpReadFirstInvocation:
         opCode = spv::OpSubgroupFirstInvocationKHR;
@@ -4202,7 +4248,15 @@ spv::Id TGlslangToSpvTraverser::createInvocationsOperation(glslang::TOperator op
     case glslang::EOpMinInvocations:
     case glslang::EOpMaxInvocations:
     case glslang::EOpAddInvocations:
-        if (op == glslang::EOpMinInvocations) {
+    case glslang::EOpMinInvocationsInclusiveScan:
+    case glslang::EOpMaxInvocationsInclusiveScan:
+    case glslang::EOpAddInvocationsInclusiveScan:
+    case glslang::EOpMinInvocationsExclusiveScan:
+    case glslang::EOpMaxInvocationsExclusiveScan:
+    case glslang::EOpAddInvocationsExclusiveScan:
+        if (op == glslang::EOpMinInvocations ||
+            op == glslang::EOpMinInvocationsInclusiveScan ||
+            op == glslang::EOpMinInvocationsExclusiveScan) {
             if (isFloat)
                 opCode = spv::OpGroupFMin;
             else {
@@ -4211,7 +4265,9 @@ spv::Id TGlslangToSpvTraverser::createInvocationsOperation(glslang::TOperator op
                 else
                     opCode = spv::OpGroupSMin;
             }
-        } else if (op == glslang::EOpMaxInvocations) {
+        } else if (op == glslang::EOpMaxInvocations ||
+                   op == glslang::EOpMaxInvocationsInclusiveScan ||
+                   op == glslang::EOpMaxInvocationsExclusiveScan) {
             if (isFloat)
                 opCode = spv::OpGroupFMax;
             else {
@@ -4228,13 +4284,21 @@ spv::Id TGlslangToSpvTraverser::createInvocationsOperation(glslang::TOperator op
         }
 
         if (builder.isVectorType(typeId))
-            return CreateInvocationsVectorOperation(opCode, typeId, operands);
+            return CreateInvocationsVectorOperation(opCode, groupOperation, typeId, operands);
 
         break;
     case glslang::EOpMinInvocationsNonUniform:
     case glslang::EOpMaxInvocationsNonUniform:
     case glslang::EOpAddInvocationsNonUniform:
-        if (op == glslang::EOpMinInvocationsNonUniform) {
+    case glslang::EOpMinInvocationsInclusiveScanNonUniform:
+    case glslang::EOpMaxInvocationsInclusiveScanNonUniform:
+    case glslang::EOpAddInvocationsInclusiveScanNonUniform:
+    case glslang::EOpMinInvocationsExclusiveScanNonUniform:
+    case glslang::EOpMaxInvocationsExclusiveScanNonUniform:
+    case glslang::EOpAddInvocationsExclusiveScanNonUniform:
+        if (op == glslang::EOpMinInvocationsNonUniform ||
+            op == glslang::EOpMinInvocationsInclusiveScanNonUniform ||
+            op == glslang::EOpMinInvocationsExclusiveScanNonUniform) {
             if (isFloat)
                 opCode = spv::OpGroupFMinNonUniformAMD;
             else {
@@ -4244,7 +4308,9 @@ spv::Id TGlslangToSpvTraverser::createInvocationsOperation(glslang::TOperator op
                     opCode = spv::OpGroupSMinNonUniformAMD;
             }
         }
-        else if (op == glslang::EOpMaxInvocationsNonUniform) {
+        else if (op == glslang::EOpMaxInvocationsNonUniform ||
+                 op == glslang::EOpMaxInvocationsInclusiveScanNonUniform ||
+                 op == glslang::EOpMaxInvocationsExclusiveScanNonUniform) {
             if (isFloat)
                 opCode = spv::OpGroupFMaxNonUniformAMD;
             else {
@@ -4262,7 +4328,7 @@ spv::Id TGlslangToSpvTraverser::createInvocationsOperation(glslang::TOperator op
         }
 
         if (builder.isVectorType(typeId))
-            return CreateInvocationsVectorOperation(opCode, typeId, operands);
+            return CreateInvocationsVectorOperation(opCode, groupOperation, typeId, operands);
 
         break;
 #endif
@@ -4276,7 +4342,7 @@ spv::Id TGlslangToSpvTraverser::createInvocationsOperation(glslang::TOperator op
 }
 
 // Create group invocation operations on a vector
-spv::Id TGlslangToSpvTraverser::CreateInvocationsVectorOperation(spv::Op op, spv::Id typeId, std::vector<spv::Id>& operands)
+spv::Id TGlslangToSpvTraverser::CreateInvocationsVectorOperation(spv::Op op, spv::GroupOperation groupOperation, spv::Id typeId, std::vector<spv::Id>& operands)
 {
 #ifdef AMD_EXTENSIONS
     assert(op == spv::OpGroupFMin || op == spv::OpGroupUMin || op == spv::OpGroupSMin ||
@@ -4320,7 +4386,7 @@ spv::Id TGlslangToSpvTraverser::CreateInvocationsVectorOperation(spv::Op op, spv
             spvGroupOperands.push_back(operands[1]);
         } else {
             spvGroupOperands.push_back(builder.makeUintConstant(spv::ScopeSubgroup));
-            spvGroupOperands.push_back(spv::GroupOperationReduce);
+            spvGroupOperands.push_back(groupOperation);
             spvGroupOperands.push_back(scalar);
         }
 

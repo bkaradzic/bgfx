@@ -129,6 +129,7 @@ bool TParseContextBase::lValueErrorCheck(const TSourceLoc& loc, const char* op, 
         case EOpIndexIndirect:     // fall through
         case EOpIndexDirectStruct: // fall through
         case EOpVectorSwizzle:
+        case EOpMatrixSwizzle:
             return lValueErrorCheck(loc, op, binaryNode->getLeft());
         default:
             break;
@@ -208,6 +209,7 @@ void TParseContextBase::rValueErrorCheck(const TSourceLoc& loc, const char* op, 
         case EOpIndexIndirect:
         case EOpIndexDirectStruct:
         case EOpVectorSwizzle:
+        case EOpMatrixSwizzle:
             rValueErrorCheck(loc, op, binaryNode->getLeft());
         default:
             break;
@@ -429,6 +431,108 @@ const TFunction* TParseContextBase::selectFunction(
     }
 
     return incumbent;
+}
+
+//
+// Look at a '.' field selector string and change it into numerical selectors
+// for a vector or scalar.
+//
+// Always return some form of swizzle, so the result is always usable.
+//
+void TParseContextBase::parseSwizzleSelector(const TSourceLoc& loc, const TString& compString, int vecSize,
+                                             TSwizzleSelectors<TVectorSelector>& selector)
+{
+    // Too long?
+    if (compString.size() > MaxSwizzleSelectors)
+        error(loc, "vector swizzle too long", compString.c_str(), "");
+
+    // Use this to test that all swizzle characters are from the same swizzle-namespace-set
+    enum {
+        exyzw,
+        ergba,
+        estpq,
+    } fieldSet[MaxSwizzleSelectors];
+
+    // Decode the swizzle string.
+    int size = std::min(MaxSwizzleSelectors, (int)compString.size());
+    for (int i = 0; i < size; ++i) {
+        switch (compString[i])  {
+        case 'x':
+            selector.push_back(0);
+            fieldSet[i] = exyzw;
+            break;
+        case 'r':
+            selector.push_back(0);
+            fieldSet[i] = ergba;
+            break;
+        case 's':
+            selector.push_back(0);
+            fieldSet[i] = estpq;
+            break;
+
+        case 'y':
+            selector.push_back(1);
+            fieldSet[i] = exyzw;
+            break;
+        case 'g':
+            selector.push_back(1);
+            fieldSet[i] = ergba;
+            break;
+        case 't':
+            selector.push_back(1);
+            fieldSet[i] = estpq;
+            break;
+
+        case 'z':
+            selector.push_back(2);
+            fieldSet[i] = exyzw;
+            break;
+        case 'b':
+            selector.push_back(2);
+            fieldSet[i] = ergba;
+            break;
+        case 'p':
+            selector.push_back(2);
+            fieldSet[i] = estpq;
+            break;
+
+        case 'w':
+            selector.push_back(3);
+            fieldSet[i] = exyzw;
+            break;
+        case 'a':
+            selector.push_back(3);
+            fieldSet[i] = ergba;
+            break;
+        case 'q':
+            selector.push_back(3);
+            fieldSet[i] = estpq;
+            break;
+
+        default:
+            error(loc, "unknown swizzle selection", compString.c_str(), "");
+            break;
+        }
+    }
+
+    // Additional error checking.
+    for (int i = 0; i < selector.size(); ++i) {
+        if (selector[i] >= vecSize) {
+            error(loc, "vector swizzle selection out of range",  compString.c_str(), "");
+            selector.resize(i);
+            break;
+        }
+
+        if (i > 0 && fieldSet[i] != fieldSet[i-1]) {
+            error(loc, "vector swizzle selectors not from the same set", compString.c_str(), "");
+            selector.resize(i);
+            break;
+        }
+    }
+
+    // Ensure it is valid.
+    if (selector.size() == 0)
+        selector.push_back(0);
 }
 
 //

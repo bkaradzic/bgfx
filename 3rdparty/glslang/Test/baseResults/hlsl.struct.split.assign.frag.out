@@ -1,0 +1,196 @@
+hlsl.struct.split.assign.frag
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:7  Function Definition: main(i1;struct-S-f1-vf41[3]; (temp 4-component vector of float)
+0:7    Function Parameters: 
+0:7      'i' (layout(location=0 ) in int)
+0:7      'input' (in 3-element array of structure{temp float f, temp 4-component vector of float FragCoord pos})
+0:?     Sequence
+0:9      Sequence
+0:9        move second child to first child (temp float)
+0:9          f: direct index for structure (temp float)
+0:9            direct index (layout(location=1 ) in structure{temp float f})
+0:9              'input' (layout(location=1 ) in 3-element array of structure{temp float f})
+0:9              Constant:
+0:9                0 (const int)
+0:9            Constant:
+0:9              0 (const int)
+0:9          f: direct index for structure (temp float)
+0:9            direct index (temp structure{temp float f, temp 4-component vector of float pos})
+0:9              'a' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:9              Constant:
+0:9                0 (const int)
+0:9            Constant:
+0:9              0 (const int)
+0:9        move second child to first child (temp float)
+0:9          f: direct index for structure (temp float)
+0:9            direct index (layout(location=1 ) in structure{temp float f})
+0:9              'input' (layout(location=1 ) in 3-element array of structure{temp float f})
+0:9              Constant:
+0:9                1 (const int)
+0:9            Constant:
+0:9              0 (const int)
+0:9          f: direct index for structure (temp float)
+0:9            direct index (temp structure{temp float f, temp 4-component vector of float pos})
+0:9              'a' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:9              Constant:
+0:9                1 (const int)
+0:9            Constant:
+0:9              0 (const int)
+0:9        move second child to first child (temp float)
+0:9          f: direct index for structure (temp float)
+0:9            direct index (layout(location=1 ) in structure{temp float f})
+0:9              'input' (layout(location=1 ) in 3-element array of structure{temp float f})
+0:9              Constant:
+0:9                2 (const int)
+0:9            Constant:
+0:9              0 (const int)
+0:9          f: direct index for structure (temp float)
+0:9            direct index (temp structure{temp float f, temp 4-component vector of float pos})
+0:9              'a' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:9              Constant:
+0:9                2 (const int)
+0:9            Constant:
+0:9              0 (const int)
+0:11      Sequence
+0:11        Branch: Return
+0:?   Linker Objects
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'i' (layout(location=0 ) in int)
+0:?     'input' (layout(location=1 ) in 3-element array of structure{temp float f})
+0:?     'input_pos' (in 3-element array of 4-component vector of float FragCoord)
+
+
+Linked fragment stage:
+
+
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:7  Function Definition: main(i1;struct-S-f1-vf41[3]; (temp 4-component vector of float)
+0:7    Function Parameters: 
+0:7      'i' (layout(location=0 ) in int)
+0:7      'input' (in 3-element array of structure{temp float f, temp 4-component vector of float FragCoord pos})
+0:?     Sequence
+0:9      Sequence
+0:9        move second child to first child (temp float)
+0:9          f: direct index for structure (temp float)
+0:9            direct index (layout(location=1 ) in structure{temp float f})
+0:9              'input' (layout(location=1 ) in 3-element array of structure{temp float f})
+0:9              Constant:
+0:9                0 (const int)
+0:9            Constant:
+0:9              0 (const int)
+0:9          f: direct index for structure (temp float)
+0:9            direct index (temp structure{temp float f, temp 4-component vector of float pos})
+0:9              'a' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:9              Constant:
+0:9                0 (const int)
+0:9            Constant:
+0:9              0 (const int)
+0:9        move second child to first child (temp float)
+0:9          f: direct index for structure (temp float)
+0:9            direct index (layout(location=1 ) in structure{temp float f})
+0:9              'input' (layout(location=1 ) in 3-element array of structure{temp float f})
+0:9              Constant:
+0:9                1 (const int)
+0:9            Constant:
+0:9              0 (const int)
+0:9          f: direct index for structure (temp float)
+0:9            direct index (temp structure{temp float f, temp 4-component vector of float pos})
+0:9              'a' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:9              Constant:
+0:9                1 (const int)
+0:9            Constant:
+0:9              0 (const int)
+0:9        move second child to first child (temp float)
+0:9          f: direct index for structure (temp float)
+0:9            direct index (layout(location=1 ) in structure{temp float f})
+0:9              'input' (layout(location=1 ) in 3-element array of structure{temp float f})
+0:9              Constant:
+0:9                2 (const int)
+0:9            Constant:
+0:9              0 (const int)
+0:9          f: direct index for structure (temp float)
+0:9            direct index (temp structure{temp float f, temp 4-component vector of float pos})
+0:9              'a' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:9              Constant:
+0:9                2 (const int)
+0:9            Constant:
+0:9              0 (const int)
+0:11      Sequence
+0:11        Branch: Return
+0:?   Linker Objects
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'i' (layout(location=0 ) in int)
+0:?     'input' (layout(location=1 ) in 3-element array of structure{temp float f})
+0:?     'input_pos' (in 3-element array of 4-component vector of float FragCoord)
+
+// Module Version 10000
+// Generated by (magic number): 80001
+// Id's are bound by 41
+
+                              Capability Shader
+               1:             ExtInstImport  "GLSL.std.450"
+                              MemoryModel Logical GLSL450
+                              EntryPoint Fragment 4  "main" 12 35 37 40
+                              ExecutionMode 4 OriginUpperLeft
+                              Name 4  "main"
+                              Name 7  "S"
+                              MemberName 7(S) 0  "f"
+                              Name 12  "input"
+                              Name 16  "S"
+                              MemberName 16(S) 0  "f"
+                              MemberName 16(S) 1  "pos"
+                              Name 19  "a"
+                              Name 35  "@entryPointOutput"
+                              Name 37  "i"
+                              Name 40  "input_pos"
+                              Decorate 12(input) Location 1
+                              Decorate 35(@entryPointOutput) Location 0
+                              Decorate 37(i) Location 0
+                              Decorate 40(input_pos) BuiltIn FragCoord
+               2:             TypeVoid
+               3:             TypeFunction 2
+               6:             TypeFloat 32
+            7(S):             TypeStruct 6(float)
+               8:             TypeInt 32 0
+               9:      8(int) Constant 3
+              10:             TypeArray 7(S) 9
+              11:             TypePointer Input 10
+       12(input):     11(ptr) Variable Input
+              13:             TypeInt 32 1
+              14:     13(int) Constant 0
+              15:             TypeVector 6(float) 4
+           16(S):             TypeStruct 6(float) 15(fvec4)
+              17:             TypeArray 16(S) 9
+              18:             TypePointer Function 17
+              20:             TypePointer Function 6(float)
+              23:             TypePointer Input 6(float)
+              25:     13(int) Constant 1
+              29:     13(int) Constant 2
+              34:             TypePointer Output 15(fvec4)
+35(@entryPointOutput):     34(ptr) Variable Output
+              36:             TypePointer Input 13(int)
+           37(i):     36(ptr) Variable Input
+              38:             TypeArray 15(fvec4) 9
+              39:             TypePointer Input 38
+   40(input_pos):     39(ptr) Variable Input
+         4(main):           2 Function None 3
+               5:             Label
+           19(a):     18(ptr) Variable Function
+              21:     20(ptr) AccessChain 19(a) 14 14
+              22:    6(float) Load 21
+              24:     23(ptr) AccessChain 12(input) 14 14
+                              Store 24 22
+              26:     20(ptr) AccessChain 19(a) 25 14
+              27:    6(float) Load 26
+              28:     23(ptr) AccessChain 12(input) 25 14
+                              Store 28 27
+              30:     20(ptr) AccessChain 19(a) 29 14
+              31:    6(float) Load 30
+              32:     23(ptr) AccessChain 12(input) 29 14
+                              Store 32 31
+                              Return
+                              FunctionEnd

@@ -22,14 +22,14 @@ ERROR: 0:172: '[]' : scalar integer expression required
 ERROR: 0:175: 'x' : undeclared identifier 
 ERROR: 0:175: '[]' : scalar integer expression required 
 ERROR: 0:175: 'b' :  left of '[' is not of type array, matrix, or vector  
-ERROR: 0:175: 'a' : vector field selection out of range 
+ERROR: 0:175: 'a' : vector swizzle selection out of range 
 ERROR: 0:175: 'length' : does not operate on this type: const float
 ERROR: 0:175: '' : function call, method, or subroutine call expected 
 ERROR: 0:175: '' : no matching overloaded function found 
 ERROR: 0:178: '[]' : scalar integer expression required 
 ERROR: 0:178: 's' : undeclared identifier 
 ERROR: 0:178: 's' :  left of '[' is not of type array, matrix, or vector  
-ERROR: 0:178: 'a' : vector field selection out of range 
+ERROR: 0:178: 'a' : vector swizzle selection out of range 
 ERROR: 0:178: 'length' : does not operate on this type: const float
 ERROR: 0:178: '' : function call, method, or subroutine call expected 
 ERROR: 0:178: '' : no matching overloaded function found 

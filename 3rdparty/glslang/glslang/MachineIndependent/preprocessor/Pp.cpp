@@ -968,7 +968,7 @@ int TPpContext::scanHeaderName(TPpToken* ppToken, char delimit)
 
         // found a character to expand the name with
         if (len < MaxTokenLength)
-            ppToken->name[len++] = ch;
+            ppToken->name[len++] = (char)ch;
         else
             tooLong = true;
     } while (true);

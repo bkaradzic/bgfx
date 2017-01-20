@@ -146,6 +146,7 @@ bool TOutputTraverser::visitBinary(TVisit /* visit */, TIntermBinary* node)
         out.debug << (*node->getLeft()->getType().getStruct())[node->getRight()->getAsConstantUnion()->getConstArray()[0].getIConst()].type->getFieldName();
         out.debug << ": direct index for structure";      break;
     case EOpVectorSwizzle: out.debug << "vector swizzle"; break;
+    case EOpMatrixSwizzle: out.debug << "matrix swizzle"; break;
 
     case EOpAdd:    out.debug << "add";                     break;
     case EOpSub:    out.debug << "subtract";                break;
@@ -376,6 +377,21 @@ bool TOutputTraverser::visitUnary(TVisit /* visit */, TIntermUnary* node)
     case EOpMinInvocationsNonUniform:   out.debug << "minInvocationsNonUniform";    break;
     case EOpMaxInvocationsNonUniform:   out.debug << "maxInvocationsNonUniform";    break;
     case EOpAddInvocationsNonUniform:   out.debug << "addInvocationsNonUniform";    break;
+
+    case EOpMinInvocationsInclusiveScan:            out.debug << "minInvocationsInclusiveScan";             break;
+    case EOpMaxInvocationsInclusiveScan:            out.debug << "maxInvocationsInclusiveScan";             break;
+    case EOpAddInvocationsInclusiveScan:            out.debug << "addInvocationsInclusiveScan";             break;
+    case EOpMinInvocationsInclusiveScanNonUniform:  out.debug << "minInvocationsInclusiveScanNonUniform";   break;
+    case EOpMaxInvocationsInclusiveScanNonUniform:  out.debug << "maxInvocationsInclusiveScanNonUniform";   break;
+    case EOpAddInvocationsInclusiveScanNonUniform:  out.debug << "addInvocationsInclusiveScanNonUniform";   break;
+
+    case EOpMinInvocationsExclusiveScan:            out.debug << "minInvocationsExclusiveScan";             break;
+    case EOpMaxInvocationsExclusiveScan:            out.debug << "maxInvocationsExclusiveScan";             break;
+    case EOpAddInvocationsExclusiveScan:            out.debug << "addInvocationsExclusiveScan";             break;
+    case EOpMinInvocationsExclusiveScanNonUniform:  out.debug << "minInvocationsExclusiveScanNonUniform";   break;
+    case EOpMaxInvocationsExclusiveScanNonUniform:  out.debug << "maxInvocationsExclusiveScanNonUniform";   break;
+    case EOpAddInvocationsExclusiveScanNonUniform:  out.debug << "addInvocationsExclusiveScanNonUniform";   break;
+
     case EOpMbcnt:                      out.debug << "mbcnt";                       break;
 
     case EOpCubeFaceIndex:          out.debug << "cubeFaceIndex";         break;

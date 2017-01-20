@@ -18,9 +18,9 @@ ERROR: 0:40: 'j' : undeclared identifier
 ERROR: 0:40: '=' :  cannot convert from 'temp float' to 'temp int'
 ERROR: 0:44: 'jj' : undeclared identifier 
 ERROR: 0:44: '=' :  cannot convert from 'temp float' to 'temp int'
-ERROR: 0:54: 'y' : vector field selection out of range 
-ERROR: 0:62: 'xxxxx' : illegal vector field selection 
-ERROR: 0:63: 'xxy' : vector field selection out of range 
+ERROR: 0:54: 'y' : vector swizzle selection out of range 
+ERROR: 0:62: 'xxxxx' : vector swizzle too long 
+ERROR: 0:63: 'xxy' : vector swizzle selection out of range 
 ERROR: 0:66: 'binding' : cannot declare a default, include a type or full declaration 
 ERROR: 0:69: 'location/component/index' : cannot declare a default, use a full declaration 
 ERROR: 0:70: 'input block' : not supported in this stage: vertex
@@ -124,8 +124,10 @@ ERROR: node is still EOpNull!
 0:61          'smeared' (temp 3-component vector of float)
 0:61          Construct vec3 (temp 3-component vector of float)
 0:61            'f' (temp float)
-0:62      'f' (temp float)
-0:63      'f' (temp float)
+0:62      Construct vec4 (temp 4-component vector of float)
+0:62        'f' (temp float)
+0:63      Construct vec2 (temp 2-component vector of float)
+0:63        'f' (temp float)
 0:88  Function Definition: bar23444( (global void)
 0:88    Function Parameters: 
 0:?     Sequence

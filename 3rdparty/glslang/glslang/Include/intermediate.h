@@ -335,6 +335,18 @@ enum TOperator {
     EOpMinInvocationsNonUniform,
     EOpMaxInvocationsNonUniform,
     EOpAddInvocationsNonUniform,
+    EOpMinInvocationsInclusiveScan,
+    EOpMaxInvocationsInclusiveScan,
+    EOpAddInvocationsInclusiveScan,
+    EOpMinInvocationsInclusiveScanNonUniform,
+    EOpMaxInvocationsInclusiveScanNonUniform,
+    EOpAddInvocationsInclusiveScanNonUniform,
+    EOpMinInvocationsExclusiveScan,
+    EOpMaxInvocationsExclusiveScan,
+    EOpAddInvocationsExclusiveScan,
+    EOpMinInvocationsExclusiveScanNonUniform,
+    EOpMaxInvocationsExclusiveScanNonUniform,
+    EOpAddInvocationsExclusiveScanNonUniform,
     EOpSwizzleInvocations,
     EOpSwizzleInvocationsMasked,
     EOpWriteInvocation,
@@ -626,6 +638,9 @@ enum TOperator {
     // geometry methods
     EOpMethodAppend,                     // Geometry shader methods
     EOpMethodRestartStrip,               // ...
+
+    // matrix
+    EOpMatrixSwizzle,                    // select multiple matrix components (non-column)
 };
 
 class TIntermTraverser;

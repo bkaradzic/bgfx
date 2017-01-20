@@ -1392,18 +1392,35 @@ TIntermConstantUnion* TIntermediate::addConstantUnion(double d, TBasicType baseT
     return addConstantUnion(unionArray, TType(baseType, EvqConst), loc, literal);
 }
 
-TIntermTyped* TIntermediate::addSwizzle(TVectorFields& fields, const TSourceLoc& loc)
+// Put vector swizzle selectors onto the given sequence
+void TIntermediate::pushSelector(TIntermSequence& sequence, const TVectorSelector& selector, const TSourceLoc& loc)
+{
+    TIntermConstantUnion* constIntNode = addConstantUnion(selector, loc);
+    sequence.push_back(constIntNode);
+}
+
+// Put matrix swizzle selectors onto the given sequence
+void TIntermediate::pushSelector(TIntermSequence& sequence, const TMatrixSelector& selector, const TSourceLoc& loc)
+{
+    TIntermConstantUnion* constIntNode = addConstantUnion(selector.coord1, loc);
+    sequence.push_back(constIntNode);
+    constIntNode = addConstantUnion(selector.coord2, loc);
+    sequence.push_back(constIntNode);
+}
+
+// Make an aggregate node that has a sequence of all selectors.
+template TIntermTyped* TIntermediate::addSwizzle<TVectorSelector>(TSwizzleSelectors<TVectorSelector>& selector, const TSourceLoc& loc);
+template TIntermTyped* TIntermediate::addSwizzle<TMatrixSelector>(TSwizzleSelectors<TMatrixSelector>& selector, const TSourceLoc& loc);
+template<typename selectorType>
+TIntermTyped* TIntermediate::addSwizzle(TSwizzleSelectors<selectorType>& selector, const TSourceLoc& loc)
 {
     TIntermAggregate* node = new TIntermAggregate(EOpSequence);
 
     node->setLoc(loc);
-    TIntermConstantUnion* constIntNode;
     TIntermSequence &sequenceVector = node->getSequence();
 
-    for (int i = 0; i < fields.num; i++) {
-        constIntNode = addConstantUnion(fields.offsets[i], loc);
-        sequenceVector.push_back(constIntNode);
-    }
+    for (int i = 0; i < selector.size(); i++)
+        pushSelector(sequenceVector, selector[i], loc);
 
     return node;
 }
@@ -1425,10 +1442,10 @@ const TIntermTyped* TIntermediate::findLValueBase(const TIntermTyped* node, bool
         if (binary == nullptr)
             return node;
         TOperator op = binary->getOp();
-        if (op != EOpIndexDirect && op != EOpIndexIndirect && op != EOpIndexDirectStruct && op != EOpVectorSwizzle)
+        if (op != EOpIndexDirect && op != EOpIndexIndirect && op != EOpIndexDirectStruct && op != EOpVectorSwizzle && op != EOpMatrixSwizzle)
             return nullptr;
         if (! swizzleOkay) {
-            if (op == EOpVectorSwizzle)
+            if (op == EOpVectorSwizzle || op == EOpMatrixSwizzle)
                 return nullptr;
             if ((op == EOpIndexDirect || op == EOpIndexIndirect) &&
                 (binary->getLeft()->getType().isVector() || binary->getLeft()->getType().isScalar()) &&

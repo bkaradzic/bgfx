@@ -819,6 +819,7 @@ const char* CapabilityString(int info)
 
     case 4423: return "SubgroupBallotKHR";
     case 4427: return "DrawParameters";
+    case 4431: return "SubgroupVoteKHR";
 
 #ifdef NV_EXTENSIONS
     case 5251: return "GeometryShaderPassthroughNV";
@@ -1158,6 +1159,9 @@ const char* OpcodeString(int op)
 
     case 4421: return "OpSubgroupBallotKHR";
     case 4422: return "OpSubgroupFirstInvocationKHR";
+    case 4428: return "OpSubgroupAnyKHR";
+    case 4429: return "OpSubgroupAllKHR";
+    case 4430: return "OpSubgroupAllEqualKHR";
     case 4432: return "OpSubgroupReadInvocationKHR";
 
 #ifdef AMD_EXTENSIONS
@@ -2770,6 +2774,18 @@ void Parameterize()
     InstructionDesc[OpSubgroupBallotKHR].operands.push(OperandId, "'Predicate'");
 
     InstructionDesc[OpSubgroupFirstInvocationKHR].operands.push(OperandId, "'Value'");
+
+    InstructionDesc[OpSubgroupAnyKHR].capabilities.push_back(CapabilitySubgroupVoteKHR);
+    InstructionDesc[OpSubgroupAnyKHR].operands.push(OperandScope, "'Execution'");
+    InstructionDesc[OpSubgroupAnyKHR].operands.push(OperandId, "'Predicate'");
+
+    InstructionDesc[OpSubgroupAllKHR].capabilities.push_back(CapabilitySubgroupVoteKHR);
+    InstructionDesc[OpSubgroupAllKHR].operands.push(OperandScope, "'Execution'");
+    InstructionDesc[OpSubgroupAllKHR].operands.push(OperandId, "'Predicate'");
+
+    InstructionDesc[OpSubgroupAllEqualKHR].capabilities.push_back(CapabilitySubgroupVoteKHR);
+    InstructionDesc[OpSubgroupAllEqualKHR].operands.push(OperandScope, "'Execution'");
+    InstructionDesc[OpSubgroupAllEqualKHR].operands.push(OperandId, "'Predicate'");
 
     InstructionDesc[OpSubgroupReadInvocationKHR].capabilities.push_back(CapabilityGroups);
     InstructionDesc[OpSubgroupReadInvocationKHR].operands.push(OperandId, "'Value'");

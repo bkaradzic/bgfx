@@ -1,6 +1,8 @@
 cppComplexExpr.vert
-ERROR: 0:46: 'xyxwx' : illegal vector field selection 
-ERROR: 0:46: 'xyxwx' : illegal vector field selection 
+ERROR: 0:46: 'xyxwx' : vector swizzle too long 
+ERROR: 0:46: 'xyxwx' : vector swizzle too long 
+ERROR: 0:46: 'return' : cannot convert return value to function return type 
+WARNING: 0:46: 'return' : type conversion on return values was not explicitly allowed until version 420 
 ERROR: 0:66: '#define' : Macro redefined; different substitutions: BIG
 ERROR: 0:81: 'preprocessor evaluation' : bad expression 
 ERROR: 0:81: '#if' : unexpected tokens following directive 
@@ -47,7 +49,7 @@ ERROR: 0:0: 'preprocessor evaluation' : division by 0
 ERROR: 0:3: 'preprocessor evaluation' : bad expression 
 ERROR: 0:3: 'preprocessor evaluation' : division by 0 
 ERROR: 0:10001: '' : missing #endif 
-ERROR: 48 compilation errors.  No code generated.
+ERROR: 49 compilation errors.  No code generated.
 
 
 Shader version: 300
@@ -80,19 +82,33 @@ ERROR: node is still EOpNull!
 0:44    Function Parameters: 
 0:46    Sequence
 0:46      Branch: Return with expression
-0:46        add (temp highp float)
-0:46          add (temp highp float)
-0:46            direct index (temp highp float)
+0:46        add (temp highp 4-component vector of float)
+0:46          add (temp highp 4-component vector of float)
+0:46            vector swizzle (temp highp 4-component vector of float)
 0:46              'gl_Position' (gl_Position highp 4-component vector of float Position)
-0:46              Constant:
-0:46                0 (const int)
+0:46              Sequence
+0:46                Constant:
+0:46                  0 (const int)
+0:46                Constant:
+0:46                  1 (const int)
+0:46                Constant:
+0:46                  0 (const int)
+0:46                Constant:
+0:46                  3 (const int)
 0:46            Constant:
 0:46              3.000000
-0:46          add (temp highp float)
-0:46            direct index (temp highp float)
+0:46          add (temp highp 4-component vector of float)
+0:46            vector swizzle (temp highp 4-component vector of float)
 0:46              'gl_Position' (gl_Position highp 4-component vector of float Position)
-0:46              Constant:
-0:46                0 (const int)
+0:46              Sequence
+0:46                Constant:
+0:46                  0 (const int)
+0:46                Constant:
+0:46                  1 (const int)
+0:46                Constant:
+0:46                  0 (const int)
+0:46                Constant:
+0:46                  3 (const int)
 0:46            Constant:
 0:46              3.000000
 0:47      Branch: Return with expression

@@ -170,6 +170,9 @@ protected:
         std::function<bool(const TType&, const TType&, const TType&)>,
         /* output */ bool& tie);
 
+    virtual void parseSwizzleSelector(const TSourceLoc&, const TString&, int size,
+                                      TSwizzleSelectors<TVectorSelector>&);
+
     // Manage the global uniform block (default uniforms in GLSL, $Global in HLSL)
     TVariable* globalUniformBlock;   // the actual block, inserted into the symbol table
     int firstNewMember;              // the index of the first member not yet inserted into the symbol table
@@ -284,7 +287,6 @@ public:
     void handlePrecisionQualifier(const TSourceLoc&, TQualifier&, TPrecisionQualifier);
     void checkPrecisionQualifier(const TSourceLoc&, TPrecisionQualifier);
 
-    bool parseVectorFields(const TSourceLoc&, const TString&, int vecSize, TVectorFields&);
     void assignError(const TSourceLoc&, const char* op, TString left, TString right);
     void unaryOpError(const TSourceLoc&, const char* op, TString operand);
     void binaryOpError(const TSourceLoc&, const char* op, TString left, TString right);

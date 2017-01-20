@@ -9,7 +9,7 @@ gl_FragCoord origin is upper left
 0:34  Function Definition: PixelShaderFunction(vf4;struct-IN_S-vf4-b1-vf1-vf2-b1-b1-b1-vf41; (temp 4-component vector of float)
 0:34    Function Parameters: 
 0:34      'input' (layout(location=0 ) in 4-component vector of float)
-0:34      's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool Face ff1, layout(offset=4 ) temp bool ff2, layout(binding=0 offset=4 ) temp bool ff3, layout(binding=0 offset=4 ) temp 4-component vector of float ff4})
+0:34      's' (in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool Face ff1, layout(offset=4 ) temp bool ff2, layout(binding=0 offset=4 ) temp bool ff3, layout(binding=0 offset=4 ) temp 4-component vector of float ff4})
 0:?     Sequence
 0:39      Compare Equal (temp bool)
 0:39        's3' (temp structure{temp 3-component vector of bool b3})
@@ -20,9 +20,9 @@ gl_FragCoord origin is upper left
 0:40          Constant:
 0:40            0 (const int)
 0:40        ff4: direct index for structure (layout(binding=0 offset=4 ) temp 4-component vector of float)
-0:40          's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool Face ff1, layout(offset=4 ) temp bool ff2, layout(binding=0 offset=4 ) temp bool ff3, layout(binding=0 offset=4 ) temp 4-component vector of float ff4})
+0:40          's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, layout(offset=4 ) temp bool ff2, layout(binding=0 offset=4 ) temp bool ff3, layout(binding=0 offset=4 ) temp 4-component vector of float ff4})
 0:40          Constant:
-0:40            7 (const int)
+0:40            6 (const int)
 0:42      Sequence
 0:42        move second child to first child (temp 4-component vector of float)
 0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
@@ -31,9 +31,10 @@ gl_FragCoord origin is upper left
 0:?   Linker Objects
 0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
 0:?     'input' (layout(location=0 ) in 4-component vector of float)
-0:?     's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool Face ff1, layout(offset=4 ) temp bool ff2, layout(binding=0 offset=4 ) temp bool ff3, layout(binding=0 offset=4 ) temp 4-component vector of float ff4})
+0:?     's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, layout(offset=4 ) temp bool ff2, layout(binding=0 offset=4 ) temp bool ff3, layout(binding=0 offset=4 ) temp 4-component vector of float ff4})
 0:?     's2' (global structure{temp 4-component vector of float i})
 0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform structure{temp bool b, temp bool c, temp 4-component vector of float a, temp 4-component vector of float d} s1, layout(binding=5 offset=1620 ) uniform float ff5, layout(binding=8 offset=1636 ) uniform float ff6})
+0:?     's_ff1' (in bool Face)
 
 
 Linked fragment stage:
@@ -45,7 +46,7 @@ gl_FragCoord origin is upper left
 0:34  Function Definition: PixelShaderFunction(vf4;struct-IN_S-vf4-b1-vf1-vf2-b1-b1-b1-vf41; (temp 4-component vector of float)
 0:34    Function Parameters: 
 0:34      'input' (layout(location=0 ) in 4-component vector of float)
-0:34      's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool Face ff1, layout(offset=4 ) temp bool ff2, layout(binding=0 offset=4 ) temp bool ff3, layout(binding=0 offset=4 ) temp 4-component vector of float ff4})
+0:34      's' (in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool Face ff1, layout(offset=4 ) temp bool ff2, layout(binding=0 offset=4 ) temp bool ff3, layout(binding=0 offset=4 ) temp 4-component vector of float ff4})
 0:?     Sequence
 0:39      Compare Equal (temp bool)
 0:39        's3' (temp structure{temp 3-component vector of bool b3})
@@ -56,9 +57,9 @@ gl_FragCoord origin is upper left
 0:40          Constant:
 0:40            0 (const int)
 0:40        ff4: direct index for structure (layout(binding=0 offset=4 ) temp 4-component vector of float)
-0:40          's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool Face ff1, layout(offset=4 ) temp bool ff2, layout(binding=0 offset=4 ) temp bool ff3, layout(binding=0 offset=4 ) temp 4-component vector of float ff4})
+0:40          's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, layout(offset=4 ) temp bool ff2, layout(binding=0 offset=4 ) temp bool ff3, layout(binding=0 offset=4 ) temp 4-component vector of float ff4})
 0:40          Constant:
-0:40            7 (const int)
+0:40            6 (const int)
 0:42      Sequence
 0:42        move second child to first child (temp 4-component vector of float)
 0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
@@ -67,18 +68,19 @@ gl_FragCoord origin is upper left
 0:?   Linker Objects
 0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
 0:?     'input' (layout(location=0 ) in 4-component vector of float)
-0:?     's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool Face ff1, layout(offset=4 ) temp bool ff2, layout(binding=0 offset=4 ) temp bool ff3, layout(binding=0 offset=4 ) temp 4-component vector of float ff4})
+0:?     's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, layout(offset=4 ) temp bool ff2, layout(binding=0 offset=4 ) temp bool ff3, layout(binding=0 offset=4 ) temp 4-component vector of float ff4})
 0:?     's2' (global structure{temp 4-component vector of float i})
 0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform structure{temp bool b, temp bool c, temp 4-component vector of float a, temp 4-component vector of float d} s1, layout(binding=5 offset=1620 ) uniform float ff5, layout(binding=8 offset=1636 ) uniform float ff6})
+0:?     's_ff1' (in bool Face)
 
 // Module Version 10000
 // Generated by (magic number): 80001
-// Id's are bound by 44
+// Id's are bound by 46
 
                               Capability Shader
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
-                              EntryPoint Fragment 4  "PixelShaderFunction" 27 35 36
+                              EntryPoint Fragment 4  "PixelShaderFunction" 27 35 36 45
                               ExecutionMode 4 OriginUpperLeft
                               Name 4  "PixelShaderFunction"
                               Name 8  "FS"
@@ -92,10 +94,9 @@ gl_FragCoord origin is upper left
                               MemberName 25(IN_S) 1  "b"
                               MemberName 25(IN_S) 2  "c"
                               MemberName 25(IN_S) 3  "d"
-                              MemberName 25(IN_S) 4  "ff1"
-                              MemberName 25(IN_S) 5  "ff2"
-                              MemberName 25(IN_S) 6  "ff3"
-                              MemberName 25(IN_S) 7  "ff4"
+                              MemberName 25(IN_S) 4  "ff2"
+                              MemberName 25(IN_S) 5  "ff3"
+                              MemberName 25(IN_S) 6  "ff4"
                               Name 27  "s"
                               Name 35  "@entryPointOutput"
                               Name 36  "input"
@@ -109,7 +110,7 @@ gl_FragCoord origin is upper left
                               MemberName 41($Global) 1  "ff5"
                               MemberName 41($Global) 2  "ff6"
                               Name 43  ""
-                              MemberDecorate 25(IN_S) 4 BuiltIn FrontFacing
+                              Name 45  "s_ff1"
                               Decorate 27(s) Location 1
                               Decorate 35(@entryPointOutput) Location 0
                               Decorate 36(input) Location 0
@@ -122,6 +123,7 @@ gl_FragCoord origin is upper left
                               MemberDecorate 41($Global) 2 Offset 1636
                               Decorate 41($Global) Block
                               Decorate 43 DescriptorSet 0
+                              Decorate 45(s_ff1) BuiltIn FrontFacing
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeBool
@@ -136,10 +138,10 @@ gl_FragCoord origin is upper left
               22:             TypeInt 32 1
               23:     22(int) Constant 0
               24:             TypeVector 17(float) 2
-        25(IN_S):             TypeStruct 18(fvec4) 6(bool) 17(float) 24(fvec2) 6(bool) 6(bool) 6(bool) 18(fvec4)
+        25(IN_S):             TypeStruct 18(fvec4) 6(bool) 17(float) 24(fvec2) 6(bool) 6(bool) 18(fvec4)
               26:             TypePointer Input 25(IN_S)
            27(s):     26(ptr) Variable Input
-              28:     22(int) Constant 7
+              28:     22(int) Constant 6
               29:             TypePointer Input 18(fvec4)
               32:             TypePointer Private 18(fvec4)
               34:             TypePointer Output 18(fvec4)
@@ -150,6 +152,8 @@ gl_FragCoord origin is upper left
      41($Global):             TypeStruct 40(myS) 17(float) 17(float)
               42:             TypePointer Uniform 41($Global)
               43:     42(ptr) Variable Uniform
+              44:             TypePointer Input 6(bool)
+       45(s_ff1):     44(ptr) Variable Input
 4(PixelShaderFunction):           2 Function None 3
                5:             Label
           10(s3):      9(ptr) Variable Function
