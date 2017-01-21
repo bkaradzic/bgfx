@@ -64,28 +64,6 @@ namespace bgfx
 		s_attribTypeSize[RendererType::Count] = s_attribTypeSize[_type];
 	}
 
-	void dbgPrintfVargs(const char* _format, va_list _argList)
-	{
-		char temp[8192];
-		char* out = temp;
-		int32_t len = bx::vsnprintf(out, sizeof(temp), _format, _argList);
-		if ( (int32_t)sizeof(temp) < len)
-		{
-			out = (char*)alloca(len+1);
-			len = bx::vsnprintf(out, len, _format, _argList);
-		}
-		out[len] = '\0';
-		bx::debugOutput(out);
-	}
-
-	void dbgPrintf(const char* _format, ...)
-	{
-		va_list argList;
-		va_start(argList, _format);
-		dbgPrintfVargs(_format, argList);
-		va_end(argList);
-	}
-
 	VertexDecl::VertexDecl()
 	{
 		// BK - struct need to have ctor to qualify as non-POD data.
@@ -172,7 +150,7 @@ namespace bgfx
 	{
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 		{
-			dbgPrintf("vertexdecl %08x (%08x), stride %d\n"
+			bx::debugPrintf("vertexdecl %08x (%08x), stride %d\n"
 				, _decl.m_hash
 				, bx::hashMurmur2A(_decl.m_attributes)
 				, _decl.m_stride
@@ -188,7 +166,7 @@ namespace bgfx
 					bool asInt;
 					_decl.decode(Attrib::Enum(attr), num, type, normalized, asInt);
 
-					dbgPrintf("\tattr %d - %s, num %d, type %d, norm %d, asint %d, offset %d\n"
+					bx::debugPrintf("\tattr %d - %s, num %d, type %d, norm %d, asint %d, offset %d\n"
 						, attr
 						, getAttribName(Attrib::Enum(attr) )
 						, num
