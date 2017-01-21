@@ -1812,7 +1812,7 @@ namespace bgfx { namespace mtl
 
 	void writeString(bx::WriterI* _writer, const char* _str)
 	{
-		bx::write(_writer, _str, (int32_t)strlen(_str) );
+		bx::write(_writer, _str, (int32_t)bx::strnlen(_str) );
 	}
 
 	void ShaderMtl::create(const Memory* _mem)

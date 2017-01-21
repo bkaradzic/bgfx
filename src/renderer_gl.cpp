@@ -980,7 +980,7 @@ namespace bgfx { namespace gl
 		//
 		// If <length> is 0 then <marker> is assumed to be null-terminated.
 
-		uint32_t size = (0 == _length ? (uint32_t)strlen(_marker) : _length) + 1;
+		uint32_t size = (0 == _length ? (uint32_t)bx::strnlen(_marker) : _length) + 1;
 		size *= sizeof(wchar_t);
 		wchar_t* name = (wchar_t*)alloca(size);
 		mbstowcs(name, _marker, size-2);
@@ -1039,7 +1039,7 @@ namespace bgfx { namespace gl
 		glGetError(); // ignore error if glGetString returns NULL.
 		if (NULL != str)
 		{
-			return bx::hashMurmur2A(str, (uint32_t)strlen(str) );
+			return bx::hashMurmur2A(str, (uint32_t)bx::strnlen(str) );
 		}
 
 		return 0;
@@ -1051,7 +1051,7 @@ namespace bgfx { namespace gl
 		{
 			char name[1024];
 			const char* pos = _extensions;
-			const char* end = _extensions + strlen(_extensions);
+			const char* end = _extensions + bx::strnlen(_extensions);
 			while (pos < end)
 			{
 				uint32_t len;
@@ -1062,7 +1062,7 @@ namespace bgfx { namespace gl
 				}
 				else
 				{
-					len = bx::uint32_min(sizeof(name), (uint32_t)strlen(pos) );
+					len = bx::uint32_min(sizeof(name), (uint32_t)bx::strnlen(pos) );
 				}
 
 				strncpy(name, pos, len);
@@ -1469,7 +1469,7 @@ namespace bgfx { namespace gl
 			for (uint32_t ii = 0; ii < BX_COUNTOF(s_vendorIds); ++ii)
 			{
 				const VendorId& vendorId = s_vendorIds[ii];
-				if (0 == strncmp(vendorId.name, m_vendor, strlen(vendorId.name) ) )
+				if (0 == strncmp(vendorId.name, m_vendor, bx::strnlen(vendorId.name) ) )
 				{
 					g_caps.vendorId = vendorId.id;
 					break;
@@ -1559,7 +1559,7 @@ namespace bgfx { namespace gl
 				{
 					char name[1024];
 					const char* pos = extensions;
-					const char* end = extensions + strlen(extensions);
+					const char* end = extensions + bx::strnlen(extensions);
 					uint32_t index = 0;
 					while (pos < end)
 					{
@@ -1571,7 +1571,7 @@ namespace bgfx { namespace gl
 						}
 						else
 						{
-							len = bx::uint32_min(sizeof(name), (uint32_t)strlen(pos) );
+							len = bx::uint32_min(sizeof(name), (uint32_t)bx::strnlen(pos) );
 						}
 
 						strncpy(name, pos, len);
@@ -5294,7 +5294,7 @@ namespace bgfx { namespace gl
 
 	void writeString(bx::WriterI* _writer, const char* _str)
 	{
-		bx::write(_writer, _str, (int32_t)strlen(_str) );
+		bx::write(_writer, _str, (int32_t)bx::strnlen(_str) );
 	}
 
 	void writeStringf(bx::WriterI* _writer, const char* _format, ...)
@@ -5311,8 +5311,8 @@ namespace bgfx { namespace gl
 
 	void strins(char* _str, const char* _insert)
 	{
-		size_t len = strlen(_insert);
-		memmove(&_str[len], _str, strlen(_str)+1);
+		size_t len = bx::strnlen(_insert);
+		memmove(&_str[len], _str, bx::strnlen(_str)+1);
 		memcpy(_str, _insert, len);
 	}
 
@@ -5382,7 +5382,7 @@ namespace bgfx { namespace gl
 		{
 			if (GL_COMPUTE_SHADER != m_type)
 			{
-				int32_t codeLen = (int32_t)strlen(code);
+				int32_t codeLen = (int32_t)bx::strnlen(code);
 				int32_t tempLen = codeLen + (4<<10);
 				char* temp = (char*)alloca(tempLen);
 				bx::StaticMemoryBlockWriter writer(temp, tempLen);

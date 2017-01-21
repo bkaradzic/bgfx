@@ -15,7 +15,7 @@ namespace bgfx
 		bx::WriterI* writer = reinterpret_cast<bx::WriterI*>(_userData);
 		char temp[512];
 		toString(temp, sizeof(temp), _instruction);
-		bx::write(writer, temp, (int32_t)strlen(temp) );
+		bx::write(writer, temp, (int32_t)bx::strnlen(temp) );
 		return true;
 	}
 
@@ -24,7 +24,7 @@ namespace bgfx
 		bx::WriterI* writer = reinterpret_cast<bx::WriterI*>(_userData);
 		char temp[512];
 		toString(temp, sizeof(temp), _instruction);
-		bx::write(writer, temp, (int32_t)strlen(temp) );
+		bx::write(writer, temp, (int32_t)bx::strnlen(temp) );
 		return true;
 	}
 
@@ -33,7 +33,7 @@ namespace bgfx
 		bx::WriterI* writer = reinterpret_cast<bx::WriterI*>(_userData);
 		char temp[512];
 		toString(temp, sizeof(temp), _instruction);
-		bx::write(writer, temp, (int32_t)strlen(temp) );
+		bx::write(writer, temp, (int32_t)bx::strnlen(temp) );
 		return true;
 	}
 
