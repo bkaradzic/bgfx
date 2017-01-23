@@ -85,7 +85,7 @@ struct InputKeyboard
 	static uint32_t encodeKeyState(uint8_t _modifiers, bool _down)
 	{
 		uint32_t state = 0;
-		state |= uint32_t(_modifiers)<<16;
+		state |= uint32_t(_down ? _modifiers : 0)<<16;
 		state |= uint32_t(_down)<<8;
 		return state;
 	}

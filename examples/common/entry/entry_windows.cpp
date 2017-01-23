@@ -143,12 +143,13 @@ namespace entry
 			}
 
 			WindowHandle defaultWindow = { 0 };
-			GamepadHandle handle = { 0 };
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_state); ++ii)
 			{
 				XINPUT_STATE state;
 				DWORD result = XInputGetState(ii, &state);
+
+				GamepadHandle handle = { ii };
 
 				bool connected = ERROR_SUCCESS == result;
 				if (connected != m_connected[ii])
