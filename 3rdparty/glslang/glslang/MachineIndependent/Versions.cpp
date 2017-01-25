@@ -198,6 +198,9 @@ void TParseVersions::initializeExtensionBehavior()
 #ifdef NV_EXTENSIONS
     extensionBehavior[E_GL_NV_sample_mask_override_coverage]         = EBhDisable;
     extensionBehavior[E_SPV_NV_geometry_shader_passthrough]          = EBhDisable;
+    extensionBehavior[E_GL_ARB_shader_viewport_layer_array]          = EBhDisable;
+    extensionBehavior[E_GL_NV_viewport_array2]                       = EBhDisable;
+    extensionBehavior[E_GL_NV_stereo_view_rendering]                 = EBhDisable;
 #endif
 
     // AEP
@@ -311,6 +314,7 @@ void TParseVersions::getPreamble(std::string& preamble)
 #ifdef NV_EXTENSIONS
             "#define GL_NV_sample_mask_override_coverage 1\n"
             "#define GL_NV_geometry_shader_passthrough 1\n"
+            "#define GL_NV_viewport_array2 1\n"
 #endif
             ;
     }

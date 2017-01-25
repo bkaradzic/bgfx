@@ -203,6 +203,11 @@ enum TBuiltInVariable {
     EbvBaryCoordPullModel,
 #endif
 
+#ifdef NV_EXTENSIONS
+    EbvViewportMaskNV,
+    EbvSecondaryPositionNV,
+    EbvSecondaryViewportMaskNV,
+#endif 
     // HLSL built-ins that live only temporarily, until they get remapped
     // to one of the above.
     EbvFragDepthGreater,
@@ -316,6 +321,11 @@ __inline const char* GetBuiltInVariableString(TBuiltInVariable v)
     case EbvBaryCoordSmoothSample:      return "BaryCoordSmoothSample";
     case EbvBaryCoordPullModel:         return "BaryCoordPullModel";
 #endif
+#ifdef NV_EXTENSIONS
+    case EbvViewportMaskNV:             return "ViewportMaskNV";
+    case EbvSecondaryPositionNV:        return "SecondaryPositionNV";
+    case EbvSecondaryViewportMaskNV:    return "SecondaryViewportMaskNV";
+#endif 
     default:                      return "unknown built-in variable";
     }
 }

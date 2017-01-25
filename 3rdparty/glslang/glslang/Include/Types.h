@@ -601,6 +601,9 @@ public:
         layoutPushConstant = false;
 #ifdef NV_EXTENSIONS
         layoutPassthrough = false;
+        layoutViewportRelative = false;
+        // -2048 as the default vaule indicating layoutSecondaryViewportRelative is not set
+        layoutSecondaryViewportRelativeOffset = -2048;
 #endif
     }
     bool hasLayout() const
@@ -657,6 +660,8 @@ public:
 
 #ifdef NV_EXTENSIONS
     bool layoutPassthrough;
+    bool layoutViewportRelative;
+    int layoutSecondaryViewportRelativeOffset;
 #endif
 
     bool hasUniformLayout() const
@@ -1336,6 +1341,12 @@ public:
         case EbvPointSize:
         case EbvClipDistance:
         case EbvCullDistance:
+#ifdef NV_EXTENSIONS
+        case EbvLayer:
+        case EbvViewportMaskNV:
+        case EbvSecondaryPositionNV:
+        case EbvSecondaryViewportMaskNV:
+#endif
             return true;
         default:
             return false;
@@ -1604,6 +1615,10 @@ public:
 #ifdef NV_EXTENSIONS
                 if (qualifier.layoutPassthrough)
                     p += snprintf(p, end - p, "passthrough ");
+                if (qualifier.layoutViewportRelative)
+                    p += snprintf(p, end - p, "layoutViewportRelative ");
+                if (qualifier.layoutSecondaryViewportRelativeOffset != -2048)
+                    p += snprintf(p, end - p, "layoutSecondaryViewportRelativeOffset=%d ", qualifier.layoutSecondaryViewportRelativeOffset);
 #endif
 
                 p += snprintf(p, end - p, ") ");

@@ -1079,11 +1079,10 @@ void HlslParseContext::flatten(const TSourceLoc& loc, const TVariable& variable)
 {
     const TType& type = variable.getType();
 
-    // emplace gives back a pair whose .first is an iterator to the item...
-    auto entry = flattenMap.emplace(variable.getUniqueId(),
-                                    TFlattenData(type.getQualifier().layoutBinding));
+    auto entry = flattenMap.insert(std::make_pair(variable.getUniqueId(),
+                                                  TFlattenData(type.getQualifier().layoutBinding)));
 
-    // ... and the item is a map pair, so first->second is the TFlattenData itself.
+    // the item is a map pair, so first->second is the TFlattenData itself.
     flatten(loc, variable, type, entry.first->second, "");
 }
 
@@ -1895,7 +1894,7 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
 
         if (split && derefType.isBuiltInInterstageIO(language)) {
             // copy from interstage IO builtin if needed
-            subTree = intermediate.addSymbol(*interstageBuiltInIo.find(tInterstageIoData(derefType, outer->getType()))->second);
+            subTree = intermediate.addSymbol(*interstageBuiltInIo[tInterstageIoData(derefType, outer->getType())]);
         } else if (flattened && isFinalFlattening(derefType)) {
             subTree = intermediate.addSymbol(*flatVariables[memberIdx++]);
         } else {

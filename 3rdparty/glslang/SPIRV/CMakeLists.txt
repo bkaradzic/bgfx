@@ -34,8 +34,9 @@ if(ENABLE_AMD_EXTENSIONS)
 endif(ENABLE_AMD_EXTENSIONS)
 
 if(ENABLE_NV_EXTENSIONS)
-    set(HEADERS
-        GLSL.ext.NV.h)
+    list(APPEND
+         HEADERS
+         GLSL.ext.NV.h)
 endif(ENABLE_NV_EXTENSIONS)
 
 add_library(SPIRV STATIC ${SOURCES} ${HEADERS})

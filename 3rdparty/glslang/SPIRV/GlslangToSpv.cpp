@@ -482,6 +482,15 @@ spv::BuiltIn TGlslangToSpvTraverser::TranslateBuiltInDecoration(glslang::TBuiltI
 
     case glslang::EbvViewportIndex:
         builder.addCapability(spv::CapabilityMultiViewport);
+#ifdef NV_EXTENSIONS
+        if (glslangIntermediate->getStage() == EShLangVertex ||
+            glslangIntermediate->getStage() == EShLangTessControl ||
+            glslangIntermediate->getStage() == EShLangTessEvaluation)
+        {
+            builder.addExtension(spv::E_SPV_NV_viewport_array2);
+            builder.addCapability(spv::CapabilityShaderViewportIndexLayerNV);
+        }
+#endif
         return spv::BuiltInViewportIndex;
 
     case glslang::EbvSampleId:
@@ -498,6 +507,18 @@ spv::BuiltIn TGlslangToSpvTraverser::TranslateBuiltInDecoration(glslang::TBuiltI
 
     case glslang::EbvLayer:
         builder.addCapability(spv::CapabilityGeometry);
+#ifdef NV_EXTENSIONS
+        if (!memberDeclaration)
+        {
+            if (glslangIntermediate->getStage() == EShLangVertex ||
+                glslangIntermediate->getStage() == EShLangTessControl ||
+                glslangIntermediate->getStage() == EShLangTessEvaluation)
+            {
+                builder.addExtension(spv::E_SPV_NV_viewport_array2);
+                builder.addCapability(spv::CapabilityShaderViewportIndexLayerNV);
+            }
+        }
+#endif
         return spv::BuiltInLayer;
 
     case glslang::EbvPosition:             return spv::BuiltInPosition;
@@ -607,6 +628,21 @@ spv::BuiltIn TGlslangToSpvTraverser::TranslateBuiltInDecoration(glslang::TBuiltI
         builder.addExtension(spv::E_SPV_AMD_shader_explicit_vertex_parameter);
         return spv::BuiltInBaryCoordPullModelAMD;
 #endif
+
+#ifdef NV_EXTENSIONS
+    case glslang::EbvViewportMaskNV:
+        builder.addExtension(spv::E_SPV_NV_viewport_array2);
+        builder.addCapability(spv::CapabilityShaderViewportMaskNV);
+        return spv::BuiltInViewportMaskNV;
+    case glslang::EbvSecondaryPositionNV:
+        builder.addExtension(spv::E_SPV_NV_stereo_view_rendering);
+        builder.addCapability(spv::CapabilityShaderStereoViewNV);
+        return spv::BuiltInSecondaryPositionNV;
+    case glslang::EbvSecondaryViewportMaskNV:
+        builder.addExtension(spv::E_SPV_NV_stereo_view_rendering);
+        builder.addCapability(spv::CapabilityShaderStereoViewNV);
+        return spv::BuiltInSecondaryViewportMaskNV;
+#endif 
     default:                               return spv::BuiltInMax;
     }
 }
@@ -2275,6 +2311,22 @@ void TGlslangToSpvTraverser::decorateStructType(const glslang::TType& type,
             spv::BuiltIn builtIn = TranslateBuiltInDecoration(glslangMember.getQualifier().builtIn, true);
             if (builtIn != spv::BuiltInMax)
                 addMemberDecoration(spvType, member, spv::DecorationBuiltIn, (int)builtIn);
+
+#ifdef NV_EXTENSIONS
+            if (builtIn == spv::BuiltInLayer) {
+                // SPV_NV_viewport_array2 extension
+                if (glslangMember.getQualifier().layoutViewportRelative){
+                    addMemberDecoration(spvType, member, (spv::Decoration)spv::DecorationViewportRelativeNV);
+                    builder.addCapability(spv::CapabilityShaderViewportMaskNV);
+                    builder.addExtension(spv::E_SPV_NV_viewport_array2);
+                }
+                if (glslangMember.getQualifier().layoutSecondaryViewportRelativeOffset != -2048){
+                    addMemberDecoration(spvType, member, (spv::Decoration)spv::DecorationSecondaryViewportRelativeNV, glslangMember.getQualifier().layoutSecondaryViewportRelativeOffset);
+                    builder.addCapability(spv::CapabilityShaderStereoViewNV);
+                    builder.addExtension(spv::E_SPV_NV_stereo_view_rendering);
+                }
+            }
+#endif
         }
     }
 
@@ -2546,6 +2598,12 @@ void TGlslangToSpvTraverser::declareUseOfStructMember(const glslang::TTypeList& 
     case glslang::EbvClipDistance:
     case glslang::EbvCullDistance:
     case glslang::EbvPointSize:
+#ifdef NV_EXTENSIONS
+    case glslang::EbvLayer:
+    case glslang::EbvViewportMaskNV:
+    case glslang::EbvSecondaryPositionNV:
+    case glslang::EbvSecondaryViewportMaskNV:
+#endif
         // Generate the associated capability.  Delegate to TranslateBuiltInDecoration.
         // Alternately, we could just call this for any glslang built-in, since the
         // capability already guards against duplicates.
@@ -4198,6 +4256,8 @@ spv::Id TGlslangToSpvTraverser::createInvocationsOperation(glslang::TOperator op
             groupOperation = spv::GroupOperationExclusiveScan;
             spvGroupOperands.push_back(groupOperation);
             break;
+        default:
+            break;
         }
 #endif
     }
@@ -4800,7 +4860,7 @@ spv::Id TGlslangToSpvTraverser::getSymbolId(const glslang::TIntermSymbol* symbol
           spv::Decoration decoration;
           // GL_NV_sample_mask_override_coverage extension
           if (glslangIntermediate->getLayoutOverrideCoverage())
-              decoration = (spv::Decoration)spv::OverrideCoverageNV;
+              decoration = (spv::Decoration)spv::DecorationOverrideCoverageNV;
           else
               decoration = (spv::Decoration)spv::DecorationMax;
         addDecoration(id, decoration);
@@ -4808,9 +4868,25 @@ spv::Id TGlslangToSpvTraverser::getSymbolId(const glslang::TIntermSymbol* symbol
             builder.addExtension(spv::E_SPV_NV_sample_mask_override_coverage);
         }
     }
+    else if (builtIn == spv::BuiltInLayer) {
+        // SPV_NV_viewport_array2 extension
+        if (symbol->getQualifier().layoutViewportRelative)
+        {
+            addDecoration(id, (spv::Decoration)spv::DecorationViewportRelativeNV);
+            builder.addCapability(spv::CapabilityShaderViewportMaskNV);
+            builder.addExtension(spv::E_SPV_NV_viewport_array2);
+        }
+        if(symbol->getQualifier().layoutSecondaryViewportRelativeOffset != -2048)
+        {
+            addDecoration(id, (spv::Decoration)spv::DecorationSecondaryViewportRelativeNV, symbol->getQualifier().layoutSecondaryViewportRelativeOffset);
+            builder.addCapability(spv::CapabilityShaderStereoViewNV);
+            builder.addExtension(spv::E_SPV_NV_stereo_view_rendering);
+        }
+    }
+
     if (symbol->getQualifier().layoutPassthrough) {
-        addDecoration(id, spv::PassthroughNV);
-        builder.addCapability(spv::GeometryShaderPassthroughNV);
+        addDecoration(id, spv::DecorationPassthroughNV);
+        builder.addCapability(spv::CapabilityGeometryShaderPassthroughNV);
         builder.addExtension(spv::E_SPV_NV_geometry_shader_passthrough);
     }
 #endif

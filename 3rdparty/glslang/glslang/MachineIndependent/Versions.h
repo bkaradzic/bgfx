@@ -143,8 +143,17 @@ const char* const E_GL_AMD_gcn_shader                           = "GL_AMD_gcn_sh
 const char* const E_GL_AMD_gpu_shader_half_float                = "GL_AMD_gpu_shader_half_float";
 #endif
 #ifdef NV_EXTENSIONS
-const char* const E_GL_NV_sample_mask_override_coverage = "GL_NV_sample_mask_override_coverage";
-const char* const E_SPV_NV_geometry_shader_passthrough = "GL_NV_geometry_shader_passthrough";
+
+const char* const E_GL_NV_sample_mask_override_coverage         = "GL_NV_sample_mask_override_coverage";
+const char* const E_SPV_NV_geometry_shader_passthrough          = "GL_NV_geometry_shader_passthrough";
+const char* const E_GL_ARB_shader_viewport_layer_array          = "GL_ARB_shader_viewport_layer_array";
+const char* const E_GL_NV_viewport_array2                       = "GL_NV_viewport_array2";
+const char* const E_GL_NV_stereo_view_rendering                 = "GL_NV_stereo_view_rendering";
+
+// Arrays of extensions for the above viewportEXTs duplications
+
+const char* const viewportEXTs[] = { E_GL_ARB_shader_viewport_layer_array, E_GL_NV_viewport_array2 };
+const int Num_viewportEXTs = sizeof(viewportEXTs) / sizeof(viewportEXTs[0]);
 #endif
 
 // AEP

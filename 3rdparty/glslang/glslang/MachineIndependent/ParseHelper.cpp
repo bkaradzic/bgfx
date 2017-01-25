@@ -3205,6 +3205,7 @@ TSymbol* TParseContext::redeclareBuiltinVariable(const TSourceLoc& loc, const TS
         (identifier == "gl_Color"               && language == EShLangFragment)                     ||
 #ifdef NV_EXTENSIONS
          identifier == "gl_SampleMask"                                                              ||
+         identifier == "gl_Layer"                                                                   ||
 #endif
          identifier == "gl_TexCoord") {
 
@@ -3290,6 +3291,12 @@ TSymbol* TParseContext::redeclareBuiltinVariable(const TSourceLoc& loc, const TS
                 error(loc, "redeclaration only allowed for override_coverage layout", "redeclaration", symbol->getName().c_str());
             }
             intermediate.setLayoutOverrideCoverage();
+        }
+        else if (identifier == "gl_Layer") {
+            if (!qualifier.layoutViewportRelative && qualifier.layoutSecondaryViewportRelativeOffset == -2048)
+                error(loc, "redeclaration only allowed for viewport_relative or secondary_view_offset layout", "redeclaration", symbol->getName().c_str());
+            symbolQualifier.layoutViewportRelative = qualifier.layoutViewportRelative;
+            symbolQualifier.layoutSecondaryViewportRelativeOffset = qualifier.layoutSecondaryViewportRelativeOffset;
         }
 #endif
 
@@ -3417,8 +3424,16 @@ void TParseContext::redeclareBuiltinBlock(const TSourceLoc& loc, TTypeList& newT
             oldType.getQualifier().flat = newType.getQualifier().flat;
             oldType.getQualifier().nopersp = newType.getQualifier().nopersp;
 
+#ifdef NV_EXTENSIONS
+            if (member->type->getFieldName() == "gl_Layer") {
+                if (!newType.getQualifier().layoutViewportRelative && newType.getQualifier().layoutSecondaryViewportRelativeOffset == -2048)
+                    error(loc, "redeclaration only allowed for viewport_relative or secondary_view_offset layout", "redeclaration", member->type->getFieldName().c_str());
+                oldType.getQualifier().layoutViewportRelative = newType.getQualifier().layoutViewportRelative;
+                oldType.getQualifier().layoutSecondaryViewportRelativeOffset = newType.getQualifier().layoutSecondaryViewportRelativeOffset;
+            }
             if (oldType.isImplicitlySizedArray() && newType.isExplicitlySizedArray())
                 oldType.changeOuterArraySize(newType.getOuterArraySize());
+#endif
 
             // go to next member
             ++member;
@@ -3943,8 +3958,20 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
             publicType.shaderQualifiers.layoutOverrideCoverage = true;
             return;
         }
-#endif
     }
+    if (language == EShLangVertex ||
+        language == EShLangTessControl ||
+        language == EShLangTessEvaluation ||
+        language == EShLangGeometry ) {
+        if (id == "viewport_relative") {
+            requireExtensions(loc, 1, &E_GL_NV_viewport_array2, "view port array2");
+            publicType.qualifier.layoutViewportRelative = true;
+            return;
+        }
+    }
+#else
+    }
+#endif
     error(loc, "unrecognized layout identifier, or qualifier requires assignment (e.g., binding = 4)", id.c_str(), "");
 }
 
@@ -4089,6 +4116,19 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
         }
         return;
     }
+
+#if NV_EXTENSIONS
+    if (language == EShLangVertex ||
+        language == EShLangTessControl ||
+        language == EShLangTessEvaluation ||
+        language == EShLangGeometry) {
+        if (id == "secondary_view_offset") {
+            requireExtensions(loc, 1, &E_GL_NV_stereo_view_rendering, "stereo view rendering");
+            publicType.qualifier.layoutSecondaryViewportRelativeOffset = value;
+            return;
+        }
+    }
+#endif
 
     switch (language) {
     case EShLangVertex:
@@ -4253,6 +4293,10 @@ void TParseContext::mergeObjectLayoutQualifiers(TQualifier& dst, const TQualifie
 #ifdef NV_EXTENSIONS
         if (src.layoutPassthrough)
             dst.layoutPassthrough = true;
+        if (src.layoutViewportRelative)
+            dst.layoutViewportRelative = true;
+        if (src.layoutSecondaryViewportRelativeOffset != -2048)
+            dst.layoutSecondaryViewportRelativeOffset = src.layoutSecondaryViewportRelativeOffset;
 #endif
     }
 }
