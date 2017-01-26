@@ -2689,6 +2689,7 @@ namespace bgfx { namespace mtl
 
 	void FrameBufferMtl::create(uint8_t _num, const Attachment* _attachment)
 	{
+		m_denseIdx = UINT16_MAX;
 		m_num = 0;
 		m_width = 0;
 		m_height = 0;

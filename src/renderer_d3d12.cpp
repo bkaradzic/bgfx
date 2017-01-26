@@ -4429,6 +4429,7 @@ data.NumQualityLevels = 0;
 
 	void FrameBufferD3D12::create(uint8_t _num, const Attachment* _attachment)
 	{
+		m_denseIdx = UINT16_MAX;
 		m_numTh = _num;
 		memcpy(m_attachment, _attachment, _num*sizeof(Attachment) );
 

@@ -3154,6 +3154,7 @@ namespace bgfx { namespace d3d9
 			m_surface[ii] = NULL;
 		}
 
+		m_denseIdx = UINT16_MAX;
 		m_dsIdx = UINT8_MAX;
 		m_num   = 0;
 		m_numTh = _num;

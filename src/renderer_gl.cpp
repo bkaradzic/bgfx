@@ -5812,6 +5812,7 @@ namespace bgfx { namespace gl
 	{
 		GL_CHECK(glGenFramebuffers(1, &m_fbo[0]) );
 
+		m_denseIdx = UINT16_MAX;
 		m_numTh = _num;
 		memcpy(m_attachment, _attachment, _num*sizeof(Attachment) );
 

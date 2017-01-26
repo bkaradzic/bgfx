@@ -4659,8 +4659,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		const uint32_t subres = _mip + ( (layer + _side) * m_numMips);
 		const uint32_t bpp    = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
-		const uint32_t rectpitch = _rect.m_width*bpp/8;
-		const uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
+		const uint32_t rectpitch  = _rect.m_width*bpp/8;
+		const uint32_t srcpitch   = UINT16_MAX == _pitch ? rectpitch : _pitch;
+		const uint32_t slicepitch = rectpitch*_rect.m_height;
 
 		const bool convert = m_textureFormat != m_requestedFormat;
 
@@ -4669,12 +4670,19 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		if (convert)
 		{
-			temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch*_rect.m_height);
+			temp = (uint8_t*)BX_ALLOC(g_allocator, slicepitch);
 			imageDecodeToBgra8(temp, data, _rect.m_width, _rect.m_height, srcpitch, TextureFormat::Enum(m_requestedFormat) );
 			data = temp;
 		}
 
-		deviceCtx->UpdateSubresource(m_ptr, subres, &box, data, srcpitch, 0);
+		deviceCtx->UpdateSubresource(
+			  m_ptr
+			, subres
+			, &box
+			, data
+			, srcpitch
+			, TextureD3D11::Texture3D == m_type ? slicepitch : 0
+			);
 
 		if (NULL != temp)
 		{
@@ -4729,7 +4737,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		m_dsv       = NULL;
 		m_swapChain = NULL;
 
-		m_numTh = _num;
+		m_denseIdx = UINT16_MAX;
+		m_numTh    = _num;
 		m_needPresent = false;
 		memcpy(m_attachment, _attachment, _num*sizeof(Attachment) );
 
