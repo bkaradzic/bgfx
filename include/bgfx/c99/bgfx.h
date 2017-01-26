@@ -911,4 +911,7 @@ BGFX_C_API void bgfx_blit(uint8_t _id, bgfx_texture_handle_t _dst, uint8_t _dstM
 /**/
 BGFX_C_API void bgfx_save_screen_shot(const char* _filePath);
 
+/**/
+BGFX_C_API int32_t bgfx_vsnprintf(char* _str, size_t _count, const char* _format, va_list _argList);
+
 #endif // BGFX_C99_H_HEADER_GUARD

@@ -4825,6 +4825,11 @@ BGFX_C_API uintptr_t bgfx_override_internal_texture(bgfx_texture_handle_t _handl
 	return bgfx::overrideInternal(handle.cpp, _width, _height, _numMips, bgfx::TextureFormat::Enum(_format), _flags);
 }
 
+BGFX_C_API int32_t bgfx_vsnprintf(char* _str, size_t _count, const char* _format, va_list _argList)
+{
+	return bx::vsnprintf(_str, _count, _format, _argList);
+}
+
 BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 {
 	if (_version == BGFX_API_VERSION)
