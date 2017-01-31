@@ -190,6 +190,8 @@ width="640" height="480" border="0" /></a>
 https://github.com/degenerated1123/REGoth - Open source reimplementation of the
 zEngine, used by the game "Gothic" and "Gothic II".
 
+Browser demo: http://gothic-dx11.de/gothic-js/REGoth.html
+
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=8bLAGttYYpY
 " target="_blank"><img src="http://img.youtube.com/vi/8bLAGttYYpY/0.jpg" 
 alt="REGoth Engine"
