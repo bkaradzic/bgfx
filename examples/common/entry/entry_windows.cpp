@@ -144,7 +144,7 @@ namespace entry
 
 			WindowHandle defaultWindow = { 0 };
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_state); ++ii)
+			for (uint16_t ii = 0; ii < BX_COUNTOF(m_state); ++ii)
 			{
 				XINPUT_STATE state;
 				DWORD result = XInputGetState(ii, &state);
