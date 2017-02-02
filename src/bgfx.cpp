@@ -2238,6 +2238,7 @@ namespace bgfx
 				break;
 
 			case CommandBuffer::DestroyProgram:
+			case CommandBuffer::DestroyProgramForRelink:
 				{
 					ProgramHandle handle;
 					_cmdbuf.read(handle);
@@ -2987,6 +2988,18 @@ error:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		return s_ctx->createProgram(_csh, _destroyShader);
+	}
+
+	bool linkProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh, bool _destroyShader)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		return s_ctx->linkProgram(_handle, _vsh, _fsh, _destroyShader);
+	}
+
+	bool linkProgram(ProgramHandle _handle, ShaderHandle _csh, bool _destroyShader)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		return s_ctx->linkProgram(_handle, _csh, _destroyShader);
 	}
 
 	void destroyProgram(ProgramHandle _handle)

@@ -1552,6 +1552,41 @@ namespace bgfx
 		, bool _destroyShader = false
 		);
 
+	/// Links an existing program with a new VS/FS pair
+	///
+	/// @param[in] _handle existing Program.
+	/// @param[in] _vsh Vertex shader.
+	/// @param[in] _fsh Fragment shader.
+	/// @param[in] _destroyShaders If true, shaders will be destroyed when
+	///   program is destroyed.
+	/// @returns True if vertex shader output and fragment shader input
+	///   are matching, otherwise false
+	///
+	/// @attention C99 equivalent is `bgfx_link_program`.
+	///
+	bool linkProgram(
+		  ProgramHandle _handle
+		, ShaderHandle _vsh
+		, ShaderHandle _fsh
+		, bool _destroyShaders = false
+		);
+
+	/// Links an existing program with a new compute shader
+	///
+	/// @param[in] _handle existing Program.
+	/// @param[in] _csh Vertex shader.
+	/// @param[in] _destroyShaders If true, shaders will be destroyed when
+	///   program is destroyed.
+	/// @returns True if the shader and program handles are valid.
+	///
+	/// @attention C99 equivalent is `bgfx_link_compute_program`.
+	///
+	bool linkProgram(
+		  ProgramHandle _handle
+		, ShaderHandle _csh
+		, bool _destroyShaders = false
+		);
+
 	/// Destroy program.
 	///
 	/// @attention C99 equivalent is `bgfx_destroy_program`.

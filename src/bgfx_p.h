@@ -610,6 +610,7 @@ namespace bgfx
 			CreateFrameBuffer,
 			CreateUniform,
 			UpdateViewName,
+			DestroyProgramForRelink,
 			End,
 			RendererShutdownEnd,
 			DestroyVertexDecl,
@@ -3143,6 +3144,112 @@ namespace bgfx
 			}
 
 			return handle;
+		}
+
+		BGFX_API_FUNC(bool linkProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh, bool _destroyShaders) )
+		{
+			if (!isValid(_handle))
+			{
+				BX_WARN(false, "Program is invlid (handle %d).", _handle.idx);
+				return false;
+			}
+
+			if (!isValid(_vsh)
+			||  !isValid(_fsh))
+			{
+				BX_WARN(false, "Vertex/fragment shader is invalid (vsh: %d, fsh: %d).", _vsh.idx, _fsh.idx);
+				return false;
+			}
+
+			const ShaderRef& vsr = m_shaderRef[_vsh.idx];
+			const ShaderRef& fsr = m_shaderRef[_fsh.idx];
+			if (vsr.m_hash != fsr.m_hash)
+			{
+				BX_WARN(false, "Vertex shader output doesn't match fragment shader input.");
+				return false;
+			}
+
+			ProgramRef& pr = m_programRef[_handle.idx];
+			CommandBuffer& destroyCmdbuf = getCommandBuffer(CommandBuffer::DestroyProgramForRelink);
+			destroyCmdbuf.write(_handle);
+
+			shaderDecRef(pr.m_vsh);
+			if (isValid(pr.m_fsh))
+			{
+				shaderDecRef(pr.m_fsh);
+			}
+
+			m_programHashMap.removeByHandle(_handle.idx);
+
+			shaderIncRef(_vsh);
+			shaderIncRef(_fsh);
+			pr.m_vsh = _vsh;
+			pr.m_fsh = _fsh;
+
+			const uint32_t key = uint32_t(_fsh.idx<<16)|_vsh.idx;
+			bool ok = m_programHashMap.insert(key, _handle.idx);
+			BX_CHECK(ok, "Program already exists (key: %x, handle: %3d)!", key, _handle.idx); BX_UNUSED(ok);
+
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
+			cmdbuf.write(_handle);
+			cmdbuf.write(_vsh);
+			cmdbuf.write(_fsh);
+
+			if (_destroyShaders)
+			{
+				shaderTakeOwnership(_vsh);
+				shaderTakeOwnership(_fsh);
+			}
+
+			return true;
+		}
+
+		BGFX_API_FUNC(bool linkProgram(ProgramHandle _handle, ShaderHandle _csh, bool _destroyShaders) )
+		{
+			if (!isValid(_handle))
+			{
+				BX_WARN(false, "Program is invlid (handle %d).", _handle.idx);
+				return false;
+			}
+
+			if (!isValid(_csh))
+			{
+				BX_WARN(false, "Compute shader is invalid (csh: %d).", _csh.idx);
+				return false;
+			}
+
+			ProgramRef& pr = m_programRef[_handle.idx];
+			CommandBuffer& destroyCmdbuf = getCommandBuffer(CommandBuffer::DestroyProgramForRelink);
+			destroyCmdbuf.write(_handle);
+
+			shaderDecRef(pr.m_vsh);
+			if (isValid(pr.m_fsh))
+			{
+				shaderDecRef(pr.m_fsh);
+			}
+
+			m_programHashMap.removeByHandle(_handle.idx);
+
+			shaderIncRef(_csh);
+			pr.m_vsh = _csh;
+			ShaderHandle fsh = BGFX_INVALID_HANDLE;
+			pr.m_fsh = fsh;
+
+			const uint32_t key = uint32_t(_csh.idx);
+			bool ok = m_programHashMap.insert(key, _handle.idx);
+			BX_CHECK(ok, "Program already exists (key: %x, handle: %3d)!", key, _handle.idx); BX_UNUSED(ok);
+
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
+			cmdbuf.write(_handle);
+			cmdbuf.write(_csh);
+			cmdbuf.write(fsh);
+
+			if (_destroyShaders)
+			{
+				shaderTakeOwnership(_csh);
+			}
+
+			return true;
 		}
 
 		BGFX_API_FUNC(void destroyProgram(ProgramHandle _handle) )
