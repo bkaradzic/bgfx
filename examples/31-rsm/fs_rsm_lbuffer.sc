@@ -14,11 +14,11 @@ uniform mat4 u_invMvp;
 
 float toClipSpaceDepth(float _depthTextureZ)
 {
-#if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_METAL
+#if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_METAL
 	return _depthTextureZ;
 #else
 	return _depthTextureZ * 2.0 - 1.0;
-#endif // BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_METAL
+#endif // BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_METAL
 }
 
 vec3 clipToWorld(mat4 _invViewProj, vec3 _clipPos)
@@ -40,9 +40,9 @@ void main()
 	float depth       = toClipSpaceDepth(deviceDepth);
 
 	vec3 clip = vec3(texCoord * 2.0 - 1.0, depth);
-#if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_METAL
+#if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_METAL
 	clip.y = -clip.y;
-#endif // BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_METAL
+#endif // BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_METAL
 	vec3 wpos = clipToWorld(u_invMvp, clip);
 
 	// Get normal from its map, and decompress

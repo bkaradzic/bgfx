@@ -56,11 +56,11 @@ vec3 calcLight(int _idx, vec3 _wpos, vec3 _normal, vec3 _view)
 
 float toClipSpaceDepth(float _depthTextureZ)
 {
-#if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_METAL
+#if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_METAL
 	return _depthTextureZ;
 #else
 	return _depthTextureZ * 2.0 - 1.0;
-#endif // BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_METAL
+#endif // BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_METAL
 }
 
 vec3 clipToWorld(mat4 _invViewProj, vec3 _clipPos)
@@ -76,9 +76,9 @@ void main()
 	float depth       = toClipSpaceDepth(deviceDepth);
 
 	vec3 clip = vec3(v_texcoord0 * 2.0 - 1.0, depth);
-#if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_METAL
+#if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_METAL
 	clip.y = -clip.y;
-#endif // BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_METAL
+#endif // BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_METAL
 	vec3 wpos = clipToWorld(u_mtx, clip);
 
 	vec3 view = mul(u_view, vec4(wpos, 0.0) ).xyz;

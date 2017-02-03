@@ -283,7 +283,7 @@ namespace bgfx
 	class StateCacheLru
 	{
 	public:
-		void add(uint64_t _key, Ty _value, uint16_t _parent)
+		Ty* add(uint64_t _key, const Ty& _value, uint16_t _parent)
 		{
 			uint16_t handle = m_alloc.alloc();
 			if (UINT16_MAX == handle)
@@ -300,6 +300,8 @@ namespace bgfx
 			data.m_value  = _value;
 			data.m_parent = _parent;
 			m_hashMap.insert(stl::make_pair(_key, handle) );
+
+			return &m_data[handle].m_value;
 		}
 
 		Ty* find(uint64_t _key)
