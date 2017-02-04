@@ -1491,7 +1491,7 @@ namespace bgfx { namespace gl
 			OcclusionQueryHandle m_handle;
 		};
 
-		Query m_query[BGFX_CONFIG_MAX_OCCUSION_QUERIES];
+		Query m_query[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
 		bx::RingBufferControl m_control;
 	};
 

@@ -484,7 +484,7 @@ namespace bgfx { namespace d3d12
 
 		ID3D12Resource*  m_readback;
 		ID3D12QueryHeap* m_queryHeap;
-		OcclusionQueryHandle m_handle[BGFX_CONFIG_MAX_OCCUSION_QUERIES];
+		OcclusionQueryHandle m_handle[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
 		uint64_t* m_result;
 		bx::RingBufferControl m_control;
 	};
