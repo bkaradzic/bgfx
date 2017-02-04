@@ -1908,7 +1908,7 @@ namespace bgfx
 		, uint32_t _textureFlags = BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP
 		);
 
-	/// Create frame buffer.
+	/// Create MRT frame buffer from texture handles (simple).
 	///
 	/// @param[in] _num Number of texture attachments.
 	/// @param[in] _handles Texture attachments.
@@ -1925,7 +1925,8 @@ namespace bgfx
 		, bool _destroyTextures = false
 		);
 
-	/// Create frame buffer.
+	/// Create MRT frame buffer from texture handles with specific layer and
+	/// mip level.
 	///
 	/// @param[in] _num Number of texture attachments.
 	/// @param[in] _attachment Attachment texture info. See: `Attachment`.
