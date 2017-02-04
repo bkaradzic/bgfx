@@ -87,6 +87,7 @@ gl_FragCoord origin is upper left
                               Name 30  "tbufName2"
                               MemberName 30(tbufName2) 0  "v1PostLayout"
                               Name 32  ""
+                              Name 38  "specConst"
                               MemberDecorate 14(tbufName) 0 Offset 16
                               Decorate 14(tbufName) BufferBlock
                               Decorate 16 DescriptorSet 3
@@ -97,7 +98,7 @@ gl_FragCoord origin is upper left
                               Decorate 30(tbufName2) BufferBlock
                               Decorate 32 DescriptorSet 4
                               Decorate 32 Binding 7
-                              Decorate 38 SpecId 17
+                              Decorate 38(specConst) SpecId 17
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
@@ -117,7 +118,7 @@ gl_FragCoord origin is upper left
    30(tbufName2):             TypeStruct 7(fvec4)
               31:             TypePointer Uniform 30(tbufName2)
               32:     31(ptr) Variable Uniform
-              38:     17(int) SpecConstant 10
+   38(specConst):     17(int) SpecConstant 10
          4(main):           2 Function None 3
                5:             Label
                               Return

@@ -20,15 +20,10 @@ glslang_set_link_args(spirv-remap)
 
 set(LIBRARIES
     glslang
-    OGLCompiler
-    OSDependent
     SPIRV
     SPVRemapper
     glslang-default-resource-limits)
 
-if(ENABLE_HLSL)
-    set(LIBRARIES ${LIBRARIES} HLSL)
-endif(ENABLE_HLSL)
 
 if(WIN32)
     set(LIBRARIES ${LIBRARIES} psapi)

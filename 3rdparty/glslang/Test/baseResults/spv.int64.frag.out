@@ -51,6 +51,11 @@ Warning, version 450 is not yet complete; most version-specific features are pre
                               MemberName 454(Block) 0  "i64v"
                               MemberName 454(Block) 1  "u64"
                               Name 456  "block"
+                              Name 457  "si64"
+                              Name 458  "su64"
+                              Name 459  "si"
+                              Name 460  "su"
+                              Name 461  "sb"
                               MemberDecorate 28(Uniforms) 0 Offset 0
                               Decorate 28(Uniforms) Block
                               Decorate 30 DescriptorSet 0
@@ -60,11 +65,11 @@ Warning, version 450 is not yet complete; most version-specific features are pre
                               Decorate 454(Block) Block
                               Decorate 456(block) DescriptorSet 0
                               Decorate 456(block) Binding 1
-                              Decorate 457 SpecId 100
-                              Decorate 458 SpecId 101
-                              Decorate 459 SpecId 102
-                              Decorate 460 SpecId 103
-                              Decorate 461 SpecId 104
+                              Decorate 457(si64) SpecId 100
+                              Decorate 458(su64) SpecId 101
+                              Decorate 459(si) SpecId 102
+                              Decorate 460(su) SpecId 103
+                              Decorate 461(sb) SpecId 104
                2:             TypeVoid
                3:             TypeFunction 2
               14:             TypeInt 64 0
@@ -148,28 +153,28 @@ Warning, version 450 is not yet complete; most version-specific features are pre
       454(Block):             TypeStruct 136(ivec3) 14(int)
              455:             TypePointer Uniform 454(Block)
       456(block):    455(ptr) Variable Uniform
-             457:     18(int) SpecConstant 4294967286 4294967295
-             458:     14(int) SpecConstant 20 0
-             459:     31(int) SpecConstant 4294967291
-             460:     21(int) SpecConstant 4
-             461:    55(bool) SpecConstantTrue
-             462:    55(bool) SpecConstantOp 171 457 69
-             463:    55(bool) SpecConstantOp 171 458 69
-             464:     18(int) SpecConstantOp 169 461 61 60
-             465:     14(int) SpecConstantOp 169 461 70 69
-             466:     31(int) SpecConstantOp 114 457
-             467:     18(int) SpecConstantOp 114 459
-             468:     21(int) SpecConstantOp 113 458
-             469:     14(int) SpecConstantOp 113 460
-             470:     18(int) SpecConstantOp 128 458 69
-             471:     14(int) SpecConstantOp 128 457 69
-             472:     21(int) SpecConstantOp 113 458
+       457(si64):     18(int) SpecConstant 4294967286 4294967295
+       458(su64):     14(int) SpecConstant 20 0
+         459(si):     31(int) SpecConstant 4294967291
+         460(su):     21(int) SpecConstant 4
+         461(sb):    55(bool) SpecConstantTrue
+             462:    55(bool) SpecConstantOp 171 457(si64) 69
+             463:    55(bool) SpecConstantOp 171 458(su64) 69
+             464:     18(int) SpecConstantOp 169 461(sb) 61 60
+             465:     14(int) SpecConstantOp 169 461(sb) 70 69
+             466:     31(int) SpecConstantOp 114 457(si64)
+             467:     18(int) SpecConstantOp 114 459(si)
+             468:     21(int) SpecConstantOp 113 458(su64)
+             469:     14(int) SpecConstantOp 113 460(su)
+             470:     18(int) SpecConstantOp 128 458(su64) 69
+             471:     14(int) SpecConstantOp 128 457(si64) 69
+             472:     21(int) SpecConstantOp 113 458(su64)
              473:     31(int) SpecConstantOp 128 472 219
-             474:     18(int) SpecConstantOp 114 459
+             474:     18(int) SpecConstantOp 114 459(si)
              475:     14(int) SpecConstantOp 128 474 69
-             476:     31(int) SpecConstantOp 114 457
+             476:     31(int) SpecConstantOp 114 457(si64)
              477:     21(int) SpecConstantOp 128 476 219
-             478:     14(int) SpecConstantOp 113 460
+             478:     14(int) SpecConstantOp 113 460(su)
              479:     18(int) SpecConstantOp 128 478 69
          4(main):           2 Function None 3
                5:             Label

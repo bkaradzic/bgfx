@@ -18,29 +18,33 @@ Warning, version 450 is not yet complete; most version-specific features are pre
                               Name 12  "refer_composite_bracket_dereference("
                               Name 16  "refer_spec_const_array_length("
                               Name 18  "declare_spec_const_in_func("
+                              Name 21  "spec_bool"
                               Name 27  "color"
+                              Name 28  "spec_int"
                               Name 33  "len"
+                              Name 37  "spec_float"
+                              Name 39  "spec_double"
                               Name 42  "global_vec4_array_with_spec_length"
-                              Decorate 21 SpecId 203
-                              Decorate 28 SpecId 200
-                              Decorate 37 SpecId 201
-                              Decorate 39 SpecId 202
+                              Decorate 21(spec_bool) SpecId 203
+                              Decorate 28(spec_int) SpecId 200
+                              Decorate 37(spec_float) SpecId 201
+                              Decorate 39(spec_double) SpecId 202
                2:             TypeVoid
                3:             TypeFunction 2
               14:             TypeInt 32 1
               15:             TypeFunction 14(int)
               20:             TypeBool
-              21:    20(bool) SpecConstantTrue
+   21(spec_bool):    20(bool) SpecConstantTrue
               24:             TypeFloat 32
               25:             TypeVector 24(float) 4
               26:             TypePointer Output 25(fvec4)
        27(color):     26(ptr) Variable Output
-              28:     14(int) SpecConstant 3
+    28(spec_int):     14(int) SpecConstant 3
               32:             TypePointer Function 14(int)
-              37:   24(float) SpecConstant 1078523331
+  37(spec_float):   24(float) SpecConstant 1078523331
               38:             TypeFloat 64
-              39:   38(float) SpecConstant 1413754136 1074340347
-              40:             TypeArray 25(fvec4) 28
+ 39(spec_double):   38(float) SpecConstant 1413754136 1074340347
+              40:             TypeArray 25(fvec4) 28(spec_int)
               41:             TypePointer Input 40
 42(global_vec4_array_with_spec_length):     41(ptr) Variable Input
          4(main):           2 Function None 3
@@ -50,9 +54,9 @@ Warning, version 450 is not yet complete; most version-specific features are pre
 6(refer_primary_spec_const():           2 Function None 3
                7:             Label
                               SelectionMerge 23 None
-                              BranchConditional 21 22 23
+                              BranchConditional 21(spec_bool) 22 23
               22:               Label
-              29:   24(float)   ConvertSToF 28
+              29:   24(float)   ConvertSToF 28(spec_int)
               30:   25(fvec4)   Load 27(color)
               31:   25(fvec4)   VectorTimesScalar 30 29
                                 Store 27(color) 31
@@ -75,7 +79,7 @@ Warning, version 450 is not yet complete; most version-specific features are pre
 16(refer_spec_const_array_length():     14(int) Function None 15
               17:             Label
          33(len):     32(ptr) Variable Function
-                              Store 33(len) 28
+                              Store 33(len) 28(spec_int)
               34:     14(int) Load 33(len)
                               ReturnValue 34
                               FunctionEnd

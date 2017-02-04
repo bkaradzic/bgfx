@@ -17,7 +17,7 @@ There are several components:
 
 1. A GLSL/ESSL front-end for reference validation and translation of GLSL/ESSL into an AST.
 
-2. An HLSL front-end for translation of a broad generic HLL into the AST.
+2. An HLSL front-end for translation of a broad generic HLL into the AST. See [issue 362](https://github.com/KhronosGroup/glslang/issues/362) and [issue 701](https://github.com/KhronosGroup/glslang/issues/701) for current status.
 
 3. A SPIR-V back end for translating the AST to SPIR-V.
 

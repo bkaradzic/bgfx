@@ -819,7 +819,7 @@ Id Builder::makeFloat16Constant(float f16, bool specConstant)
 }
 #endif
 
-Id Builder::findCompositeConstant(Op typeClass, std::vector<Id>& comps) const
+Id Builder::findCompositeConstant(Op typeClass, const std::vector<Id>& comps) const
 {
     Instruction* constant = 0;
     bool found = false;
@@ -848,7 +848,7 @@ Id Builder::findCompositeConstant(Op typeClass, std::vector<Id>& comps) const
 }
 
 // Comments in header
-Id Builder::makeCompositeConstant(Id typeId, std::vector<Id>& members, bool specConstant)
+Id Builder::makeCompositeConstant(Id typeId, const std::vector<Id>& members, bool specConstant)
 {
     Op opcode = specConstant ? OpSpecConstantComposite : OpConstantComposite;
     assert(typeId);
@@ -1098,7 +1098,7 @@ Id Builder::createLoad(Id lValue)
 }
 
 // Comments in header
-Id Builder::createAccessChain(StorageClass storageClass, Id base, std::vector<Id>& offsets)
+Id Builder::createAccessChain(StorageClass storageClass, Id base, const std::vector<Id>& offsets)
 {
     // Figure out the final resulting type.
     spv::Id typeId = getTypeId(base);
@@ -1148,7 +1148,7 @@ Id Builder::createCompositeExtract(Id composite, Id typeId, unsigned index)
     return extract->getResultId();
 }
 
-Id Builder::createCompositeExtract(Id composite, Id typeId, std::vector<unsigned>& indexes)
+Id Builder::createCompositeExtract(Id composite, Id typeId, const std::vector<unsigned>& indexes)
 {
     // Generate code for spec constants if in spec constant operation
     // generation mode.
@@ -1175,7 +1175,7 @@ Id Builder::createCompositeInsert(Id object, Id composite, Id typeId, unsigned i
     return insert->getResultId();
 }
 
-Id Builder::createCompositeInsert(Id object, Id composite, Id typeId, std::vector<unsigned>& indexes)
+Id Builder::createCompositeInsert(Id object, Id composite, Id typeId, const std::vector<unsigned>& indexes)
 {
     Instruction* insert = new Instruction(getUniqueId(), typeId, OpCompositeInsert);
     insert->addIdOperand(object);
@@ -1326,7 +1326,7 @@ Id Builder::createSpecConstantOp(Op opCode, Id typeId, const std::vector<Id>& op
     return op->getResultId();
 }
 
-Id Builder::createFunctionCall(spv::Function* function, std::vector<spv::Id>& args)
+Id Builder::createFunctionCall(spv::Function* function, const std::vector<spv::Id>& args)
 {
     Instruction* op = new Instruction(getUniqueId(), function->getReturnType(), OpFunctionCall);
     op->addIdOperand(function->getId());
@@ -1338,7 +1338,7 @@ Id Builder::createFunctionCall(spv::Function* function, std::vector<spv::Id>& ar
 }
 
 // Comments in header
-Id Builder::createRvalueSwizzle(Decoration precision, Id typeId, Id source, std::vector<unsigned>& channels)
+Id Builder::createRvalueSwizzle(Decoration precision, Id typeId, Id source, const std::vector<unsigned>& channels)
 {
     if (channels.size() == 1)
         return setPrecision(createCompositeExtract(source, typeId, channels.front()), precision);
@@ -1360,7 +1360,7 @@ Id Builder::createRvalueSwizzle(Decoration precision, Id typeId, Id source, std:
 }
 
 // Comments in header
-Id Builder::createLvalueSwizzle(Id typeId, Id target, Id source, std::vector<unsigned>& channels)
+Id Builder::createLvalueSwizzle(Id typeId, Id target, Id source, const std::vector<unsigned>& channels)
 {
     if (channels.size() == 1 && getNumComponents(source) == 1)
         return createCompositeInsert(source, target, typeId, channels.front());
@@ -1446,7 +1446,7 @@ Id Builder::smearScalar(Decoration precision, Id scalar, Id vectorType)
 }
 
 // Comments in header
-Id Builder::createBuiltinCall(Id resultType, Id builtins, int entryPoint, std::vector<Id>& args)
+Id Builder::createBuiltinCall(Id resultType, Id builtins, int entryPoint, const std::vector<Id>& args)
 {
     Instruction* inst = new Instruction(getUniqueId(), resultType, OpExtInst);
     inst->addIdOperand(builtins);
@@ -1794,7 +1794,7 @@ Id Builder::createCompositeCompare(Decoration precision, Id value1, Id value2, b
 }
 
 // OpCompositeConstruct
-Id Builder::createCompositeConstruct(Id typeId, std::vector<Id>& constituents)
+Id Builder::createCompositeConstruct(Id typeId, const std::vector<Id>& constituents)
 {
     assert(isAggregateType(typeId) || (getNumTypeConstituents(typeId) > 1 && getNumTypeConstituents(typeId) == (int)constituents.size()));
 
@@ -2011,7 +2011,8 @@ void Builder::If::makeEndIf()
 }
 
 // Comments in header
-void Builder::makeSwitch(Id selector, int numSegments, std::vector<int>& caseValues, std::vector<int>& valueIndexToSegment, int defaultSegment,
+void Builder::makeSwitch(Id selector, int numSegments, const std::vector<int>& caseValues,
+                         const std::vector<int>& valueIndexToSegment, int defaultSegment,
                          std::vector<Block*>& segmentBlocks)
 {
     Function& function = buildPoint->getParent();

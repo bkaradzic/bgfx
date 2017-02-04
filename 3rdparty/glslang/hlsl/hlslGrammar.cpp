@@ -1758,6 +1758,16 @@ bool HlslGrammar::acceptStructDeclarationList(TTypeList*& typeList)
 
             acceptPostDecls(member.type->getQualifier());
 
+            // EQUAL assignment_expression
+            if (acceptTokenClass(EHTokAssign)) {
+                parseContext.warn(idToken.loc, "struct-member initializers ignored", "typedef", "");
+                TIntermTyped* expressionNode = nullptr;
+                if (! acceptAssignmentExpression(expressionNode)) {
+                    expected("initializer");
+                    return false;
+                }
+            }
+
             // success on seeing the SEMICOLON coming up
             if (peekTokenClass(EHTokSemicolon))
                 break;
@@ -2319,6 +2329,8 @@ bool HlslGrammar::acceptPostfixExpression(TIntermTyped*& node)
         tFinalize(HlslParseContext& p) : parseContext(p) { }
         ~tFinalize() { parseContext.finalizeFlattening(); }
        HlslParseContext& parseContext;
+    private:
+        tFinalize& operator=(tFinalize&) { }
     } finalize(parseContext);
 
     // Initialize the flattening accumulation data, so we can track data across multiple bracket or

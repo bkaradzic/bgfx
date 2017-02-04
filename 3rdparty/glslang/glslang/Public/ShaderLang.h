@@ -540,6 +540,7 @@ protected:
     bool linked;
 
 private:
+    TProgram(TProgram&);
     TProgram& operator=(TProgram&);
 };
 

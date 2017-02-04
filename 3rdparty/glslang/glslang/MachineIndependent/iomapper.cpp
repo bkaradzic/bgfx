@@ -209,6 +209,9 @@ struct TResolverAdaptor
     TIoMapResolver& resolver;
     TInfoSink&      infoSink;
     bool&           error;
+
+private:
+    TResolverAdaptor& operator=(TResolverAdaptor&);
 };
 
 /*

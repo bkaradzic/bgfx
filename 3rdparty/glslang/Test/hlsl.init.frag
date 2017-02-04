@@ -34,3 +34,8 @@ float4 ShaderFunction(float4 input) : COLOR0
 
     return input * a1;
 }
+
+cbuffer Constants
+{
+    float a = 1.0f, b, c = 2.0f;
+};

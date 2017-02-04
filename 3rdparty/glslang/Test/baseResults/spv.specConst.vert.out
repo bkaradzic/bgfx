@@ -17,6 +17,7 @@ Warning, version 450 is not yet complete; most version-specific features are pre
                               MemberName 11(gl_PerVertex) 2  "gl_ClipDistance"
                               MemberName 11(gl_PerVertex) 3  "gl_CullDistance"
                               Name 13  ""
+                              Name 18  "a"
                               Name 25  "gl_VertexID"
                               Name 26  "gl_InstanceID"
                               MemberDecorate 11(gl_PerVertex) 0 BuiltIn Position
@@ -24,7 +25,7 @@ Warning, version 450 is not yet complete; most version-specific features are pre
                               MemberDecorate 11(gl_PerVertex) 2 BuiltIn ClipDistance
                               MemberDecorate 11(gl_PerVertex) 3 BuiltIn CullDistance
                               Decorate 11(gl_PerVertex) Block
-                              Decorate 18 SpecId 11
+                              Decorate 18(a) SpecId 11
                               Decorate 25(gl_VertexID) BuiltIn VertexId
                               Decorate 26(gl_InstanceID) BuiltIn InstanceId
                2:             TypeVoid
@@ -41,14 +42,14 @@ Warning, version 450 is not yet complete; most version-specific features are pre
               15:     14(int) Constant 0
               16:    6(float) Constant 1065353216
               17:    7(fvec4) ConstantComposite 16 16 16 16
-              18:     14(int) SpecConstant 8
+           18(a):     14(int) SpecConstant 8
               22:             TypePointer Output 7(fvec4)
               24:             TypePointer Input 14(int)
  25(gl_VertexID):     24(ptr) Variable Input
 26(gl_InstanceID):     24(ptr) Variable Input
          4(main):           2 Function None 3
                5:             Label
-              19:    6(float) ConvertSToF 18
+              19:    6(float) ConvertSToF 18(a)
               20:    7(fvec4) CompositeConstruct 19 19 19 19
               21:    7(fvec4) FDiv 17 20
               23:     22(ptr) AccessChain 13 15

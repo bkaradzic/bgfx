@@ -105,8 +105,8 @@ void SetThreadPoolAllocator(TPoolAllocator& poolAllocator)
 TPoolAllocator::TPoolAllocator(int growthIncrement, int allocationAlignment) :
     pageSize(growthIncrement),
     alignment(allocationAlignment),
-    freeList(0),
-    inUseList(0),
+    freeList(nullptr),
+    inUseList(nullptr),
     numCalls(0)
 {
     //

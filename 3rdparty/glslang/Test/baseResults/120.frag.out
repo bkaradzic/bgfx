@@ -50,7 +50,9 @@ ERROR: 0:191: 'shadow2DProjGradARB' : required extension not requested: GL_ARB_s
 ERROR: 0:209: 'shadow2DRectProjGradARB' : no matching overloaded function found 
 ERROR: 0:209: 'assign' :  cannot convert from 'const float' to 'temp 4-component vector of float'
 ERROR: 0:212: 'sampler2DRect' : Reserved word. 
-ERROR: 51 compilation errors.  No code generated.
+ERROR: 0:244: ':' :  wrong operand types: no operation ':' exists that takes a left-hand operand of type 'global void' and a right operand of type 'const int' (or there is no acceptable conversion)
+ERROR: 0:245: ':' :  wrong operand types: no operation ':' exists that takes a left-hand operand of type 'const int' and a right operand of type 'global void' (or there is no acceptable conversion)
+ERROR: 53 compilation errors.  No code generated.
 
 
 Shader version: 120
@@ -601,6 +603,19 @@ ERROR: node is still EOpNull!
 0:237          'v' (temp 4-component vector of float)
 0:237          'v2' (temp 2-component vector of float)
 0:237          'v2' (temp 2-component vector of float)
+0:240  Function Definition: voidTernary( (global void)
+0:240    Function Parameters: 
+0:?     Sequence
+0:243      Test condition and select (temp void)
+0:243        Condition
+0:243        'b' (temp bool)
+0:243        true case
+0:243        Function Call: foo121111( (global void)
+0:243        false case
+0:243        Function Call: foo12111( (global void)
+0:244      Constant:
+0:244        4 (const int)
+0:245      Function Call: foo12111( (global void)
 0:?   Linker Objects
 0:?     'lowp' (global float)
 0:?     'mediump' (global float)

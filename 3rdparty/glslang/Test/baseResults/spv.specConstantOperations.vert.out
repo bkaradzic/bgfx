@@ -14,85 +14,90 @@ Warning, version 450 is not yet complete; most version-specific features are pre
                               Name 4  "main"
                               Name 8  "non_const_array_size_from_spec_const("
                               Name 11  "i"
+                              Name 19  "sp_int"
                               Name 27  "array"
-                              Decorate 19 SpecId 201
-                              Decorate 40 SpecId 200
-                              Decorate 42 SpecId 202
-                              Decorate 43 SpecId 203
-                              Decorate 45 SpecId 204
+                              Name 40  "sp_float"
+                              Name 42  "sp_uint"
+                              Name 43  "sp_sint"
+                              Name 45  "sp_double"
+                              Decorate 19(sp_int) SpecId 201
+                              Decorate 40(sp_float) SpecId 200
+                              Decorate 42(sp_uint) SpecId 202
+                              Decorate 43(sp_sint) SpecId 203
+                              Decorate 45(sp_double) SpecId 204
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeInt 32 1
                7:             TypeFunction 6(int)
               10:             TypePointer Function 6(int)
               12:      6(int) Constant 0
-              19:      6(int) SpecConstant 10
+      19(sp_int):      6(int) SpecConstant 10
               20:      6(int) Constant 2
-              21:      6(int) SpecConstantOp 128 19 20
+              21:      6(int) SpecConstantOp 128 19(sp_int) 20
               22:             TypeBool
-              24:      6(int) SpecConstantOp 128 19 20
+              24:      6(int) SpecConstantOp 128 19(sp_int) 20
               25:             TypeArray 6(int) 24
               26:             TypePointer Function 25
               29:      6(int) Constant 1023
               32:      6(int) Constant 1
-              34:      6(int) SpecConstantOp 128 19 32
+              34:      6(int) SpecConstantOp 128 19(sp_int) 32
               39:             TypeFloat 32
-              40:   39(float) SpecConstant 1078530010
+    40(sp_float):   39(float) SpecConstant 1078530010
               41:             TypeInt 32 0
-              42:     41(int) SpecConstant 100
-              43:      6(int) SpecConstant 4294967286
+     42(sp_uint):     41(int) SpecConstant 100
+     43(sp_sint):      6(int) SpecConstant 4294967286
               44:             TypeFloat 64
-              45:   44(float) SpecConstant 2333366019 1074118410
-              46:   39(float) SpecConstantOp 115 45
-              47:   44(float) SpecConstantOp 115 40
+   45(sp_double):   44(float) SpecConstant 2333366019 1074118410
+              46:   39(float) SpecConstantOp 115 45(sp_double)
+              47:   44(float) SpecConstantOp 115 40(sp_float)
               48:     41(int) Constant 0
-              49:    22(bool) SpecConstantOp 171 19 48
-              50:    22(bool) SpecConstantOp 171 42 48
+              49:    22(bool) SpecConstantOp 171 19(sp_int) 48
+              50:    22(bool) SpecConstantOp 171 42(sp_uint) 48
               51:      6(int) SpecConstantOp 169 49 32 12
               52:     41(int) Constant 1
               53:     41(int) SpecConstantOp 169 49 52 48
-              54:     41(int) SpecConstantOp 128 43 48
-              55:      6(int) SpecConstantOp 128 42 48
-              56:      6(int) SpecConstantOp 126 19
-              57:      6(int) SpecConstantOp 200 19
-              58:      6(int) SpecConstantOp 128 19 20
-              59:      6(int) SpecConstantOp 128 19 20
+              54:     41(int) SpecConstantOp 128 43(sp_sint) 48
+              55:      6(int) SpecConstantOp 128 42(sp_uint) 48
+              56:      6(int) SpecConstantOp 126 19(sp_int)
+              57:      6(int) SpecConstantOp 200 19(sp_int)
+              58:      6(int) SpecConstantOp 128 19(sp_int) 20
+              59:      6(int) SpecConstantOp 128 19(sp_int) 20
               60:      6(int) Constant 3
               61:      6(int) SpecConstantOp 130 59 60
               62:      6(int) Constant 4
               63:      6(int) SpecConstantOp 130 58 62
-              64:      6(int) SpecConstantOp 132 43 20
+              64:      6(int) SpecConstantOp 132 43(sp_sint) 20
               65:     41(int) Constant 2
-              66:     41(int) SpecConstantOp 132 42 65
+              66:     41(int) SpecConstantOp 132 42(sp_uint) 65
               67:      6(int) Constant 5
               68:      6(int) SpecConstantOp 135 64 67
               69:     41(int) Constant 5
               70:     41(int) SpecConstantOp 134 66 69
-              71:      6(int) SpecConstantOp 139 43 62
+              71:      6(int) SpecConstantOp 139 43(sp_sint) 62
               72:     41(int) Constant 4
-              73:     41(int) SpecConstantOp 137 42 72
-              74:      6(int) SpecConstantOp 132 43 60
+              73:     41(int) SpecConstantOp 137 42(sp_uint) 72
+              74:      6(int) SpecConstantOp 132 43(sp_sint) 60
               75:      6(int) SpecConstantOp 135 74 67
               76:      6(int) Constant 10
-              77:      6(int) SpecConstantOp 195 43 76
+              77:      6(int) SpecConstantOp 195 43(sp_sint) 76
               78:      6(int) Constant 20
-              79:     41(int) SpecConstantOp 194 42 78
-              80:      6(int) SpecConstantOp 196 43 32
-              81:     41(int) SpecConstantOp 196 42 20
+              79:     41(int) SpecConstantOp 194 42(sp_uint) 78
+              80:      6(int) SpecConstantOp 196 43(sp_sint) 32
+              81:     41(int) SpecConstantOp 196 42(sp_uint) 20
               82:      6(int) Constant 256
-              83:      6(int) SpecConstantOp 197 43 82
+              83:      6(int) SpecConstantOp 197 43(sp_sint) 82
               84:     41(int) Constant 512
-              85:     41(int) SpecConstantOp 198 42 84
-              86:    22(bool) SpecConstantOp 177 19 43
-              87:    22(bool) SpecConstantOp 170 42 42
-              88:    22(bool) SpecConstantOp 173 19 43
+              85:     41(int) SpecConstantOp 198 42(sp_uint) 84
+              86:    22(bool) SpecConstantOp 177 19(sp_int) 43(sp_sint)
+              87:    22(bool) SpecConstantOp 170 42(sp_uint) 42(sp_uint)
+              88:    22(bool) SpecConstantOp 173 19(sp_int) 43(sp_sint)
               89:      6(int) Constant 30
               90:             TypeVector 6(int) 4
-              91:   90(ivec4) SpecConstantComposite 78 89 19 19
+              91:   90(ivec4) SpecConstantComposite 78 89 19(sp_int) 19(sp_int)
               92:     41(int) Constant 4294967295
               93:     41(int) Constant 4294967294
               94:             TypeVector 41(int) 4
-              95:   94(ivec4) SpecConstantComposite 42 42 92 93
+              95:   94(ivec4) SpecConstantComposite 42(sp_uint) 42(sp_uint) 92 93
               96:             TypeVector 22(bool) 4
               97:   94(ivec4) ConstantComposite 48 48 48 48
               98:   96(bvec4) SpecConstantOp 171 91 97

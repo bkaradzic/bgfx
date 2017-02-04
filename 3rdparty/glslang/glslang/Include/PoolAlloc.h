@@ -255,7 +255,7 @@ extern TPoolAllocator& GetThreadPoolAllocator();
 
 struct TThreadMemoryPools
 {
-        TPoolAllocator* threadPoolAllocator;
+    TPoolAllocator* threadPoolAllocator;
 };
 
 void SetThreadPoolAllocator(TPoolAllocator& poolAllocator);

@@ -3431,9 +3431,9 @@ void TParseContext::redeclareBuiltinBlock(const TSourceLoc& loc, TTypeList& newT
                 oldType.getQualifier().layoutViewportRelative = newType.getQualifier().layoutViewportRelative;
                 oldType.getQualifier().layoutSecondaryViewportRelativeOffset = newType.getQualifier().layoutSecondaryViewportRelativeOffset;
             }
+#endif
             if (oldType.isImplicitlySizedArray() && newType.isExplicitlySizedArray())
                 oldType.changeOuterArraySize(newType.getOuterArraySize());
-#endif
 
             // go to next member
             ++member;

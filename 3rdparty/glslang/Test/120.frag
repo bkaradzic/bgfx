@@ -236,3 +236,11 @@ void foo12111()
 
     v = shadow2DRectProjGradARB(s2DRS, v, v2, v2);
 }
+
+void voidTernary()
+{
+	bool b;
+	b ? foo121111() : foo12111();
+	b ? foo121111() : 4;  // ERROR
+	b ? 3 : foo12111();   // ERROR
+}
