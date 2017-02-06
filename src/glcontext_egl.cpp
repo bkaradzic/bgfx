@@ -195,8 +195,8 @@ EGL_IMPORT
 			BX_TRACE("Supported EGL extensions:");
 			dumpExtensions(extensions);
 
-      // https://www.khronos.org/registry/EGL/extensions/ANDROID/EGL_ANDROID_recordable.txt
-      const bool hasEglAndroidRecordable = !!bx::findIdentifierMatch(extensions, "EGL_ANDROID_recordable");
+			// https://www.khronos.org/registry/EGL/extensions/ANDROID/EGL_ANDROID_recordable.txt
+			const bool hasEglAndroidRecordable = !!bx::findIdentifierMatch(extensions, "EGL_ANDROID_recordable");
 
 			EGLint attrs[] =
 			{
@@ -209,9 +209,9 @@ EGL_IMPORT
 #	endif // BX_PLATFORM_
 				EGL_STENCIL_SIZE, 8,
 
-        // Android Recordable surface
-        hasEglAndroidRecordable? 0x3142 : EGL_NONE,
-        hasEglAndroidRecordable? 1      : EGL_NONE,
+				// Android Recordable surface
+				hasEglAndroidRecordable ? 0x3142 : EGL_NONE,
+				hasEglAndroidRecordable ? 1      : EGL_NONE,
 
 				EGL_NONE
 			};
