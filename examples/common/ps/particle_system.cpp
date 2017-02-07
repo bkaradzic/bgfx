@@ -191,7 +191,7 @@ namespace ps
 		void reset()
 		{
 			m_num = 0;
-			memset(&m_aabb, 0, sizeof(Aabb) );
+			bx::memSet(&m_aabb, 0, sizeof(Aabb) );
 		}
 
 		void update(float _dt)
@@ -206,7 +206,7 @@ namespace ps
 				{
 					if (ii != num-1)
 					{
-						memcpy(&particle, &m_particles[num-1], sizeof(Particle) );
+						bx::memCopy(&particle, &m_particles[num-1], sizeof(Particle) );
 						--ii;
 					}
 
@@ -310,7 +310,7 @@ namespace ps
 				bx::vec3MulMtx(particle.end[0], end,   mtx);
 				bx::vec3Add(particle.end[1], particle.end[0], gravity);
 
-				memcpy(particle.rgba, m_uniforms.m_rgba, BX_COUNTOF(m_uniforms.m_rgba)*sizeof(uint32_t) );
+				bx::memCopy(particle.rgba, m_uniforms.m_rgba, BX_COUNTOF(m_uniforms.m_rgba)*sizeof(uint32_t) );
 
 				particle.blendStart = bx::flerp(m_uniforms.m_blendStart[0], m_uniforms.m_blendStart[1], bx::frnd(&m_rng) );
 				particle.blendEnd   = bx::flerp(m_uniforms.m_blendEnd[0],   m_uniforms.m_blendEnd[1],   bx::frnd(&m_rng) );
@@ -602,7 +602,7 @@ namespace ps
 			}
 			else
 			{
-				memcpy(&emitter.m_uniforms, _uniforms, sizeof(EmitterUniforms) );
+				bx::memCopy(&emitter.m_uniforms, _uniforms, sizeof(EmitterUniforms) );
 			}
 		}
 

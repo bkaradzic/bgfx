@@ -9,7 +9,7 @@
 
 void aabbToObb(Obb& _obb, const Aabb& _aabb)
 {
-	memset(_obb.m_mtx, 0, sizeof(_obb.m_mtx) );
+	bx::memSet(_obb.m_mtx, 0, sizeof(_obb.m_mtx) );
 	_obb.m_mtx[ 0] = (_aabb.m_max[0] - _aabb.m_min[0]) * 0.5f;
 	_obb.m_mtx[ 5] = (_aabb.m_max[1] - _aabb.m_min[1]) * 0.5f;
 	_obb.m_mtx[10] = (_aabb.m_max[2] - _aabb.m_min[2]) * 0.5f;
@@ -91,7 +91,7 @@ void aabbTransformToObb(Obb& _obb, const Aabb& _aabb, const float* _mtx)
 	aabbToObb(_obb, _aabb);
 	float result[16];
 	bx::mtxMul(result, _obb.m_mtx, _mtx);
-	memcpy(_obb.m_mtx, result, sizeof(result) );
+	bx::memCopy(_obb.m_mtx, result, sizeof(result) );
 }
 
 void toAabb(Aabb& _aabb, const void* _vertices, uint32_t _numVertices, uint32_t _stride)
@@ -252,7 +252,7 @@ void calcObb(Obb& _obb, const void* _vertices, uint32_t _numVertices, uint32_t _
 		ax += angleStep;
 	}
 
-	memcpy(&_obb, &best, sizeof(Obb) );
+	bx::memCopy(&_obb, &best, sizeof(Obb) );
 }
 
 void calcMaxBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _numVertices, uint32_t _stride)

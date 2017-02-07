@@ -190,7 +190,7 @@ namespace
 				int old = gl->ctextures;
 				gl->ctextures = (gl->ctextures == 0) ? 2 : gl->ctextures*2;
 				gl->textures = (struct GLNVGtexture*)BX_REALLOC(gl->m_allocator, gl->textures, sizeof(struct GLNVGtexture)*gl->ctextures);
-				memset(&gl->textures[old], 0xff, (gl->ctextures-old)*sizeof(struct GLNVGtexture) );
+				bx::memSet(&gl->textures[old], 0xff, (gl->ctextures-old)*sizeof(struct GLNVGtexture) );
 
 				if (gl->textures == NULL)
 				{
@@ -200,7 +200,7 @@ namespace
 			tex = &gl->textures[gl->ntextures++];
 		}
 
-		memset(tex, 0, sizeof(*tex) );
+		bx::memSet(tex, 0, sizeof(*tex) );
 
 		return tex;
 	}
@@ -230,7 +230,7 @@ namespace
 				{
 					bgfx::destroyTexture(gl->textures[ii].id);
 				}
-				memset(&gl->textures[ii], 0, sizeof(gl->textures[ii]) );
+				bx::memSet(&gl->textures[ii], 0, sizeof(gl->textures[ii]) );
 				gl->textures[ii].id.idx = bgfx::invalidHandle;
 				return 1;
 			}
@@ -252,7 +252,7 @@ namespace
 
 		const bgfx::Memory* mem = bgfx::alloc(4*4*4);
 		uint32_t* bgra8 = (uint32_t*)mem->data;
-		memset(bgra8, 0, 4*4*4);
+		bx::memSet(bgra8, 0, 4*4*4);
 		gl->texMissing = bgfx::createTexture2D(4, 4, false, 1, bgfx::TextureFormat::BGRA8, 0, mem);
 
 		gl->u_scissorMat      = bgfx::createUniform("u_scissorMat",      bgfx::UniformType::Mat3);
@@ -415,14 +415,14 @@ namespace
 		struct GLNVGtexture* tex = NULL;
 		float invxform[6] = {};
 
-		memset(frag, 0, sizeof(*frag) );
+		bx::memSet(frag, 0, sizeof(*frag) );
 
 		frag->innerCol = glnvg__premulColor(paint->innerColor);
 		frag->outerCol = glnvg__premulColor(paint->outerColor);
 
 		if (scissor->extent[0] < -0.5f || scissor->extent[1] < -0.5f)
 		{
-			memset(frag->scissorMat, 0, sizeof(frag->scissorMat) );
+			bx::memSet(frag->scissorMat, 0, sizeof(frag->scissorMat) );
 			frag->scissorExt[0] = 1.0f;
 			frag->scissorExt[1] = 1.0f;
 			frag->scissorScale[0] = 1.0f;
@@ -437,7 +437,7 @@ namespace
 			frag->scissorScale[0] = sqrtf(scissor->xform[0]*scissor->xform[0] + scissor->xform[2]*scissor->xform[2]) / fringe;
 			frag->scissorScale[1] = sqrtf(scissor->xform[1]*scissor->xform[1] + scissor->xform[3]*scissor->xform[3]) / fringe;
 		}
-		memcpy(frag->extent, paint->extent, sizeof(frag->extent) );
+		bx::memCopy(frag->extent, paint->extent, sizeof(frag->extent) );
 		frag->strokeMult = (width*0.5f + fringe*0.5f) / fringe;
 
 		gl->th = gl->texMissing;
@@ -730,7 +730,7 @@ namespace
 				BX_WARN(true, "Vertex number truncated due to transient vertex buffer overflow");
 			}
 
-			memcpy(gl->tvb.data, gl->verts, gl->nverts * sizeof(struct NVGvertex) );
+			bx::memCopy(gl->tvb.data, gl->verts, gl->nverts * sizeof(struct NVGvertex) );
 
 			gl->state = glnvg__blendCompositeOperation(compositeOperation)
 				| BGFX_STATE_RGB_WRITE
@@ -792,7 +792,7 @@ namespace
 			gl->calls = (struct GLNVGcall*)BX_REALLOC(gl->m_allocator, gl->calls, sizeof(struct GLNVGcall) * gl->ccalls);
 		}
 		ret = &gl->calls[gl->ncalls++];
-		memset(ret, 0, sizeof(struct GLNVGcall) );
+		bx::memSet(ret, 0, sizeof(struct GLNVGcall) );
 		return ret;
 	}
 
@@ -878,12 +878,12 @@ namespace
 		{
 			struct GLNVGpath* copy = &gl->paths[call->pathOffset + i];
 			const struct NVGpath* path = &paths[i];
-			memset(copy, 0, sizeof(struct GLNVGpath) );
+			bx::memSet(copy, 0, sizeof(struct GLNVGpath) );
 			if (path->nfill > 0)
 			{
 				copy->fillOffset = offset;
 				copy->fillCount = path->nfill;
-				memcpy(&gl->verts[offset], path->fill, sizeof(struct NVGvertex) * path->nfill);
+				bx::memCopy(&gl->verts[offset], path->fill, sizeof(struct NVGvertex) * path->nfill);
 				offset += path->nfill;
 			}
 
@@ -891,7 +891,7 @@ namespace
 			{
 				copy->strokeOffset = offset;
 				copy->strokeCount = path->nstroke;
-				memcpy(&gl->verts[offset], path->stroke, sizeof(struct NVGvertex) * path->nstroke);
+				bx::memCopy(&gl->verts[offset], path->stroke, sizeof(struct NVGvertex) * path->nstroke);
 				offset += path->nstroke;
 			}
 		}
@@ -914,7 +914,7 @@ namespace
 			call->uniformOffset = glnvg__allocFragUniforms(gl, 2);
 			// Simple shader for stencil
 			frag = nvg__fragUniformPtr(gl, call->uniformOffset);
-			memset(frag, 0, sizeof(*frag) );
+			bx::memSet(frag, 0, sizeof(*frag) );
 			frag->type = NSVG_SHADER_SIMPLE;
 			// Fill shader
 			glnvg__convertPaint(gl, nvg__fragUniformPtr(gl, call->uniformOffset + gl->fragSize), paint, scissor, fringe, fringe);
@@ -948,12 +948,12 @@ namespace
 		{
 			struct GLNVGpath* copy = &gl->paths[call->pathOffset + i];
 			const struct NVGpath* path = &paths[i];
-			memset(copy, 0, sizeof(struct GLNVGpath) );
+			bx::memSet(copy, 0, sizeof(struct GLNVGpath) );
 			if (path->nstroke)
 			{
 				copy->strokeOffset = offset;
 				copy->strokeCount = path->nstroke;
-				memcpy(&gl->verts[offset], path->stroke, sizeof(struct NVGvertex) * path->nstroke);
+				bx::memCopy(&gl->verts[offset], path->stroke, sizeof(struct NVGvertex) * path->nstroke);
 				offset += path->nstroke;
 			}
 		}
@@ -976,7 +976,7 @@ namespace
 		// Allocate vertices for all the paths.
 		call->vertexOffset = glnvg__allocVerts(gl, nverts);
 		call->vertexCount = nverts;
-		memcpy(&gl->verts[call->vertexOffset], verts, sizeof(struct NVGvertex) * nverts);
+		bx::memCopy(&gl->verts[call->vertexOffset], verts, sizeof(struct NVGvertex) * nverts);
 
 		// Fill shader
 		call->uniformOffset = glnvg__allocFragUniforms(gl, 1);
@@ -1048,9 +1048,9 @@ NVGcontext* nvgCreate(int edgeaa, unsigned char _viewId, bx::AllocatorI* _alloca
 	struct NVGcontext* ctx = NULL;
 	struct GLNVGcontext* gl = (struct GLNVGcontext*)BX_ALLOC(_allocator, sizeof(struct GLNVGcontext) );
 	if (gl == NULL) goto error;
-	memset(gl, 0, sizeof(struct GLNVGcontext) );
+	bx::memSet(gl, 0, sizeof(struct GLNVGcontext) );
 
-	memset(&params, 0, sizeof(params) );
+	bx::memSet(&params, 0, sizeof(params) );
 	params.renderCreate         = nvgRenderCreate;
 	params.renderCreateTexture  = nvgRenderCreateTexture;
 	params.renderDeleteTexture  = nvgRenderDeleteTexture;

@@ -828,7 +828,7 @@ void VectorDisplay::genLinetex()                                    // generate 
 	const bgfx::Memory* mem = bgfx::alloc(TEXTURE_SIZE * TEXTURE_SIZE * 4);
 	unsigned char* texbuf = (unsigned char*)mem->data;
 
-	memset(texbuf, 0xff, mem->size);
+	bx::memSet(texbuf, 0xff, mem->size);
 	int x, y;
 	for (x = 0; x < TEXTURE_SIZE; x++)
 	{

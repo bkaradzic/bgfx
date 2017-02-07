@@ -449,7 +449,7 @@ struct DebugDraw
 			const uint32_t numIndices  = numVertices;
 
 			vertices[id] = BX_ALLOC(m_allocator, numVertices*stride);
-			memset(vertices[id], 0, numVertices*stride);
+			bx::memSet(vertices[id], 0, numVertices*stride);
 			genSphere(tess, vertices[id], stride);
 
 			uint16_t* trilist = (uint16_t*)BX_ALLOC(m_allocator, numIndices*sizeof(uint16_t) );
@@ -467,7 +467,7 @@ struct DebugDraw
 							);
 			indices[id] = (uint16_t*)BX_ALLOC(m_allocator, (numIndices + numLineListIndices)*sizeof(uint16_t) );
 			uint16_t* indicesOut = indices[id];
-			memcpy(indicesOut, trilist, numIndices*sizeof(uint16_t) );
+			bx::memCopy(indicesOut, trilist, numIndices*sizeof(uint16_t) );
 
 			bgfx::topologyConvert(bgfx::TopologyConvert::TriListToLineList
 							, &indicesOut[numIndices]
@@ -503,7 +503,7 @@ struct DebugDraw
 
 			vertices[id] = BX_ALLOC(m_allocator, numVertices*stride);
 			indices[id]  = (uint16_t*)BX_ALLOC(m_allocator, (numIndices + numLineListIndices)*sizeof(uint16_t) );
-			memset(indices[id], 0, (numIndices + numLineListIndices)*sizeof(uint16_t) );
+			bx::memSet(indices[id], 0, (numIndices + numLineListIndices)*sizeof(uint16_t) );
 
 			DebugShapeVertex* vertex = (DebugShapeVertex*)vertices[id];
 			uint16_t* index = indices[id];
@@ -564,7 +564,7 @@ struct DebugDraw
 
 			vertices[id] = BX_ALLOC(m_allocator, numVertices*stride);
 			indices[id]  = (uint16_t*)BX_ALLOC(m_allocator, (numIndices + numLineListIndices)*sizeof(uint16_t) );
-			memset(indices[id], 0, (numIndices + numLineListIndices)*sizeof(uint16_t) );
+			bx::memSet(indices[id], 0, (numIndices + numLineListIndices)*sizeof(uint16_t) );
 
 			DebugShapeVertex* vertex = (DebugShapeVertex*)vertices[id];
 			uint16_t* index = indices[id];
@@ -634,7 +634,7 @@ struct DebugDraw
 
 			vertices[id] = BX_ALLOC(m_allocator, numVertices*stride);
 			indices[id]  = (uint16_t*)BX_ALLOC(m_allocator, (numIndices + numLineListIndices)*sizeof(uint16_t) );
-			memset(indices[id], 0, (numIndices + numLineListIndices)*sizeof(uint16_t) );
+			bx::memSet(indices[id], 0, (numIndices + numLineListIndices)*sizeof(uint16_t) );
 
 			DebugShapeVertex* vertex = (DebugShapeVertex*)vertices[id];
 			uint16_t* index = indices[id];
@@ -706,12 +706,12 @@ struct DebugDraw
 		for (uint32_t mesh = Mesh::Sphere0; mesh < Mesh::Cube; ++mesh)
 		{
 			Mesh::Enum id = Mesh::Enum(mesh);
-			memcpy(&vb->data[m_mesh[id].m_startVertex * stride]
+			bx::memCopy(&vb->data[m_mesh[id].m_startVertex * stride]
 				 , vertices[id]
 				 , m_mesh[id].m_numVertices*stride
 				 );
 
-			memcpy(&ib->data[m_mesh[id].m_startIndex[0] * sizeof(uint16_t)]
+			bx::memCopy(&ib->data[m_mesh[id].m_startIndex[0] * sizeof(uint16_t)]
 				 , indices[id]
 				 , (m_mesh[id].m_numIndices[0]+m_mesh[id].m_numIndices[1])*sizeof(uint16_t)
 				 );
@@ -720,12 +720,12 @@ struct DebugDraw
 			BX_FREE(m_allocator, indices[id]);
 		}
 
-		memcpy(&vb->data[m_mesh[Mesh::Cube].m_startVertex * stride]
+		bx::memCopy(&vb->data[m_mesh[Mesh::Cube].m_startVertex * stride]
 			, s_cubeVertices
 			, sizeof(s_cubeVertices)
 			);
 
-		memcpy(&ib->data[m_mesh[Mesh::Cube].m_startIndex[0] * sizeof(uint16_t)]
+		bx::memCopy(&ib->data[m_mesh[Mesh::Cube].m_startIndex[0] * sizeof(uint16_t)]
 			, s_cubeIndices
 			, sizeof(s_cubeIndices)
 			);
@@ -849,7 +849,7 @@ struct DebugDraw
 
 		bgfx::Transform transform;
 		m_mtx = bgfx::allocTransform(&transform, 1);
-		memcpy(transform.data, _mtx, 64);
+		bx::memCopy(transform.data, _mtx, 64);
 	}
 
 	void setTranslate(float _x, float _y, float _z)
@@ -992,14 +992,14 @@ struct DebugDraw
 
 			flush();
 
-			memcpy(&m_cache[0], &m_cache[vertexPos], sizeof(DebugVertex) );
+			bx::memCopy(&m_cache[0], &m_cache[vertexPos], sizeof(DebugVertex) );
 			if (vertexPos == pos)
 			{
 				m_pos = 1;
 			}
 			else
 			{
-				memcpy(&m_cache[1], &m_cache[pos - 1], sizeof(DebugVertex) );
+				bx::memCopy(&m_cache[1], &m_cache[pos - 1], sizeof(DebugVertex) );
 				m_pos = 2;
 			}
 
@@ -1466,7 +1466,7 @@ struct DebugDraw
 		float mtx[2][16];
 		bx::mtxFromNormal(mtx[0], normal, _radius, _from, attrib.m_spin);
 
-		memcpy(mtx[1], mtx[0], 64);
+		bx::memCopy(mtx[1], mtx[0], 64);
 		mtx[1][12] = _to[0];
 		mtx[1][13] = _to[1];
 		mtx[1][14] = _to[2];
@@ -1496,7 +1496,7 @@ struct DebugDraw
 		float mtx[2][16];
 		bx::mtxFromNormal(mtx[0], normal, _radius, _from, attrib.m_spin);
 
-		memcpy(mtx[1], mtx[0], 64);
+		bx::memCopy(mtx[1], mtx[0], 64);
 		mtx[1][12] = _to[0];
 		mtx[1][13] = _to[1];
 		mtx[1][14] = _to[2];
@@ -1843,11 +1843,11 @@ private:
 			{
 				bgfx::TransientVertexBuffer tvb;
 				bgfx::allocTransientVertexBuffer(&tvb, m_pos, DebugVertex::ms_decl);
-				memcpy(tvb.data, m_cache, m_pos * DebugVertex::ms_decl.m_stride);
+				bx::memCopy(tvb.data, m_cache, m_pos * DebugVertex::ms_decl.m_stride);
 
 				bgfx::TransientIndexBuffer tib;
 				bgfx::allocTransientIndexBuffer(&tib, m_indexPos);
-				memcpy(tib.data, m_indices, m_indexPos * sizeof(uint16_t) );
+				bx::memCopy(tib.data, m_indices, m_indexPos * sizeof(uint16_t) );
 
 				const Attrib& attrib = m_attrib[m_stack];
 
@@ -1881,7 +1881,7 @@ private:
 			{
 				bgfx::TransientVertexBuffer tvb;
 				bgfx::allocTransientVertexBuffer(&tvb, m_posQuad, DebugUvVertex::ms_decl);
-				memcpy(tvb.data, m_cacheQuad, m_posQuad * DebugUvVertex::ms_decl.m_stride);
+				bx::memCopy(tvb.data, m_cacheQuad, m_posQuad * DebugUvVertex::ms_decl.m_stride);
 
 				bgfx::TransientIndexBuffer tib;
 				bgfx::allocTransientIndexBuffer(&tib, numIndices);
