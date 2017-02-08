@@ -439,7 +439,7 @@ namespace bgfx { namespace d3d12
 			char temp[2048];
 			va_list argList;
 			va_start(argList, _format);
-			int size = bx::uint32_min(sizeof(temp)-1, vsnprintf(temp, sizeof(temp), _format, argList) );
+			int size = bx::uint32_min(sizeof(temp)-1, bx::vsnprintf(temp, sizeof(temp), _format, argList) );
 			va_end(argList);
 			temp[size] = '\0';
 
