@@ -3,9 +3,6 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
-#include <stdio.h>
-#include <string.h>
-
 #include <string>
 #include <vector>
 #include <map>
@@ -760,7 +757,7 @@ uint16_t weldVertices(WeldedVertex* _output, const bgfx::VertexDecl& _decl, cons
 
 	const uint32_t size = sizeof(uint16_t)*(hashSize + _num);
 	uint16_t* hashTable = (uint16_t*)alloca(size);
-	memset(hashTable, 0xff, size);
+	bx::memSet(hashTable, 0xff, size);
 
 	uint16_t* next = hashTable + hashSize;
 
@@ -888,7 +885,7 @@ struct Group
 			face.m_i[0] = i0;
 			face.m_i[1] = i1;
 			face.m_i[2] = i2;
-			memcpy(face.m_plane, plane, 4*sizeof(float) );
+			bx::memCopy(face.m_plane, plane, 4*sizeof(float) );
 			m_faces.push_back(face);
 
 			//Use unique indices for EdgeMap.
@@ -916,14 +913,14 @@ struct Group
 				if (iter != edgeMap.end() )
 				{
 					EdgeAndPlane& ep = iter->second;
-					memcpy(ep.m_plane[ep.m_faceIndex].m_plane, plane, 4*sizeof(float) );
+					bx::memCopy(ep.m_plane[ep.m_faceIndex].m_plane, plane, 4*sizeof(float) );
 					ep.m_faceReverseOrder[ep.m_faceIndex] = true;
 				}
 				else
 				{
 					std::pair<EdgeMap::iterator, bool> result = edgeMap.insert(std::make_pair(key, EdgeAndPlane(ui0, ui1) ) );
 					EdgeAndPlane& ep = result.first->second;
-					memcpy(ep.m_plane[ep.m_faceIndex].m_plane, plane, 4*sizeof(float) );
+					bx::memCopy(ep.m_plane[ep.m_faceIndex].m_plane, plane, 4*sizeof(float) );
 					ep.m_faceReverseOrder[ep.m_faceIndex] = false;
 					ep.m_faceIndex++;
 				}
@@ -938,8 +935,8 @@ struct Group
 			Edge* edge = &m_edges[m_numEdges];
 			Plane* plane = &m_edgePlanes[index];
 
-			memcpy(edge, iter->second.m_faceReverseOrder, sizeof(Edge) );
-			memcpy(plane, iter->second.m_plane, 2 * sizeof(Plane) );
+			bx::memCopy(edge, iter->second.m_faceReverseOrder, sizeof(Edge) );
+			bx::memCopy(plane, iter->second.m_plane, 2 * sizeof(Plane) );
 
 			m_numEdges++;
 			index += 2;
@@ -1002,7 +999,7 @@ struct Mesh
 		size = _numVertices*_decl.getStride();
 
 		group.m_vertices = (uint8_t*)malloc(size);
-		memcpy(group.m_vertices, _vertices, size);
+		bx::memCopy(group.m_vertices, _vertices, size);
 
 		mem = bgfx::makeRef(group.m_vertices, size);
 		group.m_vbh = bgfx::createVertexBuffer(mem, _decl);
@@ -1012,7 +1009,7 @@ struct Mesh
 		size = _numIndices*2;
 
 		group.m_indices = (uint16_t*)malloc(size);
-		memcpy(group.m_indices, _indices, size);
+		bx::memCopy(group.m_indices, _indices, size);
 
 		mem = bgfx::makeRef(group.m_indices, size);
 		group.m_ibh = bgfx::createIndexBuffer(mem);
@@ -1204,7 +1201,7 @@ struct Instance
 
 	void submit(uint8_t _viewId, const RenderState& _renderState)
 	{
-		memcpy(s_uniforms.m_color, m_color, 3*sizeof(float) );
+		bx::memCopy(s_uniforms.m_color, m_color, 3*sizeof(float) );
 
 		float mtx[16];
 		bx::mtxSRT(mtx
@@ -1374,7 +1371,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 
 		VertexData(const float* _v3, float _extrude = 0.0f, float _k = 1.0f)
 		{
-			memcpy(m_v, _v3, 3*sizeof(float) );
+			bx::memCopy(m_v, _v3, 3*sizeof(float) );
 			m_extrude = _extrude;
 			m_k = _k;
 		}
@@ -2575,9 +2572,9 @@ int _main_(int _argc, char** _argv)
 		{
 			const float* lightPos = lightPosRadius[ii];
 
-			memcpy(s_uniforms.m_lightPosRadius, lightPosRadius[ii], 4*sizeof(float) );
-			memcpy(s_uniforms.m_lightRgbInnerR, lightRgbInnerR[ii], 3*sizeof(float) );
-			memcpy(s_uniforms.m_color,          lightRgbInnerR[ii], 3*sizeof(float) );
+			bx::memCopy(s_uniforms.m_lightPosRadius, lightPosRadius[ii], 4*sizeof(float) );
+			bx::memCopy(s_uniforms.m_lightRgbInnerR, lightRgbInnerR[ii], 3*sizeof(float) );
+			bx::memCopy(s_uniforms.m_color,          lightRgbInnerR[ii], 3*sizeof(float) );
 
 			if (settings_useStencilTexture)
 			{
@@ -2639,7 +2636,7 @@ int _main_(int _argc, char** _argv)
 					);
 
 				// Set virtual light pos.
-				memcpy(s_uniforms.m_virtualLightPos_extrusionDist, transformedLightPos, 3*sizeof(float) );
+				bx::memCopy(s_uniforms.m_virtualLightPos_extrusionDist, transformedLightPos, 3*sizeof(float) );
 				s_uniforms.m_virtualLightPos_extrusionDist[3] = instance.m_svExtrusionDistance;
 
 				// Compute transform for shadow volume.
@@ -2786,7 +2783,7 @@ int _main_(int _argc, char** _argv)
 		const float lightScale[3] = { 1.5f, 1.5f, 1.5f };
 		for (uint8_t ii = 0; ii < settings_numLights; ++ii)
 		{
-			memcpy(s_uniforms.m_color, lightRgbInnerR[ii], 3*sizeof(float) );
+			bx::memCopy(s_uniforms.m_color, lightRgbInnerR[ii], 3*sizeof(float) );
 
 			float lightMtx[16];
 			mtxBillboard(lightMtx, viewState.m_view, lightPosRadius[ii], lightScale);

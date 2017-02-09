@@ -20,7 +20,6 @@
 #include <bx/thread.h>
 #include <bx/os.h>
 #include <bx/handlealloc.h>
-#include <string.h> // memset
 #include <string>
 
 #include <fcntl.h>
@@ -107,7 +106,7 @@ namespace entry
 		{
 			m_fd = open("/dev/input/js0", O_RDONLY | O_NONBLOCK);
 
-			memset(m_value, 0, sizeof(m_value) );
+			bx::memSet(m_value, 0, sizeof(m_value) );
 
 			// Deadzone values from xinput.h
 			m_deadzone[GamepadAxis::LeftX ] =
@@ -250,7 +249,7 @@ namespace entry
 			: m_modifiers(Modifier::None)
 			, m_exit(false)
 		{
-			memset(s_translateKey, 0, sizeof(s_translateKey) );
+			bx::memSet(s_translateKey, 0, sizeof(s_translateKey) );
 			initTranslateKey(XK_Escape,       Key::Esc);
 			initTranslateKey(XK_Return,       Key::Return);
 			initTranslateKey(XK_Tab,          Key::Tab);
@@ -352,7 +351,7 @@ namespace entry
 			m_visual = DefaultVisual(m_display, screen);
 			m_root   = RootWindow(m_display, screen);
 
-			memset(&m_windowAttrs, 0, sizeof(m_windowAttrs) );
+			bx::memSet(&m_windowAttrs, 0, sizeof(m_windowAttrs) );
 			m_windowAttrs.background_pixmap = 0;
 			m_windowAttrs.border_pixel = 0;
 			m_windowAttrs.event_mask = 0
@@ -379,7 +378,7 @@ namespace entry
 
 			// Clear window to black.
 			XSetWindowAttributes attr;
-			memset(&attr, 0, sizeof(attr) );
+			bx::memSet(&attr, 0, sizeof(attr) );
 			XChangeWindowAttributes(m_display, m_window[0], CWBackPixel, &attr);
 
 			const char* wmDeleteWindowName = "WM_DELETE_WINDOW";
@@ -605,7 +604,7 @@ namespace entry
 
 			// Clear window to black.
 			XSetWindowAttributes attr;
-			memset(&attr, 0, sizeof(attr) );
+			bx::memSet(&attr, 0, sizeof(attr) );
 			XChangeWindowAttributes(m_display, window, CWBackPixel, &attr);
 
 			const char* wmDeleteWindowName = "WM_DELETE_WINDOW";

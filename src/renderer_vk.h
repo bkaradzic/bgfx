@@ -398,14 +398,14 @@ VK_DESTROY
 		{
 			BX_CHECK(NULL != _vsh->m_code, "Vertex shader doesn't exist.");
 			m_vsh = _vsh;
-			memcpy(&m_predefined[0], _vsh->m_predefined, _vsh->m_numPredefined*sizeof(PredefinedUniform));
+			bx::memCopy(&m_predefined[0], _vsh->m_predefined, _vsh->m_numPredefined*sizeof(PredefinedUniform));
 			m_numPredefined = _vsh->m_numPredefined;
 
 			if (NULL != _fsh)
 			{
 				BX_CHECK(NULL != _fsh->m_code, "Fragment shader doesn't exist.");
 				m_fsh = _fsh;
-				memcpy(&m_predefined[m_numPredefined], _fsh->m_predefined, _fsh->m_numPredefined*sizeof(PredefinedUniform));
+				bx::memCopy(&m_predefined[m_numPredefined], _fsh->m_predefined, _fsh->m_numPredefined*sizeof(PredefinedUniform));
 				m_numPredefined += _fsh->m_numPredefined;
 			}
 		}

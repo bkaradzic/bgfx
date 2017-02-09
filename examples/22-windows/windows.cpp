@@ -126,7 +126,7 @@ public:
 
 		m_timeOffset = bx::getHPCounter();
 
-		memset(m_fbh, 0xff, sizeof(m_fbh) );
+		bx::memSet(m_fbh, 0xff, sizeof(m_fbh) );
 	}
 
 	virtual int shutdown() BX_OVERRIDE

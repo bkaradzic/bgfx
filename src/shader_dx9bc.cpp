@@ -749,7 +749,7 @@ namespace bgfx
 		uint8_t* data = (uint8_t*)mb.more();
 		uint32_t size = uint32_t(bx::getSize(&writer) );
 		_dst.byteCode.reserve(size);
-		memcpy(_dst.byteCode.data(), data, size);
+		bx::memCopy(_dst.byteCode.data(), data, size);
 	}
 
 } // namespace bgfx

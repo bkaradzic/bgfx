@@ -407,7 +407,7 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath,
 									*srcB,
 									*srcA,
 								};
-								memcpy(&out[ii * bytesPerPixel], rgba, bytesPerPixel);
+								bx::memCopy(&out[ii * bytesPerPixel], rgba, bytesPerPixel);
 
 								srcR += stepR;
 								srcG += stepG;
@@ -487,7 +487,7 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl
 	};
 
 	float* tangents = new float[6*_numVertices];
-	memset(tangents, 0, 6*_numVertices*sizeof(float) );
+	bx::memSet(tangents, 0, 6*_numVertices*sizeof(float) );
 
 	PosTexcoord v0;
 	PosTexcoord v1;

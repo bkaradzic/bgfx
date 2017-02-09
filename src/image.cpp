@@ -661,7 +661,7 @@ namespace bgfx
 
 		for (uint32_t yy = 0; yy < _height; ++yy, src += _srcPitch, dst += _dstPitch)
 		{
-			memcpy(dst, src, pitch);
+			bx::memCopy(dst, src, pitch);
 		}
 	}
 
@@ -2544,10 +2544,10 @@ namespace bgfx
 					src += 8;
 
 					uint8_t* block = &dst[(yy*_pitch+xx*4)*4];
-					memcpy(&block[0*_pitch], &temp[ 0], 16);
-					memcpy(&block[1*_pitch], &temp[16], 16);
-					memcpy(&block[2*_pitch], &temp[32], 16);
-					memcpy(&block[3*_pitch], &temp[48], 16);
+					bx::memCopy(&block[0*_pitch], &temp[ 0], 16);
+					bx::memCopy(&block[1*_pitch], &temp[16], 16);
+					bx::memCopy(&block[2*_pitch], &temp[32], 16);
+					bx::memCopy(&block[3*_pitch], &temp[48], 16);
 				}
 			}
 			break;
@@ -2563,10 +2563,10 @@ namespace bgfx
 					src += 8;
 
 					uint8_t* block = &dst[(yy*_pitch+xx*4)*4];
-					memcpy(&block[0*_pitch], &temp[ 0], 16);
-					memcpy(&block[1*_pitch], &temp[16], 16);
-					memcpy(&block[2*_pitch], &temp[32], 16);
-					memcpy(&block[3*_pitch], &temp[48], 16);
+					bx::memCopy(&block[0*_pitch], &temp[ 0], 16);
+					bx::memCopy(&block[1*_pitch], &temp[16], 16);
+					bx::memCopy(&block[2*_pitch], &temp[32], 16);
+					bx::memCopy(&block[3*_pitch], &temp[48], 16);
 				}
 			}
 			break;
@@ -2582,10 +2582,10 @@ namespace bgfx
 					src += 8;
 
 					uint8_t* block = &dst[(yy*_pitch+xx*4)*4];
-					memcpy(&block[0*_pitch], &temp[ 0], 16);
-					memcpy(&block[1*_pitch], &temp[16], 16);
-					memcpy(&block[2*_pitch], &temp[32], 16);
-					memcpy(&block[3*_pitch], &temp[48], 16);
+					bx::memCopy(&block[0*_pitch], &temp[ 0], 16);
+					bx::memCopy(&block[1*_pitch], &temp[16], 16);
+					bx::memCopy(&block[2*_pitch], &temp[32], 16);
+					bx::memCopy(&block[3*_pitch], &temp[48], 16);
 				}
 			}
 			break;
@@ -2599,10 +2599,10 @@ namespace bgfx
 					src += 8;
 
 					uint8_t* block = &dst[(yy*_pitch+xx*4)*4];
-					memcpy(&block[0*_pitch], &temp[ 0], 16);
-					memcpy(&block[1*_pitch], &temp[16], 16);
-					memcpy(&block[2*_pitch], &temp[32], 16);
-					memcpy(&block[3*_pitch], &temp[48], 16);
+					bx::memCopy(&block[0*_pitch], &temp[ 0], 16);
+					bx::memCopy(&block[1*_pitch], &temp[16], 16);
+					bx::memCopy(&block[2*_pitch], &temp[32], 16);
+					bx::memCopy(&block[3*_pitch], &temp[48], 16);
 				}
 			}
 			break;
@@ -2627,10 +2627,10 @@ namespace bgfx
 					}
 
 					uint8_t* block = &dst[(yy*_pitch+xx*4)*4];
-					memcpy(&block[0*_pitch], &temp[ 0], 16);
-					memcpy(&block[1*_pitch], &temp[16], 16);
-					memcpy(&block[2*_pitch], &temp[32], 16);
-					memcpy(&block[3*_pitch], &temp[48], 16);
+					bx::memCopy(&block[0*_pitch], &temp[ 0], 16);
+					bx::memCopy(&block[1*_pitch], &temp[16], 16);
+					bx::memCopy(&block[2*_pitch], &temp[32], 16);
+					bx::memCopy(&block[3*_pitch], &temp[48], 16);
 				}
 			}
 			break;
@@ -2645,10 +2645,10 @@ namespace bgfx
 					src += 8;
 
 					uint8_t* block = &dst[(yy*_pitch+xx*4)*4];
-					memcpy(&block[0*_pitch], &temp[ 0], 16);
-					memcpy(&block[1*_pitch], &temp[16], 16);
-					memcpy(&block[2*_pitch], &temp[32], 16);
-					memcpy(&block[3*_pitch], &temp[48], 16);
+					bx::memCopy(&block[0*_pitch], &temp[ 0], 16);
+					bx::memCopy(&block[1*_pitch], &temp[16], 16);
+					bx::memCopy(&block[2*_pitch], &temp[32], 16);
+					bx::memCopy(&block[3*_pitch], &temp[48], 16);
 				}
 			}
 			break;
@@ -2681,10 +2681,10 @@ namespace bgfx
 					decodeBlockPtc14(temp, src, xx, yy, width, height);
 
 					uint8_t* block = &dst[(yy*_pitch+xx*4)*4];
-					memcpy(&block[0*_pitch], &temp[ 0], 16);
-					memcpy(&block[1*_pitch], &temp[16], 16);
-					memcpy(&block[2*_pitch], &temp[32], 16);
-					memcpy(&block[3*_pitch], &temp[48], 16);
+					bx::memCopy(&block[0*_pitch], &temp[ 0], 16);
+					bx::memCopy(&block[1*_pitch], &temp[16], 16);
+					bx::memCopy(&block[2*_pitch], &temp[32], 16);
+					bx::memCopy(&block[3*_pitch], &temp[48], 16);
 				}
 			}
 			break;
@@ -2697,10 +2697,10 @@ namespace bgfx
 					decodeBlockPtc14A(temp, src, xx, yy, width, height);
 
 					uint8_t* block = &dst[(yy*_pitch+xx*4)*4];
-					memcpy(&block[0*_pitch], &temp[ 0], 16);
-					memcpy(&block[1*_pitch], &temp[16], 16);
-					memcpy(&block[2*_pitch], &temp[32], 16);
-					memcpy(&block[3*_pitch], &temp[48], 16);
+					bx::memCopy(&block[0*_pitch], &temp[ 0], 16);
+					bx::memCopy(&block[1*_pitch], &temp[16], 16);
+					bx::memCopy(&block[2*_pitch], &temp[32], 16);
+					bx::memCopy(&block[3*_pitch], &temp[48], 16);
 				}
 			}
 			break;
@@ -2720,7 +2720,7 @@ namespace bgfx
 			break;
 
 		case TextureFormat::BGRA8:
-			memcpy(_dst, _src, _pitch*_height);
+			bx::memCopy(_dst, _src, _pitch*_height);
 			break;
 
 		default:
@@ -2742,7 +2742,7 @@ namespace bgfx
 		switch (_format)
 		{
 		case TextureFormat::RGBA8:
-			memcpy(_dst, _src, _pitch*_height);
+			bx::memCopy(_dst, _src, _pitch*_height);
 			break;
 
 		case TextureFormat::BGRA8:
@@ -2862,7 +2862,7 @@ namespace bgfx
 			break;
 
 		case TextureFormat::RGBA32F:
-			memcpy(_dst, _src, _pitch*_height);
+			bx::memCopy(_dst, _src, _pitch*_height);
 			break;
 
 		case TextureFormat::RGBA8:

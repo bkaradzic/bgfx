@@ -104,7 +104,7 @@ namespace bgfx
 		for (int eye = 0; eye < 2; ++eye)
 		{
 			BX_STATIC_ASSERT(sizeof(_desc->m_eyeFov[eye]) == sizeof(hmdDesc.DefaultEyeFov[eye]));
-			memcpy(&_desc->m_eyeFov[eye], &hmdDesc.DefaultEyeFov[eye], sizeof(_desc->m_eyeFov[eye]));
+			bx::memCopy(&_desc->m_eyeFov[eye], &hmdDesc.DefaultEyeFov[eye], sizeof(_desc->m_eyeFov[eye]));
 			_desc->m_eyeSize[eye].m_w = eyeSize[eye].w;
 			_desc->m_eyeSize[eye].m_h = eyeSize[eye].h;
 		}

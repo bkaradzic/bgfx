@@ -15,32 +15,32 @@ int cmdMove(CmdContext* /*_context*/, void* /*_userData*/, int _argc, char const
 {
 	if (_argc > 1)
 	{
-		if (0 == strcmp(_argv[1], "forward") )
+		if (0 == bx::strncmp(_argv[1], "forward") )
 		{
 			cameraSetKeyState(CAMERA_KEY_FORWARD, true);
 			return 0;
 		}
-		else if (0 == strcmp(_argv[1], "left") )
+		else if (0 == bx::strncmp(_argv[1], "left") )
 		{
 			cameraSetKeyState(CAMERA_KEY_LEFT, true);
 			return 0;
 		}
-		else if (0 == strcmp(_argv[1], "right") )
+		else if (0 == bx::strncmp(_argv[1], "right") )
 		{
 			cameraSetKeyState(CAMERA_KEY_RIGHT, true);
 			return 0;
 		}
-		else if (0 == strcmp(_argv[1], "backward") )
+		else if (0 == bx::strncmp(_argv[1], "backward") )
 		{
 			cameraSetKeyState(CAMERA_KEY_BACKWARD, true);
 			return 0;
 		}
-		else if (0 == strcmp(_argv[1], "up") )
+		else if (0 == bx::strncmp(_argv[1], "up") )
 		{
 			cameraSetKeyState(CAMERA_KEY_UP, true);
 			return 0;
 		}
-		else if (0 == strcmp(_argv[1], "down") )
+		else if (0 == bx::strncmp(_argv[1], "down") )
 		{
 			cameraSetKeyState(CAMERA_KEY_DOWN, true);
 			return 0;
@@ -264,7 +264,7 @@ struct Camera
 
 	void setPosition(const float* _pos)
 	{
-		memcpy(m_eye, _pos, sizeof(float)*3);
+		bx::memCopy(m_eye, _pos, sizeof(float)*3);
 	}
 
 	void setVerticalAngle(float _verticalAngle)
@@ -334,12 +334,12 @@ void cameraGetViewMtx(float* _viewMtx)
 
 void cameraGetPosition(float* _pos)
 {
-	memcpy(_pos, s_camera->m_eye, 3*sizeof(float) );
+	bx::memCopy(_pos, s_camera->m_eye, 3*sizeof(float) );
 }
 
 void cameraGetAt(float* _at)
 {
-	memcpy(_at, s_camera->m_at, 3*sizeof(float) );
+	bx::memCopy(_at, s_camera->m_at, 3*sizeof(float) );
 }
 
 void cameraUpdate(float _deltaTime, const entry::MouseState& _mouseState)

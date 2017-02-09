@@ -726,8 +726,8 @@ VK_IMPORT_DEVICE
 			ErrorState::Enum errorState = ErrorState::Default;
 
 			m_fbh.idx = invalidHandle;
-			memset(m_uniforms, 0, sizeof(m_uniforms) );
-			memset(&m_resolution, 0, sizeof(m_resolution) );
+			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
+			bx::memSet(&m_resolution, 0, sizeof(m_resolution) );
 
 			bool imported = true;
 			VkResult result;
@@ -1969,7 +1969,7 @@ VK_IMPORT_DEVICE
 		void createVertexDecl(VertexDeclHandle _handle, const VertexDecl& _decl) BX_OVERRIDE
 		{
 			VertexDecl& decl = m_vertexDecls[_handle.idx];
-			memcpy(&decl, &_decl, sizeof(VertexDecl) );
+			bx::memCopy(&decl, &_decl, sizeof(VertexDecl) );
 			dump(decl);
 		}
 
@@ -2098,7 +2098,7 @@ VK_IMPORT_DEVICE
 
 			uint32_t size = BX_ALIGN_16(g_uniformTypeSize[_type] * _num);
 			void* data = BX_ALLOC(g_allocator, size);
-			memset(data, 0, size);
+			bx::memSet(data, 0, size);
 			m_uniforms[_handle.idx] = data;
 			m_uniformReg.add(_handle, _name, data);
 		}
@@ -2123,7 +2123,7 @@ VK_IMPORT_DEVICE
 
 		void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) BX_OVERRIDE
 		{
-			memcpy(m_uniforms[_loc], _data, _size);
+			bx::memCopy(m_uniforms[_loc], _data, _size);
 		}
 
 		void setMarker(const char* /*_marker*/, uint32_t /*_size*/) BX_OVERRIDE
@@ -2224,12 +2224,12 @@ VK_IMPORT_DEVICE
 			BX_UNUSED(_flags, _regIndex, _val, _numRegs);
 			if (_flags&BGFX_UNIFORM_FRAGMENTBIT)
 			{
-				memcpy(&m_fsScratch[_regIndex], _val, _numRegs*16);
+				bx::memCopy(&m_fsScratch[_regIndex], _val, _numRegs*16);
 				m_fsChanges += _numRegs;
 			}
 			else
 			{
-				memcpy(&m_vsScratch[_regIndex], _val, _numRegs*16);
+				bx::memCopy(&m_vsScratch[_regIndex], _val, _numRegs*16);
 				m_vsChanges += _numRegs;
 			}
 		}
@@ -2257,12 +2257,12 @@ VK_IMPORT_DEVICE
 				uint8_t* data = (uint8_t*)m_scratchBuffer[m_backBufferColorIdx].allocUbv(descriptorBufferInfo, total);
 
 				uint32_t size = program.m_vsh->m_size;
-				memcpy(data, m_vsScratch, size);
+				bx::memCopy(data, m_vsScratch, size);
 				data += size;
 
 				if (NULL != program.m_fsh)
 				{
-					memcpy(data, m_fsScratch, program.m_fsh->m_size);
+					bx::memCopy(data, m_fsScratch, program.m_fsh->m_size);
 				}
 
 				vkCmdBindDescriptorSets(_commandBuffer
@@ -2446,7 +2446,7 @@ VK_IMPORT_DEVICE
 			{
 				for (uint32_t ii = 1; ii < numAttachments; ++ii)
 				{
-					memcpy(&bas[ii], bas, sizeof(VkPipelineColorBlendAttachmentState) );
+					bx::memCopy(&bas[ii], bas, sizeof(VkPipelineColorBlendAttachmentState) );
 				}
 			}
 
@@ -2530,7 +2530,7 @@ VK_IMPORT_DEVICE
 			_vertexInputState.flags = 0;
 
 			VertexDecl decl;
-			memcpy(&decl, &_vertexDecl, sizeof(VertexDecl) );
+			bx::memCopy(&decl, &_vertexDecl, sizeof(VertexDecl) );
 			const uint16_t* attrMask = _program.m_vsh->m_attrMask;
 
 			for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
@@ -2551,7 +2551,7 @@ VK_IMPORT_DEVICE
 				uint32_t index = 7 - ii; // TEXCOORD7 = i_data0, TEXCOORD6 = i_data1, etc.
 
 				BX_UNUSED(index);
-//				memcpy(curr, &inst, sizeof(D3D12_INPUT_ELEMENT_DESC) );
+//				bx::memCopy(curr, &inst, sizeof(D3D12_INPUT_ELEMENT_DESC) );
 //				curr->InputSlot = 1;
 //				curr->SemanticIndex = index;
 //				curr->AlignedByteOffset = ii*16;
@@ -2591,7 +2591,7 @@ VK_IMPORT_DEVICE
 			_stencil &= packStencil(~BGFX_STENCIL_FUNC_REF_MASK, BGFX_STENCIL_MASK);
 
 			VertexDecl decl;
-			memcpy(&decl, &m_vertexDecls[_declIdx], sizeof(VertexDecl) );
+			bx::memCopy(&decl, &m_vertexDecls[_declIdx], sizeof(VertexDecl) );
 			const uint16_t* attrMask = program.m_vsh->m_attrMask;
 
 			for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
@@ -2806,7 +2806,7 @@ VK_IMPORT_DEVICE
 				else
 				{
 					UniformHandle handle;
-					memcpy(&handle, _uniformBuffer.read(sizeof(UniformHandle) ), sizeof(UniformHandle) );
+					bx::memCopy(&handle, _uniformBuffer.read(sizeof(UniformHandle) ), sizeof(UniformHandle) );
 					data = (const char*)m_uniforms[handle.idx];
 				}
 
@@ -2891,7 +2891,7 @@ VK_IMPORT_DEVICE
 						attachments[mrt].colorAttachment = mrt;
 						attachments[mrt].aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 						uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[ii]);
-						memcpy(&attachments[mrt].clearValue.color.float32, _palette[index], 16);
+						bx::memCopy(&attachments[mrt].clearValue.color.float32, _palette[index], 16);
 						++mrt;
 					}
 				}
@@ -2909,7 +2909,7 @@ VK_IMPORT_DEVICE
 					{
 						attachments[mrt].colorAttachment = mrt;
 						attachments[mrt].aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-						memcpy(&attachments[mrt].clearValue.color.float32, frgba, 16);
+						bx::memCopy(&attachments[mrt].clearValue.color.float32, frgba, 16);
 						++mrt;
 					}
 				}
@@ -3344,7 +3344,7 @@ VK_DESTROY
 		{
 			void* dst;
 			VK_CHECK(vkMapMemory(device, m_deviceMem, 0, ma.allocationSize, 0, &dst) );
-			memcpy(dst, _data, _size);
+			bx::memCopy(dst, _data, _size);
 			vkUnmapMemory(device, m_deviceMem);
 		}
 
@@ -3496,8 +3496,8 @@ VK_DESTROY
 		bx::skip(&reader, shaderSize+1);
 
 		m_code = alloc( ( (shaderSize+3)/4)*4);
-		memset(m_code->data, 0, m_code->size);
-		memcpy(m_code->data
+		bx::memSet(m_code->data, 0, m_code->size);
+		bx::memCopy(m_code->data
 			, code
 			, shaderSize+1
 			);
@@ -3510,7 +3510,7 @@ VK_DESTROY
 			: sizeof(fs_cubes_spv)
 			;
 		m_code = alloc(shaderSize);
-		memcpy(m_code->data
+		bx::memCopy(m_code->data
 			, BGFX_CHUNK_MAGIC_VSH == magic
 				? vs_cubes_spv
 				: fs_cubes_spv
@@ -3526,7 +3526,7 @@ VK_DESTROY
 		smci.pCode    = (const uint32_t*)m_code->data;
 		VK_CHECK(vkCreateShaderModule(s_renderVK->m_device, &smci, s_renderVK->m_allocatorCb, &m_module) );
 
-		memset(m_attrMask, 0, sizeof(m_attrMask) );
+		bx::memSet(m_attrMask, 0, sizeof(m_attrMask) );
 		m_attrMask[Attrib::Position] = UINT16_MAX;
 		m_attrMask[Attrib::Color0]   = UINT16_MAX;
 		iohash = 0;
@@ -4174,7 +4174,7 @@ BX_UNUSED(currentSamplerStateIdx);
 //									}
 //									else
 //									{
-//										memcpy(&srvHandle[stage], &srvHandle[0], sizeof(D3D12_GPU_DESCRIPTOR_HANDLE) );
+//										bx::memCopy(&srvHandle[stage], &srvHandle[0], sizeof(D3D12_GPU_DESCRIPTOR_HANDLE) );
 //										samplerFlags[stage] = 0;
 //									}
 //								}

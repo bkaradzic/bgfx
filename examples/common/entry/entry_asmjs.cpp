@@ -29,7 +29,7 @@ namespace entry
 			, m_my(0)
 			, m_scroll(0)
 		{
-			memset(s_translateKey, 0, sizeof(s_translateKey));
+			bx::memSet(s_translateKey, 0, sizeof(s_translateKey));
 			s_translateKey[27]             = Key::Esc;
 			s_translateKey[uint8_t('\n')]  =
 			s_translateKey[uint8_t('\r')]  = Key::Return;

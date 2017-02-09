@@ -70,7 +70,7 @@ namespace bgfx { namespace d3d11
 	{
 		Zero()
 		{
-			memset(this, 0, sizeof(Zero) );
+			bx::memSet(this, 0, sizeof(Zero) );
 		}
 
 		ID3D11Buffer*              m_buffer[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
@@ -364,7 +364,7 @@ namespace bgfx { namespace d3d11
 		{
 			if (UINT16_MAX != _decl.m_attributes[attr])
 			{
-				memcpy(elem, &s_attrib[attr], sizeof(D3D11_INPUT_ELEMENT_DESC) );
+				bx::memCopy(elem, &s_attrib[attr], sizeof(D3D11_INPUT_ELEMENT_DESC) );
 
 				if (0 == _decl.m_attributes[attr])
 				{
@@ -397,8 +397,8 @@ namespace bgfx { namespace d3d11
 
 		void clear()
 		{
-			memset(m_srv, 0, sizeof(m_srv) );
-			memset(m_sampler, 0, sizeof(m_sampler) );
+			bx::memSet(m_srv, 0, sizeof(m_srv) );
+			bx::memSet(m_sampler, 0, sizeof(m_sampler) );
 		}
 
 		ID3D11ShaderResourceView* m_srv[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
@@ -675,9 +675,9 @@ namespace bgfx { namespace d3d11
 			, m_timerQuerySupport(false)
 		{
 			m_fbh.idx = invalidHandle;
-			memset(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
-			memset(&m_scd, 0, sizeof(m_scd) );
-			memset(&m_windows, 0xff, sizeof(m_windows) );
+			bx::memSet(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
+			bx::memSet(&m_scd, 0, sizeof(m_scd) );
+			bx::memSet(&m_windows, 0xff, sizeof(m_windows) );
 		}
 
 		~RendererContextD3D11()
@@ -712,8 +712,8 @@ namespace bgfx { namespace d3d11
 			}
 
 			m_fbh.idx = invalidHandle;
-			memset(m_uniforms, 0, sizeof(m_uniforms) );
-			memset(&m_resolution, 0, sizeof(m_resolution) );
+			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
+			bx::memSet(&m_resolution, 0, sizeof(m_resolution) );
 
 			m_ags = NULL;
 			m_agsdll = bx::dlopen(
@@ -1124,7 +1124,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					DX_RELEASE(device, 2);
 				}
 
-				memset(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
+				bx::memSet(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
 				hr = adapter->GetDesc(&m_adapterDesc);
 				BX_WARN(SUCCEEDED(hr), "Adapter GetDesc failed 0x%08x.", hr);
 
@@ -1145,7 +1145,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						goto error;
 					}
 
-					memset(&m_scd, 0, sizeof(m_scd) );
+					bx::memSet(&m_scd, 0, sizeof(m_scd) );
 					m_scd.Width  = BGFX_DEFAULT_WIDTH;
 					m_scd.Height = BGFX_DEFAULT_HEIGHT;
 					m_scd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -1205,7 +1205,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						goto error;
 					}
 
-					memset(&m_scd, 0, sizeof(m_scd) );
+					bx::memSet(&m_scd, 0, sizeof(m_scd) );
 					m_scd.BufferDesc.Width  = BGFX_DEFAULT_WIDTH;
 					m_scd.BufferDesc.Height = BGFX_DEFAULT_HEIGHT;
 					m_scd.BufferDesc.RefreshRate.Numerator   = 60;
@@ -1236,7 +1236,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				}
 				else
 				{
-					memset(&m_scd, 0, sizeof(m_scd) );
+					bx::memSet(&m_scd, 0, sizeof(m_scd) );
 					m_scd.SampleDesc.Count   = 1;
 					m_scd.SampleDesc.Quality = 0;
 					setBufferSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
@@ -1258,7 +1258,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING,    false);
 
 					D3D11_INFO_QUEUE_FILTER filter;
-					memset(&filter, 0, sizeof(filter) );
+					bx::memSet(&filter, 0, sizeof(filter) );
 
 					D3D11_MESSAGE_CATEGORY catlist[] =
 					{
@@ -1763,7 +1763,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		void createVertexDecl(VertexDeclHandle _handle, const VertexDecl& _decl) BX_OVERRIDE
 		{
 			VertexDecl& decl = m_vertexDecls[_handle.idx];
-			memcpy(&decl, &_decl, sizeof(VertexDecl) );
+			bx::memCopy(&decl, &_decl, sizeof(VertexDecl) );
 			dump(decl);
 		}
 
@@ -1869,7 +1869,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			for (uint32_t yy = 0, height = srcHeight; yy < height; ++yy)
 			{
-				memcpy(dst, src, pitch);
+				bx::memCopy(dst, src, pitch);
 
 				src += srcPitch;
 				dst += dstPitch;
@@ -1963,7 +1963,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			uint32_t size = BX_ALIGN_16(g_uniformTypeSize[_type]*_num);
 			void* data = BX_ALLOC(g_allocator, size);
-			memset(data, 0, size);
+			bx::memSet(data, 0, size);
 			m_uniforms[_handle.idx] = data;
 			m_uniformReg.add(_handle, _name, data);
 		}
@@ -1990,7 +1990,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			backBuffer->GetDesc(&backBufferDesc);
 
 			D3D11_TEXTURE2D_DESC desc;
-			memcpy(&desc, &backBufferDesc, sizeof(desc) );
+			bx::memCopy(&desc, &backBufferDesc, sizeof(desc) );
 			desc.SampleDesc.Count = 1;
 			desc.SampleDesc.Quality = 0;
 			desc.Usage = D3D11_USAGE_STAGING;
@@ -2062,7 +2062,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) BX_OVERRIDE
 		{
-			memcpy(m_uniforms[_loc], _data, _size);
+			bx::memCopy(m_uniforms[_loc], _data, _size);
 		}
 
 		void setMarker(const char* _marker, uint32_t _size) BX_OVERRIDE
@@ -2527,12 +2527,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			if (_flags&BGFX_UNIFORM_FRAGMENTBIT)
 			{
-				memcpy(&m_fsScratch[_regIndex], _val, _numRegs*16);
+				bx::memCopy(&m_fsScratch[_regIndex], _val, _numRegs*16);
 				m_fsChanges += _numRegs;
 			}
 			else
 			{
-				memcpy(&m_vsScratch[_regIndex], _val, _numRegs*16);
+				bx::memCopy(&m_vsScratch[_regIndex], _val, _numRegs*16);
 				m_vsChanges += _numRegs;
 			}
 		}
@@ -2661,7 +2661,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				D3D11_INPUT_ELEMENT_DESC vertexElements[Attrib::Count+1+BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
 
 				VertexDecl decl;
-				memcpy(&decl, &_vertexDecl, sizeof(VertexDecl) );
+				bx::memCopy(&decl, &_vertexDecl, sizeof(VertexDecl) );
 				const uint16_t* attrMask = _program.m_vsh->m_attrMask;
 
 				for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
@@ -2698,7 +2698,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						++elem;
 					}
 
-					memcpy(curr, &inst, sizeof(D3D11_INPUT_ELEMENT_DESC) );
+					bx::memCopy(curr, &inst, sizeof(D3D11_INPUT_ELEMENT_DESC) );
 					curr->InputSlot = 1;
 					curr->SemanticIndex = index;
 					curr->AlignedByteOffset = ii*16;
@@ -2798,7 +2798,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				{
 					for (uint32_t ii = 1; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii)
 					{
-						memcpy(&desc.RenderTarget[ii], drt, sizeof(D3D11_RENDER_TARGET_BLEND_DESC) );
+						bx::memCopy(&desc.RenderTarget[ii], drt, sizeof(D3D11_RENDER_TARGET_BLEND_DESC) );
 					}
 				}
 
@@ -2849,7 +2849,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			if (NULL == dss)
 			{
 				D3D11_DEPTH_STENCIL_DESC desc;
-				memset(&desc, 0, sizeof(desc) );
+				bx::memSet(&desc, 0, sizeof(desc) );
 				desc.DepthEnable    = 0 != func;
 				desc.DepthWriteMask = !!(BGFX_STATE_DEPTH_WRITE & _state) ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
 				desc.DepthFunc      = s_cmpFunc[func];
@@ -3229,7 +3229,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				backBuffer->GetDesc(&backBufferDesc);
 
 				D3D11_TEXTURE2D_DESC desc;
-				memcpy(&desc, &backBufferDesc, sizeof(desc) );
+				bx::memCopy(&desc, &backBufferDesc, sizeof(desc) );
 				desc.SampleDesc.Count   = 1;
 				desc.SampleDesc.Quality = 0;
 				desc.Usage = D3D11_USAGE_STAGING;
@@ -3327,7 +3327,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				else
 				{
 					UniformHandle handle;
-					memcpy(&handle, _uniformBuffer.read(sizeof(UniformHandle) ), sizeof(UniformHandle) );
+					bx::memCopy(&handle, _uniformBuffer.read(sizeof(UniformHandle) ), sizeof(UniformHandle) );
 					data = (const char*)m_uniforms[handle.idx];
 				}
 
@@ -3451,7 +3451,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						for (uint32_t ii = 0; ii < numMrt; ++ii)
 						{
 							uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[ii]);
-							memcpy(mrtClear[ii], _palette[index], 16);
+							bx::memCopy(mrtClear[ii], _palette[index], 16);
 						}
 
 						deviceCtx->UpdateSubresource(fsh->m_buffer, 0, 0, mrtClear, 0, 0);
@@ -3672,7 +3672,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		, m_textureSwapChain(NULL)
 		, m_mirrorTexture(NULL)
 	{
-		memset(m_eyeRtv, 0, sizeof(m_eyeRtv));
+		bx::memSet(m_eyeRtv, 0, sizeof(m_eyeRtv));
 	}
 
 	bool VRImplOVRD3D11::createSwapChain(const VRDesc& _desc, int _msaaSamples, int _mirrorWidth, int _mirrorHeight)
@@ -4085,7 +4085,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			: D3D11_MAP_WRITE_NO_OVERWRITE
 			;
 		DX_CHECK(deviceCtx->Map(m_ptr, 0, type, 0, &mapped) );
-		memcpy( (uint8_t*)mapped.pData + _offset, _data, _size);
+		bx::memCopy( (uint8_t*)mapped.pData + _offset, _data, _size);
 		deviceCtx->Unmap(m_ptr, 0);
 #endif // 0
 	}
@@ -4276,7 +4276,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		uint8_t numAttrs = 0;
 		bx::read(&reader, numAttrs);
 
-		memset(m_attrMask, 0, sizeof(m_attrMask) );
+		bx::memSet(m_attrMask, 0, sizeof(m_attrMask) );
 
 		for (uint32_t ii = 0; ii < numAttrs; ++ii)
 		{
@@ -4437,7 +4437,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				;
 
 			D3D11_SHADER_RESOURCE_VIEW_DESC srvd;
-			memset(&srvd, 0, sizeof(srvd) );
+			bx::memSet(&srvd, 0, sizeof(srvd) );
 
 			DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
 			if (swizzle)
@@ -4740,7 +4740,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		m_denseIdx = UINT16_MAX;
 		m_numTh    = _num;
 		m_needPresent = false;
-		memcpy(m_attachment, _attachment, _num*sizeof(Attachment) );
+		bx::memCopy(m_attachment, _attachment, _num*sizeof(Attachment) );
 
 		postReset();
 	}
@@ -4748,7 +4748,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	void FrameBufferD3D11::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat)
 	{
 		DXGI_SWAP_CHAIN_DESC scd;
-		memcpy(&scd, &s_renderD3D11->m_scd, sizeof(DXGI_SWAP_CHAIN_DESC) );
+		bx::memCopy(&scd, &s_renderD3D11->m_scd, sizeof(DXGI_SWAP_CHAIN_DESC) );
 		scd.BufferDesc.Width  = _width;
 		scd.BufferDesc.Height = _height;
 		scd.OutputWindow = (HWND)_nwh;

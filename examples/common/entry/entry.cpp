@@ -254,7 +254,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	bool setOrToggle(uint32_t& _flags, const char* _name, uint32_t _bit, int _first, int _argc, char const* const* _argv)
 	{
-		if (0 == strcmp(_argv[_first], _name) )
+		if (0 == bx::strncmp(_argv[_first], _name) )
 		{
 			int arg = _first+1;
 			if (_argc > arg)
@@ -310,7 +310,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				bgfx::setDebug(s_debug);
 				return 0;
 			}
-			else if (0 == strcmp(_argv[1], "screenshot") )
+			else if (0 == bx::strncmp(_argv[1], "screenshot") )
 			{
 				if (_argc > 2)
 				{
@@ -328,7 +328,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				return 0;
 			}
-			else if (0 == strcmp(_argv[1], "fullscreen") )
+			else if (0 == bx::strncmp(_argv[1], "fullscreen") )
 			{
 				WindowHandle window = { 0 };
 				toggleFullscreen(window);

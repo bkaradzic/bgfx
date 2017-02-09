@@ -231,14 +231,14 @@ namespace bgfx { namespace d3d12
 		{
 			BX_CHECK(NULL != _vsh->m_code, "Vertex shader doesn't exist.");
 			m_vsh = _vsh;
-			memcpy(&m_predefined[0], _vsh->m_predefined, _vsh->m_numPredefined*sizeof(PredefinedUniform));
+			bx::memCopy(&m_predefined[0], _vsh->m_predefined, _vsh->m_numPredefined*sizeof(PredefinedUniform));
 			m_numPredefined = _vsh->m_numPredefined;
 
 			if (NULL != _fsh)
 			{
 				BX_CHECK(NULL != _fsh->m_code, "Fragment shader doesn't exist.");
 				m_fsh = _fsh;
-				memcpy(&m_predefined[m_numPredefined], _fsh->m_predefined, _fsh->m_numPredefined*sizeof(PredefinedUniform));
+				bx::memCopy(&m_predefined[m_numPredefined], _fsh->m_predefined, _fsh->m_numPredefined*sizeof(PredefinedUniform));
 				m_numPredefined += _fsh->m_numPredefined;
 			}
 		}
@@ -271,8 +271,8 @@ namespace bgfx { namespace d3d12
 			, m_state(D3D12_RESOURCE_STATE_COMMON)
 			, m_numMips(0)
 		{
-			memset(&m_srvd, 0, sizeof(m_srvd) );
-			memset(&m_uavd, 0, sizeof(m_uavd) );
+			bx::memSet(&m_srvd, 0, sizeof(m_srvd) );
+			bx::memSet(&m_uavd, 0, sizeof(m_uavd) );
 		}
 
 		void create(const Memory* _mem, uint32_t _flags, uint8_t _skip);
@@ -380,7 +380,7 @@ namespace bgfx { namespace d3d12
 			, m_minIndirect(0)
 			, m_flushPerBatch(0)
 		{
-			memset(m_num, 0, sizeof(m_num) );
+			bx::memSet(m_num, 0, sizeof(m_num) );
 		}
 
 		~BatchD3D12()

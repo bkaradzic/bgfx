@@ -9,7 +9,6 @@
 #include <bgfx/embedded_shader.h>
 
 #include <stddef.h> // offsetof
-#include <memory.h> // memcpy
 #include <wchar.h>  // wcslen
 
 #include "text_buffer_manager.h"
@@ -252,7 +251,7 @@ void TextBuffer::appendText(FontHandle _fontHandle, const char* _string, const c
 
 	if (_end == NULL)
 	{
-		_end = _string + strlen(_string);
+		_end = _string + bx::strnlen(_string);
 	}
 	BX_CHECK(_end >= _string);
 
@@ -802,8 +801,8 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 			bgfx::TransientVertexBuffer tvb;
 			bgfx::allocTransientIndexBuffer(&tib, bc.textBuffer->getIndexCount() );
 			bgfx::allocTransientVertexBuffer(&tvb, bc.textBuffer->getVertexCount(), m_vertexDecl);
-			memcpy(tib.data, bc.textBuffer->getIndexBuffer(), indexSize);
-			memcpy(tvb.data, bc.textBuffer->getVertexBuffer(), vertexSize);
+			bx::memCopy(tib.data, bc.textBuffer->getIndexBuffer(), indexSize);
+			bx::memCopy(tvb.data, bc.textBuffer->getVertexBuffer(), vertexSize);
 			bgfx::setVertexBuffer(&tvb, 0, bc.textBuffer->getVertexCount() );
 			bgfx::setIndexBuffer(&tib, 0, bc.textBuffer->getIndexCount() );
 		}

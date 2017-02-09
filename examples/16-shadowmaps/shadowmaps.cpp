@@ -2344,7 +2344,7 @@ int _main_(int _argc, char** _argv)
 
 				bx::mtxTranspose(mtxYpr[ii], mtxTmp);
 
-				memcpy(lightView[ii], mtxYpr[ii], 12*sizeof(float) );
+				bx::memCopy(lightView[ii], mtxYpr[ii], 12*sizeof(float) );
 				lightView[ii][12] = tmp[0];
 				lightView[ii][13] = tmp[1];
 				lightView[ii][14] = tmp[2];

@@ -15,9 +15,6 @@
 #include "font/text_buffer_manager.h"
 #include "imgui/imgui.h"
 
-#include <stdio.h>
-#include <string.h>
-
 TrueTypeHandle loadTtf(FontManager* _fm, const char* _filePath)
 {
 	uint32_t size;

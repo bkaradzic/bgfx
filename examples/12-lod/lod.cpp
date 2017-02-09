@@ -58,7 +58,7 @@ class ExampleLod : public entry::AppI
 		m_textureBark  = loadTexture("textures/bark1.dds");
 
 		const bgfx::Memory* stippleTex = bgfx::alloc(8*4);
-		memset(stippleTex->data, 0, stippleTex->size);
+		bx::memSet(stippleTex->data, 0, stippleTex->size);
 
 		for (uint32_t ii = 0; ii < 32; ++ii)
 		{

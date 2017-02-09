@@ -34,7 +34,7 @@ namespace entry
 	inline void winSetHwnd(::HWND _window)
 	{
 		bgfx::PlatformData pd;
-		memset(&pd, 0, sizeof(pd) );
+		bx::memSet(&pd, 0, sizeof(pd) );
 		pd.nwh = _window;
 		bgfx::setPlatformData(pd);
 	}
@@ -75,8 +75,8 @@ namespace entry
 		XInput()
 			: m_xinputdll(NULL)
 		{
-			memset(m_connected, 0, sizeof(m_connected) );
-			memset(m_state, 0, sizeof(m_state) );
+			bx::memSet(m_connected, 0, sizeof(m_connected) );
+			bx::memSet(m_state, 0, sizeof(m_state) );
 
 			m_deadzone[GamepadAxis::LeftX ] =
 			m_deadzone[GamepadAxis::LeftY ] = XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE;
@@ -85,7 +85,7 @@ namespace entry
 			m_deadzone[GamepadAxis::LeftZ ] =
 			m_deadzone[GamepadAxis::RightZ] = XINPUT_GAMEPAD_TRIGGER_THRESHOLD;
 
-			memset(m_flip, 1, sizeof(m_flip) );
+			bx::memSet(m_flip, 1, sizeof(m_flip) );
 			m_flip[GamepadAxis::LeftY ] =
 			m_flip[GamepadAxis::RightY] = -1;
 		}
@@ -353,7 +353,7 @@ namespace entry
 			, m_init(false)
 			, m_exit(false)
 		{
-			memset(s_translateKey, 0, sizeof(s_translateKey) );
+			bx::memSet(s_translateKey, 0, sizeof(s_translateKey) );
 			s_translateKey[VK_ESCAPE]     = Key::Esc;
 			s_translateKey[VK_RETURN]     = Key::Return;
 			s_translateKey[VK_TAB]        = Key::Tab;
@@ -451,7 +451,7 @@ namespace entry
 			HINSTANCE instance = (HINSTANCE)GetModuleHandle(NULL);
 
 			WNDCLASSEXA wnd;
-			memset(&wnd, 0, sizeof(wnd) );
+			bx::memSet(&wnd, 0, sizeof(wnd) );
 			wnd.cbSize = sizeof(wnd);
 			wnd.style = CS_HREDRAW | CS_VREDRAW;
 			wnd.lpfnWndProc = wndProc;

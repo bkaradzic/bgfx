@@ -329,13 +329,13 @@ namespace bgfx { namespace d3d9
 			ErrorState::Enum errorState = ErrorState::Default;
 
 			m_fbh.idx = invalidHandle;
-			memset(m_uniforms, 0, sizeof(m_uniforms) );
-			memset(&m_resolution, 0, sizeof(m_resolution) );
+			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
+			bx::memSet(&m_resolution, 0, sizeof(m_resolution) );
 
 			D3DFORMAT adapterFormat = D3DFMT_X8R8G8B8;
 
 			// http://msdn.microsoft.com/en-us/library/windows/desktop/bb172588%28v=vs.85%29.aspx
-			memset(&m_params, 0, sizeof(m_params) );
+			bx::memSet(&m_params, 0, sizeof(m_params) );
 			m_params.BackBufferWidth = BGFX_DEFAULT_WIDTH;
 			m_params.BackBufferHeight = BGFX_DEFAULT_HEIGHT;
 			m_params.BackBufferFormat = adapterFormat;
@@ -1023,7 +1023,7 @@ namespace bgfx { namespace d3d9
 
 			for (uint32_t yy = 0, height = srcHeight; yy < height; ++yy)
 			{
-				memcpy(dst, src, pitch);
+				bx::memCopy(dst, src, pitch);
 
 				src += srcPitch;
 				dst += dstPitch;
@@ -1117,7 +1117,7 @@ namespace bgfx { namespace d3d9
 
 			uint32_t size = BX_ALIGN_16(g_uniformTypeSize[_type]*_num);
 			void* data = BX_ALLOC(g_allocator, size);
-			memset(data, 0, size);
+			bx::memSet(data, 0, size);
 			m_uniforms[_handle.idx] = data;
 			m_uniformReg.add(_handle, _name, data);
 		}
@@ -1196,7 +1196,7 @@ namespace bgfx { namespace d3d9
 
 		void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) BX_OVERRIDE
 		{
-			memcpy(m_uniforms[_loc], _data, _size);
+			bx::memCopy(m_uniforms[_loc], _data, _size);
 		}
 
 		void setMarker(const char* _marker, uint32_t _size) BX_OVERRIDE
@@ -1760,7 +1760,7 @@ namespace bgfx { namespace d3d9
 				else
 				{
 					UniformHandle handle;
-					memcpy(&handle, _uniformBuffer.read(sizeof(UniformHandle) ), sizeof(UniformHandle) );
+					bx::memCopy(&handle, _uniformBuffer.read(sizeof(UniformHandle) ), sizeof(UniformHandle) );
 					data = (const char*)m_uniforms[handle.idx];
 				}
 
@@ -2004,7 +2004,7 @@ namespace bgfx { namespace d3d9
 					for (uint32_t ii = 0; ii < numMrt; ++ii)
 					{
 						uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE - 1, _clear.m_index[ii]);
-						memcpy(mrtClear[ii], _palette[index], 16);
+						bx::memCopy(mrtClear[ii], _palette[index], 16);
 					}
 				}
 				else
@@ -2019,7 +2019,7 @@ namespace bgfx { namespace d3d9
 
 					for (uint32_t ii = 0; ii < numMrt; ++ii)
 					{
-						memcpy(mrtClear[ii], rgba, 16);
+						bx::memCopy(mrtClear[ii], rgba, 16);
 					}
 				}
 
@@ -2311,7 +2311,7 @@ namespace bgfx { namespace d3d9
 				bool asInt;
 				_decl.decode(Attrib::Enum(attr), num, type, normalized, asInt);
 
-				memcpy(elem, &s_attrib[attr], sizeof(D3DVERTEXELEMENT9) );
+				bx::memCopy(elem, &s_attrib[attr], sizeof(D3DVERTEXELEMENT9) );
 
 				elem->Type = s_attribType[type][num-1][normalized];
 				elem->Offset = _decl.m_offset[attr];
@@ -2331,13 +2331,13 @@ namespace bgfx { namespace d3d9
 
 		for (uint8_t ii = 0; ii < _numInstanceData; ++ii)
 		{
-			memcpy(elem, &inst, sizeof(D3DVERTEXELEMENT9) );
+			bx::memCopy(elem, &inst, sizeof(D3DVERTEXELEMENT9) );
 			elem->UsageIndex = uint8_t(7-ii); // TEXCOORD7 = i_data0, TEXCOORD6 = i_data1, etc.
 			elem->Offset = ii*16;
 			++elem;
 		}
 
-		memcpy(elem, &s_attrib[Attrib::Count], sizeof(D3DVERTEXELEMENT9) );
+		bx::memCopy(elem, &s_attrib[Attrib::Count], sizeof(D3DVERTEXELEMENT9) );
 
 		IDirect3DVertexDeclaration9* ptr;
 		DX_CHECK(s_renderD3D9->m_device->CreateVertexDeclaration(vertexElements, &ptr) );
@@ -2346,7 +2346,7 @@ namespace bgfx { namespace d3d9
 
 	void VertexDeclD3D9::create(const VertexDecl& _decl)
 	{
-		memcpy(&m_decl, &_decl, sizeof(VertexDecl) );
+		bx::memCopy(&m_decl, &_decl, sizeof(VertexDecl) );
 		dump(m_decl);
 		m_ptr = createVertexDeclaration(_decl, 0);
 	}
@@ -2990,7 +2990,7 @@ namespace bgfx { namespace d3d9
 								break;
 
 							default:
-								memcpy(bits, mip.m_data, size);
+								bx::memCopy(bits, mip.m_data, size);
 								break;
 							}
 						}
@@ -3052,7 +3052,7 @@ namespace bgfx { namespace d3d9
 					break;
 
 				default:
-					memcpy(dst, src, rectpitch);
+					bx::memCopy(dst, src, rectpitch);
 					break;
 				}
 				src += srcpitch;
@@ -3159,7 +3159,7 @@ namespace bgfx { namespace d3d9
 		m_num   = 0;
 		m_numTh = _num;
 		m_needResolve = false;
-		memcpy(m_attachment, _attachment, _num*sizeof(Attachment) );
+		bx::memCopy(m_attachment, _attachment, _num*sizeof(Attachment) );
 
 		for (uint32_t ii = 0; ii < _num; ++ii)
 		{
@@ -3216,7 +3216,7 @@ namespace bgfx { namespace d3d9
 		m_height = bx::uint32_max(_height, 16);
 
 		D3DPRESENT_PARAMETERS params;
-		memcpy(&params, &s_renderD3D9->m_params, sizeof(D3DPRESENT_PARAMETERS) );
+		bx::memCopy(&params, &s_renderD3D9->m_params, sizeof(D3DPRESENT_PARAMETERS) );
 		params.BackBufferWidth  = m_width;
 		params.BackBufferHeight = m_height;
 
@@ -3326,7 +3326,7 @@ namespace bgfx { namespace d3d9
 		if (NULL != m_hwnd)
 		{
 			D3DPRESENT_PARAMETERS params;
-			memcpy(&params, &s_renderD3D9->m_params, sizeof(D3DPRESENT_PARAMETERS) );
+			bx::memCopy(&params, &s_renderD3D9->m_params, sizeof(D3DPRESENT_PARAMETERS) );
 			params.BackBufferWidth  = m_width;
 			params.BackBufferHeight = m_height;
 

@@ -11,7 +11,6 @@
 #include <bx/spscqueue.h>
 
 #include "entry.h"
-#include <string.h> // memcpy
 
 #ifndef ENTRY_CONFIG_USE_NOOP
 #	define ENTRY_CONFIG_USE_NOOP (BX_PLATFORM_QNX)
@@ -199,7 +198,7 @@ namespace entry
 		{
 			CharEvent* ev = new CharEvent(_handle);
 			ev->m_len = _len;
-			memcpy(ev->m_char, _char, 4);
+			bx::memCopy(ev->m_char, _char, 4);
 			m_queue.push(ev);
 		}
 

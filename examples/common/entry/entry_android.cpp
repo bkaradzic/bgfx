@@ -96,7 +96,7 @@ namespace entry
 		Context()
 			: m_window(NULL)
 		{
-			memset(m_value, 0, sizeof(m_value) );
+			bx::memSet(m_value, 0, sizeof(m_value) );
 
 			// Deadzone values from xinput.h
 			m_deadzone[GamepadAxis::LeftX ] =

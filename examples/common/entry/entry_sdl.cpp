@@ -158,7 +158,7 @@ namespace entry
 			: m_controller(NULL)
 			, m_jid(INT32_MAX)
 		{
-			memset(m_value, 0, sizeof(m_value) );
+			bx::memSet(m_value, 0, sizeof(m_value) );
 
 			// Deadzone values from xinput.h
 			m_deadzone[GamepadAxis::LeftX ] =
@@ -341,7 +341,7 @@ namespace entry
 			, m_mouseLock(false)
 			, m_fullscreen(false)
 		{
-			memset(s_translateKey, 0, sizeof(s_translateKey) );
+			bx::memSet(s_translateKey, 0, sizeof(s_translateKey) );
 			initTranslateKey(SDL_SCANCODE_ESCAPE,       Key::Esc);
 			initTranslateKey(SDL_SCANCODE_RETURN,       Key::Return);
 			initTranslateKey(SDL_SCANCODE_TAB,          Key::Tab);
@@ -425,7 +425,7 @@ namespace entry
 			initTranslateKey(SDL_SCANCODE_Y,            Key::KeyY);
 			initTranslateKey(SDL_SCANCODE_Z,            Key::KeyZ);
 
-			memset(s_translateGamepad, uint8_t(Key::Count), sizeof(s_translateGamepad) );
+			bx::memSet(s_translateGamepad, uint8_t(Key::Count), sizeof(s_translateGamepad) );
 			initTranslateGamepad(SDL_CONTROLLER_BUTTON_A,             Key::GamepadA);
 			initTranslateGamepad(SDL_CONTROLLER_BUTTON_B,             Key::GamepadB);
 			initTranslateGamepad(SDL_CONTROLLER_BUTTON_X,             Key::GamepadX);
@@ -442,7 +442,7 @@ namespace entry
 			initTranslateGamepad(SDL_CONTROLLER_BUTTON_START,         Key::GamepadStart);
 			initTranslateGamepad(SDL_CONTROLLER_BUTTON_GUIDE,         Key::GamepadGuide);
 
-			memset(s_translateGamepadAxis, uint8_t(GamepadAxis::Count), sizeof(s_translateGamepadAxis) );
+			bx::memSet(s_translateGamepadAxis, uint8_t(GamepadAxis::Count), sizeof(s_translateGamepadAxis) );
 			initTranslateGamepadAxis(SDL_CONTROLLER_AXIS_LEFTX,        GamepadAxis::LeftX);
 			initTranslateGamepadAxis(SDL_CONTROLLER_AXIS_LEFTY,        GamepadAxis::LeftY);
 			initTranslateGamepadAxis(SDL_CONTROLLER_AXIS_TRIGGERLEFT,  GamepadAxis::LeftZ);

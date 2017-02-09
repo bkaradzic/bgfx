@@ -7,7 +7,6 @@
 #define ENTRY_H_HEADER_GUARD
 
 #include "dbg.h"
-#include <string.h> // memset
 #include <bx/bx.h>
 #include <bx/string.h>
 
@@ -227,7 +226,7 @@ namespace entry
 	{
 		GamepadState()
 		{
-			memset(m_axis, 0, sizeof(m_axis) );
+			bx::memSet(m_axis, 0, sizeof(m_axis) );
 		}
 
 		int32_t m_axis[entry::GamepadAxis::Count];

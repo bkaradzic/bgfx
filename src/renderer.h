@@ -57,7 +57,7 @@ namespace bgfx
 						}
 						else
 						{
-							memcpy(&m_view[0][ii].un.f4x4, &_frame->m_view[ii].un.f4x4, sizeof(Matrix4) );
+							bx::memCopy(&m_view[0][ii].un.f4x4, &_frame->m_view[ii].un.f4x4, sizeof(Matrix4) );
 						}
 					}
 				}

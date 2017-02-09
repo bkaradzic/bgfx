@@ -144,7 +144,7 @@ namespace bgfx { namespace d3d9
 				, _discard || (m_dynamic && 0 == _offset && m_size == _size) ? D3DLOCK_DISCARD : 0
 				) );
 
-			memcpy(buffer, _data, _size);
+			bx::memCopy(buffer, _data, _size);
 
 			DX_CHECK(m_ptr->Unlock() );
 		}
@@ -185,7 +185,7 @@ namespace bgfx { namespace d3d9
 				, _discard || (m_dynamic && 0 == _offset && m_size == _size) ? D3DLOCK_DISCARD : 0
 				) );
 
-			memcpy(buffer, _data, _size);
+			bx::memCopy(buffer, _data, _size);
 
 			DX_CHECK(m_ptr->Unlock() );
 		}
@@ -276,8 +276,8 @@ namespace bgfx { namespace d3d9
 			BX_CHECK(NULL != _fsh.m_pixelShader, "Fragment shader doesn't exist.");
 			m_fsh = &_fsh;
 
-			memcpy(&m_predefined[0], _vsh.m_predefined, _vsh.m_numPredefined*sizeof(PredefinedUniform) );
-			memcpy(&m_predefined[_vsh.m_numPredefined], _fsh.m_predefined, _fsh.m_numPredefined*sizeof(PredefinedUniform) );
+			bx::memCopy(&m_predefined[0], _vsh.m_predefined, _vsh.m_numPredefined*sizeof(PredefinedUniform) );
+			bx::memCopy(&m_predefined[_vsh.m_numPredefined], _fsh.m_predefined, _fsh.m_numPredefined*sizeof(PredefinedUniform) );
 			m_numPredefined = _vsh.m_numPredefined + _fsh.m_numPredefined;
 		}
 

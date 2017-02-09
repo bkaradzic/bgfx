@@ -119,7 +119,7 @@ class ExampleTerrain : public entry::AppI
 		m_terrain.m_heightMap = (uint8_t*)BX_ALLOC(entry::getAllocator(), num);
 
 		bx::mtxSRT(m_terrain.m_transform, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-		memset(m_terrain.m_heightMap, 0, sizeof(uint8_t) * s_terrainSize * s_terrainSize);
+		bx::memSet(m_terrain.m_heightMap, 0, sizeof(uint8_t) * s_terrainSize * s_terrainSize);
 
 		cameraCreate();
 

@@ -443,7 +443,7 @@ namespace bgfx
 
 				if (size < m_size)
 				{
-					memset(&m_mem[size], 0, m_size-size);
+					bx::memSet(&m_mem[size], 0, m_size-size);
 				}
 			}
 		}
@@ -655,7 +655,7 @@ namespace bgfx
 		{
 			BX_CHECK(m_size == BGFX_CONFIG_MAX_COMMAND_BUFFER_SIZE, "Called write outside start/finish?");
 			BX_CHECK(m_pos < m_size, "CommandBuffer::write error (pos: %d, size: %d).", m_pos, m_size);
-			memcpy(&m_buffer[m_pos], _data, _size);
+			bx::memCopy(&m_buffer[m_pos], _data, _size);
 			m_pos += _size;
 		}
 
@@ -669,7 +669,7 @@ namespace bgfx
 		void read(void* _data, uint32_t _size)
 		{
 			BX_CHECK(m_pos < m_size, "CommandBuffer::read error (pos: %d, size: %d).", m_pos, m_size);
-			memcpy(_data, &m_buffer[m_pos], _size);
+			bx::memCopy(_data, &m_buffer[m_pos], _size);
 			m_pos += _size;
 		}
 
@@ -910,7 +910,7 @@ namespace bgfx
 
 		void setIdentity()
 		{
-			memset(un.val, 0, sizeof(un.val) );
+			bx::memSet(un.val, 0, sizeof(un.val) );
 			un.val[0] = un.val[5] = un.val[10] = un.val[15] = 1.0f;
 		}
 	};
@@ -947,7 +947,7 @@ namespace bgfx
 			if (NULL != _mtx)
 			{
 				uint32_t first = reserve(&_num);
-				memcpy(&m_cache[first], _mtx, sizeof(Matrix4)*_num);
+				bx::memCopy(&m_cache[first], _mtx, sizeof(Matrix4)*_num);
 				return first;
 			}
 
@@ -1072,7 +1072,7 @@ namespace bgfx
 
 			if (m_pos + _size < m_size)
 			{
-				memcpy(&m_buffer[m_pos], _data, _size);
+				bx::memCopy(&m_buffer[m_pos], _data, _size);
 				m_pos += _size;
 			}
 		}
@@ -1093,7 +1093,7 @@ namespace bgfx
 		uint32_t read()
 		{
 			uint32_t result;
-			memcpy(&result, read(sizeof(uint32_t) ), sizeof(uint32_t) );
+			bx::memCopy(&result, read(sizeof(uint32_t) ), sizeof(uint32_t) );
 			return result;
 		}
 
@@ -1427,7 +1427,7 @@ namespace bgfx
 			term.m_program = invalidHandle;
 			m_sortKeys[BGFX_CONFIG_MAX_DRAW_CALLS]   = term.encodeDraw();
 			m_sortValues[BGFX_CONFIG_MAX_DRAW_CALLS] = BGFX_CONFIG_MAX_DRAW_CALLS;
-			memset(m_occlusion, 0xff, sizeof(m_occlusion) );
+			bx::memSet(m_occlusion, 0xff, sizeof(m_occlusion) );
 		}
 
 		~Frame()
@@ -1955,8 +1955,8 @@ namespace bgfx
 
 		void init()
 		{
-			memset(m_vertexDeclRef, 0, sizeof(m_vertexDeclRef) );
-			memset(m_vertexBufferRef, 0xff, sizeof(m_vertexBufferRef) );
+			bx::memSet(m_vertexDeclRef, 0, sizeof(m_vertexDeclRef) );
+			bx::memSet(m_vertexBufferRef, 0xff, sizeof(m_vertexBufferRef) );
 		}
 
 		template <uint16_t MaxHandlesT>
@@ -2252,7 +2252,7 @@ namespace bgfx
 
 			m_flipAfterRender = !!(_flags & BGFX_RESET_FLIP_AFTER_RENDER);
 
-			memset(m_fb, 0xff, sizeof(m_fb) );
+			bx::memSet(m_fb, 0xff, sizeof(m_fb) );
 
 			for (uint16_t ii = 0, num = m_textureHandle.getNumHandles(); ii < num; ++ii)
 			{
@@ -2978,7 +2978,7 @@ namespace bgfx
 				{
 					uint32_t size = sr.m_num*sizeof(UniformHandle);
 					sr.m_uniforms = (UniformHandle*)BX_ALLOC(g_allocator, size);
-					memcpy(sr.m_uniforms, uniforms, size);
+					bx::memCopy(sr.m_uniforms, uniforms, size);
 				}
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateShader);
@@ -3000,7 +3000,7 @@ namespace bgfx
 			ShaderRef& sr = m_shaderRef[_handle.idx];
 			if (NULL != _uniforms)
 			{
-				memcpy(_uniforms, sr.m_uniforms, bx::uint16_min(_max, sr.m_num)*sizeof(UniformHandle) );
+				bx::memCopy(_uniforms, sr.m_uniforms, bx::uint16_min(_max, sr.m_num)*sizeof(UniformHandle) );
 			}
 
 			return sr.m_num;
@@ -3403,7 +3403,7 @@ namespace bgfx
 
 				FrameBufferRef& ref = m_frameBufferRef[handle.idx];
 				ref.m_window = false;
-				memset(ref.un.m_th, 0xff, sizeof(ref.un.m_th) );
+				bx::memSet(ref.un.m_th, 0xff, sizeof(ref.un.m_th) );
 				BackbufferRatio::Enum bbRatio = BackbufferRatio::Enum(m_textureRef[_attachment[0].handle.idx].m_bbRatio);
 				for (uint32_t ii = 0; ii < _num; ++ii)
 				{
@@ -3639,7 +3639,7 @@ namespace bgfx
 				, _index
 				, BGFX_CONFIG_MAX_COLOR_PALETTE
 				);
-			memcpy(&m_clearColor[_index][0], _rgba, 16);
+			bx::memCopy(&m_clearColor[_index][0], _rgba, 16);
 			m_colorPaletteDirty = 2;
 		}
 
@@ -3717,7 +3717,7 @@ namespace bgfx
 
 			if (NULL != _view)
 			{
-				memcpy(m_view[_id].un.val, _view, sizeof(Matrix4) );
+				bx::memCopy(m_view[_id].un.val, _view, sizeof(Matrix4) );
 			}
 			else
 			{
@@ -3726,7 +3726,7 @@ namespace bgfx
 
 			if (NULL != _proj)
 			{
-				memcpy(m_proj[0][_id].un.val, _proj, sizeof(Matrix4) );
+				bx::memCopy(m_proj[0][_id].un.val, _proj, sizeof(Matrix4) );
 			}
 			else
 			{
@@ -3735,11 +3735,11 @@ namespace bgfx
 
 			if (NULL != _proj1)
 			{
-				memcpy(m_proj[1][_id].un.val, _proj1, sizeof(Matrix4) );
+				bx::memCopy(m_proj[1][_id].un.val, _proj1, sizeof(Matrix4) );
 			}
 			else
 			{
-				memcpy(m_proj[1][_id].un.val, m_proj[0][_id].un.val, sizeof(Matrix4) );
+				bx::memCopy(m_proj[1][_id].un.val, m_proj[0][_id].un.val, sizeof(Matrix4) );
 			}
 		}
 
@@ -3767,7 +3767,7 @@ namespace bgfx
 			}
 			else
 			{
-				memcpy(&m_viewRemap[_id], _order, num);
+				bx::memCopy(&m_viewRemap[_id], _order, num);
 			}
 		}
 

@@ -7,7 +7,6 @@
 #include <bgfx/bgfx.h>
 
 #include <limits.h> // INT_MAX
-#include <memory.h> // memset
 #include <vector>
 
 #include "cube_atlas.h"
@@ -270,7 +269,7 @@ Atlas::Atlas(uint16_t _textureSize, uint16_t _maxRegionsCount)
 
 	m_regions = new AtlasRegion[_maxRegionsCount];
 	m_textureBuffer = new uint8_t[ _textureSize * _textureSize * 6 * 4 ];
-	memset(m_textureBuffer, 0, _textureSize * _textureSize * 6 * 4);
+	bx::memSet(m_textureBuffer, 0, _textureSize * _textureSize * 6 * 4);
 
 	m_textureHandle = bgfx::createTextureCube(_textureSize
 		, false
@@ -293,8 +292,8 @@ Atlas::Atlas(uint16_t _textureSize, const uint8_t* _textureBuffer, uint16_t _reg
 	m_regions = new AtlasRegion[_regionCount];
 	m_textureBuffer = new uint8_t[getTextureBufferSize()];
 
-	memcpy(m_regions, _regionBuffer, _regionCount * sizeof(AtlasRegion) );
-	memcpy(m_textureBuffer, _textureBuffer, getTextureBufferSize() );
+	bx::memCopy(m_regions, _regionBuffer, _regionCount * sizeof(AtlasRegion) );
+	bx::memCopy(m_textureBuffer, _textureBuffer, getTextureBufferSize() );
 
 	m_textureHandle = bgfx::createTextureCube(_textureSize
 		, false
@@ -409,7 +408,7 @@ void Atlas::updateRegion(const AtlasRegion& _region, const uint8_t* _bitmapBuffe
 	if (0 < size)
 	{
 		const bgfx::Memory* mem = bgfx::alloc(size);
-		memset(mem->data, 0, mem->size);
+		bx::memSet(mem->data, 0, mem->size);
 		if (_region.getType() == AtlasRegion::TYPE_BGRA8)
 		{
 			const uint8_t* inLineBuffer = _bitmapBuffer;
@@ -417,12 +416,12 @@ void Atlas::updateRegion(const AtlasRegion& _region, const uint8_t* _bitmapBuffe
 
 			for (int yy = 0; yy < _region.height; ++yy)
 			{
-				memcpy(outLineBuffer, inLineBuffer, _region.width * 4);
+				bx::memCopy(outLineBuffer, inLineBuffer, _region.width * 4);
 				inLineBuffer += _region.width * 4;
 				outLineBuffer += m_textureSize * 4;
 			}
 
-			memcpy(mem->data, _bitmapBuffer, mem->size);
+			bx::memCopy(mem->data, _bitmapBuffer, mem->size);
 		}
 		else
 		{
@@ -437,7 +436,7 @@ void Atlas::updateRegion(const AtlasRegion& _region, const uint8_t* _bitmapBuffe
 					outLineBuffer[(xx * 4) + layer] = inLineBuffer[xx];
 				}
 
-				memcpy(mem->data + yy * _region.width * 4, outLineBuffer, _region.width * 4);
+				bx::memCopy(mem->data + yy * _region.width * 4, outLineBuffer, _region.width * 4);
 				inLineBuffer += _region.width;
 				outLineBuffer += m_textureSize * 4;
 			}

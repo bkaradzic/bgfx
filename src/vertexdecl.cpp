@@ -74,8 +74,8 @@ namespace bgfx
 	{
 		m_hash = _renderer; // use hash to store renderer type while building VertexDecl.
 		m_stride = 0;
-		memset(m_attributes, 0xff, sizeof(m_attributes) );
-		memset(m_offset, 0, sizeof(m_offset) );
+		bx::memSet(m_attributes, 0xff, sizeof(m_attributes) );
+		bx::memSet(m_offset, 0, sizeof(m_offset) );
 
 		return *this;
 	}
@@ -513,7 +513,7 @@ namespace bgfx
 			break;
 
 		case AttribType::Float:
-			memcpy(data, _input, num*sizeof(float) );
+			bx::memCopy(data, _input, num*sizeof(float) );
 			break;
 		}
 	}
@@ -522,7 +522,7 @@ namespace bgfx
 	{
 		if (!_decl.has(_attr) )
 		{
-			memset(_output, 0, 4*sizeof(float) );
+			bx::memSet(_output, 0, 4*sizeof(float) );
 			return;
 		}
 
@@ -630,7 +630,7 @@ namespace bgfx
 			break;
 
 		case AttribType::Float:
-			memcpy(_output, data, num*sizeof(float) );
+			bx::memCopy(_output, data, num*sizeof(float) );
 			_output += num;
 			break;
 		}
@@ -648,7 +648,7 @@ namespace bgfx
 	{
 		if (_destDecl.m_hash == _srcDecl.m_hash)
 		{
-			memcpy(_destData, _srcData, _srcDecl.getSize(_num) );
+			bx::memCopy(_destData, _srcData, _srcDecl.getSize(_num) );
 			return;
 		}
 
@@ -721,11 +721,11 @@ namespace bgfx
 					switch (cop.op)
 					{
 					case ConvertOp::Set:
-						memset(dest + cop.dest, 0, cop.size);
+						bx::memSet(dest + cop.dest, 0, cop.size);
 						break;
 
 					case ConvertOp::Copy:
-						memcpy(dest + cop.dest, src + cop.src, cop.size);
+						bx::memCopy(dest + cop.dest, src + cop.src, cop.size);
 						break;
 
 					case ConvertOp::Convert:
@@ -755,7 +755,7 @@ namespace bgfx
 		const float epsilonSq = _epsilon*_epsilon;
 
 		uint32_t numVertices = 0;
-		memset(_output, 0xff, _num*sizeof(uint16_t) );
+		bx::memSet(_output, 0xff, _num*sizeof(uint16_t) );
 
 		for (uint32_t ii = 0; ii < _num; ++ii)
 		{
@@ -800,7 +800,7 @@ namespace bgfx
 
 		const uint32_t size = sizeof(uint16_t)*(hashSize + _num);
 		uint16_t* hashTable = (uint16_t*)alloca(size);
-		memset(hashTable, 0xff, size);
+		bx::memSet(hashTable, 0xff, size);
 
 		uint16_t* next = hashTable + hashSize;
 

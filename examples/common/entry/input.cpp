@@ -35,7 +35,7 @@ struct InputMouse
 			m_norm[2] = 0.0f;
 		}
 
-		memset(m_buttons, 0, sizeof(m_buttons) );
+		bx::memSet(m_buttons, 0, sizeof(m_buttons) );
 	}
 
 	void setResolution(uint16_t _width, uint16_t _height)
@@ -78,8 +78,8 @@ struct InputKeyboard
 
 	void reset()
 	{
-		memset(m_key, 0, sizeof(m_key) );
-		memset(m_once, 0xff, sizeof(m_once) );
+		bx::memSet(m_key, 0, sizeof(m_key) );
+		bx::memSet(m_once, 0xff, sizeof(m_once) );
 	}
 
 	static uint32_t encodeKeyState(uint8_t _modifiers, bool _down)
@@ -130,7 +130,7 @@ struct InputKeyboard
 			popChar();
 		}
 
-		memcpy(&m_char[m_ring.m_current], _char, 4);
+		bx::memCopy(&m_char[m_ring.m_current], _char, 4);
 		m_ring.commit(4);
 	}
 
@@ -169,7 +169,7 @@ struct Gamepad
 
 	void reset()
 	{
-		memset(m_axis, 0, sizeof(m_axis) );
+		bx::memSet(m_axis, 0, sizeof(m_axis) );
 	}
 
 	void setAxis(entry::GamepadAxis::Enum _axis, int32_t _value)

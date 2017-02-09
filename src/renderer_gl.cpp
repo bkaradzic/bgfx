@@ -1437,7 +1437,7 @@ namespace bgfx { namespace gl
 			, m_backBufferFbo(0)
 			, m_msaaBackBufferFbo(0)
 		{
-			memset(m_msaaBackBufferRbos, 0, sizeof(m_msaaBackBufferRbos) );
+			bx::memSet(m_msaaBackBufferRbos, 0, sizeof(m_msaaBackBufferRbos) );
 		}
 
 		~RendererContextGL()
@@ -1449,8 +1449,8 @@ namespace bgfx { namespace gl
 			m_renderdocdll = loadRenderDoc();
 
 			m_fbh.idx = invalidHandle;
-			memset(m_uniforms, 0, sizeof(m_uniforms) );
-			memset(&m_resolution, 0, sizeof(m_resolution) );
+			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
+			bx::memSet(&m_resolution, 0, sizeof(m_resolution) );
 
 			setRenderContextSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
 
@@ -1607,7 +1607,7 @@ namespace bgfx { namespace gl
 			}
 
 			// Allow all texture filters.
-			memset(s_textureFilter, true, BX_COUNTOF(s_textureFilter) );
+			bx::memSet(s_textureFilter, true, BX_COUNTOF(s_textureFilter) );
 
 			bool bc123Supported = 0
 				|| s_extension[Extension::EXT_texture_compression_s3tc        ].m_supported
@@ -2311,7 +2311,7 @@ namespace bgfx { namespace gl
 		void createVertexDecl(VertexDeclHandle _handle, const VertexDecl& _decl) BX_OVERRIDE
 		{
 			VertexDecl& decl = m_vertexDecls[_handle.idx];
-			memcpy(&decl, &_decl, sizeof(VertexDecl) );
+			bx::memCopy(&decl, &_decl, sizeof(VertexDecl) );
 			dump(decl);
 		}
 
@@ -2508,7 +2508,7 @@ namespace bgfx { namespace gl
 
 			uint32_t size = g_uniformTypeSize[_type]*_num;
 			void* data = BX_ALLOC(g_allocator, size);
-			memset(data, 0, size);
+			bx::memSet(data, 0, size);
 			m_uniforms[_handle.idx] = data;
 			m_uniformReg.add(_handle, _name, m_uniforms[_handle.idx]);
 		}
@@ -2563,7 +2563,7 @@ namespace bgfx { namespace gl
 
 		void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) BX_OVERRIDE
 		{
-			memcpy(m_uniforms[_loc], _data, _size);
+			bx::memCopy(m_uniforms[_loc], _data, _size);
 		}
 
 		void setMarker(const char* _marker, uint32_t _size) BX_OVERRIDE
@@ -3205,7 +3205,7 @@ namespace bgfx { namespace gl
 				else
 				{
 					UniformHandle handle;
-					memcpy(&handle, _uniformBuffer.read(sizeof(UniformHandle) ), sizeof(UniformHandle) );
+					bx::memCopy(&handle, _uniformBuffer.read(sizeof(UniformHandle) ), sizeof(UniformHandle) );
 					data = (const char*)m_uniforms[handle.idx];
 				}
 
@@ -3400,7 +3400,7 @@ namespace bgfx { namespace gl
 					for (uint32_t ii = 0; ii < numMrt; ++ii)
 					{
 						uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[ii]);
-						memcpy(mrtClear[ii], _palette[index], 16);
+						bx::memCopy(mrtClear[ii], _palette[index], 16);
 					}
 				}
 				else
@@ -3415,7 +3415,7 @@ namespace bgfx { namespace gl
 
 					for (uint32_t ii = 0; ii < numMrt; ++ii)
 					{
-						memcpy(mrtClear[ii], rgba, 16);
+						bx::memCopy(mrtClear[ii], rgba, 16);
 					}
 				}
 
@@ -3536,7 +3536,7 @@ namespace bgfx { namespace gl
 		, m_textureSwapChain(NULL)
 		, m_mirrorTexture(NULL)
 	{
-		memset(&m_eyeTarget, 0, sizeof(m_eyeTarget) );
+		bx::memSet(&m_eyeTarget, 0, sizeof(m_eyeTarget) );
 	}
 
 	static void setDefaultSamplerState()
@@ -4298,7 +4298,7 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		memset(m_attributes, 0xff, sizeof(m_attributes) );
+		bx::memSet(m_attributes, 0xff, sizeof(m_attributes) );
 		uint32_t used = 0;
 		for (uint8_t ii = 0; ii < Attrib::Count; ++ii)
 		{
@@ -5312,8 +5312,8 @@ namespace bgfx { namespace gl
 	void strins(char* _str, const char* _insert)
 	{
 		size_t len = bx::strnlen(_insert);
-		memmove(&_str[len], _str, bx::strnlen(_str)+1);
-		memcpy(_str, _insert, len);
+		bx::memMove(&_str[len], _str, bx::strnlen(_str)+1);
+		bx::memCopy(_str, _insert, len);
 	}
 
 	void ShaderGL::create(Memory* _mem)
@@ -5543,7 +5543,7 @@ namespace bgfx { namespace gl
 					{
 						char* insert = const_cast<char*>(fragDepth);
 						strins(insert, "bg");
-						memcpy(insert + 2, "fx", 2);
+						bx::memCopy(insert + 2, "fx", 2);
 					}
 				}
 				else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
@@ -5814,7 +5814,7 @@ namespace bgfx { namespace gl
 
 		m_denseIdx = UINT16_MAX;
 		m_numTh = _num;
-		memcpy(m_attachment, _attachment, _num*sizeof(Attachment) );
+		bx::memCopy(m_attachment, _attachment, _num*sizeof(Attachment) );
 
 		m_needPresent = false;
 
@@ -5988,7 +5988,7 @@ namespace bgfx { namespace gl
 			m_swapChain = NULL;
 		}
 
-		memset(m_fbo, 0, sizeof(m_fbo) );
+		bx::memSet(m_fbo, 0, sizeof(m_fbo) );
 		uint16_t denseIdx = m_denseIdx;
 		m_denseIdx = UINT16_MAX;
 		m_needPresent = false;

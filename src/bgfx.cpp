@@ -76,7 +76,7 @@ namespace bgfx
 			if ( (int32_t)sizeof(temp) < total)
 			{
 				out = (char*)alloca(total+1);
-				memcpy(out, temp, len);
+				bx::memCopy(out, temp, len);
 				bx::vsnprintf(out + len, total-len, _format, _argList);
 			}
 			out[total] = '\0';
@@ -315,7 +315,7 @@ namespace bgfx
 				, "Only backbuffer pointer and native window handle can be changed after initialization!"
 				);
 		}
-		memcpy(&g_platformData, &_data, sizeof(PlatformData) );
+		bx::memCopy(&g_platformData, &_data, sizeof(PlatformData) );
 		g_platformDataChangedSinceReset = true;
 	}
 
@@ -492,7 +492,7 @@ namespace bgfx
 				for (uint32_t xx = 0; xx < 8; ++xx)
 				{
 					uint8_t bit = 1<<(7-xx);
-					memset(&pix[xx*_bpp], _charset[ii*_height+yy]&bit ? 255 : 0, _bpp);
+					bx::memSet(&pix[xx*_bpp], _charset[ii*_height+yy]&bit ? 255 : 0, _bpp);
 				}
 
 				pix += _pitch;
@@ -709,7 +709,7 @@ namespace bgfx
 							{ (xx  )*8.0f, (yy+1)*fontHeight, 0.0f, fg, bg, (ch  )*8.0f*texelWidth - texelWidthHalf, ubottom },
 						};
 
-						memcpy(vertex, vert, sizeof(vert) );
+						bx::memCopy(vertex, vert, sizeof(vert) );
 						vertex += 4;
 
 						indices[0] = uint16_t(startVertex+0);
@@ -1467,7 +1467,7 @@ namespace bgfx
 		m_render->destroy();
 #endif // BGFX_CONFIG_MULTITHREADED
 
-		memset(&g_internalData, 0, sizeof(InternalData) );
+		bx::memSet(&g_internalData, 0, sizeof(InternalData) );
 		s_ctx = NULL;
 
 		m_submit->destroy();
@@ -1595,24 +1595,24 @@ namespace bgfx
 		m_resolution.m_flags &= ~BGFX_RESET_INTERNAL_FORCE;
 		m_submit->m_debug = m_debug;
 
-		memcpy(m_submit->m_viewRemap, m_viewRemap, sizeof(m_viewRemap) );
-		memcpy(m_submit->m_fb, m_fb, sizeof(m_fb) );
-		memcpy(m_submit->m_clear, m_clear, sizeof(m_clear) );
-		memcpy(m_submit->m_rect, m_rect, sizeof(m_rect) );
-		memcpy(m_submit->m_scissor, m_scissor, sizeof(m_scissor) );
-		memcpy(m_submit->m_view, m_view, sizeof(m_view) );
-		memcpy(m_submit->m_proj, m_proj, sizeof(m_proj) );
-		memcpy(m_submit->m_viewFlags, m_viewFlags, sizeof(m_viewFlags) );
+		bx::memCopy(m_submit->m_viewRemap, m_viewRemap, sizeof(m_viewRemap) );
+		bx::memCopy(m_submit->m_fb, m_fb, sizeof(m_fb) );
+		bx::memCopy(m_submit->m_clear, m_clear, sizeof(m_clear) );
+		bx::memCopy(m_submit->m_rect, m_rect, sizeof(m_rect) );
+		bx::memCopy(m_submit->m_scissor, m_scissor, sizeof(m_scissor) );
+		bx::memCopy(m_submit->m_view, m_view, sizeof(m_view) );
+		bx::memCopy(m_submit->m_proj, m_proj, sizeof(m_proj) );
+		bx::memCopy(m_submit->m_viewFlags, m_viewFlags, sizeof(m_viewFlags) );
 		if (m_colorPaletteDirty > 0)
 		{
 			--m_colorPaletteDirty;
-			memcpy(m_submit->m_colorPalette, m_clearColor, sizeof(m_clearColor) );
+			bx::memCopy(m_submit->m_colorPalette, m_clearColor, sizeof(m_clearColor) );
 		}
 		m_submit->finish();
 
 		bx::xchg(m_render, m_submit);
 
-		memcpy(m_render->m_occlusion, m_submit->m_occlusion, sizeof(m_submit->m_occlusion) );
+		bx::memCopy(m_render->m_occlusion, m_submit->m_occlusion, sizeof(m_submit->m_occlusion) );
 
 		if (!BX_ENABLED(BGFX_CONFIG_MULTITHREADED)
 		||  m_singleThreaded)
@@ -1623,7 +1623,7 @@ namespace bgfx
 		m_frames++;
 		m_submit->start();
 
-		memset(m_seq, 0, sizeof(m_seq) );
+		bx::memSet(m_seq, 0, sizeof(m_seq) );
 		freeAllHandles(m_submit);
 
 		m_submit->resetFreeHandles();
@@ -1843,7 +1843,7 @@ namespace bgfx
 		};
 
 		OSVERSIONINFOEXA ovi;
-		memset(&ovi, 0, sizeof(ovi) );
+		bx::memSet(&ovi, 0, sizeof(ovi) );
 		ovi.dwOSVersionInfoSize = sizeof(ovi);
 		// _WIN32_WINNT_WINBLUE 0x0603
 		// _WIN32_WINNT_WIN8    0x0602
@@ -2566,7 +2566,7 @@ namespace bgfx
 			goto error;
 		}
 
-		memset(&g_caps, 0, sizeof(g_caps) );
+		bx::memSet(&g_caps, 0, sizeof(g_caps) );
 		g_caps.limits.maxDrawCalls            = BGFX_CONFIG_MAX_DRAW_CALLS;
 		g_caps.limits.maxBlits                = BGFX_CONFIG_MAX_BLIT_ITEMS;
 		g_caps.limits.maxViews                = BGFX_CONFIG_MAX_VIEWS;
@@ -2713,7 +2713,7 @@ error:
 	{
 		BX_CHECK(0 < _size, "Invalid memory operation. _size is 0.");
 		const Memory* mem = alloc(_size);
-		memcpy(mem->data, _data, _size);
+		bx::memCopy(mem->data, _data, _size);
 		return mem;
 	}
 

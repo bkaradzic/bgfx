@@ -197,7 +197,7 @@ static void glyphInfoInit(GlyphInfo& _glyphInfo, FT_BitmapGlyph _bitmap, FT_Glyp
 
 	for (int32_t ii = 0; ii < hh; ++ii)
 	{
-		memcpy(_dst, src, dstPitch);
+		bx::memCopy(_dst, src, dstPitch);
 
 		_dst += dstPitch;
 		src += srcPitch;
@@ -319,8 +319,8 @@ static void makeDistanceMap(const uint8_t* _img, uint8_t* _outImg, uint32_t _wid
 	}
 
 	// Compute inside = edtaa3(1-bitmap); % Transform foreground (1's)
-	memset(gx, 0, sizeof(double) * _width * _height);
-	memset(gy, 0, sizeof(double) * _width * _height);
+	bx::memSet(gx, 0, sizeof(double) * _width * _height);
+	bx::memSet(gy, 0, sizeof(double) * _width * _height);
 	for (ii = 0; ii < _width * _height; ++ii)
 	{
 		data[ii] = 1.0 - data[ii];
@@ -418,12 +418,12 @@ bool TrueTypeFont::bakeGlyphDistance(CodePoint _codePoint, GlyphInfo& _glyphInfo
 		uint32_t buffSize = nw * nh * sizeof(uint8_t);
 
 		uint8_t* alphaImg = (uint8_t*)malloc(buffSize);
-		memset(alphaImg, 0, nw * nh * sizeof(uint8_t) );
+		bx::memSet(alphaImg, 0, nw * nh * sizeof(uint8_t) );
 
 		//copy the original buffer to the temp one
 		for (uint32_t ii = dh; ii < nh - dh; ++ii)
 		{
-			memcpy(alphaImg + ii * nw + dw, _outBuffer + (ii - dh) * ww, ww);
+			bx::memCopy(alphaImg + ii * nw + dw, _outBuffer + (ii - dh) * ww, ww);
 		}
 
 		makeDistanceMap(alphaImg, _outBuffer, nw, nh);
@@ -482,7 +482,7 @@ void FontManager::init()
 	const uint32_t W = 3;
 	// Create filler rectangle
 	uint8_t buffer[W * W * 4];
-	memset(buffer, 255, W * W * 4);
+	bx::memSet(buffer, 255, W * W * 4);
 
 	m_blackGlyph.width = W;
 	m_blackGlyph.height = W;
@@ -513,7 +513,7 @@ TrueTypeHandle FontManager::createTtf(const uint8_t* _buffer, uint32_t _size)
 	BX_CHECK(id != bx::HandleAlloc::invalid, "Invalid handle used");
 	m_cachedFiles[id].buffer = new uint8_t[_size];
 	m_cachedFiles[id].bufferSize = _size;
-	memcpy(m_cachedFiles[id].buffer, _buffer, _size);
+	bx::memCopy(m_cachedFiles[id].buffer, _buffer, _size);
 
 	TrueTypeHandle ret = { id };
 	return ret;

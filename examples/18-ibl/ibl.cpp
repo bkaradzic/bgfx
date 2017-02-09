@@ -675,10 +675,10 @@ int _main_(int _argc, char** _argv)
 		uniforms.m_doSpecular    = float(settings.m_doSpecular);
 		uniforms.m_doDiffuseIbl  = float(settings.m_doDiffuseIbl);
 		uniforms.m_doSpecularIbl = float(settings.m_doSpecularIbl);
-		memcpy(uniforms.m_rgbDiff,  settings.m_rgbDiff,  3*sizeof(float) );
-		memcpy(uniforms.m_rgbSpec,  settings.m_rgbSpec,  3*sizeof(float) );
-		memcpy(uniforms.m_lightDir, settings.m_lightDir, 3*sizeof(float) );
-		memcpy(uniforms.m_lightCol, settings.m_lightCol, 3*sizeof(float) );
+		bx::memCopy(uniforms.m_rgbDiff,  settings.m_rgbDiff,  3*sizeof(float) );
+		bx::memCopy(uniforms.m_rgbSpec,  settings.m_rgbSpec,  3*sizeof(float) );
+		bx::memCopy(uniforms.m_lightDir, settings.m_lightDir, 3*sizeof(float) );
+		bx::memCopy(uniforms.m_lightCol, settings.m_lightCol, 3*sizeof(float) );
 
 		int64_t now = bx::getHPCounter();
 		static int64_t last = now;
@@ -717,7 +717,7 @@ int _main_(int _argc, char** _argv)
 			}
 		}
 		camera.update(deltaTimeSec);
-		memcpy(uniforms.m_cameraPos, camera.m_pos.curr, 3*sizeof(float) );
+		bx::memCopy(uniforms.m_cameraPos, camera.m_pos.curr, 3*sizeof(float) );
 
 		// View Transform 0.
 		float view[16];
@@ -755,7 +755,7 @@ int _main_(int _argc, char** _argv)
 		bgfx::submit(0, programSky);
 
 		// Submit view 1.
-		memcpy(uniforms.m_mtx, mtxEnvRot, 16*sizeof(float)); // Used for IBL.
+		bx::memCopy(uniforms.m_mtx, mtxEnvRot, 16*sizeof(float)); // Used for IBL.
 		if (0 == settings.m_meshSelection)
 		{
 			// Submit bunny.

@@ -896,7 +896,7 @@ int _main_(int _argc, char** _argv)
 		lightRgbInnerR[ii][2] = rgbInnerR[index][2];
 		lightRgbInnerR[ii][3] = rgbInnerR[index][3];
 	}
-	memcpy(s_uniforms.m_lightRgbInnerR, lightRgbInnerR, MAX_NUM_LIGHTS * 4*sizeof(float) );
+	bx::memCopy(s_uniforms.m_lightRgbInnerR, lightRgbInnerR, MAX_NUM_LIGHTS * 4*sizeof(float) );
 
 	// Set view and projection matrices.
 	const float aspect = float(viewState.m_width)/float(viewState.m_height);
@@ -1026,7 +1026,7 @@ int _main_(int _argc, char** _argv)
 			lightPosRadius[ii][2] = cosf( (lightTimeAccumulator*1.3f + ii*0.13f + ii*bx::piHalf*1.79f ) )*20.0f;
 			lightPosRadius[ii][3] = radius;
 		}
-		memcpy(s_uniforms.m_lightPosRadius, lightPosRadius, numLights * 4*sizeof(float) );
+		bx::memCopy(s_uniforms.m_lightPosRadius, lightPosRadius, numLights * 4*sizeof(float) );
 
 		// Floor position.
 		float floorMtx[16];
@@ -1144,7 +1144,7 @@ int _main_(int _argc, char** _argv)
 					bx::vec3MulMtx(reflectedLights[ii], lightPosRadius[ii], reflectMtx);
 					reflectedLights[ii][3] = lightPosRadius[ii][3];
 				}
-				memcpy(s_uniforms.m_lightPosRadius, reflectedLights, numLights * 4*sizeof(float) );
+				bx::memCopy(s_uniforms.m_lightPosRadius, reflectedLights, numLights * 4*sizeof(float) );
 
 				// Reflect and submit bunny.
 				float mtxReflectedBunny[16];
@@ -1168,7 +1168,7 @@ int _main_(int _argc, char** _argv)
 				}
 
 				// Set lights back.
-				memcpy(s_uniforms.m_lightPosRadius, lightPosRadius, numLights * 4*sizeof(float) );
+				bx::memCopy(s_uniforms.m_lightPosRadius, lightPosRadius, numLights * 4*sizeof(float) );
 				// Third pass - Blend plane.
 
 				// Floor.
@@ -1237,7 +1237,7 @@ int _main_(int _argc, char** _argv)
 				float ground[4];
 				float plane_pos[3] = { 0.0f, 0.0f, 0.0f };
 				float normal[3] = { 0.0f, 1.0f, 0.0f };
-				memcpy(ground, normal, sizeof(float) * 3);
+				bx::memCopy(ground, normal, sizeof(float) * 3);
 				ground[3] = -bx::vec3Dot(plane_pos, normal) - 0.01f; // - 0.01 against z-fighting
 
 				for (uint8_t ii = 0, viewId = RENDER_VIEWID_RANGE5_PASS_6; ii < numLights; ++ii, ++viewId)
@@ -1250,7 +1250,7 @@ int _main_(int _argc, char** _argv)
 					// Get homogeneous light pos.
 					float* lightPos = lightPosRadius[ii];
 					float pos[4];
-					memcpy(pos, lightPos, sizeof(float) * 3);
+					bx::memCopy(pos, lightPos, sizeof(float) * 3);
 					pos[3] = 1.0f;
 
 					// Calculate shadow mtx for current light.
