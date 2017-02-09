@@ -3,8 +3,6 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
-#include <string.h> // strlen
-
 #include "common.h"
 
 #include <tinystl/allocator.h>
@@ -137,9 +135,9 @@ static bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name
 		break;
 	}
 
-	strcpy(filePath, shaderPath);
-	strcat(filePath, _name);
-	strcat(filePath, ".bin");
+	bx::strlncpy(filePath, BX_COUNTOF(filePath), shaderPath);
+	bx::strlncat(filePath, BX_COUNTOF(filePath), _name);
+	bx::strlncat(filePath, BX_COUNTOF(filePath), ".bin");
 
 	return bgfx::createShader(loadMem(_reader, filePath) );
 }
