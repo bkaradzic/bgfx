@@ -3795,7 +3795,7 @@ namespace bgfx { namespace d3d9
 					else
 					{
 						Rect scissorRect;
-						scissorRect.intersect(viewScissorRect, _render->m_rectCache.m_cache[scissor]);
+						scissorRect.setIntersect(viewScissorRect, _render->m_rectCache.m_cache[scissor]);
 						if (scissorRect.isZeroArea() )
 						{
 							continue;

@@ -4909,7 +4909,7 @@ data.NumQualityLevels = 0;
 					if (BGFX_CLEAR_NONE != clr.m_flags)
 					{
 						Rect clearRect = rect;
-						clearRect.intersect(rect, viewScissorRect);
+						clearRect.setIntersect(rect, viewScissorRect);
 						clearQuad(clearRect, clr, _render->m_colorPalette);
 					}
 
@@ -5372,7 +5372,7 @@ data.NumQualityLevels = 0;
 						{
 							restoreScissor = true;
 							Rect scissorRect;
-							scissorRect.intersect(viewScissorRect,_render->m_rectCache.m_cache[scissor]);
+							scissorRect.setIntersect(viewScissorRect,_render->m_rectCache.m_cache[scissor]);
 							if (scissorRect.isZeroArea() )
 							{
 								continue;

@@ -273,6 +273,18 @@ namespace bgfx
 
 	struct Rect
 	{
+		Rect()
+		{
+		}
+
+		Rect(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+			: m_x(_x)
+			, m_y(_y)
+			, m_width(_width)
+			, m_height(_height)
+		{
+		}
+
 		void clear()
 		{
 			m_x =
@@ -294,7 +306,15 @@ namespace bgfx
 				;
 		}
 
-		void intersect(const Rect& _a, const Rect& _b)
+		void set(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+		{
+			m_x = _x;
+			m_y = _y;
+			m_width  = _width;
+			m_height = _height;
+		}
+
+		void setIntersect(const Rect& _a, const Rect& _b)
 		{
 			using namespace bx;
 			const uint16_t sx = uint16_max(_a.m_x, _b.m_x);
@@ -305,6 +325,11 @@ namespace bgfx
 			m_y = sy;
 			m_width  = (uint16_t)uint32_satsub(ex, sx);
 			m_height = (uint16_t)uint32_satsub(ey, sy);
+		}
+
+		void intersect(const Rect& _a)
+		{
+			setIntersect(*this, _a);
 		}
 
 		uint16_t m_x;

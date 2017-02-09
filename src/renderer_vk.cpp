@@ -3805,7 +3805,7 @@ BX_UNUSED(currentSamplerStateIdx);
 					if (BGFX_CLEAR_NONE != clr.m_flags)
 					{
 						Rect clearRect = rect;
-						clearRect.intersect(rect, viewScissorRect);
+						clearRect.setIntersect(rect, viewScissorRect);
 						clearQuad(clearRect, clr, _render->m_colorPalette);
 					}
 
@@ -4261,7 +4261,7 @@ BX_UNUSED(currentSamplerStateIdx);
 						{
 							restoreScissor = true;
 							Rect scissorRect;
-							scissorRect.intersect(viewScissorRect,_render->m_rectCache.m_cache[scissor]);
+							scissorRect.setIntersect(viewScissorRect,_render->m_rectCache.m_cache[scissor]);
 							if (scissorRect.isZeroArea() )
 							{
 								continue;
