@@ -2685,7 +2685,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					for (jj = 0; jj < num; ++jj)
 					{
 						curr = &vertexElements[jj];
-						if (0 == strcmp(curr->SemanticName, "TEXCOORD")
+						if (0 == bx::strncmp(curr->SemanticName, "TEXCOORD")
 						&&  curr->SemanticIndex == index)
 						{
 							break;
@@ -2989,7 +2989,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				{
 					D3D11_SAMPLER_DESC sd;
 					sampler->GetDesc(&sd);
-					if (0 != memcmp(_rgba, sd.BorderColor, 16) )
+					if (0 != bx::memCmp(_rgba, sd.BorderColor, 16) )
 					{
 						// Sampler will be released when updated sampler
 						// is added to cache.

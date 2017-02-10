@@ -210,7 +210,7 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath,
 		uint8_t* out = NULL;
 		static uint8_t pngMagic[] = { 0x89, 0x50, 0x4E, 0x47, 0x0d, 0x0a };
 
-		if (0 == memcmp(data, pngMagic, sizeof(pngMagic) ) )
+		if (0 == bx::memCmp(data, pngMagic, sizeof(pngMagic) ) )
 		{
 			release = lodepng_free;
 
@@ -329,22 +329,22 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath,
 						{
 							const EXRChannelInfo& channel = exrHeader.channels[ii];
 							if (UINT8_MAX == idxR
-							&&  0 == strcmp(channel.name, "R") )
+							&&  0 == bx::strncmp(channel.name, "R") )
 							{
 								idxR = ii;
 							}
 							else if (UINT8_MAX == idxG
-								 &&  0 == strcmp(channel.name, "G") )
+								 &&  0 == bx::strncmp(channel.name, "G") )
 							{
 								idxG = ii;
 							}
 							else if (UINT8_MAX == idxB
-								 &&  0 == strcmp(channel.name, "B") )
+								 &&  0 == bx::strncmp(channel.name, "B") )
 							{
 								idxB = ii;
 							}
 							else if (UINT8_MAX == idxA
-								 &&  0 == strcmp(channel.name, "A") )
+								 &&  0 == bx::strncmp(channel.name, "A") )
 							{
 								idxA = ii;
 							}

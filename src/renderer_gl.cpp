@@ -1354,7 +1354,7 @@ namespace bgfx { namespace gl
 					ext += 3;
 				}
 
-				if (0 == strcmp(ext, extension.m_name) )
+				if (0 == bx::strncmp(ext, extension.m_name) )
 				{
 					extension.m_supported = true;
 					supported = true;
@@ -1543,7 +1543,7 @@ namespace bgfx { namespace gl
 				;
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31)
-			&&  0    == strcmp(m_vendor,  "Imagination Technologies")
+			&&  0    == bx::strncmp(m_vendor,  "Imagination Technologies")
 			&&  NULL != strstr(m_version, "(SDK 3.5@3510720)") )
 			{
 				// Skip initializing extensions that are broken in emulator.

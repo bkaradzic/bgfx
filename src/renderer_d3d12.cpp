@@ -2236,7 +2236,7 @@ data.NumQualityLevels = 0;
 				for (jj = 0; jj < num; ++jj)
 				{
 					curr = &_vertexElements[jj];
-					if (0 == strcmp(curr->SemanticName, "TEXCOORD")
+					if (0 == bx::strncmp(curr->SemanticName, "TEXCOORD")
 					&&  curr->SemanticIndex == index)
 					{
 						break;
@@ -2388,14 +2388,14 @@ data.NumQualityLevels = 0;
 
 				dxbcHash(temp->data + 20, temp->size - 20, temp->data + 4);
 
-				patchShader = 0 == memcmp(program.m_fsh->m_code->data, temp->data, 16);
+				patchShader = 0 == bx::memCmp(program.m_fsh->m_code->data, temp->data, 16);
 				BX_CHECK(patchShader, "DXBC fragment shader patching error (ShaderHandle: %d).", program.m_fsh - m_shaders);
 
 				if (!patchShader)
 				{
 					for (uint32_t ii = 20; ii < temp->size; ii += 16)
 					{
-						if (0 != memcmp(&program.m_fsh->m_code->data[ii], &temp->data[ii], 16) )
+						if (0 != bx::memCmp(&program.m_fsh->m_code->data[ii], &temp->data[ii], 16) )
 						{
 // 							bx::debugPrintfData(&program.m_fsh->m_code->data[ii], temp->size-ii, "");
 // 							bx::debugPrintfData(&temp->data[ii], temp->size-ii, "");
@@ -3579,7 +3579,7 @@ data.NumQualityLevels = 0;
 							_commandList->SetGraphicsRootConstantBufferView(Rdt::CBV, cmd.cbv);
 						}
 
-						if (0 != memcmp(m_current.vbv, cmd.vbv, sizeof(cmd.vbv) ) )
+						if (0 != bx::memCmp(m_current.vbv, cmd.vbv, sizeof(cmd.vbv) ) )
 						{
 							bx::memCopy(m_current.vbv, cmd.vbv, sizeof(cmd.vbv) );
 							_commandList->IASetVertexBuffers(0
@@ -3609,7 +3609,7 @@ data.NumQualityLevels = 0;
 							_commandList->SetGraphicsRootConstantBufferView(Rdt::CBV, cmd.cbv);
 						}
 
-						if (0 != memcmp(m_current.vbv, cmd.vbv, sizeof(cmd.vbv) ) )
+						if (0 != bx::memCmp(m_current.vbv, cmd.vbv, sizeof(cmd.vbv) ) )
 						{
 							bx::memCopy(m_current.vbv, cmd.vbv, sizeof(cmd.vbv) );
 							_commandList->IASetVertexBuffers(0
@@ -3618,7 +3618,7 @@ data.NumQualityLevels = 0;
 								);
 						}
 
-						if (0 != memcmp(&m_current.ibv, &cmd.ibv, sizeof(cmd.ibv) ) )
+						if (0 != bx::memCmp(&m_current.ibv, &cmd.ibv, sizeof(cmd.ibv) ) )
 						{
 							bx::memCopy(&m_current.ibv, &cmd.ibv, sizeof(cmd.ibv) );
 							_commandList->IASetIndexBuffer(&cmd.ibv);
