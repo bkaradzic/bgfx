@@ -3009,7 +3009,7 @@ void TParseContext::declareArray(const TSourceLoc& loc, TString& identifier, con
             symbol = new TVariable(&identifier, type);
             symbolTable.insert(*symbol);
             if (symbolTable.atGlobalLevel())
-                trackLinkageDeferred(*symbol);
+                trackLinkage(*symbol);
 
             if (! symbolTable.atBuiltInLevel()) {
                 if (isIoResizeArray(type)) {
@@ -3476,7 +3476,7 @@ void TParseContext::redeclareBuiltinBlock(const TSourceLoc& loc, TTypeList& newT
         fixIoArraySize(loc, block->getWritableType());
 
     // Save it in the AST for linker use.
-    trackLinkageDeferred(*block);
+    trackLinkage(*block);
 }
 
 void TParseContext::paramCheckFix(const TSourceLoc& loc, const TStorageQualifier& qualifier, TType& type)
@@ -5056,7 +5056,7 @@ TVariable* TParseContext::declareNonArray(const TSourceLoc& loc, TString& identi
     // add variable to symbol table
     if (symbolTable.insert(*variable)) {
         if (symbolTable.atGlobalLevel())
-            trackLinkageDeferred(*variable);
+            trackLinkage(*variable);
         return variable;
     }
 
@@ -5718,7 +5718,7 @@ void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, con
         fixIoArraySize(loc, variable.getWritableType());
 
     // Save it in the AST for linker use.
-    trackLinkageDeferred(variable);
+    trackLinkage(variable);
 }
 
 // Do all block-declaration checking regarding the combination of in/out/uniform/buffer

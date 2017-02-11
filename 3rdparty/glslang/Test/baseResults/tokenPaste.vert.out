@@ -63,6 +63,8 @@ ERROR: node is still EOpNull!
 0:?       4 (const int)
 0:?     'cop' (global int)
 0:?     'dop' (global bool)
+0:?     'argPaste2' (uniform int)
+0:?     'argPaste20suff' (uniform int)
 0:?     'gl_VertexID' (gl_VertexId int VertexId)
 0:?     'gl_InstanceID' (gl_InstanceId int InstanceId)
 
@@ -107,6 +109,8 @@ ERROR: node is still EOpNull!
 0:?       4 (const int)
 0:?     'cop' (global int)
 0:?     'dop' (global bool)
+0:?     'argPaste2' (uniform int)
+0:?     'argPaste20suff' (uniform int)
 0:?     'gl_VertexID' (gl_VertexId int VertexId)
 0:?     'gl_InstanceID' (gl_InstanceId int InstanceId)
 

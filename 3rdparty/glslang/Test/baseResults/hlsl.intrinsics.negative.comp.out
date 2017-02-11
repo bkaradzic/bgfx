@@ -45,22 +45,41 @@ local_size = (1, 1, 1)
 0:?           1.000000
 0:?           2.000000
 0:?           3.000000
-0:158  Function Definition: ComputeShaderFunction(vf4;vf4;vf4;vi4; (temp 4-component vector of float)
+0:158  Function Definition: @ComputeShaderFunction(vf4;vf4;vf4;vi4; (temp 4-component vector of float)
 0:158    Function Parameters: 
-0:158      'inF0' (layout(location=0 ) in 4-component vector of float)
-0:158      'inF1' (layout(location=1 ) in 4-component vector of float)
-0:158      'inF2' (layout(location=2 ) in 4-component vector of float)
-0:158      'inI0' (layout(location=3 ) in 4-component vector of int)
+0:158      'inF0' (in 4-component vector of float)
+0:158      'inF1' (in 4-component vector of float)
+0:158      'inF2' (in 4-component vector of float)
+0:158      'inI0' (in 4-component vector of int)
 0:?     Sequence
-0:199      Sequence
-0:199        move second child to first child (temp 4-component vector of float)
-0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?           Constant:
-0:?             1.000000
-0:?             2.000000
-0:?             3.000000
-0:?             4.000000
-0:199        Branch: Return
+0:199      Branch: Return with expression
+0:?         Constant:
+0:?           1.000000
+0:?           2.000000
+0:?           3.000000
+0:?           4.000000
+0:158  Function Definition: ComputeShaderFunction( (temp void)
+0:158    Function Parameters: 
+0:?     Sequence
+0:158      move second child to first child (temp 4-component vector of float)
+0:?         'inF0' (temp 4-component vector of float)
+0:?         'inF0' (layout(location=0 ) in 4-component vector of float)
+0:158      move second child to first child (temp 4-component vector of float)
+0:?         'inF1' (temp 4-component vector of float)
+0:?         'inF1' (layout(location=1 ) in 4-component vector of float)
+0:158      move second child to first child (temp 4-component vector of float)
+0:?         'inF2' (temp 4-component vector of float)
+0:?         'inF2' (layout(location=2 ) in 4-component vector of float)
+0:158      move second child to first child (temp 4-component vector of int)
+0:?         'inI0' (temp 4-component vector of int)
+0:?         'inI0' (layout(location=3 ) in 4-component vector of int)
+0:158      move second child to first child (temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:158        Function Call: @ComputeShaderFunction(vf4;vf4;vf4;vi4; (temp 4-component vector of float)
+0:?           'inF0' (temp 4-component vector of float)
+0:?           'inF1' (temp 4-component vector of float)
+0:?           'inF2' (temp 4-component vector of float)
+0:?           'inI0' (temp 4-component vector of int)
 0:?   Linker Objects
 0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
 0:?     'inF0' (layout(location=0 ) in 4-component vector of float)
@@ -118,22 +137,41 @@ local_size = (1, 1, 1)
 0:?           1.000000
 0:?           2.000000
 0:?           3.000000
-0:158  Function Definition: ComputeShaderFunction(vf4;vf4;vf4;vi4; (temp 4-component vector of float)
+0:158  Function Definition: @ComputeShaderFunction(vf4;vf4;vf4;vi4; (temp 4-component vector of float)
 0:158    Function Parameters: 
-0:158      'inF0' (layout(location=0 ) in 4-component vector of float)
-0:158      'inF1' (layout(location=1 ) in 4-component vector of float)
-0:158      'inF2' (layout(location=2 ) in 4-component vector of float)
-0:158      'inI0' (layout(location=3 ) in 4-component vector of int)
+0:158      'inF0' (in 4-component vector of float)
+0:158      'inF1' (in 4-component vector of float)
+0:158      'inF2' (in 4-component vector of float)
+0:158      'inI0' (in 4-component vector of int)
 0:?     Sequence
-0:199      Sequence
-0:199        move second child to first child (temp 4-component vector of float)
-0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?           Constant:
-0:?             1.000000
-0:?             2.000000
-0:?             3.000000
-0:?             4.000000
-0:199        Branch: Return
+0:199      Branch: Return with expression
+0:?         Constant:
+0:?           1.000000
+0:?           2.000000
+0:?           3.000000
+0:?           4.000000
+0:158  Function Definition: ComputeShaderFunction( (temp void)
+0:158    Function Parameters: 
+0:?     Sequence
+0:158      move second child to first child (temp 4-component vector of float)
+0:?         'inF0' (temp 4-component vector of float)
+0:?         'inF0' (layout(location=0 ) in 4-component vector of float)
+0:158      move second child to first child (temp 4-component vector of float)
+0:?         'inF1' (temp 4-component vector of float)
+0:?         'inF1' (layout(location=1 ) in 4-component vector of float)
+0:158      move second child to first child (temp 4-component vector of float)
+0:?         'inF2' (temp 4-component vector of float)
+0:?         'inF2' (layout(location=2 ) in 4-component vector of float)
+0:158      move second child to first child (temp 4-component vector of int)
+0:?         'inI0' (temp 4-component vector of int)
+0:?         'inI0' (layout(location=3 ) in 4-component vector of int)
+0:158      move second child to first child (temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:158        Function Call: @ComputeShaderFunction(vf4;vf4;vf4;vi4; (temp 4-component vector of float)
+0:?           'inF0' (temp 4-component vector of float)
+0:?           'inF1' (temp 4-component vector of float)
+0:?           'inF2' (temp 4-component vector of float)
+0:?           'inI0' (temp 4-component vector of int)
 0:?   Linker Objects
 0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
 0:?     'inF0' (layout(location=0 ) in 4-component vector of float)
@@ -143,12 +181,12 @@ local_size = (1, 1, 1)
 
 // Module Version 10000
 // Generated by (magic number): 80001
-// Id's are bound by 72
+// Id's are bound by 99
 
                               Capability Shader
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
-                              EntryPoint GLCompute 4  "ComputeShaderFunction" 61 66 67 68 71
+                              EntryPoint GLCompute 4  "ComputeShaderFunction" 76 79 82 86 89
                               ExecutionMode 4 LocalSize 1 1 1
                               Name 4  "ComputeShaderFunction"
                               Name 15  "ComputeShaderFunctionS(f1;f1;f1;i1;"
@@ -171,16 +209,29 @@ local_size = (1, 1, 1)
                               Name 40  "inF1"
                               Name 41  "inF2"
                               Name 42  "inI0"
-                              Name 61  "@entryPointOutput"
-                              Name 66  "inF0"
-                              Name 67  "inF1"
-                              Name 68  "inF2"
-                              Name 71  "inI0"
-                              Decorate 61(@entryPointOutput) Location 0
-                              Decorate 66(inF0) Location 0
-                              Decorate 67(inF1) Location 1
-                              Decorate 68(inF2) Location 2
-                              Decorate 71(inI0) Location 3
+                              Name 54  "@ComputeShaderFunction(vf4;vf4;vf4;vi4;"
+                              Name 50  "inF0"
+                              Name 51  "inF1"
+                              Name 52  "inF2"
+                              Name 53  "inI0"
+                              Name 74  "inF0"
+                              Name 76  "inF0"
+                              Name 78  "inF1"
+                              Name 79  "inF1"
+                              Name 81  "inF2"
+                              Name 82  "inF2"
+                              Name 84  "inI0"
+                              Name 86  "inI0"
+                              Name 89  "@entryPointOutput"
+                              Name 90  "param"
+                              Name 92  "param"
+                              Name 94  "param"
+                              Name 96  "param"
+                              Decorate 76(inF0) Location 0
+                              Decorate 79(inF1) Location 1
+                              Decorate 82(inF2) Location 2
+                              Decorate 86(inI0) Location 3
+                              Decorate 89(@entryPointOutput) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
@@ -198,27 +249,55 @@ local_size = (1, 1, 1)
               36:             TypeVector 8(int) 3
               37:             TypePointer Function 36(ivec3)
               38:             TypeFunction 34(fvec3) 35(ptr) 35(ptr) 35(ptr) 37(ptr)
-              45:    6(float) Constant 0
-              50:    6(float) Constant 1065353216
-              51:    6(float) Constant 1073741824
-              52:   23(fvec2) ConstantComposite 50 51
-              55:    6(float) Constant 1077936128
-              56:   34(fvec3) ConstantComposite 50 51 55
-              59:             TypeVector 6(float) 4
-              60:             TypePointer Output 59(fvec4)
-61(@entryPointOutput):     60(ptr) Variable Output
-              62:    6(float) Constant 1082130432
-              63:   59(fvec4) ConstantComposite 50 51 55 62
-              65:             TypePointer Input 59(fvec4)
-        66(inF0):     65(ptr) Variable Input
-        67(inF1):     65(ptr) Variable Input
-        68(inF2):     65(ptr) Variable Input
-              69:             TypeVector 8(int) 4
-              70:             TypePointer Input 69(ivec4)
-        71(inI0):     70(ptr) Variable Input
+              45:             TypeVector 6(float) 4
+              46:             TypePointer Function 45(fvec4)
+              47:             TypeVector 8(int) 4
+              48:             TypePointer Function 47(ivec4)
+              49:             TypeFunction 45(fvec4) 46(ptr) 46(ptr) 46(ptr) 48(ptr)
+              56:    6(float) Constant 0
+              61:    6(float) Constant 1065353216
+              62:    6(float) Constant 1073741824
+              63:   23(fvec2) ConstantComposite 61 62
+              66:    6(float) Constant 1077936128
+              67:   34(fvec3) ConstantComposite 61 62 66
+              70:    6(float) Constant 1082130432
+              71:   45(fvec4) ConstantComposite 61 62 66 70
+              75:             TypePointer Input 45(fvec4)
+        76(inF0):     75(ptr) Variable Input
+        79(inF1):     75(ptr) Variable Input
+        82(inF2):     75(ptr) Variable Input
+              85:             TypePointer Input 47(ivec4)
+        86(inI0):     85(ptr) Variable Input
+              88:             TypePointer Output 45(fvec4)
+89(@entryPointOutput):     88(ptr) Variable Output
 4(ComputeShaderFunction):           2 Function None 3
                5:             Label
-                              Store 61(@entryPointOutput) 63
+        74(inF0):     46(ptr) Variable Function
+        78(inF1):     46(ptr) Variable Function
+        81(inF2):     46(ptr) Variable Function
+        84(inI0):     48(ptr) Variable Function
+       90(param):     46(ptr) Variable Function
+       92(param):     46(ptr) Variable Function
+       94(param):     46(ptr) Variable Function
+       96(param):     48(ptr) Variable Function
+              77:   45(fvec4) Load 76(inF0)
+                              Store 74(inF0) 77
+              80:   45(fvec4) Load 79(inF1)
+                              Store 78(inF1) 80
+              83:   45(fvec4) Load 82(inF2)
+                              Store 81(inF2) 83
+              87:   47(ivec4) Load 86(inI0)
+                              Store 84(inI0) 87
+              91:   45(fvec4) Load 74(inF0)
+                              Store 90(param) 91
+              93:   45(fvec4) Load 78(inF1)
+                              Store 92(param) 93
+              95:   45(fvec4) Load 81(inF2)
+                              Store 94(param) 95
+              97:   47(ivec4) Load 84(inI0)
+                              Store 96(param) 97
+              98:   45(fvec4) FunctionCall 54(@ComputeShaderFunction(vf4;vf4;vf4;vi4;) 90(param) 92(param) 94(param) 96(param)
+                              Store 89(@entryPointOutput) 98
                               Return
                               FunctionEnd
 15(ComputeShaderFunctionS(f1;f1;f1;i1;):    6(float) Function None 10
@@ -227,7 +306,7 @@ local_size = (1, 1, 1)
         13(inF2):      7(ptr) FunctionParameter
         14(inI0):      9(ptr) FunctionParameter
               16:             Label
-                              ReturnValue 45
+                              ReturnValue 56
                               FunctionEnd
 21(ComputeShaderFunction1(vf1;vf1;vf1;vi1;):    6(float) Function None 10
         17(inF0):      7(ptr) FunctionParameter
@@ -235,7 +314,7 @@ local_size = (1, 1, 1)
         19(inF2):      7(ptr) FunctionParameter
         20(inI0):      9(ptr) FunctionParameter
               22:             Label
-                              ReturnValue 45
+                              ReturnValue 56
                               FunctionEnd
 32(ComputeShaderFunction2(vf2;vf2;vf2;vi2;):   23(fvec2) Function None 27
         28(inF0):     24(ptr) FunctionParameter
@@ -243,7 +322,7 @@ local_size = (1, 1, 1)
         30(inF2):     24(ptr) FunctionParameter
         31(inI0):     26(ptr) FunctionParameter
               33:             Label
-                              ReturnValue 52
+                              ReturnValue 63
                               FunctionEnd
 43(ComputeShaderFunction3(vf3;vf3;vf3;vi3;):   34(fvec3) Function None 38
         39(inF0):     35(ptr) FunctionParameter
@@ -251,5 +330,13 @@ local_size = (1, 1, 1)
         41(inF2):     35(ptr) FunctionParameter
         42(inI0):     37(ptr) FunctionParameter
               44:             Label
-                              ReturnValue 56
+                              ReturnValue 67
+                              FunctionEnd
+54(@ComputeShaderFunction(vf4;vf4;vf4;vi4;):   45(fvec4) Function None 49
+        50(inF0):     46(ptr) FunctionParameter
+        51(inF1):     46(ptr) FunctionParameter
+        52(inF2):     46(ptr) FunctionParameter
+        53(inI0):     48(ptr) FunctionParameter
+              55:             Label
+                              ReturnValue 71
                               FunctionEnd

@@ -82,7 +82,11 @@ namespace glslang {
 
 // Multi-character tokens
 enum EFixedAtoms {
-    PpAtomMaxSingle = 256, // single character tokens get their own char value as their token, skip them
+    // single character tokens get their own char value as their token; start here for multi-character tokens
+    PpAtomMaxSingle = 127,
+
+    // replace bad character tokens with this, to avoid accidental aliasing with the below
+    PpAtomBadToken,
 
     // Operators
 

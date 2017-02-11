@@ -2,7 +2,7 @@ hlsl.gather.basic.dx10.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:29  Function Definition: main( (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:29  Function Definition: @main( (temp structure{temp 4-component vector of float Color, temp float Depth})
 0:29    Function Parameters: 
 0:?     Sequence
 0:34      Sequence
@@ -85,24 +85,28 @@ gl_FragCoord origin is upper left
 0:45            1 (const int)
 0:45        Constant:
 0:45          1.000000
-0:47      Sequence
-0:47        Sequence
-0:47          move second child to first child (temp 4-component vector of float)
-0:?             'Color' (layout(location=0 ) out 4-component vector of float)
-0:47            Color: direct index for structure (temp 4-component vector of float)
-0:47              'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:47              Constant:
-0:47                0 (const int)
-0:47          move second child to first child (temp float)
-0:?             'Depth' (out float FragDepth)
-0:47            Depth: direct index for structure (temp float)
-0:47              'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:47              Constant:
-0:47                1 (const int)
-0:47        Branch: Return
+0:47      Branch: Return with expression
+0:47        'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:29  Function Definition: main( (temp void)
+0:29    Function Parameters: 
+0:?     Sequence
+0:29      Sequence
+0:29        move second child to first child (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:29          'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:29          Function Call: @main( (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:29        move second child to first child (temp 4-component vector of float)
+0:?           'Color' (layout(location=0 ) out 4-component vector of float)
+0:29          Color: direct index for structure (temp 4-component vector of float)
+0:29            'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:29            Constant:
+0:29              0 (const int)
+0:29        move second child to first child (temp float)
+0:?           'Depth' (out float FragDepth)
+0:29          Depth: direct index for structure (temp float)
+0:29            'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:29            Constant:
+0:29              1 (const int)
 0:?   Linker Objects
-0:?     'Color' (layout(location=0 ) out 4-component vector of float)
-0:?     'Depth' (out float FragDepth)
 0:?     'g_sSamp' (layout(binding=0 ) uniform sampler)
 0:?     'g_sSamp2d' (uniform sampler)
 0:?     'g_tTex1df4a' (layout(binding=1 ) uniform texture1D)
@@ -118,6 +122,8 @@ gl_FragCoord origin is upper left
 0:?     'g_tTexcdf4' (uniform textureCube)
 0:?     'g_tTexcdi4' (uniform itextureCube)
 0:?     'g_tTexcdu4' (uniform utextureCube)
+0:?     'Color' (layout(location=0 ) out 4-component vector of float)
+0:?     'Depth' (out float FragDepth)
 
 
 Linked fragment stage:
@@ -126,7 +132,7 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:29  Function Definition: main( (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:29  Function Definition: @main( (temp structure{temp 4-component vector of float Color, temp float Depth})
 0:29    Function Parameters: 
 0:?     Sequence
 0:34      Sequence
@@ -209,24 +215,28 @@ gl_FragCoord origin is upper left
 0:45            1 (const int)
 0:45        Constant:
 0:45          1.000000
-0:47      Sequence
-0:47        Sequence
-0:47          move second child to first child (temp 4-component vector of float)
-0:?             'Color' (layout(location=0 ) out 4-component vector of float)
-0:47            Color: direct index for structure (temp 4-component vector of float)
-0:47              'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:47              Constant:
-0:47                0 (const int)
-0:47          move second child to first child (temp float)
-0:?             'Depth' (out float FragDepth)
-0:47            Depth: direct index for structure (temp float)
-0:47              'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:47              Constant:
-0:47                1 (const int)
-0:47        Branch: Return
+0:47      Branch: Return with expression
+0:47        'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:29  Function Definition: main( (temp void)
+0:29    Function Parameters: 
+0:?     Sequence
+0:29      Sequence
+0:29        move second child to first child (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:29          'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:29          Function Call: @main( (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:29        move second child to first child (temp 4-component vector of float)
+0:?           'Color' (layout(location=0 ) out 4-component vector of float)
+0:29          Color: direct index for structure (temp 4-component vector of float)
+0:29            'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:29            Constant:
+0:29              0 (const int)
+0:29        move second child to first child (temp float)
+0:?           'Depth' (out float FragDepth)
+0:29          Depth: direct index for structure (temp float)
+0:29            'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:29            Constant:
+0:29              1 (const int)
 0:?   Linker Objects
-0:?     'Color' (layout(location=0 ) out 4-component vector of float)
-0:?     'Depth' (out float FragDepth)
 0:?     'g_sSamp' (layout(binding=0 ) uniform sampler)
 0:?     'g_sSamp2d' (uniform sampler)
 0:?     'g_tTex1df4a' (layout(binding=1 ) uniform texture1D)
@@ -242,199 +252,212 @@ gl_FragCoord origin is upper left
 0:?     'g_tTexcdf4' (uniform textureCube)
 0:?     'g_tTexcdi4' (uniform itextureCube)
 0:?     'g_tTexcdu4' (uniform utextureCube)
+0:?     'Color' (layout(location=0 ) out 4-component vector of float)
+0:?     'Depth' (out float FragDepth)
 
 // Module Version 10000
 // Generated by (magic number): 80001
-// Id's are bound by 128
+// Id's are bound by 135
 
                               Capability Shader
                               Capability Sampled1D
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
-                              EntryPoint Fragment 4  "main" 100 104
+                              EntryPoint Fragment 4  "main" 108 112
                               ExecutionMode 4 OriginUpperLeft
                               Name 4  "main"
-                              Name 9  "txval20"
-                              Name 12  "g_tTex2df4"
-                              Name 16  "g_sSamp"
-                              Name 29  "txval21"
-                              Name 32  "g_tTex2di4"
-                              Name 44  "txval22"
-                              Name 47  "g_tTex2du4"
-                              Name 56  "txval40"
-                              Name 59  "g_tTexcdf4"
-                              Name 67  "txval41"
-                              Name 70  "g_tTexcdi4"
-                              Name 77  "txval42"
-                              Name 80  "g_tTexcdu4"
-                              Name 90  "PS_OUTPUT"
-                              MemberName 90(PS_OUTPUT) 0  "Color"
-                              MemberName 90(PS_OUTPUT) 1  "Depth"
-                              Name 92  "psout"
-                              Name 100  "Color"
-                              Name 104  "Depth"
-                              Name 108  "g_sSamp2d"
-                              Name 111  "g_tTex1df4a"
-                              Name 112  "g_tTex1df4"
-                              Name 115  "g_tTex1di4"
-                              Name 118  "g_tTex1du4"
-                              Name 121  "g_tTex3df4"
-                              Name 124  "g_tTex3di4"
-                              Name 127  "g_tTex3du4"
-                              Decorate 12(g_tTex2df4) DescriptorSet 0
-                              Decorate 16(g_sSamp) DescriptorSet 0
-                              Decorate 16(g_sSamp) Binding 0
-                              Decorate 32(g_tTex2di4) DescriptorSet 0
-                              Decorate 47(g_tTex2du4) DescriptorSet 0
-                              Decorate 59(g_tTexcdf4) DescriptorSet 0
-                              Decorate 70(g_tTexcdi4) DescriptorSet 0
-                              Decorate 80(g_tTexcdu4) DescriptorSet 0
-                              Decorate 100(Color) Location 0
-                              Decorate 104(Depth) BuiltIn FragDepth
-                              Decorate 108(g_sSamp2d) DescriptorSet 0
-                              Decorate 111(g_tTex1df4a) DescriptorSet 0
-                              Decorate 111(g_tTex1df4a) Binding 1
-                              Decorate 112(g_tTex1df4) DescriptorSet 0
-                              Decorate 112(g_tTex1df4) Binding 0
-                              Decorate 115(g_tTex1di4) DescriptorSet 0
-                              Decorate 118(g_tTex1du4) DescriptorSet 0
-                              Decorate 121(g_tTex3df4) DescriptorSet 0
-                              Decorate 124(g_tTex3di4) DescriptorSet 0
-                              Decorate 127(g_tTex3du4) DescriptorSet 0
+                              Name 8  "PS_OUTPUT"
+                              MemberName 8(PS_OUTPUT) 0  "Color"
+                              MemberName 8(PS_OUTPUT) 1  "Depth"
+                              Name 10  "@main("
+                              Name 13  "txval20"
+                              Name 16  "g_tTex2df4"
+                              Name 20  "g_sSamp"
+                              Name 33  "txval21"
+                              Name 36  "g_tTex2di4"
+                              Name 48  "txval22"
+                              Name 51  "g_tTex2du4"
+                              Name 60  "txval40"
+                              Name 63  "g_tTexcdf4"
+                              Name 71  "txval41"
+                              Name 74  "g_tTexcdi4"
+                              Name 81  "txval42"
+                              Name 84  "g_tTexcdu4"
+                              Name 95  "psout"
+                              Name 105  "flattenTemp"
+                              Name 108  "Color"
+                              Name 112  "Depth"
+                              Name 115  "g_sSamp2d"
+                              Name 118  "g_tTex1df4a"
+                              Name 119  "g_tTex1df4"
+                              Name 122  "g_tTex1di4"
+                              Name 125  "g_tTex1du4"
+                              Name 128  "g_tTex3df4"
+                              Name 131  "g_tTex3di4"
+                              Name 134  "g_tTex3du4"
+                              Decorate 16(g_tTex2df4) DescriptorSet 0
+                              Decorate 20(g_sSamp) DescriptorSet 0
+                              Decorate 20(g_sSamp) Binding 0
+                              Decorate 36(g_tTex2di4) DescriptorSet 0
+                              Decorate 51(g_tTex2du4) DescriptorSet 0
+                              Decorate 63(g_tTexcdf4) DescriptorSet 0
+                              Decorate 74(g_tTexcdi4) DescriptorSet 0
+                              Decorate 84(g_tTexcdu4) DescriptorSet 0
+                              Decorate 108(Color) Location 0
+                              Decorate 112(Depth) BuiltIn FragDepth
+                              Decorate 115(g_sSamp2d) DescriptorSet 0
+                              Decorate 118(g_tTex1df4a) DescriptorSet 0
+                              Decorate 118(g_tTex1df4a) Binding 1
+                              Decorate 119(g_tTex1df4) DescriptorSet 0
+                              Decorate 119(g_tTex1df4) Binding 0
+                              Decorate 122(g_tTex1di4) DescriptorSet 0
+                              Decorate 125(g_tTex1du4) DescriptorSet 0
+                              Decorate 128(g_tTex3df4) DescriptorSet 0
+                              Decorate 131(g_tTex3di4) DescriptorSet 0
+                              Decorate 134(g_tTex3du4) DescriptorSet 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
                7:             TypeVector 6(float) 4
-               8:             TypePointer Function 7(fvec4)
-              10:             TypeImage 6(float) 2D sampled format:Unknown
-              11:             TypePointer UniformConstant 10
-  12(g_tTex2df4):     11(ptr) Variable UniformConstant
-              14:             TypeSampler
+    8(PS_OUTPUT):             TypeStruct 7(fvec4) 6(float)
+               9:             TypeFunction 8(PS_OUTPUT)
+              12:             TypePointer Function 7(fvec4)
+              14:             TypeImage 6(float) 2D sampled format:Unknown
               15:             TypePointer UniformConstant 14
-     16(g_sSamp):     15(ptr) Variable UniformConstant
-              18:             TypeSampledImage 10
-              20:             TypeVector 6(float) 2
-              21:    6(float) Constant 1036831949
-              22:    6(float) Constant 1045220557
-              23:   20(fvec2) ConstantComposite 21 22
-              24:             TypeInt 32 1
-              25:     24(int) Constant 0
-              27:             TypeVector 24(int) 4
-              28:             TypePointer Function 27(ivec4)
-              30:             TypeImage 24(int) 2D sampled format:Unknown
-              31:             TypePointer UniformConstant 30
-  32(g_tTex2di4):     31(ptr) Variable UniformConstant
-              35:             TypeSampledImage 30
-              37:    6(float) Constant 1050253722
-              38:    6(float) Constant 1053609165
-              39:   20(fvec2) ConstantComposite 37 38
-              41:             TypeInt 32 0
-              42:             TypeVector 41(int) 4
-              43:             TypePointer Function 42(ivec4)
-              45:             TypeImage 41(int) 2D sampled format:Unknown
-              46:             TypePointer UniformConstant 45
-  47(g_tTex2du4):     46(ptr) Variable UniformConstant
-              50:             TypeSampledImage 45
-              52:    6(float) Constant 1056964608
-              53:    6(float) Constant 1058642330
-              54:   20(fvec2) ConstantComposite 52 53
-              57:             TypeImage 6(float) Cube sampled format:Unknown
-              58:             TypePointer UniformConstant 57
-  59(g_tTexcdf4):     58(ptr) Variable UniformConstant
-              62:             TypeSampledImage 57
-              64:             TypeVector 6(float) 3
-              65:   64(fvec3) ConstantComposite 21 22 37
-              68:             TypeImage 24(int) Cube sampled format:Unknown
-              69:             TypePointer UniformConstant 68
-  70(g_tTexcdi4):     69(ptr) Variable UniformConstant
-              73:             TypeSampledImage 68
-              75:   64(fvec3) ConstantComposite 38 52 53
-              78:             TypeImage 41(int) Cube sampled format:Unknown
-              79:             TypePointer UniformConstant 78
-  80(g_tTexcdu4):     79(ptr) Variable UniformConstant
-              83:             TypeSampledImage 78
-              85:    6(float) Constant 1060320051
-              86:    6(float) Constant 1061997773
-              87:    6(float) Constant 1063675494
-              88:   64(fvec3) ConstantComposite 85 86 87
-   90(PS_OUTPUT):             TypeStruct 7(fvec4) 6(float)
-              91:             TypePointer Function 90(PS_OUTPUT)
-              93:    6(float) Constant 1065353216
-              94:    7(fvec4) ConstantComposite 93 93 93 93
-              96:     24(int) Constant 1
-              97:             TypePointer Function 6(float)
-              99:             TypePointer Output 7(fvec4)
-      100(Color):     99(ptr) Variable Output
-             103:             TypePointer Output 6(float)
-      104(Depth):    103(ptr) Variable Output
-  108(g_sSamp2d):     15(ptr) Variable UniformConstant
-             109:             TypeImage 6(float) 1D sampled format:Unknown
-             110:             TypePointer UniformConstant 109
-111(g_tTex1df4a):    110(ptr) Variable UniformConstant
- 112(g_tTex1df4):    110(ptr) Variable UniformConstant
-             113:             TypeImage 24(int) 1D sampled format:Unknown
-             114:             TypePointer UniformConstant 113
- 115(g_tTex1di4):    114(ptr) Variable UniformConstant
-             116:             TypeImage 41(int) 1D sampled format:Unknown
+  16(g_tTex2df4):     15(ptr) Variable UniformConstant
+              18:             TypeSampler
+              19:             TypePointer UniformConstant 18
+     20(g_sSamp):     19(ptr) Variable UniformConstant
+              22:             TypeSampledImage 14
+              24:             TypeVector 6(float) 2
+              25:    6(float) Constant 1036831949
+              26:    6(float) Constant 1045220557
+              27:   24(fvec2) ConstantComposite 25 26
+              28:             TypeInt 32 1
+              29:     28(int) Constant 0
+              31:             TypeVector 28(int) 4
+              32:             TypePointer Function 31(ivec4)
+              34:             TypeImage 28(int) 2D sampled format:Unknown
+              35:             TypePointer UniformConstant 34
+  36(g_tTex2di4):     35(ptr) Variable UniformConstant
+              39:             TypeSampledImage 34
+              41:    6(float) Constant 1050253722
+              42:    6(float) Constant 1053609165
+              43:   24(fvec2) ConstantComposite 41 42
+              45:             TypeInt 32 0
+              46:             TypeVector 45(int) 4
+              47:             TypePointer Function 46(ivec4)
+              49:             TypeImage 45(int) 2D sampled format:Unknown
+              50:             TypePointer UniformConstant 49
+  51(g_tTex2du4):     50(ptr) Variable UniformConstant
+              54:             TypeSampledImage 49
+              56:    6(float) Constant 1056964608
+              57:    6(float) Constant 1058642330
+              58:   24(fvec2) ConstantComposite 56 57
+              61:             TypeImage 6(float) Cube sampled format:Unknown
+              62:             TypePointer UniformConstant 61
+  63(g_tTexcdf4):     62(ptr) Variable UniformConstant
+              66:             TypeSampledImage 61
+              68:             TypeVector 6(float) 3
+              69:   68(fvec3) ConstantComposite 25 26 41
+              72:             TypeImage 28(int) Cube sampled format:Unknown
+              73:             TypePointer UniformConstant 72
+  74(g_tTexcdi4):     73(ptr) Variable UniformConstant
+              77:             TypeSampledImage 72
+              79:   68(fvec3) ConstantComposite 42 56 57
+              82:             TypeImage 45(int) Cube sampled format:Unknown
+              83:             TypePointer UniformConstant 82
+  84(g_tTexcdu4):     83(ptr) Variable UniformConstant
+              87:             TypeSampledImage 82
+              89:    6(float) Constant 1060320051
+              90:    6(float) Constant 1061997773
+              91:    6(float) Constant 1063675494
+              92:   68(fvec3) ConstantComposite 89 90 91
+              94:             TypePointer Function 8(PS_OUTPUT)
+              96:    6(float) Constant 1065353216
+              97:    7(fvec4) ConstantComposite 96 96 96 96
+              99:     28(int) Constant 1
+             100:             TypePointer Function 6(float)
+             107:             TypePointer Output 7(fvec4)
+      108(Color):    107(ptr) Variable Output
+             111:             TypePointer Output 6(float)
+      112(Depth):    111(ptr) Variable Output
+  115(g_sSamp2d):     19(ptr) Variable UniformConstant
+             116:             TypeImage 6(float) 1D sampled format:Unknown
              117:             TypePointer UniformConstant 116
- 118(g_tTex1du4):    117(ptr) Variable UniformConstant
-             119:             TypeImage 6(float) 3D sampled format:Unknown
-             120:             TypePointer UniformConstant 119
- 121(g_tTex3df4):    120(ptr) Variable UniformConstant
-             122:             TypeImage 24(int) 3D sampled format:Unknown
-             123:             TypePointer UniformConstant 122
- 124(g_tTex3di4):    123(ptr) Variable UniformConstant
-             125:             TypeImage 41(int) 3D sampled format:Unknown
-             126:             TypePointer UniformConstant 125
- 127(g_tTex3du4):    126(ptr) Variable UniformConstant
+118(g_tTex1df4a):    117(ptr) Variable UniformConstant
+ 119(g_tTex1df4):    117(ptr) Variable UniformConstant
+             120:             TypeImage 28(int) 1D sampled format:Unknown
+             121:             TypePointer UniformConstant 120
+ 122(g_tTex1di4):    121(ptr) Variable UniformConstant
+             123:             TypeImage 45(int) 1D sampled format:Unknown
+             124:             TypePointer UniformConstant 123
+ 125(g_tTex1du4):    124(ptr) Variable UniformConstant
+             126:             TypeImage 6(float) 3D sampled format:Unknown
+             127:             TypePointer UniformConstant 126
+ 128(g_tTex3df4):    127(ptr) Variable UniformConstant
+             129:             TypeImage 28(int) 3D sampled format:Unknown
+             130:             TypePointer UniformConstant 129
+ 131(g_tTex3di4):    130(ptr) Variable UniformConstant
+             132:             TypeImage 45(int) 3D sampled format:Unknown
+             133:             TypePointer UniformConstant 132
+ 134(g_tTex3du4):    133(ptr) Variable UniformConstant
          4(main):           2 Function None 3
                5:             Label
-      9(txval20):      8(ptr) Variable Function
-     29(txval21):     28(ptr) Variable Function
-     44(txval22):     43(ptr) Variable Function
-     56(txval40):      8(ptr) Variable Function
-     67(txval41):     28(ptr) Variable Function
-     77(txval42):     43(ptr) Variable Function
-       92(psout):     91(ptr) Variable Function
-              13:          10 Load 12(g_tTex2df4)
-              17:          14 Load 16(g_sSamp)
-              19:          18 SampledImage 13 17
-              26:    7(fvec4) ImageGather 19 23 25
-                              Store 9(txval20) 26
-              33:          30 Load 32(g_tTex2di4)
-              34:          14 Load 16(g_sSamp)
-              36:          35 SampledImage 33 34
-              40:   27(ivec4) ImageGather 36 39 25
-                              Store 29(txval21) 40
-              48:          45 Load 47(g_tTex2du4)
-              49:          14 Load 16(g_sSamp)
-              51:          50 SampledImage 48 49
-              55:   42(ivec4) ImageGather 51 54 25
-                              Store 44(txval22) 55
-              60:          57 Load 59(g_tTexcdf4)
-              61:          14 Load 16(g_sSamp)
-              63:          62 SampledImage 60 61
-              66:    7(fvec4) ImageGather 63 65 25
-                              Store 56(txval40) 66
-              71:          68 Load 70(g_tTexcdi4)
-              72:          14 Load 16(g_sSamp)
-              74:          73 SampledImage 71 72
-              76:   27(ivec4) ImageGather 74 75 25
-                              Store 67(txval41) 76
-              81:          78 Load 80(g_tTexcdu4)
-              82:          14 Load 16(g_sSamp)
-              84:          83 SampledImage 81 82
-              89:   42(ivec4) ImageGather 84 88 25
-                              Store 77(txval42) 89
-              95:      8(ptr) AccessChain 92(psout) 25
-                              Store 95 94
-              98:     97(ptr) AccessChain 92(psout) 96
-                              Store 98 93
-             101:      8(ptr) AccessChain 92(psout) 25
-             102:    7(fvec4) Load 101
-                              Store 100(Color) 102
-             105:     97(ptr) AccessChain 92(psout) 96
-             106:    6(float) Load 105
-                              Store 104(Depth) 106
+105(flattenTemp):     94(ptr) Variable Function
+             106:8(PS_OUTPUT) FunctionCall 10(@main()
+                              Store 105(flattenTemp) 106
+             109:     12(ptr) AccessChain 105(flattenTemp) 29
+             110:    7(fvec4) Load 109
+                              Store 108(Color) 110
+             113:    100(ptr) AccessChain 105(flattenTemp) 99
+             114:    6(float) Load 113
+                              Store 112(Depth) 114
                               Return
+                              FunctionEnd
+      10(@main():8(PS_OUTPUT) Function None 9
+              11:             Label
+     13(txval20):     12(ptr) Variable Function
+     33(txval21):     32(ptr) Variable Function
+     48(txval22):     47(ptr) Variable Function
+     60(txval40):     12(ptr) Variable Function
+     71(txval41):     32(ptr) Variable Function
+     81(txval42):     47(ptr) Variable Function
+       95(psout):     94(ptr) Variable Function
+              17:          14 Load 16(g_tTex2df4)
+              21:          18 Load 20(g_sSamp)
+              23:          22 SampledImage 17 21
+              30:    7(fvec4) ImageGather 23 27 29
+                              Store 13(txval20) 30
+              37:          34 Load 36(g_tTex2di4)
+              38:          18 Load 20(g_sSamp)
+              40:          39 SampledImage 37 38
+              44:   31(ivec4) ImageGather 40 43 29
+                              Store 33(txval21) 44
+              52:          49 Load 51(g_tTex2du4)
+              53:          18 Load 20(g_sSamp)
+              55:          54 SampledImage 52 53
+              59:   46(ivec4) ImageGather 55 58 29
+                              Store 48(txval22) 59
+              64:          61 Load 63(g_tTexcdf4)
+              65:          18 Load 20(g_sSamp)
+              67:          66 SampledImage 64 65
+              70:    7(fvec4) ImageGather 67 69 29
+                              Store 60(txval40) 70
+              75:          72 Load 74(g_tTexcdi4)
+              76:          18 Load 20(g_sSamp)
+              78:          77 SampledImage 75 76
+              80:   31(ivec4) ImageGather 78 79 29
+                              Store 71(txval41) 80
+              85:          82 Load 84(g_tTexcdu4)
+              86:          18 Load 20(g_sSamp)
+              88:          87 SampledImage 85 86
+              93:   46(ivec4) ImageGather 88 92 29
+                              Store 81(txval42) 93
+              98:     12(ptr) AccessChain 95(psout) 29
+                              Store 98 97
+             101:    100(ptr) AccessChain 95(psout) 99
+                              Store 101 96
+             102:8(PS_OUTPUT) Load 95(psout)
+                              ReturnValue 102
                               FunctionEnd

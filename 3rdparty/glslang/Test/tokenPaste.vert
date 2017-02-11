@@ -68,3 +68,12 @@ void foo()
     // recovery from bad op
     bool f = e MAKE_OP(>,!) 5;
 }
+
+// arguments: should make 'uniform int argPaste2;'
+#define M_NEST(q) int q
+#define M_OUTER(p) M_NEST(p##2)
+uniform M_OUTER(argPaste);
+// should make 'uniform int argPaste20suff;'
+#define M_NEST2(q) int q ## suff
+#define M_OUTER2(p) M_NEST2(p ## 20)
+uniform M_OUTER2(argPaste);

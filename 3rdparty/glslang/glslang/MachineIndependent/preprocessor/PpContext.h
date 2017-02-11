@@ -220,8 +220,26 @@ public:
         inputStack.pop_back();
     }
 
-    struct TokenStream {
+    //
+    // From PpTokens.cpp
+    //
+
+    class TokenStream {
+    public:
         TokenStream() : current(0) { }
+
+        void putToken(int token, TPpToken* ppToken);
+        int getToken(TParseContextBase&, TPpToken*);
+        bool atEnd() { return current >= data.size(); }
+        bool peekTokenizedPasting(bool lastTokenPastes);
+        bool peekUntokenizedPasting();
+        void reset() { current = 0; }
+
+    protected:
+        void putSubtoken(int);
+        int getSubtoken();
+        void ungetSubtoken();
+
         TVector<unsigned char> data;
         size_t current;
     };
@@ -306,14 +324,13 @@ protected:
         virtual int getch() override { assert(0); return EndOfInput; }
         virtual void ungetch() override { assert(0); }
         bool peekPasting() override { return prepaste; }
-        bool endOfReplacementList() override { return mac->body.current >= mac->body.data.size(); }
+        bool endOfReplacementList() override { return mac->body.atEnd(); }
 
         MacroSymbol *mac;
         TVector<TokenStream*> args;
         TVector<TokenStream*> expandedArgs;
 
     protected:
-        bool peekMacPasting();
         bool prepaste;         // true if we are just before ##
         bool postpaste;        // true if we are right after ##
     };
@@ -375,22 +392,16 @@ protected:
     //
     // From PpTokens.cpp
     //
-    void lAddByte(TokenStream&, unsigned char fVal);
-    int lReadByte(TokenStream&);
-    void lUnreadByte(TokenStream&);
-    void RecordToken(TokenStream&, int token, TPpToken* ppToken);
-    void RewindTokenStream(TokenStream&);
-    int ReadToken(TokenStream&, TPpToken*);
     void pushTokenStreamInput(TokenStream&, bool pasting = false);
     void UngetToken(int token, TPpToken*);
 
     class tTokenInput : public tInput {
     public:
         tTokenInput(TPpContext* pp, TokenStream* t, bool prepasting) : tInput(pp), tokens(t), lastTokenPastes(prepasting) { }
-        virtual int scan(TPpToken *) override;
+        virtual int scan(TPpToken *ppToken) override { return tokens->getToken(pp->parseContext, ppToken); }
         virtual int getch() override { assert(0); return EndOfInput; }
         virtual void ungetch() override { assert(0); }
-        virtual bool peekPasting() override;
+        virtual bool peekPasting() override { return tokens->peekTokenizedPasting(lastTokenPastes); }
     protected:
         TokenStream* tokens;
         bool lastTokenPastes;     // true if the last token in the input is to be pasted, rather than consumed as a token

@@ -223,20 +223,11 @@ void TParseContextBase::rValueErrorCheck(const TSourceLoc& loc, const char* op, 
         error(loc, "can't read from writeonly object: ", op, symNode->getName().c_str());
 }
 
-// Add a linkage symbol node for 'symbol', which
-// must have its type fully edited, as this will snapshot the type.
-// It is okay if symbol becomes invalid before finish().
-void TParseContextBase::trackLinkage(TSymbol& symbol)
-{
-    if (!parsingBuiltins)
-        intermediate.addSymbolLinkageNode(linkage, symbol);
-}
-
 // Add 'symbol' to the list of deferred linkage symbols, which
 // are later processed in finish(), at which point the symbol
 // must still be valid.
 // It is okay if the symbol's type will be subsequently edited.
-void TParseContextBase::trackLinkageDeferred(TSymbol& symbol)
+void TParseContextBase::trackLinkage(TSymbol& symbol)
 {
     if (!parsingBuiltins)
         linkageSymbols.push_back(&symbol);
@@ -253,7 +244,7 @@ void TParseContextBase::makeEditable(TSymbol*& symbol)
 
     // Save it (deferred, so it can be edited first) in the AST for linker use.
     if (symbol)
-        trackLinkageDeferred(*symbol);
+        trackLinkage(*symbol);
 }
 
 // Return a writable version of the variable 'name'.
@@ -539,7 +530,7 @@ void TParseContextBase::parseSwizzleSelector(const TSourceLoc& loc, const TStrin
 // Make the passed-in variable information become a member of the
 // global uniform block.  If this doesn't exist yet, make it.
 //
-void TParseContextBase::growGlobalUniformBlock(TSourceLoc& loc, TType& memberType, TString& memberName)
+void TParseContextBase::growGlobalUniformBlock(TSourceLoc& loc, TType& memberType, TString& memberName, TTypeList* typeList)
 {
     // make the global block, if not yet made
     if (globalUniformBlock == nullptr) {
@@ -557,6 +548,8 @@ void TParseContextBase::growGlobalUniformBlock(TSourceLoc& loc, TType& memberTyp
     TType* type = new TType;
     type->shallowCopy(memberType);
     type->setFieldName(memberName);
+    if (typeList)
+        type->setStruct(typeList);
     TTypeLoc typeLoc = {type, loc};
     globalUniformBlock->getType().getWritableStruct()->push_back(typeLoc);
 }
@@ -577,7 +570,7 @@ bool TParseContextBase::insertGlobalUniformBlock()
         // This is the first request; we need a normal symbol table insert
         inserted = symbolTable.insert(*globalUniformBlock);
         if (inserted)
-            trackLinkageDeferred(*globalUniformBlock);
+            trackLinkage(*globalUniformBlock);
     } else if (firstNewMember <= numMembers) {
         // This is a follow-on request; we need to amend the first insert
         inserted = symbolTable.amend(*globalUniformBlock, firstNewMember);
@@ -593,12 +586,14 @@ bool TParseContextBase::insertGlobalUniformBlock()
 
 void TParseContextBase::finish()
 {
-    if (!parsingBuiltins) {
-        // Transfer the linkage symbols to AST nodes
-        for (auto i = linkageSymbols.begin(); i != linkageSymbols.end(); ++i)
-            intermediate.addSymbolLinkageNode(linkage, **i);
-        intermediate.addSymbolLinkageNodes(linkage, getLanguage(), symbolTable);
-    }
+    if (parsingBuiltins)
+        return;
+
+    // Transfer the linkage symbols to AST nodes
+    TIntermAggregate* linkage = new TIntermAggregate;
+    for (auto i = linkageSymbols.begin(); i != linkageSymbols.end(); ++i)
+        intermediate.addSymbolLinkageNode(linkage, **i);
+    intermediate.addSymbolLinkageNodes(linkage, getLanguage(), symbolTable);
 }
 
 } // end namespace glslang

@@ -7,7 +7,7 @@ ERROR: 2 compilation errors.  No code generated.
 Shader version: 450
 gl_FragCoord origin is upper left
 ERROR: node is still EOpNull!
-0:13  Function Definition: main( (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:13  Function Definition: @main( (temp structure{temp 4-component vector of float Color, temp float Depth})
 0:13    Function Parameters: 
 0:?     Sequence
 0:16      Sequence
@@ -43,27 +43,33 @@ ERROR: node is still EOpNull!
 0:20            1 (const int)
 0:20        Constant:
 0:20          1.000000
-0:22      Sequence
-0:22        Sequence
-0:22          move second child to first child (temp 4-component vector of float)
-0:?             'Color' (layout(location=0 ) out 4-component vector of float)
-0:22            Color: direct index for structure (temp 4-component vector of float)
-0:22              'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:22              Constant:
-0:22                0 (const int)
-0:22          move second child to first child (temp float)
-0:?             'Depth' (out float FragDepth)
-0:22            Depth: direct index for structure (temp float)
-0:22              'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:22              Constant:
-0:22                1 (const int)
-0:22        Branch: Return
+0:22      Branch: Return with expression
+0:22        'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:13  Function Definition: main( (temp void)
+0:13    Function Parameters: 
+0:?     Sequence
+0:13      Sequence
+0:13        move second child to first child (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:13          'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:13          Function Call: @main( (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:13        move second child to first child (temp 4-component vector of float)
+0:?           'Color' (layout(location=0 ) out 4-component vector of float)
+0:13          Color: direct index for structure (temp 4-component vector of float)
+0:13            'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:13            Constant:
+0:13              0 (const int)
+0:13        move second child to first child (temp float)
+0:?           'Depth' (out float FragDepth)
+0:13          Depth: direct index for structure (temp float)
+0:13            'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:13            Constant:
+0:13              1 (const int)
 0:?   Linker Objects
-0:?     'Color' (layout(location=0 ) out 4-component vector of float)
-0:?     'Depth' (out float FragDepth)
 0:?     'g_sSamp' (layout(binding=0 ) uniform sampler)
 0:?     'g_tTex2dmsf4' (uniform texture2DMS)
 0:?     'g_tTex2dmsf4a' (uniform texture2DMSArray)
+0:?     'Color' (layout(location=0 ) out 4-component vector of float)
+0:?     'Depth' (out float FragDepth)
 
 
 Linked fragment stage:
@@ -72,7 +78,7 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 ERROR: node is still EOpNull!
-0:13  Function Definition: main( (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:13  Function Definition: @main( (temp structure{temp 4-component vector of float Color, temp float Depth})
 0:13    Function Parameters: 
 0:?     Sequence
 0:16      Sequence
@@ -108,26 +114,32 @@ ERROR: node is still EOpNull!
 0:20            1 (const int)
 0:20        Constant:
 0:20          1.000000
-0:22      Sequence
-0:22        Sequence
-0:22          move second child to first child (temp 4-component vector of float)
-0:?             'Color' (layout(location=0 ) out 4-component vector of float)
-0:22            Color: direct index for structure (temp 4-component vector of float)
-0:22              'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:22              Constant:
-0:22                0 (const int)
-0:22          move second child to first child (temp float)
-0:?             'Depth' (out float FragDepth)
-0:22            Depth: direct index for structure (temp float)
-0:22              'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:22              Constant:
-0:22                1 (const int)
-0:22        Branch: Return
+0:22      Branch: Return with expression
+0:22        'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:13  Function Definition: main( (temp void)
+0:13    Function Parameters: 
+0:?     Sequence
+0:13      Sequence
+0:13        move second child to first child (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:13          'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:13          Function Call: @main( (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:13        move second child to first child (temp 4-component vector of float)
+0:?           'Color' (layout(location=0 ) out 4-component vector of float)
+0:13          Color: direct index for structure (temp 4-component vector of float)
+0:13            'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:13            Constant:
+0:13              0 (const int)
+0:13        move second child to first child (temp float)
+0:?           'Depth' (out float FragDepth)
+0:13          Depth: direct index for structure (temp float)
+0:13            'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:13            Constant:
+0:13              1 (const int)
 0:?   Linker Objects
-0:?     'Color' (layout(location=0 ) out 4-component vector of float)
-0:?     'Depth' (out float FragDepth)
 0:?     'g_sSamp' (layout(binding=0 ) uniform sampler)
 0:?     'g_tTex2dmsf4' (uniform texture2DMS)
 0:?     'g_tTex2dmsf4a' (uniform texture2DMSArray)
+0:?     'Color' (layout(location=0 ) out 4-component vector of float)
+0:?     'Depth' (out float FragDepth)
 
 SPIR-V is not generated for failed compile or link

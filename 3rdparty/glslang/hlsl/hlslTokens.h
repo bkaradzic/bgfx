@@ -78,6 +78,10 @@ enum EHlslTokenClass {
     EHTokLineStream,
     EHTokTriangleStream,
 
+    // Tessellation patches
+    EHTokInputPatch,
+    EHTokOutputPatch,
+
     // template types
     EHTokBuffer,
     EHTokVector,

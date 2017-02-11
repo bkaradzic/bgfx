@@ -87,6 +87,12 @@ public:
 
     virtual const TString& getName() const { return *name; }
     virtual void changeName(const TString* newName) { name = newName; }
+    virtual void addPrefix(const char* prefix)
+    {
+        TString newName(prefix);
+        newName.append(*name);
+        changeName(NewPoolTString(newName.c_str()));
+    }
     virtual const TString& getMangledName() const { return getName(); }
     virtual TFunction* getAsFunction() { return 0; }
     virtual const TFunction* getAsFunction() const { return 0; }
@@ -192,6 +198,7 @@ struct TParameter {
     TString *name;
     TType* type;
     TIntermTyped* defaultValue;
+    TBuiltInVariable declaredBuiltIn;
     void copyParam(const TParameter& param)
     {
         if (param.name)
@@ -200,6 +207,7 @@ struct TParameter {
             name = 0;
         type = param.type->clone();
         defaultValue = param.defaultValue;
+        declaredBuiltIn = param.declaredBuiltIn;
     }
 };
 
@@ -216,7 +224,11 @@ public:
         TSymbol(name),
         mangledName(*name + '('),
         op(tOp),
-        defined(false), prototyped(false), defaultParamCount(0) { returnType.shallowCopy(retType); }
+        defined(false), prototyped(false), defaultParamCount(0)
+    {
+        returnType.shallowCopy(retType);
+        declaredBuiltIn = retType.getQualifier().builtIn;
+    }
     virtual TFunction* clone() const;
     virtual ~TFunction();
 
@@ -226,15 +238,22 @@ public:
     virtual void addParameter(TParameter& p)
     {
         assert(writable);
+        p.declaredBuiltIn = p.type->getQualifier().builtIn;
         parameters.push_back(p);
         p.type->appendMangledName(mangledName);
 
         if (p.defaultValue != nullptr)
             defaultParamCount++;
     }
+    virtual void addPrefix(const char* prefix) override
+    {
+        TSymbol::addPrefix(prefix);
+        mangledName.insert(0, prefix);
+    }
 
     virtual const TString& getMangledName() const { return mangledName; }
     virtual const TType& getType() const { return returnType; }
+    virtual TBuiltInVariable getDeclaredBuiltInType() const { return declaredBuiltIn; }
     virtual TType& getWritableType() { return returnType; }
     virtual void relateToOperator(TOperator o) { assert(writable); op = o; }
     virtual TOperator getBuiltInOp() const { return op; }
@@ -262,6 +281,8 @@ protected:
     typedef TVector<TParameter> TParamList;
     TParamList parameters;
     TType returnType;
+    TBuiltInVariable declaredBuiltIn;
+
     TString mangledName;
     TOperator op;
     bool defined;

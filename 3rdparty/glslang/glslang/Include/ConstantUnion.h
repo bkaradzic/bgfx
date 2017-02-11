@@ -81,12 +81,19 @@ public:
         type = EbtBool;
     }
 
+    void setSConst(const TString* s)
+    {
+        sConst = s;
+        type = EbtString;
+    }
+
     int                getIConst() const   { return iConst; }
     unsigned int       getUConst() const   { return uConst; }
     long long          getI64Const() const { return i64Const; }
     unsigned long long getU64Const() const { return u64Const; }
     double             getDConst() const   { return dConst; }
     bool               getBConst() const   { return bConst; }
+    const TString*     getSConst() const   { return sConst; }
 
     bool operator==(const int i) const
     {
@@ -532,6 +539,7 @@ private:
         unsigned long long u64Const;    // used for u64vec, scalar uint64s
         bool               bConst;      // used for bvec, scalar bools
         double             dConst;      // used for vec, dvec, mat, dmat, scalar floats and doubles
+        const TString*     sConst;      // string constant
     };
 
     TBasicType type;

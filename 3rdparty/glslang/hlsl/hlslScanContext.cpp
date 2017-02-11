@@ -129,6 +129,9 @@ void HlslScanContext::fillInKeywordMap()
     (*KeywordMap)["LineStream"] =              EHTokLineStream;
     (*KeywordMap)["TriangleStream"] =          EHTokTriangleStream;
 
+    (*KeywordMap)["InputPatch"] =              EHTokInputPatch;
+    (*KeywordMap)["OutputPatch"] =             EHTokOutputPatch;
+
     (*KeywordMap)["Buffer"] =                  EHTokBuffer;
     (*KeywordMap)["vector"] =                  EHTokVector;
     (*KeywordMap)["matrix"] =                  EHTokMatrix;
@@ -538,6 +541,11 @@ EHlslTokenClass HlslScanContext::tokenizeIdentifier()
     case EHTokPointStream:
     case EHTokLineStream:
     case EHTokTriangleStream:
+        return keyword;
+
+    // Tessellation patches
+    case EHTokInputPatch:
+    case EHTokOutputPatch:
         return keyword;
 
     case EHTokBuffer:

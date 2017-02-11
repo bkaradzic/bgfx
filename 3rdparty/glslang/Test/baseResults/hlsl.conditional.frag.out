@@ -2,9 +2,9 @@ hlsl.conditional.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:2  Function Definition: PixelShaderFunction(vf4; (temp 4-component vector of float)
+0:2  Function Definition: @PixelShaderFunction(vf4; (temp 4-component vector of float)
 0:2    Function Parameters: 
-0:2      'input' (layout(location=0 ) in 4-component vector of float)
+0:2      'input' (in 4-component vector of float)
 0:?     Sequence
 0:3      Sequence
 0:3        move second child to first child (temp int)
@@ -35,19 +35,19 @@ gl_FragCoord origin is upper left
 0:7                vector-scale (temp 4-component vector of float)
 0:7                  Convert int to float (temp float)
 0:7                    'a' (temp int)
-0:7                  'input' (layout(location=0 ) in 4-component vector of float)
+0:7                  'input' (in 4-component vector of float)
 0:8                vector-scale (temp 4-component vector of float)
 0:8                  Convert int to float (temp float)
 0:8                    'b' (temp int)
-0:8                  'input' (layout(location=0 ) in 4-component vector of float)
+0:8                  'input' (in 4-component vector of float)
 0:9              vector-scale (temp 4-component vector of float)
 0:9                Convert int to float (temp float)
 0:9                  'c' (temp int)
-0:9                'input' (layout(location=0 ) in 4-component vector of float)
+0:9                'input' (in 4-component vector of float)
 0:10            vector-scale (temp 4-component vector of float)
 0:10              Convert int to float (temp float)
 0:10                'd' (temp int)
-0:10              'input' (layout(location=0 ) in 4-component vector of float)
+0:10              'input' (in 4-component vector of float)
 0:12      Comma (temp int)
 0:12        move second child to first child (temp int)
 0:12          'e' (temp int)
@@ -85,29 +85,36 @@ gl_FragCoord origin is upper left
 0:14              Constant:
 0:14                0 (const int)
 0:14            direct index (temp float)
-0:14              'input' (layout(location=0 ) in 4-component vector of float)
+0:14              'input' (in 4-component vector of float)
 0:14              Constant:
 0:14                1 (const int)
 0:14          true case
 0:14          vector-scale (temp 4-component vector of float)
 0:14            Convert int to float (temp float)
 0:14              'c' (temp int)
-0:14            'input' (layout(location=0 ) in 4-component vector of float)
+0:14            'input' (in 4-component vector of float)
 0:14          false case
 0:14          vector-scale (temp 4-component vector of float)
 0:14            Convert int to float (temp float)
 0:14              'd' (temp int)
-0:14            'input' (layout(location=0 ) in 4-component vector of float)
-0:15      Sequence
-0:15        move second child to first child (temp 4-component vector of float)
-0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:15          add (temp 4-component vector of float)
-0:15            vector-scale (temp 4-component vector of float)
-0:15              Convert int to float (temp float)
-0:15                'e' (temp int)
-0:15              'ret' (temp 4-component vector of float)
-0:15            'f' (temp 4-component vector of float)
-0:15        Branch: Return
+0:14            'input' (in 4-component vector of float)
+0:15      Branch: Return with expression
+0:15        add (temp 4-component vector of float)
+0:15          vector-scale (temp 4-component vector of float)
+0:15            Convert int to float (temp float)
+0:15              'e' (temp int)
+0:15            'ret' (temp 4-component vector of float)
+0:15          'f' (temp 4-component vector of float)
+0:2  Function Definition: PixelShaderFunction( (temp void)
+0:2    Function Parameters: 
+0:?     Sequence
+0:2      move second child to first child (temp 4-component vector of float)
+0:?         'input' (temp 4-component vector of float)
+0:?         'input' (layout(location=0 ) in 4-component vector of float)
+0:2      move second child to first child (temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:2        Function Call: @PixelShaderFunction(vf4; (temp 4-component vector of float)
+0:?           'input' (temp 4-component vector of float)
 0:?   Linker Objects
 0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
 0:?     'input' (layout(location=0 ) in 4-component vector of float)
@@ -119,9 +126,9 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:2  Function Definition: PixelShaderFunction(vf4; (temp 4-component vector of float)
+0:2  Function Definition: @PixelShaderFunction(vf4; (temp 4-component vector of float)
 0:2    Function Parameters: 
-0:2      'input' (layout(location=0 ) in 4-component vector of float)
+0:2      'input' (in 4-component vector of float)
 0:?     Sequence
 0:3      Sequence
 0:3        move second child to first child (temp int)
@@ -152,19 +159,19 @@ gl_FragCoord origin is upper left
 0:7                vector-scale (temp 4-component vector of float)
 0:7                  Convert int to float (temp float)
 0:7                    'a' (temp int)
-0:7                  'input' (layout(location=0 ) in 4-component vector of float)
+0:7                  'input' (in 4-component vector of float)
 0:8                vector-scale (temp 4-component vector of float)
 0:8                  Convert int to float (temp float)
 0:8                    'b' (temp int)
-0:8                  'input' (layout(location=0 ) in 4-component vector of float)
+0:8                  'input' (in 4-component vector of float)
 0:9              vector-scale (temp 4-component vector of float)
 0:9                Convert int to float (temp float)
 0:9                  'c' (temp int)
-0:9                'input' (layout(location=0 ) in 4-component vector of float)
+0:9                'input' (in 4-component vector of float)
 0:10            vector-scale (temp 4-component vector of float)
 0:10              Convert int to float (temp float)
 0:10                'd' (temp int)
-0:10              'input' (layout(location=0 ) in 4-component vector of float)
+0:10              'input' (in 4-component vector of float)
 0:12      Comma (temp int)
 0:12        move second child to first child (temp int)
 0:12          'e' (temp int)
@@ -202,171 +209,194 @@ gl_FragCoord origin is upper left
 0:14              Constant:
 0:14                0 (const int)
 0:14            direct index (temp float)
-0:14              'input' (layout(location=0 ) in 4-component vector of float)
+0:14              'input' (in 4-component vector of float)
 0:14              Constant:
 0:14                1 (const int)
 0:14          true case
 0:14          vector-scale (temp 4-component vector of float)
 0:14            Convert int to float (temp float)
 0:14              'c' (temp int)
-0:14            'input' (layout(location=0 ) in 4-component vector of float)
+0:14            'input' (in 4-component vector of float)
 0:14          false case
 0:14          vector-scale (temp 4-component vector of float)
 0:14            Convert int to float (temp float)
 0:14              'd' (temp int)
-0:14            'input' (layout(location=0 ) in 4-component vector of float)
-0:15      Sequence
-0:15        move second child to first child (temp 4-component vector of float)
-0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:15          add (temp 4-component vector of float)
-0:15            vector-scale (temp 4-component vector of float)
-0:15              Convert int to float (temp float)
-0:15                'e' (temp int)
-0:15              'ret' (temp 4-component vector of float)
-0:15            'f' (temp 4-component vector of float)
-0:15        Branch: Return
+0:14            'input' (in 4-component vector of float)
+0:15      Branch: Return with expression
+0:15        add (temp 4-component vector of float)
+0:15          vector-scale (temp 4-component vector of float)
+0:15            Convert int to float (temp float)
+0:15              'e' (temp int)
+0:15            'ret' (temp 4-component vector of float)
+0:15          'f' (temp 4-component vector of float)
+0:2  Function Definition: PixelShaderFunction( (temp void)
+0:2    Function Parameters: 
+0:?     Sequence
+0:2      move second child to first child (temp 4-component vector of float)
+0:?         'input' (temp 4-component vector of float)
+0:?         'input' (layout(location=0 ) in 4-component vector of float)
+0:2      move second child to first child (temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:2        Function Call: @PixelShaderFunction(vf4; (temp 4-component vector of float)
+0:?           'input' (temp 4-component vector of float)
 0:?   Linker Objects
 0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
 0:?     'input' (layout(location=0 ) in 4-component vector of float)
 
 // Module Version 10000
 // Generated by (magic number): 80001
-// Id's are bound by 91
+// Id's are bound by 100
 
                               Capability Shader
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
-                              EntryPoint Fragment 4  "PixelShaderFunction" 22 83
+                              EntryPoint Fragment 4  "PixelShaderFunction" 93 96
                               ExecutionMode 4 OriginUpperLeft
                               Name 4  "PixelShaderFunction"
-                              Name 8  "a"
-                              Name 10  "b"
-                              Name 12  "c"
-                              Name 14  "d"
-                              Name 18  "ret"
-                              Name 22  "input"
-                              Name 40  "e"
-                              Name 57  "f"
-                              Name 83  "@entryPointOutput"
-                              Decorate 22(input) Location 0
-                              Decorate 83(@entryPointOutput) Location 0
+                              Name 11  "@PixelShaderFunction(vf4;"
+                              Name 10  "input"
+                              Name 15  "a"
+                              Name 17  "b"
+                              Name 19  "c"
+                              Name 21  "d"
+                              Name 22  "ret"
+                              Name 42  "e"
+                              Name 59  "f"
+                              Name 91  "input"
+                              Name 93  "input"
+                              Name 96  "@entryPointOutput"
+                              Name 97  "param"
+                              Decorate 93(input) Location 0
+                              Decorate 96(@entryPointOutput) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
-               6:             TypeInt 32 1
-               7:             TypePointer Function 6(int)
-               9:      6(int) Constant 5
-              11:      6(int) Constant 6
-              13:      6(int) Constant 7
-              15:             TypeFloat 32
-              16:             TypeVector 15(float) 4
-              17:             TypePointer Function 16(fvec4)
-              21:             TypePointer Input 16(fvec4)
-       22(input):     21(ptr) Variable Input
-              47:      6(int) Constant 10
-              55:      6(int) Constant 11
-              59:             TypeInt 32 0
-              60:     59(int) Constant 0
-              61:             TypePointer Function 15(float)
-              64:     59(int) Constant 1
-              65:             TypePointer Input 15(float)
-              68:             TypeBool
-              82:             TypePointer Output 16(fvec4)
-83(@entryPointOutput):     82(ptr) Variable Output
+               6:             TypeFloat 32
+               7:             TypeVector 6(float) 4
+               8:             TypePointer Function 7(fvec4)
+               9:             TypeFunction 7(fvec4) 8(ptr)
+              13:             TypeInt 32 1
+              14:             TypePointer Function 13(int)
+              16:     13(int) Constant 5
+              18:     13(int) Constant 6
+              20:     13(int) Constant 7
+              49:     13(int) Constant 10
+              57:     13(int) Constant 11
+              61:             TypeInt 32 0
+              62:     61(int) Constant 0
+              63:             TypePointer Function 6(float)
+              66:     61(int) Constant 1
+              69:             TypeBool
+              92:             TypePointer Input 7(fvec4)
+       93(input):     92(ptr) Variable Input
+              95:             TypePointer Output 7(fvec4)
+96(@entryPointOutput):     95(ptr) Variable Output
 4(PixelShaderFunction):           2 Function None 3
                5:             Label
-            8(a):      7(ptr) Variable Function
-           10(b):      7(ptr) Variable Function
-           12(c):      7(ptr) Variable Function
-           14(d):      7(ptr) Variable Function
-         18(ret):     17(ptr) Variable Function
-           40(e):      7(ptr) Variable Function
-              41:      7(ptr) Variable Function
-              49:      7(ptr) Variable Function
-           57(f):     17(ptr) Variable Function
-              58:     17(ptr) Variable Function
-                              Store 8(a) 9
-                              Store 10(b) 11
-                              Store 12(c) 13
-                              Store 14(d) 13
-              19:      6(int) Load 8(a)
-              20:   15(float) ConvertSToF 19
-              23:   16(fvec4) Load 22(input)
-              24:   16(fvec4) VectorTimesScalar 23 20
-              25:      6(int) Load 10(b)
-              26:   15(float) ConvertSToF 25
-              27:   16(fvec4) Load 22(input)
-              28:   16(fvec4) VectorTimesScalar 27 26
-              29:   16(fvec4) FAdd 24 28
-              30:      6(int) Load 12(c)
-              31:   15(float) ConvertSToF 30
-              32:   16(fvec4) Load 22(input)
-              33:   16(fvec4) VectorTimesScalar 32 31
-              34:   16(fvec4) FAdd 29 33
-              35:      6(int) Load 14(d)
-              36:   15(float) ConvertSToF 35
-              37:   16(fvec4) Load 22(input)
-              38:   16(fvec4) VectorTimesScalar 37 36
-              39:   16(fvec4) FAdd 34 38
-                              Store 18(ret) 39
-              42:      6(int) Load 10(b)
-                              SelectionMerge 44 None
-                              BranchConditional 42 43 46
-              43:               Label
-              45:      6(int)   Load 14(d)
-                                Store 12(c) 45
-                                Store 41 45
-                                Branch 44
-              46:               Label
-                                Store 41 47
-                                Branch 44
-              44:             Label
-              48:      6(int) Load 41
-                              Store 8(a) 48
-                              Store 40(e) 48
-              50:      6(int) Load 8(a)
-                              SelectionMerge 52 None
-                              BranchConditional 50 51 54
-              51:               Label
-              53:      6(int)   Load 12(c)
-                                Store 14(d) 53
-                                Store 49 53
-                                Branch 52
-              54:               Label
-                                Store 49 55
-                                Branch 52
-              52:             Label
-              56:      6(int) Load 49
-                              Store 10(b) 56
-              62:     61(ptr) AccessChain 18(ret) 60
-              63:   15(float) Load 62
-              66:     65(ptr) AccessChain 22(input) 64
-              67:   15(float) Load 66
-              69:    68(bool) FOrdLessThan 63 67
-                              SelectionMerge 71 None
-                              BranchConditional 69 70 76
-              70:               Label
-              72:      6(int)   Load 12(c)
-              73:   15(float)   ConvertSToF 72
-              74:   16(fvec4)   Load 22(input)
-              75:   16(fvec4)   VectorTimesScalar 74 73
-                                Store 58 75
-                                Branch 71
-              76:               Label
-              77:      6(int)   Load 14(d)
-              78:   15(float)   ConvertSToF 77
-              79:   16(fvec4)   Load 22(input)
-              80:   16(fvec4)   VectorTimesScalar 79 78
-                                Store 58 80
-                                Branch 71
-              71:             Label
-              81:   16(fvec4) Load 58
-                              Store 57(f) 81
-              84:      6(int) Load 40(e)
-              85:   15(float) ConvertSToF 84
-              86:   16(fvec4) Load 18(ret)
-              87:   16(fvec4) VectorTimesScalar 86 85
-              88:   16(fvec4) Load 57(f)
-              89:   16(fvec4) FAdd 87 88
-                              Store 83(@entryPointOutput) 89
+       91(input):      8(ptr) Variable Function
+       97(param):      8(ptr) Variable Function
+              94:    7(fvec4) Load 93(input)
+                              Store 91(input) 94
+              98:    7(fvec4) Load 91(input)
+                              Store 97(param) 98
+              99:    7(fvec4) FunctionCall 11(@PixelShaderFunction(vf4;) 97(param)
+                              Store 96(@entryPointOutput) 99
                               Return
+                              FunctionEnd
+11(@PixelShaderFunction(vf4;):    7(fvec4) Function None 9
+       10(input):      8(ptr) FunctionParameter
+              12:             Label
+           15(a):     14(ptr) Variable Function
+           17(b):     14(ptr) Variable Function
+           19(c):     14(ptr) Variable Function
+           21(d):     14(ptr) Variable Function
+         22(ret):      8(ptr) Variable Function
+           42(e):     14(ptr) Variable Function
+              43:     14(ptr) Variable Function
+              51:     14(ptr) Variable Function
+           59(f):      8(ptr) Variable Function
+              60:      8(ptr) Variable Function
+                              Store 15(a) 16
+                              Store 17(b) 18
+                              Store 19(c) 20
+                              Store 21(d) 20
+              23:     13(int) Load 15(a)
+              24:    6(float) ConvertSToF 23
+              25:    7(fvec4) Load 10(input)
+              26:    7(fvec4) VectorTimesScalar 25 24
+              27:     13(int) Load 17(b)
+              28:    6(float) ConvertSToF 27
+              29:    7(fvec4) Load 10(input)
+              30:    7(fvec4) VectorTimesScalar 29 28
+              31:    7(fvec4) FAdd 26 30
+              32:     13(int) Load 19(c)
+              33:    6(float) ConvertSToF 32
+              34:    7(fvec4) Load 10(input)
+              35:    7(fvec4) VectorTimesScalar 34 33
+              36:    7(fvec4) FAdd 31 35
+              37:     13(int) Load 21(d)
+              38:    6(float) ConvertSToF 37
+              39:    7(fvec4) Load 10(input)
+              40:    7(fvec4) VectorTimesScalar 39 38
+              41:    7(fvec4) FAdd 36 40
+                              Store 22(ret) 41
+              44:     13(int) Load 17(b)
+                              SelectionMerge 46 None
+                              BranchConditional 44 45 48
+              45:               Label
+              47:     13(int)   Load 21(d)
+                                Store 19(c) 47
+                                Store 43 47
+                                Branch 46
+              48:               Label
+                                Store 43 49
+                                Branch 46
+              46:             Label
+              50:     13(int) Load 43
+                              Store 15(a) 50
+                              Store 42(e) 50
+              52:     13(int) Load 15(a)
+                              SelectionMerge 54 None
+                              BranchConditional 52 53 56
+              53:               Label
+              55:     13(int)   Load 19(c)
+                                Store 21(d) 55
+                                Store 51 55
+                                Branch 54
+              56:               Label
+                                Store 51 57
+                                Branch 54
+              54:             Label
+              58:     13(int) Load 51
+                              Store 17(b) 58
+              64:     63(ptr) AccessChain 22(ret) 62
+              65:    6(float) Load 64
+              67:     63(ptr) AccessChain 10(input) 66
+              68:    6(float) Load 67
+              70:    69(bool) FOrdLessThan 65 68
+                              SelectionMerge 72 None
+                              BranchConditional 70 71 77
+              71:               Label
+              73:     13(int)   Load 19(c)
+              74:    6(float)   ConvertSToF 73
+              75:    7(fvec4)   Load 10(input)
+              76:    7(fvec4)   VectorTimesScalar 75 74
+                                Store 60 76
+                                Branch 72
+              77:               Label
+              78:     13(int)   Load 21(d)
+              79:    6(float)   ConvertSToF 78
+              80:    7(fvec4)   Load 10(input)
+              81:    7(fvec4)   VectorTimesScalar 80 79
+                                Store 60 81
+                                Branch 72
+              72:             Label
+              82:    7(fvec4) Load 60
+                              Store 59(f) 82
+              83:     13(int) Load 42(e)
+              84:    6(float) ConvertSToF 83
+              85:    7(fvec4) Load 22(ret)
+              86:    7(fvec4) VectorTimesScalar 85 84
+              87:    7(fvec4) Load 59(f)
+              88:    7(fvec4) FAdd 86 87
+                              ReturnValue 88
                               FunctionEnd

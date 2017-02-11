@@ -60,6 +60,7 @@ namespace glslang {
         EatOutputTopology,
         EatPartitioning,
         EatPatchConstantFunc,
+        EatPatchSize,
         EatUnroll,
     };
 }

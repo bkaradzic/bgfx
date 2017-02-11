@@ -232,6 +232,8 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
         switch (ch) {
         default:
             // Single character token, including EndOfInput, '#' and '\' (escaped newlines are handled at a lower level, so this is just a '\' token)
+            if (ch > PpAtomMaxSingle)
+                ch = PpAtomBadToken;
             return ch;
 
         case 'A': case 'B': case 'C': case 'D': case 'E':

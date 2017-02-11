@@ -1748,17 +1748,72 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
     }
 }
 
+// This path handles both if-then-else and ?:
+// The if-then-else has a node type of void, while
+// ?: has either a void or a non-void node type
+//
+// Leaving the result, when not void:
+// GLSL only has r-values as the result of a :?, but
+// if we have an l-value, that can be more efficient if it will
+// become the base of a complex r-value expression, because the
+// next layer copies r-values into memory to use the access-chain mechanism
 bool TGlslangToSpvTraverser::visitSelection(glslang::TVisit /* visit */, glslang::TIntermSelection* node)
 {
-    // This path handles both if-then-else and ?:
-    // The if-then-else has a node type of void, while
-    // ?: has a non-void node type
-    spv::Id result = 0;
-    if (node->getBasicType() != glslang::EbtVoid) {
-        // don't handle this as just on-the-fly temporaries, because there will be two names
-        // and better to leave SSA to later passes
-        result = builder.createVariable(spv::StorageClassFunction, convertGlslangToSpvType(node->getType()));
+    // See if it simple and safe to generate OpSelect instead of using control flow.
+    // Crucially, side effects must be avoided, and there are performance trade-offs.
+    // Return true if good idea (and safe) for OpSelect, false otherwise.
+    const auto selectPolicy = [&]() -> bool {
+        if (node->getBasicType() == glslang::EbtVoid)
+            return false;
+
+        if (node->getTrueBlock()  == nullptr ||
+            node->getFalseBlock() == nullptr)
+            return false;
+
+        assert(node->getType() == node->getTrueBlock() ->getAsTyped()->getType() &&
+               node->getType() == node->getFalseBlock()->getAsTyped()->getType());
+
+        // return true if a single operand to ? : is okay for OpSelect
+        const auto operandOkay = [](glslang::TIntermTyped* node) {
+            return node->getAsSymbolNode() || node->getType().getQualifier().isConstant();
+        };
+
+        return operandOkay(node->getTrueBlock() ->getAsTyped()) &&
+               operandOkay(node->getFalseBlock()->getAsTyped());
+    };
+
+    // Emit OpSelect for this selection.
+    const auto handleAsOpSelect = [&]() {
+        node->getCondition()->traverse(this);
+        spv::Id condition = accessChainLoad(node->getCondition()->getType());
+        node->getTrueBlock()->traverse(this);
+        spv::Id trueValue = accessChainLoad(node->getTrueBlock()->getAsTyped()->getType());
+        node->getFalseBlock()->traverse(this);
+        spv::Id falseValue = accessChainLoad(node->getTrueBlock()->getAsTyped()->getType());
+
+        spv::Id select = builder.createTriOp(spv::OpSelect, convertGlslangToSpvType(node->getType()), condition, trueValue, falseValue);
+        builder.clearAccessChain();
+        builder.setAccessChainRValue(select);
+    };
+
+    // Try for OpSelect
+
+    if (selectPolicy()) {
+        SpecConstantOpModeGuard spec_constant_op_mode_setter(&builder);
+        if (node->getType().getQualifier().isSpecConstant())
+            spec_constant_op_mode_setter.turnOnSpecConstantOpMode();
+
+        handleAsOpSelect();
+        return false;
     }
+
+    // Instead, emit control flow...
+
+    // Don't handle results as temporaries, because there will be two names
+    // and better to leave SSA to later passes.
+    spv::Id result = (node->getBasicType() == glslang::EbtVoid)
+                        ? spv::NoResult
+                        : builder.createVariable(spv::StorageClassFunction, convertGlslangToSpvType(node->getType()));
 
     // emit the condition before doing anything with selection
     node->getCondition()->traverse(this);
@@ -1766,24 +1821,25 @@ bool TGlslangToSpvTraverser::visitSelection(glslang::TVisit /* visit */, glslang
     // make an "if" based on the value created by the condition
     spv::Builder::If ifBuilder(accessChainLoad(node->getCondition()->getType()), builder);
 
-    if (node->getTrueBlock()) {
-        // emit the "then" statement
+    // emit the "then" statement
+    if (node->getTrueBlock() != nullptr) {
         node->getTrueBlock()->traverse(this);
-        if (result)
-            builder.createStore(accessChainLoad(node->getTrueBlock()->getAsTyped()->getType()), result);
+        if (result != spv::NoResult)
+             builder.createStore(accessChainLoad(node->getTrueBlock()->getAsTyped()->getType()), result);
     }
 
-    if (node->getFalseBlock()) {
+    if (node->getFalseBlock() != nullptr) {
         ifBuilder.makeBeginElse();
         // emit the "else" statement
         node->getFalseBlock()->traverse(this);
-        if (result)
+        if (result != spv::NoResult)
             builder.createStore(accessChainLoad(node->getFalseBlock()->getAsTyped()->getType()), result);
     }
 
+    // finish off the control flow
     ifBuilder.makeEndIf();
 
-    if (result) {
+    if (result != spv::NoResult) {
         // GLSL only has r-values as the result of a :?, but
         // if we have an l-value, that can be more efficient if it will
         // become the base of a complex r-value expression, because the
@@ -2248,8 +2304,10 @@ void TGlslangToSpvTraverser::decorateStructType(const glslang::TType& type,
             addMemberDecoration(spvType, member, TranslateLayoutDecoration(glslangMember, memberQualifier.layoutMatrix));
             addMemberDecoration(spvType, member, TranslatePrecisionDecoration(glslangMember));
             // Add interpolation and auxiliary storage decorations only to top-level members of Input and Output storage classes
-            if (type.getQualifier().storage == glslang::EvqVaryingIn || type.getQualifier().storage == glslang::EvqVaryingOut) {
-                if (type.getBasicType() == glslang::EbtBlock) {
+            if (type.getQualifier().storage == glslang::EvqVaryingIn ||
+                type.getQualifier().storage == glslang::EvqVaryingOut) {
+                if (type.getBasicType() == glslang::EbtBlock ||
+                    glslangIntermediate->getSource() == glslang::EShSourceHlsl) {
                     addMemberDecoration(spvType, member, TranslateInterpolationDecoration(memberQualifier));
                     addMemberDecoration(spvType, member, TranslateAuxiliaryStorageDecoration(memberQualifier));
                 }

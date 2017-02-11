@@ -2,7 +2,7 @@ hlsl.rw.atomics.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:45  Function Definition: main( (temp structure{temp 4-component vector of float Color})
+0:45  Function Definition: @main( (temp structure{temp 4-component vector of float Color})
 0:45    Function Parameters: 
 0:?     Sequence
 0:50      imageAtomicAdd (temp int)
@@ -1935,17 +1935,19 @@ gl_FragCoord origin is upper left
 0:242          1.000000
 0:242          1.000000
 0:242          1.000000
-0:243      Sequence
-0:243        Sequence
-0:243          move second child to first child (temp 4-component vector of float)
-0:?             'Color' (layout(location=0 ) out 4-component vector of float)
-0:243            Color: direct index for structure (temp 4-component vector of float)
-0:243              'psout' (temp structure{temp 4-component vector of float Color})
-0:243              Constant:
-0:243                0 (const int)
-0:243        Branch: Return
+0:243      Branch: Return with expression
+0:243        'psout' (temp structure{temp 4-component vector of float Color})
+0:45  Function Definition: main( (temp void)
+0:45    Function Parameters: 
+0:?     Sequence
+0:45      Sequence
+0:45        move second child to first child (temp 4-component vector of float)
+0:?           'Color' (layout(location=0 ) out 4-component vector of float)
+0:45          Color: direct index for structure (temp 4-component vector of float)
+0:45            Function Call: @main( (temp structure{temp 4-component vector of float Color})
+0:45            Constant:
+0:45              0 (const int)
 0:?   Linker Objects
-0:?     'Color' (layout(location=0 ) out 4-component vector of float)
 0:?     'g_sSamp' (uniform sampler)
 0:?     'g_tTex1df1' (layout(r32f ) uniform image1D)
 0:?     'g_tTex1di1' (layout(r32i ) uniform iimage1D)
@@ -1965,6 +1967,7 @@ gl_FragCoord origin is upper left
 0:?     'g_tBuffF' (layout(r32f ) uniform imageBuffer)
 0:?     'g_tBuffI' (layout(r32i ) uniform iimageBuffer)
 0:?     'g_tBuffU' (layout(r32ui ) uniform uimageBuffer)
+0:?     'Color' (layout(location=0 ) out 4-component vector of float)
 0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform uint u1, layout(offset=8 ) uniform 2-component vector of uint u2, layout(offset=16 ) uniform 3-component vector of uint u3, layout(offset=28 ) uniform uint u1b, layout(offset=32 ) uniform uint u1c, layout(offset=36 ) uniform int i1, layout(offset=40 ) uniform 2-component vector of int i2, layout(offset=48 ) uniform 3-component vector of int i3, layout(offset=60 ) uniform int i1b, layout(offset=64 ) uniform int i1c})
 
 
@@ -1974,7 +1977,7 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:45  Function Definition: main( (temp structure{temp 4-component vector of float Color})
+0:45  Function Definition: @main( (temp structure{temp 4-component vector of float Color})
 0:45    Function Parameters: 
 0:?     Sequence
 0:50      imageAtomicAdd (temp int)
@@ -3907,17 +3910,19 @@ gl_FragCoord origin is upper left
 0:242          1.000000
 0:242          1.000000
 0:242          1.000000
-0:243      Sequence
-0:243        Sequence
-0:243          move second child to first child (temp 4-component vector of float)
-0:?             'Color' (layout(location=0 ) out 4-component vector of float)
-0:243            Color: direct index for structure (temp 4-component vector of float)
-0:243              'psout' (temp structure{temp 4-component vector of float Color})
-0:243              Constant:
-0:243                0 (const int)
-0:243        Branch: Return
+0:243      Branch: Return with expression
+0:243        'psout' (temp structure{temp 4-component vector of float Color})
+0:45  Function Definition: main( (temp void)
+0:45    Function Parameters: 
+0:?     Sequence
+0:45      Sequence
+0:45        move second child to first child (temp 4-component vector of float)
+0:?           'Color' (layout(location=0 ) out 4-component vector of float)
+0:45          Color: direct index for structure (temp 4-component vector of float)
+0:45            Function Call: @main( (temp structure{temp 4-component vector of float Color})
+0:45            Constant:
+0:45              0 (const int)
 0:?   Linker Objects
-0:?     'Color' (layout(location=0 ) out 4-component vector of float)
 0:?     'g_sSamp' (uniform sampler)
 0:?     'g_tTex1df1' (layout(r32f ) uniform image1D)
 0:?     'g_tTex1di1' (layout(r32i ) uniform iimage1D)
@@ -3937,1325 +3942,1333 @@ gl_FragCoord origin is upper left
 0:?     'g_tBuffF' (layout(r32f ) uniform imageBuffer)
 0:?     'g_tBuffI' (layout(r32i ) uniform iimageBuffer)
 0:?     'g_tBuffU' (layout(r32ui ) uniform uimageBuffer)
+0:?     'Color' (layout(location=0 ) out 4-component vector of float)
 0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform uint u1, layout(offset=8 ) uniform 2-component vector of uint u2, layout(offset=16 ) uniform 3-component vector of uint u3, layout(offset=28 ) uniform uint u1b, layout(offset=32 ) uniform uint u1c, layout(offset=36 ) uniform int i1, layout(offset=40 ) uniform 2-component vector of int i2, layout(offset=48 ) uniform 3-component vector of int i3, layout(offset=60 ) uniform int i1b, layout(offset=64 ) uniform int i1c})
 
 // Module Version 10000
 // Generated by (magic number): 80001
-// Id's are bound by 1142
+// Id's are bound by 1147
 
                               Capability Shader
                               Capability Sampled1D
                               Capability SampledBuffer
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
-                              EntryPoint Fragment 4  "main" 1111
+                              EntryPoint Fragment 4  "main" 1117
                               ExecutionMode 4 OriginUpperLeft
                               Name 4  "main"
-                              Name 9  "g_tTex1di1"
-                              Name 15  "$Global"
-                              MemberName 15($Global) 0  "u1"
-                              MemberName 15($Global) 1  "u2"
-                              MemberName 15($Global) 2  "u3"
-                              MemberName 15($Global) 3  "u1b"
-                              MemberName 15($Global) 4  "u1c"
-                              MemberName 15($Global) 5  "i1"
-                              MemberName 15($Global) 6  "i2"
-                              MemberName 15($Global) 7  "i3"
-                              MemberName 15($Global) 8  "i1b"
-                              MemberName 15($Global) 9  "i1c"
-                              Name 17  ""
-                              Name 31  "out_i1"
-                              Name 115  "g_tTex1du1"
-                              Name 126  "out_u1"
-                              Name 211  "g_tTex2di1"
-                              Name 302  "g_tTex2du1"
-                              Name 393  "g_tTex3di1"
-                              Name 484  "g_tTex3du1"
-                              Name 575  "g_tTex1di1a"
-                              Name 664  "g_tTex1du1a"
-                              Name 925  "g_tBuffI"
-                              Name 1014  "g_tBuffU"
-                              Name 1103  "PS_OUTPUT"
-                              MemberName 1103(PS_OUTPUT) 0  "Color"
-                              Name 1105  "psout"
-                              Name 1111  "Color"
-                              Name 1117  "g_sSamp"
-                              Name 1120  "g_tTex1df1"
-                              Name 1123  "g_tTex2df1"
-                              Name 1126  "g_tTex3df1"
-                              Name 1129  "g_tTex1df1a"
-                              Name 1132  "g_tTex2df1a"
-                              Name 1135  "g_tTex2di1a"
-                              Name 1138  "g_tTex2du1a"
-                              Name 1141  "g_tBuffF"
-                              Decorate 9(g_tTex1di1) DescriptorSet 0
-                              MemberDecorate 15($Global) 0 Offset 0
-                              MemberDecorate 15($Global) 1 Offset 8
-                              MemberDecorate 15($Global) 2 Offset 16
-                              MemberDecorate 15($Global) 3 Offset 28
-                              MemberDecorate 15($Global) 4 Offset 32
-                              MemberDecorate 15($Global) 5 Offset 36
-                              MemberDecorate 15($Global) 6 Offset 40
-                              MemberDecorate 15($Global) 7 Offset 48
-                              MemberDecorate 15($Global) 8 Offset 60
-                              MemberDecorate 15($Global) 9 Offset 64
-                              Decorate 15($Global) Block
-                              Decorate 17 DescriptorSet 0
-                              Decorate 115(g_tTex1du1) DescriptorSet 0
-                              Decorate 211(g_tTex2di1) DescriptorSet 0
-                              Decorate 302(g_tTex2du1) DescriptorSet 0
-                              Decorate 393(g_tTex3di1) DescriptorSet 0
-                              Decorate 484(g_tTex3du1) DescriptorSet 0
-                              Decorate 575(g_tTex1di1a) DescriptorSet 0
-                              Decorate 664(g_tTex1du1a) DescriptorSet 0
-                              Decorate 925(g_tBuffI) DescriptorSet 0
-                              Decorate 1014(g_tBuffU) DescriptorSet 0
-                              Decorate 1111(Color) Location 0
-                              Decorate 1117(g_sSamp) DescriptorSet 0
-                              Decorate 1120(g_tTex1df1) DescriptorSet 0
-                              Decorate 1123(g_tTex2df1) DescriptorSet 0
-                              Decorate 1126(g_tTex3df1) DescriptorSet 0
-                              Decorate 1129(g_tTex1df1a) DescriptorSet 0
-                              Decorate 1132(g_tTex2df1a) DescriptorSet 0
-                              Decorate 1135(g_tTex2di1a) DescriptorSet 0
-                              Decorate 1138(g_tTex2du1a) DescriptorSet 0
-                              Decorate 1141(g_tBuffF) DescriptorSet 0
+                              Name 8  "PS_OUTPUT"
+                              MemberName 8(PS_OUTPUT) 0  "Color"
+                              Name 10  "@main("
+                              Name 15  "g_tTex1di1"
+                              Name 21  "$Global"
+                              MemberName 21($Global) 0  "u1"
+                              MemberName 21($Global) 1  "u2"
+                              MemberName 21($Global) 2  "u3"
+                              MemberName 21($Global) 3  "u1b"
+                              MemberName 21($Global) 4  "u1c"
+                              MemberName 21($Global) 5  "i1"
+                              MemberName 21($Global) 6  "i2"
+                              MemberName 21($Global) 7  "i3"
+                              MemberName 21($Global) 8  "i1b"
+                              MemberName 21($Global) 9  "i1c"
+                              Name 23  ""
+                              Name 37  "out_i1"
+                              Name 121  "g_tTex1du1"
+                              Name 132  "out_u1"
+                              Name 217  "g_tTex2di1"
+                              Name 308  "g_tTex2du1"
+                              Name 399  "g_tTex3di1"
+                              Name 490  "g_tTex3du1"
+                              Name 581  "g_tTex1di1a"
+                              Name 670  "g_tTex1du1a"
+                              Name 931  "g_tBuffI"
+                              Name 1020  "g_tBuffU"
+                              Name 1108  "psout"
+                              Name 1117  "Color"
+                              Name 1122  "g_sSamp"
+                              Name 1125  "g_tTex1df1"
+                              Name 1128  "g_tTex2df1"
+                              Name 1131  "g_tTex3df1"
+                              Name 1134  "g_tTex1df1a"
+                              Name 1137  "g_tTex2df1a"
+                              Name 1140  "g_tTex2di1a"
+                              Name 1143  "g_tTex2du1a"
+                              Name 1146  "g_tBuffF"
+                              Decorate 15(g_tTex1di1) DescriptorSet 0
+                              MemberDecorate 21($Global) 0 Offset 0
+                              MemberDecorate 21($Global) 1 Offset 8
+                              MemberDecorate 21($Global) 2 Offset 16
+                              MemberDecorate 21($Global) 3 Offset 28
+                              MemberDecorate 21($Global) 4 Offset 32
+                              MemberDecorate 21($Global) 5 Offset 36
+                              MemberDecorate 21($Global) 6 Offset 40
+                              MemberDecorate 21($Global) 7 Offset 48
+                              MemberDecorate 21($Global) 8 Offset 60
+                              MemberDecorate 21($Global) 9 Offset 64
+                              Decorate 21($Global) Block
+                              Decorate 23 DescriptorSet 0
+                              Decorate 121(g_tTex1du1) DescriptorSet 0
+                              Decorate 217(g_tTex2di1) DescriptorSet 0
+                              Decorate 308(g_tTex2du1) DescriptorSet 0
+                              Decorate 399(g_tTex3di1) DescriptorSet 0
+                              Decorate 490(g_tTex3du1) DescriptorSet 0
+                              Decorate 581(g_tTex1di1a) DescriptorSet 0
+                              Decorate 670(g_tTex1du1a) DescriptorSet 0
+                              Decorate 931(g_tBuffI) DescriptorSet 0
+                              Decorate 1020(g_tBuffU) DescriptorSet 0
+                              Decorate 1117(Color) Location 0
+                              Decorate 1122(g_sSamp) DescriptorSet 0
+                              Decorate 1125(g_tTex1df1) DescriptorSet 0
+                              Decorate 1128(g_tTex2df1) DescriptorSet 0
+                              Decorate 1131(g_tTex3df1) DescriptorSet 0
+                              Decorate 1134(g_tTex1df1a) DescriptorSet 0
+                              Decorate 1137(g_tTex2df1a) DescriptorSet 0
+                              Decorate 1140(g_tTex2di1a) DescriptorSet 0
+                              Decorate 1143(g_tTex2du1a) DescriptorSet 0
+                              Decorate 1146(g_tBuffF) DescriptorSet 0
                2:             TypeVoid
                3:             TypeFunction 2
-               6:             TypeInt 32 1
-               7:             TypeImage 6(int) 1D nonsampled format:R32i
-               8:             TypePointer UniformConstant 7
-   9(g_tTex1di1):      8(ptr) Variable UniformConstant
-              10:             TypeInt 32 0
-              11:             TypeVector 10(int) 2
-              12:             TypeVector 10(int) 3
-              13:             TypeVector 6(int) 2
-              14:             TypeVector 6(int) 3
-     15($Global):             TypeStruct 10(int) 11(ivec2) 12(ivec3) 10(int) 10(int) 6(int) 13(ivec2) 14(ivec3) 6(int) 6(int)
-              16:             TypePointer Uniform 15($Global)
-              17:     16(ptr) Variable Uniform
-              18:      6(int) Constant 5
-              19:             TypePointer Uniform 6(int)
-              22:      6(int) Constant 8
-              25:     10(int) Constant 0
-              26:             TypePointer Image 6(int)
-              28:     10(int) Constant 1
-              30:             TypePointer Function 6(int)
-              54:      6(int) Constant 9
-             113:             TypeImage 10(int) 1D nonsampled format:R32ui
-             114:             TypePointer UniformConstant 113
- 115(g_tTex1du1):    114(ptr) Variable UniformConstant
-             116:      6(int) Constant 0
-             117:             TypePointer Uniform 10(int)
-             122:             TypePointer Image 10(int)
-             125:             TypePointer Function 10(int)
-             147:      6(int) Constant 3
-             150:      6(int) Constant 4
-             209:             TypeImage 6(int) 2D nonsampled format:R32i
-             210:             TypePointer UniformConstant 209
- 211(g_tTex2di1):    210(ptr) Variable UniformConstant
-             212:      6(int) Constant 6
-             213:             TypePointer Uniform 13(ivec2)
-             300:             TypeImage 10(int) 2D nonsampled format:R32ui
-             301:             TypePointer UniformConstant 300
- 302(g_tTex2du1):    301(ptr) Variable UniformConstant
-             303:      6(int) Constant 1
-             304:             TypePointer Uniform 11(ivec2)
-             391:             TypeImage 6(int) 3D nonsampled format:R32i
-             392:             TypePointer UniformConstant 391
- 393(g_tTex3di1):    392(ptr) Variable UniformConstant
-             394:      6(int) Constant 7
-             395:             TypePointer Uniform 14(ivec3)
-             482:             TypeImage 10(int) 3D nonsampled format:R32ui
-             483:             TypePointer UniformConstant 482
- 484(g_tTex3du1):    483(ptr) Variable UniformConstant
-             485:      6(int) Constant 2
-             486:             TypePointer Uniform 12(ivec3)
-             573:             TypeImage 6(int) 1D array nonsampled format:R32i
-             574:             TypePointer UniformConstant 573
-575(g_tTex1di1a):    574(ptr) Variable UniformConstant
-             662:             TypeImage 10(int) 1D array nonsampled format:R32ui
-             663:             TypePointer UniformConstant 662
-664(g_tTex1du1a):    663(ptr) Variable UniformConstant
-             923:             TypeImage 6(int) Buffer nonsampled format:R32i
-             924:             TypePointer UniformConstant 923
-   925(g_tBuffI):    924(ptr) Variable UniformConstant
-            1012:             TypeImage 10(int) Buffer nonsampled format:R32ui
-            1013:             TypePointer UniformConstant 1012
-  1014(g_tBuffU):   1013(ptr) Variable UniformConstant
-            1101:             TypeFloat 32
-            1102:             TypeVector 1101(float) 4
- 1103(PS_OUTPUT):             TypeStruct 1102(fvec4)
-            1104:             TypePointer Function 1103(PS_OUTPUT)
-            1106: 1101(float) Constant 1065353216
-            1107: 1102(fvec4) ConstantComposite 1106 1106 1106 1106
-            1108:             TypePointer Function 1102(fvec4)
-            1110:             TypePointer Output 1102(fvec4)
-     1111(Color):   1110(ptr) Variable Output
-            1115:             TypeSampler
-            1116:             TypePointer UniformConstant 1115
-   1117(g_sSamp):   1116(ptr) Variable UniformConstant
-            1118:             TypeImage 1101(float) 1D nonsampled format:R32f
-            1119:             TypePointer UniformConstant 1118
-1120(g_tTex1df1):   1119(ptr) Variable UniformConstant
-            1121:             TypeImage 1101(float) 2D nonsampled format:R32f
-            1122:             TypePointer UniformConstant 1121
-1123(g_tTex2df1):   1122(ptr) Variable UniformConstant
-            1124:             TypeImage 1101(float) 3D nonsampled format:R32f
-            1125:             TypePointer UniformConstant 1124
-1126(g_tTex3df1):   1125(ptr) Variable UniformConstant
-            1127:             TypeImage 1101(float) 1D array nonsampled format:R32f
-            1128:             TypePointer UniformConstant 1127
-1129(g_tTex1df1a):   1128(ptr) Variable UniformConstant
-            1130:             TypeImage 1101(float) 2D array nonsampled format:R32f
-            1131:             TypePointer UniformConstant 1130
-1132(g_tTex2df1a):   1131(ptr) Variable UniformConstant
-            1133:             TypeImage 6(int) 2D array nonsampled format:R32i
-            1134:             TypePointer UniformConstant 1133
-1135(g_tTex2di1a):   1134(ptr) Variable UniformConstant
-            1136:             TypeImage 10(int) 2D array nonsampled format:R32ui
-            1137:             TypePointer UniformConstant 1136
-1138(g_tTex2du1a):   1137(ptr) Variable UniformConstant
-            1139:             TypeImage 1101(float) Buffer nonsampled format:R32f
-            1140:             TypePointer UniformConstant 1139
-  1141(g_tBuffF):   1140(ptr) Variable UniformConstant
+               6:             TypeFloat 32
+               7:             TypeVector 6(float) 4
+    8(PS_OUTPUT):             TypeStruct 7(fvec4)
+               9:             TypeFunction 8(PS_OUTPUT)
+              12:             TypeInt 32 1
+              13:             TypeImage 12(int) 1D nonsampled format:R32i
+              14:             TypePointer UniformConstant 13
+  15(g_tTex1di1):     14(ptr) Variable UniformConstant
+              16:             TypeInt 32 0
+              17:             TypeVector 16(int) 2
+              18:             TypeVector 16(int) 3
+              19:             TypeVector 12(int) 2
+              20:             TypeVector 12(int) 3
+     21($Global):             TypeStruct 16(int) 17(ivec2) 18(ivec3) 16(int) 16(int) 12(int) 19(ivec2) 20(ivec3) 12(int) 12(int)
+              22:             TypePointer Uniform 21($Global)
+              23:     22(ptr) Variable Uniform
+              24:     12(int) Constant 5
+              25:             TypePointer Uniform 12(int)
+              28:     12(int) Constant 8
+              31:     16(int) Constant 0
+              32:             TypePointer Image 12(int)
+              34:     16(int) Constant 1
+              36:             TypePointer Function 12(int)
+              60:     12(int) Constant 9
+             119:             TypeImage 16(int) 1D nonsampled format:R32ui
+             120:             TypePointer UniformConstant 119
+ 121(g_tTex1du1):    120(ptr) Variable UniformConstant
+             122:     12(int) Constant 0
+             123:             TypePointer Uniform 16(int)
+             128:             TypePointer Image 16(int)
+             131:             TypePointer Function 16(int)
+             153:     12(int) Constant 3
+             156:     12(int) Constant 4
+             215:             TypeImage 12(int) 2D nonsampled format:R32i
+             216:             TypePointer UniformConstant 215
+ 217(g_tTex2di1):    216(ptr) Variable UniformConstant
+             218:     12(int) Constant 6
+             219:             TypePointer Uniform 19(ivec2)
+             306:             TypeImage 16(int) 2D nonsampled format:R32ui
+             307:             TypePointer UniformConstant 306
+ 308(g_tTex2du1):    307(ptr) Variable UniformConstant
+             309:     12(int) Constant 1
+             310:             TypePointer Uniform 17(ivec2)
+             397:             TypeImage 12(int) 3D nonsampled format:R32i
+             398:             TypePointer UniformConstant 397
+ 399(g_tTex3di1):    398(ptr) Variable UniformConstant
+             400:     12(int) Constant 7
+             401:             TypePointer Uniform 20(ivec3)
+             488:             TypeImage 16(int) 3D nonsampled format:R32ui
+             489:             TypePointer UniformConstant 488
+ 490(g_tTex3du1):    489(ptr) Variable UniformConstant
+             491:     12(int) Constant 2
+             492:             TypePointer Uniform 18(ivec3)
+             579:             TypeImage 12(int) 1D array nonsampled format:R32i
+             580:             TypePointer UniformConstant 579
+581(g_tTex1di1a):    580(ptr) Variable UniformConstant
+             668:             TypeImage 16(int) 1D array nonsampled format:R32ui
+             669:             TypePointer UniformConstant 668
+670(g_tTex1du1a):    669(ptr) Variable UniformConstant
+             929:             TypeImage 12(int) Buffer nonsampled format:R32i
+             930:             TypePointer UniformConstant 929
+   931(g_tBuffI):    930(ptr) Variable UniformConstant
+            1018:             TypeImage 16(int) Buffer nonsampled format:R32ui
+            1019:             TypePointer UniformConstant 1018
+  1020(g_tBuffU):   1019(ptr) Variable UniformConstant
+            1107:             TypePointer Function 8(PS_OUTPUT)
+            1109:    6(float) Constant 1065353216
+            1110:    7(fvec4) ConstantComposite 1109 1109 1109 1109
+            1111:             TypePointer Function 7(fvec4)
+            1116:             TypePointer Output 7(fvec4)
+     1117(Color):   1116(ptr) Variable Output
+            1120:             TypeSampler
+            1121:             TypePointer UniformConstant 1120
+   1122(g_sSamp):   1121(ptr) Variable UniformConstant
+            1123:             TypeImage 6(float) 1D nonsampled format:R32f
+            1124:             TypePointer UniformConstant 1123
+1125(g_tTex1df1):   1124(ptr) Variable UniformConstant
+            1126:             TypeImage 6(float) 2D nonsampled format:R32f
+            1127:             TypePointer UniformConstant 1126
+1128(g_tTex2df1):   1127(ptr) Variable UniformConstant
+            1129:             TypeImage 6(float) 3D nonsampled format:R32f
+            1130:             TypePointer UniformConstant 1129
+1131(g_tTex3df1):   1130(ptr) Variable UniformConstant
+            1132:             TypeImage 6(float) 1D array nonsampled format:R32f
+            1133:             TypePointer UniformConstant 1132
+1134(g_tTex1df1a):   1133(ptr) Variable UniformConstant
+            1135:             TypeImage 6(float) 2D array nonsampled format:R32f
+            1136:             TypePointer UniformConstant 1135
+1137(g_tTex2df1a):   1136(ptr) Variable UniformConstant
+            1138:             TypeImage 12(int) 2D array nonsampled format:R32i
+            1139:             TypePointer UniformConstant 1138
+1140(g_tTex2di1a):   1139(ptr) Variable UniformConstant
+            1141:             TypeImage 16(int) 2D array nonsampled format:R32ui
+            1142:             TypePointer UniformConstant 1141
+1143(g_tTex2du1a):   1142(ptr) Variable UniformConstant
+            1144:             TypeImage 6(float) Buffer nonsampled format:R32f
+            1145:             TypePointer UniformConstant 1144
+  1146(g_tBuffF):   1145(ptr) Variable UniformConstant
          4(main):           2 Function None 3
                5:             Label
-      31(out_i1):     30(ptr) Variable Function
-     126(out_u1):    125(ptr) Variable Function
-     1105(psout):   1104(ptr) Variable Function
-              20:     19(ptr) AccessChain 17 18
-              21:      6(int) Load 20
-              23:     19(ptr) AccessChain 17 22
-              24:      6(int) Load 23
-              27:     26(ptr) ImageTexelPointer 9(g_tTex1di1) 21 25
-              29:      6(int) AtomicIAdd 27 28 25 24
-              32:     19(ptr) AccessChain 17 18
-              33:      6(int) Load 32
-              34:     19(ptr) AccessChain 17 18
-              35:      6(int) Load 34
-              36:     26(ptr) ImageTexelPointer 9(g_tTex1di1) 33 25
-              37:      6(int) AtomicIAdd 36 28 25 35
-                              Store 31(out_i1) 37
-              38:     19(ptr) AccessChain 17 18
-              39:      6(int) Load 38
-              40:     19(ptr) AccessChain 17 22
-              41:      6(int) Load 40
-              42:     26(ptr) ImageTexelPointer 9(g_tTex1di1) 39 25
-              43:      6(int) AtomicAnd 42 28 25 41
-              44:     19(ptr) AccessChain 17 18
-              45:      6(int) Load 44
-              46:     19(ptr) AccessChain 17 18
-              47:      6(int) Load 46
-              48:     26(ptr) ImageTexelPointer 9(g_tTex1di1) 45 25
-              49:      6(int) AtomicAnd 48 28 25 47
-                              Store 31(out_i1) 49
-              50:     19(ptr) AccessChain 17 18
-              51:      6(int) Load 50
-              52:     19(ptr) AccessChain 17 22
-              53:      6(int) Load 52
-              55:     19(ptr) AccessChain 17 54
-              56:      6(int) Load 55
-              57:     26(ptr) ImageTexelPointer 9(g_tTex1di1) 51 25
-              58:      6(int) AtomicCompareExchange 57 28 25 25 56 53
-                              Store 31(out_i1) 58
-              59:     19(ptr) AccessChain 17 18
-              60:      6(int) Load 59
-              61:     19(ptr) AccessChain 17 18
-              62:      6(int) Load 61
-              63:     26(ptr) ImageTexelPointer 9(g_tTex1di1) 60 25
-              64:      6(int) AtomicExchange 63 28 25 62
-                              Store 31(out_i1) 64
-              65:     19(ptr) AccessChain 17 18
-              66:      6(int) Load 65
-              67:     19(ptr) AccessChain 17 22
-              68:      6(int) Load 67
-              69:     26(ptr) ImageTexelPointer 9(g_tTex1di1) 66 25
-              70:      6(int) AtomicSMax 69 28 25 68
-              71:     19(ptr) AccessChain 17 18
-              72:      6(int) Load 71
-              73:     19(ptr) AccessChain 17 18
-              74:      6(int) Load 73
-              75:     26(ptr) ImageTexelPointer 9(g_tTex1di1) 72 25
-              76:      6(int) AtomicSMax 75 28 25 74
-                              Store 31(out_i1) 76
-              77:     19(ptr) AccessChain 17 18
-              78:      6(int) Load 77
-              79:     19(ptr) AccessChain 17 22
-              80:      6(int) Load 79
-              81:     26(ptr) ImageTexelPointer 9(g_tTex1di1) 78 25
-              82:      6(int) AtomicSMin 81 28 25 80
-              83:     19(ptr) AccessChain 17 18
-              84:      6(int) Load 83
-              85:     19(ptr) AccessChain 17 18
-              86:      6(int) Load 85
-              87:     26(ptr) ImageTexelPointer 9(g_tTex1di1) 84 25
-              88:      6(int) AtomicSMin 87 28 25 86
-                              Store 31(out_i1) 88
-              89:     19(ptr) AccessChain 17 18
-              90:      6(int) Load 89
-              91:     19(ptr) AccessChain 17 22
-              92:      6(int) Load 91
-              93:     26(ptr) ImageTexelPointer 9(g_tTex1di1) 90 25
-              94:      6(int) AtomicOr 93 28 25 92
-              95:     19(ptr) AccessChain 17 18
-              96:      6(int) Load 95
-              97:     19(ptr) AccessChain 17 18
-              98:      6(int) Load 97
-              99:     26(ptr) ImageTexelPointer 9(g_tTex1di1) 96 25
-             100:      6(int) AtomicOr 99 28 25 98
-                              Store 31(out_i1) 100
-             101:     19(ptr) AccessChain 17 18
-             102:      6(int) Load 101
-             103:     19(ptr) AccessChain 17 22
-             104:      6(int) Load 103
-             105:     26(ptr) ImageTexelPointer 9(g_tTex1di1) 102 25
-             106:      6(int) AtomicXor 105 28 25 104
-             107:     19(ptr) AccessChain 17 18
-             108:      6(int) Load 107
-             109:     19(ptr) AccessChain 17 18
-             110:      6(int) Load 109
-             111:     26(ptr) ImageTexelPointer 9(g_tTex1di1) 108 25
-             112:      6(int) AtomicXor 111 28 25 110
-                              Store 31(out_i1) 112
-             118:    117(ptr) AccessChain 17 116
-             119:     10(int) Load 118
-             120:    117(ptr) AccessChain 17 116
-             121:     10(int) Load 120
-             123:    122(ptr) ImageTexelPointer 115(g_tTex1du1) 119 25
-             124:     10(int) AtomicIAdd 123 28 25 121
-             127:    117(ptr) AccessChain 17 116
-             128:     10(int) Load 127
-             129:    117(ptr) AccessChain 17 116
-             130:     10(int) Load 129
-             131:    122(ptr) ImageTexelPointer 115(g_tTex1du1) 128 25
-             132:     10(int) AtomicIAdd 131 28 25 130
-                              Store 126(out_u1) 132
-             133:    117(ptr) AccessChain 17 116
-             134:     10(int) Load 133
-             135:    117(ptr) AccessChain 17 116
-             136:     10(int) Load 135
-             137:    122(ptr) ImageTexelPointer 115(g_tTex1du1) 134 25
-             138:     10(int) AtomicAnd 137 28 25 136
-             139:    117(ptr) AccessChain 17 116
-             140:     10(int) Load 139
-             141:    117(ptr) AccessChain 17 116
-             142:     10(int) Load 141
-             143:    122(ptr) ImageTexelPointer 115(g_tTex1du1) 140 25
-             144:     10(int) AtomicAnd 143 28 25 142
-                              Store 126(out_u1) 144
-             145:    117(ptr) AccessChain 17 116
-             146:     10(int) Load 145
-             148:    117(ptr) AccessChain 17 147
-             149:     10(int) Load 148
-             151:    117(ptr) AccessChain 17 150
-             152:     10(int) Load 151
-             153:    122(ptr) ImageTexelPointer 115(g_tTex1du1) 146 25
-             154:     10(int) AtomicCompareExchange 153 28 25 25 152 149
-                              Store 126(out_u1) 154
-             155:    117(ptr) AccessChain 17 116
-             156:     10(int) Load 155
-             157:    117(ptr) AccessChain 17 116
-             158:     10(int) Load 157
-             159:    122(ptr) ImageTexelPointer 115(g_tTex1du1) 156 25
-             160:     10(int) AtomicExchange 159 28 25 158
-                              Store 126(out_u1) 160
-             161:    117(ptr) AccessChain 17 116
-             162:     10(int) Load 161
-             163:    117(ptr) AccessChain 17 116
-             164:     10(int) Load 163
-             165:    122(ptr) ImageTexelPointer 115(g_tTex1du1) 162 25
-             166:     10(int) AtomicUMax 165 28 25 164
-             167:    117(ptr) AccessChain 17 116
-             168:     10(int) Load 167
-             169:    117(ptr) AccessChain 17 116
-             170:     10(int) Load 169
-             171:    122(ptr) ImageTexelPointer 115(g_tTex1du1) 168 25
-             172:     10(int) AtomicUMax 171 28 25 170
-                              Store 126(out_u1) 172
-             173:    117(ptr) AccessChain 17 116
-             174:     10(int) Load 173
-             175:    117(ptr) AccessChain 17 116
-             176:     10(int) Load 175
-             177:    122(ptr) ImageTexelPointer 115(g_tTex1du1) 174 25
-             178:     10(int) AtomicUMin 177 28 25 176
-             179:    117(ptr) AccessChain 17 116
-             180:     10(int) Load 179
-             181:    117(ptr) AccessChain 17 116
-             182:     10(int) Load 181
-             183:    122(ptr) ImageTexelPointer 115(g_tTex1du1) 180 25
-             184:     10(int) AtomicUMin 183 28 25 182
-                              Store 126(out_u1) 184
-             185:    117(ptr) AccessChain 17 116
-             186:     10(int) Load 185
-             187:    117(ptr) AccessChain 17 116
-             188:     10(int) Load 187
-             189:    122(ptr) ImageTexelPointer 115(g_tTex1du1) 186 25
-             190:     10(int) AtomicOr 189 28 25 188
-             191:    117(ptr) AccessChain 17 116
-             192:     10(int) Load 191
-             193:    117(ptr) AccessChain 17 116
-             194:     10(int) Load 193
-             195:    122(ptr) ImageTexelPointer 115(g_tTex1du1) 192 25
-             196:     10(int) AtomicOr 195 28 25 194
-                              Store 126(out_u1) 196
-             197:    117(ptr) AccessChain 17 116
-             198:     10(int) Load 197
-             199:    117(ptr) AccessChain 17 116
-             200:     10(int) Load 199
-             201:    122(ptr) ImageTexelPointer 115(g_tTex1du1) 198 25
-             202:     10(int) AtomicXor 201 28 25 200
-             203:    117(ptr) AccessChain 17 116
-             204:     10(int) Load 203
-             205:    117(ptr) AccessChain 17 116
-             206:     10(int) Load 205
-             207:    122(ptr) ImageTexelPointer 115(g_tTex1du1) 204 25
-             208:     10(int) AtomicXor 207 28 25 206
-                              Store 126(out_u1) 208
-             214:    213(ptr) AccessChain 17 212
-             215:   13(ivec2) Load 214
-             216:     19(ptr) AccessChain 17 22
-             217:      6(int) Load 216
-             218:     26(ptr) ImageTexelPointer 211(g_tTex2di1) 215 25
-             219:      6(int) AtomicIAdd 218 28 25 217
-             220:    213(ptr) AccessChain 17 212
-             221:   13(ivec2) Load 220
-             222:     19(ptr) AccessChain 17 18
-             223:      6(int) Load 222
-             224:     26(ptr) ImageTexelPointer 211(g_tTex2di1) 221 25
-             225:      6(int) AtomicIAdd 224 28 25 223
-                              Store 31(out_i1) 225
-             226:    213(ptr) AccessChain 17 212
-             227:   13(ivec2) Load 226
-             228:     19(ptr) AccessChain 17 22
-             229:      6(int) Load 228
-             230:     26(ptr) ImageTexelPointer 211(g_tTex2di1) 227 25
-             231:      6(int) AtomicAnd 230 28 25 229
-             232:    213(ptr) AccessChain 17 212
-             233:   13(ivec2) Load 232
-             234:     19(ptr) AccessChain 17 18
-             235:      6(int) Load 234
-             236:     26(ptr) ImageTexelPointer 211(g_tTex2di1) 233 25
-             237:      6(int) AtomicAnd 236 28 25 235
-                              Store 31(out_i1) 237
-             238:    213(ptr) AccessChain 17 212
-             239:   13(ivec2) Load 238
-             240:     19(ptr) AccessChain 17 22
-             241:      6(int) Load 240
-             242:     19(ptr) AccessChain 17 54
-             243:      6(int) Load 242
-             244:     26(ptr) ImageTexelPointer 211(g_tTex2di1) 239 25
-             245:      6(int) AtomicCompareExchange 244 28 25 25 243 241
-                              Store 31(out_i1) 245
-             246:    213(ptr) AccessChain 17 212
-             247:   13(ivec2) Load 246
-             248:     19(ptr) AccessChain 17 18
-             249:      6(int) Load 248
-             250:     26(ptr) ImageTexelPointer 211(g_tTex2di1) 247 25
-             251:      6(int) AtomicExchange 250 28 25 249
-                              Store 31(out_i1) 251
-             252:    213(ptr) AccessChain 17 212
-             253:   13(ivec2) Load 252
-             254:     19(ptr) AccessChain 17 22
-             255:      6(int) Load 254
-             256:     26(ptr) ImageTexelPointer 211(g_tTex2di1) 253 25
-             257:      6(int) AtomicSMax 256 28 25 255
-             258:    213(ptr) AccessChain 17 212
-             259:   13(ivec2) Load 258
-             260:     19(ptr) AccessChain 17 18
-             261:      6(int) Load 260
-             262:     26(ptr) ImageTexelPointer 211(g_tTex2di1) 259 25
-             263:      6(int) AtomicSMax 262 28 25 261
-                              Store 31(out_i1) 263
-             264:    213(ptr) AccessChain 17 212
-             265:   13(ivec2) Load 264
-             266:     19(ptr) AccessChain 17 22
-             267:      6(int) Load 266
-             268:     26(ptr) ImageTexelPointer 211(g_tTex2di1) 265 25
-             269:      6(int) AtomicSMin 268 28 25 267
-             270:    213(ptr) AccessChain 17 212
-             271:   13(ivec2) Load 270
-             272:     19(ptr) AccessChain 17 18
-             273:      6(int) Load 272
-             274:     26(ptr) ImageTexelPointer 211(g_tTex2di1) 271 25
-             275:      6(int) AtomicSMin 274 28 25 273
-                              Store 31(out_i1) 275
-             276:    213(ptr) AccessChain 17 212
-             277:   13(ivec2) Load 276
-             278:     19(ptr) AccessChain 17 22
-             279:      6(int) Load 278
-             280:     26(ptr) ImageTexelPointer 211(g_tTex2di1) 277 25
-             281:      6(int) AtomicOr 280 28 25 279
-             282:    213(ptr) AccessChain 17 212
-             283:   13(ivec2) Load 282
-             284:     19(ptr) AccessChain 17 18
-             285:      6(int) Load 284
-             286:     26(ptr) ImageTexelPointer 211(g_tTex2di1) 283 25
-             287:      6(int) AtomicOr 286 28 25 285
-                              Store 31(out_i1) 287
-             288:    213(ptr) AccessChain 17 212
-             289:   13(ivec2) Load 288
-             290:     19(ptr) AccessChain 17 22
-             291:      6(int) Load 290
-             292:     26(ptr) ImageTexelPointer 211(g_tTex2di1) 289 25
-             293:      6(int) AtomicXor 292 28 25 291
-             294:    213(ptr) AccessChain 17 212
-             295:   13(ivec2) Load 294
-             296:     19(ptr) AccessChain 17 18
-             297:      6(int) Load 296
-             298:     26(ptr) ImageTexelPointer 211(g_tTex2di1) 295 25
-             299:      6(int) AtomicXor 298 28 25 297
-                              Store 31(out_i1) 299
-             305:    304(ptr) AccessChain 17 303
-             306:   11(ivec2) Load 305
-             307:    117(ptr) AccessChain 17 116
-             308:     10(int) Load 307
-             309:    122(ptr) ImageTexelPointer 302(g_tTex2du1) 306 25
-             310:     10(int) AtomicIAdd 309 28 25 308
-             311:    304(ptr) AccessChain 17 303
-             312:   11(ivec2) Load 311
-             313:    117(ptr) AccessChain 17 116
-             314:     10(int) Load 313
-             315:    122(ptr) ImageTexelPointer 302(g_tTex2du1) 312 25
-             316:     10(int) AtomicIAdd 315 28 25 314
-                              Store 126(out_u1) 316
-             317:    304(ptr) AccessChain 17 303
-             318:   11(ivec2) Load 317
-             319:    117(ptr) AccessChain 17 116
-             320:     10(int) Load 319
-             321:    122(ptr) ImageTexelPointer 302(g_tTex2du1) 318 25
-             322:     10(int) AtomicAnd 321 28 25 320
-             323:    304(ptr) AccessChain 17 303
-             324:   11(ivec2) Load 323
-             325:    117(ptr) AccessChain 17 116
-             326:     10(int) Load 325
-             327:    122(ptr) ImageTexelPointer 302(g_tTex2du1) 324 25
-             328:     10(int) AtomicAnd 327 28 25 326
-                              Store 126(out_u1) 328
-             329:    304(ptr) AccessChain 17 303
-             330:   11(ivec2) Load 329
-             331:    117(ptr) AccessChain 17 147
-             332:     10(int) Load 331
-             333:    117(ptr) AccessChain 17 150
-             334:     10(int) Load 333
-             335:    122(ptr) ImageTexelPointer 302(g_tTex2du1) 330 25
-             336:     10(int) AtomicCompareExchange 335 28 25 25 334 332
-                              Store 126(out_u1) 336
-             337:    304(ptr) AccessChain 17 303
-             338:   11(ivec2) Load 337
-             339:    117(ptr) AccessChain 17 116
-             340:     10(int) Load 339
-             341:    122(ptr) ImageTexelPointer 302(g_tTex2du1) 338 25
-             342:     10(int) AtomicExchange 341 28 25 340
-                              Store 126(out_u1) 342
-             343:    304(ptr) AccessChain 17 303
-             344:   11(ivec2) Load 343
-             345:    117(ptr) AccessChain 17 116
-             346:     10(int) Load 345
-             347:    122(ptr) ImageTexelPointer 302(g_tTex2du1) 344 25
-             348:     10(int) AtomicUMax 347 28 25 346
-             349:    304(ptr) AccessChain 17 303
-             350:   11(ivec2) Load 349
-             351:    117(ptr) AccessChain 17 116
-             352:     10(int) Load 351
-             353:    122(ptr) ImageTexelPointer 302(g_tTex2du1) 350 25
-             354:     10(int) AtomicUMax 353 28 25 352
-                              Store 126(out_u1) 354
-             355:    304(ptr) AccessChain 17 303
-             356:   11(ivec2) Load 355
-             357:    117(ptr) AccessChain 17 116
-             358:     10(int) Load 357
-             359:    122(ptr) ImageTexelPointer 302(g_tTex2du1) 356 25
-             360:     10(int) AtomicUMin 359 28 25 358
-             361:    304(ptr) AccessChain 17 303
-             362:   11(ivec2) Load 361
-             363:    117(ptr) AccessChain 17 116
-             364:     10(int) Load 363
-             365:    122(ptr) ImageTexelPointer 302(g_tTex2du1) 362 25
-             366:     10(int) AtomicUMin 365 28 25 364
-                              Store 126(out_u1) 366
-             367:    304(ptr) AccessChain 17 303
-             368:   11(ivec2) Load 367
-             369:    117(ptr) AccessChain 17 116
-             370:     10(int) Load 369
-             371:    122(ptr) ImageTexelPointer 302(g_tTex2du1) 368 25
-             372:     10(int) AtomicOr 371 28 25 370
-             373:    304(ptr) AccessChain 17 303
-             374:   11(ivec2) Load 373
-             375:    117(ptr) AccessChain 17 116
-             376:     10(int) Load 375
-             377:    122(ptr) ImageTexelPointer 302(g_tTex2du1) 374 25
-             378:     10(int) AtomicOr 377 28 25 376
-                              Store 126(out_u1) 378
-             379:    304(ptr) AccessChain 17 303
-             380:   11(ivec2) Load 379
-             381:    117(ptr) AccessChain 17 116
-             382:     10(int) Load 381
-             383:    122(ptr) ImageTexelPointer 302(g_tTex2du1) 380 25
-             384:     10(int) AtomicXor 383 28 25 382
-             385:    304(ptr) AccessChain 17 303
-             386:   11(ivec2) Load 385
-             387:    117(ptr) AccessChain 17 116
-             388:     10(int) Load 387
-             389:    122(ptr) ImageTexelPointer 302(g_tTex2du1) 386 25
-             390:     10(int) AtomicXor 389 28 25 388
-                              Store 126(out_u1) 390
-             396:    395(ptr) AccessChain 17 394
-             397:   14(ivec3) Load 396
-             398:     19(ptr) AccessChain 17 22
-             399:      6(int) Load 398
-             400:     26(ptr) ImageTexelPointer 393(g_tTex3di1) 397 25
-             401:      6(int) AtomicIAdd 400 28 25 399
-             402:    395(ptr) AccessChain 17 394
-             403:   14(ivec3) Load 402
-             404:     19(ptr) AccessChain 17 18
-             405:      6(int) Load 404
-             406:     26(ptr) ImageTexelPointer 393(g_tTex3di1) 403 25
-             407:      6(int) AtomicIAdd 406 28 25 405
-                              Store 31(out_i1) 407
-             408:    395(ptr) AccessChain 17 394
-             409:   14(ivec3) Load 408
-             410:     19(ptr) AccessChain 17 22
-             411:      6(int) Load 410
-             412:     26(ptr) ImageTexelPointer 393(g_tTex3di1) 409 25
-             413:      6(int) AtomicAnd 412 28 25 411
-             414:    395(ptr) AccessChain 17 394
-             415:   14(ivec3) Load 414
-             416:     19(ptr) AccessChain 17 18
-             417:      6(int) Load 416
-             418:     26(ptr) ImageTexelPointer 393(g_tTex3di1) 415 25
-             419:      6(int) AtomicAnd 418 28 25 417
-                              Store 31(out_i1) 419
-             420:    395(ptr) AccessChain 17 394
-             421:   14(ivec3) Load 420
-             422:     19(ptr) AccessChain 17 22
-             423:      6(int) Load 422
-             424:     19(ptr) AccessChain 17 54
-             425:      6(int) Load 424
-             426:     26(ptr) ImageTexelPointer 393(g_tTex3di1) 421 25
-             427:      6(int) AtomicCompareExchange 426 28 25 25 425 423
-                              Store 31(out_i1) 427
-             428:    395(ptr) AccessChain 17 394
-             429:   14(ivec3) Load 428
-             430:     19(ptr) AccessChain 17 18
-             431:      6(int) Load 430
-             432:     26(ptr) ImageTexelPointer 393(g_tTex3di1) 429 25
-             433:      6(int) AtomicExchange 432 28 25 431
-                              Store 31(out_i1) 433
-             434:    395(ptr) AccessChain 17 394
-             435:   14(ivec3) Load 434
-             436:     19(ptr) AccessChain 17 22
-             437:      6(int) Load 436
-             438:     26(ptr) ImageTexelPointer 393(g_tTex3di1) 435 25
-             439:      6(int) AtomicSMax 438 28 25 437
-             440:    395(ptr) AccessChain 17 394
-             441:   14(ivec3) Load 440
-             442:     19(ptr) AccessChain 17 18
-             443:      6(int) Load 442
-             444:     26(ptr) ImageTexelPointer 393(g_tTex3di1) 441 25
-             445:      6(int) AtomicSMax 444 28 25 443
-                              Store 31(out_i1) 445
-             446:    395(ptr) AccessChain 17 394
-             447:   14(ivec3) Load 446
-             448:     19(ptr) AccessChain 17 22
-             449:      6(int) Load 448
-             450:     26(ptr) ImageTexelPointer 393(g_tTex3di1) 447 25
-             451:      6(int) AtomicSMin 450 28 25 449
-             452:    395(ptr) AccessChain 17 394
-             453:   14(ivec3) Load 452
-             454:     19(ptr) AccessChain 17 18
-             455:      6(int) Load 454
-             456:     26(ptr) ImageTexelPointer 393(g_tTex3di1) 453 25
-             457:      6(int) AtomicSMin 456 28 25 455
-                              Store 31(out_i1) 457
-             458:    395(ptr) AccessChain 17 394
-             459:   14(ivec3) Load 458
-             460:     19(ptr) AccessChain 17 22
-             461:      6(int) Load 460
-             462:     26(ptr) ImageTexelPointer 393(g_tTex3di1) 459 25
-             463:      6(int) AtomicOr 462 28 25 461
-             464:    395(ptr) AccessChain 17 394
-             465:   14(ivec3) Load 464
-             466:     19(ptr) AccessChain 17 18
-             467:      6(int) Load 466
-             468:     26(ptr) ImageTexelPointer 393(g_tTex3di1) 465 25
-             469:      6(int) AtomicOr 468 28 25 467
-                              Store 31(out_i1) 469
-             470:    395(ptr) AccessChain 17 394
-             471:   14(ivec3) Load 470
-             472:     19(ptr) AccessChain 17 22
-             473:      6(int) Load 472
-             474:     26(ptr) ImageTexelPointer 393(g_tTex3di1) 471 25
-             475:      6(int) AtomicXor 474 28 25 473
-             476:    395(ptr) AccessChain 17 394
-             477:   14(ivec3) Load 476
-             478:     19(ptr) AccessChain 17 18
-             479:      6(int) Load 478
-             480:     26(ptr) ImageTexelPointer 393(g_tTex3di1) 477 25
-             481:      6(int) AtomicXor 480 28 25 479
-                              Store 31(out_i1) 481
-             487:    486(ptr) AccessChain 17 485
-             488:   12(ivec3) Load 487
-             489:    117(ptr) AccessChain 17 116
-             490:     10(int) Load 489
-             491:    122(ptr) ImageTexelPointer 484(g_tTex3du1) 488 25
-             492:     10(int) AtomicIAdd 491 28 25 490
-             493:    486(ptr) AccessChain 17 485
-             494:   12(ivec3) Load 493
-             495:    117(ptr) AccessChain 17 116
-             496:     10(int) Load 495
-             497:    122(ptr) ImageTexelPointer 484(g_tTex3du1) 494 25
-             498:     10(int) AtomicIAdd 497 28 25 496
-                              Store 126(out_u1) 498
-             499:    486(ptr) AccessChain 17 485
-             500:   12(ivec3) Load 499
-             501:    117(ptr) AccessChain 17 116
-             502:     10(int) Load 501
-             503:    122(ptr) ImageTexelPointer 484(g_tTex3du1) 500 25
-             504:     10(int) AtomicAnd 503 28 25 502
-             505:    486(ptr) AccessChain 17 485
-             506:   12(ivec3) Load 505
-             507:    117(ptr) AccessChain 17 116
-             508:     10(int) Load 507
-             509:    122(ptr) ImageTexelPointer 484(g_tTex3du1) 506 25
-             510:     10(int) AtomicAnd 509 28 25 508
-                              Store 126(out_u1) 510
-             511:    486(ptr) AccessChain 17 485
-             512:   12(ivec3) Load 511
-             513:    117(ptr) AccessChain 17 147
-             514:     10(int) Load 513
-             515:    117(ptr) AccessChain 17 150
-             516:     10(int) Load 515
-             517:    122(ptr) ImageTexelPointer 484(g_tTex3du1) 512 25
-             518:     10(int) AtomicCompareExchange 517 28 25 25 516 514
-                              Store 126(out_u1) 518
-             519:    486(ptr) AccessChain 17 485
-             520:   12(ivec3) Load 519
-             521:    117(ptr) AccessChain 17 116
-             522:     10(int) Load 521
-             523:    122(ptr) ImageTexelPointer 484(g_tTex3du1) 520 25
-             524:     10(int) AtomicExchange 523 28 25 522
-                              Store 126(out_u1) 524
-             525:    486(ptr) AccessChain 17 485
-             526:   12(ivec3) Load 525
-             527:    117(ptr) AccessChain 17 116
-             528:     10(int) Load 527
-             529:    122(ptr) ImageTexelPointer 484(g_tTex3du1) 526 25
-             530:     10(int) AtomicUMax 529 28 25 528
-             531:    486(ptr) AccessChain 17 485
-             532:   12(ivec3) Load 531
-             533:    117(ptr) AccessChain 17 116
-             534:     10(int) Load 533
-             535:    122(ptr) ImageTexelPointer 484(g_tTex3du1) 532 25
-             536:     10(int) AtomicUMax 535 28 25 534
-                              Store 126(out_u1) 536
-             537:    486(ptr) AccessChain 17 485
-             538:   12(ivec3) Load 537
-             539:    117(ptr) AccessChain 17 116
-             540:     10(int) Load 539
-             541:    122(ptr) ImageTexelPointer 484(g_tTex3du1) 538 25
-             542:     10(int) AtomicUMin 541 28 25 540
-             543:    486(ptr) AccessChain 17 485
-             544:   12(ivec3) Load 543
-             545:    117(ptr) AccessChain 17 116
-             546:     10(int) Load 545
-             547:    122(ptr) ImageTexelPointer 484(g_tTex3du1) 544 25
-             548:     10(int) AtomicUMin 547 28 25 546
-                              Store 126(out_u1) 548
-             549:    486(ptr) AccessChain 17 485
-             550:   12(ivec3) Load 549
-             551:    117(ptr) AccessChain 17 116
-             552:     10(int) Load 551
-             553:    122(ptr) ImageTexelPointer 484(g_tTex3du1) 550 25
-             554:     10(int) AtomicOr 553 28 25 552
-             555:    486(ptr) AccessChain 17 485
-             556:   12(ivec3) Load 555
-             557:    117(ptr) AccessChain 17 116
-             558:     10(int) Load 557
-             559:    122(ptr) ImageTexelPointer 484(g_tTex3du1) 556 25
-             560:     10(int) AtomicOr 559 28 25 558
-                              Store 126(out_u1) 560
-             561:    486(ptr) AccessChain 17 485
-             562:   12(ivec3) Load 561
-             563:    117(ptr) AccessChain 17 116
-             564:     10(int) Load 563
-             565:    122(ptr) ImageTexelPointer 484(g_tTex3du1) 562 25
-             566:     10(int) AtomicXor 565 28 25 564
-             567:    486(ptr) AccessChain 17 485
-             568:   12(ivec3) Load 567
-             569:    117(ptr) AccessChain 17 116
-             570:     10(int) Load 569
-             571:    122(ptr) ImageTexelPointer 484(g_tTex3du1) 568 25
-             572:     10(int) AtomicXor 571 28 25 570
-                              Store 126(out_u1) 572
-             576:    213(ptr) AccessChain 17 212
-             577:   13(ivec2) Load 576
-             578:     19(ptr) AccessChain 17 22
-             579:      6(int) Load 578
-             580:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 577 25
-             581:      6(int) AtomicIAdd 580 28 25 579
-             582:    213(ptr) AccessChain 17 212
-             583:   13(ivec2) Load 582
-             584:     19(ptr) AccessChain 17 18
-             585:      6(int) Load 584
-             586:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 583 25
-             587:      6(int) AtomicIAdd 586 28 25 585
-                              Store 31(out_i1) 587
-             588:    213(ptr) AccessChain 17 212
-             589:   13(ivec2) Load 588
-             590:     19(ptr) AccessChain 17 22
-             591:      6(int) Load 590
-             592:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 589 25
-             593:      6(int) AtomicAnd 592 28 25 591
-             594:    213(ptr) AccessChain 17 212
-             595:   13(ivec2) Load 594
-             596:     19(ptr) AccessChain 17 18
-             597:      6(int) Load 596
-             598:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 595 25
-             599:      6(int) AtomicAnd 598 28 25 597
-                              Store 31(out_i1) 599
-             600:    213(ptr) AccessChain 17 212
-             601:   13(ivec2) Load 600
-             602:     19(ptr) AccessChain 17 22
-             603:      6(int) Load 602
-             604:     19(ptr) AccessChain 17 54
-             605:      6(int) Load 604
-             606:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 601 25
-             607:      6(int) AtomicCompareExchange 606 28 25 25 605 603
-                              Store 31(out_i1) 607
-             608:    213(ptr) AccessChain 17 212
-             609:   13(ivec2) Load 608
-             610:     19(ptr) AccessChain 17 18
-             611:      6(int) Load 610
-             612:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 609 25
-             613:      6(int) AtomicExchange 612 28 25 611
-                              Store 31(out_i1) 613
-             614:    213(ptr) AccessChain 17 212
-             615:   13(ivec2) Load 614
-             616:     19(ptr) AccessChain 17 22
-             617:      6(int) Load 616
-             618:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 615 25
-             619:      6(int) AtomicSMax 618 28 25 617
-             620:    213(ptr) AccessChain 17 212
-             621:   13(ivec2) Load 620
-             622:     19(ptr) AccessChain 17 18
-             623:      6(int) Load 622
-             624:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 621 25
-             625:      6(int) AtomicSMax 624 28 25 623
-                              Store 31(out_i1) 625
-             626:    213(ptr) AccessChain 17 212
-             627:   13(ivec2) Load 626
-             628:     19(ptr) AccessChain 17 22
-             629:      6(int) Load 628
-             630:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 627 25
-             631:      6(int) AtomicSMin 630 28 25 629
-             632:    213(ptr) AccessChain 17 212
-             633:   13(ivec2) Load 632
-             634:     19(ptr) AccessChain 17 18
-             635:      6(int) Load 634
-             636:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 633 25
-             637:      6(int) AtomicSMin 636 28 25 635
-                              Store 31(out_i1) 637
-             638:    213(ptr) AccessChain 17 212
-             639:   13(ivec2) Load 638
-             640:     19(ptr) AccessChain 17 22
-             641:      6(int) Load 640
-             642:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 639 25
-             643:      6(int) AtomicOr 642 28 25 641
-             644:    213(ptr) AccessChain 17 212
-             645:   13(ivec2) Load 644
-             646:     19(ptr) AccessChain 17 18
-             647:      6(int) Load 646
-             648:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 645 25
-             649:      6(int) AtomicOr 648 28 25 647
-                              Store 31(out_i1) 649
-             650:    213(ptr) AccessChain 17 212
-             651:   13(ivec2) Load 650
-             652:     19(ptr) AccessChain 17 22
-             653:      6(int) Load 652
-             654:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 651 25
-             655:      6(int) AtomicXor 654 28 25 653
-             656:    213(ptr) AccessChain 17 212
-             657:   13(ivec2) Load 656
-             658:     19(ptr) AccessChain 17 18
-             659:      6(int) Load 658
-             660:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 657 25
-             661:      6(int) AtomicXor 660 28 25 659
-                              Store 31(out_i1) 661
-             665:    304(ptr) AccessChain 17 303
-             666:   11(ivec2) Load 665
-             667:    117(ptr) AccessChain 17 116
-             668:     10(int) Load 667
-             669:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 666 25
-             670:     10(int) AtomicIAdd 669 28 25 668
-             671:    304(ptr) AccessChain 17 303
-             672:   11(ivec2) Load 671
-             673:    117(ptr) AccessChain 17 116
-             674:     10(int) Load 673
-             675:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 672 25
-             676:     10(int) AtomicIAdd 675 28 25 674
-                              Store 126(out_u1) 676
-             677:    304(ptr) AccessChain 17 303
-             678:   11(ivec2) Load 677
-             679:    117(ptr) AccessChain 17 116
-             680:     10(int) Load 679
-             681:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 678 25
-             682:     10(int) AtomicAnd 681 28 25 680
-             683:    304(ptr) AccessChain 17 303
-             684:   11(ivec2) Load 683
-             685:    117(ptr) AccessChain 17 116
-             686:     10(int) Load 685
-             687:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 684 25
-             688:     10(int) AtomicAnd 687 28 25 686
-                              Store 126(out_u1) 688
-             689:    304(ptr) AccessChain 17 303
-             690:   11(ivec2) Load 689
-             691:    117(ptr) AccessChain 17 147
-             692:     10(int) Load 691
-             693:    117(ptr) AccessChain 17 150
-             694:     10(int) Load 693
-             695:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 690 25
-             696:     10(int) AtomicCompareExchange 695 28 25 25 694 692
-                              Store 126(out_u1) 696
-             697:    304(ptr) AccessChain 17 303
-             698:   11(ivec2) Load 697
-             699:    117(ptr) AccessChain 17 116
-             700:     10(int) Load 699
-             701:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 698 25
-             702:     10(int) AtomicExchange 701 28 25 700
-                              Store 126(out_u1) 702
-             703:    304(ptr) AccessChain 17 303
-             704:   11(ivec2) Load 703
-             705:    117(ptr) AccessChain 17 116
-             706:     10(int) Load 705
-             707:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 704 25
-             708:     10(int) AtomicUMax 707 28 25 706
-             709:    304(ptr) AccessChain 17 303
-             710:   11(ivec2) Load 709
-             711:    117(ptr) AccessChain 17 116
-             712:     10(int) Load 711
-             713:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 710 25
-             714:     10(int) AtomicUMax 713 28 25 712
-                              Store 126(out_u1) 714
-             715:    304(ptr) AccessChain 17 303
-             716:   11(ivec2) Load 715
-             717:    117(ptr) AccessChain 17 116
-             718:     10(int) Load 717
-             719:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 716 25
-             720:     10(int) AtomicUMin 719 28 25 718
-             721:    304(ptr) AccessChain 17 303
-             722:   11(ivec2) Load 721
-             723:    117(ptr) AccessChain 17 116
-             724:     10(int) Load 723
-             725:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 722 25
-             726:     10(int) AtomicUMin 725 28 25 724
-                              Store 126(out_u1) 726
-             727:    304(ptr) AccessChain 17 303
-             728:   11(ivec2) Load 727
-             729:    117(ptr) AccessChain 17 116
-             730:     10(int) Load 729
-             731:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 728 25
-             732:     10(int) AtomicOr 731 28 25 730
-             733:    304(ptr) AccessChain 17 303
-             734:   11(ivec2) Load 733
-             735:    117(ptr) AccessChain 17 116
-             736:     10(int) Load 735
-             737:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 734 25
-             738:     10(int) AtomicOr 737 28 25 736
-                              Store 126(out_u1) 738
-             739:    304(ptr) AccessChain 17 303
-             740:   11(ivec2) Load 739
-             741:    117(ptr) AccessChain 17 116
-             742:     10(int) Load 741
-             743:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 740 25
-             744:     10(int) AtomicXor 743 28 25 742
-             745:    304(ptr) AccessChain 17 303
-             746:   11(ivec2) Load 745
-             747:    117(ptr) AccessChain 17 116
-             748:     10(int) Load 747
-             749:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 746 25
-             750:     10(int) AtomicXor 749 28 25 748
-                              Store 126(out_u1) 750
-             751:    213(ptr) AccessChain 17 212
-             752:   13(ivec2) Load 751
-             753:     19(ptr) AccessChain 17 22
-             754:      6(int) Load 753
-             755:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 752 25
-             756:      6(int) AtomicIAdd 755 28 25 754
-             757:    213(ptr) AccessChain 17 212
-             758:   13(ivec2) Load 757
-             759:     19(ptr) AccessChain 17 18
-             760:      6(int) Load 759
-             761:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 758 25
-             762:      6(int) AtomicIAdd 761 28 25 760
-                              Store 31(out_i1) 762
-             763:    213(ptr) AccessChain 17 212
-             764:   13(ivec2) Load 763
-             765:     19(ptr) AccessChain 17 22
-             766:      6(int) Load 765
-             767:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 764 25
-             768:      6(int) AtomicAnd 767 28 25 766
-             769:    213(ptr) AccessChain 17 212
-             770:   13(ivec2) Load 769
-             771:     19(ptr) AccessChain 17 18
-             772:      6(int) Load 771
-             773:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 770 25
-             774:      6(int) AtomicAnd 773 28 25 772
-                              Store 31(out_i1) 774
-             775:    213(ptr) AccessChain 17 212
-             776:   13(ivec2) Load 775
-             777:     19(ptr) AccessChain 17 22
-             778:      6(int) Load 777
-             779:     19(ptr) AccessChain 17 54
-             780:      6(int) Load 779
-             781:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 776 25
-             782:      6(int) AtomicCompareExchange 781 28 25 25 780 778
-                              Store 31(out_i1) 782
-             783:    213(ptr) AccessChain 17 212
-             784:   13(ivec2) Load 783
-             785:     19(ptr) AccessChain 17 18
-             786:      6(int) Load 785
-             787:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 784 25
-             788:      6(int) AtomicExchange 787 28 25 786
-                              Store 31(out_i1) 788
-             789:    213(ptr) AccessChain 17 212
-             790:   13(ivec2) Load 789
-             791:     19(ptr) AccessChain 17 22
-             792:      6(int) Load 791
-             793:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 790 25
-             794:      6(int) AtomicSMax 793 28 25 792
-             795:    213(ptr) AccessChain 17 212
-             796:   13(ivec2) Load 795
-             797:     19(ptr) AccessChain 17 18
-             798:      6(int) Load 797
-             799:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 796 25
-             800:      6(int) AtomicSMax 799 28 25 798
-                              Store 31(out_i1) 800
-             801:    213(ptr) AccessChain 17 212
-             802:   13(ivec2) Load 801
-             803:     19(ptr) AccessChain 17 22
-             804:      6(int) Load 803
-             805:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 802 25
-             806:      6(int) AtomicSMin 805 28 25 804
-             807:    213(ptr) AccessChain 17 212
-             808:   13(ivec2) Load 807
-             809:     19(ptr) AccessChain 17 18
-             810:      6(int) Load 809
-             811:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 808 25
-             812:      6(int) AtomicSMin 811 28 25 810
-                              Store 31(out_i1) 812
-             813:    213(ptr) AccessChain 17 212
-             814:   13(ivec2) Load 813
-             815:     19(ptr) AccessChain 17 22
-             816:      6(int) Load 815
-             817:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 814 25
-             818:      6(int) AtomicOr 817 28 25 816
-             819:    213(ptr) AccessChain 17 212
-             820:   13(ivec2) Load 819
-             821:     19(ptr) AccessChain 17 18
-             822:      6(int) Load 821
-             823:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 820 25
-             824:      6(int) AtomicOr 823 28 25 822
-                              Store 31(out_i1) 824
-             825:    213(ptr) AccessChain 17 212
-             826:   13(ivec2) Load 825
-             827:     19(ptr) AccessChain 17 22
-             828:      6(int) Load 827
-             829:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 826 25
-             830:      6(int) AtomicXor 829 28 25 828
-             831:    213(ptr) AccessChain 17 212
-             832:   13(ivec2) Load 831
-             833:     19(ptr) AccessChain 17 18
-             834:      6(int) Load 833
-             835:     26(ptr) ImageTexelPointer 575(g_tTex1di1a) 832 25
-             836:      6(int) AtomicXor 835 28 25 834
-                              Store 31(out_i1) 836
-             837:    304(ptr) AccessChain 17 303
-             838:   11(ivec2) Load 837
-             839:    117(ptr) AccessChain 17 116
-             840:     10(int) Load 839
-             841:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 838 25
-             842:     10(int) AtomicIAdd 841 28 25 840
-             843:    304(ptr) AccessChain 17 303
-             844:   11(ivec2) Load 843
-             845:    117(ptr) AccessChain 17 116
-             846:     10(int) Load 845
-             847:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 844 25
-             848:     10(int) AtomicIAdd 847 28 25 846
-                              Store 126(out_u1) 848
-             849:    304(ptr) AccessChain 17 303
-             850:   11(ivec2) Load 849
-             851:    117(ptr) AccessChain 17 116
-             852:     10(int) Load 851
-             853:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 850 25
-             854:     10(int) AtomicAnd 853 28 25 852
-             855:    304(ptr) AccessChain 17 303
-             856:   11(ivec2) Load 855
-             857:    117(ptr) AccessChain 17 116
-             858:     10(int) Load 857
-             859:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 856 25
-             860:     10(int) AtomicAnd 859 28 25 858
-                              Store 126(out_u1) 860
-             861:    304(ptr) AccessChain 17 303
-             862:   11(ivec2) Load 861
-             863:    117(ptr) AccessChain 17 147
-             864:     10(int) Load 863
-             865:    117(ptr) AccessChain 17 150
-             866:     10(int) Load 865
-             867:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 862 25
-             868:     10(int) AtomicCompareExchange 867 28 25 25 866 864
-                              Store 126(out_u1) 868
-             869:    304(ptr) AccessChain 17 303
-             870:   11(ivec2) Load 869
-             871:    117(ptr) AccessChain 17 116
-             872:     10(int) Load 871
-             873:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 870 25
-             874:     10(int) AtomicExchange 873 28 25 872
-                              Store 126(out_u1) 874
-             875:    304(ptr) AccessChain 17 303
-             876:   11(ivec2) Load 875
-             877:    117(ptr) AccessChain 17 116
-             878:     10(int) Load 877
-             879:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 876 25
-             880:     10(int) AtomicUMax 879 28 25 878
-             881:    304(ptr) AccessChain 17 303
-             882:   11(ivec2) Load 881
-             883:    117(ptr) AccessChain 17 116
-             884:     10(int) Load 883
-             885:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 882 25
-             886:     10(int) AtomicUMax 885 28 25 884
-                              Store 126(out_u1) 886
-             887:    304(ptr) AccessChain 17 303
-             888:   11(ivec2) Load 887
-             889:    117(ptr) AccessChain 17 116
-             890:     10(int) Load 889
-             891:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 888 25
-             892:     10(int) AtomicUMin 891 28 25 890
-             893:    304(ptr) AccessChain 17 303
-             894:   11(ivec2) Load 893
-             895:    117(ptr) AccessChain 17 116
-             896:     10(int) Load 895
-             897:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 894 25
-             898:     10(int) AtomicUMin 897 28 25 896
-                              Store 126(out_u1) 898
-             899:    304(ptr) AccessChain 17 303
-             900:   11(ivec2) Load 899
-             901:    117(ptr) AccessChain 17 116
-             902:     10(int) Load 901
-             903:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 900 25
-             904:     10(int) AtomicOr 903 28 25 902
-             905:    304(ptr) AccessChain 17 303
-             906:   11(ivec2) Load 905
-             907:    117(ptr) AccessChain 17 116
-             908:     10(int) Load 907
-             909:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 906 25
-             910:     10(int) AtomicOr 909 28 25 908
-                              Store 126(out_u1) 910
-             911:    304(ptr) AccessChain 17 303
-             912:   11(ivec2) Load 911
-             913:    117(ptr) AccessChain 17 116
-             914:     10(int) Load 913
-             915:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 912 25
-             916:     10(int) AtomicXor 915 28 25 914
-             917:    304(ptr) AccessChain 17 303
-             918:   11(ivec2) Load 917
-             919:    117(ptr) AccessChain 17 116
-             920:     10(int) Load 919
-             921:    122(ptr) ImageTexelPointer 664(g_tTex1du1a) 918 25
-             922:     10(int) AtomicXor 921 28 25 920
-                              Store 126(out_u1) 922
-             926:     19(ptr) AccessChain 17 18
-             927:      6(int) Load 926
-             928:     19(ptr) AccessChain 17 22
-             929:      6(int) Load 928
-             930:     26(ptr) ImageTexelPointer 925(g_tBuffI) 927 25
-             931:      6(int) AtomicIAdd 930 28 25 929
-             932:     19(ptr) AccessChain 17 18
-             933:      6(int) Load 932
-             934:     19(ptr) AccessChain 17 18
-             935:      6(int) Load 934
-             936:     26(ptr) ImageTexelPointer 925(g_tBuffI) 933 25
-             937:      6(int) AtomicIAdd 936 28 25 935
-                              Store 31(out_i1) 937
-             938:     19(ptr) AccessChain 17 18
-             939:      6(int) Load 938
-             940:     19(ptr) AccessChain 17 22
-             941:      6(int) Load 940
-             942:     26(ptr) ImageTexelPointer 925(g_tBuffI) 939 25
-             943:      6(int) AtomicAnd 942 28 25 941
-             944:     19(ptr) AccessChain 17 18
-             945:      6(int) Load 944
-             946:     19(ptr) AccessChain 17 18
-             947:      6(int) Load 946
-             948:     26(ptr) ImageTexelPointer 925(g_tBuffI) 945 25
-             949:      6(int) AtomicAnd 948 28 25 947
-                              Store 31(out_i1) 949
-             950:     19(ptr) AccessChain 17 18
-             951:      6(int) Load 950
-             952:     19(ptr) AccessChain 17 22
-             953:      6(int) Load 952
-             954:     19(ptr) AccessChain 17 54
-             955:      6(int) Load 954
-             956:     26(ptr) ImageTexelPointer 925(g_tBuffI) 951 25
-             957:      6(int) AtomicCompareExchange 956 28 25 25 955 953
-                              Store 31(out_i1) 957
-             958:     19(ptr) AccessChain 17 18
-             959:      6(int) Load 958
-             960:     19(ptr) AccessChain 17 18
-             961:      6(int) Load 960
-             962:     26(ptr) ImageTexelPointer 925(g_tBuffI) 959 25
-             963:      6(int) AtomicExchange 962 28 25 961
-                              Store 31(out_i1) 963
-             964:     19(ptr) AccessChain 17 18
-             965:      6(int) Load 964
-             966:     19(ptr) AccessChain 17 22
-             967:      6(int) Load 966
-             968:     26(ptr) ImageTexelPointer 925(g_tBuffI) 965 25
-             969:      6(int) AtomicSMax 968 28 25 967
-             970:     19(ptr) AccessChain 17 18
-             971:      6(int) Load 970
-             972:     19(ptr) AccessChain 17 18
-             973:      6(int) Load 972
-             974:     26(ptr) ImageTexelPointer 925(g_tBuffI) 971 25
-             975:      6(int) AtomicSMax 974 28 25 973
-                              Store 31(out_i1) 975
-             976:     19(ptr) AccessChain 17 18
-             977:      6(int) Load 976
-             978:     19(ptr) AccessChain 17 22
-             979:      6(int) Load 978
-             980:     26(ptr) ImageTexelPointer 925(g_tBuffI) 977 25
-             981:      6(int) AtomicSMin 980 28 25 979
-             982:     19(ptr) AccessChain 17 18
-             983:      6(int) Load 982
-             984:     19(ptr) AccessChain 17 18
-             985:      6(int) Load 984
-             986:     26(ptr) ImageTexelPointer 925(g_tBuffI) 983 25
-             987:      6(int) AtomicSMin 986 28 25 985
-                              Store 31(out_i1) 987
-             988:     19(ptr) AccessChain 17 18
-             989:      6(int) Load 988
-             990:     19(ptr) AccessChain 17 22
-             991:      6(int) Load 990
-             992:     26(ptr) ImageTexelPointer 925(g_tBuffI) 989 25
-             993:      6(int) AtomicOr 992 28 25 991
-             994:     19(ptr) AccessChain 17 18
-             995:      6(int) Load 994
-             996:     19(ptr) AccessChain 17 18
-             997:      6(int) Load 996
-             998:     26(ptr) ImageTexelPointer 925(g_tBuffI) 995 25
-             999:      6(int) AtomicOr 998 28 25 997
-                              Store 31(out_i1) 999
-            1000:     19(ptr) AccessChain 17 18
-            1001:      6(int) Load 1000
-            1002:     19(ptr) AccessChain 17 22
-            1003:      6(int) Load 1002
-            1004:     26(ptr) ImageTexelPointer 925(g_tBuffI) 1001 25
-            1005:      6(int) AtomicXor 1004 28 25 1003
-            1006:     19(ptr) AccessChain 17 18
-            1007:      6(int) Load 1006
-            1008:     19(ptr) AccessChain 17 18
-            1009:      6(int) Load 1008
-            1010:     26(ptr) ImageTexelPointer 925(g_tBuffI) 1007 25
-            1011:      6(int) AtomicXor 1010 28 25 1009
-                              Store 31(out_i1) 1011
-            1015:    117(ptr) AccessChain 17 116
-            1016:     10(int) Load 1015
-            1017:    117(ptr) AccessChain 17 116
-            1018:     10(int) Load 1017
-            1019:    122(ptr) ImageTexelPointer 1014(g_tBuffU) 1016 25
-            1020:     10(int) AtomicIAdd 1019 28 25 1018
-            1021:    117(ptr) AccessChain 17 116
-            1022:     10(int) Load 1021
-            1023:    117(ptr) AccessChain 17 116
-            1024:     10(int) Load 1023
-            1025:    122(ptr) ImageTexelPointer 1014(g_tBuffU) 1022 25
-            1026:     10(int) AtomicIAdd 1025 28 25 1024
-                              Store 126(out_u1) 1026
-            1027:    117(ptr) AccessChain 17 116
-            1028:     10(int) Load 1027
-            1029:    117(ptr) AccessChain 17 116
-            1030:     10(int) Load 1029
-            1031:    122(ptr) ImageTexelPointer 1014(g_tBuffU) 1028 25
-            1032:     10(int) AtomicAnd 1031 28 25 1030
-            1033:    117(ptr) AccessChain 17 116
-            1034:     10(int) Load 1033
-            1035:    117(ptr) AccessChain 17 116
-            1036:     10(int) Load 1035
-            1037:    122(ptr) ImageTexelPointer 1014(g_tBuffU) 1034 25
-            1038:     10(int) AtomicAnd 1037 28 25 1036
-                              Store 126(out_u1) 1038
-            1039:    117(ptr) AccessChain 17 116
-            1040:     10(int) Load 1039
-            1041:    117(ptr) AccessChain 17 147
-            1042:     10(int) Load 1041
-            1043:    117(ptr) AccessChain 17 150
-            1044:     10(int) Load 1043
-            1045:    122(ptr) ImageTexelPointer 1014(g_tBuffU) 1040 25
-            1046:     10(int) AtomicCompareExchange 1045 28 25 25 1044 1042
-                              Store 126(out_u1) 1046
-            1047:    117(ptr) AccessChain 17 116
-            1048:     10(int) Load 1047
-            1049:    117(ptr) AccessChain 17 116
-            1050:     10(int) Load 1049
-            1051:    122(ptr) ImageTexelPointer 1014(g_tBuffU) 1048 25
-            1052:     10(int) AtomicExchange 1051 28 25 1050
-                              Store 126(out_u1) 1052
-            1053:    117(ptr) AccessChain 17 116
-            1054:     10(int) Load 1053
-            1055:    117(ptr) AccessChain 17 116
-            1056:     10(int) Load 1055
-            1057:    122(ptr) ImageTexelPointer 1014(g_tBuffU) 1054 25
-            1058:     10(int) AtomicUMax 1057 28 25 1056
-            1059:    117(ptr) AccessChain 17 116
-            1060:     10(int) Load 1059
-            1061:    117(ptr) AccessChain 17 116
-            1062:     10(int) Load 1061
-            1063:    122(ptr) ImageTexelPointer 1014(g_tBuffU) 1060 25
-            1064:     10(int) AtomicUMax 1063 28 25 1062
-                              Store 126(out_u1) 1064
-            1065:    117(ptr) AccessChain 17 116
-            1066:     10(int) Load 1065
-            1067:    117(ptr) AccessChain 17 116
-            1068:     10(int) Load 1067
-            1069:    122(ptr) ImageTexelPointer 1014(g_tBuffU) 1066 25
-            1070:     10(int) AtomicUMin 1069 28 25 1068
-            1071:    117(ptr) AccessChain 17 116
-            1072:     10(int) Load 1071
-            1073:    117(ptr) AccessChain 17 116
-            1074:     10(int) Load 1073
-            1075:    122(ptr) ImageTexelPointer 1014(g_tBuffU) 1072 25
-            1076:     10(int) AtomicUMin 1075 28 25 1074
-                              Store 126(out_u1) 1076
-            1077:    117(ptr) AccessChain 17 116
-            1078:     10(int) Load 1077
-            1079:    117(ptr) AccessChain 17 116
-            1080:     10(int) Load 1079
-            1081:    122(ptr) ImageTexelPointer 1014(g_tBuffU) 1078 25
-            1082:     10(int) AtomicOr 1081 28 25 1080
-            1083:    117(ptr) AccessChain 17 116
-            1084:     10(int) Load 1083
-            1085:    117(ptr) AccessChain 17 116
-            1086:     10(int) Load 1085
-            1087:    122(ptr) ImageTexelPointer 1014(g_tBuffU) 1084 25
-            1088:     10(int) AtomicOr 1087 28 25 1086
-                              Store 126(out_u1) 1088
-            1089:    117(ptr) AccessChain 17 116
-            1090:     10(int) Load 1089
-            1091:    117(ptr) AccessChain 17 116
-            1092:     10(int) Load 1091
-            1093:    122(ptr) ImageTexelPointer 1014(g_tBuffU) 1090 25
-            1094:     10(int) AtomicXor 1093 28 25 1092
-            1095:    117(ptr) AccessChain 17 116
-            1096:     10(int) Load 1095
-            1097:    117(ptr) AccessChain 17 116
-            1098:     10(int) Load 1097
-            1099:    122(ptr) ImageTexelPointer 1014(g_tBuffU) 1096 25
-            1100:     10(int) AtomicXor 1099 28 25 1098
-                              Store 126(out_u1) 1100
-            1109:   1108(ptr) AccessChain 1105(psout) 116
-                              Store 1109 1107
-            1112:   1108(ptr) AccessChain 1105(psout) 116
-            1113: 1102(fvec4) Load 1112
-                              Store 1111(Color) 1113
+            1118:8(PS_OUTPUT) FunctionCall 10(@main()
+            1119:    7(fvec4) CompositeExtract 1118 0
+                              Store 1117(Color) 1119
                               Return
+                              FunctionEnd
+      10(@main():8(PS_OUTPUT) Function None 9
+              11:             Label
+      37(out_i1):     36(ptr) Variable Function
+     132(out_u1):    131(ptr) Variable Function
+     1108(psout):   1107(ptr) Variable Function
+              26:     25(ptr) AccessChain 23 24
+              27:     12(int) Load 26
+              29:     25(ptr) AccessChain 23 28
+              30:     12(int) Load 29
+              33:     32(ptr) ImageTexelPointer 15(g_tTex1di1) 27 31
+              35:     12(int) AtomicIAdd 33 34 31 30
+              38:     25(ptr) AccessChain 23 24
+              39:     12(int) Load 38
+              40:     25(ptr) AccessChain 23 24
+              41:     12(int) Load 40
+              42:     32(ptr) ImageTexelPointer 15(g_tTex1di1) 39 31
+              43:     12(int) AtomicIAdd 42 34 31 41
+                              Store 37(out_i1) 43
+              44:     25(ptr) AccessChain 23 24
+              45:     12(int) Load 44
+              46:     25(ptr) AccessChain 23 28
+              47:     12(int) Load 46
+              48:     32(ptr) ImageTexelPointer 15(g_tTex1di1) 45 31
+              49:     12(int) AtomicAnd 48 34 31 47
+              50:     25(ptr) AccessChain 23 24
+              51:     12(int) Load 50
+              52:     25(ptr) AccessChain 23 24
+              53:     12(int) Load 52
+              54:     32(ptr) ImageTexelPointer 15(g_tTex1di1) 51 31
+              55:     12(int) AtomicAnd 54 34 31 53
+                              Store 37(out_i1) 55
+              56:     25(ptr) AccessChain 23 24
+              57:     12(int) Load 56
+              58:     25(ptr) AccessChain 23 28
+              59:     12(int) Load 58
+              61:     25(ptr) AccessChain 23 60
+              62:     12(int) Load 61
+              63:     32(ptr) ImageTexelPointer 15(g_tTex1di1) 57 31
+              64:     12(int) AtomicCompareExchange 63 34 31 31 62 59
+                              Store 37(out_i1) 64
+              65:     25(ptr) AccessChain 23 24
+              66:     12(int) Load 65
+              67:     25(ptr) AccessChain 23 24
+              68:     12(int) Load 67
+              69:     32(ptr) ImageTexelPointer 15(g_tTex1di1) 66 31
+              70:     12(int) AtomicExchange 69 34 31 68
+                              Store 37(out_i1) 70
+              71:     25(ptr) AccessChain 23 24
+              72:     12(int) Load 71
+              73:     25(ptr) AccessChain 23 28
+              74:     12(int) Load 73
+              75:     32(ptr) ImageTexelPointer 15(g_tTex1di1) 72 31
+              76:     12(int) AtomicSMax 75 34 31 74
+              77:     25(ptr) AccessChain 23 24
+              78:     12(int) Load 77
+              79:     25(ptr) AccessChain 23 24
+              80:     12(int) Load 79
+              81:     32(ptr) ImageTexelPointer 15(g_tTex1di1) 78 31
+              82:     12(int) AtomicSMax 81 34 31 80
+                              Store 37(out_i1) 82
+              83:     25(ptr) AccessChain 23 24
+              84:     12(int) Load 83
+              85:     25(ptr) AccessChain 23 28
+              86:     12(int) Load 85
+              87:     32(ptr) ImageTexelPointer 15(g_tTex1di1) 84 31
+              88:     12(int) AtomicSMin 87 34 31 86
+              89:     25(ptr) AccessChain 23 24
+              90:     12(int) Load 89
+              91:     25(ptr) AccessChain 23 24
+              92:     12(int) Load 91
+              93:     32(ptr) ImageTexelPointer 15(g_tTex1di1) 90 31
+              94:     12(int) AtomicSMin 93 34 31 92
+                              Store 37(out_i1) 94
+              95:     25(ptr) AccessChain 23 24
+              96:     12(int) Load 95
+              97:     25(ptr) AccessChain 23 28
+              98:     12(int) Load 97
+              99:     32(ptr) ImageTexelPointer 15(g_tTex1di1) 96 31
+             100:     12(int) AtomicOr 99 34 31 98
+             101:     25(ptr) AccessChain 23 24
+             102:     12(int) Load 101
+             103:     25(ptr) AccessChain 23 24
+             104:     12(int) Load 103
+             105:     32(ptr) ImageTexelPointer 15(g_tTex1di1) 102 31
+             106:     12(int) AtomicOr 105 34 31 104
+                              Store 37(out_i1) 106
+             107:     25(ptr) AccessChain 23 24
+             108:     12(int) Load 107
+             109:     25(ptr) AccessChain 23 28
+             110:     12(int) Load 109
+             111:     32(ptr) ImageTexelPointer 15(g_tTex1di1) 108 31
+             112:     12(int) AtomicXor 111 34 31 110
+             113:     25(ptr) AccessChain 23 24
+             114:     12(int) Load 113
+             115:     25(ptr) AccessChain 23 24
+             116:     12(int) Load 115
+             117:     32(ptr) ImageTexelPointer 15(g_tTex1di1) 114 31
+             118:     12(int) AtomicXor 117 34 31 116
+                              Store 37(out_i1) 118
+             124:    123(ptr) AccessChain 23 122
+             125:     16(int) Load 124
+             126:    123(ptr) AccessChain 23 122
+             127:     16(int) Load 126
+             129:    128(ptr) ImageTexelPointer 121(g_tTex1du1) 125 31
+             130:     16(int) AtomicIAdd 129 34 31 127
+             133:    123(ptr) AccessChain 23 122
+             134:     16(int) Load 133
+             135:    123(ptr) AccessChain 23 122
+             136:     16(int) Load 135
+             137:    128(ptr) ImageTexelPointer 121(g_tTex1du1) 134 31
+             138:     16(int) AtomicIAdd 137 34 31 136
+                              Store 132(out_u1) 138
+             139:    123(ptr) AccessChain 23 122
+             140:     16(int) Load 139
+             141:    123(ptr) AccessChain 23 122
+             142:     16(int) Load 141
+             143:    128(ptr) ImageTexelPointer 121(g_tTex1du1) 140 31
+             144:     16(int) AtomicAnd 143 34 31 142
+             145:    123(ptr) AccessChain 23 122
+             146:     16(int) Load 145
+             147:    123(ptr) AccessChain 23 122
+             148:     16(int) Load 147
+             149:    128(ptr) ImageTexelPointer 121(g_tTex1du1) 146 31
+             150:     16(int) AtomicAnd 149 34 31 148
+                              Store 132(out_u1) 150
+             151:    123(ptr) AccessChain 23 122
+             152:     16(int) Load 151
+             154:    123(ptr) AccessChain 23 153
+             155:     16(int) Load 154
+             157:    123(ptr) AccessChain 23 156
+             158:     16(int) Load 157
+             159:    128(ptr) ImageTexelPointer 121(g_tTex1du1) 152 31
+             160:     16(int) AtomicCompareExchange 159 34 31 31 158 155
+                              Store 132(out_u1) 160
+             161:    123(ptr) AccessChain 23 122
+             162:     16(int) Load 161
+             163:    123(ptr) AccessChain 23 122
+             164:     16(int) Load 163
+             165:    128(ptr) ImageTexelPointer 121(g_tTex1du1) 162 31
+             166:     16(int) AtomicExchange 165 34 31 164
+                              Store 132(out_u1) 166
+             167:    123(ptr) AccessChain 23 122
+             168:     16(int) Load 167
+             169:    123(ptr) AccessChain 23 122
+             170:     16(int) Load 169
+             171:    128(ptr) ImageTexelPointer 121(g_tTex1du1) 168 31
+             172:     16(int) AtomicUMax 171 34 31 170
+             173:    123(ptr) AccessChain 23 122
+             174:     16(int) Load 173
+             175:    123(ptr) AccessChain 23 122
+             176:     16(int) Load 175
+             177:    128(ptr) ImageTexelPointer 121(g_tTex1du1) 174 31
+             178:     16(int) AtomicUMax 177 34 31 176
+                              Store 132(out_u1) 178
+             179:    123(ptr) AccessChain 23 122
+             180:     16(int) Load 179
+             181:    123(ptr) AccessChain 23 122
+             182:     16(int) Load 181
+             183:    128(ptr) ImageTexelPointer 121(g_tTex1du1) 180 31
+             184:     16(int) AtomicUMin 183 34 31 182
+             185:    123(ptr) AccessChain 23 122
+             186:     16(int) Load 185
+             187:    123(ptr) AccessChain 23 122
+             188:     16(int) Load 187
+             189:    128(ptr) ImageTexelPointer 121(g_tTex1du1) 186 31
+             190:     16(int) AtomicUMin 189 34 31 188
+                              Store 132(out_u1) 190
+             191:    123(ptr) AccessChain 23 122
+             192:     16(int) Load 191
+             193:    123(ptr) AccessChain 23 122
+             194:     16(int) Load 193
+             195:    128(ptr) ImageTexelPointer 121(g_tTex1du1) 192 31
+             196:     16(int) AtomicOr 195 34 31 194
+             197:    123(ptr) AccessChain 23 122
+             198:     16(int) Load 197
+             199:    123(ptr) AccessChain 23 122
+             200:     16(int) Load 199
+             201:    128(ptr) ImageTexelPointer 121(g_tTex1du1) 198 31
+             202:     16(int) AtomicOr 201 34 31 200
+                              Store 132(out_u1) 202
+             203:    123(ptr) AccessChain 23 122
+             204:     16(int) Load 203
+             205:    123(ptr) AccessChain 23 122
+             206:     16(int) Load 205
+             207:    128(ptr) ImageTexelPointer 121(g_tTex1du1) 204 31
+             208:     16(int) AtomicXor 207 34 31 206
+             209:    123(ptr) AccessChain 23 122
+             210:     16(int) Load 209
+             211:    123(ptr) AccessChain 23 122
+             212:     16(int) Load 211
+             213:    128(ptr) ImageTexelPointer 121(g_tTex1du1) 210 31
+             214:     16(int) AtomicXor 213 34 31 212
+                              Store 132(out_u1) 214
+             220:    219(ptr) AccessChain 23 218
+             221:   19(ivec2) Load 220
+             222:     25(ptr) AccessChain 23 28
+             223:     12(int) Load 222
+             224:     32(ptr) ImageTexelPointer 217(g_tTex2di1) 221 31
+             225:     12(int) AtomicIAdd 224 34 31 223
+             226:    219(ptr) AccessChain 23 218
+             227:   19(ivec2) Load 226
+             228:     25(ptr) AccessChain 23 24
+             229:     12(int) Load 228
+             230:     32(ptr) ImageTexelPointer 217(g_tTex2di1) 227 31
+             231:     12(int) AtomicIAdd 230 34 31 229
+                              Store 37(out_i1) 231
+             232:    219(ptr) AccessChain 23 218
+             233:   19(ivec2) Load 232
+             234:     25(ptr) AccessChain 23 28
+             235:     12(int) Load 234
+             236:     32(ptr) ImageTexelPointer 217(g_tTex2di1) 233 31
+             237:     12(int) AtomicAnd 236 34 31 235
+             238:    219(ptr) AccessChain 23 218
+             239:   19(ivec2) Load 238
+             240:     25(ptr) AccessChain 23 24
+             241:     12(int) Load 240
+             242:     32(ptr) ImageTexelPointer 217(g_tTex2di1) 239 31
+             243:     12(int) AtomicAnd 242 34 31 241
+                              Store 37(out_i1) 243
+             244:    219(ptr) AccessChain 23 218
+             245:   19(ivec2) Load 244
+             246:     25(ptr) AccessChain 23 28
+             247:     12(int) Load 246
+             248:     25(ptr) AccessChain 23 60
+             249:     12(int) Load 248
+             250:     32(ptr) ImageTexelPointer 217(g_tTex2di1) 245 31
+             251:     12(int) AtomicCompareExchange 250 34 31 31 249 247
+                              Store 37(out_i1) 251
+             252:    219(ptr) AccessChain 23 218
+             253:   19(ivec2) Load 252
+             254:     25(ptr) AccessChain 23 24
+             255:     12(int) Load 254
+             256:     32(ptr) ImageTexelPointer 217(g_tTex2di1) 253 31
+             257:     12(int) AtomicExchange 256 34 31 255
+                              Store 37(out_i1) 257
+             258:    219(ptr) AccessChain 23 218
+             259:   19(ivec2) Load 258
+             260:     25(ptr) AccessChain 23 28
+             261:     12(int) Load 260
+             262:     32(ptr) ImageTexelPointer 217(g_tTex2di1) 259 31
+             263:     12(int) AtomicSMax 262 34 31 261
+             264:    219(ptr) AccessChain 23 218
+             265:   19(ivec2) Load 264
+             266:     25(ptr) AccessChain 23 24
+             267:     12(int) Load 266
+             268:     32(ptr) ImageTexelPointer 217(g_tTex2di1) 265 31
+             269:     12(int) AtomicSMax 268 34 31 267
+                              Store 37(out_i1) 269
+             270:    219(ptr) AccessChain 23 218
+             271:   19(ivec2) Load 270
+             272:     25(ptr) AccessChain 23 28
+             273:     12(int) Load 272
+             274:     32(ptr) ImageTexelPointer 217(g_tTex2di1) 271 31
+             275:     12(int) AtomicSMin 274 34 31 273
+             276:    219(ptr) AccessChain 23 218
+             277:   19(ivec2) Load 276
+             278:     25(ptr) AccessChain 23 24
+             279:     12(int) Load 278
+             280:     32(ptr) ImageTexelPointer 217(g_tTex2di1) 277 31
+             281:     12(int) AtomicSMin 280 34 31 279
+                              Store 37(out_i1) 281
+             282:    219(ptr) AccessChain 23 218
+             283:   19(ivec2) Load 282
+             284:     25(ptr) AccessChain 23 28
+             285:     12(int) Load 284
+             286:     32(ptr) ImageTexelPointer 217(g_tTex2di1) 283 31
+             287:     12(int) AtomicOr 286 34 31 285
+             288:    219(ptr) AccessChain 23 218
+             289:   19(ivec2) Load 288
+             290:     25(ptr) AccessChain 23 24
+             291:     12(int) Load 290
+             292:     32(ptr) ImageTexelPointer 217(g_tTex2di1) 289 31
+             293:     12(int) AtomicOr 292 34 31 291
+                              Store 37(out_i1) 293
+             294:    219(ptr) AccessChain 23 218
+             295:   19(ivec2) Load 294
+             296:     25(ptr) AccessChain 23 28
+             297:     12(int) Load 296
+             298:     32(ptr) ImageTexelPointer 217(g_tTex2di1) 295 31
+             299:     12(int) AtomicXor 298 34 31 297
+             300:    219(ptr) AccessChain 23 218
+             301:   19(ivec2) Load 300
+             302:     25(ptr) AccessChain 23 24
+             303:     12(int) Load 302
+             304:     32(ptr) ImageTexelPointer 217(g_tTex2di1) 301 31
+             305:     12(int) AtomicXor 304 34 31 303
+                              Store 37(out_i1) 305
+             311:    310(ptr) AccessChain 23 309
+             312:   17(ivec2) Load 311
+             313:    123(ptr) AccessChain 23 122
+             314:     16(int) Load 313
+             315:    128(ptr) ImageTexelPointer 308(g_tTex2du1) 312 31
+             316:     16(int) AtomicIAdd 315 34 31 314
+             317:    310(ptr) AccessChain 23 309
+             318:   17(ivec2) Load 317
+             319:    123(ptr) AccessChain 23 122
+             320:     16(int) Load 319
+             321:    128(ptr) ImageTexelPointer 308(g_tTex2du1) 318 31
+             322:     16(int) AtomicIAdd 321 34 31 320
+                              Store 132(out_u1) 322
+             323:    310(ptr) AccessChain 23 309
+             324:   17(ivec2) Load 323
+             325:    123(ptr) AccessChain 23 122
+             326:     16(int) Load 325
+             327:    128(ptr) ImageTexelPointer 308(g_tTex2du1) 324 31
+             328:     16(int) AtomicAnd 327 34 31 326
+             329:    310(ptr) AccessChain 23 309
+             330:   17(ivec2) Load 329
+             331:    123(ptr) AccessChain 23 122
+             332:     16(int) Load 331
+             333:    128(ptr) ImageTexelPointer 308(g_tTex2du1) 330 31
+             334:     16(int) AtomicAnd 333 34 31 332
+                              Store 132(out_u1) 334
+             335:    310(ptr) AccessChain 23 309
+             336:   17(ivec2) Load 335
+             337:    123(ptr) AccessChain 23 153
+             338:     16(int) Load 337
+             339:    123(ptr) AccessChain 23 156
+             340:     16(int) Load 339
+             341:    128(ptr) ImageTexelPointer 308(g_tTex2du1) 336 31
+             342:     16(int) AtomicCompareExchange 341 34 31 31 340 338
+                              Store 132(out_u1) 342
+             343:    310(ptr) AccessChain 23 309
+             344:   17(ivec2) Load 343
+             345:    123(ptr) AccessChain 23 122
+             346:     16(int) Load 345
+             347:    128(ptr) ImageTexelPointer 308(g_tTex2du1) 344 31
+             348:     16(int) AtomicExchange 347 34 31 346
+                              Store 132(out_u1) 348
+             349:    310(ptr) AccessChain 23 309
+             350:   17(ivec2) Load 349
+             351:    123(ptr) AccessChain 23 122
+             352:     16(int) Load 351
+             353:    128(ptr) ImageTexelPointer 308(g_tTex2du1) 350 31
+             354:     16(int) AtomicUMax 353 34 31 352
+             355:    310(ptr) AccessChain 23 309
+             356:   17(ivec2) Load 355
+             357:    123(ptr) AccessChain 23 122
+             358:     16(int) Load 357
+             359:    128(ptr) ImageTexelPointer 308(g_tTex2du1) 356 31
+             360:     16(int) AtomicUMax 359 34 31 358
+                              Store 132(out_u1) 360
+             361:    310(ptr) AccessChain 23 309
+             362:   17(ivec2) Load 361
+             363:    123(ptr) AccessChain 23 122
+             364:     16(int) Load 363
+             365:    128(ptr) ImageTexelPointer 308(g_tTex2du1) 362 31
+             366:     16(int) AtomicUMin 365 34 31 364
+             367:    310(ptr) AccessChain 23 309
+             368:   17(ivec2) Load 367
+             369:    123(ptr) AccessChain 23 122
+             370:     16(int) Load 369
+             371:    128(ptr) ImageTexelPointer 308(g_tTex2du1) 368 31
+             372:     16(int) AtomicUMin 371 34 31 370
+                              Store 132(out_u1) 372
+             373:    310(ptr) AccessChain 23 309
+             374:   17(ivec2) Load 373
+             375:    123(ptr) AccessChain 23 122
+             376:     16(int) Load 375
+             377:    128(ptr) ImageTexelPointer 308(g_tTex2du1) 374 31
+             378:     16(int) AtomicOr 377 34 31 376
+             379:    310(ptr) AccessChain 23 309
+             380:   17(ivec2) Load 379
+             381:    123(ptr) AccessChain 23 122
+             382:     16(int) Load 381
+             383:    128(ptr) ImageTexelPointer 308(g_tTex2du1) 380 31
+             384:     16(int) AtomicOr 383 34 31 382
+                              Store 132(out_u1) 384
+             385:    310(ptr) AccessChain 23 309
+             386:   17(ivec2) Load 385
+             387:    123(ptr) AccessChain 23 122
+             388:     16(int) Load 387
+             389:    128(ptr) ImageTexelPointer 308(g_tTex2du1) 386 31
+             390:     16(int) AtomicXor 389 34 31 388
+             391:    310(ptr) AccessChain 23 309
+             392:   17(ivec2) Load 391
+             393:    123(ptr) AccessChain 23 122
+             394:     16(int) Load 393
+             395:    128(ptr) ImageTexelPointer 308(g_tTex2du1) 392 31
+             396:     16(int) AtomicXor 395 34 31 394
+                              Store 132(out_u1) 396
+             402:    401(ptr) AccessChain 23 400
+             403:   20(ivec3) Load 402
+             404:     25(ptr) AccessChain 23 28
+             405:     12(int) Load 404
+             406:     32(ptr) ImageTexelPointer 399(g_tTex3di1) 403 31
+             407:     12(int) AtomicIAdd 406 34 31 405
+             408:    401(ptr) AccessChain 23 400
+             409:   20(ivec3) Load 408
+             410:     25(ptr) AccessChain 23 24
+             411:     12(int) Load 410
+             412:     32(ptr) ImageTexelPointer 399(g_tTex3di1) 409 31
+             413:     12(int) AtomicIAdd 412 34 31 411
+                              Store 37(out_i1) 413
+             414:    401(ptr) AccessChain 23 400
+             415:   20(ivec3) Load 414
+             416:     25(ptr) AccessChain 23 28
+             417:     12(int) Load 416
+             418:     32(ptr) ImageTexelPointer 399(g_tTex3di1) 415 31
+             419:     12(int) AtomicAnd 418 34 31 417
+             420:    401(ptr) AccessChain 23 400
+             421:   20(ivec3) Load 420
+             422:     25(ptr) AccessChain 23 24
+             423:     12(int) Load 422
+             424:     32(ptr) ImageTexelPointer 399(g_tTex3di1) 421 31
+             425:     12(int) AtomicAnd 424 34 31 423
+                              Store 37(out_i1) 425
+             426:    401(ptr) AccessChain 23 400
+             427:   20(ivec3) Load 426
+             428:     25(ptr) AccessChain 23 28
+             429:     12(int) Load 428
+             430:     25(ptr) AccessChain 23 60
+             431:     12(int) Load 430
+             432:     32(ptr) ImageTexelPointer 399(g_tTex3di1) 427 31
+             433:     12(int) AtomicCompareExchange 432 34 31 31 431 429
+                              Store 37(out_i1) 433
+             434:    401(ptr) AccessChain 23 400
+             435:   20(ivec3) Load 434
+             436:     25(ptr) AccessChain 23 24
+             437:     12(int) Load 436
+             438:     32(ptr) ImageTexelPointer 399(g_tTex3di1) 435 31
+             439:     12(int) AtomicExchange 438 34 31 437
+                              Store 37(out_i1) 439
+             440:    401(ptr) AccessChain 23 400
+             441:   20(ivec3) Load 440
+             442:     25(ptr) AccessChain 23 28
+             443:     12(int) Load 442
+             444:     32(ptr) ImageTexelPointer 399(g_tTex3di1) 441 31
+             445:     12(int) AtomicSMax 444 34 31 443
+             446:    401(ptr) AccessChain 23 400
+             447:   20(ivec3) Load 446
+             448:     25(ptr) AccessChain 23 24
+             449:     12(int) Load 448
+             450:     32(ptr) ImageTexelPointer 399(g_tTex3di1) 447 31
+             451:     12(int) AtomicSMax 450 34 31 449
+                              Store 37(out_i1) 451
+             452:    401(ptr) AccessChain 23 400
+             453:   20(ivec3) Load 452
+             454:     25(ptr) AccessChain 23 28
+             455:     12(int) Load 454
+             456:     32(ptr) ImageTexelPointer 399(g_tTex3di1) 453 31
+             457:     12(int) AtomicSMin 456 34 31 455
+             458:    401(ptr) AccessChain 23 400
+             459:   20(ivec3) Load 458
+             460:     25(ptr) AccessChain 23 24
+             461:     12(int) Load 460
+             462:     32(ptr) ImageTexelPointer 399(g_tTex3di1) 459 31
+             463:     12(int) AtomicSMin 462 34 31 461
+                              Store 37(out_i1) 463
+             464:    401(ptr) AccessChain 23 400
+             465:   20(ivec3) Load 464
+             466:     25(ptr) AccessChain 23 28
+             467:     12(int) Load 466
+             468:     32(ptr) ImageTexelPointer 399(g_tTex3di1) 465 31
+             469:     12(int) AtomicOr 468 34 31 467
+             470:    401(ptr) AccessChain 23 400
+             471:   20(ivec3) Load 470
+             472:     25(ptr) AccessChain 23 24
+             473:     12(int) Load 472
+             474:     32(ptr) ImageTexelPointer 399(g_tTex3di1) 471 31
+             475:     12(int) AtomicOr 474 34 31 473
+                              Store 37(out_i1) 475
+             476:    401(ptr) AccessChain 23 400
+             477:   20(ivec3) Load 476
+             478:     25(ptr) AccessChain 23 28
+             479:     12(int) Load 478
+             480:     32(ptr) ImageTexelPointer 399(g_tTex3di1) 477 31
+             481:     12(int) AtomicXor 480 34 31 479
+             482:    401(ptr) AccessChain 23 400
+             483:   20(ivec3) Load 482
+             484:     25(ptr) AccessChain 23 24
+             485:     12(int) Load 484
+             486:     32(ptr) ImageTexelPointer 399(g_tTex3di1) 483 31
+             487:     12(int) AtomicXor 486 34 31 485
+                              Store 37(out_i1) 487
+             493:    492(ptr) AccessChain 23 491
+             494:   18(ivec3) Load 493
+             495:    123(ptr) AccessChain 23 122
+             496:     16(int) Load 495
+             497:    128(ptr) ImageTexelPointer 490(g_tTex3du1) 494 31
+             498:     16(int) AtomicIAdd 497 34 31 496
+             499:    492(ptr) AccessChain 23 491
+             500:   18(ivec3) Load 499
+             501:    123(ptr) AccessChain 23 122
+             502:     16(int) Load 501
+             503:    128(ptr) ImageTexelPointer 490(g_tTex3du1) 500 31
+             504:     16(int) AtomicIAdd 503 34 31 502
+                              Store 132(out_u1) 504
+             505:    492(ptr) AccessChain 23 491
+             506:   18(ivec3) Load 505
+             507:    123(ptr) AccessChain 23 122
+             508:     16(int) Load 507
+             509:    128(ptr) ImageTexelPointer 490(g_tTex3du1) 506 31
+             510:     16(int) AtomicAnd 509 34 31 508
+             511:    492(ptr) AccessChain 23 491
+             512:   18(ivec3) Load 511
+             513:    123(ptr) AccessChain 23 122
+             514:     16(int) Load 513
+             515:    128(ptr) ImageTexelPointer 490(g_tTex3du1) 512 31
+             516:     16(int) AtomicAnd 515 34 31 514
+                              Store 132(out_u1) 516
+             517:    492(ptr) AccessChain 23 491
+             518:   18(ivec3) Load 517
+             519:    123(ptr) AccessChain 23 153
+             520:     16(int) Load 519
+             521:    123(ptr) AccessChain 23 156
+             522:     16(int) Load 521
+             523:    128(ptr) ImageTexelPointer 490(g_tTex3du1) 518 31
+             524:     16(int) AtomicCompareExchange 523 34 31 31 522 520
+                              Store 132(out_u1) 524
+             525:    492(ptr) AccessChain 23 491
+             526:   18(ivec3) Load 525
+             527:    123(ptr) AccessChain 23 122
+             528:     16(int) Load 527
+             529:    128(ptr) ImageTexelPointer 490(g_tTex3du1) 526 31
+             530:     16(int) AtomicExchange 529 34 31 528
+                              Store 132(out_u1) 530
+             531:    492(ptr) AccessChain 23 491
+             532:   18(ivec3) Load 531
+             533:    123(ptr) AccessChain 23 122
+             534:     16(int) Load 533
+             535:    128(ptr) ImageTexelPointer 490(g_tTex3du1) 532 31
+             536:     16(int) AtomicUMax 535 34 31 534
+             537:    492(ptr) AccessChain 23 491
+             538:   18(ivec3) Load 537
+             539:    123(ptr) AccessChain 23 122
+             540:     16(int) Load 539
+             541:    128(ptr) ImageTexelPointer 490(g_tTex3du1) 538 31
+             542:     16(int) AtomicUMax 541 34 31 540
+                              Store 132(out_u1) 542
+             543:    492(ptr) AccessChain 23 491
+             544:   18(ivec3) Load 543
+             545:    123(ptr) AccessChain 23 122
+             546:     16(int) Load 545
+             547:    128(ptr) ImageTexelPointer 490(g_tTex3du1) 544 31
+             548:     16(int) AtomicUMin 547 34 31 546
+             549:    492(ptr) AccessChain 23 491
+             550:   18(ivec3) Load 549
+             551:    123(ptr) AccessChain 23 122
+             552:     16(int) Load 551
+             553:    128(ptr) ImageTexelPointer 490(g_tTex3du1) 550 31
+             554:     16(int) AtomicUMin 553 34 31 552
+                              Store 132(out_u1) 554
+             555:    492(ptr) AccessChain 23 491
+             556:   18(ivec3) Load 555
+             557:    123(ptr) AccessChain 23 122
+             558:     16(int) Load 557
+             559:    128(ptr) ImageTexelPointer 490(g_tTex3du1) 556 31
+             560:     16(int) AtomicOr 559 34 31 558
+             561:    492(ptr) AccessChain 23 491
+             562:   18(ivec3) Load 561
+             563:    123(ptr) AccessChain 23 122
+             564:     16(int) Load 563
+             565:    128(ptr) ImageTexelPointer 490(g_tTex3du1) 562 31
+             566:     16(int) AtomicOr 565 34 31 564
+                              Store 132(out_u1) 566
+             567:    492(ptr) AccessChain 23 491
+             568:   18(ivec3) Load 567
+             569:    123(ptr) AccessChain 23 122
+             570:     16(int) Load 569
+             571:    128(ptr) ImageTexelPointer 490(g_tTex3du1) 568 31
+             572:     16(int) AtomicXor 571 34 31 570
+             573:    492(ptr) AccessChain 23 491
+             574:   18(ivec3) Load 573
+             575:    123(ptr) AccessChain 23 122
+             576:     16(int) Load 575
+             577:    128(ptr) ImageTexelPointer 490(g_tTex3du1) 574 31
+             578:     16(int) AtomicXor 577 34 31 576
+                              Store 132(out_u1) 578
+             582:    219(ptr) AccessChain 23 218
+             583:   19(ivec2) Load 582
+             584:     25(ptr) AccessChain 23 28
+             585:     12(int) Load 584
+             586:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 583 31
+             587:     12(int) AtomicIAdd 586 34 31 585
+             588:    219(ptr) AccessChain 23 218
+             589:   19(ivec2) Load 588
+             590:     25(ptr) AccessChain 23 24
+             591:     12(int) Load 590
+             592:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 589 31
+             593:     12(int) AtomicIAdd 592 34 31 591
+                              Store 37(out_i1) 593
+             594:    219(ptr) AccessChain 23 218
+             595:   19(ivec2) Load 594
+             596:     25(ptr) AccessChain 23 28
+             597:     12(int) Load 596
+             598:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 595 31
+             599:     12(int) AtomicAnd 598 34 31 597
+             600:    219(ptr) AccessChain 23 218
+             601:   19(ivec2) Load 600
+             602:     25(ptr) AccessChain 23 24
+             603:     12(int) Load 602
+             604:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 601 31
+             605:     12(int) AtomicAnd 604 34 31 603
+                              Store 37(out_i1) 605
+             606:    219(ptr) AccessChain 23 218
+             607:   19(ivec2) Load 606
+             608:     25(ptr) AccessChain 23 28
+             609:     12(int) Load 608
+             610:     25(ptr) AccessChain 23 60
+             611:     12(int) Load 610
+             612:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 607 31
+             613:     12(int) AtomicCompareExchange 612 34 31 31 611 609
+                              Store 37(out_i1) 613
+             614:    219(ptr) AccessChain 23 218
+             615:   19(ivec2) Load 614
+             616:     25(ptr) AccessChain 23 24
+             617:     12(int) Load 616
+             618:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 615 31
+             619:     12(int) AtomicExchange 618 34 31 617
+                              Store 37(out_i1) 619
+             620:    219(ptr) AccessChain 23 218
+             621:   19(ivec2) Load 620
+             622:     25(ptr) AccessChain 23 28
+             623:     12(int) Load 622
+             624:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 621 31
+             625:     12(int) AtomicSMax 624 34 31 623
+             626:    219(ptr) AccessChain 23 218
+             627:   19(ivec2) Load 626
+             628:     25(ptr) AccessChain 23 24
+             629:     12(int) Load 628
+             630:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 627 31
+             631:     12(int) AtomicSMax 630 34 31 629
+                              Store 37(out_i1) 631
+             632:    219(ptr) AccessChain 23 218
+             633:   19(ivec2) Load 632
+             634:     25(ptr) AccessChain 23 28
+             635:     12(int) Load 634
+             636:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 633 31
+             637:     12(int) AtomicSMin 636 34 31 635
+             638:    219(ptr) AccessChain 23 218
+             639:   19(ivec2) Load 638
+             640:     25(ptr) AccessChain 23 24
+             641:     12(int) Load 640
+             642:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 639 31
+             643:     12(int) AtomicSMin 642 34 31 641
+                              Store 37(out_i1) 643
+             644:    219(ptr) AccessChain 23 218
+             645:   19(ivec2) Load 644
+             646:     25(ptr) AccessChain 23 28
+             647:     12(int) Load 646
+             648:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 645 31
+             649:     12(int) AtomicOr 648 34 31 647
+             650:    219(ptr) AccessChain 23 218
+             651:   19(ivec2) Load 650
+             652:     25(ptr) AccessChain 23 24
+             653:     12(int) Load 652
+             654:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 651 31
+             655:     12(int) AtomicOr 654 34 31 653
+                              Store 37(out_i1) 655
+             656:    219(ptr) AccessChain 23 218
+             657:   19(ivec2) Load 656
+             658:     25(ptr) AccessChain 23 28
+             659:     12(int) Load 658
+             660:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 657 31
+             661:     12(int) AtomicXor 660 34 31 659
+             662:    219(ptr) AccessChain 23 218
+             663:   19(ivec2) Load 662
+             664:     25(ptr) AccessChain 23 24
+             665:     12(int) Load 664
+             666:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 663 31
+             667:     12(int) AtomicXor 666 34 31 665
+                              Store 37(out_i1) 667
+             671:    310(ptr) AccessChain 23 309
+             672:   17(ivec2) Load 671
+             673:    123(ptr) AccessChain 23 122
+             674:     16(int) Load 673
+             675:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 672 31
+             676:     16(int) AtomicIAdd 675 34 31 674
+             677:    310(ptr) AccessChain 23 309
+             678:   17(ivec2) Load 677
+             679:    123(ptr) AccessChain 23 122
+             680:     16(int) Load 679
+             681:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 678 31
+             682:     16(int) AtomicIAdd 681 34 31 680
+                              Store 132(out_u1) 682
+             683:    310(ptr) AccessChain 23 309
+             684:   17(ivec2) Load 683
+             685:    123(ptr) AccessChain 23 122
+             686:     16(int) Load 685
+             687:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 684 31
+             688:     16(int) AtomicAnd 687 34 31 686
+             689:    310(ptr) AccessChain 23 309
+             690:   17(ivec2) Load 689
+             691:    123(ptr) AccessChain 23 122
+             692:     16(int) Load 691
+             693:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 690 31
+             694:     16(int) AtomicAnd 693 34 31 692
+                              Store 132(out_u1) 694
+             695:    310(ptr) AccessChain 23 309
+             696:   17(ivec2) Load 695
+             697:    123(ptr) AccessChain 23 153
+             698:     16(int) Load 697
+             699:    123(ptr) AccessChain 23 156
+             700:     16(int) Load 699
+             701:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 696 31
+             702:     16(int) AtomicCompareExchange 701 34 31 31 700 698
+                              Store 132(out_u1) 702
+             703:    310(ptr) AccessChain 23 309
+             704:   17(ivec2) Load 703
+             705:    123(ptr) AccessChain 23 122
+             706:     16(int) Load 705
+             707:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 704 31
+             708:     16(int) AtomicExchange 707 34 31 706
+                              Store 132(out_u1) 708
+             709:    310(ptr) AccessChain 23 309
+             710:   17(ivec2) Load 709
+             711:    123(ptr) AccessChain 23 122
+             712:     16(int) Load 711
+             713:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 710 31
+             714:     16(int) AtomicUMax 713 34 31 712
+             715:    310(ptr) AccessChain 23 309
+             716:   17(ivec2) Load 715
+             717:    123(ptr) AccessChain 23 122
+             718:     16(int) Load 717
+             719:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 716 31
+             720:     16(int) AtomicUMax 719 34 31 718
+                              Store 132(out_u1) 720
+             721:    310(ptr) AccessChain 23 309
+             722:   17(ivec2) Load 721
+             723:    123(ptr) AccessChain 23 122
+             724:     16(int) Load 723
+             725:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 722 31
+             726:     16(int) AtomicUMin 725 34 31 724
+             727:    310(ptr) AccessChain 23 309
+             728:   17(ivec2) Load 727
+             729:    123(ptr) AccessChain 23 122
+             730:     16(int) Load 729
+             731:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 728 31
+             732:     16(int) AtomicUMin 731 34 31 730
+                              Store 132(out_u1) 732
+             733:    310(ptr) AccessChain 23 309
+             734:   17(ivec2) Load 733
+             735:    123(ptr) AccessChain 23 122
+             736:     16(int) Load 735
+             737:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 734 31
+             738:     16(int) AtomicOr 737 34 31 736
+             739:    310(ptr) AccessChain 23 309
+             740:   17(ivec2) Load 739
+             741:    123(ptr) AccessChain 23 122
+             742:     16(int) Load 741
+             743:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 740 31
+             744:     16(int) AtomicOr 743 34 31 742
+                              Store 132(out_u1) 744
+             745:    310(ptr) AccessChain 23 309
+             746:   17(ivec2) Load 745
+             747:    123(ptr) AccessChain 23 122
+             748:     16(int) Load 747
+             749:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 746 31
+             750:     16(int) AtomicXor 749 34 31 748
+             751:    310(ptr) AccessChain 23 309
+             752:   17(ivec2) Load 751
+             753:    123(ptr) AccessChain 23 122
+             754:     16(int) Load 753
+             755:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 752 31
+             756:     16(int) AtomicXor 755 34 31 754
+                              Store 132(out_u1) 756
+             757:    219(ptr) AccessChain 23 218
+             758:   19(ivec2) Load 757
+             759:     25(ptr) AccessChain 23 28
+             760:     12(int) Load 759
+             761:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 758 31
+             762:     12(int) AtomicIAdd 761 34 31 760
+             763:    219(ptr) AccessChain 23 218
+             764:   19(ivec2) Load 763
+             765:     25(ptr) AccessChain 23 24
+             766:     12(int) Load 765
+             767:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 764 31
+             768:     12(int) AtomicIAdd 767 34 31 766
+                              Store 37(out_i1) 768
+             769:    219(ptr) AccessChain 23 218
+             770:   19(ivec2) Load 769
+             771:     25(ptr) AccessChain 23 28
+             772:     12(int) Load 771
+             773:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 770 31
+             774:     12(int) AtomicAnd 773 34 31 772
+             775:    219(ptr) AccessChain 23 218
+             776:   19(ivec2) Load 775
+             777:     25(ptr) AccessChain 23 24
+             778:     12(int) Load 777
+             779:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 776 31
+             780:     12(int) AtomicAnd 779 34 31 778
+                              Store 37(out_i1) 780
+             781:    219(ptr) AccessChain 23 218
+             782:   19(ivec2) Load 781
+             783:     25(ptr) AccessChain 23 28
+             784:     12(int) Load 783
+             785:     25(ptr) AccessChain 23 60
+             786:     12(int) Load 785
+             787:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 782 31
+             788:     12(int) AtomicCompareExchange 787 34 31 31 786 784
+                              Store 37(out_i1) 788
+             789:    219(ptr) AccessChain 23 218
+             790:   19(ivec2) Load 789
+             791:     25(ptr) AccessChain 23 24
+             792:     12(int) Load 791
+             793:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 790 31
+             794:     12(int) AtomicExchange 793 34 31 792
+                              Store 37(out_i1) 794
+             795:    219(ptr) AccessChain 23 218
+             796:   19(ivec2) Load 795
+             797:     25(ptr) AccessChain 23 28
+             798:     12(int) Load 797
+             799:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 796 31
+             800:     12(int) AtomicSMax 799 34 31 798
+             801:    219(ptr) AccessChain 23 218
+             802:   19(ivec2) Load 801
+             803:     25(ptr) AccessChain 23 24
+             804:     12(int) Load 803
+             805:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 802 31
+             806:     12(int) AtomicSMax 805 34 31 804
+                              Store 37(out_i1) 806
+             807:    219(ptr) AccessChain 23 218
+             808:   19(ivec2) Load 807
+             809:     25(ptr) AccessChain 23 28
+             810:     12(int) Load 809
+             811:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 808 31
+             812:     12(int) AtomicSMin 811 34 31 810
+             813:    219(ptr) AccessChain 23 218
+             814:   19(ivec2) Load 813
+             815:     25(ptr) AccessChain 23 24
+             816:     12(int) Load 815
+             817:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 814 31
+             818:     12(int) AtomicSMin 817 34 31 816
+                              Store 37(out_i1) 818
+             819:    219(ptr) AccessChain 23 218
+             820:   19(ivec2) Load 819
+             821:     25(ptr) AccessChain 23 28
+             822:     12(int) Load 821
+             823:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 820 31
+             824:     12(int) AtomicOr 823 34 31 822
+             825:    219(ptr) AccessChain 23 218
+             826:   19(ivec2) Load 825
+             827:     25(ptr) AccessChain 23 24
+             828:     12(int) Load 827
+             829:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 826 31
+             830:     12(int) AtomicOr 829 34 31 828
+                              Store 37(out_i1) 830
+             831:    219(ptr) AccessChain 23 218
+             832:   19(ivec2) Load 831
+             833:     25(ptr) AccessChain 23 28
+             834:     12(int) Load 833
+             835:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 832 31
+             836:     12(int) AtomicXor 835 34 31 834
+             837:    219(ptr) AccessChain 23 218
+             838:   19(ivec2) Load 837
+             839:     25(ptr) AccessChain 23 24
+             840:     12(int) Load 839
+             841:     32(ptr) ImageTexelPointer 581(g_tTex1di1a) 838 31
+             842:     12(int) AtomicXor 841 34 31 840
+                              Store 37(out_i1) 842
+             843:    310(ptr) AccessChain 23 309
+             844:   17(ivec2) Load 843
+             845:    123(ptr) AccessChain 23 122
+             846:     16(int) Load 845
+             847:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 844 31
+             848:     16(int) AtomicIAdd 847 34 31 846
+             849:    310(ptr) AccessChain 23 309
+             850:   17(ivec2) Load 849
+             851:    123(ptr) AccessChain 23 122
+             852:     16(int) Load 851
+             853:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 850 31
+             854:     16(int) AtomicIAdd 853 34 31 852
+                              Store 132(out_u1) 854
+             855:    310(ptr) AccessChain 23 309
+             856:   17(ivec2) Load 855
+             857:    123(ptr) AccessChain 23 122
+             858:     16(int) Load 857
+             859:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 856 31
+             860:     16(int) AtomicAnd 859 34 31 858
+             861:    310(ptr) AccessChain 23 309
+             862:   17(ivec2) Load 861
+             863:    123(ptr) AccessChain 23 122
+             864:     16(int) Load 863
+             865:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 862 31
+             866:     16(int) AtomicAnd 865 34 31 864
+                              Store 132(out_u1) 866
+             867:    310(ptr) AccessChain 23 309
+             868:   17(ivec2) Load 867
+             869:    123(ptr) AccessChain 23 153
+             870:     16(int) Load 869
+             871:    123(ptr) AccessChain 23 156
+             872:     16(int) Load 871
+             873:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 868 31
+             874:     16(int) AtomicCompareExchange 873 34 31 31 872 870
+                              Store 132(out_u1) 874
+             875:    310(ptr) AccessChain 23 309
+             876:   17(ivec2) Load 875
+             877:    123(ptr) AccessChain 23 122
+             878:     16(int) Load 877
+             879:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 876 31
+             880:     16(int) AtomicExchange 879 34 31 878
+                              Store 132(out_u1) 880
+             881:    310(ptr) AccessChain 23 309
+             882:   17(ivec2) Load 881
+             883:    123(ptr) AccessChain 23 122
+             884:     16(int) Load 883
+             885:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 882 31
+             886:     16(int) AtomicUMax 885 34 31 884
+             887:    310(ptr) AccessChain 23 309
+             888:   17(ivec2) Load 887
+             889:    123(ptr) AccessChain 23 122
+             890:     16(int) Load 889
+             891:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 888 31
+             892:     16(int) AtomicUMax 891 34 31 890
+                              Store 132(out_u1) 892
+             893:    310(ptr) AccessChain 23 309
+             894:   17(ivec2) Load 893
+             895:    123(ptr) AccessChain 23 122
+             896:     16(int) Load 895
+             897:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 894 31
+             898:     16(int) AtomicUMin 897 34 31 896
+             899:    310(ptr) AccessChain 23 309
+             900:   17(ivec2) Load 899
+             901:    123(ptr) AccessChain 23 122
+             902:     16(int) Load 901
+             903:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 900 31
+             904:     16(int) AtomicUMin 903 34 31 902
+                              Store 132(out_u1) 904
+             905:    310(ptr) AccessChain 23 309
+             906:   17(ivec2) Load 905
+             907:    123(ptr) AccessChain 23 122
+             908:     16(int) Load 907
+             909:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 906 31
+             910:     16(int) AtomicOr 909 34 31 908
+             911:    310(ptr) AccessChain 23 309
+             912:   17(ivec2) Load 911
+             913:    123(ptr) AccessChain 23 122
+             914:     16(int) Load 913
+             915:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 912 31
+             916:     16(int) AtomicOr 915 34 31 914
+                              Store 132(out_u1) 916
+             917:    310(ptr) AccessChain 23 309
+             918:   17(ivec2) Load 917
+             919:    123(ptr) AccessChain 23 122
+             920:     16(int) Load 919
+             921:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 918 31
+             922:     16(int) AtomicXor 921 34 31 920
+             923:    310(ptr) AccessChain 23 309
+             924:   17(ivec2) Load 923
+             925:    123(ptr) AccessChain 23 122
+             926:     16(int) Load 925
+             927:    128(ptr) ImageTexelPointer 670(g_tTex1du1a) 924 31
+             928:     16(int) AtomicXor 927 34 31 926
+                              Store 132(out_u1) 928
+             932:     25(ptr) AccessChain 23 24
+             933:     12(int) Load 932
+             934:     25(ptr) AccessChain 23 28
+             935:     12(int) Load 934
+             936:     32(ptr) ImageTexelPointer 931(g_tBuffI) 933 31
+             937:     12(int) AtomicIAdd 936 34 31 935
+             938:     25(ptr) AccessChain 23 24
+             939:     12(int) Load 938
+             940:     25(ptr) AccessChain 23 24
+             941:     12(int) Load 940
+             942:     32(ptr) ImageTexelPointer 931(g_tBuffI) 939 31
+             943:     12(int) AtomicIAdd 942 34 31 941
+                              Store 37(out_i1) 943
+             944:     25(ptr) AccessChain 23 24
+             945:     12(int) Load 944
+             946:     25(ptr) AccessChain 23 28
+             947:     12(int) Load 946
+             948:     32(ptr) ImageTexelPointer 931(g_tBuffI) 945 31
+             949:     12(int) AtomicAnd 948 34 31 947
+             950:     25(ptr) AccessChain 23 24
+             951:     12(int) Load 950
+             952:     25(ptr) AccessChain 23 24
+             953:     12(int) Load 952
+             954:     32(ptr) ImageTexelPointer 931(g_tBuffI) 951 31
+             955:     12(int) AtomicAnd 954 34 31 953
+                              Store 37(out_i1) 955
+             956:     25(ptr) AccessChain 23 24
+             957:     12(int) Load 956
+             958:     25(ptr) AccessChain 23 28
+             959:     12(int) Load 958
+             960:     25(ptr) AccessChain 23 60
+             961:     12(int) Load 960
+             962:     32(ptr) ImageTexelPointer 931(g_tBuffI) 957 31
+             963:     12(int) AtomicCompareExchange 962 34 31 31 961 959
+                              Store 37(out_i1) 963
+             964:     25(ptr) AccessChain 23 24
+             965:     12(int) Load 964
+             966:     25(ptr) AccessChain 23 24
+             967:     12(int) Load 966
+             968:     32(ptr) ImageTexelPointer 931(g_tBuffI) 965 31
+             969:     12(int) AtomicExchange 968 34 31 967
+                              Store 37(out_i1) 969
+             970:     25(ptr) AccessChain 23 24
+             971:     12(int) Load 970
+             972:     25(ptr) AccessChain 23 28
+             973:     12(int) Load 972
+             974:     32(ptr) ImageTexelPointer 931(g_tBuffI) 971 31
+             975:     12(int) AtomicSMax 974 34 31 973
+             976:     25(ptr) AccessChain 23 24
+             977:     12(int) Load 976
+             978:     25(ptr) AccessChain 23 24
+             979:     12(int) Load 978
+             980:     32(ptr) ImageTexelPointer 931(g_tBuffI) 977 31
+             981:     12(int) AtomicSMax 980 34 31 979
+                              Store 37(out_i1) 981
+             982:     25(ptr) AccessChain 23 24
+             983:     12(int) Load 982
+             984:     25(ptr) AccessChain 23 28
+             985:     12(int) Load 984
+             986:     32(ptr) ImageTexelPointer 931(g_tBuffI) 983 31
+             987:     12(int) AtomicSMin 986 34 31 985
+             988:     25(ptr) AccessChain 23 24
+             989:     12(int) Load 988
+             990:     25(ptr) AccessChain 23 24
+             991:     12(int) Load 990
+             992:     32(ptr) ImageTexelPointer 931(g_tBuffI) 989 31
+             993:     12(int) AtomicSMin 992 34 31 991
+                              Store 37(out_i1) 993
+             994:     25(ptr) AccessChain 23 24
+             995:     12(int) Load 994
+             996:     25(ptr) AccessChain 23 28
+             997:     12(int) Load 996
+             998:     32(ptr) ImageTexelPointer 931(g_tBuffI) 995 31
+             999:     12(int) AtomicOr 998 34 31 997
+            1000:     25(ptr) AccessChain 23 24
+            1001:     12(int) Load 1000
+            1002:     25(ptr) AccessChain 23 24
+            1003:     12(int) Load 1002
+            1004:     32(ptr) ImageTexelPointer 931(g_tBuffI) 1001 31
+            1005:     12(int) AtomicOr 1004 34 31 1003
+                              Store 37(out_i1) 1005
+            1006:     25(ptr) AccessChain 23 24
+            1007:     12(int) Load 1006
+            1008:     25(ptr) AccessChain 23 28
+            1009:     12(int) Load 1008
+            1010:     32(ptr) ImageTexelPointer 931(g_tBuffI) 1007 31
+            1011:     12(int) AtomicXor 1010 34 31 1009
+            1012:     25(ptr) AccessChain 23 24
+            1013:     12(int) Load 1012
+            1014:     25(ptr) AccessChain 23 24
+            1015:     12(int) Load 1014
+            1016:     32(ptr) ImageTexelPointer 931(g_tBuffI) 1013 31
+            1017:     12(int) AtomicXor 1016 34 31 1015
+                              Store 37(out_i1) 1017
+            1021:    123(ptr) AccessChain 23 122
+            1022:     16(int) Load 1021
+            1023:    123(ptr) AccessChain 23 122
+            1024:     16(int) Load 1023
+            1025:    128(ptr) ImageTexelPointer 1020(g_tBuffU) 1022 31
+            1026:     16(int) AtomicIAdd 1025 34 31 1024
+            1027:    123(ptr) AccessChain 23 122
+            1028:     16(int) Load 1027
+            1029:    123(ptr) AccessChain 23 122
+            1030:     16(int) Load 1029
+            1031:    128(ptr) ImageTexelPointer 1020(g_tBuffU) 1028 31
+            1032:     16(int) AtomicIAdd 1031 34 31 1030
+                              Store 132(out_u1) 1032
+            1033:    123(ptr) AccessChain 23 122
+            1034:     16(int) Load 1033
+            1035:    123(ptr) AccessChain 23 122
+            1036:     16(int) Load 1035
+            1037:    128(ptr) ImageTexelPointer 1020(g_tBuffU) 1034 31
+            1038:     16(int) AtomicAnd 1037 34 31 1036
+            1039:    123(ptr) AccessChain 23 122
+            1040:     16(int) Load 1039
+            1041:    123(ptr) AccessChain 23 122
+            1042:     16(int) Load 1041
+            1043:    128(ptr) ImageTexelPointer 1020(g_tBuffU) 1040 31
+            1044:     16(int) AtomicAnd 1043 34 31 1042
+                              Store 132(out_u1) 1044
+            1045:    123(ptr) AccessChain 23 122
+            1046:     16(int) Load 1045
+            1047:    123(ptr) AccessChain 23 153
+            1048:     16(int) Load 1047
+            1049:    123(ptr) AccessChain 23 156
+            1050:     16(int) Load 1049
+            1051:    128(ptr) ImageTexelPointer 1020(g_tBuffU) 1046 31
+            1052:     16(int) AtomicCompareExchange 1051 34 31 31 1050 1048
+                              Store 132(out_u1) 1052
+            1053:    123(ptr) AccessChain 23 122
+            1054:     16(int) Load 1053
+            1055:    123(ptr) AccessChain 23 122
+            1056:     16(int) Load 1055
+            1057:    128(ptr) ImageTexelPointer 1020(g_tBuffU) 1054 31
+            1058:     16(int) AtomicExchange 1057 34 31 1056
+                              Store 132(out_u1) 1058
+            1059:    123(ptr) AccessChain 23 122
+            1060:     16(int) Load 1059
+            1061:    123(ptr) AccessChain 23 122
+            1062:     16(int) Load 1061
+            1063:    128(ptr) ImageTexelPointer 1020(g_tBuffU) 1060 31
+            1064:     16(int) AtomicUMax 1063 34 31 1062
+            1065:    123(ptr) AccessChain 23 122
+            1066:     16(int) Load 1065
+            1067:    123(ptr) AccessChain 23 122
+            1068:     16(int) Load 1067
+            1069:    128(ptr) ImageTexelPointer 1020(g_tBuffU) 1066 31
+            1070:     16(int) AtomicUMax 1069 34 31 1068
+                              Store 132(out_u1) 1070
+            1071:    123(ptr) AccessChain 23 122
+            1072:     16(int) Load 1071
+            1073:    123(ptr) AccessChain 23 122
+            1074:     16(int) Load 1073
+            1075:    128(ptr) ImageTexelPointer 1020(g_tBuffU) 1072 31
+            1076:     16(int) AtomicUMin 1075 34 31 1074
+            1077:    123(ptr) AccessChain 23 122
+            1078:     16(int) Load 1077
+            1079:    123(ptr) AccessChain 23 122
+            1080:     16(int) Load 1079
+            1081:    128(ptr) ImageTexelPointer 1020(g_tBuffU) 1078 31
+            1082:     16(int) AtomicUMin 1081 34 31 1080
+                              Store 132(out_u1) 1082
+            1083:    123(ptr) AccessChain 23 122
+            1084:     16(int) Load 1083
+            1085:    123(ptr) AccessChain 23 122
+            1086:     16(int) Load 1085
+            1087:    128(ptr) ImageTexelPointer 1020(g_tBuffU) 1084 31
+            1088:     16(int) AtomicOr 1087 34 31 1086
+            1089:    123(ptr) AccessChain 23 122
+            1090:     16(int) Load 1089
+            1091:    123(ptr) AccessChain 23 122
+            1092:     16(int) Load 1091
+            1093:    128(ptr) ImageTexelPointer 1020(g_tBuffU) 1090 31
+            1094:     16(int) AtomicOr 1093 34 31 1092
+                              Store 132(out_u1) 1094
+            1095:    123(ptr) AccessChain 23 122
+            1096:     16(int) Load 1095
+            1097:    123(ptr) AccessChain 23 122
+            1098:     16(int) Load 1097
+            1099:    128(ptr) ImageTexelPointer 1020(g_tBuffU) 1096 31
+            1100:     16(int) AtomicXor 1099 34 31 1098
+            1101:    123(ptr) AccessChain 23 122
+            1102:     16(int) Load 1101
+            1103:    123(ptr) AccessChain 23 122
+            1104:     16(int) Load 1103
+            1105:    128(ptr) ImageTexelPointer 1020(g_tBuffU) 1102 31
+            1106:     16(int) AtomicXor 1105 34 31 1104
+                              Store 132(out_u1) 1106
+            1112:   1111(ptr) AccessChain 1108(psout) 122
+                              Store 1112 1110
+            1113:8(PS_OUTPUT) Load 1108(psout)
+                              ReturnValue 1113
                               FunctionEnd

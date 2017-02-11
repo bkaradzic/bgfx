@@ -49,22 +49,29 @@ ERROR: node is still EOpNull!
 0:?           1.000000
 0:?           2.000000
 0:?           3.000000
-0:29  Function Definition: PixelShaderFunction(vf4; (temp 4-component vector of float)
+0:29  Function Definition: @PixelShaderFunction(vf4; (temp 4-component vector of float)
 0:29    Function Parameters: 
-0:29      'inF0' (layout(location=0 ) in 4-component vector of float)
+0:29      'inF0' (in 4-component vector of float)
 0:?     Sequence
 0:30      ERROR: Bad unary op
  (temp 4-component vector of uint)
-0:30        'inF0' (layout(location=0 ) in 4-component vector of float)
-0:32      Sequence
-0:32        move second child to first child (temp 4-component vector of float)
-0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?           Constant:
-0:?             1.000000
-0:?             2.000000
-0:?             3.000000
-0:?             4.000000
-0:32        Branch: Return
+0:30        'inF0' (in 4-component vector of float)
+0:32      Branch: Return with expression
+0:?         Constant:
+0:?           1.000000
+0:?           2.000000
+0:?           3.000000
+0:?           4.000000
+0:29  Function Definition: PixelShaderFunction( (temp void)
+0:29    Function Parameters: 
+0:?     Sequence
+0:29      move second child to first child (temp 4-component vector of float)
+0:?         'inF0' (temp 4-component vector of float)
+0:?         'inF0' (layout(location=0 ) in 4-component vector of float)
+0:29      move second child to first child (temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:29        Function Call: @PixelShaderFunction(vf4; (temp 4-component vector of float)
+0:?           'inF0' (temp 4-component vector of float)
 0:?   Linker Objects
 0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
 0:?     'inF0' (layout(location=0 ) in 4-component vector of float)
@@ -116,22 +123,29 @@ ERROR: node is still EOpNull!
 0:?           1.000000
 0:?           2.000000
 0:?           3.000000
-0:29  Function Definition: PixelShaderFunction(vf4; (temp 4-component vector of float)
+0:29  Function Definition: @PixelShaderFunction(vf4; (temp 4-component vector of float)
 0:29    Function Parameters: 
-0:29      'inF0' (layout(location=0 ) in 4-component vector of float)
+0:29      'inF0' (in 4-component vector of float)
 0:?     Sequence
 0:30      ERROR: Bad unary op
  (temp 4-component vector of uint)
-0:30        'inF0' (layout(location=0 ) in 4-component vector of float)
-0:32      Sequence
-0:32        move second child to first child (temp 4-component vector of float)
-0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?           Constant:
-0:?             1.000000
-0:?             2.000000
-0:?             3.000000
-0:?             4.000000
-0:32        Branch: Return
+0:30        'inF0' (in 4-component vector of float)
+0:32      Branch: Return with expression
+0:?         Constant:
+0:?           1.000000
+0:?           2.000000
+0:?           3.000000
+0:?           4.000000
+0:29  Function Definition: PixelShaderFunction( (temp void)
+0:29    Function Parameters: 
+0:?     Sequence
+0:29      move second child to first child (temp 4-component vector of float)
+0:?         'inF0' (temp 4-component vector of float)
+0:?         'inF0' (layout(location=0 ) in 4-component vector of float)
+0:29      move second child to first child (temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:29        Function Call: @PixelShaderFunction(vf4; (temp 4-component vector of float)
+0:?           'inF0' (temp 4-component vector of float)
 0:?   Linker Objects
 0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
 0:?     'inF0' (layout(location=0 ) in 4-component vector of float)

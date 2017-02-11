@@ -1,0 +1,186 @@
+hlsl.hull.void.tesc
+Shader version: 450
+vertices = 3
+0:? Sequence
+0:26  Function Definition: @main(struct-VS_OUT-vf31[3]; (temp structure{temp 3-component vector of float cpoint})
+0:26    Function Parameters: 
+0:26      'ip' (in 3-element array of structure{temp 3-component vector of float cpoint})
+0:?     Sequence
+0:28      move second child to first child (temp 3-component vector of float)
+0:28        cpoint: direct index for structure (temp 3-component vector of float)
+0:28          'output' (temp structure{temp 3-component vector of float cpoint})
+0:28          Constant:
+0:28            0 (const int)
+0:28        cpoint: direct index for structure (temp 3-component vector of float)
+0:28          direct index (temp structure{temp 3-component vector of float cpoint})
+0:28            'ip' (in 3-element array of structure{temp 3-component vector of float cpoint})
+0:28            Constant:
+0:28              0 (const int)
+0:28          Constant:
+0:28            0 (const int)
+0:29      Branch: Return with expression
+0:29        'output' (temp structure{temp 3-component vector of float cpoint})
+0:26  Function Definition: main( (temp void)
+0:26    Function Parameters: 
+0:?     Sequence
+0:26      move second child to first child (temp 3-element array of structure{temp 3-component vector of float cpoint})
+0:?         'ip' (temp 3-element array of structure{temp 3-component vector of float cpoint})
+0:?         'ip' (layout(location=0 ) in 3-element array of structure{temp 3-component vector of float cpoint})
+0:26      move second child to first child (temp structure{temp 3-component vector of float cpoint})
+0:?         '@entryPointOutput' (layout(location=0 ) out structure{temp 3-component vector of float cpoint})
+0:26        Function Call: @main(struct-VS_OUT-vf31[3]; (temp structure{temp 3-component vector of float cpoint})
+0:?           'ip' (temp 3-element array of structure{temp 3-component vector of float cpoint})
+0:?       Barrier (temp void)
+0:?       Test condition and select (temp void)
+0:?         Condition
+0:?         Compare Equal (temp bool)
+0:?           'InvocationId' (in uint InvocationID)
+0:?           Constant:
+0:?             0 (const int)
+0:?         true case
+0:?         Function Call: PCF( (temp void)
+0:33  Function Definition: PCF( (temp void)
+0:33    Function Parameters: 
+0:?   Linker Objects
+0:?     '@entryPointOutput' (layout(location=0 ) out structure{temp 3-component vector of float cpoint})
+0:?     'ip' (layout(location=0 ) in 3-element array of structure{temp 3-component vector of float cpoint})
+0:?     'InvocationId' (in uint InvocationID)
+
+
+Linked tessellation control stage:
+
+
+Shader version: 450
+vertices = 3
+0:? Sequence
+0:26  Function Definition: @main(struct-VS_OUT-vf31[3]; (temp structure{temp 3-component vector of float cpoint})
+0:26    Function Parameters: 
+0:26      'ip' (in 3-element array of structure{temp 3-component vector of float cpoint})
+0:?     Sequence
+0:28      move second child to first child (temp 3-component vector of float)
+0:28        cpoint: direct index for structure (temp 3-component vector of float)
+0:28          'output' (temp structure{temp 3-component vector of float cpoint})
+0:28          Constant:
+0:28            0 (const int)
+0:28        cpoint: direct index for structure (temp 3-component vector of float)
+0:28          direct index (temp structure{temp 3-component vector of float cpoint})
+0:28            'ip' (in 3-element array of structure{temp 3-component vector of float cpoint})
+0:28            Constant:
+0:28              0 (const int)
+0:28          Constant:
+0:28            0 (const int)
+0:29      Branch: Return with expression
+0:29        'output' (temp structure{temp 3-component vector of float cpoint})
+0:26  Function Definition: main( (temp void)
+0:26    Function Parameters: 
+0:?     Sequence
+0:26      move second child to first child (temp 3-element array of structure{temp 3-component vector of float cpoint})
+0:?         'ip' (temp 3-element array of structure{temp 3-component vector of float cpoint})
+0:?         'ip' (layout(location=0 ) in 3-element array of structure{temp 3-component vector of float cpoint})
+0:26      move second child to first child (temp structure{temp 3-component vector of float cpoint})
+0:?         '@entryPointOutput' (layout(location=0 ) out structure{temp 3-component vector of float cpoint})
+0:26        Function Call: @main(struct-VS_OUT-vf31[3]; (temp structure{temp 3-component vector of float cpoint})
+0:?           'ip' (temp 3-element array of structure{temp 3-component vector of float cpoint})
+0:?       Barrier (temp void)
+0:?       Test condition and select (temp void)
+0:?         Condition
+0:?         Compare Equal (temp bool)
+0:?           'InvocationId' (in uint InvocationID)
+0:?           Constant:
+0:?             0 (const int)
+0:?         true case
+0:?         Function Call: PCF( (temp void)
+0:33  Function Definition: PCF( (temp void)
+0:33    Function Parameters: 
+0:?   Linker Objects
+0:?     '@entryPointOutput' (layout(location=0 ) out structure{temp 3-component vector of float cpoint})
+0:?     'ip' (layout(location=0 ) in 3-element array of structure{temp 3-component vector of float cpoint})
+0:?     'InvocationId' (in uint InvocationID)
+
+// Module Version 10000
+// Generated by (magic number): 80001
+// Id's are bound by 51
+
+                              Capability Tessellation
+               1:             ExtInstImport  "GLSL.std.450"
+                              MemoryModel Logical GLSL450
+                              EntryPoint TessellationControl 4  "main" 33 36 44
+                              ExecutionMode 4 OutputVertices 3
+                              Name 4  "main"
+                              Name 8  "VS_OUT"
+                              MemberName 8(VS_OUT) 0  "cpoint"
+                              Name 13  "HS_OUT"
+                              MemberName 13(HS_OUT) 0  "cpoint"
+                              Name 16  "@main(struct-VS_OUT-vf31[3];"
+                              Name 15  "ip"
+                              Name 18  "PCF("
+                              Name 21  "output"
+                              Name 31  "ip"
+                              Name 33  "ip"
+                              Name 36  "@entryPointOutput"
+                              Name 37  "param"
+                              Name 44  "InvocationId"
+                              Decorate 33(ip) Location 0
+                              Decorate 36(@entryPointOutput) Location 0
+                              Decorate 44(InvocationId) BuiltIn InvocationId
+               2:             TypeVoid
+               3:             TypeFunction 2
+               6:             TypeFloat 32
+               7:             TypeVector 6(float) 3
+       8(VS_OUT):             TypeStruct 7(fvec3)
+               9:             TypeInt 32 0
+              10:      9(int) Constant 3
+              11:             TypeArray 8(VS_OUT) 10
+              12:             TypePointer Function 11
+      13(HS_OUT):             TypeStruct 7(fvec3)
+              14:             TypeFunction 13(HS_OUT) 12(ptr)
+              20:             TypePointer Function 13(HS_OUT)
+              22:             TypeInt 32 1
+              23:     22(int) Constant 0
+              24:             TypePointer Function 7(fvec3)
+              32:             TypePointer Input 11
+          33(ip):     32(ptr) Variable Input
+              35:             TypePointer Output 13(HS_OUT)
+36(@entryPointOutput):     35(ptr) Variable Output
+              40:      9(int) Constant 2
+              41:      9(int) Constant 1
+              42:      9(int) Constant 0
+              43:             TypePointer Input 9(int)
+44(InvocationId):     43(ptr) Variable Input
+              46:             TypeBool
+         4(main):           2 Function None 3
+               5:             Label
+          31(ip):     12(ptr) Variable Function
+       37(param):     12(ptr) Variable Function
+              34:          11 Load 33(ip)
+                              Store 31(ip) 34
+              38:          11 Load 31(ip)
+                              Store 37(param) 38
+              39:  13(HS_OUT) FunctionCall 16(@main(struct-VS_OUT-vf31[3];) 37(param)
+                              Store 36(@entryPointOutput) 39
+                              ControlBarrier 40 41 42
+              45:      9(int) Load 44(InvocationId)
+              47:    46(bool) IEqual 45 23
+                              SelectionMerge 49 None
+                              BranchConditional 47 48 49
+              48:               Label
+              50:           2   FunctionCall 18(PCF()
+                                Branch 49
+              49:             Label
+                              Return
+                              FunctionEnd
+16(@main(struct-VS_OUT-vf31[3];):  13(HS_OUT) Function None 14
+          15(ip):     12(ptr) FunctionParameter
+              17:             Label
+      21(output):     20(ptr) Variable Function
+              25:     24(ptr) AccessChain 15(ip) 23 23
+              26:    7(fvec3) Load 25
+              27:     24(ptr) AccessChain 21(output) 23
+                              Store 27 26
+              28:  13(HS_OUT) Load 21(output)
+                              ReturnValue 28
+                              FunctionEnd
+        18(PCF():           2 Function None 3
+              19:             Label
+                              Return
+                              FunctionEnd

@@ -64,7 +64,8 @@ namespace glslang {
         void unimplemented(const char*);
         bool acceptIdentifier(HlslToken&);
         bool acceptCompilationUnit();
-        bool acceptDeclaration(TIntermNode*& node);
+        bool acceptDeclaration(TIntermNode*&);
+        bool acceptDeclaration(TIntermNode*& node1, TIntermNode*& node2);
         bool acceptControlDeclaration(TIntermNode*& node);
         bool acceptSamplerDeclarationDX9(TType&);
         bool acceptSamplerState();
@@ -75,6 +76,8 @@ namespace glslang {
         bool acceptTemplateVecMatBasicType(TBasicType&);
         bool acceptVectorTemplateType(TType&);
         bool acceptMatrixTemplateType(TType&);
+        bool acceptTessellationDeclType();
+        bool acceptTessellationPatchTemplateType(TType&);
         bool acceptStreamOutTemplateType(TType&, TLayoutGeometry&);
         bool acceptOutputPrimitiveGeometry(TLayoutGeometry&);
         bool acceptAnnotations(TQualifier&);
@@ -84,7 +87,7 @@ namespace glslang {
         bool acceptStructDeclarationList(TTypeList*&);
         bool acceptFunctionParameters(TFunction&);
         bool acceptParameterDeclaration(TFunction&);
-        bool acceptFunctionDefinition(TFunction&, TIntermNode*&, const TAttributeMap&);
+        bool acceptFunctionDefinition(TFunction&, TIntermNode*& node1, TIntermNode*& node2, const TAttributeMap&);
         bool acceptParenExpression(TIntermTyped*&);
         bool acceptExpression(TIntermTyped*&);
         bool acceptInitializer(TIntermTyped*&);

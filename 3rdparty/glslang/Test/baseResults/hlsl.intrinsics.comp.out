@@ -230,16 +230,16 @@ local_size = (1, 1, 1)
 0:?           1.000000
 0:?           2.000000
 0:?           3.000000
-0:105  Function Definition: ComputeShaderFunction(vf4;vf4;vf4;vu4;vu4; (temp 4-component vector of float)
+0:105  Function Definition: @ComputeShaderFunction(vf4;vf4;vf4;vu4;vu4; (temp 4-component vector of float)
 0:105    Function Parameters: 
-0:105      'inF0' (layout(location=0 ) in 4-component vector of float)
-0:105      'inF1' (layout(location=1 ) in 4-component vector of float)
-0:105      'inF2' (layout(location=2 ) in 4-component vector of float)
-0:105      'inU0' (layout(location=3 ) in 4-component vector of uint)
-0:105      'inU1' (layout(location=4 ) in 4-component vector of uint)
+0:105      'inF0' (in 4-component vector of float)
+0:105      'inF1' (in 4-component vector of float)
+0:105      'inF2' (in 4-component vector of float)
+0:105      'inU0' (in 4-component vector of uint)
+0:105      'inU1' (in 4-component vector of uint)
 0:?     Sequence
 0:109      all (temp bool)
-0:109        'inF0' (layout(location=0 ) in 4-component vector of float)
+0:109        'inF0' (in 4-component vector of float)
 0:112      AtomicAdd (temp void)
 0:112        'gs_ua4' (shared 4-component vector of uint)
 0:112        'gs_ub4' (shared 4-component vector of uint)
@@ -299,22 +299,39 @@ local_size = (1, 1, 1)
 0:125        AtomicXor (temp 4-component vector of uint)
 0:125          'gs_ua4' (shared 4-component vector of uint)
 0:125          'gs_ub4' (shared 4-component vector of uint)
-0:128      Sequence
-0:128        move second child to first child (temp 4-component vector of float)
-0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?           Constant:
-0:?             1.000000
-0:?             2.000000
-0:?             3.000000
-0:?             4.000000
-0:128        Branch: Return
+0:128      Branch: Return with expression
+0:?         Constant:
+0:?           1.000000
+0:?           2.000000
+0:?           3.000000
+0:?           4.000000
+0:105  Function Definition: ComputeShaderFunction( (temp void)
+0:105    Function Parameters: 
+0:?     Sequence
+0:105      move second child to first child (temp 4-component vector of float)
+0:?         'inF0' (temp 4-component vector of float)
+0:?         'inF0' (layout(location=0 ) in 4-component vector of float)
+0:105      move second child to first child (temp 4-component vector of float)
+0:?         'inF1' (temp 4-component vector of float)
+0:?         'inF1' (layout(location=1 ) in 4-component vector of float)
+0:105      move second child to first child (temp 4-component vector of float)
+0:?         'inF2' (temp 4-component vector of float)
+0:?         'inF2' (layout(location=2 ) in 4-component vector of float)
+0:105      move second child to first child (temp 4-component vector of uint)
+0:?         'inU0' (temp 4-component vector of uint)
+0:?         'inU0' (layout(location=3 ) in 4-component vector of uint)
+0:105      move second child to first child (temp 4-component vector of uint)
+0:?         'inU1' (temp 4-component vector of uint)
+0:?         'inU1' (layout(location=4 ) in 4-component vector of uint)
+0:105      move second child to first child (temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:105        Function Call: @ComputeShaderFunction(vf4;vf4;vf4;vu4;vu4; (temp 4-component vector of float)
+0:?           'inF0' (temp 4-component vector of float)
+0:?           'inF1' (temp 4-component vector of float)
+0:?           'inF2' (temp 4-component vector of float)
+0:?           'inU0' (temp 4-component vector of uint)
+0:?           'inU1' (temp 4-component vector of uint)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'inF0' (layout(location=0 ) in 4-component vector of float)
-0:?     'inF1' (layout(location=1 ) in 4-component vector of float)
-0:?     'inF2' (layout(location=2 ) in 4-component vector of float)
-0:?     'inU0' (layout(location=3 ) in 4-component vector of uint)
-0:?     'inU1' (layout(location=4 ) in 4-component vector of uint)
 0:?     'gs_ua' (shared uint)
 0:?     'gs_ub' (shared uint)
 0:?     'gs_uc' (shared uint)
@@ -327,6 +344,12 @@ local_size = (1, 1, 1)
 0:?     'gs_ua4' (shared 4-component vector of uint)
 0:?     'gs_ub4' (shared 4-component vector of uint)
 0:?     'gs_uc4' (shared 4-component vector of uint)
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'inF0' (layout(location=0 ) in 4-component vector of float)
+0:?     'inF1' (layout(location=1 ) in 4-component vector of float)
+0:?     'inF2' (layout(location=2 ) in 4-component vector of float)
+0:?     'inU0' (layout(location=3 ) in 4-component vector of uint)
+0:?     'inU1' (layout(location=4 ) in 4-component vector of uint)
 
 
 Linked compute stage:
@@ -563,16 +586,16 @@ local_size = (1, 1, 1)
 0:?           1.000000
 0:?           2.000000
 0:?           3.000000
-0:105  Function Definition: ComputeShaderFunction(vf4;vf4;vf4;vu4;vu4; (temp 4-component vector of float)
+0:105  Function Definition: @ComputeShaderFunction(vf4;vf4;vf4;vu4;vu4; (temp 4-component vector of float)
 0:105    Function Parameters: 
-0:105      'inF0' (layout(location=0 ) in 4-component vector of float)
-0:105      'inF1' (layout(location=1 ) in 4-component vector of float)
-0:105      'inF2' (layout(location=2 ) in 4-component vector of float)
-0:105      'inU0' (layout(location=3 ) in 4-component vector of uint)
-0:105      'inU1' (layout(location=4 ) in 4-component vector of uint)
+0:105      'inF0' (in 4-component vector of float)
+0:105      'inF1' (in 4-component vector of float)
+0:105      'inF2' (in 4-component vector of float)
+0:105      'inU0' (in 4-component vector of uint)
+0:105      'inU1' (in 4-component vector of uint)
 0:?     Sequence
 0:109      all (temp bool)
-0:109        'inF0' (layout(location=0 ) in 4-component vector of float)
+0:109        'inF0' (in 4-component vector of float)
 0:112      AtomicAdd (temp void)
 0:112        'gs_ua4' (shared 4-component vector of uint)
 0:112        'gs_ub4' (shared 4-component vector of uint)
@@ -632,22 +655,39 @@ local_size = (1, 1, 1)
 0:125        AtomicXor (temp 4-component vector of uint)
 0:125          'gs_ua4' (shared 4-component vector of uint)
 0:125          'gs_ub4' (shared 4-component vector of uint)
-0:128      Sequence
-0:128        move second child to first child (temp 4-component vector of float)
-0:?           '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?           Constant:
-0:?             1.000000
-0:?             2.000000
-0:?             3.000000
-0:?             4.000000
-0:128        Branch: Return
+0:128      Branch: Return with expression
+0:?         Constant:
+0:?           1.000000
+0:?           2.000000
+0:?           3.000000
+0:?           4.000000
+0:105  Function Definition: ComputeShaderFunction( (temp void)
+0:105    Function Parameters: 
+0:?     Sequence
+0:105      move second child to first child (temp 4-component vector of float)
+0:?         'inF0' (temp 4-component vector of float)
+0:?         'inF0' (layout(location=0 ) in 4-component vector of float)
+0:105      move second child to first child (temp 4-component vector of float)
+0:?         'inF1' (temp 4-component vector of float)
+0:?         'inF1' (layout(location=1 ) in 4-component vector of float)
+0:105      move second child to first child (temp 4-component vector of float)
+0:?         'inF2' (temp 4-component vector of float)
+0:?         'inF2' (layout(location=2 ) in 4-component vector of float)
+0:105      move second child to first child (temp 4-component vector of uint)
+0:?         'inU0' (temp 4-component vector of uint)
+0:?         'inU0' (layout(location=3 ) in 4-component vector of uint)
+0:105      move second child to first child (temp 4-component vector of uint)
+0:?         'inU1' (temp 4-component vector of uint)
+0:?         'inU1' (layout(location=4 ) in 4-component vector of uint)
+0:105      move second child to first child (temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:105        Function Call: @ComputeShaderFunction(vf4;vf4;vf4;vu4;vu4; (temp 4-component vector of float)
+0:?           'inF0' (temp 4-component vector of float)
+0:?           'inF1' (temp 4-component vector of float)
+0:?           'inF2' (temp 4-component vector of float)
+0:?           'inU0' (temp 4-component vector of uint)
+0:?           'inU1' (temp 4-component vector of uint)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'inF0' (layout(location=0 ) in 4-component vector of float)
-0:?     'inF1' (layout(location=1 ) in 4-component vector of float)
-0:?     'inF2' (layout(location=2 ) in 4-component vector of float)
-0:?     'inU0' (layout(location=3 ) in 4-component vector of uint)
-0:?     'inU1' (layout(location=4 ) in 4-component vector of uint)
 0:?     'gs_ua' (shared uint)
 0:?     'gs_ub' (shared uint)
 0:?     'gs_uc' (shared uint)
@@ -660,15 +700,21 @@ local_size = (1, 1, 1)
 0:?     'gs_ua4' (shared 4-component vector of uint)
 0:?     'gs_ub4' (shared 4-component vector of uint)
 0:?     'gs_uc4' (shared 4-component vector of uint)
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'inF0' (layout(location=0 ) in 4-component vector of float)
+0:?     'inF1' (layout(location=1 ) in 4-component vector of float)
+0:?     'inF2' (layout(location=2 ) in 4-component vector of float)
+0:?     'inU0' (layout(location=3 ) in 4-component vector of uint)
+0:?     'inU1' (layout(location=4 ) in 4-component vector of uint)
 
 // Module Version 10000
 // Generated by (magic number): 80001
-// Id's are bound by 224
+// Id's are bound by 255
 
                               Capability Shader
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
-                              EntryPoint GLCompute 4  "ComputeShaderFunction" 175 215 219 220 222 223
+                              EntryPoint GLCompute 4  "ComputeShaderFunction" 227 230 233 237 240 243
                               ExecutionMode 4 LocalSize 1 1 1
                               Name 4  "ComputeShaderFunction"
                               Name 16  "ComputeShaderFunctionS(f1;f1;f1;u1;u1;"
@@ -693,34 +739,50 @@ local_size = (1, 1, 1)
                               Name 43  "inF2"
                               Name 44  "inU0"
                               Name 45  "inU1"
-                              Name 52  "gs_ua"
-                              Name 53  "gs_ub"
-                              Name 58  "out_u1"
-                              Name 66  "gs_uc"
-                              Name 95  "gs_ua2"
-                              Name 96  "gs_ub2"
-                              Name 99  "out_u2"
-                              Name 107  "gs_uc2"
-                              Name 136  "gs_ua3"
-                              Name 137  "gs_ub3"
-                              Name 140  "out_u3"
-                              Name 148  "gs_uc3"
-                              Name 175  "inF0"
-                              Name 180  "gs_ua4"
-                              Name 181  "gs_ub4"
-                              Name 185  "out_u4"
-                              Name 193  "gs_uc4"
-                              Name 215  "@entryPointOutput"
-                              Name 219  "inF1"
-                              Name 220  "inF2"
-                              Name 222  "inU0"
-                              Name 223  "inU1"
-                              Decorate 175(inF0) Location 0
-                              Decorate 215(@entryPointOutput) Location 0
-                              Decorate 219(inF1) Location 1
-                              Decorate 220(inF2) Location 2
-                              Decorate 222(inU0) Location 3
-                              Decorate 223(inU1) Location 4
+                              Name 58  "@ComputeShaderFunction(vf4;vf4;vf4;vu4;vu4;"
+                              Name 53  "inF0"
+                              Name 54  "inF1"
+                              Name 55  "inF2"
+                              Name 56  "inU0"
+                              Name 57  "inU1"
+                              Name 64  "gs_ua"
+                              Name 65  "gs_ub"
+                              Name 70  "out_u1"
+                              Name 78  "gs_uc"
+                              Name 107  "gs_ua2"
+                              Name 108  "gs_ub2"
+                              Name 111  "out_u2"
+                              Name 119  "gs_uc2"
+                              Name 148  "gs_ua3"
+                              Name 149  "gs_ub3"
+                              Name 152  "out_u3"
+                              Name 160  "gs_uc3"
+                              Name 188  "gs_ua4"
+                              Name 189  "gs_ub4"
+                              Name 192  "out_u4"
+                              Name 200  "gs_uc4"
+                              Name 225  "inF0"
+                              Name 227  "inF0"
+                              Name 229  "inF1"
+                              Name 230  "inF1"
+                              Name 232  "inF2"
+                              Name 233  "inF2"
+                              Name 235  "inU0"
+                              Name 237  "inU0"
+                              Name 239  "inU1"
+                              Name 240  "inU1"
+                              Name 243  "@entryPointOutput"
+                              Name 244  "param"
+                              Name 246  "param"
+                              Name 248  "param"
+                              Name 250  "param"
+                              Name 252  "param"
+                              Decorate 227(inF0) Location 0
+                              Decorate 230(inF1) Location 1
+                              Decorate 233(inF2) Location 2
+                              Decorate 237(inU0) Location 3
+                              Decorate 240(inU1) Location 4
+                              Decorate 243(@entryPointOutput) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
@@ -739,88 +801,81 @@ local_size = (1, 1, 1)
               38:             TypeVector 8(int) 3
               39:             TypePointer Function 38(ivec3)
               40:             TypeFunction 36(fvec3) 37(ptr) 37(ptr) 37(ptr) 39(ptr) 39(ptr)
-              49:             TypeBool
-              51:             TypePointer Workgroup 8(int)
-       52(gs_ua):     51(ptr) Variable Workgroup
-       53(gs_ub):     51(ptr) Variable Workgroup
-              55:      8(int) Constant 1
-              56:      8(int) Constant 0
-       66(gs_uc):     51(ptr) Variable Workgroup
-              87:    6(float) Constant 0
-              94:             TypePointer Workgroup 26(ivec2)
-      95(gs_ua2):     94(ptr) Variable Workgroup
-      96(gs_ub2):     94(ptr) Variable Workgroup
-     107(gs_uc2):     94(ptr) Variable Workgroup
-             128:    6(float) Constant 1065353216
-             129:    6(float) Constant 1073741824
-             130:   24(fvec2) ConstantComposite 128 129
-             135:             TypePointer Workgroup 38(ivec3)
-     136(gs_ua3):    135(ptr) Variable Workgroup
-     137(gs_ub3):    135(ptr) Variable Workgroup
-     148(gs_uc3):    135(ptr) Variable Workgroup
-             169:    6(float) Constant 1077936128
-             170:   36(fvec3) ConstantComposite 128 129 169
-             173:             TypeVector 6(float) 4
-             174:             TypePointer Input 173(fvec4)
-       175(inF0):    174(ptr) Variable Input
-             178:             TypeVector 8(int) 4
-             179:             TypePointer Workgroup 178(ivec4)
-     180(gs_ua4):    179(ptr) Variable Workgroup
-     181(gs_ub4):    179(ptr) Variable Workgroup
-             184:             TypePointer Function 178(ivec4)
-     193(gs_uc4):    179(ptr) Variable Workgroup
-             214:             TypePointer Output 173(fvec4)
-215(@entryPointOutput):    214(ptr) Variable Output
-             216:    6(float) Constant 1082130432
-             217:  173(fvec4) ConstantComposite 128 129 169 216
-       219(inF1):    174(ptr) Variable Input
-       220(inF2):    174(ptr) Variable Input
-             221:             TypePointer Input 178(ivec4)
-       222(inU0):    221(ptr) Variable Input
-       223(inU1):    221(ptr) Variable Input
+              48:             TypeVector 6(float) 4
+              49:             TypePointer Function 48(fvec4)
+              50:             TypeVector 8(int) 4
+              51:             TypePointer Function 50(ivec4)
+              52:             TypeFunction 48(fvec4) 49(ptr) 49(ptr) 49(ptr) 51(ptr) 51(ptr)
+              61:             TypeBool
+              63:             TypePointer Workgroup 8(int)
+       64(gs_ua):     63(ptr) Variable Workgroup
+       65(gs_ub):     63(ptr) Variable Workgroup
+              67:      8(int) Constant 1
+              68:      8(int) Constant 0
+       78(gs_uc):     63(ptr) Variable Workgroup
+              99:    6(float) Constant 0
+             106:             TypePointer Workgroup 26(ivec2)
+     107(gs_ua2):    106(ptr) Variable Workgroup
+     108(gs_ub2):    106(ptr) Variable Workgroup
+     119(gs_uc2):    106(ptr) Variable Workgroup
+             140:    6(float) Constant 1065353216
+             141:    6(float) Constant 1073741824
+             142:   24(fvec2) ConstantComposite 140 141
+             147:             TypePointer Workgroup 38(ivec3)
+     148(gs_ua3):    147(ptr) Variable Workgroup
+     149(gs_ub3):    147(ptr) Variable Workgroup
+     160(gs_uc3):    147(ptr) Variable Workgroup
+             181:    6(float) Constant 1077936128
+             182:   36(fvec3) ConstantComposite 140 141 181
+             187:             TypePointer Workgroup 50(ivec4)
+     188(gs_ua4):    187(ptr) Variable Workgroup
+     189(gs_ub4):    187(ptr) Variable Workgroup
+     200(gs_uc4):    187(ptr) Variable Workgroup
+             221:    6(float) Constant 1082130432
+             222:   48(fvec4) ConstantComposite 140 141 181 221
+             226:             TypePointer Input 48(fvec4)
+       227(inF0):    226(ptr) Variable Input
+       230(inF1):    226(ptr) Variable Input
+       233(inF2):    226(ptr) Variable Input
+             236:             TypePointer Input 50(ivec4)
+       237(inU0):    236(ptr) Variable Input
+       240(inU1):    236(ptr) Variable Input
+             242:             TypePointer Output 48(fvec4)
+243(@entryPointOutput):    242(ptr) Variable Output
 4(ComputeShaderFunction):           2 Function None 3
                5:             Label
-     185(out_u4):    184(ptr) Variable Function
-             176:  173(fvec4) Load 175(inF0)
-             177:    49(bool) All 176
-             182:  178(ivec4) Load 181(gs_ub4)
-             183:           2 AtomicIAdd 180(gs_ua4) 55 56 182
-             186:  178(ivec4) Load 181(gs_ub4)
-             187:  178(ivec4) AtomicIAdd 180(gs_ua4) 55 56 186
-                              Store 185(out_u4) 187
-             188:  178(ivec4) Load 181(gs_ub4)
-             189:           2 AtomicAnd 180(gs_ua4) 55 56 188
-             190:  178(ivec4) Load 181(gs_ub4)
-             191:  178(ivec4) AtomicAnd 180(gs_ua4) 55 56 190
-                              Store 185(out_u4) 191
-             192:  178(ivec4) Load 181(gs_ub4)
-             194:  178(ivec4) Load 193(gs_uc4)
-             195:  178(ivec4) AtomicCompareExchange 180(gs_ua4) 55 56 56 194 192
-                              Store 185(out_u4) 195
-             196:  178(ivec4) Load 181(gs_ub4)
-             197:  178(ivec4) AtomicExchange 180(gs_ua4) 55 56 196
-                              Store 185(out_u4) 197
-             198:  178(ivec4) Load 181(gs_ub4)
-             199:           2 AtomicSMax 180(gs_ua4) 55 56 198
-             200:  178(ivec4) Load 181(gs_ub4)
-             201:  178(ivec4) AtomicUMax 180(gs_ua4) 55 56 200
-                              Store 185(out_u4) 201
-             202:  178(ivec4) Load 181(gs_ub4)
-             203:           2 AtomicSMin 180(gs_ua4) 55 56 202
-             204:  178(ivec4) Load 181(gs_ub4)
-             205:  178(ivec4) AtomicUMin 180(gs_ua4) 55 56 204
-                              Store 185(out_u4) 205
-             206:  178(ivec4) Load 181(gs_ub4)
-             207:           2 AtomicOr 180(gs_ua4) 55 56 206
-             208:  178(ivec4) Load 181(gs_ub4)
-             209:  178(ivec4) AtomicOr 180(gs_ua4) 55 56 208
-                              Store 185(out_u4) 209
-             210:  178(ivec4) Load 181(gs_ub4)
-             211:           2 AtomicXor 180(gs_ua4) 55 56 210
-             212:  178(ivec4) Load 181(gs_ub4)
-             213:  178(ivec4) AtomicXor 180(gs_ua4) 55 56 212
-                              Store 185(out_u4) 213
-                              Store 215(@entryPointOutput) 217
+       225(inF0):     49(ptr) Variable Function
+       229(inF1):     49(ptr) Variable Function
+       232(inF2):     49(ptr) Variable Function
+       235(inU0):     51(ptr) Variable Function
+       239(inU1):     51(ptr) Variable Function
+      244(param):     49(ptr) Variable Function
+      246(param):     49(ptr) Variable Function
+      248(param):     49(ptr) Variable Function
+      250(param):     51(ptr) Variable Function
+      252(param):     51(ptr) Variable Function
+             228:   48(fvec4) Load 227(inF0)
+                              Store 225(inF0) 228
+             231:   48(fvec4) Load 230(inF1)
+                              Store 229(inF1) 231
+             234:   48(fvec4) Load 233(inF2)
+                              Store 232(inF2) 234
+             238:   50(ivec4) Load 237(inU0)
+                              Store 235(inU0) 238
+             241:   50(ivec4) Load 240(inU1)
+                              Store 239(inU1) 241
+             245:   48(fvec4) Load 225(inF0)
+                              Store 244(param) 245
+             247:   48(fvec4) Load 229(inF1)
+                              Store 246(param) 247
+             249:   48(fvec4) Load 232(inF2)
+                              Store 248(param) 249
+             251:   50(ivec4) Load 235(inU0)
+                              Store 250(param) 251
+             253:   50(ivec4) Load 239(inU1)
+                              Store 252(param) 253
+             254:   48(fvec4) FunctionCall 58(@ComputeShaderFunction(vf4;vf4;vf4;vu4;vu4;) 244(param) 246(param) 248(param) 250(param) 252(param)
+                              Store 243(@entryPointOutput) 254
                               Return
                               FunctionEnd
 16(ComputeShaderFunctionS(f1;f1;f1;u1;u1;):    6(float) Function None 10
@@ -830,54 +885,54 @@ local_size = (1, 1, 1)
         14(inU0):      9(ptr) FunctionParameter
         15(inU1):      9(ptr) FunctionParameter
               17:             Label
-      58(out_u1):      9(ptr) Variable Function
-              48:    6(float) Load 11(inF0)
-              50:    49(bool) All 48
-              54:      8(int) Load 53(gs_ub)
-              57:           2 AtomicIAdd 52(gs_ua) 55 56 54
-              59:      8(int) Load 53(gs_ub)
-              60:      8(int) AtomicIAdd 52(gs_ua) 55 56 59
-                              Store 58(out_u1) 60
-              61:      8(int) Load 53(gs_ub)
-              62:           2 AtomicAnd 52(gs_ua) 55 56 61
-              63:      8(int) Load 53(gs_ub)
-              64:      8(int) AtomicAnd 52(gs_ua) 55 56 63
-                              Store 58(out_u1) 64
-              65:      8(int) Load 53(gs_ub)
-              67:      8(int) Load 66(gs_uc)
-              68:      8(int) AtomicCompareExchange 52(gs_ua) 55 56 56 67 65
-                              Store 58(out_u1) 68
-              69:      8(int) Load 53(gs_ub)
-              70:      8(int) AtomicExchange 52(gs_ua) 55 56 69
-                              Store 58(out_u1) 70
-              71:      8(int) Load 53(gs_ub)
-              72:           2 AtomicSMax 52(gs_ua) 55 56 71
-              73:      8(int) Load 53(gs_ub)
-              74:      8(int) AtomicUMax 52(gs_ua) 55 56 73
-                              Store 58(out_u1) 74
-              75:      8(int) Load 53(gs_ub)
-              76:           2 AtomicSMin 52(gs_ua) 55 56 75
-              77:      8(int) Load 53(gs_ub)
-              78:      8(int) AtomicUMin 52(gs_ua) 55 56 77
-                              Store 58(out_u1) 78
-              79:      8(int) Load 53(gs_ub)
-              80:           2 AtomicOr 52(gs_ua) 55 56 79
-              81:      8(int) Load 53(gs_ub)
-              82:      8(int) AtomicOr 52(gs_ua) 55 56 81
-                              Store 58(out_u1) 82
-              83:      8(int) Load 53(gs_ub)
-              84:           2 AtomicXor 52(gs_ua) 55 56 83
-              85:      8(int) Load 53(gs_ub)
-              86:      8(int) AtomicXor 52(gs_ua) 55 56 85
-                              Store 58(out_u1) 86
-                              ReturnValue 87
+      70(out_u1):      9(ptr) Variable Function
+              60:    6(float) Load 11(inF0)
+              62:    61(bool) All 60
+              66:      8(int) Load 65(gs_ub)
+              69:           2 AtomicIAdd 64(gs_ua) 67 68 66
+              71:      8(int) Load 65(gs_ub)
+              72:      8(int) AtomicIAdd 64(gs_ua) 67 68 71
+                              Store 70(out_u1) 72
+              73:      8(int) Load 65(gs_ub)
+              74:           2 AtomicAnd 64(gs_ua) 67 68 73
+              75:      8(int) Load 65(gs_ub)
+              76:      8(int) AtomicAnd 64(gs_ua) 67 68 75
+                              Store 70(out_u1) 76
+              77:      8(int) Load 65(gs_ub)
+              79:      8(int) Load 78(gs_uc)
+              80:      8(int) AtomicCompareExchange 64(gs_ua) 67 68 68 79 77
+                              Store 70(out_u1) 80
+              81:      8(int) Load 65(gs_ub)
+              82:      8(int) AtomicExchange 64(gs_ua) 67 68 81
+                              Store 70(out_u1) 82
+              83:      8(int) Load 65(gs_ub)
+              84:           2 AtomicSMax 64(gs_ua) 67 68 83
+              85:      8(int) Load 65(gs_ub)
+              86:      8(int) AtomicUMax 64(gs_ua) 67 68 85
+                              Store 70(out_u1) 86
+              87:      8(int) Load 65(gs_ub)
+              88:           2 AtomicSMin 64(gs_ua) 67 68 87
+              89:      8(int) Load 65(gs_ub)
+              90:      8(int) AtomicUMin 64(gs_ua) 67 68 89
+                              Store 70(out_u1) 90
+              91:      8(int) Load 65(gs_ub)
+              92:           2 AtomicOr 64(gs_ua) 67 68 91
+              93:      8(int) Load 65(gs_ub)
+              94:      8(int) AtomicOr 64(gs_ua) 67 68 93
+                              Store 70(out_u1) 94
+              95:      8(int) Load 65(gs_ub)
+              96:           2 AtomicXor 64(gs_ua) 67 68 95
+              97:      8(int) Load 65(gs_ub)
+              98:      8(int) AtomicXor 64(gs_ua) 67 68 97
+                              Store 70(out_u1) 98
+                              ReturnValue 99
                               FunctionEnd
 22(ComputeShaderFunction1(vf1;vf1;vf1;):    6(float) Function None 18
         19(inF0):      7(ptr) FunctionParameter
         20(inF1):      7(ptr) FunctionParameter
         21(inF2):      7(ptr) FunctionParameter
               23:             Label
-                              ReturnValue 87
+                              ReturnValue 99
                               FunctionEnd
 34(ComputeShaderFunction2(vf2;vf2;vf2;vu2;vu2;):   24(fvec2) Function None 28
         29(inF0):     25(ptr) FunctionParameter
@@ -886,47 +941,47 @@ local_size = (1, 1, 1)
         32(inU0):     27(ptr) FunctionParameter
         33(inU1):     27(ptr) FunctionParameter
               35:             Label
-      99(out_u2):     27(ptr) Variable Function
-              92:   24(fvec2) Load 29(inF0)
-              93:    49(bool) All 92
-              97:   26(ivec2) Load 96(gs_ub2)
-              98:           2 AtomicIAdd 95(gs_ua2) 55 56 97
-             100:   26(ivec2) Load 96(gs_ub2)
-             101:   26(ivec2) AtomicIAdd 95(gs_ua2) 55 56 100
-                              Store 99(out_u2) 101
-             102:   26(ivec2) Load 96(gs_ub2)
-             103:           2 AtomicAnd 95(gs_ua2) 55 56 102
-             104:   26(ivec2) Load 96(gs_ub2)
-             105:   26(ivec2) AtomicAnd 95(gs_ua2) 55 56 104
-                              Store 99(out_u2) 105
-             106:   26(ivec2) Load 96(gs_ub2)
-             108:   26(ivec2) Load 107(gs_uc2)
-             109:   26(ivec2) AtomicCompareExchange 95(gs_ua2) 55 56 56 108 106
-                              Store 99(out_u2) 109
-             110:   26(ivec2) Load 96(gs_ub2)
-             111:   26(ivec2) AtomicExchange 95(gs_ua2) 55 56 110
-                              Store 99(out_u2) 111
-             112:   26(ivec2) Load 96(gs_ub2)
-             113:           2 AtomicSMax 95(gs_ua2) 55 56 112
-             114:   26(ivec2) Load 96(gs_ub2)
-             115:   26(ivec2) AtomicUMax 95(gs_ua2) 55 56 114
-                              Store 99(out_u2) 115
-             116:   26(ivec2) Load 96(gs_ub2)
-             117:           2 AtomicSMin 95(gs_ua2) 55 56 116
-             118:   26(ivec2) Load 96(gs_ub2)
-             119:   26(ivec2) AtomicUMin 95(gs_ua2) 55 56 118
-                              Store 99(out_u2) 119
-             120:   26(ivec2) Load 96(gs_ub2)
-             121:           2 AtomicOr 95(gs_ua2) 55 56 120
-             122:   26(ivec2) Load 96(gs_ub2)
-             123:   26(ivec2) AtomicOr 95(gs_ua2) 55 56 122
-                              Store 99(out_u2) 123
-             124:   26(ivec2) Load 96(gs_ub2)
-             125:           2 AtomicXor 95(gs_ua2) 55 56 124
-             126:   26(ivec2) Load 96(gs_ub2)
-             127:   26(ivec2) AtomicXor 95(gs_ua2) 55 56 126
-                              Store 99(out_u2) 127
-                              ReturnValue 130
+     111(out_u2):     27(ptr) Variable Function
+             104:   24(fvec2) Load 29(inF0)
+             105:    61(bool) All 104
+             109:   26(ivec2) Load 108(gs_ub2)
+             110:           2 AtomicIAdd 107(gs_ua2) 67 68 109
+             112:   26(ivec2) Load 108(gs_ub2)
+             113:   26(ivec2) AtomicIAdd 107(gs_ua2) 67 68 112
+                              Store 111(out_u2) 113
+             114:   26(ivec2) Load 108(gs_ub2)
+             115:           2 AtomicAnd 107(gs_ua2) 67 68 114
+             116:   26(ivec2) Load 108(gs_ub2)
+             117:   26(ivec2) AtomicAnd 107(gs_ua2) 67 68 116
+                              Store 111(out_u2) 117
+             118:   26(ivec2) Load 108(gs_ub2)
+             120:   26(ivec2) Load 119(gs_uc2)
+             121:   26(ivec2) AtomicCompareExchange 107(gs_ua2) 67 68 68 120 118
+                              Store 111(out_u2) 121
+             122:   26(ivec2) Load 108(gs_ub2)
+             123:   26(ivec2) AtomicExchange 107(gs_ua2) 67 68 122
+                              Store 111(out_u2) 123
+             124:   26(ivec2) Load 108(gs_ub2)
+             125:           2 AtomicSMax 107(gs_ua2) 67 68 124
+             126:   26(ivec2) Load 108(gs_ub2)
+             127:   26(ivec2) AtomicUMax 107(gs_ua2) 67 68 126
+                              Store 111(out_u2) 127
+             128:   26(ivec2) Load 108(gs_ub2)
+             129:           2 AtomicSMin 107(gs_ua2) 67 68 128
+             130:   26(ivec2) Load 108(gs_ub2)
+             131:   26(ivec2) AtomicUMin 107(gs_ua2) 67 68 130
+                              Store 111(out_u2) 131
+             132:   26(ivec2) Load 108(gs_ub2)
+             133:           2 AtomicOr 107(gs_ua2) 67 68 132
+             134:   26(ivec2) Load 108(gs_ub2)
+             135:   26(ivec2) AtomicOr 107(gs_ua2) 67 68 134
+                              Store 111(out_u2) 135
+             136:   26(ivec2) Load 108(gs_ub2)
+             137:           2 AtomicXor 107(gs_ua2) 67 68 136
+             138:   26(ivec2) Load 108(gs_ub2)
+             139:   26(ivec2) AtomicXor 107(gs_ua2) 67 68 138
+                              Store 111(out_u2) 139
+                              ReturnValue 142
                               FunctionEnd
 46(ComputeShaderFunction3(vf3;vf3;vf3;vu3;vu3;):   36(fvec3) Function None 40
         41(inF0):     37(ptr) FunctionParameter
@@ -935,45 +990,94 @@ local_size = (1, 1, 1)
         44(inU0):     39(ptr) FunctionParameter
         45(inU1):     39(ptr) FunctionParameter
               47:             Label
-     140(out_u3):     39(ptr) Variable Function
-             133:   36(fvec3) Load 41(inF0)
-             134:    49(bool) All 133
-             138:   38(ivec3) Load 137(gs_ub3)
-             139:           2 AtomicIAdd 136(gs_ua3) 55 56 138
-             141:   38(ivec3) Load 137(gs_ub3)
-             142:   38(ivec3) AtomicIAdd 136(gs_ua3) 55 56 141
-                              Store 140(out_u3) 142
-             143:   38(ivec3) Load 137(gs_ub3)
-             144:           2 AtomicAnd 136(gs_ua3) 55 56 143
-             145:   38(ivec3) Load 137(gs_ub3)
-             146:   38(ivec3) AtomicAnd 136(gs_ua3) 55 56 145
-                              Store 140(out_u3) 146
-             147:   38(ivec3) Load 137(gs_ub3)
-             149:   38(ivec3) Load 148(gs_uc3)
-             150:   38(ivec3) AtomicCompareExchange 136(gs_ua3) 55 56 56 149 147
-                              Store 140(out_u3) 150
-             151:   38(ivec3) Load 137(gs_ub3)
-             152:   38(ivec3) AtomicExchange 136(gs_ua3) 55 56 151
-                              Store 140(out_u3) 152
-             153:   38(ivec3) Load 137(gs_ub3)
-             154:           2 AtomicSMax 136(gs_ua3) 55 56 153
-             155:   38(ivec3) Load 137(gs_ub3)
-             156:   38(ivec3) AtomicUMax 136(gs_ua3) 55 56 155
-                              Store 140(out_u3) 156
-             157:   38(ivec3) Load 137(gs_ub3)
-             158:           2 AtomicSMin 136(gs_ua3) 55 56 157
-             159:   38(ivec3) Load 137(gs_ub3)
-             160:   38(ivec3) AtomicUMin 136(gs_ua3) 55 56 159
-                              Store 140(out_u3) 160
-             161:   38(ivec3) Load 137(gs_ub3)
-             162:           2 AtomicOr 136(gs_ua3) 55 56 161
-             163:   38(ivec3) Load 137(gs_ub3)
-             164:   38(ivec3) AtomicOr 136(gs_ua3) 55 56 163
-                              Store 140(out_u3) 164
-             165:   38(ivec3) Load 137(gs_ub3)
-             166:           2 AtomicXor 136(gs_ua3) 55 56 165
-             167:   38(ivec3) Load 137(gs_ub3)
-             168:   38(ivec3) AtomicXor 136(gs_ua3) 55 56 167
-                              Store 140(out_u3) 168
-                              ReturnValue 170
+     152(out_u3):     39(ptr) Variable Function
+             145:   36(fvec3) Load 41(inF0)
+             146:    61(bool) All 145
+             150:   38(ivec3) Load 149(gs_ub3)
+             151:           2 AtomicIAdd 148(gs_ua3) 67 68 150
+             153:   38(ivec3) Load 149(gs_ub3)
+             154:   38(ivec3) AtomicIAdd 148(gs_ua3) 67 68 153
+                              Store 152(out_u3) 154
+             155:   38(ivec3) Load 149(gs_ub3)
+             156:           2 AtomicAnd 148(gs_ua3) 67 68 155
+             157:   38(ivec3) Load 149(gs_ub3)
+             158:   38(ivec3) AtomicAnd 148(gs_ua3) 67 68 157
+                              Store 152(out_u3) 158
+             159:   38(ivec3) Load 149(gs_ub3)
+             161:   38(ivec3) Load 160(gs_uc3)
+             162:   38(ivec3) AtomicCompareExchange 148(gs_ua3) 67 68 68 161 159
+                              Store 152(out_u3) 162
+             163:   38(ivec3) Load 149(gs_ub3)
+             164:   38(ivec3) AtomicExchange 148(gs_ua3) 67 68 163
+                              Store 152(out_u3) 164
+             165:   38(ivec3) Load 149(gs_ub3)
+             166:           2 AtomicSMax 148(gs_ua3) 67 68 165
+             167:   38(ivec3) Load 149(gs_ub3)
+             168:   38(ivec3) AtomicUMax 148(gs_ua3) 67 68 167
+                              Store 152(out_u3) 168
+             169:   38(ivec3) Load 149(gs_ub3)
+             170:           2 AtomicSMin 148(gs_ua3) 67 68 169
+             171:   38(ivec3) Load 149(gs_ub3)
+             172:   38(ivec3) AtomicUMin 148(gs_ua3) 67 68 171
+                              Store 152(out_u3) 172
+             173:   38(ivec3) Load 149(gs_ub3)
+             174:           2 AtomicOr 148(gs_ua3) 67 68 173
+             175:   38(ivec3) Load 149(gs_ub3)
+             176:   38(ivec3) AtomicOr 148(gs_ua3) 67 68 175
+                              Store 152(out_u3) 176
+             177:   38(ivec3) Load 149(gs_ub3)
+             178:           2 AtomicXor 148(gs_ua3) 67 68 177
+             179:   38(ivec3) Load 149(gs_ub3)
+             180:   38(ivec3) AtomicXor 148(gs_ua3) 67 68 179
+                              Store 152(out_u3) 180
+                              ReturnValue 182
+                              FunctionEnd
+58(@ComputeShaderFunction(vf4;vf4;vf4;vu4;vu4;):   48(fvec4) Function None 52
+        53(inF0):     49(ptr) FunctionParameter
+        54(inF1):     49(ptr) FunctionParameter
+        55(inF2):     49(ptr) FunctionParameter
+        56(inU0):     51(ptr) FunctionParameter
+        57(inU1):     51(ptr) FunctionParameter
+              59:             Label
+     192(out_u4):     51(ptr) Variable Function
+             185:   48(fvec4) Load 53(inF0)
+             186:    61(bool) All 185
+             190:   50(ivec4) Load 189(gs_ub4)
+             191:           2 AtomicIAdd 188(gs_ua4) 67 68 190
+             193:   50(ivec4) Load 189(gs_ub4)
+             194:   50(ivec4) AtomicIAdd 188(gs_ua4) 67 68 193
+                              Store 192(out_u4) 194
+             195:   50(ivec4) Load 189(gs_ub4)
+             196:           2 AtomicAnd 188(gs_ua4) 67 68 195
+             197:   50(ivec4) Load 189(gs_ub4)
+             198:   50(ivec4) AtomicAnd 188(gs_ua4) 67 68 197
+                              Store 192(out_u4) 198
+             199:   50(ivec4) Load 189(gs_ub4)
+             201:   50(ivec4) Load 200(gs_uc4)
+             202:   50(ivec4) AtomicCompareExchange 188(gs_ua4) 67 68 68 201 199
+                              Store 192(out_u4) 202
+             203:   50(ivec4) Load 189(gs_ub4)
+             204:   50(ivec4) AtomicExchange 188(gs_ua4) 67 68 203
+                              Store 192(out_u4) 204
+             205:   50(ivec4) Load 189(gs_ub4)
+             206:           2 AtomicSMax 188(gs_ua4) 67 68 205
+             207:   50(ivec4) Load 189(gs_ub4)
+             208:   50(ivec4) AtomicUMax 188(gs_ua4) 67 68 207
+                              Store 192(out_u4) 208
+             209:   50(ivec4) Load 189(gs_ub4)
+             210:           2 AtomicSMin 188(gs_ua4) 67 68 209
+             211:   50(ivec4) Load 189(gs_ub4)
+             212:   50(ivec4) AtomicUMin 188(gs_ua4) 67 68 211
+                              Store 192(out_u4) 212
+             213:   50(ivec4) Load 189(gs_ub4)
+             214:           2 AtomicOr 188(gs_ua4) 67 68 213
+             215:   50(ivec4) Load 189(gs_ub4)
+             216:   50(ivec4) AtomicOr 188(gs_ua4) 67 68 215
+                              Store 192(out_u4) 216
+             217:   50(ivec4) Load 189(gs_ub4)
+             218:           2 AtomicXor 188(gs_ua4) 67 68 217
+             219:   50(ivec4) Load 189(gs_ub4)
+             220:   50(ivec4) AtomicXor 188(gs_ua4) 67 68 219
+                              Store 192(out_u4) 220
+                              ReturnValue 222
                               FunctionEnd

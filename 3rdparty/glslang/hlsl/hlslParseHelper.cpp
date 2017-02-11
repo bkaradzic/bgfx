@@ -48,6 +48,7 @@
 #include <functional>
 #include <cctype>
 #include <array>
+#include <set>
 
 namespace glslang {
 
@@ -58,14 +59,14 @@ HlslParseContext::HlslParseContext(TSymbolTable& symbolTable, TIntermediate& int
     TParseContextBase(symbolTable, interm, parsingBuiltins, version, profile, spvVersion, language, infoSink, forwardCompatible, messages),
     contextPragma(true, false),
     loopNestingLevel(0), annotationNestingLevel(0), structNestingLevel(0), controlFlowNestingLevel(0),
-    inEntryPoint(false),
     postEntryPointReturn(false),
     limits(resources.limits),
-    entryPointOutput(nullptr),
     builtInIoIndex(nullptr),
     builtInIoBase(nullptr),
     nextInLocation(0), nextOutLocation(0),
-    sourceEntryPointName(sourceEntryPointName)
+    sourceEntryPointName(sourceEntryPointName),
+    entryPointFunction(nullptr),
+    entryPointFunctionBody(nullptr)
 {
     globalUniformDefaults.clear();
     globalUniformDefaults.layoutMatrix = ElmRowMajor;
@@ -159,6 +160,18 @@ bool HlslParseContext::shouldConvertLValue(const TIntermNode* node) const
         return true;
 
     return false;
+}
+
+void HlslParseContext::growGlobalUniformBlock(TSourceLoc& loc, TType& memberType, TString& memberName, TTypeList* newTypeList)
+{
+    newTypeList = nullptr;
+    correctUniform(memberType.getQualifier());
+    if (memberType.isStruct()) {
+        auto it = ioTypeMap.find(memberType.getStruct());
+        if (it != ioTypeMap.end() && it->second.uniform)
+            newTypeList = it->second.uniform;
+    }
+    TParseContextBase::growGlobalUniformBlock(loc, memberType, memberName, newTypeList);
 }
 
 //
@@ -709,7 +722,7 @@ TIntermTyped* HlslParseContext::handleBracketDereference(const TSourceLoc& loc, 
     else {
         // at least one of base and index is variable...
 
-        if (base->getAsSymbolNode() && (wasFlattened(base) || shouldFlatten(base->getType()))) {
+        if (base->getAsSymbolNode() && (wasFlattened(base) || shouldFlattenUniform(base->getType()))) {
             if (index->getQualifier().storage != EvqConst)
                 error(loc, "Invalid variable index to flattened array", base->getAsSymbolNode()->getName().c_str(), "");
 
@@ -921,7 +934,7 @@ TIntermTyped* HlslParseContext::handleDotDereference(const TSourceLoc& loc, TInt
             }
         }
         if (fieldFound) {
-            if (base->getAsSymbolNode() && (wasFlattened(base) || shouldFlatten(base->getType()))) {
+            if (base->getAsSymbolNode() && (wasFlattened(base) || shouldFlattenUniform(base->getType()))) {
                 result = flattenAccess(base, member);
             } else {
                 // Update the base and member to access if this was a split structure.
@@ -944,19 +957,6 @@ TIntermTyped* HlslParseContext::handleDotDereference(const TSourceLoc& loc, TInt
         error(loc, "does not apply to this type:", field.c_str(), base->getType().getCompleteString().c_str());
 
     return result;
-}
-
-// Determine whether we should split this type
-bool HlslParseContext::shouldSplit(const TType& type)
-{
-    if (! inEntryPoint)
-        return false;
-
-    const TStorageQualifier qualifier = type.getQualifier().storage;
-
-    // If it contains interstage IO, but not ONLY interstage IO, split the struct.
-    return type.isStruct() && type.containsBuiltInInterstageIO(language) &&
-        (qualifier == EvqVaryingIn || qualifier == EvqVaryingOut);
 }
 
 // Split the type of the given node into two structs:
@@ -984,7 +984,7 @@ void HlslParseContext::split(const TVariable& variable)
 {
     const TType& type = variable.getType();
 
-    TString name = (&variable == entryPointOutput) ? "" : variable.getName();
+    TString name = variable.getName();
 
     // Create a new variable:
     TType& splitType = split(*type.clone(), name);
@@ -1010,7 +1010,7 @@ TType& HlslParseContext::split(TType& type, TString name, const TType* outerStru
     if (type.isStruct()) {
         TTypeList* userStructure = type.getWritableStruct();
 
-        // Get iterator to (now at end) set of builtin iterstage IO members
+        // Get iterator to (now at end) set of builtin interstage IO members
         const auto firstIo = std::stable_partition(userStructure->begin(), userStructure->end(),
                                                    [this](const TTypeLoc& t) {return !t.type->isBuiltInInterstageIO(language);});
 
@@ -1042,35 +1042,13 @@ TType& HlslParseContext::split(TType& type, TString name, const TType* outerStru
     return type;
 }
 
-// Determine whether we should flatten an arbitrary type.
-bool HlslParseContext::shouldFlatten(const TType& type) const
-{
-    return shouldFlattenIO(type) || shouldFlattenUniform(type);
-}
-
-// Is this an IO variable that can't be passed down the stack?
-// E.g., pipeline inputs to the vertex stage and outputs from the fragment stage.
-bool HlslParseContext::shouldFlattenIO(const TType& type) const
-{
-    if (! inEntryPoint)
-        return false;
-
-    const TStorageQualifier qualifier = type.getQualifier().storage;
-
-    if (!type.isStruct())
-        return false;
-
-    return ((language == EShLangVertex   && qualifier == EvqVaryingIn) ||
-            (language == EShLangFragment && qualifier == EvqVaryingOut));
-}
-
 // Is this a uniform array which should be flattened?
 bool HlslParseContext::shouldFlattenUniform(const TType& type) const
 {
     const TStorageQualifier qualifier = type.getQualifier().storage;
 
-    return ((type.isArray() && intermediate.getFlattenUniformArrays()) || type.isStruct()) &&
-        qualifier == EvqUniform &&
+    return qualifier == EvqUniform &&
+        ((type.isArray() && intermediate.getFlattenUniformArrays()) || type.isStruct()) &&
         type.containsOpaque();
 }
 
@@ -1131,8 +1109,8 @@ int HlslParseContext::flatten(const TSourceLoc& loc, const TVariable& variable, 
 // Add a single flattened member to the flattened data being tracked for the composite
 // Returns true for the final flattening level.
 int HlslParseContext::addFlattenedMember(const TSourceLoc& loc,
-                                          const TVariable& variable, const TType& type, TFlattenData& flattenData,
-                                          const TString& memberName, bool track)
+                                         const TVariable& variable, const TType& type, TFlattenData& flattenData,
+                                         const TString& memberName, bool track)
 {
     if (isFinalFlattening(type)) {
         // This is as far as we flatten.  Insert the variable.
@@ -1146,7 +1124,7 @@ int HlslParseContext::addFlattenedMember(const TSourceLoc& loc,
         flattenData.members.push_back(memberVariable);
 
         if (track)
-            trackLinkageDeferred(*memberVariable);
+            trackLinkage(*memberVariable);
 
         return static_cast<int>(flattenData.offsets.size())-1; // location of the member reference
     } else {
@@ -1158,12 +1136,9 @@ int HlslParseContext::addFlattenedMember(const TSourceLoc& loc,
 // Figure out the mapping between an aggregate's top members and an
 // equivalent set of individual variables.
 //
-// N.B. Erases memory of I/O-related annotations in the original type's member,
-//      effecting a transfer of this information to the flattened variable form.
-//
 // Assumes shouldFlatten() or equivalent was called first.
 int HlslParseContext::flattenStruct(const TSourceLoc& loc, const TVariable& variable, const TType& type,
-                                     TFlattenData& flattenData, TString name)
+                                    TFlattenData& flattenData, TString name)
 {
     assert(type.isStruct());
 
@@ -1180,9 +1155,6 @@ int HlslParseContext::flattenStruct(const TSourceLoc& loc, const TVariable& vari
 
         const int mpos = addFlattenedMember(loc, variable, dereferencedType, flattenData, memberName, false);
         flattenData.offsets[pos++] = mpos;
-
-        // N.B. Erase I/O-related annotations from the source-type member.
-        dereferencedType.getQualifier().makeTemporary();
     }
 
     return start;
@@ -1374,6 +1346,17 @@ TIntermTyped* HlslParseContext::splitAccessStruct(const TSourceLoc& loc, TInterm
     }
 }
 
+// Pass through to base class after remembering builtin mappings.
+void HlslParseContext::trackLinkage(TSymbol& symbol)
+{
+    TBuiltInVariable biType = symbol.getType().getQualifier().builtIn;
+    if (biType != EbvNone)
+        builtInLinkageSymbols[biType] = symbol.clone();
+
+    TParseContextBase::trackLinkage(symbol);
+}
+
+
 // Variables that correspond to the user-interface in and out of a stage
 // (not the built-in interface) are assigned locations and
 // registered as a linkage node (part of the stage's external interface).
@@ -1393,6 +1376,7 @@ void HlslParseContext::assignLocations(TVariable& variable)
                     nextOutLocation += intermediate.computeTypeLocationSize(variable.getType());
                 }
             }
+
             trackLinkage(variable);
         }
     };
@@ -1472,72 +1456,12 @@ void HlslParseContext::addInterstageIoToLinkage()
 
     // We have to (potentially) track two IO blocks, one in, one out.  E.g, a GS may have a
     // PerVertex block in both directions, possibly with different members.
-    static const TStorageQualifier ioType[2] = { EvqVaryingIn, EvqVaryingOut };
-    static const char* blockName[2] = { "PerVertex_in", "PerVertex_out" };
-
-    TTypeList*   ioBlockTypes[2] = { nullptr, nullptr };
-    TArraySizes* ioBlockArray[2] = { nullptr, nullptr };
-
     for (int idx = 0; idx < int(io.size()); ++idx) {
         TVariable* var = interstageBuiltInIo[io[idx]];
 
         // Add the loose interstage IO to the linkage
         if (var->getType().isLooseAndBuiltIn(language))
-            trackLinkageDeferred(*var);
-
-        // Add the PerVertex interstage IO to the IO block
-        if (var->getType().isPerVertexAndBuiltIn(language)) {
-            int blockId = 0;
-            switch (var->getType().getQualifier().storage) {
-            case EvqVaryingIn:  blockId = 0; break;
-            case EvqVaryingOut: blockId = 1; break;
-            default: assert(0 && "Invalid storage qualifier");
-            }
-
-            // Lazy creation of type list only if we end up needing it.
-            if (ioBlockTypes[blockId] == nullptr)
-                ioBlockTypes[blockId] = new TTypeList();
-
-            TTypeLoc member = { new TType(EbtVoid), loc };
-            member.type->shallowCopy(var->getType());
-            member.type->setFieldName(var->getName());
-
-            // We may have collected these from different parts of different structures.  If their
-            // array dimensions are not the same, we don't know what to do, so issue an error.
-            if (member.type->isArray()) {
-                if (ioBlockArray[blockId] == nullptr) {
-                    ioBlockArray[blockId] = &member.type->getArraySizes();
-                } else  {
-                    if (*ioBlockArray[blockId] != member.type->getArraySizes())
-                        error(loc, "PerVertex block array dimension mismatch", "", "");
-                }
-                member.type->clearArraySizes();
-            }
-
-            ioBlockTypes[blockId]->push_back(member);
-        }
-    }
-
-    // If there were PerVertex items, add the block to the linkage.  Handle in and out separately.
-    for (int blockId = 0; blockId <= 1; ++blockId) {
-        if (ioBlockTypes[blockId] != nullptr) {
-            const TString* instanceName = NewPoolTString(blockName[blockId]);
-            TQualifier     blockQualifier;
-
-            blockQualifier.clear();
-            blockQualifier.storage = ioType[blockId];
-
-            TType blockType(ioBlockTypes[blockId], *instanceName, blockQualifier);
-
-            if (ioBlockArray[blockId] != nullptr)
-                blockType.newArraySizes(*ioBlockArray[blockId]);
-
-            TVariable* ioBlock = new TVariable(instanceName, blockType);
-            if (!symbolTable.insert(*ioBlock))
-                error(loc, "block instance name redefinition", ioBlock->getName().c_str(), "");
-            else
-                trackLinkageDeferred(*ioBlock);
-        }
+            trackLinkage(*var);
     }
 }
 
@@ -1546,7 +1470,7 @@ void HlslParseContext::addInterstageIoToLinkage()
 // The body is handled after this function returns.
 //
 TIntermAggregate* HlslParseContext::handleFunctionDefinition(const TSourceLoc& loc, TFunction& function,
-                                                             const TAttributeMap& attributes)
+                                                             const TAttributeMap& attributes, TIntermNode*& entryPointTree)
 {
     currentCaller = function.getMangledName();
     TSymbol* symbol = symbolTable.find(function.getMangledName());
@@ -1573,7 +1497,7 @@ TIntermAggregate* HlslParseContext::handleFunctionDefinition(const TSourceLoc& l
 
     // Entry points need different I/O and other handling, transform it so the
     // rest of this function doesn't care.
-    transformEntryPoint(loc, function, attributes);
+    entryPointTree = transformEntryPoint(loc, function, attributes);
 
     // Insert the $Global constant buffer.
     // TODO: this design fails if new members are declared between function definitions.
@@ -1597,32 +1521,12 @@ TIntermAggregate* HlslParseContext::handleFunctionDefinition(const TSourceLoc& l
     for (int i = 0; i < function.getParamCount(); i++) {
         TParameter& param = function[i];
         if (param.name != nullptr) {
-            TType* sanitizedType;
-
-            // If we're not in the entry point, parameters are sanitized types.
-            if (inEntryPoint)
-                sanitizedType = param.type;
-            else
-                sanitizedType = sanitizeType(param.type);
-
-            TVariable *variable = new TVariable(param.name, *sanitizedType);
+            TVariable *variable = new TVariable(param.name, *param.type);
 
             // Insert the parameters with name in the symbol table.
             if (! symbolTable.insert(*variable))
                 error(loc, "redefinition", variable->getName().c_str(), "");
             else {
-                // get IO straightened out
-                if (inEntryPoint) {
-                    if (shouldFlatten(*param.type))
-                        flatten(loc, *variable);
-                    if (shouldSplit(*param.type))
-                        split(*variable);
-                    assignLocations(*variable);
-                }
-
-                // Transfer ownership of name pointer to symbol table.
-                param.name = nullptr;
-
                 // Add the parameter to the AST
                 paramNodes = intermediate.growAggregate(paramNodes,
                                                         intermediate.addSymbol(*variable, loc),
@@ -1641,33 +1545,48 @@ TIntermAggregate* HlslParseContext::handleFunctionDefinition(const TSourceLoc& l
 }
 
 //
-// Do all special handling for the entry point.
+// Do all special handling for the entry point, including wrapping
+// the shader's entry point with the official entry point that will call it.
 //
-void HlslParseContext::transformEntryPoint(const TSourceLoc& loc, TFunction& function, const TAttributeMap& attributes)
+// The following:
+//
+//    retType shaderEntryPoint(args...) // shader declared entry point
+//    { body }
+//
+// Becomes
+//
+//    out retType ret;
+//    in iargs<that are input>...;
+//    out oargs<that are output> ...;
+//
+//    void shaderEntryPoint()    // synthesized, but official, entry point
+//    {
+//        args<that are input> = iargs...;
+//        ret = @shaderEntryPoint(args...);
+//        oargs = args<that are output>...;
+//    }
+//
+// The symbol table will still map the original entry point name to the
+// the modified function and it's new name:
+//
+//    symbol table:  shaderEntryPoint  ->   @shaderEntryPoint
+//
+// Returns nullptr if no entry-point tree was built, otherwise, returns
+// a subtree that creates the entry point.
+//
+TIntermNode* HlslParseContext::transformEntryPoint(const TSourceLoc& loc, TFunction& userFunction, const TAttributeMap& attributes)
 {
-    inEntryPoint = function.getName().compare(intermediate.getEntryPointName().c_str()) == 0;
-
-    if (!inEntryPoint) {
-        remapNonEntryPointIO(function);
-        return;
+    // if we aren't in the entry point, fix the IO as such and exit
+    if (userFunction.getName().compare(intermediate.getEntryPointName().c_str()) != 0) {
+        remapNonEntryPointIO(userFunction);
+        return nullptr;
     }
+
+    entryPointFunction = &userFunction; // needed in finish()
 
     // entry point logic...
 
-    intermediate.setEntryPointMangledName(function.getMangledName().c_str());
-    intermediate.incrementEntryPointCount();
-
-    // Handle parameters and return value
-    remapEntryPointIO(function);
-    if (entryPointOutput) {
-        if (shouldFlatten(entryPointOutput->getType()))
-            flatten(loc, *entryPointOutput);
-        if (shouldSplit(entryPointOutput->getType()))
-            split(*entryPointOutput);
-        assignLocations(*entryPointOutput);
-    }
-
-    // Handle function attributes
+    // Handle entry-point function attributes
     const TIntermAggregate* numThreads = attributes[EatNumThreads];
     if (numThreads != nullptr) {
         const TIntermSequence& sequence = numThreads->getSequence();
@@ -1675,9 +1594,223 @@ void HlslParseContext::transformEntryPoint(const TSourceLoc& loc, TFunction& fun
         for (int lid = 0; lid < int(sequence.size()); ++lid)
             intermediate.setLocalSize(lid, sequence[lid]->getAsConstantUnion()->getConstArray()[0].getIConst());
     }
+
+    // MaxVertexCount
     const TIntermAggregate* maxVertexCount = attributes[EatMaxVertexCount];
-    if (maxVertexCount != nullptr)
-        intermediate.setVertices(maxVertexCount->getSequence()[0]->getAsConstantUnion()->getConstArray()[0].getIConst());
+    if (maxVertexCount != nullptr) {
+        if (! intermediate.setVertices(maxVertexCount->getSequence()[0]->getAsConstantUnion()->getConstArray()[0].getIConst())) {
+            error(loc, "cannot change previously set maxvertexcount attribute", "", "");
+        }
+    }
+
+    // Handle [patchconstantfunction("...")]
+    const TIntermAggregate* pcfAttr = attributes[EatPatchConstantFunc]; 
+    if (pcfAttr != nullptr) {
+        const TConstUnion& pcfName = pcfAttr->getSequence()[0]->getAsConstantUnion()->getConstArray()[0];
+
+        if (pcfName.getType() != EbtString) {
+            error(loc, "invalid patch constant function", "", "");
+        } else {
+            patchConstantFunctionName = *pcfName.getSConst();
+        }
+    }
+
+    // Handle [domain("...")]
+    const TIntermAggregate* domainAttr = attributes[EatDomain]; 
+    if (domainAttr != nullptr) {
+        const TConstUnion& domainType = domainAttr->getSequence()[0]->getAsConstantUnion()->getConstArray()[0];
+        if (domainType.getType() != EbtString) {
+            error(loc, "invalid domain", "", "");
+        } else {
+            TString domainStr = *domainType.getSConst();
+            std::transform(domainStr.begin(), domainStr.end(), domainStr.begin(), ::tolower);
+
+            TLayoutGeometry domain = ElgNone;
+
+            if (domainStr == "tri") {
+                domain = ElgTriangles;
+            } else if (domainStr == "quad") {
+                domain = ElgQuads;
+            } else if (domainStr == "isoline") {
+                domain = ElgIsolines;
+            } else {
+                error(loc, "unsupported domain type", domainStr.c_str(), "");
+            }
+
+            if (! intermediate.setInputPrimitive(domain)) {
+                error(loc, "cannot change previously set domain", TQualifier::getGeometryString(domain), "");
+            }
+        }
+    }
+
+    // Handle [outputtoplogy("...")]
+    const TIntermAggregate* topologyAttr = attributes[EatOutputTopology];
+    if (topologyAttr != nullptr) {
+        const TConstUnion& topoType = topologyAttr->getSequence()[0]->getAsConstantUnion()->getConstArray()[0];
+        if (topoType.getType() != EbtString) {
+            error(loc, "invalid outputtoplogy", "", "");
+        } else {
+            TString topologyStr = *topoType.getSConst();
+            std::transform(topologyStr.begin(), topologyStr.end(), topologyStr.begin(), ::tolower);
+
+            TVertexOrder topology = EvoNone;
+                
+            if (topologyStr == "point") {
+                topology = EvoNone;
+            } else if (topologyStr == "line") {
+                topology = EvoNone;
+            } else if (topologyStr == "triangle_cw") {
+                topology = EvoCw;
+            } else if (topologyStr == "triangle_ccw") {
+                topology = EvoCcw;
+            } else {
+                error(loc, "unsupported outputtoplogy type", topologyStr.c_str(), "");
+            }
+
+            if (topology != EvoNone) {
+                if (! intermediate.setVertexOrder(topology)) {
+                    error(loc, "cannot change previously set outputtopology", TQualifier::getVertexOrderString(topology), "");
+                }
+            }
+        }
+    }
+
+    // Handle [partitioning("...")]
+    const TIntermAggregate* partitionAttr = attributes[EatPartitioning]; 
+    if (partitionAttr != nullptr) {
+        const TConstUnion& partType = partitionAttr->getSequence()[0]->getAsConstantUnion()->getConstArray()[0];
+        if (partType.getType() != EbtString) {
+            error(loc, "invalid partitioning", "", "");
+        } else {
+            TString partitionStr = *partType.getSConst();
+            std::transform(partitionStr.begin(), partitionStr.end(), partitionStr.begin(), ::tolower);
+
+            TVertexSpacing partitioning = EvsNone;
+                
+            if (partitionStr == "integer") {
+                partitioning = EvsEqual;
+            } else if (partitionStr == "fractional_even") {
+                partitioning = EvsFractionalEven;
+            } else if (partitionStr == "fractional_odd") {
+                partitioning = EvsFractionalOdd;
+                //} else if (partition == "pow2") { // TODO: currently nothing to map this to.
+            } else {
+                error(loc, "unsupported partitioning type", partitionStr.c_str(), "");
+            }
+
+            if (! intermediate.setVertexSpacing(partitioning))
+                error(loc, "cannot change previously set partitioning", TQualifier::getVertexSpacingString(partitioning), "");
+        }
+    }
+
+    // Handle [outputcontrolpoints("...")]
+    const TIntermAggregate* outputControlPoints = attributes[EatOutputControlPoints]; 
+    if (outputControlPoints != nullptr) {
+        const TConstUnion& ctrlPointConst = outputControlPoints->getSequence()[0]->getAsConstantUnion()->getConstArray()[0];
+        if (ctrlPointConst.getType() != EbtInt) {
+            error(loc, "invalid outputcontrolpoints", "", "");
+        } else {
+            const int ctrlPoints = ctrlPointConst.getIConst();
+            if (! intermediate.setVertices(ctrlPoints)) {
+                error(loc, "cannot change previously set outputcontrolpoints attribute", "", "");
+            }
+        }
+    }
+
+    // Move parameters and return value to shader in/out
+    TVariable* entryPointOutput; // gets created in remapEntryPointIO
+    TVector<TVariable*> inputs;
+    TVector<TVariable*> outputs;
+    remapEntryPointIO(userFunction, entryPointOutput, inputs, outputs);
+
+    // Further this return/in/out transform by flattening, splitting, and assigning locations
+    const auto makeVariableInOut = [&](TVariable& variable) {
+        if (variable.getType().isStruct()) {
+            const TStorageQualifier qualifier = variable.getType().getQualifier().storage;
+            // struct inputs to the vertex stage and outputs from the fragment stage must be flattened
+            if ((language == EShLangVertex   && qualifier == EvqVaryingIn) ||
+                (language == EShLangFragment && qualifier == EvqVaryingOut))
+                flatten(loc, variable);
+            // Mixture of IO and non-IO must be split
+            else if (variable.getType().containsBuiltInInterstageIO(language))
+                split(variable);
+        }
+        assignLocations(variable);
+    };
+    if (entryPointOutput)
+        makeVariableInOut(*entryPointOutput);
+    for (auto it = inputs.begin(); it != inputs.end(); ++it)
+        makeVariableInOut(*(*it));
+    for (auto it = outputs.begin(); it != outputs.end(); ++it)
+        makeVariableInOut(*(*it));
+
+    // Synthesize the call
+
+    pushScope(); // matches the one in handleFunctionBody()
+
+    // new signature
+    TType voidType(EbtVoid);
+    TFunction synthEntryPoint(&userFunction.getName(), voidType);
+    TIntermAggregate* synthParams = new TIntermAggregate();
+    intermediate.setAggregateOperator(synthParams, EOpParameters, voidType, loc);
+    intermediate.setEntryPointMangledName(synthEntryPoint.getMangledName().c_str());
+    intermediate.incrementEntryPointCount();
+    TFunction callee(&userFunction.getName(), voidType); // call based on old name, which is still in the symbol table
+
+    // change original name
+    userFunction.addPrefix("@");                         // change the name in the function, but not in the symbol table
+
+    // Copy inputs (shader-in -> calling arg), while building up the call node
+    TVector<TVariable*> argVars;
+    TIntermAggregate* synthBody = new TIntermAggregate();
+    auto inputIt = inputs.begin();
+    TIntermTyped* callingArgs = nullptr;
+    for (int i = 0; i < userFunction.getParamCount(); i++) {
+        TParameter& param = userFunction[i];
+        argVars.push_back(makeInternalVariable(*param.name, *param.type));
+        argVars.back()->getWritableType().getQualifier().makeTemporary();
+        TIntermSymbol* arg = intermediate.addSymbol(*argVars.back());
+        handleFunctionArgument(&callee, callingArgs, arg);
+        if (param.type->getQualifier().isParamInput()) {
+            intermediate.growAggregate(synthBody, handleAssign(loc, EOpAssign, arg,
+                                                               intermediate.addSymbol(**inputIt)));
+            inputIt++;
+        }
+    }
+
+    // Call
+    currentCaller = synthEntryPoint.getMangledName();
+    TIntermTyped* callReturn = handleFunctionCall(loc, &callee, callingArgs);
+    currentCaller = userFunction.getMangledName();
+
+    // Return value
+    if (entryPointOutput)
+        intermediate.growAggregate(synthBody, handleAssign(loc, EOpAssign,
+                                                           intermediate.addSymbol(*entryPointOutput), callReturn));
+    else
+        intermediate.growAggregate(synthBody, callReturn);
+
+    // Output copies
+    auto outputIt = outputs.begin();
+    for (int i = 0; i < userFunction.getParamCount(); i++) {
+        TParameter& param = userFunction[i];
+        if (param.type->getQualifier().isParamOutput()) {
+            intermediate.growAggregate(synthBody, handleAssign(loc, EOpAssign,
+                                                               intermediate.addSymbol(**outputIt),
+                                                               intermediate.addSymbol(*argVars[i])));
+            outputIt++;
+        }
+    }
+
+    // Put the pieces together to form a full function subtree
+    // for the synthesized entry point.
+    synthBody->setOperator(EOpSequence);
+    TIntermNode* synthFunctionDef = synthParams;
+    handleFunctionBody(loc, synthEntryPoint, synthBody, synthFunctionDef);
+
+    entryPointFunctionBody = synthBody;
+
+    return synthFunctionDef;
 }
 
 void HlslParseContext::handleFunctionBody(const TSourceLoc& loc, TFunction& function, TIntermNode* functionBody, TIntermNode*& node)
@@ -1695,45 +1828,48 @@ void HlslParseContext::handleFunctionBody(const TSourceLoc& loc, TFunction& func
 // AST I/O is done through shader globals declared in the 'in' or 'out'
 // storage class.  An HLSL entry point has a return value, input parameters
 // and output parameters.  These need to get remapped to the AST I/O.
-void HlslParseContext::remapEntryPointIO(TFunction& function)
+void HlslParseContext::remapEntryPointIO(TFunction& function, TVariable*& returnValue,
+    TVector<TVariable*>& inputs, TVector<TVariable*>& outputs)
 {
-    // Will auto-assign locations here to the inputs/outputs defined by the entry point
-
-    const auto remapType = [&](TType& type) {
-        const auto remapBuiltInType = [&](TType& type) {
-            switch (type.getQualifier().builtIn) {
-            case EbvFragDepthGreater:
-                intermediate.setDepth(EldGreater);
-                type.getQualifier().builtIn = EbvFragDepth;
-                break;
-            case EbvFragDepthLesser:
-                intermediate.setDepth(EldLess);
-                type.getQualifier().builtIn = EbvFragDepth;
-                break;
-            default:
-                break;
+    // Do the actual work to make a type be a shader input or output variable,
+    // and clear the original to be non-IO (for use as a normal function parameter/return).
+    const auto makeIoVariable = [this](const char* name, TType& type, TStorageQualifier storage) {
+        TVariable* ioVariable = makeInternalVariable(name, type);
+        clearUniformInputOutput(type.getQualifier());
+        if (type.getStruct() != nullptr) {
+            auto newLists = ioTypeMap.find(ioVariable->getType().getStruct());
+            if (newLists != ioTypeMap.end()) {
+                if (storage == EvqVaryingIn && newLists->second.input)
+                    ioVariable->getWritableType().setStruct(newLists->second.input);
+                else if (storage == EvqVaryingOut && newLists->second.output)
+                    ioVariable->getWritableType().setStruct(newLists->second.output);
             }
-        };
-        remapBuiltInType(type);
-        if (type.isStruct()) {
-            auto members = *type.getStruct();
-            for (auto member = members.begin(); member != members.end(); ++member)
-                remapBuiltInType(*member->type);
         }
+        if (storage == EvqVaryingIn)
+            correctInput(ioVariable->getWritableType().getQualifier());
+        else
+            correctOutput(ioVariable->getWritableType().getQualifier());
+        ioVariable->getWritableType().getQualifier().storage = storage;
+        return ioVariable;
     };
 
     // return value is actually a shader-scoped output (out)
-    if (function.getType().getBasicType() != EbtVoid) {
-        entryPointOutput = makeInternalVariable("@entryPointOutput", function.getType());
-        entryPointOutput->getWritableType().getQualifier().storage = EvqVaryingOut;
-        remapType(function.getWritableType());
-    }
+    if (function.getType().getBasicType() == EbtVoid)
+        returnValue = nullptr;
+    else
+        returnValue = makeIoVariable("@entryPointOutput", function.getWritableType(), EvqVaryingOut);
 
     // parameters are actually shader-scoped inputs and outputs (in or out)
     for (int i = 0; i < function.getParamCount(); i++) {
         TType& paramType = *function[i].type;
-        paramType.getQualifier().storage = paramType.getQualifier().isParamInput() ? EvqVaryingIn : EvqVaryingOut;
-        remapType(paramType);
+        if (paramType.getQualifier().isParamInput()) {
+            TVariable* argAsGlobal = makeIoVariable(function[i].name->c_str(), paramType, EvqVaryingIn);
+            inputs.push_back(argAsGlobal);
+        }
+        if (paramType.getQualifier().isParamOutput()) {
+            TVariable* argAsGlobal = makeIoVariable(function[i].name->c_str(), paramType, EvqVaryingOut);
+            outputs.push_back(argAsGlobal);
+        }
     }
 }
 
@@ -1741,15 +1877,13 @@ void HlslParseContext::remapEntryPointIO(TFunction& function)
 // declares entry point IO built-ins, but these have to be undone.
 void HlslParseContext::remapNonEntryPointIO(TFunction& function)
 {
-    const auto remapBuiltInType = [&](TType& type) { type.getQualifier().builtIn = EbvNone; };
-
     // return value
     if (function.getType().getBasicType() != EbtVoid)
-        remapBuiltInType(function.getWritableType());
+        clearUniformInputOutput(function.getWritableType().getQualifier());
 
     // parameters
     for (int i = 0; i < function.getParamCount(); i++)
-        remapBuiltInType(*function[i].type);
+        clearUniformInputOutput(function[i].type->getQualifier());
 }
 
 // Handle function returns, including type conversions to the function return type
@@ -1771,23 +1905,7 @@ TIntermNode* HlslParseContext::handleReturnValue(const TSourceLoc& loc, TIntermT
         }
     }
 
-    // The entry point needs to send any return value to the entry-point output instead.
-    // So, a subtree is built up, as a two-part sequence, with the first part being an
-    // assignment subtree, and the second part being a return with no value.
-    //
-    // Otherwise, for a non entry point, just return a return statement.
-    if (inEntryPoint) {
-        assert(entryPointOutput != nullptr); // should have been error tested at the beginning
-        TIntermSymbol* left = new TIntermSymbol(entryPointOutput->getUniqueId(), entryPointOutput->getName(),
-                                                entryPointOutput->getType());
-        TIntermNode* returnSequence = handleAssign(loc, EOpAssign, left, value);
-        returnSequence = intermediate.makeAggregate(returnSequence);
-        returnSequence = intermediate.growAggregate(returnSequence, intermediate.addBranch(EOpReturn, loc), loc);
-        returnSequence->getAsAggregate()->setOperator(EOpSequence);
-
-        return returnSequence;
-    } else
-        return intermediate.addBranch(EOpReturn, value, loc);
+    return intermediate.addBranch(EOpReturn, value, loc);
 }
 
 void HlslParseContext::handleFunctionArgument(TFunction* function,
@@ -1878,6 +1996,11 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
 
     int memberIdx = 0;
 
+    // When dealing with split arrayed structures of builtins, the arrayness is moved to the extracted builtin
+    // variables, which is awkward when copying between split and unsplit structures.  This variable tracks
+    // array indirections so they can be percolated from outer structs to inner variables.
+    std::vector <int> arrayElement;
+
     // We track the outer-most aggregate, so that we can use its storage class later.
     const TIntermTyped* outerLeft  = left;
     const TIntermTyped* outerRight = right;
@@ -1894,7 +2017,14 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
 
         if (split && derefType.isBuiltInInterstageIO(language)) {
             // copy from interstage IO builtin if needed
-            subTree = intermediate.addSymbol(*interstageBuiltInIo[tInterstageIoData(derefType, outer->getType())]);
+            subTree = intermediate.addSymbol(*interstageBuiltInIo.find(tInterstageIoData(derefType, outer->getType()))->second);
+
+            // Arrayness of builtIn symbols isn't handled by the normal recursion: it's been extracted and moved to the builtin.
+            if (subTree->getType().isArray() && !arrayElement.empty()) {
+                const TType splitDerefType(subTree->getType(), arrayElement.back());
+                subTree = intermediate.addIndex(EOpIndexDirect, subTree, intermediate.addConstantUnion(arrayElement.back(), loc), loc);
+                subTree->setType(splitDerefType);
+            }
         } else if (flattened && isFinalFlattening(derefType)) {
             subTree = intermediate.addSymbol(*flatVariables[memberIdx++]);
         } else {
@@ -1925,7 +2055,9 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
 
             // array case
             for (int element=0; element < left->getType().getOuterArraySize(); ++element) {
-                    // Add a new AST symbol node if we have a temp variable holding a complex RHS.
+                arrayElement.push_back(element);
+
+                // Add a new AST symbol node if we have a temp variable holding a complex RHS.
                 TIntermTyped* subLeft  = getMember(true,  left,  element, left, element);
                 TIntermTyped* subRight = getMember(false, right, element, right, element);
 
@@ -1936,6 +2068,8 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
                     assignList = intermediate.growAggregate(assignList, intermediate.addAssign(op, subLeft, subRight, loc), loc);
                 else
                     traverse(subLeft, subRight, subSplitLeft, subSplitRight);
+
+                arrayElement.pop_back();
             }
         } else if (left->getType().isStruct()) {
             // struct case
@@ -4369,7 +4503,7 @@ void HlslParseContext::declareArray(const TSourceLoc& loc, TString& identifier, 
             symbol = new TVariable(&identifier, type);
             symbolTable.insert(*symbol);
             if (track && symbolTable.atGlobalLevel())
-                trackLinkageDeferred(*symbol);
+                trackLinkage(*symbol);
 
             return;
         }
@@ -4600,7 +4734,7 @@ void HlslParseContext::redeclareBuiltinBlock(const TSourceLoc& loc, TTypeList& n
     symbolTable.insert(*block);
 
     // Save it in the AST for linker use.
-    trackLinkageDeferred(*block);
+    trackLinkage(*block);
 }
 
 void HlslParseContext::paramFix(TType& type)
@@ -5337,51 +5471,111 @@ const TFunction* HlslParseContext::findFunction(const TSourceLoc& loc, TFunction
 // 'parseType' is the type part of the declaration (to the left)
 // 'arraySizes' is the arrayness tagged on the identifier (to the right)
 //
-void HlslParseContext::declareTypedef(const TSourceLoc& loc, TString& identifier, const TType& parseType, TArraySizes* /*arraySizes*/)
+void HlslParseContext::declareTypedef(const TSourceLoc& loc, TString& identifier, const TType& parseType)
 {
-    TType type;
-    type.deepCopy(parseType);
-
-    TVariable* typeSymbol = new TVariable(&identifier, type, true);
+    TVariable* typeSymbol = new TVariable(&identifier, parseType, true);
     if (! symbolTable.insert(*typeSymbol))
         error(loc, "name already defined", "typedef", identifier.c_str());
 }
 
-// Type sanitization: return existing sanitized (temporary) type if there is one, else make new one.
-TType* HlslParseContext::sanitizeType(TType* type)
+// Do everything necessary to handle a struct declaration, including
+// making IO aliases because HLSL allows mixed IO in a struct that specializes
+// based on the usage (input, output, uniform, none).
+void HlslParseContext::declareStruct(const TSourceLoc& loc, TString& structName, TType& type)
 {
-    // We only do this for structs.
-    if (!type->isStruct())
-        return type;
+    // If it was named, which means the type can be reused later, add
+    // it to the symbol table.  (Unless it's a block, in which
+    // case the name is not a type.)
+    if (type.getBasicType() == EbtBlock || structName.size() == 0)
+        return;
 
-    // Type sanitization: if this is declaring a variable of a type that contains
-    // interstage IO, we want to make it a temporary.
-    const auto sanitizedTypeIter = sanitizedTypeMap.find(type->getStruct());
+    TVariable* userTypeDef = new TVariable(&structName, type, true);
+    if (! symbolTable.insert(*userTypeDef)) {
+        error(loc, "redefinition", structName.c_str(), "struct");
+        return;
+    }
 
-    if (sanitizedTypeIter != sanitizedTypeMap.end()) {
-        // We've sanitized this before.  Use that one.
-        TType* sanitizedType = new TType();
-        sanitizedType->shallowCopy(*sanitizedTypeIter->second);
+    // See if we need IO aliases for the structure typeList
 
-        // Arrayness is not part of the sanitized type.  Use the input type's arrayness.
-        if (type->isArray())
-            sanitizedType->newArraySizes(type->getArraySizes());
-        else
-            sanitizedType->clearArraySizes();
-        return sanitizedType;
-    } else {
-        if (type->containsBuiltInInterstageIO(language)) {
-            // This means the type contains interstage IO, but we've never encountered it before.
-            // Copy it, sanitize it, and remember it in the sanitizedTypeMap
-            TType* sanitizedType = type->clone();
-            sanitizedType->makeTemporary();
-            sanitizedTypeMap[type->getStruct()] = sanitizedType;
-            return sanitizedType;
-        } else {
-            // This means the type has no interstage IO, so we can use it as is.
-            return type;
+    const auto condAlloc = [](bool pred, TTypeList*& list) {
+        if (pred && list == nullptr)
+            list = new TTypeList;
+    };
+
+    tIoKinds newLists = { nullptr, nullptr, nullptr }; // allocate for each kind found
+    for (auto member = type.getStruct()->begin(); member != type.getStruct()->end(); ++member) {
+        condAlloc(hasUniform(member->type->getQualifier()), newLists.uniform);
+        condAlloc(  hasInput(member->type->getQualifier()), newLists.input);
+        condAlloc( hasOutput(member->type->getQualifier()), newLists.output);
+
+        if (member->type->isStruct()) {
+            auto it = ioTypeMap.find(member->type->getStruct());
+            if (it != ioTypeMap.end()) {
+                condAlloc(it->second.uniform != nullptr, newLists.uniform);
+                condAlloc(it->second.input   != nullptr, newLists.input);
+                condAlloc(it->second.output  != nullptr, newLists.output);
+            }
         }
     }
+    if (newLists.uniform == nullptr &&
+        newLists.input   == nullptr &&
+        newLists.output  == nullptr) {
+        // Won't do any IO caching, clear up the type and get out now.
+        for (auto member = type.getStruct()->begin(); member != type.getStruct()->end(); ++member)
+            clearUniformInputOutput(member->type->getQualifier());
+        return;
+    }
+
+    // We have IO involved.
+
+    // Make a pure typeList for the symbol table, and cache side copies of IO versions.
+    for (auto member = type.getStruct()->begin(); member != type.getStruct()->end(); ++member) {
+        const auto inheritStruct = [&](TTypeList* s, TTypeLoc& ioMember) {
+            if (s != nullptr) {
+                ioMember.type = new TType;
+                ioMember.type->shallowCopy(*member->type);
+                ioMember.type->setStruct(s);
+            }
+        };
+        const auto newMember = [&](TTypeLoc& m) {
+            if (m.type == nullptr) {
+                m.type = new TType;
+                m.type->shallowCopy(*member->type);
+            }
+        };
+
+        TTypeLoc newUniformMember = { nullptr, member->loc };
+        TTypeLoc newInputMember   = { nullptr, member->loc };
+        TTypeLoc newOutputMember  = { nullptr, member->loc };
+        if (member->type->isStruct()) {
+            // swap in an IO child if there is one
+            auto it = ioTypeMap.find(member->type->getStruct());
+            if (it != ioTypeMap.end()) {
+                inheritStruct(it->second.uniform, newUniformMember);
+                inheritStruct(it->second.input,   newInputMember);
+                inheritStruct(it->second.output,  newOutputMember);
+            }
+        }
+        if (newLists.uniform) {
+            newMember(newUniformMember);
+            correctUniform(newUniformMember.type->getQualifier());
+            newLists.uniform->push_back(newUniformMember);
+        }
+        if (newLists.input) {
+            newMember(newInputMember);
+            correctInput(newInputMember.type->getQualifier());
+            newLists.input->push_back(newInputMember);
+        }
+        if (newLists.output) {
+            newMember(newOutputMember);
+            correctOutput(newOutputMember.type->getQualifier());
+            newLists.output->push_back(newOutputMember);
+        }
+
+        // make original pure
+        clearUniformInputOutput(member->type->getQualifier());
+    }
+    ioTypeMap[type.getStruct()] = newLists;
 }
 
 //
@@ -5408,30 +5602,41 @@ TIntermNode* HlslParseContext::declareVariable(const TSourceLoc& loc, TString& i
 
     inheritGlobalDefaults(type.getQualifier());
 
-    const bool flattenVar = shouldFlatten(type);
-    const bool splitVar   = shouldSplit(type);
+    const bool flattenVar = shouldFlattenUniform(type);
 
-    // Type sanitization: if this is declaring a variable of a type that contains
-    // interstage IO, we want to make it a temporary.
-    TType* sanitizedType = sanitizeType(&type);
+    // correct IO in the type
+    switch (type.getQualifier().storage) {
+    case EvqGlobal:
+    case EvqTemporary:
+        clearUniformInputOutput(type.getQualifier());
+        break;
+    case EvqUniform:
+    case EvqBuffer:
+        correctUniform(type.getQualifier());
+        if (type.isStruct()) {
+            auto it = ioTypeMap.find(type.getStruct());
+            if (it != ioTypeMap.end())
+                type.setStruct(it->second.uniform);
+        }
+        break;
+    default:
+        break;
+    }
 
     // Declare the variable
     if (type.isArray()) {
         // array case
-        declareArray(loc, identifier, *sanitizedType, symbol, !flattenVar);
+        declareArray(loc, identifier, type, symbol, !flattenVar);
     } else {
         // non-array case
         if (! symbol)
-            symbol = declareNonArray(loc, identifier, *sanitizedType, !flattenVar);
+            symbol = declareNonArray(loc, identifier, type, !flattenVar);
         else if (type != symbol->getType())
             error(loc, "cannot change the type of", "redeclaration", symbol->getName().c_str());
     }
 
     if (flattenVar)
         flatten(loc, *symbol->getAsVariable());
-
-    if (splitVar)
-        split(*symbol->getAsVariable());
 
     if (! symbol)
         return nullptr;
@@ -5493,7 +5698,7 @@ TVariable* HlslParseContext::declareNonArray(const TSourceLoc& loc, TString& ide
     // add variable to symbol table
     if (symbolTable.insert(*variable)) {
         if (track && symbolTable.atGlobalLevel())
-            trackLinkageDeferred(*variable);
+            trackLinkage(*variable);
         return variable;
     }
 
@@ -5953,6 +6158,22 @@ void HlslParseContext::declareBlock(const TSourceLoc& loc, TType& type, const TS
 {
     assert(type.getWritableStruct() != nullptr);
 
+    // Clean up top-level decorations that don't belong.
+    switch (type.getQualifier().storage) {
+    case EvqUniform:
+    case EvqBuffer:
+        correctUniform(type.getQualifier());
+        break;
+    case EvqVaryingIn:
+        correctInput(type.getQualifier());
+        break;
+    case EvqVaryingOut:
+        correctOutput(type.getQualifier());
+        break;
+    default:
+        break;
+    }
+
     TTypeList& typeList = *type.getWritableStruct();
     // fix and check for member storage qualifiers and types that don't belong within a block
     for (unsigned int member = 0; member < typeList.size(); ++member) {
@@ -5961,6 +6182,31 @@ void HlslParseContext::declareBlock(const TSourceLoc& loc, TType& type, const TS
         const TSourceLoc& memberLoc = typeList[member].loc;
         globalQualifierFix(memberLoc, memberQualifier);
         memberQualifier.storage = type.getQualifier().storage;
+
+        if (memberType.isStruct()) {
+            // clean up and pick up the right set of decorations
+            auto it = ioTypeMap.find(memberType.getStruct());
+            switch (type.getQualifier().storage) {
+            case EvqUniform:
+            case EvqBuffer:
+                correctUniform(type.getQualifier());
+                if (it != ioTypeMap.end() && it->second.uniform)
+                    type.setStruct(it->second.uniform);
+                break;
+            case EvqVaryingIn:
+                correctInput(type.getQualifier());
+                if (it != ioTypeMap.end() && it->second.input)
+                    type.setStruct(it->second.input);
+                break;
+            case EvqVaryingOut:
+                correctOutput(type.getQualifier());
+                if (it != ioTypeMap.end() && it->second.output)
+                    type.setStruct(it->second.output);
+                break;
+            default:
+                break;
+            }
+        }
     }
 
     // This might be a redeclaration of a built-in block.  If so, redeclareBuiltinBlock() will
@@ -6068,7 +6314,7 @@ void HlslParseContext::declareBlock(const TSourceLoc& loc, TType& type, const TS
     }
 
     // Save it in the AST for linker use.
-    trackLinkageDeferred(variable);
+    trackLinkage(variable);
 }
 
 void HlslParseContext::finalizeGlobalUniformBlockLayout(TVariable& block)
@@ -6482,9 +6728,476 @@ void HlslParseContext::renameShaderFunction(TString*& name) const
         name = NewPoolTString(intermediate.getEntryPointName().c_str());
 }
 
+// Return true if this has uniform-interface like decorations.
+bool HlslParseContext::hasUniform(const TQualifier& qualifier) const
+{
+    return qualifier.hasUniformLayout() ||
+           qualifier.layoutPushConstant;
+}
+
+// Potentially not the opposite of hasUniform(), as if some characteristic is
+// ever used for more than one thing (e.g., uniform or input), hasUniform() should
+// say it exists, but clearUniform() should leave it in place.
+void HlslParseContext::clearUniform(TQualifier& qualifier)
+{
+    qualifier.clearUniformLayout();
+    qualifier.layoutPushConstant = false;
+}
+
+// Return false if builtIn by itself doesn't force this qualifier to be an input qualifier.
+bool HlslParseContext::isInputBuiltIn(const TQualifier& qualifier) const
+{
+    switch (qualifier.builtIn) {
+    case EbvPosition:
+    case EbvPointSize:
+        return language != EShLangVertex && language != EShLangCompute && language != EShLangFragment;
+    case EbvClipDistance:
+    case EbvCullDistance:
+        return language != EShLangVertex && language != EShLangCompute;
+    case EbvFragCoord:
+    case EbvFace:
+    case EbvHelperInvocation:
+    case EbvLayer:
+    case EbvPointCoord:
+    case EbvSampleId:
+    case EbvSampleMask:
+    case EbvSamplePosition:
+    case EbvViewportIndex:
+        return language == EShLangFragment;
+    case EbvGlobalInvocationId:
+    case EbvLocalInvocationIndex:
+    case EbvLocalInvocationId:
+    case EbvNumWorkGroups:
+    case EbvWorkGroupId:
+    case EbvWorkGroupSize:
+        return language == EShLangCompute;
+    case EbvInvocationId:
+        return language == EShLangTessControl || language == EShLangTessEvaluation || language == EShLangGeometry;
+    case EbvPatchVertices:
+        return language == EShLangTessControl || language == EShLangTessEvaluation;
+    case EbvInstanceId:
+    case EbvInstanceIndex:
+    case EbvVertexId:
+    case EbvVertexIndex:
+        return language == EShLangVertex;
+    case EbvPrimitiveId:
+        return language == EShLangGeometry || language == EShLangFragment;
+    case EbvTessLevelInner:
+    case EbvTessLevelOuter:
+        return language == EShLangTessEvaluation;
+    default:
+        return false;
+    }
+}
+
+// Return true if there are decorations to preserve for input-like storage.
+bool HlslParseContext::hasInput(const TQualifier& qualifier) const
+{
+    if (qualifier.hasAnyLocation())
+        return true;
+
+    if (language == EShLangFragment && (qualifier.isInterpolation() || qualifier.centroid || qualifier.sample))
+        return true;
+
+    if (language == EShLangTessEvaluation && qualifier.patch)
+        return true;
+
+    if (isInputBuiltIn(qualifier))
+        return true;
+
+    return false;
+}
+
+// Return false if builtIn by itself doesn't force this qualifier to be an output qualifier.
+bool HlslParseContext::isOutputBuiltIn(const TQualifier& qualifier) const
+{
+    switch (qualifier.builtIn) {
+    case EbvPosition:
+    case EbvPointSize:
+    case EbvClipVertex:
+    case EbvClipDistance:
+    case EbvCullDistance:
+        return language != EShLangFragment && language != EShLangCompute;
+    case EbvFragDepth:
+    case EbvFragDepthGreater:
+    case EbvFragDepthLesser:
+    case EbvSampleMask:
+        return language == EShLangFragment;
+    case EbvLayer:
+    case EbvViewportIndex:
+        return language == EShLangGeometry;
+    case EbvPrimitiveId:
+        return language == EShLangGeometry || language == EShLangTessControl || language == EShLangTessEvaluation;
+    case EbvTessLevelInner:
+    case EbvTessLevelOuter:
+        return language == EShLangTessControl;
+    default:
+        return false;
+    }
+}
+
+// Return true if there are decorations to preserve for output-like storage.
+bool HlslParseContext::hasOutput(const TQualifier& qualifier) const
+{
+    if (qualifier.hasAnyLocation())
+        return true;
+
+    if (language != EShLangFragment && language != EShLangCompute && qualifier.hasXfb())
+        return true;
+
+    if (language == EShLangTessControl && qualifier.patch)
+        return true;
+
+    if (language == EShLangGeometry && qualifier.hasStream())
+        return true;
+
+    if (isOutputBuiltIn(qualifier))
+        return true;
+
+    return false;
+}
+
+// Make the IO decorations etc. be appropriate only for an input interface.
+void HlslParseContext::correctInput(TQualifier& qualifier)
+{
+    clearUniform(qualifier);
+    if (language == EShLangVertex)
+        qualifier.clearInterstage();
+    if (language != EShLangTessEvaluation)
+        qualifier.patch = false;
+    if (language != EShLangFragment) {
+        qualifier.clearInterpolation();
+        qualifier.sample = false;
+    }
+
+    qualifier.clearStreamLayout();
+    qualifier.clearXfbLayout();
+
+    if (! isInputBuiltIn(qualifier))
+        qualifier.builtIn = EbvNone;
+}
+
+// Make the IO decorations etc. be appropriate only for an output interface.
+void HlslParseContext::correctOutput(TQualifier& qualifier)
+{
+    clearUniform(qualifier);
+    if (language == EShLangFragment)
+        qualifier.clearInterstage();
+    if (language != EShLangGeometry)
+        qualifier.clearStreamLayout();
+    if (language == EShLangFragment)
+        qualifier.clearXfbLayout();
+    if (language != EShLangTessControl)
+        qualifier.patch = false;
+
+    switch (qualifier.builtIn) {
+    case EbvFragDepthGreater:
+        intermediate.setDepth(EldGreater);
+        qualifier.builtIn = EbvFragDepth;
+        break;
+    case EbvFragDepthLesser:
+        intermediate.setDepth(EldLess);
+        qualifier.builtIn = EbvFragDepth;
+        break;
+    default:
+        break;
+    }
+
+    if (! isOutputBuiltIn(qualifier))
+        qualifier.builtIn = EbvNone;
+}
+
+// Make the IO decorations etc. be appropriate only for uniform type interfaces.
+void HlslParseContext::correctUniform(TQualifier& qualifier)
+{
+    qualifier.builtIn = EbvNone;
+    qualifier.clearInterstage();
+    qualifier.clearInterstageLayout();
+}
+
+// Clear out all IO/Uniform stuff, so this has nothing to do with being an IO interface.
+void HlslParseContext::clearUniformInputOutput(TQualifier& qualifier)
+{
+    clearUniform(qualifier);
+    correctUniform(qualifier);
+}
+
+// Add patch constant function invocation
+void HlslParseContext::addPatchConstantInvocation()
+{
+    TSourceLoc loc;
+    loc.init();
+
+    // If there's no patch constant function, or we're not a HS, do nothing.
+    if (patchConstantFunctionName.empty() || language != EShLangTessControl)
+        return;
+
+    if (symbolTable.isFunctionNameVariable(patchConstantFunctionName)) {
+        error(loc, "can't use variable in patch constant function", patchConstantFunctionName.c_str(), "");
+        return;
+    }
+
+    const TString mangledName = patchConstantFunctionName + "(";
+
+    // create list of PCF candidates
+    TVector<const TFunction*> candidateList;
+    bool builtIn;
+    symbolTable.findFunctionNameList(mangledName, candidateList, builtIn);
+    
+    // We have to have one and only one, or we don't know which to pick: the patchconstantfunc does not
+    // allow any disambiguation of overloads.
+    if (candidateList.empty()) {
+        error(loc, "patch constant function not found", patchConstantFunctionName.c_str(), "");
+        return;
+    }
+
+    // Based on directed experiments, it appears that if there are overloaded patchconstantfunctions,
+    // HLSL picks the last one in shader source order.  Since that isn't yet implemented here, error
+    // out if there is more than one candidate.
+    if (candidateList.size() > 1) {
+        error(loc, "ambiguous patch constant function", patchConstantFunctionName.c_str(), "");
+        return;
+    }
+
+    // Look for builtin variables in a function's parameter list.
+    const auto findBuiltIns = [&](const TFunction& function, std::set<tInterstageIoData>& builtIns) {
+        for (int p=0; p<function.getParamCount(); ++p) {
+            const TStorageQualifier storage = function[p].type->getQualifier().storage;
+
+            if (function[p].declaredBuiltIn != EbvNone)
+                builtIns.insert(tInterstageIoData(function[p].declaredBuiltIn, storage));
+            else
+                builtIns.insert(tInterstageIoData(function[p].type->getQualifier().builtIn, storage));
+        }
+    };
+
+
+    // If we synthesize a builtin interface variable, we must add it to the linkage.
+    const auto addToLinkage = [&](const TType& type, const TString* name, TIntermSymbol** symbolNode) {
+        if (name == nullptr) {
+            error(loc, "unable to locate patch function parameter name", "", "");
+            return;
+        } else {
+            TVariable& variable = *new TVariable(name, type);
+            if (! symbolTable.insert(variable)) {
+                error(loc, "unable to declare patch constant function interface variable", name->c_str(), "");
+                return;
+            }
+
+            globalQualifierFix(loc, variable.getWritableType().getQualifier());
+
+            if (symbolNode != nullptr)
+                *symbolNode = intermediate.addSymbol(variable);
+
+            trackLinkage(variable);
+        }
+    };
+
+    // Return a symbol for the linkage variable of the given TBuiltInVariable type
+    const auto findLinkageSymbol = [this](TBuiltInVariable biType) -> TIntermSymbol* {
+        const auto it = builtInLinkageSymbols.find(biType);
+        if (it == builtInLinkageSymbols.end())  // if it wasn't declared by the user, return nullptr
+            return nullptr;
+
+        return intermediate.addSymbol(*it->second->getAsVariable());
+    };
+    
+    // We will perform these steps.  Each is in a scoped block for separation: they could
+    // become separate functions to make addPatchConstantInvocation shorter.
+    // 
+    // 1. Union the interfaces, and create builtins for anything present in the PCF and
+    //    declared as a builtin variable that isn't present in the entry point's signature.
+    //
+    // 2. Synthesizes a call to the patchconstfunction using builtin variables from either main,
+    //    or the ones we created.  Matching is based on builtin type.  We may use synthesized
+    //    variables from (1) above.
+    //
+    // 3. Create a return sequence: copy the return value (if any) from the PCF to a
+    //    (non-sanitized) output variable.  In case this may involve multiple copies, such as for
+    //    an arrayed variable, a temporary copy of the PCF output is created to avoid multiple
+    //    indirections into a complex R-value coming from the call to the PCF.
+    //
+    // 4. Add a barrier to the end of the entry point body
+    //
+    // 5. Call the PCF inside an if test for (invocation id == 0).
+
+    TFunction& patchConstantFunction = const_cast<TFunction&>(*candidateList[0]);
+    const int pcfParamCount = patchConstantFunction.getParamCount();
+    TIntermSymbol* invocationIdSym = findLinkageSymbol(EbvInvocationId);
+    TIntermSequence& epBodySeq = entryPointFunctionBody->getAsAggregate()->getSequence();
+
+    // ================ Step 1A: Union Interfaces ================
+    // Our patch constant function.
+    {
+        std::set<tInterstageIoData> pcfBuiltIns;  // patch constant function builtins
+        std::set<tInterstageIoData> epfBuiltIns;  // entry point function builtins
+
+        assert(entryPointFunction);
+        assert(entryPointFunctionBody);
+
+        findBuiltIns(patchConstantFunction, pcfBuiltIns);
+        findBuiltIns(*entryPointFunction,   epfBuiltIns);
+
+        // Patchconstantfunction can contain only builtin qualified variables.  (Technically, only HS inputs,
+        // but this test is less assertive than that).
+
+        for (auto bi = pcfBuiltIns.begin(); bi != pcfBuiltIns.end(); ++bi) {
+            if (bi->builtIn == EbvNone) {
+                error(loc, "patch constant function invalid parameter", "", "");
+                return;
+            }
+        }
+
+        // Find the set of builtins in the PCF that are not present in the entry point.
+        std::set<tInterstageIoData> notInEntryPoint;
+
+        notInEntryPoint = pcfBuiltIns;
+
+        for (auto bi : epfBuiltIns) // std::set_difference not usable on unordered containers
+            notInEntryPoint.erase(bi);
+
+        // Now we'll add those to the entry and to the linkage.
+        for (int p=0; p<pcfParamCount; ++p) {
+            TType* paramType = patchConstantFunction[p].type->clone();
+            const TBuiltInVariable biType   = patchConstantFunction[p].declaredBuiltIn;
+            const TStorageQualifier storage = patchConstantFunction[p].type->getQualifier().storage;
+
+            // Use the original declaration type for the linkage
+            paramType->getQualifier().builtIn = biType;
+
+            if (notInEntryPoint.count(tInterstageIoData(biType, storage)) == 1)
+                addToLinkage(*paramType, patchConstantFunction[p].name, nullptr);
+        }
+
+        // If we didn't find it because the shader made one, add our own.
+        if (invocationIdSym == nullptr) {
+            TType invocationIdType(EbtUint, EvqIn, 1);
+            TString* invocationIdName = NewPoolTString("InvocationId");
+            invocationIdType.getQualifier().builtIn = EbvInvocationId;
+            addToLinkage(invocationIdType, invocationIdName, &invocationIdSym);
+        }
+
+        assert(invocationIdSym);
+    }
+
+    TIntermTyped* pcfArguments = nullptr;
+
+    // ================ Step 1B: Argument synthesis ================
+    // Create pcfArguments for synthesis of patchconstantfunction invocation
+    // TODO: handle struct or array inputs
+    {
+        for (int p=0; p<pcfParamCount; ++p) {
+            if (patchConstantFunction[p].type->isArray() ||
+                patchConstantFunction[p].type->isStruct()) {
+                error(loc, "unimplemented array or variable in patch constant function signature", "", "");
+                return;
+            }
+        
+            // find which builtin it is
+            const TBuiltInVariable biType = patchConstantFunction[p].declaredBuiltIn;
+
+            TIntermSymbol* builtIn = findLinkageSymbol(biType);
+        
+            if (builtIn == nullptr) {
+                error(loc, "unable to find patch constant function builtin variable", "", "");
+                return;
+            }
+
+            if (pcfParamCount == 1)
+                pcfArguments = builtIn;
+            else
+                pcfArguments = intermediate.growAggregate(pcfArguments, builtIn);
+        }
+    }
+
+    // ================ Step 2: Synthesize call to PCF ================
+    TIntermTyped* pcfCall = nullptr;
+
+    {
+        // Create a function call to the patchconstantfunction
+        if (pcfArguments)
+            addInputArgumentConversions(patchConstantFunction, pcfArguments);
+
+        // Synthetic call.
+        pcfCall = intermediate.setAggregateOperator(pcfArguments, EOpFunctionCall, patchConstantFunction.getType(), loc);
+        pcfCall->getAsAggregate()->setUserDefined();
+        pcfCall->getAsAggregate()->setName(patchConstantFunction.getMangledName());
+        intermediate.addToCallGraph(infoSink, entryPointFunction->getMangledName(), patchConstantFunction.getMangledName());
+
+        if (pcfCall->getAsAggregate()) {
+            TQualifierList& qualifierList = pcfCall->getAsAggregate()->getQualifierList();
+            for (int i = 0; i < patchConstantFunction.getParamCount(); ++i) {
+                TStorageQualifier qual = patchConstantFunction[i].type->getQualifier().storage;
+                qualifierList.push_back(qual);
+            }
+            pcfCall = addOutputArgumentConversions(patchConstantFunction, *pcfCall->getAsOperator());
+        }
+    }
+
+    // ================ Step 3: Create return Sequence ================
+    // Return sequence: copy PCF result to a temporary, then to shader output variable.
+    if (pcfCall->getBasicType() != EbtVoid) {
+        const TType* retType = &patchConstantFunction.getType();  // return type from the PCF
+        TType outType; // output type that goes with the return type.
+        outType.shallowCopy(*retType);
+
+        // substitute the output type
+        const auto newLists = ioTypeMap.find(retType->getStruct());
+        if (newLists != ioTypeMap.end())
+            outType.setStruct(newLists->second.output);
+
+        // Substitute the top level type's builtin type
+        if (patchConstantFunction.getDeclaredBuiltInType() != EbvNone)
+            outType.getQualifier().builtIn = patchConstantFunction.getDeclaredBuiltInType();
+
+        TVariable* pcfOutput = makeInternalVariable("@patchConstantOutput", outType);
+        pcfOutput->getWritableType().getQualifier().storage = EvqVaryingOut;
+
+        if (pcfOutput->getType().containsBuiltInInterstageIO(language))
+            split(*pcfOutput);
+
+        TIntermSymbol* pcfOutputSym = intermediate.addSymbol(*pcfOutput, loc);
+
+        // The call to the PCF is a complex R-value: we want to store it in a temp to avoid
+        // repeated calls to the PCF:
+        TVariable* pcfCallResult = makeInternalVariable("@patchConstantResult", *retType);
+        pcfCallResult->getWritableType().getQualifier().makeTemporary();
+        TIntermSymbol* pcfResultVar = intermediate.addSymbol(*pcfCallResult, loc);
+        // sanitizeType(&pcfCall->getWritableType());
+        TIntermNode* pcfResultAssign = intermediate.addAssign(EOpAssign, pcfResultVar, pcfCall, loc);
+
+        TIntermNode* pcfResultToOut = handleAssign(loc, EOpAssign, pcfOutputSym, intermediate.addSymbol(*pcfCallResult, loc));
+
+        TIntermTyped* pcfAggregate = nullptr;
+        pcfAggregate = intermediate.growAggregate(pcfAggregate, pcfResultAssign);
+        pcfAggregate = intermediate.growAggregate(pcfAggregate, pcfResultToOut);
+        pcfAggregate = intermediate.setAggregateOperator(pcfAggregate, EOpSequence, *retType, loc);
+
+        pcfCall = pcfAggregate;
+    }
+
+    // ================ Step 4: Barrier ================    
+    TIntermTyped* barrier = new TIntermAggregate(EOpBarrier);
+    barrier->setLoc(loc);
+    barrier->setType(TType(EbtVoid));
+    epBodySeq.insert(epBodySeq.end(), barrier);
+
+    // ================ Step 5: Test on invocation ID ================    
+    TIntermTyped* zero = intermediate.addConstantUnion(0, loc, true);
+    TIntermTyped* cmp =  intermediate.addBinaryNode(EOpEqual, invocationIdSym, zero, loc, TType(EbtBool));
+
+    // Create if statement
+    TIntermTyped* invocationIdTest = new TIntermSelection(cmp, pcfCall, nullptr);
+    invocationIdTest->setLoc(loc);
+
+    // add our test sequence before the return.
+    epBodySeq.insert(epBodySeq.end(), invocationIdTest);
+}
+
 // post-processing
 void HlslParseContext::finish()
 {
+    addPatchConstantInvocation();
     addInterstageIoToLinkage();
 
     TParseContextBase::finish();

@@ -72,10 +72,10 @@ public:
     TIntermTyped* handleDotDereference(const TSourceLoc&, TIntermTyped* base, const TString& field);
     void assignLocations(TVariable& variable);
     TFunction& handleFunctionDeclarator(const TSourceLoc&, TFunction& function, bool prototype);
-    TIntermAggregate* handleFunctionDefinition(const TSourceLoc&, TFunction&, const TAttributeMap&);
-    void transformEntryPoint(const TSourceLoc&, TFunction&, const TAttributeMap&);
+    TIntermAggregate* handleFunctionDefinition(const TSourceLoc&, TFunction&, const TAttributeMap&, TIntermNode*& entryPointTree);
+    TIntermNode* transformEntryPoint(const TSourceLoc&, TFunction&, const TAttributeMap&);
     void handleFunctionBody(const TSourceLoc&, TFunction&, TIntermNode* functionBody, TIntermNode*& node);
-    void remapEntryPointIO(TFunction& function);
+    void remapEntryPointIO(TFunction& function, TVariable*& returnValue, TVector<TVariable*>& inputs, TVector<TVariable*>& outputs);
     void remapNonEntryPointIO(TFunction& function);
     TIntermNode* handleReturnValue(const TSourceLoc&, TIntermTyped*);
     void handleFunctionArgument(TFunction*, TIntermTyped*& arguments, TIntermTyped* newArg);
@@ -130,7 +130,8 @@ public:
     void checkNoShaderLayouts(const TSourceLoc&, const TShaderQualifiers&);
 
     const TFunction* findFunction(const TSourceLoc& loc, TFunction& call, bool& builtIn, TIntermTyped*& args);
-    void declareTypedef(const TSourceLoc&, TString& identifier, const TType&, TArraySizes* typeArray = 0);
+    void declareTypedef(const TSourceLoc&, TString& identifier, const TType&);
+    void declareStruct(const TSourceLoc&, TString& structName, TType&);
     TIntermNode* declareVariable(const TSourceLoc&, TString& identifier, TType&, TIntermTyped* initializer = 0);
     void lengthenList(const TSourceLoc&, TIntermSequence& list, int size);
     TIntermTyped* addConstructor(const TSourceLoc&, TIntermNode*, const TType&);
@@ -159,6 +160,8 @@ public:
 
     void pushSwitchSequence(TIntermSequence* sequence) { switchSequenceStack.push_back(sequence); }
     void popSwitchSequence() { switchSequenceStack.pop_back(); }
+
+    virtual void growGlobalUniformBlock(TSourceLoc&, TType&, TString& memberName, TTypeList* typeList = nullptr) override;
 
     // Apply L-value conversions.  E.g, turning a write to a RWTexture into an ImageStore.
     TIntermTyped* handleLvalue(const TSourceLoc&, const char* op, TIntermTyped* node);
@@ -203,9 +206,7 @@ protected:
     bool shouldConvertLValue(const TIntermNode*) const;
 
     // Array and struct flattening
-    bool shouldFlatten(const TType& type) const;
     TIntermTyped* flattenAccess(TIntermTyped* base, int member);
-    bool shouldFlattenIO(const TType&) const;
     bool shouldFlattenUniform(const TType&) const;
     bool wasFlattened(const TIntermTyped* node) const;
     bool wasFlattened(int id) const { return flattenMap.find(id) != flattenMap.end(); }
@@ -213,7 +214,6 @@ protected:
     bool isFinalFlattening(const TType& type) const { return !(type.isStruct() || type.isArray()); }
 
     // Structure splitting (splits interstage builtin types into its own struct)
-    bool shouldSplit(const TType&);
     TIntermTyped* splitAccessStruct(const TSourceLoc& loc, TIntermTyped*& base, int& member);
     void splitAccessArray(const TSourceLoc& loc, TIntermTyped* base, TIntermTyped* index);
     TType& split(TType& type, TString name, const TType* outerStructType = nullptr);
@@ -225,14 +225,27 @@ protected:
     TVariable* getSplitIoVar(const TVariable* var) const;
     TVariable* getSplitIoVar(int id) const;
     void addInterstageIoToLinkage();
+    void addPatchConstantInvocation();
 
     void flatten(const TSourceLoc& loc, const TVariable& variable);
     int flatten(const TSourceLoc& loc, const TVariable& variable, const TType&, TFlattenData&, TString name);
     int flattenStruct(const TSourceLoc& loc, const TVariable& variable, const TType&, TFlattenData&, TString name);
     int flattenArray(const TSourceLoc& loc, const TVariable& variable, const TType&, TFlattenData&, TString name);
 
-    // Type sanitization: return existing sanitized (temporary) type if there is one, else make new one.
-    TType* sanitizeType(TType*);
+    bool hasUniform(const TQualifier& qualifier) const;
+    void clearUniform(TQualifier& qualifier);
+    bool isInputBuiltIn(const TQualifier& qualifier) const;
+    bool hasInput(const TQualifier& qualifier) const;
+    void correctOutput(TQualifier& qualifier);
+    bool isOutputBuiltIn(const TQualifier& qualifier) const;
+    bool hasOutput(const TQualifier& qualifier) const;
+    void correctInput(TQualifier& qualifier);
+    void correctUniform(TQualifier& qualifier);
+    void clearUniformInputOutput(TQualifier& qualifier);
+
+    // Pass through to base class after remembering builtin mappings.
+    using TParseContextBase::trackLinkage;
+    void trackLinkage(TSymbol& variable) override;
 
     void finish() override; // post-processing
 
@@ -243,7 +256,6 @@ protected:
     int structNestingLevel;      // 0 if outside blocks and structures
     int controlFlowNestingLevel; // 0 if outside all flow control
     TList<TIntermSequence*> switchSequenceStack;  // case, node, case, case, node, ...; ensure only one node between cases;   stack of them for nesting
-    bool inEntryPoint;           // if inside a function, true if the function is the entry point
     bool postEntryPointReturn;         // if inside a function, true if the function is the entry point and this is after a return statement
     const TType* currentFunctionType;  // the return type of the function that's currently being parsed
     bool functionReturnsValue;   // true if a non-void function has a return
@@ -261,7 +273,6 @@ protected:
     TString currentCaller;        // name of last function body entered (not valid when at global scope)
     TIdSetType inductiveLoopIds;
     TVector<TIntermTyped*> needsIndexLimitationChecking;
-    TVariable* entryPointOutput;
 
     //
     // Geometry shader input arrays:
@@ -301,9 +312,15 @@ protected:
     TVector<int> flattenLevel;  // nested postfix operator level for flattening
     TVector<int> flattenOffset; // cumulative offset for flattening
 
-    // Sanitized type map.  During declarations we use the sanitized form of the type
-    // if it exists.
-    TMap<const TTypeList*, TType*> sanitizedTypeMap;
+    // IO-type map. Maps a pure symbol-table form of a structure-member list into
+    // each of the (up to) three kinds of IO, as each as different allowed decorations,
+    // but HLSL allows mixing all in the same structure.
+    struct tIoKinds {
+        TTypeList* input;
+        TTypeList* output;
+        TTypeList* uniform;
+    };
+    TMap<const TTypeList*, tIoKinds> ioTypeMap;
 
     // Structure splitting data:
     TMap<int, TVariable*>              splitIoVars;  // variables with the builtin interstage IO removed, indexed by unique ID.
@@ -312,6 +329,9 @@ protected:
     // can build the linkage correctly if position appears on both sides.  Otherwise, multiple positions
     // are considered identical.
     struct tInterstageIoData {
+        tInterstageIoData(TBuiltInVariable bi, TStorageQualifier q) :
+            builtIn(bi), storage(q) { }
+
         tInterstageIoData(const TType& memberType, const TType& storageType) :
             builtIn(memberType.getQualifier().builtIn),
             storage(storageType.getQualifier().storage) { }
@@ -325,7 +345,7 @@ protected:
         }
     };
 
-    TMap<tInterstageIoData, TVariable*> interstageBuiltInIo; // individual builtin interstage IO vars, inxed by builtin type.
+    TMap<tInterstageIoData, TVariable*> interstageBuiltInIo; // individual builtin interstage IO vars, indexed by builtin type.
 
     // We have to move array references to structs containing builtin interstage IO to the split variables.
     // This is only handled for one level.  This stores the index, because we'll need it in the future, since
@@ -336,7 +356,13 @@ protected:
     unsigned int nextInLocation;
     unsigned int nextOutLocation;
 
-    TString sourceEntryPointName;
+    TString    sourceEntryPointName;
+    TFunction* entryPointFunction;
+    TIntermNode* entryPointFunctionBody;
+
+    TString patchConstantFunctionName; // hull shader patch constant function name, from function level attribute.
+    TMap<TBuiltInVariable, TSymbol*> builtInLinkageSymbols; // used for tessellation, finding declared builtins
+
 };
 
 } // end namespace glslang

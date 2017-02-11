@@ -4,7 +4,7 @@ ERROR: 0:1: '#if' : unexpected tokens following directive
 ERROR: 0:3: '#error' : A <bad token> B  
 ERROR: 0:4: 'preprocessor evaluation' : bad expression 
 ERROR: 0:4: '#if' : unexpected tokens following directive 
-ERROR: 0:6: 'ÿ' : unexpected token 
+ERROR: 0:6: '€' : unexpected token 
 ERROR: 0:7: '' :  syntax error
 ERROR: 7 compilation errors.  No code generated.
 

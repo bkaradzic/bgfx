@@ -95,48 +95,45 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace glslang {
 
-void TPpContext::lAddByte(TokenStream& fTok, unsigned char fVal)
+// push onto back of stream
+void TPpContext::TokenStream::putSubtoken(int subtoken)
 {
-    fTok.data.push_back(fVal);
+    assert((subtoken & ~0xff) == 0);
+    data.push_back(static_cast<unsigned char>(subtoken));
 }
 
-/*
-* Get the next byte from a stream.
-*/
-int TPpContext::lReadByte(TokenStream& pTok)
+// get the next token in stream
+int TPpContext::TokenStream::getSubtoken()
 {
-    if (pTok.current < pTok.data.size())
-        return pTok.data[pTok.current++];
+    if (current < data.size())
+        return data[current++];
     else
         return EndOfInput;
 }
 
-void TPpContext::lUnreadByte(TokenStream& pTok)
+// back up one position in the stream
+void TPpContext::TokenStream::ungetSubtoken()
 {
-    if (pTok.current > 0)
-        --pTok.current;
+    if (current > 0)
+        --current;
 }
 
-/*
-* Add a token to the end of a list for later playback.
-*/
-void TPpContext::RecordToken(TokenStream& pTok, int token, TPpToken* ppToken)
+// Add a complete token (including backing string) to the end of a list
+// for later playback.
+void TPpContext::TokenStream::putToken(int token, TPpToken* ppToken)
 {
     const char* s;
     char* str = NULL;
 
-    if (token > PpAtomMaxSingle)
-        lAddByte(pTok, (unsigned char)((token & 0x7f) + 0x80));
-    else
-        lAddByte(pTok, (unsigned char)(token & 0x7f));
+    putSubtoken(token);
 
     switch (token) {
     case PpAtomIdentifier:
     case PpAtomConstString:
         s = ppToken->name;
         while (*s)
-            lAddByte(pTok, (unsigned char) *s++);
-        lAddByte(pTok, 0);
+            putSubtoken(*s++);
+        putSubtoken(0);
         break;
     case PpAtomConstInt:
     case PpAtomConstUint:
@@ -149,46 +146,35 @@ void TPpContext::RecordToken(TokenStream& pTok, int token, TPpToken* ppToken)
 #endif
         str = ppToken->name;
         while (*str) {
-            lAddByte(pTok, (unsigned char) *str);
+            putSubtoken(*str);
             str++;
         }
-        lAddByte(pTok, 0);
+        putSubtoken(0);
         break;
     default:
         break;
     }
 }
 
-/*
-* Reset a token stream in preparation for reading.
-*/
-void TPpContext::RewindTokenStream(TokenStream& pTok)
+// Read the next token from a token stream.
+// (Not the source stream, but a stream used to hold a tokenized macro).
+int TPpContext::TokenStream::getToken(TParseContextBase& parseContext, TPpToken *ppToken)
 {
-    pTok.current = 0;
-}
-
-/*
-* Read the next token from a token stream (not the source stream, but stream used to hold a tokenized macro).
-*/
-int TPpContext::ReadToken(TokenStream& pTok, TPpToken *ppToken)
-{
-    int ltoken, len;
+    int len;
     int ch;
 
-    ltoken = lReadByte(pTok);
+    int subtoken = getSubtoken();
     ppToken->loc = parseContext.getCurrentLoc();
-    if (ltoken > 127)
-        ltoken += 128;
-    switch (ltoken) {
+    switch (subtoken) {
     case '#':
         // Check for ##, unless the current # is the last character
-        if (pTok.current < pTok.data.size()) {
-            if (lReadByte(pTok) == '#') {
+        if (current < data.size()) {
+            if (getSubtoken() == '#') {
                 parseContext.requireProfile(ppToken->loc, ~EEsProfile, "token pasting (##)");
                 parseContext.profileRequires(ppToken->loc, ~EEsProfile, 130, 0, "token pasting (##)");
-                ltoken = PpAtomPaste;
+                subtoken = PpAtomPaste;
             } else
-                lUnreadByte(pTok);
+                ungetSubtoken();
         }
         break;
     case PpAtomConstString:
@@ -203,12 +189,12 @@ int TPpContext::ReadToken(TokenStream& pTok, TPpToken *ppToken)
     case PpAtomConstInt64:
     case PpAtomConstUint64:
         len = 0;
-        ch = lReadByte(pTok);
+        ch = getSubtoken();
         while (ch != 0 && ch != EndOfInput) {
             if (len < MaxTokenLength) {
                 ppToken->name[len] = (char)ch;
                 len++;
-                ch = lReadByte(pTok);
+                ch = getSubtoken();
             } else {
                 parseContext.error(ppToken->loc, "token too long", "", "");
                 break;
@@ -216,7 +202,7 @@ int TPpContext::ReadToken(TokenStream& pTok, TPpToken *ppToken)
         }
         ppToken->name[len] = 0;
 
-        switch (ltoken) {
+        switch (subtoken) {
         case PpAtomIdentifier:
             break;
         case PpAtomConstString:
@@ -267,43 +253,80 @@ int TPpContext::ReadToken(TokenStream& pTok, TPpToken *ppToken)
         }
     }
 
-    return ltoken;
+    return subtoken;
 }
 
-int TPpContext::tTokenInput::scan(TPpToken* ppToken)
+// We are pasting if
+//   1. we are preceding a pasting operator within this stream
+// or
+//   2. the entire macro is preceding a pasting operator (lastTokenPastes)
+//      and we are also on the last token
+bool TPpContext::TokenStream::peekTokenizedPasting(bool lastTokenPastes)
 {
-    return pp->ReadToken(*tokens, ppToken);
-}
+    // 1. preceding ##?
 
-// We are pasting if the entire macro is preceding a pasting operator
-// (lastTokenPastes) and we are also on the last token.
-bool TPpContext::tTokenInput::peekPasting()
-{
+    size_t savePos = current;
+    int subtoken;
+    // skip white space
+    do {
+        subtoken = getSubtoken();
+    } while (subtoken == ' ');
+    current = savePos;
+    if (subtoken == PpAtomPaste)
+        return true;
+
+    // 2. last token and we've been told after this there will be a ##
+
     if (! lastTokenPastes)
         return false;
-    // Getting here means the last token will be pasted.
+    // Getting here means the last token will be pasted, after this
 
     // Are we at the last non-whitespace token?
-    size_t savePos = tokens->current;
+    savePos = current;
     bool moreTokens = false;
     do {
-        int byte = pp->lReadByte(*tokens);
-        if (byte == EndOfInput)
+        subtoken = getSubtoken();
+        if (subtoken == EndOfInput)
             break;
-        if (byte != ' ') {
+        if (subtoken != ' ') {
             moreTokens = true;
             break;
         }
     } while (true);
-    tokens->current = savePos;
+    current = savePos;
 
     return !moreTokens;
+}
+
+// See if the next non-white-space tokens are two consecutive #
+bool TPpContext::TokenStream::peekUntokenizedPasting()
+{
+    // don't return early, have to restore this
+    size_t savePos = current;
+
+    // skip white-space
+    int subtoken;
+    do {
+        subtoken = getSubtoken();
+    } while (subtoken == ' ');
+
+    // check for ##
+    bool pasting = false;
+    if (subtoken == '#') {
+        subtoken = getSubtoken();
+        if (subtoken == '#')
+            pasting = true;
+    }
+
+    current = savePos;
+
+    return pasting;
 }
 
 void TPpContext::pushTokenStreamInput(TokenStream& ts, bool prepasting)
 {
     pushInput(new tTokenInput(this, &ts, prepasting));
-    RewindTokenStream(ts);
+    ts.reset();
 }
 
 int TPpContext::tUngotTokenInput::scan(TPpToken* ppToken)

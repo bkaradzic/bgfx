@@ -148,10 +148,10 @@ int TPpContext::CPPdefine(TPpToken* ppToken)
     // record the definition of the macro
     TSourceLoc defineLoc = ppToken->loc; // because ppToken is going to go to the next line before we report errors
     while (token != '\n' && token != EndOfInput) {
-        RecordToken(mac.body, token, ppToken);
+        mac.body.putToken(token, ppToken);
         token = scanToken(ppToken);
         if (token != '\n' && ppToken->space)
-            RecordToken(mac.body, ' ', ppToken);
+            mac.body.putToken(' ', ppToken);
     }
 
     // check for duplicate definition
@@ -166,15 +166,15 @@ int TPpContext::CPPdefine(TPpToken* ppToken)
             else {
                 if (existing->args != mac.args)
                     parseContext.ppError(defineLoc, "Macro redefined; different argument names:", "#define", atomStrings.getString(defAtom));
-                RewindTokenStream(existing->body);
-                RewindTokenStream(mac.body);
+                existing->body.reset();
+                mac.body.reset();
                 int newToken;
                 do {
                     int oldToken;
                     TPpToken oldPpToken;
                     TPpToken newPpToken;
-                    oldToken = ReadToken(existing->body, &oldPpToken);
-                    newToken = ReadToken(mac.body, &newPpToken);
+                    oldToken = existing->body.getToken(parseContext, &oldPpToken);
+                    newToken = mac.body.getToken(parseContext, &newPpToken);
                     if (oldToken != newToken || oldPpToken != newPpToken) {
                         parseContext.ppError(defineLoc, "Macro redefined; different substitutions:", "#define", atomStrings.getString(defAtom));
                         break;
@@ -979,28 +979,16 @@ int TPpContext::scanHeaderName(TPpToken* ppToken, char delimit)
 // Returns nullptr if no expanded argument is created.
 TPpContext::TokenStream* TPpContext::PrescanMacroArg(TokenStream& arg, TPpToken* ppToken, bool newLineOkay)
 {
-    // pre-check, to see if anything in the argument needs to be expanded,
-    // to see if we can kick out early
-    int token;
-    RewindTokenStream(arg);
-    do {
-        token = ReadToken(arg, ppToken);
-        if (token == PpAtomIdentifier && lookupMacroDef(atomStrings.getAtom(ppToken->name)) != nullptr)
-            break;
-    } while (token != EndOfInput);
-
-    // if nothing needs to be expanded, kick out early
-    if (token == EndOfInput)
-        return nullptr;
-
     // expand the argument
     TokenStream* expandedArg = new TokenStream;
     pushInput(new tMarkerInput(this));
     pushTokenStreamInput(arg);
+    int token;
     while ((token = scanToken(ppToken)) != tMarkerInput::marker && token != EndOfInput) {
+        token = tokenPaste(token, *ppToken);
         if (token == PpAtomIdentifier && MacroExpand(ppToken, false, newLineOkay) != 0)
             continue;
-        RecordToken(*expandedArg, token, ppToken);
+        expandedArg->putToken(token, ppToken);
     }
 
     if (token == EndOfInput) {
@@ -1023,7 +1011,7 @@ int TPpContext::tMacroInput::scan(TPpToken* ppToken)
 {
     int token;
     do {
-        token = pp->ReadToken(mac->body, ppToken);
+        token = mac->body.getToken(pp->parseContext, ppToken);
     } while (token == ' ');  // handle white space in macro
 
     // Hash operators basically turn off a round of macro substitution
@@ -1054,7 +1042,7 @@ int TPpContext::tMacroInput::scan(TPpToken* ppToken)
     }
 
     // see if are preceding a ##
-    if (peekMacPasting()) {
+    if (mac->body.peekUntokenizedPasting()) {
         prepaste = true;
         pasting = true;
     }
@@ -1079,31 +1067,6 @@ int TPpContext::tMacroInput::scan(TPpToken* ppToken)
         mac->busy = 0;
 
     return token;
-}
-
-// See if the next non-white-space token in the macro is ##
-bool TPpContext::tMacroInput::peekMacPasting()
-{
-    // don't return early, have to restore this
-    size_t savePos = mac->body.current;
-
-    // skip white-space
-    int ltoken;
-    do {
-        ltoken = pp->lReadByte(mac->body);
-    } while (ltoken == ' ');
-
-    // check for ##
-    bool pasting = false;
-    if (ltoken == '#') {
-        ltoken = pp->lReadByte(mac->body);
-        if (ltoken == '#')
-            pasting = true;
-    }
-
-    mac->body.current = savePos;
-
-    return pasting;
 }
 
 // return a textual zero, for scanning a macro that was never defined
@@ -1230,7 +1193,7 @@ int TPpContext::MacroExpand(TPpToken* ppToken, bool expandUndef, bool newLineOka
                     depth++;
                 if (token == ')')
                     depth--;
-                RecordToken(*in->args[arg], token, ppToken);
+                in->args[arg]->putToken(token, ppToken);
                 tokenRecorded = true;
             }
             if (token == ')') {
@@ -1263,14 +1226,14 @@ int TPpContext::MacroExpand(TPpToken* ppToken, bool expandUndef, bool newLineOka
         }
 
         // We need both expanded and non-expanded forms of the argument, for whether or
-        // not token pasting is in play.
+        // not token pasting will be applied later when the argument is consumed next to ##.
         for (size_t i = 0; i < in->mac->args.size(); i++)
             in->expandedArgs[i] = PrescanMacroArg(*in->args[i], ppToken, newLineOkay);
     }
 
     pushInput(in);
     macro->busy = 1;
-    RewindTokenStream(macro->body);
+    macro->body.reset();
 
     return 1;
 }
