@@ -23,8 +23,6 @@
 #include "config.h"
 
 #include <inttypes.h>
-#include <stdarg.h> // va_list
-#include <alloca.h>
 
 // Check handle, cannot be bgfx::invalidHandle and must be valid.
 #define BGFX_CHECK_HANDLE(_desc, _handleAlloc, _handle) \
