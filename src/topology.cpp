@@ -6,7 +6,7 @@
 #include <bx/allocator.h>
 #include <bx/debug.h>
 #include <bx/fpumath.h>
-#include <bx/radixsort.h>
+#include <bx/sort.h>
 #include <bx/uint32_t.h>
 
 #include "config.h"

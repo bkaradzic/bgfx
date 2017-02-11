@@ -10,7 +10,7 @@
 #include "../packrect.h"
 
 #include <bx/fpumath.h>
-#include <bx/radixsort.h>
+#include <bx/sort.h>
 #include <bx/uint32_t.h>
 #include <bx/crtimpl.h>
 #include <bx/handlealloc.h>

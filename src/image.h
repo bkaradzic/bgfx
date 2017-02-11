@@ -6,7 +6,6 @@
 #ifndef BGFX_IMAGE_H_HEADER_GUARD
 #define BGFX_IMAGE_H_HEADER_GUARD
 
-#include <stdint.h>
 #include <bx/pixelformat.h>
 
 namespace bgfx

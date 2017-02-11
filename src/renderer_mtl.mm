@@ -9,7 +9,6 @@
 
 #include "renderer_mtl.h"
 #include "renderer.h"
-#include "bx/bx.h"
 
 #if BX_PLATFORM_OSX
 #	include <Cocoa/Cocoa.h>

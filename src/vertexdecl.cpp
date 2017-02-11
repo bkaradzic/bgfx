@@ -3,11 +3,10 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
-#include <string.h>
 #include <bx/debug.h>
 #include <bx/hash.h>
 #include <bx/readerwriter.h>
-#include <bx/radixsort.h>
+#include <bx/sort.h>
 #include <bx/string.h>
 #include <bx/uint32_t.h>
 
