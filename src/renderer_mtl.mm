@@ -1914,7 +1914,7 @@ namespace bgfx { namespace mtl
 
 					for (uint8_t ii = 0; ii < Attrib::Count; ++ii)
 					{
-						if (!strcmp(s_attribName[ii],name))
+						if (0 == bx::strncmp(s_attribName[ii],name))
 						{
 							m_attributes[ii] = loc;
 							m_used[used++] = ii;
@@ -1924,7 +1924,7 @@ namespace bgfx { namespace mtl
 
 					for (uint32_t ii = 0; ii < BX_COUNTOF(s_instanceDataName); ++ii)
 					{
-						if (!strcmp(s_instanceDataName[ii],name))
+						if (0 == bx::strncmp(s_instanceDataName[ii],name))
 						{
 							m_instanceData[instUsed++] = loc;
 						}
@@ -2199,7 +2199,7 @@ namespace bgfx { namespace mtl
 							if (arg.active)
 							{
 								if (arg.type == MTLArgumentTypeBuffer
-								&& 0 == strcmp(utf8String(arg.name), SHADER_UNIFORM_NAME) )
+								&&  0 == bx::strncmp(utf8String(arg.name), SHADER_UNIFORM_NAME) )
 								{
 									BX_CHECK( arg.index == 0, "Uniform buffer must be in the buffer slot 0.");
 									BX_CHECK( MTLDataTypeStruct == arg.bufferDataType, "%s's type must be a struct",SHADER_UNIFORM_NAME );
