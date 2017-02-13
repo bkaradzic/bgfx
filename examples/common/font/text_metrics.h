@@ -25,6 +25,9 @@ public:
 	/// Return the height of the measured text.
 	float getHeight() const { return m_height; }
 
+	/// Clear the width and height of the measured text.
+	void clearText();
+
 private:
 	FontManager* m_fontManager;
 	float m_width;
