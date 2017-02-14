@@ -3,9 +3,6 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
-#include <stdint.h>
-#include <stdlib.h> // size_t
-
 #include <bx/allocator.h>
 #include <bx/hash.h>
 #include <bx/commandline.h>

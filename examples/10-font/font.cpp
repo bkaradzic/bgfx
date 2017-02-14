@@ -17,7 +17,6 @@
 #include <iconfontheaders/icons_font_awesome.h>
 #include <iconfontheaders/icons_kenney.h>
 
-#include <stdio.h>
 #include <wchar.h>
 
 TrueTypeHandle loadTtf(FontManager* _fm, const char* _filePath)
