@@ -282,7 +282,7 @@ void calcMaxBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 	}
 
 	bx::vec3Move(_sphere.m_center, center);
-	_sphere.m_radius = sqrtf(maxDistSq);
+	_sphere.m_radius = bx::fsqrt(maxDistSq);
 }
 
 void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _numVertices, uint32_t _stride, float _step)

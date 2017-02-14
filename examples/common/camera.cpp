@@ -166,16 +166,16 @@ struct Camera
 
 		float direction[3] =
 		{
-			cosf(m_verticalAngle) * sinf(m_horizontalAngle),
-			sinf(m_verticalAngle),
-			cosf(m_verticalAngle) * cosf(m_horizontalAngle),
+			bx::fcos(m_verticalAngle) * bx::fsin(m_horizontalAngle),
+			bx::fsin(m_verticalAngle),
+			bx::fcos(m_verticalAngle) * bx::fcos(m_horizontalAngle),
 		};
 
 		float right[3] =
 		{
-			sinf(m_horizontalAngle - bx::piHalf),
+			bx::fsin(m_horizontalAngle - bx::piHalf),
 			0,
-			cosf(m_horizontalAngle - bx::piHalf),
+			bx::fcos(m_horizontalAngle - bx::piHalf),
 		};
 
 		float up[3];
