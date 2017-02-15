@@ -365,8 +365,8 @@ struct Camera
 
 	static inline void latLongFromVec(float& _u, float& _v, const float _vec[3])
 	{
-		const float phi = atan2f(_vec[0], _vec[2]);
-		const float theta = acosf(_vec[1]);
+		const float phi = bx::fatan2(_vec[0], _vec[2]);
+		const float theta = bx::facos(_vec[1]);
 
 		_u = (bx::pi + phi)*bx::invPi*0.5f;
 		_v = theta*bx::invPi;

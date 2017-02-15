@@ -257,12 +257,12 @@ void mtxYawPitchRoll(float* __restrict _result
 		            , float _roll
 		            )
 {
-	float sroll  = sinf(_roll);
-	float croll  = cosf(_roll);
-	float spitch = sinf(_pitch);
-	float cpitch = cosf(_pitch);
-	float syaw   = sinf(_yaw);
-	float cyaw   = cosf(_yaw);
+	float sroll  = bx::fsin(_roll);
+	float croll  = bx::fcos(_roll);
+	float spitch = bx::fsin(_pitch);
+	float cpitch = bx::fcos(_pitch);
+	float syaw   = bx::fsin(_yaw);
+	float cyaw   = bx::fcos(_yaw);
 
 	_result[ 0] = sroll * spitch * syaw + croll * cyaw;
 	_result[ 1] = sroll * cpitch;
@@ -1163,7 +1163,7 @@ void splitFrustum(float* _splits, uint8_t _numSplits, float _near, float _far, f
 	{
 		float si = float(int8_t(ff) ) / numSlicesf;
 
-		const float nearp = l*(_near*powf(ratio, si) ) + (1 - l)*(_near + (_far - _near)*si);
+		const float nearp = l*(_near*bx::fpow(ratio, si) ) + (1 - l)*(_near + (_far - _near)*si);
 		_splits[nn] = nearp;          //near
 		_splits[ff] = nearp * 1.005f; //far from previous split
 	}
@@ -1956,7 +1956,7 @@ int _main_(int _argc, char** _argv)
 	const float camAspect  = float(int32_t(viewState.m_width) ) / float(int32_t(viewState.m_height) );
 	const float camNear    = 0.1f;
 	const float camFar     = 2000.0f;
-	const float projHeight = 1.0f/tanf(bx::toRad(camFovy)*0.5f);
+	const float projHeight = 1.0f/bx::ftan(bx::toRad(camFovy)*0.5f);
 	const float projWidth  = projHeight * camAspect;
 	bx::mtxProj(viewState.m_proj, camFovy, camAspect, camNear, camFar);
 	cameraGetViewMtx(viewState.m_view);
@@ -2169,16 +2169,16 @@ int _main_(int _argc, char** _argv)
 		if (settings.m_updateScene)  { timeAccumulatorScene += deltaTime; }
 
 		// Setup lights.
-		pointLight.m_position.m_x = cosf(timeAccumulatorLight) * 20.0f;
+		pointLight.m_position.m_x = bx::fcos(timeAccumulatorLight) * 20.0f;
 		pointLight.m_position.m_y = 26.0f;
-		pointLight.m_position.m_z = sinf(timeAccumulatorLight) * 20.0f;
+		pointLight.m_position.m_z = bx::fsin(timeAccumulatorLight) * 20.0f;
 		pointLight.m_spotDirectionInner.m_x = -pointLight.m_position.m_x;
 		pointLight.m_spotDirectionInner.m_y = -pointLight.m_position.m_y;
 		pointLight.m_spotDirectionInner.m_z = -pointLight.m_position.m_z;
 
-		directionalLight.m_position.m_x = -cosf(timeAccumulatorLight);
+		directionalLight.m_position.m_x = -bx::fcos(timeAccumulatorLight);
 		directionalLight.m_position.m_y = -1.0f;
-		directionalLight.m_position.m_z = -sinf(timeAccumulatorLight);
+		directionalLight.m_position.m_z = -bx::fsin(timeAccumulatorLight);
 
 		// Setup instance matrices.
 		float mtxFloor[16];
@@ -2245,9 +2245,9 @@ int _main_(int _argc, char** _argv)
 				, 0.0f
 				, float(ii)
 				, 0.0f
-				, sinf(float(ii)*2.0f*bx::pi/float(numTrees) ) * 60.0f
+				, bx::fsin(float(ii)*2.0f*bx::pi/float(numTrees) ) * 60.0f
 				, 0.0f
-				, cosf(float(ii)*2.0f*bx::pi/float(numTrees) ) * 60.0f
+				, bx::fcos(float(ii)*2.0f*bx::pi/float(numTrees) ) * 60.0f
 				);
 		}
 
@@ -2294,7 +2294,7 @@ int _main_(int _argc, char** _argv)
 			{
 				const float fovx = 143.98570868f + 3.51f + settings.m_fovXAdjust;
 				const float fovy = 125.26438968f + 9.85f + settings.m_fovYAdjust;
-				const float aspect = tanf(bx::toRad(fovx*0.5f) )/tanf(bx::toRad(fovy*0.5f) );
+				const float aspect = bx::ftan(bx::toRad(fovx*0.5f) )/bx::ftan(bx::toRad(fovy*0.5f) );
 
 				bx::mtxProj(lightProj[ProjType::Vertical]
 						, fovx
@@ -2318,7 +2318,7 @@ int _main_(int _argc, char** _argv)
 
 			const float fovx = 143.98570868f + 7.8f + settings.m_fovXAdjust;
 			const float fovy = 125.26438968f + 3.0f + settings.m_fovYAdjust;
-			const float aspect = tanf(bx::toRad(fovx*0.5f) )/tanf(bx::toRad(fovy*0.5f) );
+			const float aspect = bx::ftan(bx::toRad(fovx*0.5f) )/bx::ftan(bx::toRad(fovy*0.5f) );
 
 			bx::mtxProj(lightProj[ProjType::Horizontal], fovy, aspect, currentSmSettings->m_near, currentSmSettings->m_far);
 
@@ -2423,8 +2423,8 @@ int _main_(int _argc, char** _argv)
 				if (settings.m_stabilize)
 				{
 					const float quantizer = 64.0f;
-					scalex = quantizer / ceilf(quantizer / scalex);
-					scaley = quantizer / ceilf(quantizer / scaley);
+					scalex = quantizer / bx::fceil(quantizer / scalex);
+					scaley = quantizer / bx::fceil(quantizer / scaley);
 				}
 
 				offsetx = 0.5f * (maxproj[0] + minproj[0]) * scalex;
@@ -2433,8 +2433,8 @@ int _main_(int _argc, char** _argv)
 				if (settings.m_stabilize)
 				{
 					const float halfSize = currentShadowMapSizef * 0.5f;
-					offsetx = ceilf(offsetx * halfSize) / halfSize;
-					offsety = ceilf(offsety * halfSize) / halfSize;
+					offsetx = bx::fceil(offsetx * halfSize) / halfSize;
+					offsety = bx::fceil(offsety * halfSize) / halfSize;
 				}
 
 				float mtxCrop[16];

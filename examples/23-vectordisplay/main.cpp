@@ -152,8 +152,8 @@ int _main_(int _argc, char** _argv)
 		// draw moving shape
 		static float counter = 0.0f;
 		counter += 0.01f;
-		float posX = width  / 2.0f + sinf(counter * 3.18378f) * (width / 2.0f);
-		float posY = height / 2.0f + cosf(counter) * (height / 2.0f);
+		float posX = width  / 2.0f + bx::fsin(counter * 3.18378f) * (width / 2.0f);
+		float posY = height / 2.0f + bx::fcos(counter) * (height / 2.0f);
 		vd.drawCircle(posX, posY, 5.0f, 10.0f);
 
 		vd.endFrame();
