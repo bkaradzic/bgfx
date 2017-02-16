@@ -3655,8 +3655,8 @@ namespace bgfx
 		BGFX_API_FUNC(void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height) )
 		{
 			Rect& rect = m_rect[_id];
-			rect.m_x = _x;
-			rect.m_y = _y;
+			rect.m_x = (uint16_t)bx::uint32_imax(int16_t(_x), 0);
+			rect.m_y = (uint16_t)bx::uint32_imax(int16_t(_y), 0);
 			rect.m_width  = bx::uint16_max(_width,  1);
 			rect.m_height = bx::uint16_max(_height, 1);
 		}
