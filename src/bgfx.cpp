@@ -20,6 +20,8 @@
 #endif // BGFX_CONFIG_PROFILER_REMOTERY_BUILD_LIB
 
 #include <bx/crtimpl.h>
+#include <bx/mutex.h>
+
 #include "topology.h"
 
 BX_ERROR_RESULT(BGFX_ERROR_TEXTURE_VALIDATION,  BX_MAKEFOURCC('b', 'g', 0, 1) );

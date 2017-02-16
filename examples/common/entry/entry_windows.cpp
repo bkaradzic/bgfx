@@ -9,11 +9,13 @@
 
 #include <bgfx/platform.h>
 
-#include <bx/uint32_t.h>
-#include <bx/thread.h>
 #include <bx/mutex.h>
 #include <bx/handlealloc.h>
+#include <bx/os.h>
+#include <bx/thread.h>
 #include <bx/timer.h>
+#include <bx/uint32_t.h>
+
 #include <tinystl/allocator.h>
 #include <tinystl/string.h>
 
