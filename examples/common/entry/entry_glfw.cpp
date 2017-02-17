@@ -622,7 +622,7 @@ namespace entry
 
 		GamepadGLFW m_gamepad[ENTRY_CONFIG_MAX_GAMEPADS];
 
-		bx::SpScUnboundedQueueLf<Msg> m_msgs;
+		bx::SpScUnboundedQueueT<Msg> m_msgs;
 
 		double m_scrollPos;
 	};

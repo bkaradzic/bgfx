@@ -20,6 +20,8 @@
 #include <bx/thread.h>
 #include <bx/os.h>
 #include <bx/handlealloc.h>
+#include <bx/mutex.h>
+
 #include <string>
 
 #include <fcntl.h>

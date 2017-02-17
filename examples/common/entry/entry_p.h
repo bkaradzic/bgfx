@@ -297,7 +297,7 @@ namespace entry
 		}
 
 	private:
-		bx::SpScUnboundedQueue<Event> m_queue;
+		bx::SpScUnboundedQueueT<Event> m_queue;
 	};
 
 } // namespace entry
