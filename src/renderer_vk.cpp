@@ -928,7 +928,7 @@ VK_IMPORT_INSTANCE
 					vkGetPhysicalDeviceMemoryProperties(physicalDevices[ii], &pdmp);
 
 					BX_TRACE("\tMemory type count: %d", pdmp.memoryTypeCount);
-					for (uint32_t jj = 0; jj < pdmp.memoryHeapCount; ++jj)
+					for (uint32_t jj = 0; jj < pdmp.memoryTypeCount; ++jj)
 					{
 						BX_TRACE("\t%3d: flags 0x%08x, index %d"
 								, jj
@@ -937,7 +937,7 @@ VK_IMPORT_INSTANCE
 								);
 					}
 
-					BX_TRACE("\tMemory type count: %d", pdmp.memoryHeapCount);
+					BX_TRACE("\tMemory heap count: %d", pdmp.memoryHeapCount);
 					for (uint32_t jj = 0; jj < pdmp.memoryHeapCount; ++jj)
 					{
 						char size[16];
@@ -1029,20 +1029,6 @@ VK_IMPORT_INSTANCE
 				}
 
 				vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &m_memoryProperties);
-
-				for (uint32_t ii = 0, num = m_memoryProperties.memoryTypeCount; ii < num; ++ii)
-				{
-					const VkMemoryType& memoryType = m_memoryProperties.memoryTypes[ii];
-					if (0 != (memoryType.propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) )
-					{
-						m_memHostVisibleIdx = ii;
-					}
-
-					if (0 != (memoryType.propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) )
-					{
-						m_memLocalVisibleIdx = ii;
-					}
-				}
 			}
 
 			{
@@ -1462,7 +1448,7 @@ VK_IMPORT_DEVICE
 				ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 				ma.pNext = NULL;
 				ma.allocationSize  = mr.size;
-				ma.memoryTypeIndex = m_memLocalVisibleIdx;
+				ma.memoryTypeIndex = selectMemoryType(mr.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 				result = vkAllocateMemory(m_device
 					, &ma
 					, m_allocatorCb
@@ -2968,6 +2954,19 @@ VK_IMPORT_DEVICE
 //			VK_CHECK(vkWaitForFences(m_device, 1, &m_fence, true, INT64_MAX) );
 		}
 
+		uint32_t selectMemoryType(uint32_t memoryTypeBits, uint32_t propertyFlags)
+		{
+			for (uint32_t ii = 0; ii < m_memoryProperties.memoryTypeCount; ++ii)
+			{
+				if ((((1<<ii) & memoryTypeBits) != 0) && ((m_memoryProperties.memoryTypes[ii].propertyFlags & propertyFlags) == propertyFlags))
+				{
+					return ii;
+				}
+			}
+			BX_TRACE("failed to find memory that supports flags 0x%08x", propertyFlags);
+			return 0;
+		}
+
 		VkAllocationCallbacks* m_allocatorCb;
 		VkDebugReportCallbackEXT m_debugReportCallback;
 		VkInstance       m_instance;
@@ -2975,8 +2974,6 @@ VK_IMPORT_DEVICE
 
 		VkPhysicalDeviceProperties m_deviceProperties;
 		VkPhysicalDeviceMemoryProperties m_memoryProperties;
-		uint32_t m_memHostVisibleIdx;
-		uint32_t m_memLocalVisibleIdx;
 
 		VkSwapchainCreateInfoKHR m_sci;
 		VkSurfaceKHR     m_surface;
@@ -3121,7 +3118,7 @@ VK_DESTROY
 		ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		ma.pNext = NULL;
 		ma.allocationSize  = mr.size;
-		ma.memoryTypeIndex = s_renderVK->m_memHostVisibleIdx;
+		ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 		VK_CHECK(vkAllocateMemory(device
 			, &ma
 			, allocatorCb
@@ -3230,7 +3227,7 @@ VK_DESTROY
 		ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		ma.pNext = NULL;
 		ma.allocationSize  = mr.size;
-		ma.memoryTypeIndex = s_renderVK->m_memLocalVisibleIdx;
+		ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		result = vkAllocateMemory(device
 			, &ma
 			, allocatorCb
@@ -3333,7 +3330,7 @@ VK_DESTROY
 		ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		ma.pNext = NULL;
 		ma.allocationSize  = mr.size;
-		ma.memoryTypeIndex = s_renderVK->m_memHostVisibleIdx;
+		ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 		VK_CHECK(vkAllocateMemory(device
 			, &ma
 			, allocatorCb
@@ -3488,7 +3485,7 @@ VK_DESTROY
 			}
 		}
 
-		uint32_t shaderSize;
+		uint16_t shaderSize;
 		bx::read(&reader, shaderSize);
 
 #if 1

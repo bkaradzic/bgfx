@@ -27,7 +27,7 @@ define shader-embedded
 	@echo [$(<)]
 	 $(SILENT) $(SHADERC) --type $(1) --platform linux                 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_glsl
 	 @cat $(SHADER_TMP) > $(@)
-	-$(SILENT) $(SHADERC) --type $(1) --platform windows -p spirv      -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_spv
+	-$(SILENT) $(SHADERC) --type $(1) --platform linux   -p spirv      -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_spv
 	-@cat $(SHADER_TMP) >> $(@)
 	-$(SILENT) $(SHADERC) --type $(1) --platform windows -p $(2)  -O 3 -f $(<) -o $(SHADER_TMP) --bin2c $(basename $(<))_dx9
 	-@cat $(SHADER_TMP) >> $(@)
