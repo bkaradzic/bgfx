@@ -640,7 +640,7 @@ namespace entry
 
 		WindowHandle findHandle(Window _window)
 		{
-			bx::LwMutexScope scope(m_lock);
+			bx::MutexScope scope(m_lock);
 			for (uint32_t ii = 0, num = m_windowAlloc.getNumHandles(); ii < num; ++ii)
 			{
 				uint16_t idx = m_windowAlloc.getHandleAt(ii);
@@ -663,7 +663,7 @@ namespace entry
 		int32_t m_mz;
 
 		EventQueue m_eventQueue;
-		bx::LwMutex m_lock;
+		bx::Mutex m_lock;
 		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
 
 		int32_t m_depth;
@@ -704,7 +704,7 @@ namespace entry
 
 	WindowHandle createWindow(int32_t _x, int32_t _y, uint32_t _width, uint32_t _height, uint32_t _flags, const char* _title)
 	{
-		bx::LwMutexScope scope(s_ctx.m_lock);
+		bx::MutexScope scope(s_ctx.m_lock);
 		WindowHandle handle = { s_ctx.m_windowAlloc.alloc() };
 
 		if (isValid(handle) )
@@ -730,7 +730,7 @@ namespace entry
 			XUnmapWindow(s_ctx.m_display, s_ctx.m_window[_handle.idx]);
 			XDestroyWindow(s_ctx.m_display, s_ctx.m_window[_handle.idx]);
 
-			bx::LwMutexScope scope(s_ctx.m_lock);
+			bx::MutexScope scope(s_ctx.m_lock);
 			s_ctx.m_windowAlloc.free(_handle.idx);
 		}
 	}

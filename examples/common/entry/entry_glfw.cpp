@@ -589,7 +589,7 @@ namespace entry
 
 		WindowHandle findHandle(GLFWwindow* _window)
 		{
-			bx::LwMutexScope scope(m_lock);
+			bx::MutexScope scope(m_lock);
 			for (uint32_t ii = 0, num = m_windowAlloc.getNumHandles(); ii < num; ++ii)
 			{
 				uint16_t idx = m_windowAlloc.getHandleAt(ii);
@@ -615,7 +615,7 @@ namespace entry
 		bx::Thread m_thread;
 
 		EventQueue m_eventQueue;
-		bx::LwMutex m_lock;
+		bx::Mutex m_lock;
 
 		GLFWwindow* m_windows[ENTRY_CONFIG_MAX_WINDOWS];
 		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
