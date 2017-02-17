@@ -31,6 +31,8 @@ rebuild:
 #	@make -s --no-print-directory rebuild -C 26-occlusion
 	@make -s --no-print-directory rebuild -C 27-terrain
 	@make -s --no-print-directory rebuild -C 28-wireframe
+	@make -s --no-print-directory rebuild -C 30-picking
+	@make -s --no-print-directory rebuild -C 31-rsm
 	@make -s --no-print-directory rebuild -C common/debugdraw
 	@make -s --no-print-directory rebuild -C common/font
 	@make -s --no-print-directory rebuild -C common/imgui
