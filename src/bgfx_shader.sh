@@ -53,12 +53,12 @@
 #			define dFdyFine(_y)   ddy_fine(-_y)
 #		endif // BGFX_SHADER_LANGUAGE_HLSL > 4
 
-#	if BGFX_SHADER_LANGUAGE_HLSL
+#		if BGFX_SHADER_LANGUAGE_HLSL
 float intBitsToFloat(int   _x) { return asfloat(_x); }
 vec2  intBitsToFloat(uint2 _x) { return asfloat(_x); }
 vec3  intBitsToFloat(uint3 _x) { return asfloat(_x); }
 vec4  intBitsToFloat(uint4 _x) { return asfloat(_x); }
-#	endif // BGFX_SHADER_LANGUAGE_HLSL
+#		endif // BGFX_SHADER_LANGUAGE_HLSL
 
 float uintBitsToFloat(uint  _x) { return asfloat(_x); }
 vec2  uintBitsToFloat(uint2 _x) { return asfloat(_x); }
@@ -80,7 +80,7 @@ uint2 bitfieldReverse(uint2 _x) { return reversebits(_x); }
 uint3 bitfieldReverse(uint3 _x) { return reversebits(_x); }
 uint4 bitfieldReverse(uint4 _x) { return reversebits(_x); }
 
-#if !BGFX_SHADER_LANGUAGE_SPIRV
+#		if !BGFX_SHADER_LANGUAGE_SPIRV
 uint packHalf2x16(vec2 _x)
 {
 	return (f32tof16(_x.x)<<16) | f32tof16(_x.y);
@@ -90,7 +90,7 @@ vec2 unpackHalf2x16(uint _x)
 {
 	return vec2(f16tof32(_x >> 16), f16tof32(_x) );
 }
-#endif // !BGFX_SHADER_LANGUAGE_SPIRV
+#		endif // !BGFX_SHADER_LANGUAGE_SPIRV
 
 struct BgfxSampler2D
 {
