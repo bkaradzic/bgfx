@@ -1448,7 +1448,9 @@ VK_IMPORT_DEVICE
 				ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 				ma.pNext = NULL;
 				ma.allocationSize  = mr.size;
-				ma.memoryTypeIndex = selectMemoryType(mr.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+				ma.memoryTypeIndex = selectMemoryType(mr.memoryTypeBits
+					, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+					);
 				result = vkAllocateMemory(m_device
 					, &ma
 					, m_allocatorCb
@@ -2958,11 +2960,13 @@ VK_IMPORT_DEVICE
 		{
 			for (uint32_t ii = 0; ii < m_memoryProperties.memoryTypeCount; ++ii)
 			{
-				if ((((1<<ii) & memoryTypeBits) != 0) && ((m_memoryProperties.memoryTypes[ii].propertyFlags & propertyFlags) == propertyFlags))
+				if ( ( ((1<<ii) & memoryTypeBits) != 0)
+				&& ( (m_memoryProperties.memoryTypes[ii].propertyFlags & propertyFlags) == propertyFlags) )
 				{
 					return ii;
 				}
 			}
+
 			BX_TRACE("failed to find memory that supports flags 0x%08x", propertyFlags);
 			return 0;
 		}
@@ -3118,7 +3122,9 @@ VK_DESTROY
 		ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		ma.pNext = NULL;
 		ma.allocationSize  = mr.size;
-		ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits
+			, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+			);
 		VK_CHECK(vkAllocateMemory(device
 			, &ma
 			, allocatorCb
@@ -3227,7 +3233,9 @@ VK_DESTROY
 		ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		ma.pNext = NULL;
 		ma.allocationSize  = mr.size;
-		ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits
+			, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+			);
 		result = vkAllocateMemory(device
 			, &ma
 			, allocatorCb
@@ -3330,7 +3338,9 @@ VK_DESTROY
 		ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		ma.pNext = NULL;
 		ma.allocationSize  = mr.size;
-		ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits
+			, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+			);
 		VK_CHECK(vkAllocateMemory(device
 			, &ma
 			, allocatorCb
