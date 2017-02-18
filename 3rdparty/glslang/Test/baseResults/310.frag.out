@@ -19,13 +19,13 @@ ERROR: 0:44: 'texel offset' : value is out of range: [gl_MinProgramTexelOffset, 
 ERROR: 0:45: 'texel offset' : value is out of range: [gl_MinProgramTexelOffset, gl_MaxProgramTexelOffset]
 ERROR: 0:45: 'texel offset' : value is out of range: [gl_MinProgramTexelOffset, gl_MaxProgramTexelOffset]
 ERROR: 0:66: 'sampler/image' : type requires declaration of default precision qualifier 
-ERROR: 0:66: '' : image variables not declared 'writeonly' must have a format layout qualifier 
+ERROR: 0:66: 'image variables declared 'writeonly' without a format layout qualifier' : not supported with this profile: es
 ERROR: 0:67: 'sampler/image' : type requires declaration of default precision qualifier 
-ERROR: 0:67: '' : image variables not declared 'writeonly' must have a format layout qualifier 
+ERROR: 0:67: 'image variables declared 'writeonly' without a format layout qualifier' : not supported with this profile: es
 ERROR: 0:68: 'sampler/image' : type requires declaration of default precision qualifier 
-ERROR: 0:68: '' : image variables not declared 'writeonly' must have a format layout qualifier 
+ERROR: 0:68: 'image variables declared 'writeonly' without a format layout qualifier' : not supported with this profile: es
 ERROR: 0:69: 'sampler/image' : type requires declaration of default precision qualifier 
-ERROR: 0:69: '' : image variables not declared 'writeonly' must have a format layout qualifier 
+ERROR: 0:69: 'image variables declared 'writeonly' without a format layout qualifier' : not supported with this profile: es
 ERROR: 0:73: 'binding' : requires block, or sampler/image, or atomic-counter type 
 ERROR: 0:77: 'location' : location is too large 
 ERROR: 0:81: 'location' : too large for fragment output 
@@ -36,7 +36,7 @@ ERROR: 0:83: 'layout-id value' : cannot be negative
 ERROR: 0:96: 'sampler/image' : type requires declaration of default precision qualifier 
 ERROR: 0:110: 'out' : cannot be bool 
 ERROR: 0:111: 'image2D' : sampler/image types can only be used in uniform variables or function parameters: imageOut
-ERROR: 0:111: '' : image variables not declared 'writeonly' must have a format layout qualifier 
+ERROR: 0:111: 'image variables declared 'writeonly' without a format layout qualifier' : not supported with this profile: es
 ERROR: 0:112: 'out' : cannot be a matrix 
 ERROR: 0:114: 'in' : cannot be bool 
 ERROR: 0:115: 'sampler2D' : sampler/image types can only be used in uniform variables or function parameters: ino

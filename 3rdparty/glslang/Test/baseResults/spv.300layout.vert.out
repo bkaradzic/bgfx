@@ -61,7 +61,7 @@ Warning, version 310 is not yet complete; most version-specific features are pre
                               MemberDecorate 45(T3) 2 ColMajor
                               MemberDecorate 45(T3) 2 Offset 128
                               MemberDecorate 45(T3) 2 MatrixStride 16
-                              MemberDecorate 45(T3) 3 Offset 160
+                              MemberDecorate 45(T3) 3 Offset 2048
                               Decorate 45(T3) Block
                               Decorate 47 DescriptorSet 0
                               MemberDecorate 78(T2) 0 Offset 0

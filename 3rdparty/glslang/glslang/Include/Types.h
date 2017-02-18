@@ -1360,6 +1360,8 @@ public:
         case EbvViewportMaskNV:
         case EbvSecondaryPositionNV:
         case EbvSecondaryViewportMaskNV:
+        case EbvPositionPerViewNV:
+        case EbvViewportMaskPerViewNV:
 #endif
             return true;
         default:

@@ -25,7 +25,7 @@ layout(column_major) uniform T3 { // shared and column_major
     mat4 M3; // column_major
     layout(row_major) mat4 M4; // row major
     mat2x3 N2; // column_major
-    uvec3 uv3a[4];
+    layout(align=16, offset=2048) uvec3 uv3a[4];
 };
 
 in uint uiuin;

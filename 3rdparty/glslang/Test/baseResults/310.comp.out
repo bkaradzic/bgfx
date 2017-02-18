@@ -16,7 +16,7 @@ ERROR: 0:47: 'local_size' : can only apply to 'in'
 ERROR: 0:61: 'assign' :  l-value required "ro" (can't modify a readonly buffer)
 ERROR: 0:66: 'buffer' : buffers can be declared only as blocks 
 ERROR: 0:68: 'sampler/image' : type requires declaration of default precision qualifier 
-ERROR: 0:76: '' : image variables not declared 'writeonly' must have a format layout qualifier 
+ERROR: 0:76: 'image variables declared 'writeonly' without a format layout qualifier' : not supported with this profile: es
 ERROR: 0:81: 'sampler/image' : type requires declaration of default precision qualifier 
 ERROR: 0:82: 'sampler/image' : type requires declaration of default precision qualifier 
 ERROR: 0:87: 'imageAtomicCompSwap' : required extension not requested: GL_OES_shader_image_atomic
@@ -54,12 +54,12 @@ ERROR: 0:171: 'samplerCubeArray' : Reserved word.
 ERROR: 0:171: 'sampler/image' : type requires declaration of default precision qualifier 
 ERROR: 0:172: 'iimage2DRect' : Reserved word. 
 ERROR: 0:172: 'sampler/image' : type requires declaration of default precision qualifier 
-ERROR: 0:172: '' : image variables not declared 'writeonly' must have a format layout qualifier 
+ERROR: 0:172: 'image variables declared 'writeonly' without a format layout qualifier' : not supported with this profile: es
 ERROR: 0:173: 'image2DMS' : Reserved word. 
-ERROR: 0:173: '' : image variables not declared 'writeonly' must have a format layout qualifier 
+ERROR: 0:173: 'image variables declared 'writeonly' without a format layout qualifier' : not supported with this profile: es
 ERROR: 0:174: 'uimage2DMSArray' : Reserved word. 
 ERROR: 0:174: 'sampler/image' : type requires declaration of default precision qualifier 
-ERROR: 0:174: '' : image variables not declared 'writeonly' must have a format layout qualifier 
+ERROR: 0:174: 'image variables declared 'writeonly' without a format layout qualifier' : not supported with this profile: es
 ERROR: 0:181: 'rgba32f' : format requires readonly or writeonly memory qualifier 
 ERROR: 0:182: 'rgba8i' : format requires readonly or writeonly memory qualifier 
 ERROR: 0:183: 'rgba16ui' : format requires readonly or writeonly memory qualifier 

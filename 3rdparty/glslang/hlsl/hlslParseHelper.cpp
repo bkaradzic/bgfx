@@ -543,7 +543,7 @@ bool HlslParseContext::parseMatrixSwizzleSelector(const TSourceLoc& loc, const T
                 error(loc, "matrix component swizzle missing", compString.c_str(), "");
                 return false;
             }
-            startPos[numComps++] = c + 1;
+            startPos[numComps++] = (int)c + 1;
         }
     }
 
@@ -2153,7 +2153,7 @@ TIntermTyped* HlslParseContext::handleAssignToMatrixSwizzle(const TSourceLoc& lo
     TIntermTyped* vectorAssign = nullptr;
     if (vector == nullptr) {
         // create a new intermediate vector variable to assign to
-        TType vectorType(matrix->getBasicType(), EvqTemporary, matrix->getQualifier().precision, swizzle.size()/2);
+        TType vectorType(matrix->getBasicType(), EvqTemporary, matrix->getQualifier().precision, (int)swizzle.size()/2);
         vector = intermediate.addSymbol(*makeInternalVariable("intermVec", vectorType), loc);
 
         // assign the right to the new vector
@@ -3887,6 +3887,8 @@ void HlslParseContext::handleSemantic(TSourceLoc loc, TQualifier& qualifier, con
         qualifier.builtIn = EbvGlobalInvocationId;
     else if (semanticUpperCase == "SV_GROUPTHREADID")
         qualifier.builtIn = EbvLocalInvocationId;
+    else if (semanticUpperCase == "SV_GROUPINDEX")
+        qualifier.builtIn = EbvLocalInvocationIndex;
     else if (semanticUpperCase == "SV_GROUPID")
         qualifier.builtIn = EbvWorkGroupId;
     else if (semanticUpperCase == "SV_DOMAINLOCATION")
@@ -3903,8 +3905,6 @@ void HlslParseContext::handleSemantic(TSourceLoc loc, TQualifier& qualifier, con
         qualifier.builtIn = EbvFragDepthLesser;
     else if( semanticUpperCase == "SV_STENCILREF")
         error(loc, "unimplemented; need ARB_shader_stencil_export", "SV_STENCILREF", "");
-    else if( semanticUpperCase == "SV_GROUPINDEX")
-        error(loc, "unimplemented", "SV_GROUPINDEX", "");
 }
 
 //

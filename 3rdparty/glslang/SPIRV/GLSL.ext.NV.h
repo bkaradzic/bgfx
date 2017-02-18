@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2014-2016 The Khronos Group Inc.
+** Copyright (c) 2014-2017 The Khronos Group Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and/or associated documentation files (the "Materials"),
@@ -33,7 +33,7 @@ enum Op;
 enum Capability;
 
 static const int GLSLextNVVersion = 100;
-static const int GLSLextNVRevision = 4;
+static const int GLSLextNVRevision = 5;
 
 //SPV_NV_sample_mask_override_coverage
 const char* const E_SPV_NV_sample_mask_override_coverage = "SPV_NV_sample_mask_override_coverage";
@@ -70,5 +70,14 @@ static const BuiltIn BuiltInSecondaryPositionNV = static_cast<BuiltIn>(5257);
 static const BuiltIn BuiltInSecondaryViewportMaskNV = static_cast<BuiltIn>(5258);
 
 static const Capability CapabilityShaderStereoViewNV = static_cast<Capability>(5259);
+
+
+//SPV_NVX_multiview_per_view_attributes
+const char* const E_SPV_NVX_multiview_per_view_attributes = "SPV_NVX_multiview_per_view_attributes";
+
+static const BuiltIn BuiltInPositionPerViewNV = static_cast<BuiltIn>(5260);
+static const BuiltIn BuiltInViewportMaskPerViewNV = static_cast<BuiltIn>(5261);
+
+static const Capability CapabilityPerViewAttributesNV = static_cast<Capability>(5262);
 
 #endif  // #ifndef GLSLextNV_H

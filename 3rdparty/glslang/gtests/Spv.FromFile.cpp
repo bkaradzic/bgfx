@@ -386,6 +386,8 @@ INSTANTIATE_TEST_CASE_P(
     "spv.viewportArray2.tesc",
     "spv.stereoViewRendering.vert",
     "spv.stereoViewRendering.tesc",
+    "spv.multiviewPerViewAttributes.vert",
+    "spv.multiviewPerViewAttributes.tesc",
 })),
 FileNameAsCustomTestSuffix
 );

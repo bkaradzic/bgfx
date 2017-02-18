@@ -43,4 +43,7 @@ void main()
     sum34 += mat3x4(v3, f, v3, f, v3, f);
 
     color += sum3 * m43 + sum4;
+
+    color += vec4(m43);
+    color += vec4(vec3(mat2(f)), 7.2);
 }

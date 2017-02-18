@@ -344,6 +344,8 @@ const char* BuiltInString(int builtIn)
     case 5253: return "ViewportMaskNV";
     case 5257: return "SecondaryPositionNV";
     case 5258: return "SecondaryViewportMaskNV";
+    case 5260: return "PositionPerViewNV";
+    case 5261: return "ViewportMaskPerViewNV";
 #endif
     }
 }
@@ -1169,8 +1171,8 @@ const char* OpcodeString(int op)
 
     case 4421: return "OpSubgroupBallotKHR";
     case 4422: return "OpSubgroupFirstInvocationKHR";
-    case 4428: return "OpSubgroupAnyKHR";
-    case 4429: return "OpSubgroupAllKHR";
+    case 4428: return "OpSubgroupAllKHR";
+    case 4429: return "OpSubgroupAnyKHR";
     case 4430: return "OpSubgroupAllEqualKHR";
     case 4432: return "OpSubgroupReadInvocationKHR";
 

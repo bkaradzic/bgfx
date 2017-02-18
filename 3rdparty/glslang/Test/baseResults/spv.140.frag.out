@@ -54,7 +54,7 @@ spv.140.frag
                               MemberDecorate 87(bn) 3 Offset 576
                               MemberDecorate 87(bn) 3 MatrixStride 16
                               MemberDecorate 87(bn) 4 RowMajor
-                              MemberDecorate 87(bn) 4 Offset 640
+                              MemberDecorate 87(bn) 4 Offset 1024
                               MemberDecorate 87(bn) 4 MatrixStride 16
                               Decorate 87(bn) Block
                               Decorate 89 DescriptorSet 0

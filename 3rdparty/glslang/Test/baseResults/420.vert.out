@@ -33,7 +33,7 @@ ERROR: 0:85: '' : vertex input cannot be further qualified
 ERROR: 0:86: 'patch' : not supported in this stage: vertex
 ERROR: 0:100: '=' : global const initializers must be constant 'const int'
 ERROR: 0:101: '' : array size must be a constant integer expression 
-ERROR: 0:107: '' : image variables not declared 'writeonly' must have a format layout qualifier 
+ERROR: 0:107: 'image variables declared 'writeonly' without a format layout qualifier' : not supported for this version or the enabled extensions 
 ERROR: 0:114: 'imageAtomicMin' : only supported on image with format r32i or r32ui 
 ERROR: 0:115: 'imageAtomicMax' : no matching overloaded function found 
 ERROR: 0:119: 'writeonly' : argument cannot drop memory qualifier when passed to formal parameter 

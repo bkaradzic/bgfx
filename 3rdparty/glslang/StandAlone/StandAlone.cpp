@@ -163,6 +163,7 @@ const char* binaryFileName = nullptr;
 const char* entryPointName = nullptr;
 const char* sourceEntryPointName = nullptr;
 const char* shaderStageName = nullptr;
+const char* variableName = nullptr;
 
 std::array<unsigned int, EShLangCount> baseSamplerBinding;
 std::array<unsigned int, EShLangCount> baseTextureBinding;
@@ -302,7 +303,18 @@ void ProcessArguments(int argc, char* argv[])
                     } else if (lowerword == "no-storage-format" || // synonyms
                                lowerword == "nsf") {
                         Options |= EOptionNoStorageFormat;
-                    } else if (lowerword == "source-entrypoint" || // synonyms
+                    } else if (lowerword == "variable-name" || // synonyms
+                        lowerword == "vn") {
+                        Options |= EOptionOutputHexadecimal;
+                        variableName = argv[1];
+                        if (argc > 0) {
+                            argc--;
+                            argv++;
+                        } else
+                            Error("no <C-variable-name> provided for --variable-name");
+                        break;
+                    }
+                    else if (lowerword == "source-entrypoint" || // synonyms
                                lowerword == "sep") {
                         sourceEntryPointName = argv[1];
                         if (argc > 0) {
@@ -650,7 +662,7 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
                     if (! (Options & EOptionMemoryLeakMode)) {
                         printf("%s", logger.getAllMessages().c_str());
                         if (Options & EOptionOutputHexadecimal) {
-                            glslang::OutputSpvHex(spirv, GetBinaryName((EShLanguage)stage));
+							glslang::OutputSpvHex(spirv, GetBinaryName((EShLanguage)stage), variableName);
                         } else {
                             glslang::OutputSpvBin(spirv, GetBinaryName((EShLanguage)stage));
                         }
@@ -987,6 +999,8 @@ void usage()
            "\n"
            "  --keep-uncalled                         don't eliminate uncalled functions when linking\n"
            "  --ku                                    synonym for --keep-uncalled\n"
+		   "  --variable-name <name>                  Creates a C header file that contains a uint32_t array named <name> initialized with the shader binary code.\n"
+		   "  --vn <name>                             synonym for --variable-name <name>.\n"
            );
 
     exit(EFailUsage);

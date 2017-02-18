@@ -48,10 +48,10 @@ Warning, version 450 is not yet complete; most version-specific features are pre
               19:     6(bool) INotEqual 17 18
                               Store 8(b1) 19
               20:     6(bool) Load 8(b1)
-              21:     6(bool) SubgroupAllKHR 20
+              21:     6(bool) SubgroupAnyKHR 20
                               Store 8(b1) 21
               22:     6(bool) Load 8(b1)
-              23:     6(bool) SubgroupAnyKHR 22
+              23:     6(bool) SubgroupAllKHR 22
                               Store 8(b1) 23
               24:     6(bool) Load 8(b1)
               25:     6(bool) SubgroupAllEqualKHR 24

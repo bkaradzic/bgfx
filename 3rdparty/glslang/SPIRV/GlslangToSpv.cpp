@@ -642,6 +642,14 @@ spv::BuiltIn TGlslangToSpvTraverser::TranslateBuiltInDecoration(glslang::TBuiltI
         builder.addExtension(spv::E_SPV_NV_stereo_view_rendering);
         builder.addCapability(spv::CapabilityShaderStereoViewNV);
         return spv::BuiltInSecondaryViewportMaskNV;
+    case glslang::EbvPositionPerViewNV:
+        builder.addExtension(spv::E_SPV_NVX_multiview_per_view_attributes);
+        builder.addCapability(spv::CapabilityPerViewAttributesNV);
+        return spv::BuiltInPositionPerViewNV;
+    case glslang::EbvViewportMaskPerViewNV:
+        builder.addExtension(spv::E_SPV_NVX_multiview_per_view_attributes);
+        builder.addCapability(spv::CapabilityPerViewAttributesNV);
+        return spv::BuiltInViewportMaskPerViewNV;
 #endif 
     default:                               return spv::BuiltInMax;
     }
@@ -2384,6 +2392,11 @@ void TGlslangToSpvTraverser::decorateStructType(const glslang::TType& type,
                     builder.addExtension(spv::E_SPV_NV_stereo_view_rendering);
                 }
             }
+            if (glslangMember.getQualifier().layoutPassthrough) {
+                addMemberDecoration(spvType, member, (spv::Decoration)spv::DecorationPassthroughNV);
+                builder.addCapability(spv::CapabilityGeometryShaderPassthroughNV);
+                builder.addExtension(spv::E_SPV_NV_geometry_shader_passthrough);
+            }
 #endif
         }
     }
@@ -2661,6 +2674,8 @@ void TGlslangToSpvTraverser::declareUseOfStructMember(const glslang::TTypeList& 
     case glslang::EbvViewportMaskNV:
     case glslang::EbvSecondaryPositionNV:
     case glslang::EbvSecondaryViewportMaskNV:
+    case glslang::EbvPositionPerViewNV:
+    case glslang::EbvViewportMaskPerViewNV:
 #endif
         // Generate the associated capability.  Delegate to TranslateBuiltInDecoration.
         // Alternately, we could just call this for any glslang built-in, since the
@@ -5312,11 +5327,15 @@ void OutputSpvBin(const std::vector<unsigned int>& spirv, const char* baseName)
 }
 
 // Write SPIR-V out to a text file with 32-bit hexadecimal words
-void OutputSpvHex(const std::vector<unsigned int>& spirv, const char* baseName)
+void OutputSpvHex(const std::vector<unsigned int>& spirv, const char* baseName, const char* varName)
 {
     std::ofstream out;
     out.open(baseName, std::ios::binary | std::ios::out);
     out << "\t// " GLSLANG_REVISION " " GLSLANG_DATE << std::endl;
+    if (varName != nullptr) {
+        out << "\t #pragma once" << std::endl;
+        out << "const uint32_t " << varName << "[] = {" << std::endl;
+    }
     const int WORDS_PER_LINE = 8;
     for (int i = 0; i < (int)spirv.size(); i += WORDS_PER_LINE) {
         out << "\t";
@@ -5328,6 +5347,9 @@ void OutputSpvHex(const std::vector<unsigned int>& spirv, const char* baseName)
             }
         }
         out << std::endl;
+    }
+    if (varName != nullptr) {
+        out << "};";
     }
     out.close();
 }

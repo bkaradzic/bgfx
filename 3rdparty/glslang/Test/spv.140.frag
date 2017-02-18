@@ -14,7 +14,7 @@ layout(std140) uniform bn {
     layout(column_major) mat4 matca[4];
     layout(row_major) mat4 matr;
     layout(column_major) mat4 matc;
-    mat4 matrdef;
+    layout(align=512, offset=1024) mat4 matrdef;
 };
 
 uniform sampler2DRect sampR;
