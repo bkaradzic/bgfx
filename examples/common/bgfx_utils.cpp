@@ -24,6 +24,9 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wtype-limits")
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-parameter")
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-value")
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4100) // error C4100: '' : unreferenced formal parameter
+#if BX_PLATFORM_EMSCRIPTEN
+#	include <compat/ctype.h>
+#endif // BX_PLATFORM_EMSCRIPTEN
 #define MINIZ_NO_STDIO
 #define TINYEXR_IMPLEMENTATION
 #include <tinyexr/tinyexr.h>
