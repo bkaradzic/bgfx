@@ -210,8 +210,8 @@ struct Emitter
 		ImGuizmo::Manipulate(
 				_view
 				, _proj
-				, ImGuizmo::OPERATION::TRANSLATE
-				, ImGuizmo::MODE::LOCAL
+				, ImGuizmo::TRANSLATE
+				, ImGuizmo::LOCAL
 				, mtx
 				);
 
