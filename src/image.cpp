@@ -263,7 +263,7 @@ namespace bgfx
 		return uint8_t(numMips);
 	}
 
-	uint32_t imageGetSize(TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth, uint16_t _numLayers, bool _cubeMap, uint8_t _numMips)
+	uint32_t imageGetSize(TextureInfo* _info, uint16_t _width, uint16_t _height, uint16_t _depth, bool _cubeMap, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format)
 	{
 		const ImageBlockInfo& blockInfo = getBlockInfo(_format);
 		const uint8_t  bpp         = blockInfo.bitsPerPixel;
@@ -272,17 +272,18 @@ namespace bgfx
 		const uint16_t minBlockX   = blockInfo.minBlockX;
 		const uint16_t minBlockY   = blockInfo.minBlockY;
 
-		_width   = bx::uint16_max(blockWidth  * minBlockX, ( (_width  + blockWidth  - 1) / blockWidth)*blockWidth);
-		_height  = bx::uint16_max(blockHeight * minBlockY, ( (_height + blockHeight - 1) / blockHeight)*blockHeight);
-		_depth   = bx::uint16_max(1, _depth);
+		_width  = bx::uint16_max(blockWidth  * minBlockX, ( (_width  + blockWidth  - 1) / blockWidth)*blockWidth);
+		_height = bx::uint16_max(blockHeight * minBlockY, ( (_height + blockHeight - 1) / blockHeight)*blockHeight);
+		_depth  = bx::uint16_max(1, _depth);
+		const uint8_t  numMips = calcNumMips(_hasMips, _width, _height, _depth);
+		const uint32_t sides   = _cubeMap ? 6 : 1;
 
 		uint32_t width  = _width;
 		uint32_t height = _height;
 		uint32_t depth  = _depth;
-		uint32_t sides  = _cubeMap ? 6 : 1;
 		uint32_t size   = 0;
 
-		for (uint32_t lod = 0; lod < _numMips; ++lod)
+		for (uint32_t lod = 0; lod < numMips; ++lod)
 		{
 			width  = bx::uint32_max(blockWidth  * minBlockX, ( (width  + blockWidth  - 1) / blockWidth )*blockWidth);
 			height = bx::uint32_max(blockHeight * minBlockY, ( (height + blockHeight - 1) / blockHeight)*blockHeight);
@@ -295,7 +296,22 @@ namespace bgfx
 			depth  >>= 1;
 		}
 
-		return size * _numLayers;
+		size *= _numLayers;
+
+		if (NULL != _info)
+		{
+			_info->format  = _format;
+			_info->width   = _width;
+			_info->height  = _height;
+			_info->depth   = _depth;
+			_info->numMips = numMips;
+			_info->numLayers = _numLayers;
+			_info->cubeMap   = _cubeMap;
+			_info->storageSize  = size;
+			_info->bitsPerPixel = bpp;
+		}
+
+		return size;
 	}
 
 	void imageSolid(void* _dst, uint32_t _width, uint32_t _height, uint32_t _solid)
@@ -1607,7 +1623,7 @@ namespace bgfx
 		}
 	}
 
-	const Memory* imageAlloc(ImageContainer& _imageContainer, TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth, uint16_t _numLayers, bool _cubeMap, bool _generateMips)
+	ImageContainer* imageAlloc(bx::AllocatorI* _allocator, TextureFormat::Enum _format, uint16_t _width, uint16_t _height, uint16_t _depth, uint16_t _numLayers, bool _cubeMap, bool _hasMips)
 	{
 		const ImageBlockInfo& blockInfo = getBlockInfo(_format);
 		const uint16_t blockWidth  = blockInfo.blockWidth;
@@ -1620,31 +1636,33 @@ namespace bgfx
 		_depth     = bx::uint16_max(1, _depth);
 		_numLayers = bx::uint16_max(1, _numLayers);
 
-		const uint8_t numMips = _generateMips ? imageGetNumMips(_format, _width, _height) : 1;
-		uint32_t size = imageGetSize(_format, _width, _height, _depth, _numLayers, _cubeMap, numMips);
-		const Memory* image = alloc(size);
+		const uint8_t numMips = _hasMips ? imageGetNumMips(_format, _width, _height) : 1;
+		uint32_t size = imageGetSize(NULL, _width, _height, _depth, _cubeMap, _hasMips, _numLayers, _format);
 
-		_imageContainer.m_data      = image->data;
-		_imageContainer.m_format    = _format;
-		_imageContainer.m_size      = image->size;
-		_imageContainer.m_offset    = 0;
-		_imageContainer.m_width     = _width;
-		_imageContainer.m_height    = _height;
-		_imageContainer.m_depth     = _depth;
-		_imageContainer.m_numLayers = _numLayers;
-		_imageContainer.m_numMips   = numMips;
-		_imageContainer.m_hasAlpha  = false;
-		_imageContainer.m_cubeMap   = _cubeMap;
-		_imageContainer.m_ktx       = false;
-		_imageContainer.m_ktxLE     = false;
-		_imageContainer.m_srgb      = false;
+		ImageContainer* imageContainer = (ImageContainer*)BX_ALLOC(_allocator, size + sizeof(ImageContainer) );
 
-		return image;
+		imageContainer->m_allocator = _allocator;
+		imageContainer->m_data      = imageContainer + 1;
+		imageContainer->m_format    = _format;
+		imageContainer->m_size      = size;
+		imageContainer->m_offset    = 0;
+		imageContainer->m_width     = _width;
+		imageContainer->m_height    = _height;
+		imageContainer->m_depth     = _depth;
+		imageContainer->m_numLayers = _numLayers;
+		imageContainer->m_numMips   = numMips;
+		imageContainer->m_hasAlpha  = false;
+		imageContainer->m_cubeMap   = _cubeMap;
+		imageContainer->m_ktx       = false;
+		imageContainer->m_ktxLE     = false;
+		imageContainer->m_srgb      = false;
+
+		return imageContainer;
 	}
 
-	void imageFree(const Memory* _memory)
+	void imageFree(ImageContainer* _imageContainer)
 	{
-		release(_memory);
+		BX_FREE(_imageContainer->m_allocator, _imageContainer);
 	}
 
 // DDS
@@ -1988,6 +2006,7 @@ namespace bgfx
 			}
 		}
 
+		_imageContainer.m_allocator = NULL;
 		_imageContainer.m_data      = NULL;
 		_imageContainer.m_size      = 0;
 		_imageContainer.m_offset    = (uint32_t)bx::seek(_reader);
@@ -2297,6 +2316,7 @@ namespace bgfx
 			}
 		}
 
+		_imageContainer.m_allocator = NULL;
 		_imageContainer.m_data      = NULL;
 		_imageContainer.m_size      = 0;
 		_imageContainer.m_offset    = (uint32_t)offset;
@@ -2447,6 +2467,7 @@ namespace bgfx
 			}
 		}
 
+		_imageContainer.m_allocator = NULL;
 		_imageContainer.m_data      = NULL;
 		_imageContainer.m_size      = 0;
 		_imageContainer.m_offset    = (uint32_t)offset;
@@ -2489,6 +2510,7 @@ namespace bgfx
 
 			_imageContainer.m_format = tc.m_format;
 			_imageContainer.m_offset = UINT32_MAX;
+			_imageContainer.m_allocator = NULL;
 			if (NULL == tc.m_mem)
 			{
 				_imageContainer.m_data = NULL;
@@ -2872,7 +2894,8 @@ namespace bgfx
 		default:
 			if (isCompressed(_format) )
 			{
-				void* temp = BX_ALLOC(_allocator, imageGetSize(_format, uint16_t(_pitch/4), uint16_t(_height) ) );
+				uint32_t size = imageGetSize(NULL, uint16_t(_pitch/4), uint16_t(_height), 0, false, false, 1, _format);
+				void* temp = BX_ALLOC(_allocator, size);
 				imageDecodeToRgba8(temp, _src, _width, _height, _pitch, _format);
 				imageRgba8ToRgba32f(_dst, _width, _height, _pitch, temp);
 				BX_FREE(_allocator, temp);

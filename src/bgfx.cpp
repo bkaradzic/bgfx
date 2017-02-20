@@ -3113,48 +3113,7 @@ error:
 
 	void calcTextureSize(TextureInfo& _info, uint16_t _width, uint16_t _height, uint16_t _depth, bool _cubeMap, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format)
 	{
-		const ImageBlockInfo& blockInfo = getBlockInfo(_format);
-		const uint8_t  bpp         = blockInfo.bitsPerPixel;
-		const uint16_t blockWidth  = blockInfo.blockWidth;
-		const uint16_t blockHeight = blockInfo.blockHeight;
-		const uint16_t minBlockX   = blockInfo.minBlockX;
-		const uint16_t minBlockY   = blockInfo.minBlockY;
-
-		_width   = bx::uint16_max(blockWidth  * minBlockX, ( (_width  + blockWidth  - 1) / blockWidth)*blockWidth);
-		_height  = bx::uint16_max(blockHeight * minBlockY, ( (_height + blockHeight - 1) / blockHeight)*blockHeight);
-		_depth   = bx::uint16_max(1, _depth);
-		const uint8_t  numMips = calcNumMips(_hasMips, _width, _height, _depth);
-		const uint32_t sides   = _cubeMap ? 6 : 1;
-
-		uint32_t width  = _width;
-		uint32_t height = _height;
-		uint32_t depth  = _depth;
-		uint32_t size   = 0;
-
-		for (uint32_t lod = 0; lod < numMips; ++lod)
-		{
-			width  = bx::uint32_max(blockWidth  * minBlockX, ( (width  + blockWidth  - 1) / blockWidth )*blockWidth);
-			height = bx::uint32_max(blockHeight * minBlockY, ( (height + blockHeight - 1) / blockHeight)*blockHeight);
-			depth  = bx::uint32_max(1, depth);
-
-			size += width*height*depth*bpp/8 * sides;
-
-			width  >>= 1;
-			height >>= 1;
-			depth  >>= 1;
-		}
-
-		size *= _numLayers;
-
-		_info.format  = _format;
-		_info.width   = _width;
-		_info.height  = _height;
-		_info.depth   = _depth;
-		_info.numMips = numMips;
-		_info.numLayers = _numLayers;
-		_info.cubeMap   = _cubeMap;
-		_info.storageSize  = size;
-		_info.bitsPerPixel = bpp;
+		imageGetSize(&_info, _width, _height, _depth, _cubeMap, _hasMips, _numLayers, _format);
 	}
 
 	TextureHandle createTexture(const Memory* _mem, uint32_t _flags, uint8_t _skip, TextureInfo* _info)

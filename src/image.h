@@ -12,8 +12,11 @@ namespace bgfx
 {
 	struct ImageContainer
 	{
-		void*    m_data;
+		bx::AllocatorI* m_allocator;
+		void*           m_data;
+
 		TextureFormat::Enum m_format;
+
 		uint32_t m_size;
 		uint32_t m_offset;
 		uint32_t m_width;
@@ -87,18 +90,19 @@ namespace bgfx
 		, uint16_t _width
 		, uint16_t _height
 		, uint16_t _depth = 0
-	);
+		);
 
 	/// Returns image size.
 	uint32_t imageGetSize(
-		  TextureFormat::Enum _format
+		  TextureInfo* _info
 		, uint16_t _width
 		, uint16_t _height
-		, uint16_t _depth = 0
-		, uint16_t _numLayers = 1
-		, bool _cubeMap = false
-		, uint8_t _numMips = 1
-	);
+		, uint16_t _depth
+		, bool _cubeMap
+		, bool _hasMips
+		, uint16_t _numLayers
+		, TextureFormat::Enum _format
+		);
 
 	///
 	void imageSolid(void* _dst, uint32_t _width, uint32_t _height, uint32_t _solid);
@@ -143,19 +147,19 @@ namespace bgfx
 	bool imageConvert(void* _dst, TextureFormat::Enum _dstFormat, const void* _src, TextureFormat::Enum _srcFormat, uint32_t _width, uint32_t _height);
 
 	///
-	const Memory* imageAlloc(
-		  ImageContainer& _imageContainer
+	ImageContainer* imageAlloc(
+		  bx::AllocatorI* _allocator
 		, TextureFormat::Enum _format
 		, uint16_t _width
 		, uint16_t _height
-		, uint16_t _depth = 0
-		, uint16_t _numLayers = 1
-		, bool _cubeMap = false
-		, bool _generateMips = false
-	);
+		, uint16_t _depth
+		, uint16_t _numLayers
+		, bool _cubeMap
+		, bool _hasMips
+		);
 
 	///
-	void imageFree(const Memory* _memory);
+	void imageFree(ImageContainer* _imageContainer);
 
 	///
 	void imageWriteTga(bx::WriterI* _writer, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, bool _grayscale, bool _yflip, bx::Error* _err = NULL);
