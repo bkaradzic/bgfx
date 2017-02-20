@@ -19,6 +19,7 @@
 #include <tinystl/allocator.h>
 #include <tinystl/string.h>
 
+#include <windows.h>
 #include <windowsx.h>
 #include <xinput.h>
 
