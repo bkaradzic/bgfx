@@ -118,7 +118,7 @@ namespace bgfx
 			BX_UNUSED(_filePath, _width, _height, _pitch, _data, _size, _yflip);
 
 #if BX_CONFIG_CRT_FILE_READER_WRITER
-			const size_t len = bx::strnlen(_filePath)+5;
+			const int32_t len = bx::strnlen(_filePath)+5;
 			char* filePath = (char*)alloca(len);
 			bx::strlncpy(filePath, len, _filePath);
 			bx::strlncat(filePath, len, ".tga");
@@ -504,13 +504,13 @@ namespace bgfx
 
 	static uint8_t parseAttrTo(char*& _ptr, char _to, uint8_t _default)
 	{
-		const char* str = strchr(_ptr, _to);
+		const char* str = bx::strnchr(_ptr, _to);
 		if (NULL != str
 		&&  3 > str-_ptr)
 		{
 			char tmp[4];
 
-			ptrdiff_t len = str-_ptr;
+			int32_t len = int32_t(str-_ptr);
 			bx::strlncpy(tmp, sizeof(tmp), _ptr, len);
 
 			uint8_t attr = uint8_t(atoi(tmp) );
