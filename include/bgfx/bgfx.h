@@ -2821,6 +2821,21 @@ namespace bgfx
 	///
 	void saveScreenShot(const char* _filePath);
 
+  /// UserCallback Interface
+  typedef void (*UserCallback_I)(void*);
+
+	/// Adds an user callback command to be executed from the render thread
+	///
+	/// @param[in] _callback
+	/// @param[in] _user_data
+	///
+	/// @remarks
+  ///   This call 
+	///
+	/// @attention C99 equivalent is `bgfx_user_callback`.
+	///
+	void userCallback(UserCallback_I _callback, void *_user_data = NULL);
+
 } // namespace bgfx
 
 #endif // BGFX_H_HEADER_GUARD
