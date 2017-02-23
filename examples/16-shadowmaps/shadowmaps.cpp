@@ -1958,7 +1958,7 @@ int _main_(int _argc, char** _argv)
 	const float camFar     = 2000.0f;
 	const float projHeight = 1.0f/bx::ftan(bx::toRad(camFovy)*0.5f);
 	const float projWidth  = projHeight * camAspect;
-	bx::mtxProj(viewState.m_proj, camFovy, camAspect, camNear, camFar);
+	bx::mtxProj(viewState.m_proj, camFovy, camAspect, camNear, camFar, bgfx::getCaps()->homogeneousDepth);
 	cameraGetViewMtx(viewState.m_view);
 
 	float timeAccumulatorLight = 0.0f;

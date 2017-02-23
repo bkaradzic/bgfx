@@ -452,7 +452,7 @@ public:
 			float view[16];
 			float proj[16];
 			bx::mtxLookAt(view, eye, at);
-			bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f);
+			bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
 
 			// Set view and projection matrix for view 0.
 			bgfx::setViewTransform(0, view, proj);

@@ -316,7 +316,7 @@ int _main_(int _argc, char** _argv)
 			else
 			{
 				float proj[16];
-				bx::mtxProj(proj, 90.0f, float(width)/float(height), 0.1f, 10000.0f);
+				bx::mtxProj(proj, 90.0f, float(width)/float(height), 0.1f, 10000.0f, bgfx::getCaps()->homogeneousDepth);
 				bgfx::setViewTransform(0, view, proj);
 
 				// Set view 0 default viewport.

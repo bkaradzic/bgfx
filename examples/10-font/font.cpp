@@ -215,7 +215,7 @@ int _main_(int _argc, char** _argv)
 		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
 		{
 			float proj[16];
-			bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f);
+			bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
 
 			static float time = 0.0f;
 			time += 0.05f;
@@ -234,7 +234,7 @@ int _main_(int _argc, char** _argv)
 		else
 		{
 			float ortho[16];
-			bx::mtxOrtho(ortho, centering, width + centering, height + centering, centering, -1.0f, 1.0f);
+			bx::mtxOrtho(ortho, centering, width + centering, height + centering, centering, -1.0f, 1.0f, bgfx::getCaps()->homogeneousDepth);
 			bgfx::setViewTransform(0, view, ortho);
 			bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height) );
 		}

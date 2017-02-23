@@ -458,7 +458,7 @@ class ExampleTerrain : public entry::AppI
 			bgfx::setViewRect(0, 0, 0, m_width, m_height);
 
 			cameraGetViewMtx(m_viewMtx);
-			bx::mtxProj(m_projMtx, 60.0f, float(m_width) / float(m_height), 0.1f, 2000.0f);
+			bx::mtxProj(m_projMtx, 60.0f, float(m_width) / float(m_height), 0.1f, 2000.0f, bgfx::getCaps()->homogeneousDepth);
 
 			bgfx::setViewTransform(0, m_viewMtx, m_projMtx);
 			bgfx::setTransform(m_terrain.m_transform);

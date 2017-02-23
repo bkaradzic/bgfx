@@ -728,7 +728,7 @@ int _main_(int _argc, char** _argv)
 
 		// View Transform 1.
 		camera.mtxLookAt(view);
-		bx::mtxProj(proj, 45.0f, float(width)/float(height), 0.1f, 100.0f);
+		bx::mtxProj(proj, 45.0f, float(width)/float(height), 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
 		bgfx::setViewTransform(1, view, proj);
 
 		// View rect.

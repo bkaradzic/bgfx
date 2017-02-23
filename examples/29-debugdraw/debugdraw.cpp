@@ -118,7 +118,7 @@ class DebugDrawApp : public entry::AppI
 			}
 			else
 			{
-				bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f);
+				bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
 
 				bgfx::setViewTransform(0, view, proj);
 				bgfx::setViewRect(0, 0, 0, m_width, m_height);
@@ -129,7 +129,7 @@ class DebugDrawApp : public entry::AppI
 			float mvp[16];
 			float eye[] = { 5.0f, 10.0f, 5.0f };
 			bx::mtxLookAt(view, eye, zero);
-			bx::mtxProj(proj, 45.0f, float(m_width)/float(m_height), 1.0f, 15.0f);
+			bx::mtxProj(proj, 45.0f, float(m_width)/float(m_height), 1.0f, 15.0f, bgfx::getCaps()->homogeneousDepth);
 			bx::mtxMul(mvp, view, proj);
 
 			ddBegin(0);

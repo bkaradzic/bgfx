@@ -497,7 +497,7 @@ class ExampleWireframe : public entry::AppI
 			m_camera.update(deltaTimeSec);
 			bx::memCopy(m_uniforms.m_camPos, m_camera.m_pos.curr, 3*sizeof(float));
 			m_camera.mtxLookAt(view);
-			bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f);
+			bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
 			bgfx::setViewTransform(0, view, proj);
 
 			m_uniforms.m_drawEdges = (DrawMode::WireframeShaded == m_drawMode) ? 1.0f : 0.0f;
