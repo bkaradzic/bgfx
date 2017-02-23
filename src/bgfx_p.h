@@ -369,15 +369,6 @@ namespace bgfx
 		return un.ui;
 	}
 
-	inline float fixupDepthClear(float _depth)
-	{
-		// BK - makes consitent depth clear value between GL and DX (and other APIs).
-		return g_caps.homogeneousDepth
-			? _depth*0.5f + 0.5f
-			: _depth
-			;
-	}
-
 	inline uint64_t packStencil(uint32_t _fstencil, uint32_t _bstencil)
 	{
 		return (uint64_t(_bstencil)<<32)|uint64_t(_fstencil);
@@ -3692,7 +3683,7 @@ namespace bgfx
 			clear.m_index[1] = uint8_t(_rgba>>16);
 			clear.m_index[2] = uint8_t(_rgba>> 8);
 			clear.m_index[3] = uint8_t(_rgba>> 0);
-			clear.m_depth    = fixupDepthClear(_depth);
+			clear.m_depth    = _depth;
 			clear.m_stencil  = _stencil;
 		}
 
@@ -3715,7 +3706,7 @@ namespace bgfx
 			clear.m_index[5] = _5;
 			clear.m_index[6] = _6;
 			clear.m_index[7] = _7;
-			clear.m_depth    = fixupDepthClear(_depth);
+			clear.m_depth    = _depth;
 			clear.m_stencil  = _stencil;
 		}
 
