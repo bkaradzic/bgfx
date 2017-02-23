@@ -3147,7 +3147,11 @@ error:
 
 		bx::Error err;
 		isTextureValid(0, false, _numLayers, _format, _flags, &err);
-		BX_CHECK(err.isOk(), "%s", err.getMessage().getPtr() );
+		BX_CHECK(err.isOk(), "%s (layers %d, format %s)"
+			, err.getMessage().getPtr()
+			, _numLayers
+			, getName(_format)
+			);
 
 		if (BackbufferRatio::Count != _ratio)
 		{

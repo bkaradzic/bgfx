@@ -369,6 +369,15 @@ namespace bgfx
 		return un.ui;
 	}
 
+	inline float fixupDepthClear(float _depth)
+	{
+		// BK - makes consitent depth clear value between GL and DX (and other APIs).
+		return g_caps.homogeneousDepth
+			? _depth*0.5f + 0.5f
+			: _depth
+			;
+	}
+
 	inline uint64_t packStencil(uint32_t _fstencil, uint32_t _bstencil)
 	{
 		return (uint64_t(_bstencil)<<32)|uint64_t(_fstencil);
@@ -3672,18 +3681,28 @@ namespace bgfx
 
 		BGFX_API_FUNC(void setViewClear(uint8_t _id, uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil) )
 		{
+			BX_CHECK(bx::fequal(_depth, bx::fclamp(_depth, 0.0f, 1.0f), 0.0001f)
+				, "Clear depth value must be between 0.0 and 1.0 (_depth %f)."
+				, _depth
+				);
+
 			Clear& clear = m_clear[_id];
 			clear.m_flags = _flags;
 			clear.m_index[0] = uint8_t(_rgba>>24);
 			clear.m_index[1] = uint8_t(_rgba>>16);
 			clear.m_index[2] = uint8_t(_rgba>> 8);
 			clear.m_index[3] = uint8_t(_rgba>> 0);
-			clear.m_depth    = _depth;
+			clear.m_depth    = fixupDepthClear(_depth);
 			clear.m_stencil  = _stencil;
 		}
 
 		BGFX_API_FUNC(void setViewClear(uint8_t _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7) )
 		{
+			BX_CHECK(bx::fequal(_depth, bx::fclamp(_depth, 0.0f, 1.0f), 0.0001f)
+				, "Clear depth value must be between 0.0 and 1.0 (_depth %f)."
+				, _depth
+				);
+
 			Clear& clear = m_clear[_id];
 			clear.m_flags = (_flags & ~BGFX_CLEAR_COLOR)
 				| (0xff != (_0&_1&_2&_3&_4&_5&_6&_7) ? BGFX_CLEAR_COLOR|BGFX_CLEAR_COLOR_USE_PALETTE : 0)
@@ -3696,7 +3715,7 @@ namespace bgfx
 			clear.m_index[5] = _5;
 			clear.m_index[6] = _6;
 			clear.m_index[7] = _7;
-			clear.m_depth    = _depth;
+			clear.m_depth    = fixupDepthClear(_depth);
 			clear.m_stencil  = _stencil;
 		}
 
