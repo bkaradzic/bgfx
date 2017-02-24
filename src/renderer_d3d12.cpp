@@ -498,7 +498,7 @@ namespace bgfx { namespace d3d12
 			ErrorState::Enum errorState = ErrorState::Default;
 			LUID luid;
 
-//			m_renderdocdll = loadRenderDoc();
+			m_renderdocdll = loadRenderDoc();
 
 			m_fbh.idx = invalidHandle;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
