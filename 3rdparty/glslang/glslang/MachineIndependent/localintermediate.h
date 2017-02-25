@@ -174,6 +174,7 @@ public:
         shiftTextureBinding(0),
         shiftImageBinding(0),
         shiftUboBinding(0),
+        shiftSsboBinding(0),
         autoMapBindings(false),
         flattenUniformArrays(false),
         useUnknownFormat(false)
@@ -207,6 +208,8 @@ public:
     unsigned int getShiftImageBinding() const { return shiftImageBinding; }
     void setShiftUboBinding(unsigned int shift)     { shiftUboBinding = shift; }
     unsigned int getShiftUboBinding()     const { return shiftUboBinding; }
+    void setShiftSsboBinding(unsigned int shift)     { shiftSsboBinding = shift; }
+    unsigned int getShiftSsboBinding()  const { return shiftSsboBinding; }
     void setAutoMapBindings(bool map)               { autoMapBindings = map; }
     bool getAutoMapBindings()             const { return autoMapBindings; }
     void setFlattenUniformArrays(bool flatten)      { flattenUniformArrays = flatten; }
@@ -485,6 +488,7 @@ protected:
     unsigned int shiftTextureBinding;
     unsigned int shiftImageBinding;
     unsigned int shiftUboBinding;
+    unsigned int shiftSsboBinding;
     bool autoMapBindings;
     bool flattenUniformArrays;
     bool useUnknownFormat;

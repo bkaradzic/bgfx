@@ -118,6 +118,7 @@ void HlslScanContext::fillInKeywordMap()
     (*KeywordMap)["out"] =                     EHTokOut;
     (*KeywordMap)["inout"] =                   EHTokInOut;
     (*KeywordMap)["layout"] =                  EHTokLayout;
+    (*KeywordMap)["globallycoherent"] =        EHTokGloballyCoherent;
 
     (*KeywordMap)["point"] =                   EHTokPoint;
     (*KeywordMap)["line"] =                    EHTokLine;
@@ -318,6 +319,13 @@ void HlslScanContext::fillInKeywordMap()
     (*KeywordMap)["RWTexture2DArray"] =        EHTokRWTexture2darray;
     (*KeywordMap)["RWTexture3D"] =             EHTokRWTexture3d;
     (*KeywordMap)["RWBuffer"] =                EHTokRWBuffer;
+
+    (*KeywordMap)["AppendStructuredBuffer"] =  EHTokAppendStructuredBuffer;
+    (*KeywordMap)["ByteAddressBuffer"] =       EHTokByteAddressBuffer;
+    (*KeywordMap)["ConsumeStructuredBuffer"] = EHTokConsumeStructuredBuffer;
+    (*KeywordMap)["RWByteAddressBuffer"] =     EHTokRWByteAddressBuffer;
+    (*KeywordMap)["RWStructuredBuffer"] =      EHTokRWStructuredBuffer;
+    (*KeywordMap)["StructuredBuffer"] =        EHTokStructuredBuffer;
 
     (*KeywordMap)["struct"] =                  EHTokStruct;
     (*KeywordMap)["cbuffer"] =                 EHTokCBuffer;
@@ -527,6 +535,7 @@ EHlslTokenClass HlslScanContext::tokenizeIdentifier()
     case EHTokInOut:
     case EHTokPrecise:
     case EHTokLayout:
+    case EHTokGloballyCoherent:
         return keyword;
 
     // primitive types
@@ -722,6 +731,12 @@ EHlslTokenClass HlslScanContext::tokenizeIdentifier()
     case EHTokRWTexture2darray:
     case EHTokRWTexture3d:
     case EHTokRWBuffer:
+    case EHTokAppendStructuredBuffer:
+    case EHTokByteAddressBuffer:
+    case EHTokConsumeStructuredBuffer:
+    case EHTokRWByteAddressBuffer:
+    case EHTokRWStructuredBuffer:
+    case EHTokStructuredBuffer:
         return keyword;
 
     // variable, user type, ...

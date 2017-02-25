@@ -6,7 +6,7 @@ Warning, version 450 is not yet complete; most version-specific features are pre
 // Id's are bound by 37
 
                               Capability Tessellation
-                              Capability Bad
+                              Capability PerViewAttributesNV
                               Extension  "SPV_NVX_multiview_per_view_attributes"
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450

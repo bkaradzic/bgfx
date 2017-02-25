@@ -696,13 +696,26 @@ void TReflectionTraverser::visitSymbol(TIntermSymbol* base)
 // Implement TReflection methods.
 //
 
+// Track any required attribute reflection, such as compute shader numthreads.
+//
+void TReflection::buildAttributeReflection(EShLanguage stage, const TIntermediate& intermediate)
+{
+    if (stage == EShLangCompute) {
+        // Remember thread dimensions
+        for (int dim=0; dim<3; ++dim)
+            localSize[dim] = intermediate.getLocalSize(dim);
+    }
+}
+
 // Merge live symbols from 'intermediate' into the existing reflection database.
 //
 // Returns false if the input is too malformed to do this.
-bool TReflection::addStage(EShLanguage, const TIntermediate& intermediate)
+bool TReflection::addStage(EShLanguage stage, const TIntermediate& intermediate)
 {
     if (intermediate.getNumEntryPoints() != 1 || intermediate.isRecursive())
         return false;
+
+    buildAttributeReflection(stage, intermediate);
 
     TReflectionTraverser it(intermediate, *this);
 
@@ -735,6 +748,16 @@ void TReflection::dump()
     for (size_t i = 0; i < indexToAttribute.size(); ++i)
         indexToAttribute[i].dump();
     printf("\n");
+
+    if (getLocalSize(0) > 1) {
+        static const char* axis[] = { "X", "Y", "Z" };
+
+        for (int dim=0; dim<3; ++dim)
+            if (getLocalSize(dim) > 1)
+                printf("Local size %s: %d\n", axis[dim], getLocalSize(dim));
+
+        printf("\n");
+    }
 
     // printf("Live names\n");
     // for (TNameToIndex::const_iterator it = nameToIndex.begin(); it != nameToIndex.end(); ++it)

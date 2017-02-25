@@ -229,11 +229,11 @@ public:
         returnType.shallowCopy(retType);
         declaredBuiltIn = retType.getQualifier().builtIn;
     }
-    virtual TFunction* clone() const;
+    virtual TFunction* clone() const override;
     virtual ~TFunction();
 
-    virtual TFunction* getAsFunction() { return this; }
-    virtual const TFunction* getAsFunction() const { return this; }
+    virtual TFunction* getAsFunction() override { return this; }
+    virtual const TFunction* getAsFunction() const override { return this; }
 
     virtual void addParameter(TParameter& p)
     {
@@ -251,10 +251,10 @@ public:
         mangledName.insert(0, prefix);
     }
 
-    virtual const TString& getMangledName() const { return mangledName; }
-    virtual const TType& getType() const { return returnType; }
+    virtual const TString& getMangledName() const override { return mangledName; }
+    virtual const TType& getType() const override { return returnType; }
     virtual TBuiltInVariable getDeclaredBuiltInType() const { return declaredBuiltIn; }
-    virtual TType& getWritableType() { return returnType; }
+    virtual TType& getWritableType() override { return returnType; }
     virtual void relateToOperator(TOperator o) { assert(writable); op = o; }
     virtual TOperator getBuiltInOp() const { return op; }
     virtual void setDefined() { assert(writable); defined = true; }
@@ -272,7 +272,7 @@ public:
     virtual TParameter& operator[](int i) { assert(writable); return parameters[i]; }
     virtual const TParameter& operator[](int i) const { return parameters[i]; }
 
-    virtual void dump(TInfoSink &infoSink) const;
+    virtual void dump(TInfoSink &infoSink) const override;
 
 protected:
     explicit TFunction(const TFunction&);

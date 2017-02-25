@@ -84,6 +84,7 @@ public:
     TIntermTyped* handleFunctionCall(const TSourceLoc&, TFunction*, TIntermTyped*);
     void decomposeIntrinsic(const TSourceLoc&, TIntermTyped*& node, TIntermNode* arguments);
     void decomposeSampleMethods(const TSourceLoc&, TIntermTyped*& node, TIntermNode* arguments);
+    void decomposeStructBufferMethods(const TSourceLoc&, TIntermTyped*& node, TIntermNode* arguments);
     void decomposeGeometryMethods(const TSourceLoc&, TIntermTyped*& node, TIntermNode* arguments);
     TIntermTyped* handleLengthMethod(const TSourceLoc&, TFunction*, TIntermNode*);
     void addInputArgumentConversions(const TFunction&, TIntermTyped*&);
@@ -242,6 +243,10 @@ protected:
     void correctInput(TQualifier& qualifier);
     void correctUniform(TQualifier& qualifier);
     void clearUniformInputOutput(TQualifier& qualifier);
+
+    // Test method names
+    bool isSamplerMethod(const TString& name) const;
+    bool isStructBufferMethod(const TString& name) const;
 
     // Pass through to base class after remembering builtin mappings.
     using TParseContextBase::trackLinkage;

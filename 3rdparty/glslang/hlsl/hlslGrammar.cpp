@@ -406,6 +406,27 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& node, TIntermNode*& node2)
                 }
             }
 
+            TString* blockName = idToken.string;
+
+            // For structbuffers, we couldn't create the block type while accepting the
+            // template type, because we need the identifier name.  Now that we have that,
+            // we can create the buffer type.
+            // TODO: how to determine this without looking for implicit array sizes?
+            if (variableType.getBasicType() == EbtBlock) {
+                const int memberCount = variableType.getStruct()->size();
+                assert(memberCount > 0);
+
+                TType* contentType = (*variableType.getStruct())[memberCount-1].type;
+                
+                // Set the field name and qualifier from the declaration, now that we know it.
+                if (contentType->isRuntimeSizedArray()) {
+                    contentType->getQualifier() = variableType.getQualifier();
+                    blockName     = nullptr;        // this will be an anonymous block...
+                    contentType->setFieldName(*idToken.string); // field name is declaration name
+                    variableType.setTypeName(*idToken.string);
+                }
+            }
+
             // Hand off the actual declaration
 
             // TODO: things scoped within an annotation need their own name space;
@@ -414,7 +435,7 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& node, TIntermNode*& node2)
                 if (typedefDecl)
                     parseContext.declareTypedef(idToken.loc, *idToken.string, variableType);
                 else if (variableType.getBasicType() == EbtBlock)
-                    parseContext.declareBlock(idToken.loc, variableType, idToken.string);
+                    parseContext.declareBlock(idToken.loc, variableType, blockName);
                 else {
                     if (variableType.getQualifier().storage == EvqUniform && ! variableType.containsOpaque()) {
                         // this isn't really an individual variable, but a member of the $Global buffer
@@ -533,8 +554,11 @@ bool HlslGrammar::acceptFullySpecifiedType(TType& type)
         qualifier.layoutFormat = type.getQualifier().layoutFormat;
         qualifier.precision    = type.getQualifier().precision;
 
-        if (type.getQualifier().storage == EvqVaryingOut)
+        if (type.getQualifier().storage == EvqVaryingOut ||
+            type.getQualifier().storage == EvqBuffer) {
             qualifier.storage      = type.getQualifier().storage;
+            qualifier.readonly     = type.getQualifier().readonly;
+        }
 
         type.getQualifier()    = qualifier;
     }
@@ -609,6 +633,9 @@ bool HlslGrammar::acceptQualifier(TQualifier& qualifier)
             if (! acceptLayoutQualifierList(qualifier))
                 return false;
             continue;
+        case EHTokGloballyCoherent:
+            qualifier.coherent = true;
+            break;
 
         // GS geometries: these are specified on stage input variables, and are an error (not verified here)
         // for output variables.
@@ -1246,11 +1273,19 @@ bool HlslGrammar::acceptType(TType& type)
         return acceptTextureType(type);
         break;
 
+    case EHTokAppendStructuredBuffer:
+    case EHTokByteAddressBuffer:
+    case EHTokConsumeStructuredBuffer:
+    case EHTokRWByteAddressBuffer:
+    case EHTokRWStructuredBuffer:
+    case EHTokStructuredBuffer:
+        return acceptStructBufferType(type);
+        break;
+
     case EHTokStruct:
     case EHTokCBuffer:
     case EHTokTBuffer:
         return acceptStruct(type);
-        break;
 
     case EHTokIdentifier:
         // An identifier could be for a user-defined type.
@@ -1779,6 +1814,93 @@ bool HlslGrammar::acceptStruct(TType& type)
     }
 
     parseContext.declareStruct(token.loc, structName, type);
+
+    return true;
+}
+
+// struct_buffer
+//    : APPENDSTRUCTUREDBUFFER
+//    | BYTEADDRESSBUFFER
+//    | CONSUMESTRUCTUREDBUFFER
+//    | RWBYTEADDRESSBUFFER
+//    | RWSTRUCTUREDBUFFER
+//    | STRUCTUREDBUFFER
+bool HlslGrammar::acceptStructBufferType(TType& type)
+{
+    const EHlslTokenClass structBuffType = peek();
+
+    // TODO: globallycoherent
+    bool hasTemplateType = true;
+    bool readonly = false;
+
+    TStorageQualifier storage = EvqBuffer;
+
+    switch (structBuffType) {
+    case EHTokAppendStructuredBuffer:
+        unimplemented("AppendStructuredBuffer");
+        return false;
+    case EHTokByteAddressBuffer:
+        hasTemplateType = false;
+        readonly = true;
+        break;
+    case EHTokConsumeStructuredBuffer:
+        unimplemented("ConsumeStructuredBuffer");
+        return false;
+    case EHTokRWByteAddressBuffer:
+        hasTemplateType = false;
+        break;
+    case EHTokRWStructuredBuffer:
+        break;
+    case EHTokStructuredBuffer:
+        readonly = true;
+        break;
+    default:
+        return false;  // not a structure buffer type
+    }
+
+    advanceToken();  // consume the structure keyword
+
+    // type on which this StructedBuffer is templatized.  E.g, StructedBuffer<MyStruct> ==> MyStruct
+    TType* templateType = new TType;
+
+    if (hasTemplateType) {
+        if (! acceptTokenClass(EHTokLeftAngle)) {
+            expected("left angle bracket");
+            return false;
+        }
+    
+        if (! acceptType(*templateType)) {
+            expected("type");
+            return false;
+        }
+        if (! acceptTokenClass(EHTokRightAngle)) {
+            expected("right angle bracket");
+            return false;
+        }
+    } else {
+        // byte address buffers have no explicit type.
+        TType uintType(EbtUint, storage);
+        templateType->shallowCopy(uintType);
+    }
+
+    // Create an unsized array out of that type.
+    // TODO: does this work if it's already an array type?
+    TArraySizes unsizedArray;
+    unsizedArray.addInnerSize(UnsizedArraySize);
+    templateType->newArraySizes(unsizedArray);
+    templateType->getQualifier().storage = storage;
+    templateType->getQualifier().readonly = readonly;
+
+    // Create block type.  TODO: hidden internal uint member when needed
+    TTypeList* blockStruct = new TTypeList;
+    TTypeLoc  member = { templateType, token.loc };
+    blockStruct->push_back(member);
+
+    TType blockType(blockStruct, "", templateType->getQualifier());
+
+    // It's not until we see the name during declaration that we can set the
+    // field name.  That happens in HlslGrammar::acceptDeclaration.
+    type.shallowCopy(blockType);
 
     return true;
 }

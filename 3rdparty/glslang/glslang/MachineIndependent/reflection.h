@@ -89,7 +89,12 @@ protected:
 // The full reflection database
 class TReflection {
 public:
-    TReflection() : badReflection(TObjectReflection::badReflection()) { }
+    TReflection() : badReflection(TObjectReflection::badReflection())
+    { 
+        for (int dim=0; dim<3; ++dim)
+            localSize[dim] = 0;
+    }
+
     virtual ~TReflection() {}
 
     // grow the reflection stage by stage
@@ -135,10 +140,15 @@ public:
             return it->second;
     }
 
+    // Thread local size
+    unsigned getLocalSize(int dim) const { return dim <= 2 ? localSize[dim] : 0; }
+
     void dump();
 
 protected:
     friend class glslang::TReflectionTraverser;
+
+    void buildAttributeReflection(EShLanguage, const TIntermediate&);
 
     // Need a TString hash: typedef std::unordered_map<TString, int> TNameToIndex;
     typedef std::map<TString, int> TNameToIndex;
@@ -149,6 +159,8 @@ protected:
     TMapIndexToReflection indexToUniform;
     TMapIndexToReflection indexToUniformBlock;
     TMapIndexToReflection indexToAttribute;
+
+    unsigned int localSize[3];
 };
 
 } // end namespace glslang

@@ -169,6 +169,7 @@ std::array<unsigned int, EShLangCount> baseSamplerBinding;
 std::array<unsigned int, EShLangCount> baseTextureBinding;
 std::array<unsigned int, EShLangCount> baseImageBinding;
 std::array<unsigned int, EShLangCount> baseUboBinding;
+std::array<unsigned int, EShLangCount> baseSsboBinding;
 
 //
 // Create the default name for saving a binary if -o is not provided.
@@ -258,6 +259,7 @@ void ProcessArguments(int argc, char* argv[])
     baseTextureBinding.fill(0);
     baseImageBinding.fill(0);
     baseUboBinding.fill(0);
+    baseSsboBinding.fill(0);
 
     ExecutableName = argv[0];
     NumWorkItems = argc;  // will include some empties where the '-' options were, but it doesn't matter, they'll be 0
@@ -292,6 +294,10 @@ void ProcessArguments(int argc, char* argv[])
                                lowerword == "shift-ubo-binding"  ||
                                lowerword == "sub") {
                         ProcessBindingBase(argc, argv, baseUboBinding);
+                    } else if (lowerword == "shift-ssbo-bindings" ||  // synonyms
+                               lowerword == "shift-ssbo-binding"  ||
+                               lowerword == "sbb") {
+                        ProcessBindingBase(argc, argv, baseSsboBinding);
                     } else if (lowerword == "auto-map-bindings" ||  // synonyms
                                lowerword == "auto-map-binding"  ||
                                lowerword == "amb") {
@@ -582,6 +588,7 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
         shader->setShiftTextureBinding(baseTextureBinding[compUnit.stage]);
         shader->setShiftImageBinding(baseImageBinding[compUnit.stage]);
         shader->setShiftUboBinding(baseUboBinding[compUnit.stage]);
+        shader->setShiftSsboBinding(baseSsboBinding[compUnit.stage]);
         shader->setFlattenUniformArrays((Options & EOptionFlattenUniformArrays) != 0);
         shader->setNoStorageFormat((Options & EOptionNoStorageFormat) != 0);
 
@@ -662,7 +669,7 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
                     if (! (Options & EOptionMemoryLeakMode)) {
                         printf("%s", logger.getAllMessages().c_str());
                         if (Options & EOptionOutputHexadecimal) {
-							glslang::OutputSpvHex(spirv, GetBinaryName((EShLanguage)stage), variableName);
+                            glslang::OutputSpvHex(spirv, GetBinaryName((EShLanguage)stage), variableName);
                         } else {
                             glslang::OutputSpvBin(spirv, GetBinaryName((EShLanguage)stage));
                         }
@@ -984,6 +991,9 @@ void usage()
            "  --shift-UBO-binding [stage] num         set base binding number for UBOs\n"
            "  --sub [stage] num                       synonym for --shift-UBO-binding\n"
            "\n"
+           "  --shift-ssbo-binding [stage] num        set base binding number for SSBOs\n"
+           "  --sbb [stage] num                       synonym for --shift-ssbo-binding\n"
+           "\n"
            "  --auto-map-bindings                     automatically bind uniform variables without\n"
            "                                          explicit bindings.\n"
            "  --amb                                   synonym for --auto-map-bindings\n"
@@ -999,8 +1009,8 @@ void usage()
            "\n"
            "  --keep-uncalled                         don't eliminate uncalled functions when linking\n"
            "  --ku                                    synonym for --keep-uncalled\n"
-		   "  --variable-name <name>                  Creates a C header file that contains a uint32_t array named <name> initialized with the shader binary code.\n"
-		   "  --vn <name>                             synonym for --variable-name <name>.\n"
+           "  --variable-name <name>                  Creates a C header file that contains a uint32_t array named <name> initialized with the shader binary code.\n"
+           "  --vn <name>                             synonym for --variable-name <name>.\n"
            );
 
     exit(EFailUsage);

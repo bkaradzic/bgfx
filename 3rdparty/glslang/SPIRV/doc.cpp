@@ -835,6 +835,7 @@ const char* CapabilityString(int info)
     case 5254: return "ShaderViewportIndexLayerNV";
     case 5255: return "ShaderViewportMaskNV";
     case 5259: return "ShaderStereoViewNV";
+    case 5262: return "PerViewAttributesNV";
 #endif
 
     }

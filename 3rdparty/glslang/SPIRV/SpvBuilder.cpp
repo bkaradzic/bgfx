@@ -1125,7 +1125,8 @@ Id Builder::createAccessChain(StorageClass storageClass, Id base, const std::vec
 
 Id Builder::createArrayLength(Id base, unsigned int member)
 {
-    Instruction* length = new Instruction(getUniqueId(), makeIntType(32), OpArrayLength);
+    spv::Id intType = makeIntType(32);
+    Instruction* length = new Instruction(getUniqueId(), intType, OpArrayLength);
     length->addIdOperand(base);
     length->addImmediateOperand(member);
     buildPoint->addInstruction(std::unique_ptr<Instruction>(length));

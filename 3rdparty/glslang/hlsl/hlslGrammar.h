@@ -83,6 +83,7 @@ namespace glslang {
         bool acceptAnnotations(TQualifier&);
         bool acceptSamplerType(TType&);
         bool acceptTextureType(TType&);
+        bool acceptStructBufferType(TType&);
         bool acceptStruct(TType&);
         bool acceptStructDeclarationList(TTypeList*&);
         bool acceptFunctionParameters(TFunction&);

@@ -48,6 +48,7 @@ struct IoMapData {
     int baseTextureBinding;
     int baseImageBinding;
     int baseUboBinding;
+    int baseSsboBinding;
     bool autoMapBindings;
     bool flattenUniforms;
 };
@@ -129,6 +130,7 @@ TEST_P(HlslIoMap, FromFile)
                                  GetParam().baseTextureBinding,
                                  GetParam().baseImageBinding,
                                  GetParam().baseUboBinding,
+                                 GetParam().baseSsboBinding,
                                  GetParam().autoMapBindings,
                                  GetParam().flattenUniforms);
 }
@@ -143,6 +145,7 @@ TEST_P(GlslIoMap, FromFile)
                                  GetParam().baseTextureBinding,
                                  GetParam().baseImageBinding,
                                  GetParam().baseUboBinding,
+                                 GetParam().baseSsboBinding,
                                  GetParam().autoMapBindings,
                                  GetParam().flattenUniforms);
 }
@@ -229,6 +232,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.forLoop.frag",
         "spv.forwardFun.frag",
         "spv.functionCall.frag",
+        "spv.functionNestedOpaque.vert",
         "spv.functionSemantics.frag",
         "spv.interpOps.frag",
         "spv.int64.frag",
@@ -301,15 +305,16 @@ INSTANTIATE_TEST_CASE_P(
 INSTANTIATE_TEST_CASE_P(
     Hlsl, HlslIoMap,
     ::testing::ValuesIn(std::vector<IoMapData>{
-        { "spv.register.autoassign.frag", "main_ep", 5, 10, 0, 20, true, false },
-        { "spv.register.noautoassign.frag", "main_ep", 5, 10, 0, 15, false, false },
-        { "spv.register.autoassign-2.frag", "main", 5, 10, 0, 15, true, true },
-        { "spv.buffer.autoassign.frag", "main", 5, 10, 0, 15, true, true },
-        { "spv.rw.autoassign.frag", "main", 5, 10, 20, 15, true, true },
+        { "spv.register.autoassign.frag", "main_ep", 5, 10, 0, 20, 30, true, false },
+        { "spv.register.noautoassign.frag", "main_ep", 5, 10, 0, 15, 30, false, false },
+        { "spv.register.autoassign-2.frag", "main", 5, 10, 0, 15, 30, true, true },
+        { "spv.buffer.autoassign.frag", "main", 5, 10, 0, 15, 30, true, true },
+        { "spv.ssbo.autoassign.frag", "main", 5, 10, 0, 15, 30, true, true },
+        { "spv.rw.autoassign.frag", "main", 5, 10, 20, 15, 30, true, true },
         { "spv.register.autoassign.rangetest.frag", "main", 
                 glslang::TQualifier::layoutBindingEnd-2,
                 glslang::TQualifier::layoutBindingEnd+5,
-                20, true, false },
+                20, 30, true, false },
     }),
     FileNameAsCustomTestSuffixIoMap
 );
@@ -318,8 +323,8 @@ INSTANTIATE_TEST_CASE_P(
 INSTANTIATE_TEST_CASE_P(
     Hlsl, GlslIoMap,
     ::testing::ValuesIn(std::vector<IoMapData>{
-        { "spv.glsl.register.autoassign.frag", "main", 5, 10, 0, 20, true, false },
-        { "spv.glsl.register.noautoassign.frag", "main", 5, 10, 0, 15, false, false },
+        { "spv.glsl.register.autoassign.frag", "main", 5, 10, 0, 20, 30, true, false },
+        { "spv.glsl.register.noautoassign.frag", "main", 5, 10, 0, 15, 30, false, false },
     }),
     FileNameAsCustomTestSuffixIoMap
 );

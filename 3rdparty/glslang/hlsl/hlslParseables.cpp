@@ -850,6 +850,26 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
         { "Append",                           "-",     "-",       "-",              "-",              EShLangGS  },
         { "RestartStrip",                     "-",     "-",       "-",              "-",              EShLangGS  },
 
+        // Methods for structurebuffers.  TODO: wildcard type matching.
+        { "Load",                             nullptr, nullptr,   "-",              "-",             EShLangAll },
+        { "Load2",                            nullptr, nullptr,   "-",              "-",             EShLangAll },
+        { "Load3",                            nullptr, nullptr,   "-",              "-",             EShLangAll },
+        { "Load4",                            nullptr, nullptr,   "-",              "-",             EShLangAll },
+        { "Store",                            nullptr, nullptr,   "-",              "-",             EShLangAll },
+        { "Store2",                           nullptr, nullptr,   "-",              "-",             EShLangAll },
+        { "Store3",                           nullptr, nullptr,   "-",              "-",             EShLangAll },
+        { "Store4",                           nullptr, nullptr,   "-",              "-",             EShLangAll },
+        { "GetDimensions",                    nullptr, nullptr,   "-",              "-",             EShLangAll },
+        { "InterlockedAdd",                   nullptr, nullptr,   "-",              "-",             EShLangAll },
+        { "InterlockedAnd",                   nullptr, nullptr,   "-",              "-",             EShLangAll },
+        { "InterlockedCompareExchange",       nullptr, nullptr,   "-",              "-",             EShLangAll },
+        { "InterlockedCompareStore",          nullptr, nullptr,   "-",              "-",             EShLangAll },
+        { "InterlockedExchange",              nullptr, nullptr,   "-",              "-",             EShLangAll },
+        { "InterlockedMax",                   nullptr, nullptr,   "-",              "-",             EShLangAll },
+        { "InterlockedMin",                   nullptr, nullptr,   "-",              "-",             EShLangAll },
+        { "InterlockedOr",                    nullptr, nullptr,   "-",              "-",             EShLangAll },
+        { "InterlockedXor",                   nullptr, nullptr,   "-",              "-",             EShLangAll },
+
         // Mark end of list, since we want to avoid a range-based for, as some compilers don't handle it yet.
         { nullptr,                            nullptr, nullptr,   nullptr,      nullptr,  0 },
     };
@@ -1143,6 +1163,15 @@ void TBuiltInParseablesHlsl::identifyBuiltIns(int /*version*/, EProfile /*profil
     symbolTable.relateToOperator("Gather",                      EOpMethodGather);
     symbolTable.relateToOperator("CalculateLevelOfDetail",      EOpMethodCalculateLevelOfDetail);
     symbolTable.relateToOperator("CalculateLevelOfDetailUnclamped", EOpMethodCalculateLevelOfDetailUnclamped);
+
+    // Structure buffer methods (excluding associations already made above for texture methods w/ same name)
+    symbolTable.relateToOperator("Load2",                       EOpMethodLoad2);
+    symbolTable.relateToOperator("Load3",                       EOpMethodLoad3);
+    symbolTable.relateToOperator("Load4",                       EOpMethodLoad4);
+    symbolTable.relateToOperator("Store",                       EOpMethodStore);
+    symbolTable.relateToOperator("Store2",                      EOpMethodStore2);
+    symbolTable.relateToOperator("Store3",                      EOpMethodStore3);
+    symbolTable.relateToOperator("Store4",                      EOpMethodStore4);
 
     // SM5 Texture methods
     symbolTable.relateToOperator("GatherRed",                   EOpMethodGatherRed);
