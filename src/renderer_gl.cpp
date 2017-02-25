@@ -6988,13 +6988,37 @@ namespace bgfx { namespace gl
 							const Binding& bind = draw.m_bind[stage];
 							Binding& current = currentState.m_bind[stage];
 							if (current.m_idx != bind.m_idx
+							||  current.m_type != bind.m_type
 							||  current.m_un.m_draw.m_textureFlags != bind.m_un.m_draw.m_textureFlags
 							||  programChanged)
 							{
 								if (invalidHandle != bind.m_idx)
 								{
-									TextureGL& texture = m_textures[bind.m_idx];
-									texture.commit(stage, bind.m_un.m_draw.m_textureFlags, _render->m_colorPalette);
+									switch (bind.m_type)
+									{
+									case Binding::Texture:
+										{
+											TextureGL& texture = m_textures[bind.m_idx];
+											texture.commit(stage, bind.m_un.m_draw.m_textureFlags, _render->m_colorPalette);
+										}
+										break;
+
+									case Binding::IndexBuffer:
+										{
+											const IndexBufferGL& buffer = m_indexBuffers[bind.m_idx];
+											GL_CHECK(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, stage, buffer.m_id) );
+											// TODO: barriers?
+										}
+										break;
+
+									case Binding::VertexBuffer:
+										{
+											const VertexBufferGL& buffer = m_vertexBuffers[bind.m_idx];
+											GL_CHECK(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, stage, buffer.m_id) );
+											// TODO: barriers?
+										}
+										break;
+									}
 								}
 							}
 

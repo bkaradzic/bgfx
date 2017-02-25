@@ -3818,6 +3818,20 @@ error:
 		s_ctx->setBuffer(_stage, _handle, _access);
 	}
 
+	void setShaderBuffer(uint8_t _stage, DynamicIndexBufferHandle _handle)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(_stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, "Invalid stage %d (max %d).", _stage, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
+		s_ctx->setShaderBuffer(_stage, _handle);
+	}
+
+	void setShaderBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		BX_CHECK(_stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, "Invalid stage %d (max %d).", _stage, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
+		s_ctx->setShaderBuffer(_stage, _handle);
+	}
+
 	void setBuffer(uint8_t _stage, IndirectBufferHandle _handle, Access::Enum _access)
 	{
 		BGFX_CHECK_MAIN_THREAD();
@@ -4836,6 +4850,18 @@ BGFX_C_API void bgfx_set_compute_dynamic_vertex_buffer(uint8_t _stage, bgfx_dyna
 {
 	union { bgfx_dynamic_vertex_buffer_handle_t c; bgfx::DynamicVertexBufferHandle cpp; } handle = { _handle };
 	bgfx::setBuffer(_stage, handle.cpp, bgfx::Access::Enum(_access) );
+}
+
+BGFX_C_API void bgfx_set_shader_dynamic_index_buffer(uint8_t _stage, bgfx_dynamic_index_buffer_handle_t _handle)
+{
+	union { bgfx_dynamic_index_buffer_handle_t c; bgfx::DynamicIndexBufferHandle cpp; } handle = { _handle };
+	bgfx::setShaderBuffer(_stage, handle.cpp);
+}
+
+BGFX_C_API void bgfx_set_shader_dynamic_vertex_buffer(uint8_t _stage, bgfx_dynamic_vertex_buffer_handle_t _handle)
+{
+	union { bgfx_dynamic_vertex_buffer_handle_t c; bgfx::DynamicVertexBufferHandle cpp; } handle = { _handle };
+	bgfx::setShaderBuffer(_stage, handle.cpp);
 }
 
 BGFX_C_API void bgfx_set_compute_indirect_buffer(uint8_t _stage, bgfx_indirect_buffer_handle_t _handle, bgfx_access_t _access)
