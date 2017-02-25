@@ -1677,6 +1677,17 @@ namespace bgfx
 			bind.m_un.m_compute.m_mip    = 0;
 		}
 
+		void setShaderBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access)
+		{
+			BX_CHECK(_access == Access::Read, "Shader buffers only allow read access.");
+
+			Binding& bind = m_draw.m_bind[_stage];
+			bind.m_idx    = _handle.idx;
+			bind.m_type   = uint8_t(Binding::VertexBuffer);
+
+			// TODO: should this take in a uniform as well for opengl?
+		}
+
 		void setImage(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format)
 		{
 			Binding& bind = m_compute.m_bind[_stage];
@@ -4035,6 +4046,13 @@ namespace bgfx
 		BGFX_API_FUNC(void setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access) )
 		{
 			BGFX_CHECK_HANDLE("setBuffer", m_dynamicVertexBufferHandle, _handle);
+			const DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[_handle.idx];
+			m_submit->setBuffer(_stage, dvb.m_handle, _access);
+		}
+
+		BGFX_API_FUNC(void setShaderBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access) )
+		{
+			BGFX_CHECK_HANDLE("setShaderBuffer", m_dynamicVertexBufferHandle, _handle);
 			const DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[_handle.idx];
 			m_submit->setBuffer(_stage, dvb.m_handle, _access);
 		}
