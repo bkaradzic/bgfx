@@ -1679,11 +1679,15 @@ namespace bgfx
 
 		void setShaderBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access)
 		{
+			// In OpenGL writing might also be possible by default, 
+			// but in dx11 it would require an unordered access view
+			// with a different binding path, so just limit it to read only
 			BX_CHECK(_access == Access::Read, "Shader buffers only allow read access.");
 
 			Binding& bind = m_draw.m_bind[_stage];
 			bind.m_idx    = _handle.idx;
 			bind.m_type   = uint8_t(Binding::VertexBuffer);
+			bind.m_un.m_compute.m_access = _access;
 
 			// TODO: should this take in a uniform as well for opengl?
 		}
