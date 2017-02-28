@@ -2290,6 +2290,9 @@ namespace bgfx { namespace gl
 					m_ovr.flip();
 					m_ovr.swap(_hmd);
 
+					// Ensure the back buffer is bound as the source of the flip
+					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo));
+
 					// need to swap GL render context even if OVR is enabled to get
 					// the mirror texture in the output
 					m_glctx.swap();
