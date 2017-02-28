@@ -1344,11 +1344,14 @@ namespace bgfx { namespace gl
 		void destroy();
 		void init();
 		void bindInstanceData(uint32_t _stride, uint32_t _baseVertex = 0) const;
+
 		void bindAttributesBegin()
 		{
-			memcpy(m_unboundUsedAttrib, m_used, sizeof(m_unboundUsedAttrib) );
+			bx::memCopy(m_unboundUsedAttrib, m_used, sizeof(m_unboundUsedAttrib) );
 		}
+
 		void bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex = 0);
+
 		void bindAttributesEnd()
 		{
 			for (uint32_t ii = 0, iiEnd = m_usedCount; ii < iiEnd; ++ii)
