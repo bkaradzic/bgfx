@@ -370,8 +370,8 @@ namespace bgfx { namespace mtl
 			BX_TRACE("Init.");
 
 			m_fbh.idx = invalidHandle;
-			memset(m_uniforms, 0, sizeof(m_uniforms) );
-			memset(&m_resolution, 0, sizeof(m_resolution) );
+			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
+			bx::memSet(&m_resolution, 0, sizeof(m_resolution) );
 
 			if (NULL != NSClassFromString(@"MTKView") )
 			{
@@ -705,7 +705,7 @@ namespace bgfx { namespace mtl
 		void createVertexDecl(VertexDeclHandle _handle, const VertexDecl& _decl) BX_OVERRIDE
 		{
 			VertexDecl& decl = m_vertexDecls[_handle.idx];
-			memcpy(&decl, &_decl, sizeof(VertexDecl) );
+			bx::memCopy(&decl, &_decl, sizeof(VertexDecl) );
 			dump(decl);
 		}
 
@@ -891,7 +891,7 @@ namespace bgfx { namespace mtl
 
 			uint32_t size = BX_ALIGN_16(g_uniformTypeSize[_type]*_num);
 			void* data = BX_ALLOC(g_allocator, size);
-			memset(data, 0, size);
+			bx::memSet(data, 0, size);
 			m_uniforms[_handle.idx] = data;
 			m_uniformReg.add(_handle, _name, data);
 		}
@@ -955,7 +955,7 @@ namespace bgfx { namespace mtl
 
 		void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) BX_OVERRIDE
 		{
-			memcpy(m_uniforms[_loc], _data, _size);
+			bx::memCopy(m_uniforms[_loc], _data, _size);
 		}
 
 		void setMarker(const char* _marker, uint32_t /*_size*/) BX_OVERRIDE
@@ -1301,7 +1301,7 @@ namespace bgfx { namespace mtl
 				: m_uniformBufferVertexOffset
 				;
 			uint8_t* dst = (uint8_t*)m_uniformBuffer.contents();
-			memcpy(&dst[offset + _loc], _val, _numRegs*16);
+			bx::memCopy(&dst[offset + _loc], _val, _numRegs*16);
 		}
 
 		void setShaderUniform4f(uint8_t _flags, uint32_t _loc, const void* _val, uint32_t _numRegs)
@@ -1341,7 +1341,7 @@ namespace bgfx { namespace mtl
 				else
 				{
 					UniformHandle handle;
-					memcpy(&handle, _uniformBuffer.read(sizeof(UniformHandle) ), sizeof(UniformHandle) );
+					bx::memCopy(&handle, _uniformBuffer.read(sizeof(UniformHandle) ), sizeof(UniformHandle) );
 					data = (const char*)m_uniforms[handle.idx];
 				}
 
@@ -1457,10 +1457,10 @@ namespace bgfx { namespace mtl
 				for (uint32_t ii = 0; ii < numMrt; ++ii)
 				{
 					uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[ii]);
-					memcpy(mrtClear[ii], _palette[index], 16);
+					bx::memCopy(mrtClear[ii], _palette[index], 16);
 				}
 
-				memcpy((uint8_t*)m_uniformBuffer.contents() + m_uniformBufferFragmentOffset,
+				bx::memCopy((uint8_t*)m_uniformBuffer.contents() + m_uniformBufferFragmentOffset,
 					   mrtClear,
 					   bx::uint32_min(fragmentUniformBufferSize, sizeof(mrtClear)));
 			}
@@ -1474,7 +1474,7 @@ namespace bgfx { namespace mtl
 					_clear.m_index[3]*1.0f/255.0f,
 				};
 
-				memcpy((uint8_t*)m_uniformBuffer.contents() + m_uniformBufferFragmentOffset,
+				bx::memCopy((uint8_t*)m_uniformBuffer.contents() + m_uniformBufferFragmentOffset,
 					   rgba,
 					   bx::uint32_min(fragmentUniformBufferSize, sizeof(rgba)));
 			}
@@ -1898,7 +1898,7 @@ namespace bgfx { namespace mtl
 		}
 
 		// get attributes
-		memset(m_attributes, 0xff, sizeof(m_attributes) );
+		bx::memSet(m_attributes, 0xff, sizeof(m_attributes) );
 		uint32_t used = 0;
 		uint32_t instUsed = 0;
 		if (NULL != _vsh->m_function.m_obj )
@@ -2332,7 +2332,7 @@ namespace bgfx { namespace mtl
 		if ( m_dynamic && _discard )
 		{
 			m_bufferIndex = (m_bufferIndex + 1) % MTL_MAX_FRAMES_IN_FLIGHT;
-			memcpy( (uint8_t*)getBuffer().contents() + _offset, _data, _size);
+			bx::memCopy( (uint8_t*)getBuffer().contents() + _offset, _data, _size);
 		}
 		else if ( NULL != s_renderMtl->m_renderCommandEncoder )
 		{
@@ -2344,7 +2344,7 @@ namespace bgfx { namespace mtl
 			{
 				const void* oldContent = m_buffers[m_bufferIndex].contents();
 				m_buffers[m_bufferIndex] = s_renderMtl->m_device.newBufferWithBytes(oldContent, m_size, 0);
-				memcpy( (uint8_t*)m_buffers[m_bufferIndex].contents() + _offset, _data, _size);
+				bx::memCopy( (uint8_t*)m_buffers[m_bufferIndex].contents() + _offset, _data, _size);
 			}
 		}
 		else
@@ -2642,7 +2642,7 @@ namespace bgfx { namespace mtl
 
 			for (uint32_t yy = 0; yy < _rect.m_height; ++yy, src += srcpitch, dst += dstpitch)
 			{
-				memcpy(dst, src, rectpitch);
+				bx::memCopy(dst, src, rectpitch);
 			}
 
 			bce.copyFromBuffer(
