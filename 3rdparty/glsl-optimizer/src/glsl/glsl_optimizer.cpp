@@ -280,6 +280,14 @@ static void propagate_precision_texture(ir_instruction *ir, void *data)
 	((precision_ctx*)data)->res = true;
 }
 
+static void propagate_precision_texture_metal(ir_instruction* ir, void* data)
+{
+	// There are no precision specifiers in Metal
+	ir_texture* tex = ir->as_texture();
+	if (tex)
+		tex->set_precision(glsl_precision_undefined);
+}
+
 struct undefined_ass_ctx
 {
 	ir_variable* var;
@@ -386,7 +394,7 @@ static void propagate_precision_call(ir_instruction *ir, void *data)
 	}
 }
 
-static bool propagate_precision(exec_list* list, bool assign_high_to_undefined)
+static bool propagate_precision(exec_list* list, bool metal_target)
 {
 	bool anyProgress = false;
 	precision_ctx ctx;
@@ -396,7 +404,11 @@ static bool propagate_precision(exec_list* list, bool assign_high_to_undefined)
 		ctx.root_ir = list;
 		foreach_in_list(ir_instruction, ir, list)
 		{
-			visit_tree (ir, propagate_precision_texture, &ctx);
+			if (metal_target)
+				visit_tree (ir, propagate_precision_texture_metal, &ctx);
+			else
+				visit_tree (ir, propagate_precision_texture, &ctx);
+				
 			visit_tree (ir, propagate_precision_deref, &ctx);
 			bool hadProgress = ctx.res;
 			ctx.res = false;
@@ -417,7 +429,7 @@ static bool propagate_precision(exec_list* list, bool assign_high_to_undefined)
 	anyProgress |= ctx.res;
 	
 	// for globals that have undefined precision, set it to highp
-	if (assign_high_to_undefined)
+	if (metal_target)
 	{
 		foreach_in_list(ir_instruction, ir, list)
 		{
