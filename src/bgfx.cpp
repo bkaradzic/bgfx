@@ -1032,16 +1032,16 @@ namespace bgfx
 			}
 
 			BGFX_CHECK_RENDER_THREAD();
-			if (s_ctx->renderFrame() )
+			RenderFrame::Enum result = s_ctx->renderFrame(BGFX_CONFIG_API_SEMAPHORE_TIMEOUT);
+			if (RenderFrame::Exiting == result)
 			{
 				Context* ctx = s_ctx;
 				ctx->apiSemWait();
 				s_ctx = NULL;
 				ctx->renderSemPost();
-				return RenderFrame::Exiting;
 			}
 
-			return RenderFrame::Render;
+			return result;
 		}
 
 		BX_CHECK(false, "This call only makes sense if used with multi-threaded renderer.");
@@ -1646,7 +1646,7 @@ namespace bgfx
 		return m_uniformRef[_handle.idx].m_name.getPtr();
 	}
 
-	bool Context::renderFrame()
+	RenderFrame::Enum Context::renderFrame(int32_t _msecs)
 	{
 		BGFX_PROFILER_SCOPE(bgfx, render_frame, 0xff2040ff);
 
@@ -1658,7 +1658,7 @@ namespace bgfx
 			m_flipped = true;
 		}
 
-		if (apiSemWait(BGFX_CONFIG_API_SEMAPHORE_TIMEOUT) )
+		if (apiSemWait(_msecs) )
 		{
 			rendererExecCommands(m_render->m_cmdPre);
 			if (m_rendererInitialized)
@@ -1678,8 +1678,15 @@ namespace bgfx
 				m_flipped = true;
 			}
 		}
+		else
+		{
+			return RenderFrame::Timeout;
+		}
 
-		return m_exit;
+		return m_exit
+			? RenderFrame::Exiting
+			: RenderFrame::Render
+			;
 	}
 
 	void rendererUpdateUniforms(RendererContextI* _renderCtx, UniformBuffer* _uniformBuffer, uint32_t _begin, uint32_t _end)
