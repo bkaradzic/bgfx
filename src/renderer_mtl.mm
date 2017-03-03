@@ -911,10 +911,14 @@ namespace bgfx { namespace mtl
 		}
 
 		//cmdPost
-		void saveScreenShot(const char* _filePath) BX_OVERRIDE
+		void saveScreenShot(FrameBufferHandle _handle, const char* _filePath) BX_OVERRIDE
 		{
+			BX_UNUSED(_handle);
+
 			if (NULL == m_screenshotTarget)
+			{
 				return;
+			}
 
 			m_cmd.kick(false, true);
 			m_commandBuffer = 0;
@@ -2938,8 +2942,7 @@ namespace bgfx { namespace mtl
 	{
 		m_cmd.finish(false);
 
-
-		if ( m_commandBuffer == NULL )
+		if (m_commandBuffer == NULL)
 		{
 			m_commandBuffer = m_cmd.alloc();
 		}
@@ -2949,7 +2952,7 @@ namespace bgfx { namespace mtl
 
 		m_gpuTimer.addHandlers(m_commandBuffer);
 
-		if ( m_blitCommandEncoder )
+		if (m_blitCommandEncoder)
 		{
 			m_blitCommandEncoder.endEncoding();
 			m_blitCommandEncoder = 0;
@@ -2957,18 +2960,19 @@ namespace bgfx { namespace mtl
 
 		updateResolution(_render->m_resolution);
 
-		if ( m_saveScreenshot || NULL != m_capture )
+		if (m_saveScreenshot
+		||  NULL != m_capture)
 		{
-			if ( m_screenshotTarget )
+			if (m_screenshotTarget)
 			{
-				if ( m_screenshotTarget.width() != m_resolution.m_width ||
-					m_screenshotTarget.height() != m_resolution.m_height )
+				if (m_screenshotTarget.width()  != m_resolution.m_width
+				||  m_screenshotTarget.height() != m_resolution.m_height)
 				{
 					MTL_RELEASE(m_screenshotTarget);
 				}
 			}
 
-			if ( NULL == m_screenshotTarget)
+			if (NULL == m_screenshotTarget)
 			{
 				m_textureDescriptor.textureType = MTLTextureType2D;
 				m_textureDescriptor.pixelFormat = m_metalLayer.pixelFormat;
@@ -2981,13 +2985,16 @@ namespace bgfx { namespace mtl
 				if ( m_iOS9Runtime || m_macOS11Runtime )
 				{
 					m_textureDescriptor.cpuCacheMode = MTLCPUCacheModeDefaultCache;
-					m_textureDescriptor.storageMode = (MTLStorageMode)(((BX_ENABLED(BX_PLATFORM_IOS)) ? 0 /* MTLStorageModeShared */ :  1 /*MTLStorageModeManaged*/)
-														);
-					m_textureDescriptor.usage		 = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+					m_textureDescriptor.storageMode = (MTLStorageMode)(BX_ENABLED(BX_PLATFORM_IOS)
+						? 0 /* MTLStorageModeShared */
+						: 1 /*MTLStorageModeManaged*/
+						);
+					m_textureDescriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
 				}
 
-				m_screenshotTarget   = m_device.newTextureWithDescriptor(m_textureDescriptor);
+				m_screenshotTarget = m_device.newTextureWithDescriptor(m_textureDescriptor);
 			}
+
 			m_saveScreenshot = false;
 		}
 		else

@@ -1559,8 +1559,10 @@ namespace bgfx { namespace d3d12
 			m_uniformReg.remove(_handle);
 		}
 
-		void saveScreenShot(const char* _filePath) BX_OVERRIDE
+		void saveScreenShot(FrameBufferHandle _handle, const char* _filePath) BX_OVERRIDE
 		{
+			BX_UNUSED(_handle);
+
 			uint32_t idx = (m_backBufferColorIdx-1) % m_scd.BufferCount;
 			m_cmd.finish(m_backBufferColorFence[idx]);
 			ID3D12Resource* backBuffer = m_backBufferColor[idx];

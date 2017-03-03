@@ -1129,9 +1129,11 @@ namespace bgfx { namespace d3d9
 			m_uniformReg.remove(_handle);
 		}
 
-		void saveScreenShot(const char* _filePath) BX_OVERRIDE
+		void saveScreenShot(FrameBufferHandle _handle, const char* _filePath) BX_OVERRIDE
 		{
 #if BX_PLATFORM_WINDOWS
+			BX_UNUSED(_handle);
+
 			IDirect3DSurface9* surface;
 			D3DDEVICE_CREATION_PARAMETERS dcp;
 			DX_CHECK(m_device->GetCreationParameters(&dcp) );
@@ -1175,6 +1177,8 @@ namespace bgfx { namespace d3d9
 
 			DX_CHECK(surface->UnlockRect() );
 			DX_RELEASE(surface, 0);
+#else
+			BX_UNUSED(_handle, _filePath);
 #endif // BX_PLATFORM_WINDOWS
 		}
 

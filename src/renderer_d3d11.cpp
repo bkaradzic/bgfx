@@ -1975,16 +1975,21 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			m_uniformReg.remove(_handle);
 		}
 
-		void saveScreenShot(const char* _filePath) BX_OVERRIDE
+		void saveScreenShot(FrameBufferHandle _handle, const char* _filePath) BX_OVERRIDE
 		{
-			if (NULL == m_swapChain)
+			IDXGISwapChain* swapChain = isValid(_handle)
+				? m_frameBuffers[_handle.idx].m_swapChain
+				: m_swapChain
+				;
+
+			if (NULL == swapChain)
 			{
 				BX_TRACE("Unable to capture screenshot %s.", _filePath);
 				return;
 			}
 
 			ID3D11Texture2D* backBuffer;
-			DX_CHECK(m_swapChain->GetBuffer(0, IID_ID3D11Texture2D, (void**)&backBuffer) );
+			DX_CHECK(swapChain->GetBuffer(0, IID_ID3D11Texture2D, (void**)&backBuffer) );
 
 			D3D11_TEXTURE2D_DESC backBufferDesc;
 			backBuffer->GetDesc(&backBufferDesc);

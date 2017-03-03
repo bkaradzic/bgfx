@@ -2097,7 +2097,7 @@ VK_IMPORT_DEVICE
 			m_uniforms[_handle.idx] = NULL;
 		}
 
-		void saveScreenShot(const char* /*_filePath*/) BX_OVERRIDE
+		void saveScreenShot(FrameBufferHandle /*_handle*/, const char* /*_filePath*/) BX_OVERRIDE
 		{
 		}
 

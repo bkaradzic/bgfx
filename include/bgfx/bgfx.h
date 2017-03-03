@@ -2812,6 +2812,7 @@ namespace bgfx
 
 	/// Request screen shot.
 	///
+	/// @param[in] _handle Frame buffer handle.
 	/// @param[in] _filePath Will be passed to `bgfx::CallbackI::screenShot` callback.
 	///
 	/// @remarks
@@ -2819,7 +2820,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_save_screen_shot`.
 	///
-	void saveScreenShot(const char* _filePath);
+	void saveScreenShot(FrameBufferHandle _handle, const char* _filePath);
 
 } // namespace bgfx
 

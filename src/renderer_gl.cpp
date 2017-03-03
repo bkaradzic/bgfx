@@ -2523,13 +2523,23 @@ namespace bgfx { namespace gl
 			m_uniformReg.remove(_handle);
 		}
 
-		void saveScreenShot(const char* _filePath) BX_OVERRIDE
+		void saveScreenShot(FrameBufferHandle _handle, const char* _filePath) BX_OVERRIDE
 		{
-			uint32_t length = m_resolution.m_width*m_resolution.m_height*4;
-			uint8_t* data = (uint8_t*)BX_ALLOC(g_allocator, length);
-
+			SwapChainGL* swapChain = NULL;
 			uint32_t width  = m_resolution.m_width;
 			uint32_t height = m_resolution.m_height;
+
+			if (isValid(_handle) )
+			{
+				const FrameBufferGL& frameBuffer = m_frameBuffers[_handle.idx];
+				swapChain = frameBuffer.m_swapChain;
+				width  = frameBuffer.m_width;
+				height = frameBuffer.m_height;
+			}
+			m_glctx.makeCurrent(swapChain);
+
+			uint32_t length = width*height*4;
+			uint8_t* data = (uint8_t*)BX_ALLOC(g_allocator, length);
 
 			GL_CHECK(glReadPixels(0
 				, 0
