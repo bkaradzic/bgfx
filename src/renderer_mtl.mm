@@ -904,14 +904,14 @@ namespace bgfx { namespace mtl
 		}
 
 		//cmdPre
-		void saveScreenShotPre(const char* _filePath) BX_OVERRIDE
+		void requestScreenShotPre(const char* _filePath) BX_OVERRIDE
 		{
 			BX_UNUSED(_filePath);
 			m_saveScreenshot = true;
 		}
 
 		//cmdPost
-		void saveScreenShot(FrameBufferHandle _handle, const char* _filePath) BX_OVERRIDE
+		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) BX_OVERRIDE
 		{
 			BX_UNUSED(_handle);
 

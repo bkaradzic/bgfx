@@ -440,7 +440,7 @@ int _main_(int _argc, char** _argv)
 		if (150 == frame)
 		{
 			bgfx::FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
-			bgfx::saveScreenShot(fbh, "temp/frame150");
+			bgfx::requestScreenShot(fbh, "temp/frame150");
 		}
 
 		// Advance to next frame. Rendering thread will be kicked to

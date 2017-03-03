@@ -2523,7 +2523,7 @@ namespace bgfx { namespace gl
 			m_uniformReg.remove(_handle);
 		}
 
-		void saveScreenShot(FrameBufferHandle _handle, const char* _filePath) BX_OVERRIDE
+		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) BX_OVERRIDE
 		{
 			SwapChainGL* swapChain = NULL;
 			uint32_t width  = m_resolution.m_width;

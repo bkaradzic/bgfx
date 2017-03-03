@@ -1129,7 +1129,7 @@ namespace bgfx { namespace d3d9
 			m_uniformReg.remove(_handle);
 		}
 
-		void saveScreenShot(FrameBufferHandle _handle, const char* _filePath) BX_OVERRIDE
+		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) BX_OVERRIDE
 		{
 #if BX_PLATFORM_WINDOWS
 			BX_UNUSED(_handle);

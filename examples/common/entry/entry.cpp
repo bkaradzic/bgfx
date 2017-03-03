@@ -316,7 +316,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				if (_argc > 2)
 				{
-					bgfx::saveScreenShot(fbh, _argv[2]);
+					bgfx::requestScreenShot(fbh, _argv[2]);
 				}
 				else
 				{
@@ -325,7 +325,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 					char filePath[256];
 					bx::snprintf(filePath, sizeof(filePath), "temp/screenshot-%d", tt);
-					bgfx::saveScreenShot(fbh, filePath);
+					bgfx::requestScreenShot(fbh, filePath);
 				}
 
 				return 0;

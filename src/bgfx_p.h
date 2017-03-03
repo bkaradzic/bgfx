@@ -646,7 +646,7 @@ namespace bgfx
 			DestroyFrameBuffer,
 			DestroyUniform,
 			ReadTexture,
-			SaveScreenShot,
+			RequestScreenShot,
 		};
 
 		void write(const void* _data, uint32_t _size)
@@ -2166,7 +2166,7 @@ namespace bgfx
 		virtual void destroyFrameBuffer(FrameBufferHandle _handle) = 0;
 		virtual void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name) = 0;
 		virtual void destroyUniform(UniformHandle _handle) = 0;
-		virtual void saveScreenShot(FrameBufferHandle _handle, const char* _filePath) = 0;
+		virtual void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) = 0;
 		virtual void updateViewName(uint8_t _id, const char* _name) = 0;
 		virtual void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) = 0;
 		virtual void setMarker(const char* _marker, uint32_t _size) = 0;
@@ -3625,18 +3625,18 @@ namespace bgfx
 			m_freeOcclusionQueryHandle[m_numFreeOcclusionQueryHandles++] = _handle;
 		}
 
-		BGFX_API_FUNC(void saveScreenShot(FrameBufferHandle _handle, const char* _filePath) )
+		BGFX_API_FUNC(void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) )
 		{
-			BGFX_CHECK_HANDLE_INVALID_OK("saveScreenShot", m_frameBufferHandle, _handle);
+			BGFX_CHECK_HANDLE_INVALID_OK("requestScreenShot", m_frameBufferHandle, _handle);
 
 			if (isValid(_handle) )
 			{
 				FrameBufferRef& ref = m_frameBufferRef[_handle.idx];
-				BX_CHECK(ref.m_window, "saveScreenShot can be done only for window frame buffer handles (handle: %d).", _handle.idx); BX_UNUSED(ref);
+				BX_CHECK(ref.m_window, "requestScreenShot can be done only for window frame buffer handles (handle: %d).", _handle.idx); BX_UNUSED(ref);
 				return;
 			}
 
-			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::SaveScreenShot);
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::RequestScreenShot);
 			uint16_t len = (uint16_t)bx::strnlen(_filePath)+1;
 			cmdbuf.write(_handle);
 			cmdbuf.write(len);

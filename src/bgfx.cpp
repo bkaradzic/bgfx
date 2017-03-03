@@ -2447,7 +2447,7 @@ namespace bgfx
 				}
 				break;
 
-			case CommandBuffer::SaveScreenShot:
+			case CommandBuffer::RequestScreenShot:
 				{
 					FrameBufferHandle handle;
 					_cmdbuf.read(handle);
@@ -2457,7 +2457,7 @@ namespace bgfx
 
 					const char* filePath = (const char*)_cmdbuf.skip(len);
 
-					m_renderCtx->saveScreenShot(handle, filePath);
+					m_renderCtx->requestScreenShot(handle, filePath);
 				}
 				break;
 
@@ -3847,10 +3847,10 @@ error:
 		s_ctx->blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
 	}
 
-	void saveScreenShot(FrameBufferHandle _handle, const char* _filePath)
+	void requestScreenShot(FrameBufferHandle _handle, const char* _filePath)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->saveScreenShot(_handle, _filePath);
+		s_ctx->requestScreenShot(_handle, _filePath);
 	}
 } // namespace bgfx
 
@@ -4778,10 +4778,10 @@ BGFX_C_API void bgfx_blit(uint8_t _id, bgfx_texture_handle_t _dst, uint8_t _dstM
 	bgfx::blit(_id, dst.cpp, _dstMip, _dstX, _dstY, _dstZ, src.cpp, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
 }
 
-BGFX_C_API void bgfx_save_screen_shot(bgfx_frame_buffer_handle _handle, const char* _filePath)
+BGFX_C_API void bgfx_request_screen_shot(bgfx_frame_buffer_handle _handle, const char* _filePath)
 {
 	union { bgfx_frame_buffer_handle_t c; bgfx::FrameBufferHandle cpp; } handle = { _handle };
-	bgfx::saveScreenShot(handle.cpp, _filePath);
+	bgfx::requestScreenShot(handle.cpp, _filePath);
 }
 
 BGFX_C_API bgfx_render_frame_t bgfx_render_frame()
@@ -4948,7 +4948,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 	BGFX_IMPORT_FUNC(dispatch_indirect) \
 	BGFX_IMPORT_FUNC(discard) \
 	BGFX_IMPORT_FUNC(blit) \
-	BGFX_IMPORT_FUNC(save_screen_shot)
+	BGFX_IMPORT_FUNC(request_screen_shot)
 
 		static bgfx_interface_vtbl_t s_bgfx_interface =
 		{
