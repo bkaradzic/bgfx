@@ -1132,7 +1132,19 @@ namespace bgfx { namespace d3d9
 		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) BX_OVERRIDE
 		{
 #if BX_PLATFORM_WINDOWS
-			BX_UNUSED(_handle);
+			IDirect3DSwapChain9* swapChain = isValid(_handle)
+				? m_frameBuffers[_handle.idx].m_swapChain
+				: m_swapChain
+				;
+
+			if (NULL == swapChain)
+			{
+				BX_TRACE("Unable to capture screenshot %s.", _filePath);
+				return;
+			}
+
+			D3DPRESENT_PARAMETERS params;
+			DX_CHECK(swapChain->GetPresentParameters(&params));
 
 			IDirect3DSurface9* surface;
 			D3DDEVICE_CREATION_PARAMETERS dcp;
@@ -1149,7 +1161,13 @@ namespace bgfx { namespace d3d9
 				, NULL
 				) );
 
+			HWND nwh = params.hDeviceWindow;
+
+			SetWindowPos(nwh, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
+
 			DX_CHECK(m_device->GetFrontBufferData(0, surface) );
+
+			SetWindowPos(nwh, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
 
 			D3DLOCKED_RECT rect;
 			DX_CHECK(surface->LockRect(&rect
@@ -1158,20 +1176,20 @@ namespace bgfx { namespace d3d9
 				) );
 
 			RECT rc;
-			GetClientRect( (HWND)g_platformData.nwh, &rc);
+			GetClientRect(nwh, &rc);
 			POINT point;
 			point.x = rc.left;
 			point.y = rc.top;
-			ClientToScreen( (HWND)g_platformData.nwh, &point);
+			ClientToScreen(nwh, &point);
 			uint8_t* data = (uint8_t*)rect.pBits;
 			uint32_t bytesPerPixel = rect.Pitch/dm.Width;
 
 			g_callback->screenShot(_filePath
-				, m_params.BackBufferWidth
-				, m_params.BackBufferHeight
+				, params.BackBufferWidth
+				, params.BackBufferHeight
 				, rect.Pitch
 				, &data[point.y*rect.Pitch+point.x*bytesPerPixel]
-				, m_params.BackBufferHeight*rect.Pitch
+				, params.BackBufferHeight*rect.Pitch
 				, false
 				);
 
