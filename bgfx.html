@@ -2047,16 +2047,18 @@ creating windows.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx14saveScreenShotEPKc">
-<span id="bgfx::saveScreenShot__cCP"></span><span class="target" id="bgfxnamespacebgfx_1ae03f0dcaf3bcad95d487861674c17428"></span>void <code class="descclassname">bgfx::</code><code class="descname">saveScreenShot</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>_filePath</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14saveScreenShotEPKc" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx17requestScreenShotE17FrameBufferHandlePKc">
+<span id="bgfx::requestScreenShot__FrameBufferHandle.cCP"></span><span class="target" id="bgfxnamespacebgfx_1acbe6cfb0c11285b9f4a4969d1e3a71d6"></span>void <code class="descclassname">bgfx::</code><code class="descname">requestScreenShot</code><span class="sig-paren">(</span>FrameBufferHandle <em>_handle</em>, <em class="property">const</em> char *<em>_filePath</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17requestScreenShotE17FrameBufferHandlePKc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Request screen shot. </p>
 <p><dl class="docutils">
 <dt><strong>Remark</strong></dt>
 <dd><code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_callback_i_1a44d38debc9d86b9815d55058afc762c6"><span class="std std-ref"><span class="pre">bgfx::CallbackI::screenShot</span></span></a></code> must be implemented.</dd>
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_save_screen_shot</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_request_screen_shot</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Frame buffer handle. </p>
+</li>
 <li><code class="first docutils literal"><span class="pre">_filePath</span></code> - <p>Will be passed to <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_callback_i_1a44d38debc9d86b9815d55058afc762c6"><span class="std std-ref"><span class="pre">bgfx::CallbackI::screenShot</span></span></a></code> callback.</p>
 </li>
 </ul>
@@ -3853,6 +3855,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="bgfx::createDynamicVertexBuffer__uint32_t.VertexDeclCR.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1a5d216a81f8b71d84fc8d87e4e1e4b670"></span>DynamicVertexBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createDynamicVertexBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx10VertexDeclE" title="bgfx::VertexDecl">VertexDecl</a> &amp;<em>_decl</em>, uint16_t <em>_flags</em> = BGFX_BUFFER_NONE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx25createDynamicVertexBufferE8uint32_tRK10VertexDecl8uint16_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create empty dynamic vertex buffer. </p>
 <p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Dynamic vertex buffer handle.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_dynamic_vertex_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -3867,7 +3871,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> - Buffer will be written into by compute shader. When buffer is created with <code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> flag it cannot be updated from CPU.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ_WRITE</span></code> - Buffer will be used for read/write by compute shader.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if different amount of data is passed. If this flag is not specified if more data is passed on update buffer will be trimmed to fit existing buffer size. This flag has effect only on dynamic buffers.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers. </li>
 </ul>
 </p>
 </li>
@@ -3882,6 +3886,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="bgfx::createDynamicVertexBuffer__MemoryCP.VertexDeclCR.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1a5cd50e5ddae47e26491243b249a72a1b"></span>DynamicVertexBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createDynamicVertexBuffer</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx10VertexDeclE" title="bgfx::VertexDecl">VertexDecl</a> &amp;<em>_decl</em>, uint16_t <em>_flags</em> = BGFX_BUFFER_NONE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx25createDynamicVertexBufferEPK6MemoryRK10VertexDecl8uint16_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create dynamic vertex buffer and initialize it. </p>
 <p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Dynamic vertex buffer handle.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_dynamic_vertex_buffer_mem</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -3896,7 +3902,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> - Buffer will be written into by compute shader. When buffer is created with <code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> flag it cannot be updated from CPU.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ_WRITE</span></code> - Buffer will be used for read/write by compute shader.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if different amount of data is passed. If this flag is not specified if more data is passed on update buffer will be trimmed to fit existing buffer size. This flag has effect only on dynamic buffers.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers. </li>
 </ul>
 </p>
 </li>
@@ -3934,6 +3940,12 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_dynamic_vertex_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Dynamic vertex buffer handle.</p>
+</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
@@ -4017,6 +4029,12 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_index_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Static index buffer handle.</p>
+</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
@@ -4026,6 +4044,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="bgfx::createDynamicIndexBuffer__uint32_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1abc0f27b5cc29b3fb0c5f3c2fe9571429"></span>DynamicIndexBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createDynamicIndexBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, uint16_t <em>_flags</em> = BGFX_BUFFER_NONE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx24createDynamicIndexBufferE8uint32_t8uint16_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create empty dynamic index buffer. </p>
 <p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Dynamic index buffer handle.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_dynamic_index_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -4038,7 +4058,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> - Buffer will be written into by compute shader. When buffer is created with <code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> flag it cannot be updated from CPU.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ_WRITE</span></code> - Buffer will be used for read/write by compute shader.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if different amount of data is passed. If this flag is not specified if more data is passed on update buffer will be trimmed to fit existing buffer size. This flag has effect only on dynamic buffers.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers. </li>
 </ul>
 </p>
 </li>
@@ -4053,6 +4073,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="bgfx::createDynamicIndexBuffer__MemoryCP.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1a5d05655535947b053858b2abed7e3cb9"></span>DynamicIndexBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createDynamicIndexBuffer</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em>, uint16_t <em>_flags</em> = BGFX_BUFFER_NONE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx24createDynamicIndexBufferEPK6Memory8uint16_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create dynamic index buffer and initialized it. </p>
 <p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Dynamic index buffer handle.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_dynamic_index_buffer_mem</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -4065,7 +4087,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> - Buffer will be written into by compute shader. When buffer is created with <code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> flag it cannot be updated from CPU.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ_WRITE</span></code> - Buffer will be used for read/write by compute shader.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if different amount of data is passed. If this flag is not specified if more data is passed on update buffer will be trimmed to fit existing buffer size. This flag has effect only on dynamic buffers.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers. </li>
 </ul>
 </p>
 </li>
@@ -5033,7 +5055,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx17createFrameBufferE7uint8_tPK13TextureHandleb">
 <span id="bgfx::createFrameBuffer__uint8_t.TextureHandleCP.b"></span><span class="target" id="bgfxnamespacebgfx_1a24c15472da58c79e49b04cb8ed97a436"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>uint8_t <em>_num</em>, <em class="property">const</em> TextureHandle *<em>_handles</em>, bool <em>_destroyTextures</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferE7uint8_tPK13TextureHandleb" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create frame buffer. </p>
+<dd><p>Create MRT frame buffer from texture handles (simple). </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
 <dd>Handle to frame buffer object.</dd>
@@ -5115,7 +5137,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx17createFrameBufferE7uint8_tPK10Attachmentb">
 <span id="bgfx::createFrameBuffer__uint8_t.AttachmentCP.b"></span><span class="target" id="bgfxnamespacebgfx_1abbcc1474325bfa2c48d24e8fa4d28459"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>uint8_t <em>_num</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx10AttachmentE" title="bgfx::Attachment">Attachment</a> *<em>_attachment</em>, bool <em>_destroyTextures</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferE7uint8_tPK10Attachmentb" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create frame buffer. </p>
+<dd><p>Create MRT frame buffer from texture handles with specific layer and mip level. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
 <dd>Handle to frame buffer object.</dd>
@@ -5208,8 +5230,16 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="bgfx::createIndirectBuffer__uint32_t"></span><span class="target" id="bgfxnamespacebgfx_1a8a3c563fcf814144a76360b17b60f7e8"></span>IndirectBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createIndirectBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx20createIndirectBufferE8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create draw indirect buffer. </p>
 <p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Indirect buffer handle.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_indirect_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of indirect calls. </p>
+</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
@@ -5221,6 +5251,12 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_indirect_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Indirect buffer handle.</p>
+</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
