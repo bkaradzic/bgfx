@@ -2475,6 +2475,15 @@ namespace bgfx
 				}
 				break;
 
+			case CommandBuffer::InvalidateOcclusionQuery:
+				{
+					OcclusionQueryHandle handle;
+					_cmdbuf.read(handle);
+
+					m_renderCtx->invalidateOcclusionQuery(handle);
+				}
+				break;
+
 			default:
 				BX_CHECK(false, "Invalid command: %d", command);
 				break;

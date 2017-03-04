@@ -2584,6 +2584,11 @@ namespace bgfx { namespace gl
 			GL_CHECK(glInsertEventMarker(_size, _marker) );
 		}
 
+		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) BX_OVERRIDE
+		{
+			m_occlusionQuery.invalidate(_handle);
+		}
+
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) BX_OVERRIDE;
 
 		void blitSetup(TextVideoMemBlitter& _blitter) BX_OVERRIDE
@@ -6124,21 +6129,40 @@ namespace bgfx { namespace gl
 		while (0 != m_control.available() )
 		{
 			Query& query = m_query[m_control.m_read];
-			int32_t result;
 
-			if (!_wait)
+			if (isValid(query.m_handle) )
 			{
-				GL_CHECK(glGetQueryObjectiv(query.m_id, GL_QUERY_RESULT_AVAILABLE, &result) );
+				int32_t result;
 
-				if (!result)
+				if (!_wait)
 				{
-					break;
+					GL_CHECK(glGetQueryObjectiv(query.m_id, GL_QUERY_RESULT_AVAILABLE, &result) );
+
+					if (!result)
+					{
+						break;
+					}
 				}
+
+				GL_CHECK(glGetQueryObjectiv(query.m_id, GL_QUERY_RESULT, &result) );
+				_render->m_occlusion[query.m_handle.idx] = 0 < result;
 			}
 
-			GL_CHECK(glGetQueryObjectiv(query.m_id, GL_QUERY_RESULT, &result) );
-			_render->m_occlusion[query.m_handle.idx] = 0 < result;
 			m_control.consume(1);
+		}
+	}
+
+	void OcclusionQueryGL::invalidate(OcclusionQueryHandle _handle)
+	{
+		const uint32_t size = m_control.m_size;
+
+		for (uint32_t ii = 0, num = m_control.available(); ii < num; ++ii)
+		{
+			Query& query = m_query[(m_control.m_read + ii) % size];
+			if (query.m_handle.idx == _handle.idx)
+			{
+				query.m_handle.idx = bgfx::invalidHandle;
+			}
 		}
 	}
 

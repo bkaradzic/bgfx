@@ -2118,6 +2118,11 @@ VK_IMPORT_DEVICE
 		{
 		}
 
+		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) BX_OVERRIDE
+		{
+			BX_UNUSED(_handle);
+		}
+
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) BX_OVERRIDE;
 
 		void blitSetup(TextVideoMemBlitter& /*_blitter*/) BX_OVERRIDE

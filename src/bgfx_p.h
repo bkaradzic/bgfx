@@ -633,6 +633,7 @@ namespace bgfx
 			CreateFrameBuffer,
 			CreateUniform,
 			UpdateViewName,
+			InvalidateOcclusionQuery,
 			End,
 			RendererShutdownEnd,
 			DestroyVertexDecl,
@@ -2170,6 +2171,7 @@ namespace bgfx
 		virtual void updateViewName(uint8_t _id, const char* _name) = 0;
 		virtual void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) = 0;
 		virtual void setMarker(const char* _marker, uint32_t _size) = 0;
+		virtual void invalidateOcclusionQuery(OcclusionQueryHandle _handle) = 0;
 		virtual void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) = 0;
 		virtual void blitSetup(TextVideoMemBlitter& _blitter) = 0;
 		virtual void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) = 0;
@@ -3600,7 +3602,11 @@ namespace bgfx
 			if (isValid(handle) )
 			{
 				m_submit->m_occlusion[handle.idx] = UINT8_MAX;
+
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::InvalidateOcclusionQuery);
+				cmdbuf.write(handle);
 			}
+
 			return handle;
 		}
 
@@ -3632,8 +3638,11 @@ namespace bgfx
 			if (isValid(_handle) )
 			{
 				FrameBufferRef& ref = m_frameBufferRef[_handle.idx];
-				BX_CHECK(ref.m_window, "requestScreenShot can be done only for window frame buffer handles (handle: %d).", _handle.idx); BX_UNUSED(ref);
-				return;
+				if (!ref.m_window)
+				{
+					BX_TRACE("requestScreenShot can be done only for window frame buffer handles (handle: %d).", _handle.idx);
+					return;
+				}
 			}
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::RequestScreenShot);

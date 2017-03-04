@@ -1232,6 +1232,11 @@ namespace bgfx { namespace d3d9
 			BX_UNUSED(_marker, _size);
 		}
 
+		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) BX_OVERRIDE
+		{
+			m_occlusionQuery.invalidate(_handle);
+		}
+
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) BX_OVERRIDE;
 
 		void blitSetup(TextVideoMemBlitter& _blitter) BX_OVERRIDE
@@ -3569,15 +3574,33 @@ namespace bgfx { namespace d3d9
 		{
 			Query& query = m_query[m_control.m_read];
 
-			uint32_t result;
-			HRESULT hr = query.m_ptr->GetData(&result, sizeof(result), 0);
-			if (S_FALSE == hr)
+			if (isValid(query.m_handle) )
 			{
-				break;
+				uint32_t result;
+				HRESULT hr = query.m_ptr->GetData(&result, sizeof(result), 0);
+				if (S_FALSE == hr)
+				{
+					break;
+				}
+
+				_render->m_occlusion[query.m_handle.idx] = 0 < result;
 			}
 
-			_render->m_occlusion[query.m_handle.idx] = 0 < result;
 			m_control.consume(1);
+		}
+	}
+
+	void OcclusionQueryD3D9::invalidate(OcclusionQueryHandle _handle)
+	{
+		const uint32_t size = m_control.m_size;
+
+		for (uint32_t ii = 0, num = m_control.available(); ii < num; ++ii)
+		{
+			Query& query = m_query[(m_control.m_read + ii) % size];
+			if (query.m_handle.idx == _handle.idx)
+			{
+				query.m_handle.idx = bgfx::invalidHandle;
+			}
 		}
 	}
 

@@ -193,6 +193,10 @@ namespace bgfx { namespace noop
 		{
 		}
 
+		void invalidateOcclusionQuery(OcclusionQueryHandle /*_handle*/) BX_OVERRIDE
+		{
+		}
+
 		void submit(Frame* /*_render*/, ClearQuad& /*_clearQuad*/, TextVideoMemBlitter& /*_textVideoMemBlitter*/) BX_OVERRIDE
 		{
 		}

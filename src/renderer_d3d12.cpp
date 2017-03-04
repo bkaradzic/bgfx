@@ -1639,6 +1639,11 @@ namespace bgfx { namespace d3d12
 		{
 		}
 
+		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) BX_OVERRIDE
+		{
+			m_occlusionQuery.invalidate(_handle);
+		}
+
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) BX_OVERRIDE;
 
 		void blitSetup(TextVideoMemBlitter& _blitter) BX_OVERRIDE
@@ -4718,7 +4723,10 @@ data.NumQualityLevels = 0;
 		while (0 == m_control.reserve(1) )
 		{
 			OcclusionQueryHandle handle = m_handle[m_control.m_read];
-			_render->m_occlusion[handle.idx] = 0 < m_result[handle.idx];
+			if (isValid(handle) )
+			{
+				_render->m_occlusion[handle.idx] = 0 < m_result[handle.idx];
+			}
 			m_control.consume(1);
 		}
 
@@ -4744,6 +4752,20 @@ data.NumQualityLevels = 0;
 			, handle.idx * sizeof(uint64_t)
 			);
 		m_control.commit(1);
+	}
+
+	void OcclusionQueryD3D12::invalidate(OcclusionQueryHandle _handle)
+	{
+		const uint32_t size = m_control.m_size;
+
+		for (uint32_t ii = 0, num = m_control.available(); ii < num; ++ii)
+		{
+			OcclusionQueryHandle& handle = m_handle[(m_control.m_read + ii) % size];
+			if (handle.idx == _handle.idx)
+			{
+				handle.idx = bgfx::invalidHandle;
+			}
+		}
 	}
 
 	struct Bind

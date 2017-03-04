@@ -481,6 +481,7 @@ namespace bgfx { namespace d3d12
 		void shutdown();
 		void begin(ID3D12GraphicsCommandList* _commandList, Frame* _render, OcclusionQueryHandle _handle);
 		void end(ID3D12GraphicsCommandList* _commandList);
+		void invalidate(OcclusionQueryHandle _handle);
 
 		ID3D12Resource*  m_readback;
 		ID3D12QueryHeap* m_queryHeap;

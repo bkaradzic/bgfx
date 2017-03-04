@@ -970,6 +970,11 @@ namespace bgfx { namespace mtl
 			}
 		}
 
+		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) BX_OVERRIDE
+		{
+			m_occlusionQuery.invalidate(_handle);
+		}
+
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) BX_OVERRIDE;
 
 		void blitSetup(TextVideoMemBlitter& _blitter) BX_OVERRIDE
@@ -1691,7 +1696,6 @@ namespace bgfx { namespace mtl
 			m_occlusionQuery.resolve(_render);
 			return _visible == (0 != _render->m_occlusion[_handle.idx]);
 		}
-
 
 		BlitCommandEncoder getBlitCommandEncoder()
 		{
@@ -2932,9 +2936,27 @@ namespace bgfx { namespace mtl
 		{
 			Query& query = m_query[m_control.m_read];
 
-			uint64_t result = ( (uint64_t*)m_buffer.contents() )[query.m_handle.idx];
-			_render->m_occlusion[query.m_handle.idx] = 0 < result;
+			if (isValid(query.m_handle) )
+			{
+				uint64_t result = ( (uint64_t*)m_buffer.contents() )[query.m_handle.idx];
+				_render->m_occlusion[query.m_handle.idx] = 0 < result;
+			}
+
 			m_control.consume(1);
+		}
+	}
+
+	void OcclusionQueryMTL::invalidate(OcclusionQueryHandle _handle)
+	{
+		const uint32_t size = m_control.m_size;
+
+		for (uint32_t ii = 0, num = m_control.available(); ii < num; ++ii)
+		{
+			Query& query = m_query[(m_control.m_read + ii) % size];
+			if (query.m_handle.idx == _handle.idx)
+			{
+				query.m_handle.idx = bgfx::invalidHandle;
+			}
 		}
 	}
 
