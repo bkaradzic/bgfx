@@ -28,8 +28,9 @@ ERROR: 0:64: 'uniform buffer-member align' : not supported for this version or t
 ERROR: 0:65: 'uniform buffer-member align' : not supported for this version or the enabled extensions 
 ERROR: 0:65: 'offset on block member' : not supported for this version or the enabled extensions 
 ERROR: 0:66: 'offset on block member' : not supported for this version or the enabled extensions 
-ERROR: 0:64: 'offset/align' : can only be used with std140 or std430 layout packing 
-ERROR: 0:65: 'align' : can only be used with std140 or std430 layout packing 
+ERROR: 0:64: 'align' : can only be used with std140 or std430 layout packing 
+ERROR: 0:65: 'offset/align' : can only be used with std140 or std430 layout packing 
+ERROR: 0:66: 'offset/align' : can only be used with std140 or std430 layout packing 
 ERROR: 0:71: 'offset on block member' : not supported for this version or the enabled extensions 
 ERROR: 0:74: 'gl_MaxTransformFeedbackBuffers' : required extension not requested: GL_ARB_enhanced_layouts
 ERROR: 0:75: 'gl_MaxTransformFeedbackInterleavedComponents' : required extension not requested: GL_ARB_enhanced_layouts
@@ -63,7 +64,7 @@ ERROR: 0:221: 'textureQueryLevels' : no matching overloaded function found
 ERROR: 0:221: 'assign' :  cannot convert from 'const float' to 'temp int'
 ERROR: 0:222: 'textureQueryLevels' : no matching overloaded function found 
 ERROR: 0:222: 'assign' :  cannot convert from 'const float' to 'temp int'
-ERROR: 63 compilation errors.  No code generated.
+ERROR: 64 compilation errors.  No code generated.
 
 
 Shader version: 430

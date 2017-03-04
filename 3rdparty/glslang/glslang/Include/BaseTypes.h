@@ -203,6 +203,9 @@ enum TBuiltInVariable {
     EbvBaryCoordPullModel,
 #endif
 
+    EbvViewIndex,
+    EbvDeviceIndex,
+
 #ifdef NV_EXTENSIONS
     EbvViewportMaskNV,
     EbvSecondaryPositionNV,
@@ -210,6 +213,7 @@ enum TBuiltInVariable {
     EbvPositionPerViewNV,
     EbvViewportMaskPerViewNV,
 #endif 
+
     // HLSL built-ins that live only temporarily, until they get remapped
     // to one of the above.
     EbvFragDepthGreater,

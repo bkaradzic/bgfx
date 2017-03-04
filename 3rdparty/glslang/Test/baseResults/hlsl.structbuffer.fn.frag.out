@@ -1,0 +1,266 @@
+hlsl.structbuffer.fn.frag
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:9  Function Definition: get(block--vu4[0]1;u1; (temp 4-component vector of uint)
+0:9    Function Parameters: 
+0:9      'sb' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:9      'bufferOffset' (in uint)
+0:?     Sequence
+0:10      Branch: Return with expression
+0:10        indirect index (layout(row_major std430 ) buffer 4-component vector of uint)
+0:10          @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint)
+0:10            'sb' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:10            Constant:
+0:10              0 (const uint)
+0:10          'bufferOffset' (in uint)
+0:14  Function Definition: set(block--vu4[0]1;u1;vu4; (temp void)
+0:14    Function Parameters: 
+0:14      'sb' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:14      'bufferOffset' (in uint)
+0:14      'data' (in 4-component vector of uint)
+0:?     Sequence
+0:15      move second child to first child (temp 4-component vector of uint)
+0:15        indirect index (layout(row_major std430 ) buffer 4-component vector of uint)
+0:15          @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint)
+0:15            'sb' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:15            Constant:
+0:15              0 (const uint)
+0:15          'bufferOffset' (in uint)
+0:15        'data' (in 4-component vector of uint)
+0:19  Function Definition: @main(u1; (temp 4-component vector of float)
+0:19    Function Parameters: 
+0:19      'pos' (in uint)
+0:?     Sequence
+0:20      Function Call: set(block--vu4[0]1;u1;vu4; (temp void)
+0:20        'sbuf2' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:20        Constant:
+0:20          2 (const uint)
+0:20        Function Call: get(block--vu4[0]1;u1; (temp 4-component vector of uint)
+0:20          'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:20          Constant:
+0:20            3 (const uint)
+0:22      Branch: Return with expression
+0:22        Constant:
+0:22          0.000000
+0:22          0.000000
+0:22          0.000000
+0:22          0.000000
+0:19  Function Definition: main( (temp void)
+0:19    Function Parameters: 
+0:?     Sequence
+0:19      move second child to first child (temp uint)
+0:?         'pos' (temp uint)
+0:?         'pos' (layout(location=0 ) in uint)
+0:19      move second child to first child (temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:19        Function Call: @main(u1; (temp 4-component vector of float)
+0:?           'pos' (temp uint)
+0:?   Linker Objects
+0:?     'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:?     'sbuf2' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:?     'sbuf3' (layout(binding=12 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 3-component vector of uint @data})
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'pos' (layout(location=0 ) in uint)
+
+
+Linked fragment stage:
+
+
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:9  Function Definition: get(block--vu4[0]1;u1; (temp 4-component vector of uint)
+0:9    Function Parameters: 
+0:9      'sb' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:9      'bufferOffset' (in uint)
+0:?     Sequence
+0:10      Branch: Return with expression
+0:10        indirect index (layout(row_major std430 ) buffer 4-component vector of uint)
+0:10          @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint)
+0:10            'sb' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:10            Constant:
+0:10              0 (const uint)
+0:10          'bufferOffset' (in uint)
+0:14  Function Definition: set(block--vu4[0]1;u1;vu4; (temp void)
+0:14    Function Parameters: 
+0:14      'sb' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:14      'bufferOffset' (in uint)
+0:14      'data' (in 4-component vector of uint)
+0:?     Sequence
+0:15      move second child to first child (temp 4-component vector of uint)
+0:15        indirect index (layout(row_major std430 ) buffer 4-component vector of uint)
+0:15          @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint)
+0:15            'sb' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:15            Constant:
+0:15              0 (const uint)
+0:15          'bufferOffset' (in uint)
+0:15        'data' (in 4-component vector of uint)
+0:19  Function Definition: @main(u1; (temp 4-component vector of float)
+0:19    Function Parameters: 
+0:19      'pos' (in uint)
+0:?     Sequence
+0:20      Function Call: set(block--vu4[0]1;u1;vu4; (temp void)
+0:20        'sbuf2' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:20        Constant:
+0:20          2 (const uint)
+0:20        Function Call: get(block--vu4[0]1;u1; (temp 4-component vector of uint)
+0:20          'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:20          Constant:
+0:20            3 (const uint)
+0:22      Branch: Return with expression
+0:22        Constant:
+0:22          0.000000
+0:22          0.000000
+0:22          0.000000
+0:22          0.000000
+0:19  Function Definition: main( (temp void)
+0:19    Function Parameters: 
+0:?     Sequence
+0:19      move second child to first child (temp uint)
+0:?         'pos' (temp uint)
+0:?         'pos' (layout(location=0 ) in uint)
+0:19      move second child to first child (temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:19        Function Call: @main(u1; (temp 4-component vector of float)
+0:?           'pos' (temp uint)
+0:?   Linker Objects
+0:?     'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:?     'sbuf2' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:?     'sbuf3' (layout(binding=12 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 3-component vector of uint @data})
+0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'pos' (layout(location=0 ) in uint)
+
+// Module Version 10000
+// Generated by (magic number): 80001
+// Id's are bound by 71
+
+                              Capability Shader
+               1:             ExtInstImport  "GLSL.std.450"
+                              MemoryModel Logical GLSL450
+                              EntryPoint Fragment 4  "main" 59 62
+                              ExecutionMode 4 OriginUpperLeft
+                              Name 4  "main"
+                              Name 9  ""
+                              MemberName 9 0  "@data"
+                              Name 15  "get(block--vu4[0]1;u1;"
+                              Name 13  "sb"
+                              Name 14  "bufferOffset"
+                              Name 18  ""
+                              MemberName 18 0  "@data"
+                              Name 25  "set(block--vu4[0]1;u1;vu4;"
+                              Name 22  "sb"
+                              Name 23  "bufferOffset"
+                              Name 24  "data"
+                              Name 31  "@main(u1;"
+                              Name 30  "pos"
+                              Name 44  "sbuf2"
+                              Name 46  "sbuf"
+                              Name 48  "param"
+                              Name 50  "param"
+                              Name 51  "param"
+                              Name 57  "pos"
+                              Name 59  "pos"
+                              Name 62  "@entryPointOutput"
+                              Name 63  "param"
+                              Name 68  "sbuf3"
+                              MemberName 68(sbuf3) 0  "@data"
+                              Name 70  "sbuf3"
+                              Decorate 8 ArrayStride 16
+                              MemberDecorate 9 0 NonWritable
+                              MemberDecorate 9 0 Offset 0
+                              Decorate 9 BufferBlock
+                              Decorate 17 ArrayStride 16
+                              MemberDecorate 18 0 Offset 0
+                              Decorate 18 BufferBlock
+                              Decorate 44(sbuf2) DescriptorSet 0
+                              Decorate 46(sbuf) DescriptorSet 0
+                              Decorate 46(sbuf) Binding 10
+                              Decorate 59(pos) Location 0
+                              Decorate 62(@entryPointOutput) Location 0
+                              Decorate 67 ArrayStride 16
+                              MemberDecorate 68(sbuf3) 0 NonWritable
+                              MemberDecorate 68(sbuf3) 0 Offset 0
+                              Decorate 68(sbuf3) BufferBlock
+                              Decorate 70(sbuf3) DescriptorSet 0
+                              Decorate 70(sbuf3) Binding 12
+               2:             TypeVoid
+               3:             TypeFunction 2
+               6:             TypeInt 32 0
+               7:             TypeVector 6(int) 4
+               8:             TypeRuntimeArray 7(ivec4)
+               9:             TypeStruct 8
+              10:             TypePointer Uniform 9(struct)
+              11:             TypePointer Function 6(int)
+              12:             TypeFunction 7(ivec4) 10(ptr) 11(ptr)
+              17:             TypeRuntimeArray 7(ivec4)
+              18:             TypeStruct 17
+              19:             TypePointer Uniform 18(struct)
+              20:             TypePointer Function 7(ivec4)
+              21:             TypeFunction 2 19(ptr) 11(ptr) 20(ptr)
+              27:             TypeFloat 32
+              28:             TypeVector 27(float) 4
+              29:             TypeFunction 28(fvec4) 11(ptr)
+              33:             TypeInt 32 1
+              34:     33(int) Constant 0
+              36:             TypePointer Uniform 7(ivec4)
+       44(sbuf2):     19(ptr) Variable Uniform
+              45:      6(int) Constant 2
+        46(sbuf):     10(ptr) Variable Uniform
+              47:      6(int) Constant 3
+              53:   27(float) Constant 0
+              54:   28(fvec4) ConstantComposite 53 53 53 53
+              58:             TypePointer Input 6(int)
+         59(pos):     58(ptr) Variable Input
+              61:             TypePointer Output 28(fvec4)
+62(@entryPointOutput):     61(ptr) Variable Output
+              66:             TypeVector 6(int) 3
+              67:             TypeRuntimeArray 66(ivec3)
+       68(sbuf3):             TypeStruct 67
+              69:             TypePointer Uniform 68(sbuf3)
+       70(sbuf3):     69(ptr) Variable Uniform
+         4(main):           2 Function None 3
+               5:             Label
+         57(pos):     11(ptr) Variable Function
+       63(param):     11(ptr) Variable Function
+              60:      6(int) Load 59(pos)
+                              Store 57(pos) 60
+              64:      6(int) Load 57(pos)
+                              Store 63(param) 64
+              65:   28(fvec4) FunctionCall 31(@main(u1;) 63(param)
+                              Store 62(@entryPointOutput) 65
+                              Return
+                              FunctionEnd
+15(get(block--vu4[0]1;u1;):    7(ivec4) Function None 12
+          13(sb):     10(ptr) FunctionParameter
+14(bufferOffset):     11(ptr) FunctionParameter
+              16:             Label
+              35:      6(int) Load 14(bufferOffset)
+              37:     36(ptr) AccessChain 13(sb) 34 35
+              38:    7(ivec4) Load 37
+                              ReturnValue 38
+                              FunctionEnd
+25(set(block--vu4[0]1;u1;vu4;):           2 Function None 21
+          22(sb):     19(ptr) FunctionParameter
+23(bufferOffset):     11(ptr) FunctionParameter
+        24(data):     20(ptr) FunctionParameter
+              26:             Label
+              41:      6(int) Load 23(bufferOffset)
+              42:    7(ivec4) Load 24(data)
+              43:     36(ptr) AccessChain 22(sb) 34 41
+                              Store 43 42
+                              Return
+                              FunctionEnd
+   31(@main(u1;):   28(fvec4) Function None 29
+         30(pos):     11(ptr) FunctionParameter
+              32:             Label
+       48(param):     11(ptr) Variable Function
+       50(param):     11(ptr) Variable Function
+       51(param):     20(ptr) Variable Function
+                              Store 48(param) 47
+              49:    7(ivec4) FunctionCall 15(get(block--vu4[0]1;u1;) 46(sbuf) 48(param)
+                              Store 50(param) 45
+                              Store 51(param) 49
+              52:           2 FunctionCall 25(set(block--vu4[0]1;u1;vu4;) 44(sbuf2) 50(param) 51(param)
+                              ReturnValue 54
+                              FunctionEnd

@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2016 The Khronos Group Inc.
+// Copyright (c) 2014-2017 The Khronos Group Inc.
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and/or associated documentation files (the "Materials"),
@@ -47,11 +47,11 @@ namespace spv {
 typedef unsigned int Id;
 
 #define SPV_VERSION 0x10000
-#define SPV_REVISION 8
+#define SPV_REVISION 10
 
 static const unsigned int MagicNumber = 0x07230203;
 static const unsigned int Version = 0x00010000;
-static const unsigned int Revision = 8;
+static const unsigned int Revision = 10;
 static const unsigned int OpCodeMask = 0xffff;
 static const unsigned int WordCountShift = 16;
 
@@ -61,7 +61,6 @@ enum SourceLanguage {
     SourceLanguageGLSL = 2,
     SourceLanguageOpenCL_C = 3,
     SourceLanguageOpenCL_CPP = 4,
-    SourceLanguageHLSL = 5,
     SourceLanguageMax = 0x7fffffff,
 };
 
@@ -375,6 +374,10 @@ enum Decoration {
     DecorationNoContraction = 42,
     DecorationInputAttachmentIndex = 43,
     DecorationAlignment = 44,
+    DecorationOverrideCoverageNV = 5248,
+    DecorationPassthroughNV = 5250,
+    DecorationViewportRelativeNV = 5252,
+    DecorationSecondaryViewportRelativeNV = 5256,
     DecorationMax = 0x7fffffff,
 };
 
@@ -428,6 +431,13 @@ enum BuiltIn {
     BuiltInBaseVertex = 4424,
     BuiltInBaseInstance = 4425,
     BuiltInDrawIndex = 4426,
+    BuiltInDeviceIndex = 4438,
+    BuiltInViewIndex = 4440,
+    BuiltInViewportMaskNV = 5253,
+    BuiltInSecondaryPositionNV = 5257,
+    BuiltInSecondaryViewportMaskNV = 5258,
+    BuiltInPositionPerViewNV = 5261,
+    BuiltInViewportMaskPerViewNV = 5262,
     BuiltInMax = 0x7fffffff,
 };
 
@@ -606,6 +616,18 @@ enum Capability {
     CapabilitySubgroupBallotKHR = 4423,
     CapabilityDrawParameters = 4427,
     CapabilitySubgroupVoteKHR = 4431,
+    CapabilityStorageUniformBufferBlock16 = 4433,
+    CapabilityStorageUniform16 = 4434,
+    CapabilityStoragePushConstant16 = 4435,
+    CapabilityStorageInputOutput16 = 4436,
+    CapabilityDeviceGroup = 4437,
+    CapabilityMultiView = 4439,
+    CapabilitySampleMaskOverrideCoverageNV = 5249,
+    CapabilityGeometryShaderPassthroughNV = 5251,
+    CapabilityShaderViewportIndexLayerNV = 5254,
+    CapabilityShaderViewportMaskNV = 5255,
+    CapabilityShaderStereoViewNV = 5259,
+    CapabilityPerViewAttributesNV = 5260,
     CapabilityMax = 0x7fffffff,
 };
 
@@ -906,10 +928,10 @@ enum Op {
     OpImageSparseRead = 320,
     OpSubgroupBallotKHR = 4421,
     OpSubgroupFirstInvocationKHR = 4422,
-    OpSubgroupReadInvocationKHR = 4432,
     OpSubgroupAllKHR = 4428,
     OpSubgroupAnyKHR = 4429,
     OpSubgroupAllEqualKHR = 4430,
+    OpSubgroupReadInvocationKHR = 4432,
     OpMax = 0x7fffffff,
 };
 

@@ -244,3 +244,5 @@ void voidTernary()
 	b ? foo121111() : 4;  // ERROR
 	b ? 3 : foo12111();   // ERROR
 }
+
+float halfFloat1 = 1.0h;   // syntax ERROR

@@ -327,6 +327,7 @@ void HlslScanContext::fillInKeywordMap()
     (*KeywordMap)["RWStructuredBuffer"] =      EHTokRWStructuredBuffer;
     (*KeywordMap)["StructuredBuffer"] =        EHTokStructuredBuffer;
 
+    (*KeywordMap)["class"] =                   EHTokClass;
     (*KeywordMap)["struct"] =                  EHTokStruct;
     (*KeywordMap)["cbuffer"] =                 EHTokCBuffer;
     (*KeywordMap)["tbuffer"] =                 EHTokTBuffer;
@@ -354,7 +355,6 @@ void HlslScanContext::fillInKeywordMap()
     ReservedSet->insert("auto");
     ReservedSet->insert("catch");
     ReservedSet->insert("char");
-    ReservedSet->insert("class");
     ReservedSet->insert("const_cast");
     ReservedSet->insert("enum");
     ReservedSet->insert("explicit");
@@ -740,6 +740,7 @@ EHlslTokenClass HlslScanContext::tokenizeIdentifier()
         return keyword;
 
     // variable, user type, ...
+    case EHTokClass:
     case EHTokStruct:
     case EHTokTypedef:
     case EHTokCBuffer:

@@ -12,7 +12,7 @@ struct myS {
 
 myS s1;
 
-static struct {
+static class {
     float4 i;
 } s2;
 
@@ -30,14 +30,24 @@ struct IN_S {
 float ff5 : packoffset(c101.y) : register(ps_5_0, s[5]);
 float ff6 : packoffset(c102.y) : register(s3[5]);
 
+struct empty {};
+
+struct containEmpty {
+    empty e;
+};
+
 float4 PixelShaderFunction(float4 input, IN_S s) : COLOR0
 {
-    struct FS {
+    class FS {
         bool3 b3;
     } s3;
 
     s3 == s3;
     s2.i = s.ff4;
+
+    containEmpty ce;
+    empty e;
+    e = ce.e;
 
     return input;
 }

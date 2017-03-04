@@ -132,6 +132,10 @@ const char* const E_GL_ARB_sparse_texture_clamp         = "GL_ARB_sparse_texture
 const char* const E_GL_EXT_shader_non_constant_global_initializers = "GL_EXT_shader_non_constant_global_initializers";
 const char* const E_GL_EXT_shader_image_load_formatted = "GL_EXT_shader_image_load_formatted";
 
+// EXT extensions
+const char* const E_GL_EXT_device_group                 = "GL_EXT_device_group";
+const char* const E_GL_EXT_multiview                    = "GL_EXT_multiview";
+
 // #line and #include
 const char* const E_GL_GOOGLE_cpp_style_line_directive          = "GL_GOOGLE_cpp_style_line_directive";
 const char* const E_GL_GOOGLE_include_directive                 = "GL_GOOGLE_include_directive";

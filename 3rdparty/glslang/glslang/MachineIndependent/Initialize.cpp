@@ -85,6 +85,8 @@ TBuiltIns::TBuiltIns()
     prefixes[EbtFloat] =  "";
     prefixes[EbtInt]   = "i";
     prefixes[EbtUint]  = "u";
+    prefixes[EbtInt64]  = "i64";
+    prefixes[EbtUint64] = "u64";
     postfixes[2] = "2";
     postfixes[3] = "3";
     postfixes[4] = "4";
@@ -102,6 +104,7 @@ TBuiltIns::TBuiltIns()
 TBuiltIns::~TBuiltIns()
 {
 }
+
 
 //
 // Add all context-independent built-in functions and variables that are present
@@ -3698,6 +3701,11 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
+    if (profile != EEsProfile) {
+        commonBuiltins.append("uniform int gl_ViewIndex;");
+        commonBuiltins.append("uniform int gl_DeviceIndex;");  // GL_EXT_device_group
+    }
+
     // printf("%s\n", commonBuiltins.c_str());
     // printf("%s\n", stageBuiltins[EShLangFragment].c_str());
 }
@@ -5307,6 +5315,13 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("imageAtomicXor",      1, &E_GL_OES_shader_image_atomic);
             symbolTable.setFunctionExtensions("imageAtomicExchange", 1, &E_GL_OES_shader_image_atomic);
             symbolTable.setFunctionExtensions("imageAtomicCompSwap", 1, &E_GL_OES_shader_image_atomic);
+        }
+
+        if (profile != EEsProfile) {
+            symbolTable.setFunctionExtensions("gl_DeviceIndex",  1, &E_GL_EXT_device_group);
+            BuiltInVariable("gl_DeviceIndex", EbvDeviceIndex, symbolTable);
+            symbolTable.setFunctionExtensions("gl_ViewIndex", 1, &E_GL_EXT_multiview);
+            BuiltInVariable("gl_ViewIndex", EbvViewIndex, symbolTable);
         }
         break;
 

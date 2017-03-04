@@ -13,6 +13,10 @@ PS_OUTPUT main()
     int   r06 = 6L;      // upper long int
     int   r07 = 071;     // octal
     uint  r08 = 072u;    // unsigned octal
+    float r09 = 1.h;     // half
+    float r10 = 1.H;     // half
+    float r11 = 1.1h;    // half
+    float r12 = 1.1H;    // half
 
     PS_OUTPUT ps_output;
     ps_output.color = r07; // gets 71 octal = 57 decimal

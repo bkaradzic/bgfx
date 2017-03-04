@@ -103,7 +103,11 @@ void TType::buildMangledName(TString& mangledName)
             mangledName += "M";
         break;
     case EbtStruct:
-        mangledName += "struct-";
+    case EbtBlock:
+        if (basicType == EbtStruct)
+            mangledName += "struct-";
+        else
+            mangledName += "block-";
         if (typeName)
             mangledName += *typeName;
         for (unsigned int i = 0; i < structure->size(); ++i) {

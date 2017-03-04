@@ -5,7 +5,10 @@ ERROR: 0:40: '##' : unexpected location; end of replacement list
 ERROR: 0:49: '##' : combined tokens are too long 
 ERROR: 0:52: '##' : not supported for these tokens 
 ERROR: 0:69: '##' : combined token is invalid 
-ERROR: 5 compilation errors.  No code generated.
+ERROR: 0:82: 'macro expansion' : Too few args in Macro rec
+ERROR: 0:82: '##' : unexpected location 
+ERROR: 0:82: '##' : unexpected location 
+ERROR: 8 compilation errors.  No code generated.
 
 
 Shader version: 450

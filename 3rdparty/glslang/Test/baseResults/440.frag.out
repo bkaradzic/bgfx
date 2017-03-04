@@ -22,11 +22,11 @@ ERROR: 0:38: 'offset' : only applies to block members, not blocks
 ERROR: 0:39: 'output block' : not supported in this stage: fragment
 ERROR: 0:39: 'layout' : offset/align can only be used on a uniform or buffer 
 ERROR: 0:39: 'offset' : only applies to block members, not blocks 
-ERROR: 0:42: 'offset/align' : can only be used with std140 or std430 layout packing 
-ERROR: 0:43: 'offset/align' : can only be used with std140 or std430 layout packing 
+ERROR: 0:42: 'align' : can only be used with std140 or std430 layout packing 
+ERROR: 0:43: 'align' : can only be used with std140 or std430 layout packing 
 ERROR: 0:43: 'layout' : offset/align can only be used on a uniform or buffer 
 ERROR: 0:44: 'output block' : not supported in this stage: fragment
-ERROR: 0:44: 'offset/align' : can only be used with std140 or std430 layout packing 
+ERROR: 0:44: 'align' : can only be used with std140 or std430 layout packing 
 ERROR: 0:44: 'layout' : offset/align can only be used on a uniform or buffer 
 ERROR: 0:46: 'offset' : cannot specify on a variable declaration 
 ERROR: 0:47: 'layout' : offset/align can only be used on a uniform or buffer 
@@ -37,8 +37,9 @@ ERROR: 0:52: 'layout' : offset/align can only be used on a uniform or buffer
 ERROR: 0:54: 'layout' : matrix or packing qualifiers can only be used on a uniform or buffer 
 ERROR: 0:55: 'layout' : cannot specify packing on a variable declaration 
 ERROR: 0:57: 'align' : must be a power of 2 
-ERROR: 0:58: 'align' : can only be used with std140 or std430 layout packing 
-ERROR: 0:63: 'align' : can only be used with std140 or std430 layout packing 
+ERROR: 0:58: 'offset/align' : can only be used with std140 or std430 layout packing 
+ERROR: 0:62: 'offset/align' : can only be used with std140 or std430 layout packing 
+ERROR: 0:63: 'offset/align' : can only be used with std140 or std430 layout packing 
 ERROR: 0:62: 'layout' : offset/align can only be used on a uniform or buffer 
 ERROR: 0:63: 'layout' : offset/align can only be used on a uniform or buffer 
 ERROR: 0:84: 'align' : must be a power of 2 
@@ -48,7 +49,7 @@ ERROR: 0:103: 'align' : must be a power of 2
 ERROR: 0:105: 'align' : must be a power of 2 
 ERROR: 0:102: 'offset' : cannot lie in previous members 
 ERROR: 0:104: 'offset' : must be a multiple of the member's alignment 
-ERROR: 48 compilation errors.  No code generated.
+ERROR: 49 compilation errors.  No code generated.
 
 
 Shader version: 440

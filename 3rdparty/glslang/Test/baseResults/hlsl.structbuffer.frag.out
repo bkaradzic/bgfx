@@ -9,9 +9,9 @@ gl_FragCoord origin is upper left
 0:13      Sequence
 0:13        move second child to first child (temp structure{temp 3-component vector of float color, temp bool test, temp bool test2})
 0:13          'mydata' (temp structure{temp 3-component vector of float color, temp bool test, temp bool test2})
-0:13          indirect index (layout(binding=10 row_major std430 ) readonly buffer structure{temp 3-component vector of float color, temp bool test, temp bool test2})
-0:13            sbuf: direct index for structure (layout(binding=10 row_major std430 ) readonly buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2})
-0:13              'anon@0' (layout(binding=10 row_major std430 ) readonly buffer block{layout(binding=10 row_major std430 ) readonly buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} sbuf})
+0:13          indirect index (layout(row_major std430 ) buffer structure{temp 3-component vector of float color, temp bool test, temp bool test2})
+0:13            @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2})
+0:13              'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} @data})
 0:13              Constant:
 0:13                0 (const uint)
 0:13            'pos' (in uint)
@@ -19,8 +19,8 @@ gl_FragCoord origin is upper left
 0:17        move second child to first child (temp uint)
 0:17          'size' (temp uint)
 0:17          array length (temp uint)
-0:17            sbuf: direct index for structure (layout(binding=10 row_major std430 ) readonly buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2})
-0:17              'anon@0' (layout(binding=10 row_major std430 ) readonly buffer block{layout(binding=10 row_major std430 ) readonly buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} sbuf})
+0:17            @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2})
+0:17              'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} @data})
 0:17              Constant:
 0:17                0 (const uint)
 0:17        move second child to first child (temp uint)
@@ -30,9 +30,9 @@ gl_FragCoord origin is upper left
 0:19      Test condition and select (temp void)
 0:19        Condition
 0:19        test: direct index for structure (temp bool)
-0:19          indirect index (layout(binding=10 row_major std430 ) readonly temp structure{temp 3-component vector of float color, temp bool test, temp bool test2})
-0:19            sbuf: direct index for structure (layout(binding=10 row_major std430 ) readonly buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2})
-0:19              'anon@0' (layout(binding=10 row_major std430 ) readonly buffer block{layout(binding=10 row_major std430 ) readonly buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} sbuf})
+0:19          indirect index (layout(row_major std430 ) buffer structure{temp 3-component vector of float color, temp bool test, temp bool test2})
+0:19            @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2})
+0:19              'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} @data})
 0:19              Constant:
 0:19                0 (const uint)
 0:19            'pos' (in uint)
@@ -43,17 +43,17 @@ gl_FragCoord origin is upper left
 0:?           Construct vec4 (temp 4-component vector of float)
 0:20            add (temp 3-component vector of float)
 0:20              color: direct index for structure (temp 3-component vector of float)
-0:20                indirect index (layout(binding=10 row_major std430 ) readonly temp structure{temp 3-component vector of float color, temp bool test, temp bool test2})
-0:20                  sbuf: direct index for structure (layout(binding=10 row_major std430 ) readonly buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2})
-0:20                    'anon@0' (layout(binding=10 row_major std430 ) readonly buffer block{layout(binding=10 row_major std430 ) readonly buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} sbuf})
+0:20                indirect index (layout(row_major std430 ) buffer structure{temp 3-component vector of float color, temp bool test, temp bool test2})
+0:20                  @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2})
+0:20                    'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} @data})
 0:20                    Constant:
 0:20                      0 (const uint)
 0:20                  'pos' (in uint)
 0:20                Constant:
 0:20                  0 (const int)
-0:20              indirect index (layout(row_major std430 ) readonly temp float)
-0:20                sbuf2: direct index for structure (layout(row_major std430 ) readonly buffer implicitly-sized array of float)
-0:20                  'anon@1' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) readonly buffer implicitly-sized array of float sbuf2})
+0:20              indirect index (layout(row_major std430 ) buffer float)
+0:20                @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of float)
+0:20                  'sbuf2' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of float @data})
 0:20                  Constant:
 0:20                    0 (const uint)
 0:20                'pos' (in uint)
@@ -86,8 +86,8 @@ gl_FragCoord origin is upper left
 0:12        Function Call: @main(u1; (temp 4-component vector of float)
 0:?           'pos' (temp uint)
 0:?   Linker Objects
-0:?     'anon@0' (layout(binding=10 row_major std430 ) readonly buffer block{layout(binding=10 row_major std430 ) readonly buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} sbuf})
-0:?     'anon@1' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) readonly buffer implicitly-sized array of float sbuf2})
+0:?     'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} @data})
+0:?     'sbuf2' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of float @data})
 0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
 0:?     'pos' (layout(location=0 ) in uint)
 
@@ -105,9 +105,9 @@ gl_FragCoord origin is upper left
 0:13      Sequence
 0:13        move second child to first child (temp structure{temp 3-component vector of float color, temp bool test, temp bool test2})
 0:13          'mydata' (temp structure{temp 3-component vector of float color, temp bool test, temp bool test2})
-0:13          indirect index (layout(binding=10 row_major std430 ) readonly buffer structure{temp 3-component vector of float color, temp bool test, temp bool test2})
-0:13            sbuf: direct index for structure (layout(binding=10 row_major std430 ) readonly buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2})
-0:13              'anon@0' (layout(binding=10 row_major std430 ) readonly buffer block{layout(binding=10 row_major std430 ) readonly buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} sbuf})
+0:13          indirect index (layout(row_major std430 ) buffer structure{temp 3-component vector of float color, temp bool test, temp bool test2})
+0:13            @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2})
+0:13              'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} @data})
 0:13              Constant:
 0:13                0 (const uint)
 0:13            'pos' (in uint)
@@ -115,8 +115,8 @@ gl_FragCoord origin is upper left
 0:17        move second child to first child (temp uint)
 0:17          'size' (temp uint)
 0:17          array length (temp uint)
-0:17            sbuf: direct index for structure (layout(binding=10 row_major std430 ) readonly buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2})
-0:17              'anon@0' (layout(binding=10 row_major std430 ) readonly buffer block{layout(binding=10 row_major std430 ) readonly buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} sbuf})
+0:17            @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2})
+0:17              'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} @data})
 0:17              Constant:
 0:17                0 (const uint)
 0:17        move second child to first child (temp uint)
@@ -126,9 +126,9 @@ gl_FragCoord origin is upper left
 0:19      Test condition and select (temp void)
 0:19        Condition
 0:19        test: direct index for structure (temp bool)
-0:19          indirect index (layout(binding=10 row_major std430 ) readonly temp structure{temp 3-component vector of float color, temp bool test, temp bool test2})
-0:19            sbuf: direct index for structure (layout(binding=10 row_major std430 ) readonly buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2})
-0:19              'anon@0' (layout(binding=10 row_major std430 ) readonly buffer block{layout(binding=10 row_major std430 ) readonly buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} sbuf})
+0:19          indirect index (layout(row_major std430 ) buffer structure{temp 3-component vector of float color, temp bool test, temp bool test2})
+0:19            @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2})
+0:19              'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} @data})
 0:19              Constant:
 0:19                0 (const uint)
 0:19            'pos' (in uint)
@@ -139,17 +139,17 @@ gl_FragCoord origin is upper left
 0:?           Construct vec4 (temp 4-component vector of float)
 0:20            add (temp 3-component vector of float)
 0:20              color: direct index for structure (temp 3-component vector of float)
-0:20                indirect index (layout(binding=10 row_major std430 ) readonly temp structure{temp 3-component vector of float color, temp bool test, temp bool test2})
-0:20                  sbuf: direct index for structure (layout(binding=10 row_major std430 ) readonly buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2})
-0:20                    'anon@0' (layout(binding=10 row_major std430 ) readonly buffer block{layout(binding=10 row_major std430 ) readonly buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} sbuf})
+0:20                indirect index (layout(row_major std430 ) buffer structure{temp 3-component vector of float color, temp bool test, temp bool test2})
+0:20                  @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2})
+0:20                    'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} @data})
 0:20                    Constant:
 0:20                      0 (const uint)
 0:20                  'pos' (in uint)
 0:20                Constant:
 0:20                  0 (const int)
-0:20              indirect index (layout(row_major std430 ) readonly temp float)
-0:20                sbuf2: direct index for structure (layout(row_major std430 ) readonly buffer implicitly-sized array of float)
-0:20                  'anon@1' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) readonly buffer implicitly-sized array of float sbuf2})
+0:20              indirect index (layout(row_major std430 ) buffer float)
+0:20                @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of float)
+0:20                  'sbuf2' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of float @data})
 0:20                  Constant:
 0:20                    0 (const uint)
 0:20                'pos' (in uint)
@@ -182,8 +182,8 @@ gl_FragCoord origin is upper left
 0:12        Function Call: @main(u1; (temp 4-component vector of float)
 0:?           'pos' (temp uint)
 0:?   Linker Objects
-0:?     'anon@0' (layout(binding=10 row_major std430 ) readonly buffer block{layout(binding=10 row_major std430 ) readonly buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} sbuf})
-0:?     'anon@1' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) readonly buffer implicitly-sized array of float sbuf2})
+0:?     'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of structure{temp 3-component vector of float color, temp bool test, temp bool test2} @data})
+0:?     'sbuf2' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of float @data})
 0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
 0:?     'pos' (layout(location=0 ) in uint)
 
@@ -209,13 +209,13 @@ gl_FragCoord origin is upper left
                               MemberName 19(sb_t) 1  "test"
                               MemberName 19(sb_t) 2  "test2"
                               Name 21  "sbuf"
-                              MemberName 21(sbuf) 0  "sbuf"
-                              Name 23  ""
+                              MemberName 21(sbuf) 0  "@data"
+                              Name 23  "sbuf"
                               Name 40  "size"
                               Name 42  "stride"
                               Name 57  "sbuf2"
-                              MemberName 57(sbuf2) 0  "sbuf2"
-                              Name 59  ""
+                              MemberName 57(sbuf2) 0  "@data"
+                              Name 59  "sbuf2"
                               Name 85  "pos"
                               Name 87  "pos"
                               Name 90  "@entryPointOutput"
@@ -230,13 +230,13 @@ gl_FragCoord origin is upper left
                               MemberDecorate 21(sbuf) 0 NonWritable
                               MemberDecorate 21(sbuf) 0 Offset 0
                               Decorate 21(sbuf) BufferBlock
-                              Decorate 23 DescriptorSet 0
-                              Decorate 23 Binding 10
+                              Decorate 23(sbuf) DescriptorSet 0
+                              Decorate 23(sbuf) Binding 10
                               Decorate 56 ArrayStride 4
                               MemberDecorate 57(sbuf2) 0 NonWritable
                               MemberDecorate 57(sbuf2) 0 Offset 0
                               Decorate 57(sbuf2) BufferBlock
-                              Decorate 59 DescriptorSet 0
+                              Decorate 59(sbuf2) DescriptorSet 0
                               Decorate 87(pos) Location 0
                               Decorate 90(@entryPointOutput) Location 0
                2:             TypeVoid
@@ -254,7 +254,7 @@ gl_FragCoord origin is upper left
               20:             TypeRuntimeArray 19(sb_t)
         21(sbuf):             TypeStruct 20
               22:             TypePointer Uniform 21(sbuf)
-              23:     22(ptr) Variable Uniform
+        23(sbuf):     22(ptr) Variable Uniform
               24:             TypeInt 32 1
               25:     24(int) Constant 0
               27:             TypePointer Uniform 19(sb_t)
@@ -269,7 +269,7 @@ gl_FragCoord origin is upper left
               56:             TypeRuntimeArray 8(float)
        57(sbuf2):             TypeStruct 56
               58:             TypePointer Uniform 57(sbuf2)
-              59:     58(ptr) Variable Uniform
+       59(sbuf2):     58(ptr) Variable Uniform
               61:             TypePointer Uniform 8(float)
               66:    8(float) Constant 0
               73:             TypePointer Function 8(float)
@@ -296,7 +296,7 @@ gl_FragCoord origin is upper left
         40(size):      7(ptr) Variable Function
       42(stride):      7(ptr) Variable Function
               26:      6(int) Load 11(pos)
-              28:     27(ptr) AccessChain 23 25 26
+              28:     27(ptr) AccessChain 23(sbuf) 25 26
               29:    19(sb_t) Load 28
               30:   14(fvec3) CompositeExtract 29 0
               32:     31(ptr) AccessChain 18(mydata) 25
@@ -307,21 +307,21 @@ gl_FragCoord origin is upper left
               37:      6(int) CompositeExtract 29 2
               39:     35(ptr) AccessChain 18(mydata) 38
                               Store 39 37
-              41:     24(int) ArrayLength 23 0
+              41:     24(int) ArrayLength 23(sbuf) 0
                               Store 40(size) 41
                               Store 42(stride) 43
               44:      6(int) Load 11(pos)
-              46:     45(ptr) AccessChain 23 25 44 34
+              46:     45(ptr) AccessChain 23(sbuf) 25 44 34
               47:      6(int) Load 46
               49:    15(bool) INotEqual 47 48
                               SelectionMerge 51 None
                               BranchConditional 49 50 72
               50:               Label
               52:      6(int)   Load 11(pos)
-              54:     53(ptr)   AccessChain 23 25 52 25
+              54:     53(ptr)   AccessChain 23(sbuf) 25 52 25
               55:   14(fvec3)   Load 54
               60:      6(int)   Load 11(pos)
-              62:     61(ptr)   AccessChain 59 25 60
+              62:     61(ptr)   AccessChain 59(sbuf2) 25 60
               63:    8(float)   Load 62
               64:   14(fvec3)   CompositeConstruct 63 63 63
               65:   14(fvec3)   FAdd 55 64

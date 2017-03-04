@@ -203,14 +203,6 @@ SH_IMPORT_EXPORT int ShCompile(
     EShMessages messages = EShMsgDefault // warnings and errors
     );
 
-SH_IMPORT_EXPORT int ShLink(
-    const ShHandle,               // linker object
-    const ShHandle h[],           // compiler objects to link together
-    const int numHandles,
-    ShHandle uniformMap,          // updated with new uniforms
-    short int** uniformsAccessed,  // returned with indexes of uniforms accessed
-    int* numUniformsAccessed);
-
 SH_IMPORT_EXPORT int ShLinkExt(
     const ShHandle,               // linker object
     const ShHandle h[],           // compiler objects to link together

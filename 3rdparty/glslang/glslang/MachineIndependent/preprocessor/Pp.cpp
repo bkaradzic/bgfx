@@ -986,6 +986,8 @@ TPpContext::TokenStream* TPpContext::PrescanMacroArg(TokenStream& arg, TPpToken*
     int token;
     while ((token = scanToken(ppToken)) != tMarkerInput::marker && token != EndOfInput) {
         token = tokenPaste(token, *ppToken);
+        if (token == tMarkerInput::marker || token == EndOfInput)
+            break;
         if (token == PpAtomIdentifier && MacroExpand(ppToken, false, newLineOkay) != 0)
             continue;
         expandedArg->putToken(token, ppToken);
@@ -1050,7 +1052,7 @@ int TPpContext::tMacroInput::scan(TPpToken* ppToken)
     // TODO: preprocessor:  properly handle whitespace (or lack of it) between tokens when expanding
     if (token == PpAtomIdentifier) {
         int i;
-        for (i = mac->args.size() - 1; i >= 0; i--)
+        for (i = (int)mac->args.size() - 1; i >= 0; i--)
             if (strcmp(pp->atomStrings.getString(mac->args[i]), ppToken->name) == 0)
                 break;
         if (i >= 0) {

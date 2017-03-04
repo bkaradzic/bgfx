@@ -101,9 +101,16 @@ int TPpContext::lFloatConst(int len, int ch, TPpToken* ppToken)
 {
     bool HasDecimalOrExponent = false;
     int isDouble = 0;
+    bool generateFloat16 = false;
+    bool acceptFloat16 = parseContext.intermediate.getSource() == EShSourceHlsl;
+    bool isFloat16 = false;
+    bool requireHF = false;
 #ifdef AMD_EXTENSIONS
-    int isFloat16 = 0;
-    bool enableFloat16 = parseContext.version >= 450 && parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_half_float);
+    if (parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_half_float)) {
+        acceptFloat16 = true;
+        generateFloat16 = true;
+        requireHF = true;
+    }
 #endif
 
     const auto saveName = [&](int ch) {
@@ -158,21 +165,27 @@ int TPpContext::lFloatConst(int len, int ch, TPpToken* ppToken)
             saveName(ch2);
             isDouble = 1;
         }
+    } else if (acceptFloat16 && (ch == 'h' || ch == 'H')) {
 #ifdef AMD_EXTENSIONS
-    } else if (enableFloat16 && (ch == 'h' || ch == 'H')) {
-        parseContext.float16Check(ppToken->loc, "half floating-point suffix");
+        if (generateFloat16)
+            parseContext.float16Check(ppToken->loc, "half floating-point suffix");
+#endif
         if (!HasDecimalOrExponent)
             parseContext.ppError(ppToken->loc, "float literal needs a decimal point or exponent", "", "");
-        int ch2 = getChar();
-        if (ch2 != 'f' && ch2 != 'F') {
-            ungetChar();
-            ungetChar();
+        if (requireHF) {
+            int ch2 = getChar();
+            if (ch2 != 'f' && ch2 != 'F') {
+                ungetChar();
+                ungetChar();
+            } else {
+                saveName(ch);
+                saveName(ch2);
+                isFloat16 = generateFloat16;
+            }
         } else {
             saveName(ch);
-            saveName(ch2);
-            isFloat16 = 1;
+            isFloat16 = generateFloat16;
         }
-#endif
     } else if (ch == 'f' || ch == 'F') {
         parseContext.profileRequires(ppToken->loc,  EEsProfile, 300, nullptr, "floating-point suffix");
         if (! parseContext.relaxedErrors())
@@ -197,10 +210,8 @@ int TPpContext::lFloatConst(int len, int ch, TPpToken* ppToken)
     // Return the right token type
     if (isDouble)
         return PpAtomConstDouble;
-#ifdef AMD_EXTENSIONS
     else if (isFloat16)
         return PpAtomConstFloat16;
-#endif
     else
         return PpAtomConstFloat;
 }
@@ -216,6 +227,15 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
     int ii = 0;
     unsigned long long ival = 0;
     bool enableInt64 = pp->parseContext.version >= 450 && pp->parseContext.extensionTurnedOn(E_GL_ARB_gpu_shader_int64);
+    bool acceptHalf = pp->parseContext.intermediate.getSource() == EShSourceHlsl;
+#ifdef AMD_EXTENSIONS
+    if (pp->parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_half_float))
+        acceptHalf = true;
+#endif
+
+    const auto floatingPointChar = [&](int ch) { return ch == '.' || ch == 'e' || ch == 'E' ||
+                                                                     ch == 'f' || ch == 'F' ||
+                                                     (acceptHalf && (ch == 'h' || ch == 'H')); };
 
     ppToken->ival = 0;
     ppToken->i64val = 0;
@@ -380,7 +400,7 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
                         ch = getch();
                     } while (ch >= '0' && ch <= '9');
                 }
-                if (ch == '.' || ch == 'e' || ch == 'f' || ch == 'E' || ch == 'F')
+                if (floatingPointChar(ch))
                     return pp->lFloatConst(len, ch, ppToken);
 
                 // wasn't a float, so must be octal...
@@ -435,9 +455,9 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
                 }
                 ch = getch();
             } while (ch >= '0' && ch <= '9');
-            if (ch == '.' || ch == 'e' || ch == 'f' || ch == 'E' || ch == 'F') {
+            if (floatingPointChar(ch))
                 return pp->lFloatConst(len, ch, ppToken);
-            } else {
+            else {
                 // Finish handling signed and unsigned integers
                 int numericLen = len;
                 bool isUnsigned = false;
