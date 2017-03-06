@@ -51,7 +51,6 @@ void TextMetrics::appendText(FontHandle _fontHandle, const char* _string)
 					m_lineGap = font.lineGap;
 					m_lineHeight = font.ascender - font.descender;					
 					m_x = 0;
-					break;
 				}
 
 				m_x += glyph->advance_x;
@@ -98,7 +97,6 @@ void TextMetrics::appendText(FontHandle _fontHandle, const wchar_t* _string)
 				m_lineGap = font.lineGap;
 				m_lineHeight = font.ascender - font.descender;
 				m_x = 0;
-				break;
 			}
 
 			m_x += glyph->advance_x;
