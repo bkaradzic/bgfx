@@ -177,7 +177,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void saveScreenShot(const char* /*_filePath*/) BX_OVERRIDE
+		void requestScreenShot(FrameBufferHandle /*_handle*/, const char* /*_filePath*/) BX_OVERRIDE
 		{
 		}
 
@@ -190,6 +190,10 @@ namespace bgfx { namespace noop
 		}
 
 		void setMarker(const char* /*_marker*/, uint32_t /*_size*/) BX_OVERRIDE
+		{
+		}
+
+		void invalidateOcclusionQuery(OcclusionQueryHandle /*_handle*/) BX_OVERRIDE
 		{
 		}
 

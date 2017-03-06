@@ -904,17 +904,21 @@ namespace bgfx { namespace mtl
 		}
 
 		//cmdPre
-		void saveScreenShotPre(const char* _filePath) BX_OVERRIDE
+		void requestScreenShotPre(const char* _filePath) BX_OVERRIDE
 		{
 			BX_UNUSED(_filePath);
 			m_saveScreenshot = true;
 		}
 
 		//cmdPost
-		void saveScreenShot(const char* _filePath) BX_OVERRIDE
+		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) BX_OVERRIDE
 		{
+			BX_UNUSED(_handle);
+
 			if (NULL == m_screenshotTarget)
+			{
 				return;
+			}
 
 			m_cmd.kick(false, true);
 			m_commandBuffer = 0;
@@ -964,6 +968,11 @@ namespace bgfx { namespace mtl
 			{
 				m_renderCommandEncoder.insertDebugSignpost(_marker);
 			}
+		}
+
+		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) BX_OVERRIDE
+		{
+			m_occlusionQuery.invalidate(_handle);
 		}
 
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) BX_OVERRIDE;
@@ -1687,7 +1696,6 @@ namespace bgfx { namespace mtl
 			m_occlusionQuery.resolve(_render);
 			return _visible == (0 != _render->m_occlusion[_handle.idx]);
 		}
-
 
 		BlitCommandEncoder getBlitCommandEncoder()
 		{
@@ -2928,9 +2936,27 @@ namespace bgfx { namespace mtl
 		{
 			Query& query = m_query[m_control.m_read];
 
-			uint64_t result = ( (uint64_t*)m_buffer.contents() )[query.m_handle.idx];
-			_render->m_occlusion[query.m_handle.idx] = 0 < result;
+			if (isValid(query.m_handle) )
+			{
+				uint64_t result = ( (uint64_t*)m_buffer.contents() )[query.m_handle.idx];
+				_render->m_occlusion[query.m_handle.idx] = 0 < result;
+			}
+
 			m_control.consume(1);
+		}
+	}
+
+	void OcclusionQueryMTL::invalidate(OcclusionQueryHandle _handle)
+	{
+		const uint32_t size = m_control.m_size;
+
+		for (uint32_t ii = 0, num = m_control.available(); ii < num; ++ii)
+		{
+			Query& query = m_query[(m_control.m_read + ii) % size];
+			if (query.m_handle.idx == _handle.idx)
+			{
+				query.m_handle.idx = bgfx::invalidHandle;
+			}
 		}
 	}
 
@@ -2938,8 +2964,7 @@ namespace bgfx { namespace mtl
 	{
 		m_cmd.finish(false);
 
-
-		if ( m_commandBuffer == NULL )
+		if (m_commandBuffer == NULL)
 		{
 			m_commandBuffer = m_cmd.alloc();
 		}
@@ -2949,7 +2974,7 @@ namespace bgfx { namespace mtl
 
 		m_gpuTimer.addHandlers(m_commandBuffer);
 
-		if ( m_blitCommandEncoder )
+		if (m_blitCommandEncoder)
 		{
 			m_blitCommandEncoder.endEncoding();
 			m_blitCommandEncoder = 0;
@@ -2957,18 +2982,19 @@ namespace bgfx { namespace mtl
 
 		updateResolution(_render->m_resolution);
 
-		if ( m_saveScreenshot || NULL != m_capture )
+		if (m_saveScreenshot
+		||  NULL != m_capture)
 		{
-			if ( m_screenshotTarget )
+			if (m_screenshotTarget)
 			{
-				if ( m_screenshotTarget.width() != m_resolution.m_width ||
-					m_screenshotTarget.height() != m_resolution.m_height )
+				if (m_screenshotTarget.width()  != m_resolution.m_width
+				||  m_screenshotTarget.height() != m_resolution.m_height)
 				{
 					MTL_RELEASE(m_screenshotTarget);
 				}
 			}
 
-			if ( NULL == m_screenshotTarget)
+			if (NULL == m_screenshotTarget)
 			{
 				m_textureDescriptor.textureType = MTLTextureType2D;
 				m_textureDescriptor.pixelFormat = m_metalLayer.pixelFormat;
@@ -2981,13 +3007,16 @@ namespace bgfx { namespace mtl
 				if ( m_iOS9Runtime || m_macOS11Runtime )
 				{
 					m_textureDescriptor.cpuCacheMode = MTLCPUCacheModeDefaultCache;
-					m_textureDescriptor.storageMode = (MTLStorageMode)(((BX_ENABLED(BX_PLATFORM_IOS)) ? 0 /* MTLStorageModeShared */ :  1 /*MTLStorageModeManaged*/)
-														);
-					m_textureDescriptor.usage		 = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+					m_textureDescriptor.storageMode = (MTLStorageMode)(BX_ENABLED(BX_PLATFORM_IOS)
+						? 0 /* MTLStorageModeShared */
+						: 1 /*MTLStorageModeManaged*/
+						);
+					m_textureDescriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
 				}
 
-				m_screenshotTarget   = m_device.newTextureWithDescriptor(m_textureDescriptor);
+				m_screenshotTarget = m_device.newTextureWithDescriptor(m_textureDescriptor);
 			}
+
 			m_saveScreenshot = false;
 		}
 		else

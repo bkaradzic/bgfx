@@ -236,7 +236,7 @@ public:
         void reset() { current = 0; }
 
     protected:
-        void putSubtoken(int);
+        void putSubtoken(char);
         int getSubtoken();
         void ungetSubtoken();
 

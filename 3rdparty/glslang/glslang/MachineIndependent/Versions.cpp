@@ -232,6 +232,10 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_OES_tessellation_point_size]  = EBhDisable;
     extensionBehavior[E_GL_OES_texture_buffer]           = EBhDisable;
     extensionBehavior[E_GL_OES_texture_cube_map_array]   = EBhDisable;
+
+    // EXT extensions
+    extensionBehavior[E_GL_EXT_device_group]             = EBhDisable;
+    extensionBehavior[E_GL_EXT_multiview]                = EBhDisable;
 }
 
 // Get code that is not part of a shared symbol table, is specific to this shader,
@@ -683,7 +687,7 @@ void TParseVersions::doubleCheck(const TSourceLoc& loc, const char* op)
 }
 
 #ifdef AMD_EXTENSIONS
-// Call for any operation needing GLSL float16 data-type support.
+// Call for any operation needing float16 data-type support.
 void TParseVersions::float16Check(const TSourceLoc& loc, const char* op, bool builtIn)
 {
     if (!builtIn) {

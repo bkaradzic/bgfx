@@ -1215,6 +1215,8 @@ namespace bgfx
 
 	/// Destroy static index buffer.
 	///
+	/// @param[in] _handle Static index buffer handle.
+	///
 	/// @attention C99 equivalent is `bgfx_destroy_index_buffer`.
 	///
 	void destroyIndexBuffer(IndexBufferHandle _handle);
@@ -1268,6 +1270,7 @@ namespace bgfx
 	///       buffers.
 	///   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on
 	///       index buffers.
+	/// @returns Dynamic index buffer handle.
 	///
 	/// @attention C99 equivalent is `bgfx_create_dynamic_index_buffer`.
 	///
@@ -1291,6 +1294,7 @@ namespace bgfx
 	///       buffers.
 	///   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on
 	///       index buffers.
+	/// @returns Dynamic index buffer handle.
 	///
 	/// @attention C99 equivalent is `bgfx_create_dynamic_index_buffer_mem`.
 	///
@@ -1337,6 +1341,7 @@ namespace bgfx
 	///       buffers.
 	///   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on
 	///       index buffers.
+	/// @returns Dynamic vertex buffer handle.
 	///
 	/// @attention C99 equivalent is `bgfx_create_dynamic_vertex_buffer`.
 	///
@@ -1362,6 +1367,7 @@ namespace bgfx
 	///       buffers.
 	///   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on
 	///       index buffers.
+	/// @returns Dynamic vertex buffer handle.
 	///
 	/// @attention C99 equivalent is `bgfx_create_dynamic_vertex_buffer_mem`.
 	///
@@ -1386,6 +1392,8 @@ namespace bgfx
 		);
 
 	/// Destroy dynamic vertex buffer.
+	///
+	/// @param[in] _handle Dynamic vertex buffer handle.
 	///
 	/// @attention C99 equivalent is `bgfx_destroy_dynamic_vertex_buffer`.
 	///
@@ -1480,11 +1488,16 @@ namespace bgfx
 
 	/// Create draw indirect buffer.
 	///
+	/// @param[in] _num Number of indirect calls.
+	/// @returns Indirect buffer handle.
+	///
 	/// @attention C99 equivalent is `bgfx_create_indirect_buffer`.
 	///
 	IndirectBufferHandle createIndirectBuffer(uint32_t _num);
 
 	/// Destroy draw indirect buffer.
+	///
+	/// @param[in] _handle Indirect buffer handle.
 	///
 	/// @attention C99 equivalent is `bgfx_destroy_indirect_buffer`.
 	///
@@ -2810,16 +2823,19 @@ namespace bgfx
 		, uint16_t _depth = UINT16_MAX
 		);
 
-	/// Request screen shot.
+	/// Request screen shot of window back buffer.
 	///
+	/// @param[in] _handle Frame buffer handle. If handle is `BGFX_INVALID_HANDLE` request will be
+	///   made for main window back buffer.
 	/// @param[in] _filePath Will be passed to `bgfx::CallbackI::screenShot` callback.
 	///
 	/// @remarks
 	///   `bgfx::CallbackI::screenShot` must be implemented.
 	///
-	/// @attention C99 equivalent is `bgfx_save_screen_shot`.
+	/// @attention Frame buffer handle must be created with OS' target native window handle.
+	/// @attention C99 equivalent is `bgfx_request_screen_shot`.
 	///
-	void saveScreenShot(const char* _filePath);
+	void requestScreenShot(FrameBufferHandle _handle, const char* _filePath);
 
 } // namespace bgfx
 

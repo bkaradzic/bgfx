@@ -1,34 +1,29 @@
-float PixelShaderFunctionS(float inF0)
+float PixelShaderFunctionS(uint inF0)
 {
-    f32tof16(inF0);
-
-    return 0.0;
+    return f16tof32(inF0);
 }
 
-float1 PixelShaderFunction1(float1 inF0)
+float1 PixelShaderFunction1(uint1 inF0)
 {
-    // TODO: ... add when float1 prototypes are generated
-    return 0.0;
+    return f16tof32(inF0);
 }
 
-float2 PixelShaderFunction2(float2 inF0)
+float2 PixelShaderFunction2(uint2 inF0)
 {
-    f32tof16(inF0);
-
-    return float2(1,2);
+    return f16tof32(inF0);
 }
 
-float3 PixelShaderFunction3(float3 inF0)
+float3 PixelShaderFunction3(uint3 inF0)
 {
-    f32tof16(inF0);
-
-    return float3(1,2,3);
+    return f16tof32(inF0);
 }
 
-float4 PixelShaderFunction(float4 inF0)
+float4 PixelShaderFunction(uint4 inF0)
 {
-    f32tof16(inF0);
-
-    return float4(1,2,3,4);
+    return f16tof32(inF0);
 }
 
+float4 main() : SV_Target0
+{
+    return 0;
+}

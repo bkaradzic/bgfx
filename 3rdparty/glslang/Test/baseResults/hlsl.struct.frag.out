@@ -6,104 +6,110 @@ WARNING: 0:30: 'register' : ignoring shader_profile
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:34  Function Definition: @PixelShaderFunction(vf4;struct-IN_S-vf4-b1-vf1-vf2-b1-b1-b1-vf41; (temp 4-component vector of float)
-0:34    Function Parameters: 
-0:34      'input' (in 4-component vector of float)
-0:34      's' (in structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:40  Function Definition: @PixelShaderFunction(vf4;struct-IN_S-vf4-b1-vf1-vf2-b1-b1-b1-vf41; (temp 4-component vector of float)
+0:40    Function Parameters: 
+0:40      'input' (in 4-component vector of float)
+0:40      's' (in structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
 0:?     Sequence
-0:39      Compare Equal (temp bool)
-0:39        's3' (temp structure{temp 3-component vector of bool b3})
-0:39        's3' (temp structure{temp 3-component vector of bool b3})
+0:45      Compare Equal (temp bool)
+0:45        's3' (temp structure{temp 3-component vector of bool b3})
+0:45        's3' (temp structure{temp 3-component vector of bool b3})
+0:46      move second child to first child (temp 4-component vector of float)
+0:46        i: direct index for structure (temp 4-component vector of float)
+0:46          's2' (global structure{temp 4-component vector of float i})
+0:46          Constant:
+0:46            0 (const int)
+0:46        ff4: direct index for structure (temp 4-component vector of float)
+0:46          's' (in structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:46          Constant:
+0:46            7 (const int)
+0:50      move second child to first child (temp structure{})
+0:50        'e' (temp structure{})
+0:50        e: direct index for structure (temp structure{})
+0:50          'ce' (temp structure{temp structure{} e})
+0:50          Constant:
+0:50            0 (const int)
+0:52      Branch: Return with expression
+0:52        'input' (in 4-component vector of float)
+0:40  Function Definition: PixelShaderFunction( (temp void)
+0:40    Function Parameters: 
+0:?     Sequence
 0:40      move second child to first child (temp 4-component vector of float)
-0:40        i: direct index for structure (temp 4-component vector of float)
-0:40          's2' (global structure{temp 4-component vector of float i})
-0:40          Constant:
-0:40            0 (const int)
-0:40        ff4: direct index for structure (temp 4-component vector of float)
-0:40          's' (in structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:40          Constant:
-0:40            7 (const int)
-0:42      Branch: Return with expression
-0:42        'input' (in 4-component vector of float)
-0:34  Function Definition: PixelShaderFunction( (temp void)
-0:34    Function Parameters: 
-0:?     Sequence
-0:34      move second child to first child (temp 4-component vector of float)
 0:?         'input' (temp 4-component vector of float)
 0:?         'input' (layout(location=0 ) in 4-component vector of float)
-0:34      Sequence
-0:34        move second child to first child (temp 4-component vector of float)
-0:34          a: direct index for structure (temp 4-component vector of float)
+0:40      Sequence
+0:40        move second child to first child (temp 4-component vector of float)
+0:40          a: direct index for structure (temp 4-component vector of float)
 0:?             's' (temp structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              0 (const int)
-0:34          a: direct index for structure (smooth temp 4-component vector of float)
-0:34            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              0 (const int)
-0:34        move second child to first child (temp bool)
-0:34          b: direct index for structure (temp bool)
+0:40            Constant:
+0:40              0 (const int)
+0:40          a: direct index for structure (smooth temp 4-component vector of float)
+0:40            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:40            Constant:
+0:40              0 (const int)
+0:40        move second child to first child (temp bool)
+0:40          b: direct index for structure (temp bool)
 0:?             's' (temp structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              1 (const int)
-0:34          b: direct index for structure (flat temp bool)
-0:34            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              1 (const int)
-0:34        move second child to first child (temp 1-component vector of float)
-0:34          c: direct index for structure (temp 1-component vector of float)
+0:40            Constant:
+0:40              1 (const int)
+0:40          b: direct index for structure (flat temp bool)
+0:40            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:40            Constant:
+0:40              1 (const int)
+0:40        move second child to first child (temp 1-component vector of float)
+0:40          c: direct index for structure (temp 1-component vector of float)
 0:?             's' (temp structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              2 (const int)
-0:34          c: direct index for structure (centroid noperspective temp 1-component vector of float)
-0:34            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              2 (const int)
-0:34        move second child to first child (temp 2-component vector of float)
-0:34          d: direct index for structure (temp 2-component vector of float)
+0:40            Constant:
+0:40              2 (const int)
+0:40          c: direct index for structure (centroid noperspective temp 1-component vector of float)
+0:40            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:40            Constant:
+0:40              2 (const int)
+0:40        move second child to first child (temp 2-component vector of float)
+0:40          d: direct index for structure (temp 2-component vector of float)
 0:?             's' (temp structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              3 (const int)
-0:34          d: direct index for structure (centroid sample temp 2-component vector of float)
-0:34            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              3 (const int)
-0:34        move second child to first child (temp bool)
-0:34          ff1: direct index for structure (temp bool)
+0:40            Constant:
+0:40              3 (const int)
+0:40          d: direct index for structure (centroid sample temp 2-component vector of float)
+0:40            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:40            Constant:
+0:40              3 (const int)
+0:40        move second child to first child (temp bool)
+0:40          ff1: direct index for structure (temp bool)
 0:?             's' (temp structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              4 (const int)
+0:40            Constant:
+0:40              4 (const int)
 0:?           's_ff1' (in bool Face)
-0:34        move second child to first child (temp bool)
-0:34          ff2: direct index for structure (temp bool)
+0:40        move second child to first child (temp bool)
+0:40          ff2: direct index for structure (temp bool)
 0:?             's' (temp structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              5 (const int)
-0:34          ff2: direct index for structure (temp bool)
-0:34            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              4 (const int)
-0:34        move second child to first child (temp bool)
-0:34          ff3: direct index for structure (temp bool)
+0:40            Constant:
+0:40              5 (const int)
+0:40          ff2: direct index for structure (temp bool)
+0:40            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:40            Constant:
+0:40              4 (const int)
+0:40        move second child to first child (temp bool)
+0:40          ff3: direct index for structure (temp bool)
 0:?             's' (temp structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              6 (const int)
-0:34          ff3: direct index for structure (temp bool)
-0:34            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              5 (const int)
-0:34        move second child to first child (temp 4-component vector of float)
-0:34          ff4: direct index for structure (temp 4-component vector of float)
+0:40            Constant:
+0:40              6 (const int)
+0:40          ff3: direct index for structure (temp bool)
+0:40            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:40            Constant:
+0:40              5 (const int)
+0:40        move second child to first child (temp 4-component vector of float)
+0:40          ff4: direct index for structure (temp 4-component vector of float)
 0:?             's' (temp structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              7 (const int)
-0:34          ff4: direct index for structure (temp 4-component vector of float)
-0:34            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              6 (const int)
-0:34      move second child to first child (temp 4-component vector of float)
+0:40            Constant:
+0:40              7 (const int)
+0:40          ff4: direct index for structure (temp 4-component vector of float)
+0:40            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:40            Constant:
+0:40              6 (const int)
+0:40      move second child to first child (temp 4-component vector of float)
 0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:34        Function Call: @PixelShaderFunction(vf4;struct-IN_S-vf4-b1-vf1-vf2-b1-b1-b1-vf41; (temp 4-component vector of float)
+0:40        Function Call: @PixelShaderFunction(vf4;struct-IN_S-vf4-b1-vf1-vf2-b1-b1-b1-vf41; (temp 4-component vector of float)
 0:?           'input' (temp 4-component vector of float)
 0:?           's' (temp structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
 0:?   Linker Objects
@@ -121,104 +127,110 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:34  Function Definition: @PixelShaderFunction(vf4;struct-IN_S-vf4-b1-vf1-vf2-b1-b1-b1-vf41; (temp 4-component vector of float)
-0:34    Function Parameters: 
-0:34      'input' (in 4-component vector of float)
-0:34      's' (in structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:40  Function Definition: @PixelShaderFunction(vf4;struct-IN_S-vf4-b1-vf1-vf2-b1-b1-b1-vf41; (temp 4-component vector of float)
+0:40    Function Parameters: 
+0:40      'input' (in 4-component vector of float)
+0:40      's' (in structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
 0:?     Sequence
-0:39      Compare Equal (temp bool)
-0:39        's3' (temp structure{temp 3-component vector of bool b3})
-0:39        's3' (temp structure{temp 3-component vector of bool b3})
+0:45      Compare Equal (temp bool)
+0:45        's3' (temp structure{temp 3-component vector of bool b3})
+0:45        's3' (temp structure{temp 3-component vector of bool b3})
+0:46      move second child to first child (temp 4-component vector of float)
+0:46        i: direct index for structure (temp 4-component vector of float)
+0:46          's2' (global structure{temp 4-component vector of float i})
+0:46          Constant:
+0:46            0 (const int)
+0:46        ff4: direct index for structure (temp 4-component vector of float)
+0:46          's' (in structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:46          Constant:
+0:46            7 (const int)
+0:50      move second child to first child (temp structure{})
+0:50        'e' (temp structure{})
+0:50        e: direct index for structure (temp structure{})
+0:50          'ce' (temp structure{temp structure{} e})
+0:50          Constant:
+0:50            0 (const int)
+0:52      Branch: Return with expression
+0:52        'input' (in 4-component vector of float)
+0:40  Function Definition: PixelShaderFunction( (temp void)
+0:40    Function Parameters: 
+0:?     Sequence
 0:40      move second child to first child (temp 4-component vector of float)
-0:40        i: direct index for structure (temp 4-component vector of float)
-0:40          's2' (global structure{temp 4-component vector of float i})
-0:40          Constant:
-0:40            0 (const int)
-0:40        ff4: direct index for structure (temp 4-component vector of float)
-0:40          's' (in structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:40          Constant:
-0:40            7 (const int)
-0:42      Branch: Return with expression
-0:42        'input' (in 4-component vector of float)
-0:34  Function Definition: PixelShaderFunction( (temp void)
-0:34    Function Parameters: 
-0:?     Sequence
-0:34      move second child to first child (temp 4-component vector of float)
 0:?         'input' (temp 4-component vector of float)
 0:?         'input' (layout(location=0 ) in 4-component vector of float)
-0:34      Sequence
-0:34        move second child to first child (temp 4-component vector of float)
-0:34          a: direct index for structure (temp 4-component vector of float)
+0:40      Sequence
+0:40        move second child to first child (temp 4-component vector of float)
+0:40          a: direct index for structure (temp 4-component vector of float)
 0:?             's' (temp structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              0 (const int)
-0:34          a: direct index for structure (smooth temp 4-component vector of float)
-0:34            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              0 (const int)
-0:34        move second child to first child (temp bool)
-0:34          b: direct index for structure (temp bool)
+0:40            Constant:
+0:40              0 (const int)
+0:40          a: direct index for structure (smooth temp 4-component vector of float)
+0:40            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:40            Constant:
+0:40              0 (const int)
+0:40        move second child to first child (temp bool)
+0:40          b: direct index for structure (temp bool)
 0:?             's' (temp structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              1 (const int)
-0:34          b: direct index for structure (flat temp bool)
-0:34            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              1 (const int)
-0:34        move second child to first child (temp 1-component vector of float)
-0:34          c: direct index for structure (temp 1-component vector of float)
+0:40            Constant:
+0:40              1 (const int)
+0:40          b: direct index for structure (flat temp bool)
+0:40            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:40            Constant:
+0:40              1 (const int)
+0:40        move second child to first child (temp 1-component vector of float)
+0:40          c: direct index for structure (temp 1-component vector of float)
 0:?             's' (temp structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              2 (const int)
-0:34          c: direct index for structure (centroid noperspective temp 1-component vector of float)
-0:34            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              2 (const int)
-0:34        move second child to first child (temp 2-component vector of float)
-0:34          d: direct index for structure (temp 2-component vector of float)
+0:40            Constant:
+0:40              2 (const int)
+0:40          c: direct index for structure (centroid noperspective temp 1-component vector of float)
+0:40            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:40            Constant:
+0:40              2 (const int)
+0:40        move second child to first child (temp 2-component vector of float)
+0:40          d: direct index for structure (temp 2-component vector of float)
 0:?             's' (temp structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              3 (const int)
-0:34          d: direct index for structure (centroid sample temp 2-component vector of float)
-0:34            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              3 (const int)
-0:34        move second child to first child (temp bool)
-0:34          ff1: direct index for structure (temp bool)
+0:40            Constant:
+0:40              3 (const int)
+0:40          d: direct index for structure (centroid sample temp 2-component vector of float)
+0:40            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:40            Constant:
+0:40              3 (const int)
+0:40        move second child to first child (temp bool)
+0:40          ff1: direct index for structure (temp bool)
 0:?             's' (temp structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              4 (const int)
+0:40            Constant:
+0:40              4 (const int)
 0:?           's_ff1' (in bool Face)
-0:34        move second child to first child (temp bool)
-0:34          ff2: direct index for structure (temp bool)
+0:40        move second child to first child (temp bool)
+0:40          ff2: direct index for structure (temp bool)
 0:?             's' (temp structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              5 (const int)
-0:34          ff2: direct index for structure (temp bool)
-0:34            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              4 (const int)
-0:34        move second child to first child (temp bool)
-0:34          ff3: direct index for structure (temp bool)
+0:40            Constant:
+0:40              5 (const int)
+0:40          ff2: direct index for structure (temp bool)
+0:40            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:40            Constant:
+0:40              4 (const int)
+0:40        move second child to first child (temp bool)
+0:40          ff3: direct index for structure (temp bool)
 0:?             's' (temp structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              6 (const int)
-0:34          ff3: direct index for structure (temp bool)
-0:34            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              5 (const int)
-0:34        move second child to first child (temp 4-component vector of float)
-0:34          ff4: direct index for structure (temp 4-component vector of float)
+0:40            Constant:
+0:40              6 (const int)
+0:40          ff3: direct index for structure (temp bool)
+0:40            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:40            Constant:
+0:40              5 (const int)
+0:40        move second child to first child (temp 4-component vector of float)
+0:40          ff4: direct index for structure (temp 4-component vector of float)
 0:?             's' (temp structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              7 (const int)
-0:34          ff4: direct index for structure (temp 4-component vector of float)
-0:34            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
-0:34            Constant:
-0:34              6 (const int)
-0:34      move second child to first child (temp 4-component vector of float)
+0:40            Constant:
+0:40              7 (const int)
+0:40          ff4: direct index for structure (temp 4-component vector of float)
+0:40            's' (layout(location=1 ) in structure{smooth temp 4-component vector of float a, flat temp bool b, centroid noperspective temp 1-component vector of float c, centroid sample temp 2-component vector of float d, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
+0:40            Constant:
+0:40              6 (const int)
+0:40      move second child to first child (temp 4-component vector of float)
 0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:34        Function Call: @PixelShaderFunction(vf4;struct-IN_S-vf4-b1-vf1-vf2-b1-b1-b1-vf41; (temp 4-component vector of float)
+0:40        Function Call: @PixelShaderFunction(vf4;struct-IN_S-vf4-b1-vf1-vf2-b1-b1-b1-vf41; (temp 4-component vector of float)
 0:?           'input' (temp 4-component vector of float)
 0:?           's' (temp structure{temp 4-component vector of float a, temp bool b, temp 1-component vector of float c, temp 2-component vector of float d, temp bool ff1, temp bool ff2, temp bool ff3, temp 4-component vector of float ff4})
 0:?   Linker Objects
@@ -231,12 +243,12 @@ gl_FragCoord origin is upper left
 
 // Module Version 10000
 // Generated by (magic number): 80001
-// Id's are bound by 97
+// Id's are bound by 105
 
                               Capability Shader
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
-                              EntryPoint Fragment 4  "PixelShaderFunction" 43 48 71 86
+                              EntryPoint Fragment 4  "PixelShaderFunction" 51 56 79 94
                               ExecutionMode 4 OriginUpperLeft
                               Name 4  "PixelShaderFunction"
                               Name 11  "IN_S"
@@ -257,49 +269,54 @@ gl_FragCoord origin is upper left
                               Name 28  ""
                               MemberName 28 0  "i"
                               Name 30  "s2"
-                              Name 41  "input"
-                              Name 43  "input"
-                              Name 45  "s"
-                              Name 46  "IN_S"
-                              MemberName 46(IN_S) 0  "a"
-                              MemberName 46(IN_S) 1  "b"
-                              MemberName 46(IN_S) 2  "c"
-                              MemberName 46(IN_S) 3  "d"
-                              MemberName 46(IN_S) 4  "ff2"
-                              MemberName 46(IN_S) 5  "ff3"
-                              MemberName 46(IN_S) 6  "ff4"
-                              Name 48  "s"
-                              Name 71  "s_ff1"
-                              Name 86  "@entryPointOutput"
-                              Name 87  "param"
-                              Name 89  "param"
-                              Name 93  "myS"
-                              MemberName 93(myS) 0  "b"
-                              MemberName 93(myS) 1  "c"
-                              MemberName 93(myS) 2  "a"
-                              MemberName 93(myS) 3  "d"
-                              Name 94  "$Global"
-                              MemberName 94($Global) 0  "s1"
-                              MemberName 94($Global) 1  "ff5"
-                              MemberName 94($Global) 2  "ff6"
-                              Name 96  ""
-                              Decorate 43(input) Location 0
-                              MemberDecorate 46(IN_S) 1 Flat
-                              MemberDecorate 46(IN_S) 2 NoPerspective
-                              MemberDecorate 46(IN_S) 2 Centroid
-                              MemberDecorate 46(IN_S) 3 Centroid
-                              Decorate 48(s) Location 1
-                              Decorate 71(s_ff1) BuiltIn FrontFacing
-                              Decorate 86(@entryPointOutput) Location 0
-                              MemberDecorate 93(myS) 0 Offset 0
-                              MemberDecorate 93(myS) 1 Offset 4
-                              MemberDecorate 93(myS) 2 Offset 16
-                              MemberDecorate 93(myS) 3 Offset 32
-                              MemberDecorate 94($Global) 0 Offset 0
-                              MemberDecorate 94($Global) 1 Offset 1620
-                              MemberDecorate 94($Global) 2 Offset 1636
-                              Decorate 94($Global) Block
-                              Decorate 96 DescriptorSet 0
+                              Name 38  "empty"
+                              Name 40  "e"
+                              Name 41  "containEmpty"
+                              MemberName 41(containEmpty) 0  "e"
+                              Name 43  "ce"
+                              Name 49  "input"
+                              Name 51  "input"
+                              Name 53  "s"
+                              Name 54  "IN_S"
+                              MemberName 54(IN_S) 0  "a"
+                              MemberName 54(IN_S) 1  "b"
+                              MemberName 54(IN_S) 2  "c"
+                              MemberName 54(IN_S) 3  "d"
+                              MemberName 54(IN_S) 4  "ff2"
+                              MemberName 54(IN_S) 5  "ff3"
+                              MemberName 54(IN_S) 6  "ff4"
+                              Name 56  "s"
+                              Name 79  "s_ff1"
+                              Name 94  "@entryPointOutput"
+                              Name 95  "param"
+                              Name 97  "param"
+                              Name 101  "myS"
+                              MemberName 101(myS) 0  "b"
+                              MemberName 101(myS) 1  "c"
+                              MemberName 101(myS) 2  "a"
+                              MemberName 101(myS) 3  "d"
+                              Name 102  "$Global"
+                              MemberName 102($Global) 0  "s1"
+                              MemberName 102($Global) 1  "ff5"
+                              MemberName 102($Global) 2  "ff6"
+                              Name 104  ""
+                              Decorate 51(input) Location 0
+                              MemberDecorate 54(IN_S) 1 Flat
+                              MemberDecorate 54(IN_S) 2 NoPerspective
+                              MemberDecorate 54(IN_S) 2 Centroid
+                              MemberDecorate 54(IN_S) 3 Centroid
+                              Decorate 56(s) Location 1
+                              Decorate 79(s_ff1) BuiltIn FrontFacing
+                              Decorate 94(@entryPointOutput) Location 0
+                              MemberDecorate 101(myS) 0 Offset 0
+                              MemberDecorate 101(myS) 1 Offset 4
+                              MemberDecorate 101(myS) 2 Offset 16
+                              MemberDecorate 101(myS) 3 Offset 32
+                              MemberDecorate 102($Global) 0 Offset 0
+                              MemberDecorate 102($Global) 1 Offset 1620
+                              MemberDecorate 102($Global) 2 Offset 1636
+                              Decorate 102($Global) Block
+                              Decorate 104 DescriptorSet 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
@@ -320,76 +337,80 @@ gl_FragCoord origin is upper left
               32:     31(int) Constant 0
               33:     31(int) Constant 7
               36:             TypePointer Private 7(fvec4)
-              42:             TypePointer Input 7(fvec4)
-       43(input):     42(ptr) Variable Input
-        46(IN_S):             TypeStruct 7(fvec4) 9(bool) 6(float) 10(fvec2) 9(bool) 9(bool) 7(fvec4)
-              47:             TypePointer Input 46(IN_S)
-           48(s):     47(ptr) Variable Input
-              52:     31(int) Constant 1
-              53:             TypePointer Input 9(bool)
-              56:             TypePointer Function 9(bool)
-              58:     31(int) Constant 2
-              59:             TypePointer Input 6(float)
-              62:             TypePointer Function 6(float)
-              64:     31(int) Constant 3
-              65:             TypePointer Input 10(fvec2)
-              68:             TypePointer Function 10(fvec2)
-              70:     31(int) Constant 4
-       71(s_ff1):     53(ptr) Variable Input
-              74:     31(int) Constant 5
-              78:     31(int) Constant 6
-              85:             TypePointer Output 7(fvec4)
-86(@entryPointOutput):     85(ptr) Variable Output
-              92:             TypeInt 32 0
-         93(myS):             TypeStruct 92(int) 92(int) 7(fvec4) 7(fvec4)
-     94($Global):             TypeStruct 93(myS) 6(float) 6(float)
-              95:             TypePointer Uniform 94($Global)
-              96:     95(ptr) Variable Uniform
+       38(empty):             TypeStruct
+              39:             TypePointer Function 38(empty)
+41(containEmpty):             TypeStruct 38(empty)
+              42:             TypePointer Function 41(containEmpty)
+              50:             TypePointer Input 7(fvec4)
+       51(input):     50(ptr) Variable Input
+        54(IN_S):             TypeStruct 7(fvec4) 9(bool) 6(float) 10(fvec2) 9(bool) 9(bool) 7(fvec4)
+              55:             TypePointer Input 54(IN_S)
+           56(s):     55(ptr) Variable Input
+              60:     31(int) Constant 1
+              61:             TypePointer Input 9(bool)
+              64:             TypePointer Function 9(bool)
+              66:     31(int) Constant 2
+              67:             TypePointer Input 6(float)
+              70:             TypePointer Function 6(float)
+              72:     31(int) Constant 3
+              73:             TypePointer Input 10(fvec2)
+              76:             TypePointer Function 10(fvec2)
+              78:     31(int) Constant 4
+       79(s_ff1):     61(ptr) Variable Input
+              82:     31(int) Constant 5
+              86:     31(int) Constant 6
+              93:             TypePointer Output 7(fvec4)
+94(@entryPointOutput):     93(ptr) Variable Output
+             100:             TypeInt 32 0
+        101(myS):             TypeStruct 100(int) 100(int) 7(fvec4) 7(fvec4)
+    102($Global):             TypeStruct 101(myS) 6(float) 6(float)
+             103:             TypePointer Uniform 102($Global)
+             104:    103(ptr) Variable Uniform
 4(PixelShaderFunction):           2 Function None 3
                5:             Label
-       41(input):      8(ptr) Variable Function
-           45(s):     12(ptr) Variable Function
-       87(param):      8(ptr) Variable Function
-       89(param):     12(ptr) Variable Function
-              44:    7(fvec4) Load 43(input)
-                              Store 41(input) 44
-              49:     42(ptr) AccessChain 48(s) 32
-              50:    7(fvec4) Load 49
-              51:      8(ptr) AccessChain 45(s) 32
-                              Store 51 50
-              54:     53(ptr) AccessChain 48(s) 52
-              55:     9(bool) Load 54
-              57:     56(ptr) AccessChain 45(s) 52
-                              Store 57 55
-              60:     59(ptr) AccessChain 48(s) 58
-              61:    6(float) Load 60
-              63:     62(ptr) AccessChain 45(s) 58
-                              Store 63 61
-              66:     65(ptr) AccessChain 48(s) 64
-              67:   10(fvec2) Load 66
-              69:     68(ptr) AccessChain 45(s) 64
-                              Store 69 67
-              72:     9(bool) Load 71(s_ff1)
-              73:     56(ptr) AccessChain 45(s) 70
-                              Store 73 72
-              75:     53(ptr) AccessChain 48(s) 70
-              76:     9(bool) Load 75
-              77:     56(ptr) AccessChain 45(s) 74
-                              Store 77 76
-              79:     53(ptr) AccessChain 48(s) 74
-              80:     9(bool) Load 79
-              81:     56(ptr) AccessChain 45(s) 78
+       49(input):      8(ptr) Variable Function
+           53(s):     12(ptr) Variable Function
+       95(param):      8(ptr) Variable Function
+       97(param):     12(ptr) Variable Function
+              52:    7(fvec4) Load 51(input)
+                              Store 49(input) 52
+              57:     50(ptr) AccessChain 56(s) 32
+              58:    7(fvec4) Load 57
+              59:      8(ptr) AccessChain 53(s) 32
+                              Store 59 58
+              62:     61(ptr) AccessChain 56(s) 60
+              63:     9(bool) Load 62
+              65:     64(ptr) AccessChain 53(s) 60
+                              Store 65 63
+              68:     67(ptr) AccessChain 56(s) 66
+              69:    6(float) Load 68
+              71:     70(ptr) AccessChain 53(s) 66
+                              Store 71 69
+              74:     73(ptr) AccessChain 56(s) 72
+              75:   10(fvec2) Load 74
+              77:     76(ptr) AccessChain 53(s) 72
+                              Store 77 75
+              80:     9(bool) Load 79(s_ff1)
+              81:     64(ptr) AccessChain 53(s) 78
                               Store 81 80
-              82:     42(ptr) AccessChain 48(s) 78
-              83:    7(fvec4) Load 82
-              84:      8(ptr) AccessChain 45(s) 33
-                              Store 84 83
-              88:    7(fvec4) Load 41(input)
-                              Store 87(param) 88
-              90:    11(IN_S) Load 45(s)
-                              Store 89(param) 90
-              91:    7(fvec4) FunctionCall 16(@PixelShaderFunction(vf4;struct-IN_S-vf4-b1-vf1-vf2-b1-b1-b1-vf41;) 87(param) 89(param)
-                              Store 86(@entryPointOutput) 91
+              83:     61(ptr) AccessChain 56(s) 78
+              84:     9(bool) Load 83
+              85:     64(ptr) AccessChain 53(s) 82
+                              Store 85 84
+              87:     61(ptr) AccessChain 56(s) 82
+              88:     9(bool) Load 87
+              89:     64(ptr) AccessChain 53(s) 86
+                              Store 89 88
+              90:     50(ptr) AccessChain 56(s) 86
+              91:    7(fvec4) Load 90
+              92:      8(ptr) AccessChain 53(s) 33
+                              Store 92 91
+              96:    7(fvec4) Load 49(input)
+                              Store 95(param) 96
+              98:    11(IN_S) Load 53(s)
+                              Store 97(param) 98
+              99:    7(fvec4) FunctionCall 16(@PixelShaderFunction(vf4;struct-IN_S-vf4-b1-vf1-vf2-b1-b1-b1-vf41;) 95(param) 97(param)
+                              Store 94(@entryPointOutput) 99
                               Return
                               FunctionEnd
 16(@PixelShaderFunction(vf4;struct-IN_S-vf4-b1-vf1-vf2-b1-b1-b1-vf41;):    7(fvec4) Function None 13
@@ -397,6 +418,8 @@ gl_FragCoord origin is upper left
            15(s):     12(ptr) FunctionParameter
               17:             Label
           21(s3):     20(ptr) Variable Function
+           40(e):     39(ptr) Variable Function
+          43(ce):     42(ptr) Variable Function
               22:      19(FS) Load 21(s3)
               23:      19(FS) Load 21(s3)
               24:   18(bvec3) CompositeExtract 22 0
@@ -407,6 +430,9 @@ gl_FragCoord origin is upper left
               35:    7(fvec4) Load 34
               37:     36(ptr) AccessChain 30(s2) 32
                               Store 37 35
-              38:    7(fvec4) Load 14(input)
-                              ReturnValue 38
+              44:     39(ptr) AccessChain 43(ce) 32
+              45:   38(empty) Load 44
+                              Store 40(e) 45
+              46:    7(fvec4) Load 14(input)
+                              ReturnValue 46
                               FunctionEnd

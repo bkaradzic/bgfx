@@ -135,4 +135,7 @@ void main()
     b = !b;
 
     FragColor = b ? vec4(i) + vec4(f) + v : v;
+
+    mat4 m1 = mat4(1.0), m2 = mat4(0.0);
+    FragColor += (b ? m1 : m2)[1];
 }

@@ -25,6 +25,7 @@ namespace bgfx
 		{
 			NoContext,
 			Render,
+			Timeout,
 			Exiting,
 
 			Count

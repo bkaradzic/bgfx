@@ -4,3 +4,4 @@
 #if
 #endif
 int aÿ
+#define A "ÿ

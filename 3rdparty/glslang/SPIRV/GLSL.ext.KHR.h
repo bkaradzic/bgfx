@@ -27,10 +27,17 @@
 #ifndef GLSLextKHR_H
 #define GLSLextKHR_H
 
-// SPV_KHR_shader_ballot
-static const char* const E_SPV_KHR_shader_ballot                = "SPV_KHR_shader_ballot";
+enum BuiltIn;
+enum Op;
+enum Capability;
 
-// SPV_KHR_shader_draw_parameters
-static const char* const E_SPV_KHR_shader_draw_parameters       = "SPV_KHR_shader_draw_parameters";
-static const char* const E_SPV_KHR_subgroup_vote                = "SPV_KHR_subgroup_vote";
+static const int GLSLextKHRVersion = 100;
+static const int GLSLextKHRRevision = 1;
+
+static const char* const E_SPV_KHR_shader_ballot          = "SPV_KHR_shader_ballot";
+static const char* const E_SPV_KHR_subgroup_vote          = "SPV_KHR_subgroup_vote";
+static const char* const E_SPV_KHR_device_group           = "SPV_KHR_device_group";
+static const char* const E_SPV_KHR_multiview              = "SPV_KHR_multiview";
+static const char* const E_SPV_KHR_shader_draw_parameters = "SPV_KHR_shader_draw_parameters";
+
 #endif  // #ifndef GLSLextKHR_H

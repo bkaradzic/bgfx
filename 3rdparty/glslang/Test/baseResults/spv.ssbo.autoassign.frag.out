@@ -16,15 +16,15 @@ spv.ssbo.autoassign.frag
                               MemberName 14(BufType) 0  "va"
                               MemberName 14(BufType) 1  "vb"
                               Name 16  "SB0"
-                              MemberName 16(SB0) 0  "SB0"
-                              Name 18  ""
+                              MemberName 16(SB0) 0  "@data"
+                              Name 18  "SB0"
                               Name 26  "TestCB"
                               MemberName 26(TestCB) 0  "W"
                               MemberName 26(TestCB) 1  "H"
                               Name 28  ""
                               Name 55  "SB1"
-                              MemberName 55(SB1) 0  "SB1"
-                              Name 57  ""
+                              MemberName 55(SB1) 0  "@data"
+                              Name 57  "SB1"
                               Name 86  "pos"
                               Name 88  "pos"
                               Name 91  "@entryPointOutput"
@@ -37,8 +37,8 @@ spv.ssbo.autoassign.frag
                               MemberDecorate 16(SB0) 0 NonWritable
                               MemberDecorate 16(SB0) 0 Offset 0
                               Decorate 16(SB0) BufferBlock
-                              Decorate 18 DescriptorSet 0
-                              Decorate 18 Binding 30
+                              Decorate 18(SB0) DescriptorSet 0
+                              Decorate 18(SB0) Binding 30
                               MemberDecorate 26(TestCB) 0 Offset 0
                               MemberDecorate 26(TestCB) 1 Offset 4
                               Decorate 26(TestCB) Block
@@ -47,8 +47,8 @@ spv.ssbo.autoassign.frag
                               Decorate 54 ArrayStride 32
                               MemberDecorate 55(SB1) 0 Offset 0
                               Decorate 55(SB1) BufferBlock
-                              Decorate 57 DescriptorSet 0
-                              Decorate 57 Binding 31
+                              Decorate 57(SB1) DescriptorSet 0
+                              Decorate 57(SB1) Binding 31
                               Decorate 88(pos) Location 0
                               Decorate 91(@entryPointOutput) Location 0
                2:             TypeVoid
@@ -61,7 +61,7 @@ spv.ssbo.autoassign.frag
               15:             TypeRuntimeArray 14(BufType)
          16(SB0):             TypeStruct 15
               17:             TypePointer Uniform 16(SB0)
-              18:     17(ptr) Variable Uniform
+         18(SB0):     17(ptr) Variable Uniform
               19:             TypeInt 32 1
               20:     19(int) Constant 0
               21:             TypeInt 32 0
@@ -77,7 +77,7 @@ spv.ssbo.autoassign.frag
               54:             TypeRuntimeArray 14(BufType)
          55(SB1):             TypeStruct 54
               56:             TypePointer Uniform 55(SB1)
-              57:     56(ptr) Variable Uniform
+         57(SB1):     56(ptr) Variable Uniform
               87:             TypePointer Input 7(fvec4)
          88(pos):     87(ptr) Variable Input
               90:             TypePointer Output 7(fvec4)
@@ -107,7 +107,7 @@ spv.ssbo.autoassign.frag
               35:     23(ptr) AccessChain 10(pos) 34
               36:    6(float) Load 35
               37:    6(float) FAdd 33 36
-              39:     38(ptr) AccessChain 18 20 37 20
+              39:     38(ptr) AccessChain 18(SB0) 20 37 20
               40:    7(fvec4) Load 39
               41:     23(ptr) AccessChain 10(pos) 22
               42:    6(float) Load 41
@@ -118,7 +118,7 @@ spv.ssbo.autoassign.frag
               47:     23(ptr) AccessChain 10(pos) 34
               48:    6(float) Load 47
               49:    6(float) FAdd 46 48
-              51:     38(ptr) AccessChain 18 20 49 50
+              51:     38(ptr) AccessChain 18(SB0) 20 49 50
               52:    7(fvec4) Load 51
               53:    7(fvec4) FAdd 40 52
                               Store 13(vTmp) 53
@@ -131,7 +131,7 @@ spv.ssbo.autoassign.frag
               64:     23(ptr) AccessChain 10(pos) 34
               65:    6(float) Load 64
               66:    6(float) FAdd 63 65
-              67:     38(ptr) AccessChain 57 20 66 20
+              67:     38(ptr) AccessChain 57(SB1) 20 66 20
               68:    7(fvec4) Load 67
               69:     23(ptr) AccessChain 10(pos) 22
               70:    6(float) Load 69
@@ -142,7 +142,7 @@ spv.ssbo.autoassign.frag
               75:     23(ptr) AccessChain 10(pos) 34
               76:    6(float) Load 75
               77:    6(float) FAdd 74 76
-              78:     38(ptr) AccessChain 57 20 77 50
+              78:     38(ptr) AccessChain 57(SB1) 20 77 50
               79:    7(fvec4) Load 78
               80:    7(fvec4) FAdd 68 79
               81:    7(fvec4) Load 13(vTmp)

@@ -96,9 +96,8 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace glslang {
 
 // push onto back of stream
-void TPpContext::TokenStream::putSubtoken(int subtoken)
+void TPpContext::TokenStream::putSubtoken(char subtoken)
 {
-    assert((subtoken & ~0xff) == 0);
     data.push_back(static_cast<unsigned char>(subtoken));
 }
 
@@ -125,7 +124,8 @@ void TPpContext::TokenStream::putToken(int token, TPpToken* ppToken)
     const char* s;
     char* str = NULL;
 
-    putSubtoken(token);
+    assert((token & ~0xff) == 0);
+    putSubtoken(static_cast<char>(token));
 
     switch (token) {
     case PpAtomIdentifier:

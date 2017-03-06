@@ -1055,7 +1055,7 @@ namespace bgfx { namespace gl
 			while (pos < end)
 			{
 				uint32_t len;
-				const char* space = strchr(pos, ' ');
+				const char* space = bx::strnchr(pos, ' ');
 				if (NULL != space)
 				{
 					len = bx::uint32_min(sizeof(name), (uint32_t)(space - pos) );
@@ -1065,7 +1065,7 @@ namespace bgfx { namespace gl
 					len = bx::uint32_min(sizeof(name), (uint32_t)bx::strnlen(pos) );
 				}
 
-				strncpy(name, pos, len);
+				bx::strlncpy(name, BX_COUNTOF(name), pos, len);
 				name[len] = '\0';
 
 				BX_TRACE("\t%s", name);
@@ -1349,7 +1349,7 @@ namespace bgfx { namespace gl
 			&&  extension.m_initialize)
 			{
 				const char* ext = _name;
-				if (0 == strncmp(ext, "GL_", 3) ) // skip GL_
+				if (0 == bx::strncmp(ext, "GL_", 3) ) // skip GL_
 				{
 					ext += 3;
 				}
@@ -1469,7 +1469,7 @@ namespace bgfx { namespace gl
 			for (uint32_t ii = 0; ii < BX_COUNTOF(s_vendorIds); ++ii)
 			{
 				const VendorId& vendorId = s_vendorIds[ii];
-				if (0 == strncmp(vendorId.name, m_vendor, bx::strnlen(vendorId.name) ) )
+				if (0 == bx::strncmp(vendorId.name, m_vendor, bx::strnlen(vendorId.name) ) )
 				{
 					g_caps.vendorId = vendorId.id;
 					break;
@@ -1544,7 +1544,7 @@ namespace bgfx { namespace gl
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31)
 			&&  0    == bx::strncmp(m_vendor,  "Imagination Technologies")
-			&&  NULL != strstr(m_version, "(SDK 3.5@3510720)") )
+			&&  NULL != bx::strnstr(m_version, "(SDK 3.5@3510720)") )
 			{
 				// Skip initializing extensions that are broken in emulator.
 				s_extension[Extension::ARB_program_interface_query     ].m_initialize =
@@ -1564,7 +1564,7 @@ namespace bgfx { namespace gl
 					while (pos < end)
 					{
 						uint32_t len;
-						const char* space = strchr(pos, ' ');
+						const char* space = bx::strnchr(pos, ' ');
 						if (NULL != space)
 						{
 							len = bx::uint32_min(sizeof(name), (uint32_t)(space - pos) );
@@ -1574,7 +1574,7 @@ namespace bgfx { namespace gl
 							len = bx::uint32_min(sizeof(name), (uint32_t)bx::strnlen(pos) );
 						}
 
-						strncpy(name, pos, len);
+						bx::strlncpy(name, BX_COUNTOF(name), pos, len);
 						name[len] = '\0';
 
 						updateExtension(name);
@@ -2523,13 +2523,23 @@ namespace bgfx { namespace gl
 			m_uniformReg.remove(_handle);
 		}
 
-		void saveScreenShot(const char* _filePath) BX_OVERRIDE
+		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) BX_OVERRIDE
 		{
-			uint32_t length = m_resolution.m_width*m_resolution.m_height*4;
-			uint8_t* data = (uint8_t*)BX_ALLOC(g_allocator, length);
-
+			SwapChainGL* swapChain = NULL;
 			uint32_t width  = m_resolution.m_width;
 			uint32_t height = m_resolution.m_height;
+
+			if (isValid(_handle) )
+			{
+				const FrameBufferGL& frameBuffer = m_frameBuffers[_handle.idx];
+				swapChain = frameBuffer.m_swapChain;
+				width  = frameBuffer.m_width;
+				height = frameBuffer.m_height;
+			}
+			m_glctx.makeCurrent(swapChain);
+
+			uint32_t length = width*height*4;
+			uint8_t* data = (uint8_t*)BX_ALLOC(g_allocator, length);
 
 			GL_CHECK(glReadPixels(0
 				, 0
@@ -2572,6 +2582,11 @@ namespace bgfx { namespace gl
 		void setMarker(const char* _marker, uint32_t _size) BX_OVERRIDE
 		{
 			GL_CHECK(glInsertEventMarker(_size, _marker) );
+		}
+
+		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) BX_OVERRIDE
+		{
+			m_occlusionQuery.invalidate(_handle);
 		}
 
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) BX_OVERRIDE;
@@ -4112,7 +4127,7 @@ namespace bgfx { namespace gl
 				GLint  num;
 			};
 			VariableInfo vi;
-			GLenum props[] ={ GL_TYPE, GL_LOCATION, GL_ARRAY_SIZE };
+			GLenum props[] = { GL_TYPE, GL_LOCATION, GL_ARRAY_SIZE };
 
 			GLenum gltype;
 			GLint num;
@@ -4151,13 +4166,13 @@ namespace bgfx { namespace gl
 			num = bx::uint32_max(num, 1);
 
 			int offset = 0;
-			char* array = strchr(name, '[');
+			char* array = const_cast<char*>(bx::strnchr(name, '[') );
 			if (NULL != array)
 			{
 				BX_TRACE("--- %s", name);
 				*array = '\0';
 				array++;
-				char* end = strchr(array, ']');
+				char* end = const_cast<char*>(bx::strnchr(array, ']') );
 				if (NULL != end)
 				{ // Some devices (Amazon Fire) might not return terminating brace.
 					*end = '\0';
@@ -5525,10 +5540,10 @@ namespace bgfx { namespace gl
 
 					if (insertFragDepth)
 					{
-						char* entry = strstr(temp, "void main ()");
+						const char* entry = bx::strnstr(temp, "void main ()");
 						if (NULL != entry)
 						{
-							char* brace = strstr(entry, "{");
+							char* brace = const_cast<char*>(bx::strnstr(entry, "{") );
 							if (NULL != brace)
 							{
 								const char* end = bx::strmb(brace, '{', '}');
@@ -5621,7 +5636,7 @@ namespace bgfx { namespace gl
 							{
 								char tmpFragData[16];
 								bx::snprintf(tmpFragData, BX_COUNTOF(tmpFragData), "gl_FragData[%d]", ii);
-								fragData = bx::uint32_max(fragData, NULL == strstr(code, tmpFragData) ? 0 : ii+1);
+								fragData = bx::uint32_max(fragData, NULL == bx::strnstr(code, tmpFragData) ? 0 : ii+1);
 							}
 
 							BGFX_FATAL(0 != fragData, Fatal::InvalidShader, "Unable to find and patch gl_FragData!");
@@ -5711,7 +5726,7 @@ namespace bgfx { namespace gl
 							{
 								char tmpFragData[16];
 								bx::snprintf(tmpFragData, BX_COUNTOF(tmpFragData), "gl_FragData[%d]", ii);
-								fragData = bx::uint32_max(fragData, NULL == strstr(code, tmpFragData) ? 0 : ii+1);
+								fragData = bx::uint32_max(fragData, NULL == bx::strnstr(code, tmpFragData) ? 0 : ii+1);
 							}
 
 							BGFX_FATAL(0 != fragData, Fatal::InvalidShader, "Unable to find and patch gl_FragData!");
@@ -6114,21 +6129,40 @@ namespace bgfx { namespace gl
 		while (0 != m_control.available() )
 		{
 			Query& query = m_query[m_control.m_read];
-			int32_t result;
 
-			if (!_wait)
+			if (isValid(query.m_handle) )
 			{
-				GL_CHECK(glGetQueryObjectiv(query.m_id, GL_QUERY_RESULT_AVAILABLE, &result) );
+				int32_t result;
 
-				if (!result)
+				if (!_wait)
 				{
-					break;
+					GL_CHECK(glGetQueryObjectiv(query.m_id, GL_QUERY_RESULT_AVAILABLE, &result) );
+
+					if (!result)
+					{
+						break;
+					}
 				}
+
+				GL_CHECK(glGetQueryObjectiv(query.m_id, GL_QUERY_RESULT, &result) );
+				_render->m_occlusion[query.m_handle.idx] = 0 < result;
 			}
 
-			GL_CHECK(glGetQueryObjectiv(query.m_id, GL_QUERY_RESULT, &result) );
-			_render->m_occlusion[query.m_handle.idx] = 0 < result;
 			m_control.consume(1);
+		}
+	}
+
+	void OcclusionQueryGL::invalidate(OcclusionQueryHandle _handle)
+	{
+		const uint32_t size = m_control.m_size;
+
+		for (uint32_t ii = 0, num = m_control.available(); ii < num; ++ii)
+		{
+			Query& query = m_query[(m_control.m_read + ii) % size];
+			if (query.m_handle.idx == _handle.idx)
+			{
+				query.m_handle.idx = bgfx::invalidHandle;
+			}
 		}
 	}
 
