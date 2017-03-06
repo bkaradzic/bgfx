@@ -1282,6 +1282,12 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 		sampler_uv_dim += 1;
 	const bool is_proj = (uv_dim > sampler_uv_dim) && !is_array;
 
+    // Construct as the expected return type of shadow2D as sample_compare returns a scalar
+    if (is_shadow)
+    {
+        buffer.asprintf_append("float4(");
+    }
+
 	// texture name & call to sample
 	ir->sampler->accept(this);
 	if (is_shadow)
@@ -1345,6 +1351,12 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 	//@TODO: pixel offsets
 
 	buffer.asprintf_append (")");
+	
+    // Close float4 cast
+    if (is_shadow)
+    {
+        buffer.asprintf_append(")");
+    }
 }
 
 
