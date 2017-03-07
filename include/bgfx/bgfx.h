@@ -879,7 +879,7 @@ namespace bgfx
 	/// Convert index buffer for use with different primitive topologies.
 	///
 	/// @param[in] _conversion Conversion type, see `TopologyConvert::Enum`.
-	/// @param[in] _dst Destination index buffer. If this argument it NULL
+	/// @param[in] _dst Destination index buffer. If this argument is NULL
 	///    function will return number of indices after conversion.
 	/// @param[in] _dstSize Destination index buffer in bytes. It must be
 	///    large enough to contain output indices. If destination size is
@@ -2057,11 +2057,13 @@ namespace bgfx
 	/// Retrieve occlusion query result from previous frame.
 	///
 	/// @param[in] _handle Handle to occlusion query object.
+	/// @param[out] _result Number of pixels that passed test. This argument
+	///   can be `NULL` if result of occlusion query is not needed.
 	/// @returns Occlusion query result.
 	///
 	/// @attention C99 equivalent is `bgfx_get_result`.
 	///
-	OcclusionQueryResult::Enum getResult(OcclusionQueryHandle _handle);
+	OcclusionQueryResult::Enum getResult(OcclusionQueryHandle _handle, int32_t* _result = NULL);
 
 	/// Destroy occlusion query.
 	///

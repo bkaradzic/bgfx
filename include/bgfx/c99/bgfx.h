@@ -762,7 +762,7 @@ BGFX_C_API void bgfx_destroy_uniform(bgfx_uniform_handle_t _handle);
 BGFX_C_API bgfx_occlusion_query_handle_t bgfx_create_occlusion_query();
 
 /**/
-BGFX_C_API bgfx_occlusion_query_result_t bgfx_get_result(bgfx_occlusion_query_handle_t _handle);
+BGFX_C_API bgfx_occlusion_query_result_t bgfx_get_result(bgfx_occlusion_query_handle_t _handle, int32_t* _result);
 
 /**/
 BGFX_C_API void bgfx_destroy_occlusion_query(bgfx_occlusion_query_handle_t _handle);

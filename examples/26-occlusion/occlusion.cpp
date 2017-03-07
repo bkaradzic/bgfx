@@ -256,6 +256,10 @@ class ExampleOcclusion : public entry::AppI
 				bgfx::dbgTextImage(5 + xx*2, 5, 1, CUBES_DIM, img + xx*2, CUBES_DIM*2);
 			}
 
+			int32_t numPixels = 0;
+			bgfx::getResult(m_occlusionQueries[0], &numPixels);
+			bgfx::dbgTextPrintf(5, 5 + CUBES_DIM + 1, 0xf, "%d", numPixels);
+
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
 			bgfx::frame();

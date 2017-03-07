@@ -2939,7 +2939,7 @@ namespace bgfx { namespace mtl
 			if (isValid(query.m_handle) )
 			{
 				uint64_t result = ( (uint64_t*)m_buffer.contents() )[query.m_handle.idx];
-				_render->m_occlusion[query.m_handle.idx] = 0 < result;
+				_render->m_occlusion[query.m_handle.idx] = int32_t(result);
 			}
 
 			m_control.consume(1);

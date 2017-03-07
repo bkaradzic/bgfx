@@ -4725,7 +4725,7 @@ data.NumQualityLevels = 0;
 			OcclusionQueryHandle handle = m_handle[m_control.m_read];
 			if (isValid(handle) )
 			{
-				_render->m_occlusion[handle.idx] = 0 < m_result[handle.idx];
+				_render->m_occlusion[handle.idx] = int32_t(m_result[handle.idx]);
 			}
 			m_control.consume(1);
 		}

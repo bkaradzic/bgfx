@@ -5234,7 +5234,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					break;
 				}
 
-				_render->m_occlusion[query.m_handle.idx] = 0 < result;
+				_render->m_occlusion[query.m_handle.idx] = int32_t(result);
 			}
 
 			m_control.consume(1);

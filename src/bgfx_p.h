@@ -1833,7 +1833,7 @@ namespace bgfx
 		Matrix4 m_view[BGFX_CONFIG_MAX_VIEWS];
 		Matrix4 m_proj[2][BGFX_CONFIG_MAX_VIEWS];
 		uint8_t m_viewFlags[BGFX_CONFIG_MAX_VIEWS];
-		uint8_t m_occlusion[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
+		int32_t m_occlusion[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
 
 		uint64_t m_sortKeys[BGFX_CONFIG_MAX_DRAW_CALLS+1];
 		RenderItemCount m_sortValues[BGFX_CONFIG_MAX_DRAW_CALLS+1];
@@ -3601,7 +3601,7 @@ namespace bgfx
 			OcclusionQueryHandle handle = { m_occlusionQueryHandle.alloc() };
 			if (isValid(handle) )
 			{
-				m_submit->m_occlusion[handle.idx] = UINT8_MAX;
+				m_submit->m_occlusion[handle.idx] = INT32_MIN;
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::InvalidateOcclusionQuery);
 				cmdbuf.write(handle);
@@ -3610,15 +3610,20 @@ namespace bgfx
 			return handle;
 		}
 
-		BGFX_API_FUNC(OcclusionQueryResult::Enum getResult(OcclusionQueryHandle _handle) )
+		BGFX_API_FUNC(OcclusionQueryResult::Enum getResult(OcclusionQueryHandle _handle, int32_t* _result) )
 		{
 			BGFX_CHECK_HANDLE("getResult", m_occlusionQueryHandle, _handle);
 
 			switch (m_submit->m_occlusion[_handle.idx])
 			{
 			case 0:         return OcclusionQueryResult::Invisible;
-			case UINT8_MAX: return OcclusionQueryResult::NoResult;
-			default:;
+			case INT32_MIN: return OcclusionQueryResult::NoResult;
+			default: break;
+			}
+
+			if (NULL != _result)
+			{
+				*_result = m_submit->m_occlusion[_handle.idx];
 			}
 
 			return OcclusionQueryResult::Visible;

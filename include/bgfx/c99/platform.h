@@ -151,7 +151,7 @@ typedef struct bgfx_interface_vtbl
     void (*get_uniform_info)(bgfx_uniform_handle_t _handle, bgfx_uniform_info_t* _info);
     void (*destroy_uniform)(bgfx_uniform_handle_t _handle);
     bgfx_occlusion_query_handle_t (*create_occlusion_query)();
-    bgfx_occlusion_query_result_t (*get_result)(bgfx_occlusion_query_handle_t _handle);
+    bgfx_occlusion_query_result_t (*get_result)(bgfx_occlusion_query_handle_t _handle, int32_t* _result);
     void (*destroy_occlusion_query)(bgfx_occlusion_query_handle_t _handle);
     void (*set_palette_color)(uint8_t _index, const float _rgba[4]);
     void (*set_view_name)(uint8_t _id, const char* _name);
