@@ -138,13 +138,45 @@ namespace bgfx
 	bool imageConvert(TextureFormat::Enum _dstFormat, TextureFormat::Enum _srcFormat);
 
 	///
-	void imageConvert(void* _dst, uint32_t _bpp, bx::PackFn _pack, const void* _src, bx::UnpackFn _unpack, uint32_t _size);
+	void imageConvert(
+		  void* _dst
+		, uint32_t _bpp
+		, bx::PackFn _pack
+		, const void* _src
+		, bx::UnpackFn _unpack
+		, uint32_t _size
+		);
 
 	///
-	void imageConvert(void* _dst, uint32_t _dstBpp, bx::PackFn _pack, const void* _src, uint32_t _srcBpp, bx::UnpackFn _unpack, uint32_t _width, uint32_t _height, uint32_t _srcPitch);
+	void imageConvert(
+		  void* _dst
+		, uint32_t _dstBpp
+		, bx::PackFn _pack
+		, const void* _src
+		, uint32_t _srcBpp
+		, bx::UnpackFn _unpack
+		, uint32_t _width
+		, uint32_t _height
+		, uint32_t _srcPitch
+		);
 
 	///
-	bool imageConvert(void* _dst, TextureFormat::Enum _dstFormat, const void* _src, TextureFormat::Enum _srcFormat, uint32_t _width, uint32_t _height);
+	bool imageConvert(
+		  void* _dst
+		, TextureFormat::Enum _dstFormat
+		, const void* _src
+		, TextureFormat::Enum _srcFormat
+		, uint32_t _width
+		, uint32_t _height
+		);
+
+	///
+	ImageContainer* imageConvert(
+		  bx::AllocatorI* _allocator
+		, TextureFormat::Enum _dstFormat
+		, const void* _src
+		, uint32_t _size
+		);
 
 	///
 	ImageContainer* imageAlloc(
@@ -156,19 +188,45 @@ namespace bgfx
 		, uint16_t _numLayers
 		, bool _cubeMap
 		, bool _hasMips
+		, const void* _data = NULL
 		);
 
 	///
 	void imageFree(ImageContainer* _imageContainer);
 
 	///
-	void imageWriteTga(bx::WriterI* _writer, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, bool _grayscale, bool _yflip, bx::Error* _err = NULL);
+	void imageWriteTga(
+		  bx::WriterI* _writer
+		, uint32_t _width
+		, uint32_t _height
+		, uint32_t _pitch
+		, const void* _src
+		, bool _grayscale
+		, bool _yflip
+		, bx::Error* _err = NULL
+		);
 
 	///
-	void imageWriteKtx(bx::WriterI* _writer, TextureFormat::Enum _format, bool _cubeMap, uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _numMips, const void* _src, bx::Error* _err = NULL);
+	void imageWriteKtx(
+		  bx::WriterI* _writer
+		, TextureFormat::Enum _format
+		, bool _cubeMap
+		, uint32_t _width
+		, uint32_t _height
+		, uint32_t _depth
+		, uint8_t _numMips
+		, const void* _src
+		, bx::Error* _err = NULL
+		);
 
 	///
-	void imageWriteKtx(bx::WriterI* _writer, ImageContainer& _imageContainer, const void* _data, uint32_t _size, bx::Error* _err = NULL);
+	void imageWriteKtx(
+		  bx::WriterI* _writer
+		, ImageContainer& _imageContainer
+		, const void* _data
+		, uint32_t _size
+		, bx::Error* _err = NULL
+		);
 
 	///
 	bool imageParse(ImageContainer& _imageContainer, bx::ReaderSeekerI* _reader);
