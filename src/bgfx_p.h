@@ -497,7 +497,6 @@ namespace bgfx
 		TransientIndexBuffer* m_ib;
 		VertexDecl m_decl;
 		ProgramHandle m_program;
-		bool m_init;
 	};
 
 	struct RendererContextI;
