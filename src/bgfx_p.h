@@ -3002,6 +3002,27 @@ namespace bgfx
 				uint32_t iohash;
 				bx::read(&reader, iohash);
 
+				char** varyings = nullptr;
+				uint32_t totalvarsize = 0;
+				if(magic == BGFX_CHUNK_MAGIC_VSH)
+				{
+					bx::read(&reader, totalvarsize);
+
+					totalvarsize += Attrib::Count * sizeof(char*);
+					varyings = (char**)alloca(totalvarsize);
+					char* semdata = (char*)(varyings + Attrib::Count);
+					for(uint8_t attrib = 0; attrib < Attrib::Count; attrib++)
+					{
+						uint8_t semsize = 0;
+						bx::read(&reader, semsize);
+
+						varyings[attrib] = semdata;
+						for(uint8_t c = 0; c < semsize; c++)
+							bx::read(&reader, *semdata++);
+						*semdata++ = 0;
+					}
+				}
+
 				uint16_t count;
 				bx::read(&reader, count);
 
@@ -3011,6 +3032,7 @@ namespace bgfx
 				sr.m_num      = 0;
 				sr.m_owned    = false;
 				sr.m_uniforms = NULL;
+				sr.m_varyings = nullptr;
 
 				UniformHandle* uniforms = (UniformHandle*)alloca(count*sizeof(UniformHandle) );
 
@@ -3049,6 +3071,12 @@ namespace bgfx
 					uint32_t size = sr.m_num*sizeof(UniformHandle);
 					sr.m_uniforms = (UniformHandle*)BX_ALLOC(g_allocator, size);
 					bx::memCopy(sr.m_uniforms, uniforms, size);
+				}
+
+				if (varyings)
+				{
+					sr.m_varyings = (const char**)BX_ALLOC(g_allocator, totalvarsize);
+					bx::memCopy(sr.m_varyings, varyings, totalvarsize);
 				}
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateShader);
@@ -3131,6 +3159,9 @@ namespace bgfx
 					BX_FREE(g_allocator, sr.m_uniforms);
 					sr.m_uniforms = NULL;
 					sr.m_num = 0;
+
+					BX_FREE(g_allocator, sr.m_varyings);
+					sr.m_varyings = nullptr;
 				}
 			}
 		}
@@ -4259,6 +4290,7 @@ namespace bgfx
 
 		struct ShaderRef
 		{
+			const char** m_varyings;
 			UniformHandle* m_uniforms;
 			uint32_t m_hash;
 			int16_t  m_refCount;
