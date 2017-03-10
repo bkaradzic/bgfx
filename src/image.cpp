@@ -850,9 +850,9 @@ namespace bgfx
 	{
 		ImageContainer* output = imageAlloc(_allocator
 			, _dstFormat
-			, _input.m_width
-			, _input.m_height
-			, _input.m_depth
+			, uint16_t(_input.m_width)
+			, uint16_t(_input.m_height)
+			, uint16_t(_input.m_depth)
 			, _input.m_numLayers
 			, _input.m_cubeMap
 			, 1 < _input.m_numMips
@@ -900,9 +900,9 @@ namespace bgfx
 
 		ImageContainer* output = imageAlloc(_allocator
 			, imageContainer.m_format
-			, imageContainer.m_width
-			, imageContainer.m_height
-			, imageContainer.m_depth
+			, uint16_t(imageContainer.m_width)
+			, uint16_t(imageContainer.m_height)
+			, uint16_t(imageContainer.m_depth)
 			, imageContainer.m_numLayers
 			, imageContainer.m_cubeMap
 			, 1 < imageContainer.m_numMips

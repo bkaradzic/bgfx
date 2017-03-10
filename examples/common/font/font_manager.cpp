@@ -13,6 +13,7 @@
 
 BX_PRAGMA_DIAGNOSTIC_PUSH();
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4245) // error C4245: '=' : conversion from 'int' to 'FT_UInt', signed/unsigned mismatch
+BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4611) // warning C4611 : interaction between '_setjmp' and C++ object destruction is non - portable
 #if BX_COMPILER_MSVC || BX_COMPILER_GCC >= 40300
 #pragma push_macro("interface")
 #endif
