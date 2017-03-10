@@ -8,6 +8,7 @@
 
 #include "particle_system.h"
 #include "../bgfx_utils.h"
+#include "../packrect.h"
 
 #include <bx/easing.h>
 #include <bx/crtimpl.h>
@@ -183,6 +184,49 @@ namespace ps
 			;
 	}
 
+#define SPRITE_TEXTURE_SIZE 1024
+	template<uint16_t MaxHandlesT = 256, uint16_t TextureSizeT = 1024>
+	struct SpriteT
+	{
+		SpriteT()
+			: m_ra(TextureSizeT, TextureSizeT)
+		{
+		}
+
+		EmitterSpriteHandle create(uint16_t _width, uint16_t _height)
+		{
+			EmitterSpriteHandle handle = { bx::HandleAlloc::invalid };
+
+			if (m_handleAlloc.getNumHandles() < m_handleAlloc.getMaxHandles() )
+			{
+				Pack2D pack;
+				if (m_ra.find(_width, _height, pack) )
+				{
+					handle.idx = m_handleAlloc.alloc();
+					m_pack[handle.idx] = pack;
+				}
+			}
+
+			return handle;
+		}
+
+		void destroy(EmitterSpriteHandle _sprite)
+		{
+			const Pack2D& pack = m_pack[_sprite.idx];
+			m_ra.clear(pack);
+			m_handleAlloc.free(_sprite.idx);
+		}
+
+		const Pack2D& get(EmitterSpriteHandle _sprite) const
+		{
+			return m_pack[_sprite.idx];
+		}
+
+		bx::HandleAllocT<MaxHandlesT> m_handleAlloc;
+		Pack2D                        m_pack[MaxHandlesT];
+		RectPack2DT<256>              m_ra;
+	};
+
 	struct Emitter
 	{
 		void create(EmitterShape::Enum _shape, EmitterDirection::Enum _direction, uint32_t _maxParticles);
@@ -322,7 +366,7 @@ namespace ps
 			}
 		}
 
-		uint32_t render(const float* _mtxView, const float* _eye, uint32_t _first, uint32_t _max, ParticleSort* _outSort, PosColorTexCoord0Vertex* _outVertices)
+		uint32_t render(const float _uv[4], const float* _mtxView, const float* _eye, uint32_t _first, uint32_t _max, ParticleSort* _outSort, PosColorTexCoord0Vertex* _outVertices)
 		{
 			bx::EaseFn easeRgba  = s_easeFunc[m_uniforms.m_easeRgba];
 			bx::EaseFn easePos   = s_easeFunc[m_uniforms.m_easePos];
@@ -385,8 +429,8 @@ namespace ps
 				bx::vec3Sub(&vertex->m_x, tmp, vdir);
 				aabbExpand(aabb, &vertex->m_x);
 				vertex->m_abgr  = abgr;
-				vertex->m_u     = 0.0f;
-				vertex->m_v     = 0.0f;
+				vertex->m_u     = _uv[0];
+				vertex->m_v     = _uv[1];
 				vertex->m_blend = blend;
 				++vertex;
 
@@ -394,8 +438,8 @@ namespace ps
 				bx::vec3Sub(&vertex->m_x, tmp, vdir);
 				aabbExpand(aabb, &vertex->m_x);
 				vertex->m_abgr  = abgr;
-				vertex->m_u     = 1.0f;
-				vertex->m_v     = 0.0f;
+				vertex->m_u     = _uv[2];
+				vertex->m_v     = _uv[1];
 				vertex->m_blend = blend;
 				++vertex;
 
@@ -403,8 +447,8 @@ namespace ps
 				bx::vec3Add(&vertex->m_x, tmp, vdir);
 				aabbExpand(aabb, &vertex->m_x);
 				vertex->m_abgr  = abgr;
-				vertex->m_u     = 1.0f;
-				vertex->m_v     = 1.0f;
+				vertex->m_u     = _uv[2];
+				vertex->m_v     = _uv[3];
 				vertex->m_blend = blend;
 				++vertex;
 
@@ -412,8 +456,8 @@ namespace ps
 				bx::vec3Add(&vertex->m_x, tmp, vdir);
 				aabbExpand(aabb, &vertex->m_x);
 				vertex->m_abgr  = abgr;
-				vertex->m_u     = 0.0f;
-				vertex->m_v     = 1.0f;
+				vertex->m_u     = _uv[0];
+				vertex->m_v     = _uv[3];
 				vertex->m_blend = blend;
 				++vertex;
 			}
@@ -466,7 +510,13 @@ namespace ps
 			m_num = 0;
 
 			s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
-			m_particleTexture = loadTexture("textures/particle.ktx");
+			m_texture  = bgfx::createTexture2D(
+				  SPRITE_TEXTURE_SIZE
+				, SPRITE_TEXTURE_SIZE
+				, false
+				, 1
+				, bgfx::TextureFormat::BGRA8
+				);
 
 			bgfx::RendererType::Enum type = bgfx::getRendererType();
 			m_particleProgram = bgfx::createProgram(
@@ -479,13 +529,40 @@ namespace ps
 		void shutdown()
 		{
 			bgfx::destroyProgram(m_particleProgram);
-			bgfx::destroyTexture(m_particleTexture);
+			bgfx::destroyTexture(m_texture);
 			bgfx::destroyUniform(s_texColor);
 
 			bx::destroyHandleAlloc(m_allocator, m_emitterAlloc);
 			BX_FREE(m_allocator, m_emitter);
 
 			m_allocator = NULL;
+		}
+
+		EmitterSpriteHandle createSprite(uint16_t _width, uint16_t _height, const void* _data)
+		{
+			EmitterSpriteHandle handle = m_sprite.create(_width, _height);
+
+			if (isValid(handle) )
+			{
+				const Pack2D& pack = m_sprite.get(handle);
+				bgfx::updateTexture2D(
+						m_texture
+						, 0
+						, 0
+						, pack.m_x
+						, pack.m_y
+						, pack.m_width
+						, pack.m_height
+						, bgfx::copy(_data, pack.m_width*pack.m_height*4)
+						);
+			}
+
+			return handle;
+		}
+
+		void destroy(EmitterSpriteHandle _handle)
+		{
+			m_sprite.destroy(_handle);
 		}
 
 		void update(float _dt)
@@ -535,7 +612,18 @@ namespace ps
 					{
 						const uint16_t idx = m_emitterAlloc->getHandleAt(ii);
 						Emitter& emitter = m_emitter[idx];
-						pos += emitter.render(_mtxView, _eye, pos, max, particleSort, vertices);
+
+						const Pack2D& pack = m_sprite.get(emitter.m_uniforms.m_handle);
+						const float invTextureSize = 1.0f/SPRITE_TEXTURE_SIZE;
+						const float uv[4] =
+						{
+							 pack.m_x                  * invTextureSize,
+							 pack.m_y                  * invTextureSize,
+							(pack.m_x + pack.m_width ) * invTextureSize,
+							(pack.m_y + pack.m_height) * invTextureSize,
+						};
+
+						pos += emitter.render(uv, _mtxView, _eye, pos, max, particleSort, vertices);
 					}
 
 					qsort(particleSort
@@ -569,7 +657,7 @@ namespace ps
 						);
 					bgfx::setVertexBuffer(&tvb);
 					bgfx::setIndexBuffer(&tib);
-					bgfx::setTexture(0, s_texColor, m_particleTexture);
+					bgfx::setTexture(0, s_texColor, m_texture);
 					bgfx::submit(_view, m_particleProgram);
 				}
 			}
@@ -631,8 +719,11 @@ namespace ps
 		bx::HandleAlloc* m_emitterAlloc;
 		Emitter* m_emitter;
 
+		typedef SpriteT<256, SPRITE_TEXTURE_SIZE> Sprite;
+		Sprite m_sprite;
+
 		bgfx::UniformHandle s_texColor;
-		bgfx::TextureHandle m_particleTexture;
+		bgfx::TextureHandle m_texture;
 		bgfx::ProgramHandle m_particleProgram;
 
 		uint32_t m_num;
@@ -670,6 +761,16 @@ void psInit(uint16_t _maxEmitters, bx::AllocatorI* _allocator)
 void psShutdown()
 {
 	s_ctx.shutdown();
+}
+
+EmitterSpriteHandle psCreateSprite(uint16_t _width, uint16_t _height, const void* _data)
+{
+	return s_ctx.createSprite(_width, _height, _data);
+}
+
+void psDestroy(EmitterSpriteHandle _handle)
+{
+	s_ctx.destroy(_handle);
 }
 
 EmitterHandle psCreateEmitter(EmitterShape::Enum _shape, EmitterDirection::Enum _direction, uint32_t _maxParticles)

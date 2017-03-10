@@ -12,6 +12,15 @@
 
 #include "../bounds.h"
 
+struct EmitterHandle       { uint16_t idx; };
+struct EmitterSpriteHandle { uint16_t idx; };
+
+template<typename Ty>
+inline bool isValid(Ty _handle)
+{
+	return _handle.idx != UINT16_MAX;
+}
+
 struct EmitterShape
 {
 	enum Enum
@@ -60,15 +69,21 @@ struct EmitterUniforms
 	bx::Easing::Enum m_easeRgba;
 	bx::Easing::Enum m_easeBlend;
 	bx::Easing::Enum m_easeScale;
-};
 
-struct EmitterHandle { uint16_t idx; };
+	EmitterSpriteHandle m_handle;
+};
 
 ///
 void psInit(uint16_t _maxEmitters = 64, bx::AllocatorI* _allocator = NULL);
 
 ///
 void psShutdown();
+
+///
+EmitterSpriteHandle psCreateSprite(uint16_t _width, uint16_t _height, const void* _data);
+
+///
+void psDestroy(EmitterSpriteHandle _handle);
 
 ///
 EmitterHandle psCreateEmitter(EmitterShape::Enum _shape, EmitterDirection::Enum _direction, uint32_t _maxParticles);

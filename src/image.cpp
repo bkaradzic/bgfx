@@ -858,7 +858,7 @@ namespace bgfx
 			, 1 < _input.m_numMips
 			);
 
-		const uint8_t bpp = getBitsPerPixel(_dstFormat);
+		const uint8_t  bpp = getBitsPerPixel(_dstFormat);
 		const uint16_t numSides = _input.m_numLayers * (_input.m_cubeMap ? 6 : 1);
 
 		uint8_t* dst = (uint8_t*)output->m_data	;
@@ -906,7 +906,7 @@ namespace bgfx
 			, imageContainer.m_numLayers
 			, imageContainer.m_cubeMap
 			, 1 < imageContainer.m_numMips
-			, _src
+			, (uint8_t*)_src + imageContainer.m_offset
 			);
 
 		return output;
@@ -1712,10 +1712,10 @@ namespace bgfx
 		const uint8_t numMips = _hasMips ? imageGetNumMips(_format, _width, _height) : 1;
 		uint32_t size = imageGetSize(NULL, _width, _height, _depth, _cubeMap, _hasMips, _numLayers, _format);
 
-		ImageContainer* imageContainer = (ImageContainer*)BX_ALLOC(_allocator, (NULL != _data ? 0 : size) + sizeof(ImageContainer) );
+		ImageContainer* imageContainer = (ImageContainer*)BX_ALLOC(_allocator, size + sizeof(ImageContainer) );
 
 		imageContainer->m_allocator = _allocator;
-		imageContainer->m_data      = NULL != _data ? const_cast<void*>(_data) : imageContainer + 1;
+		imageContainer->m_data      = imageContainer + 1;
 		imageContainer->m_format    = _format;
 		imageContainer->m_size      = size;
 		imageContainer->m_offset    = 0;
@@ -1729,6 +1729,11 @@ namespace bgfx
 		imageContainer->m_ktx       = false;
 		imageContainer->m_ktxLE     = false;
 		imageContainer->m_srgb      = false;
+
+		if (NULL != _data)
+		{
+			bx::memCopy(imageContainer->m_data, _data, imageContainer->m_size);
+		}
 
 		return imageContainer;
 	}

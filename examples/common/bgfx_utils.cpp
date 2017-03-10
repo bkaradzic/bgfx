@@ -19,27 +19,6 @@ namespace stl = tinystl;
 #include "entry/entry.h"
 #include <ib-compress/indexbufferdecompression.h>
 
-BX_PRAGMA_DIAGNOSTIC_PUSH()
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wtype-limits")
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-parameter")
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-value")
-BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4100) // error C4100: '' : unreferenced formal parameter
-#if BX_PLATFORM_EMSCRIPTEN
-#	include <compat/ctype.h>
-#endif // BX_PLATFORM_EMSCRIPTEN
-#define MINIZ_NO_STDIO
-#define TINYEXR_IMPLEMENTATION
-#include <tinyexr/tinyexr.h>
-BX_PRAGMA_DIAGNOSTIC_POP()
-
-#define LODEPNG_NO_COMPILE_ENCODER
-#define LODEPNG_NO_COMPILE_DISK
-#define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS
-#define LODEPNG_NO_COMPILE_ERROR_TEXT
-#define LODEPNG_NO_COMPILE_ALLOCATORS
-#define LODEPNG_NO_COMPILE_CPP
-#include <lodepng/lodepng.h>
-
 #include "bgfx_utils.h"
 
 void* load(bx::FileReaderI* _reader, bx::AllocatorI* _allocator, const char* _filePath, uint32_t* _size)
@@ -167,302 +146,72 @@ bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
 	return loadProgram(entry::getFileReader(), _vsName, _fsName);
 }
 
-typedef unsigned char stbi_uc;
-extern "C" stbi_uc* stbi_load_from_memory(stbi_uc const* _buffer, int _len, int* _x, int* _y, int* _comp, int _req_comp);
-extern "C" void stbi_image_free(void* _ptr);
-extern void lodepng_free(void* _ptr);
-
-static void exrRelease(void* _ptr)
+static void imageReleaseCb(void* _ptr, void* _userData)
 {
-	BX_FREE(entry::getAllocator(), _ptr);
+	BX_UNUSED(_ptr);
+	bgfx::ImageContainer* imageContainer = (bgfx::ImageContainer*)_userData;
+	bgfx::imageFree(imageContainer);
 }
 
 bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath, uint32_t _flags, uint8_t _skip, bgfx::TextureInfo* _info)
 {
-	if (NULL != bx::stristr(_filePath, ".dds")
-	||  NULL != bx::stristr(_filePath, ".pvr")
-	||  NULL != bx::stristr(_filePath, ".ktx") )
-	{
-		const bgfx::Memory* mem = loadMem(_reader, _filePath);
-		if (NULL != mem)
-		{
-			return bgfx::createTexture(mem, _flags, _skip, _info);
-		}
-
-		bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
-		DBG("Failed to load %s.", _filePath);
-		return handle;
-	}
-
+	BX_UNUSED(_skip);
 	bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
-	bx::AllocatorI* allocator = entry::getAllocator();
 
-	uint32_t size = 0;
-	void* data = loadMem(_reader, allocator, _filePath, &size);
+	uint32_t size;
+	void* data = load(_reader, entry::getAllocator(), _filePath, &size);
 	if (NULL != data)
 	{
-		bgfx::TextureFormat::Enum format = bgfx::TextureFormat::RGBA8;
-		uint32_t bpp = 32;
+		bgfx::ImageContainer* imageContainer = bgfx::imageParse(entry::getAllocator(), data, size);
 
-		uint32_t width  = 0;
-		uint32_t height = 0;
-
-		typedef void (*ReleaseFn)(void* _ptr);
-		ReleaseFn release = stbi_image_free;
-
-		uint8_t* out = NULL;
-		static uint8_t pngMagic[] = { 0x89, 0x50, 0x4E, 0x47, 0x0d, 0x0a };
-
-		if (0 == bx::memCmp(data, pngMagic, sizeof(pngMagic) ) )
+		if (NULL != imageContainer)
 		{
-			release = lodepng_free;
+			const bgfx::Memory* mem = bgfx::makeRef(
+					  imageContainer->m_data
+					, imageContainer->m_size
+					, imageReleaseCb
+					, imageContainer
+					);
+			unload(data);
 
-			unsigned error;
-			LodePNGState state;
-			lodepng_state_init(&state);
-			state.decoder.color_convert = 0;
-			error = lodepng_decode(&out, &width, &height, &state, (uint8_t*)data, size);
-
-			if (0 == error)
+			if (imageContainer->m_cubeMap)
 			{
-				switch (state.info_raw.bitdepth)
-				{
-				case 8:
-					switch (state.info_raw.colortype)
-					{
-					case LCT_GREY:
-						format = bgfx::TextureFormat::R8;
-						bpp    = 8;
-						break;
-
-					case LCT_GREY_ALPHA:
-						format = bgfx::TextureFormat::RG8;
-						bpp    = 16;
-						break;
-
-					case LCT_RGB:
-						format = bgfx::TextureFormat::RGB8;
-						bpp    = 24;
-						break;
-
-					case LCT_RGBA:
-						format = bgfx::TextureFormat::RGBA8;
-						bpp    = 32;
-						break;
-
-					case LCT_PALETTE:
-						format = bgfx::TextureFormat::R8;
-						bpp    = 8;
-						break;
-					}
-					break;
-
-				case 16:
-					switch (state.info_raw.colortype)
-					{
-					case LCT_GREY:
-						for (uint32_t ii = 0, num = width*height; ii < num; ++ii)
-						{
-							uint16_t* rgba = (uint16_t*)out + ii*4;
-							rgba[0] = bx::toHostEndian(rgba[0], false);
-						}
-						format = bgfx::TextureFormat::R16;
-						bpp    = 16;
-						break;
-
-					case LCT_GREY_ALPHA:
-						for (uint32_t ii = 0, num = width*height; ii < num; ++ii)
-						{
-							uint16_t* rgba = (uint16_t*)out + ii*4;
-							rgba[0] = bx::toHostEndian(rgba[0], false);
-							rgba[1] = bx::toHostEndian(rgba[1], false);
-						}
-						format = bgfx::TextureFormat::R16;
-						bpp    = 16;
-						break;
-
-					case LCT_RGBA:
-						for (uint32_t ii = 0, num = width*height; ii < num; ++ii)
-						{
-							uint16_t* rgba = (uint16_t*)out + ii*4;
-							rgba[0] = bx::toHostEndian(rgba[0], false);
-							rgba[1] = bx::toHostEndian(rgba[1], false);
-							rgba[2] = bx::toHostEndian(rgba[2], false);
-							rgba[3] = bx::toHostEndian(rgba[3], false);
-						}
-						format = bgfx::TextureFormat::RGBA16;
-						bpp    = 64;
-						break;
-
-					case LCT_RGB:
-					case LCT_PALETTE:
-						break;
-					}
-					break;
-
-				default:
-					break;
-				}
-			}
-
-			lodepng_state_cleanup(&state);
-		}
-		else
-		{
-			EXRVersion exrVersion;
-			int result = ParseEXRVersionFromMemory(&exrVersion, (uint8_t*)data, size);
-			if (TINYEXR_SUCCESS == result)
-			{
-				const char* err = NULL;
-				EXRHeader exrHeader;
-				result = ParseEXRHeaderFromMemory(&exrHeader, &exrVersion, (uint8_t*)data, size, &err);
-				if (TINYEXR_SUCCESS == result)
-				{
-					EXRImage exrImage;
-					InitEXRImage(&exrImage);
-
-					result = LoadEXRImageFromMemory(&exrImage, &exrHeader, (uint8_t*)data, size, &err);
-					if (TINYEXR_SUCCESS == result)
-					{
-						uint8_t idxR = UINT8_MAX;
-						uint8_t idxG = UINT8_MAX;
-						uint8_t idxB = UINT8_MAX;
-						uint8_t idxA = UINT8_MAX;
-						for (uint8_t ii = 0, num = uint8_t(exrHeader.num_channels); ii < num; ++ii)
-						{
-							const EXRChannelInfo& channel = exrHeader.channels[ii];
-							if (UINT8_MAX == idxR
-							&&  0 == bx::strncmp(channel.name, "R") )
-							{
-								idxR = ii;
-							}
-							else if (UINT8_MAX == idxG
-								 &&  0 == bx::strncmp(channel.name, "G") )
-							{
-								idxG = ii;
-							}
-							else if (UINT8_MAX == idxB
-								 &&  0 == bx::strncmp(channel.name, "B") )
-							{
-								idxB = ii;
-							}
-							else if (UINT8_MAX == idxA
-								 &&  0 == bx::strncmp(channel.name, "A") )
-							{
-								idxA = ii;
-							}
-						}
-
-						if (UINT8_MAX != idxR)
-						{
-							const bool asFloat = exrHeader.pixel_types[idxR] == TINYEXR_PIXELTYPE_FLOAT;
-
-							uint32_t srcBpp = 32;
-							uint32_t dstBpp = asFloat ? 32 : 16;
-							format = asFloat ? bgfx::TextureFormat::R32F : bgfx::TextureFormat::R16F;
-							uint32_t stepR = 1;
-							uint32_t stepG = 0;
-							uint32_t stepB = 0;
-							uint32_t stepA = 0;
-
-							if (UINT8_MAX != idxG)
-							{
-								srcBpp += 32;
-								dstBpp = asFloat ? 64 : 32;
-								format = asFloat ? bgfx::TextureFormat::RG32F : bgfx::TextureFormat::RG16F;
-								stepG  = 1;
-							}
-
-							if (UINT8_MAX != idxB)
-							{
-								srcBpp += 32;
-								dstBpp = asFloat ? 128 : 64;
-								format = asFloat ? bgfx::TextureFormat::RGBA32F : bgfx::TextureFormat::RGBA16F;
-								stepB  = 1;
-							}
-
-							if (UINT8_MAX != idxA)
-							{
-								srcBpp += 32;
-								dstBpp = asFloat ? 128 : 64;
-								format = asFloat ? bgfx::TextureFormat::RGBA32F : bgfx::TextureFormat::RGBA16F;
-								stepA  = 1;
-							}
-
-							release = exrRelease;
-							out = (uint8_t*)BX_ALLOC(allocator, exrImage.width * exrImage.height * dstBpp/8);
-
-							const float zero = 0.0f;
-							const float* srcR = UINT8_MAX == idxR ? &zero : (const float*)(exrImage.images)[idxR];
-							const float* srcG = UINT8_MAX == idxG ? &zero : (const float*)(exrImage.images)[idxG];
-							const float* srcB = UINT8_MAX == idxB ? &zero : (const float*)(exrImage.images)[idxB];
-							const float* srcA = UINT8_MAX == idxA ? &zero : (const float*)(exrImage.images)[idxA];
-
-							const uint32_t bytesPerPixel = dstBpp/8;
-							for (uint32_t ii = 0, num = exrImage.width * exrImage.height; ii < num; ++ii)
-							{
-								float rgba[4] =
-								{
-									*srcR,
-									*srcG,
-									*srcB,
-									*srcA,
-								};
-								bx::memCopy(&out[ii * bytesPerPixel], rgba, bytesPerPixel);
-
-								srcR += stepR;
-								srcG += stepG;
-								srcB += stepB;
-								srcA += stepA;
-							}
-						}
-
-						FreeEXRImage(&exrImage);
-					}
-
-					FreeEXRHeader(&exrHeader);
-				}
+				handle = bgfx::createTextureCube(
+					  uint16_t(imageContainer->m_width)
+					, 1 < imageContainer->m_numMips
+					, imageContainer->m_numLayers
+					, imageContainer->m_format
+					, _flags
+					, mem
+					);
 			}
 			else
 			{
-				int comp = 0;
-				out = stbi_load_from_memory( (uint8_t*)data, size, (int*)&width, (int*)&height, &comp, 4);
+				handle = bgfx::createTexture2D(
+					  uint16_t(imageContainer->m_width)
+					, uint16_t(imageContainer->m_height)
+					, 1 < imageContainer->m_numMips
+					, imageContainer->m_numLayers
+					, imageContainer->m_format
+					, _flags
+					, mem
+					);
 			}
-		}
-
-		BX_FREE(allocator, data);
-
-		if (NULL != out)
-		{
-			handle = bgfx::createTexture2D(
-				  uint16_t(width)
-				, uint16_t(height)
-				, false
-				, 1
-				, format
-				, _flags
-				, bgfx::copy(out, width*height*bpp/8)
-				);
-			release(out);
 
 			if (NULL != _info)
 			{
 				bgfx::calcTextureSize(
 					  *_info
-					, uint16_t(width)
-					, uint16_t(height)
+					, uint16_t(imageContainer->m_width)
+					, uint16_t(imageContainer->m_height)
 					, 0
 					, false
 					, false
 					, 1
-					, format
+					, imageContainer->m_format
 					);
 			}
 		}
-	}
-	else
-	{
-		DBG("Failed to load %s.", _filePath);
 	}
 
 	return handle;
@@ -471,6 +220,14 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath,
 bgfx::TextureHandle loadTexture(const char* _name, uint32_t _flags, uint8_t _skip, bgfx::TextureInfo* _info)
 {
 	return loadTexture(entry::getFileReader(), _name, _flags, _skip, _info);
+}
+
+bgfx::ImageContainer* imageLoad(const char* _filePath, bgfx::TextureFormat::Enum _dstFormat)
+{
+	uint32_t size = 0;
+	void* data = loadMem(entry::getFileReader(), entry::getAllocator(), _filePath, &size);
+
+	return bgfx::imageParse(entry::getAllocator(), data, size, _dstFormat);
 }
 
 void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)

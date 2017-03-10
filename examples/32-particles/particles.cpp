@@ -249,9 +249,23 @@ class Particles : public entry::AppI
 
 		psInit();
 
+		bgfx::ImageContainer* image = imageLoad(
+			  "textures/particle.ktx"
+			, bgfx::TextureFormat::BGRA8
+			);
+
+		EmitterSpriteHandle sprite = psCreateSprite(
+				  uint16_t(image->m_width)
+				, uint16_t(image->m_height)
+				, image->m_data
+				);
+
+		bgfx::imageFree(image);
+
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_emitter); ++ii)
 		{
 			m_emitter[ii].create();
+			m_emitter[ii].m_uniforms.m_handle = sprite;
 		}
 
 		imguiCreate();
