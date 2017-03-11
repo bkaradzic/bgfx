@@ -691,6 +691,12 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
                 pp->parseContext.ppError(ppToken->loc, "End of line in string", "string", "");
             }
             return PpAtomConstString;
+        case ':':
+            ch = getch();
+            if (ch == ':')
+                return PpAtomColonColon;
+            ungetch();
+            return ':';
         }
 
         ch = getch();

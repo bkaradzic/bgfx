@@ -2,59 +2,59 @@ hlsl.structbuffer.fn.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:9  Function Definition: get(block--vu4[0]1;u1; (temp 4-component vector of uint)
-0:9    Function Parameters: 
-0:9      'sb' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
-0:9      'bufferOffset' (in uint)
+0:5  Function Definition: get(block--vu4[0]1;u1; (temp 4-component vector of uint)
+0:5    Function Parameters: 
+0:5      'sb' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:5      'bufferOffset' (in uint)
 0:?     Sequence
-0:10      Branch: Return with expression
-0:10        indirect index (layout(row_major std430 ) buffer 4-component vector of uint)
-0:10          @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint)
-0:10            'sb' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
-0:10            Constant:
-0:10              0 (const uint)
-0:10          'bufferOffset' (in uint)
-0:14  Function Definition: set(block--vu4[0]1;u1;vu4; (temp void)
-0:14    Function Parameters: 
-0:14      'sb' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
-0:14      'bufferOffset' (in uint)
-0:14      'data' (in 4-component vector of uint)
+0:6      Branch: Return with expression
+0:6        indirect index (layout(row_major std430 ) buffer 4-component vector of uint)
+0:6          @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint)
+0:6            'sb' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:6            Constant:
+0:6              0 (const uint)
+0:6          'bufferOffset' (in uint)
+0:10  Function Definition: set(block--vu4[0]1;u1;vu4; (temp void)
+0:10    Function Parameters: 
+0:10      'sb' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:10      'bufferOffset' (in uint)
+0:10      'data' (in 4-component vector of uint)
 0:?     Sequence
-0:15      move second child to first child (temp 4-component vector of uint)
-0:15        indirect index (layout(row_major std430 ) buffer 4-component vector of uint)
-0:15          @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint)
-0:15            'sb' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
-0:15            Constant:
-0:15              0 (const uint)
-0:15          'bufferOffset' (in uint)
-0:15        'data' (in 4-component vector of uint)
-0:19  Function Definition: @main(u1; (temp 4-component vector of float)
-0:19    Function Parameters: 
-0:19      'pos' (in uint)
+0:11      move second child to first child (temp 4-component vector of uint)
+0:11        indirect index (buffer 4-component vector of uint)
+0:11          @data: direct index for structure (buffer implicitly-sized array of 4-component vector of uint)
+0:11            'sb' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:11            Constant:
+0:11              0 (const uint)
+0:11          'bufferOffset' (in uint)
+0:11        'data' (in 4-component vector of uint)
+0:20  Function Definition: @main(u1; (temp 4-component vector of float)
+0:20    Function Parameters: 
+0:20      'pos' (in uint)
 0:?     Sequence
-0:20      Function Call: set(block--vu4[0]1;u1;vu4; (temp void)
-0:20        'sbuf2' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
-0:20        Constant:
-0:20          2 (const uint)
-0:20        Function Call: get(block--vu4[0]1;u1; (temp 4-component vector of uint)
-0:20          'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
-0:20          Constant:
-0:20            3 (const uint)
-0:22      Branch: Return with expression
-0:22        Constant:
-0:22          0.000000
-0:22          0.000000
-0:22          0.000000
-0:22          0.000000
-0:19  Function Definition: main( (temp void)
-0:19    Function Parameters: 
+0:21      Function Call: set(block--vu4[0]1;u1;vu4; (temp void)
+0:21        'sbuf2' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:21        Constant:
+0:21          2 (const uint)
+0:21        Function Call: get(block--vu4[0]1;u1; (temp 4-component vector of uint)
+0:21          'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:21          Constant:
+0:21            3 (const uint)
+0:23      Branch: Return with expression
+0:23        Constant:
+0:23          0.000000
+0:23          0.000000
+0:23          0.000000
+0:23          0.000000
+0:20  Function Definition: main( (temp void)
+0:20    Function Parameters: 
 0:?     Sequence
-0:19      move second child to first child (temp uint)
+0:20      move second child to first child (temp uint)
 0:?         'pos' (temp uint)
 0:?         'pos' (layout(location=0 ) in uint)
-0:19      move second child to first child (temp 4-component vector of float)
+0:20      move second child to first child (temp 4-component vector of float)
 0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:19        Function Call: @main(u1; (temp 4-component vector of float)
+0:20        Function Call: @main(u1; (temp 4-component vector of float)
 0:?           'pos' (temp uint)
 0:?   Linker Objects
 0:?     'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
@@ -70,59 +70,59 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:9  Function Definition: get(block--vu4[0]1;u1; (temp 4-component vector of uint)
-0:9    Function Parameters: 
-0:9      'sb' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
-0:9      'bufferOffset' (in uint)
+0:5  Function Definition: get(block--vu4[0]1;u1; (temp 4-component vector of uint)
+0:5    Function Parameters: 
+0:5      'sb' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:5      'bufferOffset' (in uint)
 0:?     Sequence
-0:10      Branch: Return with expression
-0:10        indirect index (layout(row_major std430 ) buffer 4-component vector of uint)
-0:10          @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint)
-0:10            'sb' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
-0:10            Constant:
-0:10              0 (const uint)
-0:10          'bufferOffset' (in uint)
-0:14  Function Definition: set(block--vu4[0]1;u1;vu4; (temp void)
-0:14    Function Parameters: 
-0:14      'sb' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
-0:14      'bufferOffset' (in uint)
-0:14      'data' (in 4-component vector of uint)
+0:6      Branch: Return with expression
+0:6        indirect index (layout(row_major std430 ) buffer 4-component vector of uint)
+0:6          @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint)
+0:6            'sb' (layout(row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:6            Constant:
+0:6              0 (const uint)
+0:6          'bufferOffset' (in uint)
+0:10  Function Definition: set(block--vu4[0]1;u1;vu4; (temp void)
+0:10    Function Parameters: 
+0:10      'sb' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:10      'bufferOffset' (in uint)
+0:10      'data' (in 4-component vector of uint)
 0:?     Sequence
-0:15      move second child to first child (temp 4-component vector of uint)
-0:15        indirect index (layout(row_major std430 ) buffer 4-component vector of uint)
-0:15          @data: direct index for structure (layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint)
-0:15            'sb' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
-0:15            Constant:
-0:15              0 (const uint)
-0:15          'bufferOffset' (in uint)
-0:15        'data' (in 4-component vector of uint)
-0:19  Function Definition: @main(u1; (temp 4-component vector of float)
-0:19    Function Parameters: 
-0:19      'pos' (in uint)
+0:11      move second child to first child (temp 4-component vector of uint)
+0:11        indirect index (buffer 4-component vector of uint)
+0:11          @data: direct index for structure (buffer implicitly-sized array of 4-component vector of uint)
+0:11            'sb' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:11            Constant:
+0:11              0 (const uint)
+0:11          'bufferOffset' (in uint)
+0:11        'data' (in 4-component vector of uint)
+0:20  Function Definition: @main(u1; (temp 4-component vector of float)
+0:20    Function Parameters: 
+0:20      'pos' (in uint)
 0:?     Sequence
-0:20      Function Call: set(block--vu4[0]1;u1;vu4; (temp void)
-0:20        'sbuf2' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
-0:20        Constant:
-0:20          2 (const uint)
-0:20        Function Call: get(block--vu4[0]1;u1; (temp 4-component vector of uint)
-0:20          'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
-0:20          Constant:
-0:20            3 (const uint)
-0:22      Branch: Return with expression
-0:22        Constant:
-0:22          0.000000
-0:22          0.000000
-0:22          0.000000
-0:22          0.000000
-0:19  Function Definition: main( (temp void)
-0:19    Function Parameters: 
+0:21      Function Call: set(block--vu4[0]1;u1;vu4; (temp void)
+0:21        'sbuf2' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:21        Constant:
+0:21          2 (const uint)
+0:21        Function Call: get(block--vu4[0]1;u1; (temp 4-component vector of uint)
+0:21          'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})
+0:21          Constant:
+0:21            3 (const uint)
+0:23      Branch: Return with expression
+0:23        Constant:
+0:23          0.000000
+0:23          0.000000
+0:23          0.000000
+0:23          0.000000
+0:20  Function Definition: main( (temp void)
+0:20    Function Parameters: 
 0:?     Sequence
-0:19      move second child to first child (temp uint)
+0:20      move second child to first child (temp uint)
 0:?         'pos' (temp uint)
 0:?         'pos' (layout(location=0 ) in uint)
-0:19      move second child to first child (temp 4-component vector of float)
+0:20      move second child to first child (temp 4-component vector of float)
 0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:19        Function Call: @main(u1; (temp 4-component vector of float)
+0:20        Function Call: @main(u1; (temp 4-component vector of float)
 0:?           'pos' (temp uint)
 0:?   Linker Objects
 0:?     'sbuf' (layout(binding=10 row_major std430 ) readonly buffer block{layout(row_major std430 ) buffer implicitly-sized array of 4-component vector of uint @data})

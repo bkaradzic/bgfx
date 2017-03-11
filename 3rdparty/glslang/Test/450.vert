@@ -21,3 +21,8 @@ struct SA { float f[4]; };
 out SA outSA;
 struct SS { float f; S s; };
 out SS outSS;
+
+void foo()
+{
+    SS::f;
+}

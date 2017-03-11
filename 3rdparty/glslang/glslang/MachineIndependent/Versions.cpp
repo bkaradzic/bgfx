@@ -332,6 +332,19 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_GOOGLE_include_directive 1\n"
             ;
 
+    if (version >= 150) {
+        // define GL_core_profile and GL_compatibility_profile
+        preamble +=
+                "#define GL_core_profile 1\n"
+                ;
+
+        if (profile == ECompatibilityProfile) {
+            preamble +=
+                    "#define GL_compatibility_profile 1\n"
+                    ;
+        }
+    }
+
     // #define VULKAN XXXX
     const int numberBufSize = 12;
     char numberBuf[numberBufSize];

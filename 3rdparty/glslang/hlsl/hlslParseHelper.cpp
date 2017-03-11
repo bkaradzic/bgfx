@@ -805,36 +805,6 @@ TIntermTyped* HlslParseContext::handleUnaryMath(const TSourceLoc& loc, const cha
 
     return childNode;
 }
-
-//
-// Return true if the name is a sampler method
-//
-bool HlslParseContext::isSamplerMethod(const TString& name) const
-{
-    return
-        name == "CalculateLevelOfDetail"          ||
-        name == "CalculateLevelOfDetailUnclamped" ||
-        name == "Gather"                          ||
-        name == "GatherRed"                       ||
-        name == "GatherGreen"                     ||
-        name == "GatherBlue"                      ||
-        name == "GatherAlpha"                     ||
-        name == "GatherCmp"                       ||
-        name == "GatherCmpRed"                    ||
-        name == "GatherCmpGreen"                  ||
-        name == "GatherCmpBlue"                   ||
-        name == "GatherCmpAlpha"                  ||
-        name == "GetDimensions"                   ||
-        name == "GetSamplePosition"               ||
-        name == "Load"                            ||
-        name == "Sample"                          ||
-        name == "SampleBias"                      ||
-        name == "SampleCmp"                       ||
-        name == "SampleCmpLevelZero"              ||
-        name == "SampleGrad"                      ||
-        name == "SampleLevel";
-}
-
 //
 // Return true if the name is a struct buffer method
 //
@@ -862,46 +832,17 @@ bool HlslParseContext::isStructBufferMethod(const TString& name) const
 }
 
 //
-// Handle seeing a base.field dereference in the grammar.
+// Handle seeing a base.field dereference in the grammar, where 'field' is a
+// swizzle or member variable.
 //
 TIntermTyped* HlslParseContext::handleDotDereference(const TSourceLoc& loc, TIntermTyped* base, const TString& field)
 {
     variableCheck(base);
 
-    //
-    // methods can't be resolved until we later see the function-calling syntax.
-    // Save away the name in the AST for now.  Processing is completed in
-    // handleLengthMethod(), etc.
-    //
-    if (field == "length") {
-        return intermediate.addMethod(base, TType(EbtInt), &field, loc);
-    } else if (isSamplerMethod(field) && base->getType().getBasicType() == EbtSampler) {
-        // If it's not a method on a sampler object, we fall through to let other objects have a go.
-        const TSampler& sampler = base->getType().getSampler();
-        if (! sampler.isPureSampler()) {
-            const int vecSize = sampler.isShadow() ? 1 : 4; // TODO: handle arbitrary sample return sizes
-            return intermediate.addMethod(base, TType(sampler.type, EvqTemporary, vecSize), &field, loc);
-        }
-    } else if (isStructBufferType(base->getType())) {
-        TType retType(base->getType(), 0);
-        return intermediate.addMethod(base, retType, &field, loc);
-    } else if (field == "Append" ||
-               field == "RestartStrip") {
-        // We cannot check the type here: it may be sanitized if we're not compiling a geometry shader, but
-        // the code is around in the shader source.
-        return intermediate.addMethod(base, TType(EbtVoid), &field, loc);
-    }
-
-    // It's not .length() if we get to here.
-
     if (base->isArray()) {
         error(loc, "cannot apply to an array:", ".", field.c_str());
-
         return base;
     }
-
-    // It's neither an array nor .length() if we get here,
-    // leaving swizzles and struct/block dereferences.
 
     TIntermTyped* result = base;
     if (base->isVector() || base->isScalar()) {
@@ -1009,6 +950,30 @@ TIntermTyped* HlslParseContext::handleDotDereference(const TSourceLoc& loc, TInt
         error(loc, "does not apply to this type:", field.c_str(), base->getType().getCompleteString().c_str());
 
     return result;
+}
+
+//
+// Return true if the field should be treated as a built-in method.
+// Return false otherwise.
+//
+bool HlslParseContext::isBuiltInMethod(const TSourceLoc& loc, TIntermTyped* base, const TString& field)
+{
+    if (base == nullptr)
+        return false;
+
+    variableCheck(base);
+
+    if (base->getType().getBasicType() == EbtSampler) {
+        return true;
+    } else if (isStructBufferType(base->getType()) && isStructBufferMethod(field)) {
+        return true;
+    } else if (field == "Append" ||
+               field == "RestartStrip") {
+        // We cannot check the type here: it may be sanitized if we're not compiling a geometry shader, but
+        // the code is around in the shader source.
+        return true;
+    } else
+        return false;
 }
 
 // Split the type of the given node into two structs:
@@ -1439,12 +1404,7 @@ void HlslParseContext::assignLocations(TVariable& variable)
             assignLocation(**member);
     } else if (wasSplit(variable.getUniqueId())) {
         TVariable* splitIoVar = getSplitIoVar(&variable);
-        const TTypeList* structure = splitIoVar->getType().getStruct();
-        // Struct splitting can produce empty structures if the only members of the
-        // struct were builtin interstage IO types.  Only assign locations if it
-        // isn't a struct, or is a non-empty struct.
-        if (structure == nullptr || !structure->empty())
-            assignLocation(*splitIoVar);
+        assignLocation(*splitIoVar);
     } else {
         assignLocation(variable);
     }
@@ -1520,6 +1480,8 @@ void HlslParseContext::addInterstageIoToLinkage()
 //
 // Handle seeing the function prototype in front of a function definition in the grammar.
 // The body is handled after this function returns.
+//
+// Returns an aggregate of parameter-symbol nodes.
 //
 TIntermAggregate* HlslParseContext::handleFunctionDefinition(const TSourceLoc& loc, TFunction& function,
                                                              const TAttributeMap& attributes, TIntermNode*& entryPointTree)
@@ -1885,7 +1847,7 @@ void HlslParseContext::remapEntryPointIO(TFunction& function, TVariable*& return
 {
     // Do the actual work to make a type be a shader input or output variable,
     // and clear the original to be non-IO (for use as a normal function parameter/return).
-    const auto makeIoVariable = [this](const char* name, TType& type, TStorageQualifier storage) {
+    const auto makeIoVariable = [this](const char* name, TType& type, TStorageQualifier storage) -> TVariable* {
         TVariable* ioVariable = makeInternalVariable(name, type);
         clearUniformInputOutput(type.getQualifier());
         if (type.getStruct() != nullptr) {
@@ -2071,7 +2033,7 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
 
         if (split && derefType.isBuiltInInterstageIO(language)) {
             // copy from interstage IO builtin if needed
-            subTree = intermediate.addSymbol(*interstageBuiltInIo.find(tInterstageIoData(derefType, outer->getType()))->second);
+            subTree = intermediate.addSymbol(*interstageBuiltInIo.find(HlslParseContext::tInterstageIoData(derefType, outer->getType()))->second);
 
             // Arrayness of builtIn symbols isn't handled by the normal recursion: it's been extracted and moved to the builtin.
             if (subTree->getType().isArray() && !arrayElement.empty()) {
@@ -2701,6 +2663,7 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
             const TSampler& sampler = texType.getSampler();
             const TSamplerDim dim = sampler.dim;
             const bool isImage = sampler.isImage();
+            const bool isMs = sampler.isMultiSample();
             const int numArgs = (int)argAggregate->getSequence().size();
 
             int numDims = 0;
@@ -2711,6 +2674,7 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
             case Esd3D:     numDims = 3; break; // W, H, D
             case EsdCube:   numDims = 2; break; // W, H (cube)
             case EsdBuffer: numDims = 1; break; // W (buffers)
+            case EsdRect:   numDims = 2; break; // W, H (rect)
             default:
                 assert(0 && "unhandled texture dimension");
             }
@@ -2719,17 +2683,31 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
             if (sampler.isArrayed())
                 ++numDims;
 
-            // Establish whether we're querying mip levels
-            const bool mipQuery = (numArgs > (numDims + 1)) && (!sampler.isMultiSample());
+            // Establish whether the method itself is querying mip levels.  This can be false even
+            // if the underlying query requires a MIP level, due to the available HLSL method overloads.
+            const bool mipQuery = (numArgs > (numDims + 1 + (isMs ? 1 : 0)));
+
+            // Establish whether we must use the LOD form of query (even if the method did not supply a mip level to query).
+            // True if:
+            //   1. 1D/2D/3D/Cube AND multisample==0 AND NOT image (those can be sent to the non-LOD query)
+            // or,
+            //   2. There is a LOD (because the non-LOD query cannot be used in that case, per spec)
+            const bool mipRequired =
+                ((dim == Esd1D || dim == Esd2D || dim == Esd3D || dim == EsdCube) && !isMs && !isImage) || // 1...
+                mipQuery; // 2...
 
             // AST assumes integer return.  Will be converted to float if required.
             TIntermAggregate* sizeQuery = new TIntermAggregate(isImage ? EOpImageQuerySize : EOpTextureQuerySize);
             sizeQuery->getSequence().push_back(argTex);
-            // If we're querying an explicit LOD, add the LOD, which is always arg #1
-            if (mipQuery) {
-                TIntermTyped* queryLod = argAggregate->getSequence()[1]->getAsTyped();
+
+            // If we're building an LOD query, add the LOD.
+            if (mipRequired) {
+                // If the base HLSL query had no MIP level given, use level 0.
+                TIntermTyped* queryLod = mipQuery ? argAggregate->getSequence()[1]->getAsTyped() :
+                    intermediate.addConstantUnion(0, loc, true);
                 sizeQuery->getSequence().push_back(queryLod);
             }
+
             sizeQuery->setType(TType(EbtUint, EvqTemporary, numDims));
             sizeQuery->setLoc(loc);
 
@@ -3020,8 +2998,10 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
             // For now, we have nothing to map the component-wise comparison forms
             // to, because neither GLSL nor SPIR-V has such an opcode.  Issue an
             // unimplemented error instead.  Most of the machinery is here if that
-            // should ever become available.
-            if (cmpValues) {
+            // should ever become available.  However, red can be passed through
+            // to OpImageDrefGather.  G/B/A cannot, because that opcode does not
+            // accept a component.
+            if (cmpValues != 0 && op != EOpMethodGatherCmpRed) {
                 error(loc, "unimplemented: component-level gather compare", "", "");
                 return;
             }
@@ -3102,7 +3082,7 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
             }
 
             // Add comparison value if we have one
-            if (argTex->getType().getSampler().isShadow())
+            if (argCmp != nullptr)
                 txgather->getSequence().push_back(argCmp);
 
             // Add offset (either 1, or an array of 4) if we have one
@@ -3732,9 +3712,7 @@ TIntermTyped* HlslParseContext::handleFunctionCall(const TSourceLoc& loc, TFunct
     TIntermTyped* result = nullptr;
 
     TOperator op = function->getBuiltInOp();
-    if (op == EOpArrayLength)
-        result = handleLengthMethod(loc, function, arguments);
-    else if (op != EOpNull) {
+    if (op != EOpNull) {
         //
         // Then this should be a constructor.
         // Don't go through the symbol table for constructors.
@@ -3846,41 +3824,6 @@ TIntermTyped* HlslParseContext::handleFunctionCall(const TSourceLoc& loc, TFunct
         result = intermediate.addConstantUnion(0.0, EbtFloat, loc);
 
     return result;
-}
-
-// Finish processing object.length(). This started earlier in handleDotDereference(), where
-// the ".length" part was recognized and semantically checked, and finished here where the
-// function syntax "()" is recognized.
-//
-// Return resulting tree node.
-TIntermTyped* HlslParseContext::handleLengthMethod(const TSourceLoc& loc, TFunction* function, TIntermNode* intermNode)
-{
-    int length = 0;
-
-    if (function->getParamCount() > 0)
-        error(loc, "method does not accept any arguments", function->getName().c_str(), "");
-    else {
-        const TType& type = intermNode->getAsTyped()->getType();
-        if (type.isArray()) {
-            if (type.isRuntimeSizedArray()) {
-                // Create a unary op and let the back end handle it
-                return intermediate.addBuiltInFunctionCall(loc, EOpArrayLength, true, intermNode, TType(EbtInt));
-            } else
-                length = type.getOuterArraySize();
-        } else if (type.isMatrix())
-            length = type.getMatrixCols();
-        else if (type.isVector())
-            length = type.getVectorSize();
-        else {
-            // we should not get here, because earlier semantic checking should have prevented this path
-            error(loc, ".length()", "unexpected use of .length()", "");
-        }
-    }
-
-    if (length == 0)
-        length = 1;
-
-    return intermediate.addConstantUnion(length, loc);
 }
 
 //
@@ -4206,118 +4149,23 @@ TFunction* HlslParseContext::handleConstructorCall(const TSourceLoc& loc, const 
 // Handle seeing a "COLON semantic" at the end of a type declaration,
 // by updating the type according to the semantic.
 //
-void HlslParseContext::handleSemantic(TSourceLoc loc, TQualifier& qualifier, const TString& semantic)
+void HlslParseContext::handleSemantic(TSourceLoc loc, TQualifier& qualifier, TBuiltInVariable builtIn)
 {
-    // TODO: need to know if it's an input or an output
-    // The following sketches what needs to be done, but can't be right
-    // without taking into account stage and input/output.
+    // adjust for stage in/out
 
-    TString semanticUpperCase = semantic;
-    std::transform(semanticUpperCase.begin(), semanticUpperCase.end(), semanticUpperCase.begin(), ::toupper);
-    // in DX9, all outputs had to have a semantic associated with them, that was either consumed
-    // by the system or was a specific register assignment
-    // in DX10+, only semantics with the SV_ prefix have any meaning beyond decoration
-    // Fxc will only accept DX9 style semantics in compat mode
-    // Also, in DX10 if a SV value is present as the input of a stage, but isn't appropriate for that
-    // stage, it would just be ignored as it is likely there as part of an output struct from one stage
-    // to the next
-
-    bool bParseDX9 = false;
-    if (bParseDX9) {
-        if (semanticUpperCase == "PSIZE")
-            qualifier.builtIn = EbvPointSize;
-        else if (semantic == "FOG")
-            qualifier.builtIn = EbvFogFragCoord;
-        else if (semanticUpperCase == "DEPTH")
-            qualifier.builtIn = EbvFragDepth;
-        else if (semanticUpperCase == "VFACE")
-            qualifier.builtIn = EbvFace;
-        else if (semanticUpperCase == "VPOS")
-            qualifier.builtIn = EbvFragCoord;
+    switch(builtIn) {
+    case EbvPosition:
+        if (language == EShLangFragment)
+            builtIn = EbvFragCoord;
+        break;
+    case EbvStencilRef:
+        error(loc, "unimplemented; need ARB_shader_stencil_export", "SV_STENCILREF", "");
+        break;
+    default:
+        break;
     }
 
-    // SV Position has a different meaning in vertex vs fragment
-    if (semanticUpperCase == "SV_POSITION" && language != EShLangFragment)
-        qualifier.builtIn = EbvPosition;
-    else if (semanticUpperCase == "SV_POSITION" && language == EShLangFragment)
-        qualifier.builtIn = EbvFragCoord;
-    else if (semanticUpperCase == "SV_CLIPDISTANCE")
-        qualifier.builtIn = EbvClipDistance;
-    else if (semanticUpperCase == "SV_CULLDISTANCE")
-        qualifier.builtIn = EbvCullDistance;
-    else if (semanticUpperCase == "SV_VERTEXID")
-        qualifier.builtIn = EbvVertexIndex;
-    else if (semanticUpperCase == "SV_VIEWPORTARRAYINDEX")
-        qualifier.builtIn = EbvViewportIndex;
-    else if (semanticUpperCase == "SV_TESSFACTOR")
-        qualifier.builtIn = EbvTessLevelOuter;
-
-    // Targets are defined 0-7
-    else if (semanticUpperCase == "SV_TARGET") {
-        qualifier.builtIn = EbvNone;
-        // qualifier.layoutLocation = 0;
-    } else if (semanticUpperCase == "SV_TARGET0") {
-        qualifier.builtIn = EbvNone;
-        // qualifier.layoutLocation = 0;
-    } else if (semanticUpperCase == "SV_TARGET1") {
-        qualifier.builtIn = EbvNone;
-        // qualifier.layoutLocation = 1;
-    } else if (semanticUpperCase == "SV_TARGET2") {
-        qualifier.builtIn = EbvNone;
-        // qualifier.layoutLocation = 2;
-    } else if (semanticUpperCase == "SV_TARGET3") {
-        qualifier.builtIn = EbvNone;
-        // qualifier.layoutLocation = 3;
-    } else if (semanticUpperCase == "SV_TARGET4") {
-        qualifier.builtIn = EbvNone;
-        // qualifier.layoutLocation = 4;
-    } else if (semanticUpperCase == "SV_TARGET5") {
-        qualifier.builtIn = EbvNone;
-        // qualifier.layoutLocation = 5;
-    } else if (semanticUpperCase == "SV_TARGET6") {
-        qualifier.builtIn = EbvNone;
-        // qualifier.layoutLocation = 6;
-    } else if (semanticUpperCase == "SV_TARGET7") {
-        qualifier.builtIn = EbvNone;
-        // qualifier.layoutLocation = 7;
-    } else if (semanticUpperCase == "SV_SAMPLEINDEX")
-        qualifier.builtIn = EbvSampleId;
-    else if (semanticUpperCase == "SV_RENDERTARGETARRAYINDEX")
-        qualifier.builtIn = EbvLayer;
-    else if (semanticUpperCase == "SV_PRIMITIVEID")
-        qualifier.builtIn = EbvPrimitiveId;
-    else if (semanticUpperCase == "SV_OUTPUTCONTROLPOINTID")
-        qualifier.builtIn = EbvInvocationId;
-    else if (semanticUpperCase == "SV_ISFRONTFACE")
-        qualifier.builtIn = EbvFace;
-    else if (semanticUpperCase == "SV_INSTANCEID")
-        qualifier.builtIn = EbvInstanceIndex;
-    else if (semanticUpperCase == "SV_INSIDETESSFACTOR")
-        qualifier.builtIn = EbvTessLevelInner;
-    else if (semanticUpperCase == "SV_GSINSTANCEID")
-        qualifier.builtIn = EbvInvocationId;
-    else if (semanticUpperCase == "SV_DISPATCHTHREADID")
-        qualifier.builtIn = EbvGlobalInvocationId;
-    else if (semanticUpperCase == "SV_GROUPTHREADID")
-        qualifier.builtIn = EbvLocalInvocationId;
-    else if (semanticUpperCase == "SV_GROUPINDEX")
-        qualifier.builtIn = EbvLocalInvocationIndex;
-    else if (semanticUpperCase == "SV_GROUPID")
-        qualifier.builtIn = EbvWorkGroupId;
-    else if (semanticUpperCase == "SV_DOMAINLOCATION")
-        qualifier.builtIn = EbvTessCoord;
-    else if (semanticUpperCase == "SV_DEPTH")
-        qualifier.builtIn = EbvFragDepth;
-    else if( semanticUpperCase == "SV_COVERAGE")
-        qualifier.builtIn = EbvSampleMask;
-
-    // TODO, these need to get refined to be more specific
-    else if( semanticUpperCase == "SV_DEPTHGREATEREQUAL")
-        qualifier.builtIn = EbvFragDepthGreater;
-    else if( semanticUpperCase == "SV_DEPTHLESSEQUAL")
-        qualifier.builtIn = EbvFragDepthLesser;
-    else if( semanticUpperCase == "SV_STENCILREF")
-        error(loc, "unimplemented; need ARB_shader_stencil_export", "SV_STENCILREF", "");
+    qualifier.builtIn = builtIn;
 }
 
 //
@@ -5223,10 +5071,6 @@ void HlslParseContext::shareStructBufferType(TType& type)
         return compareQualifiers(lhs, rhs) && lhs == rhs;
     };
 
-    // TString typeName;
-    // type.appendMangledName(typeName);
-    // type.setTypeName(typeName);
-
     // This is an exhaustive O(N) search, but real world shaders have
     // only a small number of these.
     for (int idx = 0; idx < int(structBufferTypes.size()); ++idx) {
@@ -5241,8 +5085,6 @@ void HlslParseContext::shareStructBufferType(TType& type)
     TType* typeCopy = new TType;
     typeCopy->shallowCopy(type);
     structBufferTypes.push_back(typeCopy);
-
-    // structBuffTypes.push_back(type.getWritableStruct());
 }
 
 void HlslParseContext::paramFix(TType& type)
@@ -7247,6 +7089,49 @@ TIntermNode* HlslParseContext::addSwitch(const TSourceLoc& loc, TIntermTyped* ex
     return switchNode;
 }
 
+// Track levels of class/struct nesting with a prefix string using
+// the type names separated by the scoping operator. E.g., two levels
+// would look like:
+//
+//   outer::inner
+//
+// The string is empty when at normal global level.
+//
+void HlslParseContext::pushThis(const TString& typeName)
+{
+    // make new type prefix
+    TString newPrefix;
+    if (currentTypePrefix.size() > 0) {
+        newPrefix = currentTypePrefix.back();
+        newPrefix.append("::");
+    }
+    newPrefix.append(typeName);
+    currentTypePrefix.push_back(newPrefix);
+}
+
+// Opposite of pushThis(), see above
+void HlslParseContext::popThis()
+{
+    currentTypePrefix.pop_back();
+}
+
+// Use the class/struct nesting string to create a global name for
+// a member of a class/struct.  Static members use "::" for the final
+// step, while non-static members use ".".
+TString* HlslParseContext::getFullMemberFunctionName(const TString& memberName, bool isStatic) const
+{
+    TString* name = NewPoolTString("");
+    if (currentTypePrefix.size() > 0)
+        name->append(currentTypePrefix.back());
+    if (isStatic)
+        name->append("::");
+    else
+        name->append(".");
+    name->append(memberName);
+
+    return name;
+}
+
 // Potentially rename shader entry point function
 void HlslParseContext::renameShaderFunction(TString*& name) const
 {
@@ -7493,9 +7378,9 @@ void HlslParseContext::addPatchConstantInvocation()
             const TStorageQualifier storage = function[p].type->getQualifier().storage;
 
             if (function[p].declaredBuiltIn != EbvNone)
-                builtIns.insert(tInterstageIoData(function[p].declaredBuiltIn, storage));
+                builtIns.insert(HlslParseContext::tInterstageIoData(function[p].declaredBuiltIn, storage));
             else
-                builtIns.insert(tInterstageIoData(function[p].type->getQualifier().builtIn, storage));
+                builtIns.insert(HlslParseContext::tInterstageIoData(function[p].type->getQualifier().builtIn, storage));
         }
     };
 
@@ -7581,8 +7466,9 @@ void HlslParseContext::addPatchConstantInvocation()
 
         notInEntryPoint = pcfBuiltIns;
 
-        for (auto bi : epfBuiltIns) // std::set_difference not usable on unordered containers
-            notInEntryPoint.erase(bi);
+        // std::set_difference not usable on unordered containers
+        for (auto bi = epfBuiltIns.begin(); bi != epfBuiltIns.end(); ++bi)
+            notInEntryPoint.erase(*bi);
 
         // Now we'll add those to the entry and to the linkage.
         for (int p=0; p<pcfParamCount; ++p) {

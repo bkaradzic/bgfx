@@ -120,6 +120,8 @@ const struct {
     { PpAtomDecrement,      "--" },
     { PpAtomIncrement,      "++" },
 
+    { PpAtomColonColon,     "::" },
+
     { PpAtomDefine,         "define" },
     { PpAtomUndef,          "undef" },
     { PpAtomIf,             "if" },

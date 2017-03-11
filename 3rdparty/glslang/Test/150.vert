@@ -1,5 +1,9 @@
 #version 150 core
 
+#ifndef GL_core_profile
+#	error standard macro GL_core_profile not defined
+#endif
+
 in vec4 iv4;
 
 uniform float ps;

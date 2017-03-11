@@ -52,6 +52,7 @@ namespace glslang {
         bool acceptTokenClass(EHlslTokenClass);
         EHlslTokenClass peek() const;
         bool peekTokenClass(EHlslTokenClass) const;
+        glslang::TBuiltInVariable mapSemantic(const TString& semantic) { return scanner.mapSemantic(semantic); }
 
     protected:
         HlslToken token;                  // the token we are currently looking at, but have not yet accepted

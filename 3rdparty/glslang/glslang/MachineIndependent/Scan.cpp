@@ -701,6 +701,10 @@ int TScanContext::tokenize(TPpContext* pp, TParserToken& token)
         case PpAtomDecrement:          return DEC_OP;
         case PpAtomIncrement:          return INC_OP;
 
+        case PpAtomColonColon:
+            parseContext.error(loc, "not supported", "::", "");
+            break;
+
         case PpAtomConstInt:           parserToken->sType.lex.i   = ppToken.ival;       return INTCONSTANT;
         case PpAtomConstUint:          parserToken->sType.lex.i   = ppToken.ival;       return UINTCONSTANT;
         case PpAtomConstInt64:         parserToken->sType.lex.i64 = ppToken.i64val;     return INT64CONSTANT;

@@ -364,6 +364,8 @@ gl_FragCoord origin is upper left
 0:70          'sizeQueryTemp' (temp uint)
 0:70          textureSize (temp uint)
 0:70            'g_tTex1df4' (uniform texture1D)
+0:70            Constant:
+0:70              0 (const int)
 0:70        move second child to first child (temp int)
 0:70          'WidthI' (temp int)
 0:70          Convert uint to int (temp int)
@@ -808,6 +810,8 @@ gl_FragCoord origin is upper left
 0:70          'sizeQueryTemp' (temp uint)
 0:70          textureSize (temp uint)
 0:70            'g_tTex1df4' (uniform texture1D)
+0:70            Constant:
+0:70              0 (const int)
 0:70        move second child to first child (temp int)
 0:70          'WidthI' (temp int)
 0:70          Convert uint to int (temp int)
@@ -1284,37 +1288,37 @@ gl_FragCoord origin is upper left
              276:    6(float) CompositeExtract 275 0
                               Store 268(r51) 276
              281:         278 Load 280(g_tTex1df4)
-             282:     14(int) ImageQuerySize 281
+             282:     15(int) ImageQuerySizeLod 281 53
                               Store 277(sizeQueryTemp) 282
              284:     15(int) Load 277(sizeQueryTemp)
              285:     14(int) Bitcast 284
                               Store 283(WidthI) 285
              287:         278 Load 280(g_tTex1df4)
-             289:     14(int) ImageQuerySizeLod 287 288
+             289:     15(int) ImageQuerySizeLod 287 288
                               Store 286(sizeQueryTemp) 289
              290:     15(int) Load 286(sizeQueryTemp)
              291:     14(int) Bitcast 290
                               Store 283(WidthI) 291
              293:         278 Load 280(g_tTex1df4)
-             294:     14(int) ImageQueryLevels 293
+             294:     15(int) ImageQueryLevels 293
                               Store 292(NumberOfLevelsU) 294
              296:         278 Load 280(g_tTex1df4)
-             297:     14(int) ImageQuerySizeLod 296 288
+             297:     15(int) ImageQuerySizeLod 296 288
                               Store 295(sizeQueryTemp) 297
              299:     15(int) Load 295(sizeQueryTemp)
                               Store 298(WidthU) 299
              301:         278 Load 280(g_tTex1df4)
-             302:     14(int) ImageQueryLevels 301
+             302:     15(int) ImageQueryLevels 301
              303:     14(int) Bitcast 302
                               Store 300(NumberOfLevelsI) 303
              305:         278 Load 280(g_tTex1df4)
-             306:     14(int) ImageQuerySizeLod 305 288
+             306:     15(int) ImageQuerySizeLod 305 288
                               Store 304(sizeQueryTemp) 306
              307:     15(int) Load 304(sizeQueryTemp)
              308:     14(int) Bitcast 307
                               Store 283(WidthI) 308
              309:         278 Load 280(g_tTex1df4)
-             310:     14(int) ImageQueryLevels 309
+             310:     15(int) ImageQueryLevels 309
              311:     14(int) Bitcast 310
                               Store 300(NumberOfLevelsI) 311
              314:    6(float) Load 13(r00)

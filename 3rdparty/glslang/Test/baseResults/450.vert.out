@@ -2,7 +2,8 @@
 Warning, version 450 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:12: 'out' : cannot be bool 
 ERROR: 0:13: 'sampler2D' : sampler/image types can only be used in uniform variables or function parameters: outo
-ERROR: 2 compilation errors.  No code generated.
+ERROR: 0:27: '::' : not supported 
+ERROR: 3 compilation errors.  No code generated.
 
 
 Shader version: 450
@@ -20,6 +21,8 @@ ERROR: node is still EOpNull!
 0:9            2 (const int)
 0:9        Constant:
 0:9          4.500000
+0:25  Function Definition: foo( (global void)
+0:25    Function Parameters: 
 0:?   Linker Objects
 0:?     'anon@0' (out block{out 3-element array of float CullDistance gl_CullDistance})
 0:?     'outb' (smooth out bool)

@@ -117,6 +117,8 @@ enum EFixedAtoms {
     PpAtomDecrement,
     PpAtomIncrement,
 
+    PpAtomColonColon,
+
     PpAtomPaste,
 
     // Constants

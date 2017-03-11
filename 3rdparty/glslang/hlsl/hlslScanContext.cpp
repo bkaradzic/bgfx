@@ -47,7 +47,6 @@
 #include "../glslang/MachineIndependent/ParseHelper.h"
 #include "hlslScanContext.h"
 #include "hlslTokens.h"
-//#include "Scan.h"
 
 // preprocessor includes
 #include "../glslang/MachineIndependent/preprocessor/PpContext.h"
@@ -82,6 +81,7 @@ struct str_hash
 // After a single process-level initialization, this is read only and thread safe
 std::unordered_map<const char*, glslang::EHlslTokenClass, str_hash, str_eq>* KeywordMap = nullptr;
 std::unordered_set<const char*, str_hash, str_eq>* ReservedSet = nullptr;
+std::unordered_map<const char*, glslang::TBuiltInVariable, str_hash, str_eq>* SemanticMap = nullptr;
 
 };
 
@@ -381,6 +381,73 @@ void HlslScanContext::fillInKeywordMap()
     ReservedSet->insert("unsigned");
     ReservedSet->insert("using");
     ReservedSet->insert("virtual");
+
+    SemanticMap = new std::unordered_map<const char*, glslang::TBuiltInVariable, str_hash, str_eq>;
+
+    // in DX9, all outputs had to have a semantic associated with them, that was either consumed
+    // by the system or was a specific register assignment
+    // in DX10+, only semantics with the SV_ prefix have any meaning beyond decoration
+    // Fxc will only accept DX9 style semantics in compat mode
+    // Also, in DX10 if a SV value is present as the input of a stage, but isn't appropriate for that
+    // stage, it would just be ignored as it is likely there as part of an output struct from one stage
+    // to the next
+    bool bParseDX9 = false;
+    if (bParseDX9) {
+        (*SemanticMap)["PSIZE"] = EbvPointSize;
+        (*SemanticMap)["FOG"] =   EbvFogFragCoord;
+        (*SemanticMap)["DEPTH"] = EbvFragDepth;
+        (*SemanticMap)["VFACE"] = EbvFace;
+        (*SemanticMap)["VPOS"] =  EbvFragCoord;
+    }
+
+    (*SemanticMap)["SV_POSITION"] =               EbvPosition;
+    (*SemanticMap)["SV_CLIPDISTANCE"] =           EbvClipDistance;
+    (*SemanticMap)["SV_CLIPDISTANCE0"] =          EbvClipDistance;
+    (*SemanticMap)["SV_CLIPDISTANCE1"] =          EbvClipDistance;
+    (*SemanticMap)["SV_CLIPDISTANCE2"] =          EbvClipDistance;
+    (*SemanticMap)["SV_CLIPDISTANCE3"] =          EbvClipDistance;
+    (*SemanticMap)["SV_CLIPDISTANCE4"] =          EbvClipDistance;
+    (*SemanticMap)["SV_CLIPDISTANCE5"] =          EbvClipDistance;
+    (*SemanticMap)["SV_CLIPDISTANCE6"] =          EbvClipDistance;
+    (*SemanticMap)["SV_CLIPDISTANCE7"] =          EbvClipDistance;
+    (*SemanticMap)["SV_CLIPDISTANCE8"] =          EbvClipDistance;
+    (*SemanticMap)["SV_CLIPDISTANCE9"] =          EbvClipDistance;
+    (*SemanticMap)["SV_CLIPDISTANCE10"] =         EbvClipDistance;
+    (*SemanticMap)["SV_CLIPDISTANCE11"] =         EbvClipDistance;
+    (*SemanticMap)["SV_CULLDISTANCE"] =           EbvCullDistance;
+    (*SemanticMap)["SV_CULLDISTANCE0"] =          EbvCullDistance;
+    (*SemanticMap)["SV_CULLDISTANCE1"] =          EbvCullDistance;
+    (*SemanticMap)["SV_CULLDISTANCE2"] =          EbvCullDistance;
+    (*SemanticMap)["SV_CULLDISTANCE3"] =          EbvCullDistance;
+    (*SemanticMap)["SV_CULLDISTANCE4"] =          EbvCullDistance;
+    (*SemanticMap)["SV_CULLDISTANCE5"] =          EbvCullDistance;
+    (*SemanticMap)["SV_CULLDISTANCE6"] =          EbvCullDistance;
+    (*SemanticMap)["SV_CULLDISTANCE7"] =          EbvCullDistance;
+    (*SemanticMap)["SV_CULLDISTANCE8"] =          EbvCullDistance;
+    (*SemanticMap)["SV_CULLDISTANCE9"] =          EbvCullDistance;
+    (*SemanticMap)["SV_CULLDISTANCE10"] =         EbvCullDistance;
+    (*SemanticMap)["SV_CULLDISTANCE11"] =         EbvCullDistance;
+    (*SemanticMap)["SV_VERTEXID"] =               EbvVertexIndex;
+    (*SemanticMap)["SV_VIEWPORTARRAYINDEX"] =     EbvViewportIndex;
+    (*SemanticMap)["SV_TESSFACTOR"] =             EbvTessLevelOuter;
+    (*SemanticMap)["SV_SAMPLEINDEX"] =            EbvSampleId;
+    (*SemanticMap)["SV_RENDERTARGETARRAYINDEX"] = EbvLayer;
+    (*SemanticMap)["SV_PRIMITIVEID"] =            EbvPrimitiveId;
+    (*SemanticMap)["SV_OUTPUTCONTROLPOINTID"] =   EbvInvocationId;
+    (*SemanticMap)["SV_ISFRONTFACE"] =            EbvFace;
+    (*SemanticMap)["SV_INSTANCEID"] =             EbvInstanceIndex;
+    (*SemanticMap)["SV_INSIDETESSFACTOR"] =       EbvTessLevelInner;
+    (*SemanticMap)["SV_GSINSTANCEID"] =           EbvInvocationId;
+    (*SemanticMap)["SV_DISPATCHTHREADID"] =       EbvGlobalInvocationId;
+    (*SemanticMap)["SV_GROUPTHREADID"] =          EbvLocalInvocationId;
+    (*SemanticMap)["SV_GROUPINDEX"] =             EbvLocalInvocationIndex;
+    (*SemanticMap)["SV_GROUPID"] =                EbvWorkGroupId;
+    (*SemanticMap)["SV_DOMAINLOCATION"] =         EbvTessCoord;
+    (*SemanticMap)["SV_DEPTH"] =                  EbvFragDepth;
+    (*SemanticMap)["SV_COVERAGE"] =               EbvSampleMask;
+    (*SemanticMap)["SV_DEPTHGREATEREQUAL"] =      EbvFragDepthGreater;
+    (*SemanticMap)["SV_DEPTHLESSEQUAL"] =         EbvFragDepthLesser;
+    (*SemanticMap)["SV_STENCILREF"] =             EbvStencilRef;
 }
 
 void HlslScanContext::deleteKeywordMap()
@@ -389,13 +456,27 @@ void HlslScanContext::deleteKeywordMap()
     KeywordMap = nullptr;
     delete ReservedSet;
     ReservedSet = nullptr;
+    delete SemanticMap;
+    SemanticMap = nullptr;
 }
 
-// Wrapper for tokenizeClass()"] =  to get everything inside the token.
+// Wrapper for tokenizeClass() to get everything inside the token.
 void HlslScanContext::tokenize(HlslToken& token)
 {
     EHlslTokenClass tokenClass = tokenizeClass(token);
     token.tokenClass = tokenClass;
+}
+
+glslang::TBuiltInVariable HlslScanContext::mapSemantic(const TString& semantic)
+{
+    TString semanticUpperCase = semantic;
+    std::transform(semanticUpperCase.begin(), semanticUpperCase.end(), semanticUpperCase.begin(), ::toupper);
+
+    auto it = SemanticMap->find(semanticUpperCase.c_str());
+    if (it != SemanticMap->end())
+        return it->second;
+    else
+        return glslang::EbvNone;
 }
 
 //
@@ -470,6 +551,8 @@ EHlslTokenClass HlslScanContext::tokenizeClass(HlslToken& token)
 
         case PpAtomDecrement:          return EHTokDecOp;
         case PpAtomIncrement:          return EHTokIncOp;
+
+        case PpAtomColonColon:         return EHTokColonColon;
 
         case PpAtomConstInt:           parserToken->i = ppToken.ival;       return EHTokIntConstant;
         case PpAtomConstUint:          parserToken->i = ppToken.ival;       return EHTokUintConstant;

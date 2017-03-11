@@ -1158,15 +1158,15 @@ TIntermAggregate* TIntermediate::growAggregate(TIntermNode* left, TIntermNode* r
         return nullptr;
 
     TIntermAggregate* aggNode = nullptr;
-    if (left)
+    if (left != nullptr)
         aggNode = left->getAsAggregate();
-    if (! aggNode || aggNode->getOp() != EOpNull) {
+    if (aggNode == nullptr || aggNode->getOp() != EOpNull) {
         aggNode = new TIntermAggregate;
-        if (left)
+        if (left != nullptr)
             aggNode->getSequence().push_back(left);
     }
 
-    if (right)
+    if (right != nullptr)
         aggNode->getSequence().push_back(right);
 
     return aggNode;

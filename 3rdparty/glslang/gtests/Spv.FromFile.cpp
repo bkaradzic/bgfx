@@ -295,6 +295,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.separate.frag",
         "spv.shortCircuit.frag",
         "spv.pushConstant.vert",
+        "spv.pushConstantAnon.vert",
         "spv.subpass.frag",
         "spv.specConstant.vert",
         "spv.specConstant.comp",

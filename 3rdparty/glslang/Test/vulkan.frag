@@ -46,7 +46,7 @@ layout(push_constant) uniform;                // ERROR, needs an object
 
 layout(push_constant) uniform pcb2 {
     int a;
-};                                            // ERROR, no instance name
+};                                            // Okay now to have no instance name
 
 layout(input_attachment_index = 2) uniform subpassInput subD;
 layout(input_attachment_index = 3) uniform texture2D subDbad1;          // ERROR, not a texture

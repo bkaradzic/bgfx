@@ -30,4 +30,6 @@ float4 PixelShaderFunction(float4 input) : COLOR0
 	if (float ii = input.z)
 	    ++ii;
 	++ii;
+    if (float(ii) == 1.0)
+        ++ii;
 }

@@ -183,6 +183,7 @@ enum TOperator {
     EOpVectorSwizzle,
 
     EOpMethod,
+    EOpScoping,
 
     //
     // Built-in functions mapped to operators

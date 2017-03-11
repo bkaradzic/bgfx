@@ -19,7 +19,6 @@ ERROR: 0:39: 'push_constant' : can only be used with a uniform
 ERROR: 0:43: 'non-opaque uniforms outside a block' : not allowed when using GLSL for Vulkan 
 ERROR: 0:43: 'push_constant' : can only be used with a block 
 ERROR: 0:45: 'push_constant' : cannot declare a default, can only be used on a block 
-ERROR: 0:47: 'push_constant' : requires an instance name 
 ERROR: 0:52: 'input_attachment_index' : can only be used with a subpass 
 ERROR: 0:53: 'input_attachment_index' : can only be used with a subpass 
 ERROR: 0:54: 'subpass' : requires an input_attachment_index layout qualifier 
@@ -41,7 +40,7 @@ ERROR: 0:93: ',' : sampler constructor must appear at point of use
 ERROR: 0:94: ':' :  wrong operand types: no operation ':' exists that takes a left-hand operand of type 'temp sampler2D' and a right operand of type 'temp sampler2D' (or there is no acceptable conversion)
 ERROR: 0:94: 'call argument' : sampler constructor must appear at point of use 
 ERROR: 0:96: 'gl_NumSamples' : undeclared identifier 
-ERROR: 39 compilation errors.  No code generated.
+ERROR: 38 compilation errors.  No code generated.
 
 
 ERROR: Linking fragment stage: Only one push_constant block is allowed per stage

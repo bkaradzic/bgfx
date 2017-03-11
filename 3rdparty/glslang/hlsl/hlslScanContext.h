@@ -82,6 +82,7 @@ public:
     static void deleteKeywordMap();
 
     void tokenize(HlslToken&);
+    glslang::TBuiltInVariable mapSemantic(const TString& semantic);
 
 protected:
     HlslScanContext(HlslScanContext&);

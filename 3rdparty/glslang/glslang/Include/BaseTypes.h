@@ -218,6 +218,7 @@ enum TBuiltInVariable {
     // to one of the above.
     EbvFragDepthGreater,
     EbvFragDepthLesser,
+    EbvStencilRef,
 
     EbvLast
 };

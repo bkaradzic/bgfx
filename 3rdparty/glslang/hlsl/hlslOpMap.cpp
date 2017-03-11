@@ -118,6 +118,8 @@ TOperator HlslOpMap::postUnary(EHlslTokenClass op)
     case EHTokIncOp:       return EOpPostIncrement;
     case EHTokDecOp:       return EOpPostDecrement;
 
+    case EHTokColonColon:  return EOpScoping;
+
     default:               return EOpNull;             // means not a post-unary op
     }
 }

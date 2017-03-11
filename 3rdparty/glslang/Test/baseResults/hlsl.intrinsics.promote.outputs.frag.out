@@ -19,6 +19,8 @@ gl_FragCoord origin is upper left
 0:40          'sizeQueryTemp' (temp uint)
 0:40          textureSize (temp uint)
 0:40            'g_tTex1df4' (uniform texture1D)
+0:40            Constant:
+0:40              0 (const int)
 0:40        move second child to first child (temp int)
 0:40          'WidthI' (temp int)
 0:40          Convert uint to int (temp int)
@@ -121,6 +123,8 @@ gl_FragCoord origin is upper left
 0:40          'sizeQueryTemp' (temp uint)
 0:40          textureSize (temp uint)
 0:40            'g_tTex1df4' (uniform texture1D)
+0:40            Constant:
+0:40              0 (const int)
 0:40        move second child to first child (temp int)
 0:40          'WidthI' (temp int)
 0:40          Convert uint to int (temp int)
@@ -229,14 +233,14 @@ gl_FragCoord origin is upper left
                               Name 19  ""
                               Name 28  "sizeQueryTemp"
                               Name 31  "g_tTex1df4"
-                              Name 35  "WidthI"
-                              Name 38  "sizeQueryTemp"
-                              Name 44  "NumberOfLevelsU"
-                              Name 47  "sizeQueryTemp"
-                              Name 50  "WidthU"
-                              Name 52  "NumberOfLevelsI"
-                              Name 56  "sizeQueryTemp"
-                              Name 65  "ps_output"
+                              Name 36  "WidthI"
+                              Name 39  "sizeQueryTemp"
+                              Name 45  "NumberOfLevelsU"
+                              Name 48  "sizeQueryTemp"
+                              Name 51  "WidthU"
+                              Name 53  "NumberOfLevelsI"
+                              Name 57  "sizeQueryTemp"
+                              Name 66  "ps_output"
                               Name 74  "color"
                               Name 80  "g_tTexbfs"
                               MemberDecorate 17($Global) 0 Offset 0
@@ -276,10 +280,10 @@ gl_FragCoord origin is upper left
               29:             TypeImage 6(float) 1D sampled format:Unknown
               30:             TypePointer UniformConstant 29
   31(g_tTex1df4):     30(ptr) Variable UniformConstant
-              34:             TypePointer Function 12(int)
-              40:     13(int) Constant 6
-              64:             TypePointer Function 8(PS_OUTPUT)
-              66:     12(int) Constant 0
+              33:     12(int) Constant 0
+              35:             TypePointer Function 12(int)
+              41:     13(int) Constant 6
+              65:             TypePointer Function 8(PS_OUTPUT)
               67:    7(fvec4) ConstantComposite 24 24 24 24
               68:             TypePointer Function 7(fvec4)
               73:             TypePointer Output 7(fvec4)
@@ -298,53 +302,53 @@ gl_FragCoord origin is upper left
       10(@main():8(PS_OUTPUT) Function None 9
               11:             Label
 28(sizeQueryTemp):     27(ptr) Variable Function
-      35(WidthI):     34(ptr) Variable Function
-38(sizeQueryTemp):     27(ptr) Variable Function
-44(NumberOfLevelsU):     27(ptr) Variable Function
-47(sizeQueryTemp):     27(ptr) Variable Function
-      50(WidthU):     27(ptr) Variable Function
-52(NumberOfLevelsI):     34(ptr) Variable Function
-56(sizeQueryTemp):     27(ptr) Variable Function
-   65(ps_output):     64(ptr) Variable Function
+      36(WidthI):     35(ptr) Variable Function
+39(sizeQueryTemp):     27(ptr) Variable Function
+45(NumberOfLevelsU):     27(ptr) Variable Function
+48(sizeQueryTemp):     27(ptr) Variable Function
+      51(WidthU):     27(ptr) Variable Function
+53(NumberOfLevelsI):     35(ptr) Variable Function
+57(sizeQueryTemp):     27(ptr) Variable Function
+   66(ps_output):     65(ptr) Variable Function
               22:     21(ptr) AccessChain 19 20
               23:    6(float) Load 22
               26:    6(float) ExtInst 1(GLSL.std.450) 43(FClamp) 23 24 25
               32:          29 Load 31(g_tTex1df4)
-              33:     12(int) ImageQuerySize 32
-                              Store 28(sizeQueryTemp) 33
-              36:     13(int) Load 28(sizeQueryTemp)
-              37:     12(int) Bitcast 36
-                              Store 35(WidthI) 37
-              39:          29 Load 31(g_tTex1df4)
-              41:     12(int) ImageQuerySizeLod 39 40
-                              Store 38(sizeQueryTemp) 41
-              42:     13(int) Load 38(sizeQueryTemp)
-              43:     12(int) Bitcast 42
-                              Store 35(WidthI) 43
-              45:          29 Load 31(g_tTex1df4)
-              46:     12(int) ImageQueryLevels 45
-                              Store 44(NumberOfLevelsU) 46
-              48:          29 Load 31(g_tTex1df4)
-              49:     12(int) ImageQuerySizeLod 48 40
-                              Store 47(sizeQueryTemp) 49
-              51:     13(int) Load 47(sizeQueryTemp)
-                              Store 50(WidthU) 51
-              53:          29 Load 31(g_tTex1df4)
-              54:     12(int) ImageQueryLevels 53
-              55:     12(int) Bitcast 54
-                              Store 52(NumberOfLevelsI) 55
-              57:          29 Load 31(g_tTex1df4)
-              58:     12(int) ImageQuerySizeLod 57 40
-                              Store 56(sizeQueryTemp) 58
-              59:     13(int) Load 56(sizeQueryTemp)
-              60:     12(int) Bitcast 59
-                              Store 35(WidthI) 60
-              61:          29 Load 31(g_tTex1df4)
-              62:     12(int) ImageQueryLevels 61
-              63:     12(int) Bitcast 62
-                              Store 52(NumberOfLevelsI) 63
-              69:     68(ptr) AccessChain 65(ps_output) 66
+              34:     13(int) ImageQuerySizeLod 32 33
+                              Store 28(sizeQueryTemp) 34
+              37:     13(int) Load 28(sizeQueryTemp)
+              38:     12(int) Bitcast 37
+                              Store 36(WidthI) 38
+              40:          29 Load 31(g_tTex1df4)
+              42:     13(int) ImageQuerySizeLod 40 41
+                              Store 39(sizeQueryTemp) 42
+              43:     13(int) Load 39(sizeQueryTemp)
+              44:     12(int) Bitcast 43
+                              Store 36(WidthI) 44
+              46:          29 Load 31(g_tTex1df4)
+              47:     13(int) ImageQueryLevels 46
+                              Store 45(NumberOfLevelsU) 47
+              49:          29 Load 31(g_tTex1df4)
+              50:     13(int) ImageQuerySizeLod 49 41
+                              Store 48(sizeQueryTemp) 50
+              52:     13(int) Load 48(sizeQueryTemp)
+                              Store 51(WidthU) 52
+              54:          29 Load 31(g_tTex1df4)
+              55:     13(int) ImageQueryLevels 54
+              56:     12(int) Bitcast 55
+                              Store 53(NumberOfLevelsI) 56
+              58:          29 Load 31(g_tTex1df4)
+              59:     13(int) ImageQuerySizeLod 58 41
+                              Store 57(sizeQueryTemp) 59
+              60:     13(int) Load 57(sizeQueryTemp)
+              61:     12(int) Bitcast 60
+                              Store 36(WidthI) 61
+              62:          29 Load 31(g_tTex1df4)
+              63:     13(int) ImageQueryLevels 62
+              64:     12(int) Bitcast 63
+                              Store 53(NumberOfLevelsI) 64
+              69:     68(ptr) AccessChain 66(ps_output) 33
                               Store 69 67
-              70:8(PS_OUTPUT) Load 65(ps_output)
+              70:8(PS_OUTPUT) Load 66(ps_output)
                               ReturnValue 70
                               FunctionEnd
