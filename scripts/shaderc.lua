@@ -109,21 +109,6 @@ project "glsl-optimizer"
 		path.join(GLSL_OPTIMIZER, "src/glsl"),
 	}
 
-	configuration { "vs*" }
-		buildoptions {
-			"/wd4100", -- error C4100: '' : unreferenced formal parameter
-			"/wd4127", -- warning C4127: conditional expression is constant
-			"/wd4132", -- warning C4132: 'deleted_key_value': const object should be initialized
-			"/wd4189", -- warning C4189: 'interface_type': local variable is initialized but not referenced
-			"/wd4204", -- warning C4204: nonstandard extension used: non-constant aggregate initializer
-			"/wd4244", -- warning C4244: '=': conversion from 'const flex_int32_t' to 'YY_CHAR', possible loss of data
-			"/wd4389", -- warning C4389: '!=': signed/unsigned mismatch
-			"/wd4245", -- warning C4245: 'return': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
-			"/wd4701", -- warning C4701: potentially uninitialized local variable 'lower' used
-			"/wd4702", -- warning C4702: unreachable code
-			"/wd4706", -- warning C4706: assignment within conditional expression
-		}
-
 	files {
 		path.join(GLSL_OPTIMIZER, "src/mesa/**.c"),
 		path.join(GLSL_OPTIMIZER, "src/glsl/**.cpp"),
@@ -169,6 +154,17 @@ project "glsl-optimizer"
 		}
 
 		buildoptions {
+			"/wd4100", -- error C4100: '' : unreferenced formal parameter
+			"/wd4127", -- warning C4127: conditional expression is constant
+			"/wd4132", -- warning C4132: 'deleted_key_value': const object should be initialized
+			"/wd4189", -- warning C4189: 'interface_type': local variable is initialized but not referenced
+			"/wd4204", -- warning C4204: nonstandard extension used: non-constant aggregate initializer
+			"/wd4244", -- warning C4244: '=': conversion from 'const flex_int32_t' to 'YY_CHAR', possible loss of data
+			"/wd4389", -- warning C4389: '!=': signed/unsigned mismatch
+			"/wd4245", -- warning C4245: 'return': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
+			"/wd4701", -- warning C4701: potentially uninitialized local variable 'lower' used
+			"/wd4702", -- warning C4702: unreachable code
+			"/wd4706", -- warning C4706: assignment within conditional expression
 			"/wd4996" -- warning C4996: 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C++ conformant name: _strdup.
 		}
 
@@ -177,6 +173,7 @@ project "glsl-optimizer"
 			"-fno-strict-aliasing", -- glsl-optimizer has bugs if strict aliasing is used.
 			"-Wno-unused-parameter",
 		}
+
 		removebuildoptions {
 			"-Wshadow", -- glsl-optimizer is full of -Wshadow warnings ignore it.
 		}
@@ -192,27 +189,9 @@ project "shaderc"
 
 	links {
 		"bx",
+		"glslang",
+		"glsl-optimizer",
 	}
-
-	configuration { "mingw-*" }
-		targetextension ".exe"
-
-	configuration { "osx" }
-		links {
-			"Cocoa.framework",
-		}
-
-	configuration { "vs*" }
-		includedirs {
-			path.join(GLSL_OPTIMIZER, "include/c99"),
-		}
-
-	configuration { "vs20* or mingw*" }
-		links {
-			"psapi",
-		}
-
-	configuration {}
 
 	defines { -- fcpp
 		"NINCLUDE=64",
@@ -255,10 +234,25 @@ project "shaderc"
 		path.join(FCPP_DIR, "cpp6.c"),
 	}
 
-	links {
-		"glslang",
-		"glsl-optimizer",
-	}
+	configuration { "mingw-*" }
+		targetextension ".exe"
+
+	configuration { "osx" }
+		links {
+			"Cocoa.framework",
+		}
+
+	configuration { "vs*" }
+		includedirs {
+			path.join(GLSL_OPTIMIZER, "include/c99"),
+		}
+
+	configuration { "vs20* or mingw*" }
+		links {
+			"psapi",
+		}
+
+	configuration {}
 
 	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
 		path.join(BGFX_DIR, "scripts/shaderc.lua"), }) then
