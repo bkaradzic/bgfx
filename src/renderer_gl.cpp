@@ -7252,7 +7252,7 @@ namespace bgfx { namespace gl
 								streamMask >>= ntz;
 								idx         += ntz;
 
-								const VertexBufferGL& vb = m_vertexBuffers[currentState.m_stream[idx].m_handle.idx];
+								const VertexBufferGL& vb = m_vertexBuffers[draw.m_stream[idx].m_handle.idx];
 								uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[idx].m_decl.idx : vb.m_decl.idx;
 								const VertexDecl& vertexDecl = m_vertexDecls[decl];
 
