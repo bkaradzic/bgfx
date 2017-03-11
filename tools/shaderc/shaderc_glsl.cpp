@@ -214,8 +214,8 @@ namespace bgfx { namespace glsl
 						bx::strlcpy(uniformName, name, array-name+1);
 
 						char arraySize[32];
-						const char* end = bx::strnstr(array, "]", eol-array);
-						bx::strlcpy(arraySize, array+1, end-array);
+						const char* arrayEnd = bx::strnstr(array, "]", eol-array);
+						bx::strlcpy(arraySize, array+1, arrayEnd-array);
 						num = uint8_t(atoi(arraySize) );
 					}
 					else
@@ -251,7 +251,7 @@ namespace bgfx { namespace glsl
 			uint8_t nameSize = (uint8_t)un.name.size();
 			bx::write(_writer, nameSize);
 			bx::write(_writer, un.name.c_str(), nameSize);
-			uint8_t uniformType = un.type;
+			uint8_t uniformType = uint8_t(un.type);
 			bx::write(_writer, uniformType);
 			bx::write(_writer, un.num);
 			bx::write(_writer, un.regIndex);

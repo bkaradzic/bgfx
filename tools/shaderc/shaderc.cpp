@@ -579,7 +579,7 @@ namespace bgfx
 		static void fppOutput(int _ch, void* _userData)
 		{
 			Preprocessor* thisClass = (Preprocessor*)_userData;
-			thisClass->m_preprocessed += _ch;
+			thisClass->m_preprocessed += char(_ch);
 		}
 
 		static void fppError(void* /*_userData*/, char* _format, va_list _vargs)
@@ -992,7 +992,7 @@ namespace bgfx
 
 		preprocessor.setDefine("M_PI=3.1415926535897932384626433832795");
 
-		char shaderType = tolower(type[0]);
+		char shaderType = bx::toLower(type[0]);
 		switch (shaderType)
 		{
 		case 'c':

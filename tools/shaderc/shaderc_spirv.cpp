@@ -673,14 +673,14 @@ namespace bgfx { namespace spirv
 							un.type = UniformType::End;
 							break;
 						}
-						un.num = program->getUniformArraySize(ii);
+						un.num = uint8_t(program->getUniformArraySize(ii) );
 						un.regIndex = 0;
 						un.regCount = un.num;
 
 						uint8_t nameSize = (uint8_t)un.name.size();
 						bx::write(_writer, nameSize);
 						bx::write(_writer, un.name.c_str(), nameSize);
-						uint8_t type = un.type | fragmentBit;
+						uint8_t type = uint8_t(un.type | fragmentBit);
 						bx::write(_writer, type);
 						bx::write(_writer, un.num);
 						bx::write(_writer, un.regIndex);

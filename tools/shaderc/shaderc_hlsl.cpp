@@ -421,7 +421,7 @@ namespace bgfx { namespace hlsl
 					, spd.Register
 					);
 
-				const RemapInputSemantic& ris = findInputSemantic(spd.SemanticName, spd.SemanticIndex);
+				const RemapInputSemantic& ris = findInputSemantic(spd.SemanticName, uint8_t(spd.SemanticIndex) );
 				if (ris.m_attr != bgfx::Attrib::Count)
 				{
 					_attrs[_numAttrs] = bgfx::attribToId(ris.m_attr);
@@ -475,8 +475,8 @@ namespace bgfx { namespace hlsl
 								Uniform un;
 								un.name = varDesc.Name;
 								un.type = uniformType;
-								un.num = constDesc.Elements;
-								un.regIndex = varDesc.StartOffset;
+								un.num = uint8_t(constDesc.Elements);
+								un.regIndex = uint16_t(varDesc.StartOffset);
 								un.regCount = BX_ALIGN_16(varDesc.Size) / 16;
 								_uniforms.push_back(un);
 
@@ -527,8 +527,8 @@ namespace bgfx { namespace hlsl
 						un.name.assign(bindDesc.Name, (end - bindDesc.Name) );
 						un.type = UniformType::Enum(BGFX_UNIFORM_SAMPLERBIT | UniformType::Int1);
 						un.num = 1;
-						un.regIndex = bindDesc.BindPoint;
-						un.regCount = bindDesc.BindCount;
+						un.regIndex = uint16_t(bindDesc.BindPoint);
+						un.regCount = uint16_t(bindDesc.BindCount);
 						_uniforms.push_back(un);
 					}
 				}
@@ -714,7 +714,7 @@ namespace bgfx { namespace hlsl
 				uint8_t nameSize = (uint8_t)un.name.size();
 				bx::write(_writer, nameSize);
 				bx::write(_writer, un.name.c_str(), nameSize);
-				uint8_t type = un.type | fragmentBit;
+				uint8_t type = uint8_t(un.type | fragmentBit);
 				bx::write(_writer, type);
 				bx::write(_writer, un.num);
 				bx::write(_writer, un.regIndex);

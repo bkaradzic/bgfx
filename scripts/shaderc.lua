@@ -3,6 +3,8 @@
 -- License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 --
 
+group "tools/shaderc"
+
 local GLSL_OPTIMIZER = path.join(BGFX_DIR, "3rdparty/glsl-optimizer")
 local FCPP_DIR = path.join(BGFX_DIR, "3rdparty/fcpp")
 
@@ -276,3 +278,5 @@ project "shaderc"
 	configuration {}
 
 	strip()
+
+group "tools"

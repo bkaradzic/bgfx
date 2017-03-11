@@ -120,7 +120,7 @@ void setOffsets4x4Lum(bgfx::UniformHandle _handle, uint32_t _width, uint32_t _he
 	float du = 1.0f/_width;
 	float dv = 1.0f/_height;
 
-	uint32_t num = 0;
+	uint16_t num = 0;
 	for (uint32_t yy = 0; yy < 4; ++yy)
 	{
 		for (uint32_t xx = 0; xx < 4; ++xx)
