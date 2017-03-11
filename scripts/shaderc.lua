@@ -182,18 +182,8 @@ project "glsl-optimizer"
 
 	configuration {}
 
-project "shaderc"
-	kind "ConsoleApp"
-
-	includedirs {
-		path.join(GLSL_OPTIMIZER, "include"),
-	}
-
-	links {
-		"bx",
-		"glslang",
-		"glsl-optimizer",
-	}
+project "fcpp"
+	kind "StaticLib"
 
 	defines { -- fcpp
 		"NINCLUDE=64",
@@ -201,6 +191,31 @@ project "shaderc"
 		"NBUFF=65536",
 		"OLD_PREPROCESSOR=0",
 	}
+
+	files {
+		path.join(FCPP_DIR, "**.h"),
+		path.join(FCPP_DIR, "cpp1.c"),
+		path.join(FCPP_DIR, "cpp2.c"),
+		path.join(FCPP_DIR, "cpp3.c"),
+		path.join(FCPP_DIR, "cpp4.c"),
+		path.join(FCPP_DIR, "cpp5.c"),
+		path.join(FCPP_DIR, "cpp6.c"),
+		path.join(FCPP_DIR, "cpp6.c"),
+	}
+
+	configuration { "vs*" }
+
+		buildoptions {
+			"/wd4055", -- warning C4055: 'type cast': from data pointer 'void *' to function pointer 'void (__cdecl *)(char *,void *)'
+			"/wd4244", -- warning C4244: '=': conversion from 'const flex_int32_t' to 'YY_CHAR', possible loss of data
+			"/wd4701", -- warning C4701: potentially uninitialized local variable 'lower' used
+			"/wd4706", -- warning C4706: assignment within conditional expression
+		}
+
+	configuration {}
+
+project "shaderc"
+	kind "ConsoleApp"
 
 	includedirs {
 		path.join(BX_DIR, "include"),
@@ -212,12 +227,16 @@ project "shaderc"
 		path.join(BGFX_DIR, "3rdparty/glslang/glslang/Public"),
 		path.join(BGFX_DIR, "3rdparty/glslang/glslang/Include"),
 		path.join(BGFX_DIR, "3rdparty/glslang"),
---		path.join(BGFX_DIR, "3rdparty/spirv-tools/include"),
 
 		path.join(GLSL_OPTIMIZER, "include"),
-		path.join(GLSL_OPTIMIZER, "src/mesa"),
-		path.join(GLSL_OPTIMIZER, "src/mapi"),
 		path.join(GLSL_OPTIMIZER, "src/glsl"),
+	}
+
+	links {
+		"bx",
+		"fcpp",
+		"glslang",
+		"glsl-optimizer",
 	}
 
 	files {
@@ -225,15 +244,6 @@ project "shaderc"
 		path.join(BGFX_DIR, "tools/shaderc/**.h"),
 		path.join(BGFX_DIR, "src/vertexdecl.**"),
 		path.join(BGFX_DIR, "src/shader_spirv.**"),
-
-		path.join(FCPP_DIR, "**.h"),
-		path.join(FCPP_DIR, "cpp1.c"),
-		path.join(FCPP_DIR, "cpp2.c"),
-		path.join(FCPP_DIR, "cpp3.c"),
-		path.join(FCPP_DIR, "cpp4.c"),
-		path.join(FCPP_DIR, "cpp5.c"),
-		path.join(FCPP_DIR, "cpp6.c"),
-		path.join(FCPP_DIR, "cpp6.c"),
 	}
 
 	configuration { "mingw-*" }
