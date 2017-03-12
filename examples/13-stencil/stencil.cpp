@@ -937,8 +937,8 @@ int _main_(int _argc, char** _argv)
 			| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
 			| (mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
 			, mouseState.m_mz
-			, viewState.m_width
-			, viewState.m_height
+			, uint16_t(viewState.m_width)
+			, uint16_t(viewState.m_height)
 			);
 
 		static int32_t scrollArea = 0;
@@ -1358,7 +1358,7 @@ int _main_(int _argc, char** _argv)
 			);
 
 		// Setup view rect and transform for all used views.
-		setViewRectMask(s_viewMask, 0, 0, viewState.m_width, viewState.m_height);
+		setViewRectMask(s_viewMask, 0, 0, uint16_t(viewState.m_width), uint16_t(viewState.m_height) );
 		setViewTransformMask(s_viewMask, viewState.m_view, viewState.m_proj);
 		s_viewMask = 0;
 

@@ -102,9 +102,9 @@ int _main_(int _argc, char** _argv)
 			| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
 			| (mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
 			, mouseState.m_mz
-			, width
-			, height
-			);
+			, uint16_t(width)
+			, uint16_t(height)
+		);
 
 		imguiBeginScrollArea("Text Area"
 			, width - guiPanelWidth - 10
@@ -141,7 +141,7 @@ int _main_(int _argc, char** _argv)
 		imguiEndFrame();
 
 		// Set view 0 default viewport.
-		bgfx::setViewRect(0, 0, 0, width, height);
+		bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height) );
 
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.
@@ -195,7 +195,7 @@ int _main_(int _argc, char** _argv)
 			float ortho[16];
 			bx::mtxOrtho(ortho, centering, width + centering, height + centering, centering, -1.0f, 1.0f);
 			bgfx::setViewTransform(0, view, ortho);
-			bgfx::setViewRect(0, 0, 0, width, height);
+			bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height) );
 		}
 
 		//very crude approximation :(

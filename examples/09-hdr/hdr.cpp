@@ -99,7 +99,7 @@ void setOffsets2x2Lum(bgfx::UniformHandle _handle, uint32_t _width, uint32_t _he
 	float du = 1.0f/_width;
 	float dv = 1.0f/_height;
 
-	uint32_t num = 0;
+	uint16_t num = 0;
 	for (uint32_t yy = 0; yy < 3; ++yy)
 	{
 		for (uint32_t xx = 0; xx < 3; ++xx)
@@ -184,8 +184,8 @@ class ExampleHDR : public entry::AppI
 
 		m_mesh = meshLoad("meshes/bunny.bin");
 
-		m_fbtextures[0] = bgfx::createTexture2D(m_width, m_height, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT|BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP);
-		m_fbtextures[1] = bgfx::createTexture2D(m_width, m_height, false, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY);
+		m_fbtextures[0] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT | BGFX_TEXTURE_U_CLAMP | BGFX_TEXTURE_V_CLAMP);
+		m_fbtextures[1] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY);
 		m_fbh = bgfx::createFrameBuffer(BX_COUNTOF(m_fbtextures), m_fbtextures, true);
 
 		m_lum[0] = bgfx::createFrameBuffer(128, 128, bgfx::TextureFormat::BGRA8);
@@ -286,8 +286,8 @@ class ExampleHDR : public entry::AppI
 
 				bgfx::destroyFrameBuffer(m_fbh);
 
-				m_fbtextures[0] = bgfx::createTexture2D(m_width, m_height, false, 1, bgfx::TextureFormat::BGRA8, ( (msaa+1)<<BGFX_TEXTURE_RT_MSAA_SHIFT)|BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP);
-				m_fbtextures[1] = bgfx::createTexture2D(m_width, m_height, false, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY|( (msaa+1)<<BGFX_TEXTURE_RT_MSAA_SHIFT) );
+				m_fbtextures[0] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, ((msaa + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT) | BGFX_TEXTURE_U_CLAMP | BGFX_TEXTURE_V_CLAMP);
+				m_fbtextures[1] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY|( (msaa+1)<<BGFX_TEXTURE_RT_MSAA_SHIFT) );
 				m_fbh = bgfx::createFrameBuffer(BX_COUNTOF(m_fbtextures), m_fbtextures, true);
 			}
 
@@ -297,8 +297,8 @@ class ExampleHDR : public entry::AppI
 					| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
 					| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
 					,  m_mouseState.m_mz
-					, m_width
-					, m_height
+					, uint16_t(m_width)
+					, uint16_t(m_height)
 					);
 
 			imguiBeginScrollArea("Settings", m_width - m_width / 5 - 10, 10, m_width / 5, m_height / 2, &m_scrollArea);
@@ -418,7 +418,7 @@ class ExampleHDR : public entry::AppI
 			bgfx::setViewOrder(0, BX_COUNTOF(order), order);
 
 			// Set view and projection matrix for view 0.
-			for (uint32_t ii = 0; ii < BX_COUNTOF(order); ++ii)
+			for (uint8_t ii = 0; ii < BX_COUNTOF(order); ++ii)
 			{
 				bgfx::setViewTransform(ii, NULL, proj);
 			}

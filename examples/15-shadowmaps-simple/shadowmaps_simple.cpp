@@ -287,7 +287,7 @@ int _main_(int _argc, char** _argv)
 		bgfx::setViewFrameBuffer(RENDER_SHADOW_PASS_ID, shadowMapFB);
 		bgfx::setViewTransform(RENDER_SHADOW_PASS_ID, lightView, lightProj);
 
-		bgfx::setViewRect(RENDER_SCENE_PASS_ID, 0, 0, width, height);
+		bgfx::setViewRect(RENDER_SCENE_PASS_ID, 0, 0, uint16_t(width), uint16_t(height) );
 		bgfx::setViewTransform(RENDER_SCENE_PASS_ID, view, proj);
 
 		// Clear backbuffer and shadowmap framebuffer at beginning.

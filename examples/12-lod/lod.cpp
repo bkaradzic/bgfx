@@ -60,7 +60,7 @@ class ExampleLod : public entry::AppI
 		const bgfx::Memory* stippleTex = bgfx::alloc(8*4);
 		bx::memSet(stippleTex->data, 0, stippleTex->size);
 
-		for (uint32_t ii = 0; ii < 32; ++ii)
+		for (uint8_t ii = 0; ii < 32; ++ii)
 		{
 			stippleTex->data[knightTour[ii].m_y * 8 + knightTour[ii].m_x] = ii*4;
 		}
@@ -127,9 +127,9 @@ class ExampleLod : public entry::AppI
 				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
 				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
 				,  m_mouseState.m_mz
-				, m_width
-				, m_height
-				);
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+			);
 
 			imguiBeginScrollArea("Toggle transitions", m_width - m_width / 5 - 10, 10, m_width / 5, m_height / 6, &m_scrollArea);
 			imguiSeparatorLine();
@@ -192,7 +192,7 @@ class ExampleLod : public entry::AppI
 				bgfx::setViewTransform(0, view, proj);
 
 				// Set view 0 default viewport.
-				bgfx::setViewRect(0, 0, 0, m_width, m_height);
+				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 			}
 
 			float mtx[16];

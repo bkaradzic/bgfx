@@ -93,7 +93,7 @@ static const uint16_t s_m_cubeIndices[36] =
 	21, 22, 23,
 };
 
-static void updateTextureCubeRectBgra8(bgfx::TextureHandle _handle, uint8_t _side, uint32_t _x, uint32_t _y, uint32_t _width, uint32_t _height, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 0xff)
+static void updateTextureCubeRectBgra8(bgfx::TextureHandle _handle, uint8_t _side, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 0xff)
 {
 	bgfx::TextureInfo ti;
 	bgfx::calcTextureSize(ti, _width, _height, 1, false, false, 1, bgfx::TextureFormat::BGRA8);
@@ -178,7 +178,7 @@ public:
 					{
 						const uint32_t offset = ( (zz*32+yy)*32+xx);
 						const uint32_t val = xx ^ yy ^ zz;
-						mem8->data[offset] = val<<3;
+						mem8->data[offset] = uint8_t(val<<3);
 						*(uint16_t*)&mem16f->data[offset*2] = bx::halfFromFloat( (float)val/32.0f);
 						*(float*)&mem32f->data[offset*4] = (float)val/32.0f;
 					}
@@ -346,8 +346,8 @@ public:
 			bgfx::setPaletteColor(1, borderColor);
 
 			// Set view 0 and 1 viewport.
-			bgfx::setViewRect(0, 0, 0, m_width, m_height);
-			bgfx::setViewRect(1, 0, 0, m_width, m_height);
+			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
+			bgfx::setViewRect(1, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
 			// This dummy draw call is here to make sure that view 0 is cleared
 			// if no other draw calls are submitted to view 0.
@@ -372,8 +372,8 @@ public:
 			{
 				PackCube face;
 
-				uint32_t bw = bx::uint16_max(1, rand()%(textureside/4) );
-				uint32_t bh = bx::uint16_max(1, rand()%(textureside/4) );
+				uint16_t bw = bx::uint16_max(1, rand()%(textureside/4) );
+				uint16_t bh = bx::uint16_max(1, rand()%(textureside/4) );
 
 				if (m_cube.find(bw, bh, face) )
 				{
