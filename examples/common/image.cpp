@@ -90,7 +90,7 @@ namespace bgfx
 	{
 		static uint8_t pngMagic[] = { 0x89, 0x50, 0x4E, 0x47, 0x0d, 0x0a };
 
-		if (0 == bx::memCmp(_data, pngMagic, sizeof(pngMagic) ) )
+		if (0 != bx::memCmp(_data, pngMagic, sizeof(pngMagic) ) )
 		{
 			return NULL;
 		}
@@ -343,7 +343,7 @@ namespace bgfx
 		int comp = 0;
 		void* data = stbi_load_from_memory( (uint8_t*)_data, _size, (int*)&width, (int*)&height, &comp, 4);
 
-		if (NULL != data)
+		if (NULL == data)
 		{
 			return NULL;
 		}
