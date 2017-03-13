@@ -264,8 +264,8 @@ class ExampleOIT : public entry::AppI
 					bgfx::destroyFrameBuffer(m_fbh);
 				}
 
-				m_fbtextures[0] = bgfx::createTexture2D(m_width, m_height, false, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_RT);
-				m_fbtextures[1] = bgfx::createTexture2D(m_width, m_height, false, 1, bgfx::TextureFormat::R16F,    BGFX_TEXTURE_RT);
+				m_fbtextures[0] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_RT);
+				m_fbtextures[1] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::R16F,    BGFX_TEXTURE_RT);
 				m_fbh = bgfx::createFrameBuffer(BX_COUNTOF(m_fbtextures), m_fbtextures, true);
 			}
 
@@ -275,8 +275,8 @@ class ExampleOIT : public entry::AppI
 				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
 				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
 				,  m_mouseState.m_mz
-				, m_width
-				, m_height
+				, uint16_t(m_width)
+				, uint16_t(m_height)
 				);
 
 			imguiBeginScrollArea("Settings", m_width - m_width / 4 - 10, 10, m_width / 4, m_height / 3, &m_scrollArea);
@@ -306,8 +306,8 @@ class ExampleOIT : public entry::AppI
 			imguiEndFrame();
 
 			// Set view 0 default viewport.
-			bgfx::setViewRect(0, 0, 0, m_width, m_height);
-			bgfx::setViewRect(1, 0, 0, m_width, m_height);
+			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
+			bgfx::setViewRect(1, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
 			int64_t now = bx::getHPCounter();
 			static int64_t last = now;

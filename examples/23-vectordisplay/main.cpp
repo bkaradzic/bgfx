@@ -47,7 +47,7 @@ int _main_(int _argc, char** _argv)
 	bool originBottomLeft = bgfx::RendererType::OpenGL == renderer
 	                        || bgfx::RendererType::OpenGLES == renderer;
 	VectorDisplay vd(originBottomLeft, texelHalf);
-	vd.setup(width, height);
+	vd.setup(uint16_t(width), uint16_t(height) );
 
 	// Enable debug text.
 	bgfx::setDebug(debug);
@@ -71,7 +71,7 @@ int _main_(int _argc, char** _argv)
 		{
 			oldWidth  = width;
 			oldHeight = height;
-			vd.resize(width, height);
+			vd.resize(uint16_t(width), uint16_t(height) );
 		}
 
 		float view[16];
@@ -82,7 +82,7 @@ int _main_(int _argc, char** _argv)
 		bgfx::setViewTransform(0, view, proj);
 
 		// Set view 0 default viewport.
-		bgfx::setViewRect(0, 0, 0, width, height);
+		bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height) );
 
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.

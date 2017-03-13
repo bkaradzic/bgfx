@@ -12,7 +12,7 @@
 #include <bx/debug.h>
 #include <bx/fpumath.h>
 
-static uint32_t s_terrainSize = 256;
+static const uint16_t s_terrainSize = 256;
 
 struct PosTexCoord0Vertex
 {
@@ -198,10 +198,10 @@ class ExampleTerrain : public entry::AppI
 		}
 
 		m_terrain.m_indexCount = 0;
-		for (uint32_t y = 0; y < (s_terrainSize - 1); y++)
+		for (uint16_t y = 0; y < (s_terrainSize - 1); y++)
 		{
-			uint32_t y_offset = (y * s_terrainSize);
-			for (uint32_t x = 0; x < (s_terrainSize - 1); x++)
+			uint16_t y_offset = (y * s_terrainSize);
+			for (uint16_t x = 0; x < (s_terrainSize - 1); x++)
 			{
 				m_terrain.m_indices[m_terrain.m_indexCount + 0] = y_offset + x + 1;
 				m_terrain.m_indices[m_terrain.m_indexCount + 1] = y_offset + x + s_terrainSize;
@@ -398,8 +398,8 @@ class ExampleTerrain : public entry::AppI
 					| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
 					| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
 					, m_mouseState.m_mz
-					, m_width
-					, m_height
+					, uint16_t(m_width)
+					, uint16_t(m_height)
 					);
 
 			imguiBeginScrollArea("Settings", m_width - m_width / 5 - 10, 10, m_width / 5, m_height / 3, &m_scrollArea);
@@ -455,7 +455,7 @@ class ExampleTerrain : public entry::AppI
 			}
 
 			// Set view 0 default viewport.
-			bgfx::setViewRect(0, 0, 0, m_width, m_height);
+			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
 			cameraGetViewMtx(m_viewMtx);
 			bx::mtxProj(m_projMtx, 60.0f, float(m_width) / float(m_height), 0.1f, 2000.0f, bgfx::getCaps()->homogeneousDepth);

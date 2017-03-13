@@ -305,7 +305,7 @@ class Particles : public entry::AppI
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
 			// Set view 0 default viewport.
-			bgfx::setViewRect(0, 0, 0, m_width, m_height);
+			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
 			bgfx::touch(0);
 
@@ -346,7 +346,7 @@ class Particles : public entry::AppI
 				bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
 
 				bgfx::setViewTransform(0, view, proj);
-				bgfx::setViewRect(0, 0, 0, m_width, m_height);
+				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 			}
 
 			imguiBeginFrame(
@@ -356,8 +356,8 @@ class Particles : public entry::AppI
 				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
 				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
 				,  m_mouseState.m_mz
-				, m_width
-				, m_height
+				, uint16_t(m_width)
+				, uint16_t(m_height)
 				);
 
 			ImGui::Begin("Properties"

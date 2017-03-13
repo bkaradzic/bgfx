@@ -212,7 +212,7 @@ int _main_(int _argc, char** _argv)
 			}
 
 			// Set view 0 default viewport.
-			bgfx::setViewRect(0, 0, 0, width, height);
+			bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height) );
 
 			// Use debug font to print information about this example.
 			bgfx::dbgTextClear();
@@ -225,8 +225,8 @@ int _main_(int _argc, char** _argv)
 					| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
 					| (mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
 					, mouseState.m_mz
-					, width
-					, height
+					, uint16_t(width)
+					, uint16_t(height)
 					);
 			imguiBeginScrollArea("Settings", width - width / 4 - 10, 10, width / 4, 500, &scrollArea);
 			imguiSlider("Random seed", u_paramsData.baseSeed, 0, 100);
@@ -285,7 +285,7 @@ int _main_(int _argc, char** _argv)
 			}
 			else
 			{
-				bgfx::dispatch(0, updateInstancesProgram, u_paramsData.dispatchSize, 1, 1);
+				bgfx::dispatch(0, updateInstancesProgram, uint16_t(u_paramsData.dispatchSize), 1, 1);
 			}
 
 			bx::xchg(currPositionBuffer0, currPositionBuffer1);
@@ -320,7 +320,7 @@ int _main_(int _argc, char** _argv)
 				bgfx::setViewTransform(0, view, proj);
 
 				// Set view 0 default viewport.
-				bgfx::setViewRect(0, 0, 0, width, height);
+				bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height) );
 			}
 
 			// Set vertex and index buffer.
@@ -382,7 +382,7 @@ int _main_(int _argc, char** _argv)
 			int64_t now = bx::getHPCounter();
 			float time = (float)( (now - timeOffset)/double(bx::getHPFrequency() ) );
 
-			bgfx::setViewRect(0, 0, 0, width, height);
+			bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height));
 
 			bgfx::dbgTextClear();
 			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/24-nbody");

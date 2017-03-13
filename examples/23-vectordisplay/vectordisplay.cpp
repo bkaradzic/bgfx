@@ -56,7 +56,7 @@ VectorDisplay::VectorDisplay(bool _originBottomLeft, float _texelHalf)
 {
 }
 
-void VectorDisplay::setup(uint16_t _width, uint16_t _height, int _view)
+void VectorDisplay::setup(uint16_t _width, uint16_t _height, uint8_t _view)
 {
 	PosColorUvVertex::init();
 
@@ -190,7 +190,7 @@ void VectorDisplay::endFrame()
 		}
 	}
 
-	int viewCounter = m_view + 1;
+	uint8_t viewCounter = m_view + 1;
 
 	bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
 

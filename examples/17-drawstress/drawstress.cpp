@@ -205,8 +205,8 @@ class ExampleDrawStress : public entry::AppI
 					| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
 					| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
 					,  m_mouseState.m_mz
-					, m_width
-					, m_height
+					, uint16_t(m_width)
+					, uint16_t(m_height)
 					);
 
 			imguiBeginScrollArea("Settings", m_width - m_width / 4 - 10, 10, m_width / 4, m_height / 2, &m_scrollArea);
@@ -249,7 +249,7 @@ class ExampleDrawStress : public entry::AppI
 			bgfx::setViewTransform(0, view, proj);
 
 			// Set view 0 default viewport.
-			bgfx::setViewRect(0, 0, 0, m_width, m_height);
+			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
 			// This dummy draw call is here to make sure that view 0 is cleared
 			// if no other draw calls are submitted to view 0.

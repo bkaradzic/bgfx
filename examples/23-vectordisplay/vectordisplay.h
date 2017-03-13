@@ -40,7 +40,7 @@ public:
 	{
 	}
 
-	void setup(uint16_t _width, uint16_t _height, int _view = 2);
+	void setup(uint16_t _width, uint16_t _height, uint8_t _view = 2);
 	void resize(uint16_t _width, uint16_t _height);
 	void teardown();
 
@@ -167,14 +167,17 @@ protected:
 	bgfx::FrameBufferHandle m_glow0FrameBuffer; // framebuffer for glow pass 0
 	bgfx::FrameBufferHandle m_glow1FrameBuffer; // framebuffer for glow pass 1
 
-	int m_view;
+	uint8_t m_view;
 
 	uint16_t m_screenWidth, m_screenHeight;
 	uint16_t m_glowWidth, m_glowHeight;
 
 	int m_numberDecaySteps;
 	float m_decayValue;
-	uint8_t m_drawColorR, m_drawColorG, m_drawColorB, m_drawColorA;
+	uint8_t m_drawColorR;
+	uint8_t m_drawColorG;
+	uint8_t m_drawColorB;
+	uint8_t m_drawColorA;
 
 	stl::vector<PosColorUvVertex> m_points;
 	stl::vector<PendingPoint> m_pendingPoints;

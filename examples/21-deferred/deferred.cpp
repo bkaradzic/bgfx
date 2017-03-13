@@ -401,7 +401,7 @@ class ExampleDeferred : public entry::AppI
 				bgfx::dbgTextPrintf(0, 5, blink ? 0x1f : 0x01, " MRT not supported by GPU. ");
 
 				// Set view 0 default viewport.
-				bgfx::setViewRect(0, 0, 0, m_width, m_height);
+				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
 				// This dummy draw call is here to make sure that view 0 is cleared
 				// if no other draw calls are submitted to view 0.
@@ -432,9 +432,9 @@ class ExampleDeferred : public entry::AppI
 						| BGFX_TEXTURE_U_CLAMP
 						| BGFX_TEXTURE_V_CLAMP
 						;
-					m_gbufferTex[0] = bgfx::createTexture2D(m_width, m_height, false, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
-					m_gbufferTex[1] = bgfx::createTexture2D(m_width, m_height, false, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
-					m_gbufferTex[2] = bgfx::createTexture2D(m_width, m_height, false, 1, bgfx::TextureFormat::D24,   samplerFlags);
+					m_gbufferTex[0] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
+					m_gbufferTex[1] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
+					m_gbufferTex[2] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::D24,   samplerFlags);
 					m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_gbufferTex), m_gbufferTex, true);
 
 					if (bgfx::isValid(m_lightBuffer) )
@@ -442,7 +442,7 @@ class ExampleDeferred : public entry::AppI
 						bgfx::destroyFrameBuffer(m_lightBuffer);
 					}
 
-					m_lightBuffer = bgfx::createFrameBuffer(m_width, m_height, bgfx::TextureFormat::BGRA8, samplerFlags);
+					m_lightBuffer = bgfx::createFrameBuffer(uint16_t(m_width), uint16_t(m_height), bgfx::TextureFormat::BGRA8, samplerFlags);
 				}
 
 				imguiBeginFrame(m_mouseState.m_mx
@@ -451,8 +451,8 @@ class ExampleDeferred : public entry::AppI
 						| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
 						| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
 						, m_mouseState.m_mz
-						, m_width
-						, m_height
+						, uint16_t(m_width)
+						, uint16_t(m_height)
 						);
 
 				imguiBeginScrollArea("Settings", m_width - m_width / 5 - 10, 10, m_width / 5, m_height / 3, &m_scrollArea);
@@ -490,11 +490,11 @@ class ExampleDeferred : public entry::AppI
 				float vp[16];
 				float invMvp[16];
 				{
-					bgfx::setViewRect(RENDER_PASS_GEOMETRY_ID,      0, 0, m_width, m_height);
-					bgfx::setViewRect(RENDER_PASS_LIGHT_ID,         0, 0, m_width, m_height);
-					bgfx::setViewRect(RENDER_PASS_COMBINE_ID,       0, 0, m_width, m_height);
-					bgfx::setViewRect(RENDER_PASS_DEBUG_LIGHTS_ID,  0, 0, m_width, m_height);
-					bgfx::setViewRect(RENDER_PASS_DEBUG_GBUFFER_ID, 0, 0, m_width, m_height);
+					bgfx::setViewRect(RENDER_PASS_GEOMETRY_ID,      0, 0, uint16_t(m_width), uint16_t(m_height) );
+					bgfx::setViewRect(RENDER_PASS_LIGHT_ID,         0, 0, uint16_t(m_width), uint16_t(m_height) );
+					bgfx::setViewRect(RENDER_PASS_COMBINE_ID,       0, 0, uint16_t(m_width), uint16_t(m_height) );
+					bgfx::setViewRect(RENDER_PASS_DEBUG_LIGHTS_ID,  0, 0, uint16_t(m_width), uint16_t(m_height) );
+					bgfx::setViewRect(RENDER_PASS_DEBUG_GBUFFER_ID, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
 					bgfx::setViewFrameBuffer(RENDER_PASS_LIGHT_ID, m_lightBuffer);
 
@@ -685,7 +685,7 @@ class ExampleDeferred : public entry::AppI
 						bgfx::setUniform(u_lightRgbInnerR, lightRgbInnerR);
 						bgfx::setUniform(u_mtx, invMvp);
 						const uint16_t scissorHeight = uint16_t(y1-y0);
-						bgfx::setScissor(uint16_t(x0), m_height-scissorHeight-uint16_t(y0), uint16_t(x1-x0), scissorHeight);
+						bgfx::setScissor(uint16_t(x0), uint16_t(m_height-scissorHeight-y0), uint16_t(x1-x0), uint16_t(scissorHeight) );
 						bgfx::setTexture(0, s_normal, bgfx::getTexture(m_gbuffer, 1) );
 						bgfx::setTexture(1, s_depth,  bgfx::getTexture(m_gbuffer, 2) );
 						bgfx::setState(0

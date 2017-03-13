@@ -187,7 +187,7 @@ public:
 
 						if (NULL != win.m_nwh)
 						{
-							m_fbh[viewId] = bgfx::createFrameBuffer(win.m_nwh, win.m_width, win.m_height);
+							m_fbh[viewId] = bgfx::createFrameBuffer(win.m_nwh, uint16_t(win.m_width), uint16_t(win.m_height) );
 						}
 						else
 						{
@@ -207,13 +207,13 @@ public:
 			bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
 
 			bgfx::setViewTransform(0, view, proj);
-			bgfx::setViewRect(0, 0, 0, m_width, m_height);
+			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 			// This dummy draw call is here to make sure that view 0 is cleared
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
 
 			// Set view and projection matrix for view 0.
-			for (uint32_t ii = 1; ii < MAX_WINDOWS; ++ii)
+			for (uint8_t ii = 1; ii < MAX_WINDOWS; ++ii)
 			{
 				bgfx::setViewTransform(ii, view, proj);
 				bgfx::setViewFrameBuffer(ii, m_fbh[ii]);
@@ -221,12 +221,12 @@ public:
 				if (!bgfx::isValid(m_fbh[ii]) )
 				{
 					// Set view to default viewport.
-					bgfx::setViewRect(ii, 0, 0, m_width, m_height);
+					bgfx::setViewRect(ii, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 					bgfx::setViewClear(ii, BGFX_CLEAR_NONE);
 				}
 				else
 				{
-					bgfx::setViewRect(ii, 0, 0, m_windows[ii].m_width, m_windows[ii].m_height);
+					bgfx::setViewRect(ii, 0, 0, uint16_t(m_windows[ii].m_width), uint16_t(m_windows[ii].m_height) );
 					bgfx::setViewClear(ii
 						, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
 						, 0x303030ff

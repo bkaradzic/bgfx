@@ -73,7 +73,7 @@ static char* cpToUTF8(int cp, char* str)
 		case 4: str[3] = 0x80 | (cp & 0x3f); cp = cp >> 6; cp |= 0x10000;
 		case 3: str[2] = 0x80 | (cp & 0x3f); cp = cp >> 6; cp |= 0x800;
 		case 2: str[1] = 0x80 | (cp & 0x3f); cp = cp >> 6; cp |= 0xc0;
-		case 1: str[0] = cp;
+		case 1: str[0] = char(cp);
 	}
 	return str;
 }
@@ -1262,7 +1262,7 @@ class ExampleNanoVG : public entry::AppI
 			float time = (float)( (now-m_timeOffset)/freq);
 
 			// Set view 0 default viewport.
-			bgfx::setViewRect(0, 0, 0, m_width, m_height);
+			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
 			// This dummy draw call is here to make sure that view 0 is cleared
 			// if no other draw calls are submitted to view 0.

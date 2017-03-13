@@ -579,8 +579,8 @@ public:
 			// Set up transform matrix for fullscreen quad
 			float orthoProj[16];
 			bx::mtxOrtho(orthoProj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
-			bgfx::setViewTransform(RENDER_PASS_COMBINE,   NULL, orthoProj);
-			bgfx::setViewRect(RENDER_PASS_COMBINE, 0, 0, m_width, m_height);
+			bgfx::setViewTransform(RENDER_PASS_COMBINE, NULL, orthoProj);
+			bgfx::setViewRect(RENDER_PASS_COMBINE, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 			// Bind vertex buffer and draw quad
 			screenSpaceQuad( (float)m_width, (float)m_height, m_texelHalf, m_caps->originBottomLeft);
 			bgfx::submit(RENDER_PASS_COMBINE, m_combineProgram);
@@ -592,8 +592,8 @@ public:
 					| (m_mouseState.m_buttons[entry::MouseButton::Right] ? IMGUI_MBUT_RIGHT : 0)
 					| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
 					, m_mouseState.m_mz
-					, m_width
-					, m_height
+					, uint16_t(m_width)
+					, uint16_t(m_height)
 					);
 
 			imguiBeginArea("RSM:", 10, 100, 300, 400);

@@ -193,17 +193,17 @@ class ExampleOcclusion : public entry::AppI
 				bx::mtxProj(proj, 90.0f, float(width)/float(height), 0.1f, 10000.0f, bgfx::getCaps()->homogeneousDepth);
 
 				bgfx::setViewTransform(0, view, proj);
-				bgfx::setViewRect(0, 0, 0, width, height);
+				bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height) );
 
 				bgfx::setViewTransform(1, view, proj);
-				bgfx::setViewRect(1, 0, 0, width, height);
+				bgfx::setViewRect(1, 0, 0, uint16_t(width), uint16_t(height) );
 
 				float at[3]  = {  0.0f,  0.0f,   0.0f };
 				float eye[3] = { 17.5f, 10.0f, -17.5f };
 				bx::mtxLookAt(view, eye, at);
 
 				bgfx::setViewTransform(2, view, proj);
-				bgfx::setViewRect(2, 10, height - height/4 - 10, width/4, height/4);
+				bgfx::setViewRect(2, 10, uint16_t(height - height/4 - 10), uint16_t(width/4), uint16_t(height/4) );
 			}
 
 			bgfx::touch(0);
@@ -251,7 +251,7 @@ class ExampleOcclusion : public entry::AppI
 				}
 			}
 
-			for (uint32_t xx = 0; xx < CUBES_DIM; ++xx)
+			for (uint16_t xx = 0; xx < CUBES_DIM; ++xx)
 			{
 				bgfx::dbgTextImage(5 + xx*2, 5, 1, CUBES_DIM, img + xx*2, CUBES_DIM*2);
 			}

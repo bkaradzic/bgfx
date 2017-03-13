@@ -394,8 +394,8 @@ class ExampleWireframe : public entry::AppI
 					| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
 					| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
 					,  m_mouseState.m_mz
-					, m_width
-					, m_height
+					, uint16_t(m_width)
+					, uint16_t(m_height)
 					);
 
 			imguiBeginScrollArea("Settings"
