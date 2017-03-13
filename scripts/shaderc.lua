@@ -25,6 +25,7 @@ project "glslang"
 			"/wd4005", -- warning C4005: '_CRT_SECURE_NO_WARNINGS': macro redefinition
 			"/wd4100", -- error C4100: 'inclusionDepth' : unreferenced formal parameter
 			"/wd4127", -- warning C4127: conditional expression is constant
+			"/wd4244", -- warning C4244: '=': conversion from 'int' to 'char', possible loss of data
 			"/wd4456", -- warning C4456: declaration of 'feature' hides previous local declaration
 			"/wd4457", -- warning C4457: declaration of 'token' hides function parameter
 			"/wd4458", -- warning C4458: declaration of 'language' hides class member
