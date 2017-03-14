@@ -33,7 +33,9 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 #include <lodepng/lodepng.h>
 
 typedef unsigned char stbi_uc;
+extern "C" int stbi_is_hdr_from_memory(stbi_uc const* _buffer, int _len);
 extern "C" stbi_uc* stbi_load_from_memory(stbi_uc const* _buffer, int _len, int* _x, int* _y, int* _comp, int _req_comp);
+extern "C" float* stbi_loadf_from_memory(stbi_uc const* _buffer, int _len, int* _x, int* _y, int* _comp, int _req_comp);
 extern "C" void stbi_image_free(void* _ptr);
 extern void lodepng_free(void* _ptr);
 
@@ -336,16 +338,31 @@ namespace bgfx
 
 	static ImageContainer* imageParseStbImage(bx::AllocatorI* _allocator, const void* _data, uint32_t _size)
 	{
-		TextureFormat::Enum format = TextureFormat::RGBA8;
+		const int isHdr = stbi_is_hdr_from_memory((const uint8_t*)_data, (int)_size);
+
+		void* data;
 		uint32_t width  = 0;
 		uint32_t height = 0;
-
 		int comp = 0;
-		void* data = stbi_load_from_memory( (uint8_t*)_data, _size, (int*)&width, (int*)&height, &comp, 4);
+		if (isHdr) { data = stbi_loadf_from_memory((const uint8_t*)_data, (int)_size, (int*)&width, (int*)&height, &comp, 4); }
+		else       { data = stbi_load_from_memory ((const uint8_t*)_data, (int)_size, (int*)&width, (int*)&height, &comp, 0); }
 
 		if (NULL == data)
 		{
 			return NULL;
+		}
+
+		bgfx::TextureFormat::Enum format;
+		if (isHdr)
+		{
+			format = bgfx::TextureFormat::RGBA32F;
+		}
+		else
+		{
+			if       (1 == comp)   { format = bgfx::TextureFormat::R8;    }
+			else  if (2 == comp)   { format = bgfx::TextureFormat::RG8;   }
+			else  if (3 == comp)   { format = bgfx::TextureFormat::RGB8;  }
+			else/*if (4 == comp)*/ { format = bgfx::TextureFormat::RGBA8; }
 		}
 
 		ImageContainer* output = imageAlloc(_allocator
