@@ -55,27 +55,6 @@ namespace bgfx { namespace gl
 		"Point",
 	};
 
-	static const char* s_attribName[] =
-	{
-		"a_position",
-		"a_normal",
-		"a_tangent",
-		"a_bitangent",
-		"a_color0",
-		"a_color1",
-		"a_indices",
-		"a_weight",
-		"a_texcoord0",
-		"a_texcoord1",
-		"a_texcoord2",
-		"a_texcoord3",
-		"a_texcoord4",
-		"a_texcoord5",
-		"a_texcoord6",
-		"a_texcoord7",
-	};
-	BX_STATIC_ASSERT(Attrib::Count == BX_COUNTOF(s_attribName) );
-
 	static const char* s_instanceDataName[] =
 	{
 		"i_data0",
