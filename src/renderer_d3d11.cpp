@@ -4206,6 +4206,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		uint32_t iohash;
 		bx::read(&reader, iohash);
 
+		if(magic == BGFX_CHUNK_MAGIC_VSH)
+		{
+			uint32_t totalvarsize = 0;
+			bx::read(&reader, totalvarsize);
+			bx::skip(&reader, totalvarsize);
+		}
+
 		uint16_t count;
 		bx::read(&reader, count);
 
