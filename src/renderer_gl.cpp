@@ -4035,7 +4035,7 @@ namespace bgfx { namespace gl
 			s_renderGL->programCache(m_id, id);
 		}
 
-		init();
+		init(_vsh.m_varyings);
 
 		if (!cached
 		&&  s_renderGL->m_workaround.m_detachShader)
@@ -4070,7 +4070,7 @@ namespace bgfx { namespace gl
 		m_vcref.invalidate(s_renderGL->m_vaoStateCache);
 	}
 
-	void ProgramGL::init()
+	void ProgramGL::init(const char** varyings)
 	{
 		GLint activeAttribs  = 0;
 		GLint activeUniforms = 0;
@@ -4350,10 +4350,10 @@ namespace bgfx { namespace gl
 		uint32_t used = 0;
 		for (uint8_t ii = 0; ii < Attrib::Count; ++ii)
 		{
-			GLint loc = glGetAttribLocation(m_id, s_attribName[ii]);
+			GLint loc = glGetAttribLocation(m_id, varyings[ii]);
 			if (-1 != loc)
 			{
-				BX_TRACE("attr %s: %d", s_attribName[ii], loc);
+				BX_TRACE("attr %s: %d", varyings[ii], loc);
 				m_attributes[ii] = loc;
 				m_used[used++] = ii;
 			}
@@ -5386,7 +5386,20 @@ namespace bgfx { namespace gl
 		{
 			uint32_t totalvarsize = 0;
 			bx::read(&reader, totalvarsize);
-			bx::skip(&reader, totalvarsize);
+
+			totalvarsize += Attrib::Count * sizeof(char*);
+			m_varyings = (const char**)BX_ALLOC(g_allocator, totalvarsize);
+			char* semdata = (char*)(m_varyings + Attrib::Count);
+			for(uint8_t attrib = 0; attrib < Attrib::Count; attrib++)
+			{
+				uint8_t semsize = 0;
+				bx::read(&reader, semsize);
+
+				m_varyings[attrib] = semdata;
+				for(uint8_t c = 0; c < semsize; c++)
+					bx::read(&reader, *semdata++);
+				*semdata++ = 0;
+			}
 		}
 
 		uint16_t count;
@@ -5869,6 +5882,12 @@ namespace bgfx { namespace gl
 		{
 			GL_CHECK(glDeleteShader(m_id) );
 			m_id = 0;
+		}
+
+		if(m_varyings)
+		{
+			BX_FREE(g_allocator, m_varyings);
+			m_varyings = nullptr;
 		}
 	}
 
