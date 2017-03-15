@@ -225,6 +225,18 @@ http://www.indiedb.com/games/on-the-hunt - On the Hunt is an open world hunting
 game in development. It's a combination of FPS and stealth.  
 ![On the Hunt](http://media.indiedb.com/images/downloads/1/120/119448/img.png)
 
+## FbxPipeline
+
+https://github.com/VladSerhiienko/FbxPipeline - Yet another FBX exporter with
+flatbuffers serialization.
+
+## FRAG
+
+https://github.com/fragworks/frag - FRAG is a game creation framework being
+developed using the Nim programming language, and is currently in pre-alpha
+status. The immediate development focus for FRAG is supporting the creation of
+2D desktop games.
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
