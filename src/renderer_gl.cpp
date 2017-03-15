@@ -4684,6 +4684,7 @@ namespace bgfx { namespace gl
 			GL_CHECK(glGenTextures(1, &m_id) );
 			BX_CHECK(0 != m_id, "Failed to generate texture id.");
 			GL_CHECK(glBindTexture(_target, m_id) );
+			GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1) );
 
 			const TextureFormatInfo& tfi = s_textureFormat[m_textureFormat];
 			m_fmt  = tfi.m_fmt;
@@ -7165,18 +7166,10 @@ namespace bgfx { namespace gl
 								streamMask >>= ntz;
 								idx         += ntz;
 
-								uint16_t handle = draw.m_stream[idx].m_handle.idx;
-								if (invalidHandle != handle)
-								{
-									VertexBufferGL& vb = m_vertexBuffers[handle];
-									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
-									bindAttribs = true;
-								}
-								else
-								{
-									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0) );
-								}
+								currentState.m_stream[idx].m_handle = draw.m_stream[idx].m_handle;
 							}
+
+							bindAttribs = true;
 						}
 
 						if (currentState.m_indexBuffer.idx != draw.m_indexBuffer.idx)
@@ -7224,8 +7217,11 @@ namespace bgfx { namespace gl
 									streamMask >>= ntz;
 									idx         += ntz;
 
+									currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
+
 									const VertexBufferGL& vb = m_vertexBuffers[draw.m_stream[idx].m_handle.idx];
 									uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[idx].m_decl.idx : vb.m_decl.idx;
+									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
 									program.bindAttributes(m_vertexDecls[decl], draw.m_stream[idx].m_startVertex);
 								}
 								program.bindAttributesEnd();
