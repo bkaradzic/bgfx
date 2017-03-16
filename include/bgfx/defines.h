@@ -145,13 +145,13 @@
 #define BGFX_STENCIL_FUNC_RMASK_MASK     UINT32_C(0x0000ff00) //!<
 
 #define BGFX_STENCIL_TEST_LESS           UINT32_C(0x00010000) //!< Enable stencil test, less.
-#define BGFX_STENCIL_TEST_LEQUAL         UINT32_C(0x00020000) //!<
-#define BGFX_STENCIL_TEST_EQUAL          UINT32_C(0x00030000) //!<
-#define BGFX_STENCIL_TEST_GEQUAL         UINT32_C(0x00040000) //!<
-#define BGFX_STENCIL_TEST_GREATER        UINT32_C(0x00050000) //!<
-#define BGFX_STENCIL_TEST_NOTEQUAL       UINT32_C(0x00060000) //!<
-#define BGFX_STENCIL_TEST_NEVER          UINT32_C(0x00070000) //!<
-#define BGFX_STENCIL_TEST_ALWAYS         UINT32_C(0x00080000) //!<
+#define BGFX_STENCIL_TEST_LEQUAL         UINT32_C(0x00020000) //!< Enable stencil test, less or equal.
+#define BGFX_STENCIL_TEST_EQUAL          UINT32_C(0x00030000) //!< Enable stencil test, equal.
+#define BGFX_STENCIL_TEST_GEQUAL         UINT32_C(0x00040000) //!< Enable stencil test, greater or equal.
+#define BGFX_STENCIL_TEST_GREATER        UINT32_C(0x00050000) //!< Enable stencil test, greater.
+#define BGFX_STENCIL_TEST_NOTEQUAL       UINT32_C(0x00060000) //!< Enable stencil test, not equal.
+#define BGFX_STENCIL_TEST_NEVER          UINT32_C(0x00070000) //!< Enable stencil test, never.
+#define BGFX_STENCIL_TEST_ALWAYS         UINT32_C(0x00080000) //!< Enable stencil test, always.
 #define BGFX_STENCIL_TEST_SHIFT          16                   //!< Stencil test bit shift.
 #define BGFX_STENCIL_TEST_MASK           UINT32_C(0x000f0000) //!< Stencil test bit mask.
 
@@ -166,27 +166,27 @@
 #define BGFX_STENCIL_OP_FAIL_S_SHIFT     20                   //!< Stencil operation fail bit shift.
 #define BGFX_STENCIL_OP_FAIL_S_MASK      UINT32_C(0x00f00000) //!< Stencil operation fail bit mask.
 
-#define BGFX_STENCIL_OP_FAIL_Z_ZERO      UINT32_C(0x00000000) //!<
-#define BGFX_STENCIL_OP_FAIL_Z_KEEP      UINT32_C(0x01000000) //!<
-#define BGFX_STENCIL_OP_FAIL_Z_REPLACE   UINT32_C(0x02000000) //!<
-#define BGFX_STENCIL_OP_FAIL_Z_INCR      UINT32_C(0x03000000) //!<
-#define BGFX_STENCIL_OP_FAIL_Z_INCRSAT   UINT32_C(0x04000000) //!<
-#define BGFX_STENCIL_OP_FAIL_Z_DECR      UINT32_C(0x05000000) //!<
-#define BGFX_STENCIL_OP_FAIL_Z_DECRSAT   UINT32_C(0x06000000) //!<
-#define BGFX_STENCIL_OP_FAIL_Z_INVERT    UINT32_C(0x07000000) //!<
-#define BGFX_STENCIL_OP_FAIL_Z_SHIFT     24                   //!< Stencil operation fail depth bit shift.
-#define BGFX_STENCIL_OP_FAIL_Z_MASK      UINT32_C(0x0f000000) //!< Stencil operation fail depth bit mask.
+#define BGFX_STENCIL_OP_FAIL_Z_ZERO      UINT32_C(0x00000000) //!< Zero.
+#define BGFX_STENCIL_OP_FAIL_Z_KEEP      UINT32_C(0x01000000) //!< Keep.
+#define BGFX_STENCIL_OP_FAIL_Z_REPLACE   UINT32_C(0x02000000) //!< Replace.
+#define BGFX_STENCIL_OP_FAIL_Z_INCR      UINT32_C(0x03000000) //!< Increment and wrap.
+#define BGFX_STENCIL_OP_FAIL_Z_INCRSAT   UINT32_C(0x04000000) //!< Increment and clamp.
+#define BGFX_STENCIL_OP_FAIL_Z_DECR      UINT32_C(0x05000000) //!< Decrement and wrap.
+#define BGFX_STENCIL_OP_FAIL_Z_DECRSAT   UINT32_C(0x06000000) //!< Decrement and clamp.
+#define BGFX_STENCIL_OP_FAIL_Z_INVERT    UINT32_C(0x07000000) //!< Invert.
+#define BGFX_STENCIL_OP_FAIL_Z_SHIFT     24                   //!< Stencil operation depth fail bit shift
+#define BGFX_STENCIL_OP_FAIL_Z_MASK      UINT32_C(0x0f000000) //!< Stencil operation depth fail bit mask.
 
-#define BGFX_STENCIL_OP_PASS_Z_ZERO      UINT32_C(0x00000000) //!<
-#define BGFX_STENCIL_OP_PASS_Z_KEEP      UINT32_C(0x10000000) //!<
-#define BGFX_STENCIL_OP_PASS_Z_REPLACE   UINT32_C(0x20000000) //!<
-#define BGFX_STENCIL_OP_PASS_Z_INCR      UINT32_C(0x30000000) //!<
-#define BGFX_STENCIL_OP_PASS_Z_INCRSAT   UINT32_C(0x40000000) //!<
-#define BGFX_STENCIL_OP_PASS_Z_DECR      UINT32_C(0x50000000) //!<
-#define BGFX_STENCIL_OP_PASS_Z_DECRSAT   UINT32_C(0x60000000) //!<
-#define BGFX_STENCIL_OP_PASS_Z_INVERT    UINT32_C(0x70000000) //!<
-#define BGFX_STENCIL_OP_PASS_Z_SHIFT     28                   //!< Stencil operation pass depth bit shift.
-#define BGFX_STENCIL_OP_PASS_Z_MASK      UINT32_C(0xf0000000) //!< Stencil operation pass depth bit mask.
+#define BGFX_STENCIL_OP_PASS_Z_ZERO      UINT32_C(0x00000000) //!< Zero.
+#define BGFX_STENCIL_OP_PASS_Z_KEEP      UINT32_C(0x10000000) //!< Keep.
+#define BGFX_STENCIL_OP_PASS_Z_REPLACE   UINT32_C(0x20000000) //!< Replace.
+#define BGFX_STENCIL_OP_PASS_Z_INCR      UINT32_C(0x30000000) //!< Increment and wrap.
+#define BGFX_STENCIL_OP_PASS_Z_INCRSAT   UINT32_C(0x40000000) //!< Increment and clamp.
+#define BGFX_STENCIL_OP_PASS_Z_DECR      UINT32_C(0x50000000) //!< Decrement and wrap.
+#define BGFX_STENCIL_OP_PASS_Z_DECRSAT   UINT32_C(0x60000000) //!< Decrement and clamp.
+#define BGFX_STENCIL_OP_PASS_Z_INVERT    UINT32_C(0x70000000) //!< Invert.
+#define BGFX_STENCIL_OP_PASS_Z_SHIFT     28                   //!< Stencil operation depth pass bit shift
+#define BGFX_STENCIL_OP_PASS_Z_MASK      UINT32_C(0xf0000000) //!< Stencil operation depth pass bit mask.
 
 #define BGFX_STENCIL_NONE                UINT32_C(0x00000000) //!<
 #define BGFX_STENCIL_MASK                UINT32_C(0xffffffff) //!<
