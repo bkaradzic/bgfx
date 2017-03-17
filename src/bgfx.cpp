@@ -1289,8 +1289,12 @@ namespace bgfx
 		TextureFormat::ETC2,
 		TextureFormat::ETC2A,
 		TextureFormat::ETC2A1,
+		TextureFormat::PTC12,
 		TextureFormat::PTC14,
+		TextureFormat::PTC12A,
 		TextureFormat::PTC14A,
+		TextureFormat::PTC22,
+		TextureFormat::PTC24,
 		TextureFormat::BGRA8, // GL doesn't support BGRA8 without extensions.
 		TextureFormat::RGBA8, // D3D9 doesn't support RGBA8
 	};

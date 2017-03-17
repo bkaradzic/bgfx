@@ -906,8 +906,23 @@ namespace bgfx
 			, imageContainer.m_numLayers
 			, imageContainer.m_cubeMap
 			, 1 < imageContainer.m_numMips
-			, (uint8_t*)_src + imageContainer.m_offset
 			);
+
+		const uint16_t numSides = imageContainer.m_numLayers * (imageContainer.m_cubeMap ? 6 : 1);
+		uint8_t* dst = (uint8_t*)output->m_data;
+
+		for (uint16_t side = 0; side < numSides; ++side)
+		{
+			for (uint8_t lod = 0, num = imageContainer.m_numMips; lod < num; ++lod)
+			{
+				ImageMip mip;
+				if (imageGetRawData(imageContainer, side, lod, _src, _size, mip) )
+				{
+					bx::memCopy(dst, mip.m_data, mip.m_size);
+					dst += mip.m_size;
+				}
+			}
+		}
 
 		return output;
 	}
