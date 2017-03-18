@@ -2,59 +2,59 @@ hlsl.pp.line.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:4  Function Definition: @main( (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:4  Function Definition: @main( ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:4    Function Parameters: 
 0:?     Sequence
 0:124      Sequence
-0:124        move second child to first child (temp int)
-0:124          'thisLineIs' (temp int)
+0:124        move second child to first child ( temp int)
+0:124          'thisLineIs' ( temp int)
 0:124          Constant:
 0:124            124 (const int)
-0:126      move second child to first child (temp 4-component vector of float)
-0:126        Color: direct index for structure (temp 4-component vector of float)
-0:126          'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:126      move second child to first child ( temp 4-component vector of float)
+0:126        Color: direct index for structure ( temp 4-component vector of float)
+0:126          'psout' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:126          Constant:
 0:126            0 (const int)
-0:?         Construct vec4 (temp 4-component vector of float)
-0:126          Convert int to float (temp float)
-0:126            'thisLineIs' (temp int)
+0:?         Construct vec4 ( temp 4-component vector of float)
+0:126          Convert int to float ( temp float)
+0:126            'thisLineIs' ( temp int)
 0:126          Constant:
 0:126            0.000000
 0:126          Constant:
 0:126            0.000000
 0:126          Constant:
 0:126            1.000000
-0:127      move second child to first child (temp float)
-0:127        Depth: direct index for structure (temp float)
-0:127          'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:127      move second child to first child ( temp float)
+0:127        Depth: direct index for structure ( temp float)
+0:127          'psout' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:127          Constant:
 0:127            1 (const int)
 0:127        Constant:
 0:127          1.000000
 0:129      Branch: Return with expression
-0:129        'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:4  Function Definition: main( (temp void)
+0:129        'psout' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
+0:4  Function Definition: main( ( temp void)
 0:4    Function Parameters: 
 0:?     Sequence
 0:4      Sequence
-0:4        move second child to first child (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:4          'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:4          Function Call: @main( (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:4        move second child to first child (temp 4-component vector of float)
-0:?           'Color' (layout(location=0 ) out 4-component vector of float)
-0:4          Color: direct index for structure (temp 4-component vector of float)
-0:4            'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:4        move second child to first child ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
+0:4          'flattenTemp' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
+0:4          Function Call: @main( ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
+0:4        move second child to first child ( temp 4-component vector of float)
+0:?           'Color' (layout( location=0) out 4-component vector of float)
+0:4          Color: direct index for structure ( temp 4-component vector of float)
+0:4            'flattenTemp' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:4            Constant:
 0:4              0 (const int)
-0:4        move second child to first child (temp float)
-0:?           'Depth' (out float FragDepth)
-0:4          Depth: direct index for structure (temp float)
-0:4            'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:4        move second child to first child ( temp float)
+0:?           'Depth' ( out float FragDepth)
+0:4          Depth: direct index for structure ( temp float)
+0:4            'flattenTemp' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:4            Constant:
 0:4              1 (const int)
 0:?   Linker Objects
-0:?     'Color' (layout(location=0 ) out 4-component vector of float)
-0:?     'Depth' (out float FragDepth)
+0:?     'Color' (layout( location=0) out 4-component vector of float)
+0:?     'Depth' ( out float FragDepth)
 
 
 Linked fragment stage:
@@ -63,59 +63,59 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:4  Function Definition: @main( (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:4  Function Definition: @main( ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:4    Function Parameters: 
 0:?     Sequence
 0:124      Sequence
-0:124        move second child to first child (temp int)
-0:124          'thisLineIs' (temp int)
+0:124        move second child to first child ( temp int)
+0:124          'thisLineIs' ( temp int)
 0:124          Constant:
 0:124            124 (const int)
-0:126      move second child to first child (temp 4-component vector of float)
-0:126        Color: direct index for structure (temp 4-component vector of float)
-0:126          'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:126      move second child to first child ( temp 4-component vector of float)
+0:126        Color: direct index for structure ( temp 4-component vector of float)
+0:126          'psout' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:126          Constant:
 0:126            0 (const int)
-0:?         Construct vec4 (temp 4-component vector of float)
-0:126          Convert int to float (temp float)
-0:126            'thisLineIs' (temp int)
+0:?         Construct vec4 ( temp 4-component vector of float)
+0:126          Convert int to float ( temp float)
+0:126            'thisLineIs' ( temp int)
 0:126          Constant:
 0:126            0.000000
 0:126          Constant:
 0:126            0.000000
 0:126          Constant:
 0:126            1.000000
-0:127      move second child to first child (temp float)
-0:127        Depth: direct index for structure (temp float)
-0:127          'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:127      move second child to first child ( temp float)
+0:127        Depth: direct index for structure ( temp float)
+0:127          'psout' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:127          Constant:
 0:127            1 (const int)
 0:127        Constant:
 0:127          1.000000
 0:129      Branch: Return with expression
-0:129        'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:4  Function Definition: main( (temp void)
+0:129        'psout' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
+0:4  Function Definition: main( ( temp void)
 0:4    Function Parameters: 
 0:?     Sequence
 0:4      Sequence
-0:4        move second child to first child (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:4          'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:4          Function Call: @main( (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:4        move second child to first child (temp 4-component vector of float)
-0:?           'Color' (layout(location=0 ) out 4-component vector of float)
-0:4          Color: direct index for structure (temp 4-component vector of float)
-0:4            'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:4        move second child to first child ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
+0:4          'flattenTemp' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
+0:4          Function Call: @main( ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
+0:4        move second child to first child ( temp 4-component vector of float)
+0:?           'Color' (layout( location=0) out 4-component vector of float)
+0:4          Color: direct index for structure ( temp 4-component vector of float)
+0:4            'flattenTemp' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:4            Constant:
 0:4              0 (const int)
-0:4        move second child to first child (temp float)
-0:?           'Depth' (out float FragDepth)
-0:4          Depth: direct index for structure (temp float)
-0:4            'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:4        move second child to first child ( temp float)
+0:?           'Depth' ( out float FragDepth)
+0:4          Depth: direct index for structure ( temp float)
+0:4            'flattenTemp' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:4            Constant:
 0:4              1 (const int)
 0:?   Linker Objects
-0:?     'Color' (layout(location=0 ) out 4-component vector of float)
-0:?     'Depth' (out float FragDepth)
+0:?     'Color' (layout( location=0) out 4-component vector of float)
+0:?     'Depth' ( out float FragDepth)
 
 // Module Version 10000
 // Generated by (magic number): 80001

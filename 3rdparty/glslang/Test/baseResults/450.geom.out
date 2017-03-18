@@ -7,21 +7,21 @@ max_vertices = -1
 input primitive = none
 output primitive = none
 0:? Sequence
-0:11  Function Definition: main( (global void)
+0:11  Function Definition: main( ( global void)
 0:11    Function Parameters: 
 0:13    Sequence
-0:13      move second child to first child (temp float)
-0:13        direct index (layout(stream=0 ) temp float CullDistance)
-0:13          gl_CullDistance: direct index for structure (layout(stream=0 ) out 3-element array of float CullDistance)
-0:13            'anon@0' (layout(stream=0 ) out block{layout(stream=0 ) out 3-element array of float CullDistance gl_CullDistance})
+0:13      move second child to first child ( temp float)
+0:13        direct index (layout( stream=0) temp float CullDistance)
+0:13          gl_CullDistance: direct index for structure (layout( stream=0) out 3-element array of float CullDistance)
+0:13            'anon@0' (layout( stream=0) out block{layout( stream=0) out 3-element array of float CullDistance gl_CullDistance})
 0:13            Constant:
 0:13              3 (const uint)
 0:13          Constant:
 0:13            2 (const int)
-0:13        direct index (temp float CullDistance)
-0:13          gl_CullDistance: direct index for structure (in 3-element array of float CullDistance)
-0:13            direct index (temp block{in 3-element array of float CullDistance gl_CullDistance})
-0:13              'gl_in' (in implicitly-sized array of block{in 3-element array of float CullDistance gl_CullDistance})
+0:13        direct index ( temp float CullDistance)
+0:13          gl_CullDistance: direct index for structure ( in 3-element array of float CullDistance)
+0:13            direct index ( temp block{ in 3-element array of float CullDistance gl_CullDistance})
+0:13              'gl_in' ( in implicitly-sized array of block{ in 3-element array of float CullDistance gl_CullDistance})
 0:13              Constant:
 0:13                1 (const int)
 0:13            Constant:
@@ -29,8 +29,8 @@ output primitive = none
 0:13          Constant:
 0:13            2 (const int)
 0:?   Linker Objects
-0:?     'gl_in' (in implicitly-sized array of block{in 3-element array of float CullDistance gl_CullDistance})
-0:?     'anon@0' (layout(stream=0 ) out block{layout(stream=0 ) out 3-element array of float CullDistance gl_CullDistance})
+0:?     'gl_in' ( in implicitly-sized array of block{ in 3-element array of float CullDistance gl_CullDistance})
+0:?     'anon@0' (layout( stream=0) out block{layout( stream=0) out 3-element array of float CullDistance gl_CullDistance})
 
 
 Linked geometry stage:
@@ -45,21 +45,21 @@ max_vertices = -1
 input primitive = none
 output primitive = none
 0:? Sequence
-0:11  Function Definition: main( (global void)
+0:11  Function Definition: main( ( global void)
 0:11    Function Parameters: 
 0:13    Sequence
-0:13      move second child to first child (temp float)
-0:13        direct index (layout(stream=0 ) temp float CullDistance)
-0:13          gl_CullDistance: direct index for structure (layout(stream=0 ) out 3-element array of float CullDistance)
-0:13            'anon@0' (layout(stream=0 ) out block{layout(stream=0 ) out 3-element array of float CullDistance gl_CullDistance})
+0:13      move second child to first child ( temp float)
+0:13        direct index (layout( stream=0) temp float CullDistance)
+0:13          gl_CullDistance: direct index for structure (layout( stream=0) out 3-element array of float CullDistance)
+0:13            'anon@0' (layout( stream=0) out block{layout( stream=0) out 3-element array of float CullDistance gl_CullDistance})
 0:13            Constant:
 0:13              3 (const uint)
 0:13          Constant:
 0:13            2 (const int)
-0:13        direct index (temp float CullDistance)
-0:13          gl_CullDistance: direct index for structure (in 3-element array of float CullDistance)
-0:13            direct index (temp block{in 3-element array of float CullDistance gl_CullDistance})
-0:13              'gl_in' (in 2-element array of block{in 3-element array of float CullDistance gl_CullDistance})
+0:13        direct index ( temp float CullDistance)
+0:13          gl_CullDistance: direct index for structure ( in 3-element array of float CullDistance)
+0:13            direct index ( temp block{ in 3-element array of float CullDistance gl_CullDistance})
+0:13              'gl_in' ( in 2-element array of block{ in 3-element array of float CullDistance gl_CullDistance})
 0:13              Constant:
 0:13                1 (const int)
 0:13            Constant:
@@ -67,6 +67,6 @@ output primitive = none
 0:13          Constant:
 0:13            2 (const int)
 0:?   Linker Objects
-0:?     'gl_in' (in 2-element array of block{in 3-element array of float CullDistance gl_CullDistance})
-0:?     'anon@0' (layout(stream=0 ) out block{layout(stream=0 ) out 3-element array of float CullDistance gl_CullDistance})
+0:?     'gl_in' ( in 2-element array of block{ in 3-element array of float CullDistance gl_CullDistance})
+0:?     'anon@0' (layout( stream=0) out block{layout( stream=0) out 3-element array of float CullDistance gl_CullDistance})
 

@@ -1414,7 +1414,7 @@ void HlslParseContext::assignLocations(TVariable& variable)
 // Handle seeing a function declarator in the grammar.  This is the precursor
 // to recognizing a function prototype or function definition.
 //
-TFunction& HlslParseContext::handleFunctionDeclarator(const TSourceLoc& loc, TFunction& function, bool prototype)
+void HlslParseContext::handleFunctionDeclarator(const TSourceLoc& loc, TFunction& function, bool prototype)
 {
     //
     // Multiple declarations of the same function name are allowed.
@@ -1442,13 +1442,6 @@ TFunction& HlslParseContext::handleFunctionDeclarator(const TSourceLoc& loc, TFu
     // other forms of name collisions.
     if (! symbolTable.insert(function))
         error(loc, "function name is redeclaration of existing name", function.getName().c_str(), "");
-
-    //
-    // If this is a redeclaration, it could also be a definition,
-    // in which case, we need to use the parameter names from this one, and not the one that's
-    // being redeclared.  So, pass back this declaration, not the one in the symbol table.
-    //
-    return function;
 }
 
 // Add interstage IO variables to the linkage in canonical order.
@@ -3089,7 +3082,9 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
             if (argOffset != nullptr)
                 txgather->getSequence().push_back(argOffset);
 
-            txgather->getSequence().push_back(argChannel);
+            // Add channel value if the sampler is not shadow
+            if (! argSamp->getType().getSampler().isShadow())
+                txgather->getSequence().push_back(argChannel);
 
             txgather->setType(node->getType());
             txgather->setLoc(loc);
@@ -4149,7 +4144,7 @@ TFunction* HlslParseContext::handleConstructorCall(const TSourceLoc& loc, const 
 // Handle seeing a "COLON semantic" at the end of a type declaration,
 // by updating the type according to the semantic.
 //
-void HlslParseContext::handleSemantic(TSourceLoc loc, TQualifier& qualifier, TBuiltInVariable builtIn)
+void HlslParseContext::handleSemantic(TSourceLoc loc, TQualifier& qualifier, TBuiltInVariable builtIn, const TString& upperCase)
 {
     // adjust for stage in/out
 
@@ -4166,6 +4161,7 @@ void HlslParseContext::handleSemantic(TSourceLoc loc, TQualifier& qualifier, TBu
     }
 
     qualifier.builtIn = builtIn;
+    qualifier.semanticName = intermediate.addSemanticName(upperCase);
 }
 
 //

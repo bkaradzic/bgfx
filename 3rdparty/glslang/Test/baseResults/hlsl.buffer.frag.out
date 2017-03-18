@@ -2,49 +2,49 @@ hlsl.buffer.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:30  Function Definition: @PixelShaderFunction(vf4; (temp 4-component vector of float)
+0:30  Function Definition: @PixelShaderFunction(vf4; ( temp 4-component vector of float)
 0:30    Function Parameters: 
-0:30      'input' (in 4-component vector of float)
+0:30      'input' ( in 4-component vector of float)
 0:?     Sequence
 0:31      Branch: Return with expression
-0:31        add (temp 4-component vector of float)
-0:31          add (temp 4-component vector of float)
-0:31            add (temp 4-component vector of float)
-0:31              add (temp 4-component vector of float)
-0:31                'input' (in 4-component vector of float)
-0:31                v1: direct index for structure (layout(row_major std140 ) uniform 4-component vector of float)
-0:31                  'anon@0' (layout(row_major std140 ) uniform block{layout(row_major std140 ) uniform 4-component vector of float v1})
+0:31        add ( temp 4-component vector of float)
+0:31          add ( temp 4-component vector of float)
+0:31            add ( temp 4-component vector of float)
+0:31              add ( temp 4-component vector of float)
+0:31                'input' ( in 4-component vector of float)
+0:31                v1: direct index for structure (layout( row_major std140) uniform 4-component vector of float)
+0:31                  'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4-component vector of float v1})
 0:31                  Constant:
 0:31                    0 (const uint)
-0:31              v2: direct index for structure (layout(row_major std430 ) buffer 4-component vector of float)
-0:31                'anon@1' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer 4-component vector of float v2})
+0:31              v2: direct index for structure (layout( row_major std430) buffer 4-component vector of float)
+0:31                'anon@1' (layout( row_major std430) buffer block{layout( row_major std430) buffer 4-component vector of float v2})
 0:31                Constant:
 0:31                  0 (const uint)
-0:31            v3: direct index for structure (layout(row_major std140 ) uniform 4-component vector of float)
-0:31              'anon@2' (layout(set=10 binding=2 row_major std140 ) uniform block{layout(row_major std140 ) uniform 4-component vector of float v3, layout(row_major std140 offset=20 ) uniform int i3})
+0:31            v3: direct index for structure (layout( row_major std140) uniform 4-component vector of float)
+0:31              'anon@2' (layout( set=10 binding=2 row_major std140) uniform block{layout( row_major std140) uniform 4-component vector of float v3, layout( row_major std140 offset=20) uniform int i3})
 0:31              Constant:
 0:31                0 (const uint)
-0:31          v4: direct index for structure (layout(row_major std430 offset=16 ) buffer 4-component vector of float)
-0:31            'anon@3' (layout(binding=8 row_major std430 ) buffer block{layout(row_major std430 offset=16 ) buffer 4-component vector of float v4, layout(row_major std430 offset=48 ) buffer int i4, layout(row_major std430 offset=60 ) buffer float f1, layout(row_major std430 offset=64 ) buffer float f3, layout(row_major std430 offset=68 ) buffer float f4, layout(row_major std430 offset=72 ) buffer float f5, layout(row_major std430 ) buffer float f6, layout(row_major std430 ) buffer float f7, layout(row_major std430 ) buffer 3X4 matrix of float m1, layout(column_major std430 ) buffer 3X4 matrix of float m2, layout(row_major std430 ) buffer 3X4 matrix of float m3, ...})
+0:31          v4: direct index for structure (layout( row_major std430 offset=16) buffer 4-component vector of float)
+0:31            'anon@3' (layout( binding=8 row_major std430) buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v4, layout( row_major std430 offset=48) buffer int i4, layout( row_major std430 offset=60) buffer float f1, layout( row_major std430 offset=64) buffer float f3, layout( row_major std430 offset=68) buffer float f4, layout( row_major std430 offset=72) buffer float f5, layout( row_major std430) buffer float f6, layout( row_major std430) buffer float f7, layout( row_major std430) buffer 3X4 matrix of float m1, layout( column_major std430) buffer 3X4 matrix of float m2, layout( row_major std430) buffer 3X4 matrix of float m3, layout( row_major std430) buffer 3X4 matrix of float m4})
 0:31            Constant:
 0:31              0 (const uint)
-0:30  Function Definition: PixelShaderFunction( (temp void)
+0:30  Function Definition: PixelShaderFunction( ( temp void)
 0:30    Function Parameters: 
 0:?     Sequence
-0:30      move second child to first child (temp 4-component vector of float)
-0:?         'input' (temp 4-component vector of float)
-0:?         'input' (layout(location=0 ) in 4-component vector of float)
-0:30      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:30        Function Call: @PixelShaderFunction(vf4; (temp 4-component vector of float)
-0:?           'input' (temp 4-component vector of float)
+0:30      move second child to first child ( temp 4-component vector of float)
+0:?         'input' ( temp 4-component vector of float)
+0:?         'input' (layout( location=0) in 4-component vector of float)
+0:30      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:30        Function Call: @PixelShaderFunction(vf4; ( temp 4-component vector of float)
+0:?           'input' ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(row_major std140 ) uniform 4-component vector of float v1})
-0:?     'anon@1' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer 4-component vector of float v2})
-0:?     'anon@2' (layout(set=10 binding=2 row_major std140 ) uniform block{layout(row_major std140 ) uniform 4-component vector of float v3, layout(row_major std140 offset=20 ) uniform int i3})
-0:?     'anon@3' (layout(binding=8 row_major std430 ) buffer block{layout(row_major std430 offset=16 ) buffer 4-component vector of float v4, layout(row_major std430 offset=48 ) buffer int i4, layout(row_major std430 offset=60 ) buffer float f1, layout(row_major std430 offset=64 ) buffer float f3, layout(row_major std430 offset=68 ) buffer float f4, layout(row_major std430 offset=72 ) buffer float f5, layout(row_major std430 ) buffer float f6, layout(row_major std430 ) buffer float f7, layout(row_major std430 ) buffer 3X4 matrix of float m1, layout(column_major std430 ) buffer 3X4 matrix of float m2, layout(row_major std430 ) buffer 3X4 matrix of float m3, ...})
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'input' (layout(location=0 ) in 4-component vector of float)
+0:?     'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4-component vector of float v1})
+0:?     'anon@1' (layout( row_major std430) buffer block{layout( row_major std430) buffer 4-component vector of float v2})
+0:?     'anon@2' (layout( set=10 binding=2 row_major std140) uniform block{layout( row_major std140) uniform 4-component vector of float v3, layout( row_major std140 offset=20) uniform int i3})
+0:?     'anon@3' (layout( binding=8 row_major std430) buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v4, layout( row_major std430 offset=48) buffer int i4, layout( row_major std430 offset=60) buffer float f1, layout( row_major std430 offset=64) buffer float f3, layout( row_major std430 offset=68) buffer float f4, layout( row_major std430 offset=72) buffer float f5, layout( row_major std430) buffer float f6, layout( row_major std430) buffer float f7, layout( row_major std430) buffer 3X4 matrix of float m1, layout( column_major std430) buffer 3X4 matrix of float m2, layout( row_major std430) buffer 3X4 matrix of float m3, layout( row_major std430) buffer 3X4 matrix of float m4})
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'input' (layout( location=0) in 4-component vector of float)
 
 
 Linked fragment stage:
@@ -53,49 +53,49 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:30  Function Definition: @PixelShaderFunction(vf4; (temp 4-component vector of float)
+0:30  Function Definition: @PixelShaderFunction(vf4; ( temp 4-component vector of float)
 0:30    Function Parameters: 
-0:30      'input' (in 4-component vector of float)
+0:30      'input' ( in 4-component vector of float)
 0:?     Sequence
 0:31      Branch: Return with expression
-0:31        add (temp 4-component vector of float)
-0:31          add (temp 4-component vector of float)
-0:31            add (temp 4-component vector of float)
-0:31              add (temp 4-component vector of float)
-0:31                'input' (in 4-component vector of float)
-0:31                v1: direct index for structure (layout(row_major std140 ) uniform 4-component vector of float)
-0:31                  'anon@0' (layout(row_major std140 ) uniform block{layout(row_major std140 ) uniform 4-component vector of float v1})
+0:31        add ( temp 4-component vector of float)
+0:31          add ( temp 4-component vector of float)
+0:31            add ( temp 4-component vector of float)
+0:31              add ( temp 4-component vector of float)
+0:31                'input' ( in 4-component vector of float)
+0:31                v1: direct index for structure (layout( row_major std140) uniform 4-component vector of float)
+0:31                  'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4-component vector of float v1})
 0:31                  Constant:
 0:31                    0 (const uint)
-0:31              v2: direct index for structure (layout(row_major std430 ) buffer 4-component vector of float)
-0:31                'anon@1' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer 4-component vector of float v2})
+0:31              v2: direct index for structure (layout( row_major std430) buffer 4-component vector of float)
+0:31                'anon@1' (layout( row_major std430) buffer block{layout( row_major std430) buffer 4-component vector of float v2})
 0:31                Constant:
 0:31                  0 (const uint)
-0:31            v3: direct index for structure (layout(row_major std140 ) uniform 4-component vector of float)
-0:31              'anon@2' (layout(set=10 binding=2 row_major std140 ) uniform block{layout(row_major std140 ) uniform 4-component vector of float v3, layout(row_major std140 offset=20 ) uniform int i3})
+0:31            v3: direct index for structure (layout( row_major std140) uniform 4-component vector of float)
+0:31              'anon@2' (layout( set=10 binding=2 row_major std140) uniform block{layout( row_major std140) uniform 4-component vector of float v3, layout( row_major std140 offset=20) uniform int i3})
 0:31              Constant:
 0:31                0 (const uint)
-0:31          v4: direct index for structure (layout(row_major std430 offset=16 ) buffer 4-component vector of float)
-0:31            'anon@3' (layout(binding=8 row_major std430 ) buffer block{layout(row_major std430 offset=16 ) buffer 4-component vector of float v4, layout(row_major std430 offset=48 ) buffer int i4, layout(row_major std430 offset=60 ) buffer float f1, layout(row_major std430 offset=64 ) buffer float f3, layout(row_major std430 offset=68 ) buffer float f4, layout(row_major std430 offset=72 ) buffer float f5, layout(row_major std430 ) buffer float f6, layout(row_major std430 ) buffer float f7, layout(row_major std430 ) buffer 3X4 matrix of float m1, layout(column_major std430 ) buffer 3X4 matrix of float m2, layout(row_major std430 ) buffer 3X4 matrix of float m3, ...})
+0:31          v4: direct index for structure (layout( row_major std430 offset=16) buffer 4-component vector of float)
+0:31            'anon@3' (layout( binding=8 row_major std430) buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v4, layout( row_major std430 offset=48) buffer int i4, layout( row_major std430 offset=60) buffer float f1, layout( row_major std430 offset=64) buffer float f3, layout( row_major std430 offset=68) buffer float f4, layout( row_major std430 offset=72) buffer float f5, layout( row_major std430) buffer float f6, layout( row_major std430) buffer float f7, layout( row_major std430) buffer 3X4 matrix of float m1, layout( column_major std430) buffer 3X4 matrix of float m2, layout( row_major std430) buffer 3X4 matrix of float m3, layout( row_major std430) buffer 3X4 matrix of float m4})
 0:31            Constant:
 0:31              0 (const uint)
-0:30  Function Definition: PixelShaderFunction( (temp void)
+0:30  Function Definition: PixelShaderFunction( ( temp void)
 0:30    Function Parameters: 
 0:?     Sequence
-0:30      move second child to first child (temp 4-component vector of float)
-0:?         'input' (temp 4-component vector of float)
-0:?         'input' (layout(location=0 ) in 4-component vector of float)
-0:30      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:30        Function Call: @PixelShaderFunction(vf4; (temp 4-component vector of float)
-0:?           'input' (temp 4-component vector of float)
+0:30      move second child to first child ( temp 4-component vector of float)
+0:?         'input' ( temp 4-component vector of float)
+0:?         'input' (layout( location=0) in 4-component vector of float)
+0:30      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:30        Function Call: @PixelShaderFunction(vf4; ( temp 4-component vector of float)
+0:?           'input' ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(row_major std140 ) uniform 4-component vector of float v1})
-0:?     'anon@1' (layout(row_major std430 ) buffer block{layout(row_major std430 ) buffer 4-component vector of float v2})
-0:?     'anon@2' (layout(set=10 binding=2 row_major std140 ) uniform block{layout(row_major std140 ) uniform 4-component vector of float v3, layout(row_major std140 offset=20 ) uniform int i3})
-0:?     'anon@3' (layout(binding=8 row_major std430 ) buffer block{layout(row_major std430 offset=16 ) buffer 4-component vector of float v4, layout(row_major std430 offset=48 ) buffer int i4, layout(row_major std430 offset=60 ) buffer float f1, layout(row_major std430 offset=64 ) buffer float f3, layout(row_major std430 offset=68 ) buffer float f4, layout(row_major std430 offset=72 ) buffer float f5, layout(row_major std430 ) buffer float f6, layout(row_major std430 ) buffer float f7, layout(row_major std430 ) buffer 3X4 matrix of float m1, layout(column_major std430 ) buffer 3X4 matrix of float m2, layout(row_major std430 ) buffer 3X4 matrix of float m3, ...})
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'input' (layout(location=0 ) in 4-component vector of float)
+0:?     'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4-component vector of float v1})
+0:?     'anon@1' (layout( row_major std430) buffer block{layout( row_major std430) buffer 4-component vector of float v2})
+0:?     'anon@2' (layout( set=10 binding=2 row_major std140) uniform block{layout( row_major std140) uniform 4-component vector of float v3, layout( row_major std140 offset=20) uniform int i3})
+0:?     'anon@3' (layout( binding=8 row_major std430) buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v4, layout( row_major std430 offset=48) buffer int i4, layout( row_major std430 offset=60) buffer float f1, layout( row_major std430 offset=64) buffer float f3, layout( row_major std430 offset=68) buffer float f4, layout( row_major std430 offset=72) buffer float f5, layout( row_major std430) buffer float f6, layout( row_major std430) buffer float f7, layout( row_major std430) buffer 3X4 matrix of float m1, layout( column_major std430) buffer 3X4 matrix of float m2, layout( row_major std430) buffer 3X4 matrix of float m3, layout( row_major std430) buffer 3X4 matrix of float m4})
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'input' (layout( location=0) in 4-component vector of float)
 
 // Module Version 10000
 // Generated by (magic number): 80001

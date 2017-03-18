@@ -238,3 +238,19 @@ float t__;  // ERROR, no __ until revision 310
 #define __D
 
 shared vec4 arr[2][3][4];
+
+void devi()
+{
+    gl_DeviceIndex; // ERROR, no extension
+    gl_ViewIndex;   // ERROR, never this stage
+}
+
+#ifdef GL_EXT_device_group
+#extension GL_EXT_device_group : enable
+#endif
+
+void devie()
+{
+    gl_DeviceIndex;
+    gl_ViewIndex;   // ERROR, never this stage
+}

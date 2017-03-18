@@ -3,8 +3,8 @@ Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
 0:3  Sequence
-0:3    move second child to first child (temp 5-element array of float)
-0:3      'g_array' (global 5-element array of float)
+0:3    move second child to first child ( temp 5-element array of float)
+0:3      'g_array' ( global 5-element array of float)
 0:3      Constant:
 0:3        1.000000
 0:3        2.000000
@@ -12,8 +12,8 @@ gl_FragCoord origin is upper left
 0:3        4.000000
 0:3        5.000000
 0:6  Sequence
-0:6    move second child to first child (temp 7-element array of float)
-0:6      'g_array_unused' (global 7-element array of float)
+0:6    move second child to first child ( temp 7-element array of float)
+0:6      'g_array_unused' ( global 7-element array of float)
 0:6      Constant:
 0:6        1.000000
 0:6        2.000000
@@ -23,60 +23,60 @@ gl_FragCoord origin is upper left
 0:6        6.000000
 0:6        7.000000
 0:12  Sequence
-0:12    move second child to first child (temp 2-element array of structure{temp int i, temp float f})
-0:12      'g_mystruct' (global 2-element array of structure{temp int i, temp float f})
+0:12    move second child to first child ( temp 2-element array of structure{ temp int i,  temp float f})
+0:12      'g_mystruct' ( global 2-element array of structure{ temp int i,  temp float f})
 0:12      Constant:
 0:12        1 (const int)
 0:12        2.000000
 0:12        3 (const int)
 0:12        4.000000
-0:26  Function Definition: main(struct-PS_OUTPUT-vf41; (temp void)
+0:26  Function Definition: main(struct-PS_OUTPUT-vf41; ( temp void)
 0:26    Function Parameters: 
-0:26      'ps_output' (out structure{temp 4-component vector of float color})
+0:26      'ps_output' ( out structure{ temp 4-component vector of float color})
 0:?     Sequence
 0:28      Sequence
-0:28        move second child to first child (temp 3-element array of float)
-0:28          'l_array' (temp 3-element array of float)
+0:28        move second child to first child ( temp 3-element array of float)
+0:28          'l_array' ( temp 3-element array of float)
 0:28          Constant:
 0:28            1.000000
 0:28            2.000000
 0:28            3.000000
-0:31      move second child to first child (temp 4-component vector of float)
-0:31        color: direct index for structure (temp 4-component vector of float)
-0:31          'ps_output' (out structure{temp 4-component vector of float color})
+0:31      move second child to first child ( temp 4-component vector of float)
+0:31        color: direct index for structure ( temp 4-component vector of float)
+0:31          'ps_output' ( out structure{ temp 4-component vector of float color})
 0:31          Constant:
 0:31            0 (const int)
-0:31        Construct vec4 (temp 4-component vector of float)
-0:31          add (temp float)
-0:31            add (temp float)
-0:31              add (temp float)
-0:31                add (temp float)
-0:31                  direct index (temp float)
-0:31                    'g_array' (global 5-element array of float)
+0:31        Construct vec4 ( temp 4-component vector of float)
+0:31          add ( temp float)
+0:31            add ( temp float)
+0:31              add ( temp float)
+0:31                add ( temp float)
+0:31                  direct index ( temp float)
+0:31                    'g_array' ( global 5-element array of float)
 0:31                    Constant:
 0:31                      0 (const int)
-0:31                  direct index (temp float)
-0:31                    'g_array' (global 5-element array of float)
+0:31                  direct index ( temp float)
+0:31                    'g_array' ( global 5-element array of float)
 0:31                    Constant:
 0:31                      4 (const int)
-0:31                direct index (temp float)
-0:31                  'l_array' (temp 3-element array of float)
+0:31                direct index ( temp float)
+0:31                  'l_array' ( temp 3-element array of float)
 0:31                  Constant:
 0:31                    1 (const int)
-0:31              f: direct index for structure (temp float)
-0:31                direct index (temp structure{temp int i, temp float f})
-0:31                  'g_mystruct' (global 2-element array of structure{temp int i, temp float f})
+0:31              f: direct index for structure ( temp float)
+0:31                direct index ( temp structure{ temp int i,  temp float f})
+0:31                  'g_mystruct' ( global 2-element array of structure{ temp int i,  temp float f})
 0:31                  Constant:
 0:31                    0 (const int)
 0:31                Constant:
 0:31                  1 (const int)
-0:31            indirect index (temp float)
-0:31              'g_array' (global 5-element array of float)
-0:31              'idx' (temp int)
+0:31            indirect index ( temp float)
+0:31              'g_array' ( global 5-element array of float)
+0:31              'idx' ( temp int)
 0:?   Linker Objects
-0:?     'g_array' (global 5-element array of float)
-0:?     'g_array_unused' (global 7-element array of float)
-0:?     'g_mystruct' (global 2-element array of structure{temp int i, temp float f})
+0:?     'g_array' ( global 5-element array of float)
+0:?     'g_array_unused' ( global 7-element array of float)
+0:?     'g_mystruct' ( global 2-element array of structure{ temp int i,  temp float f})
 
 
 Linked fragment stage:
@@ -87,8 +87,8 @@ Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
 0:3  Sequence
-0:3    move second child to first child (temp 5-element array of float)
-0:3      'g_array' (global 5-element array of float)
+0:3    move second child to first child ( temp 5-element array of float)
+0:3      'g_array' ( global 5-element array of float)
 0:3      Constant:
 0:3        1.000000
 0:3        2.000000
@@ -96,8 +96,8 @@ gl_FragCoord origin is upper left
 0:3        4.000000
 0:3        5.000000
 0:6  Sequence
-0:6    move second child to first child (temp 7-element array of float)
-0:6      'g_array_unused' (global 7-element array of float)
+0:6    move second child to first child ( temp 7-element array of float)
+0:6      'g_array_unused' ( global 7-element array of float)
 0:6      Constant:
 0:6        1.000000
 0:6        2.000000
@@ -107,60 +107,60 @@ gl_FragCoord origin is upper left
 0:6        6.000000
 0:6        7.000000
 0:12  Sequence
-0:12    move second child to first child (temp 2-element array of structure{temp int i, temp float f})
-0:12      'g_mystruct' (global 2-element array of structure{temp int i, temp float f})
+0:12    move second child to first child ( temp 2-element array of structure{ temp int i,  temp float f})
+0:12      'g_mystruct' ( global 2-element array of structure{ temp int i,  temp float f})
 0:12      Constant:
 0:12        1 (const int)
 0:12        2.000000
 0:12        3 (const int)
 0:12        4.000000
-0:26  Function Definition: main(struct-PS_OUTPUT-vf41; (temp void)
+0:26  Function Definition: main(struct-PS_OUTPUT-vf41; ( temp void)
 0:26    Function Parameters: 
-0:26      'ps_output' (out structure{temp 4-component vector of float color})
+0:26      'ps_output' ( out structure{ temp 4-component vector of float color})
 0:?     Sequence
 0:28      Sequence
-0:28        move second child to first child (temp 3-element array of float)
-0:28          'l_array' (temp 3-element array of float)
+0:28        move second child to first child ( temp 3-element array of float)
+0:28          'l_array' ( temp 3-element array of float)
 0:28          Constant:
 0:28            1.000000
 0:28            2.000000
 0:28            3.000000
-0:31      move second child to first child (temp 4-component vector of float)
-0:31        color: direct index for structure (temp 4-component vector of float)
-0:31          'ps_output' (out structure{temp 4-component vector of float color})
+0:31      move second child to first child ( temp 4-component vector of float)
+0:31        color: direct index for structure ( temp 4-component vector of float)
+0:31          'ps_output' ( out structure{ temp 4-component vector of float color})
 0:31          Constant:
 0:31            0 (const int)
-0:31        Construct vec4 (temp 4-component vector of float)
-0:31          add (temp float)
-0:31            add (temp float)
-0:31              add (temp float)
-0:31                add (temp float)
-0:31                  direct index (temp float)
-0:31                    'g_array' (global 5-element array of float)
+0:31        Construct vec4 ( temp 4-component vector of float)
+0:31          add ( temp float)
+0:31            add ( temp float)
+0:31              add ( temp float)
+0:31                add ( temp float)
+0:31                  direct index ( temp float)
+0:31                    'g_array' ( global 5-element array of float)
 0:31                    Constant:
 0:31                      0 (const int)
-0:31                  direct index (temp float)
-0:31                    'g_array' (global 5-element array of float)
+0:31                  direct index ( temp float)
+0:31                    'g_array' ( global 5-element array of float)
 0:31                    Constant:
 0:31                      4 (const int)
-0:31                direct index (temp float)
-0:31                  'l_array' (temp 3-element array of float)
+0:31                direct index ( temp float)
+0:31                  'l_array' ( temp 3-element array of float)
 0:31                  Constant:
 0:31                    1 (const int)
-0:31              f: direct index for structure (temp float)
-0:31                direct index (temp structure{temp int i, temp float f})
-0:31                  'g_mystruct' (global 2-element array of structure{temp int i, temp float f})
+0:31              f: direct index for structure ( temp float)
+0:31                direct index ( temp structure{ temp int i,  temp float f})
+0:31                  'g_mystruct' ( global 2-element array of structure{ temp int i,  temp float f})
 0:31                  Constant:
 0:31                    0 (const int)
 0:31                Constant:
 0:31                  1 (const int)
-0:31            indirect index (temp float)
-0:31              'g_array' (global 5-element array of float)
-0:31              'idx' (temp int)
+0:31            indirect index ( temp float)
+0:31              'g_array' ( global 5-element array of float)
+0:31              'idx' ( temp int)
 0:?   Linker Objects
-0:?     'g_array' (global 5-element array of float)
-0:?     'g_array_unused' (global 7-element array of float)
-0:?     'g_mystruct' (global 2-element array of structure{temp int i, temp float f})
+0:?     'g_array' ( global 5-element array of float)
+0:?     'g_array_unused' ( global 7-element array of float)
+0:?     'g_mystruct' ( global 2-element array of structure{ temp int i,  temp float f})
 
 // Module Version 10000
 // Generated by (magic number): 80001

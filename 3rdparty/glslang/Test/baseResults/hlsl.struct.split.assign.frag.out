@@ -2,117 +2,117 @@ hlsl.struct.split.assign.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:7  Function Definition: @main(i1;struct-S-f1-vf41[3]; (temp 4-component vector of float)
+0:7  Function Definition: @main(i1;struct-S-f1-vf41[3]; ( temp 4-component vector of float)
 0:7    Function Parameters: 
-0:7      'i' (in int)
-0:7      'input' (in 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:7      'i' ( in int)
+0:7      'input' ( in 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:?     Sequence
-0:9      move second child to first child (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
-0:9        'input' (in 3-element array of structure{temp float f, temp 4-component vector of float pos})
-0:9        'a' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:9      move second child to first child ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
+0:9        'input' ( in 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
+0:9        'a' ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:11      Branch: Return with expression
 0:11        Constant:
 0:11          1.000000
 0:11          1.000000
 0:11          1.000000
-0:7  Function Definition: main( (temp void)
+0:7  Function Definition: main( ( temp void)
 0:7    Function Parameters: 
 0:?     Sequence
-0:7      move second child to first child (temp int)
-0:?         'i' (temp int)
-0:?         'i' (layout(location=0 ) in int)
+0:7      move second child to first child ( temp int)
+0:?         'i' ( temp int)
+0:?         'i' (layout( location=0) in int)
 0:7      Sequence
-0:7        move second child to first child (temp float)
-0:7          f: direct index for structure (temp float)
-0:7            direct index (temp structure{temp float f, temp 4-component vector of float pos})
-0:?               'input' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:7        move second child to first child ( temp float)
+0:7          f: direct index for structure ( temp float)
+0:7            direct index ( temp structure{ temp float f,  temp 4-component vector of float pos})
+0:?               'input' ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:7              Constant:
 0:7                0 (const int)
 0:7            Constant:
 0:7              0 (const int)
-0:7          f: direct index for structure (temp float)
-0:7            direct index (layout(location=1 ) in structure{temp float f})
-0:7              'input' (layout(location=1 ) in 3-element array of structure{temp float f})
+0:7          f: direct index for structure ( temp float)
+0:7            direct index (layout( location=1) in structure{ temp float f})
+0:7              'input' (layout( location=1) in 3-element array of structure{ temp float f})
 0:7              Constant:
 0:7                0 (const int)
 0:7            Constant:
 0:7              0 (const int)
-0:7        move second child to first child (temp 4-component vector of float)
-0:7          pos: direct index for structure (temp 4-component vector of float)
-0:7            direct index (temp structure{temp float f, temp 4-component vector of float pos})
-0:?               'input' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:7        move second child to first child ( temp 4-component vector of float)
+0:7          pos: direct index for structure ( temp 4-component vector of float)
+0:7            direct index ( temp structure{ temp float f,  temp 4-component vector of float pos})
+0:?               'input' ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:7              Constant:
 0:7                0 (const int)
 0:7            Constant:
 0:7              1 (const int)
-0:7          direct index (in 4-component vector of float FragCoord)
-0:?             'input_pos' (in 3-element array of 4-component vector of float FragCoord)
+0:7          direct index ( in 4-component vector of float FragCoord)
+0:?             'input_pos' ( in 3-element array of 4-component vector of float FragCoord)
 0:7            Constant:
 0:7              0 (const int)
-0:7        move second child to first child (temp float)
-0:7          f: direct index for structure (temp float)
-0:7            direct index (temp structure{temp float f, temp 4-component vector of float pos})
-0:?               'input' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:7        move second child to first child ( temp float)
+0:7          f: direct index for structure ( temp float)
+0:7            direct index ( temp structure{ temp float f,  temp 4-component vector of float pos})
+0:?               'input' ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:7              Constant:
 0:7                1 (const int)
 0:7            Constant:
 0:7              0 (const int)
-0:7          f: direct index for structure (temp float)
-0:7            direct index (layout(location=1 ) in structure{temp float f})
-0:7              'input' (layout(location=1 ) in 3-element array of structure{temp float f})
+0:7          f: direct index for structure ( temp float)
+0:7            direct index (layout( location=1) in structure{ temp float f})
+0:7              'input' (layout( location=1) in 3-element array of structure{ temp float f})
 0:7              Constant:
 0:7                1 (const int)
 0:7            Constant:
 0:7              0 (const int)
-0:7        move second child to first child (temp 4-component vector of float)
-0:7          pos: direct index for structure (temp 4-component vector of float)
-0:7            direct index (temp structure{temp float f, temp 4-component vector of float pos})
-0:?               'input' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:7        move second child to first child ( temp 4-component vector of float)
+0:7          pos: direct index for structure ( temp 4-component vector of float)
+0:7            direct index ( temp structure{ temp float f,  temp 4-component vector of float pos})
+0:?               'input' ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:7              Constant:
 0:7                1 (const int)
 0:7            Constant:
 0:7              1 (const int)
-0:7          direct index (in 4-component vector of float FragCoord)
-0:?             'input_pos' (in 3-element array of 4-component vector of float FragCoord)
+0:7          direct index ( in 4-component vector of float FragCoord)
+0:?             'input_pos' ( in 3-element array of 4-component vector of float FragCoord)
 0:7            Constant:
 0:7              1 (const int)
-0:7        move second child to first child (temp float)
-0:7          f: direct index for structure (temp float)
-0:7            direct index (temp structure{temp float f, temp 4-component vector of float pos})
-0:?               'input' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:7        move second child to first child ( temp float)
+0:7          f: direct index for structure ( temp float)
+0:7            direct index ( temp structure{ temp float f,  temp 4-component vector of float pos})
+0:?               'input' ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:7              Constant:
 0:7                2 (const int)
 0:7            Constant:
 0:7              0 (const int)
-0:7          f: direct index for structure (temp float)
-0:7            direct index (layout(location=1 ) in structure{temp float f})
-0:7              'input' (layout(location=1 ) in 3-element array of structure{temp float f})
+0:7          f: direct index for structure ( temp float)
+0:7            direct index (layout( location=1) in structure{ temp float f})
+0:7              'input' (layout( location=1) in 3-element array of structure{ temp float f})
 0:7              Constant:
 0:7                2 (const int)
 0:7            Constant:
 0:7              0 (const int)
-0:7        move second child to first child (temp 4-component vector of float)
-0:7          pos: direct index for structure (temp 4-component vector of float)
-0:7            direct index (temp structure{temp float f, temp 4-component vector of float pos})
-0:?               'input' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:7        move second child to first child ( temp 4-component vector of float)
+0:7          pos: direct index for structure ( temp 4-component vector of float)
+0:7            direct index ( temp structure{ temp float f,  temp 4-component vector of float pos})
+0:?               'input' ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:7              Constant:
 0:7                2 (const int)
 0:7            Constant:
 0:7              1 (const int)
-0:7          direct index (in 4-component vector of float FragCoord)
-0:?             'input_pos' (in 3-element array of 4-component vector of float FragCoord)
+0:7          direct index ( in 4-component vector of float FragCoord)
+0:?             'input_pos' ( in 3-element array of 4-component vector of float FragCoord)
 0:7            Constant:
 0:7              2 (const int)
-0:7      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:7        Function Call: @main(i1;struct-S-f1-vf41[3]; (temp 4-component vector of float)
-0:?           'i' (temp int)
-0:?           'input' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:7      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:7        Function Call: @main(i1;struct-S-f1-vf41[3]; ( temp 4-component vector of float)
+0:?           'i' ( temp int)
+0:?           'input' ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'i' (layout(location=0 ) in int)
-0:?     'input' (layout(location=1 ) in 3-element array of structure{temp float f})
-0:?     'input_pos' (in 3-element array of 4-component vector of float FragCoord)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'i' (layout( location=0) in int)
+0:?     'input' (layout( location=1) in 3-element array of structure{ temp float f})
+0:?     'input_pos' ( in 3-element array of 4-component vector of float FragCoord)
 
 
 Linked fragment stage:
@@ -121,117 +121,117 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:7  Function Definition: @main(i1;struct-S-f1-vf41[3]; (temp 4-component vector of float)
+0:7  Function Definition: @main(i1;struct-S-f1-vf41[3]; ( temp 4-component vector of float)
 0:7    Function Parameters: 
-0:7      'i' (in int)
-0:7      'input' (in 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:7      'i' ( in int)
+0:7      'input' ( in 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:?     Sequence
-0:9      move second child to first child (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
-0:9        'input' (in 3-element array of structure{temp float f, temp 4-component vector of float pos})
-0:9        'a' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:9      move second child to first child ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
+0:9        'input' ( in 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
+0:9        'a' ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:11      Branch: Return with expression
 0:11        Constant:
 0:11          1.000000
 0:11          1.000000
 0:11          1.000000
-0:7  Function Definition: main( (temp void)
+0:7  Function Definition: main( ( temp void)
 0:7    Function Parameters: 
 0:?     Sequence
-0:7      move second child to first child (temp int)
-0:?         'i' (temp int)
-0:?         'i' (layout(location=0 ) in int)
+0:7      move second child to first child ( temp int)
+0:?         'i' ( temp int)
+0:?         'i' (layout( location=0) in int)
 0:7      Sequence
-0:7        move second child to first child (temp float)
-0:7          f: direct index for structure (temp float)
-0:7            direct index (temp structure{temp float f, temp 4-component vector of float pos})
-0:?               'input' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:7        move second child to first child ( temp float)
+0:7          f: direct index for structure ( temp float)
+0:7            direct index ( temp structure{ temp float f,  temp 4-component vector of float pos})
+0:?               'input' ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:7              Constant:
 0:7                0 (const int)
 0:7            Constant:
 0:7              0 (const int)
-0:7          f: direct index for structure (temp float)
-0:7            direct index (layout(location=1 ) in structure{temp float f})
-0:7              'input' (layout(location=1 ) in 3-element array of structure{temp float f})
+0:7          f: direct index for structure ( temp float)
+0:7            direct index (layout( location=1) in structure{ temp float f})
+0:7              'input' (layout( location=1) in 3-element array of structure{ temp float f})
 0:7              Constant:
 0:7                0 (const int)
 0:7            Constant:
 0:7              0 (const int)
-0:7        move second child to first child (temp 4-component vector of float)
-0:7          pos: direct index for structure (temp 4-component vector of float)
-0:7            direct index (temp structure{temp float f, temp 4-component vector of float pos})
-0:?               'input' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:7        move second child to first child ( temp 4-component vector of float)
+0:7          pos: direct index for structure ( temp 4-component vector of float)
+0:7            direct index ( temp structure{ temp float f,  temp 4-component vector of float pos})
+0:?               'input' ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:7              Constant:
 0:7                0 (const int)
 0:7            Constant:
 0:7              1 (const int)
-0:7          direct index (in 4-component vector of float FragCoord)
-0:?             'input_pos' (in 3-element array of 4-component vector of float FragCoord)
+0:7          direct index ( in 4-component vector of float FragCoord)
+0:?             'input_pos' ( in 3-element array of 4-component vector of float FragCoord)
 0:7            Constant:
 0:7              0 (const int)
-0:7        move second child to first child (temp float)
-0:7          f: direct index for structure (temp float)
-0:7            direct index (temp structure{temp float f, temp 4-component vector of float pos})
-0:?               'input' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:7        move second child to first child ( temp float)
+0:7          f: direct index for structure ( temp float)
+0:7            direct index ( temp structure{ temp float f,  temp 4-component vector of float pos})
+0:?               'input' ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:7              Constant:
 0:7                1 (const int)
 0:7            Constant:
 0:7              0 (const int)
-0:7          f: direct index for structure (temp float)
-0:7            direct index (layout(location=1 ) in structure{temp float f})
-0:7              'input' (layout(location=1 ) in 3-element array of structure{temp float f})
+0:7          f: direct index for structure ( temp float)
+0:7            direct index (layout( location=1) in structure{ temp float f})
+0:7              'input' (layout( location=1) in 3-element array of structure{ temp float f})
 0:7              Constant:
 0:7                1 (const int)
 0:7            Constant:
 0:7              0 (const int)
-0:7        move second child to first child (temp 4-component vector of float)
-0:7          pos: direct index for structure (temp 4-component vector of float)
-0:7            direct index (temp structure{temp float f, temp 4-component vector of float pos})
-0:?               'input' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:7        move second child to first child ( temp 4-component vector of float)
+0:7          pos: direct index for structure ( temp 4-component vector of float)
+0:7            direct index ( temp structure{ temp float f,  temp 4-component vector of float pos})
+0:?               'input' ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:7              Constant:
 0:7                1 (const int)
 0:7            Constant:
 0:7              1 (const int)
-0:7          direct index (in 4-component vector of float FragCoord)
-0:?             'input_pos' (in 3-element array of 4-component vector of float FragCoord)
+0:7          direct index ( in 4-component vector of float FragCoord)
+0:?             'input_pos' ( in 3-element array of 4-component vector of float FragCoord)
 0:7            Constant:
 0:7              1 (const int)
-0:7        move second child to first child (temp float)
-0:7          f: direct index for structure (temp float)
-0:7            direct index (temp structure{temp float f, temp 4-component vector of float pos})
-0:?               'input' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:7        move second child to first child ( temp float)
+0:7          f: direct index for structure ( temp float)
+0:7            direct index ( temp structure{ temp float f,  temp 4-component vector of float pos})
+0:?               'input' ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:7              Constant:
 0:7                2 (const int)
 0:7            Constant:
 0:7              0 (const int)
-0:7          f: direct index for structure (temp float)
-0:7            direct index (layout(location=1 ) in structure{temp float f})
-0:7              'input' (layout(location=1 ) in 3-element array of structure{temp float f})
+0:7          f: direct index for structure ( temp float)
+0:7            direct index (layout( location=1) in structure{ temp float f})
+0:7              'input' (layout( location=1) in 3-element array of structure{ temp float f})
 0:7              Constant:
 0:7                2 (const int)
 0:7            Constant:
 0:7              0 (const int)
-0:7        move second child to first child (temp 4-component vector of float)
-0:7          pos: direct index for structure (temp 4-component vector of float)
-0:7            direct index (temp structure{temp float f, temp 4-component vector of float pos})
-0:?               'input' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:7        move second child to first child ( temp 4-component vector of float)
+0:7          pos: direct index for structure ( temp 4-component vector of float)
+0:7            direct index ( temp structure{ temp float f,  temp 4-component vector of float pos})
+0:?               'input' ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:7              Constant:
 0:7                2 (const int)
 0:7            Constant:
 0:7              1 (const int)
-0:7          direct index (in 4-component vector of float FragCoord)
-0:?             'input_pos' (in 3-element array of 4-component vector of float FragCoord)
+0:7          direct index ( in 4-component vector of float FragCoord)
+0:?             'input_pos' ( in 3-element array of 4-component vector of float FragCoord)
 0:7            Constant:
 0:7              2 (const int)
-0:7      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:7        Function Call: @main(i1;struct-S-f1-vf41[3]; (temp 4-component vector of float)
-0:?           'i' (temp int)
-0:?           'input' (temp 3-element array of structure{temp float f, temp 4-component vector of float pos})
+0:7      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:7        Function Call: @main(i1;struct-S-f1-vf41[3]; ( temp 4-component vector of float)
+0:?           'i' ( temp int)
+0:?           'input' ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'i' (layout(location=0 ) in int)
-0:?     'input' (layout(location=1 ) in 3-element array of structure{temp float f})
-0:?     'input_pos' (in 3-element array of 4-component vector of float FragCoord)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'i' (layout( location=0) in int)
+0:?     'input' (layout( location=1) in 3-element array of structure{ temp float f})
+0:?     'input_pos' ( in 3-element array of 4-component vector of float FragCoord)
 
 // Module Version 10000
 // Generated by (magic number): 80001

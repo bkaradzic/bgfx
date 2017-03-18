@@ -480,16 +480,18 @@ spv::BuiltIn TGlslangToSpvTraverser::TranslateBuiltInDecoration(glslang::TBuiltI
         return spv::BuiltInCullDistance;
 
     case glslang::EbvViewportIndex:
-        builder.addCapability(spv::CapabilityMultiViewport);
+        if (!memberDeclaration) {
+            builder.addCapability(spv::CapabilityMultiViewport);
 #ifdef NV_EXTENSIONS
-        if (glslangIntermediate->getStage() == EShLangVertex ||
-            glslangIntermediate->getStage() == EShLangTessControl ||
-            glslangIntermediate->getStage() == EShLangTessEvaluation)
-        {
-            builder.addExtension(spv::E_SPV_NV_viewport_array2);
-            builder.addCapability(spv::CapabilityShaderViewportIndexLayerNV);
-        }
+            if (glslangIntermediate->getStage() == EShLangVertex ||
+                glslangIntermediate->getStage() == EShLangTessControl ||
+                glslangIntermediate->getStage() == EShLangTessEvaluation) {
+
+                builder.addExtension(spv::E_SPV_NV_viewport_array2);
+                builder.addCapability(spv::CapabilityShaderViewportIndexLayerNV);
+            }
 #endif
+        }
         return spv::BuiltInViewportIndex;
 
     case glslang::EbvSampleId:
@@ -505,19 +507,19 @@ spv::BuiltIn TGlslangToSpvTraverser::TranslateBuiltInDecoration(glslang::TBuiltI
         return spv::BuiltInSampleMask;
 
     case glslang::EbvLayer:
-        builder.addCapability(spv::CapabilityGeometry);
+        if (!memberDeclaration) {
+            builder.addCapability(spv::CapabilityGeometry);
 #ifdef NV_EXTENSIONS
-        if (!memberDeclaration)
-        {
             if (glslangIntermediate->getStage() == EShLangVertex ||
                 glslangIntermediate->getStage() == EShLangTessControl ||
-                glslangIntermediate->getStage() == EShLangTessEvaluation)
-            {
+                glslangIntermediate->getStage() == EShLangTessEvaluation) {
+
                 builder.addExtension(spv::E_SPV_NV_viewport_array2);
                 builder.addCapability(spv::CapabilityShaderViewportIndexLayerNV);
             }
-        }
 #endif
+        }
+
         return spv::BuiltInLayer;
 
     case glslang::EbvPosition:             return spv::BuiltInPosition;
@@ -640,8 +642,10 @@ spv::BuiltIn TGlslangToSpvTraverser::TranslateBuiltInDecoration(glslang::TBuiltI
 
 #ifdef NV_EXTENSIONS
     case glslang::EbvViewportMaskNV:
-        builder.addExtension(spv::E_SPV_NV_viewport_array2);
-        builder.addCapability(spv::CapabilityShaderViewportMaskNV);
+        if (!memberDeclaration) {
+            builder.addExtension(spv::E_SPV_NV_viewport_array2);
+            builder.addCapability(spv::CapabilityShaderViewportMaskNV);
+        }
         return spv::BuiltInViewportMaskNV;
     case glslang::EbvSecondaryPositionNV:
         if (!memberDeclaration) {
@@ -2690,6 +2694,7 @@ void TGlslangToSpvTraverser::declareUseOfStructMember(const glslang::TTypeList& 
     case glslang::EbvPointSize:
 #ifdef NV_EXTENSIONS
     case glslang::EbvLayer:
+    case glslang::EbvViewportIndex:
     case glslang::EbvViewportMaskNV:
     case glslang::EbvSecondaryPositionNV:
     case glslang::EbvSecondaryViewportMaskNV:

@@ -5,88 +5,88 @@ max_vertices = 3
 input primitive = triangles
 output primitive = triangle_strip
 0:? Sequence
-0:14  Function Definition: @main(struct-PS_IN-vf41[3];struct-GS_OUT-vf41; (temp void)
+0:14  Function Definition: @main(struct-PS_IN-vf41[3];struct-GS_OUT-vf41; ( temp void)
 0:14    Function Parameters: 
-0:14      'i' (in 3-element array of structure{temp 4-component vector of float pos})
-0:14      'ts' (out structure{temp 4-component vector of float pos})
+0:14      'i' ( in 3-element array of structure{ temp 4-component vector of float pos})
+0:14      'ts' ( out structure{ temp 4-component vector of float pos})
 0:?     Sequence
 0:17      Sequence
-0:17        move second child to first child (temp int)
-0:17          'x' (temp int)
+0:17        move second child to first child ( temp int)
+0:17          'x' ( temp int)
 0:17          Constant:
 0:17            0 (const int)
 0:17        Loop with condition tested first
 0:17          Loop Condition
-0:17          Compare Less Than (temp bool)
-0:17            'x' (temp int)
+0:17          Compare Less Than ( temp bool)
+0:17            'x' ( temp int)
 0:17            Constant:
 0:17              3 (const int)
 0:17          Loop Body
 0:?           Sequence
-0:18            move second child to first child (temp 4-component vector of float)
-0:18              pos: direct index for structure (temp 4-component vector of float)
-0:18                'o' (temp structure{temp 4-component vector of float pos})
+0:18            move second child to first child ( temp 4-component vector of float)
+0:18              pos: direct index for structure ( temp 4-component vector of float)
+0:18                'o' ( temp structure{ temp 4-component vector of float pos})
 0:18                Constant:
 0:18                  0 (const int)
-0:18              pos: direct index for structure (temp 4-component vector of float)
-0:18                indirect index (temp structure{temp 4-component vector of float pos})
-0:18                  'i' (in 3-element array of structure{temp 4-component vector of float pos})
-0:18                  'x' (temp int)
+0:18              pos: direct index for structure ( temp 4-component vector of float)
+0:18                indirect index ( temp structure{ temp 4-component vector of float pos})
+0:18                  'i' ( in 3-element array of structure{ temp 4-component vector of float pos})
+0:18                  'x' ( temp int)
 0:18                Constant:
 0:18                  0 (const int)
 0:19            Sequence
-0:19              move second child to first child (temp structure{temp 4-component vector of float pos})
-0:19                'ts' (out structure{temp 4-component vector of float pos})
-0:19                'o' (temp structure{temp 4-component vector of float pos})
-0:19              EmitVertex (temp void)
+0:19              move second child to first child ( temp structure{ temp 4-component vector of float pos})
+0:19                'ts' ( out structure{ temp 4-component vector of float pos})
+0:19                'o' ( temp structure{ temp 4-component vector of float pos})
+0:19              EmitVertex ( temp void)
 0:17          Loop Terminal Expression
-0:17          Pre-Increment (temp int)
-0:17            'x' (temp int)
-0:14  Function Definition: main( (temp void)
+0:17          Pre-Increment ( temp int)
+0:17            'x' ( temp int)
+0:14  Function Definition: main( ( temp void)
 0:14    Function Parameters: 
 0:?     Sequence
 0:14      Sequence
-0:14        move second child to first child (temp 4-component vector of float)
-0:14          pos: direct index for structure (temp 4-component vector of float)
-0:14            direct index (temp structure{temp 4-component vector of float pos})
-0:?               'i' (temp 3-element array of structure{temp 4-component vector of float pos})
+0:14        move second child to first child ( temp 4-component vector of float)
+0:14          pos: direct index for structure ( temp 4-component vector of float)
+0:14            direct index ( temp structure{ temp 4-component vector of float pos})
+0:?               'i' ( temp 3-element array of structure{ temp 4-component vector of float pos})
 0:14              Constant:
 0:14                0 (const int)
 0:14            Constant:
 0:14              0 (const int)
-0:14          direct index (in 4-component vector of float Position)
-0:?             'i_pos' (in 3-element array of 4-component vector of float Position)
+0:14          direct index ( in 4-component vector of float Position)
+0:?             'i_pos' ( in 3-element array of 4-component vector of float Position)
 0:14            Constant:
 0:14              0 (const int)
-0:14        move second child to first child (temp 4-component vector of float)
-0:14          pos: direct index for structure (temp 4-component vector of float)
-0:14            direct index (temp structure{temp 4-component vector of float pos})
-0:?               'i' (temp 3-element array of structure{temp 4-component vector of float pos})
+0:14        move second child to first child ( temp 4-component vector of float)
+0:14          pos: direct index for structure ( temp 4-component vector of float)
+0:14            direct index ( temp structure{ temp 4-component vector of float pos})
+0:?               'i' ( temp 3-element array of structure{ temp 4-component vector of float pos})
 0:14              Constant:
 0:14                1 (const int)
 0:14            Constant:
 0:14              0 (const int)
-0:14          direct index (in 4-component vector of float Position)
-0:?             'i_pos' (in 3-element array of 4-component vector of float Position)
+0:14          direct index ( in 4-component vector of float Position)
+0:?             'i_pos' ( in 3-element array of 4-component vector of float Position)
 0:14            Constant:
 0:14              1 (const int)
-0:14        move second child to first child (temp 4-component vector of float)
-0:14          pos: direct index for structure (temp 4-component vector of float)
-0:14            direct index (temp structure{temp 4-component vector of float pos})
-0:?               'i' (temp 3-element array of structure{temp 4-component vector of float pos})
+0:14        move second child to first child ( temp 4-component vector of float)
+0:14          pos: direct index for structure ( temp 4-component vector of float)
+0:14            direct index ( temp structure{ temp 4-component vector of float pos})
+0:?               'i' ( temp 3-element array of structure{ temp 4-component vector of float pos})
 0:14              Constant:
 0:14                2 (const int)
 0:14            Constant:
 0:14              0 (const int)
-0:14          direct index (in 4-component vector of float Position)
-0:?             'i_pos' (in 3-element array of 4-component vector of float Position)
+0:14          direct index ( in 4-component vector of float Position)
+0:?             'i_pos' ( in 3-element array of 4-component vector of float Position)
 0:14            Constant:
 0:14              2 (const int)
-0:14      Function Call: @main(struct-PS_IN-vf41[3];struct-GS_OUT-vf41; (temp void)
-0:?         'i' (temp 3-element array of structure{temp 4-component vector of float pos})
-0:?         'ts' (temp structure{temp 4-component vector of float pos})
+0:14      Function Call: @main(struct-PS_IN-vf41[3];struct-GS_OUT-vf41; ( temp void)
+0:?         'i' ( temp 3-element array of structure{ temp 4-component vector of float pos})
+0:?         'ts' ( temp structure{ temp 4-component vector of float pos})
 0:?   Linker Objects
-0:?     'i' (layout(location=0 ) in 3-element array of structure{})
+0:?     'i' (layout( location=0) in 3-element array of structure{})
 
 
 Linked geometry stage:
@@ -98,88 +98,88 @@ max_vertices = 3
 input primitive = triangles
 output primitive = triangle_strip
 0:? Sequence
-0:14  Function Definition: @main(struct-PS_IN-vf41[3];struct-GS_OUT-vf41; (temp void)
+0:14  Function Definition: @main(struct-PS_IN-vf41[3];struct-GS_OUT-vf41; ( temp void)
 0:14    Function Parameters: 
-0:14      'i' (in 3-element array of structure{temp 4-component vector of float pos})
-0:14      'ts' (out structure{temp 4-component vector of float pos})
+0:14      'i' ( in 3-element array of structure{ temp 4-component vector of float pos})
+0:14      'ts' ( out structure{ temp 4-component vector of float pos})
 0:?     Sequence
 0:17      Sequence
-0:17        move second child to first child (temp int)
-0:17          'x' (temp int)
+0:17        move second child to first child ( temp int)
+0:17          'x' ( temp int)
 0:17          Constant:
 0:17            0 (const int)
 0:17        Loop with condition tested first
 0:17          Loop Condition
-0:17          Compare Less Than (temp bool)
-0:17            'x' (temp int)
+0:17          Compare Less Than ( temp bool)
+0:17            'x' ( temp int)
 0:17            Constant:
 0:17              3 (const int)
 0:17          Loop Body
 0:?           Sequence
-0:18            move second child to first child (temp 4-component vector of float)
-0:18              pos: direct index for structure (temp 4-component vector of float)
-0:18                'o' (temp structure{temp 4-component vector of float pos})
+0:18            move second child to first child ( temp 4-component vector of float)
+0:18              pos: direct index for structure ( temp 4-component vector of float)
+0:18                'o' ( temp structure{ temp 4-component vector of float pos})
 0:18                Constant:
 0:18                  0 (const int)
-0:18              pos: direct index for structure (temp 4-component vector of float)
-0:18                indirect index (temp structure{temp 4-component vector of float pos})
-0:18                  'i' (in 3-element array of structure{temp 4-component vector of float pos})
-0:18                  'x' (temp int)
+0:18              pos: direct index for structure ( temp 4-component vector of float)
+0:18                indirect index ( temp structure{ temp 4-component vector of float pos})
+0:18                  'i' ( in 3-element array of structure{ temp 4-component vector of float pos})
+0:18                  'x' ( temp int)
 0:18                Constant:
 0:18                  0 (const int)
 0:19            Sequence
-0:19              move second child to first child (temp structure{temp 4-component vector of float pos})
-0:19                'ts' (out structure{temp 4-component vector of float pos})
-0:19                'o' (temp structure{temp 4-component vector of float pos})
-0:19              EmitVertex (temp void)
+0:19              move second child to first child ( temp structure{ temp 4-component vector of float pos})
+0:19                'ts' ( out structure{ temp 4-component vector of float pos})
+0:19                'o' ( temp structure{ temp 4-component vector of float pos})
+0:19              EmitVertex ( temp void)
 0:17          Loop Terminal Expression
-0:17          Pre-Increment (temp int)
-0:17            'x' (temp int)
-0:14  Function Definition: main( (temp void)
+0:17          Pre-Increment ( temp int)
+0:17            'x' ( temp int)
+0:14  Function Definition: main( ( temp void)
 0:14    Function Parameters: 
 0:?     Sequence
 0:14      Sequence
-0:14        move second child to first child (temp 4-component vector of float)
-0:14          pos: direct index for structure (temp 4-component vector of float)
-0:14            direct index (temp structure{temp 4-component vector of float pos})
-0:?               'i' (temp 3-element array of structure{temp 4-component vector of float pos})
+0:14        move second child to first child ( temp 4-component vector of float)
+0:14          pos: direct index for structure ( temp 4-component vector of float)
+0:14            direct index ( temp structure{ temp 4-component vector of float pos})
+0:?               'i' ( temp 3-element array of structure{ temp 4-component vector of float pos})
 0:14              Constant:
 0:14                0 (const int)
 0:14            Constant:
 0:14              0 (const int)
-0:14          direct index (in 4-component vector of float Position)
-0:?             'i_pos' (in 3-element array of 4-component vector of float Position)
+0:14          direct index ( in 4-component vector of float Position)
+0:?             'i_pos' ( in 3-element array of 4-component vector of float Position)
 0:14            Constant:
 0:14              0 (const int)
-0:14        move second child to first child (temp 4-component vector of float)
-0:14          pos: direct index for structure (temp 4-component vector of float)
-0:14            direct index (temp structure{temp 4-component vector of float pos})
-0:?               'i' (temp 3-element array of structure{temp 4-component vector of float pos})
+0:14        move second child to first child ( temp 4-component vector of float)
+0:14          pos: direct index for structure ( temp 4-component vector of float)
+0:14            direct index ( temp structure{ temp 4-component vector of float pos})
+0:?               'i' ( temp 3-element array of structure{ temp 4-component vector of float pos})
 0:14              Constant:
 0:14                1 (const int)
 0:14            Constant:
 0:14              0 (const int)
-0:14          direct index (in 4-component vector of float Position)
-0:?             'i_pos' (in 3-element array of 4-component vector of float Position)
+0:14          direct index ( in 4-component vector of float Position)
+0:?             'i_pos' ( in 3-element array of 4-component vector of float Position)
 0:14            Constant:
 0:14              1 (const int)
-0:14        move second child to first child (temp 4-component vector of float)
-0:14          pos: direct index for structure (temp 4-component vector of float)
-0:14            direct index (temp structure{temp 4-component vector of float pos})
-0:?               'i' (temp 3-element array of structure{temp 4-component vector of float pos})
+0:14        move second child to first child ( temp 4-component vector of float)
+0:14          pos: direct index for structure ( temp 4-component vector of float)
+0:14            direct index ( temp structure{ temp 4-component vector of float pos})
+0:?               'i' ( temp 3-element array of structure{ temp 4-component vector of float pos})
 0:14              Constant:
 0:14                2 (const int)
 0:14            Constant:
 0:14              0 (const int)
-0:14          direct index (in 4-component vector of float Position)
-0:?             'i_pos' (in 3-element array of 4-component vector of float Position)
+0:14          direct index ( in 4-component vector of float Position)
+0:?             'i_pos' ( in 3-element array of 4-component vector of float Position)
 0:14            Constant:
 0:14              2 (const int)
-0:14      Function Call: @main(struct-PS_IN-vf41[3];struct-GS_OUT-vf41; (temp void)
-0:?         'i' (temp 3-element array of structure{temp 4-component vector of float pos})
-0:?         'ts' (temp structure{temp 4-component vector of float pos})
+0:14      Function Call: @main(struct-PS_IN-vf41[3];struct-GS_OUT-vf41; ( temp void)
+0:?         'i' ( temp 3-element array of structure{ temp 4-component vector of float pos})
+0:?         'ts' ( temp structure{ temp 4-component vector of float pos})
 0:?   Linker Objects
-0:?     'i' (layout(location=0 ) in 3-element array of structure{})
+0:?     'i' (layout( location=0) in 3-element array of structure{})
 
 // Module Version 10000
 // Generated by (magic number): 80001

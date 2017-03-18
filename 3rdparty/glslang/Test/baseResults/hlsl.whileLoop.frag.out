@@ -2,20 +2,20 @@ hlsl.whileLoop.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:2  Function Definition: @PixelShaderFunction(vf4; (temp 4-component vector of float)
+0:2  Function Definition: @PixelShaderFunction(vf4; ( temp 4-component vector of float)
 0:2    Function Parameters: 
-0:2      'input' (in 4-component vector of float)
+0:2      'input' ( in 4-component vector of float)
 0:?     Sequence
 0:3      Loop with condition tested first
 0:3        Loop Condition
-0:3        any (temp bool)
-0:3          NotEqual (temp 4-component vector of bool)
-0:3            'input' (in 4-component vector of float)
-0:3            'input' (in 4-component vector of float)
+0:3        any ( temp bool)
+0:3          NotEqual ( temp 4-component vector of bool)
+0:3            'input' ( in 4-component vector of float)
+0:3            'input' ( in 4-component vector of float)
 0:3        Loop Body
 0:?         Sequence
 0:3          Branch: Return with expression
-0:3            'input' (in 4-component vector of float)
+0:3            'input' ( in 4-component vector of float)
 0:4      Loop with condition tested first
 0:4        Loop Condition
 0:4        Constant:
@@ -31,19 +31,19 @@ gl_FragCoord origin is upper left
 0:6        Constant:
 0:6          false (const bool)
 0:6        No loop body
-0:2  Function Definition: PixelShaderFunction( (temp void)
+0:2  Function Definition: PixelShaderFunction( ( temp void)
 0:2    Function Parameters: 
 0:?     Sequence
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         'input' (temp 4-component vector of float)
-0:?         'input' (layout(location=0 ) in 4-component vector of float)
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:2        Function Call: @PixelShaderFunction(vf4; (temp 4-component vector of float)
-0:?           'input' (temp 4-component vector of float)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         'input' ( temp 4-component vector of float)
+0:?         'input' (layout( location=0) in 4-component vector of float)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:2        Function Call: @PixelShaderFunction(vf4; ( temp 4-component vector of float)
+0:?           'input' ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'input' (layout(location=0 ) in 4-component vector of float)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'input' (layout( location=0) in 4-component vector of float)
 
 
 Linked fragment stage:
@@ -52,20 +52,20 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:2  Function Definition: @PixelShaderFunction(vf4; (temp 4-component vector of float)
+0:2  Function Definition: @PixelShaderFunction(vf4; ( temp 4-component vector of float)
 0:2    Function Parameters: 
-0:2      'input' (in 4-component vector of float)
+0:2      'input' ( in 4-component vector of float)
 0:?     Sequence
 0:3      Loop with condition tested first
 0:3        Loop Condition
-0:3        any (temp bool)
-0:3          NotEqual (temp 4-component vector of bool)
-0:3            'input' (in 4-component vector of float)
-0:3            'input' (in 4-component vector of float)
+0:3        any ( temp bool)
+0:3          NotEqual ( temp 4-component vector of bool)
+0:3            'input' ( in 4-component vector of float)
+0:3            'input' ( in 4-component vector of float)
 0:3        Loop Body
 0:?         Sequence
 0:3          Branch: Return with expression
-0:3            'input' (in 4-component vector of float)
+0:3            'input' ( in 4-component vector of float)
 0:4      Loop with condition tested first
 0:4        Loop Condition
 0:4        Constant:
@@ -81,19 +81,19 @@ gl_FragCoord origin is upper left
 0:6        Constant:
 0:6          false (const bool)
 0:6        No loop body
-0:2  Function Definition: PixelShaderFunction( (temp void)
+0:2  Function Definition: PixelShaderFunction( ( temp void)
 0:2    Function Parameters: 
 0:?     Sequence
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         'input' (temp 4-component vector of float)
-0:?         'input' (layout(location=0 ) in 4-component vector of float)
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:2        Function Call: @PixelShaderFunction(vf4; (temp 4-component vector of float)
-0:?           'input' (temp 4-component vector of float)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         'input' ( temp 4-component vector of float)
+0:?         'input' (layout( location=0) in 4-component vector of float)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:2        Function Call: @PixelShaderFunction(vf4; ( temp 4-component vector of float)
+0:?           'input' ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'input' (layout(location=0 ) in 4-component vector of float)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'input' (layout( location=0) in 4-component vector of float)
 
 // Module Version 10000
 // Generated by (magic number): 80001

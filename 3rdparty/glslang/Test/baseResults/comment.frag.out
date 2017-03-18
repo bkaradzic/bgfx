@@ -5,10 +5,10 @@ WARNING: 0:12: 'line continuation' : used at end of comment; the following line 
 
 Shader version: 430
 0:? Sequence
-0:17  Function Definition: main( (global void)
+0:17  Function Definition: main( ( global void)
 0:17    Function Parameters: 
 0:?   Linker Objects
-0:?     'v' (smooth in 4-component vector of float)
+0:?     'v' ( smooth in 4-component vector of float)
 
 
 Linked fragment stage:
@@ -16,8 +16,8 @@ Linked fragment stage:
 
 Shader version: 430
 0:? Sequence
-0:17  Function Definition: main( (global void)
+0:17  Function Definition: main( ( global void)
 0:17    Function Parameters: 
 0:?   Linker Objects
-0:?     'v' (smooth in 4-component vector of float)
+0:?     'v' ( smooth in 4-component vector of float)
 

@@ -2,51 +2,51 @@ hlsl.scope.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:2  Function Definition: @PixelShaderFunction(vf4; (temp void)
+0:2  Function Definition: @PixelShaderFunction(vf4; ( temp void)
 0:2    Function Parameters: 
-0:2      'input' (in 4-component vector of float)
+0:2      'input' ( in 4-component vector of float)
 0:?     Sequence
-0:4      'x' (temp int)
+0:4      'x' ( temp int)
 0:?       Sequence
-0:7        'x' (temp float)
+0:7        'x' ( temp float)
 0:?         Sequence
-0:10          'x' (temp bool)
+0:10          'x' ( temp bool)
 0:?           Sequence
-0:13            'x' (temp 3-component vector of float)
-0:15          'x' (temp bool)
-0:17        'x' (temp float)
-0:19      'x' (temp int)
-0:21      Test condition and select (temp void)
+0:13            'x' ( temp 3-component vector of float)
+0:15          'x' ( temp bool)
+0:17        'x' ( temp float)
+0:19      'x' ( temp int)
+0:21      Test condition and select ( temp void)
 0:21        Condition
-0:21        Compare Greater Than (temp bool)
-0:21          'x' (temp int)
+0:21        Compare Greater Than ( temp bool)
+0:21          'x' ( temp int)
 0:21          Constant:
 0:21            0 (const int)
 0:21        true case is null
 0:24      Loop with condition tested first
 0:24        Loop Condition
-0:24        Compare Greater Than (temp bool)
-0:24          'x' (temp int)
+0:24        Compare Greater Than ( temp bool)
+0:24          'x' ( temp int)
 0:24          Constant:
 0:24            0 (const int)
 0:24        No loop body
 0:27      Loop with condition not tested first
 0:27        Loop Condition
-0:29        Compare Greater Than (temp bool)
-0:29          'x' (temp int)
+0:29        Compare Greater Than ( temp bool)
+0:29          'x' ( temp int)
 0:29          Constant:
 0:29            0 (const int)
 0:27        No loop body
-0:2  Function Definition: PixelShaderFunction( (temp void)
+0:2  Function Definition: PixelShaderFunction( ( temp void)
 0:2    Function Parameters: 
 0:?     Sequence
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         'input' (temp 4-component vector of float)
-0:?         'input' (layout(location=0 ) in 4-component vector of float)
-0:2      Function Call: @PixelShaderFunction(vf4; (temp void)
-0:?         'input' (temp 4-component vector of float)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         'input' ( temp 4-component vector of float)
+0:?         'input' (layout( location=0) in 4-component vector of float)
+0:2      Function Call: @PixelShaderFunction(vf4; ( temp void)
+0:?         'input' ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     'input' (layout(location=0 ) in 4-component vector of float)
+0:?     'input' (layout( location=0) in 4-component vector of float)
 
 
 Linked fragment stage:
@@ -55,51 +55,51 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:2  Function Definition: @PixelShaderFunction(vf4; (temp void)
+0:2  Function Definition: @PixelShaderFunction(vf4; ( temp void)
 0:2    Function Parameters: 
-0:2      'input' (in 4-component vector of float)
+0:2      'input' ( in 4-component vector of float)
 0:?     Sequence
-0:4      'x' (temp int)
+0:4      'x' ( temp int)
 0:?       Sequence
-0:7        'x' (temp float)
+0:7        'x' ( temp float)
 0:?         Sequence
-0:10          'x' (temp bool)
+0:10          'x' ( temp bool)
 0:?           Sequence
-0:13            'x' (temp 3-component vector of float)
-0:15          'x' (temp bool)
-0:17        'x' (temp float)
-0:19      'x' (temp int)
-0:21      Test condition and select (temp void)
+0:13            'x' ( temp 3-component vector of float)
+0:15          'x' ( temp bool)
+0:17        'x' ( temp float)
+0:19      'x' ( temp int)
+0:21      Test condition and select ( temp void)
 0:21        Condition
-0:21        Compare Greater Than (temp bool)
-0:21          'x' (temp int)
+0:21        Compare Greater Than ( temp bool)
+0:21          'x' ( temp int)
 0:21          Constant:
 0:21            0 (const int)
 0:21        true case is null
 0:24      Loop with condition tested first
 0:24        Loop Condition
-0:24        Compare Greater Than (temp bool)
-0:24          'x' (temp int)
+0:24        Compare Greater Than ( temp bool)
+0:24          'x' ( temp int)
 0:24          Constant:
 0:24            0 (const int)
 0:24        No loop body
 0:27      Loop with condition not tested first
 0:27        Loop Condition
-0:29        Compare Greater Than (temp bool)
-0:29          'x' (temp int)
+0:29        Compare Greater Than ( temp bool)
+0:29          'x' ( temp int)
 0:29          Constant:
 0:29            0 (const int)
 0:27        No loop body
-0:2  Function Definition: PixelShaderFunction( (temp void)
+0:2  Function Definition: PixelShaderFunction( ( temp void)
 0:2    Function Parameters: 
 0:?     Sequence
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         'input' (temp 4-component vector of float)
-0:?         'input' (layout(location=0 ) in 4-component vector of float)
-0:2      Function Call: @PixelShaderFunction(vf4; (temp void)
-0:?         'input' (temp 4-component vector of float)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         'input' ( temp 4-component vector of float)
+0:?         'input' (layout( location=0) in 4-component vector of float)
+0:2      Function Call: @PixelShaderFunction(vf4; ( temp void)
+0:?         'input' ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     'input' (layout(location=0 ) in 4-component vector of float)
+0:?     'input' (layout( location=0) in 4-component vector of float)
 
 // Module Version 10000
 // Generated by (magic number): 80001

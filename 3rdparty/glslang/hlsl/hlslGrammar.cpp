@@ -301,8 +301,8 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& nodeList)
     bool declarator_list = false; // true when processing comma separation
 
     // attributes
-    TAttributeMap attributes;
-    acceptAttributes(attributes);
+    TFunctionDeclarator declarator;
+    acceptAttributes(declarator.attributes);
 
     // typedef
     bool typedefDecl = acceptTokenClass(EHTokTypedef);
@@ -334,26 +334,27 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& nodeList)
             parseContext.renameShaderFunction(fnName);
 
             // function_parameters
-            TFunction& function = *new TFunction(fnName, declaredType);
-            if (!acceptFunctionParameters(function)) {
+            declarator.function = new TFunction(fnName, declaredType);
+            if (!acceptFunctionParameters(*declarator.function)) {
                 expected("function parameter list");
                 return false;
             }
 
             // post_decls
-            acceptPostDecls(function.getWritableType().getQualifier());
+            acceptPostDecls(declarator.function->getWritableType().getQualifier());
 
             // compound_statement (function body definition) or just a prototype?
+            declarator.loc = token.loc;
             if (peekTokenClass(EHTokLeftBrace)) {
                 if (declarator_list)
                     parseContext.error(idToken.loc, "function body can't be in a declarator list", "{", "");
                 if (typedefDecl)
                     parseContext.error(idToken.loc, "function body can't be in a typedef", "{", "");
-                return acceptFunctionDefinition(function, nodeList, attributes);
+                return acceptFunctionDefinition(declarator, nodeList, nullptr);
             } else {
                 if (typedefDecl)
                     parseContext.error(idToken.loc, "function typedefs not implemented", "{", "");
-                parseContext.handleFunctionDeclarator(idToken.loc, function, true);
+                parseContext.handleFunctionDeclarator(declarator.loc, *declarator.function, true);
             }
         } else {
             // A variable declaration. Fix the storage qualifier if it's a global.
@@ -625,6 +626,9 @@ bool HlslGrammar::acceptQualifier(TQualifier& qualifier)
             continue;
         case EHTokGloballyCoherent:
             qualifier.coherent = true;
+            break;
+        case EHTokInline:
+            // TODO: map this to SPIR-V function control
             break;
 
         // GS geometries: these are specified on stage input variables, and are an error (not verified here)
@@ -1935,10 +1939,15 @@ bool HlslGrammar::acceptStructDeclarationList(TTypeList*& typeList, TIntermNode*
     typeList = new TTypeList();
     HlslToken idToken;
 
+    // Save these away for each member function so they can be processed after
+    // all member variables/types have been declared.
+    TVector<TVector<HlslToken>*> memberBodies;
+    TVector<TFunctionDeclarator> declarators;
+
     do {
         // success on seeing the RIGHT_BRACE coming up
         if (peekTokenClass(EHTokRightBrace))
-            return true;
+            break;
 
         // struct_declaration
     
@@ -1962,7 +1971,13 @@ bool HlslGrammar::acceptStructDeclarationList(TTypeList*& typeList, TIntermNode*
             if (peekTokenClass(EHTokLeftParen)) {
                 // function_parameters
                 if (!declarator_list) {
-                    functionDefinitionAccepted = acceptMemberFunctionDefinition(nodeList, typeName, memberType, *idToken.string);
+                    declarators.resize(declarators.size() + 1);
+                    // request a token stream for deferred processing
+                    TVector<HlslToken>* deferredTokens = new TVector<HlslToken>;
+                    functionDefinitionAccepted = acceptMemberFunctionDefinition(nodeList, typeName, memberType,
+                                                                                *idToken.string, declarators.back(),
+                                                                                deferredTokens);
+                    memberBodies.push_back(deferredTokens);
                     if (functionDefinitionAccepted)
                         break;
                 }
@@ -2014,6 +2029,16 @@ bool HlslGrammar::acceptStructDeclarationList(TTypeList*& typeList, TIntermNode*
         }
 
     } while (true);
+
+    // parse member-function bodies now
+    for (int b = 0; b < (int)memberBodies.size(); ++b) {
+        pushTokenStream(memberBodies[b]);
+        if (! acceptFunctionBody(declarators[b], nodeList))
+            return false;
+        popTokenStream();
+    }
+
+    return true;
 }
 
 // member_function_definition
@@ -2022,29 +2047,30 @@ bool HlslGrammar::acceptStructDeclarationList(TTypeList*& typeList, TIntermNode*
 // Expects type to have EvqGlobal for a static member and
 // EvqTemporary for non-static member.
 bool HlslGrammar::acceptMemberFunctionDefinition(TIntermNode*& nodeList, const TString& typeName,
-                                                 const TType& type, const TString& memberName)
+                                                 const TType& type, const TString& memberName,
+                                                 TFunctionDeclarator& declarator, TVector<HlslToken>* deferredTokens)
 {
     // watch early returns...
     parseContext.pushThis(typeName);
     bool accepted = false;
 
     TString* functionName = parseContext.getFullMemberFunctionName(memberName, type.getQualifier().storage == EvqGlobal);
-    TFunction& function = *new TFunction(functionName, type);
+    declarator.function = new TFunction(functionName, type);
 
     // function_parameters
-    if (acceptFunctionParameters(function)) {
+    if (acceptFunctionParameters(*declarator.function)) {
         // post_decls
-        acceptPostDecls(function.getWritableType().getQualifier());
+        acceptPostDecls(declarator.function->getWritableType().getQualifier());
 
         // compound_statement (function body definition)
         if (peekTokenClass(EHTokLeftBrace)) {
-            if (function.getType().getQualifier().storage != EvqGlobal) {
+            if (declarator.function->getType().getQualifier().storage != EvqGlobal) {
                 expected("only static member functions are accepted");
                 return false;
             }
 
-            TAttributeMap attributes;
-            accepted = acceptFunctionDefinition(function, nodeList, attributes);
+            declarator.loc = token.loc;
+            accepted = acceptFunctionDefinition(declarator, nodeList, deferredTokens);
         }
     } else
         expected("function parameter list");
@@ -2180,17 +2206,29 @@ bool HlslGrammar::acceptParameterDeclaration(TFunction& function)
 
 // Do the work to create the function definition in addition to
 // parsing the body (compound_statement).
-bool HlslGrammar::acceptFunctionDefinition(TFunction& function, TIntermNode*& nodeList, const TAttributeMap& attributes)
+//
+// If 'deferredTokens' are passed in, just get the token stream,
+// don't process.
+//
+bool HlslGrammar::acceptFunctionDefinition(TFunctionDeclarator& declarator, TIntermNode*& nodeList,
+                                           TVector<HlslToken>* deferredTokens)
 {
-    TFunction& functionDeclarator = parseContext.handleFunctionDeclarator(token.loc, function, false /* not prototype */);
-    TSourceLoc loc = token.loc;
+    parseContext.handleFunctionDeclarator(declarator.loc, *declarator.function, false /* not prototype */);
 
-    // we might get back and entry-point
+    if (deferredTokens)
+        return captureBlockTokens(*deferredTokens);
+    else
+    return acceptFunctionBody(declarator, nodeList);
+}
+
+bool HlslGrammar::acceptFunctionBody(TFunctionDeclarator& declarator, TIntermNode*& nodeList)
+{
+    // we might get back an entry-point
     TIntermNode* entryPointNode = nullptr;
 
     // This does a pushScope()
-    TIntermNode* functionNode = parseContext.handleFunctionDefinition(loc, functionDeclarator, attributes,
-                                                                      entryPointNode);
+    TIntermNode* functionNode = parseContext.handleFunctionDefinition(declarator.loc, *declarator.function,
+                                                                      declarator.attributes, entryPointNode);
 
     // compound_statement
     TIntermNode* functionBody = nullptr;
@@ -2198,7 +2236,7 @@ bool HlslGrammar::acceptFunctionDefinition(TFunction& function, TIntermNode*& no
         return false;
 
     // this does a popScope()
-    parseContext.handleFunctionBody(loc, functionDeclarator, functionBody, functionNode);
+    parseContext.handleFunctionBody(declarator.loc, *declarator.function, functionBody, functionNode);
 
     // Hook up the 1 or 2 function definitions.
     nodeList = intermediate.growAggregate(nodeList, functionNode);
@@ -3493,7 +3531,9 @@ bool HlslGrammar::acceptPostDecls(TQualifier& qualifier)
                 parseContext.handleRegister(registerDesc.loc, qualifier, profile.string, *registerDesc.string, subComponent, spaceDesc.string);
             } else {
                 // semantic, in idToken.string
-                parseContext.handleSemantic(idToken.loc, qualifier, mapSemantic(*idToken.string));
+                TString semanticUpperCase = *idToken.string;
+                std::transform(semanticUpperCase.begin(), semanticUpperCase.end(), semanticUpperCase.begin(), ::toupper);
+                parseContext.handleSemantic(idToken.loc, qualifier, mapSemantic(semanticUpperCase.c_str()), semanticUpperCase);
             }
         } else if (peekTokenClass(EHTokLeftAngle)) {
             found = true;
@@ -3504,6 +3544,39 @@ bool HlslGrammar::acceptPostDecls(TQualifier& qualifier)
     } while (true);
 
     return found;
+}
+
+//
+// Get the stream of tokens from the scanner, but skip all syntactic/semantic
+// processing.
+//
+bool HlslGrammar::captureBlockTokens(TVector<HlslToken>& tokens)
+{
+    if (! peekTokenClass(EHTokLeftBrace))
+        return false;
+
+    int braceCount = 0;
+
+    do {
+        switch (peek()) {
+        case EHTokLeftBrace:
+            ++braceCount;
+            break;
+        case EHTokRightBrace:
+            --braceCount;
+            break;
+        case EHTokNone:
+            // End of input before balance { } is bad...
+            return false;
+        default:
+            break;
+        }
+
+        tokens.push_back(token);
+        advanceToken();
+    } while (braceCount > 0);
+
+    return true;
 }
 
 } // end namespace glslang

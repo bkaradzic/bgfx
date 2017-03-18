@@ -57,3 +57,23 @@ void foo()
     v += textureProjGradOffset(s2dr, tloc4, ivec2(0.0), ivec2(0.0), ivec2(1,2));
     v += textureProjGradOffset(s2drs, tloc4, ivec2(0.0), ivec2(0.0), ivec2(1,2));
 }
+
+void devi()
+{
+    gl_DeviceIndex; // ERROR, no extension
+    gl_ViewIndex;   // ERROR, no extension
+}
+
+#ifdef GL_EXT_device_group
+#extension GL_EXT_device_group : enable
+#endif
+
+#ifdef GL_EXT_device_group
+#extension GL_EXT_multiview : enable
+#endif
+
+void devie()
+{
+    gl_DeviceIndex;
+    gl_ViewIndex;
+}

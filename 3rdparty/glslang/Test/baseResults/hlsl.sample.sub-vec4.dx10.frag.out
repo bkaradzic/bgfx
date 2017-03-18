@@ -2,51 +2,51 @@ hlsl.sample.sub-vec4.dx10.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:14  Function Definition: @main( (temp structure{temp 4-component vector of float Color})
+0:14  Function Definition: @main( ( temp structure{ temp 4-component vector of float Color})
 0:14    Function Parameters: 
 0:?     Sequence
 0:17      Sequence
-0:17        move second child to first child (temp float)
-0:17          'txval10' (temp float)
-0:17          Construct float (temp float)
-0:?             texture (temp 4-component vector of float)
-0:17              Construct combined texture-sampler (temp sampler1D)
-0:17                'g_tTex1df1' (uniform texture1D)
-0:17                'g_sSamp' (layout(binding=0 ) uniform sampler)
+0:17        move second child to first child ( temp float)
+0:17          'txval10' ( temp float)
+0:17          Construct float ( temp float)
+0:?             texture ( temp 4-component vector of float)
+0:17              Construct combined texture-sampler ( temp sampler1D)
+0:17                'g_tTex1df1' ( uniform texture1D)
+0:17                'g_sSamp' (layout( binding=0) uniform sampler)
 0:17              Constant:
 0:17                0.100000
 0:18      Sequence
-0:18        move second child to first child (temp 2-component vector of float)
-0:18          'txval11' (temp 2-component vector of float)
-0:18          Construct vec2 (temp 2-component vector of float)
-0:?             texture (temp 4-component vector of float)
-0:18              Construct combined texture-sampler (temp sampler1D)
-0:18                'g_tTex1df2' (uniform texture1D)
-0:18                'g_sSamp' (layout(binding=0 ) uniform sampler)
+0:18        move second child to first child ( temp 2-component vector of float)
+0:18          'txval11' ( temp 2-component vector of float)
+0:18          Construct vec2 ( temp 2-component vector of float)
+0:?             texture ( temp 4-component vector of float)
+0:18              Construct combined texture-sampler ( temp sampler1D)
+0:18                'g_tTex1df2' ( uniform texture1D)
+0:18                'g_sSamp' (layout( binding=0) uniform sampler)
 0:18              Constant:
 0:18                0.200000
 0:19      Sequence
-0:19        move second child to first child (temp 3-component vector of float)
-0:19          'txval12' (temp 3-component vector of float)
-0:19          Construct vec3 (temp 3-component vector of float)
-0:?             texture (temp 4-component vector of float)
-0:19              Construct combined texture-sampler (temp sampler1D)
-0:19                'g_tTex1df3' (uniform texture1D)
-0:19                'g_sSamp' (layout(binding=0 ) uniform sampler)
+0:19        move second child to first child ( temp 3-component vector of float)
+0:19          'txval12' ( temp 3-component vector of float)
+0:19          Construct vec3 ( temp 3-component vector of float)
+0:?             texture ( temp 4-component vector of float)
+0:19              Construct combined texture-sampler ( temp sampler1D)
+0:19                'g_tTex1df3' ( uniform texture1D)
+0:19                'g_sSamp' (layout( binding=0) uniform sampler)
 0:19              Constant:
 0:19                0.200000
 0:20      Sequence
-0:20        move second child to first child (temp 4-component vector of float)
-0:20          'txval13' (temp 4-component vector of float)
-0:20          texture (temp 4-component vector of float)
-0:20            Construct combined texture-sampler (temp sampler1D)
-0:20              'g_tTex1df4' (uniform texture1D)
-0:20              'g_sSamp' (layout(binding=0 ) uniform sampler)
+0:20        move second child to first child ( temp 4-component vector of float)
+0:20          'txval13' ( temp 4-component vector of float)
+0:20          texture ( temp 4-component vector of float)
+0:20            Construct combined texture-sampler ( temp sampler1D)
+0:20              'g_tTex1df4' ( uniform texture1D)
+0:20              'g_sSamp' (layout( binding=0) uniform sampler)
 0:20            Constant:
 0:20              0.200000
-0:22      move second child to first child (temp 4-component vector of float)
-0:22        Color: direct index for structure (temp 4-component vector of float)
-0:22          'psout' (temp structure{temp 4-component vector of float Color})
+0:22      move second child to first child ( temp 4-component vector of float)
+0:22        Color: direct index for structure ( temp 4-component vector of float)
+0:22          'psout' ( temp structure{ temp 4-component vector of float Color})
 0:22          Constant:
 0:22            0 (const int)
 0:22        Constant:
@@ -55,24 +55,24 @@ gl_FragCoord origin is upper left
 0:22          1.000000
 0:22          1.000000
 0:23      Branch: Return with expression
-0:23        'psout' (temp structure{temp 4-component vector of float Color})
-0:14  Function Definition: main( (temp void)
+0:23        'psout' ( temp structure{ temp 4-component vector of float Color})
+0:14  Function Definition: main( ( temp void)
 0:14    Function Parameters: 
 0:?     Sequence
 0:14      Sequence
-0:14        move second child to first child (temp 4-component vector of float)
-0:?           'Color' (layout(location=0 ) out 4-component vector of float)
-0:14          Color: direct index for structure (temp 4-component vector of float)
-0:14            Function Call: @main( (temp structure{temp 4-component vector of float Color})
+0:14        move second child to first child ( temp 4-component vector of float)
+0:?           'Color' (layout( location=0) out 4-component vector of float)
+0:14          Color: direct index for structure ( temp 4-component vector of float)
+0:14            Function Call: @main( ( temp structure{ temp 4-component vector of float Color})
 0:14            Constant:
 0:14              0 (const int)
 0:?   Linker Objects
-0:?     'g_sSamp' (layout(binding=0 ) uniform sampler)
-0:?     'g_tTex1df1' (uniform texture1D)
-0:?     'g_tTex1df2' (uniform texture1D)
-0:?     'g_tTex1df3' (uniform texture1D)
-0:?     'g_tTex1df4' (uniform texture1D)
-0:?     'Color' (layout(location=0 ) out 4-component vector of float)
+0:?     'g_sSamp' (layout( binding=0) uniform sampler)
+0:?     'g_tTex1df1' ( uniform texture1D)
+0:?     'g_tTex1df2' ( uniform texture1D)
+0:?     'g_tTex1df3' ( uniform texture1D)
+0:?     'g_tTex1df4' ( uniform texture1D)
+0:?     'Color' (layout( location=0) out 4-component vector of float)
 
 
 Linked fragment stage:
@@ -81,51 +81,51 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:14  Function Definition: @main( (temp structure{temp 4-component vector of float Color})
+0:14  Function Definition: @main( ( temp structure{ temp 4-component vector of float Color})
 0:14    Function Parameters: 
 0:?     Sequence
 0:17      Sequence
-0:17        move second child to first child (temp float)
-0:17          'txval10' (temp float)
-0:17          Construct float (temp float)
-0:?             texture (temp 4-component vector of float)
-0:17              Construct combined texture-sampler (temp sampler1D)
-0:17                'g_tTex1df1' (uniform texture1D)
-0:17                'g_sSamp' (layout(binding=0 ) uniform sampler)
+0:17        move second child to first child ( temp float)
+0:17          'txval10' ( temp float)
+0:17          Construct float ( temp float)
+0:?             texture ( temp 4-component vector of float)
+0:17              Construct combined texture-sampler ( temp sampler1D)
+0:17                'g_tTex1df1' ( uniform texture1D)
+0:17                'g_sSamp' (layout( binding=0) uniform sampler)
 0:17              Constant:
 0:17                0.100000
 0:18      Sequence
-0:18        move second child to first child (temp 2-component vector of float)
-0:18          'txval11' (temp 2-component vector of float)
-0:18          Construct vec2 (temp 2-component vector of float)
-0:?             texture (temp 4-component vector of float)
-0:18              Construct combined texture-sampler (temp sampler1D)
-0:18                'g_tTex1df2' (uniform texture1D)
-0:18                'g_sSamp' (layout(binding=0 ) uniform sampler)
+0:18        move second child to first child ( temp 2-component vector of float)
+0:18          'txval11' ( temp 2-component vector of float)
+0:18          Construct vec2 ( temp 2-component vector of float)
+0:?             texture ( temp 4-component vector of float)
+0:18              Construct combined texture-sampler ( temp sampler1D)
+0:18                'g_tTex1df2' ( uniform texture1D)
+0:18                'g_sSamp' (layout( binding=0) uniform sampler)
 0:18              Constant:
 0:18                0.200000
 0:19      Sequence
-0:19        move second child to first child (temp 3-component vector of float)
-0:19          'txval12' (temp 3-component vector of float)
-0:19          Construct vec3 (temp 3-component vector of float)
-0:?             texture (temp 4-component vector of float)
-0:19              Construct combined texture-sampler (temp sampler1D)
-0:19                'g_tTex1df3' (uniform texture1D)
-0:19                'g_sSamp' (layout(binding=0 ) uniform sampler)
+0:19        move second child to first child ( temp 3-component vector of float)
+0:19          'txval12' ( temp 3-component vector of float)
+0:19          Construct vec3 ( temp 3-component vector of float)
+0:?             texture ( temp 4-component vector of float)
+0:19              Construct combined texture-sampler ( temp sampler1D)
+0:19                'g_tTex1df3' ( uniform texture1D)
+0:19                'g_sSamp' (layout( binding=0) uniform sampler)
 0:19              Constant:
 0:19                0.200000
 0:20      Sequence
-0:20        move second child to first child (temp 4-component vector of float)
-0:20          'txval13' (temp 4-component vector of float)
-0:20          texture (temp 4-component vector of float)
-0:20            Construct combined texture-sampler (temp sampler1D)
-0:20              'g_tTex1df4' (uniform texture1D)
-0:20              'g_sSamp' (layout(binding=0 ) uniform sampler)
+0:20        move second child to first child ( temp 4-component vector of float)
+0:20          'txval13' ( temp 4-component vector of float)
+0:20          texture ( temp 4-component vector of float)
+0:20            Construct combined texture-sampler ( temp sampler1D)
+0:20              'g_tTex1df4' ( uniform texture1D)
+0:20              'g_sSamp' (layout( binding=0) uniform sampler)
 0:20            Constant:
 0:20              0.200000
-0:22      move second child to first child (temp 4-component vector of float)
-0:22        Color: direct index for structure (temp 4-component vector of float)
-0:22          'psout' (temp structure{temp 4-component vector of float Color})
+0:22      move second child to first child ( temp 4-component vector of float)
+0:22        Color: direct index for structure ( temp 4-component vector of float)
+0:22          'psout' ( temp structure{ temp 4-component vector of float Color})
 0:22          Constant:
 0:22            0 (const int)
 0:22        Constant:
@@ -134,24 +134,24 @@ gl_FragCoord origin is upper left
 0:22          1.000000
 0:22          1.000000
 0:23      Branch: Return with expression
-0:23        'psout' (temp structure{temp 4-component vector of float Color})
-0:14  Function Definition: main( (temp void)
+0:23        'psout' ( temp structure{ temp 4-component vector of float Color})
+0:14  Function Definition: main( ( temp void)
 0:14    Function Parameters: 
 0:?     Sequence
 0:14      Sequence
-0:14        move second child to first child (temp 4-component vector of float)
-0:?           'Color' (layout(location=0 ) out 4-component vector of float)
-0:14          Color: direct index for structure (temp 4-component vector of float)
-0:14            Function Call: @main( (temp structure{temp 4-component vector of float Color})
+0:14        move second child to first child ( temp 4-component vector of float)
+0:?           'Color' (layout( location=0) out 4-component vector of float)
+0:14          Color: direct index for structure ( temp 4-component vector of float)
+0:14            Function Call: @main( ( temp structure{ temp 4-component vector of float Color})
 0:14            Constant:
 0:14              0 (const int)
 0:?   Linker Objects
-0:?     'g_sSamp' (layout(binding=0 ) uniform sampler)
-0:?     'g_tTex1df1' (uniform texture1D)
-0:?     'g_tTex1df2' (uniform texture1D)
-0:?     'g_tTex1df3' (uniform texture1D)
-0:?     'g_tTex1df4' (uniform texture1D)
-0:?     'Color' (layout(location=0 ) out 4-component vector of float)
+0:?     'g_sSamp' (layout( binding=0) uniform sampler)
+0:?     'g_tTex1df1' ( uniform texture1D)
+0:?     'g_tTex1df2' ( uniform texture1D)
+0:?     'g_tTex1df3' ( uniform texture1D)
+0:?     'g_tTex1df4' ( uniform texture1D)
+0:?     'Color' (layout( location=0) out 4-component vector of float)
 
 // Module Version 10000
 // Generated by (magic number): 80001

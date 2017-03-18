@@ -66,11 +66,14 @@ namespace glslang {
 
 struct TVarEntryInfo
 {
-    int             id;
-    TIntermSymbol*  symbol;
-    bool            live;
-    int             newBinding;
-    int             newSet;
+    int               id;
+    TIntermSymbol*    symbol;
+    bool              live;
+    int               newBinding;
+    int               newSet;
+    int               newLocation;
+    int               newComponent;
+    int               newIndex;
 
     struct TOrderById
     {
@@ -113,70 +116,109 @@ typedef std::vector<TVarEntryInfo> TVarLiveMap;
 class TVarGatherTraverser : public TLiveTraverser
 {
 public:
-    TVarGatherTraverser(const TIntermediate& i, TVarLiveMap& vars, bool traverseDeadCode)
+    TVarGatherTraverser(const TIntermediate& i, bool traverseDeadCode, TVarLiveMap& inList, TVarLiveMap& outList, TVarLiveMap& uniformList)
       : TLiveTraverser(i, traverseDeadCode, true, true, false)
-      , varLiveList(vars)
+      , inputList(inList)
+      , outputList(outList)
+      , uniformList(uniformList)
     {
     }
 
 
     virtual void visitSymbol(TIntermSymbol* base)
     {
-        if (base->getType().getQualifier().isUniformOrBuffer()) {
+        TVarLiveMap* target = nullptr;
+        if (base->getQualifier().storage == EvqVaryingIn)
+            target = &inputList;
+        else if (base->getQualifier().storage == EvqVaryingOut)
+            target = &outputList;
+        else if (base->getQualifier().isUniformOrBuffer())
+            target = &uniformList;
+
+        if (target) {
             TVarEntryInfo ent = { base->getId(), base, !traverseAll };
-            TVarLiveMap::iterator at = std::lower_bound(varLiveList.begin(), varLiveList.end(), ent, TVarEntryInfo::TOrderById());
-            if (at != varLiveList.end() && at->id == ent.id)
+            TVarLiveMap::iterator at = std::lower_bound(target->begin(), target->end(), ent, TVarEntryInfo::TOrderById());
+            if (at != target->end() && at->id == ent.id)
               at->live = at->live || !traverseAll; // update live state
             else
-              varLiveList.insert(at, ent);
+              target->insert(at, ent);
         }
     }
 
 private:
-    TVarLiveMap&    varLiveList;
+    TVarLiveMap&    inputList;
+    TVarLiveMap&    outputList;
+    TVarLiveMap&    uniformList;
 };
 
 class TVarSetTraverser : public TLiveTraverser
 {
 public:
-    TVarSetTraverser(const TIntermediate& i, const TVarLiveMap& vars)
+    TVarSetTraverser(const TIntermediate& i, const TVarLiveMap& inList, const TVarLiveMap& outList, const TVarLiveMap& uniformList)
       : TLiveTraverser(i, true, true, true, false)
-      , varLiveList(vars)
+      , inputList(inList)
+      , outputList(outList)
+      , uniformList(uniformList)
     {
     }
 
 
     virtual void visitSymbol(TIntermSymbol* base)
     {
-        TVarEntryInfo ent = { base->getId() };
-        TVarLiveMap::const_iterator at = std::lower_bound(varLiveList.begin(), varLiveList.end(), ent, TVarEntryInfo::TOrderById());
-        if (at == varLiveList.end())
+        const TVarLiveMap* source;
+        if (base->getQualifier().storage == EvqVaryingIn)
+            source = &inputList;
+        else if (base->getQualifier().storage == EvqVaryingOut)
+            source = &outputList;
+        else if (base->getQualifier().isUniformOrBuffer())
+            source = &uniformList;
+        else
             return;
-        if (!(at->id == ent.id))
+
+        TVarEntryInfo ent = { base->getId() };
+        TVarLiveMap::const_iterator at = std::lower_bound(source->begin(), source->end(), ent, TVarEntryInfo::TOrderById());
+        if (at == source->end())
+            return;
+
+        if (at->id != ent.id)
             return;
 
         if (at->newBinding != -1)
             base->getWritableType().getQualifier().layoutBinding = at->newBinding;
         if (at->newSet != -1)
             base->getWritableType().getQualifier().layoutSet = at->newSet;
+        if (at->newLocation != -1)
+            base->getWritableType().getQualifier().layoutLocation = at->newLocation;
+        if (at->newComponent != -1)
+            base->getWritableType().getQualifier().layoutComponent = at->newComponent;
+        if (at->newIndex != -1)
+            base->getWritableType().getQualifier().layoutIndex = at->newIndex;
     }
 
   private:
-    const TVarLiveMap&    varLiveList;
+    const TVarLiveMap&    inputList;
+    const TVarLiveMap&    outputList;
+    const TVarLiveMap&    uniformList;
 };
 
-struct TResolverAdaptor
+struct TResolverUniformAdaptor
 {
-    TResolverAdaptor(EShLanguage s, TIoMapResolver& r, TInfoSink& i, bool& e)
-      : stage(s)
-      , resolver(r)
+    TResolverUniformAdaptor(EShLanguage s, TIoMapResolver& r, TInfoSink& i, bool& e, TIntermediate& interm)
+      : resolver(r)
+      , stage(s)
       , infoSink(i)
       , error(e)
+      , intermediate(interm)
     {
     }
 
     inline void operator()(TVarEntryInfo& ent)
     {
+        ent.newLocation = -1;
+        ent.newComponent = -1;
+        ent.newBinding = -1;
+        ent.newSet = -1;
+        ent.newIndex = -1;
         const bool isValid = resolver.validateBinding(stage, ent.symbol->getName().c_str(), ent.symbol->getType(), ent.live);
         if (isValid) {
             ent.newBinding = resolver.resolveBinding(stage, ent.symbol->getName().c_str(), ent.symbol->getType(), ent.live);
@@ -209,15 +251,69 @@ struct TResolverAdaptor
     TIoMapResolver& resolver;
     TInfoSink&      infoSink;
     bool&           error;
+    TIntermediate&  intermediate;
 
 private:
-    TResolverAdaptor& operator=(TResolverAdaptor&);
+    TResolverUniformAdaptor& operator=(TResolverUniformAdaptor&);
+};
+
+struct TResolverInOutAdaptor
+{
+    TResolverInOutAdaptor(EShLanguage s, TIoMapResolver& r, TInfoSink& i, bool& e, TIntermediate& interm)
+      : resolver(r)
+      , stage(s)
+      , infoSink(i)
+      , error(e)
+      , intermediate(interm)
+    {
+    }
+
+    inline void operator()(TVarEntryInfo& ent)
+    {
+        ent.newLocation = -1;
+        ent.newComponent = -1;
+        ent.newBinding = -1;
+        ent.newSet = -1;
+        ent.newIndex = -1;
+        const bool isValid = resolver.validateInOut(stage,
+                                                    ent.symbol->getName().c_str(),
+                                                    ent.symbol->getType(),
+                                                    ent.live);
+        if (isValid) {
+            ent.newLocation = resolver.resolveInOutLocation(stage,
+                                                            ent.symbol->getName().c_str(),
+                                                            ent.symbol->getType(),
+                                                            ent.live);
+            ent.newComponent = resolver.resolveInOutComponent(stage,
+                                                              ent.symbol->getName().c_str(),
+                                                              ent.symbol->getType(),
+                                                              ent.live);
+            ent.newIndex = resolver.resolveInOutIndex(stage,
+                                                      ent.symbol->getName().c_str(),
+                                                      ent.symbol->getType(),
+                                                      ent.live);
+        } else {
+            TString errorMsg = "Invalid shader In/Out variable semantic: ";
+            errorMsg += ent.symbol->getType().getQualifier().semanticName;
+            infoSink.info.message(EPrefixInternalError, errorMsg.c_str());
+            error = true;
+        }
+    }
+
+    EShLanguage     stage;
+    TIoMapResolver& resolver;
+    TInfoSink&      infoSink;
+    bool&           error;
+    TIntermediate&  intermediate;
+
+private:
+    TResolverInOutAdaptor& operator=(TResolverInOutAdaptor&);
 };
 
 /*
  * Basic implementation of glslang::TIoMapResolver that replaces the
- * previous offset behaviour.
- * It does the same, uses the offsets for th corresponding uniform
+ * previous offset behavior.
+ * It does the same, uses the offsets for the corresponding uniform
  * types. Also respects the EOptionAutoMapBindings flag and binds
  * them if needed.
  */
@@ -348,6 +444,23 @@ struct TDefaultIoResolver : public glslang::TIoMapResolver
             return type.getQualifier().layoutSet;
         return 0;
     }
+
+    bool validateInOut(EShLanguage stage, const char* name, const TType& type, bool is_live) override
+    {
+        return true;
+    }
+    int resolveInOutLocation(EShLanguage stage, const char* name, const TType& type, bool is_live) override
+    {
+        return -1;
+    }
+    int resolveInOutComponent(EShLanguage stage, const char* name, const TType& type, bool is_live) override
+    {
+        return -1;
+    }
+    int resolveInOutIndex(EShLanguage stage, const char* name, const TType& type, bool is_live) override
+    {
+        return -1;
+    }
 };
 
 // Map I/O variables to provided offsets, and make bindings for
@@ -386,9 +499,9 @@ bool TIoMapper::addStage(EShLanguage stage, TIntermediate &intermediate, TInfoSi
         resolver = &defaultResolver;
     }
 
-    TVarLiveMap varMap;
-    TVarGatherTraverser iter_binding_all(intermediate, varMap, true);
-    TVarGatherTraverser iter_binding_live(intermediate, varMap, false);
+    TVarLiveMap inVarMap, outVarMap, uniformVarMap;
+    TVarGatherTraverser iter_binding_all(intermediate, true, inVarMap, outVarMap, uniformVarMap);
+    TVarGatherTraverser iter_binding_live(intermediate, false, inVarMap, outVarMap, uniformVarMap);
 
     root->traverse(&iter_binding_all);
     iter_binding_live.pushFunction(intermediate.getEntryPointMangledName().c_str());
@@ -400,16 +513,19 @@ bool TIoMapper::addStage(EShLanguage stage, TIntermediate &intermediate, TInfoSi
     }
 
     // sort entries by priority. see TVarEntryInfo::TOrderByPriority for info.
-    std::sort(varMap.begin(), varMap.end(), TVarEntryInfo::TOrderByPriority());
+    std::sort(uniformVarMap.begin(), uniformVarMap.end(), TVarEntryInfo::TOrderByPriority());
 
     bool hadError = false;
-    TResolverAdaptor doResolve(stage, *resolver, infoSink, hadError);
-    std::for_each(varMap.begin(), varMap.end(), doResolve);
+    TResolverUniformAdaptor uniformResolve(stage, *resolver, infoSink, hadError, intermediate);
+    TResolverInOutAdaptor inOutResolve(stage, *resolver, infoSink, hadError, intermediate);
+    std::for_each(inVarMap.begin(), inVarMap.end(), inOutResolve);
+    std::for_each(outVarMap.begin(), outVarMap.end(), inOutResolve);
+    std::for_each(uniformVarMap.begin(), uniformVarMap.end(), uniformResolve);
 
     if (!hadError) {
         // sort by id again, so we can use lower bound to find entries
-        std::sort(varMap.begin(), varMap.end(), TVarEntryInfo::TOrderById());
-        TVarSetTraverser iter_iomap(intermediate, varMap);
+        std::sort(uniformVarMap.begin(), uniformVarMap.end(), TVarEntryInfo::TOrderById());
+        TVarSetTraverser iter_iomap(intermediate, inVarMap, outVarMap, uniformVarMap);
         root->traverse(&iter_iomap);
     }
 

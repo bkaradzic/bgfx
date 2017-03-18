@@ -2,17 +2,17 @@ hlsl.intrinsics.d3dcolortoubyte4.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:5  Function Definition: @main( (temp 4-component vector of int)
+0:5  Function Definition: @main( ( temp 4-component vector of int)
 0:5    Function Parameters: 
 0:?     Sequence
 0:6      Branch: Return with expression
-0:6        Convert float to int (temp 4-component vector of int)
-0:6          vector-scale (temp 4-component vector of float)
+0:6        Convert float to int ( temp 4-component vector of int)
+0:6          vector-scale ( temp 4-component vector of float)
 0:6            Constant:
 0:6              255.001953
-0:6            vector swizzle (temp 4-component vector of float)
-0:6              col4: direct index for structure (layout(offset=0 ) uniform 4-component vector of float)
-0:6                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float col4})
+0:6            vector swizzle ( temp 4-component vector of float)
+0:6              col4: direct index for structure (layout( offset=0) uniform 4-component vector of float)
+0:6                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float col4})
 0:6                Constant:
 0:6                  0 (const uint)
 0:6              Sequence
@@ -24,15 +24,15 @@ gl_FragCoord origin is upper left
 0:6                  0 (const int)
 0:6                Constant:
 0:6                  3 (const int)
-0:5  Function Definition: main( (temp void)
+0:5  Function Definition: main( ( temp void)
 0:5    Function Parameters: 
 0:?     Sequence
-0:5      move second child to first child (temp 4-component vector of int)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of int)
-0:5        Function Call: @main( (temp 4-component vector of int)
+0:5      move second child to first child ( temp 4-component vector of int)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of int)
+0:5        Function Call: @main( ( temp 4-component vector of int)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of int)
-0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float col4})
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of int)
+0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float col4})
 
 
 Linked fragment stage:
@@ -41,17 +41,17 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:5  Function Definition: @main( (temp 4-component vector of int)
+0:5  Function Definition: @main( ( temp 4-component vector of int)
 0:5    Function Parameters: 
 0:?     Sequence
 0:6      Branch: Return with expression
-0:6        Convert float to int (temp 4-component vector of int)
-0:6          vector-scale (temp 4-component vector of float)
+0:6        Convert float to int ( temp 4-component vector of int)
+0:6          vector-scale ( temp 4-component vector of float)
 0:6            Constant:
 0:6              255.001953
-0:6            vector swizzle (temp 4-component vector of float)
-0:6              col4: direct index for structure (layout(offset=0 ) uniform 4-component vector of float)
-0:6                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float col4})
+0:6            vector swizzle ( temp 4-component vector of float)
+0:6              col4: direct index for structure (layout( offset=0) uniform 4-component vector of float)
+0:6                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float col4})
 0:6                Constant:
 0:6                  0 (const uint)
 0:6              Sequence
@@ -63,15 +63,15 @@ gl_FragCoord origin is upper left
 0:6                  0 (const int)
 0:6                Constant:
 0:6                  3 (const int)
-0:5  Function Definition: main( (temp void)
+0:5  Function Definition: main( ( temp void)
 0:5    Function Parameters: 
 0:?     Sequence
-0:5      move second child to first child (temp 4-component vector of int)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of int)
-0:5        Function Call: @main( (temp 4-component vector of int)
+0:5      move second child to first child ( temp 4-component vector of int)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of int)
+0:5        Function Call: @main( ( temp 4-component vector of int)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of int)
-0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float col4})
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of int)
+0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float col4})
 
 // Module Version 10000
 // Generated by (magic number): 80001

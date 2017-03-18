@@ -3125,6 +3125,13 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
+    if ((profile != EEsProfile && version >= 140) ||
+        (profile == EEsProfile && version >= 310)) {
+        stageBuiltins[EShLangCompute].append(
+            "in highp int gl_DeviceIndex;"     // GL_EXT_device_group
+            "\n");
+    }
+
     //============================================================================
     //
     // Define the interface to the vertex shader.
@@ -3290,6 +3297,15 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         }
     }
 
+    if ((profile != EEsProfile && version >= 140) ||
+        (profile == EEsProfile && version >= 310)) {
+        stageBuiltins[EShLangVertex].append(
+            "in highp int gl_DeviceIndex;"     // GL_EXT_device_group
+            "in highp int gl_ViewIndex;"       // GL_EXT_multiview
+            "\n");
+    }
+
+
     //============================================================================
     //
     // Define the interface to the geometry shader.
@@ -3398,6 +3414,14 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             );
     }
 
+    if ((profile != EEsProfile && version >= 140) ||
+        (profile == EEsProfile && version >= 310)) {
+        stageBuiltins[EShLangGeometry].append(
+            "in highp int gl_DeviceIndex;"     // GL_EXT_device_group
+            "in highp int gl_ViewIndex;"       // GL_EXT_multiview
+            "\n");
+    }
+
     //============================================================================
     //
     // Define the interface to the tessellation control shader.
@@ -3466,6 +3490,14 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "patch out highp float gl_TessLevelOuter[4];"
             "patch out highp float gl_TessLevelInner[2];"
             "patch out highp vec4 gl_BoundingBoxOES[2];"
+            "\n");
+    }
+
+    if ((profile != EEsProfile && version >= 140) ||
+        (profile == EEsProfile && version >= 310)) {
+        stageBuiltins[EShLangTessControl].append(
+            "in highp int gl_DeviceIndex;"     // GL_EXT_device_group
+            "in highp int gl_ViewIndex;"       // GL_EXT_multiview
             "\n");
     }
 
@@ -3541,6 +3573,14 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             );
         stageBuiltins[EShLangTessEvaluation].append(
             "};"
+            "\n");
+    }
+
+    if ((profile != EEsProfile && version >= 140) ||
+        (profile == EEsProfile && version >= 310)) {
+        stageBuiltins[EShLangTessEvaluation].append(
+            "in highp int gl_DeviceIndex;"     // GL_EXT_device_group
+            "in highp int gl_ViewIndex;"       // GL_EXT_multiview
             "\n");
     }
 
@@ -3701,9 +3741,12 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
-    if (profile != EEsProfile) {
-        commonBuiltins.append("uniform int gl_ViewIndex;");
-        commonBuiltins.append("uniform int gl_DeviceIndex;");  // GL_EXT_device_group
+    if ((profile != EEsProfile && version >= 140) ||
+        (profile == EEsProfile && version >= 310)) {
+        stageBuiltins[EShLangFragment].append(
+            "flat in highp int gl_DeviceIndex;"     // GL_EXT_device_group
+            "flat in highp int gl_ViewIndex;"       // GL_EXT_multiview
+            "\n");
     }
 
     // printf("%s\n", commonBuiltins.c_str());
@@ -5120,6 +5163,14 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         //        symbolTable.setVariableExtensions("gl_PointSize", Num_AEP_tessellation_point_size, AEP_tessellation_point_size);
         //}
 
+        if ((profile != EEsProfile && version >= 140) ||
+            (profile == EEsProfile && version >= 310)) {
+            symbolTable.setVariableExtensions("gl_DeviceIndex",  1, &E_GL_EXT_device_group);
+            BuiltInVariable("gl_DeviceIndex", EbvDeviceIndex, symbolTable);
+            symbolTable.setVariableExtensions("gl_ViewIndex", 1, &E_GL_EXT_multiview);
+            BuiltInVariable("gl_ViewIndex", EbvViewIndex, symbolTable);
+        }
+
         break;
 
     case EShLangFragment:
@@ -5317,12 +5368,10 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("imageAtomicCompSwap", 1, &E_GL_OES_shader_image_atomic);
         }
 
-        if (profile != EEsProfile) {
-            symbolTable.setFunctionExtensions("gl_DeviceIndex",  1, &E_GL_EXT_device_group);
-            BuiltInVariable("gl_DeviceIndex", EbvDeviceIndex, symbolTable);
-            symbolTable.setFunctionExtensions("gl_ViewIndex", 1, &E_GL_EXT_multiview);
-            BuiltInVariable("gl_ViewIndex", EbvViewIndex, symbolTable);
-        }
+        symbolTable.setVariableExtensions("gl_DeviceIndex",  1, &E_GL_EXT_device_group);
+        BuiltInVariable("gl_DeviceIndex", EbvDeviceIndex, symbolTable);
+        symbolTable.setVariableExtensions("gl_ViewIndex", 1, &E_GL_EXT_multiview);
+        BuiltInVariable("gl_ViewIndex", EbvViewIndex, symbolTable);
         break;
 
     case EShLangCompute:
@@ -5356,6 +5405,15 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("memoryBarrierShared",        1, &E_GL_ARB_compute_shader);
             symbolTable.setFunctionExtensions("groupMemoryBarrier",         1, &E_GL_ARB_compute_shader);
         }
+
+        if ((profile != EEsProfile && version >= 140) ||
+            (profile == EEsProfile && version >= 310)) {
+            symbolTable.setVariableExtensions("gl_DeviceIndex",  1, &E_GL_EXT_device_group);
+            BuiltInVariable("gl_DeviceIndex", EbvDeviceIndex, symbolTable);
+            symbolTable.setVariableExtensions("gl_ViewIndex", 1, &E_GL_EXT_multiview);
+            BuiltInVariable("gl_ViewIndex", EbvViewIndex, symbolTable);
+        }
+
         break;
 
     default:

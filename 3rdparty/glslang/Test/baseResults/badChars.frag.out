@@ -13,7 +13,7 @@ ERROR: 8 compilation errors.  No code generated.
 Shader version: 100
 ERROR: node is still EOpNull!
 0:?   Linker Objects
-0:?     'a' (global mediump int)
+0:?     'a' ( global mediump int)
 
 
 Linked fragment stage:
@@ -23,5 +23,5 @@ ERROR: Linking fragment stage: Missing entry point: Each stage requires one entr
 Shader version: 100
 ERROR: node is still EOpNull!
 0:?   Linker Objects
-0:?     'a' (global mediump int)
+0:?     'a' ( global mediump int)
 

@@ -2,96 +2,96 @@ hlsl.numericsuffixes.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:5  Function Definition: @main( (temp structure{temp 4-component vector of float color})
+0:5  Function Definition: @main( ( temp structure{ temp 4-component vector of float color})
 0:5    Function Parameters: 
 0:?     Sequence
 0:7      Sequence
-0:7        move second child to first child (temp float)
-0:7          'r00' (temp float)
+0:7        move second child to first child ( temp float)
+0:7          'r00' ( temp float)
 0:7          Constant:
 0:7            1.000000
 0:8      Sequence
-0:8        move second child to first child (temp uint)
-0:8          'r01' (temp uint)
+0:8        move second child to first child ( temp uint)
+0:8          'r01' ( temp uint)
 0:8          Constant:
 0:8            1 (const uint)
 0:9      Sequence
-0:9        move second child to first child (temp uint)
-0:9          'r02' (temp uint)
+0:9        move second child to first child ( temp uint)
+0:9          'r02' ( temp uint)
 0:9          Constant:
 0:9            2 (const uint)
 0:10      Sequence
-0:10        move second child to first child (temp uint)
-0:10          'r03' (temp uint)
+0:10        move second child to first child ( temp uint)
+0:10          'r03' ( temp uint)
 0:10          Constant:
 0:10            2748 (const uint)
 0:11      Sequence
-0:11        move second child to first child (temp uint)
-0:11          'r04' (temp uint)
+0:11        move second child to first child ( temp uint)
+0:11          'r04' ( temp uint)
 0:11          Constant:
 0:11            2748 (const uint)
 0:12      Sequence
-0:12        move second child to first child (temp int)
-0:12          'r05' (temp int)
+0:12        move second child to first child ( temp int)
+0:12          'r05' ( temp int)
 0:12          Constant:
 0:12            5 (const int)
 0:13      Sequence
-0:13        move second child to first child (temp int)
-0:13          'r06' (temp int)
+0:13        move second child to first child ( temp int)
+0:13          'r06' ( temp int)
 0:13          Constant:
 0:13            6 (const int)
 0:14      Sequence
-0:14        move second child to first child (temp int)
-0:14          'r07' (temp int)
+0:14        move second child to first child ( temp int)
+0:14          'r07' ( temp int)
 0:14          Constant:
 0:14            57 (const int)
 0:15      Sequence
-0:15        move second child to first child (temp uint)
-0:15          'r08' (temp uint)
+0:15        move second child to first child ( temp uint)
+0:15          'r08' ( temp uint)
 0:15          Constant:
 0:15            58 (const uint)
 0:16      Sequence
-0:16        move second child to first child (temp float)
-0:16          'r09' (temp float)
+0:16        move second child to first child ( temp float)
+0:16          'r09' ( temp float)
 0:16          Constant:
 0:16            1.000000
 0:17      Sequence
-0:17        move second child to first child (temp float)
-0:17          'r10' (temp float)
+0:17        move second child to first child ( temp float)
+0:17          'r10' ( temp float)
 0:17          Constant:
 0:17            1.000000
 0:18      Sequence
-0:18        move second child to first child (temp float)
-0:18          'r11' (temp float)
+0:18        move second child to first child ( temp float)
+0:18          'r11' ( temp float)
 0:18          Constant:
 0:18            1.100000
 0:19      Sequence
-0:19        move second child to first child (temp float)
-0:19          'r12' (temp float)
+0:19        move second child to first child ( temp float)
+0:19          'r12' ( temp float)
 0:19          Constant:
 0:19            1.100000
-0:22      move second child to first child (temp 4-component vector of float)
-0:22        color: direct index for structure (temp 4-component vector of float)
-0:22          'ps_output' (temp structure{temp 4-component vector of float color})
+0:22      move second child to first child ( temp 4-component vector of float)
+0:22        color: direct index for structure ( temp 4-component vector of float)
+0:22          'ps_output' ( temp structure{ temp 4-component vector of float color})
 0:22          Constant:
 0:22            0 (const int)
-0:22        Construct vec4 (temp 4-component vector of float)
-0:22          Convert int to float (temp float)
-0:22            'r07' (temp int)
+0:22        Construct vec4 ( temp 4-component vector of float)
+0:22          Convert int to float ( temp float)
+0:22            'r07' ( temp int)
 0:23      Branch: Return with expression
-0:23        'ps_output' (temp structure{temp 4-component vector of float color})
-0:5  Function Definition: main( (temp void)
+0:23        'ps_output' ( temp structure{ temp 4-component vector of float color})
+0:5  Function Definition: main( ( temp void)
 0:5    Function Parameters: 
 0:?     Sequence
 0:5      Sequence
-0:5        move second child to first child (temp 4-component vector of float)
-0:?           'color' (layout(location=0 ) out 4-component vector of float)
-0:5          color: direct index for structure (temp 4-component vector of float)
-0:5            Function Call: @main( (temp structure{temp 4-component vector of float color})
+0:5        move second child to first child ( temp 4-component vector of float)
+0:?           'color' (layout( location=0) out 4-component vector of float)
+0:5          color: direct index for structure ( temp 4-component vector of float)
+0:5            Function Call: @main( ( temp structure{ temp 4-component vector of float color})
 0:5            Constant:
 0:5              0 (const int)
 0:?   Linker Objects
-0:?     'color' (layout(location=0 ) out 4-component vector of float)
+0:?     'color' (layout( location=0) out 4-component vector of float)
 
 
 Linked fragment stage:
@@ -100,96 +100,96 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:5  Function Definition: @main( (temp structure{temp 4-component vector of float color})
+0:5  Function Definition: @main( ( temp structure{ temp 4-component vector of float color})
 0:5    Function Parameters: 
 0:?     Sequence
 0:7      Sequence
-0:7        move second child to first child (temp float)
-0:7          'r00' (temp float)
+0:7        move second child to first child ( temp float)
+0:7          'r00' ( temp float)
 0:7          Constant:
 0:7            1.000000
 0:8      Sequence
-0:8        move second child to first child (temp uint)
-0:8          'r01' (temp uint)
+0:8        move second child to first child ( temp uint)
+0:8          'r01' ( temp uint)
 0:8          Constant:
 0:8            1 (const uint)
 0:9      Sequence
-0:9        move second child to first child (temp uint)
-0:9          'r02' (temp uint)
+0:9        move second child to first child ( temp uint)
+0:9          'r02' ( temp uint)
 0:9          Constant:
 0:9            2 (const uint)
 0:10      Sequence
-0:10        move second child to first child (temp uint)
-0:10          'r03' (temp uint)
+0:10        move second child to first child ( temp uint)
+0:10          'r03' ( temp uint)
 0:10          Constant:
 0:10            2748 (const uint)
 0:11      Sequence
-0:11        move second child to first child (temp uint)
-0:11          'r04' (temp uint)
+0:11        move second child to first child ( temp uint)
+0:11          'r04' ( temp uint)
 0:11          Constant:
 0:11            2748 (const uint)
 0:12      Sequence
-0:12        move second child to first child (temp int)
-0:12          'r05' (temp int)
+0:12        move second child to first child ( temp int)
+0:12          'r05' ( temp int)
 0:12          Constant:
 0:12            5 (const int)
 0:13      Sequence
-0:13        move second child to first child (temp int)
-0:13          'r06' (temp int)
+0:13        move second child to first child ( temp int)
+0:13          'r06' ( temp int)
 0:13          Constant:
 0:13            6 (const int)
 0:14      Sequence
-0:14        move second child to first child (temp int)
-0:14          'r07' (temp int)
+0:14        move second child to first child ( temp int)
+0:14          'r07' ( temp int)
 0:14          Constant:
 0:14            57 (const int)
 0:15      Sequence
-0:15        move second child to first child (temp uint)
-0:15          'r08' (temp uint)
+0:15        move second child to first child ( temp uint)
+0:15          'r08' ( temp uint)
 0:15          Constant:
 0:15            58 (const uint)
 0:16      Sequence
-0:16        move second child to first child (temp float)
-0:16          'r09' (temp float)
+0:16        move second child to first child ( temp float)
+0:16          'r09' ( temp float)
 0:16          Constant:
 0:16            1.000000
 0:17      Sequence
-0:17        move second child to first child (temp float)
-0:17          'r10' (temp float)
+0:17        move second child to first child ( temp float)
+0:17          'r10' ( temp float)
 0:17          Constant:
 0:17            1.000000
 0:18      Sequence
-0:18        move second child to first child (temp float)
-0:18          'r11' (temp float)
+0:18        move second child to first child ( temp float)
+0:18          'r11' ( temp float)
 0:18          Constant:
 0:18            1.100000
 0:19      Sequence
-0:19        move second child to first child (temp float)
-0:19          'r12' (temp float)
+0:19        move second child to first child ( temp float)
+0:19          'r12' ( temp float)
 0:19          Constant:
 0:19            1.100000
-0:22      move second child to first child (temp 4-component vector of float)
-0:22        color: direct index for structure (temp 4-component vector of float)
-0:22          'ps_output' (temp structure{temp 4-component vector of float color})
+0:22      move second child to first child ( temp 4-component vector of float)
+0:22        color: direct index for structure ( temp 4-component vector of float)
+0:22          'ps_output' ( temp structure{ temp 4-component vector of float color})
 0:22          Constant:
 0:22            0 (const int)
-0:22        Construct vec4 (temp 4-component vector of float)
-0:22          Convert int to float (temp float)
-0:22            'r07' (temp int)
+0:22        Construct vec4 ( temp 4-component vector of float)
+0:22          Convert int to float ( temp float)
+0:22            'r07' ( temp int)
 0:23      Branch: Return with expression
-0:23        'ps_output' (temp structure{temp 4-component vector of float color})
-0:5  Function Definition: main( (temp void)
+0:23        'ps_output' ( temp structure{ temp 4-component vector of float color})
+0:5  Function Definition: main( ( temp void)
 0:5    Function Parameters: 
 0:?     Sequence
 0:5      Sequence
-0:5        move second child to first child (temp 4-component vector of float)
-0:?           'color' (layout(location=0 ) out 4-component vector of float)
-0:5          color: direct index for structure (temp 4-component vector of float)
-0:5            Function Call: @main( (temp structure{temp 4-component vector of float color})
+0:5        move second child to first child ( temp 4-component vector of float)
+0:?           'color' (layout( location=0) out 4-component vector of float)
+0:5          color: direct index for structure ( temp 4-component vector of float)
+0:5            Function Call: @main( ( temp structure{ temp 4-component vector of float color})
 0:5            Constant:
 0:5              0 (const int)
 0:?   Linker Objects
-0:?     'color' (layout(location=0 ) out 4-component vector of float)
+0:?     'color' (layout( location=0) out 4-component vector of float)
 
 // Module Version 10000
 // Generated by (magic number): 80001

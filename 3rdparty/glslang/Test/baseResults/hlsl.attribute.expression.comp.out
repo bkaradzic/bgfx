@@ -2,41 +2,41 @@ hlsl.attribute.expression.comp
 Shader version: 450
 local_size = (4, 6, 8)
 0:? Sequence
-0:9  Function Definition: @main( (temp 4-component vector of float)
+0:9  Function Definition: @main( ( temp 4-component vector of float)
 0:9    Function Parameters: 
 0:?     Sequence
 0:11      Sequence
-0:11        move second child to first child (temp int)
-0:11          'x' (temp int)
+0:11        move second child to first child ( temp int)
+0:11          'x' ( temp int)
 0:11          Constant:
 0:11            0 (const int)
 0:11        Loop with condition tested first
 0:11          Loop Condition
-0:11          Compare Less Than (temp bool)
-0:11            'x' (temp int)
-0:11            bound: direct index for structure (layout(offset=0 ) uniform int)
-0:11              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int bound})
+0:11          Compare Less Than ( temp bool)
+0:11            'x' ( temp int)
+0:11            bound: direct index for structure (layout( offset=0) uniform int)
+0:11              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int bound})
 0:11              Constant:
 0:11                0 (const uint)
 0:11          No loop body
 0:11          Loop Terminal Expression
-0:11          Pre-Increment (temp int)
-0:11            'x' (temp int)
+0:11          Pre-Increment ( temp int)
+0:11            'x' ( temp int)
 0:14      Branch: Return with expression
 0:?         Constant:
 0:?           0.000000
 0:?           0.000000
 0:?           0.000000
 0:?           0.000000
-0:9  Function Definition: main( (temp void)
+0:9  Function Definition: main( ( temp void)
 0:9    Function Parameters: 
 0:?     Sequence
-0:9      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:9        Function Call: @main( (temp 4-component vector of float)
+0:9      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:9        Function Call: @main( ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int bound})
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int bound})
 
 
 Linked compute stage:
@@ -45,41 +45,41 @@ Linked compute stage:
 Shader version: 450
 local_size = (4, 6, 8)
 0:? Sequence
-0:9  Function Definition: @main( (temp 4-component vector of float)
+0:9  Function Definition: @main( ( temp 4-component vector of float)
 0:9    Function Parameters: 
 0:?     Sequence
 0:11      Sequence
-0:11        move second child to first child (temp int)
-0:11          'x' (temp int)
+0:11        move second child to first child ( temp int)
+0:11          'x' ( temp int)
 0:11          Constant:
 0:11            0 (const int)
 0:11        Loop with condition tested first
 0:11          Loop Condition
-0:11          Compare Less Than (temp bool)
-0:11            'x' (temp int)
-0:11            bound: direct index for structure (layout(offset=0 ) uniform int)
-0:11              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int bound})
+0:11          Compare Less Than ( temp bool)
+0:11            'x' ( temp int)
+0:11            bound: direct index for structure (layout( offset=0) uniform int)
+0:11              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int bound})
 0:11              Constant:
 0:11                0 (const uint)
 0:11          No loop body
 0:11          Loop Terminal Expression
-0:11          Pre-Increment (temp int)
-0:11            'x' (temp int)
+0:11          Pre-Increment ( temp int)
+0:11            'x' ( temp int)
 0:14      Branch: Return with expression
 0:?         Constant:
 0:?           0.000000
 0:?           0.000000
 0:?           0.000000
 0:?           0.000000
-0:9  Function Definition: main( (temp void)
+0:9  Function Definition: main( ( temp void)
 0:9    Function Parameters: 
 0:?     Sequence
-0:9      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:9        Function Call: @main( (temp 4-component vector of float)
+0:9      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:9        Function Call: @main( ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform int bound})
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int bound})
 
 // Module Version 10000
 // Generated by (magic number): 80001

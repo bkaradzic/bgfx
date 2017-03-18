@@ -2,114 +2,114 @@ hlsl.type.identifier.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:6  Function Definition: fn(f1; (temp float)
+0:6  Function Definition: fn(f1; ( temp float)
 0:6    Function Parameters: 
-0:6      'float' (in float)
+0:6      'float' ( in float)
 0:?     Sequence
 0:6      Branch: Return with expression
-0:6        'float' (in float)
-0:9  Function Definition: @main( (temp 4-component vector of float)
+0:6        'float' ( in float)
+0:9  Function Definition: @main( ( temp 4-component vector of float)
 0:9    Function Parameters: 
 0:?     Sequence
 0:10      Sequence
-0:10        move second child to first child (temp float)
-0:10          'float' (temp float)
+0:10        move second child to first child ( temp float)
+0:10          'float' ( temp float)
 0:10          Constant:
 0:10            7.000000
 0:11      Sequence
-0:11        move second child to first child (temp 2-element array of bool)
-0:11          'bool' (temp 2-element array of bool)
-0:11          Construct bool (temp 2-element array of bool)
-0:11            Convert float to bool (temp bool)
-0:11              'float' (temp float)
-0:11            Convert float to bool (temp bool)
-0:11              'float' (temp float)
+0:11        move second child to first child ( temp 2-element array of bool)
+0:11          'bool' ( temp 2-element array of bool)
+0:11          Construct bool ( temp 2-element array of bool)
+0:11            Convert float to bool ( temp bool)
+0:11              'float' ( temp float)
+0:11            Convert float to bool ( temp bool)
+0:11              'float' ( temp float)
 0:12      Sequence
-0:12        move second child to first child (temp int)
-0:12          'int' (temp int)
-0:12          Convert bool to int (temp int)
-0:12            direct index (temp bool)
-0:12              'bool' (temp 2-element array of bool)
+0:12        move second child to first child ( temp int)
+0:12          'int' ( temp int)
+0:12          Convert bool to int ( temp int)
+0:12            direct index ( temp bool)
+0:12              'bool' ( temp 2-element array of bool)
 0:12              Constant:
 0:12                1 (const int)
 0:13      Sequence
-0:13        move second child to first child (temp uint)
-0:13          'uint' (temp uint)
-0:13          Convert float to uint (temp uint)
-0:13            add (temp float)
-0:13              'float' (temp float)
-0:13              Convert int to float (temp float)
-0:13                'int' (temp int)
+0:13        move second child to first child ( temp uint)
+0:13          'uint' ( temp uint)
+0:13          Convert float to uint ( temp uint)
+0:13            add ( temp float)
+0:13              'float' ( temp float)
+0:13              Convert int to float ( temp float)
+0:13                'int' ( temp int)
 0:14      Sequence
-0:14        move second child to first child (temp mediump float)
-0:14          'min16float' (temp mediump float)
-0:14          Convert uint to float (temp mediump float)
-0:14            'uint' (temp mediump uint)
+0:14        move second child to first child ( temp mediump float)
+0:14          'min16float' ( temp mediump float)
+0:14          Convert uint to float ( temp mediump float)
+0:14            'uint' ( temp mediump uint)
 0:15      Sequence
-0:15        move second child to first child (temp mediump float)
-0:15          'min10float' (temp mediump float)
-0:15          'min16float' (temp mediump float)
+0:15        move second child to first child ( temp mediump float)
+0:15          'min10float' ( temp mediump float)
+0:15          'min16float' ( temp mediump float)
 0:16      Sequence
-0:16        move second child to first child (temp mediump float)
-0:16          'half' (temp mediump float)
+0:16        move second child to first child ( temp mediump float)
+0:16          'half' ( temp mediump float)
 0:16          Constant:
 0:16            0.500000
 0:?       Sequence
-0:20        move second child to first child (temp float)
-0:20          float: direct index for structure (temp float)
-0:20            'float' (temp structure{temp float float})
+0:20        move second child to first child ( temp float)
+0:20          float: direct index for structure ( temp float)
+0:20            'float' ( temp structure{ temp float float})
 0:20            Constant:
 0:20              0 (const int)
 0:20          Constant:
 0:20            42.000000
-0:23      move second child to first child (temp bool)
-0:23        direct index (temp bool)
-0:23          'bool' (temp 2-element array of bool)
+0:23      move second child to first child ( temp bool)
+0:23        direct index ( temp bool)
+0:23          'bool' ( temp 2-element array of bool)
 0:23          Constant:
 0:23            0 (const int)
-0:23        direct index (temp bool)
-0:23          'bool' (temp 2-element array of bool)
+0:23        direct index ( temp bool)
+0:23          'bool' ( temp 2-element array of bool)
 0:23          Constant:
 0:23            1 (const int)
-0:25      move second child to first child (temp mediump float)
-0:25        'float' (temp mediump float)
-0:25        add (temp mediump float)
-0:25          add (temp mediump float)
-0:25            add (temp mediump float)
-0:25              add (temp mediump float)
-0:25                add (temp mediump float)
-0:25                  add (temp mediump float)
-0:25                    'float' (temp mediump float)
-0:25                    Convert int to float (temp mediump float)
-0:25                      'int' (temp mediump int)
-0:25                  Convert uint to float (temp mediump float)
-0:25                    'uint' (temp mediump uint)
-0:25                'min16float' (temp mediump float)
-0:25              'min10float' (temp mediump float)
-0:25            Test condition and select (temp mediump float)
+0:25      move second child to first child ( temp mediump float)
+0:25        'float' ( temp mediump float)
+0:25        add ( temp mediump float)
+0:25          add ( temp mediump float)
+0:25            add ( temp mediump float)
+0:25              add ( temp mediump float)
+0:25                add ( temp mediump float)
+0:25                  add ( temp mediump float)
+0:25                    'float' ( temp mediump float)
+0:25                    Convert int to float ( temp mediump float)
+0:25                      'int' ( temp mediump int)
+0:25                  Convert uint to float ( temp mediump float)
+0:25                    'uint' ( temp mediump uint)
+0:25                'min16float' ( temp mediump float)
+0:25              'min10float' ( temp mediump float)
+0:25            Test condition and select ( temp mediump float)
 0:25              Condition
-0:25              direct index (temp bool)
-0:25                'bool' (temp 2-element array of bool)
+0:25              direct index ( temp bool)
+0:25                'bool' ( temp 2-element array of bool)
 0:25                Constant:
 0:25                  0 (const int)
 0:25              true case
-0:25              Convert int to float (temp mediump float)
-0:25                'int' (temp mediump int)
+0:25              Convert int to float ( temp mediump float)
+0:25                'int' ( temp mediump int)
 0:25              false case
-0:25              'float' (temp mediump float)
-0:25          Function Call: fn(f1; (temp mediump float)
-0:25            'float' (temp mediump float)
+0:25              'float' ( temp mediump float)
+0:25          Function Call: fn(f1; ( temp mediump float)
+0:25            'float' ( temp mediump float)
 0:27      Branch: Return with expression
-0:27        Construct vec4 (temp 4-component vector of float)
-0:27          'float' (temp float)
-0:9  Function Definition: main( (temp void)
+0:27        Construct vec4 ( temp 4-component vector of float)
+0:27          'float' ( temp float)
+0:9  Function Definition: main( ( temp void)
 0:9    Function Parameters: 
 0:?     Sequence
-0:9      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:9        Function Call: @main( (temp 4-component vector of float)
+0:9      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:9        Function Call: @main( ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 
 
 Linked fragment stage:
@@ -118,114 +118,114 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:6  Function Definition: fn(f1; (temp float)
+0:6  Function Definition: fn(f1; ( temp float)
 0:6    Function Parameters: 
-0:6      'float' (in float)
+0:6      'float' ( in float)
 0:?     Sequence
 0:6      Branch: Return with expression
-0:6        'float' (in float)
-0:9  Function Definition: @main( (temp 4-component vector of float)
+0:6        'float' ( in float)
+0:9  Function Definition: @main( ( temp 4-component vector of float)
 0:9    Function Parameters: 
 0:?     Sequence
 0:10      Sequence
-0:10        move second child to first child (temp float)
-0:10          'float' (temp float)
+0:10        move second child to first child ( temp float)
+0:10          'float' ( temp float)
 0:10          Constant:
 0:10            7.000000
 0:11      Sequence
-0:11        move second child to first child (temp 2-element array of bool)
-0:11          'bool' (temp 2-element array of bool)
-0:11          Construct bool (temp 2-element array of bool)
-0:11            Convert float to bool (temp bool)
-0:11              'float' (temp float)
-0:11            Convert float to bool (temp bool)
-0:11              'float' (temp float)
+0:11        move second child to first child ( temp 2-element array of bool)
+0:11          'bool' ( temp 2-element array of bool)
+0:11          Construct bool ( temp 2-element array of bool)
+0:11            Convert float to bool ( temp bool)
+0:11              'float' ( temp float)
+0:11            Convert float to bool ( temp bool)
+0:11              'float' ( temp float)
 0:12      Sequence
-0:12        move second child to first child (temp int)
-0:12          'int' (temp int)
-0:12          Convert bool to int (temp int)
-0:12            direct index (temp bool)
-0:12              'bool' (temp 2-element array of bool)
+0:12        move second child to first child ( temp int)
+0:12          'int' ( temp int)
+0:12          Convert bool to int ( temp int)
+0:12            direct index ( temp bool)
+0:12              'bool' ( temp 2-element array of bool)
 0:12              Constant:
 0:12                1 (const int)
 0:13      Sequence
-0:13        move second child to first child (temp uint)
-0:13          'uint' (temp uint)
-0:13          Convert float to uint (temp uint)
-0:13            add (temp float)
-0:13              'float' (temp float)
-0:13              Convert int to float (temp float)
-0:13                'int' (temp int)
+0:13        move second child to first child ( temp uint)
+0:13          'uint' ( temp uint)
+0:13          Convert float to uint ( temp uint)
+0:13            add ( temp float)
+0:13              'float' ( temp float)
+0:13              Convert int to float ( temp float)
+0:13                'int' ( temp int)
 0:14      Sequence
-0:14        move second child to first child (temp mediump float)
-0:14          'min16float' (temp mediump float)
-0:14          Convert uint to float (temp mediump float)
-0:14            'uint' (temp mediump uint)
+0:14        move second child to first child ( temp mediump float)
+0:14          'min16float' ( temp mediump float)
+0:14          Convert uint to float ( temp mediump float)
+0:14            'uint' ( temp mediump uint)
 0:15      Sequence
-0:15        move second child to first child (temp mediump float)
-0:15          'min10float' (temp mediump float)
-0:15          'min16float' (temp mediump float)
+0:15        move second child to first child ( temp mediump float)
+0:15          'min10float' ( temp mediump float)
+0:15          'min16float' ( temp mediump float)
 0:16      Sequence
-0:16        move second child to first child (temp mediump float)
-0:16          'half' (temp mediump float)
+0:16        move second child to first child ( temp mediump float)
+0:16          'half' ( temp mediump float)
 0:16          Constant:
 0:16            0.500000
 0:?       Sequence
-0:20        move second child to first child (temp float)
-0:20          float: direct index for structure (temp float)
-0:20            'float' (temp structure{temp float float})
+0:20        move second child to first child ( temp float)
+0:20          float: direct index for structure ( temp float)
+0:20            'float' ( temp structure{ temp float float})
 0:20            Constant:
 0:20              0 (const int)
 0:20          Constant:
 0:20            42.000000
-0:23      move second child to first child (temp bool)
-0:23        direct index (temp bool)
-0:23          'bool' (temp 2-element array of bool)
+0:23      move second child to first child ( temp bool)
+0:23        direct index ( temp bool)
+0:23          'bool' ( temp 2-element array of bool)
 0:23          Constant:
 0:23            0 (const int)
-0:23        direct index (temp bool)
-0:23          'bool' (temp 2-element array of bool)
+0:23        direct index ( temp bool)
+0:23          'bool' ( temp 2-element array of bool)
 0:23          Constant:
 0:23            1 (const int)
-0:25      move second child to first child (temp mediump float)
-0:25        'float' (temp mediump float)
-0:25        add (temp mediump float)
-0:25          add (temp mediump float)
-0:25            add (temp mediump float)
-0:25              add (temp mediump float)
-0:25                add (temp mediump float)
-0:25                  add (temp mediump float)
-0:25                    'float' (temp mediump float)
-0:25                    Convert int to float (temp mediump float)
-0:25                      'int' (temp mediump int)
-0:25                  Convert uint to float (temp mediump float)
-0:25                    'uint' (temp mediump uint)
-0:25                'min16float' (temp mediump float)
-0:25              'min10float' (temp mediump float)
-0:25            Test condition and select (temp mediump float)
+0:25      move second child to first child ( temp mediump float)
+0:25        'float' ( temp mediump float)
+0:25        add ( temp mediump float)
+0:25          add ( temp mediump float)
+0:25            add ( temp mediump float)
+0:25              add ( temp mediump float)
+0:25                add ( temp mediump float)
+0:25                  add ( temp mediump float)
+0:25                    'float' ( temp mediump float)
+0:25                    Convert int to float ( temp mediump float)
+0:25                      'int' ( temp mediump int)
+0:25                  Convert uint to float ( temp mediump float)
+0:25                    'uint' ( temp mediump uint)
+0:25                'min16float' ( temp mediump float)
+0:25              'min10float' ( temp mediump float)
+0:25            Test condition and select ( temp mediump float)
 0:25              Condition
-0:25              direct index (temp bool)
-0:25                'bool' (temp 2-element array of bool)
+0:25              direct index ( temp bool)
+0:25                'bool' ( temp 2-element array of bool)
 0:25                Constant:
 0:25                  0 (const int)
 0:25              true case
-0:25              Convert int to float (temp mediump float)
-0:25                'int' (temp mediump int)
+0:25              Convert int to float ( temp mediump float)
+0:25                'int' ( temp mediump int)
 0:25              false case
-0:25              'float' (temp mediump float)
-0:25          Function Call: fn(f1; (temp mediump float)
-0:25            'float' (temp mediump float)
+0:25              'float' ( temp mediump float)
+0:25          Function Call: fn(f1; ( temp mediump float)
+0:25            'float' ( temp mediump float)
 0:27      Branch: Return with expression
-0:27        Construct vec4 (temp 4-component vector of float)
-0:27          'float' (temp float)
-0:9  Function Definition: main( (temp void)
+0:27        Construct vec4 ( temp 4-component vector of float)
+0:27          'float' ( temp float)
+0:9  Function Definition: main( ( temp void)
 0:9    Function Parameters: 
 0:?     Sequence
-0:9      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:9        Function Call: @main( (temp 4-component vector of float)
+0:9      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:9        Function Call: @main( ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 
 // Module Version 10000
 // Generated by (magic number): 80001

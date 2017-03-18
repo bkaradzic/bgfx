@@ -2,67 +2,67 @@ hlsl.amend.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:5  Function Definition: @f1( (temp void)
+0:5  Function Definition: @f1( ( temp void)
 0:5    Function Parameters: 
 0:?     Sequence
-0:6      vector-scale (temp 4-component vector of float)
-0:6        a: direct index for structure (layout(offset=0 ) uniform 4-component vector of float)
-0:6          'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float a, layout(offset=16 ) uniform float b, layout(offset=32 ) uniform 3-component vector of float c, layout(offset=44 ) uniform int d, uniform int e})
+0:6      vector-scale ( temp 4-component vector of float)
+0:6        a: direct index for structure (layout( offset=0) uniform 4-component vector of float)
+0:6          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
 0:6          Constant:
 0:6            0 (const uint)
-0:6        b: direct index for structure (layout(offset=16 ) uniform float)
-0:6          'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float a, layout(offset=16 ) uniform float b, layout(offset=32 ) uniform 3-component vector of float c, layout(offset=44 ) uniform int d, uniform int e})
+0:6        b: direct index for structure (layout( offset=16) uniform float)
+0:6          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
 0:6          Constant:
 0:6            1 (const uint)
-0:5  Function Definition: f1( (temp void)
+0:5  Function Definition: f1( ( temp void)
 0:5    Function Parameters: 
 0:?     Sequence
-0:5      Function Call: @f1( (temp void)
-0:12  Function Definition: f2( (temp void)
+0:5      Function Call: @f1( ( temp void)
+0:12  Function Definition: f2( ( temp void)
 0:12    Function Parameters: 
 0:?     Sequence
-0:13      add (temp float)
-0:13        add (temp float)
-0:13          direct index (temp float)
-0:13            a: direct index for structure (layout(offset=0 ) uniform 4-component vector of float)
-0:13              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float a, layout(offset=16 ) uniform float b, layout(offset=32 ) uniform 3-component vector of float c, layout(offset=44 ) uniform int d, uniform int e})
+0:13      add ( temp float)
+0:13        add ( temp float)
+0:13          direct index ( temp float)
+0:13            a: direct index for structure (layout( offset=0) uniform 4-component vector of float)
+0:13              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
 0:13              Constant:
 0:13                0 (const uint)
 0:13            Constant:
 0:13              0 (const int)
-0:13          b: direct index for structure (layout(offset=16 ) uniform float)
-0:13            'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float a, layout(offset=16 ) uniform float b, layout(offset=32 ) uniform 3-component vector of float c, layout(offset=44 ) uniform int d, uniform int e})
+0:13          b: direct index for structure (layout( offset=16) uniform float)
+0:13            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
 0:13            Constant:
 0:13              1 (const uint)
-0:13        direct index (temp float)
-0:13          c: direct index for structure (layout(offset=32 ) uniform 3-component vector of float)
-0:13            'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float a, layout(offset=16 ) uniform float b, layout(offset=32 ) uniform 3-component vector of float c, layout(offset=44 ) uniform int d, uniform int e})
+0:13        direct index ( temp float)
+0:13          c: direct index for structure (layout( offset=32) uniform 3-component vector of float)
+0:13            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
 0:13            Constant:
 0:13              2 (const uint)
 0:13          Constant:
 0:13            0 (const int)
-0:17  Function Definition: f3( (temp void)
+0:17  Function Definition: f3( ( temp void)
 0:17    Function Parameters: 
 0:?     Sequence
-0:18      c: direct index for structure (layout(offset=32 ) uniform 3-component vector of float)
-0:18        'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float a, layout(offset=16 ) uniform float b, layout(offset=32 ) uniform 3-component vector of float c, layout(offset=44 ) uniform int d, uniform int e})
+0:18      c: direct index for structure (layout( offset=32) uniform 3-component vector of float)
+0:18        'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
 0:18        Constant:
 0:18          2 (const uint)
-0:24  Function Definition: f4( (temp void)
+0:24  Function Definition: f4( ( temp void)
 0:24    Function Parameters: 
 0:?     Sequence
-0:25      vector-scale (temp 4-component vector of float)
-0:25        Convert int to float (temp float)
-0:25          d: direct index for structure (layout(offset=44 ) uniform int)
-0:25            'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float a, layout(offset=16 ) uniform float b, layout(offset=32 ) uniform 3-component vector of float c, layout(offset=44 ) uniform int d, uniform int e})
+0:25      vector-scale ( temp 4-component vector of float)
+0:25        Convert int to float ( temp float)
+0:25          d: direct index for structure (layout( offset=44) uniform int)
+0:25            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
 0:25            Constant:
 0:25              3 (const uint)
-0:25        a: direct index for structure (layout(offset=0 ) uniform 4-component vector of float)
-0:25          'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float a, layout(offset=16 ) uniform float b, layout(offset=32 ) uniform 3-component vector of float c, layout(offset=44 ) uniform int d, uniform int e})
+0:25        a: direct index for structure (layout( offset=0) uniform 4-component vector of float)
+0:25          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
 0:25          Constant:
 0:25            0 (const uint)
 0:?   Linker Objects
-0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float a, layout(offset=16 ) uniform float b, layout(offset=32 ) uniform 3-component vector of float c, layout(offset=44 ) uniform int d, uniform int e})
+0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
 
 
 Linked fragment stage:
@@ -71,67 +71,67 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:5  Function Definition: @f1( (temp void)
+0:5  Function Definition: @f1( ( temp void)
 0:5    Function Parameters: 
 0:?     Sequence
-0:6      vector-scale (temp 4-component vector of float)
-0:6        a: direct index for structure (layout(offset=0 ) uniform 4-component vector of float)
-0:6          'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float a, layout(offset=16 ) uniform float b, layout(offset=32 ) uniform 3-component vector of float c, layout(offset=44 ) uniform int d, uniform int e})
+0:6      vector-scale ( temp 4-component vector of float)
+0:6        a: direct index for structure (layout( offset=0) uniform 4-component vector of float)
+0:6          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
 0:6          Constant:
 0:6            0 (const uint)
-0:6        b: direct index for structure (layout(offset=16 ) uniform float)
-0:6          'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float a, layout(offset=16 ) uniform float b, layout(offset=32 ) uniform 3-component vector of float c, layout(offset=44 ) uniform int d, uniform int e})
+0:6        b: direct index for structure (layout( offset=16) uniform float)
+0:6          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
 0:6          Constant:
 0:6            1 (const uint)
-0:5  Function Definition: f1( (temp void)
+0:5  Function Definition: f1( ( temp void)
 0:5    Function Parameters: 
 0:?     Sequence
-0:5      Function Call: @f1( (temp void)
-0:12  Function Definition: f2( (temp void)
+0:5      Function Call: @f1( ( temp void)
+0:12  Function Definition: f2( ( temp void)
 0:12    Function Parameters: 
 0:?     Sequence
-0:13      add (temp float)
-0:13        add (temp float)
-0:13          direct index (temp float)
-0:13            a: direct index for structure (layout(offset=0 ) uniform 4-component vector of float)
-0:13              'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float a, layout(offset=16 ) uniform float b, layout(offset=32 ) uniform 3-component vector of float c, layout(offset=44 ) uniform int d, uniform int e})
+0:13      add ( temp float)
+0:13        add ( temp float)
+0:13          direct index ( temp float)
+0:13            a: direct index for structure (layout( offset=0) uniform 4-component vector of float)
+0:13              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
 0:13              Constant:
 0:13                0 (const uint)
 0:13            Constant:
 0:13              0 (const int)
-0:13          b: direct index for structure (layout(offset=16 ) uniform float)
-0:13            'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float a, layout(offset=16 ) uniform float b, layout(offset=32 ) uniform 3-component vector of float c, layout(offset=44 ) uniform int d, uniform int e})
+0:13          b: direct index for structure (layout( offset=16) uniform float)
+0:13            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
 0:13            Constant:
 0:13              1 (const uint)
-0:13        direct index (temp float)
-0:13          c: direct index for structure (layout(offset=32 ) uniform 3-component vector of float)
-0:13            'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float a, layout(offset=16 ) uniform float b, layout(offset=32 ) uniform 3-component vector of float c, layout(offset=44 ) uniform int d, uniform int e})
+0:13        direct index ( temp float)
+0:13          c: direct index for structure (layout( offset=32) uniform 3-component vector of float)
+0:13            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
 0:13            Constant:
 0:13              2 (const uint)
 0:13          Constant:
 0:13            0 (const int)
-0:17  Function Definition: f3( (temp void)
+0:17  Function Definition: f3( ( temp void)
 0:17    Function Parameters: 
 0:?     Sequence
-0:18      c: direct index for structure (layout(offset=32 ) uniform 3-component vector of float)
-0:18        'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float a, layout(offset=16 ) uniform float b, layout(offset=32 ) uniform 3-component vector of float c, layout(offset=44 ) uniform int d, uniform int e})
+0:18      c: direct index for structure (layout( offset=32) uniform 3-component vector of float)
+0:18        'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
 0:18        Constant:
 0:18          2 (const uint)
-0:24  Function Definition: f4( (temp void)
+0:24  Function Definition: f4( ( temp void)
 0:24    Function Parameters: 
 0:?     Sequence
-0:25      vector-scale (temp 4-component vector of float)
-0:25        Convert int to float (temp float)
-0:25          d: direct index for structure (layout(offset=44 ) uniform int)
-0:25            'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float a, layout(offset=16 ) uniform float b, layout(offset=32 ) uniform 3-component vector of float c, layout(offset=44 ) uniform int d, uniform int e})
+0:25      vector-scale ( temp 4-component vector of float)
+0:25        Convert int to float ( temp float)
+0:25          d: direct index for structure (layout( offset=44) uniform int)
+0:25            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
 0:25            Constant:
 0:25              3 (const uint)
-0:25        a: direct index for structure (layout(offset=0 ) uniform 4-component vector of float)
-0:25          'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float a, layout(offset=16 ) uniform float b, layout(offset=32 ) uniform 3-component vector of float c, layout(offset=44 ) uniform int d, uniform int e})
+0:25        a: direct index for structure (layout( offset=0) uniform 4-component vector of float)
+0:25          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
 0:25          Constant:
 0:25            0 (const uint)
 0:?   Linker Objects
-0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform 4-component vector of float a, layout(offset=16 ) uniform float b, layout(offset=32 ) uniform 3-component vector of float c, layout(offset=44 ) uniform int d, uniform int e})
+0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
 
 // Module Version 10000
 // Generated by (magic number): 80001

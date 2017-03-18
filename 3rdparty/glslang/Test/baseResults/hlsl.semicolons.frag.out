@@ -2,16 +2,16 @@ hlsl.semicolons.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:2  Function Definition: MyFunc( (temp void)
+0:2  Function Definition: MyFunc( ( temp void)
 0:2    Function Parameters: 
-0:8  Function Definition: MyFunc2( (temp void)
+0:8  Function Definition: MyFunc2( ( temp void)
 0:8    Function Parameters: 
-0:13  Function Definition: @main( (temp structure{temp 4-component vector of float color})
+0:13  Function Definition: @main( ( temp structure{ temp 4-component vector of float color})
 0:13    Function Parameters: 
 0:?     Sequence
-0:16      move second child to first child (temp 4-component vector of float)
-0:16        color: direct index for structure (temp 4-component vector of float)
-0:16          'ps_output' (temp structure{temp 4-component vector of float color})
+0:16      move second child to first child ( temp 4-component vector of float)
+0:16        color: direct index for structure ( temp 4-component vector of float)
+0:16          'ps_output' ( temp structure{ temp 4-component vector of float color})
 0:16          Constant:
 0:16            0 (const int)
 0:16        Constant:
@@ -20,19 +20,19 @@ gl_FragCoord origin is upper left
 0:16          1.000000
 0:16          1.000000
 0:17      Branch: Return with expression
-0:17        'ps_output' (temp structure{temp 4-component vector of float color})
-0:13  Function Definition: main( (temp void)
+0:17        'ps_output' ( temp structure{ temp 4-component vector of float color})
+0:13  Function Definition: main( ( temp void)
 0:13    Function Parameters: 
 0:?     Sequence
 0:13      Sequence
-0:13        move second child to first child (temp 4-component vector of float)
-0:?           'color' (layout(location=0 ) out 4-component vector of float)
-0:13          color: direct index for structure (temp 4-component vector of float)
-0:13            Function Call: @main( (temp structure{temp 4-component vector of float color})
+0:13        move second child to first child ( temp 4-component vector of float)
+0:?           'color' (layout( location=0) out 4-component vector of float)
+0:13          color: direct index for structure ( temp 4-component vector of float)
+0:13            Function Call: @main( ( temp structure{ temp 4-component vector of float color})
 0:13            Constant:
 0:13              0 (const int)
 0:?   Linker Objects
-0:?     'color' (layout(location=0 ) out 4-component vector of float)
+0:?     'color' (layout( location=0) out 4-component vector of float)
 
 
 Linked fragment stage:
@@ -41,16 +41,16 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:2  Function Definition: MyFunc( (temp void)
+0:2  Function Definition: MyFunc( ( temp void)
 0:2    Function Parameters: 
-0:8  Function Definition: MyFunc2( (temp void)
+0:8  Function Definition: MyFunc2( ( temp void)
 0:8    Function Parameters: 
-0:13  Function Definition: @main( (temp structure{temp 4-component vector of float color})
+0:13  Function Definition: @main( ( temp structure{ temp 4-component vector of float color})
 0:13    Function Parameters: 
 0:?     Sequence
-0:16      move second child to first child (temp 4-component vector of float)
-0:16        color: direct index for structure (temp 4-component vector of float)
-0:16          'ps_output' (temp structure{temp 4-component vector of float color})
+0:16      move second child to first child ( temp 4-component vector of float)
+0:16        color: direct index for structure ( temp 4-component vector of float)
+0:16          'ps_output' ( temp structure{ temp 4-component vector of float color})
 0:16          Constant:
 0:16            0 (const int)
 0:16        Constant:
@@ -59,19 +59,19 @@ gl_FragCoord origin is upper left
 0:16          1.000000
 0:16          1.000000
 0:17      Branch: Return with expression
-0:17        'ps_output' (temp structure{temp 4-component vector of float color})
-0:13  Function Definition: main( (temp void)
+0:17        'ps_output' ( temp structure{ temp 4-component vector of float color})
+0:13  Function Definition: main( ( temp void)
 0:13    Function Parameters: 
 0:?     Sequence
 0:13      Sequence
-0:13        move second child to first child (temp 4-component vector of float)
-0:?           'color' (layout(location=0 ) out 4-component vector of float)
-0:13          color: direct index for structure (temp 4-component vector of float)
-0:13            Function Call: @main( (temp structure{temp 4-component vector of float color})
+0:13        move second child to first child ( temp 4-component vector of float)
+0:?           'color' (layout( location=0) out 4-component vector of float)
+0:13          color: direct index for structure ( temp 4-component vector of float)
+0:13            Function Call: @main( ( temp structure{ temp 4-component vector of float color})
 0:13            Constant:
 0:13              0 (const int)
 0:?   Linker Objects
-0:?     'color' (layout(location=0 ) out 4-component vector of float)
+0:?     'color' (layout( location=0) out 4-component vector of float)
 
 // Module Version 10000
 // Generated by (magic number): 80001

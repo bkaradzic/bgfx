@@ -1,55 +1,55 @@
 hlsl.intrinsics.negative.vert
 Shader version: 450
 0:? Sequence
-0:15  Function Definition: VertexShaderFunctionS(f1;f1;f1;i1; (temp float)
+0:15  Function Definition: VertexShaderFunctionS(f1;f1;f1;i1; ( temp float)
 0:15    Function Parameters: 
-0:15      'inF0' (in float)
-0:15      'inF1' (in float)
-0:15      'inF2' (in float)
-0:15      'inI0' (in int)
+0:15      'inF0' ( in float)
+0:15      'inF1' ( in float)
+0:15      'inF2' ( in float)
+0:15      'inI0' ( in int)
 0:?     Sequence
 0:71      Branch: Return with expression
 0:71        Constant:
 0:71          0.000000
-0:75  Function Definition: VertexShaderFunction1(vf1;vf1;vf1;vi1; (temp 1-component vector of float)
+0:75  Function Definition: VertexShaderFunction1(vf1;vf1;vf1;vi1; ( temp 1-component vector of float)
 0:75    Function Parameters: 
-0:75      'inF0' (in 1-component vector of float)
-0:75      'inF1' (in 1-component vector of float)
-0:75      'inF2' (in 1-component vector of float)
-0:75      'inI0' (in 1-component vector of int)
+0:75      'inF0' ( in 1-component vector of float)
+0:75      'inF1' ( in 1-component vector of float)
+0:75      'inF2' ( in 1-component vector of float)
+0:75      'inI0' ( in 1-component vector of int)
 0:?     Sequence
 0:80      Branch: Return with expression
 0:80        Constant:
 0:80          0.000000
-0:84  Function Definition: VertexShaderFunction2(vf2;vf2;vf2;vi2; (temp 2-component vector of float)
+0:84  Function Definition: VertexShaderFunction2(vf2;vf2;vf2;vi2; ( temp 2-component vector of float)
 0:84    Function Parameters: 
-0:84      'inF0' (in 2-component vector of float)
-0:84      'inF1' (in 2-component vector of float)
-0:84      'inF2' (in 2-component vector of float)
-0:84      'inI0' (in 2-component vector of int)
+0:84      'inF0' ( in 2-component vector of float)
+0:84      'inF1' ( in 2-component vector of float)
+0:84      'inF2' ( in 2-component vector of float)
+0:84      'inI0' ( in 2-component vector of int)
 0:?     Sequence
 0:127      Branch: Return with expression
 0:?         Constant:
 0:?           1.000000
 0:?           2.000000
-0:131  Function Definition: VertexShaderFunction3(vf3;vf3;vf3;vi3; (temp 3-component vector of float)
+0:131  Function Definition: VertexShaderFunction3(vf3;vf3;vf3;vi3; ( temp 3-component vector of float)
 0:131    Function Parameters: 
-0:131      'inF0' (in 3-component vector of float)
-0:131      'inF1' (in 3-component vector of float)
-0:131      'inF2' (in 3-component vector of float)
-0:131      'inI0' (in 3-component vector of int)
+0:131      'inF0' ( in 3-component vector of float)
+0:131      'inF1' ( in 3-component vector of float)
+0:131      'inF2' ( in 3-component vector of float)
+0:131      'inI0' ( in 3-component vector of int)
 0:?     Sequence
 0:172      Branch: Return with expression
 0:?         Constant:
 0:?           1.000000
 0:?           2.000000
 0:?           3.000000
-0:176  Function Definition: @VertexShaderFunction(vf4;vf4;vf4;vi4; (temp 4-component vector of float)
+0:176  Function Definition: @VertexShaderFunction(vf4;vf4;vf4;vi4; ( temp 4-component vector of float)
 0:176    Function Parameters: 
-0:176      'inF0' (in 4-component vector of float)
-0:176      'inF1' (in 4-component vector of float)
-0:176      'inF2' (in 4-component vector of float)
-0:176      'inI0' (in 4-component vector of int)
+0:176      'inF0' ( in 4-component vector of float)
+0:176      'inF1' ( in 4-component vector of float)
+0:176      'inF2' ( in 4-component vector of float)
+0:176      'inI0' ( in 4-component vector of int)
 0:?     Sequence
 0:217      Branch: Return with expression
 0:?         Constant:
@@ -57,33 +57,33 @@ Shader version: 450
 0:?           2.000000
 0:?           3.000000
 0:?           4.000000
-0:176  Function Definition: VertexShaderFunction( (temp void)
+0:176  Function Definition: VertexShaderFunction( ( temp void)
 0:176    Function Parameters: 
 0:?     Sequence
-0:176      move second child to first child (temp 4-component vector of float)
-0:?         'inF0' (temp 4-component vector of float)
-0:?         'inF0' (layout(location=0 ) in 4-component vector of float)
-0:176      move second child to first child (temp 4-component vector of float)
-0:?         'inF1' (temp 4-component vector of float)
-0:?         'inF1' (layout(location=1 ) in 4-component vector of float)
-0:176      move second child to first child (temp 4-component vector of float)
-0:?         'inF2' (temp 4-component vector of float)
-0:?         'inF2' (layout(location=2 ) in 4-component vector of float)
-0:176      move second child to first child (temp 4-component vector of int)
-0:?         'inI0' (temp 4-component vector of int)
-0:?         'inI0' (layout(location=3 ) in 4-component vector of int)
-0:176      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:176        Function Call: @VertexShaderFunction(vf4;vf4;vf4;vi4; (temp 4-component vector of float)
-0:?           'inF0' (temp 4-component vector of float)
-0:?           'inF1' (temp 4-component vector of float)
-0:?           'inF2' (temp 4-component vector of float)
-0:?           'inI0' (temp 4-component vector of int)
-0:226  Function Definition: VertexShaderFunction2x2(mf22;mf22;mf22; (temp 2X2 matrix of float)
+0:176      move second child to first child ( temp 4-component vector of float)
+0:?         'inF0' ( temp 4-component vector of float)
+0:?         'inF0' (layout( location=0) in 4-component vector of float)
+0:176      move second child to first child ( temp 4-component vector of float)
+0:?         'inF1' ( temp 4-component vector of float)
+0:?         'inF1' (layout( location=1) in 4-component vector of float)
+0:176      move second child to first child ( temp 4-component vector of float)
+0:?         'inF2' ( temp 4-component vector of float)
+0:?         'inF2' (layout( location=2) in 4-component vector of float)
+0:176      move second child to first child ( temp 4-component vector of int)
+0:?         'inI0' ( temp 4-component vector of int)
+0:?         'inI0' (layout( location=3) in 4-component vector of int)
+0:176      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:176        Function Call: @VertexShaderFunction(vf4;vf4;vf4;vi4; ( temp 4-component vector of float)
+0:?           'inF0' ( temp 4-component vector of float)
+0:?           'inF1' ( temp 4-component vector of float)
+0:?           'inF2' ( temp 4-component vector of float)
+0:?           'inI0' ( temp 4-component vector of int)
+0:226  Function Definition: VertexShaderFunction2x2(mf22;mf22;mf22; ( temp 2X2 matrix of float)
 0:226    Function Parameters: 
-0:226      'inF0' (in 2X2 matrix of float)
-0:226      'inF1' (in 2X2 matrix of float)
-0:226      'inF2' (in 2X2 matrix of float)
+0:226      'inF0' ( in 2X2 matrix of float)
+0:226      'inF1' ( in 2X2 matrix of float)
+0:226      'inF2' ( in 2X2 matrix of float)
 0:?     Sequence
 0:230      Branch: Return with expression
 0:?         Constant:
@@ -91,11 +91,11 @@ Shader version: 450
 0:?           2.000000
 0:?           2.000000
 0:?           2.000000
-0:234  Function Definition: VertexShaderFunction3x3(mf33;mf33;mf33; (temp 3X3 matrix of float)
+0:234  Function Definition: VertexShaderFunction3x3(mf33;mf33;mf33; ( temp 3X3 matrix of float)
 0:234    Function Parameters: 
-0:234      'inF0' (in 3X3 matrix of float)
-0:234      'inF1' (in 3X3 matrix of float)
-0:234      'inF2' (in 3X3 matrix of float)
+0:234      'inF0' ( in 3X3 matrix of float)
+0:234      'inF1' ( in 3X3 matrix of float)
+0:234      'inF2' ( in 3X3 matrix of float)
 0:?     Sequence
 0:238      Branch: Return with expression
 0:?         Constant:
@@ -108,11 +108,11 @@ Shader version: 450
 0:?           3.000000
 0:?           3.000000
 0:?           3.000000
-0:242  Function Definition: VertexShaderFunction4x4(mf44;mf44;mf44; (temp 4X4 matrix of float)
+0:242  Function Definition: VertexShaderFunction4x4(mf44;mf44;mf44; ( temp 4X4 matrix of float)
 0:242    Function Parameters: 
-0:242      'inF0' (in 4X4 matrix of float)
-0:242      'inF1' (in 4X4 matrix of float)
-0:242      'inF2' (in 4X4 matrix of float)
+0:242      'inF0' ( in 4X4 matrix of float)
+0:242      'inF1' ( in 4X4 matrix of float)
+0:242      'inF2' ( in 4X4 matrix of float)
 0:?     Sequence
 0:246      Branch: Return with expression
 0:?         Constant:
@@ -133,23 +133,23 @@ Shader version: 450
 0:?           4.000000
 0:?           4.000000
 0:?   Linker Objects
-0:?     'gs_ua' (global uint)
-0:?     'gs_ub' (global uint)
-0:?     'gs_uc' (global uint)
-0:?     'gs_ua2' (global 2-component vector of uint)
-0:?     'gs_ub2' (global 2-component vector of uint)
-0:?     'gs_uc2' (global 2-component vector of uint)
-0:?     'gs_ua3' (global 3-component vector of uint)
-0:?     'gs_ub3' (global 3-component vector of uint)
-0:?     'gs_uc3' (global 3-component vector of uint)
-0:?     'gs_ua4' (global 4-component vector of uint)
-0:?     'gs_ub4' (global 4-component vector of uint)
-0:?     'gs_uc4' (global 4-component vector of uint)
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'inF0' (layout(location=0 ) in 4-component vector of float)
-0:?     'inF1' (layout(location=1 ) in 4-component vector of float)
-0:?     'inF2' (layout(location=2 ) in 4-component vector of float)
-0:?     'inI0' (layout(location=3 ) in 4-component vector of int)
+0:?     'gs_ua' ( global uint)
+0:?     'gs_ub' ( global uint)
+0:?     'gs_uc' ( global uint)
+0:?     'gs_ua2' ( global 2-component vector of uint)
+0:?     'gs_ub2' ( global 2-component vector of uint)
+0:?     'gs_uc2' ( global 2-component vector of uint)
+0:?     'gs_ua3' ( global 3-component vector of uint)
+0:?     'gs_ub3' ( global 3-component vector of uint)
+0:?     'gs_uc3' ( global 3-component vector of uint)
+0:?     'gs_ua4' ( global 4-component vector of uint)
+0:?     'gs_ub4' ( global 4-component vector of uint)
+0:?     'gs_uc4' ( global 4-component vector of uint)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'inF0' (layout( location=0) in 4-component vector of float)
+0:?     'inF1' (layout( location=1) in 4-component vector of float)
+0:?     'inF2' (layout( location=2) in 4-component vector of float)
+0:?     'inI0' (layout( location=3) in 4-component vector of int)
 
 
 Linked vertex stage:
@@ -157,55 +157,55 @@ Linked vertex stage:
 
 Shader version: 450
 0:? Sequence
-0:15  Function Definition: VertexShaderFunctionS(f1;f1;f1;i1; (temp float)
+0:15  Function Definition: VertexShaderFunctionS(f1;f1;f1;i1; ( temp float)
 0:15    Function Parameters: 
-0:15      'inF0' (in float)
-0:15      'inF1' (in float)
-0:15      'inF2' (in float)
-0:15      'inI0' (in int)
+0:15      'inF0' ( in float)
+0:15      'inF1' ( in float)
+0:15      'inF2' ( in float)
+0:15      'inI0' ( in int)
 0:?     Sequence
 0:71      Branch: Return with expression
 0:71        Constant:
 0:71          0.000000
-0:75  Function Definition: VertexShaderFunction1(vf1;vf1;vf1;vi1; (temp 1-component vector of float)
+0:75  Function Definition: VertexShaderFunction1(vf1;vf1;vf1;vi1; ( temp 1-component vector of float)
 0:75    Function Parameters: 
-0:75      'inF0' (in 1-component vector of float)
-0:75      'inF1' (in 1-component vector of float)
-0:75      'inF2' (in 1-component vector of float)
-0:75      'inI0' (in 1-component vector of int)
+0:75      'inF0' ( in 1-component vector of float)
+0:75      'inF1' ( in 1-component vector of float)
+0:75      'inF2' ( in 1-component vector of float)
+0:75      'inI0' ( in 1-component vector of int)
 0:?     Sequence
 0:80      Branch: Return with expression
 0:80        Constant:
 0:80          0.000000
-0:84  Function Definition: VertexShaderFunction2(vf2;vf2;vf2;vi2; (temp 2-component vector of float)
+0:84  Function Definition: VertexShaderFunction2(vf2;vf2;vf2;vi2; ( temp 2-component vector of float)
 0:84    Function Parameters: 
-0:84      'inF0' (in 2-component vector of float)
-0:84      'inF1' (in 2-component vector of float)
-0:84      'inF2' (in 2-component vector of float)
-0:84      'inI0' (in 2-component vector of int)
+0:84      'inF0' ( in 2-component vector of float)
+0:84      'inF1' ( in 2-component vector of float)
+0:84      'inF2' ( in 2-component vector of float)
+0:84      'inI0' ( in 2-component vector of int)
 0:?     Sequence
 0:127      Branch: Return with expression
 0:?         Constant:
 0:?           1.000000
 0:?           2.000000
-0:131  Function Definition: VertexShaderFunction3(vf3;vf3;vf3;vi3; (temp 3-component vector of float)
+0:131  Function Definition: VertexShaderFunction3(vf3;vf3;vf3;vi3; ( temp 3-component vector of float)
 0:131    Function Parameters: 
-0:131      'inF0' (in 3-component vector of float)
-0:131      'inF1' (in 3-component vector of float)
-0:131      'inF2' (in 3-component vector of float)
-0:131      'inI0' (in 3-component vector of int)
+0:131      'inF0' ( in 3-component vector of float)
+0:131      'inF1' ( in 3-component vector of float)
+0:131      'inF2' ( in 3-component vector of float)
+0:131      'inI0' ( in 3-component vector of int)
 0:?     Sequence
 0:172      Branch: Return with expression
 0:?         Constant:
 0:?           1.000000
 0:?           2.000000
 0:?           3.000000
-0:176  Function Definition: @VertexShaderFunction(vf4;vf4;vf4;vi4; (temp 4-component vector of float)
+0:176  Function Definition: @VertexShaderFunction(vf4;vf4;vf4;vi4; ( temp 4-component vector of float)
 0:176    Function Parameters: 
-0:176      'inF0' (in 4-component vector of float)
-0:176      'inF1' (in 4-component vector of float)
-0:176      'inF2' (in 4-component vector of float)
-0:176      'inI0' (in 4-component vector of int)
+0:176      'inF0' ( in 4-component vector of float)
+0:176      'inF1' ( in 4-component vector of float)
+0:176      'inF2' ( in 4-component vector of float)
+0:176      'inI0' ( in 4-component vector of int)
 0:?     Sequence
 0:217      Branch: Return with expression
 0:?         Constant:
@@ -213,33 +213,33 @@ Shader version: 450
 0:?           2.000000
 0:?           3.000000
 0:?           4.000000
-0:176  Function Definition: VertexShaderFunction( (temp void)
+0:176  Function Definition: VertexShaderFunction( ( temp void)
 0:176    Function Parameters: 
 0:?     Sequence
-0:176      move second child to first child (temp 4-component vector of float)
-0:?         'inF0' (temp 4-component vector of float)
-0:?         'inF0' (layout(location=0 ) in 4-component vector of float)
-0:176      move second child to first child (temp 4-component vector of float)
-0:?         'inF1' (temp 4-component vector of float)
-0:?         'inF1' (layout(location=1 ) in 4-component vector of float)
-0:176      move second child to first child (temp 4-component vector of float)
-0:?         'inF2' (temp 4-component vector of float)
-0:?         'inF2' (layout(location=2 ) in 4-component vector of float)
-0:176      move second child to first child (temp 4-component vector of int)
-0:?         'inI0' (temp 4-component vector of int)
-0:?         'inI0' (layout(location=3 ) in 4-component vector of int)
-0:176      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:176        Function Call: @VertexShaderFunction(vf4;vf4;vf4;vi4; (temp 4-component vector of float)
-0:?           'inF0' (temp 4-component vector of float)
-0:?           'inF1' (temp 4-component vector of float)
-0:?           'inF2' (temp 4-component vector of float)
-0:?           'inI0' (temp 4-component vector of int)
-0:226  Function Definition: VertexShaderFunction2x2(mf22;mf22;mf22; (temp 2X2 matrix of float)
+0:176      move second child to first child ( temp 4-component vector of float)
+0:?         'inF0' ( temp 4-component vector of float)
+0:?         'inF0' (layout( location=0) in 4-component vector of float)
+0:176      move second child to first child ( temp 4-component vector of float)
+0:?         'inF1' ( temp 4-component vector of float)
+0:?         'inF1' (layout( location=1) in 4-component vector of float)
+0:176      move second child to first child ( temp 4-component vector of float)
+0:?         'inF2' ( temp 4-component vector of float)
+0:?         'inF2' (layout( location=2) in 4-component vector of float)
+0:176      move second child to first child ( temp 4-component vector of int)
+0:?         'inI0' ( temp 4-component vector of int)
+0:?         'inI0' (layout( location=3) in 4-component vector of int)
+0:176      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:176        Function Call: @VertexShaderFunction(vf4;vf4;vf4;vi4; ( temp 4-component vector of float)
+0:?           'inF0' ( temp 4-component vector of float)
+0:?           'inF1' ( temp 4-component vector of float)
+0:?           'inF2' ( temp 4-component vector of float)
+0:?           'inI0' ( temp 4-component vector of int)
+0:226  Function Definition: VertexShaderFunction2x2(mf22;mf22;mf22; ( temp 2X2 matrix of float)
 0:226    Function Parameters: 
-0:226      'inF0' (in 2X2 matrix of float)
-0:226      'inF1' (in 2X2 matrix of float)
-0:226      'inF2' (in 2X2 matrix of float)
+0:226      'inF0' ( in 2X2 matrix of float)
+0:226      'inF1' ( in 2X2 matrix of float)
+0:226      'inF2' ( in 2X2 matrix of float)
 0:?     Sequence
 0:230      Branch: Return with expression
 0:?         Constant:
@@ -247,11 +247,11 @@ Shader version: 450
 0:?           2.000000
 0:?           2.000000
 0:?           2.000000
-0:234  Function Definition: VertexShaderFunction3x3(mf33;mf33;mf33; (temp 3X3 matrix of float)
+0:234  Function Definition: VertexShaderFunction3x3(mf33;mf33;mf33; ( temp 3X3 matrix of float)
 0:234    Function Parameters: 
-0:234      'inF0' (in 3X3 matrix of float)
-0:234      'inF1' (in 3X3 matrix of float)
-0:234      'inF2' (in 3X3 matrix of float)
+0:234      'inF0' ( in 3X3 matrix of float)
+0:234      'inF1' ( in 3X3 matrix of float)
+0:234      'inF2' ( in 3X3 matrix of float)
 0:?     Sequence
 0:238      Branch: Return with expression
 0:?         Constant:
@@ -264,11 +264,11 @@ Shader version: 450
 0:?           3.000000
 0:?           3.000000
 0:?           3.000000
-0:242  Function Definition: VertexShaderFunction4x4(mf44;mf44;mf44; (temp 4X4 matrix of float)
+0:242  Function Definition: VertexShaderFunction4x4(mf44;mf44;mf44; ( temp 4X4 matrix of float)
 0:242    Function Parameters: 
-0:242      'inF0' (in 4X4 matrix of float)
-0:242      'inF1' (in 4X4 matrix of float)
-0:242      'inF2' (in 4X4 matrix of float)
+0:242      'inF0' ( in 4X4 matrix of float)
+0:242      'inF1' ( in 4X4 matrix of float)
+0:242      'inF2' ( in 4X4 matrix of float)
 0:?     Sequence
 0:246      Branch: Return with expression
 0:?         Constant:
@@ -289,23 +289,23 @@ Shader version: 450
 0:?           4.000000
 0:?           4.000000
 0:?   Linker Objects
-0:?     'gs_ua' (global uint)
-0:?     'gs_ub' (global uint)
-0:?     'gs_uc' (global uint)
-0:?     'gs_ua2' (global 2-component vector of uint)
-0:?     'gs_ub2' (global 2-component vector of uint)
-0:?     'gs_uc2' (global 2-component vector of uint)
-0:?     'gs_ua3' (global 3-component vector of uint)
-0:?     'gs_ub3' (global 3-component vector of uint)
-0:?     'gs_uc3' (global 3-component vector of uint)
-0:?     'gs_ua4' (global 4-component vector of uint)
-0:?     'gs_ub4' (global 4-component vector of uint)
-0:?     'gs_uc4' (global 4-component vector of uint)
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'inF0' (layout(location=0 ) in 4-component vector of float)
-0:?     'inF1' (layout(location=1 ) in 4-component vector of float)
-0:?     'inF2' (layout(location=2 ) in 4-component vector of float)
-0:?     'inI0' (layout(location=3 ) in 4-component vector of int)
+0:?     'gs_ua' ( global uint)
+0:?     'gs_ub' ( global uint)
+0:?     'gs_uc' ( global uint)
+0:?     'gs_ua2' ( global 2-component vector of uint)
+0:?     'gs_ub2' ( global 2-component vector of uint)
+0:?     'gs_uc2' ( global 2-component vector of uint)
+0:?     'gs_ua3' ( global 3-component vector of uint)
+0:?     'gs_ub3' ( global 3-component vector of uint)
+0:?     'gs_uc3' ( global 3-component vector of uint)
+0:?     'gs_ua4' ( global 4-component vector of uint)
+0:?     'gs_ub4' ( global 4-component vector of uint)
+0:?     'gs_uc4' ( global 4-component vector of uint)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'inF0' (layout( location=0) in 4-component vector of float)
+0:?     'inF1' (layout( location=1) in 4-component vector of float)
+0:?     'inF2' (layout( location=2) in 4-component vector of float)
+0:?     'inI0' (layout( location=3) in 4-component vector of int)
 
 // Module Version 10000
 // Generated by (magic number): 80001

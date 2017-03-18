@@ -1,15 +1,15 @@
 hlsl.typeGraphCopy.vert
 Shader version: 450
 0:? Sequence
-0:22  Function Definition: @main( (temp float)
+0:22  Function Definition: @main( ( temp float)
 0:22    Function Parameters: 
 0:?     Sequence
 0:23      Branch: Return with expression
-0:23        b: direct index for structure (temp float)
-0:23          s2: direct index for structure (temp structure{temp int a, temp float b})
-0:23            t3: direct index for structure (temp structure{temp structure{temp int a, temp float b} s1, temp structure{temp int a, temp float b} s2})
-0:23              foo: direct index for structure (layout(offset=0 ) uniform structure{temp structure{temp structure{temp int a, temp float b} s1, temp structure{temp int a, temp float b} s2} t1, temp structure{temp int a, temp float b} t2, temp structure{temp structure{temp int a, temp float b} s1, temp structure{temp int a, temp float b} s2} t3})
-0:23                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform structure{temp structure{temp structure{temp int a, temp float b} s1, temp structure{temp int a, temp float b} s2} t1, temp structure{temp int a, temp float b} t2, temp structure{temp structure{temp int a, temp float b} s1, temp structure{temp int a, temp float b} s2} t3} foo})
+0:23        b: direct index for structure ( temp float)
+0:23          s2: direct index for structure ( temp structure{ temp int a,  temp float b})
+0:23            t3: direct index for structure ( temp structure{ temp structure{ temp int a,  temp float b} s1,  temp structure{ temp int a,  temp float b} s2})
+0:23              foo: direct index for structure (layout( offset=0) uniform structure{ temp structure{ temp structure{ temp int a,  temp float b} s1,  temp structure{ temp int a,  temp float b} s2} t1,  temp structure{ temp int a,  temp float b} t2,  temp structure{ temp structure{ temp int a,  temp float b} s1,  temp structure{ temp int a,  temp float b} s2} t3})
+0:23                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform structure{ temp structure{ temp structure{ temp int a,  temp float b} s1,  temp structure{ temp int a,  temp float b} s2} t1,  temp structure{ temp int a,  temp float b} t2,  temp structure{ temp structure{ temp int a,  temp float b} s1,  temp structure{ temp int a,  temp float b} s2} t3} foo})
 0:23                Constant:
 0:23                  0 (const uint)
 0:23              Constant:
@@ -18,15 +18,15 @@ Shader version: 450
 0:23              1 (const int)
 0:23          Constant:
 0:23            1 (const int)
-0:22  Function Definition: main( (temp void)
+0:22  Function Definition: main( ( temp void)
 0:22    Function Parameters: 
 0:?     Sequence
-0:22      move second child to first child (temp float)
-0:?         '@entryPointOutput' (layout(location=0 ) out float)
-0:22        Function Call: @main( (temp float)
+0:22      move second child to first child ( temp float)
+0:?         '@entryPointOutput' (layout( location=0) out float)
+0:22        Function Call: @main( ( temp float)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out float)
-0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform structure{temp structure{temp structure{temp int a, temp float b} s1, temp structure{temp int a, temp float b} s2} t1, temp structure{temp int a, temp float b} t2, temp structure{temp structure{temp int a, temp float b} s1, temp structure{temp int a, temp float b} s2} t3} foo})
+0:?     '@entryPointOutput' (layout( location=0) out float)
+0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform structure{ temp structure{ temp structure{ temp int a,  temp float b} s1,  temp structure{ temp int a,  temp float b} s2} t1,  temp structure{ temp int a,  temp float b} t2,  temp structure{ temp structure{ temp int a,  temp float b} s1,  temp structure{ temp int a,  temp float b} s2} t3} foo})
 
 
 Linked vertex stage:
@@ -34,15 +34,15 @@ Linked vertex stage:
 
 Shader version: 450
 0:? Sequence
-0:22  Function Definition: @main( (temp float)
+0:22  Function Definition: @main( ( temp float)
 0:22    Function Parameters: 
 0:?     Sequence
 0:23      Branch: Return with expression
-0:23        b: direct index for structure (temp float)
-0:23          s2: direct index for structure (temp structure{temp int a, temp float b})
-0:23            t3: direct index for structure (temp structure{temp structure{temp int a, temp float b} s1, temp structure{temp int a, temp float b} s2})
-0:23              foo: direct index for structure (layout(offset=0 ) uniform structure{temp structure{temp structure{temp int a, temp float b} s1, temp structure{temp int a, temp float b} s2} t1, temp structure{temp int a, temp float b} t2, temp structure{temp structure{temp int a, temp float b} s1, temp structure{temp int a, temp float b} s2} t3})
-0:23                'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform structure{temp structure{temp structure{temp int a, temp float b} s1, temp structure{temp int a, temp float b} s2} t1, temp structure{temp int a, temp float b} t2, temp structure{temp structure{temp int a, temp float b} s1, temp structure{temp int a, temp float b} s2} t3} foo})
+0:23        b: direct index for structure ( temp float)
+0:23          s2: direct index for structure ( temp structure{ temp int a,  temp float b})
+0:23            t3: direct index for structure ( temp structure{ temp structure{ temp int a,  temp float b} s1,  temp structure{ temp int a,  temp float b} s2})
+0:23              foo: direct index for structure (layout( offset=0) uniform structure{ temp structure{ temp structure{ temp int a,  temp float b} s1,  temp structure{ temp int a,  temp float b} s2} t1,  temp structure{ temp int a,  temp float b} t2,  temp structure{ temp structure{ temp int a,  temp float b} s1,  temp structure{ temp int a,  temp float b} s2} t3})
+0:23                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform structure{ temp structure{ temp structure{ temp int a,  temp float b} s1,  temp structure{ temp int a,  temp float b} s2} t1,  temp structure{ temp int a,  temp float b} t2,  temp structure{ temp structure{ temp int a,  temp float b} s1,  temp structure{ temp int a,  temp float b} s2} t3} foo})
 0:23                Constant:
 0:23                  0 (const uint)
 0:23              Constant:
@@ -51,15 +51,15 @@ Shader version: 450
 0:23              1 (const int)
 0:23          Constant:
 0:23            1 (const int)
-0:22  Function Definition: main( (temp void)
+0:22  Function Definition: main( ( temp void)
 0:22    Function Parameters: 
 0:?     Sequence
-0:22      move second child to first child (temp float)
-0:?         '@entryPointOutput' (layout(location=0 ) out float)
-0:22        Function Call: @main( (temp float)
+0:22      move second child to first child ( temp float)
+0:?         '@entryPointOutput' (layout( location=0) out float)
+0:22        Function Call: @main( ( temp float)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out float)
-0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(offset=0 ) uniform structure{temp structure{temp structure{temp int a, temp float b} s1, temp structure{temp int a, temp float b} s2} t1, temp structure{temp int a, temp float b} t2, temp structure{temp structure{temp int a, temp float b} s1, temp structure{temp int a, temp float b} s2} t3} foo})
+0:?     '@entryPointOutput' (layout( location=0) out float)
+0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform structure{ temp structure{ temp structure{ temp int a,  temp float b} s1,  temp structure{ temp int a,  temp float b} s2} t1,  temp structure{ temp int a,  temp float b} t2,  temp structure{ temp structure{ temp int a,  temp float b} s1,  temp structure{ temp int a,  temp float b} s2} t3} foo})
 
 // Module Version 10000
 // Generated by (magic number): 80001

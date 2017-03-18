@@ -2,16 +2,16 @@ hlsl.switch.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:2  Function Definition: @PixelShaderFunction(vf4;i1;i1; (temp 4-component vector of float)
+0:2  Function Definition: @PixelShaderFunction(vf4;i1;i1; ( temp 4-component vector of float)
 0:2    Function Parameters: 
-0:2      'input' (in 4-component vector of float)
-0:2      'c' (in int)
-0:2      'd' (in int)
+0:2      'input' ( in 4-component vector of float)
+0:2      'c' ( in int)
+0:2      'd' ( in int)
 0:?     Sequence
-0:3      'c' (in int)
+0:3      'c' ( in int)
 0:7      switch
 0:7      condition
-0:7        'c' (in int)
+0:7        'c' ( in int)
 0:7      body
 0:7        Sequence
 0:9          default: 
@@ -19,34 +19,34 @@ gl_FragCoord origin is upper left
 0:7            Branch: Break
 0:12      switch
 0:12      condition
-0:12        'c' (in int)
+0:12        'c' ( in int)
 0:12      body
 0:12        Sequence
 0:13          case:  with expression
 0:13            Constant:
 0:13              1 (const int)
 0:?           Sequence
-0:14            Pre-Increment (temp 4-component vector of float)
-0:14              'input' (in 4-component vector of float)
+0:14            Pre-Increment ( temp 4-component vector of float)
+0:14              'input' ( in 4-component vector of float)
 0:15            Branch: Break
 0:16          case:  with expression
 0:16            Constant:
 0:16              2 (const int)
 0:?           Sequence
-0:17            Pre-Decrement (temp 4-component vector of float)
-0:17              'input' (in 4-component vector of float)
+0:17            Pre-Decrement ( temp 4-component vector of float)
+0:17              'input' ( in 4-component vector of float)
 0:18            Branch: Break
 0:21      switch
 0:21      condition
-0:21        'c' (in int)
+0:21        'c' ( in int)
 0:21      body
 0:21        Sequence
 0:22          case:  with expression
 0:22            Constant:
 0:22              1 (const int)
 0:?           Sequence
-0:23            Pre-Increment (temp 4-component vector of float)
-0:23              'input' (in 4-component vector of float)
+0:23            Pre-Increment ( temp 4-component vector of float)
+0:23              'input' ( in 4-component vector of float)
 0:24            Branch: Break
 0:25          case:  with expression
 0:25            Constant:
@@ -54,15 +54,15 @@ gl_FragCoord origin is upper left
 0:?           Sequence
 0:26            switch
 0:26            condition
-0:26              'd' (in int)
+0:26              'd' ( in int)
 0:26            body
 0:26              Sequence
 0:27                case:  with expression
 0:27                  Constant:
 0:27                    2 (const int)
 0:?                 Sequence
-0:28                  add second child into first child (temp 4-component vector of float)
-0:28                    'input' (in 4-component vector of float)
+0:28                  add second child into first child ( temp 4-component vector of float)
+0:28                    'input' ( in 4-component vector of float)
 0:28                    Constant:
 0:28                      2.000000
 0:29                  Branch: Break
@@ -70,21 +70,21 @@ gl_FragCoord origin is upper left
 0:30                  Constant:
 0:30                    3 (const int)
 0:?                 Sequence
-0:31                  add second child into first child (temp 4-component vector of float)
-0:31                    'input' (in 4-component vector of float)
+0:31                  add second child into first child ( temp 4-component vector of float)
+0:31                    'input' ( in 4-component vector of float)
 0:31                    Constant:
 0:31                      3.000000
 0:32                  Branch: Break
 0:34            Branch: Break
 0:35          default: 
 0:?           Sequence
-0:36            add second child into first child (temp 4-component vector of float)
-0:36              'input' (in 4-component vector of float)
+0:36            add second child into first child ( temp 4-component vector of float)
+0:36              'input' ( in 4-component vector of float)
 0:36              Constant:
 0:36                4.000000
 0:39      switch
 0:39      condition
-0:39        'c' (in int)
+0:39        'c' ( in int)
 0:39      body
 0:39        Sequence
 0:40          case:  with expression
@@ -94,7 +94,7 @@ gl_FragCoord origin is upper left
 0:39            Branch: Break
 0:43      switch
 0:43      condition
-0:43        'c' (in int)
+0:43        'c' ( in int)
 0:43      body
 0:43        Sequence
 0:44          case:  with expression
@@ -107,8 +107,8 @@ gl_FragCoord origin is upper left
 0:46            Constant:
 0:46              3 (const int)
 0:?           Sequence
-0:47            Pre-Increment (temp 4-component vector of float)
-0:47              'input' (in 4-component vector of float)
+0:47            Pre-Increment ( temp 4-component vector of float)
+0:47              'input' ( in 4-component vector of float)
 0:48            Branch: Break
 0:49          case:  with expression
 0:49            Constant:
@@ -117,33 +117,33 @@ gl_FragCoord origin is upper left
 0:50            Constant:
 0:50              5 (const int)
 0:?           Sequence
-0:51            Pre-Decrement (temp 4-component vector of float)
-0:51              'input' (in 4-component vector of float)
+0:51            Pre-Decrement ( temp 4-component vector of float)
+0:51              'input' ( in 4-component vector of float)
 0:54      Branch: Return with expression
-0:54        'input' (in 4-component vector of float)
-0:2  Function Definition: PixelShaderFunction( (temp void)
+0:54        'input' ( in 4-component vector of float)
+0:2  Function Definition: PixelShaderFunction( ( temp void)
 0:2    Function Parameters: 
 0:?     Sequence
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         'input' (temp 4-component vector of float)
-0:?         'input' (layout(location=0 ) in 4-component vector of float)
-0:2      move second child to first child (temp int)
-0:?         'c' (temp int)
-0:?         'c' (layout(location=1 ) in int)
-0:2      move second child to first child (temp int)
-0:?         'd' (temp int)
-0:?         'd' (layout(location=2 ) in int)
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:2        Function Call: @PixelShaderFunction(vf4;i1;i1; (temp 4-component vector of float)
-0:?           'input' (temp 4-component vector of float)
-0:?           'c' (temp int)
-0:?           'd' (temp int)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         'input' ( temp 4-component vector of float)
+0:?         'input' (layout( location=0) in 4-component vector of float)
+0:2      move second child to first child ( temp int)
+0:?         'c' ( temp int)
+0:?         'c' (layout( location=1) in int)
+0:2      move second child to first child ( temp int)
+0:?         'd' ( temp int)
+0:?         'd' (layout( location=2) in int)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:2        Function Call: @PixelShaderFunction(vf4;i1;i1; ( temp 4-component vector of float)
+0:?           'input' ( temp 4-component vector of float)
+0:?           'c' ( temp int)
+0:?           'd' ( temp int)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'input' (layout(location=0 ) in 4-component vector of float)
-0:?     'c' (layout(location=1 ) in int)
-0:?     'd' (layout(location=2 ) in int)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'input' (layout( location=0) in 4-component vector of float)
+0:?     'c' (layout( location=1) in int)
+0:?     'd' (layout( location=2) in int)
 
 
 Linked fragment stage:
@@ -152,16 +152,16 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:2  Function Definition: @PixelShaderFunction(vf4;i1;i1; (temp 4-component vector of float)
+0:2  Function Definition: @PixelShaderFunction(vf4;i1;i1; ( temp 4-component vector of float)
 0:2    Function Parameters: 
-0:2      'input' (in 4-component vector of float)
-0:2      'c' (in int)
-0:2      'd' (in int)
+0:2      'input' ( in 4-component vector of float)
+0:2      'c' ( in int)
+0:2      'd' ( in int)
 0:?     Sequence
-0:3      'c' (in int)
+0:3      'c' ( in int)
 0:7      switch
 0:7      condition
-0:7        'c' (in int)
+0:7        'c' ( in int)
 0:7      body
 0:7        Sequence
 0:9          default: 
@@ -169,34 +169,34 @@ gl_FragCoord origin is upper left
 0:7            Branch: Break
 0:12      switch
 0:12      condition
-0:12        'c' (in int)
+0:12        'c' ( in int)
 0:12      body
 0:12        Sequence
 0:13          case:  with expression
 0:13            Constant:
 0:13              1 (const int)
 0:?           Sequence
-0:14            Pre-Increment (temp 4-component vector of float)
-0:14              'input' (in 4-component vector of float)
+0:14            Pre-Increment ( temp 4-component vector of float)
+0:14              'input' ( in 4-component vector of float)
 0:15            Branch: Break
 0:16          case:  with expression
 0:16            Constant:
 0:16              2 (const int)
 0:?           Sequence
-0:17            Pre-Decrement (temp 4-component vector of float)
-0:17              'input' (in 4-component vector of float)
+0:17            Pre-Decrement ( temp 4-component vector of float)
+0:17              'input' ( in 4-component vector of float)
 0:18            Branch: Break
 0:21      switch
 0:21      condition
-0:21        'c' (in int)
+0:21        'c' ( in int)
 0:21      body
 0:21        Sequence
 0:22          case:  with expression
 0:22            Constant:
 0:22              1 (const int)
 0:?           Sequence
-0:23            Pre-Increment (temp 4-component vector of float)
-0:23              'input' (in 4-component vector of float)
+0:23            Pre-Increment ( temp 4-component vector of float)
+0:23              'input' ( in 4-component vector of float)
 0:24            Branch: Break
 0:25          case:  with expression
 0:25            Constant:
@@ -204,15 +204,15 @@ gl_FragCoord origin is upper left
 0:?           Sequence
 0:26            switch
 0:26            condition
-0:26              'd' (in int)
+0:26              'd' ( in int)
 0:26            body
 0:26              Sequence
 0:27                case:  with expression
 0:27                  Constant:
 0:27                    2 (const int)
 0:?                 Sequence
-0:28                  add second child into first child (temp 4-component vector of float)
-0:28                    'input' (in 4-component vector of float)
+0:28                  add second child into first child ( temp 4-component vector of float)
+0:28                    'input' ( in 4-component vector of float)
 0:28                    Constant:
 0:28                      2.000000
 0:29                  Branch: Break
@@ -220,21 +220,21 @@ gl_FragCoord origin is upper left
 0:30                  Constant:
 0:30                    3 (const int)
 0:?                 Sequence
-0:31                  add second child into first child (temp 4-component vector of float)
-0:31                    'input' (in 4-component vector of float)
+0:31                  add second child into first child ( temp 4-component vector of float)
+0:31                    'input' ( in 4-component vector of float)
 0:31                    Constant:
 0:31                      3.000000
 0:32                  Branch: Break
 0:34            Branch: Break
 0:35          default: 
 0:?           Sequence
-0:36            add second child into first child (temp 4-component vector of float)
-0:36              'input' (in 4-component vector of float)
+0:36            add second child into first child ( temp 4-component vector of float)
+0:36              'input' ( in 4-component vector of float)
 0:36              Constant:
 0:36                4.000000
 0:39      switch
 0:39      condition
-0:39        'c' (in int)
+0:39        'c' ( in int)
 0:39      body
 0:39        Sequence
 0:40          case:  with expression
@@ -244,7 +244,7 @@ gl_FragCoord origin is upper left
 0:39            Branch: Break
 0:43      switch
 0:43      condition
-0:43        'c' (in int)
+0:43        'c' ( in int)
 0:43      body
 0:43        Sequence
 0:44          case:  with expression
@@ -257,8 +257,8 @@ gl_FragCoord origin is upper left
 0:46            Constant:
 0:46              3 (const int)
 0:?           Sequence
-0:47            Pre-Increment (temp 4-component vector of float)
-0:47              'input' (in 4-component vector of float)
+0:47            Pre-Increment ( temp 4-component vector of float)
+0:47              'input' ( in 4-component vector of float)
 0:48            Branch: Break
 0:49          case:  with expression
 0:49            Constant:
@@ -267,33 +267,33 @@ gl_FragCoord origin is upper left
 0:50            Constant:
 0:50              5 (const int)
 0:?           Sequence
-0:51            Pre-Decrement (temp 4-component vector of float)
-0:51              'input' (in 4-component vector of float)
+0:51            Pre-Decrement ( temp 4-component vector of float)
+0:51              'input' ( in 4-component vector of float)
 0:54      Branch: Return with expression
-0:54        'input' (in 4-component vector of float)
-0:2  Function Definition: PixelShaderFunction( (temp void)
+0:54        'input' ( in 4-component vector of float)
+0:2  Function Definition: PixelShaderFunction( ( temp void)
 0:2    Function Parameters: 
 0:?     Sequence
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         'input' (temp 4-component vector of float)
-0:?         'input' (layout(location=0 ) in 4-component vector of float)
-0:2      move second child to first child (temp int)
-0:?         'c' (temp int)
-0:?         'c' (layout(location=1 ) in int)
-0:2      move second child to first child (temp int)
-0:?         'd' (temp int)
-0:?         'd' (layout(location=2 ) in int)
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:2        Function Call: @PixelShaderFunction(vf4;i1;i1; (temp 4-component vector of float)
-0:?           'input' (temp 4-component vector of float)
-0:?           'c' (temp int)
-0:?           'd' (temp int)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         'input' ( temp 4-component vector of float)
+0:?         'input' (layout( location=0) in 4-component vector of float)
+0:2      move second child to first child ( temp int)
+0:?         'c' ( temp int)
+0:?         'c' (layout( location=1) in int)
+0:2      move second child to first child ( temp int)
+0:?         'd' ( temp int)
+0:?         'd' (layout( location=2) in int)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:2        Function Call: @PixelShaderFunction(vf4;i1;i1; ( temp 4-component vector of float)
+0:?           'input' ( temp 4-component vector of float)
+0:?           'c' ( temp int)
+0:?           'd' ( temp int)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'input' (layout(location=0 ) in 4-component vector of float)
-0:?     'c' (layout(location=1 ) in int)
-0:?     'd' (layout(location=2 ) in int)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'input' (layout( location=0) in 4-component vector of float)
+0:?     'c' (layout( location=1) in int)
+0:?     'd' (layout( location=2) in int)
 
 // Module Version 10000
 // Generated by (magic number): 80001

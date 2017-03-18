@@ -66,4 +66,18 @@ else
     echo Tests Failed.
 fi
 
+#
+# Testing -S
+#
+echo Running explicit stage test
+$EXE -i -S vert nosuffix > $TARGETDIR/nosuffix.out
+diff -b $BASEDIR/nosuffix.out $TARGETDIR/nosuffix.out || HASERROR=1
+
+if [ $HASERROR -eq 0 ]
+then
+    echo Tests Succeeded.
+else
+    echo Tests Failed.
+fi
+
 exit $HASERROR

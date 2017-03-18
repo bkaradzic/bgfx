@@ -2,7 +2,7 @@ hlsl.rw.swizzle.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:4  Function Definition: SomeValue( (temp 3-component vector of float)
+0:4  Function Definition: SomeValue( ( temp 3-component vector of float)
 0:4    Function Parameters: 
 0:?     Sequence
 0:4      Branch: Return with expression
@@ -10,24 +10,24 @@ gl_FragCoord origin is upper left
 0:?           1.000000
 0:?           2.000000
 0:?           3.000000
-0:7  Function Definition: @main( (temp 4-component vector of float)
+0:7  Function Definition: @main( ( temp 4-component vector of float)
 0:7    Function Parameters: 
 0:?     Sequence
 0:8      Sequence
-0:8        move second child to first child (temp 2-component vector of int)
-0:8          'tc2' (temp 2-component vector of int)
+0:8        move second child to first child ( temp 2-component vector of int)
+0:8          'tc2' ( temp 2-component vector of int)
 0:8          Constant:
 0:8            0 (const int)
 0:8            0 (const int)
 0:9      Sequence
-0:9        move second child to first child (temp int)
-0:9          'tc' (temp int)
+0:9        move second child to first child ( temp int)
+0:9          'tc' ( temp int)
 0:9          Constant:
 0:9            0 (const int)
 0:12      Sequence
-0:12        move second child to first child (temp 3-component vector of float)
-0:12          vector swizzle (temp 3-component vector of float)
-0:12            'storeTemp' (temp 3-component vector of float)
+0:12        move second child to first child ( temp 3-component vector of float)
+0:12          vector swizzle ( temp 3-component vector of float)
+0:12            'storeTemp' ( temp 3-component vector of float)
 0:12            Sequence
 0:12              Constant:
 0:12                2 (const int)
@@ -39,15 +39,15 @@ gl_FragCoord origin is upper left
 0:?             1.000000
 0:?             2.000000
 0:?             3.000000
-0:12        imageStore (temp void)
-0:12          'rwtx' (layout(rgba32f ) uniform image2D)
-0:12          'tc2' (temp 2-component vector of int)
-0:12          'storeTemp' (temp 3-component vector of float)
-0:12        'storeTemp' (temp 3-component vector of float)
+0:12        imageStore ( temp void)
+0:12          'rwtx' (layout( rgba32f) uniform image2D)
+0:12          'tc2' ( temp 2-component vector of int)
+0:12          'storeTemp' ( temp 3-component vector of float)
+0:12        'storeTemp' ( temp 3-component vector of float)
 0:13      Sequence
-0:13        move second child to first child (temp 3-component vector of float)
-0:13          vector swizzle (temp 3-component vector of float)
-0:13            'storeTemp' (temp 3-component vector of float)
+0:13        move second child to first child ( temp 3-component vector of float)
+0:13          vector swizzle ( temp 3-component vector of float)
+0:13            'storeTemp' ( temp 3-component vector of float)
 0:13            Sequence
 0:13              Constant:
 0:13                2 (const int)
@@ -55,16 +55,16 @@ gl_FragCoord origin is upper left
 0:13                1 (const int)
 0:13              Constant:
 0:13                0 (const int)
-0:13          Function Call: SomeValue( (temp 3-component vector of float)
-0:13        imageStore (temp void)
-0:13          'rwtx' (layout(rgba32f ) uniform image2D)
-0:13          'tc2' (temp 2-component vector of int)
-0:13          'storeTemp' (temp 3-component vector of float)
-0:13        'storeTemp' (temp 3-component vector of float)
+0:13          Function Call: SomeValue( ( temp 3-component vector of float)
+0:13        imageStore ( temp void)
+0:13          'rwtx' (layout( rgba32f) uniform image2D)
+0:13          'tc2' ( temp 2-component vector of int)
+0:13          'storeTemp' ( temp 3-component vector of float)
+0:13        'storeTemp' ( temp 3-component vector of float)
 0:14      Sequence
-0:14        move second child to first child (temp 3-component vector of float)
-0:14          vector swizzle (temp 3-component vector of float)
-0:14            'storeTemp' (temp 3-component vector of float)
+0:14        move second child to first child ( temp 3-component vector of float)
+0:14          vector swizzle ( temp 3-component vector of float)
+0:14            'storeTemp' ( temp 3-component vector of float)
 0:14            Sequence
 0:14              Constant:
 0:14                2 (const int)
@@ -76,27 +76,27 @@ gl_FragCoord origin is upper left
 0:14            2.000000
 0:14            2.000000
 0:14            2.000000
-0:14        imageStore (temp void)
-0:14          'rwtx' (layout(rgba32f ) uniform image2D)
-0:14          'tc2' (temp 2-component vector of int)
-0:14          'storeTemp' (temp 3-component vector of float)
-0:14        'storeTemp' (temp 3-component vector of float)
+0:14        imageStore ( temp void)
+0:14          'rwtx' (layout( rgba32f) uniform image2D)
+0:14          'tc2' ( temp 2-component vector of int)
+0:14          'storeTemp' ( temp 3-component vector of float)
+0:14        'storeTemp' ( temp 3-component vector of float)
 0:27      Branch: Return with expression
 0:27        Constant:
 0:27          0.000000
 0:27          0.000000
 0:27          0.000000
 0:27          0.000000
-0:7  Function Definition: main( (temp void)
+0:7  Function Definition: main( ( temp void)
 0:7    Function Parameters: 
 0:?     Sequence
-0:7      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:7        Function Call: @main( (temp 4-component vector of float)
+0:7      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:7        Function Call: @main( ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     'rwtx' (layout(rgba32f ) uniform image2D)
-0:?     'buf' (layout(rgba32f ) uniform imageBuffer)
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'rwtx' (layout( rgba32f) uniform image2D)
+0:?     'buf' (layout( rgba32f) uniform imageBuffer)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 
 
 Linked fragment stage:
@@ -105,7 +105,7 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:4  Function Definition: SomeValue( (temp 3-component vector of float)
+0:4  Function Definition: SomeValue( ( temp 3-component vector of float)
 0:4    Function Parameters: 
 0:?     Sequence
 0:4      Branch: Return with expression
@@ -113,24 +113,24 @@ gl_FragCoord origin is upper left
 0:?           1.000000
 0:?           2.000000
 0:?           3.000000
-0:7  Function Definition: @main( (temp 4-component vector of float)
+0:7  Function Definition: @main( ( temp 4-component vector of float)
 0:7    Function Parameters: 
 0:?     Sequence
 0:8      Sequence
-0:8        move second child to first child (temp 2-component vector of int)
-0:8          'tc2' (temp 2-component vector of int)
+0:8        move second child to first child ( temp 2-component vector of int)
+0:8          'tc2' ( temp 2-component vector of int)
 0:8          Constant:
 0:8            0 (const int)
 0:8            0 (const int)
 0:9      Sequence
-0:9        move second child to first child (temp int)
-0:9          'tc' (temp int)
+0:9        move second child to first child ( temp int)
+0:9          'tc' ( temp int)
 0:9          Constant:
 0:9            0 (const int)
 0:12      Sequence
-0:12        move second child to first child (temp 3-component vector of float)
-0:12          vector swizzle (temp 3-component vector of float)
-0:12            'storeTemp' (temp 3-component vector of float)
+0:12        move second child to first child ( temp 3-component vector of float)
+0:12          vector swizzle ( temp 3-component vector of float)
+0:12            'storeTemp' ( temp 3-component vector of float)
 0:12            Sequence
 0:12              Constant:
 0:12                2 (const int)
@@ -142,15 +142,15 @@ gl_FragCoord origin is upper left
 0:?             1.000000
 0:?             2.000000
 0:?             3.000000
-0:12        imageStore (temp void)
-0:12          'rwtx' (layout(rgba32f ) uniform image2D)
-0:12          'tc2' (temp 2-component vector of int)
-0:12          'storeTemp' (temp 3-component vector of float)
-0:12        'storeTemp' (temp 3-component vector of float)
+0:12        imageStore ( temp void)
+0:12          'rwtx' (layout( rgba32f) uniform image2D)
+0:12          'tc2' ( temp 2-component vector of int)
+0:12          'storeTemp' ( temp 3-component vector of float)
+0:12        'storeTemp' ( temp 3-component vector of float)
 0:13      Sequence
-0:13        move second child to first child (temp 3-component vector of float)
-0:13          vector swizzle (temp 3-component vector of float)
-0:13            'storeTemp' (temp 3-component vector of float)
+0:13        move second child to first child ( temp 3-component vector of float)
+0:13          vector swizzle ( temp 3-component vector of float)
+0:13            'storeTemp' ( temp 3-component vector of float)
 0:13            Sequence
 0:13              Constant:
 0:13                2 (const int)
@@ -158,16 +158,16 @@ gl_FragCoord origin is upper left
 0:13                1 (const int)
 0:13              Constant:
 0:13                0 (const int)
-0:13          Function Call: SomeValue( (temp 3-component vector of float)
-0:13        imageStore (temp void)
-0:13          'rwtx' (layout(rgba32f ) uniform image2D)
-0:13          'tc2' (temp 2-component vector of int)
-0:13          'storeTemp' (temp 3-component vector of float)
-0:13        'storeTemp' (temp 3-component vector of float)
+0:13          Function Call: SomeValue( ( temp 3-component vector of float)
+0:13        imageStore ( temp void)
+0:13          'rwtx' (layout( rgba32f) uniform image2D)
+0:13          'tc2' ( temp 2-component vector of int)
+0:13          'storeTemp' ( temp 3-component vector of float)
+0:13        'storeTemp' ( temp 3-component vector of float)
 0:14      Sequence
-0:14        move second child to first child (temp 3-component vector of float)
-0:14          vector swizzle (temp 3-component vector of float)
-0:14            'storeTemp' (temp 3-component vector of float)
+0:14        move second child to first child ( temp 3-component vector of float)
+0:14          vector swizzle ( temp 3-component vector of float)
+0:14            'storeTemp' ( temp 3-component vector of float)
 0:14            Sequence
 0:14              Constant:
 0:14                2 (const int)
@@ -179,27 +179,27 @@ gl_FragCoord origin is upper left
 0:14            2.000000
 0:14            2.000000
 0:14            2.000000
-0:14        imageStore (temp void)
-0:14          'rwtx' (layout(rgba32f ) uniform image2D)
-0:14          'tc2' (temp 2-component vector of int)
-0:14          'storeTemp' (temp 3-component vector of float)
-0:14        'storeTemp' (temp 3-component vector of float)
+0:14        imageStore ( temp void)
+0:14          'rwtx' (layout( rgba32f) uniform image2D)
+0:14          'tc2' ( temp 2-component vector of int)
+0:14          'storeTemp' ( temp 3-component vector of float)
+0:14        'storeTemp' ( temp 3-component vector of float)
 0:27      Branch: Return with expression
 0:27        Constant:
 0:27          0.000000
 0:27          0.000000
 0:27          0.000000
 0:27          0.000000
-0:7  Function Definition: main( (temp void)
+0:7  Function Definition: main( ( temp void)
 0:7    Function Parameters: 
 0:?     Sequence
-0:7      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:7        Function Call: @main( (temp 4-component vector of float)
+0:7      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:7        Function Call: @main( ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     'rwtx' (layout(rgba32f ) uniform image2D)
-0:?     'buf' (layout(rgba32f ) uniform imageBuffer)
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     'rwtx' (layout( rgba32f) uniform image2D)
+0:?     'buf' (layout( rgba32f) uniform imageBuffer)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 
 // Module Version 10000
 // Generated by (magic number): 80001

@@ -24,6 +24,8 @@ buffer outs {
     vec4 va[];
 } outnames;
 
+#extension GL_EXT_device_group : enable
+
 void main()
 {
     barrier();
@@ -34,4 +36,5 @@ void main()
     outbname.uns[i] = vec3(s);
     outnames.va[gl_LocalInvocationID.x] = vec4(s);
     outnames.s = outbname.uns.length();
+    gl_DeviceIndex;
 }

@@ -2,122 +2,122 @@ hlsl.entry-out.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:7  Function Definition: fun(struct-OutParam-vf2-vi21; (temp void)
+0:7  Function Definition: fun(struct-OutParam-vf2-vi21; ( temp void)
 0:7    Function Parameters: 
-0:7      'op' (out structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:7      'op' ( out structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:?     Sequence
-0:8      move second child to first child (temp 2-component vector of float)
-0:8        v: direct index for structure (temp 2-component vector of float)
-0:8          'op' (out structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:8      move second child to first child ( temp 2-component vector of float)
+0:8        v: direct index for structure ( temp 2-component vector of float)
+0:8          'op' ( out structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:8          Constant:
 0:8            0 (const int)
 0:8        Constant:
 0:8          0.400000
 0:8          0.400000
-0:9      move second child to first child (temp 2-component vector of int)
-0:9        i: direct index for structure (temp 2-component vector of int)
-0:9          'op' (out structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:9      move second child to first child ( temp 2-component vector of int)
+0:9        i: direct index for structure ( temp 2-component vector of int)
+0:9          'op' ( out structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:9          Constant:
 0:9            1 (const int)
 0:9        Constant:
 0:9          7 (const int)
 0:9          7 (const int)
-0:13  Function Definition: @PixelShaderFunction(vf4;vf4;struct-OutParam-vf2-vi21;struct-OutParam-vf2-vi21; (temp 4-component vector of float)
+0:13  Function Definition: @PixelShaderFunction(vf4;vf4;struct-OutParam-vf2-vi21;struct-OutParam-vf2-vi21; ( temp 4-component vector of float)
 0:13    Function Parameters: 
-0:13      'input' (in 4-component vector of float)
-0:13      'out1' (out 4-component vector of float)
-0:13      'out2' (out structure{temp 2-component vector of float v, temp 2-component vector of int i})
-0:13      'out3' (out structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:13      'input' ( in 4-component vector of float)
+0:13      'out1' ( out 4-component vector of float)
+0:13      'out2' ( out structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
+0:13      'out3' ( out structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:?     Sequence
-0:14      move second child to first child (temp 4-component vector of float)
-0:14        'out1' (out 4-component vector of float)
-0:14        'input' (in 4-component vector of float)
-0:15      move second child to first child (temp 2-component vector of float)
-0:15        v: direct index for structure (temp 2-component vector of float)
-0:15          'out2' (out structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:14      move second child to first child ( temp 4-component vector of float)
+0:14        'out1' ( out 4-component vector of float)
+0:14        'input' ( in 4-component vector of float)
+0:15      move second child to first child ( temp 2-component vector of float)
+0:15        v: direct index for structure ( temp 2-component vector of float)
+0:15          'out2' ( out structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:15          Constant:
 0:15            0 (const int)
 0:15        Constant:
 0:15          2.000000
 0:15          2.000000
-0:16      move second child to first child (temp 2-component vector of int)
-0:16        i: direct index for structure (temp 2-component vector of int)
-0:16          'out2' (out structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:16      move second child to first child ( temp 2-component vector of int)
+0:16        i: direct index for structure ( temp 2-component vector of int)
+0:16          'out2' ( out structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:16          Constant:
 0:16            1 (const int)
 0:16        Constant:
 0:16          3 (const int)
 0:16          3 (const int)
-0:18      move second child to first child (temp 2-component vector of float)
-0:18        v: direct index for structure (temp 2-component vector of float)
-0:18          'local' (temp structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:18      move second child to first child ( temp 2-component vector of float)
+0:18        v: direct index for structure ( temp 2-component vector of float)
+0:18          'local' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:18          Constant:
 0:18            0 (const int)
 0:18        Constant:
 0:18          12.000000
 0:18          12.000000
-0:19      move second child to first child (temp 2-component vector of int)
-0:19        i: direct index for structure (temp 2-component vector of int)
-0:19          'local' (temp structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:19      move second child to first child ( temp 2-component vector of int)
+0:19        i: direct index for structure ( temp 2-component vector of int)
+0:19          'local' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:19          Constant:
 0:19            1 (const int)
 0:19        Constant:
 0:19          13 (const int)
 0:19          13 (const int)
-0:20      Function Call: fun(struct-OutParam-vf2-vi21; (temp void)
-0:20        'out3' (out structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:20      Function Call: fun(struct-OutParam-vf2-vi21; ( temp void)
+0:20        'out3' ( out structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:22      Branch: Return with expression
-0:22        'out1' (out 4-component vector of float)
-0:13  Function Definition: PixelShaderFunction( (temp void)
+0:22        'out1' ( out 4-component vector of float)
+0:13  Function Definition: PixelShaderFunction( ( temp void)
 0:13    Function Parameters: 
 0:?     Sequence
-0:13      move second child to first child (temp 4-component vector of float)
-0:?         'input' (temp 4-component vector of float)
-0:?         'input' (layout(location=0 ) in 4-component vector of float)
-0:13      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:13        Function Call: @PixelShaderFunction(vf4;vf4;struct-OutParam-vf2-vi21;struct-OutParam-vf2-vi21; (temp 4-component vector of float)
-0:?           'input' (temp 4-component vector of float)
-0:?           'out1' (temp 4-component vector of float)
-0:?           'out2' (temp structure{temp 2-component vector of float v, temp 2-component vector of int i})
-0:?           'out3' (temp structure{temp 2-component vector of float v, temp 2-component vector of int i})
-0:13      move second child to first child (temp 4-component vector of float)
-0:?         'out1' (layout(location=1 ) out 4-component vector of float)
-0:?         'out1' (temp 4-component vector of float)
+0:13      move second child to first child ( temp 4-component vector of float)
+0:?         'input' ( temp 4-component vector of float)
+0:?         'input' (layout( location=0) in 4-component vector of float)
+0:13      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:13        Function Call: @PixelShaderFunction(vf4;vf4;struct-OutParam-vf2-vi21;struct-OutParam-vf2-vi21; ( temp 4-component vector of float)
+0:?           'input' ( temp 4-component vector of float)
+0:?           'out1' ( temp 4-component vector of float)
+0:?           'out2' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
+0:?           'out3' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
+0:13      move second child to first child ( temp 4-component vector of float)
+0:?         'out1' (layout( location=1) out 4-component vector of float)
+0:?         'out1' ( temp 4-component vector of float)
 0:13      Sequence
-0:13        move second child to first child (temp 2-component vector of float)
-0:?           'v' (layout(location=2 ) out 2-component vector of float)
-0:13          v: direct index for structure (temp 2-component vector of float)
-0:?             'out2' (temp structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:13        move second child to first child ( temp 2-component vector of float)
+0:?           'v' (layout( location=2) out 2-component vector of float)
+0:13          v: direct index for structure ( temp 2-component vector of float)
+0:?             'out2' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:13            Constant:
 0:13              0 (const int)
-0:13        move second child to first child (temp 2-component vector of int)
-0:?           'i' (layout(location=3 ) out 2-component vector of int)
-0:13          i: direct index for structure (temp 2-component vector of int)
-0:?             'out2' (temp structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:13        move second child to first child ( temp 2-component vector of int)
+0:?           'i' (layout( location=3) out 2-component vector of int)
+0:13          i: direct index for structure ( temp 2-component vector of int)
+0:?             'out2' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:13            Constant:
 0:13              1 (const int)
 0:13      Sequence
-0:13        move second child to first child (temp 2-component vector of float)
-0:?           'v' (layout(location=4 ) out 2-component vector of float)
-0:13          v: direct index for structure (temp 2-component vector of float)
-0:?             'out3' (temp structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:13        move second child to first child ( temp 2-component vector of float)
+0:?           'v' (layout( location=4) out 2-component vector of float)
+0:13          v: direct index for structure ( temp 2-component vector of float)
+0:?             'out3' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:13            Constant:
 0:13              0 (const int)
-0:13        move second child to first child (temp 2-component vector of int)
-0:?           'i' (layout(location=5 ) out 2-component vector of int)
-0:13          i: direct index for structure (temp 2-component vector of int)
-0:?             'out3' (temp structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:13        move second child to first child ( temp 2-component vector of int)
+0:?           'i' (layout( location=5) out 2-component vector of int)
+0:13          i: direct index for structure ( temp 2-component vector of int)
+0:?             'out3' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:13            Constant:
 0:13              1 (const int)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'input' (layout(location=0 ) in 4-component vector of float)
-0:?     'out1' (layout(location=1 ) out 4-component vector of float)
-0:?     'v' (layout(location=2 ) out 2-component vector of float)
-0:?     'i' (layout(location=3 ) out 2-component vector of int)
-0:?     'v' (layout(location=4 ) out 2-component vector of float)
-0:?     'i' (layout(location=5 ) out 2-component vector of int)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'input' (layout( location=0) in 4-component vector of float)
+0:?     'out1' (layout( location=1) out 4-component vector of float)
+0:?     'v' (layout( location=2) out 2-component vector of float)
+0:?     'i' (layout( location=3) out 2-component vector of int)
+0:?     'v' (layout( location=4) out 2-component vector of float)
+0:?     'i' (layout( location=5) out 2-component vector of int)
 
 
 Linked fragment stage:
@@ -126,122 +126,122 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:7  Function Definition: fun(struct-OutParam-vf2-vi21; (temp void)
+0:7  Function Definition: fun(struct-OutParam-vf2-vi21; ( temp void)
 0:7    Function Parameters: 
-0:7      'op' (out structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:7      'op' ( out structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:?     Sequence
-0:8      move second child to first child (temp 2-component vector of float)
-0:8        v: direct index for structure (temp 2-component vector of float)
-0:8          'op' (out structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:8      move second child to first child ( temp 2-component vector of float)
+0:8        v: direct index for structure ( temp 2-component vector of float)
+0:8          'op' ( out structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:8          Constant:
 0:8            0 (const int)
 0:8        Constant:
 0:8          0.400000
 0:8          0.400000
-0:9      move second child to first child (temp 2-component vector of int)
-0:9        i: direct index for structure (temp 2-component vector of int)
-0:9          'op' (out structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:9      move second child to first child ( temp 2-component vector of int)
+0:9        i: direct index for structure ( temp 2-component vector of int)
+0:9          'op' ( out structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:9          Constant:
 0:9            1 (const int)
 0:9        Constant:
 0:9          7 (const int)
 0:9          7 (const int)
-0:13  Function Definition: @PixelShaderFunction(vf4;vf4;struct-OutParam-vf2-vi21;struct-OutParam-vf2-vi21; (temp 4-component vector of float)
+0:13  Function Definition: @PixelShaderFunction(vf4;vf4;struct-OutParam-vf2-vi21;struct-OutParam-vf2-vi21; ( temp 4-component vector of float)
 0:13    Function Parameters: 
-0:13      'input' (in 4-component vector of float)
-0:13      'out1' (out 4-component vector of float)
-0:13      'out2' (out structure{temp 2-component vector of float v, temp 2-component vector of int i})
-0:13      'out3' (out structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:13      'input' ( in 4-component vector of float)
+0:13      'out1' ( out 4-component vector of float)
+0:13      'out2' ( out structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
+0:13      'out3' ( out structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:?     Sequence
-0:14      move second child to first child (temp 4-component vector of float)
-0:14        'out1' (out 4-component vector of float)
-0:14        'input' (in 4-component vector of float)
-0:15      move second child to first child (temp 2-component vector of float)
-0:15        v: direct index for structure (temp 2-component vector of float)
-0:15          'out2' (out structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:14      move second child to first child ( temp 4-component vector of float)
+0:14        'out1' ( out 4-component vector of float)
+0:14        'input' ( in 4-component vector of float)
+0:15      move second child to first child ( temp 2-component vector of float)
+0:15        v: direct index for structure ( temp 2-component vector of float)
+0:15          'out2' ( out structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:15          Constant:
 0:15            0 (const int)
 0:15        Constant:
 0:15          2.000000
 0:15          2.000000
-0:16      move second child to first child (temp 2-component vector of int)
-0:16        i: direct index for structure (temp 2-component vector of int)
-0:16          'out2' (out structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:16      move second child to first child ( temp 2-component vector of int)
+0:16        i: direct index for structure ( temp 2-component vector of int)
+0:16          'out2' ( out structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:16          Constant:
 0:16            1 (const int)
 0:16        Constant:
 0:16          3 (const int)
 0:16          3 (const int)
-0:18      move second child to first child (temp 2-component vector of float)
-0:18        v: direct index for structure (temp 2-component vector of float)
-0:18          'local' (temp structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:18      move second child to first child ( temp 2-component vector of float)
+0:18        v: direct index for structure ( temp 2-component vector of float)
+0:18          'local' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:18          Constant:
 0:18            0 (const int)
 0:18        Constant:
 0:18          12.000000
 0:18          12.000000
-0:19      move second child to first child (temp 2-component vector of int)
-0:19        i: direct index for structure (temp 2-component vector of int)
-0:19          'local' (temp structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:19      move second child to first child ( temp 2-component vector of int)
+0:19        i: direct index for structure ( temp 2-component vector of int)
+0:19          'local' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:19          Constant:
 0:19            1 (const int)
 0:19        Constant:
 0:19          13 (const int)
 0:19          13 (const int)
-0:20      Function Call: fun(struct-OutParam-vf2-vi21; (temp void)
-0:20        'out3' (out structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:20      Function Call: fun(struct-OutParam-vf2-vi21; ( temp void)
+0:20        'out3' ( out structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:22      Branch: Return with expression
-0:22        'out1' (out 4-component vector of float)
-0:13  Function Definition: PixelShaderFunction( (temp void)
+0:22        'out1' ( out 4-component vector of float)
+0:13  Function Definition: PixelShaderFunction( ( temp void)
 0:13    Function Parameters: 
 0:?     Sequence
-0:13      move second child to first child (temp 4-component vector of float)
-0:?         'input' (temp 4-component vector of float)
-0:?         'input' (layout(location=0 ) in 4-component vector of float)
-0:13      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:13        Function Call: @PixelShaderFunction(vf4;vf4;struct-OutParam-vf2-vi21;struct-OutParam-vf2-vi21; (temp 4-component vector of float)
-0:?           'input' (temp 4-component vector of float)
-0:?           'out1' (temp 4-component vector of float)
-0:?           'out2' (temp structure{temp 2-component vector of float v, temp 2-component vector of int i})
-0:?           'out3' (temp structure{temp 2-component vector of float v, temp 2-component vector of int i})
-0:13      move second child to first child (temp 4-component vector of float)
-0:?         'out1' (layout(location=1 ) out 4-component vector of float)
-0:?         'out1' (temp 4-component vector of float)
+0:13      move second child to first child ( temp 4-component vector of float)
+0:?         'input' ( temp 4-component vector of float)
+0:?         'input' (layout( location=0) in 4-component vector of float)
+0:13      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:13        Function Call: @PixelShaderFunction(vf4;vf4;struct-OutParam-vf2-vi21;struct-OutParam-vf2-vi21; ( temp 4-component vector of float)
+0:?           'input' ( temp 4-component vector of float)
+0:?           'out1' ( temp 4-component vector of float)
+0:?           'out2' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
+0:?           'out3' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
+0:13      move second child to first child ( temp 4-component vector of float)
+0:?         'out1' (layout( location=1) out 4-component vector of float)
+0:?         'out1' ( temp 4-component vector of float)
 0:13      Sequence
-0:13        move second child to first child (temp 2-component vector of float)
-0:?           'v' (layout(location=2 ) out 2-component vector of float)
-0:13          v: direct index for structure (temp 2-component vector of float)
-0:?             'out2' (temp structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:13        move second child to first child ( temp 2-component vector of float)
+0:?           'v' (layout( location=2) out 2-component vector of float)
+0:13          v: direct index for structure ( temp 2-component vector of float)
+0:?             'out2' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:13            Constant:
 0:13              0 (const int)
-0:13        move second child to first child (temp 2-component vector of int)
-0:?           'i' (layout(location=3 ) out 2-component vector of int)
-0:13          i: direct index for structure (temp 2-component vector of int)
-0:?             'out2' (temp structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:13        move second child to first child ( temp 2-component vector of int)
+0:?           'i' (layout( location=3) out 2-component vector of int)
+0:13          i: direct index for structure ( temp 2-component vector of int)
+0:?             'out2' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:13            Constant:
 0:13              1 (const int)
 0:13      Sequence
-0:13        move second child to first child (temp 2-component vector of float)
-0:?           'v' (layout(location=4 ) out 2-component vector of float)
-0:13          v: direct index for structure (temp 2-component vector of float)
-0:?             'out3' (temp structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:13        move second child to first child ( temp 2-component vector of float)
+0:?           'v' (layout( location=4) out 2-component vector of float)
+0:13          v: direct index for structure ( temp 2-component vector of float)
+0:?             'out3' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:13            Constant:
 0:13              0 (const int)
-0:13        move second child to first child (temp 2-component vector of int)
-0:?           'i' (layout(location=5 ) out 2-component vector of int)
-0:13          i: direct index for structure (temp 2-component vector of int)
-0:?             'out3' (temp structure{temp 2-component vector of float v, temp 2-component vector of int i})
+0:13        move second child to first child ( temp 2-component vector of int)
+0:?           'i' (layout( location=5) out 2-component vector of int)
+0:13          i: direct index for structure ( temp 2-component vector of int)
+0:?             'out3' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:13            Constant:
 0:13              1 (const int)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'input' (layout(location=0 ) in 4-component vector of float)
-0:?     'out1' (layout(location=1 ) out 4-component vector of float)
-0:?     'v' (layout(location=2 ) out 2-component vector of float)
-0:?     'i' (layout(location=3 ) out 2-component vector of int)
-0:?     'v' (layout(location=4 ) out 2-component vector of float)
-0:?     'i' (layout(location=5 ) out 2-component vector of int)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'input' (layout( location=0) in 4-component vector of float)
+0:?     'out1' (layout( location=1) out 4-component vector of float)
+0:?     'v' (layout( location=2) out 2-component vector of float)
+0:?     'i' (layout( location=3) out 2-component vector of int)
+0:?     'v' (layout( location=4) out 2-component vector of float)
+0:?     'i' (layout( location=5) out 2-component vector of int)
 
 // Module Version 10000
 // Generated by (magic number): 80001

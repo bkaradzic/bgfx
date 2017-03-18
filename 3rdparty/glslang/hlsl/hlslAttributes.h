@@ -92,6 +92,14 @@ namespace glslang {
 
         std::unordered_map<TAttributeType, TIntermAggregate*> attributes;
     };
+
+    class TFunctionDeclarator {
+    public:
+        TSourceLoc loc;
+        TFunction* function;
+        TAttributeMap attributes;
+    };
+
 } // end namespace glslang
 
 

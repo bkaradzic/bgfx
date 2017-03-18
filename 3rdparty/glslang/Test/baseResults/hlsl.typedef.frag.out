@@ -2,38 +2,38 @@ hlsl.typedef.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:4  Function Definition: ShaderFunction(vf4;i1; (temp 4-component vector of float)
+0:4  Function Definition: ShaderFunction(vf4;i1; ( temp 4-component vector of float)
 0:4    Function Parameters: 
-0:4      'input' (in 4-component vector of float)
-0:4      'ii' (in int)
+0:4      'input' ( in 4-component vector of float)
+0:4      'ii' ( in int)
 0:?     Sequence
 0:6      Sequence
-0:6        move second child to first child (temp 4-component vector of float)
-0:6          'a1' (temp 4-component vector of float)
+0:6        move second child to first child ( temp 4-component vector of float)
+0:6          'a1' ( temp 4-component vector of float)
 0:6          Constant:
 0:6            1.000000
 0:6            1.000000
 0:6            1.000000
 0:6            1.000000
 0:7      Sequence
-0:7        move second child to first child (temp int)
-0:7          'i' (temp int)
+0:7        move second child to first child ( temp int)
+0:7          'i' ( temp int)
 0:7          Constant:
 0:7            2 (const int)
 0:9      Sequence
-0:9        move second child to first child (temp int)
-0:9          'j' (temp int)
-0:9          'ii' (in int)
+0:9        move second child to first child ( temp int)
+0:9          'j' ( temp int)
+0:9          'ii' ( in int)
 0:10      Branch: Return with expression
-0:10        add (temp 4-component vector of float)
-0:10          component-wise multiply (temp 4-component vector of float)
-0:10            'input' (in 4-component vector of float)
-0:10            'a1' (temp 4-component vector of float)
-0:10          Construct vec4 (uniform 4-component vector of float)
-0:10            Convert int to float (temp float)
-0:10              add (temp int)
-0:10                'i' (temp int)
-0:10                'j' (temp int)
+0:10        add ( temp 4-component vector of float)
+0:10          component-wise multiply ( temp 4-component vector of float)
+0:10            'input' ( in 4-component vector of float)
+0:10            'a1' ( temp 4-component vector of float)
+0:10          Construct vec4 ( uniform 4-component vector of float)
+0:10            Convert int to float ( temp float)
+0:10              add ( temp int)
+0:10                'i' ( temp int)
+0:10                'j' ( temp int)
 0:?   Linker Objects
 
 
@@ -44,38 +44,38 @@ WARNING: Linking fragment stage: Entry point not found
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:4  Function Definition: ShaderFunction(vf4;i1; (temp 4-component vector of float)
+0:4  Function Definition: ShaderFunction(vf4;i1; ( temp 4-component vector of float)
 0:4    Function Parameters: 
-0:4      'input' (in 4-component vector of float)
-0:4      'ii' (in int)
+0:4      'input' ( in 4-component vector of float)
+0:4      'ii' ( in int)
 0:?     Sequence
 0:6      Sequence
-0:6        move second child to first child (temp 4-component vector of float)
-0:6          'a1' (temp 4-component vector of float)
+0:6        move second child to first child ( temp 4-component vector of float)
+0:6          'a1' ( temp 4-component vector of float)
 0:6          Constant:
 0:6            1.000000
 0:6            1.000000
 0:6            1.000000
 0:6            1.000000
 0:7      Sequence
-0:7        move second child to first child (temp int)
-0:7          'i' (temp int)
+0:7        move second child to first child ( temp int)
+0:7          'i' ( temp int)
 0:7          Constant:
 0:7            2 (const int)
 0:9      Sequence
-0:9        move second child to first child (temp int)
-0:9          'j' (temp int)
-0:9          'ii' (in int)
+0:9        move second child to first child ( temp int)
+0:9          'j' ( temp int)
+0:9          'ii' ( in int)
 0:10      Branch: Return with expression
-0:10        add (temp 4-component vector of float)
-0:10          component-wise multiply (temp 4-component vector of float)
-0:10            'input' (in 4-component vector of float)
-0:10            'a1' (temp 4-component vector of float)
-0:10          Construct vec4 (uniform 4-component vector of float)
-0:10            Convert int to float (temp float)
-0:10              add (temp int)
-0:10                'i' (temp int)
-0:10                'j' (temp int)
+0:10        add ( temp 4-component vector of float)
+0:10          component-wise multiply ( temp 4-component vector of float)
+0:10            'input' ( in 4-component vector of float)
+0:10            'a1' ( temp 4-component vector of float)
+0:10          Construct vec4 ( uniform 4-component vector of float)
+0:10            Convert int to float ( temp float)
+0:10              add ( temp int)
+0:10                'i' ( temp int)
+0:10                'j' ( temp int)
 0:?   Linker Objects
 
 // Module Version 10000

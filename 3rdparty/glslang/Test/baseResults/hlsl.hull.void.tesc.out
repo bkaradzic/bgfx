@@ -2,49 +2,49 @@ hlsl.hull.void.tesc
 Shader version: 450
 vertices = 3
 0:? Sequence
-0:26  Function Definition: @main(struct-VS_OUT-vf31[3]; (temp structure{temp 3-component vector of float cpoint})
+0:26  Function Definition: @main(struct-VS_OUT-vf31[3]; ( temp structure{ temp 3-component vector of float cpoint})
 0:26    Function Parameters: 
-0:26      'ip' (in 3-element array of structure{temp 3-component vector of float cpoint})
+0:26      'ip' ( in 3-element array of structure{ temp 3-component vector of float cpoint})
 0:?     Sequence
-0:28      move second child to first child (temp 3-component vector of float)
-0:28        cpoint: direct index for structure (temp 3-component vector of float)
-0:28          'output' (temp structure{temp 3-component vector of float cpoint})
+0:28      move second child to first child ( temp 3-component vector of float)
+0:28        cpoint: direct index for structure ( temp 3-component vector of float)
+0:28          'output' ( temp structure{ temp 3-component vector of float cpoint})
 0:28          Constant:
 0:28            0 (const int)
-0:28        cpoint: direct index for structure (temp 3-component vector of float)
-0:28          direct index (temp structure{temp 3-component vector of float cpoint})
-0:28            'ip' (in 3-element array of structure{temp 3-component vector of float cpoint})
+0:28        cpoint: direct index for structure ( temp 3-component vector of float)
+0:28          direct index ( temp structure{ temp 3-component vector of float cpoint})
+0:28            'ip' ( in 3-element array of structure{ temp 3-component vector of float cpoint})
 0:28            Constant:
 0:28              0 (const int)
 0:28          Constant:
 0:28            0 (const int)
 0:29      Branch: Return with expression
-0:29        'output' (temp structure{temp 3-component vector of float cpoint})
-0:26  Function Definition: main( (temp void)
+0:29        'output' ( temp structure{ temp 3-component vector of float cpoint})
+0:26  Function Definition: main( ( temp void)
 0:26    Function Parameters: 
 0:?     Sequence
-0:26      move second child to first child (temp 3-element array of structure{temp 3-component vector of float cpoint})
-0:?         'ip' (temp 3-element array of structure{temp 3-component vector of float cpoint})
-0:?         'ip' (layout(location=0 ) in 3-element array of structure{temp 3-component vector of float cpoint})
-0:26      move second child to first child (temp structure{temp 3-component vector of float cpoint})
-0:?         '@entryPointOutput' (layout(location=0 ) out structure{temp 3-component vector of float cpoint})
-0:26        Function Call: @main(struct-VS_OUT-vf31[3]; (temp structure{temp 3-component vector of float cpoint})
-0:?           'ip' (temp 3-element array of structure{temp 3-component vector of float cpoint})
-0:?       Barrier (temp void)
-0:?       Test condition and select (temp void)
+0:26      move second child to first child ( temp 3-element array of structure{ temp 3-component vector of float cpoint})
+0:?         'ip' ( temp 3-element array of structure{ temp 3-component vector of float cpoint})
+0:?         'ip' (layout( location=0) in 3-element array of structure{ temp 3-component vector of float cpoint})
+0:26      move second child to first child ( temp structure{ temp 3-component vector of float cpoint})
+0:?         '@entryPointOutput' (layout( location=0) out structure{ temp 3-component vector of float cpoint})
+0:26        Function Call: @main(struct-VS_OUT-vf31[3]; ( temp structure{ temp 3-component vector of float cpoint})
+0:?           'ip' ( temp 3-element array of structure{ temp 3-component vector of float cpoint})
+0:?       Barrier ( temp void)
+0:?       Test condition and select ( temp void)
 0:?         Condition
-0:?         Compare Equal (temp bool)
-0:?           'InvocationId' (in uint InvocationID)
+0:?         Compare Equal ( temp bool)
+0:?           'InvocationId' ( in uint InvocationID)
 0:?           Constant:
 0:?             0 (const int)
 0:?         true case
-0:?         Function Call: PCF( (temp void)
-0:33  Function Definition: PCF( (temp void)
+0:?         Function Call: PCF( ( temp void)
+0:33  Function Definition: PCF( ( temp void)
 0:33    Function Parameters: 
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out structure{temp 3-component vector of float cpoint})
-0:?     'ip' (layout(location=0 ) in 3-element array of structure{temp 3-component vector of float cpoint})
-0:?     'InvocationId' (in uint InvocationID)
+0:?     '@entryPointOutput' (layout( location=0) out structure{ temp 3-component vector of float cpoint})
+0:?     'ip' (layout( location=0) in 3-element array of structure{ temp 3-component vector of float cpoint})
+0:?     'InvocationId' ( in uint InvocationID)
 
 
 Linked tessellation control stage:
@@ -53,49 +53,49 @@ Linked tessellation control stage:
 Shader version: 450
 vertices = 3
 0:? Sequence
-0:26  Function Definition: @main(struct-VS_OUT-vf31[3]; (temp structure{temp 3-component vector of float cpoint})
+0:26  Function Definition: @main(struct-VS_OUT-vf31[3]; ( temp structure{ temp 3-component vector of float cpoint})
 0:26    Function Parameters: 
-0:26      'ip' (in 3-element array of structure{temp 3-component vector of float cpoint})
+0:26      'ip' ( in 3-element array of structure{ temp 3-component vector of float cpoint})
 0:?     Sequence
-0:28      move second child to first child (temp 3-component vector of float)
-0:28        cpoint: direct index for structure (temp 3-component vector of float)
-0:28          'output' (temp structure{temp 3-component vector of float cpoint})
+0:28      move second child to first child ( temp 3-component vector of float)
+0:28        cpoint: direct index for structure ( temp 3-component vector of float)
+0:28          'output' ( temp structure{ temp 3-component vector of float cpoint})
 0:28          Constant:
 0:28            0 (const int)
-0:28        cpoint: direct index for structure (temp 3-component vector of float)
-0:28          direct index (temp structure{temp 3-component vector of float cpoint})
-0:28            'ip' (in 3-element array of structure{temp 3-component vector of float cpoint})
+0:28        cpoint: direct index for structure ( temp 3-component vector of float)
+0:28          direct index ( temp structure{ temp 3-component vector of float cpoint})
+0:28            'ip' ( in 3-element array of structure{ temp 3-component vector of float cpoint})
 0:28            Constant:
 0:28              0 (const int)
 0:28          Constant:
 0:28            0 (const int)
 0:29      Branch: Return with expression
-0:29        'output' (temp structure{temp 3-component vector of float cpoint})
-0:26  Function Definition: main( (temp void)
+0:29        'output' ( temp structure{ temp 3-component vector of float cpoint})
+0:26  Function Definition: main( ( temp void)
 0:26    Function Parameters: 
 0:?     Sequence
-0:26      move second child to first child (temp 3-element array of structure{temp 3-component vector of float cpoint})
-0:?         'ip' (temp 3-element array of structure{temp 3-component vector of float cpoint})
-0:?         'ip' (layout(location=0 ) in 3-element array of structure{temp 3-component vector of float cpoint})
-0:26      move second child to first child (temp structure{temp 3-component vector of float cpoint})
-0:?         '@entryPointOutput' (layout(location=0 ) out structure{temp 3-component vector of float cpoint})
-0:26        Function Call: @main(struct-VS_OUT-vf31[3]; (temp structure{temp 3-component vector of float cpoint})
-0:?           'ip' (temp 3-element array of structure{temp 3-component vector of float cpoint})
-0:?       Barrier (temp void)
-0:?       Test condition and select (temp void)
+0:26      move second child to first child ( temp 3-element array of structure{ temp 3-component vector of float cpoint})
+0:?         'ip' ( temp 3-element array of structure{ temp 3-component vector of float cpoint})
+0:?         'ip' (layout( location=0) in 3-element array of structure{ temp 3-component vector of float cpoint})
+0:26      move second child to first child ( temp structure{ temp 3-component vector of float cpoint})
+0:?         '@entryPointOutput' (layout( location=0) out structure{ temp 3-component vector of float cpoint})
+0:26        Function Call: @main(struct-VS_OUT-vf31[3]; ( temp structure{ temp 3-component vector of float cpoint})
+0:?           'ip' ( temp 3-element array of structure{ temp 3-component vector of float cpoint})
+0:?       Barrier ( temp void)
+0:?       Test condition and select ( temp void)
 0:?         Condition
-0:?         Compare Equal (temp bool)
-0:?           'InvocationId' (in uint InvocationID)
+0:?         Compare Equal ( temp bool)
+0:?           'InvocationId' ( in uint InvocationID)
 0:?           Constant:
 0:?             0 (const int)
 0:?         true case
-0:?         Function Call: PCF( (temp void)
-0:33  Function Definition: PCF( (temp void)
+0:?         Function Call: PCF( ( temp void)
+0:33  Function Definition: PCF( ( temp void)
 0:33    Function Parameters: 
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out structure{temp 3-component vector of float cpoint})
-0:?     'ip' (layout(location=0 ) in 3-element array of structure{temp 3-component vector of float cpoint})
-0:?     'InvocationId' (in uint InvocationID)
+0:?     '@entryPointOutput' (layout( location=0) out structure{ temp 3-component vector of float cpoint})
+0:?     'ip' (layout( location=0) in 3-element array of structure{ temp 3-component vector of float cpoint})
+0:?     'InvocationId' ( in uint InvocationID)
 
 // Module Version 10000
 // Generated by (magic number): 80001

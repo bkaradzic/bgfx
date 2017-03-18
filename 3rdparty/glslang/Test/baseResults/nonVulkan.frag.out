@@ -10,10 +10,10 @@ ERROR: 4 compilation errors.  No code generated.
 Shader version: 450
 ERROR: node is still EOpNull!
 0:?   Linker Objects
-0:?     'arraySize' (specialization-constant const int)
+0:?     'arraySize' ( specialization-constant const int)
 0:?       12 (const int)
-0:?     'foo' (temp int)
-0:?     'ubi' (layout(column_major std430 push_constant ) uniform block{layout(column_major std430 offset=0 ) uniform int a})
+0:?     'foo' ( temp int)
+0:?     'ubi' (layout( column_major std430 push_constant) uniform block{layout( column_major std430 offset=0) uniform int a})
 
 
 Linked fragment stage:
@@ -23,8 +23,8 @@ ERROR: Linking fragment stage: Missing entry point: Each stage requires one entr
 Shader version: 450
 ERROR: node is still EOpNull!
 0:?   Linker Objects
-0:?     'arraySize' (specialization-constant const int)
+0:?     'arraySize' ( specialization-constant const int)
 0:?       12 (const int)
-0:?     'foo' (temp int)
-0:?     'ubi' (layout(column_major std430 push_constant ) uniform block{layout(column_major std430 offset=0 ) uniform int a})
+0:?     'foo' ( temp int)
+0:?     'ubi' (layout( column_major std430 push_constant) uniform block{layout( column_major std430 offset=0) uniform int a})
 

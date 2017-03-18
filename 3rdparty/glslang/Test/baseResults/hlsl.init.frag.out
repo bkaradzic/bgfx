@@ -6,163 +6,163 @@ Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
 0:1  Sequence
-0:1    move second child to first child (temp 4-component vector of float)
-0:1      'a1' (global 4-component vector of float)
+0:1    move second child to first child ( temp 4-component vector of float)
+0:1      'a1' ( global 4-component vector of float)
 0:?       Constant:
 0:?         1.000000
 0:?         0.500000
 0:?         0.000000
 0:?         1.000000
-0:1    move second child to first child (temp 4-component vector of float)
-0:1      'b1' (global 4-component vector of float)
+0:1    move second child to first child ( temp 4-component vector of float)
+0:1      'b1' ( global 4-component vector of float)
 0:?       Constant:
 0:?         2.000000
 0:?         2.500000
 0:?         2.100000
 0:?         2.200000
 0:2  Sequence
-0:2    move second child to first child (temp 4-component vector of float)
-0:2      'a1i' (global 4-component vector of float)
+0:2    move second child to first child ( temp 4-component vector of float)
+0:2      'a1i' ( global 4-component vector of float)
 0:2      Constant:
 0:2        1.000000
 0:2        0.500000
 0:2        0.000000
 0:2        1.000000
-0:2    move second child to first child (temp 4-component vector of float)
-0:2      'b1i' (global 4-component vector of float)
+0:2    move second child to first child ( temp 4-component vector of float)
+0:2      'b1i' ( global 4-component vector of float)
 0:2      Constant:
 0:2        2.000000
 0:2        2.500000
 0:2        2.100000
 0:2        2.200000
 0:3  Sequence
-0:3    move second child to first child (temp float)
-0:3      'a2' (global float)
+0:3    move second child to first child ( temp float)
+0:3      'a2' ( global float)
 0:3      Constant:
 0:3        0.200000
 0:4  Sequence
-0:4    move second child to first child (temp float)
-0:4      'b3' (global float)
+0:4    move second child to first child ( temp float)
+0:4      'b3' ( global float)
 0:4      Constant:
 0:4        0.300000
 0:5  Sequence
-0:5    move second child to first child (temp float)
-0:5      'b4' (global float)
+0:5    move second child to first child ( temp float)
+0:5      'b4' ( global float)
 0:5      Constant:
 0:5        0.400000
 0:6  Sequence
-0:6    move second child to first child (temp float)
-0:6      'a5' (global float)
+0:6    move second child to first child ( temp float)
+0:6      'a5' ( global float)
 0:6      Constant:
 0:6        0.500000
-0:6    move second child to first child (temp float)
-0:6      'c5' (global float)
+0:6    move second child to first child ( temp float)
+0:6      'c5' ( global float)
 0:6      Constant:
 0:6        1.500000
 0:9  Sequence
-0:9    move second child to first child (temp structure{temp int f})
-0:9      'single1' (global structure{temp int f})
+0:9    move second child to first child ( temp structure{ temp int f})
+0:9      'single1' ( global structure{ temp int f})
 0:9      Constant:
 0:9        10 (const int)
 0:12  Sequence
-0:12    move second child to first child (temp structure{temp 2-component vector of uint v})
-0:12      'single2' (global structure{temp 2-component vector of uint v})
+0:12    move second child to first child ( temp structure{ temp 2-component vector of uint v})
+0:12      'single2' ( global structure{ temp 2-component vector of uint v})
 0:12      Constant:
 0:12        1 (const uint)
 0:12        2 (const uint)
 0:15  Sequence
-0:15    move second child to first child (temp structure{temp structure{temp int f} s1})
-0:15      'single3' (global structure{temp structure{temp int f} s1})
+0:15    move second child to first child ( temp structure{ temp structure{ temp int f} s1})
+0:15      'single3' ( global structure{ temp structure{ temp int f} s1})
 0:15      Constant:
 0:15        3 (const int)
 0:18  Sequence
-0:18    move second child to first child (temp structure{temp structure{temp 2-component vector of uint v} s1})
-0:18      'single4' (global structure{temp structure{temp 2-component vector of uint v} s1})
+0:18    move second child to first child ( temp structure{ temp structure{ temp 2-component vector of uint v} s1})
+0:18      'single4' ( global structure{ temp structure{ temp 2-component vector of uint v} s1})
 0:18      Constant:
 0:18        4 (const uint)
 0:18        5 (const uint)
-0:21  Function Definition: @ShaderFunction(vf4; (temp 4-component vector of float)
+0:21  Function Definition: @ShaderFunction(vf4; ( temp 4-component vector of float)
 0:21    Function Parameters: 
-0:21      'input' (in 4-component vector of float)
+0:21      'input' ( in 4-component vector of float)
 0:?     Sequence
 0:22      Sequence
-0:22        move second child to first child (temp 4-component vector of float)
-0:22          'a2' (temp 4-component vector of float)
+0:22        move second child to first child ( temp 4-component vector of float)
+0:22          'a2' ( temp 4-component vector of float)
 0:?           Constant:
 0:?             0.200000
 0:?             0.300000
 0:?             0.400000
 0:?             0.500000
 0:32      Sequence
-0:32        move second child to first child (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
-0:32          's2i' (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
-0:32          Construct structure (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
+0:32        move second child to first child ( temp structure{ temp int j,  temp float g,  temp structure{ temp float f,  temp int i} s1})
+0:32          's2i' ( temp structure{ temp int j,  temp float g,  temp structure{ temp float f,  temp int i} s1})
+0:32          Construct structure ( temp structure{ temp int j,  temp float g,  temp structure{ temp float f,  temp int i} s1})
 0:32            Constant:
 0:32              9 (const int)
-0:32            'a5' (global float)
-0:32            Construct structure (temp structure{temp float f, temp int i})
-0:32              Comma (temp float)
-0:32                'a3' (global float)
-0:32                'a4' (global float)
+0:32            'a5' ( global float)
+0:32            Construct structure ( temp structure{ temp float f,  temp int i})
+0:32              Comma ( temp float)
+0:32                'a3' ( global float)
+0:32                'a4' ( global float)
 0:32              Constant:
 0:32                12 (const int)
-0:32        move second child to first child (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
-0:32          's2' (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
-0:?           Construct structure (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
+0:32        move second child to first child ( temp structure{ temp int j,  temp float g,  temp structure{ temp float f,  temp int i} s1})
+0:32          's2' ( temp structure{ temp int j,  temp float g,  temp structure{ temp float f,  temp int i} s1})
+0:?           Construct structure ( temp structure{ temp int j,  temp float g,  temp structure{ temp float f,  temp int i} s1})
 0:32            Constant:
 0:32              9 (const int)
-0:32            'a5' (global float)
-0:?             Construct structure (temp structure{temp float f, temp int i})
-0:32              Comma (temp float)
-0:32                'a3' (global float)
-0:32                'a4' (global float)
+0:32            'a5' ( global float)
+0:?             Construct structure ( temp structure{ temp float f,  temp int i})
+0:32              Comma ( temp float)
+0:32                'a3' ( global float)
+0:32                'a4' ( global float)
 0:32              Constant:
 0:32                12 (const int)
 0:33      Sequence
-0:33        move second child to first child (temp float)
-0:33          'a8' (temp float)
-0:33          Comma (temp float)
-0:33            'a2' (temp 4-component vector of float)
-0:33            'b2' (global float)
-0:33        move second child to first child (temp float)
-0:33          'a9' (temp float)
-0:33          'a5' (global float)
+0:33        move second child to first child ( temp float)
+0:33          'a8' ( temp float)
+0:33          Comma ( temp float)
+0:33            'a2' ( temp 4-component vector of float)
+0:33            'b2' ( global float)
+0:33        move second child to first child ( temp float)
+0:33          'a9' ( temp float)
+0:33          'a5' ( global float)
 0:35      Branch: Return with expression
-0:35        component-wise multiply (temp 4-component vector of float)
-0:35          'input' (in 4-component vector of float)
-0:35          'a1' (global 4-component vector of float)
-0:21  Function Definition: ShaderFunction( (temp void)
+0:35        component-wise multiply ( temp 4-component vector of float)
+0:35          'input' ( in 4-component vector of float)
+0:35          'a1' ( global 4-component vector of float)
+0:21  Function Definition: ShaderFunction( ( temp void)
 0:21    Function Parameters: 
 0:?     Sequence
-0:21      move second child to first child (temp 4-component vector of float)
-0:?         'input' (temp 4-component vector of float)
-0:?         'input' (layout(location=0 ) in 4-component vector of float)
-0:21      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:21        Function Call: @ShaderFunction(vf4; (temp 4-component vector of float)
-0:?           'input' (temp 4-component vector of float)
+0:21      move second child to first child ( temp 4-component vector of float)
+0:?         'input' ( temp 4-component vector of float)
+0:?         'input' (layout( location=0) in 4-component vector of float)
+0:21      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:21        Function Call: @ShaderFunction(vf4; ( temp 4-component vector of float)
+0:?           'input' ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     'a1' (global 4-component vector of float)
-0:?     'b1' (global 4-component vector of float)
-0:?     'a1i' (global 4-component vector of float)
-0:?     'b1i' (global 4-component vector of float)
-0:?     'a2' (global float)
-0:?     'b2' (global float)
-0:?     'a3' (global float)
-0:?     'b3' (global float)
-0:?     'a4' (global float)
-0:?     'b4' (global float)
-0:?     'c4' (global float)
-0:?     'a5' (global float)
-0:?     'b5' (global float)
-0:?     'c5' (global float)
-0:?     'single1' (global structure{temp int f})
-0:?     'single2' (global structure{temp 2-component vector of uint v})
-0:?     'single3' (global structure{temp structure{temp int f} s1})
-0:?     'single4' (global structure{temp structure{temp 2-component vector of uint v} s1})
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'input' (layout(location=0 ) in 4-component vector of float)
-0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(row_major std140 ) uniform float a, layout(row_major std140 ) uniform float b, layout(row_major std140 ) uniform float c})
+0:?     'a1' ( global 4-component vector of float)
+0:?     'b1' ( global 4-component vector of float)
+0:?     'a1i' ( global 4-component vector of float)
+0:?     'b1i' ( global 4-component vector of float)
+0:?     'a2' ( global float)
+0:?     'b2' ( global float)
+0:?     'a3' ( global float)
+0:?     'b3' ( global float)
+0:?     'a4' ( global float)
+0:?     'b4' ( global float)
+0:?     'c4' ( global float)
+0:?     'a5' ( global float)
+0:?     'b5' ( global float)
+0:?     'c5' ( global float)
+0:?     'single1' ( global structure{ temp int f})
+0:?     'single2' ( global structure{ temp 2-component vector of uint v})
+0:?     'single3' ( global structure{ temp structure{ temp int f} s1})
+0:?     'single4' ( global structure{ temp structure{ temp 2-component vector of uint v} s1})
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'input' (layout( location=0) in 4-component vector of float)
+0:?     'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform float a, layout( row_major std140) uniform float b, layout( row_major std140) uniform float c})
 
 
 Linked fragment stage:
@@ -172,163 +172,163 @@ Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
 0:1  Sequence
-0:1    move second child to first child (temp 4-component vector of float)
-0:1      'a1' (global 4-component vector of float)
+0:1    move second child to first child ( temp 4-component vector of float)
+0:1      'a1' ( global 4-component vector of float)
 0:?       Constant:
 0:?         1.000000
 0:?         0.500000
 0:?         0.000000
 0:?         1.000000
-0:1    move second child to first child (temp 4-component vector of float)
-0:1      'b1' (global 4-component vector of float)
+0:1    move second child to first child ( temp 4-component vector of float)
+0:1      'b1' ( global 4-component vector of float)
 0:?       Constant:
 0:?         2.000000
 0:?         2.500000
 0:?         2.100000
 0:?         2.200000
 0:2  Sequence
-0:2    move second child to first child (temp 4-component vector of float)
-0:2      'a1i' (global 4-component vector of float)
+0:2    move second child to first child ( temp 4-component vector of float)
+0:2      'a1i' ( global 4-component vector of float)
 0:2      Constant:
 0:2        1.000000
 0:2        0.500000
 0:2        0.000000
 0:2        1.000000
-0:2    move second child to first child (temp 4-component vector of float)
-0:2      'b1i' (global 4-component vector of float)
+0:2    move second child to first child ( temp 4-component vector of float)
+0:2      'b1i' ( global 4-component vector of float)
 0:2      Constant:
 0:2        2.000000
 0:2        2.500000
 0:2        2.100000
 0:2        2.200000
 0:3  Sequence
-0:3    move second child to first child (temp float)
-0:3      'a2' (global float)
+0:3    move second child to first child ( temp float)
+0:3      'a2' ( global float)
 0:3      Constant:
 0:3        0.200000
 0:4  Sequence
-0:4    move second child to first child (temp float)
-0:4      'b3' (global float)
+0:4    move second child to first child ( temp float)
+0:4      'b3' ( global float)
 0:4      Constant:
 0:4        0.300000
 0:5  Sequence
-0:5    move second child to first child (temp float)
-0:5      'b4' (global float)
+0:5    move second child to first child ( temp float)
+0:5      'b4' ( global float)
 0:5      Constant:
 0:5        0.400000
 0:6  Sequence
-0:6    move second child to first child (temp float)
-0:6      'a5' (global float)
+0:6    move second child to first child ( temp float)
+0:6      'a5' ( global float)
 0:6      Constant:
 0:6        0.500000
-0:6    move second child to first child (temp float)
-0:6      'c5' (global float)
+0:6    move second child to first child ( temp float)
+0:6      'c5' ( global float)
 0:6      Constant:
 0:6        1.500000
 0:9  Sequence
-0:9    move second child to first child (temp structure{temp int f})
-0:9      'single1' (global structure{temp int f})
+0:9    move second child to first child ( temp structure{ temp int f})
+0:9      'single1' ( global structure{ temp int f})
 0:9      Constant:
 0:9        10 (const int)
 0:12  Sequence
-0:12    move second child to first child (temp structure{temp 2-component vector of uint v})
-0:12      'single2' (global structure{temp 2-component vector of uint v})
+0:12    move second child to first child ( temp structure{ temp 2-component vector of uint v})
+0:12      'single2' ( global structure{ temp 2-component vector of uint v})
 0:12      Constant:
 0:12        1 (const uint)
 0:12        2 (const uint)
 0:15  Sequence
-0:15    move second child to first child (temp structure{temp structure{temp int f} s1})
-0:15      'single3' (global structure{temp structure{temp int f} s1})
+0:15    move second child to first child ( temp structure{ temp structure{ temp int f} s1})
+0:15      'single3' ( global structure{ temp structure{ temp int f} s1})
 0:15      Constant:
 0:15        3 (const int)
 0:18  Sequence
-0:18    move second child to first child (temp structure{temp structure{temp 2-component vector of uint v} s1})
-0:18      'single4' (global structure{temp structure{temp 2-component vector of uint v} s1})
+0:18    move second child to first child ( temp structure{ temp structure{ temp 2-component vector of uint v} s1})
+0:18      'single4' ( global structure{ temp structure{ temp 2-component vector of uint v} s1})
 0:18      Constant:
 0:18        4 (const uint)
 0:18        5 (const uint)
-0:21  Function Definition: @ShaderFunction(vf4; (temp 4-component vector of float)
+0:21  Function Definition: @ShaderFunction(vf4; ( temp 4-component vector of float)
 0:21    Function Parameters: 
-0:21      'input' (in 4-component vector of float)
+0:21      'input' ( in 4-component vector of float)
 0:?     Sequence
 0:22      Sequence
-0:22        move second child to first child (temp 4-component vector of float)
-0:22          'a2' (temp 4-component vector of float)
+0:22        move second child to first child ( temp 4-component vector of float)
+0:22          'a2' ( temp 4-component vector of float)
 0:?           Constant:
 0:?             0.200000
 0:?             0.300000
 0:?             0.400000
 0:?             0.500000
 0:32      Sequence
-0:32        move second child to first child (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
-0:32          's2i' (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
-0:32          Construct structure (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
+0:32        move second child to first child ( temp structure{ temp int j,  temp float g,  temp structure{ temp float f,  temp int i} s1})
+0:32          's2i' ( temp structure{ temp int j,  temp float g,  temp structure{ temp float f,  temp int i} s1})
+0:32          Construct structure ( temp structure{ temp int j,  temp float g,  temp structure{ temp float f,  temp int i} s1})
 0:32            Constant:
 0:32              9 (const int)
-0:32            'a5' (global float)
-0:32            Construct structure (temp structure{temp float f, temp int i})
-0:32              Comma (temp float)
-0:32                'a3' (global float)
-0:32                'a4' (global float)
+0:32            'a5' ( global float)
+0:32            Construct structure ( temp structure{ temp float f,  temp int i})
+0:32              Comma ( temp float)
+0:32                'a3' ( global float)
+0:32                'a4' ( global float)
 0:32              Constant:
 0:32                12 (const int)
-0:32        move second child to first child (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
-0:32          's2' (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
-0:?           Construct structure (temp structure{temp int j, temp float g, temp structure{temp float f, temp int i} s1})
+0:32        move second child to first child ( temp structure{ temp int j,  temp float g,  temp structure{ temp float f,  temp int i} s1})
+0:32          's2' ( temp structure{ temp int j,  temp float g,  temp structure{ temp float f,  temp int i} s1})
+0:?           Construct structure ( temp structure{ temp int j,  temp float g,  temp structure{ temp float f,  temp int i} s1})
 0:32            Constant:
 0:32              9 (const int)
-0:32            'a5' (global float)
-0:?             Construct structure (temp structure{temp float f, temp int i})
-0:32              Comma (temp float)
-0:32                'a3' (global float)
-0:32                'a4' (global float)
+0:32            'a5' ( global float)
+0:?             Construct structure ( temp structure{ temp float f,  temp int i})
+0:32              Comma ( temp float)
+0:32                'a3' ( global float)
+0:32                'a4' ( global float)
 0:32              Constant:
 0:32                12 (const int)
 0:33      Sequence
-0:33        move second child to first child (temp float)
-0:33          'a8' (temp float)
-0:33          Comma (temp float)
-0:33            'a2' (temp 4-component vector of float)
-0:33            'b2' (global float)
-0:33        move second child to first child (temp float)
-0:33          'a9' (temp float)
-0:33          'a5' (global float)
+0:33        move second child to first child ( temp float)
+0:33          'a8' ( temp float)
+0:33          Comma ( temp float)
+0:33            'a2' ( temp 4-component vector of float)
+0:33            'b2' ( global float)
+0:33        move second child to first child ( temp float)
+0:33          'a9' ( temp float)
+0:33          'a5' ( global float)
 0:35      Branch: Return with expression
-0:35        component-wise multiply (temp 4-component vector of float)
-0:35          'input' (in 4-component vector of float)
-0:35          'a1' (global 4-component vector of float)
-0:21  Function Definition: ShaderFunction( (temp void)
+0:35        component-wise multiply ( temp 4-component vector of float)
+0:35          'input' ( in 4-component vector of float)
+0:35          'a1' ( global 4-component vector of float)
+0:21  Function Definition: ShaderFunction( ( temp void)
 0:21    Function Parameters: 
 0:?     Sequence
-0:21      move second child to first child (temp 4-component vector of float)
-0:?         'input' (temp 4-component vector of float)
-0:?         'input' (layout(location=0 ) in 4-component vector of float)
-0:21      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:21        Function Call: @ShaderFunction(vf4; (temp 4-component vector of float)
-0:?           'input' (temp 4-component vector of float)
+0:21      move second child to first child ( temp 4-component vector of float)
+0:?         'input' ( temp 4-component vector of float)
+0:?         'input' (layout( location=0) in 4-component vector of float)
+0:21      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:21        Function Call: @ShaderFunction(vf4; ( temp 4-component vector of float)
+0:?           'input' ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     'a1' (global 4-component vector of float)
-0:?     'b1' (global 4-component vector of float)
-0:?     'a1i' (global 4-component vector of float)
-0:?     'b1i' (global 4-component vector of float)
-0:?     'a2' (global float)
-0:?     'b2' (global float)
-0:?     'a3' (global float)
-0:?     'b3' (global float)
-0:?     'a4' (global float)
-0:?     'b4' (global float)
-0:?     'c4' (global float)
-0:?     'a5' (global float)
-0:?     'b5' (global float)
-0:?     'c5' (global float)
-0:?     'single1' (global structure{temp int f})
-0:?     'single2' (global structure{temp 2-component vector of uint v})
-0:?     'single3' (global structure{temp structure{temp int f} s1})
-0:?     'single4' (global structure{temp structure{temp 2-component vector of uint v} s1})
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'input' (layout(location=0 ) in 4-component vector of float)
-0:?     'anon@0' (layout(row_major std140 ) uniform block{layout(row_major std140 ) uniform float a, layout(row_major std140 ) uniform float b, layout(row_major std140 ) uniform float c})
+0:?     'a1' ( global 4-component vector of float)
+0:?     'b1' ( global 4-component vector of float)
+0:?     'a1i' ( global 4-component vector of float)
+0:?     'b1i' ( global 4-component vector of float)
+0:?     'a2' ( global float)
+0:?     'b2' ( global float)
+0:?     'a3' ( global float)
+0:?     'b3' ( global float)
+0:?     'a4' ( global float)
+0:?     'b4' ( global float)
+0:?     'c4' ( global float)
+0:?     'a5' ( global float)
+0:?     'b5' ( global float)
+0:?     'c5' ( global float)
+0:?     'single1' ( global structure{ temp int f})
+0:?     'single2' ( global structure{ temp 2-component vector of uint v})
+0:?     'single3' ( global structure{ temp structure{ temp int f} s1})
+0:?     'single4' ( global structure{ temp structure{ temp 2-component vector of uint v} s1})
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'input' (layout( location=0) in 4-component vector of float)
+0:?     'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform float a, layout( row_major std140) uniform float b, layout( row_major std140) uniform float c})
 
 // Module Version 10000
 // Generated by (magic number): 80001

@@ -5,63 +5,63 @@ max_vertices = 4
 input primitive = lines
 output primitive = triangle_strip
 0:? Sequence
-0:16  Function Definition: @main(struct-VertexData-vf4-vf4-vf21[2];struct-PS_IN-vf4-vf4-vf21; (temp void)
+0:16  Function Definition: @main(struct-VertexData-vf4-vf4-vf21[2];struct-PS_IN-vf4-vf4-vf21; ( temp void)
 0:16    Function Parameters: 
-0:16      'vin' (in 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:16      'outStream' (out structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:16      'vin' ( in 2-element array of structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:16      'outStream' ( out structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
 0:?     Sequence
-0:19      move second child to first child (temp 4-component vector of float)
-0:19        color: direct index for structure (temp 4-component vector of float)
-0:19          'vout' (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:19      move second child to first child ( temp 4-component vector of float)
+0:19        color: direct index for structure ( temp 4-component vector of float)
+0:19          'vout' ( temp structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
 0:19          Constant:
 0:19            1 (const int)
-0:19        color: direct index for structure (temp 4-component vector of float)
-0:19          direct index (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:19            'vin' (in 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:19        color: direct index for structure ( temp 4-component vector of float)
+0:19          direct index ( temp structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:19            'vin' ( in 2-element array of structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
 0:19            Constant:
 0:19              1 (const int)
 0:19          Constant:
 0:19            1 (const int)
-0:20      move second child to first child (temp 2-component vector of float)
-0:20        uv: direct index for structure (temp 2-component vector of float)
-0:20          'vout' (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:20      move second child to first child ( temp 2-component vector of float)
+0:20        uv: direct index for structure ( temp 2-component vector of float)
+0:20          'vout' ( temp structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
 0:20          Constant:
 0:20            2 (const int)
-0:20        uv: direct index for structure (temp 2-component vector of float)
-0:20          direct index (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:20            'vin' (in 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:20        uv: direct index for structure ( temp 2-component vector of float)
+0:20          direct index ( temp structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:20            'vin' ( in 2-element array of structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
 0:20            Constant:
 0:20              1 (const int)
 0:20          Constant:
 0:20            2 (const int)
-0:21      move second child to first child (temp 4-component vector of float)
-0:21        position: direct index for structure (temp 4-component vector of float)
-0:21          'vout' (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:21      move second child to first child ( temp 4-component vector of float)
+0:21        position: direct index for structure ( temp 4-component vector of float)
+0:21          'vout' ( temp structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
 0:21          Constant:
 0:21            0 (const int)
-0:21        position: direct index for structure (temp 4-component vector of float)
-0:21          direct index (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:21            'vin' (in 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:21        position: direct index for structure ( temp 4-component vector of float)
+0:21          direct index ( temp structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:21            'vin' ( in 2-element array of structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
 0:21            Constant:
 0:21              1 (const int)
 0:21          Constant:
 0:21            0 (const int)
 0:22      Sequence
-0:22        move second child to first child (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:22          'outStream' (out structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:22          'vout' (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:22        EmitVertex (temp void)
-0:16  Function Definition: main( (temp void)
+0:22        move second child to first child ( temp structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:22          'outStream' ( out structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:22          'vout' ( temp structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:22        EmitVertex ( temp void)
+0:16  Function Definition: main( ( temp void)
 0:16    Function Parameters: 
 0:?     Sequence
-0:16      move second child to first child (temp 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:?         'vin' (temp 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:?         'vin' (layout(location=0 ) in 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:16      Function Call: @main(struct-VertexData-vf4-vf4-vf21[2];struct-PS_IN-vf4-vf4-vf21; (temp void)
-0:?         'vin' (temp 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:?         'outStream' (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:16      move second child to first child ( temp 2-element array of structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:?         'vin' ( temp 2-element array of structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:?         'vin' (layout( location=0) in 2-element array of structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:16      Function Call: @main(struct-VertexData-vf4-vf4-vf21[2];struct-PS_IN-vf4-vf4-vf21; ( temp void)
+0:?         'vin' ( temp 2-element array of structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:?         'outStream' ( temp structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
 0:?   Linker Objects
-0:?     'vin' (layout(location=0 ) in 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:?     'vin' (layout( location=0) in 2-element array of structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
 
 
 Linked geometry stage:
@@ -73,63 +73,63 @@ max_vertices = 4
 input primitive = lines
 output primitive = triangle_strip
 0:? Sequence
-0:16  Function Definition: @main(struct-VertexData-vf4-vf4-vf21[2];struct-PS_IN-vf4-vf4-vf21; (temp void)
+0:16  Function Definition: @main(struct-VertexData-vf4-vf4-vf21[2];struct-PS_IN-vf4-vf4-vf21; ( temp void)
 0:16    Function Parameters: 
-0:16      'vin' (in 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:16      'outStream' (out structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:16      'vin' ( in 2-element array of structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:16      'outStream' ( out structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
 0:?     Sequence
-0:19      move second child to first child (temp 4-component vector of float)
-0:19        color: direct index for structure (temp 4-component vector of float)
-0:19          'vout' (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:19      move second child to first child ( temp 4-component vector of float)
+0:19        color: direct index for structure ( temp 4-component vector of float)
+0:19          'vout' ( temp structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
 0:19          Constant:
 0:19            1 (const int)
-0:19        color: direct index for structure (temp 4-component vector of float)
-0:19          direct index (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:19            'vin' (in 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:19        color: direct index for structure ( temp 4-component vector of float)
+0:19          direct index ( temp structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:19            'vin' ( in 2-element array of structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
 0:19            Constant:
 0:19              1 (const int)
 0:19          Constant:
 0:19            1 (const int)
-0:20      move second child to first child (temp 2-component vector of float)
-0:20        uv: direct index for structure (temp 2-component vector of float)
-0:20          'vout' (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:20      move second child to first child ( temp 2-component vector of float)
+0:20        uv: direct index for structure ( temp 2-component vector of float)
+0:20          'vout' ( temp structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
 0:20          Constant:
 0:20            2 (const int)
-0:20        uv: direct index for structure (temp 2-component vector of float)
-0:20          direct index (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:20            'vin' (in 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:20        uv: direct index for structure ( temp 2-component vector of float)
+0:20          direct index ( temp structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:20            'vin' ( in 2-element array of structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
 0:20            Constant:
 0:20              1 (const int)
 0:20          Constant:
 0:20            2 (const int)
-0:21      move second child to first child (temp 4-component vector of float)
-0:21        position: direct index for structure (temp 4-component vector of float)
-0:21          'vout' (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:21      move second child to first child ( temp 4-component vector of float)
+0:21        position: direct index for structure ( temp 4-component vector of float)
+0:21          'vout' ( temp structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
 0:21          Constant:
 0:21            0 (const int)
-0:21        position: direct index for structure (temp 4-component vector of float)
-0:21          direct index (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:21            'vin' (in 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:21        position: direct index for structure ( temp 4-component vector of float)
+0:21          direct index ( temp structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:21            'vin' ( in 2-element array of structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
 0:21            Constant:
 0:21              1 (const int)
 0:21          Constant:
 0:21            0 (const int)
 0:22      Sequence
-0:22        move second child to first child (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:22          'outStream' (out structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:22          'vout' (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:22        EmitVertex (temp void)
-0:16  Function Definition: main( (temp void)
+0:22        move second child to first child ( temp structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:22          'outStream' ( out structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:22          'vout' ( temp structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:22        EmitVertex ( temp void)
+0:16  Function Definition: main( ( temp void)
 0:16    Function Parameters: 
 0:?     Sequence
-0:16      move second child to first child (temp 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:?         'vin' (temp 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:?         'vin' (layout(location=0 ) in 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:16      Function Call: @main(struct-VertexData-vf4-vf4-vf21[2];struct-PS_IN-vf4-vf4-vf21; (temp void)
-0:?         'vin' (temp 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
-0:?         'outStream' (temp structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:16      move second child to first child ( temp 2-element array of structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:?         'vin' ( temp 2-element array of structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:?         'vin' (layout( location=0) in 2-element array of structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:16      Function Call: @main(struct-VertexData-vf4-vf4-vf21[2];struct-PS_IN-vf4-vf4-vf21; ( temp void)
+0:?         'vin' ( temp 2-element array of structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
+0:?         'outStream' ( temp structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
 0:?   Linker Objects
-0:?     'vin' (layout(location=0 ) in 2-element array of structure{temp 4-component vector of float position, temp 4-component vector of float color, temp 2-component vector of float uv})
+0:?     'vin' (layout( location=0) in 2-element array of structure{ temp 4-component vector of float position,  temp 4-component vector of float color,  temp 2-component vector of float uv})
 
 // Module Version 10000
 // Generated by (magic number): 80001

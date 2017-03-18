@@ -2,35 +2,35 @@ hlsl.type.half.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:3  Function Definition: @main( (temp 4-component vector of float)
+0:3  Function Definition: @main( ( temp 4-component vector of float)
 0:3    Function Parameters: 
 0:?     Sequence
 0:4      Sequence
-0:4        move second child to first child (temp mediump float)
-0:4          'h0' (temp mediump float)
+0:4        move second child to first child ( temp mediump float)
+0:4          'h0' ( temp mediump float)
 0:4          Constant:
 0:4            0.000000
 0:5      Sequence
-0:5        move second child to first child (temp mediump 1-component vector of float)
-0:5          'h1' (temp mediump 1-component vector of float)
+0:5        move second child to first child ( temp mediump 1-component vector of float)
+0:5          'h1' ( temp mediump 1-component vector of float)
 0:5          Constant:
 0:5            1.000000
 0:6      Sequence
-0:6        move second child to first child (temp mediump 2-component vector of float)
-0:6          'h2' (temp mediump 2-component vector of float)
+0:6        move second child to first child ( temp mediump 2-component vector of float)
+0:6          'h2' ( temp mediump 2-component vector of float)
 0:6          Constant:
 0:6            2.000000
 0:6            2.000000
 0:7      Sequence
-0:7        move second child to first child (temp mediump 3-component vector of float)
-0:7          'h3' (temp mediump 3-component vector of float)
+0:7        move second child to first child ( temp mediump 3-component vector of float)
+0:7          'h3' ( temp mediump 3-component vector of float)
 0:7          Constant:
 0:7            3.000000
 0:7            3.000000
 0:7            3.000000
 0:8      Sequence
-0:8        move second child to first child (temp mediump 4-component vector of float)
-0:8          'h4' (temp mediump 4-component vector of float)
+0:8        move second child to first child ( temp mediump 4-component vector of float)
+0:8          'h4' ( temp mediump 4-component vector of float)
 0:8          Constant:
 0:8            4.000000
 0:8            4.000000
@@ -42,14 +42,14 @@ gl_FragCoord origin is upper left
 0:10          0.000000
 0:10          0.000000
 0:10          0.000000
-0:3  Function Definition: main( (temp void)
+0:3  Function Definition: main( ( temp void)
 0:3    Function Parameters: 
 0:?     Sequence
-0:3      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:3        Function Call: @main( (temp 4-component vector of float)
+0:3      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:3        Function Call: @main( ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 
 
 Linked fragment stage:
@@ -58,35 +58,35 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:3  Function Definition: @main( (temp 4-component vector of float)
+0:3  Function Definition: @main( ( temp 4-component vector of float)
 0:3    Function Parameters: 
 0:?     Sequence
 0:4      Sequence
-0:4        move second child to first child (temp mediump float)
-0:4          'h0' (temp mediump float)
+0:4        move second child to first child ( temp mediump float)
+0:4          'h0' ( temp mediump float)
 0:4          Constant:
 0:4            0.000000
 0:5      Sequence
-0:5        move second child to first child (temp mediump 1-component vector of float)
-0:5          'h1' (temp mediump 1-component vector of float)
+0:5        move second child to first child ( temp mediump 1-component vector of float)
+0:5          'h1' ( temp mediump 1-component vector of float)
 0:5          Constant:
 0:5            1.000000
 0:6      Sequence
-0:6        move second child to first child (temp mediump 2-component vector of float)
-0:6          'h2' (temp mediump 2-component vector of float)
+0:6        move second child to first child ( temp mediump 2-component vector of float)
+0:6          'h2' ( temp mediump 2-component vector of float)
 0:6          Constant:
 0:6            2.000000
 0:6            2.000000
 0:7      Sequence
-0:7        move second child to first child (temp mediump 3-component vector of float)
-0:7          'h3' (temp mediump 3-component vector of float)
+0:7        move second child to first child ( temp mediump 3-component vector of float)
+0:7          'h3' ( temp mediump 3-component vector of float)
 0:7          Constant:
 0:7            3.000000
 0:7            3.000000
 0:7            3.000000
 0:8      Sequence
-0:8        move second child to first child (temp mediump 4-component vector of float)
-0:8          'h4' (temp mediump 4-component vector of float)
+0:8        move second child to first child ( temp mediump 4-component vector of float)
+0:8          'h4' ( temp mediump 4-component vector of float)
 0:8          Constant:
 0:8            4.000000
 0:8            4.000000
@@ -98,14 +98,14 @@ gl_FragCoord origin is upper left
 0:10          0.000000
 0:10          0.000000
 0:10          0.000000
-0:3  Function Definition: main( (temp void)
+0:3  Function Definition: main( ( temp void)
 0:3    Function Parameters: 
 0:?     Sequence
-0:3      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:3        Function Call: @main( (temp 4-component vector of float)
+0:3      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:3        Function Call: @main( ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 
 // Module Version 10000
 // Generated by (magic number): 80001

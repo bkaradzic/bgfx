@@ -356,8 +356,7 @@ void ProcessArguments(int argc, char* argv[])
                 if (argc > 0) {
                     argc--;
                     argv++;
-                }
-                else
+                } else
                     Error("no <stage> specified for -S");
                 break;
             case 'G':
@@ -533,14 +532,14 @@ struct ShaderCompUnit {
     EShLanguage stage;
     std::string fileName;
     char** text;             // memory owned/managed externally
-    const char*  fileNameList[1];
+    const char* fileNameList[1];
 
     // Need to have a special constructors to adjust the fileNameList, since back end needs a list of ptrs
     ShaderCompUnit(EShLanguage istage, std::string &ifileName, char** itext)
     {
         stage = istage;
         fileName = ifileName;
-        text    = itext;
+        text = itext;
         fileNameList[0] = fileName.c_str();
     }
 
@@ -848,21 +847,23 @@ int C_DECL main(int argc, char* argv[])
 EShLanguage FindLanguage(const std::string& name, bool parseSuffix)
 {
     size_t ext = 0;
+    std::string suffix;
 
-    // Search for a suffix on a filename: e.g, "myfile.frag".  If given
-    // the suffix directly, we skip looking the '.'
-    if (parseSuffix) {
-        ext = name.rfind('.');
-        if (ext == std::string::npos) {
-            usage();
-            return EShLangVertex;
-        }
-        ++ext;
-    }
-
-    std::string suffix = name.substr(ext, std::string::npos);
     if (shaderStageName)
         suffix = shaderStageName;
+    else {
+        // Search for a suffix on a filename: e.g, "myfile.frag".  If given
+        // the suffix directly, we skip looking for the '.'
+        if (parseSuffix) {
+            ext = name.rfind('.');
+            if (ext == std::string::npos) {
+                usage();
+                return EShLangVertex;
+            }
+            ++ext;
+        }
+        suffix = name.substr(ext, std::string::npos);
+    }
 
     if (suffix == "vert")
         return EShLangVertex;
@@ -957,8 +958,8 @@ void usage()
            "  -H          print human readable form of SPIR-V; turns on -V\n"
            "  -E          print pre-processed GLSL; cannot be used with -l;\n"
            "              errors will appear on stderr.\n"
-           "  -S <stage>  uses explicit stage specified, rather then the file extension.\n"
-           "              valid choices are vert, tesc, tese, geom, frag, or comp\n"
+           "  -S <stage>  uses specified stage rather than parsing the file extension\n"
+           "              valid choices for <stage> are vert, tesc, tese, geom, frag, or comp\n"
            "  -c          configuration dump;\n"
            "              creates the default configuration file (redirect to a .conf file)\n"
            "  -C          cascading errors; risks crashes from accumulation of error recoveries\n"

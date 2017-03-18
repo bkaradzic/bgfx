@@ -2,107 +2,107 @@ hlsl.if.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:2  Function Definition: @PixelShaderFunction(vf4; (temp 4-component vector of float)
+0:2  Function Definition: @PixelShaderFunction(vf4; ( temp 4-component vector of float)
 0:2    Function Parameters: 
-0:2      'input' (in 4-component vector of float)
+0:2      'input' ( in 4-component vector of float)
 0:?     Sequence
-0:3      Test condition and select (temp void)
+0:3      Test condition and select ( temp void)
 0:3        Condition
-0:3        all (temp bool)
-0:3          Equal (temp 4-component vector of bool)
-0:3            'input' (in 4-component vector of float)
-0:3            'input' (in 4-component vector of float)
+0:3        all ( temp bool)
+0:3          Equal ( temp 4-component vector of bool)
+0:3            'input' ( in 4-component vector of float)
+0:3            'input' ( in 4-component vector of float)
 0:3        true case
 0:4        Branch: Return with expression
-0:4          'input' (in 4-component vector of float)
-0:6      Test condition and select (temp void)
+0:4          'input' ( in 4-component vector of float)
+0:6      Test condition and select ( temp void)
 0:6        Condition
-0:6        all (temp bool)
-0:6          Equal (temp 4-component vector of bool)
-0:6            'input' (in 4-component vector of float)
-0:6            'input' (in 4-component vector of float)
+0:6        all ( temp bool)
+0:6          Equal ( temp 4-component vector of bool)
+0:6            'input' ( in 4-component vector of float)
+0:6            'input' ( in 4-component vector of float)
 0:6        true case
 0:7        Branch: Return with expression
-0:7          'input' (in 4-component vector of float)
+0:7          'input' ( in 4-component vector of float)
 0:6        false case
 0:9        Branch: Return with expression
-0:9          Negate value (temp 4-component vector of float)
-0:9            'input' (in 4-component vector of float)
-0:11      Test condition and select (temp void)
+0:9          Negate value ( temp 4-component vector of float)
+0:9            'input' ( in 4-component vector of float)
+0:11      Test condition and select ( temp void)
 0:11        Condition
-0:11        all (temp bool)
-0:11          Equal (temp 4-component vector of bool)
-0:11            'input' (in 4-component vector of float)
-0:11            'input' (in 4-component vector of float)
+0:11        all ( temp bool)
+0:11          Equal ( temp 4-component vector of bool)
+0:11            'input' ( in 4-component vector of float)
+0:11            'input' ( in 4-component vector of float)
 0:11        true case is null
-0:14      Test condition and select (temp void)
+0:14      Test condition and select ( temp void)
 0:14        Condition
-0:14        all (temp bool)
-0:14          Equal (temp 4-component vector of bool)
-0:14            'input' (in 4-component vector of float)
-0:14            'input' (in 4-component vector of float)
+0:14        all ( temp bool)
+0:14          Equal ( temp 4-component vector of bool)
+0:14            'input' ( in 4-component vector of float)
+0:14            'input' ( in 4-component vector of float)
 0:14        true case is null
-0:19      Test condition and select (temp void)
+0:19      Test condition and select ( temp void)
 0:19        Condition
-0:19        all (temp bool)
-0:19          Equal (temp 4-component vector of bool)
-0:19            'input' (in 4-component vector of float)
-0:19            'input' (in 4-component vector of float)
+0:19        all ( temp bool)
+0:19          Equal ( temp 4-component vector of bool)
+0:19            'input' ( in 4-component vector of float)
+0:19            'input' ( in 4-component vector of float)
 0:19        true case
 0:?         Sequence
 0:20          Branch: Return with expression
-0:20            'input' (in 4-component vector of float)
-0:23      Test condition and select (temp void)
+0:20            'input' ( in 4-component vector of float)
+0:23      Test condition and select ( temp void)
 0:23        Condition
-0:23        all (temp bool)
-0:23          Equal (temp 4-component vector of bool)
-0:23            'input' (in 4-component vector of float)
-0:23            'input' (in 4-component vector of float)
+0:23        all ( temp bool)
+0:23          Equal ( temp 4-component vector of bool)
+0:23            'input' ( in 4-component vector of float)
+0:23            'input' ( in 4-component vector of float)
 0:23        true case
 0:?         Sequence
 0:24          Branch: Return with expression
-0:24            'input' (in 4-component vector of float)
+0:24            'input' ( in 4-component vector of float)
 0:23        false case
 0:?         Sequence
 0:26          Branch: Return with expression
-0:26            Negate value (temp 4-component vector of float)
-0:26              'input' (in 4-component vector of float)
-0:30      Test condition and select (temp void)
+0:26            Negate value ( temp 4-component vector of float)
+0:26              'input' ( in 4-component vector of float)
+0:30      Test condition and select ( temp void)
 0:30        Condition
-0:30        move second child to first child (temp float)
-0:30          'ii' (temp float)
-0:30          direct index (temp float)
-0:30            'input' (in 4-component vector of float)
+0:30        move second child to first child ( temp float)
+0:30          'ii' ( temp float)
+0:30          direct index ( temp float)
+0:30            'input' ( in 4-component vector of float)
 0:30            Constant:
 0:30              2 (const int)
 0:30        true case
-0:31        Pre-Increment (temp float)
-0:31          'ii' (temp float)
-0:32      Pre-Increment (temp int)
-0:32        'ii' (temp int)
-0:33      Test condition and select (temp void)
+0:31        Pre-Increment ( temp float)
+0:31          'ii' ( temp float)
+0:32      Pre-Increment ( temp int)
+0:32        'ii' ( temp int)
+0:33      Test condition and select ( temp void)
 0:33        Condition
-0:33        Compare Equal (temp bool)
-0:33          Convert int to float (temp float)
-0:33            'ii' (temp int)
+0:33        Compare Equal ( temp bool)
+0:33          Convert int to float ( temp float)
+0:33            'ii' ( temp int)
 0:33          Constant:
 0:33            1.000000
 0:33        true case
-0:34        Pre-Increment (temp int)
-0:34          'ii' (temp int)
-0:2  Function Definition: PixelShaderFunction( (temp void)
+0:34        Pre-Increment ( temp int)
+0:34          'ii' ( temp int)
+0:2  Function Definition: PixelShaderFunction( ( temp void)
 0:2    Function Parameters: 
 0:?     Sequence
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         'input' (temp 4-component vector of float)
-0:?         'input' (layout(location=0 ) in 4-component vector of float)
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:2        Function Call: @PixelShaderFunction(vf4; (temp 4-component vector of float)
-0:?           'input' (temp 4-component vector of float)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         'input' ( temp 4-component vector of float)
+0:?         'input' (layout( location=0) in 4-component vector of float)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:2        Function Call: @PixelShaderFunction(vf4; ( temp 4-component vector of float)
+0:?           'input' ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'input' (layout(location=0 ) in 4-component vector of float)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'input' (layout( location=0) in 4-component vector of float)
 
 
 Linked fragment stage:
@@ -111,107 +111,107 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:2  Function Definition: @PixelShaderFunction(vf4; (temp 4-component vector of float)
+0:2  Function Definition: @PixelShaderFunction(vf4; ( temp 4-component vector of float)
 0:2    Function Parameters: 
-0:2      'input' (in 4-component vector of float)
+0:2      'input' ( in 4-component vector of float)
 0:?     Sequence
-0:3      Test condition and select (temp void)
+0:3      Test condition and select ( temp void)
 0:3        Condition
-0:3        all (temp bool)
-0:3          Equal (temp 4-component vector of bool)
-0:3            'input' (in 4-component vector of float)
-0:3            'input' (in 4-component vector of float)
+0:3        all ( temp bool)
+0:3          Equal ( temp 4-component vector of bool)
+0:3            'input' ( in 4-component vector of float)
+0:3            'input' ( in 4-component vector of float)
 0:3        true case
 0:4        Branch: Return with expression
-0:4          'input' (in 4-component vector of float)
-0:6      Test condition and select (temp void)
+0:4          'input' ( in 4-component vector of float)
+0:6      Test condition and select ( temp void)
 0:6        Condition
-0:6        all (temp bool)
-0:6          Equal (temp 4-component vector of bool)
-0:6            'input' (in 4-component vector of float)
-0:6            'input' (in 4-component vector of float)
+0:6        all ( temp bool)
+0:6          Equal ( temp 4-component vector of bool)
+0:6            'input' ( in 4-component vector of float)
+0:6            'input' ( in 4-component vector of float)
 0:6        true case
 0:7        Branch: Return with expression
-0:7          'input' (in 4-component vector of float)
+0:7          'input' ( in 4-component vector of float)
 0:6        false case
 0:9        Branch: Return with expression
-0:9          Negate value (temp 4-component vector of float)
-0:9            'input' (in 4-component vector of float)
-0:11      Test condition and select (temp void)
+0:9          Negate value ( temp 4-component vector of float)
+0:9            'input' ( in 4-component vector of float)
+0:11      Test condition and select ( temp void)
 0:11        Condition
-0:11        all (temp bool)
-0:11          Equal (temp 4-component vector of bool)
-0:11            'input' (in 4-component vector of float)
-0:11            'input' (in 4-component vector of float)
+0:11        all ( temp bool)
+0:11          Equal ( temp 4-component vector of bool)
+0:11            'input' ( in 4-component vector of float)
+0:11            'input' ( in 4-component vector of float)
 0:11        true case is null
-0:14      Test condition and select (temp void)
+0:14      Test condition and select ( temp void)
 0:14        Condition
-0:14        all (temp bool)
-0:14          Equal (temp 4-component vector of bool)
-0:14            'input' (in 4-component vector of float)
-0:14            'input' (in 4-component vector of float)
+0:14        all ( temp bool)
+0:14          Equal ( temp 4-component vector of bool)
+0:14            'input' ( in 4-component vector of float)
+0:14            'input' ( in 4-component vector of float)
 0:14        true case is null
-0:19      Test condition and select (temp void)
+0:19      Test condition and select ( temp void)
 0:19        Condition
-0:19        all (temp bool)
-0:19          Equal (temp 4-component vector of bool)
-0:19            'input' (in 4-component vector of float)
-0:19            'input' (in 4-component vector of float)
+0:19        all ( temp bool)
+0:19          Equal ( temp 4-component vector of bool)
+0:19            'input' ( in 4-component vector of float)
+0:19            'input' ( in 4-component vector of float)
 0:19        true case
 0:?         Sequence
 0:20          Branch: Return with expression
-0:20            'input' (in 4-component vector of float)
-0:23      Test condition and select (temp void)
+0:20            'input' ( in 4-component vector of float)
+0:23      Test condition and select ( temp void)
 0:23        Condition
-0:23        all (temp bool)
-0:23          Equal (temp 4-component vector of bool)
-0:23            'input' (in 4-component vector of float)
-0:23            'input' (in 4-component vector of float)
+0:23        all ( temp bool)
+0:23          Equal ( temp 4-component vector of bool)
+0:23            'input' ( in 4-component vector of float)
+0:23            'input' ( in 4-component vector of float)
 0:23        true case
 0:?         Sequence
 0:24          Branch: Return with expression
-0:24            'input' (in 4-component vector of float)
+0:24            'input' ( in 4-component vector of float)
 0:23        false case
 0:?         Sequence
 0:26          Branch: Return with expression
-0:26            Negate value (temp 4-component vector of float)
-0:26              'input' (in 4-component vector of float)
-0:30      Test condition and select (temp void)
+0:26            Negate value ( temp 4-component vector of float)
+0:26              'input' ( in 4-component vector of float)
+0:30      Test condition and select ( temp void)
 0:30        Condition
-0:30        move second child to first child (temp float)
-0:30          'ii' (temp float)
-0:30          direct index (temp float)
-0:30            'input' (in 4-component vector of float)
+0:30        move second child to first child ( temp float)
+0:30          'ii' ( temp float)
+0:30          direct index ( temp float)
+0:30            'input' ( in 4-component vector of float)
 0:30            Constant:
 0:30              2 (const int)
 0:30        true case
-0:31        Pre-Increment (temp float)
-0:31          'ii' (temp float)
-0:32      Pre-Increment (temp int)
-0:32        'ii' (temp int)
-0:33      Test condition and select (temp void)
+0:31        Pre-Increment ( temp float)
+0:31          'ii' ( temp float)
+0:32      Pre-Increment ( temp int)
+0:32        'ii' ( temp int)
+0:33      Test condition and select ( temp void)
 0:33        Condition
-0:33        Compare Equal (temp bool)
-0:33          Convert int to float (temp float)
-0:33            'ii' (temp int)
+0:33        Compare Equal ( temp bool)
+0:33          Convert int to float ( temp float)
+0:33            'ii' ( temp int)
 0:33          Constant:
 0:33            1.000000
 0:33        true case
-0:34        Pre-Increment (temp int)
-0:34          'ii' (temp int)
-0:2  Function Definition: PixelShaderFunction( (temp void)
+0:34        Pre-Increment ( temp int)
+0:34          'ii' ( temp int)
+0:2  Function Definition: PixelShaderFunction( ( temp void)
 0:2    Function Parameters: 
 0:?     Sequence
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         'input' (temp 4-component vector of float)
-0:?         'input' (layout(location=0 ) in 4-component vector of float)
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:2        Function Call: @PixelShaderFunction(vf4; (temp 4-component vector of float)
-0:?           'input' (temp 4-component vector of float)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         'input' ( temp 4-component vector of float)
+0:?         'input' (layout( location=0) in 4-component vector of float)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:2        Function Call: @PixelShaderFunction(vf4; ( temp 4-component vector of float)
+0:?           'input' ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'input' (layout(location=0 ) in 4-component vector of float)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'input' (layout( location=0) in 4-component vector of float)
 
 // Module Version 10000
 // Generated by (magic number): 80001

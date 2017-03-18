@@ -2,16 +2,16 @@ hlsl.precise.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:6  Function Definition: MyFunction(f1;vf3; (temp void)
+0:6  Function Definition: MyFunction(f1;vf3; ( temp void)
 0:6    Function Parameters: 
-0:6      'myfloat' (noContraction in float)
-0:6      'myfloat3' (noContraction out 3-component vector of float)
-0:9  Function Definition: @main( (temp structure{noContraction temp 4-component vector of float color})
+0:6      'myfloat' ( noContraction in float)
+0:6      'myfloat3' ( noContraction out 3-component vector of float)
+0:9  Function Definition: @main( ( temp structure{ noContraction temp 4-component vector of float color})
 0:9    Function Parameters: 
 0:?     Sequence
-0:11      move second child to first child (noContraction temp 4-component vector of float)
-0:11        color: direct index for structure (noContraction temp 4-component vector of float)
-0:11          'ps_output' (temp structure{noContraction temp 4-component vector of float color})
+0:11      move second child to first child ( noContraction temp 4-component vector of float)
+0:11        color: direct index for structure ( noContraction temp 4-component vector of float)
+0:11          'ps_output' ( temp structure{ noContraction temp 4-component vector of float color})
 0:11          Constant:
 0:11            0 (const int)
 0:11        Constant:
@@ -20,20 +20,20 @@ gl_FragCoord origin is upper left
 0:11          1.000000
 0:11          1.000000
 0:12      Branch: Return with expression
-0:12        'ps_output' (temp structure{noContraction temp 4-component vector of float color})
-0:9  Function Definition: main( (temp void)
+0:12        'ps_output' ( temp structure{ noContraction temp 4-component vector of float color})
+0:9  Function Definition: main( ( temp void)
 0:9    Function Parameters: 
 0:?     Sequence
 0:9      Sequence
-0:9        move second child to first child (noContraction temp 4-component vector of float)
-0:?           'color' (layout(location=0 ) noContraction out 4-component vector of float)
-0:9          color: direct index for structure (noContraction temp 4-component vector of float)
-0:9            Function Call: @main( (temp structure{noContraction temp 4-component vector of float color})
+0:9        move second child to first child ( noContraction temp 4-component vector of float)
+0:?           'color' (layout( location=0) noContraction out 4-component vector of float)
+0:9          color: direct index for structure ( noContraction temp 4-component vector of float)
+0:9            Function Call: @main( ( temp structure{ noContraction temp 4-component vector of float color})
 0:9            Constant:
 0:9              0 (const int)
 0:?   Linker Objects
-0:?     'precisefloat' (noContraction global float)
-0:?     'color' (layout(location=0 ) noContraction out 4-component vector of float)
+0:?     'precisefloat' ( noContraction global float)
+0:?     'color' (layout( location=0) noContraction out 4-component vector of float)
 
 
 Linked fragment stage:
@@ -42,16 +42,16 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:6  Function Definition: MyFunction(f1;vf3; (temp void)
+0:6  Function Definition: MyFunction(f1;vf3; ( temp void)
 0:6    Function Parameters: 
-0:6      'myfloat' (noContraction in float)
-0:6      'myfloat3' (noContraction out 3-component vector of float)
-0:9  Function Definition: @main( (temp structure{noContraction temp 4-component vector of float color})
+0:6      'myfloat' ( noContraction in float)
+0:6      'myfloat3' ( noContraction out 3-component vector of float)
+0:9  Function Definition: @main( ( temp structure{ noContraction temp 4-component vector of float color})
 0:9    Function Parameters: 
 0:?     Sequence
-0:11      move second child to first child (noContraction temp 4-component vector of float)
-0:11        color: direct index for structure (noContraction temp 4-component vector of float)
-0:11          'ps_output' (temp structure{noContraction temp 4-component vector of float color})
+0:11      move second child to first child ( noContraction temp 4-component vector of float)
+0:11        color: direct index for structure ( noContraction temp 4-component vector of float)
+0:11          'ps_output' ( temp structure{ noContraction temp 4-component vector of float color})
 0:11          Constant:
 0:11            0 (const int)
 0:11        Constant:
@@ -60,20 +60,20 @@ gl_FragCoord origin is upper left
 0:11          1.000000
 0:11          1.000000
 0:12      Branch: Return with expression
-0:12        'ps_output' (temp structure{noContraction temp 4-component vector of float color})
-0:9  Function Definition: main( (temp void)
+0:12        'ps_output' ( temp structure{ noContraction temp 4-component vector of float color})
+0:9  Function Definition: main( ( temp void)
 0:9    Function Parameters: 
 0:?     Sequence
 0:9      Sequence
-0:9        move second child to first child (noContraction temp 4-component vector of float)
-0:?           'color' (layout(location=0 ) noContraction out 4-component vector of float)
-0:9          color: direct index for structure (noContraction temp 4-component vector of float)
-0:9            Function Call: @main( (temp structure{noContraction temp 4-component vector of float color})
+0:9        move second child to first child ( noContraction temp 4-component vector of float)
+0:?           'color' (layout( location=0) noContraction out 4-component vector of float)
+0:9          color: direct index for structure ( noContraction temp 4-component vector of float)
+0:9            Function Call: @main( ( temp structure{ noContraction temp 4-component vector of float color})
 0:9            Constant:
 0:9              0 (const int)
 0:?   Linker Objects
-0:?     'precisefloat' (noContraction global float)
-0:?     'color' (layout(location=0 ) noContraction out 4-component vector of float)
+0:?     'precisefloat' ( noContraction global float)
+0:?     'color' (layout( location=0) noContraction out 4-component vector of float)
 
 // Module Version 10000
 // Generated by (magic number): 80001

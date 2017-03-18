@@ -43,7 +43,8 @@
 
 namespace glslang {
 
-    class TAttributeMap; // forward declare
+    class TAttributeMap;
+    class TFunctionDeclarator;
 
     // Should just be the grammar aspect of HLSL.
     // Described in more detail in hlslGrammar.cpp.
@@ -88,10 +89,12 @@ namespace glslang {
         bool acceptStruct(TType&, TIntermNode*& nodeList);
         bool acceptStructDeclarationList(TTypeList*&, TIntermNode*& nodeList, const TString& typeName);
         bool acceptMemberFunctionDefinition(TIntermNode*& nodeList, const TString& typeName,
-                                            const TType&, const TString& memberName);
+                                            const TType&, const TString& memberName, TFunctionDeclarator&,
+                                            TVector<HlslToken>* deferredTokens);
         bool acceptFunctionParameters(TFunction&);
         bool acceptParameterDeclaration(TFunction&);
-        bool acceptFunctionDefinition(TFunction&, TIntermNode*& nodeList, const TAttributeMap&);
+        bool acceptFunctionDefinition(TFunctionDeclarator&, TIntermNode*& nodeList, TVector<HlslToken>* deferredTokens);
+        bool acceptFunctionBody(TFunctionDeclarator& declarator, TIntermNode*& nodeList);
         bool acceptParenExpression(TIntermTyped*&);
         bool acceptExpression(TIntermTyped*&);
         bool acceptInitializer(TIntermTyped*&);
@@ -120,6 +123,8 @@ namespace glslang {
         void acceptArraySpecifier(TArraySizes*&);
         bool acceptPostDecls(TQualifier&);
         bool acceptDefaultParameterDeclaration(const TType&, TIntermTyped*&);
+
+        bool captureBlockTokens(TVector<HlslToken>& tokens);
 
         HlslParseContext& parseContext;  // state of parsing and helper functions for building the intermediate
         TIntermediate& intermediate;     // the final product, the intermediate representation, includes the AST

@@ -1,50 +1,50 @@
 hlsl.struct.split.trivial.vert
 Shader version: 450
 0:? Sequence
-0:16  Function Definition: @main(struct-VS_INPUT-vf41;vf4; (temp structure{temp 4-component vector of float Pos})
+0:16  Function Definition: @main(struct-VS_INPUT-vf41;vf4; ( temp structure{ temp 4-component vector of float Pos})
 0:16    Function Parameters: 
-0:16      'vsin' (in structure{temp 4-component vector of float Pos_in})
-0:16      'Pos_loose' (in 4-component vector of float)
+0:16      'vsin' ( in structure{ temp 4-component vector of float Pos_in})
+0:16      'Pos_loose' ( in 4-component vector of float)
 0:?     Sequence
-0:19      move second child to first child (temp 4-component vector of float)
-0:19        Pos: direct index for structure (temp 4-component vector of float)
-0:19          'vsout' (temp structure{temp 4-component vector of float Pos})
+0:19      move second child to first child ( temp 4-component vector of float)
+0:19        Pos: direct index for structure ( temp 4-component vector of float)
+0:19          'vsout' ( temp structure{ temp 4-component vector of float Pos})
 0:19          Constant:
 0:19            0 (const int)
-0:19        add (temp 4-component vector of float)
-0:19          Pos_in: direct index for structure (temp 4-component vector of float)
-0:19            'vsin' (in structure{temp 4-component vector of float Pos_in})
+0:19        add ( temp 4-component vector of float)
+0:19          Pos_in: direct index for structure ( temp 4-component vector of float)
+0:19            'vsin' ( in structure{ temp 4-component vector of float Pos_in})
 0:19            Constant:
 0:19              0 (const int)
-0:19          'Pos_loose' (in 4-component vector of float)
+0:19          'Pos_loose' ( in 4-component vector of float)
 0:21      Branch: Return with expression
-0:21        'vsout' (temp structure{temp 4-component vector of float Pos})
-0:16  Function Definition: main( (temp void)
+0:21        'vsout' ( temp structure{ temp 4-component vector of float Pos})
+0:16  Function Definition: main( ( temp void)
 0:16    Function Parameters: 
 0:?     Sequence
 0:16      Sequence
-0:16        move second child to first child (temp 4-component vector of float)
-0:16          Pos_in: direct index for structure (temp 4-component vector of float)
-0:?             'vsin' (temp structure{temp 4-component vector of float Pos_in})
+0:16        move second child to first child ( temp 4-component vector of float)
+0:16          Pos_in: direct index for structure ( temp 4-component vector of float)
+0:?             'vsin' ( temp structure{ temp 4-component vector of float Pos_in})
 0:16            Constant:
 0:16              0 (const int)
-0:?           'Pos_in' (layout(location=0 ) in 4-component vector of float)
-0:16      move second child to first child (temp 4-component vector of float)
-0:?         'Pos_loose' (temp 4-component vector of float)
-0:?         'Pos_loose' (layout(location=1 ) in 4-component vector of float)
+0:?           'Pos_in' (layout( location=0) in 4-component vector of float)
+0:16      move second child to first child ( temp 4-component vector of float)
+0:?         'Pos_loose' ( temp 4-component vector of float)
+0:?         'Pos_loose' (layout( location=1) in 4-component vector of float)
 0:16      Sequence
-0:16        move second child to first child (temp 4-component vector of float)
-0:?           '@entryPointOutput_Pos' (out 4-component vector of float Position)
-0:16          Pos: direct index for structure (temp 4-component vector of float)
-0:16            Function Call: @main(struct-VS_INPUT-vf41;vf4; (temp structure{temp 4-component vector of float Pos})
-0:?               'vsin' (temp structure{temp 4-component vector of float Pos_in})
-0:?               'Pos_loose' (temp 4-component vector of float)
+0:16        move second child to first child ( temp 4-component vector of float)
+0:?           '@entryPointOutput_Pos' ( out 4-component vector of float Position)
+0:16          Pos: direct index for structure ( temp 4-component vector of float)
+0:16            Function Call: @main(struct-VS_INPUT-vf41;vf4; ( temp structure{ temp 4-component vector of float Pos})
+0:?               'vsin' ( temp structure{ temp 4-component vector of float Pos_in})
+0:?               'Pos_loose' ( temp 4-component vector of float)
 0:16            Constant:
 0:16              0 (const int)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out structure{})
-0:?     'Pos_in' (layout(location=0 ) in 4-component vector of float)
-0:?     'Pos_loose' (layout(location=1 ) in 4-component vector of float)
+0:?     '@entryPointOutput' (layout( location=0) out structure{})
+0:?     'Pos_in' (layout( location=0) in 4-component vector of float)
+0:?     'Pos_loose' (layout( location=1) in 4-component vector of float)
 
 
 Linked vertex stage:
@@ -52,50 +52,50 @@ Linked vertex stage:
 
 Shader version: 450
 0:? Sequence
-0:16  Function Definition: @main(struct-VS_INPUT-vf41;vf4; (temp structure{temp 4-component vector of float Pos})
+0:16  Function Definition: @main(struct-VS_INPUT-vf41;vf4; ( temp structure{ temp 4-component vector of float Pos})
 0:16    Function Parameters: 
-0:16      'vsin' (in structure{temp 4-component vector of float Pos_in})
-0:16      'Pos_loose' (in 4-component vector of float)
+0:16      'vsin' ( in structure{ temp 4-component vector of float Pos_in})
+0:16      'Pos_loose' ( in 4-component vector of float)
 0:?     Sequence
-0:19      move second child to first child (temp 4-component vector of float)
-0:19        Pos: direct index for structure (temp 4-component vector of float)
-0:19          'vsout' (temp structure{temp 4-component vector of float Pos})
+0:19      move second child to first child ( temp 4-component vector of float)
+0:19        Pos: direct index for structure ( temp 4-component vector of float)
+0:19          'vsout' ( temp structure{ temp 4-component vector of float Pos})
 0:19          Constant:
 0:19            0 (const int)
-0:19        add (temp 4-component vector of float)
-0:19          Pos_in: direct index for structure (temp 4-component vector of float)
-0:19            'vsin' (in structure{temp 4-component vector of float Pos_in})
+0:19        add ( temp 4-component vector of float)
+0:19          Pos_in: direct index for structure ( temp 4-component vector of float)
+0:19            'vsin' ( in structure{ temp 4-component vector of float Pos_in})
 0:19            Constant:
 0:19              0 (const int)
-0:19          'Pos_loose' (in 4-component vector of float)
+0:19          'Pos_loose' ( in 4-component vector of float)
 0:21      Branch: Return with expression
-0:21        'vsout' (temp structure{temp 4-component vector of float Pos})
-0:16  Function Definition: main( (temp void)
+0:21        'vsout' ( temp structure{ temp 4-component vector of float Pos})
+0:16  Function Definition: main( ( temp void)
 0:16    Function Parameters: 
 0:?     Sequence
 0:16      Sequence
-0:16        move second child to first child (temp 4-component vector of float)
-0:16          Pos_in: direct index for structure (temp 4-component vector of float)
-0:?             'vsin' (temp structure{temp 4-component vector of float Pos_in})
+0:16        move second child to first child ( temp 4-component vector of float)
+0:16          Pos_in: direct index for structure ( temp 4-component vector of float)
+0:?             'vsin' ( temp structure{ temp 4-component vector of float Pos_in})
 0:16            Constant:
 0:16              0 (const int)
-0:?           'Pos_in' (layout(location=0 ) in 4-component vector of float)
-0:16      move second child to first child (temp 4-component vector of float)
-0:?         'Pos_loose' (temp 4-component vector of float)
-0:?         'Pos_loose' (layout(location=1 ) in 4-component vector of float)
+0:?           'Pos_in' (layout( location=0) in 4-component vector of float)
+0:16      move second child to first child ( temp 4-component vector of float)
+0:?         'Pos_loose' ( temp 4-component vector of float)
+0:?         'Pos_loose' (layout( location=1) in 4-component vector of float)
 0:16      Sequence
-0:16        move second child to first child (temp 4-component vector of float)
-0:?           '@entryPointOutput_Pos' (out 4-component vector of float Position)
-0:16          Pos: direct index for structure (temp 4-component vector of float)
-0:16            Function Call: @main(struct-VS_INPUT-vf41;vf4; (temp structure{temp 4-component vector of float Pos})
-0:?               'vsin' (temp structure{temp 4-component vector of float Pos_in})
-0:?               'Pos_loose' (temp 4-component vector of float)
+0:16        move second child to first child ( temp 4-component vector of float)
+0:?           '@entryPointOutput_Pos' ( out 4-component vector of float Position)
+0:16          Pos: direct index for structure ( temp 4-component vector of float)
+0:16            Function Call: @main(struct-VS_INPUT-vf41;vf4; ( temp structure{ temp 4-component vector of float Pos})
+0:?               'vsin' ( temp structure{ temp 4-component vector of float Pos_in})
+0:?               'Pos_loose' ( temp 4-component vector of float)
 0:16            Constant:
 0:16              0 (const int)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out structure{})
-0:?     'Pos_in' (layout(location=0 ) in 4-component vector of float)
-0:?     'Pos_loose' (layout(location=1 ) in 4-component vector of float)
+0:?     '@entryPointOutput' (layout( location=0) out structure{})
+0:?     'Pos_in' (layout( location=0) in 4-component vector of float)
+0:?     'Pos_loose' (layout( location=1) in 4-component vector of float)
 
 // Module Version 10000
 // Generated by (magic number): 80001

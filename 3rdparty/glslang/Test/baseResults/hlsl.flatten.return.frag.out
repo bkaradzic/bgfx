@@ -2,7 +2,7 @@ hlsl.flatten.return.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:11  Function Definition: Func1( (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
+0:11  Function Definition: Func1( ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
 0:11    Function Parameters: 
 0:?     Sequence
 0:12      Branch: Return with expression
@@ -14,47 +14,47 @@ gl_FragCoord origin is upper left
 0:?           2.000000
 0:?           3.000000
 0:?           4.000000
-0:16  Function Definition: @main( (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
+0:16  Function Definition: @main( ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
 0:16    Function Parameters: 
 0:?     Sequence
 0:17      Branch: Return with expression
-0:17        Function Call: Func1( (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
-0:16  Function Definition: main( (temp void)
+0:17        Function Call: Func1( ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
+0:16  Function Definition: main( ( temp void)
 0:16    Function Parameters: 
 0:?     Sequence
 0:16      Sequence
-0:16        move second child to first child (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
-0:16          'flattenTemp' (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
-0:16          Function Call: @main( (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
-0:16        move second child to first child (temp 4-component vector of float)
-0:?           'color' (layout(location=0 ) out 4-component vector of float)
-0:16          color: direct index for structure (temp 4-component vector of float)
-0:16            'flattenTemp' (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
+0:16        move second child to first child ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
+0:16          'flattenTemp' ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
+0:16          Function Call: @main( ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
+0:16        move second child to first child ( temp 4-component vector of float)
+0:?           'color' (layout( location=0) out 4-component vector of float)
+0:16          color: direct index for structure ( temp 4-component vector of float)
+0:16            'flattenTemp' ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
 0:16            Constant:
 0:16              0 (const int)
-0:16        move second child to first child (temp float)
-0:?           'other_struct_member1' (layout(location=1 ) out float)
-0:16          other_struct_member1: direct index for structure (temp float)
-0:16            'flattenTemp' (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
+0:16        move second child to first child ( temp float)
+0:?           'other_struct_member1' (layout( location=1) out float)
+0:16          other_struct_member1: direct index for structure ( temp float)
+0:16            'flattenTemp' ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
 0:16            Constant:
 0:16              1 (const int)
-0:16        move second child to first child (temp float)
-0:?           'other_struct_member2' (layout(location=2 ) out float)
-0:16          other_struct_member2: direct index for structure (temp float)
-0:16            'flattenTemp' (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
+0:16        move second child to first child ( temp float)
+0:?           'other_struct_member2' (layout( location=2) out float)
+0:16          other_struct_member2: direct index for structure ( temp float)
+0:16            'flattenTemp' ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
 0:16            Constant:
 0:16              2 (const int)
-0:16        move second child to first child (temp float)
-0:?           'other_struct_member3' (layout(location=3 ) out float)
-0:16          other_struct_member3: direct index for structure (temp float)
-0:16            'flattenTemp' (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
+0:16        move second child to first child ( temp float)
+0:?           'other_struct_member3' (layout( location=3) out float)
+0:16          other_struct_member3: direct index for structure ( temp float)
+0:16            'flattenTemp' ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
 0:16            Constant:
 0:16              3 (const int)
 0:?   Linker Objects
-0:?     'color' (layout(location=0 ) out 4-component vector of float)
-0:?     'other_struct_member1' (layout(location=1 ) out float)
-0:?     'other_struct_member2' (layout(location=2 ) out float)
-0:?     'other_struct_member3' (layout(location=3 ) out float)
+0:?     'color' (layout( location=0) out 4-component vector of float)
+0:?     'other_struct_member1' (layout( location=1) out float)
+0:?     'other_struct_member2' (layout( location=2) out float)
+0:?     'other_struct_member3' (layout( location=3) out float)
 
 
 Linked fragment stage:
@@ -63,7 +63,7 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:11  Function Definition: Func1( (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
+0:11  Function Definition: Func1( ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
 0:11    Function Parameters: 
 0:?     Sequence
 0:12      Branch: Return with expression
@@ -75,47 +75,47 @@ gl_FragCoord origin is upper left
 0:?           2.000000
 0:?           3.000000
 0:?           4.000000
-0:16  Function Definition: @main( (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
+0:16  Function Definition: @main( ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
 0:16    Function Parameters: 
 0:?     Sequence
 0:17      Branch: Return with expression
-0:17        Function Call: Func1( (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
-0:16  Function Definition: main( (temp void)
+0:17        Function Call: Func1( ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
+0:16  Function Definition: main( ( temp void)
 0:16    Function Parameters: 
 0:?     Sequence
 0:16      Sequence
-0:16        move second child to first child (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
-0:16          'flattenTemp' (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
-0:16          Function Call: @main( (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
-0:16        move second child to first child (temp 4-component vector of float)
-0:?           'color' (layout(location=0 ) out 4-component vector of float)
-0:16          color: direct index for structure (temp 4-component vector of float)
-0:16            'flattenTemp' (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
+0:16        move second child to first child ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
+0:16          'flattenTemp' ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
+0:16          Function Call: @main( ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
+0:16        move second child to first child ( temp 4-component vector of float)
+0:?           'color' (layout( location=0) out 4-component vector of float)
+0:16          color: direct index for structure ( temp 4-component vector of float)
+0:16            'flattenTemp' ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
 0:16            Constant:
 0:16              0 (const int)
-0:16        move second child to first child (temp float)
-0:?           'other_struct_member1' (layout(location=1 ) out float)
-0:16          other_struct_member1: direct index for structure (temp float)
-0:16            'flattenTemp' (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
+0:16        move second child to first child ( temp float)
+0:?           'other_struct_member1' (layout( location=1) out float)
+0:16          other_struct_member1: direct index for structure ( temp float)
+0:16            'flattenTemp' ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
 0:16            Constant:
 0:16              1 (const int)
-0:16        move second child to first child (temp float)
-0:?           'other_struct_member2' (layout(location=2 ) out float)
-0:16          other_struct_member2: direct index for structure (temp float)
-0:16            'flattenTemp' (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
+0:16        move second child to first child ( temp float)
+0:?           'other_struct_member2' (layout( location=2) out float)
+0:16          other_struct_member2: direct index for structure ( temp float)
+0:16            'flattenTemp' ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
 0:16            Constant:
 0:16              2 (const int)
-0:16        move second child to first child (temp float)
-0:?           'other_struct_member3' (layout(location=3 ) out float)
-0:16          other_struct_member3: direct index for structure (temp float)
-0:16            'flattenTemp' (temp structure{temp 4-component vector of float color, temp float other_struct_member1, temp float other_struct_member2, temp float other_struct_member3})
+0:16        move second child to first child ( temp float)
+0:?           'other_struct_member3' (layout( location=3) out float)
+0:16          other_struct_member3: direct index for structure ( temp float)
+0:16            'flattenTemp' ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
 0:16            Constant:
 0:16              3 (const int)
 0:?   Linker Objects
-0:?     'color' (layout(location=0 ) out 4-component vector of float)
-0:?     'other_struct_member1' (layout(location=1 ) out float)
-0:?     'other_struct_member2' (layout(location=2 ) out float)
-0:?     'other_struct_member3' (layout(location=3 ) out float)
+0:?     'color' (layout( location=0) out 4-component vector of float)
+0:?     'other_struct_member1' (layout( location=1) out float)
+0:?     'other_struct_member2' (layout( location=2) out float)
+0:?     'other_struct_member3' (layout( location=3) out float)
 
 // Module Version 10000
 // Generated by (magic number): 80001

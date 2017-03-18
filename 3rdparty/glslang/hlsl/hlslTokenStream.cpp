@@ -64,14 +64,56 @@ HlslToken HlslTokenStream::popTokenBuffer()
     return tokenBuffer[tokenBufferPos];
 }
 
+//
+// Make a new source of tokens, not from the source, but from an
+// already pre-processed token stream.
+//
+// This interrupts current token processing which must be restored
+// later.  Some simplifying assumptions are made (and asserted).
+//
+void HlslTokenStream::pushTokenStream(const TVector<HlslToken>* tokens)
+{
+    // not yet setup to interrupt a stream that has been receded
+    // and not yet reconsumed
+    assert(preTokenStackSize == 0);
+
+    // save current state
+    currentTokenStack.push_back(token);
+
+    // set up new token stream
+    tokenStreamStack.push_back(tokens);
+
+    // start position at first token:
+    token = (*tokens)[0];
+    tokenPosition.push_back(0);
+}
+
+// Undo pushTokenStream(), see above
+void HlslTokenStream::popTokenStream()
+{
+    tokenStreamStack.pop_back();
+    tokenPosition.pop_back();
+    token = currentTokenStack.back();
+    currentTokenStack.pop_back();
+}
+
 // Load 'token' with the next token in the stream of tokens.
 void HlslTokenStream::advanceToken()
 {
     pushTokenBuffer(token);
     if (preTokenStackSize > 0)
         token = popPreToken();
-    else
-        scanner.tokenize(token);
+    else {
+        if (tokenStreamStack.size() == 0)
+            scanner.tokenize(token);
+        else {
+            ++tokenPosition.back();
+            if (tokenPosition.back() >= (int)tokenStreamStack.back()->size())
+                token.tokenClass = EHTokNone;
+            else
+                token = (*tokenStreamStack.back())[tokenPosition.back()];
+        }
+    }
 }
 
 void HlslTokenStream::recedeToken()

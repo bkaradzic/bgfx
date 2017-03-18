@@ -4,7 +4,7 @@ struct PS_OUTPUT
     float  Depth : SV_Depth;
 };
 
-void MyFunc(in float x, out float y, inout float z)
+inline void MyFunc(in float x, out float y, inout float z)
 {
     y = x;
     z = y;

@@ -103,3 +103,23 @@ in float gl_TessLevelOuter[4];           // ERROR, can't redeclare
 patch in pinbn {
     int a;
 } pinbi;
+
+void devi()
+{
+    gl_DeviceIndex; // ERROR, no extension
+    gl_ViewIndex;   // ERROR, no extension
+}
+
+#ifdef GL_EXT_device_group
+#extension GL_EXT_device_group : enable
+#endif
+
+#ifdef GL_EXT_device_group
+#extension GL_EXT_multiview : enable
+#endif
+
+void devie()
+{
+    gl_DeviceIndex;
+    gl_ViewIndex;
+}

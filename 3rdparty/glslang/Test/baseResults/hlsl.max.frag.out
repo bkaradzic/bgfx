@@ -2,33 +2,33 @@ hlsl.max.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:2  Function Definition: @PixelShaderFunction(vf4;vf4; (temp 4-component vector of float)
+0:2  Function Definition: @PixelShaderFunction(vf4;vf4; ( temp 4-component vector of float)
 0:2    Function Parameters: 
-0:2      'input1' (in 4-component vector of float)
-0:2      'input2' (in 4-component vector of float)
+0:2      'input1' ( in 4-component vector of float)
+0:2      'input2' ( in 4-component vector of float)
 0:?     Sequence
 0:3      Branch: Return with expression
-0:3        max (temp 4-component vector of float)
-0:3          'input1' (in 4-component vector of float)
-0:3          'input2' (in 4-component vector of float)
-0:2  Function Definition: PixelShaderFunction( (temp void)
+0:3        max ( temp 4-component vector of float)
+0:3          'input1' ( in 4-component vector of float)
+0:3          'input2' ( in 4-component vector of float)
+0:2  Function Definition: PixelShaderFunction( ( temp void)
 0:2    Function Parameters: 
 0:?     Sequence
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         'input1' (temp 4-component vector of float)
-0:?         'input1' (layout(location=0 ) in 4-component vector of float)
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         'input2' (temp 4-component vector of float)
-0:?         'input2' (layout(location=1 ) in 4-component vector of float)
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:2        Function Call: @PixelShaderFunction(vf4;vf4; (temp 4-component vector of float)
-0:?           'input1' (temp 4-component vector of float)
-0:?           'input2' (temp 4-component vector of float)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         'input1' ( temp 4-component vector of float)
+0:?         'input1' (layout( location=0) in 4-component vector of float)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         'input2' ( temp 4-component vector of float)
+0:?         'input2' (layout( location=1) in 4-component vector of float)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:2        Function Call: @PixelShaderFunction(vf4;vf4; ( temp 4-component vector of float)
+0:?           'input1' ( temp 4-component vector of float)
+0:?           'input2' ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'input1' (layout(location=0 ) in 4-component vector of float)
-0:?     'input2' (layout(location=1 ) in 4-component vector of float)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'input1' (layout( location=0) in 4-component vector of float)
+0:?     'input2' (layout( location=1) in 4-component vector of float)
 
 
 Linked fragment stage:
@@ -37,33 +37,33 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:2  Function Definition: @PixelShaderFunction(vf4;vf4; (temp 4-component vector of float)
+0:2  Function Definition: @PixelShaderFunction(vf4;vf4; ( temp 4-component vector of float)
 0:2    Function Parameters: 
-0:2      'input1' (in 4-component vector of float)
-0:2      'input2' (in 4-component vector of float)
+0:2      'input1' ( in 4-component vector of float)
+0:2      'input2' ( in 4-component vector of float)
 0:?     Sequence
 0:3      Branch: Return with expression
-0:3        max (temp 4-component vector of float)
-0:3          'input1' (in 4-component vector of float)
-0:3          'input2' (in 4-component vector of float)
-0:2  Function Definition: PixelShaderFunction( (temp void)
+0:3        max ( temp 4-component vector of float)
+0:3          'input1' ( in 4-component vector of float)
+0:3          'input2' ( in 4-component vector of float)
+0:2  Function Definition: PixelShaderFunction( ( temp void)
 0:2    Function Parameters: 
 0:?     Sequence
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         'input1' (temp 4-component vector of float)
-0:?         'input1' (layout(location=0 ) in 4-component vector of float)
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         'input2' (temp 4-component vector of float)
-0:?         'input2' (layout(location=1 ) in 4-component vector of float)
-0:2      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:2        Function Call: @PixelShaderFunction(vf4;vf4; (temp 4-component vector of float)
-0:?           'input1' (temp 4-component vector of float)
-0:?           'input2' (temp 4-component vector of float)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         'input1' ( temp 4-component vector of float)
+0:?         'input1' (layout( location=0) in 4-component vector of float)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         'input2' ( temp 4-component vector of float)
+0:?         'input2' (layout( location=1) in 4-component vector of float)
+0:2      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:2        Function Call: @PixelShaderFunction(vf4;vf4; ( temp 4-component vector of float)
+0:?           'input1' ( temp 4-component vector of float)
+0:?           'input2' ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:?     'input1' (layout(location=0 ) in 4-component vector of float)
-0:?     'input2' (layout(location=1 ) in 4-component vector of float)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'input1' (layout( location=0) in 4-component vector of float)
+0:?     'input2' (layout( location=1) in 4-component vector of float)
 
 // Module Version 10000
 // Generated by (magic number): 80001

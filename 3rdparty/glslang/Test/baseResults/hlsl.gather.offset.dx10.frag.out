@@ -2,16 +2,16 @@ hlsl.gather.offset.dx10.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:28  Function Definition: @main( (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:28  Function Definition: @main( ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:28    Function Parameters: 
 0:?     Sequence
 0:33      Sequence
-0:33        move second child to first child (temp 4-component vector of float)
-0:33          'txval20' (temp 4-component vector of float)
-0:33          textureGatherOffset (temp 4-component vector of float)
-0:33            Construct combined texture-sampler (temp sampler2D)
-0:33              'g_tTex2df4' (uniform texture2D)
-0:33              'g_sSamp' (layout(binding=0 ) uniform sampler)
+0:33        move second child to first child ( temp 4-component vector of float)
+0:33          'txval20' ( temp 4-component vector of float)
+0:33          textureGatherOffset ( temp 4-component vector of float)
+0:33            Construct combined texture-sampler ( temp sampler2D)
+0:33              'g_tTex2df4' ( uniform texture2D)
+0:33              'g_sSamp' (layout( binding=0) uniform sampler)
 0:?             Constant:
 0:?               0.100000
 0:?               0.200000
@@ -19,12 +19,12 @@ gl_FragCoord origin is upper left
 0:?               1 (const int)
 0:?               0 (const int)
 0:34      Sequence
-0:34        move second child to first child (temp 4-component vector of int)
-0:34          'txval21' (temp 4-component vector of int)
-0:34          textureGatherOffset (temp 4-component vector of int)
-0:34            Construct combined texture-sampler (temp isampler2D)
-0:34              'g_tTex2di4' (uniform itexture2D)
-0:34              'g_sSamp' (layout(binding=0 ) uniform sampler)
+0:34        move second child to first child ( temp 4-component vector of int)
+0:34          'txval21' ( temp 4-component vector of int)
+0:34          textureGatherOffset ( temp 4-component vector of int)
+0:34            Construct combined texture-sampler ( temp isampler2D)
+0:34              'g_tTex2di4' ( uniform itexture2D)
+0:34              'g_sSamp' (layout( binding=0) uniform sampler)
 0:?             Constant:
 0:?               0.300000
 0:?               0.400000
@@ -32,21 +32,21 @@ gl_FragCoord origin is upper left
 0:?               1 (const int)
 0:?               1 (const int)
 0:35      Sequence
-0:35        move second child to first child (temp 4-component vector of uint)
-0:35          'txval22' (temp 4-component vector of uint)
-0:35          textureGatherOffset (temp 4-component vector of uint)
-0:35            Construct combined texture-sampler (temp usampler2D)
-0:35              'g_tTex2du4' (uniform utexture2D)
-0:35              'g_sSamp' (layout(binding=0 ) uniform sampler)
+0:35        move second child to first child ( temp 4-component vector of uint)
+0:35          'txval22' ( temp 4-component vector of uint)
+0:35          textureGatherOffset ( temp 4-component vector of uint)
+0:35            Construct combined texture-sampler ( temp usampler2D)
+0:35              'g_tTex2du4' ( uniform utexture2D)
+0:35              'g_sSamp' (layout( binding=0) uniform sampler)
 0:?             Constant:
 0:?               0.500000
 0:?               0.600000
 0:?             Constant:
 0:?               1 (const int)
 0:?               -1 (const int)
-0:40      move second child to first child (temp 4-component vector of float)
-0:40        Color: direct index for structure (temp 4-component vector of float)
-0:40          'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:40      move second child to first child ( temp 4-component vector of float)
+0:40        Color: direct index for structure ( temp 4-component vector of float)
+0:40          'psout' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:40          Constant:
 0:40            0 (const int)
 0:40        Constant:
@@ -54,51 +54,51 @@ gl_FragCoord origin is upper left
 0:40          1.000000
 0:40          1.000000
 0:40          1.000000
-0:41      move second child to first child (temp float)
-0:41        Depth: direct index for structure (temp float)
-0:41          'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:41      move second child to first child ( temp float)
+0:41        Depth: direct index for structure ( temp float)
+0:41          'psout' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:41          Constant:
 0:41            1 (const int)
 0:41        Constant:
 0:41          1.000000
 0:43      Branch: Return with expression
-0:43        'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:28  Function Definition: main( (temp void)
+0:43        'psout' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
+0:28  Function Definition: main( ( temp void)
 0:28    Function Parameters: 
 0:?     Sequence
 0:28      Sequence
-0:28        move second child to first child (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:28          'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:28          Function Call: @main( (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:28        move second child to first child (temp 4-component vector of float)
-0:?           'Color' (layout(location=0 ) out 4-component vector of float)
-0:28          Color: direct index for structure (temp 4-component vector of float)
-0:28            'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:28        move second child to first child ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
+0:28          'flattenTemp' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
+0:28          Function Call: @main( ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
+0:28        move second child to first child ( temp 4-component vector of float)
+0:?           'Color' (layout( location=0) out 4-component vector of float)
+0:28          Color: direct index for structure ( temp 4-component vector of float)
+0:28            'flattenTemp' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:28            Constant:
 0:28              0 (const int)
-0:28        move second child to first child (temp float)
-0:?           'Depth' (out float FragDepth)
-0:28          Depth: direct index for structure (temp float)
-0:28            'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:28        move second child to first child ( temp float)
+0:?           'Depth' ( out float FragDepth)
+0:28          Depth: direct index for structure ( temp float)
+0:28            'flattenTemp' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:28            Constant:
 0:28              1 (const int)
 0:?   Linker Objects
-0:?     'g_sSamp' (layout(binding=0 ) uniform sampler)
-0:?     'g_tTex1df4a' (layout(binding=1 ) uniform texture1D)
-0:?     'g_tTex1df4' (layout(binding=0 ) uniform texture1D)
-0:?     'g_tTex1di4' (uniform itexture1D)
-0:?     'g_tTex1du4' (uniform utexture1D)
-0:?     'g_tTex2df4' (uniform texture2D)
-0:?     'g_tTex2di4' (uniform itexture2D)
-0:?     'g_tTex2du4' (uniform utexture2D)
-0:?     'g_tTex3df4' (uniform texture3D)
-0:?     'g_tTex3di4' (uniform itexture3D)
-0:?     'g_tTex3du4' (uniform utexture3D)
-0:?     'g_tTexcdf4' (uniform textureCube)
-0:?     'g_tTexcdi4' (uniform itextureCube)
-0:?     'g_tTexcdu4' (uniform utextureCube)
-0:?     'Color' (layout(location=0 ) out 4-component vector of float)
-0:?     'Depth' (out float FragDepth)
+0:?     'g_sSamp' (layout( binding=0) uniform sampler)
+0:?     'g_tTex1df4a' (layout( binding=1) uniform texture1D)
+0:?     'g_tTex1df4' (layout( binding=0) uniform texture1D)
+0:?     'g_tTex1di4' ( uniform itexture1D)
+0:?     'g_tTex1du4' ( uniform utexture1D)
+0:?     'g_tTex2df4' ( uniform texture2D)
+0:?     'g_tTex2di4' ( uniform itexture2D)
+0:?     'g_tTex2du4' ( uniform utexture2D)
+0:?     'g_tTex3df4' ( uniform texture3D)
+0:?     'g_tTex3di4' ( uniform itexture3D)
+0:?     'g_tTex3du4' ( uniform utexture3D)
+0:?     'g_tTexcdf4' ( uniform textureCube)
+0:?     'g_tTexcdi4' ( uniform itextureCube)
+0:?     'g_tTexcdu4' ( uniform utextureCube)
+0:?     'Color' (layout( location=0) out 4-component vector of float)
+0:?     'Depth' ( out float FragDepth)
 
 
 Linked fragment stage:
@@ -107,16 +107,16 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:28  Function Definition: @main( (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:28  Function Definition: @main( ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:28    Function Parameters: 
 0:?     Sequence
 0:33      Sequence
-0:33        move second child to first child (temp 4-component vector of float)
-0:33          'txval20' (temp 4-component vector of float)
-0:33          textureGatherOffset (temp 4-component vector of float)
-0:33            Construct combined texture-sampler (temp sampler2D)
-0:33              'g_tTex2df4' (uniform texture2D)
-0:33              'g_sSamp' (layout(binding=0 ) uniform sampler)
+0:33        move second child to first child ( temp 4-component vector of float)
+0:33          'txval20' ( temp 4-component vector of float)
+0:33          textureGatherOffset ( temp 4-component vector of float)
+0:33            Construct combined texture-sampler ( temp sampler2D)
+0:33              'g_tTex2df4' ( uniform texture2D)
+0:33              'g_sSamp' (layout( binding=0) uniform sampler)
 0:?             Constant:
 0:?               0.100000
 0:?               0.200000
@@ -124,12 +124,12 @@ gl_FragCoord origin is upper left
 0:?               1 (const int)
 0:?               0 (const int)
 0:34      Sequence
-0:34        move second child to first child (temp 4-component vector of int)
-0:34          'txval21' (temp 4-component vector of int)
-0:34          textureGatherOffset (temp 4-component vector of int)
-0:34            Construct combined texture-sampler (temp isampler2D)
-0:34              'g_tTex2di4' (uniform itexture2D)
-0:34              'g_sSamp' (layout(binding=0 ) uniform sampler)
+0:34        move second child to first child ( temp 4-component vector of int)
+0:34          'txval21' ( temp 4-component vector of int)
+0:34          textureGatherOffset ( temp 4-component vector of int)
+0:34            Construct combined texture-sampler ( temp isampler2D)
+0:34              'g_tTex2di4' ( uniform itexture2D)
+0:34              'g_sSamp' (layout( binding=0) uniform sampler)
 0:?             Constant:
 0:?               0.300000
 0:?               0.400000
@@ -137,21 +137,21 @@ gl_FragCoord origin is upper left
 0:?               1 (const int)
 0:?               1 (const int)
 0:35      Sequence
-0:35        move second child to first child (temp 4-component vector of uint)
-0:35          'txval22' (temp 4-component vector of uint)
-0:35          textureGatherOffset (temp 4-component vector of uint)
-0:35            Construct combined texture-sampler (temp usampler2D)
-0:35              'g_tTex2du4' (uniform utexture2D)
-0:35              'g_sSamp' (layout(binding=0 ) uniform sampler)
+0:35        move second child to first child ( temp 4-component vector of uint)
+0:35          'txval22' ( temp 4-component vector of uint)
+0:35          textureGatherOffset ( temp 4-component vector of uint)
+0:35            Construct combined texture-sampler ( temp usampler2D)
+0:35              'g_tTex2du4' ( uniform utexture2D)
+0:35              'g_sSamp' (layout( binding=0) uniform sampler)
 0:?             Constant:
 0:?               0.500000
 0:?               0.600000
 0:?             Constant:
 0:?               1 (const int)
 0:?               -1 (const int)
-0:40      move second child to first child (temp 4-component vector of float)
-0:40        Color: direct index for structure (temp 4-component vector of float)
-0:40          'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:40      move second child to first child ( temp 4-component vector of float)
+0:40        Color: direct index for structure ( temp 4-component vector of float)
+0:40          'psout' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:40          Constant:
 0:40            0 (const int)
 0:40        Constant:
@@ -159,51 +159,51 @@ gl_FragCoord origin is upper left
 0:40          1.000000
 0:40          1.000000
 0:40          1.000000
-0:41      move second child to first child (temp float)
-0:41        Depth: direct index for structure (temp float)
-0:41          'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:41      move second child to first child ( temp float)
+0:41        Depth: direct index for structure ( temp float)
+0:41          'psout' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:41          Constant:
 0:41            1 (const int)
 0:41        Constant:
 0:41          1.000000
 0:43      Branch: Return with expression
-0:43        'psout' (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:28  Function Definition: main( (temp void)
+0:43        'psout' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
+0:28  Function Definition: main( ( temp void)
 0:28    Function Parameters: 
 0:?     Sequence
 0:28      Sequence
-0:28        move second child to first child (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:28          'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:28          Function Call: @main( (temp structure{temp 4-component vector of float Color, temp float Depth})
-0:28        move second child to first child (temp 4-component vector of float)
-0:?           'Color' (layout(location=0 ) out 4-component vector of float)
-0:28          Color: direct index for structure (temp 4-component vector of float)
-0:28            'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:28        move second child to first child ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
+0:28          'flattenTemp' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
+0:28          Function Call: @main( ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
+0:28        move second child to first child ( temp 4-component vector of float)
+0:?           'Color' (layout( location=0) out 4-component vector of float)
+0:28          Color: direct index for structure ( temp 4-component vector of float)
+0:28            'flattenTemp' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:28            Constant:
 0:28              0 (const int)
-0:28        move second child to first child (temp float)
-0:?           'Depth' (out float FragDepth)
-0:28          Depth: direct index for structure (temp float)
-0:28            'flattenTemp' (temp structure{temp 4-component vector of float Color, temp float Depth})
+0:28        move second child to first child ( temp float)
+0:?           'Depth' ( out float FragDepth)
+0:28          Depth: direct index for structure ( temp float)
+0:28            'flattenTemp' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:28            Constant:
 0:28              1 (const int)
 0:?   Linker Objects
-0:?     'g_sSamp' (layout(binding=0 ) uniform sampler)
-0:?     'g_tTex1df4a' (layout(binding=1 ) uniform texture1D)
-0:?     'g_tTex1df4' (layout(binding=0 ) uniform texture1D)
-0:?     'g_tTex1di4' (uniform itexture1D)
-0:?     'g_tTex1du4' (uniform utexture1D)
-0:?     'g_tTex2df4' (uniform texture2D)
-0:?     'g_tTex2di4' (uniform itexture2D)
-0:?     'g_tTex2du4' (uniform utexture2D)
-0:?     'g_tTex3df4' (uniform texture3D)
-0:?     'g_tTex3di4' (uniform itexture3D)
-0:?     'g_tTex3du4' (uniform utexture3D)
-0:?     'g_tTexcdf4' (uniform textureCube)
-0:?     'g_tTexcdi4' (uniform itextureCube)
-0:?     'g_tTexcdu4' (uniform utextureCube)
-0:?     'Color' (layout(location=0 ) out 4-component vector of float)
-0:?     'Depth' (out float FragDepth)
+0:?     'g_sSamp' (layout( binding=0) uniform sampler)
+0:?     'g_tTex1df4a' (layout( binding=1) uniform texture1D)
+0:?     'g_tTex1df4' (layout( binding=0) uniform texture1D)
+0:?     'g_tTex1di4' ( uniform itexture1D)
+0:?     'g_tTex1du4' ( uniform utexture1D)
+0:?     'g_tTex2df4' ( uniform texture2D)
+0:?     'g_tTex2di4' ( uniform itexture2D)
+0:?     'g_tTex2du4' ( uniform utexture2D)
+0:?     'g_tTex3df4' ( uniform texture3D)
+0:?     'g_tTex3di4' ( uniform itexture3D)
+0:?     'g_tTex3du4' ( uniform utexture3D)
+0:?     'g_tTexcdf4' ( uniform textureCube)
+0:?     'g_tTexcdi4' ( uniform itextureCube)
+0:?     'g_tTexcdu4' ( uniform utextureCube)
+0:?     'Color' (layout( location=0) out 4-component vector of float)
+0:?     'Depth' ( out float FragDepth)
 
 // Module Version 10000
 // Generated by (magic number): 80001

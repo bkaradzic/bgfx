@@ -1,14 +1,14 @@
 mains1.frag
 Shader version: 110
 0:? Sequence
-0:3  Function Definition: main( (global void)
+0:3  Function Definition: main( ( global void)
 0:3    Function Parameters: 
 0:?   Linker Objects
 
 mains2.frag
 Shader version: 110
 0:? Sequence
-0:3  Function Definition: main( (global void)
+0:3  Function Definition: main( ( global void)
 0:3    Function Parameters: 
 0:?   Linker Objects
 
@@ -23,7 +23,7 @@ max_vertices = -1
 input primitive = none
 output primitive = points
 ERROR: node is still EOpNull!
-0:3  Function Definition: foo( (global void)
+0:3  Function Definition: foo( ( global void)
 0:3    Function Parameters: 
 0:?   Linker Objects
 
@@ -34,7 +34,7 @@ max_vertices = -1
 input primitive = none
 output primitive = line_strip
 0:? Sequence
-0:3  Function Definition: bar( (global void)
+0:3  Function Definition: bar( ( global void)
 0:3    Function Parameters: 
 0:?   Linker Objects
 
@@ -61,9 +61,9 @@ ERROR: node is still EOpNull!
 0:?   Linker Objects
 Shader version: 110
 0:? Sequence
-0:3  Function Definition: main( (global void)
+0:3  Function Definition: main( ( global void)
 0:3    Function Parameters: 
-0:3  Function Definition: main( (global void)
+0:3  Function Definition: main( ( global void)
 0:3    Function Parameters: 
 0:?   Linker Objects
 

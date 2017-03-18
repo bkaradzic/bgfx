@@ -1,36 +1,36 @@
 hlsl.getdimensions.dx10.vert
 Shader version: 450
 0:? Sequence
-0:11  Function Definition: @main( (temp structure{temp 4-component vector of float Pos})
+0:11  Function Definition: @main( ( temp structure{ temp 4-component vector of float Pos})
 0:11    Function Parameters: 
 0:?     Sequence
 0:21      Sequence
-0:21        move second child to first child (temp uint)
-0:21          'sizeQueryTemp' (temp uint)
-0:21          textureSize (temp uint)
-0:21            'g_tTex1df4' (layout(binding=0 ) uniform texture1D)
+0:21        move second child to first child ( temp uint)
+0:21          'sizeQueryTemp' ( temp uint)
+0:21          textureSize ( temp uint)
+0:21            'g_tTex1df4' (layout( binding=0) uniform texture1D)
 0:21            Constant:
 0:21              0 (const int)
-0:21        move second child to first child (temp uint)
-0:21          'WidthU' (temp uint)
-0:21          'sizeQueryTemp' (temp uint)
+0:21        move second child to first child ( temp uint)
+0:21          'WidthU' ( temp uint)
+0:21          'sizeQueryTemp' ( temp uint)
 0:22      Sequence
-0:22        move second child to first child (temp uint)
-0:22          'sizeQueryTemp' (temp uint)
-0:22          textureSize (temp uint)
-0:22            'g_tTex1df4' (layout(binding=0 ) uniform texture1D)
+0:22        move second child to first child ( temp uint)
+0:22          'sizeQueryTemp' ( temp uint)
+0:22          textureSize ( temp uint)
+0:22            'g_tTex1df4' (layout( binding=0) uniform texture1D)
 0:22            Constant:
 0:22              6 (const uint)
-0:22        move second child to first child (temp uint)
-0:22          'WidthU' (temp uint)
-0:22          'sizeQueryTemp' (temp uint)
-0:22        move second child to first child (temp uint)
-0:22          'NumberOfLevelsU' (temp uint)
-0:22          textureQueryLevels (temp uint)
-0:22            'g_tTex1df4' (layout(binding=0 ) uniform texture1D)
-0:24      move second child to first child (temp 4-component vector of float)
-0:24        Pos: direct index for structure (temp 4-component vector of float)
-0:24          'vsout' (temp structure{temp 4-component vector of float Pos})
+0:22        move second child to first child ( temp uint)
+0:22          'WidthU' ( temp uint)
+0:22          'sizeQueryTemp' ( temp uint)
+0:22        move second child to first child ( temp uint)
+0:22          'NumberOfLevelsU' ( temp uint)
+0:22          textureQueryLevels ( temp uint)
+0:22            'g_tTex1df4' (layout( binding=0) uniform texture1D)
+0:24      move second child to first child ( temp 4-component vector of float)
+0:24        Pos: direct index for structure ( temp 4-component vector of float)
+0:24          'vsout' ( temp structure{ temp 4-component vector of float Pos})
 0:24          Constant:
 0:24            0 (const int)
 0:?         Constant:
@@ -39,21 +39,21 @@ Shader version: 450
 0:?           0.000000
 0:?           0.000000
 0:26      Branch: Return with expression
-0:26        'vsout' (temp structure{temp 4-component vector of float Pos})
-0:11  Function Definition: main( (temp void)
+0:26        'vsout' ( temp structure{ temp 4-component vector of float Pos})
+0:11  Function Definition: main( ( temp void)
 0:11    Function Parameters: 
 0:?     Sequence
 0:11      Sequence
-0:11        move second child to first child (temp 4-component vector of float)
-0:?           '@entryPointOutput_Pos' (out 4-component vector of float Position)
-0:11          Pos: direct index for structure (temp 4-component vector of float)
-0:11            Function Call: @main( (temp structure{temp 4-component vector of float Pos})
+0:11        move second child to first child ( temp 4-component vector of float)
+0:?           '@entryPointOutput_Pos' ( out 4-component vector of float Position)
+0:11          Pos: direct index for structure ( temp 4-component vector of float)
+0:11            Function Call: @main( ( temp structure{ temp 4-component vector of float Pos})
 0:11            Constant:
 0:11              0 (const int)
 0:?   Linker Objects
-0:?     'g_sSamp' (layout(binding=0 ) uniform sampler)
-0:?     'g_tTex1df4' (layout(binding=0 ) uniform texture1D)
-0:?     '@entryPointOutput' (layout(location=0 ) out structure{})
+0:?     'g_sSamp' (layout( binding=0) uniform sampler)
+0:?     'g_tTex1df4' (layout( binding=0) uniform texture1D)
+0:?     '@entryPointOutput' (layout( location=0) out structure{})
 
 
 Linked vertex stage:
@@ -61,36 +61,36 @@ Linked vertex stage:
 
 Shader version: 450
 0:? Sequence
-0:11  Function Definition: @main( (temp structure{temp 4-component vector of float Pos})
+0:11  Function Definition: @main( ( temp structure{ temp 4-component vector of float Pos})
 0:11    Function Parameters: 
 0:?     Sequence
 0:21      Sequence
-0:21        move second child to first child (temp uint)
-0:21          'sizeQueryTemp' (temp uint)
-0:21          textureSize (temp uint)
-0:21            'g_tTex1df4' (layout(binding=0 ) uniform texture1D)
+0:21        move second child to first child ( temp uint)
+0:21          'sizeQueryTemp' ( temp uint)
+0:21          textureSize ( temp uint)
+0:21            'g_tTex1df4' (layout( binding=0) uniform texture1D)
 0:21            Constant:
 0:21              0 (const int)
-0:21        move second child to first child (temp uint)
-0:21          'WidthU' (temp uint)
-0:21          'sizeQueryTemp' (temp uint)
+0:21        move second child to first child ( temp uint)
+0:21          'WidthU' ( temp uint)
+0:21          'sizeQueryTemp' ( temp uint)
 0:22      Sequence
-0:22        move second child to first child (temp uint)
-0:22          'sizeQueryTemp' (temp uint)
-0:22          textureSize (temp uint)
-0:22            'g_tTex1df4' (layout(binding=0 ) uniform texture1D)
+0:22        move second child to first child ( temp uint)
+0:22          'sizeQueryTemp' ( temp uint)
+0:22          textureSize ( temp uint)
+0:22            'g_tTex1df4' (layout( binding=0) uniform texture1D)
 0:22            Constant:
 0:22              6 (const uint)
-0:22        move second child to first child (temp uint)
-0:22          'WidthU' (temp uint)
-0:22          'sizeQueryTemp' (temp uint)
-0:22        move second child to first child (temp uint)
-0:22          'NumberOfLevelsU' (temp uint)
-0:22          textureQueryLevels (temp uint)
-0:22            'g_tTex1df4' (layout(binding=0 ) uniform texture1D)
-0:24      move second child to first child (temp 4-component vector of float)
-0:24        Pos: direct index for structure (temp 4-component vector of float)
-0:24          'vsout' (temp structure{temp 4-component vector of float Pos})
+0:22        move second child to first child ( temp uint)
+0:22          'WidthU' ( temp uint)
+0:22          'sizeQueryTemp' ( temp uint)
+0:22        move second child to first child ( temp uint)
+0:22          'NumberOfLevelsU' ( temp uint)
+0:22          textureQueryLevels ( temp uint)
+0:22            'g_tTex1df4' (layout( binding=0) uniform texture1D)
+0:24      move second child to first child ( temp 4-component vector of float)
+0:24        Pos: direct index for structure ( temp 4-component vector of float)
+0:24          'vsout' ( temp structure{ temp 4-component vector of float Pos})
 0:24          Constant:
 0:24            0 (const int)
 0:?         Constant:
@@ -99,21 +99,21 @@ Shader version: 450
 0:?           0.000000
 0:?           0.000000
 0:26      Branch: Return with expression
-0:26        'vsout' (temp structure{temp 4-component vector of float Pos})
-0:11  Function Definition: main( (temp void)
+0:26        'vsout' ( temp structure{ temp 4-component vector of float Pos})
+0:11  Function Definition: main( ( temp void)
 0:11    Function Parameters: 
 0:?     Sequence
 0:11      Sequence
-0:11        move second child to first child (temp 4-component vector of float)
-0:?           '@entryPointOutput_Pos' (out 4-component vector of float Position)
-0:11          Pos: direct index for structure (temp 4-component vector of float)
-0:11            Function Call: @main( (temp structure{temp 4-component vector of float Pos})
+0:11        move second child to first child ( temp 4-component vector of float)
+0:?           '@entryPointOutput_Pos' ( out 4-component vector of float Position)
+0:11          Pos: direct index for structure ( temp 4-component vector of float)
+0:11            Function Call: @main( ( temp structure{ temp 4-component vector of float Pos})
 0:11            Constant:
 0:11              0 (const int)
 0:?   Linker Objects
-0:?     'g_sSamp' (layout(binding=0 ) uniform sampler)
-0:?     'g_tTex1df4' (layout(binding=0 ) uniform texture1D)
-0:?     '@entryPointOutput' (layout(location=0 ) out structure{})
+0:?     'g_sSamp' (layout( binding=0) uniform sampler)
+0:?     'g_tTex1df4' (layout( binding=0) uniform texture1D)
+0:?     '@entryPointOutput' (layout( location=0) out structure{})
 
 // Module Version 10000
 // Generated by (magic number): 80001

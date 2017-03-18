@@ -2,59 +2,59 @@ hlsl.staticMemberFunction.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:5  Function Definition: Test::staticMemFun(vf4; (global 4-component vector of float)
+0:5  Function Definition: Test::staticMemFun(vf4; ( global 4-component vector of float)
 0:5    Function Parameters: 
-0:5      'a' (in 4-component vector of float)
+0:5      'a' ( in 4-component vector of float)
 0:?     Sequence
 0:6      Branch: Return with expression
-0:6        vector-scale (temp 4-component vector of float)
+0:6        vector-scale ( temp 4-component vector of float)
 0:6          Constant:
 0:6            2.000000
-0:6          'a' (in 4-component vector of float)
-0:9  Function Definition: Test::staticMemFun(i1; (global int)
+0:6          'a' ( in 4-component vector of float)
+0:9  Function Definition: Test::staticMemFun(i1; ( global int)
 0:9    Function Parameters: 
-0:9      'a' (in int)
+0:9      'a' ( in int)
 0:?     Sequence
 0:10      Branch: Return with expression
-0:10        add (temp int)
+0:10        add ( temp int)
 0:10          Constant:
 0:10            2 (const int)
-0:10          'a' (in int)
-0:16  Function Definition: @main( (temp 4-component vector of float)
+0:10          'a' ( in int)
+0:16  Function Definition: @main( ( temp 4-component vector of float)
 0:16    Function Parameters: 
 0:?     Sequence
 0:18      Sequence
-0:18        move second child to first child (temp 4-component vector of float)
-0:18          'f4' (temp 4-component vector of float)
+0:18        move second child to first child ( temp 4-component vector of float)
+0:18          'f4' ( temp 4-component vector of float)
 0:?           Constant:
 0:?             1.000000
 0:?             1.000000
 0:?             1.000000
 0:?             1.000000
-0:19      add second child into first child (temp 4-component vector of float)
-0:19        'f4' (temp 4-component vector of float)
-0:19        Function Call: Test::staticMemFun(vf4; (global 4-component vector of float)
+0:19      add second child into first child ( temp 4-component vector of float)
+0:19        'f4' ( temp 4-component vector of float)
+0:19        Function Call: Test::staticMemFun(vf4; ( global 4-component vector of float)
 0:?           Constant:
 0:?             5.000000
 0:?             5.000000
 0:?             5.000000
 0:?             5.000000
-0:20      add second child into first child (temp 4-component vector of float)
-0:20        'f4' (temp 4-component vector of float)
-0:20        Convert int to float (temp float)
-0:20          Function Call: Test::staticMemFun(i1; (global int)
+0:20      add second child into first child ( temp 4-component vector of float)
+0:20        'f4' ( temp 4-component vector of float)
+0:20        Convert int to float ( temp float)
+0:20          Function Call: Test::staticMemFun(i1; ( global int)
 0:20            Constant:
 0:20              7 (const int)
 0:21      Branch: Return with expression
-0:21        'f4' (temp 4-component vector of float)
-0:16  Function Definition: main( (temp void)
+0:21        'f4' ( temp 4-component vector of float)
+0:16  Function Definition: main( ( temp void)
 0:16    Function Parameters: 
 0:?     Sequence
-0:16      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:16        Function Call: @main( (temp 4-component vector of float)
+0:16      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:16        Function Call: @main( ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 
 
 Linked fragment stage:
@@ -63,59 +63,59 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:5  Function Definition: Test::staticMemFun(vf4; (global 4-component vector of float)
+0:5  Function Definition: Test::staticMemFun(vf4; ( global 4-component vector of float)
 0:5    Function Parameters: 
-0:5      'a' (in 4-component vector of float)
+0:5      'a' ( in 4-component vector of float)
 0:?     Sequence
 0:6      Branch: Return with expression
-0:6        vector-scale (temp 4-component vector of float)
+0:6        vector-scale ( temp 4-component vector of float)
 0:6          Constant:
 0:6            2.000000
-0:6          'a' (in 4-component vector of float)
-0:9  Function Definition: Test::staticMemFun(i1; (global int)
+0:6          'a' ( in 4-component vector of float)
+0:9  Function Definition: Test::staticMemFun(i1; ( global int)
 0:9    Function Parameters: 
-0:9      'a' (in int)
+0:9      'a' ( in int)
 0:?     Sequence
 0:10      Branch: Return with expression
-0:10        add (temp int)
+0:10        add ( temp int)
 0:10          Constant:
 0:10            2 (const int)
-0:10          'a' (in int)
-0:16  Function Definition: @main( (temp 4-component vector of float)
+0:10          'a' ( in int)
+0:16  Function Definition: @main( ( temp 4-component vector of float)
 0:16    Function Parameters: 
 0:?     Sequence
 0:18      Sequence
-0:18        move second child to first child (temp 4-component vector of float)
-0:18          'f4' (temp 4-component vector of float)
+0:18        move second child to first child ( temp 4-component vector of float)
+0:18          'f4' ( temp 4-component vector of float)
 0:?           Constant:
 0:?             1.000000
 0:?             1.000000
 0:?             1.000000
 0:?             1.000000
-0:19      add second child into first child (temp 4-component vector of float)
-0:19        'f4' (temp 4-component vector of float)
-0:19        Function Call: Test::staticMemFun(vf4; (global 4-component vector of float)
+0:19      add second child into first child ( temp 4-component vector of float)
+0:19        'f4' ( temp 4-component vector of float)
+0:19        Function Call: Test::staticMemFun(vf4; ( global 4-component vector of float)
 0:?           Constant:
 0:?             5.000000
 0:?             5.000000
 0:?             5.000000
 0:?             5.000000
-0:20      add second child into first child (temp 4-component vector of float)
-0:20        'f4' (temp 4-component vector of float)
-0:20        Convert int to float (temp float)
-0:20          Function Call: Test::staticMemFun(i1; (global int)
+0:20      add second child into first child ( temp 4-component vector of float)
+0:20        'f4' ( temp 4-component vector of float)
+0:20        Convert int to float ( temp float)
+0:20          Function Call: Test::staticMemFun(i1; ( global int)
 0:20            Constant:
 0:20              7 (const int)
 0:21      Branch: Return with expression
-0:21        'f4' (temp 4-component vector of float)
-0:16  Function Definition: main( (temp void)
+0:21        'f4' ( temp 4-component vector of float)
+0:16  Function Definition: main( ( temp void)
 0:16    Function Parameters: 
 0:?     Sequence
-0:16      move second child to first child (temp 4-component vector of float)
-0:?         '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
-0:16        Function Call: @main( (temp 4-component vector of float)
+0:16      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:16        Function Call: @main( ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     '@entryPointOutput' (layout(location=0 ) out 4-component vector of float)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 
 // Module Version 10000
 // Generated by (magic number): 80001

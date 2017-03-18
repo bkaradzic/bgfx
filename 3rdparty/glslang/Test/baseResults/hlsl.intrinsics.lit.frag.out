@@ -2,59 +2,59 @@ hlsl.intrinsics.lit.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:2  Function Definition: @PixelShaderFunction(f1;f1;f1; (temp void)
+0:2  Function Definition: @PixelShaderFunction(f1;f1;f1; ( temp void)
 0:2    Function Parameters: 
-0:2      'n_dot_l' (in float)
-0:2      'n_dot_h' (in float)
-0:2      'm' (in float)
+0:2      'n_dot_l' ( in float)
+0:2      'n_dot_h' ( in float)
+0:2      'm' ( in float)
 0:?     Sequence
 0:3      Sequence
-0:3        move second child to first child (temp 4-component vector of float)
-0:3          'r0' (temp 4-component vector of float)
-0:3          Construct vec4 (temp 4-component vector of float)
+0:3        move second child to first child ( temp 4-component vector of float)
+0:3          'r0' ( temp 4-component vector of float)
+0:3          Construct vec4 ( temp 4-component vector of float)
 0:3            Constant:
 0:3              1.000000
-0:3            max (temp float)
-0:3              'n_dot_l' (in float)
+0:3            max ( temp float)
+0:3              'n_dot_l' ( in float)
 0:3              Constant:
 0:3                0.000000
-0:3            Test condition and select (temp float)
+0:3            Test condition and select ( temp float)
 0:3              Condition
-0:3              Compare Less Than (temp bool)
-0:3                min (temp float)
-0:3                  'n_dot_l' (in float)
-0:3                  'n_dot_h' (in float)
+0:3              Compare Less Than ( temp bool)
+0:3                min ( temp float)
+0:3                  'n_dot_l' ( in float)
+0:3                  'n_dot_h' ( in float)
 0:3                Constant:
 0:3                  0.000000
 0:3              true case
 0:3              Constant:
 0:3                0.000000
 0:3              false case
-0:3              component-wise multiply (temp float)
-0:3                'n_dot_h' (in float)
-0:3                'm' (in float)
+0:3              component-wise multiply ( temp float)
+0:3                'n_dot_h' ( in float)
+0:3                'm' ( in float)
 0:3            Constant:
 0:3              1.000000
-0:2  Function Definition: PixelShaderFunction( (temp void)
+0:2  Function Definition: PixelShaderFunction( ( temp void)
 0:2    Function Parameters: 
 0:?     Sequence
-0:2      move second child to first child (temp float)
-0:?         'n_dot_l' (temp float)
-0:?         'n_dot_l' (layout(location=0 ) in float)
-0:2      move second child to first child (temp float)
-0:?         'n_dot_h' (temp float)
-0:?         'n_dot_h' (layout(location=1 ) in float)
-0:2      move second child to first child (temp float)
-0:?         'm' (temp float)
-0:?         'm' (layout(location=2 ) in float)
-0:2      Function Call: @PixelShaderFunction(f1;f1;f1; (temp void)
-0:?         'n_dot_l' (temp float)
-0:?         'n_dot_h' (temp float)
-0:?         'm' (temp float)
+0:2      move second child to first child ( temp float)
+0:?         'n_dot_l' ( temp float)
+0:?         'n_dot_l' (layout( location=0) in float)
+0:2      move second child to first child ( temp float)
+0:?         'n_dot_h' ( temp float)
+0:?         'n_dot_h' (layout( location=1) in float)
+0:2      move second child to first child ( temp float)
+0:?         'm' ( temp float)
+0:?         'm' (layout( location=2) in float)
+0:2      Function Call: @PixelShaderFunction(f1;f1;f1; ( temp void)
+0:?         'n_dot_l' ( temp float)
+0:?         'n_dot_h' ( temp float)
+0:?         'm' ( temp float)
 0:?   Linker Objects
-0:?     'n_dot_l' (layout(location=0 ) in float)
-0:?     'n_dot_h' (layout(location=1 ) in float)
-0:?     'm' (layout(location=2 ) in float)
+0:?     'n_dot_l' (layout( location=0) in float)
+0:?     'n_dot_h' (layout( location=1) in float)
+0:?     'm' (layout( location=2) in float)
 
 
 Linked fragment stage:
@@ -63,59 +63,59 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
-0:2  Function Definition: @PixelShaderFunction(f1;f1;f1; (temp void)
+0:2  Function Definition: @PixelShaderFunction(f1;f1;f1; ( temp void)
 0:2    Function Parameters: 
-0:2      'n_dot_l' (in float)
-0:2      'n_dot_h' (in float)
-0:2      'm' (in float)
+0:2      'n_dot_l' ( in float)
+0:2      'n_dot_h' ( in float)
+0:2      'm' ( in float)
 0:?     Sequence
 0:3      Sequence
-0:3        move second child to first child (temp 4-component vector of float)
-0:3          'r0' (temp 4-component vector of float)
-0:3          Construct vec4 (temp 4-component vector of float)
+0:3        move second child to first child ( temp 4-component vector of float)
+0:3          'r0' ( temp 4-component vector of float)
+0:3          Construct vec4 ( temp 4-component vector of float)
 0:3            Constant:
 0:3              1.000000
-0:3            max (temp float)
-0:3              'n_dot_l' (in float)
+0:3            max ( temp float)
+0:3              'n_dot_l' ( in float)
 0:3              Constant:
 0:3                0.000000
-0:3            Test condition and select (temp float)
+0:3            Test condition and select ( temp float)
 0:3              Condition
-0:3              Compare Less Than (temp bool)
-0:3                min (temp float)
-0:3                  'n_dot_l' (in float)
-0:3                  'n_dot_h' (in float)
+0:3              Compare Less Than ( temp bool)
+0:3                min ( temp float)
+0:3                  'n_dot_l' ( in float)
+0:3                  'n_dot_h' ( in float)
 0:3                Constant:
 0:3                  0.000000
 0:3              true case
 0:3              Constant:
 0:3                0.000000
 0:3              false case
-0:3              component-wise multiply (temp float)
-0:3                'n_dot_h' (in float)
-0:3                'm' (in float)
+0:3              component-wise multiply ( temp float)
+0:3                'n_dot_h' ( in float)
+0:3                'm' ( in float)
 0:3            Constant:
 0:3              1.000000
-0:2  Function Definition: PixelShaderFunction( (temp void)
+0:2  Function Definition: PixelShaderFunction( ( temp void)
 0:2    Function Parameters: 
 0:?     Sequence
-0:2      move second child to first child (temp float)
-0:?         'n_dot_l' (temp float)
-0:?         'n_dot_l' (layout(location=0 ) in float)
-0:2      move second child to first child (temp float)
-0:?         'n_dot_h' (temp float)
-0:?         'n_dot_h' (layout(location=1 ) in float)
-0:2      move second child to first child (temp float)
-0:?         'm' (temp float)
-0:?         'm' (layout(location=2 ) in float)
-0:2      Function Call: @PixelShaderFunction(f1;f1;f1; (temp void)
-0:?         'n_dot_l' (temp float)
-0:?         'n_dot_h' (temp float)
-0:?         'm' (temp float)
+0:2      move second child to first child ( temp float)
+0:?         'n_dot_l' ( temp float)
+0:?         'n_dot_l' (layout( location=0) in float)
+0:2      move second child to first child ( temp float)
+0:?         'n_dot_h' ( temp float)
+0:?         'n_dot_h' (layout( location=1) in float)
+0:2      move second child to first child ( temp float)
+0:?         'm' ( temp float)
+0:?         'm' (layout( location=2) in float)
+0:2      Function Call: @PixelShaderFunction(f1;f1;f1; ( temp void)
+0:?         'n_dot_l' ( temp float)
+0:?         'n_dot_h' ( temp float)
+0:?         'm' ( temp float)
 0:?   Linker Objects
-0:?     'n_dot_l' (layout(location=0 ) in float)
-0:?     'n_dot_h' (layout(location=1 ) in float)
-0:?     'm' (layout(location=2 ) in float)
+0:?     'n_dot_l' (layout( location=0) in float)
+0:?     'n_dot_h' (layout( location=1) in float)
+0:?     'm' (layout( location=2) in float)
 
 // Module Version 10000
 // Generated by (magic number): 80001

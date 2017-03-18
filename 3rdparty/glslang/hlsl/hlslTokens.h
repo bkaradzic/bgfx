@@ -66,6 +66,7 @@ enum EHlslTokenClass {
     EHTokInOut,
     EHTokLayout,
     EHTokGloballyCoherent,
+    EHTokInline,
 
     // primitive types
     EHTokPoint,

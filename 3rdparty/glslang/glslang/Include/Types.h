@@ -403,6 +403,7 @@ public:
     // drop qualifiers that don't belong in a temporary variable
     void makeTemporary()
     {
+        semanticName = nullptr;
         storage = EvqTemporary;
         builtIn = EbvNone;
         clearInterstage();
@@ -451,6 +452,7 @@ public:
         specConstant = false;
     }
 
+    const char*         semanticName;
     TStorageQualifier   storage   : 6;
     TBuiltInVariable    builtIn   : 8;
     TPrecisionQualifier precision : 3;
@@ -1582,10 +1584,11 @@ public:
 
     TString getCompleteString() const
     {
-        const int maxSize = GlslangMaxTypeLength;
-        char buf[maxSize];
-        char* p = &buf[0];
-        char* end = &buf[maxSize];
+        TString typeString;
+
+        const auto appendStr  = [&](const char* s)  { typeString.append(s); };
+        const auto appendUint = [&](unsigned int u) { typeString.append(std::to_string(u).c_str()); };
+        const auto appendInt  = [&](int i)          { typeString.append(std::to_string(i).c_str()); };
 
         if (qualifier.hasLayout()) {
             // To reduce noise, skip this if the only layout is an xfb_buffer
@@ -1593,137 +1596,175 @@ public:
             TQualifier noXfbBuffer = qualifier;
             noXfbBuffer.layoutXfbBuffer = TQualifier::layoutXfbBufferEnd;
             if (noXfbBuffer.hasLayout()) {
-                p += snprintf(p, end - p, "layout(");
+                appendStr("layout(");
                 if (qualifier.hasAnyLocation()) {
-                    p += snprintf(p, end - p, "location=%d ", qualifier.layoutLocation);
-                    if (qualifier.hasComponent())
-                        p += snprintf(p, end - p, "component=%d ", qualifier.layoutComponent);
-                    if (qualifier.hasIndex())
-                        p += snprintf(p, end - p, "index=%d ", qualifier.layoutIndex);
+                    appendStr(" location=");
+                    appendUint(qualifier.layoutLocation);
+                    if (qualifier.hasComponent()) {
+                        appendStr(" component=");
+                        appendUint(qualifier.layoutComponent);
+                    }
+                    if (qualifier.hasIndex()) {
+                        appendStr(" index=");
+                        appendUint(qualifier.layoutIndex);
+                    }
                 }
-                if (qualifier.hasSet())
-                    p += snprintf(p, end - p, "set=%d ", qualifier.layoutSet);
-                if (qualifier.hasBinding())
-                    p += snprintf(p, end - p, "binding=%d ", qualifier.layoutBinding);
-                if (qualifier.hasStream())
-                    p += snprintf(p, end - p, "stream=%d ", qualifier.layoutStream);
-                if (qualifier.hasMatrix())
-                    p += snprintf(p, end - p, "%s ", TQualifier::getLayoutMatrixString(qualifier.layoutMatrix));
-                if (qualifier.hasPacking())
-                    p += snprintf(p, end - p, "%s ", TQualifier::getLayoutPackingString(qualifier.layoutPacking));
-                if (qualifier.hasOffset())
-                    p += snprintf(p, end - p, "offset=%d ", qualifier.layoutOffset);
-                if (qualifier.hasAlign())
-                    p += snprintf(p, end - p, "align=%d ", qualifier.layoutAlign);
-                if (qualifier.hasFormat())
-                    p += snprintf(p, end - p, "%s ", TQualifier::getLayoutFormatString(qualifier.layoutFormat));
-                if (qualifier.hasXfbBuffer() && qualifier.hasXfbOffset())
-                    p += snprintf(p, end - p, "xfb_buffer=%d ", qualifier.layoutXfbBuffer);
-                if (qualifier.hasXfbOffset())
-                    p += snprintf(p, end - p, "xfb_offset=%d ", qualifier.layoutXfbOffset);
-                if (qualifier.hasXfbStride())
-                    p += snprintf(p, end - p, "xfb_stride=%d ", qualifier.layoutXfbStride);
-                if (qualifier.hasAttachment())
-                    p += snprintf(p, end - p, "input_attachment_index=%d ", qualifier.layoutAttachment);
-                if (qualifier.hasSpecConstantId())
-                    p += snprintf(p, end - p, "constant_id=%d ", qualifier.layoutSpecConstantId);
+                if (qualifier.hasSet()) {
+                    appendStr(" set=");
+                    appendUint(qualifier.layoutSet);
+                }
+                if (qualifier.hasBinding()) {
+                    appendStr(" binding=");
+                    appendUint(qualifier.layoutBinding);
+                }
+                if (qualifier.hasStream()) {
+                    appendStr(" stream=");
+                    appendUint(qualifier.layoutStream);
+                }
+                if (qualifier.hasMatrix()) {
+                    appendStr(" ");
+                    appendStr(TQualifier::getLayoutMatrixString(qualifier.layoutMatrix));
+                }
+                if (qualifier.hasPacking()) {
+                    appendStr(" ");
+                    appendStr(TQualifier::getLayoutPackingString(qualifier.layoutPacking));
+                }
+                if (qualifier.hasOffset()) {
+                    appendStr(" offset=");
+                    appendInt(qualifier.layoutOffset);
+                }
+                if (qualifier.hasAlign()) {
+                    appendStr(" align=");
+                    appendInt(qualifier.layoutAlign);
+                }
+                if (qualifier.hasFormat()) {
+                    appendStr(" ");
+                    appendStr(TQualifier::getLayoutFormatString(qualifier.layoutFormat));
+                }
+                if (qualifier.hasXfbBuffer() && qualifier.hasXfbOffset()) {
+                    appendStr(" xfb_buffer=");
+                    appendUint(qualifier.layoutXfbBuffer);
+                }
+                if (qualifier.hasXfbOffset()) {
+                    appendStr(" xfb_offset=");
+                    appendUint(qualifier.layoutXfbOffset);
+                }
+                if (qualifier.hasXfbStride()) {
+                    appendStr(" xfb_stride=");
+                    appendUint(qualifier.layoutXfbStride);
+                }
+                if (qualifier.hasAttachment()) {
+                    appendStr(" input_attachment_index=");
+                    appendUint(qualifier.layoutAttachment);
+                }
+                if (qualifier.hasSpecConstantId()) {
+                    appendStr(" constant_id=");
+                    appendUint(qualifier.layoutSpecConstantId);
+                }
                 if (qualifier.layoutPushConstant)
-                    p += snprintf(p, end - p, "push_constant ");
+                    appendStr(" push_constant");
 
 #ifdef NV_EXTENSIONS
                 if (qualifier.layoutPassthrough)
-                    p += snprintf(p, end - p, "passthrough ");
+                    appendStr(" passthrough");
                 if (qualifier.layoutViewportRelative)
-                    p += snprintf(p, end - p, "layoutViewportRelative ");
-                if (qualifier.layoutSecondaryViewportRelativeOffset != -2048)
-                    p += snprintf(p, end - p, "layoutSecondaryViewportRelativeOffset=%d ", qualifier.layoutSecondaryViewportRelativeOffset);
+                    appendStr(" layoutViewportRelative");
+                if (qualifier.layoutSecondaryViewportRelativeOffset != -2048) {
+                    appendStr(" layoutSecondaryViewportRelativeOffset=");
+                    appendInt(qualifier.layoutSecondaryViewportRelativeOffset);
+                }
 #endif
 
-                p += snprintf(p, end - p, ") ");
+                appendStr(")");
             }
         }
 
         if (qualifier.invariant)
-            p += snprintf(p, end - p, "invariant ");
+            appendStr(" invariant");
         if (qualifier.noContraction)
-            p += snprintf(p, end - p, "noContraction ");
+            appendStr(" noContraction");
         if (qualifier.centroid)
-            p += snprintf(p, end - p, "centroid ");
+            appendStr(" centroid");
         if (qualifier.smooth)
-            p += snprintf(p, end - p, "smooth ");
+            appendStr(" smooth");
         if (qualifier.flat)
-            p += snprintf(p, end - p, "flat ");
+            appendStr(" flat");
         if (qualifier.nopersp)
-            p += snprintf(p, end - p, "noperspective ");
+            appendStr(" noperspective");
 #ifdef AMD_EXTENSIONS
         if (qualifier.explicitInterp)
-            p += snprintf(p, end - p, "__explicitInterpAMD ");
+            appendStr(" __explicitInterpAMD");
 #endif
         if (qualifier.patch)
-            p += snprintf(p, end - p, "patch ");
+            appendStr(" patch");
         if (qualifier.sample)
-            p += snprintf(p, end - p, "sample ");
+            appendStr(" sample");
         if (qualifier.coherent)
-            p += snprintf(p, end - p, "coherent ");
+            appendStr(" coherent");
         if (qualifier.volatil)
-            p += snprintf(p, end - p, "volatile ");
+            appendStr(" volatile");
         if (qualifier.restrict)
-            p += snprintf(p, end - p, "restrict ");
+            appendStr(" restrict");
         if (qualifier.readonly)
-            p += snprintf(p, end - p, "readonly ");
+            appendStr(" readonly");
         if (qualifier.writeonly)
-            p += snprintf(p, end - p, "writeonly ");
+            appendStr(" writeonly");
         if (qualifier.specConstant)
-            p += snprintf(p, end - p, "specialization-constant ");
-        p += snprintf(p, end - p, "%s ", getStorageQualifierString());
+            appendStr(" specialization-constant");
+        appendStr(" ");
+        appendStr(getStorageQualifierString());
         if (isArray()) {
             for(int i = 0; i < (int)arraySizes->getNumDims(); ++i) {
                 int size = arraySizes->getDimSize(i);
                 if (size == 0)
-                    p += snprintf(p, end - p, "implicitly-sized array of ");
-                else
-                    p += snprintf(p, end - p, "%d-element array of ", arraySizes->getDimSize(i));
+                    appendStr(" implicitly-sized array of");
+                else {
+                    appendStr(" ");
+                    appendInt(arraySizes->getDimSize(i));
+                    appendStr("-element array of");
+                }
             }
         }
-        if (qualifier.precision != EpqNone)
-            p += snprintf(p, end - p, "%s ", getPrecisionQualifierString());
-        if (isMatrix())
-            p += snprintf(p, end - p, "%dX%d matrix of ", matrixCols, matrixRows);
-        else if (isVector())
-            p += snprintf(p, end - p, "%d-component vector of ", vectorSize);
+        if (qualifier.precision != EpqNone) {
+            appendStr(" ");
+            appendStr(getPrecisionQualifierString());
+        }
+        if (isMatrix()) {
+            appendStr(" ");
+            appendInt(matrixCols);
+            appendStr("X");
+            appendInt(matrixRows);
+            appendStr(" matrix of");
+        } else if (isVector()) {
+            appendStr(" ");
+            appendInt(vectorSize);
+            appendStr("-component vector of");
+        }
 
-        *p = 0;
-        TString s(buf);
-        s.append(getBasicTypeString());
+        appendStr(" ");
+        typeString.append(getBasicTypeString());
 
         if (qualifier.builtIn != EbvNone) {
-            s.append(" ");
-            s.append(getBuiltInVariableString());
+            appendStr(" ");
+            appendStr(getBuiltInVariableString());
         }
 
         // Add struct/block members
         if (structure) {
-            s.append("{");
+            appendStr("{");
             for (size_t i = 0; i < structure->size(); ++i) {
-                if (s.size() > 3 * GlslangMaxTypeLength) {
-                    // If we are getting too long, cut it short,
-                    // just need to draw the line somewhere, as there is no limit to
-                    // how large a struct/block type can get.
-                    s.append("...");
-                    break;
-                }
                 if (! (*structure)[i].type->hiddenMember()) {
-                    s.append((*structure)[i].type->getCompleteString());
-                    s.append(" ");
-                    s.append((*structure)[i].type->getFieldName());
+                    typeString.append((*structure)[i].type->getCompleteString());
+                    typeString.append(" ");
+                    typeString.append((*structure)[i].type->getFieldName());
                     if (i < structure->size() - 1)
-                        s.append(", ");
+                        appendStr(", ");
                 }
             }
-            s.append("}");
+            appendStr("}");
         }
 
-        return s;
+        return typeString;
     }
 
     TString getBasicTypeString() const

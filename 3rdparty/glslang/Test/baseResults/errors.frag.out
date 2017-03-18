@@ -6,9 +6,9 @@ ERROR: 2 compilation errors.  No code generated.
 
 Shader version: 100
 ERROR: node is still EOpNull!
-0:1  Function Definition: main(i1; (global mediump int)
+0:1  Function Definition: main(i1; ( global mediump int)
 0:1    Function Parameters: 
-0:1      'foo' (in mediump int)
+0:1      'foo' ( in mediump int)
 0:3    Sequence
 0:3      Branch: Return with expression
 0:3        Constant:
@@ -21,9 +21,9 @@ Linked fragment stage:
 
 Shader version: 100
 ERROR: node is still EOpNull!
-0:1  Function Definition: main(i1; (global mediump int)
+0:1  Function Definition: main(i1; ( global mediump int)
 0:1    Function Parameters: 
-0:1      'foo' (in mediump int)
+0:1      'foo' ( in mediump int)
 0:3    Sequence
 0:3      Branch: Return with expression
 0:3        Constant:
