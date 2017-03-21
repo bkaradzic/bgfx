@@ -1143,8 +1143,8 @@ namespace bgfx
 		UniformHandle m_handle;
 	};
 
- 	class UniformRegistry
- 	{
+	class UniformRegistry
+	{
 	public:
 		UniformRegistry()
 		{
@@ -1624,7 +1624,7 @@ namespace bgfx
 
 		void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint32_t _num)
 		{
- 			m_draw.m_instanceDataOffset = _idb->offset;
+			m_draw.m_instanceDataOffset = _idb->offset;
 			m_draw.m_instanceDataStride = _idb->stride;
 			m_draw.m_numInstances       = bx::uint32_min(_idb->num, _num);
 			m_draw.m_instanceDataBuffer = _idb->handle;
@@ -3090,7 +3090,7 @@ namespace bgfx
 			}
 
 			ProgramHandle handle;
- 			handle.idx = m_programHandle.alloc();
+			handle.idx = m_programHandle.alloc();
 
 			BX_WARN(isValid(handle), "Failed to allocate program handle.");
 			if (isValid(handle) )
