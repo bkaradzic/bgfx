@@ -72,6 +72,14 @@ namespace
 		int flags;
 	};
 
+	struct GLNVGblend
+	{
+		uint64_t srcRGB;
+		uint64_t dstRGB;
+		uint64_t srcAlpha;
+		uint64_t dstAlpha;
+	};
+
 	enum GLNVGcallType
 	{
 		GLNVG_FILL,
@@ -89,6 +97,7 @@ namespace
 		int vertexOffset;
 		int vertexCount;
 		int uniformOffset;
+		GLNVGblend blendFunc;
 	};
 
 	struct GLNVGpath
@@ -705,16 +714,24 @@ namespace
 		return s_blend[idx];
 	}
 
-	static uint64_t glnvg__blendCompositeOperation(NVGcompositeOperationState op)
+	static GLNVGblend glnvg__blendCompositeOperation(NVGcompositeOperationState op)
 	{
-		return BGFX_STATE_BLEND_FUNC_SEPARATE(
-				glnvg_convertBlendFuncFactor(op.srcRGB),
-				glnvg_convertBlendFuncFactor(op.dstRGB),
-				glnvg_convertBlendFuncFactor(op.srcAlpha),
-				glnvg_convertBlendFuncFactor(op.dstAlpha));
+		GLNVGblend blend;
+		blend.srcRGB = glnvg_convertBlendFuncFactor(op.srcRGB);
+		blend.dstRGB = glnvg_convertBlendFuncFactor(op.dstRGB);
+		blend.srcAlpha = glnvg_convertBlendFuncFactor(op.srcAlpha);
+		blend.dstAlpha = glnvg_convertBlendFuncFactor(op.dstAlpha);
+		if (blend.srcRGB == BGFX_STATE_NONE || blend.dstRGB == BGFX_STATE_NONE || blend.srcAlpha == BGFX_STATE_NONE || blend.dstAlpha == BGFX_STATE_NONE)
+		{
+			blend.srcRGB = BGFX_STATE_BLEND_ONE;
+			blend.dstRGB = BGFX_STATE_BLEND_INV_SRC_ALPHA;
+			blend.srcAlpha = BGFX_STATE_BLEND_ONE;
+			blend.dstAlpha = BGFX_STATE_BLEND_INV_SRC_ALPHA;
+		}
+		return blend;
 	}
 
-	static void nvgRenderFlush(void* _userPtr, NVGcompositeOperationState compositeOperation)
+	static void nvgRenderFlush(void* _userPtr)
 	{
 		struct GLNVGcontext* gl = (struct GLNVGcontext*)_userPtr;
 
@@ -732,16 +749,16 @@ namespace
 
 			bx::memCopy(gl->tvb.data, gl->verts, gl->nverts * sizeof(struct NVGvertex) );
 
-			gl->state = glnvg__blendCompositeOperation(compositeOperation)
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
-				;
-
 			bgfx::setUniform(gl->u_viewSize, gl->view);
 
 			for (uint32_t ii = 0, num = gl->ncalls; ii < num; ++ii)
 			{
 				struct GLNVGcall* call = &gl->calls[ii];
+				const GLNVGblend* blend = &call->blendFunc;
+				gl->state = BGFX_STATE_BLEND_FUNC_SEPARATE(blend->srcRGB, blend->dstRGB, blend->srcAlpha, blend->dstAlpha)
+					| BGFX_STATE_RGB_WRITE
+					| BGFX_STATE_ALPHA_WRITE
+					;
 				switch (call->type)
 				{
 				case GLNVG_FILL:
@@ -850,8 +867,8 @@ namespace
 		vtx->v = v;
 	}
 
-	static void nvgRenderFill(void* _userPtr, struct NVGpaint* paint, struct NVGscissor* scissor, float fringe,
-								  const float* bounds, const struct NVGpath* paths, int npaths)
+	static void nvgRenderFill(void* _userPtr, NVGpaint* paint, NVGcompositeOperationState compositeOperation, NVGscissor* scissor,
+								  float fringe, const float* bounds, const NVGpath* paths, int npaths)
 	{
 		struct GLNVGcontext* gl = (struct GLNVGcontext*)_userPtr;
 
@@ -864,6 +881,7 @@ namespace
 		call->pathOffset = glnvg__allocPaths(gl, npaths);
 		call->pathCount = npaths;
 		call->image = paint->image;
+		call->blendFunc = glnvg__blendCompositeOperation(compositeOperation);
 
 		if (npaths == 1 && paths[0].convex)
 		{
@@ -927,7 +945,7 @@ namespace
 		}
 	}
 
-	static void nvgRenderStroke(void* _userPtr, struct NVGpaint* paint, struct NVGscissor* scissor, float fringe,
+	static void nvgRenderStroke(void* _userPtr, struct NVGpaint* paint, NVGcompositeOperationState compositeOperation, struct NVGscissor* scissor, float fringe,
 									float strokeWidth, const struct NVGpath* paths, int npaths)
 	{
 		struct GLNVGcontext* gl = (struct GLNVGcontext*)_userPtr;
@@ -939,6 +957,7 @@ namespace
 		call->pathOffset = glnvg__allocPaths(gl, npaths);
 		call->pathCount = npaths;
 		call->image = paint->image;
+		call->blendFunc = glnvg__blendCompositeOperation(compositeOperation);
 
 		// Allocate vertices for all the paths.
 		maxverts = glnvg__maxVertCount(paths, npaths);
@@ -963,7 +982,7 @@ namespace
 		glnvg__convertPaint(gl, nvg__fragUniformPtr(gl, call->uniformOffset), paint, scissor, strokeWidth, fringe);
 	}
 
-	static void nvgRenderTriangles(void* _userPtr, struct NVGpaint* paint, struct NVGscissor* scissor,
+	static void nvgRenderTriangles(void* _userPtr, struct NVGpaint* paint, NVGcompositeOperationState compositeOperation, struct NVGscissor* scissor,
 									   const struct NVGvertex* verts, int nverts)
 	{
 		struct GLNVGcontext* gl = (struct GLNVGcontext*)_userPtr;
@@ -972,6 +991,7 @@ namespace
 
 		call->type = GLNVG_TRIANGLES;
 		call->image = paint->image;
+		call->blendFunc = glnvg__blendCompositeOperation(compositeOperation);
 
 		// Allocate vertices for all the paths.
 		call->vertexOffset = glnvg__allocVerts(gl, nverts);
