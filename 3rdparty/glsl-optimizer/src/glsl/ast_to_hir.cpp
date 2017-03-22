@@ -3045,10 +3045,12 @@ process_initializer(ir_variable *var, ast_declaration *decl,
    /* Propagate precision qualifier for constant value */
    if (type->qualifier.flags.q.constant) {
       ir_constant *constant_value = rhs->constant_expression_value();
-      constant_value->set_precision((glsl_precision)type->qualifier.precision);
-      if (constant_value->type->is_array()) {
-         for (unsigned i = 0; i < constant_value->type->length; i++) {
-            constant_value->get_array_element(i)->set_precision((glsl_precision)type->qualifier.precision);
+      if (NULL != constant_value) {
+         constant_value->set_precision((glsl_precision)type->qualifier.precision);
+         if (constant_value->type->is_array()) {
+            for (unsigned i = 0; i < constant_value->type->length; i++) {
+               constant_value->get_array_element(i)->set_precision((glsl_precision)type->qualifier.precision);
+            }
          }
       }
    }

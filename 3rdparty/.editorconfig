@@ -31,3 +31,7 @@ indent_size  = 4
 [remotery/*]
 indent_style = space
 indent_size  = 4
+
+[glsl-optimizer/*]
+indent_style = space
+indent_size  = 3
