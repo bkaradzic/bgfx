@@ -4058,7 +4058,7 @@ namespace bgfx
 		{
 			BGFX_CHECK_HANDLE("setShaderBuffer", m_dynamicVertexBufferHandle, _handle);
 			const DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[_handle.idx];
-			m_submit->setBuffer(_stage, dvb.m_handle, _access);
+			m_submit->setShaderBuffer(_stage, dvb.m_handle, _access);
 		}
 
 		BGFX_API_FUNC(void setBuffer(uint8_t _stage, IndirectBufferHandle _handle, Access::Enum _access) )
