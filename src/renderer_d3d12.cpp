@@ -4270,7 +4270,8 @@ data.NumQualityLevels = 0;
 				break;
 
 			case Texture3D:
-				resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+				resourceDesc.Dimension        = D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+				resourceDesc.DepthOrArraySize = m_depth;
 				m_srvd.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE3D;
 				m_srvd.Texture3D.MostDetailedMip     = 0;
 				m_srvd.Texture3D.MipLevels           = numMips;
