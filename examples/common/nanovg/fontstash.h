@@ -83,7 +83,7 @@ typedef struct FONStextIter FONStextIter;
 
 typedef struct FONScontext FONScontext;
 
-// Contructor and destructor.
+// Constructor and destructor.
 FONScontext* fonsCreateInternal(FONSparams* params);
 void fonsDeleteInternal(FONScontext* s);
 
@@ -92,7 +92,7 @@ void fonsSetErrorCallback(FONScontext* s, void (*callback)(void* uptr, int error
 void fonsGetAtlasSize(FONScontext* s, int* width, int* height);
 // Expands the atlas size.
 int fonsExpandAtlas(FONScontext* s, int width, int height);
-// Reseta the whole stash.
+// Resets the whole stash.
 int fonsResetAtlas(FONScontext* stash, int width, int height);
 
 // Add fonts
@@ -1045,6 +1045,7 @@ static FONSglyph* fons__getGlyph(FONScontext* stash, FONSfont* font, unsigned in
 	int pad, added;
 	unsigned char* bdst;
 	unsigned char* dst;
+	FONSfont* renderFont = font;
 
 	if (isize < 2) return NULL;
 	if (iblur > 20) iblur = 20;
@@ -1063,18 +1064,23 @@ static FONSglyph* fons__getGlyph(FONScontext* stash, FONSfont* font, unsigned in
 	}
 
 	// Could not find glyph, create it.
-	scale = fons__tt_getPixelHeightScale(&font->font, size);
 	g = fons__tt_getGlyphIndex(&font->font, codepoint);
 	// Try to find the glyph in fallback fonts.
 	if (g == 0) {
 		for (i = 0; i < font->nfallbacks; ++i) {
-			FONSglyph* fallbackGlyph = fons__getGlyph(stash, stash->fonts[font->fallbacks[i]], codepoint, isize, iblur);
-			if (fallbackGlyph != NULL && fallbackGlyph->index != 0) {
-				return fallbackGlyph;
+			FONSfont* fallbackFont = stash->fonts[font->fallbacks[i]];
+			int fallbackIndex = fons__tt_getGlyphIndex(&fallbackFont->font, codepoint);
+			if (fallbackIndex != 0) {
+				g = fallbackIndex;
+				renderFont = fallbackFont;
+				break;
 			}
 		}
+		// It is possible that we did not find a fallback glyph.
+		// In that case the glyph index 'g' is 0, and we'll proceed below and cache empty glyph.
 	}
-	fons__tt_buildGlyphBitmap(&font->font, g, size, scale, &advance, &lsb, &x0, &y0, &x1, &y1);
+	scale = fons__tt_getPixelHeightScale(&renderFont->font, size);
+	fons__tt_buildGlyphBitmap(&renderFont->font, g, size, scale, &advance, &lsb, &x0, &y0, &x1, &y1);
 	gw = x1-x0 + pad*2;
 	gh = y1-y0 + pad*2;
 
@@ -1108,7 +1114,7 @@ static FONSglyph* fons__getGlyph(FONScontext* stash, FONSfont* font, unsigned in
 
 	// Rasterize
 	dst = &stash->texData[(glyph->x0+pad) + (glyph->y0+pad) * stash->params.width];
-	fons__tt_renderGlyphBitmap(&font->font, dst, gw-pad*2,gh-pad*2, stash->params.width, scale,scale, g);
+	fons__tt_renderGlyphBitmap(&renderFont->font, dst, gw-pad*2,gh-pad*2, stash->params.width, scale,scale, g);
 
 	// Make sure there is one pixel empty border.
 	dst = &stash->texData[glyph->x0 + glyph->y0 * stash->params.width];

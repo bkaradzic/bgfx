@@ -257,10 +257,14 @@ static void nvg__setDevicePixelRatio(NVGcontext* ctx, float ratio)
 
 static NVGcompositeOperationState nvg__compositeOperationState(int op)
 {
-	int sfactor = NVG_ONE;
-	int dfactor = NVG_ONE_MINUS_SRC_ALPHA;
+	int sfactor, dfactor;
 
-	if (op == NVG_SOURCE_IN)
+	if (op == NVG_SOURCE_OVER)
+	{
+		sfactor = NVG_ONE;
+		dfactor = NVG_ONE_MINUS_SRC_ALPHA;
+	}
+	else if (op == NVG_SOURCE_IN)
 	{
 		sfactor = NVG_DST_ALPHA;
 		dfactor = NVG_ZERO;
@@ -309,6 +313,11 @@ static NVGcompositeOperationState nvg__compositeOperationState(int op)
 	{
 		sfactor = NVG_ONE_MINUS_DST_ALPHA;
 		dfactor = NVG_ONE_MINUS_SRC_ALPHA;
+	}
+	else
+	{
+		sfactor = NVG_ONE;
+		dfactor = NVG_ZERO;
 	}
 
 	NVGcompositeOperationState state;
@@ -507,7 +516,7 @@ NVGcolor nvgLerpRGBA(NVGcolor c0, NVGcolor c1, float u)
 {
 	int i;
 	float oneminu;
-	NVGcolor cint;
+	NVGcolor cint = {{{0}}};
 
 	u = nvg__clampf(u, 0.0f, 1.0f);
 	oneminu = 1.0f - u;
@@ -2595,6 +2604,7 @@ enum NVGcodepointType {
 	NVG_SPACE,
 	NVG_NEWLINE,
 	NVG_CHAR,
+	NVG_CJK_CHAR,
 };
 
 int nvgTextBreakLines(NVGcontext* ctx, const char* string, const char* end, float breakRowWidth, NVGtextRow* rows, int maxRows)
@@ -2662,7 +2672,15 @@ int nvgTextBreakLines(NVGcontext* ctx, const char* string, const char* end, floa
 				type = NVG_NEWLINE;
 				break;
 			default:
-				type = NVG_CHAR;
+				if ((iter.codepoint >= 0x4E00 && iter.codepoint <= 0x9FFF) ||
+					(iter.codepoint >= 0x3000 && iter.codepoint <= 0x30FF) ||
+					(iter.codepoint >= 0xFF00 && iter.codepoint <= 0xFFEF) ||
+					(iter.codepoint >= 0x1100 && iter.codepoint <= 0x11FF) ||
+					(iter.codepoint >= 0x3130 && iter.codepoint <= 0x318F) ||
+					(iter.codepoint >= 0xAC00 && iter.codepoint <= 0xD7AF))
+					type = NVG_CJK_CHAR;
+				else
+					type = NVG_CHAR;
 				break;
 		}
 
@@ -2689,7 +2707,7 @@ int nvgTextBreakLines(NVGcontext* ctx, const char* string, const char* end, floa
 		} else {
 			if (rowStart == NULL) {
 				// Skip white space until the beginning of the line
-				if (type == NVG_CHAR) {
+				if (type == NVG_CHAR || type == NVG_CJK_CHAR) {
 					// The current char is the row so far
 					rowStartX = iter.x;
 					rowStart = iter.str;
@@ -2709,26 +2727,26 @@ int nvgTextBreakLines(NVGcontext* ctx, const char* string, const char* end, floa
 				float nextWidth = iter.nextx - rowStartX;
 
 				// track last non-white space character
-				if (type == NVG_CHAR) {
+				if (type == NVG_CHAR || type == NVG_CJK_CHAR) {
 					rowEnd = iter.next;
 					rowWidth = iter.nextx - rowStartX;
 					rowMaxX = q.x1 - rowStartX;
 				}
 				// track last end of a word
-				if (ptype == NVG_CHAR && type == NVG_SPACE) {
+				if (((ptype == NVG_CHAR || ptype == NVG_CJK_CHAR) && type == NVG_SPACE) || type == NVG_CJK_CHAR) {
 					breakEnd = iter.str;
 					breakWidth = rowWidth;
 					breakMaxX = rowMaxX;
 				}
 				// track last beginning of a word
-				if (ptype == NVG_SPACE && type == NVG_CHAR) {
+				if ((ptype == NVG_SPACE && (type == NVG_CHAR || type == NVG_CJK_CHAR)) || type == NVG_CJK_CHAR) {
 					wordStart = iter.str;
 					wordStartX = iter.x;
 					wordMinX = q.x0 - rowStartX;
 				}
 
 				// Break to new line when a character is beyond break width.
-				if (type == NVG_CHAR && nextWidth > breakRowWidth) {
+				if ((type == NVG_CHAR || type == NVG_CJK_CHAR) && nextWidth > breakRowWidth) {
 					// The run length is too long, need to break to new line.
 					if (breakEnd == rowStart) {
 						// The current word is longer than the row length, just break it from here.
