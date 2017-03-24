@@ -25,9 +25,14 @@ namespace bgfx
 		"texture2DLod",
 		"texture2DArrayLod", // BK - interacts with ARB_texture_array.
 		"texture2DProjLod",
+		"texture2DGrad",
+		"texture2DProjGrad",
 		"texture3DLod",
 		"texture3DProjLod",
+		"texture3DGrad",
+		"texture3DProjGrad",
 		"textureCubeLod",
+		"textureCubeGrad",
 		"shadow2DLod",
 		"shadow2DProjLod",
 		NULL
@@ -35,6 +40,17 @@ namespace bgfx
 		// "texture1DProjLod",
 		// "shadow1DLod",
 		// "shadow1DProjLod",
+	};
+
+	static const char* s_EXT_shader_texture_lod[] =
+	{
+		"texture2DLod",
+		"texture2DProjLod",
+		"textureCubeLod",
+		"texture2DGrad",
+		"texture2DProjGrad",
+		"textureCubeGrad",
+		NULL
 	};
 
 	static const char* s_EXT_shadow_samplers[] =
@@ -347,28 +363,28 @@ namespace bgfx
 
 	char* strInsert(char* _str, const char* _insert)
 	{
-		size_t len = strlen(_insert);
-		memmove(&_str[len], _str, strlen(_str) );
-		memcpy(_str, _insert, len);
+		uint32_t len = bx::strnlen(_insert);
+		bx::memMove(&_str[len], _str, bx::strnlen(_str) );
+		bx::memCopy(_str, _insert, len);
 		return _str + len;
 	}
 
 	void strReplace(char* _str, const char* _find, const char* _replace)
 	{
-		const size_t len = strlen(_find);
+		const int32_t len = bx::strnlen(_find);
 
 		char* replace = (char*)alloca(len+1);
 		bx::strlcpy(replace, _replace, len+1);
-		for (size_t ii = strlen(replace); ii < len; ++ii)
+		for (int32_t ii = bx::strnlen(replace); ii < len; ++ii)
 		{
 			replace[ii] = ' ';
 		}
 		replace[len] = '\0';
 
-		BX_CHECK(len >= strlen(_replace), "");
-		for (char* ptr = strstr(_str, _find); NULL != ptr; ptr = strstr(ptr + len, _find) )
+		BX_CHECK(len >= bx::strnlen(_replace), "");
+		for (const char* ptr = bx::strnstr(_str, _find); NULL != ptr; ptr = bx::strnstr(ptr + len, _find) )
 		{
-			memcpy(ptr, replace, len);
+			bx::memCopy(const_cast<char*>(ptr), replace, len);
 		}
 	}
 
@@ -529,7 +545,7 @@ namespace bgfx
 			m_input = m_default;
 			m_input += "\n\n";
 
-			size_t len = strlen(_input)+1;
+			int32_t len = bx::strnlen(_input)+1;
 			char* temp = new char[len];
 			bx::eolLF(temp, len, _input);
 			m_input += temp;
@@ -1834,9 +1850,12 @@ namespace bgfx
 							{
 								std::string code;
 
+								const bool usesTextureLod   = false
+									|| !!bx::findIdentifierMatch(input, s_ARB_shader_texture_lod)
+									|| !!bx::findIdentifierMatch(input, s_EXT_shader_texture_lod)
+									;
 								const bool usesGpuShader5   = !!bx::findIdentifierMatch(input, s_ARB_gpu_shader5);
 								const bool usesTexelFetch   = !!bx::findIdentifierMatch(input, s_texelFetch);
-								const bool usesTextureLod   = !!bx::findIdentifierMatch(input, s_ARB_shader_texture_lod /*EXT_shader_texture_lod*/);
 								const bool usesTextureMS    = !!bx::findIdentifierMatch(input, s_ARB_texture_multisample);
 								const bool usesTextureArray = !!bx::findIdentifierMatch(input, s_textureArray);
 								const bool usesPacking      = !!bx::findIdentifierMatch(input, s_ARB_shading_language_packing);
@@ -1871,12 +1890,26 @@ namespace bgfx
 											);
 									}
 
-									if (usesTextureLod
-									&&  130 > glsl)
+									bool ARB_shader_texture_lod = false;
+									bool EXT_shader_texture_lod = false;
+
+									if (usesTextureLod)
 									{
-										bx::stringPrintf(code
-											, "#extension GL_ARB_shader_texture_lod : enable\n"
-											);
+										if ( (0 != metal || 130 > glsl)
+										&&  'f' == shaderType)
+										{
+											ARB_shader_texture_lod = true;
+											bx::stringPrintf(code
+												, "#extension GL_ARB_shader_texture_lod : enable\n"
+												);
+										}
+										else
+										{
+											EXT_shader_texture_lod = true;
+											bx::stringPrintf(code
+												, "#extension GL_EXT_shader_texture_lod : enable\n"
+												);
+										}
 									}
 
 									if (usesTextureMS)
@@ -1896,10 +1929,29 @@ namespace bgfx
 									if (130 > glsl)
 									{
 										bx::stringPrintf(code,
-												"#define ivec2 vec2\n"
-												"#define ivec3 vec3\n"
-												"#define ivec4 vec4\n"
-												);
+											"#define ivec2 vec2\n"
+											"#define ivec3 vec3\n"
+											"#define ivec4 vec4\n"
+											);
+									}
+
+									if (ARB_shader_texture_lod)
+									{
+										bx::stringPrintf(code,
+											"#define texture2DProjLod  texture2DProjLodARB\n"
+											"#define texture2DGrad     texture2DGradARB\n"
+											"#define texture2DProjGrad texture2DProjGradARB\n"
+											"#define textureCubeGrad   textureCubeGradARB\n"
+											);
+									}
+									else if (EXT_shader_texture_lod)
+									{
+										bx::stringPrintf(code,
+											"#define texture2DProjLod  texture2DProjLodEXT\n"
+											"#define texture2DGrad     texture2DGradEXT\n"
+											"#define texture2DProjGrad texture2DProjGradEXT\n"
+											"#define textureCubeGrad   textureCubeGradEXT\n"
+											);
 									}
 
 									bx::stringPrintf(code
@@ -1915,12 +1967,12 @@ namespace bgfx
 									{
 										bx::stringPrintf(code
 											, "#extension GL_EXT_shader_texture_lod : enable\n"
-											  "#define texture2DLod texture2DLodEXT\n"
-											  "#define texture2DProjLod texture2DProjLodEXT\n"
-											  "#define textureCubeLod textureCubeLodEXT\n"
-	//										  "#define texture2DGrad texture2DGradEXT\n"
-	//										  "#define texture2DProjGrad texture2DProjGradEXT\n"
-	//										  "#define textureCubeGrad textureCubeGradEXT\n"
+											  "#define texture2DLod      texture2DLodEXT\n"
+											  "#define texture2DGrad     texture2DGradEXT\n"
+											  "#define texture2DProjLod  texture2DProjLodEXT\n"
+											  "#define texture2DProjGrad texture2DProjGradEXT\n"
+											  "#define textureCubeLod    textureCubeLodEXT\n"
+											  "#define textureCubeGrad   textureCubeGradEXT\n"
 											);
 									}
 
