@@ -363,6 +363,9 @@ namespace
 		uint32_t bytesPerPixel = NVG_TEXTURE_RGBA == tex->type ? 4 : 1;
 		uint32_t pitch = tex->width * bytesPerPixel;
 
+		const bgfx::Memory* mem = bgfx::alloc(w * h * bytesPerPixel);
+		bx::gather(mem->data, data + y * pitch + x * bytesPerPixel, w * bytesPerPixel, h, pitch);
+
 		bgfx::updateTexture2D(
 			  tex->id
 			, 0
@@ -371,8 +374,8 @@ namespace
 			, y
 			, w
 			, h
-			, bgfx::copy(data + y*pitch + x*bytesPerPixel, h*pitch)
-			, pitch
+			, mem
+			, UINT16_MAX
 			);
 
 		return 1;
