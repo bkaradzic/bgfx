@@ -1622,14 +1622,6 @@ VK_IMPORT_DEVICE
 				VkCommandBuffer commandBuffer = m_commandBuffers[0];
 				VK_CHECK(vkBeginCommandBuffer(commandBuffer, &cbbi) );
 
-				VkClearValue clearValue[2];
-				clearValue[0].color.float32[0] = 0.0f;
-				clearValue[0].color.float32[1] = 0.0f;
-				clearValue[0].color.float32[2] = 0.0f;
-				clearValue[0].color.float32[3] = 1.0f;
-				clearValue[1].depthStencil.depth   = 0.0f;
-				clearValue[1].depthStencil.stencil = 0;
-
 				VkRenderPassBeginInfo rpbi;
 				rpbi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 				rpbi.pNext = NULL;
@@ -1637,8 +1629,8 @@ VK_IMPORT_DEVICE
 				rpbi.renderArea.offset.x = 0;
 				rpbi.renderArea.offset.y = 0;
 				rpbi.renderArea.extent = m_sci.imageExtent;
-				rpbi.clearValueCount = BX_COUNTOF(clearValue);
-				rpbi.pClearValues    = clearValue;
+				rpbi.clearValueCount = 0;
+				rpbi.pClearValues = NULL;
 
 				setImageMemoryBarrier(commandBuffer
 					, m_backBufferDepthStencilImage
@@ -2872,7 +2864,6 @@ VK_IMPORT_DEVICE
 
 			VkClearAttachment attachments[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 			uint32_t mrt = 0;
-			attachments[mrt].aspectMask = 0;
 
 			if (true //NULL != m_currentColor
 			&&  BGFX_CLEAR_COLOR & _clear.m_flags)
@@ -2912,6 +2903,7 @@ VK_IMPORT_DEVICE
 			&& (BGFX_CLEAR_DEPTH | BGFX_CLEAR_STENCIL) & _clear.m_flags)
 			{
 				attachments[mrt].colorAttachment = mrt;
+				attachments[mrt].aspectMask = 0;
 				attachments[mrt].aspectMask |= (_clear.m_flags & BGFX_CLEAR_DEPTH  ) ? VK_IMAGE_ASPECT_DEPTH_BIT   : 0;
 				attachments[mrt].aspectMask |= (_clear.m_flags & BGFX_CLEAR_STENCIL) ? VK_IMAGE_ASPECT_STENCIL_BIT : 0;
 
