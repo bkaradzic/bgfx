@@ -5570,27 +5570,34 @@ data.NumQualityLevels = 0;
 					);
 
 #if BX_PLATFORM_WINDOWS
-				DXGI_QUERY_VIDEO_MEMORY_INFO memInfo;
-				DX_CHECK(m_adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &memInfo) );
+				DXGI_QUERY_VIDEO_MEMORY_INFO vmi[2];
+				DX_CHECK(m_adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL,     &vmi[0]) );
+				DX_CHECK(m_adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL, &vmi[1]) );
 
-				char budget[16];
-				bx::prettify(budget, BX_COUNTOF(budget), memInfo.Budget);
+				for (uint32_t ii = 0; ii < BX_COUNTOF(vmi); ++ii)
+				{
+					const DXGI_QUERY_VIDEO_MEMORY_INFO& memInfo = vmi[ii];
 
-				char currentUsage[16];
-				bx::prettify(currentUsage, BX_COUNTOF(currentUsage), memInfo.CurrentUsage);
+					char budget[16];
+					bx::prettify(budget, BX_COUNTOF(budget), memInfo.Budget);
 
-				char availableForReservation[16];
-				bx::prettify(availableForReservation, BX_COUNTOF(currentUsage), memInfo.AvailableForReservation);
+					char currentUsage[16];
+					bx::prettify(currentUsage, BX_COUNTOF(currentUsage), memInfo.CurrentUsage);
 
-				char currentReservation[16];
-				bx::prettify(currentReservation, BX_COUNTOF(currentReservation), memInfo.CurrentReservation);
+					char availableForReservation[16];
+					bx::prettify(availableForReservation, BX_COUNTOF(currentUsage), memInfo.AvailableForReservation);
 
-				tvm.printf(0, pos++, 0x8f, " Budget: %s, Usage: %s, AvailRes: %s, CurrRes: %s "
-					, budget
-					, currentUsage
-					, availableForReservation
-					, currentReservation
-					);
+					char currentReservation[16];
+					bx::prettify(currentReservation, BX_COUNTOF(currentReservation), memInfo.CurrentReservation);
+
+					tvm.printf(0, pos++, 0x8f, "   %s - Budget: %10s, Usage: %10s, AvailRes: %10s, CurrRes: %10s "
+						, 0 == ii ? "Local    " : "Non-local"
+						, budget
+						, currentUsage
+						, availableForReservation
+						, currentReservation
+						);
+				}
 #endif // BX_PLATFORM_WINDOWS
 
 				pos = 10;
