@@ -54,7 +54,7 @@ class TPpToken;
 // Everything needed to fully describe a token.
 //
 struct HlslToken {
-    HlslToken() : string(nullptr), symbol(nullptr) { loc.init(); }
+    HlslToken() : string(nullptr) { loc.init(); }
     TSourceLoc loc;                // location of token in the source
     EHlslTokenClass tokenClass;    // what kind of token it is
     union {                        // what data the token holds
@@ -64,7 +64,6 @@ struct HlslToken {
         bool b;
         double d;
     };
-    glslang::TSymbol* symbol;      // if a symbol-table lookup was done already, this is the result
 };
 
 //

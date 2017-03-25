@@ -14,16 +14,16 @@ gl_FragCoord origin is upper left
 0:10              add ( temp 4-component vector of float)
 0:10                add ( temp 4-component vector of float)
 0:10                  add ( temp 4-component vector of float)
-0:10                    direct index (layout( offset=0) temp 4-component vector of float)
-0:10                      a: direct index for structure (layout( offset=0) uniform 4-element array of 4-component vector of float)
-0:10                        'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-element array of 4-component vector of float a, layout( offset=64) uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m} s})
+0:10                    direct index ( temp 4-component vector of float)
+0:10                      a: direct index for structure ( uniform 4-element array of 4-component vector of float)
+0:10                        'anon@0' (layout( row_major std140) uniform block{ uniform 4-element array of 4-component vector of float a,  uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m} s})
 0:10                        Constant:
 0:10                          0 (const uint)
 0:10                      Constant:
 0:10                        1 (const int)
-0:10                    indirect index (layout( offset=0) temp 4-component vector of float)
-0:10                      a: direct index for structure (layout( offset=0) uniform 4-element array of 4-component vector of float)
-0:10                        'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-element array of 4-component vector of float a, layout( offset=64) uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m} s})
+0:10                    indirect index ( temp 4-component vector of float)
+0:10                      a: direct index for structure ( uniform 4-element array of 4-component vector of float)
+0:10                        'anon@0' (layout( row_major std140) uniform block{ uniform 4-element array of 4-component vector of float a,  uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m} s})
 0:10                        Constant:
 0:10                          0 (const uint)
 0:10                      'i' ( in int)
@@ -43,9 +43,9 @@ gl_FragCoord origin is upper left
 0:10              'i' ( in int)
 0:10          indirect index ( temp 4-component vector of float)
 0:10            m: direct index for structure ( temp 7-element array of 4-component vector of float)
-0:10              indirect index (layout( offset=64) temp structure{ temp 7-element array of 4-component vector of float m})
-0:10                s: direct index for structure (layout( offset=64) uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m})
-0:10                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-element array of 4-component vector of float a, layout( offset=64) uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m} s})
+0:10              indirect index ( temp structure{ temp 7-element array of 4-component vector of float m})
+0:10                s: direct index for structure ( uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m})
+0:10                  'anon@0' (layout( row_major std140) uniform block{ uniform 4-element array of 4-component vector of float a,  uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m} s})
 0:10                  Constant:
 0:10                    1 (const uint)
 0:10                'i' ( in int)
@@ -67,10 +67,10 @@ gl_FragCoord origin is upper left
 0:?           'i' ( temp int)
 0:?           'input' ( temp 3-element array of 4-component vector of float)
 0:?   Linker Objects
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform 4-element array of 4-component vector of float a,  uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m} s})
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 0:?     'i' (layout( location=0) in int)
 0:?     'input' (layout( location=1) in 3-element array of 4-component vector of float)
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-element array of 4-component vector of float a, layout( offset=64) uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m} s})
 
 
 Linked fragment stage:
@@ -91,16 +91,16 @@ gl_FragCoord origin is upper left
 0:10              add ( temp 4-component vector of float)
 0:10                add ( temp 4-component vector of float)
 0:10                  add ( temp 4-component vector of float)
-0:10                    direct index (layout( offset=0) temp 4-component vector of float)
-0:10                      a: direct index for structure (layout( offset=0) uniform 4-element array of 4-component vector of float)
-0:10                        'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-element array of 4-component vector of float a, layout( offset=64) uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m} s})
+0:10                    direct index ( temp 4-component vector of float)
+0:10                      a: direct index for structure ( uniform 4-element array of 4-component vector of float)
+0:10                        'anon@0' (layout( row_major std140) uniform block{ uniform 4-element array of 4-component vector of float a,  uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m} s})
 0:10                        Constant:
 0:10                          0 (const uint)
 0:10                      Constant:
 0:10                        1 (const int)
-0:10                    indirect index (layout( offset=0) temp 4-component vector of float)
-0:10                      a: direct index for structure (layout( offset=0) uniform 4-element array of 4-component vector of float)
-0:10                        'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-element array of 4-component vector of float a, layout( offset=64) uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m} s})
+0:10                    indirect index ( temp 4-component vector of float)
+0:10                      a: direct index for structure ( uniform 4-element array of 4-component vector of float)
+0:10                        'anon@0' (layout( row_major std140) uniform block{ uniform 4-element array of 4-component vector of float a,  uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m} s})
 0:10                        Constant:
 0:10                          0 (const uint)
 0:10                      'i' ( in int)
@@ -120,9 +120,9 @@ gl_FragCoord origin is upper left
 0:10              'i' ( in int)
 0:10          indirect index ( temp 4-component vector of float)
 0:10            m: direct index for structure ( temp 7-element array of 4-component vector of float)
-0:10              indirect index (layout( offset=64) temp structure{ temp 7-element array of 4-component vector of float m})
-0:10                s: direct index for structure (layout( offset=64) uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m})
-0:10                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-element array of 4-component vector of float a, layout( offset=64) uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m} s})
+0:10              indirect index ( temp structure{ temp 7-element array of 4-component vector of float m})
+0:10                s: direct index for structure ( uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m})
+0:10                  'anon@0' (layout( row_major std140) uniform block{ uniform 4-element array of 4-component vector of float a,  uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m} s})
 0:10                  Constant:
 0:10                    1 (const uint)
 0:10                'i' ( in int)
@@ -144,10 +144,10 @@ gl_FragCoord origin is upper left
 0:?           'i' ( temp int)
 0:?           'input' ( temp 3-element array of 4-component vector of float)
 0:?   Linker Objects
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform 4-element array of 4-component vector of float a,  uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m} s})
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 0:?     'i' (layout( location=0) in int)
 0:?     'input' (layout( location=1) in 3-element array of 4-component vector of float)
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-element array of 4-component vector of float a, layout( offset=64) uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m} s})
 
 // Module Version 10000
 // Generated by (magic number): 80001

@@ -94,20 +94,20 @@ gl_FragCoord origin is upper left
 0:43              23.000000
 0:43              24.000000
 0:43              25.000000
-0:43            idx: direct index for structure (layout( offset=0) uniform int)
-0:43              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int idx, layout( offset=16) uniform 3X2 matrix of float um})
+0:43            idx: direct index for structure ( uniform int)
+0:43              'anon@0' (layout( row_major std140) uniform block{ uniform int idx,  uniform 3X2 matrix of float um})
 0:43              Constant:
 0:43                0 (const uint)
 0:44      Sequence
 0:44        move second child to first child ( temp 2-component vector of float)
 0:44          'r0c' ( temp 2-component vector of float)
-0:44          indirect index (layout( offset=16) temp 2-component vector of float)
-0:44            um: direct index for structure (layout( offset=16) uniform 3X2 matrix of float)
-0:44              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int idx, layout( offset=16) uniform 3X2 matrix of float um})
+0:44          indirect index ( temp 2-component vector of float)
+0:44            um: direct index for structure ( uniform 3X2 matrix of float)
+0:44              'anon@0' (layout( row_major std140) uniform block{ uniform int idx,  uniform 3X2 matrix of float um})
 0:44              Constant:
 0:44                1 (const uint)
-0:44            idx: direct index for structure (layout( offset=0) uniform int)
-0:44              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int idx, layout( offset=16) uniform 3X2 matrix of float um})
+0:44            idx: direct index for structure ( uniform int)
+0:44              'anon@0' (layout( row_major std140) uniform block{ uniform int idx,  uniform 3X2 matrix of float um})
 0:44              Constant:
 0:44                0 (const uint)
 0:47      move second child to first child ( temp 4-component vector of float)
@@ -130,8 +130,8 @@ gl_FragCoord origin is upper left
 0:10            Constant:
 0:10              0 (const int)
 0:?   Linker Objects
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform int idx,  uniform 3X2 matrix of float um})
 0:?     'Color' (layout( location=0) out 4-component vector of float)
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int idx, layout( offset=16) uniform 3X2 matrix of float um})
 
 
 Linked fragment stage:
@@ -232,20 +232,20 @@ gl_FragCoord origin is upper left
 0:43              23.000000
 0:43              24.000000
 0:43              25.000000
-0:43            idx: direct index for structure (layout( offset=0) uniform int)
-0:43              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int idx, layout( offset=16) uniform 3X2 matrix of float um})
+0:43            idx: direct index for structure ( uniform int)
+0:43              'anon@0' (layout( row_major std140) uniform block{ uniform int idx,  uniform 3X2 matrix of float um})
 0:43              Constant:
 0:43                0 (const uint)
 0:44      Sequence
 0:44        move second child to first child ( temp 2-component vector of float)
 0:44          'r0c' ( temp 2-component vector of float)
-0:44          indirect index (layout( offset=16) temp 2-component vector of float)
-0:44            um: direct index for structure (layout( offset=16) uniform 3X2 matrix of float)
-0:44              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int idx, layout( offset=16) uniform 3X2 matrix of float um})
+0:44          indirect index ( temp 2-component vector of float)
+0:44            um: direct index for structure ( uniform 3X2 matrix of float)
+0:44              'anon@0' (layout( row_major std140) uniform block{ uniform int idx,  uniform 3X2 matrix of float um})
 0:44              Constant:
 0:44                1 (const uint)
-0:44            idx: direct index for structure (layout( offset=0) uniform int)
-0:44              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int idx, layout( offset=16) uniform 3X2 matrix of float um})
+0:44            idx: direct index for structure ( uniform int)
+0:44              'anon@0' (layout( row_major std140) uniform block{ uniform int idx,  uniform 3X2 matrix of float um})
 0:44              Constant:
 0:44                0 (const uint)
 0:47      move second child to first child ( temp 4-component vector of float)
@@ -268,8 +268,8 @@ gl_FragCoord origin is upper left
 0:10            Constant:
 0:10              0 (const int)
 0:?   Linker Objects
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform int idx,  uniform 3X2 matrix of float um})
 0:?     'Color' (layout( location=0) out 4-component vector of float)
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int idx, layout( offset=16) uniform 3X2 matrix of float um})
 
 // Module Version 10000
 // Generated by (magic number): 80001

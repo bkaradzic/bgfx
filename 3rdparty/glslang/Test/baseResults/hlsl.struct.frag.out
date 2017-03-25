@@ -113,11 +113,11 @@ gl_FragCoord origin is upper left
 0:?           'input' ( temp 4-component vector of float)
 0:?           's' ( temp structure{ temp 4-component vector of float a,  temp bool b,  temp 1-component vector of float c,  temp 2-component vector of float d,  temp bool ff1,  temp bool ff2,  temp bool ff3,  temp 4-component vector of float ff4})
 0:?   Linker Objects
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform structure{ temp bool b,  temp bool c,  temp 4-component vector of float a,  temp 4-component vector of float d} s1, layout( binding=5 offset=1620) uniform float ff5, layout( binding=8 offset=1636) uniform float ff6})
 0:?     's2' ( global structure{ temp 4-component vector of float i})
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 0:?     'input' (layout( location=0) in 4-component vector of float)
 0:?     's' (layout( location=1) in structure{ smooth temp 4-component vector of float a,  flat temp bool b,  centroid noperspective temp 1-component vector of float c,  centroid sample temp 2-component vector of float d,  temp bool ff2,  temp bool ff3,  temp 4-component vector of float ff4})
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform structure{ temp bool b,  temp bool c,  temp 4-component vector of float a,  temp 4-component vector of float d} s1, layout( binding=5 offset=1620) uniform float ff5, layout( binding=8 offset=1636) uniform float ff6})
 0:?     's_ff1' ( in bool Face)
 
 
@@ -234,11 +234,11 @@ gl_FragCoord origin is upper left
 0:?           'input' ( temp 4-component vector of float)
 0:?           's' ( temp structure{ temp 4-component vector of float a,  temp bool b,  temp 1-component vector of float c,  temp 2-component vector of float d,  temp bool ff1,  temp bool ff2,  temp bool ff3,  temp 4-component vector of float ff4})
 0:?   Linker Objects
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform structure{ temp bool b,  temp bool c,  temp 4-component vector of float a,  temp 4-component vector of float d} s1, layout( binding=5 offset=1620) uniform float ff5, layout( binding=8 offset=1636) uniform float ff6})
 0:?     's2' ( global structure{ temp 4-component vector of float i})
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 0:?     'input' (layout( location=0) in 4-component vector of float)
 0:?     's' (layout( location=1) in structure{ smooth temp 4-component vector of float a,  flat temp bool b,  centroid noperspective temp 1-component vector of float c,  centroid sample temp 2-component vector of float d,  temp bool ff2,  temp bool ff3,  temp 4-component vector of float ff4})
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform structure{ temp bool b,  temp bool c,  temp 4-component vector of float a,  temp 4-component vector of float d} s1, layout( binding=5 offset=1620) uniform float ff5, layout( binding=8 offset=1636) uniform float ff6})
 0:?     's_ff1' ( in bool Face)
 
 // Module Version 10000

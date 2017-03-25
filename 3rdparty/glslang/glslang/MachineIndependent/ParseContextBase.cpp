@@ -226,7 +226,8 @@ void TParseContextBase::rValueErrorCheck(const TSourceLoc& loc, const char* op, 
 // Add 'symbol' to the list of deferred linkage symbols, which
 // are later processed in finish(), at which point the symbol
 // must still be valid.
-// It is okay if the symbol's type will be subsequently edited.
+// It is okay if the symbol's type will be subsequently edited;
+// the modifications will be tracked.
 void TParseContextBase::trackLinkage(TSymbol& symbol)
 {
     if (!parsingBuiltins)
@@ -532,19 +533,18 @@ void TParseContextBase::parseSwizzleSelector(const TSourceLoc& loc, const TStrin
 //
 void TParseContextBase::growGlobalUniformBlock(TSourceLoc& loc, TType& memberType, TString& memberName, TTypeList* typeList)
 {
-    // make the global block, if not yet made
+    // Make the global block, if not yet made.
     if (globalUniformBlock == nullptr) {
-        TString& blockName = *NewPoolTString(getGlobalUniformBlockName());
         TQualifier blockQualifier;
         blockQualifier.clear();
         blockQualifier.storage = EvqUniform;
-        TType blockType(new TTypeList, blockName, blockQualifier);
-        TString* instanceName = NewPoolTString("");
-        globalUniformBlock = new TVariable(instanceName, blockType, true);
+        TType blockType(new TTypeList, *NewPoolTString(getGlobalUniformBlockName()), blockQualifier);
+        setUniformBlockDefaults(blockType);
+        globalUniformBlock = new TVariable(NewPoolTString(""), blockType, true);
         firstNewMember = 0;
     }
 
-    // add the requested member as a member to the block
+    // Add the requested member as a member to the global block.
     TType* type = new TType;
     type->shallowCopy(memberType);
     type->setFieldName(memberName);
@@ -552,36 +552,20 @@ void TParseContextBase::growGlobalUniformBlock(TSourceLoc& loc, TType& memberTyp
         type->setStruct(typeList);
     TTypeLoc typeLoc = {type, loc};
     globalUniformBlock->getType().getWritableStruct()->push_back(typeLoc);
-}
 
-//
-// Insert into the symbol table the global uniform block created in
-// growGlobalUniformBlock(). The variables added as members won't be
-// found unless this is done.
-//
-bool TParseContextBase::insertGlobalUniformBlock()
-{
-    if (globalUniformBlock == nullptr)
-        return true;
-
-    int numMembers = (int)globalUniformBlock->getType().getStruct()->size();
-    bool inserted = false;
+    // Insert into the symbol table.
     if (firstNewMember == 0) {
         // This is the first request; we need a normal symbol table insert
-        inserted = symbolTable.insert(*globalUniformBlock);
-        if (inserted)
+        if (symbolTable.insert(*globalUniformBlock))
             trackLinkage(*globalUniformBlock);
-    } else if (firstNewMember <= numMembers) {
+        else
+            error(loc, "failed to insert the global constant buffer", "uniform", "");
+    } else {
         // This is a follow-on request; we need to amend the first insert
-        inserted = symbolTable.amend(*globalUniformBlock, firstNewMember);
+        symbolTable.amend(*globalUniformBlock, firstNewMember);
     }
 
-    if (inserted) {
-        finalizeGlobalUniformBlockLayout(*globalUniformBlock);
-        firstNewMember = numMembers;
-    }
-
-    return inserted;
+    ++firstNewMember;
 }
 
 void TParseContextBase::finish()

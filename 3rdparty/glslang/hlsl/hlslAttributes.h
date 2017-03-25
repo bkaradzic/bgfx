@@ -95,9 +95,11 @@ namespace glslang {
 
     class TFunctionDeclarator {
     public:
+        TFunctionDeclarator() : function(nullptr), body(nullptr) { }
         TSourceLoc loc;
         TFunction* function;
         TAttributeMap attributes;
+        TVector<HlslToken>* body;
     };
 
 } // end namespace glslang

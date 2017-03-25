@@ -10,12 +10,12 @@ gl_FragCoord origin is upper left
 0:23          'r00' ( temp float)
 0:23          max ( temp float)
 0:23            Convert bool to float ( temp float)
-0:23              b: direct index for structure (layout( offset=12) uniform bool)
-0:23                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:23              b: direct index for structure ( uniform bool)
+0:23                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:23                Constant:
 0:23                  3 (const uint)
-0:23            f: direct index for structure (layout( offset=8) uniform float)
-0:23              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:23            f: direct index for structure ( uniform float)
+0:23              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:23              Constant:
 0:23                2 (const uint)
 0:24      Sequence
@@ -23,12 +23,12 @@ gl_FragCoord origin is upper left
 0:24          'r01' ( temp uint)
 0:24          max ( temp uint)
 0:24            Convert bool to uint ( temp uint)
-0:24              b: direct index for structure (layout( offset=12) uniform bool)
-0:24                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:24              b: direct index for structure ( uniform bool)
+0:24                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:24                Constant:
 0:24                  3 (const uint)
-0:24            u: direct index for structure (layout( offset=4) uniform uint)
-0:24              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:24            u: direct index for structure ( uniform uint)
+0:24              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:24              Constant:
 0:24                1 (const uint)
 0:25      Sequence
@@ -36,12 +36,12 @@ gl_FragCoord origin is upper left
 0:25          'r02' ( temp int)
 0:25          max ( temp int)
 0:25            Convert bool to int ( temp int)
-0:25              b: direct index for structure (layout( offset=12) uniform bool)
-0:25                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:25              b: direct index for structure ( uniform bool)
+0:25                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:25                Constant:
 0:25                  3 (const uint)
-0:25            i: direct index for structure (layout( offset=0) uniform int)
-0:25              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:25            i: direct index for structure ( uniform int)
+0:25              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:25              Constant:
 0:25                0 (const uint)
 0:26      Sequence
@@ -49,12 +49,12 @@ gl_FragCoord origin is upper left
 0:26          'r03' ( temp float)
 0:26          max ( temp float)
 0:26            Convert int to float ( temp float)
-0:26              i: direct index for structure (layout( offset=0) uniform int)
-0:26                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:26              i: direct index for structure ( uniform int)
+0:26                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:26                Constant:
 0:26                  0 (const uint)
-0:26            f: direct index for structure (layout( offset=8) uniform float)
-0:26              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:26            f: direct index for structure ( uniform float)
+0:26              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:26              Constant:
 0:26                2 (const uint)
 0:27      Sequence
@@ -62,12 +62,12 @@ gl_FragCoord origin is upper left
 0:27          'r04' ( temp float)
 0:27          max ( temp float)
 0:27            Convert uint to float ( temp float)
-0:27              u: direct index for structure (layout( offset=4) uniform uint)
-0:27                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:27              u: direct index for structure ( uniform uint)
+0:27                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:27                Constant:
 0:27                  1 (const uint)
-0:27            f: direct index for structure (layout( offset=8) uniform float)
-0:27              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:27            f: direct index for structure ( uniform float)
+0:27              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:27              Constant:
 0:27                2 (const uint)
 0:29      Sequence
@@ -75,12 +75,12 @@ gl_FragCoord origin is upper left
 0:29          'r10' ( temp 2-component vector of float)
 0:29          max ( temp 2-component vector of float)
 0:29            Convert bool to float ( temp 2-component vector of float)
-0:29              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:29                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:29              b2: direct index for structure ( uniform 2-component vector of bool)
+0:29                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:29                Constant:
 0:29                  7 (const uint)
-0:29            f2: direct index for structure (layout( offset=32) uniform 2-component vector of float)
-0:29              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:29            f2: direct index for structure ( uniform 2-component vector of float)
+0:29              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:29              Constant:
 0:29                6 (const uint)
 0:30      Sequence
@@ -88,12 +88,12 @@ gl_FragCoord origin is upper left
 0:30          'r11' ( temp 2-component vector of uint)
 0:30          max ( temp 2-component vector of uint)
 0:30            Convert bool to uint ( temp 2-component vector of uint)
-0:30              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:30                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:30              b2: direct index for structure ( uniform 2-component vector of bool)
+0:30                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:30                Constant:
 0:30                  7 (const uint)
-0:30            u2: direct index for structure (layout( offset=24) uniform 2-component vector of uint)
-0:30              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:30            u2: direct index for structure ( uniform 2-component vector of uint)
+0:30              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:30              Constant:
 0:30                5 (const uint)
 0:31      Sequence
@@ -101,12 +101,12 @@ gl_FragCoord origin is upper left
 0:31          'r12' ( temp 2-component vector of int)
 0:31          max ( temp 2-component vector of int)
 0:31            Convert bool to int ( temp 2-component vector of int)
-0:31              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:31                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:31              b2: direct index for structure ( uniform 2-component vector of bool)
+0:31                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:31                Constant:
 0:31                  7 (const uint)
-0:31            i2: direct index for structure (layout( offset=16) uniform 2-component vector of int)
-0:31              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:31            i2: direct index for structure ( uniform 2-component vector of int)
+0:31              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:31              Constant:
 0:31                4 (const uint)
 0:32      Sequence
@@ -114,12 +114,12 @@ gl_FragCoord origin is upper left
 0:32          'r13' ( temp 2-component vector of float)
 0:32          max ( temp 2-component vector of float)
 0:32            Convert int to float ( temp 2-component vector of float)
-0:32              i2: direct index for structure (layout( offset=16) uniform 2-component vector of int)
-0:32                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:32              i2: direct index for structure ( uniform 2-component vector of int)
+0:32                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:32                Constant:
 0:32                  4 (const uint)
-0:32            f2: direct index for structure (layout( offset=32) uniform 2-component vector of float)
-0:32              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:32            f2: direct index for structure ( uniform 2-component vector of float)
+0:32              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:32              Constant:
 0:32                6 (const uint)
 0:33      Sequence
@@ -127,12 +127,12 @@ gl_FragCoord origin is upper left
 0:33          'r14' ( temp 2-component vector of float)
 0:33          max ( temp 2-component vector of float)
 0:33            Convert uint to float ( temp 2-component vector of float)
-0:33              u2: direct index for structure (layout( offset=24) uniform 2-component vector of uint)
-0:33                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:33              u2: direct index for structure ( uniform 2-component vector of uint)
+0:33                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:33                Constant:
 0:33                  5 (const uint)
-0:33            f2: direct index for structure (layout( offset=32) uniform 2-component vector of float)
-0:33              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:33            f2: direct index for structure ( uniform 2-component vector of float)
+0:33              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:33              Constant:
 0:33                6 (const uint)
 0:35      Sequence
@@ -140,17 +140,17 @@ gl_FragCoord origin is upper left
 0:35          'r20' ( temp 2-component vector of float)
 0:35          clamp ( temp 2-component vector of float)
 0:35            Convert int to float ( temp 2-component vector of float)
-0:35              i2: direct index for structure (layout( offset=16) uniform 2-component vector of int)
-0:35                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:35              i2: direct index for structure ( uniform 2-component vector of int)
+0:35                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:35                Constant:
 0:35                  4 (const uint)
 0:35            Convert uint to float ( temp 2-component vector of float)
-0:35              u2: direct index for structure (layout( offset=24) uniform 2-component vector of uint)
-0:35                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:35              u2: direct index for structure ( uniform 2-component vector of uint)
+0:35                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:35                Constant:
 0:35                  5 (const uint)
-0:35            f2: direct index for structure (layout( offset=32) uniform 2-component vector of float)
-0:35              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:35            f2: direct index for structure ( uniform 2-component vector of float)
+0:35              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:35              Constant:
 0:35                6 (const uint)
 0:36      Sequence
@@ -158,17 +158,17 @@ gl_FragCoord origin is upper left
 0:36          'r21' ( temp 2-component vector of uint)
 0:36          clamp ( temp 2-component vector of uint)
 0:36            Convert bool to uint ( temp 2-component vector of uint)
-0:36              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:36                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:36              b2: direct index for structure ( uniform 2-component vector of bool)
+0:36                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:36                Constant:
 0:36                  7 (const uint)
-0:36            u2: direct index for structure (layout( offset=24) uniform 2-component vector of uint)
-0:36              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:36            u2: direct index for structure ( uniform 2-component vector of uint)
+0:36              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:36              Constant:
 0:36                5 (const uint)
 0:36            Convert bool to uint ( temp 2-component vector of uint)
-0:36              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:36                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:36              b2: direct index for structure ( uniform 2-component vector of bool)
+0:36                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:36                Constant:
 0:36                  7 (const uint)
 0:37      Sequence
@@ -176,17 +176,17 @@ gl_FragCoord origin is upper left
 0:37          'r22' ( temp 2-component vector of float)
 0:37          clamp ( temp 2-component vector of float)
 0:37            Convert bool to float ( temp 2-component vector of float)
-0:37              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:37                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:37              b2: direct index for structure ( uniform 2-component vector of bool)
+0:37                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:37                Constant:
 0:37                  7 (const uint)
-0:37            f2: direct index for structure (layout( offset=32) uniform 2-component vector of float)
-0:37              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:37            f2: direct index for structure ( uniform 2-component vector of float)
+0:37              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:37              Constant:
 0:37                6 (const uint)
 0:37            Convert bool to float ( temp 2-component vector of float)
-0:37              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:37                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:37              b2: direct index for structure ( uniform 2-component vector of bool)
+0:37                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:37                Constant:
 0:37                  7 (const uint)
 0:40      Sequence
@@ -195,12 +195,12 @@ gl_FragCoord origin is upper left
 0:40          max ( temp 2-component vector of float)
 0:40            Construct vec2 ( in 2-component vector of float)
 0:40              Convert bool to float ( temp float)
-0:40                b: direct index for structure (layout( offset=12) uniform bool)
-0:40                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:40                b: direct index for structure ( uniform bool)
+0:40                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:40                  Constant:
 0:40                    3 (const uint)
-0:40            f2: direct index for structure (layout( offset=32) uniform 2-component vector of float)
-0:40              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:40            f2: direct index for structure ( uniform 2-component vector of float)
+0:40              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:40              Constant:
 0:40                6 (const uint)
 0:41      Sequence
@@ -209,12 +209,12 @@ gl_FragCoord origin is upper left
 0:41          max ( temp 2-component vector of uint)
 0:41            Construct uvec2 ( in 2-component vector of uint)
 0:41              Convert bool to uint ( temp uint)
-0:41                b: direct index for structure (layout( offset=12) uniform bool)
-0:41                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:41                b: direct index for structure ( uniform bool)
+0:41                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:41                  Constant:
 0:41                    3 (const uint)
-0:41            u2: direct index for structure (layout( offset=24) uniform 2-component vector of uint)
-0:41              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:41            u2: direct index for structure ( uniform 2-component vector of uint)
+0:41              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:41              Constant:
 0:41                5 (const uint)
 0:42      Sequence
@@ -223,12 +223,12 @@ gl_FragCoord origin is upper left
 0:42          max ( temp 2-component vector of int)
 0:42            Construct ivec2 ( in 2-component vector of int)
 0:42              Convert bool to int ( temp int)
-0:42                b: direct index for structure (layout( offset=12) uniform bool)
-0:42                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:42                b: direct index for structure ( uniform bool)
+0:42                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:42                  Constant:
 0:42                    3 (const uint)
-0:42            i2: direct index for structure (layout( offset=16) uniform 2-component vector of int)
-0:42              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:42            i2: direct index for structure ( uniform 2-component vector of int)
+0:42              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:42              Constant:
 0:42                4 (const uint)
 0:43      Sequence
@@ -237,12 +237,12 @@ gl_FragCoord origin is upper left
 0:43          max ( temp 2-component vector of float)
 0:43            Construct vec2 ( in 2-component vector of float)
 0:43              Convert int to float ( temp float)
-0:43                i: direct index for structure (layout( offset=0) uniform int)
-0:43                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:43                i: direct index for structure ( uniform int)
+0:43                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:43                  Constant:
 0:43                    0 (const uint)
-0:43            f2: direct index for structure (layout( offset=32) uniform 2-component vector of float)
-0:43              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:43            f2: direct index for structure ( uniform 2-component vector of float)
+0:43              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:43              Constant:
 0:43                6 (const uint)
 0:44      Sequence
@@ -251,12 +251,12 @@ gl_FragCoord origin is upper left
 0:44          max ( temp 2-component vector of float)
 0:44            Construct vec2 ( in 2-component vector of float)
 0:44              Convert uint to float ( temp float)
-0:44                u: direct index for structure (layout( offset=4) uniform uint)
-0:44                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:44                u: direct index for structure ( uniform uint)
+0:44                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:44                  Constant:
 0:44                    1 (const uint)
-0:44            f2: direct index for structure (layout( offset=32) uniform 2-component vector of float)
-0:44              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:44            f2: direct index for structure ( uniform 2-component vector of float)
+0:44              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:44              Constant:
 0:44                6 (const uint)
 0:46      Sequence
@@ -265,17 +265,17 @@ gl_FragCoord origin is upper left
 0:46          clamp ( temp 2-component vector of float)
 0:46            Construct vec2 ( in 2-component vector of float)
 0:46              Convert int to float ( temp float)
-0:46                i: direct index for structure (layout( offset=0) uniform int)
-0:46                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:46                i: direct index for structure ( uniform int)
+0:46                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:46                  Constant:
 0:46                    0 (const uint)
 0:46            Convert uint to float ( temp 2-component vector of float)
-0:46              u2: direct index for structure (layout( offset=24) uniform 2-component vector of uint)
-0:46                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:46              u2: direct index for structure ( uniform 2-component vector of uint)
+0:46                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:46                Constant:
 0:46                  5 (const uint)
-0:46            f2: direct index for structure (layout( offset=32) uniform 2-component vector of float)
-0:46              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:46            f2: direct index for structure ( uniform 2-component vector of float)
+0:46              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:46              Constant:
 0:46                6 (const uint)
 0:47      Sequence
@@ -283,18 +283,18 @@ gl_FragCoord origin is upper left
 0:47          'r41' ( temp 2-component vector of uint)
 0:47          clamp ( temp 2-component vector of uint)
 0:47            Convert bool to uint ( temp 2-component vector of uint)
-0:47              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:47                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:47              b2: direct index for structure ( uniform 2-component vector of bool)
+0:47                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:47                Constant:
 0:47                  7 (const uint)
 0:47            Construct uvec2 ( in 2-component vector of uint)
-0:47              u: direct index for structure (layout( offset=4) uniform uint)
-0:47                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:47              u: direct index for structure ( uniform uint)
+0:47                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:47                Constant:
 0:47                  1 (const uint)
 0:47            Convert bool to uint ( temp 2-component vector of uint)
-0:47              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:47                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:47              b2: direct index for structure ( uniform 2-component vector of bool)
+0:47                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:47                Constant:
 0:47                  7 (const uint)
 0:48      Sequence
@@ -302,19 +302,19 @@ gl_FragCoord origin is upper left
 0:48          'r42' ( temp 2-component vector of float)
 0:48          clamp ( temp 2-component vector of float)
 0:48            Convert bool to float ( temp 2-component vector of float)
-0:48              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:48                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:48              b2: direct index for structure ( uniform 2-component vector of bool)
+0:48                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:48                Constant:
 0:48                  7 (const uint)
 0:48            Construct vec2 ( in 2-component vector of float)
-0:48              f: direct index for structure (layout( offset=8) uniform float)
-0:48                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:48              f: direct index for structure ( uniform float)
+0:48                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:48                Constant:
 0:48                  2 (const uint)
 0:48            Construct vec2 ( in 2-component vector of float)
 0:48              Convert bool to float ( temp float)
-0:48                b: direct index for structure (layout( offset=12) uniform bool)
-0:48                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:48                b: direct index for structure ( uniform bool)
+0:48                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:48                  Constant:
 0:48                    3 (const uint)
 0:49      Sequence
@@ -324,39 +324,39 @@ gl_FragCoord origin is upper left
 0:49            clamp ( temp 2-component vector of uint)
 0:49              Construct uvec2 ( in 2-component vector of uint)
 0:49                Convert int to uint ( temp uint)
-0:49                  i: direct index for structure (layout( offset=0) uniform int)
-0:49                    'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:49                  i: direct index for structure ( uniform int)
+0:49                    'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:49                    Constant:
 0:49                      0 (const uint)
 0:49              Convert int to uint ( temp 2-component vector of uint)
-0:49                i2: direct index for structure (layout( offset=16) uniform 2-component vector of int)
-0:49                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:49                i2: direct index for structure ( uniform 2-component vector of int)
+0:49                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:49                  Constant:
 0:49                    4 (const uint)
-0:49              u2: direct index for structure (layout( offset=24) uniform 2-component vector of uint)
-0:49                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:49              u2: direct index for structure ( uniform 2-component vector of uint)
+0:49                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:49                Constant:
 0:49                  5 (const uint)
 0:51      Sequence
 0:51        move second child to first child ( temp float)
 0:51          'r50' ( temp float)
 0:51          Construct float ( temp float)
-0:?             textureFetch ( temp 4-component vector of float)
-0:51              'g_tTexbfs' (layout( r32f) uniform samplerBuffer)
+0:?             imageLoad ( temp 4-component vector of float)
+0:51              'g_tTexbfs' (layout( r32f) readonly uniform imageBuffer)
 0:51              Convert uint to int ( temp int)
-0:51                upos: direct index for structure (layout( offset=48) uniform uint)
-0:51                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:51                upos: direct index for structure ( uniform uint)
+0:51                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:51                  Constant:
 0:51                    8 (const uint)
 0:52      Sequence
 0:52        move second child to first child ( temp float)
 0:52          'r51' ( temp float)
 0:52          Construct float ( temp float)
-0:?             textureFetch ( temp 4-component vector of float)
-0:52              'g_tTexbfs' (layout( r32f) uniform samplerBuffer)
+0:?             imageLoad ( temp 4-component vector of float)
+0:52              'g_tTexbfs' (layout( r32f) readonly uniform imageBuffer)
 0:52              Convert float to int ( temp int)
-0:52                fpos: direct index for structure (layout( offset=52) uniform float)
-0:52                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:52                fpos: direct index for structure ( uniform float)
+0:52                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:52                  Constant:
 0:52                    9 (const uint)
 0:70      Sequence
@@ -436,10 +436,10 @@ gl_FragCoord origin is upper left
 0:20            Constant:
 0:20              0 (const int)
 0:?   Linker Objects
-0:?     'g_tTexbfs' (layout( r32f) uniform samplerBuffer)
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
+0:?     'g_tTexbfs' (layout( r32f) readonly uniform imageBuffer)
 0:?     'g_tTex1df4' ( uniform texture1D)
 0:?     'color' (layout( location=0) out 4-component vector of float)
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
 
 
 Linked fragment stage:
@@ -456,12 +456,12 @@ gl_FragCoord origin is upper left
 0:23          'r00' ( temp float)
 0:23          max ( temp float)
 0:23            Convert bool to float ( temp float)
-0:23              b: direct index for structure (layout( offset=12) uniform bool)
-0:23                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:23              b: direct index for structure ( uniform bool)
+0:23                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:23                Constant:
 0:23                  3 (const uint)
-0:23            f: direct index for structure (layout( offset=8) uniform float)
-0:23              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:23            f: direct index for structure ( uniform float)
+0:23              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:23              Constant:
 0:23                2 (const uint)
 0:24      Sequence
@@ -469,12 +469,12 @@ gl_FragCoord origin is upper left
 0:24          'r01' ( temp uint)
 0:24          max ( temp uint)
 0:24            Convert bool to uint ( temp uint)
-0:24              b: direct index for structure (layout( offset=12) uniform bool)
-0:24                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:24              b: direct index for structure ( uniform bool)
+0:24                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:24                Constant:
 0:24                  3 (const uint)
-0:24            u: direct index for structure (layout( offset=4) uniform uint)
-0:24              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:24            u: direct index for structure ( uniform uint)
+0:24              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:24              Constant:
 0:24                1 (const uint)
 0:25      Sequence
@@ -482,12 +482,12 @@ gl_FragCoord origin is upper left
 0:25          'r02' ( temp int)
 0:25          max ( temp int)
 0:25            Convert bool to int ( temp int)
-0:25              b: direct index for structure (layout( offset=12) uniform bool)
-0:25                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:25              b: direct index for structure ( uniform bool)
+0:25                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:25                Constant:
 0:25                  3 (const uint)
-0:25            i: direct index for structure (layout( offset=0) uniform int)
-0:25              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:25            i: direct index for structure ( uniform int)
+0:25              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:25              Constant:
 0:25                0 (const uint)
 0:26      Sequence
@@ -495,12 +495,12 @@ gl_FragCoord origin is upper left
 0:26          'r03' ( temp float)
 0:26          max ( temp float)
 0:26            Convert int to float ( temp float)
-0:26              i: direct index for structure (layout( offset=0) uniform int)
-0:26                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:26              i: direct index for structure ( uniform int)
+0:26                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:26                Constant:
 0:26                  0 (const uint)
-0:26            f: direct index for structure (layout( offset=8) uniform float)
-0:26              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:26            f: direct index for structure ( uniform float)
+0:26              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:26              Constant:
 0:26                2 (const uint)
 0:27      Sequence
@@ -508,12 +508,12 @@ gl_FragCoord origin is upper left
 0:27          'r04' ( temp float)
 0:27          max ( temp float)
 0:27            Convert uint to float ( temp float)
-0:27              u: direct index for structure (layout( offset=4) uniform uint)
-0:27                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:27              u: direct index for structure ( uniform uint)
+0:27                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:27                Constant:
 0:27                  1 (const uint)
-0:27            f: direct index for structure (layout( offset=8) uniform float)
-0:27              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:27            f: direct index for structure ( uniform float)
+0:27              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:27              Constant:
 0:27                2 (const uint)
 0:29      Sequence
@@ -521,12 +521,12 @@ gl_FragCoord origin is upper left
 0:29          'r10' ( temp 2-component vector of float)
 0:29          max ( temp 2-component vector of float)
 0:29            Convert bool to float ( temp 2-component vector of float)
-0:29              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:29                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:29              b2: direct index for structure ( uniform 2-component vector of bool)
+0:29                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:29                Constant:
 0:29                  7 (const uint)
-0:29            f2: direct index for structure (layout( offset=32) uniform 2-component vector of float)
-0:29              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:29            f2: direct index for structure ( uniform 2-component vector of float)
+0:29              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:29              Constant:
 0:29                6 (const uint)
 0:30      Sequence
@@ -534,12 +534,12 @@ gl_FragCoord origin is upper left
 0:30          'r11' ( temp 2-component vector of uint)
 0:30          max ( temp 2-component vector of uint)
 0:30            Convert bool to uint ( temp 2-component vector of uint)
-0:30              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:30                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:30              b2: direct index for structure ( uniform 2-component vector of bool)
+0:30                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:30                Constant:
 0:30                  7 (const uint)
-0:30            u2: direct index for structure (layout( offset=24) uniform 2-component vector of uint)
-0:30              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:30            u2: direct index for structure ( uniform 2-component vector of uint)
+0:30              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:30              Constant:
 0:30                5 (const uint)
 0:31      Sequence
@@ -547,12 +547,12 @@ gl_FragCoord origin is upper left
 0:31          'r12' ( temp 2-component vector of int)
 0:31          max ( temp 2-component vector of int)
 0:31            Convert bool to int ( temp 2-component vector of int)
-0:31              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:31                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:31              b2: direct index for structure ( uniform 2-component vector of bool)
+0:31                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:31                Constant:
 0:31                  7 (const uint)
-0:31            i2: direct index for structure (layout( offset=16) uniform 2-component vector of int)
-0:31              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:31            i2: direct index for structure ( uniform 2-component vector of int)
+0:31              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:31              Constant:
 0:31                4 (const uint)
 0:32      Sequence
@@ -560,12 +560,12 @@ gl_FragCoord origin is upper left
 0:32          'r13' ( temp 2-component vector of float)
 0:32          max ( temp 2-component vector of float)
 0:32            Convert int to float ( temp 2-component vector of float)
-0:32              i2: direct index for structure (layout( offset=16) uniform 2-component vector of int)
-0:32                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:32              i2: direct index for structure ( uniform 2-component vector of int)
+0:32                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:32                Constant:
 0:32                  4 (const uint)
-0:32            f2: direct index for structure (layout( offset=32) uniform 2-component vector of float)
-0:32              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:32            f2: direct index for structure ( uniform 2-component vector of float)
+0:32              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:32              Constant:
 0:32                6 (const uint)
 0:33      Sequence
@@ -573,12 +573,12 @@ gl_FragCoord origin is upper left
 0:33          'r14' ( temp 2-component vector of float)
 0:33          max ( temp 2-component vector of float)
 0:33            Convert uint to float ( temp 2-component vector of float)
-0:33              u2: direct index for structure (layout( offset=24) uniform 2-component vector of uint)
-0:33                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:33              u2: direct index for structure ( uniform 2-component vector of uint)
+0:33                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:33                Constant:
 0:33                  5 (const uint)
-0:33            f2: direct index for structure (layout( offset=32) uniform 2-component vector of float)
-0:33              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:33            f2: direct index for structure ( uniform 2-component vector of float)
+0:33              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:33              Constant:
 0:33                6 (const uint)
 0:35      Sequence
@@ -586,17 +586,17 @@ gl_FragCoord origin is upper left
 0:35          'r20' ( temp 2-component vector of float)
 0:35          clamp ( temp 2-component vector of float)
 0:35            Convert int to float ( temp 2-component vector of float)
-0:35              i2: direct index for structure (layout( offset=16) uniform 2-component vector of int)
-0:35                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:35              i2: direct index for structure ( uniform 2-component vector of int)
+0:35                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:35                Constant:
 0:35                  4 (const uint)
 0:35            Convert uint to float ( temp 2-component vector of float)
-0:35              u2: direct index for structure (layout( offset=24) uniform 2-component vector of uint)
-0:35                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:35              u2: direct index for structure ( uniform 2-component vector of uint)
+0:35                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:35                Constant:
 0:35                  5 (const uint)
-0:35            f2: direct index for structure (layout( offset=32) uniform 2-component vector of float)
-0:35              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:35            f2: direct index for structure ( uniform 2-component vector of float)
+0:35              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:35              Constant:
 0:35                6 (const uint)
 0:36      Sequence
@@ -604,17 +604,17 @@ gl_FragCoord origin is upper left
 0:36          'r21' ( temp 2-component vector of uint)
 0:36          clamp ( temp 2-component vector of uint)
 0:36            Convert bool to uint ( temp 2-component vector of uint)
-0:36              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:36                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:36              b2: direct index for structure ( uniform 2-component vector of bool)
+0:36                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:36                Constant:
 0:36                  7 (const uint)
-0:36            u2: direct index for structure (layout( offset=24) uniform 2-component vector of uint)
-0:36              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:36            u2: direct index for structure ( uniform 2-component vector of uint)
+0:36              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:36              Constant:
 0:36                5 (const uint)
 0:36            Convert bool to uint ( temp 2-component vector of uint)
-0:36              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:36                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:36              b2: direct index for structure ( uniform 2-component vector of bool)
+0:36                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:36                Constant:
 0:36                  7 (const uint)
 0:37      Sequence
@@ -622,17 +622,17 @@ gl_FragCoord origin is upper left
 0:37          'r22' ( temp 2-component vector of float)
 0:37          clamp ( temp 2-component vector of float)
 0:37            Convert bool to float ( temp 2-component vector of float)
-0:37              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:37                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:37              b2: direct index for structure ( uniform 2-component vector of bool)
+0:37                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:37                Constant:
 0:37                  7 (const uint)
-0:37            f2: direct index for structure (layout( offset=32) uniform 2-component vector of float)
-0:37              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:37            f2: direct index for structure ( uniform 2-component vector of float)
+0:37              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:37              Constant:
 0:37                6 (const uint)
 0:37            Convert bool to float ( temp 2-component vector of float)
-0:37              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:37                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:37              b2: direct index for structure ( uniform 2-component vector of bool)
+0:37                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:37                Constant:
 0:37                  7 (const uint)
 0:40      Sequence
@@ -641,12 +641,12 @@ gl_FragCoord origin is upper left
 0:40          max ( temp 2-component vector of float)
 0:40            Construct vec2 ( in 2-component vector of float)
 0:40              Convert bool to float ( temp float)
-0:40                b: direct index for structure (layout( offset=12) uniform bool)
-0:40                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:40                b: direct index for structure ( uniform bool)
+0:40                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:40                  Constant:
 0:40                    3 (const uint)
-0:40            f2: direct index for structure (layout( offset=32) uniform 2-component vector of float)
-0:40              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:40            f2: direct index for structure ( uniform 2-component vector of float)
+0:40              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:40              Constant:
 0:40                6 (const uint)
 0:41      Sequence
@@ -655,12 +655,12 @@ gl_FragCoord origin is upper left
 0:41          max ( temp 2-component vector of uint)
 0:41            Construct uvec2 ( in 2-component vector of uint)
 0:41              Convert bool to uint ( temp uint)
-0:41                b: direct index for structure (layout( offset=12) uniform bool)
-0:41                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:41                b: direct index for structure ( uniform bool)
+0:41                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:41                  Constant:
 0:41                    3 (const uint)
-0:41            u2: direct index for structure (layout( offset=24) uniform 2-component vector of uint)
-0:41              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:41            u2: direct index for structure ( uniform 2-component vector of uint)
+0:41              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:41              Constant:
 0:41                5 (const uint)
 0:42      Sequence
@@ -669,12 +669,12 @@ gl_FragCoord origin is upper left
 0:42          max ( temp 2-component vector of int)
 0:42            Construct ivec2 ( in 2-component vector of int)
 0:42              Convert bool to int ( temp int)
-0:42                b: direct index for structure (layout( offset=12) uniform bool)
-0:42                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:42                b: direct index for structure ( uniform bool)
+0:42                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:42                  Constant:
 0:42                    3 (const uint)
-0:42            i2: direct index for structure (layout( offset=16) uniform 2-component vector of int)
-0:42              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:42            i2: direct index for structure ( uniform 2-component vector of int)
+0:42              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:42              Constant:
 0:42                4 (const uint)
 0:43      Sequence
@@ -683,12 +683,12 @@ gl_FragCoord origin is upper left
 0:43          max ( temp 2-component vector of float)
 0:43            Construct vec2 ( in 2-component vector of float)
 0:43              Convert int to float ( temp float)
-0:43                i: direct index for structure (layout( offset=0) uniform int)
-0:43                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:43                i: direct index for structure ( uniform int)
+0:43                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:43                  Constant:
 0:43                    0 (const uint)
-0:43            f2: direct index for structure (layout( offset=32) uniform 2-component vector of float)
-0:43              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:43            f2: direct index for structure ( uniform 2-component vector of float)
+0:43              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:43              Constant:
 0:43                6 (const uint)
 0:44      Sequence
@@ -697,12 +697,12 @@ gl_FragCoord origin is upper left
 0:44          max ( temp 2-component vector of float)
 0:44            Construct vec2 ( in 2-component vector of float)
 0:44              Convert uint to float ( temp float)
-0:44                u: direct index for structure (layout( offset=4) uniform uint)
-0:44                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:44                u: direct index for structure ( uniform uint)
+0:44                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:44                  Constant:
 0:44                    1 (const uint)
-0:44            f2: direct index for structure (layout( offset=32) uniform 2-component vector of float)
-0:44              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:44            f2: direct index for structure ( uniform 2-component vector of float)
+0:44              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:44              Constant:
 0:44                6 (const uint)
 0:46      Sequence
@@ -711,17 +711,17 @@ gl_FragCoord origin is upper left
 0:46          clamp ( temp 2-component vector of float)
 0:46            Construct vec2 ( in 2-component vector of float)
 0:46              Convert int to float ( temp float)
-0:46                i: direct index for structure (layout( offset=0) uniform int)
-0:46                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:46                i: direct index for structure ( uniform int)
+0:46                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:46                  Constant:
 0:46                    0 (const uint)
 0:46            Convert uint to float ( temp 2-component vector of float)
-0:46              u2: direct index for structure (layout( offset=24) uniform 2-component vector of uint)
-0:46                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:46              u2: direct index for structure ( uniform 2-component vector of uint)
+0:46                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:46                Constant:
 0:46                  5 (const uint)
-0:46            f2: direct index for structure (layout( offset=32) uniform 2-component vector of float)
-0:46              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:46            f2: direct index for structure ( uniform 2-component vector of float)
+0:46              'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:46              Constant:
 0:46                6 (const uint)
 0:47      Sequence
@@ -729,18 +729,18 @@ gl_FragCoord origin is upper left
 0:47          'r41' ( temp 2-component vector of uint)
 0:47          clamp ( temp 2-component vector of uint)
 0:47            Convert bool to uint ( temp 2-component vector of uint)
-0:47              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:47                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:47              b2: direct index for structure ( uniform 2-component vector of bool)
+0:47                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:47                Constant:
 0:47                  7 (const uint)
 0:47            Construct uvec2 ( in 2-component vector of uint)
-0:47              u: direct index for structure (layout( offset=4) uniform uint)
-0:47                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:47              u: direct index for structure ( uniform uint)
+0:47                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:47                Constant:
 0:47                  1 (const uint)
 0:47            Convert bool to uint ( temp 2-component vector of uint)
-0:47              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:47                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:47              b2: direct index for structure ( uniform 2-component vector of bool)
+0:47                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:47                Constant:
 0:47                  7 (const uint)
 0:48      Sequence
@@ -748,19 +748,19 @@ gl_FragCoord origin is upper left
 0:48          'r42' ( temp 2-component vector of float)
 0:48          clamp ( temp 2-component vector of float)
 0:48            Convert bool to float ( temp 2-component vector of float)
-0:48              b2: direct index for structure (layout( offset=40) uniform 2-component vector of bool)
-0:48                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:48              b2: direct index for structure ( uniform 2-component vector of bool)
+0:48                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:48                Constant:
 0:48                  7 (const uint)
 0:48            Construct vec2 ( in 2-component vector of float)
-0:48              f: direct index for structure (layout( offset=8) uniform float)
-0:48                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:48              f: direct index for structure ( uniform float)
+0:48                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:48                Constant:
 0:48                  2 (const uint)
 0:48            Construct vec2 ( in 2-component vector of float)
 0:48              Convert bool to float ( temp float)
-0:48                b: direct index for structure (layout( offset=12) uniform bool)
-0:48                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:48                b: direct index for structure ( uniform bool)
+0:48                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:48                  Constant:
 0:48                    3 (const uint)
 0:49      Sequence
@@ -770,39 +770,39 @@ gl_FragCoord origin is upper left
 0:49            clamp ( temp 2-component vector of uint)
 0:49              Construct uvec2 ( in 2-component vector of uint)
 0:49                Convert int to uint ( temp uint)
-0:49                  i: direct index for structure (layout( offset=0) uniform int)
-0:49                    'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:49                  i: direct index for structure ( uniform int)
+0:49                    'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:49                    Constant:
 0:49                      0 (const uint)
 0:49              Convert int to uint ( temp 2-component vector of uint)
-0:49                i2: direct index for structure (layout( offset=16) uniform 2-component vector of int)
-0:49                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:49                i2: direct index for structure ( uniform 2-component vector of int)
+0:49                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:49                  Constant:
 0:49                    4 (const uint)
-0:49              u2: direct index for structure (layout( offset=24) uniform 2-component vector of uint)
-0:49                'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:49              u2: direct index for structure ( uniform 2-component vector of uint)
+0:49                'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:49                Constant:
 0:49                  5 (const uint)
 0:51      Sequence
 0:51        move second child to first child ( temp float)
 0:51          'r50' ( temp float)
 0:51          Construct float ( temp float)
-0:?             textureFetch ( temp 4-component vector of float)
-0:51              'g_tTexbfs' (layout( r32f) uniform samplerBuffer)
+0:?             imageLoad ( temp 4-component vector of float)
+0:51              'g_tTexbfs' (layout( r32f) readonly uniform imageBuffer)
 0:51              Convert uint to int ( temp int)
-0:51                upos: direct index for structure (layout( offset=48) uniform uint)
-0:51                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:51                upos: direct index for structure ( uniform uint)
+0:51                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:51                  Constant:
 0:51                    8 (const uint)
 0:52      Sequence
 0:52        move second child to first child ( temp float)
 0:52          'r51' ( temp float)
 0:52          Construct float ( temp float)
-0:?             textureFetch ( temp 4-component vector of float)
-0:52              'g_tTexbfs' (layout( r32f) uniform samplerBuffer)
+0:?             imageLoad ( temp 4-component vector of float)
+0:52              'g_tTexbfs' (layout( r32f) readonly uniform imageBuffer)
 0:52              Convert float to int ( temp int)
-0:52                fpos: direct index for structure (layout( offset=52) uniform float)
-0:52                  'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
+0:52                fpos: direct index for structure ( uniform float)
+0:52                  'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
 0:52                  Constant:
 0:52                    9 (const uint)
 0:70      Sequence
@@ -882,14 +882,14 @@ gl_FragCoord origin is upper left
 0:20            Constant:
 0:20              0 (const int)
 0:?   Linker Objects
-0:?     'g_tTexbfs' (layout( r32f) uniform samplerBuffer)
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform int i,  uniform uint u,  uniform float f,  uniform bool b,  uniform 2-component vector of int i2,  uniform 2-component vector of uint u2,  uniform 2-component vector of float f2,  uniform 2-component vector of bool b2,  uniform uint upos,  uniform float fpos})
+0:?     'g_tTexbfs' (layout( r32f) readonly uniform imageBuffer)
 0:?     'g_tTex1df4' ( uniform texture1D)
 0:?     'color' (layout( location=0) out 4-component vector of float)
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int i, layout( offset=4) uniform uint u, layout( offset=8) uniform float f, layout( offset=12) uniform bool b, layout( offset=16) uniform 2-component vector of int i2, layout( offset=24) uniform 2-component vector of uint u2, layout( offset=32) uniform 2-component vector of float f2, layout( offset=40) uniform 2-component vector of bool b2, layout( offset=48) uniform uint upos, layout( offset=52) uniform float fpos})
 
 // Module Version 10000
 // Generated by (magic number): 80001
-// Id's are bound by 325
+// Id's are bound by 322
 
                               Capability Shader
                               Capability Sampled1D
@@ -897,7 +897,7 @@ gl_FragCoord origin is upper left
                               Capability ImageQuery
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
-                              EntryPoint Fragment 4  "main" 322
+                              EntryPoint Fragment 4  "main" 319
                               ExecutionMode 4 OriginUpperLeft
                               Name 4  "main"
                               Name 8  "PS_OUTPUT"
@@ -938,19 +938,19 @@ gl_FragCoord origin is upper left
                               Name 229  "r42"
                               Name 243  "r43"
                               Name 255  "r50"
-                              Name 259  "g_tTexbfs"
-                              Name 268  "r51"
-                              Name 277  "sizeQueryTemp"
-                              Name 280  "g_tTex1df4"
-                              Name 283  "WidthI"
-                              Name 286  "sizeQueryTemp"
-                              Name 292  "NumberOfLevelsU"
-                              Name 295  "sizeQueryTemp"
-                              Name 298  "WidthU"
-                              Name 300  "NumberOfLevelsI"
-                              Name 304  "sizeQueryTemp"
-                              Name 313  "ps_output"
-                              Name 322  "color"
+                              Name 258  "g_tTexbfs"
+                              Name 266  "r51"
+                              Name 274  "sizeQueryTemp"
+                              Name 277  "g_tTex1df4"
+                              Name 280  "WidthI"
+                              Name 283  "sizeQueryTemp"
+                              Name 289  "NumberOfLevelsU"
+                              Name 292  "sizeQueryTemp"
+                              Name 295  "WidthU"
+                              Name 297  "NumberOfLevelsI"
+                              Name 301  "sizeQueryTemp"
+                              Name 310  "ps_output"
+                              Name 319  "color"
                               MemberDecorate 19($Global) 0 Offset 0
                               MemberDecorate 19($Global) 1 Offset 4
                               MemberDecorate 19($Global) 2 Offset 8
@@ -963,9 +963,10 @@ gl_FragCoord origin is upper left
                               MemberDecorate 19($Global) 9 Offset 52
                               Decorate 19($Global) Block
                               Decorate 21 DescriptorSet 0
-                              Decorate 259(g_tTexbfs) DescriptorSet 0
-                              Decorate 280(g_tTex1df4) DescriptorSet 0
-                              Decorate 322(color) Location 0
+                              Decorate 258(g_tTexbfs) DescriptorSet 0
+                              Decorate 258(g_tTexbfs) NonWritable
+                              Decorate 277(g_tTex1df4) DescriptorSet 0
+                              Decorate 319(color) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
@@ -1012,25 +1013,24 @@ gl_FragCoord origin is upper left
              107:   16(ivec2) ConstantComposite 44 44
              109:     14(int) Constant 4
              110:             TypePointer Uniform 16(ivec2)
-             256:             TypeImage 6(float) Buffer sampled format:R32f
-             257:             TypeSampledImage 256
-             258:             TypePointer UniformConstant 257
-  259(g_tTexbfs):    258(ptr) Variable UniformConstant
-             261:     14(int) Constant 8
-             270:     14(int) Constant 9
-             278:             TypeImage 6(float) 1D sampled format:Unknown
-             279:             TypePointer UniformConstant 278
- 280(g_tTex1df4):    279(ptr) Variable UniformConstant
-             288:     15(int) Constant 6
-             312:             TypePointer Function 8(PS_OUTPUT)
-             316:             TypePointer Function 7(fvec4)
-             321:             TypePointer Output 7(fvec4)
-      322(color):    321(ptr) Variable Output
+             256:             TypeImage 6(float) Buffer nonsampled format:R32f
+             257:             TypePointer UniformConstant 256
+  258(g_tTexbfs):    257(ptr) Variable UniformConstant
+             260:     14(int) Constant 8
+             268:     14(int) Constant 9
+             275:             TypeImage 6(float) 1D sampled format:Unknown
+             276:             TypePointer UniformConstant 275
+ 277(g_tTex1df4):    276(ptr) Variable UniformConstant
+             285:     15(int) Constant 6
+             309:             TypePointer Function 8(PS_OUTPUT)
+             313:             TypePointer Function 7(fvec4)
+             318:             TypePointer Output 7(fvec4)
+      319(color):    318(ptr) Variable Output
          4(main):           2 Function None 3
                5:             Label
-             323:8(PS_OUTPUT) FunctionCall 10(@main()
-             324:    7(fvec4) CompositeExtract 323 0
-                              Store 322(color) 324
+             320:8(PS_OUTPUT) FunctionCall 10(@main()
+             321:    7(fvec4) CompositeExtract 320 0
+                              Store 319(color) 321
                               Return
                               FunctionEnd
       10(@main():8(PS_OUTPUT) Function None 9
@@ -1058,16 +1058,16 @@ gl_FragCoord origin is upper left
         229(r42):     73(ptr) Variable Function
         243(r43):    101(ptr) Variable Function
         255(r50):     12(ptr) Variable Function
-        268(r51):     12(ptr) Variable Function
-277(sizeQueryTemp):     37(ptr) Variable Function
-     283(WidthI):     48(ptr) Variable Function
-286(sizeQueryTemp):     37(ptr) Variable Function
-292(NumberOfLevelsU):     37(ptr) Variable Function
-295(sizeQueryTemp):     37(ptr) Variable Function
-     298(WidthU):     37(ptr) Variable Function
-300(NumberOfLevelsI):     48(ptr) Variable Function
-304(sizeQueryTemp):     37(ptr) Variable Function
-  313(ps_output):    312(ptr) Variable Function
+        266(r51):     12(ptr) Variable Function
+274(sizeQueryTemp):     37(ptr) Variable Function
+     280(WidthI):     48(ptr) Variable Function
+283(sizeQueryTemp):     37(ptr) Variable Function
+289(NumberOfLevelsU):     37(ptr) Variable Function
+292(sizeQueryTemp):     37(ptr) Variable Function
+     295(WidthU):     37(ptr) Variable Function
+297(NumberOfLevelsI):     48(ptr) Variable Function
+301(sizeQueryTemp):     37(ptr) Variable Function
+  310(ps_output):    309(ptr) Variable Function
               24:     23(ptr) AccessChain 21 22
               25:     15(int) Load 24
               28:    26(bool) INotEqual 25 27
@@ -1271,60 +1271,58 @@ gl_FragCoord origin is upper left
              253:   17(ivec2) ExtInst 1(GLSL.std.450) 44(UClamp) 247 250 252
              254:   16(ivec2) Bitcast 253
                               Store 243(r43) 254
-             260:         257 Load 259(g_tTexbfs)
-             262:     23(ptr) AccessChain 21 261
-             263:     15(int) Load 262
-             264:     14(int) Bitcast 263
-             265:         256 Image 260
-             266:    7(fvec4) ImageFetch 265 264
-             267:    6(float) CompositeExtract 266 0
-                              Store 255(r50) 267
-             269:         257 Load 259(g_tTexbfs)
-             271:     33(ptr) AccessChain 21 270
-             272:    6(float) Load 271
-             273:     14(int) ConvertFToS 272
-             274:         256 Image 269
-             275:    7(fvec4) ImageFetch 274 273
-             276:    6(float) CompositeExtract 275 0
-                              Store 268(r51) 276
-             281:         278 Load 280(g_tTex1df4)
-             282:     15(int) ImageQuerySizeLod 281 53
-                              Store 277(sizeQueryTemp) 282
-             284:     15(int) Load 277(sizeQueryTemp)
-             285:     14(int) Bitcast 284
-                              Store 283(WidthI) 285
-             287:         278 Load 280(g_tTex1df4)
-             289:     15(int) ImageQuerySizeLod 287 288
-                              Store 286(sizeQueryTemp) 289
-             290:     15(int) Load 286(sizeQueryTemp)
-             291:     14(int) Bitcast 290
-                              Store 283(WidthI) 291
-             293:         278 Load 280(g_tTex1df4)
-             294:     15(int) ImageQueryLevels 293
-                              Store 292(NumberOfLevelsU) 294
-             296:         278 Load 280(g_tTex1df4)
-             297:     15(int) ImageQuerySizeLod 296 288
-                              Store 295(sizeQueryTemp) 297
-             299:     15(int) Load 295(sizeQueryTemp)
-                              Store 298(WidthU) 299
-             301:         278 Load 280(g_tTex1df4)
-             302:     15(int) ImageQueryLevels 301
-             303:     14(int) Bitcast 302
-                              Store 300(NumberOfLevelsI) 303
-             305:         278 Load 280(g_tTex1df4)
-             306:     15(int) ImageQuerySizeLod 305 288
-                              Store 304(sizeQueryTemp) 306
-             307:     15(int) Load 304(sizeQueryTemp)
+             259:         256 Load 258(g_tTexbfs)
+             261:     23(ptr) AccessChain 21 260
+             262:     15(int) Load 261
+             263:     14(int) Bitcast 262
+             264:    7(fvec4) ImageRead 259 263
+             265:    6(float) CompositeExtract 264 0
+                              Store 255(r50) 265
+             267:         256 Load 258(g_tTexbfs)
+             269:     33(ptr) AccessChain 21 268
+             270:    6(float) Load 269
+             271:     14(int) ConvertFToS 270
+             272:    7(fvec4) ImageRead 267 271
+             273:    6(float) CompositeExtract 272 0
+                              Store 266(r51) 273
+             278:         275 Load 277(g_tTex1df4)
+             279:     15(int) ImageQuerySizeLod 278 53
+                              Store 274(sizeQueryTemp) 279
+             281:     15(int) Load 274(sizeQueryTemp)
+             282:     14(int) Bitcast 281
+                              Store 280(WidthI) 282
+             284:         275 Load 277(g_tTex1df4)
+             286:     15(int) ImageQuerySizeLod 284 285
+                              Store 283(sizeQueryTemp) 286
+             287:     15(int) Load 283(sizeQueryTemp)
+             288:     14(int) Bitcast 287
+                              Store 280(WidthI) 288
+             290:         275 Load 277(g_tTex1df4)
+             291:     15(int) ImageQueryLevels 290
+                              Store 289(NumberOfLevelsU) 291
+             293:         275 Load 277(g_tTex1df4)
+             294:     15(int) ImageQuerySizeLod 293 285
+                              Store 292(sizeQueryTemp) 294
+             296:     15(int) Load 292(sizeQueryTemp)
+                              Store 295(WidthU) 296
+             298:         275 Load 277(g_tTex1df4)
+             299:     15(int) ImageQueryLevels 298
+             300:     14(int) Bitcast 299
+                              Store 297(NumberOfLevelsI) 300
+             302:         275 Load 277(g_tTex1df4)
+             303:     15(int) ImageQuerySizeLod 302 285
+                              Store 301(sizeQueryTemp) 303
+             304:     15(int) Load 301(sizeQueryTemp)
+             305:     14(int) Bitcast 304
+                              Store 280(WidthI) 305
+             306:         275 Load 277(g_tTex1df4)
+             307:     15(int) ImageQueryLevels 306
              308:     14(int) Bitcast 307
-                              Store 283(WidthI) 308
-             309:         278 Load 280(g_tTex1df4)
-             310:     15(int) ImageQueryLevels 309
-             311:     14(int) Bitcast 310
-                              Store 300(NumberOfLevelsI) 311
-             314:    6(float) Load 13(r00)
-             315:    7(fvec4) CompositeConstruct 314 314 314 314
-             317:    316(ptr) AccessChain 313(ps_output) 53
-                              Store 317 315
-             318:8(PS_OUTPUT) Load 313(ps_output)
-                              ReturnValue 318
+                              Store 297(NumberOfLevelsI) 308
+             311:    6(float) Load 13(r00)
+             312:    7(fvec4) CompositeConstruct 311 311 311 311
+             314:    313(ptr) AccessChain 310(ps_output) 53
+                              Store 314 312
+             315:8(PS_OUTPUT) Load 310(ps_output)
+                              ReturnValue 315
                               FunctionEnd

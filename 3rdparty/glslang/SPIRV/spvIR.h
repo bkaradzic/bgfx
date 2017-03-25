@@ -273,6 +273,10 @@ public:
     const std::vector<Block*>& getBlocks() const { return blocks; }
     void addLocalVariable(std::unique_ptr<Instruction> inst);
     Id getReturnType() const { return functionInstruction.getTypeId(); }
+
+    void setImplicitThis() { implicitThis = true; }
+    bool hasImplicitThis() const { return implicitThis; }
+
     void dump(std::vector<unsigned int>& out) const
     {
         // OpFunction
@@ -296,6 +300,7 @@ protected:
     Instruction functionInstruction;
     std::vector<Instruction*> parameterInstructions;
     std::vector<Block*> blocks;
+    bool implicitThis;  // true if this is a member function expecting to be passed a 'this' as the first argument
 };
 
 //
@@ -354,7 +359,7 @@ protected:
 // - the OpFunction instruction
 // - all the OpFunctionParameter instructions
 __inline Function::Function(Id id, Id resultType, Id functionType, Id firstParamId, Module& parent)
-    : parent(parent), functionInstruction(id, resultType, OpFunction)
+    : parent(parent), functionInstruction(id, resultType, OpFunction), implicitThis(false)
 {
     // OpFunction
     functionInstruction.addImmediateOperand(FunctionControlMaskNone);

@@ -2,16 +2,28 @@ hlsl.amend.frag
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
+0:3  Sequence
+0:3    move second child to first child ( temp 4-component vector of float)
+0:3      'm' ( global 4-component vector of float)
+0:3      vector-scale ( temp 4-component vector of float)
+0:3        a: direct index for structure ( uniform 4-component vector of float)
+0:3          'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
+0:3          Constant:
+0:3            0 (const uint)
+0:3        b: direct index for structure ( uniform float)
+0:3          'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
+0:3          Constant:
+0:3            1 (const uint)
 0:5  Function Definition: @f1( ( temp void)
 0:5    Function Parameters: 
 0:?     Sequence
 0:6      vector-scale ( temp 4-component vector of float)
-0:6        a: direct index for structure (layout( offset=0) uniform 4-component vector of float)
-0:6          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
+0:6        a: direct index for structure ( uniform 4-component vector of float)
+0:6          'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
 0:6          Constant:
 0:6            0 (const uint)
-0:6        b: direct index for structure (layout( offset=16) uniform float)
-0:6          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
+0:6        b: direct index for structure ( uniform float)
+0:6          'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
 0:6          Constant:
 0:6            1 (const uint)
 0:5  Function Definition: f1( ( temp void)
@@ -24,19 +36,19 @@ gl_FragCoord origin is upper left
 0:13      add ( temp float)
 0:13        add ( temp float)
 0:13          direct index ( temp float)
-0:13            a: direct index for structure (layout( offset=0) uniform 4-component vector of float)
-0:13              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
+0:13            a: direct index for structure ( uniform 4-component vector of float)
+0:13              'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
 0:13              Constant:
 0:13                0 (const uint)
 0:13            Constant:
 0:13              0 (const int)
-0:13          b: direct index for structure (layout( offset=16) uniform float)
-0:13            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
+0:13          b: direct index for structure ( uniform float)
+0:13            'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
 0:13            Constant:
 0:13              1 (const uint)
 0:13        direct index ( temp float)
-0:13          c: direct index for structure (layout( offset=32) uniform 3-component vector of float)
-0:13            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
+0:13          c: direct index for structure ( uniform 3-component vector of float)
+0:13            'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
 0:13            Constant:
 0:13              2 (const uint)
 0:13          Constant:
@@ -44,8 +56,8 @@ gl_FragCoord origin is upper left
 0:17  Function Definition: f3( ( temp void)
 0:17    Function Parameters: 
 0:?     Sequence
-0:18      c: direct index for structure (layout( offset=32) uniform 3-component vector of float)
-0:18        'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
+0:18      c: direct index for structure ( uniform 3-component vector of float)
+0:18        'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
 0:18        Constant:
 0:18          2 (const uint)
 0:24  Function Definition: f4( ( temp void)
@@ -53,16 +65,17 @@ gl_FragCoord origin is upper left
 0:?     Sequence
 0:25      vector-scale ( temp 4-component vector of float)
 0:25        Convert int to float ( temp float)
-0:25          d: direct index for structure (layout( offset=44) uniform int)
-0:25            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
+0:25          d: direct index for structure ( uniform int)
+0:25            'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
 0:25            Constant:
 0:25              3 (const uint)
-0:25        a: direct index for structure (layout( offset=0) uniform 4-component vector of float)
-0:25          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
+0:25        a: direct index for structure ( uniform 4-component vector of float)
+0:25          'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
 0:25          Constant:
 0:25            0 (const uint)
 0:?   Linker Objects
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
+0:?     'm' ( global 4-component vector of float)
 
 
 Linked fragment stage:
@@ -71,16 +84,28 @@ Linked fragment stage:
 Shader version: 450
 gl_FragCoord origin is upper left
 0:? Sequence
+0:3  Sequence
+0:3    move second child to first child ( temp 4-component vector of float)
+0:3      'm' ( global 4-component vector of float)
+0:3      vector-scale ( temp 4-component vector of float)
+0:3        a: direct index for structure ( uniform 4-component vector of float)
+0:3          'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
+0:3          Constant:
+0:3            0 (const uint)
+0:3        b: direct index for structure ( uniform float)
+0:3          'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
+0:3          Constant:
+0:3            1 (const uint)
 0:5  Function Definition: @f1( ( temp void)
 0:5    Function Parameters: 
 0:?     Sequence
 0:6      vector-scale ( temp 4-component vector of float)
-0:6        a: direct index for structure (layout( offset=0) uniform 4-component vector of float)
-0:6          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
+0:6        a: direct index for structure ( uniform 4-component vector of float)
+0:6          'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
 0:6          Constant:
 0:6            0 (const uint)
-0:6        b: direct index for structure (layout( offset=16) uniform float)
-0:6          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
+0:6        b: direct index for structure ( uniform float)
+0:6          'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
 0:6          Constant:
 0:6            1 (const uint)
 0:5  Function Definition: f1( ( temp void)
@@ -93,19 +118,19 @@ gl_FragCoord origin is upper left
 0:13      add ( temp float)
 0:13        add ( temp float)
 0:13          direct index ( temp float)
-0:13            a: direct index for structure (layout( offset=0) uniform 4-component vector of float)
-0:13              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
+0:13            a: direct index for structure ( uniform 4-component vector of float)
+0:13              'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
 0:13              Constant:
 0:13                0 (const uint)
 0:13            Constant:
 0:13              0 (const int)
-0:13          b: direct index for structure (layout( offset=16) uniform float)
-0:13            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
+0:13          b: direct index for structure ( uniform float)
+0:13            'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
 0:13            Constant:
 0:13              1 (const uint)
 0:13        direct index ( temp float)
-0:13          c: direct index for structure (layout( offset=32) uniform 3-component vector of float)
-0:13            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
+0:13          c: direct index for structure ( uniform 3-component vector of float)
+0:13            'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
 0:13            Constant:
 0:13              2 (const uint)
 0:13          Constant:
@@ -113,8 +138,8 @@ gl_FragCoord origin is upper left
 0:17  Function Definition: f3( ( temp void)
 0:17    Function Parameters: 
 0:?     Sequence
-0:18      c: direct index for structure (layout( offset=32) uniform 3-component vector of float)
-0:18        'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
+0:18      c: direct index for structure ( uniform 3-component vector of float)
+0:18        'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
 0:18        Constant:
 0:18          2 (const uint)
 0:24  Function Definition: f4( ( temp void)
@@ -122,20 +147,21 @@ gl_FragCoord origin is upper left
 0:?     Sequence
 0:25      vector-scale ( temp 4-component vector of float)
 0:25        Convert int to float ( temp float)
-0:25          d: direct index for structure (layout( offset=44) uniform int)
-0:25            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
+0:25          d: direct index for structure ( uniform int)
+0:25            'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
 0:25            Constant:
 0:25              3 (const uint)
-0:25        a: direct index for structure (layout( offset=0) uniform 4-component vector of float)
-0:25          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
+0:25        a: direct index for structure ( uniform 4-component vector of float)
+0:25          'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
 0:25          Constant:
 0:25            0 (const uint)
 0:?   Linker Objects
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of float a, layout( offset=16) uniform float b, layout( offset=32) uniform 3-component vector of float c, layout( offset=44) uniform int d,  uniform int e})
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of float a,  uniform float b,  uniform 3-component vector of float c,  uniform int d,  uniform int e})
+0:?     'm' ( global 4-component vector of float)
 
 // Module Version 10000
 // Generated by (magic number): 80001
-// Id's are bound by 50
+// Id's are bound by 57
 
                               Capability Shader
                1:             ExtInstImport  "GLSL.std.450"
@@ -147,62 +173,71 @@ gl_FragCoord origin is upper left
                               Name 8  "f2("
                               Name 10  "f3("
                               Name 12  "f4("
-                              Name 18  "$Global"
-                              MemberName 18($Global) 0  "a"
-                              MemberName 18($Global) 1  "b"
-                              MemberName 18($Global) 2  "c"
-                              MemberName 18($Global) 3  "d"
-                              MemberName 18($Global) 4  "e"
-                              Name 20  ""
-                              MemberDecorate 18($Global) 0 Offset 0
-                              MemberDecorate 18($Global) 1 Offset 16
-                              MemberDecorate 18($Global) 2 Offset 32
-                              MemberDecorate 18($Global) 3 Offset 44
-                              MemberDecorate 18($Global) 4 Offset 48
-                              Decorate 18($Global) Block
-                              Decorate 20 DescriptorSet 0
+                              Name 17  "m"
+                              Name 20  "$Global"
+                              MemberName 20($Global) 0  "a"
+                              MemberName 20($Global) 1  "b"
+                              MemberName 20($Global) 2  "c"
+                              MemberName 20($Global) 3  "d"
+                              MemberName 20($Global) 4  "e"
+                              Name 22  ""
+                              MemberDecorate 20($Global) 0 Offset 0
+                              MemberDecorate 20($Global) 1 Offset 16
+                              MemberDecorate 20($Global) 2 Offset 32
+                              MemberDecorate 20($Global) 3 Offset 44
+                              MemberDecorate 20($Global) 4 Offset 48
+                              Decorate 20($Global) Block
+                              Decorate 22 DescriptorSet 0
                2:             TypeVoid
                3:             TypeFunction 2
               14:             TypeFloat 32
               15:             TypeVector 14(float) 4
-              16:             TypeVector 14(float) 3
-              17:             TypeInt 32 1
-     18($Global):             TypeStruct 15(fvec4) 14(float) 16(fvec3) 17(int) 17(int)
-              19:             TypePointer Uniform 18($Global)
-              20:     19(ptr) Variable Uniform
-              21:     17(int) Constant 0
-              22:             TypePointer Uniform 15(fvec4)
-              25:     17(int) Constant 1
-              26:             TypePointer Uniform 14(float)
-              31:             TypeInt 32 0
-              32:     31(int) Constant 0
-              38:     17(int) Constant 2
-              42:     17(int) Constant 3
-              43:             TypePointer Uniform 17(int)
+              16:             TypePointer Private 15(fvec4)
+           17(m):     16(ptr) Variable Private
+              18:             TypeVector 14(float) 3
+              19:             TypeInt 32 1
+     20($Global):             TypeStruct 15(fvec4) 14(float) 18(fvec3) 19(int) 19(int)
+              21:             TypePointer Uniform 20($Global)
+              22:     21(ptr) Variable Uniform
+              23:     19(int) Constant 0
+              24:             TypePointer Uniform 15(fvec4)
+              27:     19(int) Constant 1
+              28:             TypePointer Uniform 14(float)
+              38:             TypeInt 32 0
+              39:     38(int) Constant 0
+              45:     19(int) Constant 2
+              49:     19(int) Constant 3
+              50:             TypePointer Uniform 19(int)
            4(f1):           2 Function None 3
                5:             Label
-              30:           2 FunctionCall 6(@f1()
+              25:     24(ptr) AccessChain 22 23
+              26:   15(fvec4) Load 25
+              29:     28(ptr) AccessChain 22 27
+              30:   14(float) Load 29
+              31:   15(fvec4) VectorTimesScalar 26 30
+                              Store 17(m) 31
+              37:           2 FunctionCall 6(@f1()
                               Return
                               FunctionEnd
          6(@f1():           2 Function None 3
                7:             Label
-              23:     22(ptr) AccessChain 20 21
-              24:   15(fvec4) Load 23
-              27:     26(ptr) AccessChain 20 25
-              28:   14(float) Load 27
-              29:   15(fvec4) VectorTimesScalar 24 28
+              32:     24(ptr) AccessChain 22 23
+              33:   15(fvec4) Load 32
+              34:     28(ptr) AccessChain 22 27
+              35:   14(float) Load 34
+              36:   15(fvec4) VectorTimesScalar 33 35
                               Return
                               FunctionEnd
           8(f2():           2 Function None 3
                9:             Label
-              33:     26(ptr) AccessChain 20 21 32
-              34:   14(float) Load 33
-              35:     26(ptr) AccessChain 20 25
-              36:   14(float) Load 35
-              37:   14(float) FAdd 34 36
-              39:     26(ptr) AccessChain 20 38 32
-              40:   14(float) Load 39
-              41:   14(float) FAdd 37 40
+              40:     28(ptr) AccessChain 22 23 39
+              41:   14(float) Load 40
+              42:     28(ptr) AccessChain 22 27
+              43:   14(float) Load 42
+              44:   14(float) FAdd 41 43
+              46:     28(ptr) AccessChain 22 45 39
+              47:   14(float) Load 46
+              48:   14(float) FAdd 44 47
                               Return
                               FunctionEnd
          10(f3():           2 Function None 3
@@ -211,11 +246,11 @@ gl_FragCoord origin is upper left
                               FunctionEnd
          12(f4():           2 Function None 3
               13:             Label
-              44:     43(ptr) AccessChain 20 42
-              45:     17(int) Load 44
-              46:   14(float) ConvertSToF 45
-              47:     22(ptr) AccessChain 20 21
-              48:   15(fvec4) Load 47
-              49:   15(fvec4) VectorTimesScalar 48 46
+              51:     50(ptr) AccessChain 22 49
+              52:     19(int) Load 51
+              53:   14(float) ConvertSToF 52
+              54:     24(ptr) AccessChain 22 23
+              55:   15(fvec4) Load 54
+              56:   15(fvec4) VectorTimesScalar 55 53
                               Return
                               FunctionEnd

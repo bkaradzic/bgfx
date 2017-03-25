@@ -219,12 +219,12 @@ public:
     explicit TFunction(TOperator o) :
         TSymbol(0),
         op(o),
-        defined(false), prototyped(false), defaultParamCount(0) { }
+        defined(false), prototyped(false), implicitThis(false), illegalImplicitThis(false), defaultParamCount(0) { }
     TFunction(const TString *name, const TType& retType, TOperator tOp = EOpNull) :
         TSymbol(name),
         mangledName(*name + '('),
         op(tOp),
-        defined(false), prototyped(false), defaultParamCount(0)
+        defined(false), prototyped(false), implicitThis(false), illegalImplicitThis(false), defaultParamCount(0)
     {
         returnType.shallowCopy(retType);
         declaredBuiltIn = retType.getQualifier().builtIn;
@@ -235,6 +235,9 @@ public:
     virtual TFunction* getAsFunction() override { return this; }
     virtual const TFunction* getAsFunction() const override { return this; }
 
+    // Install 'p' as the (non-'this') last parameter.
+    // Non-'this' parameters are reflected in both the list of parameters and the
+    // mangled name.
     virtual void addParameter(TParameter& p)
     {
         assert(writable);
@@ -245,6 +248,16 @@ public:
         if (p.defaultValue != nullptr)
             defaultParamCount++;
     }
+
+    // Install 'this' as the first parameter.
+    // 'this' is reflected in the list of parameters, but not the mangled name.
+    virtual void addThisParameter(TType& type, const char* name)
+    {
+        TParameter p = { NewPoolTString(name), new TType, nullptr };
+        p.type->shallowCopy(type);
+        parameters.insert(parameters.begin(), p);
+    }
+
     virtual void addPrefix(const char* prefix) override
     {
         TSymbol::addPrefix(prefix);
@@ -261,6 +274,10 @@ public:
     virtual bool isDefined() const { return defined; }
     virtual void setPrototyped() { assert(writable); prototyped = true; }
     virtual bool isPrototyped() const { return prototyped; }
+    virtual void setImplicitThis() { assert(writable); implicitThis = true; }
+    virtual bool hasImplicitThis() const { return implicitThis; }
+    virtual void setIllegalImplicitThis() { assert(writable); illegalImplicitThis = true; }
+    virtual bool hasIllegalImplicitThis() const { return illegalImplicitThis; }
 
     // Return total number of parameters
     virtual int getParamCount() const { return static_cast<int>(parameters.size()); }
@@ -287,6 +304,11 @@ protected:
     TOperator op;
     bool defined;
     bool prototyped;
+    bool implicitThis;         // True if this function is allowed to see all members of 'this'
+    bool illegalImplicitThis;  // True if this function is not supposed to have access to dynamic members of 'this',
+                               // even if it finds member variables in the symbol table.
+                               // This is important for a static member function that has member variables in scope,
+                               // but is not allowed to use them, or see hidden symbols instead.
     int  defaultParamCount;
 };
 
@@ -334,7 +356,7 @@ protected:
 class TSymbolTableLevel {
 public:
     POOL_ALLOCATOR_NEW_DELETE(GetThreadPoolAllocator())
-    TSymbolTableLevel() : defaultPrecision(0), anonId(0) { }
+    TSymbolTableLevel() : defaultPrecision(0), anonId(0), thisLevel(false) { }
     ~TSymbolTableLevel();
 
     bool insert(TSymbol& symbol, bool separateNameSpaces)
@@ -492,6 +514,9 @@ public:
     TSymbolTableLevel* clone() const;
     void readOnly();
 
+    void setThisLevel() { thisLevel = true; }
+    bool isThisLevel() const { return thisLevel; }
+
 protected:
     explicit TSymbolTableLevel(TSymbolTableLevel&);
     TSymbolTableLevel& operator=(TSymbolTableLevel&);
@@ -503,6 +528,8 @@ protected:
     tLevel level;  // named mappings
     TPrecisionQualifier *defaultPrecision;
     int anonId;
+    bool thisLevel;  // True if this level of the symbol table is a structure scope containing member function
+                     // that are supposed to see anonymous access to member variables.
 };
 
 class TSymbolTable {
@@ -557,6 +584,20 @@ public:
     void push()
     {
         table.push_back(new TSymbolTableLevel);
+    }
+
+    // Make a new symbol-table level to represent the scope introduced by a structure
+    // containing member functions, such that the member functions can find anonymous
+    // references to member variables.
+    //
+    // 'thisSymbol' should have a name of "" to trigger anonymous structure-member
+    // symbol finds.
+    void pushThis(TSymbol& thisSymbol)
+    {
+        assert(thisSymbol.getName().size() == 0);
+        table.push_back(new TSymbolTableLevel);
+        table.back()->setThisLevel();
+        insert(thisSymbol);
     }
 
     void pop(TPrecisionQualifier *p)
@@ -645,6 +686,8 @@ public:
         }
     }
 
+    // Normal find of a symbol, that can optionally say whether the symbol was found
+    // at a built-in level or the current top-scope level.
     TSymbol* find(const TString& name, bool* builtIn = 0, bool *currentScope = 0)
     {
         int level = currentLevel();
@@ -658,6 +701,27 @@ public:
             *builtIn = isBuiltInLevel(level);
         if (currentScope)
             *currentScope = isGlobalLevel(currentLevel()) || level == currentLevel();  // consider shared levels as "current scope" WRT user globals
+
+        return symbol;
+    }
+
+    // Find of a symbol that returns how many layers deep of nested
+    // structures-with-member-functions ('this' scopes) deep the symbol was
+    // found in.
+    TSymbol* find(const TString& name, int& thisDepth)
+    {
+        int level = currentLevel();
+        TSymbol* symbol;
+        thisDepth = 0;
+        do {
+            if (table[level]->isThisLevel())
+                ++thisDepth;
+            symbol = table[level]->find(name);
+            --level;
+        } while (symbol == 0 && level >= 0);
+
+        if (! table[level + 1]->isThisLevel())
+            thisDepth = 0;
 
         return symbol;
     }

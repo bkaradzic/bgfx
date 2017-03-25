@@ -25,8 +25,8 @@ gl_FragCoord origin is upper left
 0:?     Sequence
 0:42      Branch: Return with expression
 0:42        Convert int to float ( temp 4-component vector of float)
-0:42          c4: direct index for structure (layout( offset=32) uniform 4-component vector of int)
-0:42            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:42          c4: direct index for structure ( uniform 4-component vector of int)
+0:42            'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:42            Constant:
 0:42              3 (const uint)
 0:45  Function Definition: @main( ( temp structure{ temp 4-component vector of float Color})
@@ -34,8 +34,8 @@ gl_FragCoord origin is upper left
 0:?     Sequence
 0:49      textureFetch ( temp 4-component vector of float)
 0:49        'g_tTex1df4' (layout( binding=0) uniform texture1D)
-0:49        c1: direct index for structure (layout( offset=0) uniform int)
-0:49          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:49        c1: direct index for structure ( uniform int)
+0:49          'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:49          Constant:
 0:49            0 (const uint)
 0:49        Constant:
@@ -45,8 +45,8 @@ gl_FragCoord origin is upper left
 0:51          'r00' ( temp 4-component vector of float)
 0:51          textureFetch ( temp 4-component vector of float)
 0:51            'g_tTex1df4' (layout( binding=0) uniform texture1D)
-0:51            c1: direct index for structure (layout( offset=0) uniform int)
-0:51              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:51            c1: direct index for structure ( uniform int)
+0:51              'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:51              Constant:
 0:51                0 (const uint)
 0:51            Constant:
@@ -56,8 +56,8 @@ gl_FragCoord origin is upper left
 0:52          'r01' ( temp 4-component vector of int)
 0:52          textureFetch ( temp 4-component vector of int)
 0:52            'g_tTex1di4' ( uniform itexture1D)
-0:52            c1: direct index for structure (layout( offset=0) uniform int)
-0:52              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:52            c1: direct index for structure ( uniform int)
+0:52              'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:52              Constant:
 0:52                0 (const uint)
 0:52            Constant:
@@ -67,8 +67,8 @@ gl_FragCoord origin is upper left
 0:53          'r02' ( temp 4-component vector of uint)
 0:53          textureFetch ( temp 4-component vector of uint)
 0:53            'g_tTex1du4' ( uniform utexture1D)
-0:53            c1: direct index for structure (layout( offset=0) uniform int)
-0:53              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:53            c1: direct index for structure ( uniform int)
+0:53              'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:53              Constant:
 0:53                0 (const uint)
 0:53            Constant:
@@ -78,8 +78,8 @@ gl_FragCoord origin is upper left
 0:56          'r10' ( temp 4-component vector of float)
 0:56          textureFetch ( temp 4-component vector of float)
 0:56            'g_tTex2df4' ( uniform texture2D)
-0:56            c2: direct index for structure (layout( offset=8) uniform 2-component vector of int)
-0:56              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:56            c2: direct index for structure ( uniform 2-component vector of int)
+0:56              'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:56              Constant:
 0:56                1 (const uint)
 0:56            Constant:
@@ -89,8 +89,8 @@ gl_FragCoord origin is upper left
 0:57          'r11' ( temp 4-component vector of int)
 0:57          textureFetch ( temp 4-component vector of int)
 0:57            'g_tTex2di4' ( uniform itexture2D)
-0:57            c2: direct index for structure (layout( offset=8) uniform 2-component vector of int)
-0:57              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:57            c2: direct index for structure ( uniform 2-component vector of int)
+0:57              'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:57              Constant:
 0:57                1 (const uint)
 0:57            Constant:
@@ -100,8 +100,8 @@ gl_FragCoord origin is upper left
 0:58          'r12' ( temp 4-component vector of uint)
 0:58          textureFetch ( temp 4-component vector of uint)
 0:58            'g_tTex2du4' ( uniform utexture2D)
-0:58            c2: direct index for structure (layout( offset=8) uniform 2-component vector of int)
-0:58              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:58            c2: direct index for structure ( uniform 2-component vector of int)
+0:58              'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:58              Constant:
 0:58                1 (const uint)
 0:58            Constant:
@@ -111,8 +111,8 @@ gl_FragCoord origin is upper left
 0:61          'r20' ( temp 4-component vector of float)
 0:61          textureFetch ( temp 4-component vector of float)
 0:61            'g_tTex3df4' ( uniform texture3D)
-0:61            c3: direct index for structure (layout( offset=16) uniform 3-component vector of int)
-0:61              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:61            c3: direct index for structure ( uniform 3-component vector of int)
+0:61              'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:61              Constant:
 0:61                2 (const uint)
 0:61            Constant:
@@ -122,8 +122,8 @@ gl_FragCoord origin is upper left
 0:62          'r21' ( temp 4-component vector of int)
 0:62          textureFetch ( temp 4-component vector of int)
 0:62            'g_tTex3di4' ( uniform itexture3D)
-0:62            c3: direct index for structure (layout( offset=16) uniform 3-component vector of int)
-0:62              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:62            c3: direct index for structure ( uniform 3-component vector of int)
+0:62              'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:62              Constant:
 0:62                2 (const uint)
 0:62            Constant:
@@ -133,8 +133,8 @@ gl_FragCoord origin is upper left
 0:63          'r22' ( temp 4-component vector of uint)
 0:63          textureFetch ( temp 4-component vector of uint)
 0:63            'g_tTex3du4' ( uniform utexture3D)
-0:63            c3: direct index for structure (layout( offset=16) uniform 3-component vector of int)
-0:63              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:63            c3: direct index for structure ( uniform 3-component vector of int)
+0:63              'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:63              Constant:
 0:63                2 (const uint)
 0:63            Constant:
@@ -142,8 +142,8 @@ gl_FragCoord origin is upper left
 0:66      Function Call: Fn1(vf4; ( temp 4-component vector of float)
 0:66        textureFetch ( temp 4-component vector of float)
 0:66          'g_tTex1df4' (layout( binding=0) uniform texture1D)
-0:66          c1: direct index for structure (layout( offset=0) uniform int)
-0:66            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:66          c1: direct index for structure ( uniform int)
+0:66            'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:66            Constant:
 0:66              0 (const uint)
 0:66          Constant:
@@ -151,8 +151,8 @@ gl_FragCoord origin is upper left
 0:67      Function Call: Fn1(vi4; ( temp 4-component vector of int)
 0:67        textureFetch ( temp 4-component vector of int)
 0:67          'g_tTex1di4' ( uniform itexture1D)
-0:67          c1: direct index for structure (layout( offset=0) uniform int)
-0:67            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:67          c1: direct index for structure ( uniform int)
+0:67            'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:67            Constant:
 0:67              0 (const uint)
 0:67          Constant:
@@ -160,8 +160,8 @@ gl_FragCoord origin is upper left
 0:68      Function Call: Fn1(vu4; ( temp 4-component vector of uint)
 0:68        textureFetch ( temp 4-component vector of uint)
 0:68          'g_tTex1du4' ( uniform utexture1D)
-0:68          c1: direct index for structure (layout( offset=0) uniform int)
-0:68            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:68          c1: direct index for structure ( uniform int)
+0:68            'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:68            Constant:
 0:68              0 (const uint)
 0:68          Constant:
@@ -205,7 +205,7 @@ gl_FragCoord origin is upper left
 0:?     'g_tTex2df4a' ( uniform texture2DArray)
 0:?     'g_tTex2di4a' ( uniform itexture2DArray)
 0:?     'g_tTex2du4a' ( uniform utexture2DArray)
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:?     'Color' (layout( location=0) out 4-component vector of float)
 
 
@@ -238,8 +238,8 @@ gl_FragCoord origin is upper left
 0:?     Sequence
 0:42      Branch: Return with expression
 0:42        Convert int to float ( temp 4-component vector of float)
-0:42          c4: direct index for structure (layout( offset=32) uniform 4-component vector of int)
-0:42            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:42          c4: direct index for structure ( uniform 4-component vector of int)
+0:42            'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:42            Constant:
 0:42              3 (const uint)
 0:45  Function Definition: @main( ( temp structure{ temp 4-component vector of float Color})
@@ -247,8 +247,8 @@ gl_FragCoord origin is upper left
 0:?     Sequence
 0:49      textureFetch ( temp 4-component vector of float)
 0:49        'g_tTex1df4' (layout( binding=0) uniform texture1D)
-0:49        c1: direct index for structure (layout( offset=0) uniform int)
-0:49          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:49        c1: direct index for structure ( uniform int)
+0:49          'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:49          Constant:
 0:49            0 (const uint)
 0:49        Constant:
@@ -258,8 +258,8 @@ gl_FragCoord origin is upper left
 0:51          'r00' ( temp 4-component vector of float)
 0:51          textureFetch ( temp 4-component vector of float)
 0:51            'g_tTex1df4' (layout( binding=0) uniform texture1D)
-0:51            c1: direct index for structure (layout( offset=0) uniform int)
-0:51              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:51            c1: direct index for structure ( uniform int)
+0:51              'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:51              Constant:
 0:51                0 (const uint)
 0:51            Constant:
@@ -269,8 +269,8 @@ gl_FragCoord origin is upper left
 0:52          'r01' ( temp 4-component vector of int)
 0:52          textureFetch ( temp 4-component vector of int)
 0:52            'g_tTex1di4' ( uniform itexture1D)
-0:52            c1: direct index for structure (layout( offset=0) uniform int)
-0:52              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:52            c1: direct index for structure ( uniform int)
+0:52              'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:52              Constant:
 0:52                0 (const uint)
 0:52            Constant:
@@ -280,8 +280,8 @@ gl_FragCoord origin is upper left
 0:53          'r02' ( temp 4-component vector of uint)
 0:53          textureFetch ( temp 4-component vector of uint)
 0:53            'g_tTex1du4' ( uniform utexture1D)
-0:53            c1: direct index for structure (layout( offset=0) uniform int)
-0:53              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:53            c1: direct index for structure ( uniform int)
+0:53              'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:53              Constant:
 0:53                0 (const uint)
 0:53            Constant:
@@ -291,8 +291,8 @@ gl_FragCoord origin is upper left
 0:56          'r10' ( temp 4-component vector of float)
 0:56          textureFetch ( temp 4-component vector of float)
 0:56            'g_tTex2df4' ( uniform texture2D)
-0:56            c2: direct index for structure (layout( offset=8) uniform 2-component vector of int)
-0:56              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:56            c2: direct index for structure ( uniform 2-component vector of int)
+0:56              'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:56              Constant:
 0:56                1 (const uint)
 0:56            Constant:
@@ -302,8 +302,8 @@ gl_FragCoord origin is upper left
 0:57          'r11' ( temp 4-component vector of int)
 0:57          textureFetch ( temp 4-component vector of int)
 0:57            'g_tTex2di4' ( uniform itexture2D)
-0:57            c2: direct index for structure (layout( offset=8) uniform 2-component vector of int)
-0:57              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:57            c2: direct index for structure ( uniform 2-component vector of int)
+0:57              'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:57              Constant:
 0:57                1 (const uint)
 0:57            Constant:
@@ -313,8 +313,8 @@ gl_FragCoord origin is upper left
 0:58          'r12' ( temp 4-component vector of uint)
 0:58          textureFetch ( temp 4-component vector of uint)
 0:58            'g_tTex2du4' ( uniform utexture2D)
-0:58            c2: direct index for structure (layout( offset=8) uniform 2-component vector of int)
-0:58              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:58            c2: direct index for structure ( uniform 2-component vector of int)
+0:58              'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:58              Constant:
 0:58                1 (const uint)
 0:58            Constant:
@@ -324,8 +324,8 @@ gl_FragCoord origin is upper left
 0:61          'r20' ( temp 4-component vector of float)
 0:61          textureFetch ( temp 4-component vector of float)
 0:61            'g_tTex3df4' ( uniform texture3D)
-0:61            c3: direct index for structure (layout( offset=16) uniform 3-component vector of int)
-0:61              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:61            c3: direct index for structure ( uniform 3-component vector of int)
+0:61              'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:61              Constant:
 0:61                2 (const uint)
 0:61            Constant:
@@ -335,8 +335,8 @@ gl_FragCoord origin is upper left
 0:62          'r21' ( temp 4-component vector of int)
 0:62          textureFetch ( temp 4-component vector of int)
 0:62            'g_tTex3di4' ( uniform itexture3D)
-0:62            c3: direct index for structure (layout( offset=16) uniform 3-component vector of int)
-0:62              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:62            c3: direct index for structure ( uniform 3-component vector of int)
+0:62              'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:62              Constant:
 0:62                2 (const uint)
 0:62            Constant:
@@ -346,8 +346,8 @@ gl_FragCoord origin is upper left
 0:63          'r22' ( temp 4-component vector of uint)
 0:63          textureFetch ( temp 4-component vector of uint)
 0:63            'g_tTex3du4' ( uniform utexture3D)
-0:63            c3: direct index for structure (layout( offset=16) uniform 3-component vector of int)
-0:63              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:63            c3: direct index for structure ( uniform 3-component vector of int)
+0:63              'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:63              Constant:
 0:63                2 (const uint)
 0:63            Constant:
@@ -355,8 +355,8 @@ gl_FragCoord origin is upper left
 0:66      Function Call: Fn1(vf4; ( temp 4-component vector of float)
 0:66        textureFetch ( temp 4-component vector of float)
 0:66          'g_tTex1df4' (layout( binding=0) uniform texture1D)
-0:66          c1: direct index for structure (layout( offset=0) uniform int)
-0:66            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:66          c1: direct index for structure ( uniform int)
+0:66            'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:66            Constant:
 0:66              0 (const uint)
 0:66          Constant:
@@ -364,8 +364,8 @@ gl_FragCoord origin is upper left
 0:67      Function Call: Fn1(vi4; ( temp 4-component vector of int)
 0:67        textureFetch ( temp 4-component vector of int)
 0:67          'g_tTex1di4' ( uniform itexture1D)
-0:67          c1: direct index for structure (layout( offset=0) uniform int)
-0:67            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:67          c1: direct index for structure ( uniform int)
+0:67            'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:67            Constant:
 0:67              0 (const uint)
 0:67          Constant:
@@ -373,8 +373,8 @@ gl_FragCoord origin is upper left
 0:68      Function Call: Fn1(vu4; ( temp 4-component vector of uint)
 0:68        textureFetch ( temp 4-component vector of uint)
 0:68          'g_tTex1du4' ( uniform utexture1D)
-0:68          c1: direct index for structure (layout( offset=0) uniform int)
-0:68            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:68          c1: direct index for structure ( uniform int)
+0:68            'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:68            Constant:
 0:68              0 (const uint)
 0:68          Constant:
@@ -418,7 +418,7 @@ gl_FragCoord origin is upper left
 0:?     'g_tTex2df4a' ( uniform texture2DArray)
 0:?     'g_tTex2di4a' ( uniform itexture2DArray)
 0:?     'g_tTex2du4a' ( uniform utexture2DArray)
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int c1, layout( offset=8) uniform 2-component vector of int c2, layout( offset=16) uniform 3-component vector of int c3, layout( offset=32) uniform 4-component vector of int c4, layout( offset=48) uniform int o1, layout( offset=56) uniform 2-component vector of int o2, layout( offset=64) uniform 3-component vector of int o3, layout( offset=80) uniform 4-component vector of int o4})
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform int c1,  uniform 2-component vector of int c2,  uniform 3-component vector of int c3,  uniform 4-component vector of int c4,  uniform int o1,  uniform 2-component vector of int o2,  uniform 3-component vector of int o3,  uniform 4-component vector of int o4})
 0:?     'Color' (layout( location=0) out 4-component vector of float)
 
 // Module Version 10000

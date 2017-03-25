@@ -210,6 +210,8 @@ INSTANTIATE_TEST_CASE_P(
         "spv.430.frag",
         "spv.430.vert",
         "spv.450.tesc",
+        "spv.450.geom",
+        "spv.450.noRedecl.tesc",
         "spv.accessChain.frag",
         "spv.aggOps.frag",
         "spv.always-discard.frag",

@@ -3256,11 +3256,11 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             stageBuiltins[EShLangVertex].append(
                 "out int gl_ViewportIndex;"
                 "out int gl_Layer;"
-                "out int gl_ViewportMask[];"
-                "out int gl_SecondaryViewportMaskNV[];"
-                "out vec4 gl_SecondaryPositionNV;"
-                "out vec4 gl_PositionPerViewNV[];"
-                "out int  gl_ViewportMaskPerViewNV[];"
+                "out int gl_ViewportMask[];"             // GL_NV_viewport_array2
+                "out int gl_SecondaryViewportMaskNV[];"  // GL_NV_stereo_view_rendering
+                "out vec4 gl_SecondaryPositionNV;"       // GL_NV_stereo_view_rendering
+                "out vec4 gl_PositionPerViewNV[];"       // GL_NVX_multiview_per_view_attributes
+                "out int  gl_ViewportMaskPerViewNV[];"   // GL_NVX_multiview_per_view_attributes
                 );
 #endif
 
@@ -3333,8 +3333,8 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             stageBuiltins[EShLangGeometry].append(
                 "float gl_CullDistance[];"
 #ifdef NV_EXTENSIONS
-                "vec4 gl_SecondaryPositionNV;"
-                "vec4 gl_PositionPerViewNV[];"
+                "vec4 gl_SecondaryPositionNV;"   // GL_NV_stereo_view_rendering
+                "vec4 gl_PositionPerViewNV[];"   // GL_NVX_multiview_per_view_attributes
 #endif
                 );
         stageBuiltins[EShLangGeometry].append(
@@ -3384,11 +3384,11 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 #ifdef NV_EXTENSIONS
         if (version >= 450)
             stageBuiltins[EShLangGeometry].append(
-                "out int gl_ViewportMask[];"
-                "out int gl_SecondaryViewportMaskNV[];"
-                "out vec4 gl_SecondaryPositionNV;"
-                "out vec4 gl_PositionPerViewNV[];"
-                "out int  gl_ViewportMaskPerViewNV[];"
+                "out int gl_ViewportMask[];"               // GL_NV_viewport_array2
+                "out int gl_SecondaryViewportMaskNV[];"    // GL_NV_stereo_view_rendering
+                "out vec4 gl_SecondaryPositionNV;"         // GL_NV_stereo_view_rendering
+                "out vec4 gl_PositionPerViewNV[];"         // GL_NVX_multiview_per_view_attributes
+                "out int  gl_ViewportMaskPerViewNV[];"     // GL_NVX_multiview_per_view_attributes
             );
 #endif
 
@@ -3458,11 +3458,11 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 #ifdef NV_EXTENSIONS
                 "int  gl_ViewportIndex;"
                 "int  gl_Layer;"
-                "int  gl_ViewportMask[];"
-                "vec4 gl_SecondaryPositionNV;"
-                "int  gl_SecondaryViewportMaskNV[];"
-                "vec4 gl_PositionPerViewNV[];"
-                "int  gl_ViewportMaskPerViewNV[];"
+                "int  gl_ViewportMask[];"             // GL_NV_viewport_array2
+                "vec4 gl_SecondaryPositionNV;"        // GL_NV_stereo_view_rendering
+                "int  gl_SecondaryViewportMaskNV[];"  // GL_NV_stereo_view_rendering
+                "vec4 gl_PositionPerViewNV[];"        // GL_NVX_multiview_per_view_attributes
+                "int  gl_ViewportMaskPerViewNV[];"    // GL_NVX_multiview_per_view_attributes
 #endif
                 );
         stageBuiltins[EShLangTessControl].append(
@@ -3547,11 +3547,11 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             stageBuiltins[EShLangTessEvaluation].append(
                 "out int  gl_ViewportIndex;"
                 "out int  gl_Layer;"
-                "out int  gl_ViewportMask[];"
-                "out vec4 gl_SecondaryPositionNV;"
-                "out int  gl_SecondaryViewportMaskNV[];"
-                "out vec4 gl_PositionPerViewNV[];"
-                "out int  gl_ViewportMaskPerViewNV[];"
+                "out int  gl_ViewportMask[];"             // GL_NV_viewport_array2
+                "out vec4 gl_SecondaryPositionNV;"        // GL_NV_stereo_view_rendering
+                "out int  gl_SecondaryViewportMaskNV[];"  // GL_NV_stereo_view_rendering
+                "out vec4 gl_PositionPerViewNV[];"        // GL_NVX_multiview_per_view_attributes
+                "out int  gl_ViewportMaskPerViewNV[];"    // GL_NVX_multiview_per_view_attributes
                 );
 #endif
 
@@ -4505,8 +4505,8 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
                         "highp vec4 gl_Position;"
                         "highp float gl_PointSize;"
 #ifdef NV_EXTENSIONS
-                        "highp vec4 gl_SecondaryPositionNV;"
-                        "highp vec4 gl_PositionPerViewNV[];"
+                        "highp vec4 gl_SecondaryPositionNV;"  // GL_NV_stereo_view_rendering
+                        "highp vec4 gl_PositionPerViewNV[];"  // GL_NVX_multiview_per_view_attributes
 #endif
                     "} gl_in[gl_MaxPatchVertices];"
                     "\n");
@@ -4695,8 +4695,8 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
                     s.append(
                         "float gl_CullDistance[];"
 #ifdef NV_EXTENSIONS
-                        "vec4 gl_SecondaryPositionNV;"
-                        "vec4 gl_PositionPerViewNV[];"
+                        "vec4 gl_SecondaryPositionNV;"  // GL_NV_stereo_view_rendering
+                        "vec4 gl_PositionPerViewNV[];"  // GL_NVX_multiview_per_view_attributes
 #endif
                        );
                 s.append(

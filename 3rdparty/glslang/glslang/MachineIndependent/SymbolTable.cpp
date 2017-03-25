@@ -50,7 +50,7 @@ namespace glslang {
 //
 // Recursively generate mangled names.
 //
-void TType::buildMangledName(TString& mangledName)
+void TType::buildMangledName(TString& mangledName) const
 {
     if (isMatrix())
         mangledName += 'm';
@@ -299,6 +299,8 @@ TFunction::TFunction(const TFunction& copyOf) : TSymbol(copyOf)
     op = copyOf.op;
     defined = copyOf.defined;
     prototyped = copyOf.prototyped;
+    implicitThis = copyOf.implicitThis;
+    illegalImplicitThis = copyOf.illegalImplicitThis;
     defaultParamCount = copyOf.defaultParamCount;
 }
 
@@ -323,6 +325,7 @@ TSymbolTableLevel* TSymbolTableLevel::clone() const
 {
     TSymbolTableLevel *symTableLevel = new TSymbolTableLevel();
     symTableLevel->anonId = anonId;
+    symTableLevel->thisLevel = thisLevel;
     std::vector<bool> containerCopied(anonId, false);
     tLevel::const_iterator iter;
     for (iter = level.begin(); iter != level.end(); ++iter) {

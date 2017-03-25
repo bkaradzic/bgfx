@@ -49,6 +49,7 @@
 //
 
 #include "hlslParseables.h"
+#include "hlslParseHelper.h"
 #include <cctype>
 #include <utility>
 #include <algorithm>
@@ -543,335 +544,336 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
         const char*   argOrder;  // argument order key
         const char*   argType;   // argument type key
         unsigned int  stage;     // stage mask
+        bool          method;    // true if it's a method.
     } hlslIntrinsics[] = {
         // name                               retOrd   retType    argOrder          argType   stage mask
         // -----------------------------------------------------------------------------------------------
-        { "abort",                            nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "abs",                              nullptr, nullptr,   "SVM",            "DFUI",          EShLangAll },
-        { "acos",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "all",                              "S",    "B",        "SVM",            "BFIU",          EShLangAll },
-        { "AllMemoryBarrier",                 nullptr, nullptr,   "-",              "-",             EShLangCS },
-        { "AllMemoryBarrierWithGroupSync",    nullptr, nullptr,   "-",              "-",             EShLangCS },
-        { "any",                              "S",     "B",       "SVM",            "BFIU",          EShLangAll },
-        { "asdouble",                         "S",     "D",       "S,",             "UI,",           EShLangAll },
-        { "asdouble",                         "V2",    "D",       "V2,",            "UI,",           EShLangAll },
-        { "asfloat",                          nullptr, "F",       "SVM",            "BFIU",          EShLangAll },
-        { "asin",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "asint",                            nullptr, "I",       "SVM",            "FU",            EShLangAll },
-        { "asuint",                           nullptr, "U",       "SVM",            "FU",            EShLangAll },
-        { "atan",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "atan2",                            nullptr, nullptr,   "SVM,",           "F,",            EShLangAll },
-        { "ceil",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "CheckAccessFullyMapped",           "S",     "B" ,      "S",              "U",             EShLangPSCS },
-        { "clamp",                            nullptr, nullptr,   "SVM,,",          "FUI,,",         EShLangAll },
-        { "clip",                             "-",     "-",       "SVM",            "F",             EShLangPS },
-        { "cos",                              nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "cosh",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "countbits",                        nullptr, nullptr,   "SV",             "UI",            EShLangAll },
-        { "cross",                            nullptr, nullptr,   "V3,",            "F,",            EShLangAll },
-        { "D3DCOLORtoUBYTE4",                 "V4",    "I",       "V4",             "F",             EShLangAll },
-        { "ddx",                              nullptr, nullptr,   "SVM",            "F",             EShLangPS },
-        { "ddx_coarse",                       nullptr, nullptr,   "SVM",            "F",             EShLangPS },
-        { "ddx_fine",                         nullptr, nullptr,   "SVM",            "F",             EShLangPS },
-        { "ddy",                              nullptr, nullptr,   "SVM",            "F",             EShLangPS },
-        { "ddy_coarse",                       nullptr, nullptr,   "SVM",            "F",             EShLangPS },
-        { "ddy_fine",                         nullptr, nullptr,   "SVM",            "F",             EShLangPS },
-        { "degrees",                          nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "determinant",                      "S",     "F",       "M",              "F",             EShLangAll },
-        { "DeviceMemoryBarrier",              nullptr, nullptr,   "-",              "-",             EShLangPSCS },
-        { "DeviceMemoryBarrierWithGroupSync", nullptr, nullptr,   "-",              "-",             EShLangCS },
-        { "distance",                         "S",     "F",       "V,",             "F,",            EShLangAll },
-        { "dot",                              "S",     nullptr,   "SV,",            "FI,",           EShLangAll },
-        { "dst",                              nullptr, nullptr,   "V4,",            "F,",            EShLangAll },
-        // { "errorf",                           "-",     "-",       "",             "",             EShLangAll }, TODO: varargs
-        { "EvaluateAttributeAtCentroid",      nullptr, nullptr,   "SVM",            "F",             EShLangPS },
-        { "EvaluateAttributeAtSample",        nullptr, nullptr,   "SVM,S",          "F,U",           EShLangPS },
-        { "EvaluateAttributeSnapped",         nullptr, nullptr,   "SVM,V2",         "F,I",           EShLangPS },
-        { "exp",                              nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "exp2",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "f16tof32",                         nullptr, "F",       "SV",             "U",             EShLangAll },
-        { "f32tof16",                         nullptr, "U",       "SV",             "F",             EShLangAll },
-        { "faceforward",                      nullptr, nullptr,   "V,,",            "F,,",           EShLangAll },
-        { "firstbithigh",                     nullptr, nullptr,   "SV",             "UI",            EShLangAll },
-        { "firstbitlow",                      nullptr, nullptr,   "SV",             "UI",            EShLangAll },
-        { "floor",                            nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "fma",                              nullptr, nullptr,   "SVM,,",          "D,,",           EShLangAll },
-        { "fmod",                             nullptr, nullptr,   "SVM,",           "F,",            EShLangAll },
-        { "frac",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "frexp",                            nullptr, nullptr,   "SVM,",           "F,",            EShLangAll },
-        { "fwidth",                           nullptr, nullptr,   "SVM",            "F",             EShLangPS },
-        { "GetRenderTargetSampleCount",       "S",     "U",       "-",              "-",             EShLangAll },
-        { "GetRenderTargetSamplePosition",    "V2",    "F",       "V1",             "I",             EShLangAll },
-        { "GroupMemoryBarrier",               nullptr, nullptr,   "-",              "-",             EShLangCS },
-        { "GroupMemoryBarrierWithGroupSync",  nullptr, nullptr,   "-",              "-",             EShLangCS },
-        { "InterlockedAdd",                   "-",     "-",       "SVM,,>",         "UI,,",          EShLangPSCS },
-        { "InterlockedAdd",                   "-",     "-",       "SVM,",           "UI,",           EShLangPSCS },
-        { "InterlockedAnd",                   "-",     "-",       "SVM,,>",         "UI,,",          EShLangPSCS },
-        { "InterlockedAnd",                   "-",     "-",       "SVM,",           "UI,",           EShLangPSCS },
-        { "InterlockedCompareExchange",       "-",     "-",       "SVM,,,>",        "UI,,,",         EShLangPSCS },
-        { "InterlockedCompareStore",          "-",     "-",       "SVM,,",          "UI,,",          EShLangPSCS },
-        { "InterlockedExchange",              "-",     "-",       "SVM,,>",         "UI,,",          EShLangPSCS },
-        { "InterlockedMax",                   "-",     "-",       "SVM,,>",         "UI,,",          EShLangPSCS },
-        { "InterlockedMax",                   "-",     "-",       "SVM,",           "UI,",           EShLangPSCS },
-        { "InterlockedMin",                   "-",     "-",       "SVM,,>",         "UI,,",          EShLangPSCS },
-        { "InterlockedMin",                   "-",     "-",       "SVM,",           "UI,",           EShLangPSCS },
-        { "InterlockedOr",                    "-",     "-",       "SVM,,>",         "UI,,",          EShLangPSCS },
-        { "InterlockedOr",                    "-",     "-",       "SVM,",           "UI,",           EShLangPSCS },
-        { "InterlockedXor",                   "-",     "-",       "SVM,,>",         "UI,,",          EShLangPSCS },
-        { "InterlockedXor",                   "-",     "-",       "SVM,",           "UI,",           EShLangPSCS },
-        { "isfinite",                         nullptr, "B" ,      "SVM",            "F",             EShLangAll },
-        { "isinf",                            nullptr, "B" ,      "SVM",            "F",             EShLangAll },
-        { "isnan",                            nullptr, "B" ,      "SVM",            "F",             EShLangAll },
-        { "ldexp",                            nullptr, nullptr,   "SVM,",           "F,",            EShLangAll },
-        { "length",                           "S",     "F",       "V",              "F",             EShLangAll },
-        { "lerp",                             nullptr, nullptr,   "VM,,",           "F,,",           EShLangAll },
-        { "lerp",                             nullptr, nullptr,   "SVM,,S",         "F,,",           EShLangAll },
-        { "lit",                              "V4",    "F",       "S,,",            "F,,",           EShLangAll },
-        { "log",                              nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "log10",                            nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "log2",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "mad",                              nullptr, nullptr,   "SVM,,",          "DFUI,,",        EShLangAll },
-        { "max",                              nullptr, nullptr,   "SVM,",           "FIU,",          EShLangAll },
-        { "min",                              nullptr, nullptr,   "SVM,",           "FIU,",          EShLangAll },
-        { "modf",                             nullptr, nullptr,   "SVM,>",          "FIU,",          EShLangAll },
-        { "msad4",                            "V4",    "U",       "S,V2,V4",        "U,,",           EShLangAll },
-        { "mul",                              "S",     nullptr,   "S,S",            "FI,",           EShLangAll },
-        { "mul",                              "V",     nullptr,   "S,V",            "FI,",           EShLangAll },
-        { "mul",                              "M",     nullptr,   "S,M",            "FI,",           EShLangAll },
-        { "mul",                              "V",     nullptr,   "V,S",            "FI,",           EShLangAll },
-        { "mul",                              "S",     nullptr,   "V,V",            "FI,",           EShLangAll },
-        { "mul",                              "M",     nullptr,   "M,S",            "FI,",           EShLangAll },
+        { "abort",                            nullptr, nullptr,   "-",              "-",             EShLangAll,    false },
+        { "abs",                              nullptr, nullptr,   "SVM",            "DFUI",          EShLangAll,    false },
+        { "acos",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "all",                              "S",    "B",        "SVM",            "BFIU",          EShLangAll,    false },
+        { "AllMemoryBarrier",                 nullptr, nullptr,   "-",              "-",             EShLangCS,     false },
+        { "AllMemoryBarrierWithGroupSync",    nullptr, nullptr,   "-",              "-",             EShLangCS,     false },
+        { "any",                              "S",     "B",       "SVM",            "BFIU",          EShLangAll,    false },
+        { "asdouble",                         "S",     "D",       "S,",             "UI,",           EShLangAll,    false },
+        { "asdouble",                         "V2",    "D",       "V2,",            "UI,",           EShLangAll,    false },
+        { "asfloat",                          nullptr, "F",       "SVM",            "BFIU",          EShLangAll,    false },
+        { "asin",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "asint",                            nullptr, "I",       "SVM",            "FU",            EShLangAll,    false },
+        { "asuint",                           nullptr, "U",       "SVM",            "FU",            EShLangAll,    false },
+        { "atan",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "atan2",                            nullptr, nullptr,   "SVM,",           "F,",            EShLangAll,    false },
+        { "ceil",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "CheckAccessFullyMapped",           "S",     "B" ,      "S",              "U",             EShLangPSCS,   false },
+        { "clamp",                            nullptr, nullptr,   "SVM,,",          "FUI,,",         EShLangAll,    false },
+        { "clip",                             "-",     "-",       "SVM",            "F",             EShLangPS,     false },
+        { "cos",                              nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "cosh",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "countbits",                        nullptr, nullptr,   "SV",             "UI",            EShLangAll,    false },
+        { "cross",                            nullptr, nullptr,   "V3,",            "F,",            EShLangAll,    false },
+        { "D3DCOLORtoUBYTE4",                 "V4",    "I",       "V4",             "F",             EShLangAll,    false },
+        { "ddx",                              nullptr, nullptr,   "SVM",            "F",             EShLangPS,     false },
+        { "ddx_coarse",                       nullptr, nullptr,   "SVM",            "F",             EShLangPS,     false },
+        { "ddx_fine",                         nullptr, nullptr,   "SVM",            "F",             EShLangPS,     false },
+        { "ddy",                              nullptr, nullptr,   "SVM",            "F",             EShLangPS,     false },
+        { "ddy_coarse",                       nullptr, nullptr,   "SVM",            "F",             EShLangPS,     false },
+        { "ddy_fine",                         nullptr, nullptr,   "SVM",            "F",             EShLangPS,     false },
+        { "degrees",                          nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "determinant",                      "S",     "F",       "M",              "F",             EShLangAll,    false },
+        { "DeviceMemoryBarrier",              nullptr, nullptr,   "-",              "-",             EShLangPSCS,   false },
+        { "DeviceMemoryBarrierWithGroupSync", nullptr, nullptr,   "-",              "-",             EShLangCS,     false },
+        { "distance",                         "S",     "F",       "V,",             "F,",            EShLangAll,    false },
+        { "dot",                              "S",     nullptr,   "SV,",            "FI,",           EShLangAll,    false },
+        { "dst",                              nullptr, nullptr,   "V4,",            "F,",            EShLangAll,    false },
+        // { "errorf",                           "-",     "-",       "",             "",             EShLangAll,    false }, TODO: varargs
+        { "EvaluateAttributeAtCentroid",      nullptr, nullptr,   "SVM",            "F",             EShLangPS,     false },
+        { "EvaluateAttributeAtSample",        nullptr, nullptr,   "SVM,S",          "F,U",           EShLangPS,     false },
+        { "EvaluateAttributeSnapped",         nullptr, nullptr,   "SVM,V2",         "F,I",           EShLangPS,     false },
+        { "exp",                              nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "exp2",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "f16tof32",                         nullptr, "F",       "SV",             "U",             EShLangAll,    false },
+        { "f32tof16",                         nullptr, "U",       "SV",             "F",             EShLangAll,    false },
+        { "faceforward",                      nullptr, nullptr,   "V,,",            "F,,",           EShLangAll,    false },
+        { "firstbithigh",                     nullptr, nullptr,   "SV",             "UI",            EShLangAll,    false },
+        { "firstbitlow",                      nullptr, nullptr,   "SV",             "UI",            EShLangAll,    false },
+        { "floor",                            nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "fma",                              nullptr, nullptr,   "SVM,,",          "D,,",           EShLangAll,    false },
+        { "fmod",                             nullptr, nullptr,   "SVM,",           "F,",            EShLangAll,    false },
+        { "frac",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "frexp",                            nullptr, nullptr,   "SVM,",           "F,",            EShLangAll,    false },
+        { "fwidth",                           nullptr, nullptr,   "SVM",            "F",             EShLangPS,     false },
+        { "GetRenderTargetSampleCount",       "S",     "U",       "-",              "-",             EShLangAll,    false },
+        { "GetRenderTargetSamplePosition",    "V2",    "F",       "V1",             "I",             EShLangAll,    false },
+        { "GroupMemoryBarrier",               nullptr, nullptr,   "-",              "-",             EShLangCS,     false },
+        { "GroupMemoryBarrierWithGroupSync",  nullptr, nullptr,   "-",              "-",             EShLangCS,     false },
+        { "InterlockedAdd",                   "-",     "-",       "SVM,,>",         "UI,,",          EShLangPSCS,   false },
+        { "InterlockedAdd",                   "-",     "-",       "SVM,",           "UI,",           EShLangPSCS,   false },
+        { "InterlockedAnd",                   "-",     "-",       "SVM,,>",         "UI,,",          EShLangPSCS,   false },
+        { "InterlockedAnd",                   "-",     "-",       "SVM,",           "UI,",           EShLangPSCS,   false },
+        { "InterlockedCompareExchange",       "-",     "-",       "SVM,,,>",        "UI,,,",         EShLangPSCS,   false },
+        { "InterlockedCompareStore",          "-",     "-",       "SVM,,",          "UI,,",          EShLangPSCS,   false },
+        { "InterlockedExchange",              "-",     "-",       "SVM,,>",         "UI,,",          EShLangPSCS,   false },
+        { "InterlockedMax",                   "-",     "-",       "SVM,,>",         "UI,,",          EShLangPSCS,   false },
+        { "InterlockedMax",                   "-",     "-",       "SVM,",           "UI,",           EShLangPSCS,   false },
+        { "InterlockedMin",                   "-",     "-",       "SVM,,>",         "UI,,",          EShLangPSCS,   false },
+        { "InterlockedMin",                   "-",     "-",       "SVM,",           "UI,",           EShLangPSCS,   false },
+        { "InterlockedOr",                    "-",     "-",       "SVM,,>",         "UI,,",          EShLangPSCS,   false },
+        { "InterlockedOr",                    "-",     "-",       "SVM,",           "UI,",           EShLangPSCS,   false },
+        { "InterlockedXor",                   "-",     "-",       "SVM,,>",         "UI,,",          EShLangPSCS,   false },
+        { "InterlockedXor",                   "-",     "-",       "SVM,",           "UI,",           EShLangPSCS,   false },
+        { "isfinite",                         nullptr, "B" ,      "SVM",            "F",             EShLangAll,    false },
+        { "isinf",                            nullptr, "B" ,      "SVM",            "F",             EShLangAll,    false },
+        { "isnan",                            nullptr, "B" ,      "SVM",            "F",             EShLangAll,    false },
+        { "ldexp",                            nullptr, nullptr,   "SVM,",           "F,",            EShLangAll,    false },
+        { "length",                           "S",     "F",       "V",              "F",             EShLangAll,    false },
+        { "lerp",                             nullptr, nullptr,   "VM,,",           "F,,",           EShLangAll,    false },
+        { "lerp",                             nullptr, nullptr,   "SVM,,S",         "F,,",           EShLangAll,    false },
+        { "lit",                              "V4",    "F",       "S,,",            "F,,",           EShLangAll,    false },
+        { "log",                              nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "log10",                            nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "log2",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "mad",                              nullptr, nullptr,   "SVM,,",          "DFUI,,",        EShLangAll,    false },
+        { "max",                              nullptr, nullptr,   "SVM,",           "FIU,",          EShLangAll,    false },
+        { "min",                              nullptr, nullptr,   "SVM,",           "FIU,",          EShLangAll,    false },
+        { "modf",                             nullptr, nullptr,   "SVM,>",          "FIU,",          EShLangAll,    false },
+        { "msad4",                            "V4",    "U",       "S,V2,V4",        "U,,",           EShLangAll,    false },
+        { "mul",                              "S",     nullptr,   "S,S",            "FI,",           EShLangAll,    false },
+        { "mul",                              "V",     nullptr,   "S,V",            "FI,",           EShLangAll,    false },
+        { "mul",                              "M",     nullptr,   "S,M",            "FI,",           EShLangAll,    false },
+        { "mul",                              "V",     nullptr,   "V,S",            "FI,",           EShLangAll,    false },
+        { "mul",                              "S",     nullptr,   "V,V",            "FI,",           EShLangAll,    false },
+        { "mul",                              "M",     nullptr,   "M,S",            "FI,",           EShLangAll,    false },
         // mat*mat form of mul is handled in createMatTimesMat()
-        { "noise",                            "S",     "F",       "V",              "F",             EShLangPS },
-        { "normalize",                        nullptr, nullptr,   "V",              "F",             EShLangAll },
-        { "pow",                              nullptr, nullptr,   "SVM,",           "F,",            EShLangAll },
-        // { "printf",                           "-",     "-",       "",            "",              EShLangAll }, TODO: varargs
-        { "Process2DQuadTessFactorsAvg",      "-",     "-",       "V4,V2,>V4,>V2,", "F,,,,",         EShLangHS },
-        { "Process2DQuadTessFactorsMax",      "-",     "-",       "V4,V2,>V4,>V2,", "F,,,,",         EShLangHS },
-        { "Process2DQuadTessFactorsMin",      "-",     "-",       "V4,V2,>V4,>V2,", "F,,,,",         EShLangHS },
-        { "ProcessIsolineTessFactors",        "-",     "-",       "S,,>,>",         "F,,,",          EShLangHS },
-        { "ProcessQuadTessFactorsAvg",        "-",     "-",       "V4,S,>V4,>V2,",  "F,,,,",         EShLangHS },
-        { "ProcessQuadTessFactorsMax",        "-",     "-",       "V4,S,>V4,>V2,",  "F,,,,",         EShLangHS },
-        { "ProcessQuadTessFactorsMin",        "-",     "-",       "V4,S,>V4,>V2,",  "F,,,,",         EShLangHS },
-        { "ProcessTriTessFactorsAvg",         "-",     "-",       "V3,S,>V3,>S,",   "F,,,,",         EShLangHS },
-        { "ProcessTriTessFactorsMax",         "-",     "-",       "V3,S,>V3,>S,",   "F,,,,",         EShLangHS },
-        { "ProcessTriTessFactorsMin",         "-",     "-",       "V3,S,>V3,>S,",   "F,,,,",         EShLangHS },
-        { "radians",                          nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "rcp",                              nullptr, nullptr,   "SVM",            "FD",            EShLangAll },
-        { "reflect",                          nullptr, nullptr,   "V,",             "F,",            EShLangAll },
-        { "refract",                          nullptr, nullptr,   "V,V,S",          "F,,",           EShLangAll },
-        { "reversebits",                      nullptr, nullptr,   "SV",             "UI",            EShLangAll },
-        { "round",                            nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "rsqrt",                            nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "saturate",                         nullptr, nullptr ,  "SVM",            "F",             EShLangAll },
-        { "sign",                             nullptr, nullptr,   "SVM",            "FI",            EShLangAll },
-        { "sin",                              nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "sincos",                           "-",     "-",       "SVM,>,>",        "F,,",           EShLangAll },
-        { "sinh",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "smoothstep",                       nullptr, nullptr,   "SVM,,",          "F,,",           EShLangAll },
-        { "sqrt",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "step",                             nullptr, nullptr,   "SVM,",           "F,",            EShLangAll },
-        { "tan",                              nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "tanh",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll },
-        { "tex1D",                            "V4",    "F",       "V1,S",           "S,F",           EShLangPS },
-        { "tex1D",                            "V4",    "F",       "V1,S,V1,",       "S,F,,",         EShLangPS },
-        { "tex1Dbias",                        "V4",    "F",       "V1,V4",          "S,F",           EShLangPS },
-        { "tex1Dgrad",                        "V4",    "F",       "V1,,,",          "S,F,,",         EShLangPS },
-        { "tex1Dlod",                         "V4",    "F",       "V1,V4",          "S,F",           EShLangPS },
-        { "tex1Dproj",                        "V4",    "F",       "V1,V4",          "S,F",           EShLangPS },
-        { "tex2D",                            "V4",    "F",       "V2,",            "S,F",           EShLangPS },
-        { "tex2D",                            "V4",    "F",       "V2,,,",          "S,F,,",         EShLangPS },
-        { "tex2Dbias",                        "V4",    "F",       "V2,V4",          "S,F",           EShLangPS },
-        { "tex2Dgrad",                        "V4",    "F",       "V2,,,",          "S,F,,",         EShLangPS },
-        { "tex2Dlod",                         "V4",    "F",       "V2,V4",          "S,F",           EShLangPS },
-        { "tex2Dproj",                        "V4",    "F",       "V2,V4",          "S,F",           EShLangPS },
-        { "tex3D",                            "V4",    "F",       "V3,",            "S,F",           EShLangPS },
-        { "tex3D",                            "V4",    "F",       "V3,,,",          "S,F,,",         EShLangPS },
-        { "tex3Dbias",                        "V4",    "F",       "V3,V4",          "S,F",           EShLangPS },
-        { "tex3Dgrad",                        "V4",    "F",       "V3,,,",          "S,F,,",         EShLangPS },
-        { "tex3Dlod",                         "V4",    "F",       "V3,V4",          "S,F",           EShLangPS },
-        { "tex3Dproj",                        "V4",    "F",       "V3,V4",          "S,F",           EShLangPS },
-        { "texCUBE",                          "V4",    "F",       "V4,V3",          "S,F",           EShLangPS },
-        { "texCUBE",                          "V4",    "F",       "V4,V3,,",        "S,F,,",         EShLangPS },
-        { "texCUBEbias",                      "V4",    "F",       "V4,",            "S,F",           EShLangPS },
-        { "texCUBEgrad",                      "V4",    "F",       "V4,V3,,",        "S,F,,",         EShLangPS },
-        { "texCUBElod",                       "V4",    "F",       "V4,",            "S,F",           EShLangPS },
-        { "texCUBEproj",                      "V4",    "F",       "V4,",            "S,F",           EShLangPS },
-        { "transpose",                        "^M",    nullptr,   "M",              "FUIB",          EShLangAll },
-        { "trunc",                            nullptr, nullptr,   "SVM",            "F",             EShLangAll },
+        { "noise",                            "S",     "F",       "V",              "F",             EShLangPS,     false },
+        { "normalize",                        nullptr, nullptr,   "V",              "F",             EShLangAll,    false },
+        { "pow",                              nullptr, nullptr,   "SVM,",           "F,",            EShLangAll,    false },
+        // { "printf",                           "-",     "-",       "",            "",              EShLangAll,    false }, TODO: varargs
+        { "Process2DQuadTessFactorsAvg",      "-",     "-",       "V4,V2,>V4,>V2,", "F,,,,",         EShLangHS,     false },
+        { "Process2DQuadTessFactorsMax",      "-",     "-",       "V4,V2,>V4,>V2,", "F,,,,",         EShLangHS,     false },
+        { "Process2DQuadTessFactorsMin",      "-",     "-",       "V4,V2,>V4,>V2,", "F,,,,",         EShLangHS,     false },
+        { "ProcessIsolineTessFactors",        "-",     "-",       "S,,>,>",         "F,,,",          EShLangHS,     false },
+        { "ProcessQuadTessFactorsAvg",        "-",     "-",       "V4,S,>V4,>V2,",  "F,,,,",         EShLangHS,     false },
+        { "ProcessQuadTessFactorsMax",        "-",     "-",       "V4,S,>V4,>V2,",  "F,,,,",         EShLangHS,     false },
+        { "ProcessQuadTessFactorsMin",        "-",     "-",       "V4,S,>V4,>V2,",  "F,,,,",         EShLangHS,     false },
+        { "ProcessTriTessFactorsAvg",         "-",     "-",       "V3,S,>V3,>S,",   "F,,,,",         EShLangHS,     false },
+        { "ProcessTriTessFactorsMax",         "-",     "-",       "V3,S,>V3,>S,",   "F,,,,",         EShLangHS,     false },
+        { "ProcessTriTessFactorsMin",         "-",     "-",       "V3,S,>V3,>S,",   "F,,,,",         EShLangHS,     false },
+        { "radians",                          nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "rcp",                              nullptr, nullptr,   "SVM",            "FD",            EShLangAll,    false },
+        { "reflect",                          nullptr, nullptr,   "V,",             "F,",            EShLangAll,    false },
+        { "refract",                          nullptr, nullptr,   "V,V,S",          "F,,",           EShLangAll,    false },
+        { "reversebits",                      nullptr, nullptr,   "SV",             "UI",            EShLangAll,    false },
+        { "round",                            nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "rsqrt",                            nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "saturate",                         nullptr, nullptr ,  "SVM",            "F",             EShLangAll,    false },
+        { "sign",                             nullptr, nullptr,   "SVM",            "FI",            EShLangAll,    false },
+        { "sin",                              nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "sincos",                           "-",     "-",       "SVM,>,>",        "F,,",           EShLangAll,    false },
+        { "sinh",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "smoothstep",                       nullptr, nullptr,   "SVM,,",          "F,,",           EShLangAll,    false },
+        { "sqrt",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "step",                             nullptr, nullptr,   "SVM,",           "F,",            EShLangAll,    false },
+        { "tan",                              nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "tanh",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
+        { "tex1D",                            "V4",    "F",       "V1,S",           "S,F",           EShLangPS,     false },
+        { "tex1D",                            "V4",    "F",       "V1,S,V1,",       "S,F,,",         EShLangPS,     false },
+        { "tex1Dbias",                        "V4",    "F",       "V1,V4",          "S,F",           EShLangPS,     false },
+        { "tex1Dgrad",                        "V4",    "F",       "V1,,,",          "S,F,,",         EShLangPS,     false },
+        { "tex1Dlod",                         "V4",    "F",       "V1,V4",          "S,F",           EShLangPS,     false },
+        { "tex1Dproj",                        "V4",    "F",       "V1,V4",          "S,F",           EShLangPS,     false },
+        { "tex2D",                            "V4",    "F",       "V2,",            "S,F",           EShLangPS,     false },
+        { "tex2D",                            "V4",    "F",       "V2,,,",          "S,F,,",         EShLangPS,     false },
+        { "tex2Dbias",                        "V4",    "F",       "V2,V4",          "S,F",           EShLangPS,     false },
+        { "tex2Dgrad",                        "V4",    "F",       "V2,,,",          "S,F,,",         EShLangPS,     false },
+        { "tex2Dlod",                         "V4",    "F",       "V2,V4",          "S,F",           EShLangPS,     false },
+        { "tex2Dproj",                        "V4",    "F",       "V2,V4",          "S,F",           EShLangPS,     false },
+        { "tex3D",                            "V4",    "F",       "V3,",            "S,F",           EShLangPS,     false },
+        { "tex3D",                            "V4",    "F",       "V3,,,",          "S,F,,",         EShLangPS,     false },
+        { "tex3Dbias",                        "V4",    "F",       "V3,V4",          "S,F",           EShLangPS,     false },
+        { "tex3Dgrad",                        "V4",    "F",       "V3,,,",          "S,F,,",         EShLangPS,     false },
+        { "tex3Dlod",                         "V4",    "F",       "V3,V4",          "S,F",           EShLangPS,     false },
+        { "tex3Dproj",                        "V4",    "F",       "V3,V4",          "S,F",           EShLangPS,     false },
+        { "texCUBE",                          "V4",    "F",       "V4,V3",          "S,F",           EShLangPS,     false },
+        { "texCUBE",                          "V4",    "F",       "V4,V3,,",        "S,F,,",         EShLangPS,     false },
+        { "texCUBEbias",                      "V4",    "F",       "V4,",            "S,F",           EShLangPS,     false },
+        { "texCUBEgrad",                      "V4",    "F",       "V4,V3,,",        "S,F,,",         EShLangPS,     false },
+        { "texCUBElod",                       "V4",    "F",       "V4,",            "S,F",           EShLangPS,     false },
+        { "texCUBEproj",                      "V4",    "F",       "V4,",            "S,F",           EShLangPS,     false },
+        { "transpose",                        "^M",    nullptr,   "M",              "FUIB",          EShLangAll,    false },
+        { "trunc",                            nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
 
         // Texture object methods.  Return type can be overridden by shader declaration.
         // !O = no offset, O = offset
-        { "Sample",             /*!O*/        "V4",    nullptr,   "%@,S,V",         "FIU,S,F",       EShLangPS },
-        { "Sample",             /* O*/        "V4",    nullptr,   "%@,S,V,",        "FIU,S,F,I",     EShLangPS },
+        { "Sample",             /*!O*/        "V4",    nullptr,   "%@,S,V",         "FIU,S,F",        EShLangPS,    true },
+        { "Sample",             /* O*/        "V4",    nullptr,   "%@,S,V,",        "FIU,S,F,I",      EShLangPS,    true },
 
-        { "SampleBias",         /*!O*/        "V4",    nullptr,   "%@,S,V,S",       "FIU,S,F,",      EShLangPS },
-        { "SampleBias",         /* O*/        "V4",    nullptr,   "%@,S,V,S,V",     "FIU,S,F,,I",    EShLangPS },
-
-        // TODO: FXC accepts int/uint samplers here.  unclear what that means.
-        { "SampleCmp",          /*!O*/        "S",     "F",       "%@,S,V,S",       "FIU,s,F,",      EShLangPS },
-        { "SampleCmp",          /* O*/        "S",     "F",       "%@,S,V,S,V",     "FIU,s,F,,I",    EShLangPS },
+        { "SampleBias",         /*!O*/        "V4",    nullptr,   "%@,S,V,S",       "FIU,S,F,",       EShLangPS,    true },
+        { "SampleBias",         /* O*/        "V4",    nullptr,   "%@,S,V,S,V",     "FIU,S,F,,I",     EShLangPS,    true },
 
         // TODO: FXC accepts int/uint samplers here.  unclear what that means.
-        { "SampleCmpLevelZero", /*!O*/        "S",     "F",       "%@,S,V,S",       "FIU,s,F,F",     EShLangPS },
-        { "SampleCmpLevelZero", /* O*/        "S",     "F",       "%@,S,V,S,V",     "FIU,s,F,F,I",   EShLangPS },
+        { "SampleCmp",          /*!O*/        "S",     "F",       "%@,S,V,S",       "FIU,s,F,",       EShLangPS,    true },
+        { "SampleCmp",          /* O*/        "S",     "F",       "%@,S,V,S,V",     "FIU,s,F,,I",     EShLangPS,    true },
 
-        { "SampleGrad",         /*!O*/        "V4",    nullptr,   "%@,S,V,,",       "FIU,S,F,,",     EShLangAll },
-        { "SampleGrad",         /* O*/        "V4",    nullptr,   "%@,S,V,,,",      "FIU,S,F,,,I",   EShLangAll },
+        // TODO: FXC accepts int/uint samplers here.  unclear what that means.
+        { "SampleCmpLevelZero", /*!O*/        "S",     "F",       "%@,S,V,S",       "FIU,s,F,F",      EShLangPS,    true },
+        { "SampleCmpLevelZero", /* O*/        "S",     "F",       "%@,S,V,S,V",     "FIU,s,F,F,I",    EShLangPS,    true },
 
-        { "SampleLevel",        /*!O*/        "V4",    nullptr,   "%@,S,V,S",       "FIU,S,F,",      EShLangAll },
-        { "SampleLevel",        /* O*/        "V4",    nullptr,   "%@,S,V,S,V",     "FIU,S,F,,I",    EShLangAll },
+        { "SampleGrad",         /*!O*/        "V4",    nullptr,   "%@,S,V,,",       "FIU,S,F,,",      EShLangAll,   true },
+        { "SampleGrad",         /* O*/        "V4",    nullptr,   "%@,S,V,,,",      "FIU,S,F,,,I",    EShLangAll,   true },
 
-        { "Load",               /*!O*/        "V4",    nullptr,   "%@,V",           "FIU,I",         EShLangAll },
-        { "Load",               /* O*/        "V4",    nullptr,   "%@,V,V",         "FIU,I,I",       EShLangAll },
-        { "Load", /* +sampleidex*/            "V4",    nullptr,   "$&,V,S",         "FIU,I,I",       EShLangAll },
-        { "Load", /* +samplindex, offset*/    "V4",    nullptr,   "$&,V,S,V",       "FIU,I,I,I",     EShLangAll },
+        { "SampleLevel",        /*!O*/        "V4",    nullptr,   "%@,S,V,S",       "FIU,S,F,",       EShLangAll,   true },
+        { "SampleLevel",        /* O*/        "V4",    nullptr,   "%@,S,V,S,V",     "FIU,S,F,,I",     EShLangAll,   true },
+
+        { "Load",               /*!O*/        "V4",    nullptr,   "%@,V",           "FIU,I",          EShLangAll,   true },
+        { "Load",               /* O*/        "V4",    nullptr,   "%@,V,V",         "FIU,I,I",        EShLangAll,   true },
+        { "Load", /* +sampleidex*/            "V4",    nullptr,   "$&,V,S",         "FIU,I,I",        EShLangAll,   true },
+        { "Load", /* +samplindex, offset*/    "V4",    nullptr,   "$&,V,S,V",       "FIU,I,I,I",      EShLangAll,   true },
 
         // RWTexture loads
-        { "Load",                             "V4",    nullptr,   "!#,V",           "FIU,I",         EShLangAll },
+        { "Load",                             "V4",    nullptr,   "!#,V",           "FIU,I",          EShLangAll,   true },
         // (RW)Buffer loads
-        { "Load",                             "V4",    nullptr,   "~*1,V",          "FIU,I",         EShLangAll },
+        { "Load",                             "V4",    nullptr,   "~*1,V",          "FIU,I",          EShLangAll,   true },
 
-        { "Gather",             /*!O*/        "V4",    nullptr,   "%@,S,V",         "FIU,S,F",       EShLangAll },
-        { "Gather",             /* O*/        "V4",    nullptr,   "%@,S,V,V",       "FIU,S,F,I",     EShLangAll },
+        { "Gather",             /*!O*/        "V4",    nullptr,   "%@,S,V",         "FIU,S,F",        EShLangAll,   true },
+        { "Gather",             /* O*/        "V4",    nullptr,   "%@,S,V,V",       "FIU,S,F,I",      EShLangAll,   true },
 
-        { "CalculateLevelOfDetail",           "S",     "F",       "%@,S,V",         "FUI,S,F",       EShLangPS },
-        { "CalculateLevelOfDetailUnclamped",  "S",     "F",       "%@,S,V",         "FUI,S,F",       EShLangPS },
+        { "CalculateLevelOfDetail",           "S",     "F",       "%@,S,V",         "FUI,S,F",        EShLangPS,    true },
+        { "CalculateLevelOfDetailUnclamped",  "S",     "F",       "%@,S,V",         "FUI,S,F",        EShLangPS,    true },
 
-        { "GetSamplePosition",                "V2",    "F",       "$&2,S",          "FUI,I",         EShLangVSPSGS },
+        { "GetSamplePosition",                "V2",    "F",       "$&2,S",          "FUI,I",          EShLangVSPSGS,true },
 
         //
         // UINT Width
         // UINT MipLevel, UINT Width, UINT NumberOfLevels
-        { "GetDimensions",   /* 1D */         "-",     "-",       "%!~1,>S",        "FUI,U",         EShLangAll },
-        { "GetDimensions",   /* 1D */         "-",     "-",       "%!~1,>S",        "FUI,F",         EShLangAll },
-        { "GetDimensions",   /* 1D */         "-",     "-",       "%1,S,>S,",       "FUI,U,,",       EShLangAll },
-        { "GetDimensions",   /* 1D */         "-",     "-",       "%1,S,>S,",       "FUI,U,F,",      EShLangAll },
+        { "GetDimensions",   /* 1D */         "-",     "-",       "%!~1,>S",        "FUI,U",          EShLangAll,   true },
+        { "GetDimensions",   /* 1D */         "-",     "-",       "%!~1,>S",        "FUI,F",          EShLangAll,   true },
+        { "GetDimensions",   /* 1D */         "-",     "-",       "%1,S,>S,",       "FUI,U,,",        EShLangAll,   true },
+        { "GetDimensions",   /* 1D */         "-",     "-",       "%1,S,>S,",       "FUI,U,F,",       EShLangAll,   true },
 
         // UINT Width, UINT Elements
         // UINT MipLevel, UINT Width, UINT Elements, UINT NumberOfLevels
-        { "GetDimensions",   /* 1DArray */    "-",     "-",       "@#1,>S,",        "FUI,U,",        EShLangAll },
-        { "GetDimensions",   /* 1DArray */    "-",     "-",       "@#1,>S,",        "FUI,F,",        EShLangAll },
-        { "GetDimensions",   /* 1DArray */    "-",     "-",       "@1,S,>S,,",      "FUI,U,,,",      EShLangAll },
-        { "GetDimensions",   /* 1DArray */    "-",     "-",       "@1,S,>S,,",      "FUI,U,F,,",     EShLangAll },
+        { "GetDimensions",   /* 1DArray */    "-",     "-",       "@#1,>S,",        "FUI,U,",         EShLangAll,   true },
+        { "GetDimensions",   /* 1DArray */    "-",     "-",       "@#1,>S,",        "FUI,F,",         EShLangAll,   true },
+        { "GetDimensions",   /* 1DArray */    "-",     "-",       "@1,S,>S,,",      "FUI,U,,,",       EShLangAll,   true },
+        { "GetDimensions",   /* 1DArray */    "-",     "-",       "@1,S,>S,,",      "FUI,U,F,,",      EShLangAll,   true },
 
         // UINT Width, UINT Height
         // UINT MipLevel, UINT Width, UINT Height, UINT NumberOfLevels
-        { "GetDimensions",   /* 2D */         "-",     "-",       "%!2,>S,",        "FUI,U,",        EShLangAll },
-        { "GetDimensions",   /* 2D */         "-",     "-",       "%!2,>S,",        "FUI,F,",        EShLangAll },
-        { "GetDimensions",   /* 2D */         "-",     "-",       "%2,S,>S,,",      "FUI,U,,,",      EShLangAll },
-        { "GetDimensions",   /* 2D */         "-",     "-",       "%2,S,>S,,",      "FUI,U,F,,",     EShLangAll },
+        { "GetDimensions",   /* 2D */         "-",     "-",       "%!2,>S,",        "FUI,U,",         EShLangAll,   true },
+        { "GetDimensions",   /* 2D */         "-",     "-",       "%!2,>S,",        "FUI,F,",         EShLangAll,   true },
+        { "GetDimensions",   /* 2D */         "-",     "-",       "%2,S,>S,,",      "FUI,U,,,",       EShLangAll,   true },
+        { "GetDimensions",   /* 2D */         "-",     "-",       "%2,S,>S,,",      "FUI,U,F,,",      EShLangAll,   true },
 
         // UINT Width, UINT Height, UINT Elements
         // UINT MipLevel, UINT Width, UINT Height, UINT Elements, UINT NumberOfLevels
-        { "GetDimensions",   /* 2DArray */    "-",     "-",       "@#2,>S,,",       "FUI,U,,",       EShLangAll },
-        { "GetDimensions",   /* 2DArray */    "-",     "-",       "@#2,>S,,",       "FUI,F,F,F",     EShLangAll },
-        { "GetDimensions",   /* 2DArray */    "-",     "-",       "@2,S,>S,,,",     "FUI,U,,,,",     EShLangAll },
-        { "GetDimensions",   /* 2DArray */    "-",     "-",       "@2,S,>S,,,",     "FUI,U,F,,,",    EShLangAll },
+        { "GetDimensions",   /* 2DArray */    "-",     "-",       "@#2,>S,,",       "FUI,U,,",        EShLangAll,   true },
+        { "GetDimensions",   /* 2DArray */    "-",     "-",       "@#2,>S,,",       "FUI,F,F,F",      EShLangAll,   true },
+        { "GetDimensions",   /* 2DArray */    "-",     "-",       "@2,S,>S,,,",     "FUI,U,,,,",      EShLangAll,   true },
+        { "GetDimensions",   /* 2DArray */    "-",     "-",       "@2,S,>S,,,",     "FUI,U,F,,,",     EShLangAll,   true },
 
         // UINT Width, UINT Height, UINT Depth
         // UINT MipLevel, UINT Width, UINT Height, UINT Depth, UINT NumberOfLevels
-        { "GetDimensions",   /* 3D */         "-",     "-",       "%!3,>S,,",       "FUI,U,,",       EShLangAll },
-        { "GetDimensions",   /* 3D */         "-",     "-",       "%!3,>S,,",       "FUI,F,,",       EShLangAll },
-        { "GetDimensions",   /* 3D */         "-",     "-",       "%3,S,>S,,,",     "FUI,U,,,,",     EShLangAll },
-        { "GetDimensions",   /* 3D */         "-",     "-",       "%3,S,>S,,,",     "FUI,U,F,,,",    EShLangAll },
+        { "GetDimensions",   /* 3D */         "-",     "-",       "%!3,>S,,",       "FUI,U,,",        EShLangAll,   true },
+        { "GetDimensions",   /* 3D */         "-",     "-",       "%!3,>S,,",       "FUI,F,,",        EShLangAll,   true },
+        { "GetDimensions",   /* 3D */         "-",     "-",       "%3,S,>S,,,",     "FUI,U,,,,",      EShLangAll,   true },
+        { "GetDimensions",   /* 3D */         "-",     "-",       "%3,S,>S,,,",     "FUI,U,F,,,",     EShLangAll,   true },
 
         // UINT Width, UINT Height
         // UINT MipLevel, UINT Width, UINT Height, UINT NumberOfLevels
-        { "GetDimensions",   /* Cube */       "-",     "-",       "%4,>S,",         "FUI,U,",        EShLangAll },
-        { "GetDimensions",   /* Cube */       "-",     "-",       "%4,>S,",         "FUI,F,",        EShLangAll },
-        { "GetDimensions",   /* Cube */       "-",     "-",       "%4,S,>S,,",      "FUI,U,,,",      EShLangAll },
-        { "GetDimensions",   /* Cube */       "-",     "-",       "%4,S,>S,,",      "FUI,U,F,,",     EShLangAll },
+        { "GetDimensions",   /* Cube */       "-",     "-",       "%4,>S,",         "FUI,U,",         EShLangAll,   true },
+        { "GetDimensions",   /* Cube */       "-",     "-",       "%4,>S,",         "FUI,F,",         EShLangAll,   true },
+        { "GetDimensions",   /* Cube */       "-",     "-",       "%4,S,>S,,",      "FUI,U,,,",       EShLangAll,   true },
+        { "GetDimensions",   /* Cube */       "-",     "-",       "%4,S,>S,,",      "FUI,U,F,,",      EShLangAll,   true },
 
         // UINT Width, UINT Height, UINT Elements
         // UINT MipLevel, UINT Width, UINT Height, UINT Elements, UINT NumberOfLevels
-        { "GetDimensions",   /* CubeArray */  "-",     "-",       "@4,>S,,",        "FUI,U,,",       EShLangAll },
-        { "GetDimensions",   /* CubeArray */  "-",     "-",       "@4,>S,,",        "FUI,F,,",       EShLangAll },
-        { "GetDimensions",   /* CubeArray */  "-",     "-",       "@4,S,>S,,,",     "FUI,U,,,,",     EShLangAll },
-        { "GetDimensions",   /* CubeArray */  "-",     "-",       "@4,S,>S,,,",     "FUI,U,F,,,",    EShLangAll },
+        { "GetDimensions",   /* CubeArray */  "-",     "-",       "@4,>S,,",        "FUI,U,,",        EShLangAll,   true },
+        { "GetDimensions",   /* CubeArray */  "-",     "-",       "@4,>S,,",        "FUI,F,,",        EShLangAll,   true },
+        { "GetDimensions",   /* CubeArray */  "-",     "-",       "@4,S,>S,,,",     "FUI,U,,,,",      EShLangAll,   true },
+        { "GetDimensions",   /* CubeArray */  "-",     "-",       "@4,S,>S,,,",     "FUI,U,F,,,",     EShLangAll,   true },
 
         // UINT Width, UINT Height, UINT Samples
         // UINT Width, UINT Height, UINT Elements, UINT Samples
-        { "GetDimensions",   /* 2DMS */       "-",     "-",       "$2,>S,,",        "FUI,U,,",       EShLangAll },
-        { "GetDimensions",   /* 2DMS */       "-",     "-",       "$2,>S,,",        "FUI,U,,",       EShLangAll },
-        { "GetDimensions",   /* 2DMSArray */  "-",     "-",       "&2,>S,,,",       "FUI,U,,,",      EShLangAll },
-        { "GetDimensions",   /* 2DMSArray */  "-",     "-",       "&2,>S,,,",       "FUI,U,,,",      EShLangAll },
+        { "GetDimensions",   /* 2DMS */       "-",     "-",       "$2,>S,,",        "FUI,U,,",        EShLangAll,   true },
+        { "GetDimensions",   /* 2DMS */       "-",     "-",       "$2,>S,,",        "FUI,U,,",        EShLangAll,   true },
+        { "GetDimensions",   /* 2DMSArray */  "-",     "-",       "&2,>S,,,",       "FUI,U,,,",       EShLangAll,   true },
+        { "GetDimensions",   /* 2DMSArray */  "-",     "-",       "&2,>S,,,",       "FUI,U,,,",       EShLangAll,   true },
 
         // SM5 texture methods
-        { "GatherRed",       /*!O*/           "V4",    nullptr,   "%@,S,V",         "FIU,S,F",       EShLangAll },
-        { "GatherRed",       /* O*/           "V4",    nullptr,   "%@,S,V,",        "FIU,S,F,I",     EShLangAll },
-        { "GatherRed",       /* O, status*/   "V4",    nullptr,   "%@,S,V,,>S",     "FIU,S,F,I,U",   EShLangAll },
-        { "GatherRed",       /* O-4 */        "V4",    nullptr,   "%@,S,V,,,,",     "FIU,S,F,I,,,",  EShLangAll },
-        { "GatherRed",       /* O-4, status */"V4",    nullptr,   "%@,S,V,,,,,S",   "FIU,S,F,I,,,,U",EShLangAll },
+        { "GatherRed",       /*!O*/           "V4",    nullptr,   "%@,S,V",         "FIU,S,F",        EShLangAll,   true },
+        { "GatherRed",       /* O*/           "V4",    nullptr,   "%@,S,V,",        "FIU,S,F,I",      EShLangAll,   true },
+        { "GatherRed",       /* O, status*/   "V4",    nullptr,   "%@,S,V,,>S",     "FIU,S,F,I,U",    EShLangAll,   true },
+        { "GatherRed",       /* O-4 */        "V4",    nullptr,   "%@,S,V,,,,",     "FIU,S,F,I,,,",   EShLangAll,   true },
+        { "GatherRed",       /* O-4, status */"V4",    nullptr,   "%@,S,V,,,,,S",   "FIU,S,F,I,,,,U", EShLangAll,   true },
 
-        { "GatherGreen",     /*!O*/           "V4",    nullptr,   "%@,S,V",         "FIU,S,F",       EShLangAll },
-        { "GatherGreen",     /* O*/           "V4",    nullptr,   "%@,S,V,",        "FIU,S,F,I",     EShLangAll },
-        { "GatherGreen",     /* O, status*/   "V4",    nullptr,   "%@,S,V,,>S",     "FIU,S,F,I,U",   EShLangAll },
-        { "GatherGreen",     /* O-4 */        "V4",    nullptr,   "%@,S,V,,,,",     "FIU,S,F,I,,,",  EShLangAll },
-        { "GatherGreen",     /* O-4, status */"V4",    nullptr,   "%@,S,V,,,,,S",   "FIU,S,F,I,,,,U",EShLangAll },
+        { "GatherGreen",     /*!O*/           "V4",    nullptr,   "%@,S,V",         "FIU,S,F",        EShLangAll,   true },
+        { "GatherGreen",     /* O*/           "V4",    nullptr,   "%@,S,V,",        "FIU,S,F,I",      EShLangAll,   true },
+        { "GatherGreen",     /* O, status*/   "V4",    nullptr,   "%@,S,V,,>S",     "FIU,S,F,I,U",    EShLangAll,   true },
+        { "GatherGreen",     /* O-4 */        "V4",    nullptr,   "%@,S,V,,,,",     "FIU,S,F,I,,,",   EShLangAll,   true },
+        { "GatherGreen",     /* O-4, status */"V4",    nullptr,   "%@,S,V,,,,,S",   "FIU,S,F,I,,,,U", EShLangAll,   true },
 
-        { "GatherBlue",      /*!O*/           "V4",    nullptr,   "%@,S,V",         "FIU,S,F",       EShLangAll },
-        { "GatherBlue",      /* O*/           "V4",    nullptr,   "%@,S,V,",        "FIU,S,F,I",     EShLangAll },
-        { "GatherBlue",      /* O, status*/   "V4",    nullptr,   "%@,S,V,,>S",     "FIU,S,F,I,U",   EShLangAll },
-        { "GatherBlue",      /* O-4 */        "V4",    nullptr,   "%@,S,V,,,,",     "FIU,S,F,I,,,",  EShLangAll },
-        { "GatherBlue",      /* O-4, status */"V4",    nullptr,   "%@,S,V,,,,,S",   "FIU,S,F,I,,,,U",EShLangAll },
+        { "GatherBlue",      /*!O*/           "V4",    nullptr,   "%@,S,V",         "FIU,S,F",        EShLangAll,   true },
+        { "GatherBlue",      /* O*/           "V4",    nullptr,   "%@,S,V,",        "FIU,S,F,I",      EShLangAll,   true },
+        { "GatherBlue",      /* O, status*/   "V4",    nullptr,   "%@,S,V,,>S",     "FIU,S,F,I,U",    EShLangAll,   true },
+        { "GatherBlue",      /* O-4 */        "V4",    nullptr,   "%@,S,V,,,,",     "FIU,S,F,I,,,",   EShLangAll,   true },
+        { "GatherBlue",      /* O-4, status */"V4",    nullptr,   "%@,S,V,,,,,S",   "FIU,S,F,I,,,,U", EShLangAll,   true },
 
-        { "GatherAlpha",     /*!O*/           "V4",    nullptr,   "%@,S,V",         "FIU,S,F",       EShLangAll },
-        { "GatherAlpha",     /* O*/           "V4",    nullptr,   "%@,S,V,",        "FIU,S,F,I",     EShLangAll },
-        { "GatherAlpha",     /* O, status*/   "V4",    nullptr,   "%@,S,V,,>S",     "FIU,S,F,I,U",   EShLangAll },
-        { "GatherAlpha",     /* O-4 */        "V4",    nullptr,   "%@,S,V,,,,",     "FIU,S,F,I,,,",  EShLangAll },
-        { "GatherAlpha",     /* O-4, status */"V4",    nullptr,   "%@,S,V,,,,,S",   "FIU,S,F,I,,,,U",EShLangAll },
+        { "GatherAlpha",     /*!O*/           "V4",    nullptr,   "%@,S,V",         "FIU,S,F",        EShLangAll,   true },
+        { "GatherAlpha",     /* O*/           "V4",    nullptr,   "%@,S,V,",        "FIU,S,F,I",      EShLangAll,   true },
+        { "GatherAlpha",     /* O, status*/   "V4",    nullptr,   "%@,S,V,,>S",     "FIU,S,F,I,U",    EShLangAll,   true },
+        { "GatherAlpha",     /* O-4 */        "V4",    nullptr,   "%@,S,V,,,,",     "FIU,S,F,I,,,",   EShLangAll,   true },
+        { "GatherAlpha",     /* O-4, status */"V4",    nullptr,   "%@,S,V,,,,,S",   "FIU,S,F,I,,,,U", EShLangAll,   true },
 
-        { "GatherCmpRed",    /*!O*/           "V4",    nullptr,   "%@,S,V,S",       "FIU,s,F,",       EShLangAll },
-        { "GatherCmpRed",    /* O*/           "V4",    nullptr,   "%@,S,V,S,V",     "FIU,s,F,,I",     EShLangAll },
-        { "GatherCmpRed",    /* O, status*/   "V4",    nullptr,   "%@,S,V,S,V,>S",  "FIU,s,F,,I,U",   EShLangAll },
-        { "GatherCmpRed",    /* O-4 */        "V4",    nullptr,   "%@,S,V,S,V,,,",  "FIU,s,F,,I,,,",  EShLangAll },
-        { "GatherCmpRed",    /* O-4, status */"V4",    nullptr,   "%@,S,V,S,V,,V,S","FIU,s,F,,I,,,,U",EShLangAll },
+        { "GatherCmpRed",    /*!O*/           "V4",    nullptr,   "%@,S,V,S",       "FIU,s,F,",       EShLangAll,   true },
+        { "GatherCmpRed",    /* O*/           "V4",    nullptr,   "%@,S,V,S,V",     "FIU,s,F,,I",     EShLangAll,   true },
+        { "GatherCmpRed",    /* O, status*/   "V4",    nullptr,   "%@,S,V,S,V,>S",  "FIU,s,F,,I,U",   EShLangAll,   true },
+        { "GatherCmpRed",    /* O-4 */        "V4",    nullptr,   "%@,S,V,S,V,,,",  "FIU,s,F,,I,,,",  EShLangAll,   true },
+        { "GatherCmpRed",    /* O-4, status */"V4",    nullptr,   "%@,S,V,S,V,,V,S","FIU,s,F,,I,,,,U",EShLangAll,   true },
 
-        { "GatherCmpGreen",  /*!O*/           "V4",    nullptr,   "%@,S,V,S",       "FIU,s,F,",       EShLangAll },
-        { "GatherCmpGreen",  /* O*/           "V4",    nullptr,   "%@,S,V,S,V",     "FIU,s,F,,I",     EShLangAll },
-        { "GatherCmpGreen",  /* O, status*/   "V4",    nullptr,   "%@,S,V,S,V,>S",  "FIU,s,F,,I,U",   EShLangAll },
-        { "GatherCmpGreen",  /* O-4 */        "V4",    nullptr,   "%@,S,V,S,V,,,",  "FIU,s,F,,I,,,",  EShLangAll },
-        { "GatherCmpGreen",  /* O-4, status */"V4",    nullptr,   "%@,S,V,S,V,,,,S","FIU,s,F,,I,,,,U",EShLangAll },
+        { "GatherCmpGreen",  /*!O*/           "V4",    nullptr,   "%@,S,V,S",       "FIU,s,F,",       EShLangAll,   true },
+        { "GatherCmpGreen",  /* O*/           "V4",    nullptr,   "%@,S,V,S,V",     "FIU,s,F,,I",     EShLangAll,   true },
+        { "GatherCmpGreen",  /* O, status*/   "V4",    nullptr,   "%@,S,V,S,V,>S",  "FIU,s,F,,I,U",   EShLangAll,   true },
+        { "GatherCmpGreen",  /* O-4 */        "V4",    nullptr,   "%@,S,V,S,V,,,",  "FIU,s,F,,I,,,",  EShLangAll,   true },
+        { "GatherCmpGreen",  /* O-4, status */"V4",    nullptr,   "%@,S,V,S,V,,,,S","FIU,s,F,,I,,,,U",EShLangAll,   true },
 
-        { "GatherCmpBlue",   /*!O*/           "V4",    nullptr,   "%@,S,V,S",       "FIU,s,F,",       EShLangAll },
-        { "GatherCmpBlue",   /* O*/           "V4",    nullptr,   "%@,S,V,S,V",     "FIU,s,F,,I",     EShLangAll },
-        { "GatherCmpBlue",   /* O, status*/   "V4",    nullptr,   "%@,S,V,S,V,>S",  "FIU,s,F,,I,U",   EShLangAll },
-        { "GatherCmpBlue",   /* O-4 */        "V4",    nullptr,   "%@,S,V,S,V,,,",  "FIU,s,F,,I,,,",  EShLangAll },
-        { "GatherCmpBlue",   /* O-4, status */"V4",    nullptr,   "%@,S,V,S,V,,,,S","FIU,s,F,,I,,,,U",EShLangAll },
+        { "GatherCmpBlue",   /*!O*/           "V4",    nullptr,   "%@,S,V,S",       "FIU,s,F,",       EShLangAll,   true },
+        { "GatherCmpBlue",   /* O*/           "V4",    nullptr,   "%@,S,V,S,V",     "FIU,s,F,,I",     EShLangAll,   true },
+        { "GatherCmpBlue",   /* O, status*/   "V4",    nullptr,   "%@,S,V,S,V,>S",  "FIU,s,F,,I,U",   EShLangAll,   true },
+        { "GatherCmpBlue",   /* O-4 */        "V4",    nullptr,   "%@,S,V,S,V,,,",  "FIU,s,F,,I,,,",  EShLangAll,   true },
+        { "GatherCmpBlue",   /* O-4, status */"V4",    nullptr,   "%@,S,V,S,V,,,,S","FIU,s,F,,I,,,,U",EShLangAll,   true },
 
-        { "GatherCmpAlpha",  /*!O*/           "V4",    nullptr,   "%@,S,V,S",       "FIU,s,F,",       EShLangAll },
-        { "GatherCmpAlpha",  /* O*/           "V4",    nullptr,   "%@,S,V,S,V",     "FIU,s,F,,I",     EShLangAll },
-        { "GatherCmpAlpha",  /* O, status*/   "V4",    nullptr,   "%@,S,V,S,V,>S",  "FIU,s,F,,I,U",   EShLangAll },
-        { "GatherCmpAlpha",  /* O-4 */        "V4",    nullptr,   "%@,S,V,S,V,,,",  "FIU,s,F,,I,,,",  EShLangAll },
-        { "GatherCmpAlpha",  /* O-4, status */"V4",    nullptr,   "%@,S,V,S,V,,,,S","FIU,s,F,,I,,,,U",EShLangAll },
+        { "GatherCmpAlpha",  /*!O*/           "V4",    nullptr,   "%@,S,V,S",       "FIU,s,F,",       EShLangAll,   true },
+        { "GatherCmpAlpha",  /* O*/           "V4",    nullptr,   "%@,S,V,S,V",     "FIU,s,F,,I",     EShLangAll,   true },
+        { "GatherCmpAlpha",  /* O, status*/   "V4",    nullptr,   "%@,S,V,S,V,>S",  "FIU,s,F,,I,U",   EShLangAll,   true },
+        { "GatherCmpAlpha",  /* O-4 */        "V4",    nullptr,   "%@,S,V,S,V,,,",  "FIU,s,F,,I,,,",  EShLangAll,   true },
+        { "GatherCmpAlpha",  /* O-4, status */"V4",    nullptr,   "%@,S,V,S,V,,,,S","FIU,s,F,,I,,,,U",EShLangAll,   true },
 
         // geometry methods
-        { "Append",                           "-",     "-",       "-",              "-",              EShLangGS  },
-        { "RestartStrip",                     "-",     "-",       "-",              "-",              EShLangGS  },
+        { "Append",                           "-",     "-",       "-",              "-",              EShLangGS ,   true },
+        { "RestartStrip",                     "-",     "-",       "-",              "-",              EShLangGS ,   true },
 
         // Methods for structurebuffers.  TODO: wildcard type matching.
-        { "Load",                             nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "Load2",                            nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "Load3",                            nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "Load4",                            nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "Store",                            nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "Store2",                           nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "Store3",                           nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "Store4",                           nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "GetDimensions",                    nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "InterlockedAdd",                   nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "InterlockedAnd",                   nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "InterlockedCompareExchange",       nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "InterlockedCompareStore",          nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "InterlockedExchange",              nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "InterlockedMax",                   nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "InterlockedMin",                   nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "InterlockedOr",                    nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "InterlockedXor",                   nullptr, nullptr,   "-",              "-",             EShLangAll },
+        { "Load",                             nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
+        { "Load2",                            nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
+        { "Load3",                            nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
+        { "Load4",                            nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
+        { "Store",                            nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
+        { "Store2",                           nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
+        { "Store3",                           nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
+        { "Store4",                           nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
+        { "GetDimensions",                    nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
+        { "InterlockedAdd",                   nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
+        { "InterlockedAnd",                   nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
+        { "InterlockedCompareExchange",       nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
+        { "InterlockedCompareStore",          nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
+        { "InterlockedExchange",              nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
+        { "InterlockedMax",                   nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
+        { "InterlockedMin",                   nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
+        { "InterlockedOr",                    nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
+        { "InterlockedXor",                   nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
 
         // Mark end of list, since we want to avoid a range-based for, as some compilers don't handle it yet.
-        { nullptr,                            nullptr, nullptr,   nullptr,      nullptr,  0 },
+        { nullptr,                            nullptr, nullptr,   nullptr,      nullptr,  0, false },
     };
 
     // Create prototypes for the intrinsics.  TODO: Avoid ranged based for until all compilers can handle it.
@@ -918,6 +920,12 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
 
                             AppendTypeName(s, retOrder, retType, dim0, dim1);  // add return type
                             s.append(" ");                                     // space between type and name
+
+                            // methods have a prefix.  TODO: it would be better as an invalid identifier character,
+                            // but that requires a scanner change.
+                            if (intrinsic.method)
+                                s.append(BUILTIN_PREFIX);
+
                             s.append(intrinsic.name);                          // intrinsic name
                             s.append("(");                                     // open paren
 
@@ -1151,41 +1159,51 @@ void TBuiltInParseablesHlsl::identifyBuiltIns(int /*version*/, EProfile /*profil
     symbolTable.relateToOperator("trunc",                       EOpTrunc);
 
     // Texture methods
-    symbolTable.relateToOperator("Sample",                      EOpMethodSample);
-    symbolTable.relateToOperator("SampleBias",                  EOpMethodSampleBias);
-    symbolTable.relateToOperator("SampleCmp",                   EOpMethodSampleCmp);
-    symbolTable.relateToOperator("SampleCmpLevelZero",          EOpMethodSampleCmpLevelZero);
-    symbolTable.relateToOperator("SampleGrad",                  EOpMethodSampleGrad);
-    symbolTable.relateToOperator("SampleLevel",                 EOpMethodSampleLevel);
-    symbolTable.relateToOperator("Load",                        EOpMethodLoad);
-    symbolTable.relateToOperator("GetDimensions",               EOpMethodGetDimensions);
-    symbolTable.relateToOperator("GetSamplePosition",           EOpMethodGetSamplePosition);
-    symbolTable.relateToOperator("Gather",                      EOpMethodGather);
-    symbolTable.relateToOperator("CalculateLevelOfDetail",      EOpMethodCalculateLevelOfDetail);
-    symbolTable.relateToOperator("CalculateLevelOfDetailUnclamped", EOpMethodCalculateLevelOfDetailUnclamped);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "Sample",                      EOpMethodSample);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "SampleBias",                  EOpMethodSampleBias);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "SampleCmp",                   EOpMethodSampleCmp);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "SampleCmpLevelZero",          EOpMethodSampleCmpLevelZero);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "SampleGrad",                  EOpMethodSampleGrad);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "SampleLevel",                 EOpMethodSampleLevel);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "Load",                        EOpMethodLoad);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "GetDimensions",               EOpMethodGetDimensions);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "GetSamplePosition",           EOpMethodGetSamplePosition);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "Gather",                      EOpMethodGather);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "CalculateLevelOfDetail",      EOpMethodCalculateLevelOfDetail);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "CalculateLevelOfDetailUnclamped", EOpMethodCalculateLevelOfDetailUnclamped);
 
     // Structure buffer methods (excluding associations already made above for texture methods w/ same name)
-    symbolTable.relateToOperator("Load2",                       EOpMethodLoad2);
-    symbolTable.relateToOperator("Load3",                       EOpMethodLoad3);
-    symbolTable.relateToOperator("Load4",                       EOpMethodLoad4);
-    symbolTable.relateToOperator("Store",                       EOpMethodStore);
-    symbolTable.relateToOperator("Store2",                      EOpMethodStore2);
-    symbolTable.relateToOperator("Store3",                      EOpMethodStore3);
-    symbolTable.relateToOperator("Store4",                      EOpMethodStore4);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "Load2",                       EOpMethodLoad2);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "Load3",                       EOpMethodLoad3);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "Load4",                       EOpMethodLoad4);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "Store",                       EOpMethodStore);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "Store2",                      EOpMethodStore2);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "Store3",                      EOpMethodStore3);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "Store4",                      EOpMethodStore4);
+
+    symbolTable.relateToOperator(BUILTIN_PREFIX "InterlockedAdd",              EOpInterlockedAdd);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "InterlockedAnd",              EOpInterlockedAnd);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "InterlockedCompareExchange",  EOpInterlockedCompareExchange);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "InterlockedCompareStore",     EOpInterlockedCompareStore);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "InterlockedExchange",         EOpInterlockedExchange);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "InterlockedMax",              EOpInterlockedMax);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "InterlockedMin",              EOpInterlockedMin);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "InterlockedOr",               EOpInterlockedOr);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "InterlockedXor",              EOpInterlockedXor);
 
     // SM5 Texture methods
-    symbolTable.relateToOperator("GatherRed",                   EOpMethodGatherRed);
-    symbolTable.relateToOperator("GatherGreen",                 EOpMethodGatherGreen);
-    symbolTable.relateToOperator("GatherBlue",                  EOpMethodGatherBlue);
-    symbolTable.relateToOperator("GatherAlpha",                 EOpMethodGatherAlpha);
-    symbolTable.relateToOperator("GatherCmpRed",                EOpMethodGatherCmpRed);
-    symbolTable.relateToOperator("GatherCmpGreen",              EOpMethodGatherCmpGreen);
-    symbolTable.relateToOperator("GatherCmpBlue",               EOpMethodGatherCmpBlue);
-    symbolTable.relateToOperator("GatherCmpAlpha",              EOpMethodGatherCmpAlpha);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "GatherRed",                   EOpMethodGatherRed);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "GatherGreen",                 EOpMethodGatherGreen);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "GatherBlue",                  EOpMethodGatherBlue);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "GatherAlpha",                 EOpMethodGatherAlpha);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "GatherCmpRed",                EOpMethodGatherCmpRed);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "GatherCmpGreen",              EOpMethodGatherCmpGreen);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "GatherCmpBlue",               EOpMethodGatherCmpBlue);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "GatherCmpAlpha",              EOpMethodGatherCmpAlpha);
 
     // GS methods
-    symbolTable.relateToOperator("Append",                      EOpMethodAppend);
-    symbolTable.relateToOperator("RestartStrip",                EOpMethodRestartStrip);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "Append",                      EOpMethodAppend);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "RestartStrip",                EOpMethodRestartStrip);
 }
 
 //

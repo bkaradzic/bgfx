@@ -25,7 +25,6 @@ Warning, version 450 is not yet complete; most version-specific features are pre
                               MemberName 27(gl_PerVertex) 1  "gl_PointSize"
                               MemberName 27(gl_PerVertex) 2  "gl_ClipDistance"
                               MemberName 27(gl_PerVertex) 3  "gl_CullDistance"
-                              MemberName 27(gl_PerVertex) 4  "gl_SecondaryPositionNV"
                               MemberName 27(gl_PerVertex) 5  "gl_PositionPerViewNV"
                               Name 31  "gl_in"
                               MemberDecorate 13(gl_PerVertex) 0 BuiltIn PositionPerViewNV
@@ -57,7 +56,7 @@ Warning, version 450 is not yet complete; most version-specific features are pre
               22:     11(int) Constant 0
               23:             TypePointer Output 11(int)
               26:             TypeArray 6(float) 9
-27(gl_PerVertex):             TypeStruct 7(fvec4) 6(float) 26 26 7(fvec4) 10
+27(gl_PerVertex):             TypeStruct 7(fvec4) 6(float) 26 26 10
               28:      8(int) Constant 32
               29:             TypeArray 27(gl_PerVertex) 28
               30:             TypePointer Input 29

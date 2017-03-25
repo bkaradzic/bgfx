@@ -86,8 +86,8 @@ gl_FragCoord origin is upper left
 0:35      Sequence
 0:35        move second child to first child ( temp 4-element array of float)
 0:35          'local_float_array' ( temp 4-element array of float)
-0:35          g_floats: direct index for structure (layout( offset=384) uniform 4-element array of float)
-0:35            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-element array of 3X3 matrix of float g_mats, layout( binding=10 offset=192) uniform 4-element array of 3X3 matrix of float g_mats_explicit, layout( offset=384) uniform 4-element array of float g_floats})
+0:35          g_floats: direct index for structure ( uniform 4-element array of float)
+0:35            'anon@0' (layout( row_major std140) uniform block{ uniform 4-element array of 3X3 matrix of float g_mats, layout( binding=10) uniform 4-element array of 3X3 matrix of float g_mats_explicit,  uniform 4-element array of float g_floats})
 0:35            Constant:
 0:35              2 (const uint)
 0:37      move second child to first child ( temp 4-component vector of float)
@@ -165,7 +165,7 @@ gl_FragCoord origin is upper left
 0:?     'g_samp_explicit[0]' (layout( binding=5) uniform sampler)
 0:?     'g_samp_explicit[1]' (layout( binding=6) uniform sampler)
 0:?     'g_samp_explicit[2]' (layout( binding=7) uniform sampler)
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-element array of 3X3 matrix of float g_mats, layout( binding=10 offset=192) uniform 4-element array of 3X3 matrix of float g_mats_explicit, layout( offset=384) uniform 4-element array of float g_floats})
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform 4-element array of 3X3 matrix of float g_mats, layout( binding=10) uniform 4-element array of 3X3 matrix of float g_mats_explicit,  uniform 4-element array of float g_floats})
 0:?     'not_flattened_a' ( global 5-element array of int)
 0:?     'color' (layout( location=0) out 4-component vector of float)
 
@@ -260,8 +260,8 @@ gl_FragCoord origin is upper left
 0:35      Sequence
 0:35        move second child to first child ( temp 4-element array of float)
 0:35          'local_float_array' ( temp 4-element array of float)
-0:35          g_floats: direct index for structure (layout( offset=384) uniform 4-element array of float)
-0:35            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-element array of 3X3 matrix of float g_mats, layout( binding=10 offset=192) uniform 4-element array of 3X3 matrix of float g_mats_explicit, layout( offset=384) uniform 4-element array of float g_floats})
+0:35          g_floats: direct index for structure ( uniform 4-element array of float)
+0:35            'anon@0' (layout( row_major std140) uniform block{ uniform 4-element array of 3X3 matrix of float g_mats, layout( binding=10) uniform 4-element array of 3X3 matrix of float g_mats_explicit,  uniform 4-element array of float g_floats})
 0:35            Constant:
 0:35              2 (const uint)
 0:37      move second child to first child ( temp 4-component vector of float)
@@ -339,7 +339,7 @@ gl_FragCoord origin is upper left
 0:?     'g_samp_explicit[0]' (layout( binding=5) uniform sampler)
 0:?     'g_samp_explicit[1]' (layout( binding=6) uniform sampler)
 0:?     'g_samp_explicit[2]' (layout( binding=7) uniform sampler)
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-element array of 3X3 matrix of float g_mats, layout( binding=10 offset=192) uniform 4-element array of 3X3 matrix of float g_mats_explicit, layout( offset=384) uniform 4-element array of float g_floats})
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform 4-element array of 3X3 matrix of float g_mats, layout( binding=10) uniform 4-element array of 3X3 matrix of float g_mats_explicit,  uniform 4-element array of float g_floats})
 0:?     'not_flattened_a' ( global 5-element array of int)
 0:?     'color' (layout( location=0) out 4-component vector of float)
 

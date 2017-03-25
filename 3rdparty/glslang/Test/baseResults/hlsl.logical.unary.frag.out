@@ -7,39 +7,39 @@ gl_FragCoord origin is upper left
 0:?     Sequence
 0:13      Negate conditional ( temp bool)
 0:13        Convert int to bool ( temp bool)
-0:13          ival: direct index for structure (layout( offset=0) uniform int)
-0:13            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int ival, layout( offset=16) uniform 4-component vector of int ival4, layout( offset=32) uniform float fval, layout( offset=48) uniform 4-component vector of float fval4})
+0:13          ival: direct index for structure ( uniform int)
+0:13            'anon@0' (layout( row_major std140) uniform block{ uniform int ival,  uniform 4-component vector of int ival4,  uniform float fval,  uniform 4-component vector of float fval4})
 0:13            Constant:
 0:13              0 (const uint)
 0:14      Negate conditional ( temp 4-component vector of bool)
 0:14        Convert int to bool ( temp 4-component vector of bool)
-0:14          ival4: direct index for structure (layout( offset=16) uniform 4-component vector of int)
-0:14            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int ival, layout( offset=16) uniform 4-component vector of int ival4, layout( offset=32) uniform float fval, layout( offset=48) uniform 4-component vector of float fval4})
+0:14          ival4: direct index for structure ( uniform 4-component vector of int)
+0:14            'anon@0' (layout( row_major std140) uniform block{ uniform int ival,  uniform 4-component vector of int ival4,  uniform float fval,  uniform 4-component vector of float fval4})
 0:14            Constant:
 0:14              1 (const uint)
 0:16      Negate conditional ( temp bool)
 0:16        Convert float to bool ( temp bool)
-0:16          fval: direct index for structure (layout( offset=32) uniform float)
-0:16            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int ival, layout( offset=16) uniform 4-component vector of int ival4, layout( offset=32) uniform float fval, layout( offset=48) uniform 4-component vector of float fval4})
+0:16          fval: direct index for structure ( uniform float)
+0:16            'anon@0' (layout( row_major std140) uniform block{ uniform int ival,  uniform 4-component vector of int ival4,  uniform float fval,  uniform 4-component vector of float fval4})
 0:16            Constant:
 0:16              2 (const uint)
 0:17      Negate conditional ( temp 4-component vector of bool)
 0:17        Convert float to bool ( temp 4-component vector of bool)
-0:17          fval4: direct index for structure (layout( offset=48) uniform 4-component vector of float)
-0:17            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int ival, layout( offset=16) uniform 4-component vector of int ival4, layout( offset=32) uniform float fval, layout( offset=48) uniform 4-component vector of float fval4})
+0:17          fval4: direct index for structure ( uniform 4-component vector of float)
+0:17            'anon@0' (layout( row_major std140) uniform block{ uniform int ival,  uniform 4-component vector of int ival4,  uniform float fval,  uniform 4-component vector of float fval4})
 0:17            Constant:
 0:17              3 (const uint)
 0:19      Test condition and select ( temp void)
 0:19        Condition
-0:19        ival: direct index for structure (layout( offset=0) uniform int)
-0:19          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int ival, layout( offset=16) uniform 4-component vector of int ival4, layout( offset=32) uniform float fval, layout( offset=48) uniform 4-component vector of float fval4})
+0:19        ival: direct index for structure ( uniform int)
+0:19          'anon@0' (layout( row_major std140) uniform block{ uniform int ival,  uniform 4-component vector of int ival4,  uniform float fval,  uniform 4-component vector of float fval4})
 0:19          Constant:
 0:19            0 (const uint)
 0:19        true case is null
 0:20      Test condition and select ( temp void)
 0:20        Condition
-0:20        fval: direct index for structure (layout( offset=32) uniform float)
-0:20          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int ival, layout( offset=16) uniform 4-component vector of int ival4, layout( offset=32) uniform float fval, layout( offset=48) uniform 4-component vector of float fval4})
+0:20        fval: direct index for structure ( uniform float)
+0:20          'anon@0' (layout( row_major std140) uniform block{ uniform int ival,  uniform 4-component vector of int ival4,  uniform float fval,  uniform 4-component vector of float fval4})
 0:20          Constant:
 0:20            2 (const uint)
 0:20        true case is null
@@ -47,8 +47,8 @@ gl_FragCoord origin is upper left
 0:21        Condition
 0:21        Negate conditional ( temp bool)
 0:21          Convert int to bool ( temp bool)
-0:21            ival: direct index for structure (layout( offset=0) uniform int)
-0:21              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int ival, layout( offset=16) uniform 4-component vector of int ival4, layout( offset=32) uniform float fval, layout( offset=48) uniform 4-component vector of float fval4})
+0:21            ival: direct index for structure ( uniform int)
+0:21              'anon@0' (layout( row_major std140) uniform block{ uniform int ival,  uniform 4-component vector of int ival4,  uniform float fval,  uniform 4-component vector of float fval4})
 0:21              Constant:
 0:21                0 (const uint)
 0:21        true case is null
@@ -56,8 +56,8 @@ gl_FragCoord origin is upper left
 0:22        Condition
 0:22        Negate conditional ( temp bool)
 0:22          Convert float to bool ( temp bool)
-0:22            fval: direct index for structure (layout( offset=32) uniform float)
-0:22              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int ival, layout( offset=16) uniform 4-component vector of int ival4, layout( offset=32) uniform float fval, layout( offset=48) uniform 4-component vector of float fval4})
+0:22            fval: direct index for structure ( uniform float)
+0:22              'anon@0' (layout( row_major std140) uniform block{ uniform int ival,  uniform 4-component vector of int ival4,  uniform float fval,  uniform 4-component vector of float fval4})
 0:22              Constant:
 0:22                2 (const uint)
 0:22        true case is null
@@ -84,8 +84,8 @@ gl_FragCoord origin is upper left
 0:12            Constant:
 0:12              0 (const int)
 0:?   Linker Objects
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform int ival,  uniform 4-component vector of int ival4,  uniform float fval,  uniform 4-component vector of float fval4})
 0:?     'Color' (layout( location=0) out 4-component vector of float)
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int ival, layout( offset=16) uniform 4-component vector of int ival4, layout( offset=32) uniform float fval, layout( offset=48) uniform 4-component vector of float fval4})
 
 
 Linked fragment stage:
@@ -99,39 +99,39 @@ gl_FragCoord origin is upper left
 0:?     Sequence
 0:13      Negate conditional ( temp bool)
 0:13        Convert int to bool ( temp bool)
-0:13          ival: direct index for structure (layout( offset=0) uniform int)
-0:13            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int ival, layout( offset=16) uniform 4-component vector of int ival4, layout( offset=32) uniform float fval, layout( offset=48) uniform 4-component vector of float fval4})
+0:13          ival: direct index for structure ( uniform int)
+0:13            'anon@0' (layout( row_major std140) uniform block{ uniform int ival,  uniform 4-component vector of int ival4,  uniform float fval,  uniform 4-component vector of float fval4})
 0:13            Constant:
 0:13              0 (const uint)
 0:14      Negate conditional ( temp 4-component vector of bool)
 0:14        Convert int to bool ( temp 4-component vector of bool)
-0:14          ival4: direct index for structure (layout( offset=16) uniform 4-component vector of int)
-0:14            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int ival, layout( offset=16) uniform 4-component vector of int ival4, layout( offset=32) uniform float fval, layout( offset=48) uniform 4-component vector of float fval4})
+0:14          ival4: direct index for structure ( uniform 4-component vector of int)
+0:14            'anon@0' (layout( row_major std140) uniform block{ uniform int ival,  uniform 4-component vector of int ival4,  uniform float fval,  uniform 4-component vector of float fval4})
 0:14            Constant:
 0:14              1 (const uint)
 0:16      Negate conditional ( temp bool)
 0:16        Convert float to bool ( temp bool)
-0:16          fval: direct index for structure (layout( offset=32) uniform float)
-0:16            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int ival, layout( offset=16) uniform 4-component vector of int ival4, layout( offset=32) uniform float fval, layout( offset=48) uniform 4-component vector of float fval4})
+0:16          fval: direct index for structure ( uniform float)
+0:16            'anon@0' (layout( row_major std140) uniform block{ uniform int ival,  uniform 4-component vector of int ival4,  uniform float fval,  uniform 4-component vector of float fval4})
 0:16            Constant:
 0:16              2 (const uint)
 0:17      Negate conditional ( temp 4-component vector of bool)
 0:17        Convert float to bool ( temp 4-component vector of bool)
-0:17          fval4: direct index for structure (layout( offset=48) uniform 4-component vector of float)
-0:17            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int ival, layout( offset=16) uniform 4-component vector of int ival4, layout( offset=32) uniform float fval, layout( offset=48) uniform 4-component vector of float fval4})
+0:17          fval4: direct index for structure ( uniform 4-component vector of float)
+0:17            'anon@0' (layout( row_major std140) uniform block{ uniform int ival,  uniform 4-component vector of int ival4,  uniform float fval,  uniform 4-component vector of float fval4})
 0:17            Constant:
 0:17              3 (const uint)
 0:19      Test condition and select ( temp void)
 0:19        Condition
-0:19        ival: direct index for structure (layout( offset=0) uniform int)
-0:19          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int ival, layout( offset=16) uniform 4-component vector of int ival4, layout( offset=32) uniform float fval, layout( offset=48) uniform 4-component vector of float fval4})
+0:19        ival: direct index for structure ( uniform int)
+0:19          'anon@0' (layout( row_major std140) uniform block{ uniform int ival,  uniform 4-component vector of int ival4,  uniform float fval,  uniform 4-component vector of float fval4})
 0:19          Constant:
 0:19            0 (const uint)
 0:19        true case is null
 0:20      Test condition and select ( temp void)
 0:20        Condition
-0:20        fval: direct index for structure (layout( offset=32) uniform float)
-0:20          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int ival, layout( offset=16) uniform 4-component vector of int ival4, layout( offset=32) uniform float fval, layout( offset=48) uniform 4-component vector of float fval4})
+0:20        fval: direct index for structure ( uniform float)
+0:20          'anon@0' (layout( row_major std140) uniform block{ uniform int ival,  uniform 4-component vector of int ival4,  uniform float fval,  uniform 4-component vector of float fval4})
 0:20          Constant:
 0:20            2 (const uint)
 0:20        true case is null
@@ -139,8 +139,8 @@ gl_FragCoord origin is upper left
 0:21        Condition
 0:21        Negate conditional ( temp bool)
 0:21          Convert int to bool ( temp bool)
-0:21            ival: direct index for structure (layout( offset=0) uniform int)
-0:21              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int ival, layout( offset=16) uniform 4-component vector of int ival4, layout( offset=32) uniform float fval, layout( offset=48) uniform 4-component vector of float fval4})
+0:21            ival: direct index for structure ( uniform int)
+0:21              'anon@0' (layout( row_major std140) uniform block{ uniform int ival,  uniform 4-component vector of int ival4,  uniform float fval,  uniform 4-component vector of float fval4})
 0:21              Constant:
 0:21                0 (const uint)
 0:21        true case is null
@@ -148,8 +148,8 @@ gl_FragCoord origin is upper left
 0:22        Condition
 0:22        Negate conditional ( temp bool)
 0:22          Convert float to bool ( temp bool)
-0:22            fval: direct index for structure (layout( offset=32) uniform float)
-0:22              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int ival, layout( offset=16) uniform 4-component vector of int ival4, layout( offset=32) uniform float fval, layout( offset=48) uniform 4-component vector of float fval4})
+0:22            fval: direct index for structure ( uniform float)
+0:22              'anon@0' (layout( row_major std140) uniform block{ uniform int ival,  uniform 4-component vector of int ival4,  uniform float fval,  uniform 4-component vector of float fval4})
 0:22              Constant:
 0:22                2 (const uint)
 0:22        true case is null
@@ -176,8 +176,8 @@ gl_FragCoord origin is upper left
 0:12            Constant:
 0:12              0 (const int)
 0:?   Linker Objects
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform int ival,  uniform 4-component vector of int ival4,  uniform float fval,  uniform 4-component vector of float fval4})
 0:?     'Color' (layout( location=0) out 4-component vector of float)
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform int ival, layout( offset=16) uniform 4-component vector of int ival4, layout( offset=32) uniform float fval, layout( offset=48) uniform 4-component vector of float fval4})
 
 // Module Version 10000
 // Generated by (magic number): 80001

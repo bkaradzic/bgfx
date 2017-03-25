@@ -101,8 +101,8 @@ ERROR: node is still EOpNull!
 0:41                            101 (const int)
 0:41                            101 (const int)
 0:41                            101 (const int)
-0:41                          ui4: direct index for structure (layout( offset=0) uniform 4-component vector of int)
-0:41                            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of int ui4, layout( offset=16) uniform float ufvar})
+0:41                          ui4: direct index for structure ( uniform 4-component vector of int)
+0:41                            'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of int ui4,  uniform float ufvar})
 0:41                            Constant:
 0:41                              0 (const uint)
 0:15                          Constant:
@@ -116,8 +116,8 @@ ERROR: node is still EOpNull!
 0:42                          102 (const int)
 0:42                          102 (const int)
 0:42                          102 (const int)
-0:42                        ui4: direct index for structure (layout( offset=0) uniform 4-component vector of int)
-0:42                          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of int ui4, layout( offset=16) uniform float ufvar})
+0:42                        ui4: direct index for structure ( uniform 4-component vector of int)
+0:42                          'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of int ui4,  uniform float ufvar})
 0:42                          Constant:
 0:42                            0 (const uint)
 0:42                        'myarray' ( temp 2-element array of int)
@@ -129,8 +129,8 @@ ERROR: node is still EOpNull!
 0:43                        103 (const int)
 0:43                        103 (const int)
 0:43                        103 (const int)
-0:43                      ui4: direct index for structure (layout( offset=0) uniform 4-component vector of int)
-0:43                        'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of int ui4, layout( offset=16) uniform float ufvar})
+0:43                      ui4: direct index for structure ( uniform 4-component vector of int)
+0:43                        'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of int ui4,  uniform float ufvar})
 0:43                        Constant:
 0:43                          0 (const uint)
 0:43                      'myarray' ( temp 2-element array of int)
@@ -185,11 +185,11 @@ ERROR: node is still EOpNull!
 0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of int)
 0:37        Function Call: @main( ( temp 4-component vector of int)
 0:?   Linker Objects
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of int ui4,  uniform float ufvar})
 0:?     'cia' ( const int)
 0:?       -4 (const int)
 0:?     'cib' ( const int)
 0:?       -42 (const int)
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of int ui4, layout( offset=16) uniform float ufvar})
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of int)
 
 
@@ -291,8 +291,8 @@ ERROR: node is still EOpNull!
 0:41                            101 (const int)
 0:41                            101 (const int)
 0:41                            101 (const int)
-0:41                          ui4: direct index for structure (layout( offset=0) uniform 4-component vector of int)
-0:41                            'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of int ui4, layout( offset=16) uniform float ufvar})
+0:41                          ui4: direct index for structure ( uniform 4-component vector of int)
+0:41                            'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of int ui4,  uniform float ufvar})
 0:41                            Constant:
 0:41                              0 (const uint)
 0:15                          Constant:
@@ -306,8 +306,8 @@ ERROR: node is still EOpNull!
 0:42                          102 (const int)
 0:42                          102 (const int)
 0:42                          102 (const int)
-0:42                        ui4: direct index for structure (layout( offset=0) uniform 4-component vector of int)
-0:42                          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of int ui4, layout( offset=16) uniform float ufvar})
+0:42                        ui4: direct index for structure ( uniform 4-component vector of int)
+0:42                          'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of int ui4,  uniform float ufvar})
 0:42                          Constant:
 0:42                            0 (const uint)
 0:42                        'myarray' ( temp 2-element array of int)
@@ -319,8 +319,8 @@ ERROR: node is still EOpNull!
 0:43                        103 (const int)
 0:43                        103 (const int)
 0:43                        103 (const int)
-0:43                      ui4: direct index for structure (layout( offset=0) uniform 4-component vector of int)
-0:43                        'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of int ui4, layout( offset=16) uniform float ufvar})
+0:43                      ui4: direct index for structure ( uniform 4-component vector of int)
+0:43                        'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of int ui4,  uniform float ufvar})
 0:43                        Constant:
 0:43                          0 (const uint)
 0:43                      'myarray' ( temp 2-element array of int)
@@ -375,11 +375,11 @@ ERROR: node is still EOpNull!
 0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of int)
 0:37        Function Call: @main( ( temp 4-component vector of int)
 0:?   Linker Objects
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of int ui4,  uniform float ufvar})
 0:?     'cia' ( const int)
 0:?       -4 (const int)
 0:?     'cib' ( const int)
 0:?       -42 (const int)
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of int ui4, layout( offset=16) uniform float ufvar})
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of int)
 
 SPIR-V is not generated for failed compile or link

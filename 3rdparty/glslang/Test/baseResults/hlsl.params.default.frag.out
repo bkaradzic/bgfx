@@ -100,8 +100,8 @@ gl_FragCoord origin is upper left
 0:43                          101 (const int)
 0:43                          101 (const int)
 0:43                          101 (const int)
-0:43                        ui4: direct index for structure (layout( offset=0) uniform 4-component vector of int)
-0:43                          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of int ui4})
+0:43                        ui4: direct index for structure ( uniform 4-component vector of int)
+0:43                          'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of int ui4})
 0:43                          Constant:
 0:43                            0 (const uint)
 0:15                        Constant:
@@ -115,8 +115,8 @@ gl_FragCoord origin is upper left
 0:44                        102 (const int)
 0:44                        102 (const int)
 0:44                        102 (const int)
-0:44                      ui4: direct index for structure (layout( offset=0) uniform 4-component vector of int)
-0:44                        'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of int ui4})
+0:44                      ui4: direct index for structure ( uniform 4-component vector of int)
+0:44                        'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of int ui4})
 0:44                        Constant:
 0:44                          0 (const uint)
 0:44                      'myarray' ( temp 2-element array of int)
@@ -128,8 +128,8 @@ gl_FragCoord origin is upper left
 0:45                      103 (const int)
 0:45                      103 (const int)
 0:45                      103 (const int)
-0:45                    ui4: direct index for structure (layout( offset=0) uniform 4-component vector of int)
-0:45                      'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of int ui4})
+0:45                    ui4: direct index for structure ( uniform 4-component vector of int)
+0:45                      'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of int ui4})
 0:45                      Constant:
 0:45                        0 (const uint)
 0:45                    'myarray' ( temp 2-element array of int)
@@ -178,11 +178,11 @@ gl_FragCoord origin is upper left
 0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of int)
 0:36        Function Call: @main( ( temp 4-component vector of int)
 0:?   Linker Objects
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of int ui4})
 0:?     'cia' ( const int)
 0:?       -4 (const int)
 0:?     'cib' ( const int)
 0:?       -42 (const int)
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of int ui4})
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of int)
 
 
@@ -290,8 +290,8 @@ gl_FragCoord origin is upper left
 0:43                          101 (const int)
 0:43                          101 (const int)
 0:43                          101 (const int)
-0:43                        ui4: direct index for structure (layout( offset=0) uniform 4-component vector of int)
-0:43                          'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of int ui4})
+0:43                        ui4: direct index for structure ( uniform 4-component vector of int)
+0:43                          'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of int ui4})
 0:43                          Constant:
 0:43                            0 (const uint)
 0:15                        Constant:
@@ -305,8 +305,8 @@ gl_FragCoord origin is upper left
 0:44                        102 (const int)
 0:44                        102 (const int)
 0:44                        102 (const int)
-0:44                      ui4: direct index for structure (layout( offset=0) uniform 4-component vector of int)
-0:44                        'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of int ui4})
+0:44                      ui4: direct index for structure ( uniform 4-component vector of int)
+0:44                        'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of int ui4})
 0:44                        Constant:
 0:44                          0 (const uint)
 0:44                      'myarray' ( temp 2-element array of int)
@@ -318,8 +318,8 @@ gl_FragCoord origin is upper left
 0:45                      103 (const int)
 0:45                      103 (const int)
 0:45                      103 (const int)
-0:45                    ui4: direct index for structure (layout( offset=0) uniform 4-component vector of int)
-0:45                      'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of int ui4})
+0:45                    ui4: direct index for structure ( uniform 4-component vector of int)
+0:45                      'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of int ui4})
 0:45                      Constant:
 0:45                        0 (const uint)
 0:45                    'myarray' ( temp 2-element array of int)
@@ -368,11 +368,11 @@ gl_FragCoord origin is upper left
 0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of int)
 0:36        Function Call: @main( ( temp 4-component vector of int)
 0:?   Linker Objects
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform 4-component vector of int ui4})
 0:?     'cia' ( const int)
 0:?       -4 (const int)
 0:?     'cib' ( const int)
 0:?       -42 (const int)
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform 4-component vector of int ui4})
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of int)
 
 // Module Version 10000

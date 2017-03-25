@@ -333,6 +333,7 @@ void HlslScanContext::fillInKeywordMap()
     (*KeywordMap)["cbuffer"] =                 EHTokCBuffer;
     (*KeywordMap)["tbuffer"] =                 EHTokTBuffer;
     (*KeywordMap)["typedef"] =                 EHTokTypedef;
+    (*KeywordMap)["this"] =                    EHTokThis;
 
     (*KeywordMap)["true"] =                    EHTokBoolConstant;
     (*KeywordMap)["false"] =                   EHTokBoolConstant;
@@ -374,7 +375,6 @@ void HlslScanContext::fillInKeywordMap()
     ReservedSet->insert("sizeof");
     ReservedSet->insert("static_cast");
     ReservedSet->insert("template");
-    ReservedSet->insert("this");
     ReservedSet->insert("throw");
     ReservedSet->insert("try");
     ReservedSet->insert("typename");
@@ -827,6 +827,7 @@ EHlslTokenClass HlslScanContext::tokenizeIdentifier()
     case EHTokTypedef:
     case EHTokCBuffer:
     case EHTokTBuffer:
+    case EHTokThis:
         return keyword;
 
     case EHTokBoolConstant:

@@ -129,6 +129,7 @@ protected:
     void convertSwizzle(const glslang::TIntermAggregate&, std::vector<unsigned>& swizzle);
     spv::Id convertGlslangToSpvType(const glslang::TType& type);
     spv::Id convertGlslangToSpvType(const glslang::TType& type, glslang::TLayoutPacking, const glslang::TQualifier&);
+    bool filterMember(const glslang::TType& member);
     spv::Id convertGlslangStructToSpvType(const glslang::TType&, const glslang::TTypeList* glslangStruct,
                                           glslang::TLayoutPacking, const glslang::TQualifier&);
     void decorateStructType(const glslang::TType&, const glslang::TTypeList* glslangStruct, glslang::TLayoutPacking,
@@ -2263,6 +2264,24 @@ spv::Id TGlslangToSpvTraverser::convertGlslangToSpvType(const glslang::TType& ty
     return spvType;
 }
 
+// TODO: this functionality should exist at a higher level, in creating the AST
+//
+// Identify interface members that don't have their required extension turned on.
+//
+bool TGlslangToSpvTraverser::filterMember(const glslang::TType& member)
+{
+    auto& extensions = glslangIntermediate->getRequestedExtensions();
+
+    if (member.getFieldName() == "gl_SecondaryPositionNV" &&
+        extensions.find("GL_NV_stereo_view_rendering") == extensions.end())
+        return true;
+    if (member.getFieldName() == "gl_PositionPerViewNV" &&
+        extensions.find("GL_NVX_multiview_per_view_attributes") == extensions.end())
+        return true;
+
+    return false;
+};
+
 // Do full recursive conversion of a glslang structure (or block) type to a SPIR-V Id.
 // explicitLayout can be kept the same throughout the hierarchical recursive walk.
 // Mutually recursive with convertGlslangToSpvType().
@@ -2282,8 +2301,11 @@ spv::Id TGlslangToSpvTraverser::convertGlslangStructToSpvType(const glslang::TTy
             if (type.getBasicType() == glslang::EbtBlock)
                 memberRemapper[glslangMembers][i] = -1;
         } else {
-            if (type.getBasicType() == glslang::EbtBlock)
+            if (type.getBasicType() == glslang::EbtBlock) {
                 memberRemapper[glslangMembers][i] = i - memberDelta;
+                if (filterMember(glslangMember))
+                    continue;
+            }
             // modify just this child's view of the qualifier
             glslang::TQualifier memberQualifier = glslangMember.getQualifier();
             InheritQualifiers(memberQualifier, qualifier);
@@ -2322,8 +2344,11 @@ void TGlslangToSpvTraverser::decorateStructType(const glslang::TType& type,
     for (int i = 0; i < (int)glslangMembers->size(); i++) {
         glslang::TType& glslangMember = *(*glslangMembers)[i].type;
         int member = i;
-        if (type.getBasicType() == glslang::EbtBlock)
+        if (type.getBasicType() == glslang::EbtBlock) {
             member = memberRemapper[glslangMembers][i];
+            if (filterMember(glslangMember))
+                continue;
+        }
 
         // modify just this child's view of the qualifier
         glslang::TQualifier memberQualifier = glslangMember.getQualifier();
@@ -2743,11 +2768,16 @@ void TGlslangToSpvTraverser::makeFunctions(const glslang::TIntermSequence& glslF
         std::vector<spv::Decoration> paramPrecisions;
         glslang::TIntermSequence& parameters = glslFunction->getSequence()[0]->getAsAggregate()->getSequence();
 
+        bool implicitThis = (int)parameters.size() > 0 && parameters[0]->getAsSymbolNode()->getName() == glslangIntermediate->implicitThisName;
+
         for (int p = 0; p < (int)parameters.size(); ++p) {
             const glslang::TType& paramType = parameters[p]->getAsTyped()->getType();
             spv::Id typeId = convertGlslangToSpvType(paramType);
-            if (paramType.containsOpaque() ||
-                (paramType.getBasicType() == glslang::EbtBlock && paramType.getQualifier().storage == glslang::EvqBuffer))
+            // can we pass by reference?
+            if (paramType.containsOpaque() ||                                // sampler, etc.
+                (paramType.getBasicType() == glslang::EbtBlock &&
+                 paramType.getQualifier().storage == glslang::EvqBuffer) ||  // SSBO
+                 p == 0 && implicitThis)                                     // implicit 'this'
                 typeId = builder.makePointer(TranslateStorageClass(paramType), typeId);
             else if (paramType.getQualifier().storage != glslang::EvqConstReadOnly)
                 typeId = builder.makePointer(spv::StorageClassFunction, typeId);
@@ -2761,6 +2791,8 @@ void TGlslangToSpvTraverser::makeFunctions(const glslang::TIntermSequence& glslF
         spv::Function *function = builder.makeFunctionEntry(TranslatePrecisionDecoration(glslFunction->getType()),
                                                             convertGlslangToSpvType(glslFunction->getType()),
                                                             glslFunction->getName().c_str(), paramTypes, paramPrecisions, &functionBlock);
+        if (implicitThis)
+            function->setImplicitThis();
 
         // Track function to emit/call later
         functionMap[glslFunction->getName().c_str()] = function;
@@ -3232,7 +3264,8 @@ spv::Id TGlslangToSpvTraverser::handleUserFunctionCall(const glslang::TIntermAgg
         const glslang::TType& paramType = glslangArgs[a]->getAsTyped()->getType();
         spv::Id arg;
         if (paramType.containsOpaque() ||
-            (paramType.getBasicType() == glslang::EbtBlock && qualifiers[a] == glslang::EvqBuffer)) {
+            (paramType.getBasicType() == glslang::EbtBlock && qualifiers[a] == glslang::EvqBuffer) ||
+            (a == 0 && function->hasImplicitThis())) {
             builder.setAccessChain(lValues[lValueCount]);
             arg = builder.accessChainGetLValue();
             ++lValueCount;

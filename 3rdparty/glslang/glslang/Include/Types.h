@@ -1802,7 +1802,7 @@ public:
     }
 
     // append this type's mangled name to the passed in 'name'
-    void appendMangledName(TString& name)
+    void appendMangledName(TString& name) const
     {
         buildMangledName(name);
         name += ';' ;
@@ -1926,7 +1926,7 @@ protected:
     }
 
 
-    void buildMangledName(TString&);
+    void buildMangledName(TString&) const;
 
     TBasicType basicType : 8;
     int vectorSize       : 4;  // 1 means either scalar or 1-component vector; see vector1 to disambiguate.

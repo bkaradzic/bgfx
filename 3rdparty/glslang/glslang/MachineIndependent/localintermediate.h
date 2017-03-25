@@ -428,6 +428,8 @@ public:
         return semanticNameSet.insert(name).first->c_str();
     }
 
+    const char* const implicitThisName = "@this";
+
 protected:
     TIntermSymbol* addSymbol(int Id, const TString&, const TType&, const TConstUnionArray&, TIntermTyped* subtree, const TSourceLoc&);
     void error(TInfoSink& infoSink, const char*);

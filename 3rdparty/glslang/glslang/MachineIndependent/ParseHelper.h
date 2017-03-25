@@ -136,14 +136,12 @@ public:
     TSymbolTable& symbolTable;   // symbol table that goes with the current language, version, and profile
 
     // Manage the global uniform block (default uniforms in GLSL, $Global in HLSL)
-    // TODO: This could perhaps get its own object, but the current design doesn't work
-    // yet when new uniform variables are declared between function definitions, so
-    // this is pending getting a fully functional design.
     virtual void growGlobalUniformBlock(TSourceLoc&, TType&, TString& memberName, TTypeList* typeList = nullptr);
-    virtual bool insertGlobalUniformBlock();
 
     virtual bool lValueErrorCheck(const TSourceLoc&, const char* op, TIntermTyped*);
     virtual void rValueErrorCheck(const TSourceLoc&, const char* op, TIntermTyped*);
+
+    const char* const scopeMangler = "::";
 
 protected:
     TParseContextBase(TParseContextBase&);
@@ -175,7 +173,8 @@ protected:
     TVariable* globalUniformBlock;   // the actual block, inserted into the symbol table
     int firstNewMember;              // the index of the first member not yet inserted into the symbol table
     // override this to set the language-specific name
-    virtual const char* getGlobalUniformBlockName() { return ""; }
+    virtual const char* getGlobalUniformBlockName() const { return ""; }
+    virtual void setUniformBlockDefaults(TType& block) const { }
     virtual void finalizeGlobalUniformBlockLayout(TVariable&) { }
     virtual void outputMessage(const TSourceLoc&, const char* szReason, const char* szToken,
                                const char* szExtraInfoFormat, TPrefixType prefix,

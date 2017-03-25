@@ -12,8 +12,8 @@ gl_FragCoord origin is upper left
 0:33            Construct combined texture-sampler ( temp sampler2DArray)
 0:33              'g_tTex2df4a' ( uniform texture2DArray)
 0:33              'g_sSamp' (layout( binding=0) uniform sampler)
-0:33            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:33              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:33            c3: direct index for structure ( uniform 3-component vector of float)
+0:33              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:33              Constant:
 0:33                2 (const uint)
 0:33            Constant:
@@ -25,8 +25,8 @@ gl_FragCoord origin is upper left
 0:34            Construct combined texture-sampler ( temp isampler2DArray)
 0:34              'g_tTex2di4a' ( uniform itexture2DArray)
 0:34              'g_sSamp' (layout( binding=0) uniform sampler)
-0:34            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:34              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:34            c3: direct index for structure ( uniform 3-component vector of float)
+0:34              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:34              Constant:
 0:34                2 (const uint)
 0:34            Constant:
@@ -38,8 +38,8 @@ gl_FragCoord origin is upper left
 0:35            Construct combined texture-sampler ( temp usampler2DArray)
 0:35              'g_tTex2du4a' ( uniform utexture2DArray)
 0:35              'g_sSamp' (layout( binding=0) uniform sampler)
-0:35            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:35              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:35            c3: direct index for structure ( uniform 3-component vector of float)
+0:35              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:35              Constant:
 0:35                2 (const uint)
 0:35            Constant:
@@ -51,8 +51,8 @@ gl_FragCoord origin is upper left
 0:37            Construct combined texture-sampler ( temp sampler2DArray)
 0:37              'g_tTex2df4a' ( uniform texture2DArray)
 0:37              'g_sSamp' (layout( binding=0) uniform sampler)
-0:37            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:37              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:37            c3: direct index for structure ( uniform 3-component vector of float)
+0:37              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:37              Constant:
 0:37                2 (const uint)
 0:37            Constant:
@@ -64,8 +64,8 @@ gl_FragCoord origin is upper left
 0:38            Construct combined texture-sampler ( temp isampler2DArray)
 0:38              'g_tTex2di4a' ( uniform itexture2DArray)
 0:38              'g_sSamp' (layout( binding=0) uniform sampler)
-0:38            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:38              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:38            c3: direct index for structure ( uniform 3-component vector of float)
+0:38              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:38              Constant:
 0:38                2 (const uint)
 0:38            Constant:
@@ -77,8 +77,8 @@ gl_FragCoord origin is upper left
 0:39            Construct combined texture-sampler ( temp usampler2DArray)
 0:39              'g_tTex2du4a' ( uniform utexture2DArray)
 0:39              'g_sSamp' (layout( binding=0) uniform sampler)
-0:39            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:39              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:39            c3: direct index for structure ( uniform 3-component vector of float)
+0:39              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:39              Constant:
 0:39                2 (const uint)
 0:39            Constant:
@@ -90,8 +90,8 @@ gl_FragCoord origin is upper left
 0:41            Construct combined texture-sampler ( temp sampler2DArray)
 0:41              'g_tTex2df4a' ( uniform texture2DArray)
 0:41              'g_sSamp' (layout( binding=0) uniform sampler)
-0:41            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:41              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:41            c3: direct index for structure ( uniform 3-component vector of float)
+0:41              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:41              Constant:
 0:41                2 (const uint)
 0:41            Constant:
@@ -103,8 +103,8 @@ gl_FragCoord origin is upper left
 0:42            Construct combined texture-sampler ( temp isampler2DArray)
 0:42              'g_tTex2di4a' ( uniform itexture2DArray)
 0:42              'g_sSamp' (layout( binding=0) uniform sampler)
-0:42            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:42              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:42            c3: direct index for structure ( uniform 3-component vector of float)
+0:42              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:42              Constant:
 0:42                2 (const uint)
 0:42            Constant:
@@ -116,8 +116,8 @@ gl_FragCoord origin is upper left
 0:43            Construct combined texture-sampler ( temp usampler2DArray)
 0:43              'g_tTex2du4a' ( uniform utexture2DArray)
 0:43              'g_sSamp' (layout( binding=0) uniform sampler)
-0:43            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:43              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:43            c3: direct index for structure ( uniform 3-component vector of float)
+0:43              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:43              Constant:
 0:43                2 (const uint)
 0:43            Constant:
@@ -129,8 +129,8 @@ gl_FragCoord origin is upper left
 0:45            Construct combined texture-sampler ( temp sampler2DArray)
 0:45              'g_tTex2df4a' ( uniform texture2DArray)
 0:45              'g_sSamp' (layout( binding=0) uniform sampler)
-0:45            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:45              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:45            c3: direct index for structure ( uniform 3-component vector of float)
+0:45              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:45              Constant:
 0:45                2 (const uint)
 0:45            Constant:
@@ -142,8 +142,8 @@ gl_FragCoord origin is upper left
 0:46            Construct combined texture-sampler ( temp isampler2DArray)
 0:46              'g_tTex2di4a' ( uniform itexture2DArray)
 0:46              'g_sSamp' (layout( binding=0) uniform sampler)
-0:46            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:46              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:46            c3: direct index for structure ( uniform 3-component vector of float)
+0:46              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:46              Constant:
 0:46                2 (const uint)
 0:46            Constant:
@@ -155,8 +155,8 @@ gl_FragCoord origin is upper left
 0:47            Construct combined texture-sampler ( temp usampler2DArray)
 0:47              'g_tTex2du4a' ( uniform utexture2DArray)
 0:47              'g_sSamp' (layout( binding=0) uniform sampler)
-0:47            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:47              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:47            c3: direct index for structure ( uniform 3-component vector of float)
+0:47              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:47              Constant:
 0:47                2 (const uint)
 0:47            Constant:
@@ -168,8 +168,8 @@ gl_FragCoord origin is upper left
 0:51            Construct combined texture-sampler ( temp samplerCubeArray)
 0:51              'g_tTexcdf4a' ( uniform textureCubeArray)
 0:51              'g_sSamp' (layout( binding=0) uniform sampler)
-0:51            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:51              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:51            c4: direct index for structure ( uniform 4-component vector of float)
+0:51              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:51              Constant:
 0:51                3 (const uint)
 0:51            Constant:
@@ -181,8 +181,8 @@ gl_FragCoord origin is upper left
 0:52            Construct combined texture-sampler ( temp isamplerCubeArray)
 0:52              'g_tTexcdi4a' ( uniform itextureCubeArray)
 0:52              'g_sSamp' (layout( binding=0) uniform sampler)
-0:52            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:52              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:52            c4: direct index for structure ( uniform 4-component vector of float)
+0:52              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:52              Constant:
 0:52                3 (const uint)
 0:52            Constant:
@@ -194,8 +194,8 @@ gl_FragCoord origin is upper left
 0:53            Construct combined texture-sampler ( temp usamplerCubeArray)
 0:53              'g_tTexcdu4a' ( uniform utextureCubeArray)
 0:53              'g_sSamp' (layout( binding=0) uniform sampler)
-0:53            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:53              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:53            c4: direct index for structure ( uniform 4-component vector of float)
+0:53              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:53              Constant:
 0:53                3 (const uint)
 0:53            Constant:
@@ -207,8 +207,8 @@ gl_FragCoord origin is upper left
 0:55            Construct combined texture-sampler ( temp samplerCubeArray)
 0:55              'g_tTexcdf4a' ( uniform textureCubeArray)
 0:55              'g_sSamp' (layout( binding=0) uniform sampler)
-0:55            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:55              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:55            c4: direct index for structure ( uniform 4-component vector of float)
+0:55              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:55              Constant:
 0:55                3 (const uint)
 0:55            Constant:
@@ -220,8 +220,8 @@ gl_FragCoord origin is upper left
 0:56            Construct combined texture-sampler ( temp isamplerCubeArray)
 0:56              'g_tTexcdi4a' ( uniform itextureCubeArray)
 0:56              'g_sSamp' (layout( binding=0) uniform sampler)
-0:56            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:56              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:56            c4: direct index for structure ( uniform 4-component vector of float)
+0:56              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:56              Constant:
 0:56                3 (const uint)
 0:56            Constant:
@@ -233,8 +233,8 @@ gl_FragCoord origin is upper left
 0:57            Construct combined texture-sampler ( temp usamplerCubeArray)
 0:57              'g_tTexcdu4a' ( uniform utextureCubeArray)
 0:57              'g_sSamp' (layout( binding=0) uniform sampler)
-0:57            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:57              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:57            c4: direct index for structure ( uniform 4-component vector of float)
+0:57              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:57              Constant:
 0:57                3 (const uint)
 0:57            Constant:
@@ -246,8 +246,8 @@ gl_FragCoord origin is upper left
 0:59            Construct combined texture-sampler ( temp samplerCubeArray)
 0:59              'g_tTexcdf4a' ( uniform textureCubeArray)
 0:59              'g_sSamp' (layout( binding=0) uniform sampler)
-0:59            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:59              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:59            c4: direct index for structure ( uniform 4-component vector of float)
+0:59              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:59              Constant:
 0:59                3 (const uint)
 0:59            Constant:
@@ -259,8 +259,8 @@ gl_FragCoord origin is upper left
 0:60            Construct combined texture-sampler ( temp isamplerCubeArray)
 0:60              'g_tTexcdi4a' ( uniform itextureCubeArray)
 0:60              'g_sSamp' (layout( binding=0) uniform sampler)
-0:60            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:60              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:60            c4: direct index for structure ( uniform 4-component vector of float)
+0:60              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:60              Constant:
 0:60                3 (const uint)
 0:60            Constant:
@@ -272,8 +272,8 @@ gl_FragCoord origin is upper left
 0:61            Construct combined texture-sampler ( temp usamplerCubeArray)
 0:61              'g_tTexcdu4a' ( uniform utextureCubeArray)
 0:61              'g_sSamp' (layout( binding=0) uniform sampler)
-0:61            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:61              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:61            c4: direct index for structure ( uniform 4-component vector of float)
+0:61              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:61              Constant:
 0:61                3 (const uint)
 0:61            Constant:
@@ -285,8 +285,8 @@ gl_FragCoord origin is upper left
 0:63            Construct combined texture-sampler ( temp samplerCubeArray)
 0:63              'g_tTexcdf4a' ( uniform textureCubeArray)
 0:63              'g_sSamp' (layout( binding=0) uniform sampler)
-0:63            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:63              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:63            c4: direct index for structure ( uniform 4-component vector of float)
+0:63              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:63              Constant:
 0:63                3 (const uint)
 0:63            Constant:
@@ -298,8 +298,8 @@ gl_FragCoord origin is upper left
 0:64            Construct combined texture-sampler ( temp isamplerCubeArray)
 0:64              'g_tTexcdi4a' ( uniform itextureCubeArray)
 0:64              'g_sSamp' (layout( binding=0) uniform sampler)
-0:64            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:64              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:64            c4: direct index for structure ( uniform 4-component vector of float)
+0:64              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:64              Constant:
 0:64                3 (const uint)
 0:64            Constant:
@@ -311,8 +311,8 @@ gl_FragCoord origin is upper left
 0:65            Construct combined texture-sampler ( temp usamplerCubeArray)
 0:65              'g_tTexcdu4a' ( uniform utextureCubeArray)
 0:65              'g_sSamp' (layout( binding=0) uniform sampler)
-0:65            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:65              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:65            c4: direct index for structure ( uniform 4-component vector of float)
+0:65              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:65              Constant:
 0:65                3 (const uint)
 0:65            Constant:
@@ -367,9 +367,9 @@ gl_FragCoord origin is upper left
 0:?     'g_tTexcdf4a' ( uniform textureCubeArray)
 0:?     'g_tTexcdi4a' ( uniform itextureCubeArray)
 0:?     'g_tTexcdu4a' ( uniform utextureCubeArray)
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:?     'Color' (layout( location=0) out 4-component vector of float)
 0:?     'Depth' ( out float FragDepth)
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
 
 
 Linked fragment stage:
@@ -388,8 +388,8 @@ gl_FragCoord origin is upper left
 0:33            Construct combined texture-sampler ( temp sampler2DArray)
 0:33              'g_tTex2df4a' ( uniform texture2DArray)
 0:33              'g_sSamp' (layout( binding=0) uniform sampler)
-0:33            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:33              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:33            c3: direct index for structure ( uniform 3-component vector of float)
+0:33              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:33              Constant:
 0:33                2 (const uint)
 0:33            Constant:
@@ -401,8 +401,8 @@ gl_FragCoord origin is upper left
 0:34            Construct combined texture-sampler ( temp isampler2DArray)
 0:34              'g_tTex2di4a' ( uniform itexture2DArray)
 0:34              'g_sSamp' (layout( binding=0) uniform sampler)
-0:34            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:34              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:34            c3: direct index for structure ( uniform 3-component vector of float)
+0:34              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:34              Constant:
 0:34                2 (const uint)
 0:34            Constant:
@@ -414,8 +414,8 @@ gl_FragCoord origin is upper left
 0:35            Construct combined texture-sampler ( temp usampler2DArray)
 0:35              'g_tTex2du4a' ( uniform utexture2DArray)
 0:35              'g_sSamp' (layout( binding=0) uniform sampler)
-0:35            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:35              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:35            c3: direct index for structure ( uniform 3-component vector of float)
+0:35              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:35              Constant:
 0:35                2 (const uint)
 0:35            Constant:
@@ -427,8 +427,8 @@ gl_FragCoord origin is upper left
 0:37            Construct combined texture-sampler ( temp sampler2DArray)
 0:37              'g_tTex2df4a' ( uniform texture2DArray)
 0:37              'g_sSamp' (layout( binding=0) uniform sampler)
-0:37            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:37              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:37            c3: direct index for structure ( uniform 3-component vector of float)
+0:37              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:37              Constant:
 0:37                2 (const uint)
 0:37            Constant:
@@ -440,8 +440,8 @@ gl_FragCoord origin is upper left
 0:38            Construct combined texture-sampler ( temp isampler2DArray)
 0:38              'g_tTex2di4a' ( uniform itexture2DArray)
 0:38              'g_sSamp' (layout( binding=0) uniform sampler)
-0:38            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:38              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:38            c3: direct index for structure ( uniform 3-component vector of float)
+0:38              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:38              Constant:
 0:38                2 (const uint)
 0:38            Constant:
@@ -453,8 +453,8 @@ gl_FragCoord origin is upper left
 0:39            Construct combined texture-sampler ( temp usampler2DArray)
 0:39              'g_tTex2du4a' ( uniform utexture2DArray)
 0:39              'g_sSamp' (layout( binding=0) uniform sampler)
-0:39            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:39              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:39            c3: direct index for structure ( uniform 3-component vector of float)
+0:39              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:39              Constant:
 0:39                2 (const uint)
 0:39            Constant:
@@ -466,8 +466,8 @@ gl_FragCoord origin is upper left
 0:41            Construct combined texture-sampler ( temp sampler2DArray)
 0:41              'g_tTex2df4a' ( uniform texture2DArray)
 0:41              'g_sSamp' (layout( binding=0) uniform sampler)
-0:41            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:41              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:41            c3: direct index for structure ( uniform 3-component vector of float)
+0:41              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:41              Constant:
 0:41                2 (const uint)
 0:41            Constant:
@@ -479,8 +479,8 @@ gl_FragCoord origin is upper left
 0:42            Construct combined texture-sampler ( temp isampler2DArray)
 0:42              'g_tTex2di4a' ( uniform itexture2DArray)
 0:42              'g_sSamp' (layout( binding=0) uniform sampler)
-0:42            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:42              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:42            c3: direct index for structure ( uniform 3-component vector of float)
+0:42              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:42              Constant:
 0:42                2 (const uint)
 0:42            Constant:
@@ -492,8 +492,8 @@ gl_FragCoord origin is upper left
 0:43            Construct combined texture-sampler ( temp usampler2DArray)
 0:43              'g_tTex2du4a' ( uniform utexture2DArray)
 0:43              'g_sSamp' (layout( binding=0) uniform sampler)
-0:43            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:43              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:43            c3: direct index for structure ( uniform 3-component vector of float)
+0:43              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:43              Constant:
 0:43                2 (const uint)
 0:43            Constant:
@@ -505,8 +505,8 @@ gl_FragCoord origin is upper left
 0:45            Construct combined texture-sampler ( temp sampler2DArray)
 0:45              'g_tTex2df4a' ( uniform texture2DArray)
 0:45              'g_sSamp' (layout( binding=0) uniform sampler)
-0:45            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:45              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:45            c3: direct index for structure ( uniform 3-component vector of float)
+0:45              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:45              Constant:
 0:45                2 (const uint)
 0:45            Constant:
@@ -518,8 +518,8 @@ gl_FragCoord origin is upper left
 0:46            Construct combined texture-sampler ( temp isampler2DArray)
 0:46              'g_tTex2di4a' ( uniform itexture2DArray)
 0:46              'g_sSamp' (layout( binding=0) uniform sampler)
-0:46            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:46              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:46            c3: direct index for structure ( uniform 3-component vector of float)
+0:46              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:46              Constant:
 0:46                2 (const uint)
 0:46            Constant:
@@ -531,8 +531,8 @@ gl_FragCoord origin is upper left
 0:47            Construct combined texture-sampler ( temp usampler2DArray)
 0:47              'g_tTex2du4a' ( uniform utexture2DArray)
 0:47              'g_sSamp' (layout( binding=0) uniform sampler)
-0:47            c3: direct index for structure (layout( offset=16) uniform 3-component vector of float)
-0:47              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:47            c3: direct index for structure ( uniform 3-component vector of float)
+0:47              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:47              Constant:
 0:47                2 (const uint)
 0:47            Constant:
@@ -544,8 +544,8 @@ gl_FragCoord origin is upper left
 0:51            Construct combined texture-sampler ( temp samplerCubeArray)
 0:51              'g_tTexcdf4a' ( uniform textureCubeArray)
 0:51              'g_sSamp' (layout( binding=0) uniform sampler)
-0:51            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:51              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:51            c4: direct index for structure ( uniform 4-component vector of float)
+0:51              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:51              Constant:
 0:51                3 (const uint)
 0:51            Constant:
@@ -557,8 +557,8 @@ gl_FragCoord origin is upper left
 0:52            Construct combined texture-sampler ( temp isamplerCubeArray)
 0:52              'g_tTexcdi4a' ( uniform itextureCubeArray)
 0:52              'g_sSamp' (layout( binding=0) uniform sampler)
-0:52            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:52              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:52            c4: direct index for structure ( uniform 4-component vector of float)
+0:52              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:52              Constant:
 0:52                3 (const uint)
 0:52            Constant:
@@ -570,8 +570,8 @@ gl_FragCoord origin is upper left
 0:53            Construct combined texture-sampler ( temp usamplerCubeArray)
 0:53              'g_tTexcdu4a' ( uniform utextureCubeArray)
 0:53              'g_sSamp' (layout( binding=0) uniform sampler)
-0:53            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:53              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:53            c4: direct index for structure ( uniform 4-component vector of float)
+0:53              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:53              Constant:
 0:53                3 (const uint)
 0:53            Constant:
@@ -583,8 +583,8 @@ gl_FragCoord origin is upper left
 0:55            Construct combined texture-sampler ( temp samplerCubeArray)
 0:55              'g_tTexcdf4a' ( uniform textureCubeArray)
 0:55              'g_sSamp' (layout( binding=0) uniform sampler)
-0:55            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:55              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:55            c4: direct index for structure ( uniform 4-component vector of float)
+0:55              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:55              Constant:
 0:55                3 (const uint)
 0:55            Constant:
@@ -596,8 +596,8 @@ gl_FragCoord origin is upper left
 0:56            Construct combined texture-sampler ( temp isamplerCubeArray)
 0:56              'g_tTexcdi4a' ( uniform itextureCubeArray)
 0:56              'g_sSamp' (layout( binding=0) uniform sampler)
-0:56            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:56              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:56            c4: direct index for structure ( uniform 4-component vector of float)
+0:56              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:56              Constant:
 0:56                3 (const uint)
 0:56            Constant:
@@ -609,8 +609,8 @@ gl_FragCoord origin is upper left
 0:57            Construct combined texture-sampler ( temp usamplerCubeArray)
 0:57              'g_tTexcdu4a' ( uniform utextureCubeArray)
 0:57              'g_sSamp' (layout( binding=0) uniform sampler)
-0:57            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:57              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:57            c4: direct index for structure ( uniform 4-component vector of float)
+0:57              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:57              Constant:
 0:57                3 (const uint)
 0:57            Constant:
@@ -622,8 +622,8 @@ gl_FragCoord origin is upper left
 0:59            Construct combined texture-sampler ( temp samplerCubeArray)
 0:59              'g_tTexcdf4a' ( uniform textureCubeArray)
 0:59              'g_sSamp' (layout( binding=0) uniform sampler)
-0:59            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:59              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:59            c4: direct index for structure ( uniform 4-component vector of float)
+0:59              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:59              Constant:
 0:59                3 (const uint)
 0:59            Constant:
@@ -635,8 +635,8 @@ gl_FragCoord origin is upper left
 0:60            Construct combined texture-sampler ( temp isamplerCubeArray)
 0:60              'g_tTexcdi4a' ( uniform itextureCubeArray)
 0:60              'g_sSamp' (layout( binding=0) uniform sampler)
-0:60            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:60              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:60            c4: direct index for structure ( uniform 4-component vector of float)
+0:60              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:60              Constant:
 0:60                3 (const uint)
 0:60            Constant:
@@ -648,8 +648,8 @@ gl_FragCoord origin is upper left
 0:61            Construct combined texture-sampler ( temp usamplerCubeArray)
 0:61              'g_tTexcdu4a' ( uniform utextureCubeArray)
 0:61              'g_sSamp' (layout( binding=0) uniform sampler)
-0:61            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:61              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:61            c4: direct index for structure ( uniform 4-component vector of float)
+0:61              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:61              Constant:
 0:61                3 (const uint)
 0:61            Constant:
@@ -661,8 +661,8 @@ gl_FragCoord origin is upper left
 0:63            Construct combined texture-sampler ( temp samplerCubeArray)
 0:63              'g_tTexcdf4a' ( uniform textureCubeArray)
 0:63              'g_sSamp' (layout( binding=0) uniform sampler)
-0:63            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:63              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:63            c4: direct index for structure ( uniform 4-component vector of float)
+0:63              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:63              Constant:
 0:63                3 (const uint)
 0:63            Constant:
@@ -674,8 +674,8 @@ gl_FragCoord origin is upper left
 0:64            Construct combined texture-sampler ( temp isamplerCubeArray)
 0:64              'g_tTexcdi4a' ( uniform itextureCubeArray)
 0:64              'g_sSamp' (layout( binding=0) uniform sampler)
-0:64            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:64              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:64            c4: direct index for structure ( uniform 4-component vector of float)
+0:64              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:64              Constant:
 0:64                3 (const uint)
 0:64            Constant:
@@ -687,8 +687,8 @@ gl_FragCoord origin is upper left
 0:65            Construct combined texture-sampler ( temp usamplerCubeArray)
 0:65              'g_tTexcdu4a' ( uniform utextureCubeArray)
 0:65              'g_sSamp' (layout( binding=0) uniform sampler)
-0:65            c4: direct index for structure (layout( offset=32) uniform 4-component vector of float)
-0:65              'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
+0:65            c4: direct index for structure ( uniform 4-component vector of float)
+0:65              'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:65              Constant:
 0:65                3 (const uint)
 0:65            Constant:
@@ -743,9 +743,9 @@ gl_FragCoord origin is upper left
 0:?     'g_tTexcdf4a' ( uniform textureCubeArray)
 0:?     'g_tTexcdi4a' ( uniform itextureCubeArray)
 0:?     'g_tTexcdu4a' ( uniform utextureCubeArray)
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform float c1,  uniform 2-component vector of float c2,  uniform 3-component vector of float c3,  uniform 4-component vector of float c4})
 0:?     'Color' (layout( location=0) out 4-component vector of float)
 0:?     'Depth' ( out float FragDepth)
-0:?     'anon@0' (layout( row_major std140) uniform block{layout( offset=0) uniform float c1, layout( offset=8) uniform 2-component vector of float c2, layout( offset=16) uniform 3-component vector of float c3, layout( offset=32) uniform 4-component vector of float c4})
 
 // Module Version 10000
 // Generated by (magic number): 80001
