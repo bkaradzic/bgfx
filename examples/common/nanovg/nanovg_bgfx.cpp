@@ -50,6 +50,7 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] =
 namespace
 {
 	static bgfx::VertexDecl s_nvgDecl;
+	static bool* s_viewIdAvailabilities = nullptr;
 
 	enum GLNVGshaderType
 	{
@@ -1137,47 +1138,91 @@ bgfx::TextureHandle nvglImageHandle(NVGcontext* ctx, int image)
 	return tex->id;
 }
 
-NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* ctx, int width,
-																				 int height, int imageFlags) {
+bool* nvgluViewIdAvailabilities()
+{
+	if (s_viewIdAvailabilities != nullptr)
+	{
+		return s_viewIdAvailabilities;
+	}
+
+	bx::CrtAllocator allocator;
+	bx::AllocatorI* _allocator = &allocator;
+	const int maxViews = bgfx::getCaps()->limits.maxViews;
+	s_viewIdAvailabilities = (bool*)BX_ALLOC(_allocator, sizeof(bool) * maxViews);
+	for (int ii = 0; ii < maxViews; ++ii)
+	{
+		s_viewIdAvailabilities[ii] = true;
+	}
+	return s_viewIdAvailabilities;
+}
+
+NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* ctx, int width, int height, int imageFlags)
+{
 	NVGLUframebuffer* framebuffer = new NVGLUframebuffer;
 	framebuffer->ctx = ctx;
 	framebuffer->image = nvgCreateImageRGBA(ctx, width, height, imageFlags | NVG_IMAGE_PREMULTIPLIED, NULL);
+	framebuffer->viewId = 0;
 	bgfx::TextureHandle texture = nvglImageHandle(ctx, framebuffer->image);
-	if (!bgfx::isValid(texture)) {
+	if (!bgfx::isValid(texture))
+	{
 		nvgluDeleteFramebuffer(framebuffer);
-		return NULL;
+		return nullptr;
 	}
 	framebuffer->handle = bgfx::createFrameBuffer(1, &texture, false);
 	if (!bgfx::isValid(framebuffer->handle))
 	{
 		nvgluDeleteFramebuffer(framebuffer);
-		return NULL;
+		return nullptr;
 	}
-	static uint8_t s_ViewId = 1;  // may have a better way to assign new view id
-	framebuffer->viewId = s_ViewId++;
+
+	// Determines the view ID for the generated framebuffer. View ID 0 is
+	// preserved by the main view so 0 is used here to represent an invalid ID.
+	bool* viewIdAvailabilities = nvgluViewIdAvailabilities();
+	for (int i = 1; i < bgfx::getCaps()->limits.maxViews; ++i)
+	{
+		if (viewIdAvailabilities[i])
+		{
+			framebuffer->viewId = i;
+			break;
+		}
+	}
+	if (framebuffer->viewId == 0) {
+		nvgluDeleteFramebuffer(framebuffer);
+		return nullptr;
+	}
+	viewIdAvailabilities[framebuffer->viewId] = false;
+
 	bgfx::setViewFrameBuffer(framebuffer->viewId, framebuffer->handle);
 	bgfx::setViewSeq(framebuffer->viewId, true);
 	return framebuffer;
 }
 
 void nvgluBindFramebuffer(NVGLUframebuffer* framebuffer) {
-	static NVGcontext* s_prevCtx = NULL;
+	static NVGcontext* s_prevCtx = nullptr;
 	static uint8_t s_prevViewId;
-	if (framebuffer != NULL) {
+	if (framebuffer != nullptr)
+	{
 		s_prevCtx = framebuffer->ctx;
 		s_prevViewId = nvgViewId(framebuffer->ctx);
 		nvgViewId(framebuffer->ctx, framebuffer->viewId);
-	} else if (s_prevCtx != NULL) {
+	} else if (s_prevCtx != nullptr) {
 		nvgViewId(s_prevCtx, s_prevViewId);
 	}
 }
 
 void nvgluDeleteFramebuffer(NVGLUframebuffer* framebuffer) {
-	if (framebuffer == NULL)
+	if (framebuffer == nullptr) {
 		return;
-	if (bgfx::isValid(framebuffer->handle))
-		bgfx::destroyFrameBuffer(framebuffer->handle);
+	}
 	if (framebuffer->image > 0)
+	{
 		nvgDeleteImage(framebuffer->ctx, framebuffer->image);
+	}
+	if (bgfx::isValid(framebuffer->handle))
+	{
+		bgfx::destroyFrameBuffer(framebuffer->handle);
+		bool* viewIdAvailabilities = nvgluViewIdAvailabilities();
+		viewIdAvailabilities[framebuffer->viewId] = true;
+	}
 	delete framebuffer;
 }
