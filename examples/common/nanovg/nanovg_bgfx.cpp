@@ -1140,7 +1140,7 @@ bgfx::TextureHandle nvglImageHandle(NVGcontext* ctx, int image)
 NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* ctx, int width, int height, int imageFlags, uint8_t viewId)
 {
   NVGLUframebuffer* framebuffer = nvgluCreateFramebuffer(ctx, width, height, imageFlags);
-	if (framebuffer != nullptr)
+	if (framebuffer != NULL)
 	{
 		nvgluSetViewFramebuffer(viewId, framebuffer);
 	}
@@ -1156,34 +1156,34 @@ NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* ctx, int width, int height,
 	if (!bgfx::isValid(texture))
 	{
 		nvgluDeleteFramebuffer(framebuffer);
-		return nullptr;
+		return NULL;
 	}
 	framebuffer->handle = bgfx::createFrameBuffer(1, &texture, false);
 	if (!bgfx::isValid(framebuffer->handle))
 	{
 		nvgluDeleteFramebuffer(framebuffer);
-		return nullptr;
+		return NULL;
 	}
 	return framebuffer;
 }
 
 void nvgluBindFramebuffer(NVGLUframebuffer* framebuffer)
 {
-	static NVGcontext* s_prevCtx = nullptr;
+	static NVGcontext* s_prevCtx = NULL;
 	static uint8_t s_prevViewId;
-	if (framebuffer != nullptr)
+	if (framebuffer != NULL)
 	{
 		s_prevCtx = framebuffer->ctx;
 		s_prevViewId = nvgViewId(framebuffer->ctx);
 		nvgViewId(framebuffer->ctx, framebuffer->viewId);
-	} else if (s_prevCtx != nullptr) {
+	} else if (s_prevCtx != NULL) {
 		nvgViewId(s_prevCtx, s_prevViewId);
 	}
 }
 
 void nvgluDeleteFramebuffer(NVGLUframebuffer* framebuffer)
 {
-	if (framebuffer == nullptr)
+	if (framebuffer == NULL)
 		return;
 	if (bgfx::isValid(framebuffer->handle))
 	{
