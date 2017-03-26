@@ -30,6 +30,7 @@ void nvgViewId(struct NVGcontext* ctx, unsigned char _viewId);
 // Example:
 //		float scale = 2;
 //		NVGLUframebuffer* fb = nvgluCreateFramebuffer(ctx, 100 * scale, 100 * scale, 0);
+//		nvgluSetViewFramebuffer(VIEW_ID, fb);
 //		nvgluBindFramebuffer(fb);
 //		nvgBeginFrame(ctx, 100, 100, scale);
 //		// renders anything offscreen
@@ -44,8 +45,10 @@ void nvgViewId(struct NVGcontext* ctx, unsigned char _viewId);
 //		nvgFillPaint(ctx, paint);
 //		nvgFill(ctx);
 //		nvgEndFrame(ctx);
+NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* ctx, int width, int height, int imageFlags, uint8_t viewId);
 NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* ctx, int width, int height, int imageFlags);
 void nvgluBindFramebuffer(NVGLUframebuffer* framebuffer);
 void nvgluDeleteFramebuffer(NVGLUframebuffer* framebuffer);
+void nvgluSetViewFramebuffer(uint8_t viewId, NVGLUframebuffer* framebuffer);
 
 #endif // NANOVG_BGFX_H_HEADER_GUARD
