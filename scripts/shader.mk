@@ -154,6 +154,10 @@ all: dirs $(BIN)
 clean:
 	@echo Cleaning...
 	@-rm -vf $(BIN)
+
+.PHONY: cleanall
+cleanall:
+	@echo Cleaning...
 	@-$(call CMD_RMDIR,$(BUILD_INTERMEDIATE_DIR))
 
 .PHONY: dirs
