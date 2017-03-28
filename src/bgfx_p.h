@@ -3500,6 +3500,8 @@ namespace bgfx
 				return handle;
 			}
 
+			_num  = bx::uint16_max(1, _num);
+
 			uint16_t idx = m_uniformHashMap.find(bx::hashMurmur2A(_name) );
 			if (UniformHashMap::invalid != idx)
 			{
