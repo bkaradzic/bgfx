@@ -97,6 +97,7 @@ namespace bgfx
 			return NULL;
 		}
 
+		ImageContainer* output = NULL;
 		bgfx::TextureFormat::Enum format = bgfx::TextureFormat::RGBA8;
 		uint32_t width  = 0;
 		uint32_t height = 0;
@@ -180,20 +181,20 @@ namespace bgfx
 				default:
 					break;
 			}
+
+			output = imageAlloc(_allocator
+				, format
+				, uint16_t(width)
+				, uint16_t(height)
+				, 0
+				, 1
+				, false
+				, false
+				, data
+				);
 		}
 
 		lodepng_state_cleanup(&state);
-
-		ImageContainer* output = imageAlloc(_allocator
-			, format
-			, uint16_t(width)
-			, uint16_t(height)
-			, 0
-			, 1
-			, false
-			, false
-			, data
-			);
 		lodepng_free(data);
 
 		return output;
