@@ -305,10 +305,10 @@ namespace bgfx
 			return true;
 
 		default:
-			return imageConvert(_dst, format, _src, TextureFormat::RGBA8, _width, _height);
+			break;
 		}
 
-		return false;
+		return imageConvert(_dst, format, _src, TextureFormat::RGBA8, _width, _height);
 	}
 
 	bool imageEncodeFromRgba32f(bx::AllocatorI* _allocator, void* _dst, const void* _src, uint32_t _width, uint32_t _height, uint8_t _format)
@@ -361,10 +361,10 @@ namespace bgfx
 			return true;
 
 		default:
-			return imageConvert(_dst, format, _src, TextureFormat::RGBA32F, _width, _height);
+			break;
 		}
 
-		return false;
+		return imageConvert(_dst, format, _src, TextureFormat::RGBA32F, _width, _height);
 	}
 
 	void imageRgba32f11to01(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src)
