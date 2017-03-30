@@ -1955,6 +1955,7 @@ namespace bgfx
 		{
 			bx::memSet(m_vertexDeclRef, 0, sizeof(m_vertexDeclRef) );
 			bx::memSet(m_vertexBufferRef, 0xff, sizeof(m_vertexBufferRef) );
+			bx::memSet(m_dynamicVertexBufferRef, 0xff, sizeof(m_vertexBufferRef) );
 		}
 
 		template <uint16_t MaxHandlesT>
@@ -1974,28 +1975,60 @@ namespace bgfx
 			return handle;
 		}
 
+		void add(VertexDeclHandle _declHandle, uint32_t _hash)
+		{
+			m_vertexDeclRef[_declHandle.idx]++;
+			m_vertexDeclMap.insert(_hash, _declHandle.idx);
+		}
+
 		void add(VertexBufferHandle _handle, VertexDeclHandle _declHandle, uint32_t _hash)
 		{
+			BX_CHECK(m_vertexBufferRef[_handle.idx].idx == invalidHandle, "");
 			m_vertexBufferRef[_handle.idx] = _declHandle;
 			m_vertexDeclRef[_declHandle.idx]++;
 			m_vertexDeclMap.insert(_hash, _declHandle.idx);
 		}
 
-		VertexDeclHandle release(VertexBufferHandle _handle)
+		void add(DynamicVertexBufferHandle _handle, VertexDeclHandle _declHandle, uint32_t _hash)
 		{
-			VertexDeclHandle declHandle = m_vertexBufferRef[_handle.idx];
-			if (isValid(declHandle) )
-			{
-				m_vertexDeclRef[declHandle.idx]--;
+			BX_CHECK(m_dynamicVertexBufferRef[_handle.idx].idx == invalidHandle, "");
+			m_dynamicVertexBufferRef[_handle.idx] = _declHandle;
+			m_vertexDeclRef[_declHandle.idx]++;
+			m_vertexDeclMap.insert(_hash, _declHandle.idx);
+		}
 
-				if (0 != m_vertexDeclRef[declHandle.idx])
+		VertexDeclHandle release(VertexDeclHandle _declHandle)
+		{
+			if (isValid(_declHandle) )
+			{
+				BX_CHECK(0 < m_vertexDeclRef[_declHandle.idx], "Ref counting is messed up for VertexDecl %d!", _declHandle.idx);
+				m_vertexDeclRef[_declHandle.idx]--;
+
+				if (0 == m_vertexDeclRef[_declHandle.idx])
 				{
-					VertexDeclHandle invalid = BGFX_INVALID_HANDLE;
-					return invalid;
+					m_vertexDeclMap.removeByHandle(_declHandle.idx);
+					return _declHandle;
 				}
 			}
 
-			m_vertexDeclMap.removeByHandle(declHandle.idx);
+			VertexDeclHandle invalid = BGFX_INVALID_HANDLE;
+			return invalid;
+		}
+
+		VertexDeclHandle release(VertexBufferHandle _handle)
+		{
+			VertexDeclHandle declHandle = m_vertexBufferRef[_handle.idx];
+			declHandle = release(declHandle);
+			m_vertexBufferRef[_handle.idx].idx = invalidHandle;
+
+			return declHandle;
+		}
+
+		VertexDeclHandle release(DynamicVertexBufferHandle _handle)
+		{
+			VertexDeclHandle declHandle = m_dynamicVertexBufferRef[_handle.idx];
+			declHandle = release(declHandle);
+			m_dynamicVertexBufferRef[_handle.idx].idx = invalidHandle;
 
 			return declHandle;
 		}
@@ -2005,6 +2038,7 @@ namespace bgfx
 
 		uint16_t m_vertexDeclRef[BGFX_CONFIG_MAX_VERTEX_DECLS];
 		VertexDeclHandle m_vertexBufferRef[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
+		VertexDeclHandle m_dynamicVertexBufferRef[BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS];
 	};
 
 	// First-fit non-local allocator.
@@ -2624,7 +2658,7 @@ namespace bgfx
 			dvb.m_stride      = _decl.m_stride;
 			dvb.m_decl        = declHandle;
 			dvb.m_flags       = _flags;
-			m_declRef.add(dvb.m_handle, declHandle, _decl.m_hash);
+			m_declRef.add(handle, declHandle, _decl.m_hash);
 
 			return handle;
 		}
@@ -2687,15 +2721,17 @@ namespace bgfx
 
 		void destroyDynamicVertexBufferInternal(DynamicVertexBufferHandle _handle)
 		{
-			DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[_handle.idx];
+			VertexDeclHandle declHandle = m_declRef.release(_handle);
+			BGFX_CHECK_HANDLE_INVALID_OK("destroyDynamicVertexBufferInternal", m_vertexDeclHandle, declHandle);
 
-			VertexDeclHandle declHandle = m_declRef.release(dvb.m_handle);
 			if (isValid(declHandle) )
 			{
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexDecl);
 				cmdbuf.write(declHandle);
 				m_render->free(declHandle);
 			}
+
+			DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[_handle.idx];
 
 			if (0 != (dvb.m_flags & BGFX_BUFFER_COMPUTE_WRITE) )
 			{
@@ -2833,7 +2869,7 @@ namespace bgfx
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateVertexDecl);
 				cmdbuf.write(declHandle);
 				cmdbuf.write(_decl);
-				m_declRef.add(dvb.handle, declHandle, _decl.m_hash);
+				m_declRef.add(declHandle, _decl.m_hash);
 			}
 
 			uint32_t offset = m_submit->allocTransientVertexBuffer(_num, _decl.m_stride);

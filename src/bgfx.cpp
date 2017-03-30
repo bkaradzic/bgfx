@@ -1456,6 +1456,11 @@ namespace bgfx
 				, m_declRef.m_vertexDeclMap.getNumElements()
 				);
 
+		for (uint16_t ii = 0, num = m_vertexDeclHandle.getNumHandles(); ii < num; ++ii)
+		{
+			VertexDeclHandle handle = { m_vertexDeclHandle.getHandleAt(ii) };
+			m_declRef.release(handle);
+		}
 		m_declRef.shutdown(m_vertexDeclHandle);
 
 #if BGFX_CONFIG_MULTITHREADED
