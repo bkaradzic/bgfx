@@ -1961,9 +1961,12 @@ namespace bgfx
 		template <uint16_t MaxHandlesT>
 		void shutdown(bx::HandleAllocT<MaxHandlesT>& _handleAlloc)
 		{
-			for (VertexDeclMap::Iterator it = m_vertexDeclMap.first(); m_vertexDeclMap.next(it); )
+			for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii)
 			{
-				_handleAlloc.free(it.handle);
+				VertexDeclHandle handle = { _handleAlloc.getHandleAt(ii) };
+				handle = release(handle);
+				BX_CHECK(isValid(handle), "Failed to release vertex decl handle %d!", handle.idx);
+				_handleAlloc.free(handle.idx);
 			}
 
 			m_vertexDeclMap.reset();
