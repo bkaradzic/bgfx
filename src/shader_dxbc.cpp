@@ -94,7 +94,7 @@ namespace bgfx
 		{ 2, 0 }, // SQRT
 		{ 1, 0 }, // SWITCH
 		{ 3, 0 }, // SINCOS
-		{ 3, 0 }, // UDIV
+		{ 4, 0 }, // UDIV
 		{ 3, 0 }, // ULT
 		{ 3, 0 }, // UGE
 		{ 4, 0 }, // UMUL
