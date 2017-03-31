@@ -691,16 +691,16 @@ namespace bgfx
 			float translation[3];       //!< Eye translation.
 			float fov[4];               //!< Field of view (up, down, left, right).
 			float viewOffset[3];        //!< Eye view matrix translation adjustment.
-			float projection[16];       //!< Eye projection matrix
+			float projection[16];       //!< Eye projection matrix.
 			float pixelsPerTanAngle[2]; //!< Number of pixels that fit in tan(angle) = 1.
 		};
 
 		Eye eye[2];
-		uint16_t width;        //!< Framebuffer width.
-		uint16_t height;       //!< Framebuffer width.
-		uint32_t deviceWidth;  //!< Device resolution width
-		uint32_t deviceHeight; //!< Device resolution height
-		uint8_t flags;         //!< Status flags
+		uint16_t width;        //!< Frame buffer width.
+		uint16_t height;       //!< Frame buffer height.
+		uint32_t deviceWidth;  //!< Device resolution width.
+		uint32_t deviceHeight; //!< Device resolution height.
+		uint8_t  flags;        //!< Status flags.
 	};
 
 	/// Renderer statistics data.
