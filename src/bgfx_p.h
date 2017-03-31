@@ -1964,8 +1964,8 @@ namespace bgfx
 			for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii)
 			{
 				VertexDeclHandle handle = { _handleAlloc.getHandleAt(ii) };
-				handle = release(handle);
-				BX_CHECK(isValid(handle), "Failed to release vertex decl handle %d!", handle.idx);
+				m_vertexDeclRef[handle.idx] = 0;
+				m_vertexDeclMap.removeByHandle(handle.idx);
 				_handleAlloc.free(handle.idx);
 			}
 
@@ -2004,7 +2004,6 @@ namespace bgfx
 		{
 			if (isValid(_declHandle) )
 			{
-				BX_CHECK(0 < m_vertexDeclRef[_declHandle.idx], "Ref counting is messed up for VertexDecl %d!", _declHandle.idx);
 				m_vertexDeclRef[_declHandle.idx]--;
 
 				if (0 == m_vertexDeclRef[_declHandle.idx])
