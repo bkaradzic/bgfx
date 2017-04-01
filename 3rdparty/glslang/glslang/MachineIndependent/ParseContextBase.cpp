@@ -531,7 +531,7 @@ void TParseContextBase::parseSwizzleSelector(const TSourceLoc& loc, const TStrin
 // Make the passed-in variable information become a member of the
 // global uniform block.  If this doesn't exist yet, make it.
 //
-void TParseContextBase::growGlobalUniformBlock(TSourceLoc& loc, TType& memberType, TString& memberName, TTypeList* typeList)
+void TParseContextBase::growGlobalUniformBlock(const TSourceLoc& loc, TType& memberType, const TString& memberName, TTypeList* typeList)
 {
     // Make the global block, if not yet made.
     if (globalUniformBlock == nullptr) {

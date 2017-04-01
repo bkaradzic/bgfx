@@ -461,10 +461,12 @@ void TIntermediate::finalCheck(TInfoSink& infoSink, bool keepUncalled)
     case EShLangTessEvaluation:
         if (inputPrimitive == ElgNone)
             error(infoSink, "At least one shader must specify an input layout primitive");
-        if (vertexSpacing == EvsNone)
-            vertexSpacing = EvsEqual;
-        if (vertexOrder == EvoNone)
-            vertexOrder = EvoCcw;
+        if (source == EShSourceGlsl) {
+            if (vertexSpacing == EvsNone)
+                vertexSpacing = EvsEqual;
+            if (vertexOrder == EvoNone)
+                vertexOrder = EvoCcw;
+        }
         break;
     case EShLangGeometry:
         if (inputPrimitive == ElgNone)

@@ -884,6 +884,13 @@ void TIntermediate::output(TInfoSink& infoSink, bool tree)
 
     case EShLangTessControl:
         infoSink.debug << "vertices = " << vertices << "\n";
+
+        if (inputPrimitive != ElgNone)
+            infoSink.debug << "input primitive = " << TQualifier::getGeometryString(inputPrimitive) << "\n";
+        if (vertexSpacing != EvsNone)
+            infoSink.debug << "vertex spacing = " << TQualifier::getVertexSpacingString(vertexSpacing) << "\n";
+        if (vertexOrder != EvoNone)
+            infoSink.debug << "triangle order = " << TQualifier::getVertexOrderString(vertexOrder) << "\n";
         break;
 
     case EShLangTessEvaluation:

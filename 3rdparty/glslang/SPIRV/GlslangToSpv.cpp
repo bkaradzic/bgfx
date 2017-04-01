@@ -869,14 +869,20 @@ TGlslangToSpvTraverser::TGlslangToSpvTraverser(const glslang::TIntermediate* gls
         builder.addCapability(spv::CapabilityShader);
         break;
 
+    case EShLangTessEvaluation:
     case EShLangTessControl:
         builder.addCapability(spv::CapabilityTessellation);
-        builder.addExecutionMode(shaderEntry, spv::ExecutionModeOutputVertices, glslangIntermediate->getVertices());
-        break;
 
-    case EShLangTessEvaluation:
-        builder.addCapability(spv::CapabilityTessellation);
-        switch (glslangIntermediate->getInputPrimitive()) {
+        glslang::TLayoutGeometry primitive;
+
+        if (glslangIntermediate->getStage() == EShLangTessControl) {
+            builder.addExecutionMode(shaderEntry, spv::ExecutionModeOutputVertices, glslangIntermediate->getVertices());
+            primitive = glslangIntermediate->getOutputPrimitive();
+        } else {
+            primitive = glslangIntermediate->getInputPrimitive();
+        }
+
+        switch (primitive) {
         case glslang::ElgTriangles:           mode = spv::ExecutionModeTriangles;     break;
         case glslang::ElgQuads:               mode = spv::ExecutionModeQuads;         break;
         case glslang::ElgIsolines:            mode = spv::ExecutionModeIsolines;      break;
@@ -1823,7 +1829,15 @@ bool TGlslangToSpvTraverser::visitSelection(glslang::TVisit /* visit */, glslang
         node->getFalseBlock()->traverse(this);
         spv::Id falseValue = accessChainLoad(node->getTrueBlock()->getAsTyped()->getType());
 
-        spv::Id select = builder.createTriOp(spv::OpSelect, convertGlslangToSpvType(node->getType()), condition, trueValue, falseValue);
+        // smear condition to vector, if necessary (AST is always scalar)
+        if (builder.isVector(trueValue))
+            condition = builder.smearScalar(spv::NoPrecision, condition, 
+                                            builder.makeVectorType(builder.makeBoolType(),
+                                                                   builder.getNumComponents(trueValue)));
+
+        spv::Id select = builder.createTriOp(spv::OpSelect,
+                                             convertGlslangToSpvType(node->getType()), condition,
+                                                                     trueValue, falseValue);
         builder.clearAccessChain();
         builder.setAccessChainRValue(select);
     };
@@ -2272,10 +2286,19 @@ bool TGlslangToSpvTraverser::filterMember(const glslang::TType& member)
 {
     auto& extensions = glslangIntermediate->getRequestedExtensions();
 
+    if (member.getFieldName() == "gl_ViewportMask" &&
+        extensions.find("GL_NV_viewport_array2") == extensions.end())
+        return true;
+    if (member.getFieldName() == "gl_SecondaryViewportMaskNV" &&
+        extensions.find("GL_NV_stereo_view_rendering") == extensions.end())
+        return true;
     if (member.getFieldName() == "gl_SecondaryPositionNV" &&
         extensions.find("GL_NV_stereo_view_rendering") == extensions.end())
         return true;
     if (member.getFieldName() == "gl_PositionPerViewNV" &&
+        extensions.find("GL_NVX_multiview_per_view_attributes") == extensions.end())
+        return true;
+    if (member.getFieldName() == "gl_ViewportMaskPerViewNV" &&
         extensions.find("GL_NVX_multiview_per_view_attributes") == extensions.end())
         return true;
 
@@ -2777,7 +2800,7 @@ void TGlslangToSpvTraverser::makeFunctions(const glslang::TIntermSequence& glslF
             if (paramType.containsOpaque() ||                                // sampler, etc.
                 (paramType.getBasicType() == glslang::EbtBlock &&
                  paramType.getQualifier().storage == glslang::EvqBuffer) ||  // SSBO
-                 p == 0 && implicitThis)                                     // implicit 'this'
+                (p == 0 && implicitThis))                                    // implicit 'this'
                 typeId = builder.makePointer(TranslateStorageClass(paramType), typeId);
             else if (paramType.getQualifier().storage != glslang::EvqConstReadOnly)
                 typeId = builder.makePointer(spv::StorageClassFunction, typeId);
@@ -4609,6 +4632,9 @@ spv::Id TGlslangToSpvTraverser::createMiscOperation(glslang::TOperator op, spv::
     spv::Id typeId0 = 0;
     if (consumedOperands > 0)
         typeId0 = builder.getTypeId(operands[0]);
+    spv::Id typeId1 = 0;
+    if (consumedOperands > 1)
+        typeId1 = builder.getTypeId(operands[1]);
     spv::Id frexpIntType = 0;
 
     switch (op) {
@@ -4730,13 +4756,22 @@ spv::Id TGlslangToSpvTraverser::createMiscOperation(glslang::TOperator op, spv::
         libCall = spv::GLSLstd450Fma;
         break;
     case glslang::EOpFrexp:
-        libCall = spv::GLSLstd450FrexpStruct;
-        if (builder.getNumComponents(operands[0]) == 1)
-            frexpIntType = builder.makeIntegerType(32, true);
-        else
-            frexpIntType = builder.makeVectorType(builder.makeIntegerType(32, true), builder.getNumComponents(operands[0]));
-        typeId = builder.makeStructResultType(typeId0, frexpIntType);
-        consumedOperands = 1;
+        {
+            libCall = spv::GLSLstd450FrexpStruct;
+            assert(builder.isPointerType(typeId1));
+            typeId1 = builder.getContainedTypeId(typeId1);
+#ifdef AMD_EXTENSIONS
+            int width = builder.getScalarTypeWidth(typeId1);
+#else
+            int width = 32;
+#endif
+            if (builder.getNumComponents(operands[0]) == 1)
+                frexpIntType = builder.makeIntegerType(width, true);
+            else
+                frexpIntType = builder.makeVectorType(builder.makeIntegerType(width, true), builder.getNumComponents(operands[0]));
+            typeId = builder.makeStructResultType(typeId0, frexpIntType);
+            consumedOperands = 1;
+        }
         break;
     case glslang::EOpLdexp:
         libCall = spv::GLSLstd450Ldexp;
@@ -4844,9 +4879,18 @@ spv::Id TGlslangToSpvTraverser::createMiscOperation(glslang::TOperator op, spv::
         builder.createStore(builder.createCompositeExtract(id, typeId0, 1), operands[2]);
         break;
     case glslang::EOpFrexp:
-        assert(operands.size() == 2);
-        builder.createStore(builder.createCompositeExtract(id, frexpIntType, 1), operands[1]);
-        id = builder.createCompositeExtract(id, typeId0, 0);
+        {
+            assert(operands.size() == 2);
+            if (builder.isFloatType(builder.getScalarTypeId(typeId1))) {
+                // "exp" is floating-point type (from HLSL intrinsic)
+                spv::Id member1 = builder.createCompositeExtract(id, frexpIntType, 1);
+                member1 = builder.createUnaryOp(spv::OpConvertSToF, typeId1, member1);
+                builder.createStore(member1, operands[1]);
+            } else
+                // "exp" is integer type (from GLSL built-in function)
+                builder.createStore(builder.createCompositeExtract(id, frexpIntType, 1), operands[1]);
+            id = builder.createCompositeExtract(id, typeId0, 0);
+        }
         break;
     default:
         break;

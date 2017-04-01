@@ -80,6 +80,7 @@ public:
     void handleFunctionDeclarator(const TSourceLoc&, TFunction& function, bool prototype);
     TIntermAggregate* handleFunctionDefinition(const TSourceLoc&, TFunction&, const TAttributeMap&, TIntermNode*& entryPointTree);
     TIntermNode* transformEntryPoint(const TSourceLoc&, TFunction&, const TAttributeMap&);
+    void handleEntryPointAttributes(const TSourceLoc&, const TAttributeMap&);
     void handleFunctionBody(const TSourceLoc&, TFunction&, TIntermNode* functionBody, TIntermNode*& node);
     void remapEntryPointIO(TFunction& function, TVariable*& returnValue, TVector<TVariable*>& inputs, TVector<TVariable*>& outputs);
     void remapNonEntryPointIO(TFunction& function);
@@ -101,7 +102,7 @@ public:
                           const glslang::TString* component);
     void handleRegister(const TSourceLoc&, TQualifier&, const glslang::TString* profile, const glslang::TString& desc,
                         int subComponent, const glslang::TString*);
-
+    TIntermTyped* convertConditionalExpression(const TSourceLoc&, TIntermTyped*);
     TIntermAggregate* handleSamplerTextureCombine(const TSourceLoc& loc, TIntermTyped* argTex, TIntermTyped* argSampler);
 
     bool parseMatrixSwizzleSelector(const TSourceLoc&, const TString&, int cols, int rows, TSwizzleSelectors<TMatrixSelector>&);
@@ -120,7 +121,6 @@ public:
     void structArrayCheck(const TSourceLoc&, const TType& structure);
     void arrayDimMerge(TType& type, const TArraySizes* sizes);
     bool voidErrorCheck(const TSourceLoc&, const TString&, TBasicType);
-    void boolCheck(const TSourceLoc&, const TIntermTyped*);
     void globalQualifierFix(const TSourceLoc&, TQualifier&);
     bool structQualifierErrorCheck(const TSourceLoc&, const TPublicType& pType);
     void mergeQualifiers(TQualifier& dst, const TQualifier& src);
@@ -136,10 +136,10 @@ public:
     void checkNoShaderLayouts(const TSourceLoc&, const TShaderQualifiers&);
 
     const TFunction* findFunction(const TSourceLoc& loc, TFunction& call, bool& builtIn, TIntermTyped*& args);
-    void declareTypedef(const TSourceLoc&, TString& identifier, const TType&);
+    void declareTypedef(const TSourceLoc&, const TString& identifier, const TType&);
     void declareStruct(const TSourceLoc&, TString& structName, TType&);
     TSymbol* lookupUserType(const TString&, TType&);
-    TIntermNode* declareVariable(const TSourceLoc&, TString& identifier, TType&, TIntermTyped* initializer = 0);
+    TIntermNode* declareVariable(const TSourceLoc&, const TString& identifier, TType&, TIntermTyped* initializer = 0);
     void lengthenList(const TSourceLoc&, TIntermSequence& list, int size);
     TIntermTyped* addConstructor(const TSourceLoc&, TIntermNode*, const TType&);
     TIntermTyped* constructAggregate(TIntermNode*, const TType&, int, const TSourceLoc&);
@@ -173,13 +173,13 @@ public:
 
     void pushNamespace(const TString& name);
     void popNamespace();
-    TString* getFullNamespaceName(const TString& localName) const;
+    void getFullNamespaceName(const TString*&) const;
     void addScopeMangler(TString&);
 
     void pushSwitchSequence(TIntermSequence* sequence) { switchSequenceStack.push_back(sequence); }
     void popSwitchSequence() { switchSequenceStack.pop_back(); }
 
-    virtual void growGlobalUniformBlock(TSourceLoc&, TType&, TString& memberName, TTypeList* typeList = nullptr) override;
+    virtual void growGlobalUniformBlock(const TSourceLoc&, TType&, const TString& memberName, TTypeList* typeList = nullptr) override;
 
     // Apply L-value conversions.  E.g, turning a write to a RWTexture into an ImageStore.
     TIntermTyped* handleLvalue(const TSourceLoc&, const char* op, TIntermTyped* node);
@@ -191,7 +191,7 @@ public:
     bool handleInputGeometry(const TSourceLoc&, const TLayoutGeometry& geometry);
 
     // Potentially rename shader entry point function
-    void renameShaderFunction(TString*& name) const;
+    void renameShaderFunction(const TString*& name) const;
 
     // Reset data for incrementally built referencing of flattened composite structures
     void initFlattening() { flattenLevel.push_back(0); flattenOffset.push_back(0); }
@@ -210,14 +210,14 @@ protected:
         int                 nextBinding; // next binding to use.
     };
 
-    void fixConstInit(const TSourceLoc&, TString& identifier, TType& type, TIntermTyped*& initializer);
+    void fixConstInit(const TSourceLoc&, const TString& identifier, TType& type, TIntermTyped*& initializer);
     void inheritGlobalDefaults(TQualifier& dst) const;
     TVariable* makeInternalVariable(const char* name, const TType&) const;
     TVariable* makeInternalVariable(const TString& name, const TType& type) const {
         return makeInternalVariable(name.c_str(), type);
     }
-    TVariable* declareNonArray(const TSourceLoc&, TString& identifier, TType&, bool track);
-    void declareArray(const TSourceLoc&, TString& identifier, const TType&, TSymbol*&, bool track);
+    TVariable* declareNonArray(const TSourceLoc&, const TString& identifier, const TType&, bool track);
+    void declareArray(const TSourceLoc&, const TString& identifier, const TType&, TSymbol*&, bool track);
     TIntermNode* executeInitializer(const TSourceLoc&, TIntermTyped* initializer, TVariable* variable);
     TIntermTyped* convertInitializerList(const TSourceLoc&, const TType&, TIntermTyped* initializer);
     bool isZeroConstructor(const TIntermNode*);
@@ -247,6 +247,8 @@ protected:
     TVariable* getSplitIoVar(int id) const;
     void addInterstageIoToLinkage();
     void addPatchConstantInvocation();
+
+    void fixBuiltInArrayType(TType&);
 
     void flatten(const TSourceLoc& loc, const TVariable& variable);
     int flatten(const TSourceLoc& loc, const TVariable& variable, const TType&, TFlattenData&, TString name);
@@ -280,6 +282,9 @@ protected:
     void trackLinkage(TSymbol& variable) override;
 
     void finish() override; // post-processing
+
+    // Linkage symbol helpers
+    TIntermSymbol* findLinkageSymbol(TBuiltInVariable biType) const;
 
     // Current state of parsing
     struct TPragma contextPragma;

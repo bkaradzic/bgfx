@@ -445,19 +445,19 @@ struct TDefaultIoResolver : public glslang::TIoMapResolver
         return 0;
     }
 
-    bool validateInOut(EShLanguage stage, const char* name, const TType& type, bool is_live) override
+    bool validateInOut(EShLanguage /*stage*/, const char* /*name*/, const TType& /*type*/, bool /*is_live*/) override
     {
         return true;
     }
-    int resolveInOutLocation(EShLanguage stage, const char* name, const TType& type, bool is_live) override
+    int resolveInOutLocation(EShLanguage /*stage*/, const char* /*name*/, const TType& /*type*/, bool /*is_live*/) override
     {
         return -1;
     }
-    int resolveInOutComponent(EShLanguage stage, const char* name, const TType& type, bool is_live) override
+    int resolveInOutComponent(EShLanguage /*stage*/, const char* /*name*/, const TType& /*type*/, bool /*is_live*/) override
     {
         return -1;
     }
-    int resolveInOutIndex(EShLanguage stage, const char* name, const TType& type, bool is_live) override
+    int resolveInOutIndex(EShLanguage /*stage*/, const char* /*name*/, const TType& /*type*/, bool /*is_live*/) override
     {
         return -1;
     }

@@ -9,7 +9,7 @@ gl_FragCoord origin is upper left
 0:11      Test condition and select ( temp void)
 0:11        Condition
 0:11        Constant:
-0:11          0 (const int)
+0:11          false (const bool)
 0:11        true case is null
 0:2  Function Definition: PixelShaderFunction( ( temp void)
 0:2    Function Parameters: 
@@ -36,7 +36,7 @@ gl_FragCoord origin is upper left
 0:11      Test condition and select ( temp void)
 0:11        Condition
 0:11        Constant:
-0:11          0 (const int)
+0:11          false (const bool)
 0:11        true case is null
 0:2  Function Definition: PixelShaderFunction( ( temp void)
 0:2    Function Parameters: 
@@ -71,8 +71,8 @@ gl_FragCoord origin is upper left
                7:             TypeVector 6(float) 4
                8:             TypePointer Function 7(fvec4)
                9:             TypeFunction 2 8(ptr)
-              13:             TypeInt 32 1
-              14:     13(int) Constant 0
+              13:             TypeBool
+              14:    13(bool) ConstantFalse
               18:             TypePointer Input 7(fvec4)
        19(input):     18(ptr) Variable Input
 4(PixelShaderFunction):           2 Function None 3

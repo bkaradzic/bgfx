@@ -136,7 +136,7 @@ public:
     TSymbolTable& symbolTable;   // symbol table that goes with the current language, version, and profile
 
     // Manage the global uniform block (default uniforms in GLSL, $Global in HLSL)
-    virtual void growGlobalUniformBlock(TSourceLoc&, TType&, TString& memberName, TTypeList* typeList = nullptr);
+    virtual void growGlobalUniformBlock(const TSourceLoc&, TType&, const TString& memberName, TTypeList* typeList = nullptr);
 
     virtual bool lValueErrorCheck(const TSourceLoc&, const char* op, TIntermTyped*);
     virtual void rValueErrorCheck(const TSourceLoc&, const char* op, TIntermTyped*);
@@ -174,7 +174,7 @@ protected:
     int firstNewMember;              // the index of the first member not yet inserted into the symbol table
     // override this to set the language-specific name
     virtual const char* getGlobalUniformBlockName() const { return ""; }
-    virtual void setUniformBlockDefaults(TType& block) const { }
+    virtual void setUniformBlockDefaults(TType&) const { }
     virtual void finalizeGlobalUniformBlockLayout(TVariable&) { }
     virtual void outputMessage(const TSourceLoc&, const char* szReason, const char* szToken,
                                const char* szExtraInfoFormat, TPrefixType prefix,
@@ -371,8 +371,8 @@ protected:
     void nonInitConstCheck(const TSourceLoc&, TString& identifier, TType& type);
     void inheritGlobalDefaults(TQualifier& dst) const;
     TVariable* makeInternalVariable(const char* name, const TType&) const;
-    TVariable* declareNonArray(const TSourceLoc&, TString& identifier, TType&);
-    void declareArray(const TSourceLoc&, TString& identifier, const TType&, TSymbol*&);
+    TVariable* declareNonArray(const TSourceLoc&, const TString& identifier, const TType&);
+    void declareArray(const TSourceLoc&, const TString& identifier, const TType&, TSymbol*&);
     TIntermNode* executeInitializer(const TSourceLoc&, TIntermTyped* initializer, TVariable* variable);
     TIntermTyped* convertInitializerList(const TSourceLoc&, const TType&, TIntermTyped* initializer);
     void finish() override;

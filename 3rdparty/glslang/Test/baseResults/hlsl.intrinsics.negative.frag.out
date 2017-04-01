@@ -1,6 +1,5 @@
 hlsl.intrinsics.negative.frag
 ERROR: 0:10: 'determinant' : no matching overloaded function found 
-ERROR: 0:23: 'length' : ambiguous best function under implicit type conversion 
 ERROR: 0:25: 'normalize' : ambiguous best function under implicit type conversion 
 ERROR: 0:26: 'reflect' : ambiguous best function under implicit type conversion 
 ERROR: 0:27: 'refract' : ambiguous best function under implicit type conversion 
@@ -59,7 +58,7 @@ ERROR: 0:133: 'normalize' : no matching overloaded function found
 ERROR: 0:133: 'reflect' : no matching overloaded function found 
 ERROR: 0:133: 'refract' : no matching overloaded function found 
 ERROR: 0:133: 'reversebits' : no matching overloaded function found 
-ERROR: 60 compilation errors.  No code generated.
+ERROR: 59 compilation errors.  No code generated.
 
 
 Shader version: 450
@@ -120,8 +119,7 @@ ERROR: node is still EOpNull!
 0:14        Convert float to uint ( temp uint)
 0:14          'inF0' ( in float)
 0:23      length ( temp float)
-0:23        Construct vec2 ( in 2-component vector of float)
-0:23          'inF0' ( in float)
+0:23        'inF0' ( in float)
 0:24      Function Call: msad4(u1;vu2;vu4; ( temp 4-component vector of uint)
 0:24        Convert float to uint ( temp uint)
 0:24          'inF0' ( in float)
@@ -582,8 +580,7 @@ ERROR: node is still EOpNull!
 0:14        Convert float to uint ( temp uint)
 0:14          'inF0' ( in float)
 0:23      length ( temp float)
-0:23        Construct vec2 ( in 2-component vector of float)
-0:23          'inF0' ( in float)
+0:23        'inF0' ( in float)
 0:24      Function Call: msad4(u1;vu2;vu4; ( temp 4-component vector of uint)
 0:24        Convert float to uint ( temp uint)
 0:24          'inF0' ( in float)

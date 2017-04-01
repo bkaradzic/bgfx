@@ -28,7 +28,6 @@ float VertexShaderFunctionS(float inF0, float inF1, float inF2, uint inU0, uint 
     // TODO: fma(inD0, inD1, inD2);
     fmod(inF0, inF1);
     frac(inF0);
-    frexp(inF0, inF1);
     isinf(inF0);
     isnan(inF0);
     ldexp(inF0, inF1);
@@ -99,7 +98,6 @@ float2 VertexShaderFunction2(float2 inF0, float2 inF1, float2 inF2, uint2 inU0, 
     // TODO: fma(inD0, inD1, inD2);
     fmod(inF0, inF1);
     frac(inF0);
-    frexp(inF0, inF1);
     isinf(inF0);
     isnan(inF0);
     ldexp(inF0, inF1);
@@ -170,7 +168,6 @@ float3 VertexShaderFunction3(float3 inF0, float3 inF1, float3 inF2, uint3 inU0, 
     // TODO: fma(inD0, inD1, inD2);
     fmod(inF0, inF1);
     frac(inF0);
-    frexp(inF0, inF1);
     isinf(inF0);
     isnan(inF0);
     ldexp(inF0, inF1);
@@ -241,7 +238,6 @@ float4 VertexShaderFunction4(float4 inF0, float4 inF1, float4 inF2, uint4 inU0, 
     // TODO: fma(inD0, inD1, inD2);
     fmod(inF0, inF1);
     frac(inF0);
-    frexp(inF0, inF1);
     isinf(inF0);
     isnan(inF0);
     ldexp(inF0, inF1);
@@ -305,7 +301,6 @@ float4 VertexShaderFunction4(float4 inF0, float4 inF1, float4 inF2, uint4 inU0, 
     floor(inF0); \
     fmod(inF0, inF1); \
     frac(inF0); \
-    frexp(inF0, inF1); \
     ldexp(inF0, inF1); \
     lerp(inF0, inF1, inF2); \
     log(inF0); \

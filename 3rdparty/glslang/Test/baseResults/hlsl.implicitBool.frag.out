@@ -1,0 +1,549 @@
+hlsl.implicitBool.frag
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:7  Function Definition: @main( ( temp 4-component vector of float)
+0:7    Function Parameters: 
+0:?     Sequence
+0:8      Sequence
+0:8        move second child to first child ( temp 4-component vector of float)
+0:8          'a' ( temp 4-component vector of float)
+0:?           Constant:
+0:?             2.000000
+0:?             2.000000
+0:?             2.000000
+0:?             2.000000
+0:9      Test condition and select ( temp void)
+0:9        Condition
+0:9        Convert int to bool ( temp bool)
+0:9          condi: direct index for structure ( uniform int)
+0:9            'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:9            Constant:
+0:9              1 (const uint)
+0:9        true case
+0:10        Branch: Return with expression
+0:10          add ( temp 4-component vector of float)
+0:10            'a' ( temp 4-component vector of float)
+0:10            Constant:
+0:10              1.000000
+0:11      Test condition and select ( temp void)
+0:11        Condition
+0:11        Convert float to bool ( temp bool)
+0:11          condf: direct index for structure ( uniform float)
+0:11            'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:11            Constant:
+0:11              0 (const uint)
+0:11        true case
+0:12        Branch: Return with expression
+0:12          add ( temp 4-component vector of float)
+0:12            'a' ( temp 4-component vector of float)
+0:12            Constant:
+0:12              2.000000
+0:13      Test condition and select ( temp void)
+0:13        Condition
+0:13        Convert float to bool ( temp bool)
+0:13          condf1: direct index for structure ( uniform 1-component vector of float)
+0:13            'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:13            Constant:
+0:13              2 (const uint)
+0:13        true case
+0:14        Branch: Return with expression
+0:14          add ( temp 4-component vector of float)
+0:14            'a' ( temp 4-component vector of float)
+0:14            Constant:
+0:14              3.000000
+0:15      Test condition and select ( temp void)
+0:15        Condition
+0:15        Convert int to bool ( temp bool)
+0:15          condi1: direct index for structure ( uniform 1-component vector of int)
+0:15            'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:15            Constant:
+0:15              3 (const uint)
+0:15        true case
+0:16        Branch: Return with expression
+0:16          add ( temp 4-component vector of float)
+0:16            'a' ( temp 4-component vector of float)
+0:16            Constant:
+0:16              4.000000
+0:17      Test condition and select ( temp void)
+0:17        Condition
+0:17        logical-or ( temp bool)
+0:17          logical-and ( temp bool)
+0:17            Convert int to bool ( temp bool)
+0:17              condi: direct index for structure ( uniform int)
+0:17                'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:17                Constant:
+0:17                  1 (const uint)
+0:17            Convert int to bool ( temp bool)
+0:17              Convert float to int ( temp int)
+0:17                condf: direct index for structure ( uniform float)
+0:17                  'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:17                  Constant:
+0:17                    0 (const uint)
+0:17          Convert float to bool ( temp bool)
+0:17            condf1: direct index for structure ( uniform 1-component vector of float)
+0:17              'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:17              Constant:
+0:17                2 (const uint)
+0:17        true case
+0:18        Branch: Return with expression
+0:18          add ( temp 4-component vector of float)
+0:18            'a' ( temp 4-component vector of float)
+0:18            Constant:
+0:18              5.000000
+0:20      Sequence
+0:20        move second child to first child ( temp float)
+0:20          'f' ( temp float)
+0:20          condf: direct index for structure ( uniform float)
+0:20            'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:20            Constant:
+0:20              0 (const uint)
+0:21      Loop with condition tested first
+0:21        Loop Condition
+0:21        Convert float to bool ( temp bool)
+0:21          'f' ( temp float)
+0:21        Loop Body
+0:?         Sequence
+0:21          Pre-Decrement ( temp float)
+0:21            'f' ( temp float)
+0:23      Sequence
+0:23        move second child to first child ( temp int)
+0:23          'i' ( temp int)
+0:23          condi: direct index for structure ( uniform int)
+0:23            'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:23            Constant:
+0:23              1 (const uint)
+0:24      Loop with condition not tested first
+0:24        Loop Condition
+0:24        Convert int to bool ( temp bool)
+0:24          'i' ( temp int)
+0:24        Loop Body
+0:24        Pre-Decrement ( temp int)
+0:24          'i' ( temp int)
+0:?       Sequence
+0:26        Loop with condition tested first
+0:26          Loop Condition
+0:26          Convert int to bool ( temp bool)
+0:26            'i' ( temp int)
+0:26          Loop Body
+0:?           Sequence
+0:26            Pre-Decrement ( temp int)
+0:26              'i' ( temp int)
+0:28      Sequence
+0:28        move second child to first child ( temp float)
+0:28          'g' ( temp float)
+0:28          Test condition and select ( temp float)
+0:28            Condition
+0:28            Convert float to bool ( temp bool)
+0:28              condf: direct index for structure ( uniform float)
+0:28                'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:28                Constant:
+0:28                  0 (const uint)
+0:28            true case
+0:28            Constant:
+0:28              7.000000
+0:28            false case
+0:28            Constant:
+0:28              8.000000
+0:29      add second child into first child ( temp 4-component vector of float)
+0:29        'a' ( temp 4-component vector of float)
+0:29        'g' ( temp float)
+0:31      Branch: Return with expression
+0:31        subtract ( temp 4-component vector of float)
+0:31          'a' ( temp 4-component vector of float)
+0:31          Constant:
+0:31            1.000000
+0:7  Function Definition: main( ( temp void)
+0:7    Function Parameters: 
+0:?     Sequence
+0:7      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:7        Function Call: @main( ( temp 4-component vector of float)
+0:?   Linker Objects
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+
+
+Linked fragment stage:
+
+
+Shader version: 450
+gl_FragCoord origin is upper left
+0:? Sequence
+0:7  Function Definition: @main( ( temp 4-component vector of float)
+0:7    Function Parameters: 
+0:?     Sequence
+0:8      Sequence
+0:8        move second child to first child ( temp 4-component vector of float)
+0:8          'a' ( temp 4-component vector of float)
+0:?           Constant:
+0:?             2.000000
+0:?             2.000000
+0:?             2.000000
+0:?             2.000000
+0:9      Test condition and select ( temp void)
+0:9        Condition
+0:9        Convert int to bool ( temp bool)
+0:9          condi: direct index for structure ( uniform int)
+0:9            'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:9            Constant:
+0:9              1 (const uint)
+0:9        true case
+0:10        Branch: Return with expression
+0:10          add ( temp 4-component vector of float)
+0:10            'a' ( temp 4-component vector of float)
+0:10            Constant:
+0:10              1.000000
+0:11      Test condition and select ( temp void)
+0:11        Condition
+0:11        Convert float to bool ( temp bool)
+0:11          condf: direct index for structure ( uniform float)
+0:11            'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:11            Constant:
+0:11              0 (const uint)
+0:11        true case
+0:12        Branch: Return with expression
+0:12          add ( temp 4-component vector of float)
+0:12            'a' ( temp 4-component vector of float)
+0:12            Constant:
+0:12              2.000000
+0:13      Test condition and select ( temp void)
+0:13        Condition
+0:13        Convert float to bool ( temp bool)
+0:13          condf1: direct index for structure ( uniform 1-component vector of float)
+0:13            'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:13            Constant:
+0:13              2 (const uint)
+0:13        true case
+0:14        Branch: Return with expression
+0:14          add ( temp 4-component vector of float)
+0:14            'a' ( temp 4-component vector of float)
+0:14            Constant:
+0:14              3.000000
+0:15      Test condition and select ( temp void)
+0:15        Condition
+0:15        Convert int to bool ( temp bool)
+0:15          condi1: direct index for structure ( uniform 1-component vector of int)
+0:15            'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:15            Constant:
+0:15              3 (const uint)
+0:15        true case
+0:16        Branch: Return with expression
+0:16          add ( temp 4-component vector of float)
+0:16            'a' ( temp 4-component vector of float)
+0:16            Constant:
+0:16              4.000000
+0:17      Test condition and select ( temp void)
+0:17        Condition
+0:17        logical-or ( temp bool)
+0:17          logical-and ( temp bool)
+0:17            Convert int to bool ( temp bool)
+0:17              condi: direct index for structure ( uniform int)
+0:17                'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:17                Constant:
+0:17                  1 (const uint)
+0:17            Convert int to bool ( temp bool)
+0:17              Convert float to int ( temp int)
+0:17                condf: direct index for structure ( uniform float)
+0:17                  'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:17                  Constant:
+0:17                    0 (const uint)
+0:17          Convert float to bool ( temp bool)
+0:17            condf1: direct index for structure ( uniform 1-component vector of float)
+0:17              'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:17              Constant:
+0:17                2 (const uint)
+0:17        true case
+0:18        Branch: Return with expression
+0:18          add ( temp 4-component vector of float)
+0:18            'a' ( temp 4-component vector of float)
+0:18            Constant:
+0:18              5.000000
+0:20      Sequence
+0:20        move second child to first child ( temp float)
+0:20          'f' ( temp float)
+0:20          condf: direct index for structure ( uniform float)
+0:20            'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:20            Constant:
+0:20              0 (const uint)
+0:21      Loop with condition tested first
+0:21        Loop Condition
+0:21        Convert float to bool ( temp bool)
+0:21          'f' ( temp float)
+0:21        Loop Body
+0:?         Sequence
+0:21          Pre-Decrement ( temp float)
+0:21            'f' ( temp float)
+0:23      Sequence
+0:23        move second child to first child ( temp int)
+0:23          'i' ( temp int)
+0:23          condi: direct index for structure ( uniform int)
+0:23            'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:23            Constant:
+0:23              1 (const uint)
+0:24      Loop with condition not tested first
+0:24        Loop Condition
+0:24        Convert int to bool ( temp bool)
+0:24          'i' ( temp int)
+0:24        Loop Body
+0:24        Pre-Decrement ( temp int)
+0:24          'i' ( temp int)
+0:?       Sequence
+0:26        Loop with condition tested first
+0:26          Loop Condition
+0:26          Convert int to bool ( temp bool)
+0:26            'i' ( temp int)
+0:26          Loop Body
+0:?           Sequence
+0:26            Pre-Decrement ( temp int)
+0:26              'i' ( temp int)
+0:28      Sequence
+0:28        move second child to first child ( temp float)
+0:28          'g' ( temp float)
+0:28          Test condition and select ( temp float)
+0:28            Condition
+0:28            Convert float to bool ( temp bool)
+0:28              condf: direct index for structure ( uniform float)
+0:28                'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:28                Constant:
+0:28                  0 (const uint)
+0:28            true case
+0:28            Constant:
+0:28              7.000000
+0:28            false case
+0:28            Constant:
+0:28              8.000000
+0:29      add second child into first child ( temp 4-component vector of float)
+0:29        'a' ( temp 4-component vector of float)
+0:29        'g' ( temp float)
+0:31      Branch: Return with expression
+0:31        subtract ( temp 4-component vector of float)
+0:31          'a' ( temp 4-component vector of float)
+0:31          Constant:
+0:31            1.000000
+0:7  Function Definition: main( ( temp void)
+0:7    Function Parameters: 
+0:?     Sequence
+0:7      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:7        Function Call: @main( ( temp 4-component vector of float)
+0:?   Linker Objects
+0:?     'anon@0' (layout( row_major std140) uniform block{ uniform float condf,  uniform int condi,  uniform 1-component vector of float condf1,  uniform 1-component vector of int condi1})
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+
+// Module Version 10000
+// Generated by (magic number): 80001
+// Id's are bound by 145
+
+                              Capability Shader
+               1:             ExtInstImport  "GLSL.std.450"
+                              MemoryModel Logical GLSL450
+                              EntryPoint Fragment 4  "main" 143
+                              ExecutionMode 4 OriginUpperLeft
+                              Name 4  "main"
+                              Name 9  "@main("
+                              Name 12  "a"
+                              Name 16  "$Global"
+                              MemberName 16($Global) 0  "condf"
+                              MemberName 16($Global) 1  "condi"
+                              MemberName 16($Global) 2  "condf1"
+                              MemberName 16($Global) 3  "condi1"
+                              Name 18  ""
+                              Name 93  "f"
+                              Name 106  "i"
+                              Name 126  "g"
+                              Name 143  "@entryPointOutput"
+                              MemberDecorate 16($Global) 0 Offset 0
+                              MemberDecorate 16($Global) 1 Offset 4
+                              MemberDecorate 16($Global) 2 Offset 16
+                              MemberDecorate 16($Global) 3 Offset 32
+                              Decorate 16($Global) Block
+                              Decorate 18 DescriptorSet 0
+                              Decorate 143(@entryPointOutput) Location 0
+               2:             TypeVoid
+               3:             TypeFunction 2
+               6:             TypeFloat 32
+               7:             TypeVector 6(float) 4
+               8:             TypeFunction 7(fvec4)
+              11:             TypePointer Function 7(fvec4)
+              13:    6(float) Constant 1073741824
+              14:    7(fvec4) ConstantComposite 13 13 13 13
+              15:             TypeInt 32 1
+     16($Global):             TypeStruct 6(float) 15(int) 6(float) 15(int)
+              17:             TypePointer Uniform 16($Global)
+              18:     17(ptr) Variable Uniform
+              19:     15(int) Constant 1
+              20:             TypePointer Uniform 15(int)
+              23:             TypeBool
+              24:             TypeInt 32 0
+              25:     24(int) Constant 0
+              30:    6(float) Constant 1065353216
+              34:     15(int) Constant 0
+              35:             TypePointer Uniform 6(float)
+              38:    6(float) Constant 0
+              46:     15(int) Constant 2
+              53:    6(float) Constant 1077936128
+              57:     15(int) Constant 3
+              64:    6(float) Constant 1082130432
+              88:    6(float) Constant 1084227584
+              92:             TypePointer Function 6(float)
+             105:             TypePointer Function 15(int)
+             130:    6(float) Constant 1088421888
+             131:    6(float) Constant 1090519040
+             142:             TypePointer Output 7(fvec4)
+143(@entryPointOutput):    142(ptr) Variable Output
+         4(main):           2 Function None 3
+               5:             Label
+             144:    7(fvec4) FunctionCall 9(@main()
+                              Store 143(@entryPointOutput) 144
+                              Return
+                              FunctionEnd
+       9(@main():    7(fvec4) Function None 8
+              10:             Label
+           12(a):     11(ptr) Variable Function
+           93(f):     92(ptr) Variable Function
+          106(i):    105(ptr) Variable Function
+          126(g):     92(ptr) Variable Function
+                              Store 12(a) 14
+              21:     20(ptr) AccessChain 18 19
+              22:     15(int) Load 21
+              26:    23(bool) INotEqual 22 25
+                              SelectionMerge 28 None
+                              BranchConditional 26 27 28
+              27:               Label
+              29:    7(fvec4)   Load 12(a)
+              31:    7(fvec4)   CompositeConstruct 30 30 30 30
+              32:    7(fvec4)   FAdd 29 31
+                                ReturnValue 32
+              28:             Label
+              36:     35(ptr) AccessChain 18 34
+              37:    6(float) Load 36
+              39:    23(bool) FOrdNotEqual 37 38
+                              SelectionMerge 41 None
+                              BranchConditional 39 40 41
+              40:               Label
+              42:    7(fvec4)   Load 12(a)
+              43:    7(fvec4)   CompositeConstruct 13 13 13 13
+              44:    7(fvec4)   FAdd 42 43
+                                ReturnValue 44
+              41:             Label
+              47:     35(ptr) AccessChain 18 46
+              48:    6(float) Load 47
+              49:    23(bool) FOrdNotEqual 48 38
+                              SelectionMerge 51 None
+                              BranchConditional 49 50 51
+              50:               Label
+              52:    7(fvec4)   Load 12(a)
+              54:    7(fvec4)   CompositeConstruct 53 53 53 53
+              55:    7(fvec4)   FAdd 52 54
+                                ReturnValue 55
+              51:             Label
+              58:     20(ptr) AccessChain 18 57
+              59:     15(int) Load 58
+              60:    23(bool) INotEqual 59 25
+                              SelectionMerge 62 None
+                              BranchConditional 60 61 62
+              61:               Label
+              63:    7(fvec4)   Load 12(a)
+              65:    7(fvec4)   CompositeConstruct 64 64 64 64
+              66:    7(fvec4)   FAdd 63 65
+                                ReturnValue 66
+              62:             Label
+              68:     20(ptr) AccessChain 18 19
+              69:     15(int) Load 68
+              70:    23(bool) INotEqual 69 25
+                              SelectionMerge 72 None
+                              BranchConditional 70 71 72
+              71:               Label
+              73:     35(ptr)   AccessChain 18 34
+              74:    6(float)   Load 73
+              75:     15(int)   ConvertFToS 74
+              76:    23(bool)   INotEqual 75 25
+                                Branch 72
+              72:             Label
+              77:    23(bool) Phi 70 62 76 71
+              78:    23(bool) LogicalNot 77
+                              SelectionMerge 80 None
+                              BranchConditional 78 79 80
+              79:               Label
+              81:     35(ptr)   AccessChain 18 46
+              82:    6(float)   Load 81
+              83:    23(bool)   FOrdNotEqual 82 38
+                                Branch 80
+              80:             Label
+              84:    23(bool) Phi 77 72 83 79
+                              SelectionMerge 86 None
+                              BranchConditional 84 85 86
+              85:               Label
+              87:    7(fvec4)   Load 12(a)
+              89:    7(fvec4)   CompositeConstruct 88 88 88 88
+              90:    7(fvec4)   FAdd 87 89
+                                ReturnValue 90
+              86:             Label
+              94:     35(ptr) AccessChain 18 34
+              95:    6(float) Load 94
+                              Store 93(f) 95
+                              Branch 96
+              96:             Label
+                              LoopMerge 98 99 None
+                              Branch 100
+             100:             Label
+             101:    6(float) Load 93(f)
+             102:    23(bool) FOrdNotEqual 101 38
+                              BranchConditional 102 97 98
+              97:               Label
+             103:    6(float)   Load 93(f)
+             104:    6(float)   FSub 103 30
+                                Store 93(f) 104
+                                Branch 99
+              99:               Label
+                                Branch 96
+              98:             Label
+             107:     20(ptr) AccessChain 18 19
+             108:     15(int) Load 107
+                              Store 106(i) 108
+                              Branch 109
+             109:             Label
+                              LoopMerge 111 112 None
+                              Branch 110
+             110:             Label
+             113:     15(int) Load 106(i)
+             114:     15(int) ISub 113 19
+                              Store 106(i) 114
+                              Branch 112
+             112:             Label
+             115:     15(int) Load 106(i)
+             116:    23(bool) INotEqual 115 25
+                              BranchConditional 116 109 111
+             111:             Label
+                              Branch 117
+             117:             Label
+                              LoopMerge 119 120 None
+                              Branch 121
+             121:             Label
+             122:     15(int) Load 106(i)
+             123:    23(bool) INotEqual 122 25
+                              BranchConditional 123 118 119
+             118:               Label
+             124:     15(int)   Load 106(i)
+             125:     15(int)   ISub 124 19
+                                Store 106(i) 125
+                                Branch 120
+             120:               Label
+                                Branch 117
+             119:             Label
+             127:     35(ptr) AccessChain 18 34
+             128:    6(float) Load 127
+             129:    23(bool) FOrdNotEqual 128 38
+             132:    6(float) Select 129 130 131
+                              Store 126(g) 132
+             133:    6(float) Load 126(g)
+             134:    7(fvec4) Load 12(a)
+             135:    7(fvec4) CompositeConstruct 133 133 133 133
+             136:    7(fvec4) FAdd 134 135
+                              Store 12(a) 136
+             137:    7(fvec4) Load 12(a)
+             138:    7(fvec4) CompositeConstruct 30 30 30 30
+             139:    7(fvec4) FSub 137 138
+                              ReturnValue 139
+                              FunctionEnd
