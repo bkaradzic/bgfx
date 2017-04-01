@@ -237,6 +237,11 @@ developed using the Nim programming language, and is currently in pre-alpha
 status. The immediate development focus for FRAG is supporting the creation of
 2D desktop games.
 
+## vg-renderer
+
+https://github.com/jdryg/vg-renderer#vg-renderer - A vector graphics renderer
+for bgfx, based on ideas from both NanoVG and ImDrawList (Dear ImGUI)
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
