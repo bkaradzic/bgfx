@@ -1677,6 +1677,21 @@ namespace bgfx
 			bind.m_un.m_compute.m_mip    = 0;
 		}
 
+		void setShaderBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
+		{
+			// In OpenGL writing might also be possible by default, 
+			// but in dx11 it would require an unordered access view
+			// with a different binding path, so just limit it to read only
+			BX_CHECK(_access == Access::Read, "Shader buffers only allow read access.");
+
+			Binding& bind = m_draw.m_bind[_stage];
+			bind.m_idx = _handle.idx;
+			bind.m_type = uint8_t(Binding::IndexBuffer);
+			bind.m_un.m_compute.m_access = _access;
+
+			// TODO: should this take in a uniform as well for opengl?
+		}
+
 		void setShaderBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access)
 		{
 			// In OpenGL writing might also be possible by default, 
@@ -4052,6 +4067,13 @@ namespace bgfx
 			BGFX_CHECK_HANDLE("setBuffer", m_dynamicVertexBufferHandle, _handle);
 			const DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[_handle.idx];
 			m_submit->setBuffer(_stage, dvb.m_handle, _access);
+		}
+
+		BGFX_API_FUNC(void setShaderBuffer(uint8_t _stage, DynamicIndexBufferHandle _handle, Access::Enum _access))
+		{
+			BGFX_CHECK_HANDLE("setShaderBuffer", m_dynamicIndexBufferHandle, _handle);
+			const DynamicIndexBuffer& dib = m_dynamicIndexBuffers[_handle.idx];
+			m_submit->setShaderBuffer(_stage, dib.m_handle, _access);
 		}
 
 		BGFX_API_FUNC(void setShaderBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access) )
