@@ -5300,14 +5300,44 @@ data.NumQualityLevels = 0;
 									const Binding& bind = draw.m_bind[stage];
 									if (invalidHandle != bind.m_idx)
 									{
-										TextureD3D12& texture = m_textures[bind.m_idx];
-										texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-										scratchBuffer.allocSrv(srvHandle[stage], texture);
-										samplerFlags[stage] = (0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & bind.m_un.m_draw.m_textureFlags)
-											? bind.m_un.m_draw.m_textureFlags
-											: texture.m_flags
-											) & (BGFX_TEXTURE_SAMPLER_BITS_MASK|BGFX_TEXTURE_BORDER_COLOR_MASK)
-											;
+										switch (bind.m_type)
+										{
+										case Binding::Texture:
+											{
+												TextureD3D12& texture = m_textures[bind.m_idx];
+												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+												scratchBuffer.allocSrv(srvHandle[stage], texture);
+												samplerFlags[stage] = (0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & bind.m_un.m_draw.m_textureFlags)
+													? bind.m_un.m_draw.m_textureFlags
+													: texture.m_flags
+													) & (BGFX_TEXTURE_SAMPLER_BITS_MASK | BGFX_TEXTURE_BORDER_COLOR_MASK)
+													;
+											}
+											break;
+
+										case Binding::IndexBuffer:
+										case Binding::VertexBuffer:
+											{
+												BufferD3D12& buffer = Binding::IndexBuffer == bind.m_type
+													? m_indexBuffers[bind.m_idx]
+													: m_vertexBuffers[bind.m_idx]
+													;
+
+												if (Access::Read != bind.m_un.m_compute.m_access)
+												{
+													buffer.setState(m_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+													scratchBuffer.allocUav(srvHandle[stage], buffer);
+												}
+												else 
+												{
+													// The api functions prevent binding with Access::Write,
+													// but might as well allow it in here for future-proofing
+													buffer.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+													scratchBuffer.allocSrv(srvHandle[stage], buffer);
+												}
+											}
+											break;
+										}
 									}
 									else
 									{
