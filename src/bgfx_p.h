@@ -1687,7 +1687,7 @@ namespace bgfx
 			Binding& bind = m_draw.m_bind[_stage];
 			bind.m_idx = _handle.idx;
 			bind.m_type = uint8_t(Binding::IndexBuffer);
-			bind.m_un.m_compute.m_access = _access;
+			bind.m_un.m_compute.m_access = uint8_t(_access);
 
 			// TODO: should this take in a uniform as well for opengl?
 		}
@@ -1702,7 +1702,7 @@ namespace bgfx
 			Binding& bind = m_draw.m_bind[_stage];
 			bind.m_idx    = _handle.idx;
 			bind.m_type   = uint8_t(Binding::VertexBuffer);
-			bind.m_un.m_compute.m_access = _access;
+			bind.m_un.m_compute.m_access = uint8_t(_access);
 
 			// TODO: should this take in a uniform as well for opengl?
 		}
