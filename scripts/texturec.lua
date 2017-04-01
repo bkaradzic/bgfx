@@ -14,9 +14,11 @@ project "texturec"
 		path.join(BGFX_DIR, "3rdparty"),
 		path.join(BGFX_DIR, "3rdparty/nvtt"),
 		path.join(BGFX_DIR, "3rdparty/iqa/include"),
+		path.join(BGFX_DIR, "examples/common"),
 	}
 
 	files {
+		path.join(BGFX_DIR, "examples/common/image_decode.*"),
 		path.join(BGFX_DIR, "src/image.*"),
 		path.join(BGFX_DIR, "3rdparty/libsquish/**.cpp"),
 		path.join(BGFX_DIR, "3rdparty/libsquish/**.h"),

@@ -8,7 +8,7 @@
 
 #include <bx/pixelformat.h>
 #include <bgfx/bgfx.h>
-#include "image.h"
+#include "image_decode.h"
 
 ///
 void* load(const char* _filePath, uint32_t* _size = NULL);

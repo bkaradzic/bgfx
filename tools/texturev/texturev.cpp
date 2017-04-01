@@ -24,7 +24,7 @@
 #include <string>
 namespace stl = tinystl;
 
-#include "image.h"
+#include "image_decode.h"
 
 #include <bgfx/embedded_shader.h>
 

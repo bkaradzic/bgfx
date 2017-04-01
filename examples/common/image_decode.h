@@ -8,6 +8,7 @@
 
 namespace bgfx
 {
+#if !defined(BGFX_IMAGE_H_HEADER_GUARD)
 	///
 	struct ImageContainer
 	{
@@ -31,14 +32,6 @@ namespace bgfx
 	};
 
 	///
-	ImageContainer* imageParse(
-		  bx::AllocatorI* _allocator
-		, const void* _data
-		, uint32_t _size
-		, TextureFormat::Enum _dstFormat = TextureFormat::Count
-		);
-
-	///
 	ImageContainer* imageAlloc(
 		  bx::AllocatorI* _allocator
 		, TextureFormat::Enum _format
@@ -56,6 +49,15 @@ namespace bgfx
 
 	/// Converts format to string.
 	const char* getName(TextureFormat::Enum _format);
+#endif // !defined(BGFX_IMAGE_H_HEADER_GUARD)
+
+	///
+	ImageContainer* imageParse(
+		  bx::AllocatorI* _allocator
+		, const void* _data
+		, uint32_t _size
+		, TextureFormat::Enum _dstFormat = TextureFormat::Count
+		);
 
 } // namespace bgfx
 

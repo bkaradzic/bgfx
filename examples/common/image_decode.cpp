@@ -24,23 +24,50 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4100) // error C4100: '' : unreferenced formal
 #include <tinyexr/tinyexr.h>
 BX_PRAGMA_DIAGNOSTIC_POP()
 
+BX_PRAGMA_DIAGNOSTIC_PUSH();
+BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4127) // warning C4127: conditional expression is constant
 #define LODEPNG_NO_COMPILE_ENCODER
 #define LODEPNG_NO_COMPILE_DISK
 #define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS
 #define LODEPNG_NO_COMPILE_ERROR_TEXT
 #define LODEPNG_NO_COMPILE_ALLOCATORS
 #define LODEPNG_NO_COMPILE_CPP
-#include <lodepng/lodepng.h>
+#include <lodepng/lodepng.cpp>
+BX_PRAGMA_DIAGNOSTIC_POP();
 
-typedef unsigned char stbi_uc;
-extern "C" int stbi_is_hdr_from_memory(stbi_uc const* _buffer, int _len);
-extern "C" stbi_uc* stbi_load_from_memory(stbi_uc const* _buffer, int _len, int* _x, int* _y, int* _comp, int _req_comp);
-extern "C" float* stbi_loadf_from_memory(stbi_uc const* _buffer, int _len, int* _x, int* _y, int* _comp, int _req_comp);
-extern "C" void stbi_image_free(void* _ptr);
-extern void lodepng_free(void* _ptr);
+void* lodepng_malloc(size_t _size)
+{
+	return ::malloc(_size);
+}
+
+void* lodepng_realloc(void* _ptr, size_t _size)
+{
+	return ::realloc(_ptr, _size);
+}
+
+void lodepng_free(void* _ptr)
+{
+	::free(_ptr);
+}
+
+BX_PRAGMA_DIAGNOSTIC_PUSH();
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wmissing-field-initializers");
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow");
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wint-to-pointer-cast")
+#if BX_COMPILER_GCC >= 60000
+BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wmisleading-indentation");
+BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wshift-negative-value");
+#endif // BX_COMPILER_GCC >= 60000_
+#define STBI_MALLOC(_size)        lodepng_malloc(_size)
+#define STBI_REALLOC(_ptr, _size) lodepng_realloc(_ptr, _size)
+#define STBI_FREE(_ptr)           lodepng_free(_ptr)
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.c>
+BX_PRAGMA_DIAGNOSTIC_POP();
 
 namespace bgfx
 {
+#if !defined(BGFX_IMAGE_H_HEADER_GUARD)
 	struct ImageMip
 	{
 		TextureFormat::Enum m_format;
@@ -52,6 +79,7 @@ namespace bgfx
 		bool     m_hasAlpha;
 		const uint8_t* m_data;
 	};
+#endif // !defined(BGFX_IMAGE_H_HEADER_GUARD)
 
 	uint32_t imageGetSize(
 		  TextureInfo* _info
