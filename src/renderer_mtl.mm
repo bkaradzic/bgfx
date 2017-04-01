@@ -3623,6 +3623,8 @@ namespace bgfx { namespace mtl
 					{
 						const Binding& sampler = draw.m_bind[stage];
 						Binding& current = currentState.m_bind[stage];
+						BX_CHECK(Binding::Texture == current.m_type
+						      , "Buffer binding is not supported on Metal.");
 						if (current.m_idx != sampler.m_idx
 						||  current.m_un.m_draw.m_textureFlags != sampler.m_un.m_draw.m_textureFlags
 						||  programChanged)
