@@ -6,6 +6,7 @@
 #ifndef BGFX_UTILS_H_HEADER_GUARD
 #define BGFX_UTILS_H_HEADER_GUARD
 
+#include <bx/pixelformat.h>
 #include <bgfx/bgfx.h>
 #include "image.h"
 
@@ -42,6 +43,21 @@ inline bool checkAvailTransientBuffers(uint32_t _numVertices, const bgfx::Vertex
 	return _numVertices == bgfx::getAvailTransientVertexBuffer(_numVertices, _decl)
 		&& _numIndices  == bgfx::getAvailTransientIndexBuffer(_numIndices)
 		;
+}
+
+///
+inline uint32_t encodeNormalRgba8(float _x, float _y = 0.0f, float _z = 0.0f, float _w = 0.0f)
+{
+	const float src[] =
+	{
+		_x * 0.5f + 0.5f,
+		_y * 0.5f + 0.5f,
+		_z * 0.5f + 0.5f,
+		_w * 0.5f + 0.5f,
+	};
+	uint32_t dst;
+	bx::packRgba8(&dst, src);
+	return dst;
 }
 
 ///
