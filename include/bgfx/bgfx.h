@@ -10,7 +10,7 @@
 #include <stdint.h> // uint32_t
 #include <stdlib.h> // NULL
 
-#include <bgfx/defines.h>
+#include "defines.h"
 
 ///
 #define BGFX_HANDLE(_name) \
