@@ -13,8 +13,8 @@ configuration:
   - Release
 
 install:
-  - git clone https://github.com/bkaradzic/bx ..\bx
-  - git clone https://github.com/bkaradzic/bimg ..\bimg
+  - git clone --depth 1 https://github.com/bkaradzic/bx ..\bx
+  - git clone --depth 1 https://github.com/bkaradzic/bimg ..\bimg
   - ..\bx\tools\bin\windows\genie --with-tools %TOOLSET%
 
 build:
