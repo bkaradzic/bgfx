@@ -23,6 +23,10 @@
 
 #include "nanovg.h"
 
+#ifndef NANOVG_HAS_STB_IMAGE
+#	define NANOVG_HAS_STB_IMAGE 1
+#endif // NANOVG_HAS_STB_IMAGE
+
 #include <bx/macros.h>
 
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4701) // error C4701: potentially uninitialized local variable 'cint' used
@@ -37,6 +41,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wunused-result");
 #include "fontstash.h"
 BX_PRAGMA_DIAGNOSTIC_POP();
 
+#if NANOVG_HAS_STB_IMAGE
 #define LODEPNG_NO_COMPILE_ENCODER
 #define LODEPNG_NO_COMPILE_DISK
 #define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS
@@ -56,6 +61,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wshift-negative-value");
 
 #include <stb/stb_image.c>
 BX_PRAGMA_DIAGNOSTIC_POP();
+#endif // NANOVG_HAS_STB_IMAGE
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4100)  // unreferenced formal parameter
@@ -810,6 +816,7 @@ void nvgFillPaint(NVGcontext* ctx, NVGpaint paint)
 	nvgTransformMultiply(state->fill.xform, state->xform);
 }
 
+#if NANOVG_HAS_STB_IMAGE
 int nvgCreateImage(NVGcontext* ctx, const char* filename, int imageFlags)
 {
 	int w, h, n, image;
@@ -838,6 +845,7 @@ int nvgCreateImageMem(NVGcontext* ctx, int imageFlags, unsigned char* data, int 
 	stbi_image_free(img);
 	return image;
 }
+#endif // NANOVG_HAS_STB_IMAGE
 
 int nvgCreateImageRGBA(NVGcontext* ctx, int w, int h, int imageFlags, const unsigned char* data)
 {

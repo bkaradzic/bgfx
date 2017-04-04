@@ -1874,6 +1874,7 @@ namespace bgfx
 									else
 									{
 										bx::stringPrintf(code, "#version %s\n", need130 ? "130" : profile);
+										glsl = 130;
 									}
 
 									if (usesGpuShader5)
@@ -1895,8 +1896,7 @@ namespace bgfx
 
 									if (usesTextureLod)
 									{
-										if ( (0 != metal || 130 > glsl)
-										&&  'f' == shaderType)
+										if ('f' == shaderType)
 										{
 											ARB_shader_texture_lod = true;
 											bx::stringPrintf(code

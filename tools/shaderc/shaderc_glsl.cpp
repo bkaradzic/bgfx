@@ -50,6 +50,7 @@ namespace bgfx { namespace glsl
 
 			bool found = false
 				|| 3 == sscanf(log, "%u:%u(%u):", &source, &line, &column)
+				|| 2 == sscanf(log, "(%u,%u):", &line, &column)
 				;
 
 			if (found
@@ -108,21 +109,24 @@ namespace bgfx { namespace glsl
 				&&  *parse != '\0')
 			{
 				parse = bx::strws(parse);
-				const char* eol = strchr(parse, ';');
+				const char* eol = bx::strnchr(parse, ';');
 				if (NULL != eol)
 				{
 					const char* qualifier = parse;
 					parse = bx::strws(bx::strword(parse) );
 
-					if (0 == strncmp(qualifier, "attribute", 9)
-					||  0 == strncmp(qualifier, "varying", 7) )
+					if (0 == bx::strncmp(qualifier, "attribute", 9)
+					||  0 == bx::strncmp(qualifier, "varying",   7)
+					||  0 == bx::strncmp(qualifier, "in",        2)
+					||  0 == bx::strncmp(qualifier, "out",       3)
+					   )
 					{
 						// skip attributes and varyings.
 						parse = eol + 1;
 						continue;
 					}
 
-					if (0 != strncmp(qualifier, "uniform", 7) )
+					if (0 != bx::strncmp(qualifier, "uniform", 7) )
 					{
 						// end if there is no uniform keyword.
 						parse = NULL;
@@ -132,9 +136,9 @@ namespace bgfx { namespace glsl
 					const char* precision = NULL;
 					const char* typen = parse;
 
-					if (0 == strncmp(typen, "lowp", 4)
-					||  0 == strncmp(typen, "mediump", 7)
-					||  0 == strncmp(typen, "highp", 5) )
+					if (0 == bx::strncmp(typen, "lowp", 4)
+					||  0 == bx::strncmp(typen, "mediump", 7)
+					||  0 == bx::strncmp(typen, "highp", 5) )
 					{
 						precision = typen;
 						typen = parse = bx::strws(bx::strword(parse) );
@@ -147,30 +151,30 @@ namespace bgfx { namespace glsl
 
 					if (0 == strncmp(typen, "sampler", 7) )
 					{
-						strcpy(uniformType, "int");
+						bx::strlncpy(uniformType, BX_COUNTOF(uniformType), "int");
 					}
 					else
 					{
-						bx::strlcpy(uniformType, typen, parse-typen+1);
+						bx::strlcpy(uniformType, typen, int32_t(parse-typen+1) );
 					}
 
 					const char* name = parse = bx::strws(parse);
 
 					char uniformName[256];
 					uint8_t num = 1;
-					const char* array = bx::strnstr(name, "[", eol-parse);
+					const char* array = bx::strnstr(name, "[", int32_t(eol-parse) );
 					if (NULL != array)
 					{
-						bx::strlcpy(uniformName, name, array-name+1);
+						bx::strlcpy(uniformName, name, int32_t(array-name+1) );
 
 						char arraySize[32];
-						const char* end = bx::strnstr(array, "]", eol-array);
-						bx::strlcpy(arraySize, array+1, end-array);
+						const char* end = bx::strnstr(array, "]", int32_t(eol-array) );
+						bx::strlcpy(arraySize, array+1, int32_t(end-array) );
 						num = uint8_t(atoi(arraySize) );
 					}
 					else
 					{
-						bx::strlcpy(uniformName, name, eol-name+1);
+						bx::strlcpy(uniformName, name, int32_t(eol-name+1) );
 					}
 
 					Uniform un;
@@ -193,43 +197,43 @@ namespace bgfx { namespace glsl
 		}
 		else
 		{
-			const char* parse = strstr(optimizedShader, "struct xlatMtlShaderUniform {");
+			const char* parse = bx::strnstr(optimizedShader, "struct xlatMtlShaderUniform {");
 			const char* end   = parse;
 			if (NULL != parse)
 			{
-				parse += strlen("struct xlatMtlShaderUniform {");
-				end   = strstr(parse, "};");
+				parse += bx::strnlen("struct xlatMtlShaderUniform {");
+				end   =  bx::strnstr(parse, "};");
 			}
 
 			while ( parse < end
 			&&     *parse != '\0')
 			{
 				parse = bx::strws(parse);
-				const char* eol = strchr(parse, ';');
+				const char* eol = bx::strnchr(parse, ';');
 				if (NULL != eol)
 				{
 					const char* typen = parse;
 
 					char uniformType[256];
 					parse = bx::strword(parse);
-					bx::strlcpy(uniformType, typen, parse-typen+1);
+					bx::strlcpy(uniformType, typen, int32_t(parse-typen+1) );
 					const char* name = parse = bx::strws(parse);
 
 					char uniformName[256];
 					uint8_t num = 1;
-					const char* array = bx::strnstr(name, "[", eol-parse);
+					const char* array = bx::strnstr(name, "[", int32_t(eol-parse) );
 					if (NULL != array)
 					{
-						bx::strlcpy(uniformName, name, array-name+1);
+						bx::strlcpy(uniformName, name, int32_t(array-name+1) );
 
 						char arraySize[32];
-						const char* arrayEnd = bx::strnstr(array, "]", eol-array);
-						bx::strlcpy(arraySize, array+1, arrayEnd-array);
+						const char* arrayEnd = bx::strnstr(array, "]", int32_t(eol-array) );
+						bx::strlcpy(arraySize, array+1, int32_t(arrayEnd-array) );
 						num = uint8_t(atoi(arraySize) );
 					}
 					else
 					{
-						bx::strlcpy(uniformName, name, eol-name+1);
+						bx::strlcpy(uniformName, name, int32_t(eol-name+1) );
 					}
 
 					Uniform un;
