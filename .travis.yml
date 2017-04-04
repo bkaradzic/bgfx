@@ -16,8 +16,7 @@ addons:
     - clang
 
 before_script:
-  - git clone https://github.com/bkaradzic/bx   ../bx
-  - git clone https://github.com/bkaradzic/bimg ../bimg
+  git clone --depth 1 https://github.com/bkaradzic/bx ../bx && git clone --depth 1 https://github.com/bkaradzic/bimg ../bimg
 
 script:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then make build CXX="g++-4.8" CC="gcc-4.8"; fi
