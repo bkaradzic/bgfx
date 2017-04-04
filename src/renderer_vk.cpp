@@ -986,7 +986,7 @@ VK_IMPORT_INSTANCE
 					{
 						uint8_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
-						const bool depth = isDepth(TextureFormat::Enum(ii) );
+						const bool depth = bimg::isDepth(bimg::TextureFormat::Enum(ii) );
 						VkFormat fmt = depth
 							? s_textureFormat[ii].m_fmtDsv
 							: s_textureFormat[ii].m_fmt

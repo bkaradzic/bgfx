@@ -249,7 +249,7 @@ class Particles : public entry::AppI
 
 		psInit();
 
-		bgfx::ImageContainer* image = imageLoad(
+		bimg::ImageContainer* image = imageLoad(
 			  "textures/particle.ktx"
 			, bgfx::TextureFormat::BGRA8
 			);
@@ -260,7 +260,7 @@ class Particles : public entry::AppI
 				, image->m_data
 				);
 
-		bgfx::imageFree(image);
+		bimg::imageFree(image);
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_emitter); ++ii)
 		{

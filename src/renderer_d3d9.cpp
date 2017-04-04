@@ -700,7 +700,7 @@ namespace bgfx { namespace d3d9
 				support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
 					, m_deviceType
 					, adapterFormat
-					, isDepth(TextureFormat::Enum(ii) ) ? D3DUSAGE_DEPTHSTENCIL : D3DUSAGE_RENDERTARGET
+					, bimg::isDepth(bimg::TextureFormat::Enum(ii) ) ? D3DUSAGE_DEPTHSTENCIL : D3DUSAGE_RENDERTARGET
 					, D3DRTYPE_TEXTURE
 					, s_textureFormat[ii].m_fmt
 					) ) ? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER : BGFX_CAPS_FORMAT_TEXTURE_NONE;
@@ -716,7 +716,7 @@ namespace bgfx { namespace d3d9
 				support |= SUCCEEDED(m_d3d9->CheckDeviceFormat(m_adapter
 					, m_deviceType
 					, adapterFormat
-					, isDepth(TextureFormat::Enum(ii) ) ? D3DUSAGE_DEPTHSTENCIL : D3DUSAGE_RENDERTARGET
+					, bimg::isDepth(bimg::TextureFormat::Enum(ii) ) ? D3DUSAGE_DEPTHSTENCIL : D3DUSAGE_RENDERTARGET
 					, D3DRTYPE_TEXTURE
 					, s_textureFormat[ii].m_fmt
 					) ) ? BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN : BGFX_CAPS_FORMAT_TEXTURE_NONE;
@@ -1015,7 +1015,7 @@ namespace bgfx { namespace d3d9
 			uint32_t srcPitch  = lockedRect.Pitch;
 			uint8_t* src       = (uint8_t*)lockedRect.pBits;
 
-			const uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(texture.m_textureFormat) );
+			const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(texture.m_textureFormat) );
 			uint8_t* dst      = (uint8_t*)_data;
 			uint32_t dstPitch = srcWidth*bpp/8;
 
@@ -2504,7 +2504,7 @@ namespace bgfx { namespace d3d9
 	void TextureD3D9::createTexture(uint32_t _width, uint32_t _height, uint8_t _numMips)
 	{
 		m_type = Texture2D;
-		const TextureFormat::Enum fmt = (TextureFormat::Enum)m_textureFormat;
+		const bimg::TextureFormat::Enum fmt = (bimg::TextureFormat::Enum)m_textureFormat;
 
 		DWORD usage = 0;
 		D3DPOOL pool = D3DPOOL_DEFAULT;
@@ -2512,7 +2512,7 @@ namespace bgfx { namespace d3d9
 		const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
 		const bool blit         = 0 != (m_flags&BGFX_TEXTURE_BLIT_DST);
 		const bool readBack     = 0 != (m_flags&BGFX_TEXTURE_READ_BACK);
-		if (isDepth(fmt) )
+		if (bimg::isDepth(fmt) )
 		{
 			usage = D3DUSAGE_DEPTHSTENCIL;
 		}
@@ -2543,7 +2543,7 @@ namespace bgfx { namespace d3d9
 			{
 				const Msaa& msaa = s_msaa[msaaQuality];
 
-				if (isDepth(fmt) )
+				if (bimg::isDepth(fmt) )
 				{
 					DX_CHECK(device->CreateDepthStencilSurface(
 						  m_width
@@ -2615,7 +2615,7 @@ namespace bgfx { namespace d3d9
 			, _width
 			, _height
 			, _numMips
-			, getName(fmt)
+			, bimg::getName(fmt)
 			);
 	}
 
@@ -2667,13 +2667,13 @@ namespace bgfx { namespace d3d9
 	void TextureD3D9::createCubeTexture(uint32_t _width, uint8_t _numMips)
 	{
 		m_type = TextureCube;
-		const TextureFormat::Enum fmt = (TextureFormat::Enum)m_textureFormat;
+		const bimg::TextureFormat::Enum fmt = (bimg::TextureFormat::Enum)m_textureFormat;
 
 		DWORD usage = 0;
 
 		const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
 		const bool blit         = 0 != (m_flags&BGFX_TEXTURE_BLIT_DST);
-		if (isDepth(fmt) )
+		if (bimg::isDepth(fmt) )
 		{
 			usage = D3DUSAGE_DEPTHSTENCIL;
 		}
@@ -2891,14 +2891,14 @@ namespace bgfx { namespace d3d9
 
 	void TextureD3D9::create(const Memory* _mem, uint32_t _flags, uint8_t _skip)
 	{
-		ImageContainer imageContainer;
+		bimg::ImageContainer imageContainer;
 
-		if (imageParse(imageContainer, _mem->data, _mem->size) )
+		if (bimg::imageParse(imageContainer, _mem->data, _mem->size) )
 		{
 			uint8_t numMips = imageContainer.m_numMips;
 			const uint8_t startLod = uint8_t(bx::uint32_min(_skip, numMips-1) );
 			numMips -= startLod;
-			const ImageBlockInfo& blockInfo = getBlockInfo(TextureFormat::Enum(imageContainer.m_format) );
+			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(imageContainer.m_format) );
 			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
 			const uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height>>startLod);
 
@@ -2911,7 +2911,7 @@ namespace bgfx { namespace d3d9
 			m_textureFormat   = uint8_t(getViableTextureFormat(imageContainer) );
 			const bool convert = m_textureFormat != m_requestedFormat;
 
-			uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
+			uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 
 			if (imageContainer.m_cubeMap)
 			{
@@ -2950,8 +2950,8 @@ namespace bgfx { namespace d3d9
 			// bytes. If actual mip size is used it causes memory corruption.
 			// http://www.aras-p.info/texts/D3D9GPUHacks.html#3dc
 			const bool useMipSize = true
-							&& imageContainer.m_format != TextureFormat::BC4
-							&& imageContainer.m_format != TextureFormat::BC5
+							&& imageContainer.m_format != bimg::TextureFormat::BC4
+							&& imageContainer.m_format != bimg::TextureFormat::BC5
 							;
 
 			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
@@ -2971,8 +2971,8 @@ namespace bgfx { namespace d3d9
 					mipHeight = bx::uint32_max(blockInfo.blockHeight, mipHeight);
 					uint32_t mipSize = width*height*depth*bpp/8;
 
-					ImageMip mip;
-					if (imageGetRawData(imageContainer, side, lod+startLod, _mem->data, _mem->size, mip) )
+					bimg::ImageMip mip;
+					if (bimg::imageGetRawData(imageContainer, side, lod+startLod, _mem->data, _mem->size, mip) )
 					{
 						uint32_t pitch;
 						uint32_t slicePitch;
@@ -2986,7 +2986,7 @@ namespace bgfx { namespace d3d9
 								uint32_t srcpitch = mipWidth*bpp/8;
 
 								uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, srcpitch*mipHeight);
-								imageDecodeToBgra8(temp
+								bimg::imageDecodeToBgra8(temp
 										, mip.m_data
 										, mip.m_width
 										, mip.m_height
@@ -3000,7 +3000,7 @@ namespace bgfx { namespace d3d9
 							}
 							else
 							{
-								imageDecodeToBgra8(bits, mip.m_data, mip.m_width, mip.m_height, pitch, mip.m_format);
+								bimg::imageDecodeToBgra8(bits, mip.m_data, mip.m_width, mip.m_height, pitch, mip.m_format);
 							}
 						}
 						else
@@ -3009,11 +3009,11 @@ namespace bgfx { namespace d3d9
 							switch (m_textureFormat)
 							{
 							case TextureFormat::RGB5A1:
-								imageConvert(bits, 16, bx::packBgr5a1, mip.m_data, bx::unpackRgb5a1, size);
+								bimg::imageConvert(bits, 16, bx::packBgr5a1, mip.m_data, bx::unpackRgb5a1, size);
 								break;
 
 							case TextureFormat::RGBA4:
-								imageConvert(bits, 16, bx::packBgra4, mip.m_data, bx::unpackRgba4, size);
+								bimg::imageConvert(bits, 16, bx::packBgra4, mip.m_data, bx::unpackRgba4, size);
 								break;
 
 							default:
@@ -3045,7 +3045,7 @@ namespace bgfx { namespace d3d9
 
 	void TextureD3D9::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
-		const uint32_t bpp = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
+		const uint32_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 		const uint32_t rectpitch = _rect.m_width*bpp/8;
 		const uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
 		const uint32_t dstpitch  = s_renderD3D9->m_updateTexturePitch;
@@ -3059,7 +3059,7 @@ namespace bgfx { namespace d3d9
 		if (convert)
 		{
 			temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch*_rect.m_height);
-			imageDecodeToBgra8(temp, data, _rect.m_width, _rect.m_height, srcpitch, TextureFormat::Enum(m_requestedFormat) );
+			bimg::imageDecodeToBgra8(temp, data, _rect.m_width, _rect.m_height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 			data = temp;
 		}
 
@@ -3071,11 +3071,11 @@ namespace bgfx { namespace d3d9
 				switch (m_textureFormat)
 				{
 				case TextureFormat::RGB5A1:
-					imageConvert(dst, 16, bx::packBgr5a1, src, bx::unpackRgb5a1, rectpitch);
+					bimg::imageConvert(dst, 16, bx::packBgr5a1, src, bx::unpackRgb5a1, rectpitch);
 					break;
 
 				case TextureFormat::RGBA4:
-					imageConvert(dst, 16, bx::packBgra4, src, bx::unpackRgba4, rectpitch);
+					bimg::imageConvert(dst, 16, bx::packBgra4, src, bx::unpackRgba4, rectpitch);
 					break;
 
 				default:
@@ -3211,7 +3211,7 @@ namespace bgfx { namespace d3d9
 					m_height = texture.m_height;
 				}
 
-				if (isDepth( (TextureFormat::Enum)texture.m_textureFormat) )
+				if (bimg::isDepth(bimg::TextureFormat::Enum(texture.m_textureFormat) ) )
 				{
 					m_dsIdx = uint8_t(ii);
 				}
@@ -3801,7 +3801,7 @@ namespace bgfx { namespace d3d9
 						//
 						// GetRenderTargetData (dst must be SYSTEMMEM)
 
-						bool depth = isDepth(TextureFormat::Enum(src.m_textureFormat) );
+						bool depth = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) );
 						HRESULT hr = m_device->StretchRect(srcSurface
 							, depth ? NULL : &srcRect
 							, dstSurface

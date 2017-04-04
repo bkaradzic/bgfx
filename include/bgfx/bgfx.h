@@ -933,44 +933,6 @@ namespace bgfx
 		, bool _index32
 		);
 
-	/// Swizzle RGBA8 image to BGRA8.
-	///
-	/// @param[in] _dst Destination image. Must be the same size as input image.
-	///   _dst might be pointer to the same memory as _src.
-	/// @param[in] _width Width of input image (pixels).
-	/// @param[in] _height Height of input image (pixels).
-	/// @param[in] _pitch Pitch of input image (bytes).
-	/// @param[in] _src Source image.
-	///
-	/// @attention C99 equivalent is `bgfx_image_swizzle_bgra8`.
-	///
-	void imageSwizzleBgra8(
-		  void* _dst
-		, uint32_t _width
-		, uint32_t _height
-		, uint32_t _pitch
-		, const void* _src
-		);
-
-	/// Downsample RGBA8 image with 2x2 pixel average filter.
-	///
-	/// @param[in] _dst Destination image. Must be at least quarter size of
-	///   input image. _dst might be pointer to the same memory as _src.
-	/// @param[in] _width Width of input image (pixels).
-	/// @param[in] _height Height of input image (pixels).
-	/// @param[in] _pitch Pitch of input image (bytes).
-	/// @param[in] _src Source image.
-	///
-	/// @attention C99 equivalent is `bgfx_image_rgba8_downsample_2x2`.
-	///
-	void imageRgba8Downsample2x2(
-		  void* _dst
-		, uint32_t _width
-		, uint32_t _height
-		, uint32_t _pitch
-		, const void* _src
-		);
-
 	/// Returns supported backend API renderers.
 	///
 	/// @param[in] _max Maximum number of elements in _enum array.

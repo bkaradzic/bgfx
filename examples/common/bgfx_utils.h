@@ -8,7 +8,7 @@
 
 #include <bx/pixelformat.h>
 #include <bgfx/bgfx.h>
-#include "image_decode.h"
+#include <bimg/bimg.h>
 
 ///
 void* load(const char* _filePath, uint32_t* _size = NULL);
@@ -26,7 +26,7 @@ bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName);
 bgfx::TextureHandle loadTexture(const char* _name, uint32_t _flags = BGFX_TEXTURE_NONE, uint8_t _skip = 0, bgfx::TextureInfo* _info = NULL);
 
 ///
-bgfx::ImageContainer* imageLoad(const char* _filePath, bgfx::TextureFormat::Enum _dstFormat);
+bimg::ImageContainer* imageLoad(const char* _filePath, bgfx::TextureFormat::Enum _dstFormat);
 
 ///
 void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices);

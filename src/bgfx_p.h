@@ -132,7 +132,7 @@ namespace bgfx
 #include <bx/maputil.h>
 
 #include <bgfx/platform.h>
-#include "image.h"
+#include <bimg/bimg.h>
 #include "shader.h"
 
 #define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', 0x2)
@@ -360,7 +360,8 @@ namespace bgfx
 	void release(const Memory* _mem);
 	const char* getAttribName(Attrib::Enum _attr);
 	void getTextureSizeFromRatio(BackbufferRatio::Enum _ratio, uint16_t& _width, uint16_t& _height);
-	TextureFormat::Enum getViableTextureFormat(const ImageContainer& _imageContainer);
+	TextureFormat::Enum getViableTextureFormat(const bimg::ImageContainer& _imageContainer);
+	const char* getName(TextureFormat::Enum _fmt);
 
 	inline uint32_t castfu(float _value)
 	{
@@ -3243,8 +3244,8 @@ namespace bgfx
 				_info = &ti;
 			}
 
-			ImageContainer imageContainer;
-			if (imageParse(imageContainer, _mem->data, _mem->size) )
+			bimg::ImageContainer imageContainer;
+			if (bimg::imageParse(imageContainer, _mem->data, _mem->size) )
 			{
 				calcTextureSize(*_info
 					, (uint16_t)imageContainer.m_width
@@ -3328,7 +3329,7 @@ namespace bgfx
 				, _handle.idx
 				, _width
 				, _height
-				, bgfx::getName(TextureFormat::Enum(textureRef.m_format) )
+				, bimg::getName(bimg::TextureFormat::Enum(textureRef.m_format) )
 				);
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::ResizeTexture);
@@ -3406,7 +3407,7 @@ namespace bgfx
 			for (uint32_t ii = 0; ii < _num; ++ii)
 			{
 				TextureHandle texHandle = _attachment[ii].handle;
-				if (isDepth(TextureFormat::Enum(m_textureRef[texHandle.idx].m_format)))
+				if (bimg::isDepth(bimg::TextureFormat::Enum(m_textureRef[texHandle.idx].m_format)))
 				{
 					++depth;
 				}
@@ -4087,8 +4088,8 @@ namespace bgfx
 			const TextureRef& dst = m_textureRef[_dst.idx];
 			BX_CHECK(src.m_format == dst.m_format
 				, "Texture format must match (src %s, dst %s)."
-				, bgfx::getName(TextureFormat::Enum(src.m_format) )
-				, bgfx::getName(TextureFormat::Enum(dst.m_format) )
+				, bimg::getName(bimg::TextureFormat::Enum(src.m_format) )
+				, bimg::getName(bimg::TextureFormat::Enum(dst.m_format) )
 				);
 			BX_UNUSED(src, dst);
 			m_submit->blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);

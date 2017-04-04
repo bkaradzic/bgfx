@@ -24,7 +24,7 @@
 #include <string>
 namespace stl = tinystl;
 
-#include "image_decode.h"
+#include <bimg/decode.h>
 
 #include <bgfx/embedded_shader.h>
 
@@ -863,7 +863,7 @@ int _main_(int _argc, char** _argv)
 						, view.m_info.width
 						, view.m_info.height
 						, view.m_info.cubeMap ? " CubeMap" : ""
-						, bgfx::getName(view.m_info.format)
+						, bimg::getName(bimg::TextureFormat::Enum(view.m_info.format) )
 						);
 				}
 				else

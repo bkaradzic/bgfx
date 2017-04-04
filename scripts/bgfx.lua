@@ -47,6 +47,7 @@ function bgfxProject(_name, _kind, _defines)
 			}
 
 			links {
+				"bimg",
 				"bx",
 			}
 
@@ -73,6 +74,7 @@ function bgfxProject(_name, _kind, _defines)
 			path.join(BGFX_DIR, "3rdparty"),
 			path.join(BGFX_DIR, "3rdparty/dxsdk/include"),
 			path.join(BX_DIR,   "include"),
+			path.join(BIMG_DIR, "include"),
 		}
 
 		defines {

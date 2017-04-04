@@ -24,7 +24,7 @@
 #include "nanovg.h"
 
 #ifndef NANOVG_HAS_STB_IMAGE
-#	define NANOVG_HAS_STB_IMAGE 1
+#	define NANOVG_HAS_STB_IMAGE 0
 #endif // NANOVG_HAS_STB_IMAGE
 
 #include <bx/macros.h>
@@ -816,9 +816,9 @@ void nvgFillPaint(NVGcontext* ctx, NVGpaint paint)
 	nvgTransformMultiply(state->fill.xform, state->xform);
 }
 
-#if NANOVG_HAS_STB_IMAGE
 int nvgCreateImage(NVGcontext* ctx, const char* filename, int imageFlags)
 {
+#if NANOVG_HAS_STB_IMAGE
 	int w, h, n, image;
 	unsigned char* img;
 	stbi_set_unpremultiply_on_load(1);
@@ -831,10 +831,15 @@ int nvgCreateImage(NVGcontext* ctx, const char* filename, int imageFlags)
 	image = nvgCreateImageRGBA(ctx, w, h, imageFlags, img);
 	stbi_image_free(img);
 	return image;
+#else
+	BX_UNUSED(ctx, filename, imageFlags);
+	return 0;
+#endif // NANOVG_HAS_STB_IMAGE
 }
 
 int nvgCreateImageMem(NVGcontext* ctx, int imageFlags, unsigned char* data, int ndata)
 {
+#if NANOVG_HAS_STB_IMAGE
 	int w, h, n, image;
 	unsigned char* img = stbi_load_from_memory(data, ndata, &w, &h, &n, 4);
 	if (img == NULL) {
@@ -844,8 +849,11 @@ int nvgCreateImageMem(NVGcontext* ctx, int imageFlags, unsigned char* data, int 
 	image = nvgCreateImageRGBA(ctx, w, h, imageFlags, img);
 	stbi_image_free(img);
 	return image;
-}
+#else
+	BX_UNUSED(ctx, imageFlags, data, ndata);
+	return 0;
 #endif // NANOVG_HAS_STB_IMAGE
+}
 
 int nvgCreateImageRGBA(NVGcontext* ctx, int w, int h, int imageFlags, const unsigned char* data)
 {

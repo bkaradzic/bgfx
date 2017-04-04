@@ -72,6 +72,7 @@ solution "bgfx"
 
 MODULE_DIR = path.getabsolute("../")
 BGFX_DIR   = path.getabsolute("..")
+BIMG_DIR   = path.getabsolute(path.join(BGFX_DIR, "../bimg"))
 BX_DIR     = os.getenv("BX_DIR")
 
 local BGFX_BUILD_DIR = path.join(BGFX_DIR, ".build")
@@ -122,6 +123,7 @@ function exampleProject(_name)
 
 	includedirs {
 		path.join(BX_DIR,   "include"),
+		path.join(BIMG_DIR, "include"),
 		path.join(BGFX_DIR, "include"),
 		path.join(BGFX_DIR, "3rdparty"),
 		path.join(BGFX_DIR, "examples/common"),
@@ -144,6 +146,8 @@ function exampleProject(_name)
 	links {
 		"example-common",
 		"bgfx",
+		"bimg_decode",
+		"bimg",
 		"bx",
 	}
 
@@ -364,7 +368,8 @@ dofile "bgfx.lua"
 group "libs"
 bgfxProject("", "StaticLib", {})
 
-dofile(path.join(BX_DIR, "scripts/bx.lua"))
+dofile(path.join(BX_DIR,   "scripts/bx.lua"))
+dofile(path.join(BIMG_DIR, "scripts/bimg.lua"))
 
 if _OPTIONS["with-examples"] or _OPTIONS["with-tools"] then
 	group "examples"

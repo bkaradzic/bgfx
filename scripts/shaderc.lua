@@ -219,7 +219,8 @@ project "shaderc"
 	kind "ConsoleApp"
 
 	includedirs {
-		path.join(BX_DIR, "include"),
+		path.join(BX_DIR,   "include"),
+		path.join(BIMG_DIR, "include"),
 		path.join(BGFX_DIR, "include"),
 
 		path.join(BGFX_DIR, "3rdparty/dxsdk/include"),
