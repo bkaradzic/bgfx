@@ -410,6 +410,7 @@ if _OPTIONS["with-examples"] then
 	exampleProject("30-picking")
 	exampleProject("31-rsm")
 	exampleProject("32-particles")
+	exampleProject("33-pom")
 
 	-- C99 source doesn't compile under WinRT settings
 	if not premake.vstudio.iswinrt() then
