@@ -1389,13 +1389,13 @@
 <dl class="member">
 <dt id="_CPPv2N4bgfx3HMD5widthE">
 <span id="bgfx::HMD::width__uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_h_m_d_1ad093809cc663ce7f272282c7b049611c"></span>uint16_t <code class="descname">width</code><a class="headerlink" href="#_CPPv2N4bgfx3HMD5widthE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Framebuffer width. </p>
+<dd><p>Frame buffer width. </p>
 </dd></dl>
 
 <dl class="member">
 <dt id="_CPPv2N4bgfx3HMD6heightE">
 <span id="bgfx::HMD::height__uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_h_m_d_1a8b918bcaef2145d1783926b3241d9f18"></span>uint16_t <code class="descname">height</code><a class="headerlink" href="#_CPPv2N4bgfx3HMD6heightE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Framebuffer width. </p>
+<dd><p>Frame buffer height. </p>
 </dd></dl>
 
 <dl class="member">
@@ -1823,7 +1823,7 @@ creating windows.</p>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_conversion</span></code> - <p>Conversion type, see <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_topology_convert_1acc544033627edfbc7c30a75a58ace153"><span class="std std-ref"><span class="pre">TopologyConvert::Enum</span></span></a></code>. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_dst</span></code> - <p>Destination index buffer. If this argument it NULL function will return number of indices after conversion. </p>
+<li><code class="first docutils literal"><span class="pre">_dst</span></code> - <p>Destination index buffer. If this argument is NULL function will return number of indices after conversion. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_dstSize</span></code> - <p>Destination index buffer in bytes. It must be large enough to contain output indices. If destination size is insufficient index buffer will be truncated. </p>
 </li>
@@ -2049,15 +2049,17 @@ creating windows.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx17requestScreenShotE17FrameBufferHandlePKc">
 <span id="bgfx::requestScreenShot__FrameBufferHandle.cCP"></span><span class="target" id="bgfxnamespacebgfx_1acbe6cfb0c11285b9f4a4969d1e3a71d6"></span>void <code class="descclassname">bgfx::</code><code class="descname">requestScreenShot</code><span class="sig-paren">(</span>FrameBufferHandle <em>_handle</em>, <em class="property">const</em> char *<em>_filePath</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17requestScreenShotE17FrameBufferHandlePKc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Request screen shot. </p>
+<dd><p>Request screen shot of window back buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Remark</strong></dt>
 <dd><code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_callback_i_1a44d38debc9d86b9815d55058afc762c6"><span class="std std-ref"><span class="pre">bgfx::CallbackI::screenShot</span></span></a></code> must be implemented.</dd>
 <dt><strong>Attention</strong></dt>
+<dd>Frame buffer handle must be created with OS&#8217; target native window handle. </dd>
+<dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_request_screen_shot</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Frame buffer handle. </p>
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Frame buffer handle. If handle is <code class="docutils literal"><span class="pre">BGFX_INVALID_HANDLE</span></code> request will be made for main window back buffer. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_filePath</span></code> - <p>Will be passed to <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_callback_i_1a44d38debc9d86b9815d55058afc762c6"><span class="std std-ref"><span class="pre">bgfx::CallbackI::screenShot</span></span></a></code> callback.</p>
 </li>
@@ -5322,8 +5324,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx9getResultE20OcclusionQueryHandle">
-<span id="bgfx::getResult__OcclusionQueryHandle"></span><span class="target" id="bgfxnamespacebgfx_1a7ba8bfe99238724b19795de8a04d7d3c"></span><a class="reference internal" href="#_CPPv2N4bgfx20OcclusionQueryResultE" title="bgfx::OcclusionQueryResult">OcclusionQueryResult</a>::<a class="reference internal" href="#_CPPv2N4bgfx20OcclusionQueryResult4EnumE" title="bgfx::OcclusionQueryResult::Enum">Enum</a> <code class="descclassname">bgfx::</code><code class="descname">getResult</code><span class="sig-paren">(</span>OcclusionQueryHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx9getResultE20OcclusionQueryHandle" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx9getResultE20OcclusionQueryHandleP7int32_t">
+<span id="bgfx::getResult__OcclusionQueryHandle.int32_tP"></span><span class="target" id="bgfxnamespacebgfx_1abccef1bca742db8d7b55e81ad5088f1a"></span><a class="reference internal" href="#_CPPv2N4bgfx20OcclusionQueryResultE" title="bgfx::OcclusionQueryResult">OcclusionQueryResult</a>::<a class="reference internal" href="#_CPPv2N4bgfx20OcclusionQueryResult4EnumE" title="bgfx::OcclusionQueryResult::Enum">Enum</a> <code class="descclassname">bgfx::</code><code class="descname">getResult</code><span class="sig-paren">(</span>OcclusionQueryHandle <em>_handle</em>, int32_t *<em>_result</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx9getResultE20OcclusionQueryHandleP7int32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieve occlusion query result from previous frame. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
@@ -5333,6 +5335,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Handle to occlusion query object. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_result</span></code> - <p>Number of pixels that passed test. This argument can be <code class="docutils literal"><span class="pre">NULL</span></code> if result of occlusion query is not needed. </p>
 </li>
 </ul>
 </dd>
