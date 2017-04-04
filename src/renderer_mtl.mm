@@ -557,7 +557,7 @@ namespace bgfx { namespace mtl
 					: BGFX_CAPS_FORMAT_TEXTURE_NONE
 					;
 
-				if (!isCompressed((TextureFormat::Enum)(ii)))
+				if (!bimg::isCompressed(bimg::TextureFormat::Enum(ii) ) )
 				{
 					support |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
 						| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA;
@@ -803,7 +803,7 @@ namespace bgfx { namespace mtl
 
 			uint32_t srcWidth  = bx::uint32_max(1, texture.m_ptr.width()  >> _mip);
 			uint32_t srcHeight = bx::uint32_max(1, texture.m_ptr.height() >> _mip);
-			const uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(texture.m_textureFormat) );
+			const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(texture.m_textureFormat) );
 
 			MTLRegion region = { { 0, 0, 0 }, { srcWidth, srcHeight, 1 } };
 
@@ -1249,7 +1249,7 @@ namespace bgfx { namespace mtl
 
 				if (m_screenshotTarget.pixelFormat() == MTLPixelFormatRGBA8Uint)
 				{
-					imageSwizzleBgra8(
+					bimg::imageSwizzleBgra8(
 						  m_capture
 						, m_resolution.m_width
 						, m_resolution.m_height
@@ -2380,14 +2380,14 @@ namespace bgfx { namespace mtl
 	{
 		m_sampler = s_renderMtl->getSamplerState(_flags);
 
-		ImageContainer imageContainer;
+		bimg::ImageContainer imageContainer;
 
-		if (imageParse(imageContainer, _mem->data, _mem->size) )
+		if (bimg::imageParse(imageContainer, _mem->data, _mem->size) )
 		{
 			uint8_t numMips = imageContainer.m_numMips;
 			const uint8_t startLod = uint8_t(bx::uint32_min(_skip, numMips-1) );
 			numMips -= startLod;
-			const ImageBlockInfo& blockInfo = getBlockInfo(TextureFormat::Enum(imageContainer.m_format) );
+			const bimg::ImageBlockInfo& blockInfo = getBlockInfo(bimg::TextureFormat::Enum(imageContainer.m_format) );
 			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
 			const uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height>>startLod);
 			const uint16_t numLayers     = imageContainer.m_numLayers;
@@ -2399,7 +2399,7 @@ namespace bgfx { namespace mtl
 			m_requestedFormat  = uint8_t(imageContainer.m_format);
 			m_textureFormat    = uint8_t(getViableTextureFormat(imageContainer) );
 			const bool convert = m_textureFormat != m_requestedFormat;
-			const uint8_t bpp = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
+			const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 
 			TextureDescriptor desc = s_renderMtl->m_textureDescriptor;
 
@@ -2437,7 +2437,7 @@ namespace bgfx { namespace mtl
 			m_numMips = numMips;
 			const uint16_t numSides = numLayers * (imageContainer.m_cubeMap ? 6 : 1);
 
-			const bool compressed   = isCompressed(TextureFormat::Enum(m_textureFormat) );
+			const bool compressed   = bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) );
 			const bool writeOnly    = 0 != (_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
 			const bool computeWrite = 0 != (_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 			const bool renderTarget = 0 != (_flags&BGFX_TEXTURE_RT_MASK);
@@ -2487,16 +2487,25 @@ namespace bgfx { namespace mtl
 			{
 				desc.cpuCacheMode = MTLCPUCacheModeDefaultCache;
 
-				desc.storageMode = (MTLStorageMode)(writeOnly||isDepth(TextureFormat::Enum(m_textureFormat))
-													? 2 /*MTLStorageModePrivate*/
-													: ((BX_ENABLED(BX_PLATFORM_IOS)) ? 0 /* MTLStorageModeShared */ :  1 /*MTLStorageModeManaged*/)
-													);
+				desc.storageMode = (MTLStorageMode)(false
+					|| writeOnly
+					|| bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
+					? 2 /*MTLStorageModePrivate*/
+					: (BX_ENABLED(BX_PLATFORM_IOS)
+						? 0 /* MTLStorageModeShared */
+						:  1 /*MTLStorageModeManaged*/
+					) );
 
 				desc.usage = MTLTextureUsageShaderRead;
 				if (computeWrite)
+				{
 					desc.usage |= MTLTextureUsageShaderWrite;
+				}
+
 				if (renderTarget)
+				{
 					desc.usage |= MTLTextureUsageRenderTarget;
+				}
 			}
 
 			m_ptr = s_renderMtl->m_device.newTextureWithDescriptor(desc);
@@ -2535,14 +2544,14 @@ namespace bgfx { namespace mtl
 					height = bx::uint32_max(1, height);
 					depth  = bx::uint32_max(1, depth);
 
-					ImageMip mip;
-					if (imageGetRawData(imageContainer, side, lod+startLod, _mem->data, _mem->size, mip) )
+					bimg::ImageMip mip;
+					if (bimg::imageGetRawData(imageContainer, side, lod+startLod, _mem->data, _mem->size, mip) )
 					{
 						const uint8_t* data = mip.m_data;
 
 						if (convert)
 						{
-							imageDecodeToBgra8(temp
+							bimg::imageDecodeToBgra8(temp
 								, mip.m_data
 								, mip.m_width
 								, mip.m_height
@@ -2601,7 +2610,7 @@ namespace bgfx { namespace mtl
 
 	void TextureMtl::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
-		const uint32_t bpp       = getBitsPerPixel(TextureFormat::Enum(m_textureFormat) );
+		const uint32_t bpp       = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 		const uint32_t rectpitch = _rect.m_width*bpp/8;
 		const uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
 		const uint32_t slice = ((m_type == Texture3D) ? 0 : _side + _z * (m_type == TextureCube ? 6 : 1));
@@ -2615,12 +2624,12 @@ namespace bgfx { namespace mtl
 		if (convert)
 		{
 			temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch*_rect.m_height);
-			imageDecodeToBgra8(temp
+			bimg::imageDecodeToBgra8(temp
 				, data
 				, _rect.m_width
 				, _rect.m_height
 				, srcpitch
-				, TextureFormat::Enum(m_requestedFormat)
+				, bimg::TextureFormat::Enum(m_requestedFormat)
 				);
 			data = temp;
 		}
@@ -2713,7 +2722,7 @@ namespace bgfx { namespace mtl
 					m_height = texture.m_height;
 				}
 
-				if (isDepth( (TextureFormat::Enum)texture.m_textureFormat) )
+				if (bimg::isDepth(bimg::TextureFormat::Enum(texture.m_textureFormat) ) )
 				{
 					m_depthHandle = handle;
 				}
