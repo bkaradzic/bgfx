@@ -14,6 +14,7 @@ configuration:
 
 install:
   - git clone https://github.com/bkaradzic/bx ..\bx
+  - git clone https://github.com/bkaradzic/bimg ..\bimg
   - ..\bx\tools\bin\windows\genie --with-tools %TOOLSET%
 
 build:
