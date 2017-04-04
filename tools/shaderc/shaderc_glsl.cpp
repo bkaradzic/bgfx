@@ -149,7 +149,7 @@ namespace bgfx { namespace glsl
 					char uniformType[256];
 					parse = bx::strword(parse);
 
-					if (0 == strncmp(typen, "sampler", 7) )
+					if (0 == bx::strncmp(typen, "sampler", 7) )
 					{
 						bx::strlncpy(uniformType, BX_COUNTOF(uniformType), "int");
 					}

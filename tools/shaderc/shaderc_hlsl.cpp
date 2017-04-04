@@ -520,7 +520,7 @@ namespace bgfx { namespace hlsl
 						, bindDesc.BindCount
 						);
 
-					const char * end = strstr(bindDesc.Name, "Sampler");
+					const char * end = bx::strnstr(bindDesc.Name, "Sampler");
 					if (NULL != end)
 					{
 						Uniform un;

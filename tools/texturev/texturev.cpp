@@ -312,7 +312,7 @@ struct View
 			{
 				if (0 == (item->d_type & DT_DIR) )
 				{
-					const char* ext = strrchr(item->d_name, '.');
+					const char* ext = bx::strnrchr(item->d_name, '.');
 					if (NULL != ext)
 					{
 						ext += 1;

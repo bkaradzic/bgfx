@@ -524,13 +524,13 @@ int main(int _argc, const char* _argv[])
 						index.m_vbc = 0;
 					}
 
-					char* vertex   = argv[edge+1];
-					char* texcoord = strchr(vertex, '/');
+					const char* vertex   = argv[edge+1];
+					char* texcoord = const_cast<char*>(bx::strnchr(vertex, '/') );
 					if (NULL != texcoord)
 					{
 						*texcoord++ = '\0';
 
-						char* normal = strchr(texcoord, '/');
+						char* normal = const_cast<char*>(bx::strnchr(texcoord, '/') );
 						if (NULL != normal)
 						{
 							*normal++ = '\0';
@@ -860,7 +860,7 @@ int main(int _argc, const char* _argv[])
 
 				if (hasTangent)
 				{
-					calcTangents(vertexData, numVertices, decl, indexData, numIndices);
+					calcTangents(vertexData, uint16_t(numVertices), decl, indexData, numIndices);
 				}
 
 				bx::MemoryWriter memWriter(&memBlock);
@@ -877,7 +877,7 @@ int main(int _argc, const char* _argv[])
 							, prim1.m_numIndices
 							, vertexData + prim1.m_startVertex
 							, numVertices
-							, stride
+							, uint16_t(stride)
 							);
 					}
 				}
@@ -991,7 +991,7 @@ int main(int _argc, const char* _argv[])
 	{
 		if (hasTangent)
 		{
-			calcTangents(vertexData, numVertices, decl, indexData, numIndices);
+			calcTangents(vertexData, uint16_t(numVertices), decl, indexData, numIndices);
 		}
 
 		bx::MemoryWriter memWriter(&memBlock);
@@ -1008,7 +1008,7 @@ int main(int _argc, const char* _argv[])
 					, prim1.m_numIndices
 					, vertexData + prim1.m_startVertex
 					, numVertices
-					, stride
+					, uint16_t(stride)
 					);
 			}
 		}

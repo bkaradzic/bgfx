@@ -495,7 +495,7 @@ namespace bgfx { namespace spirv
 				const SpvReflection::Id& id = it->second;
 				uint32_t num = uint32_t(id.members.size() );
 				if (0 < num
-				&&  0 != strcmp(id.var.name.c_str(), "gl_PerVertex") )
+				&&  0 != bx::strncmp(id.var.name.c_str(), "gl_PerVertex") )
 				{
 					printf("%3d: %s %d %s\n"
 						, it->first
@@ -606,7 +606,7 @@ namespace bgfx { namespace spirv
 				int32_t start   = 0;
 				int32_t end     = INT32_MAX;
 
-				const char* err = strstr(log, "ERROR:");
+				const char* err = bx::strnstr(log, "ERROR:");
 
 				bool found = false;
 

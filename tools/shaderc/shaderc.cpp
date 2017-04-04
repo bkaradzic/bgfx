@@ -141,11 +141,11 @@ namespace bgfx
 
 	const char* interpolationDx11(const char* _glsl)
 	{
-		if (0 == strcmp(_glsl, "smooth") )
+		if (0 == bx::strncmp(_glsl, "smooth") )
 		{
 			return "linear";
 		}
-		else if (0 == strcmp(_glsl, "flat") )
+		else if (0 == bx::strncmp(_glsl, "flat") )
 		{
 			return "nointerpolation";
 		}
@@ -169,7 +169,7 @@ namespace bgfx
 		for (uint32_t ii = 0; ii < UniformType::Count*2; ++ii)
 		{
 			if (NULL != s_uniformTypeName[ii]
-			&&  0 == strcmp(_name, s_uniformTypeName[ii]) )
+			&&  0 == bx::strncmp(_name, s_uniformTypeName[ii]) )
 			{
 				return UniformType::Enum(ii/2);
 			}
@@ -517,7 +517,10 @@ namespace bgfx
 		{
 			char* start = scratch(_includeDir);
 
-			for (char* split = strchr(start, ';'); NULL != split; split = strchr(start, ';') )
+			for (char* split = const_cast<char*>(bx::strnchr(start, ';') )
+				; NULL != split
+				; split = const_cast<char*>(bx::strnchr(start, ';') )
+				)
 			{
 				*split = '\0';
 				m_tagptr->tag = FPPTAG_INCLUDE_DIR;
@@ -811,32 +814,32 @@ namespace bgfx
 		const char* profile = cmdLine.findOption('p', "profile");
 		if (NULL != profile)
 		{
-			if (0 == strncmp(&profile[1], "s_4_0_level", 11) )
+			if (0 == bx::strncmp(&profile[1], "s_4_0_level", 11) )
 			{
 				hlsl = 2;
 			}
-			else if (0 == strncmp(&profile[1], "s_3", 3) )
+			else if (0 == bx::strncmp(&profile[1], "s_3", 3) )
 			{
 				hlsl = 3;
 				d3d  = 9;
 			}
-			else if (0 == strncmp(&profile[1], "s_4", 3) )
+			else if (0 == bx::strncmp(&profile[1], "s_4", 3) )
 			{
 				hlsl = 4;
 			}
-			else if (0 == strncmp(&profile[1], "s_5", 3) )
+			else if (0 == bx::strncmp(&profile[1], "s_5", 3) )
 			{
 				hlsl = 5;
 			}
-			else if (0 == strcmp(profile, "metal") )
+			else if (0 == bx::strncmp(profile, "metal") )
 			{
 				metal = 1;
 			}
-			else if (0 == strcmp(profile, "pssl") )
+			else if (0 == bx::strncmp(profile, "pssl") )
 			{
 				pssl = 1;
 			}
-			else if (0 == strcmp(profile, "spirv") )
+			else if (0 == bx::strncmp(profile, "spirv") )
 			{
 				spirv = 1;
 			}
@@ -909,7 +912,7 @@ namespace bgfx
 		&&    '\0'  != *defines)
 		{
 			defines = bx::strws(defines);
-			const char* eol = strchr(defines, ';');
+			const char* eol = bx::strnchr(defines, ';');
 			if (NULL == eol)
 			{
 				eol = defines + strlen(defines);
@@ -1057,7 +1060,7 @@ namespace bgfx
 			   &&  *parse != '\0')
 			{
 				parse = bx::strws(parse);
-				const char* eol = strchr(parse, ';');
+				const char* eol = bx::strnchr(parse, ';');
 				if (NULL == eol)
 				{
 					eol = bx::streol(parse);
@@ -1069,18 +1072,18 @@ namespace bgfx
 					const char* interpolation = NULL;
 					const char* typen = parse;
 
-					if (0 == strncmp(typen, "lowp", 4)
-					||  0 == strncmp(typen, "mediump", 7)
-					||  0 == strncmp(typen, "highp", 5) )
+					if (0 == bx::strncmp(typen, "lowp", 4)
+					||  0 == bx::strncmp(typen, "mediump", 7)
+					||  0 == bx::strncmp(typen, "highp", 5) )
 					{
 						precision = typen;
 						typen = parse = bx::strws(bx::strword(parse) );
 					}
 
-					if (0 == strncmp(typen, "flat", 4)
-					||  0 == strncmp(typen, "smooth", 6)
-					||  0 == strncmp(typen, "noperspective", 13)
-					||  0 == strncmp(typen, "centroid", 8) )
+					if (0 == bx::strncmp(typen, "flat", 4)
+					||  0 == bx::strncmp(typen, "smooth", 6)
+					||  0 == bx::strncmp(typen, "noperspective", 13)
+					||  0 == bx::strncmp(typen, "centroid", 8) )
 					{
 						interpolation = typen;
 						typen = parse = bx::strws(bx::strword(parse) );
@@ -1184,21 +1187,21 @@ namespace bgfx
 					const char* nl  = bx::strnl(eol);
 					input = const_cast<char*>(nl);
 
-					if (0 == strncmp(str, "input", 5) )
+					if (0 == bx::strncmp(str, "input", 5) )
 					{
 						str += 5;
-						const char* comment = strstr(str, "//");
+						const char* comment = bx::strnstr(str, "//");
 						eol = NULL != comment && comment < eol ? comment : eol;
 						inputHash = parseInOut(shaderInputs, str, eol);
 					}
-					else if (0 == strncmp(str, "output", 6) )
+					else if (0 == bx::strncmp(str, "output", 6) )
 					{
 						str += 6;
-						const char* comment = strstr(str, "//");
+						const char* comment = bx::strnstr(str, "//");
 						eol = NULL != comment && comment < eol ? comment : eol;
 						outputHash = parseInOut(shaderOutputs, str, eol);
 					}
-					else if (0 == strncmp(str, "raw", 3) )
+					else if (0 == bx::strncmp(str, "raw", 3) )
 					{
 						raw = true;
 						str += 3;
@@ -1268,7 +1271,7 @@ namespace bgfx
 			}
 			else if ('c' == shaderType) // Compute
 			{
-				char* entry = strstr(input, "void main()");
+				char* entry = const_cast<char*>(bx::strnstr(input, "void main()") );
 				if (NULL == entry)
 				{
 					fprintf(stderr, "Shader entry point 'void main()' is not found.\n");
@@ -1307,10 +1310,10 @@ namespace bgfx
 
 						uint32_t arg = 0;
 
-						const bool hasLocalInvocationID    = NULL != strstr(input, "gl_LocalInvocationID");
-						const bool hasLocalInvocationIndex = NULL != strstr(input, "gl_LocalInvocationIndex");
-						const bool hasGlobalInvocationID   = NULL != strstr(input, "gl_GlobalInvocationID");
-						const bool hasWorkGroupID          = NULL != strstr(input, "gl_WorkGroupID");
+						const bool hasLocalInvocationID    = NULL != bx::strnstr(input, "gl_LocalInvocationID");
+						const bool hasLocalInvocationIndex = NULL != bx::strnstr(input, "gl_LocalInvocationIndex");
+						const bool hasGlobalInvocationID   = NULL != bx::strnstr(input, "gl_GlobalInvocationID");
+						const bool hasWorkGroupID          = NULL != bx::strnstr(input, "gl_WorkGroupID");
 
 						if (hasLocalInvocationID)
 						{
@@ -1455,7 +1458,7 @@ namespace bgfx
 			}
 			else // Vertex/Fragment
 			{
-				char* entry = strstr(input, "void main()");
+				char* entry = const_cast<char*>(bx::strnstr(input, "void main()") );
 				if (NULL == entry)
 				{
 					fprintf(stderr, "Shader entry point 'void main()' is not found.\n");
@@ -1484,8 +1487,8 @@ namespace bgfx
 								const Varying& var = varyingIt->second;
 								const char* name = var.m_name.c_str();
 
-								if (0 == strncmp(name, "a_", 2)
-								||  0 == strncmp(name, "i_", 2) )
+								if (0 == bx::strncmp(name, "a_", 2)
+								||  0 == bx::strncmp(name, "i_", 2) )
 								{
 									preprocessor.writef("attribute %s %s %s %s;\n"
 											, var.m_precision.c_str()
@@ -1555,17 +1558,17 @@ namespace bgfx
 
 						if ('f' == shaderType)
 						{
-							const char* insert = strstr(entry, "{");
+							const char* insert = bx::strnstr(entry, "{");
 							if (NULL != insert)
 							{
 								insert = strInsert(const_cast<char*>(insert+1), "\nvec4 bgfx_VoidFrag = vec4_splat(0.0);\n");
 							}
 
-							const bool hasFragColor   = NULL != strstr(input, "gl_FragColor");
-							const bool hasFragCoord   = NULL != strstr(input, "gl_FragCoord") || hlsl > 3 || hlsl == 2;
-							const bool hasFragDepth   = NULL != strstr(input, "gl_FragDepth");
-							const bool hasFrontFacing = NULL != strstr(input, "gl_FrontFacing");
-							const bool hasPrimitiveId = NULL != strstr(input, "gl_PrimitiveID");
+							const bool hasFragColor   = NULL != bx::strnstr(input, "gl_FragColor");
+							const bool hasFragCoord   = NULL != bx::strnstr(input, "gl_FragCoord") || hlsl > 3 || hlsl == 2;
+							const bool hasFragDepth   = NULL != bx::strnstr(input, "gl_FragDepth");
+							const bool hasFrontFacing = NULL != bx::strnstr(input, "gl_FrontFacing");
+							const bool hasPrimitiveId = NULL != bx::strnstr(input, "gl_PrimitiveID");
 
 							bool hasFragData[8] = {};
 							uint32_t numFragData = 0;
@@ -1573,7 +1576,7 @@ namespace bgfx
 							{
 								char temp[32];
 								bx::snprintf(temp, BX_COUNTOF(temp), "gl_FragData[%d]", ii);
-								hasFragData[ii] = NULL != strstr(input, temp);
+								hasFragData[ii] = NULL != bx::strnstr(input, temp);
 								numFragData += hasFragData[ii];
 							}
 
@@ -1695,7 +1698,7 @@ namespace bgfx
 						}
 						else if ('v' == shaderType)
 						{
-							const char* brace = strstr(entry, "{");
+							const char* brace = bx::strnstr(entry, "{");
 							if (NULL != brace)
 							{
 								const char* end = bx::strmb(brace, '{', '}');
