@@ -5,3 +5,7 @@ build $textures/texture_compression_bc2.ktx:  texturec_bc2  $pwd/texture_compres
 build $textures/texture_compression_bc3.ktx:  texturec_bc3  $pwd/texture_compression.png
 build $textures/texture_compression_etc1.ktx: texturec_etc1 $pwd/texture_compression.png
 build $textures/texture_compression_etc2.ktx: texturec_etc2 $pwd/texture_compression.png
+
+build $textures/parallax-d.ktx: texturec_diffuse $pwd/parallax-d.png
+build $textures/parallax-n.ktx: texturec_normal  $pwd/parallax-n.png
+build $textures/parallax-h.ktx: texturec_height  $pwd/parallax-h.png

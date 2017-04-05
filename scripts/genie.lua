@@ -370,6 +370,8 @@ bgfxProject("", "StaticLib", {})
 
 dofile(path.join(BX_DIR,   "scripts/bx.lua"))
 dofile(path.join(BIMG_DIR, "scripts/bimg.lua"))
+dofile(path.join(BIMG_DIR, "scripts/bimg_decode.lua"))
+dofile(path.join(BIMG_DIR, "scripts/bimg_encode.lua"))
 
 if _OPTIONS["with-examples"] or _OPTIONS["with-tools"] then
 	group "examples"

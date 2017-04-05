@@ -29,6 +29,15 @@ rule texturec_etc1
 rule texturec_etc2
     command = texturec -f $in -o $out -t etc2 -m
 
+rule texturec_diffuse
+    command = texturec -f $in -o $out -t bc2 -m
+
+rule texturec_normal
+    command = texturec -f $in -o $out -t bc5 -m -n
+
+rule texturec_height
+    command = texturec -f $in -o $out -t r8
+
 pwd = ../examples/assets/meshes
 subninja ../examples/assets/meshes/meshes.ninja
 

@@ -147,23 +147,20 @@ class ExamplePom : public entry::AppI
 
 
 		u_light_pos = bgfx::createUniform("u_light_pos", bgfx::UniformType::Vec4);
-		u_norm_mtx = bgfx::createUniform("u_norm_mtx", bgfx::UniformType::Mat4);
-		u_shading_type = bgfx::createUniform("u_shading_type", bgfx::UniformType::Int1);
-		u_show_diffuse_texture = bgfx::createUniform("u_show_diffuse_texture", bgfx::UniformType::Int1);
-		u_parallax_scale = bgfx::createUniform("u_parallax_scale", bgfx::UniformType::Int1);
-		u_num_steps = bgfx::createUniform("u_num_steps", bgfx::UniformType::Int1);
+		u_norm_mtx  = bgfx::createUniform("u_norm_mtx",  bgfx::UniformType::Mat4);
+		u_pomParam  = bgfx::createUniform("u_pomParam",  bgfx::UniformType::Vec4);
 
 		// Create program from shaders.
 		m_program = loadProgram("vs_pom", "fs_pom");
 
 		// Load diffuse texture.
-		m_textureColor = loadTexture("textures/parallax-d.png");
+		m_textureColor = loadTexture("textures/parallax-d.ktx");
 
 		// Load normal texture.
-		m_textureNormal = loadTexture("textures/parallax-n.png");
+		m_textureNormal = loadTexture("textures/parallax-n.ktx");
 
 		// Load depth texture.
-		m_textureDepth = loadTexture("textures/parallax-h.png");
+		m_textureDepth = loadTexture("textures/parallax-h.ktx");
 
 		imguiCreate();
 
@@ -188,10 +185,7 @@ class ExamplePom : public entry::AppI
 		bgfx::destroyUniform(s_texDepth);
 		bgfx::destroyUniform(u_light_pos);
 		bgfx::destroyUniform(u_norm_mtx);
-		bgfx::destroyUniform(u_shading_type);
-		bgfx::destroyUniform(u_show_diffuse_texture);
-		bgfx::destroyUniform(u_parallax_scale);
-		bgfx::destroyUniform(u_num_steps);
+		bgfx::destroyUniform(u_pomParam);
 
 		imguiDestroy();
 
@@ -275,12 +269,10 @@ class ExamplePom : public entry::AppI
 			ImGui::RadioButton("Parallax mapping", &m_shading_type, 2);
 			ImGui::RadioButton("Steep parallax mapping", &m_shading_type, 3);
 			ImGui::RadioButton("Parallax occlusion mapping", &m_shading_type, 4);
-			bgfx::setUniform(u_shading_type, &m_shading_type);
 
 			ImGui::Separator();
 
 			ImGui::Checkbox("Show diffuse texture", &m_show_diffuse_texture);
-			bgfx::setUniform(u_show_diffuse_texture, &m_show_diffuse_texture);
 
 			if (m_shading_type > 1)
 			{
@@ -290,7 +282,6 @@ class ExamplePom : public entry::AppI
 				float x = (float)m_parallax_scale / multiplier;
 				ImGui::SliderFloat("Parallax scale", &x, 0.0f, 0.1f);
 				m_parallax_scale = (int32_t)(x * multiplier);
-				bgfx::setUniform(u_parallax_scale, &m_parallax_scale);
 			}
 
 			if (m_shading_type > 2)
@@ -298,15 +289,14 @@ class ExamplePom : public entry::AppI
 				ImGui::Separator();
 
 				ImGui::SliderInt("Number of steps", &m_num_steps, 1, 32);
-				bgfx::setUniform(u_num_steps, &m_num_steps);
 			}
 
 			ImGui::End();
 
 			imguiEndFrame();
 
-			float light_pos[4] = { 1, 2, 0, 0 };
-			bgfx::setUniform(u_light_pos, light_pos);
+			float lightPos[4] = { 1.0f, 2.0f, 0.0f, 0.0f };
+			bgfx::setUniform(u_light_pos, lightPos);
 
 			float a[16];
 			float b[16];
@@ -321,6 +311,9 @@ class ExamplePom : public entry::AppI
 
 			// Set transform for draw call.
 			bgfx::setTransform(mtx);
+
+			float pomParam[4] = { float(m_shading_type), float(m_show_diffuse_texture), float(m_parallax_scale), float(m_num_steps) };
+			bgfx::setUniform(u_pomParam, pomParam);
 
 			// Set normal matrix uniform
 			float inv[16];
@@ -367,10 +360,7 @@ class ExamplePom : public entry::AppI
 	bgfx::UniformHandle s_texDepth;
 	bgfx::UniformHandle u_light_pos;
 	bgfx::UniformHandle u_norm_mtx;
-	bgfx::UniformHandle u_shading_type;
-	bgfx::UniformHandle u_show_diffuse_texture;
-	bgfx::UniformHandle u_parallax_scale;
-	bgfx::UniformHandle u_num_steps;
+	bgfx::UniformHandle u_pomParam;
 	bgfx::ProgramHandle m_program;
 	bgfx::TextureHandle m_textureColor;
 	bgfx::TextureHandle m_textureNormal;

@@ -6,20 +6,22 @@ SAMPLER2D(s_texColor,  0);
 SAMPLER2D(s_texNormal, 1);
 SAMPLER2D(s_texDepth,  2);
 
-uniform int u_shading_type;
-uniform int u_show_diffuse_texture;
-uniform int u_parallax_scale;
-uniform int u_num_steps;
+uniform vec4 u_pomParam;
+
+#define u_shading_type         u_pomParam.x
+#define u_show_diffuse_texture u_pomParam.y
+#define u_parallax_scale       u_pomParam.z
+#define u_num_steps            u_pomParam.w
 
 vec2 parallax_uv(vec2 uv, vec3 view_dir)
 {
 	float depth_scale = float(u_parallax_scale) / 1000.0;
-	if (u_shading_type == 2)
+	if (u_shading_type == 2.0)
 	{
 		// Parallax mapping
-		float depth = texture2D(s_texDepth, uv).r;    
+		float depth = texture2D(s_texDepth, uv).r;
 		vec2 p = view_dir.xy * (depth * depth_scale) / view_dir.z;
-		return uv - p;  
+		return uv - p;
 	}
 	else
 	{
@@ -41,7 +43,7 @@ vec2 parallax_uv(vec2 uv, vec3 view_dir)
 			}
 		}
 
-		if (u_shading_type == 3)
+		if (u_shading_type == 3.0)
 		{
 			// Steep parallax mapping
 			return cur_uv;
@@ -61,13 +63,13 @@ vec2 parallax_uv(vec2 uv, vec3 view_dir)
 void main()
 {
 	vec3 light_dir = normalize(v_ts_light_pos - v_ts_frag_pos);
-	vec3 view_dir = normalize(v_ts_view_pos - v_ts_frag_pos);
+	vec3 view_dir  = normalize(v_ts_view_pos  - v_ts_frag_pos);
 
 	// Only perturb the texture coordinates if a parallax technique is selected
-	vec2 uv = (u_shading_type < 2) ? v_texcoord0 : parallax_uv(v_texcoord0, view_dir);
+	vec2 uv = (u_shading_type < 2.0) ? v_texcoord0 : parallax_uv(v_texcoord0, view_dir);
 
 	vec3 albedo;
-	if (u_show_diffuse_texture == 0)
+	if (u_show_diffuse_texture == 0.0)
 	{
 		albedo = vec3(1.0, 1.0, 1.0);
 	}
@@ -78,17 +80,18 @@ void main()
 
 	vec3 ambient = 0.3 * albedo;
 
-	vec3 norm;
+	vec3 normal;
 
-	if (u_shading_type == 0)
+	if (u_shading_type == 0.0)
 	{
-		norm = vec3(0, 0, 1);
+		normal = vec3(0.0, 0.0, 1.0);
 	}
 	else
 	{
-		norm = normalize(texture2D(s_texNormal, uv).rgb * 2.0 - 1.0);
+		normal.xy = texture2D(s_texNormal, uv).xy * 2.0 - 1.0;
+		normal.z = sqrt(1.0 - dot(normal.xy, normal.xy) );
 	}
 
-	float diffuse = max(dot(light_dir, norm), 0.0);
+	float diffuse = max(dot(light_dir, normal), 0.0);
 	gl_FragColor = vec4(diffuse * albedo + ambient, 1.0);
 }
