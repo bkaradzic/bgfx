@@ -307,7 +307,7 @@ class ExamplePom : public entry::AppI
 			bx::mtxRotateY(a, time * 0.4f);
 			bx::mtxRotateX(b, 0.4f);
 			bx::mtxMul(c, a, b);
-			bx::mtxTranslate(d, 0, 0, 4);
+			bx::mtxTranslate(d, 0.0f, 0.0f, 4.0f);
 			bx::mtxMul(mtx, c, d);
 
 			// Set transform for draw call.

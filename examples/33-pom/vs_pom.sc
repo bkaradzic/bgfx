@@ -20,10 +20,10 @@ void main()
 	vec3 n = normalize(mul(u_norm_mtx, vec4(normal,    0.0) ).xyz);
 	mat3 tbn = mat3(t, b, n);
 
-	v_ts_light_pos = mul(tbn, u_light_pos.xyz);
+	v_ts_light_pos = instMul(u_light_pos.xyz, tbn);
 	// Our camera is always at the origin
-	v_ts_view_pos = mul(tbn, vec3_splat(0.0) );
-	v_ts_frag_pos = mul(tbn, wpos);
+	v_ts_view_pos  = instMul(vec3_splat(0.0), tbn);
+	v_ts_frag_pos  = instMul(wpos,            tbn);
 
 	v_texcoord0 = a_texcoord0;
 }
