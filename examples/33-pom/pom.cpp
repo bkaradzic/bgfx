@@ -168,7 +168,7 @@ class ExamplePom : public entry::AppI
 		m_shading_type = 4;
 		m_show_diffuse_texture = true;
 		m_parallax_scale = 50;
-		m_num_steps = 4;
+		m_num_steps = 16;
 	}
 
 	virtual int shutdown() BX_OVERRIDE
@@ -263,6 +263,7 @@ class ExamplePom : public entry::AppI
 				);
 
 			ImGui::Begin("Properties");
+			ImGui::SetWindowPos(ImVec2(m_width - 240.0f, 20.0f));
 
 			ImGui::RadioButton("No bump mapping", &m_shading_type, 0);
 			ImGui::RadioButton("Normal mapping", &m_shading_type, 1);
