@@ -365,7 +365,6 @@ class ExamplePom : public entry::AppI
 	bgfx::TextureHandle m_textureColor;
 	bgfx::TextureHandle m_textureNormal;
 	bgfx::TextureHandle m_textureDepth;
-	bool m_instancingSupported;
 
 	entry::MouseState m_mouseState;
 
@@ -376,7 +375,7 @@ class ExamplePom : public entry::AppI
 	int64_t m_timeOffset;
 
 	int32_t m_shading_type;
-	bool m_show_diffuse_texture;
+	bool    m_show_diffuse_texture;
 	int32_t m_parallax_scale;
 	int32_t m_num_steps;
 };
