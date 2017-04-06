@@ -2634,24 +2634,6 @@ namespace bgfx
 	///
 	void setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access);
 
-	/// Set shader dynamic index buffer.
-	///
-	/// @param[in] _stage Texture/sampler stage.
-	/// @param[in] _handle Dynamic index buffer handle.
-	///
-	/// @attention C99 equivalent is `bgfx_set_shader_dynamic_index_buffer`.
-	///
-	void setShaderBuffer(uint8_t _stage, DynamicIndexBufferHandle _handle);
-
-	/// Set shader dynamic vertex buffer.
-	///
-	/// @param[in] _stage Texture/sampler stage.
-	/// @param[in] _handle Dynamic vertex buffer handle.
-	///
-	/// @attention C99 equivalent is `bgfx_set_shader_dynamic_vertex_buffer`.
-	///
-	void setShaderBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle);
-
 	/// Set compute indirect buffer.
 	///
 	/// @param[in] _stage Compute stage.
