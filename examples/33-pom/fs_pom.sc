@@ -60,15 +60,6 @@ vec2 parallax_uv(vec2 uv, vec3 view_dir)
 	}
 }
 
-vec2 texture2DBc4(sampler2D _sampler, vec2 _uv)
-{
-#if BGFX_SHADER_LANGUAGE_HLSL && BGFX_SHADER_LANGUAGE_HLSL <= 3
-	return texture2D(_sampler, _uv).yx;
-#else
-	return texture2D(_sampler, _uv).xy;
-#endif
-}
-
 void main()
 {
 	vec3 light_dir = normalize(v_ts_light_pos - v_ts_frag_pos);
@@ -97,7 +88,7 @@ void main()
 	}
 	else
 	{
-		normal.xy = texture2DBc4(s_texNormal, uv) * 2.0 - 1.0;
+		normal.xy = texture2DBc5(s_texNormal, uv) * 2.0 - 1.0;
 		normal.z  = sqrt(1.0 - dot(normal.xy, normal.xy) );
 	}
 
