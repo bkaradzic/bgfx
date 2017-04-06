@@ -5325,13 +5325,13 @@ data.NumQualityLevels = 0;
 
 												if (Access::Read != bind.m_un.m_compute.m_access)
 												{
+													// The api functions prevent binding with Access::Write,
+													// but might as well allow it in here for future-proofing
 													buffer.setState(m_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 													scratchBuffer.allocUav(srvHandle[stage], buffer);
 												}
 												else 
 												{
-													// The api functions prevent binding with Access::Write,
-													// but might as well allow it in here for future-proofing
 													buffer.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 													scratchBuffer.allocSrv(srvHandle[stage], buffer);
 												}
