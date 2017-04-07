@@ -3057,6 +3057,9 @@ namespace bgfx { namespace mtl
 		currentState.m_stateFlags = BGFX_STATE_NONE;
 		currentState.m_stencil    = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
+		RenderBind currentBind;
+		currentBind.clear();
+
 		_render->m_hmdInitialized = false;
 
 		const bool hmdEnabled = false;
@@ -3115,7 +3118,10 @@ namespace bgfx { namespace mtl
 					|| key.m_view != view
 					|| item == numItems
 					;
-				const RenderItem& renderItem = _render->m_renderItem[_render->m_sortValues[item] ];
+
+				const uint32_t itemIdx       = _render->m_sortValues[item];
+				const RenderItem& renderItem = _render->m_renderItem[itemIdx];
+				const RenderBind& renderBind = _render->m_renderItemBind[itemIdx];
 				++item;
 
 				if (viewChanged)
@@ -3415,6 +3421,8 @@ namespace bgfx { namespace mtl
 					currentState.m_stateFlags = newFlags;
 					currentState.m_stencil    = newStencil;
 
+					currentBind.clear();
+
 					programIdx = invalidHandle;
 					setDepthStencilState(newFlags, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT));
 
@@ -3621,24 +3629,25 @@ namespace bgfx { namespace mtl
 
 					for (uint8_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 					{
-						const Binding& sampler = draw.m_bind[stage];
-						Binding& current = currentState.m_bind[stage];
-						BX_CHECK(Binding::Texture == current.m_type
-						      , "Buffer binding is not supported on Metal.");
-						if (current.m_idx != sampler.m_idx
-						||  current.m_un.m_draw.m_textureFlags != sampler.m_un.m_draw.m_textureFlags
+						const Binding& bind = renderBind.m_bind[stage];
+						Binding& current = currentBind.m_bind[stage];
+
+						if (current.m_idx                      != bind.m_idx
+						||  current.m_un.m_draw.m_textureFlags != bind.m_un.m_draw.m_textureFlags
 						||  programChanged)
 						{
-							if (invalidHandle != sampler.m_idx)
+							if (invalidHandle != bind.m_idx)
 							{
-								TextureMtl& texture = m_textures[sampler.m_idx];
-								texture.commit(stage, (usedVertexSamplerStages&(1<<stage))!=0,
-											   (usedFragmentSamplerStages&(1<<stage))!=0,
-												sampler.m_un.m_draw.m_textureFlags);
+								TextureMtl& texture = m_textures[bind.m_idx];
+								texture.commit(stage
+									, 0 != (usedVertexSamplerStages   & (1<<stage) )
+									, 0 != (usedFragmentSamplerStages & (1<<stage) )
+									, bind.m_un.m_draw.m_textureFlags
+									);
 							}
 						}
 
-						current = sampler;
+						current = bind;
 					}
 				}
 
