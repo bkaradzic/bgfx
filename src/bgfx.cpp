@@ -3818,20 +3818,6 @@ error:
 		s_ctx->setBuffer(_stage, _handle, _access);
 	}
 
-	void setBuffer(uint8_t _stage, DynamicIndexBufferHandle _handle)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(_stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, "Invalid stage %d (max %d).", _stage, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
-		s_ctx->setBuffer(_stage, _handle);
-	}
-
-	void setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle)
-	{
-		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(_stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, "Invalid stage %d (max %d).", _stage, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
-		s_ctx->setBuffer(_stage, _handle);
-	}
-
 	void setBuffer(uint8_t _stage, IndirectBufferHandle _handle, Access::Enum _access)
 	{
 		BGFX_CHECK_MAIN_THREAD();
