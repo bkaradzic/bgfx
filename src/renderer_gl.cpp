@@ -1412,6 +1412,16 @@ namespace bgfx { namespace gl
 		{ "Intel",                        BGFX_PCI_ID_INTEL  },
 	};
 
+	struct Workaround
+	{
+		void reset()
+		{
+			m_detachShader = true;
+		}
+
+		bool m_detachShader;
+	};
+
 	struct RendererContextGL : public RendererContextI
 	{
 		RendererContextGL()
@@ -1481,6 +1491,8 @@ namespace bgfx { namespace gl
 					break;
 				}
 			}
+
+			m_workaround.reset();
 
 			GLint numCmpFormats = 0;
 			GL_CHECK(glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &numCmpFormats) );
@@ -3520,6 +3532,8 @@ namespace bgfx { namespace gl
 		const char* m_version;
 		const char* m_glslVersion;
 
+		Workaround m_workaround;
+
 		GLuint m_currentFbo;
 
 		VR m_ovr;
@@ -4018,7 +4032,8 @@ namespace bgfx { namespace gl
 
 		init();
 
-		if (!cached)
+		if (!cached
+		&&  s_renderGL->m_workaround.m_detachShader)
 		{
 			// Must be after init, otherwise init might fail to lookup shader
 			// info (NVIDIA Tegra 3 OpenGL ES 2.0 14.01003).
