@@ -5938,13 +5938,33 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						const Binding& bind = draw.m_bind[stage];
 						Binding& current = currentState.m_bind[stage];
 						if (current.m_idx != bind.m_idx
+						||  current.m_type != bind.m_type
 						||  current.m_un.m_draw.m_textureFlags != bind.m_un.m_draw.m_textureFlags
 						||  programChanged)
 						{
 							if (invalidHandle != bind.m_idx)
 							{
-								TextureD3D11& texture = m_textures[bind.m_idx];
-								texture.commit(stage, bind.m_un.m_draw.m_textureFlags, _render->m_colorPalette);
+								switch (bind.m_type)
+								{
+								case Binding::Texture:
+									{
+										TextureD3D11& texture = m_textures[bind.m_idx];
+										texture.commit(stage, bind.m_un.m_draw.m_textureFlags, _render->m_colorPalette);
+									}
+									break;
+
+								case Binding::IndexBuffer:
+								case Binding::VertexBuffer:
+									{
+										const BufferD3D11& buffer = Binding::IndexBuffer == bind.m_type
+											? m_indexBuffers[bind.m_idx]
+											: m_vertexBuffers[bind.m_idx]
+											;
+										m_textureStage.m_srv[stage] = buffer.m_srv;
+										m_textureStage.m_sampler[stage] = NULL;
+									}
+									break;
+								}
 							}
 							else
 							{

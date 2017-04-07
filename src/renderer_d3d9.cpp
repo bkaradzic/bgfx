@@ -4094,6 +4094,9 @@ namespace bgfx { namespace d3d9
 					{
 						const Binding& bind = draw.m_bind[stage];
 						Binding& current = currentState.m_bind[stage];
+						BX_CHECK(Binding::Texture == current.m_type
+						      , "Buffer binding is not supported on DirectX 9.");
+
 						if (current.m_idx != bind.m_idx
 						||  current.m_un.m_draw.m_textureFlags != bind.m_un.m_draw.m_textureFlags
 						||  programChanged)
