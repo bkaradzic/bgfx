@@ -3640,6 +3640,9 @@ namespace bgfx { namespace d3d9
 		currentState.m_stateFlags = BGFX_STATE_NONE;
 		currentState.m_stencil    = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
+		RenderBind currentBind;
+		currentBind.clear();
+
 		ViewState viewState(_render, false);
 
 		DX_CHECK(device->SetRenderState(D3DRS_FILLMODE, _render->m_debug&BGFX_DEBUG_WIREFRAME ? D3DFILL_WIREFRAME : D3DFILL_SOLID) );
@@ -3692,7 +3695,9 @@ namespace bgfx { namespace d3d9
 					continue;
 				}
 
-				const RenderDraw& draw = _render->m_renderItem[_render->m_sortValues[item] ].draw;
+				const uint32_t itemIdx = _render->m_sortValues[item];
+				const RenderDraw& draw = _render->m_renderItem[itemIdx].draw;
+				const RenderBind& renderBind = _render->m_renderItemBind[itemIdx];
 
 				const bool hasOcclusionQuery = 0 != (draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
 				if (isValid(draw.m_occlusionQuery)
@@ -4092,10 +4097,8 @@ namespace bgfx { namespace d3d9
 				{
 					for (uint8_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 					{
-						const Binding& bind = draw.m_bind[stage];
-						Binding& current = currentState.m_bind[stage];
-						BX_CHECK(Binding::Texture == current.m_type
-						      , "Buffer binding is not supported on DirectX 9.");
+						const Binding& bind = renderBind.m_bind[stage];
+						Binding& current = currentBind.m_bind[stage];
 
 						if (current.m_idx != bind.m_idx
 						||  current.m_un.m_draw.m_textureFlags != bind.m_un.m_draw.m_textureFlags

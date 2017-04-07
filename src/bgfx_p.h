@@ -1237,6 +1237,22 @@ namespace bgfx
 		VertexDeclHandle   m_decl;
 	};
 
+	struct RenderBind
+	{
+		void clear()
+		{
+			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
+			{
+				Binding& bind = m_bind[ii];
+				bind.m_idx = invalidHandle;
+				bind.m_type = 0;
+				bind.m_un.m_draw.m_textureFlags = 0;
+			}
+		};
+
+		Binding m_bind[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+	};
+
 	struct RenderDraw
 	{
 		void clear()
@@ -1264,14 +1280,6 @@ namespace bgfx
 			m_instanceDataBuffer.idx = invalidHandle;
 			m_indirectBuffer.idx     = invalidHandle;
 			m_occlusionQuery.idx     = invalidHandle;
-
-			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
-			{
-				Binding& bind = m_bind[ii];
-				bind.m_idx  = invalidHandle;
-				bind.m_type = 0;
-				bind.m_un.m_draw.m_textureFlags = 0;
-			}
 		}
 
 		bool setStreamBit(uint8_t _stream, VertexBufferHandle _handle)
@@ -1283,7 +1291,6 @@ namespace bgfx
 			return 0 != tmp;
 		}
 
-		Binding  m_bind[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		Stream   m_stream[BGFX_CONFIG_MAX_VERTEX_STREAMS];
 		uint64_t m_stateFlags;
 		uint64_t m_stencil;
@@ -1326,14 +1333,8 @@ namespace bgfx
 			m_indirectBuffer.idx = invalidHandle;
 			m_startIndirect      = 0;
 			m_numIndirect        = UINT16_MAX;
-
-			for (uint32_t ii = 0; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
-			{
-				m_bind[ii].m_idx = invalidHandle;
-			}
 		}
 
-		Binding  m_bind[BGFX_MAX_COMPUTE_BINDINGS];
 		uint32_t m_constBegin;
 		uint32_t m_constEnd;
 		uint32_t m_matrix;
@@ -1461,6 +1462,7 @@ namespace bgfx
 			m_uniformEnd   = 0;
 			m_draw.clear();
 			m_compute.clear();
+			m_bind.clear();
 			m_matrixCache.reset();
 			m_rectCache.reset();
 			m_key.reset();
@@ -1642,7 +1644,7 @@ namespace bgfx
 
 		void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags)
 		{
-			Binding& bind = m_draw.m_bind[_stage];
+			Binding& bind = m_bind.m_bind[_stage];
 			bind.m_idx    = _handle.idx;
 			bind.m_type   = uint8_t(Binding::Texture);
 			bind.m_un.m_draw.m_textureFlags = (_flags&BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER)
@@ -1659,7 +1661,7 @@ namespace bgfx
 
 		void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
 		{
-			Binding& bind = m_compute.m_bind[_stage];
+			Binding& bind = m_bind.m_bind[_stage];
 			bind.m_idx    = _handle.idx;
 			bind.m_type   = uint8_t(Binding::IndexBuffer);
 			bind.m_un.m_compute.m_format = 0;
@@ -1669,7 +1671,7 @@ namespace bgfx
 
 		void setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access)
 		{
-			Binding& bind = m_compute.m_bind[_stage];
+			Binding& bind = m_bind.m_bind[_stage];
 			bind.m_idx    = _handle.idx;
 			bind.m_type   = uint8_t(Binding::VertexBuffer);
 			bind.m_un.m_compute.m_format = 0;
@@ -1679,7 +1681,7 @@ namespace bgfx
 
 		void setImage(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format)
 		{
-			Binding& bind = m_compute.m_bind[_stage];
+			Binding& bind = m_bind.m_bind[_stage];
 			bind.m_idx    = _handle.idx;
 			bind.m_type   = uint8_t(Binding::Image);
 			bind.m_un.m_compute.m_format = uint8_t(_format);
@@ -1838,8 +1840,12 @@ namespace bgfx
 		uint64_t m_sortKeys[BGFX_CONFIG_MAX_DRAW_CALLS+1];
 		RenderItemCount m_sortValues[BGFX_CONFIG_MAX_DRAW_CALLS+1];
 		RenderItem m_renderItem[BGFX_CONFIG_MAX_DRAW_CALLS+1];
-		RenderDraw m_draw;
+		RenderBind m_renderItemBind[BGFX_CONFIG_MAX_DRAW_CALLS + 1];
+
+		RenderDraw    m_draw;
 		RenderCompute m_compute;
+		RenderBind    m_bind;
+
 		uint32_t m_numVertices[BGFX_CONFIG_MAX_VERTEX_STREAMS];
 		uint32_t m_blitKeys[BGFX_CONFIG_MAX_BLIT_ITEMS+1];
 		BlitItem m_blitItem[BGFX_CONFIG_MAX_BLIT_ITEMS+1];
