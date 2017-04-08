@@ -97,11 +97,11 @@ namespace bgfx { namespace gl
 		{
 			GL_CHECK(glGenRenderbuffers(1, &m_depthStencilRbo) );
 			GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_depthStencilRbo) );
-			GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8_OES, _width, _height) ); // from OES_packed_depth_stencil
+			GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _width, _height) );
 			GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depthStencilRbo) );
 			GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depthStencilRbo) );
 
-			GLenum err = glCheckFramebufferStatus(GL_FRAMEBUFFER)
+			GLenum err = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 			BX_CHECK(GL_FRAMEBUFFER_COMPLETE == err, "glCheckFramebufferStatus failed 0x%08x", err);
 			BX_UNUSED(err);
 
@@ -198,7 +198,7 @@ namespace bgfx { namespace gl
 
 		GL_CHECK(glGenRenderbuffers(1, &m_depthStencilRbo) );
 		GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_depthStencilRbo) );
-		GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8_OES, width, height) ); // from OES_packed_depth_stencil
+		GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height) );
 		GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depthStencilRbo) );
 		GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depthStencilRbo) );
 
@@ -285,7 +285,7 @@ namespace bgfx { namespace gl
 
 		GL_CHECK(glGenRenderbuffers(1, &m_depthStencilRbo) );
 		GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_depthStencilRbo) );
-		GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8_OES, width, height) ); // from OES_packed_depth_stencil
+		GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height) );
 		GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depthStencilRbo) );
 		GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depthStencilRbo) );
 
