@@ -2333,7 +2333,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 				}
 
-				m_lost = d3d11::isLost(hr);
+				m_lost = isLost(hr);
 				BGFX_FATAL(!m_lost
 					, bgfx::Fatal::DeviceLost
 					, "Device is lost. FAILED 0x%08x %s (%s)"

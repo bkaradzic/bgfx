@@ -432,6 +432,46 @@ namespace bgfx { namespace d3d12
 		return createCommittedResource(_device, _heapProperty, &resourceDesc, NULL);
 	}
 
+	inline bool isLost(HRESULT _hr)
+	{
+		return false
+			|| _hr == DXGI_ERROR_DEVICE_REMOVED
+			|| _hr == DXGI_ERROR_DEVICE_HUNG
+			|| _hr == DXGI_ERROR_DEVICE_RESET
+			|| _hr == DXGI_ERROR_DRIVER_INTERNAL_ERROR
+			|| _hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE
+			;
+	}
+
+	static const char* getLostReason(HRESULT _hr)
+	{
+		switch (_hr)
+		{
+		// The GPU device instance has been suspended. Use GetDeviceRemovedReason to determine the appropriate action.
+		case DXGI_ERROR_DEVICE_REMOVED: return "DXGI_ERROR_DEVICE_REMOVED";
+
+		// The GPU will not respond to more commands, most likely because of an invalid command passed by the calling application.
+		case DXGI_ERROR_DEVICE_HUNG: return "DXGI_ERROR_DEVICE_HUNG";
+
+		// The GPU will not respond to more commands, most likely because some other application submitted invalid commands.
+		// The calling application should re-create the device and continue.
+		case DXGI_ERROR_DEVICE_RESET: return "DXGI_ERROR_DEVICE_RESET";
+
+		// An internal issue prevented the driver from carrying out the specified operation. The driver's state is probably
+		// suspect, and the application should not continue.
+		case DXGI_ERROR_DRIVER_INTERNAL_ERROR: return "DXGI_ERROR_DRIVER_INTERNAL_ERROR";
+
+		// A resource is not available at the time of the call, but may become available later.
+		case DXGI_ERROR_NOT_CURRENTLY_AVAILABLE: return "DXGI_ERROR_NOT_CURRENTLY_AVAILABLE";
+
+		case S_OK: return "S_OK";
+
+		default: break;
+		}
+
+		return "Unknown HRESULT?";
+	}
+
 	BX_NO_INLINE void setDebugObjectName(ID3D12Object* _object, const char* _format, ...)
 	{
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG_OBJECT_NAME) )
@@ -467,6 +507,7 @@ namespace bgfx { namespace d3d12
 			, m_renderdocdll(NULL)
 			, m_featureLevel(D3D_FEATURE_LEVEL(0) )
 			, m_wireframe(false)
+			, m_lost(false)
 			, m_maxAnisotropy(1)
 			, m_depthClamp(false)
 			, m_fsChanges(0)
@@ -1260,24 +1301,15 @@ namespace bgfx { namespace d3d12
 			return BGFX_RENDERER_DIRECT3D12_NAME;
 		}
 
-		static bool isDeviceRemoved(HRESULT _hr)
-		{
-			return DXGI_ERROR_DEVICE_REMOVED == _hr
-				|| DXGI_ERROR_DEVICE_HUNG == _hr
-				|| DXGI_ERROR_DEVICE_RESET == _hr
-				|| DXGI_ERROR_DRIVER_INTERNAL_ERROR == _hr
-				|| DXGI_ERROR_NOT_CURRENTLY_AVAILABLE == _hr
-				;
-		}
-
 		bool isDeviceRemoved() BX_OVERRIDE
 		{
-			return false;
+			return m_lost;
 		}
 
 		void flip(HMD& /*_hmd*/) BX_OVERRIDE
 		{
-			if (NULL != m_swapChain)
+			if (NULL != m_swapChain
+			&&  !m_lost)
 			{
 				int64_t start = bx::getHPCounter();
 
@@ -1298,16 +1330,14 @@ namespace bgfx { namespace d3d12
 				int64_t now = bx::getHPCounter();
 				m_presentElapsed = now - start;
 
-				if (FAILED(hr)
-				&&  isDeviceRemoved(hr) )
-				{
-					++m_lost;
-					BGFX_FATAL(10 > m_lost, bgfx::Fatal::DeviceLost, "Device is lost. FAILED 0x%08x", hr);
-				}
-				else
-				{
-					m_lost = 0;
-				}
+				m_lost = isLost(hr);
+				BGFX_FATAL(!m_lost
+					, bgfx::Fatal::DeviceLost
+					, "Device is lost. FAILED 0x%08x %s (%s)"
+					, hr
+					, getLostReason(hr)
+					, DXGI_ERROR_DEVICE_REMOVED == hr ? getLostReason(m_device->GetDeviceRemovedReason() ) : "no info"
+					);
 			}
 		}
 
@@ -1869,7 +1899,7 @@ data.NumQualityLevels = 0;
 			}
 		}
 
-		void updateResolution(const Resolution& _resolution)
+		bool updateResolution(const Resolution& _resolution)
 		{
 			if (!!(_resolution.m_flags & BGFX_RESET_MAXANISOTROPY) )
 			{
@@ -1951,6 +1981,8 @@ data.NumQualityLevels = 0;
 
 				postReset();
 			}
+
+			return false;
 		}
 
 		void setShaderUniform(uint8_t _flags, uint32_t _regIndex, const void* _val, uint32_t _numRegs)
@@ -2836,7 +2868,6 @@ data.NumQualityLevels = 0;
 #endif // BX_PLATFORM_WINDOWS
 
 		int64_t m_presentElapsed;
-		uint16_t m_lost;
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 
@@ -2865,6 +2896,7 @@ data.NumQualityLevels = 0;
 
 		Resolution m_resolution;
 		bool m_wireframe;
+		bool m_lost;
 
 #if BX_PLATFORM_WINDOWS
 		DXGI_SWAP_CHAIN_DESC m_scd;
@@ -4784,7 +4816,11 @@ data.NumQualityLevels = 0;
 	{
 //		PIX_BEGINEVENT(D3DCOLOR_FRAME, L"rendererSubmit");
 
-		updateResolution(_render->m_resolution);
+		if (m_lost
+		||  updateResolution(_render->m_resolution) )
+		{
+			return;
+		}
 
 		int64_t elapsed = -bx::getHPCounter();
 		int64_t captureElapsed = 0;

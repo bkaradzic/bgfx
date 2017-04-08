@@ -1493,7 +1493,7 @@ namespace bgfx { namespace d3d9
 					}
 
 #if BX_PLATFORM_WINDOWS
-					if (d3d9::isLost(hr) )
+					if (isLost(hr) )
 					{
 						do
 						{

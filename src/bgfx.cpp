@@ -2374,7 +2374,7 @@ namespace bgfx
 					uint8_t mip;
 					_cmdbuf.read(mip);
 
-					m_renderCtx->readTexture(handle, data,mip);
+					m_renderCtx->readTexture(handle, data, mip);
 				}
 				break;
 
