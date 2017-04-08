@@ -1919,6 +1919,11 @@ VK_IMPORT_DEVICE
 			return BGFX_RENDERER_VULKAN_NAME;
 		}
 
+		bool isDeviceRemoved() BX_OVERRIDE
+		{
+			return false;
+		}
+
 		void flip(HMD& /*_hmd*/) BX_OVERRIDE
 		{
 			if (VK_NULL_HANDLE != m_swapchain)

@@ -1669,6 +1669,13 @@ namespace bgfx
 		{
 			m_renderCtx->flip(m_render->m_hmd);
 			m_flipped = true;
+
+			if (m_renderCtx->isDeviceRemoved() )
+			{
+				// Something horribly went wrong, fallback to noop renderer.
+				m_renderCtx = m_renderNoop;
+				g_caps.rendererType = m_renderCtx->getRendererType();
+			}
 		}
 
 		if (apiSemWait(_msecs) )
@@ -1834,7 +1841,7 @@ namespace bgfx
 
 	static RendererCreator s_rendererCreator[] =
 	{
-		{ noop::rendererCreate,  noop::rendererDestroy,  BGFX_RENDERER_NOOP_NAME,       !!BGFX_CONFIG_RENDERER_NOOP       }, // Noop
+		{ noop::rendererCreate,  noop::rendererDestroy,  BGFX_RENDERER_NOOP_NAME,       true                              }, // Noop
 		{ d3d9::rendererCreate,  d3d9::rendererDestroy,  BGFX_RENDERER_DIRECT3D9_NAME,  !!BGFX_CONFIG_RENDERER_DIRECT3D9  }, // Direct3D9
 		{ d3d11::rendererCreate, d3d11::rendererDestroy, BGFX_RENDERER_DIRECT3D11_NAME, !!BGFX_CONFIG_RENDERER_DIRECT3D11 }, // Direct3D11
 		{ d3d12::rendererCreate, d3d12::rendererDestroy, BGFX_RENDERER_DIRECT3D12_NAME, !!BGFX_CONFIG_RENDERER_DIRECT3D12 }, // Direct3D12
@@ -1849,8 +1856,6 @@ namespace bgfx
 		{ vk::rendererCreate,    vk::rendererDestroy,    BGFX_RENDERER_VULKAN_NAME,     !!BGFX_CONFIG_RENDERER_VULKAN     }, // Vulkan
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_rendererCreator) == RendererType::Count);
-
-	static RendererDestroyFn s_rendererDestroyFn;
 
 	struct Condition
 	{
@@ -1974,7 +1979,6 @@ namespace bgfx
 			renderCtx = s_rendererCreator[renderer].createFn();
 			if (NULL != renderCtx)
 			{
-				s_rendererDestroyFn = s_rendererCreator[renderer].destroyFn;
 				break;
 			}
 
@@ -1984,9 +1988,12 @@ namespace bgfx
 		return renderCtx;
 	}
 
-	void rendererDestroy()
+	void rendererDestroy(RendererContextI* _renderCtx)
 	{
-		s_rendererDestroyFn();
+		if (NULL != _renderCtx)
+		{
+			s_rendererCreator[_renderCtx->getRendererType()].destroyFn();
+		}
 	}
 
 	void Context::rendererExecCommands(CommandBuffer& _cmdbuf)
@@ -2020,8 +2027,9 @@ namespace bgfx
 					RendererType::Enum type;
 					_cmdbuf.read(type);
 
-					m_renderCtx = rendererCreate(type);
-					m_rendererInitialized = NULL != m_renderCtx;
+					m_renderMain = rendererCreate(type);
+
+					m_rendererInitialized = NULL != m_renderMain;
 
 					if (!m_rendererInitialized)
 					{
@@ -2031,6 +2039,12 @@ namespace bgfx
 							);
 						return;
 					}
+
+					m_renderCtx  = m_renderMain;
+					m_renderNoop = RendererType::Noop != type
+						? rendererCreate(RendererType::Noop)
+						: NULL
+						;
 				}
 				break;
 			}
@@ -2053,8 +2067,15 @@ namespace bgfx
 			case CommandBuffer::RendererShutdownEnd:
 				{
 					BX_CHECK(!m_rendererInitialized && !m_exit, "This shouldn't happen! Bad synchronization?");
-					rendererDestroy();
+
 					m_renderCtx = NULL;
+
+					rendererDestroy(m_renderMain);
+					m_renderMain = NULL;
+
+					rendererDestroy(m_renderNoop);
+					m_renderNoop = NULL;
+
 					m_exit = true;
 				}
 				// fall through

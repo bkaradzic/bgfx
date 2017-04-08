@@ -5,8 +5,6 @@
 
 #include "bgfx_p.h"
 
-#if BGFX_CONFIG_RENDERER_NOOP
-
 namespace bgfx { namespace noop
 {
 	struct RendererContextNOOP : public RendererContextI
@@ -50,6 +48,11 @@ namespace bgfx { namespace noop
 		const char* getRendererName() const BX_OVERRIDE
 		{
 			return BGFX_RENDERER_NOOP_NAME;
+		}
+
+		bool isDeviceRemoved() BX_OVERRIDE
+		{
+			return false;
 		}
 
 		void flip(HMD& /*_hmd*/) BX_OVERRIDE
@@ -224,19 +227,3 @@ namespace bgfx { namespace noop
 		s_renderNOOP = NULL;
 	}
 } /* namespace noop */ } // namespace bgfx
-
-#else
-
-namespace bgfx { namespace noop
-{
-	RendererContextI* rendererCreate()
-	{
-		return NULL;
-	}
-
-	void rendererDestroy()
-	{
-	}
-} /* namespace noop */ } // namespace bgfx
-
-#endif // BGFX_CONFIG_RENDERER_NOOP

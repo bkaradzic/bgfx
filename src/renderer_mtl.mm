@@ -1069,6 +1069,11 @@ namespace bgfx { namespace mtl
 			}
 		}
 
+		bool isDeviceRemoved() BX_OVERRIDE
+		{
+			return false;
+		}
+
 		void flip(HMD& /*_hmd*/) BX_OVERRIDE
 		{
 			if (NULL == m_commandBuffer)

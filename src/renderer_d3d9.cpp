@@ -1458,6 +1458,11 @@ namespace bgfx { namespace d3d9
 			m_flushQuery->GetData(NULL, 0, D3DGETDATA_FLUSH);
 		}
 
+		bool isDeviceRemoved() BX_OVERRIDE
+		{
+			return false;
+		}
+
 		void flip(HMD& /*_hmd*/) BX_OVERRIDE
 		{
 			if (NULL != m_swapChain)
@@ -1488,7 +1493,7 @@ namespace bgfx { namespace d3d9
 					}
 
 #if BX_PLATFORM_WINDOWS
-					if (isLost(hr) )
+					if (d3d9::isLost(hr) )
 					{
 						do
 						{

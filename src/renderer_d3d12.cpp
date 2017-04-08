@@ -1260,7 +1260,7 @@ namespace bgfx { namespace d3d12
 			return BGFX_RENDERER_DIRECT3D12_NAME;
 		}
 
-		static bool isLost(HRESULT _hr)
+		static bool isDeviceRemoved(HRESULT _hr)
 		{
 			return DXGI_ERROR_DEVICE_REMOVED == _hr
 				|| DXGI_ERROR_DEVICE_HUNG == _hr
@@ -1268,6 +1268,11 @@ namespace bgfx { namespace d3d12
 				|| DXGI_ERROR_DRIVER_INTERNAL_ERROR == _hr
 				|| DXGI_ERROR_NOT_CURRENTLY_AVAILABLE == _hr
 				;
+		}
+
+		bool isDeviceRemoved() BX_OVERRIDE
+		{
+			return false;
 		}
 
 		void flip(HMD& /*_hmd*/) BX_OVERRIDE
@@ -1294,7 +1299,7 @@ namespace bgfx { namespace d3d12
 				m_presentElapsed = now - start;
 
 				if (FAILED(hr)
-				&&  isLost(hr) )
+				&&  isDeviceRemoved(hr) )
 				{
 					++m_lost;
 					BGFX_FATAL(10 > m_lost, bgfx::Fatal::DeviceLost, "Device is lost. FAILED 0x%08x", hr);
@@ -5337,7 +5342,7 @@ data.NumQualityLevels = 0;
 													buffer.setState(m_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 													scratchBuffer.allocUav(srvHandle[stage], buffer);
 												}
-												else 
+												else
 												{
 													buffer.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 													scratchBuffer.allocSrv(srvHandle[stage], buffer);
