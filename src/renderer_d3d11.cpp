@@ -2334,13 +2334,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				}
 
 				m_lost = d3d11::isLost(hr);
-				BGFX_FATAL(!m_lost
-					, bgfx::Fatal::DeviceLost
-					, "Device is lost. FAILED 0x%08x %s (%s)"
-					, hr
-					, getLostReason(hr)
-					, DXGI_ERROR_DEVICE_REMOVED == hr ? getLostReason(m_device->GetDeviceRemovedReason() ) : "no info"
-					);
+//				BGFX_FATAL(!m_lost
+//					, bgfx::Fatal::DeviceLost
+//					, "Device is lost. FAILED 0x%08x %s (%s)"
+//					, hr
+//					, getLostReason(hr)
+//					, DXGI_ERROR_DEVICE_REMOVED == hr ? getLostReason(m_device->GetDeviceRemovedReason() ) : "no info"
+//					);
 			}
 		}
 

@@ -1659,12 +1659,12 @@ namespace bgfx
 		return m_uniformRef[_handle.idx].m_name.getPtr();
 	}
 
-	RenderFrame::Enum Context::renderFrame(int32_t _msecs)
-	{
-		BGFX_PROFILER_SCOPE(bgfx, render_frame, 0xff2040ff);
+	RendererContextI* rendererCreate(RendererType::Enum _type);
+	void rendererDestroy(RendererContextI* _renderCtx);
 
+	void Context::flip()
+	{
 		if (m_rendererInitialized
-		&& !m_flipAfterRender
 		&& !m_flipped)
 		{
 			m_renderCtx->flip(m_render->m_hmd);
@@ -1673,9 +1673,21 @@ namespace bgfx
 			if (m_renderCtx->isDeviceRemoved() )
 			{
 				// Something horribly went wrong, fallback to noop renderer.
-				m_renderCtx = m_renderNoop;
-				g_caps.rendererType = m_renderCtx->getRendererType();
+				rendererDestroy(m_renderCtx);
+
+				m_renderCtx = rendererCreate(RendererType::Noop);
+				g_caps.rendererType = RendererType::Noop;
 			}
+		}
+	}
+
+	RenderFrame::Enum Context::renderFrame(int32_t _msecs)
+	{
+		BGFX_PROFILER_SCOPE(bgfx, render_frame, 0xff2040ff);
+
+		if (!m_flipAfterRender)
+		{
+			flip();
 		}
 
 		if (apiSemWait(_msecs) )
@@ -1691,11 +1703,9 @@ namespace bgfx
 
 			renderSemPost();
 
-			if (m_rendererInitialized
-			&&  m_flipAfterRender)
+			if (m_flipAfterRender)
 			{
-				m_renderCtx->flip(m_render->m_hmd);
-				m_flipped = true;
+				flip();
 			}
 		}
 		else
@@ -2027,9 +2037,9 @@ namespace bgfx
 					RendererType::Enum type;
 					_cmdbuf.read(type);
 
-					m_renderMain = rendererCreate(type);
+					m_renderCtx = rendererCreate(type);
 
-					m_rendererInitialized = NULL != m_renderMain;
+					m_rendererInitialized = NULL != m_renderCtx;
 
 					if (!m_rendererInitialized)
 					{
@@ -2039,12 +2049,6 @@ namespace bgfx
 							);
 						return;
 					}
-
-					m_renderCtx  = m_renderMain;
-					m_renderNoop = RendererType::Noop != type
-						? rendererCreate(RendererType::Noop)
-						: NULL
-						;
 				}
 				break;
 			}
@@ -2068,13 +2072,8 @@ namespace bgfx
 				{
 					BX_CHECK(!m_rendererInitialized && !m_exit, "This shouldn't happen! Bad synchronization?");
 
+					rendererDestroy(m_renderCtx);
 					m_renderCtx = NULL;
-
-					rendererDestroy(m_renderMain);
-					m_renderMain = NULL;
-
-					rendererDestroy(m_renderNoop);
-					m_renderNoop = NULL;
 
 					m_exit = true;
 				}

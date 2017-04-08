@@ -4144,6 +4144,7 @@ namespace bgfx
 		const char* getName(UniformHandle _handle) const;
 
 		// render thread
+		void flip();
 		RenderFrame::Enum renderFrame(int32_t _msecs = -1);
 		void flushTextureUpdateBatch(CommandBuffer& _cmdbuf);
 		void rendererExecCommands(CommandBuffer& _cmdbuf);
