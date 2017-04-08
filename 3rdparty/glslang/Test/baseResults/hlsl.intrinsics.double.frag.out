@@ -1,5 +1,5 @@
 hlsl.intrinsics.double.frag
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:5  Function Definition: @PixelShaderFunction(d1;d1;d1;vd2;vd3;vd4;u1;u1; ( temp float)
@@ -83,7 +83,7 @@ gl_FragCoord origin is upper left
 Linked fragment stage:
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:5  Function Definition: @PixelShaderFunction(d1;d1;d1;vd2;vd3;vd4;u1;u1; ( temp float)
@@ -173,6 +173,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "PixelShaderFunction" 44 47 50 54 58 62 66 69 72
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "PixelShaderFunction"
                               Name 26  "@PixelShaderFunction(d1;d1;d1;vd2;vd3;vd4;u1;u1;"
                               Name 18  "inDV1a"

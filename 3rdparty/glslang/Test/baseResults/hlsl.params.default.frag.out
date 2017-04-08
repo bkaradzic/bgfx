@@ -1,5 +1,5 @@
 hlsl.params.default.frag
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:9  Function Definition: fn1(vi4;b1;b1; ( temp 4-component vector of int)
@@ -189,7 +189,7 @@ gl_FragCoord origin is upper left
 Linked fragment stage:
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:9  Function Definition: fn1(vi4;b1;b1; ( temp 4-component vector of int)
@@ -384,6 +384,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 175
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "main"
                               Name 15  "fn1(vi4;b1;b1;"
                               Name 12  "p0"

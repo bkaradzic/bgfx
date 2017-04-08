@@ -611,11 +611,14 @@ bool HlslGrammar::acceptFullySpecifiedType(TType& type, TIntermNode*& nodeList)
         qualifier.layoutFormat = type.getQualifier().layoutFormat;
         qualifier.precision    = type.getQualifier().precision;
 
-        if (type.getQualifier().storage == EvqVaryingOut ||
+        if (type.getQualifier().storage == EvqOut ||
             type.getQualifier().storage == EvqBuffer) {
             qualifier.storage      = type.getQualifier().storage;
             qualifier.readonly     = type.getQualifier().readonly;
         }
+
+        if (type.getQualifier().builtIn != EbvNone)
+            qualifier.builtIn = type.getQualifier().builtIn;
 
         type.getQualifier()    = qualifier;
     }
@@ -960,14 +963,14 @@ bool HlslGrammar::acceptOutputPrimitiveGeometry(TLayoutGeometry& geometry)
 //      : INPUTPATCH
 //      | OUTPUTPATCH
 //
-bool HlslGrammar::acceptTessellationDeclType()
+bool HlslGrammar::acceptTessellationDeclType(TBuiltInVariable& patchType)
 {
     // read geometry type
     const EHlslTokenClass tessType = peek();
 
     switch (tessType) {
-    case EHTokInputPatch:    break;
-    case EHTokOutputPatch:   break;
+    case EHTokInputPatch:    patchType = EbvInputPatch;  break;
+    case EHTokOutputPatch:   patchType = EbvOutputPatch; break;
     default:
         return false;  // not a tessellation decl
     }
@@ -981,7 +984,9 @@ bool HlslGrammar::acceptTessellationDeclType()
 //
 bool HlslGrammar::acceptTessellationPatchTemplateType(TType& type)
 {
-    if (! acceptTessellationDeclType())
+    TBuiltInVariable patchType;
+
+    if (! acceptTessellationDeclType(patchType))
         return false;
     
     if (! acceptTokenClass(EHTokLeftAngle))
@@ -1008,6 +1013,7 @@ bool HlslGrammar::acceptTessellationPatchTemplateType(TType& type)
     TArraySizes* arraySizes = new TArraySizes;
     arraySizes->addInnerSize(size->getAsConstantUnion()->getConstArray()[0].getIConst());
     type.newArraySizes(*arraySizes);
+    type.getQualifier().builtIn = patchType;
 
     if (! acceptTokenClass(EHTokRightAngle)) {
         expected("right angle bracket");
@@ -1035,7 +1041,8 @@ bool HlslGrammar::acceptStreamOutTemplateType(TType& type, TLayoutGeometry& geom
         return false;
     }
 
-    type.getQualifier().storage = EvqVaryingOut;
+    type.getQualifier().storage = EvqOut;
+    type.getQualifier().builtIn = EbvGsOutputStream;
 
     if (! acceptTokenClass(EHTokRightAngle)) {
         expected("right angle bracket");
@@ -1145,9 +1152,10 @@ bool HlslGrammar::acceptTextureType(TType& type)
     bool array = false;
     bool ms    = false;
     bool image = false;
+    bool combined = true;
 
     switch (textureType) {
-    case EHTokBuffer:            dim = EsdBuffer;                      break;
+    case EHTokBuffer:            dim = EsdBuffer; combined = false;    break;
     case EHTokTexture1d:         dim = Esd1D;                          break;
     case EHTokTexture1darray:    dim = Esd1D; array = true;            break;
     case EHTokTexture2d:         dim = Esd2D;                          break;
@@ -1251,6 +1259,10 @@ bool HlslGrammar::acceptTextureType(TType& type)
 
     // Remember the declared vector size.
     sampler.vectorSize = txType.getVectorSize();
+
+    // Force uncombined, if necessary
+    if (!combined)
+        sampler.combined = false;
 
     type.shallowCopy(TType(sampler, EvqUniform, arraySizes));
     type.getQualifier().layoutFormat = format;
@@ -2207,7 +2219,7 @@ bool HlslGrammar::acceptDefaultParameterDeclaration(const TType& type, TIntermTy
 
         // For initializer lists, we have to const-fold into a constructor for the type, so build
         // that.
-        TFunction* constructor = parseContext.handleConstructorCall(token.loc, type);
+        TFunction* constructor = parseContext.makeConstructorCall(token.loc, type);
         if (constructor == nullptr)  // cannot construct
             return false;
 
@@ -2616,7 +2628,7 @@ bool HlslGrammar::acceptUnaryExpression(TIntermTyped*& node)
                     return false;
 
                 // Hook it up like a constructor
-                TFunction* constructorFunction = parseContext.handleConstructorCall(loc, castType);
+                TFunction* constructorFunction = parseContext.makeConstructorCall(loc, castType);
                 if (constructorFunction == nullptr) {
                     expected("type that can be constructed");
                     return false;
@@ -2804,6 +2816,8 @@ bool HlslGrammar::acceptPostfixExpression(TIntermTyped*& node)
             }
             advanceToken();
             node = parseContext.handleBracketDereference(indexNode->getLoc(), node, indexNode);
+            if (node == nullptr)
+                return false;
             break;
         }
         case EOpPostIncrement:
@@ -2829,7 +2843,7 @@ bool HlslGrammar::acceptConstructor(TIntermTyped*& node)
     // type
     TType type;
     if (acceptType(type)) {
-        TFunction* constructorFunction = parseContext.handleConstructorCall(token.loc, type);
+        TFunction* constructorFunction = parseContext.makeConstructorCall(token.loc, type);
         if (constructorFunction == nullptr)
             return false;
 

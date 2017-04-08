@@ -1,5 +1,5 @@
 hlsl.intrinsics.negative.comp
-Shader version: 450
+Shader version: 500
 local_size = (1, 1, 1)
 0:? Sequence
 0:2  Function Definition: ComputeShaderFunctionS(f1;f1;f1;i1; ( temp float)
@@ -91,7 +91,7 @@ local_size = (1, 1, 1)
 Linked compute stage:
 
 
-Shader version: 450
+Shader version: 500
 local_size = (1, 1, 1)
 0:? Sequence
 0:2  Function Definition: ComputeShaderFunctionS(f1;f1;f1;i1; ( temp float)
@@ -188,6 +188,7 @@ local_size = (1, 1, 1)
                               MemoryModel Logical GLSL450
                               EntryPoint GLCompute 4  "ComputeShaderFunction" 76 79 82 86 89
                               ExecutionMode 4 LocalSize 1 1 1
+                              Source HLSL 500
                               Name 4  "ComputeShaderFunction"
                               Name 15  "ComputeShaderFunctionS(f1;f1;f1;i1;"
                               Name 11  "inF0"

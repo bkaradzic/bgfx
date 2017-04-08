@@ -6,7 +6,7 @@ ERROR: 0:47: 'fn2' : ambiguous best function under implicit type conversion
 ERROR: 4 compilation errors.  No code generated.
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 ERROR: node is still EOpNull!
 0:7  Function Definition: fn1(vi4; ( temp 4-component vector of int)
@@ -196,7 +196,7 @@ ERROR: node is still EOpNull!
 Linked fragment stage:
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 ERROR: node is still EOpNull!
 0:7  Function Definition: fn1(vi4; ( temp 4-component vector of int)

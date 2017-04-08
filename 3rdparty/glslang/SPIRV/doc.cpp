@@ -68,9 +68,9 @@ namespace spv {
 // Also, the ceilings are declared next to these, to help keep them in sync.
 // Ceilings should be
 //  - one more than the maximum value an enumerant takes on, for non-mask enumerants
-//    (for non-sparse enums, this is the number of enumurants)
+//    (for non-sparse enums, this is the number of enumerants)
 //  - the number of bits consumed by the set of masks
-//    (for non-sparse mask enums, this is the number of enumurants)
+//    (for non-sparse mask enums, this is the number of enumerants)
 //
 
 const int SourceLanguageCeiling = 6; // HLSL todo: need official enumerant

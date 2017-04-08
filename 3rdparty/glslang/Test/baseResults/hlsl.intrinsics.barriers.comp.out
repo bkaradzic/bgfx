@@ -1,5 +1,5 @@
 hlsl.intrinsics.barriers.comp
-Shader version: 450
+Shader version: 500
 local_size = (1, 1, 1)
 0:? Sequence
 0:3  Function Definition: @ComputeShaderFunction( ( temp float)
@@ -27,7 +27,7 @@ local_size = (1, 1, 1)
 Linked compute stage:
 
 
-Shader version: 450
+Shader version: 500
 local_size = (1, 1, 1)
 0:? Sequence
 0:3  Function Definition: @ComputeShaderFunction( ( temp float)
@@ -60,6 +60,7 @@ local_size = (1, 1, 1)
                               MemoryModel Logical GLSL450
                               EntryPoint GLCompute 4  "ComputeShaderFunction" 20
                               ExecutionMode 4 LocalSize 1 1 1
+                              Source HLSL 500
                               Name 4  "ComputeShaderFunction"
                               Name 8  "@ComputeShaderFunction("
                               Name 20  "@entryPointOutput"

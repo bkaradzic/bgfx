@@ -61,7 +61,7 @@ ERROR: 0:133: 'reversebits' : no matching overloaded function found
 ERROR: 59 compilation errors.  No code generated.
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 ERROR: node is still EOpNull!
 0:2  Function Definition: PixelShaderFunctionS(f1;f1;f1;i1; ( temp float)
@@ -522,7 +522,7 @@ ERROR: node is still EOpNull!
 Linked fragment stage:
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 ERROR: node is still EOpNull!
 0:2  Function Definition: PixelShaderFunctionS(f1;f1;f1;i1; ( temp float)

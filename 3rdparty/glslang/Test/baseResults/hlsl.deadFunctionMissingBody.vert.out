@@ -7,6 +7,7 @@ hlsl.deadFunctionMissingBody.vert
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
                               EntryPoint Vertex 4  "main" 16
+                              Source HLSL 500
                               Name 4  "main"
                               Name 9  "@main("
                               Name 16  "@entryPointOutput"

@@ -1,5 +1,5 @@
 hlsl.semantic.geom
-Shader version: 450
+Shader version: 500
 invocations = -1
 max_vertices = 4
 input primitive = triangles
@@ -25,25 +25,25 @@ output primitive = line_strip
 0:?             'VertexID' ( temp 3-element array of uint)
 0:?             'OutputStream' ( temp structure{ temp float clip0,  temp float cull0,  temp uint vpai,  temp uint rtai,  temp int ii})
 0:12        move second child to first child ( temp float)
-0:?           '@entryPointOutput_clip0' ( out float ClipDistance)
+0:?           'OutputStream_clip0' ( out float ClipDistance)
 0:12          clip0: direct index for structure ( temp float)
 0:12            'flattenTemp' ( temp structure{ temp float clip0,  temp float cull0,  temp uint vpai,  temp uint rtai,  temp int ii})
 0:12            Constant:
 0:12              0 (const int)
 0:12        move second child to first child ( temp float)
-0:?           '@entryPointOutput_cull0' ( out float CullDistance)
+0:?           'OutputStream_cull0' ( out float CullDistance)
 0:12          cull0: direct index for structure ( temp float)
 0:12            'flattenTemp' ( temp structure{ temp float clip0,  temp float cull0,  temp uint vpai,  temp uint rtai,  temp int ii})
 0:12            Constant:
 0:12              1 (const int)
 0:12        move second child to first child ( temp uint)
-0:?           '@entryPointOutput_vpai' ( out uint ViewportIndex)
+0:?           'OutputStream_vpai' ( out uint ViewportIndex)
 0:12          vpai: direct index for structure ( temp uint)
 0:12            'flattenTemp' ( temp structure{ temp float clip0,  temp float cull0,  temp uint vpai,  temp uint rtai,  temp int ii})
 0:12            Constant:
 0:12              2 (const int)
 0:12        move second child to first child ( temp uint)
-0:?           '@entryPointOutput_rtai' ( out uint Layer)
+0:?           'OutputStream_rtai' ( out uint Layer)
 0:12          rtai: direct index for structure ( temp uint)
 0:12            'flattenTemp' ( temp structure{ temp float clip0,  temp float cull0,  temp uint vpai,  temp uint rtai,  temp int ii})
 0:12            Constant:
@@ -60,13 +60,14 @@ output primitive = line_strip
 0:?   Linker Objects
 0:?     '@entryPointOutput' (layout( location=0) out structure{ temp int ii})
 0:?     'VertexID' (layout( location=0) in 3-element array of uint)
-0:?     '@entryPointOutput_vpai' ( out uint ViewportIndex)
+0:?     'OutputStream' (layout( location=1) out structure{ temp int ii})
+0:?     'OutputStream_vpai' ( out uint ViewportIndex)
 
 
 Linked geometry stage:
 
 
-Shader version: 450
+Shader version: 500
 invocations = 1
 max_vertices = 4
 input primitive = triangles
@@ -92,25 +93,25 @@ output primitive = line_strip
 0:?             'VertexID' ( temp 3-element array of uint)
 0:?             'OutputStream' ( temp structure{ temp float clip0,  temp float cull0,  temp uint vpai,  temp uint rtai,  temp int ii})
 0:12        move second child to first child ( temp float)
-0:?           '@entryPointOutput_clip0' ( out float ClipDistance)
+0:?           'OutputStream_clip0' ( out float ClipDistance)
 0:12          clip0: direct index for structure ( temp float)
 0:12            'flattenTemp' ( temp structure{ temp float clip0,  temp float cull0,  temp uint vpai,  temp uint rtai,  temp int ii})
 0:12            Constant:
 0:12              0 (const int)
 0:12        move second child to first child ( temp float)
-0:?           '@entryPointOutput_cull0' ( out float CullDistance)
+0:?           'OutputStream_cull0' ( out float CullDistance)
 0:12          cull0: direct index for structure ( temp float)
 0:12            'flattenTemp' ( temp structure{ temp float clip0,  temp float cull0,  temp uint vpai,  temp uint rtai,  temp int ii})
 0:12            Constant:
 0:12              1 (const int)
 0:12        move second child to first child ( temp uint)
-0:?           '@entryPointOutput_vpai' ( out uint ViewportIndex)
+0:?           'OutputStream_vpai' ( out uint ViewportIndex)
 0:12          vpai: direct index for structure ( temp uint)
 0:12            'flattenTemp' ( temp structure{ temp float clip0,  temp float cull0,  temp uint vpai,  temp uint rtai,  temp int ii})
 0:12            Constant:
 0:12              2 (const int)
 0:12        move second child to first child ( temp uint)
-0:?           '@entryPointOutput_rtai' ( out uint Layer)
+0:?           'OutputStream_rtai' ( out uint Layer)
 0:12          rtai: direct index for structure ( temp uint)
 0:12            'flattenTemp' ( temp structure{ temp float clip0,  temp float cull0,  temp uint vpai,  temp uint rtai,  temp int ii})
 0:12            Constant:
@@ -127,11 +128,12 @@ output primitive = line_strip
 0:?   Linker Objects
 0:?     '@entryPointOutput' (layout( location=0) out structure{ temp int ii})
 0:?     'VertexID' (layout( location=0) in 3-element array of uint)
-0:?     '@entryPointOutput_vpai' ( out uint ViewportIndex)
+0:?     'OutputStream' (layout( location=1) out structure{ temp int ii})
+0:?     'OutputStream_vpai' ( out uint ViewportIndex)
 
 // Module Version 10000
 // Generated by (magic number): 80001
-// Id's are bound by 62
+// Id's are bound by 66
 
                               Capability Geometry
                               Capability ClipDistance
@@ -139,11 +141,12 @@ output primitive = line_strip
                               Capability MultiViewport
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
-                              EntryPoint Geometry 4  "main" 25 34 39 44 49 55
+                              EntryPoint Geometry 4  "main" 25 35 40 45 50 56 65
                               ExecutionMode 4 Triangles
                               ExecutionMode 4 Invocations 1
                               ExecutionMode 4 OutputLineStrip
                               ExecutionMode 4 OutputVertices 4
+                              Source HLSL 500
                               Name 4  "main"
                               Name 12  "S"
                               MemberName 12(S) 0  "clip0"
@@ -161,19 +164,23 @@ output primitive = line_strip
                               Name 28  "OutputStream"
                               Name 29  "param"
                               Name 31  "param"
-                              Name 34  "@entryPointOutput_clip0"
-                              Name 39  "@entryPointOutput_cull0"
-                              Name 44  "@entryPointOutput_vpai"
-                              Name 49  "@entryPointOutput_rtai"
-                              Name 53  "S"
-                              MemberName 53(S) 0  "ii"
-                              Name 55  "@entryPointOutput"
+                              Name 35  "OutputStream_clip0"
+                              Name 40  "OutputStream_cull0"
+                              Name 45  "OutputStream_vpai"
+                              Name 50  "OutputStream_rtai"
+                              Name 54  "S"
+                              MemberName 54(S) 0  "ii"
+                              Name 56  "@entryPointOutput"
+                              Name 63  "S"
+                              MemberName 63(S) 0  "ii"
+                              Name 65  "OutputStream"
                               Decorate 25(VertexID) Location 0
-                              Decorate 34(@entryPointOutput_clip0) BuiltIn ClipDistance
-                              Decorate 39(@entryPointOutput_cull0) BuiltIn CullDistance
-                              Decorate 44(@entryPointOutput_vpai) BuiltIn ViewportIndex
-                              Decorate 49(@entryPointOutput_rtai) BuiltIn Layer
-                              Decorate 55(@entryPointOutput) Location 0
+                              Decorate 35(OutputStream_clip0) BuiltIn ClipDistance
+                              Decorate 40(OutputStream_cull0) BuiltIn CullDistance
+                              Decorate 45(OutputStream_vpai) BuiltIn ViewportIndex
+                              Decorate 50(OutputStream_rtai) BuiltIn Layer
+                              Decorate 56(@entryPointOutput) Location 0
+                              Decorate 65(OutputStream) Location 1
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeInt 32 0
@@ -187,24 +194,27 @@ output primitive = line_strip
               14:             TypeFunction 12(S) 9(ptr) 13(ptr)
               24:             TypePointer Input 8
     25(VertexID):     24(ptr) Variable Input
-              33:             TypePointer Output 10(float)
-34(@entryPointOutput_clip0):     33(ptr) Variable Output
-              35:     11(int) Constant 0
-              36:             TypePointer Function 10(float)
-39(@entryPointOutput_cull0):     33(ptr) Variable Output
-              40:     11(int) Constant 1
-              43:             TypePointer Output 6(int)
-44(@entryPointOutput_vpai):     43(ptr) Variable Output
-              45:     11(int) Constant 2
-              46:             TypePointer Function 6(int)
-49(@entryPointOutput_rtai):     43(ptr) Variable Output
-              50:     11(int) Constant 3
-           53(S):             TypeStruct 11(int)
-              54:             TypePointer Output 53(S)
-55(@entryPointOutput):     54(ptr) Variable Output
-              56:     11(int) Constant 4
-              57:             TypePointer Function 11(int)
-              60:             TypePointer Output 11(int)
+              34:             TypePointer Output 10(float)
+35(OutputStream_clip0):     34(ptr) Variable Output
+              36:     11(int) Constant 0
+              37:             TypePointer Function 10(float)
+40(OutputStream_cull0):     34(ptr) Variable Output
+              41:     11(int) Constant 1
+              44:             TypePointer Output 6(int)
+45(OutputStream_vpai):     44(ptr) Variable Output
+              46:     11(int) Constant 2
+              47:             TypePointer Function 6(int)
+50(OutputStream_rtai):     44(ptr) Variable Output
+              51:     11(int) Constant 3
+           54(S):             TypeStruct 11(int)
+              55:             TypePointer Output 54(S)
+56(@entryPointOutput):     55(ptr) Variable Output
+              57:     11(int) Constant 4
+              58:             TypePointer Function 11(int)
+              61:             TypePointer Output 11(int)
+           63(S):             TypeStruct 11(int)
+              64:             TypePointer Output 63(S)
+65(OutputStream):     64(ptr) Variable Output
          4(main):           2 Function None 3
                5:             Label
     23(VertexID):      9(ptr) Variable Function
@@ -217,23 +227,25 @@ output primitive = line_strip
               30:           8 Load 23(VertexID)
                               Store 29(param) 30
               32:       12(S) FunctionCall 17(@main(u1[3];struct-S-f1-f1-u1-u1-i11;) 29(param) 31(param)
+              33:       12(S) Load 31(param)
+                              Store 28(OutputStream) 33
                               Store 27(flattenTemp) 32
-              37:     36(ptr) AccessChain 27(flattenTemp) 35
-              38:   10(float) Load 37
-                              Store 34(@entryPointOutput_clip0) 38
-              41:     36(ptr) AccessChain 27(flattenTemp) 40
-              42:   10(float) Load 41
-                              Store 39(@entryPointOutput_cull0) 42
-              47:     46(ptr) AccessChain 27(flattenTemp) 45
-              48:      6(int) Load 47
-                              Store 44(@entryPointOutput_vpai) 48
-              51:     46(ptr) AccessChain 27(flattenTemp) 50
-              52:      6(int) Load 51
-                              Store 49(@entryPointOutput_rtai) 52
-              58:     57(ptr) AccessChain 27(flattenTemp) 56
-              59:     11(int) Load 58
-              61:     60(ptr) AccessChain 55(@entryPointOutput) 35
-                              Store 61 59
+              38:     37(ptr) AccessChain 27(flattenTemp) 36
+              39:   10(float) Load 38
+                              Store 35(OutputStream_clip0) 39
+              42:     37(ptr) AccessChain 27(flattenTemp) 41
+              43:   10(float) Load 42
+                              Store 40(OutputStream_cull0) 43
+              48:     47(ptr) AccessChain 27(flattenTemp) 46
+              49:      6(int) Load 48
+                              Store 45(OutputStream_vpai) 49
+              52:     47(ptr) AccessChain 27(flattenTemp) 51
+              53:      6(int) Load 52
+                              Store 50(OutputStream_rtai) 53
+              59:     58(ptr) AccessChain 27(flattenTemp) 57
+              60:     11(int) Load 59
+              62:     61(ptr) AccessChain 56(@entryPointOutput) 36
+                              Store 62 60
                               Return
                               FunctionEnd
 17(@main(u1[3];struct-S-f1-f1-u1-u1-i11;):       12(S) Function None 14

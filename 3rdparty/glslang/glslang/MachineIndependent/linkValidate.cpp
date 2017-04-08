@@ -1047,9 +1047,9 @@ unsigned int TIntermediate::computeTypeXfbSize(const TType& type, bool& contains
 
 const int baseAlignmentVec4Std140 = 16;
 
-// Return the size and alignment of a scalar.
+// Return the size and alignment of a component of the given type.
 // The size is returned in the 'size' parameter
-// Return value is the alignment of the type.
+// Return value is the alignment..
 int TIntermediate::getBaseAlignmentScalar(const TType& type, int& size)
 {
     switch (type.getBasicType()) {
@@ -1217,6 +1217,16 @@ int TIntermediate::getBaseAlignment(const TType& type, int& size, int& stride, b
     assert(0);  // all cases should be covered above
     size = baseAlignmentVec4Std140;
     return baseAlignmentVec4Std140;
+}
+
+// To aid the basic HLSL rule about crossing vec4 boundaries.
+bool TIntermediate::improperStraddle(const TType& type, int size, int offset)
+{
+    if (! type.isVector() || type.isArray())
+        return false;
+
+    return size <= 16 ? offset / 16 != (offset + size - 1) / 16
+                      : offset % 16 != 0;
 }
 
 } // end namespace glslang

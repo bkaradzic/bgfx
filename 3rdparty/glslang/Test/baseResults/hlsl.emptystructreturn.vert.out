@@ -1,5 +1,5 @@
 hlsl.emptystructreturn.vert
-Shader version: 450
+Shader version: 500
 0:? Sequence
 0:10  Function Definition: @main(struct-vs_in1; ( temp structure{})
 0:10    Function Parameters: 
@@ -25,7 +25,7 @@ Shader version: 450
 Linked vertex stage:
 
 
-Shader version: 450
+Shader version: 500
 0:? Sequence
 0:10  Function Definition: @main(struct-vs_in1; ( temp structure{})
 0:10    Function Parameters: 
@@ -55,6 +55,7 @@ Shader version: 450
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
                               EntryPoint Vertex 4  "main" 20 23
+                              Source HLSL 500
                               Name 4  "main"
                               Name 6  "vs_in"
                               Name 8  "vs_out"

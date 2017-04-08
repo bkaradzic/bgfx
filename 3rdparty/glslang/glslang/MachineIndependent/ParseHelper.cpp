@@ -342,10 +342,8 @@ TIntermTyped* TParseContext::handleBracketDereference(const TSourceLoc& loc, TIn
     TIntermTyped* result = nullptr;
 
     int indexValue = 0;
-    if (index->getQualifier().isFrontEndConstant()) {
+    if (index->getQualifier().isFrontEndConstant())
         indexValue = index->getAsConstantUnion()->getConstArray()[0].getIConst();
-        checkIndex(loc, base->getType(), indexValue);
-    }
 
     variableCheck(base);
     if (! base->isArray() && ! base->isMatrix() && ! base->isVector()) {
@@ -353,10 +351,12 @@ TIntermTyped* TParseContext::handleBracketDereference(const TSourceLoc& loc, TIn
             error(loc, " left of '[' is not of type array, matrix, or vector ", base->getAsSymbolNode()->getName().c_str(), "");
         else
             error(loc, " left of '[' is not of type array, matrix, or vector ", "expression", "");
-    } else if (base->getType().getQualifier().isFrontEndConstant() && index->getQualifier().isFrontEndConstant())
+    } else if (base->getType().getQualifier().isFrontEndConstant() && index->getQualifier().isFrontEndConstant()) {
+        // both base and index are front-end constants
+        checkIndex(loc, base->getType(), indexValue);
         return intermediate.foldDereference(base, indexValue, loc);
-    else {
-        // at least one of base and index is variable...
+    } else {
+        // at least one of base and index is not a front-end constant variable...
 
         if (base->getAsSymbolNode() && isIoResizeArray(base->getType()))
             handleIoResizeArrayAccess(loc, base);
@@ -364,6 +364,8 @@ TIntermTyped* TParseContext::handleBracketDereference(const TSourceLoc& loc, TIn
         if (index->getQualifier().isFrontEndConstant()) {
             if (base->getType().isImplicitlySizedArray())
                 updateImplicitArraySize(loc, base, indexValue);
+            else
+                checkIndex(loc, base->getType(), indexValue);
             result = intermediate.addIndex(EOpIndexDirect, base, index, loc);
         } else {
             if (base->getType().isImplicitlySizedArray()) {

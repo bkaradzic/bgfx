@@ -1,5 +1,5 @@
 hlsl.typedef.frag
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:4  Function Definition: ShaderFunction(vf4;i1; ( temp 4-component vector of float)
@@ -41,7 +41,7 @@ Linked fragment stage:
 
 WARNING: Linking fragment stage: Entry point not found
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:4  Function Definition: ShaderFunction(vf4;i1; ( temp 4-component vector of float)
@@ -87,6 +87,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "PixelShaderFunction"
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "PixelShaderFunction"
                               Name 14  "ShaderFunction(vf4;i1;"
                               Name 12  "input"

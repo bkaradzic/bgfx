@@ -177,7 +177,8 @@ public:
         shiftSsboBinding(0),
         autoMapBindings(false),
         flattenUniformArrays(false),
-        useUnknownFormat(false)
+        useUnknownFormat(false),
+        hlslOffsets(false)
     {
         localSize[0] = 1;
         localSize[1] = 1;
@@ -216,6 +217,8 @@ public:
     bool getFlattenUniformArrays()        const { return flattenUniformArrays; }
     void setNoStorageFormat(bool b)             { useUnknownFormat = b; }
     bool getNoStorageFormat()             const { return useUnknownFormat; }
+    void setHlslOffsets()         { hlslOffsets = true; }
+    bool usingHlslOFfsets() const { return hlslOffsets; }
 
     void setVersion(int v) { version = v; }
     int getVersion() const { return version; }
@@ -413,7 +416,9 @@ public:
     }
     int addXfbBufferOffset(const TType&);
     unsigned int computeTypeXfbSize(const TType&, bool& containsDouble) const;
+    static int getBaseAlignmentScalar(const TType&, int& size);
     static int getBaseAlignment(const TType&, int& size, int& stride, bool std140, bool rowMajor);
+    static bool improperStraddle(const TType& type, int size, int offset);
     bool promote(TIntermOperator*);
 
 #ifdef NV_EXTENSIONS
@@ -443,7 +448,6 @@ protected:
     void inOutLocationCheck(TInfoSink&);
     TIntermSequence& findLinkerObjects() const;
     bool userOutputUsed() const;
-    static int getBaseAlignmentScalar(const TType&, int& size);
     bool isSpecializationOperation(const TIntermOperator&) const;
     bool promoteUnary(TIntermUnary&);
     bool promoteBinary(TIntermBinary&);
@@ -499,6 +503,7 @@ protected:
     bool autoMapBindings;
     bool flattenUniformArrays;
     bool useUnknownFormat;
+    bool hlslOffsets;
 
     typedef std::list<TCall> TGraph;
     TGraph callGraph;

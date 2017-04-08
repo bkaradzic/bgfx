@@ -1,5 +1,5 @@
 hlsl.promotions.frag
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:19  Function Definition: Fn_F3(vf3; ( temp void)
@@ -792,7 +792,7 @@ gl_FragCoord origin is upper left
 Linked fragment stage:
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:19  Function Definition: Fn_F3(vf3; ( temp void)
@@ -1591,6 +1591,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 593
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "main"
                               Name 11  "Fn_F3(vf3;"
                               Name 10  "x"

@@ -43,6 +43,8 @@
 #include "../Public/ShaderLang.h"
 #include "arrays.h"
 
+#include <algorithm>
+
 namespace glslang {
 
 const int GlslangMaxTypeLength = 200;  // TODO: need to print block/struct one member per line, so this can stay bounded
@@ -1382,127 +1384,80 @@ public:
         return !isPerVertexAndBuiltIn(language);
     }
     
+    // return true if this type contains any subtype which satisfies the given predicate.
+    template <typename P> 
+    bool contains(P predicate) const
+    {
+        if (predicate(this))
+            return true;
+
+        const auto hasa = [predicate](const TTypeLoc& tl) { return tl.type->contains(predicate); };
+
+        return structure && std::any_of(structure->begin(), structure->end(), hasa);
+    }
+
     // Recursively checks if the type contains the given basic type
     virtual bool containsBasicType(TBasicType checkType) const
     {
-        if (basicType == checkType)
-            return true;
-        if (! structure)
-            return false;
-        for (unsigned int i = 0; i < structure->size(); ++i) {
-            if ((*structure)[i].type->containsBasicType(checkType))
-                return true;
-        }
-        return false;
+        return contains([checkType](const TType* t) { return t->basicType == checkType; } );
     }
 
     // Recursively check the structure for any arrays, needed for some error checks
     virtual bool containsArray() const
     {
-        if (isArray())
-            return true;
-        if (structure == nullptr)
-            return false;
-        for (unsigned int i = 0; i < structure->size(); ++i) {
-            if ((*structure)[i].type->containsArray())
-                return true;
-        }
-        return false;
+        return contains([](const TType* t) { return t->isArray(); } );
     }
 
     // Check the structure for any structures, needed for some error checks
     virtual bool containsStructure() const
     {
-        if (structure == nullptr)
-            return false;
-        for (unsigned int i = 0; i < structure->size(); ++i) {
-            if ((*structure)[i].type->structure)
-                return true;
-        }
-        return false;
+        return contains([this](const TType* t) { return t != this && t->isStruct(); } );
     }
 
     // Recursively check the structure for any implicitly-sized arrays, needed for triggering a copyUp().
     virtual bool containsImplicitlySizedArray() const
     {
-        if (isImplicitlySizedArray())
-            return true;
-        if (structure == nullptr)
-            return false;
-        for (unsigned int i = 0; i < structure->size(); ++i) {
-            if ((*structure)[i].type->containsImplicitlySizedArray())
-                return true;
-        }
-        return false;
+        return contains([](const TType* t) { return t->isImplicitlySizedArray(); } );
     }
 
     virtual bool containsOpaque() const
     {
-        if (isOpaque())
-            return true;
-        if (! structure)
-            return false;
-        for (unsigned int i = 0; i < structure->size(); ++i) {
-            if ((*structure)[i].type->containsOpaque())
-                return true;
-        }
-        return false;
+        return contains([](const TType* t) { return t->isOpaque(); } );
     }
 
     // Recursively checks if the type contains an interstage IO builtin
     virtual bool containsBuiltInInterstageIO(EShLanguage language) const
     {
-        if (isBuiltInInterstageIO(language))
-            return true;
-
-        if (! structure)
-            return false;
-        for (unsigned int i = 0; i < structure->size(); ++i) {
-            if ((*structure)[i].type->containsBuiltInInterstageIO(language))
-                return true;
-        }
-        return false;
+        return contains([language](const TType* t) { return t->isBuiltInInterstageIO(language); } );
     }
 
     virtual bool containsNonOpaque() const
     {
-        // list all non-opaque types
-        switch (basicType) {
-        case EbtVoid:
-        case EbtFloat:
-        case EbtDouble:
+        const auto nonOpaque = [](const TType* t) {
+            switch (t->basicType) {
+            case EbtVoid:
+            case EbtFloat:
+            case EbtDouble:
 #ifdef AMD_EXTENSIONS
-        case EbtFloat16:
+            case EbtFloat16:
 #endif
-        case EbtInt:
-        case EbtUint:
-        case EbtInt64:
-        case EbtUint64:
-        case EbtBool:
+            case EbtInt:
+            case EbtUint:
+            case EbtInt64:
+            case EbtUint64:
+            case EbtBool:
             return true;
-        default:
-            break;
-        }
-        if (! structure)
+            default:
             return false;
-        for (unsigned int i = 0; i < structure->size(); ++i) {
-            if ((*structure)[i].type->containsNonOpaque())
-                return true;
-        }
-        return false;
+            }
+        };
+
+        return contains(nonOpaque);
     }
 
     virtual bool containsSpecializationSize() const
     {
-        if (isArray() && arraySizes->containsNode())
-            return true;
-        if (! structure)
-            return false;
-        for (unsigned int i = 0; i < structure->size(); ++i) {
-            if ((*structure)[i].type->containsSpecializationSize())
-                return true;
-        }
-        return false;
+        return contains([](const TType* t) { return t->isArray() && t->arraySizes->containsNode(); } );
     }
 
     // Array editing methods.  Array descriptors can be shared across

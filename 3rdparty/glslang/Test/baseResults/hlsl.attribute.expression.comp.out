@@ -1,5 +1,5 @@
 hlsl.attribute.expression.comp
-Shader version: 450
+Shader version: 500
 local_size = (4, 6, 8)
 0:? Sequence
 0:9  Function Definition: @main( ( temp 4-component vector of float)
@@ -42,7 +42,7 @@ local_size = (4, 6, 8)
 Linked compute stage:
 
 
-Shader version: 450
+Shader version: 500
 local_size = (4, 6, 8)
 0:? Sequence
 0:9  Function Definition: @main( ( temp 4-component vector of float)
@@ -90,6 +90,7 @@ local_size = (4, 6, 8)
                               MemoryModel Logical GLSL450
                               EntryPoint GLCompute 4  "main" 37
                               ExecutionMode 4 LocalSize 4 6 8
+                              Source HLSL 500
                               Name 4  "main"
                               Name 9  "@main("
                               Name 13  "x"

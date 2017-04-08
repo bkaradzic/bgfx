@@ -799,6 +799,7 @@ int TPpContext::tokenPaste(int token, TPpToken& ppToken)
         token = scanToken(&pastedPpToken);
         assert(token == PpAtomPaste);
 
+        // This covers end of macro expansion
         if (endOfReplacementList()) {
             parseContext.ppError(ppToken.loc, "unexpected location; end of replacement list", "##", "");
             break;
@@ -806,6 +807,12 @@ int TPpContext::tokenPaste(int token, TPpToken& ppToken)
 
         // get the token after the ##
         token = scanToken(&pastedPpToken);
+
+        // This covers end of argument expansion
+        if (token == tMarkerInput::marker) {
+            parseContext.ppError(ppToken.loc, "unexpected location; end of argument", "##", "");
+            break;
+        }
 
         // get the token text
         switch (resultToken) {

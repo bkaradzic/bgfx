@@ -96,7 +96,7 @@ public:
     void addInputArgumentConversions(const TFunction&, TIntermTyped*&);
     TIntermTyped* addOutputArgumentConversions(const TFunction&, TIntermOperator&);
     void builtInOpCheck(const TSourceLoc&, const TFunction&, TIntermOperator&);
-    TFunction* handleConstructorCall(const TSourceLoc&, const TType&);
+    TFunction* makeConstructorCall(const TSourceLoc&, const TType&);
     void handleSemantic(TSourceLoc, TQualifier&, TBuiltInVariable, const TString& upperCase);
     void handlePackOffset(const TSourceLoc&, TQualifier&, const glslang::TString& location,
                           const glslang::TString* component);
@@ -140,8 +140,9 @@ public:
     void declareStruct(const TSourceLoc&, TString& structName, TType&);
     TSymbol* lookupUserType(const TString&, TType&);
     TIntermNode* declareVariable(const TSourceLoc&, const TString& identifier, TType&, TIntermTyped* initializer = 0);
-    void lengthenList(const TSourceLoc&, TIntermSequence& list, int size);
-    TIntermTyped* addConstructor(const TSourceLoc&, TIntermNode*, const TType&);
+    void lengthenList(const TSourceLoc&, TIntermSequence& list, int size, TIntermTyped* scalarInit);
+    TIntermTyped* handleConstructor(const TSourceLoc&, TIntermTyped*, const TType&);
+    TIntermTyped* addConstructor(const TSourceLoc&, TIntermTyped*, const TType&);
     TIntermTyped* constructAggregate(TIntermNode*, const TType&, int, const TSourceLoc&);
     TIntermTyped* constructBuiltIn(const TType&, TOperator, TIntermTyped*, const TSourceLoc&, bool subset);
     void declareBlock(const TSourceLoc&, TType&, const TString* instanceName = 0, TArraySizes* arraySizes = 0);
@@ -216,11 +217,12 @@ protected:
     TVariable* makeInternalVariable(const TString& name, const TType& type) const {
         return makeInternalVariable(name.c_str(), type);
     }
+    TIntermSymbol* makeInternalVariableNode(const TSourceLoc&, const char* name, const TType&) const;
     TVariable* declareNonArray(const TSourceLoc&, const TString& identifier, const TType&, bool track);
     void declareArray(const TSourceLoc&, const TString& identifier, const TType&, TSymbol*&, bool track);
     TIntermNode* executeInitializer(const TSourceLoc&, TIntermTyped* initializer, TVariable* variable);
-    TIntermTyped* convertInitializerList(const TSourceLoc&, const TType&, TIntermTyped* initializer);
-    bool isZeroConstructor(const TIntermNode*);
+    TIntermTyped* convertInitializerList(const TSourceLoc&, const TType&, TIntermTyped* initializer, TIntermTyped* scalarInit);
+    bool isScalarConstructor(const TIntermNode*);
     TOperator mapAtomicOp(const TSourceLoc& loc, TOperator op, bool isImage);
 
     // Return true if this node requires L-value conversion (e.g, to an imageStore).
@@ -248,7 +250,7 @@ protected:
     void addInterstageIoToLinkage();
     void addPatchConstantInvocation();
 
-    void fixBuiltInArrayType(TType&);
+    void fixBuiltInIoType(TType&);
 
     void flatten(const TSourceLoc& loc, const TVariable& variable);
     int flatten(const TSourceLoc& loc, const TVariable& variable, const TType&, TFlattenData&, TString name);
@@ -386,6 +388,7 @@ protected:
     };
 
     TMap<tInterstageIoData, TVariable*> interstageBuiltInIo; // individual builtin interstage IO vars, indexed by builtin type.
+    TVariable* inputPatch;
 
     // We have to move array references to structs containing builtin interstage IO to the split variables.
     // This is only handled for one level.  This stores the index, because we'll need it in the future, since
@@ -405,6 +408,8 @@ protected:
 
     TVector<TString> currentTypePrefix;      // current scoping prefix for nested structures
     TVector<TVariable*> implicitThisStack;   // currently active 'this' variables for nested structures
+
+    TVariable* gsStreamOutput;               // geometry shader stream outputs, for emit (Append method)
 };
 
 // This is the prefix we use for builtin methods to avoid namespace collisions with

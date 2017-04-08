@@ -8,6 +8,7 @@ spv.ssbo.autoassign.frag
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 88 91
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "main"
                               Name 11  "@main(vf4;"
                               Name 10  "pos"

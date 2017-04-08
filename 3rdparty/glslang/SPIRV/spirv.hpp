@@ -61,6 +61,7 @@ enum SourceLanguage {
     SourceLanguageGLSL = 2,
     SourceLanguageOpenCL_C = 3,
     SourceLanguageOpenCL_CPP = 4,
+    SourceLanguageHLSL = 5,
     SourceLanguageMax = 0x7fffffff,
 };
 
@@ -137,6 +138,7 @@ enum StorageClass {
     StorageClassPushConstant = 9,
     StorageClassAtomicCounter = 10,
     StorageClassImage = 11,
+    StorageClassStorageBuffer = 12,
     StorageClassMax = 0x7fffffff,
 };
 
@@ -616,12 +618,16 @@ enum Capability {
     CapabilitySubgroupBallotKHR = 4423,
     CapabilityDrawParameters = 4427,
     CapabilitySubgroupVoteKHR = 4431,
+    CapabilityStorageBuffer16BitAccess = 4433,
     CapabilityStorageUniformBufferBlock16 = 4433,
     CapabilityStorageUniform16 = 4434,
+    CapabilityUniformAndStorageBuffer16BitAccess = 4434,
     CapabilityStoragePushConstant16 = 4435,
     CapabilityStorageInputOutput16 = 4436,
     CapabilityDeviceGroup = 4437,
     CapabilityMultiView = 4439,
+    CapabilityVariablePointersStorageBuffer = 4441,
+    CapabilityVariablePointers = 4442,
     CapabilitySampleMaskOverrideCoverageNV = 5249,
     CapabilityGeometryShaderPassthroughNV = 5251,
     CapabilityShaderViewportIndexLayerNV = 5254,

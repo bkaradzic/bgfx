@@ -1,5 +1,5 @@
 hlsl.intrinsics.evalfns.frag
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:3  Function Definition: @main(f1;vf2;vf3;vf4;vi2; ( temp void)
@@ -78,7 +78,7 @@ gl_FragCoord origin is upper left
 Linked fragment stage:
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:3  Function Definition: @main(f1;vf2;vf3;vf4;vi2; ( temp void)
@@ -163,6 +163,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 51 55 59 63 67
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "main"
                               Name 23  "@main(f1;vf2;vf3;vf4;vi2;"
                               Name 18  "inF1"

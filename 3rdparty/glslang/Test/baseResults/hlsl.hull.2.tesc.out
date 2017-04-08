@@ -1,5 +1,5 @@
 hlsl.hull.2.tesc
-Shader version: 450
+Shader version: 500
 vertices = 4
 vertex spacing = equal_spacing
 0:? Sequence
@@ -112,7 +112,7 @@ vertex spacing = equal_spacing
 Linked tessellation control stage:
 
 
-Shader version: 450
+Shader version: 500
 vertices = 4
 vertex spacing = equal_spacing
 0:? Sequence
@@ -232,6 +232,7 @@ vertex spacing = equal_spacing
                               ExecutionMode 4 OutputVertices 4
                               ExecutionMode 4 Isolines
                               ExecutionMode 4 SpacingEqual
+                              Source HLSL 500
                               Name 4  "main"
                               Name 8  "VS_OUT"
                               MemberName 8(VS_OUT) 0  "cpoint"

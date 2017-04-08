@@ -1,5 +1,5 @@
 hlsl.shapeConvRet.frag
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:2  Function Definition: foo( ( temp 3-component vector of int)
@@ -35,7 +35,7 @@ gl_FragCoord origin is upper left
 Linked fragment stage:
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:2  Function Definition: foo( ( temp 3-component vector of int)
@@ -76,6 +76,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 28 31
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "main"
                               Name 9  "foo("
                               Name 16  "@main(f1;"

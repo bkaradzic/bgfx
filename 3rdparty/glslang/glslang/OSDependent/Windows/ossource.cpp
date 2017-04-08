@@ -131,21 +131,6 @@ unsigned int __stdcall EnterGenericThread (void* entry)
     return ((TThreadEntrypoint)entry)(0);
 }
 
-void* OS_CreateThread(TThreadEntrypoint entry)
-{
-    return (void*)_beginthreadex(0, 0, EnterGenericThread, (void*)entry, 0, 0);
-}
-
-void OS_WaitForAllThreads(void* threads, int numThreads)
-{
-    WaitForMultipleObjects(numThreads, (HANDLE*)threads, true, INFINITE);
-}
-
-void OS_Sleep(int milliseconds)
-{
-    Sleep(milliseconds);
-}
-
 //#define DUMP_COUNTERS
 
 void OS_DumpMemoryCounters()

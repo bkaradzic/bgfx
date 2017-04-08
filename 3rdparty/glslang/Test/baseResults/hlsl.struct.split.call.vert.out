@@ -1,5 +1,5 @@
 hlsl.struct.split.call.vert
-Shader version: 450
+Shader version: 500
 0:? Sequence
 0:17  Function Definition: Fn1(struct-VS_INPUT-i1-vf4-i11;struct-VS_OUTPUT-i1-vf4-i11; ( temp void)
 0:17    Function Parameters: 
@@ -112,7 +112,7 @@ Shader version: 450
 Linked vertex stage:
 
 
-Shader version: 450
+Shader version: 500
 0:? Sequence
 0:17  Function Definition: Fn1(struct-VS_INPUT-i1-vf4-i11;struct-VS_OUTPUT-i1-vf4-i11; ( temp void)
 0:17    Function Parameters: 
@@ -229,6 +229,7 @@ Shader version: 450
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
                               EntryPoint Vertex 4  "main" 52 56 59 68 74
+                              Source HLSL 500
                               Name 4  "main"
                               Name 9  "VS_INPUT"
                               MemberName 9(VS_INPUT) 0  "x0_in"

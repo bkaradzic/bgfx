@@ -1,5 +1,5 @@
 hlsl.namespace.frag
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:5  Function Definition: N1::getVec( ( temp 4-component vector of float)
@@ -52,7 +52,7 @@ gl_FragCoord origin is upper left
 Linked fragment stage:
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:5  Function Definition: N1::getVec( ( temp 4-component vector of float)
@@ -110,6 +110,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 52
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "main"
                               Name 9  "N1::getVec("
                               Name 11  "N2::getVec("

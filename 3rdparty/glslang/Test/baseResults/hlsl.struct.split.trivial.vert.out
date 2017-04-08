@@ -1,5 +1,5 @@
 hlsl.struct.split.trivial.vert
-Shader version: 450
+Shader version: 500
 0:? Sequence
 0:16  Function Definition: @main(struct-VS_INPUT-vf41;vf4; ( temp structure{ temp 4-component vector of float Pos})
 0:16    Function Parameters: 
@@ -50,7 +50,7 @@ Shader version: 450
 Linked vertex stage:
 
 
-Shader version: 450
+Shader version: 500
 0:? Sequence
 0:16  Function Definition: @main(struct-VS_INPUT-vf41;vf4; ( temp structure{ temp 4-component vector of float Pos})
 0:16    Function Parameters: 
@@ -105,6 +105,7 @@ Shader version: 450
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
                               EntryPoint Vertex 4  "main" 31 35 38 47
+                              Source HLSL 500
                               Name 4  "main"
                               Name 8  "VS_INPUT"
                               MemberName 8(VS_INPUT) 0  "Pos_in"

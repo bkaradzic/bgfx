@@ -1,5 +1,5 @@
 hlsl.hull.ctrlpt-1.tesc
-Shader version: 450
+Shader version: 500
 vertices = 3
 vertex spacing = fractional_odd_spacing
 triangle order = cw
@@ -200,7 +200,7 @@ triangle order = cw
 Linked tessellation control stage:
 
 
-Shader version: 450
+Shader version: 500
 vertices = 3
 vertex spacing = fractional_odd_spacing
 triangle order = cw
@@ -409,6 +409,7 @@ triangle order = cw
                               ExecutionMode 4 Triangles
                               ExecutionMode 4 SpacingFractionalOdd
                               ExecutionMode 4 VertexOrderCw
+                              Source HLSL 500
                               Name 4  "main"
                               Name 8  "hs_in_t"
                               MemberName 8(hs_in_t) 0  "val"

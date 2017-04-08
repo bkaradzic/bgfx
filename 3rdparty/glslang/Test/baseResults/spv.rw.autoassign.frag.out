@@ -10,6 +10,7 @@ spv.rw.autoassign.frag
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 39
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "main"
                               Name 8  "PS_OUTPUT"
                               MemberName 8(PS_OUTPUT) 0  "Color"

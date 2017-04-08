@@ -1,5 +1,5 @@
 hlsl.array.flatten.frag
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:17  Function Definition: TestFn1( ( temp 4-component vector of float)
@@ -173,7 +173,7 @@ gl_FragCoord origin is upper left
 Linked fragment stage:
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:17  Function Definition: TestFn1( ( temp 4-component vector of float)
@@ -353,6 +353,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 128
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "main"
                               Name 9  "TestFn1("
                               Name 22  "TestFn2(t11[3];p1[3];"

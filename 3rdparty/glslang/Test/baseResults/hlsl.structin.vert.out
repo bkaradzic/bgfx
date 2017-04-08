@@ -1,5 +1,5 @@
 hlsl.structin.vert
-Shader version: 450
+Shader version: 500
 0:? Sequence
 0:8  Function Definition: @main(vf4;struct-VI-vf4[2]-vu2-vf41;vf4; ( temp structure{ temp 2-element array of 4-component vector of float m,  temp 2-component vector of uint coord,  temp 4-component vector of float b})
 0:8    Function Parameters: 
@@ -132,7 +132,7 @@ Shader version: 450
 Linked vertex stage:
 
 
-Shader version: 450
+Shader version: 500
 0:? Sequence
 0:8  Function Definition: @main(vf4;struct-VI-vf4[2]-vu2-vf41;vf4; ( temp structure{ temp 2-element array of 4-component vector of float m,  temp 2-component vector of uint coord,  temp 4-component vector of float b})
 0:8    Function Parameters: 
@@ -269,6 +269,7 @@ Shader version: 450
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
                               EntryPoint Vertex 4  "main" 48 51 54 58 62 66 78
+                              Source HLSL 500
                               Name 4  "main"
                               Name 13  "VI"
                               MemberName 13(VI) 0  "m"

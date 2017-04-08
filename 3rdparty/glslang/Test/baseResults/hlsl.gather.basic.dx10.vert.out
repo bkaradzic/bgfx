@@ -1,5 +1,5 @@
 hlsl.gather.basic.dx10.vert
-Shader version: 450
+Shader version: 500
 0:? Sequence
 0:28  Function Definition: @main( ( temp structure{ temp 4-component vector of float Pos})
 0:28    Function Parameters: 
@@ -111,7 +111,7 @@ Shader version: 450
 Linked vertex stage:
 
 
-Shader version: 450
+Shader version: 500
 0:? Sequence
 0:28  Function Definition: @main( ( temp structure{ temp 4-component vector of float Pos})
 0:28    Function Parameters: 
@@ -228,6 +228,7 @@ Shader version: 450
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
                               EntryPoint Vertex 4  "main" 103 128
+                              Source HLSL 500
                               Name 4  "main"
                               Name 8  "VS_OUTPUT"
                               MemberName 8(VS_OUTPUT) 0  "Pos"

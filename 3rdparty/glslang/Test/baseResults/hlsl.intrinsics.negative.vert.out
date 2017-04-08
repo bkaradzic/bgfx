@@ -1,5 +1,5 @@
 hlsl.intrinsics.negative.vert
-Shader version: 450
+Shader version: 500
 0:? Sequence
 0:15  Function Definition: VertexShaderFunctionS(f1;f1;f1;i1; ( temp float)
 0:15    Function Parameters: 
@@ -155,7 +155,7 @@ Shader version: 450
 Linked vertex stage:
 
 
-Shader version: 450
+Shader version: 500
 0:? Sequence
 0:15  Function Definition: VertexShaderFunctionS(f1;f1;f1;i1; ( temp float)
 0:15    Function Parameters: 
@@ -315,6 +315,7 @@ Shader version: 450
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
                               EntryPoint Vertex 4  "VertexShaderFunction" 100 103 106 110 113
+                              Source HLSL 500
                               Name 4  "VertexShaderFunction"
                               Name 15  "VertexShaderFunctionS(f1;f1;f1;i1;"
                               Name 11  "inF0"

@@ -2,7 +2,7 @@ hlsl.init.frag
 WARNING: 0:40: 'typedef' : struct-member initializers ignored 
 WARNING: 0:40: 'typedef' : struct-member initializers ignored 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:1  Sequence
@@ -168,7 +168,7 @@ gl_FragCoord origin is upper left
 Linked fragment stage:
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:1  Sequence
@@ -339,6 +339,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "ShaderFunction" 98 101
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "ShaderFunction"
                               Name 11  "@ShaderFunction(vf4;"
                               Name 10  "input"

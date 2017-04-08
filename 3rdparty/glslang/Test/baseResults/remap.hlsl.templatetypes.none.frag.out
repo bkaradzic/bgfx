@@ -9,6 +9,7 @@ remap.hlsl.templatetypes.none.frag
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 153 156
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "main"
                               Name 11  "@main(vf4;"
                               Name 10  "input"

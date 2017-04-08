@@ -79,7 +79,7 @@ namespace glslang {
         bool acceptTemplateVecMatBasicType(TBasicType&);
         bool acceptVectorTemplateType(TType&);
         bool acceptMatrixTemplateType(TType&);
-        bool acceptTessellationDeclType();
+        bool acceptTessellationDeclType(TBuiltInVariable&);
         bool acceptTessellationPatchTemplateType(TType&);
         bool acceptStreamOutTemplateType(TType&, TLayoutGeometry&);
         bool acceptOutputPrimitiveGeometry(TLayoutGeometry&);

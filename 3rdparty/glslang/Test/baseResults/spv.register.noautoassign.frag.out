@@ -9,6 +9,7 @@ spv.register.noautoassign.frag
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main_ep" 151
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "main_ep"
                               Name 9  "Func1("
                               Name 11  "Func2("

@@ -1,5 +1,5 @@
 hlsl.samplegrad.offset.dx10.frag
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:28  Function Definition: @main( ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
@@ -236,7 +236,7 @@ gl_FragCoord origin is upper left
 Linked fragment stage:
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:28  Function Definition: @main( ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
@@ -479,6 +479,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 149 153
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "main"
                               Name 8  "PS_OUTPUT"
                               MemberName 8(PS_OUTPUT) 0  "Color"

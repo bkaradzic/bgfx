@@ -1,5 +1,5 @@
 hlsl.intrinsic.frexp.vert
-Shader version: 450
+Shader version: 500
 0:? Sequence
 0:2  Function Definition: VertexShaderFunctionS(f1;f1; ( temp float)
 0:2    Function Parameters: 
@@ -58,7 +58,7 @@ Linked vertex stage:
 
 WARNING: Linking vertex stage: Entry point not found
 
-Shader version: 450
+Shader version: 500
 0:? Sequence
 0:2  Function Definition: VertexShaderFunctionS(f1;f1; ( temp float)
 0:2    Function Parameters: 
@@ -120,6 +120,7 @@ Shader version: 450
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
                               EntryPoint Vertex 4  "VertexShaderFunction"
+                              Source HLSL 500
                               Name 4  "VertexShaderFunction"
                               Name 11  "VertexShaderFunctionS(f1;f1;"
                               Name 9  "inF0"

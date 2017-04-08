@@ -920,7 +920,7 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
     case EbtUint:
         switch (from) {
         case EbtInt:
-            return version >= 400;
+            return version >= 400 || (source == EShSourceHlsl);
         case EbtUint:
             return true;
         case EbtBool:

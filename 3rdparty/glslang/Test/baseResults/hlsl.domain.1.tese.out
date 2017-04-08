@@ -1,5 +1,5 @@
 hlsl.domain.1.tese
-Shader version: 450
+Shader version: 500
 input primitive = triangles
 vertex spacing = none
 triangle order = none
@@ -123,7 +123,7 @@ triangle order = none
 Linked tessellation evaluation stage:
 
 
-Shader version: 450
+Shader version: 500
 input primitive = triangles
 vertex spacing = none
 triangle order = none
@@ -252,6 +252,7 @@ triangle order = none
                               MemoryModel Logical GLSL450
                               EntryPoint TessellationEvaluation 4  "main" 51 55 61 76 81 90
                               ExecutionMode 4 Triangles
+                              Source HLSL 500
                               Name 4  "main"
                               Name 9  "ds_in_t"
                               MemberName 9(ds_in_t) 0  "pos"

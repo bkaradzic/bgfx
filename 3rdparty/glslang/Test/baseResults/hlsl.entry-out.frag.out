@@ -1,5 +1,5 @@
 hlsl.entry-out.frag
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:7  Function Definition: fun(struct-OutParam-vf2-vi21; ( temp void)
@@ -123,7 +123,7 @@ gl_FragCoord origin is upper left
 Linked fragment stage:
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:7  Function Definition: fun(struct-OutParam-vf2-vi21; ( temp void)
@@ -252,6 +252,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "PixelShaderFunction" 57 60 73 76 80 83 86
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "PixelShaderFunction"
                               Name 10  "OutParam"
                               MemberName 10(OutParam) 0  "v"

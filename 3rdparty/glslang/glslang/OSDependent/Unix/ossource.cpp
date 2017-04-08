@@ -184,20 +184,6 @@ void ReleaseGlobalLock()
   pthread_mutex_unlock(&gMutex);
 }
 
-// TODO: non-windows: if we need these on linux, flesh them out
-void* OS_CreateThread(TThreadEntrypoint /*entry*/)
-{
-    return 0;
-}
-
-void OS_WaitForAllThreads(void* /*threads*/, int /*numThreads*/)
-{
-}
-
-void OS_Sleep(int /*milliseconds*/)
-{
-}
-
 void OS_DumpMemoryCounters()
 {
 }

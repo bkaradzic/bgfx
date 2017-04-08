@@ -1,5 +1,5 @@
 hlsl.precedence2.frag
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:7  Function Definition: @PixelShaderFunction(i1;i1;i1;i1; ( temp int)
@@ -58,7 +58,7 @@ gl_FragCoord origin is upper left
 Linked fragment stage:
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:7  Function Definition: @PixelShaderFunction(i1;i1;i1;i1; ( temp int)
@@ -122,6 +122,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "PixelShaderFunction" 34 37 40 43 46
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "PixelShaderFunction"
                               Name 13  "@PixelShaderFunction(i1;i1;i1;i1;"
                               Name 9  "a1"

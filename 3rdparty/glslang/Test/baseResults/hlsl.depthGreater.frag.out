@@ -1,5 +1,5 @@
 hlsl.depthGreater.frag
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 using depth_greater
 0:? Sequence
@@ -26,7 +26,7 @@ using depth_greater
 Linked fragment stage:
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 using depth_greater
 0:? Sequence
@@ -59,6 +59,7 @@ using depth_greater
                               EntryPoint Fragment 4  "PixelShaderFunction" 18
                               ExecutionMode 4 OriginUpperLeft
                               ExecutionMode 4 DepthGreater
+                              Source HLSL 500
                               Name 4  "PixelShaderFunction"
                               Name 10  "@PixelShaderFunction(f1;"
                               Name 9  "depth"

@@ -1,5 +1,5 @@
 hlsl.semantic.vert
-Shader version: 450
+Shader version: 500
 0:? Sequence
 0:12  Function Definition: @main(struct-S-f1-f1-f1-f1-f1-f1-i11; ( temp structure{ temp float clip,  temp float clip0,  temp float clip7,  temp float cull,  temp float cull2,  temp float cull5,  temp int ii})
 0:12    Function Parameters: 
@@ -117,7 +117,7 @@ Shader version: 450
 Linked vertex stage:
 
 
-Shader version: 450
+Shader version: 500
 0:? Sequence
 0:12  Function Definition: @main(struct-S-f1-f1-f1-f1-f1-f1-i11; ( temp structure{ temp float clip,  temp float clip0,  temp float clip7,  temp float cull,  temp float cull2,  temp float cull5,  temp int ii})
 0:12    Function Parameters: 
@@ -241,6 +241,7 @@ Shader version: 450
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
                               EntryPoint Vertex 4  "main" 21 26 30 34 38 42 47 56 63 72
+                              Source HLSL 500
                               Name 4  "main"
                               Name 8  "S"
                               MemberName 8(S) 0  "clip"

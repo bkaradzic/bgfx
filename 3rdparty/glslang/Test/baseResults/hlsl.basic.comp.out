@@ -1,5 +1,5 @@
 hlsl.basic.comp
-Shader version: 450
+Shader version: 500
 local_size = (1, 1, 1)
 0:? Sequence
 0:4  Function Definition: @main(i1;i1; ( temp void)
@@ -31,7 +31,7 @@ local_size = (1, 1, 1)
 Linked compute stage:
 
 
-Shader version: 450
+Shader version: 500
 local_size = (1, 1, 1)
 0:? Sequence
 0:4  Function Definition: @main(i1;i1; ( temp void)
@@ -68,6 +68,7 @@ local_size = (1, 1, 1)
                               MemoryModel Logical GLSL450
                               EntryPoint GLCompute 4  "main" 18 21
                               ExecutionMode 4 LocalSize 1 1 1
+                              Source HLSL 500
                               Name 4  "main"
                               Name 11  "@main(i1;i1;"
                               Name 9  "dti"

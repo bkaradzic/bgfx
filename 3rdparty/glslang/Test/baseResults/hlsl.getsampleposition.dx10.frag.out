@@ -4,7 +4,7 @@ ERROR: 0:17: '' : unimplemented: GetSamplePosition
 ERROR: 2 compilation errors.  No code generated.
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 ERROR: node is still EOpNull!
 0:13  Function Definition: @main( ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
@@ -75,7 +75,7 @@ ERROR: node is still EOpNull!
 Linked fragment stage:
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 ERROR: node is still EOpNull!
 0:13  Function Definition: @main( ( temp structure{ temp 4-component vector of float Color,  temp float Depth})

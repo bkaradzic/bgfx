@@ -3,7 +3,7 @@ WARNING: 0:26: 'register' : ignoring shader_profile
 WARNING: 0:27: 'register' : ignoring shader_profile 
 WARNING: 0:30: 'register' : ignoring shader_profile 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:40  Function Definition: @PixelShaderFunction(vf4;struct-IN_S-vf4-b1-vf1-vf2-b1-b1-b1-vf41; ( temp 4-component vector of float)
@@ -124,7 +124,7 @@ gl_FragCoord origin is upper left
 Linked fragment stage:
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:40  Function Definition: @PixelShaderFunction(vf4;struct-IN_S-vf4-b1-vf1-vf2-b1-b1-b1-vf41; ( temp 4-component vector of float)
@@ -250,6 +250,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "PixelShaderFunction" 51 56 79 94
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "PixelShaderFunction"
                               Name 11  "IN_S"
                               MemberName 11(IN_S) 0  "a"

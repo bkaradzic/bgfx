@@ -8,7 +8,8 @@ ERROR: 0:69: '##' : combined token is invalid
 ERROR: 0:82: 'macro expansion' : Too few args in Macro rec
 ERROR: 0:82: '##' : unexpected location 
 ERROR: 0:82: '##' : unexpected location 
-ERROR: 8 compilation errors.  No code generated.
+ERROR: 0:86: '##' : unexpected location; end of argument 
+ERROR: 9 compilation errors.  No code generated.
 
 
 Shader version: 450

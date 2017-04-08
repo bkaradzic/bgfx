@@ -175,7 +175,7 @@ bool TInputScanner::scanVersion(int& version, EProfile& profile, bool& notFirstT
 
     bool versionNotFirst = false;  // means not first WRT comments and white space, nothing more
     notFirstToken = false;         // means not first WRT to real tokens
-    version = 0;  // means not found
+    version = 0;                   // means not found
     profile = ENoProfile;
 
     bool foundNonSpaceTab = false;

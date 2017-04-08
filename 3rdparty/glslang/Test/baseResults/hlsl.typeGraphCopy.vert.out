@@ -1,5 +1,5 @@
 hlsl.typeGraphCopy.vert
-Shader version: 450
+Shader version: 500
 0:? Sequence
 0:22  Function Definition: @main( ( temp float)
 0:22    Function Parameters: 
@@ -32,7 +32,7 @@ Shader version: 450
 Linked vertex stage:
 
 
-Shader version: 450
+Shader version: 500
 0:? Sequence
 0:22  Function Definition: @main( ( temp float)
 0:22    Function Parameters: 
@@ -69,6 +69,7 @@ Shader version: 450
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
                               EntryPoint Vertex 4  "main" 26
+                              Source HLSL 500
                               Name 4  "main"
                               Name 8  "@main("
                               Name 11  "N1"

@@ -1,5 +1,5 @@
 hlsl.array.implicit-size.frag
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:3  Sequence
@@ -83,7 +83,7 @@ Linked fragment stage:
 
 WARNING: Linking fragment stage: Entry point not found
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:3  Sequence
@@ -171,6 +171,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "PixelShaderFunction"
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "PixelShaderFunction"
                               Name 8  "PS_OUTPUT"
                               MemberName 8(PS_OUTPUT) 0  "color"

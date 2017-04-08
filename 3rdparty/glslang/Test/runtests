@@ -73,6 +73,20 @@ echo Running explicit stage test
 $EXE -i -S vert nosuffix > $TARGETDIR/nosuffix.out
 diff -b $BASEDIR/nosuffix.out $TARGETDIR/nosuffix.out || HASERROR=1
 
+#
+# Testing --hlsl-offsets
+#
+echo Running hlsl offsets
+$EXE -i --hlsl-offsets -H spv.hlslOffsets.vert > $TARGETDIR/spv.hlslOffsets.vert.out
+diff -b $BASEDIR/spv.hlslOffsets.vert.out $TARGETDIR/spv.hlslOffsets.vert.out || HASERROR=1
+
+echo Running hlsl offsets
+$EXE -i  --hlsl-offsets -D -e main -H hlsl.hlslOffset.vert > $TARGETDIR/hlsl.hlslOffset.vert.out
+diff -b $BASEDIR/hlsl.hlslOffset.vert.out $TARGETDIR/hlsl.hlslOffset.vert.out || HASERROR=1
+
+#
+# Final checking
+#
 if [ $HASERROR -eq 0 ]
 then
     echo Tests Succeeded.

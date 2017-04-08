@@ -2,7 +2,7 @@ hlsl.partialInit.frag
 WARNING: 0:35: 'cgf2a' : variable with qualifier 'const' not initialized; zero initializing 
 WARNING: 0:36: 'ci' : variable with qualifier 'const' not initialized; zero initializing 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:8  Sequence
@@ -202,7 +202,7 @@ gl_FragCoord origin is upper left
 Linked fragment stage:
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:8  Sequence
@@ -407,6 +407,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "PixelShaderFunction" 80 87 91 95 99
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "PixelShaderFunction"
                               Name 11  "outs"
                               MemberName 11(outs) 0  "a"

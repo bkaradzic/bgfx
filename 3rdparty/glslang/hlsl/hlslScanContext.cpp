@@ -878,28 +878,4 @@ EHlslTokenClass HlslScanContext::reservedWord()
     return EHTokNone;
 }
 
-EHlslTokenClass HlslScanContext::identifierOrReserved(bool reserved)
-{
-    if (reserved) {
-        reservedWord();
-
-        return EHTokNone;
-    }
-
-    if (parseContext.forwardCompatible)
-        parseContext.warn(loc, "using future reserved keyword", tokenText, "");
-
-    return identifierOrType();
-}
-
-// For a keyword that was never reserved, until it suddenly
-// showed up.
-EHlslTokenClass HlslScanContext::nonreservedKeyword(int version)
-{
-    if (parseContext.version < version)
-        return identifierOrType();
-
-    return keyword;
-}
-
 } // end namespace glslang

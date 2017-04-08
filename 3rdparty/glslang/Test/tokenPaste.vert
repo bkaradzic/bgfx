@@ -80,3 +80,7 @@ uniform M_OUTER2(argPaste);
 
 #define rec(x)##
 rec(rec())
+
+#define bax(bay)
+#define baz bax(/##)
+baz

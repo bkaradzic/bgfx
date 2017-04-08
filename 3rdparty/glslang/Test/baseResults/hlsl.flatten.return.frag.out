@@ -1,5 +1,5 @@
 hlsl.flatten.return.frag
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:11  Function Definition: Func1( ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
@@ -60,7 +60,7 @@ gl_FragCoord origin is upper left
 Linked fragment stage:
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:11  Function Definition: Func1( ( temp structure{ temp 4-component vector of float color,  temp float other_struct_member1,  temp float other_struct_member2,  temp float other_struct_member3})
@@ -126,6 +126,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 29 36 41 45
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "main"
                               Name 8  "PS_OUTPUT"
                               MemberName 8(PS_OUTPUT) 0  "color"

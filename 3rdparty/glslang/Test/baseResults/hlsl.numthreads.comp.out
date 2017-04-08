@@ -1,5 +1,5 @@
 hlsl.numthreads.comp
-Shader version: 450
+Shader version: 500
 local_size = (4, 4, 2)
 0:? Sequence
 0:4  Function Definition: main(vu3; ( temp void)
@@ -23,7 +23,7 @@ local_size = (4, 4, 2)
 Linked compute stage:
 
 
-Shader version: 450
+Shader version: 500
 local_size = (4, 4, 2)
 0:? Sequence
 0:4  Function Definition: main(vu3; ( temp void)
@@ -52,6 +52,7 @@ local_size = (4, 4, 2)
                               MemoryModel Logical GLSL450
                               EntryPoint GLCompute 4  "main_aux1" 18
                               ExecutionMode 4 LocalSize 4 4 2
+                              Source HLSL 500
                               Name 4  "main_aux1"
                               Name 11  "main(vu3;"
                               Name 10  "tid"

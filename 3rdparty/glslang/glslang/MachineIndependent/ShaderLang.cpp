@@ -442,7 +442,7 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
     bool correct = true;
 
     if (source == EShSourceHlsl) {
-        version = 450;          // TODO: GLSL parser is still used for builtins.
+        version = 500;          // shader model; currently a characteristic of glslang, not the input
         profile = ECoreProfile; // allow doubles in prototype parsing
         return correct;
     }
@@ -679,13 +679,13 @@ bool ProcessDeferred(
     // First, without using the preprocessor or parser, find the #version, so we know what
     // symbol tables, processing rules, etc. to set up.  This does not need the extra strings
     // outlined above, just the user shader.
-    int version;
-    EProfile profile;
     glslang::TInputScanner userInput(numStrings, &strings[numPre], &lengths[numPre]);  // no preamble
-    bool versionNotFirstToken;
-    bool versionNotFirst = userInput.scanVersion(version, profile, versionNotFirstToken);
+    int version = 0;
+    EProfile profile = ENoProfile;
+    bool versionNotFirstToken = false;
+    bool versionNotFirst = (messages & EShMsgReadHlsl) ? true : userInput.scanVersion(version, profile, versionNotFirstToken);
     bool versionNotFound = version == 0;
-    if (forceDefaultVersionAndProfile) {
+    if (forceDefaultVersionAndProfile && (messages & EShMsgReadHlsl) == 0) {
         if (! (messages & EShMsgSuppressWarnings) && ! versionNotFound &&
             (version != defaultVersion || profile != defaultProfile)) {
             compiler->infoSink.info << "Warning, (version, profile) forced to be ("
@@ -726,6 +726,8 @@ bool ProcessDeferred(
     intermediate.setSpv(spvVersion);
     if (spvVersion.vulkan >= 100)
         intermediate.setOriginUpperLeft();
+    if (messages & EShMsgHlslOffsets) // source-language independent
+        intermediate.setHlslOffsets();
     SetupBuiltinSymbolTable(version, profile, spvVersion, source);
 
     TSymbolTable* cachedTable = SharedSymbolTables[MapVersionToIndex(version)]

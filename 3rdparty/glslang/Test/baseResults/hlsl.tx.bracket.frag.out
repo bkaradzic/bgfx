@@ -1,5 +1,5 @@
 hlsl.tx.bracket.frag
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:38  Function Definition: Fn1(vi4; ( temp 4-component vector of int)
@@ -212,7 +212,7 @@ gl_FragCoord origin is upper left
 Linked fragment stage:
 
 
-Shader version: 450
+Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
 0:38  Function Definition: Fn1(vi4; ( temp 4-component vector of int)
@@ -431,6 +431,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 164
                               ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
                               Name 4  "main"
                               Name 11  "Fn1(vi4;"
                               Name 10  "x"

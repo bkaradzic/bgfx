@@ -1,5 +1,5 @@
 hlsl.hull.void.tesc
-Shader version: 450
+Shader version: 500
 vertices = 3
 vertex spacing = fractional_even_spacing
 0:? Sequence
@@ -54,7 +54,7 @@ vertex spacing = fractional_even_spacing
 Linked tessellation control stage:
 
 
-Shader version: 450
+Shader version: 500
 vertices = 3
 vertex spacing = fractional_even_spacing
 0:? Sequence
@@ -116,6 +116,7 @@ vertex spacing = fractional_even_spacing
                               ExecutionMode 4 OutputVertices 3
                               ExecutionMode 4 Triangles
                               ExecutionMode 4 SpacingFractionalEven
+                              Source HLSL 500
                               Name 4  "main"
                               Name 8  "VS_OUT"
                               MemberName 8(VS_OUT) 0  "cpoint"
