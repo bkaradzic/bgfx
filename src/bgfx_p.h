@@ -2372,6 +2372,10 @@ namespace bgfx
 				cmdbuf.write(_mem);
 				cmdbuf.write(_flags);
 			}
+			else
+			{
+				release(_mem);
+			}
 
 			return handle;
 		}
@@ -2419,6 +2423,10 @@ namespace bgfx
 				cmdbuf.write(_mem);
 				cmdbuf.write(declHandle);
 				cmdbuf.write(_flags);
+			}
+			else
+			{
+				release(_mem);
 			}
 
 			return handle;
@@ -2526,10 +2534,16 @@ namespace bgfx
 			BX_CHECK(0 == (_flags &  BGFX_BUFFER_COMPUTE_READ_WRITE), "Cannot initialize compute buffer from CPU.");
 			const uint32_t indexSize = 0 == (_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
 			DynamicIndexBufferHandle handle = createDynamicIndexBuffer(_mem->size/indexSize, _flags);
+
 			if (isValid(handle) )
 			{
 				updateDynamicIndexBuffer(handle, 0, _mem);
 			}
+			else
+			{
+				release(_mem);
+			}
+
 			return handle;
 		}
 
@@ -2679,10 +2693,16 @@ namespace bgfx
 		{
 			uint32_t numVertices = _mem->size/_decl.m_stride;
 			DynamicVertexBufferHandle handle = createDynamicVertexBuffer(numVertices, _decl, _flags);
+
 			if (isValid(handle) )
 			{
 				updateDynamicVertexBuffer(handle, 0, _mem);
 			}
+			else
+			{
+				release(_mem);
+			}
+
 			return handle;
 		}
 
@@ -2955,6 +2975,7 @@ namespace bgfx
 			if (!err.isOk() )
 			{
 				ShaderHandle invalid = BGFX_INVALID_HANDLE;
+				release(_mem);
 				return invalid;
 			}
 
@@ -2969,6 +2990,7 @@ namespace bgfx
 					, ( (uint8_t*)&magic)[3]
 					);
 				ShaderHandle invalid = BGFX_INVALID_HANDLE;
+				release(_mem);
 				return invalid;
 			}
 
@@ -3032,6 +3054,10 @@ namespace bgfx
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateShader);
 				cmdbuf.write(handle);
 				cmdbuf.write(_mem);
+			}
+			else
+			{
+				release(_mem);
 			}
 
 			return handle;
@@ -3294,6 +3320,10 @@ namespace bgfx
 				cmdbuf.write(_mem);
 				cmdbuf.write(_flags);
 				cmdbuf.write(_skip);
+			}
+			else
+			{
+				release(_mem);
 			}
 
 			return handle;
