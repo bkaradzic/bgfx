@@ -105,7 +105,7 @@ struct Emitter
 		psUpdateEmitter(m_handle, &m_uniforms);
 	}
 
-	void imgui(const float* _view, const float* _proj)
+	void imgui()
 	{
 //		if (ImGui::CollapsingHeader("General") )
 		{
@@ -197,15 +197,19 @@ struct Emitter
 			ImGui::ColorEdit4("RGBA3", &m_uniforms.m_rgba[3], true);
 			ImGui::ColorEdit4("RGBA4", &m_uniforms.m_rgba[4], true);
 		}
+	}
 
-		ImGui::End();
-
+	void gizmo(const float* _view, const float* _proj)
+	{
 		float mtx[16];
 		bx::mtxSRT(mtx
 				, 1.0f, 1.0f, 1.0f
 				, m_uniforms.m_angle[0],    m_uniforms.m_angle[1],    m_uniforms.m_angle[2]
 				, m_uniforms.m_position[0], m_uniforms.m_position[1], m_uniforms.m_position[2]
 				);
+
+		ImGuiIO& io = ImGui::GetIO();
+		ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
 
 		ImGuizmo::Manipulate(
 				_view
@@ -388,7 +392,11 @@ class Particles : public entry::AppI
 				ImGui::RadioButton(name, &currentEmitter, ii);
 			}
 
-			m_emitter[currentEmitter].imgui(view, proj);
+			m_emitter[currentEmitter].imgui();
+
+			ImGui::End();
+
+			m_emitter[currentEmitter].gizmo(view, proj);
 
 			imguiEndFrame();
 

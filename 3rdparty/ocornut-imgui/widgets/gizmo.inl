@@ -20,11 +20,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#define IMGUI_DEFINE_MATH_OPERATORS
+
+// includes patches for multiview from
+// https://github.com/CedricGuillemet/ImGuizmo/issues/15
+
 namespace ImGuizmo
 {
    static const float ZPI = 3.14159265358979323846f;
    static const float RAD2DEG = (180.f / ZPI);
    static const float DEG2RAD = (ZPI / 180.f);
+
+   const float screenRotateSize = 0.06f;
 
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // utility and math
@@ -551,9 +558,13 @@ namespace ImGuizmo
 	  bool mbUsingBounds;
 	  matrix_t mBoundsMatrix;
 
-
       //
       int mCurrentOperation;
+
+	  float mX = 0.f;
+	  float mY = 0.f;
+	  float mWidth = 0.f;
+	  float mHeight = 0.f;
    };
 
    static Context gContext;
@@ -584,16 +595,16 @@ namespace ImGuizmo
 
    static ImVec2 worldToPos(const vec_t& worldPos, const matrix_t& mat)
    {
-      ImGuiIO& io = ImGui::GetIO();
-
       vec_t trans;
       trans.TransformPoint(worldPos, mat);
       trans *= 0.5f / trans.w;
       trans += makeVect(0.5f, 0.5f);
       trans.y = 1.f - trans.y;
-      trans.x *= io.DisplaySize.x;
-      trans.y *= io.DisplaySize.y;
-      return ImVec2(trans.x, trans.y);
+	  trans.x *= gContext.mWidth;
+	  trans.y *= gContext.mHeight;
+	  trans.x += gContext.mX;
+	  trans.y += gContext.mY;
+	  return ImVec2(trans.x, trans.y);
    }
 
    static void ComputeCameraRay(vec_t &rayOrigin, vec_t &rayDir)
@@ -603,9 +614,9 @@ namespace ImGuizmo
       matrix_t mViewProjInverse;
       mViewProjInverse.Inverse(gContext.mViewMat * gContext.mProjectionMat);
 
-      float mox = (io.MousePos.x / io.DisplaySize.x) * 2.f - 1.f;
-      float moy = (1.f - (io.MousePos.y / io.DisplaySize.y)) * 2.f - 1.f;
-
+	  float mox = ((io.MousePos.x - gContext.mX) / gContext.mWidth) * 2.f - 1.f;
+	  float moy = (1.f - ((io.MousePos.y - gContext.mY) / gContext.mHeight)) * 2.f - 1.f;
+	  
       rayOrigin.Transform(makeVect(mox, moy, 0.f, 1.f), mViewProjInverse);
       rayOrigin *= 1.f / rayOrigin.w;
       vec_t rayEnd;
@@ -625,12 +636,21 @@ namespace ImGuizmo
       return -(numer / denom);
    }
 
+   void SetRect(float x, float y, float width, float height)
+   {
+	   gContext.mX = x;
+	   gContext.mY = y;
+	   gContext.mWidth = width;
+	   gContext.mHeight = height;
+   }
+
    void BeginFrame()
    {
       ImGuiIO& io = ImGui::GetIO();
 
       ImGui::Begin("gizmo", NULL, io.DisplaySize, 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus);
-      gContext.mDrawList = ImGui::GetWindowDrawList();
+
+	  gContext.mDrawList = ImGui::GetWindowDrawList();
 
       ImGui::End();
    }
@@ -726,6 +746,8 @@ namespace ImGuizmo
             for (int i = 0; i < 3; i++)
                colors[i + 1] = (type == (int)(SCALE_X + i)) ? selectionColor : directionColor[i];
             break;
+		 default:
+			 break;
          }
       }
       else
@@ -821,7 +843,6 @@ namespace ImGuizmo
    static void DrawRotationGizmo(int type)
    {
       ImDrawList* drawList = gContext.mDrawList;
-      ImGuiIO& io = ImGui::GetIO();
 
       // colors
       ImU32 colors[7];
@@ -845,7 +866,7 @@ namespace ImGuizmo
          }
          drawList->AddPolyline(circlePos, halfCircleSegmentCount, colors[3 - axis], false, 2, true);
       }
-      drawList->AddCircle(worldToPos(gContext.mModel.v.position, gContext.mViewProjection), 0.06f * io.DisplaySize.x, colors[0], 64);
+      drawList->AddCircle(worldToPos(gContext.mModel.v.position, gContext.mViewProjection), screenRotateSize * gContext.mHeight, colors[0], 64);
 
       if (gContext.mbUsing)
       {
@@ -951,6 +972,8 @@ namespace ImGuizmo
    static void DrawTranslationGizmo(int type)
    {
       ImDrawList* drawList = gContext.mDrawList;
+	  if (!drawList)
+		  return;
 
       // colors
       ImU32 colors[7];
@@ -1226,7 +1249,7 @@ namespace ImGuizmo
 
       vec_t deltaScreen = { io.MousePos.x - gContext.mScreenSquareCenter.x, io.MousePos.y - gContext.mScreenSquareCenter.y, 0.f, 0.f };
       float dist = deltaScreen.Length();
-      if (dist >= 0.058f * io.DisplaySize.x && dist < 0.062f * io.DisplaySize.x)
+	  if (dist >= (screenRotateSize - 0.002f) * gContext.mHeight && dist < (screenRotateSize + 0.002f) * gContext.mHeight)
          type = ROTATE_SCREEN;
 
       const vec_t planNormals[] = { gContext.mModel.v.right, gContext.mModel.v.up, gContext.mModel.v.dir};
@@ -1688,3 +1711,4 @@ namespace ImGuizmo
       }
    }
 };
+
