@@ -18,7 +18,7 @@ namespace bgfx
 
 	#define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', 0x2)
 	#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x4)
-	#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x4)
+	#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x5)
 
 	static const char* s_ARB_shader_texture_lod[] =
 	{
@@ -691,6 +691,43 @@ namespace bgfx
 		strReplace(_data, find, "bgfx_VoidFrag");
 	}
 
+	void writeVaryings(bx::CrtFileWriter* writer, const VaryingMap& varyingMap)
+	{
+		std::string semantics[Attrib::Count] {};
+		for(const std::pair<const std::string, Varying>& v : varyingMap)
+		{
+			if(v.second.m_semantics == "POSITION")       semantics[Attrib::Position] = v.second.m_name;
+			else if(v.second.m_semantics == "NORMAL")    semantics[Attrib::Normal] = v.second.m_name;
+			else if(v.second.m_semantics == "TANGENT")   semantics[Attrib::Tangent] = v.second.m_name;
+			else if(v.second.m_semantics == "BITANGENT") semantics[Attrib::Bitangent] = v.second.m_name;
+			else if(v.second.m_semantics == "COLOR0")    semantics[Attrib::Color0] = v.second.m_name;
+			else if(v.second.m_semantics == "COLOR1")    semantics[Attrib::Color1] = v.second.m_name;
+			else if(v.second.m_semantics == "INDICES")   semantics[Attrib::Indices] = v.second.m_name;
+			else if(v.second.m_semantics == "WEIGHT")    semantics[Attrib::Weight] = v.second.m_name;
+			else if(v.second.m_semantics == "TEXCOORD0") semantics[Attrib::TexCoord0] = v.second.m_name;
+			else if(v.second.m_semantics == "TEXCOORD1") semantics[Attrib::TexCoord1] = v.second.m_name;
+			else if(v.second.m_semantics == "TEXCOORD2") semantics[Attrib::TexCoord2] = v.second.m_name;
+			else if(v.second.m_semantics == "TEXCOORD3") semantics[Attrib::TexCoord3] = v.second.m_name;
+			else if(v.second.m_semantics == "TEXCOORD4") semantics[Attrib::TexCoord4] = v.second.m_name;
+			else if(v.second.m_semantics == "TEXCOORD5") semantics[Attrib::TexCoord5] = v.second.m_name;
+			else if(v.second.m_semantics == "TEXCOORD6") semantics[Attrib::TexCoord6] = v.second.m_name;
+			else if(v.second.m_semantics == "TEXCOORD7") semantics[Attrib::TexCoord7] = v.second.m_name;
+		}
+
+		uint32_t totalsemsize = 0;
+		for(uint8_t attrib = 0; attrib < Attrib::Count; attrib++)
+			totalsemsize += 1 + (uint32_t)semantics[attrib].size();
+		bx::write(writer, totalsemsize);
+
+		for(int attrib = 0; attrib < Attrib::Count; attrib++)
+		{
+			const std::string& semvar = semantics[attrib];
+			bx::write(writer, (uint8_t)semvar.size());
+			for(char c : semvar)
+				bx::write(writer, c);
+		}
+	}
+
 	// c - compute
 	// d - domain
 	// f - fragment
@@ -1239,6 +1276,7 @@ namespace bgfx
 				{
 					bx::write(writer, BGFX_CHUNK_MAGIC_VSH);
 					bx::write(writer, outputHash);
+					writeVaryings(writer, varyingMap);
 				}
 				else
 				{
@@ -1487,8 +1525,7 @@ namespace bgfx
 								const Varying& var = varyingIt->second;
 								const char* name = var.m_name.c_str();
 
-								if (0 == bx::strncmp(name, "a_", 2)
-								||  0 == bx::strncmp(name, "i_", 2) )
+								if (shaderType == 'v')
 								{
 									preprocessor.writef("attribute %s %s %s %s;\n"
 											, var.m_precision.c_str()
@@ -1840,6 +1877,7 @@ namespace bgfx
 							{
 								bx::write(writer, BGFX_CHUNK_MAGIC_VSH);
 								bx::write(writer, outputHash);
+								writeVaryings(writer, varyingMap);
 							}
 							else
 							{

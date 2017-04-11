@@ -708,6 +708,7 @@ namespace bgfx { namespace mtl
 	{
 		ShaderMtl()
 			: m_function(NULL)
+			, m_varyings(nullptr)
 		{
 		}
 
@@ -715,10 +716,15 @@ namespace bgfx { namespace mtl
 		void destroy()
 		{
 			MTL_RELEASE(m_function);
-
+			if(m_varyings)
+			{
+				BX_FREE(g_allocator, m_varyings);
+				m_varyings = nullptr;
+			}
 		}
 
 		Function m_function;
+		const char** m_varyings;
 	};
 
 	struct ProgramMtl

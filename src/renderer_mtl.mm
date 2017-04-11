@@ -1849,6 +1849,26 @@ namespace bgfx { namespace mtl
 		uint32_t iohash;
 		bx::read(&reader, iohash);
 
+		if(magic == BGFX_CHUNK_MAGIC_VSH)
+		{
+			uint32_t totalvarsize = 0;
+			bx::read(&reader, totalvarsize);
+
+			totalvarsize += Attrib::Count * sizeof(char*);
+			m_varyings = (const char**)BX_ALLOC(g_allocator, totalvarsize);
+			char* semdata = (char*)(m_varyings + Attrib::Count);
+			for(uint8_t attrib = 0; attrib < Attrib::Count; attrib++)
+			{
+				uint8_t semsize = 0;
+				bx::read(&reader, semsize);
+
+				m_varyings[attrib] = semdata;
+				for(uint8_t c = 0; c < semsize; c++)
+					bx::read(&reader, *semdata++);
+				*semdata++ = 0;
+			}
+		}
+
 		uint16_t count;
 		bx::read(&reader, count);
 
@@ -1926,7 +1946,7 @@ namespace bgfx { namespace mtl
 
 					for (uint8_t ii = 0; ii < Attrib::Count; ++ii)
 					{
-						if (0 == bx::strncmp(s_attribName[ii],name))
+						if (0 == bx::strncmp(_vsh.m_varyings[ii],name))
 						{
 							m_attributes[ii] = loc;
 							m_used[used++] = ii;
