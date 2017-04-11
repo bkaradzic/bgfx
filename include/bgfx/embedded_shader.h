@@ -104,7 +104,7 @@
 					BGFX_EMBEDDED_SHADER_ESSL (bgfx::RendererType::OpenGLES,   _name)              \
 					BGFX_EMBEDDED_SHADER_GLSL (bgfx::RendererType::OpenGL,     _name)              \
 					BGFX_EMBEDDED_SHADER_SPIRV(bgfx::RendererType::Vulkan,     _name)              \
-					{ bgfx::RendererType::Noop,  (const uint8_t*)"VSH\x4\x0\x0\x0\x0\x0\x0", 10 }, \
+					{ bgfx::RendererType::Noop,  (const uint8_t*)"VSH\x5\x0\x0\x0\x0\xf\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0", 30 }, \
 					{ bgfx::RendererType::Count, NULL, 0 }                                         \
 				}                                                                                  \
 			}
