@@ -23,10 +23,6 @@
 
 #include "nanovg.h"
 
-#ifndef NANOVG_HAS_STB_IMAGE
-#	define NANOVG_HAS_STB_IMAGE 0
-#endif // NANOVG_HAS_STB_IMAGE
-
 #include <bx/macros.h>
 
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4701) // error C4701: potentially uninitialized local variable 'cint' used
@@ -40,28 +36,6 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wunused-result");
 #define FONTSTASH_IMPLEMENTATION
 #include "fontstash.h"
 BX_PRAGMA_DIAGNOSTIC_POP();
-
-#if NANOVG_HAS_STB_IMAGE
-#define LODEPNG_NO_COMPILE_ENCODER
-#define LODEPNG_NO_COMPILE_DISK
-#define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS
-#define LODEPNG_NO_COMPILE_ERROR_TEXT
-#define LODEPNG_NO_COMPILE_ALLOCATORS
-#define LODEPNG_NO_COMPILE_CPP
-#include <lodepng/lodepng.h>
-
-BX_PRAGMA_DIAGNOSTIC_PUSH();
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wmissing-field-initializers");
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow");
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wint-to-pointer-cast")
-#if BX_COMPILER_GCC >= 60000
-BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wmisleading-indentation");
-BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wshift-negative-value");
-#endif // BX_COMPILER_GCC >= 60000_
-
-#include <stb/stb_image.c>
-BX_PRAGMA_DIAGNOSTIC_POP();
-#endif // NANOVG_HAS_STB_IMAGE
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4100)  // unreferenced formal parameter
@@ -814,45 +788,6 @@ void nvgFillPaint(NVGcontext* ctx, NVGpaint paint)
 	NVGstate* state = nvg__getState(ctx);
 	state->fill = paint;
 	nvgTransformMultiply(state->fill.xform, state->xform);
-}
-
-int nvgCreateImage(NVGcontext* ctx, const char* filename, int imageFlags)
-{
-#if NANOVG_HAS_STB_IMAGE
-	int w, h, n, image;
-	unsigned char* img;
-	stbi_set_unpremultiply_on_load(1);
-	stbi_convert_iphone_png_to_rgb(1);
-	img = stbi_load(filename, &w, &h, &n, 4);
-	if (img == NULL) {
-//		printf("Failed to load %s - %s\n", filename, stbi_failure_reason());
-		return 0;
-	}
-	image = nvgCreateImageRGBA(ctx, w, h, imageFlags, img);
-	stbi_image_free(img);
-	return image;
-#else
-	BX_UNUSED(ctx, filename, imageFlags);
-	return 0;
-#endif // NANOVG_HAS_STB_IMAGE
-}
-
-int nvgCreateImageMem(NVGcontext* ctx, int imageFlags, unsigned char* data, int ndata)
-{
-#if NANOVG_HAS_STB_IMAGE
-	int w, h, n, image;
-	unsigned char* img = stbi_load_from_memory(data, ndata, &w, &h, &n, 4);
-	if (img == NULL) {
-//		printf("Failed to load %s - %s\n", filename, stbi_failure_reason());
-		return 0;
-	}
-	image = nvgCreateImageRGBA(ctx, w, h, imageFlags, img);
-	stbi_image_free(img);
-	return image;
-#else
-	BX_UNUSED(ctx, imageFlags, data, ndata);
-	return 0;
-#endif // NANOVG_HAS_STB_IMAGE
 }
 
 int nvgCreateImageRGBA(NVGcontext* ctx, int w, int h, int imageFlags, const unsigned char* data)

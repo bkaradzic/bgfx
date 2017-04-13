@@ -386,7 +386,8 @@ namespace
 		struct GLNVGcontext* gl = (struct GLNVGcontext*)_userPtr;
 		struct GLNVGtexture* tex = glnvg__findTexture(gl, image);
 
-		if (!bgfx::isValid(tex->id) )
+		if (NULL == tex
+		|| !bgfx::isValid(tex->id) )
 		{
 			return 0;
 		}

@@ -29,6 +29,8 @@
 
 #include <bx/string.h>
 #include <bx/timer.h>
+#include <bimg/decode.h>
+
 #include "entry/entry.h"
 #include "imgui/imgui.h"
 #include "nanovg/nanovg.h"
@@ -939,13 +941,48 @@ struct DemoData
 	int images[12];
 };
 
+int createImage(struct NVGcontext* _ctx, const char* _filePath, int _imageFlags)
+{
+	uint32_t size;
+	void* data = load(_filePath, &size);
+	if (NULL == data)
+	{
+		return 0;
+	}
+
+	bimg::ImageContainer* imageContainer = bimg::imageParse(
+		  entry::getAllocator()
+		, data
+		, size
+		, bimg::TextureFormat::RGBA8
+		);
+	unload(data);
+
+	if (NULL == imageContainer)
+	{
+		return 0;
+	}
+
+	int texId = nvgCreateImageRGBA(
+		  _ctx
+		, imageContainer->m_width
+		, imageContainer->m_height
+		, _imageFlags
+		, (const uint8_t*)imageContainer->m_data
+		);
+
+	bimg::imageFree(imageContainer);
+
+	return texId;
+}
+
 int loadDemoData(struct NVGcontext* vg, struct DemoData* data)
 {
 	for (uint32_t ii = 0; ii < 12; ++ii)
 	{
 		char file[128];
 		bx::snprintf(file, 128, "images/image%d.jpg", ii+1);
-		data->images[ii] = nvgCreateImage(vg, file, 0);
+		data->images[ii] = createImage(vg, file, 0);
 		if (data->images[ii] == 0)
 		{
 			printf("Could not load %s.\n", file);
@@ -1234,7 +1271,7 @@ class ExampleNanoVG : public entry::AppI
 		loadDemoData(m_nvg, &m_data);
 
 		bndSetFont(nvgCreateFont(m_nvg, "droidsans", "font/droidsans.ttf") );
-		bndSetIconImage(nvgCreateImage(m_nvg, "images/blender_icons16.png", 0) );
+		bndSetIconImage(createImage(m_nvg, "images/blender_icons16.png", 0) );
 
 		m_timeOffset = bx::getHPCounter();
 	}
