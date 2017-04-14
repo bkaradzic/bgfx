@@ -245,7 +245,7 @@ status. The immediate development focus for FRAG is supporting the creation of
 https://github.com/jdryg/vg-renderer#vg-renderer - A vector graphics renderer
 for bgfx, based on ideas from both NanoVG and ImDrawList (Dear ImGUI)
 
-## Zombi Safari
+## Zombie Safari
 
 http://www.dogbytegames.com/zombie_safari.html - Do what you please in this
 Open-World Offroad Driving game: explore massive landscapes, complete challenges,
