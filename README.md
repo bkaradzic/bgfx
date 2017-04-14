@@ -242,6 +242,17 @@ status. The immediate development focus for FRAG is supporting the creation of
 https://github.com/jdryg/vg-renderer#vg-renderer - A vector graphics renderer
 for bgfx, based on ideas from both NanoVG and ImDrawList (Dear ImGUI)
 
+## Zombi Safari
+
+http://www.dogbytegames.com/zombie_safari.html - Do what you please in this
+Open-World Offroad Driving game: explore massive landscapes, complete challenges,
+smash zombies, find secret locations, unlock and upgrade cars and weapons, it's
+up to you!
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=LSiH0lRkw8g
+" target="_blank"><img src="http://img.youtube.com/vi/LSiH0lRkw8g/0.jpg" 
+alt="Zombie Safari - Official Gameplay Trailer (Android)"
+width="640" height="480" border="0" /></a>
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
