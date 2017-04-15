@@ -1293,8 +1293,19 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					{
 						D3D11_MESSAGE_CATEGORY_STATE_CREATION,
 					};
+
 					filter.DenyList.NumCategories = BX_COUNTOF(catlist);
 					filter.DenyList.pCategoryList = catlist;
+
+					D3D11_MESSAGE_ID idlist[] =
+					{
+						D3D11_MESSAGE_ID_DEVICE_DRAW_RENDERTARGETVIEW_NOT_SET,
+						D3D11_MESSAGE_ID_QUERY_BEGIN_ABANDONING_PREVIOUS_RESULTS,
+					};
+
+					filter.DenyList.NumIDs  = BX_COUNTOF(idlist);
+					filter.DenyList.pIDList = idlist;
+
 					m_infoQueue->PushStorageFilter(&filter);
 
 					DX_RELEASE(m_infoQueue, 3);
