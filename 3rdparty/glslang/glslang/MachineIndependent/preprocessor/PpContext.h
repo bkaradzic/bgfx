@@ -92,7 +92,7 @@ namespace glslang {
 
 class TPpToken {
 public:
-    TPpToken() : space(false), ival(0), dval(0.0), i64val(0)
+    TPpToken() : space(false), i64val(0)
     {
         loc.init();
         name[0] = 0;
@@ -108,10 +108,14 @@ public:
     bool operator!=(const TPpToken& right) { return ! operator==(right); }
 
     TSourceLoc loc;
-    bool   space;  // true if a space (for white space or a removed comment) should also be recognized, in front of the token returned
-    int    ival;
-    double dval;
-    long long i64val;
+    bool space;  // true if a space (for white space or a removed comment) should also be recognized, in front of the token returned
+
+    union {
+        int ival;
+        double dval;
+        long long i64val;
+    };
+
     char   name[MaxTokenLength + 1];
 };
 
@@ -584,6 +588,7 @@ protected:
     int ScanFromString(char* s);
     void missingEndifCheck();
     int lFloatConst(int len, int ch, TPpToken* ppToken);
+    int characterLiteral(TPpToken* ppToken);
 
     void push_include(TShader::Includer::IncludeResult* result)
     {

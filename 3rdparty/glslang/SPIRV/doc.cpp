@@ -830,6 +830,11 @@ const char* CapabilityString(int info)
     case 4427: return "DrawParameters";
     case 4431: return "SubgroupVoteKHR";
 
+    case 4433: return "StorageUniformBufferBlock16";
+    case 4434: return "StorageUniform16";
+    case 4435: return "StoragePushConstant16";
+    case 4436: return "StorageInputOutput16";
+
     case 4437: return "DeviceGroup";
     case 4439: return "MultiView";
 

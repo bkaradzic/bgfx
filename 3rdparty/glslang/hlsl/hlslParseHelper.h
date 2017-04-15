@@ -102,7 +102,7 @@ public:
                           const glslang::TString* component);
     void handleRegister(const TSourceLoc&, TQualifier&, const glslang::TString* profile, const glslang::TString& desc,
                         int subComponent, const glslang::TString*);
-    TIntermTyped* convertConditionalExpression(const TSourceLoc&, TIntermTyped*);
+    TIntermTyped* convertConditionalExpression(const TSourceLoc&, TIntermTyped*, bool mustBeScalar = true);
     TIntermAggregate* handleSamplerTextureCombine(const TSourceLoc& loc, TIntermTyped* argTex, TIntermTyped* argSampler);
 
     bool parseMatrixSwizzleSelector(const TSourceLoc&, const TString&, int cols, int rows, TSwizzleSelectors<TMatrixSelector>&);

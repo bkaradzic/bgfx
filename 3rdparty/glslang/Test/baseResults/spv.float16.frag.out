@@ -11,7 +11,11 @@ Warning, version 450 is not yet complete; most version-specific features are pre
                               Capability Int64
                               Capability DerivativeControl
                               Capability InterpolationFunction
+                              Capability StorageUniformBufferBlock16
+                              Capability StorageUniform16
+                              Capability StorageInputOutput16
                               Extension  "SPV_AMD_gpu_shader_half_float"
+                              Extension  "SPV_KHR_16bit_storage"
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 465

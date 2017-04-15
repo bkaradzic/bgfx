@@ -9,7 +9,7 @@ tbuffer {
 cbuffer cbufName : register(b2, space10) {
     float4 v3;
     int i3 : packoffset(c1.y);
-};
+} // no semicolon is okay
 
 tbuffer tbufName : register(b8) {
     float4 v4 : packoffset(c1);
@@ -24,7 +24,7 @@ tbuffer tbufName : register(b8) {
        row_major float3x4 m2;
     column_major float3x4 m3;
                  float3x4 m4;
-};
+}  // no semicolon is okay
 
 float4 PixelShaderFunction(float4 input) : COLOR0
 {

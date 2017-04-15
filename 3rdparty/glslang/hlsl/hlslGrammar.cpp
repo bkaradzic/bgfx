@@ -308,7 +308,7 @@ bool HlslGrammar::acceptSamplerDeclarationDX9(TType& /*type*/)
 
 // declaration
 //      : sampler_declaration_dx9 post_decls SEMICOLON
-//      | fully_specified_type declarator_list SEMICOLON
+//      | fully_specified_type declarator_list SEMICOLON(optional for cbuffer/tbuffer)
 //      | fully_specified_type identifier function_parameters post_decls compound_statement  // function definition
 //      | fully_specified_type identifier sampler_state post_decls compound_statement        // sampler definition
 //      | typedef declaration
@@ -509,18 +509,22 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& nodeList)
     else
         nodeList = initializers;
 
-    // SEMICOLON
+    // SEMICOLON(optional for cbuffer/tbuffer)
     if (! acceptTokenClass(EHTokSemicolon)) {
-        // This may have been a false detection of what appeared to be a declaration, but
-        // was actually an assignment such as "float = 4", where "float" is an identifier.
-        // We put the token back to let further parsing happen for cases where that may
-        // happen.  This errors on the side of caution, and mostly triggers the error.
-
-        if (peek() == EHTokAssign || peek() == EHTokLeftBracket || peek() == EHTokDot || peek() == EHTokComma)
+        if (peek() == EHTokAssign || peek() == EHTokLeftBracket || peek() == EHTokDot || peek() == EHTokComma) {
+            // This may have been a false detection of what appeared to be a declaration, but
+            // was actually an assignment such as "float = 4", where "float" is an identifier.
+            // We put the token back to let further parsing happen for cases where that may
+            // happen.  This errors on the side of caution, and mostly triggers the error.
             recedeToken();
-        else
+            return false;
+        } else if (declaredType.getBasicType() == EbtBlock) {
+            // cbuffer, et. al. (but not struct) don't have an ending semicolon
+            return true;
+        } else {
             expected(";");
-        return false;
+            return false;
+        }
     }
 
     return true;
@@ -601,7 +605,7 @@ bool HlslGrammar::acceptFullySpecifiedType(TType& type, TIntermNode*& nodeList)
         // the type was a block, which set some parts of the qualifier
         parseContext.mergeQualifiers(type.getQualifier(), qualifier);
         // further, it can create an anonymous instance of the block
-        if (peekTokenClass(EHTokSemicolon))
+        if (peek() != EHTokIdentifier)
             parseContext.declareBlock(loc, type);
     } else {
         // Some qualifiers are set when parsing the type.  Merge those with
@@ -2532,7 +2536,7 @@ bool HlslGrammar::acceptConditionalExpression(TIntermTyped*& node)
     if (! acceptTokenClass(EHTokQuestion))
         return true;
 
-    node = parseContext.convertConditionalExpression(token.loc, node);
+    node = parseContext.convertConditionalExpression(token.loc, node, false);
     if (node == nullptr)
         return false;
 

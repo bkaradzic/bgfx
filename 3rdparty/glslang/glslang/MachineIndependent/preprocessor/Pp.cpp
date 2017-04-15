@@ -776,8 +776,12 @@ int TPpContext::CPPversion(TPpToken* ppToken)
 {
     int token = scanToken(ppToken);
 
-    if (errorOnVersion || versionSeen)
-        parseContext.ppError(ppToken->loc, "must occur first in shader", "#version", "");
+    if (errorOnVersion || versionSeen) {
+        if (parseContext.isReadingHLSL())
+            parseContext.ppError(ppToken->loc, "invalid preprocessor command", "#version", "");
+        else
+            parseContext.ppError(ppToken->loc, "must occur first in shader", "#version", "");
+    }
     versionSeen = true;
 
     if (token == '\n') {

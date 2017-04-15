@@ -623,7 +623,10 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
              node->getType().getBasicType() == EbtUint64))
 
             return node;
-        else
+        else if (source == EShSourceHlsl && node->getType().getBasicType() == EbtBool) {
+            promoteTo = type.getBasicType();
+            break;
+        } else
             return nullptr;
 
     default:
@@ -1271,7 +1274,8 @@ TIntermTyped* TIntermediate::addMethod(TIntermTyped* object, const TType& type, 
 //
 // For "?:" test nodes.  There are three children; a condition,
 // a true path, and a false path.  The two paths are specified
-// as separate parameters.
+// as separate parameters. For vector 'cond', the true and false
+// are not paths, but vectors to mix.
 //
 // Specialization constant operations include
 //     - The ternary operator ( ? : )
@@ -1304,10 +1308,30 @@ TIntermTyped* TIntermediate::addSelection(TIntermTyped* cond, TIntermTyped* true
     if (falseBlock->getType() != trueBlock->getType())
         return nullptr;
 
-    //
-    // See if all the operands are constant, then fold it otherwise not.
-    //
+    // Handle a vector condition as a mix
+    if (!cond->getType().isScalarOrVec1()) {
+        TType targetVectorType(trueBlock->getType().getBasicType(), EvqTemporary,
+                               cond->getType().getVectorSize());
+        // smear true/false operations if needed
+        if (trueBlock->getType().isScalarOrVec1())
+            trueBlock = addShapeConversion(EOpAssign, targetVectorType, trueBlock);
+        if (falseBlock->getType().isScalarOrVec1())
+            falseBlock = addShapeConversion(EOpAssign, targetVectorType, falseBlock);
 
+        // make the mix operation
+        TIntermAggregate* mix = makeAggregate(loc);
+        mix = growAggregate(mix, falseBlock);
+        mix = growAggregate(mix, trueBlock);
+        mix = growAggregate(mix, cond);
+        mix->setType(targetVectorType);
+        mix->setOp(EOpMix);
+
+        return mix;
+    }
+
+    // Now have a scalar condition...
+
+    // Eliminate the selection when the condition is a scalar and all operands are constant.
     if (cond->getAsConstantUnion() && trueBlock->getAsConstantUnion() && falseBlock->getAsConstantUnion()) {
         if (cond->getAsConstantUnion()->getConstArray()[0].getBConst())
             return trueBlock;
@@ -1966,6 +1990,42 @@ bool TIntermediate::promoteBinary(TIntermBinary& node)
     //
     // We now have only scalars, vectors, and matrices to worry about.
     //
+
+    // HLSL implicitly promotes bool -> int for numeric operations.
+    // (Implicit conversions to make the operands match each other's types were already done.)
+    if (getSource() == EShSourceHlsl &&
+        (left->getBasicType() == EbtBool || right->getBasicType() == EbtBool)) {
+        switch (op) {
+        case EOpLessThan:
+        case EOpGreaterThan:
+        case EOpLessThanEqual:
+        case EOpGreaterThanEqual:
+
+        case EOpRightShift:
+        case EOpLeftShift:
+
+        case EOpMod:
+
+        case EOpAnd:
+        case EOpInclusiveOr:
+        case EOpExclusiveOr:
+
+        case EOpAdd:
+        case EOpSub:
+        case EOpDiv:
+        case EOpMul:
+            left = addConversion(op, TType(EbtInt, EvqTemporary, left->getVectorSize()), left);
+            right = addConversion(op, TType(EbtInt, EvqTemporary, right->getVectorSize()), right);
+            if (left == nullptr || right == nullptr)
+                return false;
+            node.setLeft(left);
+            node.setRight(right);
+            break;
+
+        default:
+            break;
+        }
+    }
 
     // Do general type checks against individual operands (comparing left and right is coming up, checking mixed shapes after that)
     switch (op) {

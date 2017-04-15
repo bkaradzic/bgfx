@@ -2074,6 +2074,24 @@ spv::Id TGlslangToSpvTraverser::createSpvVariable(const glslang::TIntermSymbol* 
     spv::StorageClass storageClass = TranslateStorageClass(node->getType());
     spv::Id spvType = convertGlslangToSpvType(node->getType());
 
+#ifdef AMD_EXTENSIONS
+    const bool contains16BitType = node->getType().containsBasicType(glslang::EbtFloat16);
+    if (contains16BitType) {
+        if (storageClass == spv::StorageClassInput || storageClass == spv::StorageClassOutput) {
+            builder.addExtension(spv::E_SPV_KHR_16bit_storage);
+            builder.addCapability(spv::CapabilityStorageInputOutput16);
+        } else if (storageClass == spv::StorageClassPushConstant) {
+            builder.addExtension(spv::E_SPV_KHR_16bit_storage);
+            builder.addCapability(spv::CapabilityStoragePushConstant16);
+        } else if (storageClass == spv::StorageClassUniform) {
+            builder.addExtension(spv::E_SPV_KHR_16bit_storage);
+            builder.addCapability(spv::CapabilityStorageUniform16);
+            if (node->getType().getQualifier().storage == glslang::EvqBuffer)
+                builder.addCapability(spv::CapabilityStorageUniformBufferBlock16);
+        }
+    }
+#endif
+
     const char* name = node->getName().c_str();
     if (glslang::IsAnonymous(name))
         name = "";

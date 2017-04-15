@@ -39,5 +39,6 @@ static const char* const E_SPV_KHR_subgroup_vote          = "SPV_KHR_subgroup_vo
 static const char* const E_SPV_KHR_device_group           = "SPV_KHR_device_group";
 static const char* const E_SPV_KHR_multiview              = "SPV_KHR_multiview";
 static const char* const E_SPV_KHR_shader_draw_parameters = "SPV_KHR_shader_draw_parameters";
+static const char* const E_SPV_KHR_16bit_storage          = "SPV_KHR_16bit_storage";
 
 #endif  // #ifndef GLSLextKHR_H

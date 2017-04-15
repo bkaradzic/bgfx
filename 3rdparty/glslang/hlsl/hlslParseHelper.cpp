@@ -3907,25 +3907,27 @@ void HlslParseContext::decomposeIntrinsic(const TSourceLoc& loc, TIntermTyped*& 
 
             TIntermAggregate* compoundStatement = intermediate.makeAggregate(tmpArgAssign, loc);
 
+            const TType boolType(EbtBool, EvqTemporary, arg0->getVectorSize(), arg0->getMatrixCols(), arg0->getMatrixRows());
+
             TIntermTyped* isnan = handleUnaryMath(loc, "isnan", EOpIsNan, intermediate.addSymbol(*tempArg, loc));
-            isnan->setType(TType(EbtBool));
+            isnan->setType(boolType);
 
             TIntermTyped* notnan = handleUnaryMath(loc, "!", EOpLogicalNot, isnan);
-            notnan->setType(TType(EbtBool));
+            notnan->setType(boolType);
 
             TIntermTyped* isinf = handleUnaryMath(loc, "isinf", EOpIsInf, intermediate.addSymbol(*tempArg, loc));
-            isinf->setType(TType(EbtBool));
+            isinf->setType(boolType);
 
             TIntermTyped* notinf = handleUnaryMath(loc, "!", EOpLogicalNot, isinf);
-            notinf->setType(TType(EbtBool));
+            notinf->setType(boolType);
             
             TIntermTyped* andNode = handleBinaryMath(loc, "and", EOpLogicalAnd, notnan, notinf);
-            andNode->setType(TType(EbtBool));
+            andNode->setType(boolType);
 
             compoundStatement = intermediate.growAggregate(compoundStatement, andNode);
             compoundStatement->setOperator(EOpSequence);
             compoundStatement->setLoc(loc);
-            compoundStatement->setType(TType(EbtVoid));
+            compoundStatement->setType(boolType);
 
             node = compoundStatement;
 
@@ -4527,14 +4529,14 @@ void HlslParseContext::handleRegister(const TSourceLoc& loc, TQualifier& qualifi
 
 // Convert to a scalar boolean, or if not allowed by HLSL semantics,
 // report an error and return nullptr.
-TIntermTyped* HlslParseContext::convertConditionalExpression(const TSourceLoc& loc, TIntermTyped* condition)
+TIntermTyped* HlslParseContext::convertConditionalExpression(const TSourceLoc& loc, TIntermTyped* condition, bool mustBeScalar)
 {
-    if (!condition->getType().isScalarOrVec1()) {
+    if (mustBeScalar && !condition->getType().isScalarOrVec1()) {
         error(loc, "requires a scalar", "conditional expression", "");
         return nullptr;
     }
 
-    return intermediate.addConversion(EOpConstructBool, TType(EbtBool), condition);
+    return intermediate.addConversion(EOpConstructBool, TType(EbtBool, EvqTemporary, condition->getVectorSize()), condition);
 }
 
 //
@@ -6436,7 +6438,10 @@ TIntermNode* HlslParseContext::executeInitializer(const TSourceLoc& loc, TInterm
         // Compile-time tagging of the variable with its constant value...
 
         initializer = intermediate.addConversion(EOpAssign, variable->getType(), initializer);
-        if (! initializer || ! initializer->getAsConstantUnion() || variable->getType() != initializer->getType()) {
+        if (initializer != nullptr && variable->getType() != initializer->getType())
+            initializer = intermediate.addShapeConversion(EOpAssign, variable->getType(), initializer);
+        if (initializer == nullptr || !initializer->getAsConstantUnion() ||
+                                      variable->getType() != initializer->getType()) {
             error(loc, "non-matching or non-convertible constant type for const initializer",
                 variable->getType().getStorageQualifierString(), "");
             variable->getWritableType().getQualifier().storage = EvqTemporary;

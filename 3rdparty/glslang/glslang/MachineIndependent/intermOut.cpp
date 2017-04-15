@@ -45,11 +45,31 @@
 
 namespace {
 
-bool is_positive_infinity(double x) {
+bool IsInfinity(double x) {
 #ifdef _MSC_VER
-  return _fpclass(x) == _FPCLASS_PINF;
+    switch (_fpclass(x)) {
+    case _FPCLASS_NINF:
+    case _FPCLASS_PINF:
+        return true;
+    default:
+        return false;
+    }
 #else
-  return std::isinf(x) && (x >= 0);
+    return std::isinf(x);
+#endif
+}
+
+bool IsNan(double x) {
+#ifdef _MSC_VER
+    switch (_fpclass(x)) {
+    case _FPCLASS_SNAN:
+    case _FPCLASS_QNAN:
+        return true;
+    default:
+        return false;
+    }
+#else
+  return std::isnan(x);
 #endif
 }
 
@@ -694,11 +714,14 @@ static void OutputConstantUnion(TInfoSink& out, const TIntermTyped* node, const 
 #endif
             {
                 const double value = constUnion[i].getDConst();
-                // Print infinity in a portable way, for test stability.
-                // Other cases may be needed in the future: negative infinity,
-                // and NaNs.
-                if (is_positive_infinity(value))
-                    out.debug << "inf\n";
+                // Print infinities and NaNs in a portable way.
+                if (IsInfinity(value)) {
+                    if (value < 0)
+                        out.debug << "-1.#INF\n";
+                    else
+                        out.debug << "+1.#INF\n";
+                } else if (IsNan(value))
+                    out.debug << "1.#IND\n";
                 else {
                     const int maxSize = 300;
                     char buf[maxSize];
