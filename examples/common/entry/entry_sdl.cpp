@@ -11,7 +11,7 @@
 #	define SDL_MAIN_HANDLED
 #endif // BX_PLATFORM_WINDOWS
 
-#include <bx/bx.h>
+#include <bx/os.h>
 
 #include <SDL2/SDL.h>
 
@@ -487,11 +487,13 @@ namespace entry
 			WindowHandle defaultWindow = { 0 };
 			setWindowSize(defaultWindow, m_width, m_height, true);
 
-			bx::FileReaderI* reader = 0;
-            while (!reader) {
-              reader = getFileReader();
-              bx::sleep(100);
-            }
+			bx::FileReaderI* reader = NULL;
+			while (NULL == reader)
+			{
+				reader = getFileReader();
+				bx::sleep(100);
+			}
+
 			if (bx::open(reader, "gamecontrollerdb.txt") )
 			{
 				bx::AllocatorI* allocator = getAllocator();
