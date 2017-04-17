@@ -950,7 +950,7 @@ namespace bgfx { namespace mtl
 		{
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 			{
-				bx::strlncpy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
+				bx::strCopy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
 						, BX_COUNTOF(s_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
 						, _name
 						);
@@ -1824,7 +1824,7 @@ namespace bgfx { namespace mtl
 
 	void writeString(bx::WriterI* _writer, const char* _str)
 	{
-		bx::write(_writer, _str, (int32_t)bx::strnlen(_str) );
+		bx::write(_writer, _str, (int32_t)bx::strLen(_str) );
 	}
 
 	void ShaderMtl::create(const Memory* _mem)
