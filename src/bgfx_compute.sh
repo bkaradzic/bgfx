@@ -50,11 +50,10 @@
 
 #define __IMAGE_IMPL(_textureType, _storeComponents, _type, _loadComponents)                                                     \
 	_type imageLoad(       Texture2D<_textureType> _image, ivec2 _uv)                { return _image[_uv ]._loadComponents;    } \
+	_type imageLoad(     RWTexture2D<_textureType> _image, ivec2 _uv)                { return _image[_uv ]._loadComponents;    } \
 	_type imageLoad(RWTexture2DArray<_textureType> _image, ivec3 _uvw)               { return _image[_uvw ]._loadComponents;   } \
 	_type imageLoad(       Texture3D<_textureType> _image, ivec3 _uvw)               { return _image[_uvw]._loadComponents;    } \
-	_type imageLoad(     RWTexture2D<_textureType> _image, ivec2 _uv)                { return _image[_uv ]._loadComponents;    } \
-	_type imageLoad(RWTexture2DArray<_textureType> _image, ivec3 _uvw, _type _value) { return _image[_uvw]._loadComponents;    } \
-	_type imageLoad(     RWTexture3D<_textureType> _image, ivec3 _uvw, _type _value) { return _image[_uvw]._loadComponents;    } \
+	_type imageLoad(     RWTexture3D<_textureType> _image, ivec3 _uvw)               { return _image[_uvw]._loadComponents;    } \
 	void imageStore(     RWTexture2D<_textureType> _image, ivec2 _uv,  _type _value) { _image[_uv ] = _value._storeComponents; } \
 	void imageStore(RWTexture2DArray<_textureType> _image, ivec3 _uvw, _type _value) { _image[_uvw] = _value._storeComponents; } \
 	void imageStore(     RWTexture3D<_textureType> _image, ivec3 _uvw, _type _value) { _image[_uvw] = _value._storeComponents; }
