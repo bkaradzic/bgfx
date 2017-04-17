@@ -119,9 +119,9 @@ static bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name
 		break;
 	}
 
-	bx::strlncpy(filePath, BX_COUNTOF(filePath), shaderPath);
-	bx::strlncat(filePath, BX_COUNTOF(filePath), _name);
-	bx::strlncat(filePath, BX_COUNTOF(filePath), ".bin");
+	bx::strCopy(filePath, BX_COUNTOF(filePath), shaderPath);
+	bx::strCat(filePath, BX_COUNTOF(filePath), _name);
+	bx::strCat(filePath, BX_COUNTOF(filePath), ".bin");
 
 	return bgfx::createShader(loadMem(_reader, filePath) );
 }

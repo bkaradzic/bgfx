@@ -950,9 +950,9 @@ namespace bgfx { namespace mtl
 		{
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 			{
-				bx::strlcpy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
-						, _name
+				bx::strlncpy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
 						, BX_COUNTOF(s_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
+						, _name
 						);
 			}
 		}

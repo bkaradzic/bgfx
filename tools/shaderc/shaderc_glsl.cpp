@@ -151,11 +151,11 @@ namespace bgfx { namespace glsl
 
 					if (0 == bx::strncmp(typen, "sampler", 7) )
 					{
-						bx::strlncpy(uniformType, BX_COUNTOF(uniformType), "int");
+						bx::strCopy(uniformType, BX_COUNTOF(uniformType), "int");
 					}
 					else
 					{
-						bx::strlcpy(uniformType, typen, int32_t(parse-typen+1) );
+						bx::strCopy(uniformType, int32_t(parse-typen+1), typen);
 					}
 
 					const char* name = parse = bx::strws(parse);
@@ -165,16 +165,16 @@ namespace bgfx { namespace glsl
 					const char* array = bx::strnstr(name, "[", int32_t(eol-parse) );
 					if (NULL != array)
 					{
-						bx::strlcpy(uniformName, name, int32_t(array-name+1) );
+						bx::strCopy(uniformName, int32_t(array-name+1), name);
 
 						char arraySize[32];
 						const char* end = bx::strnstr(array, "]", int32_t(eol-array) );
-						bx::strlcpy(arraySize, array+1, int32_t(end-array) );
+						bx::strCopy(arraySize, int32_t(end-array), array+1);
 						num = uint8_t(atoi(arraySize) );
 					}
 					else
 					{
-						bx::strlcpy(uniformName, name, int32_t(eol-name+1) );
+						bx::strCopy(uniformName, int32_t(eol-name+1), name);
 					}
 
 					Uniform un;
@@ -201,7 +201,7 @@ namespace bgfx { namespace glsl
 			const char* end   = parse;
 			if (NULL != parse)
 			{
-				parse += bx::strnlen("struct xlatMtlShaderUniform {");
+				parse += bx::strLen("struct xlatMtlShaderUniform {");
 				end   =  bx::strnstr(parse, "};");
 			}
 
@@ -216,7 +216,7 @@ namespace bgfx { namespace glsl
 
 					char uniformType[256];
 					parse = bx::strword(parse);
-					bx::strlcpy(uniformType, typen, int32_t(parse-typen+1) );
+					bx::strCopy(uniformType, int32_t(parse-typen+1), typen);
 					const char* name = parse = bx::strws(parse);
 
 					char uniformName[256];
@@ -224,16 +224,16 @@ namespace bgfx { namespace glsl
 					const char* array = bx::strnstr(name, "[", int32_t(eol-parse) );
 					if (NULL != array)
 					{
-						bx::strlcpy(uniformName, name, int32_t(array-name+1) );
+						bx::strCopy(uniformName, int32_t(array-name+1), name);
 
 						char arraySize[32];
 						const char* arrayEnd = bx::strnstr(array, "]", int32_t(eol-array) );
-						bx::strlcpy(arraySize, array+1, int32_t(arrayEnd-array) );
+						bx::strCopy(arraySize, int32_t(arrayEnd-array), array+1);
 						num = uint8_t(atoi(arraySize) );
 					}
 					else
 					{
-						bx::strlcpy(uniformName, name, int32_t(eol-name+1) );
+						bx::strCopy(uniformName, int32_t(eol-name+1), name);
 					}
 
 					Uniform un;
@@ -279,7 +279,7 @@ namespace bgfx { namespace glsl
 				);
 		}
 
-		uint32_t shaderSize = (uint32_t)strlen(optimizedShader);
+		uint32_t shaderSize = (uint32_t)bx::strLen(optimizedShader);
 		bx::write(_writer, shaderSize);
 		bx::write(_writer, optimizedShader, shaderSize);
 		uint8_t nul = 0;

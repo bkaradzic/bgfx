@@ -251,7 +251,7 @@ void TextBuffer::appendText(FontHandle _fontHandle, const char* _string, const c
 
 	if (_end == NULL)
 	{
-		_end = _string + bx::strnlen(_string);
+		_end = _string + bx::strLen(_string);
 	}
 	BX_CHECK(_end >= _string);
 

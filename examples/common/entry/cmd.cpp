@@ -28,7 +28,7 @@ struct CmdContext
 
 	void add(const char* _name, ConsoleFn _fn, void* _userData)
 	{
-		uint32_t cmd = bx::hashMurmur2A(_name, (uint32_t)bx::strnlen(_name) );
+		uint32_t cmd = bx::hashMurmur2A(_name, (uint32_t)bx::strLen(_name) );
 		BX_CHECK(m_lookup.end() == m_lookup.find(cmd), "Command \"%s\" already exist.", _name);
 		Func fn = { _fn, _userData };
 		m_lookup.insert(stl::make_pair(cmd, fn) );
@@ -46,7 +46,7 @@ struct CmdContext
 			if (argc > 0)
 			{
 				int err = -1;
-				uint32_t cmd = bx::hashMurmur2A(argv[0], (uint32_t)bx::strnlen(argv[0]) );
+				uint32_t cmd = bx::hashMurmur2A(argv[0], (uint32_t)bx::strLen(argv[0]) );
 				CmdLookup::iterator it = m_lookup.find(cmd);
 				if (it != m_lookup.end() )
 				{

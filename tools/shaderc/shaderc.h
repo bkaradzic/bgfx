@@ -74,7 +74,7 @@ namespace bgfx
 		LineReader(const char* _str)
 			: m_str(_str)
 			, m_pos(0)
-			, m_size((uint32_t)strlen(_str))
+			, m_size((uint32_t)bx::strLen(_str))
 		{
 		}
 

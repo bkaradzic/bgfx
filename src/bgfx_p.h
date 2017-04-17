@@ -3604,7 +3604,7 @@ namespace bgfx
 					cmdbuf.write(handle);
 					cmdbuf.write(uniform.m_type);
 					cmdbuf.write(uniform.m_num);
-					uint8_t len = (uint8_t)bx::strnlen(_name)+1;
+					uint8_t len = (uint8_t)bx::strLen(_name)+1;
 					cmdbuf.write(len);
 					cmdbuf.write(_name, len);
 				}
@@ -3632,7 +3632,7 @@ namespace bgfx
 				cmdbuf.write(handle);
 				cmdbuf.write(_type);
 				cmdbuf.write(_num);
-				uint8_t len = (uint8_t)bx::strnlen(_name)+1;
+				uint8_t len = (uint8_t)bx::strLen(_name)+1;
 				cmdbuf.write(len);
 				cmdbuf.write(_name, len);
 			}
@@ -3649,7 +3649,7 @@ namespace bgfx
 			BGFX_CHECK_HANDLE("getUniformInfo", m_uniformHandle, _handle);
 
 			UniformRef& uniform = m_uniformRef[_handle.idx];
-			bx::strlcpy(_info.name, uniform.m_name.getPtr(), sizeof(_info.name) );
+			bx::strCopy(_info.name, sizeof(_info.name), uniform.m_name.getPtr() );
 			_info.type = uniform.m_type;
 			_info.num  = uniform.m_num;
 		}
@@ -3730,7 +3730,7 @@ namespace bgfx
 			}
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::RequestScreenShot);
-			uint16_t len = (uint16_t)bx::strnlen(_filePath)+1;
+			uint16_t len = (uint16_t)bx::strLen(_filePath)+1;
 			cmdbuf.write(_handle);
 			cmdbuf.write(len);
 			cmdbuf.write(_filePath, len);
@@ -3750,7 +3750,7 @@ namespace bgfx
 		{
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::UpdateViewName);
 			cmdbuf.write(_id);
-			uint16_t len = (uint16_t)bx::strnlen(_name)+1;
+			uint16_t len = (uint16_t)bx::strLen(_name)+1;
 			cmdbuf.write(len);
 			cmdbuf.write(_name, len);
 		}

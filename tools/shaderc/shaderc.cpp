@@ -363,25 +363,25 @@ namespace bgfx
 
 	char* strInsert(char* _str, const char* _insert)
 	{
-		uint32_t len = bx::strnlen(_insert);
-		bx::memMove(&_str[len], _str, bx::strnlen(_str) );
+		uint32_t len = bx::strLen(_insert);
+		bx::memMove(&_str[len], _str, bx::strLen(_str) );
 		bx::memCopy(_str, _insert, len);
 		return _str + len;
 	}
 
 	void strReplace(char* _str, const char* _find, const char* _replace)
 	{
-		const int32_t len = bx::strnlen(_find);
+		const int32_t len = bx::strLen(_find);
 
 		char* replace = (char*)alloca(len+1);
-		bx::strlcpy(replace, _replace, len+1);
-		for (int32_t ii = bx::strnlen(replace); ii < len; ++ii)
+		bx::strCopy(replace, len+1, _replace);
+		for (int32_t ii = bx::strLen(replace); ii < len; ++ii)
 		{
 			replace[ii] = ' ';
 		}
 		replace[len] = '\0';
 
-		BX_CHECK(len >= bx::strnlen(_replace), "");
+		BX_CHECK(len >= bx::strLen(_replace), "");
 		for (const char* ptr = bx::strnstr(_str, _find); NULL != ptr; ptr = bx::strnstr(ptr + len, _find) )
 		{
 			bx::memCopy(const_cast<char*>(ptr), replace, len);
@@ -548,7 +548,7 @@ namespace bgfx
 			m_input = m_default;
 			m_input += "\n\n";
 
-			int32_t len = bx::strnlen(_input)+1;
+			int32_t len = bx::strLen(_input)+1;
 			char* temp = new char[len];
 			bx::eolLF(temp, len, _input);
 			m_input += temp;
@@ -610,7 +610,7 @@ namespace bgfx
 		{
 			char* result = &m_scratch[m_scratchPos];
 			strcpy(result, _str);
-			m_scratchPos += (uint32_t)strlen(_str)+1;
+			m_scratchPos += (uint32_t)bx::strLen(_str)+1;
 
 			return result;
 		}
@@ -860,7 +860,7 @@ namespace bgfx
 			if (NULL == bin2c)
 			{
 				bin2c = bx::baseName(outFilePath);
-				uint32_t len = (uint32_t)strlen(bin2c);
+				uint32_t len = (uint32_t)bx::strLen(bin2c);
 				char* temp = (char*)alloca(len+1);
 				for (char *out = temp; *bin2c != '\0';)
 				{
@@ -915,7 +915,7 @@ namespace bgfx
 			const char* eol = bx::strnchr(defines, ';');
 			if (NULL == eol)
 			{
-				eol = defines + strlen(defines);
+				eol = defines + bx::strLen(defines);
 			}
 			std::string define(defines, eol);
 			preprocessor.setDefine(define.c_str() );
@@ -1250,7 +1250,7 @@ namespace bgfx
 				{
 					bx::write(writer, uint16_t(0) );
 
-					uint32_t shaderSize = (uint32_t)strlen(input);
+					uint32_t shaderSize = (uint32_t)bx::strLen(input);
 					bx::write(writer, shaderSize);
 					bx::write(writer, input, shaderSize);
 					bx::write(writer, uint8_t(0) );

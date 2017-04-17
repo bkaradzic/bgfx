@@ -118,10 +118,10 @@ namespace bgfx
 			BX_UNUSED(_filePath, _width, _height, _pitch, _data, _size, _yflip);
 
 #if BX_CONFIG_CRT_FILE_READER_WRITER
-			const int32_t len = bx::strnlen(_filePath)+5;
+			const int32_t len = bx::strLen(_filePath)+5;
 			char* filePath = (char*)alloca(len);
-			bx::strlncpy(filePath, len, _filePath);
-			bx::strlncat(filePath, len, ".tga");
+			bx::strCopy(filePath, len, _filePath);
+			bx::strCat(filePath, len, ".tga");
 
 			bx::CrtFileWriter writer;
 			if (bx::open(&writer, filePath) )
@@ -511,7 +511,7 @@ namespace bgfx
 			char tmp[4];
 
 			int32_t len = int32_t(str-_ptr);
-			bx::strlncpy(tmp, sizeof(tmp), _ptr, len);
+			bx::strCopy(tmp, sizeof(tmp), _ptr, len);
 
 			uint8_t attr = uint8_t(atoi(tmp) );
 			_ptr += len+1;
@@ -1078,7 +1078,7 @@ namespace bgfx
 
 	void UniformBuffer::writeMarker(const char* _marker)
 	{
-		uint16_t num = (uint16_t)bx::strnlen(_marker)+1;
+		uint16_t num = (uint16_t)bx::strLen(_marker)+1;
 		uint32_t opcode = encodeOpcode(bgfx::UniformType::Count, 0, num, true);
 		write(opcode);
 		write(_marker, num);
