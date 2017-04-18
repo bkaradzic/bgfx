@@ -2653,7 +2653,7 @@ namespace bgfx { namespace gl
 
 			if (!BX_ENABLED(BX_PLATFORM_OSX) )
 			{
-				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 33)
 				||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 				{
 					if (m_samplerObjectSupport)
