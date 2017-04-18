@@ -3442,7 +3442,8 @@ error:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(_num != 0, "Number of frame buffer attachments can't be 0.");
-		BX_CHECK(_num <= BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS, "Number of frame buffer attachments is larger than allowed %d (max: %d)."
+		BX_CHECK(_num <= BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS
+			, "Number of frame buffer attachments is larger than allowed %d (max: %d)."
 			, _num
 			, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS
 			);
@@ -3453,7 +3454,17 @@ error:
 	FrameBufferHandle createFrameBuffer(void* _nwh, uint16_t _width, uint16_t _height, TextureFormat::Enum _depthFormat)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		return s_ctx->createFrameBuffer(_nwh, _width, _height, _depthFormat);
+		BX_WARN(_width > 0 && _height > 0
+			, "Invalid frame buffer dimensions (width %d, height %d)."
+			, _width
+			, _height
+			);
+		return s_ctx->createFrameBuffer(
+			  _nwh
+			, bx::uint16_max(_width, 1)
+			, bx::uint16_max(_height, 1)
+			, _depthFormat
+			);
 	}
 
 	TextureHandle getTexture(FrameBufferHandle _handle, uint8_t _attachment)
