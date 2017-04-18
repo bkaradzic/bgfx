@@ -1155,14 +1155,17 @@ namespace bgfx { namespace gl
 		{
 			BX_CHECK(0 != m_id, "Updating invalid index buffer.");
 
-			if (_discard)
-			{
-				// orphan buffer...
-				destroy();
-				create(m_size, NULL, m_flags);
-			}
-
 			GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_id) );
+			if(_discard && m_size < _size + _offset)
+			{
+				// need to grow the buffer
+				m_size = _size + _offset;
+				GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER
+					, m_size
+					, NULL
+					, GL_DYNAMIC_DRAW
+					) );
+			}
 			GL_CHECK(glBufferSubData(GL_ELEMENT_ARRAY_BUFFER
 				, _offset
 				, _size
@@ -1209,14 +1212,17 @@ namespace bgfx { namespace gl
 		{
 			BX_CHECK(0 != m_id, "Updating invalid vertex buffer.");
 
-			if (_discard)
-			{
-				// orphan buffer...
-				destroy();
-				create(m_size, NULL, m_decl, 0);
-			}
-
 			GL_CHECK(glBindBuffer(m_target, m_id) );
+			if(_discard && m_size < _size + _offset)
+			{
+				// need to grow the buffer
+				m_size = _size + _offset;
+				GL_CHECK(glBufferData(m_target
+					, m_size
+					, NULL
+					, GL_DYNAMIC_DRAW
+					) );
+			}
 			GL_CHECK(glBufferSubData(m_target
 				, _offset
 				, _size
