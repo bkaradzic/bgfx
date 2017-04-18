@@ -282,7 +282,7 @@ static inline GLuint CPU_TO_LE32(GLuint x)
  */
 #if defined(__GNUC__) && defined(__i386__)
 /*
- * Set the x86 FPU control word to guarentee only 32 bits of precision
+ * Set the x86 FPU control word to guarantee only 32 bits of precision
  * are stored in registers.  Allowing the FPU to store more introduces
  * differences between situations where numbers are pulled out of memory
  * vs. situations where the compiler is able to optimize register usage.
