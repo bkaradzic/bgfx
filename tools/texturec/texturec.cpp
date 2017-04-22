@@ -176,7 +176,8 @@ bimg::ImageContainer* convert(bx::AllocatorI* _allocator, const void* _inputData
 
 				BX_FREE(_allocator, rgbaDst);
 			}
-			else if (8 != bimg::getBlockInfo(input->m_format).rBits)
+			else if (!bimg::isCompressed(input->m_format)
+				 &&  8 != bimg::getBlockInfo(input->m_format).rBits)
 			{
 				output = bimg::imageAlloc(_allocator, format, uint16_t(mip.m_width), uint16_t(mip.m_height), 0, 1, false, _options.mips);
 
@@ -215,7 +216,7 @@ bimg::ImageContainer* convert(bx::AllocatorI* _allocator, const void* _inputData
 					, mip.m_data
 					, mip.m_width
 					, mip.m_height
-					, mip.m_width*mip.m_bpp/8
+					, mip.m_width*16
 					, mip.m_format
 					);
 				bimg::imageEncodeFromRgba32f(_allocator, output->m_data, rgba, dstMip.m_width, dstMip.m_height, format);
@@ -283,7 +284,7 @@ bimg::ImageContainer* convert(bx::AllocatorI* _allocator, const void* _inputData
 					, mip.m_data
 					, mip.m_width
 					, mip.m_height
-					, mip.m_width*mip.m_bpp/8
+					, mip.m_width*4
 					, mip.m_format
 					);
 
