@@ -670,7 +670,7 @@ namespace bgfx { namespace d3d12
 						}
 
 						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PERFHUD)
-						&&  0 != bx::strnstr(description, "PerfHUD") )
+						&&  0 != bx::strFind(description, "PerfHUD") )
 						{
 							m_adapter = adapter;
 							m_driverType = D3D_DRIVER_TYPE_REFERENCE;
@@ -2280,7 +2280,7 @@ data.NumQualityLevels = 0;
 				for (jj = 0; jj < num; ++jj)
 				{
 					curr = &_vertexElements[jj];
-					if (0 == bx::strncmp(curr->SemanticName, "TEXCOORD")
+					if (0 == bx::strCmp(curr->SemanticName, "TEXCOORD")
 					&&  curr->SemanticIndex == index)
 					{
 						break;

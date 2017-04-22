@@ -188,7 +188,7 @@ using namespace entry;
 
 PP_EXPORT const void* PPP_GetInterface(const char* _name)
 {
-	if (0 == bx::strncmp(_name, PPP_INSTANCE_INTERFACE) )
+	if (0 == bx::strCmp(_name, PPP_INSTANCE_INTERFACE) )
 	{
 		static PPP_Instance instanceInterface =
 		{

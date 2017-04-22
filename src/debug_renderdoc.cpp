@@ -43,7 +43,7 @@ namespace bgfx
 								, BX_COUNTOF(moduleName)
 								);
 					if (0 != result
-					&&  0 == bx::strincmp(_name, moduleName) )
+					&&  0 == bx::strCmpI(_name, moduleName) )
 					{
 						return true;
 					}

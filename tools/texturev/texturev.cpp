@@ -312,14 +312,14 @@ struct View
 			{
 				if (0 == (item->d_type & DT_DIR) )
 				{
-					const char* ext = bx::strnrchr(item->d_name, '.');
+					const char* ext = bx::strRFind(item->d_name, '.');
 					if (NULL != ext)
 					{
 						ext += 1;
 						bool supported = false;
 						for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
 						{
-							if (0 == bx::strincmp(ext, s_supportedExt[ii]) )
+							if (0 == bx::strCmpI(ext, s_supportedExt[ii]) )
 							{
 								supported = true;
 								break;

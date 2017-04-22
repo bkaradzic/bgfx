@@ -465,7 +465,7 @@ namespace bgfx
 	{
 		for (const EmbeddedShader* es = _es; NULL != es->name; ++es)
 		{
-			if (0 == bx::strncmp(_name, es->name) )
+			if (0 == bx::strCmp(_name, es->name) )
 			{
 				for (const EmbeddedShader::Data* esd = es->data; RendererType::Count != esd->type; ++esd)
 				{
@@ -504,7 +504,7 @@ namespace bgfx
 
 	static uint8_t parseAttrTo(char*& _ptr, char _to, uint8_t _default)
 	{
-		const char* str = bx::strnchr(_ptr, _to);
+		const char* str = bx::strFind(_ptr, _to);
 		if (NULL != str
 		&&  3 > str-_ptr)
 		{
@@ -529,7 +529,7 @@ namespace bgfx
 			return _default;
 		}
 
-		if (0 == bx::strncmp(ptr, "0m", 2) )
+		if (0 == bx::strCmp(ptr, "0m", 2) )
 		{
 			_ptr = ptr + 2;
 			return _default;
@@ -810,7 +810,7 @@ namespace bgfx
 		for (uint32_t ii = 0; ii < UniformType::Count; ++ii)
 		{
 			if (NULL != s_uniformTypeName[ii]
-			&&  0 == bx::strncmp(_name, s_uniformTypeName[ii]) )
+			&&  0 == bx::strCmp(_name, s_uniformTypeName[ii]) )
 			{
 				return UniformType::Enum(ii);
 			}
@@ -844,7 +844,7 @@ namespace bgfx
 	{
 		for (uint32_t ii = 0; ii < PredefinedUniform::Count; ++ii)
 		{
-			if (0 == bx::strncmp(_name, s_predefinedName[ii]) )
+			if (0 == bx::strCmp(_name, s_predefinedName[ii]) )
 			{
 				return PredefinedUniform::Enum(ii);
 			}

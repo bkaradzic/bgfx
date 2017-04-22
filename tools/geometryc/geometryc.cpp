@@ -525,12 +525,12 @@ int main(int _argc, const char* _argv[])
 					}
 
 					const char* vertex   = argv[edge+1];
-					char* texcoord = const_cast<char*>(bx::strnchr(vertex, '/') );
+					char* texcoord = const_cast<char*>(bx::strFind(vertex, '/') );
 					if (NULL != texcoord)
 					{
 						*texcoord++ = '\0';
 
-						char* normal = const_cast<char*>(bx::strnchr(texcoord, '/') );
+						char* normal = const_cast<char*>(bx::strFind(texcoord, '/') );
 						if (NULL != normal)
 						{
 							*normal++ = '\0';

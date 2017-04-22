@@ -402,7 +402,7 @@ int main(int _argc, const char* _argv[])
 	}
 
 	const char* saveAs = cmdLine.findOption("as");
-	saveAs = NULL == saveAs ? bx::stristr(outputFileName, ".ktx") : saveAs;
+	saveAs = NULL == saveAs ? bx::strFindI(outputFileName, ".ktx") : saveAs;
 	if (NULL == saveAs)
 	{
 		help("Output file format must be specified.");
@@ -472,7 +472,7 @@ int main(int _argc, const char* _argv[])
 		bx::CrtFileWriter writer;
 		if (bx::open(&writer, outputFileName) )
 		{
-			if (NULL != bx::stristr(saveAs, "ktx") )
+			if (NULL != bx::strFindI(saveAs, "ktx") )
 			{
 				bimg::imageWriteKtx(&writer, *output, output->m_data, output->m_size);
 			}
