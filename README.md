@@ -233,12 +233,10 @@ game in development. It's a combination of FPS and stealth.
 https://github.com/VladSerhiienko/FbxPipeline - Yet another FBX exporter with
 flatbuffers serialization.
 
-## FRAG
+## FRAG - Framework for Rather Awesome Games
 
-https://github.com/fragworks/frag - FRAG is a game creation framework being
-developed using the Nim programming language, and is currently in pre-alpha
-status. The immediate development focus for FRAG is supporting the creation of
-2D desktop games.
+http://fragworks.io/ - FRAG is a cross-platform 2D game creation framework for
+the Nim programming language.
 
 ## vg-renderer
 
