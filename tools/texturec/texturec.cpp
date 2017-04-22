@@ -419,13 +419,6 @@ int main(int _argc, const char* _argv[])
 		options.maxSize = atoi(maxSize);
 	}
 
-	bx::CrtFileReader reader;
-	if (!bx::open(&reader, inputFileName) )
-	{
-		help("Failed to open input file.");
-		return EXIT_FAILURE;
-	}
-
 	options.format = bimg::TextureFormat::Count;
 	const char* type = cmdLine.findOption('t');
 	if (NULL != type)
@@ -439,13 +432,27 @@ int main(int _argc, const char* _argv[])
 		}
 	}
 
+	bx::CrtFileReader reader;
+	if (!bx::open(&reader, inputFileName) )
+	{
+		help("Failed to open input file.");
+		return EXIT_FAILURE;
+	}
+
 	bx::CrtAllocator allocator;
 
 	uint32_t inputSize = (uint32_t)bx::getSize(&reader);
 	uint8_t* inputData = (uint8_t*)BX_ALLOC(&allocator, inputSize);
 
-	bx::read(&reader, inputData, inputSize);
+	bx::Error err;
+	bx::read(&reader, inputData, inputSize, &err);
 	bx::close(&reader);
+
+	if (!err.isOk() )
+	{
+		help("Failed to read input file.");
+		return EXIT_FAILURE;
+	}
 
 	bimg::ImageContainer* output = convert(&allocator, inputData, inputSize, options);
 
@@ -456,7 +463,7 @@ int main(int _argc, const char* _argv[])
 		bx::CrtFileWriter writer;
 		if (bx::open(&writer, outputFileName) )
 		{
-			if (NULL != bx::stristr(outputFileName, ".ktx") )
+//			if (NULL != bx::stristr(outputFileName, ".ktx") )
 			{
 				bimg::imageWriteKtx(&writer, *output, output->m_data, output->m_size);
 			}
