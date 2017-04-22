@@ -12,23 +12,23 @@ gl_FragCoord origin is upper left
 0:17            add ( temp 4-component vector of float)
 0:17              'input' ( in 4-component vector of float)
 0:17              v1: direct index for structure (layout( row_major std430 offset=16) buffer 4-component vector of float)
-0:17                'anon@0' (layout( set=3 binding=5 row_major std430) buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v1})
+0:17                'anon@0' (layout( set=3 binding=5 row_major std430) readonly buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v1})
 0:17                Constant:
 0:17                  0 (const uint)
 0:17            v5: direct index for structure (layout( row_major std430 offset=0) buffer 4-component vector of float)
-0:17              'anon@1' (layout( row_major std430 push_constant) buffer block{layout( row_major std430 offset=0) buffer 4-component vector of float v5})
+0:17              'anon@1' (layout( row_major std430 push_constant) readonly buffer block{layout( row_major std430 offset=0) buffer 4-component vector of float v5})
 0:17              Constant:
 0:17                0 (const uint)
 0:17          v1PostLayout: direct index for structure (layout( row_major std430 offset=16) buffer 4-component vector of float)
-0:17            'anon@2' (layout( set=4 binding=7 row_major std430) buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v1PostLayout})
+0:17            'anon@2' (layout( set=4 binding=7 row_major std430) readonly buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v1PostLayout})
 0:17            Constant:
 0:17              0 (const uint)
 0:?   Linker Objects
-0:?     'anon@0' (layout( set=3 binding=5 row_major std430) buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v1})
-0:?     'anon@1' (layout( row_major std430 push_constant) buffer block{layout( row_major std430 offset=0) buffer 4-component vector of float v5})
+0:?     'anon@0' (layout( set=3 binding=5 row_major std430) readonly buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v1})
+0:?     'anon@1' (layout( row_major std430 push_constant) readonly buffer block{layout( row_major std430 offset=0) buffer 4-component vector of float v5})
 0:?     'specConst' ( specialization-constant const int)
 0:?       10 (const int)
-0:?     'anon@2' (layout( set=4 binding=7 row_major std430) buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v1PostLayout})
+0:?     'anon@2' (layout( set=4 binding=7 row_major std430) readonly buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v1PostLayout})
 
 
 Linked fragment stage:
@@ -48,23 +48,23 @@ gl_FragCoord origin is upper left
 0:17            add ( temp 4-component vector of float)
 0:17              'input' ( in 4-component vector of float)
 0:17              v1: direct index for structure (layout( row_major std430 offset=16) buffer 4-component vector of float)
-0:17                'anon@0' (layout( set=3 binding=5 row_major std430) buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v1})
+0:17                'anon@0' (layout( set=3 binding=5 row_major std430) readonly buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v1})
 0:17                Constant:
 0:17                  0 (const uint)
 0:17            v5: direct index for structure (layout( row_major std430 offset=0) buffer 4-component vector of float)
-0:17              'anon@1' (layout( row_major std430 push_constant) buffer block{layout( row_major std430 offset=0) buffer 4-component vector of float v5})
+0:17              'anon@1' (layout( row_major std430 push_constant) readonly buffer block{layout( row_major std430 offset=0) buffer 4-component vector of float v5})
 0:17              Constant:
 0:17                0 (const uint)
 0:17          v1PostLayout: direct index for structure (layout( row_major std430 offset=16) buffer 4-component vector of float)
-0:17            'anon@2' (layout( set=4 binding=7 row_major std430) buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v1PostLayout})
+0:17            'anon@2' (layout( set=4 binding=7 row_major std430) readonly buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v1PostLayout})
 0:17            Constant:
 0:17              0 (const uint)
 0:?   Linker Objects
-0:?     'anon@0' (layout( set=3 binding=5 row_major std430) buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v1})
-0:?     'anon@1' (layout( row_major std430 push_constant) buffer block{layout( row_major std430 offset=0) buffer 4-component vector of float v5})
+0:?     'anon@0' (layout( set=3 binding=5 row_major std430) readonly buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v1})
+0:?     'anon@1' (layout( row_major std430 push_constant) readonly buffer block{layout( row_major std430 offset=0) buffer 4-component vector of float v5})
 0:?     'specConst' ( specialization-constant const int)
 0:?       10 (const int)
-0:?     'anon@2' (layout( set=4 binding=7 row_major std430) buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v1PostLayout})
+0:?     'anon@2' (layout( set=4 binding=7 row_major std430) readonly buffer block{layout( row_major std430 offset=16) buffer 4-component vector of float v1PostLayout})
 
 // Module Version 10000
 // Generated by (magic number): 80001
@@ -89,12 +89,15 @@ gl_FragCoord origin is upper left
                               MemberName 30(tbufName2) 0  "v1PostLayout"
                               Name 32  ""
                               Name 38  "specConst"
+                              MemberDecorate 14(tbufName) 0 NonWritable
                               MemberDecorate 14(tbufName) 0 Offset 16
                               Decorate 14(tbufName) BufferBlock
                               Decorate 16 DescriptorSet 3
                               Decorate 16 Binding 5
+                              MemberDecorate 23(tbufName2) 0 NonWritable
                               MemberDecorate 23(tbufName2) 0 Offset 0
                               Decorate 23(tbufName2) BufferBlock
+                              MemberDecorate 30(tbufName2) 0 NonWritable
                               MemberDecorate 30(tbufName2) 0 Offset 16
                               Decorate 30(tbufName2) BufferBlock
                               Decorate 32 DescriptorSet 4

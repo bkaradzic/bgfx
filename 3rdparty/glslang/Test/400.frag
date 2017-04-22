@@ -184,10 +184,8 @@ void qlod()
     lod = textureQueryLod(sampRect, pf2);   // ERROR
 }
 
-struct SKeyMem { int precise; } KeyMem;     // ERROR, keyword can't be a member
-
 uniform uint uu;
-out int iout;
+out uint iout;
 
 void bitwiseConv()
 {
@@ -195,3 +193,5 @@ void bitwiseConv()
     iout += uu ^ i;
     iout += i | uu;
 }
+
+struct SKeyMem { int precise; } KeyMem;     // ERROR, keyword can't be a member

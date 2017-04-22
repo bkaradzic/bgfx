@@ -707,6 +707,19 @@ void TReflection::buildAttributeReflection(EShLanguage stage, const TIntermediat
     }
 }
 
+// build counter block index associations for buffers
+void TReflection::buildCounterIndices()
+{
+    // search for ones that have counters
+    for (int i = 0; i < int(indexToUniformBlock.size()); ++i) {
+        const TString counterName(indexToUniformBlock[i].name + "@count");
+        const int index = getIndex(counterName);
+
+        if (index >= 0)
+            indexToUniformBlock[i].counterIndex = index;
+    }
+}
+
 // Merge live symbols from 'intermediate' into the existing reflection database.
 //
 // Returns false if the input is too malformed to do this.
@@ -728,6 +741,8 @@ bool TReflection::addStage(EShLanguage stage, const TIntermediate& intermediate)
         it.functions.pop_back();
         function->traverse(&it);
     }
+
+    buildCounterIndices();
 
     return true;
 }

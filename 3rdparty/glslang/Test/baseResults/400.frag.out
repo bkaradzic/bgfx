@@ -34,7 +34,7 @@ ERROR: 0:183: 'textureQueryLod' : no matching overloaded function found
 ERROR: 0:183: 'assign' :  cannot convert from ' const float' to ' temp 2-component vector of float'
 ERROR: 0:184: 'textureQueryLod' : no matching overloaded function found 
 ERROR: 0:184: 'assign' :  cannot convert from ' const float' to ' temp 2-component vector of float'
-ERROR: 0:187: '' :  syntax error
+ERROR: 0:197: '' :  syntax error, unexpected PRECISE, expecting IDENTIFIER
 ERROR: 35 compilation errors.  No code generated.
 
 
@@ -469,6 +469,27 @@ ERROR: node is still EOpNull!
 0:181          'pf3' ( temp 3-component vector of float)
 0:183      'lod' ( temp 2-component vector of float)
 0:184      'lod' ( temp 2-component vector of float)
+0:190  Function Definition: bitwiseConv( ( global void)
+0:190    Function Parameters: 
+0:192    Sequence
+0:192      move second child to first child ( temp uint)
+0:192        'iout' ( out uint)
+0:192        bitwise and ( temp uint)
+0:192          'uu' ( uniform uint)
+0:192          Convert int to uint ( temp uint)
+0:192            'i' ( flat in int)
+0:193      add second child into first child ( temp uint)
+0:193        'iout' ( out uint)
+0:193        exclusive-or ( temp uint)
+0:193          'uu' ( uniform uint)
+0:193          Convert int to uint ( temp uint)
+0:193            'i' ( flat in int)
+0:194      add second child into first child ( temp uint)
+0:194        'iout' ( out uint)
+0:194        inclusive-or ( temp uint)
+0:194          Convert int to uint ( temp uint)
+0:194            'i' ( flat in int)
+0:194          'uu' ( uniform uint)
 0:?   Linker Objects
 0:?     'c2D' ( smooth in 2-component vector of float)
 0:?     'i' ( flat in int)
@@ -512,6 +533,8 @@ ERROR: node is still EOpNull!
 0:?     'sampCubeAs' ( uniform samplerCubeArrayShadow)
 0:?     'sampBuf' ( uniform samplerBuffer)
 0:?     'sampRect' ( uniform sampler2DRect)
+0:?     'uu' ( uniform uint)
+0:?     'iout' ( out uint)
 
 
 Linked fragment stage:
@@ -685,4 +708,6 @@ ERROR: node is still EOpNull!
 0:?     'sampCubeAs' ( uniform samplerCubeArrayShadow)
 0:?     'sampBuf' ( uniform samplerBuffer)
 0:?     'sampRect' ( uniform sampler2DRect)
+0:?     'uu' ( uniform uint)
+0:?     'iout' ( out uint)
 

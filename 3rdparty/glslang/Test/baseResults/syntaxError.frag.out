@@ -1,6 +1,6 @@
 syntaxError.frag
 ERROR: 0:9: 'vec5' : undeclared identifier 
-ERROR: 0:9: '' :  syntax error
+ERROR: 0:9: '' :  syntax error, unexpected IDENTIFIER, expecting COMMA or SEMICOLON
 ERROR: 2 compilation errors.  No code generated.
 
 

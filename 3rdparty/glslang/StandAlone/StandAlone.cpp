@@ -87,6 +87,7 @@ enum TOptions {
     EOptionNoStorageFormat      = (1 << 21),
     EOptionKeepUncalled         = (1 << 22),
     EOptionHlslOffsets          = (1 << 23),
+    EOptionHlslIoMapping        = (1 << 24),
 };
 
 //
@@ -166,6 +167,7 @@ std::array<unsigned int, EShLangCount> baseTextureBinding;
 std::array<unsigned int, EShLangCount> baseImageBinding;
 std::array<unsigned int, EShLangCount> baseUboBinding;
 std::array<unsigned int, EShLangCount> baseSsboBinding;
+std::array<unsigned int, EShLangCount> baseUavBinding;
 
 //
 // Create the default name for saving a binary if -o is not provided.
@@ -256,6 +258,7 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
     baseImageBinding.fill(0);
     baseUboBinding.fill(0);
     baseSsboBinding.fill(0);
+    baseUavBinding.fill(0);
 
     ExecutableName = argv[0];
     workItems.reserve(argc);
@@ -285,12 +288,19 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         ProcessBindingBase(argc, argv, baseImageBinding);
                     } else if (lowerword == "shift-ubo-bindings" ||  // synonyms
                                lowerword == "shift-ubo-binding"  ||
-                               lowerword == "sub") {
+                               lowerword == "shift-cbuffer-bindings" ||
+                               lowerword == "shift-cbuffer-binding"  ||
+                               lowerword == "sub" ||
+                               lowerword == "scb") {
                         ProcessBindingBase(argc, argv, baseUboBinding);
                     } else if (lowerword == "shift-ssbo-bindings" ||  // synonyms
                                lowerword == "shift-ssbo-binding"  ||
                                lowerword == "sbb") {
                         ProcessBindingBase(argc, argv, baseSsboBinding);
+                    } else if (lowerword == "shift-uav-bindings" ||  // synonyms
+                               lowerword == "shift-uav-binding"  ||
+                               lowerword == "suavb") {
+                        ProcessBindingBase(argc, argv, baseUavBinding);
                     } else if (lowerword == "auto-map-bindings" ||  // synonyms
                                lowerword == "auto-map-binding"  ||
                                lowerword == "amb") {
@@ -326,6 +336,10 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         Options |= EOptionKeepUncalled;
                     } else if (lowerword == "hlsl-offsets") {
                         Options |= EOptionHlslOffsets;
+                    } else if (lowerword == "hlsl-iomap" ||
+                               lowerword == "hlsl-iomapper" ||
+                               lowerword == "hlsl-iomapping") {
+                        Options |= EOptionHlslIoMapping;
                     } else {
                         usage();
                     }
@@ -577,8 +591,12 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
         shader->setShiftImageBinding(baseImageBinding[compUnit.stage]);
         shader->setShiftUboBinding(baseUboBinding[compUnit.stage]);
         shader->setShiftSsboBinding(baseSsboBinding[compUnit.stage]);
+        shader->setShiftUavBinding(baseUavBinding[compUnit.stage]);
         shader->setFlattenUniformArrays((Options & EOptionFlattenUniformArrays) != 0);
         shader->setNoStorageFormat((Options & EOptionNoStorageFormat) != 0);
+
+        if (Options & EOptionHlslIoMapping)
+            shader->setHlslIoMapping(true);
 
         if (Options & EOptionAutoMapBindings)
             shader->setAutoMapBindings(true);
@@ -982,10 +1000,14 @@ void usage()
            "  --sib [stage] num                       synonym for --shift-image-binding\n"
            "\n"
            "  --shift-UBO-binding [stage] num         set base binding number for UBOs\n"
+           "  --shift-cbuffer-binding [stage] num     synonym for --shift-UBO-binding\n"
            "  --sub [stage] num                       synonym for --shift-UBO-binding\n"
            "\n"
            "  --shift-ssbo-binding [stage] num        set base binding number for SSBOs\n"
            "  --sbb [stage] num                       synonym for --shift-ssbo-binding\n"
+           "\n"
+           "  --shift-uav-binding [stage] num         set base binding number for UAVs\n"
+           "  --suavb [stage] num                     synonym for --shift-uav-binding\n"
            "\n"
            "  --auto-map-bindings                     automatically bind uniform variables without\n"
            "                                          explicit bindings.\n"
@@ -1009,6 +1031,8 @@ void usage()
            "\n"
            "  --hlsl-offsets                          Allow block offsets to follow HLSL rules instead of GLSL rules.\n"
            "                                          Works independently of source language.\n"
+           "\n"
+           "  --hlsl-iomap                            Perform IO mapping in HLSL register space.\n"
            );
 
     exit(EFailUsage);

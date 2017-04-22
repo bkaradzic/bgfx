@@ -303,8 +303,11 @@ public:
     void setShiftTextureBinding(unsigned int base);
     void setShiftImageBinding(unsigned int base);
     void setShiftUboBinding(unsigned int base);
+    void setShiftUavBinding(unsigned int base);
+    void setShiftCbufferBinding(unsigned int base); // synonym for setShiftUboBinding
     void setShiftSsboBinding(unsigned int base);
     void setAutoMapBindings(bool map);
+    void setHlslIoMapping(bool hlslIoMap);
     void setFlattenUniformArrays(bool flatten);
     void setNoStorageFormat(bool useUnknownFormat);
 
@@ -518,6 +521,7 @@ public:
     int getUniformBlockSize(int blockIndex) const;         // can be used for glGetActiveUniformBlockiv(UNIFORM_BLOCK_DATA_SIZE)
     int getUniformIndex(const char* name) const;           // can be used for glGetUniformIndices()
     int getUniformBlockIndex(int index) const;             // can be used for glGetActiveUniformsiv(GL_UNIFORM_BLOCK_INDEX)
+    int getUniformBlockCounterIndex(int index) const;      // returns block index of associated counter.
     int getUniformType(int index) const;                   // can be used for glGetActiveUniformsiv(GL_UNIFORM_TYPE)
     int getUniformBufferOffset(int index) const;           // can be used for glGetActiveUniformsiv(GL_UNIFORM_OFFSET)
     int getUniformArraySize(int index) const;              // can be used for glGetActiveUniformsiv(GL_UNIFORM_SIZE)

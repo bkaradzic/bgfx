@@ -43,7 +43,7 @@ ERROR: 0:156: 'invariant' : can only apply to an output
 ERROR: 0:157: 'invariant' : can only apply to an output 
 ERROR: 0:158: 'invariant' : can only apply to an output 
 ERROR: 0:160: 'imageBuffer' : Reserved word. 
-ERROR: 0:160: '' :  syntax error
+ERROR: 0:160: '' :  syntax error, unexpected IMAGEBUFFER, expecting COMMA or SEMICOLON
 ERROR: 45 compilation errors.  No code generated.
 
 

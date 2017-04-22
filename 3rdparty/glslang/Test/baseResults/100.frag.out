@@ -84,7 +84,7 @@ ERROR: 0:194: '.' : cannot apply to an array: method
 ERROR: 0:194: 'a' : can't use function syntax on variable 
 ERROR: 0:214: 'non-constant global initializer (needs GL_EXT_shader_non_constant_global_initializers)' : not supported for this version or the enabled extensions 
 ERROR: 0:3000: '#error' : line of this error should be 3000  
-ERROR: 0:3002: '' :  syntax error
+ERROR: 0:3002: '' :  syntax error, unexpected IDENTIFIER, expecting LEFT_BRACE or COMMA or SEMICOLON
 ERROR: 77 compilation errors.  No code generated.
 
 

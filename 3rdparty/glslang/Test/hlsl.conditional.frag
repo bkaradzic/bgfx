@@ -8,7 +8,14 @@ float4 vectorCond()
 {
     return (c4 ? t4 : f4) +
            (c4 ? t  : f ) +
-           (t4 < f4 ? t4 : f4);
+           (t4 < f4 ? t4 : f4) +
+           (c4 ? t : f4);
+}
+
+float4 scalarCond()
+{
+    float4 ret = t != f ? t * f4 : 1;
+    return ret;
 }
 
 float2 fbSelect(bool2 cnd, float2 src0, float2 src1)
@@ -30,6 +37,6 @@ float4 PixelShaderFunction(float4 input) : COLOR0
     e = a = b ? c = d : 10, b = a ? d = c : 11;
     float4 f;
     f = ret.x < input.y ? c * input : d * input;
-    return e * ret + f + vectorCond() + 
+    return e * ret + f + vectorCond() + scalarCond() +
            float4(fbSelect(bool2(true, false), float2(1.0, 2.0), float2(3.0, 4.0)), 10.0, 10.0);
 }

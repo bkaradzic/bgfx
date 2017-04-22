@@ -1,6 +1,6 @@
 cppIndent.vert
 ERROR: 0:61: 'macro expansion' : Too few args in Macro FUNC
-ERROR: 0:61: '' :  syntax error
+ERROR: 0:61: '' :  syntax error, unexpected COMMA
 ERROR: 2 compilation errors.  No code generated.
 
 

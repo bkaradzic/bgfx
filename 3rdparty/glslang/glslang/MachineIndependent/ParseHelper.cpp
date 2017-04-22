@@ -255,6 +255,10 @@ void TParseContext::handlePragma(const TSourceLoc& loc, const TVector<TString>& 
             error(loc, "\")\" expected to end 'debug' pragma", "#pragma", "");
             return;
         }
+    } else if (spvVersion.spv > 0 && tokens[0].compare("use_storage_buffer") == 0) {
+        if (tokens.size() != 1)
+            error(loc, "extra tokens", "#pragma", "");
+        intermediate.setUseStorageBuffer();
     }
 }
 

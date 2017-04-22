@@ -63,6 +63,8 @@ using namespace glslang;
 
 %}
 
+%define parse.error verbose
+
 %union {
     struct {
         glslang::TSourceLoc loc;

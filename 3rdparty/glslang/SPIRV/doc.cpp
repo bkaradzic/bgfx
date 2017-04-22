@@ -180,7 +180,7 @@ const char* ExecutionModeString(int mode)
     }
 }
 
-const int StorageClassCeiling = 12;
+const int StorageClassCeiling = 13;
 
 const char* StorageClassString(int StorageClass)
 {
@@ -197,6 +197,7 @@ const char* StorageClassString(int StorageClass)
     case 9:  return "PushConstant";
     case 10: return "AtomicCounter";
     case 11: return "Image";
+    case 12: return "StorageBuffer";
 
     case StorageClassCeiling:
     default: return "Bad";

@@ -130,8 +130,9 @@ TIntermTyped* TIntermediate::addBinaryMath(TOperator op, TIntermTyped* left, TIn
     }
 
     // Convert the children's type shape to be compatible.
-    right = addShapeConversion(op,  left->getType(), right);
-    left  = addShapeConversion(op, right->getType(),  left);
+    addBiShapeConversion(op, left, right);
+    if (left == nullptr || right == nullptr)
+        return nullptr;
 
     //
     // Need a new node holding things together.  Make
@@ -238,7 +239,7 @@ TIntermTyped* TIntermediate::addAssign(TOperator op, TIntermTyped* left, TInterm
         return nullptr;
 
     // convert shape
-    right = addShapeConversion(op, left->getType(), right);
+    right = addUniShapeConversion(op, left->getType(), right);
 
     // build the node
     TIntermBinary* node = addBinaryNode(op, left, right, loc);
@@ -788,7 +789,10 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
 }
 
 // Convert the node's shape of type for the given type, as allowed by the
-// operation involved: 'op'.
+// operation involved: 'op'.  This is for situations where there is only one
+// direction to consider doing the shape conversion.
+//
+// This implements policy, it call addShapeConversion() for the mechanism.
 //
 // Generally, the AST represents allowed GLSL shapes, so this isn't needed
 // for GLSL.  Bad shapes are caught in conversion or promotion.
@@ -796,7 +800,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
 // Return 'node' if no conversion was done. Promotion handles final shape
 // checking.
 //
-TIntermTyped* TIntermediate::addShapeConversion(TOperator op, const TType& type, TIntermTyped* node)
+TIntermTyped* TIntermediate::addUniShapeConversion(TOperator op, const TType& type, TIntermTyped* node)
 {
     // some source languages don't do this
     switch (source) {
@@ -809,22 +813,141 @@ TIntermTyped* TIntermediate::addShapeConversion(TOperator op, const TType& type,
 
     // some operations don't do this
     switch (op) {
+    case EOpFunctionCall:
+    case EOpReturn:
+        break;
+
+    case EOpMulAssign:
+        // want to support vector *= scalar native ops in AST and lower, not smear, similarly for
+        // matrix *= scalar, etc.
+
+    case EOpAddAssign:
+    case EOpSubAssign:
+    case EOpDivAssign:
+    case EOpAndAssign:
+    case EOpInclusiveOrAssign:
+    case EOpExclusiveOrAssign:
+    case EOpRightShiftAssign:
+    case EOpLeftShiftAssign:
+        if (node->getVectorSize() == 1)
+            return node;
+        break;
+
     case EOpAssign:
+        break;
+
+    case EOpMix:
+        break;
+
+    default:
+        return node;
+    }
+
+    return addShapeConversion(type, node);
+}
+
+// Convert the nodes' shapes to be compatible for the operation 'op'.
+//
+// This implements policy, it call addShapeConversion() for the mechanism.
+//
+// Generally, the AST represents allowed GLSL shapes, so this isn't needed
+// for GLSL.  Bad shapes are caught in conversion or promotion.
+//
+void TIntermediate::addBiShapeConversion(TOperator op, TIntermTyped*& lhsNode, TIntermTyped*& rhsNode)
+{
+    // some source languages don't do this
+    switch (source) {
+    case EShSourceHlsl:
+        break;
+    case EShSourceGlsl:
+    default:
+        return;
+    }
+
+    // some operations don't do this
+    // 'break' will mean attempt bidirectional conversion
+    switch (op) {
+    case EOpMulAssign:
+    case EOpAssign:
+    case EOpAddAssign:
+    case EOpSubAssign:
+    case EOpDivAssign:
+    case EOpAndAssign:
+    case EOpInclusiveOrAssign:
+    case EOpExclusiveOrAssign:
+    case EOpRightShiftAssign:
+    case EOpLeftShiftAssign:
+        // switch to unidirectional conversion (the lhs can't change)
+        rhsNode = addUniShapeConversion(op, lhsNode->getType(), rhsNode);
+        return;
+
+    case EOpAdd:
+    case EOpSub:
+    case EOpMul:
+    case EOpDiv:
+        // want to support vector * scalar native ops in AST and lower, not smear, similarly for
+        // matrix * vector, etc.
+        if (lhsNode->getVectorSize() == 1 || rhsNode->getVectorSize() == 1)
+            return;
+        break;
+
+    case EOpRightShift:
+    case EOpLeftShift:
+        // can natively support the right operand being a scalar and the left a vector,
+        // but not the reverse
+        if (rhsNode->getVectorSize() == 1)
+            return;
+        break;
+
     case EOpLessThan:
     case EOpGreaterThan:
     case EOpLessThanEqual:
     case EOpGreaterThanEqual:
+
     case EOpEqual:
     case EOpNotEqual:
-    case EOpFunctionCall:
-    case EOpReturn:
+
     case EOpLogicalAnd:
     case EOpLogicalOr:
     case EOpLogicalXor:
+
+    case EOpAnd:
+    case EOpInclusiveOr:
+    case EOpExclusiveOr:
+
+    case EOpMix:
         break;
+
     default:
-        return node;
+        return;
     }
+
+    // Do bidirectional conversions
+    if (lhsNode->getType().isScalarOrVec1() || rhsNode->getType().isScalarOrVec1()) {
+        if (lhsNode->getType().isScalarOrVec1())
+            lhsNode = addShapeConversion(rhsNode->getType(), lhsNode);
+        else
+            rhsNode = addShapeConversion(lhsNode->getType(), rhsNode);
+    }
+    lhsNode = addShapeConversion(rhsNode->getType(), lhsNode);
+    rhsNode = addShapeConversion(lhsNode->getType(), rhsNode);
+}
+
+// Convert the node's shape of type for the given type. It's not necessarily
+// an error if they are different and not converted, as some operations accept
+// mixed types.  Promotion will do final shape checking.
+//
+// If there is a chance of two nodes, with conversions possible in each direction,
+// the policy for what to ask for must be in the caller; this will do what is asked.
+//
+// Return 'node' if no conversion was done. Promotion handles final shape
+// checking.
+//
+TIntermTyped* TIntermediate::addShapeConversion(const TType& type, TIntermTyped* node)
+{
+    // no conversion needed
+    if (node->getType() == type)
+        return node;
 
     // structures and arrays don't change shape, either to or from
     if (node->getType().isStruct() || node->getType().isArray() ||
@@ -834,12 +957,12 @@ TIntermTyped* TIntermediate::addShapeConversion(TOperator op, const TType& type,
     // The new node that handles the conversion
     TOperator constructorOp = mapTypeToConstructorOp(type);
 
-    // scalar -> smeared -> vector, or
-    // vec1 -> scalar, or
-    // bigger vector -> smaller vector or scalar
-    if ((type.isVector() && node->getType().isScalar()) ||
-        (node->getType().isVector() && node->getVectorSize() == 1 && type.isScalar()) ||
-        (node->getVectorSize() > type.getVectorSize() && type.isVector()))
+    // scalar -> vector or vec1 -> vector or
+    // vector -> scalar or
+    // bigger vector -> smaller vector
+    if ((node->getType().isScalarOrVec1() && type.isVector()) ||
+        (node->getType().isVector() && type.isScalar()) ||
+        (node->isVector() && type.isVector() && node->getVectorSize() > type.getVectorSize()))
         return setAggregateOperator(makeAggregate(node), constructorOp, type, node->getLoc());
 
     return node;
@@ -1304,19 +1427,17 @@ TIntermTyped* TIntermediate::addSelection(TIntermTyped* cond, TIntermTyped* true
             return nullptr;
     }
 
-    // After conversion, types have to match.
-    if (falseBlock->getType() != trueBlock->getType())
-        return nullptr;
-
     // Handle a vector condition as a mix
     if (!cond->getType().isScalarOrVec1()) {
         TType targetVectorType(trueBlock->getType().getBasicType(), EvqTemporary,
                                cond->getType().getVectorSize());
-        // smear true/false operations if needed
-        if (trueBlock->getType().isScalarOrVec1())
-            trueBlock = addShapeConversion(EOpAssign, targetVectorType, trueBlock);
-        if (falseBlock->getType().isScalarOrVec1())
-            falseBlock = addShapeConversion(EOpAssign, targetVectorType, falseBlock);
+        // smear true/false operands as needed
+        trueBlock = addUniShapeConversion(EOpMix, targetVectorType, trueBlock);
+        falseBlock = addUniShapeConversion(EOpMix, targetVectorType, falseBlock);
+
+        // After conversion, types have to match.
+        if (falseBlock->getType() != trueBlock->getType())
+            return nullptr;
 
         // make the mix operation
         TIntermAggregate* mix = makeAggregate(loc);
@@ -1330,6 +1451,13 @@ TIntermTyped* TIntermediate::addSelection(TIntermTyped* cond, TIntermTyped* true
     }
 
     // Now have a scalar condition...
+
+    // Convert true and false expressions to matching types
+    addBiShapeConversion(EOpMix, trueBlock, falseBlock);
+
+    // After conversion, types have to match.
+    if (falseBlock->getType() != trueBlock->getType())
+        return nullptr;
 
     // Eliminate the selection when the condition is a scalar and all operands are constant.
     if (cond->getAsConstantUnion() && trueBlock->getAsConstantUnion() && falseBlock->getAsConstantUnion()) {
@@ -2139,8 +2267,6 @@ bool TIntermediate::promoteBinary(TIntermBinary& node)
     case EOpLogicalXor:
         return left->getType() == right->getType();
 
-    // no shifts: they can mix types (scalar int can shift a vector uint, etc.)
-
     case EOpMod:
     case EOpModAssign:
 
@@ -2154,6 +2280,7 @@ bool TIntermediate::promoteBinary(TIntermBinary& node)
     case EOpAdd:
     case EOpSub:
     case EOpDiv:
+
     case EOpAddAssign:
     case EOpSubAssign:
     case EOpDivAssign:
@@ -2178,7 +2305,7 @@ bool TIntermediate::promoteBinary(TIntermBinary& node)
         return true;
 
     // Finish handling the case, for all ops, where there are two vectors of different sizes
-    if (left->isVector() && right->isVector() && left->getVectorSize() != right->getVectorSize())
+    if (left->isVector() && right->isVector() && left->getVectorSize() != right->getVectorSize() && right->getVectorSize() > 1)
         return false;
 
     //

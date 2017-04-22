@@ -19,7 +19,7 @@ ERROR: 0:112: '#if' : unexpected tokens following directive
 ERROR: 0:117: 'macro expansion' : End of line in macro substitution: FOOM
 ERROR: 0:118: 'preprocessor evaluation' : can't evaluate expression 
 ERROR: 0:118: '#if' : unexpected tokens following directive 
-ERROR: 0:150: '' :  syntax error
+ERROR: 0:150: '' :  syntax error, unexpected EQUAL
 ERROR: 19 compilation errors.  No code generated.
 
 

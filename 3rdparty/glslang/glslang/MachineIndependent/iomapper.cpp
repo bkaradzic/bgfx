@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2016 LunarG, Inc.
+// Copyright (C) 2016-2017 LunarG, Inc.
 //
 // All rights reserved.
 //
@@ -310,20 +310,15 @@ private:
     TResolverInOutAdaptor& operator=(TResolverInOutAdaptor&);
 };
 
-/*
- * Basic implementation of glslang::TIoMapResolver that replaces the
- * previous offset behavior.
- * It does the same, uses the offsets for the corresponding uniform
- * types. Also respects the EOptionAutoMapBindings flag and binds
- * them if needed.
- */
-struct TDefaultIoResolver : public glslang::TIoMapResolver
+// Base class for shared TIoMapResolver services, used by several derivations.
+struct TDefaultIoResolverBase : public glslang::TIoMapResolver
 {
     int baseSamplerBinding;
     int baseTextureBinding;
     int baseImageBinding;
     int baseUboBinding;
     int baseSsboBinding;
+    int baseUavBinding;
     bool doAutoMapping;
     typedef std::vector<int> TSlotSet;
     typedef std::unordered_map<int, TSlotSet> TSlotSetMap;
@@ -360,83 +355,9 @@ struct TDefaultIoResolver : public glslang::TIoMapResolver
         return reserveSlot(set, base);
     }
 
-    bool validateBinding(EShLanguage /*stage*/, const char* /*name*/, const glslang::TType& type, bool /*is_live*/) override
-    {
-        if (type.getQualifier().hasBinding()) {
-            int set;
-            if (type.getQualifier().hasSet())
-                set = type.getQualifier().layoutSet;
-            else
-                set = 0;
+    virtual bool validateBinding(EShLanguage /*stage*/, const char* /*name*/, const glslang::TType& type, bool /*is_live*/) override = 0;
 
-            if (type.getBasicType() == glslang::EbtSampler) {
-                const glslang::TSampler& sampler = type.getSampler();
-                if (sampler.isPureSampler())
-                    return checkEmpty(set, baseSamplerBinding + type.getQualifier().layoutBinding);
-
-                if (sampler.isTexture())
-                    return checkEmpty(set, baseTextureBinding + type.getQualifier().layoutBinding);
-            }
-
-            if (type.getQualifier().storage == EvqUniform)
-                return checkEmpty(set, baseUboBinding + type.getQualifier().layoutBinding);
-
-            if (type.getQualifier().storage == EvqBuffer)
-                return checkEmpty(set, baseSsboBinding + type.getQualifier().layoutBinding);
-        }
-        return true;
-    }
-
-    int resolveBinding(EShLanguage /*stage*/, const char* /*name*/, const glslang::TType& type, bool is_live) override
-    {
-        int set;
-        if (type.getQualifier().hasSet())
-            set = type.getQualifier().layoutSet;
-        else
-            set = 0;
-
-        if (type.getQualifier().hasBinding()) {
-            if (type.getBasicType() == glslang::EbtSampler) {
-                const glslang::TSampler& sampler = type.getSampler();
-                if (sampler.isImage())
-                    return reserveSlot(set, baseImageBinding + type.getQualifier().layoutBinding);
-
-                if (sampler.isPureSampler())
-                    return reserveSlot(set, baseSamplerBinding + type.getQualifier().layoutBinding);
-
-                if (sampler.isTexture())
-                    return reserveSlot(set, baseTextureBinding + type.getQualifier().layoutBinding);
-            }
-
-            if (type.getQualifier().storage == EvqUniform)
-                return reserveSlot(set, baseUboBinding + type.getQualifier().layoutBinding);
-
-            if (type.getQualifier().storage == EvqBuffer)
-                return reserveSlot(set, baseSsboBinding + type.getQualifier().layoutBinding);
-        } else if (is_live && doAutoMapping) {
-            // find free slot, the caller did make sure it passes all vars with binding
-            // first and now all are passed that do not have a binding and needs one
-            if (type.getBasicType() == glslang::EbtSampler) {
-                const glslang::TSampler& sampler = type.getSampler();
-                if (sampler.isImage())
-                    return getFreeSlot(set, baseImageBinding);
-
-                if (sampler.isPureSampler())
-                    return getFreeSlot(set, baseSamplerBinding);
-
-                if (sampler.isTexture())
-                    return getFreeSlot(set, baseTextureBinding);
-            }
-
-            if (type.getQualifier().storage == EvqUniform)
-                return getFreeSlot(set, baseUboBinding);
-
-            if (type.getQualifier().storage == EvqBuffer)
-                return getFreeSlot(set, baseSsboBinding);
-        }
-
-        return -1;
-    }
+    virtual int resolveBinding(EShLanguage /*stage*/, const char* /*name*/, const glslang::TType& type, bool is_live) override = 0;
 
     int resolveSet(EShLanguage /*stage*/, const char* /*name*/, const glslang::TType& type, bool /*is_live*/) override
     {
@@ -461,7 +382,231 @@ struct TDefaultIoResolver : public glslang::TIoMapResolver
     {
         return -1;
     }
+
+protected:
+    static int getLayoutSet(const glslang::TType& type) {
+        if (type.getQualifier().hasSet())
+            return type.getQualifier().layoutSet;
+        else
+            return 0;
+    }
+
+    static bool isSamplerType(const glslang::TType& type) {
+        return type.getBasicType() == glslang::EbtSampler && type.getSampler().isPureSampler();
+    }
+
+    static bool isTextureType(const glslang::TType& type) {
+        return type.getBasicType() == glslang::EbtSampler && type.getSampler().isTexture();
+    }
+
+    static bool isUboType(const glslang::TType& type) {
+        return type.getQualifier().storage == EvqUniform;
+    }
 };
+
+/*
+ * Basic implementation of glslang::TIoMapResolver that replaces the
+ * previous offset behavior.
+ * It does the same, uses the offsets for the corresponding uniform
+ * types. Also respects the EOptionAutoMapBindings flag and binds
+ * them if needed.
+ */
+/*
+ * Default resolver
+ */
+struct TDefaultIoResolver : public TDefaultIoResolverBase
+{
+    bool validateBinding(EShLanguage /*stage*/, const char* /*name*/, const glslang::TType& type, bool /*is_live*/) override
+    {
+        if (type.getQualifier().hasBinding()) {
+            const int set = getLayoutSet(type);
+
+            if (isImageType(type))
+                return checkEmpty(set, baseImageBinding + type.getQualifier().layoutBinding);
+
+            if (isTextureType(type))
+                return checkEmpty(set, baseTextureBinding + type.getQualifier().layoutBinding);
+
+            if (isSsboType(type))
+                return checkEmpty(set, baseSsboBinding + type.getQualifier().layoutBinding);
+
+            if (isSamplerType(type))
+                return checkEmpty(set, baseSamplerBinding + type.getQualifier().layoutBinding);
+
+            if (isUboType(type))
+                return checkEmpty(set, baseUboBinding + type.getQualifier().layoutBinding);
+        }
+        return true;
+    }
+
+    int resolveBinding(EShLanguage /*stage*/, const char* /*name*/, const glslang::TType& type, bool is_live) override
+    {
+        const int set = getLayoutSet(type);
+
+        if (type.getQualifier().hasBinding()) {
+            if (isImageType(type))
+                return reserveSlot(set, baseImageBinding + type.getQualifier().layoutBinding);
+                
+            if (isTextureType(type))
+                return reserveSlot(set, baseTextureBinding + type.getQualifier().layoutBinding);
+
+            if (isSsboType(type))
+                return reserveSlot(set, baseSsboBinding + type.getQualifier().layoutBinding);
+
+            if (isSamplerType(type))
+                return reserveSlot(set, baseSamplerBinding + type.getQualifier().layoutBinding);
+
+            if (isUboType(type))
+                return reserveSlot(set, baseUboBinding + type.getQualifier().layoutBinding);
+        } else if (is_live && doAutoMapping) {
+            // find free slot, the caller did make sure it passes all vars with binding
+            // first and now all are passed that do not have a binding and needs one
+
+            if (isImageType(type))
+                return getFreeSlot(set, baseImageBinding);
+
+            if (isTextureType(type))
+                return getFreeSlot(set, baseTextureBinding);
+
+            if (isSsboType(type))
+                return getFreeSlot(set, baseSsboBinding);
+
+            if (isSamplerType(type))
+                return getFreeSlot(set, baseSamplerBinding);
+
+            if (isUboType(type))
+                return getFreeSlot(set, baseUboBinding);
+        }
+
+        return -1;
+    }
+
+protected:
+    static bool isImageType(const glslang::TType& type) {
+        return type.getBasicType() == glslang::EbtSampler && type.getSampler().isImage();
+    }
+
+    static bool isSsboType(const glslang::TType& type) {
+        return type.getQualifier().storage == EvqBuffer;
+    }
+};
+
+/********************************************************************************
+The following IO resolver maps types in HLSL register space, as follows:
+
+t – for shader resource views (SRV)
+   TEXTURE1D
+   TEXTURE1DARRAY
+   TEXTURE2D
+   TEXTURE2DARRAY
+   TEXTURE3D
+   TEXTURECUBE
+   TEXTURECUBEARRAY
+   TEXTURE2DMS
+   TEXTURE2DMSARRAY
+   STRUCTUREDBUFFER
+   BYTEADDRESSBUFFER
+   BUFFER
+   TBUFFER
+    
+s – for samplers
+   SAMPLER
+   SAMPLER1D
+   SAMPLER2D
+   SAMPLER3D
+   SAMPLERCUBE
+   SAMPLERSTATE
+   SAMPLERCOMPARISONSTATE
+
+u – for unordered access views (UAV)
+   RWBYTEADDRESSBUFFER
+   RWSTRUCTUREDBUFFER
+   APPENDSTRUCTUREDBUFFER
+   CONSUMESTRUCTUREDBUFFER
+   RWBUFFER
+   RWTEXTURE1D
+   RWTEXTURE1DARRAY
+   RWTEXTURE2D
+   RWTEXTURE2DARRAY
+   RWTEXTURE3D
+
+b – for constant buffer views (CBV)
+   CBUFFER
+ ********************************************************************************/
+struct TDefaultHlslIoResolver : public TDefaultIoResolverBase
+{
+    bool validateBinding(EShLanguage /*stage*/, const char* /*name*/, const glslang::TType& type, bool /*is_live*/) override
+    {
+        if (type.getQualifier().hasBinding()) {
+            const int set = getLayoutSet(type);
+
+            if (isUavType(type))
+                return checkEmpty(set, baseUavBinding + type.getQualifier().layoutBinding);
+
+            if (isSrvType(type))
+                return checkEmpty(set, baseTextureBinding + type.getQualifier().layoutBinding);
+
+            if (isSamplerType(type))
+                return checkEmpty(set, baseSamplerBinding + type.getQualifier().layoutBinding);
+
+            if (isUboType(type))
+                return checkEmpty(set, baseUboBinding + type.getQualifier().layoutBinding);
+        }
+        return true;
+    }
+
+    int resolveBinding(EShLanguage /*stage*/, const char* /*name*/, const glslang::TType& type, bool is_live) override
+    {
+        const int set = getLayoutSet(type);
+
+        if (type.getQualifier().hasBinding()) {
+            if (isUavType(type))
+                return reserveSlot(set, baseUavBinding + type.getQualifier().layoutBinding);
+
+            if (isSrvType(type))
+                return reserveSlot(set, baseTextureBinding + type.getQualifier().layoutBinding);
+
+            if (isSamplerType(type))
+                return reserveSlot(set, baseSamplerBinding + type.getQualifier().layoutBinding);
+
+            if (isUboType(type))
+                return reserveSlot(set, baseUboBinding + type.getQualifier().layoutBinding);
+        } else if (is_live && doAutoMapping) {
+            // find free slot, the caller did make sure it passes all vars with binding
+            // first and now all are passed that do not have a binding and needs one
+
+            if (isUavType(type))
+                return getFreeSlot(set, baseUavBinding);
+
+            if (isSrvType(type))
+                return getFreeSlot(set, baseTextureBinding);
+
+            if (isSamplerType(type))
+                return getFreeSlot(set, baseSamplerBinding);
+
+            if (isUboType(type))
+                return getFreeSlot(set, baseUboBinding);
+        }
+
+        return -1;
+    }
+
+protected:
+    // Return true if this is a SRV (shader resource view) type:
+    static bool isSrvType(const glslang::TType& type) {
+        return isTextureType(type) || type.getQualifier().storage == EvqBuffer;
+    }
+
+    // Return true if this is a UAV (unordered access view) type:
+    static bool isUavType(const glslang::TType& type) {
+        if (type.getQualifier().readonly)
+            return false;
+
+        return (type.getBasicType() == glslang::EbtSampler && type.getSampler().isImage()) ||
+            (type.getQualifier().storage == EvqBuffer);
+    }
+};
+
 
 // Map I/O variables to provided offsets, and make bindings for
 // unbound but live variables.
@@ -475,6 +620,7 @@ bool TIoMapper::addStage(EShLanguage stage, TIntermediate &intermediate, TInfoSi
         intermediate.getShiftImageBinding() == 0 &&
         intermediate.getShiftUboBinding() == 0 &&
         intermediate.getShiftSsboBinding() == 0 &&
+        intermediate.getShiftUavBinding() == 0 &&
         intermediate.getAutoMapBindings() == false &&
         resolver == nullptr)
         return true;
@@ -488,15 +634,26 @@ bool TIoMapper::addStage(EShLanguage stage, TIntermediate &intermediate, TInfoSi
 
     // if no resolver is provided, use the default resolver with the given shifts and auto map settings
     TDefaultIoResolver defaultResolver;
-    if (resolver == nullptr) {
-        defaultResolver.baseSamplerBinding = intermediate.getShiftSamplerBinding();
-        defaultResolver.baseTextureBinding = intermediate.getShiftTextureBinding();
-        defaultResolver.baseImageBinding = intermediate.getShiftImageBinding();
-        defaultResolver.baseUboBinding = intermediate.getShiftUboBinding();
-        defaultResolver.baseSsboBinding = intermediate.getShiftSsboBinding();
-        defaultResolver.doAutoMapping = intermediate.getAutoMapBindings();
+    TDefaultHlslIoResolver defaultHlslResolver;
 
-        resolver = &defaultResolver;
+    if (resolver == nullptr) {
+        TDefaultIoResolverBase* resolverBase;
+
+        // TODO: use a passed in IO mapper for this
+        if (intermediate.usingHlslIoMapping())
+            resolverBase = &defaultHlslResolver;
+        else
+            resolverBase = &defaultResolver;
+
+        resolverBase->baseSamplerBinding = intermediate.getShiftSamplerBinding();
+        resolverBase->baseTextureBinding = intermediate.getShiftTextureBinding();
+        resolverBase->baseImageBinding = intermediate.getShiftImageBinding();
+        resolverBase->baseUboBinding = intermediate.getShiftUboBinding();
+        resolverBase->baseSsboBinding = intermediate.getShiftSsboBinding();
+        resolverBase->baseUavBinding = intermediate.getShiftUavBinding();
+        resolverBase->doAutoMapping = intermediate.getAutoMapBindings();
+
+        resolver = resolverBase;
     }
 
     TVarLiveMap inVarMap, outVarMap, uniformVarMap;

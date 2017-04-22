@@ -303,6 +303,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.specConstant.comp",
         "spv.specConstantComposite.vert",
         "spv.specConstantOperations.vert",
+        "spv.storageBuffer.vert",
         "spv.precise.tese",
         "spv.precise.tesc",
     })),

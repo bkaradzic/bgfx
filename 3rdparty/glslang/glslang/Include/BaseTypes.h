@@ -223,6 +223,13 @@ enum TBuiltInVariable {
     EbvOutputPatch,
     EbvInputPatch,
 
+    // structbuffer types
+    EbvAppendConsume, // no need to differentiate append and consume
+    EbvRWStructuredBuffer,
+    EbvStructuredBuffer,
+    EbvByteAddressBuffer,
+    EbvRWByteAddressBuffer,
+
     EbvLast
 };
 

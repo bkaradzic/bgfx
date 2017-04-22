@@ -118,8 +118,9 @@ gl_FragCoord origin is upper left
 0:24        Convert int to bool ( temp bool)
 0:24          'i' ( temp int)
 0:24        Loop Body
-0:24        Pre-Decrement ( temp int)
-0:24          'i' ( temp int)
+0:?         Sequence
+0:24          Pre-Decrement ( temp int)
+0:24            'i' ( temp int)
 0:?       Sequence
 0:26        Loop with condition tested first
 0:26          Loop Condition
@@ -286,8 +287,9 @@ gl_FragCoord origin is upper left
 0:24        Convert int to bool ( temp bool)
 0:24          'i' ( temp int)
 0:24        Loop Body
-0:24        Pre-Decrement ( temp int)
-0:24          'i' ( temp int)
+0:?         Sequence
+0:24          Pre-Decrement ( temp int)
+0:24            'i' ( temp int)
 0:?       Sequence
 0:26        Loop with condition tested first
 0:26          Loop Condition

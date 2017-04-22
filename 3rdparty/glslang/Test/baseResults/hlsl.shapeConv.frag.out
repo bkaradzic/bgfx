@@ -95,27 +95,66 @@ gl_FragCoord origin is upper left
 0:22          Construct vec4 ( temp 4-component vector of float)
 0:22            'f' ( in float)
 0:22          'v' ( temp 4-component vector of float)
-0:26      Compare Equal ( temp bool)
-0:26        'f1' ( temp 1-component vector of float)
-0:26        Construct float ( temp 1-component vector of float)
-0:26          'v' ( temp 4-component vector of float)
-0:27      Compare Less Than ( temp bool)
-0:27        Construct float ( temp 1-component vector of float)
-0:27          'v' ( temp 4-component vector of float)
-0:27        'f1' ( temp 1-component vector of float)
+0:26      Equal ( temp 4-component vector of bool)
+0:26        Construct vec4 ( temp 4-component vector of float)
+0:26          'f1' ( temp 1-component vector of float)
+0:26        'v' ( temp 4-component vector of float)
+0:27      Compare Less Than ( temp 4-component vector of bool)
+0:27        'v' ( temp 4-component vector of float)
+0:27        Construct vec4 ( temp 4-component vector of float)
+0:27          'f1' ( temp 1-component vector of float)
 0:28      Construct float ( temp float)
 0:28        'f1' ( temp 1-component vector of float)
 0:29      Construct vec3 ( temp 3-component vector of float)
 0:29        Construct float ( temp float)
 0:29          'f1' ( temp 1-component vector of float)
-0:33      Branch: Return with expression
-0:33        component-wise multiply ( temp 4-component vector of float)
-0:33          'input' ( in 4-component vector of float)
-0:33          Constant:
-0:33            3.000000
-0:33            3.000000
-0:33            3.000000
-0:33            3.000000
+0:36      right-shift ( temp 3-component vector of uint)
+0:36        Construct uvec3 ( temp 3-component vector of uint)
+0:36          'ui' ( temp uint)
+0:36        'ui3' ( temp 3-component vector of uint)
+0:37      right-shift ( temp 3-component vector of uint)
+0:37        'ui3' ( temp 3-component vector of uint)
+0:37        'ui' ( temp uint)
+0:39      multiply second child into first child ( temp 4-component vector of float)
+0:39        'v' ( temp 4-component vector of float)
+0:39        'f1' ( temp 1-component vector of float)
+0:40      multiply second child into first child ( temp 1-component vector of float)
+0:40        'f1' ( temp 1-component vector of float)
+0:40        Construct float ( temp 1-component vector of float)
+0:40          'v' ( temp 4-component vector of float)
+0:42      Sequence
+0:42        move second child to first child ( temp 3-component vector of float)
+0:42          'mixed' ( temp 3-component vector of float)
+0:42          component-wise multiply ( temp 3-component vector of float)
+0:42            'u' ( temp 3-component vector of float)
+0:42            Construct vec3 ( temp 3-component vector of float)
+0:42              'v' ( temp 4-component vector of float)
+0:43      move second child to first child ( temp float)
+0:43        'f' ( in float)
+0:43        Construct float ( in float)
+0:43          'u' ( temp 3-component vector of float)
+0:44      move second child to first child ( temp 1-component vector of float)
+0:44        'f1' ( temp 1-component vector of float)
+0:44        Construct float ( temp 1-component vector of float)
+0:44          'u' ( temp 3-component vector of float)
+0:45      Sequence
+0:45        move second child to first child ( temp float)
+0:45          'sf' ( temp float)
+0:45          Construct float ( temp float)
+0:45            'v' ( temp 4-component vector of float)
+0:46      Sequence
+0:46        move second child to first child ( temp 1-component vector of float)
+0:46          'sf1' ( temp 1-component vector of float)
+0:46          Construct float ( temp 1-component vector of float)
+0:46            'v' ( temp 4-component vector of float)
+0:48      Branch: Return with expression
+0:48        component-wise multiply ( temp 4-component vector of float)
+0:48          'input' ( in 4-component vector of float)
+0:48          Constant:
+0:48            3.000000
+0:48            3.000000
+0:48            3.000000
+0:48            3.000000
 0:?   Linker Objects
 
 
@@ -219,32 +258,71 @@ gl_FragCoord origin is upper left
 0:22          Construct vec4 ( temp 4-component vector of float)
 0:22            'f' ( in float)
 0:22          'v' ( temp 4-component vector of float)
-0:26      Compare Equal ( temp bool)
-0:26        'f1' ( temp 1-component vector of float)
-0:26        Construct float ( temp 1-component vector of float)
-0:26          'v' ( temp 4-component vector of float)
-0:27      Compare Less Than ( temp bool)
-0:27        Construct float ( temp 1-component vector of float)
-0:27          'v' ( temp 4-component vector of float)
-0:27        'f1' ( temp 1-component vector of float)
+0:26      Equal ( temp 4-component vector of bool)
+0:26        Construct vec4 ( temp 4-component vector of float)
+0:26          'f1' ( temp 1-component vector of float)
+0:26        'v' ( temp 4-component vector of float)
+0:27      Compare Less Than ( temp 4-component vector of bool)
+0:27        'v' ( temp 4-component vector of float)
+0:27        Construct vec4 ( temp 4-component vector of float)
+0:27          'f1' ( temp 1-component vector of float)
 0:28      Construct float ( temp float)
 0:28        'f1' ( temp 1-component vector of float)
 0:29      Construct vec3 ( temp 3-component vector of float)
 0:29        Construct float ( temp float)
 0:29          'f1' ( temp 1-component vector of float)
-0:33      Branch: Return with expression
-0:33        component-wise multiply ( temp 4-component vector of float)
-0:33          'input' ( in 4-component vector of float)
-0:33          Constant:
-0:33            3.000000
-0:33            3.000000
-0:33            3.000000
-0:33            3.000000
+0:36      right-shift ( temp 3-component vector of uint)
+0:36        Construct uvec3 ( temp 3-component vector of uint)
+0:36          'ui' ( temp uint)
+0:36        'ui3' ( temp 3-component vector of uint)
+0:37      right-shift ( temp 3-component vector of uint)
+0:37        'ui3' ( temp 3-component vector of uint)
+0:37        'ui' ( temp uint)
+0:39      multiply second child into first child ( temp 4-component vector of float)
+0:39        'v' ( temp 4-component vector of float)
+0:39        'f1' ( temp 1-component vector of float)
+0:40      multiply second child into first child ( temp 1-component vector of float)
+0:40        'f1' ( temp 1-component vector of float)
+0:40        Construct float ( temp 1-component vector of float)
+0:40          'v' ( temp 4-component vector of float)
+0:42      Sequence
+0:42        move second child to first child ( temp 3-component vector of float)
+0:42          'mixed' ( temp 3-component vector of float)
+0:42          component-wise multiply ( temp 3-component vector of float)
+0:42            'u' ( temp 3-component vector of float)
+0:42            Construct vec3 ( temp 3-component vector of float)
+0:42              'v' ( temp 4-component vector of float)
+0:43      move second child to first child ( temp float)
+0:43        'f' ( in float)
+0:43        Construct float ( in float)
+0:43          'u' ( temp 3-component vector of float)
+0:44      move second child to first child ( temp 1-component vector of float)
+0:44        'f1' ( temp 1-component vector of float)
+0:44        Construct float ( temp 1-component vector of float)
+0:44          'u' ( temp 3-component vector of float)
+0:45      Sequence
+0:45        move second child to first child ( temp float)
+0:45          'sf' ( temp float)
+0:45          Construct float ( temp float)
+0:45            'v' ( temp 4-component vector of float)
+0:46      Sequence
+0:46        move second child to first child ( temp 1-component vector of float)
+0:46          'sf1' ( temp 1-component vector of float)
+0:46          Construct float ( temp 1-component vector of float)
+0:46            'v' ( temp 4-component vector of float)
+0:48      Branch: Return with expression
+0:48        component-wise multiply ( temp 4-component vector of float)
+0:48          'input' ( in 4-component vector of float)
+0:48          Constant:
+0:48            3.000000
+0:48            3.000000
+0:48            3.000000
+0:48            3.000000
 0:?   Linker Objects
 
 // Module Version 10000
 // Generated by (magic number): 80001
-// Id's are bound by 88
+// Id's are bound by 127
 
                               Capability Shader
                1:             ExtInstImport  "GLSL.std.450"
@@ -263,6 +341,11 @@ gl_FragCoord origin is upper left
                               Name 34  "MyVal"
                               Name 37  "foo"
                               Name 70  "f1"
+                              Name 83  "ui"
+                              Name 88  "ui3"
+                              Name 103  "mixed"
+                              Name 115  "sf"
+                              Name 118  "sf1"
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
@@ -294,8 +377,11 @@ gl_FragCoord origin is upper left
               56:             TypeInt 32 0
               57:     56(int) Constant 0
               62:             TypeVector 41(bool) 4
-              83:    6(float) Constant 1077936128
-              84:    7(fvec4) ConstantComposite 83 83 83 83
+              82:             TypePointer Function 56(int)
+              85:             TypeVector 56(int) 3
+              87:             TypePointer Function 85(ivec3)
+             122:    6(float) Constant 1077936128
+             123:    7(fvec4) ConstantComposite 122 122 122 122
          4(main):           2 Function None 3
                5:             Label
                               Return
@@ -311,6 +397,11 @@ gl_FragCoord origin is upper left
        34(MyVal):     23(ptr) Variable Function
          37(foo):     23(ptr) Variable Function
           70(f1):      9(ptr) Variable Function
+          83(ui):     82(ptr) Variable Function
+         88(ui3):     87(ptr) Variable Function
+      103(mixed):     23(ptr) Variable Function
+         115(sf):      9(ptr) Variable Function
+        118(sf1):      9(ptr) Variable Function
                               Store 15(v) 17
                               Store 15(v) 19
               20:    6(float) Load 12(f)
@@ -346,17 +437,55 @@ gl_FragCoord origin is upper left
               68:   62(bvec4) FOrdNotEqual 66 67
               69:    41(bool) Any 68
               71:    6(float) Load 70(f1)
-              72:    7(fvec4) Load 15(v)
-              73:    6(float) CompositeExtract 72 0
-              74:    41(bool) FOrdEqual 71 73
+              72:    7(fvec4) CompositeConstruct 71 71 71 71
+              73:    7(fvec4) Load 15(v)
+              74:   62(bvec4) FOrdEqual 72 73
               75:    7(fvec4) Load 15(v)
-              76:    6(float) CompositeExtract 75 0
-              77:    6(float) Load 70(f1)
-              78:    41(bool) FOrdLessThan 76 77
+              76:    6(float) Load 70(f1)
+              77:    7(fvec4) CompositeConstruct 76 76 76 76
+              78:   62(bvec4) FOrdLessThan 75 77
               79:    6(float) Load 70(f1)
               80:    6(float) Load 70(f1)
               81:   22(fvec3) CompositeConstruct 80 80 80
-              82:    7(fvec4) Load 11(input)
-              85:    7(fvec4) FMul 82 84
-                              ReturnValue 85
+              84:     56(int) Load 83(ui)
+              86:   85(ivec3) CompositeConstruct 84 84 84
+              89:   85(ivec3) Load 88(ui3)
+              90:   85(ivec3) ShiftRightLogical 86 89
+              91:   85(ivec3) Load 88(ui3)
+              92:     56(int) Load 83(ui)
+              93:   85(ivec3) CompositeConstruct 92 92 92
+              94:   85(ivec3) ShiftRightLogical 91 93
+              95:    6(float) Load 70(f1)
+              96:    7(fvec4) Load 15(v)
+              97:    7(fvec4) CompositeConstruct 95 95 95 95
+              98:    7(fvec4) FMul 96 97
+                              Store 15(v) 98
+              99:    7(fvec4) Load 15(v)
+             100:    6(float) CompositeExtract 99 0
+             101:    6(float) Load 70(f1)
+             102:    6(float) FMul 101 100
+                              Store 70(f1) 102
+             104:   22(fvec3) Load 24(u)
+             105:    7(fvec4) Load 15(v)
+             106:    6(float) CompositeExtract 105 0
+             107:    6(float) CompositeExtract 105 1
+             108:    6(float) CompositeExtract 105 2
+             109:   22(fvec3) CompositeConstruct 106 107 108
+             110:   22(fvec3) FMul 104 109
+                              Store 103(mixed) 110
+             111:   22(fvec3) Load 24(u)
+             112:    6(float) CompositeExtract 111 0
+                              Store 12(f) 112
+             113:   22(fvec3) Load 24(u)
+             114:    6(float) CompositeExtract 113 0
+                              Store 70(f1) 114
+             116:    7(fvec4) Load 15(v)
+             117:    6(float) CompositeExtract 116 0
+                              Store 115(sf) 117
+             119:    7(fvec4) Load 15(v)
+             120:    6(float) CompositeExtract 119 0
+                              Store 118(sf1) 120
+             121:    7(fvec4) Load 11(input)
+             124:    7(fvec4) FMul 121 123
+                              ReturnValue 124
                               FunctionEnd
