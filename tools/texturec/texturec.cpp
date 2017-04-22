@@ -370,6 +370,7 @@ void help(const char* _error = NULL)
 		  "      --iqa                Image Quality Assesment\n"
 		  "      --max <max size>     Maximum width/height (image will be scaled down and\n"
 		  "                           aspect ratio will be preserved.\n"
+		  "      --as <extension>     Save as.\n"
 
 		  "\n"
 		  "For additional information, see https://github.com/bkaradzic/bgfx\n"
@@ -397,6 +398,14 @@ int main(int _argc, const char* _argv[])
 	if (NULL == outputFileName)
 	{
 		help("Output file must be specified.");
+		return EXIT_FAILURE;
+	}
+
+	const char* saveAs = cmdLine.findOption("as");
+	saveAs = NULL == saveAs ? bx::stristr(outputFileName, ".ktx") : saveAs;
+	if (NULL == saveAs)
+	{
+		help("Output file format must be specified.");
 		return EXIT_FAILURE;
 	}
 
@@ -463,7 +472,7 @@ int main(int _argc, const char* _argv[])
 		bx::CrtFileWriter writer;
 		if (bx::open(&writer, outputFileName) )
 		{
-//			if (NULL != bx::stristr(outputFileName, ".ktx") )
+			if (NULL != bx::stristr(saveAs, "ktx") )
 			{
 				bimg::imageWriteKtx(&writer, *output, output->m_data, output->m_size);
 			}
