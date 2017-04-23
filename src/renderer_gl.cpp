@@ -940,6 +940,13 @@ namespace bgfx { namespace gl
 		NULL
 	};
 
+	static const char* s_EXT_gpu_shader4[] =
+	{
+		"gl_VertexID",
+		"gl_InstanceID",
+		NULL
+	};
+
 	static const char* s_ARB_gpu_shader5[] =
 	{
 		"bitfieldReverse",
@@ -5602,6 +5609,7 @@ namespace bgfx { namespace gl
 						&& s_extension[Extension::ARB_shader_texture_lod].m_supported
 						&& bx::findIdentifierMatch(code, s_ARB_shader_texture_lod)
 						;
+					const bool usesGpuShader4   = !!bx::findIdentifierMatch(code, s_EXT_gpu_shader4);
 					const bool usesGpuShader5   = !!bx::findIdentifierMatch(code, s_ARB_gpu_shader5);
 					const bool usesIUsamplers   = !!bx::findIdentifierMatch(code, s_uisamplers);
 					const bool usesTexelFetch   = !!bx::findIdentifierMatch(code, s_texelFetch);
@@ -5610,7 +5618,7 @@ namespace bgfx { namespace gl
 					const bool usesPacking      = !!bx::findIdentifierMatch(code, s_ARB_shading_language_packing);
 
 					uint32_t version =
-						  usesIUsamplers || usesTexelFetch || usesGpuShader5 ? 130
+						  usesIUsamplers|| usesTexelFetch || usesGpuShader5 ? 130
 						: usesTextureLod ? 120
 						: 120
 						;
@@ -5631,6 +5639,11 @@ namespace bgfx { namespace gl
 								  "#define textureCubeGrad textureCubeGradARB\n"
 								);
 						}
+					}
+
+					if (usesGpuShader4)
+					{
+						writeString(&writer, "#extension GL_EXT_gpu_shader4 : enable\n");
 					}
 
 					if (usesGpuShader5)

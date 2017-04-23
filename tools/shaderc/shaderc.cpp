@@ -78,6 +78,13 @@ namespace bgfx
 		NULL
 	};
 
+	static const char* s_EXT_gpu_shader4[] =
+	{
+		"gl_VertexID",
+		"gl_InstanceID",
+		NULL
+	};
+
 	static const char* s_ARB_gpu_shader5[] =
 	{
 		"bitfieldReverse",
@@ -1671,7 +1678,7 @@ namespace bgfx
 								}
 								else
 								{
-									fprintf(stderr, "PrimitiveID builtin is not supported by this D3D9 HLSL.\n");
+									fprintf(stderr, "gl_PrimitiveID builtin is not supported by this D3D9 HLSL.\n");
 									return EXIT_FAILURE;
 								}
 							}
@@ -1698,6 +1705,9 @@ namespace bgfx
 						}
 						else if ('v' == shaderType)
 						{
+							const bool hasVertexId    = NULL != bx::strFind(input, "gl_VertexID");
+							const bool hasInstanceId  = NULL != bx::strFind(input, "gl_InstanceID");
+
 							const char* brace = bx::strFind(entry, "{");
 							if (NULL != brace)
 							{
@@ -1730,17 +1740,55 @@ namespace bgfx
 
 							preprocessor.writef("#define void_main() \\\n");
 							preprocessor.writef("Output main(");
-							bool first = true;
+							uint32_t arg = 0;
 							for (InOut::const_iterator it = shaderInputs.begin(), itEnd = shaderInputs.end(); it != itEnd; ++it)
 							{
 								VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
 								if (varyingIt != varyingMap.end() )
 								{
 									const Varying& var = varyingIt->second;
-									preprocessor.writef("%s%s %s : %s\\\n", first ? "" : "\t, ", var.m_type.c_str(), var.m_name.c_str(), var.m_semantics.c_str() );
-									first = false;
+									preprocessor.writef(
+										" \\\n\t%s%s %s : %s"
+										, arg++ > 0 ? ", " : ""
+										, var.m_type.c_str()
+										, var.m_name.c_str()
+										, var.m_semantics.c_str()
+										);
 								}
 							}
+
+							if (hasVertexId)
+							{
+								if (d3d > 9)
+								{
+									preprocessor.writef(
+										" \\\n\t%suint gl_VertexID : SV_VertexID"
+										, arg++ > 0 ? ", " : "  "
+										);
+								}
+								else
+								{
+									fprintf(stderr, "gl_VertexID builtin is not supported by this D3D9 HLSL.\n");
+									return EXIT_FAILURE;
+								}
+							}
+
+							if (hasInstanceId)
+							{
+								if (d3d > 9)
+								{
+									preprocessor.writef(
+										" \\\n\t%suint gl_InstanceID : SV_InstanceID"
+										, arg++ > 0 ? ", " : "  "
+										);
+								}
+								else
+								{
+									fprintf(stderr, "gl_InstanceID builtin is not supported by this D3D9 HLSL.\n");
+									return EXIT_FAILURE;
+								}
+							}
+
 							preprocessor.writef(
 								") \\\n"
 								"{ \\\n"
@@ -1857,6 +1905,8 @@ namespace bgfx
 									|| !!bx::findIdentifierMatch(input, s_ARB_shader_texture_lod)
 									|| !!bx::findIdentifierMatch(input, s_EXT_shader_texture_lod)
 									;
+								const bool usesInstanceID   = !!bx::strFind(input, "gl_InstanceID");
+								const bool usesGpuShader4   = !!bx::findIdentifierMatch(input, s_EXT_gpu_shader4);
 								const bool usesGpuShader5   = !!bx::findIdentifierMatch(input, s_ARB_gpu_shader5);
 								const bool usesTexelFetch   = !!bx::findIdentifierMatch(input, s_texelFetch);
 								const bool usesTextureMS    = !!bx::findIdentifierMatch(input, s_ARB_texture_multisample);
@@ -1878,6 +1928,20 @@ namespace bgfx
 									{
 										bx::stringPrintf(code, "#version %s\n", need130 ? "130" : profile);
 										glsl = 130;
+									}
+
+									if (usesInstanceID)
+									{
+										bx::stringPrintf(code
+											, "#extension GL_ARB_draw_instanced : enable\n"
+											);
+									}
+
+									if (usesGpuShader4)
+									{
+										bx::stringPrintf(code
+											, "#extension GL_EXT_gpu_shader4 : enable\n"
+											);
 									}
 
 									if (usesGpuShader5)

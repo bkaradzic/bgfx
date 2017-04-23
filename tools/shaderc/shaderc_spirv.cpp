@@ -475,6 +475,8 @@ namespace bgfx { namespace spirv
 		return true;
 	}
 
+#define DBG(...)
+
 	void disassemble(bx::WriterI* _writer, bx::ReaderSeekerI* _reader, bx::Error* _err)
 	{
 		BX_UNUSED(_writer);
@@ -497,24 +499,25 @@ namespace bgfx { namespace spirv
 				if (0 < num
 				&&  0 != bx::strCmp(id.var.name.c_str(), "gl_PerVertex") )
 				{
-					printf("%3d: %s %d %s\n"
+					DBG("%3d: %s %d %s\n"
 						, it->first
 						, id.var.name.c_str()
 						, id.var.location
 						, getName(id.var.storageClass)
 						);
-					printf("{\n");
+					DBG("{\n");
 					for (uint32_t ii = 0; ii < num; ++ii)
 					{
 						const SpvReflection::Id::Variable& var = id.members[ii];
-						printf("\t\t%s %s %d %s\n"
+						DBG("\t\t%s %s %d %s\n"
 							, spvx.getTypeName(var.type).c_str()
 							, var.name.c_str()
 							, var.offset
 							, getName(var.storageClass)
 							);
+						BX_UNUSED(var);
 					}
-					printf("}\n");
+					DBG("}\n");
 				}
 			}
 
