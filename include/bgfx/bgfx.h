@@ -222,7 +222,7 @@ namespace bgfx
 			RGBA4,
 			RGB5A1,
 			RGB10A2,
-			R11G11B10F,
+			RG11B10F,
 
 			UnknownDepth, // Depth formats below.
 
