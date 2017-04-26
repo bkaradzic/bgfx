@@ -3735,38 +3735,53 @@ error:
 		s_ctx->setIndexBuffer(_tib, _tib->startIndex + _firstIndex, numIndices);
 	}
 
+	void setVertexBuffer(uint8_t _stream, VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx->setVertexBuffer(_stream, _handle, _startVertex, _numVertices);
+	}
+
 	void setVertexBuffer(VertexBufferHandle _handle)
 	{
-		setVertexBuffer(_handle, 0, UINT32_MAX);
+		setVertexBuffer(0, _handle, 0, UINT32_MAX);
 	}
 
 	void setVertexBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices)
 	{
+		setVertexBuffer(0, _handle, _startVertex, _numVertices);
+	}
+
+	void setVertexBuffer(uint8_t _stream, DynamicVertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices)
+	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->setVertexBuffer(0, _handle, _startVertex, _numVertices);
+		s_ctx->setVertexBuffer(_stream, _handle, _startVertex, _numVertices);
 	}
 
 	void setVertexBuffer(DynamicVertexBufferHandle _handle)
 	{
-		setVertexBuffer(_handle, 0, UINT32_MAX);
+		setVertexBuffer(0, _handle, 0, UINT32_MAX);
 	}
 
 	void setVertexBuffer(DynamicVertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices)
 	{
+		setVertexBuffer(0, _handle, _startVertex, _numVertices);
+	}
+
+	void setVertexBuffer(uint8_t _stream, const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices)
+	{
 		BGFX_CHECK_MAIN_THREAD();
-		s_ctx->setVertexBuffer(0, _handle, _startVertex, _numVertices);
+		BX_CHECK(NULL != _tvb, "_tvb can't be NULL");
+		s_ctx->setVertexBuffer(_stream, _tvb, _startVertex, _numVertices);
 	}
 
 	void setVertexBuffer(const TransientVertexBuffer* _tvb)
 	{
-		setVertexBuffer(_tvb, 0, UINT32_MAX);
+		setVertexBuffer(0, _tvb, 0, UINT32_MAX);
 	}
 
 	void setVertexBuffer(const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices)
 	{
-		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(NULL != _tvb, "_tvb can't be NULL");
-		s_ctx->setVertexBuffer(0, _tvb, _startVertex, _numVertices);
+		setVertexBuffer(0, _tvb, _startVertex, _numVertices);
 	}
 
 	void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint32_t _num)
