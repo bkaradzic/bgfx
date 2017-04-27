@@ -2463,34 +2463,38 @@ namespace bgfx { namespace gl
 			else
 			{
 				const TextureGL& texture = m_textures[_handle.idx];
+				const bool compressed    = bimg::isCompressed(bimg::TextureFormat::Enum(texture.m_textureFormat) );
 
-				Attachment attachment[1];
-				attachment[0].handle = _handle;
-				attachment[0].mip = 0;
-				attachment[0].layer = 0;
-
-				FrameBufferGL frameBuffer;
-				frameBuffer.create(1, attachment);
-				glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.m_fbo[0]);
-				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.m_id, attachment[0].mip);
-
-				if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) && !BX_ENABLED(BX_PLATFORM_IOS))
+				if(!compressed)
 				{
-					GL_CHECK(glReadBuffer(GL_COLOR_ATTACHMENT0));
-				}
-				if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE) 
-				{
-					GL_CHECK(glReadPixels(0
-						, 0
-						, texture.m_width
-						, texture.m_height
-						, m_readPixelsFmt
-						, GL_UNSIGNED_BYTE
-						, _data
-					));
-				}
+					Attachment attachment[1];
+					attachment[0].handle = _handle;
+					attachment[0].mip = 0;
+					attachment[0].layer = 0;
 
-				frameBuffer.destroy();
+					FrameBufferGL frameBuffer;
+					frameBuffer.create(1, attachment);
+					glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.m_fbo[0]);
+					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.m_id, attachment[0].mip);
+
+					if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) && !BX_ENABLED(BX_PLATFORM_IOS))
+					{
+						GL_CHECK(glReadBuffer(GL_COLOR_ATTACHMENT0));
+					}
+					if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE) 
+					{
+						GL_CHECK(glReadPixels(0
+							, 0
+							, texture.m_width
+							, texture.m_height
+							, m_readPixelsFmt
+							, GL_UNSIGNED_BYTE
+							, _data
+						));
+					}
+
+					frameBuffer.destroy();
+				}
 			}
 		}
 
