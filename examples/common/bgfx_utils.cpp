@@ -206,10 +206,10 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath,
 					  *_info
 					, uint16_t(imageContainer->m_width)
 					, uint16_t(imageContainer->m_height)
-					, 0
-					, false
-					, false
-					, 1
+					, uint16_t(imageContainer->m_depth)
+					, imageContainer->m_cubeMap
+					, 1 < imageContainer->m_numMips
+					, imageContainer->m_numLayers
 					, bgfx::TextureFormat::Enum(imageContainer->m_format)
 					);
 			}

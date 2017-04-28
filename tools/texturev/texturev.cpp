@@ -858,11 +858,13 @@ int _main_(int _argc, char** _argv)
 				std::string title;
 				if (isValid(texture) )
 				{
-					bx::stringPrintf(title, "%s (%d x %d%s, %s)"
+					bx::stringPrintf(title, "%s (%d x %d%s, mips: %d, layers %d, %s)"
 						, filePath
 						, view.m_info.width
 						, view.m_info.height
 						, view.m_info.cubeMap ? " CubeMap" : ""
+						, view.m_info.numMips
+						, view.m_info.numLayers
 						, bimg::getName(bimg::TextureFormat::Enum(view.m_info.format) )
 						);
 				}
