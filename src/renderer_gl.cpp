@@ -4883,9 +4883,9 @@ namespace bgfx { namespace gl
 			{
 				switch (target)
 				{
-				case GL_TEXTURE_CUBE_MAP:       target = GL_TEXTURE_CUBE_MAP_ARRAY;
-				case GL_TEXTURE_2D_MULTISAMPLE: target = GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
-				default:                        target = GL_TEXTURE_2D_ARRAY;
+				case GL_TEXTURE_CUBE_MAP:       target = GL_TEXTURE_CUBE_MAP_ARRAY;       break;
+				case GL_TEXTURE_2D_MULTISAMPLE: target = GL_TEXTURE_2D_MULTISAMPLE_ARRAY; break;
+				default:                        target = GL_TEXTURE_2D_ARRAY;             break;
 				}
 			}
 

@@ -4262,7 +4262,7 @@ BX_UNUSED(currentSamplerStateIdx);
 								restoreScissor = false;
 								VkRect2D rc;
 								rc.offset.x      = viewScissorRect.m_x;
-								rc.offset.x      = viewScissorRect.m_y;
+								rc.offset.y      = viewScissorRect.m_y;
 								rc.extent.width  = viewScissorRect.m_x + viewScissorRect.m_width;
 								rc.extent.height = viewScissorRect.m_y + viewScissorRect.m_height;
 								vkCmdSetScissor(m_commandBuffer, 0, 1, &rc);
@@ -4280,7 +4280,7 @@ BX_UNUSED(currentSamplerStateIdx);
 
 							VkRect2D rc;
 							rc.offset.x      = scissorRect.m_x;
-							rc.offset.x      = scissorRect.m_y;
+							rc.offset.y      = scissorRect.m_y;
 							rc.extent.width  = scissorRect.m_x + scissorRect.m_width;
 							rc.extent.height = scissorRect.m_y + scissorRect.m_height;
 							vkCmdSetScissor(m_commandBuffer, 0, 1, &rc);
