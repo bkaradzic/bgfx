@@ -13,6 +13,8 @@
 
 #if 0
 #	define DBG(_format, ...) fprintf(stderr, "" _format "\n", ##__VA_ARGS__)
+#else
+#	define DBG(...) BX_NOOP()
 #endif // DEBUG
 
 #include <bx/bx.h>
@@ -33,6 +35,26 @@ struct Options
 	{
 	}
 
+	void dump()
+	{
+		DBG("Options:\n"
+			"\t  maxSize: %d\n"
+			"\t     edge: %f\n"
+			"\t   format: %s\n"
+			"\t     mips: %s\n"
+			"\tnormalMap: %s\n"
+			"\t      iqa: %s\n"
+			"\t      sdf: %s\n"
+			, maxSize
+			, edge
+			, bimg::getName(format)
+			, mips      ? "true" : "false"
+			, normalMap ? "true" : "false"
+			, iqa       ? "true" : "false"
+			, sdf       ? "true" : "false"
+			);
+	}
+
 	uint32_t maxSize;
 	float edge;
 	bimg::TextureFormat::Enum format;
@@ -44,24 +66,6 @@ struct Options
 
 bimg::ImageContainer* convert(bx::AllocatorI* _allocator, const void* _inputData, uint32_t _inputSize, const Options& _options)
 {
-
-	DBG("Options:\n"
-		"\t  maxSize: %d\n"
-		"\t     edge: %f\n"
-		"\t   format: %s\n"
-		"\t     mips: %s\n"
-		"\tnormalMap: %s\n"
-		"\t      iqa: %s\n"
-		"\t      sdf: %s\n"
-		, _options.maxSize
-		, _options.edge
-		, bimg::getName(_options.format)
-		, _options.mips ? "true" : "false"
-		, _options.normalMap ? "true" : "false"
-		, _options.iqa ? "true" : "false"
-		, _options.sdf ? "true" : "false"
-		);
-
 	const uint8_t* inputData = (uint8_t*)_inputData;
 
 	bimg::ImageContainer* output = NULL;
