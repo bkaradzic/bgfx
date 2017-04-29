@@ -273,6 +273,9 @@ protected:
     // Test method names
     bool isStructBufferMethod(const TString& name) const;
 
+    // Return standard sample position array
+    TIntermConstantUnion* getSamplePosArray(int count);
+
     TType* getStructBufferContentType(const TType& type) const;
     bool isStructBufferType(const TType& type) const { return getStructBufferContentType(type) != nullptr; }
     TIntermTyped* indexStructBufferContent(const TSourceLoc& loc, TIntermTyped* buffer) const;

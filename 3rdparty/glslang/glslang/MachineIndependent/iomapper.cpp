@@ -201,11 +201,41 @@ public:
     const TVarLiveMap&    uniformList;
 };
 
+struct TNotifyUniformAdaptor
+{
+    EShLanguage stage;
+    TIoMapResolver& resolver;
+    inline TNotifyUniformAdaptor(EShLanguage s, TIoMapResolver& r)
+      : stage(s)
+      , resolver(r)
+    {
+    }
+    inline void operator()(TVarEntryInfo& ent)
+    {
+        resolver.notifyBinding(stage, ent.symbol->getName().c_str(), ent.symbol->getType(), ent.live);
+    }
+};
+
+struct TNotifyInOutAdaptor
+{
+    EShLanguage stage;
+    TIoMapResolver& resolver;
+    inline TNotifyInOutAdaptor(EShLanguage s, TIoMapResolver& r)
+      : stage(s)
+      , resolver(r)
+    {
+    }
+    inline void operator()(TVarEntryInfo& ent)
+    {
+        resolver.notifyInOut(stage, ent.symbol->getName().c_str(), ent.symbol->getType(), ent.live);
+    }
+};
+
 struct TResolverUniformAdaptor
 {
     TResolverUniformAdaptor(EShLanguage s, TIoMapResolver& r, TInfoSink& i, bool& e, TIntermediate& interm)
-      : resolver(r)
-      , stage(s)
+      : stage(s)
+      , resolver(r)
       , infoSink(i)
       , error(e)
       , intermediate(interm)
@@ -260,8 +290,8 @@ private:
 struct TResolverInOutAdaptor
 {
     TResolverInOutAdaptor(EShLanguage s, TIoMapResolver& r, TInfoSink& i, bool& e, TIntermediate& interm)
-      : resolver(r)
-      , stage(s)
+      : stage(s)
+      , resolver(r)
       , infoSink(i)
       , error(e)
       , intermediate(interm)
@@ -382,6 +412,10 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
     {
         return -1;
     }
+
+    void notifyBinding(EShLanguage stage, const char* name, const TType& type, bool is_live) override {}
+    void notifyInOut(EShLanguage stage, const char* name, const TType& type, bool is_live) override {}
+    void endNotifications() override {}
 
 protected:
     static int getLayoutSet(const glslang::TType& type) {
@@ -532,6 +566,7 @@ u – for unordered access views (UAV)
 
 b – for constant buffer views (CBV)
    CBUFFER
+   CONSTANTBUFFER
  ********************************************************************************/
 struct TDefaultHlslIoResolver : public TDefaultIoResolverBase
 {
@@ -673,8 +708,14 @@ bool TIoMapper::addStage(EShLanguage stage, TIntermediate &intermediate, TInfoSi
     std::sort(uniformVarMap.begin(), uniformVarMap.end(), TVarEntryInfo::TOrderByPriority());
 
     bool hadError = false;
+    TNotifyInOutAdaptor inOutNotify(stage, *resolver);
+    TNotifyUniformAdaptor uniformNotify(stage, *resolver);
     TResolverUniformAdaptor uniformResolve(stage, *resolver, infoSink, hadError, intermediate);
     TResolverInOutAdaptor inOutResolve(stage, *resolver, infoSink, hadError, intermediate);
+    std::for_each(inVarMap.begin(), inVarMap.end(), inOutNotify);
+    std::for_each(outVarMap.begin(), outVarMap.end(), inOutNotify);
+    std::for_each(uniformVarMap.begin(), uniformVarMap.end(), uniformNotify);
+    resolver->endNotifications();
     std::for_each(inVarMap.begin(), inVarMap.end(), inOutResolve);
     std::for_each(outVarMap.begin(), outVarMap.end(), inOutResolve);
     std::for_each(uniformVarMap.begin(), uniformVarMap.end(), uniformResolve);

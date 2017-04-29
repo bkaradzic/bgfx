@@ -463,6 +463,13 @@ class TIoMapper;
 // 5) all uniforms with set but no binding defined
 // 6) all uniforms with no binding and no set defined
 //
+// mapIO will use this resolver in two phases. The first
+// phase is a notification phase, calling the corresponging
+// notifiy callbacks, this phase ends with a call to endNotifications.
+// Phase two starts directly after the call to endNotifications
+// and calls all other callbacks to validate and to get the
+// bindings, sets, locations, component and color indices. 
+//
 // NOTE: that still limit checks are applied to bindings and sets
 // and may result in an error.
 class TIoMapResolver
@@ -491,6 +498,12 @@ public:
   // Should return a value >= 0 if the current color index should be overridden.
   // Return -1 if the current color index (including no index) should be kept.
   virtual int resolveInOutIndex(EShLanguage stage, const char* name, const TType& type, bool is_live) = 0;
+  // Notification of a uniform variable
+  virtual void notifyBinding(EShLanguage stage, const char* name, const TType& type, bool is_live) = 0;
+  // Notification of a in or out variable
+  virtual void notifyInOut(EShLanguage stage, const char* name, const TType& type, bool is_live) = 0;
+  // Called by mapIO when it has finished the notify pass
+  virtual void endNotifications() = 0;
 };
 
 // Make one TProgram per set of shaders that will get linked together.  Add all

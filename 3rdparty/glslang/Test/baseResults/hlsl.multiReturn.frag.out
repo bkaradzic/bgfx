@@ -72,9 +72,9 @@ gl_FragCoord origin is upper left
                               MemberName 16(bufName) 0  "s"
                               Name 18  ""
                               MemberDecorate 15(S) 0 Offset 0
-                              MemberDecorate 15(S) 1 Offset 16
+                              MemberDecorate 15(S) 1 Offset 4
                               MemberDecorate 15(S) 2 RowMajor
-                              MemberDecorate 15(S) 2 Offset 32
+                              MemberDecorate 15(S) 2 Offset 16
                               MemberDecorate 15(S) 2 MatrixStride 16
                               MemberDecorate 16(bufName) 0 Offset 0
                               Decorate 16(bufName) Block

@@ -476,7 +476,8 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& nodeList)
                 if (typedefDecl)
                     parseContext.declareTypedef(idToken.loc, *fullName, variableType);
                 else if (variableType.getBasicType() == EbtBlock) {
-                    parseContext.declareBlock(idToken.loc, variableType, fullName);
+                    parseContext.declareBlock(idToken.loc, variableType, fullName,
+                                              variableType.isArray() ? &variableType.getArraySizes() : nullptr);
                     parseContext.declareStructBufferCounter(idToken.loc, variableType, *fullName);
                 } else {
                     if (variableType.getQualifier().storage == EvqUniform && ! variableType.containsOpaque()) {
@@ -1364,6 +1365,9 @@ bool HlslGrammar::acceptType(TType& type, TIntermNode*& nodeList)
         return acceptStructBufferType(type);
         break;
 
+    case EHTokConstantBuffer:
+        return acceptConstantBufferType(type);
+
     case EHTokClass:
     case EHTokStruct:
     case EHTokCBuffer:
@@ -1942,6 +1946,47 @@ bool HlslGrammar::acceptStruct(TType& type, TIntermNode*& nodeList)
     parseContext.popNamespace();
 
     return deferredSuccess;
+}
+
+// constantbuffer
+//    : CONSTANTBUFFER LEFT_ANGLE type RIGHT_ANGLE
+bool HlslGrammar::acceptConstantBufferType(TType& type)
+{
+    if (! acceptTokenClass(EHTokConstantBuffer))
+        return false;
+
+    if (! acceptTokenClass(EHTokLeftAngle)) {
+        expected("left angle bracket");
+        return false;
+    }
+    
+    TType templateType;
+    if (! acceptType(templateType)) {
+        expected("type");
+        return false;
+    }
+
+    if (! acceptTokenClass(EHTokRightAngle)) {
+        expected("right angle bracket");
+        return false;
+    }
+
+    TQualifier postDeclQualifier;
+    postDeclQualifier.clear();
+    postDeclQualifier.storage = EvqUniform;
+
+    if (templateType.isStruct()) {
+        // Make a block from the type parsed as the template argument
+        TTypeList* typeList = templateType.getWritableStruct();
+        new(&type) TType(typeList, "", postDeclQualifier); // sets EbtBlock
+
+        type.getQualifier().storage = EvqUniform;
+
+        return true;
+    } else {
+        parseContext.error(token.loc, "non-structure type in ConstantBuffer", "", "");
+        return false;
+    }
 }
 
 // struct_buffer

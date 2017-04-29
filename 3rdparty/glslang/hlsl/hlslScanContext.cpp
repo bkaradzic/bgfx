@@ -331,6 +331,7 @@ void HlslScanContext::fillInKeywordMap()
     (*KeywordMap)["class"] =                   EHTokClass;
     (*KeywordMap)["struct"] =                  EHTokStruct;
     (*KeywordMap)["cbuffer"] =                 EHTokCBuffer;
+    (*KeywordMap)["ConstantBuffer"] =          EHTokConstantBuffer;
     (*KeywordMap)["tbuffer"] =                 EHTokTBuffer;
     (*KeywordMap)["typedef"] =                 EHTokTypedef;
     (*KeywordMap)["this"] =                    EHTokThis;
@@ -827,6 +828,7 @@ EHlslTokenClass HlslScanContext::tokenizeIdentifier()
     case EHTokStruct:
     case EHTokTypedef:
     case EHTokCBuffer:
+    case EHTokConstantBuffer:
     case EHTokTBuffer:
     case EHTokThis:
     case EHTokNamespace:

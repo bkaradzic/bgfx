@@ -9,12 +9,12 @@ struct PS_OUTPUT
     float  Depth : SV_Depth;
 };
 
-PS_OUTPUT main()
+PS_OUTPUT main(int sample : SAMPLE)
 {
    PS_OUTPUT psout;
 
-   float2 r00 = g_tTex2dmsf4.GetSamplePosition(1);
-   float2 r01 = g_tTex2dmsf4a.GetSamplePosition(2);
+   float2 r00 = g_tTex2dmsf4.GetSamplePosition(sample);
+   float2 r01 = g_tTex2dmsf4a.GetSamplePosition(sample);
 
    psout.Color = 1.0;
    psout.Depth = 1.0;

@@ -61,14 +61,14 @@ HlslParseContext::HlslParseContext(TSymbolTable& symbolTable, TIntermediate& int
     loopNestingLevel(0), annotationNestingLevel(0), structNestingLevel(0), controlFlowNestingLevel(0),
     postEntryPointReturn(false),
     limits(resources.limits),
+    inputPatch(nullptr),
     builtInIoIndex(nullptr),
     builtInIoBase(nullptr),
     nextInLocation(0), nextOutLocation(0),
     sourceEntryPointName(sourceEntryPointName),
     entryPointFunction(nullptr),
     entryPointFunctionBody(nullptr),
-    gsStreamOutput(nullptr),
-    inputPatch(nullptr)
+    gsStreamOutput(nullptr)
 {
     globalUniformDefaults.clear();
     globalUniformDefaults.layoutMatrix = ElmRowMajor;
@@ -2843,7 +2843,73 @@ void HlslParseContext::decomposeStructBufferMethods(const TSourceLoc& loc, TInte
         break; // most pass through unchanged
     }
 }
+
+// Create array of standard sample positions for given sample count.
+// TODO: remove when a real method to query sample pos exists in SPIR-V.
+TIntermConstantUnion* HlslParseContext::getSamplePosArray(int count)
+{
+    struct tSamplePos { float x, y; };
+
+    static const tSamplePos pos1[] = {
+        { 0.0/16.0,  0.0/16.0 },
+    };
+
+    // standard sample positions for 2, 4, 8, and 16 samples.
+    static const tSamplePos pos2[] = {
+        { 4.0/16.0,  4.0/16.0 }, {-4.0/16.0, -4.0/16.0 },
+    };
+
+    static const tSamplePos pos4[] = {
+        {-2.0/16.0, -6.0/16.0 }, { 6.0/16.0, -2.0/16.0 }, {-6.0/16.0,  2.0/16.0 }, { 2.0/16.0,  6.0/16.0 },
+    };
+
+    static const tSamplePos pos8[] = {
+        { 1.0/16.0, -3.0/16.0 }, {-1.0/16.0,  3.0/16.0 }, { 5.0/16.0,  1.0/16.0 }, {-3.0/16.0, -5.0/16.0 },
+        {-5.0/16.0,  5.0/16.0 }, {-7.0/16.0, -1.0/16.0 }, { 3.0/16.0,  7.0/16.0 }, { 7.0/16.0, -7.0/16.0 },
+    };
+
+    static const tSamplePos pos16[] = {
+        { 1.0/16.0,  1.0/16.0 }, {-1.0/16.0, -3.0/16.0 }, {-3.0/16.0,  2.0/16.0 }, { 4.0/16.0, -1.0/16.0 },
+        {-5.0/16.0, -2.0/16.0 }, { 2.0/16.0,  5.0/16.0 }, { 5.0/16.0,  3.0/16.0 }, { 3.0/16.0, -5.0/16.0 },
+        {-2.0/16.0,  6.0/16.0 }, { 0.0/16.0, -7.0/16.0 }, {-4.0/16.0, -6.0/16.0 }, {-6.0/16.0,  4.0/16.0 },
+        {-8.0/16.0,  0.0/16.0 }, { 7.0/16.0, -4.0/16.0 }, { 6.0/16.0,  7.0/16.0 }, {-7.0/16.0, -8.0/16.0 },
+    };
+
+    const tSamplePos* sampleLoc = nullptr;
+    int numSamples = count;
+
+    switch (count) {
+    case 2:  sampleLoc = pos2;  break;
+    case 4:  sampleLoc = pos4;  break;
+    case 8:  sampleLoc = pos8;  break;
+    case 16: sampleLoc = pos16; break;
+    default:
+        sampleLoc = pos1;
+        numSamples = 1;
+    }
+
+    TConstUnionArray* values = new TConstUnionArray(numSamples*2);
     
+    for (int pos=0; pos<count; ++pos) {
+        TConstUnion x, y;
+        x.setDConst(sampleLoc[pos].x);
+        y.setDConst(sampleLoc[pos].y);
+
+        (*values)[pos*2+0] = x;
+        (*values)[pos*2+1] = y;
+    }
+
+    TType retType(EbtFloat, EvqConst, 2);
+
+    if (numSamples != 1) {
+        TArraySizes arraySizes;
+        arraySizes.addInnerSize(numSamples);
+        retType.newArraySizes(arraySizes);
+    }
+
+    return new TIntermConstantUnion(*values, retType);
+}
+
 //
 // Decompose DX9 and DX10 sample intrinsics & object methods into AST
 //
@@ -3510,7 +3576,68 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
 
     case EOpMethodGetSamplePosition:
         {
-            error(loc, "unimplemented: GetSamplePosition", "", "");
+            // TODO: this entire decomposition exists because there is not yet a way to query
+            // the sample position directly through SPIR-V.  Instead, we return fixed sample
+            // positions for common cases.  *** If the sample positions are set differently,
+            // this will be wrong. ***
+
+            TIntermTyped* argTex     = argAggregate->getSequence()[0]->getAsTyped();
+            TIntermTyped* argSampIdx = argAggregate->getSequence()[1]->getAsTyped();
+
+            TIntermAggregate* samplesQuery = new TIntermAggregate(EOpImageQuerySamples);
+            samplesQuery->getSequence().push_back(argTex);
+            samplesQuery->setType(TType(EbtUint, EvqTemporary, 1));
+            samplesQuery->setLoc(loc);
+
+            TIntermAggregate* compoundStatement = nullptr;
+
+            TVariable* outSampleCount = makeInternalVariable("@sampleCount", TType(EbtUint));
+            outSampleCount->getWritableType().getQualifier().makeTemporary();
+            TIntermTyped* compAssign = intermediate.addAssign(EOpAssign, intermediate.addSymbol(*outSampleCount, loc),
+                                                              samplesQuery, loc);
+            compoundStatement = intermediate.growAggregate(compoundStatement, compAssign);
+
+            TIntermTyped* idxtest[4];
+
+            // Create tests against 2, 4, 8, and 16 sample values
+            int count = 0;
+            for (int val = 2; val <= 16; val *= 2)
+                idxtest[count++] =
+                    intermediate.addBinaryNode(EOpEqual, 
+                                               intermediate.addSymbol(*outSampleCount, loc),
+                                               intermediate.addConstantUnion(val, loc),
+                                               loc, TType(EbtBool));
+
+            const TOperator idxOp = (argSampIdx->getQualifier().storage == EvqConst) ? EOpIndexDirect : EOpIndexIndirect;
+            
+            // Create index ops into position arrays given sample index.
+            // TODO: should it be clamped?
+            TIntermTyped* index[4];
+            count = 0;
+            for (int val = 2; val <= 16; val *= 2) {
+                index[count] = intermediate.addIndex(idxOp, getSamplePosArray(val), argSampIdx, loc);
+                index[count++]->setType(TType(EbtFloat, EvqTemporary, 2));
+            }
+
+            // Create expression as:
+            // (sampleCount == 2)  ? pos2[idx] :
+            // (sampleCount == 4)  ? pos4[idx] :
+            // (sampleCount == 8)  ? pos8[idx] :
+            // (sampleCount == 16) ? pos16[idx] : float2(0,0);
+            TIntermTyped* test = 
+                intermediate.addSelection(idxtest[0], index[0], 
+                    intermediate.addSelection(idxtest[1], index[1], 
+                        intermediate.addSelection(idxtest[2], index[2],
+                            intermediate.addSelection(idxtest[3], index[3], 
+                                                      getSamplePosArray(1), loc), loc), loc), loc);
+                                         
+            compoundStatement = intermediate.growAggregate(compoundStatement, test);
+            compoundStatement->setOperator(EOpSequence);
+            compoundStatement->setLoc(loc);
+            compoundStatement->setType(TType(EbtFloat, EvqTemporary, 2));
+
+            node = compoundStatement;
+
             break;
         }
 

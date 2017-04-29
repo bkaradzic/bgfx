@@ -726,7 +726,7 @@ bool ProcessDeferred(
     intermediate.setSpv(spvVersion);
     if (spvVersion.vulkan >= 100)
         intermediate.setOriginUpperLeft();
-    if (messages & EShMsgHlslOffsets) // source-language independent
+    if ((messages & EShMsgHlslOffsets) || (messages & EShMsgReadHlsl))
         intermediate.setHlslOffsets();
     SetupBuiltinSymbolTable(version, profile, spvVersion, source);
 

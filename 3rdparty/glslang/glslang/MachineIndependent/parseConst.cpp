@@ -76,12 +76,6 @@ bool TConstTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node)
         return false;
     }
 
-    if (node->getSequence().size() == 0) {
-        error = true;
-
-        return false;
-    }
-
     bool flag = node->getSequence().size() == 1 && node->getSequence()[0]->getAsTyped()->getAsConstantUnion();
     if (flag) {
         singleConstantParam = true;
