@@ -40,11 +40,11 @@
 #define BGFX_STATE_BLEND_SHIFT             12                           //!< Blend state bit shift.
 #define BGFX_STATE_BLEND_MASK              UINT64_C(0x000000000ffff000) //!< Blend state bit mask.
 
-#define BGFX_STATE_BLEND_EQUATION_ADD      UINT64_C(0x0000000000000000) //!<
-#define BGFX_STATE_BLEND_EQUATION_SUB      UINT64_C(0x0000000010000000) //!<
-#define BGFX_STATE_BLEND_EQUATION_REVSUB   UINT64_C(0x0000000020000000) //!<
-#define BGFX_STATE_BLEND_EQUATION_MIN      UINT64_C(0x0000000030000000) //!<
-#define BGFX_STATE_BLEND_EQUATION_MAX      UINT64_C(0x0000000040000000) //!<
+#define BGFX_STATE_BLEND_EQUATION_ADD      UINT64_C(0x0000000000000000) //!< Blend add: src + dst.
+#define BGFX_STATE_BLEND_EQUATION_SUB      UINT64_C(0x0000000010000000) //!< Blend subtract: src - dst.
+#define BGFX_STATE_BLEND_EQUATION_REVSUB   UINT64_C(0x0000000020000000) //!< Blend reverse subtract: dst - src.
+#define BGFX_STATE_BLEND_EQUATION_MIN      UINT64_C(0x0000000030000000) //!< Blend min: min(src, dst).
+#define BGFX_STATE_BLEND_EQUATION_MAX      UINT64_C(0x0000000040000000) //!< Blend max: max(src, dst).
 #define BGFX_STATE_BLEND_EQUATION_SHIFT    28                           //!< Blend equation bit shift.
 #define BGFX_STATE_BLEND_EQUATION_MASK     UINT64_C(0x00000003f0000000) //!< Blend equation bit mask.
 
@@ -70,8 +70,8 @@
 #define BGFX_STATE_POINT_SIZE_SHIFT        52                           //!< Point size bit shift.
 #define BGFX_STATE_POINT_SIZE_MASK         UINT64_C(0x00f0000000000000) //!< Point size bit mask.
 
-/// Enable MSAA write when writing into MSAA frame buffer. This flag is ignored when not writing into
-/// MSAA frame buffer.
+/// Enable MSAA write when writing into MSAA frame buffer.
+/// This flag is ignored when not writing into MSAA frame buffer.
 #define BGFX_STATE_MSAA                    UINT64_C(0x0100000000000000) //!< Enable MSAA rasterization.
 #define BGFX_STATE_LINEAA                  UINT64_C(0x0200000000000000) //!< Enable line AA rasterization.
 #define BGFX_STATE_CONSERVATIVE_RASTER     UINT64_C(0x0400000000000000) //!< Enable conservative rasterization.
@@ -86,23 +86,23 @@
 
 /// Default state is write to RGB, alpha, and depth with depth test less enabled, with clockwise
 /// culling and MSAA (when writing into MSAA frame buffer, otherwise this flag is ignored).
-#define BGFX_STATE_DEFAULT (0 \
-					| BGFX_STATE_RGB_WRITE \
-					| BGFX_STATE_ALPHA_WRITE \
-					| BGFX_STATE_DEPTH_TEST_LESS \
-					| BGFX_STATE_DEPTH_WRITE \
-					| BGFX_STATE_CULL_CW \
-					| BGFX_STATE_MSAA \
-					)
+#define BGFX_STATE_DEFAULT (0            \
+			| BGFX_STATE_RGB_WRITE       \
+			| BGFX_STATE_ALPHA_WRITE     \
+			| BGFX_STATE_DEPTH_TEST_LESS \
+			| BGFX_STATE_DEPTH_WRITE     \
+			| BGFX_STATE_CULL_CW         \
+			| BGFX_STATE_MSAA            \
+			)
 
 #define BGFX_STATE_ALPHA_REF(_ref)   ( ( (uint64_t)(_ref )<<BGFX_STATE_ALPHA_REF_SHIFT )&BGFX_STATE_ALPHA_REF_MASK)
 #define BGFX_STATE_POINT_SIZE(_size) ( ( (uint64_t)(_size)<<BGFX_STATE_POINT_SIZE_SHIFT)&BGFX_STATE_POINT_SIZE_MASK)
 
 ///
 #define BGFX_STATE_BLEND_FUNC_SEPARATE(_srcRGB, _dstRGB, _srcA, _dstA) (UINT64_C(0) \
-					| ( ( (uint64_t)(_srcRGB)|( (uint64_t)(_dstRGB)<<4) )   ) \
-					| ( ( (uint64_t)(_srcA  )|( (uint64_t)(_dstA  )<<4) )<<8) \
-					)
+			| ( ( (uint64_t)(_srcRGB)|( (uint64_t)(_dstRGB)<<4) )   )               \
+			| ( ( (uint64_t)(_srcA  )|( (uint64_t)(_dstA  )<<4) )<<8)               \
+			)
 
 #define BGFX_STATE_BLEND_EQUATION_SEPARATE(_rgb, _a) ( (uint64_t)(_rgb)|( (uint64_t)(_a)<<3) )
 
@@ -120,15 +120,15 @@
 #define BGFX_STATE_BLEND_LINEAR_BURN (BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_DST_COLOR, BGFX_STATE_BLEND_INV_DST_COLOR) | BGFX_STATE_BLEND_EQUATION(BGFX_STATE_BLEND_EQUATION_SUB) )
 
 ///
-#define BGFX_STATE_BLEND_FUNC_RT_x(_src, _dst) (0 \
-					| ( uint32_t( (_src)>>BGFX_STATE_BLEND_SHIFT) \
-					| ( uint32_t( (_dst)>>BGFX_STATE_BLEND_SHIFT)<<4) ) \
-					)
+#define BGFX_STATE_BLEND_FUNC_RT_x(_src, _dst) (0               \
+			| ( uint32_t( (_src)>>BGFX_STATE_BLEND_SHIFT)       \
+			| ( uint32_t( (_dst)>>BGFX_STATE_BLEND_SHIFT)<<4) ) \
+			)
 
-#define BGFX_STATE_BLEND_FUNC_RT_xE(_src, _dst, _equation) (0 \
-					| BGFX_STATE_BLEND_FUNC_RT_x(_src, _dst) \
-					| ( uint32_t( (_equation)>>BGFX_STATE_BLEND_EQUATION_SHIFT)<<8) \
-					)
+#define BGFX_STATE_BLEND_FUNC_RT_xE(_src, _dst, _equation) (0               \
+			| BGFX_STATE_BLEND_FUNC_RT_x(_src, _dst)                        \
+			| ( uint32_t( (_equation)>>BGFX_STATE_BLEND_EQUATION_SHIFT)<<8) \
+			)
 
 #define BGFX_STATE_BLEND_FUNC_RT_1(_src, _dst)  (BGFX_STATE_BLEND_FUNC_RT_x(_src, _dst)<< 0)
 #define BGFX_STATE_BLEND_FUNC_RT_2(_src, _dst)  (BGFX_STATE_BLEND_FUNC_RT_x(_src, _dst)<<11)
@@ -214,20 +214,20 @@
 #define BGFX_CLEAR_DISCARD_DEPTH         UINT16_C(0x0800) //!< Discard frame buffer depth attachment.
 #define BGFX_CLEAR_DISCARD_STENCIL       UINT16_C(0x1000) //!< Discard frame buffer stencil attachment.
 
-#define BGFX_CLEAR_DISCARD_COLOR_MASK (0 \
-			| BGFX_CLEAR_DISCARD_COLOR_0 \
-			| BGFX_CLEAR_DISCARD_COLOR_1 \
-			| BGFX_CLEAR_DISCARD_COLOR_2 \
-			| BGFX_CLEAR_DISCARD_COLOR_3 \
-			| BGFX_CLEAR_DISCARD_COLOR_4 \
-			| BGFX_CLEAR_DISCARD_COLOR_5 \
-			| BGFX_CLEAR_DISCARD_COLOR_6 \
-			| BGFX_CLEAR_DISCARD_COLOR_7 \
+#define BGFX_CLEAR_DISCARD_COLOR_MASK (0    \
+			| BGFX_CLEAR_DISCARD_COLOR_0    \
+			| BGFX_CLEAR_DISCARD_COLOR_1    \
+			| BGFX_CLEAR_DISCARD_COLOR_2    \
+			| BGFX_CLEAR_DISCARD_COLOR_3    \
+			| BGFX_CLEAR_DISCARD_COLOR_4    \
+			| BGFX_CLEAR_DISCARD_COLOR_5    \
+			| BGFX_CLEAR_DISCARD_COLOR_6    \
+			| BGFX_CLEAR_DISCARD_COLOR_7    \
 			)
-#define BGFX_CLEAR_DISCARD_MASK (0 \
+#define BGFX_CLEAR_DISCARD_MASK (0          \
 			| BGFX_CLEAR_DISCARD_COLOR_MASK \
-			| BGFX_CLEAR_DISCARD_DEPTH \
-			| BGFX_CLEAR_DISCARD_STENCIL \
+			| BGFX_CLEAR_DISCARD_DEPTH      \
+			| BGFX_CLEAR_DISCARD_STENCIL    \
 			)
 
 #define BGFX_DEBUG_NONE                  UINT32_C(0x00000000) //!< No debug.
@@ -264,8 +264,8 @@
 #define BGFX_BUFFER_INDEX32              UINT16_C(0x1000) //!<
 
 #define BGFX_BUFFER_COMPUTE_READ_WRITE (0 \
-			| BGFX_BUFFER_COMPUTE_READ \
-			| BGFX_BUFFER_COMPUTE_WRITE \
+			| BGFX_BUFFER_COMPUTE_READ    \
+			| BGFX_BUFFER_COMPUTE_WRITE   \
 			)
 
 ///
@@ -328,13 +328,13 @@
 #define BGFX_TEXTURE_BORDER_COLOR(_index) ( (_index << BGFX_TEXTURE_BORDER_COLOR_SHIFT) & BGFX_TEXTURE_BORDER_COLOR_MASK)
 
 #define BGFX_TEXTURE_SAMPLER_BITS_MASK (0 \
-			| BGFX_TEXTURE_U_MASK \
-			| BGFX_TEXTURE_V_MASK \
-			| BGFX_TEXTURE_W_MASK \
-			| BGFX_TEXTURE_MIN_MASK \
-			| BGFX_TEXTURE_MAG_MASK \
-			| BGFX_TEXTURE_MIP_MASK \
-			| BGFX_TEXTURE_COMPARE_MASK \
+			| BGFX_TEXTURE_U_MASK         \
+			| BGFX_TEXTURE_V_MASK         \
+			| BGFX_TEXTURE_W_MASK         \
+			| BGFX_TEXTURE_MIN_MASK       \
+			| BGFX_TEXTURE_MAG_MASK       \
+			| BGFX_TEXTURE_MIP_MASK       \
+			| BGFX_TEXTURE_COMPARE_MASK   \
 			)
 
 ///
