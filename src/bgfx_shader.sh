@@ -91,12 +91,12 @@ uint4 bitfieldReverse(uint4 _x) { return reversebits(_x); }
 #		if !BGFX_SHADER_LANGUAGE_SPIRV
 uint packHalf2x16(vec2 _x)
 {
-	return (f32tof16(_x.x)<<16) | f32tof16(_x.y);
+	return (f32tof16(_x.y)<<16) | f32tof16(_x.x);
 }
 
 vec2 unpackHalf2x16(uint _x)
 {
-	return vec2(f16tof32(_x >> 16), f16tof32(_x) );
+	return vec2(f16tof32(_x & 0xffff), f16tof32(_x >> 16) );
 }
 #		endif // !BGFX_SHADER_LANGUAGE_SPIRV
 
