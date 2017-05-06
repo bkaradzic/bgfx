@@ -10,6 +10,37 @@
 
 namespace bgfx
 {
+	struct BlitState
+	{
+		BlitState(const Frame* _frame)
+			: m_frame(_frame)
+			, m_item(0)
+		{
+			m_key.decode(_frame->m_blitKeys[0]);
+		}
+
+		bool hasItem(uint16_t _view) const
+		{
+			return m_item < m_frame->m_numBlitItems
+				&& m_key.m_view <= _view
+				;
+		}
+
+		const BlitItem& advance()
+		{
+			const BlitItem& bi = m_frame->m_blitItem[m_item];
+
+			++m_item;
+			m_key.decode(m_frame->m_blitKeys[m_item]);
+
+			return bi;
+		}
+
+		const Frame* m_frame;
+		BlitKey  m_key;
+		uint16_t m_item;
+	};
+
 	struct ViewState
 	{
 		ViewState()
@@ -76,7 +107,7 @@ namespace bgfx
 		}
 
 		template<uint16_t mtxRegs, typename RendererContext, typename Program, typename Draw>
-		void setPredefined(RendererContext* _renderer, uint16_t _view, uint8_t _eye, Program& _program, Frame* _frame, const Draw& _draw)
+		void setPredefined(RendererContext* _renderer, uint16_t _view, uint8_t _eye, Program& _program, const Frame* _frame, const Draw& _draw)
 		{
 			for (uint32_t ii = 0, num = _program.m_numPredefined; ii < num; ++ii)
 			{

@@ -2619,6 +2619,8 @@ namespace bgfx { namespace gl
 			m_occlusionQuery.invalidate(_handle);
 		}
 
+		void submitBlit(BlitState& _bs, uint16_t _view);
+
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) BX_OVERRIDE;
 
 		void blitSetup(TextVideoMemBlitter& _blitter) BX_OVERRIDE
@@ -6219,6 +6221,47 @@ namespace bgfx { namespace gl
 		}
 	}
 
+	void RendererContextGL::submitBlit(BlitState& _bs, uint16_t _view)
+	{
+		if (m_blitSupported)
+		{
+			while (_bs.hasItem(_view) )
+			{
+				const BlitItem& bi = _bs.advance();
+
+				const TextureGL& src = m_textures[bi.m_src.idx];
+				const TextureGL& dst = m_textures[bi.m_dst.idx];
+
+				uint32_t srcWidth  = bx::uint32_min(src.m_width,  bi.m_srcX + bi.m_width)  - bi.m_srcX;
+				uint32_t srcHeight = bx::uint32_min(src.m_height, bi.m_srcY + bi.m_height) - bi.m_srcY;
+				uint32_t srcDepth  = bx::uint32_min(src.m_depth,  bi.m_srcZ + bi.m_depth)  - bi.m_srcZ;
+				uint32_t dstWidth  = bx::uint32_min(dst.m_width,  bi.m_dstX + bi.m_width)  - bi.m_dstX;
+				uint32_t dstHeight = bx::uint32_min(dst.m_height, bi.m_dstY + bi.m_height) - bi.m_dstY;
+				uint32_t dstDepth  = bx::uint32_min(dst.m_depth,  bi.m_dstZ + bi.m_depth)  - bi.m_dstZ;
+				uint32_t width     = bx::uint32_min(srcWidth,  dstWidth);
+				uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
+				uint32_t depth     = bx::uint32_min(srcDepth,  dstDepth);
+
+				GL_CHECK(glCopyImageSubData(src.m_id
+					, src.m_target
+					, bi.m_srcMip
+					, bi.m_srcX
+					, bi.m_srcY
+					, bi.m_srcZ
+					, dst.m_id
+					, dst.m_target
+					, bi.m_dstMip
+					, bi.m_dstX
+					, bi.m_dstY
+					, bi.m_dstZ
+					, width
+					, height
+					, bx::uint32_imax(depth, 1)
+					) );
+			}
+		}
+	}
+
 	void RendererContextGL::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
 		BGFX_GPU_PROFILER_BEGIN_DYNAMIC("rendererSubmit");
@@ -6291,10 +6334,7 @@ namespace bgfx { namespace gl
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
 
-		BlitKey blitKey;
-		blitKey.decode(_render->m_blitKeys[0]);
-		uint16_t numBlitItems = _render->m_numBlitItems;
-		uint16_t blitItem = 0;
+		BlitState bs(_render);
 
 		int32_t resolutionHeight = hmdEnabled
 					? _render->m_hmd.height
@@ -6472,45 +6512,7 @@ namespace bgfx { namespace gl
 					GL_CHECK(glEnable(GL_CULL_FACE) );
 					GL_CHECK(glDisable(GL_BLEND) );
 
-					if (m_blitSupported)
-					{
-						const uint8_t blitView = SortKey::decodeView(encodedKey);
-						for (; blitItem < numBlitItems && blitKey.m_view <= blitView; blitItem++)
-						{
-							const BlitItem& bi = _render->m_blitItem[blitItem];
-							blitKey.decode(_render->m_blitKeys[blitItem + 1]);
-
-							const TextureGL& src = m_textures[bi.m_src.idx];
-							const TextureGL& dst = m_textures[bi.m_dst.idx];
-
-							uint32_t srcWidth  = bx::uint32_min(src.m_width,  bi.m_srcX + bi.m_width)  - bi.m_srcX;
-							uint32_t srcHeight = bx::uint32_min(src.m_height, bi.m_srcY + bi.m_height) - bi.m_srcY;
-							uint32_t srcDepth  = bx::uint32_min(src.m_depth,  bi.m_srcZ + bi.m_depth)  - bi.m_srcZ;
-							uint32_t dstWidth  = bx::uint32_min(dst.m_width,  bi.m_dstX + bi.m_width)  - bi.m_dstX;
-							uint32_t dstHeight = bx::uint32_min(dst.m_height, bi.m_dstY + bi.m_height) - bi.m_dstY;
-							uint32_t dstDepth  = bx::uint32_min(dst.m_depth,  bi.m_dstZ + bi.m_depth)  - bi.m_dstZ;
-							uint32_t width     = bx::uint32_min(srcWidth,  dstWidth);
-							uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
-							uint32_t depth     = bx::uint32_min(srcDepth,  dstDepth);
-
-							GL_CHECK(glCopyImageSubData(src.m_id
-								, src.m_target
-								, bi.m_srcMip
-								, bi.m_srcX
-								, bi.m_srcY
-								, bi.m_srcZ
-								, dst.m_id
-								, dst.m_target
-								, bi.m_dstMip
-								, bi.m_dstX
-								, bi.m_dstY
-								, bi.m_dstZ
-								, width
-								, height
-								, bx::uint32_imax(depth, 1)
-								) );
-						}
-					}
+					submitBlit(bs, view);
 				}
 
 				if (isCompute)
@@ -7468,6 +7470,8 @@ namespace bgfx { namespace gl
 					}
 				}
 			}
+
+			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
 
 			blitMsaaFbo();
 
