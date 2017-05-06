@@ -116,7 +116,7 @@ namespace glslang {
         void acceptAttributes(TAttributeMap&);
         bool acceptSelectionStatement(TIntermNode*&);
         bool acceptSwitchStatement(TIntermNode*&);
-        bool acceptIterationStatement(TIntermNode*&);
+        bool acceptIterationStatement(TIntermNode*&, const TAttributeMap&);
         bool acceptJumpStatement(TIntermNode*&);
         bool acceptCaseLabel(TIntermNode*&);
         bool acceptDefaultLabel(TIntermNode*&);

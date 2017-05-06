@@ -7569,6 +7569,20 @@ bool HlslParseContext::handleOutputGeometry(const TSourceLoc& loc, const TLayout
 }
 
 //
+// Loop hints
+//
+TLoopControl HlslParseContext::handleLoopControl(const TAttributeMap& attributes) const
+{
+    if (attributes.contains(EatUnroll))
+        return ELoopControlUnroll;
+    else if (attributes.contains(EatLoop))
+        return ELoopControlDontUnroll;
+    else
+        return ELoopControlNone;
+}
+
+
+//
 // Updating default qualifier for the case of a declaration with just a qualifier,
 // no type, block, or identifier.
 //

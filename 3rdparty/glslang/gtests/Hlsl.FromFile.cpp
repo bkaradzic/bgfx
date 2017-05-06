@@ -175,6 +175,7 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.logical.binary.vec.frag", "main"},
         {"hlsl.logicalConvert.frag", "main"},
         {"hlsl.logical.unary.frag", "main"},
+        {"hlsl.loopattr.frag", "main"},
         {"hlsl.namespace.frag", "main"},
         {"hlsl.nonint-index.frag", "main"},
         {"hlsl.matNx1.frag", "main"},

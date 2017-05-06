@@ -192,6 +192,9 @@ public:
     bool handleOutputGeometry(const TSourceLoc&, const TLayoutGeometry& geometry);
     bool handleInputGeometry(const TSourceLoc&, const TLayoutGeometry& geometry);
 
+    // Determine loop control from attributes
+    TLoopControl handleLoopControl(const TAttributeMap& attributes) const;
+
     // Potentially rename shader entry point function
     void renameShaderFunction(const TString*& name) const;
 

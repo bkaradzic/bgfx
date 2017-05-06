@@ -171,7 +171,7 @@ gl_FragCoord origin is upper left
               28:             Label
                               Branch 32
               32:             Label
-                              LoopMerge 34 35 None
+                              LoopMerge 34 35 Unroll 
                               Branch 36
               36:             Label
                               BranchConditional 31 33 34

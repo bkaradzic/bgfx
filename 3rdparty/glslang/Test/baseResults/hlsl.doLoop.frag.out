@@ -194,7 +194,7 @@ gl_FragCoord origin is upper left
               12:             Label
                               Branch 13
               13:             Label
-                              LoopMerge 15 16 None
+                              LoopMerge 15 16 Unroll 
                               Branch 14
               14:             Label
                               Branch 16
@@ -203,7 +203,7 @@ gl_FragCoord origin is upper left
               15:             Label
                               Branch 19
               19:             Label
-                              LoopMerge 21 22 None
+                              LoopMerge 21 22 Unroll 
                               Branch 20
               20:             Label
                               Branch 22

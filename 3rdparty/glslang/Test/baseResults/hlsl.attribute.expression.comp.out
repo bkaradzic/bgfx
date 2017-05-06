@@ -132,7 +132,7 @@ local_size = (4, 6, 8)
                               Store 13(x) 14
                               Branch 15
               15:             Label
-                              LoopMerge 17 18 None
+                              LoopMerge 17 18 Unroll 
                               Branch 19
               19:             Label
               20:     11(int) Load 13(x)

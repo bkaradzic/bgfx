@@ -62,6 +62,7 @@ namespace glslang {
         EatPatchConstantFunc,
         EatPatchSize,
         EatUnroll,
+        EatLoop,
     };
 }
 
@@ -85,6 +86,9 @@ namespace glslang {
 
         // Const lookup: search for (but do not modify) the attribute in the map.
         const TIntermAggregate* operator[](TAttributeType) const;
+
+        // True if entry exists in map (even if value is nullptr)
+        bool contains(TAttributeType) const;
 
     protected:
         // Find an attribute enum given its name.

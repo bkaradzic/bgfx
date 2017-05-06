@@ -51,6 +51,10 @@ PS_OUTPUT main()
    int4   txval31 = g_tTex2di4 . GatherCmpAlpha(g_sSampCmp, c2, 0.75);
    uint4  txval32 = g_tTex2du4 . GatherCmpAlpha(g_sSampCmp, c2, 0.75);
 
+   float4 txval80 = g_tTex2df4 . GatherCmp(g_sSampCmp, c2, 0.75);
+   int4   txval81 = g_tTex2di4 . GatherCmp(g_sSampCmp, c2, 0.75);
+   uint4  txval82 = g_tTex2du4 . GatherCmp(g_sSampCmp, c2, 0.75);
+
    // no 3D gathers
 
    float4 txval40 = g_tTexcdf4 . GatherCmpRed(g_sSampCmp, c3, 0.75);
@@ -68,6 +72,10 @@ PS_OUTPUT main()
    float4 txval70 = g_tTexcdf4 . GatherCmpAlpha(g_sSampCmp, c3, 0.75);
    int4   txval71 = g_tTexcdi4 . GatherCmpAlpha(g_sSampCmp, c3, 0.75);
    uint4  txval72 = g_tTexcdu4 . GatherCmpAlpha(g_sSampCmp, c3, 0.75);
+
+   float4 txval90 = g_tTexcdf4 . GatherCmp(g_sSampCmp, c3, 0.75);
+   int4   txval91 = g_tTexcdi4 . GatherCmp(g_sSampCmp, c3, 0.75);
+   uint4  txval92 = g_tTexcdu4 . GatherCmp(g_sSampCmp, c3, 0.75);
 
    psout.Color = 1.0;
    psout.Depth = 1.0;

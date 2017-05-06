@@ -338,7 +338,7 @@ gl_FragCoord origin is upper left
               23:             Label
                               Branch 25
               25:             Label
-                              LoopMerge 27 28 None
+                              LoopMerge 27 28 Unroll 
                               Branch 29
               29:             Label
               30:    7(fvec4) Load 10(input)

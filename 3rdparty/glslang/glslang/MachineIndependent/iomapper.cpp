@@ -413,8 +413,8 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
         return -1;
     }
 
-    void notifyBinding(EShLanguage stage, const char* name, const TType& type, bool is_live) override {}
-    void notifyInOut(EShLanguage stage, const char* name, const TType& type, bool is_live) override {}
+    void notifyBinding(EShLanguage, const char* /*name*/, const TType&, bool /*is_live*/) override {}
+    void notifyInOut(EShLanguage, const char* /*name*/, const TType&, bool /*is_live*/) override {}
     void endNotifications() override {}
 
 protected:

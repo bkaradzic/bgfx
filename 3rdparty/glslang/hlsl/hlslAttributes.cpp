@@ -80,6 +80,8 @@ namespace glslang {
             return EatPatchConstantFunc;
         else if (lowername == "unroll")
             return EatUnroll;
+        else if (lowername == "loop")
+            return EatLoop;
         else
             return EatNone;
     }
@@ -105,6 +107,12 @@ namespace glslang {
         const auto entry = attributes.find(attr);
 
         return (entry == attributes.end()) ? nullptr : entry->second;
+    }
+
+    // True if entry exists in map (even if value is nullptr)
+    bool TAttributeMap::contains(TAttributeType attr) const
+    {
+        return attributes.find(attr) != attributes.end();
     }
 
 } // end namespace glslang

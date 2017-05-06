@@ -50,13 +50,9 @@ PS_OUTPUT main()
    int4   txval014 = g_tTex2di4 . GatherCmpRed(g_sSampCmp, c2, 0.75, int2(1,-1), int2(1,-1), int2(1,-1), int2(1,-1));
    uint4  txval024 = g_tTex2du4 . GatherCmpRed(g_sSampCmp, c2, 0.75, int2(1,1), int2(1,1), int2(1,1), int2(1,1));
    
-   // float4 txval00s = g_tTex2df4 . GatherCmpRed(g_sSampCmp, c2, 0.75, int2(1,0), status);
-   // int4   txval01s = g_tTex2di4 . GatherCmpRed(g_sSampCmp, c2, 0.75, int2(1,0), status);
-   // uint4  txval02s = g_tTex2du4 . GatherCmpRed(g_sSampCmp, c2, 0.75, int2(1,0), status);
-
-   // float4 txval004s = g_tTex2df4 . GatherCmpRed(g_sSampCmp, c2, 0.75, int2(1,0), int2(1,0), int2(1,0), int2(1,0), status);
-   // int4   txval014s = g_tTex2di4 . GatherCmpRed(g_sSampCmp, c2, 0.75, int2(1,0), int2(1,0), int2(1,0), int2(1,0), status);
-   // uint4  txval024s = g_tTex2du4 . GatherCmpRed(g_sSampCmp, c2, 0.75, int2(1,0), int2(1,0), int2(1,0), int2(1,0), status);
+   float4 txval401 = g_tTex2df4 . GatherCmp(g_sSampCmp, c2, 0.75, int2(1,0));
+   int4   txval411 = g_tTex2di4 . GatherCmp(g_sSampCmp, c2, 0.75, int2(1,-1));
+   uint4  txval421 = g_tTex2du4 . GatherCmp(g_sSampCmp, c2, 0.75, int2(1,1));
 
    // GatherCmpGreen not implemented pending OpImageDrefGather component input
    // float4 txval101 = g_tTex2df4 . GatherCmpGreen(g_sSampCmp, c2, 0.75, int2(1,0));

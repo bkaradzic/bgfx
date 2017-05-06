@@ -759,6 +759,15 @@ protected:
 };
 
 //
+// Loop control hints
+//
+enum TLoopControl {
+    ELoopControlNone,
+    ELoopControlUnroll,
+    ELoopControlDontUnroll,
+};
+
+//
 // Handle for, do-while, and while loops.
 //
 class TIntermLoop : public TIntermNode {
@@ -767,17 +776,25 @@ public:
         body(aBody),
         test(aTest),
         terminal(aTerminal),
-        first(testFirst) { }
+        first(testFirst),
+        control(ELoopControlNone)
+    { }
+
     virtual void traverse(TIntermTraverser*);
     TIntermNode*  getBody() const { return body; }
     TIntermTyped* getTest() const { return test; }
     TIntermTyped* getTerminal() const { return terminal; }
     bool testFirst() const { return first; }
+
+    void setLoopControl(TLoopControl c) { control = c; }
+    TLoopControl getLoopControl() const { return control; }
+
 protected:
     TIntermNode* body;       // code to loop over
     TIntermTyped* test;      // exit condition associated with loop, could be 0 for 'for' loops
     TIntermTyped* terminal;  // exists for for-loops
     bool first;              // true for while and for, not for do-while
+    TLoopControl control;    // loop control hint
 };
 
 //

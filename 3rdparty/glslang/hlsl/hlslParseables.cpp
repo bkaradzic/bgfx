@@ -111,7 +111,8 @@ bool IsIllegalSample(const glslang::TString& name, const char* argOrder, int dim
          name == "GatherAlpha");
 
     const bool isGatherCmp =
-        (name == "GatherCmpRed"   ||
+        (name == "GatherCmp"      ||
+         name == "GatherCmpRed"   ||
          name == "GatherCmpGreen" ||
          name == "GatherCmpBlue"  ||
          name == "GatherCmpAlpha");
@@ -824,6 +825,12 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
         { "GatherAlpha",     /* O-4 */        "V4",    nullptr,   "%@,S,V,,,,",     "FIU,S,F,I,,,",   EShLangAll,   true },
         { "GatherAlpha",     /* O-4, status */"V4",    nullptr,   "%@,S,V,,,,,S",   "FIU,S,F,I,,,,U", EShLangAll,   true },
 
+        { "GatherCmp",       /*!O*/           "V4",    nullptr,   "%@,S,V,S",       "FIU,s,F,",       EShLangAll,   true },
+        { "GatherCmp",       /* O*/           "V4",    nullptr,   "%@,S,V,S,V",     "FIU,s,F,,I",     EShLangAll,   true },
+        { "GatherCmp",       /* O, status*/   "V4",    nullptr,   "%@,S,V,S,V,>S",  "FIU,s,F,,I,U",   EShLangAll,   true },
+        { "GatherCmp",       /* O-4 */        "V4",    nullptr,   "%@,S,V,S,V,,,",  "FIU,s,F,,I,,,",  EShLangAll,   true },
+        { "GatherCmp",       /* O-4, status */"V4",    nullptr,   "%@,S,V,S,V,,V,S","FIU,s,F,,I,,,,U",EShLangAll,   true },
+
         { "GatherCmpRed",    /*!O*/           "V4",    nullptr,   "%@,S,V,S",       "FIU,s,F,",       EShLangAll,   true },
         { "GatherCmpRed",    /* O*/           "V4",    nullptr,   "%@,S,V,S,V",     "FIU,s,F,,I",     EShLangAll,   true },
         { "GatherCmpRed",    /* O, status*/   "V4",    nullptr,   "%@,S,V,S,V,>S",  "FIU,s,F,,I,U",   EShLangAll,   true },
@@ -1203,6 +1210,7 @@ void TBuiltInParseablesHlsl::identifyBuiltIns(int /*version*/, EProfile /*profil
     symbolTable.relateToOperator(BUILTIN_PREFIX "GatherGreen",                 EOpMethodGatherGreen);
     symbolTable.relateToOperator(BUILTIN_PREFIX "GatherBlue",                  EOpMethodGatherBlue);
     symbolTable.relateToOperator(BUILTIN_PREFIX "GatherAlpha",                 EOpMethodGatherAlpha);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "GatherCmp",                   EOpMethodGatherCmpRed); // alias
     symbolTable.relateToOperator(BUILTIN_PREFIX "GatherCmpRed",                EOpMethodGatherCmpRed);
     symbolTable.relateToOperator(BUILTIN_PREFIX "GatherCmpGreen",              EOpMethodGatherCmpGreen);
     symbolTable.relateToOperator(BUILTIN_PREFIX "GatherCmpBlue",               EOpMethodGatherCmpBlue);

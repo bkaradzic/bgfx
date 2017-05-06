@@ -29,6 +29,10 @@ PS_OUTPUT main()
 
    // no 1D gathers
 
+   float4 txval80 = g_tTex2df4a . GatherCmp(g_sSampCmp, c3, .75);
+   int4   txval81 = g_tTex2di4a . GatherCmp(g_sSampCmp, c3, .75);
+   uint4  txval82 = g_tTex2du4a . GatherCmp(g_sSampCmp, c3, .75);
+
    float4 txval00 = g_tTex2df4a . GatherCmpRed(g_sSampCmp, c3, .75);
    int4   txval01 = g_tTex2di4a . GatherCmpRed(g_sSampCmp, c3, .75);
    uint4  txval02 = g_tTex2du4a . GatherCmpRed(g_sSampCmp, c3, .75);

@@ -3127,7 +3127,7 @@ bool HlslGrammar::acceptStatement(TIntermNode*& statement)
     case EHTokFor:
     case EHTokDo:
     case EHTokWhile:
-        return acceptIterationStatement(statement);
+        return acceptIterationStatement(statement, attributes);
 
     case EHTokContinue:
     case EHTokBreak:
@@ -3336,7 +3336,7 @@ bool HlslGrammar::acceptSwitchStatement(TIntermNode*& statement)
 //      | FOR LEFT_PAREN for_init_statement for_rest_statement RIGHT_PAREN statement
 //
 // Non-speculative, only call if it needs to be found; WHILE or DO or FOR already seen.
-bool HlslGrammar::acceptIterationStatement(TIntermNode*& statement)
+bool HlslGrammar::acceptIterationStatement(TIntermNode*& statement, const TAttributeMap& attributes)
 {
     TSourceLoc loc = token.loc;
     TIntermTyped* condition = nullptr;
@@ -3346,6 +3346,8 @@ bool HlslGrammar::acceptIterationStatement(TIntermNode*& statement)
 
     //  WHILE or DO or FOR
     advanceToken();
+    
+    const TLoopControl control = parseContext.handleLoopControl(attributes);
 
     switch (loop) {
     case EHTokWhile:
@@ -3370,7 +3372,7 @@ bool HlslGrammar::acceptIterationStatement(TIntermNode*& statement)
         parseContext.unnestLooping();
         parseContext.popScope();
 
-        statement = intermediate.addLoop(statement, condition, nullptr, true, loc);
+        statement = intermediate.addLoop(statement, condition, nullptr, true, loc, control);
 
         return true;
 
@@ -3402,7 +3404,7 @@ bool HlslGrammar::acceptIterationStatement(TIntermNode*& statement)
 
         parseContext.unnestLooping();
 
-        statement = intermediate.addLoop(statement, condition, 0, false, loc);
+        statement = intermediate.addLoop(statement, condition, 0, false, loc, control);
 
         return true;
 
@@ -3451,7 +3453,7 @@ bool HlslGrammar::acceptIterationStatement(TIntermNode*& statement)
             return false;
         }
 
-        statement = intermediate.addForLoop(statement, initNode, condition, iterator, true, loc);
+        statement = intermediate.addForLoop(statement, initNode, condition, iterator, true, loc, control);
 
         parseContext.popScope();
         parseContext.unnestLooping();
