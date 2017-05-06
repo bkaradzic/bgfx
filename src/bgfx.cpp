@@ -3922,6 +3922,20 @@ error:
 	}
 } // namespace bgfx
 
+#if BX_PLATFORM_WINDOWS
+extern "C"
+{
+	// When laptop setup has integrated and discrete GPU, following driver workarounds will
+	// select discrete GPU:
+
+	// Reference: https://docs.nvidia.com/gameworks/content/technologies/desktop/optimus.htm
+	__declspec(dllexport) uint32_t NvOptimusEnablement = UINT32_C(1);
+
+	// Reference: http://gpuopen.com/amdpowerxpressrequesthighperformance/
+	__declspec(dllexport) uint32_t AmdPowerXpressRequestHighPerformance = UINT32_C(1);
+}
+#endif // BX_PLATFORM_WINDOWS
+
 #define BGFX_TEXTURE_FORMAT_BIMG(_fmt) \
 			BX_STATIC_ASSERT(uint32_t(bgfx::TextureFormat::_fmt) == uint32_t(bimg::TextureFormat::_fmt) )
 
