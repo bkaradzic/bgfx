@@ -1238,6 +1238,8 @@ namespace bgfx { namespace d3d9
 			m_occlusionQuery.invalidate(_handle);
 		}
 
+		void submitBlit(BlitState& _bs, uint16_t _view);
+
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) BX_OVERRIDE;
 
 		void blitSetup(TextVideoMemBlitter& _blitter) BX_OVERRIDE
@@ -3610,6 +3612,60 @@ namespace bgfx { namespace d3d9
 		}
 	}
 
+	void RendererContextD3D9::submitBlit(BlitState& _bs, uint16_t _view)
+	{
+		while (_bs.hasItem(_view) )
+		{
+			const BlitItem& blit = _bs.advance();
+
+			const TextureD3D9& src = m_textures[blit.m_src.idx];
+			const TextureD3D9& dst = m_textures[blit.m_dst.idx];
+
+			uint32_t srcWidth  = bx::uint32_min(src.m_width,  blit.m_srcX + blit.m_width)  - blit.m_srcX;
+			uint32_t srcHeight = bx::uint32_min(src.m_height, blit.m_srcY + blit.m_height) - blit.m_srcY;
+			uint32_t dstWidth  = bx::uint32_min(dst.m_width,  blit.m_dstX + blit.m_width)  - blit.m_dstX;
+			uint32_t dstHeight = bx::uint32_min(dst.m_height, blit.m_dstY + blit.m_height) - blit.m_dstY;
+			uint32_t width     = bx::uint32_min(srcWidth,  dstWidth);
+			uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
+
+			RECT srcRect = { LONG(blit.m_srcX), LONG(blit.m_srcY), LONG(blit.m_srcX + width), LONG(blit.m_srcY + height) };
+			RECT dstRect = { LONG(blit.m_dstX), LONG(blit.m_dstY), LONG(blit.m_dstX + width), LONG(blit.m_dstY + height) };
+
+			IDirect3DSurface9* srcSurface = src.getSurface(uint8_t(blit.m_srcZ), blit.m_srcMip);
+			IDirect3DSurface9* dstSurface = dst.getSurface(uint8_t(blit.m_dstZ), blit.m_dstMip);
+
+			// UpdateSurface (pool src: SYSTEMMEM, dst: DEFAULT)
+			// s/d T   RTT RT
+			// T   y   y   y
+			// RTT -   -   -
+			// RT  -   -   -
+			//
+			// StretchRect (pool src and dst must be DEFAULT)
+			// s/d T   RTT RT
+			// T   -   y   y
+			// RTT -   y   y
+			// RT  -   y   y
+			//
+			// GetRenderTargetData (dst must be SYSTEMMEM)
+
+			bool depth = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) );
+			HRESULT hr = m_device->StretchRect(srcSurface
+				, depth ? NULL : &srcRect
+				, dstSurface
+				, depth ? NULL : &dstRect
+				, D3DTEXF_NONE
+				);
+			if (FAILED(hr) )
+			{
+				hr = m_device->GetRenderTargetData(srcSurface, dstSurface);
+				BX_WARN(SUCCEEDED(hr), "StretchRect and GetRenderTargetData failed %x.", hr);
+			}
+
+			srcSurface->Release();
+			dstSurface->Release();
+		}
+	}
+
 	void RendererContextD3D9::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
 		IDirect3DDevice9* device = m_device;
@@ -3658,10 +3714,7 @@ namespace bgfx { namespace d3d9
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
 		uint32_t blendFactor = 0;
 
-		BlitKey blitKey;
-		blitKey.decode(_render->m_blitKeys[0]);
-		uint16_t numBlitItems = _render->m_numBlitItems;
-		uint16_t blitItem = 0;
+		BlitState bs(_render);
 
 		uint8_t primIndex;
 		{
@@ -3776,58 +3829,7 @@ namespace bgfx { namespace d3d9
 					DX_CHECK(device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE) );
 					DX_CHECK(device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER) );
 
-					const uint8_t blitView = SortKey::decodeView(encodedKey);
-					for (; blitItem < numBlitItems && blitKey.m_view <= blitView; blitItem++)
-					{
-						const BlitItem& blit = _render->m_blitItem[blitItem];
-						blitKey.decode(_render->m_blitKeys[blitItem+1]);
-
-						const TextureD3D9& src = m_textures[blit.m_src.idx];
-						const TextureD3D9& dst = m_textures[blit.m_dst.idx];
-
-						uint32_t srcWidth  = bx::uint32_min(src.m_width,  blit.m_srcX + blit.m_width)  - blit.m_srcX;
-						uint32_t srcHeight = bx::uint32_min(src.m_height, blit.m_srcY + blit.m_height) - blit.m_srcY;
-						uint32_t dstWidth  = bx::uint32_min(dst.m_width,  blit.m_dstX + blit.m_width)  - blit.m_dstX;
-						uint32_t dstHeight = bx::uint32_min(dst.m_height, blit.m_dstY + blit.m_height) - blit.m_dstY;
-						uint32_t width     = bx::uint32_min(srcWidth,  dstWidth);
-						uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
-
-						RECT srcRect = { LONG(blit.m_srcX), LONG(blit.m_srcY), LONG(blit.m_srcX + width), LONG(blit.m_srcY + height) };
-						RECT dstRect = { LONG(blit.m_dstX), LONG(blit.m_dstY), LONG(blit.m_dstX + width), LONG(blit.m_dstY + height) };
-
-						IDirect3DSurface9* srcSurface = src.getSurface(uint8_t(blit.m_srcZ), blit.m_srcMip);
-						IDirect3DSurface9* dstSurface = dst.getSurface(uint8_t(blit.m_dstZ), blit.m_dstMip);
-
-						// UpdateSurface (pool src: SYSTEMMEM, dst: DEFAULT)
-						// s/d T   RTT RT
-						// T   y   y   y
-						// RTT -   -   -
-						// RT  -   -   -
-						//
-						// StretchRect (pool src and dst must be DEFAULT)
-						// s/d T   RTT RT
-						// T   -   y   y
-						// RTT -   y   y
-						// RT  -   y   y
-						//
-						// GetRenderTargetData (dst must be SYSTEMMEM)
-
-						bool depth = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) );
-						HRESULT hr = m_device->StretchRect(srcSurface
-							, depth ? NULL : &srcRect
-							, dstSurface
-							, depth ? NULL : &dstRect
-							, D3DTEXF_NONE
-							);
-						if (FAILED(hr) )
-						{
-							hr = m_device->GetRenderTargetData(srcSurface, dstSurface);
-							BX_WARN(SUCCEEDED(hr), "StretchRect and GetRenderTargetData failed %x.", hr);
-						}
-
-						srcSurface->Release();
-						dstSurface->Release();
-					}
+					submitBlit(bs, view);
 				}
 
 				uint16_t scissor = draw.m_scissor;
@@ -4267,6 +4269,8 @@ namespace bgfx { namespace d3d9
 					statsNumIndices += numIndices;
 				}
 			}
+
+			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
 
 			if (0 < _render->m_num)
 			{

@@ -2126,6 +2126,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			m_occlusionQuery.invalidate(_handle);
 		}
 
+		void submitBlit(BlitState& _bs, uint16_t _view);
+
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) BX_OVERRIDE;
 
 		void blitSetup(TextVideoMemBlitter& _blitter) BX_OVERRIDE
@@ -5316,6 +5318,85 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		}
 	}
 
+	void RendererContextD3D11::submitBlit(BlitState& _bs, uint16_t _view)
+	{
+		ID3D11DeviceContext* deviceCtx = m_deviceCtx;
+		
+		while (_bs.hasItem(_view) )
+		{
+			const BlitItem& blit = _bs.advance();
+			
+			const TextureD3D11& src = m_textures[blit.m_src.idx];
+			const TextureD3D11& dst = m_textures[blit.m_dst.idx];
+
+			uint32_t srcWidth  = bx::uint32_min(src.m_width,  blit.m_srcX + blit.m_width)  - blit.m_srcX;
+			uint32_t srcHeight = bx::uint32_min(src.m_height, blit.m_srcY + blit.m_height) - blit.m_srcY;
+			uint32_t srcDepth  = bx::uint32_min(src.m_depth,  blit.m_srcZ + blit.m_depth)  - blit.m_srcZ;
+			uint32_t dstWidth  = bx::uint32_min(dst.m_width,  blit.m_dstX + blit.m_width)  - blit.m_dstX;
+			uint32_t dstHeight = bx::uint32_min(dst.m_height, blit.m_dstY + blit.m_height) - blit.m_dstY;
+			uint32_t dstDepth  = bx::uint32_min(dst.m_depth,  blit.m_dstZ + blit.m_depth)  - blit.m_dstZ;
+			uint32_t width     = bx::uint32_min(srcWidth,  dstWidth);
+			uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
+			uint32_t depth     = bx::uint32_min(srcDepth,  dstDepth);
+
+			if (TextureD3D11::Texture3D == src.m_type)
+			{
+				D3D11_BOX box;
+				box.left   = blit.m_srcX;
+				box.top    = blit.m_srcY;
+				box.front  = blit.m_srcZ;
+				box.right  = blit.m_srcX + width;
+				box.bottom = blit.m_srcY + height;;
+				box.back   = blit.m_srcZ + bx::uint32_imax(1, depth);
+
+				deviceCtx->CopySubresourceRegion(dst.m_ptr
+					, blit.m_dstMip
+					, blit.m_dstX
+					, blit.m_dstY
+					, blit.m_dstZ
+					, src.m_ptr
+					, blit.m_srcMip
+					, &box
+					);
+			}
+			else
+			{
+				bool depthStencil = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) );
+				BX_CHECK(!depthStencil
+					||  (width == src.m_width && height == src.m_height)
+					, "When blitting depthstencil surface, source resolution must match destination."
+					);
+
+				D3D11_BOX box;
+				box.left   = blit.m_srcX;
+				box.top    = blit.m_srcY;
+				box.front  = 0;
+				box.right  = blit.m_srcX + width;
+				box.bottom = blit.m_srcY + height;
+				box.back   = 1;
+
+				const uint32_t srcZ = TextureD3D11::TextureCube == src.m_type
+					? blit.m_srcZ
+					: 0
+					;
+				const uint32_t dstZ = TextureD3D11::TextureCube == dst.m_type
+					? blit.m_dstZ
+					: 0
+					;
+
+				deviceCtx->CopySubresourceRegion(dst.m_ptr
+					, dstZ*dst.m_numMips+blit.m_dstMip
+					, blit.m_dstX
+					, blit.m_dstY
+					, 0
+					, src.m_ptr
+					, srcZ*src.m_numMips+blit.m_srcMip
+					, depthStencil ? NULL : &box
+					);
+			}
+		}
+	}
+
 	void RendererContextD3D11::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
 		if (m_lost
@@ -5379,10 +5460,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
 
-		BlitKey blitKey;
-		blitKey.decode(_render->m_blitKeys[0]);
-		uint16_t numBlitItems = _render->m_numBlitItems;
-		uint16_t blitItem = 0;
+		BlitState bs(_render);
 
 		const uint64_t primType = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
 		uint8_t primIndex = uint8_t(primType >> BGFX_STATE_PT_SHIFT);
@@ -5535,81 +5613,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						prim = s_primInfo[BX_COUNTOF(s_primName)]; // Force primitive type update after clear quad.
 					}
 
-					const uint8_t blitView = SortKey::decodeView(encodedKey);
-					for (; blitItem < numBlitItems && blitKey.m_view <= blitView; blitItem++)
-					{
-						const BlitItem& blit = _render->m_blitItem[blitItem];
-						blitKey.decode(_render->m_blitKeys[blitItem+1]);
-
-						const TextureD3D11& src = m_textures[blit.m_src.idx];
-						const TextureD3D11& dst = m_textures[blit.m_dst.idx];
-
-						uint32_t srcWidth  = bx::uint32_min(src.m_width,  blit.m_srcX + blit.m_width)  - blit.m_srcX;
-						uint32_t srcHeight = bx::uint32_min(src.m_height, blit.m_srcY + blit.m_height) - blit.m_srcY;
-						uint32_t srcDepth  = bx::uint32_min(src.m_depth,  blit.m_srcZ + blit.m_depth)  - blit.m_srcZ;
-						uint32_t dstWidth  = bx::uint32_min(dst.m_width,  blit.m_dstX + blit.m_width)  - blit.m_dstX;
-						uint32_t dstHeight = bx::uint32_min(dst.m_height, blit.m_dstY + blit.m_height) - blit.m_dstY;
-						uint32_t dstDepth  = bx::uint32_min(dst.m_depth,  blit.m_dstZ + blit.m_depth)  - blit.m_dstZ;
-						uint32_t width     = bx::uint32_min(srcWidth,  dstWidth);
-						uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
-						uint32_t depth     = bx::uint32_min(srcDepth,  dstDepth);
-
-						if (TextureD3D11::Texture3D == src.m_type)
-						{
-							D3D11_BOX box;
-							box.left   = blit.m_srcX;
-							box.top    = blit.m_srcY;
-							box.front  = blit.m_srcZ;
-							box.right  = blit.m_srcX + width;
-							box.bottom = blit.m_srcY + height;;
-							box.back   = blit.m_srcZ + bx::uint32_imax(1, depth);
-
-							deviceCtx->CopySubresourceRegion(dst.m_ptr
-								, blit.m_dstMip
-								, blit.m_dstX
-								, blit.m_dstY
-								, blit.m_dstZ
-								, src.m_ptr
-								, blit.m_srcMip
-								, &box
-								);
-						}
-						else
-						{
-							bool depthStencil = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) );
-							BX_CHECK(!depthStencil
-								||  (width == src.m_width && height == src.m_height)
-								, "When blitting depthstencil surface, source resolution must match destination."
-								);
-
-							D3D11_BOX box;
-							box.left   = blit.m_srcX;
-							box.top    = blit.m_srcY;
-							box.front  = 0;
-							box.right  = blit.m_srcX + width;
-							box.bottom = blit.m_srcY + height;
-							box.back   = 1;
-
-							const uint32_t srcZ = TextureD3D11::TextureCube == src.m_type
-								? blit.m_srcZ
-								: 0
-								;
-							const uint32_t dstZ = TextureD3D11::TextureCube == dst.m_type
-								? blit.m_dstZ
-								: 0
-								;
-
-							deviceCtx->CopySubresourceRegion(dst.m_ptr
-								, dstZ*dst.m_numMips+blit.m_dstMip
-								, blit.m_dstX
-								, blit.m_dstY
-								, 0
-								, src.m_ptr
-								, srcZ*src.m_numMips+blit.m_srcMip
-								, depthStencil ? NULL : &box
-								);
-						}
-					}
+					submitBlit(bs, view);
 				}
 
 				if (isCompute)
@@ -6258,6 +6262,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				invalidateCompute();
 			}
+
+			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
 
 			if (0 < _render->m_num)
 			{

@@ -1679,6 +1679,8 @@ namespace bgfx { namespace d3d12
 			m_occlusionQuery.invalidate(_handle);
 		}
 
+		void submitBlit(BlitState& _bs, uint16_t _view);
+
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) BX_OVERRIDE;
 
 		void blitSetup(TextVideoMemBlitter& _blitter) BX_OVERRIDE
@@ -4812,6 +4814,85 @@ data.NumQualityLevels = 0;
 		uint16_t m_samplerStateIdx;
 	};
 
+	void RendererContextD3D12::submitBlit(BlitState& _bs, uint16_t _view)
+	{
+		while (_bs.hasItem(_view) )
+		{
+			const BlitItem& blit = _bs.advance();
+
+			const TextureD3D12& src = m_textures[blit.m_src.idx];
+			const TextureD3D12& dst = m_textures[blit.m_dst.idx];
+
+ 			uint32_t srcWidth  = bx::uint32_min(src.m_width,  blit.m_srcX + blit.m_width)  - blit.m_srcX;
+ 			uint32_t srcHeight = bx::uint32_min(src.m_height, blit.m_srcY + blit.m_height) - blit.m_srcY;
+ 			uint32_t srcDepth  = bx::uint32_min(src.m_depth,  blit.m_srcZ + blit.m_depth)  - blit.m_srcZ;
+ 			uint32_t dstWidth  = bx::uint32_min(dst.m_width,  blit.m_dstX + blit.m_width)  - blit.m_dstX;
+ 			uint32_t dstHeight = bx::uint32_min(dst.m_height, blit.m_dstY + blit.m_height) - blit.m_dstY;
+ 			uint32_t dstDepth  = bx::uint32_min(dst.m_depth,  blit.m_dstZ + blit.m_depth)  - blit.m_dstZ;
+ 			uint32_t width     = bx::uint32_min(srcWidth,  dstWidth);
+ 			uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
+ 			uint32_t depth     = bx::uint32_min(srcDepth,  dstDepth);
+
+			if (TextureD3D12::Texture3D == src.m_type)
+			{
+				D3D12_BOX box;
+ 				box.left   = blit.m_srcX;
+ 				box.top    = blit.m_srcY;
+ 				box.front  = blit.m_srcZ;
+ 				box.right  = blit.m_srcX + width;
+ 				box.bottom = blit.m_srcY + height;;
+ 				box.back   = blit.m_srcZ + bx::uint32_imax(1, depth);
+
+				D3D12_TEXTURE_COPY_LOCATION dstLocation = { dst.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{}} };
+				D3D12_TEXTURE_COPY_LOCATION srcLocation = { src.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{}} };
+				m_commandList->CopyTextureRegion(&dstLocation
+					, blit.m_dstX
+					, blit.m_dstY
+					, blit.m_dstZ
+					, &srcLocation
+					, &box
+					);
+			}
+			else
+			{
+				D3D12_BOX box;
+				box.left   = blit.m_srcX;
+				box.top    = blit.m_srcY;
+				box.front  = 0;
+				box.right  = blit.m_srcX + width;
+				box.bottom = blit.m_srcY + height;;
+				box.back   = 1;
+
+				const uint32_t srcZ = TextureD3D12::TextureCube == src.m_type
+					? blit.m_srcZ
+					: 0
+					;
+				const uint32_t dstZ = TextureD3D12::TextureCube == dst.m_type
+					? blit.m_dstZ
+					: 0
+					;
+
+				D3D12_TEXTURE_COPY_LOCATION dstLocation;
+				dstLocation.pResource = dst.m_ptr;
+				dstLocation.Type      = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+				dstLocation.SubresourceIndex = dstZ*dst.m_numMips+blit.m_dstMip;
+				D3D12_TEXTURE_COPY_LOCATION srcLocation;
+				srcLocation.pResource = src.m_ptr;
+				srcLocation.Type      = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+				srcLocation.SubresourceIndex = srcZ*src.m_numMips+blit.m_srcMip;
+
+				bool depthStencil = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) );
+				m_commandList->CopyTextureRegion(&dstLocation
+					, blit.m_dstX
+					, blit.m_dstY
+					, 0
+					, &srcLocation
+					, depthStencil ? NULL : &box
+					);
+			}
+		}
+	}
+
 	void RendererContextD3D12::submit(Frame* _render, ClearQuad& /*_clearQuad*/, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
 //		PIX_BEGINEVENT(D3DCOLOR_FRAME, L"rendererSubmit");
@@ -4868,10 +4949,7 @@ data.NumQualityLevels = 0;
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
 
-		BlitKey blitKey;
-		blitKey.decode(_render->m_blitKeys[0]);
-		uint16_t numBlitItems = _render->m_numBlitItems;
-		uint16_t blitItem = 0;
+		BlitState bs(_render);
 
 		uint32_t blendFactor = 0;
 
@@ -4986,83 +5064,7 @@ data.NumQualityLevels = 0;
 
 					prim = s_primInfo[BX_COUNTOF(s_primName)]; // Force primitive type update.
 
-					const uint8_t blitView = SortKey::decodeView(encodedKey);
-					for (; blitItem < numBlitItems && blitKey.m_view <= blitView; blitItem++)
-					{
-						const BlitItem& blit = _render->m_blitItem[blitItem];
-						blitKey.decode(_render->m_blitKeys[blitItem+1]);
-
-						const TextureD3D12& src = m_textures[blit.m_src.idx];
-						const TextureD3D12& dst = m_textures[blit.m_dst.idx];
-
- 						uint32_t srcWidth  = bx::uint32_min(src.m_width,  blit.m_srcX + blit.m_width)  - blit.m_srcX;
- 						uint32_t srcHeight = bx::uint32_min(src.m_height, blit.m_srcY + blit.m_height) - blit.m_srcY;
- 						uint32_t srcDepth  = bx::uint32_min(src.m_depth,  blit.m_srcZ + blit.m_depth)  - blit.m_srcZ;
- 						uint32_t dstWidth  = bx::uint32_min(dst.m_width,  blit.m_dstX + blit.m_width)  - blit.m_dstX;
- 						uint32_t dstHeight = bx::uint32_min(dst.m_height, blit.m_dstY + blit.m_height) - blit.m_dstY;
- 						uint32_t dstDepth  = bx::uint32_min(dst.m_depth,  blit.m_dstZ + blit.m_depth)  - blit.m_dstZ;
- 						uint32_t width     = bx::uint32_min(srcWidth,  dstWidth);
- 						uint32_t height    = bx::uint32_min(srcHeight, dstHeight);
- 						uint32_t depth     = bx::uint32_min(srcDepth,  dstDepth);
-
-						if (TextureD3D12::Texture3D == src.m_type)
-						{
-							D3D12_BOX box;
- 							box.left   = blit.m_srcX;
- 							box.top    = blit.m_srcY;
- 							box.front  = blit.m_srcZ;
- 							box.right  = blit.m_srcX + width;
- 							box.bottom = blit.m_srcY + height;;
- 							box.back   = blit.m_srcZ + bx::uint32_imax(1, depth);
-
-							D3D12_TEXTURE_COPY_LOCATION dstLocation = { dst.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{}} };
-							D3D12_TEXTURE_COPY_LOCATION srcLocation = { src.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{}} };
-							m_commandList->CopyTextureRegion(&dstLocation
-								, blit.m_dstX
-								, blit.m_dstY
-								, blit.m_dstZ
-								, &srcLocation
-								, &box
-								);
-						}
-						else
-						{
-							D3D12_BOX box;
-							box.left   = blit.m_srcX;
-							box.top    = blit.m_srcY;
-							box.front  = 0;
-							box.right  = blit.m_srcX + width;
-							box.bottom = blit.m_srcY + height;;
-							box.back   = 1;
-
-							const uint32_t srcZ = TextureD3D12::TextureCube == src.m_type
-								? blit.m_srcZ
-								: 0
-								;
-							const uint32_t dstZ = TextureD3D12::TextureCube == dst.m_type
-								? blit.m_dstZ
-								: 0
-								;
-
-							D3D12_TEXTURE_COPY_LOCATION dstLocation;
-							dstLocation.pResource = dst.m_ptr;
-							dstLocation.Type      = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-							dstLocation.SubresourceIndex = dstZ*dst.m_numMips+blit.m_dstMip;
-							D3D12_TEXTURE_COPY_LOCATION srcLocation;
-							srcLocation.pResource = src.m_ptr;
-							srcLocation.Type      = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-							srcLocation.SubresourceIndex = srcZ*src.m_numMips+blit.m_srcMip;
-
-							bool depthStencil = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) );
-							m_commandList->CopyTextureRegion(&dstLocation
-								, blit.m_dstX
-								, blit.m_dstY
-								, 0
-								, &srcLocation
-								, depthStencil ? NULL : &box
-								);
-						}
-					}
+					submitBlit(bs, view);
 				}
 
 				if (isCompute)
@@ -5547,6 +5549,8 @@ data.NumQualityLevels = 0;
 					}
 				}
 			}
+
+			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
 
 			m_batch.end(m_commandList);
 		}
