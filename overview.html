@@ -460,23 +460,7 @@ in GPA directory and add <code class="docutils literal"><span class="pre">exampl
 windowing libraries. The main requirement is that windowing library
 provides access to native window handle that&#8217;s used to create Direct3D
 device or OpenGL context.</p>
-<p>Using bgfx with SDL example:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">#include &lt;SDL.h&gt;</span>
-<span class="c1">#include &lt;bgfx/platform.h&gt; // it must be included after SDL to enable SDL</span>
-                           <span class="o">//</span> <span class="n">integration</span> <span class="n">code</span> <span class="n">path</span><span class="o">.</span>
-
-<span class="c1">#include &lt;bgfx/bgfx.h&gt;</span>
-<span class="o">...</span>
-
-<span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="o">...</span>
-<span class="p">{</span>
-    <span class="n">SDL_window</span><span class="o">*</span> <span class="n">window</span> <span class="o">=</span> <span class="n">SDL_CreateWindow</span><span class="p">(</span><span class="o">...</span>
-    <span class="n">bgfx</span><span class="p">::</span><span class="n">sdlSetWindow</span><span class="p">(</span><span class="n">window</span><span class="p">);</span>
-
-    <span class="o">...</span>
-    <span class="n">bgfx</span><span class="p">::</span><span class="n">init</span><span class="p">();</span>
-</pre></div>
-</div>
+<p>For more info see: <a class="reference internal" href="bgfx.html"><span class="doc">API Reference</span></a>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">You can use <code class="docutils literal"><span class="pre">--with-sdl</span></code> when runnning GENie to enable SDL2 integration with examples:
