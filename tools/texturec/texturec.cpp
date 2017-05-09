@@ -104,11 +104,15 @@ bimg::ImageContainer* convert(bx::AllocatorI* _allocator, const void* _inputData
 				width  = input->m_width * height / input->m_height;
 			}
 
-			bimg::ImageContainer* dst = bimg::imageAlloc(_allocator
+			bimg::ImageContainer* dst = bimg::imageAlloc(
+				  _allocator
 				, bimg::TextureFormat::RGBA32F
 				, uint16_t(width)
 				, uint16_t(height)
-				, 1, 1, false, false
+				, 1
+				, input->m_numLayers
+				, input->m_cubeMap
+				, false
 				);
 
 			bimg::imageResizeRgba32fLinear(dst, src);
@@ -343,7 +347,9 @@ bimg::ImageContainer* convert(bx::AllocatorI* _allocator, const void* _inputData
 						bx::memCopy(ref, rgba, size);
 					}
 
-					bimg::imageEncodeFromRgba8(output->m_data, rgba, dstMip.m_width, dstMip.m_height, outputFormat);
+					bimg::imageGetRawData(*output, side, 0, output->m_data, output->m_size, dstMip);
+					dstData = const_cast<uint8_t*>(dstMip.m_data);
+					bimg::imageEncodeFromRgba8(dstData, rgba, dstMip.m_width, dstMip.m_height, outputFormat);
 
 					for (uint8_t lod = 1; lod < numMips; ++lod)
 					{

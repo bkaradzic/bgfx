@@ -3614,7 +3614,11 @@ VK_DESTROY
 
 	void RendererContextVK::submitBlit(BlitState& _bs, uint16_t _view)
 	{
-		BX_UNUSED(_bs, _view);
+		while (_bs.hasItem(_view) )
+		{
+			const BlitItem& blit = _bs.advance();
+			BX_UNUSED(blit);
+		}
 	}
 
 	void RendererContextVK::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
