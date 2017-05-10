@@ -15,7 +15,7 @@ project "texturec"
 	}
 
 	files {
-		path.join(BGFX_DIR, "tools/texturec/texturec.cpp"),
+		path.join(BIMG_DIR, "tools/texturec/texturec.cpp"),
 	}
 
 	links {
