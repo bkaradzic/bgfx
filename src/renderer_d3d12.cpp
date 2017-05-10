@@ -540,6 +540,7 @@ namespace bgfx { namespace d3d12
 			LUID luid;
 
 			m_renderdocdll = loadRenderDoc();
+			setGraphicsDebuggerPresent(NULL != m_renderdocdll);
 
 			m_fbh.idx = invalidHandle;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
@@ -5550,9 +5551,10 @@ data.NumQualityLevels = 0;
 				}
 			}
 
-			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
-
 			m_batch.end(m_commandList);
+			kick();
+
+			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
 		}
 
 		int64_t now = bx::getHPCounter();
