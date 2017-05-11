@@ -12,13 +12,16 @@ extern "C"
 #include <fpp.h>
 } // extern "C"
 
+#define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', 0x2)
+#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x4)
+#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x4)
+
+#define BGFX_SHADERC_VERSION_MAJOR 1
+#define BGFX_SHADERC_VERSION_MINOR 0
+
 namespace bgfx
 {
 	bool g_verbose = false;
-
-	#define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', 0x2)
-	#define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', 0x4)
-	#define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x4)
 
 	static const char* s_ARB_shader_texture_lod[] =
 	{
@@ -725,9 +728,12 @@ namespace bgfx
 		}
 
 		fprintf(stderr
-			, "shaderc, bgfx shader compiler tool\n"
+			, "shaderc, bgfx shader compiler tool, version %d.%d.%d.\n"
 			  "Copyright 2011-2017 Branimir Karadzic. All rights reserved.\n"
 			  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
+			, BGFX_SHADERC_VERSION_MAJOR
+			, BGFX_SHADERC_VERSION_MINOR
+			, BGFX_API_VERSION
 			);
 
 		fprintf(stderr
@@ -735,6 +741,8 @@ namespace bgfx
 
 			  "\n"
 			  "Options:\n"
+			  "  -h, --help                    Help.\n"
+			  "  -v, --version                 Version information only.\n"
 			  "  -f <file path>                Input file path.\n"
 			  "  -i <include path>             Include path (for multiple paths use use -i multiple times).\n"
 			  "  -o <file path>                Output file path.\n"
@@ -773,6 +781,17 @@ namespace bgfx
 	int compileShader(int _argc, const char* _argv[])
 	{
 		bx::CommandLine cmdLine(_argc, _argv);
+
+		if (cmdLine.hasArg('v', "version") )
+		{
+			fprintf(stderr
+				, "shaderc, bgfx shader compiler tool, version %d.%d.%d.\n"
+				, BGFX_SHADERC_VERSION_MAJOR
+				, BGFX_SHADERC_VERSION_MINOR
+				, BGFX_API_VERSION
+				);
+			return EXIT_SUCCESS;
+		}
 
 		if (cmdLine.hasArg('h', "help") )
 		{

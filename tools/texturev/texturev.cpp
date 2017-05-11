@@ -35,6 +35,9 @@ namespace stl = tinystl;
 #include "fs_texture_cube.bin.h"
 #include "fs_texture_sdf.bin.h"
 
+#define BGFX_TEXTUREV_VERSION_MAJOR 1
+#define BGFX_TEXTUREV_VERSION_MINOR 0
+
 static const bgfx::EmbeddedShader s_embeddedShaders[] =
 {
 	BGFX_EMBEDDED_SHADER(vs_texture),
@@ -509,39 +512,6 @@ struct Interpolator
 	}
 };
 
-void help(const char* _error = NULL)
-{
-	if (NULL != _error)
-	{
-		fprintf(stderr, "Error:\n%s\n\n", _error);
-	}
-
-	fprintf(stderr
-		, "texturev, bgfx texture viewer tool\n"
-		  "Copyright 2011-2017 Branimir Karadzic. All rights reserved.\n"
-		  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
-		);
-
-	fprintf(stderr
-		, "Usage: texturev <file path>\n"
-		  "\n"
-		  "Supported input file types:\n"
-		  );
-
-	for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
-	{
-		fprintf(stderr, "    *.%s\n", s_supportedExt[ii]);
-	}
-
-	fprintf(stderr
-		, "\n"
-		  "Options:\n"
-		  "      --associate          Associate file extensions with texturev.\n"
-		  "\n"
-		  "For additional information, see https://github.com/bkaradzic/bgfx\n"
-		);
-}
-
 void associate()
 {
 #if BX_PLATFORM_WINDOWS
@@ -628,9 +598,58 @@ void associate()
 #endif // BX_PLATFORM_WINDOWS
 }
 
+void help(const char* _error = NULL)
+{
+	if (NULL != _error)
+	{
+		fprintf(stderr, "Error:\n%s\n\n", _error);
+	}
+
+	fprintf(stderr
+		, "texturev, bgfx texture viewer tool, version %d.%d.%d.\n"
+		  "Copyright 2011-2017 Branimir Karadzic. All rights reserved.\n"
+		  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
+		, BGFX_TEXTUREV_VERSION_MAJOR
+		, BGFX_TEXTUREV_VERSION_MINOR
+		, BGFX_API_VERSION
+		);
+
+	fprintf(stderr
+		, "Usage: texturev <file path>\n"
+		  "\n"
+		  "Supported input file types:\n"
+		  );
+
+	for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
+	{
+		fprintf(stderr, "    *.%s\n", s_supportedExt[ii]);
+	}
+
+	fprintf(stderr
+		, "\n"
+		  "Options:\n"
+		  "  -h, --help               Help.\n"
+		  "  -v, --version            Version information only.\n"
+		  "      --associate          Associate file extensions with texturev.\n"
+		  "\n"
+		  "For additional information, see https://github.com/bkaradzic/bgfx\n"
+		);
+}
+
 int _main_(int _argc, char** _argv)
 {
 	bx::CommandLine cmdLine(_argc, _argv);
+
+	if (cmdLine.hasArg('v', "version") )
+	{
+		fprintf(stderr
+			, "texturev, bgfx texture viewer tool, version %d.%d.%d.\n"
+			, BGFX_TEXTUREV_VERSION_MAJOR
+			, BGFX_TEXTUREV_VERSION_MINOR
+			, BGFX_API_VERSION
+			);
+		return EXIT_SUCCESS;
+	}
 
 	if (cmdLine.hasArg('h', "help") )
 	{
@@ -776,9 +795,12 @@ int _main_(int _argc, char** _argv)
 				ImGui::SetWindowFontScale(1.0f);
 
 				ImGui::Text(
-					"texturev, bgfx texture viewer tool " ICON_KI_WRENCH "\n"
+					"texturev, bgfx texture viewer tool " ICON_KI_WRENCH ", version %d.%d.%d.\n"
 					"Copyright 2011-2017 Branimir Karadzic. All rights reserved.\n"
 					"License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n"
+					, BGFX_TEXTUREV_VERSION_MAJOR
+					, BGFX_TEXTUREV_VERSION_MINOR
+					, BGFX_API_VERSION
 					);
 				ImGui::Separator();
 				ImGui::NextLine();
