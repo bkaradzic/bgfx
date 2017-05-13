@@ -40,6 +40,7 @@
 #include "../MachineIndependent/Versions.h"
 
 #include <cstring>
+#include <vector>
 
 #ifdef _WIN32
 #define C_DECL __cdecl
@@ -306,6 +307,7 @@ public:
     void setShiftUavBinding(unsigned int base);
     void setShiftCbufferBinding(unsigned int base); // synonym for setShiftUboBinding
     void setShiftSsboBinding(unsigned int base);
+    void setResourceSetBinding(const std::vector<std::string>& base);
     void setAutoMapBindings(bool map);
     void setHlslIoMapping(bool hlslIoMap);
     void setFlattenUniformArrays(bool flatten);

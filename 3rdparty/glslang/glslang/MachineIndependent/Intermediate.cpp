@@ -148,8 +148,8 @@ TIntermTyped* TIntermediate::addBinaryMath(TOperator op, TIntermTyped* left, TIn
     // If they are both (non-specialization) constants, they must be folded.
     // (Unless it's the sequence (comma) operator, but that's handled in addComma().)
     //
-    TIntermConstantUnion *leftTempConstant = left->getAsConstantUnion();
-    TIntermConstantUnion *rightTempConstant = right->getAsConstantUnion();
+    TIntermConstantUnion *leftTempConstant = node->getLeft()->getAsConstantUnion();
+    TIntermConstantUnion *rightTempConstant = node->getRight()->getAsConstantUnion();
     if (leftTempConstant && rightTempConstant) {
         TIntermTyped* folded = leftTempConstant->fold(node->getOp(), rightTempConstant);
         if (folded)
@@ -158,7 +158,7 @@ TIntermTyped* TIntermediate::addBinaryMath(TOperator op, TIntermTyped* left, TIn
 
     // If can propagate spec-constantness and if the operation is an allowed
     // specialization-constant operation, make a spec-constant.
-    if (specConstantPropagates(*left, *right) && isSpecializationOperation(*node))
+    if (specConstantPropagates(*node->getLeft(), *node->getRight()) && isSpecializationOperation(*node))
         node->getWritableType().getQualifier().makeSpecConstant();
 
     return node;

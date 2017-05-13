@@ -21,6 +21,8 @@
 ** MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
 */
 
+#pragma once
+
 #define GL_FLOAT                          0x1406
 #define GL_FLOAT_VEC2                     0x8B50
 #define GL_FLOAT_VEC3                     0x8B51

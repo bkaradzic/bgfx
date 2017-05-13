@@ -37,6 +37,8 @@
 // propagate 'noContraction' qualifier.
 //
 
+#pragma once
+
 #include "../Include/intermediate.h"
 
 namespace glslang {

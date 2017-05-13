@@ -349,6 +349,7 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
     int baseUboBinding;
     int baseSsboBinding;
     int baseUavBinding;
+    std::vector<std::string> baseResourceSetBinding;
     bool doAutoMapping;
     typedef std::vector<int> TSlotSet;
     typedef std::unordered_map<int, TSlotSet> TSlotSetMap;
@@ -656,6 +657,7 @@ bool TIoMapper::addStage(EShLanguage stage, TIntermediate &intermediate, TInfoSi
         intermediate.getShiftUboBinding() == 0 &&
         intermediate.getShiftSsboBinding() == 0 &&
         intermediate.getShiftUavBinding() == 0 &&
+        intermediate.getResourceSetBinding().empty() &&
         intermediate.getAutoMapBindings() == false &&
         resolver == nullptr)
         return true;
@@ -686,6 +688,7 @@ bool TIoMapper::addStage(EShLanguage stage, TIntermediate &intermediate, TInfoSi
         resolverBase->baseUboBinding = intermediate.getShiftUboBinding();
         resolverBase->baseSsboBinding = intermediate.getShiftSsboBinding();
         resolverBase->baseUavBinding = intermediate.getShiftUavBinding();
+        resolverBase->baseResourceSetBinding = intermediate.getResourceSetBinding();
         resolverBase->doAutoMapping = intermediate.getAutoMapBindings();
 
         resolver = resolverBase;

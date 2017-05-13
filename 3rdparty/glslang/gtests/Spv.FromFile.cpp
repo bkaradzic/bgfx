@@ -283,6 +283,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.test.vert",
         "spv.texture.frag",
         "spv.texture.vert",
+        "spv.textureBuffer.vert",
         "spv.image.frag",
         "spv.types.frag",
         "spv.uint.frag",

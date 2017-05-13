@@ -36,6 +36,8 @@
 // Parameterize the SPIR-V enumerants.
 //
 
+#pragma once
+
 #include "spirv.hpp"
 
 #include <vector>
