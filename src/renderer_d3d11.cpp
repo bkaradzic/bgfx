@@ -356,7 +356,7 @@ namespace bgfx { namespace d3d11
 	};
 	BX_STATIC_ASSERT(AttribType::Count == BX_COUNTOF(s_attribType) );
 
-	static D3D11_INPUT_ELEMENT_DESC* fillVertexDecl(D3D11_INPUT_ELEMENT_DESC* _out, const VertexDecl& _decl)
+	static D3D11_INPUT_ELEMENT_DESC* fillVertexDecl(uint8_t _stream, D3D11_INPUT_ELEMENT_DESC* _out, const VertexDecl& _decl)
 	{
 		D3D11_INPUT_ELEMENT_DESC* elem = _out;
 
@@ -365,6 +365,8 @@ namespace bgfx { namespace d3d11
 			if (UINT16_MAX != _decl.m_attributes[attr])
 			{
 				bx::memCopy(elem, &s_attrib[attr], sizeof(D3D11_INPUT_ELEMENT_DESC) );
+
+				elem->InputSlot = _stream;
 
 				if (0 == _decl.m_attributes[attr])
 				{
@@ -1336,18 +1338,39 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				if (m_featureLevel <= D3D_FEATURE_LEVEL_9_2)
 				{
 					g_caps.limits.maxTextureSize   = D3D_FL9_1_REQ_TEXTURE2D_U_OR_V_DIMENSION;
-					g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(D3D_FL9_1_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
+					g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(
+						  D3D_FL9_1_SIMULTANEOUS_RENDER_TARGET_COUNT
+						, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS
+						) );
+					g_caps.limits.maxVertexStreams = uint8_t(bx::uint32_min(
+						  16
+						, BGFX_CONFIG_MAX_VERTEX_STREAMS
+						) );
 				}
 				else if (m_featureLevel == D3D_FEATURE_LEVEL_9_3)
 				{
 					g_caps.limits.maxTextureSize   = D3D_FL9_3_REQ_TEXTURE2D_U_OR_V_DIMENSION;
-					g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(D3D_FL9_3_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
+					g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(
+						  D3D_FL9_3_SIMULTANEOUS_RENDER_TARGET_COUNT
+						, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS
+						) );
+					g_caps.limits.maxVertexStreams = uint8_t(bx::uint32_min(
+						  16
+						, BGFX_CONFIG_MAX_VERTEX_STREAMS
+						) );
 				}
 				else
 				{
 					g_caps.supported |= BGFX_CAPS_TEXTURE_COMPARE_ALL;
 					g_caps.limits.maxTextureSize   = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
-					g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
+					g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(
+						  D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT
+						, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS
+						) );
+					g_caps.limits.maxVertexStreams = uint8_t(bx::uint32_min(
+						  D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT
+						, BGFX_CONFIG_MAX_VERTEX_STREAMS
+						) );
 				}
 
 				// 32-bit indices only supported on 9_2+.
@@ -2708,27 +2731,51 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			}
 		}
 
-		void setInputLayout(const VertexDecl& _vertexDecl, const ProgramD3D11& _program, uint16_t _numInstanceData)
+		void setInputLayout(uint8_t _numStreams, const VertexDecl** _vertexDecls, const ProgramD3D11& _program, uint16_t _numInstanceData)
 		{
-			uint64_t layoutHash = (uint64_t(_vertexDecl.m_hash)<<32) | _program.m_vsh->m_hash;
-			layoutHash ^= _numInstanceData;
+			bx::HashMurmur2A murmur;
+			murmur.begin();
+			murmur.add(_numInstanceData);
+			for (uint8_t stream = 0; stream < _numStreams; ++stream)
+			{
+				murmur.add(_vertexDecls[stream]->m_hash);
+			}
+			uint64_t layoutHash = (uint64_t(_program.m_vsh->m_hash)<<32) | murmur.end();
+
 			ID3D11InputLayout* layout = m_inputLayoutCache.find(layoutHash);
 			if (NULL == layout)
 			{
 				D3D11_INPUT_ELEMENT_DESC vertexElements[Attrib::Count+1+BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
+				D3D11_INPUT_ELEMENT_DESC* elem = vertexElements;
 
-				VertexDecl decl;
-				bx::memCopy(&decl, &_vertexDecl, sizeof(VertexDecl) );
-				const uint16_t* attrMask = _program.m_vsh->m_attrMask;
+				uint16_t attrMask[Attrib::Count];
+				bx::memCopy(attrMask, _program.m_vsh->m_attrMask, sizeof(attrMask) );
 
-				for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
+				for (uint8_t stream = 0; stream < _numStreams; ++stream)
 				{
-					uint16_t mask = attrMask[ii];
-					uint16_t attr = (decl.m_attributes[ii] & mask);
-					decl.m_attributes[ii] = attr == 0 ? UINT16_MAX : attr == UINT16_MAX ? 0 : attr;
+					VertexDecl decl;
+					bx::memCopy(&decl, _vertexDecls[stream], sizeof(VertexDecl) );
+
+					const bool last = stream == _numStreams-1;
+
+					for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
+					{
+						uint16_t mask = attrMask[ii];
+						uint16_t attr = (decl.m_attributes[ii] & mask);
+						if (0          == attr
+						||  UINT16_MAX == attr)
+						{
+							decl.m_attributes[ii] = last ? ~attr : UINT16_MAX;
+						}
+						else
+						{
+							attrMask[ii] = 0;
+						}
+					}
+
+					elem = fillVertexDecl(stream, elem, decl);
 				}
 
-				D3D11_INPUT_ELEMENT_DESC* elem = fillVertexDecl(vertexElements, decl);
 				uint32_t num = uint32_t(elem-vertexElements);
 
 				const D3D11_INPUT_ELEMENT_DESC inst = { "TEXCOORD", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_INSTANCE_DATA, 1 };
@@ -2756,7 +2803,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 
 					bx::memCopy(curr, &inst, sizeof(D3D11_INPUT_ELEMENT_DESC) );
-					curr->InputSlot = 1;
+					curr->InputSlot = _numStreams;
 					curr->SemanticIndex = index;
 					curr->AlignedByteOffset = ii*16;
 				}
@@ -2772,6 +2819,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			}
 
 			m_deviceCtx->IASetInputLayout(layout);
+		}
+
+		void setInputLayout(const VertexDecl& _vertexDecl, const ProgramD3D11& _program, uint16_t _numInstanceData)
+		{
+			const VertexDecl* decls[1] = { &_vertexDecl };
+			setInputLayout(BX_COUNTOF(decls), decls, _program, _numInstanceData);
 		}
 
 		void setBlendState(uint64_t _state, uint32_t _rgba = 0)
@@ -5321,11 +5374,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	void RendererContextD3D11::submitBlit(BlitState& _bs, uint16_t _view)
 	{
 		ID3D11DeviceContext* deviceCtx = m_deviceCtx;
-		
+
 		while (_bs.hasItem(_view) )
 		{
 			const BlitItem& blit = _bs.advance();
-			
+
 			const TextureD3D11& src = m_textures[blit.m_src.idx];
 			const TextureD3D11& dst = m_textures[blit.m_dst.idx];
 
@@ -6041,43 +6094,70 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 				}
 
+				bool vertexStreamChanged = hasVertexStreamChanged(currentState, draw);
+
 				if (programChanged
-				||  currentState.m_streamMask             != draw.m_streamMask
-				||  currentState.m_stream[0].m_decl.idx   != draw.m_stream[0].m_decl.idx
-				||  currentState.m_stream[0].m_handle.idx != draw.m_stream[0].m_handle.idx
-				||  currentState.m_instanceDataBuffer.idx != draw.m_instanceDataBuffer.idx
-				||  currentState.m_instanceDataOffset     != draw.m_instanceDataOffset
-				||  currentState.m_instanceDataStride     != draw.m_instanceDataStride)
+				||  vertexStreamChanged)
 				{
 				    currentState.m_streamMask             = draw.m_streamMask;
-					currentState.m_stream[0].m_decl       = draw.m_stream[0].m_decl;
-					currentState.m_stream[0].m_handle     = draw.m_stream[0].m_handle;
 					currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
 					currentState.m_instanceDataOffset     = draw.m_instanceDataOffset;
 					currentState.m_instanceDataStride     = draw.m_instanceDataStride;
 
-					uint16_t handle = draw.m_stream[0].m_handle.idx;
-					if (invalidHandle != handle)
-					{
-						const VertexBufferD3D11& vb = m_vertexBuffers[handle];
+					ID3D11Buffer* buffers[BGFX_CONFIG_MAX_VERTEX_STREAMS];
+					uint32_t strides[BGFX_CONFIG_MAX_VERTEX_STREAMS];
+					uint32_t offsets[BGFX_CONFIG_MAX_VERTEX_STREAMS];
+					const VertexDecl* decls[BGFX_CONFIG_MAX_VERTEX_STREAMS];
 
-						uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[0].m_decl.idx : vb.m_decl.idx;
+					uint32_t numVertices = UINT32_MAX;
+					uint8_t  numStreams  = 0;
+					for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
+						; 0 != streamMask
+						; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask), ++numStreams
+						)
+					{
+						streamMask >>= ntz;
+						idx         += ntz;
+
+						currentState.m_stream[idx].m_decl        = draw.m_stream[idx].m_decl;
+						currentState.m_stream[idx].m_handle      = draw.m_stream[idx].m_handle;
+						currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
+
+						uint16_t handle = draw.m_stream[idx].m_handle.idx;
+						const VertexBufferD3D11& vb = m_vertexBuffers[handle];
+						uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[idx].m_decl.idx : vb.m_decl.idx;
 						const VertexDecl& vertexDecl = m_vertexDecls[decl];
 						uint32_t stride = vertexDecl.m_stride;
-						uint32_t offset = 0;
-						deviceCtx->IASetVertexBuffers(0, 1, &vb.m_ptr, &stride, &offset);
+
+						buffers[numStreams] = vb.m_ptr;
+						strides[numStreams] = stride;
+						offsets[numStreams] = draw.m_stream[idx].m_startVertex * stride;
+						decls[numStreams]   = &vertexDecl;
+
+						numVertices = bx::uint32_min(UINT32_MAX == draw.m_numVertices
+							? vb.m_size/stride
+							: draw.m_numVertices
+							, numVertices
+							);
+					}
+
+					currentState.m_numVertices = numVertices;
+
+					if (0 < numStreams)
+					{
+						deviceCtx->IASetVertexBuffers(0, numStreams, buffers, strides, offsets);
 
 						if (isValid(draw.m_instanceDataBuffer) )
 						{
 							const VertexBufferD3D11& inst = m_vertexBuffers[draw.m_instanceDataBuffer.idx];
 							uint32_t instStride = draw.m_instanceDataStride;
-							deviceCtx->IASetVertexBuffers(1, 1, &inst.m_ptr, &instStride, &draw.m_instanceDataOffset);
-							setInputLayout(vertexDecl, m_program[programIdx], draw.m_instanceDataStride/16);
+							deviceCtx->IASetVertexBuffers(numStreams, 1, &inst.m_ptr, &instStride, &draw.m_instanceDataOffset);
+							setInputLayout(numStreams, decls, m_program[programIdx], draw.m_instanceDataStride/16);
 						}
 						else
 						{
-							deviceCtx->IASetVertexBuffers(1, 1, s_zero.m_buffer, s_zero.m_zero, s_zero.m_zero);
-							setInputLayout(vertexDecl, m_program[programIdx], 0);
+							deviceCtx->IASetVertexBuffers(numStreams, 1, s_zero.m_buffer, s_zero.m_zero, s_zero.m_zero);
+							setInputLayout(numStreams, decls, m_program[programIdx], 0);
 						}
 					}
 					else
@@ -6107,15 +6187,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				if (0 != currentState.m_streamMask)
 				{
-					uint32_t numVertices = draw.m_numVertices;
-					if (UINT32_MAX == numVertices)
-					{
-						const VertexBufferD3D11& vb = m_vertexBuffers[currentState.m_stream[0].m_handle.idx];
-						uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[0].m_decl.idx : vb.m_decl.idx;
-						const VertexDecl& vertexDecl = m_vertexDecls[decl];
-						numVertices = vb.m_size/vertexDecl.m_stride;
-					}
-
+					uint32_t numVertices       = currentState.m_numVertices;
 					uint32_t numIndices        = 0;
 					uint32_t numPrimsSubmitted = 0;
 					uint32_t numInstances      = 0;
@@ -6177,7 +6249,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 									deviceCtx->DrawIndexedInstanced(numIndices
 										, draw.m_numInstances
 										, 0
-										, draw.m_stream[0].m_startVertex
+										, 0
 										, 0
 										);
 								}
@@ -6185,7 +6257,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								{
 									deviceCtx->DrawIndexed(numIndices
 										, 0
-										, draw.m_stream[0].m_startVertex
+										, 0
 										);
 								}
 							}
@@ -6201,7 +6273,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 									deviceCtx->DrawIndexedInstanced(numIndices
 										, draw.m_numInstances
 										, draw.m_startIndex
-										, draw.m_stream[0].m_startVertex
+										, 0
 										, 0
 										);
 								}
@@ -6209,7 +6281,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								{
 									deviceCtx->DrawIndexed(numIndices
 										, draw.m_startIndex
-										, draw.m_stream[0].m_startVertex
+										, 0
 										);
 								}
 							}
@@ -6224,14 +6296,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 							{
 								deviceCtx->DrawInstanced(numVertices
 									, draw.m_numInstances
-									, draw.m_stream[0].m_startVertex
+									, 0
 									, 0
 									);
 							}
 							else
 							{
 								deviceCtx->Draw(numVertices
-									, draw.m_stream[0].m_startVertex
+									, 0
 									);
 							}
 						}

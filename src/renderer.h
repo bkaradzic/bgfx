@@ -467,6 +467,34 @@ namespace bgfx
 		HashMap m_hashMap;
 	};
 
+	inline bool hasVertexStreamChanged(const RenderDraw& _current, const RenderDraw& _new)
+	{
+		if (_current.m_streamMask             != _new.m_streamMask
+		||  _current.m_instanceDataBuffer.idx != _new.m_instanceDataBuffer.idx
+		||  _current.m_instanceDataOffset     != _new.m_instanceDataOffset
+		||  _current.m_instanceDataStride     != _new.m_instanceDataStride)
+		{
+			return true;
+		}
+
+		for (uint32_t idx = 0, streamMask = _new.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
+			; 0 != streamMask
+			; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
+			)
+		{
+			streamMask >>= ntz;
+			idx         += ntz;
+
+			if (_current.m_stream[idx].m_handle.idx  != _new.m_stream[idx].m_handle.idx
+			||  _current.m_stream[idx].m_startVertex != _new.m_stream[idx].m_startVertex)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 } // namespace bgfx
 
 #endif // BGFX_RENDERER_H_HEADER_GUARD
