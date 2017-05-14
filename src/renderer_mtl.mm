@@ -1548,20 +1548,23 @@ namespace bgfx { namespace mtl
 		{
 			if (!isValid(_fbh) )
 			{
-				if ( NULL != m_backBufferColorMSAA )
+				if (NULL != m_backBufferColorMSAA)
 				{
 					renderPassDescriptor.colorAttachments[0].texture = m_backBufferColorMSAA;
-					renderPassDescriptor.colorAttachments[0].resolveTexture = ((NULL != m_screenshotTarget) ?
-																			   m_screenshotTarget.m_obj :
-																			   currentDrawable().texture);
+					renderPassDescriptor.colorAttachments[0].resolveTexture = NULL != m_screenshotTarget
+						? m_screenshotTarget.m_obj
+						: currentDrawable().texture
+						;
 				}
 				else
 				{
-					renderPassDescriptor.colorAttachments[0].texture = ((NULL != m_screenshotTarget) ?
-																		m_screenshotTarget.m_obj :
-																		currentDrawable().texture);
+					renderPassDescriptor.colorAttachments[0].texture = NULL != m_screenshotTarget
+						? m_screenshotTarget.m_obj
+						: currentDrawable().texture
+						;
 				}
-				renderPassDescriptor.depthAttachment.texture = m_backBufferDepth;
+
+				renderPassDescriptor.depthAttachment.texture   = m_backBufferDepth;
 				renderPassDescriptor.stencilAttachment.texture = m_backBufferStencil;
 			}
 			else
@@ -1571,25 +1574,39 @@ namespace bgfx { namespace mtl
 				for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
 				{
 					const TextureMtl& texture = m_textures[frameBuffer.m_colorHandle[ii].idx];
-					renderPassDescriptor.colorAttachments[ii].texture = texture.m_ptrMSAA ? texture.m_ptrMSAA : texture.m_ptr;
-					renderPassDescriptor.colorAttachments[ii].resolveTexture = texture.m_ptrMSAA ? texture.m_ptr.m_obj : NULL;
+					renderPassDescriptor.colorAttachments[ii].texture = texture.m_ptrMSAA
+						? texture.m_ptrMSAA
+						: texture.m_ptr
+						;
+					renderPassDescriptor.colorAttachments[ii].resolveTexture = texture.m_ptrMSAA
+						? texture.m_ptr.m_obj
+						: NULL
+						;
 				}
 
 				if (isValid(frameBuffer.m_depthHandle) )
 				{
 					const TextureMtl& texture = m_textures[frameBuffer.m_depthHandle.idx];
-					renderPassDescriptor.depthAttachment.texture = texture.m_ptrMSAA ? texture.m_ptrMSAA : texture.m_ptr;
+					renderPassDescriptor.depthAttachment.texture = texture.m_ptrMSAA
+						? texture.m_ptrMSAA
+						: texture.m_ptr
+						;
 					renderPassDescriptor.stencilAttachment.texture = texture.m_ptrStencil;
 
-					if ( texture.m_textureFormat == TextureFormat::D24S8)//TODO: msaa and stencil iOS8 hack
+					if (texture.m_textureFormat == TextureFormat::D24S8)
 					{
-						if ( texture.m_ptr.pixelFormat() == 255 /* Depth24Unorm_Stencil8 */||
-							 texture.m_ptr.pixelFormat() == 260 /* Depth32Float_Stencil8 */ )
+						if (texture.m_ptr.pixelFormat() == 255 /* Depth24Unorm_Stencil8 */
+						||  texture.m_ptr.pixelFormat() == 260 /* Depth32Float_Stencil8 */)
 						{
 							renderPassDescriptor.stencilAttachment.texture = renderPassDescriptor.depthAttachment.texture;
 						}
 						else
-							renderPassDescriptor.stencilAttachment.texture = texture.m_ptrMSAA ? texture.m_ptrMSAA : texture.m_ptrStencil;
+						{
+							renderPassDescriptor.stencilAttachment.texture = texture.m_ptrMSAA
+								? texture.m_ptrMSAA
+								: texture.m_ptrStencil
+								;
+						}
 					}
 				}
 			}
@@ -2055,7 +2072,10 @@ namespace bgfx { namespace mtl
 				for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
 				{
 					const TextureMtl& texture = s_renderMtl->m_textures[frameBuffer.m_colorHandle[ii].idx];
-					pd.sampleCount = NULL != texture.m_ptrMSAA ? texture.m_ptrMSAA.sampleCount() : 1;
+					pd.sampleCount = NULL != texture.m_ptrMSAA
+						? texture.m_ptrMSAA.sampleCount()
+						: 1
+						;
 					pd.colorAttachments[ii].pixelFormat = texture.m_ptr.m_obj.pixelFormat;
 				}
 
@@ -2070,7 +2090,9 @@ namespace bgfx { namespace mtl
 					else
 					{
 						if ( texture.m_textureFormat == TextureFormat::D24S8)
+						{
 							pd.stencilAttachmentPixelFormat = texture.m_ptr.m_obj.pixelFormat;
+						}
 					}
 				}
 			}
@@ -2130,10 +2152,10 @@ namespace bgfx { namespace mtl
 				}
 			}
 
-			pd.vertexFunction = m_vsh->m_function;
+			pd.vertexFunction   = m_vsh->m_function;
 			pd.fragmentFunction = m_fsh->m_function;
 
-			if (isValid(_declHandle))
+			if (isValid(_declHandle) )
 			{
 				VertexDescriptor vertexDesc = s_renderMtl->m_vertexDescriptor;
 				reset(vertexDesc);
@@ -2172,19 +2194,19 @@ namespace bgfx { namespace mtl
 
 				BX_TRACE("stride: %d", (int)vertexDesc.layouts[1].stride);
 
-				if (_numInstanceData > 0)
+				if (0 < _numInstanceData)
 				{
 					for (uint32_t ii = 0; UINT16_MAX != m_instanceData[ii]; ++ii)
 					{
 						uint32_t loc = m_instanceData[ii];
-						vertexDesc.attributes[loc].format = MTLVertexFormatFloat4;
+						vertexDesc.attributes[loc].format      = MTLVertexFormatFloat4;
 						vertexDesc.attributes[loc].bufferIndex = 2;
-						vertexDesc.attributes[loc].offset = ii*16;
+						vertexDesc.attributes[loc].offset      = ii*16;
 					}
 
-					vertexDesc.layouts[2].stride = _numInstanceData * 16;
+					vertexDesc.layouts[2].stride       = _numInstanceData * 16;
 					vertexDesc.layouts[2].stepFunction = MTLVertexStepFunctionPerInstance;
-					vertexDesc.layouts[2].stepRate = 1;
+					vertexDesc.layouts[2].stepRate     = 1;
 				}
 
 				pd.vertexDescriptor = vertexDesc;
@@ -2246,15 +2268,10 @@ namespace bgfx { namespace mtl
 											}
 
 											switch (dataType) {
-												case MTLDataTypeFloat4 :
-													num *= 1;
-													break;
-												case MTLDataTypeFloat4x4:
-													num *= 4;
-													break;
-												case MTLDataTypeFloat3x3:
-													num *= 3;
-													break;
+												case MTLDataTypeFloat4:   num *= 1; break;
+												case MTLDataTypeFloat4x4: num *= 4; break;
+												case MTLDataTypeFloat3x3: num *= 3; break;
+
 												default:
 													BX_WARN(0, "Unsupported uniform MTLDataType: %d", uniform.dataType);
 													break;
@@ -2291,8 +2308,14 @@ namespace bgfx { namespace mtl
 								}
 								else if (arg.type == MTLArgumentTypeTexture)
 								{
-									if ( shaderType == 0 ) m_usedVertexSamplerStages |= 1<<arg.index;
-									else m_usedFragmentSamplerStages |= 1<<arg.index;
+									if (0 == shaderType)
+									{
+										m_usedVertexSamplerStages |= 1<<arg.index;
+									}
+									else
+									{
+										m_usedFragmentSamplerStages |= 1<<arg.index;
+									}
 
 									BX_TRACE("texture: %s index:%d", utf8String(arg.name), arg.index);
 								}
