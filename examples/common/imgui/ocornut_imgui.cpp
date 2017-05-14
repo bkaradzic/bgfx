@@ -148,7 +148,7 @@ struct OcornutImguiContext
 
 					bgfx::setState(state);
 					bgfx::setTexture(0, s_tex, th);
-					bgfx::setVertexBuffer(&tvb, 0, numVertices);
+					bgfx::setVertexBuffer(0, &tvb, 0, numVertices);
 					bgfx::setIndexBuffer(&tib, offset, cmd->ElemCount);
 					bgfx::submit(cmd->ViewId, program);
 				}

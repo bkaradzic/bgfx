@@ -726,7 +726,7 @@ class ExampleMetaballs : public entry::AppI
 			bgfx::setTransform(mtx);
 
 			// Set vertex and index buffer.
-			bgfx::setVertexBuffer(&tvb, 0, numVertices);
+			bgfx::setVertexBuffer(0, &tvb, 0, numVertices);
 
 			// Set render states.
 			bgfx::setState(BGFX_STATE_DEFAULT);

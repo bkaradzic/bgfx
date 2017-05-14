@@ -176,7 +176,7 @@ void VectorDisplay::endFrame()
 
 			bgfx::setTexture(0, s_texColor, m_lineTexId);
 
-			bgfx::setVertexBuffer(m_vertexBuffers[i], 0, m_vertexBuffersSize[i]); // explicitly feed vertex number!
+			bgfx::setVertexBuffer(0, m_vertexBuffers[i], 0, m_vertexBuffersSize[i]); // explicitly feed vertex number!
 
 			bgfx::setState(0
 				| BGFX_STATE_RGB_WRITE
@@ -793,7 +793,7 @@ void VectorDisplay::screenSpaceQuad(float _textureWidth, float _textureHeight, f
 		vertex[2].m_u = maxu;
 		vertex[2].m_v = maxv;
 
-		bgfx::setVertexBuffer(&vb);
+		bgfx::setVertexBuffer(0, &vb);
 	}
 }
 

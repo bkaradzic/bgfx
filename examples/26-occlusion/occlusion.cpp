@@ -224,14 +224,14 @@ class ExampleOcclusion : public entry::AppI
 					bgfx::OcclusionQueryHandle occlusionQuery = m_occlusionQueries[yy*CUBES_DIM+xx];
 
 					bgfx::setTransform(mtx);
-					bgfx::setVertexBuffer(m_vbh);
+					bgfx::setVertexBuffer(0, m_vbh);
 					bgfx::setIndexBuffer(m_ibh);
 					bgfx::setCondition(occlusionQuery, true);
 					bgfx::setState(BGFX_STATE_DEFAULT);
 					bgfx::submit(0, m_program);
 
 					bgfx::setTransform(mtx);
-					bgfx::setVertexBuffer(m_vbh);
+					bgfx::setVertexBuffer(0, m_vbh);
 					bgfx::setIndexBuffer(m_ibh);
 					bgfx::setState(0
 						| BGFX_STATE_DEPTH_TEST_LEQUAL
@@ -240,7 +240,7 @@ class ExampleOcclusion : public entry::AppI
 					bgfx::submit(1, m_program, occlusionQuery);
 
 					bgfx::setTransform(mtx);
-					bgfx::setVertexBuffer(m_vbh);
+					bgfx::setVertexBuffer(0, m_vbh);
 					bgfx::setIndexBuffer(m_ibh);
 					bgfx::setCondition(occlusionQuery, true);
 					bgfx::setState(BGFX_STATE_DEFAULT);

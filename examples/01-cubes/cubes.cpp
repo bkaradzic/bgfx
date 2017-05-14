@@ -6,11 +6,6 @@
 #include "common.h"
 #include "bgfx_utils.h"
 
-namespace bgfx
-{
-	void setVertexBuffer(uint8_t _stream, VertexBufferHandle _handle, uint32_t _startVertex = 0, uint32_t _numVertices = UINT32_MAX);
-}
-
 struct PosColorVertex
 {
 	float m_x;
@@ -20,25 +15,17 @@ struct PosColorVertex
 
 	static void init()
 	{
-		ms_decl0
+		ms_decl
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-			.skip(4)
-			.end();
-
-		ms_decl1
-			.begin()
-			.skip(12)
 			.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl0;
-	static bgfx::VertexDecl ms_decl1;
+	static bgfx::VertexDecl ms_decl;
 };
 
-bgfx::VertexDecl PosColorVertex::ms_decl0;
-bgfx::VertexDecl PosColorVertex::ms_decl1;
+bgfx::VertexDecl PosColorVertex::ms_decl;
 
 static PosColorVertex s_cubeVertices[] =
 {
@@ -115,16 +102,10 @@ class ExampleCubes : public entry::AppI
 		PosColorVertex::init();
 
 		// Create static vertex buffer.
-		m_vbh0 = bgfx::createVertexBuffer(
+		m_vbh = bgfx::createVertexBuffer(
 				// Static data can be passed with bgfx::makeRef
 				bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-				, PosColorVertex::ms_decl0
-				);
-
-		m_vbh1 = bgfx::createVertexBuffer(
-				// Static data can be passed with bgfx::makeRef
-				bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-				, PosColorVertex::ms_decl1
+				, PosColorVertex::ms_decl
 				);
 
 		// Create static index buffer.
@@ -143,8 +124,7 @@ class ExampleCubes : public entry::AppI
 	{
 		// Cleanup.
 		bgfx::destroyIndexBuffer(m_ibh);
-		bgfx::destroyVertexBuffer(m_vbh0);
-		bgfx::destroyVertexBuffer(m_vbh1);
+		bgfx::destroyVertexBuffer(m_vbh);
 		bgfx::destroyProgram(m_program);
 
 		// Shutdown bgfx.
@@ -221,8 +201,7 @@ class ExampleCubes : public entry::AppI
 					bgfx::setTransform(mtx);
 
 					// Set vertex and index buffer.
-					bgfx::setVertexBuffer(0, m_vbh0);
-					bgfx::setVertexBuffer(1, m_vbh1);
+					bgfx::setVertexBuffer(0, m_vbh);
 					bgfx::setIndexBuffer(m_ibh);
 
 					// Set render states.
@@ -250,8 +229,7 @@ class ExampleCubes : public entry::AppI
 	uint32_t m_height;
 	uint32_t m_debug;
 	uint32_t m_reset;
-	bgfx::VertexBufferHandle m_vbh0;
-	bgfx::VertexBufferHandle m_vbh1;
+	bgfx::VertexBufferHandle m_vbh;
 	bgfx::IndexBufferHandle m_ibh;
 	bgfx::ProgramHandle m_program;
 	int64_t m_timeOffset;

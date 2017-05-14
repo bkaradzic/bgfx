@@ -311,7 +311,7 @@ int _main_(int _argc, char** _argv)
 			}
 			bgfx::setUniform(u_lightMtx, lightMtx);
 			bgfx::setIndexBuffer(ibh);
-			bgfx::setVertexBuffer(vbh);
+			bgfx::setVertexBuffer(0, vbh);
 			bgfx::setState(st.m_state);
 			bgfx::submit(st.m_viewId, st.m_program);
 		}

@@ -655,7 +655,7 @@ namespace ps
 						| BGFX_STATE_CULL_CW
 						| BGFX_STATE_BLEND_NORMAL
 						);
-					bgfx::setVertexBuffer(&tvb);
+					bgfx::setVertexBuffer(0, &tvb);
 					bgfx::setIndexBuffer(&tib);
 					bgfx::setTexture(0, s_texColor, m_texture);
 					bgfx::submit(_view, m_particleProgram);

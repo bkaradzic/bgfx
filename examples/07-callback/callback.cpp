@@ -425,7 +425,7 @@ int _main_(int _argc, char** _argv)
 				bgfx::setTransform(mtx);
 
 				// Set vertex and index buffer.
-				bgfx::setVertexBuffer(vbh);
+				bgfx::setVertexBuffer(0, vbh);
 				bgfx::setIndexBuffer(ibh);
 
 				// Set render states.

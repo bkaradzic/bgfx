@@ -183,7 +183,7 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf
 		vertex[2].m_u = maxu;
 		vertex[2].m_v = maxv;
 
-		bgfx::setVertexBuffer(&vb);
+		bgfx::setVertexBuffer(0, &vb);
 	}
 }
 
@@ -520,7 +520,7 @@ class ExampleDeferred : public entry::AppI
 						bgfx::setTransform(mtx);
 
 						// Set vertex and index buffer.
-						bgfx::setVertexBuffer(m_vbh);
+						bgfx::setVertexBuffer(0, m_vbh);
 						bgfx::setIndexBuffer(m_ibh);
 
 						// Bind textures.
@@ -635,7 +635,7 @@ class ExampleDeferred : public entry::AppI
 								*indices++ = 3;
 								*indices++ = 0;
 
-								bgfx::setVertexBuffer(&tvb);
+								bgfx::setVertexBuffer(0, &tvb);
 								bgfx::setIndexBuffer(&tib);
 								bgfx::setState(0
 										| BGFX_STATE_RGB_WRITE
@@ -698,7 +698,7 @@ class ExampleDeferred : public entry::AppI
 								);
 
 						bgfx::setTransform(mtx);
-						bgfx::setVertexBuffer(m_vbh);
+						bgfx::setVertexBuffer(0, m_vbh);
 						bgfx::setIndexBuffer(m_ibh, 0, 6);
 						bgfx::setTexture(0, s_texColor, m_gbufferTex[ii]);
 						bgfx::setState(BGFX_STATE_RGB_WRITE);

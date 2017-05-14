@@ -142,7 +142,7 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBott
 		vertex[2].m_u = maxu;
 		vertex[2].m_v = maxv;
 
-		bgfx::setVertexBuffer(&vb);
+		bgfx::setVertexBuffer(0, &vb);
 	}
 }
 
@@ -399,7 +399,7 @@ class ExampleOIT : public entry::AppI
 						bgfx::setTransform(mtx);
 
 						// Set vertex and index buffer.
-						bgfx::setVertexBuffer(m_vbh);
+						bgfx::setVertexBuffer(0, m_vbh);
 						bgfx::setIndexBuffer(m_ibh);
 
 						const uint64_t state = 0

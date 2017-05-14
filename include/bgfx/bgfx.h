@@ -2415,54 +2415,75 @@ namespace bgfx
 
 	/// Set vertex buffer for draw primitive.
 	///
+	/// @param[in] _stream Vertex stream.
 	/// @param[in] _handle Vertex buffer.
 	///
 	/// @attention C99 equivalent is `bgfx_set_vertex_buffer`.
-	///
-	void setVertexBuffer(VertexBufferHandle _handle);
-
-	/// Set vertex buffer for draw primitive.
-	///
-	/// @param[in] _handle Vertex buffer.
-	/// @param[in] _startVertex First vertex to render.
-	/// @param[in] _numVertices Number of vertices to render.
-	///
-	/// @attention C99 equivalent is `bgfx_set_vertex_buffer`.
-	///
-	void setVertexBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices);
-
-	/// Set vertex buffer for draw primitive.
-	///
-	/// @param[in] _handle Dynamic vertex buffer.
-	///
-	/// @attention C99 equivalent is `bgfx_set_dynamic_vertex_buffer`.
-	///
-	void setVertexBuffer(DynamicVertexBufferHandle _handle);
-
-	/// Set vertex buffer for draw primitive.
-	///
-	/// @param[in] _handle Dynamic vertex buffer.
-	/// @param[in] _startVertex First vertex to render.
-	/// @param[in] _numVertices Number of vertices to render.
-	///
-	/// @attention C99 equivalent is `bgfx_set_dynamic_vertex_buffer`.
 	///
 	void setVertexBuffer(
-		  DynamicVertexBufferHandle _handle
+		  uint8_t _stream
+		, VertexBufferHandle _handle
+		);
+
+	/// Set vertex buffer for draw primitive.
+	///
+	/// @param[in] _stream Vertex stream.
+	/// @param[in] _handle Vertex buffer.
+	/// @param[in] _startVertex First vertex to render.
+	/// @param[in] _numVertices Number of vertices to render.
+	///
+	/// @attention C99 equivalent is `bgfx_set_vertex_buffer`.
+	///
+	void setVertexBuffer(
+		  uint8_t _stream
+		, VertexBufferHandle _handle
 		, uint32_t _startVertex
 		, uint32_t _numVertices
 		);
 
 	/// Set vertex buffer for draw primitive.
 	///
+	/// @param[in] _stream Vertex stream.
+	/// @param[in] _handle Dynamic vertex buffer.
+	///
+	/// @attention C99 equivalent is `bgfx_set_dynamic_vertex_buffer`.
+	///
+	void setVertexBuffer(
+		  uint8_t _stream
+		, DynamicVertexBufferHandle _handle
+		);
+
+	/// Set vertex buffer for draw primitive.
+	///
+	/// @param[in] _stream Vertex stream.
+	/// @param[in] _handle Dynamic vertex buffer.
+	/// @param[in] _startVertex First vertex to render.
+	/// @param[in] _numVertices Number of vertices to render.
+	///
+	/// @attention C99 equivalent is `bgfx_set_dynamic_vertex_buffer`.
+	///
+	void setVertexBuffer(
+		  uint8_t _stream
+		, DynamicVertexBufferHandle _handle
+		, uint32_t _startVertex
+		, uint32_t _numVertices
+		);
+
+	/// Set vertex buffer for draw primitive.
+	///
+	/// @param[in] _stream Vertex stream.
 	/// @param[in] _tvb Transient vertex buffer.
 	///
 	/// @attention C99 equivalent is `bgfx_set_transient_vertex_buffer`.
 	///
-	void setVertexBuffer(const TransientVertexBuffer* _tvb);
+	void setVertexBuffer(
+		  uint8_t _stream
+		, const TransientVertexBuffer* _tvb
+		);
 
 	/// Set vertex buffer for draw primitive.
 	///
+	/// @param[in] _stream Vertex stream.
 	/// @param[in] _tvb Transient vertex buffer.
 	/// @param[in] _startVertex First vertex to render.
 	/// @param[in] _numVertices Number of vertices to render.
@@ -2470,7 +2491,8 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_set_transient_vertex_buffer`.
 	///
 	void setVertexBuffer(
-		  const TransientVertexBuffer* _tvb
+		  uint8_t _stream
+		, const TransientVertexBuffer* _tvb
 		, uint32_t _startVertex
 		, uint32_t _numVertices
 		);

@@ -1818,7 +1818,7 @@ private:
 		bgfx::setUniform(u_params, params, 4);
 
 		bgfx::setTransform(_mtx, _num);
-		bgfx::setVertexBuffer(m_vbh, mesh.m_startVertex, mesh.m_numVertices);
+		bgfx::setVertexBuffer(0, m_vbh, mesh.m_startVertex, mesh.m_numVertices);
 		bgfx::setState(0
 				| attrib.m_state
 				| (_wireframe ? BGFX_STATE_PT_LINES|BGFX_STATE_LINEAA|BGFX_STATE_BLEND_ALPHA
@@ -1851,7 +1851,7 @@ private:
 
 				const Attrib& attrib = m_attrib[m_stack];
 
-				bgfx::setVertexBuffer(&tvb);
+				bgfx::setVertexBuffer(0, &tvb);
 				bgfx::setIndexBuffer(&tib);
 				bgfx::setState(0
 						| BGFX_STATE_RGB_WRITE
@@ -1900,7 +1900,7 @@ private:
 
 				const Attrib& attrib = m_attrib[m_stack];
 
-				bgfx::setVertexBuffer(&tvb);
+				bgfx::setVertexBuffer(0, &tvb);
 				bgfx::setIndexBuffer(&tib);
 				bgfx::setState(0
 						| (attrib.m_state & ~BGFX_STATE_CULL_MASK)

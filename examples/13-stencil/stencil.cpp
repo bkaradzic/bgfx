@@ -767,7 +767,7 @@ struct Mesh
 			// Set model matrix for rendering.
 			bgfx::setTransform(_mtx);
 			bgfx::setIndexBuffer(group.m_ibh);
-			bgfx::setVertexBuffer(group.m_vbh);
+			bgfx::setVertexBuffer(0, group.m_vbh);
 
 			// Set texture
 			if (bgfx::invalidHandle != _texture.idx)

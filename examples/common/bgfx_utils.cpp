@@ -547,7 +547,7 @@ struct Mesh
 			const Group& group = *it;
 
 			bgfx::setIndexBuffer(group.m_ibh);
-			bgfx::setVertexBuffer(group.m_vbh);
+			bgfx::setVertexBuffer(0, group.m_vbh);
 			bgfx::submit(_id, _program, 0, it != itEnd-1);
 		}
 	}
@@ -578,7 +578,7 @@ struct Mesh
 				const Group& group = *it;
 
 				bgfx::setIndexBuffer(group.m_ibh);
-				bgfx::setVertexBuffer(group.m_vbh);
+				bgfx::setVertexBuffer(0, group.m_vbh);
 				bgfx::submit(state.m_viewId, state.m_program, 0, it != itEnd-1);
 			}
 		}

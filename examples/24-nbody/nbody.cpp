@@ -324,7 +324,7 @@ int _main_(int _argc, char** _argv)
 			}
 
 			// Set vertex and index buffer.
-			bgfx::setVertexBuffer(vbh);
+			bgfx::setVertexBuffer(0, vbh);
 			bgfx::setIndexBuffer(ibh);
 			bgfx::setInstanceDataBuffer(currPositionBuffer0, 0, u_paramsData.dispatchSize * threadGroupUpdateSize);
 

@@ -88,7 +88,7 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBott
 		vertex[2].m_u = maxu;
 		vertex[2].m_v = maxv;
 
-		bgfx::setVertexBuffer(&vb);
+		bgfx::setVertexBuffer(0, &vb);
 	}
 }
 

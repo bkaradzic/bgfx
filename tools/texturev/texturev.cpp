@@ -457,7 +457,7 @@ bool screenQuad(int32_t _x, int32_t _y, int32_t _width, uint32_t _height, uint32
 		vertex[4].m_abgr = _abgr;
 		vertex[5].m_abgr = _abgr;
 
-		bgfx::setVertexBuffer(&vb);
+		bgfx::setVertexBuffer(0, &vb);
 
 		return true;
 	}

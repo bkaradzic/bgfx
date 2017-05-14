@@ -97,7 +97,7 @@ void renderScreenSpaceQuad(uint8_t _view, bgfx::ProgramHandle _program, float _x
 
 		bgfx::setState(BGFX_STATE_DEFAULT);
 		bgfx::setIndexBuffer(&tib);
-		bgfx::setVertexBuffer(&tvb);
+		bgfx::setVertexBuffer(0, &tvb);
 		bgfx::submit(_view, _program);
 	}
 }

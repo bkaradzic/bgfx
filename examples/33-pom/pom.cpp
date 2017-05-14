@@ -324,7 +324,7 @@ class ExamplePom : public entry::AppI
 			bgfx::setUniform(u_norm_mtx, transpose);
 
 			// Set vertex and index buffer.
-			bgfx::setVertexBuffer(m_vbh);
+			bgfx::setVertexBuffer(0, m_vbh);
 			bgfx::setIndexBuffer(m_ibh);
 
 			// Bind textures.

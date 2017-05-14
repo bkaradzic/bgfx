@@ -1887,7 +1887,7 @@ struct Imgui
 
 			bgfx::setTransform(mtx);
 			bgfx::setTexture(0, s_texColor, _cubemap);
-			bgfx::setVertexBuffer(&tvb);
+			bgfx::setVertexBuffer(0, &tvb);
 			bgfx::setIndexBuffer(&tib);
 			bgfx::setState(BGFX_STATE_RGB_WRITE
 						  |BGFX_STATE_ALPHA_WRITE
@@ -2396,7 +2396,7 @@ struct Imgui
 				++vertex;
 			}
 
-			bgfx::setVertexBuffer(&tvb);
+			bgfx::setVertexBuffer(0, &tvb);
 			bgfx::setState(0
 				| BGFX_STATE_RGB_WRITE
 				| BGFX_STATE_ALPHA_WRITE
@@ -2701,7 +2701,7 @@ struct Imgui
 			}
 
 			bgfx::setTexture(0, s_texColor, m_fonts[m_currentFontIdx].m_texture);
-			bgfx::setVertexBuffer(&tvb);
+			bgfx::setVertexBuffer(0, &tvb);
 			bgfx::setState(0
 				| BGFX_STATE_RGB_WRITE
 				| BGFX_STATE_ALPHA_WRITE
@@ -2766,7 +2766,7 @@ struct Imgui
 			vertex[5].m_u = minu;
 			vertex[5].m_v = minv;
 
-			bgfx::setVertexBuffer(&vb);
+			bgfx::setVertexBuffer(0, &vb);
 
 			return true;
 		}

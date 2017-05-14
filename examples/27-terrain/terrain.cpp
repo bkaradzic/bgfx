@@ -466,19 +466,19 @@ class ExampleTerrain : public entry::AppI
 			switch (m_terrain.m_mode)
 			{
 			default:
-				bgfx::setVertexBuffer(m_vbh);
+				bgfx::setVertexBuffer(0, m_vbh);
 				bgfx::setIndexBuffer(m_ibh);
 				bgfx::submit(0, m_terrainProgram);
 				break;
 
 			case 1:
-				bgfx::setVertexBuffer(m_dvbh);
+				bgfx::setVertexBuffer(0, m_dvbh);
 				bgfx::setIndexBuffer(m_dibh);
 				bgfx::submit(0, m_terrainProgram);
 				break;
 
 			case 2:
-				bgfx::setVertexBuffer(m_vbh);
+				bgfx::setVertexBuffer(0, m_vbh);
 				bgfx::setIndexBuffer(m_ibh);
 				bgfx::setTexture(0, s_heightTexture, m_heightTexture);
 				bgfx::submit(0, m_terrainHeightTextureProgram);

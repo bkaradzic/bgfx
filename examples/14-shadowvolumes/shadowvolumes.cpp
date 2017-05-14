@@ -1141,7 +1141,7 @@ struct Model
 
 			// Set buffers
 			bgfx::setIndexBuffer(group.m_ibh);
-			bgfx::setVertexBuffer(group.m_vbh);
+			bgfx::setVertexBuffer(0, group.m_vbh);
 
 			// Set textures
 			if (bgfx::invalidHandle != m_texture.idx)
@@ -2674,7 +2674,7 @@ int _main_(int _argc, char** _argv)
 
 					s_uniforms.submitPerDrawUniforms();
 					bgfx::setTransform(shadowVolumeMtx);
-					bgfx::setVertexBuffer(shadowVolume.m_vbSides);
+					bgfx::setVertexBuffer(0, shadowVolume.m_vbSides);
 					bgfx::setIndexBuffer(shadowVolume.m_ibSides);
 					setRenderState(renderStateCraftStencil);
 					::submit(viewId, svProgs[programIndex][ShadowVolumePart::Side]);
@@ -2683,14 +2683,14 @@ int _main_(int _argc, char** _argv)
 					{
 						s_uniforms.submitPerDrawUniforms();
 						bgfx::setTransform(shadowVolumeMtx);
-						bgfx::setVertexBuffer(group.m_vbh);
+						bgfx::setVertexBuffer(0, group.m_vbh);
 						bgfx::setIndexBuffer(shadowVolume.m_ibFrontCap);
 						setRenderState(renderStateCraftStencil);
 						::submit(viewId, svProgs[programIndex][ShadowVolumePart::Front]);
 
 						s_uniforms.submitPerDrawUniforms();
 						bgfx::setTransform(shadowVolumeMtx);
-						bgfx::setVertexBuffer(group.m_vbh);
+						bgfx::setVertexBuffer(0, group.m_vbh);
 						bgfx::setIndexBuffer(shadowVolume.m_ibBackCap);
 						::setRenderState(renderStateCraftStencil);
 						::submit(viewId, svProgs[programIndex][ShadowVolumePart::Back]);
@@ -2702,7 +2702,7 @@ int _main_(int _argc, char** _argv)
 
 						s_uniforms.submitPerDrawUniforms();
 						bgfx::setTransform(shadowVolumeMtx);
-						bgfx::setVertexBuffer(shadowVolume.m_vbSides);
+						bgfx::setVertexBuffer(0, shadowVolume.m_vbSides);
 						bgfx::setIndexBuffer(shadowVolume.m_ibSides);
 						::setRenderState(renderState);
 						::submit(VIEWID_RANGE1_PASS3, svProgs[ShadowVolumeProgramType::Color][ShadowVolumePart::Side]);
@@ -2711,14 +2711,14 @@ int _main_(int _argc, char** _argv)
 						{
 							s_uniforms.submitPerDrawUniforms();
 							bgfx::setTransform(shadowVolumeMtx);
-							bgfx::setVertexBuffer(group.m_vbh);
+							bgfx::setVertexBuffer(0, group.m_vbh);
 							bgfx::setIndexBuffer(shadowVolume.m_ibFrontCap);
 							::setRenderState(renderState);
 							::submit(VIEWID_RANGE1_PASS3, svProgs[ShadowVolumeProgramType::Color][ShadowVolumePart::Front]);
 
 							s_uniforms.submitPerDrawUniforms();
 							bgfx::setTransform(shadowVolumeMtx);
-							bgfx::setVertexBuffer(group.m_vbh);
+							bgfx::setVertexBuffer(0, group.m_vbh);
 							bgfx::setIndexBuffer(shadowVolume.m_ibBackCap);
 							::setRenderState(renderState);
 							::submit(VIEWID_RANGE1_PASS3, svProgs[ShadowVolumeProgramType::Color][ShadowVolumePart::Back]);

@@ -976,7 +976,7 @@ struct Mesh
 			// Set model matrix for rendering.
 			bgfx::setTransform(_mtx);
 			bgfx::setIndexBuffer(group.m_ibh);
-			bgfx::setVertexBuffer(group.m_vbh);
+			bgfx::setVertexBuffer(0, group.m_vbh);
 
 			// Set textures.
 			if (bgfx::invalidHandle != _texture.idx)
@@ -1081,7 +1081,7 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBott
 		vertex[2].m_u = maxu;
 		vertex[2].m_v = maxv;
 
-		bgfx::setVertexBuffer(&vb);
+		bgfx::setVertexBuffer(0, &vb);
 	}
 }
 
@@ -2714,7 +2714,7 @@ int _main_(int _argc, char** _argv)
 							| BGFX_STENCIL_OP_FAIL_Z_REPLACE
 							| BGFX_STENCIL_OP_PASS_Z_REPLACE
 							);
-					bgfx::setVertexBuffer(&vb);
+					bgfx::setVertexBuffer(0, &vb);
 					bgfx::submit(RENDERVIEW_SHADOWMAP_0_ID, s_programs.m_black);
 				}
 			}

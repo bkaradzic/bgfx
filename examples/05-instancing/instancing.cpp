@@ -209,7 +209,7 @@ class ExampleInstancing : public entry::AppI
 					}
 
 					// Set vertex and index buffer.
-					bgfx::setVertexBuffer(m_vbh);
+					bgfx::setVertexBuffer(0, m_vbh);
 					bgfx::setIndexBuffer(m_ibh);
 
 					// Set instance data buffer.

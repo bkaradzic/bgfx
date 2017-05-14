@@ -270,7 +270,7 @@ class ExampleBump : public entry::AppI
 						bgfx::setInstanceDataBuffer(idb, numInstances);
 
 						// Set vertex and index buffer.
-						bgfx::setVertexBuffer(m_vbh);
+						bgfx::setVertexBuffer(0, m_vbh);
 						bgfx::setIndexBuffer(m_ibh);
 
 						// Bind textures.
@@ -307,7 +307,7 @@ class ExampleBump : public entry::AppI
 						bgfx::setTransform(mtx);
 
 						// Set vertex and index buffer.
-						bgfx::setVertexBuffer(m_vbh);
+						bgfx::setVertexBuffer(0, m_vbh);
 						bgfx::setIndexBuffer(m_ibh);
 
 						// Bind textures.
