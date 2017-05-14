@@ -276,6 +276,89 @@ namespace bgfx { namespace d3d9
 	static PFN_D3DPERF_BEGIN_EVENT D3DPERF_BeginEvent;
 	static PFN_D3DPERF_END_EVENT   D3DPERF_EndEvent;
 
+	static const D3DVERTEXELEMENT9 s_attrib[] =
+	{
+		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,     0 },
+		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,       0 },
+		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TANGENT,      0 },
+		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BINORMAL,     0 },
+		{ 0, 0, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,        0 },
+		{ 0, 0, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,        1 },
+		{ 0, 0, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDINDICES, 0 },
+		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDWEIGHT,  0 },
+		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     0 },
+		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     1 },
+		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     2 },
+		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     3 },
+		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     4 },
+		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     5 },
+		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     6 },
+		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     7 },
+		D3DDECL_END()
+	};
+	BX_STATIC_ASSERT(Attrib::Count == BX_COUNTOF(s_attrib)-1);
+
+	static const uint8_t s_attribType[][4][2] =
+	{
+		{ // Uint8
+			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
+			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
+			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
+			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
+		},
+		{ // Uint10
+			{ D3DDECLTYPE_UDEC3,     D3DDECLTYPE_DEC3N     },
+			{ D3DDECLTYPE_UDEC3,     D3DDECLTYPE_DEC3N     },
+			{ D3DDECLTYPE_UDEC3,     D3DDECLTYPE_DEC3N     },
+			{ D3DDECLTYPE_UDEC3,     D3DDECLTYPE_DEC3N     },
+		},
+		{ // Int16
+			{ D3DDECLTYPE_SHORT2,    D3DDECLTYPE_SHORT2N   },
+			{ D3DDECLTYPE_SHORT2,    D3DDECLTYPE_SHORT2N   },
+			{ D3DDECLTYPE_SHORT4,    D3DDECLTYPE_SHORT4N   },
+			{ D3DDECLTYPE_SHORT4,    D3DDECLTYPE_SHORT4N   },
+		},
+		{ // Half
+			{ D3DDECLTYPE_FLOAT16_2, D3DDECLTYPE_FLOAT16_2 },
+			{ D3DDECLTYPE_FLOAT16_2, D3DDECLTYPE_FLOAT16_2 },
+			{ D3DDECLTYPE_FLOAT16_4, D3DDECLTYPE_FLOAT16_4 },
+			{ D3DDECLTYPE_FLOAT16_4, D3DDECLTYPE_FLOAT16_4 },
+		},
+		{ // Float
+			{ D3DDECLTYPE_FLOAT1,    D3DDECLTYPE_FLOAT1    },
+			{ D3DDECLTYPE_FLOAT2,    D3DDECLTYPE_FLOAT2    },
+			{ D3DDECLTYPE_FLOAT3,    D3DDECLTYPE_FLOAT3    },
+			{ D3DDECLTYPE_FLOAT4,    D3DDECLTYPE_FLOAT4    },
+		},
+	};
+	BX_STATIC_ASSERT(AttribType::Count == BX_COUNTOF(s_attribType) );
+
+	static D3DVERTEXELEMENT9* fillVertexDecl(uint8_t _stream, D3DVERTEXELEMENT9* _out, const VertexDecl& _decl)
+	{
+		D3DVERTEXELEMENT9* elem = _out;
+
+		for (uint32_t attr = 0; attr < Attrib::Count; ++attr)
+		{
+			if (UINT16_MAX != _decl.m_attributes[attr])
+			{
+				uint8_t num;
+				AttribType::Enum type;
+				bool normalized;
+				bool asInt;
+				_decl.decode(Attrib::Enum(attr), num, type, normalized, asInt);
+
+				bx::memCopy(elem, &s_attrib[attr], sizeof(D3DVERTEXELEMENT9) );
+
+				elem->Stream = _stream;
+				elem->Type   = s_attribType[type][num-1][normalized];
+				elem->Offset = _decl.m_offset[attr];
+				++elem;
+			}
+		}
+
+		return elem;
+	}
+
 	inline bool isLost(HRESULT _hr)
 	{
 		return false
@@ -857,11 +940,6 @@ namespace bgfx { namespace d3d9
 				m_textures[ii].destroy();
 			}
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_vertexDecls); ++ii)
-			{
-				m_vertexDecls[ii].destroy();
-			}
-
 			if (NULL != m_d3d9ex)
 			{
 				DX_RELEASE(m_deviceEx, 1);
@@ -909,12 +987,13 @@ namespace bgfx { namespace d3d9
 
 		void createVertexDecl(VertexDeclHandle _handle, const VertexDecl& _decl) BX_OVERRIDE
 		{
-			m_vertexDecls[_handle.idx].create(_decl);
+			VertexDecl& decl = m_vertexDecls[_handle.idx];
+			bx::memCopy(&decl, &_decl, sizeof(VertexDecl) );
+			dump(decl);
 		}
 
-		void destroyVertexDecl(VertexDeclHandle _handle) BX_OVERRIDE
+		void destroyVertexDecl(VertexDeclHandle /*_handle*/) BX_OVERRIDE
 		{
-			m_vertexDecls[_handle.idx].destroy();
 		}
 
 		void createVertexBuffer(VertexBufferHandle _handle, Memory* _mem, VertexDeclHandle _declHandle, uint16_t /*_flags*/) BX_OVERRIDE
@@ -1274,9 +1353,9 @@ namespace bgfx { namespace d3d9
 			DX_CHECK(device->SetPixelShader(program.m_fsh->m_pixelShader) );
 
 			VertexBufferD3D9& vb = m_vertexBuffers[_blitter.m_vb->handle.idx];
-			VertexDeclD3D9& vertexDecl = m_vertexDecls[_blitter.m_vb->decl.idx];
-			DX_CHECK(device->SetStreamSource(0, vb.m_ptr, 0, vertexDecl.m_decl.m_stride) );
-			DX_CHECK(device->SetVertexDeclaration(vertexDecl.m_ptr) );
+			VertexDecl& vertexDecl = m_vertexDecls[_blitter.m_vb->decl.idx];
+			DX_CHECK(device->SetStreamSource(0, vb.m_ptr, 0, vertexDecl.m_stride) );
+			setInputLayout(vertexDecl, 0);
 
 			IndexBufferD3D9& ib = m_indexBuffers[_blitter.m_ib->handle.idx];
 			DX_CHECK(device->SetIndices(ib.m_ptr) );
@@ -1527,6 +1606,7 @@ namespace bgfx { namespace d3d9
 			m_needPresent = false;
 
 			invalidateSamplerState();
+			m_inputLayoutCache.invalidate();
 
 			for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 			{
@@ -1993,7 +2073,7 @@ namespace bgfx { namespace d3d9
 				}
 
 				VertexBufferD3D9& vb = m_vertexBuffers[_clearQuad.m_vb->handle.idx];
-				VertexDeclD3D9& vertexDecl = m_vertexDecls[_clearQuad.m_vb->decl.idx];
+				VertexDecl& vertexDecl = m_vertexDecls[_clearQuad.m_vb->decl.idx];
 				uint32_t stride = _clearQuad.m_decl.m_stride;
 
 				{
@@ -2063,13 +2143,61 @@ namespace bgfx { namespace d3d9
 				DX_CHECK(device->SetStreamSource(0, vb.m_ptr, 0, stride) );
 				DX_CHECK(device->SetStreamSourceFreq(0, 1) );
 				DX_CHECK(device->SetStreamSource(1, NULL, 0, 0) );
-				DX_CHECK(device->SetVertexDeclaration(vertexDecl.m_ptr) );
+				setInputLayout(vertexDecl, 0);
 				DX_CHECK(device->SetIndices(NULL) );
 				DX_CHECK(device->DrawPrimitive(D3DPT_TRIANGLESTRIP
 					, 0
 					, 2
 					) );
 			}
+		}
+
+		void setInputLayout(uint8_t _numStreams, const VertexDecl** _vertexDecls, uint16_t _numInstanceData)
+		{
+			bx::HashMurmur2A murmur;
+			murmur.begin();
+			murmur.add(_numInstanceData);
+			for (uint8_t stream = 0; stream < _numStreams; ++stream)
+			{
+				murmur.add(_vertexDecls[stream]->m_hash);
+			}
+			uint64_t layoutHash = murmur.end();
+
+			IDirect3DVertexDeclaration9* layout = m_inputLayoutCache.find(layoutHash);
+			if (NULL == layout)
+			{
+				D3DVERTEXELEMENT9 vertexElements[Attrib::Count+1+BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
+				D3DVERTEXELEMENT9* elem = vertexElements;
+
+				for (uint8_t stream = 0; stream < _numStreams; ++stream)
+				{
+					elem = fillVertexDecl(stream, elem, *_vertexDecls[stream]);
+				}
+
+				const D3DVERTEXELEMENT9 inst = { _numStreams, 0, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 };
+
+				for (uint8_t ii = 0; ii < _numInstanceData; ++ii)
+				{
+					bx::memCopy(elem, &inst, sizeof(D3DVERTEXELEMENT9) );
+					elem->UsageIndex = uint8_t(7-ii); // TEXCOORD7 = i_data0, TEXCOORD6 = i_data1, etc.
+					elem->Offset = ii*16;
+					++elem;
+				}
+
+				bx::memCopy(elem, &s_attrib[Attrib::Count], sizeof(D3DVERTEXELEMENT9) );
+
+				DX_CHECK(m_device->CreateVertexDeclaration(vertexElements, &layout) );
+
+				m_inputLayoutCache.add(layoutHash, layout);
+			}
+
+			DX_CHECK(m_device->SetVertexDeclaration(layout) );
+		}
+
+		void setInputLayout(const VertexDecl& _vertexDecl, uint16_t _numInstanceData)
+		{
+			const VertexDecl* decls[1] = { &_vertexDecl };
+			setInputLayout(BX_COUNTOF(decls), decls, _numInstanceData);
 		}
 
 #if BX_PLATFORM_WINDOWS
@@ -2124,7 +2252,7 @@ namespace bgfx { namespace d3d9
 		ShaderD3D9 m_shaders[BGFX_CONFIG_MAX_SHADERS];
 		ProgramD3D9 m_program[BGFX_CONFIG_MAX_PROGRAMS];
 		TextureD3D9 m_textures[BGFX_CONFIG_MAX_TEXTURES];
-		VertexDeclD3D9 m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
+		VertexDecl m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
 		FrameBufferD3D9 m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 		UniformRegistry m_uniformReg;
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
@@ -2136,6 +2264,8 @@ namespace bgfx { namespace d3d9
 		uint32_t m_updateTexturePitch;
 		uint8_t m_updateTextureSide;
 		uint8_t m_updateTextureMip;
+
+		StateCacheT<IDirect3DVertexDeclaration9> m_inputLayoutCache;
 
 		TextVideoMem m_textVideoMem;
 
@@ -2273,117 +2403,6 @@ namespace bgfx { namespace d3d9
 					, NULL
 					) );
 		}
-	}
-
-	static const D3DVERTEXELEMENT9 s_attrib[] =
-	{
-		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,     0 },
-		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,       0 },
-		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TANGENT,      0 },
-		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BINORMAL,     0 },
-		{ 0, 0, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,        0 },
-		{ 0, 0, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,        1 },
-		{ 0, 0, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDINDICES, 0 },
-		{ 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDWEIGHT,  0 },
-		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     0 },
-		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     1 },
-		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     2 },
-		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     3 },
-		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     4 },
-		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     5 },
-		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     6 },
-		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,     7 },
-		D3DDECL_END()
-	};
-	BX_STATIC_ASSERT(Attrib::Count == BX_COUNTOF(s_attrib)-1);
-
-	static const uint8_t s_attribType[][4][2] =
-	{
-		{ // Uint8
-			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
-			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
-			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
-			{ D3DDECLTYPE_UBYTE4,    D3DDECLTYPE_UBYTE4N   },
-		},
-		{ // Uint10
-			{ D3DDECLTYPE_UDEC3,     D3DDECLTYPE_DEC3N     },
-			{ D3DDECLTYPE_UDEC3,     D3DDECLTYPE_DEC3N     },
-			{ D3DDECLTYPE_UDEC3,     D3DDECLTYPE_DEC3N     },
-			{ D3DDECLTYPE_UDEC3,     D3DDECLTYPE_DEC3N     },
-		},
-		{ // Int16
-			{ D3DDECLTYPE_SHORT2,    D3DDECLTYPE_SHORT2N   },
-			{ D3DDECLTYPE_SHORT2,    D3DDECLTYPE_SHORT2N   },
-			{ D3DDECLTYPE_SHORT4,    D3DDECLTYPE_SHORT4N   },
-			{ D3DDECLTYPE_SHORT4,    D3DDECLTYPE_SHORT4N   },
-		},
-		{ // Half
-			{ D3DDECLTYPE_FLOAT16_2, D3DDECLTYPE_FLOAT16_2 },
-			{ D3DDECLTYPE_FLOAT16_2, D3DDECLTYPE_FLOAT16_2 },
-			{ D3DDECLTYPE_FLOAT16_4, D3DDECLTYPE_FLOAT16_4 },
-			{ D3DDECLTYPE_FLOAT16_4, D3DDECLTYPE_FLOAT16_4 },
-		},
-		{ // Float
-			{ D3DDECLTYPE_FLOAT1,    D3DDECLTYPE_FLOAT1    },
-			{ D3DDECLTYPE_FLOAT2,    D3DDECLTYPE_FLOAT2    },
-			{ D3DDECLTYPE_FLOAT3,    D3DDECLTYPE_FLOAT3    },
-			{ D3DDECLTYPE_FLOAT4,    D3DDECLTYPE_FLOAT4    },
-		},
-	};
-	BX_STATIC_ASSERT(AttribType::Count == BX_COUNTOF(s_attribType) );
-
-	static D3DVERTEXELEMENT9* fillVertexDecl(D3DVERTEXELEMENT9* _out, const VertexDecl& _decl)
-	{
-		D3DVERTEXELEMENT9* elem = _out;
-
-		for (uint32_t attr = 0; attr < Attrib::Count; ++attr)
-		{
-			if (UINT16_MAX != _decl.m_attributes[attr])
-			{
-				uint8_t num;
-				AttribType::Enum type;
-				bool normalized;
-				bool asInt;
-				_decl.decode(Attrib::Enum(attr), num, type, normalized, asInt);
-
-				bx::memCopy(elem, &s_attrib[attr], sizeof(D3DVERTEXELEMENT9) );
-
-				elem->Type = s_attribType[type][num-1][normalized];
-				elem->Offset = _decl.m_offset[attr];
-				++elem;
-			}
-		}
-
-		return elem;
-	}
-
-	static IDirect3DVertexDeclaration9* createVertexDeclaration(const VertexDecl& _decl, uint16_t _numInstanceData)
-	{
-		D3DVERTEXELEMENT9 vertexElements[Attrib::Count+1+BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
-		D3DVERTEXELEMENT9* elem = fillVertexDecl(vertexElements, _decl);
-
-		const D3DVERTEXELEMENT9 inst = { 1, 0, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 };
-
-		for (uint8_t ii = 0; ii < _numInstanceData; ++ii)
-		{
-			bx::memCopy(elem, &inst, sizeof(D3DVERTEXELEMENT9) );
-			elem->UsageIndex = uint8_t(7-ii); // TEXCOORD7 = i_data0, TEXCOORD6 = i_data1, etc.
-			elem->Offset = ii*16;
-			++elem;
-		}
-
-		bx::memCopy(elem, &s_attrib[Attrib::Count], sizeof(D3DVERTEXELEMENT9) );
-
-		IDirect3DVertexDeclaration9* ptr;
-		DX_CHECK(s_renderD3D9->m_device->CreateVertexDeclaration(vertexElements, &ptr) );
-		return ptr;
-	}
-
-	void VertexDeclD3D9::create(const VertexDecl& _decl)
-	{
-		bx::memCopy(&m_decl, &_decl, sizeof(VertexDecl) );
-		dump(m_decl);
-		m_ptr = createVertexDeclaration(_decl, 0);
 	}
 
 	void ShaderD3D9::create(const Memory* _mem)
@@ -3819,7 +3838,6 @@ namespace bgfx { namespace d3d9
 					if (BGFX_CLEAR_NONE != (clear.m_flags & BGFX_CLEAR_MASK) )
 					{
 						clearQuad(_clearQuad, viewState.m_rect, clear, _render->m_colorPalette);
-						prim = s_primInfo[BX_COUNTOF(s_primName)]; // Force primitive type update after clear quad.
 					}
 
 					DX_CHECK(device->SetRenderState(D3DRS_STENCILENABLE, FALSE) );
@@ -4126,45 +4144,75 @@ namespace bgfx { namespace d3d9
 					}
 				}
 
+				bool vertexStreamChanged = hasVertexStreamChanged(currentState, draw);
+
 				if (programChanged
-				||  currentState.m_streamMask             != draw.m_streamMask
-				||  currentState.m_stream[0].m_handle.idx != draw.m_stream[0].m_handle.idx
-				||  currentState.m_instanceDataBuffer.idx != draw.m_instanceDataBuffer.idx
-				||  currentState.m_instanceDataOffset     != draw.m_instanceDataOffset
-				||  currentState.m_instanceDataStride     != draw.m_instanceDataStride)
+				||  vertexStreamChanged)
 				{
-					currentState.m_streamMask             = draw.m_streamMask;
-					currentState.m_stream[0].m_handle     = draw.m_stream[0].m_handle;
+				    currentState.m_streamMask             = draw.m_streamMask;
 					currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
 					currentState.m_instanceDataOffset     = draw.m_instanceDataOffset;
 					currentState.m_instanceDataStride     = draw.m_instanceDataStride;
 
-					uint16_t handle = draw.m_stream[0].m_handle.idx;
-					if (invalidHandle != handle)
+					const VertexDecl* decls[BGFX_CONFIG_MAX_VERTEX_STREAMS];
+
+					const bool instanced = true
+						&& isValid(draw.m_instanceDataBuffer)
+						&& m_instancingSupport
+						;
+
+					const uint32_t freq = instanced
+						? D3DSTREAMSOURCE_INDEXEDDATA|draw.m_numInstances
+						: 1
+						;
+
+					uint32_t numVertices = draw.m_numVertices;
+					uint8_t  numStreams  = 0;
+					for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
+						; 0 != streamMask
+						; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask), ++numStreams
+						)
 					{
+						streamMask >>= ntz;
+						idx         += ntz;
+
+						currentState.m_stream[idx].m_decl        = draw.m_stream[idx].m_decl;
+						currentState.m_stream[idx].m_handle      = draw.m_stream[idx].m_handle;
+						currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
+
+						const uint16_t handle = draw.m_stream[idx].m_handle.idx;
 						const VertexBufferD3D9& vb = m_vertexBuffers[handle];
+						const uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[idx].m_decl.idx : vb.m_decl.idx;
+						const VertexDecl& vertexDecl = m_vertexDecls[decl];
+						const uint32_t stride = vertexDecl.m_stride;
 
-						uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[0].m_decl.idx : vb.m_decl.idx;
-						const VertexDeclD3D9& vertexDecl = m_vertexDecls[decl];
-						DX_CHECK(device->SetStreamSource(0, vb.m_ptr, 0, vertexDecl.m_decl.m_stride) );
+						decls[numStreams] = &vertexDecl;
 
-						if (isValid(draw.m_instanceDataBuffer)
-						&&  m_instancingSupport)
+						numVertices = bx::uint32_min(UINT32_MAX == draw.m_numVertices
+							? vb.m_size/stride
+							: draw.m_numVertices
+							, numVertices
+							);
+
+						DX_CHECK(device->SetStreamSourceFreq(0, freq) );
+						DX_CHECK(device->SetStreamSource(numStreams, vb.m_ptr, 0, stride) );
+					}
+
+					currentState.m_numVertices = numVertices;
+
+					if (0 < numStreams)
+					{
+						if (instanced)
 						{
 							const VertexBufferD3D9& inst = m_vertexBuffers[draw.m_instanceDataBuffer.idx];
-							DX_CHECK(device->SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA|draw.m_numInstances) );
-							DX_CHECK(device->SetStreamSourceFreq(1, UINT(D3DSTREAMSOURCE_INSTANCEDATA|1) ) );
-							DX_CHECK(device->SetStreamSource(1, inst.m_ptr, draw.m_instanceDataOffset, draw.m_instanceDataStride) );
-
-							IDirect3DVertexDeclaration9* ptr = createVertexDeclaration(vertexDecl.m_decl, draw.m_instanceDataStride/16);
-							DX_CHECK(device->SetVertexDeclaration(ptr) );
-							DX_RELEASE(ptr, 0);
+							DX_CHECK(device->SetStreamSourceFreq(numStreams, UINT(D3DSTREAMSOURCE_INSTANCEDATA|1) ) );
+							DX_CHECK(device->SetStreamSource(numStreams, inst.m_ptr, draw.m_instanceDataOffset, draw.m_instanceDataStride) );
+							setInputLayout(numStreams, decls, draw.m_instanceDataStride/16);
 						}
 						else
 						{
-							DX_CHECK(device->SetStreamSourceFreq(0, 1) );
-							DX_CHECK(device->SetStreamSource(1, NULL, 0, 0) );
-							DX_CHECK(device->SetVertexDeclaration(vertexDecl.m_ptr) );
+							DX_CHECK(device->SetStreamSource(numStreams, NULL, 0, 0) );
+							setInputLayout(numStreams, decls, 0);
 						}
 					}
 					else
@@ -4192,15 +4240,7 @@ namespace bgfx { namespace d3d9
 
 				if (0 != currentState.m_streamMask)
 				{
-					uint32_t numVertices = draw.m_numVertices;
-					if (UINT32_MAX == numVertices)
-					{
-						const VertexBufferD3D9& vb = m_vertexBuffers[currentState.m_stream[0].m_handle.idx];
-						uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[0].m_decl.idx : vb.m_decl.idx;
-						const VertexDeclD3D9& vertexDecl = m_vertexDecls[decl];
-						numVertices = vb.m_size/vertexDecl.m_decl.m_stride;
-					}
-
+					uint32_t numVertices       = draw.m_numVertices;
 					uint32_t numIndices        = 0;
 					uint32_t numPrimsSubmitted = 0;
 					uint32_t numInstances      = 0;
@@ -4409,6 +4449,16 @@ namespace bgfx { namespace d3d9
 				tvm.printf(10, pos++, 0x8e, "     DIB size: %7d ", _render->m_iboffset);
 
 				pos++;
+				tvm.printf(10, pos++, 0x8e, " Occlusion queries: %3d ", m_occlusionQuery.m_control.available() );
+
+				pos++;
+				tvm.printf(10, pos++, 0x8e, " State cache: ");
+				tvm.printf(10, pos++, 0x8e, " Input  ");
+				tvm.printf(10, pos++, 0x8e, " %6d "
+					, m_inputLayoutCache.getCount()
+					);
+				pos++;
+
 				double captureMs = double(captureElapsed)*toMs;
 				tvm.printf(10, pos++, 0x8e, "     Capture: %7.4f [ms]", captureMs);
 

@@ -6109,7 +6109,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					uint32_t offsets[BGFX_CONFIG_MAX_VERTEX_STREAMS];
 					const VertexDecl* decls[BGFX_CONFIG_MAX_VERTEX_STREAMS];
 
-					uint32_t numVertices = UINT32_MAX;
+					uint32_t numVertices = draw.m_numVertices;
 					uint8_t  numStreams  = 0;
 					for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
 						; 0 != streamMask

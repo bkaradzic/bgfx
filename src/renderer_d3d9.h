@@ -208,24 +208,6 @@ namespace bgfx { namespace d3d9
 		bool m_dynamic;
 	};
 
-	struct VertexDeclD3D9
-	{
-		VertexDeclD3D9()
-			: m_ptr(NULL)
-		{
-		}
-
-		void create(const VertexDecl& _decl);
-
-		void destroy()
-		{
-			DX_RELEASE(m_ptr, 0);
-		}
-
-		IDirect3DVertexDeclaration9* m_ptr;
-		VertexDecl m_decl;
-	};
-
 	struct ShaderD3D9
 	{
 		ShaderD3D9()
