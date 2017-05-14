@@ -661,6 +661,7 @@ namespace bgfx { namespace d3d9
 			BX_TRACE("Max fragment shader 3.0 instr. slots: %d", m_caps.MaxPixelShader30InstructionSlots);
 			BX_TRACE("Num simultaneous render targets: %d", m_caps.NumSimultaneousRTs);
 			BX_TRACE("Max vertex index: %d", m_caps.MaxVertexIndex);
+			BX_TRACE("Max streams: %d", m_caps.MaxStreams);
 
 			g_caps.supported |= ( 0
 				| BGFX_CAPS_TEXTURE_3D
@@ -674,12 +675,14 @@ namespace bgfx { namespace d3d9
 				| BGFX_CAPS_TEXTURE_READ_BACK
 				| (m_occlusionQuerySupport ? BGFX_CAPS_OCCLUSION_QUERY : 0)
 				);
-			g_caps.limits.maxTextureSize = uint16_t(bx::uint32_min(m_caps.MaxTextureWidth, m_caps.MaxTextureHeight) );
 
-			m_caps.NumSimultaneousRTs = uint8_t(bx::uint32_min(m_caps.NumSimultaneousRTs, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
+			m_caps.NumSimultaneousRTs = bx::uint32_min(m_caps.NumSimultaneousRTs, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
+			m_caps.MaxStreams         = bx::uint32_min(m_caps.MaxStreams,         BGFX_CONFIG_MAX_VERTEX_STREAMS);
+			m_caps.MaxAnisotropy      = bx::uint32_max(m_caps.MaxAnisotropy, 1);
+
+			g_caps.limits.maxTextureSize   = uint16_t(bx::uint32_min(m_caps.MaxTextureWidth, m_caps.MaxTextureHeight) );
 			g_caps.limits.maxFBAttachments = uint8_t(m_caps.NumSimultaneousRTs);
-
-			m_caps.MaxAnisotropy = bx::uint32_max(m_caps.MaxAnisotropy, 1);
+			g_caps.limits.maxVertexStreams = uint8_t(m_caps.MaxStreams);
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_USE_EXTENSIONS) )
 			{
