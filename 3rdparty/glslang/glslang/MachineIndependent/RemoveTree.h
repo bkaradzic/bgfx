@@ -32,6 +32,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 
+#pragma once
+
 namespace glslang {
 
 void RemoveAllTreeNodes(TIntermNode*);

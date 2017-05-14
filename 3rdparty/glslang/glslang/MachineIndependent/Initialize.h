@@ -94,11 +94,11 @@ public:
 
 protected:
     void add2ndGenerationSamplingImaging(int version, EProfile profile, const SpvVersion& spvVersion);
-    void addSubpassSampling(TSampler, TString& typeName, int version, EProfile profile);
-    void addQueryFunctions(TSampler, TString& typeName, int version, EProfile profile);
-    void addImageFunctions(TSampler, TString& typeName, int version, EProfile profile);
-    void addSamplingFunctions(TSampler, TString& typeName, int version, EProfile profile);
-    void addGatherFunctions(TSampler, TString& typeName, int version, EProfile profile);
+    void addSubpassSampling(TSampler, const TString& typeName, int version, EProfile profile);
+    void addQueryFunctions(TSampler, const TString& typeName, int version, EProfile profile);
+    void addImageFunctions(TSampler, const TString& typeName, int version, EProfile profile);
+    void addSamplingFunctions(TSampler, const TString& typeName, int version, EProfile profile);
+    void addGatherFunctions(TSampler, const TString& typeName, int version, EProfile profile);
 
     // Helpers for making textual representations of the permutations
     // of texturing/imaging functions.

@@ -32,6 +32,8 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#pragma once
+
 #if _MSC_VER >= 1900
     #pragma warning(disable : 4464) // relative include path contains '..'
 #endif

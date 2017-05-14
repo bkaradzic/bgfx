@@ -38,6 +38,8 @@
 // sits between the preprocessor scanner and parser.
 //
 
+#pragma once
+
 #include "ParseHelper.h"
 
 namespace glslang {

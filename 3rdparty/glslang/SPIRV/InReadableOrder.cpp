@@ -51,7 +51,7 @@
 #include "spvIR.h"
 
 #include <cassert>
-#include <unordered_map>
+#include <unordered_set>
 
 using spv::Block;
 using spv::Id;
@@ -69,33 +69,33 @@ public:
     void visit(Block* block)
     {
         assert(block);
-        if (visited_[block] || delayed_[block])
+        if (visited_.count(block) || delayed_.count(block))
             return;
         callback_(block);
-        visited_[block] = true;
+        visited_.insert(block);
         Block* mergeBlock = nullptr;
         Block* continueBlock = nullptr;
         auto mergeInst = block->getMergeInstruction();
         if (mergeInst) {
             Id mergeId = mergeInst->getIdOperand(0);
             mergeBlock = block->getParent().getParent().getInstruction(mergeId)->getBlock();
-            delayed_[mergeBlock] = true;
+            delayed_.insert(mergeBlock);
             if (mergeInst->getOpCode() == spv::OpLoopMerge) {
                 Id continueId = mergeInst->getIdOperand(1);
                 continueBlock =
                     block->getParent().getParent().getInstruction(continueId)->getBlock();
-                delayed_[continueBlock] = true;
+                delayed_.insert(continueBlock);
             }
         }
         const auto successors = block->getSuccessors();
         for (auto it = successors.cbegin(); it != successors.cend(); ++it)
             visit(*it);
         if (continueBlock) {
-            delayed_[continueBlock] = false;
+            delayed_.erase(continueBlock);
             visit(continueBlock);
         }
         if (mergeBlock) {
-            delayed_[mergeBlock] = false;
+            delayed_.erase(mergeBlock);
             visit(mergeBlock);
         }
     }
@@ -103,7 +103,7 @@ public:
 private:
     std::function<void(Block*)> callback_;
     // Whether a block has already been visited or is being delayed.
-    std::unordered_map<Block *, bool> visited_, delayed_;
+    std::unordered_set<Block *> visited_, delayed_;
 };
 }
 

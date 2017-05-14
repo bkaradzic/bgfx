@@ -33,6 +33,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 
+#pragma once
+
 #include "../Include/Common.h"
 #include "reflection.h"
 #include "localintermediate.h"
