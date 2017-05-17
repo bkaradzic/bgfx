@@ -5535,7 +5535,8 @@ namespace bgfx { namespace gl
 					if (usesTextureLod)
 					{
 						BX_WARN(s_extension[Extension::ARB_shader_texture_lod].m_supported
-							, "ARB_shader_texture_lod is used but not supported by GLES2 driver."
+						     || s_extension[Extension::ARB_shader_texture_lod].m_supported
+							, "(ARB|EXT)_shader_texture_lod is used but not supported by GLES2 driver."
 							);
 
 						if (s_extension[Extension::ARB_shader_texture_lod].m_supported)
@@ -5552,11 +5553,23 @@ namespace bgfx { namespace gl
 						}
 						else
 						{
-							writeString(&writer
-								, "#define texture2DLod(_sampler, _coord, _level) texture2D(_sampler, _coord)\n"
-								  "#define texture2DProjLod(_sampler, _coord, _level) texture2DProj(_sampler, _coord)\n"
-								  "#define textureCubeLod(_sampler, _coord, _level) textureCube(_sampler, _coord)\n"
+							if(s_extension[Extension::EXT_shader_texture_lod].m_supported)
+							{
+								writeString(&writer
+								, "#extension GL_EXT_shader_texture_lod : enable\n"
+								  "#define texture2DLod texture2DLodEXT\n"
+								  "#define texture2DProjLod texture2DProjLodEXT\n"
+								  "#define textureCubeLod textureCubeLodEXT\n"
 								);
+							}
+							else
+							{
+								writeString(&writer
+									, "#define texture2DLod(_sampler, _coord, _level) texture2D(_sampler, _coord)\n"
+										"#define texture2DProjLod(_sampler, _coord, _level) texture2DProj(_sampler, _coord)\n"
+										"#define textureCubeLod(_sampler, _coord, _level) textureCube(_sampler, _coord)\n"
+									);
+							}
 						}
 					}
 
