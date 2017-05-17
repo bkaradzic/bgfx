@@ -5535,7 +5535,7 @@ namespace bgfx { namespace gl
 					if (usesTextureLod)
 					{
 						BX_WARN(s_extension[Extension::ARB_shader_texture_lod].m_supported
-						     || s_extension[Extension::ARB_shader_texture_lod].m_supported
+						     || s_extension[Extension::EXT_shader_texture_lod].m_supported
 							, "(ARB|EXT)_shader_texture_lod is used but not supported by GLES2 driver."
 							);
 
