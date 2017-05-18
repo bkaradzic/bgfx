@@ -116,19 +116,9 @@ CS_BIN = $(addprefix $(BUILD_INTERMEDIATE_DIR)/, $(addsuffix .bin, $(basename $(
 BIN = $(VS_BIN) $(FS_BIN)
 ASM = $(VS_ASM) $(FS_ASM)
 
-ifeq ($(TARGET), 1)
+ifeq ($(TARGET), $(filter $(TARGET),1 3 4 6))
 BIN += $(CS_BIN)
 ASM += $(CS_ASM)
-else
-ifeq ($(TARGET), 3)
-BIN += $(CS_BIN)
-ASM += $(CS_ASM)
-else
-ifeq ($(TARGET), 4)
-BIN += $(CS_BIN)
-ASM += $(CS_ASM)
-endif
-endif
 endif
 
 $(BUILD_INTERMEDIATE_DIR)/vs_%.bin : $(SHADERS_DIR)vs_%.sc
