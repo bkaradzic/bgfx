@@ -1960,9 +1960,9 @@ namespace bgfx
 
 		void init()
 		{
-			bx::memSet(m_vertexDeclRef, 0, sizeof(m_vertexDeclRef) );
-			bx::memSet(m_vertexBufferRef, 0xff, sizeof(m_vertexBufferRef) );
-			bx::memSet(m_dynamicVertexBufferRef, 0xff, sizeof(m_vertexBufferRef) );
+			bx::memSet(m_vertexDeclRef,          0,    sizeof(m_vertexDeclRef)          );
+			bx::memSet(m_vertexBufferRef,        0xff, sizeof(m_vertexBufferRef)        );
+			bx::memSet(m_dynamicVertexBufferRef, 0xff, sizeof(m_dynamicVertexBufferRef) );
 		}
 
 		template <uint16_t MaxHandlesT>
