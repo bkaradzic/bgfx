@@ -4096,6 +4096,7 @@ namespace bgfx
 
 		BGFX_API_FUNC(uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _numX, uint16_t _numY, uint16_t _numZ, uint8_t _flags) )
 		{
+			BGFX_CHECK_HANDLE_INVALID_OK("dispatch", m_programHandle, _handle);
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
 			{
 				m_uniformSet.clear();
@@ -4105,6 +4106,8 @@ namespace bgfx
 
 		BGFX_API_FUNC(uint32_t dispatch(uint8_t _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags) )
 		{
+			BGFX_CHECK_HANDLE_INVALID_OK("dispatch", m_programHandle, _handle);
+			BGFX_CHECK_HANDLE("dispatch", m_vertexBufferHandle, _indirectHandle);
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
 			{
 				m_uniformSet.clear();
