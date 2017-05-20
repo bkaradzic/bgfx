@@ -198,7 +198,6 @@ struct TParameter {
     TString *name;
     TType* type;
     TIntermTyped* defaultValue;
-    TBuiltInVariable declaredBuiltIn;
     void copyParam(const TParameter& param)
     {
         if (param.name)
@@ -207,8 +206,8 @@ struct TParameter {
             name = 0;
         type = param.type->clone();
         defaultValue = param.defaultValue;
-        declaredBuiltIn = param.declaredBuiltIn;
     }
+    TBuiltInVariable getDeclaredBuiltIn() const { return type->getQualifier().declaredBuiltIn; }
 };
 
 //
@@ -241,7 +240,6 @@ public:
     virtual void addParameter(TParameter& p)
     {
         assert(writable);
-        p.declaredBuiltIn = p.type->getQualifier().builtIn;
         parameters.push_back(p);
         p.type->appendMangledName(mangledName);
 
@@ -262,6 +260,12 @@ public:
     {
         TSymbol::addPrefix(prefix);
         mangledName.insert(0, prefix);
+    }
+
+    virtual void removePrefix(const TString& prefix)
+    {
+        assert(mangledName.compare(0, prefix.size(), prefix) == 0);
+        mangledName.erase(0, prefix.size());
     }
 
     virtual const TString& getMangledName() const override { return mangledName; }
@@ -688,19 +692,27 @@ public:
 
     // Normal find of a symbol, that can optionally say whether the symbol was found
     // at a built-in level or the current top-scope level.
-    TSymbol* find(const TString& name, bool* builtIn = 0, bool *currentScope = 0)
+    TSymbol* find(const TString& name, bool* builtIn = 0, bool* currentScope = 0, int* thisDepthP = 0)
     {
         int level = currentLevel();
         TSymbol* symbol;
+        int thisDepth = 0;
         do {
+            if (table[level]->isThisLevel())
+                ++thisDepth;
             symbol = table[level]->find(name);
             --level;
-        } while (symbol == 0 && level >= 0);
+        } while (symbol == nullptr && level >= 0);
         level++;
         if (builtIn)
             *builtIn = isBuiltInLevel(level);
         if (currentScope)
             *currentScope = isGlobalLevel(currentLevel()) || level == currentLevel();  // consider shared levels as "current scope" WRT user globals
+        if (thisDepthP != nullptr) {
+            if (! table[level]->isThisLevel())
+                thisDepth = 0;
+            *thisDepthP = thisDepth;
+        }
 
         return symbol;
     }

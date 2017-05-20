@@ -464,8 +464,8 @@ namespace spv {
     {
         const auto     instructionStart = word;
         const unsigned wordCount = asWordCount(instructionStart);
-        const spv::Op  opCode    = asOpCode(instructionStart);
         const int      nextInst  = word++ + wordCount;
+        spv::Op  opCode    = asOpCode(instructionStart);
 
         if (nextInst > int(spv.size()))
             error("spir instruction terminated too early");
@@ -506,6 +506,18 @@ namespace spv {
 
         // Store IDs from instruction in our map
         for (int op = 0; numOperands > 0; ++op, --numOperands) {
+            // SpecConstantOp is special: it includes the operands of another opcode which is
+            // given as a literal in the 3rd word.  We will switch over to pretending that the
+            // opcode being processed is the literal opcode value of the SpecConstantOp.  See the
+            // SPIRV spec for details.  This way we will handle IDs and literals as appropriate for
+            // the embedded op.
+            if (opCode == spv::OpSpecConstantOp) {
+                if (op == 0) {
+                    opCode = asOpCode(word++);  // this is the opcode embedded in the SpecConstantOp.
+                    --numOperands;
+                }
+            }
+
             switch (spv::InstructionDesc[opCode].operands.getClass(op)) {
             case spv::OperandId:
             case spv::OperandScope:

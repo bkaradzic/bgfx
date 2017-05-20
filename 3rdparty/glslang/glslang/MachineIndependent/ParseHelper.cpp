@@ -4332,6 +4332,18 @@ void TParseContext::layoutObjectCheck(const TSourceLoc& loc, const TSymbol& symb
         default:
             break;
         }
+    } else if (spvVersion.spv > 0) {
+        switch (qualifier.storage) {
+        case EvqVaryingIn:
+        case EvqVaryingOut:
+            if (! parsingBuiltins && qualifier.builtIn == EbvNone) {
+                if (!intermediate.getAutoMapLocations())
+                    error(loc, "SPIR-V requires location for user input/output", "location", "");
+            }
+            break;
+        default:
+            break;
+        }
     }
 
     // Check packing and matrix
@@ -5022,6 +5034,8 @@ TIntermNode* TParseContext::declareVariable(const TSourceLoc& loc, TString& iden
 
     // look for errors in layout qualifier use
     layoutObjectCheck(loc, *symbol);
+
+    // fix up
     fixOffset(loc, *symbol);
 
     return initNode;
@@ -5728,6 +5742,7 @@ void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, con
     // Check for general layout qualifier errors
     layoutObjectCheck(loc, variable);
 
+    // fix up
     if (isIoResizeArray(blockType)) {
         ioArraySymbolResizeList.push_back(&variable);
         checkIoArraysConsistency(loc, true);

@@ -202,6 +202,7 @@ public:
         const EShLanguage kind = GetShaderStage(GetSuffix(shaderName));
 
         glslang::TShader shader(kind);
+        shader.setAutoMapLocations(true);
         shader.setFlattenUniformArrays(flattenUniformArrays);
 
         bool success = compile(&shader, code, entryPointName, controls);
@@ -254,6 +255,7 @@ public:
         shader.setShiftUboBinding(baseUboBinding);
         shader.setShiftSsboBinding(baseSsboBinding);
         shader.setAutoMapBindings(autoMapBindings);
+        shader.setAutoMapLocations(true);
         shader.setFlattenUniformArrays(flattenUniformArrays);
 
         bool success = compile(&shader, code, entryPointName, controls);
@@ -295,6 +297,8 @@ public:
         const EShLanguage kind = GetShaderStage(GetSuffix(shaderName));
 
         glslang::TShader shader(kind);
+        shader.setAutoMapLocations(true);
+
         bool success = compile(&shader, code, entryPointName, controls);
 
         glslang::TProgram program;

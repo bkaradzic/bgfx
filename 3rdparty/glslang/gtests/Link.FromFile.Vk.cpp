@@ -60,6 +60,7 @@ TEST_P(LinkTestVulkan, FromFile)
         shaders.emplace_back(
                 new glslang::TShader(GetShaderStage(GetSuffix(fileNames[i]))));
         auto* shader = shaders.back().get();
+        shader->setAutoMapLocations(true);
         compile(shader, contents, "", controls);
         result.shaderResults.push_back(
             {fileNames[i], shader->getInfoLog(), shader->getInfoDebugLog()});

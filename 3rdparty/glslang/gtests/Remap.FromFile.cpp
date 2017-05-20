@@ -89,6 +89,7 @@ INSTANTIATE_TEST_CASE_P(
             { "remap.basic.everything.frag",              "main", Source::GLSL, spv::spirvbin_t::DO_EVERYTHING },
             { "remap.basic.dcefunc.frag",                 "main", Source::GLSL, spv::spirvbin_t::DCE_FUNCS },
             { "remap.basic.strip.frag",                   "main", Source::GLSL, spv::spirvbin_t::STRIP },
+            { "remap.specconst.comp",                     "main", Source::GLSL, spv::spirvbin_t::DO_EVERYTHING },
             { "remap.switch.none.frag",                   "main", Source::GLSL, spv::spirvbin_t::NONE },
             { "remap.switch.everything.frag",             "main", Source::GLSL, spv::spirvbin_t::DO_EVERYTHING },
             { "remap.literal64.none.spv",                 "main", Source::GLSL, spv::spirvbin_t::NONE },

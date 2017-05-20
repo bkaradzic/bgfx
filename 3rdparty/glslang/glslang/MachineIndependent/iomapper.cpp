@@ -214,6 +214,8 @@ struct TNotifyUniformAdaptor
     {
         resolver.notifyBinding(stage, ent.symbol->getName().c_str(), ent.symbol->getType(), ent.live);
     }
+private:
+    TNotifyUniformAdaptor& operator=(TNotifyUniformAdaptor&);
 };
 
 struct TNotifyInOutAdaptor
@@ -229,6 +231,8 @@ struct TNotifyInOutAdaptor
     {
         resolver.notifyInOut(stage, ent.symbol->getName().c_str(), ent.symbol->getType(), ent.live);
     }
+private:
+    TNotifyInOutAdaptor& operator=(TNotifyInOutAdaptor&);
 };
 
 struct TResolverUniformAdaptor
@@ -350,7 +354,8 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
     int baseSsboBinding;
     int baseUavBinding;
     std::vector<std::string> baseResourceSetBinding;
-    bool doAutoMapping;
+    bool doAutoBindingMapping;
+    bool doAutoLocationMapping;
     typedef std::vector<int> TSlotSet;
     typedef std::unordered_map<int, TSlotSet> TSlotSetMap;
     TSlotSetMap slots;
@@ -401,9 +406,19 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
     {
         return true;
     }
-    int resolveInOutLocation(EShLanguage /*stage*/, const char* /*name*/, const TType& /*type*/, bool /*is_live*/) override
+    int resolveInOutLocation(EShLanguage /*stage*/, const char* /*name*/, const TType& type, bool /*is_live*/) override
     {
-        return -1;
+        if (!doAutoLocationMapping || type.getQualifier().hasLocation())
+            return -1;
+
+        // Placeholder.
+        // TODO: It would be nice to flesh this out using 
+        // intermediate->computeTypeLocationSize(type), or functions that call it like
+        // intermediate->addUsedLocation()
+        // These in turn would want the intermediate, which is not available here, but
+        // is available in many places, and a lot of copying from it could be saved if
+        // it were just available.
+        return 0;
     }
     int resolveInOutComponent(EShLanguage /*stage*/, const char* /*name*/, const TType& /*type*/, bool /*is_live*/) override
     {
@@ -493,7 +508,7 @@ struct TDefaultIoResolver : public TDefaultIoResolverBase
 
             if (isUboType(type))
                 return reserveSlot(set, baseUboBinding + type.getQualifier().layoutBinding);
-        } else if (is_live && doAutoMapping) {
+        } else if (is_live && doAutoBindingMapping) {
             // find free slot, the caller did make sure it passes all vars with binding
             // first and now all are passed that do not have a binding and needs one
 
@@ -607,7 +622,7 @@ struct TDefaultHlslIoResolver : public TDefaultIoResolverBase
 
             if (isUboType(type))
                 return reserveSlot(set, baseUboBinding + type.getQualifier().layoutBinding);
-        } else if (is_live && doAutoMapping) {
+        } else if (is_live && doAutoBindingMapping) {
             // find free slot, the caller did make sure it passes all vars with binding
             // first and now all are passed that do not have a binding and needs one
 
@@ -659,6 +674,7 @@ bool TIoMapper::addStage(EShLanguage stage, TIntermediate &intermediate, TInfoSi
         intermediate.getShiftUavBinding() == 0 &&
         intermediate.getResourceSetBinding().empty() &&
         intermediate.getAutoMapBindings() == false &&
+        intermediate.getAutoMapLocations() == false &&
         resolver == nullptr)
         return true;
 
@@ -689,7 +705,8 @@ bool TIoMapper::addStage(EShLanguage stage, TIntermediate &intermediate, TInfoSi
         resolverBase->baseSsboBinding = intermediate.getShiftSsboBinding();
         resolverBase->baseUavBinding = intermediate.getShiftUavBinding();
         resolverBase->baseResourceSetBinding = intermediate.getResourceSetBinding();
-        resolverBase->doAutoMapping = intermediate.getAutoMapBindings();
+        resolverBase->doAutoBindingMapping = intermediate.getAutoMapBindings();
+        resolverBase->doAutoLocationMapping = intermediate.getAutoMapLocations();
 
         resolver = resolverBase;
     }

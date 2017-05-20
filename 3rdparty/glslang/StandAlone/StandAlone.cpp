@@ -90,6 +90,7 @@ enum TOptions {
     EOptionKeepUncalled         = (1 << 22),
     EOptionHlslOffsets          = (1 << 23),
     EOptionHlslIoMapping        = (1 << 24),
+    EOptionAutoMapLocations     = (1 << 25),
 };
 
 //
@@ -386,6 +387,9 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                                lowerword == "hlsl-iomapper" ||
                                lowerword == "hlsl-iomapping") {
                         Options |= EOptionHlslIoMapping;
+                    } else if (lowerword == "auto-map-locations" || // synonyms
+                               lowerword == "aml") {
+                        Options |= EOptionAutoMapLocations;
                     } else {
                         usage();
                     }
@@ -647,6 +651,9 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
 
         if (Options & EOptionAutoMapBindings)
             shader->setAutoMapBindings(true);
+
+        if (Options & EOptionAutoMapLocations)
+            shader->setAutoMapLocations(true);
 
         shaders.push_back(shader);
 
@@ -1062,6 +1069,11 @@ void usage()
            "  --auto-map-bindings                     automatically bind uniform variables without\n"
            "                                          explicit bindings.\n"
            "  --amb                                   synonym for --auto-map-bindings\n"
+           "\n"
+           "  --auto-map-locations                    automatically locate input/output lacking 'location'\n"
+           "                                          (fragile, not cross stage: recommend explicit\n"
+           "                                          'location' use in shader)\n"
+           "  --aml                                   synonym for --auto-map-locations\n"
            "\n"
            "  --flatten-uniform-arrays                flatten uniform texture & sampler arrays to scalars\n"
            "  --fua                                   synonym for --flatten-uniform-arrays\n"

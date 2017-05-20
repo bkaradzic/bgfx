@@ -78,6 +78,7 @@ Warning, version 450 is not yet complete; most version-specific features are pre
                               Decorate 126(g_tTex_unused2) DescriptorSet 0
                               Decorate 126(g_tTex_unused2) Binding 12
                               Decorate 128(g_sSamp_unused2) DescriptorSet 0
+                              Decorate 137(FragColor) Location 0
                               Decorate 141(g_tTex_unused3) DescriptorSet 0
                2:             TypeVoid
                3:             TypeFunction 2

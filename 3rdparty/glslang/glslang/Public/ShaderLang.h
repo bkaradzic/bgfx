@@ -309,6 +309,7 @@ public:
     void setShiftSsboBinding(unsigned int base);
     void setResourceSetBinding(const std::vector<std::string>& base);
     void setAutoMapBindings(bool map);
+    void setAutoMapLocations(bool map);
     void setHlslIoMapping(bool hlslIoMap);
     void setFlattenUniformArrays(bool flatten);
     void setNoStorageFormat(bool useUnknownFormat);

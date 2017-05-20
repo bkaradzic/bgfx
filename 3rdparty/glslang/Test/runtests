@@ -86,11 +86,18 @@ $EXE -i  --hlsl-offsets -D -e main -H hlsl.hlslOffset.vert > $TARGETDIR/hlsl.hls
 diff -b $BASEDIR/hlsl.hlslOffset.vert.out $TARGETDIR/hlsl.hlslOffset.vert.out || HASERROR=1
 
 #
-# Tesing --resource-set-binding
+# Testing --resource-set-binding
 #
 echo Configuring HLSL descriptor set and binding number manually
 $EXE -V -D -e main -H hlsl.multiDescriptorSet.frag --rsb frag t0 0 0 t1 1 0 s0 0 1 s1 1 1 b0 2 0 b1 2 1 b2 2 2 > $TARGETDIR/hlsl.multiDescriptorSet.frag.out
 diff -b $BASEDIR/hlsl.multiDescriptorSet.frag.out $TARGETDIR/hlsl.multiDescriptorSet.frag.out
+
+#
+# Testing location error
+#
+echo Testing SPV no location
+$EXE -V -C spv.noLocation.vert > $TARGETDIR/spv.noLocation.vert.out
+diff -b $BASEDIR/spv.noLocation.vert.out $TARGETDIR/spv.noLocation.vert.out
 
 #
 # Final checking

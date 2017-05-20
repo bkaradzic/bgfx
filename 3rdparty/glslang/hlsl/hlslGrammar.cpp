@@ -1933,7 +1933,7 @@ bool HlslGrammar::acceptStruct(TType& type, TIntermNode*& nodeList)
     // All member functions get parsed inside the class/struct namespace and with the
     // class/struct members in a symbol-table level.
     parseContext.pushNamespace(structName);
-    parseContext.pushThisScope(type);
+    parseContext.pushThisScope(type, functionDeclarators);
     bool deferredSuccess = true;
     for (int b = 0; b < (int)functionDeclarators.size() && deferredSuccess; ++b) {
         // parse body
