@@ -327,7 +327,6 @@ class Particles : public entry::AppI
 			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Particles.");
 			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
-			// Update camera.George RR Martin
 			cameraUpdate(deltaTime, m_mouseState);
 
 			float view[16];
