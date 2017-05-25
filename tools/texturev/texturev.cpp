@@ -87,33 +87,33 @@ static const InputBinding s_bindingApp[] =
 
 static const InputBinding s_bindingView[] =
 {
-	{ entry::Key::Comma,     entry::Modifier::None,       1, NULL, "view mip prev"    },
-	{ entry::Key::Period,    entry::Modifier::None,       1, NULL, "view mip next"    },
-	{ entry::Key::Comma,     entry::Modifier::LeftShift,  1, NULL, "view mip"         },
-	{ entry::Key::Comma,     entry::Modifier::RightShift, 1, NULL, "view mip"         },
+	{ entry::Key::Comma,     entry::Modifier::None,       1, NULL, "view mip prev"           },
+	{ entry::Key::Period,    entry::Modifier::None,       1, NULL, "view mip next"           },
+	{ entry::Key::Comma,     entry::Modifier::LeftShift,  1, NULL, "view mip"                },
+	{ entry::Key::Comma,     entry::Modifier::RightShift, 1, NULL, "view mip"                },
 
-	{ entry::Key::Slash,     entry::Modifier::None,       1, NULL, "view filter"      },
+	{ entry::Key::Slash,     entry::Modifier::None,       1, NULL, "view filter"             },
 
-	{ entry::Key::Key0,      entry::Modifier::None,       1, NULL, "view zoom 1.0"    },
-	{ entry::Key::Plus,      entry::Modifier::None,       1, NULL, "view zoom +0.1"   },
-	{ entry::Key::Minus,     entry::Modifier::None,       1, NULL, "view zoom -0.1"   },
+	{ entry::Key::Key0,      entry::Modifier::None,       1, NULL, "view zoom 1.0\nview pan" },
+	{ entry::Key::Plus,      entry::Modifier::None,       1, NULL, "view zoom +0.1"          },
+	{ entry::Key::Minus,     entry::Modifier::None,       1, NULL, "view zoom -0.1"          },
 
-	{ entry::Key::Up,        entry::Modifier::None,       1, NULL, "view file-up"     },
-	{ entry::Key::Down,      entry::Modifier::None,       1, NULL, "view file-down"   },
-	{ entry::Key::PageUp,    entry::Modifier::None,       1, NULL, "view file-pgup"   },
-	{ entry::Key::PageDown,  entry::Modifier::None,       1, NULL, "view file-pgdown" },
+	{ entry::Key::Up,        entry::Modifier::None,       1, NULL, "view file-up"            },
+	{ entry::Key::Down,      entry::Modifier::None,       1, NULL, "view file-down"          },
+	{ entry::Key::PageUp,    entry::Modifier::None,       1, NULL, "view file-pgup"          },
+	{ entry::Key::PageDown,  entry::Modifier::None,       1, NULL, "view file-pgdown"        },
 
-	{ entry::Key::Left,      entry::Modifier::None,       1, NULL, "view layer prev"  },
-	{ entry::Key::Right,     entry::Modifier::None,       1, NULL, "view layer next"  },
+	{ entry::Key::Left,      entry::Modifier::None,       1, NULL, "view layer prev"         },
+	{ entry::Key::Right,     entry::Modifier::None,       1, NULL, "view layer next"         },
 
-	{ entry::Key::KeyR,      entry::Modifier::None,       1, NULL, "view rgb r"       },
-	{ entry::Key::KeyG,      entry::Modifier::None,       1, NULL, "view rgb g"       },
-	{ entry::Key::KeyB,      entry::Modifier::None,       1, NULL, "view rgb b"       },
-	{ entry::Key::KeyA,      entry::Modifier::None,       1, NULL, "view rgb a"       },
+	{ entry::Key::KeyR,      entry::Modifier::None,       1, NULL, "view rgb r"              },
+	{ entry::Key::KeyG,      entry::Modifier::None,       1, NULL, "view rgb g"              },
+	{ entry::Key::KeyB,      entry::Modifier::None,       1, NULL, "view rgb b"              },
+	{ entry::Key::KeyA,      entry::Modifier::None,       1, NULL, "view rgb a"              },
 
-	{ entry::Key::KeyH,      entry::Modifier::None,       1, NULL, "view help"        },
+	{ entry::Key::KeyH,      entry::Modifier::None,       1, NULL, "view help"               },
 
-	{ entry::Key::KeyS,      entry::Modifier::None,       1, NULL, "view sdf"         },
+	{ entry::Key::KeyS,      entry::Modifier::None,       1, NULL, "view sdf"                },
 
 	INPUT_BINDING_END
 };
@@ -140,6 +140,8 @@ struct View
 		, m_mip(0)
 		, m_layer(0)
 		, m_abgr(UINT32_MAX)
+		, m_posx(0.0f)
+		, m_posy(0.0f)
 		, m_zoom(1.0f)
 		, m_filter(true)
 		, m_alpha(false)
@@ -155,20 +157,20 @@ struct View
 	{
 		if (_argc >= 2)
 		{
-			if (0 == strcmp(_argv[1], "mip") )
+			if (0 == bx::strCmp(_argv[1], "mip") )
 			{
 				if (_argc >= 3)
 				{
 					uint32_t mip = m_mip;
-					if (0 == strcmp(_argv[2], "next") )
+					if (0 == bx::strCmp(_argv[2], "next") )
 					{
 						++mip;
 					}
-					else if (0 == strcmp(_argv[2], "prev") )
+					else if (0 == bx::strCmp(_argv[2], "prev") )
 					{
 						--mip;
 					}
-					else if (0 == strcmp(_argv[2], "last") )
+					else if (0 == bx::strCmp(_argv[2], "last") )
 					{
 						mip = INT32_MAX;
 					}
@@ -184,20 +186,20 @@ struct View
 					m_mip = 0;
 				}
 			}
-			if (0 == strcmp(_argv[1], "layer") )
+			if (0 == bx::strCmp(_argv[1], "layer") )
 			{
 				if (_argc >= 3)
 				{
 					uint32_t layer = m_layer;
-					if (0 == strcmp(_argv[2], "next") )
+					if (0 == bx::strCmp(_argv[2], "next") )
 					{
 						++layer;
 					}
-					else if (0 == strcmp(_argv[2], "prev") )
+					else if (0 == bx::strCmp(_argv[2], "prev") )
 					{
 						--layer;
 					}
-					else if (0 == strcmp(_argv[2], "last") )
+					else if (0 == bx::strCmp(_argv[2], "last") )
 					{
 						layer = INT32_MAX;
 					}
@@ -213,7 +215,42 @@ struct View
 					m_layer = 0;
 				}
 			}
-			else if (0 == strcmp(_argv[1], "zoom") )
+			else if (0 == bx::strCmp(_argv[1], "pan") )
+			{
+				if (_argc >= 3)
+				{
+					if (_argc >= 4)
+					{
+						float yy = (float)atof(_argv[3]);
+						if (_argv[3][0] == '+'
+						||  _argv[3][0] == '-')
+						{
+							m_posy += yy;
+						}
+						else
+						{
+							m_posy = yy;
+						}
+					}
+
+					float xx = (float)atof(_argv[2]);
+					if (_argv[2][0] == '+'
+					||  _argv[2][0] == '-')
+					{
+						m_posx += xx;
+					}
+					else
+					{
+						m_posx = xx;
+					}
+				}
+				else
+				{
+					m_posx = 0.0f;
+					m_posy = 0.0f;
+				}
+			}
+			else if (0 == bx::strCmp(_argv[1], "zoom") )
 			{
 				if (_argc >= 3)
 				{
@@ -236,7 +273,7 @@ struct View
 					m_zoom = 1.0f;
 				}
 			}
-			else if (0 == strcmp(_argv[1], "filter") )
+			else if (0 == bx::strCmp(_argv[1], "filter") )
 			{
 				if (_argc >= 3)
 				{
@@ -247,17 +284,17 @@ struct View
 					m_filter ^= true;
 				}
 			}
-			else if (0 == strcmp(_argv[1], "file-up") )
+			else if (0 == bx::strCmp(_argv[1], "file-up") )
 			{
 				m_fileIndex = bx::uint32_satsub(m_fileIndex, 1);
 			}
-			else if (0 == strcmp(_argv[1], "file-down") )
+			else if (0 == bx::strCmp(_argv[1], "file-down") )
 			{
 				uint32_t numFiles = bx::uint32_satsub(uint32_t(m_fileList.size() ), 1);
 				++m_fileIndex;
 				m_fileIndex = bx::uint32_min(m_fileIndex, numFiles);
 			}
-			else if (0 == strcmp(_argv[1], "rgb") )
+			else if (0 == bx::strCmp(_argv[1], "rgb") )
 			{
 				if (_argc >= 3)
 				{
@@ -284,11 +321,11 @@ struct View
 					m_alpha = false;
 				}
 			}
-			else if (0 == strcmp(_argv[1], "sdf") )
+			else if (0 == bx::strCmp(_argv[1], "sdf") )
 			{
 				m_sdf ^= true;
 			}
-			else if (0 == strcmp(_argv[1], "help") )
+			else if (0 == bx::strCmp(_argv[1], "help") )
 			{
 				m_help ^= true;
 			}
@@ -331,7 +368,7 @@ struct View
 
 						if (supported)
 						{
-							if (0 == strcmp(_fileName, item->d_name) )
+							if (0 == bx::strCmp(_fileName, item->d_name) )
 							{
 								m_fileIndex = uint32_t(m_fileList.size() );
 							}
@@ -359,6 +396,8 @@ struct View
 	uint32_t m_mip;
 	uint32_t m_layer;
 	uint32_t m_abgr;
+	float    m_posx;
+	float    m_posy;
 	float    m_zoom;
 	bool     m_filter;
 	bool     m_alpha;
@@ -730,6 +769,8 @@ int _main_(int _argc, char** _argv)
 	Interpolator layer(0.0f);
 	Interpolator zoom(1.0f);
 	Interpolator scale(1.0f);
+	Interpolator posx(0.0f);
+	Interpolator posy(0.0f);
 
 	const char* filePath = _argc < 2 ? "" : _argv[1];
 	bool directory = false;
@@ -768,6 +809,7 @@ int _main_(int _argc, char** _argv)
 	else
 	{
 		uint32_t fileIndex = 0;
+		bool dragging = false;
 
 		entry::MouseState mouseStatePrev;
 		entry::MouseState mouseState;
@@ -797,6 +839,21 @@ int _main_(int _argc, char** _argv)
 			{
 				char exec[64];
 				bx::snprintf(exec, BX_COUNTOF(exec), "view zoom %+f", -zoomDelta*0.1f);
+				cmdExec(exec);
+			}
+
+			if (mouseState.m_buttons[entry::MouseButton::Left] != mouseStatePrev.m_buttons[entry::MouseButton::Left])
+			{
+				dragging = !!mouseState.m_buttons[entry::MouseButton::Left];
+			}
+
+			if (dragging)
+			{
+				float xDelta = float(mouseStatePrev.m_mx - mouseState.m_mx);
+				float yDelta = float(mouseStatePrev.m_my - mouseState.m_my);
+
+				char exec[64];
+				bx::snprintf(exec, BX_COUNTOF(exec), "view pan %+f %+f", xDelta, yDelta);
 				cmdExec(exec);
 			}
 
@@ -924,8 +981,15 @@ int _main_(int _argc, char** _argv)
 
 			time += (float)(frameTime*speed/freq);
 
+			float transitionTime = dragging ? 0.0f : 0.25f;
+
+			posx.set(view.m_posx, transitionTime);
+			posy.set(view.m_posy, transitionTime);
+
 			float ortho[16];
-			bx::mtxOrtho(ortho, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f);
+			float px = posx.getValue();
+			float py = posy.getValue();
+			bx::mtxOrtho(ortho, px, px+width, py+height, py, 0.0f, 1000.0f);
 			bgfx::setViewTransform(0, NULL, ortho);
 			bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height) );
 			bgfx::touch(0);
@@ -938,7 +1002,7 @@ int _main_(int _argc, char** _argv)
 				)
 				, 0.1f
 				);
-			zoom.set(view.m_zoom, 0.25);
+			zoom.set(view.m_zoom, transitionTime);
 
 			float ss = scale.getValue() * zoom.getValue();
 
