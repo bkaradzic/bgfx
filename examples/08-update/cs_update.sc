@@ -5,7 +5,7 @@
 
 #include "bgfx_compute.sh"
 
-IMAGE2D_ARRAY_WR(s_texColor,rgba32f,0);
+IMAGE2D_ARRAY_WR(s_texColor,rgba8,0);
 uniform vec4 u_time;
 
 NUM_THREADS(16, 16, 1)
