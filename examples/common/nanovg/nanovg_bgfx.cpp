@@ -1216,7 +1216,7 @@ NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* _ctx, int _width, int _heig
 	tex->width  = _width;
 	tex->height = _height;
 	tex->type   = NVG_TEXTURE_RGBA;
-	tex->flags  = _imageFlags;
+	tex->flags  = _imageFlags | NVG_IMAGE_PREMULTIPLIED;
 	tex->id     = bgfx::getTexture(fbh);
 
 	NVGLUframebuffer* framebuffer = BX_NEW(gl->m_allocator, NVGLUframebuffer);
