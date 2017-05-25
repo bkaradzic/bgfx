@@ -229,7 +229,7 @@ struct View
 						m_zoom = zoom;
 					}
 
-					m_zoom = bx::fclamp(m_zoom, 0.001f, 10.0f);
+					m_zoom = bx::fclamp(m_zoom, 0.01f, 10.0f);
 				}
 				else
 				{
@@ -769,20 +769,38 @@ int _main_(int _argc, char** _argv)
 	{
 		uint32_t fileIndex = 0;
 
+		entry::MouseState mouseStatePrev;
 		entry::MouseState mouseState;
 		while (!entry::processEvents(width, height, debug, reset, &mouseState) )
 		{
 			imguiBeginFrame(mouseState.m_mx
-				, mouseState.m_my
+				,  mouseState.m_my
 				, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
 				| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
 				| (mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-				, mouseState.m_mz
+				,  mouseState.m_mz
 				, uint16_t(width)
 				, uint16_t(height)
 				);
 
 			static bool help = false;
+
+			static bool mouseDelta = false;
+			if (!mouseDelta)
+			{
+				mouseStatePrev = mouseState;
+				mouseDelta = true;
+			}
+
+			int32_t zoomDelta = mouseState.m_mz - mouseStatePrev.m_mz;
+			if (zoomDelta != 0)
+			{
+				char exec[64];
+				bx::snprintf(exec, BX_COUNTOF(exec), "view zoom %+f", -zoomDelta*0.1f);
+				cmdExec(exec);
+			}
+
+			mouseStatePrev = mouseState;
 
 			if (help == false
 			&&  help != view.m_help)
