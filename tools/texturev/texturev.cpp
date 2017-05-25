@@ -959,15 +959,21 @@ int _main_(int _argc, char** _argv)
 			float params[4] = { mip.getValue(), layer.getValue(), 0.0f, 0.0f };
 			bgfx::setUniform(u_params, params);
 
-			bgfx::setTexture(0
-				, s_texColor
-				, texture
-				, view.m_filter
-				? BGFX_TEXTURE_NONE
-				: 0
+			const uint32_t textureFlags = 0
+				| BGFX_TEXTURE_U_CLAMP
+				| BGFX_TEXTURE_V_CLAMP
+				| BGFX_TEXTURE_W_CLAMP
+				| (view.m_filter ? 0 : 0
 				| BGFX_TEXTURE_MIN_POINT
 				| BGFX_TEXTURE_MIP_POINT
 				| BGFX_TEXTURE_MAG_POINT
+				  )
+				;
+
+			bgfx::setTexture(0
+				, s_texColor
+				, texture
+				, textureFlags
 				);
 			bgfx::setState(0
 				| BGFX_STATE_RGB_WRITE
