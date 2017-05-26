@@ -28,8 +28,9 @@
 
 #include <bgfx/platform.h>
 
-#include <bx/thread.h>
 #include <bx/handlealloc.h>
+#include <bx/thread.h>
+#include <bx/mutex.h>
 #include <tinystl/string.h>
 
 #include "dbg.h"
@@ -533,17 +534,25 @@ namespace entry
 					case GLFW_WINDOW_TOGGLE_FULL_SCREEN:
 						{
 							GLFWwindow* window = m_windows[msg->m_handle.idx];
-							if (glfwGetWindowMonitor(window))
+							if (glfwGetWindowMonitor(window) )
 							{
-								int width, height;
-								glfwGetWindowSize(window, &width, &height);
-								glfwSetWindowMonitor(window, NULL, 0, 0, width, height, 0);
+								glfwSetWindowMonitor(window
+									, NULL
+									, m_oldX
+									, m_oldY
+									, m_oldWidth
+									, m_oldHeight
+									, 0
+									);
 							}
 							else
 							{
 								GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 								if (NULL != monitor)
 								{
+									glfwGetWindowPos(window, &m_oldX, &m_oldY);
+									glfwGetWindowSize(window, &m_oldWidth, &m_oldHeight);
+
 									const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 									glfwSetWindowMonitor(window
 										, monitor
@@ -623,6 +632,11 @@ namespace entry
 		GamepadGLFW m_gamepad[ENTRY_CONFIG_MAX_GAMEPADS];
 
 		bx::SpScUnboundedQueueT<Msg> m_msgs;
+
+		int32_t m_oldX;
+		int32_t m_oldY;
+		int32_t m_oldWidth;
+		int32_t m_oldHeight;
 
 		double m_scrollPos;
 	};
