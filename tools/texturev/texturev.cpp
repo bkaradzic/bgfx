@@ -585,7 +585,7 @@ void associate()
 
 	char temp[MAX_PATH];
 	GetTempPathA(MAX_PATH, temp);
-	bx::strCat(temp, "\\texturev.reg");
+	bx::strCat(temp, MAX_PATH, "\\texturev.reg");
 
 	bx::CrtFileWriter writer;
 	bx::Error err;
