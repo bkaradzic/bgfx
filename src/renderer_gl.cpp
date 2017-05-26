@@ -1576,6 +1576,13 @@ namespace bgfx { namespace gl
 				s_extension[Extension::ARB_shader_storage_buffer_object].m_initialize = false;
 			}
 
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
+			&&  0    == bx::strCmp(m_vendor,  "Imagination Technologies")
+			&&  NULL != bx::strFind(m_version, "1.8@905891") )
+			{
+				m_workaround.m_detachShader = false;
+			}
+
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_USE_EXTENSIONS) )
 			{
 				const char* extensions = (const char*)glGetString(GL_EXTENSIONS);
