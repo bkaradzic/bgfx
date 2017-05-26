@@ -2438,8 +2438,6 @@ namespace bgfx { namespace mtl
 					desc.textureType = MTLTextureType2DArray;
 					m_type = Texture2D;
 				}
-
-				desc.arrayLength = numLayers;
 			}
 			else if (imageContainer.m_cubeMap)
 			{
@@ -2505,6 +2503,7 @@ namespace bgfx { namespace mtl
 			desc.depth  = bx::uint32_max(1,imageContainer.m_depth);
 			desc.mipmapLevelCount = imageContainer.m_numMips;
 			desc.sampleCount      = 1;
+			desc.arrayLength = numLayers;
 
 			if (s_renderMtl->m_iOS9Runtime || s_renderMtl->m_macOS11Runtime)
 			{
