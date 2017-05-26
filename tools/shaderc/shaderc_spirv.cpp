@@ -529,7 +529,7 @@ namespace bgfx { namespace spirv
 		virtual int32_t write(const void* _data, int32_t _size, bx::Error*) BX_OVERRIDE
 		{
 			char* out = (char*)alloca(_size + 1);
-			memcpy(out, _data, _size);
+			bx::memCopy(out, _data, _size);
 			out[_size] = '\0';
 			printf("%s", out);
 			return _size;

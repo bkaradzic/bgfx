@@ -585,7 +585,7 @@ void associate()
 
 	char temp[MAX_PATH];
 	GetTempPathA(MAX_PATH, temp);
-	strcat(temp, "\\texturev.reg");
+	bx::strCat(temp, "\\texturev.reg");
 
 	bx::CrtFileWriter writer;
 	bx::Error err;
@@ -997,19 +997,22 @@ int _main_(int _argc, char** _argv)
 			bgfx::dbgTextClear();
 
 			scale.set(
-				  bx::fmin( float(width) / float(view.m_info.width)
-				, float(height) / float(view.m_info.height)
+				  bx::fmin( float(width)  / float(view.m_info.width)
+				,           float(height) / float(view.m_info.height)
 				)
 				, 0.1f
 				);
 			zoom.set(view.m_zoom, transitionTime);
 
-			float ss = scale.getValue() * zoom.getValue();
+			float ss = scale.getValue()
+				* zoom.getValue()
+				;
 
-			screenQuad( int(width  - view.m_info.width  * ss)/2
+			screenQuad(
+				  int(width  - view.m_info.width  * ss)/2
 				, int(height - view.m_info.height * ss)/2
-				, int(view.m_info.width  * ss)
-				, int(view.m_info.height * ss)
+				, int(         view.m_info.width  * ss)
+				, int(         view.m_info.height * ss)
 				, view.m_abgr
 				);
 

@@ -136,7 +136,7 @@ void triangleReorder(uint16_t* _indices, uint32_t _numIndices, uint32_t _numVert
 {
 	uint16_t* newIndexList = new uint16_t[_numIndices];
 	Forsyth::OptimizeFaces(_indices, _numIndices, _numVertices, newIndexList, _cacheSize);
-	memcpy(_indices, newIndexList, _numIndices*2);
+	bx::memCopy(_indices, newIndexList, _numIndices*2);
 	delete [] newIndexList;
 }
 
@@ -159,9 +159,9 @@ void triangleCompress(bx::WriterI* _writer, uint16_t* _indices, uint32_t _numInd
 	{
 		uint32_t remap = vertexRemap[ii];
 		remap = UINT32_MAX == remap ? ii : remap;
-		memcpy(&outVertexData[remap*_stride], &_vertexData[ii*_stride], _stride);
+		bx::memCopy(&outVertexData[remap*_stride], &_vertexData[ii*_stride], _stride);
 	}
-	memcpy(_vertexData, outVertexData, _numVertices*_stride);
+	bx::memCopy(_vertexData, outVertexData, _numVertices*_stride);
 	free(outVertexData);
 
 	free(vertexRemap);
@@ -184,7 +184,7 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl
 	};
 
 	float* tangents = new float[6*_numVertices];
-	memset(tangents, 0, 6*_numVertices*sizeof(float) );
+	bx::memSet(tangents, 0, 6*_numVertices*sizeof(float) );
 
 	PosTexcoord v0;
 	PosTexcoord v1;
@@ -519,17 +519,17 @@ int main(int _argc, const char* _argv[])
 		next = bx::tokenizeCommandLine(next, commandLine, len, argc, argv, BX_COUNTOF(argv), '\n');
 		if (0 < argc)
 		{
-			if (0 == strcmp(argv[0], "#") )
+			if (0 == bx::strCmp(argv[0], "#") )
 			{
 				if (2 < argc
-				&&  0 == strcmp(argv[2], "polygons") )
+				&&  0 == bx::strCmp(argv[2], "polygons") )
 				{
 				}
 			}
-			else if (0 == strcmp(argv[0], "f") )
+			else if (0 == bx::strCmp(argv[0], "f") )
 			{
 				Triangle triangle;
-				memset(&triangle, 0, sizeof(Triangle) );
+				bx::memSet(&triangle, 0, sizeof(Triangle) );
 
 				const int numNormals   = (int)normals.size();
 				const int numTexcoords = (int)texcoords.size();
@@ -624,7 +624,7 @@ int main(int _argc, const char* _argv[])
 					}
 				}
 			}
-			else if (0 == strcmp(argv[0], "g") )
+			else if (0 == bx::strCmp(argv[0], "g") )
 			{
 				EXPECT(1 < argc);
 				group.m_name = argv[1];
@@ -639,7 +639,7 @@ int main(int _argc, const char* _argv[])
 					group.m_numTriangles = 0;
 				}
 
-				if (0 == strcmp(argv[0], "vn") )
+				if (0 == bx::strCmp(argv[0], "vn") )
 				{
 					Vector3 normal;
 					normal.x = (float)atof(argv[1]);
@@ -648,7 +648,7 @@ int main(int _argc, const char* _argv[])
 
 					normals.push_back(normal);
 				}
-				else if (0 == strcmp(argv[0], "vp") )
+				else if (0 == bx::strCmp(argv[0], "vp") )
 				{
 					static bool once = true;
 					if (once)
@@ -657,7 +657,7 @@ int main(int _argc, const char* _argv[])
 						printf("warning: 'parameter space vertices' are unsupported.\n");
 					}
 				}
-				else if (0 == strcmp(argv[0], "vt") )
+				else if (0 == bx::strCmp(argv[0], "vt") )
 				{
 					Vector3 texcoord;
 					texcoord.x = (float)atof(argv[1]);
@@ -702,7 +702,7 @@ int main(int _argc, const char* _argv[])
 					positions.push_back(pos);
 				}
 			}
-			else if (0 == strcmp(argv[0], "usemtl") )
+			else if (0 == bx::strCmp(argv[0], "usemtl") )
 			{
 				std::string material(argv[1]);
 
@@ -720,13 +720,13 @@ int main(int _argc, const char* _argv[])
 				group.m_material = material;
 			}
 // unsupported tags
-// 				else if (0 == strcmp(argv[0], "mtllib") )
+// 				else if (0 == bx::strCmp(argv[0], "mtllib") )
 // 				{
 // 				}
-// 				else if (0 == strcmp(argv[0], "o") )
+// 				else if (0 == bx::strCmp(argv[0], "o") )
 // 				{
 // 				}
-// 				else if (0 == strcmp(argv[0], "s") )
+// 				else if (0 == bx::strCmp(argv[0], "s") )
 // 				{
 // 				}
 		}
@@ -947,7 +947,7 @@ int main(int _argc, const char* _argv[])
 		 			index.m_vertexIndex = numVertices++;
 
 					float* position = (float*)(vertices + positionOffset);
-					memcpy(position, &positions[index.m_position], 3*sizeof(float) );
+					bx::memCopy(position, &positions[index.m_position], 3*sizeof(float) );
 
 					if (hasColor)
 					{
@@ -969,7 +969,7 @@ int main(int _argc, const char* _argv[])
 					if (hasTexcoord)
 					{
 						float uv[2];
-						memcpy(uv, &texcoords[index.m_texcoord], 2*sizeof(float) );
+						bx::memCopy(uv, &texcoords[index.m_texcoord], 2*sizeof(float) );
 
 						if (flipV)
 						{

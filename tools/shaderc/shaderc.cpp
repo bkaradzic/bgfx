@@ -343,7 +343,7 @@ namespace bgfx
 				&&  m_data[1] == '\xbb'
 				&&  m_data[2] == '\xbf')
 				{
-					memmove(m_data, &m_data[3], m_size-3);
+					bx::memMove(m_data, &m_data[3], m_size-3);
 					m_size -= 3;
 				}
 
@@ -619,7 +619,7 @@ namespace bgfx
 		char* scratch(const char* _str)
 		{
 			char* result = &m_scratch[m_scratchPos];
-			strcpy(result, _str);
+			bx::strCopy(result, uint32_t(sizeof(m_scratch)-m_scratchPos), _str);
 			m_scratchPos += (uint32_t)bx::strLen(_str)+1;
 
 			return result;
@@ -1179,14 +1179,14 @@ namespace bgfx
 				&&  data[1] == '\xbb'
 				&&  data[2] == '\xbf')
 				{
-					memmove(data, &data[3], size-3);
+					bx::memMove(data, &data[3], size-3);
 					size -= 3;
 				}
 
 				// Compiler generates "error X3000: syntax error: unexpected end of file"
 				// if input doesn't have empty line at EOF.
 				data[size] = '\n';
-				memset(&data[size+1], 0, padding);
+				bx::memSet(&data[size+1], 0, padding);
 				bx::close(&reader);
 
 				if (!raw)
@@ -1199,8 +1199,8 @@ namespace bgfx
 
 					size = (uint32_t)preprocessor.m_preprocessed.size();
 					data = new char[size+padding+1];
-					memcpy(data, preprocessor.m_preprocessed.c_str(), size);
-					memset(&data[size], 0, padding+1);
+					bx::memCopy(data, preprocessor.m_preprocessed.c_str(), size);
+					bx::memSet(&data[size], 0, padding+1);
 				}
 
 				strNormalizeEol(data);

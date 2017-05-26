@@ -190,7 +190,7 @@ namespace bgfx { namespace hlsl
 		for (uint32_t ii = 0; ii < bgfx::Attrib::Count; ++ii)
 		{
 			const RemapInputSemantic& ris = s_remapInputSemantic[ii];
-			if (0 == strcmp(ris.m_name, _name)
+			if (0 == bx::strCmp(ris.m_name, _name)
 			&&  ris.m_index == _index)
 			{
 				return ris;
