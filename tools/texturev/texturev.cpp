@@ -80,6 +80,7 @@ struct Binding
 static const InputBinding s_bindingApp[] =
 {
 	{ entry::Key::Esc,  entry::Modifier::None,  1, NULL, "exit"                },
+	{ entry::Key::KeyQ, entry::Modifier::None,  1, NULL, "exit"                },
 	{ entry::Key::KeyF, entry::Modifier::None,  1, NULL, "graphics fullscreen" },
 
 	INPUT_BINDING_END
