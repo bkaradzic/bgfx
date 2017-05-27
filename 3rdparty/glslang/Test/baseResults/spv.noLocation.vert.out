@@ -2,7 +2,10 @@ spv.noLocation.vert
 Warning, version 450 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: spv.noLocation.vert:4: 'location' : SPIR-V requires location for user input/output 
 ERROR: spv.noLocation.vert:8: 'location' : SPIR-V requires location for user input/output 
-ERROR: 2 compilation errors.  No code generated.
+ERROR: spv.noLocation.vert:19: 'location' : SPIR-V requires location for user input/output 
+ERROR: spv.noLocation.vert:25: 'location' : SPIR-V requires location for user input/output 
+ERROR: spv.noLocation.vert:29: 'location' : SPIR-V requires location for user input/output 
+ERROR: 5 compilation errors.  No code generated.
 
 
 SPIR-V is not generated for failed compile or link

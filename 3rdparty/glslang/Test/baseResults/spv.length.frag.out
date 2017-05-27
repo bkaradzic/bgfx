@@ -14,6 +14,7 @@ spv.length.frag
                               Name 14  "v"
                               Name 26  "gl_FragColor"
                               Name 32  "u"
+                              Decorate 26(gl_FragColor) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

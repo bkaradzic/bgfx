@@ -52,9 +52,9 @@ Warning, version 450 is not yet complete; most version-specific features are pre
               28:     27(int) Constant 0
               29:     6(bool) ConstantFalse
               30:    9(bvec2) ConstantComposite 29 29
-              31:     22(int) Constant 0
+              31:     22(int) Constant 1
               32:   23(ivec2) ConstantComposite 31 31
-              33:     22(int) Constant 1
+              33:     22(int) Constant 0
               34:   23(ivec2) ConstantComposite 33 33
               36:             TypePointer Uniform 23(ivec2)
               38:             TypeVector 22(int) 4
@@ -62,7 +62,7 @@ Warning, version 450 is not yet complete; most version-specific features are pre
               40:             TypePointer Uniform 39(Uniform)
               41:     40(ptr) Variable Uniform
               42:             TypePointer Uniform 38(ivec4)
-              65:   38(ivec4) ConstantComposite 31 31 31 31
+              65:   38(ivec4) ConstantComposite 33 33 33 33
               72:             TypeFloat 32
               73:             TypeVector 72(float) 4
               74:             TypePointer Output 73(fvec4)
@@ -73,22 +73,22 @@ Warning, version 450 is not yet complete; most version-specific features are pre
                5:             Label
        62(param):      8(ptr) Variable Function
        67(param):     10(ptr) Variable Function
-              35:   23(ivec2) Select 30 34 32
+              35:   23(ivec2) Select 30 32 34
               37:     36(ptr) AccessChain 26 28
                               Store 37 35
               43:     42(ptr) AccessChain 41 28
               44:   38(ivec4) Load 43
               45:     22(int) CompositeExtract 44 2
-              46:     6(bool) INotEqual 45 31
+              46:     6(bool) INotEqual 45 33
                               SelectionMerge 48 None
                               BranchConditional 46 47 48
               47:               Label
               49:     42(ptr)   AccessChain 41 28
               50:   38(ivec4)   Load 49
               51:     22(int)   CompositeExtract 50 0
-              52:     6(bool)   INotEqual 51 31
+              52:     6(bool)   INotEqual 51 33
               53:    9(bvec2)   CompositeConstruct 52 52
-              54:   23(ivec2)   Select 53 34 32
+              54:   23(ivec2)   Select 53 32 34
               55:     36(ptr)   AccessChain 26 28
                                 Store 55 54
                                 Branch 48
@@ -96,7 +96,7 @@ Warning, version 450 is not yet complete; most version-specific features are pre
               56:     36(ptr) AccessChain 26 28
               57:   23(ivec2) Load 56
               58:     22(int) CompositeExtract 57 0
-              59:     6(bool) INotEqual 58 31
+              59:     6(bool) INotEqual 58 33
                               SelectionMerge 61 None
                               BranchConditional 59 60 61
               60:               Label
@@ -106,7 +106,7 @@ Warning, version 450 is not yet complete; most version-specific features are pre
                                 Store 62(param) 66
               68:           2   FunctionCall 14(foo(vb4;vb2;) 62(param) 67(param)
               69:    9(bvec2)   Load 67(param)
-              70:   23(ivec2)   Select 69 34 32
+              70:   23(ivec2)   Select 69 32 34
               71:     36(ptr)   AccessChain 26 28
                                 Store 71 70
                                 Branch 61
@@ -114,14 +114,14 @@ Warning, version 450 is not yet complete; most version-specific features are pre
               76:     42(ptr) AccessChain 41 28
               77:   38(ivec4) Load 76
               78:     22(int) CompositeExtract 77 0
-              79:     6(bool) INotEqual 78 31
+              79:     6(bool) INotEqual 78 33
                               SelectionMerge 81 None
                               BranchConditional 79 80 81
               80:               Label
               82:     42(ptr)   AccessChain 41 28
               83:   38(ivec4)   Load 82
               84:     22(int)   CompositeExtract 83 1
-              85:     6(bool)   INotEqual 84 31
+              85:     6(bool)   INotEqual 84 33
                                 Branch 81
               81:             Label
               86:     6(bool) Phi 79 61 85 80
@@ -131,7 +131,7 @@ Warning, version 450 is not yet complete; most version-specific features are pre
               91:     42(ptr) AccessChain 41 28
               92:   38(ivec4) Load 91
               93:     22(int) CompositeExtract 92 0
-              94:     6(bool) INotEqual 93 31
+              94:     6(bool) INotEqual 93 33
               95:     6(bool) LogicalNot 94
                               SelectionMerge 97 None
                               BranchConditional 95 96 97
@@ -139,7 +139,7 @@ Warning, version 450 is not yet complete; most version-specific features are pre
               98:     42(ptr)   AccessChain 41 28
               99:   38(ivec4)   Load 98
              100:     22(int)   CompositeExtract 99 1
-             101:     6(bool)   INotEqual 100 31
+             101:     6(bool)   INotEqual 100 33
                                 Branch 97
               97:             Label
              102:     6(bool) Phi 94 81 101 96

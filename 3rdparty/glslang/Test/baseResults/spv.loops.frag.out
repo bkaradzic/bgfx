@@ -49,6 +49,7 @@ spv.loops.frag
                               Name 687  "d18"
                               Name 698  "d17"
                               Decorate 157(Count) Flat
+                              Decorate 615(gl_FragColor) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

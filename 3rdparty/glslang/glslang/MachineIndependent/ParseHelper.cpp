@@ -4332,14 +4332,21 @@ void TParseContext::layoutObjectCheck(const TSourceLoc& loc, const TSymbol& symb
         default:
             break;
         }
-    } else if (spvVersion.spv > 0) {
+    }
+
+    // user-variable location check, which are required for SPIR-V in/out:
+    //  - variables have it directly,
+    //  - blocks have it on each member (already enforced), so check first one
+    if (spvVersion.spv > 0 && !parsingBuiltins && qualifier.builtIn == EbvNone &&
+        !qualifier.hasLocation() && !intermediate.getAutoMapLocations()) {
+
         switch (qualifier.storage) {
         case EvqVaryingIn:
         case EvqVaryingOut:
-            if (! parsingBuiltins && qualifier.builtIn == EbvNone) {
-                if (!intermediate.getAutoMapLocations())
-                    error(loc, "SPIR-V requires location for user input/output", "location", "");
-            }
+            if (type.getBasicType() != EbtBlock || 
+                (!(*type.getStruct())[0].type->getQualifier().hasLocation() && 
+                  (*type.getStruct())[0].type->getQualifier().builtIn == EbvNone))
+                error(loc, "SPIR-V requires location for user input/output", "location", "");
             break;
         default:
             break;

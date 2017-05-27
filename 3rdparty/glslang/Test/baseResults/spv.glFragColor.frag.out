@@ -11,6 +11,7 @@ spv.glFragColor.frag
                               Source GLSL 330
                               Name 4  "main"
                               Name 9  "gl_FragColor"
+                              Decorate 9(gl_FragColor) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

@@ -15,6 +15,7 @@ spv.doWhileLoop.frag
                               Name 17  "bigColor"
                               Name 27  "d"
                               Name 32  "gl_FragColor"
+                              Decorate 32(gl_FragColor) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

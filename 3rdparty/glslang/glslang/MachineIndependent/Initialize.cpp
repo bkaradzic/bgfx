@@ -5187,7 +5187,15 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         SpecialQualifier("gl_FrontFacing",      EvqFace,       EbvFace,             symbolTable);
         SpecialQualifier("gl_FragCoord",        EvqFragCoord,  EbvFragCoord,        symbolTable);
         SpecialQualifier("gl_PointCoord",       EvqPointCoord, EbvPointCoord,       symbolTable);
-        SpecialQualifier("gl_FragColor",        EvqFragColor,  EbvFragColor,        symbolTable);
+        if (spvVersion.spv == 0)
+            SpecialQualifier("gl_FragColor",    EvqFragColor,  EbvFragColor,        symbolTable);
+        else {
+            TSymbol* symbol = symbolTable.find("gl_FragColor");
+            if (symbol) {
+                symbol->getWritableType().getQualifier().storage = EvqVaryingOut;
+                symbol->getWritableType().getQualifier().layoutLocation = 0;
+            }
+        }
         SpecialQualifier("gl_FragDepth",        EvqFragDepth,  EbvFragDepth,        symbolTable);
         SpecialQualifier("gl_FragDepthEXT",     EvqFragDepth,  EbvFragDepth,        symbolTable);
         SpecialQualifier("gl_HelperInvocation", EvqVaryingIn,  EbvHelperInvocation, symbolTable);

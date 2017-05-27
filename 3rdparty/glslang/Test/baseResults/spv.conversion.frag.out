@@ -51,6 +51,7 @@ spv.conversion.frag
                               Name 454  "i_f4"
                               Decorate 39(i_i) Flat
                               Decorate 157(i_i4) Flat
+                              Decorate 322(gl_FragColor) Location 0
                               Decorate 446(i_i2) Flat
                               Decorate 448(i_i3) Flat
                2:             TypeVoid

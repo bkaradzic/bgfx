@@ -17,6 +17,7 @@ Warning, version 400 is not yet complete; most version-specific features are pre
                               Name 17  "coord"
                               Name 34  "gl_FragColor"
                               Decorate 13(tex) DescriptorSet 0
+                              Decorate 34(gl_FragColor) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

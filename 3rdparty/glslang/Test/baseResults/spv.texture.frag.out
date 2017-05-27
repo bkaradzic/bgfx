@@ -45,6 +45,7 @@ WARNING: 0:12: varying deprecated in version 130; may be removed in future relea
                               Decorate 130(texSamplerCube) DescriptorSet 0
                               Decorate 145(shadowSampler1D) DescriptorSet 0
                               Decorate 164(shadowSampler2D) DescriptorSet 0
+                              Decorate 291(gl_FragColor) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

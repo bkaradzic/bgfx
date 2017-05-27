@@ -40,6 +40,7 @@ spv.structDeref.frag
                               Name 99  "gl_FragColor"
                               Name 116  "samp2D"
                               Name 122  "foo2"
+                              Decorate 99(gl_FragColor) Location 0
                               Decorate 116(samp2D) DescriptorSet 0
                2:             TypeVoid
                3:             TypeFunction 2

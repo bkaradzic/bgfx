@@ -26,6 +26,7 @@ spv.forLoop.frag
                               Name 104  "f"
                               Name 117  "i"
                               Decorate 24(Count) Flat
+                              Decorate 36(gl_FragColor) Location 0
                               Decorate 53(v4) Flat
                2:             TypeVoid
                3:             TypeFunction 2

@@ -42,6 +42,7 @@ Warning, version 400 is not yet complete; most version-specific features are pre
                               Name 135  "foo2"
                               Decorate 15(foo3) Flat
                               Decorate 90(condition) Flat
+                              Decorate 108(gl_FragColor) Location 0
                               Decorate 128(samp2D) DescriptorSet 0
                               Decorate 134(foo) Flat
                               Decorate 135(foo2) Flat

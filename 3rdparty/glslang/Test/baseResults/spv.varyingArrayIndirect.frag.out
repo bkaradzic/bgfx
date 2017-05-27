@@ -22,6 +22,7 @@ spv.varyingArrayIndirect.frag
                               Decorate 13(texSampler2D) DescriptorSet 0
                               Decorate 22(b) Flat
                               Decorate 31(a) Flat
+                              Decorate 56(gl_FragColor) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

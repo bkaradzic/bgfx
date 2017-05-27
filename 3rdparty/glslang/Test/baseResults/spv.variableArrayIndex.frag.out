@@ -38,6 +38,7 @@ Warning, version 400 is not yet complete; most version-specific features are pre
                               Decorate 20(foo3) Flat
                               Decorate 34(foo2) Flat
                               Decorate 36(foo) Flat
+                              Decorate 54(gl_FragColor) Location 0
                               Decorate 59(samp2D) DescriptorSet 0
                2:             TypeVoid
                3:             TypeFunction 2

@@ -2988,13 +2988,19 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
     const TOperator op  = node->getAsOperator()->getOp();
     const TIntermAggregate* argAggregate = arguments ? arguments->getAsAggregate() : nullptr;
 
-    // Bail out if not a sampler method
+    // Bail out if not a sampler method.
+    // Note though this is odd to do before checking the op, because the op
+    // could be something that takes the arguments, and the function in question
+    // takes the result of the op.  So, this is not the final word.
     if (arguments != nullptr) {
-        if ((argAggregate != nullptr && argAggregate->getSequence()[0]->getAsTyped()->getBasicType() != EbtSampler))
-            return;
-
-        if (argAggregate == nullptr && arguments->getAsTyped()->getBasicType() != EbtSampler)
-            return;
+        if (argAggregate == nullptr) {
+            if (arguments->getAsTyped()->getBasicType() != EbtSampler)
+                return;
+        } else {
+            if (argAggregate->getSequence().size() == 0 ||
+                argAggregate->getSequence()[0]->getAsTyped()->getBasicType() != EbtSampler)
+                return;
+        }
     }
 
     switch (op) {
@@ -5150,6 +5156,33 @@ bool HlslParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node
     case EOpConstructDMat4x2:
     case EOpConstructDMat4x3:
     case EOpConstructDMat4x4:
+    case EOpConstructIMat2x2:
+    case EOpConstructIMat2x3:
+    case EOpConstructIMat2x4:
+    case EOpConstructIMat3x2:
+    case EOpConstructIMat3x3:
+    case EOpConstructIMat3x4:
+    case EOpConstructIMat4x2:
+    case EOpConstructIMat4x3:
+    case EOpConstructIMat4x4:
+    case EOpConstructUMat2x2:
+    case EOpConstructUMat2x3:
+    case EOpConstructUMat2x4:
+    case EOpConstructUMat3x2:
+    case EOpConstructUMat3x3:
+    case EOpConstructUMat3x4:
+    case EOpConstructUMat4x2:
+    case EOpConstructUMat4x3:
+    case EOpConstructUMat4x4:
+    case EOpConstructBMat2x2:
+    case EOpConstructBMat2x3:
+    case EOpConstructBMat2x4:
+    case EOpConstructBMat3x2:
+    case EOpConstructBMat3x3:
+    case EOpConstructBMat3x4:
+    case EOpConstructBMat4x2:
+    case EOpConstructBMat4x3:
+    case EOpConstructBMat4x4:
         constructingMatrix = true;
         break;
     default:
@@ -7274,6 +7307,15 @@ TIntermTyped* HlslParseContext::constructBuiltIn(const TType& type, TOperator op
     case EOpConstructIVec2:
     case EOpConstructIVec3:
     case EOpConstructIVec4:
+    case EOpConstructIMat2x2:
+    case EOpConstructIMat2x3:
+    case EOpConstructIMat2x4:
+    case EOpConstructIMat3x2:
+    case EOpConstructIMat3x3:
+    case EOpConstructIMat3x4:
+    case EOpConstructIMat4x2:
+    case EOpConstructIMat4x3:
+    case EOpConstructIMat4x4:
     case EOpConstructInt:
         basicOp = EOpConstructInt;
         break;
@@ -7281,6 +7323,15 @@ TIntermTyped* HlslParseContext::constructBuiltIn(const TType& type, TOperator op
     case EOpConstructUVec2:
     case EOpConstructUVec3:
     case EOpConstructUVec4:
+    case EOpConstructUMat2x2:
+    case EOpConstructUMat2x3:
+    case EOpConstructUMat2x4:
+    case EOpConstructUMat3x2:
+    case EOpConstructUMat3x3:
+    case EOpConstructUMat3x4:
+    case EOpConstructUMat4x2:
+    case EOpConstructUMat4x3:
+    case EOpConstructUMat4x4:
     case EOpConstructUint:
         basicOp = EOpConstructUint;
         break;
@@ -7288,6 +7339,15 @@ TIntermTyped* HlslParseContext::constructBuiltIn(const TType& type, TOperator op
     case EOpConstructBVec2:
     case EOpConstructBVec3:
     case EOpConstructBVec4:
+    case EOpConstructBMat2x2:
+    case EOpConstructBMat2x3:
+    case EOpConstructBMat2x4:
+    case EOpConstructBMat3x2:
+    case EOpConstructBMat3x3:
+    case EOpConstructBMat3x4:
+    case EOpConstructBMat4x2:
+    case EOpConstructBMat4x3:
+    case EOpConstructBMat4x4:
     case EOpConstructBool:
         basicOp = EOpConstructBool;
         break;

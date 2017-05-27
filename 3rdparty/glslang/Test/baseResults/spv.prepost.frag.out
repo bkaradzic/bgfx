@@ -20,6 +20,7 @@ spv.prepost.frag
                               Name 66  "z"
                               Name 73  "v"
                               Name 90  "gl_FragColor"
+                              Decorate 90(gl_FragColor) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeInt 32 1

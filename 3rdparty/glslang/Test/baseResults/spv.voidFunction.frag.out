@@ -20,6 +20,7 @@ Warning, version 400 is not yet complete; most version-specific features are pre
                               Name 37  "gl_FragColor"
                               Name 40  "BaseColor"
                               Name 42  "d"
+                              Decorate 37(gl_FragColor) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
               10:             TypeFloat 32

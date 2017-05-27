@@ -99,6 +99,14 @@ void TType::buildMangledName(TString& mangledName) const
         case EsdSubpass:  mangledName += "P";  break;
         default: break; // some compilers want this
         }
+
+        switch (sampler.vectorSize) {
+        case 1: mangledName += "1"; break;
+        case 2: mangledName += "2"; break;
+        case 3: mangledName += "3"; break;
+        case 4: break; // default to prior name mangle behavior
+        }
+
         if (sampler.ms)
             mangledName += "M";
         break;

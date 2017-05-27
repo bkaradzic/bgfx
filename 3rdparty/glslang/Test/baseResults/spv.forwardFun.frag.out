@@ -32,6 +32,7 @@ spv.forwardFun.frag
                               Decorate 27(f) RelaxedPrecision
                               Decorate 28 RelaxedPrecision
                               Decorate 30(gl_FragColor) RelaxedPrecision
+                              Decorate 30(gl_FragColor) Location 0
                               Decorate 31 RelaxedPrecision
                               Decorate 32 RelaxedPrecision
                               Decorate 33 RelaxedPrecision

@@ -13,6 +13,7 @@ spv.simpleFunctionCall.frag
                               Name 9  "foo("
                               Name 12  "BaseColor"
                               Name 17  "gl_FragColor"
+                              Decorate 17(gl_FragColor) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

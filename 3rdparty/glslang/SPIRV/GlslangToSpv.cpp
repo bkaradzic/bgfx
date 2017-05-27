@@ -1528,6 +1528,33 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
     case glslang::EOpConstructDMat4x2:
     case glslang::EOpConstructDMat4x3:
     case glslang::EOpConstructDMat4x4:
+    case glslang::EOpConstructIMat2x2:
+    case glslang::EOpConstructIMat2x3:
+    case glslang::EOpConstructIMat2x4:
+    case glslang::EOpConstructIMat3x2:
+    case glslang::EOpConstructIMat3x3:
+    case glslang::EOpConstructIMat3x4:
+    case glslang::EOpConstructIMat4x2:
+    case glslang::EOpConstructIMat4x3:
+    case glslang::EOpConstructIMat4x4:
+    case glslang::EOpConstructUMat2x2:
+    case glslang::EOpConstructUMat2x3:
+    case glslang::EOpConstructUMat2x4:
+    case glslang::EOpConstructUMat3x2:
+    case glslang::EOpConstructUMat3x3:
+    case glslang::EOpConstructUMat3x4:
+    case glslang::EOpConstructUMat4x2:
+    case glslang::EOpConstructUMat4x3:
+    case glslang::EOpConstructUMat4x4:
+    case glslang::EOpConstructBMat2x2:
+    case glslang::EOpConstructBMat2x3:
+    case glslang::EOpConstructBMat2x4:
+    case glslang::EOpConstructBMat3x2:
+    case glslang::EOpConstructBMat3x3:
+    case glslang::EOpConstructBMat3x4:
+    case glslang::EOpConstructBMat4x2:
+    case glslang::EOpConstructBMat4x3:
+    case glslang::EOpConstructBMat4x4:
 #ifdef AMD_EXTENSIONS
     case glslang::EOpConstructF16Mat2x2:
     case glslang::EOpConstructF16Mat2x3:
@@ -2591,19 +2618,24 @@ void TGlslangToSpvTraverser::accessChainStore(const glslang::TType& type, spv::I
             // Conversion for bool
             spv::Id boolType = builder.makeBoolType();
             if (nominalTypeId != boolType) {
+                // keep these outside arguments, for determinant order-of-evaluation
+                spv::Id one = builder.makeUintConstant(1);
                 spv::Id zero = builder.makeUintConstant(0);
-                spv::Id one  = builder.makeUintConstant(1);
                 rvalue = builder.createTriOp(spv::OpSelect, nominalTypeId, rvalue, one, zero);
-            }
+            } else if (builder.getTypeId(rvalue) != boolType)
+                rvalue = builder.createBinOp(spv::OpINotEqual, boolType, rvalue, builder.makeUintConstant(0));
         } else if (builder.isVectorType(nominalTypeId)) {
             // Conversion for bvec
             int vecSize = builder.getNumTypeComponents(nominalTypeId);
             spv::Id bvecType = builder.makeVectorType(builder.makeBoolType(), vecSize);
             if (nominalTypeId != bvecType) {
+                // keep these outside arguments, for determinant order-of-evaluation
+                spv::Id one = makeSmearedConstant(builder.makeUintConstant(1), vecSize);
                 spv::Id zero = makeSmearedConstant(builder.makeUintConstant(0), vecSize);
-                spv::Id one  = makeSmearedConstant(builder.makeUintConstant(1), vecSize);
                 rvalue = builder.createTriOp(spv::OpSelect, nominalTypeId, rvalue, one, zero);
-            }
+            } else if (builder.getTypeId(rvalue) != bvecType)
+                rvalue = builder.createBinOp(spv::OpINotEqual, bvecType, rvalue,
+                                             makeSmearedConstant(builder.makeUintConstant(0), vecSize));
         }
     }
 
@@ -5356,12 +5388,17 @@ bool TGlslangToSpvTraverser::isTrivialLeaf(const glslang::TIntermTyped* node)
 }
 
 // A node is trivial if it is a single operation with no side effects.
-// Error on the side of saying non-trivial.
+// HLSL (and/or vectors) are always trivial, as it does not short circuit.
+// Otherwise, error on the side of saying non-trivial.
 // Return true if trivial.
 bool TGlslangToSpvTraverser::isTrivial(const glslang::TIntermTyped* node)
 {
     if (node == nullptr)
         return false;
+
+    // count non scalars as trivial, as well as anything coming from HLSL
+    if (! node->getType().isScalarOrVec1() || glslangIntermediate->getSource() == glslang::EShSourceHlsl)
+        return true;
 
     // symbols and constants are trivial
     if (isTrivialLeaf(node))

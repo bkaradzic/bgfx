@@ -17,6 +17,7 @@ spv.always-discard2.frag
                               Name 21  "tex_coord"
                               Name 30  "y"
                               Name 38  "gl_FragColor"
+                              Decorate 38(gl_FragColor) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
