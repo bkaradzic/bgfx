@@ -2,7 +2,7 @@
 // File: vk_platform.h
 //
 /*
-** Copyright (c) 2014-2015 The Khronos Group Inc.
+** Copyright (c) 2014-2017 The Khronos Group Inc.
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -51,13 +51,13 @@ extern "C"
     #define VKAPI_ATTR
     #define VKAPI_CALL __stdcall
     #define VKAPI_PTR  VKAPI_CALL
-#elif defined(__ANDROID__) && defined(__ARM_EABI__) && !defined(__ARM_ARCH_7A__)
-    // Android does not support Vulkan in native code using the "armeabi" ABI.
-    #error "Vulkan requires the 'armeabi-v7a' or 'armeabi-v7a-hard' ABI on 32-bit ARM CPUs"
-#elif defined(__ANDROID__) && defined(__ARM_ARCH_7A__)
-    // On Android/ARMv7a, Vulkan functions use the armeabi-v7a-hard calling
-    // convention, even if the application's native code is compiled with the
-    // armeabi-v7a calling convention.
+#elif defined(__ANDROID__) && defined(__ARM_ARCH) && __ARM_ARCH < 7
+    #error "Vulkan isn't supported for the 'armeabi' NDK ABI"
+#elif defined(__ANDROID__) && defined(__ARM_ARCH) && __ARM_ARCH >= 7 && defined(__ARM_32BIT_STATE)
+    // On Android 32-bit ARM targets, Vulkan functions use the "hardfloat"
+    // calling convention, i.e. float parameters are passed in registers. This
+    // is true even if the rest of the application passes floats on the stack,
+    // as it does by default when compiling for the armeabi-v7a NDK ABI.
     #define VKAPI_ATTR __attribute__((pcs("aapcs-vfp")))
     #define VKAPI_CALL
     #define VKAPI_PTR  VKAPI_ATTR

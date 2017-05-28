@@ -961,6 +961,8 @@ VK_IMPORT_INSTANCE
 				g_caps.vendorId = uint16_t(m_deviceProperties.vendorID);
 				g_caps.deviceId = uint16_t(m_deviceProperties.deviceID);
 
+				g_caps.limits.maxTextureSize   = m_deviceProperties.limits.maxImageDimension2D;
+				g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(m_deviceProperties.limits.maxFragmentOutputAttachments, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
 
 				{
 //					VkFormatProperties fp;
@@ -1171,7 +1173,7 @@ VK_IMPORT_DEVICE
 
 			m_backBufferDepthStencilFormat =
 				VK_FORMAT_D32_SFLOAT_S8_UINT
-			//	VK_FORMAT_D24_UNORM_S8_UINT
+//				VK_FORMAT_D24_UNORM_S8_UINT
 				;
 
 			{
@@ -3506,11 +3508,11 @@ VK_DESTROY
 		const void* code = reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
 
-		m_code = alloc( ( (shaderSize+3)/4)*4);
+		m_code = alloc( ( ( (shaderSize+3)/4)*4) );
 		bx::memSet(m_code->data, 0, m_code->size);
 		bx::memCopy(m_code->data
 			, code
-			, shaderSize+1
+			, shaderSize
 			);
 #else
 #include "../examples/runtime/shaders/spv/vert.spv.h"
@@ -3535,7 +3537,12 @@ VK_DESTROY
 		smci.flags = 0;
 		smci.codeSize = m_code->size;
 		smci.pCode    = (const uint32_t*)m_code->data;
-		VK_CHECK(vkCreateShaderModule(s_renderVK->m_device, &smci, s_renderVK->m_allocatorCb, &m_module) );
+		VK_CHECK(vkCreateShaderModule(
+			  s_renderVK->m_device
+			, &smci
+			, s_renderVK->m_allocatorCb
+			, &m_module
+			) );
 
 		bx::memSet(m_attrMask, 0, sizeof(m_attrMask) );
 		m_attrMask[Attrib::Position] = UINT16_MAX;
