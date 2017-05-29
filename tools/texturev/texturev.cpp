@@ -35,6 +35,9 @@ namespace stl = tinystl;
 #include "fs_texture_cube.bin.h"
 #include "fs_texture_sdf.bin.h"
 
+#define BACKGROUND_VIEW_ID 0
+#define IMAGE_VIEW_ID      1
+
 #define BGFX_TEXTUREV_VERSION_MAJOR 1
 #define BGFX_TEXTUREV_VERSION_MINOR 0
 
@@ -435,7 +438,7 @@ struct PosUvColorVertex
 
 bgfx::VertexDecl PosUvColorVertex::ms_decl;
 
-bool screenQuad(int32_t _x, int32_t _y, int32_t _width, uint32_t _height, uint32_t _abgr, bool _originBottomLeft = false)
+bool screenQuad(int32_t _x, int32_t _y, int32_t _width, uint32_t _height, uint32_t _abgr, float _maxu = 1.0f, float _maxv = 1.0f)
 {
 	if (6 == bgfx::getAvailTransientVertexBuffer(6, PosUvColorVertex::ms_decl) )
 	{
@@ -451,14 +454,10 @@ bool screenQuad(int32_t _x, int32_t _y, int32_t _width, uint32_t _height, uint32
 		const float maxx = minx+widthf;
 		const float maxy = miny+heightf;
 
-		float m_halfTexel = 0.0f;
-
-		const float texelHalfW = m_halfTexel/widthf;
-		const float texelHalfH = m_halfTexel/heightf;
-		const float minu = texelHalfW;
-		const float maxu = 1.0f - texelHalfW;
-		const float minv = _originBottomLeft ? texelHalfH+1.0f : texelHalfH     ;
-		const float maxv = _originBottomLeft ? texelHalfH      : texelHalfH+1.0f;
+		const float minu = 0.0f;
+		const float maxu = _maxu;
+		const float minv = 0.0f;
+		const float maxv = _maxv;
 
 		vertex[0].m_x = minx;
 		vertex[0].m_y = miny;
@@ -717,9 +716,9 @@ int _main_(int _argc, char** _argv)
 	bgfx::reset(width, height, reset);
 
 	// Set view 0 clear state.
-	bgfx::setViewClear(0
+	bgfx::setViewClear(BACKGROUND_VIEW_ID
 		, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-		, 0x101010ff
+		, 0x000000ff
 		, 1.0f
 		, 0
 		);
@@ -739,7 +738,6 @@ int _main_(int _argc, char** _argv)
 			, fsTexture
 			, true
 			);
-
 	bgfx::ProgramHandle textureArrayProgram = bgfx::createProgram(
 			  vsTexture
 			, bgfx::isValid(fsTextureArray)
@@ -762,6 +760,21 @@ int _main_(int _argc, char** _argv)
 	bgfx::UniformHandle s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
 	bgfx::UniformHandle u_mtx      = bgfx::createUniform("u_mtx",      bgfx::UniformType::Mat4);
 	bgfx::UniformHandle u_params   = bgfx::createUniform("u_params",   bgfx::UniformType::Vec4);
+
+	const uint32_t checkerBoardSize = 64;
+	bgfx::TextureHandle checkerBoard;
+	{
+		const bgfx::Memory* mem = bgfx::alloc(checkerBoardSize*checkerBoardSize*4);
+		bimg::imageCheckerboard(mem->data, checkerBoardSize, checkerBoardSize, 8, 0xff8e8e8e, 0xff5d5d5d);
+		checkerBoard = bgfx::createTexture2D(checkerBoardSize, checkerBoardSize, false, 1
+			, bgfx::TextureFormat::BGRA8
+			, 0
+			| BGFX_TEXTURE_MIN_POINT
+			| BGFX_TEXTURE_MIP_POINT
+			| BGFX_TEXTURE_MAG_POINT
+			, mem
+			);
+	}
 
 	float speed = 0.37f;
 	float time  = 0.0f;
@@ -988,12 +1001,37 @@ int _main_(int _argc, char** _argv)
 			posy.set(view.m_posy, transitionTime);
 
 			float ortho[16];
+
+			bx::mtxOrtho(ortho, 0.0f, width, height, 0.0f, 0.0f, 1000.0f);
+			bgfx::setViewTransform(BACKGROUND_VIEW_ID, NULL, ortho);
+			bgfx::setViewRect(BACKGROUND_VIEW_ID, 0, 0, uint16_t(width), uint16_t(height) );
+
+			screenQuad(
+				  0
+				, 0
+				, width
+				, height
+				, view.m_alpha ? UINT32_MAX : 0
+				, float(width )/float(checkerBoardSize)
+				, float(height)/float(checkerBoardSize)
+				);
+			bgfx::setTexture(0
+				, s_texColor
+				, checkerBoard
+				);
+			bgfx::setState(0
+				| BGFX_STATE_RGB_WRITE
+				| BGFX_STATE_ALPHA_WRITE
+				);
+			bgfx::submit(BACKGROUND_VIEW_ID
+					, textureProgram
+					);
+
 			float px = posx.getValue();
 			float py = posy.getValue();
 			bx::mtxOrtho(ortho, px, px+width, py+height, py, 0.0f, 1000.0f);
-			bgfx::setViewTransform(0, NULL, ortho);
-			bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height) );
-			bgfx::touch(0);
+			bgfx::setViewTransform(IMAGE_VIEW_ID, NULL, ortho);
+			bgfx::setViewRect(IMAGE_VIEW_ID, 0, 0, uint16_t(width), uint16_t(height) );
 
 			bgfx::dbgTextClear();
 
@@ -1048,7 +1086,7 @@ int _main_(int _argc, char** _argv)
 				| BGFX_STATE_ALPHA_WRITE
 				| (view.m_alpha ? BGFX_STATE_BLEND_ALPHA : BGFX_STATE_NONE)
 				);
-			bgfx::submit(0
+			bgfx::submit(IMAGE_VIEW_ID
 					,     view.m_info.cubeMap   ? textureCubeProgram
 					: 1 < view.m_info.numLayers ? textureArrayProgram
 					:     view.m_sdf            ? textureSdfProgram
@@ -1063,6 +1101,7 @@ int _main_(int _argc, char** _argv)
 	{
 		bgfx::destroyTexture(texture);
 	}
+	bgfx::destroyTexture(checkerBoard);
 	bgfx::destroyUniform(s_texColor);
 	bgfx::destroyUniform(u_mtx);
 	bgfx::destroyUniform(u_params);
