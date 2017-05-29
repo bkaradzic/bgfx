@@ -5685,7 +5685,10 @@ namespace bgfx { namespace gl
 
 					if (usesTextureArray)
 					{
-						writeString(&writer, "#extension GL_EXT_texture_array : enable\n");
+						writeString(&writer
+							, "#extension GL_EXT_texture_array : enable\n"
+							  "#define texture2DArrayLodEXT texture2DArrayLod\n"
+							);
 					}
 
 					if (130 <= version)
