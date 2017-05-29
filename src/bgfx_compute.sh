@@ -61,7 +61,7 @@
 #define r32f     float
 #define rg16f    float2
 #define rgba16f  float4
-#define rgba8    float4
+#define rgba8    unorm float4
 #define rgba32f  float4
 
 #define IMAGE2D_RO( _name, _format, _reg)   Texture2D<_format> _name : REGISTER(t, _reg)
@@ -106,18 +106,22 @@
 	ivec3 imageSize(       Texture3D<_textureType> _image)                           { uvec3 result; _image.GetDimensions(result.x, result.y, result.z); return ivec3(result); } \
 	ivec3 imageSize(     RWTexture3D<_textureType> _image)                           { uvec3 result; _image.GetDimensions(result.x, result.y, result.z); return ivec3(result); }
 
-__IMAGE_IMPL(float, x,    vec4,  xxxx)
-__IMAGE_IMPL(vec2,  xy,   vec4,  xyyy)
-__IMAGE_IMPL(vec3,  xyz,  vec4,  xyzz)
-__IMAGE_IMPL(vec4,  xyzw, vec4,  xyzw)
-__IMAGE_IMPL(uint,  x,    uvec4, xxxx)
-__IMAGE_IMPL(uvec2, xy,   uvec4, xyyy)
-__IMAGE_IMPL(uvec3, xyz,  uvec4, xyzz)
-__IMAGE_IMPL(uvec4, xyzw, uvec4, xyzw)
-__IMAGE_IMPL(int,   x,    ivec4, xxxx)
-__IMAGE_IMPL(ivec2, xy,   ivec4, xyyy)
-__IMAGE_IMPL(ivec3, xyz,  ivec4, xyzz)
-__IMAGE_IMPL(ivec4, xyzw, ivec4, xyzw)
+__IMAGE_IMPL(float,       x,    vec4,  xxxx)
+__IMAGE_IMPL(vec2,        xy,   vec4,  xyyy)
+__IMAGE_IMPL(vec3,        xyz,  vec4,  xyzz)
+__IMAGE_IMPL(vec4,        xyzw, vec4,  xyzw)
+__IMAGE_IMPL(unorm float, x,    vec4,  xxxx)
+__IMAGE_IMPL(unorm vec2,  xy,   vec4,  xyyy)
+__IMAGE_IMPL(unorm vec3,  xyz,  vec4,  xyzz)
+__IMAGE_IMPL(unorm vec4,  xyzw, vec4,  xyzw)
+__IMAGE_IMPL(uint,        x,    uvec4, xxxx)
+__IMAGE_IMPL(uvec2,       xy,   uvec4, xyyy)
+__IMAGE_IMPL(uvec3,       xyz,  uvec4, xyzz)
+__IMAGE_IMPL(uvec4,       xyzw, uvec4, xyzw)
+__IMAGE_IMPL(int,         x,    ivec4, xxxx)
+__IMAGE_IMPL(ivec2,       xy,   ivec4, xyyy)
+__IMAGE_IMPL(ivec3,       xyz,  ivec4, xyzz)
+__IMAGE_IMPL(ivec4,       xyzw, ivec4, xyzw)
 
 #define __ATOMIC_IMPL_TYPE(_genType, _glFunc, _dxFunc)      \
 			_genType _glFunc(_genType _mem, _genType _data) \
