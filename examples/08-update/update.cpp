@@ -256,7 +256,7 @@ public:
 		if (m_computeSupported)
 		{
 			m_textureCube[2] = bgfx::createTextureCube(
-				textureside
+				  textureside
 				, false
 				, 1
 				, bgfx::TextureFormat::RGBA8
