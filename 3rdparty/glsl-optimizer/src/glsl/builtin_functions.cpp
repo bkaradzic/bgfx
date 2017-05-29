@@ -161,6 +161,7 @@ lod_exists_in_stage(const _mesa_glsl_parse_state *state)
     */
    return state->stage == MESA_SHADER_VERTEX ||
           state->is_version(130, 300) ||
+          state->EXT_texture_array_enable || /* BK - don't complain about texture array in fragment shaders. */
           state->ARB_shader_texture_lod_enable;
 }
 
