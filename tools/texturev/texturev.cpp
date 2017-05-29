@@ -754,7 +754,7 @@ int _main_(int _argc, char** _argv)
 			, true
 			);
 
-	bgfx::ProgramHandle textureSDFProgram = bgfx::createProgram(
+	bgfx::ProgramHandle textureSdfProgram = bgfx::createProgram(
 			  vsTexture
 			, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_texture_sdf")
 			, true);
@@ -1051,7 +1051,7 @@ int _main_(int _argc, char** _argv)
 			bgfx::submit(0
 					,     view.m_info.cubeMap   ? textureCubeProgram
 					: 1 < view.m_info.numLayers ? textureArrayProgram
-					:     view.m_sdf            ? textureSDFProgram
+					:     view.m_sdf            ? textureSdfProgram
 					:                             textureProgram
 					);
 
@@ -1069,6 +1069,7 @@ int _main_(int _argc, char** _argv)
 	bgfx::destroyProgram(textureProgram);
 	bgfx::destroyProgram(textureArrayProgram);
 	bgfx::destroyProgram(textureCubeProgram);
+	bgfx::destroyProgram(textureSdfProgram);
 
 	imguiDestroy();
 
