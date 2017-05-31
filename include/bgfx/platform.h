@@ -131,19 +131,4 @@ namespace bgfx
 
 } // namespace bgfx
 
-#if BX_PLATFORM_NACL
-#	include <ppapi/c/ppb_graphics_3d.h>
-#	include <ppapi/c/ppb_instance.h>
-
-namespace bgfx
-{
-	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
-
-	///
-	bool naclSetInterfaces(::PP_Instance, const ::PPB_Instance*, const ::PPB_Graphics3D*, PostSwapBuffersFn);
-
-} // namespace bgfx
-
-#endif // BX_PLATFORM_
-
 #endif // BGFX_PLATFORM_H_HEADER_GUARD

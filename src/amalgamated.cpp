@@ -6,7 +6,6 @@
 #include "bgfx.cpp"
 #include "glcontext_egl.cpp"
 #include "glcontext_glx.cpp"
-#include "glcontext_ppapi.cpp"
 #include "glcontext_wgl.cpp"
 #include "hmd.cpp"
 #include "hmd_ovr.cpp"

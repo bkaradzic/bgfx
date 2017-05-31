@@ -935,9 +935,7 @@ typedef uint64_t GLuint64;
 #	define GL_LINE_SMOOTH 0x0B20
 #endif // GL_LINE_SMOOTH
 
-#if BX_PLATFORM_NACL
-#	include "glcontext_ppapi.h"
-#elif BX_PLATFORM_WINDOWS
+#if BX_PLATFORM_WINDOWS
 #	include <windows.h>
 #elif BX_PLATFORM_LINUX || BX_PLATFORM_BSD
 #	include "glcontext_glx.h"

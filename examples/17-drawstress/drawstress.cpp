@@ -72,13 +72,13 @@ static const uint16_t s_cubeIndices[36] =
 	6, 3, 7,
 };
 
-#if BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_NACL
+#if BX_PLATFORM_EMSCRIPTEN
 static const int64_t highwm = 1000000/35;
 static const int64_t lowwm  = 1000000/27;
 #else
 static const int64_t highwm = 1000000/65;
 static const int64_t lowwm  = 1000000/57;
-#endif // BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_NACL
+#endif // BX_PLATFORM_EMSCRIPTEN
 
 class ExampleDrawStress : public entry::AppI
 {

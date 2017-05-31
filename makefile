@@ -56,9 +56,6 @@ projgen: ## Generate project files for all configurations.
 	$(GENIE)              --with-examples                   --gcc=ios-arm       gmake
 	$(GENIE)              --with-examples                   --gcc=ios-arm64     gmake
 	$(GENIE)              --with-examples                   --gcc=ios-simulator gmake
-	$(GENIE)              --with-examples                   --gcc=nacl          gmake
-	$(GENIE)              --with-examples                   --gcc=nacl-arm      gmake
-	$(GENIE)              --with-examples                   --gcc=pnacl         gmake
 	$(GENIE)              --with-examples                   --gcc=rpi           gmake
 
 .build/projects/gmake-android-arm:
@@ -188,34 +185,6 @@ vs2017-debug64: .build/projects/vs2017 ## Build - vs2017 x64 Debug
 vs2017-release64: .build/projects/vs2017 ## Build - vs2017 x64 Release
 	devenv .build/projects/vs2017/bgfx.sln /Build "Release|x64"
 vs2017: vs2017-debug32 vs2017-release32 vs2017-debug64 vs2017-release64 ## Build - vs2017 x86/x64 Debug and Release
-
-.build/projects/gmake-nacl:
-	$(GENIE) --gcc=nacl gmake
-nacl-debug32: .build/projects/gmake-nacl ## Build - Native Client x86 Debug
-	$(MAKE) -R -C .build/projects/gmake-nacl config=debug32
-nacl-release32: .build/projects/gmake-nacl ## Build - Native Client x86 Release
-	$(MAKE) -R -C .build/projects/gmake-nacl config=release32
-nacl-debug64: .build/projects/gmake-nacl ## Build - Native Client x64 Debug
-	$(MAKE) -R -C .build/projects/gmake-nacl config=debug64
-nacl-release64: .build/projects/gmake-nacl ## Build - Native Client x64 Release
-	$(MAKE) -R -C .build/projects/gmake-nacl config=release64
-nacl: nacl-debug32 nacl-release32 nacl-debug64 nacl-release64 ## Build - Native Client x86/x64 Debug and Release
-
-.build/projects/gmake-nacl-arm:
-	$(GENIE) --gcc=nacl-arm gmake
-nacl-arm-debug: .build/projects/gmake-nacl-arm ## Build - Native Client ARM Debug
-	$(MAKE) -R -C .build/projects/gmake-nacl-arm config=debug
-nacl-arm-release: .build/projects/gmake-nacl-arm ## Build - Native Client ARM Release
-	$(MAKE) -R -C .build/projects/gmake-nacl-arm config=release
-nacl-arm: nacl-arm-debug32 nacl-arm-release32 ## Build - Native Client ARM Debug and Release
-
-.build/projects/gmake-pnacl:
-	$(GENIE) --gcc=pnacl gmake
-pnacl-debug: .build/projects/gmake-pnacl ## Build - Portable Native Client Debug
-	$(MAKE) -R -C .build/projects/gmake-pnacl config=debug
-pnacl-release: .build/projects/gmake-pnacl ## Build - Portable Native Client Release
-	$(MAKE) -R -C .build/projects/gmake-pnacl config=release
-pnacl: pnacl-debug pnacl-release ## Build - Portable Native Client Debug and Release
 
 .build/projects/gmake-osx:
 	$(GENIE) --with-tools --with-examples --with-shared-lib --gcc=osx gmake

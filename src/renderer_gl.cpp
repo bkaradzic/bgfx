@@ -2037,15 +2037,6 @@ namespace bgfx { namespace gl
 				|| s_extension[Extension::OES_vertex_array_object].m_supported
 				;
 
-			if (BX_ENABLED(BX_PLATFORM_NACL) )
-			{
-				m_vaoSupport &= true
-					&& NULL != glGenVertexArrays
-					&& NULL != glDeleteVertexArrays
-					&& NULL != glBindVertexArray
-					;
-			}
-
 			if (m_vaoSupport)
 			{
 				GL_CHECK(glGenVertexArrays(1, &m_vao) );

@@ -16,7 +16,7 @@ namespace ImGui
 
 	void ImFileList::ChDir(const char* path)
 	{
-#if BX_PLATFORM_NACL || BX_PLATFORM_PS4
+#if BX_PLATFORM_PS4
 		BX_UNUSED(path);
 #else
 		DIR* dir = opendir(path);
@@ -47,7 +47,7 @@ namespace ImGui
 
 			closedir(dir);
 		}
-#endif // BX_PLATFORM_NACL || BX_PLATFORM_PS4
+#endif // BX_PLATFORM_PS4
 	}
 
 	void ImFileList::Draw()

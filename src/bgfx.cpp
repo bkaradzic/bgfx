@@ -1958,7 +1958,6 @@ namespace bgfx
 					 ||  BX_PLATFORM_ANDROID
 					 ||  BX_PLATFORM_EMSCRIPTEN
 					 ||  BX_PLATFORM_IOS
-					 ||  BX_PLATFORM_NACL
 					 ||  BX_PLATFORM_RPI
 					 ) )
 				{
@@ -2613,7 +2612,7 @@ namespace bgfx
 		}
 
 		if (true
-		&&  !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_NACL || BX_PLATFORM_PS4)
+		&&  !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_PS4)
 		&&  RendererType::Noop != _type
 		&&  NULL == g_platformData.ndt
 		&&  NULL == g_platformData.nwh

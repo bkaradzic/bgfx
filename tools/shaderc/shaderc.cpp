@@ -952,7 +952,6 @@ namespace bgfx
 		preprocessor.setDefaultDefine("BX_PLATFORM_EMSCRIPTEN");
 		preprocessor.setDefaultDefine("BX_PLATFORM_IOS");
 		preprocessor.setDefaultDefine("BX_PLATFORM_LINUX");
-		preprocessor.setDefaultDefine("BX_PLATFORM_NACL");
 		preprocessor.setDefaultDefine("BX_PLATFORM_OSX");
 		preprocessor.setDefaultDefine("BX_PLATFORM_PS4");
 		preprocessor.setDefaultDefine("BX_PLATFORM_WINDOWS");
@@ -1002,11 +1001,6 @@ namespace bgfx
 			{
 				preprocessor.setDefine(glslDefine);
 			}
-		}
-		else if (0 == bx::strCmpI(platform, "nacl") )
-		{
-			preprocessor.setDefine("BX_PLATFORM_NACL=1");
-			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
 		}
 		else if (0 == bx::strCmpI(platform, "osx") )
 		{

@@ -37,7 +37,6 @@ Supported platforms:
  * iOS (iPhone, iPad, AppleTV)
  * Linux
  * MIPS Creator CI20
- * Native Client (PPAPI 37+, ARM, x86, x64, PNaCl)
  * OSX (10.9+)
  * RaspberryPi
  * SteamLink
