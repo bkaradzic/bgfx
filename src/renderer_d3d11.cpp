@@ -4082,6 +4082,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		ID3D11Device* device = s_renderD3D11->m_device;
 
+		D3D11_SUBRESOURCE_DATA srd;
+		srd.pSysMem = _data;
+		srd.SysMemPitch = 0;
+		srd.SysMemSlicePitch = 0;
+
 		if (needUav)
 		{
 			desc.Usage = D3D11_USAGE_DEFAULT;
@@ -4089,7 +4094,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			desc.StructureByteStride = _stride;
 
 			DX_CHECK(device->CreateBuffer(&desc
-				, NULL
+				, NULL == _data ? NULL : &srd
 				, &m_ptr
 				) );
 
@@ -4118,11 +4123,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			desc.Usage = D3D11_USAGE_IMMUTABLE;
 			desc.CPUAccessFlags = 0;
-
-			D3D11_SUBRESOURCE_DATA srd;
-			srd.pSysMem = _data;
-			srd.SysMemPitch = 0;
-			srd.SysMemSlicePitch = 0;
 
 			DX_CHECK(device->CreateBuffer(&desc
 				, &srd
