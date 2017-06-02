@@ -430,29 +430,21 @@ class ExampleDeferred : public entry::AppI
 						, uint16_t(m_height)
 						);
 
-				imguiBeginScrollArea("Settings", m_width - m_width / 5 - 10, 10, m_width / 5, m_height / 3, &m_scrollArea);
-				imguiSeparatorLine();
+				ImGui::Begin("Deferred Rendering Settings"
+					, NULL
+					, ImVec2(m_width / 5.0f, m_height / 3.0f)
+					, ImGuiWindowFlags_AlwaysAutoResize
+					);
+				ImGui::SetWindowPos(ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f) );
 
-				imguiSlider("Num lights", m_numLights, 1, 2048);
+				ImGui::SliderInt("Num lights", &m_numLights, 1, 2048);
+				ImGui::Checkbox("Show G-Buffer.", &m_showGBuffer);
+				ImGui::Checkbox("Show light scissor.", &m_showScissorRects);
+				ImGui::Checkbox("Animate mesh.", &m_animateMesh);
+				ImGui::SliderFloat("Anim.speed", &m_lightAnimationSpeed, 0.0f, 0.4f);
 
-				if (imguiCheck("Show G-Buffer.", m_showGBuffer) )
-				{
-					m_showGBuffer = !m_showGBuffer;
-				}
+				ImGui::End();
 
-				if (imguiCheck("Show light scissor.", m_showScissorRects) )
-				{
-					m_showScissorRects = !m_showScissorRects;
-				}
-
-				if (imguiCheck("Animate mesh.", m_animateMesh) )
-				{
-					m_animateMesh = !m_animateMesh;
-				}
-
-				imguiSlider("Lights animation speed", m_lightAnimationSpeed, 0.0f, 0.4f, 0.01f);
-
-				imguiEndScrollArea();
 				imguiEndFrame();
 
 				// Update camera.
