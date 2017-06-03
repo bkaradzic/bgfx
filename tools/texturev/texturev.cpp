@@ -588,6 +588,13 @@ struct InterpolatorT
 typedef InterpolatorT<bx::flerp,     bx::easeInOutQuad>  Interpolator;
 typedef InterpolatorT<bx::angleLerp, bx::easeInOutCubic> InterpolatorAngle;
 
+void keyBindingHelp(const char* _bindings, const char* _description)
+{
+	ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), _bindings);
+	ImGui::SameLine(100);
+	ImGui::Text(_description);
+}
+
 void associate()
 {
 #if BX_PLATFORM_WINDOWS
@@ -935,40 +942,38 @@ int _main_(int _argc, char** _argv)
 				ImGui::Text("Key bindings:\n\n");
 
 				ImGui::PushFont(ImGui::Font::Mono);
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "ESC");   ImGui::SameLine(64); ImGui::Text("Exit.");
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "h");     ImGui::SameLine(64); ImGui::Text("Toggle help screen.");
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "f");     ImGui::SameLine(64); ImGui::Text("Toggle full-screen.");
+				keyBindingHelp("ESC", "Exit.");
+				keyBindingHelp("h", "Toggle help screen.");
+				keyBindingHelp("f", "Toggle full-screen.");
 				ImGui::NextLine();
 
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "-");     ImGui::SameLine(64); ImGui::Text("Zoom out.");
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "=");     ImGui::SameLine(64); ImGui::Text("Zoom in.");
+				keyBindingHelp("LMB+drag",  "Pan.");
+				keyBindingHelp("=/- or MW", "Zoom in/out.");
+				keyBindingHelp("z/Z",       "Rotate.");
+				keyBindingHelp("0",         "Reset.");
 				ImGui::NextLine();
 
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "z/Z");   ImGui::SameLine(64); ImGui::Text("Rotate.");
+				keyBindingHelp("<",   "Reset MIP level.");
+				keyBindingHelp(",/,", "MIP level up/down.");
+				keyBindingHelp("/",   "Toggle linear/point texture sampling.");
 				ImGui::NextLine();
 
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), ",");     ImGui::SameLine(64); ImGui::Text("MIP level up.");
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), ".");     ImGui::SameLine(64); ImGui::Text("MIP level down.");
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "/");     ImGui::SameLine(64); ImGui::Text("Toggle linear/point texture sampling.");
+				keyBindingHelp("left",  "Previous layer in texture array.");
+				keyBindingHelp("right", "Next layer in texture array.");
 				ImGui::NextLine();
 
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "left");  ImGui::SameLine(64); ImGui::Text("Previous layer in texture array.");
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "right"); ImGui::SameLine(64); ImGui::Text("Next layer in texture array.");
+				keyBindingHelp("up",   "Previous texture.");
+				keyBindingHelp("down", "Next texture.");
 				ImGui::NextLine();
 
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "up");    ImGui::SameLine(64); ImGui::Text("Previous texture.");
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "down");  ImGui::SameLine(64); ImGui::Text("Next texture.");
+				keyBindingHelp("r/g/b", "Toggle R, G, or B color channel.");
+				keyBindingHelp("a",     "Toggle alpha blending.");
 				ImGui::NextLine();
 
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "r/g/b"); ImGui::SameLine(64); ImGui::Text("Toggle R, G, or B color channel.");
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "a");     ImGui::SameLine(64); ImGui::Text("Toggle alpha blending.");
+				keyBindingHelp("s", "Toggle Multi-channel SDF rendering");
 				ImGui::NextLine();
-
-				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "s");     ImGui::SameLine(64); ImGui::Text("Toggle Multi-channel SDF rendering");
 
 				ImGui::PopFont();
-
-				ImGui::NextLine();
 
 				ImGui::Dummy(ImVec2(0.0f, 0.0f) );
 				ImGui::SameLine(ImGui::GetWindowWidth() - 136.0f);
