@@ -381,7 +381,7 @@ namespace entry
 			s_translateKey[VK_OEM_7]      = Key::Quote;
 			s_translateKey[VK_OEM_COMMA]  = Key::Comma;
 			s_translateKey[VK_OEM_PERIOD] = Key::Period;
-			s_translateKey[VK_DECIMAL] 	  = Key::Period;
+			s_translateKey[VK_DECIMAL]    = Key::Period;
 			s_translateKey[VK_OEM_2]      = Key::Slash;
 			s_translateKey[VK_OEM_5]      = Key::Backslash;
 			s_translateKey[VK_OEM_3]      = Key::Tilde;
