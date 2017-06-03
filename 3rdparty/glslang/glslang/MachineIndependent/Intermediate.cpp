@@ -1776,6 +1776,14 @@ bool TIntermediate::postProcess(TIntermNode* root, EShLanguage /*language*/)
     // Propagate 'noContraction' label in backward from 'precise' variables.
     glslang::PropagateNoContraction(*this);
 
+    switch (textureSamplerTransformMode) {
+    case EShTexSampTransKeep:
+        break;
+    case EShTexSampTransUpgradeTextureRemoveSampler:
+        performTextureUpgradeAndSamplerRemovalTransformation(root);
+        break;
+    }
+
     return true;
 }
 
@@ -2941,6 +2949,43 @@ bool TIntermediate::specConstantPropagates(const TIntermTyped& node1, const TInt
 {
     return (node1.getType().getQualifier().isSpecConstant() && node2.getType().getQualifier().isConstant()) ||
            (node2.getType().getQualifier().isSpecConstant() && node1.getType().getQualifier().isConstant());
+}
+
+struct TextureUpgradeAndSamplerRemovalTransform : public TIntermTraverser {
+    bool visitAggregate(TVisit, TIntermAggregate* ag) override {
+        using namespace std;
+        TIntermSequence& seq = ag->getSequence();
+        // remove pure sampler variables
+        TIntermSequence::iterator newEnd = remove_if(seq.begin(), seq.end(), [](TIntermNode* node) {
+            TIntermSymbol* symbol = node->getAsSymbolNode();
+            if (!symbol)
+                return false;
+
+            return (symbol->getBasicType() == EbtSampler && symbol->getType().getSampler().isPureSampler());
+        });
+        seq.erase(newEnd, seq.end());
+        // replace constructors with sampler/textures
+        // update textures into sampled textures
+        for_each(seq.begin(), seq.end(), [](TIntermNode*& node) {
+            TIntermSymbol* symbol = node->getAsSymbolNode();
+            if (!symbol) {
+                TIntermAggregate *constructor = node->getAsAggregate();
+                if (constructor && constructor->getOp() == EOpConstructTextureSampler) {
+                    if (!constructor->getSequence().empty())
+                        node = constructor->getSequence()[0];
+                }
+            } else if (symbol->getBasicType() == EbtSampler && symbol->getType().getSampler().isTexture()) {
+                symbol->getWritableType().getSampler().combined = true;
+            }
+        });
+        return true;
+    }
+};
+
+void TIntermediate::performTextureUpgradeAndSamplerRemovalTransformation(TIntermNode* root)
+{
+    TextureUpgradeAndSamplerRemovalTransform transform;
+    root->traverse(&transform);
 }
 
 } // end namespace glslang

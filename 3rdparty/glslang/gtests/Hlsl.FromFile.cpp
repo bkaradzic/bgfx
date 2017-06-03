@@ -81,6 +81,7 @@ INSTANTIATE_TEST_CASE_P(
     ToSpirv, HlslCompileTest,
     ::testing::ValuesIn(std::vector<FileNameEntryPointPair>{
         {"hlsl.amend.frag", "f1"},
+        {"hlsl.aliasOpaque.frag", "main"},
         {"hlsl.array.frag", "PixelShaderFunction"},
         {"hlsl.array.implicit-size.frag", "PixelShaderFunction"},
         {"hlsl.array.multidim.frag", "main"},
@@ -114,6 +115,7 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.float1.frag", "PixelShaderFunction"},
         {"hlsl.float4.frag", "PixelShaderFunction"},
         {"hlsl.flatten.return.frag", "main"},
+        {"hlsl.flattenOpaque.frag", "main"},
         {"hlsl.forLoop.frag", "PixelShaderFunction"},
         {"hlsl.gather.array.dx10.frag", "main"},
         {"hlsl.gather.basic.dx10.frag", "main"},

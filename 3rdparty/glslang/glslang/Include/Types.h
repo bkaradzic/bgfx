@@ -1310,6 +1310,7 @@ public:
 
     virtual TBasicType getBasicType() const { return basicType; }
     virtual const TSampler& getSampler() const { return sampler; }
+    virtual TSampler& getSampler() { return sampler; }
 
     virtual       TQualifier& getQualifier()       { return qualifier; }
     virtual const TQualifier& getQualifier() const { return qualifier; }

@@ -182,7 +182,8 @@ public:
         useUnknownFormat(false),
         hlslOffsets(false),
         useStorageBuffer(false),
-        hlslIoMapping(false)
+        hlslIoMapping(false),
+        textureSamplerTransformMode(EShTexSampTransKeep)
     {
         localSize[0] = 1;
         localSize[1] = 1;
@@ -233,6 +234,7 @@ public:
     bool usingStorageBuffer() const { return useStorageBuffer; }
     void setHlslIoMapping(bool b) { hlslIoMapping = b; }
     bool usingHlslIoMapping()     { return hlslIoMapping; }
+    void setTextureSamplerTransformMode(EShTextureSamplerTransformMode mode) { textureSamplerTransformMode = mode; }
 
     void setVersion(int v) { version = v; }
     int getVersion() const { return version; }
@@ -449,6 +451,11 @@ public:
         return semanticNameSet.insert(name).first->c_str();
     }
 
+    void setSourceFile(const char* file) { sourceFile = file; }
+    const std::string& getSourceFile() const { return sourceFile; }
+    void addSourceText(const char* text) { sourceText = sourceText + text; }
+    const std::string& getSourceText() const { return sourceText; }
+
     const char* const implicitThisName = "@this";
 
 protected:
@@ -472,6 +479,7 @@ protected:
     void pushSelector(TIntermSequence&, const TVectorSelector&, const TSourceLoc&);
     void pushSelector(TIntermSequence&, const TMatrixSelector&, const TSourceLoc&);
     bool specConstantPropagates(const TIntermTyped&, const TIntermTyped&);
+    void performTextureUpgradeAndSamplerRemovalTransformation(TIntermNode* root);
 
     const EShLanguage language;  // stage, known at construction time
     EShSource source;            // source language, known a bit later
@@ -535,6 +543,12 @@ protected:
     std::vector<TXfbBuffer> xfbBuffers;     // all the data we need to track per xfb buffer
     std::unordered_set<int> usedConstantId; // specialization constant ids used
     std::set<TString> semanticNameSet;
+
+    EShTextureSamplerTransformMode textureSamplerTransformMode;
+
+    // source code of shader, useful as part of debug information
+    std::string sourceFile;
+    std::string sourceText;
 
 private:
     void operator=(TIntermediate&); // prevent assignments

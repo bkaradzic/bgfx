@@ -374,7 +374,12 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
     int reserveSlot(int set, int slot)
     {
         TSlotSet::iterator at = findSlot(set, slot);
-        slots[set].insert(at, slot);
+
+        // tolerate aliasing, by not double-recording aliases
+        // (policy about appropriateness of the alias is higher up)
+        if (at == slots[set].end() || *at != slot)
+            slots[set].insert(at, slot);
+
         return slot;
     }
 
@@ -468,24 +473,6 @@ struct TDefaultIoResolver : public TDefaultIoResolverBase
 {
     bool validateBinding(EShLanguage /*stage*/, const char* /*name*/, const glslang::TType& type, bool /*is_live*/) override
     {
-        if (type.getQualifier().hasBinding()) {
-            const int set = getLayoutSet(type);
-
-            if (isImageType(type))
-                return checkEmpty(set, baseImageBinding + type.getQualifier().layoutBinding);
-
-            if (isTextureType(type))
-                return checkEmpty(set, baseTextureBinding + type.getQualifier().layoutBinding);
-
-            if (isSsboType(type))
-                return checkEmpty(set, baseSsboBinding + type.getQualifier().layoutBinding);
-
-            if (isSamplerType(type))
-                return checkEmpty(set, baseSamplerBinding + type.getQualifier().layoutBinding);
-
-            if (isUboType(type))
-                return checkEmpty(set, baseUboBinding + type.getQualifier().layoutBinding);
-        }
         return true;
     }
 
@@ -496,7 +483,7 @@ struct TDefaultIoResolver : public TDefaultIoResolverBase
         if (type.getQualifier().hasBinding()) {
             if (isImageType(type))
                 return reserveSlot(set, baseImageBinding + type.getQualifier().layoutBinding);
-                
+
             if (isTextureType(type))
                 return reserveSlot(set, baseTextureBinding + type.getQualifier().layoutBinding);
 
@@ -588,21 +575,6 @@ struct TDefaultHlslIoResolver : public TDefaultIoResolverBase
 {
     bool validateBinding(EShLanguage /*stage*/, const char* /*name*/, const glslang::TType& type, bool /*is_live*/) override
     {
-        if (type.getQualifier().hasBinding()) {
-            const int set = getLayoutSet(type);
-
-            if (isUavType(type))
-                return checkEmpty(set, baseUavBinding + type.getQualifier().layoutBinding);
-
-            if (isSrvType(type))
-                return checkEmpty(set, baseTextureBinding + type.getQualifier().layoutBinding);
-
-            if (isSamplerType(type))
-                return checkEmpty(set, baseSamplerBinding + type.getQualifier().layoutBinding);
-
-            if (isUboType(type))
-                return checkEmpty(set, baseUboBinding + type.getQualifier().layoutBinding);
-        }
         return true;
     }
 

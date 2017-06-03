@@ -12,8 +12,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow") // warning: declaration of 'u
 #include <ShaderLang.h>
 #include <ResourceLimits.h>
 #include <SPIRV/SPVRemapper.h>
-//#include <spirv-tools/libspirv.hpp>
-//#include <spirv-tools/optimizer.hpp>
+#include <SPIRV/GlslangToSpv.h>
 BX_PRAGMA_DIAGNOSTIC_POP()
 
 namespace bgfx
@@ -49,12 +48,6 @@ namespace bgfx
 namespace stl = tinystl;
 
 #include "../../src/shader_spirv.h"
-
-namespace glslang
-{
-	void GlslangToSpv(const glslang::TIntermediate& _intermediate, std::vector<uint32_t>& _spirv);
-
-} // namespace glslang
 
 namespace bgfx { namespace spirv
 {

@@ -502,7 +502,7 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
     static const EShLanguageMask EShLangAll    = EShLanguageMask(EShLangCount - 1);
 
     // These are the actual stage masks defined in the documentation, in case they are
-    // needed for furture validation.  For now, they are commented out, and set below
+    // needed for future validation.  For now, they are commented out, and set below
     // to EShLangAll, to allow any intrinsic to be used in any shader, which is legal
     // if it is not called.
     //

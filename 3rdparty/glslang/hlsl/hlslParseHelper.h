@@ -96,6 +96,7 @@ public:
     void decomposeGeometryMethods(const TSourceLoc&, TIntermTyped*& node, TIntermNode* arguments);
     void pushFrontArguments(TIntermTyped* front, TIntermTyped*& arguments);
     void addInputArgumentConversions(const TFunction&, TIntermTyped*&);
+    void expandArguments(const TSourceLoc&, const TFunction&, TIntermTyped*&);
     TIntermTyped* addOutputArgumentConversions(const TFunction&, TIntermOperator&);
     void builtInOpCheck(const TSourceLoc&, const TFunction&, TIntermOperator&);
     TFunction* makeConstructorCall(const TSourceLoc&, const TType&);
@@ -186,7 +187,8 @@ public:
     virtual void growGlobalUniformBlock(const TSourceLoc&, TType&, const TString& memberName, TTypeList* typeList = nullptr) override;
 
     // Apply L-value conversions.  E.g, turning a write to a RWTexture into an ImageStore.
-    TIntermTyped* handleLvalue(const TSourceLoc&, const char* op, TIntermTyped* node);
+    TIntermTyped* handleLvalue(const TSourceLoc&, const char* op, TIntermTyped*& node);
+    TIntermTyped* handleSamplerLvalue(const TSourceLoc&, const char* op, TIntermTyped*& node);
     bool lValueErrorCheck(const TSourceLoc&, const char* op, TIntermTyped*) override;
 
     TLayoutFormat getLayoutFromTxType(const TSourceLoc&, const TType&);
@@ -236,13 +238,14 @@ protected:
 
     // Array and struct flattening
     TIntermTyped* flattenAccess(TIntermTyped* base, int member);
-    bool shouldFlattenUniform(const TType&) const;
+    TIntermTyped* flattenAccess(int uniqueId, int member, const TType&);
+    bool shouldFlatten(const TType&) const;
     bool wasFlattened(const TIntermTyped* node) const;
     bool wasFlattened(int id) const { return flattenMap.find(id) != flattenMap.end(); }
     int  addFlattenedMember(const TSourceLoc& loc, const TVariable&, const TType&, TFlattenData&, const TString& name, bool track);
     bool isFinalFlattening(const TType& type) const { return !(type.isStruct() || type.isArray()); }
 
-    // Structure splitting (splits interstage builtin types into its own struct)
+    // Structure splitting (splits interstage built-in types into its own struct)
     TIntermTyped* splitAccessStruct(const TSourceLoc& loc, TIntermTyped*& base, int& member);
     void splitAccessArray(const TSourceLoc& loc, TIntermTyped* base, TIntermTyped* index);
     TType& split(TType& type, TString name, const TType* outerStructType = nullptr);

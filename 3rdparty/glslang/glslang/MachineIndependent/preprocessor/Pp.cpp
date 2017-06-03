@@ -613,14 +613,14 @@ int TPpContext::CPPinclude(TPpToken* ppToken)
     TShader::Includer::IncludeResult* res = nullptr;
     if (startWithLocalSearch)
         res = includer.includeLocal(filename.c_str(), currentSourceFile.c_str(), includeStack.size() + 1);
-    if (! res || res->headerName.empty()) {
+    if (res == nullptr || res->headerName.empty()) {
         includer.releaseInclude(res);
         res = includer.includeSystem(filename.c_str(), currentSourceFile.c_str(), includeStack.size() + 1);
     }
 
     // Process the results
-    if (res && !res->headerName.empty()) {
-        if (res->headerData && res->headerLength) {
+    if (res != nullptr && !res->headerName.empty()) {
+        if (res->headerData != nullptr && res->headerLength > 0) {
             // path for processing one or more tokens from an included header, hand off 'res'
             const bool forNextLine = parseContext.lineDirectiveShouldSetNextLine();
             std::ostringstream prologue;
@@ -638,8 +638,8 @@ int TPpContext::CPPinclude(TPpToken* ppToken)
     } else {
         // error path, clean up
         std::string message =
-            res ? std::string(res->headerData, res->headerLength)
-                : std::string("Could not process include directive");
+            res != nullptr ? std::string(res->headerData, res->headerLength)
+                           : std::string("Could not process include directive");
         parseContext.ppError(directiveLoc, message.c_str(), "#include", "for header name: %s", filename.c_str());
         includer.releaseInclude(res);
     }

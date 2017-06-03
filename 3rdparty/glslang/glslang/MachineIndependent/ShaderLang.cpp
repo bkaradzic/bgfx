@@ -728,6 +728,11 @@ bool ProcessDeferred(
         intermediate.setOriginUpperLeft();
     if ((messages & EShMsgHlslOffsets) || (messages & EShMsgReadHlsl))
         intermediate.setHlslOffsets();
+    if (messages & EShMsgDebugInfo) {
+        intermediate.setSourceFile(names[numPre]);
+        for (int s = 0; s < numStrings; ++s)
+            intermediate.addSourceText(strings[numPre]);
+    }
     SetupBuiltinSymbolTable(version, profile, spvVersion, source);
 
     TSymbolTable* cachedTable = SharedSymbolTables[MapVersionToIndex(version)]
@@ -1578,6 +1583,7 @@ void TShader::setHlslIoMapping(bool hlslIoMap)          { intermediate->setHlslI
 void TShader::setFlattenUniformArrays(bool flatten)     { intermediate->setFlattenUniformArrays(flatten); }
 void TShader::setNoStorageFormat(bool useUnknownFormat) { intermediate->setNoStorageFormat(useUnknownFormat); }
 void TShader::setResourceSetBinding(const std::vector<std::string>& base)   { intermediate->setResourceSetBinding(base); }
+void TShader::setTextureSamplerTransformMode(EShTextureSamplerTransformMode mode) { intermediate->setTextureSamplerTransformMode(mode); }
 
 //
 // Turn the shader strings into a parse tree in the TIntermediate.
@@ -1599,11 +1605,6 @@ bool TShader::parse(const TBuiltInResource* builtInResources, int defaultVersion
                            preamble, EShOptNone, builtInResources, defaultVersion,
                            defaultProfile, forceDefaultVersionAndProfile,
                            forwardCompatible, messages, *intermediate, includer, sourceEntryPointName);
-}
-
-bool TShader::parse(const TBuiltInResource* builtInResources, int defaultVersion, bool forwardCompatible, EShMessages messages)
-{
-    return parse(builtInResources, defaultVersion, ENoProfile, false, forwardCompatible, messages);
 }
 
 // Fill in a string with the result of preprocessing ShaderStrings

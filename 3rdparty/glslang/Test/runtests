@@ -90,14 +90,32 @@ diff -b $BASEDIR/hlsl.hlslOffset.vert.out $TARGETDIR/hlsl.hlslOffset.vert.out ||
 #
 echo Configuring HLSL descriptor set and binding number manually
 $EXE -V -D -e main -H hlsl.multiDescriptorSet.frag --rsb frag t0 0 0 t1 1 0 s0 0 1 s1 1 1 b0 2 0 b1 2 1 b2 2 2 > $TARGETDIR/hlsl.multiDescriptorSet.frag.out
-diff -b $BASEDIR/hlsl.multiDescriptorSet.frag.out $TARGETDIR/hlsl.multiDescriptorSet.frag.out
+diff -b $BASEDIR/hlsl.multiDescriptorSet.frag.out $TARGETDIR/hlsl.multiDescriptorSet.frag.out || HASERROR=1
 
 #
 # Testing location error
 #
 echo Testing SPV no location
 $EXE -V -C spv.noLocation.vert > $TARGETDIR/spv.noLocation.vert.out
-diff -b $BASEDIR/spv.noLocation.vert.out $TARGETDIR/spv.noLocation.vert.out
+diff -b $BASEDIR/spv.noLocation.vert.out $TARGETDIR/spv.noLocation.vert.out || HASERROR=1
+
+#
+# Testing debug information
+#
+echo Testing SPV Debug Information
+$EXE -g -H spv.debugInfo.frag > $TARGETDIR/spv.debugInfo.frag.out
+diff -b $BASEDIR/spv.debugInfo.frag.out $TARGETDIR/spv.debugInfo.frag.out || HASERROR=1
+
+#
+# Testing Includer
+#
+echo Testing Includer
+$EXE -D -e main -H ../Test/hlsl.include.vert > $TARGETDIR/hlsl.include.vert.out
+diff -b $BASEDIR/hlsl.include.vert.out $TARGETDIR/hlsl.include.vert.out || HASERROR=1
+$EXE -D -e main -H hlsl.includeNegative.vert > $TARGETDIR/hlsl.includeNegative.vert.out
+diff -b $BASEDIR/hlsl.includeNegative.vert.out $TARGETDIR/hlsl.includeNegative.vert.out || HASERROR=1
+$EXE -l -i include.vert > $TARGETDIR/include.vert.out
+diff -b $BASEDIR/include.vert.out $TARGETDIR/include.vert.out || HASERROR=1
 
 #
 # Final checking

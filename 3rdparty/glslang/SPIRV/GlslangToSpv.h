@@ -47,9 +47,16 @@
 
 namespace glslang {
 
+struct SpvOptions {
+    SpvOptions() : generateDebugInfo(false) { }
+    bool generateDebugInfo;
+};
+
 void GetSpirvVersion(std::string&);
-void GlslangToSpv(const glslang::TIntermediate& intermediate, std::vector<unsigned int>& spirv);
-void GlslangToSpv(const glslang::TIntermediate& intermediate, std::vector<unsigned int>& spirv, spv::SpvBuildLogger* logger);
+void GlslangToSpv(const glslang::TIntermediate& intermediate, std::vector<unsigned int>& spirv,
+                  SpvOptions* options = nullptr);
+void GlslangToSpv(const glslang::TIntermediate& intermediate, std::vector<unsigned int>& spirv,
+                  spv::SpvBuildLogger* logger, SpvOptions* options = nullptr);
 void OutputSpvBin(const std::vector<unsigned int>& spirv, const char* baseName);
 void OutputSpvHex(const std::vector<unsigned int>& spirv, const char* baseName, const char* varName);
 

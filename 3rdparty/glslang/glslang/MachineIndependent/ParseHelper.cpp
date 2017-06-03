@@ -2102,6 +2102,17 @@ bool TParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node, T
     case EOpConstructDMat4x2:
     case EOpConstructDMat4x3:
     case EOpConstructDMat4x4:
+#ifdef AMD_EXTENSIONS
+    case EOpConstructF16Mat2x2:
+    case EOpConstructF16Mat2x3:
+    case EOpConstructF16Mat2x4:
+    case EOpConstructF16Mat3x2:
+    case EOpConstructF16Mat3x3:
+    case EOpConstructF16Mat3x4:
+    case EOpConstructF16Mat4x2:
+    case EOpConstructF16Mat4x3:
+    case EOpConstructF16Mat4x4:
+#endif
         constructingMatrix = true;
         break;
     default:

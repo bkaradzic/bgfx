@@ -41,6 +41,7 @@
 
 #include "ResourceLimits.h"
 #include "Worklist.h"
+#include "DirStackFileIncluder.h"
 #include "./../glslang/Include/ShHandle.h"
 #include "./../glslang/Include/revision.h"
 #include "./../glslang/Public/ShaderLang.h"
@@ -48,6 +49,7 @@
 #include "../SPIRV/GLSL.std.450.h"
 #include "../SPIRV/doc.h"
 #include "../SPIRV/disassemble.h"
+
 #include <cstring>
 #include <cstdlib>
 #include <cctype>
@@ -91,6 +93,7 @@ enum TOptions {
     EOptionHlslOffsets          = (1 << 23),
     EOptionHlslIoMapping        = (1 << 24),
     EOptionAutoMapLocations     = (1 << 25),
+    EOptionDebug                = (1 << 26),
 };
 
 //
@@ -448,6 +451,9 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                 } else
                     Error("no <entry-point> provided for -e");
                 break;
+            case 'g':
+                Options |= EOptionDebug;
+                break;
             case 'h':
                 usage();
                 break;
@@ -539,6 +545,8 @@ void SetMessageOptions(EShMessages& messages)
         messages = (EShMessages)(messages | EShMsgKeepUncalled);
     if (Options & EOptionHlslOffsets)
         messages = (EShMessages)(messages | EShMsgHlslOffsets);
+    if (Options & EOptionDebug)
+        messages = (EShMessages)(messages | EShMsgDebugInfo);
 }
 
 //
@@ -659,9 +667,9 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
 
         const int defaultVersion = Options & EOptionDefaultDesktop? 110: 100;
 
+        DirStackFileIncluder includer;
         if (Options & EOptionOutputPreprocessed) {
             std::string str;
-            glslang::TShader::ForbidIncluder includer;
             if (shader->preprocess(&Resources, defaultVersion, ENoProfile, false, false,
                                    messages, &str, includer)) {
                 PutsIfNonEmpty(str.c_str());
@@ -672,7 +680,7 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
             StderrIfNonEmpty(shader->getInfoDebugLog());
             continue;
         }
-        if (! shader->parse(&Resources, defaultVersion, false, messages))
+        if (! shader->parse(&Resources, defaultVersion, false, messages, includer))
             CompileFailed = true;
 
         program.addShader(shader);
@@ -722,7 +730,10 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
                     std::vector<unsigned int> spirv;
                     std::string warningsErrors;
                     spv::SpvBuildLogger logger;
-                    glslang::GlslangToSpv(*program.getIntermediate((EShLanguage)stage), spirv, &logger);
+                    glslang::SpvOptions spvOptions;
+                    if (Options & EOptionDebug)
+                        spvOptions.generateDebugInfo = true;
+                    glslang::GlslangToSpv(*program.getIntermediate((EShLanguage)stage), spirv, &logger, &spvOptions);
 
                     // Dump the spv to a file or stdout, etc., but only if not doing
                     // memory/perf testing, as it's not internal to programmatic use.
@@ -1031,6 +1042,7 @@ void usage()
            "              (default is ES version 100)\n"
            "  -D          input is HLSL\n"
            "  -e          specify entry-point name\n"
+           "  -g          generate debug information\n"
            "  -h          print this usage message\n"
            "  -i          intermediate tree (glslang AST) is printed out\n"
            "  -l          link all input files together to form a single module\n"

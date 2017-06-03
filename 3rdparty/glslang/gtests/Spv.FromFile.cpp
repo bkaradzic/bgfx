@@ -75,6 +75,7 @@ using CompileVulkanToSpirvTestAMD = GlslangTest<::testing::TestWithParam<std::st
 #ifdef NV_EXTENSIONS
 using CompileVulkanToSpirvTestNV = GlslangTest<::testing::TestWithParam<std::string>>;
 #endif
+using CompileUpgradeTextureToSampledTextureAndDropSamplersTest = GlslangTest<::testing::TestWithParam<std::string>>;
 
 // Compiling GLSL to SPIR-V under Vulkan semantics. Expected to successfully
 // generate SPIR-V.
@@ -171,6 +172,15 @@ TEST_P(CompileVulkanToSpirvTestNV, FromFile)
         Target::Spv);
 }
 #endif
+
+TEST_P(CompileUpgradeTextureToSampledTextureAndDropSamplersTest, FromFile)
+{
+    loadCompileUpgradeTextureToSampledTextureAndDropSamplersAndCheck(GlobalTestSettings.testRoot,
+                                                                     GetParam(),
+                                                                     Source::GLSL,
+                                                                     Semantics::Vulkan,
+                                                                     Target::Spv);
+}
 
 // clang-format off
 INSTANTIATE_TEST_CASE_P(
@@ -320,6 +330,7 @@ INSTANTIATE_TEST_CASE_P(
         { "spv.register.autoassign-2.frag", "main", 5, 10, 0, 15, 30, true, true },
         { "spv.buffer.autoassign.frag", "main", 5, 10, 0, 15, 30, true, true },
         { "spv.ssbo.autoassign.frag", "main", 5, 10, 0, 15, 30, true, true },
+        { "spv.ssboAlias.frag", "main", 0, 0, 0, 0, 83, true, false },
         { "spv.rw.autoassign.frag", "main", 5, 10, 20, 15, 30, true, true },
         { "spv.register.autoassign.rangetest.frag", "main", 
                 glslang::TQualifier::layoutBindingEnd-2,
@@ -407,6 +418,14 @@ INSTANTIATE_TEST_CASE_P(
 FileNameAsCustomTestSuffix
 );
 #endif
+
+INSTANTIATE_TEST_CASE_P(
+    Glsl, CompileUpgradeTextureToSampledTextureAndDropSamplersTest,
+    ::testing::ValuesIn(std::vector<std::string>({
+      "spv.texture.sampler.transform.frag",
+    })),
+    FileNameAsCustomTestSuffix
+);
 // clang-format on
 
 }  // anonymous namespace

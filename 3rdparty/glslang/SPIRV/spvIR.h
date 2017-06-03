@@ -87,7 +87,6 @@ public:
     void addImmediateOperand(unsigned int immediate) { operands.push_back(immediate); }
     void addStringOperand(const char* str)
     {
-        originalString = str;
         unsigned int word;
         char* wordString = (char*)&word;
         char* wordPtr = wordString;
@@ -120,7 +119,6 @@ public:
     Id getTypeId() const { return typeId; }
     Id getIdOperand(int op) const { return operands[op]; }
     unsigned int getImmediateOperand(int op) const { return operands[op]; }
-    const char* getStringOperand() const { return originalString.c_str(); }
 
     // Write out the binary form.
     void dump(std::vector<unsigned int>& out) const
@@ -151,7 +149,6 @@ protected:
     Id typeId;
     Op opCode;
     std::vector<Id> operands;
-    std::string originalString;        // could be optimized away; convenience for getting string operand
     Block* block;
 };
 
