@@ -131,18 +131,20 @@ class ExampleLod : public entry::AppI
 				, uint16_t(m_height)
 			);
 
-			imguiBeginScrollArea("Toggle transitions", m_width - m_width / 5 - 10, 10, m_width / 5, m_height / 6, &m_scrollArea);
-			imguiSeparatorLine();
+			ImGui::Begin("LOD Settings"
+				, NULL
+				, ImVec2(m_width / 5.0f, m_height / 6.0f)
+				, ImGuiWindowFlags_AlwaysAutoResize
+				);
+			ImGui::SetWindowPos(ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f) );
 
-			if (imguiButton(m_transitions ? "ON" : "OFF") )
-			{
-				m_transitions = !m_transitions;
-			}
+			ImGui::Checkbox("Transition", &m_transitions);
 
 			static float distance = 2.0f;
-			imguiSlider("Distance", distance, 2.0f, 6.0f, 0.01f);
+			ImGui::SliderFloat("Distance", &distance, 2.0f, 6.0f);
 
-			imguiEndScrollArea();
+			ImGui::End();
+
 			imguiEndFrame();
 
 			// Set view 0 default viewport.
