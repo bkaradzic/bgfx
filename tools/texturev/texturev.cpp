@@ -944,6 +944,9 @@ int _main_(int _argc, char** _argv)
 				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "=");     ImGui::SameLine(64); ImGui::Text("Zoom in.");
 				ImGui::NextLine();
 
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "z/Z");   ImGui::SameLine(64); ImGui::Text("Rotate.");
+				ImGui::NextLine();
+
 				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), ",");     ImGui::SameLine(64); ImGui::Text("MIP level up.");
 				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), ".");     ImGui::SameLine(64); ImGui::Text("MIP level down.");
 				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "/");     ImGui::SameLine(64); ImGui::Text("Toggle linear/point texture sampling.");
@@ -1040,7 +1043,7 @@ int _main_(int _argc, char** _argv)
 
 			float ortho[16];
 
-			bx::mtxOrtho(ortho, 0.0f, width, height, 0.0f, 0.0f, 1000.0f);
+			bx::mtxOrtho(ortho, 0.0f, float(width), float(height), 0.0f, 0.0f, 1000.0f);
 			bgfx::setViewTransform(BACKGROUND_VIEW_ID, NULL, ortho);
 			bgfx::setViewRect(BACKGROUND_VIEW_ID, 0, 0, uint16_t(width), uint16_t(height) );
 
