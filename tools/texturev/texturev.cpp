@@ -9,6 +9,8 @@
 #include <bx/os.h>
 #include <bx/string.h>
 #include <bx/uint32_t.h>
+#include <bx/fpumath.h>
+#include <bx/easing.h>
 #include <entry/entry.h>
 #include <entry/input.h>
 #include <entry/cmd.h>
@@ -98,9 +100,15 @@ static const InputBinding s_bindingView[] =
 
 	{ entry::Key::Slash,     entry::Modifier::None,       1, NULL, "view filter"             },
 
-	{ entry::Key::Key0,      entry::Modifier::None,       1, NULL, "view zoom 1.0\nview pan" },
+	{ entry::Key::Key0,      entry::Modifier::None,       1, NULL, "view zoom 1.0\n"
+	                                                               "view rotate 0\n"
+	                                                               "view pan\n"
+	                                                                                         },
 	{ entry::Key::Plus,      entry::Modifier::None,       1, NULL, "view zoom +0.1"          },
 	{ entry::Key::Minus,     entry::Modifier::None,       1, NULL, "view zoom -0.1"          },
+
+	{ entry::Key::KeyZ,      entry::Modifier::None,       1, NULL, "view rotate -90"         },
+	{ entry::Key::KeyZ,      entry::Modifier::LeftShift,  1, NULL, "view rotate +90"         },
 
 	{ entry::Key::Up,        entry::Modifier::None,       1, NULL, "view file-up"            },
 	{ entry::Key::Down,      entry::Modifier::None,       1, NULL, "view file-down"          },
@@ -147,6 +155,7 @@ struct View
 		, m_posx(0.0f)
 		, m_posy(0.0f)
 		, m_zoom(1.0f)
+		, m_angle(0.0f)
 		, m_filter(true)
 		, m_alpha(false)
 		, m_help(false)
@@ -277,6 +286,29 @@ struct View
 					m_zoom = 1.0f;
 				}
 			}
+			else if (0 == bx::strCmp(_argv[1], "rotate") )
+			{
+				if (_argc >= 3)
+				{
+					float angle = (float)atof(_argv[2]);
+
+					if (_argv[2][0] == '+'
+					||  _argv[2][0] == '-')
+					{
+						m_angle += bx::toRad(angle);
+					}
+					else
+					{
+						m_angle = bx::toRad(angle);
+					}
+
+					m_angle = bx::fwrap(m_angle, bx::pi*2.0f);
+				}
+				else
+				{
+					m_angle = 0.0f;
+				}
+			}
 			else if (0 == bx::strCmp(_argv[1], "filter") )
 			{
 				if (_argc >= 3)
@@ -403,6 +435,7 @@ struct View
 	float    m_posx;
 	float    m_posy;
 	float    m_zoom;
+	float    m_angle;
 	bool     m_filter;
 	bool     m_alpha;
 	bool     m_help;
@@ -504,14 +537,15 @@ bool screenQuad(int32_t _x, int32_t _y, int32_t _width, uint32_t _height, uint32
 	return false;
 }
 
-struct Interpolator
+template<bx::LerpFn lerpT, bx::EaseFn easeT>
+struct InterpolatorT
 {
 	float from;
 	float to;
 	float duration;
 	int64_t offset;
 
-	Interpolator(float _value)
+	InterpolatorT(float _value)
 	{
 		reset(_value);
 	}
@@ -544,12 +578,15 @@ struct Interpolator
 			int64_t now = bx::getHPCounter();
 			float time = (float)(double(now - offset) / freq);
 			float lerp = bx::fclamp(time, 0.0, duration) / duration;
-			return bx::flerp(from, to, lerp);
+			return lerpT(from, to, easeT(lerp) );
 		}
 
 		return to;
 	}
 };
+
+typedef InterpolatorT<bx::flerp,     bx::easeInOutQuad>  Interpolator;
+typedef InterpolatorT<bx::angleLerp, bx::easeInOutCubic> InterpolatorAngle;
 
 void associate()
 {
@@ -782,6 +819,7 @@ int _main_(int _argc, char** _argv)
 	Interpolator mip(0.0f);
 	Interpolator layer(0.0f);
 	Interpolator zoom(1.0f);
+	InterpolatorAngle angle(0.0f);
 	Interpolator scale(1.0f);
 	Interpolator posx(0.0f);
 	Interpolator posy(0.0f);
@@ -1029,7 +1067,7 @@ int _main_(int _argc, char** _argv)
 
 			float px = posx.getValue();
 			float py = posy.getValue();
-			bx::mtxOrtho(ortho, px, px+width, py+height, py, 0.0f, 1000.0f);
+			bx::mtxOrtho(ortho, px-width/2, px+width/2, py+height/2, py-height/2, 0.0f, 1000.0f);
 			bgfx::setViewTransform(IMAGE_VIEW_ID, NULL, ortho);
 			bgfx::setViewRect(IMAGE_VIEW_ID, 0, 0, uint16_t(width), uint16_t(height) );
 
@@ -1042,18 +1080,23 @@ int _main_(int _argc, char** _argv)
 				, 0.1f
 				);
 			zoom.set(view.m_zoom, transitionTime);
+			angle.set(view.m_angle, transitionTime);
 
 			float ss = scale.getValue()
 				* zoom.getValue()
 				;
 
 			screenQuad(
-				  int(width  - view.m_info.width  * ss)/2
-				, int(height - view.m_info.height * ss)/2
-				, int(         view.m_info.width  * ss)
-				, int(         view.m_info.height * ss)
+				  -int(view.m_info.width  * ss)/2
+				, -int(view.m_info.height * ss)/2
+				,  int(view.m_info.width  * ss)
+				,  int(view.m_info.height * ss)
 				, view.m_abgr
 				);
+
+			float rotz[16];
+			bx::mtxRotateZ(rotz, angle.getValue() );
+			bgfx::setTransform(rotz);
 
 			float mtx[16];
 			bx::mtxRotateXY(mtx, 0.0f, time);
