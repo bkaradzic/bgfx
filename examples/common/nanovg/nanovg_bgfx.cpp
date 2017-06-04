@@ -1191,11 +1191,15 @@ NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* ctx, int width, int height,
 NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* _ctx, int _width, int _height, int _imageFlags)
 {
 	BX_UNUSED(_imageFlags);
+	bgfx::TextureHandle textures[] =
+	{
+		bgfx::createTexture2D(_width, _height, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_RT),
+		bgfx::createTexture2D(_width, _height, false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT | BGFX_TEXTURE_RT_WRITE_ONLY)
+	};
 	bgfx::FrameBufferHandle fbh = bgfx::createFrameBuffer(
-		  _width
-		, _height
-		, bgfx::TextureFormat::RGBA8
-		, BGFX_TEXTURE_NONE
+		  BX_COUNTOF(textures)
+		, textures
+		, true
 		);
 
 	if (!bgfx::isValid(fbh) )
