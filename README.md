@@ -146,7 +146,10 @@ C++ and using bgfx to support multiple rendering APIs.
 ## DLS
 
 http://makingartstudios.itch.io/dls - DLS the digital logic simulator game.  
-![dls-screenshot](https://img.itch.io/aW1hZ2UvMzk3MTgvMTc5MjQ4LnBuZw==/original/kA%2FQPb.png)
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=6o1-sQRNqcA
+" target="_blank"><img src="http://img.youtube.com/vi/6o1-sQRNqcA/0.jpg" 
+alt="DLS - Creating a 4-bit Register "
+width="640" height="480" border="0" /></a>
 
 http://dls.makingartstudios.com/sandbox/ - DLS: The Sandbox  
 ![dls-sandbox-screenshot](https://pbs.twimg.com/media/DBaFwOKWAAEq0mp.jpg:large)
