@@ -18,6 +18,7 @@ Supported rendering backends:
  * Direct3D 11
  * Direct3D 12 (WIP)
  * Metal (WIP)
+ * Vulkan (WIP)
  * OpenGL 2.1
  * OpenGL 3.1+
  * OpenGL ES 2
