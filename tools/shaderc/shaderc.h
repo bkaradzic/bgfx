@@ -68,38 +68,38 @@ namespace bgfx
 {
 	extern bool g_verbose;
 
-	class LineReader
+	class LineReader : public bx::ReaderI
 	{
 	public:
 		LineReader(const char* _str)
 			: m_str(_str)
 			, m_pos(0)
-			, m_size((uint32_t)bx::strLen(_str))
+			, m_size(bx::strLen(_str) )
 		{
 		}
 
-		std::string getLine()
+		virtual int32_t read(void* _data, int32_t _size, bx::Error* _err) BX_OVERRIDE
 		{
-			const char* str = &m_str[m_pos];
-			skipLine();
+			if (m_str[m_pos] == '\0'
+			||  m_pos == m_size)
+			{
+				BX_ERROR_SET(_err, BX_ERROR_READERWRITER_EOF, "LineReader: EOF.");
+				return 0;
+			}
 
-			const char* eol = &m_str[m_pos];
-
-			std::string tmp;
-			tmp.assign(str, eol - str);
-			return tmp;
-		}
-
-		bool isEof() const
-		{
-			return m_str[m_pos] == '\0';
-		}
-
-		void skipLine()
-		{
-			const char* str = &m_str[m_pos];
+			uint32_t pos = m_pos;
+			const char* str = &m_str[pos];
 			const char* nl = bx::strnl(str);
-			m_pos += (uint32_t)(nl - str);
+			pos += (uint32_t)(nl - str);
+
+			const char* eol = &m_str[pos];
+
+			uint32_t size = bx::uint32_min(uint32_t(eol - str), _size);
+
+			bx::memCopy(_data, str, size);
+			m_pos += size;
+
+			return size;
 		}
 
 		const char* m_str;

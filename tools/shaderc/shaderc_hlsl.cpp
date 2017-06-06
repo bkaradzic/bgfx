@@ -624,7 +624,7 @@ namespace bgfx { namespace hlsl
 			int32_t end    = INT32_MAX;
 
 			bool found = false
-				|| 2 == sscanf(log, "(%u,%u):", &line, &column)
+				|| 2 == sscanf(log, "(%u,%u):",  &line, &column)
 				|| 2 == sscanf(log, " :%u:%u: ", &line, &column)
 				;
 
@@ -670,32 +670,39 @@ namespace bgfx { namespace hlsl
 
 				// first time through, we just find unused uniforms and get rid of them
 				std::string output;
+				bx::Error err;
 				LineReader reader(_code.c_str() );
-				while (!reader.isEof() )
+				while (err.isOk() )
 				{
-					std::string line = reader.getLine();
-					for (UniformNameList::iterator it = unusedUniforms.begin(), itEnd = unusedUniforms.end(); it != itEnd; ++it)
+					char str[4096];
+					int32_t len = bx::read(&reader, str, BX_COUNTOF(str), &err);
+					if (err.isOk() )
 					{
-						size_t index = line.find("uniform ");
-						if (index == std::string::npos)
+						std::string strLine(str, len);
+
+						for (UniformNameList::iterator it = unusedUniforms.begin(), itEnd = unusedUniforms.end(); it != itEnd; ++it)
 						{
-							continue;
+							size_t index = strLine.find("uniform ");
+							if (index == std::string::npos)
+							{
+								continue;
+							}
+
+							// matching lines like:  uniform u_name;
+							// we want to replace "uniform" with "static" so that it's no longer
+							// included in the uniform blob that the application must upload
+							// we can't just remove them, because unused functions might still reference
+							// them and cause a compile error when they're gone
+							if (!!bx::findIdentifierMatch(strLine.c_str(), it->c_str() ) )
+							{
+								strLine = strLine.replace(index, strLength, "static");
+								unusedUniforms.erase(it);
+								break;
+							}
 						}
 
-						// matching lines like:  uniform u_name;
-						// we want to replace "uniform" with "static" so that it's no longer
-						// included in the uniform blob that the application must upload
-						// we can't just remove them, because unused functions might still reference
-						// them and cause a compile error when they're gone
-						if (!!bx::findIdentifierMatch(line.c_str(), it->c_str() ) )
-						{
-							line = line.replace(index, strLength, "static");
-							unusedUniforms.erase(it);
-							break;
-						}
+						output += strLine;
 					}
-
-					output += line;
 				}
 
 				// recompile with the unused uniforms converted to statics

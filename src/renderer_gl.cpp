@@ -5431,7 +5431,8 @@ namespace bgfx { namespace gl
 
 		if (0 != m_id)
 		{
-			if (GL_COMPUTE_SHADER != m_type)
+			if (GL_COMPUTE_SHADER != m_type
+			&&  0 != bx::strCmp(code, "#version 430", 12) )
 			{
 				int32_t codeLen = (int32_t)bx::strLen(code);
 				int32_t tempLen = codeLen + (4<<10);
@@ -5859,7 +5860,24 @@ namespace bgfx { namespace gl
 
 			if (0 == compiled)
 			{
-				BX_TRACE("\n####\n%s\n####", code);
+				LineReader lineReader(code);
+				bx::Error err;
+				for (int32_t line = 1; err.isOk(); ++line)
+				{
+					char str[4096];
+					int32_t len = bx::read(&lineReader, str, BX_COUNTOF(str)-1, &err);
+
+					if (err.isOk() )
+					{
+						str[len] = '\0';
+						const char* eol = bx::streol(str);
+						if (eol != str)
+						{
+							*const_cast<char*>(eol) = '\0';
+						}
+						BX_TRACE("%3d %s", line, str);
+					}
+				}
 
 				GLsizei len;
 				char log[1024];

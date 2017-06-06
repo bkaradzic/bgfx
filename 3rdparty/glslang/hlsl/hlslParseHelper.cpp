@@ -6974,8 +6974,8 @@ TIntermNode* HlslParseContext::declareVariable(const TSourceLoc& loc, const TStr
     // Deal with initializer
     TIntermNode* initNode = nullptr;
     if (symbol && initializer) {
-        if (flattenVar)
-            error(loc, "flattened array with initializer list unsupported", identifier.c_str(), "");
+//        if (flattenVar)
+//            error(loc, "flattened array with initializer list unsupported", identifier.c_str(), "");
 
         TVariable* variable = symbol->getAsVariable();
         if (! variable) {
