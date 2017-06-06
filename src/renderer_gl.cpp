@@ -6160,7 +6160,8 @@ namespace bgfx { namespace gl
 			if (!BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
 			&&  (BGFX_CLEAR_DISCARD_DEPTH|BGFX_CLEAR_DISCARD_STENCIL) == dsFlags)
 			{
-				buffers[idx++] = GL_DEPTH_STENCIL_ATTACHMENT;
+				buffers[idx++] = GL_DEPTH_ATTACHMENT;
+				buffers[idx++] = GL_STENCIL_ATTACHMENT;
 			}
 			else if (BGFX_CLEAR_DISCARD_DEPTH == dsFlags)
 			{
