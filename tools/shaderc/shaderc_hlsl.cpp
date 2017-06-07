@@ -172,6 +172,8 @@ namespace bgfx { namespace hlsl
 		{ bgfx::Attrib::Bitangent, "BITANGENT",    0 },
 		{ bgfx::Attrib::Color0,    "COLOR",        0 },
 		{ bgfx::Attrib::Color1,    "COLOR",        1 },
+		{ bgfx::Attrib::Color2,    "COLOR",        2 },
+		{ bgfx::Attrib::Color3,    "COLOR",        3 },
 		{ bgfx::Attrib::Indices,   "BLENDINDICES", 0 },
 		{ bgfx::Attrib::Weight,    "BLENDWEIGHT",  0 },
 		{ bgfx::Attrib::TexCoord0, "TEXCOORD",     0 },

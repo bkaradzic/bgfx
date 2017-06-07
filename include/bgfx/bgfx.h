@@ -97,6 +97,8 @@ namespace bgfx
 			Bitangent, //!< a_bitangent
 			Color0,    //!< a_color0
 			Color1,    //!< a_color1
+			Color2,    //!< a_color2
+			Color3,    //!< a_color3
 			Indices,   //!< a_indices
 			Weight,    //!< a_weight
 			TexCoord0, //!< a_texcoord0

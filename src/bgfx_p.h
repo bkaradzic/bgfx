@@ -2765,7 +2765,7 @@ namespace bgfx
 
 			DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[_handle.idx];
 
-			if (0 != (dvb.m_flags & BGFX_BUFFER_COMPUTE_WRITE) )
+			if (0 != (dvb.m_flags & BGFX_BUFFER_COMPUTE_READ_WRITE) )
 			{
 				destroyVertexBuffer(dvb.m_handle);
 			}

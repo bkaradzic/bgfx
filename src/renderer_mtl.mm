@@ -104,6 +104,8 @@ namespace bgfx { namespace mtl
 		"a_bitangent",
 		"a_color0",
 		"a_color1",
+		"a_color2",
+		"a_color3",
 		"a_indices",
 		"a_weight",
 		"a_texcoord0",
