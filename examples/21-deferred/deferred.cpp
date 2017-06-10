@@ -430,12 +430,12 @@ class ExampleDeferred : public entry::AppI
 						, uint16_t(m_height)
 						);
 
+				ImGui::SetNextWindowPos(ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f) );
 				ImGui::Begin("Deferred Rendering Settings"
 					, NULL
 					, ImVec2(m_width / 5.0f, m_height / 3.0f)
 					, ImGuiWindowFlags_AlwaysAutoResize
 					);
-				ImGui::SetWindowPos(ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f) );
 
 				ImGui::SliderInt("Num lights", &m_numLights, 1, 2048);
 				ImGui::Checkbox("Show G-Buffer.", &m_showGBuffer);
