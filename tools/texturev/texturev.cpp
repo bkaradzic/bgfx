@@ -305,7 +305,7 @@ struct View
 						m_angle = bx::toRad(angle);
 					}
 
-					m_angle = bx::fwrap(m_angle, bx::pi*2.0f);
+					m_angle = bx::fwrap(m_angle, bx::kPi*2.0f);
 				}
 				else
 				{

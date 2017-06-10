@@ -147,8 +147,8 @@ struct Camera
 
 	static inline void vecFromLatLong(float _vec[3], float _u, float _v)
 	{
-		const float phi   = _u * 2.0f*bx::pi;
-		const float theta = _v * bx::pi;
+		const float phi   = _u * 2.0f*bx::kPi;
+		const float theta = _v * bx::kPi;
 
 		const float st = bx::fsin(theta);
 		const float sp = bx::fsin(phi);
@@ -165,8 +165,8 @@ struct Camera
 		const float phi   = bx::fatan2(_vec[0], _vec[2]);
 		const float theta = bx::facos(_vec[1]);
 
-		_u = (bx::pi + phi)*bx::invPi*0.5f;
-		_v = theta*bx::invPi;
+		_u = (bx::kPi + phi)*bx::kInvPi*0.5f;
+		_v = theta*bx::kInvPi;
 	}
 
 	struct Interp3f
@@ -337,7 +337,7 @@ class ExampleWireframe : public entry::AppI
 
 		m_uniforms.init();
 
-		m_meshes[0].init("meshes/bunny.bin",      1.0f, 0.0f, bx::pi, 0.0f, 0.0f, -0.8f,  0.0f);
+		m_meshes[0].init("meshes/bunny.bin",      1.0f, 0.0f, bx::kPi, 0.0f, 0.0f, -0.8f,  0.0f);
 		m_meshes[1].init("meshes/hollowcube.bin", 1.0f, 0.0f,   0.0f, 0.0f, 0.0f,  0.0f,  0.0f);
 		m_meshes[2].init("meshes/orb.bin",        1.2f, 0.0f,   0.0f, 0.0f, 0.0f, -0.65f, 0.0f);
 

@@ -2220,9 +2220,9 @@ int _main_(int _argc, char** _argv)
 				, 0.0f
 				, float(ii)
 				, 0.0f
-				, bx::fsin(float(ii)*2.0f*bx::pi/float(numTrees) ) * 60.0f
+				, bx::fsin(float(ii)*2.0f*bx::kPi/float(numTrees) ) * 60.0f
 				, 0.0f
-				, bx::fcos(float(ii)*2.0f*bx::pi/float(numTrees) ) * 60.0f
+				, bx::fcos(float(ii)*2.0f*bx::kPi/float(numTrees) ) * 60.0f
 				);
 		}
 

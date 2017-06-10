@@ -672,8 +672,8 @@ public:
 
 	void updateLightDir()
 	{
-		float el = m_lightElevation * (bx::pi/180.0f);
-		float az = m_lightAzimuth   * (bx::pi/180.0f);
+		float el = m_lightElevation * (bx::kPi/180.0f);
+		float az = m_lightAzimuth   * (bx::kPi/180.0f);
 		m_lightDir[0] = bx::fcos(el)*bx::fcos(az);
 		m_lightDir[2] = bx::fcos(el)*bx::fsin(az);
 		m_lightDir[1] = bx::fsin(el);

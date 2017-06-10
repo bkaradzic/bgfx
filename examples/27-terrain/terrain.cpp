@@ -125,7 +125,7 @@ class ExampleTerrain : public entry::AppI
 
 		const float initialPos[3] = { s_terrainSize/2.0f, 100.0f, 0.0f };
 		cameraSetPosition(initialPos);
-		cameraSetVerticalAngle(-bx::pi/4.0f);
+		cameraSetVerticalAngle(-bx::kPi/4.0f);
 	}
 
 	virtual int shutdown() BX_OVERRIDE

@@ -173,9 +173,9 @@ struct Camera
 
 		float right[3] =
 		{
-			bx::fsin(m_horizontalAngle - bx::piHalf),
+			bx::fsin(m_horizontalAngle - bx::kPiHalf),
 			0,
-			bx::fcos(m_horizontalAngle - bx::piHalf),
+			bx::fcos(m_horizontalAngle - bx::kPiHalf),
 		};
 
 		float up[3];

@@ -144,10 +144,10 @@ int _main_(int _argc, char** _argv)
 		vd.drawBox(450.0f, 600.0f, 80.0f, 80.0f);
 
 		vd.setDrawColor(1.0f, 0.7f, 1.0f);
-		vd.drawWheel(bx::pi, 800.0f, 450.0f, 80.0f);
-		vd.drawWheel(3.0f * bx::pi / 4.0f, 95.0f, 450.0f, 60.0f);
-		vd.drawWheel(bx::pi / 2.0f, 1150.0f, 450.0f, 30.0f);
-		vd.drawWheel(bx::pi / 4.0f, 1250.0f, 450.0f, 10.0f);
+		vd.drawWheel(bx::kPi, 800.0f, 450.0f, 80.0f);
+		vd.drawWheel(3.0f * bx::kPi / 4.0f, 95.0f, 450.0f, 60.0f);
+		vd.drawWheel(bx::kPi / 2.0f, 1150.0f, 450.0f, 30.0f);
+		vd.drawWheel(bx::kPi / 4.0f, 1250.0f, 450.0f, 10.0f);
 
 		// draw moving shape
 		static float counter = 0.0f;
