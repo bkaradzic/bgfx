@@ -204,7 +204,7 @@ class ExampleHDR : public entry::AppI
 		}
 		else
 		{
-			m_rb.idx = bgfx::invalidHandle;
+			m_rb.idx = bgfx::kInvalidHandle;
 		}
 
 		// Imgui.

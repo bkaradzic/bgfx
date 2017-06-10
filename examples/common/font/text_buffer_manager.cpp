@@ -628,8 +628,8 @@ TextBufferHandle TextBufferManager::createTextBuffer(uint32_t _type, BufferType:
 	bc.textBuffer = new TextBuffer(m_fontManager);
 	bc.fontType = _type;
 	bc.bufferType = _bufferType;
-	bc.indexBufferHandleIdx = bgfx::invalidHandle;
-	bc.vertexBufferHandleIdx = bgfx::invalidHandle;
+	bc.indexBufferHandleIdx = bgfx::kInvalidHandle;
+	bc.vertexBufferHandleIdx = bgfx::kInvalidHandle;
 
 	TextBufferHandle ret = {textIdx};
 	return ret;
@@ -644,7 +644,7 @@ void TextBufferManager::destroyTextBuffer(TextBufferHandle _handle)
 	delete bc.textBuffer;
 	bc.textBuffer = NULL;
 
-	if (bc.vertexBufferHandleIdx == bgfx::invalidHandle)
+	if (bc.vertexBufferHandleIdx == bgfx::kInvalidHandle)
 	{
 		return;
 	}
@@ -730,7 +730,7 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 			bgfx::IndexBufferHandle ibh;
 			bgfx::VertexBufferHandle vbh;
 
-			if (bgfx::invalidHandle == bc.vertexBufferHandleIdx)
+			if (bgfx::kInvalidHandle == bc.vertexBufferHandleIdx)
 			{
 				ibh = bgfx::createIndexBuffer(
 								bgfx::copy(bc.textBuffer->getIndexBuffer(), indexSize)
@@ -760,7 +760,7 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, 
 			bgfx::DynamicIndexBufferHandle ibh;
 			bgfx::DynamicVertexBufferHandle vbh;
 
-			if (bgfx::invalidHandle == bc.vertexBufferHandleIdx )
+			if (bgfx::kInvalidHandle == bc.vertexBufferHandleIdx )
 			{
 				ibh = bgfx::createDynamicIndexBuffer(
 								bgfx::copy(bc.textBuffer->getIndexBuffer(), indexSize)

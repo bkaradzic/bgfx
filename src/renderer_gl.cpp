@@ -1473,7 +1473,7 @@ namespace bgfx { namespace gl
 		{
 			m_renderdocdll = loadRenderDoc();
 
-			m_fbh.idx = invalidHandle;
+			m_fbh.idx = kInvalidHandle;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
 			bx::memSet(&m_resolution, 0, sizeof(m_resolution) );
 
@@ -6250,7 +6250,7 @@ namespace bgfx { namespace gl
 			Query& query = m_query[(m_control.m_read + ii) % size];
 			if (query.m_handle.idx == _handle.idx)
 			{
-				query.m_handle.idx = bgfx::invalidHandle;
+				query.m_handle.idx = bgfx::kInvalidHandle;
 			}
 		}
 	}
@@ -6363,7 +6363,7 @@ namespace bgfx { namespace gl
 		static ViewState viewState;
 		viewState.reset(_render, hmdEnabled);
 
-		uint16_t programIdx = invalidHandle;
+		uint16_t programIdx = kInvalidHandle;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
@@ -6451,7 +6451,7 @@ namespace bgfx { namespace gl
 					}
 
 					view = key.m_view;
-					programIdx = invalidHandle;
+					programIdx = kInvalidHandle;
 
 					if (_render->m_fb[view].idx != fbh.idx)
 					{
@@ -6574,7 +6574,7 @@ namespace bgfx { namespace gl
 						for (uint32_t ii = 0; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
 						{
 							const Binding& bind = renderBind.m_bind[ii];
-							if (invalidHandle != bind.m_idx)
+							if (kInvalidHandle != bind.m_idx)
 							{
 								switch (bind.m_type)
 								{
@@ -6650,7 +6650,7 @@ namespace bgfx { namespace gl
 							{
 								if (isValid(currentState.m_indirectBuffer) )
 								{
-									currentState.m_indirectBuffer.idx = invalidHandle;
+									currentState.m_indirectBuffer.idx = kInvalidHandle;
 									GL_CHECK(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, 0) );
 								}
 
@@ -7035,10 +7035,10 @@ namespace bgfx { namespace gl
 				if (key.m_program != programIdx)
 				{
 					programIdx = key.m_program;
-					GLuint id = invalidHandle == programIdx ? 0 : m_program[programIdx].m_id;
+					GLuint id = kInvalidHandle == programIdx ? 0 : m_program[programIdx].m_id;
 
 					// Skip rendering if program index is valid, but program is invalid.
-					programIdx = 0 == id ? invalidHandle : programIdx;
+					programIdx = 0 == id ? kInvalidHandle : programIdx;
 
 					GL_CHECK(glUseProgram(id) );
 					programChanged =
@@ -7046,7 +7046,7 @@ namespace bgfx { namespace gl
 						bindAttribs = true;
 				}
 
-				if (invalidHandle != programIdx)
+				if (kInvalidHandle != programIdx)
 				{
 					ProgramGL& program = m_program[programIdx];
 
@@ -7068,7 +7068,7 @@ namespace bgfx { namespace gl
 							||  current.m_un.m_draw.m_textureFlags != bind.m_un.m_draw.m_textureFlags
 							||  programChanged)
 							{
-								if (invalidHandle != bind.m_idx)
+								if (kInvalidHandle != bind.m_idx)
 								{
 									switch (bind.m_type)
 									{
@@ -7242,9 +7242,9 @@ namespace bgfx { namespace gl
 							currentState.m_streamMask = 0;
 							for (size_t ii = 0; ii < BGFX_CONFIG_MAX_VERTEX_STREAMS; ++ii)
 							{
-								currentState.m_stream[ii].m_handle.idx = invalidHandle;
+								currentState.m_stream[ii].m_handle.idx = kInvalidHandle;
 							}
-							currentState.m_indexBuffer.idx = invalidHandle;
+							currentState.m_indexBuffer.idx = kInvalidHandle;
 							bindAttribs = true;
 							currentVao = 0;
 						}
@@ -7296,7 +7296,7 @@ namespace bgfx { namespace gl
 							currentState.m_indexBuffer = draw.m_indexBuffer;
 
 							uint16_t handle = draw.m_indexBuffer.idx;
-							if (invalidHandle != handle)
+							if (kInvalidHandle != handle)
 							{
 								IndexBufferGL& ib = m_indexBuffers[handle];
 								GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
@@ -7435,7 +7435,7 @@ namespace bgfx { namespace gl
 						{
 							if (isValid(currentState.m_indirectBuffer) )
 							{
-								currentState.m_indirectBuffer.idx = invalidHandle;
+								currentState.m_indirectBuffer.idx = kInvalidHandle;
 								GL_CHECK(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0) );
 							}
 

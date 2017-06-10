@@ -24,7 +24,7 @@
 
 #include <inttypes.h>
 
-// Check handle, cannot be bgfx::invalidHandle and must be valid.
+// Check handle, cannot be bgfx::kInvalidHandle and must be valid.
 #define BGFX_CHECK_HANDLE(_desc, _handleAlloc, _handle) \
 			BX_CHECK(isValid(_handle) \
 				&& _handleAlloc.isValid(_handle.idx) \
@@ -34,7 +34,7 @@
 				, _handleAlloc.getMaxHandles() \
 				)
 
-// Check handle, it's ok to be bgfx::invalidHandle or must be valid.
+// Check handle, it's ok to be bgfx::kInvalidHandle or must be valid.
 #define BGFX_CHECK_HANDLE_INVALID_OK(_desc, _handleAlloc, _handle) \
 			BX_CHECK(!isValid(_handle) \
 				|| _handleAlloc.isValid(_handle.idx) \
@@ -558,7 +558,7 @@ namespace bgfx
 		{
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_program); ++ii)
 			{
-				m_program[ii].idx = invalidHandle;
+				m_program[ii].idx = kInvalidHandle;
 			}
 		}
 
@@ -1158,7 +1158,7 @@ namespace bgfx
 		const UniformRegInfo* find(const char* _name) const
 		{
 			uint16_t handle = m_uniforms.find(bx::hashMurmur2A(_name) );
-			if (UniformHashMap::invalid != handle)
+			if (kInvalidHandle != handle)
 			{
 				return &m_info[handle];
 			}
@@ -1228,8 +1228,8 @@ namespace bgfx
 		void clear()
 		{
 			m_startVertex = 0;
-			m_handle.idx  = invalidHandle;
-			m_decl.idx    = invalidHandle;
+			m_handle.idx  = kInvalidHandle;
+			m_decl.idx    = kInvalidHandle;
 		}
 
 		uint32_t           m_startVertex;
@@ -1244,7 +1244,7 @@ namespace bgfx
 			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
 			{
 				Binding& bind = m_bind[ii];
-				bind.m_idx = invalidHandle;
+				bind.m_idx = kInvalidHandle;
 				bind.m_type = 0;
 				bind.m_un.m_draw.m_textureFlags = 0;
 			}
@@ -1276,10 +1276,10 @@ namespace bgfx
 			m_scissor       = UINT16_MAX;
 			m_streamMask    = 0;
 			m_stream[0].clear();
-			m_indexBuffer.idx        = invalidHandle;
-			m_instanceDataBuffer.idx = invalidHandle;
-			m_indirectBuffer.idx     = invalidHandle;
-			m_occlusionQuery.idx     = invalidHandle;
+			m_indexBuffer.idx        = kInvalidHandle;
+			m_instanceDataBuffer.idx = kInvalidHandle;
+			m_indirectBuffer.idx     = kInvalidHandle;
+			m_occlusionQuery.idx     = kInvalidHandle;
 		}
 
 		bool setStreamBit(uint8_t _stream, VertexBufferHandle _handle)
@@ -1330,7 +1330,7 @@ namespace bgfx
 			m_num         = 0;
 			m_submitFlags = BGFX_SUBMIT_EYE_FIRST;
 
-			m_indirectBuffer.idx = invalidHandle;
+			m_indirectBuffer.idx = kInvalidHandle;
 			m_startIndirect      = 0;
 			m_numIndirect        = UINT16_MAX;
 		}
@@ -1424,7 +1424,7 @@ namespace bgfx
 		{
 			SortKey term;
 			term.reset();
-			term.m_program = invalidHandle;
+			term.m_program = kInvalidHandle;
 			m_sortKeys[BGFX_CONFIG_MAX_DRAW_CALLS]   = term.encodeDraw();
 			m_sortValues[BGFX_CONFIG_MAX_DRAW_CALLS] = BGFX_CONFIG_MAX_DRAW_CALLS;
 			bx::memSet(m_occlusion, 0xff, sizeof(m_occlusion) );
@@ -1592,7 +1592,7 @@ namespace bgfx
 				Stream& stream = m_draw.m_stream[_stream];
 				stream.m_startVertex   = _startVertex;
 				stream.m_handle        = _handle;
-				stream.m_decl.idx      = invalidHandle;
+				stream.m_decl.idx      = kInvalidHandle;
 				m_numVertices[_stream] = _numVertices;
 			}
 		}
@@ -1993,7 +1993,7 @@ namespace bgfx
 
 		void add(VertexBufferHandle _handle, VertexDeclHandle _declHandle, uint32_t _hash)
 		{
-			BX_CHECK(m_vertexBufferRef[_handle.idx].idx == invalidHandle, "");
+			BX_CHECK(m_vertexBufferRef[_handle.idx].idx == kInvalidHandle, "");
 			m_vertexBufferRef[_handle.idx] = _declHandle;
 			m_vertexDeclRef[_declHandle.idx]++;
 			m_vertexDeclMap.insert(_hash, _declHandle.idx);
@@ -2001,7 +2001,7 @@ namespace bgfx
 
 		void add(DynamicVertexBufferHandle _handle, VertexDeclHandle _declHandle, uint32_t _hash)
 		{
-			BX_CHECK(m_dynamicVertexBufferRef[_handle.idx].idx == invalidHandle, "");
+			BX_CHECK(m_dynamicVertexBufferRef[_handle.idx].idx == kInvalidHandle, "");
 			m_dynamicVertexBufferRef[_handle.idx] = _declHandle;
 			m_vertexDeclRef[_declHandle.idx]++;
 			m_vertexDeclMap.insert(_hash, _declHandle.idx);
@@ -2028,7 +2028,7 @@ namespace bgfx
 		{
 			VertexDeclHandle declHandle = m_vertexBufferRef[_handle.idx];
 			declHandle = release(declHandle);
-			m_vertexBufferRef[_handle.idx].idx = invalidHandle;
+			m_vertexBufferRef[_handle.idx].idx = kInvalidHandle;
 
 			return declHandle;
 		}
@@ -2037,7 +2037,7 @@ namespace bgfx
 		{
 			VertexDeclHandle declHandle = m_dynamicVertexBufferRef[_handle.idx];
 			declHandle = release(declHandle);
-			m_dynamicVertexBufferRef[_handle.idx].idx = invalidHandle;
+			m_dynamicVertexBufferRef[_handle.idx].idx = kInvalidHandle;
 
 			return declHandle;
 		}
@@ -2054,7 +2054,7 @@ namespace bgfx
 	class NonLocalAllocator
 	{
 	public:
-		static const uint64_t invalidBlock = UINT64_MAX;
+		static const uint64_t kInvalidBlock = UINT64_MAX;
 
 		NonLocalAllocator()
 		{
@@ -2114,7 +2114,7 @@ namespace bgfx
 			}
 
 			// there is no block large enough.
-			return invalidBlock;
+			return kInvalidBlock;
 		}
 
 		void free(uint64_t _block)
@@ -2458,7 +2458,7 @@ namespace bgfx
 		uint64_t allocDynamicIndexBuffer(uint32_t _size, uint16_t _flags)
 		{
 			uint64_t ptr = m_dynIndexBufferAllocator.alloc(_size);
-			if (ptr == NonLocalAllocator::invalidBlock)
+			if (ptr == NonLocalAllocator::kInvalidBlock)
 			{
 				IndexBufferHandle indexBufferHandle = { m_indexBufferHandle.alloc() };
 				BX_WARN(isValid(indexBufferHandle), "Failed to allocate index buffer handle.");
@@ -2506,7 +2506,7 @@ namespace bgfx
 			else
 			{
 				ptr = allocDynamicIndexBuffer(size, _flags);
-				if (ptr == NonLocalAllocator::invalidBlock)
+				if (ptr == NonLocalAllocator::kInvalidBlock)
 				{
 					return handle;
 				}
@@ -2618,14 +2618,14 @@ namespace bgfx
 		uint64_t allocDynamicVertexBuffer(uint32_t _size, uint16_t _flags)
 		{
 			uint64_t ptr = m_dynVertexBufferAllocator.alloc(_size);
-			if (ptr == NonLocalAllocator::invalidBlock)
+			if (ptr == NonLocalAllocator::kInvalidBlock)
 			{
 				VertexBufferHandle vertexBufferHandle = { m_vertexBufferHandle.alloc() };
 
 				BX_WARN(isValid(vertexBufferHandle), "Failed to allocate dynamic vertex buffer handle.");
 				if (!isValid(vertexBufferHandle) )
 				{
-					return NonLocalAllocator::invalidBlock;
+					return NonLocalAllocator::kInvalidBlock;
 				}
 
 				uint32_t allocSize = bx::uint32_max(BGFX_CONFIG_DYNAMIC_VERTEX_BUFFER_SIZE, _size);
@@ -2666,7 +2666,7 @@ namespace bgfx
 			else
 			{
 				ptr = allocDynamicVertexBuffer(size, _flags);
-				if (ptr == NonLocalAllocator::invalidBlock)
+				if (ptr == NonLocalAllocator::kInvalidBlock)
 				{
 					return handle;
 				}
@@ -3146,7 +3146,7 @@ namespace bgfx
 			}
 
 			uint16_t idx = m_programHashMap.find(uint32_t(_fsh.idx<<16)|_vsh.idx);
-			if (ProgramHashMap::invalid != idx)
+			if (kInvalidHandle != idx)
 			{
 				ProgramHandle handle = { idx };
 				ProgramRef& pr = m_programRef[handle.idx];
@@ -3205,7 +3205,7 @@ namespace bgfx
 			}
 
 			uint16_t idx = m_programHashMap.find(_vsh.idx);
-			if (ProgramHashMap::invalid != idx)
+			if (kInvalidHandle != idx)
 			{
 				ProgramHandle handle = { idx };
 				ProgramRef& pr = m_programRef[handle.idx];
@@ -3581,7 +3581,7 @@ namespace bgfx
 			_num  = bx::uint16_max(1, _num);
 
 			uint16_t idx = m_uniformHashMap.find(bx::hashMurmur2A(_name) );
-			if (UniformHashMap::invalid != idx)
+			if (kInvalidHandle != idx)
 			{
 				UniformHandle handle = { idx };
 				UniformRef& uniform = m_uniformRef[handle.idx];

@@ -414,7 +414,7 @@ namespace bgfx { namespace d3d9
 
 			ErrorState::Enum errorState = ErrorState::Default;
 
-			m_fbh.idx = invalidHandle;
+			m_fbh.idx = kInvalidHandle;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
 			bx::memSet(&m_resolution, 0, sizeof(m_resolution) );
 
@@ -3631,7 +3631,7 @@ namespace bgfx { namespace d3d9
 			Query& query = m_query[(m_control.m_read + ii) % size];
 			if (query.m_handle.idx == _handle.idx)
 			{
-				query.m_handle.idx = bgfx::invalidHandle;
+				query.m_handle.idx = bgfx::kInvalidHandle;
 			}
 		}
 	}
@@ -3732,7 +3732,7 @@ namespace bgfx { namespace d3d9
 		ViewState viewState(_render, false);
 
 		DX_CHECK(device->SetRenderState(D3DRS_FILLMODE, _render->m_debug&BGFX_DEBUG_WIREFRAME ? D3DFILL_WIREFRAME : D3DFILL_SOLID) );
-		uint16_t programIdx = invalidHandle;
+		uint16_t programIdx = kInvalidHandle;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
@@ -3816,7 +3816,7 @@ namespace bgfx { namespace d3d9
 					BGFX_PROFILER_BEGIN_DYNAMIC(s_viewName[key.m_view]);
 
 					view = key.m_view;
-					programIdx = invalidHandle;
+					programIdx = kInvalidHandle;
 
 					if (_render->m_fb[view].idx != fbh.idx)
 					{
@@ -4087,7 +4087,7 @@ namespace bgfx { namespace d3d9
 				{
 					programIdx = key.m_program;
 
-					if (invalidHandle == programIdx)
+					if (kInvalidHandle == programIdx)
 					{
 						device->SetVertexShader(NULL);
 						device->SetPixelShader(NULL);
@@ -4103,7 +4103,7 @@ namespace bgfx { namespace d3d9
 						constantsChanged = true;
 				}
 
-				if (invalidHandle != programIdx)
+				if (kInvalidHandle != programIdx)
 				{
 					ProgramD3D9& program = m_program[programIdx];
 
@@ -4135,7 +4135,7 @@ namespace bgfx { namespace d3d9
 						||  current.m_un.m_draw.m_textureFlags != bind.m_un.m_draw.m_textureFlags
 						||  programChanged)
 						{
-							if (invalidHandle != bind.m_idx)
+							if (kInvalidHandle != bind.m_idx)
 							{
 								m_textures[bind.m_idx].commit(stage, bind.m_un.m_draw.m_textureFlags, _render->m_colorPalette);
 							}
@@ -4232,7 +4232,7 @@ namespace bgfx { namespace d3d9
 					currentState.m_indexBuffer = draw.m_indexBuffer;
 
 					uint16_t handle = draw.m_indexBuffer.idx;
-					if (invalidHandle != handle)
+					if (kInvalidHandle != handle)
 					{
 						const IndexBufferD3D9& ib = m_indexBuffers[handle];
 						DX_CHECK(device->SetIndices(ib.m_ptr) );

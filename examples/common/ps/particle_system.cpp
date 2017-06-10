@@ -195,7 +195,7 @@ namespace ps
 
 		EmitterSpriteHandle create(uint16_t _width, uint16_t _height)
 		{
-			EmitterSpriteHandle handle = { bx::HandleAlloc::invalid };
+			EmitterSpriteHandle handle = { bx::kInvalidHandle };
 
 			if (m_handleAlloc.getNumHandles() < m_handleAlloc.getMaxHandles() )
 			{

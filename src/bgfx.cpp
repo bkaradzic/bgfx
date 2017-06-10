@@ -781,7 +781,7 @@ namespace bgfx
 				if (isValid(m_program[ii]) )
 				{
 					destroyProgram(m_program[ii]);
-					m_program[ii].idx = invalidHandle;
+					m_program[ii].idx = kInvalidHandle;
 				}
 			}
 
@@ -870,7 +870,7 @@ namespace bgfx
 
 		m_uniformEnd = m_uniformBuffer->getPos();
 
-		m_key.m_program = invalidHandle == _program.idx
+		m_key.m_program = kInvalidHandle == _program.idx
 			? 0
 			: _program.idx
 			;

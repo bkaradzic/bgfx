@@ -725,7 +725,7 @@ VK_IMPORT_DEVICE
 
 			ErrorState::Enum errorState = ErrorState::Default;
 
-			m_fbh.idx = invalidHandle;
+			m_fbh.idx = kInvalidHandle;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
 			bx::memSet(&m_resolution, 0, sizeof(m_resolution) );
 
@@ -3667,8 +3667,8 @@ VK_DESTROY
 // 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
 // 		setDebugWireframe(wireframe);
 
-		uint16_t currentSamplerStateIdx = invalidHandle;
-		uint16_t currentProgramIdx      = invalidHandle;
+		uint16_t currentSamplerStateIdx = kInvalidHandle;
+		uint16_t currentProgramIdx      = kInvalidHandle;
 		uint32_t currentBindHash        = 0;
 		bool     hasPredefined          = false;
 		bool     commandListChanged     = false;
@@ -3787,9 +3787,9 @@ finishAll();
 
 					view = key.m_view;
 					currentPipeline = VK_NULL_HANDLE;
-					currentSamplerStateIdx = invalidHandle;
+					currentSamplerStateIdx = kInvalidHandle;
 BX_UNUSED(currentSamplerStateIdx);
-					currentProgramIdx      = invalidHandle;
+					currentProgramIdx      = kInvalidHandle;
 					hasPredefined          = false;
 
 					fbh = _render->m_fb[view];
@@ -3878,7 +3878,7 @@ BX_UNUSED(currentSamplerStateIdx);
 //							for (uint32_t ii = 0; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
 //							{
 //								const Binding& bind = renderBind.m_bind[ii];
-//								if (invalidHandle != bind.m_idx)
+//								if (kInvalidHandle != bind.m_idx)
 //								{
 //									switch (bind.m_type)
 //									{
@@ -4055,8 +4055,8 @@ BX_UNUSED(currentSamplerStateIdx);
 
 					currentPipeline        = VK_NULL_HANDLE;
 					currentBindHash        = 0;
-					currentSamplerStateIdx = invalidHandle;
-					currentProgramIdx      = invalidHandle;
+					currentSamplerStateIdx = kInvalidHandle;
+					currentProgramIdx      = kInvalidHandle;
 					currentState.clear();
 					currentState.m_scissor = !draw.m_scissor;
 					changedFlags = BGFX_STATE_MASK;
@@ -4117,7 +4117,7 @@ BX_UNUSED(currentSamplerStateIdx);
 //								for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 //								{
 //									const Binding& bind = renderBind.m_bind[stage];
-//									if (invalidHandle != bind.m_idx)
+//									if (kInvalidHandle != bind.m_idx)
 //									{
 //										TextureD3D12& texture = m_textures[bind.m_idx];
 //										texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);

@@ -816,8 +816,8 @@ struct Group
 
 	void reset()
 	{
-		m_vbh.idx = bgfx::invalidHandle;
-		m_ibh.idx = bgfx::invalidHandle;
+		m_vbh.idx = bgfx::kInvalidHandle;
+		m_ibh.idx = bgfx::kInvalidHandle;
 		m_prims.clear();
 	}
 
@@ -950,7 +950,7 @@ struct Mesh
 			const Group& group = *it;
 			bgfx::destroyVertexBuffer(group.m_vbh);
 
-			if (bgfx::invalidHandle != group.m_ibh.idx)
+			if (bgfx::kInvalidHandle != group.m_ibh.idx)
 			{
 				bgfx::destroyIndexBuffer(group.m_ibh);
 			}
@@ -979,7 +979,7 @@ struct Mesh
 			bgfx::setVertexBuffer(0, group.m_vbh);
 
 			// Set textures.
-			if (bgfx::invalidHandle != _texture.idx)
+			if (bgfx::kInvalidHandle != _texture.idx)
 			{
 				bgfx::setTexture(0, s_texColor, _texture);
 			}

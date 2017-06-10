@@ -273,11 +273,11 @@ class ExampleDeferred : public entry::AppI
 		// Load normal texture.
 		m_textureNormal = loadTexture("textures/fieldstone-n.dds");
 
-		m_gbufferTex[0].idx = bgfx::invalidHandle;
-		m_gbufferTex[1].idx = bgfx::invalidHandle;
-		m_gbufferTex[2].idx = bgfx::invalidHandle;
-		m_gbuffer.idx = bgfx::invalidHandle;
-		m_lightBuffer.idx = bgfx::invalidHandle;
+		m_gbufferTex[0].idx = bgfx::kInvalidHandle;
+		m_gbufferTex[1].idx = bgfx::kInvalidHandle;
+		m_gbufferTex[2].idx = bgfx::kInvalidHandle;
+		m_gbuffer.idx = bgfx::kInvalidHandle;
+		m_lightBuffer.idx = bgfx::kInvalidHandle;
 
 		// Imgui.
 		imguiCreate();

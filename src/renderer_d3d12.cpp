@@ -544,7 +544,7 @@ namespace bgfx { namespace d3d12
 			m_renderdocdll = loadRenderDoc();
 			setGraphicsDebuggerPresent(NULL != m_renderdocdll);
 
-			m_fbh.idx = invalidHandle;
+			m_fbh.idx = kInvalidHandle;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
 			bx::memSet(&m_resolution, 0, sizeof(m_resolution) );
 
@@ -4507,7 +4507,7 @@ data.NumQualityLevels = 0;
 
 			m_width  = 0;
 			m_height = 0;
-			m_depth.idx = bgfx::invalidHandle;
+			m_depth.idx = bgfx::kInvalidHandle;
 			m_num = 0;
 			for (uint32_t ii = 0; ii < m_numTh; ++ii)
 			{
@@ -4567,7 +4567,7 @@ data.NumQualityLevels = 0;
 	{
 		m_numTh = 0;
 
-		m_depth.idx = bgfx::invalidHandle;
+		m_depth.idx = bgfx::kInvalidHandle;
 
 		uint16_t denseIdx = m_denseIdx;
 		m_denseIdx = UINT16_MAX;
@@ -4806,7 +4806,7 @@ data.NumQualityLevels = 0;
 			OcclusionQueryHandle& handle = m_handle[(m_control.m_read + ii) % size];
 			if (handle.idx == _handle.idx)
 			{
-				handle.idx = bgfx::invalidHandle;
+				handle.idx = bgfx::kInvalidHandle;
 			}
 		}
 	}
@@ -4942,8 +4942,8 @@ data.NumQualityLevels = 0;
 // 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
 // 		setDebugWireframe(wireframe);
 
-		uint16_t currentSamplerStateIdx = invalidHandle;
-		uint16_t currentProgramIdx      = invalidHandle;
+		uint16_t currentSamplerStateIdx = kInvalidHandle;
+		uint16_t currentProgramIdx      = kInvalidHandle;
 		uint32_t currentBindHash        = 0;
 		bool     hasPredefined          = false;
 		bool     commandListChanged     = false;
@@ -5027,8 +5027,8 @@ data.NumQualityLevels = 0;
 
 					view = key.m_view;
 					currentPso = NULL;
-					currentSamplerStateIdx = invalidHandle;
-					currentProgramIdx      = invalidHandle;
+					currentSamplerStateIdx = kInvalidHandle;
+					currentProgramIdx      = kInvalidHandle;
 					hasPredefined          = false;
 
 					fbh = _render->m_fb[view];
@@ -5108,7 +5108,7 @@ data.NumQualityLevels = 0;
 							for (uint32_t ii = 0; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
 							{
 								const Binding& bind = renderBind.m_bind[ii];
-								if (invalidHandle != bind.m_idx)
+								if (kInvalidHandle != bind.m_idx)
 								{
 									switch (bind.m_type)
 									{
@@ -5285,8 +5285,8 @@ data.NumQualityLevels = 0;
 
 					currentPso             = NULL;
 					currentBindHash        = 0;
-					currentSamplerStateIdx = invalidHandle;
-					currentProgramIdx      = invalidHandle;
+					currentSamplerStateIdx = kInvalidHandle;
+					currentProgramIdx      = kInvalidHandle;
 					currentState.clear();
 					currentState.m_scissor = !draw.m_scissor;
 					changedFlags = BGFX_STATE_MASK;
@@ -5351,7 +5351,7 @@ data.NumQualityLevels = 0;
 								for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 								{
 									const Binding& bind = renderBind.m_bind[stage];
-									if (invalidHandle != bind.m_idx)
+									if (kInvalidHandle != bind.m_idx)
 									{
 										switch (bind.m_type)
 										{

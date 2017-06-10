@@ -373,8 +373,8 @@ struct Group
 
 	void reset()
 	{
-		m_vbh.idx = bgfx::invalidHandle;
-		m_ibh.idx = bgfx::invalidHandle;
+		m_vbh.idx = bgfx::kInvalidHandle;
+		m_ibh.idx = bgfx::kInvalidHandle;
 		m_prims.clear();
 	}
 

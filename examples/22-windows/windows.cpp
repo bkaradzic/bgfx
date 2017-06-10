@@ -178,7 +178,7 @@ public:
 						if (bgfx::isValid(m_fbh[viewId]) )
 						{
 							bgfx::destroyFrameBuffer(m_fbh[viewId]);
-							m_fbh[viewId].idx = bgfx::invalidHandle;
+							m_fbh[viewId].idx = bgfx::kInvalidHandle;
 						}
 
 						win.m_nwh    = state.m_nwh;
@@ -319,7 +319,7 @@ public:
 			if (bgfx::isValid(m_fbh[ii]) )
 			{
 				bgfx::destroyFrameBuffer(m_fbh[ii]);
-				m_fbh[ii].idx = bgfx::invalidHandle;
+				m_fbh[ii].idx = bgfx::kInvalidHandle;
 
 				// Flush destruction of swap chain before destroying window!
 				bgfx::frame();

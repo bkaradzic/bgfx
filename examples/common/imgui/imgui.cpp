@@ -413,17 +413,17 @@ struct Imgui
 		m_invTextureWidth  = 1.0f/m_textureWidth;
 		m_invTextureHeight = 1.0f/m_textureHeight;
 
-		u_imageLodEnabled.idx = bgfx::invalidHandle;
-		u_imageSwizzle.idx    = bgfx::invalidHandle;
-		s_texColor.idx        = bgfx::invalidHandle;
-		m_missingTexture.idx  = bgfx::invalidHandle;
+		u_imageLodEnabled.idx = bgfx::kInvalidHandle;
+		u_imageSwizzle.idx    = bgfx::kInvalidHandle;
+		s_texColor.idx        = bgfx::kInvalidHandle;
+		m_missingTexture.idx  = bgfx::kInvalidHandle;
 
-		m_colorProgram.idx      = bgfx::invalidHandle;
-		m_textureProgram.idx    = bgfx::invalidHandle;
-		m_cubeMapProgram.idx    = bgfx::invalidHandle;
-		m_latlongProgram.idx    = bgfx::invalidHandle;
-		m_imageProgram.idx      = bgfx::invalidHandle;
-		m_imageSwizzProgram.idx = bgfx::invalidHandle;
+		m_colorProgram.idx      = bgfx::kInvalidHandle;
+		m_textureProgram.idx    = bgfx::kInvalidHandle;
+		m_cubeMapProgram.idx    = bgfx::kInvalidHandle;
+		m_latlongProgram.idx    = bgfx::kInvalidHandle;
+		m_imageProgram.idx      = bgfx::kInvalidHandle;
+		m_imageSwizzProgram.idx = bgfx::kInvalidHandle;
 	}
 
 	ImguiFontHandle createFont(const void* _data, float _fontSize)
@@ -443,7 +443,7 @@ struct Imgui
 			);
 		m_fonts[handle.idx].m_size = _fontSize;
 #else
-		const ImguiFontHandle handle = { bgfx::invalidHandle };
+		const ImguiFontHandle handle = { bgfx::kInvalidHandle };
 #endif // !USE_NANOVG_FONT
 		return handle;
 	}
@@ -569,7 +569,7 @@ struct Imgui
 		const ImguiFontHandle handle = createFont(s_robotoRegularTtf, _fontSize);
 		m_currentFontIdx = handle.idx;
 #else
-		const ImguiFontHandle handle = { bgfx::invalidHandle };
+		const ImguiFontHandle handle = { bgfx::kInvalidHandle };
 #endif // !USE_NANOVG_FONT
 		return handle;
 	}

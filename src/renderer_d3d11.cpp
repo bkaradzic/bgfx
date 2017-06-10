@@ -707,7 +707,7 @@ namespace bgfx { namespace d3d11
 			, m_rtMsaa(false)
 			, m_timerQuerySupport(false)
 		{
-			m_fbh.idx = invalidHandle;
+			m_fbh.idx = kInvalidHandle;
 			bx::memSet(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
 			bx::memSet(&m_scd, 0, sizeof(m_scd) );
 			bx::memSet(&m_windows, 0xff, sizeof(m_windows) );
@@ -744,7 +744,7 @@ namespace bgfx { namespace d3d11
 				m_renderdocdll = loadRenderDoc();
 			}
 
-			m_fbh.idx = invalidHandle;
+			m_fbh.idx = kInvalidHandle;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
 			bx::memSet(&m_resolution, 0, sizeof(m_resolution) );
 
@@ -5368,7 +5368,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			Query& query = m_query[(m_control.m_read + ii) % size];
 			if (query.m_handle.idx == _handle.idx)
 			{
-				query.m_handle.idx = bgfx::invalidHandle;
+				query.m_handle.idx = bgfx::kInvalidHandle;
 			}
 		}
 	}
@@ -5510,7 +5510,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		bool scissorEnabled = false;
 		setDebugWireframe(wireframe);
 
-		uint16_t programIdx = invalidHandle;
+		uint16_t programIdx = kInvalidHandle;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
@@ -5577,7 +5577,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 
 					view = key.m_view;
-					programIdx = invalidHandle;
+					programIdx = kInvalidHandle;
 
 					if (_render->m_fb[view].idx != fbh.idx)
 					{
@@ -5721,7 +5721,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 							constantsChanged = true;
 					}
 
-					if (invalidHandle != programIdx)
+					if (kInvalidHandle != programIdx)
 					{
 						ProgramD3D11& program = m_program[programIdx];
 
@@ -5750,7 +5750,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					for (uint32_t ii = 0; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
 					{
 						const Binding& bind = renderBind.m_bind[ii];
-						if (invalidHandle != bind.m_idx)
+						if (kInvalidHandle != bind.m_idx)
 						{
 							switch (bind.m_type)
 							{
@@ -5837,7 +5837,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						PIX_BEGINEVENT(D3DCOLOR_DRAW, viewNameW);
 					}
 
-					programIdx = invalidHandle;
+					programIdx = kInvalidHandle;
 					m_currentProgram = NULL;
 
 					invalidateCompute();
@@ -5982,7 +5982,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				{
 					programIdx = key.m_program;
 
-					if (invalidHandle == programIdx)
+					if (kInvalidHandle == programIdx)
 					{
 						m_currentProgram = NULL;
 
@@ -6015,7 +6015,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						constantsChanged = true;
 				}
 
-				if (invalidHandle != programIdx)
+				if (kInvalidHandle != programIdx)
 				{
 					ProgramD3D11& program = m_program[programIdx];
 
@@ -6054,7 +6054,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						||  current.m_un.m_draw.m_textureFlags != bind.m_un.m_draw.m_textureFlags
 						||  programChanged)
 						{
-							if (invalidHandle != bind.m_idx)
+							if (kInvalidHandle != bind.m_idx)
 							{
 								switch (bind.m_type)
 								{
@@ -6173,7 +6173,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					currentState.m_indexBuffer = draw.m_indexBuffer;
 
 					uint16_t handle = draw.m_indexBuffer.idx;
-					if (invalidHandle != handle)
+					if (kInvalidHandle != handle)
 					{
 						const IndexBufferD3D11& ib = m_indexBuffers[handle];
 						deviceCtx->IASetIndexBuffer(ib.m_ptr

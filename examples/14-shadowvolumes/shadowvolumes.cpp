@@ -778,8 +778,8 @@ struct Group
 
 	void reset()
 	{
-		m_vbh.idx = bgfx::invalidHandle;
-		m_ibh.idx = bgfx::invalidHandle;
+		m_vbh.idx = bgfx::kInvalidHandle;
+		m_ibh.idx = bgfx::kInvalidHandle;
 		m_numVertices = 0;
 		m_vertices = NULL;
 		m_numIndices = 0;
@@ -921,7 +921,7 @@ struct Group
 	void unload()
 	{
 		bgfx::destroyVertexBuffer(m_vbh);
-		if (bgfx::invalidHandle != m_ibh.idx)
+		if (bgfx::kInvalidHandle != m_ibh.idx)
 		{
 			bgfx::destroyIndexBuffer(m_ibh);
 		}
@@ -1108,8 +1108,8 @@ struct Model
 {
 	Model()
 	{
-		m_program.idx = bgfx::invalidHandle;
-		m_texture.idx = bgfx::invalidHandle;
+		m_program.idx = bgfx::kInvalidHandle;
+		m_texture.idx = bgfx::kInvalidHandle;
 	}
 
 	void load(const void* _vertices, uint16_t _numVertices, const bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
@@ -1144,7 +1144,7 @@ struct Model
 			bgfx::setVertexBuffer(0, group.m_vbh);
 
 			// Set textures
-			if (bgfx::invalidHandle != m_texture.idx)
+			if (bgfx::kInvalidHandle != m_texture.idx)
 			{
 				bgfx::setTexture(0, s_texColor, m_texture);
 			}
@@ -1154,7 +1154,7 @@ struct Model
 			::setRenderState(_renderState);
 
 			// Submit
-			BX_CHECK(bgfx::invalidHandle != m_program, "Error, program is not set.");
+			BX_CHECK(bgfx::kInvalidHandle != m_program, "Error, program is not set.");
 			::submit(_viewId, m_program);
 		}
 	}

@@ -210,13 +210,13 @@ public:
 		// Create programs.
 		m_program    = loadProgram("vs_update", "fs_update");
 		m_programCmp = loadProgram("vs_update", "fs_update_cmp");
-		m_program3d.idx = bgfx::invalidHandle;
+		m_program3d.idx = bgfx::kInvalidHandle;
 		if (m_texture3DSupported)
 		{
 			m_program3d = loadProgram("vs_update", "fs_update_3d");
 		}
 
-		m_programCompute.idx = bgfx::invalidHandle;
+		m_programCompute.idx = bgfx::kInvalidHandle;
 		if (m_computeSupported)
 		{
 			m_programCompute = bgfx::createProgram( loadShader( "cs_update" ), true );
@@ -231,7 +231,7 @@ public:
 
 		for(uint32_t ii = 0; ii<BX_COUNTOF( m_textureCube ); ++ii)
 		{
-			m_textureCube[ii].idx = bgfx::invalidHandle;
+			m_textureCube[ii].idx = bgfx::kInvalidHandle;
 		}
 
 		m_textureCube[0] = bgfx::createTextureCube(

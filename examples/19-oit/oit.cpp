@@ -206,9 +206,9 @@ class ExampleOIT : public entry::AppI
 		m_wbPass         = loadProgram("vs_oit",      "fs_oit_wb"               );
 		m_wbBlit         = loadProgram("vs_oit_blit", "fs_oit_wb_blit"          );
 
-		m_fbtextures[0].idx = bgfx::invalidHandle;
-		m_fbtextures[1].idx = bgfx::invalidHandle;
-		m_fbh.idx = bgfx::invalidHandle;
+		m_fbtextures[0].idx = bgfx::kInvalidHandle;
+		m_fbtextures[1].idx = bgfx::kInvalidHandle;
+		m_fbh.idx = bgfx::kInvalidHandle;
 
 		m_mode = 1;
 		m_scrollArea = 0;
