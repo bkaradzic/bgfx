@@ -371,7 +371,7 @@ namespace bgfx { namespace mtl
 		{
 			BX_TRACE("Init.");
 
-			m_fbh.idx = invalidHandle;
+			m_fbh.idx = kInvalidHandle;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
 			bx::memSet(&m_resolution, 0, sizeof(m_resolution) );
 
@@ -999,7 +999,7 @@ namespace bgfx { namespace mtl
 			FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
 
 			if (NULL == rce
-			||  m_renderCommandEncoderFrameBufferHandle.idx != invalidHandle)
+			||  m_renderCommandEncoderFrameBufferHandle.idx != kInvalidHandle)
 			{
 				if (m_renderCommandEncoder )
 					m_renderCommandEncoder.endEncoding();
@@ -2801,7 +2801,7 @@ namespace bgfx { namespace mtl
 	uint16_t FrameBufferMtl::destroy()
 	{
 		m_num = 0;
-		m_depthHandle.idx = invalidHandle;
+		m_depthHandle.idx = kInvalidHandle;
 
 		uint16_t denseIdx = m_denseIdx;
 		m_denseIdx = UINT16_MAX;
@@ -2998,7 +2998,7 @@ namespace bgfx { namespace mtl
 			Query& query = m_query[(m_control.m_read + ii) % size];
 			if (query.m_handle.idx == _handle.idx)
 			{
-				query.m_handle.idx = bgfx::invalidHandle;
+				query.m_handle.idx = bgfx::kInvalidHandle;
 			}
 		}
 	}
@@ -3190,7 +3190,7 @@ namespace bgfx { namespace mtl
 
 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
 
-		uint16_t programIdx = invalidHandle;
+		uint16_t programIdx = kInvalidHandle;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
@@ -3254,7 +3254,7 @@ namespace bgfx { namespace mtl
 					}
 
 					view = key.m_view;
-					programIdx = invalidHandle;
+					programIdx = kInvalidHandle;
 
 					viewRestart  = BGFX_VIEW_STEREO == (_render->m_viewFlags[view] & BGFX_VIEW_STEREO);
 					viewRestart &= hmdEnabled;
@@ -3457,7 +3457,7 @@ namespace bgfx { namespace mtl
 				{
 					wasCompute = false;
 
-					programIdx = invalidHandle;
+					programIdx = kInvalidHandle;
 					currentProgram = NULL;
 
 					//invalidateCompute();
@@ -3492,7 +3492,7 @@ namespace bgfx { namespace mtl
 
 					currentBind.clear();
 
-					programIdx = invalidHandle;
+					programIdx = kInvalidHandle;
 					setDepthStencilState(newFlags, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT) );
 
 					const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
@@ -3609,7 +3609,7 @@ namespace bgfx { namespace mtl
 					currentState.m_stream[0].m_decl   = draw.m_stream[0].m_decl;
 					currentState.m_instanceDataStride = draw.m_instanceDataStride;
 
-					if (invalidHandle == programIdx)
+					if (kInvalidHandle == programIdx)
 					{
 						currentProgram = NULL;
 						continue;
@@ -3634,7 +3634,7 @@ namespace bgfx { namespace mtl
 						if (NULL == pipelineState)
 						{
 							currentProgram = NULL;
-							programIdx = invalidHandle;
+							programIdx = kInvalidHandle;
 							continue;
 						}
 
@@ -3645,7 +3645,7 @@ namespace bgfx { namespace mtl
 					constantsChanged = true;
 				}
 
-				if (invalidHandle != programIdx)
+				if (kInvalidHandle != programIdx)
 				{
 					ProgramMtl& program = m_program[programIdx];
 
@@ -3690,7 +3690,7 @@ namespace bgfx { namespace mtl
 					uint32_t usedVertexSamplerStages = 0;
 					uint32_t usedFragmentSamplerStages = 0;
 
-					if (invalidHandle != programIdx)
+					if (kInvalidHandle != programIdx)
 					{
 						ProgramMtl& program = m_program[programIdx];
 						usedVertexSamplerStages = program.m_usedVertexSamplerStages;
@@ -3706,7 +3706,7 @@ namespace bgfx { namespace mtl
 						||  current.m_un.m_draw.m_textureFlags != bind.m_un.m_draw.m_textureFlags
 						||  programChanged)
 						{
-							if (invalidHandle != bind.m_idx)
+							if (kInvalidHandle != bind.m_idx)
 							{
 								TextureMtl& texture = m_textures[bind.m_idx];
 								texture.commit(stage
@@ -3734,7 +3734,7 @@ namespace bgfx { namespace mtl
 					currentState.m_instanceDataOffset       = draw.m_instanceDataOffset;
 
 					uint16_t handle = draw.m_stream[0].m_handle.idx;
-					if (invalidHandle != handle)
+					if (kInvalidHandle != handle)
 					{
 						const VertexBufferMtl& vb = m_vertexBuffers[handle];
 
@@ -3990,7 +3990,7 @@ namespace bgfx { namespace mtl
 
 		rce.endEncoding();
 		m_renderCommandEncoder = 0;
-		m_renderCommandEncoderFrameBufferHandle.idx = invalidHandle;
+		m_renderCommandEncoderFrameBufferHandle.idx = kInvalidHandle;
 
 		if (m_screenshotTarget)
 		{
