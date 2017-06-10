@@ -741,7 +741,7 @@ struct Mesh
 			const Group& group = *it;
 			bgfx::destroyVertexBuffer(group.m_vbh);
 
-			if (bgfx::kInvalidHandle != group.m_ibh.idx)
+			if (bgfx::isValid(group.m_ibh) )
 			{
 				bgfx::destroyIndexBuffer(group.m_ibh);
 			}
@@ -770,10 +770,7 @@ struct Mesh
 			bgfx::setVertexBuffer(0, group.m_vbh);
 
 			// Set texture
-			if (bgfx::kInvalidHandle != _texture.idx)
-			{
-				bgfx::setTexture(0, s_texColor, _texture);
-			}
+			bgfx::setTexture(0, s_texColor, _texture);
 
 			// Apply render state
 			bgfx::setStencil(_renderState.m_fstencil, _renderState.m_bstencil);
