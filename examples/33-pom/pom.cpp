@@ -262,8 +262,8 @@ class ExamplePom : public entry::AppI
 				, uint16_t(m_height)
 				);
 
+			ImGui::SetNextWindowPos(ImVec2(m_width - 240.0f, 20.0f));
 			ImGui::Begin("Properties");
-			ImGui::SetWindowPos(ImVec2(m_width - 240.0f, 20.0f));
 
 			ImGui::RadioButton("No bump mapping", &m_shading_type, 0);
 			ImGui::RadioButton("Normal mapping", &m_shading_type, 1);

@@ -131,12 +131,12 @@ class ExampleLod : public entry::AppI
 				, uint16_t(m_height)
 			);
 
+			ImGui::SetNextWindowPos(ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f) );
 			ImGui::Begin("LOD Settings"
 				, NULL
 				, ImVec2(m_width / 5.0f, m_height / 6.0f)
 				, ImGuiWindowFlags_AlwaysAutoResize
 				);
-			ImGui::SetWindowPos(ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f) );
 
 			ImGui::Checkbox("Transition", &m_transitions);
 
