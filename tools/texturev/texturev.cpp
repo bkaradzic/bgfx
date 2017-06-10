@@ -100,10 +100,12 @@ static const InputBinding s_bindingView[] =
 
 	{ entry::Key::Slash,     entry::Modifier::None,       1, NULL, "view filter"             },
 
+	{ entry::Key::Key1,      entry::Modifier::None,       1, NULL, "view zoom 1.0\n"
+	                                                               "view fit\n"              },
+
 	{ entry::Key::Key0,      entry::Modifier::None,       1, NULL, "view zoom 1.0\n"
 	                                                               "view rotate 0\n"
-	                                                               "view pan\n"
-	                                                                                         },
+	                                                               "view pan\n"              },
 	{ entry::Key::Plus,      entry::Modifier::None,       1, NULL, "view zoom +0.1"          },
 	{ entry::Key::Minus,     entry::Modifier::None,       1, NULL, "view zoom -0.1"          },
 
@@ -157,6 +159,7 @@ struct View
 		, m_zoom(1.0f)
 		, m_angle(0.0f)
 		, m_filter(true)
+		, m_fit(true)
 		, m_alpha(false)
 		, m_help(false)
 		, m_sdf(false)
@@ -320,6 +323,17 @@ struct View
 					m_filter ^= true;
 				}
 			}
+			else if (0 == bx::strCmp(_argv[1], "fit") )
+			{
+				if (_argc >= 3)
+				{
+					m_fit = bx::toBool(_argv[2]);
+				}
+				else
+				{
+					m_fit ^= true;
+				}
+			}
 			else if (0 == bx::strCmp(_argv[1], "file-up") )
 			{
 				m_fileIndex = bx::uint32_satsub(m_fileIndex, 1);
@@ -437,6 +451,7 @@ struct View
 	float    m_zoom;
 	float    m_angle;
 	bool     m_filter;
+	bool     m_fit;
 	bool     m_alpha;
 	bool     m_help;
 	bool     m_sdf;
@@ -951,6 +966,7 @@ int _main_(int _argc, char** _argv)
 				keyBindingHelp("=/- or MW", "Zoom in/out.");
 				keyBindingHelp("z/Z",       "Rotate.");
 				keyBindingHelp("0",         "Reset.");
+				keyBindingHelp("1",         "Fit to window.");
 				ImGui::NextLine();
 
 				keyBindingHelp("<",   "Reset MIP level.");
@@ -1081,12 +1097,20 @@ int _main_(int _argc, char** _argv)
 
 			bgfx::dbgTextClear();
 
-			scale.set(
-				  bx::fmin( float(width)  / float(view.m_info.width)
-				,           float(height) / float(view.m_info.height)
-				)
-				, 0.1f
-				);
+			if (view.m_fit)
+			{
+				scale.set(
+					bx::fmin( float(width)  / float(view.m_info.width)
+					,           float(height) / float(view.m_info.height)
+					)
+					, 0.1f
+					);
+			}
+			else
+			{
+				scale.set(1.0f, 0.1f);
+			}
+
 			zoom.set(view.m_zoom, transitionTime);
 			angle.set(view.m_angle, transitionTime);
 
