@@ -1,5 +1,4 @@
 430scope.vert
-Warning, version 430 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:5: 'a' : redefinition 
 ERROR: 0:17: 'b' : function name is redeclaration of existing name 
 ERROR: 0:20: 'c' : redefinition 

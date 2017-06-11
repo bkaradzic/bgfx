@@ -1,5 +1,4 @@
 440.vert
-Warning, version 440 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:8: 'component' : type overflows the available 4 components 
 ERROR: 0:15: 'component' : component is too large 
 ERROR: 0:23: 'location' : overlapping use of location 4

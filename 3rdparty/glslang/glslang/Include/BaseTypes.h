@@ -53,6 +53,10 @@ enum TBasicType {
     EbtUint,
     EbtInt64,
     EbtUint64,
+#ifdef AMD_EXTENSIONS
+    EbtInt16,
+    EbtUint16,
+#endif
     EbtBool,
     EbtAtomicUint,
     EbtSampler,

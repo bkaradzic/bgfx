@@ -1,5 +1,4 @@
 420_size_gl_in.geom
-Warning, version 420 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:19: 'gl_PerVertex' : can only redeclare a built-in block once, and before any use 
 ERROR: 1 compilation errors.  No code generated.
 

@@ -1,5 +1,4 @@
 comment.frag
-Warning, version 430 is not yet complete; most version-specific features are present, but some are missing.
 WARNING: 0:10: 'line continuation' : used at end of comment; the following line is still part of the comment 
 WARNING: 0:12: 'line continuation' : used at end of comment; the following line is still part of the comment 
 

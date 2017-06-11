@@ -839,6 +839,10 @@ const char* CapabilityString(int info)
     case 4437: return "DeviceGroup";
     case 4439: return "MultiView";
 
+#ifdef AMD_EXTENSIONS
+    case 5009: return "ImageGatherBiasLodAMD";
+#endif
+
 #ifdef NV_EXTENSIONS
     case 5251: return "GeometryShaderPassthroughNV";
     case 5254: return "ShaderViewportIndexLayerNV";

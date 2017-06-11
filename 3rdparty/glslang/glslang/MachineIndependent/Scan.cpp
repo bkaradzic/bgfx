@@ -464,6 +464,15 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["u64vec4"] =                 U64VEC4;
 
 #ifdef AMD_EXTENSIONS
+    (*KeywordMap)["int16_t"] =                 INT16_T;
+    (*KeywordMap)["uint16_t"] =                UINT16_T;
+    (*KeywordMap)["i16vec2"] =                 I16VEC2;
+    (*KeywordMap)["i16vec3"] =                 I16VEC3;
+    (*KeywordMap)["i16vec4"] =                 I16VEC4;
+    (*KeywordMap)["u16vec2"] =                 U16VEC2;
+    (*KeywordMap)["u16vec3"] =                 U16VEC3;
+    (*KeywordMap)["u16vec4"] =                 U16VEC4;
+
     (*KeywordMap)["float16_t"] =               FLOAT16_T;
     (*KeywordMap)["f16vec2"] =                 F16VEC2;
     (*KeywordMap)["f16vec3"] =                 F16VEC3;
@@ -709,6 +718,10 @@ int TScanContext::tokenize(TPpContext* pp, TParserToken& token)
         case PpAtomConstUint:          parserToken->sType.lex.i   = ppToken.ival;       return UINTCONSTANT;
         case PpAtomConstInt64:         parserToken->sType.lex.i64 = ppToken.i64val;     return INT64CONSTANT;
         case PpAtomConstUint64:        parserToken->sType.lex.i64 = ppToken.i64val;     return UINT64CONSTANT;
+#ifdef AMD_EXTENSIONS
+        case PpAtomConstInt16:         parserToken->sType.lex.i   = ppToken.ival;       return INT16CONSTANT;
+        case PpAtomConstUint16:        parserToken->sType.lex.i   = ppToken.ival;       return UINT16CONSTANT;
+#endif
         case PpAtomConstFloat:         parserToken->sType.lex.d   = ppToken.dval;       return FLOATCONSTANT;
         case PpAtomConstDouble:        parserToken->sType.lex.d   = ppToken.dval;       return DOUBLECONSTANT;
 #ifdef AMD_EXTENSIONS
@@ -973,6 +986,21 @@ int TScanContext::tokenizeIdentifier()
         return identifierOrType();
 
 #ifdef AMD_EXTENSIONS
+    case INT16_T:
+    case UINT16_T:
+    case I16VEC2:
+    case I16VEC3:
+    case I16VEC4:
+    case U16VEC2:
+    case U16VEC3:
+    case U16VEC4:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            (parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_int16) &&
+             parseContext.profile != EEsProfile && parseContext.version >= 450))
+            return keyword;
+        return identifierOrType();
+
     case FLOAT16_T:
     case F16VEC2:
     case F16VEC3:

@@ -1,5 +1,4 @@
 spv.switch.frag
-Warning, version 310 is not yet complete; most version-specific features are present, but some are missing.
 WARNING: 0:121: 'switch' : last case/default label not followed by statements 
 WARNING: 0:134: 'switch' : last case/default label not followed by statements 
 WARNING: 0:139: 'switch' : last case/default label not followed by statements 

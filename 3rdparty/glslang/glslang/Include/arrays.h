@@ -264,6 +264,20 @@ struct TArraySizes {
 
         return false;
     }
+    bool isInnerSpecialization() const
+    {
+        for (int d = 1; d < sizes.size(); ++d) {
+            if (sizes.getDimNode(d) != nullptr)
+                return true;
+        }
+
+        return false;
+    }
+    bool isOuterSpecialization()
+    {
+        return sizes.getDimNode(0) != nullptr;
+    }
+
     bool isImplicit() const { return getOuterSize() == UnsizedArraySize || isInnerImplicit(); }
     void addOuterSizes(const TArraySizes& s) { sizes.push_front(s.sizes); }
     void dereference() { sizes.pop_front(); }
@@ -286,18 +300,6 @@ struct TArraySizes {
         }
 
         return true;
-    }
-
-    // Returns true if any of the dimensions of the array is sized with a node
-    // instead of a front-end compile-time constant.
-    bool containsNode()
-    {
-        for (int d = 0; d < sizes.size(); ++d) {
-            if (sizes.getDimNode(d) != nullptr)
-                return true;
-        }
-
-        return false;
     }
 
     bool operator==(const TArraySizes& rhs) { return sizes == rhs.sizes; }

@@ -110,6 +110,80 @@ gl_FragCoord origin is upper left
 0:11            'ii' ( temp int)
 0:12      Pre-Decrement ( temp float)
 0:12        'ii' ( temp float)
+0:13      Sequence
+0:13        move second child to first child ( temp int)
+0:13          'first' ( temp int)
+0:13          Constant:
+0:13            0 (const int)
+0:13        move second child to first child ( temp int)
+0:13          'second' ( temp int)
+0:13          Constant:
+0:13            1 (const int)
+0:13        Loop with condition tested first
+0:13          No loop condition
+0:13          Loop Body
+0:13          add ( temp int)
+0:13            'first' ( temp int)
+0:13            'second' ( temp int)
+0:14      Sequence
+0:14        move second child to first child ( temp int)
+0:14          'i' ( temp int)
+0:14          Constant:
+0:14            0 (const int)
+0:14        move second child to first child ( temp int)
+0:14          'count' ( temp int)
+0:14          Convert float to int ( temp int)
+0:14            'ii' ( temp float)
+0:14        Loop with condition tested first
+0:14          Loop Condition
+0:14          Compare Less Than ( temp bool)
+0:14            'i' ( temp int)
+0:14            'count' ( temp int)
+0:14          No loop body
+0:14          Loop Terminal Expression
+0:14          Post-Increment ( temp int)
+0:14            'i' ( temp int)
+0:15      Sequence
+0:15        move second child to first child ( temp float)
+0:15          'first' ( temp float)
+0:15          Constant:
+0:15            0.000000
+0:15        Loop with condition tested first
+0:15          Loop Condition
+0:15          Compare Less Than ( temp bool)
+0:15            'first' ( temp float)
+0:15            direct index ( temp float)
+0:15              'second' ( temp 2-element array of float)
+0:15              Constant:
+0:15                0 (const int)
+0:15          Loop Body
+0:15          add ( temp float)
+0:15            add ( temp float)
+0:15              'first' ( temp float)
+0:15              direct index ( temp float)
+0:15                'second' ( temp 2-element array of float)
+0:15                Constant:
+0:15                  1 (const int)
+0:15            'third' ( temp float)
+0:15          Loop Terminal Expression
+0:15          Pre-Increment ( temp float)
+0:15            direct index ( temp float)
+0:15              'second' ( temp 2-element array of float)
+0:15              Constant:
+0:15                1 (const int)
+0:?       Sequence
+0:16        Comma ( temp float)
+0:16          Comma ( temp float)
+0:16            Pre-Decrement ( temp float)
+0:16              'ii' ( temp float)
+0:16            Pre-Decrement ( temp float)
+0:16              'ii' ( temp float)
+0:16          Pre-Decrement ( temp float)
+0:16            'ii' ( temp float)
+0:16        Loop with condition tested first
+0:16          No loop condition
+0:16          Loop Body
+0:16          'ii' ( temp float)
 0:2  Function Definition: PixelShaderFunction( ( temp void)
 0:2    Function Parameters: 
 0:?     Sequence
@@ -239,6 +313,80 @@ gl_FragCoord origin is upper left
 0:11            'ii' ( temp int)
 0:12      Pre-Decrement ( temp float)
 0:12        'ii' ( temp float)
+0:13      Sequence
+0:13        move second child to first child ( temp int)
+0:13          'first' ( temp int)
+0:13          Constant:
+0:13            0 (const int)
+0:13        move second child to first child ( temp int)
+0:13          'second' ( temp int)
+0:13          Constant:
+0:13            1 (const int)
+0:13        Loop with condition tested first
+0:13          No loop condition
+0:13          Loop Body
+0:13          add ( temp int)
+0:13            'first' ( temp int)
+0:13            'second' ( temp int)
+0:14      Sequence
+0:14        move second child to first child ( temp int)
+0:14          'i' ( temp int)
+0:14          Constant:
+0:14            0 (const int)
+0:14        move second child to first child ( temp int)
+0:14          'count' ( temp int)
+0:14          Convert float to int ( temp int)
+0:14            'ii' ( temp float)
+0:14        Loop with condition tested first
+0:14          Loop Condition
+0:14          Compare Less Than ( temp bool)
+0:14            'i' ( temp int)
+0:14            'count' ( temp int)
+0:14          No loop body
+0:14          Loop Terminal Expression
+0:14          Post-Increment ( temp int)
+0:14            'i' ( temp int)
+0:15      Sequence
+0:15        move second child to first child ( temp float)
+0:15          'first' ( temp float)
+0:15          Constant:
+0:15            0.000000
+0:15        Loop with condition tested first
+0:15          Loop Condition
+0:15          Compare Less Than ( temp bool)
+0:15            'first' ( temp float)
+0:15            direct index ( temp float)
+0:15              'second' ( temp 2-element array of float)
+0:15              Constant:
+0:15                0 (const int)
+0:15          Loop Body
+0:15          add ( temp float)
+0:15            add ( temp float)
+0:15              'first' ( temp float)
+0:15              direct index ( temp float)
+0:15                'second' ( temp 2-element array of float)
+0:15                Constant:
+0:15                  1 (const int)
+0:15            'third' ( temp float)
+0:15          Loop Terminal Expression
+0:15          Pre-Increment ( temp float)
+0:15            direct index ( temp float)
+0:15              'second' ( temp 2-element array of float)
+0:15              Constant:
+0:15                1 (const int)
+0:?       Sequence
+0:16        Comma ( temp float)
+0:16          Comma ( temp float)
+0:16            Pre-Decrement ( temp float)
+0:16              'ii' ( temp float)
+0:16            Pre-Decrement ( temp float)
+0:16              'ii' ( temp float)
+0:16          Pre-Decrement ( temp float)
+0:16            'ii' ( temp float)
+0:16        Loop with condition tested first
+0:16          No loop condition
+0:16          Loop Body
+0:16          'ii' ( temp float)
 0:2  Function Definition: PixelShaderFunction( ( temp void)
 0:2    Function Parameters: 
 0:?     Sequence
@@ -255,12 +403,12 @@ gl_FragCoord origin is upper left
 
 // Module Version 10000
 // Generated by (magic number): 80001
-// Id's are bound by 124
+// Id's are bound by 183
 
                               Capability Shader
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
-                              EntryPoint Fragment 4  "PixelShaderFunction" 117 120
+                              EntryPoint Fragment 4  "PixelShaderFunction" 176 179
                               ExecutionMode 4 OriginUpperLeft
                               Source HLSL 500
                               Name 4  "PixelShaderFunction"
@@ -268,12 +416,19 @@ gl_FragCoord origin is upper left
                               Name 10  "input"
                               Name 92  "ii"
                               Name 111  "ii"
-                              Name 115  "input"
-                              Name 117  "input"
-                              Name 120  "@entryPointOutput"
-                              Name 121  "param"
-                              Decorate 117(input) Location 0
-                              Decorate 120(@entryPointOutput) Location 0
+                              Name 114  "first"
+                              Name 116  "second"
+                              Name 124  "i"
+                              Name 125  "count"
+                              Name 138  "first"
+                              Name 149  "second"
+                              Name 157  "third"
+                              Name 174  "input"
+                              Name 176  "input"
+                              Name 179  "@entryPointOutput"
+                              Name 180  "param"
+                              Decorate 176(input) Location 0
+                              Decorate 179(@entryPointOutput) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
@@ -293,20 +448,25 @@ gl_FragCoord origin is upper left
              100:     90(int) Constant 3
              103:     90(int) Constant 2
              109:     90(int) Constant 1
-             116:             TypePointer Input 7(fvec4)
-      117(input):    116(ptr) Variable Input
-             119:             TypePointer Output 7(fvec4)
-120(@entryPointOutput):    119(ptr) Variable Output
+             115:     90(int) Constant 0
+             139:    6(float) Constant 0
+             146:     71(int) Constant 2
+             147:             TypeArray 6(float) 146
+             148:             TypePointer Function 147
+             175:             TypePointer Input 7(fvec4)
+      176(input):    175(ptr) Variable Input
+             178:             TypePointer Output 7(fvec4)
+179(@entryPointOutput):    178(ptr) Variable Output
 4(PixelShaderFunction):           2 Function None 3
                5:             Label
-      115(input):      8(ptr) Variable Function
-      121(param):      8(ptr) Variable Function
-             118:    7(fvec4) Load 117(input)
-                              Store 115(input) 118
-             122:    7(fvec4) Load 115(input)
-                              Store 121(param) 122
-             123:    7(fvec4) FunctionCall 11(@PixelShaderFunction(vf4;) 121(param)
-                              Store 120(@entryPointOutput) 123
+      174(input):      8(ptr) Variable Function
+      180(param):      8(ptr) Variable Function
+             177:    7(fvec4) Load 176(input)
+                              Store 174(input) 177
+             181:    7(fvec4) Load 174(input)
+                              Store 180(param) 181
+             182:    7(fvec4) FunctionCall 11(@PixelShaderFunction(vf4;) 180(param)
+                              Store 179(@entryPointOutput) 182
                               Return
                               FunctionEnd
 11(@PixelShaderFunction(vf4;):    7(fvec4) Function None 9
@@ -314,6 +474,13 @@ gl_FragCoord origin is upper left
               12:             Label
           92(ii):     91(ptr) Variable Function
          111(ii):     73(ptr) Variable Function
+      114(first):     91(ptr) Variable Function
+     116(second):     91(ptr) Variable Function
+          124(i):     91(ptr) Variable Function
+      125(count):     91(ptr) Variable Function
+      138(first):     73(ptr) Variable Function
+     149(second):    148(ptr) Variable Function
+      157(third):     73(ptr) Variable Function
                               Branch 13
               13:             Label
                               LoopMerge 15 16 None
@@ -454,6 +621,85 @@ gl_FragCoord origin is upper left
              112:    6(float) Load 111(ii)
              113:    6(float) FSub 112 18
                               Store 111(ii) 113
-             114:    7(fvec4) Undef
-                              ReturnValue 114
+                              Store 114(first) 115
+                              Store 116(second) 109
+                              Branch 117
+             117:             Label
+                              LoopMerge 119 120 None
+                              Branch 118
+             118:             Label
+             121:     90(int) Load 114(first)
+             122:     90(int) Load 116(second)
+             123:     90(int) IAdd 121 122
+                              Branch 120
+             120:             Label
+                              Branch 117
+             119:             Label
+                              Store 124(i) 115
+             126:    6(float) Load 111(ii)
+             127:     90(int) ConvertFToS 126
+                              Store 125(count) 127
+                              Branch 128
+             128:             Label
+                              LoopMerge 130 131 None
+                              Branch 132
+             132:             Label
+             133:     90(int) Load 124(i)
+             134:     90(int) Load 125(count)
+             135:    32(bool) SLessThan 133 134
+                              BranchConditional 135 129 130
+             129:               Label
+                                Branch 131
+             131:               Label
+             136:     90(int)   Load 124(i)
+             137:     90(int)   IAdd 136 109
+                                Store 124(i) 137
+                                Branch 128
+             130:             Label
+                              Store 138(first) 139
+                              Branch 140
+             140:             Label
+                              LoopMerge 142 143 None
+                              Branch 144
+             144:             Label
+             145:    6(float) Load 138(first)
+             150:     73(ptr) AccessChain 149(second) 115
+             151:    6(float) Load 150
+             152:    32(bool) FOrdLessThan 145 151
+                              BranchConditional 152 141 142
+             141:               Label
+             153:    6(float)   Load 138(first)
+             154:     73(ptr)   AccessChain 149(second) 109
+             155:    6(float)   Load 154
+             156:    6(float)   FAdd 153 155
+             158:    6(float)   Load 157(third)
+             159:    6(float)   FAdd 156 158
+                                Branch 143
+             143:               Label
+             160:     73(ptr)   AccessChain 149(second) 109
+             161:    6(float)   Load 160
+             162:    6(float)   FAdd 161 18
+                                Store 160 162
+                                Branch 140
+             142:             Label
+             163:    6(float) Load 111(ii)
+             164:    6(float) FSub 163 18
+                              Store 111(ii) 164
+             165:    6(float) Load 111(ii)
+             166:    6(float) FSub 165 18
+                              Store 111(ii) 166
+             167:    6(float) Load 111(ii)
+             168:    6(float) FSub 167 18
+                              Store 111(ii) 168
+                              Branch 169
+             169:             Label
+                              LoopMerge 171 172 None
+                              Branch 170
+             170:             Label
+                              Branch 172
+             172:             Label
+                              Branch 169
+             171:             Label
+             173:    7(fvec4) Undef
+                              ReturnValue 173
                               FunctionEnd

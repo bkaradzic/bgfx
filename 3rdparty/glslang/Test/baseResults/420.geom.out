@@ -1,5 +1,4 @@
 420.geom
-Warning, version 420 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:9: 'length' :  array must first be sized by a redeclaration or layout qualifier
 ERROR: 0:11: '[' :  array must be sized by a redeclaration or layout qualifier before being indexed with a variable
 ERROR: 0:42: 'assign' :  l-value required (can't modify a const)

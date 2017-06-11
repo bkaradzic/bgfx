@@ -1,5 +1,4 @@
 400.vert
-Warning, version 400 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:3: 'vertex-shader `double` type input' : not supported for this version or the enabled extensions 
 ERROR: 0:4: 'vertex-shader `double` type input' : not supported for this version or the enabled extensions 
 ERROR: 0:5: 'vertex-shader `double` type input' : not supported for this version or the enabled extensions 

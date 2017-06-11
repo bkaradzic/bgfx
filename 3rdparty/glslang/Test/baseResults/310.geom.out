@@ -1,5 +1,4 @@
 310.geom
-Warning, version 310 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:29: 'fromVertex' : block instance name redefinition 
 ERROR: 0:33: 'fromVertex' : redefinition 
 ERROR: 0:35: 'fooC' : block instance name redefinition 

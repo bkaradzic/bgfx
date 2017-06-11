@@ -111,6 +111,22 @@ bool HlslGrammar::acceptIdentifier(HlslToken& idToken)
     switch (peek()) {
     case EHTokSample:     idString = NewPoolTString("sample");     break;
     case EHTokHalf:       idString = NewPoolTString("half");       break;
+    case EHTokHalf1x1:    idString = NewPoolTString("half1x1");    break;
+    case EHTokHalf1x2:    idString = NewPoolTString("half1x2");    break;
+    case EHTokHalf1x3:    idString = NewPoolTString("half1x3");    break;
+    case EHTokHalf1x4:    idString = NewPoolTString("half1x4");    break;
+    case EHTokHalf2x1:    idString = NewPoolTString("half2x1");    break;
+    case EHTokHalf2x2:    idString = NewPoolTString("half2x2");    break;
+    case EHTokHalf2x3:    idString = NewPoolTString("half2x3");    break;
+    case EHTokHalf2x4:    idString = NewPoolTString("half2x4");    break;
+    case EHTokHalf3x1:    idString = NewPoolTString("half3x1");    break;
+    case EHTokHalf3x2:    idString = NewPoolTString("half3x2");    break;
+    case EHTokHalf3x3:    idString = NewPoolTString("half3x3");    break;
+    case EHTokHalf3x4:    idString = NewPoolTString("half3x4");    break;
+    case EHTokHalf4x1:    idString = NewPoolTString("half4x1");    break;
+    case EHTokHalf4x2:    idString = NewPoolTString("half4x2");    break;
+    case EHTokHalf4x3:    idString = NewPoolTString("half4x3");    break;
+    case EHTokHalf4x4:    idString = NewPoolTString("half4x4");    break;
     case EHTokBool:       idString = NewPoolTString("bool");       break;
     case EHTokFloat:      idString = NewPoolTString("float");      break;
     case EHTokDouble:     idString = NewPoolTString("double");     break;
@@ -1479,20 +1495,20 @@ bool HlslGrammar::acceptType(TType& type, TIntermNode*& nodeList)
         break;
 
     case EHTokHalf:
-        new(&type) TType(half_bt, EvqTemporary, EpqMedium);
+        new(&type) TType(half_bt, EvqTemporary);
         break;
     case EHTokHalf1:
-        new(&type) TType(half_bt, EvqTemporary, EpqMedium);
+        new(&type) TType(half_bt, EvqTemporary);
         type.makeVector();
         break;
     case EHTokHalf2:
-        new(&type) TType(half_bt, EvqTemporary, EpqMedium, 2);
+        new(&type) TType(half_bt, EvqTemporary, 2);
         break;
     case EHTokHalf3:
-        new(&type) TType(half_bt, EvqTemporary, EpqMedium, 3);
+        new(&type) TType(half_bt, EvqTemporary, 3);
         break;
     case EHTokHalf4:
-        new(&type) TType(half_bt, EvqTemporary, EpqMedium, 4);
+        new(&type) TType(half_bt, EvqTemporary, 4);
         break;
 
     case EHTokMin16float:
@@ -1774,6 +1790,55 @@ bool HlslGrammar::acceptType(TType& type, TIntermNode*& nodeList)
         break;
     case EHTokFloat4x4:
         new(&type) TType(EbtFloat, EvqTemporary, 0, 4, 4);
+        break;
+
+    case EHTokHalf1x1:
+        new(&type) TType(half_bt, EvqTemporary, 0, 1, 1);
+        break;
+    case EHTokHalf1x2:
+        new(&type) TType(half_bt, EvqTemporary, 0, 1, 2);
+        break;
+    case EHTokHalf1x3:
+        new(&type) TType(half_bt, EvqTemporary, 0, 1, 3);
+        break;
+    case EHTokHalf1x4:
+        new(&type) TType(half_bt, EvqTemporary, 0, 1, 4);
+        break;
+    case EHTokHalf2x1:
+        new(&type) TType(half_bt, EvqTemporary, 0, 2, 1);
+        break;
+    case EHTokHalf2x2:
+        new(&type) TType(half_bt, EvqTemporary, 0, 2, 2);
+        break;
+    case EHTokHalf2x3:
+        new(&type) TType(half_bt, EvqTemporary, 0, 2, 3);
+        break;
+    case EHTokHalf2x4:
+        new(&type) TType(half_bt, EvqTemporary, 0, 2, 4);
+        break;
+    case EHTokHalf3x1:
+        new(&type) TType(half_bt, EvqTemporary, 0, 3, 1);
+        break;
+    case EHTokHalf3x2:
+        new(&type) TType(half_bt, EvqTemporary, 0, 3, 2);
+        break;
+    case EHTokHalf3x3:
+        new(&type) TType(half_bt, EvqTemporary, 0, 3, 3);
+        break;
+    case EHTokHalf3x4:
+        new(&type) TType(half_bt, EvqTemporary, 0, 3, 4);
+        break;
+    case EHTokHalf4x1:
+        new(&type) TType(half_bt, EvqTemporary, 0, 4, 1);
+        break;
+    case EHTokHalf4x2:
+        new(&type) TType(half_bt, EvqTemporary, 0, 4, 2);
+        break;
+    case EHTokHalf4x3:
+        new(&type) TType(half_bt, EvqTemporary, 0, 4, 3);
+        break;
+    case EHTokHalf4x4:
+        new(&type) TType(half_bt, EvqTemporary, 0, 4, 4);
         break;
 
     case EHTokDouble1x1:
@@ -2594,6 +2659,8 @@ bool HlslGrammar::acceptConditionalExpression(TIntermTyped*& node)
     if (node == nullptr)
         return false;
 
+    ++parseContext.controlFlowNestingLevel;  // this only needs to work right if no errors
+
     TIntermTyped* trueNode = nullptr;
     if (! acceptExpression(trueNode)) {
         expected("expression after ?");
@@ -2611,6 +2678,8 @@ bool HlslGrammar::acceptConditionalExpression(TIntermTyped*& node)
         expected("expression after :");
         return false;
     }
+
+    --parseContext.controlFlowNestingLevel;
 
     node = intermediate.addSelection(node, trueNode, falseNode, loc);
 
@@ -3039,6 +3108,37 @@ bool HlslGrammar::acceptLiteral(TIntermTyped*& node)
     return true;
 }
 
+// simple_statement
+//      : SEMICOLON
+//      | declaration_statement
+//      | expression SEMICOLON
+//
+bool HlslGrammar::acceptSimpleStatement(TIntermNode*& statement)
+{
+    // SEMICOLON
+    if (acceptTokenClass(EHTokSemicolon))
+        return true;
+
+    // declaration
+    if (acceptDeclaration(statement))
+        return true;
+
+    // expression
+    TIntermTyped* node;
+    if (acceptExpression(node))
+        statement = node;
+    else
+        return false;
+
+    // SEMICOLON (following an expression)
+    if (acceptTokenClass(EHTokSemicolon))
+        return true;
+    else {
+        expected(";");
+        return false;
+    }
+}
+
 // compound_statement
 //      : LEFT_CURLY statement statement ... RIGHT_CURLY
 //
@@ -3096,12 +3196,11 @@ bool HlslGrammar::acceptScopedCompoundStatement(TIntermNode*& statement)
 //
 // attributed_statement
 //      : compound_statement
-//      | SEMICOLON
-//      | expression SEMICOLON
-//      | declaration_statement
+//      | simple_statement
 //      | selection_statement
 //      | switch_statement
 //      | case_label
+//      | default_label
 //      | iteration_statement
 //      | jump_statement
 //
@@ -3140,33 +3239,13 @@ bool HlslGrammar::acceptStatement(TIntermNode*& statement)
     case EHTokDefault:
         return acceptDefaultLabel(statement);
 
-    case EHTokSemicolon:
-        return acceptTokenClass(EHTokSemicolon);
-
     case EHTokRightBrace:
         // Performance: not strictly necessary, but stops a bunch of hunting early,
         // and is how sequences of statements end.
         return false;
 
     default:
-        {
-            // declaration
-            if (acceptDeclaration(statement))
-                return true;
-
-            // expression
-            TIntermTyped* node;
-            if (acceptExpression(node))
-                statement = node;
-            else
-                return false;
-
-            // SEMICOLON (following an expression)
-            if (! acceptTokenClass(EHTokSemicolon)) {
-                expected(";");
-                return false;
-            }
-        }
+        return acceptSimpleStatement(statement);
     }
 
     return true;
@@ -3278,6 +3357,8 @@ bool HlslGrammar::acceptSelectionStatement(TIntermNode*& statement)
     // create the child statements
     TIntermNodePair thenElse = { nullptr, nullptr };
 
+    ++parseContext.controlFlowNestingLevel;  // this only needs to work right if no errors
+
     // then statement
     if (! acceptScopedStatement(thenElse.node1)) {
         expected("then statement");
@@ -3296,6 +3377,7 @@ bool HlslGrammar::acceptSelectionStatement(TIntermNode*& statement)
     // Put the pieces together
     statement = intermediate.addSelection(condition, thenElse, loc);
     parseContext.popScope();
+    --parseContext.controlFlowNestingLevel;
 
     return true;
 }
@@ -3320,7 +3402,11 @@ bool HlslGrammar::acceptSwitchStatement(TIntermNode*& statement)
 
     // compound_statement
     parseContext.pushSwitchSequence(new TIntermSequence);
+
+    ++parseContext.controlFlowNestingLevel;
     bool statementOkay = acceptCompoundStatement(statement);
+    --parseContext.controlFlowNestingLevel;
+
     if (statementOkay)
         statement = parseContext.addSwitch(loc, switchExpression, statement ? statement->getAsAggregate() : nullptr);
 
@@ -3353,8 +3439,9 @@ bool HlslGrammar::acceptIterationStatement(TIntermNode*& statement, const TAttri
     case EHTokWhile:
         // so that something declared in the condition is scoped to the lifetime
         // of the while sub-statement
-        parseContext.pushScope();
+        parseContext.pushScope();  // this only needs to work right if no errors
         parseContext.nestLooping();
+        ++parseContext.controlFlowNestingLevel;
 
         // LEFT_PAREN condition RIGHT_PAREN
         if (! acceptParenExpression(condition))
@@ -3371,13 +3458,15 @@ bool HlslGrammar::acceptIterationStatement(TIntermNode*& statement, const TAttri
 
         parseContext.unnestLooping();
         parseContext.popScope();
+        --parseContext.controlFlowNestingLevel;
 
         statement = intermediate.addLoop(statement, condition, nullptr, true, loc, control);
 
         return true;
 
     case EHTokDo:
-        parseContext.nestLooping();
+        parseContext.nestLooping();  // this only needs to work right if no errors
+        ++parseContext.controlFlowNestingLevel;
 
         // statement
         if (! acceptScopedStatement(statement)) {
@@ -3403,6 +3492,7 @@ bool HlslGrammar::acceptIterationStatement(TIntermNode*& statement, const TAttri
             expected(";");
 
         parseContext.unnestLooping();
+        --parseContext.controlFlowNestingLevel;
 
         statement = intermediate.addLoop(statement, condition, 0, false, loc, control);
 
@@ -3420,16 +3510,11 @@ bool HlslGrammar::acceptIterationStatement(TIntermNode*& statement, const TAttri
 
         // initializer
         TIntermNode* initNode = nullptr;
-        if (! acceptControlDeclaration(initNode)) {
-            TIntermTyped* initExpr = nullptr;
-            acceptExpression(initExpr);
-            initNode = initExpr;
-        }
-        // SEMI_COLON
-        if (! acceptTokenClass(EHTokSemicolon))
-            expected(";");
+        if (! acceptSimpleStatement(initNode))
+            expected("for-loop initializer statement");
 
-        parseContext.nestLooping();
+        parseContext.nestLooping();  // this only needs to work right if no errors
+        ++parseContext.controlFlowNestingLevel;
 
         // condition SEMI_COLON
         acceptExpression(condition);
@@ -3457,6 +3542,7 @@ bool HlslGrammar::acceptIterationStatement(TIntermNode*& statement, const TAttri
 
         parseContext.popScope();
         parseContext.unnestLooping();
+        --parseContext.controlFlowNestingLevel;
 
         return true;
     }

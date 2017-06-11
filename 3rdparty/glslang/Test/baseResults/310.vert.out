@@ -1,5 +1,4 @@
 310.vert
-Warning, version 310 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:3: 'shared' : not supported in this stage: vertex
 ERROR: 0:4: 'local_size_x' : there is no such layout identifier for this stage taking an assigned value 
 ERROR: 0:5: 'buffer' : buffers can be declared only as blocks 

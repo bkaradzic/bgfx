@@ -108,10 +108,11 @@ namespace glslang {
         bool acceptFunctionCall(const TSourceLoc&, TString& name, TIntermTyped*&, TIntermTyped* objectBase);
         bool acceptArguments(TFunction*, TIntermTyped*&);
         bool acceptLiteral(TIntermTyped*&);
+        bool acceptSimpleStatement(TIntermNode*&);
         bool acceptCompoundStatement(TIntermNode*&);
-        bool acceptStatement(TIntermNode*&);
         bool acceptScopedStatement(TIntermNode*&);
         bool acceptScopedCompoundStatement(TIntermNode*&);
+        bool acceptStatement(TIntermNode*&);
         bool acceptNestedStatement(TIntermNode*&);
         void acceptAttributes(TAttributeMap&);
         bool acceptSelectionStatement(TIntermNode*&);

@@ -471,7 +471,7 @@ protected:
  */
 struct TDefaultIoResolver : public TDefaultIoResolverBase
 {
-    bool validateBinding(EShLanguage /*stage*/, const char* /*name*/, const glslang::TType& type, bool /*is_live*/) override
+    bool validateBinding(EShLanguage /*stage*/, const char* /*name*/, const glslang::TType& /*type*/, bool /*is_live*/) override
     {
         return true;
     }
@@ -573,7 +573,7 @@ b – for constant buffer views (CBV)
  ********************************************************************************/
 struct TDefaultHlslIoResolver : public TDefaultIoResolverBase
 {
-    bool validateBinding(EShLanguage /*stage*/, const char* /*name*/, const glslang::TType& type, bool /*is_live*/) override
+    bool validateBinding(EShLanguage /*stage*/, const char* /*name*/, const glslang::TType& /*type*/, bool /*is_live*/) override
     {
         return true;
     }

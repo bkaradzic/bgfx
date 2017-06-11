@@ -566,41 +566,6 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
         }
     }
 
-    // A meta check on the condition of the compiler itself...
-    switch (version) {
-
-    // ES versions
-    case 100:
-    case 300:
-        // versions are complete
-        break;
-
-    // Desktop versions
-    case 110:
-    case 120:
-    case 130:
-    case 140:
-    case 150:
-    case 330:
-        // versions are complete
-        break;
-
-    case 310:
-    case 400:
-    case 410:
-    case 420:
-    case 430:
-    case 440:
-    case 450:
-        infoSink.info << "Warning, version " << version << " is not yet complete; most version-specific features are present, but some are missing.\n";
-        break;
-
-    default:
-        infoSink.info << "Warning, version " << version << " is unknown.\n";
-        break;
-
-    }
-
     return correct;
 }
 

@@ -279,6 +279,22 @@ void HlslScanContext::fillInKeywordMap()
     (*KeywordMap)["float4x2"] =                EHTokFloat4x2;
     (*KeywordMap)["float4x3"] =                EHTokFloat4x3;
     (*KeywordMap)["float4x4"] =                EHTokFloat4x4;
+    (*KeywordMap)["half1x1"] =                 EHTokHalf1x1;
+    (*KeywordMap)["half1x2"] =                 EHTokHalf1x2;
+    (*KeywordMap)["half1x3"] =                 EHTokHalf1x3;
+    (*KeywordMap)["half1x4"] =                 EHTokHalf1x4;
+    (*KeywordMap)["half2x1"] =                 EHTokHalf2x1;
+    (*KeywordMap)["half2x2"] =                 EHTokHalf2x2;
+    (*KeywordMap)["half2x3"] =                 EHTokHalf2x3;
+    (*KeywordMap)["half2x4"] =                 EHTokHalf2x4;
+    (*KeywordMap)["half3x1"] =                 EHTokHalf3x1;
+    (*KeywordMap)["half3x2"] =                 EHTokHalf3x2;
+    (*KeywordMap)["half3x3"] =                 EHTokHalf3x3;
+    (*KeywordMap)["half3x4"] =                 EHTokHalf3x4;
+    (*KeywordMap)["half4x1"] =                 EHTokHalf4x1;
+    (*KeywordMap)["half4x2"] =                 EHTokHalf4x2;
+    (*KeywordMap)["half4x3"] =                 EHTokHalf4x3;
+    (*KeywordMap)["half4x4"] =                 EHTokHalf4x4;
     (*KeywordMap)["double1x1"] =               EHTokDouble1x1;
     (*KeywordMap)["double1x2"] =               EHTokDouble1x2;
     (*KeywordMap)["double1x3"] =               EHTokDouble1x3;
@@ -773,6 +789,22 @@ EHlslTokenClass HlslScanContext::tokenizeIdentifier()
     case EHTokFloat4x2:
     case EHTokFloat4x3:
     case EHTokFloat4x4:
+    case EHTokHalf1x1:
+    case EHTokHalf1x2:
+    case EHTokHalf1x3:
+    case EHTokHalf1x4:
+    case EHTokHalf2x1:
+    case EHTokHalf2x2:
+    case EHTokHalf2x3:
+    case EHTokHalf2x4:
+    case EHTokHalf3x1:
+    case EHTokHalf3x2:
+    case EHTokHalf3x3:
+    case EHTokHalf3x4:
+    case EHTokHalf4x1:
+    case EHTokHalf4x2:
+    case EHTokHalf4x3:
+    case EHTokHalf4x4:
     case EHTokDouble1x1:
     case EHTokDouble1x2:
     case EHTokDouble1x3:

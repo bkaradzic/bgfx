@@ -285,6 +285,11 @@ public:
     TIntermConstantUnion* addConstantUnion(unsigned int, const TSourceLoc&, bool literal = false) const;
     TIntermConstantUnion* addConstantUnion(long long, const TSourceLoc&, bool literal = false) const;
     TIntermConstantUnion* addConstantUnion(unsigned long long, const TSourceLoc&, bool literal = false) const;
+#ifdef AMD_EXTENSIONS
+    TIntermConstantUnion* addConstantUnion(short, const TSourceLoc&, bool literal = false) const;
+    TIntermConstantUnion* addConstantUnion(unsigned short, const TSourceLoc&, bool literal = false) const;
+    
+#endif
     TIntermConstantUnion* addConstantUnion(bool, const TSourceLoc&, bool literal = false) const;
     TIntermConstantUnion* addConstantUnion(double, TBasicType, const TSourceLoc&, bool literal = false) const;
     TIntermConstantUnion* addConstantUnion(const TString*, const TSourceLoc&, bool literal = false) const;

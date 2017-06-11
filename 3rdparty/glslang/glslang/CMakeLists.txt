@@ -31,9 +31,7 @@ set(SOURCES
     MachineIndependent/preprocessor/Pp.cpp
     MachineIndependent/preprocessor/PpAtom.cpp
     MachineIndependent/preprocessor/PpContext.cpp
-    MachineIndependent/preprocessor/PpMemory.cpp
     MachineIndependent/preprocessor/PpScanner.cpp
-    MachineIndependent/preprocessor/PpSymbols.cpp
     MachineIndependent/preprocessor/PpTokens.cpp
     MachineIndependent/propagateNoContraction.cpp
     GenericCodeGen/CodeGen.cpp

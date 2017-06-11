@@ -67,6 +67,10 @@ void TType::buildMangledName(TString& mangledName) const
     case EbtUint:               mangledName += 'u';      break;
     case EbtInt64:              mangledName += "i64";    break;
     case EbtUint64:             mangledName += "u64";    break;
+#ifdef AMD_EXTENSIONS
+    case EbtInt16:              mangledName += "i16";    break;
+    case EbtUint16:             mangledName += "u16";    break;
+#endif
     case EbtBool:               mangledName += 'b';      break;
     case EbtAtomicUint:         mangledName += "au";     break;
     case EbtSampler:

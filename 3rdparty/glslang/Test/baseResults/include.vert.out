@@ -1,6 +1,4 @@
 include.vert
-Warning, version 450 is not yet complete; most version-specific features are present, but some are missing.
-
 Shader version: 450
 Requested GL_GOOGLE_cpp_style_line_directive
 Requested GL_GOOGLE_include_directive

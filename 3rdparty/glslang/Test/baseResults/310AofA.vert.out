@@ -1,5 +1,4 @@
 310AofA.vert
-Warning, version 310 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:17: '' : array size required 
 ERROR: 0:23: '' : array size required 
 ERROR: 0:28: '[]' : only outermost dimension of an array of arrays can be implicitly sized 

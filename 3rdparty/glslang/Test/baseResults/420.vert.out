@@ -1,5 +1,4 @@
 420.vert
-Warning, version 420 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:2: '#version' : must occur first in shader 
 WARNING: 0:3: varying deprecated in version 130; may be removed in future release
 ERROR: 0:3: 'varying' : no longer supported in core profile; removed in version 420
@@ -33,7 +32,7 @@ ERROR: 0:85: '' : vertex input cannot be further qualified
 ERROR: 0:86: 'patch' : not supported in this stage: vertex
 ERROR: 0:100: '=' : global const initializers must be constant ' const int'
 ERROR: 0:101: '' : array size must be a constant integer expression 
-ERROR: 0:107: 'image variables declared 'writeonly' without a format layout qualifier' : not supported for this version or the enabled extensions 
+ERROR: 0:107: 'image variables not declared 'writeonly' and without a format layout qualifier' : not supported for this version or the enabled extensions 
 ERROR: 0:114: 'imageAtomicMin' : only supported on image with format r32i or r32ui 
 ERROR: 0:115: 'imageAtomicMax' : no matching overloaded function found 
 ERROR: 0:119: 'writeonly' : argument cannot drop memory qualifier when passed to formal parameter 

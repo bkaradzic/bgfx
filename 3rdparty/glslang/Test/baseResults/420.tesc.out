@@ -1,5 +1,4 @@
 420.tesc
-Warning, version 420 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:7: 'vertices' : inconsistent output number of vertices for array size of gl_out
 ERROR: 0:11: 'vertices' : inconsistent output number of vertices for array size of a
 ERROR: 0:12: 'vertices' : inconsistent output number of vertices for array size of outb

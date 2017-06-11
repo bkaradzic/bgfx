@@ -393,6 +393,14 @@ int TPpContext::eval(int token, int precedence, bool shortCircuit, int& res, boo
     TSourceLoc loc = ppToken->loc;  // because we sometimes read the newline before reporting the error
     if (token == PpAtomIdentifier) {
         if (strcmp("defined", ppToken->name) == 0) {
+            if (! parseContext.isReadingHLSL() && isMacroInput()) {
+                if (parseContext.relaxedErrors())
+                    parseContext.ppWarn(ppToken->loc, "nonportable when expanded from macros for preprocessor expression",
+                                                      "defined", "");
+                else
+                    parseContext.ppError(ppToken->loc, "cannot use in preprocessor expression when expanded from macros",
+                                                       "defined", "");
+            }
             bool needclose = 0;
             token = scanToken(ppToken);
             if (token == '(') {
@@ -716,6 +724,7 @@ int TPpContext::CPPerror(TPpToken* ppToken)
         if (token == PpAtomConstInt   || token == PpAtomConstUint   ||
             token == PpAtomConstInt64 || token == PpAtomConstUint64 ||
 #ifdef AMD_EXTENSIONS
+            token == PpAtomConstInt16 || token == PpAtomConstUint16 ||
             token == PpAtomConstFloat16 ||
 #endif
             token == PpAtomConstFloat || token == PpAtomConstDouble) {
@@ -750,6 +759,10 @@ int TPpContext::CPPpragma(TPpToken* ppToken)
         case PpAtomConstUint:
         case PpAtomConstInt64:
         case PpAtomConstUint64:
+#ifdef AMD_EXTENSIONS
+        case PpAtomConstInt16:
+        case PpAtomConstUint16:
+#endif
         case PpAtomConstFloat:
         case PpAtomConstDouble:
 #ifdef AMD_EXTENSIONS

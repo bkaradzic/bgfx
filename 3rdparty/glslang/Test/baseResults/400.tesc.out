@@ -1,5 +1,4 @@
 400.tesc
-Warning, version 400 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:6: 'quads' : unrecognized layout identifier, or qualifier requires assignment (e.g., binding = 4) 
 ERROR: 0:7: 'ccw' : unrecognized layout identifier, or qualifier requires assignment (e.g., binding = 4) 
 ERROR: 0:8: 'fractional_even_spacing' : unrecognized layout identifier, or qualifier requires assignment (e.g., binding = 4) 

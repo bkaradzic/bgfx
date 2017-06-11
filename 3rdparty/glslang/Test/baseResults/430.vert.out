@@ -1,5 +1,4 @@
 430.vert
-Warning, version 430 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:3: 'location' : can only apply to uniform, buffer, in, or out storage qualifiers 
 ERROR: 0:7: 'input block' : not supported in this stage: vertex
 ERROR: 0:7: 'location qualifier on in/out block' : not supported for this version or the enabled extensions 
@@ -233,7 +232,7 @@ ERROR: node is still EOpNull!
 0:?     'start2' ( const int)
 0:?       5 (const int)
 0:?     'v6' (layout( location=19) in 4-component vector of float)
-0:?     'ininst2' ( in block{layout( location=28 component=0) in bool b1, layout( location=29 component=0) in float f1, layout( location=25) in float f2})
+0:?     'ininst2' ( in block{layout( location=28) in bool b1, layout( location=29) in float f1, layout( location=25) in float f2})
 0:?     'in4' ( in block{layout( location=50) in float f1, layout( location=51) in float f2})
 0:?     'bbinst2g' ( out block{layout( xfb_buffer=3 xfb_offset=64) out 4-component vector of float bbv})
 0:?     'bg' (layout( xfb_buffer=1 xfb_offset=48 xfb_stride=80) smooth out 4-component vector of float)
@@ -308,7 +307,7 @@ ERROR: node is still EOpNull!
 0:?     'start2' ( const int)
 0:?       5 (const int)
 0:?     'v6' (layout( location=19) in 4-component vector of float)
-0:?     'ininst2' ( in block{layout( location=28 component=0) in bool b1, layout( location=29 component=0) in float f1, layout( location=25) in float f2})
+0:?     'ininst2' ( in block{layout( location=28) in bool b1, layout( location=29) in float f1, layout( location=25) in float f2})
 0:?     'in4' ( in block{layout( location=50) in float f1, layout( location=51) in float f2})
 0:?     'bbinst2g' ( out block{layout( xfb_buffer=3 xfb_offset=64) out 4-component vector of float bbv})
 0:?     'bg' (layout( xfb_buffer=1 xfb_offset=48 xfb_stride=80) smooth out 4-component vector of float)

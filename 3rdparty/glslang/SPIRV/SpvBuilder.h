@@ -214,6 +214,10 @@ public:
     Id makeUintConstant(unsigned u, bool specConstant = false)   { return makeIntConstant(makeUintType(32),           u, specConstant); }
     Id makeInt64Constant(long long i, bool specConstant = false)            { return makeInt64Constant(makeIntType(64),  (unsigned long long)i, specConstant); }
     Id makeUint64Constant(unsigned long long u, bool specConstant = false)  { return makeInt64Constant(makeUintType(64),                     u, specConstant); }
+#ifdef AMD_EXTENSIONS
+    Id makeInt16Constant(short i, bool specConstant = false)        { return makeIntConstant(makeIntType(16),      (unsigned)((unsigned short)i), specConstant); }
+    Id makeUint16Constant(unsigned short u, bool specConstant = false)  { return makeIntConstant(makeUintType(16), (unsigned)u, specConstant); }
+#endif
     Id makeFloatConstant(float f, bool specConstant = false);
     Id makeDoubleConstant(double d, bool specConstant = false);
 #ifdef AMD_EXTENSIONS

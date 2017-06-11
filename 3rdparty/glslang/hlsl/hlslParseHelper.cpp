@@ -57,10 +57,7 @@ HlslParseContext::HlslParseContext(TSymbolTable& symbolTable, TIntermediate& int
                                    const TString sourceEntryPointName,
                                    bool forwardCompatible, EShMessages messages) :
     TParseContextBase(symbolTable, interm, parsingBuiltins, version, profile, spvVersion, language, infoSink, forwardCompatible, messages),
-    contextPragma(true, false),
-    loopNestingLevel(0), annotationNestingLevel(0), structNestingLevel(0), controlFlowNestingLevel(0),
-    postEntryPointReturn(false),
-    limits(resources.limits),
+    annotationNestingLevel(0),
     inputPatch(nullptr),
     builtInIoIndex(nullptr),
     builtInIoBase(nullptr),
@@ -519,6 +516,9 @@ TIntermTyped* HlslParseContext::handleSamplerLvalue(const TSourceLoc& loc, const
         error(loc, "can't modify sampler", op, "");
         return node;
     }
+
+    if (controlFlowNestingLevel > 0)
+        warn(loc, "sampler or image aliased under control flow; consumption must be in same path", op, "");
 
     // Best is if we are aliasing a flattened struct member "S.s1 = s2",
     // in which case we want to update the flattening information with the alias,
@@ -6974,8 +6974,15 @@ TIntermNode* HlslParseContext::declareVariable(const TSourceLoc& loc, const TStr
     // Deal with initializer
     TIntermNode* initNode = nullptr;
     if (symbol && initializer) {
-//        if (flattenVar)
-//            error(loc, "flattened array with initializer list unsupported", identifier.c_str(), "");
+/*
+ * BK -
+ * uniform SamplerState s_texNormalSampler : register(s1);
+ * uniform Texture2D s_texNormalTexture : register(t1);
+ * static BgfxSampler2D s_texNormal = { s_texNormalSampler, s_texNormalTexture };
+ *
+        if (flattenVar)
+            error(loc, "flattened array with initializer list unsupported", identifier.c_str(), "");
+*/
 
         TVariable* variable = symbol->getAsVariable();
         if (! variable) {

@@ -1,5 +1,4 @@
 nonVulkan.frag
-Warning, version 450 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:3: 'constant_id' : only allowed when generating SPIR-V 
 ERROR: 0:4: 'input_attachment_index' : only allowed when using GLSL for Vulkan 
 ERROR: 0:4: 'input_attachment_index' : can only be used with a subpass 

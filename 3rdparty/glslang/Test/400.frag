@@ -194,4 +194,8 @@ void bitwiseConv()
     iout += i | uu;
 }
 
+subroutine(subT1, subT2);
+subroutine float subT1() { return 1.0; }
+subroutine float subT2() { return 1.0; }
+
 struct SKeyMem { int precise; } KeyMem;     // ERROR, keyword can't be a member

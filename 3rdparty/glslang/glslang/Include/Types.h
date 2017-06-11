@@ -190,8 +190,6 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
         case EbtFloat:               break;
         case EbtInt:  s.append("i"); break;
         case EbtUint: s.append("u"); break;
-        case EbtInt64:  s.append("i64"); break;
-        case EbtUint64: s.append("u64"); break;
         default:  break;  // some compilers want this
         }
         if (image) {
@@ -1448,6 +1446,10 @@ public:
             case EbtUint:
             case EbtInt64:
             case EbtUint64:
+#ifdef AMD_EXTENSIONS
+            case EbtInt16:
+            case EbtUint16:
+#endif
             case EbtBool:
             return true;
             default:
@@ -1460,7 +1462,7 @@ public:
 
     virtual bool containsSpecializationSize() const
     {
-        return contains([](const TType* t) { return t->isArray() && t->arraySizes->containsNode(); } );
+        return contains([](const TType* t) { return t->isArray() && t->arraySizes->isOuterSpecialization(); } );
     }
 
     // Array editing methods.  Array descriptors can be shared across
@@ -1531,6 +1533,10 @@ public:
         case EbtUint:              return "uint";
         case EbtInt64:             return "int64_t";
         case EbtUint64:            return "uint64_t";
+#ifdef AMD_EXTENSIONS
+        case EbtInt16:             return "int16_t";
+        case EbtUint16:            return "uint16_t";
+#endif
         case EbtBool:              return "bool";
         case EbtAtomicUint:        return "atomic_uint";
         case EbtSampler:           return "sampler/image";

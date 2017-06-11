@@ -116,6 +116,8 @@ $EXE -D -e main -H hlsl.includeNegative.vert > $TARGETDIR/hlsl.includeNegative.v
 diff -b $BASEDIR/hlsl.includeNegative.vert.out $TARGETDIR/hlsl.includeNegative.vert.out || HASERROR=1
 $EXE -l -i include.vert > $TARGETDIR/include.vert.out
 diff -b $BASEDIR/include.vert.out $TARGETDIR/include.vert.out || HASERROR=1
+$EXE -D -e main -H -Iinc1/path1 -Iinc1/path2 hlsl.dashI.vert > $TARGETDIR/hlsl.dashI.vert.out
+diff -b $BASEDIR/hlsl.dashI.vert.out $TARGETDIR/hlsl.dashI.vert.out || HASERROR=1
 
 #
 # Final checking

@@ -141,6 +141,42 @@ enum TOperator {
     EOpConvFloat16ToDouble,
     EOpConvFloat16ToInt64,
     EOpConvFloat16ToUint64,
+
+    EOpConvBoolToInt16,
+    EOpConvIntToInt16,
+    EOpConvUintToInt16,
+    EOpConvFloatToInt16,
+    EOpConvDoubleToInt16,
+    EOpConvFloat16ToInt16,
+    EOpConvInt64ToInt16,
+    EOpConvUint64ToInt16,
+    EOpConvUint16ToInt16,
+    EOpConvInt16ToBool,
+    EOpConvInt16ToInt,
+    EOpConvInt16ToUint,
+    EOpConvInt16ToFloat,
+    EOpConvInt16ToDouble,
+    EOpConvInt16ToFloat16,
+    EOpConvInt16ToInt64,
+    EOpConvInt16ToUint64,
+
+    EOpConvBoolToUint16,
+    EOpConvIntToUint16,
+    EOpConvUintToUint16,
+    EOpConvFloatToUint16,
+    EOpConvDoubleToUint16,
+    EOpConvFloat16ToUint16,
+    EOpConvInt64ToUint16,
+    EOpConvUint64ToUint16,
+    EOpConvInt16ToUint16,
+    EOpConvUint16ToBool,
+    EOpConvUint16ToInt,
+    EOpConvUint16ToUint,
+    EOpConvUint16ToFloat,
+    EOpConvUint16ToDouble,
+    EOpConvUint16ToFloat16,
+    EOpConvUint16ToInt64,
+    EOpConvUint16ToUint64,
 #endif
 
     //
@@ -244,6 +280,12 @@ enum TOperator {
     EOpDoubleBitsToUint64,
     EOpInt64BitsToDouble,
     EOpUint64BitsToDouble,
+#ifdef AMD_EXTENSIONS
+    EOpFloat16BitsToInt16,
+    EOpFloat16BitsToUint16,
+    EOpInt16BitsToFloat16,
+    EOpUint16BitsToFloat16,
+#endif
     EOpPackSnorm2x16,
     EOpUnpackSnorm2x16,
     EOpPackUnorm2x16,
@@ -263,6 +305,14 @@ enum TOperator {
 #ifdef AMD_EXTENSIONS
     EOpPackFloat2x16,
     EOpUnpackFloat2x16,
+    EOpPackInt2x16,
+    EOpUnpackInt2x16,
+    EOpPackUint2x16,
+    EOpUnpackUint2x16,
+    EOpPackInt4x16,
+    EOpUnpackInt4x16,
+    EOpPackUint4x16,
+    EOpUnpackUint4x16,
 #endif
 
     EOpLength,
@@ -394,15 +444,27 @@ enum TOperator {
     EOpConstructUint,
     EOpConstructInt64,
     EOpConstructUint64,
+#ifdef AMD_EXTENSIONS
+    EOpConstructInt16,
+    EOpConstructUint16,
+#endif
     EOpConstructBool,
     EOpConstructFloat,
     EOpConstructDouble,
+#ifdef AMD_EXTENSIONS
+    EOpConstructFloat16,
+#endif
     EOpConstructVec2,
     EOpConstructVec3,
     EOpConstructVec4,
     EOpConstructDVec2,
     EOpConstructDVec3,
     EOpConstructDVec4,
+#ifdef AMD_EXTENSIONS
+    EOpConstructF16Vec2,
+    EOpConstructF16Vec3,
+    EOpConstructF16Vec4,
+#endif
     EOpConstructBVec2,
     EOpConstructBVec3,
     EOpConstructBVec4,
@@ -418,6 +480,14 @@ enum TOperator {
     EOpConstructU64Vec2,
     EOpConstructU64Vec3,
     EOpConstructU64Vec4,
+#ifdef AMD_EXTENSIONS
+    EOpConstructI16Vec2,
+    EOpConstructI16Vec3,
+    EOpConstructI16Vec4,
+    EOpConstructU16Vec2,
+    EOpConstructU16Vec3,
+    EOpConstructU16Vec4,
+#endif
     EOpConstructMat2x2,
     EOpConstructMat2x3,
     EOpConstructMat2x4,
@@ -464,10 +534,6 @@ enum TOperator {
     EOpConstructBMat4x3,
     EOpConstructBMat4x4,
 #ifdef AMD_EXTENSIONS
-    EOpConstructFloat16,
-    EOpConstructF16Vec2,
-    EOpConstructF16Vec3,
-    EOpConstructF16Vec4,
     EOpConstructF16Mat2x2,
     EOpConstructF16Mat2x3,
     EOpConstructF16Mat2x4,
@@ -567,6 +633,11 @@ enum TOperator {
     EOpTextureOffsetClamp,
     EOpTextureGradClamp,
     EOpTextureGradOffsetClamp,
+#ifdef AMD_EXTENSIONS
+    EOpTextureGatherLod,
+    EOpTextureGatherLodOffset,
+    EOpTextureGatherLodOffsets,
+#endif
 
     EOpSparseTextureGuardBegin,
 
@@ -586,6 +657,11 @@ enum TOperator {
     EOpSparseTextureOffsetClamp,
     EOpSparseTextureGradClamp,
     EOpSparseTextureGradOffsetClamp,
+#ifdef AMD_EXTENSIONS
+    EOpSparseTextureGatherLod,
+    EOpSparseTextureGatherLodOffset,
+    EOpSparseTextureGatherLodOffsets,
+#endif
 
     EOpSparseTextureGuardEnd,
     EOpSamplingGuardEnd,
@@ -1075,6 +1151,25 @@ public:
             cracked.gather = true;
             cracked.offsets = true;
             break;
+#ifdef AMD_EXTENSIONS
+        case EOpTextureGatherLod:
+        case EOpSparseTextureGatherLod:
+            cracked.gather = true;
+            cracked.lod    = true;
+            break;
+        case EOpTextureGatherLodOffset:
+        case EOpSparseTextureGatherLodOffset:
+            cracked.gather = true;
+            cracked.offset = true;
+            cracked.lod    = true;
+            break;
+        case EOpTextureGatherLodOffsets:
+        case EOpSparseTextureGatherLodOffsets:
+            cracked.gather  = true;
+            cracked.offsets = true;
+            cracked.lod     = true;
+            break;
+#endif
         case EOpSubpassLoad:
         case EOpSubpassLoadMS:
             cracked.subpass = true;

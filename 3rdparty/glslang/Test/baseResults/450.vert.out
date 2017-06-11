@@ -1,5 +1,4 @@
 450.vert
-Warning, version 450 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:12: 'out' : cannot be bool 
 ERROR: 0:13: 'sampler2D' : sampler/image types can only be used in uniform variables or function parameters: outo
 ERROR: 0:27: '::' : not supported 

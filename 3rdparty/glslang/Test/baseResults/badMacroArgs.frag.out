@@ -1,5 +1,4 @@
 badMacroArgs.frag
-Warning, version 400 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:4: 'macro expansion' : Too few args in Macro m
 ERROR: 0:4: '' : compilation terminated 
 ERROR: 2 compilation errors.  No code generated.

@@ -127,6 +127,10 @@ enum EFixedAtoms {
     PpAtomConstUint,
     PpAtomConstInt64,
     PpAtomConstUint64,
+#ifdef AMD_EXTENSIONS
+    PpAtomConstInt16,
+    PpAtomConstUint16,
+#endif
     PpAtomConstFloat,
     PpAtomConstDouble,
     PpAtomConstFloat16,

@@ -167,6 +167,7 @@ const char* entryPointName = nullptr;
 const char* sourceEntryPointName = nullptr;
 const char* shaderStageName = nullptr;
 const char* variableName = nullptr;
+std::vector<std::string> IncludeDirectoryList;
 
 std::array<unsigned int, EShLangCount> baseSamplerBinding;
 std::array<unsigned int, EShLangCount> baseTextureBinding;
@@ -406,6 +407,13 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                     Options |= EOptionVulkanRules;
                     Options |= EOptionLinkProgram;
                 }
+                break;
+            case 'I':
+                if (argv[0][2] == 0) {
+                    printf("include path must immediately follow (no spaces) -I\n");
+                    exit(EFailUsage);
+                }
+                IncludeDirectoryList.push_back(argv[0]+2);
                 break;
             case 'V':
                 Options |= EOptionSpv;
@@ -668,6 +676,8 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
         const int defaultVersion = Options & EOptionDefaultDesktop? 110: 100;
 
         DirStackFileIncluder includer;
+        std::for_each(IncludeDirectoryList.rbegin(), IncludeDirectoryList.rend(), [&includer](const std::string& dir) {
+            includer.pushExternalLocalDirectory(dir); });
         if (Options & EOptionOutputPreprocessed) {
             std::string str;
             if (shader->preprocess(&Resources, defaultVersion, ENoProfile, false, false,
@@ -1031,6 +1041,8 @@ void usage()
            "  -G          create SPIR-V binary, under OpenGL semantics; turns on -l;\n"
            "              default file name is <stage>.spv (-o overrides this)\n"
            "  -H          print human readable form of SPIR-V; turns on -V\n"
+           "  -I<dir>     add dir to the include search path; includer's directory\n"
+           "              is searched first, followed by left-to-right order of -I\n"
            "  -E          print pre-processed GLSL; cannot be used with -l;\n"
            "              errors will appear on stderr.\n"
            "  -S <stage>  uses specified stage rather than parsing the file extension\n"

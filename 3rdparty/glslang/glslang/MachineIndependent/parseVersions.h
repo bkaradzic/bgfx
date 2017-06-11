@@ -68,6 +68,7 @@ public:
     virtual void requireStage(const TSourceLoc&, EShLanguage, const char* featureDesc);
     virtual void checkDeprecated(const TSourceLoc&, int queryProfiles, int depVersion, const char* featureDesc);
     virtual void requireNotRemoved(const TSourceLoc&, int queryProfiles, int removedVersion, const char* featureDesc);
+    virtual void unimplemented(const TSourceLoc&, const char* featureDesc);
     virtual void requireExtensions(const TSourceLoc&, int numExtensions, const char* const extensions[], const char* featureDesc);
     virtual void ppRequireExtensions(const TSourceLoc&, int numExtensions, const char* const extensions[], const char* featureDesc);
     virtual TExtensionBehavior getExtensionBehavior(const char*);
@@ -77,6 +78,7 @@ public:
     virtual void fullIntegerCheck(const TSourceLoc&, const char* op);
     virtual void doubleCheck(const TSourceLoc&, const char* op);
 #ifdef AMD_EXTENSIONS
+    virtual void int16Check(const TSourceLoc& loc, const char* op, bool builtIn = false);
     virtual void float16Check(const TSourceLoc&, const char* op, bool builtIn = false);
 #endif
     virtual void int64Check(const TSourceLoc&, const char* op, bool builtIn = false);

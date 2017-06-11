@@ -146,7 +146,10 @@ const char* const E_GL_AMD_shader_trinary_minmax                = "GL_AMD_shader
 const char* const E_GL_AMD_shader_explicit_vertex_parameter     = "GL_AMD_shader_explicit_vertex_parameter";
 const char* const E_GL_AMD_gcn_shader                           = "GL_AMD_gcn_shader";
 const char* const E_GL_AMD_gpu_shader_half_float                = "GL_AMD_gpu_shader_half_float";
+const char* const E_GL_AMD_texture_gather_bias_lod              = "GL_AMD_texture_gather_bias_lod";
+const char* const E_GL_AMD_gpu_shader_int16                     = "GL_AMD_gpu_shader_int16";
 #endif
+
 #ifdef NV_EXTENSIONS
 
 const char* const E_GL_NV_sample_mask_override_coverage         = "GL_NV_sample_mask_override_coverage";

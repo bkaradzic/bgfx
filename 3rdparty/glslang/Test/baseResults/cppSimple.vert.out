@@ -1,5 +1,4 @@
 cppSimple.vert
-Warning, version 400 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:77: '#error' : good1  
 ERROR: 0:81: '#error' : good2  
 ERROR: 0:85: '#error' : good3  
@@ -91,8 +90,10 @@ ERROR: 12:9504: '#if' : unexpected tokens following directive
 ERROR: 12:9506: '#error' : \ 377  
 ERROR: 12:9507: '#error' : \ 376  
 ERROR: 12:9508: '#error' : \ 377  
+ERROR: 12:9602: 'defined' : cannot use in preprocessor expression when expanded from macros 
+ERROR: 12:9603: '#error' : DEF_DEFINED then  
 ERROR: 12:10002: '' : missing #endif 
-ERROR: 88 compilation errors.  No code generated.
+ERROR: 90 compilation errors.  No code generated.
 
 
 Shader version: 400
