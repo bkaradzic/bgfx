@@ -2596,7 +2596,7 @@ namespace bgfx
 		}
 		else
 		{
-			bx::CrtAllocator allocator;
+			bx::DefaultAllocator allocator;
 			g_allocator =
 				s_allocatorStub = BX_NEW(&allocator, AllocatorStub);
 		}
@@ -2676,7 +2676,7 @@ error:
 
 			if (NULL != s_allocatorStub)
 			{
-				bx::CrtAllocator allocator;
+				bx::DefaultAllocator allocator;
 				BX_DELETE(&allocator, s_allocatorStub);
 				s_allocatorStub = NULL;
 			}
@@ -2716,7 +2716,7 @@ error:
 
 		if (NULL != s_allocatorStub)
 		{
-			bx::CrtAllocator allocator;
+			bx::DefaultAllocator allocator;
 			BX_DELETE(&allocator, s_allocatorStub);
 			s_allocatorStub = NULL;
 		}

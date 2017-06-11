@@ -17,7 +17,7 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 
 namespace bgfx
 {
-	static bx::CrtAllocator s_allocator;
+	static bx::DefaultAllocator s_allocator;
 	bx::AllocatorI* g_allocator = &s_allocator;
 
 	struct TinyStlAllocator

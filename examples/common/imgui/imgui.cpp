@@ -493,13 +493,11 @@ struct Imgui
 	{
 		m_allocator = _allocator;
 
-#if BX_CONFIG_ALLOCATOR_CRT
 		if (NULL == _allocator)
 		{
-			static bx::CrtAllocator allocator;
+			static bx::DefaultAllocator allocator;
 			m_allocator = &allocator;
 		}
-#endif // BX_CONFIG_ALLOCATOR_CRT
 
 		IMGUI_create(_fontSize, m_allocator);
 

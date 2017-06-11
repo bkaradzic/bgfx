@@ -865,7 +865,7 @@ int main(int _argc, const char* _argv[])
 	uint32_t positionOffset = decl.getOffset(bgfx::Attrib::Position);
 	uint32_t color0Offset   = decl.getOffset(bgfx::Attrib::Color0);
 
-	bx::CrtAllocator crtAllocator;
+	bx::DefaultAllocator crtAllocator;
 	bx::MemoryBlock  memBlock(&crtAllocator);
 
 	uint32_t ii = 0;

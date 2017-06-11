@@ -494,13 +494,11 @@ namespace ps
 		{
 			m_allocator = _allocator;
 
-#if BX_CONFIG_ALLOCATOR_CRT
 			if (NULL == _allocator)
 			{
-				static bx::CrtAllocator allocator;
+				static bx::DefaultAllocator allocator;
 				m_allocator = &allocator;
 			}
-#endif // BX_CONFIG_ALLOCATOR_CRT
 
 			m_emitterAlloc = bx::createHandleAlloc(m_allocator, _maxEmitters);
 			m_emitter = (Emitter*)BX_ALLOC(m_allocator, sizeof(Emitter)*_maxEmitters);

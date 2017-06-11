@@ -380,13 +380,11 @@ struct DebugDraw
 		m_allocator = _allocator;
 		m_depthTestLess = _depthTestLess;
 
-#if BX_CONFIG_ALLOCATOR_CRT
 		if (NULL == _allocator)
 		{
-			static bx::CrtAllocator allocator;
+			static bx::DefaultAllocator allocator;
 			m_allocator = &allocator;
 		}
-#endif // BX_CONFIG_ALLOCATOR_CRT
 
 		DebugVertex::init();
 		DebugUvVertex::init();
