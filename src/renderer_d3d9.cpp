@@ -431,7 +431,7 @@ namespace bgfx { namespace d3d9
 			m_params.EnableAutoDepthStencil = TRUE;
 			m_params.AutoDepthStencilFormat = D3DFMT_D24S8;
 			m_params.Flags = D3DPRESENTFLAG_DISCARD_DEPTHSTENCIL;
-#if BX_PLATFORM_WINDOWS
+
 			m_params.FullScreen_RefreshRateInHz = 0;
 			m_params.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
 			m_params.SwapEffect = D3DSWAPEFFECT_DISCARD;
@@ -814,37 +814,6 @@ namespace bgfx { namespace d3d9
 			}
 
 			m_fmtDepth = D3DFMT_D24S8;
-
-#elif BX_PLATFORM_XBOX360
-			m_params.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
-			m_params.DisableAutoBackBuffer = FALSE;
-			m_params.DisableAutoFrontBuffer = FALSE;
-			m_params.FrontBufferFormat = D3DFMT_X8R8G8B8;
-			m_params.FrontBufferColorSpace = D3DCOLORSPACE_RGB;
-
-			m_d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
-			BX_TRACE("Creating D3D9 %p", m_d3d9);
-
-			XVIDEO_MODE videoMode;
-			XGetVideoMode(&videoMode);
-			if (!videoMode.fIsWideScreen)
-			{
-				m_params.Flags |= D3DPRESENTFLAG_NO_LETTERBOX;
-			}
-
-			BX_TRACE("Creating device");
-			DX_CHECK(m_d3d9->CreateDevice(m_adapter
-					, m_deviceType
-					, NULL
-					, D3DCREATE_HARDWARE_VERTEXPROCESSING|D3DCREATE_BUFFER_2_FRAMES
-					, &m_params
-					, &m_device
-					) );
-
-			BX_TRACE("Device %p", m_device);
-
-			m_fmtDepth = D3DFMT_D24FS8;
-#endif // BX_PLATFORM_WINDOWS
 
 			{
 				IDirect3DSwapChain9* swapChain;

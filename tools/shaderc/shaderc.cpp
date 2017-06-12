@@ -958,7 +958,6 @@ namespace bgfx
 		preprocessor.setDefaultDefine("BX_PLATFORM_OSX");
 		preprocessor.setDefaultDefine("BX_PLATFORM_PS4");
 		preprocessor.setDefaultDefine("BX_PLATFORM_WINDOWS");
-		preprocessor.setDefaultDefine("BX_PLATFORM_XBOX360");
 		preprocessor.setDefaultDefine("BX_PLATFORM_XBOXONE");
 
 //		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_ESSL");
@@ -1019,11 +1018,6 @@ namespace bgfx
 			char temp[256];
 			bx::snprintf(temp, sizeof(temp), "BGFX_SHADER_LANGUAGE_HLSL=%d", hlsl);
 			preprocessor.setDefine(temp);
-		}
-		else if (0 == bx::strCmpI(platform, "xbox360") )
-		{
-			preprocessor.setDefine("BX_PLATFORM_XBOX360=1");
-			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_HLSL=3");
 		}
 		else if (0 == bx::strCmpI(platform, "orbis") )
 		{
