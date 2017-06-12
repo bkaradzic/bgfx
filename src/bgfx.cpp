@@ -117,19 +117,17 @@ namespace bgfx
 		{
 			BX_UNUSED(_filePath, _width, _height, _pitch, _data, _size, _yflip);
 
-#if BX_CONFIG_CRT_FILE_READER_WRITER
 			const int32_t len = bx::strLen(_filePath)+5;
 			char* filePath = (char*)alloca(len);
 			bx::strCopy(filePath, len, _filePath);
 			bx::strCat(filePath, len, ".tga");
 
-			bx::CrtFileWriter writer;
+			bx::FileWriter writer;
 			if (bx::open(&writer, filePath) )
 			{
 				bimg::imageWriteTga(&writer, _width, _height, _pitch, _data, false, _yflip);
 				bx::close(&writer);
 			}
-#endif // BX_CONFIG_CRT_FILE_READER_WRITER
 		}
 
 		virtual void captureBegin(uint32_t /*_width*/, uint32_t /*_height*/, uint32_t /*_pitch*/, TextureFormat::Enum /*_format*/, bool /*_yflip*/) BX_OVERRIDE

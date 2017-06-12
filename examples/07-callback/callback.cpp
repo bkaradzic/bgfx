@@ -108,7 +108,7 @@ void imageWriteTga(bx::WriterI* _writer, uint32_t _width, uint32_t _height, uint
 
 void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale, bool _yflip)
 {
-	bx::CrtFileWriter writer;
+	bx::FileWriter writer;
 	bx::Error err;
 	if (bx::open(&writer, _filePath, false, &err) )
 	{

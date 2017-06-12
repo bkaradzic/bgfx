@@ -646,7 +646,7 @@ void associate()
 	GetTempPathA(MAX_PATH, temp);
 	bx::strCat(temp, MAX_PATH, "\\texturev.reg");
 
-	bx::CrtFileWriter writer;
+	bx::FileWriter writer;
 	bx::Error err;
 	if (bx::open(&writer, temp, false, &err) )
 	{
@@ -677,7 +677,7 @@ void associate()
 
 	str += "\n";
 
-	bx::CrtFileWriter writer;
+	bx::FileWriter writer;
 	bx::Error err;
 	if (bx::open(&writer, "/tmp/texturev.sh", false, &err) )
 	{

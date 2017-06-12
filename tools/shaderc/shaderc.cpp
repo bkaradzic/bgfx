@@ -211,7 +211,7 @@ namespace bgfx
 		return len;
 	}
 
-	class Bin2cWriter : public bx::CrtFileWriter
+	class Bin2cWriter : public bx::FileWriter
 	{
 	public:
 		Bin2cWriter(const char* _name)
@@ -226,7 +226,7 @@ namespace bgfx
 		virtual void close() BX_OVERRIDE
 		{
 			generate();
-			return bx::CrtFileWriter::close();
+			return bx::FileWriter::close();
 		}
 
 		virtual int32_t write(const void* _data, int32_t _size, bx::Error*) BX_OVERRIDE
@@ -300,7 +300,7 @@ namespace bgfx
 			}
 
 			bx::Error err;
-			int32_t size = bx::CrtFileWriter::write(out, len, &err);
+			int32_t size = bx::FileWriter::write(out, len, &err);
 
 			va_end(argList);
 
@@ -331,7 +331,7 @@ namespace bgfx
 		File(const char* _filePath)
 			: m_data(NULL)
 		{
-			bx::CrtFileReader reader;
+			bx::FileReader reader;
 			if (bx::open(&reader, _filePath) )
 			{
 				m_size = (uint32_t)bx::getSize(&reader);
@@ -442,7 +442,7 @@ namespace bgfx
 
 	void writeFile(const char* _filePath, const void* _data, int32_t _size)
 	{
-		bx::CrtFileWriter out;
+		bx::FileWriter out;
 		if (bx::open(&out, _filePath) )
 		{
 			bx::write(&out, _data, _size);
@@ -1056,7 +1056,7 @@ namespace bgfx
 
 		bool compiled = false;
 
-		bx::CrtFileReader reader;
+		bx::FileReader reader;
 		if (!bx::open(&reader, filePath) )
 		{
 			fprintf(stderr, "Unable to open file '%s'.\n", filePath);
@@ -1236,7 +1236,7 @@ namespace bgfx
 
 			if (raw)
 			{
-				bx::CrtFileWriter* writer = NULL;
+				bx::FileWriter* writer = NULL;
 
 				if (NULL != bin2c)
 				{
@@ -1244,7 +1244,7 @@ namespace bgfx
 				}
 				else
 				{
-					writer = new bx::CrtFileWriter;
+					writer = new bx::FileWriter;
 				}
 
 				if (!bx::open(writer, outFilePath) )
@@ -1382,7 +1382,7 @@ namespace bgfx
 
 						if (preprocessOnly)
 						{
-							bx::CrtFileWriter writer;
+							bx::FileWriter writer;
 
 							if (!bx::open(&writer, outFilePath) )
 							{
@@ -1397,7 +1397,7 @@ namespace bgfx
 						}
 
 						{
-							bx::CrtFileWriter* writer = NULL;
+							bx::FileWriter* writer = NULL;
 
 							if (NULL != bin2c)
 							{
@@ -1405,7 +1405,7 @@ namespace bgfx
 							}
 							else
 							{
-								writer = new bx::CrtFileWriter;
+								writer = new bx::FileWriter;
 							}
 
 							if (!bx::open(writer, outFilePath) )
@@ -1468,7 +1468,7 @@ namespace bgfx
 							{
 								std::string ofp = outFilePath;
 								ofp += ".d";
-								bx::CrtFileWriter writer;
+								bx::FileWriter writer;
 								if (bx::open(&writer, ofp.c_str() ) )
 								{
 									writef(&writer, "%s : %s\n", outFilePath, preprocessor.m_depends.c_str() );
@@ -1852,7 +1852,7 @@ namespace bgfx
 
 						if (preprocessOnly)
 						{
-							bx::CrtFileWriter writer;
+							bx::FileWriter writer;
 
 							if (!bx::open(&writer, outFilePath) )
 							{
@@ -1878,7 +1878,7 @@ namespace bgfx
 						}
 
 						{
-							bx::CrtFileWriter* writer = NULL;
+							bx::FileWriter* writer = NULL;
 
 							if (NULL != bin2c)
 							{
@@ -1886,7 +1886,7 @@ namespace bgfx
 							}
 							else
 							{
-								writer = new bx::CrtFileWriter;
+								writer = new bx::FileWriter;
 							}
 
 							if (!bx::open(writer, outFilePath) )
@@ -2178,7 +2178,7 @@ namespace bgfx
 							{
 								std::string ofp = outFilePath;
 								ofp += ".d";
-								bx::CrtFileWriter writer;
+								bx::FileWriter writer;
 								if (bx::open(&writer, ofp.c_str() ) )
 								{
 									writef(&writer, "%s : %s\n", outFilePath, preprocessor.m_depends.c_str() );
