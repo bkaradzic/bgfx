@@ -301,25 +301,30 @@ class ExampleHDR : public entry::AppI
 					, uint16_t(m_height)
 					);
 
-			imguiBeginScrollArea("Settings", m_width - m_width / 5 - 10, 10, m_width / 5, m_height / 2, &m_scrollArea);
-			imguiSeparatorLine();
+			ImGui::SetNextWindowPos(ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f) );
+			ImGui::Begin("HDR Settings"
+				, NULL
+				, ImVec2(m_width / 5.0f, m_height / 2.0f)
+				, ImGuiWindowFlags_AlwaysAutoResize
+				);
 
-			imguiSlider("Speed", m_speed, 0.0f, 1.0f, 0.01f);
-			imguiSeparator();
+			ImGui::SliderFloat("Speed", &m_speed, 0.0f, 1.0f);
+			ImGui::Separator();
 
-			imguiSlider("Middle gray", m_middleGray, 0.1f, 1.0f, 0.01f);
-			imguiSlider("White point", m_white,      0.1f, 2.0f, 0.01f);
-			imguiSlider("Threshold",   m_threshold,  0.1f, 2.0f, 0.01f);
+			ImGui::SliderFloat("Middle gray", &m_middleGray, 0.1f, 1.0f);
+			ImGui::SliderFloat("White point", &m_white,      0.1f, 2.0f);
+			ImGui::SliderFloat("Threshold",   &m_threshold,  0.1f, 2.0f);
 
 			if (bgfx::isValid(m_rb) )
 			{
 				union { uint32_t color; uint8_t bgra[4]; } cast = { m_lumBgra8 };
 				float exponent = cast.bgra[3]/255.0f * 255.0f - 128.0f;
 				float lumAvg   = cast.bgra[2]/255.0f * bx::fexp2(exponent);
-				imguiSlider("Lum Avg", lumAvg, 0.0f, 1.0f, 0.01f, false);
+				ImGui::SliderFloat("Lum Avg", &lumAvg, 0.0f, 1.0f);
 			}
 
-			imguiEndScrollArea();
+			ImGui::End();
+
 			imguiEndFrame();
 
 			// This dummy draw call is here to make sure that view 0 is cleared
