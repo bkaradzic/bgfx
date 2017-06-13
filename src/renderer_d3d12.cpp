@@ -1726,7 +1726,7 @@ namespace bgfx { namespace d3d12
 			m_commandList->SetGraphicsRootSignature(m_rootSignature);
 
 			float proj[16];
-			bx::mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f);
+			bx::mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f, 0.0f, false);
 
 			PredefinedUniform& predefined = m_program[_blitter.m_program.idx].m_predefined[0];
 			uint8_t flags = predefined.m_type;
