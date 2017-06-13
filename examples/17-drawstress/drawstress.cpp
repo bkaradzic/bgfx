@@ -241,9 +241,12 @@ class ExampleDrawStress : public entry::AppI
 			float eye[3] = { 0.0f, 0.0f, -35.0f };
 
 			float view[16];
-			float proj[16];
 			bx::mtxLookAt(view, eye, at);
-			bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f);
+
+
+			const bgfx::Caps* caps = bgfx::getCaps();
+			float proj[16];
+			bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, caps->homogeneousDepth);
 
 			// Set view and projection matrix for view 0.
 			bgfx::setViewTransform(0, view, proj);

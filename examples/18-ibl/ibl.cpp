@@ -721,14 +721,17 @@ int _main_(int _argc, char** _argv)
 
 		// View Transform 0.
 		float view[16];
-		float proj[16];
 		bx::mtxIdentity(view);
-		bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
+
+		const bgfx::Caps* caps = bgfx::getCaps();
+
+		float proj[16];
+		bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f, 0.0, caps->homogeneousDepth);
 		bgfx::setViewTransform(0, view, proj);
 
 		// View Transform 1.
 		camera.mtxLookAt(view);
-		bx::mtxProj(proj, 45.0f, float(width)/float(height), 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
+		bx::mtxProj(proj, 45.0f, float(width)/float(height), 0.1f, 100.0f, caps->homogeneousDepth);
 		bgfx::setViewTransform(1, view, proj);
 
 		// View rect.

@@ -1926,6 +1926,8 @@ int _main_(int _argc, char** _argv)
 	cameraSetPosition(initialPos);
 	cameraSetVerticalAngle(-0.45f);
 
+	const bgfx::Caps* caps = bgfx::getCaps();
+
 	// Set view and projection matrices.
 	const float camFovy    = 60.0f;
 	const float camAspect  = float(int32_t(viewState.m_width) ) / float(int32_t(viewState.m_height) );
@@ -1933,7 +1935,7 @@ int _main_(int _argc, char** _argv)
 	const float camFar     = 2000.0f;
 	const float projHeight = 1.0f/bx::ftan(bx::toRad(camFovy)*0.5f);
 	const float projWidth  = projHeight * camAspect;
-	bx::mtxProj(viewState.m_proj, camFovy, camAspect, camNear, camFar, bgfx::getCaps()->homogeneousDepth);
+	bx::mtxProj(viewState.m_proj, camFovy, camAspect, camNear, camFar, caps->homogeneousDepth);
 	cameraGetViewMtx(viewState.m_view);
 
 	float timeAccumulatorLight = 0.0f;
@@ -2235,13 +2237,31 @@ int _main_(int _argc, char** _argv)
 		float screenProj[16];
 		float screenView[16];
 		bx::mtxIdentity(screenView);
-		bx::mtxOrtho(screenProj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
 
-	    if (LightType::SpotLight == settings.m_lightType)
+		bx::mtxOrtho(
+			  screenProj
+			, 0.0f
+			, 1.0f
+			, 1.0f
+			, 0.0f
+			, 0.0f
+			, 100.0f
+			, 0.0f
+			, caps->homogeneousDepth
+			);
+
+		if (LightType::SpotLight == settings.m_lightType)
 		{
 			const float fovy = settings.m_coverageSpotL;
 			const float aspect = 1.0f;
-			bx::mtxProj(lightProj[ProjType::Horizontal], fovy, aspect, currentSmSettings->m_near, currentSmSettings->m_far);
+			bx::mtxProj(
+				  lightProj[ProjType::Horizontal]
+				, fovy
+				, aspect
+				, currentSmSettings->m_near
+				, currentSmSettings->m_far
+				, false
+				);
 
 			//For linear depth, prevent depth division by variable w-component in shaders and divide here by far plane
 			if (DepthImpl::Linear == settings.m_depthImpl)
@@ -2271,11 +2291,13 @@ int _main_(int _argc, char** _argv)
 				const float fovy = 125.26438968f + 9.85f + settings.m_fovYAdjust;
 				const float aspect = bx::ftan(bx::toRad(fovx*0.5f) )/bx::ftan(bx::toRad(fovy*0.5f) );
 
-				bx::mtxProj(lightProj[ProjType::Vertical]
+				bx::mtxProj(
+						  lightProj[ProjType::Vertical]
 						, fovx
 						, aspect
 						, currentSmSettings->m_near
 						, currentSmSettings->m_far
+						, false
 						);
 
 				//For linear depth, prevent depth division by variable w-component in shaders and divide here by far plane
@@ -2295,7 +2317,14 @@ int _main_(int _argc, char** _argv)
 			const float fovy = 125.26438968f + 3.0f + settings.m_fovYAdjust;
 			const float aspect = bx::ftan(bx::toRad(fovx*0.5f) )/bx::ftan(bx::toRad(fovy*0.5f) );
 
-			bx::mtxProj(lightProj[ProjType::Horizontal], fovy, aspect, currentSmSettings->m_near, currentSmSettings->m_far);
+			bx::mtxProj(
+				  lightProj[ProjType::Horizontal]
+				, fovy
+				, aspect
+				, currentSmSettings->m_near
+				, currentSmSettings->m_far
+				, caps->homogeneousDepth
+				);
 
 			//For linear depth, prevent depth division by variable w component in shaders and divide here by far plane
 			if (DepthImpl::Linear == settings.m_depthImpl)
@@ -2357,7 +2386,17 @@ int _main_(int _argc, char** _argv)
 			}
 
 			float mtxProj[16];
-			bx::mtxOrtho(mtxProj, 1.0f, -1.0f, 1.0f, -1.0f, -currentSmSettings->m_far, currentSmSettings->m_far);
+			bx::mtxOrtho(
+				  mtxProj
+				, 1.0f
+				, -1.0f
+				, 1.0f
+				, -1.0f
+				, -currentSmSettings->m_far
+				, currentSmSettings->m_far
+				, 0.0f
+				, caps->homogeneousDepth
+				);
 
 			const uint8_t numCorners = 8;
 			float frustumCorners[maxNumSplits][numCorners][3];

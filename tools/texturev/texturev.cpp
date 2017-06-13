@@ -786,7 +786,8 @@ int _main_(int _argc, char** _argv)
 
 	PosUvColorVertex::init();
 
-	bgfx::RendererType::Enum type = bgfx::getRendererType();
+	const bgfx::Caps* caps = bgfx::getCaps();
+	bgfx::RendererType::Enum type = caps->rendererType;
 
 	bgfx::ShaderHandle vsTexture      = bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_texture");
 	bgfx::ShaderHandle fsTexture      = bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_texture");
@@ -1064,7 +1065,7 @@ int _main_(int _argc, char** _argv)
 
 			float ortho[16];
 
-			bx::mtxOrtho(ortho, 0.0f, float(width), float(height), 0.0f, 0.0f, 1000.0f);
+			bx::mtxOrtho(ortho, 0.0f, float(width), float(height), 0.0f, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
 			bgfx::setViewTransform(BACKGROUND_VIEW_ID, NULL, ortho);
 			bgfx::setViewRect(BACKGROUND_VIEW_ID, 0, 0, uint16_t(width), uint16_t(height) );
 
@@ -1091,7 +1092,7 @@ int _main_(int _argc, char** _argv)
 
 			float px = posx.getValue();
 			float py = posy.getValue();
-			bx::mtxOrtho(ortho, px-width/2, px+width/2, py+height/2, py-height/2, 0.0f, 1000.0f);
+			bx::mtxOrtho(ortho, px-width/2, px+width/2, py+height/2, py-height/2, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
 			bgfx::setViewTransform(IMAGE_VIEW_ID, NULL, ortho);
 			bgfx::setViewRect(IMAGE_VIEW_ID, 0, 0, uint16_t(width), uint16_t(height) );
 

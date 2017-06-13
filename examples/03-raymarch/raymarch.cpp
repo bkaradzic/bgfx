@@ -194,8 +194,9 @@ class ExampleRaymarch : public entry::AppI
 			// Set view and projection matrix for view 1.
 			bgfx::setViewTransform(0, view, proj);
 
+			const bgfx::Caps* caps = bgfx::getCaps();
 			float ortho[16];
-			bx::mtxOrtho(ortho, 0.0f, 1280.0f, 720.0f, 0.0f, 0.0f, 100.0f);
+			bx::mtxOrtho(ortho, 0.0f, 1280.0f, 720.0f, 0.0f, 0.0f, 100.0f, 0.0, caps->homogeneousDepth);
 
 			// Set view and projection matrix for view 0.
 			bgfx::setViewTransform(1, NULL, ortho);

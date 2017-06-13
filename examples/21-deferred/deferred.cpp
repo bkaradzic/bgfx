@@ -474,16 +474,18 @@ class ExampleDeferred : public entry::AppI
 					bx::mtxMul(vp, view, proj);
 					bx::mtxInverse(invMvp, vp);
 
-					bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
+					const bgfx::Caps* caps = bgfx::getCaps();
+
+					bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f, 0.0f, caps->homogeneousDepth);
 					bgfx::setViewTransform(RENDER_PASS_LIGHT_ID,   NULL, proj);
 					bgfx::setViewTransform(RENDER_PASS_COMBINE_ID, NULL, proj);
 
 					const float aspectRatio = float(m_height)/float(m_width);
 					const float size = 10.0f;
-					bx::mtxOrtho(proj, -size, size, size*aspectRatio, -size*aspectRatio, 0.0f, 1000.0f);
+					bx::mtxOrtho(proj, -size, size, size*aspectRatio, -size*aspectRatio, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
 					bgfx::setViewTransform(RENDER_PASS_DEBUG_GBUFFER_ID, NULL, proj);
 
-					bx::mtxOrtho(proj, 0.0f, (float)m_width, 0.0f, (float)m_height, 0.0f, 1000.0f);
+					bx::mtxOrtho(proj, 0.0f, (float)m_width, 0.0f, (float)m_height, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
 					bgfx::setViewTransform(RENDER_PASS_DEBUG_LIGHTS_ID, NULL, proj);
 				}
 

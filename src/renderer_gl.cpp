@@ -2649,7 +2649,7 @@ namespace bgfx { namespace gl
 			GL_CHECK(glUniform1i(program.m_sampler[0], 0) );
 
 			float proj[16];
-			bx::mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f);
+			bx::mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f, 0.0f, true);
 
 			GL_CHECK(glUniformMatrix4fv(program.m_predefined[0].m_loc
 				, 1

@@ -805,7 +805,8 @@ struct Imgui
 		bgfx::setViewName(_view, "IMGUI");
 		bgfx::setViewSeq(_view, true);
 
-		const bgfx::HMD* hmd = bgfx::getHMD();
+		const bgfx::HMD*  hmd  = bgfx::getHMD();
+		const bgfx::Caps* caps = bgfx::getCaps();
 		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
 		{
 			m_viewWidth = _width / 2;
@@ -824,15 +825,15 @@ struct Imgui
 			float ortho[2][16];
 			const float viewOffset = _surfaceWidth/4.0f;
 			const float viewWidth  = _surfaceWidth/2.0f;
-			bx::mtxOrtho(ortho[0], viewOffset, viewOffset + viewWidth, (float)m_surfaceHeight, 0.0f, 0.0f, 1000.0f, offset0);
-			bx::mtxOrtho(ortho[1], viewOffset, viewOffset + viewWidth, (float)m_surfaceHeight, 0.0f, 0.0f, 1000.0f, offset1);
+			bx::mtxOrtho(ortho[0], viewOffset, viewOffset + viewWidth, (float)m_surfaceHeight, 0.0f, 0.0f, 1000.0f, offset0, caps->homogeneousDepth);
+			bx::mtxOrtho(ortho[1], viewOffset, viewOffset + viewWidth, (float)m_surfaceHeight, 0.0f, 0.0f, 1000.0f, offset1, caps->homogeneousDepth);
 			bgfx::setViewTransform(_view, NULL, ortho[0], BGFX_VIEW_STEREO, ortho[1]);
 			bgfx::setViewRect(_view, 0, 0, hmd->width, hmd->height);
 		}
 		else
 		{
 			float ortho[16];
-			bx::mtxOrtho(ortho, 0.0f, (float)m_surfaceWidth, (float)m_surfaceHeight, 0.0f, 0.0f, 1000.0f);
+			bx::mtxOrtho(ortho, 0.0f, (float)m_surfaceWidth, (float)m_surfaceHeight, 0.0f, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
 			bgfx::setViewTransform(_view, NULL, ortho);
 			bgfx::setViewRect(_view, 0, 0, _width, _height);
 		}

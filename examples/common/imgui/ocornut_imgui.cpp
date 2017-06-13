@@ -72,8 +72,9 @@ struct OcornutImguiContext
 		const float height = io.DisplaySize.y;
 
 		{
+			const bgfx::Caps* caps = bgfx::getCaps();
 			float ortho[16];
-			bx::mtxOrtho(ortho, 0.0f, width, height, 0.0f, -1.0f, 1.0f);
+			bx::mtxOrtho(ortho, 0.0f, width, height, 0.0f, -1.0f, 1.0f, 0.0f, caps->homogeneousDepth);
 			bgfx::setViewTransform(m_viewId, NULL, ortho);
 		}
 

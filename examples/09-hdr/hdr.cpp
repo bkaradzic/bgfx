@@ -404,8 +404,9 @@ class ExampleHDR : public entry::AppI
 			bgfx::FrameBufferHandle invalid = BGFX_INVALID_HANDLE;
 			bgfx::setViewFrameBuffer(hdrHBlurTonemap, invalid);
 
+			const bgfx::Caps* caps = bgfx::getCaps();
 			float proj[16];
-			bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
+			bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f, 0.0f, caps->homogeneousDepth);
 
 			uint8_t order[] =
 			{
@@ -442,7 +443,7 @@ class ExampleHDR : public entry::AppI
 
 			float view[16];
 			bx::mtxLookAt(view, temp, at);
-			bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
+			bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, caps->homogeneousDepth);
 
 			// Set view and projection matrix for view hdrMesh.
 			bgfx::setViewTransform(hdrMesh, view, proj);

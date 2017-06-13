@@ -366,7 +366,9 @@ class ExampleOIT : public entry::AppI
 
 			// Set view and projection matrix for view 1.
 			bx::mtxIdentity(view);
-			bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
+
+			const bgfx::Caps* caps = bgfx::getCaps();
+			bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f, 0.0f, caps->homogeneousDepth);
 			bgfx::setViewTransform(1, view, proj);
 
 			for (uint32_t depth = 0; depth < 3; ++depth)

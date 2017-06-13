@@ -492,7 +492,8 @@ public:
 			// Set view and projection matrix for view 1.
 			const float aspectRatio = float(m_height)/float(m_width);
 			const float size = 11.0f;
-			bx::mtxOrtho(proj, -size, size, size*aspectRatio, -size*aspectRatio, 0.0f, 1000.0f);
+			const bgfx::Caps* caps = bgfx::getCaps();
+			bx::mtxOrtho(proj, -size, size, size*aspectRatio, -size*aspectRatio, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
 			bgfx::setViewTransform(1, NULL, proj);
 
 			float mtx[16];

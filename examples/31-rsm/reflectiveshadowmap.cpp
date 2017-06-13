@@ -477,12 +477,8 @@ public:
 
 			bx::mtxLookAt(smView, lightEye, lightAt);
 			const float area = 10.0f;
-			bgfx::RendererType::Enum renderer = bgfx::getRendererType();
-			bool flipV = false
-				|| renderer == bgfx::RendererType::OpenGL
-				|| renderer == bgfx::RendererType::OpenGLES
-				;
-			bx::mtxOrtho(smProj, -area, area, -area, area, -100.0f, 100.0f, 0.0f, flipV);
+			const bgfx::Caps* caps = bgfx::getCaps();
+			bx::mtxOrtho(smProj, -area, area, -area, area, -100.0f, 100.0f, 0.0f, caps->homogeneousDepth);
 			bgfx::setViewTransform(RENDER_PASS_SHADOW_MAP, smView, smProj);
 			bgfx::setViewFrameBuffer(RENDER_PASS_SHADOW_MAP, m_shadowBuffer);
 			bgfx::setViewRect(RENDER_PASS_SHADOW_MAP, 0, 0, SHADOW_MAP_DIM, SHADOW_MAP_DIM);
@@ -578,7 +574,7 @@ public:
 
 			// Set up transform matrix for fullscreen quad
 			float orthoProj[16];
-			bx::mtxOrtho(orthoProj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
+			bx::mtxOrtho(orthoProj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f, 0.0f, caps->homogeneousDepth);
 			bgfx::setViewTransform(RENDER_PASS_COMBINE, NULL, orthoProj);
 			bgfx::setViewRect(RENDER_PASS_COMBINE, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 			// Bind vertex buffer and draw quad

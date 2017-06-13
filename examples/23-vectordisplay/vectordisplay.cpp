@@ -132,8 +132,20 @@ void VectorDisplay::beginFrame()
 
 void VectorDisplay::endFrame()
 {
+	const bgfx::Caps* caps = bgfx::getCaps();
+
 	float proj[16];
-	bx::mtxOrtho(proj, 0.0f, (float)m_screenWidth, (float)m_screenHeight, 0.0f, 0.0f, 1000.0f);
+	bx::mtxOrtho(
+		  proj
+		, 0.0f
+		, (float)m_screenWidth
+		, (float)m_screenHeight
+		, 0.0f
+		, 0.0f
+		, 1000.0f
+		, 0.0f
+		, caps->homogeneousDepth
+		);
 
 	bgfx::setViewRect(m_view, 0, 0, m_screenWidth, m_screenHeight);
 	bgfx::setViewFrameBuffer(m_view, m_sceneFrameBuffer);
@@ -192,7 +204,7 @@ void VectorDisplay::endFrame()
 
 	uint8_t viewCounter = m_view + 1;
 
-	bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
+	bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f, 0.0f, caps->homogeneousDepth);
 
 	float glow_iter_mult = 1.05f + ( (m_brightness - 1.0f) / 5.0f);
 	float glow_fin_mult  = 1.25f + ( (m_brightness - 1.0f) / 2.0f);
