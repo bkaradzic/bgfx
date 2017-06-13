@@ -1689,10 +1689,26 @@ creating windows.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx10vertexPackEA4_KfbN6Attrib4EnumERK10VertexDeclPv8uint32_t">
 <span id="bgfx::vertexPack__floatCA.b.Attrib::Enum.VertexDeclCR.voidP.uint32_t"></span><span class="target" id="bgfxnamespacebgfx_1af00c88a0daf27e1ddc43470a3e0f73ad"></span>void <code class="descclassname">bgfx::</code><code class="descname">vertexPack</code><span class="sig-paren">(</span><em class="property">const</em> float <em>_input</em>[4], bool <em>_inputNormalized</em>, <a class="reference internal" href="#_CPPv2N4bgfx6AttribE" title="bgfx::Attrib">Attrib</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Attrib4EnumE" title="bgfx::Attrib::Enum">Enum</a> <em>_attr</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx10VertexDeclE" title="bgfx::VertexDecl">VertexDecl</a> &amp;<em>_decl</em>, void *<em>_data</em>, uint32_t <em>_index</em> = 0<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx10vertexPackEA4_KfbN6Attrib4EnumERK10VertexDeclPv8uint32_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pack vec4 into vertex stream format. </p>
+<dd><p>Pack vertex attribute into vertex stream format. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_vertex_pack</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_input</span></code> - <p>Value to be packed into vertex stream. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_inputNormalized</span></code> - <p>True if input value is already normalized. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_attr</span></code> - <p>Attribute to pack. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_decl</span></code> - <p>Vertex stream declaration. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_data</span></code> - <p>Destination vertex stream where data will be packed. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_index</span></code> - <p>Vertex index that will be modified.</p>
+</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
@@ -1700,10 +1716,24 @@ creating windows.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx12vertexUnpackEA4_fN6Attrib4EnumERK10VertexDeclPKv8uint32_t">
 <span id="bgfx::vertexUnpack__floatA.Attrib::Enum.VertexDeclCR.voidCP.uint32_t"></span><span class="target" id="bgfxnamespacebgfx_1a2407f7864d3303f18177f4b6ec1fbd08"></span>void <code class="descclassname">bgfx::</code><code class="descname">vertexUnpack</code><span class="sig-paren">(</span>float <em>_output</em>[4], <a class="reference internal" href="#_CPPv2N4bgfx6AttribE" title="bgfx::Attrib">Attrib</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Attrib4EnumE" title="bgfx::Attrib::Enum">Enum</a> <em>_attr</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx10VertexDeclE" title="bgfx::VertexDecl">VertexDecl</a> &amp;<em>_decl</em>, <em class="property">const</em> void *<em>_data</em>, uint32_t <em>_index</em> = 0<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12vertexUnpackEA4_fN6Attrib4EnumERK10VertexDeclPKv8uint32_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Unpack vec4 from vertex stream format. </p>
+<dd><p>Unpack vertex attribute from vertex stream format. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_vertex_unpack</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_output</span></code> - <p>Result of unpacking. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_attr</span></code> - <p>Attribute to unpack. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_decl</span></code> - <p>Vertex stream declaration. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_data</span></code> - <p>Source vertex stream from where data will be unpacked. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_index</span></code> - <p>Vertex index that will be unpacked.</p>
+</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
@@ -3790,6 +3820,18 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dt id="_CPPv2N4bgfx6Attrib6Color1E">
 <span id="bgfx::Attrib::Color1"></span><span class="target" id="bgfxstructbgfx_1_1_attrib_1a1c2416ba7a7a1bbd4d6e74bf57f03804acf56be5ceeef8242b540cbd6fd5fa35d"></span><code class="descname">Color1</code><a class="headerlink" href="#_CPPv2N4bgfx6Attrib6Color1E" title="Permalink to this definition">¶</a></dt>
 <dd><p>a_color1 </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx6Attrib6Color2E">
+<span id="bgfx::Attrib::Color2"></span><span class="target" id="bgfxstructbgfx_1_1_attrib_1a1c2416ba7a7a1bbd4d6e74bf57f03804a5f72a5fba4d62dd373c8c8387d120270"></span><code class="descname">Color2</code><a class="headerlink" href="#_CPPv2N4bgfx6Attrib6Color2E" title="Permalink to this definition">¶</a></dt>
+<dd><p>a_color2 </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx6Attrib6Color3E">
+<span id="bgfx::Attrib::Color3"></span><span class="target" id="bgfxstructbgfx_1_1_attrib_1a1c2416ba7a7a1bbd4d6e74bf57f03804a345365a6d18a7fea2d4cbfc10cd8e699"></span><code class="descname">Color3</code><a class="headerlink" href="#_CPPv2N4bgfx6Attrib6Color3E" title="Permalink to this definition">¶</a></dt>
+<dd><p>a_color3 </p>
 </dd></dl>
 
 <dl class="member">
