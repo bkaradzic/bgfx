@@ -25,7 +25,20 @@ struct PosNormalVertex
 	float    m_y;
 	float    m_z;
 	uint32_t m_normal;
+
+	static void init()
+	{
+		ms_decl
+			.begin()
+			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::Normal,   4, bgfx::AttribType::Uint8, true, true)
+			.end();
+	};
+
+	static bgfx::VertexDecl ms_decl;
 };
+
+bgfx::VertexDecl PosNormalVertex::ms_decl;
 
 static PosNormalVertex s_hplaneVertices[] =
 {
@@ -45,7 +58,6 @@ class ExampleShadowmapsSimple : public entry::AppI
 {
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
-
 		Args args(_argc, _argv);
 
 		m_width = 1280;
@@ -79,12 +91,8 @@ class ExampleShadowmapsSimple : public entry::AppI
 		}
 		bgfx::setUniform(u_depthScaleOffset, depthScaleOffset);
 
-		// Vertex declarations.
-		bgfx::VertexDecl PosNormalDecl;
-		PosNormalDecl.begin()
-			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-			.add(bgfx::Attrib::Normal,   4, bgfx::AttribType::Uint8, true, true)
-			.end();
+		// Create vertex stream declaration.
+		PosNormalVertex::init();
 
 		// Meshes.
 		m_bunny      = meshLoad("meshes/bunny.bin");
@@ -93,7 +101,7 @@ class ExampleShadowmapsSimple : public entry::AppI
 
 		m_vbh = bgfx::createVertexBuffer(
 			  bgfx::makeRef(s_hplaneVertices, sizeof(s_hplaneVertices) )
-			, PosNormalDecl
+			, PosNormalVertex::ms_decl
 			);
 
 		m_ibh = bgfx::createIndexBuffer(
@@ -115,8 +123,18 @@ class ExampleShadowmapsSimple : public entry::AppI
 			m_progShadow = loadProgram("vs_sms_shadow", "fs_sms_shadow");
 			m_progMesh   = loadProgram("vs_sms_mesh",   "fs_sms_mesh");
 
-			shadowMapTexture = bgfx::createTexture2D(m_shadowMapSize, m_shadowMapSize, false, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT | BGFX_TEXTURE_COMPARE_LEQUAL);
-			bgfx::TextureHandle fbtextures[] = { shadowMapTexture };
+			bgfx::TextureHandle fbtextures[] =
+			{
+				bgfx::createTexture2D(
+					  m_shadowMapSize
+					, m_shadowMapSize
+					, false
+					, 1
+					, bgfx::TextureFormat::D16
+					, BGFX_TEXTURE_RT | BGFX_TEXTURE_COMPARE_LEQUAL
+					),
+			};
+			shadowMapTexture = fbtextures[0];
 			m_shadowMapFB = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 		}
 		else
@@ -126,12 +144,26 @@ class ExampleShadowmapsSimple : public entry::AppI
 			m_progShadow = loadProgram("vs_sms_shadow_pd", "fs_sms_shadow_pd");
 			m_progMesh   = loadProgram("vs_sms_mesh",      "fs_sms_mesh_pd");
 
-			shadowMapTexture = bgfx::createTexture2D(m_shadowMapSize, m_shadowMapSize, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT);
 			bgfx::TextureHandle fbtextures[] =
 			{
-				shadowMapTexture,
-				bgfx::createTexture2D(m_shadowMapSize, m_shadowMapSize, false, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY),
+				bgfx::createTexture2D(
+					  m_shadowMapSize
+					, m_shadowMapSize
+					, false
+					, 1
+					, bgfx::TextureFormat::BGRA8
+					, BGFX_TEXTURE_RT
+					),
+				bgfx::createTexture2D(
+					  m_shadowMapSize
+					, m_shadowMapSize
+					, false
+					, 1
+					, bgfx::TextureFormat::D16
+					, BGFX_TEXTURE_RT_WRITE_ONLY
+					),
 			};
+			shadowMapTexture = fbtextures[0];
 			m_shadowMapFB = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 		}
 
@@ -174,9 +206,7 @@ class ExampleShadowmapsSimple : public entry::AppI
 		const float aspect = float(int32_t(m_width) ) / float(int32_t(m_height) );
 		bx::mtxProj(m_proj, 60.0f, aspect, 0.1f, 1000.0f, bgfx::getCaps()->homogeneousDepth);
 
-		// Time acumulators.
-		m_timeAccumulatorLight = 0.0f;
-		m_timeAccumulatorScene = 0.0f;
+		m_timeOffset = bx::getHPCounter();
 	}
 
 	virtual int shutdown() BX_OVERRIDE
@@ -211,18 +241,14 @@ class ExampleShadowmapsSimple : public entry::AppI
 	{
 		while (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
-			// Time.
 			int64_t now = bx::getHPCounter();
 			static int64_t last = now;
 			const int64_t frameTime = now - last;
 			last = now;
 			const double freq = double(bx::getHPFrequency() );
 			const double toMs = 1000.0/freq;
-			const float deltaTime = float(frameTime/freq);
 
-			// Update time accumulators.
-			m_timeAccumulatorLight += deltaTime;
-			m_timeAccumulatorScene += deltaTime;
+			float time = float( (now-m_timeOffset)/freq);
 
 			// Use debug font to print information about this example.
 			bgfx::dbgTextClear();
@@ -232,9 +258,9 @@ class ExampleShadowmapsSimple : public entry::AppI
 
 			// Setup lights.
 			float lightPos[4];
-			lightPos[0] = -bx::fcos(m_timeAccumulatorLight);
+			lightPos[0] = -bx::fcos(time);
 			lightPos[1] = -1.0f;
-			lightPos[2] = -bx::fsin(m_timeAccumulatorLight);
+			lightPos[2] = -bx::fsin(time);
 			lightPos[3] = 0.0f;
 
 			bgfx::setUniform(u_lightPos, lightPos);
@@ -250,21 +276,21 @@ class ExampleShadowmapsSimple : public entry::AppI
 			float mtxBunny[16];
 			bx::mtxSRT(mtxBunny
 				, 5.0f, 5.0f, 5.0f
-				, 0.0f, bx::kPi - m_timeAccumulatorScene, 0.0f
+				, 0.0f, bx::kPi - time, 0.0f
 				, 15.0f, 5.0f, 0.0f
 				);
 
 			float mtxHollowcube[16];
 			bx::mtxSRT(mtxHollowcube
 				, 2.5f, 2.5f, 2.5f
-				, 0.0f, 1.56f - m_timeAccumulatorScene, 0.0f
+				, 0.0f, 1.56f - time, 0.0f
 				, 0.0f, 10.0f, 0.0f
 				);
 
 			float mtxCube[16];
 			bx::mtxSRT(mtxCube
 				, 2.5f, 2.5f, 2.5f
-				, 0.0f, 1.56f - m_timeAccumulatorScene, 0.0f
+				, 0.0f, 1.56f - time, 0.0f
 				, -15.0f, 5.0f, 0.0f
 				);
 
@@ -329,10 +355,10 @@ class ExampleShadowmapsSimple : public entry::AppI
 				{
 					const MeshState::Texture& texture = st.m_textures[tex];
 					bgfx::setTexture(texture.m_stage
-									 , texture.m_sampler
-									 , texture.m_texture
-									 , texture.m_flags
-									 );
+						, texture.m_sampler
+						, texture.m_texture
+						, texture.m_flags
+						);
 				}
 				bgfx::setUniform(u_lightMtx, lightMtx);
 				bgfx::setIndexBuffer(m_ibh);
@@ -401,11 +427,10 @@ class ExampleShadowmapsSimple : public entry::AppI
 
 	MeshState* m_state[2];
 
-	float m_timeAccumulatorLight;
-	float m_timeAccumulatorScene;
-
 	float m_view[16];
 	float m_proj[16];
+
+	int64_t m_timeOffset;
 };
 
 ENTRY_IMPLEMENT_MAIN(ExampleShadowmapsSimple);
