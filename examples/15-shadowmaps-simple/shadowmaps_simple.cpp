@@ -56,12 +56,6 @@ class ExampleShadowmapsSimple : public entry::AppI
 		bgfx::init(args.m_type, args.m_pciId);
 		bgfx::reset(m_width, m_height, m_reset);
 
-		bgfx::RendererType::Enum renderer = bgfx::getRendererType();
-		m_flipV = false
-		|| renderer == bgfx::RendererType::OpenGL
-		|| renderer == bgfx::RendererType::OpenGLES
-		;
-
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
 
@@ -73,17 +67,24 @@ class ExampleShadowmapsSimple : public entry::AppI
 		// When using GL clip space depth range [-1, 1] and packing depth into color buffer, we need to
 		// adjust the depth range to be [0, 1] for writing to the color buffer
 		u_depthScaleOffset = bgfx::createUniform("u_depthScaleOffset",  bgfx::UniformType::Vec4);
-		m_depthScale = m_flipV ? 0.5f : 1.0f;
-		m_depthOffset = m_flipV ? 0.5f : 0.0f;
-		float depthScaleOffset[4] = {m_depthScale, m_depthOffset, 0.0f, 0.0f};
+
+		// Get renderer capabilities info.
+		const bgfx::Caps* caps = bgfx::getCaps();
+
+		float depthScaleOffset[4] = { 1.0f, 0.0f, 0.0f, 0.0f };
+		if (caps->homogeneousDepth)
+		{
+			depthScaleOffset[0] = 0.5f;
+			depthScaleOffset[1] = 0.5f;
+		}
 		bgfx::setUniform(u_depthScaleOffset, depthScaleOffset);
 
 		// Vertex declarations.
 		bgfx::VertexDecl PosNormalDecl;
 		PosNormalDecl.begin()
-		.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
-		.add(bgfx::Attrib::Normal,    4, bgfx::AttribType::Uint8, true, true)
-		.end();
+			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::Normal,   4, bgfx::AttribType::Uint8, true, true)
+			.end();
 
 		// Meshes.
 		m_bunny      = meshLoad("meshes/bunny.bin");
@@ -91,19 +92,17 @@ class ExampleShadowmapsSimple : public entry::AppI
 		m_hollowcube = meshLoad("meshes/hollowcube.bin");
 
 		m_vbh = bgfx::createVertexBuffer(
-										 bgfx::makeRef(s_hplaneVertices, sizeof(s_hplaneVertices) )
-										 , PosNormalDecl
-										 );
+			  bgfx::makeRef(s_hplaneVertices, sizeof(s_hplaneVertices) )
+			, PosNormalDecl
+			);
 
 		m_ibh = bgfx::createIndexBuffer(
-										bgfx::makeRef(s_planeIndices, sizeof(s_planeIndices) )
-										);
+			  bgfx::makeRef(s_planeIndices, sizeof(s_planeIndices) )
+			);
 
 		// Render targets.
 		m_shadowMapSize = 512;
 
-		// Get renderer capabilities info.
-		const bgfx::Caps* caps = bgfx::getCaps();
 		// Shadow samplers are supported at least partially supported if texture
 		// compare less equal feature is supported.
 		m_shadowSamplerSupported = 0 != (caps->supported & BGFX_CAPS_TEXTURE_COMPARE_LEQUAL);
@@ -138,26 +137,26 @@ class ExampleShadowmapsSimple : public entry::AppI
 
 		m_state[0] = meshStateCreate();
 		m_state[0]->m_state = 0
-		| BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_ALPHA_WRITE
-		| BGFX_STATE_DEPTH_WRITE
-		| BGFX_STATE_DEPTH_TEST_LESS
-		| BGFX_STATE_CULL_CCW
-		| BGFX_STATE_MSAA
-		;
+			| BGFX_STATE_RGB_WRITE
+			| BGFX_STATE_ALPHA_WRITE
+			| BGFX_STATE_DEPTH_WRITE
+			| BGFX_STATE_DEPTH_TEST_LESS
+			| BGFX_STATE_CULL_CCW
+			| BGFX_STATE_MSAA
+			;
 		m_state[0]->m_program = m_progShadow;
 		m_state[0]->m_viewId  = RENDER_SHADOW_PASS_ID;
 		m_state[0]->m_numTextures = 0;
 
 		m_state[1] = meshStateCreate();
 		m_state[1]->m_state = 0
-		| BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_ALPHA_WRITE
-		| BGFX_STATE_DEPTH_WRITE
-		| BGFX_STATE_DEPTH_TEST_LESS
-		| BGFX_STATE_CULL_CCW
-		| BGFX_STATE_MSAA
-		;
+			| BGFX_STATE_RGB_WRITE
+			| BGFX_STATE_ALPHA_WRITE
+			| BGFX_STATE_DEPTH_WRITE
+			| BGFX_STATE_DEPTH_TEST_LESS
+			| BGFX_STATE_CULL_CCW
+			| BGFX_STATE_MSAA
+			;
 		m_state[1]->m_program = m_progMesh;
 		m_state[1]->m_viewId  = RENDER_SCENE_PASS_ID;
 		m_state[1]->m_numTextures = 1;
@@ -243,31 +242,31 @@ class ExampleShadowmapsSimple : public entry::AppI
 			// Setup instance matrices.
 			float mtxFloor[16];
 			bx::mtxSRT(mtxFloor
-					   , 30.0f, 30.0f, 30.0f
-					   , 0.0f, 0.0f, 0.0f
-					   , 0.0f, 0.0f, 0.0f
-					   );
+				, 30.0f, 30.0f, 30.0f
+				, 0.0f, 0.0f, 0.0f
+				, 0.0f, 0.0f, 0.0f
+				);
 
 			float mtxBunny[16];
 			bx::mtxSRT(mtxBunny
-					   , 5.0f, 5.0f, 5.0f
-					   , 0.0f, bx::kPi - m_timeAccumulatorScene, 0.0f
-					   , 15.0f, 5.0f, 0.0f
-					   );
+				, 5.0f, 5.0f, 5.0f
+				, 0.0f, bx::kPi - m_timeAccumulatorScene, 0.0f
+				, 15.0f, 5.0f, 0.0f
+				);
 
 			float mtxHollowcube[16];
 			bx::mtxSRT(mtxHollowcube
-					   , 2.5f, 2.5f, 2.5f
-					   , 0.0f, 1.56f - m_timeAccumulatorScene, 0.0f
-					   , 0.0f, 10.0f, 0.0f
-					   );
+				, 2.5f, 2.5f, 2.5f
+				, 0.0f, 1.56f - m_timeAccumulatorScene, 0.0f
+				, 0.0f, 10.0f, 0.0f
+				);
 
 			float mtxCube[16];
 			bx::mtxSRT(mtxCube
-					   , 2.5f, 2.5f, 2.5f
-					   , 0.0f, 1.56f - m_timeAccumulatorScene, 0.0f
-					   , -15.0f, 5.0f, 0.0f
-					   );
+				, 2.5f, 2.5f, 2.5f
+				, 0.0f, 1.56f - m_timeAccumulatorScene, 0.0f
+				, -15.0f, 5.0f, 0.0f
+				);
 
 			// Define matrices.
 			float lightView[16];
@@ -278,8 +277,9 @@ class ExampleShadowmapsSimple : public entry::AppI
 
 			bx::mtxLookAt(lightView, eye, at);
 
+			const bgfx::Caps* caps = bgfx::getCaps();
 			const float area = 30.0f;
-			bx::mtxOrtho(lightProj, -area, area, -area, area, -100.0f, 100.0f, 0.0f, m_flipV);
+			bx::mtxOrtho(lightProj, -area, area, -area, area, -100.0f, 100.0f, 0.0f, caps->homogeneousDepth);
 
 			bgfx::setViewRect(RENDER_SHADOW_PASS_ID, 0, 0, m_shadowMapSize, m_shadowMapSize);
 			bgfx::setViewFrameBuffer(RENDER_SHADOW_PASS_ID, m_shadowMapFB);
@@ -290,26 +290,28 @@ class ExampleShadowmapsSimple : public entry::AppI
 
 			// Clear backbuffer and shadowmap framebuffer at beginning.
 			bgfx::setViewClear(RENDER_SHADOW_PASS_ID
-							   , BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
-							   , 0x303030ff, 1.0f, 0
-							   );
+				, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
+				, 0x303030ff, 1.0f, 0
+				);
 
 			bgfx::setViewClear(RENDER_SCENE_PASS_ID
-							   , BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
-							   , 0x303030ff, 1.0f, 0
-							   );
+				, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
+				, 0x303030ff, 1.0f, 0
+				);
 
 			// Render.
 			float mtxShadow[16];
 			float lightMtx[16];
 
-			const float sy = m_flipV ? 0.5f : -0.5f;
+			const float sy = caps->originBottomLeft ? 0.5f : -0.5f;
+			const float sz = caps->homogeneousDepth ? 0.5f :  1.0f;
+			const float tz = caps->homogeneousDepth ? 0.5f :  0.0f;
 			const float mtxCrop[16] =
 			{
 				0.5f, 0.0f, 0.0f, 0.0f,
 				0.0f,   sy, 0.0f, 0.0f,
-				0.0f, 0.0f, m_depthScale, 0.0f,
-				0.5f, 0.5f, m_depthOffset, 1.0f,
+				0.0f, 0.0f, sz,   0.0f,
+				0.5f, 0.5f, tz,   1.0f,
 			};
 
 			float mtxTmp[16];
@@ -376,15 +378,11 @@ class ExampleShadowmapsSimple : public entry::AppI
 	uint32_t m_debug;
 	uint32_t m_reset;
 
-	bool m_flipV;
-
 	bgfx::UniformHandle u_shadowMap;
 	bgfx::UniformHandle u_lightPos;
 	bgfx::UniformHandle u_lightMtx;
 
 	bgfx::UniformHandle u_depthScaleOffset;
-	float m_depthScale;
-	float m_depthOffset;
 
 	Mesh* m_bunny;
 	Mesh* m_cube;
@@ -408,7 +406,6 @@ class ExampleShadowmapsSimple : public entry::AppI
 
 	float m_view[16];
 	float m_proj[16];
-
 };
 
 ENTRY_IMPLEMENT_MAIN(ExampleShadowmapsSimple);
