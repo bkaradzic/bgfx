@@ -1313,19 +1313,19 @@ class ExampleShadowmaps : public entry::AppI
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
-		
+
 		m_debug = BGFX_DEBUG_TEXT;
 		m_reset = BGFX_RESET_VSYNC;
-		
+
 		m_viewState = ViewState(1280, 720);
 		m_clearValues = ClearValues(0x00000000, 1.0f, 0);
-		
+
 		bgfx::init(args.m_type, args.m_pciId);
 		bgfx::reset(m_viewState.m_width, m_viewState.m_height, m_reset);
-		
+
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
-		
+
 		// Setup root path for binary shaders. Shader binaries are different
 		// for each renderer.
 		switch (bgfx::getRendererType() )
@@ -1333,19 +1333,19 @@ class ExampleShadowmaps : public entry::AppI
 			case bgfx::RendererType::Direct3D9:
 				s_texelHalf = 0.5f;
 				break;
-				
+
 			case bgfx::RendererType::OpenGL:
 			case bgfx::RendererType::OpenGLES:
 				s_flipV = true;
 				break;
-				
+
 			default:
 				break;
 		}
-		
+
 		// Imgui.
 		imguiCreate();
-		
+
 		// Uniforms.
 		s_uniforms.init();
 		s_texColor = bgfx::createUniform("s_texColor",  bgfx::UniformType::Int1);
@@ -1353,10 +1353,10 @@ class ExampleShadowmaps : public entry::AppI
 		s_shadowMap[1] = bgfx::createUniform("s_shadowMap1", bgfx::UniformType::Int1);
 		s_shadowMap[2] = bgfx::createUniform("s_shadowMap2", bgfx::UniformType::Int1);
 		s_shadowMap[3] = bgfx::createUniform("s_shadowMap3", bgfx::UniformType::Int1);
-		
+
 		// Programs.
 		s_programs.init();
-		
+
 		// Vertex declarations.
 		bgfx::VertexDecl PosNormalTexcoordDecl;
 		PosNormalTexcoordDecl.begin()
@@ -1364,18 +1364,18 @@ class ExampleShadowmaps : public entry::AppI
 		.add(bgfx::Attrib::Normal,    4, bgfx::AttribType::Uint8, true, true)
 		.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
 		.end();
-		
+
 		m_posDecl.begin();
 		m_posDecl.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float);
 		m_posDecl.end();
-		
+
 		PosColorTexCoord0Vertex::init();
-		
+
 		// Textures.
 		m_texFigure     = loadTexture("textures/figure-rgba.dds");
 		m_texFlare      = loadTexture("textures/flare.dds");
 		m_texFieldstone = loadTexture("textures/fieldstone-rgba.dds");
-		
+
 		// Meshes.
 		m_bunnyMesh.load("meshes/bunny.bin");
 		m_treeMesh.load("meshes/tree.bin");
@@ -1383,7 +1383,7 @@ class ExampleShadowmaps : public entry::AppI
 		m_hollowcubeMesh.load("meshes/hollowcube.bin");
 		m_hplaneMesh.load(s_hplaneVertices, BX_COUNTOF(s_hplaneVertices), PosNormalTexcoordDecl, s_planeIndices, BX_COUNTOF(s_planeIndices) );
 		m_vplaneMesh.load(s_vplaneVertices, BX_COUNTOF(s_vplaneVertices), PosNormalTexcoordDecl, s_planeIndices, BX_COUNTOF(s_planeIndices) );
-		
+
 		// Materials.
 		m_defaultMaterial =
 		{
@@ -1391,7 +1391,7 @@ class ExampleShadowmaps : public entry::AppI
 			{ { 1.0f, 1.0f, 1.0f, 0.0f } }, //diffuse
 			{ { 1.0f, 1.0f, 1.0f, 0.0f } }, //specular, exponent
 		};
-		
+
 		// Lights.
 		m_pointLight =
 		{
@@ -1404,7 +1404,7 @@ class ExampleShadowmaps : public entry::AppI
 			{   0.0f, 0.0f, 0.0f, 0.0f     }, //-ignore
 			{ { 1.0f, 0.0f, 1.0f, 91.0f  } }, //attenuation, spotcutoff
 		};
-		
+
 		m_directionalLight =
 		{
 			{ { 0.5f,-1.0f, 0.1f, 0.0f  } }, //position
@@ -1416,7 +1416,7 @@ class ExampleShadowmaps : public entry::AppI
 			{   0.0f, 0.0f, 0.0f, 0.0f    }, //-ignore
 			{ { 0.0f, 0.0f, 0.0f, 1.0f  } }, //attenuation, spotcutoff
 		};
-		
+
 		// Setup uniforms.
 		m_color[0] = m_color[1] = m_color[2] = m_color[3] = 1.0f;
 		s_uniforms.setPtrs(&m_defaultMaterial
@@ -1429,14 +1429,14 @@ class ExampleShadowmaps : public entry::AppI
 						   , &m_shadowMapMtx[ShadowMapRenderTargets::Fourth][0]
 						   );
 		s_uniforms.submitConstUniforms();
-		
+
 		// Settings.
 		ShadowMapSettings smSettings[LightType::Count][DepthImpl::Count][SmImpl::Count] =
 		{
 			{ //LightType::Spot
-				
+
 				{ //DepthImpl::InvZ
-					
+
 					{ //SmImpl::Hard
 						10.0f, 7.0f, 12.0f, 1.0f         // m_sizePwrTwo
 						, 10.0f, 1.0f, 20.0f, 1.0f         // m_depthValuePow
@@ -1505,10 +1505,10 @@ class ExampleShadowmaps : public entry::AppI
 						, &s_programs.m_packDepth[DepthImpl::InvZ][PackDepth::RGBA] //m_progPack
 						, &s_programs.m_colorLighting[SmType::Single][DepthImpl::InvZ][SmImpl::ESM] //m_progDraw
 					}
-					
+
 				},
 				{ //DepthImpl::Linear
-					
+
 					{ //SmImpl::Hard
 						10.0f, 7.0f, 12.0f, 1.0f         // m_sizePwrTwo
 						, 1.0f, 1.0f, 20.0f, 1.0f          // m_depthValuePow
@@ -1577,14 +1577,14 @@ class ExampleShadowmaps : public entry::AppI
 						, &s_programs.m_packDepth[DepthImpl::Linear][PackDepth::RGBA] //m_progPack
 						, &s_programs.m_colorLighting[SmType::Single][DepthImpl::Linear][SmImpl::ESM] //m_progDraw
 					}
-					
+
 				}
-				
+
 			},
 			{ //LightType::Point
-				
+
 				{ //DepthImpl::InvZ
-					
+
 					{ //SmImpl::Hard
 						12.0f, 9.0f, 12.0f, 1.0f         // m_sizePwrTwo
 						, 10.0f, 1.0f, 20.0f, 1.0f         // m_depthValuePow
@@ -1653,10 +1653,10 @@ class ExampleShadowmaps : public entry::AppI
 						, &s_programs.m_packDepth[DepthImpl::InvZ][PackDepth::RGBA] //m_progPack
 						, &s_programs.m_colorLighting[SmType::Omni][DepthImpl::InvZ][SmImpl::ESM] //m_progDraw
 					}
-					
+
 				},
 				{ //DepthImpl::Linear
-					
+
 					{ //SmImpl::Hard
 						12.0f, 9.0f, 12.0f, 1.0f         // m_sizePwrTwo
 						, 1.0f, 1.0f, 20.0f, 1.0f          // m_depthValuePow
@@ -1725,14 +1725,14 @@ class ExampleShadowmaps : public entry::AppI
 						, &s_programs.m_packDepth[DepthImpl::Linear][PackDepth::RGBA] //m_progPack
 						, &s_programs.m_colorLighting[SmType::Omni][DepthImpl::Linear][SmImpl::ESM] //m_progDraw
 					}
-					
+
 				}
-				
+
 			},
 			{ //LightType::Directional
-				
+
 				{ //DepthImpl::InvZ
-					
+
 					{ //SmImpl::Hard
 						11.0f, 7.0f, 12.0f, 1.0f         // m_sizePwrTwo
 						, 1.0f, 1.0f, 20.0f, 1.0f          // m_depthValuePow
@@ -1801,10 +1801,10 @@ class ExampleShadowmaps : public entry::AppI
 						, &s_programs.m_packDepth[DepthImpl::InvZ][PackDepth::RGBA] //m_progPack
 						, &s_programs.m_colorLighting[SmType::Cascade][DepthImpl::InvZ][SmImpl::ESM] //m_progDraw
 					}
-					
+
 				},
 				{ //DepthImpl::Linear
-					
+
 					{ //SmImpl::Hard
 						11.0f, 7.0f, 12.0f, 1.0f         // m_sizePwrTwo
 						, 1.0f, 1.0f, 20.0f, 1.0f          // m_depthValuePow
@@ -1873,12 +1873,12 @@ class ExampleShadowmaps : public entry::AppI
 						, &s_programs.m_packDepth[DepthImpl::Linear][PackDepth::RGBA] //m_progPack
 						, &s_programs.m_colorLighting[SmType::Cascade][DepthImpl::Linear][SmImpl::ESM] //m_progDraw
 					}
-					
+
 				}
 			}
 		};
 		bx::memCopy(m_smSettings, smSettings, sizeof(smSettings));
-		
+
 		m_settings.m_lightType = LightType::SpotLight;
 		m_settings.m_depthImpl = DepthImpl::InvZ;
 		m_settings.m_smImpl    = SmImpl::Hard;
@@ -1896,9 +1896,9 @@ class ExampleShadowmaps : public entry::AppI
 		m_settings.m_showSmCoverage  = false;
 		m_settings.m_stencilPack     = true;
 		m_settings.m_stabilize       = true;
-		
+
 		ShadowMapSettings* currentSmSettings = &m_smSettings[m_settings.m_lightType][m_settings.m_depthImpl][m_settings.m_smImpl];
-		
+
 		// Render targets.
 		uint16_t shadowMapSize = 1 << uint32_t(currentSmSettings->m_sizePwrTwo);
 		m_currentShadowMapSize = shadowMapSize;
@@ -1914,13 +1914,13 @@ class ExampleShadowmaps : public entry::AppI
 			s_rtShadowMap[ii] = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 		}
 		s_rtBlur = bgfx::createFrameBuffer(m_currentShadowMapSize, m_currentShadowMapSize, bgfx::TextureFormat::BGRA8);
-		
+
 		// Setup camera.
 		float initialPos[3] = { 0.0f, 60.0f, -105.0f };
 		cameraCreate();
 		cameraSetPosition(initialPos);
 		cameraSetVerticalAngle(-0.45f);
-		
+
 		m_timeAccumulatorLight = 0.0f;
 		m_timeAccumulatorScene = 0.0f;
 	}
@@ -1933,33 +1933,33 @@ class ExampleShadowmaps : public entry::AppI
 		m_hollowcubeMesh.unload();
 		m_hplaneMesh.unload();
 		m_vplaneMesh.unload();
-		
+
 		bgfx::destroyTexture(m_texFigure);
 		bgfx::destroyTexture(m_texFieldstone);
 		bgfx::destroyTexture(m_texFlare);
-		
+
 		for (uint8_t ii = 0; ii < ShadowMapRenderTargets::Count; ++ii)
 		{
 			bgfx::destroyFrameBuffer(s_rtShadowMap[ii]);
 		}
 		bgfx::destroyFrameBuffer(s_rtBlur);
-		
+
 		s_programs.destroy();
-		
+
 		bgfx::destroyUniform(s_texColor);
 		bgfx::destroyUniform(s_shadowMap[3]);
 		bgfx::destroyUniform(s_shadowMap[2]);
 		bgfx::destroyUniform(s_shadowMap[1]);
 		bgfx::destroyUniform(s_shadowMap[0]);
-		
+
 		s_uniforms.destroy();
-		
+
 		cameraDestroy();
 		imguiDestroy();
-		
+
 		// Shutdown bgfx.
 		bgfx::shutdown();
-		
+
 		return 0;
 	}
 
@@ -1969,9 +1969,9 @@ class ExampleShadowmaps : public entry::AppI
 		{
 			m_viewState.m_width  = uint16_t(m_width);
 			m_viewState.m_height = uint16_t(m_height);
-			
+
 			const bgfx::Caps* caps = bgfx::getCaps();
-			
+
 			// Set view and projection matrices.
 			const float camFovy    = 60.0f;
 			const float camAspect  = float(int32_t(m_viewState.m_width) ) / float(int32_t(m_viewState.m_height) );
@@ -1981,14 +1981,14 @@ class ExampleShadowmaps : public entry::AppI
 			const float projWidth  = projHeight * camAspect;
 			bx::mtxProj(m_viewState.m_proj, camFovy, camAspect, camNear, camFar, caps->homogeneousDepth);
 			cameraGetViewMtx(m_viewState.m_view);
-			
+
 			float currentShadowMapSizef = float(int16_t(m_currentShadowMapSize) );
 			s_uniforms.m_shadowMapTexelSize = 1.0f / currentShadowMapSizef;
 
 			s_uniforms.submitConstUniforms();
-			
+
 			//		s_uniforms.submitConstUniforms();
-			
+
 			// Imgui.
 			imguiBeginFrame(m_mouseState.m_mx
 							, m_mouseState.m_my
@@ -1999,10 +1999,10 @@ class ExampleShadowmaps : public entry::AppI
 							, m_viewState.m_width
 							, m_viewState.m_height
 							);
-			
+
 			static int32_t rightScrollArea = 0;
 			imguiBeginScrollArea("Settings", m_viewState.m_width - 256 - 10, 10, 256, 660, &rightScrollArea);
-			
+
 #define IMGUI_FLOAT_SLIDER(_name, _val) \
 imguiSlider(_name \
 , _val \
@@ -2010,27 +2010,27 @@ imguiSlider(_name \
 , *( ((float*)&_val)+2) \
 , *( ((float*)&_val)+3) \
 )
-			
+
 			imguiBool("Update lights", m_settings.m_updateLights);
 			imguiBool("Update scene", m_settings.m_updateScene);
-			
+
 			imguiSeparatorLine();
 			imguiLabel("Shadow map depth:");
 			imguiEnum(m_settings.m_depthImpl);
 			ShadowMapSettings* currentSmSettings = &m_smSettings[m_settings.m_lightType][m_settings.m_depthImpl][m_settings.m_smImpl];
-			
+
 			imguiSeparator();
 			imguiBool("Draw depth buffer.", m_settings.m_drawDepthBuffer);
 			if (m_settings.m_drawDepthBuffer)
 			{
 				IMGUI_FLOAT_SLIDER("Depth value pow:", currentSmSettings->m_depthValuePow);
 			}
-			
+
 			imguiSeparatorLine();
 			imguiLabel("Shadow Map implementation:");
 			imguiEnum(m_settings.m_smImpl);
 			currentSmSettings = &m_smSettings[m_settings.m_lightType][m_settings.m_depthImpl][m_settings.m_smImpl];
-			
+
 			imguiSeparator();
 			IMGUI_FLOAT_SLIDER("Bias:", currentSmSettings->m_bias);
 			IMGUI_FLOAT_SLIDER("Normal offset:", currentSmSettings->m_normalOffset);
@@ -2040,20 +2040,20 @@ imguiSlider(_name \
 				IMGUI_FLOAT_SLIDER("Near plane:", currentSmSettings->m_near);
 			}
 			IMGUI_FLOAT_SLIDER("Far plane:", currentSmSettings->m_far);
-			
+
 			imguiSeparator();
 			switch(m_settings.m_smImpl)
 			{
 				case SmImpl::Hard:
 					//imguiLabel("Hard");
 					break;
-					
+
 				case SmImpl::PCF:
 					imguiLabel("PCF");
 					IMGUI_FLOAT_SLIDER("X Offset:", currentSmSettings->m_xOffset);
 					IMGUI_FLOAT_SLIDER("Y Offset:", currentSmSettings->m_yOffset);
 					break;
-					
+
 				case SmImpl::VSM:
 					imguiLabel("VSM");
 					IMGUI_FLOAT_SLIDER("Min variance", currentSmSettings->m_customParam0);
@@ -2065,7 +2065,7 @@ imguiSlider(_name \
 						IMGUI_FLOAT_SLIDER("Blur Y Offset:", currentSmSettings->m_yOffset);
 					}
 					break;
-					
+
 				case SmImpl::ESM:
 					imguiLabel("ESM");
 					IMGUI_FLOAT_SLIDER("ESM Hardness", currentSmSettings->m_customParam0);
@@ -2077,34 +2077,34 @@ imguiSlider(_name \
 						IMGUI_FLOAT_SLIDER("Blur Y Offset:", currentSmSettings->m_yOffset);
 					}
 					break;
-					
+
 				default:
 					break;
 			};
-			
+
 			imguiEndScrollArea();
-			
+
 			static int32_t leftScrollArea = 0;
 			imguiBeginScrollArea("Light", 10, 70, 256, 334, &leftScrollArea);
-			
+
 			const LightType::Enum ltBefore = m_settings.m_lightType;
 			imguiEnum(m_settings.m_lightType);
 			const LightType::Enum ltAfter = m_settings.m_lightType;
 			const bool bLtChanged = (ltAfter != ltBefore);
-			
+
 			imguiSeparator();
 			imguiBool("Show shadow map coverage.", m_settings.m_showSmCoverage);
-			
+
 			imguiSeparator();
 			imguiLabel("Shadow map resolution: %ux%u", m_currentShadowMapSize, m_currentShadowMapSize);
 			IMGUI_FLOAT_SLIDER(" ", currentSmSettings->m_sizePwrTwo);
-			
+
 			imguiSeparatorLine();
 			if (LightType::SpotLight == m_settings.m_lightType)
 			{
 				imguiLabel("Spot light");
 				imguiSlider("Shadow map area:", m_settings.m_coverageSpotL, 45.0f, 120.0f, 1.0f);
-				
+
 				imguiSeparator();
 				imguiSlider("Spot outer cone:", m_settings.m_spotOuterAngle, 0.0f, 91.0f, 0.1f);
 				imguiSlider("Spot inner cone:", m_settings.m_spotInnerAngle, 0.0f, 90.0f, 0.1f);
@@ -2113,7 +2113,7 @@ imguiSlider(_name \
 			{
 				imguiLabel("Point light");
 				imguiBool("Stencil pack", m_settings.m_stencilPack);
-				
+
 				imguiSlider("Fov X adjust:", m_settings.m_fovXAdjust, -20.0f, 20.0f, 0.0001f);
 				imguiSlider("Fov Y adjust:", m_settings.m_fovYAdjust, -20.0f, 20.0f, 0.0001f);
 			}
@@ -2125,12 +2125,12 @@ imguiSlider(_name \
 				imguiSlider("Cascade distribution:", m_settings.m_splitDistribution, 0.0f, 1.0f, 0.001f);
 				m_settings.m_numSplits = uint8_t(m_settings.m_numSplitsf);
 			}
-			
+
 #undef IMGUI_FLOAT_SLIDER
-			
+
 			imguiEndScrollArea();
 			imguiEndFrame();
-			
+
 			// Update uniforms.
 			s_uniforms.m_shadowMapBias   = currentSmSettings->m_bias;
 			s_uniforms.m_shadowMapOffset = currentSmSettings->m_normalOffset;
@@ -2143,7 +2143,7 @@ imguiSlider(_name \
 			s_uniforms.m_YOffset         = currentSmSettings->m_yOffset;
 			s_uniforms.m_showSmCoverage  = float(m_settings.m_showSmCoverage);
 			s_uniforms.m_lightPtr = (LightType::DirectionalLight == m_settings.m_lightType) ? &m_directionalLight : &m_pointLight;
-			
+
 			if (LightType::SpotLight == m_settings.m_lightType)
 			{
 				m_pointLight.m_attenuationSpotOuter.m_outer = m_settings.m_spotOuterAngle;
@@ -2153,9 +2153,9 @@ imguiSlider(_name \
 			{
 				m_pointLight.m_attenuationSpotOuter.m_outer = 91.0f; //above 90.0f means point light
 			}
-			
+
 			s_uniforms.submitPerFrameUniforms();
-			
+
 			// Time.
 			int64_t now = bx::getHPCounter();
 			static int64_t last = now;
@@ -2164,27 +2164,27 @@ imguiSlider(_name \
 			const double freq = double(bx::getHPFrequency() );
 			const double toMs = 1000.0/freq;
 			const float deltaTime = float(frameTime/freq);
-			
+
 			// Use debug font to print information about this example.
 			bgfx::dbgTextClear();
 			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/16-shadowmaps");
 			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Shadow maps example.");
 			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
-			
+
 			// Update camera.
 			cameraUpdate(deltaTime, m_mouseState);
-			
+
 			// Update view mtx.
 			cameraGetViewMtx(m_viewState.m_view);
-			
+
 			// Update lights.
 			m_pointLight.computeViewSpaceComponents(m_viewState.m_view);
 			m_directionalLight.computeViewSpaceComponents(m_viewState.m_view);
-			
+
 			// Update time accumulators.
 			if (m_settings.m_updateLights) { m_timeAccumulatorLight += deltaTime; }
 			if (m_settings.m_updateScene)  { m_timeAccumulatorScene += deltaTime; }
-			
+
 			// Setup lights.
 			m_pointLight.m_position.m_x = bx::fcos(m_timeAccumulatorLight) * 20.0f;
 			m_pointLight.m_position.m_y = 26.0f;
@@ -2192,11 +2192,11 @@ imguiSlider(_name \
 			m_pointLight.m_spotDirectionInner.m_x = -m_pointLight.m_position.m_x;
 			m_pointLight.m_spotDirectionInner.m_y = -m_pointLight.m_position.m_y;
 			m_pointLight.m_spotDirectionInner.m_z = -m_pointLight.m_position.m_z;
-			
+
 			m_directionalLight.m_position.m_x = -bx::fcos(m_timeAccumulatorLight);
 			m_directionalLight.m_position.m_y = -1.0f;
 			m_directionalLight.m_position.m_z = -bx::fsin(m_timeAccumulatorLight);
-			
+
 			// Setup instance matrices.
 			float mtxFloor[16];
 			const float floorScale = 550.0f;
@@ -2211,7 +2211,7 @@ imguiSlider(_name \
 					   , 0.0f //translateY
 					   , 0.0f //translateZ
 					   );
-			
+
 			float mtxBunny[16];
 			bx::mtxSRT(mtxBunny
 					   , 5.0f
@@ -2224,7 +2224,7 @@ imguiSlider(_name \
 					   , 5.0f
 					   , 0.0f
 					   );
-			
+
 			float mtxHollowcube[16];
 			bx::mtxSRT(mtxHollowcube
 					   , 2.5f
@@ -2237,7 +2237,7 @@ imguiSlider(_name \
 					   , 10.0f
 					   , 0.0f
 					   );
-			
+
 			float mtxCube[16];
 			bx::mtxSRT(mtxCube
 					   , 2.5f
@@ -2250,7 +2250,7 @@ imguiSlider(_name \
 					   , 5.0f
 					   , 0.0f
 					   );
-			
+
 			const uint8_t numTrees = 10;
 			float mtxTrees[numTrees][16];
 			for (uint8_t ii = 0; ii < numTrees; ++ii)
@@ -2267,17 +2267,17 @@ imguiSlider(_name \
 						   , bx::fcos(float(ii)*2.0f*bx::kPi/float(numTrees) ) * 60.0f
 						   );
 			}
-			
+
 			// Compute transform matrices.
 			const uint8_t shadowMapPasses = ShadowMapRenderTargets::Count;
 			float lightView[shadowMapPasses][16];
 			float lightProj[shadowMapPasses][16];
 			float mtxYpr[TetrahedronFaces::Count][16];
-			
+
 			float screenProj[16];
 			float screenView[16];
 			bx::mtxIdentity(screenView);
-			
+
 			bx::mtxOrtho(
 						 screenProj
 						 , 0.0f
@@ -2289,7 +2289,7 @@ imguiSlider(_name \
 						 , 0.0f
 						 , caps->homogeneousDepth
 						 );
-			
+
 			if (LightType::SpotLight == m_settings.m_lightType)
 			{
 				const float fovy = m_settings.m_coverageSpotL;
@@ -2302,14 +2302,14 @@ imguiSlider(_name \
 							, currentSmSettings->m_far
 							, false
 							);
-				
+
 				//For linear depth, prevent depth division by variable w-component in shaders and divide here by far plane
 				if (DepthImpl::Linear == m_settings.m_depthImpl)
 				{
 					lightProj[ProjType::Horizontal][10] /= currentSmSettings->m_far;
 					lightProj[ProjType::Horizontal][14] /= currentSmSettings->m_far;
 				}
-				
+
 				float at[3];
 				bx::vec3Add(at, m_pointLight.m_position.m_v, m_pointLight.m_spotDirectionInner.m_v);
 				bx::mtxLookAt(lightView[TetrahedronFaces::Green], m_pointLight.m_position.m_v, at);
@@ -2323,14 +2323,14 @@ imguiSlider(_name \
 					{ bx::toRad(-90.0f), bx::toRad(-27.36780516f), bx::toRad(0.0f) },
 					{ bx::toRad( 90.0f), bx::toRad(-27.36780516f), bx::toRad(0.0f) },
 				};
-				
-				
+
+
 				if (m_settings.m_stencilPack)
 				{
 					const float fovx = 143.98570868f + 3.51f + m_settings.m_fovXAdjust;
 					const float fovy = 125.26438968f + 9.85f + m_settings.m_fovYAdjust;
 					const float aspect = bx::ftan(bx::toRad(fovx*0.5f) )/bx::ftan(bx::toRad(fovy*0.5f) );
-					
+
 					bx::mtxProj(
 						  lightProj[ProjType::Vertical]
 								, fovx
@@ -2339,24 +2339,24 @@ imguiSlider(_name \
 								, currentSmSettings->m_far
 								, false
 								);
-					
+
 					//For linear depth, prevent depth division by variable w-component in shaders and divide here by far plane
 					if (DepthImpl::Linear == m_settings.m_depthImpl)
 					{
 						lightProj[ProjType::Vertical][10] /= currentSmSettings->m_far;
 						lightProj[ProjType::Vertical][14] /= currentSmSettings->m_far;
 					}
-					
+
 					ypr[TetrahedronFaces::Green ][2] = bx::toRad(180.0f);
 					ypr[TetrahedronFaces::Yellow][2] = bx::toRad(  0.0f);
 					ypr[TetrahedronFaces::Blue  ][2] = bx::toRad( 90.0f);
 					ypr[TetrahedronFaces::Red   ][2] = bx::toRad(-90.0f);
 				}
-				
+
 				const float fovx = 143.98570868f + 7.8f + m_settings.m_fovXAdjust;
 				const float fovy = 125.26438968f + 3.0f + m_settings.m_fovYAdjust;
 				const float aspect = bx::ftan(bx::toRad(fovx*0.5f) )/bx::ftan(bx::toRad(fovy*0.5f) );
-				
+
 				bx::mtxProj(
 							lightProj[ProjType::Horizontal]
 							, fovy
@@ -2365,29 +2365,29 @@ imguiSlider(_name \
 							, currentSmSettings->m_far
 							, caps->homogeneousDepth
 							);
-				
+
 				//For linear depth, prevent depth division by variable w component in shaders and divide here by far plane
 				if (DepthImpl::Linear == m_settings.m_depthImpl)
 				{
 					lightProj[ProjType::Horizontal][10] /= currentSmSettings->m_far;
 					lightProj[ProjType::Horizontal][14] /= currentSmSettings->m_far;
 				}
-				
-				
+
+
 				for (uint8_t ii = 0; ii < TetrahedronFaces::Count; ++ii)
 				{
 					float mtxTmp[16];
 					mtxYawPitchRoll(mtxTmp, ypr[ii][0], ypr[ii][1], ypr[ii][2]);
-					
+
 					float tmp[3] =
 					{
 						-bx::vec3Dot(m_pointLight.m_position.m_v, &mtxTmp[0]),
 						-bx::vec3Dot(m_pointLight.m_position.m_v, &mtxTmp[4]),
 						-bx::vec3Dot(m_pointLight.m_position.m_v, &mtxTmp[8]),
 					};
-					
+
 					bx::mtxTranspose(mtxYpr[ii], mtxTmp);
-					
+
 					bx::memCopy(lightView[ii], mtxYpr[ii], 12*sizeof(float) );
 					lightView[ii][12] = tmp[0];
 					lightView[ii][13] = tmp[1];
@@ -2406,25 +2406,25 @@ imguiSlider(_name \
 				};
 				float at[3] = { 0.0f, 0.0f, 0.0f };
 				bx::mtxLookAt(lightView[0], eye, at);
-				
+
 				// Compute camera inverse view mtx.
 				float mtxViewInv[16];
 				bx::mtxInverse(mtxViewInv, m_viewState.m_view);
-				
+
 				// Compute split distances.
 				const uint8_t maxNumSplits = 4;
 				BX_CHECK(maxNumSplits >= settings.m_numSplits, "Error! Max num splits.");
-				
+
 				float splitSlices[maxNumSplits*2];
 				splitFrustum(splitSlices, m_settings.m_numSplits, currentSmSettings->m_near, currentSmSettings->m_far, m_settings.m_splitDistribution);
-				
+
 				// Update uniforms.
 				for (uint8_t ii = 0, ff = 1; ii < m_settings.m_numSplits; ++ii, ff+=2)
 				{
 					// This lags for 1 frame, but it's not a problem.
 					s_uniforms.m_csmFarDistances[ii] = splitSlices[ff];
 				}
-				
+
 				float mtxProj[16];
 				bx::mtxOrtho(
 							 mtxProj
@@ -2437,23 +2437,23 @@ imguiSlider(_name \
 							 , 0.0f
 							 , caps->homogeneousDepth
 							 );
-				
+
 				const uint8_t numCorners = 8;
 				float frustumCorners[maxNumSplits][numCorners][3];
 				for (uint8_t ii = 0, nn = 0, ff = 1; ii < m_settings.m_numSplits; ++ii, nn+=2, ff+=2)
 				{
 					// Compute frustum corners for one split in world space.
 					worldSpaceFrustumCorners( (float*)frustumCorners[ii], splitSlices[nn], splitSlices[ff], projWidth, projHeight, mtxViewInv);
-					
+
 					float min[3] = {  9000.0f,  9000.0f,  9000.0f };
 					float max[3] = { -9000.0f, -9000.0f, -9000.0f };
-					
+
 					for (uint8_t jj = 0; jj < numCorners; ++jj)
 					{
 						// Transform to light space.
 						float lightSpaceFrustumCorner[3];
 						bx::vec3MulMtx(lightSpaceFrustumCorner, frustumCorners[ii][jj], lightView[0]);
-						
+
 						// Update bounding box.
 						min[0] = bx::fmin(min[0], lightSpaceFrustumCorner[0]);
 						max[0] = bx::fmax(max[0], lightSpaceFrustumCorner[0]);
@@ -2462,63 +2462,63 @@ imguiSlider(_name \
 						min[2] = bx::fmin(min[2], lightSpaceFrustumCorner[2]);
 						max[2] = bx::fmax(max[2], lightSpaceFrustumCorner[2]);
 					}
-					
+
 					float minproj[3];
 					float maxproj[3];
 					bx::vec3MulMtxH(minproj, min, mtxProj);
 					bx::vec3MulMtxH(maxproj, max, mtxProj);
-					
+
 					float offsetx, offsety;
 					float scalex, scaley;
-					
+
 					scalex = 2.0f / (maxproj[0] - minproj[0]);
 					scaley = 2.0f / (maxproj[1] - minproj[1]);
-					
+
 					if (m_settings.m_stabilize)
 					{
 						const float quantizer = 64.0f;
 						scalex = quantizer / bx::fceil(quantizer / scalex);
 						scaley = quantizer / bx::fceil(quantizer / scaley);
 					}
-					
+
 					offsetx = 0.5f * (maxproj[0] + minproj[0]) * scalex;
 					offsety = 0.5f * (maxproj[1] + minproj[1]) * scaley;
-					
+
 					if (m_settings.m_stabilize)
 					{
 						const float halfSize = currentShadowMapSizef * 0.5f;
 						offsetx = bx::fceil(offsetx * halfSize) / halfSize;
 						offsety = bx::fceil(offsety * halfSize) / halfSize;
 					}
-					
+
 					float mtxCrop[16];
 					bx::mtxIdentity(mtxCrop);
 					mtxCrop[ 0] = scalex;
 					mtxCrop[ 5] = scaley;
 					mtxCrop[12] = offsetx;
 					mtxCrop[13] = offsety;
-					
+
 					bx::mtxMul(lightProj[ii], mtxCrop, mtxProj);
 				}
 			}
-			
+
 			// Reset render targets.
 			const bgfx::FrameBufferHandle invalidRt = BGFX_INVALID_HANDLE;
 			for (uint8_t ii = 0; ii < RENDERVIEW_DRAWDEPTH_3_ID+1; ++ii)
 			{
 				bgfx::setViewFrameBuffer(ii, invalidRt);
 			}
-			
+
 			// Determine on-screen rectangle size where depth buffer will be drawn.
 			uint16_t depthRectHeight = uint16_t(float(m_viewState.m_height) / 2.5f);
 			uint16_t depthRectWidth  = depthRectHeight;
 			uint16_t depthRectX = 0;
 			uint16_t depthRectY = m_viewState.m_height - depthRectHeight;
-			
+
 			// Setup views and render targets.
 			bgfx::setViewRect(0, 0, 0, m_viewState.m_width, m_viewState.m_height);
 			bgfx::setViewTransform(0, m_viewState.m_view, m_viewState.m_proj);
-			
+
 			if (LightType::SpotLight == m_settings.m_lightType)
 			{
 				/**
@@ -2530,7 +2530,7 @@ imguiSlider(_name \
 				 * RENDERVIEW_DRAWSCENE_1_ID - Draw floor bottom.
 				 * RENDERVIEW_DRAWDEPTH_0_ID - Draw depth buffer.
 				 */
-				
+
 				bgfx::setViewRect(RENDERVIEW_SHADOWMAP_0_ID, 0, 0, m_currentShadowMapSize, m_currentShadowMapSize);
 				bgfx::setViewRect(RENDERVIEW_SHADOWMAP_1_ID, 0, 0, m_currentShadowMapSize, m_currentShadowMapSize);
 				bgfx::setViewRect(RENDERVIEW_VBLUR_0_ID, 0, 0, m_currentShadowMapSize, m_currentShadowMapSize);
@@ -2538,7 +2538,7 @@ imguiSlider(_name \
 				bgfx::setViewRect(RENDERVIEW_DRAWSCENE_0_ID, 0, 0, m_viewState.m_width, m_viewState.m_height);
 				bgfx::setViewRect(RENDERVIEW_DRAWSCENE_1_ID, 0, 0, m_viewState.m_width, m_viewState.m_height);
 				bgfx::setViewRect(RENDERVIEW_DRAWDEPTH_0_ID, depthRectX, depthRectY, depthRectWidth, depthRectHeight);
-				
+
 				bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_0_ID, screenView, screenProj);
 				bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_1_ID, lightView[0], lightProj[ProjType::Horizontal]);
 				bgfx::setViewTransform(RENDERVIEW_VBLUR_0_ID, screenView, screenProj);
@@ -2546,7 +2546,7 @@ imguiSlider(_name \
 				bgfx::setViewTransform(RENDERVIEW_DRAWSCENE_0_ID, m_viewState.m_view, m_viewState.m_proj);
 				bgfx::setViewTransform(RENDERVIEW_DRAWSCENE_1_ID, m_viewState.m_view, m_viewState.m_proj);
 				bgfx::setViewTransform(RENDERVIEW_DRAWDEPTH_0_ID, screenView, screenProj);
-				
+
 				bgfx::setViewFrameBuffer(RENDERVIEW_SHADOWMAP_0_ID, s_rtShadowMap[0]);
 				bgfx::setViewFrameBuffer(RENDERVIEW_SHADOWMAP_1_ID, s_rtShadowMap[0]);
 				bgfx::setViewFrameBuffer(RENDERVIEW_VBLUR_0_ID, s_rtBlur);
@@ -2566,7 +2566,7 @@ imguiSlider(_name \
 				 * RENDERVIEW_DRAWSCENE_1_ID - Draw floor bottom.
 				 * RENDERVIEW_DRAWDEPTH_0_ID - Draw depth buffer.
 				 */
-				
+
 				bgfx::setViewRect(RENDERVIEW_SHADOWMAP_0_ID, 0, 0, m_currentShadowMapSize, m_currentShadowMapSize);
 				if (m_settings.m_stencilPack)
 				{
@@ -2590,7 +2590,7 @@ imguiSlider(_name \
 				bgfx::setViewRect(RENDERVIEW_DRAWSCENE_0_ID, 0, 0, m_viewState.m_width, m_viewState.m_height);
 				bgfx::setViewRect(RENDERVIEW_DRAWSCENE_1_ID, 0, 0, m_viewState.m_width, m_viewState.m_height);
 				bgfx::setViewRect(RENDERVIEW_DRAWDEPTH_0_ID, depthRectX, depthRectY, depthRectWidth, depthRectHeight);
-				
+
 				bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_0_ID, screenView, screenProj);
 				bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_1_ID, lightView[TetrahedronFaces::Green],  lightProj[ProjType::Horizontal]);
 				bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_2_ID, lightView[TetrahedronFaces::Yellow], lightProj[ProjType::Horizontal]);
@@ -2609,7 +2609,7 @@ imguiSlider(_name \
 				bgfx::setViewTransform(RENDERVIEW_DRAWSCENE_0_ID, m_viewState.m_view, m_viewState.m_proj);
 				bgfx::setViewTransform(RENDERVIEW_DRAWSCENE_1_ID, m_viewState.m_view, m_viewState.m_proj);
 				bgfx::setViewTransform(RENDERVIEW_DRAWDEPTH_0_ID, screenView, screenProj);
-				
+
 				bgfx::setViewFrameBuffer(RENDERVIEW_SHADOWMAP_0_ID, s_rtShadowMap[0]);
 				bgfx::setViewFrameBuffer(RENDERVIEW_SHADOWMAP_1_ID, s_rtShadowMap[0]);
 				bgfx::setViewFrameBuffer(RENDERVIEW_SHADOWMAP_2_ID, s_rtShadowMap[0]);
@@ -2640,12 +2640,12 @@ imguiSlider(_name \
 				 * RENDERVIEW_DRAWDEPTH_2_ID - Draw depth buffer for third  split.
 				 * RENDERVIEW_DRAWDEPTH_3_ID - Draw depth buffer for fourth split.
 				 */
-				
+
 				depthRectHeight = m_viewState.m_height / 3;
 				depthRectWidth  = depthRectHeight;
 				depthRectX = 0;
 				depthRectY = m_viewState.m_height - depthRectHeight;
-				
+
 				bgfx::setViewRect(RENDERVIEW_SHADOWMAP_1_ID, 0, 0, m_currentShadowMapSize, m_currentShadowMapSize);
 				bgfx::setViewRect(RENDERVIEW_SHADOWMAP_2_ID, 0, 0, m_currentShadowMapSize, m_currentShadowMapSize);
 				bgfx::setViewRect(RENDERVIEW_SHADOWMAP_3_ID, 0, 0, m_currentShadowMapSize, m_currentShadowMapSize);
@@ -2664,7 +2664,7 @@ imguiSlider(_name \
 				bgfx::setViewRect(RENDERVIEW_DRAWDEPTH_1_ID, depthRectX+(1*depthRectWidth), depthRectY, depthRectWidth, depthRectHeight);
 				bgfx::setViewRect(RENDERVIEW_DRAWDEPTH_2_ID, depthRectX+(2*depthRectWidth), depthRectY, depthRectWidth, depthRectHeight);
 				bgfx::setViewRect(RENDERVIEW_DRAWDEPTH_3_ID, depthRectX+(3*depthRectWidth), depthRectY, depthRectWidth, depthRectHeight);
-				
+
 				bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_1_ID, lightView[0], lightProj[0]);
 				bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_2_ID, lightView[0], lightProj[1]);
 				bgfx::setViewTransform(RENDERVIEW_SHADOWMAP_3_ID, lightView[0], lightProj[2]);
@@ -2683,7 +2683,7 @@ imguiSlider(_name \
 				bgfx::setViewTransform(RENDERVIEW_DRAWDEPTH_1_ID, screenView, screenProj);
 				bgfx::setViewTransform(RENDERVIEW_DRAWDEPTH_2_ID, screenView, screenProj);
 				bgfx::setViewTransform(RENDERVIEW_DRAWDEPTH_3_ID, screenView, screenProj);
-				
+
 				bgfx::setViewFrameBuffer(RENDERVIEW_SHADOWMAP_1_ID, s_rtShadowMap[0]);
 				bgfx::setViewFrameBuffer(RENDERVIEW_SHADOWMAP_2_ID, s_rtShadowMap[1]);
 				bgfx::setViewFrameBuffer(RENDERVIEW_SHADOWMAP_3_ID, s_rtShadowMap[2]);
@@ -2697,7 +2697,7 @@ imguiSlider(_name \
 				bgfx::setViewFrameBuffer(RENDERVIEW_VBLUR_3_ID, s_rtBlur);         //vblur
 				bgfx::setViewFrameBuffer(RENDERVIEW_HBLUR_3_ID, s_rtShadowMap[3]); //hblur
 			}
-			
+
 			// Clear backbuffer at beginning.
 			bgfx::setViewClear(0
 							   , BGFX_CLEAR_COLOR
@@ -2707,13 +2707,13 @@ imguiSlider(_name \
 							   , m_clearValues.m_clearStencil
 							   );
 			bgfx::touch(0);
-			
+
 			// Clear shadowmap rendertarget at beginning.
 			const uint8_t flags0 = (LightType::DirectionalLight == m_settings.m_lightType)
 			? 0
 			: BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH | BGFX_CLEAR_STENCIL
 			;
-			
+
 			bgfx::setViewClear(RENDERVIEW_SHADOWMAP_0_ID
 							   , flags0
 							   , 0xfefefefe //blur fails on completely white regions
@@ -2721,12 +2721,12 @@ imguiSlider(_name \
 							   , m_clearValues.m_clearStencil
 							   );
 			bgfx::touch(RENDERVIEW_SHADOWMAP_0_ID);
-			
+
 			const uint8_t flags1 = (LightType::DirectionalLight == m_settings.m_lightType)
 			? BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
 			: 0
 			;
-			
+
 			for (uint8_t ii = 0; ii < 4; ++ii)
 			{
 				bgfx::setViewClear(RENDERVIEW_SHADOWMAP_1_ID+ii
@@ -2737,9 +2737,9 @@ imguiSlider(_name \
 								   );
 				bgfx::touch(RENDERVIEW_SHADOWMAP_1_ID+ii);
 			}
-			
+
 			// Render.
-			
+
 			// Craft shadow map.
 			{
 				// Craft stencil mask for point light shadow map packing.
@@ -2751,40 +2751,40 @@ imguiSlider(_name \
 						{
 							float m_x, m_y, m_z;
 						};
-						
+
 						bgfx::TransientVertexBuffer vb;
 						bgfx::allocTransientVertexBuffer(&vb, 6, m_posDecl);
 						Pos* vertex = (Pos*)vb.data;
-						
+
 						const float min = 0.0f;
 						const float max = 1.0f;
 						const float center = 0.5f;
 						const float zz = 0.0f;
-						
+
 						vertex[0].m_x = min;
 						vertex[0].m_y = min;
 						vertex[0].m_z = zz;
-						
+
 						vertex[1].m_x = max;
 						vertex[1].m_y = min;
 						vertex[1].m_z = zz;
-						
+
 						vertex[2].m_x = center;
 						vertex[2].m_y = center;
 						vertex[2].m_z = zz;
-						
+
 						vertex[3].m_x = center;
 						vertex[3].m_y = center;
 						vertex[3].m_z = zz;
-						
+
 						vertex[4].m_x = max;
 						vertex[4].m_y = max;
 						vertex[4].m_z = zz;
-						
+
 						vertex[5].m_x = min;
 						vertex[5].m_y = max;
 						vertex[5].m_z = zz;
-						
+
 						bgfx::setState(0);
 						bgfx::setStencil(BGFX_STENCIL_TEST_ALWAYS
 										 | BGFX_STENCIL_FUNC_REF(1)
@@ -2797,7 +2797,7 @@ imguiSlider(_name \
 						bgfx::submit(RENDERVIEW_SHADOWMAP_0_ID, s_programs.m_black);
 					}
 				}
-				
+
 				// Draw scene into shadowmap.
 				uint8_t drawNum;
 				if (LightType::SpotLight == m_settings.m_lightType)
@@ -2812,45 +2812,45 @@ imguiSlider(_name \
 				{
 					drawNum = m_settings.m_numSplits;
 				}
-				
+
 				for (uint8_t ii = 0; ii < drawNum; ++ii)
 				{
 					const uint8_t viewId = RENDERVIEW_SHADOWMAP_1_ID + ii;
-					
+
 					uint8_t renderStateIndex = RenderState::ShadowMap_PackDepth;
 					if(LightType::PointLight == m_settings.m_lightType && m_settings.m_stencilPack)
 					{
 						renderStateIndex = uint8_t( (ii < 2) ? RenderState::ShadowMap_PackDepthHoriz : RenderState::ShadowMap_PackDepthVert);
 					}
-					
+
 					// Floor.
 					m_hplaneMesh.submit(viewId
 										, mtxFloor
 										, *currentSmSettings->m_progPack
 										, s_renderStates[renderStateIndex]
 										);
-					
+
 					// Bunny.
 					m_bunnyMesh.submit(viewId
 									   , mtxBunny
 									   , *currentSmSettings->m_progPack
 									   , s_renderStates[renderStateIndex]
 									   );
-					
+
 					// Hollow cube.
 					m_hollowcubeMesh.submit(viewId
 											, mtxHollowcube
 											, *currentSmSettings->m_progPack
 											, s_renderStates[renderStateIndex]
 											);
-					
+
 					// Cube.
 					m_cubeMesh.submit(viewId
 									  , mtxCube
 									  , *currentSmSettings->m_progPack
 									  , s_renderStates[renderStateIndex]
 									  );
-					
+
 					// Trees.
 					for (uint8_t jj = 0; jj < numTrees; ++jj)
 					{
@@ -2862,10 +2862,10 @@ imguiSlider(_name \
 					}
 				}
 			}
-			
+
 			PackDepth::Enum depthType = (SmImpl::VSM == m_settings.m_smImpl) ? PackDepth::VSM : PackDepth::RGBA;
 			bool bVsmOrEsm = (SmImpl::VSM == m_settings.m_smImpl) || (SmImpl::ESM == m_settings.m_smImpl);
-			
+
 			// Blur shadow map.
 			if (bVsmOrEsm
 				&&  currentSmSettings->m_doBlur)
@@ -2874,23 +2874,23 @@ imguiSlider(_name \
 				bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 				screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 				bgfx::submit(RENDERVIEW_VBLUR_0_ID, s_programs.m_vBlur[depthType]);
-				
+
 				bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtBlur) );
 				bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 				screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 				bgfx::submit(RENDERVIEW_HBLUR_0_ID, s_programs.m_hBlur[depthType]);
-				
+
 				if (LightType::DirectionalLight == m_settings.m_lightType)
 				{
 					for (uint8_t ii = 1, jj = 2; ii < m_settings.m_numSplits; ++ii, jj+=2)
 					{
 						const uint8_t viewId = RENDERVIEW_VBLUR_0_ID + jj;
-						
+
 						bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtShadowMap[ii]) );
 						bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 						screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 						bgfx::submit(viewId, s_programs.m_vBlur[depthType]);
-						
+
 						bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtBlur) );
 						bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 						screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
@@ -2898,15 +2898,15 @@ imguiSlider(_name \
 					}
 				}
 			}
-			
+
 			// Draw scene.
 			{
 				// Setup shadow mtx.
 				float mtxShadow[16];
-				
+
 				const float ymul = (s_flipV) ? 0.5f : -0.5f;
 				float zadd = (DepthImpl::Linear == m_settings.m_depthImpl) ? 0.0f : 0.5f;
-				
+
 				const float mtxBias[16] =
 				{
 					0.5f, 0.0f, 0.0f, 0.0f,
@@ -2914,7 +2914,7 @@ imguiSlider(_name \
 					0.0f, 0.0f, 0.5f, 0.0f,
 					0.5f, 0.5f, zadd, 1.0f,
 				};
-				
+
 				if (LightType::SpotLight == m_settings.m_lightType)
 				{
 					float mtxTmp[16];
@@ -2925,11 +2925,11 @@ imguiSlider(_name \
 				{
 					const float s = (s_flipV) ? 1.0f : -1.0f; //sign
 					zadd = (DepthImpl::Linear == m_settings.m_depthImpl) ? 0.0f : 0.5f;
-					
+
 					const float mtxCropBias[2][TetrahedronFaces::Count][16] =
 					{
 						{ // settings.m_stencilPack == false
-							
+
 							{ // D3D: Green, OGL: Blue
 								0.25f,    0.0f, 0.0f, 0.0f,
 							 0.0f, s*0.25f, 0.0f, 0.0f,
@@ -2956,7 +2956,7 @@ imguiSlider(_name \
 							},
 						},
 						{ // settings.m_stencilPack == true
-							
+
 							{ // D3D: Red, OGL: Blue
 								0.25f,   0.0f, 0.0f, 0.0f,
 							 0.0f, s*0.5f, 0.0f, 0.0f,
@@ -2983,7 +2983,7 @@ imguiSlider(_name \
 							},
 						}
 					};
-					
+
 					//Use as: [stencilPack][flipV][tetrahedronFace]
 					static const uint8_t cropBiasIndices[2][2][4] =
 					{
@@ -2996,17 +2996,17 @@ imguiSlider(_name \
 							{ 2, 3, 0, 1 }, //flipV == true
 						},
 					};
-					
+
 					for (uint8_t ii = 0; ii < TetrahedronFaces::Count; ++ii)
 					{
 						ProjType::Enum projType = (m_settings.m_stencilPack) ? ProjType::Enum(ii>1) : ProjType::Horizontal;
 						uint8_t biasIndex = cropBiasIndices[m_settings.m_stencilPack][uint8_t(s_flipV)][ii];
-						
+
 						float mtxTmp[16];
 						bx::mtxMul(mtxTmp, mtxYpr[ii], lightProj[projType]);
 						bx::mtxMul(m_shadowMapMtx[ii], mtxTmp, mtxCropBias[m_settings.m_stencilPack][biasIndex]); //mtxYprProjBias
 					}
-					
+
 					bx::mtxTranslate(mtxShadow //lightInvTranslate
 									 , -m_pointLight.m_position.m_v[0]
 									 , -m_pointLight.m_position.m_v[1]
@@ -3018,12 +3018,12 @@ imguiSlider(_name \
 					for (uint8_t ii = 0; ii < m_settings.m_numSplits; ++ii)
 					{
 						float mtxTmp[16];
-						
+
 						bx::mtxMul(mtxTmp, lightProj[ii], mtxBias);
 						bx::mtxMul(m_shadowMapMtx[ii], lightView[0], mtxTmp); //lViewProjCropBias
 					}
 				}
-				
+
 				// Floor.
 				if (LightType::DirectionalLight != m_settings.m_lightType)
 				{
@@ -3035,7 +3035,7 @@ imguiSlider(_name \
 									, s_renderStates[RenderState::Default]
 									, true
 									);
-				
+
 				// Bunny.
 				if (LightType::DirectionalLight != m_settings.m_lightType)
 				{
@@ -3047,7 +3047,7 @@ imguiSlider(_name \
 								   , s_renderStates[RenderState::Default]
 								   , true
 								   );
-				
+
 				// Hollow cube.
 				if (LightType::DirectionalLight != m_settings.m_lightType)
 				{
@@ -3059,7 +3059,7 @@ imguiSlider(_name \
 										, s_renderStates[RenderState::Default]
 										, true
 										);
-				
+
 				// Cube.
 				if (LightType::DirectionalLight != m_settings.m_lightType)
 				{
@@ -3071,7 +3071,7 @@ imguiSlider(_name \
 								  , s_renderStates[RenderState::Default]
 								  , true
 								  );
-				
+
 				// Trees.
 				for (uint8_t ii = 0; ii < numTrees; ++ii)
 				{
@@ -3086,7 +3086,7 @@ imguiSlider(_name \
 									  , true
 									  );
 				}
-				
+
 				// Lights.
 				if (LightType::SpotLight == m_settings.m_lightType || LightType::PointLight == m_settings.m_lightType)
 				{
@@ -3100,7 +3100,7 @@ imguiSlider(_name \
 										, m_texFlare
 										);
 				}
-				
+
 				// Draw floor bottom.
 				float floorBottomMtx[16];
 				bx::mtxSRT(floorBottomMtx
@@ -3114,7 +3114,7 @@ imguiSlider(_name \
 						   , -0.1f //translateY
 						   , 0.0f  //translateZ
 						   );
-				
+
 				m_hplaneMesh.submit(RENDERVIEW_DRAWSCENE_1_ID
 									, floorBottomMtx
 									, s_programs.m_texture
@@ -3122,7 +3122,7 @@ imguiSlider(_name \
 									, m_texFigure
 									);
 			}
-			
+
 			// Draw depth rect.
 			if (m_settings.m_drawDepthBuffer)
 			{
@@ -3130,7 +3130,7 @@ imguiSlider(_name \
 				bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
 				screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 				bgfx::submit(RENDERVIEW_DRAWDEPTH_0_ID, s_programs.m_drawDepth[depthType]);
-				
+
 				if (LightType::DirectionalLight == m_settings.m_lightType)
 				{
 					for (uint8_t ii = 1; ii < m_settings.m_numSplits; ++ii)
@@ -3142,17 +3142,17 @@ imguiSlider(_name \
 					}
 				}
 			}
-			
+
 			// Update render target size.
 			uint16_t shadowMapSize = 1 << uint32_t(currentSmSettings->m_sizePwrTwo);
 			if (bLtChanged || m_currentShadowMapSize != shadowMapSize)
 			{
 				m_currentShadowMapSize = shadowMapSize;
 				s_uniforms.m_shadowMapTexelSize = 1.0f / currentShadowMapSizef;
-				
+
 				{
 					bgfx::destroyFrameBuffer(s_rtShadowMap[0]);
-					
+
 					bgfx::TextureHandle fbtextures[] =
 					{
 						bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
@@ -3160,14 +3160,14 @@ imguiSlider(_name \
 					};
 					s_rtShadowMap[0] = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 				}
-				
+
 				if (LightType::DirectionalLight == m_settings.m_lightType)
 				{
 					for (uint8_t ii = 1; ii < ShadowMapRenderTargets::Count; ++ii)
 					{
 						{
 							bgfx::destroyFrameBuffer(s_rtShadowMap[ii]);
-							
+
 							bgfx::TextureHandle fbtextures[] =
 							{
 								bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
@@ -3177,56 +3177,56 @@ imguiSlider(_name \
 						}
 					}
 				}
-				
+
 				bgfx::destroyFrameBuffer(s_rtBlur);
 				s_rtBlur = bgfx::createFrameBuffer(m_currentShadowMapSize, m_currentShadowMapSize, bgfx::TextureFormat::BGRA8);
 			}
-			
+
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
 			bgfx::frame();
-			
+
 			return true;
 		}
-		
+
 		return false;
 	}
-	
+
 	entry::MouseState m_mouseState;
 	uint32_t m_width;
 	uint32_t m_height;
 	uint32_t m_debug;
 	uint32_t m_reset;
-	
+
 	ViewState m_viewState;
 	ClearValues m_clearValues;
-	
+
 	bgfx::VertexDecl m_posDecl;
-	
+
 	bgfx::TextureHandle m_texFigure;
 	bgfx::TextureHandle m_texFlare;
 	bgfx::TextureHandle m_texFieldstone;
-	
+
 	Mesh m_bunnyMesh;
 	Mesh m_treeMesh;
 	Mesh m_cubeMesh;
 	Mesh m_hollowcubeMesh;
 	Mesh m_hplaneMesh;
 	Mesh m_vplaneMesh;
-	
+
 	float m_color[4];
 	Material m_defaultMaterial;
 	Light m_pointLight;
 	Light m_directionalLight;
-	
+
 	float m_lightMtx[16];
 	float m_shadowMapMtx[ShadowMapRenderTargets::Count][16];
-	
+
 	ShadowMapSettings m_smSettings[LightType::Count][DepthImpl::Count][SmImpl::Count];
 	SceneSettings m_settings;
-	
+
 	uint16_t m_currentShadowMapSize;
-	
+
 	float m_timeAccumulatorLight;
 	float m_timeAccumulatorScene;
 };
