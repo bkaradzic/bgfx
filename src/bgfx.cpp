@@ -1154,13 +1154,26 @@ namespace bgfx
 
 		BX_TRACE("");
 		BX_TRACE("Sort key masks:");
-		BX_TRACE("\t  View     %016" PRIx64, SORT_KEY_VIEW_MASK);
-		BX_TRACE("\t  Draw bit %016" PRIx64, SORT_KEY_DRAW_BIT);
-		BX_TRACE("\t  Seq      %016" PRIx64, SORT_KEY_SEQ_MASK);
-		BX_TRACE("\tD Trans    %016" PRIx64, SORT_KEY_DRAW_TRANS_MASK);
-		BX_TRACE("\tD Program  %016" PRIx64, SORT_KEY_DRAW_PROGRAM_MASK);
-		BX_TRACE("\tC Program  %016" PRIx64, SORT_KEY_COMPUTE_PROGRAM_MASK);
-		BX_TRACE("\tD Depth    %016" PRIx64, SORT_KEY_DRAW_DEPTH_MASK);
+		BX_TRACE("\t   View     %016" PRIx64, SORT_KEY_VIEW_MASK);
+		BX_TRACE("\t   Draw bit %016" PRIx64, SORT_KEY_DRAW_BIT);
+
+		BX_TRACE("");
+		BX_TRACE("\tD  Type     %016" PRIx64, SORT_KEY_DRAW_TYPE_BIT);
+
+		BX_TRACE("");
+		BX_TRACE("\tD0 Seq      %016" PRIx64, SORT_KEY_DRAW_0_SEQ_MASK);
+		BX_TRACE("\tD0 Trans    %016" PRIx64, SORT_KEY_DRAW_0_TRANS_MASK);
+		BX_TRACE("\tD0 Program  %016" PRIx64, SORT_KEY_DRAW_0_PROGRAM_MASK);
+		BX_TRACE("\tD0 Depth    %016" PRIx64, SORT_KEY_DRAW_0_DEPTH_MASK);
+
+		BX_TRACE("");
+		BX_TRACE("\tD1 Depth    %016" PRIx64, SORT_KEY_DRAW_1_DEPTH_MASK);
+		BX_TRACE("\tD1 Trans    %016" PRIx64, SORT_KEY_DRAW_1_TRANS_MASK);
+		BX_TRACE("\tD1 Program  %016" PRIx64, SORT_KEY_DRAW_1_PROGRAM_MASK);
+
+		BX_TRACE("");
+		BX_TRACE("\t C Seq      %016" PRIx64, SORT_KEY_COMPUTE_SEQ_MASK);
+		BX_TRACE("\t C Program  %016" PRIx64, SORT_KEY_COMPUTE_PROGRAM_MASK);
 
 		BX_TRACE("");
 		BX_TRACE("Supported capabilities (renderer %s, vendor 0x%04x, device 0x%04x):"
