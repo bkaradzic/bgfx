@@ -3601,11 +3601,11 @@ error:
 		s_ctx->setViewClear(_id, _flags, _depth, _stencil, _0, _1, _2, _3, _4, _5, _6, _7);
 	}
 
-	void setViewSeq(uint8_t _id, bool _enabled)
+	void setViewMode(uint8_t _id, ViewMode::Enum _mode)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(checkView(_id), "Invalid view id: %d", _id);
-		s_ctx->setViewSeq(_id, _enabled);
+		s_ctx->setViewMode(_id, _mode);
 	}
 
 	void setViewFrameBuffer(uint8_t _id, FrameBufferHandle _handle)
@@ -4688,9 +4688,9 @@ BGFX_C_API void bgfx_set_view_clear_mrt(uint8_t _id, uint16_t _flags, float _dep
 	bgfx::setViewClear(_id, _flags, _depth, _stencil, _0, _1, _2, _3, _4, _5, _6, _7);
 }
 
-BGFX_C_API void bgfx_set_view_seq(uint8_t _id, bool _enabled)
+BGFX_C_API void bgfx_set_view_mode(uint8_t _id, bgfx_view_mode_t _mode)
 {
-	bgfx::setViewSeq(_id, _enabled);
+	bgfx::setViewMode(_id, bgfx::ViewMode::Enum(_mode) );
 }
 
 BGFX_C_API void bgfx_set_view_frame_buffer(uint8_t _id, bgfx_frame_buffer_handle_t _handle)
@@ -5045,7 +5045,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 	BGFX_IMPORT_FUNC(set_view_scissor) \
 	BGFX_IMPORT_FUNC(set_view_clear) \
 	BGFX_IMPORT_FUNC(set_view_clear_mrt) \
-	BGFX_IMPORT_FUNC(set_view_seq) \
+	BGFX_IMPORT_FUNC(set_view_mode) \
 	BGFX_IMPORT_FUNC(set_view_frame_buffer) \
 	BGFX_IMPORT_FUNC(set_view_transform) \
 	BGFX_IMPORT_FUNC(set_view_transform_stereo) \

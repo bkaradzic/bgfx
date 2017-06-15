@@ -1266,7 +1266,7 @@ class ExampleNanoVG : public entry::AppI
 		imguiCreate();
 
 		m_nvg = nvgCreate(1, 0);
-		bgfx::setViewSeq(0, true);
+		bgfx::setViewMode(0, bgfx::ViewMode::Sequential);
 
 		loadDemoData(m_nvg, &m_data);
 

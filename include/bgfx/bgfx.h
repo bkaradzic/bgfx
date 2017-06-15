@@ -342,6 +342,23 @@ namespace bgfx
 		};
 	};
 
+	/// View mode sets draw call sort order.
+	///
+	/// @attention C99 equivalent is `bgfx_view_mode_t`.
+	///
+	struct ViewMode
+	{
+		enum Enum
+		{
+			Default,         //!< Default sort order.
+			Sequential,      //!< Sort in the same order in which submit calls were called.
+			DepthAscending,  //!< Sort draw call depth in ascending order.
+			DepthDescending, //!< Sort draw call depth in descending order.
+
+			Count
+		};
+	};
+
 	static const uint16_t kInvalidHandle = UINT16_MAX;
 
 	BGFX_HANDLE(DynamicIndexBufferHandle);
@@ -2189,9 +2206,9 @@ namespace bgfx
 	/// Set view into sequential mode. Draw calls will be sorted in the same
 	/// order in which submit calls were called.
 	///
-	/// @attention C99 equivalent is `bgfx_set_view_seq`.
+	/// @attention C99 equivalent is `bgfx_set_view_mode`.
 	///
-	void setViewSeq(uint8_t _id, bool _enabled);
+	void setViewMode(uint8_t _id, ViewMode::Enum _mode = ViewMode::Default);
 
 	/// Set view frame buffer.
 	///

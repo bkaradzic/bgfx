@@ -3810,9 +3810,9 @@ namespace bgfx
 			clear.m_stencil  = _stencil;
 		}
 
-		BGFX_API_FUNC(void setViewSeq(uint8_t _id, bool _enabled) )
+		BGFX_API_FUNC(void setViewMode(uint8_t _id, ViewMode::Enum _mode) )
 		{
-			m_seqMask[_id] = _enabled ? 0xffff : 0x0;
+			m_seqMask[_id] = _mode == ViewMode::Sequential ? 0xffff : 0x0;
 		}
 
 		BGFX_API_FUNC(void setViewFrameBuffer(uint8_t _id, FrameBufferHandle _handle) )
@@ -3858,7 +3858,7 @@ namespace bgfx
 			setViewRect(_id, 0, 0, 1, 1);
 			setViewScissor(_id, 0, 0, 0, 0);
 			setViewClear(_id, BGFX_CLEAR_NONE, 0, 0.0f, 0);
-			setViewSeq(_id, false);
+			setViewMode(_id, ViewMode::Default);
 			FrameBufferHandle invalid = BGFX_INVALID_HANDLE;
 			setViewFrameBuffer(_id, invalid);
 			setViewTransform(_id, NULL, NULL, BGFX_VIEW_NONE, NULL);

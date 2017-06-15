@@ -257,6 +257,17 @@ typedef enum bgfx_topology_sort
 
 } bgfx_topology_sort_t;
 
+typedef enum bgfx_view_mode
+{
+    BGFX_VIEW_MODE_DEFAULT,
+    BGFX_VIEW_MODE_SEQUENTIAL,
+    BGFX_VIEW_MODE_DEPTH_ASCENDING,
+    BGFX_VIEW_MODE_DEPTH_DESCENDING,
+
+    BGFX_VIEW_MODE_CCOUNT
+
+} bgfx_view_mode_t;
+
 #define BGFX_HANDLE_T(_name) \
     typedef struct _name { uint16_t idx; } _name##_t
 
@@ -785,7 +796,7 @@ BGFX_C_API void bgfx_set_view_clear(uint8_t _id, uint16_t _flags, uint32_t _rgba
 BGFX_C_API void bgfx_set_view_clear_mrt(uint8_t _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7);
 
 /**/
-BGFX_C_API void bgfx_set_view_seq(uint8_t _id, bool _enabled);
+BGFX_C_API void bgfx_set_view_mode(uint8_t _id, bgfx_view_mode_t _mode);
 
 /**/
 BGFX_C_API void bgfx_set_view_frame_buffer(uint8_t _id, bgfx_frame_buffer_handle_t _handle);

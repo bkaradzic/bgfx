@@ -803,7 +803,7 @@ struct Imgui
 		nvgViewId(m_nvg, _view);
 
 		bgfx::setViewName(_view, "IMGUI");
-		bgfx::setViewSeq(_view, true);
+		bgfx::setViewMode(_view, bgfx::ViewMode::Sequential);
 
 		const bgfx::HMD*  hmd  = bgfx::getHMD();
 		const bgfx::Caps* caps = bgfx::getCaps();
