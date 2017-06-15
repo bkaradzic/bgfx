@@ -455,7 +455,7 @@ struct Settings
 		m_meshSelection = 0;
 		m_crossCubemapPreview = ImguiCubemap::Latlong;
 	}
-	
+
 	float m_envRotCurr;
 	float m_envRotDest;
 	float m_lightDir[3];
@@ -486,7 +486,7 @@ class ExampleIbl : public entry::AppI
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
-		
+
 		m_width = 1280;
 		m_height = 720;
 		m_debug = BGFX_DEBUG_TEXT;
@@ -494,13 +494,13 @@ class ExampleIbl : public entry::AppI
 		| BGFX_RESET_VSYNC
 		| BGFX_RESET_MSAA_X16
 		;
-		
+
 		bgfx::init(args.m_type, args.m_pciId);
 		bgfx::reset(m_width, m_height, m_reset);
-		
+
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
-		
+
 		// Set views  clear state.
 		bgfx::setViewClear(0
 						   , BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
@@ -508,65 +508,65 @@ class ExampleIbl : public entry::AppI
 						   , 1.0f
 						   , 0
 						   );
-		
+
 		// Imgui.
 		imguiCreate();
-		
+
 		// Uniforms.
 		m_uniforms.init();
-		
+
 		// Vertex declarations.
 		PosColorTexCoord0Vertex::init();
-		
+
 		m_lightProbes[LightProbe::Bolonga].load("bolonga");
 		m_lightProbes[LightProbe::Kyoto  ].load("kyoto");
 		m_currentLightProbe = LightProbe::Bolonga;
-		
+
 		u_mtx        = bgfx::createUniform("u_mtx",        bgfx::UniformType::Mat4);
 		u_params     = bgfx::createUniform("u_params",     bgfx::UniformType::Vec4);
 		u_flags      = bgfx::createUniform("u_flags",      bgfx::UniformType::Vec4);
 		u_camPos     = bgfx::createUniform("u_camPos",     bgfx::UniformType::Vec4);
 		s_texCube    = bgfx::createUniform("s_texCube",    bgfx::UniformType::Int1);
 		s_texCubeIrr = bgfx::createUniform("s_texCubeIrr", bgfx::UniformType::Int1);
-		
+
 		m_programMesh  = loadProgram("vs_ibl_mesh",   "fs_ibl_mesh");
 		m_programSky   = loadProgram("vs_ibl_skybox", "fs_ibl_skybox");
-		
+
 		m_meshBunny = meshLoad("meshes/bunny.bin");
 		m_meshOrb = meshLoad("meshes/orb.bin");
-		
+
 		m_leftScrollArea = 0;
 	}
-	
+
 	virtual int shutdown() BX_OVERRIDE
 	{
 		meshUnload(m_meshBunny);
 		meshUnload(m_meshOrb);
-		
+
 		// Cleanup.
 		bgfx::destroyProgram(m_programMesh);
 		bgfx::destroyProgram(m_programSky);
-		
+
 		bgfx::destroyUniform(u_camPos);
 		bgfx::destroyUniform(u_flags);
 		bgfx::destroyUniform(u_params);
 		bgfx::destroyUniform(u_mtx);
-		
+
 		bgfx::destroyUniform(s_texCube);
 		bgfx::destroyUniform(s_texCubeIrr);
-		
+
 		for (uint8_t ii = 0; ii < LightProbe::Count; ++ii)
 		{
 			m_lightProbes[ii].destroy();
 		}
-		
+
 		m_uniforms.destroy();
-		
+
 		imguiDestroy();
-		
+
 		// Shutdown bgfx.
 		bgfx::shutdown();
-		
+
 		return 0;
 	}
 
@@ -583,10 +583,10 @@ class ExampleIbl : public entry::AppI
 							, uint16_t(m_width)
 							, uint16_t(m_height)
 							);
-			
+
 			static int32_t rightScrollArea = 0;
 			imguiBeginScrollArea("", m_width - 256 - 10, 10, 256, 700, &rightScrollArea);
-			
+
 			imguiLabel("Environment light:");
 			imguiIndent();
 			imguiBool("IBL Diffuse",  m_settings.m_doDiffuseIbl);
@@ -607,7 +607,7 @@ class ExampleIbl : public entry::AppI
 			}
 			imguiSlider("Texture LOD", m_settings.m_lod, 0.0f, 10.1f, 0.1f);
 			imguiUnindent();
-			
+
 			imguiSeparator(8);
 			imguiLabel("Directional light:");
 			imguiIndent();
@@ -619,7 +619,7 @@ class ExampleIbl : public entry::AppI
 			imguiSlider("Light direction Z", m_settings.m_lightDir[2], -1.0f, 1.0f, 0.1f, doDirectLighting);
 			imguiColorWheel("Color:", m_settings.m_lightCol, m_settings.m_showLightColorWheel, 0.6f, doDirectLighting);
 			imguiUnindent();
-			
+
 			imguiSeparator(8);
 			imguiLabel("Background:");
 			imguiIndent();
@@ -628,7 +628,7 @@ class ExampleIbl : public entry::AppI
 				if      (0.0f == m_settings.m_bgType) { selection = UINT8_C(0); }
 				else if (7.0f == m_settings.m_bgType) { selection = UINT8_C(2); }
 				else                                { selection = UINT8_C(1); }
-				
+
 				selection = imguiTabs(
 									  uint8_t(selection)
 									  , true
@@ -647,52 +647,52 @@ class ExampleIbl : public entry::AppI
 				imguiSlider("Mip level", m_settings.m_radianceSlider, 1.0f, 6.0f, 0.1f, isRadiance);
 			}
 			imguiUnindent();
-			
+
 			imguiSeparator(8);
 			imguiLabel("Post processing:");
 			imguiIndent();
 			imguiSlider("Exposure", m_settings.m_exposure, -4.0f, 4.0f, 0.1f);
 			imguiUnindent();
-			
+
 			imguiSeparator();
-			
+
 			imguiEndScrollArea();
-			
+
 			imguiBeginScrollArea("", 10, 70, 256, 636, &m_leftScrollArea);
-			
+
 			imguiLabel("Mesh:");
 			imguiIndent();
 			m_settings.m_meshSelection = uint8_t(imguiChoose(m_settings.m_meshSelection, "Bunny", "Orbs") );
 			imguiUnindent();
-			
+
 			const bool isBunny = (0 == m_settings.m_meshSelection);
 			if (!isBunny)
 			{
 				m_settings.m_metalOrSpec = 0;
 			}
-			
+
 			imguiSeparator(4);
 			imguiLabel("Workflow:");
 			imguiIndent();
 			if (imguiCheck("Metalness", 0 == m_settings.m_metalOrSpec, isBunny) ) { m_settings.m_metalOrSpec = 0; }
 			if (imguiCheck("Specular",  1 == m_settings.m_metalOrSpec, isBunny) ) { m_settings.m_metalOrSpec = 1; }
 			imguiUnindent();
-			
+
 			imguiSeparator(4);
 			imguiLabel("Material:");
 			imguiIndent();
 			imguiSlider("Glossiness", m_settings.m_glossiness, 0.0f, 1.0f, 0.01f, isBunny);
 			imguiSlider(0 == m_settings.m_metalOrSpec ? "Metalness" : "Diffuse - Specular", m_settings.m_reflectivity, 0.0f, 1.0f, 0.01f, isBunny);
 			imguiUnindent();
-			
+
 			imguiColorWheel("Diffuse:", &m_settings.m_rgbDiff[0], m_settings.m_showDiffColorWheel, 0.7f);
 			imguiSeparator();
 			imguiColorWheel("Specular:", &m_settings.m_rgbSpec[0], m_settings.m_showSpecColorWheel, 0.7f, (1 == m_settings.m_metalOrSpec) && isBunny);
-			
+
 			imguiEndScrollArea();
-			
+
 			imguiEndFrame();
-			
+
 			m_uniforms.m_glossiness   = m_settings.m_glossiness;
 			m_uniforms.m_reflectivity = m_settings.m_reflectivity;
 			m_uniforms.m_exposure     = m_settings.m_exposure;
@@ -706,7 +706,7 @@ class ExampleIbl : public entry::AppI
 			bx::memCopy(m_uniforms.m_rgbSpec,  m_settings.m_rgbSpec,  3*sizeof(float) );
 			bx::memCopy(m_uniforms.m_lightDir, m_settings.m_lightDir, 3*sizeof(float) );
 			bx::memCopy(m_uniforms.m_lightCol, m_settings.m_lightCol, 3*sizeof(float) );
-			
+
 			int64_t now = bx::getHPCounter();
 			static int64_t last = now;
 			const int64_t frameTime = now - last;
@@ -714,13 +714,13 @@ class ExampleIbl : public entry::AppI
 			const double freq = double(bx::getHPFrequency() );
 			const double toMs = 1000.0/freq;
 			const float deltaTimeSec = float(double(frameTime)/freq);
-			
+
 			// Use debug font to print information about this example.
 			bgfx::dbgTextClear();
 			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/18-ibl");
 			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Image-based lighting.");
 			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
-			
+
 			// Camera.
 			const bool mouseOverGui = imguiMouseOverArea();
 			m_mouse.update(float(m_mouseState.m_mx), float(m_mouseState.m_my), m_mouseState.m_mz, m_width, m_height);
@@ -745,37 +745,37 @@ class ExampleIbl : public entry::AppI
 			}
 			m_camera.update(deltaTimeSec);
 			bx::memCopy(m_uniforms.m_cameraPos, m_camera.m_pos.curr, 3*sizeof(float) );
-			
+
 			// View Transform 0.
 			float view[16];
 			bx::mtxIdentity(view);
-			
+
 			const bgfx::Caps* caps = bgfx::getCaps();
-			
+
 			float proj[16];
 			bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f, 0.0, caps->homogeneousDepth);
 			bgfx::setViewTransform(0, view, proj);
-			
+
 			// View Transform 1.
 			m_camera.mtxLookAt(view);
 			bx::mtxProj(proj, 45.0f, float(m_width)/float(m_height), 0.1f, 100.0f, caps->homogeneousDepth);
 			bgfx::setViewTransform(1, view, proj);
-			
+
 			// View rect.
 			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 			bgfx::setViewRect(1, 0, 0, uint16_t(m_width), uint16_t(m_height) );
-			
+
 			// Env rotation.
 			const float amount = bx::fmin(deltaTimeSec/0.12f, 1.0f);
 			m_settings.m_envRotCurr = bx::flerp(m_settings.m_envRotCurr, m_settings.m_envRotDest, amount);
-			
+
 			// Env mtx.
 			float mtxEnvView[16];
 			m_camera.envViewMtx(mtxEnvView);
 			float mtxEnvRot[16];
 			bx::mtxRotateY(mtxEnvRot, m_settings.m_envRotCurr);
 			bx::mtxMul(m_uniforms.m_mtx, mtxEnvView, mtxEnvRot); // Used for Skybox.
-			
+
 			// Submit view 0.
 			bgfx::setTexture(0, s_texCube, m_lightProbes[m_currentLightProbe].m_tex);
 			bgfx::setTexture(1, s_texCubeIrr, m_lightProbes[m_currentLightProbe].m_texIrr);
@@ -783,7 +783,7 @@ class ExampleIbl : public entry::AppI
 			screenSpaceQuad( (float)m_width, (float)m_height, true);
 			m_uniforms.submit();
 			bgfx::submit(0, m_programSky);
-			
+
 			// Submit view 1.
 			bx::memCopy(m_uniforms.m_mtx, mtxEnvRot, 16*sizeof(float)); // Used for IBL.
 			if (0 == m_settings.m_meshSelection)
@@ -806,7 +806,7 @@ class ExampleIbl : public entry::AppI
 						const float scale   =  1.2f;
 						const float spacing =  2.2f;
 						const float yAdj    = -0.8f;
-						
+
 						float mtx[16];
 						bx::mtxSRT(mtx
 								   , scale/xend
@@ -819,57 +819,57 @@ class ExampleIbl : public entry::AppI
 								   , yAdj/yend + (yy/yend)*spacing - (1.0f + (scale-1.0f)*0.5f - 1.0f/yend)
 								   , 0.0f
 								   );
-						
+
 						m_uniforms.m_glossiness   =        xx*(1.0f/xend);
 						m_uniforms.m_reflectivity = (yend-yy)*(1.0f/yend);
 						m_uniforms.m_metalOrSpec = 0.0f;
 						m_uniforms.submit();
-						
+
 						bgfx::setTexture(0, s_texCube,    m_lightProbes[m_currentLightProbe].m_tex);
 						bgfx::setTexture(1, s_texCubeIrr, m_lightProbes[m_currentLightProbe].m_texIrr);
 						meshSubmit(m_meshOrb, 1, m_programMesh, mtx);
 					}
 				}
 			}
-			
+
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
 			bgfx::frame();
-			
+
 			return true;
 		}
-		
+
 		return false;
 	}
-	
+
 	uint32_t m_width;
 	uint32_t m_height;
 	uint32_t m_debug;
 	uint32_t m_reset;
 	entry::MouseState m_mouseState;
-	
+
 	Uniforms m_uniforms;
-	
+
 	LightProbe m_lightProbes[LightProbe::Count];
 	LightProbe::Enum m_currentLightProbe;
-	
+
 	bgfx::UniformHandle u_mtx;
 	bgfx::UniformHandle u_params;
 	bgfx::UniformHandle u_flags;
 	bgfx::UniformHandle u_camPos;
 	bgfx::UniformHandle s_texCube;
 	bgfx::UniformHandle s_texCubeIrr;
-	
+
 	bgfx::ProgramHandle m_programMesh;
 	bgfx::ProgramHandle m_programSky;
-	
+
 	Mesh* m_meshBunny;
 	Mesh* m_meshOrb;
 	Camera m_camera;
 	Mouse m_mouse;
-	
+
 	Settings m_settings;
-	
+
 	int32_t m_leftScrollArea;
 };
 
