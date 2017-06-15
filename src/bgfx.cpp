@@ -873,12 +873,19 @@ namespace bgfx
 			: _program.idx
 			;
 
-		m_key.m_depth  = (uint32_t)_depth;
-		m_key.m_view   = _id;
-		m_key.m_seq    = s_ctx->m_seq[_id] & s_ctx->m_seqMask[_id];
+		m_key.m_view = _id;
+
+		bool key1 = false;
+		switch (s_ctx->m_viewMode[_id])
+		{
+		case ViewMode::Sequential:      m_key.m_seq   = s_ctx->m_seq[_id];              break;
+		case ViewMode::DepthAscending:  m_key.m_depth = (uint32_t)_depth;  key1 = true; break;
+		case ViewMode::DepthDescending: m_key.m_depth = (uint32_t)-_depth; key1 = true; break;
+		default:                                                                        break;
+		}
 		s_ctx->m_seq[_id]++;
 
-		uint64_t key = m_key.encodeDraw();
+		uint64_t key = m_key.encodeDraw(key1);
 		m_sortKeys[m_num]   = key;
 		m_sortValues[m_num] = m_numRenderItems;
 		++m_num;

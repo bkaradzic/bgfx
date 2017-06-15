@@ -839,7 +839,7 @@ namespace bgfx
 	//
 	struct SortKey
 	{
-		uint64_t encodeDraw(bool _key1 = false)
+		uint64_t encodeDraw(bool _key1)
 		{
 			if (_key1)
 			{
@@ -1486,7 +1486,7 @@ namespace bgfx
 			SortKey term;
 			term.reset();
 			term.m_program = kInvalidHandle;
-			m_sortKeys[BGFX_CONFIG_MAX_DRAW_CALLS]   = term.encodeDraw();
+			m_sortKeys[BGFX_CONFIG_MAX_DRAW_CALLS]   = term.encodeDraw(false);
 			m_sortValues[BGFX_CONFIG_MAX_DRAW_CALLS] = BGFX_CONFIG_MAX_DRAW_CALLS;
 			bx::memSet(m_occlusion, 0xff, sizeof(m_occlusion) );
 		}
@@ -3876,7 +3876,7 @@ namespace bgfx
 
 		BGFX_API_FUNC(void setViewMode(uint8_t _id, ViewMode::Enum _mode) )
 		{
-			m_seqMask[_id] = _mode == ViewMode::Sequential ? 0xffff : 0x0;
+			m_viewMode[_id] = uint8_t(_mode);
 		}
 
 		BGFX_API_FUNC(void setViewFrameBuffer(uint8_t _id, FrameBufferHandle _handle) )
@@ -4393,7 +4393,7 @@ namespace bgfx
 		Matrix4 m_proj[2][BGFX_CONFIG_MAX_VIEWS];
 		uint8_t m_viewFlags[BGFX_CONFIG_MAX_VIEWS];
 		uint16_t m_seq[BGFX_CONFIG_MAX_VIEWS];
-		uint16_t m_seqMask[BGFX_CONFIG_MAX_VIEWS];
+		uint8_t m_viewMode[BGFX_CONFIG_MAX_VIEWS];
 
 		uint8_t m_colorPaletteDirty;
 
