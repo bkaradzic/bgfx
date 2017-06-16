@@ -34,12 +34,14 @@ struct PosColorUvVertex
 class VectorDisplay
 {
 public:
-	VectorDisplay(bool _originBottomLeft, float _texelHalf);
+	VectorDisplay();
 
 	~VectorDisplay()
 	{
 	}
 
+	void init(bool _originBottomLeft, float _texelHalf);
+	
 	void setup(uint16_t _width, uint16_t _height, uint8_t _view = 2);
 	void resize(uint16_t _width, uint16_t _height);
 	void teardown();
