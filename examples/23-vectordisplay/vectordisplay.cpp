@@ -50,11 +50,18 @@ inline float normalizef(float _a)
 	return bx::fwrap(_a, 2.0f * bx::kPi);
 }
 
-VectorDisplay::VectorDisplay(bool _originBottomLeft, float _texelHalf)
-	: m_originBottomLeft(_originBottomLeft)
-	, m_texelHalf(_texelHalf)
+VectorDisplay::VectorDisplay()
+	: m_originBottomLeft(false)
+	, m_texelHalf(false)
 {
 }
+
+void VectorDisplay::init(bool _originBottomLeft, float _texelHalf)
+{
+	m_originBottomLeft = _originBottomLeft;
+	m_texelHalf = _texelHalf;
+}
+
 
 void VectorDisplay::setup(uint16_t _width, uint16_t _height, uint8_t _view)
 {
