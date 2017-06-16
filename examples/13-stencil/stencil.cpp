@@ -13,14 +13,14 @@
 #include "camera.h"
 #include "imgui/imgui.h"
 
-#define RENDER_VIEWID_RANGE1_PASS_0   1
-#define RENDER_VIEWID_RANGE1_PASS_1   2
-#define RENDER_VIEWID_RANGE1_PASS_2   3
-#define RENDER_VIEWID_RANGE1_PASS_3   4
-#define RENDER_VIEWID_RANGE1_PASS_4   5
-#define RENDER_VIEWID_RANGE1_PASS_5   6
-#define RENDER_VIEWID_RANGE5_PASS_6   7
-#define RENDER_VIEWID_RANGE1_PASS_7  13
+#define RENDER_VIEWID_RANGE1_PASS_0  1
+#define RENDER_VIEWID_RANGE1_PASS_1  2
+#define RENDER_VIEWID_RANGE1_PASS_2  3
+#define RENDER_VIEWID_RANGE1_PASS_3  4
+#define RENDER_VIEWID_RANGE1_PASS_4  5
+#define RENDER_VIEWID_RANGE1_PASS_5  6
+#define RENDER_VIEWID_RANGE5_PASS_6  7
+#define RENDER_VIEWID_RANGE1_PASS_7 13
 
 #define MAX_NUM_LIGHTS 5
 
@@ -117,15 +117,9 @@ static const uint16_t s_planeIndices[] =
 	1, 3, 2,
 };
 
-static bool s_flipV = false;
 static uint32_t s_viewMask = 0;
 static uint32_t s_clearMask = 0;
 static bgfx::UniformHandle s_texColor;
-
-inline void mtxProj(float* _result, float _fovy, float _aspect, float _near, float _far)
-{
-	bx::mtxProj(_result, _fovy, _aspect, _near, _far, s_flipV);
-}
 
 void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
 {
@@ -796,57 +790,44 @@ public:
 	virtual void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
-		
+
 		m_viewState = ViewState(1280, 720);
 		m_clearValues = ClearValues(0x30303000, 1.0f, 0);
-		
+
 		m_debug = BGFX_DEBUG_TEXT;
 		m_reset = BGFX_RESET_VSYNC;
-		
+
 		bgfx::init(args.m_type, args.m_pciId);
 		bgfx::reset(m_viewState.m_width, m_viewState.m_height, m_reset);
-		
+
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
-		
-		// Setup root path for binary shaders. Shader binaries are different
-		// for each renderer.
-		switch (bgfx::getRendererType() )
-		{
-			case bgfx::RendererType::OpenGL:
-			case bgfx::RendererType::OpenGLES:
-				s_flipV = true;
-				break;
-				
-			default:
-				break;
-		}
-		
+
 		// Imgui.
 		imguiCreate();
-		
+
 		PosNormalTexcoordVertex::init();
-		
+
 		s_uniforms.init();
-		
+
 		s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
-		
+
 		m_programTextureLighting = loadProgram("vs_stencil_texture_lighting", "fs_stencil_texture_lighting");
 		m_programColorLighting   = loadProgram("vs_stencil_color_lighting",   "fs_stencil_color_lighting"  );
 		m_programColorTexture    = loadProgram("vs_stencil_color_texture",    "fs_stencil_color_texture"   );
 		m_programColorBlack      = loadProgram("vs_stencil_color",            "fs_stencil_color_black"     );
 		m_programTexture         = loadProgram("vs_stencil_texture",          "fs_stencil_texture"         );
-		
+
 		m_bunnyMesh.load("meshes/bunny.bin");
 		m_columnMesh.load("meshes/column.bin");
 		m_cubeMesh.load(s_cubeVertices, BX_COUNTOF(s_cubeVertices), PosNormalTexcoordVertex::ms_decl, s_cubeIndices, BX_COUNTOF(s_cubeIndices) );
 		m_hplaneMesh.load(s_hplaneVertices, BX_COUNTOF(s_hplaneVertices), PosNormalTexcoordVertex::ms_decl, s_planeIndices, BX_COUNTOF(s_planeIndices) );
 		m_vplaneMesh.load(s_vplaneVertices, BX_COUNTOF(s_vplaneVertices), PosNormalTexcoordVertex::ms_decl, s_planeIndices, BX_COUNTOF(s_planeIndices) );
-		
+
 		m_figureTex     = loadTexture("textures/figure-rgba.dds");
 		m_flareTex      = loadTexture("textures/flare.dds");
 		m_fieldstoneTex = loadTexture("textures/fieldstone-rgba.dds");
-		
+
 		// Setup lights.
 		const float rgbInnerR[][4] =
 		{
@@ -856,7 +837,7 @@ public:
 			{ 1.0f, 0.4f, 0.2f, 0.0f }, //orange
 			{ 0.7f, 0.7f, 0.7f, 0.0f }, //white
 		};
-		
+
 		for (uint8_t ii = 0, jj = 0; ii < MAX_NUM_LIGHTS; ++ii, ++jj)
 		{
 			const uint8_t index = jj%BX_COUNTOF(rgbInnerR);
@@ -866,24 +847,25 @@ public:
 			m_lightRgbInnerR[ii][3] = rgbInnerR[index][3];
 		}
 		bx::memCopy(s_uniforms.m_lightRgbInnerR, m_lightRgbInnerR, MAX_NUM_LIGHTS * 4*sizeof(float) );
-		
+
 		// Set view and projection matrices.
 		const float aspect = float(m_viewState.m_width)/float(m_viewState.m_height);
-		mtxProj(m_viewState.m_proj, 60.0f, aspect, 0.1f, 100.0f);
-		
+		const bgfx::Caps* caps = bgfx::getCaps();
+		bx::mtxProj(m_viewState.m_proj, 60.0f, aspect, 0.1f, 100.0f, caps->homogeneousDepth);
+
 		float initialPos[3] = { 0.0f, 18.0f, -40.0f };
 		cameraCreate();
 		cameraSetPosition(initialPos);
 		cameraSetVerticalAngle(-0.35f);
 		cameraGetViewMtx(m_viewState.m_view);
-		
+
 		m_timeOffset = bx::getHPCounter();
-		
+
 		m_scene = StencilReflectionScene;
-		m_settings_numLights       = 4.0f;
-		m_settings_reflectionValue = 0.8f;
-		m_settings_updateLights    = true;
-		m_settings_updateScene     = true;
+		m_numLights       = 4;
+		m_reflectionValue = 0.8f;
+		m_updateLights    = true;
+		m_updateScene     = true;
 	}
 
 	virtual int shutdown() BX_OVERRIDE
@@ -894,27 +876,27 @@ public:
 		m_cubeMesh.unload();
 		m_hplaneMesh.unload();
 		m_vplaneMesh.unload();
-		
+
 		bgfx::destroyTexture(m_figureTex);
 		bgfx::destroyTexture(m_fieldstoneTex);
 		bgfx::destroyTexture(m_flareTex);
-		
+
 		bgfx::destroyProgram(m_programTextureLighting);
 		bgfx::destroyProgram(m_programColorLighting);
 		bgfx::destroyProgram(m_programColorTexture);
 		bgfx::destroyProgram(m_programColorBlack);
 		bgfx::destroyProgram(m_programTexture);
-		
+
 		bgfx::destroyUniform(s_texColor);
-		
+
 		s_uniforms.destroy();
-		
+
 		cameraDestroy();
 		imguiDestroy();
-		
+
 		// Shutdown bgfx.
 		bgfx::shutdown();
-		
+
 		return 0;
 	}
 
@@ -923,66 +905,63 @@ public:
 		if (!entry::processEvents(m_viewState.m_width, m_viewState.m_height, m_debug, m_reset, &m_mouseState) )
 		{
 			imguiBeginFrame(m_mouseState.m_mx
-							, m_mouseState.m_my
-							, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
-							| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
-							| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-							, m_mouseState.m_mz
-							, uint16_t(m_viewState.m_width)
-							, uint16_t(m_viewState.m_height)
-							);
-			
-			static const char* titles[3] =
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_viewState.m_width)
+				, uint16_t(m_viewState.m_height)
+				);
+
+			ImGui::SetNextWindowPos(ImVec2(m_viewState.m_width - m_viewState.m_width / 5.0f - 10.0f, 10.0f) );
+			ImGui::Begin("Stencil Settings"
+				, NULL
+				, ImVec2(m_viewState.m_width / 5.0f, m_viewState.m_height / 2.0f)
+				, ImGuiWindowFlags_AlwaysAutoResize
+				);
+
 			{
-				"Stencil Reflection Scene",
-				"Projection Shadows Scene",
-			};
-			
-			static int32_t scrollArea = 0;
-			imguiBeginScrollArea("Settings", m_viewState.m_width - 256 - 10, 10, 256, 215, &scrollArea);
-			
-			if (imguiCheck(titles[StencilReflectionScene], StencilReflectionScene == m_scene) )
-			{
-				m_scene = StencilReflectionScene;
-				m_settings_numLights = 4.0f;
+				bool check = StencilReflectionScene == m_scene;
+				if (ImGui::Checkbox("Stencil Reflection Scene", &check) )
+				{
+					m_scene = StencilReflectionScene;
+					m_numLights = 4;
+				}
 			}
-			
-			if (imguiCheck(titles[ProjectionShadowsScene], ProjectionShadowsScene == m_scene) )
+
 			{
-				m_scene = ProjectionShadowsScene;
-				m_settings_numLights = 1.0f;
+				bool check = ProjectionShadowsScene == m_scene;
+				if (ImGui::Checkbox("Projection Shadows Scene", &check) )
+				{
+					m_scene = ProjectionShadowsScene;
+					m_numLights = 1;
+				}
 			}
-			
-			imguiSeparatorLine();
-			imguiSlider("Lights", m_settings_numLights, 1.0f, float(MAX_NUM_LIGHTS), 1.0f);
+
+			ImGui::SliderInt("Lights", &m_numLights, 1, MAX_NUM_LIGHTS);
 			if (m_scene == StencilReflectionScene)
 			{
-				imguiSlider("Reflection value", m_settings_reflectionValue, 0.0f, 1.0f, 0.01f);
+				ImGui::SliderFloat("Reflection value", &m_reflectionValue, 0.0f, 1.0f);
 			}
-			
-			if (imguiCheck("Update lights", m_settings_updateLights) )
-			{
-				m_settings_updateLights = !m_settings_updateLights;
-			}
-			
-			if (imguiCheck("Update scene", m_settings_updateScene) )
-			{
-				m_settings_updateScene = !m_settings_updateScene;
-			}
-			
-			imguiEndScrollArea();
+
+			ImGui::Checkbox("Update lights", &m_updateLights);
+			ImGui::Checkbox("Update scene",  &m_updateScene);
+
+			ImGui::End();
+
 			imguiEndFrame();
-			
+
 			s_uniforms.submitConstUniforms();
-			
+
 			// Update settings.
-			uint8_t numLights = (uint8_t)m_settings_numLights;
-			s_uniforms.m_params.m_ambientPass     = 1.0f;
-			s_uniforms.m_params.m_lightingPass    = 1.0f;
-			s_uniforms.m_params.m_lightCount      = m_settings_numLights;
-			s_uniforms.m_params.m_lightIndex      = 0.0f;
-			s_uniforms.m_color[3]                 = m_settings_reflectionValue;
-			
+			uint8_t numLights = (uint8_t)m_numLights;
+			s_uniforms.m_params.m_ambientPass  = 1.0f;
+			s_uniforms.m_params.m_lightingPass = 1.0f;
+			s_uniforms.m_params.m_lightCount   = m_numLights;
+			s_uniforms.m_params.m_lightIndex   = 0.0f;
+			s_uniforms.m_color[3]              = m_reflectionValue;
+
 			// Time.
 			int64_t now = bx::getHPCounter();
 			static int64_t last = now;
@@ -993,29 +972,29 @@ public:
 			const float time = (float)( (now - m_timeOffset)/double(bx::getHPFrequency() ) );
 			const float deltaTime = float(frameTime/freq);
 			s_uniforms.m_time = time;
-			
+
 			// Use debug font to print information about this example.
 			bgfx::dbgTextClear();
 			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/13-stencil");
 			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Stencil reflections and shadows.");
 			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
-			
+
 			// Update camera.
 			cameraUpdate(deltaTime, m_mouseState);
 			cameraGetViewMtx(m_viewState.m_view);
-			
+
 			static float lightTimeAccumulator = 0.0f;
-			if (m_settings_updateLights)
+			if (m_updateLights)
 			{
 				lightTimeAccumulator += deltaTime;
 			}
-			
+
 			static float sceneTimeAccumulator = 0.0f;
-			if (m_settings_updateScene)
+			if (m_updateScene)
 			{
 				sceneTimeAccumulator += deltaTime;
 			}
-			
+
 			float lightPosRadius[MAX_NUM_LIGHTS][4];
 			const float radius = (m_scene == StencilReflectionScene) ? 15.0f : 25.0f;
 			for (uint8_t ii = 0; ii < numLights; ++ii)
@@ -1026,35 +1005,35 @@ public:
 				lightPosRadius[ii][3] = radius;
 			}
 			bx::memCopy(s_uniforms.m_lightPosRadius, lightPosRadius, numLights * 4*sizeof(float) );
-			
+
 			// Floor position.
 			float floorMtx[16];
 			bx::mtxSRT(floorMtx
-					   , 20.0f  //scaleX
-					   , 20.0f  //scaleY
-					   , 20.0f  //scaleZ
-					   , 0.0f   //rotX
-					   , 0.0f   //rotY
-					   , 0.0f   //rotZ
-					   , 0.0f   //translateX
-					   , 0.0f   //translateY
-					   , 0.0f   //translateZ
-					   );
-			
+				, 20.0f  //scaleX
+				, 20.0f  //scaleY
+				, 20.0f  //scaleZ
+				, 0.0f   //rotX
+				, 0.0f   //rotY
+				, 0.0f   //rotZ
+				, 0.0f   //translateX
+				, 0.0f   //translateY
+				, 0.0f   //translateZ
+				);
+
 			// Bunny position.
 			float bunnyMtx[16];
 			bx::mtxSRT(bunnyMtx
-					   , 5.0f
-					   , 5.0f
-					   , 5.0f
-					   , 0.0f
-					   , 1.56f - sceneTimeAccumulator
-					   , 0.0f
-					   , 0.0f
-					   , 2.0f
-					   , 0.0f
-					   );
-			
+				, 5.0f
+				, 5.0f
+				, 5.0f
+				, 0.0f
+				, 1.56f - sceneTimeAccumulator
+				, 0.0f
+				, 0.0f
+				, 2.0f
+				, 0.0f
+				);
+
 			// Columns position.
 			const float dist = 14.0f;
 			const float columnPositions[4][3] =
@@ -1064,78 +1043,78 @@ public:
 				{  dist, 0.0f, -dist },
 				{ -dist, 0.0f, -dist },
 			};
-			
+
 			float columnMtx[4][16];
 			for (uint8_t ii = 0; ii < 4; ++ii)
 			{
 				bx::mtxSRT(columnMtx[ii]
-						   , 1.0f
-						   , 1.0f
-						   , 1.0f
-						   , 0.0f
-						   , 0.0f
-						   , 0.0f
-						   , columnPositions[ii][0]
-						   , columnPositions[ii][1]
-						   , columnPositions[ii][2]
-						   );
+					, 1.0f
+					, 1.0f
+					, 1.0f
+					, 0.0f
+					, 0.0f
+					, 0.0f
+					, columnPositions[ii][0]
+					, columnPositions[ii][1]
+					, columnPositions[ii][2]
+					);
 			}
-			
+
 			const uint8_t numCubes = 9;
 			float cubeMtx[numCubes][16];
 			for (uint16_t ii = 0; ii < numCubes; ++ii)
 			{
 				bx::mtxSRT(cubeMtx[ii]
-						   , 1.0f
-						   , 1.0f
-						   , 1.0f
-						   , 0.0f
-						   , 0.0f
-						   , 0.0f
-						   , bx::fsin(ii * 2.0f + 13.0f - sceneTimeAccumulator) * 13.0f
-						   , 4.0f
-						   , bx::fcos(ii * 2.0f + 13.0f - sceneTimeAccumulator) * 13.0f
-						   );
+					, 1.0f
+					, 1.0f
+					, 1.0f
+					, 0.0f
+					, 0.0f
+					, 0.0f
+					, bx::fsin(ii * 2.0f + 13.0f - sceneTimeAccumulator) * 13.0f
+					, 4.0f
+					, bx::fcos(ii * 2.0f + 13.0f - sceneTimeAccumulator) * 13.0f
+					);
 			}
-			
+
 			// Make sure at the beginning everything gets cleared.
 			clearView(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH | BGFX_CLEAR_STENCIL, m_clearValues);
 			bgfx::touch(0);
 			s_viewMask |= 1;
-			
+
 			// Bunny and columns color.
 			s_uniforms.m_color[0] = 0.70f;
 			s_uniforms.m_color[1] = 0.65f;
 			s_uniforms.m_color[2] = 0.60f;
-			
+
 			switch (m_scene)
 			{
-				case StencilReflectionScene:
+			case StencilReflectionScene:
 				{
 					// First pass - Draw plane.
-					
+
 					// Setup params for this scene.
 					s_uniforms.m_params.m_ambientPass = 1.0f;
 					s_uniforms.m_params.m_lightingPass = 1.0f;
-					
+
 					// Floor.
 					m_hplaneMesh.submit(RENDER_VIEWID_RANGE1_PASS_0
-										, floorMtx
-										, m_programColorBlack
-										, s_renderStates[RenderState::StencilReflection_CraftStencil]
-										);
-					
+						, floorMtx
+						, m_programColorBlack
+						, s_renderStates[RenderState::StencilReflection_CraftStencil]
+						);
+
 					// Second pass - Draw reflected objects.
-					
+
 					// Clear depth from previous pass.
 					clearView(RENDER_VIEWID_RANGE1_PASS_1, BGFX_CLEAR_DEPTH, m_clearValues);
-					
+
 					// Compute reflected matrix.
 					float reflectMtx[16];
 					float plane_pos[3] = { 0.0f, 0.01f, 0.0f };
 					float normal[3] = { 0.0f, 1.0f, 0.0f };
 					mtxReflected(reflectMtx, plane_pos, normal);
-					
+
 					// Reflect lights.
 					float reflectedLights[MAX_NUM_LIGHTS][4];
 					for (uint8_t ii = 0; ii < numLights; ++ii)
@@ -1144,179 +1123,179 @@ public:
 						reflectedLights[ii][3] = lightPosRadius[ii][3];
 					}
 					bx::memCopy(s_uniforms.m_lightPosRadius, reflectedLights, numLights * 4*sizeof(float) );
-					
+
 					// Reflect and submit bunny.
 					float mtxReflectedBunny[16];
 					bx::mtxMul(mtxReflectedBunny, bunnyMtx, reflectMtx);
 					m_bunnyMesh.submit(RENDER_VIEWID_RANGE1_PASS_1
-									   , mtxReflectedBunny
-									   , m_programColorLighting
-									   , s_renderStates[RenderState::StencilReflection_DrawReflected]
-									   );
-					
+						, mtxReflectedBunny
+						, m_programColorLighting
+						, s_renderStates[RenderState::StencilReflection_DrawReflected]
+						);
+
 					// Reflect and submit columns.
 					float mtxReflectedColumn[16];
 					for (uint8_t ii = 0; ii < 4; ++ii)
 					{
 						bx::mtxMul(mtxReflectedColumn, columnMtx[ii], reflectMtx);
 						m_columnMesh.submit(RENDER_VIEWID_RANGE1_PASS_1
-											, mtxReflectedColumn
-											, m_programColorLighting
-											, s_renderStates[RenderState::StencilReflection_DrawReflected]
-											);
+							, mtxReflectedColumn
+							, m_programColorLighting
+							, s_renderStates[RenderState::StencilReflection_DrawReflected]
+							);
 					}
-					
+
 					// Set lights back.
 					bx::memCopy(s_uniforms.m_lightPosRadius, lightPosRadius, numLights * 4*sizeof(float) );
 					// Third pass - Blend plane.
-					
+
 					// Floor.
 					m_hplaneMesh.submit(RENDER_VIEWID_RANGE1_PASS_2
-										, floorMtx
-										, m_programTextureLighting
-										, s_renderStates[RenderState::StencilReflection_BlendPlane]
-										, m_fieldstoneTex
-										);
-					
+						, floorMtx
+						, m_programTextureLighting
+						, s_renderStates[RenderState::StencilReflection_BlendPlane]
+						, m_fieldstoneTex
+						);
+
 					// Fourth pass - Draw everything else but the plane.
-					
+
 					// Bunny.
 					m_bunnyMesh.submit(RENDER_VIEWID_RANGE1_PASS_3
-									   , bunnyMtx
-									   , m_programColorLighting
-									   , s_renderStates[RenderState::StencilReflection_DrawScene]
-									   );
-					
+						, bunnyMtx
+						, m_programColorLighting
+						, s_renderStates[RenderState::StencilReflection_DrawScene]
+						);
+
 					// Columns.
 					for (uint8_t ii = 0; ii < 4; ++ii)
 					{
 						m_columnMesh.submit(RENDER_VIEWID_RANGE1_PASS_3
-											, columnMtx[ii]
-											, m_programColorLighting
-											, s_renderStates[RenderState::StencilReflection_DrawScene]
-											);
+							, columnMtx[ii]
+							, m_programColorLighting
+							, s_renderStates[RenderState::StencilReflection_DrawScene]
+							);
 					}
-					
+
 				}
-					break;
-					
-				case ProjectionShadowsScene:
+				break;
+
+			case ProjectionShadowsScene:
 				{
 					// First pass - Draw entire scene. (ambient only).
 					s_uniforms.m_params.m_ambientPass = 1.0f;
 					s_uniforms.m_params.m_lightingPass = 0.0f;
-					
+
 					// Bunny.
 					m_bunnyMesh.submit(RENDER_VIEWID_RANGE1_PASS_0
-									   , bunnyMtx
-									   , m_programColorLighting
-									   , s_renderStates[RenderState::ProjectionShadows_DrawAmbient]
-									   );
-					
+						, bunnyMtx
+						, m_programColorLighting
+						, s_renderStates[RenderState::ProjectionShadows_DrawAmbient]
+						);
+
 					// Floor.
 					m_hplaneMesh.submit(RENDER_VIEWID_RANGE1_PASS_0
-										, floorMtx
-										, m_programTextureLighting
-										, s_renderStates[RenderState::ProjectionShadows_DrawAmbient]
-										, m_fieldstoneTex
-										);
-					
+						, floorMtx
+						, m_programTextureLighting
+						, s_renderStates[RenderState::ProjectionShadows_DrawAmbient]
+						, m_fieldstoneTex
+						);
+
 					// Cubes.
 					for (uint8_t ii = 0; ii < numCubes; ++ii)
 					{
 						m_cubeMesh.submit(RENDER_VIEWID_RANGE1_PASS_0
-										  , cubeMtx[ii]
-										  , m_programTextureLighting
-										  , s_renderStates[RenderState::ProjectionShadows_DrawAmbient]
-										  , m_figureTex
-										  );
+							, cubeMtx[ii]
+							, m_programTextureLighting
+							, s_renderStates[RenderState::ProjectionShadows_DrawAmbient]
+							, m_figureTex
+							);
 					}
-					
+
 					// Ground plane.
 					float ground[4];
 					float plane_pos[3] = { 0.0f, 0.0f, 0.0f };
 					float normal[3] = { 0.0f, 1.0f, 0.0f };
 					bx::memCopy(ground, normal, sizeof(float) * 3);
 					ground[3] = -bx::vec3Dot(plane_pos, normal) - 0.01f; // - 0.01 against z-fighting
-					
+
 					for (uint8_t ii = 0, viewId = RENDER_VIEWID_RANGE5_PASS_6; ii < numLights; ++ii, ++viewId)
 					{
 						// Clear stencil for this light source.
 						clearView(viewId, BGFX_CLEAR_STENCIL, m_clearValues);
-						
+
 						// Draw shadow projection of scene objects.
-						
+
 						// Get homogeneous light pos.
 						float* lightPos = lightPosRadius[ii];
 						float pos[4];
 						bx::memCopy(pos, lightPos, sizeof(float) * 3);
 						pos[3] = 1.0f;
-						
+
 						// Calculate shadow mtx for current light.
 						float shadowMtx[16];
 						mtxShadow(shadowMtx, ground, pos);
-						
+
 						// Submit bunny's shadow.
 						float mtxShadowedBunny[16];
 						bx::mtxMul(mtxShadowedBunny, bunnyMtx, shadowMtx);
 						m_bunnyMesh.submit(viewId
-										   , mtxShadowedBunny
-										   , m_programColorBlack
-										   , s_renderStates[RenderState::ProjectionShadows_CraftStencil]
-										   );
-						
+							, mtxShadowedBunny
+							, m_programColorBlack
+							, s_renderStates[RenderState::ProjectionShadows_CraftStencil]
+							);
+
 						// Submit cube shadows.
 						float mtxShadowedCube[16];
 						for (uint8_t jj = 0; jj < numCubes; ++jj)
 						{
 							bx::mtxMul(mtxShadowedCube, cubeMtx[jj], shadowMtx);
 							m_cubeMesh.submit(viewId
-											  , mtxShadowedCube
-											  , m_programColorBlack
-											  , s_renderStates[RenderState::ProjectionShadows_CraftStencil]
-											  );
+								, mtxShadowedCube
+								, m_programColorBlack
+								, s_renderStates[RenderState::ProjectionShadows_CraftStencil]
+								);
 						}
-						
+
 						// Draw entire scene. (lighting pass only. blending is on)
 						s_uniforms.m_params.m_ambientPass = 0.0f;
 						s_uniforms.m_params.m_lightingPass = 1.0f;
 						s_uniforms.m_params.m_lightCount = 1.0f;
 						s_uniforms.m_params.m_lightIndex = float(ii);
-						
+
 						// Bunny.
 						m_bunnyMesh.submit(viewId
-										   , bunnyMtx
-										   , m_programColorLighting
-										   , s_renderStates[RenderState::ProjectionShadows_DrawDiffuse]
-										   );
-						
+							, bunnyMtx
+							, m_programColorLighting
+							, s_renderStates[RenderState::ProjectionShadows_DrawDiffuse]
+							);
+
 						// Floor.
 						m_hplaneMesh.submit(viewId
-											, floorMtx
-											, m_programTextureLighting
-											, s_renderStates[RenderState::ProjectionShadows_DrawDiffuse]
-											, m_fieldstoneTex
-											);
-						
+							, floorMtx
+							, m_programTextureLighting
+							, s_renderStates[RenderState::ProjectionShadows_DrawDiffuse]
+							, m_fieldstoneTex
+							);
+
 						// Cubes.
 						for (uint8_t jj = 0; jj < numCubes; ++jj)
 						{
 							m_cubeMesh.submit(viewId
-											  , cubeMtx[jj]
-											  , m_programTextureLighting
-											  , s_renderStates[RenderState::ProjectionShadows_DrawDiffuse]
-											  , m_figureTex
-											  );
+								, cubeMtx[jj]
+								, m_programTextureLighting
+								, s_renderStates[RenderState::ProjectionShadows_DrawDiffuse]
+								, m_figureTex
+								);
 						}
 					}
-					
+
 					// Reset these to default..
 					s_uniforms.m_params.m_ambientPass = 1.0f;
 					s_uniforms.m_params.m_lightingPass = 1.0f;
 				}
-					break;
+				break;
 			};
-			
+
 			//lights
 			const float lightScale[3] = { 1.5f, 1.5f, 1.5f };
 			float lightMtx[16];
@@ -1325,95 +1304,95 @@ public:
 				s_uniforms.m_color[0] = m_lightRgbInnerR[ii][0];
 				s_uniforms.m_color[1] = m_lightRgbInnerR[ii][1];
 				s_uniforms.m_color[2] = m_lightRgbInnerR[ii][2];
-				
+
 				mtxBillboard(lightMtx, m_viewState.m_view, lightPosRadius[ii], lightScale);
 				m_vplaneMesh.submit(RENDER_VIEWID_RANGE1_PASS_7
-									, lightMtx
-									, m_programColorTexture
-									, s_renderStates[RenderState::Custom_BlendLightTexture]
-									, m_flareTex
-									);
+					, lightMtx
+					, m_programColorTexture
+					, s_renderStates[RenderState::Custom_BlendLightTexture]
+					, m_flareTex
+					);
 			}
-			
+
 			// Draw floor bottom.
 			float floorBottomMtx[16];
 			bx::mtxSRT(floorBottomMtx
-					   , 20.0f  //scaleX
-					   , 20.0f  //scaleY
-					   , 20.0f  //scaleZ
-					   , 0.0f   //rotX
-					   , 0.0f   //rotY
-					   , 0.0f   //rotZ
-					   , 0.0f   //translateX
-					   , -0.1f  //translateY
-					   , 0.0f   //translateZ
-					   );
-			
+				, 20.0f  //scaleX
+				, 20.0f  //scaleY
+				, 20.0f  //scaleZ
+				, 0.0f   //rotX
+				, 0.0f   //rotY
+				, 0.0f   //rotZ
+				, 0.0f   //translateX
+				, -0.1f  //translateY
+				, 0.0f   //translateZ
+				);
+
 			m_hplaneMesh.submit(RENDER_VIEWID_RANGE1_PASS_7
-								, floorBottomMtx
-								, m_programTexture
-								, s_renderStates[RenderState::Custom_DrawPlaneBottom]
-								, m_figureTex
-								);
-			
+				, floorBottomMtx
+				, m_programTexture
+				, s_renderStates[RenderState::Custom_DrawPlaneBottom]
+				, m_figureTex
+				);
+
 			// Setup view rect and transform for all used views.
 			setViewRectMask(s_viewMask, 0, 0, uint16_t(m_viewState.m_width), uint16_t(m_viewState.m_height) );
 			setViewTransformMask(s_viewMask, m_viewState.m_view, m_viewState.m_proj);
 			s_viewMask = 0;
-			
+
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
 			bgfx::frame();
-			
+
 			//reset clear values on used views
 			clearViewMask(s_clearMask, BGFX_CLEAR_NONE, m_clearValues);
 			s_clearMask = 0;
-			
+
 			return true;
 		}
-		
+
 		return false;
 	}
 
 	ViewState m_viewState;
 	entry::MouseState m_mouseState;
 	ClearValues m_clearValues;
-	
+
 	uint32_t m_debug;
 	uint32_t m_reset;
-	
+
 	bgfx::ProgramHandle m_programTextureLighting;
 	bgfx::ProgramHandle m_programColorLighting;
 	bgfx::ProgramHandle m_programColorTexture;
 	bgfx::ProgramHandle m_programColorBlack;
 	bgfx::ProgramHandle m_programTexture;
-	
+
 	Mesh m_bunnyMesh;
 	Mesh m_columnMesh;
 	Mesh m_cubeMesh;
 	Mesh m_hplaneMesh;
 	Mesh m_vplaneMesh;
-	
+
 	bgfx::TextureHandle m_figureTex;
 	bgfx::TextureHandle m_flareTex;
 	bgfx::TextureHandle m_fieldstoneTex;
-	
+
 	float m_lightRgbInnerR[MAX_NUM_LIGHTS][4];
-	
+
 	int64_t m_timeOffset;
-	
+
 	enum Scene
 	{
 		StencilReflectionScene = 0,
 		ProjectionShadowsScene,
 	};
-	
+
 	Scene m_scene;
-	float m_settings_numLights;
-	float m_settings_reflectionValue;
-	bool  m_settings_updateLights;
-	bool  m_settings_updateScene;
-	
+	int32_t m_numLights;
+	float   m_reflectionValue;
+	bool    m_updateLights;
+	bool    m_updateScene;
+
 };
 
 ENTRY_IMPLEMENT_MAIN(ExampleStencil);
