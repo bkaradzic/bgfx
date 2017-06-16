@@ -383,6 +383,7 @@ end
 
 if _OPTIONS["with-examples"] then
 	group "examples"
+	exampleProject("XX-map")
 	exampleProject("00-helloworld")
 	exampleProject("01-cubes")
 	exampleProject("02-metaballs")
