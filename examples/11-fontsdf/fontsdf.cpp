@@ -50,11 +50,11 @@ class ExampleFontSDF : public entry::AppI
 
 		// Set view 0 clear state.
 		bgfx::setViewClear(0
-						   , BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
-						   , 0x303030ff
-						   , 1.0f
-						   , 0
-						   );
+			, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
+			, 0x303030ff
+			, 1.0f
+			, 0
+			);
 
 		// Imgui.
 		imguiCreate();
@@ -87,7 +87,6 @@ class ExampleFontSDF : public entry::AppI
 
 		m_textBufferManager->appendText(m_scrollableBuffer, m_fontScaled, m_textBegin, m_textEnd);
 
-		m_scrollArea = 0;
 		m_textScroll = 0.0f;
 		m_textRotation = 0.0f;
 		m_textScale = 1.0f;
@@ -96,7 +95,6 @@ class ExampleFontSDF : public entry::AppI
 
 	virtual int shutdown() BX_OVERRIDE
 	{
-
 		imguiDestroy();
 
 		BX_FREE(entry::getAllocator(), m_bigText);
@@ -119,34 +117,33 @@ class ExampleFontSDF : public entry::AppI
 
 	bool update() BX_OVERRIDE
 	{
-
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
 			imguiBeginFrame(m_mouseState.m_mx
-							, m_mouseState.m_my
-							, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
-							| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
-							| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-							, m_mouseState.m_mz
-							, uint16_t(m_width)
-							, uint16_t(m_height)
-							);
-			
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
+
 			const int32_t guiPanelWidth = 325;
 			const int32_t guiPanelHeight = 200;
-			
+
 			ImGui::SetNextWindowPos(ImVec2(m_width - guiPanelWidth - 10.0f, 10.0f) );
 			ImGui::Begin("Text Area"
-						 , NULL
-						 , ImVec2(guiPanelWidth, guiPanelHeight)
-						 , ImGuiWindowFlags_AlwaysAutoResize
-						 );
-			
+				, NULL
+				, ImVec2(guiPanelWidth, guiPanelHeight)
+				, ImGuiWindowFlags_AlwaysAutoResize
+				);
+
 			ImGui::Separator();
 
 			bool recomputeVisibleText = false;
 			recomputeVisibleText |= ImGui::SliderFloat("Number of lines", &m_visibleLineCount, 1.0f, 177.0f);
-			
+
 			if (ImGui::SliderFloat("Font size", &m_textSize, 6.0f, 64.0f) )
 			{
 				m_fontManager->destroyFont(m_fontScaled);
@@ -154,20 +151,20 @@ class ExampleFontSDF : public entry::AppI
 				m_metrics = TextLineMetrics(m_fontManager->getFontInfo(m_fontScaled) );
 				recomputeVisibleText = true;
 			}
-			
+
 			recomputeVisibleText |= ImGui::SliderFloat("Scroll", &m_textScroll, 0.0f, (m_lineCount-m_visibleLineCount));
 			ImGui::SliderFloat("Rotate", &m_textRotation, 0.0f, bx::kPi*2.0f);
 			recomputeVisibleText |= ImGui::SliderFloat("Scale", &m_textScale, 0.1f, 10.0f);
-			
+
 			if (recomputeVisibleText)
 			{
 				m_textBufferManager->clearTextBuffer(m_scrollableBuffer);
 				m_metrics.getSubText(m_bigText,(uint32_t)m_textScroll, (uint32_t)(m_textScroll+m_visibleLineCount), m_textBegin, m_textEnd);
 				m_textBufferManager->appendText(m_scrollableBuffer, m_fontScaled, m_textBegin, m_textEnd);
 			}
-			
+
 			ImGui::End();
-			
+
 			imguiEndFrame();
 
 			// Set view 0 default viewport.
@@ -201,7 +198,8 @@ class ExampleFontSDF : public entry::AppI
 			// Setup a top-left ortho matrix for screen space drawing.
 			const bgfx::HMD*  hmd  = bgfx::getHMD();
 			const bgfx::Caps* caps = bgfx::getCaps();
-			if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
+			if (NULL != hmd
+			&&  0 != (hmd->flags & BGFX_HMD_RENDERING) )
 			{
 				float proj[16];
 				bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f, caps->homogeneousDepth);
@@ -292,7 +290,6 @@ class ExampleFontSDF : public entry::AppI
 	const char* m_textBegin;
 	const char* m_textEnd;
 
-	int32_t m_scrollArea;
 	float m_textScroll;
 	float m_textRotation;
 	float m_textScale;
