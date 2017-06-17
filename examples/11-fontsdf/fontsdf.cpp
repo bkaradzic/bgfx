@@ -131,42 +131,43 @@ class ExampleFontSDF : public entry::AppI
 							, uint16_t(m_width)
 							, uint16_t(m_height)
 							);
-
-			const int32_t guiPanelWidth = 250;
+			
+			const int32_t guiPanelWidth = 325;
 			const int32_t guiPanelHeight = 200;
-
-			imguiBeginScrollArea("Text Area"
-								 , m_width - guiPanelWidth - 10
-								 , 10
-								 , guiPanelWidth
-								 , guiPanelHeight
-								 , &m_scrollArea
-								 );
-			imguiSeparatorLine();
+			
+			ImGui::SetNextWindowPos(ImVec2(m_width - guiPanelWidth - 10.0f, 10.0f) );
+			ImGui::Begin("Text Area"
+						 , NULL
+						 , ImVec2(guiPanelWidth, guiPanelHeight)
+						 , ImGuiWindowFlags_AlwaysAutoResize
+						 );
+			
+			ImGui::Separator();
 
 			bool recomputeVisibleText = false;
-			recomputeVisibleText |= imguiSlider("Number of lines", m_visibleLineCount, 1.0f, 177.0f , 1.0f);
-			if (imguiSlider("Font size", m_textSize, 6.0f, 64.0f , 1.0f) )
+			recomputeVisibleText |= ImGui::SliderFloat("Number of lines", &m_visibleLineCount, 1.0f, 177.0f);
+			
+			if (ImGui::SliderFloat("Font size", &m_textSize, 6.0f, 64.0f) )
 			{
 				m_fontManager->destroyFont(m_fontScaled);
 				m_fontScaled = m_fontManager->createScaledFontToPixelSize(m_fontSdf, (uint32_t) m_textSize);
 				m_metrics = TextLineMetrics(m_fontManager->getFontInfo(m_fontScaled) );
 				recomputeVisibleText = true;
 			}
-
-			recomputeVisibleText |= imguiSlider("Scroll", m_textScroll, 0.0f, (m_lineCount-m_visibleLineCount) , 1.0f);
-			imguiSlider("Rotate", m_textRotation, 0.0f, bx::kPi*2.0f , 0.1f);
-			recomputeVisibleText |= imguiSlider("Scale", m_textScale, 0.1f, 10.0f , 0.1f);
-
+			
+			recomputeVisibleText |= ImGui::SliderFloat("Scroll", &m_textScroll, 0.0f, (m_lineCount-m_visibleLineCount));
+			ImGui::SliderFloat("Rotate", &m_textRotation, 0.0f, bx::kPi*2.0f);
+			recomputeVisibleText |= ImGui::SliderFloat("Scale", &m_textScale, 0.1f, 10.0f);
+			
 			if (recomputeVisibleText)
 			{
 				m_textBufferManager->clearTextBuffer(m_scrollableBuffer);
 				m_metrics.getSubText(m_bigText,(uint32_t)m_textScroll, (uint32_t)(m_textScroll+m_visibleLineCount), m_textBegin, m_textEnd);
 				m_textBufferManager->appendText(m_scrollableBuffer, m_fontScaled, m_textBegin, m_textEnd);
 			}
-
-			imguiEndScrollArea();
-
+			
+			ImGui::End();
+			
 			imguiEndFrame();
 
 			// Set view 0 default viewport.
