@@ -2431,7 +2431,6 @@ spv::Id TGlslangToSpvTraverser::convertGlslangStructToSpvType(const glslang::TTy
     // Create a vector of struct types for SPIR-V to consume
     std::vector<spv::Id> spvMembers;
     int memberDelta = 0;  // how much the member's index changes from glslang to SPIR-V, normally 0, except sometimes for blocks
-    int locationOffset = 0;  // for use across struct members, when they are called recursively
     for (int i = 0; i < (int)glslangMembers->size(); i++) {
         glslang::TType& glslangMember = *(*glslangMembers)[i].type;
         if (glslangMember.hiddenMember()) {
@@ -2448,11 +2447,9 @@ spv::Id TGlslangToSpvTraverser::convertGlslangStructToSpvType(const glslang::TTy
             glslang::TQualifier memberQualifier = glslangMember.getQualifier();
             InheritQualifiers(memberQualifier, qualifier);
 
-            // manually inherit location; it's more complex
+            // manually inherit location
             if (! memberQualifier.hasLocation() && qualifier.hasLocation())
-                memberQualifier.layoutLocation = qualifier.layoutLocation + locationOffset;
-            if (qualifier.hasLocation())
-                locationOffset += glslangIntermediate->computeTypeLocationSize(glslangMember);
+                memberQualifier.layoutLocation = qualifier.layoutLocation;
 
             // recurse
             spvMembers.push_back(convertGlslangToSpvType(glslangMember, explicitLayout, memberQualifier));
@@ -2515,29 +2512,12 @@ void TGlslangToSpvTraverser::decorateStructType(const glslang::TType& type,
                     addMemberDecoration(spvType, member, memory[i]);
             }
 
-            // Compute location decoration; tricky based on whether inheritance is at play and
-            // what kind of container we have, etc.
-            // TODO: This algorithm (and it's cousin above doing almost the same thing) should
-            //       probably move to the linker stage of the front end proper, and just have the
-            //       answer sitting already distributed throughout the individual member locations.
-            int location = -1;                // will only decorate if present or inherited
+            // Location assignment was already completed correctly by the front end,
+            // just track whether a member needs to be decorated.
             // Ignore member locations if the container is an array, as that's
-            // ill-specified and decisions have been made to not allow this anyway.
-            // The object itself must have a location, and that comes out from decorating the object,
-            // not the type (this code decorates types).
-            if (! type.isArray()) {
-                if (memberQualifier.hasLocation()) { // no inheritance, or override of inheritance
-                    // struct members should not have explicit locations
-                    assert(type.getBasicType() != glslang::EbtStruct);
-                    location = memberQualifier.layoutLocation;
-                } else if (type.getBasicType() != glslang::EbtBlock) {
-                    // If it is a not a Block, (...) Its members are assigned consecutive locations (...)
-                    // The members, and their nested types, must not themselves have Location decorations.
-                } else if (qualifier.hasLocation()) // inheritance
-                    location = qualifier.layoutLocation + locationOffset;
-            }
-            if (location >= 0)
-                builder.addMemberDecoration(spvType, member, spv::DecorationLocation, location);
+            // ill-specified and decisions have been made to not allow this.
+            if (! type.isArray() && memberQualifier.hasLocation())
+                builder.addMemberDecoration(spvType, member, spv::DecorationLocation, memberQualifier.layoutLocation);
 
             if (qualifier.hasLocation())      // track for upcoming inheritance
                 locationOffset += glslangIntermediate->computeTypeLocationSize(glslangMember);
@@ -3294,7 +3274,7 @@ spv::Id TGlslangToSpvTraverser::createImageTextureFunctionCall(glslang::TIntermO
         if (bias || cracked.lod ||
             sourceExtensions.find(glslang::E_GL_AMD_texture_gather_bias_lod) != sourceExtensions.end()) {
             builder.addExtension(spv::E_SPV_AMD_texture_gather_bias_lod);
-            builder.addCapability(spv::OpCapabilityImageGatherBiasLodAMD);
+            builder.addCapability(spv::CapabilityImageGatherBiasLodAMD);
         }
     }
 #endif

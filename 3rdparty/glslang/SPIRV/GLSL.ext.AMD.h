@@ -117,7 +117,7 @@ static const char* const E_SPV_AMD_gpu_shader_half_float = "SPV_AMD_gpu_shader_h
 // SPV_AMD_texture_gather_bias_lod
 static const char* const E_SPV_AMD_texture_gather_bias_lod = "SPV_AMD_texture_gather_bias_lod";
 
-static const Capability OpCapabilityImageGatherBiasLodAMD = static_cast<Capability>(5009);
+static const Capability CapabilityImageGatherBiasLodAMD = static_cast<Capability>(5009);
 
 // SPV_AMD_gpu_shader_int16
 static const char* const E_SPV_AMD_gpu_shader_int16 = "SPV_AMD_gpu_shader_int16";

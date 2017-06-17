@@ -120,6 +120,14 @@ $EXE -D -e main -H -Iinc1/path1 -Iinc1/path2 hlsl.dashI.vert > $TARGETDIR/hlsl.d
 diff -b $BASEDIR/hlsl.dashI.vert.out $TARGETDIR/hlsl.dashI.vert.out || HASERROR=1
 
 #
+# Testing -D and -U
+#
+$EXE -DUNDEFED -UIN_SHADER -DFOO=200 -i -l -UUNDEFED -DMUL=FOO*2 glsl.-D-U.frag > $TARGETDIR/glsl.-D-U.frag.out
+diff -b $BASEDIR/glsl.-D-U.frag.out $TARGETDIR/glsl.-D-U.frag.out || HASERROR=1
+$EXE -D -e main -V -i -DUNDEFED -UIN_SHADER -DFOO=200 -UUNDEFED hlsl.-D-U.frag > $TARGETDIR/hlsl.-D-U.frag.out
+diff -b $BASEDIR/hlsl.-D-U.frag.out $TARGETDIR/hlsl.-D-U.frag.out || HASERROR=1
+
+#
 # Final checking
 #
 if [ $HASERROR -eq 0 ]

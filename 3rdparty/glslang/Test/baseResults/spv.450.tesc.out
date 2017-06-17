@@ -36,11 +36,8 @@ spv.450.tesc
                               Decorate 11(TheBlock) Block
                               Decorate 16(tcBlock) Location 12
                               MemberDecorate 17(SingleBlock) 0 Patch
-                              MemberDecorate 17(SingleBlock) 0 Location 2
                               MemberDecorate 17(SingleBlock) 1 Patch
-                              MemberDecorate 17(SingleBlock) 1 Location 3
                               MemberDecorate 17(SingleBlock) 2 Patch
-                              MemberDecorate 17(SingleBlock) 2 Location 4
                               Decorate 17(SingleBlock) Block
                               Decorate 19(singleBlock) Location 2
                               MemberDecorate 20(bn) 0 Patch

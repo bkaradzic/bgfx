@@ -1043,6 +1043,32 @@ TIntermTyped* TIntermediate::addShapeConversion(const TType& type, TIntermTyped*
     // The new node that handles the conversion
     TOperator constructorOp = mapTypeToConstructorOp(type);
 
+    // HLSL has custom semantics for scalar->mat shape conversions.
+    if (source == EShSourceHlsl) {
+        if (node->getType().isScalarOrVec1() && type.isMatrix()) {
+
+            // HLSL semantics: the scalar (or vec1) is replicated to every component of the matrix.  Left to its
+            // own devices, the constructor from a scalar would populate the diagonal.  This forces replication
+            // to every matrix element.
+
+            // Note that if the node is complex (e.g, a function call), we don't want to duplicate it here
+            // repeatedly, so we copy it to a temp, then use the temp.
+            const int matSize = type.getMatrixRows() * type.getMatrixCols();
+            TIntermAggregate* rhsAggregate = new TIntermAggregate();
+
+            const bool isSimple = (node->getAsSymbolNode() != nullptr) || (node->getAsConstantUnion() != nullptr);
+
+            if (!isSimple) {
+                assert(0); // TODO: use node replicator service when available.
+            }
+            
+            for (int x=0; x<matSize; ++x)
+                rhsAggregate->getSequence().push_back(node);
+
+            return setAggregateOperator(rhsAggregate, constructorOp, type, node->getLoc());
+        }
+    }
+
     // scalar -> vector or vec1 -> vector or
     // vector -> scalar or
     // bigger vector -> smaller vector

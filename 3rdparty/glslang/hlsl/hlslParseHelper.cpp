@@ -1165,7 +1165,7 @@ bool HlslParseContext::shouldFlatten(const TType& type) const
     const TStorageQualifier qualifier = type.getQualifier().storage;
 
     return (qualifier == EvqUniform && type.isArray() && intermediate.getFlattenUniformArrays()) ||
-           type.isStruct() && type.containsOpaque();
+           (type.isStruct() && type.containsOpaque());
 }
 
 // Top level variable flattening: construct data
@@ -5401,7 +5401,8 @@ bool HlslParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node
         if (type.isImplicitlySizedArray()) {
             // auto adapt the constructor type to the number of arguments
             type.changeOuterArraySize(function.getParamCount());
-        } else if (type.getOuterArraySize() != function.getParamCount()) {
+        } else if (type.getOuterArraySize() != function.getParamCount() &&
+                   type.computeNumComponents() > size) {
             error(loc, "array constructor needs one argument per array element", "constructor", "");
             return true;
         }
@@ -5429,6 +5430,12 @@ bool HlslParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node
             }
         }
     }
+
+    // Some array -> array type casts are okay
+    if (arrayArg && function.getParamCount() == 1 && op != EOpConstructStruct && type.isArray() &&
+        !type.isArrayOfArrays() && !function[0].type->isArrayOfArrays() &&
+        type.getVectorSize() >= 1 && function[0].type->getVectorSize() >= 1)
+        return false;
 
     if (arrayArg && op != EOpConstructStruct && ! type.isArrayOfArrays()) {
         error(loc, "constructing non-array constituent from array argument", "constructor", "");
@@ -6609,6 +6616,7 @@ const TFunction* HlslParseContext::findFunction(const TSourceLoc& loc, TFunction
         // shapes have to be convertible
         if ((from.isScalarOrVec1() && to.isScalarOrVec1()) ||
             (from.isScalarOrVec1() && to.isVector())    ||
+            (from.isScalarOrVec1() && to.isMatrix())    ||
             (from.isVector() && to.isVector() && from.getVectorSize() >= to.getVectorSize()))
             return true;
 
@@ -7343,17 +7351,20 @@ TIntermTyped* HlslParseContext::handleConstructor(const TSourceLoc& loc, TInterm
 
 // Add a constructor, either from the grammar, or other programmatic reasons.
 //
+// 'node' is what to construct from.
+// 'type' is what type to construct.
+//
+// Returns the constructed object.
 // Return nullptr if it can't be done.
 //
 TIntermTyped* HlslParseContext::addConstructor(const TSourceLoc& loc, TIntermTyped* node, const TType& type)
 {
-    TIntermAggregate* aggrNode = node->getAsAggregate();
     TOperator op = intermediate.mapTypeToConstructorOp(type);
 
     // Combined texture-sampler constructors are completely semantic checked
     // in constructorTextureSamplerError()
     if (op == EOpConstructTextureSampler)
-        return intermediate.setAggregateOperator(aggrNode, op, type, loc);
+        return intermediate.setAggregateOperator(node->getAsAggregate(), op, type, loc);
 
     TTypeList::const_iterator memberTypes;
     if (op == EOpConstructStruct)
@@ -7367,7 +7378,8 @@ TIntermTyped* HlslParseContext::addConstructor(const TSourceLoc& loc, TIntermTyp
         elementType.shallowCopy(type);
 
     bool singleArg;
-    if (aggrNode) {
+    TIntermAggregate* aggrNode = node->getAsAggregate();
+    if (aggrNode != nullptr) {
         if (aggrNode->getOp() != EOpNull || aggrNode->getSequence().size() == 1)
             singleArg = true;
         else
@@ -7377,14 +7389,27 @@ TIntermTyped* HlslParseContext::addConstructor(const TSourceLoc& loc, TIntermTyp
 
     TIntermTyped *newNode;
     if (singleArg) {
+        // Handle array -> array conversion
+        // Constructing an array of one type from an array of another type is allowed,
+        // assuming there are enough components available (semantic-checked earlier).
+        if (type.isArray() && node->isArray())
+            newNode = convertArray(node, type);
+
         // If structure constructor or array constructor is being called
         // for only one parameter inside the structure, we need to call constructAggregate function once.
-        if (type.isArray())
+        else if (type.isArray())
             newNode = constructAggregate(node, elementType, 1, node->getLoc());
         else if (op == EOpConstructStruct)
             newNode = constructAggregate(node, *(*memberTypes).type, 1, node->getLoc());
-        else
+        else {
+            // shape conversion for matrix constructor from scalar.  HLSL semantics are: scalar
+            // is replicated into every element of the matrix (not just the diagnonal), so
+            // that is handled specially here.
+            if (type.isMatrix() && node->getType().isScalarOrVec1())
+                node = intermediate.addShapeConversion(type, node);
+
             newNode = constructBuiltIn(type, op, node, node->getLoc(), false);
+        }
 
         if (newNode && (type.isArray() || op == EOpConstructStruct))
             newNode = intermediate.setAggregateOperator(newNode, EOpConstructStruct, type, loc);
@@ -7544,13 +7569,86 @@ TIntermTyped* HlslParseContext::constructBuiltIn(const TType& type, TOperator op
     return intermediate.setAggregateOperator(newNode, op, type, loc);
 }
 
+// Convert the array in node to the requested type, which is also an array.
+// Returns nullptr on failure, otherwise returns aggregate holding the list of
+// elements needed to construct the array.
+TIntermTyped* HlslParseContext::convertArray(TIntermTyped* node, const TType& type)
+{
+    assert(node->isArray() && type.isArray());
+    if (node->getType().computeNumComponents() < type.computeNumComponents())
+        return nullptr;
+
+    // TODO: write an argument replicator, for the case the argument should not be
+    // executed multiple times, yet multiple copies are needed.
+
+    TIntermTyped* constructee = node->getAsTyped();
+    // track where we are in consuming the argument
+    int constructeeElement = 0;
+    int constructeeComponent = 0;
+
+    // bump up to the next component to consume
+    const auto getNextComponent = [&]() {
+        TIntermTyped* component;
+        component = handleBracketDereference(node->getLoc(), constructee, 
+                                             intermediate.addConstantUnion(constructeeElement, node->getLoc()));
+        if (component->isVector())
+            component = handleBracketDereference(node->getLoc(), component,
+                                                 intermediate.addConstantUnion(constructeeComponent, node->getLoc()));
+        // bump component pointer up
+        ++constructeeComponent;
+        if (constructeeComponent == constructee->getVectorSize()) {
+            constructeeComponent = 0;
+            ++constructeeElement;
+        }
+        return component;
+    };
+
+    // make one subnode per constructed array element
+    TIntermAggregate* constructor = nullptr;
+    TType derefType(type, 0);
+    TType speculativeComponentType(derefType, 0);
+    TType* componentType = derefType.isVector() ? &speculativeComponentType : &derefType;
+    TOperator componentOp = intermediate.mapTypeToConstructorOp(*componentType);
+    TType crossType(node->getBasicType(), EvqTemporary, type.getVectorSize());
+    for (int e = 0; e < type.getOuterArraySize(); ++e) {
+        // construct an element
+        TIntermTyped* elementArg;
+        if (type.getVectorSize() == constructee->getVectorSize()) {
+            // same element shape
+            elementArg = handleBracketDereference(node->getLoc(), constructee,
+                                                  intermediate.addConstantUnion(e, node->getLoc()));
+        } else {
+            // mismatched element shapes
+            if (type.getVectorSize() == 1)
+                elementArg = getNextComponent();
+            else {
+                // make a vector
+                TIntermAggregate* elementConstructee = nullptr;
+                for (int c = 0; c < type.getVectorSize(); ++c)
+                    elementConstructee = intermediate.growAggregate(elementConstructee, getNextComponent());
+                elementArg = addConstructor(node->getLoc(), elementConstructee, crossType);
+            }
+        }
+        // convert basic types
+        elementArg = intermediate.addConversion(componentOp, derefType, elementArg);
+        if (elementArg == nullptr)
+            return nullptr;
+        // combine with top-level constructor
+        constructor = intermediate.growAggregate(constructor, elementArg);
+    }
+
+    return constructor;
+}
+
 // This function tests for the type of the parameters to the structure or array constructor. Raises
 // an error message if the expected type does not match the parameter passed to the constructor.
 //
 // Returns nullptr for an error or the input node itself if the expected and the given parameter types match.
 //
-TIntermTyped* HlslParseContext::constructAggregate(TIntermNode* node, const TType& type, int paramCount, const TSourceLoc& loc)
+TIntermTyped* HlslParseContext::constructAggregate(TIntermNode* node, const TType& type, int paramCount,
+                                                   const TSourceLoc& loc)
 {
+    // Handle cases that map more 1:1 between constructor arguments and constructed.
     TIntermTyped* converted = intermediate.addConversion(EOpConstructStruct, type, node->getAsTyped());
     if (! converted || converted->getType() != type) {
         error(loc, "", "constructor", "cannot convert parameter %d from '%s' to '%s'", paramCount,

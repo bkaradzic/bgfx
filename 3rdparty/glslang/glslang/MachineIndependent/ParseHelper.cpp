@@ -5425,6 +5425,9 @@ TIntermTyped* TParseContext::convertInitializerList(const TSourceLoc& loc, const
 // Test for the correctness of the parameters passed to various constructor functions
 // and also convert them to the right data type, if allowed and required.
 //
+// 'node' is what to construct from.
+// 'type' is what type to construct.
+//
 // Returns nullptr for an error or the constructed node (aggregate or typed) for no error.
 //
 TIntermTyped* TParseContext::addConstructor(const TSourceLoc& loc, TIntermNode* node, const TType& type)

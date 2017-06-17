@@ -588,7 +588,7 @@ bool ProcessDeferred(
     const char* customPreamble,
     const EShOptimizationLevel optLevel,
     const TBuiltInResource* resources,
-    int defaultVersion,         // use 100 for ES environment, 110 for desktop; this is the GLSL version, not SPIR-V or Vulkan
+    int defaultVersion,  // use 100 for ES environment, 110 for desktop; this is the GLSL version, not SPIR-V or Vulkan
     EProfile defaultProfile,
     // set version/profile to defaultVersion/defaultProfile regardless of the #version
     // directive in the source code
@@ -628,7 +628,7 @@ bool ProcessDeferred(
     const char** names = new const char*[numTotal];
     for (int s = 0; s < numStrings; ++s) {
         strings[s + numPre] = shaderStrings[s];
-        if (inputLengths == 0 || inputLengths[s] < 0)
+        if (inputLengths == nullptr || inputLengths[s] < 0)
             lengths[s + numPre] = strlen(shaderStrings[s]);
         else
             lengths[s + numPre] = inputLengths[s];
@@ -643,12 +643,14 @@ bool ProcessDeferred(
 
     // First, without using the preprocessor or parser, find the #version, so we know what
     // symbol tables, processing rules, etc. to set up.  This does not need the extra strings
-    // outlined above, just the user shader.
-    glslang::TInputScanner userInput(numStrings, &strings[numPre], &lengths[numPre]);  // no preamble
+    // outlined above, just the user shader, after the system and user preambles.
+    glslang::TInputScanner userInput(numStrings, &strings[numPre], &lengths[numPre]);
     int version = 0;
     EProfile profile = ENoProfile;
     bool versionNotFirstToken = false;
-    bool versionNotFirst = (messages & EShMsgReadHlsl) ? true : userInput.scanVersion(version, profile, versionNotFirstToken);
+    bool versionNotFirst = (messages & EShMsgReadHlsl) ?
+                                true :
+                                userInput.scanVersion(version, profile, versionNotFirstToken);
     bool versionNotFound = version == 0;
     if (forceDefaultVersionAndProfile && (messages & EShMsgReadHlsl) == 0) {
         if (! (messages & EShMsgSuppressWarnings) && ! versionNotFound &&
@@ -675,7 +677,8 @@ bool ProcessDeferred(
         spvVersion.vulkan = 100;     // TODO: eventually have this come from the outside
     else if (spvVersion.spv != 0)
         spvVersion.openGl = 100;     // TODO: eventually have this come from the outside
-    bool goodVersion = DeduceVersionProfile(compiler->infoSink, compiler->getLanguage(), versionNotFirst, defaultVersion, source, version, profile, spvVersion);
+    bool goodVersion = DeduceVersionProfile(compiler->infoSink, compiler->getLanguage(),
+                                            versionNotFirst, defaultVersion, source, version, profile, spvVersion);
     bool versionWillBeError = (versionNotFound || (profile == EEsProfile && version >= 300 && versionNotFirst));
     bool warnVersionNotFirst = false;
     if (! versionWillBeError && versionNotFirstToken) {
@@ -696,7 +699,7 @@ bool ProcessDeferred(
     if (messages & EShMsgDebugInfo) {
         intermediate.setSourceFile(names[numPre]);
         for (int s = 0; s < numStrings; ++s)
-            intermediate.addSourceText(strings[numPre]);
+            intermediate.addSourceText(strings[numPre + s]);
     }
     SetupBuiltinSymbolTable(version, profile, spvVersion, source);
 
@@ -726,7 +729,7 @@ bool ProcessDeferred(
                                                          compiler->getLanguage(), compiler->infoSink,
                                                          spvVersion, forwardCompatible, messages, false, sourceEntryPointName);
 
-    TPpContext ppContext(*parseContext, names[numPre]? names[numPre]: "", includer);
+    TPpContext ppContext(*parseContext, names[numPre] ? names[numPre] : "", includer);
 
     // only GLSL (bison triggered, really) needs an externally set scan context
     glslang::TScanContext scanContext(*parseContext);
