@@ -135,33 +135,6 @@ struct ShadowMapRenderTargets
 	};
 };
 
-void imguiEnum(SmImpl::Enum& _enum)
-{
-	_enum = (SmImpl::Enum)imguiChoose(_enum
-			, "Hard"
-			, "PCF"
-			, "VSM"
-			, "ESM"
-			);
-}
-
-void imguiEnum(DepthImpl::Enum& _enum)
-{
-	_enum = (DepthImpl::Enum)imguiChoose(_enum
-			, "InvZ"
-			, "Linear"
-			);
-}
-
-void imguiEnum(LightType::Enum& _enum)
-{
-	_enum = (LightType::Enum)imguiChoose(_enum
-			, "Spot light"
-			, "Point light"
-			, "Directional light"
-			);
-}
-
 struct PosNormalTexcoordVertex
 {
 	float    m_x;
@@ -1295,9 +1268,8 @@ struct SceneSettings
 	float m_fovXAdjust;
 	float m_fovYAdjust;
 	float m_coverageSpotL;
-	float m_numSplitsf;
 	float m_splitDistribution;
-	uint8_t m_numSplits;
+	int   m_numSplits;
 	bool m_updateLights;
 	bool m_updateScene;
 	bool m_drawDepthBuffer;
@@ -1887,9 +1859,8 @@ class ExampleShadowmaps : public entry::AppI
 		m_settings.m_fovXAdjust      = 0.0f;
 		m_settings.m_fovYAdjust      = 0.0f;
 		m_settings.m_coverageSpotL   = 90.0f;
-		m_settings.m_numSplitsf      = 4.0f;
 		m_settings.m_splitDistribution = 0.6f;
-		m_settings.m_numSplits       = uint8_t(m_settings.m_numSplitsf);
+		m_settings.m_numSplits       = 4;
 		m_settings.m_updateLights    = true;
 		m_settings.m_updateScene     = true;
 		m_settings.m_drawDepthBuffer = false;
@@ -1999,136 +1970,163 @@ class ExampleShadowmaps : public entry::AppI
 							, m_viewState.m_width
 							, m_viewState.m_height
 							);
-
-			static int32_t rightScrollArea = 0;
-			imguiBeginScrollArea("Settings", m_viewState.m_width - 256 - 10, 10, 256, 660, &rightScrollArea);
-
+			
+			ImGui::SetNextWindowPos(ImVec2(m_viewState.m_width - 300 - 10, 10) );
+			ImGui::Begin("Settings"
+						 , NULL
+						 , ImVec2(300, 660)
+						 , ImGuiWindowFlags_AlwaysAutoResize
+						 );
+			
 #define IMGUI_FLOAT_SLIDER(_name, _val) \
-imguiSlider(_name \
-, _val \
+ImGui::SliderFloat(_name \
+, &_val \
 , *( ((float*)&_val)+1) \
 , *( ((float*)&_val)+2) \
-, *( ((float*)&_val)+3) \
 )
-
-			imguiBool("Update lights", m_settings.m_updateLights);
-			imguiBool("Update scene", m_settings.m_updateScene);
-
-			imguiSeparatorLine();
-			imguiLabel("Shadow map depth:");
-			imguiEnum(m_settings.m_depthImpl);
+#define IMGUI_RADIO_BUTTON(_name, _var, _val) \
+if ( ImGui::RadioButton(_name, _var == _val )) _var = _val;
+			
+			ImGui::Checkbox("Update lights", &m_settings.m_updateLights);
+			ImGui::Checkbox("Update scene", &m_settings.m_updateScene);
+			
+			ImGui::Separator();
+			ImGui::Text("Shadow map depth:");
+			IMGUI_RADIO_BUTTON("InvZ", m_settings.m_depthImpl, DepthImpl::InvZ);
+			IMGUI_RADIO_BUTTON("Linear", m_settings.m_depthImpl, DepthImpl::Linear);
+			
 			ShadowMapSettings* currentSmSettings = &m_smSettings[m_settings.m_lightType][m_settings.m_depthImpl][m_settings.m_smImpl];
-
-			imguiSeparator();
-			imguiBool("Draw depth buffer.", m_settings.m_drawDepthBuffer);
+			
+			ImGui::Separator();
+			ImGui::Checkbox("Draw depth buffer", &m_settings.m_drawDepthBuffer);
 			if (m_settings.m_drawDepthBuffer)
 			{
-				IMGUI_FLOAT_SLIDER("Depth value pow:", currentSmSettings->m_depthValuePow);
+				IMGUI_FLOAT_SLIDER("Depth value pow", currentSmSettings->m_depthValuePow);
 			}
-
-			imguiSeparatorLine();
-			imguiLabel("Shadow Map implementation:");
-			imguiEnum(m_settings.m_smImpl);
+			
+			ImGui::Separator();
+			ImGui::Text("Shadow Map implementation");
+			IMGUI_RADIO_BUTTON("Hard", m_settings.m_smImpl, SmImpl::Hard);
+			IMGUI_RADIO_BUTTON("PCF", m_settings.m_smImpl, SmImpl::PCF);
+			IMGUI_RADIO_BUTTON("VSM", m_settings.m_smImpl, SmImpl::VSM);
+			IMGUI_RADIO_BUTTON("ESM", m_settings.m_smImpl, SmImpl::ESM);
 			currentSmSettings = &m_smSettings[m_settings.m_lightType][m_settings.m_depthImpl][m_settings.m_smImpl];
-
-			imguiSeparator();
-			IMGUI_FLOAT_SLIDER("Bias:", currentSmSettings->m_bias);
-			IMGUI_FLOAT_SLIDER("Normal offset:", currentSmSettings->m_normalOffset);
-			imguiSeparator();
+			
+			ImGui::Separator();
+			IMGUI_FLOAT_SLIDER("Bias", currentSmSettings->m_bias);
+			IMGUI_FLOAT_SLIDER("Normal offset", currentSmSettings->m_normalOffset);
+			ImGui::Separator();
 			if (LightType::DirectionalLight != m_settings.m_lightType)
 			{
-				IMGUI_FLOAT_SLIDER("Near plane:", currentSmSettings->m_near);
+				IMGUI_FLOAT_SLIDER("Near plane", currentSmSettings->m_near);
 			}
-			IMGUI_FLOAT_SLIDER("Far plane:", currentSmSettings->m_far);
-
-			imguiSeparator();
+			IMGUI_FLOAT_SLIDER("Far plane", currentSmSettings->m_far);
+			
+			ImGui::Separator();
 			switch(m_settings.m_smImpl)
 			{
 				case SmImpl::Hard:
-					//imguiLabel("Hard");
+					//ImGui::Text("Hard");
 					break;
-
+					
 				case SmImpl::PCF:
-					imguiLabel("PCF");
-					IMGUI_FLOAT_SLIDER("X Offset:", currentSmSettings->m_xOffset);
-					IMGUI_FLOAT_SLIDER("Y Offset:", currentSmSettings->m_yOffset);
+					ImGui::Text("PCF");
+					IMGUI_FLOAT_SLIDER("X Offset", currentSmSettings->m_xOffset);
+					IMGUI_FLOAT_SLIDER("Y Offset", currentSmSettings->m_yOffset);
 					break;
-
+					
 				case SmImpl::VSM:
-					imguiLabel("VSM");
+					ImGui::Text("VSM");
 					IMGUI_FLOAT_SLIDER("Min variance", currentSmSettings->m_customParam0);
 					IMGUI_FLOAT_SLIDER("Depth multiplier", currentSmSettings->m_customParam1);
-					imguiBool("Blur shadow map", currentSmSettings->m_doBlur);
+					ImGui::Checkbox("Blur shadow map", &currentSmSettings->m_doBlur);
 					if (currentSmSettings->m_doBlur)
 					{
-						IMGUI_FLOAT_SLIDER("Blur X Offset:", currentSmSettings->m_xOffset);
-						IMGUI_FLOAT_SLIDER("Blur Y Offset:", currentSmSettings->m_yOffset);
+						IMGUI_FLOAT_SLIDER("Blur X Offset", currentSmSettings->m_xOffset);
+						IMGUI_FLOAT_SLIDER("Blur Y Offset", currentSmSettings->m_yOffset);
 					}
 					break;
-
+					
 				case SmImpl::ESM:
-					imguiLabel("ESM");
+					ImGui::Text("ESM");
 					IMGUI_FLOAT_SLIDER("ESM Hardness", currentSmSettings->m_customParam0);
 					IMGUI_FLOAT_SLIDER("Depth multiplier", currentSmSettings->m_customParam1);
-					imguiBool("Blur shadow map", currentSmSettings->m_doBlur);
+					ImGui::Checkbox("Blur shadow map", &currentSmSettings->m_doBlur);
 					if (currentSmSettings->m_doBlur)
 					{
-						IMGUI_FLOAT_SLIDER("Blur X Offset:", currentSmSettings->m_xOffset);
-						IMGUI_FLOAT_SLIDER("Blur Y Offset:", currentSmSettings->m_yOffset);
+						IMGUI_FLOAT_SLIDER("Blur X Offset", currentSmSettings->m_xOffset);
+						IMGUI_FLOAT_SLIDER("Blur Y Offset", currentSmSettings->m_yOffset);
 					}
 					break;
-
+					
 				default:
 					break;
 			};
+			
+			ImGui::End();
+#undef IMGUI_RADIO_BUTTON
 
-			imguiEndScrollArea();
+			ImGui::SetNextWindowPos(ImVec2(10,70) );
+			ImGui::Begin("Light"
+						 , NULL
+						 , ImVec2(330, 334)
+						 , ImGuiWindowFlags_AlwaysAutoResize
+						 );
+			ImGui::PushItemWidth(185.0f);
 
-			static int32_t leftScrollArea = 0;
-			imguiBeginScrollArea("Light", 10, 70, 256, 334, &leftScrollArea);
+			bool bLtChanged = false;
+			if ( ImGui::RadioButton("Spot light", m_settings.m_lightType == LightType::SpotLight ))
+			{
+				m_settings.m_lightType = LightType::SpotLight; bLtChanged = true;
+			}
+			if ( ImGui::RadioButton("Point light", m_settings.m_lightType == LightType::PointLight ))
+			{
+				m_settings.m_lightType = LightType::PointLight; bLtChanged = true;
+			}
+			if ( ImGui::RadioButton("Directional light", m_settings.m_lightType == LightType::DirectionalLight ))
+			{
+				m_settings.m_lightType = LightType::DirectionalLight; bLtChanged = true;
+			}
+			
+			ImGui::Separator();
+			ImGui::Checkbox("Show shadow map coverage.", &m_settings.m_showSmCoverage);
+			
+			ImGui::Separator();
+			ImGui::Text("Shadow map resolution: %ux%u", m_currentShadowMapSize, m_currentShadowMapSize);
+			ImGui::SliderFloat("##SizePwrTwo", &currentSmSettings->m_sizePwrTwo,
+							   currentSmSettings->m_sizePwrTwoMin,
+							   currentSmSettings->m_sizePwrTwoMax, "%.0f");
 
-			const LightType::Enum ltBefore = m_settings.m_lightType;
-			imguiEnum(m_settings.m_lightType);
-			const LightType::Enum ltAfter = m_settings.m_lightType;
-			const bool bLtChanged = (ltAfter != ltBefore);
-
-			imguiSeparator();
-			imguiBool("Show shadow map coverage.", m_settings.m_showSmCoverage);
-
-			imguiSeparator();
-			imguiLabel("Shadow map resolution: %ux%u", m_currentShadowMapSize, m_currentShadowMapSize);
-			IMGUI_FLOAT_SLIDER(" ", currentSmSettings->m_sizePwrTwo);
-
-			imguiSeparatorLine();
+			ImGui::Separator();
 			if (LightType::SpotLight == m_settings.m_lightType)
 			{
-				imguiLabel("Spot light");
-				imguiSlider("Shadow map area:", m_settings.m_coverageSpotL, 45.0f, 120.0f, 1.0f);
-
-				imguiSeparator();
-				imguiSlider("Spot outer cone:", m_settings.m_spotOuterAngle, 0.0f, 91.0f, 0.1f);
-				imguiSlider("Spot inner cone:", m_settings.m_spotInnerAngle, 0.0f, 90.0f, 0.1f);
+				ImGui::Text("Spot light");
+				ImGui::SliderFloat("Shadow map area", &m_settings.m_coverageSpotL, 45.0f, 120.0f);
+				
+				ImGui::Separator();
+				ImGui::SliderFloat("Spot outer cone", &m_settings.m_spotOuterAngle, 0.0f, 91.0f);
+				ImGui::SliderFloat("Spot inner cone", &m_settings.m_spotInnerAngle, 0.0f, 90.0f);
 			}
 			else if (LightType::PointLight == m_settings.m_lightType)
 			{
-				imguiLabel("Point light");
-				imguiBool("Stencil pack", m_settings.m_stencilPack);
-
-				imguiSlider("Fov X adjust:", m_settings.m_fovXAdjust, -20.0f, 20.0f, 0.0001f);
-				imguiSlider("Fov Y adjust:", m_settings.m_fovYAdjust, -20.0f, 20.0f, 0.0001f);
+				ImGui::Text("Point light");
+				ImGui::Checkbox("Stencil pack", &m_settings.m_stencilPack);
+				
+				ImGui::SliderFloat("Fov X adjust", &m_settings.m_fovXAdjust, -20.0f, 20.0f);
+				ImGui::SliderFloat("Fov Y adjust", &m_settings.m_fovYAdjust, -20.0f, 20.0f);
 			}
 			else if (LightType::DirectionalLight == m_settings.m_lightType)
 			{
-				imguiLabel("Directional light");
-				imguiBool("Stabilize cascades", m_settings.m_stabilize);
-				imguiSlider("Cascade splits:", m_settings.m_numSplitsf, 1.0f, 4.0f, 1.0f);
-				imguiSlider("Cascade distribution:", m_settings.m_splitDistribution, 0.0f, 1.0f, 0.001f);
-				m_settings.m_numSplits = uint8_t(m_settings.m_numSplitsf);
+				ImGui::Text("Directional light");
+				ImGui::Checkbox("Stabilize cascades", &m_settings.m_stabilize);
+				ImGui::SliderInt("Cascade splits", &m_settings.m_numSplits, 1, 4);
+				ImGui::SliderFloat("Cascade distribution", &m_settings.m_splitDistribution, 0.0f, 1.0f);
 			}
-
+			
 #undef IMGUI_FLOAT_SLIDER
-
-			imguiEndScrollArea();
+			
+			ImGui::End();
+			
 			imguiEndFrame();
 
 			// Update uniforms.
