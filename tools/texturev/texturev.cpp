@@ -237,7 +237,8 @@ struct View
 				{
 					if (_argc >= 4)
 					{
-						float yy = (float)atof(_argv[3]);
+						float yy;
+						bx::fromString(&yy, _argv[3]);
 						if (_argv[3][0] == '+'
 						||  _argv[3][0] == '-')
 						{
@@ -249,7 +250,8 @@ struct View
 						}
 					}
 
-					float xx = (float)atof(_argv[2]);
+					float xx;
+					bx::fromString(&xx, _argv[2]);
 					if (_argv[2][0] == '+'
 					||  _argv[2][0] == '-')
 					{
@@ -270,7 +272,8 @@ struct View
 			{
 				if (_argc >= 3)
 				{
-					float zoom = (float)atof(_argv[2]);
+					float zoom;
+					bx::fromString(&zoom, _argv[2]);
 
 					if (_argv[2][0] == '+'
 					||  _argv[2][0] == '-')
@@ -293,7 +296,8 @@ struct View
 			{
 				if (_argc >= 3)
 				{
-					float angle = (float)atof(_argv[2]);
+					float angle;
+					bx::fromString(&angle, _argv[2]);
 
 					if (_argv[2][0] == '+'
 					||  _argv[2][0] == '-')
