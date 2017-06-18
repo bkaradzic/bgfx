@@ -1970,14 +1970,14 @@ class ExampleShadowmaps : public entry::AppI
 							, m_viewState.m_width
 							, m_viewState.m_height
 							);
-			
+
 			ImGui::SetNextWindowPos(ImVec2(m_viewState.m_width - 300 - 10, 10) );
 			ImGui::Begin("Settings"
 						 , NULL
 						 , ImVec2(300, 660)
 						 , ImGuiWindowFlags_AlwaysAutoResize
 						 );
-			
+
 #define IMGUI_FLOAT_SLIDER(_name, _val) \
 ImGui::SliderFloat(_name \
 , &_val \
@@ -1986,24 +1986,24 @@ ImGui::SliderFloat(_name \
 )
 #define IMGUI_RADIO_BUTTON(_name, _var, _val) \
 if ( ImGui::RadioButton(_name, _var == _val )) _var = _val;
-			
+
 			ImGui::Checkbox("Update lights", &m_settings.m_updateLights);
 			ImGui::Checkbox("Update scene", &m_settings.m_updateScene);
-			
+
 			ImGui::Separator();
 			ImGui::Text("Shadow map depth:");
 			IMGUI_RADIO_BUTTON("InvZ", m_settings.m_depthImpl, DepthImpl::InvZ);
 			IMGUI_RADIO_BUTTON("Linear", m_settings.m_depthImpl, DepthImpl::Linear);
-			
+
 			ShadowMapSettings* currentSmSettings = &m_smSettings[m_settings.m_lightType][m_settings.m_depthImpl][m_settings.m_smImpl];
-			
+
 			ImGui::Separator();
 			ImGui::Checkbox("Draw depth buffer", &m_settings.m_drawDepthBuffer);
 			if (m_settings.m_drawDepthBuffer)
 			{
 				IMGUI_FLOAT_SLIDER("Depth value pow", currentSmSettings->m_depthValuePow);
 			}
-			
+
 			ImGui::Separator();
 			ImGui::Text("Shadow Map implementation");
 			IMGUI_RADIO_BUTTON("Hard", m_settings.m_smImpl, SmImpl::Hard);
@@ -2011,7 +2011,7 @@ if ( ImGui::RadioButton(_name, _var == _val )) _var = _val;
 			IMGUI_RADIO_BUTTON("VSM", m_settings.m_smImpl, SmImpl::VSM);
 			IMGUI_RADIO_BUTTON("ESM", m_settings.m_smImpl, SmImpl::ESM);
 			currentSmSettings = &m_smSettings[m_settings.m_lightType][m_settings.m_depthImpl][m_settings.m_smImpl];
-			
+
 			ImGui::Separator();
 			IMGUI_FLOAT_SLIDER("Bias", currentSmSettings->m_bias);
 			IMGUI_FLOAT_SLIDER("Normal offset", currentSmSettings->m_normalOffset);
@@ -2021,20 +2021,20 @@ if ( ImGui::RadioButton(_name, _var == _val )) _var = _val;
 				IMGUI_FLOAT_SLIDER("Near plane", currentSmSettings->m_near);
 			}
 			IMGUI_FLOAT_SLIDER("Far plane", currentSmSettings->m_far);
-			
+
 			ImGui::Separator();
 			switch(m_settings.m_smImpl)
 			{
 				case SmImpl::Hard:
 					//ImGui::Text("Hard");
 					break;
-					
+
 				case SmImpl::PCF:
 					ImGui::Text("PCF");
 					IMGUI_FLOAT_SLIDER("X Offset", currentSmSettings->m_xOffset);
 					IMGUI_FLOAT_SLIDER("Y Offset", currentSmSettings->m_yOffset);
 					break;
-					
+
 				case SmImpl::VSM:
 					ImGui::Text("VSM");
 					IMGUI_FLOAT_SLIDER("Min variance", currentSmSettings->m_customParam0);
@@ -2046,7 +2046,7 @@ if ( ImGui::RadioButton(_name, _var == _val )) _var = _val;
 						IMGUI_FLOAT_SLIDER("Blur Y Offset", currentSmSettings->m_yOffset);
 					}
 					break;
-					
+
 				case SmImpl::ESM:
 					ImGui::Text("ESM");
 					IMGUI_FLOAT_SLIDER("ESM Hardness", currentSmSettings->m_customParam0);
@@ -2058,11 +2058,11 @@ if ( ImGui::RadioButton(_name, _var == _val )) _var = _val;
 						IMGUI_FLOAT_SLIDER("Blur Y Offset", currentSmSettings->m_yOffset);
 					}
 					break;
-					
+
 				default:
 					break;
 			};
-			
+
 			ImGui::End();
 #undef IMGUI_RADIO_BUTTON
 
@@ -2087,10 +2087,10 @@ if ( ImGui::RadioButton(_name, _var == _val )) _var = _val;
 			{
 				m_settings.m_lightType = LightType::DirectionalLight; bLtChanged = true;
 			}
-			
+
 			ImGui::Separator();
 			ImGui::Checkbox("Show shadow map coverage.", &m_settings.m_showSmCoverage);
-			
+
 			ImGui::Separator();
 			ImGui::Text("Shadow map resolution: %ux%u", m_currentShadowMapSize, m_currentShadowMapSize);
 			ImGui::SliderFloat("##SizePwrTwo", &currentSmSettings->m_sizePwrTwo,
@@ -2102,7 +2102,7 @@ if ( ImGui::RadioButton(_name, _var == _val )) _var = _val;
 			{
 				ImGui::Text("Spot light");
 				ImGui::SliderFloat("Shadow map area", &m_settings.m_coverageSpotL, 45.0f, 120.0f);
-				
+
 				ImGui::Separator();
 				ImGui::SliderFloat("Spot outer cone", &m_settings.m_spotOuterAngle, 0.0f, 91.0f);
 				ImGui::SliderFloat("Spot inner cone", &m_settings.m_spotInnerAngle, 0.0f, 90.0f);
@@ -2111,7 +2111,7 @@ if ( ImGui::RadioButton(_name, _var == _val )) _var = _val;
 			{
 				ImGui::Text("Point light");
 				ImGui::Checkbox("Stencil pack", &m_settings.m_stencilPack);
-				
+
 				ImGui::SliderFloat("Fov X adjust", &m_settings.m_fovXAdjust, -20.0f, 20.0f);
 				ImGui::SliderFloat("Fov Y adjust", &m_settings.m_fovYAdjust, -20.0f, 20.0f);
 			}
@@ -2122,11 +2122,11 @@ if ( ImGui::RadioButton(_name, _var == _val )) _var = _val;
 				ImGui::SliderInt("Cascade splits", &m_settings.m_numSplits, 1, 4);
 				ImGui::SliderFloat("Cascade distribution", &m_settings.m_splitDistribution, 0.0f, 1.0f);
 			}
-			
+
 #undef IMGUI_FLOAT_SLIDER
-			
+
 			ImGui::End();
-			
+
 			imguiEndFrame();
 
 			// Update uniforms.
