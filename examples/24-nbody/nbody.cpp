@@ -9,6 +9,14 @@
 #include "camera.h"
 #include <bgfx/bgfx.h>
 
+static const char* s_shapeNames[] =
+{
+	"Point",
+	"Sphere",
+	"Box",
+	"Donut"
+};
+
 struct ParamsData
 {
 	float   timeStep;
@@ -228,8 +236,7 @@ class ExampleNbody : public entry::AppI
 
 	bool update() BX_OVERRIDE
 	{
-		entry::MouseState mouseState;
-		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &mouseState) )
+		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
 			const bgfx::Caps* caps = bgfx::getCaps();
 			const bool computeSupported  = !!(caps->supported & BGFX_CAPS_COMPUTE);
@@ -253,47 +260,66 @@ class ExampleNbody : public entry::AppI
 				bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/24-nbody");
 				bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: N-body simulation with compute shaders using buffers.");
 
-				imguiBeginFrame(mouseState.m_mx
-					, mouseState.m_my
-					, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
-					| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
-					| (mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-					, mouseState.m_mz
+				imguiBeginFrame(
+					   m_mouseState.m_mx
+					,  m_mouseState.m_my
+					, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+					| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+					| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+					,  m_mouseState.m_mz
 					, uint16_t(m_width)
 					, uint16_t(m_height)
 					);
-				static int32_t scrollArea = 0;
-				imguiBeginScrollArea("Settings", m_width - m_width / 4 - 10, 10, m_width / 4, 500, &scrollArea);
-				imguiSlider("Random seed", m_paramsData.baseSeed, 0, 100);
-				int32_t shape = imguiChoose(m_paramsData.initialShape, "Point", "Sphere", "Box", "Donut");
-				imguiSlider("Initial speed", m_paramsData.initialSpeed, 0.0f, 300.0f, 0.1f);
-				bool defaults = imguiButton("Reset");
-				imguiSeparatorLine();
-				imguiSlider("Particle count (x512)", m_paramsData.dispatchSize, 1, 64);
-				imguiSlider("Gravity", m_paramsData.gravity, 0.0f, 0.3f, 0.001f);
-				imguiSlider("Damping", m_paramsData.damping, 0.0f, 1.0f, 0.01f);
-				imguiSlider("Max acceleration", m_paramsData.maxAccel, 0.0f, 100.0f, 0.01f);
-				imguiSlider("Time step", m_paramsData.timeStep, 0.0f, 0.02f, 0.0001f);
-				imguiSeparatorLine();
-				imguiSlider("Particle intensity", m_paramsData.particleIntensity, 0.0f, 1.0f, 0.001f);
-				imguiSlider("Particle size", m_paramsData.particleSize, 0.0f, 1.0f, 0.001f);
-				imguiSlider("Particle power", m_paramsData.particlePower, 0.001f, 16.0f, 0.01f);
-				imguiSeparatorLine();
-				if (imguiCheck("Use draw/dispatch indirect", m_useIndirect, indirectSupported) )
+
+				ImGui::SetNextWindowPos(ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f) );
+				ImGui::Begin("N-body Settings"
+					, NULL
+					, ImVec2(m_width / 5.0f, m_height / 1.5f)
+					, ImGuiWindowFlags_AlwaysAutoResize
+					);
+
+				bool    reset = false;
+				int32_t shape = m_paramsData.initialShape;
+				if (ImGui::Combo("Initial shape", &shape, s_shapeNames, BX_COUNTOF(s_shapeNames) ) )
 				{
-					m_useIndirect = !m_useIndirect;
+					// Modify parameters and reset if shape is changed
+					initializeParams(shape, &m_paramsData);
+					reset = true;
 				}
-				imguiEndScrollArea();
+
+				ImGui::SliderInt("Random seed", &m_paramsData.baseSeed, 0, 100);
+
+				if (ImGui::Button("Reset") )
+				{
+					reset = true;
+				}
+
+				ImGui::Separator();
+
+				ImGui::SliderInt("Particle count (x512)", &m_paramsData.dispatchSize, 1, 64);
+				ImGui::SliderFloat("Gravity", &m_paramsData.gravity, 0.0f, 0.3f);
+				ImGui::SliderFloat("Damping", &m_paramsData.damping, 0.0f, 1.0f);
+				ImGui::SliderFloat("Max acceleration", &m_paramsData.maxAccel, 0.0f, 100.0f);
+				ImGui::SliderFloat("Time step", &m_paramsData.timeStep, 0.0f, 0.02f);
+
+				ImGui::Separator();
+
+				ImGui::SliderFloat("Particle intensity", &m_paramsData.particleIntensity, 0.0f, 1.0f);
+				ImGui::SliderFloat("Particle size", &m_paramsData.particleSize, 0.0f, 1.0f);
+				ImGui::SliderFloat("Particle power", &m_paramsData.particlePower, 0.001f, 16.0f);
+
+				ImGui::Separator();
+
+				if (indirectSupported)
+				{
+					ImGui::Checkbox("Use draw/dispatch indirect", &m_useIndirect);
+				}
+
+				ImGui::End();
+
 				imguiEndFrame();
 
-				// Modify parameters and reset if shape is changed
-				if (shape != m_paramsData.initialShape)
-				{
-					defaults = true;
-					initializeParams(shape, &m_paramsData);
-				}
-
-				if (defaults)
+				if (reset)
 				{
 					bgfx::setBuffer(0, m_prevPositionBuffer0, bgfx::Access::Write);
 					bgfx::setBuffer(1, m_currPositionBuffer0, bgfx::Access::Write);
@@ -327,7 +353,7 @@ class ExampleNbody : public entry::AppI
 				bx::xchg(m_prevPositionBuffer0, m_prevPositionBuffer1);
 
 				// Update camera.
-				cameraUpdate(deltaTime, mouseState);
+				cameraUpdate(deltaTime, m_mouseState);
 
 				float view[16];
 				cameraGetViewMtx(view);
@@ -442,6 +468,8 @@ class ExampleNbody : public entry::AppI
 	bgfx::DynamicVertexBufferHandle m_prevPositionBuffer0;
 	bgfx::DynamicVertexBufferHandle m_prevPositionBuffer1;
 	bgfx::UniformHandle u_params;
+
+	entry::MouseState m_mouseState;
 
 	int64_t m_timeOffset;
 };
