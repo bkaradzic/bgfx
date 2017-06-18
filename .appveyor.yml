@@ -15,7 +15,7 @@ configuration:
 install:
   - git clone --depth 1 https://github.com/bkaradzic/bx ..\bx
   - git clone --depth 1 https://github.com/bkaradzic/bimg ..\bimg
-  - ..\bx\tools\bin\windows\genie --with-tools %TOOLSET%
+  - ..\bx\tools\bin\windows\genie --with-tools --with-examples %TOOLSET%
 
 build:
   project: .build/projects/$(TOOLSET)/bgfx.sln
