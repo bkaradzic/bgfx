@@ -48,15 +48,6 @@ namespace stl = tinystl;
 		} while(0)
 #endif // 0
 
-#define EXPECT(_condition) \
-	do { \
-		if (!(_condition) ) \
-		{ \
-			printf("Error parsing at:\n" BX_FILE_LINE_LITERAL "\nExpected: " #_condition "\n"); \
-			exit(EXIT_FAILURE); \
-		} \
-	} while(0)
-
 #include <bx/bx.h>
 #include <bx/debug.h>
 #include <bx/commandline.h>
@@ -626,7 +617,6 @@ int main(int _argc, const char* _argv[])
 			}
 			else if (0 == bx::strCmp(argv[0], "g") )
 			{
-				EXPECT(1 < argc);
 				group.m_name = argv[1];
 			}
 			else if (*argv[0] == 'v')
