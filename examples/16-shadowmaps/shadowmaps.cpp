@@ -1971,10 +1971,10 @@ class ExampleShadowmaps : public entry::AppI
 							, m_viewState.m_height
 							);
 
-			ImGui::SetNextWindowPos(ImVec2(m_viewState.m_width - 300 - 10, 10) );
+			ImGui::SetNextWindowPos(ImVec2(float(m_viewState.m_width) - 300.0f - 10.0f, 10.0f) );
 			ImGui::Begin("Settings"
 						 , NULL
-						 , ImVec2(300, 660)
+						 , ImVec2(300.0f, 660.0f)
 						 , ImGuiWindowFlags_AlwaysAutoResize
 						 );
 
@@ -2414,7 +2414,12 @@ if ( ImGui::RadioButton(_name, _var == _val )) _var = _val;
 				BX_CHECK(maxNumSplits >= settings.m_numSplits, "Error! Max num splits.");
 
 				float splitSlices[maxNumSplits*2];
-				splitFrustum(splitSlices, m_settings.m_numSplits, currentSmSettings->m_near, currentSmSettings->m_far, m_settings.m_splitDistribution);
+				splitFrustum(splitSlices
+					, uint8_t(m_settings.m_numSplits)
+					, currentSmSettings->m_near
+					, currentSmSettings->m_far
+					, m_settings.m_splitDistribution
+					);
 
 				// Update uniforms.
 				for (uint8_t ii = 0, ff = 1; ii < m_settings.m_numSplits; ++ii, ff+=2)
@@ -2808,7 +2813,7 @@ if ( ImGui::RadioButton(_name, _var == _val )) _var = _val;
 				}
 				else //LightType::DirectionalLight == settings.m_lightType)
 				{
-					drawNum = m_settings.m_numSplits;
+					drawNum = uint8_t(m_settings.m_numSplits);
 				}
 
 				for (uint8_t ii = 0; ii < drawNum; ++ii)

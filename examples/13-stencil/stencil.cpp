@@ -958,7 +958,7 @@ public:
 			uint8_t numLights = (uint8_t)m_numLights;
 			s_uniforms.m_params.m_ambientPass  = 1.0f;
 			s_uniforms.m_params.m_lightingPass = 1.0f;
-			s_uniforms.m_params.m_lightCount   = m_numLights;
+			s_uniforms.m_params.m_lightCount   = float(m_numLights);
 			s_uniforms.m_params.m_lightIndex   = 0.0f;
 			s_uniforms.m_color[3]              = m_reflectionValue;
 
