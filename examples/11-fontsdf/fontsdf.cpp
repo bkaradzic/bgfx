@@ -129,8 +129,8 @@ class ExampleFontSDF : public entry::AppI
 				, uint16_t(m_height)
 				);
 
-			const int32_t guiPanelWidth = 325;
-			const int32_t guiPanelHeight = 200;
+			const float guiPanelWidth  = 325.0f;
+			const float guiPanelHeight = 200.0f;
 
 			ImGui::SetNextWindowPos(ImVec2(m_width - guiPanelWidth - 10.0f, 10.0f) );
 			ImGui::Begin("Text Area"
