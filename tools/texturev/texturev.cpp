@@ -31,11 +31,13 @@ namespace stl = tinystl;
 #include <bgfx/embedded_shader.h>
 
 #include "vs_texture.bin.h"
+#include "vs_texture_cube.bin.h"
+
 #include "fs_texture.bin.h"
 #include "fs_texture_array.bin.h"
-#include "vs_texture_cube.bin.h"
 #include "fs_texture_cube.bin.h"
 #include "fs_texture_sdf.bin.h"
+#include "fs_texture_3d.bin.h"
 
 #define BACKGROUND_VIEW_ID 0
 #define IMAGE_VIEW_ID      1
@@ -51,6 +53,7 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] =
 	BGFX_EMBEDDED_SHADER(vs_texture_cube),
 	BGFX_EMBEDDED_SHADER(fs_texture_cube),
 	BGFX_EMBEDDED_SHADER(fs_texture_sdf),
+	BGFX_EMBEDDED_SHADER(fs_texture_3d),
 
 	BGFX_EMBEDDED_SHADER_END()
 };
@@ -821,6 +824,11 @@ int _main_(int _argc, char** _argv)
 			, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_texture_sdf")
 			, true);
 
+	bgfx::ProgramHandle texture3DProgram = bgfx::createProgram(
+			  vsTexture
+			, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_texture_3d")
+			, true);
+
 	bgfx::UniformHandle s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
 	bgfx::UniformHandle u_mtx      = bgfx::createUniform("u_mtx",      bgfx::UniformType::Mat4);
 	bgfx::UniformHandle u_params   = bgfx::createUniform("u_params",   bgfx::UniformType::Vec4);
@@ -1036,11 +1044,26 @@ int _main_(int _argc, char** _argv)
 				std::string title;
 				if (isValid(texture) )
 				{
+					const char* name = "";
+					if (view.m_info.cubeMap)
+					{
+						name = " CubeMap";
+					}
+					else if (1 < view.m_info.depth)
+					{
+						name = " 3D";
+						view.m_info.numLayers = view.m_info.depth;
+					}
+					else if (1 < view.m_info.numLayers)
+					{
+						name = " 2D Array";
+					}
+
 					bx::stringPrintf(title, "%s (%d x %d%s, mips: %d, layers %d, %s)"
 						, filePath
 						, view.m_info.width
 						, view.m_info.height
-						, view.m_info.cubeMap ? " CubeMap" : ""
+						, name
 						, view.m_info.numMips
 						, view.m_info.numLayers
 						, bimg::getName(bimg::TextureFormat::Enum(view.m_info.format) )
@@ -1143,6 +1166,11 @@ int _main_(int _argc, char** _argv)
 			layer.set(float(view.m_layer), 0.25f);
 
 			float params[4] = { mip.getValue(), layer.getValue(), 0.0f, 0.0f };
+			if (1 < view.m_info.depth)
+			{
+				params[1] = layer.getValue()/view.m_info.depth;
+			}
+
 			bgfx::setUniform(u_params, params);
 
 			const uint32_t textureFlags = 0
@@ -1166,12 +1194,26 @@ int _main_(int _argc, char** _argv)
 				| BGFX_STATE_ALPHA_WRITE
 				| (view.m_alpha ? BGFX_STATE_BLEND_ALPHA : BGFX_STATE_NONE)
 				);
-			bgfx::submit(IMAGE_VIEW_ID
-					,     view.m_info.cubeMap   ? textureCubeProgram
-					: 1 < view.m_info.numLayers ? textureArrayProgram
-					:     view.m_sdf            ? textureSdfProgram
-					:                             textureProgram
-					);
+
+			bgfx:: ProgramHandle program = textureProgram;
+			if (1 < view.m_info.depth)
+			{
+				program = texture3DProgram;
+			}
+			else if (view.m_info.cubeMap)
+			{
+				program = textureCubeProgram;
+			}
+			else if (1 < view.m_info.numLayers)
+			{
+				program = textureArrayProgram;
+			}
+			else if (view.m_sdf)
+			{
+				program = textureSdfProgram;
+			}
+
+			bgfx::submit(IMAGE_VIEW_ID, program);
 
 			bgfx::frame();
 		}
