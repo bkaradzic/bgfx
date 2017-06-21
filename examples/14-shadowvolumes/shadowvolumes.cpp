@@ -2145,7 +2145,7 @@ class ExampleShadowVolumes : public entry::AppI
 						 , ImVec2(256.0f, 700.0f)
 						 , ImGuiWindowFlags_AlwaysAutoResize
 						 );
-			
+
 			const char* titles[2] =
 			{
 				"Scene 0",
@@ -2165,12 +2165,12 @@ class ExampleShadowVolumes : public entry::AppI
 			ImGui::SliderInt("Lights", &m_settings_numLights, 1, MAX_LIGHTS_COUNT);
 			ImGui::Checkbox("Update lights", &m_settings_updateLights);
 			ImGui::Indent();
-			
+
 			if (ImGui::RadioButton("Light pattern 0", LightPattern0 == m_lightPattern) )
 			{
 				m_lightPattern = LightPattern0;
 			}
-			
+
 			if (ImGui::RadioButton("Light pattern 1", LightPattern1 == m_lightPattern) )
 			{
 				m_lightPattern = LightPattern1;
@@ -2184,7 +2184,7 @@ class ExampleShadowVolumes : public entry::AppI
 			}
 
 			ImGui::Separator();
-			
+
 			ImGui::Text("Stencil buffer implementation:");
 			ImGui::Checkbox("Mixed", &m_settings_mixedSvImpl);
 			if (!m_settings_mixedSvImpl)
@@ -2247,14 +2247,14 @@ class ExampleShadowVolumes : public entry::AppI
 				, ImVec2(120.0f, 77.0f)
 				, ImGuiWindowFlags_AlwaysAutoResize
 				);
-			
+
 			if (ImGui::Button(m_settings_showHelp ? "ON" : "OFF") )
 			{
 				m_settings_showHelp = !m_settings_showHelp;
 			}
 
 			ImGui::End();
-			
+
 			imguiEndFrame();
 
 			//update settings
