@@ -2009,17 +2009,16 @@ class ExampleShadowVolumes : public entry::AppI
 		m_oldHeight = 0;
 
 		// Imgui.
-		m_settings_showHelp          = false;
-		m_settings_updateLights      = true;
-		m_settings_updateScene       = true;
-		m_settings_mixedSvImpl       = true;
-		m_settings_useStencilTexture = false;
-		m_settings_drawShadowVolumes = false;
-		m_settings_numLights         = 1;
-		m_settings_instanceCount     = 9;
-		m_settings_shadowVolumeImpl      = ShadowVolumeImpl::DepthFail;
-		m_settings_shadowVolumeAlgorithm = ShadowVolumeAlgorithm::EdgeBased;
-		m_scrollAreaRight = 0;
+		m_showHelp          = false;
+		m_updateLights      = true;
+		m_updateScene       = true;
+		m_mixedSvImpl       = true;
+		m_useStencilTexture = false;
+		m_drawShadowVolumes = false;
+		m_numLights         = 1;
+		m_instanceCount     = 9;
+		m_shadowVolumeImpl      = ShadowVolumeImpl::DepthFail;
+		m_shadowVolumeAlgorithm = ShadowVolumeAlgorithm::EdgeBased;
 
 		m_lightPattern = LightPattern0;
 		m_currentMesh  = BunnyLowPoly;
@@ -2177,8 +2176,8 @@ class ExampleShadowVolumes : public entry::AppI
 				m_currentScene = Scene1;
 			}
 
-			ImGui::SliderInt("Lights", &m_settings_numLights, 1, MAX_LIGHTS_COUNT);
-			ImGui::Checkbox("Update lights", &m_settings_updateLights);
+			ImGui::SliderInt("Lights", &m_numLights, 1, MAX_LIGHTS_COUNT);
+			ImGui::Checkbox("Update lights", &m_updateLights);
 			ImGui::Indent();
 
 			if (ImGui::RadioButton("Light pattern 0", LightPattern0 == m_lightPattern) )
@@ -2195,36 +2194,36 @@ class ExampleShadowVolumes : public entry::AppI
 
 			if ( Scene0 == m_currentScene )
 			{
-				ImGui::Checkbox("Update scene", &m_settings_updateScene);
+				ImGui::Checkbox("Update scene", &m_updateScene);
 			}
 
 			ImGui::Separator();
 
 			ImGui::Text("Stencil buffer implementation:");
-			ImGui::Checkbox("Mixed", &m_settings_mixedSvImpl);
-			if (!m_settings_mixedSvImpl)
+			ImGui::Checkbox("Mixed", &m_mixedSvImpl);
+			if (!m_mixedSvImpl)
 			{
-				m_settings_shadowVolumeImpl = (ImGui::RadioButton("Depth fail", ShadowVolumeImpl::DepthFail == m_settings_shadowVolumeImpl) ? ShadowVolumeImpl::DepthFail : m_settings_shadowVolumeImpl);
-				m_settings_shadowVolumeImpl = (ImGui::RadioButton("Depth pass", ShadowVolumeImpl::DepthPass == m_settings_shadowVolumeImpl) ? ShadowVolumeImpl::DepthPass : m_settings_shadowVolumeImpl);
+				m_shadowVolumeImpl = (ImGui::RadioButton("Depth fail", ShadowVolumeImpl::DepthFail == m_shadowVolumeImpl) ? ShadowVolumeImpl::DepthFail : m_shadowVolumeImpl);
+				m_shadowVolumeImpl = (ImGui::RadioButton("Depth pass", ShadowVolumeImpl::DepthPass == m_shadowVolumeImpl) ? ShadowVolumeImpl::DepthPass : m_shadowVolumeImpl);
 			}
 
 			ImGui::Text("Shadow volume implementation:");
-			m_settings_shadowVolumeAlgorithm = (ImGui::RadioButton("Face based impl.", ShadowVolumeAlgorithm::FaceBased == m_settings_shadowVolumeAlgorithm) ? ShadowVolumeAlgorithm::FaceBased : m_settings_shadowVolumeAlgorithm);
-			m_settings_shadowVolumeAlgorithm = (ImGui::RadioButton("Edge based impl.", ShadowVolumeAlgorithm::EdgeBased == m_settings_shadowVolumeAlgorithm) ? ShadowVolumeAlgorithm::EdgeBased : m_settings_shadowVolumeAlgorithm);
+			m_shadowVolumeAlgorithm = (ImGui::RadioButton("Face based impl.", ShadowVolumeAlgorithm::FaceBased == m_shadowVolumeAlgorithm) ? ShadowVolumeAlgorithm::FaceBased : m_shadowVolumeAlgorithm);
+			m_shadowVolumeAlgorithm = (ImGui::RadioButton("Edge based impl.", ShadowVolumeAlgorithm::EdgeBased == m_shadowVolumeAlgorithm) ? ShadowVolumeAlgorithm::EdgeBased : m_shadowVolumeAlgorithm);
 
 			ImGui::Text("Stencil:");
-			if (ImGui::RadioButton("Use stencil buffer", !m_settings_useStencilTexture) )
+			if (ImGui::RadioButton("Use stencil buffer", !m_useStencilTexture) )
 			{
-				if (m_settings_useStencilTexture)
+				if (m_useStencilTexture)
 				{
-					m_settings_useStencilTexture = false;
+					m_useStencilTexture = false;
 				}
 			}
-			if (ImGui::RadioButton("Use texture as stencil", m_settings_useStencilTexture) )
+			if (ImGui::RadioButton("Use texture as stencil", m_useStencilTexture) )
 			{
-				if (!m_settings_useStencilTexture)
+				if (!m_useStencilTexture)
 				{
-					m_settings_useStencilTexture = true;
+					m_useStencilTexture = true;
 				}
 			}
 
@@ -2242,7 +2241,7 @@ class ExampleShadowVolumes : public entry::AppI
 
 			if (Scene1 == m_currentScene)
 			{
-				ImGui::SliderInt("Instance count", &m_settings_instanceCount, 1, MAX_INSTANCE_COUNT);
+				ImGui::SliderInt("Instance count", &m_instanceCount, 1, MAX_INSTANCE_COUNT);
 			}
 
 			ImGui::Text("CPU Time: %7.1f [ms]", double(m_profTime)*toMs);
@@ -2252,7 +2251,7 @@ class ExampleShadowVolumes : public entry::AppI
 			m_numShadowVolumeIndices = 0;
 
 			ImGui::Separator();
-			ImGui::Checkbox("Draw Shadow Volumes", &m_settings_drawShadowVolumes);
+			ImGui::Checkbox("Draw Shadow Volumes", &m_drawShadowVolumes);
 
 			ImGui::End();
 
@@ -2263,9 +2262,9 @@ class ExampleShadowVolumes : public entry::AppI
 				, ImGuiWindowFlags_AlwaysAutoResize
 				);
 
-			if (ImGui::Button(m_settings_showHelp ? "ON" : "OFF") )
+			if (ImGui::Button(m_showHelp ? "ON" : "OFF") )
 			{
-				m_settings_showHelp = !m_settings_showHelp;
+				m_showHelp = !m_showHelp;
 			}
 
 			ImGui::End();
@@ -2276,20 +2275,20 @@ class ExampleShadowVolumes : public entry::AppI
 			s_uniforms.m_params.m_ambientPass     = 1.0f;
 			s_uniforms.m_params.m_lightingPass    = 1.0f;
 			s_uniforms.m_params.m_texelHalf       = s_texelHalf;
-			s_uniforms.m_svparams.m_useStencilTex = float(m_settings_useStencilTexture);
+			s_uniforms.m_svparams.m_useStencilTex = float(m_useStencilTexture);
 
 			//set picked bunny model
 			Model* bunnyModel = BunnyLowPoly == m_currentMesh ? &m_bunnyLowPolyModel : &m_bunnyHighPolyModel;
 
 			//update time accumulators
 			static float sceneTimeAccumulator = 0.0f;
-			if (m_settings_updateScene)
+			if (m_updateScene)
 			{
 				sceneTimeAccumulator += deltaTime;
 			}
 
 			static float lightTimeAccumulator = 0.0f;
-			if (m_settings_updateLights)
+			if (m_updateLights)
 			{
 				lightTimeAccumulator += deltaTime;
 			}
@@ -2298,21 +2297,21 @@ class ExampleShadowVolumes : public entry::AppI
 			float lightPosRadius[MAX_LIGHTS_COUNT][4];
 			if (LightPattern0 == m_lightPattern)
 			{
-				for (uint8_t ii = 0; ii < m_settings_numLights; ++ii)
+				for (uint8_t ii = 0; ii < m_numLights; ++ii)
 				{
-					lightPosRadius[ii][0] = bx::fcos(2.0f*bx::kPi/float(m_settings_numLights) * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
+					lightPosRadius[ii][0] = bx::fcos(2.0f*bx::kPi/float(m_numLights) * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
 					lightPosRadius[ii][1] = 20.0f;
-					lightPosRadius[ii][2] = bx::fsin(2.0f*bx::kPi/float(m_settings_numLights) * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
+					lightPosRadius[ii][2] = bx::fsin(2.0f*bx::kPi/float(m_numLights) * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
 					lightPosRadius[ii][3] = 20.0f;
 				}
 			}
 			else
 			{
-				for (uint8_t ii = 0; ii < m_settings_numLights; ++ii)
+				for (uint8_t ii = 0; ii < m_numLights; ++ii)
 				{
-					lightPosRadius[ii][0] = bx::fcos(float(ii) * 2.0f/float(m_settings_numLights) + lightTimeAccumulator * 1.3f + bx::kPi) * 40.0f;
+					lightPosRadius[ii][0] = bx::fcos(float(ii) * 2.0f/float(m_numLights) + lightTimeAccumulator * 1.3f + bx::kPi) * 40.0f;
 					lightPosRadius[ii][1] = 20.0f;
-					lightPosRadius[ii][2] = bx::fsin(float(ii) * 2.0f/float(m_settings_numLights) + lightTimeAccumulator * 1.3f + bx::kPi) * 40.0f;
+					lightPosRadius[ii][2] = bx::fsin(float(ii) * 2.0f/float(m_numLights) + lightTimeAccumulator * 1.3f + bx::kPi) * 40.0f;
 					lightPosRadius[ii][3] = 20.0f;
 				}
 			}
@@ -2323,7 +2322,7 @@ class ExampleShadowVolumes : public entry::AppI
 			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Shadow volumes.");
 			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
-			if (m_settings_showHelp)
+			if (m_showHelp)
 			{
 				uint8_t row = 5;
 				bgfx::dbgTextPrintf(3, row++, 0x0f, "Stencil buffer implementation:");
@@ -2503,7 +2502,7 @@ class ExampleShadowVolumes : public entry::AppI
 				uint8_t stateStep = 0;
 				uint8_t stateChange = 1;
 
-				for (uint8_t ii = 0; ii < m_settings_instanceCount; ++ii)
+				for (uint8_t ii = 0; ii < m_instanceCount; ++ii)
 				{
 					Instance& inst = shadowCasters[Scene1][shadowCastersCount[Scene1]++];
 					inst.m_scale[0]    = 5.0f;
@@ -2570,7 +2569,7 @@ class ExampleShadowVolumes : public entry::AppI
 			s_uniforms.m_color[1] = 1.0f;
 			s_uniforms.m_color[2] = 1.0f;
 
-			const RenderState& drawAmbient = m_settings_useStencilTexture
+			const RenderState& drawAmbient = m_useStencilTexture
 				? s_renderStates[RenderState::ShadowVolume_UsingStencilTexture_DrawAmbient]
 				: s_renderStates[RenderState::ShadowVolume_UsingStencilBuffer_DrawAmbient]
 				;
@@ -2588,7 +2587,7 @@ class ExampleShadowVolumes : public entry::AppI
 			}
 
 			// Using stencil texture requires rendering to separate render target. first pass is building depth buffer.
-			if (m_settings_useStencilTexture)
+			if (m_useStencilTexture)
 			{
 				bgfx::setViewClear(VIEWID_RANGE1_RT_PASS1, BGFX_CLEAR_DEPTH, 0x00000000, 1.0f, 0);
 				bgfx::setViewFrameBuffer(VIEWID_RANGE1_RT_PASS1, s_stencilFb);
@@ -2613,7 +2612,7 @@ class ExampleShadowVolumes : public entry::AppI
 			 * 1. Compute and draw shadow volume to stencil buffer
 			 * 2. Draw diffuse with stencil test
 			 */
-			for (uint8_t ii = 0, viewId = VIEWID_RANGE15_PASS2; ii < m_settings_numLights; ++ii, ++viewId)
+			for (uint8_t ii = 0, viewId = VIEWID_RANGE15_PASS2; ii < m_numLights; ++ii, ++viewId)
 			{
 				const float* lightPos = lightPosRadius[ii];
 
@@ -2621,7 +2620,7 @@ class ExampleShadowVolumes : public entry::AppI
 				bx::memCopy(s_uniforms.m_lightRgbInnerR, m_lightRgbInnerR[ii], 3*sizeof(float) );
 				bx::memCopy(s_uniforms.m_color,          m_lightRgbInnerR[ii], 3*sizeof(float) );
 
-				if (m_settings_useStencilTexture)
+				if (m_useStencilTexture)
 				{
 					bgfx::setViewFrameBuffer(viewId, s_stencilFb);
 
@@ -2648,7 +2647,7 @@ class ExampleShadowVolumes : public entry::AppI
 				// Create near clip volume for current light.
 				float nearClipVolume[6 * 4] = {};
 				float pointLight[4];
-				if (m_settings_mixedSvImpl)
+				if (m_mixedSvImpl)
 				{
 					pointLight[0] = lightPos[0];
 					pointLight[1] = lightPos[1];
@@ -2662,8 +2661,8 @@ class ExampleShadowVolumes : public entry::AppI
 					const Instance& instance = shadowCasters[m_currentScene][jj];
 					Model* model = instance.m_model;
 
-					ShadowVolumeImpl::Enum shadowVolumeImpl = m_settings_shadowVolumeImpl;
-					if (m_settings_mixedSvImpl)
+					ShadowVolumeImpl::Enum shadowVolumeImpl = m_shadowVolumeImpl;
+					if (m_mixedSvImpl)
 					{
 						// If instance is inside near clip volume, depth fail must be used, else depth pass is fine.
 						bool isInsideVolume = clipTest(nearClipVolume, 6, model->m_mesh, instance.m_scale, instance.m_pos);
@@ -2712,8 +2711,8 @@ class ExampleShadowVolumes : public entry::AppI
 							, shadowVolumeMtx
 							, transformedLightPos
 							, shadowVolumeImpl
-							, m_settings_shadowVolumeAlgorithm
-							, m_settings_useStencilTexture
+							, m_shadowVolumeAlgorithm
+							, m_useStencilTexture
 							);
 
 						m_numShadowVolumeVertices += shadowVolume.m_numVertices;
@@ -2721,14 +2720,14 @@ class ExampleShadowVolumes : public entry::AppI
 
 						ShadowVolumeProgramType::Enum programIndex = ShadowVolumeProgramType::Blank;
 						RenderState::Enum renderStateIndex;
-						if (m_settings_useStencilTexture)
+						if (m_useStencilTexture)
 						{
 							renderStateIndex = ShadowVolumeImpl::DepthFail == shadowVolumeImpl
 								? RenderState::ShadowVolume_UsingStencilTexture_CraftStencil_DepthFail
 								: RenderState::ShadowVolume_UsingStencilTexture_CraftStencil_DepthPass
 								;
 
-							programIndex = ShadowVolumeAlgorithm::FaceBased == m_settings_shadowVolumeAlgorithm
+							programIndex = ShadowVolumeAlgorithm::FaceBased == m_shadowVolumeAlgorithm
 								? ShadowVolumeProgramType::Tex1
 								: ShadowVolumeProgramType::Tex2
 								;
@@ -2766,7 +2765,7 @@ class ExampleShadowVolumes : public entry::AppI
 							::submit(viewId, m_svProgs[programIndex][ShadowVolumePart::Back]);
 						}
 
-						if (m_settings_drawShadowVolumes)
+						if (m_drawShadowVolumes)
 						{
 							const RenderState& renderState = s_renderStates[RenderState::Custom_DrawShadowVolume_Lines];
 
@@ -2801,13 +2800,13 @@ class ExampleShadowVolumes : public entry::AppI
 				s_uniforms.m_params.m_ambientPass = 0.0f;
 				s_uniforms.m_params.m_lightingPass = 1.0f;
 
-				RenderState& drawDiffuse = m_settings_useStencilTexture
+				RenderState& drawDiffuse = m_useStencilTexture
 					? s_renderStates[RenderState::ShadowVolume_UsingStencilTexture_DrawDiffuse]
 					: s_renderStates[RenderState::ShadowVolume_UsingStencilBuffer_DrawDiffuse]
 					;
 
 				// If using stencil texture, viewId is set to render target. Incr it to render to default back buffer.
-				viewId += uint8_t(m_settings_useStencilTexture);
+				viewId += uint8_t(m_useStencilTexture);
 
 				// Draw shadow casters.
 				for (uint8_t jj = 0; jj < shadowCastersCount[m_currentScene]; ++jj)
@@ -2826,7 +2825,7 @@ class ExampleShadowVolumes : public entry::AppI
 
 			// Lights.
 			const float lightScale[3] = { 1.5f, 1.5f, 1.5f };
-			for (uint8_t ii = 0; ii < m_settings_numLights; ++ii)
+			for (uint8_t ii = 0; ii < m_numLights; ++ii)
 			{
 				bx::memCopy(s_uniforms.m_color, m_lightRgbInnerR[ii], 3*sizeof(float) );
 
@@ -2913,21 +2912,20 @@ class ExampleShadowVolumes : public entry::AppI
 	uint32_t m_oldWidth;
 	uint32_t m_oldHeight;
 
-	bool m_settings_showHelp;
-	bool m_settings_updateLights;
-	bool m_settings_updateScene;
-	bool m_settings_mixedSvImpl;
-	bool m_settings_useStencilTexture;
-	bool m_settings_drawShadowVolumes;
-	int  m_settings_numLights;
-	int  m_settings_instanceCount;
-	ShadowVolumeImpl::Enum      m_settings_shadowVolumeImpl;
-	ShadowVolumeAlgorithm::Enum m_settings_shadowVolumeAlgorithm;
-	int32_t m_scrollAreaRight;
+	int32_t m_numLights;
+	int32_t m_instanceCount;
+	bool m_showHelp;
+	bool m_updateLights;
+	bool m_updateScene;
+	bool m_mixedSvImpl;
+	bool m_useStencilTexture;
+	bool m_drawShadowVolumes;
+	ShadowVolumeImpl::Enum      m_shadowVolumeImpl;
+	ShadowVolumeAlgorithm::Enum m_shadowVolumeAlgorithm;
 
 	LightPattern m_lightPattern;
-	MeshChoice m_currentMesh;
-	Scene m_currentScene;
+	MeshChoice   m_currentMesh;
+	Scene        m_currentScene;
 
 	entry::MouseState m_mouseState;
 };
