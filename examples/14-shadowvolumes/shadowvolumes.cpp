@@ -1871,7 +1871,7 @@ class ExampleShadowVolumes : public entry::AppI
 		Args args(_argc, _argv);
 
 		m_viewState = ViewState(1280, 720);
-		m_clearValues = {0x00000000, 1.0f, 0};
+		m_clearValues = { 0x00000000, 1.0f, 0 };
 
 		m_debug = BGFX_DEBUG_TEXT;
 		m_reset = BGFX_RESET_VSYNC;
@@ -1900,7 +1900,7 @@ class ExampleShadowVolumes : public entry::AppI
 		bgfx::TextureHandle fbtextures[] =
 		{
 			bgfx::createTexture2D(uint16_t(m_viewState.m_width), uint16_t(m_viewState.m_height), false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_U_CLAMP | BGFX_TEXTURE_V_CLAMP | BGFX_TEXTURE_RT),
-			bgfx::createTexture2D(uint16_t(m_viewState.m_width), uint16_t(m_viewState.m_height), false, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY),
+			bgfx::createTexture2D(uint16_t(m_viewState.m_width), uint16_t(m_viewState.m_height), false, 1, bgfx::TextureFormat::D16,   BGFX_TEXTURE_RT_WRITE_ONLY),
 		};
 
 		s_stencilFb  = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
@@ -1908,24 +1908,24 @@ class ExampleShadowVolumes : public entry::AppI
 		s_texColor   = bgfx::createUniform("s_texColor",   bgfx::UniformType::Int1);
 		s_texStencil = bgfx::createUniform("s_texStencil", bgfx::UniformType::Int1);
 
-		m_programTextureLighting  = loadProgram("vs_shadowvolume_texture_lighting", "fs_shadowvolume_texture_lighting");
-		m_programColorLighting    = loadProgram("vs_shadowvolume_color_lighting",   "fs_shadowvolume_color_lighting"  );
-		m_programColorTexture     = loadProgram("vs_shadowvolume_color_texture",    "fs_shadowvolume_color_texture"   );
-		m_programTexture          = loadProgram("vs_shadowvolume_texture",          "fs_shadowvolume_texture"         );
+		m_programTextureLighting = loadProgram("vs_shadowvolume_texture_lighting", "fs_shadowvolume_texture_lighting");
+		m_programColorLighting   = loadProgram("vs_shadowvolume_color_lighting",   "fs_shadowvolume_color_lighting"  );
+		m_programColorTexture    = loadProgram("vs_shadowvolume_color_texture",    "fs_shadowvolume_color_texture"   );
+		m_programTexture         = loadProgram("vs_shadowvolume_texture",          "fs_shadowvolume_texture"         );
 
-		m_programBackBlank        = loadProgram("vs_shadowvolume_svback",  "fs_shadowvolume_svbackblank" );
-		m_programSideBlank        = loadProgram("vs_shadowvolume_svside",  "fs_shadowvolume_svsideblank" );
-		m_programFrontBlank       = loadProgram("vs_shadowvolume_svfront", "fs_shadowvolume_svfrontblank");
+		m_programBackBlank       = loadProgram("vs_shadowvolume_svback",  "fs_shadowvolume_svbackblank" );
+		m_programSideBlank       = loadProgram("vs_shadowvolume_svside",  "fs_shadowvolume_svsideblank" );
+		m_programFrontBlank      = loadProgram("vs_shadowvolume_svfront", "fs_shadowvolume_svfrontblank");
 
-		m_programBackColor        = loadProgram("vs_shadowvolume_svback",  "fs_shadowvolume_svbackcolor" );
-		m_programSideColor        = loadProgram("vs_shadowvolume_svside",  "fs_shadowvolume_svsidecolor" );
-		m_programFrontColor       = loadProgram("vs_shadowvolume_svfront", "fs_shadowvolume_svfrontcolor");
+		m_programBackColor       = loadProgram("vs_shadowvolume_svback",  "fs_shadowvolume_svbackcolor" );
+		m_programSideColor       = loadProgram("vs_shadowvolume_svside",  "fs_shadowvolume_svsidecolor" );
+		m_programFrontColor      = loadProgram("vs_shadowvolume_svfront", "fs_shadowvolume_svfrontcolor");
 
-		m_programSideTex          = loadProgram("vs_shadowvolume_svside",  "fs_shadowvolume_svsidetex"   );
-		m_programBackTex1         = loadProgram("vs_shadowvolume_svback",  "fs_shadowvolume_svbacktex1"  );
-		m_programBackTex2         = loadProgram("vs_shadowvolume_svback",  "fs_shadowvolume_svbacktex2"  );
-		m_programFrontTex1        = loadProgram("vs_shadowvolume_svfront", "fs_shadowvolume_svfronttex1" );
-		m_programFrontTex2        = loadProgram("vs_shadowvolume_svfront", "fs_shadowvolume_svfronttex2" );
+		m_programSideTex         = loadProgram("vs_shadowvolume_svside",  "fs_shadowvolume_svsidetex"   );
+		m_programBackTex1        = loadProgram("vs_shadowvolume_svback",  "fs_shadowvolume_svbacktex1"  );
+		m_programBackTex2        = loadProgram("vs_shadowvolume_svback",  "fs_shadowvolume_svbacktex2"  );
+		m_programFrontTex1       = loadProgram("vs_shadowvolume_svfront", "fs_shadowvolume_svfronttex1" );
+		m_programFrontTex2       = loadProgram("vs_shadowvolume_svfront", "fs_shadowvolume_svfronttex2" );
 
 		bgfx::ProgramHandle svProgs[ShadowVolumeProgramType::Count][ShadowVolumePart::Count] =
 		{
@@ -1953,15 +1953,30 @@ class ExampleShadowVolumes : public entry::AppI
 		m_cubeModel.m_program = m_programTextureLighting;
 		m_cubeModel.m_texture = m_figureTex;
 
-		m_hplaneFieldModel.load(s_hplaneVertices, BX_COUNTOF(s_hplaneVertices), PosNormalTexcoordVertex::ms_decl, s_planeIndices, BX_COUNTOF(s_planeIndices) );
+		m_hplaneFieldModel.load(s_hplaneVertices
+			, BX_COUNTOF(s_hplaneVertices)
+			, PosNormalTexcoordVertex::ms_decl
+			, s_planeIndices
+			, BX_COUNTOF(s_planeIndices)
+			);
 		m_hplaneFieldModel.m_program = m_programTextureLighting;
 		m_hplaneFieldModel.m_texture = m_fieldstoneTex;
 
-		m_hplaneFigureModel.load(s_hplaneVertices, BX_COUNTOF(s_hplaneVertices), PosNormalTexcoordVertex::ms_decl, s_planeIndices, BX_COUNTOF(s_planeIndices) );
+		m_hplaneFigureModel.load(s_hplaneVertices
+			, BX_COUNTOF(s_hplaneVertices)
+			, PosNormalTexcoordVertex::ms_decl
+			, s_planeIndices
+			, BX_COUNTOF(s_planeIndices)
+			);
 		m_hplaneFigureModel.m_program = m_programTextureLighting;
 		m_hplaneFigureModel.m_texture = m_figureTex;
 
-		m_vplaneModel.load(s_vplaneVertices, BX_COUNTOF(s_vplaneVertices), PosNormalTexcoordVertex::ms_decl, s_planeIndices, BX_COUNTOF(s_planeIndices) );
+		m_vplaneModel.load(s_vplaneVertices
+			, BX_COUNTOF(s_vplaneVertices)
+			, PosNormalTexcoordVertex::ms_decl
+			, s_planeIndices
+			, BX_COUNTOF(s_planeIndices)
+			);
 		m_vplaneModel.m_program = m_programColorTexture;
 		m_vplaneModel.m_texture = m_flareTex;
 
@@ -1994,12 +2009,12 @@ class ExampleShadowVolumes : public entry::AppI
 		m_oldHeight = 0;
 
 		// Imgui.
-		m_settings_showHelp           = false;
-		m_settings_updateLights       = true;
-		m_settings_updateScene        = true;
-		m_settings_mixedSvImpl        = true;
-		m_settings_useStencilTexture  = false;
-		m_settings_drawShadowVolumes  = false;
+		m_settings_showHelp          = false;
+		m_settings_updateLights      = true;
+		m_settings_updateScene       = true;
+		m_settings_mixedSvImpl       = true;
+		m_settings_useStencilTexture = false;
+		m_settings_drawShadowVolumes = false;
 		m_settings_numLights         = 1;
 		m_settings_instanceCount     = 9;
 		m_settings_shadowVolumeImpl      = ShadowVolumeImpl::DepthFail;
@@ -2007,12 +2022,12 @@ class ExampleShadowVolumes : public entry::AppI
 		m_scrollAreaRight = 0;
 
 		m_lightPattern = LightPattern0;
-		m_currentMesh = BunnyLowPoly;
+		m_currentMesh  = BunnyLowPoly;
 		m_currentScene = Scene0;
 
 		// Set view matrix
-		float initialPos[3] = { 3.0f, 20.0f, -58.0f };
 		cameraCreate();
+		float initialPos[3] = { 3.0f, 20.0f, -58.0f };
 		cameraSetPosition(initialPos);
 		cameraSetVerticalAngle(-0.25f);
 		cameraGetViewMtx(m_viewState.m_view);
@@ -2141,10 +2156,10 @@ class ExampleShadowVolumes : public entry::AppI
 
 			ImGui::SetNextWindowPos(ImVec2(m_viewState.m_width - 256.0f, 10.0f) );
 			ImGui::Begin("Settings"
-						 , NULL
-						 , ImVec2(256.0f, 700.0f)
-						 , ImGuiWindowFlags_AlwaysAutoResize
-						 );
+				, NULL
+				, ImVec2(256.0f, 700.0f)
+				, ImGuiWindowFlags_AlwaysAutoResize
+				);
 
 			const char* titles[2] =
 			{
@@ -2512,10 +2527,10 @@ class ExampleShadowVolumes : public entry::AppI
 
 					switch (currentDirection)
 					{
-						case Left:  currX -= stepX; break;
-						case Down:  currY -= stepY; break;
-						case Right: currX += stepX; break;
-						case Up:    currY += stepY; break;
+					case Left:  currX -= stepX; break;
+					case Down:  currY -= stepY; break;
+					case Right: currX += stepX; break;
+					case Up:    currY += stepY; break;
 					}
 				}
 			}
