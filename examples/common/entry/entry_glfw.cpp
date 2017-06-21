@@ -403,7 +403,7 @@ namespace entry
 			if (!glfwInit() )
 			{
 				DBG("glfwInit failed!");
-				return EXIT_FAILURE;
+				return bx::kExitFailure;
 			}
 
 			glfwSetJoystickCallback(joystickCb);
@@ -422,7 +422,7 @@ namespace entry
 			{
 				DBG("glfwCreateWindow failed!");
 				glfwTerminate();
-				return EXIT_FAILURE;
+				return bx::kExitFailure;
 			}
 
 			glfwSetKeyCallback(m_windows[0], keyCb);

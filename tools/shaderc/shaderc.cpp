@@ -793,13 +793,13 @@ namespace bgfx
 				, BGFX_SHADERC_VERSION_MINOR
 				, BGFX_API_VERSION
 				);
-			return EXIT_SUCCESS;
+			return bx::kExitSuccess;
 		}
 
 		if (cmdLine.hasArg('h', "help") )
 		{
 			help();
-			return EXIT_FAILURE;
+			return bx::kExitFailure;
 		}
 
 		g_verbose = cmdLine.hasArg("verbose");
@@ -808,21 +808,21 @@ namespace bgfx
 		if (NULL == filePath)
 		{
 			help("Shader file name must be specified.");
-			return EXIT_FAILURE;
+			return bx::kExitFailure;
 		}
 
 		const char* outFilePath = cmdLine.findOption('o');
 		if (NULL == outFilePath)
 		{
 			help("Output file name must be specified.");
-			return EXIT_FAILURE;
+			return bx::kExitFailure;
 		}
 
 		const char* type = cmdLine.findOption('\0', "type");
 		if (NULL == type)
 		{
 			help("Must specify shader type.");
-			return EXIT_FAILURE;
+			return bx::kExitFailure;
 		}
 
 		const char* platform = cmdLine.findOption('\0', "platform");
@@ -1045,7 +1045,7 @@ namespace bgfx
 
 		default:
 			fprintf(stderr, "Unknown type: %s?!", type);
-			return EXIT_FAILURE;
+			return bx::kExitFailure;
 		}
 
 		bool compiled = false;
@@ -1244,7 +1244,7 @@ namespace bgfx
 				if (!bx::open(writer, outFilePath) )
 				{
 					fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
-					return EXIT_FAILURE;
+					return bx::kExitFailure;
 				}
 
 				if ('f' == shaderType)
@@ -1381,13 +1381,13 @@ namespace bgfx
 							if (!bx::open(&writer, outFilePath) )
 							{
 								fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
-								return EXIT_FAILURE;
+								return bx::kExitFailure;
 							}
 
 							bx::write(&writer, preprocessor.m_preprocessed.c_str(), (int32_t)preprocessor.m_preprocessed.size() );
 							bx::close(&writer);
 
-							return EXIT_SUCCESS;
+							return bx::kExitSuccess;
 						}
 
 						{
@@ -1405,7 +1405,7 @@ namespace bgfx
 							if (!bx::open(writer, outFilePath) )
 							{
 								fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
-								return EXIT_FAILURE;
+								return bx::kExitFailure;
 							}
 
 							bx::write(writer, BGFX_CHUNK_MAGIC_CSH);
@@ -1689,7 +1689,7 @@ namespace bgfx
 								else
 								{
 									fprintf(stderr, "gl_PrimitiveID builtin is not supported by this D3D9 HLSL.\n");
-									return EXIT_FAILURE;
+									return bx::kExitFailure;
 								}
 							}
 
@@ -1779,7 +1779,7 @@ namespace bgfx
 								else
 								{
 									fprintf(stderr, "gl_VertexID builtin is not supported by this D3D9 HLSL.\n");
-									return EXIT_FAILURE;
+									return bx::kExitFailure;
 								}
 							}
 
@@ -1795,7 +1795,7 @@ namespace bgfx
 								else
 								{
 									fprintf(stderr, "gl_InstanceID builtin is not supported by this D3D9 HLSL.\n");
-									return EXIT_FAILURE;
+									return bx::kExitFailure;
 								}
 							}
 
@@ -1851,7 +1851,7 @@ namespace bgfx
 							if (!bx::open(&writer, outFilePath) )
 							{
 								fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
-								return EXIT_FAILURE;
+								return bx::kExitFailure;
 							}
 
 							if (0 != glsl)
@@ -1868,7 +1868,7 @@ namespace bgfx
 							bx::write(&writer, preprocessor.m_preprocessed.c_str(), (int32_t)preprocessor.m_preprocessed.size() );
 							bx::close(&writer);
 
-							return EXIT_SUCCESS;
+							return bx::kExitSuccess;
 						}
 
 						{
@@ -1886,7 +1886,7 @@ namespace bgfx
 							if (!bx::open(writer, outFilePath) )
 							{
 								fprintf(stderr, "Unable to open output file '%s'.", outFilePath);
-								return EXIT_FAILURE;
+								return bx::kExitFailure;
 							}
 
 							if ('f' == shaderType)
@@ -2189,13 +2189,13 @@ namespace bgfx
 
 		if (compiled)
 		{
-			return EXIT_SUCCESS;
+			return bx::kExitSuccess;
 		}
 
 		remove(outFilePath);
 
 		fprintf(stderr, "Failed to build shader.\n");
-		return EXIT_FAILURE;
+		return bx::kExitFailure;
 	}
 
 } // namespace bgfx
