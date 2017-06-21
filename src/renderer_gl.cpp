@@ -5685,6 +5685,14 @@ namespace bgfx { namespace gl
 							);
 					}
 
+//					if (usesTexture3D)
+					{
+						writeString(&writer
+							, "#define texture3DEXT    texture3D\n"
+							  "#define texture3DLodEXT texture3DLod\n"
+							);
+					}
+
 					if (130 <= version)
 					{
 						if (m_type == GL_FRAGMENT_SHADER)
