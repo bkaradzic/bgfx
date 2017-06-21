@@ -94,10 +94,10 @@ https://github.com/dariomanesku/cmftStudio cmftStudio - cubemap filtering tool.
 
 ## Crown
 
-https://github.com/taylor001/crown Crown is a general purpose data-driven game
+https://github.com/dbartolini/crown Crown is a general purpose data-driven game
 engine, written from scratch with a minimalistic and data-oriented design
 philosophy in mind.  
-![Crown screenshot](https://raw.githubusercontent.com/taylor001/crown/master/docs/shots/level-editor.png)
+![Crown screenshot](https://raw.githubusercontent.com/dbartolini/crown/master/docs/shots/level-editor.png)
 
 ## Offroad Legends 2
 
