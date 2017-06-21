@@ -748,7 +748,7 @@ namespace bgfx { namespace spirv
 
 				if (optimized)
 				{
-					uint16_t shaderSize = (uint16_t)spirv.size()*sizeof(uint32_t);
+					uint32_t shaderSize = (uint32_t)spirv.size()*sizeof(uint32_t);
 					bx::write(_writer, shaderSize);
 					bx::write(_writer, spirv.data(), shaderSize);
 					uint8_t nul = 0;

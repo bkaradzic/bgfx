@@ -3501,7 +3501,7 @@ VK_DESTROY
 			}
 		}
 
-		uint16_t shaderSize;
+		uint32_t shaderSize;
 		bx::read(&reader, shaderSize);
 
 #if 1

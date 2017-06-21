@@ -2483,7 +2483,7 @@ namespace bgfx { namespace d3d9
 			}
 		}
 
-		uint16_t shaderSize;
+		uint32_t shaderSize;
 		bx::read(&reader, shaderSize);
 
 		const DWORD* code = (const DWORD*)reader.getDataPtr();
