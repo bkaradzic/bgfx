@@ -209,32 +209,33 @@ class ExampleDrawStress : public entry::AppI
 					, uint16_t(m_height)
 					);
 
-			imguiBeginScrollArea("Settings", m_width - m_width / 4 - 10, 10, m_width / 4, m_height / 2, &m_scrollArea);
-			imguiSeparatorLine();
+			ImGui::SetNextWindowPos(ImVec2((float)m_width - (float)m_width / 4.0f - 10.0f, 10.0f) );
+			ImGui::SetNextWindowSize(ImVec2((float)m_width / 4.0f, (float)m_height / 2.0f) );
+			ImGui::Begin("Settings"
+						 , NULL
+						 , ImVec2((float)m_width / 4.0f, (float)m_height / 2.0f)
+						 , ImGuiWindowFlags_AlwaysAutoResize
+						 );
+			
+			ImGui::RadioButton("Rotate",&m_transform,0);
+			ImGui::RadioButton("No fragments",&m_transform,1);
+			ImGui::Separator();
 
-			m_transform = imguiChoose(m_transform
-					, "Rotate"
-					, "No fragments"
-					);
-			imguiSeparatorLine();
+			ImGui::Checkbox("Auto adjust", &m_autoAdjust);
 
-			if (imguiCheck("Auto adjust", m_autoAdjust) )
-			{
-				m_autoAdjust ^= true;
-			}
+			ImGui::SliderInt("Dim", &m_dim, 5, m_maxDim);
+			ImGui::Text("Draw calls: %d", m_dim*m_dim*m_dim);
+			ImGui::Text("Avg Delta Time (1 second) [ms]: %0.4f", m_deltaTimeAvgNs/1000.0f);
 
-			imguiSlider("Dim", m_dim, 5, m_maxDim);
-			imguiLabel("Draw calls: %d", m_dim*m_dim*m_dim);
-			imguiLabel("Avg Delta Time (1 second) [ms]: %0.4f", m_deltaTimeAvgNs/1000.0f);
-
-			imguiSeparatorLine();
+			ImGui::Separator();
 			const bgfx::Stats* stats = bgfx::getStats();
-			imguiLabel("GPU %0.6f [ms]", double(stats->gpuTimeEnd - stats->gpuTimeBegin)*1000.0/stats->gpuTimerFreq);
-			imguiLabel("CPU %0.6f [ms]", double(stats->cpuTimeEnd - stats->cpuTimeBegin)*1000.0/stats->cpuTimerFreq);
-			imguiLabel("Waiting for render thread %0.6f [ms]", double(stats->waitRender) * toMs);
-			imguiLabel("Waiting for submit thread %0.6f [ms]", double(stats->waitSubmit) * toMs);
+			ImGui::Text("GPU %0.6f [ms]", double(stats->gpuTimeEnd - stats->gpuTimeBegin)*1000.0/stats->gpuTimerFreq);
+			ImGui::Text("CPU %0.6f [ms]", double(stats->cpuTimeEnd - stats->cpuTimeBegin)*1000.0/stats->cpuTimerFreq);
+			ImGui::Text("Waiting for render thread %0.6f [ms]", double(stats->waitRender) * toMs);
+			ImGui::Text("Waiting for submit thread %0.6f [ms]", double(stats->waitSubmit) * toMs);
 
-			imguiEndScrollArea();
+			ImGui::End();
+			
 			imguiEndFrame();
 
 			float at[3] = { 0.0f, 0.0f, 0.0f };
@@ -327,7 +328,7 @@ class ExampleDrawStress : public entry::AppI
 	int32_t  m_scrollArea;
 	int32_t  m_dim;
 	int32_t  m_maxDim;
-	uint32_t m_transform;
+	int32_t  m_transform;
 
 	int64_t  m_timeOffset;
 
