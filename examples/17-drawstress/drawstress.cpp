@@ -114,11 +114,11 @@ class ExampleDrawStress : public entry::AppI
 
 		// Set view 0 clear state.
 		bgfx::setViewClear(0
-				, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-				, 0x303030ff
-				, 1.0f
-				, 0
-				);
+			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
+			, 0x303030ff
+			, 1.0f
+			, 0
+			);
 
 		// Create vertex stream declaration.
 		PosColorVertex::init();
@@ -127,16 +127,16 @@ class ExampleDrawStress : public entry::AppI
 
 		// Create program from shaders.
 		m_program = bgfx::createProgram(
-				  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_drawstress")
-				, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_drawstress")
-				, true /* destroy shaders when program is destroyed */
-				);
+			  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_drawstress")
+			, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_drawstress")
+			, true /* destroy shaders when program is destroyed */
+			);
 
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(
-					  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-					, PosColorVertex::ms_decl
-					);
+			  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
+			, PosColorVertex::ms_decl
+			);
 
 		// Create static index buffer.
 		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
@@ -200,23 +200,23 @@ class ExampleDrawStress : public entry::AppI
 			float time = (float)( (now-m_timeOffset)/freq);
 
 			imguiBeginFrame(m_mouseState.m_mx
-					,  m_mouseState.m_my
-					, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-					,  m_mouseState.m_mz
-					, uint16_t(m_width)
-					, uint16_t(m_height)
-					);
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
 
 			ImGui::SetNextWindowPos(ImVec2((float)m_width - (float)m_width / 4.0f - 10.0f, 10.0f) );
 			ImGui::SetNextWindowSize(ImVec2((float)m_width / 4.0f, (float)m_height / 2.0f) );
 			ImGui::Begin("Settings"
-						 , NULL
-						 , ImVec2((float)m_width / 4.0f, (float)m_height / 2.0f)
-						 , ImGuiWindowFlags_AlwaysAutoResize
-						 );
-			
+				, NULL
+				, ImVec2((float)m_width / 4.0f, (float)m_height / 2.0f)
+				, ImGuiWindowFlags_AlwaysAutoResize
+				);
+
 			ImGui::RadioButton("Rotate",&m_transform,0);
 			ImGui::RadioButton("No fragments",&m_transform,1);
 			ImGui::Separator();
@@ -235,7 +235,7 @@ class ExampleDrawStress : public entry::AppI
 			ImGui::Text("Waiting for submit thread %0.6f [ms]", double(stats->waitSubmit) * toMs);
 
 			ImGui::End();
-			
+
 			imguiEndFrame();
 
 			float at[3] = { 0.0f, 0.0f, 0.0f };
@@ -243,7 +243,6 @@ class ExampleDrawStress : public entry::AppI
 
 			float view[16];
 			bx::mtxLookAt(view, eye, at);
-
 
 			const bgfx::Caps* caps = bgfx::getCaps();
 			float proj[16];
