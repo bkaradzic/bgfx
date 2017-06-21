@@ -2326,7 +2326,7 @@ namespace bgfx
 			BGFX_PROFILER_SET_CURRENT_THREAD_NAME("bgfx - Render Thread");
 			while (RenderFrame::Exiting != bgfx::renderFrame() ) {};
 			BX_TRACE("render thread exit");
-			return EXIT_SUCCESS;
+			return bx::kExitSuccess;
 		}
 
 		// game thread
