@@ -753,18 +753,18 @@ int _main_(int _argc, char** _argv)
 			, BGFX_TEXTUREV_VERSION_MINOR
 			, BGFX_API_VERSION
 			);
-		return EXIT_SUCCESS;
+		return bx::kExitSuccess;
 	}
 
 	if (cmdLine.hasArg('h', "help") )
 	{
 		help();
-		return EXIT_FAILURE;
+		return bx::kExitFailure;
 	}
 	else if (cmdLine.hasArg("associate") )
 	{
 		associate();
-		return EXIT_FAILURE;
+		return bx::kExitFailure;
 	}
 
 	uint32_t width  = 1280;
@@ -878,12 +878,12 @@ int _main_(int _argc, char** _argv)
 		view.updateFileList(path.c_str() );
 	}
 
-	int exitcode = EXIT_SUCCESS;
+	int exitcode = bx::kExitSuccess;
 	bgfx::TextureHandle texture = BGFX_INVALID_HANDLE;
 
 	if (view.m_fileList.empty() )
 	{
-		exitcode = EXIT_FAILURE;
+		exitcode = bx::kExitFailure;
 		if (2 > _argc)
 		{
 			help("File path is not specified.");
