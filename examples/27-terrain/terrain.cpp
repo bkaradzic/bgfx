@@ -38,7 +38,7 @@ bgfx::VertexDecl PosTexCoord0Vertex::ms_decl;
 
 struct TerrainData
 {
-	uint32_t             m_mode;
+	int32_t              m_mode;
 	bool                 m_dirty;
 	float                m_transform[16];
 	uint8_t*             m_heightMap;
@@ -402,38 +402,29 @@ class ExampleTerrain : public entry::AppI
 					, uint16_t(m_height)
 					);
 
-			imguiBeginScrollArea("Settings", m_width - m_width / 5 - 10, 10, m_width / 5, m_height / 3, &m_scrollArea);
-			imguiSeparatorLine();
+			ImGui::SetNextWindowPos(ImVec2((float)m_width - (float)m_width / 5.0f - 10.0f, 10.0f) );
+			ImGui::SetNextWindowSize(ImVec2((float)m_width / 5.0f, (float)m_height / 3.0f) );
+			ImGui::Begin("Settings"
+						 , NULL
+						 , ImVec2((float)m_width / 5.0f, (float)m_height / 3.0f)
+						 , ImGuiWindowFlags_AlwaysAutoResize
+						 );
+			
 
-			if (imguiCheck("Vertex Buffer", (m_terrain.m_mode == 0) ) )
-			{
-				m_terrain.m_mode = 0;
-				m_terrain.m_dirty = true;
-			}
+			ImGui::Separator();
 
-			if (imguiCheck("Dynamic Vertex Buffer", (m_terrain.m_mode == 1) ) )
-			{
-				m_terrain.m_mode = 1;
-				m_terrain.m_dirty = true;
-			}
+			m_terrain.m_dirty |= ImGui::RadioButton("Vertex Buffer", &m_terrain.m_mode, 0);
+			m_terrain.m_dirty |= ImGui::RadioButton("Dynamic Vertex Buffer", &m_terrain.m_mode, 1);
+			m_terrain.m_dirty |= ImGui::RadioButton("Height Texture", &m_terrain.m_mode, 2);
+			
+			ImGui::Separator();
 
-			if (imguiCheck("Height Texture", (m_terrain.m_mode == 2) ) )
-			{
-				m_terrain.m_mode = 2;
-				m_terrain.m_dirty = true;
-			}
+			ImGui::Checkbox("Raise Terrain", &m_brush.m_raise);
 
-			imguiSeparatorLine();
+			ImGui::SliderInt("Brush Size", &m_brush.m_size, 1, 50);
+			ImGui::SliderFloat("Brush Power", &m_brush.m_power, 0.0f, 1.0f);
 
-			if (imguiCheck("Raise Terrain", m_brush.m_raise) )
-			{
-				m_brush.m_raise = !m_brush.m_raise;
-			}
-
-			imguiSlider("Brush Size", m_brush.m_size, 1, 50);
-			imguiSlider("Brush Power", m_brush.m_power, 0.0f, 1.0f, 0.01f);
-
-			imguiEndScrollArea();
+			ImGui::End();
 			imguiEndFrame();
 
 			if (!imguiMouseOverArea() )
