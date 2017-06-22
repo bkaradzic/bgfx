@@ -75,11 +75,11 @@ class ExampleTerrain : public entry::AppI
 
 		// Set view 0 clear state.
 		bgfx::setViewClear(0
-				, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
-				, 0x303030ff
-				, 1.0f
-				, 0
-				);
+			, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
+			, 0x303030ff
+			, 1.0f
+			, 0
+			);
 
 		// Create vertex stream declaration.
 		PosTexCoord0Vertex::init();
@@ -103,8 +103,6 @@ class ExampleTerrain : public entry::AppI
 		m_oldWidth  = 0;
 		m_oldHeight = 0;
 		m_oldReset  = m_reset;
-
-		m_scrollArea   = 0;
 
 		m_brush.m_power = 0.5f;
 		m_brush.m_size  = 10;
@@ -393,30 +391,29 @@ class ExampleTerrain : public entry::AppI
 			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			imguiBeginFrame(m_mouseState.m_mx
-					, m_mouseState.m_my
-					, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-					, m_mouseState.m_mz
-					, uint16_t(m_width)
-					, uint16_t(m_height)
-					);
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
 
 			ImGui::SetNextWindowPos(ImVec2((float)m_width - (float)m_width / 5.0f - 10.0f, 10.0f) );
 			ImGui::SetNextWindowSize(ImVec2((float)m_width / 5.0f, (float)m_height / 3.0f) );
 			ImGui::Begin("Settings"
-						 , NULL
-						 , ImVec2((float)m_width / 5.0f, (float)m_height / 3.0f)
-						 , ImGuiWindowFlags_AlwaysAutoResize
-						 );
-			
+				, NULL
+				, ImVec2((float)m_width / 5.0f, (float)m_height / 3.0f)
+				, ImGuiWindowFlags_AlwaysAutoResize
+				);
 
 			ImGui::Separator();
 
 			m_terrain.m_dirty |= ImGui::RadioButton("Vertex Buffer", &m_terrain.m_mode, 0);
 			m_terrain.m_dirty |= ImGui::RadioButton("Dynamic Vertex Buffer", &m_terrain.m_mode, 1);
 			m_terrain.m_dirty |= ImGui::RadioButton("Height Texture", &m_terrain.m_mode, 2);
-			
+
 			ImGui::Separator();
 
 			ImGui::Checkbox("Raise Terrain", &m_brush.m_raise);
@@ -506,8 +503,6 @@ class ExampleTerrain : public entry::AppI
 	uint32_t m_oldWidth;
 	uint32_t m_oldHeight;
 	uint32_t m_oldReset;
-
-	int32_t m_scrollArea;
 
 	TerrainData m_terrain;
 	BrushData m_brush;
