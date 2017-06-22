@@ -6587,6 +6587,7 @@ namespace bgfx { namespace gl
 								switch (bind.m_type)
 								{
 								case Binding::Image:
+								case Binding::Texture:
 									{
 										const TextureGL& texture = m_textures[bind.m_idx];
 										GL_CHECK(glBindImageTexture(ii

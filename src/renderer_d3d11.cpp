@@ -5755,6 +5755,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 							switch (bind.m_type)
 							{
 							case Binding::Image:
+							case Binding::Texture:
 								{
 									TextureD3D11& texture = m_textures[bind.m_idx];
 									if (Access::Read != bind.m_un.m_compute.m_access)

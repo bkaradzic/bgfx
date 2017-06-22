@@ -5113,6 +5113,7 @@ data.NumQualityLevels = 0;
 									switch (bind.m_type)
 									{
 									case Binding::Image:
+									case Binding::Texture:
 										{
 											TextureD3D12& texture = m_textures[bind.m_idx];
 
