@@ -468,35 +468,17 @@ struct Settings
 	float m_rgbDiff[3];
 	float m_rgbSpec[3];
 	float m_lod;
-	bool m_doDiffuse;
-	bool m_doSpecular;
-	bool m_doDiffuseIbl;
-	bool m_doSpecularIbl;
-	bool m_showLightColorWheel;
-	bool m_showDiffColorWheel;
-	bool m_showSpecColorWheel;
+	bool  m_doDiffuse;
+	bool  m_doSpecular;
+	bool  m_doDiffuseIbl;
+	bool  m_doSpecularIbl;
+	bool  m_showLightColorWheel;
+	bool  m_showDiffColorWheel;
+	bool  m_showSpecColorWheel;
 	int32_t m_metalOrSpec;
 	int32_t m_meshSelection;
 	ImguiCubemap::Enum m_crossCubemapPreview;
 };
-
-bool ImGuiTabButton(const char* _text, float _width, bool _active)
-{
-	if ( _active )
-	{
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f,0.75f,0.0f,0.78f));
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f,0.0f,0.0f,1.0f));
-	}
-	else
-	{
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f,0.5f,0.5f,0.7f));
-	}
-	bool retval = ImGui::Button(_text, ImVec2(_width,20.0f));
-	ImGui::PopStyleColor(_active ? 2 : 1);
-
-	return retval;
-}
-
 
 class ExampleIbl : public entry::AppI
 {
@@ -508,9 +490,9 @@ class ExampleIbl : public entry::AppI
 		m_height = 720;
 		m_debug = BGFX_DEBUG_TEXT;
 		m_reset  = 0
-		| BGFX_RESET_VSYNC
-		| BGFX_RESET_MSAA_X16
-		;
+			| BGFX_RESET_VSYNC
+			| BGFX_RESET_MSAA_X16
+			;
 
 		bgfx::init(args.m_type, args.m_pciId);
 		bgfx::reset(m_width, m_height, m_reset);
@@ -520,11 +502,11 @@ class ExampleIbl : public entry::AppI
 
 		// Set views  clear state.
 		bgfx::setViewClear(0
-						   , BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-						   , 0x303030ff
-						   , 1.0f
-						   , 0
-						   );
+			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
+			, 0x303030ff
+			, 1.0f
+			, 0
+			);
 
 		// Imgui.
 		imguiCreate();
@@ -551,8 +533,6 @@ class ExampleIbl : public entry::AppI
 
 		m_meshBunny = meshLoad("meshes/bunny.bin");
 		m_meshOrb = meshLoad("meshes/orb.bin");
-
-		m_leftScrollArea = 0;
 	}
 
 	virtual int shutdown() BX_OVERRIDE
@@ -592,14 +572,14 @@ class ExampleIbl : public entry::AppI
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
 			imguiBeginFrame(m_mouseState.m_mx
-							, m_mouseState.m_my
-							, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
-							| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
-							| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-							, m_mouseState.m_mz
-							, uint16_t(m_width)
-							, uint16_t(m_height)
-							);
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
 
 			ImGui::SetNextWindowPos(ImVec2(m_width - 320.0f - 10.0f, 10.0f) );
 			ImGui::Begin("Settings"
@@ -616,23 +596,18 @@ class ExampleIbl : public entry::AppI
 
 			{
 				float tabWidth = ImGui::GetContentRegionAvailWidth() / 2.0f;
-				if (ImGuiTabButton("Bolonga", tabWidth, m_currentLightProbe == LightProbe::Bolonga) )
+				if (ImGui::TabButton("Bolonga", tabWidth, m_currentLightProbe == LightProbe::Bolonga) )
 				{
 					m_currentLightProbe = LightProbe::Bolonga;
 				}
 
 				ImGui::SameLine(0.0f,0.0f);
 
-				if (ImGuiTabButton("Kyoto", tabWidth, m_currentLightProbe == LightProbe::Kyoto) )
+				if (ImGui::TabButton("Kyoto", tabWidth, m_currentLightProbe == LightProbe::Kyoto) )
 				{
 					m_currentLightProbe = LightProbe::Kyoto;
 				}
 			}
-
-			//if (imguiCube(m_lightProbes[m_currentLightProbe].m_tex, m_settings.m_lod, m_settings.m_crossCubemapPreview, true) )
-			//{
-			//	m_settings.m_crossCubemapPreview = ImguiCubemap::Enum( (m_settings.m_crossCubemapPreview+1) % ImguiCubemap::Count);
-			//}
 
 			ImGui::SliderFloat("Texture LOD", &m_settings.m_lod, 0.0f, 10.1f);
 			ImGui::Unindent();
@@ -657,23 +632,55 @@ class ExampleIbl : public entry::AppI
 			ImGui::Indent();
 			{
 				int32_t selection;
-				if      (0.0f == m_settings.m_bgType) { selection = UINT8_C(0); }
-				else if (7.0f == m_settings.m_bgType) { selection = UINT8_C(2); }
-				else                                { selection = UINT8_C(1); }
+				if (0.0f == m_settings.m_bgType)
+				{
+					selection = UINT8_C(0);
+				}
+				else if (7.0f == m_settings.m_bgType)
+				{
+					selection = UINT8_C(2);
+				}
+				else
+				{
+					selection = UINT8_C(1);
+				}
 
 				float tabWidth = ImGui::GetContentRegionAvailWidth() / 3.0f;
-				if ( ImGuiTabButton("Skybox", tabWidth, selection == 0)) selection = 0;
-				ImGui::SameLine(0.0f,0.0f);
-				if ( ImGuiTabButton("Radiance", tabWidth, selection == 1)) selection = 1;
-				ImGui::SameLine(0.0f,0.0f);
-				if ( ImGuiTabButton("Irradiance", tabWidth, selection == 2)) selection = 2;
+				if (ImGui::TabButton("Skybox", tabWidth, selection == 0) )
+				{
+					selection = 0;
+				}
 
-				if      (0 == selection) { m_settings.m_bgType = 0.0f; }
-				else if (2 == selection) { m_settings.m_bgType = 7.0f; }
-				else                     { m_settings.m_bgType = m_settings.m_radianceSlider; }
+				ImGui::SameLine(0.0f,0.0f);
+				if (ImGui::TabButton("Radiance", tabWidth, selection == 1) )
+				{
+					selection = 1;
+				}
+
+				ImGui::SameLine(0.0f,0.0f);
+				if (ImGui::TabButton("Irradiance", tabWidth, selection == 2) )
+				{
+					selection = 2;
+				}
+
+				if (0 == selection)
+				{
+					m_settings.m_bgType = 0.0f;
+				}
+				else if (2 == selection)
+				{
+					m_settings.m_bgType = 7.0f;
+				}
+				else
+				{
+					m_settings.m_bgType = m_settings.m_radianceSlider;
+				}
+
 				const bool isRadiance = (selection == 1);
-				if ( isRadiance )
+				if (isRadiance)
+				{
 					ImGui::SliderFloat("Mip level", &m_settings.m_radianceSlider, 1.0f, 6.0f);
+				}
 			}
 			ImGui::Unindent();
 
@@ -728,7 +735,9 @@ class ExampleIbl : public entry::AppI
 			ImGui::ColorWheel("Diffuse:", &m_settings.m_rgbDiff[0], 0.7f);
 			ImGui::Separator();
 			if ( (1 == m_settings.m_metalOrSpec) && isBunny )
+			{
 				ImGui::ColorWheel("Specular:", &m_settings.m_rgbSpec[0], 0.7f);
+			}
 
 			ImGui::End();
 
@@ -850,16 +859,16 @@ class ExampleIbl : public entry::AppI
 
 						float mtx[16];
 						bx::mtxSRT(mtx
-								   , scale/xend
-								   , scale/xend
-								   , scale/xend
-								   , 0.0f
-								   , 0.0f
-								   , 0.0f
-								   , 0.0f      + (xx/xend)*spacing - (1.0f + (scale-1.0f)*0.5f - 1.0f/xend)
-								   , yAdj/yend + (yy/yend)*spacing - (1.0f + (scale-1.0f)*0.5f - 1.0f/yend)
-								   , 0.0f
-								   );
+							, scale/xend
+							, scale/xend
+							, scale/xend
+							, 0.0f
+							, 0.0f
+							, 0.0f
+							, 0.0f      + (xx/xend)*spacing - (1.0f + (scale-1.0f)*0.5f - 1.0f/xend)
+							, yAdj/yend + (yy/yend)*spacing - (1.0f + (scale-1.0f)*0.5f - 1.0f/yend)
+							, 0.0f
+							);
 
 						m_uniforms.m_glossiness   =        xx*(1.0f/xend);
 						m_uniforms.m_reflectivity = (yend-yy)*(1.0f/yend);
@@ -910,8 +919,6 @@ class ExampleIbl : public entry::AppI
 	Mouse m_mouse;
 
 	Settings m_settings;
-
-	int32_t m_leftScrollArea;
 };
 
 ENTRY_IMPLEMENT_MAIN(ExampleIbl);
