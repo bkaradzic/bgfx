@@ -191,11 +191,11 @@ struct Emitter
 			ImGui::Text("Color:");
 
 			ImGui::Combo("RGBA Ease", (int*)&m_uniforms.m_easeRgba, s_easeFuncName, BX_COUNTOF(s_easeFuncName) );
-			ImGui::ColorEdit4("RGBA0", &m_uniforms.m_rgba[0], true);
-			ImGui::ColorEdit4("RGBA1", &m_uniforms.m_rgba[1], true);
-			ImGui::ColorEdit4("RGBA2", &m_uniforms.m_rgba[2], true);
-			ImGui::ColorEdit4("RGBA3", &m_uniforms.m_rgba[3], true);
-			ImGui::ColorEdit4("RGBA4", &m_uniforms.m_rgba[4], true);
+			ImGui::ColorWheel("RGBA0", &m_uniforms.m_rgba[0], 0.3f);
+			ImGui::ColorWheel("RGBA1", &m_uniforms.m_rgba[1], 0.3f);
+			ImGui::ColorWheel("RGBA2", &m_uniforms.m_rgba[2], 0.3f);
+			ImGui::ColorWheel("RGBA3", &m_uniforms.m_rgba[3], 0.3f);
+			ImGui::ColorWheel("RGBA4", &m_uniforms.m_rgba[4], 0.3f);
 		}
 	}
 

@@ -6,9 +6,9 @@ namespace ImGui
 	{ 
 		return a < _min ? _min : (a > _max ? _max : a);
 	}
-	inline float fclamp01(float _a) 
+	inline float fclamp01(float _a)
 	{ 
-		return fclamp(_a, 0.0f, 1.0f); 
+		return fclamp(_a, 0.0f, 1.0f);
 	}
 
 	inline float fmin(float _a, float _b)
@@ -373,31 +373,59 @@ namespace ImGui
 				ImVec2 psel = { center[0] + cosh * sel[0] - sinh * sel[1], center[1] + sinh * sel[0] + cosh * sel[1] };
 
 				// Color selector drop shadow.
-				draw_list->AddCircle(psel, 5.0f, IM_COL32(0,0,0,64), 16, 4.0f);
+				draw_list->AddCircle(psel, 5.0f, IM_COL32(0, 0, 0, 64), 16, 4.0f);
 
 				// Color selector.
-				draw_list->AddCircle(psel, 5.0f, IM_COL32(255,255,255,alpha1), 16, 2.0f);
+				draw_list->AddCircle(psel, 5.0f, IM_COL32(255, 255, 255,alpha1), 16, 2.0f);
 			}
 		}
 	}
 
-	void ColorWheel(const char* _text, float _rgb[3], float _size)
+	void ColorWheel(const char* _text, float* _rgba, float _size)
 	{
 		char buf[512];
-		ImFormatString(buf, IM_ARRAYSIZE(buf), "%s [RGB %-2.2f %-2.2f %-2.2f]##%s"
+		ImFormatString(buf, IM_ARRAYSIZE(buf), "%s [R %-2.2f G %-2.2f B %-2.2f A %-2.2f]##%s"
 			, _text
-			, _rgb[0]
-			, _rgb[1]
-			, _rgb[2]
+			, _rgba[0]
+			, _rgba[1]
+			, _rgba[2]
+			, _rgba[3]
 			, _text
 			);
 
 		if (CollapsingHeader(buf, ImGuiTreeNodeFlags_DefaultOpen) )
 		{
 			ImGui::PushID(_text);
-			ColorWheel(_rgb, _size);
+			ColorWheel(_rgba, _size);
+			SliderFloat("Alpha", &_rgba[3], 0.0f, 1.0f);
 			ImGui::PopID();
 		}
+	}
+
+	inline void decodeRgba(float* _dst, const uint32_t* _src)
+	{
+		uint8_t* src = (uint8_t*)_src;
+		_dst[0] = float(src[0] / 255.0f);
+		_dst[1] = float(src[1] / 255.0f);
+		_dst[2] = float(src[2] / 255.0f);
+		_dst[3] = float(src[3] / 255.0f);
+	}
+
+	inline void encodeRgba(uint32_t* _dst, const float* _src)
+	{
+		uint8_t* dst = (uint8_t*)_dst;
+		dst[0] = uint8_t(_src[0] * 255.0);
+		dst[1] = uint8_t(_src[1] * 255.0);
+		dst[2] = uint8_t(_src[2] * 255.0);
+		dst[3] = uint8_t(_src[3] * 255.0);
+	}
+
+	void ColorWheel(const char* _text, uint32_t* _rgba, float _size)
+	{
+		float rgba[4];
+		decodeRgba(rgba, _rgba);
+		ColorWheel(_text, rgba, _size);
+		encodeRgba(_rgba, rgba);
 	}
 
 } // namespace ImGui
