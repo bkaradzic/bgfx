@@ -35,91 +35,6 @@
 #define IMGUI_MBUT_RIGHT  0x02
 #define IMGUI_MBUT_MIDDLE 0x04
 
-/// For custom values, define these macros before including imgui.h
-
-#ifndef IMGUI_SCROLL_AREA_R
-#	define IMGUI_SCROLL_AREA_R 6
-#endif //IMGUI_SCROLL_AREA_R
-
-#ifndef IMGUI_SCROLL_BAR_R
-#	define IMGUI_SCROLL_BAR_R 5
-#endif //IMGUI_SCROLL_BAR_R
-
-#ifndef IMGUI_BUTTON_R
-#	define IMGUI_BUTTON_R 9
-#endif //IMGUI_BUTTON_R
-
-#ifndef IMGUI_BUTTON_RGB0
-#	define IMGUI_BUTTON_RGB0 imguiRGBA(128, 128, 128, 0)
-#endif //IMGUI_BUTTON_RGB0
-
-#ifndef IMGUI_INPUT_R
-#	define IMGUI_INPUT_R 4
-#endif //IMGUI_INPUT_R
-
-#ifndef IMGUI_TABS_HEIGHT
-#	define IMGUI_TABS_HEIGHT 20
-#endif //IMGUI_TABS_HEIGHT
-
-#ifndef IMGUI_TABS_R
-#	define IMGUI_TABS_R 9
-#endif //IMGUI_TABS_R
-
-#ifndef IMGUI_INDENT_VALUE
-#	define IMGUI_INDENT_VALUE 16
-#endif //IMGUI_INDENT_VALUE
-
-#ifndef IMGUI_SEPARATOR_VALUE
-#	define IMGUI_SEPARATOR_VALUE 12
-#endif //IMGUI_SEPARATOR_VALUE
-
-struct ImguiTextAlign
-{
-	enum Enum
-	{
-		Left,
-		Center,
-		Right,
-
-		Count
-	};
-};
-
-struct ImguiAlign
-{
-	enum Enum
-	{
-		Left,
-		LeftIndented,
-		Center,
-		CenterIndented,
-		Right,
-	};
-};
-
-struct ImguiCubemap
-{
-	enum Enum
-	{
-		Cross,
-		Latlong,
-		Hex,
-
-		Count,
-	};
-};
-
-struct ImguiBorder
-{
-	enum Enum
-	{
-		Left,
-		Right,
-		Top,
-		Bottom
-	};
-};
-
 inline uint32_t imguiRGBA(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 255)
 {
 	return 0
@@ -130,29 +45,14 @@ inline uint32_t imguiRGBA(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 255)
 		;
 }
 
-BGFX_HANDLE(ImguiFontHandle);
-
-//ImguiFontHandle imguiCreateFont(const void* _data, float _fontSize = 18.0f);
-//void imguiSetFont(ImguiFontHandle _handle);
-//ImguiFontHandle imguiGetCurrentFont();
-
 namespace bx { struct AllocatorI; }
 
-ImguiFontHandle imguiCreate(const void* _data = NULL, uint32_t _size = 0, float _fontSize = 18.0f, bx::AllocatorI* _allocator = NULL);
+void imguiCreate(const void* _data = NULL, uint32_t _size = 0, float _fontSize = 18.0f, bx::AllocatorI* _allocator = NULL);
 void imguiDestroy();
 
 void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar = 0, uint8_t _view = 255);
 void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, uint16_t _surfaceWidth, uint16_t _surfaceHeight, char _inputChar = 0, uint8_t _view = 255);
 void imguiEndFrame();
-
-void imguiIndent(uint16_t _width = IMGUI_INDENT_VALUE);
-bool imguiCheck(const char* _text, bool _checked, bool _enabled = true);
-bool imguiCollapse(const char* _text, const char* _subtext, bool _checked, bool _enabled = true);
-
-uint32_t imguiChooseUseMacroInstead(uint32_t _selected, ...);
-#define imguiChoose(...) imguiChooseUseMacroInstead(__VA_ARGS__, NULL)
-
-bool imguiMouseOverArea();
 
 namespace ImGui
 {
@@ -247,7 +147,13 @@ namespace ImGui
 		return retval;
 	}
 
-
+	inline bool MouseOverArea()
+	{
+		return false
+			|| ImGui::IsAnyItemHovered()
+			|| ImGui::IsMouseHoveringAnyWindow()
+			;
+	}
 
 } // namespace ImGui
 

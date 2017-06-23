@@ -423,7 +423,6 @@ class ExampleWireframe : public entry::AppI
 			ImGui::Separator();
 			ImGui::Text("Mesh:");
 			{
-				imguiIndent();
 				bool meshChanged = false;
 				meshChanged |= ImGui::RadioButton("Bunny", &m_meshSelection, 0);
 				meshChanged |= ImGui::RadioButton("Hollowcubes", &m_meshSelection, 1);
@@ -460,7 +459,7 @@ class ExampleWireframe : public entry::AppI
 			bgfx::setViewRect(0, 0, 0, bgfx::BackbufferRatio::Equal);
 			bgfx::setViewClear(0, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
 
-			const bool mouseOverGui = imguiMouseOverArea();
+			const bool mouseOverGui = ImGui::MouseOverArea();
 			m_mouse.update(float(m_mouseState.m_mx), float(m_mouseState.m_my), m_mouseState.m_mz, m_width, m_height);
 			if (!mouseOverGui)
 			{

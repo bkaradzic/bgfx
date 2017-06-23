@@ -424,7 +424,7 @@ class ExampleTerrain : public entry::AppI
 			ImGui::End();
 			imguiEndFrame();
 
-			if (!imguiMouseOverArea() )
+			if (!ImGui::MouseOverArea() )
 			{
 				// Update camera.
 				cameraUpdate(deltaTime, m_mouseState);

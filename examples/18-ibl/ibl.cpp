@@ -453,7 +453,6 @@ struct Settings
 		m_showSpecColorWheel = true;
 		m_metalOrSpec = 0;
 		m_meshSelection = 0;
-		m_crossCubemapPreview = ImguiCubemap::Latlong;
 	}
 
 	float m_envRotCurr;
@@ -477,7 +476,6 @@ struct Settings
 	bool  m_showSpecColorWheel;
 	int32_t m_metalOrSpec;
 	int32_t m_meshSelection;
-	ImguiCubemap::Enum m_crossCubemapPreview;
 };
 
 class ExampleIbl : public entry::AppI
@@ -703,8 +701,7 @@ class ExampleIbl : public entry::AppI
 			ImGui::Text("Mesh:");
 			ImGui::Indent();
 			ImGui::RadioButton("Bunny", &m_settings.m_meshSelection, 0);
-			ImGui::RadioButton("Orbs", &m_settings.m_meshSelection, 1);
-			m_settings.m_meshSelection = uint8_t(imguiChoose(m_settings.m_meshSelection, "Bunny", "Orbs") );
+			ImGui::RadioButton("Orbs",  &m_settings.m_meshSelection, 1);
 			ImGui::Unindent();
 
 			const bool isBunny = (0 == m_settings.m_meshSelection);
@@ -772,7 +769,7 @@ class ExampleIbl : public entry::AppI
 			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			// Camera.
-			const bool mouseOverGui = imguiMouseOverArea();
+			const bool mouseOverGui = ImGui::MouseOverArea();
 			m_mouse.update(float(m_mouseState.m_mx), float(m_mouseState.m_my), m_mouseState.m_mz, m_width, m_height);
 			if (!mouseOverGui)
 			{

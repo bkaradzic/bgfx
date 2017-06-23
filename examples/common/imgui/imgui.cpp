@@ -110,6 +110,93 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wtype-limits"); // warning: comparison 
 #include <stb/stb_truetype.h>
 BX_PRAGMA_DIAGNOSTIC_POP();
 
+/// For custom values, define these macros before including imgui.h
+
+#ifndef IMGUI_SCROLL_AREA_R
+#	define IMGUI_SCROLL_AREA_R 6
+#endif //IMGUI_SCROLL_AREA_R
+
+#ifndef IMGUI_SCROLL_BAR_R
+#	define IMGUI_SCROLL_BAR_R 5
+#endif //IMGUI_SCROLL_BAR_R
+
+#ifndef IMGUI_BUTTON_R
+#	define IMGUI_BUTTON_R 9
+#endif //IMGUI_BUTTON_R
+
+#ifndef IMGUI_BUTTON_RGB0
+#	define IMGUI_BUTTON_RGB0 imguiRGBA(128, 128, 128, 0)
+#endif //IMGUI_BUTTON_RGB0
+
+#ifndef IMGUI_INPUT_R
+#	define IMGUI_INPUT_R 4
+#endif //IMGUI_INPUT_R
+
+#ifndef IMGUI_TABS_HEIGHT
+#	define IMGUI_TABS_HEIGHT 20
+#endif //IMGUI_TABS_HEIGHT
+
+#ifndef IMGUI_TABS_R
+#	define IMGUI_TABS_R 9
+#endif //IMGUI_TABS_R
+
+#ifndef IMGUI_INDENT_VALUE
+#	define IMGUI_INDENT_VALUE 16
+#endif //IMGUI_INDENT_VALUE
+
+#ifndef IMGUI_SEPARATOR_VALUE
+#	define IMGUI_SEPARATOR_VALUE 12
+#endif //IMGUI_SEPARATOR_VALUE
+
+struct ImguiTextAlign
+{
+	enum Enum
+	{
+		Left,
+		Center,
+		Right,
+
+		Count
+	};
+};
+
+struct ImguiAlign
+{
+	enum Enum
+	{
+		Left,
+		LeftIndented,
+		Center,
+		CenterIndented,
+		Right,
+	};
+};
+
+struct ImguiCubemap
+{
+	enum Enum
+	{
+		Cross,
+		Latlong,
+		Hex,
+
+		Count,
+	};
+};
+
+struct ImguiBorder
+{
+	enum Enum
+	{
+		Left,
+		Right,
+		Top,
+		Bottom
+	};
+};
+
+BGFX_HANDLE(ImguiFontHandle);
+
 namespace
 {
 	static uint32_t addQuad(uint16_t* _indices, uint16_t _idx0, uint16_t _idx1, uint16_t _idx2, uint16_t _idx3)
@@ -3224,30 +3311,14 @@ void imguiFree(void* _ptr, void*)
 	BX_FREE(s_imgui.m_allocator, _ptr);
 }
 
-ImguiFontHandle imguiCreate(const void*, uint32_t, float _fontSize, bx::AllocatorI* _allocator)
+void imguiCreate(const void*, uint32_t, float _fontSize, bx::AllocatorI* _allocator)
 {
-	return s_imgui.create(_fontSize, _allocator);
+	s_imgui.create(_fontSize, _allocator);
 }
 
 void imguiDestroy()
 {
 	s_imgui.destroy();
-}
-
-ImguiFontHandle imguiCreateFont(const void* _data, float _fontSize)
-{
-	return s_imgui.createFont(_data, _fontSize);
-}
-
-void imguiSetFont(ImguiFontHandle _handle)
-{
-	s_imgui.setFont(_handle);
-}
-
-ImguiFontHandle imguiGetCurrentFont()
-{
-	const ImguiFontHandle handle = { s_imgui.m_currentFontIdx };
-	return handle;
 }
 
 void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, uint16_t _surfaceWidth, uint16_t _surfaceHeight, char _inputChar, uint8_t _view)
@@ -3263,282 +3334,6 @@ void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll,
 void imguiEndFrame()
 {
 	s_imgui.endFrame();
-}
-
-void imguiDrawText(int32_t _x, int32_t _y, ImguiTextAlign::Enum _align, const char* _text, uint32_t _argb)
-{
-	s_imgui.drawText(_x, _y, _align, _text, _argb);
-}
-
-void imguiDrawLine(float _x0, float _y0, float _x1, float _y1, float _r, uint32_t _argb)
-{
-	s_imgui.drawLine(_x0, _y0, _x1, _y1, _r, _argb);
-}
-
-void imguiDrawRoundedRect(float _x, float _y, float _width, float _height, float _r, uint32_t _argb)
-{
-	s_imgui.drawRoundedRect(_x, _y, _width, _height, _r, _argb);
-}
-
-void imguiDrawRect(float _x, float _y, float _width, float _height, uint32_t _argb)
-{
-	s_imgui.drawRect(_x, _y, _width, _height, _argb);
-}
-
-bool imguiBorderButton(ImguiBorder::Enum _border, bool _checked, bool _enabled)
-{
-	return s_imgui.borderButton(_border, _checked, _enabled);
-}
-
-bool imguiBeginArea(const char* _name, int _x, int _y, int _width, int _height, bool _enabled, int32_t _r)
-{
-	return s_imgui.beginArea(_name, _x, _y, _width, _height, _enabled, _r);
-}
-
-void imguiEndArea()
-{
-	return s_imgui.endArea();
-}
-
-bool imguiBeginScroll(int32_t _height, int32_t* _scroll, bool _enabled)
-{
-	return s_imgui.beginScroll(_height, _scroll, _enabled);
-}
-
-void imguiEndScroll(int32_t _r)
-{
-	s_imgui.endScroll(_r);
-}
-
-bool imguiBeginScrollArea(const char* _name, int32_t _x, int32_t _y, int32_t _width, int32_t _height, int32_t* _scroll, bool _enabled, int32_t _r)
-{
-	const bool result = s_imgui.beginArea(_name, _x, _y, _width, _height, _enabled, _r);
-	const bool hasTitle = (NULL != _name && '\0' != _name[0]);
-	const int32_t margins = int32_t(hasTitle)*(AREA_HEADER+2*SCROLL_AREA_PADDING-1);
-	s_imgui.beginScroll(_height - margins, _scroll, _enabled);
-	return result;
-}
-
-void imguiEndScrollArea(int32_t _r)
-{
-	s_imgui.endScroll(_r);
-	s_imgui.endArea();
-}
-
-void imguiIndent(uint16_t _width)
-{
-	s_imgui.indent(_width);
-}
-
-void imguiUnindent(uint16_t _width)
-{
-	s_imgui.unindent(_width);
-}
-
-void imguiSeparator(uint16_t _height)
-{
-	s_imgui.separator(_height);
-}
-
-void imguiSeparatorLine(uint16_t _height, ImguiAlign::Enum _align)
-{
-	s_imgui.separatorLine(_height, _align);
-}
-
-int32_t imguiGetWidgetX()
-{
-	return s_imgui.getCurrentArea().m_widgetX;
-}
-
-int32_t imguiGetWidgetY()
-{
-	return s_imgui.getCurrentArea().m_widgetY;
-}
-
-int32_t imguiGetWidgetW()
-{
-	return s_imgui.getCurrentArea().m_widgetW;
-}
-
-void imguiSetCurrentScissor()
-{
-	return s_imgui.setCurrentScissor();
-}
-
-bool imguiButton(const char* _text, bool _enabled, ImguiAlign::Enum _align, uint32_t _rgb0, int32_t _r)
-{
-	return s_imgui.button(_text, _enabled, _align, _rgb0, _r);
-}
-
-bool imguiItem(const char* _text, bool _enabled)
-{
-	return s_imgui.item(_text, _enabled);
-}
-
-bool imguiCheck(const char* _text, bool _checked, bool _enabled)
-{
-	return s_imgui.check(_text, _checked, _enabled);
-}
-
-bool imguiBool(const char* _text, bool& _flag, bool _enabled)
-{
-	bool result = imguiCheck(_text, _flag, _enabled);
-	if (result)
-	{
-		_flag = !_flag;
-	}
-	return result;
-}
-
-bool imguiCollapse(const char* _text, const char* _subtext, bool _checked, bool _enabled)
-{
-	return s_imgui.collapse(_text, _subtext, _checked, _enabled);
-}
-
-void imguiLabel(const char* _format, ...)
-{
-	va_list argList;
-	va_start(argList, _format);
-	s_imgui.labelVargs(_format, argList, imguiRGBA(255, 255, 255, 255) );
-	va_end(argList);
-}
-
-void imguiLabel(uint32_t _rgba, const char* _format, ...)
-{
-	va_list argList;
-	va_start(argList, _format);
-	s_imgui.labelVargs(_format, argList, _rgba);
-	va_end(argList);
-}
-
-void imguiValue(const char* _text)
-{
-	s_imgui.value(_text);
-}
-
-bool imguiSlider(const char* _text, float& _val, float _vmin, float _vmax, float _vinc, bool _enabled, ImguiAlign::Enum _align)
-{
-	return s_imgui.slider(_text, _val, _vmin, _vmax, _vinc, _enabled, _align);
-}
-
-bool imguiSlider(const char* _text, int32_t& _val, int32_t _vmin, int32_t _vmax, bool _enabled, ImguiAlign::Enum _align)
-{
-	float val = (float)_val;
-	bool result = s_imgui.slider(_text, val, (float)_vmin, (float)_vmax, 1.0f, _enabled, _align);
-	_val = (int32_t)val;
-	return result;
-}
-
-void imguiInput(const char* _label, char* _str, uint32_t _len, bool _enabled, ImguiAlign::Enum _align, int32_t _r)
-{
-	s_imgui.input(_label, _str, _len, _enabled, _align, _r);
-}
-
-uint8_t imguiTabs(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, int32_t _height, int32_t _r, uint32_t _nTabs, uint32_t _nEnabled, ...)
-{
-	va_list argList;
-	va_start(argList, _nEnabled);
-	const uint8_t result = s_imgui.tabs(_selected, _enabled, _align, _height, _r, _nTabs, _nEnabled, argList);
-	va_end(argList);
-
-	return result;
-}
-
-uint8_t imguiTabs(uint8_t _selected, bool _enabled, ImguiAlign::Enum _align, int32_t _height, int32_t _r, uint32_t _nTabs, ...)
-{
-	va_list argList;
-	va_start(argList, _nTabs);
-	const uint8_t result = s_imgui.tabs(_selected, _enabled, _align, _height, _r, _nTabs, 0, argList);
-	va_end(argList);
-
-	return result;
-}
-
-uint32_t imguiChooseUseMacroInstead(uint32_t _selected, ...)
-{
-	va_list argList;
-	va_start(argList, _selected);
-
-	const char* str = va_arg(argList, const char*);
-	for (uint32_t ii = 0; str != NULL; ++ii, str = va_arg(argList, const char*) )
-	{
-		if (imguiCheck(str, ii == _selected) )
-		{
-			_selected = ii;
-		}
-	}
-
-	va_end(argList);
-
-	return _selected;
-}
-
-void imguiColorWheel(float _rgb[3], bool _respectIndentation, float _size, bool _enabled)
-{
-	s_imgui.colorWheelWidget(_rgb, _respectIndentation, _size, _enabled);
-}
-
-void imguiColorWheel(const char* _text, float _rgb[3], bool& _activated, float _size, bool _enabled)
-{
-	char buf[128];
-	bx::snprintf(buf, sizeof(buf), "[RGB %-2.2f %-2.2f %-2.2f]"
-		, _rgb[0]
-		, _rgb[1]
-		, _rgb[2]
-		);
-
-	if (imguiCollapse(_text, buf, _activated) )
-	{
-		_activated = !_activated;
-	}
-
-	if (_activated)
-	{
-		imguiColorWheel(_rgb, false, _size, _enabled);
-	}
-}
-
-bool imguiImage(bgfx::TextureHandle _image, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align, bool _enabled, bool _originBottomLeft)
-{
-	return s_imgui.image(_image, _lod, _width, _height, _align, _enabled, _originBottomLeft);
-}
-
-bool imguiImage(bgfx::TextureHandle _image, float _lod, float _width, float _aspect, ImguiAlign::Enum _align, bool _enabled, bool _originBottomLeft)
-{
-	return s_imgui.image(_image, _lod, _width, _aspect, _align, _enabled, _originBottomLeft);
-}
-
-bool imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, int32_t _width, int32_t _height, ImguiAlign::Enum _align, bool _enabled)
-{
-	return s_imgui.imageChannel(_image, _channel, _lod, _width, _height, _align, _enabled);
-}
-
-bool imguiImageChannel(bgfx::TextureHandle _image, uint8_t _channel, float _lod, float _width, float _aspect, ImguiAlign::Enum _align, bool _enabled)
-{
-	return s_imgui.imageChannel(_image, _channel, _lod, _width, _aspect, _align, _enabled);
-}
-
-bool imguiCube(bgfx::TextureHandle _cubemap, float _lod, ImguiCubemap::Enum _display, bool _sameHeight, ImguiAlign::Enum _align, bool _enabled)
-{
-	return s_imgui.cubeMap(_cubemap, _lod, _display, _sameHeight, _align, _enabled);
-}
-
-float imguiGetTextLength(const char* _text, ImguiFontHandle _handle)
-{
-#if !USE_NANOVG_FONT
-	uint32_t numVertices = 0; //unused
-	return getTextLength(s_imgui.m_fonts[_handle.idx].m_cdata, _text, numVertices);
-#else
-	return 0.0f;
-#endif
-}
-
-bool imguiMouseOverArea()
-{
-	return s_imgui.m_insideArea
-		|| ImGui::IsAnyItemHovered()
-		|| ImGui::IsMouseHoveringAnyWindow()
-		;
 }
 
 bgfx::ProgramHandle imguiGetImageProgram(uint8_t _mip)
