@@ -475,10 +475,27 @@ struct Settings
 	bool m_showLightColorWheel;
 	bool m_showDiffColorWheel;
 	bool m_showSpecColorWheel;
-	uint8_t m_metalOrSpec;
-	uint8_t m_meshSelection;
+	int32_t m_metalOrSpec;
+	int32_t m_meshSelection;
 	ImguiCubemap::Enum m_crossCubemapPreview;
 };
+
+bool ImGuiTabButton(const char* _text, float _width, bool _active)
+{
+	if ( _active ) 
+	{ 
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f,0.75f,0.0f,0.78f));
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f,0.0f,0.0f,1.0f)); 
+	}
+	else 
+	{
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f,0.5f,0.5f,0.7f));
+	}
+	bool retval = ImGui::Button(_text, ImVec2(_width,20.0f));
+	ImGui::PopStyleColor(_active ? 2 : 1);
+
+	return retval;
+}
 
 
 class ExampleIbl : public entry::AppI
@@ -584,112 +601,126 @@ class ExampleIbl : public entry::AppI
 							, uint16_t(m_height)
 							);
 
-			static int32_t rightScrollArea = 0;
-			imguiBeginScrollArea("", m_width - 256 - 10, 10, 256, 700, &rightScrollArea);
+			ImGui::SetNextWindowPos(ImVec2(m_width - 320.0f - 10.0f, 10.0f) );
+			ImGui::Begin("Settings"
+				, NULL
+				, ImVec2(320.0f, 700.0f)
+				, ImGuiWindowFlags_AlwaysAutoResize
+				);
+			ImGui::PushItemWidth(180.0f);
 
-			imguiLabel("Environment light:");
-			imguiIndent();
-			imguiBool("IBL Diffuse",  m_settings.m_doDiffuseIbl);
-			imguiBool("IBL Specular", m_settings.m_doSpecularIbl);
-			m_currentLightProbe = LightProbe::Enum(imguiTabs(
-															 uint8_t(m_currentLightProbe)
-															 , true
-															 , ImguiAlign::LeftIndented
-															 , 16
-															 , 2
-															 , 2
-															 , "Bolonga"
-															 , "Kyoto"
-															 ) );
-			if (imguiCube(m_lightProbes[m_currentLightProbe].m_tex, m_settings.m_lod, m_settings.m_crossCubemapPreview, true) )
-			{
-				m_settings.m_crossCubemapPreview = ImguiCubemap::Enum( (m_settings.m_crossCubemapPreview+1) % ImguiCubemap::Count);
-			}
-			imguiSlider("Texture LOD", m_settings.m_lod, 0.0f, 10.1f, 0.1f);
-			imguiUnindent();
+			ImGui::Text("Environment light:");
+			ImGui::Indent();
+			ImGui::Checkbox("IBL Diffuse",  &m_settings.m_doDiffuseIbl);
+			ImGui::Checkbox("IBL Specular", &m_settings.m_doSpecularIbl);
 
-			imguiSeparator(8);
-			imguiLabel("Directional light:");
-			imguiIndent();
-			imguiBool("Diffuse",  m_settings.m_doDiffuse);
-			imguiBool("Specular", m_settings.m_doSpecular);
+			float tabWidth = ImGui::GetContentRegionAvailWidth() / 2.0f;
+			if ( ImGuiTabButton("Bolonga", tabWidth, m_currentLightProbe == LightProbe::Bolonga)) m_currentLightProbe = LightProbe::Bolonga;
+			ImGui::SameLine(0.0f,0.0f);
+			if ( ImGuiTabButton("Kyoto", tabWidth, m_currentLightProbe == LightProbe::Kyoto)) m_currentLightProbe = LightProbe::Kyoto;
+
+			//if (imguiCube(m_lightProbes[m_currentLightProbe].m_tex, m_settings.m_lod, m_settings.m_crossCubemapPreview, true) )
+			//{
+			//	m_settings.m_crossCubemapPreview = ImguiCubemap::Enum( (m_settings.m_crossCubemapPreview+1) % ImguiCubemap::Count);
+			//}
+
+			ImGui::SliderFloat("Texture LOD", &m_settings.m_lod, 0.0f, 10.1f);
+			ImGui::Unindent();
+
+			ImGui::Separator();
+			ImGui::Text("Directional light:");
+			ImGui::Indent();
+			ImGui::Checkbox("Diffuse",  &m_settings.m_doDiffuse);
+			ImGui::Checkbox("Specular", &m_settings.m_doSpecular);
 			const bool doDirectLighting = m_settings.m_doDiffuse || m_settings.m_doSpecular;
-			imguiSlider("Light direction X", m_settings.m_lightDir[0], -1.0f, 1.0f, 0.1f, doDirectLighting);
-			imguiSlider("Light direction Y", m_settings.m_lightDir[1], -1.0f, 1.0f, 0.1f, doDirectLighting);
-			imguiSlider("Light direction Z", m_settings.m_lightDir[2], -1.0f, 1.0f, 0.1f, doDirectLighting);
-			imguiColorWheel("Color:", m_settings.m_lightCol, m_settings.m_showLightColorWheel, 0.6f, doDirectLighting);
-			imguiUnindent();
+			if ( doDirectLighting )
+			{
+				ImGui::SliderFloat("Light direction X", &m_settings.m_lightDir[0], -1.0f, 1.0f);
+				ImGui::SliderFloat("Light direction Y", &m_settings.m_lightDir[1], -1.0f, 1.0f);
+				ImGui::SliderFloat("Light direction Z", &m_settings.m_lightDir[2], -1.0f, 1.0f);
+				ImGui::ColorWheel("Color:", m_settings.m_lightCol, 0.6f);
+			}
+			ImGui::Unindent();
 
-			imguiSeparator(8);
-			imguiLabel("Background:");
-			imguiIndent();
+			ImGui::Separator();
+			ImGui::Text("Background:");
+			ImGui::Indent();
 			{
 				int32_t selection;
 				if      (0.0f == m_settings.m_bgType) { selection = UINT8_C(0); }
 				else if (7.0f == m_settings.m_bgType) { selection = UINT8_C(2); }
 				else                                { selection = UINT8_C(1); }
 
-				selection = imguiTabs(
-									  uint8_t(selection)
-									  , true
-									  , ImguiAlign::LeftIndented
-									  , 16
-									  , 2
-									  , 3
-									  , "Skybox"
-									  , "Radiance"
-									  , "Irradiance"
-									  );
+				float tabWidth = ImGui::GetContentRegionAvailWidth() / 3.0f;
+				if ( ImGuiTabButton("Skybox", tabWidth, selection == 0)) selection = 0;
+				ImGui::SameLine(0.0f,0.0f);
+				if ( ImGuiTabButton("Radiance", tabWidth, selection == 1)) selection = 1;
+				ImGui::SameLine(0.0f,0.0f);
+				if ( ImGuiTabButton("Irradiance", tabWidth, selection == 2)) selection = 2;
+				
 				if      (0 == selection) { m_settings.m_bgType = 0.0f; }
 				else if (2 == selection) { m_settings.m_bgType = 7.0f; }
 				else                     { m_settings.m_bgType = m_settings.m_radianceSlider; }
 				const bool isRadiance = (selection == 1);
-				imguiSlider("Mip level", m_settings.m_radianceSlider, 1.0f, 6.0f, 0.1f, isRadiance);
+				if ( isRadiance )
+					ImGui::SliderFloat("Mip level", &m_settings.m_radianceSlider, 1.0f, 6.0f);
 			}
-			imguiUnindent();
+			ImGui::Unindent();
 
-			imguiSeparator(8);
-			imguiLabel("Post processing:");
-			imguiIndent();
-			imguiSlider("Exposure", m_settings.m_exposure, -4.0f, 4.0f, 0.1f);
-			imguiUnindent();
+			ImGui::Separator();
+			ImGui::Text("Post processing:");
+			ImGui::Indent();
+			ImGui::SliderFloat("Exposure",& m_settings.m_exposure, -4.0f, 4.0f);
+			ImGui::Unindent();
 
-			imguiSeparator();
+			ImGui::PopItemWidth();
+			ImGui::End();
 
-			imguiEndScrollArea();
+			ImGui::SetNextWindowPos(ImVec2(10.0f, 70.0f) );
+			ImGui::Begin("Mesh"
+				, NULL
+				, ImVec2(280.0f, 636.0f)
+				, ImGuiWindowFlags_AlwaysAutoResize
+				);
 
-			imguiBeginScrollArea("", 10, 70, 256, 636, &m_leftScrollArea);
-
-			imguiLabel("Mesh:");
-			imguiIndent();
+			ImGui::Text("Mesh:");
+			ImGui::Indent();
+			ImGui::RadioButton("Bunny", &m_settings.m_meshSelection, 0);
+			ImGui::RadioButton("Orbs", &m_settings.m_meshSelection, 1);
 			m_settings.m_meshSelection = uint8_t(imguiChoose(m_settings.m_meshSelection, "Bunny", "Orbs") );
-			imguiUnindent();
+			ImGui::Unindent();
 
 			const bool isBunny = (0 == m_settings.m_meshSelection);
 			if (!isBunny)
 			{
 				m_settings.m_metalOrSpec = 0;
 			}
+			else
+			{
+				ImGui::Separator();
+				ImGui::Text("Workflow:");
+				ImGui::Indent();
+				ImGui::RadioButton("Metalness", &m_settings.m_metalOrSpec, 0);
+				ImGui::RadioButton("Specular", &m_settings.m_metalOrSpec, 1);
+				ImGui::Unindent();
 
-			imguiSeparator(4);
-			imguiLabel("Workflow:");
-			imguiIndent();
-			if (imguiCheck("Metalness", 0 == m_settings.m_metalOrSpec, isBunny) ) { m_settings.m_metalOrSpec = 0; }
-			if (imguiCheck("Specular",  1 == m_settings.m_metalOrSpec, isBunny) ) { m_settings.m_metalOrSpec = 1; }
-			imguiUnindent();
+				ImGui::Separator();
+				ImGui::Text("Material:");
+				ImGui::Indent();
+				ImGui::PushItemWidth(130.0f);
+				ImGui::SliderFloat("Glossiness", &m_settings.m_glossiness, 0.0f, 1.0f);
+				ImGui::SliderFloat(0 == m_settings.m_metalOrSpec ? "Metalness" : "Diffuse - Specular", &m_settings.m_reflectivity, 0.0f, 1.0f);
+				ImGui::PopItemWidth();
+				ImGui::Unindent();
+			}
 
-			imguiSeparator(4);
-			imguiLabel("Material:");
-			imguiIndent();
-			imguiSlider("Glossiness", m_settings.m_glossiness, 0.0f, 1.0f, 0.01f, isBunny);
-			imguiSlider(0 == m_settings.m_metalOrSpec ? "Metalness" : "Diffuse - Specular", m_settings.m_reflectivity, 0.0f, 1.0f, 0.01f, isBunny);
-			imguiUnindent();
 
-			imguiColorWheel("Diffuse:", &m_settings.m_rgbDiff[0], m_settings.m_showDiffColorWheel, 0.7f);
-			imguiSeparator();
-			imguiColorWheel("Specular:", &m_settings.m_rgbSpec[0], m_settings.m_showSpecColorWheel, 0.7f, (1 == m_settings.m_metalOrSpec) && isBunny);
+			ImGui::ColorWheel("Diffuse:", &m_settings.m_rgbDiff[0], 0.7f);
+			ImGui::Separator();
+			if ( (1 == m_settings.m_metalOrSpec) && isBunny )
+				ImGui::ColorWheel("Specular:", &m_settings.m_rgbSpec[0], 0.7f);
 
-			imguiEndScrollArea();
+			ImGui::End();
 
 			imguiEndFrame();
 
