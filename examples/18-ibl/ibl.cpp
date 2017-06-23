@@ -482,12 +482,12 @@ struct Settings
 
 bool ImGuiTabButton(const char* _text, float _width, bool _active)
 {
-	if ( _active ) 
-	{ 
+	if ( _active )
+	{
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f,0.75f,0.0f,0.78f));
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f,0.0f,0.0f,1.0f)); 
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f,0.0f,0.0f,1.0f));
 	}
-	else 
+	else
 	{
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f,0.5f,0.5f,0.7f));
 	}
@@ -614,10 +614,20 @@ class ExampleIbl : public entry::AppI
 			ImGui::Checkbox("IBL Diffuse",  &m_settings.m_doDiffuseIbl);
 			ImGui::Checkbox("IBL Specular", &m_settings.m_doSpecularIbl);
 
-			float tabWidth = ImGui::GetContentRegionAvailWidth() / 2.0f;
-			if ( ImGuiTabButton("Bolonga", tabWidth, m_currentLightProbe == LightProbe::Bolonga)) m_currentLightProbe = LightProbe::Bolonga;
-			ImGui::SameLine(0.0f,0.0f);
-			if ( ImGuiTabButton("Kyoto", tabWidth, m_currentLightProbe == LightProbe::Kyoto)) m_currentLightProbe = LightProbe::Kyoto;
+			{
+				float tabWidth = ImGui::GetContentRegionAvailWidth() / 2.0f;
+				if (ImGuiTabButton("Bolonga", tabWidth, m_currentLightProbe == LightProbe::Bolonga) )
+				{
+					m_currentLightProbe = LightProbe::Bolonga;
+				}
+
+				ImGui::SameLine(0.0f,0.0f);
+
+				if (ImGuiTabButton("Kyoto", tabWidth, m_currentLightProbe == LightProbe::Kyoto) )
+				{
+					m_currentLightProbe = LightProbe::Kyoto;
+				}
+			}
 
 			//if (imguiCube(m_lightProbes[m_currentLightProbe].m_tex, m_settings.m_lod, m_settings.m_crossCubemapPreview, true) )
 			//{
@@ -633,7 +643,7 @@ class ExampleIbl : public entry::AppI
 			ImGui::Checkbox("Diffuse",  &m_settings.m_doDiffuse);
 			ImGui::Checkbox("Specular", &m_settings.m_doSpecular);
 			const bool doDirectLighting = m_settings.m_doDiffuse || m_settings.m_doSpecular;
-			if ( doDirectLighting )
+			if (doDirectLighting)
 			{
 				ImGui::SliderFloat("Light direction X", &m_settings.m_lightDir[0], -1.0f, 1.0f);
 				ImGui::SliderFloat("Light direction Y", &m_settings.m_lightDir[1], -1.0f, 1.0f);
@@ -657,7 +667,7 @@ class ExampleIbl : public entry::AppI
 				if ( ImGuiTabButton("Radiance", tabWidth, selection == 1)) selection = 1;
 				ImGui::SameLine(0.0f,0.0f);
 				if ( ImGuiTabButton("Irradiance", tabWidth, selection == 2)) selection = 2;
-				
+
 				if      (0 == selection) { m_settings.m_bgType = 0.0f; }
 				else if (2 == selection) { m_settings.m_bgType = 7.0f; }
 				else                     { m_settings.m_bgType = m_settings.m_radianceSlider; }
