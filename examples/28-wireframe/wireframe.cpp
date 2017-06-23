@@ -350,8 +350,6 @@ class ExampleWireframe : public entry::AppI
 
 		m_meshSelection = 1;
 		m_drawMode = DrawMode::WireframeShaded;
-		m_scrollArea = 0;
-		m_showWfColor = true;
 	}
 
 	virtual int shutdown() BX_OVERRIDE
@@ -398,58 +396,46 @@ class ExampleWireframe : public entry::AppI
 					, uint16_t(m_height)
 					);
 
-			imguiBeginScrollArea("Settings"
-							    , m_width - m_width / 5 - 10
-							    , 10
-							    , m_width / 5
-							    , 492
-							    , &m_scrollArea
-							    );
+			ImGui::SetNextWindowPos(ImVec2((float)m_width - (float)m_width / 5.0f - 10.0f, 10.0f) );
+			ImGui::SetNextWindowSize(ImVec2((float)m_width / 5.0f, (float)m_height * 0.75f) );
+			ImGui::Begin("Settings"
+				, NULL
+				, ImVec2((float)m_width / 4.0f, (float)m_height * 0.75f)
+				, ImGuiWindowFlags_AlwaysAutoResize
+				);
 
-			imguiSeparatorLine(1); imguiIndent(8); imguiLabel("Draw mode:"); imguiUnindent(8); imguiSeparatorLine(1);
-			imguiSeparator(4);
-			{
-				imguiIndent();
-				m_drawMode = imguiChoose(m_drawMode
-										, "Wireframe + Shaded"
-										, "Wireframe"
-										, "Shaded"
-										);
-				imguiUnindent();
-			}
-			imguiSeparator(8);
+			ImGui::Separator();
+			ImGui::Text("Draw mode:");
+			ImGui::RadioButton("Wireframe + Shaded", &m_drawMode, 0);
+			ImGui::RadioButton("Wireframe", &m_drawMode, 1);
+			ImGui::RadioButton("Shaded", &m_drawMode, 2);
 
 			const bool wfEnabled = (DrawMode::Shaded != m_drawMode);
-			imguiSeparatorLine(1); imguiIndent(8); imguiLabel("Wireframe:", wfEnabled); imguiUnindent(8); imguiSeparatorLine(1);
-			imguiSeparator(4);
+			if ( wfEnabled )
 			{
-				imguiColorWheel("Color", m_uniforms.m_wfColor, m_showWfColor, 0.6f, wfEnabled);
-				imguiIndent();
-				imguiSlider("Opacity",   m_uniforms.m_wfOpacity,   0.1f, 1.0f, 0.1f, wfEnabled);
-				imguiSlider("Thickness", m_uniforms.m_wfThickness, 0.6f, 2.2f, 0.1f, wfEnabled);
-				imguiUnindent();
-			}
-			imguiSeparator(8);
+				ImGui::Separator();
 
-			imguiSeparatorLine(1); imguiIndent(8); imguiLabel("Mesh:"); imguiUnindent(8); imguiSeparatorLine(1);
-			imguiSeparator(4);
+				ImGui::ColorWheel("Color", m_uniforms.m_wfColor, 0.6f);
+				ImGui::SliderFloat("Opacity",   &m_uniforms.m_wfOpacity,   0.1f, 1.0f);
+				ImGui::SliderFloat("Thickness", &m_uniforms.m_wfThickness, 0.6f, 2.2f);
+			}
+
+			ImGui::Separator();
+			ImGui::Text("Mesh:");
 			{
 				imguiIndent();
-				const uint32_t prevMeshSel = m_meshSelection;
-				m_meshSelection = imguiChoose(m_meshSelection
-											, "Bunny"
-											, "Hollowcubes"
-											, "Orb"
-											);
-				if (prevMeshSel != m_meshSelection)
+				bool meshChanged = false;
+				meshChanged |= ImGui::RadioButton("Bunny", &m_meshSelection, 0);
+				meshChanged |= ImGui::RadioButton("Hollowcubes", &m_meshSelection, 1);
+				meshChanged |= ImGui::RadioButton("Orb", &m_meshSelection, 2);
+
+				if (meshChanged)
 				{
 					m_camera.reset();
 				}
-				imguiUnindent();
 			}
-			imguiSeparator(8);
 
-			imguiEndScrollArea();
+			ImGui::End();
 			imguiEndFrame();
 
 			// This dummy draw call is here to make sure that view 0 is cleared
@@ -556,11 +542,8 @@ class ExampleWireframe : public entry::AppI
 	Mouse m_mouse;
 	Uniforms m_uniforms;
 	MeshMtx m_meshes[3];
-	uint32_t m_meshSelection;
-	uint32_t m_drawMode; // Holds data for 'DrawMode'.
-
-	bool m_showWfColor;
-	int32_t m_scrollArea;
+	int32_t m_meshSelection;
+	int32_t m_drawMode; // Holds data for 'DrawMode'.
 };
 
 ENTRY_IMPLEMENT_MAIN(ExampleWireframe);
