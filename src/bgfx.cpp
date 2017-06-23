@@ -3151,7 +3151,7 @@ error:
 		}
 
 		if (0 != (_flags & BGFX_TEXTURE_MSAA_SAMPLE)
-		&&  0 == (g_caps.supported & BGFX_CAPS_FORMAT_TEXTURE_MSAA) )
+		&&  0 == (g_caps.formats[_format] & BGFX_CAPS_FORMAT_TEXTURE_MSAA) )
 		{
 			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
 				, "MSAA sampling for this texture format is not supported."
