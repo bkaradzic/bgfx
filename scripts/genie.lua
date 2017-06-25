@@ -111,13 +111,7 @@ if _OPTIONS["with-profiler"] then
 	}
 end
 
-function exampleProject(_name)
-
-	project ("example-" .. _name)
-		uuid (os.uuid("example-" .. _name))
-		kind "WindowedApp"
-
-	configuration {}
+function exampleProjectDefaults()
 
 	debugdir (path.join(BGFX_DIR, "examples/runtime"))
 
@@ -127,16 +121,6 @@ function exampleProject(_name)
 		path.join(BGFX_DIR, "include"),
 		path.join(BGFX_DIR, "3rdparty"),
 		path.join(BGFX_DIR, "examples/common"),
-	}
-
-	files {
-		path.join(BGFX_DIR, "examples", _name, "**.c"),
-		path.join(BGFX_DIR, "examples", _name, "**.cpp"),
-		path.join(BGFX_DIR, "examples", _name, "**.h"),
-	}
-
-	removefiles {
-		path.join(BGFX_DIR, "examples", _name, "**.bin.h"),
 	}
 
 	flags {
@@ -351,6 +335,7 @@ function exampleProject(_name)
 			path.join(BGFX_DIR, "examples/runtime/tvOS-Info.plist"),
 		}
 
+
 	configuration { "qnx*" }
 		targetextension ""
 		links {
@@ -361,6 +346,53 @@ function exampleProject(_name)
 	configuration {}
 
 	strip()
+end
+
+function exampleProject(multi, ...)
+
+	if multi then
+
+		project ("examples")
+			uuid (os.uuid("examples"))
+			kind "WindowedApp"
+
+		for _, name in ipairs({...}) do
+
+			files {
+				path.join(BGFX_DIR, "examples", name, "**.c"),
+				path.join(BGFX_DIR, "examples", name, "**.cpp"),
+				path.join(BGFX_DIR, "examples", name, "**.h"),
+			}
+
+			removefiles {
+				path.join(BGFX_DIR, "examples", name, "**.bin.h"),
+			}
+
+		end
+
+		exampleProjectDefaults()
+
+	else
+
+		for _, name in ipairs({...}) do
+			project ("example-" .. name)
+				uuid (os.uuid("example-" .. name))
+				kind "WindowedApp"
+
+			files {
+				path.join(BGFX_DIR, "examples", name, "**.c"),
+				path.join(BGFX_DIR, "examples", name, "**.cpp"),
+				path.join(BGFX_DIR, "examples", name, "**.h"),
+			}
+
+			removefiles {
+				path.join(BGFX_DIR, "examples", name, "**.bin.h"),
+			}
+
+			exampleProjectDefaults()
+		end
+	end
+
 end
 
 dofile "bgfx.lua"
@@ -383,39 +415,42 @@ end
 
 if _OPTIONS["with-examples"] then
 	group "examples"
-	exampleProject("00-helloworld")
-	exampleProject("01-cubes")
-	exampleProject("02-metaballs")
-	exampleProject("03-raymarch")
-	exampleProject("04-mesh")
-	exampleProject("05-instancing")
-	exampleProject("06-bump")
-	exampleProject("07-callback")
-	exampleProject("08-update")
-	exampleProject("09-hdr")
-	exampleProject("10-font")
-	exampleProject("11-fontsdf")
-	exampleProject("12-lod")
-	exampleProject("13-stencil")
-	exampleProject("14-shadowvolumes")
-	exampleProject("15-shadowmaps-simple")
-	exampleProject("16-shadowmaps")
-	exampleProject("17-drawstress")
-	exampleProject("18-ibl")
-	exampleProject("19-oit")
-	exampleProject("20-nanovg")
-	exampleProject("21-deferred")
-	exampleProject("22-windows")
-	exampleProject("23-vectordisplay")
-	exampleProject("24-nbody")
-	exampleProject("26-occlusion")
-	exampleProject("27-terrain")
-	exampleProject("28-wireframe")
-	exampleProject("29-debugdraw")
-	exampleProject("30-picking")
-	exampleProject("31-rsm")
-	exampleProject("32-particles")
-	exampleProject("33-pom")
+
+	exampleProject(false
+		, "00-helloworld"
+		, "01-cubes"
+		, "02-metaballs"
+		, "03-raymarch"
+		, "04-mesh"
+		, "05-instancing"
+		, "06-bump"
+		, "07-callback"
+		, "08-update"
+		, "09-hdr"
+		, "10-font"
+		, "11-fontsdf"
+		, "12-lod"
+		, "13-stencil"
+		, "14-shadowvolumes"
+		, "15-shadowmaps-simple"
+		, "16-shadowmaps"
+		, "17-drawstress"
+		, "18-ibl"
+		, "19-oit"
+		, "20-nanovg"
+		, "21-deferred"
+		, "22-windows"
+		, "23-vectordisplay"
+		, "24-nbody"
+		, "26-occlusion"
+		, "27-terrain"
+		, "28-wireframe"
+		, "29-debugdraw"
+		, "30-picking"
+		, "31-rsm"
+		, "32-particles"
+		, "33-pom"
+		)
 
 	-- C99 source doesn't compile under WinRT settings
 	if not premake.vstudio.iswinrt() then
