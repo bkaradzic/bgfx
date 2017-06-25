@@ -348,9 +348,9 @@ function exampleProjectDefaults()
 	strip()
 end
 
-function exampleProject(multi, ...)
+function exampleProject(_combined, ...)
 
-	if multi then
+	if _combined then
 
 		project ("examples")
 			uuid (os.uuid("examples"))
@@ -454,7 +454,7 @@ if _OPTIONS["with-examples"] then
 
 	-- C99 source doesn't compile under WinRT settings
 	if not premake.vstudio.iswinrt() then
-		exampleProject("25-c99")
+		exampleProject(false, "25-c99")
 	end
 end
 
