@@ -58,7 +58,7 @@ gl_FragCoord origin is upper left
 0:13            Constant:
 0:13              0 (const int)
 0:13          v: direct index for structure ( temp 2-component vector of float)
-0:13            'i' (layout( location=0) in structure{ temp 2-component vector of float v,  temp 2-component vector of int i2})
+0:13            'i' (layout( location=0) in structure{ temp 2-component vector of float v,  flat temp 2-component vector of int i2})
 0:13            Constant:
 0:13              0 (const int)
 0:13        move second child to first child ( temp 4-component vector of float)
@@ -72,8 +72,8 @@ gl_FragCoord origin is upper left
 0:?             'i' ( temp structure{ temp 2-component vector of float v,  temp 4-component vector of float fragCoord,  temp 2-component vector of int i2})
 0:13            Constant:
 0:13              2 (const int)
-0:13          i2: direct index for structure ( temp 2-component vector of int)
-0:13            'i' (layout( location=0) in structure{ temp 2-component vector of float v,  temp 2-component vector of int i2})
+0:13          i2: direct index for structure ( flat temp 2-component vector of int)
+0:13            'i' (layout( location=0) in structure{ temp 2-component vector of float v,  flat temp 2-component vector of int i2})
 0:13            Constant:
 0:13              1 (const int)
 0:13      move second child to first child ( temp 4-component vector of float)
@@ -82,7 +82,7 @@ gl_FragCoord origin is upper left
 0:?           'i' ( temp structure{ temp 2-component vector of float v,  temp 4-component vector of float fragCoord,  temp 2-component vector of int i2})
 0:?   Linker Objects
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
-0:?     'i' (layout( location=0) in structure{ temp 2-component vector of float v,  temp 2-component vector of int i2})
+0:?     'i' (layout( location=0) in structure{ temp 2-component vector of float v,  flat temp 2-component vector of int i2})
 0:?     'i_fragCoord' ( in 4-component vector of float FragCoord)
 
 
@@ -148,7 +148,7 @@ gl_FragCoord origin is upper left
 0:13            Constant:
 0:13              0 (const int)
 0:13          v: direct index for structure ( temp 2-component vector of float)
-0:13            'i' (layout( location=0) in structure{ temp 2-component vector of float v,  temp 2-component vector of int i2})
+0:13            'i' (layout( location=0) in structure{ temp 2-component vector of float v,  flat temp 2-component vector of int i2})
 0:13            Constant:
 0:13              0 (const int)
 0:13        move second child to first child ( temp 4-component vector of float)
@@ -162,8 +162,8 @@ gl_FragCoord origin is upper left
 0:?             'i' ( temp structure{ temp 2-component vector of float v,  temp 4-component vector of float fragCoord,  temp 2-component vector of int i2})
 0:13            Constant:
 0:13              2 (const int)
-0:13          i2: direct index for structure ( temp 2-component vector of int)
-0:13            'i' (layout( location=0) in structure{ temp 2-component vector of float v,  temp 2-component vector of int i2})
+0:13          i2: direct index for structure ( flat temp 2-component vector of int)
+0:13            'i' (layout( location=0) in structure{ temp 2-component vector of float v,  flat temp 2-component vector of int i2})
 0:13            Constant:
 0:13              1 (const int)
 0:13      move second child to first child ( temp 4-component vector of float)
@@ -172,7 +172,7 @@ gl_FragCoord origin is upper left
 0:?           'i' ( temp structure{ temp 2-component vector of float v,  temp 4-component vector of float fragCoord,  temp 2-component vector of int i2})
 0:?   Linker Objects
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
-0:?     'i' (layout( location=0) in structure{ temp 2-component vector of float v,  temp 2-component vector of int i2})
+0:?     'i' (layout( location=0) in structure{ temp 2-component vector of float v,  flat temp 2-component vector of int i2})
 0:?     'i_fragCoord' ( in 4-component vector of float FragCoord)
 
 // Module Version 10000
@@ -207,6 +207,7 @@ gl_FragCoord origin is upper left
                               Name 63  "i_fragCoord"
                               Name 73  "@entryPointOutput"
                               Name 74  "param"
+                              MemberDecorate 54(InParam) 1 Flat
                               Decorate 56(i) Location 0
                               Decorate 63(i_fragCoord) BuiltIn FragCoord
                               Decorate 73(@entryPointOutput) Location 0

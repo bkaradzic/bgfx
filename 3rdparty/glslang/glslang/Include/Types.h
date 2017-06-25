@@ -1338,7 +1338,24 @@ public:
 #else
     virtual bool isFloatingDomain() const { return basicType == EbtFloat || basicType == EbtDouble; }
 #endif
-
+    virtual bool isIntegerDomain() const
+    {
+        switch (basicType) {
+        case EbtInt:
+        case EbtUint:
+        case EbtInt64:
+        case EbtUint64:
+#ifdef AMD_EXTENSIONS
+        case EbtInt16:
+        case EbtUint16:
+#endif
+        case EbtAtomicUint:
+            return true;
+        default:
+            break;
+        }
+        return false;
+    }
     virtual bool isOpaque() const { return basicType == EbtSampler || basicType == EbtAtomicUint; }
 
     // "Image" is a superset of "Subpass"
@@ -1451,9 +1468,9 @@ public:
             case EbtUint16:
 #endif
             case EbtBool:
-            return true;
+                return true;
             default:
-            return false;
+                return false;
             }
         };
 

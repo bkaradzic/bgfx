@@ -374,7 +374,7 @@ ERROR: node is still EOpNull!
 0:?         'inF2' (layout( location=2) in 4-component vector of float)
 0:80      move second child to first child ( temp 4-component vector of int)
 0:?         'inI0' ( temp 4-component vector of int)
-0:?         'inI0' (layout( location=3) in 4-component vector of int)
+0:?         'inI0' (layout( location=3) flat in 4-component vector of int)
 0:80      move second child to first child ( temp 4-component vector of float)
 0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 0:80        Function Call: @PixelShaderFunction(vf4;vf4;vf4;vi4; ( temp 4-component vector of float)
@@ -518,7 +518,7 @@ ERROR: node is still EOpNull!
 0:?     'inF0' (layout( location=0) in 4-component vector of float)
 0:?     'inF1' (layout( location=1) in 4-component vector of float)
 0:?     'inF2' (layout( location=2) in 4-component vector of float)
-0:?     'inI0' (layout( location=3) in 4-component vector of int)
+0:?     'inI0' (layout( location=3) flat in 4-component vector of int)
 
 
 Linked fragment stage:
@@ -837,7 +837,7 @@ ERROR: node is still EOpNull!
 0:?         'inF2' (layout( location=2) in 4-component vector of float)
 0:80      move second child to first child ( temp 4-component vector of int)
 0:?         'inI0' ( temp 4-component vector of int)
-0:?         'inI0' (layout( location=3) in 4-component vector of int)
+0:?         'inI0' (layout( location=3) flat in 4-component vector of int)
 0:80      move second child to first child ( temp 4-component vector of float)
 0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 0:80        Function Call: @PixelShaderFunction(vf4;vf4;vf4;vi4; ( temp 4-component vector of float)
@@ -981,6 +981,6 @@ ERROR: node is still EOpNull!
 0:?     'inF0' (layout( location=0) in 4-component vector of float)
 0:?     'inF1' (layout( location=1) in 4-component vector of float)
 0:?     'inF2' (layout( location=2) in 4-component vector of float)
-0:?     'inI0' (layout( location=3) in 4-component vector of int)
+0:?     'inI0' (layout( location=3) flat in 4-component vector of int)
 
 SPIR-V is not generated for failed compile or link

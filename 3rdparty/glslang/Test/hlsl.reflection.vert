@@ -19,26 +19,9 @@ cbuffer c_nameless {
     float4 c_anonMember3;
 };
 
-cbuffer named {
-    float3 deadMember1;
-    int scalar;
-    float4 member2;
-    float4 member3;
-    float2 memfloat2;
-    float memf1;
-    bool  memf2;
-    int   memf3;
-    float2 memfloat2a;
-    float2x2 m22[7];
-} ablock;
-
 cbuffer namelessdead {
     int a;
 };
-
-cbuffer namedDead {
-    int b;
-} bblock;
 
 struct N1 {
     float a;
@@ -57,7 +40,7 @@ struct N3 {
 
 cbuffer nested {
     N3 foo;
-} nest;
+}
 
 struct TS {
     int a;
@@ -89,16 +72,12 @@ struct deep3 {
     int3 v3;
 };
 
-
-
-
 uniform deep3 deepA[2], deepB[2], deepC[3], deepD[2];
 
 const bool control = true;
 
 void deadFunction()
 {
-    float3 v3 = ablock.deadMember1;
     float4 v = anonDeadMember2;
     float f = ufDead4;
 }
@@ -110,12 +89,12 @@ void liveFunction2()
 }
 
 tbuffer abl {
-    float foo;
-} arrBl;
+    float foo1;
+}
 
 tbuffer abl2 {
-    float foo;
-} arrBl2;
+    float foo2;
+}
 
 void flizv(in float attributeFloat, in float2 attributeFloat2, in float3 attributeFloat3, in float4 attributeFloat4, in float4x4 attributeMat4)
 {
@@ -130,22 +109,16 @@ void flizv(in float attributeFloat, in float2 attributeFloat2, in float3 attribu
         liveFunction2();
         f = anonMember3.z;
         f = s.a;
-        f = ablock.scalar;
         f = m23[1].y + scalarAfterm23;
         f = c_m23[1].y + c_scalarAfterm23;
         f += scalarBeforeArray;
         f += floatArray[2];
         f += floatArray[4];
         f += scalarAfterArray;
-        f += ablock.memfloat2.x;
-        f += ablock.memf1;
-        f += float(ablock.memf2);
-        f += ablock.memf3;
-        f += ablock.memfloat2a.y;
-        f += ablock.m22[i][1][0];
+        f += m22[i][1][0];
         f += dm22[3][0][1];
         f += m22[2][1].y;
-        f += nest.foo.n1.a + nest.foo.n2.b + nest.foo.n2.c + nest.foo.n2.d;
+        f += foo.n1.a + foo.n2.b + foo.n2.c + foo.n2.d;
         f += deepA[i].d2.d1[2].va[1].x;
         f += deepB[1].d2.d1[i].va[1].x;
         f += deepB[i].d2.d1[i].va[1].x;
@@ -154,8 +127,8 @@ void flizv(in float attributeFloat, in float2 attributeFloat2, in float3 attribu
     } else
         f = ufDead3;
 
-    f += arrBl.foo + arrBl.foo;
-    f += arrBl2.foo;
+    f += foo1 + foo2;
+    f += foo2;
 
     f += attributeFloat;
     f += attributeFloat2.x;
