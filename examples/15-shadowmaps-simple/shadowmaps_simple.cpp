@@ -15,6 +15,10 @@
 #include <bx/fpumath.h>
 #include "entry/entry.h"
 #include "bgfx_utils.h"
+#include "imgui/imgui.h"
+
+namespace
+{
 
 #define RENDER_SHADOW_PASS_ID 0
 #define RENDER_SCENE_PASS_ID  1
@@ -56,13 +60,19 @@ static const uint16_t s_planeIndices[] =
 
 class ExampleShadowmapsSimple : public entry::AppI
 {
+public:
+	ExampleShadowmapsSimple(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
 
 		m_width = 1280;
 		m_height = 720;
-		m_debug = BGFX_DEBUG_TEXT;
+		m_debug = BGFX_DEBUG_NONE;
 		m_reset = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -207,10 +217,14 @@ class ExampleShadowmapsSimple : public entry::AppI
 		bx::mtxProj(m_proj, 60.0f, aspect, 0.1f, 1000.0f, bgfx::getCaps()->homogeneousDepth);
 
 		m_timeOffset = bx::getHPCounter();
+
+		imguiCreate();
 	}
 
 	virtual int shutdown() BX_OVERRIDE
 	{
+		imguiDestroy();
+
 		meshUnload(m_bunny);
 		meshUnload(m_cube);
 		meshUnload(m_hollowcube);
@@ -239,22 +253,25 @@ class ExampleShadowmapsSimple : public entry::AppI
 
 	bool update() BX_OVERRIDE
 	{
-		while (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
+		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			imguiBeginFrame(m_mouseState.m_mx
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
+
+			bool restart = showExampleDialog(this);
+
+			imguiEndFrame();
+
 			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
 			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
-
 			float time = float( (now-m_timeOffset)/freq);
-
-			// Use debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/15-shadowmaps-simple");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Shadow maps example (technique: %s).", m_shadowSamplerSupported ? "depth texture and shadow samplers" : "shadow depth packed into color texture");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			// Setup lights.
 			float lightPos[4];
@@ -392,7 +409,7 @@ class ExampleShadowmapsSimple : public entry::AppI
 			// process submitted rendering primitives.
 			bgfx::frame();
 
-			return true;
+			return !restart;
 		}
 
 		return false;
@@ -433,5 +450,6 @@ class ExampleShadowmapsSimple : public entry::AppI
 	int64_t m_timeOffset;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleShadowmapsSimple);
+} // namespace
 
+ENTRY_IMPLEMENT_MAIN(ExampleShadowmapsSimple, "15-shadowmaps-simple", "Shadow maps example");

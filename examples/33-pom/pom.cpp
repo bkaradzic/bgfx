@@ -8,6 +8,9 @@
 
 #include <imgui/imgui.h>
 
+namespace
+{
+
 struct PosTangentBitangentTexcoordVertex
 {
 	float m_x;
@@ -107,13 +110,19 @@ static const uint16_t s_cubeIndices[36] =
 
 class ExamplePom : public entry::AppI
 {
+public:
+	ExamplePom(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
 
 		m_width  = 1280;
 		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -207,19 +216,9 @@ class ExamplePom : public entry::AppI
 			bgfx::touch(0);
 
 			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
 			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
 
 			float time = (float)( (now-m_timeOffset)/freq);
-
-			// Use debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/33-pom");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Parallax mapping.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			float at[3]  = { 0.0f, 0.0f, 1.0f };
 			float eye[3] = { 0.0f, 0.0f, 0.0f };
@@ -261,6 +260,8 @@ class ExamplePom : public entry::AppI
 				, uint16_t(m_width)
 				, uint16_t(m_height)
 				);
+
+			bool restart = showExampleDialog(this);
 
 			ImGui::SetNextWindowPos(ImVec2(m_width - 240.0f, 20.0f));
 			ImGui::Begin("Properties");
@@ -348,7 +349,7 @@ class ExamplePom : public entry::AppI
 			// process submitted rendering primitives.
 			bgfx::frame();
 
-			return true;
+			return !restart;
 		}
 
 		return false;
@@ -381,4 +382,6 @@ class ExamplePom : public entry::AppI
 	int32_t m_num_steps;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExamplePom);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExamplePom, "33-pom", "Parallax mapping.");

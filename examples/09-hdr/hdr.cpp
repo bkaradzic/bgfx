@@ -8,6 +8,9 @@
 #include "imgui/imgui.h"
 #include <bx/rng.h>
 
+namespace
+{
+
 static float s_texelHalf = 0.0f;
 
 struct PosColorTexCoord0Vertex
@@ -134,20 +137,21 @@ void setOffsets4x4Lum(bgfx::UniformHandle _handle, uint32_t _width, uint32_t _he
 	bgfx::setUniform(_handle, offsets, num);
 }
 
-inline float square(float _x)
-{
-	return _x*_x;
-}
-
 class ExampleHDR : public entry::AppI
 {
+public:
+	ExampleHDR(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
 
 		m_width  = 1280;
 		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -301,6 +305,8 @@ class ExampleHDR : public entry::AppI
 					, uint16_t(m_height)
 					);
 
+			bool restart = showExampleDialog(this);
+
 			ImGui::SetNextWindowPos(ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f) );
 			ImGui::Begin("HDR Settings"
 				, NULL
@@ -336,15 +342,8 @@ class ExampleHDR : public entry::AppI
 			const int64_t frameTime = now - last;
 			last = now;
 			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
 
 			m_time += (float)(frameTime*m_speed/freq);
-
-			// Use m_debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/09-hdr");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Using multiple views with frame buffers, and view order remapping.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			uint8_t shuffle[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 			bx::shuffle(&m_rng, shuffle, BX_COUNTOF(shuffle) );
@@ -448,7 +447,7 @@ class ExampleHDR : public entry::AppI
 			// Set view and projection matrix for view hdrMesh.
 			bgfx::setViewTransform(hdrMesh, view, proj);
 
-			float tonemap[4] = { m_middleGray, square(m_white), m_threshold, m_time };
+			float tonemap[4] = { m_middleGray, bx::fsq(m_white), m_threshold, m_time };
 
 			// Render skybox into view hdrSkybox.
 			bgfx::setTexture(0, s_texCube, m_uffizi);
@@ -531,7 +530,7 @@ class ExampleHDR : public entry::AppI
 			// process submitted rendering primitives.
 			bgfx::frame();
 
-			return true;
+			return !restart;
 		}
 
 		return false;
@@ -588,4 +587,6 @@ class ExampleHDR : public entry::AppI
 	float m_time;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleHDR);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleHDR, "09-hdr", "Description: Using multiple views with frame buffers, and view order remapping.");

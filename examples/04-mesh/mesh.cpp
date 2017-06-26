@@ -5,16 +5,26 @@
 
 #include "common.h"
 #include "bgfx_utils.h"
+#include "imgui/imgui.h"
+
+namespace
+{
 
 class ExampleMesh : public entry::AppI
 {
+public:
+	ExampleMesh(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
 
 		m_width  = 1280;
 		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -39,10 +49,14 @@ class ExampleMesh : public entry::AppI
 		m_mesh = meshLoad("meshes/bunny.bin");
 
 		m_timeOffset = bx::getHPCounter();
+
+		imguiCreate();
 	}
 
 	int shutdown() BX_OVERRIDE
 	{
+		imguiDestroy();
+
 		meshUnload(m_mesh);
 
 		// Cleanup.
@@ -58,8 +72,22 @@ class ExampleMesh : public entry::AppI
 
 	bool update() BX_OVERRIDE
 	{
-		if (!entry::processEvents(m_width, m_height, m_debug, m_reset) )
+		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			imguiBeginFrame(m_mouseState.m_mx
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
+
+			bool restart = showExampleDialog(this);
+
+			imguiEndFrame();
+
 			// Set view 0 default viewport.
 			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
@@ -67,20 +95,8 @@ class ExampleMesh : public entry::AppI
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
 
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
 			float time = (float)( (bx::getHPCounter()-m_timeOffset)/double(bx::getHPFrequency() ) );
 			bgfx::setUniform(u_time, &time);
-
-			// Use debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/04-mesh");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Loading meshes.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			float at[3]  = { 0.0f, 1.0f,  0.0f };
 			float eye[3] = { 0.0f, 1.0f, -2.5f };
@@ -124,11 +140,13 @@ class ExampleMesh : public entry::AppI
 			// process submitted rendering primitives.
 			bgfx::frame();
 
-			return true;
+			return !restart;
 		}
 
 		return false;
 	}
+
+	entry::MouseState m_mouseState;
 
 	uint32_t m_width;
 	uint32_t m_height;
@@ -141,4 +159,6 @@ class ExampleMesh : public entry::AppI
 	bgfx::UniformHandle u_time;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleMesh);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleMesh, "04-mesh", "Description: Loading meshes.");

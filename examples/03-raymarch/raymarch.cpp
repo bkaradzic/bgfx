@@ -5,6 +5,10 @@
 
 #include "common.h"
 #include "bgfx_utils.h"
+#include "imgui/imgui.h"
+
+namespace
+{
 
 struct PosColorTexCoord0Vertex
 {
@@ -29,13 +33,6 @@ struct PosColorTexCoord0Vertex
 };
 
 bgfx::VertexDecl PosColorTexCoord0Vertex::ms_decl;
-
-static bool s_oglNdc = false;
-
-inline void mtxProj(float* _result, float _fovy, float _aspect, float _near, float _far)
-{
-	bx::mtxProj(_result, _fovy, _aspect, _near, _far, s_oglNdc);
-}
 
 void renderScreenSpaceQuad(uint8_t _view, bgfx::ProgramHandle _program, float _x, float _y, float _width, float _height)
 {
@@ -104,13 +101,19 @@ void renderScreenSpaceQuad(uint8_t _view, bgfx::ProgramHandle _program, float _x
 
 class ExampleRaymarch : public entry::AppI
 {
+public:
+	ExampleRaymarch(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
 
 		m_width  = 1280;
 		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -127,9 +130,6 @@ class ExampleRaymarch : public entry::AppI
 				, 0
 				);
 
-		const bgfx::Caps* caps = bgfx::getCaps();
-		s_oglNdc = caps->homogeneousDepth;
-
 		// Create vertex stream declaration.
 		PosColorTexCoord0Vertex::init();
 
@@ -140,10 +140,14 @@ class ExampleRaymarch : public entry::AppI
 		m_program = loadProgram("vs_raymarching", "fs_raymarching");
 
 		m_timeOffset = bx::getHPCounter();
+
+		imguiCreate();
 	}
 
 	int shutdown() BX_OVERRIDE
 	{
+		imguiDestroy();
+
 		// Cleanup.
 		bgfx::destroyProgram(m_program);
 
@@ -158,8 +162,21 @@ class ExampleRaymarch : public entry::AppI
 
 	bool update() BX_OVERRIDE
 	{
-		if (!entry::processEvents(m_width, m_height, m_debug, m_reset) )
+		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			imguiBeginFrame(m_mouseState.m_mx
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
+
+			bool restart = showExampleDialog(this);
+
+			imguiEndFrame();
 			// Set view 0 default viewport.
 			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
@@ -170,31 +187,19 @@ class ExampleRaymarch : public entry::AppI
 			// if no other draw calls are submitted to viewZ 0.
 			bgfx::touch(0);
 
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
-
-			// Use debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/03-raymarch");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Updating shader uniforms.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
-
 			float at[3]  = { 0.0f, 0.0f,   0.0f };
 			float eye[3] = { 0.0f, 0.0f, -15.0f };
 
 			float view[16];
 			float proj[16];
 			bx::mtxLookAt(view, eye, at);
-			mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f);
+
+			const bgfx::Caps* caps = bgfx::getCaps();
+			bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, caps->homogeneousDepth);
 
 			// Set view and projection matrix for view 1.
 			bgfx::setViewTransform(0, view, proj);
 
-			const bgfx::Caps* caps = bgfx::getCaps();
 			float ortho[16];
 			bx::mtxOrtho(ortho, 0.0f, 1280.0f, 720.0f, 0.0f, 0.0f, 100.0f, 0.0, caps->homogeneousDepth);
 
@@ -235,11 +240,13 @@ class ExampleRaymarch : public entry::AppI
 			// process submitted rendering primitives.
 			bgfx::frame();
 
-			return true;
+			return !restart;
 		}
 
 		return false;
 	}
+
+	entry::MouseState m_mouseState;
 
 	uint32_t m_width;
 	uint32_t m_height;
@@ -252,4 +259,6 @@ class ExampleRaymarch : public entry::AppI
 	bgfx::ProgramHandle m_program;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleRaymarch);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleRaymarch, "03-raymarch", "Description: Updating shader uniforms.");

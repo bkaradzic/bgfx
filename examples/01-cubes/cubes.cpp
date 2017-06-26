@@ -5,6 +5,10 @@
 
 #include "common.h"
 #include "bgfx_utils.h"
+#include "imgui/imgui.h"
+
+namespace
+{
 
 struct PosColorVertex
 {
@@ -73,6 +77,12 @@ static const uint16_t s_cubeTriStrip[] =
 
 class ExampleCubes : public entry::AppI
 {
+public:
+	ExampleCubes(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		BX_UNUSED(s_cubeTriList, s_cubeTriStrip);
@@ -81,7 +91,7 @@ class ExampleCubes : public entry::AppI
 
 		m_width  = 1280;
 		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -118,10 +128,14 @@ class ExampleCubes : public entry::AppI
 		m_program = loadProgram("vs_cubes", "fs_cubes");
 
 		m_timeOffset = bx::getHPCounter();
+
+		imguiCreate();
 	}
 
 	virtual int shutdown() BX_OVERRIDE
 	{
+		imguiDestroy();
+
 		// Cleanup.
 		bgfx::destroyIndexBuffer(m_ibh);
 		bgfx::destroyVertexBuffer(m_vbh);
@@ -135,22 +149,23 @@ class ExampleCubes : public entry::AppI
 
 	bool update() BX_OVERRIDE
 	{
-		if (!entry::processEvents(m_width, m_height, m_debug, m_reset) )
+		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
+			imguiBeginFrame(m_mouseState.m_mx
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
 
-			float time = (float)( (now-m_timeOffset)/double(bx::getHPFrequency() ) );
+			bool restart = showExampleDialog(this);
 
-			// Use debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/01-cube");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Rendering simple static mesh.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
+			imguiEndFrame();
+
+			float time = (float)( (bx::getHPCounter()-m_timeOffset)/double(bx::getHPFrequency() ) );
 
 			float at[3]  = { 0.0f, 0.0f,   0.0f };
 			float eye[3] = { 0.0f, 0.0f, -35.0f };
@@ -219,11 +234,13 @@ class ExampleCubes : public entry::AppI
 			// process submitted rendering primitives.
 			bgfx::frame();
 
-			return true;
+			return !restart;
 		}
 
 		return false;
 	}
+
+	entry::MouseState m_mouseState;
 
 	uint32_t m_width;
 	uint32_t m_height;
@@ -235,4 +252,6 @@ class ExampleCubes : public entry::AppI
 	int64_t m_timeOffset;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleCubes);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleCubes, "01-cube", "Rendering simple static mesh.");

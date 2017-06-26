@@ -5,11 +5,14 @@
 
 #include "common.h"
 #include "bgfx_utils.h"
+#include "packrect.h"
+#include "imgui/imgui.h"
 
 #include <bx/uint32_t.h>
-#include "packrect.h"
-
 #include <list>
+
+namespace
+{
 
 struct PosTexcoordVertex
 {
@@ -118,8 +121,9 @@ static const uint32_t texture2dSize = 256;
 class ExampleUpdate : public entry::AppI
 {
 public:
-	ExampleUpdate()
-		: m_cube(textureside)
+	ExampleUpdate(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+		, m_cube(textureside)
 	{
 	}
 
@@ -129,7 +133,7 @@ public:
 
 		m_width  = 1280;
 		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -284,10 +288,14 @@ public:
 
 		m_updateTime = 0;
 		m_timeOffset = bx::getHPCounter();
+
+		imguiCreate();
 	}
 
 	virtual int shutdown() BX_OVERRIDE
 	{
+		imguiDestroy();
+
 		// m_texture2dData is managed from main thread, and it's passed to renderer
 		// just as MemoryRef. At this point render might be using it. We must wait
 		// previous frame to finish before we can free it.
@@ -340,8 +348,22 @@ public:
 
 	bool update() BX_OVERRIDE
 	{
-		if (!entry::processEvents(m_width, m_height, m_debug, m_reset) )
+		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			imguiBeginFrame(m_mouseState.m_mx
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
+
+			bool restart = showExampleDialog(this);
+
+			imguiEndFrame();
+
 			float borderColor[4] = { float(rand()%255)/255.0f, float(rand()%255)/255.0f, float(rand()%255)/255.0f, float(rand()%255)/255.0f };
 			bgfx::setPaletteColor(1, borderColor);
 
@@ -354,19 +376,8 @@ public:
 			bgfx::touch(0);
 
 			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const int64_t freq = bx::getHPFrequency();
-			const double toMs = 1000.0/double(freq);
 			float time = (float)( (now - m_timeOffset)/double(bx::getHPFrequency() ) );
 			bgfx::setUniform(u_time, &time);
-
-			// Use debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/08-update");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Updating m_textures.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			if (now > m_updateTime)
 			{
@@ -443,8 +454,6 @@ public:
 					bgfx::updateTexture2D(m_texture2d, 0, 0, tx, ty, tw, th, mem, pitch);
 				}
 			}
-
-			bgfx::dbgTextPrintf(0, 4, 0x0f, "m_hit: %d, m_miss %d", m_hit, m_miss);
 
 			float at[3] = { 0.0f, 0.0f, 0.0f };
 			float eye[3] = { 0.0f, 0.0f, -5.0f };
@@ -583,19 +592,21 @@ public:
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
 			bgfx::frame();
-			return true;
+
+			return !restart;
 		}
 
 		return false;
 	}
 
-	uint8_t* m_texture2dData;
+	entry::MouseState m_mouseState;
 
 	uint32_t m_width;
 	uint32_t m_height;
 	uint32_t m_debug;
 	uint32_t m_reset;
 
+	uint8_t* m_texture2dData;
 	uint32_t m_numTextures3d;
 	bool m_texture3DSupported;
 	bool m_blitSupported;
@@ -629,4 +640,6 @@ public:
 
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleUpdate);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleUpdate, "08-update", "Updating m_textures.");

@@ -13,6 +13,14 @@
 #include "camera.h"
 #include "imgui/imgui.h"
 
+namespace bgfx
+{
+	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
+}
+
+namespace
+{
+
 #define RENDER_VIEWID_RANGE1_PASS_0  1
 #define RENDER_VIEWID_RANGE1_PASS_1  2
 #define RENDER_VIEWID_RANGE1_PASS_2  3
@@ -613,11 +621,6 @@ struct Group
 	PrimitiveArray m_prims;
 };
 
-namespace bgfx
-{
-	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
-}
-
 struct Mesh
 {
 	void load(const void* _vertices, uint32_t _numVertices, const bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
@@ -787,6 +790,11 @@ struct Mesh
 class ExampleStencil : public entry::AppI
 {
 public:
+	ExampleStencil(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
 	virtual void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
@@ -794,7 +802,7 @@ public:
 		m_viewState = ViewState(1280, 720);
 		m_clearValues = ClearValues(0x30303000, 1.0f, 0);
 
-		m_debug = BGFX_DEBUG_TEXT;
+		m_debug = BGFX_DEBUG_NONE;
 		m_reset = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -914,6 +922,8 @@ public:
 				, uint16_t(m_viewState.m_height)
 				);
 
+			bool restart = showExampleDialog(this);
+
 			ImGui::SetNextWindowPos(ImVec2(m_viewState.m_width - m_viewState.m_width / 5.0f - 10.0f, 10.0f) );
 			ImGui::Begin("Stencil Settings"
 				, NULL
@@ -968,16 +978,9 @@ public:
 			const int64_t frameTime = now - last;
 			last = now;
 			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
 			const float time = (float)( (now - m_timeOffset)/double(bx::getHPFrequency() ) );
 			const float deltaTime = float(frameTime/freq);
 			s_uniforms.m_time = time;
-
-			// Use debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/13-stencil");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Stencil reflections and shadows.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			// Update camera.
 			cameraUpdate(deltaTime, m_mouseState);
@@ -1348,7 +1351,7 @@ public:
 			clearViewMask(s_clearMask, BGFX_CLEAR_NONE, m_clearValues);
 			s_clearMask = 0;
 
-			return true;
+			return !restart;
 		}
 
 		return false;
@@ -1395,4 +1398,6 @@ public:
 
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleStencil);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleStencil, "13-stencil", "Stencil reflections and shadows.");

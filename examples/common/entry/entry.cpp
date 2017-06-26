@@ -7,6 +7,7 @@
 #include <bgfx/bgfx.h>
 #include <bx/string.h>
 #include <bx/crtimpl.h>
+#include <bx/sort.h>
 
 #include <time.h>
 
@@ -378,22 +379,48 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	}
 #endif // BX_PLATFORM_EMSCRIPTEN
 
-	static App* s_apps = NULL;
+	static AppI*    s_apps    = NULL;
+	static uint32_t s_numApps = 0;
+	static char     s_restartArgs[1024] = { '\0' };
 
-	App::App(const char* _name)
+	AppI::AppI(const char* _name, const char* _description)
 	{
-		m_name = _name;
-		m_next = s_apps;
+		m_name        = _name;
+		m_description = _description;
+		m_next        = s_apps;
+
 		s_apps = this;
+		s_numApps++;
 	}
 
-	App::~App()
+	const char* AppI::getName() const
 	{
+		return m_name;
 	}
 
-	App* getFirstApp()
+	const char* AppI::getDescription() const
+	{
+		return m_description;
+	}
+
+	AppI* AppI::getNext()
+	{
+		return m_next;
+	}
+
+	AppI* getFirstApp()
 	{
 		return s_apps;
+	}
+
+	uint32_t getNumApps()
+	{
+		return s_numApps;
+	}
+
+	void setRestartArgs(const char* _args)
+	{
+		bx::strCopy(s_restartArgs, BX_COUNTOF(s_restartArgs), _args);
 	}
 
 	int runApp(AppI* _app, int _argc, char** _argv)
@@ -412,6 +439,41 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 #endif // BX_PLATFORM_EMSCRIPTEN
 
 		return _app->shutdown();
+	}
+
+	static int32_t sortApp(const void* _lhs, const void* _rhs)
+	{
+		const AppI* lhs = *(const AppI**)_lhs;
+		const AppI* rhs = *(const AppI**)_rhs;
+
+		return bx::strCmpI(lhs->getName(), rhs->getName() );
+	}
+
+	static void sortApps()
+	{
+		if (2 > s_numApps)
+		{
+			return;
+		}
+
+		AppI** apps = (AppI**)BX_ALLOC(g_allocator, s_numApps*sizeof(AppI*) );
+
+		uint32_t ii = 0;
+		for (AppI* app = getFirstApp(); NULL != app; app = app->getNext() )
+		{
+			apps[ii++] = app;
+		}
+		bx::quickSort(apps, s_numApps, sizeof(AppI*), sortApp);
+
+		s_apps = apps[0];
+		for (ii = 1; ii < s_numApps; ++ii)
+		{
+			AppI* app = apps[ii-1];
+			app->m_next = apps[ii];
+		}
+		apps[s_numApps-1]->m_next = NULL;
+
+		BX_FREE(g_allocator, apps);
 	}
 
 	int main(int _argc, char** _argv)
@@ -456,7 +518,50 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		entry::setWindowTitle(defaultWindow, bx::baseName(_argv[0]) );
 		setWindowSize(defaultWindow, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
 
-		int32_t result = ::_main_(_argc, _argv);
+		sortApps();
+
+		const char* find = "";
+		if (1 < _argc)
+		{
+			find = _argv[_argc-1];
+		}
+
+restart:
+		AppI* selected = NULL;
+
+		for (AppI* app = getFirstApp(); NULL != app; app = app->getNext() )
+		{
+			if (NULL == selected
+			&&  bx::strFindI(app->getName(), find) )
+			{
+				selected = app;
+			}
+#if 0
+			DBG("%c %s, %s"
+				, app == selected ? '>' : ' '
+				, app->getName()
+				, app->getDescription()
+				);
+#endif // 0
+		}
+
+		int32_t result = bx::kExitSuccess;
+		s_restartArgs[0] = '\0';
+		if (0 == s_numApps)
+		{
+			result = ::_main_(_argc, _argv);
+		}
+		else
+		{
+			result = runApp(NULL == selected ? getFirstApp() : selected, _argc, _argv);
+		}
+
+		if (0 != bx::strLen(s_restartArgs) )
+		{
+			find = s_restartArgs;
+			goto restart;
+		}
+
 		setCurrentDir("");
 
 		inputRemoveBindings("bindings");

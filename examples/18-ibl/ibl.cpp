@@ -14,6 +14,9 @@
 #include <bx/readerwriter.h>
 #include <bx/string.h>
 
+namespace
+{
+
 static float s_texelHalf = 0.0f;
 
 struct Uniforms
@@ -480,13 +483,19 @@ struct Settings
 
 class ExampleIbl : public entry::AppI
 {
+public:
+	ExampleIbl(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
 
 		m_width = 1280;
 		m_height = 720;
-		m_debug = BGFX_DEBUG_TEXT;
+		m_debug = BGFX_DEBUG_NONE;
 		m_reset  = 0
 			| BGFX_RESET_VSYNC
 			| BGFX_RESET_MSAA_X16
@@ -578,6 +587,8 @@ class ExampleIbl : public entry::AppI
 				, uint16_t(m_width)
 				, uint16_t(m_height)
 				);
+
+			bool restart = showExampleDialog(this);
 
 			ImGui::SetNextWindowPos(ImVec2(m_width - 320.0f - 10.0f, 10.0f) );
 			ImGui::Begin("Settings"
@@ -759,14 +770,7 @@ class ExampleIbl : public entry::AppI
 			const int64_t frameTime = now - last;
 			last = now;
 			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
 			const float deltaTimeSec = float(double(frameTime)/freq);
-
-			// Use debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/18-ibl");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Image-based lighting.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			// Camera.
 			const bool mouseOverGui = ImGui::MouseOverArea();
@@ -883,7 +887,7 @@ class ExampleIbl : public entry::AppI
 			// process submitted rendering primitives.
 			bgfx::frame();
 
-			return true;
+			return !restart;
 		}
 
 		return false;
@@ -918,4 +922,6 @@ class ExampleIbl : public entry::AppI
 	Settings m_settings;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleIbl);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleIbl, "18-ibl", "Image-based lighting.");

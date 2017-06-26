@@ -7,6 +7,9 @@
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"
 
+namespace
+{
+
 struct DrawMode
 {
 	enum
@@ -225,27 +228,27 @@ struct MeshMtx
 	}
 
 	void init(const char* _path
-			, float _scale = 1.0f
-			, float _rotX = 0.0f
-			, float _rotY = 0.0f
-			, float _rotZ = 0.0f
-			, float _transX = 0.0f
-			, float _transY = 0.0f
-			, float _transZ = 0.0f
-			)
+		, float _scale = 1.0f
+		, float _rotX = 0.0f
+		, float _rotY = 0.0f
+		, float _rotZ = 0.0f
+		, float _transX = 0.0f
+		, float _transY = 0.0f
+		, float _transZ = 0.0f
+		)
 	{
 		m_mesh = meshLoad(_path);
 		bx::mtxSRT(m_mtx
-					, _scale
-					, _scale
-					, _scale
-					, _rotX
-					, _rotY
-					, _rotZ
-					, _transX
-					, _transY
-					, _transZ
-					);
+			, _scale
+			, _scale
+			, _scale
+			, _rotX
+			, _rotY
+			, _rotZ
+			, _transX
+			, _transY
+			, _transZ
+			);
 	}
 
 	void destroy()
@@ -272,7 +275,7 @@ struct Uniforms
 		m_wfColor[0] = 1.0f;
 		m_wfColor[1] = 0.0f;
 		m_wfColor[2] = 0.0f;
-		m_wfOpacity = 0.7f;
+		m_wfColor[3] = 1.0f;
 		m_drawEdges = 0.0f;
 		m_wfThickness = 1.5f;
 
@@ -294,7 +297,7 @@ struct Uniforms
 		struct
 		{
 			/*0*/struct { float m_camPos[3], m_unused0; };
-			/*1*/struct { float m_wfColor[3], m_wfOpacity; };
+			/*1*/struct { float m_wfColor[4]; };
 			/*2*/struct { float m_drawEdges, m_wfThickness, m_unused2[2]; };
 		};
 
@@ -306,13 +309,19 @@ struct Uniforms
 
 class ExampleWireframe : public entry::AppI
 {
+public:
+	ExampleWireframe(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
 
 		m_width  = 1280;
 		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = 0
 			| BGFX_RESET_VSYNC
 			| BGFX_RESET_MSAA_X16
@@ -396,6 +405,8 @@ class ExampleWireframe : public entry::AppI
 					, uint16_t(m_height)
 					);
 
+			bool restart = showExampleDialog(this);
+
 			ImGui::SetNextWindowPos(ImVec2((float)m_width - (float)m_width / 5.0f - 10.0f, 10.0f) );
 			ImGui::SetNextWindowSize(ImVec2((float)m_width / 5.0f, (float)m_height * 0.75f) );
 			ImGui::Begin("Settings"
@@ -416,7 +427,6 @@ class ExampleWireframe : public entry::AppI
 				ImGui::Separator();
 
 				ImGui::ColorWheel("Color", m_uniforms.m_wfColor, 0.6f);
-				ImGui::SliderFloat("Opacity",   &m_uniforms.m_wfOpacity,   0.1f, 1.0f);
 				ImGui::SliderFloat("Thickness", &m_uniforms.m_wfThickness, 0.6f, 2.2f);
 			}
 
@@ -446,14 +456,7 @@ class ExampleWireframe : public entry::AppI
 			const int64_t frameTime = now - last;
 			last = now;
 			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
 			const float deltaTimeSec = float(double(frameTime)/freq);
-
-			// Use m_debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/28-wirefame");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Drawing wireframe mesh.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			// Setup view.
 			bgfx::setViewRect(0, 0, 0, bgfx::BackbufferRatio::Equal);
@@ -517,7 +520,7 @@ class ExampleWireframe : public entry::AppI
 			// process submitted rendering primitives.
 			bgfx::frame();
 
-			return true;
+			return !restart;
 		}
 
 		return false;
@@ -545,4 +548,6 @@ class ExampleWireframe : public entry::AppI
 	int32_t m_drawMode; // Holds data for 'DrawMode'.
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleWireframe);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleWireframe, "28-wirefame", "Drawing wireframe mesh.");

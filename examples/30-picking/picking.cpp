@@ -9,6 +9,9 @@
 #include <bx/rng.h>
 #include <map>
 
+namespace
+{
+
 #define RENDER_PASS_SHADING 0  // Default forward rendered geo with simple shading
 #define RENDER_PASS_ID      1  // ID buffer for picking
 #define RENDER_PASS_BLIT    2  // Blit GPU render target to CPU texture
@@ -17,13 +20,19 @@
 
 class ExamplePicking : public entry::AppI
 {
+public:
+	ExamplePicking(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
 
 		m_width  = 1280;
 		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -177,19 +186,7 @@ class ExamplePicking : public entry::AppI
 		{
 			bgfx::setViewFrameBuffer(RENDER_PASS_ID, m_pickingFB);
 
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency());
-			const double toMs = 1000.0 / freq;
 			float time = (float)( (bx::getHPCounter() - m_timeOffset) / double(bx::getHPFrequency() ) );
-
-			// Use debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/30-picking");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Mouse picking via GPU texture readback.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			// Set up matrices for basic forward renderer
 			const float camSpeed = 0.25;
@@ -368,6 +365,8 @@ class ExamplePicking : public entry::AppI
 				, uint16_t(m_height)
 				);
 
+			bool restart = showExampleDialog(this);
+
 			ImGui::SetNextWindowPos(ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f) );
 			ImGui::Begin("Picking Render Target"
 				, NULL
@@ -387,19 +386,19 @@ class ExamplePicking : public entry::AppI
 			// process submitted rendering primitives.
 			m_currFrame = bgfx::frame();
 
-			return true;
+			return !restart;
 		}
 
 		return false;
 	}
+
+	entry::MouseState m_mouseState;
 
 	uint32_t m_width;
 	uint32_t m_height;
 	uint32_t m_debug;
 	uint32_t m_reset;
 	int64_t m_timeOffset;
-
-	entry::MouseState m_mouseState;
 
 	Mesh* m_meshes[12];
 	float m_meshScale[12];
@@ -426,4 +425,6 @@ class ExamplePicking : public entry::AppI
 	bool  m_cameraSpin;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExamplePicking);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExamplePicking, "30-picking", "Mouse picking via GPU texture readback.");

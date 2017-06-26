@@ -34,6 +34,7 @@
 #include "ocornut_imgui.h"
 #include "../bgfx_utils.h"
 #include "../nanovg/nanovg.h"
+#include "../entry/entry.h"
 
 #include <bgfx/embedded_shader.h>
 
@@ -71,8 +72,6 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] =
 #include "roboto_regular.ttf.h"
 
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4244); // warning C4244: '=' : conversion from '' to '', possible loss of data
-
-#define USE_NANOVG_FONT 0
 
 #define IMGUI_CONFIG_MAX_FONTS 20
 
@@ -422,7 +421,6 @@ namespace
 
 } // namespace
 
-#if !USE_NANOVG_FONT
 static float getTextLength(stbtt_bakedchar* _chardata, const char* _text, uint32_t& _numVertices)
 {
 	float xpos = 0;
@@ -460,7 +458,6 @@ static float getTextLength(stbtt_bakedchar* _chardata, const char* _text, uint32
 
 	return len;
 }
-#endif // !USE_NANOVG_FONT
 
 struct Imgui
 {
@@ -515,7 +512,6 @@ struct Imgui
 
 	ImguiFontHandle createFont(const void* _data, float _fontSize)
 	{
-#if !USE_NANOVG_FONT
 		const ImguiFontHandle handle = { m_fontHandle.alloc() };
 		const bgfx::Memory* mem = bgfx::alloc(m_textureWidth * m_textureHeight);
 		stbtt_BakeFontBitmap( (uint8_t*)_data, 0, _fontSize, mem->data, m_textureWidth, m_textureHeight, 32, 96, m_fonts[handle.idx].m_cdata);
@@ -529,9 +525,6 @@ struct Imgui
 			, mem
 			);
 		m_fonts[handle.idx].m_size = _fontSize;
-#else
-		const ImguiFontHandle handle = { bgfx::kInvalidHandle };
-#endif // !USE_NANOVG_FONT
 		return handle;
 	}
 
@@ -650,12 +643,8 @@ struct Imgui
 
 		m_missingTexture = genMissingTexture(256, 256, 0.04f);
 
-#if !USE_NANOVG_FONT
 		const ImguiFontHandle handle = createFont(s_robotoRegularTtf, _fontSize);
 		m_currentFontIdx = handle.idx;
-#else
-		const ImguiFontHandle handle = { bgfx::kInvalidHandle };
-#endif // !USE_NANOVG_FONT
 		return handle;
 	}
 
@@ -664,14 +653,12 @@ struct Imgui
 		bgfx::destroyUniform(u_imageLodEnabled);
 		bgfx::destroyUniform(u_imageSwizzle);
 		bgfx::destroyUniform(s_texColor);
-#if !USE_NANOVG_FONT
 		for (uint16_t ii = 0, num = m_fontHandle.getNumHandles(); ii < num; ++ii)
 		{
 			uint16_t idx = m_fontHandle.getHandleAt(0);
 			bgfx::destroyTexture(m_fonts[idx].m_texture);
 			m_fontHandle.free(idx);
 		}
-#endif // !USE_NANOVG_FONT
 		bgfx::destroyTexture(m_missingTexture);
 		bgfx::destroyProgram(m_colorProgram);
 		bgfx::destroyProgram(m_textureProgram);
@@ -2649,7 +2636,6 @@ struct Imgui
 		}
 	}
 
-#if !USE_NANOVG_FONT
 	void getBakedQuad(stbtt_bakedchar* _chardata, int32_t char_index, float* _xpos, float* _ypos, stbtt_aligned_quad* _quad)
 	{
 		stbtt_bakedchar* b = _chardata + char_index;
@@ -2668,7 +2654,6 @@ struct Imgui
 
 		*_xpos += b->xadvance;
 	}
-#endif // !USE_NANOVG_FONT
 
 	void drawText(int32_t _x, int32_t _y, ImguiTextAlign::Enum _align, const char* _text, uint32_t _abgr)
 	{
@@ -2683,20 +2668,6 @@ struct Imgui
 			return;
 		}
 
-#if USE_NANOVG_FONT
-		static uint32_t textAlign[ImguiTextAlign::Count] =
-		{
-			NVG_ALIGN_LEFT,
-			NVG_ALIGN_CENTER,
-			NVG_ALIGN_RIGHT,
-		};
-
-		nvgTextAlign(m_nvg, textAlign[_align]);
-
-		nvgFontBlur(m_nvg, 0.0f);
-		nvgFillColor(m_nvg, nvgRGBAu(_abgr) );
-		nvgText(m_nvg, _x, _y, _text, NULL);
-#else
 		uint32_t numVertices = 0;
 		if (_align == ImguiTextAlign::Center)
 		{
@@ -2796,7 +2767,6 @@ struct Imgui
 			setCurrentScissor();
 			bgfx::submit(m_view, m_textureProgram);
 		}
-#endif // USE_NANOVG_FONT
 	}
 
 	bool screenQuad(int32_t _x, int32_t _y, int32_t _width, uint32_t _height, bool _originBottomLeft = false)
@@ -3274,7 +3244,6 @@ struct Imgui
 	uint16_t m_viewWidth;
 	uint16_t m_viewHeight;
 
-#if !USE_NANOVG_FONT
 	struct Font
 	{
 		stbtt_bakedchar m_cdata[96]; // ASCII 32..126 is 95 glyphs
@@ -3285,7 +3254,6 @@ struct Imgui
 	uint16_t m_currentFontIdx;
 	bx::HandleAllocT<IMGUI_CONFIG_MAX_FONTS> m_fontHandle;
 	Font m_fonts[IMGUI_CONFIG_MAX_FONTS];
-#endif // !USE_NANOVG_FONT
 
 	bgfx::UniformHandle u_imageLodEnabled;
 	bgfx::UniformHandle u_imageSwizzle;
@@ -3341,4 +3309,99 @@ bgfx::ProgramHandle imguiGetImageProgram(uint8_t _mip)
 	const float lodEnabled[4] = { float(_mip), 1.0f, 0.0f, 0.0f };
 	bgfx::setUniform(s_imgui.u_imageLodEnabled, lodEnabled);
 	return s_imgui.m_imageProgram;
+}
+
+static const char* s_rendererNames[] =
+{
+	"Noop",
+	"Direct3D9",
+	"Direct3D11",
+	"Direct3D12",
+	"Gnm",
+	"Metal",
+	"OpenGLES",
+	"OpenGL",
+	"Vulkan",
+};
+BX_STATIC_ASSERT(bgfx::RendererType::Count == BX_COUNTOF(s_rendererNames) );
+
+bool showExampleDialog(entry::AppI* _app)
+{
+	bool restart = false;
+
+	char temp[1024];
+	bx::snprintf(temp, BX_COUNTOF(temp), "Example: %s", _app->getName() );
+
+	ImGui::Begin(temp
+		, NULL
+		, ImVec2(256.0f, 200.0f)
+		, ImGuiWindowFlags_AlwaysAutoResize
+		);
+
+	ImGui::TextWrapped("%s", _app->getDescription() );
+	ImGui::Separator();
+
+	{
+		uint32_t num = entry::getNumApps();
+		const char** items = (const char**)alloca(num*sizeof(void*) );
+
+		uint32_t ii = 0;
+		int32_t current = 0;
+		for (entry::AppI* app = entry::getFirstApp(); NULL != app; app = app->getNext() )
+		{
+			if (app == _app)
+			{
+				current = ii;
+			}
+
+			items[ii++] = app->getName();
+		}
+
+		if (1 < num
+		&&  ImGui::Combo("Example", &current, items, num) )
+		{
+			entry::setRestartArgs(items[current]);
+			restart = true;
+		}
+	}
+
+#if 0
+	{
+		bgfx::RendererType::Enum supportedRenderers[bgfx::RendererType::Count];
+		uint8_t num = bgfx::getSupportedRenderers(BX_COUNTOF(supportedRenderers), supportedRenderers);
+
+		const bgfx::Caps* caps = bgfx::getCaps();
+
+		const char* items[bgfx::RendererType::Count];
+
+		int32_t current = 0;
+		for (uint8_t ii = 0; ii < num; ++ii)
+		{
+			items[ii] = s_rendererNames[supportedRenderers[ii] ];
+			if (supportedRenderers[ii] == caps->rendererType)
+			{
+				current = ii;
+			}
+		}
+
+		if (ImGui::Combo("Renderer", &current, items, num) )
+		{
+			restart = true;
+		}
+	}
+#endif // 0
+
+	const bgfx::Stats* stats = bgfx::getStats();
+	ImGui::Text("CPU %0.3f"
+		, double(stats->cpuTimeEnd-stats->cpuTimeBegin)/stats->cpuTimerFreq*1000.0
+		);
+
+	ImGui::Text("GPU %0.3f (latency: %d)"
+		, double(stats->gpuTimeEnd-stats->gpuTimeBegin)/stats->gpuTimerFreq*1000.0
+		, stats->maxGpuLatency
+		);
+
+	ImGui::End();
+
+	return restart;
 }

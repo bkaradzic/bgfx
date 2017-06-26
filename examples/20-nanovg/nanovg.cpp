@@ -41,6 +41,9 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-parameter");
 #include "blendish.h"
 BX_PRAGMA_DIAGNOSTIC_POP();
 
+namespace
+{
+
 #define ICON_SEARCH 0x1F50D
 #define ICON_CIRCLED_CROSS 0x2716
 #define ICON_CHEVRON_RIGHT 0xE75E
@@ -79,7 +82,6 @@ static char* cpToUTF8(int cp, char* str)
 	}
 	return str;
 }
-
 
 void drawWindow(struct NVGcontext* vg, const char* title, float x, float y, float w, float h)
 {
@@ -1025,13 +1027,6 @@ void freeDemoData(struct NVGcontext* vg, struct DemoData* data)
 		nvgDeleteImage(vg, data->images[i]);
 }
 
-#if defined(_MSC_VER) && (_MSC_VER < 1800)
-inline float round(float _f)
-{
-	return float(int(_f) );
-}
-#endif
-
 void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float height, float mx, float my)
 {
 	struct NVGtextRow rows[3];
@@ -1113,10 +1108,10 @@ void drawParagraph(struct NVGcontext* vg, float x, float y, float width, float h
 		nvgBeginPath(vg);
 		nvgFillColor(vg, nvgRGBA(255,192,0,255) );
 		nvgRoundedRect(vg
-			, bx::fround(bounds[0])-4.0f
-			, bx::fround(bounds[1])-2.0f
-			, bx::fround(bounds[2]-bounds[0])+8.0f
-			, bx::fround(bounds[3]-bounds[1])+4.0f
+			,  bx::fround(bounds[0])-4.0f
+			,  bx::fround(bounds[1])-2.0f
+			,  bx::fround(bounds[2]-bounds[0])+8.0f
+			,  bx::fround(bounds[3]-bounds[1])+4.0f
 			, (bx::fround(bounds[3]-bounds[1])+4.0f)/2.0f-1.0f
 			);
 		nvgFill(vg);
@@ -1240,13 +1235,19 @@ void renderDemo(struct NVGcontext* vg, float mx, float my, float width, float he
 
 class ExampleNanoVG : public entry::AppI
 {
+public:
+	ExampleNanoVG(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
 
 		m_width  = 1280;
 		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -1294,6 +1295,20 @@ class ExampleNanoVG : public entry::AppI
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			imguiBeginFrame(m_mouseState.m_mx
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
+
+			bool restart = showExampleDialog(this);
+
+			imguiEndFrame();
+
 			int64_t now = bx::getHPCounter();
 			const double freq = double(bx::getHPFrequency() );
 			float time = (float)( (now-m_timeOffset)/freq);
@@ -1305,11 +1320,6 @@ class ExampleNanoVG : public entry::AppI
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
 
-			// Use debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/20-nanovg");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: NanoVG is small antialiased vector graphics rendering library.");
-
 			nvgBeginFrame(m_nvg, m_width, m_height, 1.0f);
 
 			renderDemo(m_nvg, float(m_mouseState.m_mx), float(m_mouseState.m_my), float(m_width), float(m_height), time, 0, &m_data);
@@ -1320,7 +1330,7 @@ class ExampleNanoVG : public entry::AppI
 			// process submitted rendering primitives.
 			bgfx::frame();
 
-			return true;
+			return !restart;
 		}
 
 		return false;
@@ -1339,4 +1349,6 @@ class ExampleNanoVG : public entry::AppI
 	DemoData m_data;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleNanoVG);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleNanoVG, "20-nanovg", "NanoVG is small antialiased vector graphics rendering library.");

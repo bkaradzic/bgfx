@@ -54,6 +54,9 @@ void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll,
 void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, uint16_t _surfaceWidth, uint16_t _surfaceHeight, char _inputChar = 0, uint8_t _view = 255);
 void imguiEndFrame();
 
+namespace entry { class AppI; }
+bool showExampleDialog(entry::AppI* _app);
+
 namespace ImGui
 {
 #define IMGUI_FLAGS_NONE        UINT8_C(0x00)

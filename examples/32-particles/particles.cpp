@@ -17,6 +17,9 @@
 
 #include <ps/particle_system.h>
 
+namespace
+{
+
 static const char* s_shapeNames[] =
 {
 	"Sphere",
@@ -224,15 +227,21 @@ struct Emitter
 	}
 };
 
-class Particles : public entry::AppI
+class ExampleParticles : public entry::AppI
 {
+public:
+	ExampleParticles(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
 
 		m_width  = 1280;
 		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -318,14 +327,7 @@ class Particles : public entry::AppI
 			const int64_t frameTime = now - last;
 			last = now;
 			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
 			const float deltaTime = float(frameTime/freq);
-
-			// Use debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/32-particles");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Particles.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			cameraUpdate(deltaTime, m_mouseState);
 
@@ -362,6 +364,8 @@ class Particles : public entry::AppI
 				, uint16_t(m_width)
 				, uint16_t(m_height)
 				);
+
+			bool restart = showExampleDialog(this);
 
 			ImGui::Begin("Properties"
 				, NULL
@@ -426,7 +430,7 @@ class Particles : public entry::AppI
 			// process submitted rendering primitives.
 			bgfx::frame();
 
-			return true;
+			return !restart;
 		}
 
 		return false;
@@ -444,4 +448,6 @@ class Particles : public entry::AppI
 	Emitter m_emitter[4];
 };
 
-ENTRY_IMPLEMENT_MAIN(Particles);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleParticles, "32-particles", "Particles.");

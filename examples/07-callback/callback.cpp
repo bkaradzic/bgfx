@@ -14,6 +14,9 @@
 
 #include <inttypes.h>
 
+namespace
+{
+
 struct PosColorVertex
 {
 	float m_x;
@@ -312,6 +315,12 @@ private:
 
 class ExampleCallback : public entry::AppI
 {
+public:
+	ExampleCallback(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
@@ -319,17 +328,13 @@ class ExampleCallback : public entry::AppI
 		m_width = 1280;
 		m_height = 720;
 
-		// Enumerate supported backend renderers.
-		m_numRenderers = bgfx::getSupportedRenderers(BX_COUNTOF(m_renderers), m_renderers);
-
-		bgfx::init(bgfx::RendererType::Count == args.m_type
-				   ? m_renderers[bx::getHPCounter() % m_numRenderers] /* randomize renderer */
-				   : args.m_type
-				   , args.m_pciId
-				   , 0
-				   , &m_callback  // custom callback handler
-				   , &m_allocator // custom allocator
-				   );
+		bgfx::init(
+			  args.m_type
+			, args.m_pciId
+			, 0
+			, &m_callback  // custom callback handler
+			, &m_allocator // custom allocator
+			);
 		bgfx::reset(m_width, m_height, BGFX_RESET_CAPTURE|BGFX_RESET_MSAA_X16);
 
 		// Enable debug text.
@@ -382,42 +387,16 @@ class ExampleCallback : public entry::AppI
 
 	bool update() BX_OVERRIDE
 	{
-
-
 		// 5 second 60Hz video
-		if ( m_frame < 300)
+		if (m_frame < 300)
 		{
 			++m_frame;
-			const bgfx::RendererType::Enum rendererType = bgfx::getRendererType();
 
 			// This dummy draw call is here to make sure that view 0 is cleared
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
 
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
-
-			// Use debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf( 0, 1, 0x4f, "bgfx/examples/07-callback");
-			bgfx::dbgTextPrintf( 0, 2, 0x6f, "Description: Implementing application specific callbacks for taking screen shots,");
-			bgfx::dbgTextPrintf(13, 3, 0x6f, "caching OpenGL binary shaders, and video capture.");
-			bgfx::dbgTextPrintf( 0, 4, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
-
-			bgfx::dbgTextPrintf( 2, 6, 0x0e, "Supported renderers:");
-			for (uint8_t ii = 0; ii < m_numRenderers; ++ii)
-			{
-				bgfx::dbgTextPrintf( 2, 7+ii, 0x0c, "[%c] %s"
-									, m_renderers[ii] == rendererType ? '\xfe' : ' '
-									, bgfx::getRendererName(m_renderers[ii])
-									);
-			}
-
-			float at[3] = { 0.0f, 0.0f, 0.0f };
+			float at[3]  = { 0.0f, 0.0f,   0.0f };
 			float eye[3] = { 0.0f, 0.0f, -35.0f };
 
 			float view[16];
@@ -479,9 +458,6 @@ class ExampleCallback : public entry::AppI
 	uint32_t m_width;
 	uint32_t m_height;
 
-	bgfx::RendererType::Enum m_renderers[bgfx::RendererType::Count];
-	uint8_t m_numRenderers;
-
 	bgfx::VertexBufferHandle m_vbh;
 	bgfx::IndexBufferHandle m_ibh;
 	bgfx::ProgramHandle m_program;
@@ -489,5 +465,6 @@ class ExampleCallback : public entry::AppI
 	uint32_t m_frame;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleCallback);
+} // namespace
 
+ENTRY_IMPLEMENT_MAIN(ExampleCallback, "07-callback", "Implementing application specific callbacks for taking screen shots, caching OpenGL binary shaders, and video capture.");

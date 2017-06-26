@@ -7,6 +7,9 @@
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"
 
+namespace
+{
+
 struct PosColorVertex
 {
 	float m_x;
@@ -148,13 +151,19 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBott
 
 class ExampleOIT : public entry::AppI
 {
+public:
+	ExampleOIT(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
 
 		m_width  = 1280;
 		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -278,6 +287,8 @@ class ExampleOIT : public entry::AppI
 				, uint16_t(m_height)
 				);
 
+			bool restart = showExampleDialog(this);
+
 			ImGui::SetNextWindowPos(ImVec2((float)m_width - (float)m_width / 4.0f - 10.0f, 10.0f) );
 			ImGui::SetNextWindowSize(ImVec2((float)m_width / 4.0f, (float)m_height / 3.0f) );
 			ImGui::Begin("Settings"
@@ -307,23 +318,13 @@ class ExampleOIT : public entry::AppI
 			bgfx::setViewRect(1, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
 			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
 			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
-
 			float time = (float)( (now-m_timeOffset)/freq);
 
-			// Use debug font to print information about this example.
-			bgfx::dbgTextClear();
 			// Reference:
 			// Weighted, Blended Order-Independent Transparency
 			// http://jcgt.org/published/0002/02/09/
 			// http://casual-effects.blogspot.com/2014/03/weighted-blended-order-independent.html
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/19-oit");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Weighted, Blended Order Independent Transparency.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			float at[3] = { 0.0f, 0.0f, 0.0f };
 			float eye[3] = { 0.0f, 0.0f, -7.0f };
@@ -478,7 +479,7 @@ class ExampleOIT : public entry::AppI
 			// process submitted rendering primitives.
 			bgfx::frame();
 
-			return true;
+			return !restart;
 		}
 
 		return false;
@@ -518,4 +519,6 @@ class ExampleOIT : public entry::AppI
 	bgfx::FrameBufferHandle m_fbh;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleOIT);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleOIT, "19-oit", "Weighted, Blended Order Independent Transparency.");

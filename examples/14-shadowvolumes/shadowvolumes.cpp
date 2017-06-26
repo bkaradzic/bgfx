@@ -24,6 +24,14 @@ namespace stl = tinystl;
 #include "camera.h"
 #include "imgui/imgui.h"
 
+namespace bgfx
+{
+	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
+}
+
+namespace
+{
+
 #define SV_USE_SIMD 1
 #define MAX_INSTANCE_COUNT 25
 #define MAX_LIGHTS_COUNT 5
@@ -956,11 +964,6 @@ struct Group
 
 typedef std::vector<Group> GroupArray;
 
-namespace bgfx
-{
-	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
-}
-
 struct Mesh
 {
 	void load(const void* _vertices, uint16_t _numVertices, const bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
@@ -1866,6 +1869,12 @@ enum Scene
 
 class ExampleShadowVolumes : public entry::AppI
 {
+public:
+	ExampleShadowVolumes(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
@@ -1873,7 +1882,7 @@ class ExampleShadowVolumes : public entry::AppI
 		m_viewState = ViewState(1280, 720);
 		m_clearValues = { 0x00000000, 1.0f, 0 };
 
-		m_debug = BGFX_DEBUG_TEXT;
+		m_debug = BGFX_DEBUG_NONE;
 		m_reset = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -2153,6 +2162,8 @@ class ExampleShadowVolumes : public entry::AppI
 				, uint16_t(m_viewState.m_height)
 				);
 
+			bool restart = showExampleDialog(this);
+
 			ImGui::SetNextWindowPos(ImVec2(m_viewState.m_width - 256.0f, 10.0f) );
 			ImGui::Begin("Settings"
 				, NULL
@@ -2315,12 +2326,6 @@ class ExampleShadowVolumes : public entry::AppI
 					lightPosRadius[ii][3] = 20.0f;
 				}
 			}
-
-			//use debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/14-shadowvolumes");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Shadow volumes.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			if (m_showHelp)
 			{
@@ -2855,7 +2860,7 @@ class ExampleShadowVolumes : public entry::AppI
 				, m_clearValues.m_clearStencil
 				);
 
-			return true;
+			return !restart;
 		}
 
 		return false;
@@ -2930,4 +2935,6 @@ class ExampleShadowVolumes : public entry::AppI
 	entry::MouseState m_mouseState;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleShadowVolumes);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleShadowVolumes, "14-shadowvolumes", "Shadow volumes.");

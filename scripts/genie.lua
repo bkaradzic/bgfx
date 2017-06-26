@@ -370,6 +370,10 @@ function exampleProject(_combined, ...)
 
 		end
 
+		files {
+			path.join(BGFX_DIR, "examples/25-c99/helloworld.c"), -- hack for _main_
+		}
+
 		exampleProjectDefaults()
 
 	else
@@ -387,6 +391,10 @@ function exampleProject(_combined, ...)
 
 			removefiles {
 				path.join(BGFX_DIR, "examples", name, "**.bin.h"),
+			}
+
+			defines {
+				"ENTRY_CONFIG_IMPLEMENT_MAIN=1",
 			}
 
 			exampleProjectDefaults()

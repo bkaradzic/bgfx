@@ -7,6 +7,13 @@
 #include "bgfx_utils.h"
 #include <entry/input.h>
 #include <bx/string.h>
+#include "imgui/imgui.h"
+
+void cmdCreateWindow(const void* _userData);
+void cmdDestroyWindow(const void* _userData);
+
+namespace
+{
 
 #define MAX_WINDOWS 8
 
@@ -59,19 +66,21 @@ static const uint16_t s_cubeIndices[36] =
 	6, 3, 7,
 };
 
-void cmdCreateWindow(const void* _userData);
-void cmdDestroyWindow(const void* _userData);
-
 class ExampleWindows : public entry::AppI
 {
 public:
+	ExampleWindows(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
 
 		m_width  = 1280;
 		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -127,10 +136,14 @@ public:
 		m_timeOffset = bx::getHPCounter();
 
 		bx::memSet(m_fbh, 0xff, sizeof(m_fbh) );
+
+		imguiCreate();
 	}
 
 	virtual int shutdown() BX_OVERRIDE
 	{
+		imguiDestroy();
+
 		for (uint32_t ii = 0; ii < MAX_WINDOWS; ++ii)
 		{
 			if (bgfx::isValid(m_fbh[ii]) )
@@ -157,6 +170,22 @@ public:
 		entry::WindowState state;
 		if (!entry::processWindowEvents(state, m_debug, m_reset) )
 		{
+			m_mouseState = state.m_mouse;
+
+			imguiBeginFrame(m_mouseState.m_mx
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
+
+			bool restart = showExampleDialog(this);
+
+			imguiEndFrame();
+
 			if (isValid(state.m_handle) )
 			{
 				if (0 == state.m_handle.idx)
@@ -237,19 +266,7 @@ public:
 			}
 
 			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
-
 			float time = (float)( (now-m_timeOffset)/double(bx::getHPFrequency() ) );
-
-			// Use debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/22-windows");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Rendering into multiple windows.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			if (NULL != m_bindings)
 			{
@@ -258,7 +275,7 @@ public:
 			else
 			{
 				bool blink = uint32_t(time*3.0f)&1;
-				bgfx::dbgTextPrintf(0, 5, blink ? 0x1f : 0x01, " Multiple windows is not supported by `%s` renderer. ", bgfx::getRendererName(bgfx::getCaps()->rendererType) );
+				bgfx::dbgTextPrintf(0, 0, blink ? 0x1f : 0x01, " Multiple windows is not supported by `%s` renderer. ", bgfx::getRendererName(bgfx::getCaps()->rendererType) );
 			}
 
 			uint32_t count = 0;
@@ -294,7 +311,7 @@ public:
 			// process submitted rendering primitives.
 			bgfx::frame();
 
-			return true;
+			return !restart;
 		}
 
 		return false;
@@ -335,6 +352,8 @@ public:
 		}
 	}
 
+	entry::MouseState m_mouseState;
+
 	uint32_t m_width;
 	uint32_t m_height;
 	uint32_t m_debug;
@@ -352,7 +371,9 @@ public:
 	int64_t m_timeOffset;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleWindows);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleWindows, "22-windows", "Rendering into multiple windows.");
 
 void cmdCreateWindow(const void* _userData)
 {

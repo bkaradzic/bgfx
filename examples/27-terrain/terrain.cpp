@@ -12,6 +12,9 @@
 #include <bx/debug.h>
 #include <bx/fpumath.h>
 
+namespace
+{
+
 static const uint16_t s_terrainSize = 256;
 
 struct PosTexCoord0Vertex
@@ -58,13 +61,19 @@ struct BrushData
 
 class ExampleTerrain : public entry::AppI
 {
+public:
+	ExampleTerrain(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
 
 		m_width  = 1280;
 		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -381,14 +390,7 @@ class ExampleTerrain : public entry::AppI
 			const int64_t frameTime = now - last;
 			last = now;
 			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
 			const float deltaTime = float(frameTime/freq);
-
-			// Use m_debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/27-terrain");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Terrain painting example.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			imguiBeginFrame(m_mouseState.m_mx
 				,  m_mouseState.m_my
@@ -399,6 +401,8 @@ class ExampleTerrain : public entry::AppI
 				, uint16_t(m_width)
 				, uint16_t(m_height)
 				);
+
+			bool restart = showExampleDialog(this);
 
 			ImGui::SetNextWindowPos(ImVec2((float)m_width - (float)m_width / 5.0f - 10.0f, 10.0f) );
 			ImGui::SetNextWindowSize(ImVec2((float)m_width / 5.0f, (float)m_height / 3.0f) );
@@ -477,7 +481,7 @@ class ExampleTerrain : public entry::AppI
 			// process submitted rendering primitives.
 			bgfx::frame();
 
-			return true;
+			return !restart;
 		}
 
 		return false;
@@ -512,4 +516,6 @@ class ExampleTerrain : public entry::AppI
 	int64_t m_timeOffset;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleTerrain);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleTerrain, "27-terrain", "Terrain painting example.");

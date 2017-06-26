@@ -9,6 +9,9 @@
 #include "camera.h"
 #include "bounds.h"
 
+namespace
+{
+
 #define RENDER_PASS_GEOMETRY_ID       0
 #define RENDER_PASS_LIGHT_ID          1
 #define RENDER_PASS_COMBINE_ID        2
@@ -189,13 +192,19 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf
 
 class ExampleDeferred : public entry::AppI
 {
+public:
+	ExampleDeferred(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
 	void init(int _argc, char** _argv) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
 
 		m_width  = 1280;
 		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -352,28 +361,33 @@ class ExampleDeferred : public entry::AppI
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			imguiBeginFrame(m_mouseState.m_mx
+					, m_mouseState.m_my
+					, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+					| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+					| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+					, m_mouseState.m_mz
+					, uint16_t(m_width)
+					, uint16_t(m_height)
+					);
+
+			bool restart = showExampleDialog(this);
+
 			int64_t now = bx::getHPCounter();
 			static int64_t last = now;
 			const int64_t frameTime = now - last;
 			last = now;
 			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
 			const float deltaTime = float(frameTime/freq);
 
 			float time = (float)( (now-m_timeOffset)/freq);
-
-			// Use m_debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/21-deferred");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: MRT rendering and deferred shading.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			if (2 > m_caps->limits.maxFBAttachments)
 			{
 				// When multiple render targets (MRT) is not supported by GPU,
 				// implement alternative code path that doesn't use MRT.
 				bool blink = uint32_t(time*3.0f)&1;
-				bgfx::dbgTextPrintf(0, 5, blink ? 0x1f : 0x01, " MRT not supported by GPU. ");
+				bgfx::dbgTextPrintf(0, 0, blink ? 0x1f : 0x01, " MRT not supported by GPU. ");
 
 				// Set view 0 default viewport.
 				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
@@ -420,16 +434,6 @@ class ExampleDeferred : public entry::AppI
 					m_lightBuffer = bgfx::createFrameBuffer(uint16_t(m_width), uint16_t(m_height), bgfx::TextureFormat::BGRA8, samplerFlags);
 				}
 
-				imguiBeginFrame(m_mouseState.m_mx
-						, m_mouseState.m_my
-						, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
-						| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
-						| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-						, m_mouseState.m_mz
-						, uint16_t(m_width)
-						, uint16_t(m_height)
-						);
-
 				ImGui::SetNextWindowPos(ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f) );
 				ImGui::Begin("Deferred Rendering Settings"
 					, NULL
@@ -444,8 +448,6 @@ class ExampleDeferred : public entry::AppI
 				ImGui::SliderFloat("Anim.speed", &m_lightAnimationSpeed, 0.0f, 0.4f);
 
 				ImGui::End();
-
-				imguiEndFrame();
 
 				// Update camera.
 				cameraUpdate(deltaTime, m_mouseState);
@@ -701,11 +703,13 @@ class ExampleDeferred : public entry::AppI
 				}
 			}
 
+			imguiEndFrame();
+
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
 			bgfx::frame();
 
-			return true;
+			return !restart;
 		}
 
 		return false;
@@ -759,4 +763,6 @@ class ExampleDeferred : public entry::AppI
 	int64_t m_timeOffset;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleDeferred);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleDeferred, "21-deferred", "MRT rendering and deferred shading.");
