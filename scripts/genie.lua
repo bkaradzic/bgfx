@@ -44,6 +44,11 @@ newoption {
 }
 
 newoption {
+	trigger = "with-combined-examples",
+	description = "Enable building examples (combined as single executable).",
+}
+
+newoption {
 	trigger = "with-examples",
 	description = "Enable building examples.",
 }
@@ -416,15 +421,18 @@ if _OPTIONS["with-tools"] then
 	dofile(path.join(BIMG_DIR, "scripts/bimg_encode.lua"))
 end
 
-if _OPTIONS["with-examples"] or _OPTIONS["with-tools"] then
+if _OPTIONS["with-examples"]
+or _OPTIONS["with-combined-examples"]
+or _OPTIONS["with-tools"] then
 	group "examples"
 	dofile "example-common.lua"
 end
 
-if _OPTIONS["with-examples"] then
+if _OPTIONS["with-examples"]
+or _OPTIONS["with-combined-examples"] then
 	group "examples"
 
-	exampleProject(false
+	exampleProject(_OPTIONS["with-combined-examples"]
 		, "00-helloworld"
 		, "01-cubes"
 		, "02-metaballs"
