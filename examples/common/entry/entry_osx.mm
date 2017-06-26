@@ -487,10 +487,7 @@ namespace entry
 			{
 				@autoreleasepool
 				{
-					if (bgfx::RenderFrame::Exiting == bgfx::renderFrame() )
-					{
-						break;
-					}
+					bgfx::renderFrame();
 				}
 
 				while (dispatchEvent(peekEvent() ) )
