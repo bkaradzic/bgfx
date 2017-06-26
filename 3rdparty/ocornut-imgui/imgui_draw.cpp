@@ -1,4 +1,4 @@
-// dear imgui, v1.50
+// dear imgui, v1.51 WIP
 // (drawing and font code)
 
 // Contains implementation for
@@ -1163,7 +1163,7 @@ ImFont* ImFontAtlas::AddFont(const ImFontConfig* font_cfg)
     }
     else
     {
-        IM_ASSERT(!Fonts.empty()); // When using MergeMode make sure that a font has already been added before. You can use ImGui::AddFontDefault() to add the default imgui font.
+        IM_ASSERT(!Fonts.empty()); // When using MergeMode make sure that a font has already been added before. You can use ImGui::GetIO().Fonts->AddFontDefault() to add the default imgui font.
     }
 
     ConfigData.push_back(*font_cfg);
