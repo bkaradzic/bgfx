@@ -13,6 +13,10 @@ bool showExampleDialog(entry::AppI* _app)
 	char temp[1024];
 	bx::snprintf(temp, BX_COUNTOF(temp), "Example: %s", _app->getName() );
 
+	ImGui::SetNextWindowPos(
+		  ImVec2(10.0f, 50.0f)
+		, ImGuiSetCond_FirstUseEver
+		);
 	ImGui::Begin(temp
 		, NULL
 		, ImVec2(256.0f, 200.0f)

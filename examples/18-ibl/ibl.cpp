@@ -590,10 +590,13 @@ public:
 
 			bool restart = showExampleDialog(this);
 
-			ImGui::SetNextWindowPos(ImVec2(m_width - 320.0f - 10.0f, 10.0f) );
+			ImGui::SetNextWindowPos(
+				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiSetCond_FirstUseEver
+				);
 			ImGui::Begin("Settings"
 				, NULL
-				, ImVec2(320.0f, 700.0f)
+				, ImVec2(m_width / 5.0f, m_height - 20.0f)
 				, ImGuiWindowFlags_AlwaysAutoResize
 				);
 			ImGui::PushItemWidth(180.0f);
@@ -702,10 +705,13 @@ public:
 			ImGui::PopItemWidth();
 			ImGui::End();
 
-			ImGui::SetNextWindowPos(ImVec2(10.0f, 70.0f) );
+			ImGui::SetNextWindowPos(
+				  ImVec2(10.0f, 260.0f)
+				, ImGuiSetCond_FirstUseEver
+				);
 			ImGui::Begin("Mesh"
 				, NULL
-				, ImVec2(280.0f, 636.0f)
+				, ImVec2(m_width / 5.0f, 450.0f)
 				, ImGuiWindowFlags_AlwaysAutoResize
 				);
 
