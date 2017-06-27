@@ -134,6 +134,7 @@ function exampleProjectDefaults()
 
 	links {
 		"example-common",
+		"example-glue",
 		"bgfx",
 		"bimg_decode",
 		"bimg",

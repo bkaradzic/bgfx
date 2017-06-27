@@ -3,8 +3,21 @@
 -- License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 --
 
+project ("example-glue")
+	kind "StaticLib"
+
+	includedirs {
+		path.join(BX_DIR,   "include"),
+		path.join(BIMG_DIR, "include"),
+		path.join(BGFX_DIR, "include"),
+		path.join(BGFX_DIR, "3rdparty"),
+	}
+
+	files {
+		path.join(BGFX_DIR, "examples/common/example-glue.cpp"),
+	}
+
 project ("example-common")
-	uuid ("21cc0e26-bf62-11e2-a01e-0291bd4c8125")
 	kind "StaticLib"
 
 	includedirs {
@@ -22,6 +35,10 @@ project ("example-common")
 		path.join(BGFX_DIR, "examples/common/**.cpp"),
 		path.join(BGFX_DIR, "examples/common/**.cpp"),
 		path.join(BGFX_DIR, "examples/common/**.h"),
+	}
+
+	removefiles {
+		path.join(BGFX_DIR, "examples/common/example-glue.cpp"),
 	}
 
 	if _OPTIONS["with-scintilla"] then
