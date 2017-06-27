@@ -371,7 +371,7 @@ public:
 				  ImVec2(m_width - m_width / 4.0f - 10.0f, 10.0f)
 				, ImGuiSetCond_FirstUseEver
 				);
-			ImGui::Begin("Properties"
+			ImGui::Begin("Settings"
 				, NULL
 				, ImVec2(m_width / 4.0f, m_height - 20.0f)
 				, ImGuiWindowFlags_AlwaysAutoResize

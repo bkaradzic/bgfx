@@ -591,9 +591,13 @@ public:
 
 			bool restart = showExampleDialog(this);
 
-			ImGui::Begin("Reflective Shadow Map"
+			ImGui::SetNextWindowPos(
+				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiSetCond_FirstUseEver
+				);
+			ImGui::Begin("Settings"
 				, NULL
-				, ImVec2(300.0f, 400.0f)
+				, ImVec2(m_width / 5.0f, m_height / 3.0f)
 				, ImGuiWindowFlags_AlwaysAutoResize
 				);
 

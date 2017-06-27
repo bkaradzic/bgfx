@@ -145,11 +145,10 @@ public:
 		const bool computeSupported  = !!(caps->supported & BGFX_CAPS_COMPUTE);
 		const bool indirectSupported = !!(caps->supported & BGFX_CAPS_DRAW_INDIRECT);
 
+		imguiCreate();
+
 		if (computeSupported)
 		{
-			// Imgui.
-			imguiCreate();
-
 			bgfx::VertexDecl quadVertexDecl;
 			quadVertexDecl.begin()
 				.add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
@@ -277,8 +276,11 @@ public:
 
 			if (computeSupported)
 			{
-				ImGui::SetNextWindowPos(ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f) );
-				ImGui::Begin("N-body Settings"
+				ImGui::SetNextWindowPos(
+					  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+					, ImGuiSetCond_FirstUseEver
+					);
+				ImGui::Begin("Settings"
 					, NULL
 					, ImVec2(m_width / 5.0f, m_height / 1.5f)
 					, ImGuiWindowFlags_AlwaysAutoResize

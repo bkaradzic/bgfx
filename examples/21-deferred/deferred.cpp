@@ -434,8 +434,11 @@ public:
 					m_lightBuffer = bgfx::createFrameBuffer(uint16_t(m_width), uint16_t(m_height), bgfx::TextureFormat::BGRA8, samplerFlags);
 				}
 
-				ImGui::SetNextWindowPos(ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f) );
-				ImGui::Begin("Deferred Rendering Settings"
+				ImGui::SetNextWindowPos(
+					  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+					, ImGuiSetCond_FirstUseEver
+					);
+				ImGui::Begin("Settings"
 					, NULL
 					, ImVec2(m_width / 5.0f, m_height / 3.0f)
 					, ImGuiWindowFlags_AlwaysAutoResize

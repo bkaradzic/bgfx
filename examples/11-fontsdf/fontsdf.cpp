@@ -140,20 +140,18 @@ public:
 
 			bool restart = showExampleDialog(this);
 
-			const float guiPanelWidth  = 325.0f;
-			const float guiPanelHeight = 200.0f;
-
-			ImGui::SetNextWindowPos(ImVec2(m_width - guiPanelWidth - 10.0f, 10.0f) );
-			ImGui::Begin("Text Area"
+			ImGui::SetNextWindowPos(
+				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiSetCond_FirstUseEver
+				);
+			ImGui::Begin("Settings"
 				, NULL
-				, ImVec2(guiPanelWidth, guiPanelHeight)
+				, ImVec2(m_width / 5.0f, m_height / 2.0f)
 				, ImGuiWindowFlags_AlwaysAutoResize
 				);
 
-			ImGui::Separator();
-
 			bool recomputeVisibleText = false;
-			recomputeVisibleText |= ImGui::SliderFloat("Number of lines", &m_visibleLineCount, 1.0f, 177.0f);
+			recomputeVisibleText |= ImGui::SliderFloat("# of lines", &m_visibleLineCount, 1.0f, 177.0f);
 
 			if (ImGui::SliderFloat("Font size", &m_textSize, 6.0f, 64.0f) )
 			{

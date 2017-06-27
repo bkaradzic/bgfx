@@ -311,7 +311,7 @@ public:
 				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
 				, ImGuiSetCond_FirstUseEver
 				);
-			ImGui::Begin("HDR Settings"
+			ImGui::Begin("Settings"
 				, NULL
 				, ImVec2(m_width / 5.0f, m_height / 2.0f)
 				, ImGuiWindowFlags_AlwaysAutoResize

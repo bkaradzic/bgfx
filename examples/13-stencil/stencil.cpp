@@ -924,8 +924,11 @@ public:
 
 			bool restart = showExampleDialog(this);
 
-			ImGui::SetNextWindowPos(ImVec2(m_viewState.m_width - m_viewState.m_width / 5.0f - 10.0f, 10.0f) );
-			ImGui::Begin("Stencil Settings"
+			ImGui::SetNextWindowPos(
+				  ImVec2(m_viewState.m_width - m_viewState.m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiSetCond_FirstUseEver
+				);
+			ImGui::Begin("Settings"
 				, NULL
 				, ImVec2(m_viewState.m_width / 5.0f, m_viewState.m_height / 2.0f)
 				, ImGuiWindowFlags_AlwaysAutoResize
