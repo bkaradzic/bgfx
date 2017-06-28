@@ -1296,7 +1296,9 @@ public:
 		m_debug = BGFX_DEBUG_NONE;
 		m_reset = BGFX_RESET_VSYNC;
 
-		m_viewState = ViewState(1280, 720);
+		m_width = 1280;
+		m_height = 720;
+		m_viewState = ViewState(uint16_t(m_width), uint16_t(m_height));
 		m_clearValues = ClearValues(0x00000000, 1.0f, 0);
 
 		bgfx::init(args.m_type, args.m_pciId);
