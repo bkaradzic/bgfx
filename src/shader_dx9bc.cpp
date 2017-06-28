@@ -443,12 +443,12 @@ namespace bgfx
 
 		switch (_instruction.numOperands)
 		{
-		case 6: size += read(_reader, _instruction.operand[currOp++], _err);
-		case 5: size += read(_reader, _instruction.operand[currOp++], _err);
-		case 4: size += read(_reader, _instruction.operand[currOp++], _err);
-		case 3: size += read(_reader, _instruction.operand[currOp++], _err);
-		case 2: size += read(_reader, _instruction.operand[currOp++], _err);
-		case 1: size += read(_reader, _instruction.operand[currOp++], _err);
+		case 6: size += read(_reader, _instruction.operand[currOp++], _err); BX_FALLTHROUGH;
+		case 5: size += read(_reader, _instruction.operand[currOp++], _err); BX_FALLTHROUGH;
+		case 4: size += read(_reader, _instruction.operand[currOp++], _err); BX_FALLTHROUGH;
+		case 3: size += read(_reader, _instruction.operand[currOp++], _err); BX_FALLTHROUGH;
+		case 2: size += read(_reader, _instruction.operand[currOp++], _err); BX_FALLTHROUGH;
+		case 1: size += read(_reader, _instruction.operand[currOp++], _err); BX_FALLTHROUGH;
 		case 0:
 			if (!valuesBeforeOpcode
 			&&  0 < info.numValues)
@@ -482,12 +482,12 @@ namespace bgfx
 		uint32_t currOp = 0;
 		switch (_instruction.numOperands)
 		{
-		case 6: size += write(_writer, _instruction.operand[currOp++], _err);
-		case 5: size += write(_writer, _instruction.operand[currOp++], _err);
-		case 4: size += write(_writer, _instruction.operand[currOp++], _err);
-		case 3: size += write(_writer, _instruction.operand[currOp++], _err);
-		case 2: size += write(_writer, _instruction.operand[currOp++], _err);
-		case 1: size += write(_writer, _instruction.operand[currOp++], _err);
+		case 6: size += write(_writer, _instruction.operand[currOp++], _err); BX_FALLTHROUGH;
+		case 5: size += write(_writer, _instruction.operand[currOp++], _err); BX_FALLTHROUGH;
+		case 4: size += write(_writer, _instruction.operand[currOp++], _err); BX_FALLTHROUGH;
+		case 3: size += write(_writer, _instruction.operand[currOp++], _err); BX_FALLTHROUGH;
+		case 2: size += write(_writer, _instruction.operand[currOp++], _err); BX_FALLTHROUGH;
+		case 1: size += write(_writer, _instruction.operand[currOp++], _err); BX_FALLTHROUGH;
 		case 0:
 			break;
 		}
