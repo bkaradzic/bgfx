@@ -319,7 +319,7 @@ public:
 				float brushAttn = m_brush.m_size - bx::fsqrt(a2 + b2);
 
 				// Raise/Lower and scale by brush power.
-				height += (bx::fclamp(brushAttn * m_brush.m_power, 0.0, m_brush.m_power) * m_brush.m_raise)
+				height += 0.0f < bx::fclamp(brushAttn*m_brush.m_power, 0.0f, m_brush.m_power) && m_brush.m_raise
 					?  1.0f
 					: -1.0f
 					;

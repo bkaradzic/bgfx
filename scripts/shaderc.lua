@@ -213,6 +213,11 @@ project "fcpp"
 			"/wd4706", -- warning C4706: assignment within conditional expression
 		}
 
+	configuration { "not vs*" }
+		buildoptions {
+			"-Wno-implicit-fallthrough",
+		}
+
 	configuration {}
 
 project "shaderc"
