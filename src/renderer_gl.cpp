@@ -5861,6 +5861,26 @@ namespace bgfx { namespace gl
 
 				code = temp;
 			}
+			else if (GL_COMPUTE_SHADER == m_type)
+			{
+				int32_t codeLen = (int32_t)bx::strLen(code);
+				int32_t tempLen = codeLen + (4<<10);
+				char* temp = (char*)alloca(tempLen);
+				bx::StaticMemoryBlockWriter writer(temp, tempLen);
+
+				writeString(&writer, "#version 430\n");
+				writeString(&writer, "#define texture2DLod    textureLod\n");
+				writeString(&writer, "#define texture3DLod    textureLod\n");
+				writeString(&writer, "#define textureCubeLod  textureLod\n");
+				writeString(&writer, "#define texture2DGrad   textureGrad\n");
+				writeString(&writer, "#define texture3DGrad   textureGrad\n");
+				writeString(&writer, "#define textureCubeGrad textureGrad\n");
+
+				bx::write(&writer, code+bx::strLen("#version 430"), codeLen);
+				bx::write(&writer, '\0');
+
+				code = temp;
+			}
 
 			GL_CHECK(glShaderSource(m_id, 1, (const GLchar**)&code, NULL) );
 			GL_CHECK(glCompileShader(m_id) );
@@ -6586,14 +6606,20 @@ namespace bgfx { namespace gl
 							{
 								switch (bind.m_type)
 								{
-								case Binding::Image:
 								case Binding::Texture:
+									{
+										TextureGL& texture = m_textures[bind.m_idx];
+										texture.commit(ii, bind.m_un.m_draw.m_textureFlags, _render->m_colorPalette);
+									}
+									break;
+
+								case Binding::Image:
 									{
 										const TextureGL& texture = m_textures[bind.m_idx];
 										GL_CHECK(glBindImageTexture(ii
 											, texture.m_id
 											, bind.m_un.m_compute.m_mip
-											, texture.isCubeMap()?GL_TRUE:GL_FALSE
+											, texture.isCubeMap() ? GL_TRUE : GL_FALSE
 											, 0
 											, s_access[bind.m_un.m_compute.m_access]
 											, s_imageFormat[bind.m_un.m_compute.m_format])
