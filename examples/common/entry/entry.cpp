@@ -390,7 +390,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		if (0 == bx::strCmp(_argv[1], "restart")
 		&&  NULL != s_currentApp)
 		{
-			if (1 == _argc)
+			if (2 == _argc)
 			{
 				bx::strCopy(s_restartArgs, BX_COUNTOF(s_restartArgs), s_currentApp->getName() );
 				return bx::kExitSuccess;

@@ -51,6 +51,18 @@ bool showExampleDialog(entry::AppI* _app)
 			bx::snprintf(command, BX_COUNTOF(command), "app restart %s", items[current]);
 			cmdExec(command);
 		}
+
+		if (ImGui::Button("Restart") )
+		{
+			cmdExec("app restart");
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Next") )
+		{
+			cmdExec("app restart next");
+		}
+
 	}
 
 #if 0
