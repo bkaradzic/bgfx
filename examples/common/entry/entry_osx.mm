@@ -64,7 +64,7 @@ namespace entry
 	struct MainThreadEntry
 	{
 		int m_argc;
-		char** m_argv;
+		const char* const* m_argv;
 
 		static int32_t threadFunc(void* _userData)
 		{
@@ -409,7 +409,7 @@ namespace entry
 			m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::DidSuspend);
 		}
 
-		int32_t run(int _argc, char** _argv)
+		int32_t run(int _argc, const char* const* _argv)
 		{
 			[NSApplication sharedApplication];
 
@@ -767,7 +767,7 @@ namespace entry
 
 @end
 
-int main(int _argc, char** _argv)
+int main(int _argc, const char* const* _argv)
 {
 	using namespace entry;
 	return s_ctx.run(_argc, _argv);

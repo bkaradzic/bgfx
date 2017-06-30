@@ -86,7 +86,7 @@ namespace entry
 			}
 		}
 
-		int32_t run(int _argc, char** _argv)
+		int32_t run(int _argc, const char* const* _argv)
 		{
 			emscripten_set_mousedown_callback("#canvas", this, true, mouseCb);
 			emscripten_set_mouseup_callback("#canvas", this, true, mouseCb);
@@ -397,7 +397,7 @@ namespace entry
 	}
 }
 
-int main(int _argc, char** _argv)
+int main(int _argc, const char* const* _argv)
 {
 	using namespace entry;
 	return s_ctx.run(_argc, _argv);
