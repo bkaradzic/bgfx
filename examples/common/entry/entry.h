@@ -286,7 +286,7 @@ namespace entry
 		virtual ~AppI() = 0;
 
 		///
-		virtual void init(int _argc, char** _argv) = 0;
+		virtual void init(int32_t _argc, const char* const* _argv, uint32_t _width, uint32_t _height) = 0;
 
 		///
 		virtual int  shutdown() = 0;
@@ -321,10 +321,7 @@ namespace entry
 	uint32_t getNumApps();
 
 	///
-	void setRestartArgs(const char* _args);
-
-	///
-	int runApp(AppI* _app, int _argc, char** _argv);
+	int runApp(AppI* _app, int _argc, const char* const* _argv);
 
 } // namespace entry
 

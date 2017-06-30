@@ -1289,15 +1289,15 @@ public:
 	{
 	}
 
-	void init(int _argc, char** _argv) BX_OVERRIDE
+	void init(int32_t _argc, const char* const* _argv, uint32_t _width, uint32_t _height) BX_OVERRIDE
 	{
 		Args args(_argc, _argv);
 
 		m_debug = BGFX_DEBUG_NONE;
 		m_reset = BGFX_RESET_VSYNC;
 
-		m_width = 1280;
-		m_height = 720;
+		m_width  = _width;
+		m_height = _height;
 		m_viewState = ViewState(uint16_t(m_width), uint16_t(m_height));
 		m_clearValues = ClearValues(0x00000000, 1.0f, 0);
 

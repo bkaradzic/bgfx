@@ -13,7 +13,7 @@ uint16_t uint16_max(uint16_t _a, uint16_t _b)
 	return _a < _b ? _b : _a;
 }
 
-int _main_(int _argc, char** _argv)
+int32_t _main_(int32_t _argc, char** _argv)
 {
 	uint32_t width  = 1280;
 	uint32_t height = 720;

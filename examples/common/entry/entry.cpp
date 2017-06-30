@@ -22,7 +22,7 @@
 #define RMT_ENABLED ENTRY_CONFIG_PROFILER
 #include <remotery/lib/Remotery.h>
 
-extern "C" int _main_(int _argc, char** _argv);
+extern "C" int32_t _main_(int32_t _argc, char** _argv);
 
 namespace entry
 {
@@ -277,10 +277,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		if (_argc > 1)
 		{
 			inputSetMouseLock(_argc > 1 ? bx::toBool(_argv[1]) : !inputIsMouseLocked() );
-			return 0;
+			return bx::kExitSuccess;
 		}
 
-		return 1;
+		return bx::kExitFailure;
 	}
 
 	int cmdGraphics(CmdContext* /*_context*/, void* /*_userData*/, int _argc, char const* const* _argv)
@@ -299,7 +299,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			||  setOrToggle(s_reset, "depthclamp",  BGFX_RESET_DEPTH_CLAMP,        1, _argc, _argv)
 			   )
 			{
-				return 0;
+				return bx::kExitSuccess;
 			}
 			else if (setOrToggle(s_debug, "stats",     BGFX_DEBUG_STATS,     1, _argc, _argv)
 				 ||  setOrToggle(s_debug, "ifh",       BGFX_DEBUG_IFH,       1, _argc, _argv)
@@ -307,7 +307,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				 ||  setOrToggle(s_debug, "wireframe", BGFX_DEBUG_WIREFRAME, 1, _argc, _argv) )
 			{
 				bgfx::setDebug(s_debug);
-				return 0;
+				return bx::kExitSuccess;
 			}
 			else if (0 == bx::strCmp(_argv[1], "screenshot") )
 			{
@@ -327,23 +327,23 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					bgfx::requestScreenShot(fbh, filePath);
 				}
 
-				return 0;
+				return bx::kExitSuccess;
 			}
 			else if (0 == bx::strCmp(_argv[1], "fullscreen") )
 			{
 				WindowHandle window = { 0 };
 				toggleFullscreen(window);
-				return 0;
+				return bx::kExitSuccess;
 			}
 		}
 
-		return 1;
+		return bx::kExitFailure;
 	}
 
 	int cmdExit(CmdContext* /*_context*/, void* /*_userData*/, int /*_argc*/, char const* const* /*_argv*/)
 	{
 		s_exit = true;
-		return 0;
+		return bx::kExitSuccess;
 	}
 
 	static const InputBinding s_bindings[] =
@@ -379,9 +379,47 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	}
 #endif // BX_PLATFORM_EMSCRIPTEN
 
-	static AppI*    s_apps    = NULL;
-	static uint32_t s_numApps = 0;
-	static char     s_restartArgs[1024] = { '\0' };
+	static AppI*    s_currentApp = NULL;
+	static AppI*    s_apps       = NULL;
+	static uint32_t s_numApps    = 0;
+
+	static char s_restartArgs[1024] = { '\0' };
+
+	int cmdApp(CmdContext* /*_context*/, void* /*_userData*/, int _argc, char const* const* _argv)
+	{
+		if (0 == bx::strCmp(_argv[1], "restart")
+		&&  NULL != s_currentApp)
+		{
+			if (1 == _argc)
+			{
+				bx::strCopy(s_restartArgs, BX_COUNTOF(s_restartArgs), s_currentApp->getName() );
+				return bx::kExitSuccess;
+			}
+
+			if (0 == bx::strCmp(_argv[2], "next") )
+			{
+				AppI* next = s_currentApp->getNext();
+				if (NULL == next)
+				{
+					next = getFirstApp();
+				}
+
+				bx::strCopy(s_restartArgs, BX_COUNTOF(s_restartArgs), next->getName() );
+				return bx::kExitSuccess;
+			}
+
+			for (AppI* app = getFirstApp(); NULL != app; app = app->getNext() )
+			{
+				if (0 == bx::strCmp(_argv[2], app->getName() ) )
+				{
+					bx::strCopy(s_restartArgs, BX_COUNTOF(s_restartArgs), app->getName() );
+					return bx::kExitSuccess;
+				}
+			}
+		}
+
+		return bx::kExitFailure;
+	}
 
 	AppI::AppI(const char* _name, const char* _description)
 	{
@@ -418,14 +456,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		return s_numApps;
 	}
 
-	void setRestartArgs(const char* _args)
+	int runApp(AppI* _app, int _argc, const char* const* _argv)
 	{
-		bx::strCopy(s_restartArgs, BX_COUNTOF(s_restartArgs), _args);
-	}
-
-	int runApp(AppI* _app, int _argc, char** _argv)
-	{
-		_app->init(_argc, _argv);
+		_app->init(_argc, _argv, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
 		bgfx::frame();
 
 		WindowHandle defaultWindow = { 0 };
@@ -435,7 +468,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		s_app = _app;
 		emscripten_set_main_loop(&updateApp, -1, 1);
 #else
-		while (_app->update() );
+		while (_app->update() )
+		{
+			if (0 != bx::strLen(s_restartArgs) )
+			{
+				break;
+			}
+		}
 #endif // BX_PLATFORM_EMSCRIPTEN
 
 		return _app->shutdown();
@@ -476,7 +515,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		BX_FREE(g_allocator, apps);
 	}
 
-	int main(int _argc, char** _argv)
+	int main(int _argc, const char* const* _argv)
 	{
 		//DBG(BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME);
 
@@ -510,6 +549,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		cmdAdd("mouselock", cmdMouseLock);
 		cmdAdd("graphics",  cmdGraphics );
 		cmdAdd("exit",      cmdExit     );
+		cmdAdd("app",       cmdApp      );
 
 		inputInit();
 		inputAddBindings("bindings", s_bindings);
@@ -549,11 +589,12 @@ restart:
 		s_restartArgs[0] = '\0';
 		if (0 == s_numApps)
 		{
-			result = ::_main_(_argc, _argv);
+			result = ::_main_(_argc, (char**)_argv);
 		}
 		else
 		{
-			result = runApp(NULL == selected ? getFirstApp() : selected, _argc, _argv);
+			s_currentApp = NULL == selected ? getFirstApp() : selected;
+			result = runApp(s_currentApp, _argc, _argv);
 		}
 
 		if (0 != bx::strLen(s_restartArgs) )

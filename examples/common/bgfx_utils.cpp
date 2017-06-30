@@ -648,7 +648,7 @@ void meshSubmit(const Mesh* _mesh, const MeshState*const* _state, uint8_t _numPa
 	_mesh->submit(_state, _numPasses, _mtx, _numMatrices);
 }
 
-Args::Args(int _argc, char** _argv)
+Args::Args(int _argc, const char* const* _argv)
 	: m_type(bgfx::RendererType::Count)
 	, m_pciId(BGFX_PCI_ID_NONE)
 {

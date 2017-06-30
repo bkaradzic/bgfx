@@ -5,6 +5,8 @@
 
 #include "imgui/imgui.h"
 #include "entry/entry.h"
+#include "entry/cmd.h"
+#include <bx/string.h>
 
 bool showExampleDialog(entry::AppI* _app)
 {
@@ -45,8 +47,9 @@ bool showExampleDialog(entry::AppI* _app)
 		if (1 < num
 		&&  ImGui::Combo("Example", &current, items, num) )
 		{
-			entry::setRestartArgs(items[current]);
-			restart = true;
+			char command[1024];
+			bx::snprintf(command, BX_COUNTOF(command), "app restart %s", items[current]);
+			cmdExec(command);
 		}
 	}
 
