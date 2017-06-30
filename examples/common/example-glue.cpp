@@ -8,10 +8,8 @@
 #include "entry/cmd.h"
 #include <bx/string.h>
 
-bool showExampleDialog(entry::AppI* _app)
+void showExampleDialog(entry::AppI* _app)
 {
-	bool restart = false;
-
 	char temp[1024];
 	bx::snprintf(temp, BX_COUNTOF(temp), "Example: %s", _app->getName() );
 
@@ -102,6 +100,4 @@ bool showExampleDialog(entry::AppI* _app)
 		);
 
 	ImGui::End();
-
-	return restart;
 }

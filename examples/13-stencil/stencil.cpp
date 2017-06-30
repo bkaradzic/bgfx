@@ -922,7 +922,7 @@ public:
 				, uint16_t(m_viewState.m_height)
 				);
 
-			bool restart = showExampleDialog(this);
+			showExampleDialog(this);
 
 			ImGui::SetNextWindowPos(
 				  ImVec2(m_viewState.m_width - m_viewState.m_width / 5.0f - 10.0f, 10.0f)
@@ -1354,7 +1354,7 @@ public:
 			clearViewMask(s_clearMask, BGFX_CLEAR_NONE, m_clearValues);
 			s_clearMask = 0;
 
-			return !restart;
+			return true;
 		}
 
 		return false;

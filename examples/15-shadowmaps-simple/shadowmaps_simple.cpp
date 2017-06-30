@@ -265,7 +265,7 @@ public:
 				, uint16_t(m_height)
 				);
 
-			bool restart = showExampleDialog(this);
+			showExampleDialog(this);
 
 			imguiEndFrame();
 
@@ -409,7 +409,7 @@ public:
 			// process submitted rendering primitives.
 			bgfx::frame();
 
-			return !restart;
+			return true;
 		}
 
 		return false;

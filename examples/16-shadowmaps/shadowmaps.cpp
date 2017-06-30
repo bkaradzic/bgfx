@@ -1980,7 +1980,7 @@ public:
 							, m_viewState.m_height
 							);
 
-			bool restart = showExampleDialog(this);
+			showExampleDialog(this);
 
 			ImGui::SetNextWindowPos(
 				  ImVec2(m_viewState.m_width - m_viewState.m_width / 5.0f - 10.0f, 10.0f)
@@ -3203,7 +3203,7 @@ public:
 			// process submitted rendering primitives.
 			bgfx::frame();
 
-			return !restart;
+			return true;
 		}
 
 		return false;

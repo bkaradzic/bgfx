@@ -371,7 +371,7 @@ public:
 					, uint16_t(m_height)
 					);
 
-			bool restart = showExampleDialog(this);
+			showExampleDialog(this);
 
 			int64_t now = bx::getHPCounter();
 			static int64_t last = now;
@@ -712,7 +712,7 @@ public:
 			// process submitted rendering primitives.
 			bgfx::frame();
 
-			return !restart;
+			return true;
 		}
 
 		return false;

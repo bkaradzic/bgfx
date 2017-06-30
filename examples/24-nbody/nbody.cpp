@@ -257,7 +257,7 @@ public:
 				, uint16_t(m_height)
 				);
 
-			bool restart = showExampleDialog(this);
+			showExampleDialog(this);
 
 			const bgfx::Caps* caps = bgfx::getCaps();
 			const bool computeSupported  = !!(caps->supported & BGFX_CAPS_COMPUTE);
@@ -446,7 +446,7 @@ public:
 			// process submitted rendering primitives.
 			bgfx::frame();
 
-			return !restart;
+			return true;
 		}
 
 		return false;
