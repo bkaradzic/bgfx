@@ -71,6 +71,7 @@ namespace ImGui
 				, active(true)
 				, status(Status_Float)
 				, opened(false)
+				, first(true)
 			{
 				location[0] = 0;
 				children[0] = children[1] = NULL;
