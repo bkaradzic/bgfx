@@ -128,6 +128,16 @@ $EXE -D -e main -V -i -DUNDEFED -UIN_SHADER -DFOO=200 -UUNDEFED hlsl.-D-U.frag >
 diff -b $BASEDIR/hlsl.-D-U.frag.out $TARGETDIR/hlsl.-D-U.frag.out || HASERROR=1
 
 #
+# Test --client and --target-env
+#
+$EXE --client vulkan100      spv.targetVulkan.vert || HASERROR=1
+$EXE --client opengl100      spv.targetOpenGL.vert || HASERROR=1
+$EXE --target-env vulkan1.0  spv.targetVulkan.vert || HASERROR=1
+$EXE --target-env opengl     spv.targetOpenGL.vert || HASERROR=1
+$EXE -V100                   spv.targetVulkan.vert || HASERROR=1
+$EXE -G100                   spv.targetOpenGL.vert || HASERROR=1
+
+#
 # Final checking
 #
 if [ $HASERROR -eq 0 ]

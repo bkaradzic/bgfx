@@ -1,6 +1,7 @@
 450.frag
 ERROR: 0:63: 'location' : cannot use in a block array where new locations are needed for each block element 
-ERROR: 1 compilation errors.  No code generated.
+ERROR: 0:68: 'early_fragment_tests' : can only apply to a standalone qualifier 
+ERROR: 2 compilation errors.  No code generated.
 
 
 Shader version: 450
@@ -164,6 +165,7 @@ ERROR: node is still EOpNull!
 0:?     'i2dmsa' (layout( rgba32f) uniform image2DMSArray)
 0:?     'bInst1' ( in block{layout( location=6) in float f, layout( location=7) in float g, layout( location=8) in 4X4 matrix of float m})
 0:?     'bInst2' ( in 3-element array of block{layout( location=12) in float f, layout( location=13) in float g})
+0:?     'f' ( smooth in float)
 
 
 Linked fragment stage:
@@ -279,4 +281,5 @@ ERROR: node is still EOpNull!
 0:?     'i2dmsa' (layout( rgba32f) uniform image2DMSArray)
 0:?     'bInst1' ( in block{layout( location=6) in float f, layout( location=7) in float g, layout( location=8) in 4X4 matrix of float m})
 0:?     'bInst2' ( in 3-element array of block{layout( location=12) in float f, layout( location=13) in float g})
+0:?     'f' ( smooth in float)
 

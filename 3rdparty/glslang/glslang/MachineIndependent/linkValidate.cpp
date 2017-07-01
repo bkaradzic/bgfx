@@ -459,9 +459,9 @@ void TIntermediate::finalCheck(TInfoSink& infoSink, bool keepUncalled)
             error(infoSink, "At least one shader must specify an output layout(vertices=...)");
         break;
     case EShLangTessEvaluation:
-        if (inputPrimitive == ElgNone)
-            error(infoSink, "At least one shader must specify an input layout primitive");
         if (source == EShSourceGlsl) {
+            if (inputPrimitive == ElgNone)
+                error(infoSink, "At least one shader must specify an input layout primitive");
             if (vertexSpacing == EvsNone)
                 vertexSpacing = EvsEqual;
             if (vertexOrder == EvoNone)

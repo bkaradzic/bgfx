@@ -1,7 +1,8 @@
 450.geom
 ERROR: 0:15: '[' :  array index out of range '3'
 ERROR: 0:15: 'gl_Position' : no such field in structure 
-ERROR: 2 compilation errors.  No code generated.
+ERROR: 0:19: 'points' : can only apply to a standalone qualifier 
+ERROR: 3 compilation errors.  No code generated.
 
 
 Shader version: 450
@@ -38,6 +39,7 @@ ERROR: node is still EOpNull!
 0:?   Linker Objects
 0:?     'gl_in' ( in 3-element array of block{ in 3-element array of float CullDistance gl_CullDistance})
 0:?     'anon@0' (layout( stream=0) out block{layout( stream=0) out 3-element array of float CullDistance gl_CullDistance})
+0:?     'f' ( in 3-element array of float)
 
 
 Linked geometry stage:
@@ -79,4 +81,5 @@ ERROR: node is still EOpNull!
 0:?   Linker Objects
 0:?     'gl_in' ( in 3-element array of block{ in 3-element array of float CullDistance gl_CullDistance})
 0:?     'anon@0' (layout( stream=0) out block{layout( stream=0) out 3-element array of float CullDistance gl_CullDistance})
+0:?     'f' ( in 3-element array of float)
 

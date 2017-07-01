@@ -520,6 +520,10 @@ spv::BuiltIn TGlslangToSpvTraverser::TranslateBuiltInDecoration(glslang::TBuiltI
             builder.addCapability(spv::CapabilityGeometry);
         return spv::BuiltInPrimitiveId;
 
+    case glslang::EbvFragStencilRef:
+        logger->missingFunctionality("shader stencil export");
+        return spv::BuiltInMax;
+
     case glslang::EbvInvocationId:         return spv::BuiltInInvocationId;
     case glslang::EbvTessLevelInner:       return spv::BuiltInTessLevelInner;
     case glslang::EbvTessLevelOuter:       return spv::BuiltInTessLevelOuter;

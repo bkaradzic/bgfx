@@ -569,6 +569,73 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
     return correct;
 }
 
+// There are multiple paths in for setting environment stuff.
+// TEnvironment takes precedence, for what it sets, so sort all this out.
+// Ideally, the internal code could be made to use TEnvironment, but for
+// now, translate it to the historically used parameters.
+void TranslateEnvironment(const TEnvironment* environment, EShMessages& messages, EShSource& source,
+                          EShLanguage& stage, SpvVersion& spvVersion)
+{
+    // Set up environmental defaults, first ignoring 'environment'.
+    if (messages & EShMsgSpvRules)
+        spvVersion.spv = 0x00010000;
+    if (messages & EShMsgVulkanRules) {
+        spvVersion.vulkan = 100;
+        spvVersion.vulkanGlsl = 100;
+    } else if (spvVersion.spv != 0)
+        spvVersion.openGl = 100;
+
+    // Now, override, based on any content set in 'environment'.
+    // 'environment' must be cleared to ESh*None settings when items
+    // are not being set.
+    if (environment != nullptr) {
+        // input language
+        if (environment->input.languageFamily != EShSourceNone) {
+            stage = environment->input.stage;
+            switch (environment->input.dialect) {
+            case EShClientNone:
+                break;
+            case EShClientVulkan:
+                spvVersion.vulkanGlsl = environment->input.dialectVersion;
+                break;
+            case EShClientOpenGL:
+                spvVersion.openGl = environment->input.dialectVersion;
+                break;
+            }
+            switch (environment->input.languageFamily) {
+            case EShSourceNone:
+                break;
+            case EShSourceGlsl:
+                source = EShSourceGlsl;
+                messages = static_cast<EShMessages>(messages & ~EShMsgReadHlsl);
+                break;
+            case EShSourceHlsl:
+                source = EShSourceHlsl;
+                messages = static_cast<EShMessages>(messages | EShMsgReadHlsl);
+                break;
+            }
+        }
+
+        // client
+        switch (environment->client.client) {
+        case EShClientVulkan:
+            spvVersion.vulkan = environment->client.version;
+            break;
+        default:
+            break;
+        }
+
+        // generated code
+        switch (environment->target.language) {
+        case EshTargetSpv:
+            spvVersion.spv = environment->target.version;
+            break;
+        default:
+            break;
+        }
+    }
+}
+
 // This is the common setup and cleanup code for PreprocessDeferred and
 // CompileDeferred.
 // It takes any callable with a signature of
@@ -599,8 +666,8 @@ bool ProcessDeferred(
     ProcessingContext& processingContext,
     bool requireNonempty,
     TShader::Includer& includer,
-    const std::string sourceEntryPointName = ""
-    )
+    const std::string sourceEntryPointName = "",
+    const TEnvironment* environment = nullptr)  // optional way of fully setting all versions, overriding the above
 {
     if (! InitThread())
         return false;
@@ -641,6 +708,13 @@ bool ProcessDeferred(
             names[s + numPre] = nullptr;
     }
 
+    // Get all the stages, languages, clients, and other environment
+    // stuff sorted out.
+    EShSource source = (messages & EShMsgReadHlsl) != 0 ? EShSourceHlsl : EShSourceGlsl;
+    SpvVersion spvVersion;
+    EShLanguage stage = compiler->getLanguage();
+    TranslateEnvironment(environment, messages, source, stage, spvVersion);
+
     // First, without using the preprocessor or parser, find the #version, so we know what
     // symbol tables, processing rules, etc. to set up.  This does not need the extra strings
     // outlined above, just the user shader, after the system and user preambles.
@@ -648,11 +722,11 @@ bool ProcessDeferred(
     int version = 0;
     EProfile profile = ENoProfile;
     bool versionNotFirstToken = false;
-    bool versionNotFirst = (messages & EShMsgReadHlsl) ?
-                                true :
-                                userInput.scanVersion(version, profile, versionNotFirstToken);
+    bool versionNotFirst = (source == EShSourceHlsl)
+                                ? true
+                                : userInput.scanVersion(version, profile, versionNotFirstToken);
     bool versionNotFound = version == 0;
-    if (forceDefaultVersionAndProfile && (messages & EShMsgReadHlsl) == 0) {
+    if (forceDefaultVersionAndProfile && source == EShSourceGlsl) {
         if (! (messages & EShMsgSuppressWarnings) && ! versionNotFound &&
             (version != defaultVersion || profile != defaultProfile)) {
             compiler->infoSink.info << "Warning, (version, profile) forced to be ("
@@ -669,15 +743,8 @@ bool ProcessDeferred(
         version = defaultVersion;
         profile = defaultProfile;
     }
-    SpvVersion spvVersion;
-    if (messages & EShMsgSpvRules)
-        spvVersion.spv = 0x00010000;    // TODO: eventually have this come from the outside
-    EShSource source = (messages & EShMsgReadHlsl) ? EShSourceHlsl : EShSourceGlsl;
-    if (messages & EShMsgVulkanRules)
-        spvVersion.vulkan = 100;     // TODO: eventually have this come from the outside
-    else if (spvVersion.spv != 0)
-        spvVersion.openGl = 100;     // TODO: eventually have this come from the outside
-    bool goodVersion = DeduceVersionProfile(compiler->infoSink, compiler->getLanguage(),
+
+    bool goodVersion = DeduceVersionProfile(compiler->infoSink, stage,
                                             versionNotFirst, defaultVersion, source, version, profile, spvVersion);
     bool versionWillBeError = (versionNotFound || (profile == EEsProfile && version >= 300 && versionNotFirst));
     bool warnVersionNotFirst = false;
@@ -694,7 +761,7 @@ bool ProcessDeferred(
     intermediate.setSpv(spvVersion);
     if (spvVersion.vulkan >= 100)
         intermediate.setOriginUpperLeft();
-    if ((messages & EShMsgHlslOffsets) || (messages & EShMsgReadHlsl))
+    if ((messages & EShMsgHlslOffsets) || source == EShSourceHlsl)
         intermediate.setHlslOffsets();
     if (messages & EShMsgDebugInfo) {
         intermediate.setSourceFile(names[numPre]);
@@ -707,7 +774,7 @@ bool ProcessDeferred(
                                                   [MapSpvVersionToIndex(spvVersion)]
                                                   [MapProfileToIndex(profile)]
                                                   [MapSourceToIndex(source)]
-                                                  [compiler->getLanguage()];
+                                                  [stage];
 
     // Dynamically allocate the symbol table so we can control when it is deallocated WRT the pool.
     TSymbolTable* symbolTableMemory = new TSymbolTable;
@@ -718,7 +785,7 @@ bool ProcessDeferred(
     // Add built-in symbols that are potentially context dependent;
     // they get popped again further down.
     if (! AddContextSpecificSymbols(resources, compiler->infoSink, symbolTable, version, profile, spvVersion,
-                                    compiler->getLanguage(), source))
+                                    stage, source))
         return false;
 
     //
@@ -726,14 +793,14 @@ bool ProcessDeferred(
     //
 
     TParseContextBase* parseContext = CreateParseContext(symbolTable, intermediate, version, profile, source,
-                                                         compiler->getLanguage(), compiler->infoSink,
+                                                         stage, compiler->infoSink,
                                                          spvVersion, forwardCompatible, messages, false, sourceEntryPointName);
 
     TPpContext ppContext(*parseContext, names[numPre] ? names[numPre] : "", includer);
 
     // only GLSL (bison triggered, really) needs an externally set scan context
     glslang::TScanContext scanContext(*parseContext);
-    if ((messages & EShMsgReadHlsl) == 0)
+    if (source == EShSourceGlsl)
         parseContext->setScanContext(&scanContext);
 
     parseContext->setPpContext(&ppContext);
@@ -1052,14 +1119,15 @@ bool CompileDeferred(
     EShMessages messages,       // warnings/errors/AST; things to print out
     TIntermediate& intermediate,// returned tree, etc.
     TShader::Includer& includer,
-    const std::string sourceEntryPointName = "")
+    const std::string sourceEntryPointName = "",
+    TEnvironment* environment = nullptr)
 {
     DoFullParse parser;
     return ProcessDeferred(compiler, shaderStrings, numStrings, inputLengths, stringNames,
                            preamble, optLevel, resources, defaultVersion,
                            defaultProfile, forceDefaultVersionAndProfile,
                            forwardCompatible, messages, intermediate, parser,
-                           true, includer, sourceEntryPointName);
+                           true, includer, sourceEntryPointName, environment);
 }
 
 } // end anonymous namespace for local functions
@@ -1485,6 +1553,12 @@ TShader::TShader(EShLanguage s)
     infoSink = new TInfoSink;
     compiler = new TDeferredCompiler(stage, *infoSink);
     intermediate = new TIntermediate(s);
+
+    // clear environment (avoid constructors in them for use in a C interface)
+    environment.input.languageFamily = EShSourceNone;
+    environment.input.dialect = EShClientNone;
+    environment.client.client = EShClientNone;
+    environment.target.language = EShTargetNone;
 }
 
 TShader::~TShader()
@@ -1572,7 +1646,8 @@ bool TShader::parse(const TBuiltInResource* builtInResources, int defaultVersion
     return CompileDeferred(compiler, strings, numStrings, lengths, stringNames,
                            preamble, EShOptNone, builtInResources, defaultVersion,
                            defaultProfile, forceDefaultVersionAndProfile,
-                           forwardCompatible, messages, *intermediate, includer, sourceEntryPointName);
+                           forwardCompatible, messages, *intermediate, includer, sourceEntryPointName,
+                           &environment);
 }
 
 // Fill in a string with the result of preprocessing ShaderStrings

@@ -1,9 +1,18 @@
 450.tese
+ERROR: 0:16: 'equal_spacing' : can only apply to a standalone qualifier 
+ERROR: 0:17: 'fractional_even_spacing' : can only apply to a standalone qualifier 
+ERROR: 0:18: 'fractional_odd_spacing' : can only apply to a standalone qualifier 
+ERROR: 0:19: 'cw' : can only apply to a standalone qualifier 
+ERROR: 0:20: 'ccw' : can only apply to a standalone qualifier 
+ERROR: 0:21: 'point_mode' : can only apply to a standalone qualifier 
+ERROR: 6 compilation errors.  No code generated.
+
+
 Shader version: 450
 input primitive = none
 vertex spacing = none
 triangle order = none
-0:? Sequence
+ERROR: node is still EOpNull!
 0:11  Function Definition: main( ( global void)
 0:11    Function Parameters: 
 0:13    Sequence
@@ -28,6 +37,12 @@ triangle order = none
 0:?   Linker Objects
 0:?     'gl_in' ( in 32-element array of block{ in 3-element array of float CullDistance gl_CullDistance})
 0:?     'anon@0' ( out block{ out 3-element array of float CullDistance gl_CullDistance})
+0:?     'f1' ( in 32-element array of float)
+0:?     'f2' ( in 32-element array of float)
+0:?     'f3' ( in 32-element array of float)
+0:?     'f4' ( in 32-element array of float)
+0:?     'f5' ( in 32-element array of float)
+0:?     'f6' ( in 32-element array of float)
 
 
 Linked tessellation evaluation stage:
@@ -38,7 +53,7 @@ Shader version: 450
 input primitive = none
 vertex spacing = equal_spacing
 triangle order = ccw
-0:? Sequence
+ERROR: node is still EOpNull!
 0:11  Function Definition: main( ( global void)
 0:11    Function Parameters: 
 0:13    Sequence
@@ -63,4 +78,10 @@ triangle order = ccw
 0:?   Linker Objects
 0:?     'gl_in' ( in 32-element array of block{ in 3-element array of float CullDistance gl_CullDistance})
 0:?     'anon@0' ( out block{ out 3-element array of float CullDistance gl_CullDistance})
+0:?     'f1' ( in 32-element array of float)
+0:?     'f2' ( in 32-element array of float)
+0:?     'f3' ( in 32-element array of float)
+0:?     'f4' ( in 32-element array of float)
+0:?     'f5' ( in 32-element array of float)
+0:?     'f6' ( in 32-element array of float)
 

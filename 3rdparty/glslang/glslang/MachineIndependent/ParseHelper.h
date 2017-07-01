@@ -80,8 +80,8 @@ public:
             statementNestingLevel(0), loopNestingLevel(0), structNestingLevel(0), controlFlowNestingLevel(0),
             postEntryPointReturn(false),
             contextPragma(true, false),
-            limits(resources.limits),
             parsingBuiltins(parsingBuiltins), scanContext(nullptr), ppContext(nullptr),
+            limits(resources.limits),
             globalUniformBlock(nullptr)
     { }
     virtual ~TParseContextBase() { }

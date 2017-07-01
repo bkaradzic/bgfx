@@ -1174,7 +1174,8 @@ void HlslParseContext::flatten(const TSourceLoc& loc, const TVariable& variable)
     const TType& type = variable.getType();
 
     auto entry = flattenMap.insert(std::make_pair(variable.getUniqueId(),
-                                                  TFlattenData(type.getQualifier().layoutBinding)));
+                                                  TFlattenData(type.getQualifier().layoutBinding,
+                                                               type.getQualifier().layoutLocation)));
 
     // the item is a map pair, so first->second is the TFlattenData itself.
     flatten(loc, variable, type, entry.first->second, "");
@@ -1235,6 +1236,19 @@ int HlslParseContext::addFlattenedMember(const TSourceLoc& loc,
 
         if (flattenData.nextBinding != TQualifier::layoutBindingEnd)
             memberVariable->getWritableType().getQualifier().layoutBinding = flattenData.nextBinding++;
+
+        if (memberVariable->getType().getQualifier().builtIn == EbvNone) {
+            // inherited locations must be auto bumped, not replicated
+            if (flattenData.nextLocation != TQualifier::layoutLocationEnd &&
+                memberVariable->getType().getQualifier().builtIn == EbvNone) {
+                memberVariable->getWritableType().getQualifier().layoutLocation = flattenData.nextLocation;
+                flattenData.nextLocation += intermediate.computeTypeLocationSize(memberVariable->getType());
+                nextOutLocation = std::max(nextOutLocation, flattenData.nextLocation);
+            }
+        } else {
+            // inherited locations are nonsensical for built-ins
+            memberVariable->getWritableType().getQualifier().layoutLocation = TQualifier::layoutLocationEnd;
+        }
 
         flattenData.offsets.push_back(static_cast<int>(flattenData.members.size()));
         flattenData.members.push_back(memberVariable);
@@ -1551,7 +1565,7 @@ void HlslParseContext::assignToInterface(TVariable& variable)
         TType& type = variable.getWritableType();
         TQualifier& qualifier = type.getQualifier();
         if (qualifier.storage == EvqVaryingIn || qualifier.storage == EvqVaryingOut) {
-            if (qualifier.builtIn == EbvNone) {
+            if (qualifier.builtIn == EbvNone && !qualifier.hasLocation()) {
                 // Strip off the outer array dimension for those having an extra one.
                 int size;
                 if (type.isArray() && qualifier.isArrayedIo(language)) {
@@ -1833,35 +1847,41 @@ void HlslParseContext::handleEntryPointAttributes(const TSourceLoc& loc, const T
         }
     }
 
-    // Handle [outputtoplogy("...")]
+    // Handle [outputtopology("...")]
     const TIntermAggregate* topologyAttr = attributes[EatOutputTopology];
     if (topologyAttr != nullptr) {
         const TConstUnion& topoType = topologyAttr->getSequence()[0]->getAsConstantUnion()->getConstArray()[0];
         if (topoType.getType() != EbtString) {
-            error(loc, "invalid outputtoplogy", "", "");
+            error(loc, "invalid outputtopology", "", "");
         } else {
             TString topologyStr = *topoType.getSConst();
             std::transform(topologyStr.begin(), topologyStr.end(), topologyStr.begin(), ::tolower);
 
-            TVertexOrder topology = EvoNone;
-                
+            TVertexOrder vertexOrder = EvoNone;
+            TLayoutGeometry primitive = ElgNone;
+
             if (topologyStr == "point") {
-                topology = EvoNone;
+                intermediate.setPointMode();
             } else if (topologyStr == "line") {
-                topology = EvoNone;
+                primitive = ElgIsolines;
             } else if (topologyStr == "triangle_cw") {
-                topology = EvoCw;
+                vertexOrder = EvoCw;
+                primitive = ElgTriangles;
             } else if (topologyStr == "triangle_ccw") {
-                topology = EvoCcw;
+                vertexOrder = EvoCcw;
+                primitive = ElgTriangles;
             } else {
-                error(loc, "unsupported outputtoplogy type", topologyStr.c_str(), "");
+                error(loc, "unsupported outputtopology type", topologyStr.c_str(), "");
             }
 
-            if (topology != EvoNone) {
-                if (! intermediate.setVertexOrder(topology)) {
-                    error(loc, "cannot change previously set outputtopology", TQualifier::getVertexOrderString(topology), "");
+            if (vertexOrder != EvoNone) {
+                if (! intermediate.setVertexOrder(vertexOrder)) {
+                    error(loc, "cannot change previously set outputtopology",
+                          TQualifier::getVertexOrderString(vertexOrder), "");
                 }
             }
+            if (primitive != ElgNone)
+                intermediate.setOutputPrimitive(primitive);
         }
     }
 
@@ -1985,7 +2005,7 @@ TIntermNode* HlslParseContext::transformEntryPoint(const TSourceLoc& loc, TFunct
 
         assignToInterface(variable);
     };
-    if (entryPointOutput)
+    if (entryPointOutput != nullptr)
         makeVariableInOut(*entryPointOutput);
     for (auto it = inputs.begin(); it != inputs.end(); ++it)
         if (!isDsPcfInput((*it)->getType()))  // skip domain shader PCF input (see comment below)
@@ -5205,16 +5225,31 @@ TFunction* HlslParseContext::makeConstructorCall(const TSourceLoc& loc, const TT
 // Handle seeing a "COLON semantic" at the end of a type declaration,
 // by updating the type according to the semantic.
 //
-void HlslParseContext::handleSemantic(TSourceLoc loc, TQualifier& qualifier, TBuiltInVariable builtIn, const TString& upperCase)
+void HlslParseContext::handleSemantic(TSourceLoc loc, TQualifier& qualifier, TBuiltInVariable builtIn,
+                                      const TString& upperCase)
 {
-    // adjust for stage in/out
+    const auto getSemanticNumber = [](const TString& semantic) -> unsigned int {
+        size_t pos = semantic.find_last_not_of("0123456789");
+        if (pos == std::string::npos)
+            return 0u;
+        return (unsigned int)atoi(semantic.c_str() + pos + 1);
+    };
 
     switch(builtIn) {
+    case EbvNone:
+        // Get location numbers from fragment outputs, instead of
+        // auto-assigning them.
+        if (language == EShLangFragment && upperCase.compare(0, 9, "SV_TARGET") == 0) {
+            qualifier.layoutLocation = getSemanticNumber(upperCase);
+            nextOutLocation = std::max(nextOutLocation, qualifier.layoutLocation + 1u);
+        }
+        break;
     case EbvPosition:
+        // adjust for stage in/out
         if (language == EShLangFragment)
             builtIn = EbvFragCoord;
         break;
-    case EbvStencilRef:
+    case EbvFragStencilRef:
         error(loc, "unimplemented; need ARB_shader_stencil_export", "SV_STENCILREF", "");
         break;
     case EbvTessLevelInner:

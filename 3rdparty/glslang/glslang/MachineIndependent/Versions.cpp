@@ -155,7 +155,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_frag_depth]                   = EBhDisable;
     extensionBehavior[E_GL_OES_EGL_image_external]           = EBhDisable;
     extensionBehavior[E_GL_EXT_shader_texture_lod]           = EBhDisable;
-
+    extensionBehavior[E_GL_EXT_shadow_samplers]              = EBhDisable;
     extensionBehavior[E_GL_ARB_texture_rectangle]            = EBhDisable;
     extensionBehavior[E_GL_3DL_array_objects]                = EBhDisable;
     extensionBehavior[E_GL_ARB_shading_language_420pack]     = EBhDisable;
@@ -179,6 +179,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_ARB_shader_ballot]                = EBhDisable;
     extensionBehavior[E_GL_ARB_sparse_texture2]              = EBhDisable;
     extensionBehavior[E_GL_ARB_sparse_texture_clamp]         = EBhDisable;
+    extensionBehavior[E_GL_ARB_shader_stencil_export]        = EBhDisable;
 //    extensionBehavior[E_GL_ARB_cull_distance]                = EBhDisable;    // present for 4.5, but need extension control over block members
 
     extensionBehavior[E_GL_EXT_shader_non_constant_global_initializers] = EBhDisable;
@@ -238,6 +239,10 @@ void TParseVersions::initializeExtensionBehavior()
     // EXT extensions
     extensionBehavior[E_GL_EXT_device_group]             = EBhDisable;
     extensionBehavior[E_GL_EXT_multiview]                = EBhDisable;
+
+    // OVR extensions
+    extensionBehavior[E_GL_OVR_multiview]                = EBhDisable;
+    extensionBehavior[E_GL_OVR_multiview2]               = EBhDisable;
 }
 
 // Get code that is not part of a shared symbol table, is specific to this shader,
@@ -253,6 +258,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_frag_depth 1\n"
             "#define GL_OES_EGL_image_external 1\n"
             "#define GL_EXT_shader_texture_lod 1\n"
+            "#define GL_EXT_shadow_samplers 1\n"
 
             // AEP
             "#define GL_ANDROID_extension_pack_es31a 1\n"
@@ -308,6 +314,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_ARB_shader_ballot 1\n"
             "#define GL_ARB_sparse_texture2 1\n"
             "#define GL_ARB_sparse_texture_clamp 1\n"
+            "#define GL_ARB_shader_stencil_export 1\n"
 //            "#define GL_ARB_cull_distance 1\n"    // present for 4.5, but need extension control over block members
             "#define GL_EXT_shader_non_constant_global_initializers 1\n"
             "#define GL_EXT_shader_image_load_formatted 1\n"
@@ -340,9 +347,16 @@ void TParseVersions::getPreamble(std::string& preamble)
 
     if ((profile != EEsProfile && version >= 140) ||
         (profile == EEsProfile && version >= 310)) {
-        preamble += 
+        preamble +=
             "#define GL_EXT_device_group 1\n"
             "#define GL_EXT_multiview 1\n"
+            ;
+    }
+
+    if (version >= 300 /* both ES and non-ES */) {
+        preamble +=
+            "#define GL_OVR_multiview 1\n"
+            "#define GL_OVR_multiview2 1\n"
             ;
     }
 
@@ -355,9 +369,9 @@ void TParseVersions::getPreamble(std::string& preamble)
     // #define VULKAN XXXX
     const int numberBufSize = 12;
     char numberBuf[numberBufSize];
-    if (spvVersion.vulkan > 0) {
+    if (spvVersion.vulkanGlsl > 0) {
         preamble += "#define VULKAN ";
-        snprintf(numberBuf, numberBufSize, "%d", spvVersion.vulkan);
+        snprintf(numberBuf, numberBufSize, "%d", spvVersion.vulkanGlsl);
         preamble += numberBuf;
         preamble += "\n";
     }

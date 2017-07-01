@@ -15,3 +15,5 @@ void main()
     gl_in[3].gl_Position; // ERROR, out of range
     gl_CullDistance[2] = gl_in[1].gl_CullDistance[2];
 }
+
+layout(points) in float f[3];  // ERROR, must be standalone

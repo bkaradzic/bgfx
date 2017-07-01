@@ -1113,8 +1113,10 @@ int TScanContext::tokenizeIdentifier()
 
     case SAMPLER2DSHADOW:
         afterType = true;
-        if (parseContext.profile == EEsProfile && parseContext.version < 300)
-            reservedWord();
+        if (parseContext.profile == EEsProfile && parseContext.version < 300) {
+            if (!parseContext.extensionTurnedOn(E_GL_EXT_shadow_samplers))
+                reservedWord();
+        }
         return keyword;
 
     case SAMPLER2DRECT:

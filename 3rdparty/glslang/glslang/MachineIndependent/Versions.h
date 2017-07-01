@@ -72,14 +72,19 @@ inline const char* ProfileName(EProfile profile)
 }
 
 //
-// SPIR-V has versions for multiple things; tie them together.
-// 0 means a target or rule set is not enabled.
+// What source rules, validation rules, target language, etc. are needed
+// desired for SPIR-V?
+//
+// 0 means a target or rule set is not enabled (ignore rules from that entity).
+// Non-0 means to apply semantic rules arising from that version of its rule set.
+// The union of all requested rule sets will be applied.
 //
 struct SpvVersion {
-    SpvVersion() : spv(0), vulkan(0), openGl(0) {}
-    unsigned int spv; // the version of the targeted SPIR-V, as defined by SPIR-V in word 1 of the SPIR-V binary header
-    int vulkan;       // the version of semantics for Vulkan; e.g., for GLSL from KHR_vulkan_glsl "#define VULKAN"
-    int openGl;       // the version of semantics for OpenGL; e.g., for GLSL from KHR_vulkan_glsl "#define GL_SPIRV"
+    SpvVersion() : spv(0), vulkanGlsl(0), vulkan(0), openGl(0) {}
+    unsigned int spv; // the version of SPIR-V to target, as defined by "word 1" of the SPIR-V binary header
+    int vulkanGlsl;   // the version of GLSL semantics for Vulkan, from GL_KHR_vulkan_glsl, for "#define VULKAN XXX"
+    int vulkan;       // the version of Vulkan, for which SPIR-V execution environment rules to use (100 means 1.0)
+    int openGl;       // the version of GLSL semantics for OpenGL, from GL_ARB_gl_spirv, for "#define GL_SPIRV XXX"
 };
 
 //
@@ -103,6 +108,7 @@ const char* const E_GL_OES_standard_derivatives         = "GL_OES_standard_deriv
 const char* const E_GL_EXT_frag_depth                   = "GL_EXT_frag_depth";
 const char* const E_GL_OES_EGL_image_external           = "GL_OES_EGL_image_external";
 const char* const E_GL_EXT_shader_texture_lod           = "GL_EXT_shader_texture_lod";
+const char* const E_GL_EXT_shadow_samplers              = "GL_EXT_shadow_samplers";
 
 const char* const E_GL_ARB_texture_rectangle            = "GL_ARB_texture_rectangle";
 const char* const E_GL_3DL_array_objects                = "GL_3DL_array_objects";
@@ -127,6 +133,7 @@ const char* const E_GL_ARB_gpu_shader_int64             = "GL_ARB_gpu_shader_int
 const char* const E_GL_ARB_shader_ballot                = "GL_ARB_shader_ballot";
 const char* const E_GL_ARB_sparse_texture2              = "GL_ARB_sparse_texture2";
 const char* const E_GL_ARB_sparse_texture_clamp         = "GL_ARB_sparse_texture_clamp";
+const char* const E_GL_ARB_shader_stencil_export        = "GL_ARB_shader_stencil_export";
 // const char* const E_GL_ARB_cull_distance            = "GL_ARB_cull_distance";  // present for 4.5, but need extension control over block members
 
 const char* const E_GL_EXT_shader_non_constant_global_initializers = "GL_EXT_shader_non_constant_global_initializers";
@@ -135,6 +142,13 @@ const char* const E_GL_EXT_shader_image_load_formatted = "GL_EXT_shader_image_lo
 // EXT extensions
 const char* const E_GL_EXT_device_group                 = "GL_EXT_device_group";
 const char* const E_GL_EXT_multiview                    = "GL_EXT_multiview";
+
+// OVR extensions
+const char* const E_GL_OVR_multiview                    = "GL_OVR_multiview";
+const char* const E_GL_OVR_multiview2                   = "GL_OVR_multiview2";
+
+const char* const OVR_multiview_EXTs[] = { E_GL_OVR_multiview, E_GL_OVR_multiview2 };
+const int Num_OVR_multiview_EXTs = sizeof(OVR_multiview_EXTs) / sizeof(OVR_multiview_EXTs[0]);
 
 // #line and #include
 const char* const E_GL_GOOGLE_cpp_style_line_directive          = "GL_GOOGLE_cpp_style_line_directive";

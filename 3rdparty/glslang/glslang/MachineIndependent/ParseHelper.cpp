@@ -50,7 +50,8 @@ namespace glslang {
 TParseContext::TParseContext(TSymbolTable& symbolTable, TIntermediate& interm, bool parsingBuiltins,
                              int version, EProfile profile, const SpvVersion& spvVersion, EShLanguage language,
                              TInfoSink& infoSink, bool forwardCompatible, EShMessages messages) :
-            TParseContextBase(symbolTable, interm, parsingBuiltins, version, profile, spvVersion, language, infoSink, forwardCompatible, messages),
+            TParseContextBase(symbolTable, interm, parsingBuiltins, version, profile, spvVersion, language,
+                              infoSink, forwardCompatible, messages),
             inMain(false),
             blockName(nullptr),
             limits(resources.limits),
@@ -4777,8 +4778,22 @@ void TParseContext::checkNoShaderLayouts(const TSourceLoc& loc, const TShaderQua
 
     if (shaderQualifiers.geometry != ElgNone)
         error(loc, message, TQualifier::getGeometryString(shaderQualifiers.geometry), "");
+    if (shaderQualifiers.spacing != EvsNone)
+        error(loc, message, TQualifier::getVertexSpacingString(shaderQualifiers.spacing), "");
+    if (shaderQualifiers.order != EvoNone)
+        error(loc, message, TQualifier::getVertexOrderString(shaderQualifiers.order), "");
+    if (shaderQualifiers.pointMode)
+        error(loc, message, "point_mode", "");
     if (shaderQualifiers.invocations != TQualifier::layoutNotSet)
         error(loc, message, "invocations", "");
+    if (shaderQualifiers.earlyFragmentTests)
+        error(loc, message, "early_fragment_tests", "");
+    for (int i = 0; i < 3; ++i) {
+        if (shaderQualifiers.localSize[i] > 1)
+            error(loc, message, "local_size", "");
+        if (shaderQualifiers.localSizeSpecId[i] != TQualifier::layoutNotSet)
+            error(loc, message, "local_size id", "");
+    }
     if (shaderQualifiers.vertices != TQualifier::layoutNotSet) {
         if (language == EShLangGeometry)
             error(loc, message, "max_vertices", "");
@@ -4787,15 +4802,8 @@ void TParseContext::checkNoShaderLayouts(const TSourceLoc& loc, const TShaderQua
         else
             assert(0);
     }
-    for (int i = 0; i < 3; ++i) {
-        if (shaderQualifiers.localSize[i] > 1)
-            error(loc, message, "local_size", "");
-        if (shaderQualifiers.localSizeSpecId[i] != TQualifier::layoutNotSet)
-            error(loc, message, "local_size id", "");
-    }
     if (shaderQualifiers.blendEquation)
         error(loc, message, "blend equation", "");
-    // TBD: correctness: are any of these missing?  pixelCenterInteger, originUpperLeft, spacing, order, pointmode, earlyfragment, depth
 }
 
 // Correct and/or advance an object's offset layout qualifier.

@@ -278,6 +278,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.shaderBallot.comp",
         "spv.shaderDrawParams.vert",
         "spv.shaderGroupVote.comp",
+        "spv.shaderStencilExport.frag",
         "spv.shiftOps.frag",
         "spv.simpleFunctionCall.frag",
         "spv.simpleMat.vert",
@@ -332,7 +333,7 @@ INSTANTIATE_TEST_CASE_P(
         { "spv.ssbo.autoassign.frag", "main", 5, 10, 0, 15, 30, true, true },
         { "spv.ssboAlias.frag", "main", 0, 0, 0, 0, 83, true, false },
         { "spv.rw.autoassign.frag", "main", 5, 10, 20, 15, 30, true, true },
-        { "spv.register.autoassign.rangetest.frag", "main", 
+        { "spv.register.autoassign.rangetest.frag", "main",
                 glslang::TQualifier::layoutBindingEnd-2,
                 glslang::TQualifier::layoutBindingEnd+5,
                 20, 30, true, false },
@@ -357,6 +358,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.atomic.comp",
         "spv.glFragColor.frag",
         "spv.specConst.vert",
+        "spv.OVR_multiview.vert",
     })),
     FileNameAsCustomTestSuffix
 );

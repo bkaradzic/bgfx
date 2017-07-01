@@ -213,12 +213,14 @@ public:
 
 protected:
     struct TFlattenData {
-        TFlattenData() : nextBinding(TQualifier::layoutBindingEnd) { }
-        TFlattenData(int nb) : nextBinding(nb) { }
+        TFlattenData() : nextBinding(TQualifier::layoutBindingEnd),
+                         nextLocation(TQualifier::layoutLocationEnd) { }
+        TFlattenData(int nb, int nl) : nextBinding(nb), nextLocation(nl) { }
 
         TVector<TVariable*> members;     // individual flattened variables
-        TVector<int>        offsets;     // offset to next tree level
-        int                 nextBinding; // next binding to use.
+        TVector<int> offsets;            // offset to next tree level
+        unsigned int nextBinding;        // next binding to use.
+        unsigned int nextLocation;       // next location to use
     };
 
     void fixConstInit(const TSourceLoc&, const TString& identifier, TType& type, TIntermTyped*& initializer);

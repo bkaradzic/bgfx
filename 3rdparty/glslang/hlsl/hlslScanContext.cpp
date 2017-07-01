@@ -466,7 +466,7 @@ void HlslScanContext::fillInKeywordMap()
     (*SemanticMap)["SV_COVERAGE"] =               EbvSampleMask;
     (*SemanticMap)["SV_DEPTHGREATEREQUAL"] =      EbvFragDepthGreater;
     (*SemanticMap)["SV_DEPTHLESSEQUAL"] =         EbvFragDepthLesser;
-    (*SemanticMap)["SV_STENCILREF"] =             EbvStencilRef;
+    (*SemanticMap)["SV_STENCILREF"] =             EbvFragStencilRef;
 }
 
 void HlslScanContext::deleteKeywordMap()
