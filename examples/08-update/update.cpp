@@ -642,4 +642,4 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleUpdate, "08-update", "Updating m_textures.");
+ENTRY_IMPLEMENT_MAIN(ExampleUpdate, "08-update", "Updating textures.");
