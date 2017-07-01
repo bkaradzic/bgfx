@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "bgfx_utils.h"
+#include "imgui/imgui.h"
 
 #include <bx/allocator.h>
 #include <bx/string.h>
@@ -327,6 +328,12 @@ public:
 
 		m_width  = _width;
 		m_height = _height;
+		m_debug  = BGFX_DEBUG_NONE;
+		m_reset  = 0
+			| BGFX_RESET_VSYNC
+			| BGFX_RESET_CAPTURE
+			| BGFX_RESET_MSAA_X16
+			;
 
 		bgfx::init(
 			  args.m_type
@@ -335,30 +342,30 @@ public:
 			, &m_callback  // custom callback handler
 			, &m_allocator // custom allocator
 			);
-		bgfx::reset(m_width, m_height, BGFX_RESET_CAPTURE|BGFX_RESET_MSAA_X16);
+		bgfx::reset(m_width, m_height, m_reset);
 
 		// Enable debug text.
-		bgfx::setDebug(BGFX_DEBUG_TEXT);
+		bgfx::setDebug(m_debug);
 
 		// Set view 0 default viewport.
 		bgfx::setViewRect(0, 0, 0, 1280, 720);
 
 		// Set view 0 clear state.
 		bgfx::setViewClear(0
-						   , BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-						   , 0x303030ff
-						   , 1.0f
-						   , 0
-						   );
+			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
+			, 0x303030ff
+			, 1.0f
+			, 0
+			);
 
 		// Create vertex stream declaration.
 		PosColorVertex::init();
 
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(
-										 bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-										 , PosColorVertex::ms_decl
-										 );
+			  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
+			, PosColorVertex::ms_decl
+			);
 
 		// Create static index buffer.
 		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
@@ -366,12 +373,16 @@ public:
 		// Create program from shaders.
 		m_program = loadProgram("vs_callback", "fs_callback");
 
-		m_time = 0.0f;
+		m_time  = 0.0f;
 		m_frame = 0;
+
+		imguiCreate();
 	}
 
 	virtual int shutdown() BX_OVERRIDE
 	{
+		imguiDestroy();
+
 		// Cleanup.
 		bgfx::destroyIndexBuffer(m_ibh);
 		bgfx::destroyVertexBuffer(m_vbh);
@@ -387,11 +398,36 @@ public:
 
 	bool update() BX_OVERRIDE
 	{
+		bool exit = false;
+
 		// 5 second 60Hz video
 		if (m_frame < 300)
 		{
 			++m_frame;
+		}
+		else
+		{
+			m_reset &= ~BGFX_RESET_CAPTURE;
 
+			exit = entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState);
+
+			imguiBeginFrame(m_mouseState.m_mx
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
+
+			showExampleDialog(this);
+
+			imguiEndFrame();
+		}
+
+		if (!exit)
+		{
 			// This dummy draw call is here to make sure that view 0 is cleared
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
@@ -452,11 +488,15 @@ public:
 		return false;
 	}
 
-	BgfxCallback m_callback;
+	BgfxCallback  m_callback;
 	BgfxAllocator m_allocator;
+
+	entry::MouseState m_mouseState;
 
 	uint32_t m_width;
 	uint32_t m_height;
+	uint32_t m_debug;
+	uint32_t m_reset;
 
 	bgfx::VertexBufferHandle m_vbh;
 	bgfx::IndexBufferHandle m_ibh;
