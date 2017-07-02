@@ -2270,13 +2270,71 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </p>
 </dd></dl>
 
+<dl class="class">
+<dt id="_CPPv2N4bgfx8ViewModeE">
+<span id="bgfx::ViewMode"></span><span class="target" id="bgfxstructbgfx_1_1_view_mode"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">ViewMode</code><a class="headerlink" href="#_CPPv2N4bgfx8ViewModeE" title="Permalink to this definition">¶</a></dt>
+<dd><p>View mode sets draw call sort order. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_view_mode_t</span></code>. </dd>
+</dl>
+</p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Types</p>
+<dl class="type">
+<dt id="_CPPv2N4bgfx8ViewMode4EnumE">
+<span id="bgfx::ViewMode::Enum"></span><span class="target" id="bgfxstructbgfx_1_1_view_mode_1a4b88760e456f6cf104c9e49d171c91aa"></span><em class="property">enum </em><code class="descname">Enum</code><a class="headerlink" href="#_CPPv2N4bgfx8ViewMode4EnumE" title="Permalink to this definition">¶</a></dt>
+<dd><p>View modes: </p>
+<p><em>Values:</em></p>
+<dl class="member">
+<dt id="_CPPv2N4bgfx8ViewMode7DefaultE">
+<span id="bgfx::ViewMode::Default"></span><span class="target" id="bgfxstructbgfx_1_1_view_mode_1a4b88760e456f6cf104c9e49d171c91aaacc189b62f09dcf003826e409009ec906"></span><code class="descname">Default</code><a class="headerlink" href="#_CPPv2N4bgfx8ViewMode7DefaultE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default sort order. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx8ViewMode10SequentialE">
+<span id="bgfx::ViewMode::Sequential"></span><span class="target" id="bgfxstructbgfx_1_1_view_mode_1a4b88760e456f6cf104c9e49d171c91aaa8f3111e262d32c305a93b447fd7326d3"></span><code class="descname">Sequential</code><a class="headerlink" href="#_CPPv2N4bgfx8ViewMode10SequentialE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sort in the same order in which submit calls were called. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx8ViewMode14DepthAscendingE">
+<span id="bgfx::ViewMode::DepthAscending"></span><span class="target" id="bgfxstructbgfx_1_1_view_mode_1a4b88760e456f6cf104c9e49d171c91aaa6700d02ac6b36c9e1874bfd4462780db"></span><code class="descname">DepthAscending</code><a class="headerlink" href="#_CPPv2N4bgfx8ViewMode14DepthAscendingE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sort draw call depth in ascending order. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx8ViewMode15DepthDescendingE">
+<span id="bgfx::ViewMode::DepthDescending"></span><span class="target" id="bgfxstructbgfx_1_1_view_mode_1a4b88760e456f6cf104c9e49d171c91aaae89536701b2d0a969706fac6c2017db1"></span><code class="descname">DepthDescending</code><a class="headerlink" href="#_CPPv2N4bgfx8ViewMode15DepthDescendingE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sort draw call depth in descending order. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx8ViewMode5CountE">
+<span id="bgfx::ViewMode::Count"></span><span class="target" id="bgfxstructbgfx_1_1_view_mode_1a4b88760e456f6cf104c9e49d171c91aaafbbc12d1b61d713f30a996bc296bda11"></span><code class="descname">Count</code><a class="headerlink" href="#_CPPv2N4bgfx8ViewMode5CountE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</dd></dl>
+
 <dl class="function">
 <dt id="_CPPv2N4bgfx11setViewModeE7uint8_tN8ViewMode4EnumE">
-<span id="bgfx::setViewMode__uint8_t.ViewMode::Enum"></span><span class="target" id="bgfxnamespacebgfx_1a0c3c0121f555d23c214e0f1991b927ab"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewMode</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ViewMode::Enum <em>_mode</em> = ViewMode::Default<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11setViewModeE7uint8_tN8ViewMode4EnumE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set view into sequential mode. Draw calls will be sorted in the same order in which submit calls were called. </p>
+<span id="bgfx::setViewMode__uint8_t.ViewMode::Enum"></span><span class="target" id="bgfxnamespacebgfx_1a0c3c0121f555d23c214e0f1991b927ab"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewMode</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, <a class="reference internal" href="#_CPPv2N4bgfx8ViewModeE" title="bgfx::ViewMode">ViewMode</a>::<a class="reference internal" href="#_CPPv2N4bgfx8ViewMode4EnumE" title="bgfx::ViewMode::Enum">Enum</a> <em>_mode</em> = ViewMode::Default<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11setViewModeE7uint8_tN8ViewMode4EnumE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set view sorting mode. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_view_mode</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_mode</span></code> - <p>View sort mode. See <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_view_mode_1a4b88760e456f6cf104c9e49d171c91aa"><span class="std std-ref"><span class="pre">ViewMode::Enum</span></span></a></code>.</p>
+</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
@@ -2382,7 +2440,7 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <p><dl class="docutils">
 <dt><strong>Remark</strong></dt>
 <dd><ol class="arabic simple">
-<li>Use <code class="docutils literal"><span class="pre">BGFX_STATE_ALPHA_REF</span></code>, <code class="docutils literal"><span class="pre">BGFX_STATE_POINT_SIZE</span></code> and <code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_FUNC</span></code> macros to setup more complex states.</li>
+<li>To setup more complex states use: <code class="docutils literal"><span class="pre">BGFX_STATE_ALPHA_REF(_ref)</span></code>, <code class="docutils literal"><span class="pre">BGFX_STATE_POINT_SIZE(_size)</span></code>, <code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_FUNC(_src,</span> <span class="pre">_dst)</span></code>, <code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_FUNC_SEPARATE(_srcRGB,</span> <span class="pre">_dstRGB,</span> <span class="pre">_srcA,</span> <span class="pre">_dstA)</span></code> <code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_EQUATION(_equation)</span></code> <code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_EQUATION_SEPARATE(_equationRGB,</span> <span class="pre">_equationA)</span></code></li>
 <li><code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_EQUATION_ADD</span></code> is set when no other blend equation is specified.</li>
 </ol>
 </dd>
@@ -3004,9 +3062,50 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <cite>bgfx::dispatch</cite>.</p>
 <div class="section" id="id3">
 <h3>Buffers<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="_CPPv2N4bgfx6AccessE">
+<span id="bgfx::Access"></span><span class="target" id="bgfxstructbgfx_1_1_access"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">Access</code><a class="headerlink" href="#_CPPv2N4bgfx6AccessE" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="#bgfxstructbgfx_1_1_access"><span class="std std-ref">Access</span></a> mode enum. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_access_t</span></code>. </dd>
+</dl>
+</p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Types</p>
+<dl class="type">
+<dt id="_CPPv2N4bgfx6Access4EnumE">
+<span id="bgfx::Access::Enum"></span><span class="target" id="bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180"></span><em class="property">enum </em><code class="descname">Enum</code><a class="headerlink" href="#_CPPv2N4bgfx6Access4EnumE" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="#bgfxstructbgfx_1_1_access"><span class="std std-ref">Access</span></a>: </p>
+<p><em>Values:</em></p>
+<dl class="member">
+<dt id="_CPPv2N4bgfx6Access4ReadE">
+<span id="bgfx::Access::Read"></span><span class="target" id="bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180aa8c5d200b47f6eba1f1ad2dc4149bcd4"></span><code class="descname">Read</code><a class="headerlink" href="#_CPPv2N4bgfx6Access4ReadE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx6Access5WriteE">
+<span id="bgfx::Access::Write"></span><span class="target" id="bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180a10ed39a89f1207269328309b7238ad74"></span><code class="descname">Write</code><a class="headerlink" href="#_CPPv2N4bgfx6Access5WriteE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx6Access9ReadWriteE">
+<span id="bgfx::Access::ReadWrite"></span><span class="target" id="bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180a844968ef8ec9575127437553bd0b128b"></span><code class="descname">ReadWrite</code><a class="headerlink" href="#_CPPv2N4bgfx6Access9ReadWriteE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx6Access5CountE">
+<span id="bgfx::Access::Count"></span><span class="target" id="bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180af48902f20e66734d9cf257c4f1f31340"></span><code class="descname">Count</code><a class="headerlink" href="#_CPPv2N4bgfx6Access5CountE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</dd></dl>
+
 <dl class="function">
 <dt id="_CPPv2N4bgfx9setBufferE7uint8_t17IndexBufferHandleN6Access4EnumE">
-<span id="bgfx::setBuffer__uint8_t.IndexBufferHandle.Access::Enum"></span><span class="target" id="bgfxnamespacebgfx_1a94c3195ced868b94a232428561a21d56"></span>void <code class="descclassname">bgfx::</code><code class="descname">setBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, IndexBufferHandle <em>_handle</em>, Access::Enum <em>_access</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx9setBufferE7uint8_t17IndexBufferHandleN6Access4EnumE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::setBuffer__uint8_t.IndexBufferHandle.Access::Enum"></span><span class="target" id="bgfxnamespacebgfx_1a94c3195ced868b94a232428561a21d56"></span>void <code class="descclassname">bgfx::</code><code class="descname">setBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, IndexBufferHandle <em>_handle</em>, <a class="reference internal" href="#_CPPv2N4bgfx6AccessE" title="bgfx::Access">Access</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Access4EnumE" title="bgfx::Access::Enum">Enum</a> <em>_access</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx9setBufferE7uint8_t17IndexBufferHandleN6Access4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set compute index buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3017,7 +3116,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Index buffer handle. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Buffer access. See <code class="docutils literal"><span class="pre">Access::Enum</span></code>.</p>
+<li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Buffer access. See <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180"><span class="std std-ref"><span class="pre">Access::Enum</span></span></a></code>.</p>
 </li>
 </ul>
 </dd>
@@ -3027,7 +3126,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx9setBufferE7uint8_t18VertexBufferHandleN6Access4EnumE">
-<span id="bgfx::setBuffer__uint8_t.VertexBufferHandle.Access::Enum"></span><span class="target" id="bgfxnamespacebgfx_1a85f8bcfd59b5d298e0e0cfd69cdcf4ce"></span>void <code class="descclassname">bgfx::</code><code class="descname">setBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, VertexBufferHandle <em>_handle</em>, Access::Enum <em>_access</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx9setBufferE7uint8_t18VertexBufferHandleN6Access4EnumE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::setBuffer__uint8_t.VertexBufferHandle.Access::Enum"></span><span class="target" id="bgfxnamespacebgfx_1a85f8bcfd59b5d298e0e0cfd69cdcf4ce"></span>void <code class="descclassname">bgfx::</code><code class="descname">setBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, VertexBufferHandle <em>_handle</em>, <a class="reference internal" href="#_CPPv2N4bgfx6AccessE" title="bgfx::Access">Access</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Access4EnumE" title="bgfx::Access::Enum">Enum</a> <em>_access</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx9setBufferE7uint8_t18VertexBufferHandleN6Access4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set compute vertex buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3038,7 +3137,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Vertex buffer handle. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Buffer access. See <code class="docutils literal"><span class="pre">Access::Enum</span></code>.</p>
+<li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Buffer access. See <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180"><span class="std std-ref"><span class="pre">Access::Enum</span></span></a></code>.</p>
 </li>
 </ul>
 </dd>
@@ -3048,7 +3147,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx9setBufferE7uint8_t24DynamicIndexBufferHandleN6Access4EnumE">
-<span id="bgfx::setBuffer__uint8_t.DynamicIndexBufferHandle.Access::Enum"></span><span class="target" id="bgfxnamespacebgfx_1a353d269041bba99cc86345ad7ac6dd9f"></span>void <code class="descclassname">bgfx::</code><code class="descname">setBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, DynamicIndexBufferHandle <em>_handle</em>, Access::Enum <em>_access</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx9setBufferE7uint8_t24DynamicIndexBufferHandleN6Access4EnumE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::setBuffer__uint8_t.DynamicIndexBufferHandle.Access::Enum"></span><span class="target" id="bgfxnamespacebgfx_1a353d269041bba99cc86345ad7ac6dd9f"></span>void <code class="descclassname">bgfx::</code><code class="descname">setBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, DynamicIndexBufferHandle <em>_handle</em>, <a class="reference internal" href="#_CPPv2N4bgfx6AccessE" title="bgfx::Access">Access</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Access4EnumE" title="bgfx::Access::Enum">Enum</a> <em>_access</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx9setBufferE7uint8_t24DynamicIndexBufferHandleN6Access4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set compute dynamic index buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3059,7 +3158,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Dynamic index buffer handle. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Buffer access. See <code class="docutils literal"><span class="pre">Access::Enum</span></code>.</p>
+<li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Buffer access. See <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180"><span class="std std-ref"><span class="pre">Access::Enum</span></span></a></code>.</p>
 </li>
 </ul>
 </dd>
@@ -3069,7 +3168,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx9setBufferE7uint8_t25DynamicVertexBufferHandleN6Access4EnumE">
-<span id="bgfx::setBuffer__uint8_t.DynamicVertexBufferHandle.Access::Enum"></span><span class="target" id="bgfxnamespacebgfx_1a02cd00cdf0cb59d423d03b7358331bff"></span>void <code class="descclassname">bgfx::</code><code class="descname">setBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, DynamicVertexBufferHandle <em>_handle</em>, Access::Enum <em>_access</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx9setBufferE7uint8_t25DynamicVertexBufferHandleN6Access4EnumE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::setBuffer__uint8_t.DynamicVertexBufferHandle.Access::Enum"></span><span class="target" id="bgfxnamespacebgfx_1a02cd00cdf0cb59d423d03b7358331bff"></span>void <code class="descclassname">bgfx::</code><code class="descname">setBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, DynamicVertexBufferHandle <em>_handle</em>, <a class="reference internal" href="#_CPPv2N4bgfx6AccessE" title="bgfx::Access">Access</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Access4EnumE" title="bgfx::Access::Enum">Enum</a> <em>_access</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx9setBufferE7uint8_t25DynamicVertexBufferHandleN6Access4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set compute dynamic vertex buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3080,7 +3179,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Dynamic vertex buffer handle. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Buffer access. See <code class="docutils literal"><span class="pre">Access::Enum</span></code>.</p>
+<li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Buffer access. See <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180"><span class="std std-ref"><span class="pre">Access::Enum</span></span></a></code>.</p>
 </li>
 </ul>
 </dd>
@@ -3090,7 +3189,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx9setBufferE7uint8_t20IndirectBufferHandleN6Access4EnumE">
-<span id="bgfx::setBuffer__uint8_t.IndirectBufferHandle.Access::Enum"></span><span class="target" id="bgfxnamespacebgfx_1a52b241b7370222eea882474910cd49b4"></span>void <code class="descclassname">bgfx::</code><code class="descname">setBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, IndirectBufferHandle <em>_handle</em>, Access::Enum <em>_access</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx9setBufferE7uint8_t20IndirectBufferHandleN6Access4EnumE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::setBuffer__uint8_t.IndirectBufferHandle.Access::Enum"></span><span class="target" id="bgfxnamespacebgfx_1a52b241b7370222eea882474910cd49b4"></span>void <code class="descclassname">bgfx::</code><code class="descname">setBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, IndirectBufferHandle <em>_handle</em>, <a class="reference internal" href="#_CPPv2N4bgfx6AccessE" title="bgfx::Access">Access</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Access4EnumE" title="bgfx::Access::Enum">Enum</a> <em>_access</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx9setBufferE7uint8_t20IndirectBufferHandleN6Access4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set compute indirect buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3101,7 +3200,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Indirect buffer handle. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Buffer access. See <code class="docutils literal"><span class="pre">Access::Enum</span></code>.</p>
+<li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Buffer access. See <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180"><span class="std std-ref"><span class="pre">Access::Enum</span></span></a></code>.</p>
 </li>
 </ul>
 </dd>
@@ -3114,7 +3213,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <h3>Images<a class="headerlink" href="#images" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="_CPPv2N4bgfx8setImageE7uint8_t13UniformHandle13TextureHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE">
-<span id="bgfx::setImage__uint8_t.UniformHandle.TextureHandle.uint8_t.Access::Enum.TextureFormat::Enum"></span><span class="target" id="bgfxnamespacebgfx_1ad8db33907881ef115e47ef9702c25f4d"></span>void <code class="descclassname">bgfx::</code><code class="descname">setImage</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, UniformHandle <em>_sampler</em>, TextureHandle <em>_handle</em>, uint8_t <em>_mip</em>, Access::Enum <em>_access</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em> = TextureFormat::Count<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8setImageE7uint8_t13UniformHandle13TextureHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::setImage__uint8_t.UniformHandle.TextureHandle.uint8_t.Access::Enum.TextureFormat::Enum"></span><span class="target" id="bgfxnamespacebgfx_1ad8db33907881ef115e47ef9702c25f4d"></span>void <code class="descclassname">bgfx::</code><code class="descname">setImage</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, UniformHandle <em>_sampler</em>, TextureHandle <em>_handle</em>, uint8_t <em>_mip</em>, <a class="reference internal" href="#_CPPv2N4bgfx6AccessE" title="bgfx::Access">Access</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Access4EnumE" title="bgfx::Access::Enum">Enum</a> <em>_access</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em> = TextureFormat::Count<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8setImageE7uint8_t13UniformHandle13TextureHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set compute image from texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3129,7 +3228,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_mip</span></code> - <p>Mip level. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Texture access. See <code class="docutils literal"><span class="pre">Access::Enum</span></code>. </p>
+<li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Texture access. See <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180"><span class="std std-ref"><span class="pre">Access::Enum</span></span></a></code>. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span class="std std-ref"><span class="pre">TextureFormat::Enum</span></span></a></code>.</p>
 </li>
