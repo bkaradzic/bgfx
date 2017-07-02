@@ -50,17 +50,22 @@ void showExampleDialog(entry::AppI* _app)
 			cmdExec(command);
 		}
 
-		if (ImGui::Button("Restart") )
+		if (ImGui::Button(ICON_FA_REPEAT " Restart" ) )
 		{
 			cmdExec("app restart");
 		}
 
 		ImGui::SameLine();
-		if (ImGui::Button("Next") )
+		if (ImGui::Button(ICON_KI_NEXT " Next") )
 		{
 			cmdExec("app restart next");
 		}
 
+		ImGui::SameLine(0.0f, 25.0f);
+		if (ImGui::Button(ICON_KI_EXIT " Exit") )
+		{
+			cmdExec("exit");
+		}
 	}
 
 #if 0
