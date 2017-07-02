@@ -348,6 +348,7 @@ namespace bgfx
 	///
 	struct ViewMode
 	{
+		/// View modes:
 		enum Enum
 		{
 			Default,         //!< Default sort order.
