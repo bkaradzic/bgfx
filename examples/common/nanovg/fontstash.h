@@ -247,7 +247,11 @@ int fons__tt_getGlyphKernAdvance(FONSttFontImpl *font, int glyph1, int glyph2)
 static void* fons__tmpalloc(size_t size, void* up);
 static void fons__tmpfree(void* ptr, void* up);
 #else
+#if defined(__linux__) || defined(__APPLE__)
 #	include <malloc.h>
+#else
+#	include <stdlib.h>
+#endif
 #	include <string.h>
 #endif // 0
 
