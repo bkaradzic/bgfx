@@ -2203,8 +2203,10 @@ namespace bgfx
 		, uint8_t _7 = UINT8_MAX
 		);
 
-	/// Set view into sequential mode. Draw calls will be sorted in the same
-	/// order in which submit calls were called.
+	/// Set view sorting mode.
+	///
+	/// @param[in] _id View id.
+	/// @param[in] _mode View sort mode. See `ViewMode::Enum`.
 	///
 	/// @attention C99 equivalent is `bgfx_set_view_mode`.
 	///
@@ -2290,8 +2292,13 @@ namespace bgfx
 	///   `BGFX_STATE_BLEND_INV_FACTOR` blend modes.
 	///
 	/// @remarks
-	///   1. Use `BGFX_STATE_ALPHA_REF`, `BGFX_STATE_POINT_SIZE` and
-	///      `BGFX_STATE_BLEND_FUNC` macros to setup more complex states.
+	///   1. To setup more complex states use:
+	///      `BGFX_STATE_ALPHA_REF(_ref)`,
+	///      `BGFX_STATE_POINT_SIZE(_size)`,
+	///      `BGFX_STATE_BLEND_FUNC(_src, _dst)`,
+	///      `BGFX_STATE_BLEND_FUNC_SEPARATE(_srcRGB, _dstRGB, _srcA, _dstA)`
+	///      `BGFX_STATE_BLEND_EQUATION(_equation)`
+	///      `BGFX_STATE_BLEND_EQUATION_SEPARATE(_equationRGB, _equationA)`
 	///   2. `BGFX_STATE_BLEND_EQUATION_ADD` is set when no other blend
 	///      equation is specified.
 	///

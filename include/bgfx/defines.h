@@ -71,6 +71,7 @@
 #define BGFX_STATE_PT_SHIFT                48                           //!< Primitive type bit shift.
 #define BGFX_STATE_PT_MASK                 UINT64_C(0x0007000000000000) //!< Primitive type bit mask.
 
+/// See BGFX_STATE_POINT_SIZE(_size) helper macro.
 #define BGFX_STATE_POINT_SIZE_SHIFT        52                           //!< Point size bit shift.
 #define BGFX_STATE_POINT_SIZE_MASK         UINT64_C(0x00f0000000000000) //!< Point size bit mask.
 
@@ -84,7 +85,6 @@
 #define BGFX_STATE_RESERVED_SHIFT          61                           //!< Internal bits shift.
 #define BGFX_STATE_RESERVED_MASK           UINT64_C(0xe000000000000000) //!< Internal bits mask.
 
-/// See BGFX_STATE_POINT_SIZE(_size) helper macro.
 #define BGFX_STATE_NONE                    UINT64_C(0x0000000000000000) //!< No state.
 #define BGFX_STATE_MASK                    UINT64_C(0xffffffffffffffff) //!< State mask.
 
