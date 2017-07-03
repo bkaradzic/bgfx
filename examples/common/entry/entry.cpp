@@ -385,26 +385,56 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	static char s_restartArgs[1024] = { '\0' };
 
+	static AppI* getCurrentApp(AppI* _set = NULL)
+	{
+		if (NULL != _set)
+		{
+			s_currentApp = _set;
+		}
+		else if (NULL == s_currentApp)
+		{
+			s_currentApp = getFirstApp();
+		}
+
+		return s_currentApp;
+	}
+
+	static AppI* getNextWrap(AppI* _app)
+	{
+		AppI* next = _app->getNext();
+		if (NULL != next)
+		{
+			return next;
+		}
+
+		return getFirstApp();
+	}
+
 	int cmdApp(CmdContext* /*_context*/, void* /*_userData*/, int _argc, char const* const* _argv)
 	{
-		if (0 == bx::strCmp(_argv[1], "restart")
-		&&  NULL != s_currentApp)
+		if (0 == bx::strCmp(_argv[1], "restart") )
 		{
 			if (2 == _argc)
 			{
-				bx::strCopy(s_restartArgs, BX_COUNTOF(s_restartArgs), s_currentApp->getName() );
+				bx::strCopy(s_restartArgs, BX_COUNTOF(s_restartArgs), getCurrentApp()->getName() );
 				return bx::kExitSuccess;
 			}
 
 			if (0 == bx::strCmp(_argv[2], "next") )
 			{
-				AppI* next = s_currentApp->getNext();
-				if (NULL == next)
+				AppI* next = getNextWrap(getCurrentApp() );
+				bx::strCopy(s_restartArgs, BX_COUNTOF(s_restartArgs), next->getName() );
+				return bx::kExitSuccess;
+			}
+			else if (0 == bx::strCmp(_argv[2], "prev") )
+			{
+				AppI* prev = getCurrentApp();
+				for (AppI* app = getNextWrap(prev); app != getCurrentApp(); app = getNextWrap(app) )
 				{
-					next = getFirstApp();
+					prev = app;
 				}
 
-				bx::strCopy(s_restartArgs, BX_COUNTOF(s_restartArgs), next->getName() );
+				bx::strCopy(s_restartArgs, BX_COUNTOF(s_restartArgs), prev->getName() );
 				return bx::kExitSuccess;
 			}
 
@@ -593,8 +623,7 @@ restart:
 		}
 		else
 		{
-			s_currentApp = NULL == selected ? getFirstApp() : selected;
-			result = runApp(s_currentApp, _argc, _argv);
+			result = runApp(getCurrentApp(selected), _argc, _argv);
 		}
 
 		if (0 != bx::strLen(s_restartArgs) )
