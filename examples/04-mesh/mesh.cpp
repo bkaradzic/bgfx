@@ -161,4 +161,4 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleMesh, "04-mesh", "Description: Loading meshes.");
+ENTRY_IMPLEMENT_MAIN(ExampleMesh, "04-mesh", "Loading meshes.");

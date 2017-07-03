@@ -264,4 +264,4 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleInstancing, "05-instancing", "Description: Geometry instancing.");
+ENTRY_IMPLEMENT_MAIN(ExampleInstancing, "05-instancing", "Geometry instancing.");

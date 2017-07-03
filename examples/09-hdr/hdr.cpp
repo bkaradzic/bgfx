@@ -592,4 +592,4 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleHDR, "09-hdr", "Description: Using multiple views with frame buffers, and view order remapping.");
+ENTRY_IMPLEMENT_MAIN(ExampleHDR, "09-hdr", "Using multiple views with frame buffers, and view order remapping.");

@@ -377,4 +377,4 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleBump, "06-bump", "Description: Loading textures.");
+ENTRY_IMPLEMENT_MAIN(ExampleBump, "06-bump", "Loading textures.");
