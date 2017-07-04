@@ -113,13 +113,13 @@ struct Camera
 		};
 
 		float ll[2];
-		latLongFromVec(ll[0], ll[1], toPosNorm);
+		bx::vec3ToLatLong(&ll[0], &ll[1], toPosNorm);
 		ll[0] += consume[0];
 		ll[1] -= consume[1];
-		ll[1] = bx::fclamp(ll[1], 0.02f, 0.98f);
+		ll[1]  = bx::fclamp(ll[1], 0.02f, 0.98f);
 
 		float tmp[3];
-		vecFromLatLong(tmp, ll[0], ll[1]);
+		bx::vec3FromLatLong(tmp, ll[0], ll[1]);
 
 		float diff[3];
 		diff[0] = (tmp[0]-toPosNorm[0])*toPosLen;
@@ -146,30 +146,6 @@ struct Camera
 		m_pos.curr[0] = bx::flerp(m_pos.curr[0], m_pos.dest[0], amount);
 		m_pos.curr[1] = bx::flerp(m_pos.curr[1], m_pos.dest[1], amount);
 		m_pos.curr[2] = bx::flerp(m_pos.curr[2], m_pos.dest[2], amount);
-	}
-
-	static inline void vecFromLatLong(float _vec[3], float _u, float _v)
-	{
-		const float phi   = _u * 2.0f*bx::kPi;
-		const float theta = _v * bx::kPi;
-
-		const float st = bx::fsin(theta);
-		const float sp = bx::fsin(phi);
-		const float ct = bx::fcos(theta);
-		const float cp = bx::fcos(phi);
-
-		_vec[0] = -st*sp;
-		_vec[1] = ct;
-		_vec[2] = -st*cp;
-	}
-
-	static inline void latLongFromVec(float& _u, float& _v, const float _vec[3])
-	{
-		const float phi   = bx::fatan2(_vec[0], _vec[2]);
-		const float theta = bx::facos(_vec[1]);
-
-		_u = (bx::kPi + phi)*bx::kInvPi*0.5f;
-		_v = theta*bx::kInvPi;
 	}
 
 	struct Interp3f
