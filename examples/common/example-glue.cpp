@@ -99,7 +99,7 @@ void showExampleDialog(entry::AppI* _app)
 
 		if (ImGui::Combo("Renderer", &current, items, num) )
 		{
-			restart = true;
+			cmdExec("app restart");
 		}
 	}
 #endif // 0
