@@ -50,6 +50,8 @@ void showExampleDialog(entry::AppI* _app)
 			cmdExec(command);
 		}
 
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(3.0f, 3.0f) );
+
 		if (ImGui::Button(ICON_FA_REPEAT " Restart" ) )
 		{
 			cmdExec("app restart");
@@ -72,6 +74,8 @@ void showExampleDialog(entry::AppI* _app)
 		{
 			cmdExec("exit");
 		}
+
+		ImGui::PopStyleVar();
 	}
 
 #if 0
