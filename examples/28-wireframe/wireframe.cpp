@@ -311,11 +311,11 @@ public:
 
 		// Set view 0 clear state.
 		bgfx::setViewClear(0
-				, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-				, 0x303030ff
-				, 1.0f
-				, 0
-				);
+			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
+			, 0x303030ff
+			, 1.0f
+			, 0
+			);
 
 		m_wfProgram   = loadProgram("vs_wf_wireframe", "fs_wf_wireframe");
 		m_meshProgram = loadProgram("vs_wf_mesh",      "fs_wf_mesh");
@@ -372,14 +372,14 @@ public:
 			}
 
 			imguiBeginFrame(m_mouseState.m_mx
-					,  m_mouseState.m_my
-					, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-					,  m_mouseState.m_mz
-					, uint16_t(m_width)
-					, uint16_t(m_height)
-					);
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
 
 			showExampleDialog(this);
 
@@ -472,25 +472,25 @@ public:
 			if (DrawMode::Wireframe == m_drawMode)
 			{
 				uint64_t state = 0
-							   | BGFX_STATE_RGB_WRITE
-							   | BGFX_STATE_ALPHA_WRITE
-							   | BGFX_STATE_DEPTH_WRITE
-							   | BGFX_STATE_CULL_CCW
-							   | BGFX_STATE_MSAA
-							   | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
-							   ;
+					| BGFX_STATE_RGB_WRITE
+					| BGFX_STATE_ALPHA_WRITE
+					| BGFX_STATE_DEPTH_WRITE
+					| BGFX_STATE_CULL_CCW
+					| BGFX_STATE_MSAA
+					| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
+					;
 				meshSubmit(m_meshes[m_meshSelection].m_mesh, 0, m_wfProgram, m_meshes[m_meshSelection].m_mtx, state);
 			}
 			else
 			{
 				uint64_t state = 0
-							   | BGFX_STATE_RGB_WRITE
-							   | BGFX_STATE_ALPHA_WRITE
-							   | BGFX_STATE_DEPTH_TEST_LESS
-							   | BGFX_STATE_DEPTH_WRITE
-							   | BGFX_STATE_CULL_CCW
-							   | BGFX_STATE_MSAA
-							   ;
+					| BGFX_STATE_RGB_WRITE
+					| BGFX_STATE_ALPHA_WRITE
+					| BGFX_STATE_DEPTH_TEST_LESS
+					| BGFX_STATE_DEPTH_WRITE
+					| BGFX_STATE_CULL_CCW
+					| BGFX_STATE_MSAA
+					;
 				meshSubmit(m_meshes[m_meshSelection].m_mesh, 0, m_meshProgram, m_meshes[m_meshSelection].m_mtx, state);
 			}
 
