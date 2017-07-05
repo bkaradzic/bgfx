@@ -57,13 +57,13 @@ namespace bgfx
 
 	pRENDERDOC_GetAPI RENDERDOC_GetAPI;
 	static RENDERDOC_API_1_1_0* s_renderDoc = NULL;
-	static void* s_RenderDocDll = NULL;
+	static void* s_renderDocDll = NULL;
 
 	void* loadRenderDoc()
 	{
 		if (NULL != s_renderDoc)
 		{
-			return s_RenderDocDll;
+			return s_renderDocDll;
 		}
 
 		// Skip loading RenderDoc when IntelGPA is present to avoid RenderDoc crash.
@@ -91,6 +91,8 @@ namespace bgfx
 				s_renderDoc->SetCaptureOptionU32(eRENDERDOC_Option_SaveAllInitials, 1);
 
 				s_renderDoc->MaskOverlayBits(eRENDERDOC_Overlay_None, eRENDERDOC_Overlay_None);
+
+				s_renderDocDll = renderDocDll;
 			}
 			else
 			{
