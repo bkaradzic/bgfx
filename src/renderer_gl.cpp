@@ -898,15 +898,6 @@ namespace bgfx { namespace gl
 		NULL
 	};
 
-	static const char* s_OES_texture_3D[] =
-	{
-		"texture3D",
-		"texture3DProj",
-		"texture3DLod",
-		"texture3DProjLod",
-		NULL
-	};
-
 	static const char* s_uisamplers[] =
 	{
 		"isampler2D",
@@ -922,6 +913,13 @@ namespace bgfx { namespace gl
 	{
 		"texelFetch",
 		"texelFetchOffset",
+		NULL
+	};
+
+	static const char* s_texture3D[] =
+	{
+		"sampler3D",
+		"sampler3DArray",
 		NULL
 	};
 
@@ -5462,7 +5460,7 @@ namespace bgfx { namespace gl
 					bool usesShadowSamplers = !!bx::findIdentifierMatch(code, s_EXT_shadow_samplers);
 
 					bool usesTexture3D = s_extension[Extension::OES_texture_3D].m_supported
-						&& bx::findIdentifierMatch(code, s_OES_texture_3D)
+						&& bx::findIdentifierMatch(code, s_texture3D)
 						;
 
 					bool usesTextureLod = !!bx::findIdentifierMatch(code, s_EXT_shader_texture_lod);
@@ -5630,11 +5628,12 @@ namespace bgfx { namespace gl
 					const bool usesIUsamplers   = !!bx::findIdentifierMatch(code, s_uisamplers);
 					const bool usesTexelFetch   = !!bx::findIdentifierMatch(code, s_texelFetch);
 					const bool usesTextureArray = !!bx::findIdentifierMatch(code, s_textureArray);
+					const bool usesTexture3D    = !!bx::findIdentifierMatch(code, s_texture3D);
 					const bool usesTextureMS    = !!bx::findIdentifierMatch(code, s_ARB_texture_multisample);
 					const bool usesPacking      = !!bx::findIdentifierMatch(code, s_ARB_shading_language_packing);
 
 					uint32_t version =
-						  usesIUsamplers|| usesTexelFetch || usesGpuShader5 ? 130
+						  usesTextureArray || usesTexture3D || usesIUsamplers|| usesTexelFetch || usesGpuShader5 ? 130
 						: usesTextureLod ? 120
 						: 120
 						;
@@ -5685,7 +5684,7 @@ namespace bgfx { namespace gl
 							);
 					}
 
-//					if (usesTexture3D)
+					if (usesTexture3D)
 					{
 						writeString(&writer
 							, "#define texture3DEXT    texture3D\n"
