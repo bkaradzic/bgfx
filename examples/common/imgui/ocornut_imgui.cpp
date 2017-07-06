@@ -255,13 +255,11 @@ struct OcornutImguiContext
 			, 0
 			, bgfx::copy(data, width*height*4)
 			);
-
-		ImGui::InitDockContext();
 	}
 
 	void destroy()
 	{
-		ImGui::ShutdownDockContext();
+		ImGui::ShutdownDock();
 		ImGui::Shutdown();
 
 		bgfx::destroyUniform(s_tex);
