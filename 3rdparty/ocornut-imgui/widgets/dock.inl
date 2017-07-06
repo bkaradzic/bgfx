@@ -1,17 +1,4 @@
-#include "imgui.h"
-#define IMGUI_DEFINE_PLACEMENT_NEW
-#include "imgui_internal.h"
 
-
-ImVec2 operator+(ImVec2 lhs, ImVec2 rhs) {
-    return ImVec2(lhs.x+rhs.x, lhs.y+rhs.y);
-}
-ImVec2 operator-(ImVec2 lhs, ImVec2 rhs) {
-    return ImVec2(lhs.x-rhs.x, lhs.y-rhs.y);
-}
-ImVec2 operator*(ImVec2 lhs, float rhs) {
-    return ImVec2(lhs.x*rhs, lhs.y*rhs);
-}
 
 #define ASSERT(x) IM_ASSERT(x)
 
