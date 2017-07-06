@@ -4612,7 +4612,8 @@ namespace bgfx { namespace gl
 		, const GLvoid* _data
 	)
 	{
-		if (_target == GL_TEXTURE_3D)
+		if (_target == GL_TEXTURE_3D
+		||  _target == GL_TEXTURE_2D_ARRAY)
 		{
 			GL_CHECK(glCompressedTexSubImage3D(
 				  _target
