@@ -108,6 +108,7 @@ static const InputBinding s_bindingView[] =
 
 	{ entry::Key::Key0,      entry::Modifier::None,       1, NULL, "view zoom 1.0\n"
 	                                                               "view rotate 0\n"
+	                                                               "view cubemap\n"
 	                                                               "view pan\n"              },
 	{ entry::Key::Plus,      entry::Modifier::None,       1, NULL, "view zoom +0.1"          },
 	{ entry::Key::Minus,     entry::Modifier::None,       1, NULL, "view zoom -0.1"          },
@@ -115,10 +116,14 @@ static const InputBinding s_bindingView[] =
 	{ entry::Key::KeyZ,      entry::Modifier::None,       1, NULL, "view rotate -90"         },
 	{ entry::Key::KeyZ,      entry::Modifier::LeftShift,  1, NULL, "view rotate +90"         },
 
-	{ entry::Key::Up,        entry::Modifier::None,       1, NULL, "view file-up"            },
-	{ entry::Key::Down,      entry::Modifier::None,       1, NULL, "view file-down"          },
-	{ entry::Key::PageUp,    entry::Modifier::None,       1, NULL, "view file-pgup"          },
-	{ entry::Key::PageDown,  entry::Modifier::None,       1, NULL, "view file-pgdown"        },
+	{ entry::Key::Up,        entry::Modifier::None,       1, NULL, "view pan\n"
+	                                                               "view file-up"            },
+	{ entry::Key::Down,      entry::Modifier::None,       1, NULL, "view pan\n"
+	                                                               "view file-down"          },
+	{ entry::Key::PageUp,    entry::Modifier::None,       1, NULL, "view pan\n"
+	                                                               "view file-pgup"          },
+	{ entry::Key::PageDown,  entry::Modifier::None,       1, NULL, "view pan\n"
+	                                                               "view file-pgdown"        },
 
 	{ entry::Key::Left,      entry::Modifier::None,       1, NULL, "view layer prev"         },
 	{ entry::Key::Right,     entry::Modifier::None,       1, NULL, "view layer next"         },
@@ -159,6 +164,8 @@ struct View
 		, m_abgr(UINT32_MAX)
 		, m_posx(0.0f)
 		, m_posy(0.0f)
+		, m_angx(0.0f)
+		, m_angy(0.0f)
 		, m_zoom(1.0f)
 		, m_angle(0.0f)
 		, m_filter(true)
@@ -269,6 +276,43 @@ struct View
 				{
 					m_posx = 0.0f;
 					m_posy = 0.0f;
+				}
+			}
+			else if (0 == bx::strCmp(_argv[1], "cubemap") )
+			{
+				if (_argc >= 3)
+				{
+					if (_argc >= 4)
+					{
+						float yy;
+						bx::fromString(&yy, _argv[3]);
+						if (_argv[3][0] == '+'
+						||  _argv[3][0] == '-')
+						{
+							m_angy += bx::toRad(yy);
+						}
+						else
+						{
+							m_angy = bx::toRad(yy);
+						}
+					}
+
+					float xx;
+					bx::fromString(&xx, _argv[2]);
+					if (_argv[2][0] == '+'
+					||  _argv[2][0] == '-')
+					{
+						m_angx += bx::toRad(xx);
+					}
+					else
+					{
+						m_angx = bx::toRad(xx);
+					}
+				}
+				else
+				{
+					m_angx = 0.0f;
+					m_angy = 0.0f;
 				}
 			}
 			else if (0 == bx::strCmp(_argv[1], "zoom") )
@@ -455,6 +499,8 @@ struct View
 	uint32_t m_abgr;
 	float    m_posx;
 	float    m_posy;
+	float    m_angx;
+	float    m_angy;
 	float    m_zoom;
 	float    m_angle;
 	bool     m_filter;
@@ -854,10 +900,12 @@ int _main_(int _argc, char** _argv)
 	Interpolator mip(0.0f);
 	Interpolator layer(0.0f);
 	Interpolator zoom(1.0f);
-	InterpolatorAngle angle(0.0f);
 	Interpolator scale(1.0f);
 	Interpolator posx(0.0f);
 	Interpolator posy(0.0f);
+	InterpolatorAngle angle(0.0f);
+	InterpolatorAngle angx(0.0f);
+	InterpolatorAngle angy(0.0f);
 
 	const char* filePath = _argc < 2 ? "" : _argv[1];
 	bool directory = false;
@@ -913,7 +961,6 @@ int _main_(int _argc, char** _argv)
 				);
 
 			static bool help = false;
-
 			static bool mouseDelta = false;
 			if (!mouseDelta)
 			{
@@ -929,22 +976,58 @@ int _main_(int _argc, char** _argv)
 				cmdExec(exec);
 			}
 
-			if (mouseState.m_buttons[entry::MouseButton::Left] != mouseStatePrev.m_buttons[entry::MouseButton::Left])
+			const float xDelta = float(mouseStatePrev.m_mx - mouseState.m_mx);
+			const float yDelta = float(mouseStatePrev.m_my - mouseState.m_my);
+
+			if (!ImGui::MouseOverArea()
+			&&  !help
+			&&  mouseState.m_buttons[entry::MouseButton::Left] != mouseStatePrev.m_buttons[entry::MouseButton::Left])
 			{
 				dragging = !!mouseState.m_buttons[entry::MouseButton::Left];
 			}
 
 			if (dragging)
 			{
-				float xDelta = float(mouseStatePrev.m_mx - mouseState.m_mx);
-				float yDelta = float(mouseStatePrev.m_my - mouseState.m_my);
-
-				char exec[64];
-				bx::snprintf(exec, BX_COUNTOF(exec), "view pan %+f %+f", xDelta, yDelta);
-				cmdExec(exec);
+				if (view.m_info.cubeMap)
+				{
+					char exec[64];
+					bx::snprintf(exec, BX_COUNTOF(exec), "view cubemap %+f %+f", -yDelta, -xDelta);
+					cmdExec(exec);
+				}
+				else
+				{
+					char exec[64];
+					bx::snprintf(exec, BX_COUNTOF(exec), "view pan %+f %+f", xDelta, yDelta);
+					cmdExec(exec);
+				}
 			}
 
 			mouseStatePrev = mouseState;
+
+			if (ImGui::BeginPopupContextVoid("Menu") )
+			{
+				if (ImGui::MenuItem("Open") )
+				{
+				}
+
+				if (ImGui::MenuItem("Save As") )
+				{
+				}
+
+				ImGui::Separator();
+				if (ImGui::MenuItem("Help") )
+				{
+					view.m_help = true;
+				}
+
+				ImGui::Separator();
+				if (ImGui::MenuItem("Exit") )
+				{
+					cmdExec("exit");
+				}
+
+				ImGui::EndPopup();
+			}
 
 			if (help == false
 			&&  help != view.m_help)
@@ -1127,10 +1210,8 @@ int _main_(int _argc, char** _argv)
 
 			if (view.m_fit)
 			{
-				scale.set(
-					bx::fmin( float(width)  / float(view.m_info.width)
-					,           float(height) / float(view.m_info.height)
-					)
+				scale.set(bx::fmin(float(width)  / float(view.m_info.width)
+					,              float(height) / float(view.m_info.height) )
 					, 0.1f
 					);
 			}
@@ -1141,6 +1222,8 @@ int _main_(int _argc, char** _argv)
 
 			zoom.set(view.m_zoom, transitionTime);
 			angle.set(view.m_angle, transitionTime);
+			angx.set(view.m_angx, transitionTime);
+			angy.set(view.m_angy, transitionTime);
 
 			float ss = scale.getValue()
 				* zoom.getValue()
@@ -1159,7 +1242,8 @@ int _main_(int _argc, char** _argv)
 			bgfx::setTransform(rotz);
 
 			float mtx[16];
-			bx::mtxRotateXY(mtx, 0.0f, time);
+			bx::mtxRotateXY(mtx, angx.getValue(), angy.getValue() );
+
 			bgfx::setUniform(u_mtx, mtx);
 
 			mip.set(float(view.m_mip), 0.5f);
