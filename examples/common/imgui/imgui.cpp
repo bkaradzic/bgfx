@@ -64,10 +64,11 @@ static FontRangeMerge s_fontRangeMerge[] =
 	{ s_iconsFontAwesomeTtf, sizeof(s_iconsFontAwesomeTtf), { ICON_MIN_FA, ICON_MAX_FA, 0 } },
 };
 
+static void* memAlloc(size_t _size);
+static void memFree(void* _ptr);
+
 struct OcornutImguiContext
 {
-	static void* memAlloc(size_t _size);
-	static void memFree(void* _ptr);
 	static void renderDrawLists(ImDrawData* _drawData);
 
 	void render(ImDrawData* _drawData)
@@ -460,12 +461,12 @@ struct OcornutImguiContext
 
 static OcornutImguiContext s_ctx;
 
-void* OcornutImguiContext::memAlloc(size_t _size)
+static void* memAlloc(size_t _size)
 {
 	return BX_ALLOC(s_ctx.m_allocator, _size);
 }
 
-void OcornutImguiContext::memFree(void* _ptr)
+static void memFree(void* _ptr)
 {
 	BX_FREE(s_ctx.m_allocator, _ptr);
 }
@@ -495,16 +496,6 @@ void imguiEndFrame()
 	s_ctx.endFrame();
 }
 
-void* imguiMalloc(size_t _size, void*)
-{
-	return BX_ALLOC(s_ctx.m_allocator, _size);
-}
-
-void imguiFree(void* _ptr, void*)
-{
-	BX_FREE(s_ctx.m_allocator, _ptr);
-}
-
 namespace ImGui
 {
 	void PushFont(Font::Enum _font)
@@ -519,8 +510,8 @@ BX_PRAGMA_DIAGNOSTIC_PUSH();
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunknown-pragmas")
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-but-set-variable"); // warning: variable ‘L1’ set but not used
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wtype-limits"); // warning: comparison is always true due to limited range of data type
-#define STBTT_malloc(_size, _userData) imguiMalloc(_size, _userData)
-#define STBTT_free(_ptr, _userData) imguiFree(_ptr, _userData)
+#define STBTT_malloc(_size, _userData) memAlloc(_size)
+#define STBTT_free(_ptr, _userData) memFree(_ptr)
 #define STB_RECT_PACK_IMPLEMENTATION
 #include <stb/stb_rect_pack.h>
 #define STB_TRUETYPE_IMPLEMENTATION
