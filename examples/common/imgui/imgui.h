@@ -47,11 +47,10 @@ inline uint32_t imguiRGBA(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 255)
 
 namespace bx { struct AllocatorI; }
 
-void imguiCreate(const void* _data = NULL, uint32_t _size = 0, float _fontSize = 18.0f, bx::AllocatorI* _allocator = NULL);
+void imguiCreate(float _fontSize = 18.0f, bx::AllocatorI* _allocator = NULL);
 void imguiDestroy();
 
 void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar = 0, uint8_t _view = 255);
-void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, uint16_t _surfaceWidth, uint16_t _surfaceHeight, char _inputChar = 0, uint8_t _view = 255);
 void imguiEndFrame();
 
 namespace entry { class AppI; }

@@ -8,7 +8,9 @@
 #include <bx/allocator.h>
 #include <bx/fpumath.h>
 #include <bx/timer.h>
+#include <bx/crtimpl.h>
 #include <ocornut-imgui/imgui.h>
+
 #include "imgui.h"
 #include "ocornut_imgui.h"
 #include "../bgfx_utils.h"
@@ -32,6 +34,8 @@
 
 #include "vs_ocornut_imgui.bin.h"
 #include "fs_ocornut_imgui.bin.h"
+#include "vs_imgui_image.bin.h"
+#include "fs_imgui_image.bin.h"
 
 #include "roboto_regular.ttf.h"
 #include "robotomono_regular.ttf.h"
@@ -42,6 +46,8 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] =
 {
 	BGFX_EMBEDDED_SHADER(vs_ocornut_imgui),
 	BGFX_EMBEDDED_SHADER(fs_ocornut_imgui),
+	BGFX_EMBEDDED_SHADER(vs_imgui_image),
+	BGFX_EMBEDDED_SHADER(fs_imgui_image),
 
 	BGFX_EMBEDDED_SHADER_END()
 };
@@ -131,8 +137,9 @@ struct OcornutImguiContext
 						th = texture.s.handle;
 						if (0 != texture.s.mip)
 						{
-							extern bgfx::ProgramHandle imguiGetImageProgram(uint8_t _mip);
-							program = imguiGetImageProgram(texture.s.mip);
+							const float lodEnabled[4] = { float(texture.s.mip), 1.0f, 0.0f, 0.0f };
+							bgfx::setUniform(u_imageLodEnabled, lodEnabled);
+							program = m_imageProgram;
 						}
 					}
 					else
@@ -161,18 +168,22 @@ struct OcornutImguiContext
 
 	void create(float _fontSize, bx::AllocatorI* _allocator)
 	{
-		m_viewId = 255;
 		m_allocator = _allocator;
+
+		if (NULL == _allocator)
+		{
+			static bx::DefaultAllocator allocator;
+			m_allocator = &allocator;
+		}
+
+		m_viewId = 255;
 		m_lastScroll = 0;
 		m_last = bx::getHPCounter();
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.RenderDrawListsFn = renderDrawLists;
-		if (NULL != m_allocator)
-		{
-			io.MemAllocFn = memAlloc;
-			io.MemFreeFn  = memFree;
-		}
+		io.MemAllocFn = memAlloc;
+		io.MemFreeFn  = memFree;
 
 		io.DisplaySize = ImVec2(1280.0f, 720.0f);
 		io.DeltaTime   = 1.0f / 60.0f;
@@ -204,6 +215,13 @@ struct OcornutImguiContext
 		m_program = bgfx::createProgram(
 			  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_ocornut_imgui")
 			, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_ocornut_imgui")
+			, true
+			);
+
+		u_imageLodEnabled = bgfx::createUniform("u_imageLodEnabled", bgfx::UniformType::Vec4);
+		m_imageProgram = bgfx::createProgram(
+			  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_imgui_image")
+			, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_imgui_image")
 			, true
 			);
 
@@ -266,6 +284,9 @@ struct OcornutImguiContext
 
 		bgfx::destroyUniform(s_tex);
 		bgfx::destroyTexture(m_texture);
+
+		bgfx::destroyUniform(u_imageLodEnabled);
+		bgfx::destroyProgram(m_imageProgram);
 		bgfx::destroyProgram(m_program);
 
 		m_allocator = NULL;
@@ -393,8 +414,10 @@ struct OcornutImguiContext
 	bx::AllocatorI*     m_allocator;
 	bgfx::VertexDecl    m_decl;
 	bgfx::ProgramHandle m_program;
+	bgfx::ProgramHandle m_imageProgram;
 	bgfx::TextureHandle m_texture;
 	bgfx::UniformHandle s_tex;
+	bgfx::UniformHandle u_imageLodEnabled;
 	ImFont* m_font[ImGui::Font::Count];
 	int64_t m_last;
 	int32_t m_lastScroll;
@@ -418,12 +441,12 @@ void OcornutImguiContext::renderDrawLists(ImDrawData* _drawData)
 	s_ctx.render(_drawData);
 }
 
-void IMGUI_create(float _fontSize, bx::AllocatorI* _allocator)
+void imguiCreate(float _fontSize, bx::AllocatorI* _allocator)
 {
 	s_ctx.create(_fontSize, _allocator);
 }
 
-void IMGUI_destroy()
+void imguiDestroy()
 {
 	s_ctx.destroy();
 }
@@ -436,6 +459,16 @@ void IMGUI_beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll
 void IMGUI_endFrame()
 {
 	s_ctx.endFrame();
+}
+
+void* imguiMalloc(size_t _size, void*)
+{
+	return BX_ALLOC(s_ctx.m_allocator, _size);
+}
+
+void imguiFree(void* _ptr, void*)
+{
+	BX_FREE(s_ctx.m_allocator, _ptr);
 }
 
 namespace ImGui

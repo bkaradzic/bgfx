@@ -3,27 +3,6 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
-// This code is based on:
-//
-// Copyright (c) 2009-2010 Mikko Mononen memon@inside.org
-//
-// This software is provided 'as-is', without any express or implied
-// warranty.  In no event will the authors be held liable for any damages
-// arising from the use of this software.
-// Permission is granted to anyone to use this software for any purpose,
-// including commercial applications, and to alter it and redistribute it
-// freely, subject to the following restrictions:
-// 1. The origin of this software must not be misrepresented; you must not
-//    claim that you wrote the original software. If you use this software
-//    in a product, an acknowledgment in the product documentation would be
-//    appreciated but is not required.
-// 2. Altered source versions must be plainly marked as such, and must not be
-//    misrepresented as being the original software.
-// 3. This notice may not be removed or altered from any source distribution.
-//
-// Source altered and distributed from https://github.com/AdrienHerubel/imgui
-
-#include <stdio.h>
 #include <bx/string.h>
 #include <bx/uint32_t.h>
 #include <bx/fpumath.h>
@@ -34,38 +13,6 @@
 #include "ocornut_imgui.h"
 #include "../bgfx_utils.h"
 #include "../nanovg/nanovg.h"
-
-#include <bgfx/embedded_shader.h>
-
-// embedded shaders
-#include "vs_imgui_color.bin.h"
-#include "fs_imgui_color.bin.h"
-#include "vs_imgui_texture.bin.h"
-#include "fs_imgui_texture.bin.h"
-#include "vs_imgui_cubemap.bin.h"
-#include "fs_imgui_cubemap.bin.h"
-#include "vs_imgui_latlong.bin.h"
-#include "fs_imgui_latlong.bin.h"
-#include "vs_imgui_image.bin.h"
-#include "fs_imgui_image.bin.h"
-#include "fs_imgui_image_swizz.bin.h"
-
-static const bgfx::EmbeddedShader s_embeddedShaders[] =
-{
-	BGFX_EMBEDDED_SHADER(vs_imgui_color),
-	BGFX_EMBEDDED_SHADER(fs_imgui_color),
-	BGFX_EMBEDDED_SHADER(vs_imgui_texture),
-	BGFX_EMBEDDED_SHADER(fs_imgui_texture),
-	BGFX_EMBEDDED_SHADER(vs_imgui_cubemap),
-	BGFX_EMBEDDED_SHADER(fs_imgui_cubemap),
-	BGFX_EMBEDDED_SHADER(vs_imgui_latlong),
-	BGFX_EMBEDDED_SHADER(fs_imgui_latlong),
-	BGFX_EMBEDDED_SHADER(vs_imgui_image),
-	BGFX_EMBEDDED_SHADER(fs_imgui_image),
-	BGFX_EMBEDDED_SHADER(fs_imgui_image_swizz),
-
-	BGFX_EMBEDDED_SHADER_END()
-};
 
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4244); // warning C4244: '=' : conversion from '' to '', possible loss of data
 
@@ -213,134 +160,7 @@ namespace
 		_u = 1.0f - _v - _w;
 	}
 
-	struct PosColorVertex
-	{
-		float m_x;
-		float m_y;
-		uint32_t m_abgr;
-
-		static void init()
-		{
-			ms_decl
-				.begin()
-				.add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
-				.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
-				.end();
-		}
-
-		static bgfx::VertexDecl ms_decl;
-	};
-
-	bgfx::VertexDecl PosColorVertex::ms_decl;
-
-	struct PosColorUvVertex
-	{
-		float m_x;
-		float m_y;
-		float m_u;
-		float m_v;
-		uint32_t m_abgr;
-
-		static void init()
-		{
-			ms_decl
-				.begin()
-				.add(bgfx::Attrib::Position,  2, bgfx::AttribType::Float)
-				.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-				.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
-				.end();
-		}
-
-		static bgfx::VertexDecl ms_decl;
-	};
-
-	bgfx::VertexDecl PosColorUvVertex::ms_decl;
-
-	struct PosUvVertex
-	{
-		float m_x;
-		float m_y;
-		float m_u;
-		float m_v;
-
-		static void init()
-		{
-			ms_decl
-				.begin()
-				.add(bgfx::Attrib::Position,  2, bgfx::AttribType::Float)
-				.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-				.end();
-		}
-
-		static bgfx::VertexDecl ms_decl;
-	};
-
-	bgfx::VertexDecl PosUvVertex::ms_decl;
-
-	struct PosNormalVertex
-	{
-		float m_x;
-		float m_y;
-		float m_z;
-		float m_nx;
-		float m_ny;
-		float m_nz;
-
-		static void init()
-		{
-			ms_decl.begin()
-				   .add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
-				   .add(bgfx::Attrib::Normal,    3, bgfx::AttribType::Float)
-				   .end();
-		}
-
-		void set(float _x, float _y, float _z, float _nx, float _ny, float _nz)
-		{
-			m_x = _x;
-			m_y = _y;
-			m_z = _z;
-			m_nx = _nx;
-			m_ny = _ny;
-			m_nz = _nz;
-		}
-
-		static bgfx::VertexDecl ms_decl;
-	};
-
-	bgfx::VertexDecl PosNormalVertex::ms_decl;
-
 } // namespace
-
-struct Imgui
-{
-	Imgui()
-		: m_mx(-1)
-		, m_my(-1)
-		, m_scroll(0)
-		, m_textureWidth(512)
-		, m_textureHeight(512)
-		, m_halfTexel(0.0f)
-		, m_view(255)
-		, m_surfaceWidth(0)
-		, m_surfaceHeight(0)
-		, m_viewWidth(0)
-		, m_viewHeight(0)
-	{
-		m_invTextureWidth  = 1.0f/m_textureWidth;
-		m_invTextureHeight = 1.0f/m_textureHeight;
-
-		u_imageLodEnabled.idx = bgfx::kInvalidHandle;
-		u_imageSwizzle.idx    = bgfx::kInvalidHandle;
-		s_texColor.idx        = bgfx::kInvalidHandle;
-		m_missingTexture.idx  = bgfx::kInvalidHandle;
-
-		m_colorProgram.idx      = bgfx::kInvalidHandle;
-		m_textureProgram.idx    = bgfx::kInvalidHandle;
-		m_cubeMapProgram.idx    = bgfx::kInvalidHandle;
-		m_latlongProgram.idx    = bgfx::kInvalidHandle;
-		m_imageProgram.idx      = bgfx::kInvalidHandle;
-		m_imageSwizzProgram.idx = bgfx::kInvalidHandle;
-	}
 
 	bgfx::TextureHandle genMissingTexture(uint32_t _width, uint32_t _height, float _lineWidth = 0.02f)
 	{
@@ -365,93 +185,33 @@ struct Imgui
 		}
 
 		return bgfx::createTexture2D(
-					  uint16_t(_width)
-					, uint16_t(_height)
-					, false
-					, 1
-					, bgfx::TextureFormat::BGRA8
-					, 0
-					, mem
-					);
+			  uint16_t(_width)
+			, uint16_t(_height)
+			, false
+			, 1
+			, bgfx::TextureFormat::BGRA8
+			, 0
+			, mem
+			);
 	}
 
-	void create(float _fontSize, bx::AllocatorI* _allocator)
+struct Imgui
+{
+	Imgui()
+		: m_mx(-1)
+		, m_my(-1)
+		, m_scroll(0)
+		, m_textureWidth(512)
+		, m_textureHeight(512)
+		, m_halfTexel(0.0f)
+		, m_view(255)
+		, m_surfaceWidth(0)
+		, m_surfaceHeight(0)
+		, m_viewWidth(0)
+		, m_viewHeight(0)
 	{
-		m_allocator = _allocator;
-
-		if (NULL == _allocator)
-		{
-			static bx::DefaultAllocator allocator;
-			m_allocator = &allocator;
-		}
-
-		IMGUI_create(_fontSize, m_allocator);
-
-		PosColorVertex::init();
-		PosColorUvVertex::init();
-		PosUvVertex::init();
-		PosNormalVertex::init();
-
-		u_imageLodEnabled = bgfx::createUniform("u_imageLodEnabled", bgfx::UniformType::Vec4);
-		u_imageSwizzle    = bgfx::createUniform("u_swizzle",         bgfx::UniformType::Vec4);
-		s_texColor        = bgfx::createUniform("s_texColor",        bgfx::UniformType::Int1);
-
-		bgfx::ShaderHandle vsh;
-		bgfx::ShaderHandle fsh;
-
-		bgfx::RendererType::Enum type = bgfx::getRendererType();
-		vsh = bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_imgui_color");
-		fsh = bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_imgui_color");
-		m_colorProgram = bgfx::createProgram(vsh, fsh);
-		bgfx::destroyShader(vsh);
-		bgfx::destroyShader(fsh);
-
-		vsh = bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_imgui_texture");
-		fsh = bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_imgui_texture");
-		m_textureProgram = bgfx::createProgram(vsh, fsh);
-		bgfx::destroyShader(vsh);
-		bgfx::destroyShader(fsh);
-
-		vsh = bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_imgui_cubemap");
-		fsh = bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_imgui_cubemap");
-		m_cubeMapProgram = bgfx::createProgram(vsh, fsh);
-		bgfx::destroyShader(vsh);
-		bgfx::destroyShader(fsh);
-
-		vsh = bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_imgui_latlong");
-		fsh = bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_imgui_latlong");
-		m_latlongProgram = bgfx::createProgram(vsh, fsh);
-		bgfx::destroyShader(vsh);
-		bgfx::destroyShader(fsh);
-
-		vsh = bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_imgui_image");
-		fsh = bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_imgui_image");
-		m_imageProgram = bgfx::createProgram(vsh, fsh);
-		bgfx::destroyShader(fsh);
-
-		// Notice: using the same vsh.
-		fsh = bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_imgui_image_swizz");
-		m_imageSwizzProgram = bgfx::createProgram(vsh, fsh);
-		bgfx::destroyShader(fsh);
-		bgfx::destroyShader(vsh);
-
-		m_missingTexture = genMissingTexture(256, 256, 0.04f);
-	}
-
-	void destroy()
-	{
-		bgfx::destroyUniform(u_imageLodEnabled);
-		bgfx::destroyUniform(u_imageSwizzle);
-		bgfx::destroyUniform(s_texColor);
-		bgfx::destroyTexture(m_missingTexture);
-		bgfx::destroyProgram(m_colorProgram);
-		bgfx::destroyProgram(m_textureProgram);
-		bgfx::destroyProgram(m_cubeMapProgram);
-		bgfx::destroyProgram(m_latlongProgram);
-		bgfx::destroyProgram(m_imageProgram);
-		bgfx::destroyProgram(m_imageSwizzProgram);
-
-		IMGUI_destroy();
+		m_invTextureWidth  = 1.0f/m_textureWidth;
+		m_invTextureHeight = 1.0f/m_textureHeight;
 	}
 
 	void beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, uint16_t _surfaceWidth, uint16_t _surfaceHeight, char _inputChar, uint8_t _view)
@@ -469,7 +229,7 @@ struct Imgui
 
 		IMGUI_beginFrame(mx, my, _button, _scroll, _width, _height, _inputChar, _view);
 
-		bgfx::setViewName(_view, "IMGUI");
+		bgfx::setViewName(_view, "ImGui");
 		bgfx::setViewMode(_view, bgfx::ViewMode::Sequential);
 
 		const bgfx::HMD*  hmd  = bgfx::getHMD();
@@ -651,7 +411,6 @@ struct Imgui
 	}
 #endif // 0
 
-	bx::AllocatorI* m_allocator;
 	int32_t m_mx;
 	int32_t m_my;
 	int32_t m_scroll;
@@ -667,45 +426,9 @@ struct Imgui
 	uint16_t m_surfaceHeight;
 	uint16_t m_viewWidth;
 	uint16_t m_viewHeight;
-
-	bgfx::UniformHandle u_imageLodEnabled;
-	bgfx::UniformHandle u_imageSwizzle;
-	bgfx::UniformHandle s_texColor;
-	bgfx::ProgramHandle m_colorProgram;
-	bgfx::ProgramHandle m_textureProgram;
-	bgfx::ProgramHandle m_cubeMapProgram;
-	bgfx::ProgramHandle m_latlongProgram;
-	bgfx::ProgramHandle m_imageProgram;
-	bgfx::ProgramHandle m_imageSwizzProgram;
-	bgfx::TextureHandle m_missingTexture;
 };
 
 static Imgui s_imgui;
-
-void* imguiMalloc(size_t _size, void*)
-{
-	return BX_ALLOC(s_imgui.m_allocator, _size);
-}
-
-void imguiFree(void* _ptr, void*)
-{
-	BX_FREE(s_imgui.m_allocator, _ptr);
-}
-
-void imguiCreate(const void*, uint32_t, float _fontSize, bx::AllocatorI* _allocator)
-{
-	s_imgui.create(_fontSize, _allocator);
-}
-
-void imguiDestroy()
-{
-	s_imgui.destroy();
-}
-
-void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, uint16_t _surfaceWidth, uint16_t _surfaceHeight, char _inputChar, uint8_t _view)
-{
-	s_imgui.beginFrame(_mx, _my, _button, _scroll, _width, _height, _surfaceWidth, _surfaceHeight, _inputChar, _view);
-}
 
 void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar, uint8_t _view)
 {
@@ -715,11 +438,4 @@ void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll,
 void imguiEndFrame()
 {
 	s_imgui.endFrame();
-}
-
-bgfx::ProgramHandle imguiGetImageProgram(uint8_t _mip)
-{
-	const float lodEnabled[4] = { float(_mip), 1.0f, 0.0f, 0.0f };
-	bgfx::setUniform(s_imgui.u_imageLodEnabled, lodEnabled);
-	return s_imgui.m_imageProgram;
 }
