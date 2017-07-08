@@ -77,11 +77,37 @@ struct OcornutImguiContext
 		const float width  = io.DisplaySize.x;
 		const float height = io.DisplaySize.y;
 
+		bgfx::setViewName(m_viewId, "ImGui");
+		bgfx::setViewMode(m_viewId, bgfx::ViewMode::Sequential);
+
+		const bgfx::HMD*  hmd  = bgfx::getHMD();
+		const bgfx::Caps* caps = bgfx::getCaps();
+		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
 		{
-			const bgfx::Caps* caps = bgfx::getCaps();
+			float proj[16];
+			bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
+
+			static float time = 0.0f;
+			time += 0.05f;
+
+			const float dist = 10.0f;
+			const float offset0 = -proj[8] + (hmd->eye[0].viewOffset[0] / dist * proj[0]);
+			const float offset1 = -proj[8] + (hmd->eye[1].viewOffset[0] / dist * proj[0]);
+
+			float ortho[2][16];
+			const float viewOffset = width/4.0f;
+			const float viewWidth  = width/2.0f;
+			bx::mtxOrtho(ortho[0], viewOffset, viewOffset + viewWidth, height, 0.0f, 0.0f, 1000.0f, offset0, caps->homogeneousDepth);
+			bx::mtxOrtho(ortho[1], viewOffset, viewOffset + viewWidth, height, 0.0f, 0.0f, 1000.0f, offset1, caps->homogeneousDepth);
+			bgfx::setViewTransform(m_viewId, NULL, ortho[0], BGFX_VIEW_STEREO, ortho[1]);
+			bgfx::setViewRect(m_viewId, 0, 0, hmd->width, hmd->height);
+		}
+		else
+		{
 			float ortho[16];
-			bx::mtxOrtho(ortho, 0.0f, width, height, 0.0f, -1.0f, 1.0f, 0.0f, caps->homogeneousDepth);
+			bx::mtxOrtho(ortho, 0.0f, width, height, 0.0f, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
 			bgfx::setViewTransform(m_viewId, NULL, ortho);
+			bgfx::setViewRect(m_viewId, 0, 0, width, height);
 		}
 
 		// Render command lists
@@ -363,7 +389,16 @@ struct OcornutImguiContext
 		}
 	}
 
-	void beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, int _width, int _height, char _inputChar, uint8_t _viewId)
+	void beginFrame(
+		  int32_t _mx
+		, int32_t _my
+		, uint8_t _button
+		, int32_t _scroll
+		, int _width
+		, int _height
+		, char _inputChar
+		, uint8_t _viewId
+		)
 	{
 		m_viewId = _viewId;
 
@@ -451,12 +486,12 @@ void imguiDestroy()
 	s_ctx.destroy();
 }
 
-void IMGUI_beginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, int _width, int _height, char _inputChar, uint8_t _viewId)
+void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar, uint8_t _viewId)
 {
 	s_ctx.beginFrame(_mx, _my, _button, _scroll, _width, _height, _inputChar, _viewId);
 }
 
-void IMGUI_endFrame()
+void imguiEndFrame()
 {
 	s_ctx.endFrame();
 }
@@ -478,3 +513,17 @@ namespace ImGui
 		PushFont(s_ctx.m_font[_font]);
 	}
 } // namespace ImGui
+
+BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4505); // error C4505: '' : unreferenced local function has been removed
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-function"); // warning: ‘int rect_width_compare(const void*, const void*)’ defined but not used
+BX_PRAGMA_DIAGNOSTIC_PUSH();
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunknown-pragmas")
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-but-set-variable"); // warning: variable ‘L1’ set but not used
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wtype-limits"); // warning: comparison is always true due to limited range of data type
+#define STBTT_malloc(_size, _userData) imguiMalloc(_size, _userData)
+#define STBTT_free(_ptr, _userData) imguiFree(_ptr, _userData)
+#define STB_RECT_PACK_IMPLEMENTATION
+#include <stb/stb_rect_pack.h>
+#define STB_TRUETYPE_IMPLEMENTATION
+#include <stb/stb_truetype.h>
+BX_PRAGMA_DIAGNOSTIC_POP();
