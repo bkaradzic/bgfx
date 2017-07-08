@@ -159,7 +159,7 @@ public:
     void addQualifierToExisting(const TSourceLoc&, TQualifier, TIdentifierList&);
     void updateStandaloneQualifierDefaults(const TSourceLoc&, const TPublicType&);
     void wrapupSwitchSubsequence(TIntermAggregate* statements, TIntermNode* branchNode);
-    TIntermNode* addSwitch(const TSourceLoc&, TIntermTyped* expression, TIntermAggregate* body);
+    TIntermNode* addSwitch(const TSourceLoc&, TIntermTyped* expression, TIntermAggregate* body, TSelectionControl control);
 
     void updateImplicitArraySize(const TSourceLoc&, TIntermNode*, int index);
 
@@ -198,15 +198,14 @@ public:
     bool handleOutputGeometry(const TSourceLoc&, const TLayoutGeometry& geometry);
     bool handleInputGeometry(const TSourceLoc&, const TLayoutGeometry& geometry);
 
+    // Determine selection control from attributes
+    TSelectionControl handleSelectionControl(const TAttributeMap& attributes) const;
+
     // Determine loop control from attributes
     TLoopControl handleLoopControl(const TAttributeMap& attributes) const;
 
     // Potentially rename shader entry point function
     void renameShaderFunction(const TString*& name) const;
-
-    // Reset data for incrementally built referencing of flattened composite structures
-    void initFlattening() { flattenLevel.push_back(0); flattenOffset.push_back(0); }
-    void finalizeFlattening() { flattenLevel.pop_back(); flattenOffset.pop_back(); }
 
     // Share struct buffer deep types
     void shareStructBufferType(TType&);
@@ -242,7 +241,7 @@ protected:
 
     // Array and struct flattening
     TIntermTyped* flattenAccess(TIntermTyped* base, int member);
-    TIntermTyped* flattenAccess(int uniqueId, int member, const TType&);
+    TIntermTyped* flattenAccess(int uniqueId, int member, const TType&, int subset = -1);
     bool shouldFlatten(const TType&) const;
     bool wasFlattened(const TIntermTyped* node) const;
     bool wasFlattened(int id) const { return flattenMap.find(id) != flattenMap.end(); }
@@ -368,7 +367,6 @@ protected:
 
     TMap<int, TFlattenData> flattenMap;
     TVector<int> flattenLevel;  // nested postfix operator level for flattening
-    TVector<int> flattenOffset; // cumulative offset for flattening
 
     // IO-type map. Maps a pure symbol-table form of a structure-member list into
     // each of the (up to) three kinds of IO, as each as different allowed decorations,

@@ -45,6 +45,11 @@ echo Comparing single thread to multithread for all tests in current directory..
 $EXE -i -C *.vert *.geom *.frag *.tes* *.comp > singleThread.out
 $EXE -i -C *.vert *.geom *.frag *.tes* *.comp -t > multiThread.out
 diff singleThread.out multiThread.out || HASERROR=1
+if [ $HASERROR -eq 0 ]
+then
+    rm singleThread.out
+    rm multiThread.out
+fi
 
 #
 # entry point renaming tests
@@ -146,5 +151,7 @@ then
 else
     echo Tests Failed.
 fi
+
+rm -f comp.spv frag.spv geom.spv tesc.spv tese.spv vert.spv
 
 exit $HASERROR

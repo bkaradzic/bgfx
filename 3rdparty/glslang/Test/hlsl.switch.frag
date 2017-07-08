@@ -18,7 +18,7 @@ float4 PixelShaderFunction(float4 input, int c, int d) : COLOR0
         break;
     }
 
-    switch (c) {
+    [branch] switch (c) {
     case 1:
         ++input;
         break;

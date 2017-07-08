@@ -436,7 +436,10 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
 
     void notifyBinding(EShLanguage, const char* /*name*/, const TType&, bool /*is_live*/) override {}
     void notifyInOut(EShLanguage, const char* /*name*/, const TType&, bool /*is_live*/) override {}
-    void endNotifications() override {}
+    void endNotifications(EShLanguage) override {}
+    void beginNotifications(EShLanguage) override {}
+    void beginResolve(EShLanguage) override {}
+    void endResolve(EShLanguage) override {}
 
 protected:
     static int getLayoutSet(const glslang::TType& type) {
@@ -704,13 +707,16 @@ bool TIoMapper::addStage(EShLanguage stage, TIntermediate &intermediate, TInfoSi
     TNotifyUniformAdaptor uniformNotify(stage, *resolver);
     TResolverUniformAdaptor uniformResolve(stage, *resolver, infoSink, hadError, intermediate);
     TResolverInOutAdaptor inOutResolve(stage, *resolver, infoSink, hadError, intermediate);
+    resolver->beginNotifications(stage);
     std::for_each(inVarMap.begin(), inVarMap.end(), inOutNotify);
     std::for_each(outVarMap.begin(), outVarMap.end(), inOutNotify);
     std::for_each(uniformVarMap.begin(), uniformVarMap.end(), uniformNotify);
-    resolver->endNotifications();
+    resolver->endNotifications(stage);
+    resolver->beginResolve(stage);
     std::for_each(inVarMap.begin(), inVarMap.end(), inOutResolve);
     std::for_each(outVarMap.begin(), outVarMap.end(), inOutResolve);
     std::for_each(uniformVarMap.begin(), uniformVarMap.end(), uniformResolve);
+    resolver->endResolve(stage);
 
     if (!hadError) {
         // sort by id again, so we can use lower bound to find entries

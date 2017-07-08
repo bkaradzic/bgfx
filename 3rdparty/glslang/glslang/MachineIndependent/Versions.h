@@ -135,6 +135,7 @@ const char* const E_GL_ARB_sparse_texture2              = "GL_ARB_sparse_texture
 const char* const E_GL_ARB_sparse_texture_clamp         = "GL_ARB_sparse_texture_clamp";
 const char* const E_GL_ARB_shader_stencil_export        = "GL_ARB_shader_stencil_export";
 // const char* const E_GL_ARB_cull_distance            = "GL_ARB_cull_distance";  // present for 4.5, but need extension control over block members
+const char* const E_GL_ARB_post_depth_coverage          = "GL_ARB_post_depth_coverage";
 
 const char* const E_GL_EXT_shader_non_constant_global_initializers = "GL_EXT_shader_non_constant_global_initializers";
 const char* const E_GL_EXT_shader_image_load_formatted = "GL_EXT_shader_image_load_formatted";
@@ -142,6 +143,12 @@ const char* const E_GL_EXT_shader_image_load_formatted = "GL_EXT_shader_image_lo
 // EXT extensions
 const char* const E_GL_EXT_device_group                 = "GL_EXT_device_group";
 const char* const E_GL_EXT_multiview                    = "GL_EXT_multiview";
+const char* const E_GL_EXT_post_depth_coverage          = "GL_EXT_post_depth_coverage";
+
+// Arrays of extensions for the above viewportEXTs duplications
+
+const char* const post_depth_coverageEXTs[] = { E_GL_ARB_post_depth_coverage, E_GL_EXT_post_depth_coverage };
+const int Num_post_depth_coverageEXTs = sizeof(post_depth_coverageEXTs) / sizeof(post_depth_coverageEXTs[0]);
 
 // OVR extensions
 const char* const E_GL_OVR_multiview                    = "GL_OVR_multiview";

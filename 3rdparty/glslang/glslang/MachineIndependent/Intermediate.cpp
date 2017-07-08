@@ -1614,7 +1614,7 @@ TIntermAggregate* TIntermediate::makeAggregate(const TSourceLoc& loc)
 //
 // Returns the selection node created.
 //
-TIntermTyped* TIntermediate::addSelection(TIntermTyped* cond, TIntermNodePair nodePair, const TSourceLoc& loc)
+TIntermTyped* TIntermediate::addSelection(TIntermTyped* cond, TIntermNodePair nodePair, const TSourceLoc& loc, TSelectionControl control)
 {
     //
     // Don't prune the false path for compile-time constants; it's needed
@@ -1623,6 +1623,7 @@ TIntermTyped* TIntermediate::addSelection(TIntermTyped* cond, TIntermNodePair no
 
     TIntermSelection* node = new TIntermSelection(cond, nodePair.node1, nodePair.node2);
     node->setLoc(loc);
+    node->setSelectionControl(control);
 
     return node;
 }
@@ -1665,12 +1666,12 @@ TIntermTyped* TIntermediate::addMethod(TIntermTyped* object, const TType& type, 
 //
 // Returns the selection node created, or nullptr if one could not be.
 //
-TIntermTyped* TIntermediate::addSelection(TIntermTyped* cond, TIntermTyped* trueBlock, TIntermTyped* falseBlock, const TSourceLoc& loc)
+TIntermTyped* TIntermediate::addSelection(TIntermTyped* cond, TIntermTyped* trueBlock, TIntermTyped* falseBlock, const TSourceLoc& loc, TSelectionControl control)
 {
     // If it's void, go to the if-then-else selection()
     if (trueBlock->getBasicType() == EbtVoid && falseBlock->getBasicType() == EbtVoid) {
         TIntermNodePair pair = { trueBlock, falseBlock };
-        return addSelection(cond, pair, loc);
+        return addSelection(cond, pair, loc, control);
     }
 
     //
@@ -3186,6 +3187,11 @@ bool TIntermediate::specConstantPropagates(const TIntermTyped& node1, const TInt
 }
 
 struct TextureUpgradeAndSamplerRemovalTransform : public TIntermTraverser {
+    void visitSymbol(TIntermSymbol* symbol) override {
+        if (symbol->getBasicType() == EbtSampler && symbol->getType().getSampler().isTexture()) {
+            symbol->getWritableType().getSampler().combined = true;
+        }
+    }
     bool visitAggregate(TVisit, TIntermAggregate* ag) override {
         using namespace std;
         TIntermSequence& seq = ag->getSequence();
@@ -3199,17 +3205,11 @@ struct TextureUpgradeAndSamplerRemovalTransform : public TIntermTraverser {
         });
         seq.erase(newEnd, seq.end());
         // replace constructors with sampler/textures
-        // update textures into sampled textures
         for_each(seq.begin(), seq.end(), [](TIntermNode*& node) {
-            TIntermSymbol* symbol = node->getAsSymbolNode();
-            if (!symbol) {
-                TIntermAggregate *constructor = node->getAsAggregate();
-                if (constructor && constructor->getOp() == EOpConstructTextureSampler) {
-                    if (!constructor->getSequence().empty())
-                        node = constructor->getSequence()[0];
-                }
-            } else if (symbol->getBasicType() == EbtSampler && symbol->getType().getSampler().isTexture()) {
-                symbol->getWritableType().getSampler().combined = true;
+            TIntermAggregate *constructor = node->getAsAggregate();
+            if (constructor && constructor->getOp() == EOpConstructTextureSampler) {
+                if (!constructor->getSequence().empty())
+                    node = constructor->getSequence()[0];
             }
         });
         return true;

@@ -10,13 +10,15 @@ Shader version: 500
 0:2      'inU1' ( in uint)
 0:?     Sequence
 0:3      all ( temp bool)
-0:3        'inF0' ( in float)
+0:3        Convert float to bool ( temp bool)
+0:3          'inF0' ( in float)
 0:4      Absolute value ( temp float)
 0:4        'inF0' ( in float)
 0:5      arc cosine ( temp float)
 0:5        'inF0' ( in float)
 0:6      any ( temp bool)
-0:6        'inF0' ( in float)
+0:6        Convert float to bool ( temp bool)
+0:6          'inF0' ( in float)
 0:7      arc sine ( temp float)
 0:7        'inF0' ( in float)
 0:8      floatBitsToInt ( temp int)
@@ -157,13 +159,15 @@ Shader version: 500
 0:69      'inU1' ( in 2-component vector of uint)
 0:?     Sequence
 0:70      all ( temp bool)
-0:70        'inF0' ( in 2-component vector of float)
+0:70        Convert float to bool ( temp 2-component vector of bool)
+0:70          'inF0' ( in 2-component vector of float)
 0:71      Absolute value ( temp 2-component vector of float)
 0:71        'inF0' ( in 2-component vector of float)
 0:72      arc cosine ( temp 2-component vector of float)
 0:72        'inF0' ( in 2-component vector of float)
 0:73      any ( temp bool)
-0:73        'inF0' ( in 2-component vector of float)
+0:73        Convert float to bool ( temp 2-component vector of bool)
+0:73          'inF0' ( in 2-component vector of float)
 0:74      arc sine ( temp 2-component vector of float)
 0:74        'inF0' ( in 2-component vector of float)
 0:75      floatBitsToInt ( temp 2-component vector of int)
@@ -320,13 +324,15 @@ Shader version: 500
 0:138      'inU1' ( in 3-component vector of uint)
 0:?     Sequence
 0:139      all ( temp bool)
-0:139        'inF0' ( in 3-component vector of float)
+0:139        Convert float to bool ( temp 3-component vector of bool)
+0:139          'inF0' ( in 3-component vector of float)
 0:140      Absolute value ( temp 3-component vector of float)
 0:140        'inF0' ( in 3-component vector of float)
 0:141      arc cosine ( temp 3-component vector of float)
 0:141        'inF0' ( in 3-component vector of float)
 0:142      any ( temp bool)
-0:142        'inF0' ( in 3-component vector of float)
+0:142        Convert float to bool ( temp 3-component vector of bool)
+0:142          'inF0' ( in 3-component vector of float)
 0:143      arc sine ( temp 3-component vector of float)
 0:143        'inF0' ( in 3-component vector of float)
 0:144      floatBitsToInt ( temp 3-component vector of int)
@@ -489,13 +495,15 @@ Shader version: 500
 0:208      'inU1' ( in 4-component vector of uint)
 0:?     Sequence
 0:209      all ( temp bool)
-0:209        'inF0' ( in 4-component vector of float)
+0:209        Convert float to bool ( temp 4-component vector of bool)
+0:209          'inF0' ( in 4-component vector of float)
 0:210      Absolute value ( temp 4-component vector of float)
 0:210        'inF0' ( in 4-component vector of float)
 0:211      arc cosine ( temp 4-component vector of float)
 0:211        'inF0' ( in 4-component vector of float)
 0:212      any ( temp bool)
-0:212        'inF0' ( in 4-component vector of float)
+0:212        Convert float to bool ( temp 4-component vector of bool)
+0:212          'inF0' ( in 4-component vector of float)
 0:213      arc sine ( temp 4-component vector of float)
 0:213        'inF0' ( in 4-component vector of float)
 0:214      floatBitsToInt ( temp 4-component vector of int)
@@ -676,13 +684,15 @@ Shader version: 500
 0:331      'inF2' ( in 2X2 matrix of float)
 0:?     Sequence
 0:333      all ( temp bool)
-0:333        'inF0' ( in 2X2 matrix of float)
+0:333        Convert float to bool ( temp 2X2 matrix of bool)
+0:333          'inF0' ( in 2X2 matrix of float)
 0:333      Absolute value ( temp 2X2 matrix of float)
 0:333        'inF0' ( in 2X2 matrix of float)
 0:333      arc cosine ( temp 2X2 matrix of float)
 0:333        'inF0' ( in 2X2 matrix of float)
 0:333      any ( temp bool)
-0:333        'inF0' ( in 2X2 matrix of float)
+0:333        Convert float to bool ( temp 2X2 matrix of bool)
+0:333          'inF0' ( in 2X2 matrix of float)
 0:333      arc sine ( temp 2X2 matrix of float)
 0:333        'inF0' ( in 2X2 matrix of float)
 0:333      arc tangent ( temp 2X2 matrix of float)
@@ -803,13 +813,15 @@ Shader version: 500
 0:340      'inF2' ( in 3X3 matrix of float)
 0:?     Sequence
 0:342      all ( temp bool)
-0:342        'inF0' ( in 3X3 matrix of float)
+0:342        Convert float to bool ( temp 3X3 matrix of bool)
+0:342          'inF0' ( in 3X3 matrix of float)
 0:342      Absolute value ( temp 3X3 matrix of float)
 0:342        'inF0' ( in 3X3 matrix of float)
 0:342      arc cosine ( temp 3X3 matrix of float)
 0:342        'inF0' ( in 3X3 matrix of float)
 0:342      any ( temp bool)
-0:342        'inF0' ( in 3X3 matrix of float)
+0:342        Convert float to bool ( temp 3X3 matrix of bool)
+0:342          'inF0' ( in 3X3 matrix of float)
 0:342      arc sine ( temp 3X3 matrix of float)
 0:342        'inF0' ( in 3X3 matrix of float)
 0:342      arc tangent ( temp 3X3 matrix of float)
@@ -935,13 +947,15 @@ Shader version: 500
 0:349      'inF2' ( in 4X4 matrix of float)
 0:?     Sequence
 0:351      all ( temp bool)
-0:351        'inF0' ( in 4X4 matrix of float)
+0:351        Convert float to bool ( temp 4X4 matrix of bool)
+0:351          'inF0' ( in 4X4 matrix of float)
 0:351      Absolute value ( temp 4X4 matrix of float)
 0:351        'inF0' ( in 4X4 matrix of float)
 0:351      arc cosine ( temp 4X4 matrix of float)
 0:351        'inF0' ( in 4X4 matrix of float)
 0:351      any ( temp bool)
-0:351        'inF0' ( in 4X4 matrix of float)
+0:351        Convert float to bool ( temp 4X4 matrix of bool)
+0:351          'inF0' ( in 4X4 matrix of float)
 0:351      arc sine ( temp 4X4 matrix of float)
 0:351        'inF0' ( in 4X4 matrix of float)
 0:351      arc tangent ( temp 4X4 matrix of float)
@@ -1388,13 +1402,15 @@ Shader version: 500
 0:2      'inU1' ( in uint)
 0:?     Sequence
 0:3      all ( temp bool)
-0:3        'inF0' ( in float)
+0:3        Convert float to bool ( temp bool)
+0:3          'inF0' ( in float)
 0:4      Absolute value ( temp float)
 0:4        'inF0' ( in float)
 0:5      arc cosine ( temp float)
 0:5        'inF0' ( in float)
 0:6      any ( temp bool)
-0:6        'inF0' ( in float)
+0:6        Convert float to bool ( temp bool)
+0:6          'inF0' ( in float)
 0:7      arc sine ( temp float)
 0:7        'inF0' ( in float)
 0:8      floatBitsToInt ( temp int)
@@ -1535,13 +1551,15 @@ Shader version: 500
 0:69      'inU1' ( in 2-component vector of uint)
 0:?     Sequence
 0:70      all ( temp bool)
-0:70        'inF0' ( in 2-component vector of float)
+0:70        Convert float to bool ( temp 2-component vector of bool)
+0:70          'inF0' ( in 2-component vector of float)
 0:71      Absolute value ( temp 2-component vector of float)
 0:71        'inF0' ( in 2-component vector of float)
 0:72      arc cosine ( temp 2-component vector of float)
 0:72        'inF0' ( in 2-component vector of float)
 0:73      any ( temp bool)
-0:73        'inF0' ( in 2-component vector of float)
+0:73        Convert float to bool ( temp 2-component vector of bool)
+0:73          'inF0' ( in 2-component vector of float)
 0:74      arc sine ( temp 2-component vector of float)
 0:74        'inF0' ( in 2-component vector of float)
 0:75      floatBitsToInt ( temp 2-component vector of int)
@@ -1698,13 +1716,15 @@ Shader version: 500
 0:138      'inU1' ( in 3-component vector of uint)
 0:?     Sequence
 0:139      all ( temp bool)
-0:139        'inF0' ( in 3-component vector of float)
+0:139        Convert float to bool ( temp 3-component vector of bool)
+0:139          'inF0' ( in 3-component vector of float)
 0:140      Absolute value ( temp 3-component vector of float)
 0:140        'inF0' ( in 3-component vector of float)
 0:141      arc cosine ( temp 3-component vector of float)
 0:141        'inF0' ( in 3-component vector of float)
 0:142      any ( temp bool)
-0:142        'inF0' ( in 3-component vector of float)
+0:142        Convert float to bool ( temp 3-component vector of bool)
+0:142          'inF0' ( in 3-component vector of float)
 0:143      arc sine ( temp 3-component vector of float)
 0:143        'inF0' ( in 3-component vector of float)
 0:144      floatBitsToInt ( temp 3-component vector of int)
@@ -1867,13 +1887,15 @@ Shader version: 500
 0:208      'inU1' ( in 4-component vector of uint)
 0:?     Sequence
 0:209      all ( temp bool)
-0:209        'inF0' ( in 4-component vector of float)
+0:209        Convert float to bool ( temp 4-component vector of bool)
+0:209          'inF0' ( in 4-component vector of float)
 0:210      Absolute value ( temp 4-component vector of float)
 0:210        'inF0' ( in 4-component vector of float)
 0:211      arc cosine ( temp 4-component vector of float)
 0:211        'inF0' ( in 4-component vector of float)
 0:212      any ( temp bool)
-0:212        'inF0' ( in 4-component vector of float)
+0:212        Convert float to bool ( temp 4-component vector of bool)
+0:212          'inF0' ( in 4-component vector of float)
 0:213      arc sine ( temp 4-component vector of float)
 0:213        'inF0' ( in 4-component vector of float)
 0:214      floatBitsToInt ( temp 4-component vector of int)
@@ -2054,13 +2076,15 @@ Shader version: 500
 0:331      'inF2' ( in 2X2 matrix of float)
 0:?     Sequence
 0:333      all ( temp bool)
-0:333        'inF0' ( in 2X2 matrix of float)
+0:333        Convert float to bool ( temp 2X2 matrix of bool)
+0:333          'inF0' ( in 2X2 matrix of float)
 0:333      Absolute value ( temp 2X2 matrix of float)
 0:333        'inF0' ( in 2X2 matrix of float)
 0:333      arc cosine ( temp 2X2 matrix of float)
 0:333        'inF0' ( in 2X2 matrix of float)
 0:333      any ( temp bool)
-0:333        'inF0' ( in 2X2 matrix of float)
+0:333        Convert float to bool ( temp 2X2 matrix of bool)
+0:333          'inF0' ( in 2X2 matrix of float)
 0:333      arc sine ( temp 2X2 matrix of float)
 0:333        'inF0' ( in 2X2 matrix of float)
 0:333      arc tangent ( temp 2X2 matrix of float)
@@ -2181,13 +2205,15 @@ Shader version: 500
 0:340      'inF2' ( in 3X3 matrix of float)
 0:?     Sequence
 0:342      all ( temp bool)
-0:342        'inF0' ( in 3X3 matrix of float)
+0:342        Convert float to bool ( temp 3X3 matrix of bool)
+0:342          'inF0' ( in 3X3 matrix of float)
 0:342      Absolute value ( temp 3X3 matrix of float)
 0:342        'inF0' ( in 3X3 matrix of float)
 0:342      arc cosine ( temp 3X3 matrix of float)
 0:342        'inF0' ( in 3X3 matrix of float)
 0:342      any ( temp bool)
-0:342        'inF0' ( in 3X3 matrix of float)
+0:342        Convert float to bool ( temp 3X3 matrix of bool)
+0:342          'inF0' ( in 3X3 matrix of float)
 0:342      arc sine ( temp 3X3 matrix of float)
 0:342        'inF0' ( in 3X3 matrix of float)
 0:342      arc tangent ( temp 3X3 matrix of float)
@@ -2313,13 +2339,15 @@ Shader version: 500
 0:349      'inF2' ( in 4X4 matrix of float)
 0:?     Sequence
 0:351      all ( temp bool)
-0:351        'inF0' ( in 4X4 matrix of float)
+0:351        Convert float to bool ( temp 4X4 matrix of bool)
+0:351          'inF0' ( in 4X4 matrix of float)
 0:351      Absolute value ( temp 4X4 matrix of float)
 0:351        'inF0' ( in 4X4 matrix of float)
 0:351      arc cosine ( temp 4X4 matrix of float)
 0:351        'inF0' ( in 4X4 matrix of float)
 0:351      any ( temp bool)
-0:351        'inF0' ( in 4X4 matrix of float)
+0:351        Convert float to bool ( temp 4X4 matrix of bool)
+0:351          'inF0' ( in 4X4 matrix of float)
 0:351      arc sine ( temp 4X4 matrix of float)
 0:351        'inF0' ( in 4X4 matrix of float)
 0:351      arc tangent ( temp 4X4 matrix of float)
@@ -2752,7 +2780,7 @@ Shader version: 500
 
 // Module Version 10000
 // Generated by (magic number): 80001
-// Id's are bound by 1205
+// Id's are bound by 1225
 
                               Capability Shader
                1:             ExtInstImport  "GLSL.std.450"
@@ -2831,50 +2859,50 @@ Shader version: 500
                               Name 126  "inFM3x3"
                               Name 127  "inFM3x4"
                               Name 128  "inFM2x4"
-                              Name 1029  "r0"
-                              Name 1033  "r1"
-                              Name 1037  "r2"
-                              Name 1041  "r3"
-                              Name 1045  "r4"
-                              Name 1049  "r5"
-                              Name 1053  "r6"
-                              Name 1057  "r7"
-                              Name 1061  "r8"
-                              Name 1065  "r0"
-                              Name 1069  "r1"
-                              Name 1073  "r2"
-                              Name 1077  "r3"
-                              Name 1081  "r4"
-                              Name 1085  "r5"
-                              Name 1089  "r6"
-                              Name 1093  "r7"
-                              Name 1097  "r8"
-                              Name 1101  "r0"
-                              Name 1105  "r1"
-                              Name 1109  "r2"
-                              Name 1113  "r3"
-                              Name 1117  "r4"
-                              Name 1121  "r5"
-                              Name 1125  "r6"
-                              Name 1129  "r7"
-                              Name 1133  "r8"
-                              Name 1137  "r00"
-                              Name 1141  "r01"
-                              Name 1145  "r02"
-                              Name 1149  "r03"
-                              Name 1153  "r04"
-                              Name 1157  "r05"
-                              Name 1161  "r06"
-                              Name 1165  "r07"
-                              Name 1169  "r08"
-                              Name 1173  "r09"
-                              Name 1177  "r10"
-                              Name 1181  "r11"
-                              Name 1185  "r12"
-                              Name 1189  "r13"
-                              Name 1193  "r14"
-                              Name 1197  "r15"
-                              Name 1201  "r16"
+                              Name 1049  "r0"
+                              Name 1053  "r1"
+                              Name 1057  "r2"
+                              Name 1061  "r3"
+                              Name 1065  "r4"
+                              Name 1069  "r5"
+                              Name 1073  "r6"
+                              Name 1077  "r7"
+                              Name 1081  "r8"
+                              Name 1085  "r0"
+                              Name 1089  "r1"
+                              Name 1093  "r2"
+                              Name 1097  "r3"
+                              Name 1101  "r4"
+                              Name 1105  "r5"
+                              Name 1109  "r6"
+                              Name 1113  "r7"
+                              Name 1117  "r8"
+                              Name 1121  "r0"
+                              Name 1125  "r1"
+                              Name 1129  "r2"
+                              Name 1133  "r3"
+                              Name 1137  "r4"
+                              Name 1141  "r5"
+                              Name 1145  "r6"
+                              Name 1149  "r7"
+                              Name 1153  "r8"
+                              Name 1157  "r00"
+                              Name 1161  "r01"
+                              Name 1165  "r02"
+                              Name 1169  "r03"
+                              Name 1173  "r04"
+                              Name 1177  "r05"
+                              Name 1181  "r06"
+                              Name 1185  "r07"
+                              Name 1189  "r08"
+                              Name 1193  "r09"
+                              Name 1197  "r10"
+                              Name 1201  "r11"
+                              Name 1205  "r12"
+                              Name 1209  "r13"
+                              Name 1213  "r14"
+                              Name 1217  "r15"
+                              Name 1221  "r16"
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
@@ -2920,43 +2948,49 @@ Shader version: 500
              118:             TypePointer Function 117
              119:             TypeFunction 2 7(ptr) 7(ptr) 25(ptr) 37(ptr) 112(ptr) 114(ptr) 69(ptr) 116(ptr) 118(ptr)
              132:             TypeBool
-             143:             TypeInt 32 1
-             164:    143(int) Constant 7
-             196:    6(float) Constant 1050288283
-             211:    143(int) Constant 2
-             218:    6(float) Constant 0
-             219:    6(float) Constant 1065353216
-             261:             TypeVector 143(int) 2
-             282:    143(int) Constant 3
-             283:  261(ivec2) ConstantComposite 164 282
-             311:             TypeVector 132(bool) 2
-             349:    6(float) Constant 1073741824
-             351:    143(int) Constant 1
-             352:  261(ivec2) ConstantComposite 351 211
-             387:   24(fvec2) ConstantComposite 219 349
-             401:             TypeVector 143(int) 3
-             422:    143(int) Constant 5
-             423:  401(ivec3) ConstantComposite 164 282 422
-             454:             TypeVector 132(bool) 3
-             493:  401(ivec3) ConstantComposite 351 211 282
-             528:    6(float) Constant 1077936128
-             529:   36(fvec3) ConstantComposite 219 349 528
-             543:             TypeVector 143(int) 4
-             564:  543(ivec4) ConstantComposite 164 282 422 211
-             574:      8(int) Constant 1
-             580:      8(int) Constant 2
-             583:      8(int) Constant 3
-             605:             TypeVector 132(bool) 4
-             644:    143(int) Constant 4
-             645:  543(ivec4) ConstantComposite 351 211 282 644
-             680:    6(float) Constant 1082130432
-             681:   48(fvec4) ConstantComposite 219 349 528 680
-             792:   24(fvec2) ConstantComposite 349 349
-             793:          60 ConstantComposite 792 792
-             907:   36(fvec3) ConstantComposite 528 528 528
-             908:          68 ConstantComposite 907 907 907
-            1025:   48(fvec4) ConstantComposite 680 680 680 680
-            1026:          76 ConstantComposite 1025 1025 1025 1025
+             133:    6(float) Constant 0
+             146:             TypeInt 32 1
+             167:    146(int) Constant 7
+             199:    6(float) Constant 1050288283
+             214:    146(int) Constant 2
+             221:    6(float) Constant 1065353216
+             253:             TypeVector 132(bool) 2
+             254:   24(fvec2) ConstantComposite 133 133
+             267:             TypeVector 146(int) 2
+             288:    146(int) Constant 3
+             289:  267(ivec2) ConstantComposite 167 288
+             354:    6(float) Constant 1073741824
+             356:    146(int) Constant 1
+             357:  267(ivec2) ConstantComposite 356 214
+             392:   24(fvec2) ConstantComposite 221 354
+             396:             TypeVector 132(bool) 3
+             397:   36(fvec3) ConstantComposite 133 133 133
+             410:             TypeVector 146(int) 3
+             431:    146(int) Constant 5
+             432:  410(ivec3) ConstantComposite 167 288 431
+             501:  410(ivec3) ConstantComposite 356 214 288
+             536:    6(float) Constant 1077936128
+             537:   36(fvec3) ConstantComposite 221 354 536
+             541:             TypeVector 132(bool) 4
+             542:   48(fvec4) ConstantComposite 133 133 133 133
+             555:             TypeVector 146(int) 4
+             576:  555(ivec4) ConstantComposite 167 288 431 214
+             586:      8(int) Constant 1
+             592:      8(int) Constant 2
+             595:      8(int) Constant 3
+             655:    146(int) Constant 4
+             656:  555(ivec4) ConstantComposite 356 214 288 655
+             691:    6(float) Constant 1082130432
+             692:   48(fvec4) ConstantComposite 221 354 536 691
+             696:             TypeMatrix 253(bvec2) 2
+             806:   24(fvec2) ConstantComposite 354 354
+             807:          60 ConstantComposite 806 806
+             811:             TypeMatrix 396(bvec3) 3
+             924:   36(fvec3) ConstantComposite 536 536 536
+             925:          68 ConstantComposite 924 924 924
+             929:             TypeMatrix 541(bvec4) 4
+            1045:   48(fvec4) ConstantComposite 691 691 691 691
+            1046:          76 ConstantComposite 1045 1045 1045 1045
 4(VertexShaderFunction):           2 Function None 3
                5:             Label
                               Return
@@ -2969,123 +3003,125 @@ Shader version: 500
         15(inU1):      9(ptr) FunctionParameter
               17:             Label
              131:    6(float) Load 11(inF0)
-             133:   132(bool) All 131
-             134:    6(float) Load 11(inF0)
-             135:    6(float) ExtInst 1(GLSL.std.450) 4(FAbs) 134
+             134:   132(bool) FOrdNotEqual 131 133
+             135:   132(bool) All 134
              136:    6(float) Load 11(inF0)
-             137:    6(float) ExtInst 1(GLSL.std.450) 17(Acos) 136
+             137:    6(float) ExtInst 1(GLSL.std.450) 4(FAbs) 136
              138:    6(float) Load 11(inF0)
-             139:   132(bool) Any 138
+             139:    6(float) ExtInst 1(GLSL.std.450) 17(Acos) 138
              140:    6(float) Load 11(inF0)
-             141:    6(float) ExtInst 1(GLSL.std.450) 16(Asin) 140
-             142:    6(float) Load 11(inF0)
-             144:    143(int) Bitcast 142
+             141:   132(bool) FOrdNotEqual 140 133
+             142:   132(bool) Any 141
+             143:    6(float) Load 11(inF0)
+             144:    6(float) ExtInst 1(GLSL.std.450) 16(Asin) 143
              145:    6(float) Load 11(inF0)
-             146:      8(int) Bitcast 145
-             147:      8(int) Load 14(inU0)
-             148:    6(float) Bitcast 147
-             149:    6(float) Load 11(inF0)
-             150:    6(float) ExtInst 1(GLSL.std.450) 18(Atan) 149
-             151:    6(float) Load 11(inF0)
-             152:    6(float) Load 12(inF1)
-             153:    6(float) ExtInst 1(GLSL.std.450) 25(Atan2) 151 152
+             147:    146(int) Bitcast 145
+             148:    6(float) Load 11(inF0)
+             149:      8(int) Bitcast 148
+             150:      8(int) Load 14(inU0)
+             151:    6(float) Bitcast 150
+             152:    6(float) Load 11(inF0)
+             153:    6(float) ExtInst 1(GLSL.std.450) 18(Atan) 152
              154:    6(float) Load 11(inF0)
-             155:    6(float) ExtInst 1(GLSL.std.450) 9(Ceil) 154
-             156:    6(float) Load 11(inF0)
-             157:    6(float) Load 12(inF1)
-             158:    6(float) Load 13(inF2)
-             159:    6(float) ExtInst 1(GLSL.std.450) 43(FClamp) 156 157 158
-             160:    6(float) Load 11(inF0)
-             161:    6(float) ExtInst 1(GLSL.std.450) 14(Cos) 160
-             162:    6(float) Load 11(inF0)
-             163:    6(float) ExtInst 1(GLSL.std.450) 20(Cosh) 162
-             165:    143(int) BitCount 164
-             166:    6(float) Load 11(inF0)
-             167:    6(float) ExtInst 1(GLSL.std.450) 12(Degrees) 166
-             168:    6(float) Load 11(inF0)
-             169:    6(float) ExtInst 1(GLSL.std.450) 27(Exp) 168
-             170:    6(float) Load 11(inF0)
-             171:    6(float) ExtInst 1(GLSL.std.450) 29(Exp2) 170
-             172:    143(int) ExtInst 1(GLSL.std.450) 74(FindSMsb) 164
-             173:    143(int) ExtInst 1(GLSL.std.450) 73(FindILsb) 164
-             174:    6(float) Load 11(inF0)
-             175:    6(float) ExtInst 1(GLSL.std.450) 8(Floor) 174
-             176:    6(float) Load 11(inF0)
-             177:    6(float) Load 12(inF1)
-             178:    6(float) FMod 176 177
+             155:    6(float) Load 12(inF1)
+             156:    6(float) ExtInst 1(GLSL.std.450) 25(Atan2) 154 155
+             157:    6(float) Load 11(inF0)
+             158:    6(float) ExtInst 1(GLSL.std.450) 9(Ceil) 157
+             159:    6(float) Load 11(inF0)
+             160:    6(float) Load 12(inF1)
+             161:    6(float) Load 13(inF2)
+             162:    6(float) ExtInst 1(GLSL.std.450) 43(FClamp) 159 160 161
+             163:    6(float) Load 11(inF0)
+             164:    6(float) ExtInst 1(GLSL.std.450) 14(Cos) 163
+             165:    6(float) Load 11(inF0)
+             166:    6(float) ExtInst 1(GLSL.std.450) 20(Cosh) 165
+             168:    146(int) BitCount 167
+             169:    6(float) Load 11(inF0)
+             170:    6(float) ExtInst 1(GLSL.std.450) 12(Degrees) 169
+             171:    6(float) Load 11(inF0)
+             172:    6(float) ExtInst 1(GLSL.std.450) 27(Exp) 171
+             173:    6(float) Load 11(inF0)
+             174:    6(float) ExtInst 1(GLSL.std.450) 29(Exp2) 173
+             175:    146(int) ExtInst 1(GLSL.std.450) 74(FindSMsb) 167
+             176:    146(int) ExtInst 1(GLSL.std.450) 73(FindILsb) 167
+             177:    6(float) Load 11(inF0)
+             178:    6(float) ExtInst 1(GLSL.std.450) 8(Floor) 177
              179:    6(float) Load 11(inF0)
-             180:    6(float) ExtInst 1(GLSL.std.450) 10(Fract) 179
-             181:    6(float) Load 11(inF0)
-             182:   132(bool) IsInf 181
-             183:    6(float) Load 11(inF0)
-             184:   132(bool) IsNan 183
-             185:    6(float) Load 11(inF0)
-             186:    6(float) Load 12(inF1)
-             187:    6(float) ExtInst 1(GLSL.std.450) 53(Ldexp) 185 186
+             180:    6(float) Load 12(inF1)
+             181:    6(float) FMod 179 180
+             182:    6(float) Load 11(inF0)
+             183:    6(float) ExtInst 1(GLSL.std.450) 10(Fract) 182
+             184:    6(float) Load 11(inF0)
+             185:   132(bool) IsInf 184
+             186:    6(float) Load 11(inF0)
+             187:   132(bool) IsNan 186
              188:    6(float) Load 11(inF0)
              189:    6(float) Load 12(inF1)
-             190:    6(float) Load 13(inF2)
-             191:    6(float) ExtInst 1(GLSL.std.450) 46(FMix) 188 189 190
-             192:    6(float) Load 11(inF0)
-             193:    6(float) ExtInst 1(GLSL.std.450) 28(Log) 192
-             194:    6(float) Load 11(inF0)
-             195:    6(float) ExtInst 1(GLSL.std.450) 30(Log2) 194
-             197:    6(float) FMul 195 196
-             198:    6(float) Load 11(inF0)
-             199:    6(float) ExtInst 1(GLSL.std.450) 30(Log2) 198
-             200:    6(float) Load 11(inF0)
-             201:    6(float) Load 12(inF1)
-             202:    6(float) ExtInst 1(GLSL.std.450) 40(FMax) 200 201
+             190:    6(float) ExtInst 1(GLSL.std.450) 53(Ldexp) 188 189
+             191:    6(float) Load 11(inF0)
+             192:    6(float) Load 12(inF1)
+             193:    6(float) Load 13(inF2)
+             194:    6(float) ExtInst 1(GLSL.std.450) 46(FMix) 191 192 193
+             195:    6(float) Load 11(inF0)
+             196:    6(float) ExtInst 1(GLSL.std.450) 28(Log) 195
+             197:    6(float) Load 11(inF0)
+             198:    6(float) ExtInst 1(GLSL.std.450) 30(Log2) 197
+             200:    6(float) FMul 198 199
+             201:    6(float) Load 11(inF0)
+             202:    6(float) ExtInst 1(GLSL.std.450) 30(Log2) 201
              203:    6(float) Load 11(inF0)
              204:    6(float) Load 12(inF1)
-             205:    6(float) ExtInst 1(GLSL.std.450) 37(FMin) 203 204
+             205:    6(float) ExtInst 1(GLSL.std.450) 40(FMax) 203 204
              206:    6(float) Load 11(inF0)
              207:    6(float) Load 12(inF1)
-             208:    6(float) ExtInst 1(GLSL.std.450) 26(Pow) 206 207
+             208:    6(float) ExtInst 1(GLSL.std.450) 37(FMin) 206 207
              209:    6(float) Load 11(inF0)
-             210:    6(float) ExtInst 1(GLSL.std.450) 11(Radians) 209
-             212:    143(int) BitReverse 211
-             213:    6(float) Load 11(inF0)
-             214:    6(float) ExtInst 1(GLSL.std.450) 2(RoundEven) 213
-             215:    6(float) Load 11(inF0)
-             216:    6(float) ExtInst 1(GLSL.std.450) 32(InverseSqrt) 215
-             217:    6(float) Load 11(inF0)
-             220:    6(float) ExtInst 1(GLSL.std.450) 43(FClamp) 217 218 219
-             221:    6(float) Load 11(inF0)
-             222:    6(float) ExtInst 1(GLSL.std.450) 6(FSign) 221
+             210:    6(float) Load 12(inF1)
+             211:    6(float) ExtInst 1(GLSL.std.450) 26(Pow) 209 210
+             212:    6(float) Load 11(inF0)
+             213:    6(float) ExtInst 1(GLSL.std.450) 11(Radians) 212
+             215:    146(int) BitReverse 214
+             216:    6(float) Load 11(inF0)
+             217:    6(float) ExtInst 1(GLSL.std.450) 2(RoundEven) 216
+             218:    6(float) Load 11(inF0)
+             219:    6(float) ExtInst 1(GLSL.std.450) 32(InverseSqrt) 218
+             220:    6(float) Load 11(inF0)
+             222:    6(float) ExtInst 1(GLSL.std.450) 43(FClamp) 220 133 221
              223:    6(float) Load 11(inF0)
-             224:    6(float) ExtInst 1(GLSL.std.450) 13(Sin) 223
+             224:    6(float) ExtInst 1(GLSL.std.450) 6(FSign) 223
              225:    6(float) Load 11(inF0)
              226:    6(float) ExtInst 1(GLSL.std.450) 13(Sin) 225
-                              Store 12(inF1) 226
              227:    6(float) Load 11(inF0)
-             228:    6(float) ExtInst 1(GLSL.std.450) 14(Cos) 227
-                              Store 13(inF2) 228
+             228:    6(float) ExtInst 1(GLSL.std.450) 13(Sin) 227
+                              Store 12(inF1) 228
              229:    6(float) Load 11(inF0)
-             230:    6(float) ExtInst 1(GLSL.std.450) 19(Sinh) 229
+             230:    6(float) ExtInst 1(GLSL.std.450) 14(Cos) 229
+                              Store 13(inF2) 230
              231:    6(float) Load 11(inF0)
-             232:    6(float) Load 12(inF1)
-             233:    6(float) Load 13(inF2)
-             234:    6(float) ExtInst 1(GLSL.std.450) 49(SmoothStep) 231 232 233
-             235:    6(float) Load 11(inF0)
-             236:    6(float) ExtInst 1(GLSL.std.450) 31(Sqrt) 235
+             232:    6(float) ExtInst 1(GLSL.std.450) 19(Sinh) 231
+             233:    6(float) Load 11(inF0)
+             234:    6(float) Load 12(inF1)
+             235:    6(float) Load 13(inF2)
+             236:    6(float) ExtInst 1(GLSL.std.450) 49(SmoothStep) 233 234 235
              237:    6(float) Load 11(inF0)
-             238:    6(float) Load 12(inF1)
-             239:    6(float) ExtInst 1(GLSL.std.450) 48(Step) 237 238
-             240:    6(float) Load 11(inF0)
-             241:    6(float) ExtInst 1(GLSL.std.450) 15(Tan) 240
+             238:    6(float) ExtInst 1(GLSL.std.450) 31(Sqrt) 237
+             239:    6(float) Load 11(inF0)
+             240:    6(float) Load 12(inF1)
+             241:    6(float) ExtInst 1(GLSL.std.450) 48(Step) 239 240
              242:    6(float) Load 11(inF0)
-             243:    6(float) ExtInst 1(GLSL.std.450) 21(Tanh) 242
+             243:    6(float) ExtInst 1(GLSL.std.450) 15(Tan) 242
              244:    6(float) Load 11(inF0)
-             245:    6(float) ExtInst 1(GLSL.std.450) 3(Trunc) 244
-                              ReturnValue 218
+             245:    6(float) ExtInst 1(GLSL.std.450) 21(Tanh) 244
+             246:    6(float) Load 11(inF0)
+             247:    6(float) ExtInst 1(GLSL.std.450) 3(Trunc) 246
+                              ReturnValue 133
                               FunctionEnd
 22(VertexShaderFunction1(vf1;vf1;vf1;):    6(float) Function None 18
         19(inF0):      7(ptr) FunctionParameter
         20(inF1):      7(ptr) FunctionParameter
         21(inF2):      7(ptr) FunctionParameter
               23:             Label
-                              ReturnValue 218
+                              ReturnValue 133
                               FunctionEnd
 34(VertexShaderFunction2(vf2;vf2;vf2;vu2;vu2;):   24(fvec2) Function None 28
         29(inF0):     25(ptr) FunctionParameter
@@ -3094,139 +3130,141 @@ Shader version: 500
         32(inU0):     27(ptr) FunctionParameter
         33(inU1):     27(ptr) FunctionParameter
               35:             Label
-             250:   24(fvec2) Load 29(inF0)
-             251:   132(bool) All 250
              252:   24(fvec2) Load 29(inF0)
-             253:   24(fvec2) ExtInst 1(GLSL.std.450) 4(FAbs) 252
-             254:   24(fvec2) Load 29(inF0)
-             255:   24(fvec2) ExtInst 1(GLSL.std.450) 17(Acos) 254
-             256:   24(fvec2) Load 29(inF0)
-             257:   132(bool) Any 256
-             258:   24(fvec2) Load 29(inF0)
-             259:   24(fvec2) ExtInst 1(GLSL.std.450) 16(Asin) 258
-             260:   24(fvec2) Load 29(inF0)
-             262:  261(ivec2) Bitcast 260
-             263:   24(fvec2) Load 29(inF0)
-             264:   26(ivec2) Bitcast 263
-             265:   26(ivec2) Load 32(inU0)
-             266:   24(fvec2) Bitcast 265
-             267:   24(fvec2) Load 29(inF0)
-             268:   24(fvec2) ExtInst 1(GLSL.std.450) 18(Atan) 267
+             255:  253(bvec2) FOrdNotEqual 252 254
+             256:   132(bool) All 255
+             257:   24(fvec2) Load 29(inF0)
+             258:   24(fvec2) ExtInst 1(GLSL.std.450) 4(FAbs) 257
+             259:   24(fvec2) Load 29(inF0)
+             260:   24(fvec2) ExtInst 1(GLSL.std.450) 17(Acos) 259
+             261:   24(fvec2) Load 29(inF0)
+             262:  253(bvec2) FOrdNotEqual 261 254
+             263:   132(bool) Any 262
+             264:   24(fvec2) Load 29(inF0)
+             265:   24(fvec2) ExtInst 1(GLSL.std.450) 16(Asin) 264
+             266:   24(fvec2) Load 29(inF0)
+             268:  267(ivec2) Bitcast 266
              269:   24(fvec2) Load 29(inF0)
-             270:   24(fvec2) Load 30(inF1)
-             271:   24(fvec2) ExtInst 1(GLSL.std.450) 25(Atan2) 269 270
-             272:   24(fvec2) Load 29(inF0)
-             273:   24(fvec2) ExtInst 1(GLSL.std.450) 9(Ceil) 272
-             274:   24(fvec2) Load 29(inF0)
-             275:   24(fvec2) Load 30(inF1)
-             276:   24(fvec2) Load 31(inF2)
-             277:   24(fvec2) ExtInst 1(GLSL.std.450) 43(FClamp) 274 275 276
+             270:   26(ivec2) Bitcast 269
+             271:   26(ivec2) Load 32(inU0)
+             272:   24(fvec2) Bitcast 271
+             273:   24(fvec2) Load 29(inF0)
+             274:   24(fvec2) ExtInst 1(GLSL.std.450) 18(Atan) 273
+             275:   24(fvec2) Load 29(inF0)
+             276:   24(fvec2) Load 30(inF1)
+             277:   24(fvec2) ExtInst 1(GLSL.std.450) 25(Atan2) 275 276
              278:   24(fvec2) Load 29(inF0)
-             279:   24(fvec2) ExtInst 1(GLSL.std.450) 14(Cos) 278
+             279:   24(fvec2) ExtInst 1(GLSL.std.450) 9(Ceil) 278
              280:   24(fvec2) Load 29(inF0)
-             281:   24(fvec2) ExtInst 1(GLSL.std.450) 20(Cosh) 280
-             284:  261(ivec2) BitCount 283
-             285:   24(fvec2) Load 29(inF0)
-             286:   24(fvec2) ExtInst 1(GLSL.std.450) 12(Degrees) 285
-             287:   24(fvec2) Load 29(inF0)
-             288:   24(fvec2) Load 30(inF1)
-             289:    6(float) ExtInst 1(GLSL.std.450) 67(Distance) 287 288
-             290:   24(fvec2) Load 29(inF0)
-             291:   24(fvec2) Load 30(inF1)
-             292:    6(float) Dot 290 291
+             281:   24(fvec2) Load 30(inF1)
+             282:   24(fvec2) Load 31(inF2)
+             283:   24(fvec2) ExtInst 1(GLSL.std.450) 43(FClamp) 280 281 282
+             284:   24(fvec2) Load 29(inF0)
+             285:   24(fvec2) ExtInst 1(GLSL.std.450) 14(Cos) 284
+             286:   24(fvec2) Load 29(inF0)
+             287:   24(fvec2) ExtInst 1(GLSL.std.450) 20(Cosh) 286
+             290:  267(ivec2) BitCount 289
+             291:   24(fvec2) Load 29(inF0)
+             292:   24(fvec2) ExtInst 1(GLSL.std.450) 12(Degrees) 291
              293:   24(fvec2) Load 29(inF0)
-             294:   24(fvec2) ExtInst 1(GLSL.std.450) 27(Exp) 293
-             295:   24(fvec2) Load 29(inF0)
-             296:   24(fvec2) ExtInst 1(GLSL.std.450) 29(Exp2) 295
-             297:   24(fvec2) Load 29(inF0)
-             298:   24(fvec2) Load 30(inF1)
-             299:   24(fvec2) Load 31(inF2)
-             300:   24(fvec2) ExtInst 1(GLSL.std.450) 70(FaceForward) 297 298 299
-             301:    143(int) ExtInst 1(GLSL.std.450) 74(FindSMsb) 164
-             302:    143(int) ExtInst 1(GLSL.std.450) 73(FindILsb) 164
+             294:   24(fvec2) Load 30(inF1)
+             295:    6(float) ExtInst 1(GLSL.std.450) 67(Distance) 293 294
+             296:   24(fvec2) Load 29(inF0)
+             297:   24(fvec2) Load 30(inF1)
+             298:    6(float) Dot 296 297
+             299:   24(fvec2) Load 29(inF0)
+             300:   24(fvec2) ExtInst 1(GLSL.std.450) 27(Exp) 299
+             301:   24(fvec2) Load 29(inF0)
+             302:   24(fvec2) ExtInst 1(GLSL.std.450) 29(Exp2) 301
              303:   24(fvec2) Load 29(inF0)
-             304:   24(fvec2) ExtInst 1(GLSL.std.450) 8(Floor) 303
-             305:   24(fvec2) Load 29(inF0)
-             306:   24(fvec2) Load 30(inF1)
-             307:   24(fvec2) FMod 305 306
-             308:   24(fvec2) Load 29(inF0)
-             309:   24(fvec2) ExtInst 1(GLSL.std.450) 10(Fract) 308
-             310:   24(fvec2) Load 29(inF0)
-             312:  311(bvec2) IsInf 310
-             313:   24(fvec2) Load 29(inF0)
-             314:  311(bvec2) IsNan 313
-             315:   24(fvec2) Load 29(inF0)
-             316:   24(fvec2) Load 30(inF1)
-             317:   24(fvec2) ExtInst 1(GLSL.std.450) 53(Ldexp) 315 316
+             304:   24(fvec2) Load 30(inF1)
+             305:   24(fvec2) Load 31(inF2)
+             306:   24(fvec2) ExtInst 1(GLSL.std.450) 70(FaceForward) 303 304 305
+             307:    146(int) ExtInst 1(GLSL.std.450) 74(FindSMsb) 167
+             308:    146(int) ExtInst 1(GLSL.std.450) 73(FindILsb) 167
+             309:   24(fvec2) Load 29(inF0)
+             310:   24(fvec2) ExtInst 1(GLSL.std.450) 8(Floor) 309
+             311:   24(fvec2) Load 29(inF0)
+             312:   24(fvec2) Load 30(inF1)
+             313:   24(fvec2) FMod 311 312
+             314:   24(fvec2) Load 29(inF0)
+             315:   24(fvec2) ExtInst 1(GLSL.std.450) 10(Fract) 314
+             316:   24(fvec2) Load 29(inF0)
+             317:  253(bvec2) IsInf 316
              318:   24(fvec2) Load 29(inF0)
-             319:   24(fvec2) Load 30(inF1)
-             320:   24(fvec2) Load 31(inF2)
-             321:   24(fvec2) ExtInst 1(GLSL.std.450) 46(FMix) 318 319 320
-             322:   24(fvec2) Load 29(inF0)
-             323:    6(float) ExtInst 1(GLSL.std.450) 66(Length) 322
-             324:   24(fvec2) Load 29(inF0)
-             325:   24(fvec2) ExtInst 1(GLSL.std.450) 28(Log) 324
-             326:   24(fvec2) Load 29(inF0)
-             327:   24(fvec2) ExtInst 1(GLSL.std.450) 30(Log2) 326
-             328:   24(fvec2) VectorTimesScalar 327 196
+             319:  253(bvec2) IsNan 318
+             320:   24(fvec2) Load 29(inF0)
+             321:   24(fvec2) Load 30(inF1)
+             322:   24(fvec2) ExtInst 1(GLSL.std.450) 53(Ldexp) 320 321
+             323:   24(fvec2) Load 29(inF0)
+             324:   24(fvec2) Load 30(inF1)
+             325:   24(fvec2) Load 31(inF2)
+             326:   24(fvec2) ExtInst 1(GLSL.std.450) 46(FMix) 323 324 325
+             327:   24(fvec2) Load 29(inF0)
+             328:    6(float) ExtInst 1(GLSL.std.450) 66(Length) 327
              329:   24(fvec2) Load 29(inF0)
-             330:   24(fvec2) ExtInst 1(GLSL.std.450) 30(Log2) 329
+             330:   24(fvec2) ExtInst 1(GLSL.std.450) 28(Log) 329
              331:   24(fvec2) Load 29(inF0)
-             332:   24(fvec2) Load 30(inF1)
-             333:   24(fvec2) ExtInst 1(GLSL.std.450) 40(FMax) 331 332
+             332:   24(fvec2) ExtInst 1(GLSL.std.450) 30(Log2) 331
+             333:   24(fvec2) VectorTimesScalar 332 199
              334:   24(fvec2) Load 29(inF0)
-             335:   24(fvec2) Load 30(inF1)
-             336:   24(fvec2) ExtInst 1(GLSL.std.450) 37(FMin) 334 335
-             337:   24(fvec2) Load 29(inF0)
-             338:   24(fvec2) ExtInst 1(GLSL.std.450) 69(Normalize) 337
+             335:   24(fvec2) ExtInst 1(GLSL.std.450) 30(Log2) 334
+             336:   24(fvec2) Load 29(inF0)
+             337:   24(fvec2) Load 30(inF1)
+             338:   24(fvec2) ExtInst 1(GLSL.std.450) 40(FMax) 336 337
              339:   24(fvec2) Load 29(inF0)
              340:   24(fvec2) Load 30(inF1)
-             341:   24(fvec2) ExtInst 1(GLSL.std.450) 26(Pow) 339 340
+             341:   24(fvec2) ExtInst 1(GLSL.std.450) 37(FMin) 339 340
              342:   24(fvec2) Load 29(inF0)
-             343:   24(fvec2) ExtInst 1(GLSL.std.450) 11(Radians) 342
+             343:   24(fvec2) ExtInst 1(GLSL.std.450) 69(Normalize) 342
              344:   24(fvec2) Load 29(inF0)
              345:   24(fvec2) Load 30(inF1)
-             346:   24(fvec2) ExtInst 1(GLSL.std.450) 71(Reflect) 344 345
+             346:   24(fvec2) ExtInst 1(GLSL.std.450) 26(Pow) 344 345
              347:   24(fvec2) Load 29(inF0)
-             348:   24(fvec2) Load 30(inF1)
-             350:   24(fvec2) ExtInst 1(GLSL.std.450) 72(Refract) 347 348 349
-             353:  261(ivec2) BitReverse 352
-             354:   24(fvec2) Load 29(inF0)
-             355:   24(fvec2) ExtInst 1(GLSL.std.450) 2(RoundEven) 354
-             356:   24(fvec2) Load 29(inF0)
-             357:   24(fvec2) ExtInst 1(GLSL.std.450) 32(InverseSqrt) 356
-             358:   24(fvec2) Load 29(inF0)
-             359:   24(fvec2) CompositeConstruct 218 218
-             360:   24(fvec2) CompositeConstruct 219 219
-             361:   24(fvec2) ExtInst 1(GLSL.std.450) 43(FClamp) 358 359 360
-             362:   24(fvec2) Load 29(inF0)
-             363:   24(fvec2) ExtInst 1(GLSL.std.450) 6(FSign) 362
-             364:   24(fvec2) Load 29(inF0)
-             365:   24(fvec2) ExtInst 1(GLSL.std.450) 13(Sin) 364
-             366:   24(fvec2) Load 29(inF0)
-             367:   24(fvec2) ExtInst 1(GLSL.std.450) 13(Sin) 366
-                              Store 30(inF1) 367
-             368:   24(fvec2) Load 29(inF0)
-             369:   24(fvec2) ExtInst 1(GLSL.std.450) 14(Cos) 368
-                              Store 31(inF2) 369
-             370:   24(fvec2) Load 29(inF0)
-             371:   24(fvec2) ExtInst 1(GLSL.std.450) 19(Sinh) 370
-             372:   24(fvec2) Load 29(inF0)
-             373:   24(fvec2) Load 30(inF1)
-             374:   24(fvec2) Load 31(inF2)
-             375:   24(fvec2) ExtInst 1(GLSL.std.450) 49(SmoothStep) 372 373 374
-             376:   24(fvec2) Load 29(inF0)
-             377:   24(fvec2) ExtInst 1(GLSL.std.450) 31(Sqrt) 376
-             378:   24(fvec2) Load 29(inF0)
-             379:   24(fvec2) Load 30(inF1)
-             380:   24(fvec2) ExtInst 1(GLSL.std.450) 48(Step) 378 379
+             348:   24(fvec2) ExtInst 1(GLSL.std.450) 11(Radians) 347
+             349:   24(fvec2) Load 29(inF0)
+             350:   24(fvec2) Load 30(inF1)
+             351:   24(fvec2) ExtInst 1(GLSL.std.450) 71(Reflect) 349 350
+             352:   24(fvec2) Load 29(inF0)
+             353:   24(fvec2) Load 30(inF1)
+             355:   24(fvec2) ExtInst 1(GLSL.std.450) 72(Refract) 352 353 354
+             358:  267(ivec2) BitReverse 357
+             359:   24(fvec2) Load 29(inF0)
+             360:   24(fvec2) ExtInst 1(GLSL.std.450) 2(RoundEven) 359
+             361:   24(fvec2) Load 29(inF0)
+             362:   24(fvec2) ExtInst 1(GLSL.std.450) 32(InverseSqrt) 361
+             363:   24(fvec2) Load 29(inF0)
+             364:   24(fvec2) CompositeConstruct 133 133
+             365:   24(fvec2) CompositeConstruct 221 221
+             366:   24(fvec2) ExtInst 1(GLSL.std.450) 43(FClamp) 363 364 365
+             367:   24(fvec2) Load 29(inF0)
+             368:   24(fvec2) ExtInst 1(GLSL.std.450) 6(FSign) 367
+             369:   24(fvec2) Load 29(inF0)
+             370:   24(fvec2) ExtInst 1(GLSL.std.450) 13(Sin) 369
+             371:   24(fvec2) Load 29(inF0)
+             372:   24(fvec2) ExtInst 1(GLSL.std.450) 13(Sin) 371
+                              Store 30(inF1) 372
+             373:   24(fvec2) Load 29(inF0)
+             374:   24(fvec2) ExtInst 1(GLSL.std.450) 14(Cos) 373
+                              Store 31(inF2) 374
+             375:   24(fvec2) Load 29(inF0)
+             376:   24(fvec2) ExtInst 1(GLSL.std.450) 19(Sinh) 375
+             377:   24(fvec2) Load 29(inF0)
+             378:   24(fvec2) Load 30(inF1)
+             379:   24(fvec2) Load 31(inF2)
+             380:   24(fvec2) ExtInst 1(GLSL.std.450) 49(SmoothStep) 377 378 379
              381:   24(fvec2) Load 29(inF0)
-             382:   24(fvec2) ExtInst 1(GLSL.std.450) 15(Tan) 381
+             382:   24(fvec2) ExtInst 1(GLSL.std.450) 31(Sqrt) 381
              383:   24(fvec2) Load 29(inF0)
-             384:   24(fvec2) ExtInst 1(GLSL.std.450) 21(Tanh) 383
-             385:   24(fvec2) Load 29(inF0)
-             386:   24(fvec2) ExtInst 1(GLSL.std.450) 3(Trunc) 385
-                              ReturnValue 387
+             384:   24(fvec2) Load 30(inF1)
+             385:   24(fvec2) ExtInst 1(GLSL.std.450) 48(Step) 383 384
+             386:   24(fvec2) Load 29(inF0)
+             387:   24(fvec2) ExtInst 1(GLSL.std.450) 15(Tan) 386
+             388:   24(fvec2) Load 29(inF0)
+             389:   24(fvec2) ExtInst 1(GLSL.std.450) 21(Tanh) 388
+             390:   24(fvec2) Load 29(inF0)
+             391:   24(fvec2) ExtInst 1(GLSL.std.450) 3(Trunc) 390
+                              ReturnValue 392
                               FunctionEnd
 46(VertexShaderFunction3(vf3;vf3;vf3;vu3;vu3;):   36(fvec3) Function None 40
         41(inF0):     37(ptr) FunctionParameter
@@ -3235,142 +3273,144 @@ Shader version: 500
         44(inU0):     39(ptr) FunctionParameter
         45(inU1):     39(ptr) FunctionParameter
               47:             Label
-             390:   36(fvec3) Load 41(inF0)
-             391:   132(bool) All 390
-             392:   36(fvec3) Load 41(inF0)
-             393:   36(fvec3) ExtInst 1(GLSL.std.450) 4(FAbs) 392
-             394:   36(fvec3) Load 41(inF0)
-             395:   36(fvec3) ExtInst 1(GLSL.std.450) 17(Acos) 394
-             396:   36(fvec3) Load 41(inF0)
-             397:   132(bool) Any 396
-             398:   36(fvec3) Load 41(inF0)
-             399:   36(fvec3) ExtInst 1(GLSL.std.450) 16(Asin) 398
+             395:   36(fvec3) Load 41(inF0)
+             398:  396(bvec3) FOrdNotEqual 395 397
+             399:   132(bool) All 398
              400:   36(fvec3) Load 41(inF0)
-             402:  401(ivec3) Bitcast 400
-             403:   36(fvec3) Load 41(inF0)
-             404:   38(ivec3) Bitcast 403
-             405:   38(ivec3) Load 44(inU0)
-             406:   36(fvec3) Bitcast 405
+             401:   36(fvec3) ExtInst 1(GLSL.std.450) 4(FAbs) 400
+             402:   36(fvec3) Load 41(inF0)
+             403:   36(fvec3) ExtInst 1(GLSL.std.450) 17(Acos) 402
+             404:   36(fvec3) Load 41(inF0)
+             405:  396(bvec3) FOrdNotEqual 404 397
+             406:   132(bool) Any 405
              407:   36(fvec3) Load 41(inF0)
-             408:   36(fvec3) ExtInst 1(GLSL.std.450) 18(Atan) 407
+             408:   36(fvec3) ExtInst 1(GLSL.std.450) 16(Asin) 407
              409:   36(fvec3) Load 41(inF0)
-             410:   36(fvec3) Load 42(inF1)
-             411:   36(fvec3) ExtInst 1(GLSL.std.450) 25(Atan2) 409 410
+             411:  410(ivec3) Bitcast 409
              412:   36(fvec3) Load 41(inF0)
-             413:   36(fvec3) ExtInst 1(GLSL.std.450) 9(Ceil) 412
-             414:   36(fvec3) Load 41(inF0)
-             415:   36(fvec3) Load 42(inF1)
-             416:   36(fvec3) Load 43(inF2)
-             417:   36(fvec3) ExtInst 1(GLSL.std.450) 43(FClamp) 414 415 416
+             413:   38(ivec3) Bitcast 412
+             414:   38(ivec3) Load 44(inU0)
+             415:   36(fvec3) Bitcast 414
+             416:   36(fvec3) Load 41(inF0)
+             417:   36(fvec3) ExtInst 1(GLSL.std.450) 18(Atan) 416
              418:   36(fvec3) Load 41(inF0)
-             419:   36(fvec3) ExtInst 1(GLSL.std.450) 14(Cos) 418
-             420:   36(fvec3) Load 41(inF0)
-             421:   36(fvec3) ExtInst 1(GLSL.std.450) 20(Cosh) 420
-             424:  401(ivec3) BitCount 423
-             425:   36(fvec3) Load 41(inF0)
-             426:   36(fvec3) Load 42(inF1)
-             427:   36(fvec3) ExtInst 1(GLSL.std.450) 68(Cross) 425 426
-             428:   36(fvec3) Load 41(inF0)
-             429:   36(fvec3) ExtInst 1(GLSL.std.450) 12(Degrees) 428
-             430:   36(fvec3) Load 41(inF0)
-             431:   36(fvec3) Load 42(inF1)
-             432:    6(float) ExtInst 1(GLSL.std.450) 67(Distance) 430 431
-             433:   36(fvec3) Load 41(inF0)
-             434:   36(fvec3) Load 42(inF1)
-             435:    6(float) Dot 433 434
-             436:   36(fvec3) Load 41(inF0)
-             437:   36(fvec3) ExtInst 1(GLSL.std.450) 27(Exp) 436
-             438:   36(fvec3) Load 41(inF0)
-             439:   36(fvec3) ExtInst 1(GLSL.std.450) 29(Exp2) 438
-             440:   36(fvec3) Load 41(inF0)
-             441:   36(fvec3) Load 42(inF1)
-             442:   36(fvec3) Load 43(inF2)
-             443:   36(fvec3) ExtInst 1(GLSL.std.450) 70(FaceForward) 440 441 442
-             444:    143(int) ExtInst 1(GLSL.std.450) 74(FindSMsb) 164
-             445:    143(int) ExtInst 1(GLSL.std.450) 73(FindILsb) 164
-             446:   36(fvec3) Load 41(inF0)
-             447:   36(fvec3) ExtInst 1(GLSL.std.450) 8(Floor) 446
-             448:   36(fvec3) Load 41(inF0)
-             449:   36(fvec3) Load 42(inF1)
-             450:   36(fvec3) FMod 448 449
-             451:   36(fvec3) Load 41(inF0)
-             452:   36(fvec3) ExtInst 1(GLSL.std.450) 10(Fract) 451
-             453:   36(fvec3) Load 41(inF0)
-             455:  454(bvec3) IsInf 453
-             456:   36(fvec3) Load 41(inF0)
-             457:  454(bvec3) IsNan 456
-             458:   36(fvec3) Load 41(inF0)
-             459:   36(fvec3) Load 42(inF1)
-             460:   36(fvec3) ExtInst 1(GLSL.std.450) 53(Ldexp) 458 459
-             461:   36(fvec3) Load 41(inF0)
-             462:   36(fvec3) Load 42(inF1)
-             463:   36(fvec3) Load 43(inF2)
-             464:   36(fvec3) ExtInst 1(GLSL.std.450) 46(FMix) 461 462 463
-             465:   36(fvec3) Load 41(inF0)
-             466:    6(float) ExtInst 1(GLSL.std.450) 66(Length) 465
-             467:   36(fvec3) Load 41(inF0)
-             468:   36(fvec3) ExtInst 1(GLSL.std.450) 28(Log) 467
+             419:   36(fvec3) Load 42(inF1)
+             420:   36(fvec3) ExtInst 1(GLSL.std.450) 25(Atan2) 418 419
+             421:   36(fvec3) Load 41(inF0)
+             422:   36(fvec3) ExtInst 1(GLSL.std.450) 9(Ceil) 421
+             423:   36(fvec3) Load 41(inF0)
+             424:   36(fvec3) Load 42(inF1)
+             425:   36(fvec3) Load 43(inF2)
+             426:   36(fvec3) ExtInst 1(GLSL.std.450) 43(FClamp) 423 424 425
+             427:   36(fvec3) Load 41(inF0)
+             428:   36(fvec3) ExtInst 1(GLSL.std.450) 14(Cos) 427
+             429:   36(fvec3) Load 41(inF0)
+             430:   36(fvec3) ExtInst 1(GLSL.std.450) 20(Cosh) 429
+             433:  410(ivec3) BitCount 432
+             434:   36(fvec3) Load 41(inF0)
+             435:   36(fvec3) Load 42(inF1)
+             436:   36(fvec3) ExtInst 1(GLSL.std.450) 68(Cross) 434 435
+             437:   36(fvec3) Load 41(inF0)
+             438:   36(fvec3) ExtInst 1(GLSL.std.450) 12(Degrees) 437
+             439:   36(fvec3) Load 41(inF0)
+             440:   36(fvec3) Load 42(inF1)
+             441:    6(float) ExtInst 1(GLSL.std.450) 67(Distance) 439 440
+             442:   36(fvec3) Load 41(inF0)
+             443:   36(fvec3) Load 42(inF1)
+             444:    6(float) Dot 442 443
+             445:   36(fvec3) Load 41(inF0)
+             446:   36(fvec3) ExtInst 1(GLSL.std.450) 27(Exp) 445
+             447:   36(fvec3) Load 41(inF0)
+             448:   36(fvec3) ExtInst 1(GLSL.std.450) 29(Exp2) 447
+             449:   36(fvec3) Load 41(inF0)
+             450:   36(fvec3) Load 42(inF1)
+             451:   36(fvec3) Load 43(inF2)
+             452:   36(fvec3) ExtInst 1(GLSL.std.450) 70(FaceForward) 449 450 451
+             453:    146(int) ExtInst 1(GLSL.std.450) 74(FindSMsb) 167
+             454:    146(int) ExtInst 1(GLSL.std.450) 73(FindILsb) 167
+             455:   36(fvec3) Load 41(inF0)
+             456:   36(fvec3) ExtInst 1(GLSL.std.450) 8(Floor) 455
+             457:   36(fvec3) Load 41(inF0)
+             458:   36(fvec3) Load 42(inF1)
+             459:   36(fvec3) FMod 457 458
+             460:   36(fvec3) Load 41(inF0)
+             461:   36(fvec3) ExtInst 1(GLSL.std.450) 10(Fract) 460
+             462:   36(fvec3) Load 41(inF0)
+             463:  396(bvec3) IsInf 462
+             464:   36(fvec3) Load 41(inF0)
+             465:  396(bvec3) IsNan 464
+             466:   36(fvec3) Load 41(inF0)
+             467:   36(fvec3) Load 42(inF1)
+             468:   36(fvec3) ExtInst 1(GLSL.std.450) 53(Ldexp) 466 467
              469:   36(fvec3) Load 41(inF0)
-             470:   36(fvec3) ExtInst 1(GLSL.std.450) 30(Log2) 469
-             471:   36(fvec3) VectorTimesScalar 470 196
-             472:   36(fvec3) Load 41(inF0)
-             473:   36(fvec3) ExtInst 1(GLSL.std.450) 30(Log2) 472
-             474:   36(fvec3) Load 41(inF0)
-             475:   36(fvec3) Load 42(inF1)
-             476:   36(fvec3) ExtInst 1(GLSL.std.450) 40(FMax) 474 475
+             470:   36(fvec3) Load 42(inF1)
+             471:   36(fvec3) Load 43(inF2)
+             472:   36(fvec3) ExtInst 1(GLSL.std.450) 46(FMix) 469 470 471
+             473:   36(fvec3) Load 41(inF0)
+             474:    6(float) ExtInst 1(GLSL.std.450) 66(Length) 473
+             475:   36(fvec3) Load 41(inF0)
+             476:   36(fvec3) ExtInst 1(GLSL.std.450) 28(Log) 475
              477:   36(fvec3) Load 41(inF0)
-             478:   36(fvec3) Load 42(inF1)
-             479:   36(fvec3) ExtInst 1(GLSL.std.450) 37(FMin) 477 478
+             478:   36(fvec3) ExtInst 1(GLSL.std.450) 30(Log2) 477
+             479:   36(fvec3) VectorTimesScalar 478 199
              480:   36(fvec3) Load 41(inF0)
-             481:   36(fvec3) ExtInst 1(GLSL.std.450) 69(Normalize) 480
+             481:   36(fvec3) ExtInst 1(GLSL.std.450) 30(Log2) 480
              482:   36(fvec3) Load 41(inF0)
              483:   36(fvec3) Load 42(inF1)
-             484:   36(fvec3) ExtInst 1(GLSL.std.450) 26(Pow) 482 483
+             484:   36(fvec3) ExtInst 1(GLSL.std.450) 40(FMax) 482 483
              485:   36(fvec3) Load 41(inF0)
-             486:   36(fvec3) ExtInst 1(GLSL.std.450) 11(Radians) 485
-             487:   36(fvec3) Load 41(inF0)
-             488:   36(fvec3) Load 42(inF1)
-             489:   36(fvec3) ExtInst 1(GLSL.std.450) 71(Reflect) 487 488
+             486:   36(fvec3) Load 42(inF1)
+             487:   36(fvec3) ExtInst 1(GLSL.std.450) 37(FMin) 485 486
+             488:   36(fvec3) Load 41(inF0)
+             489:   36(fvec3) ExtInst 1(GLSL.std.450) 69(Normalize) 488
              490:   36(fvec3) Load 41(inF0)
              491:   36(fvec3) Load 42(inF1)
-             492:   36(fvec3) ExtInst 1(GLSL.std.450) 72(Refract) 490 491 349
-             494:  401(ivec3) BitReverse 493
+             492:   36(fvec3) ExtInst 1(GLSL.std.450) 26(Pow) 490 491
+             493:   36(fvec3) Load 41(inF0)
+             494:   36(fvec3) ExtInst 1(GLSL.std.450) 11(Radians) 493
              495:   36(fvec3) Load 41(inF0)
-             496:   36(fvec3) ExtInst 1(GLSL.std.450) 2(RoundEven) 495
-             497:   36(fvec3) Load 41(inF0)
-             498:   36(fvec3) ExtInst 1(GLSL.std.450) 32(InverseSqrt) 497
-             499:   36(fvec3) Load 41(inF0)
-             500:   36(fvec3) CompositeConstruct 218 218 218
-             501:   36(fvec3) CompositeConstruct 219 219 219
-             502:   36(fvec3) ExtInst 1(GLSL.std.450) 43(FClamp) 499 500 501
+             496:   36(fvec3) Load 42(inF1)
+             497:   36(fvec3) ExtInst 1(GLSL.std.450) 71(Reflect) 495 496
+             498:   36(fvec3) Load 41(inF0)
+             499:   36(fvec3) Load 42(inF1)
+             500:   36(fvec3) ExtInst 1(GLSL.std.450) 72(Refract) 498 499 354
+             502:  410(ivec3) BitReverse 501
              503:   36(fvec3) Load 41(inF0)
-             504:   36(fvec3) ExtInst 1(GLSL.std.450) 6(FSign) 503
+             504:   36(fvec3) ExtInst 1(GLSL.std.450) 2(RoundEven) 503
              505:   36(fvec3) Load 41(inF0)
-             506:   36(fvec3) ExtInst 1(GLSL.std.450) 13(Sin) 505
+             506:   36(fvec3) ExtInst 1(GLSL.std.450) 32(InverseSqrt) 505
              507:   36(fvec3) Load 41(inF0)
-             508:   36(fvec3) ExtInst 1(GLSL.std.450) 13(Sin) 507
-                              Store 42(inF1) 508
-             509:   36(fvec3) Load 41(inF0)
-             510:   36(fvec3) ExtInst 1(GLSL.std.450) 14(Cos) 509
-                              Store 43(inF2) 510
+             508:   36(fvec3) CompositeConstruct 133 133 133
+             509:   36(fvec3) CompositeConstruct 221 221 221
+             510:   36(fvec3) ExtInst 1(GLSL.std.450) 43(FClamp) 507 508 509
              511:   36(fvec3) Load 41(inF0)
-             512:   36(fvec3) ExtInst 1(GLSL.std.450) 19(Sinh) 511
+             512:   36(fvec3) ExtInst 1(GLSL.std.450) 6(FSign) 511
              513:   36(fvec3) Load 41(inF0)
-             514:   36(fvec3) Load 42(inF1)
-             515:   36(fvec3) Load 43(inF2)
-             516:   36(fvec3) ExtInst 1(GLSL.std.450) 49(SmoothStep) 513 514 515
+             514:   36(fvec3) ExtInst 1(GLSL.std.450) 13(Sin) 513
+             515:   36(fvec3) Load 41(inF0)
+             516:   36(fvec3) ExtInst 1(GLSL.std.450) 13(Sin) 515
+                              Store 42(inF1) 516
              517:   36(fvec3) Load 41(inF0)
-             518:   36(fvec3) ExtInst 1(GLSL.std.450) 31(Sqrt) 517
+             518:   36(fvec3) ExtInst 1(GLSL.std.450) 14(Cos) 517
+                              Store 43(inF2) 518
              519:   36(fvec3) Load 41(inF0)
-             520:   36(fvec3) Load 42(inF1)
-             521:   36(fvec3) ExtInst 1(GLSL.std.450) 48(Step) 519 520
-             522:   36(fvec3) Load 41(inF0)
-             523:   36(fvec3) ExtInst 1(GLSL.std.450) 15(Tan) 522
-             524:   36(fvec3) Load 41(inF0)
-             525:   36(fvec3) ExtInst 1(GLSL.std.450) 21(Tanh) 524
-             526:   36(fvec3) Load 41(inF0)
-             527:   36(fvec3) ExtInst 1(GLSL.std.450) 3(Trunc) 526
-                              ReturnValue 529
+             520:   36(fvec3) ExtInst 1(GLSL.std.450) 19(Sinh) 519
+             521:   36(fvec3) Load 41(inF0)
+             522:   36(fvec3) Load 42(inF1)
+             523:   36(fvec3) Load 43(inF2)
+             524:   36(fvec3) ExtInst 1(GLSL.std.450) 49(SmoothStep) 521 522 523
+             525:   36(fvec3) Load 41(inF0)
+             526:   36(fvec3) ExtInst 1(GLSL.std.450) 31(Sqrt) 525
+             527:   36(fvec3) Load 41(inF0)
+             528:   36(fvec3) Load 42(inF1)
+             529:   36(fvec3) ExtInst 1(GLSL.std.450) 48(Step) 527 528
+             530:   36(fvec3) Load 41(inF0)
+             531:   36(fvec3) ExtInst 1(GLSL.std.450) 15(Tan) 530
+             532:   36(fvec3) Load 41(inF0)
+             533:   36(fvec3) ExtInst 1(GLSL.std.450) 21(Tanh) 532
+             534:   36(fvec3) Load 41(inF0)
+             535:   36(fvec3) ExtInst 1(GLSL.std.450) 3(Trunc) 534
+                              ReturnValue 537
                               FunctionEnd
 58(VertexShaderFunction4(vf4;vf4;vf4;vu4;vu4;):   48(fvec4) Function None 52
         53(inF0):     49(ptr) FunctionParameter
@@ -3379,509 +3419,517 @@ Shader version: 500
         56(inU0):     51(ptr) FunctionParameter
         57(inU1):     51(ptr) FunctionParameter
               59:             Label
-             532:   48(fvec4) Load 53(inF0)
-             533:   132(bool) All 532
-             534:   48(fvec4) Load 53(inF0)
-             535:   48(fvec4) ExtInst 1(GLSL.std.450) 4(FAbs) 534
-             536:   48(fvec4) Load 53(inF0)
-             537:   48(fvec4) ExtInst 1(GLSL.std.450) 17(Acos) 536
-             538:   48(fvec4) Load 53(inF0)
-             539:   132(bool) Any 538
              540:   48(fvec4) Load 53(inF0)
-             541:   48(fvec4) ExtInst 1(GLSL.std.450) 16(Asin) 540
-             542:   48(fvec4) Load 53(inF0)
-             544:  543(ivec4) Bitcast 542
+             543:  541(bvec4) FOrdNotEqual 540 542
+             544:   132(bool) All 543
              545:   48(fvec4) Load 53(inF0)
-             546:   50(ivec4) Bitcast 545
-             547:   50(ivec4) Load 56(inU0)
-             548:   48(fvec4) Bitcast 547
+             546:   48(fvec4) ExtInst 1(GLSL.std.450) 4(FAbs) 545
+             547:   48(fvec4) Load 53(inF0)
+             548:   48(fvec4) ExtInst 1(GLSL.std.450) 17(Acos) 547
              549:   48(fvec4) Load 53(inF0)
-             550:   48(fvec4) ExtInst 1(GLSL.std.450) 18(Atan) 549
-             551:   48(fvec4) Load 53(inF0)
-             552:   48(fvec4) Load 54(inF1)
-             553:   48(fvec4) ExtInst 1(GLSL.std.450) 25(Atan2) 551 552
+             550:  541(bvec4) FOrdNotEqual 549 542
+             551:   132(bool) Any 550
+             552:   48(fvec4) Load 53(inF0)
+             553:   48(fvec4) ExtInst 1(GLSL.std.450) 16(Asin) 552
              554:   48(fvec4) Load 53(inF0)
-             555:   48(fvec4) ExtInst 1(GLSL.std.450) 9(Ceil) 554
-             556:   48(fvec4) Load 53(inF0)
-             557:   48(fvec4) Load 54(inF1)
-             558:   48(fvec4) Load 55(inF2)
-             559:   48(fvec4) ExtInst 1(GLSL.std.450) 43(FClamp) 556 557 558
-             560:   48(fvec4) Load 53(inF0)
-             561:   48(fvec4) ExtInst 1(GLSL.std.450) 14(Cos) 560
-             562:   48(fvec4) Load 53(inF0)
-             563:   48(fvec4) ExtInst 1(GLSL.std.450) 20(Cosh) 562
-             565:  543(ivec4) BitCount 564
+             556:  555(ivec4) Bitcast 554
+             557:   48(fvec4) Load 53(inF0)
+             558:   50(ivec4) Bitcast 557
+             559:   50(ivec4) Load 56(inU0)
+             560:   48(fvec4) Bitcast 559
+             561:   48(fvec4) Load 53(inF0)
+             562:   48(fvec4) ExtInst 1(GLSL.std.450) 18(Atan) 561
+             563:   48(fvec4) Load 53(inF0)
+             564:   48(fvec4) Load 54(inF1)
+             565:   48(fvec4) ExtInst 1(GLSL.std.450) 25(Atan2) 563 564
              566:   48(fvec4) Load 53(inF0)
-             567:   48(fvec4) ExtInst 1(GLSL.std.450) 12(Degrees) 566
+             567:   48(fvec4) ExtInst 1(GLSL.std.450) 9(Ceil) 566
              568:   48(fvec4) Load 53(inF0)
              569:   48(fvec4) Load 54(inF1)
-             570:    6(float) ExtInst 1(GLSL.std.450) 67(Distance) 568 569
-             571:   48(fvec4) Load 53(inF0)
-             572:   48(fvec4) Load 54(inF1)
-             573:    6(float) Dot 571 572
-             575:      7(ptr) AccessChain 53(inF0) 574
-             576:    6(float) Load 575
-             577:      7(ptr) AccessChain 54(inF1) 574
-             578:    6(float) Load 577
-             579:    6(float) FMul 576 578
-             581:      7(ptr) AccessChain 53(inF0) 580
-             582:    6(float) Load 581
-             584:      7(ptr) AccessChain 54(inF1) 583
-             585:    6(float) Load 584
-             586:   48(fvec4) CompositeConstruct 219 579 582 585
-             587:   48(fvec4) Load 53(inF0)
-             588:   48(fvec4) ExtInst 1(GLSL.std.450) 27(Exp) 587
-             589:   48(fvec4) Load 53(inF0)
-             590:   48(fvec4) ExtInst 1(GLSL.std.450) 29(Exp2) 589
-             591:   48(fvec4) Load 53(inF0)
-             592:   48(fvec4) Load 54(inF1)
-             593:   48(fvec4) Load 55(inF2)
-             594:   48(fvec4) ExtInst 1(GLSL.std.450) 70(FaceForward) 591 592 593
-             595:    143(int) ExtInst 1(GLSL.std.450) 74(FindSMsb) 164
-             596:    143(int) ExtInst 1(GLSL.std.450) 73(FindILsb) 164
-             597:   48(fvec4) Load 53(inF0)
-             598:   48(fvec4) ExtInst 1(GLSL.std.450) 8(Floor) 597
+             570:   48(fvec4) Load 55(inF2)
+             571:   48(fvec4) ExtInst 1(GLSL.std.450) 43(FClamp) 568 569 570
+             572:   48(fvec4) Load 53(inF0)
+             573:   48(fvec4) ExtInst 1(GLSL.std.450) 14(Cos) 572
+             574:   48(fvec4) Load 53(inF0)
+             575:   48(fvec4) ExtInst 1(GLSL.std.450) 20(Cosh) 574
+             577:  555(ivec4) BitCount 576
+             578:   48(fvec4) Load 53(inF0)
+             579:   48(fvec4) ExtInst 1(GLSL.std.450) 12(Degrees) 578
+             580:   48(fvec4) Load 53(inF0)
+             581:   48(fvec4) Load 54(inF1)
+             582:    6(float) ExtInst 1(GLSL.std.450) 67(Distance) 580 581
+             583:   48(fvec4) Load 53(inF0)
+             584:   48(fvec4) Load 54(inF1)
+             585:    6(float) Dot 583 584
+             587:      7(ptr) AccessChain 53(inF0) 586
+             588:    6(float) Load 587
+             589:      7(ptr) AccessChain 54(inF1) 586
+             590:    6(float) Load 589
+             591:    6(float) FMul 588 590
+             593:      7(ptr) AccessChain 53(inF0) 592
+             594:    6(float) Load 593
+             596:      7(ptr) AccessChain 54(inF1) 595
+             597:    6(float) Load 596
+             598:   48(fvec4) CompositeConstruct 221 591 594 597
              599:   48(fvec4) Load 53(inF0)
-             600:   48(fvec4) Load 54(inF1)
-             601:   48(fvec4) FMod 599 600
-             602:   48(fvec4) Load 53(inF0)
-             603:   48(fvec4) ExtInst 1(GLSL.std.450) 10(Fract) 602
-             604:   48(fvec4) Load 53(inF0)
-             606:  605(bvec4) IsInf 604
-             607:   48(fvec4) Load 53(inF0)
-             608:  605(bvec4) IsNan 607
+             600:   48(fvec4) ExtInst 1(GLSL.std.450) 27(Exp) 599
+             601:   48(fvec4) Load 53(inF0)
+             602:   48(fvec4) ExtInst 1(GLSL.std.450) 29(Exp2) 601
+             603:   48(fvec4) Load 53(inF0)
+             604:   48(fvec4) Load 54(inF1)
+             605:   48(fvec4) Load 55(inF2)
+             606:   48(fvec4) ExtInst 1(GLSL.std.450) 70(FaceForward) 603 604 605
+             607:    146(int) ExtInst 1(GLSL.std.450) 74(FindSMsb) 167
+             608:    146(int) ExtInst 1(GLSL.std.450) 73(FindILsb) 167
              609:   48(fvec4) Load 53(inF0)
-             610:   48(fvec4) Load 54(inF1)
-             611:   48(fvec4) ExtInst 1(GLSL.std.450) 53(Ldexp) 609 610
-             612:   48(fvec4) Load 53(inF0)
-             613:   48(fvec4) Load 54(inF1)
-             614:   48(fvec4) Load 55(inF2)
-             615:   48(fvec4) ExtInst 1(GLSL.std.450) 46(FMix) 612 613 614
+             610:   48(fvec4) ExtInst 1(GLSL.std.450) 8(Floor) 609
+             611:   48(fvec4) Load 53(inF0)
+             612:   48(fvec4) Load 54(inF1)
+             613:   48(fvec4) FMod 611 612
+             614:   48(fvec4) Load 53(inF0)
+             615:   48(fvec4) ExtInst 1(GLSL.std.450) 10(Fract) 614
              616:   48(fvec4) Load 53(inF0)
-             617:    6(float) ExtInst 1(GLSL.std.450) 66(Length) 616
+             617:  541(bvec4) IsInf 616
              618:   48(fvec4) Load 53(inF0)
-             619:   48(fvec4) ExtInst 1(GLSL.std.450) 28(Log) 618
+             619:  541(bvec4) IsNan 618
              620:   48(fvec4) Load 53(inF0)
-             621:   48(fvec4) ExtInst 1(GLSL.std.450) 30(Log2) 620
-             622:   48(fvec4) VectorTimesScalar 621 196
+             621:   48(fvec4) Load 54(inF1)
+             622:   48(fvec4) ExtInst 1(GLSL.std.450) 53(Ldexp) 620 621
              623:   48(fvec4) Load 53(inF0)
-             624:   48(fvec4) ExtInst 1(GLSL.std.450) 30(Log2) 623
-             625:   48(fvec4) Load 53(inF0)
-             626:   48(fvec4) Load 54(inF1)
-             627:   48(fvec4) ExtInst 1(GLSL.std.450) 40(FMax) 625 626
-             628:   48(fvec4) Load 53(inF0)
-             629:   48(fvec4) Load 54(inF1)
-             630:   48(fvec4) ExtInst 1(GLSL.std.450) 37(FMin) 628 629
+             624:   48(fvec4) Load 54(inF1)
+             625:   48(fvec4) Load 55(inF2)
+             626:   48(fvec4) ExtInst 1(GLSL.std.450) 46(FMix) 623 624 625
+             627:   48(fvec4) Load 53(inF0)
+             628:    6(float) ExtInst 1(GLSL.std.450) 66(Length) 627
+             629:   48(fvec4) Load 53(inF0)
+             630:   48(fvec4) ExtInst 1(GLSL.std.450) 28(Log) 629
              631:   48(fvec4) Load 53(inF0)
-             632:   48(fvec4) ExtInst 1(GLSL.std.450) 69(Normalize) 631
-             633:   48(fvec4) Load 53(inF0)
-             634:   48(fvec4) Load 54(inF1)
-             635:   48(fvec4) ExtInst 1(GLSL.std.450) 26(Pow) 633 634
+             632:   48(fvec4) ExtInst 1(GLSL.std.450) 30(Log2) 631
+             633:   48(fvec4) VectorTimesScalar 632 199
+             634:   48(fvec4) Load 53(inF0)
+             635:   48(fvec4) ExtInst 1(GLSL.std.450) 30(Log2) 634
              636:   48(fvec4) Load 53(inF0)
-             637:   48(fvec4) ExtInst 1(GLSL.std.450) 11(Radians) 636
-             638:   48(fvec4) Load 53(inF0)
-             639:   48(fvec4) Load 54(inF1)
-             640:   48(fvec4) ExtInst 1(GLSL.std.450) 71(Reflect) 638 639
-             641:   48(fvec4) Load 53(inF0)
-             642:   48(fvec4) Load 54(inF1)
-             643:   48(fvec4) ExtInst 1(GLSL.std.450) 72(Refract) 641 642 349
-             646:  543(ivec4) BitReverse 645
+             637:   48(fvec4) Load 54(inF1)
+             638:   48(fvec4) ExtInst 1(GLSL.std.450) 40(FMax) 636 637
+             639:   48(fvec4) Load 53(inF0)
+             640:   48(fvec4) Load 54(inF1)
+             641:   48(fvec4) ExtInst 1(GLSL.std.450) 37(FMin) 639 640
+             642:   48(fvec4) Load 53(inF0)
+             643:   48(fvec4) ExtInst 1(GLSL.std.450) 69(Normalize) 642
+             644:   48(fvec4) Load 53(inF0)
+             645:   48(fvec4) Load 54(inF1)
+             646:   48(fvec4) ExtInst 1(GLSL.std.450) 26(Pow) 644 645
              647:   48(fvec4) Load 53(inF0)
-             648:   48(fvec4) ExtInst 1(GLSL.std.450) 2(RoundEven) 647
+             648:   48(fvec4) ExtInst 1(GLSL.std.450) 11(Radians) 647
              649:   48(fvec4) Load 53(inF0)
-             650:   48(fvec4) ExtInst 1(GLSL.std.450) 32(InverseSqrt) 649
-             651:   48(fvec4) Load 53(inF0)
-             652:   48(fvec4) CompositeConstruct 218 218 218 218
-             653:   48(fvec4) CompositeConstruct 219 219 219 219
-             654:   48(fvec4) ExtInst 1(GLSL.std.450) 43(FClamp) 651 652 653
-             655:   48(fvec4) Load 53(inF0)
-             656:   48(fvec4) ExtInst 1(GLSL.std.450) 6(FSign) 655
-             657:   48(fvec4) Load 53(inF0)
-             658:   48(fvec4) ExtInst 1(GLSL.std.450) 13(Sin) 657
-             659:   48(fvec4) Load 53(inF0)
-             660:   48(fvec4) ExtInst 1(GLSL.std.450) 13(Sin) 659
-                              Store 54(inF1) 660
-             661:   48(fvec4) Load 53(inF0)
-             662:   48(fvec4) ExtInst 1(GLSL.std.450) 14(Cos) 661
-                              Store 55(inF2) 662
-             663:   48(fvec4) Load 53(inF0)
-             664:   48(fvec4) ExtInst 1(GLSL.std.450) 19(Sinh) 663
-             665:   48(fvec4) Load 53(inF0)
-             666:   48(fvec4) Load 54(inF1)
-             667:   48(fvec4) Load 55(inF2)
-             668:   48(fvec4) ExtInst 1(GLSL.std.450) 49(SmoothStep) 665 666 667
-             669:   48(fvec4) Load 53(inF0)
-             670:   48(fvec4) ExtInst 1(GLSL.std.450) 31(Sqrt) 669
-             671:   48(fvec4) Load 53(inF0)
-             672:   48(fvec4) Load 54(inF1)
-             673:   48(fvec4) ExtInst 1(GLSL.std.450) 48(Step) 671 672
+             650:   48(fvec4) Load 54(inF1)
+             651:   48(fvec4) ExtInst 1(GLSL.std.450) 71(Reflect) 649 650
+             652:   48(fvec4) Load 53(inF0)
+             653:   48(fvec4) Load 54(inF1)
+             654:   48(fvec4) ExtInst 1(GLSL.std.450) 72(Refract) 652 653 354
+             657:  555(ivec4) BitReverse 656
+             658:   48(fvec4) Load 53(inF0)
+             659:   48(fvec4) ExtInst 1(GLSL.std.450) 2(RoundEven) 658
+             660:   48(fvec4) Load 53(inF0)
+             661:   48(fvec4) ExtInst 1(GLSL.std.450) 32(InverseSqrt) 660
+             662:   48(fvec4) Load 53(inF0)
+             663:   48(fvec4) CompositeConstruct 133 133 133 133
+             664:   48(fvec4) CompositeConstruct 221 221 221 221
+             665:   48(fvec4) ExtInst 1(GLSL.std.450) 43(FClamp) 662 663 664
+             666:   48(fvec4) Load 53(inF0)
+             667:   48(fvec4) ExtInst 1(GLSL.std.450) 6(FSign) 666
+             668:   48(fvec4) Load 53(inF0)
+             669:   48(fvec4) ExtInst 1(GLSL.std.450) 13(Sin) 668
+             670:   48(fvec4) Load 53(inF0)
+             671:   48(fvec4) ExtInst 1(GLSL.std.450) 13(Sin) 670
+                              Store 54(inF1) 671
+             672:   48(fvec4) Load 53(inF0)
+             673:   48(fvec4) ExtInst 1(GLSL.std.450) 14(Cos) 672
+                              Store 55(inF2) 673
              674:   48(fvec4) Load 53(inF0)
-             675:   48(fvec4) ExtInst 1(GLSL.std.450) 15(Tan) 674
+             675:   48(fvec4) ExtInst 1(GLSL.std.450) 19(Sinh) 674
              676:   48(fvec4) Load 53(inF0)
-             677:   48(fvec4) ExtInst 1(GLSL.std.450) 21(Tanh) 676
-             678:   48(fvec4) Load 53(inF0)
-             679:   48(fvec4) ExtInst 1(GLSL.std.450) 3(Trunc) 678
-                              ReturnValue 681
+             677:   48(fvec4) Load 54(inF1)
+             678:   48(fvec4) Load 55(inF2)
+             679:   48(fvec4) ExtInst 1(GLSL.std.450) 49(SmoothStep) 676 677 678
+             680:   48(fvec4) Load 53(inF0)
+             681:   48(fvec4) ExtInst 1(GLSL.std.450) 31(Sqrt) 680
+             682:   48(fvec4) Load 53(inF0)
+             683:   48(fvec4) Load 54(inF1)
+             684:   48(fvec4) ExtInst 1(GLSL.std.450) 48(Step) 682 683
+             685:   48(fvec4) Load 53(inF0)
+             686:   48(fvec4) ExtInst 1(GLSL.std.450) 15(Tan) 685
+             687:   48(fvec4) Load 53(inF0)
+             688:   48(fvec4) ExtInst 1(GLSL.std.450) 21(Tanh) 687
+             689:   48(fvec4) Load 53(inF0)
+             690:   48(fvec4) ExtInst 1(GLSL.std.450) 3(Trunc) 689
+                              ReturnValue 692
                               FunctionEnd
 66(VertexShaderFunction2x2(mf22;mf22;mf22;):          60 Function None 62
         63(inF0):     61(ptr) FunctionParameter
         64(inF1):     61(ptr) FunctionParameter
         65(inF2):     61(ptr) FunctionParameter
               67:             Label
-             684:          60 Load 63(inF0)
-             685:   132(bool) All 684
-             686:          60 Load 63(inF0)
-             687:          60 ExtInst 1(GLSL.std.450) 4(FAbs) 686
-             688:          60 Load 63(inF0)
-             689:          60 ExtInst 1(GLSL.std.450) 17(Acos) 688
-             690:          60 Load 63(inF0)
-             691:   132(bool) Any 690
-             692:          60 Load 63(inF0)
-             693:          60 ExtInst 1(GLSL.std.450) 16(Asin) 692
-             694:          60 Load 63(inF0)
-             695:          60 ExtInst 1(GLSL.std.450) 18(Atan) 694
-             696:          60 Load 63(inF0)
-             697:          60 Load 64(inF1)
-             698:          60 ExtInst 1(GLSL.std.450) 25(Atan2) 696 697
+             695:          60 Load 63(inF0)
+             697:         696 FOrdNotEqual 695 133
+             698:   132(bool) All 697
              699:          60 Load 63(inF0)
-             700:          60 ExtInst 1(GLSL.std.450) 9(Ceil) 699
+             700:          60 ExtInst 1(GLSL.std.450) 4(FAbs) 699
              701:          60 Load 63(inF0)
-             702:          60 Load 64(inF1)
-             703:          60 Load 65(inF2)
-             704:          60 ExtInst 1(GLSL.std.450) 43(FClamp) 701 702 703
-             705:          60 Load 63(inF0)
-             706:          60 ExtInst 1(GLSL.std.450) 14(Cos) 705
-             707:          60 Load 63(inF0)
-             708:          60 ExtInst 1(GLSL.std.450) 20(Cosh) 707
-             709:          60 Load 63(inF0)
-             710:          60 ExtInst 1(GLSL.std.450) 12(Degrees) 709
-             711:          60 Load 63(inF0)
-             712:    6(float) ExtInst 1(GLSL.std.450) 33(Determinant) 711
+             702:          60 ExtInst 1(GLSL.std.450) 17(Acos) 701
+             703:          60 Load 63(inF0)
+             704:         696 FOrdNotEqual 703 133
+             705:   132(bool) Any 704
+             706:          60 Load 63(inF0)
+             707:          60 ExtInst 1(GLSL.std.450) 16(Asin) 706
+             708:          60 Load 63(inF0)
+             709:          60 ExtInst 1(GLSL.std.450) 18(Atan) 708
+             710:          60 Load 63(inF0)
+             711:          60 Load 64(inF1)
+             712:          60 ExtInst 1(GLSL.std.450) 25(Atan2) 710 711
              713:          60 Load 63(inF0)
-             714:          60 ExtInst 1(GLSL.std.450) 27(Exp) 713
+             714:          60 ExtInst 1(GLSL.std.450) 9(Ceil) 713
              715:          60 Load 63(inF0)
-             716:          60 ExtInst 1(GLSL.std.450) 29(Exp2) 715
-             717:    143(int) ExtInst 1(GLSL.std.450) 74(FindSMsb) 164
-             718:    143(int) ExtInst 1(GLSL.std.450) 73(FindILsb) 164
+             716:          60 Load 64(inF1)
+             717:          60 Load 65(inF2)
+             718:          60 ExtInst 1(GLSL.std.450) 43(FClamp) 715 716 717
              719:          60 Load 63(inF0)
-             720:          60 ExtInst 1(GLSL.std.450) 8(Floor) 719
+             720:          60 ExtInst 1(GLSL.std.450) 14(Cos) 719
              721:          60 Load 63(inF0)
-             722:          60 Load 64(inF1)
-             723:   24(fvec2) CompositeExtract 721 0
-             724:   24(fvec2) CompositeExtract 722 0
-             725:   24(fvec2) FMod 723 724
-             726:   24(fvec2) CompositeExtract 721 1
-             727:   24(fvec2) CompositeExtract 722 1
-             728:   24(fvec2) FMod 726 727
-             729:          60 CompositeConstruct 725 728
-             730:          60 Load 63(inF0)
-             731:          60 ExtInst 1(GLSL.std.450) 10(Fract) 730
-             732:          60 Load 63(inF0)
-             733:          60 Load 64(inF1)
-             734:          60 ExtInst 1(GLSL.std.450) 53(Ldexp) 732 733
+             722:          60 ExtInst 1(GLSL.std.450) 20(Cosh) 721
+             723:          60 Load 63(inF0)
+             724:          60 ExtInst 1(GLSL.std.450) 12(Degrees) 723
+             725:          60 Load 63(inF0)
+             726:    6(float) ExtInst 1(GLSL.std.450) 33(Determinant) 725
+             727:          60 Load 63(inF0)
+             728:          60 ExtInst 1(GLSL.std.450) 27(Exp) 727
+             729:          60 Load 63(inF0)
+             730:          60 ExtInst 1(GLSL.std.450) 29(Exp2) 729
+             731:    146(int) ExtInst 1(GLSL.std.450) 74(FindSMsb) 167
+             732:    146(int) ExtInst 1(GLSL.std.450) 73(FindILsb) 167
+             733:          60 Load 63(inF0)
+             734:          60 ExtInst 1(GLSL.std.450) 8(Floor) 733
              735:          60 Load 63(inF0)
              736:          60 Load 64(inF1)
-             737:          60 Load 65(inF2)
-             738:          60 ExtInst 1(GLSL.std.450) 46(FMix) 735 736 737
-             739:          60 Load 63(inF0)
-             740:          60 ExtInst 1(GLSL.std.450) 28(Log) 739
-             741:          60 Load 63(inF0)
-             742:          60 ExtInst 1(GLSL.std.450) 30(Log2) 741
-             743:          60 MatrixTimesScalar 742 196
+             737:   24(fvec2) CompositeExtract 735 0
+             738:   24(fvec2) CompositeExtract 736 0
+             739:   24(fvec2) FMod 737 738
+             740:   24(fvec2) CompositeExtract 735 1
+             741:   24(fvec2) CompositeExtract 736 1
+             742:   24(fvec2) FMod 740 741
+             743:          60 CompositeConstruct 739 742
              744:          60 Load 63(inF0)
-             745:          60 ExtInst 1(GLSL.std.450) 30(Log2) 744
+             745:          60 ExtInst 1(GLSL.std.450) 10(Fract) 744
              746:          60 Load 63(inF0)
              747:          60 Load 64(inF1)
-             748:          60 ExtInst 1(GLSL.std.450) 40(FMax) 746 747
+             748:          60 ExtInst 1(GLSL.std.450) 53(Ldexp) 746 747
              749:          60 Load 63(inF0)
              750:          60 Load 64(inF1)
-             751:          60 ExtInst 1(GLSL.std.450) 37(FMin) 749 750
-             752:          60 Load 63(inF0)
-             753:          60 Load 64(inF1)
-             754:          60 ExtInst 1(GLSL.std.450) 26(Pow) 752 753
+             751:          60 Load 65(inF2)
+             752:          60 ExtInst 1(GLSL.std.450) 46(FMix) 749 750 751
+             753:          60 Load 63(inF0)
+             754:          60 ExtInst 1(GLSL.std.450) 28(Log) 753
              755:          60 Load 63(inF0)
-             756:          60 ExtInst 1(GLSL.std.450) 11(Radians) 755
-             757:          60 Load 63(inF0)
-             758:          60 ExtInst 1(GLSL.std.450) 2(RoundEven) 757
-             759:          60 Load 63(inF0)
-             760:          60 ExtInst 1(GLSL.std.450) 32(InverseSqrt) 759
-             761:          60 Load 63(inF0)
-             762:   24(fvec2) CompositeConstruct 218 218
-             763:   24(fvec2) CompositeConstruct 219 219
-             764:          60 ExtInst 1(GLSL.std.450) 43(FClamp) 761 762 763
-             765:          60 Load 63(inF0)
-             766:          60 ExtInst 1(GLSL.std.450) 6(FSign) 765
-             767:          60 Load 63(inF0)
-             768:          60 ExtInst 1(GLSL.std.450) 13(Sin) 767
+             756:          60 ExtInst 1(GLSL.std.450) 30(Log2) 755
+             757:          60 MatrixTimesScalar 756 199
+             758:          60 Load 63(inF0)
+             759:          60 ExtInst 1(GLSL.std.450) 30(Log2) 758
+             760:          60 Load 63(inF0)
+             761:          60 Load 64(inF1)
+             762:          60 ExtInst 1(GLSL.std.450) 40(FMax) 760 761
+             763:          60 Load 63(inF0)
+             764:          60 Load 64(inF1)
+             765:          60 ExtInst 1(GLSL.std.450) 37(FMin) 763 764
+             766:          60 Load 63(inF0)
+             767:          60 Load 64(inF1)
+             768:          60 ExtInst 1(GLSL.std.450) 26(Pow) 766 767
              769:          60 Load 63(inF0)
-             770:          60 ExtInst 1(GLSL.std.450) 13(Sin) 769
-                              Store 64(inF1) 770
+             770:          60 ExtInst 1(GLSL.std.450) 11(Radians) 769
              771:          60 Load 63(inF0)
-             772:          60 ExtInst 1(GLSL.std.450) 14(Cos) 771
-                              Store 65(inF2) 772
+             772:          60 ExtInst 1(GLSL.std.450) 2(RoundEven) 771
              773:          60 Load 63(inF0)
-             774:          60 ExtInst 1(GLSL.std.450) 19(Sinh) 773
+             774:          60 ExtInst 1(GLSL.std.450) 32(InverseSqrt) 773
              775:          60 Load 63(inF0)
-             776:          60 Load 64(inF1)
-             777:          60 Load 65(inF2)
-             778:          60 ExtInst 1(GLSL.std.450) 49(SmoothStep) 775 776 777
+             776:   24(fvec2) CompositeConstruct 133 133
+             777:   24(fvec2) CompositeConstruct 221 221
+             778:          60 ExtInst 1(GLSL.std.450) 43(FClamp) 775 776 777
              779:          60 Load 63(inF0)
-             780:          60 ExtInst 1(GLSL.std.450) 31(Sqrt) 779
+             780:          60 ExtInst 1(GLSL.std.450) 6(FSign) 779
              781:          60 Load 63(inF0)
-             782:          60 Load 64(inF1)
-             783:          60 ExtInst 1(GLSL.std.450) 48(Step) 781 782
-             784:          60 Load 63(inF0)
-             785:          60 ExtInst 1(GLSL.std.450) 15(Tan) 784
-             786:          60 Load 63(inF0)
-             787:          60 ExtInst 1(GLSL.std.450) 21(Tanh) 786
-             788:          60 Load 63(inF0)
-             789:          60 Transpose 788
-             790:          60 Load 63(inF0)
-             791:          60 ExtInst 1(GLSL.std.450) 3(Trunc) 790
-                              ReturnValue 793
+             782:          60 ExtInst 1(GLSL.std.450) 13(Sin) 781
+             783:          60 Load 63(inF0)
+             784:          60 ExtInst 1(GLSL.std.450) 13(Sin) 783
+                              Store 64(inF1) 784
+             785:          60 Load 63(inF0)
+             786:          60 ExtInst 1(GLSL.std.450) 14(Cos) 785
+                              Store 65(inF2) 786
+             787:          60 Load 63(inF0)
+             788:          60 ExtInst 1(GLSL.std.450) 19(Sinh) 787
+             789:          60 Load 63(inF0)
+             790:          60 Load 64(inF1)
+             791:          60 Load 65(inF2)
+             792:          60 ExtInst 1(GLSL.std.450) 49(SmoothStep) 789 790 791
+             793:          60 Load 63(inF0)
+             794:          60 ExtInst 1(GLSL.std.450) 31(Sqrt) 793
+             795:          60 Load 63(inF0)
+             796:          60 Load 64(inF1)
+             797:          60 ExtInst 1(GLSL.std.450) 48(Step) 795 796
+             798:          60 Load 63(inF0)
+             799:          60 ExtInst 1(GLSL.std.450) 15(Tan) 798
+             800:          60 Load 63(inF0)
+             801:          60 ExtInst 1(GLSL.std.450) 21(Tanh) 800
+             802:          60 Load 63(inF0)
+             803:          60 Transpose 802
+             804:          60 Load 63(inF0)
+             805:          60 ExtInst 1(GLSL.std.450) 3(Trunc) 804
+                              ReturnValue 807
                               FunctionEnd
 74(VertexShaderFunction3x3(mf33;mf33;mf33;):          68 Function None 70
         71(inF0):     69(ptr) FunctionParameter
         72(inF1):     69(ptr) FunctionParameter
         73(inF2):     69(ptr) FunctionParameter
               75:             Label
-             796:          68 Load 71(inF0)
-             797:   132(bool) All 796
-             798:          68 Load 71(inF0)
-             799:          68 ExtInst 1(GLSL.std.450) 4(FAbs) 798
-             800:          68 Load 71(inF0)
-             801:          68 ExtInst 1(GLSL.std.450) 17(Acos) 800
-             802:          68 Load 71(inF0)
-             803:   132(bool) Any 802
-             804:          68 Load 71(inF0)
-             805:          68 ExtInst 1(GLSL.std.450) 16(Asin) 804
-             806:          68 Load 71(inF0)
-             807:          68 ExtInst 1(GLSL.std.450) 18(Atan) 806
-             808:          68 Load 71(inF0)
-             809:          68 Load 72(inF1)
-             810:          68 ExtInst 1(GLSL.std.450) 25(Atan2) 808 809
-             811:          68 Load 71(inF0)
-             812:          68 ExtInst 1(GLSL.std.450) 9(Ceil) 811
-             813:          68 Load 71(inF0)
-             814:          68 Load 72(inF1)
-             815:          68 Load 73(inF2)
-             816:          68 ExtInst 1(GLSL.std.450) 43(FClamp) 813 814 815
-             817:          68 Load 71(inF0)
-             818:          68 ExtInst 1(GLSL.std.450) 14(Cos) 817
-             819:          68 Load 71(inF0)
-             820:          68 ExtInst 1(GLSL.std.450) 20(Cosh) 819
+             810:          68 Load 71(inF0)
+             812:         811 FOrdNotEqual 810 133
+             813:   132(bool) All 812
+             814:          68 Load 71(inF0)
+             815:          68 ExtInst 1(GLSL.std.450) 4(FAbs) 814
+             816:          68 Load 71(inF0)
+             817:          68 ExtInst 1(GLSL.std.450) 17(Acos) 816
+             818:          68 Load 71(inF0)
+             819:         811 FOrdNotEqual 818 133
+             820:   132(bool) Any 819
              821:          68 Load 71(inF0)
-             822:          68 ExtInst 1(GLSL.std.450) 12(Degrees) 821
+             822:          68 ExtInst 1(GLSL.std.450) 16(Asin) 821
              823:          68 Load 71(inF0)
-             824:    6(float) ExtInst 1(GLSL.std.450) 33(Determinant) 823
+             824:          68 ExtInst 1(GLSL.std.450) 18(Atan) 823
              825:          68 Load 71(inF0)
-             826:          68 ExtInst 1(GLSL.std.450) 27(Exp) 825
-             827:          68 Load 71(inF0)
-             828:          68 ExtInst 1(GLSL.std.450) 29(Exp2) 827
-             829:    143(int) ExtInst 1(GLSL.std.450) 74(FindSMsb) 164
-             830:    143(int) ExtInst 1(GLSL.std.450) 73(FindILsb) 164
-             831:          68 Load 71(inF0)
-             832:          68 ExtInst 1(GLSL.std.450) 8(Floor) 831
-             833:          68 Load 71(inF0)
-             834:          68 Load 72(inF1)
-             835:   36(fvec3) CompositeExtract 833 0
-             836:   36(fvec3) CompositeExtract 834 0
-             837:   36(fvec3) FMod 835 836
-             838:   36(fvec3) CompositeExtract 833 1
-             839:   36(fvec3) CompositeExtract 834 1
-             840:   36(fvec3) FMod 838 839
-             841:   36(fvec3) CompositeExtract 833 2
-             842:   36(fvec3) CompositeExtract 834 2
-             843:   36(fvec3) FMod 841 842
-             844:          68 CompositeConstruct 837 840 843
-             845:          68 Load 71(inF0)
-             846:          68 ExtInst 1(GLSL.std.450) 10(Fract) 845
-             847:          68 Load 71(inF0)
-             848:          68 Load 72(inF1)
-             849:          68 ExtInst 1(GLSL.std.450) 53(Ldexp) 847 848
+             826:          68 Load 72(inF1)
+             827:          68 ExtInst 1(GLSL.std.450) 25(Atan2) 825 826
+             828:          68 Load 71(inF0)
+             829:          68 ExtInst 1(GLSL.std.450) 9(Ceil) 828
+             830:          68 Load 71(inF0)
+             831:          68 Load 72(inF1)
+             832:          68 Load 73(inF2)
+             833:          68 ExtInst 1(GLSL.std.450) 43(FClamp) 830 831 832
+             834:          68 Load 71(inF0)
+             835:          68 ExtInst 1(GLSL.std.450) 14(Cos) 834
+             836:          68 Load 71(inF0)
+             837:          68 ExtInst 1(GLSL.std.450) 20(Cosh) 836
+             838:          68 Load 71(inF0)
+             839:          68 ExtInst 1(GLSL.std.450) 12(Degrees) 838
+             840:          68 Load 71(inF0)
+             841:    6(float) ExtInst 1(GLSL.std.450) 33(Determinant) 840
+             842:          68 Load 71(inF0)
+             843:          68 ExtInst 1(GLSL.std.450) 27(Exp) 842
+             844:          68 Load 71(inF0)
+             845:          68 ExtInst 1(GLSL.std.450) 29(Exp2) 844
+             846:    146(int) ExtInst 1(GLSL.std.450) 74(FindSMsb) 167
+             847:    146(int) ExtInst 1(GLSL.std.450) 73(FindILsb) 167
+             848:          68 Load 71(inF0)
+             849:          68 ExtInst 1(GLSL.std.450) 8(Floor) 848
              850:          68 Load 71(inF0)
              851:          68 Load 72(inF1)
-             852:          68 Load 73(inF2)
-             853:          68 ExtInst 1(GLSL.std.450) 46(FMix) 850 851 852
-             854:          68 Load 71(inF0)
-             855:          68 ExtInst 1(GLSL.std.450) 28(Log) 854
-             856:          68 Load 71(inF0)
-             857:          68 ExtInst 1(GLSL.std.450) 30(Log2) 856
-             858:          68 MatrixTimesScalar 857 196
-             859:          68 Load 71(inF0)
-             860:          68 ExtInst 1(GLSL.std.450) 30(Log2) 859
-             861:          68 Load 71(inF0)
-             862:          68 Load 72(inF1)
-             863:          68 ExtInst 1(GLSL.std.450) 40(FMax) 861 862
+             852:   36(fvec3) CompositeExtract 850 0
+             853:   36(fvec3) CompositeExtract 851 0
+             854:   36(fvec3) FMod 852 853
+             855:   36(fvec3) CompositeExtract 850 1
+             856:   36(fvec3) CompositeExtract 851 1
+             857:   36(fvec3) FMod 855 856
+             858:   36(fvec3) CompositeExtract 850 2
+             859:   36(fvec3) CompositeExtract 851 2
+             860:   36(fvec3) FMod 858 859
+             861:          68 CompositeConstruct 854 857 860
+             862:          68 Load 71(inF0)
+             863:          68 ExtInst 1(GLSL.std.450) 10(Fract) 862
              864:          68 Load 71(inF0)
              865:          68 Load 72(inF1)
-             866:          68 ExtInst 1(GLSL.std.450) 37(FMin) 864 865
+             866:          68 ExtInst 1(GLSL.std.450) 53(Ldexp) 864 865
              867:          68 Load 71(inF0)
              868:          68 Load 72(inF1)
-             869:          68 ExtInst 1(GLSL.std.450) 26(Pow) 867 868
-             870:          68 Load 71(inF0)
-             871:          68 ExtInst 1(GLSL.std.450) 11(Radians) 870
-             872:          68 Load 71(inF0)
-             873:          68 ExtInst 1(GLSL.std.450) 2(RoundEven) 872
-             874:          68 Load 71(inF0)
-             875:          68 ExtInst 1(GLSL.std.450) 32(InverseSqrt) 874
+             869:          68 Load 73(inF2)
+             870:          68 ExtInst 1(GLSL.std.450) 46(FMix) 867 868 869
+             871:          68 Load 71(inF0)
+             872:          68 ExtInst 1(GLSL.std.450) 28(Log) 871
+             873:          68 Load 71(inF0)
+             874:          68 ExtInst 1(GLSL.std.450) 30(Log2) 873
+             875:          68 MatrixTimesScalar 874 199
              876:          68 Load 71(inF0)
-             877:   36(fvec3) CompositeConstruct 218 218 218
-             878:   36(fvec3) CompositeConstruct 219 219 219
-             879:          68 ExtInst 1(GLSL.std.450) 43(FClamp) 876 877 878
-             880:          68 Load 71(inF0)
-             881:          68 ExtInst 1(GLSL.std.450) 6(FSign) 880
-             882:          68 Load 71(inF0)
-             883:          68 ExtInst 1(GLSL.std.450) 13(Sin) 882
+             877:          68 ExtInst 1(GLSL.std.450) 30(Log2) 876
+             878:          68 Load 71(inF0)
+             879:          68 Load 72(inF1)
+             880:          68 ExtInst 1(GLSL.std.450) 40(FMax) 878 879
+             881:          68 Load 71(inF0)
+             882:          68 Load 72(inF1)
+             883:          68 ExtInst 1(GLSL.std.450) 37(FMin) 881 882
              884:          68 Load 71(inF0)
-             885:          68 ExtInst 1(GLSL.std.450) 13(Sin) 884
-                              Store 72(inF1) 885
-             886:          68 Load 71(inF0)
-             887:          68 ExtInst 1(GLSL.std.450) 14(Cos) 886
-                              Store 73(inF2) 887
-             888:          68 Load 71(inF0)
-             889:          68 ExtInst 1(GLSL.std.450) 19(Sinh) 888
-             890:          68 Load 71(inF0)
-             891:          68 Load 72(inF1)
-             892:          68 Load 73(inF2)
-             893:          68 ExtInst 1(GLSL.std.450) 49(SmoothStep) 890 891 892
-             894:          68 Load 71(inF0)
-             895:          68 ExtInst 1(GLSL.std.450) 31(Sqrt) 894
-             896:          68 Load 71(inF0)
-             897:          68 Load 72(inF1)
-             898:          68 ExtInst 1(GLSL.std.450) 48(Step) 896 897
+             885:          68 Load 72(inF1)
+             886:          68 ExtInst 1(GLSL.std.450) 26(Pow) 884 885
+             887:          68 Load 71(inF0)
+             888:          68 ExtInst 1(GLSL.std.450) 11(Radians) 887
+             889:          68 Load 71(inF0)
+             890:          68 ExtInst 1(GLSL.std.450) 2(RoundEven) 889
+             891:          68 Load 71(inF0)
+             892:          68 ExtInst 1(GLSL.std.450) 32(InverseSqrt) 891
+             893:          68 Load 71(inF0)
+             894:   36(fvec3) CompositeConstruct 133 133 133
+             895:   36(fvec3) CompositeConstruct 221 221 221
+             896:          68 ExtInst 1(GLSL.std.450) 43(FClamp) 893 894 895
+             897:          68 Load 71(inF0)
+             898:          68 ExtInst 1(GLSL.std.450) 6(FSign) 897
              899:          68 Load 71(inF0)
-             900:          68 ExtInst 1(GLSL.std.450) 15(Tan) 899
+             900:          68 ExtInst 1(GLSL.std.450) 13(Sin) 899
              901:          68 Load 71(inF0)
-             902:          68 ExtInst 1(GLSL.std.450) 21(Tanh) 901
+             902:          68 ExtInst 1(GLSL.std.450) 13(Sin) 901
+                              Store 72(inF1) 902
              903:          68 Load 71(inF0)
-             904:          68 Transpose 903
+             904:          68 ExtInst 1(GLSL.std.450) 14(Cos) 903
+                              Store 73(inF2) 904
              905:          68 Load 71(inF0)
-             906:          68 ExtInst 1(GLSL.std.450) 3(Trunc) 905
-                              ReturnValue 908
+             906:          68 ExtInst 1(GLSL.std.450) 19(Sinh) 905
+             907:          68 Load 71(inF0)
+             908:          68 Load 72(inF1)
+             909:          68 Load 73(inF2)
+             910:          68 ExtInst 1(GLSL.std.450) 49(SmoothStep) 907 908 909
+             911:          68 Load 71(inF0)
+             912:          68 ExtInst 1(GLSL.std.450) 31(Sqrt) 911
+             913:          68 Load 71(inF0)
+             914:          68 Load 72(inF1)
+             915:          68 ExtInst 1(GLSL.std.450) 48(Step) 913 914
+             916:          68 Load 71(inF0)
+             917:          68 ExtInst 1(GLSL.std.450) 15(Tan) 916
+             918:          68 Load 71(inF0)
+             919:          68 ExtInst 1(GLSL.std.450) 21(Tanh) 918
+             920:          68 Load 71(inF0)
+             921:          68 Transpose 920
+             922:          68 Load 71(inF0)
+             923:          68 ExtInst 1(GLSL.std.450) 3(Trunc) 922
+                              ReturnValue 925
                               FunctionEnd
 82(VertexShaderFunction4x4(mf44;mf44;mf44;):          76 Function None 78
         79(inF0):     77(ptr) FunctionParameter
         80(inF1):     77(ptr) FunctionParameter
         81(inF2):     77(ptr) FunctionParameter
               83:             Label
-             911:          76 Load 79(inF0)
-             912:   132(bool) All 911
-             913:          76 Load 79(inF0)
-             914:          76 ExtInst 1(GLSL.std.450) 4(FAbs) 913
-             915:          76 Load 79(inF0)
-             916:          76 ExtInst 1(GLSL.std.450) 17(Acos) 915
-             917:          76 Load 79(inF0)
-             918:   132(bool) Any 917
-             919:          76 Load 79(inF0)
-             920:          76 ExtInst 1(GLSL.std.450) 16(Asin) 919
-             921:          76 Load 79(inF0)
-             922:          76 ExtInst 1(GLSL.std.450) 18(Atan) 921
-             923:          76 Load 79(inF0)
-             924:          76 Load 80(inF1)
-             925:          76 ExtInst 1(GLSL.std.450) 25(Atan2) 923 924
-             926:          76 Load 79(inF0)
-             927:          76 ExtInst 1(GLSL.std.450) 9(Ceil) 926
              928:          76 Load 79(inF0)
-             929:          76 Load 80(inF1)
-             930:          76 Load 81(inF2)
-             931:          76 ExtInst 1(GLSL.std.450) 43(FClamp) 928 929 930
+             930:         929 FOrdNotEqual 928 133
+             931:   132(bool) All 930
              932:          76 Load 79(inF0)
-             933:          76 ExtInst 1(GLSL.std.450) 14(Cos) 932
+             933:          76 ExtInst 1(GLSL.std.450) 4(FAbs) 932
              934:          76 Load 79(inF0)
-             935:          76 ExtInst 1(GLSL.std.450) 20(Cosh) 934
+             935:          76 ExtInst 1(GLSL.std.450) 17(Acos) 934
              936:          76 Load 79(inF0)
-             937:          76 ExtInst 1(GLSL.std.450) 12(Degrees) 936
-             938:          76 Load 79(inF0)
-             939:    6(float) ExtInst 1(GLSL.std.450) 33(Determinant) 938
-             940:          76 Load 79(inF0)
-             941:          76 ExtInst 1(GLSL.std.450) 27(Exp) 940
-             942:          76 Load 79(inF0)
-             943:          76 ExtInst 1(GLSL.std.450) 29(Exp2) 942
-             944:    143(int) ExtInst 1(GLSL.std.450) 74(FindSMsb) 164
-             945:    143(int) ExtInst 1(GLSL.std.450) 73(FindILsb) 164
+             937:         929 FOrdNotEqual 936 133
+             938:   132(bool) Any 937
+             939:          76 Load 79(inF0)
+             940:          76 ExtInst 1(GLSL.std.450) 16(Asin) 939
+             941:          76 Load 79(inF0)
+             942:          76 ExtInst 1(GLSL.std.450) 18(Atan) 941
+             943:          76 Load 79(inF0)
+             944:          76 Load 80(inF1)
+             945:          76 ExtInst 1(GLSL.std.450) 25(Atan2) 943 944
              946:          76 Load 79(inF0)
-             947:          76 ExtInst 1(GLSL.std.450) 8(Floor) 946
+             947:          76 ExtInst 1(GLSL.std.450) 9(Ceil) 946
              948:          76 Load 79(inF0)
              949:          76 Load 80(inF1)
-             950:   48(fvec4) CompositeExtract 948 0
-             951:   48(fvec4) CompositeExtract 949 0
-             952:   48(fvec4) FMod 950 951
-             953:   48(fvec4) CompositeExtract 948 1
-             954:   48(fvec4) CompositeExtract 949 1
-             955:   48(fvec4) FMod 953 954
-             956:   48(fvec4) CompositeExtract 948 2
-             957:   48(fvec4) CompositeExtract 949 2
-             958:   48(fvec4) FMod 956 957
-             959:   48(fvec4) CompositeExtract 948 3
-             960:   48(fvec4) CompositeExtract 949 3
-             961:   48(fvec4) FMod 959 960
-             962:          76 CompositeConstruct 952 955 958 961
-             963:          76 Load 79(inF0)
-             964:          76 ExtInst 1(GLSL.std.450) 10(Fract) 963
-             965:          76 Load 79(inF0)
-             966:          76 Load 80(inF1)
-             967:          76 ExtInst 1(GLSL.std.450) 53(Ldexp) 965 966
+             950:          76 Load 81(inF2)
+             951:          76 ExtInst 1(GLSL.std.450) 43(FClamp) 948 949 950
+             952:          76 Load 79(inF0)
+             953:          76 ExtInst 1(GLSL.std.450) 14(Cos) 952
+             954:          76 Load 79(inF0)
+             955:          76 ExtInst 1(GLSL.std.450) 20(Cosh) 954
+             956:          76 Load 79(inF0)
+             957:          76 ExtInst 1(GLSL.std.450) 12(Degrees) 956
+             958:          76 Load 79(inF0)
+             959:    6(float) ExtInst 1(GLSL.std.450) 33(Determinant) 958
+             960:          76 Load 79(inF0)
+             961:          76 ExtInst 1(GLSL.std.450) 27(Exp) 960
+             962:          76 Load 79(inF0)
+             963:          76 ExtInst 1(GLSL.std.450) 29(Exp2) 962
+             964:    146(int) ExtInst 1(GLSL.std.450) 74(FindSMsb) 167
+             965:    146(int) ExtInst 1(GLSL.std.450) 73(FindILsb) 167
+             966:          76 Load 79(inF0)
+             967:          76 ExtInst 1(GLSL.std.450) 8(Floor) 966
              968:          76 Load 79(inF0)
              969:          76 Load 80(inF1)
-             970:          76 Load 81(inF2)
-             971:          76 ExtInst 1(GLSL.std.450) 46(FMix) 968 969 970
-             972:          76 Load 79(inF0)
-             973:          76 ExtInst 1(GLSL.std.450) 28(Log) 972
-             974:          76 Load 79(inF0)
-             975:          76 ExtInst 1(GLSL.std.450) 30(Log2) 974
-             976:          76 MatrixTimesScalar 975 196
-             977:          76 Load 79(inF0)
-             978:          76 ExtInst 1(GLSL.std.450) 30(Log2) 977
-             979:          76 Load 79(inF0)
-             980:          76 Load 80(inF1)
-             981:          76 ExtInst 1(GLSL.std.450) 40(FMax) 979 980
-             982:          76 Load 79(inF0)
-             983:          76 Load 80(inF1)
-             984:          76 ExtInst 1(GLSL.std.450) 37(FMin) 982 983
+             970:   48(fvec4) CompositeExtract 968 0
+             971:   48(fvec4) CompositeExtract 969 0
+             972:   48(fvec4) FMod 970 971
+             973:   48(fvec4) CompositeExtract 968 1
+             974:   48(fvec4) CompositeExtract 969 1
+             975:   48(fvec4) FMod 973 974
+             976:   48(fvec4) CompositeExtract 968 2
+             977:   48(fvec4) CompositeExtract 969 2
+             978:   48(fvec4) FMod 976 977
+             979:   48(fvec4) CompositeExtract 968 3
+             980:   48(fvec4) CompositeExtract 969 3
+             981:   48(fvec4) FMod 979 980
+             982:          76 CompositeConstruct 972 975 978 981
+             983:          76 Load 79(inF0)
+             984:          76 ExtInst 1(GLSL.std.450) 10(Fract) 983
              985:          76 Load 79(inF0)
              986:          76 Load 80(inF1)
-             987:          76 ExtInst 1(GLSL.std.450) 26(Pow) 985 986
+             987:          76 ExtInst 1(GLSL.std.450) 53(Ldexp) 985 986
              988:          76 Load 79(inF0)
-             989:          76 ExtInst 1(GLSL.std.450) 11(Radians) 988
-             990:          76 Load 79(inF0)
-             991:          76 ExtInst 1(GLSL.std.450) 2(RoundEven) 990
+             989:          76 Load 80(inF1)
+             990:          76 Load 81(inF2)
+             991:          76 ExtInst 1(GLSL.std.450) 46(FMix) 988 989 990
              992:          76 Load 79(inF0)
-             993:          76 ExtInst 1(GLSL.std.450) 32(InverseSqrt) 992
+             993:          76 ExtInst 1(GLSL.std.450) 28(Log) 992
              994:          76 Load 79(inF0)
-             995:   48(fvec4) CompositeConstruct 218 218 218 218
-             996:   48(fvec4) CompositeConstruct 219 219 219 219
-             997:          76 ExtInst 1(GLSL.std.450) 43(FClamp) 994 995 996
-             998:          76 Load 79(inF0)
-             999:          76 ExtInst 1(GLSL.std.450) 6(FSign) 998
-            1000:          76 Load 79(inF0)
-            1001:          76 ExtInst 1(GLSL.std.450) 13(Sin) 1000
+             995:          76 ExtInst 1(GLSL.std.450) 30(Log2) 994
+             996:          76 MatrixTimesScalar 995 199
+             997:          76 Load 79(inF0)
+             998:          76 ExtInst 1(GLSL.std.450) 30(Log2) 997
+             999:          76 Load 79(inF0)
+            1000:          76 Load 80(inF1)
+            1001:          76 ExtInst 1(GLSL.std.450) 40(FMax) 999 1000
             1002:          76 Load 79(inF0)
-            1003:          76 ExtInst 1(GLSL.std.450) 13(Sin) 1002
-                              Store 80(inF1) 1003
-            1004:          76 Load 79(inF0)
-            1005:          76 ExtInst 1(GLSL.std.450) 14(Cos) 1004
-                              Store 81(inF2) 1005
-            1006:          76 Load 79(inF0)
-            1007:          76 ExtInst 1(GLSL.std.450) 19(Sinh) 1006
+            1003:          76 Load 80(inF1)
+            1004:          76 ExtInst 1(GLSL.std.450) 37(FMin) 1002 1003
+            1005:          76 Load 79(inF0)
+            1006:          76 Load 80(inF1)
+            1007:          76 ExtInst 1(GLSL.std.450) 26(Pow) 1005 1006
             1008:          76 Load 79(inF0)
-            1009:          76 Load 80(inF1)
-            1010:          76 Load 81(inF2)
-            1011:          76 ExtInst 1(GLSL.std.450) 49(SmoothStep) 1008 1009 1010
+            1009:          76 ExtInst 1(GLSL.std.450) 11(Radians) 1008
+            1010:          76 Load 79(inF0)
+            1011:          76 ExtInst 1(GLSL.std.450) 2(RoundEven) 1010
             1012:          76 Load 79(inF0)
-            1013:          76 ExtInst 1(GLSL.std.450) 31(Sqrt) 1012
+            1013:          76 ExtInst 1(GLSL.std.450) 32(InverseSqrt) 1012
             1014:          76 Load 79(inF0)
-            1015:          76 Load 80(inF1)
-            1016:          76 ExtInst 1(GLSL.std.450) 48(Step) 1014 1015
-            1017:          76 Load 79(inF0)
-            1018:          76 ExtInst 1(GLSL.std.450) 15(Tan) 1017
-            1019:          76 Load 79(inF0)
-            1020:          76 ExtInst 1(GLSL.std.450) 21(Tanh) 1019
-            1021:          76 Load 79(inF0)
-            1022:          76 Transpose 1021
-            1023:          76 Load 79(inF0)
-            1024:          76 ExtInst 1(GLSL.std.450) 3(Trunc) 1023
-                              ReturnValue 1026
+            1015:   48(fvec4) CompositeConstruct 133 133 133 133
+            1016:   48(fvec4) CompositeConstruct 221 221 221 221
+            1017:          76 ExtInst 1(GLSL.std.450) 43(FClamp) 1014 1015 1016
+            1018:          76 Load 79(inF0)
+            1019:          76 ExtInst 1(GLSL.std.450) 6(FSign) 1018
+            1020:          76 Load 79(inF0)
+            1021:          76 ExtInst 1(GLSL.std.450) 13(Sin) 1020
+            1022:          76 Load 79(inF0)
+            1023:          76 ExtInst 1(GLSL.std.450) 13(Sin) 1022
+                              Store 80(inF1) 1023
+            1024:          76 Load 79(inF0)
+            1025:          76 ExtInst 1(GLSL.std.450) 14(Cos) 1024
+                              Store 81(inF2) 1025
+            1026:          76 Load 79(inF0)
+            1027:          76 ExtInst 1(GLSL.std.450) 19(Sinh) 1026
+            1028:          76 Load 79(inF0)
+            1029:          76 Load 80(inF1)
+            1030:          76 Load 81(inF2)
+            1031:          76 ExtInst 1(GLSL.std.450) 49(SmoothStep) 1028 1029 1030
+            1032:          76 Load 79(inF0)
+            1033:          76 ExtInst 1(GLSL.std.450) 31(Sqrt) 1032
+            1034:          76 Load 79(inF0)
+            1035:          76 Load 80(inF1)
+            1036:          76 ExtInst 1(GLSL.std.450) 48(Step) 1034 1035
+            1037:          76 Load 79(inF0)
+            1038:          76 ExtInst 1(GLSL.std.450) 15(Tan) 1037
+            1039:          76 Load 79(inF0)
+            1040:          76 ExtInst 1(GLSL.std.450) 21(Tanh) 1039
+            1041:          76 Load 79(inF0)
+            1042:          76 Transpose 1041
+            1043:          76 Load 79(inF0)
+            1044:          76 ExtInst 1(GLSL.std.450) 3(Trunc) 1043
+                              ReturnValue 1046
                               FunctionEnd
 91(TestGenMul2(f1;f1;vf2;vf2;mf22;mf22;):           2 Function None 84
         85(inF0):      7(ptr) FunctionParameter
@@ -3891,51 +3939,51 @@ Shader version: 500
        89(inFM0):     61(ptr) FunctionParameter
        90(inFM1):     61(ptr) FunctionParameter
               92:             Label
-        1029(r0):      7(ptr) Variable Function
-        1033(r1):     25(ptr) Variable Function
-        1037(r2):     25(ptr) Variable Function
-        1041(r3):      7(ptr) Variable Function
-        1045(r4):     25(ptr) Variable Function
-        1049(r5):     25(ptr) Variable Function
-        1053(r6):     61(ptr) Variable Function
-        1057(r7):     61(ptr) Variable Function
-        1061(r8):     61(ptr) Variable Function
-            1030:    6(float) Load 86(inF1)
-            1031:    6(float) Load 85(inF0)
-            1032:    6(float) FMul 1030 1031
-                              Store 1029(r0) 1032
-            1034:    6(float) Load 85(inF0)
-            1035:   24(fvec2) Load 87(inFV0)
-            1036:   24(fvec2) VectorTimesScalar 1035 1034
-                              Store 1033(r1) 1036
-            1038:   24(fvec2) Load 87(inFV0)
-            1039:    6(float) Load 85(inF0)
-            1040:   24(fvec2) VectorTimesScalar 1038 1039
-                              Store 1037(r2) 1040
-            1042:   24(fvec2) Load 87(inFV0)
-            1043:   24(fvec2) Load 88(inFV1)
-            1044:    6(float) Dot 1042 1043
-                              Store 1041(r3) 1044
-            1046:   24(fvec2) Load 87(inFV0)
-            1047:          60 Load 89(inFM0)
-            1048:   24(fvec2) VectorTimesMatrix 1046 1047
-                              Store 1045(r4) 1048
-            1050:          60 Load 89(inFM0)
-            1051:   24(fvec2) Load 87(inFV0)
-            1052:   24(fvec2) MatrixTimesVector 1050 1051
-                              Store 1049(r5) 1052
+        1049(r0):      7(ptr) Variable Function
+        1053(r1):     25(ptr) Variable Function
+        1057(r2):     25(ptr) Variable Function
+        1061(r3):      7(ptr) Variable Function
+        1065(r4):     25(ptr) Variable Function
+        1069(r5):     25(ptr) Variable Function
+        1073(r6):     61(ptr) Variable Function
+        1077(r7):     61(ptr) Variable Function
+        1081(r8):     61(ptr) Variable Function
+            1050:    6(float) Load 86(inF1)
+            1051:    6(float) Load 85(inF0)
+            1052:    6(float) FMul 1050 1051
+                              Store 1049(r0) 1052
             1054:    6(float) Load 85(inF0)
-            1055:          60 Load 89(inFM0)
-            1056:          60 MatrixTimesScalar 1055 1054
-                              Store 1053(r6) 1056
-            1058:          60 Load 89(inFM0)
+            1055:   24(fvec2) Load 87(inFV0)
+            1056:   24(fvec2) VectorTimesScalar 1055 1054
+                              Store 1053(r1) 1056
+            1058:   24(fvec2) Load 87(inFV0)
             1059:    6(float) Load 85(inF0)
-            1060:          60 MatrixTimesScalar 1058 1059
-                              Store 1057(r7) 1060
-            1062:          60 Load 90(inFM1)
-            1063:          60 Load 89(inFM0)
-            1064:          60 MatrixTimesMatrix 1062 1063
-                              Store 1061(r8) 1064
+            1060:   24(fvec2) VectorTimesScalar 1058 1059
+                              Store 1057(r2) 1060
+            1062:   24(fvec2) Load 87(inFV0)
+            1063:   24(fvec2) Load 88(inFV1)
+            1064:    6(float) Dot 1062 1063
+                              Store 1061(r3) 1064
+            1066:   24(fvec2) Load 87(inFV0)
+            1067:          60 Load 89(inFM0)
+            1068:   24(fvec2) VectorTimesMatrix 1066 1067
+                              Store 1065(r4) 1068
+            1070:          60 Load 89(inFM0)
+            1071:   24(fvec2) Load 87(inFV0)
+            1072:   24(fvec2) MatrixTimesVector 1070 1071
+                              Store 1069(r5) 1072
+            1074:    6(float) Load 85(inF0)
+            1075:          60 Load 89(inFM0)
+            1076:          60 MatrixTimesScalar 1075 1074
+                              Store 1073(r6) 1076
+            1078:          60 Load 89(inFM0)
+            1079:    6(float) Load 85(inF0)
+            1080:          60 MatrixTimesScalar 1078 1079
+                              Store 1077(r7) 1080
+            1082:          60 Load 90(inFM1)
+            1083:          60 Load 89(inFM0)
+            1084:          60 MatrixTimesMatrix 1082 1083
+                              Store 1081(r8) 1084
                               Return
                               FunctionEnd
 100(TestGenMul3(f1;f1;vf3;vf3;mf33;mf33;):           2 Function None 93
@@ -3946,51 +3994,51 @@ Shader version: 500
        98(inFM0):     69(ptr) FunctionParameter
        99(inFM1):     69(ptr) FunctionParameter
              101:             Label
-        1065(r0):      7(ptr) Variable Function
-        1069(r1):     37(ptr) Variable Function
-        1073(r2):     37(ptr) Variable Function
-        1077(r3):      7(ptr) Variable Function
-        1081(r4):     37(ptr) Variable Function
-        1085(r5):     37(ptr) Variable Function
-        1089(r6):     69(ptr) Variable Function
-        1093(r7):     69(ptr) Variable Function
-        1097(r8):     69(ptr) Variable Function
-            1066:    6(float) Load 95(inF1)
-            1067:    6(float) Load 94(inF0)
-            1068:    6(float) FMul 1066 1067
-                              Store 1065(r0) 1068
-            1070:    6(float) Load 94(inF0)
-            1071:   36(fvec3) Load 96(inFV0)
-            1072:   36(fvec3) VectorTimesScalar 1071 1070
-                              Store 1069(r1) 1072
-            1074:   36(fvec3) Load 96(inFV0)
-            1075:    6(float) Load 94(inF0)
-            1076:   36(fvec3) VectorTimesScalar 1074 1075
-                              Store 1073(r2) 1076
-            1078:   36(fvec3) Load 96(inFV0)
-            1079:   36(fvec3) Load 97(inFV1)
-            1080:    6(float) Dot 1078 1079
-                              Store 1077(r3) 1080
-            1082:   36(fvec3) Load 96(inFV0)
-            1083:          68 Load 98(inFM0)
-            1084:   36(fvec3) VectorTimesMatrix 1082 1083
-                              Store 1081(r4) 1084
-            1086:          68 Load 98(inFM0)
-            1087:   36(fvec3) Load 96(inFV0)
-            1088:   36(fvec3) MatrixTimesVector 1086 1087
-                              Store 1085(r5) 1088
+        1085(r0):      7(ptr) Variable Function
+        1089(r1):     37(ptr) Variable Function
+        1093(r2):     37(ptr) Variable Function
+        1097(r3):      7(ptr) Variable Function
+        1101(r4):     37(ptr) Variable Function
+        1105(r5):     37(ptr) Variable Function
+        1109(r6):     69(ptr) Variable Function
+        1113(r7):     69(ptr) Variable Function
+        1117(r8):     69(ptr) Variable Function
+            1086:    6(float) Load 95(inF1)
+            1087:    6(float) Load 94(inF0)
+            1088:    6(float) FMul 1086 1087
+                              Store 1085(r0) 1088
             1090:    6(float) Load 94(inF0)
-            1091:          68 Load 98(inFM0)
-            1092:          68 MatrixTimesScalar 1091 1090
-                              Store 1089(r6) 1092
-            1094:          68 Load 98(inFM0)
+            1091:   36(fvec3) Load 96(inFV0)
+            1092:   36(fvec3) VectorTimesScalar 1091 1090
+                              Store 1089(r1) 1092
+            1094:   36(fvec3) Load 96(inFV0)
             1095:    6(float) Load 94(inF0)
-            1096:          68 MatrixTimesScalar 1094 1095
-                              Store 1093(r7) 1096
-            1098:          68 Load 99(inFM1)
-            1099:          68 Load 98(inFM0)
-            1100:          68 MatrixTimesMatrix 1098 1099
-                              Store 1097(r8) 1100
+            1096:   36(fvec3) VectorTimesScalar 1094 1095
+                              Store 1093(r2) 1096
+            1098:   36(fvec3) Load 96(inFV0)
+            1099:   36(fvec3) Load 97(inFV1)
+            1100:    6(float) Dot 1098 1099
+                              Store 1097(r3) 1100
+            1102:   36(fvec3) Load 96(inFV0)
+            1103:          68 Load 98(inFM0)
+            1104:   36(fvec3) VectorTimesMatrix 1102 1103
+                              Store 1101(r4) 1104
+            1106:          68 Load 98(inFM0)
+            1107:   36(fvec3) Load 96(inFV0)
+            1108:   36(fvec3) MatrixTimesVector 1106 1107
+                              Store 1105(r5) 1108
+            1110:    6(float) Load 94(inF0)
+            1111:          68 Load 98(inFM0)
+            1112:          68 MatrixTimesScalar 1111 1110
+                              Store 1109(r6) 1112
+            1114:          68 Load 98(inFM0)
+            1115:    6(float) Load 94(inF0)
+            1116:          68 MatrixTimesScalar 1114 1115
+                              Store 1113(r7) 1116
+            1118:          68 Load 99(inFM1)
+            1119:          68 Load 98(inFM0)
+            1120:          68 MatrixTimesMatrix 1118 1119
+                              Store 1117(r8) 1120
                               Return
                               FunctionEnd
 109(TestGenMul4(f1;f1;vf4;vf4;mf44;mf44;):           2 Function None 102
@@ -4001,51 +4049,51 @@ Shader version: 500
       107(inFM0):     77(ptr) FunctionParameter
       108(inFM1):     77(ptr) FunctionParameter
              110:             Label
-        1101(r0):      7(ptr) Variable Function
-        1105(r1):     49(ptr) Variable Function
-        1109(r2):     49(ptr) Variable Function
-        1113(r3):      7(ptr) Variable Function
-        1117(r4):     49(ptr) Variable Function
-        1121(r5):     49(ptr) Variable Function
-        1125(r6):     77(ptr) Variable Function
-        1129(r7):     77(ptr) Variable Function
-        1133(r8):     77(ptr) Variable Function
-            1102:    6(float) Load 104(inF1)
-            1103:    6(float) Load 103(inF0)
-            1104:    6(float) FMul 1102 1103
-                              Store 1101(r0) 1104
-            1106:    6(float) Load 103(inF0)
-            1107:   48(fvec4) Load 105(inFV0)
-            1108:   48(fvec4) VectorTimesScalar 1107 1106
-                              Store 1105(r1) 1108
-            1110:   48(fvec4) Load 105(inFV0)
-            1111:    6(float) Load 103(inF0)
-            1112:   48(fvec4) VectorTimesScalar 1110 1111
-                              Store 1109(r2) 1112
-            1114:   48(fvec4) Load 105(inFV0)
-            1115:   48(fvec4) Load 106(inFV1)
-            1116:    6(float) Dot 1114 1115
-                              Store 1113(r3) 1116
-            1118:   48(fvec4) Load 105(inFV0)
-            1119:          76 Load 107(inFM0)
-            1120:   48(fvec4) VectorTimesMatrix 1118 1119
-                              Store 1117(r4) 1120
-            1122:          76 Load 107(inFM0)
-            1123:   48(fvec4) Load 105(inFV0)
-            1124:   48(fvec4) MatrixTimesVector 1122 1123
-                              Store 1121(r5) 1124
+        1121(r0):      7(ptr) Variable Function
+        1125(r1):     49(ptr) Variable Function
+        1129(r2):     49(ptr) Variable Function
+        1133(r3):      7(ptr) Variable Function
+        1137(r4):     49(ptr) Variable Function
+        1141(r5):     49(ptr) Variable Function
+        1145(r6):     77(ptr) Variable Function
+        1149(r7):     77(ptr) Variable Function
+        1153(r8):     77(ptr) Variable Function
+            1122:    6(float) Load 104(inF1)
+            1123:    6(float) Load 103(inF0)
+            1124:    6(float) FMul 1122 1123
+                              Store 1121(r0) 1124
             1126:    6(float) Load 103(inF0)
-            1127:          76 Load 107(inFM0)
-            1128:          76 MatrixTimesScalar 1127 1126
-                              Store 1125(r6) 1128
-            1130:          76 Load 107(inFM0)
+            1127:   48(fvec4) Load 105(inFV0)
+            1128:   48(fvec4) VectorTimesScalar 1127 1126
+                              Store 1125(r1) 1128
+            1130:   48(fvec4) Load 105(inFV0)
             1131:    6(float) Load 103(inF0)
-            1132:          76 MatrixTimesScalar 1130 1131
-                              Store 1129(r7) 1132
-            1134:          76 Load 108(inFM1)
-            1135:          76 Load 107(inFM0)
-            1136:          76 MatrixTimesMatrix 1134 1135
-                              Store 1133(r8) 1136
+            1132:   48(fvec4) VectorTimesScalar 1130 1131
+                              Store 1129(r2) 1132
+            1134:   48(fvec4) Load 105(inFV0)
+            1135:   48(fvec4) Load 106(inFV1)
+            1136:    6(float) Dot 1134 1135
+                              Store 1133(r3) 1136
+            1138:   48(fvec4) Load 105(inFV0)
+            1139:          76 Load 107(inFM0)
+            1140:   48(fvec4) VectorTimesMatrix 1138 1139
+                              Store 1137(r4) 1140
+            1142:          76 Load 107(inFM0)
+            1143:   48(fvec4) Load 105(inFV0)
+            1144:   48(fvec4) MatrixTimesVector 1142 1143
+                              Store 1141(r5) 1144
+            1146:    6(float) Load 103(inF0)
+            1147:          76 Load 107(inFM0)
+            1148:          76 MatrixTimesScalar 1147 1146
+                              Store 1145(r6) 1148
+            1150:          76 Load 107(inFM0)
+            1151:    6(float) Load 103(inF0)
+            1152:          76 MatrixTimesScalar 1150 1151
+                              Store 1149(r7) 1152
+            1154:          76 Load 108(inFM1)
+            1155:          76 Load 107(inFM0)
+            1156:          76 MatrixTimesMatrix 1154 1155
+                              Store 1153(r8) 1156
                               Return
                               FunctionEnd
 129(TestGenMulNxM(f1;f1;vf2;vf3;mf23;mf32;mf33;mf34;mf24;):           2 Function None 119
@@ -4059,90 +4107,90 @@ Shader version: 500
     127(inFM3x4):    116(ptr) FunctionParameter
     128(inFM2x4):    118(ptr) FunctionParameter
              130:             Label
-       1137(r00):      7(ptr) Variable Function
-       1141(r01):     25(ptr) Variable Function
-       1145(r02):     37(ptr) Variable Function
-       1149(r03):     25(ptr) Variable Function
-       1153(r04):     37(ptr) Variable Function
-       1157(r05):      7(ptr) Variable Function
-       1161(r06):      7(ptr) Variable Function
-       1165(r07):     37(ptr) Variable Function
-       1169(r08):     25(ptr) Variable Function
-       1173(r09):     25(ptr) Variable Function
-       1177(r10):     37(ptr) Variable Function
-       1181(r11):    112(ptr) Variable Function
-       1185(r12):    114(ptr) Variable Function
-       1189(r13):     61(ptr) Variable Function
-       1193(r14):    112(ptr) Variable Function
-       1197(r15):    118(ptr) Variable Function
-       1201(r16):    116(ptr) Variable Function
-            1138:    6(float) Load 121(inF1)
-            1139:    6(float) Load 120(inF0)
-            1140:    6(float) FMul 1138 1139
-                              Store 1137(r00) 1140
-            1142:    6(float) Load 120(inF0)
-            1143:   24(fvec2) Load 122(inFV2)
-            1144:   24(fvec2) VectorTimesScalar 1143 1142
-                              Store 1141(r01) 1144
-            1146:    6(float) Load 120(inF0)
-            1147:   36(fvec3) Load 123(inFV3)
-            1148:   36(fvec3) VectorTimesScalar 1147 1146
-                              Store 1145(r02) 1148
-            1150:   24(fvec2) Load 122(inFV2)
-            1151:    6(float) Load 120(inF0)
-            1152:   24(fvec2) VectorTimesScalar 1150 1151
-                              Store 1149(r03) 1152
-            1154:   36(fvec3) Load 123(inFV3)
-            1155:    6(float) Load 120(inF0)
-            1156:   36(fvec3) VectorTimesScalar 1154 1155
-                              Store 1153(r04) 1156
-            1158:   24(fvec2) Load 122(inFV2)
-            1159:   24(fvec2) Load 122(inFV2)
-            1160:    6(float) Dot 1158 1159
-                              Store 1157(r05) 1160
-            1162:   36(fvec3) Load 123(inFV3)
-            1163:   36(fvec3) Load 123(inFV3)
-            1164:    6(float) Dot 1162 1163
-                              Store 1161(r06) 1164
-            1166:         111 Load 124(inFM2x3)
-            1167:   24(fvec2) Load 122(inFV2)
-            1168:   36(fvec3) MatrixTimesVector 1166 1167
-                              Store 1165(r07) 1168
-            1170:         113 Load 125(inFM3x2)
-            1171:   36(fvec3) Load 123(inFV3)
-            1172:   24(fvec2) MatrixTimesVector 1170 1171
-                              Store 1169(r08) 1172
+       1157(r00):      7(ptr) Variable Function
+       1161(r01):     25(ptr) Variable Function
+       1165(r02):     37(ptr) Variable Function
+       1169(r03):     25(ptr) Variable Function
+       1173(r04):     37(ptr) Variable Function
+       1177(r05):      7(ptr) Variable Function
+       1181(r06):      7(ptr) Variable Function
+       1185(r07):     37(ptr) Variable Function
+       1189(r08):     25(ptr) Variable Function
+       1193(r09):     25(ptr) Variable Function
+       1197(r10):     37(ptr) Variable Function
+       1201(r11):    112(ptr) Variable Function
+       1205(r12):    114(ptr) Variable Function
+       1209(r13):     61(ptr) Variable Function
+       1213(r14):    112(ptr) Variable Function
+       1217(r15):    118(ptr) Variable Function
+       1221(r16):    116(ptr) Variable Function
+            1158:    6(float) Load 121(inF1)
+            1159:    6(float) Load 120(inF0)
+            1160:    6(float) FMul 1158 1159
+                              Store 1157(r00) 1160
+            1162:    6(float) Load 120(inF0)
+            1163:   24(fvec2) Load 122(inFV2)
+            1164:   24(fvec2) VectorTimesScalar 1163 1162
+                              Store 1161(r01) 1164
+            1166:    6(float) Load 120(inF0)
+            1167:   36(fvec3) Load 123(inFV3)
+            1168:   36(fvec3) VectorTimesScalar 1167 1166
+                              Store 1165(r02) 1168
+            1170:   24(fvec2) Load 122(inFV2)
+            1171:    6(float) Load 120(inF0)
+            1172:   24(fvec2) VectorTimesScalar 1170 1171
+                              Store 1169(r03) 1172
             1174:   36(fvec3) Load 123(inFV3)
-            1175:         111 Load 124(inFM2x3)
-            1176:   24(fvec2) VectorTimesMatrix 1174 1175
-                              Store 1173(r09) 1176
+            1175:    6(float) Load 120(inF0)
+            1176:   36(fvec3) VectorTimesScalar 1174 1175
+                              Store 1173(r04) 1176
             1178:   24(fvec2) Load 122(inFV2)
-            1179:         113 Load 125(inFM3x2)
-            1180:   36(fvec3) VectorTimesMatrix 1178 1179
-                              Store 1177(r10) 1180
-            1182:    6(float) Load 120(inF0)
-            1183:         111 Load 124(inFM2x3)
-            1184:         111 MatrixTimesScalar 1183 1182
-                              Store 1181(r11) 1184
-            1186:    6(float) Load 120(inF0)
-            1187:         113 Load 125(inFM3x2)
-            1188:         113 MatrixTimesScalar 1187 1186
-                              Store 1185(r12) 1188
+            1179:   24(fvec2) Load 122(inFV2)
+            1180:    6(float) Dot 1178 1179
+                              Store 1177(r05) 1180
+            1182:   36(fvec3) Load 123(inFV3)
+            1183:   36(fvec3) Load 123(inFV3)
+            1184:    6(float) Dot 1182 1183
+                              Store 1181(r06) 1184
+            1186:         111 Load 124(inFM2x3)
+            1187:   24(fvec2) Load 122(inFV2)
+            1188:   36(fvec3) MatrixTimesVector 1186 1187
+                              Store 1185(r07) 1188
             1190:         113 Load 125(inFM3x2)
-            1191:         111 Load 124(inFM2x3)
-            1192:          60 MatrixTimesMatrix 1190 1191
-                              Store 1189(r13) 1192
-            1194:          68 Load 126(inFM3x3)
+            1191:   36(fvec3) Load 123(inFV3)
+            1192:   24(fvec2) MatrixTimesVector 1190 1191
+                              Store 1189(r08) 1192
+            1194:   36(fvec3) Load 123(inFV3)
             1195:         111 Load 124(inFM2x3)
-            1196:         111 MatrixTimesMatrix 1194 1195
-                              Store 1193(r14) 1196
-            1198:         115 Load 127(inFM3x4)
-            1199:         111 Load 124(inFM2x3)
-            1200:         117 MatrixTimesMatrix 1198 1199
-                              Store 1197(r15) 1200
-            1202:         117 Load 128(inFM2x4)
-            1203:         113 Load 125(inFM3x2)
-            1204:         115 MatrixTimesMatrix 1202 1203
-                              Store 1201(r16) 1204
+            1196:   24(fvec2) VectorTimesMatrix 1194 1195
+                              Store 1193(r09) 1196
+            1198:   24(fvec2) Load 122(inFV2)
+            1199:         113 Load 125(inFM3x2)
+            1200:   36(fvec3) VectorTimesMatrix 1198 1199
+                              Store 1197(r10) 1200
+            1202:    6(float) Load 120(inF0)
+            1203:         111 Load 124(inFM2x3)
+            1204:         111 MatrixTimesScalar 1203 1202
+                              Store 1201(r11) 1204
+            1206:    6(float) Load 120(inF0)
+            1207:         113 Load 125(inFM3x2)
+            1208:         113 MatrixTimesScalar 1207 1206
+                              Store 1205(r12) 1208
+            1210:         113 Load 125(inFM3x2)
+            1211:         111 Load 124(inFM2x3)
+            1212:          60 MatrixTimesMatrix 1210 1211
+                              Store 1209(r13) 1212
+            1214:          68 Load 126(inFM3x3)
+            1215:         111 Load 124(inFM2x3)
+            1216:         111 MatrixTimesMatrix 1214 1215
+                              Store 1213(r14) 1216
+            1218:         115 Load 127(inFM3x4)
+            1219:         111 Load 124(inFM2x3)
+            1220:         117 MatrixTimesMatrix 1218 1219
+                              Store 1217(r15) 1220
+            1222:         117 Load 128(inFM2x4)
+            1223:         113 Load 125(inFM3x2)
+            1224:         115 MatrixTimesMatrix 1222 1223
+                              Store 1221(r16) 1224
                               Return
                               FunctionEnd

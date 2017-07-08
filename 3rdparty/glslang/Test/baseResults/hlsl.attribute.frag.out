@@ -90,7 +90,7 @@ gl_FragCoord origin is upper left
 11(@PixelShaderFunction(vf4;):           2 Function None 9
        10(input):      8(ptr) FunctionParameter
               12:             Label
-                              SelectionMerge 16 None
+                              SelectionMerge 16 DontFlatten 
                               BranchConditional 14 15 16
               15:               Label
                                 Branch 16

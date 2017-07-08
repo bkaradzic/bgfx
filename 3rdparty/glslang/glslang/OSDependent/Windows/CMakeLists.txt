@@ -1,7 +1,8 @@
 set(SOURCES ossource.cpp ../osinclude.h)
 
 add_library(OSDependent STATIC ${SOURCES})
-set_property(TARGET OSDependent PROPERTY FOLDER glslang POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET OSDependent PROPERTY FOLDER glslang)
+set_property(TARGET OSDependent PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 # MinGW GCC complains about function pointer casts to void*.
 # Turn that off with -fpermissive.
@@ -13,5 +14,7 @@ if(WIN32)
     source_group("Source" FILES ${SOURCES})
 endif(WIN32)
 
-install(TARGETS OSDependent
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(ENABLE_GLSLANG_INSTALL)
+    install(TARGETS OSDependent
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif(ENABLE_GLSLANG_INSTALL)

@@ -47,11 +47,11 @@ namespace spv {
 typedef unsigned int Id;
 
 #define SPV_VERSION 0x10000
-#define SPV_REVISION 10
+#define SPV_REVISION 11
 
 static const unsigned int MagicNumber = 0x07230203;
 static const unsigned int Version = 0x00010000;
-static const unsigned int Revision = 10;
+static const unsigned int Revision = 11;
 static const unsigned int OpCodeMask = 0xffff;
 static const unsigned int WordCountShift = 16;
 
@@ -122,6 +122,7 @@ enum ExecutionMode {
     ExecutionModeOutputTriangleStrip = 29,
     ExecutionModeVecTypeHint = 30,
     ExecutionModeContractionOff = 31,
+    ExecutionModePostDepthCoverage = 4446,
     ExecutionModeMax = 0x7fffffff,
 };
 
@@ -628,6 +629,7 @@ enum Capability {
     CapabilityMultiView = 4439,
     CapabilityVariablePointersStorageBuffer = 4441,
     CapabilityVariablePointers = 4442,
+    CapabilitySampleMaskPostDepthCoverage = 4447,
     CapabilitySampleMaskOverrideCoverageNV = 5249,
     CapabilityGeometryShaderPassthroughNV = 5251,
     CapabilityShaderViewportIndexLayerNV = 5254,
