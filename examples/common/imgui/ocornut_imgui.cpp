@@ -12,7 +12,6 @@
 #include <ocornut-imgui/imgui.h>
 
 #include "imgui.h"
-#include "ocornut_imgui.h"
 #include "../bgfx_utils.h"
 
 #ifndef USE_ENTRY
