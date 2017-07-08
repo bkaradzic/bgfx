@@ -4744,6 +4744,7 @@ namespace bgfx { namespace gl
 
 		const bool writeOnly    = 0 != (m_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
 		const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE );
+		const bool srgb         = 0 != (m_flags&BGFX_TEXTURE_SRGB);
 		const bool textureArray = false
 			|| _target == GL_TEXTURE_2D_ARRAY
 			|| _target == GL_TEXTURE_CUBE_MAP_ARRAY
@@ -4778,11 +4779,16 @@ namespace bgfx { namespace gl
 				m_type = tfiRgba8.m_type;
 			}
 
+			const GLenum internalFmt = srgb
+				? s_textureFormat[m_textureFormat].m_internalFmtSrgb
+				: s_textureFormat[m_textureFormat].m_internalFmt
+				;
+
 			if (textureArray)
 			{
 				GL_CHECK(glTexStorage3D(_target
 					, _numMips
-					, s_textureFormat[m_textureFormat].m_internalFmt
+					, internalFmt
 					, m_width
 					, m_height
 					, _depth
@@ -4795,7 +4801,7 @@ namespace bgfx { namespace gl
 				{
 					GL_CHECK(glTexStorage3D(_target
 							, _numMips
-							, s_textureFormat[m_textureFormat].m_internalFmt
+							, internalFmt
 							, m_width
 							, m_height
 							, _depth
@@ -4805,7 +4811,7 @@ namespace bgfx { namespace gl
 				{
 					GL_CHECK(glTexStorage2D(_target
 							, _numMips
-							, s_textureFormat[m_textureFormat].m_internalFmt
+							, internalFmt
 							, m_width
 							, m_height
 							) );
