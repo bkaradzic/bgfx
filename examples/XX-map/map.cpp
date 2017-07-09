@@ -259,7 +259,7 @@ class ExampleCubes : public entry::AppI
             bgfx::setViewTransform(SPRITE_VID, NULL, proj);
             bgfx::setViewRect(SPRITE_VID, 0, 0, uint16_t(mBaseWidth), uint16_t(mBaseHeight) );
             bgfx::setVertexBuffer(0, &vb);
-            bgfx::setIndexBuffer( m_spriteIBH );
+            bgfx::setIndexBuffer( m_spriteIBH, 0, numSprites*6);
             bgfx::setTexture(0, m_texUniform,  m_spriteSheetTexture);
             bgfx::setState(0
                     | BGFX_STATE_RGB_WRITE
