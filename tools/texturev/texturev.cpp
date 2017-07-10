@@ -108,6 +108,13 @@ static const InputBinding s_bindingApp[] =
 	INPUT_BINDING_END
 };
 
+const char* s_resetCmd =
+	"view zoom 1.0\n"
+	"view rotate 0\n"
+	"view cubemap\n"
+	"view pan\n"
+	;
+
 static const InputBinding s_bindingView[] =
 {
 	{ entry::Key::Comma,     entry::Modifier::None,       1, NULL, "view mip prev"           },
@@ -120,10 +127,7 @@ static const InputBinding s_bindingView[] =
 	{ entry::Key::Key1,      entry::Modifier::None,       1, NULL, "view zoom 1.0\n"
 	                                                               "view fit\n"              },
 
-	{ entry::Key::Key0,      entry::Modifier::None,       1, NULL, "view zoom 1.0\n"
-	                                                               "view rotate 0\n"
-	                                                               "view cubemap\n"
-	                                                               "view pan\n"              },
+	{ entry::Key::Key0,      entry::Modifier::None,       1, NULL, s_resetCmd                },
 	{ entry::Key::Plus,      entry::Modifier::None,       1, NULL, "view zoom +0.1"          },
 	{ entry::Key::Minus,     entry::Modifier::None,       1, NULL, "view zoom -0.1"          },
 
@@ -446,7 +450,25 @@ struct View
 			}
 			else if (0 == bx::strCmp(_argv[1], "geo") )
 			{
-				m_cubeMapGeo = Geometry::Enum( (m_cubeMapGeo + 1) % Geometry::Count);
+				if (_argc >= 3)
+				{
+					if (bx::toLower(_argv[2][0]) == 'c')
+					{
+						m_cubeMapGeo = Geometry::Cross;
+					}
+					else if (bx::toLower(_argv[2][0]) == 'h')
+					{
+						m_cubeMapGeo = Geometry::Hexagon;
+					}
+					else
+					{
+						m_cubeMapGeo = Geometry::Quad;
+					}
+				}
+				else
+				{
+					m_cubeMapGeo = Geometry::Enum( (m_cubeMapGeo + 1) % Geometry::Count);
+				}
 			}
 			else if (0 == bx::strCmp(_argv[1], "help") )
 			{
@@ -1129,12 +1151,73 @@ int _main_(int _argc, char** _argv)
 
 			if (ImGui::BeginPopupContextVoid("Menu") )
 			{
-				if (ImGui::MenuItem("Open") )
+//				if (ImGui::MenuItem("Open") )
 				{
 				}
 
-				if (ImGui::MenuItem("Save As") )
+//				if (ImGui::MenuItem("Save As") )
 				{
+				}
+
+				if (ImGui::MenuItem("Reset") )
+				{
+					cmdExec(s_resetCmd);
+				}
+
+				ImGui::Separator();
+				if (ImGui::BeginMenu("Options"))
+				{
+					bool filter = view.m_filter;
+					if (ImGui::MenuItem("Filter", NULL, &filter) )
+					{
+						cmdExec("view filter");
+					}
+
+					if (ImGui::BeginMenu("Cubemap", view.m_info.cubeMap) )
+					{
+						if (ImGui::MenuItem("Quad", NULL, Geometry::Quad == view.m_cubeMapGeo) )
+						{
+							cmdExec("view geo quad");
+						}
+
+						if (ImGui::MenuItem("Cross", NULL, Geometry::Cross == view.m_cubeMapGeo) )
+						{
+							cmdExec("view geo cross");
+						}
+
+						if (ImGui::MenuItem("Hexagon", NULL, Geometry::Hexagon == view.m_cubeMapGeo) )
+						{
+							cmdExec("view geo hexagon");
+						}
+
+						ImGui::EndMenu();
+					}
+
+					bool rr = 0 != (view.m_abgr & 0x000000ff);
+					if (ImGui::MenuItem("R", NULL, &rr) )
+					{
+						cmdExec("view rgb r");
+					}
+
+					bool gg = 0 != (view.m_abgr & 0x0000ff00);
+					if (ImGui::MenuItem("G", NULL, &gg) )
+					{
+						cmdExec("view rgb g");
+					}
+
+					bool bb = 0 != (view.m_abgr & 0x0000ff00);
+					if (ImGui::MenuItem("B", NULL, &bb) )
+					{
+						cmdExec("view rgb b");
+					}
+
+					bool alpha = view.m_alpha;
+					if (ImGui::MenuItem("Checkerboard", NULL, &alpha) )
+					{
+						cmdExec("view rgb a");
+					}
+
+					ImGui::EndMenu();
 				}
 
 				ImGui::Separator();
