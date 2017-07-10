@@ -881,10 +881,6 @@ namespace entry
 			}
 			else
 			{
-#if defined(__MINGW32__)
-				rect  = m_rect;
-				style = m_style;
-#else
 				HMONITOR monitor = MonitorFromWindow(_hwnd, MONITOR_DEFAULTTONEAREST);
 				MONITORINFO mi;
 				mi.cbSize = sizeof(mi);
@@ -892,7 +888,6 @@ namespace entry
 				newrect = mi.rcMonitor;
 				rect = mi.rcMonitor;
 				m_aspectRatio = float(newrect.right  - newrect.left)/float(newrect.bottom - newrect.top);
-#endif // !defined(__MINGW__)
 			}
 
 			SetWindowLong(_hwnd, GWL_STYLE, style);
