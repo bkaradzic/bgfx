@@ -1094,6 +1094,7 @@ namespace bgfx
 
 	/// Returns performance counters.
 	///
+	/// @attention Pointer returned is valid until `bgfx::frame` is called.
 	/// @attention C99 equivalent is `bgfx_get_stats`.
 	///
 	const Stats* getStats();
@@ -1117,6 +1118,7 @@ namespace bgfx
 	/// `bgfx::frame` calls. `ReleaseFn` function must be able to be called
 	/// from any thread.
 	///
+	/// @attention Data passed must be available for at least 2 `bgfx::frame` calls.
 	/// @attention C99 equivalent are `bgfx_make_ref`, `bgfx_make_ref_release`.
 	///
 	const Memory* makeRef(
@@ -1156,7 +1158,13 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_dbg_text_printf`.
 	///
-	void dbgTextPrintf(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, ...);
+	void dbgTextPrintf(
+		  uint16_t _x
+		, uint16_t _y
+		, uint8_t _attr
+		, const char* _format
+		, ...
+		);
 
 	/// Print into internal debug text character-buffer (VGA-compatible text mode).
 	///
@@ -1168,7 +1176,13 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_dbg_text_vprintf`.
 	///
-	void dbgTextPrintfVargs(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, va_list _argList);
+	void dbgTextPrintfVargs(
+		  uint16_t _x
+		, uint16_t _y
+		, uint8_t _attr
+		, const char* _format
+		, va_list _argList
+		);
 
 	/// Draw image into internal debug text buffer.
 	///
@@ -2360,13 +2374,13 @@ namespace bgfx
 	///
 	uint32_t setTransform(const void* _mtx, uint16_t _num = 1);
 
-	/// Reserve `_num` matrices in internal matrix cache. Pointer returned
-	/// can be modifed until `bgfx::frame` is called.
+	/// Reserve `_num` matrices in internal matrix cache.
 	///
 	/// @param[in] _transform Pointer to `Transform` structure.
 	/// @param[in] _num Number of matrices.
 	/// @returns index into matrix cache.
 	///
+	/// @attention Pointer returned can be modifed until `bgfx::frame` is called.
 	/// @attention C99 equivalent is `bgfx_alloc_transform`.
 	///
 	uint32_t allocTransform(Transform* _transform, uint16_t _num);
