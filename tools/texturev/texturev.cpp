@@ -1205,7 +1205,7 @@ int _main_(int _argc, char** _argv)
 						cmdExec("view rgb g");
 					}
 
-					bool bb = 0 != (view.m_abgr & 0x0000ff00);
+					bool bb = 0 != (view.m_abgr & 0x00ff0000);
 					if (ImGui::MenuItem("B", NULL, &bb) )
 					{
 						cmdExec("view rgb b");
