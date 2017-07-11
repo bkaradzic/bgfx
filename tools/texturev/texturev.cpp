@@ -82,6 +82,7 @@ struct Binding
 	{
 		App,
 		View,
+		Help,
 
 		Count
 	};
@@ -101,7 +102,6 @@ struct Geometry
 
 static const InputBinding s_bindingApp[] =
 {
-	{ entry::Key::Esc,  entry::Modifier::None,  1, NULL, "exit"                },
 	{ entry::Key::KeyQ, entry::Modifier::None,  1, NULL, "exit"                },
 	{ entry::Key::KeyF, entry::Modifier::None,  1, NULL, "graphics fullscreen" },
 
@@ -117,6 +117,8 @@ const char* s_resetCmd =
 
 static const InputBinding s_bindingView[] =
 {
+	{ entry::Key::Esc,       entry::Modifier::None,       1, NULL, "exit"                    },
+
 	{ entry::Key::Comma,     entry::Modifier::None,       1, NULL, "view mip prev"           },
 	{ entry::Key::Period,    entry::Modifier::None,       1, NULL, "view mip next"           },
 	{ entry::Key::Comma,     entry::Modifier::LeftShift,  1, NULL, "view mip"                },
@@ -161,10 +163,18 @@ static const InputBinding s_bindingView[] =
 	INPUT_BINDING_END
 };
 
+static const InputBinding s_bindingHelp[] =
+{
+	{ entry::Key::Esc,  entry::Modifier::None,  1, NULL, "view help" },
+	{ entry::Key::KeyH, entry::Modifier::None,  1, NULL, "view help" },
+	INPUT_BINDING_END
+};
+
 static const char* s_bindingName[] =
 {
 	"App",
 	"View",
+	"Help",
 };
 BX_STATIC_ASSERT(Binding::Count == BX_COUNTOF(s_bindingName) );
 
@@ -172,6 +182,7 @@ static const InputBinding* s_binding[] =
 {
 	s_bindingApp,
 	s_bindingView,
+	s_bindingHelp,
 };
 BX_STATIC_ASSERT(Binding::Count == BX_COUNTOF(s_binding) );
 
@@ -1223,7 +1234,7 @@ int _main_(int _argc, char** _argv)
 				ImGui::Separator();
 				if (ImGui::MenuItem("Help") )
 				{
-					view.m_help = true;
+					cmdExec("view help");
 				}
 
 				ImGui::Separator();
@@ -1241,9 +1252,11 @@ int _main_(int _argc, char** _argv)
 				{
 					ImGui::OpenPopup("Help");
 					inputRemoveBindings(s_bindingName[Binding::View]);
+					inputAddBindings(s_bindingName[Binding::Help], s_binding[Binding::Help]);
 				}
 				else
 				{
+					inputRemoveBindings(s_bindingName[Binding::Help]);
 					inputAddBindings(s_bindingName[Binding::View], s_binding[Binding::View]);
 				}
 
