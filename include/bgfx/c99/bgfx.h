@@ -21,17 +21,26 @@
 #    define BGFX_SHARED_LIB_USE 0
 #endif // BGFX_SHARED_LIB_USE
 
-#if defined(_MSC_VER)
-#   if BGFX_SHARED_LIB_BUILD
-#       define BGFX_SHARED_LIB_API __declspec(dllexport)
-#   elif BGFX_SHARED_LIB_USE
-#       define BGFX_SHARED_LIB_API __declspec(dllimport)
-#   else
-#       define BGFX_SHARED_LIB_API
-#   endif // BGFX_SHARED_LIB_*
+#if defined(_WIN32) || defined(__CYGWIN__)
+#    if defined(__GNUC__)
+#        define BGFX_SYMBOL_EXPORT __attribute__((dllexport))
+#        define BGFX_SYMBOL_IMPORT __attribute__((dllimport))
+#    else
+#        define BGFX_SYMBOL_EXPORT __declspec(dllexport)
+#        define BGFX_SYMBOL_IMPORT __declspec(dllimport)
+#    endif
 #else
-#   define BGFX_SHARED_LIB_API
-#endif // defined(_MSC_VER)
+#    define BGFX_SYMBOL_EXPORT __attribute__((visibility("default")))
+#    define BGFX_SYMBOL_IMPORT
+#endif // defined(_WIN32)
+
+#if BGFX_SHARED_LIB_BUILD
+#    define BGFX_SHARED_LIB_API BGFX_SYMBOL_EXPORT
+#elif BGFX_SHARED_LIB_USE
+#    define BGFX_SHARED_LIB_API BGFX_SYMBOL_IMPORT
+#else
+#    define BGFX_SHARED_LIB_API
+#endif // BGFX_SHARED_LIB_*
 
 #if defined(__cplusplus)
 #   define BGFX_C_API extern "C" BGFX_SHARED_LIB_API
