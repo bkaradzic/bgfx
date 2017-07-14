@@ -711,9 +711,6 @@ namespace bgfx
 		char tmp[bx::kMaxFilePath];
 		bx::strCopy(tmp, BX_COUNTOF(tmp), fp.getFileName() );
 		const char* base = bx::strFind(_filePath, tmp);
-printf(" tmp: %s\n", tmp);
-printf("  fp: %s\n", _filePath);
-printf("base: %s\n", base);
 		return base;
 	}
 
