@@ -5,6 +5,7 @@
 
 #include "shaderc.h"
 #include <bx/commandline.h>
+#include <bx/filepath.h>
 
 #define MAX_TAGS 256
 extern "C"
@@ -704,6 +705,18 @@ namespace bgfx
 		strReplace(_data, find, "bgfx_VoidFrag");
 	}
 
+	const char* baseName(const char* _filePath)
+	{
+		bx::FilePath fp(_filePath);
+		char tmp[bx::kMaxFilePath];
+		bx::strCopy(tmp, BX_COUNTOF(tmp), fp.getFileName() );
+		const char* base = bx::strFind(_filePath, tmp);
+printf(" tmp: %s\n", tmp);
+printf("  fp: %s\n", _filePath);
+printf("base: %s\n", base);
+		return base;
+	}
+
 	// c - compute
 	// d - domain
 	// f - fragment
@@ -888,7 +901,7 @@ namespace bgfx
 			bin2c = cmdLine.findOption("bin2c");
 			if (NULL == bin2c)
 			{
-				bin2c = bx::baseName(outFilePath);
+				bin2c = baseName(outFilePath);
 				uint32_t len = (uint32_t)bx::strLen(bin2c);
 				char* temp = (char*)alloca(len+1);
 				for (char *out = temp; *bin2c != '\0';)
@@ -927,7 +940,7 @@ namespace bgfx
 
 		std::string dir;
 		{
-			const char* base = bx::baseName(filePath);
+			const char* base = baseName(filePath);
 
 			if (base != filePath)
 			{

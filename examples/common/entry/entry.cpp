@@ -5,7 +5,7 @@
 
 #include <bx/bx.h>
 #include <bgfx/bgfx.h>
-#include <bx/string.h>
+#include <bx/filepath.h>
 #include <bx/crtimpl.h>
 #include <bx/sort.h>
 
@@ -585,7 +585,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		inputAddBindings("bindings", s_bindings);
 
 		entry::WindowHandle defaultWindow = { 0 };
-		entry::setWindowTitle(defaultWindow, bx::baseName(_argv[0]) );
+
+		bx::FilePath fp(_argv[0]);
+		char title[bx::kMaxFilePath];
+		bx::strCopy(title, BX_COUNTOF(title), fp.getBaseName() );
+
+		entry::setWindowTitle(defaultWindow, title);
 		setWindowSize(defaultWindow, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
 
 		sortApps();

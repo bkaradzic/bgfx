@@ -7,7 +7,7 @@
 #include <bgfx/bgfx.h>
 #include <bx/commandline.h>
 #include <bx/os.h>
-#include <bx/string.h>
+#include <bx/filepath.h>
 #include <bx/uint32_t.h>
 #include <bx/fpumath.h>
 #include <bx/easing.h>
@@ -490,7 +490,7 @@ struct View
 		return 0;
 	}
 
-	void updateFileList(const char* _path, const char* _fileName = "")
+	void updateFileList(const char* _path, const bx::StringView& _fileName)
 	{
 		std::string path = _path;
 
@@ -524,7 +524,7 @@ struct View
 
 						if (supported)
 						{
-							if (0 == bx::strCmp(_fileName, item->d_name) )
+							if (0 == bx::strCmp(item->d_name, _fileName) )
 							{
 								m_fileIndex = uint32_t(m_fileList.size() );
 							}
@@ -1072,13 +1072,13 @@ int _main_(int _argc, char** _argv)
 	std::string path = filePath;
 	if (!directory)
 	{
-		const char* fileName = directory ? filePath : bx::baseName(filePath);
-		path.assign(filePath, fileName);
-		view.updateFileList(path.c_str(), fileName);
+		bx::FilePath fp(filePath);
+		path.assign(fp.getPath().getPtr(), fp.getPath().getTerm() );
+		view.updateFileList(path.c_str(), fp.getFileName() );
 	}
 	else
 	{
-		view.updateFileList(path.c_str() );
+		view.updateFileList(path.c_str(), "");
 	}
 
 	int exitcode = bx::kExitSuccess;
