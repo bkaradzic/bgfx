@@ -24,13 +24,8 @@
 #endif // BGFX_SHARED_LIB_USE
 
 #if BX_PLATFORM_WINDOWS
-#   if BX_COMPILER_MSVC
-#       define BGFX_SYMBOL_EXPORT __declspec(dllexport)
-#       define BGFX_SYMBOL_IMPORT __declspec(dllimport)
-#   else
-#       define BGFX_SYMBOL_EXPORT __attribute__((dllexport))
-#       define BGFX_SYMBOL_IMPORT __attribute__((dllimport))
-#   endif // BX_COMPILER_MSVC
+#   define BGFX_SYMBOL_EXPORT __declspec(dllexport)
+#   define BGFX_SYMBOL_IMPORT __declspec(dllimport)
 #else
 #   define BGFX_SYMBOL_EXPORT __attribute__((visibility("default")))
 #   define BGFX_SYMBOL_IMPORT
