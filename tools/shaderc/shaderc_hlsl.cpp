@@ -756,7 +756,7 @@ namespace bgfx { namespace hlsl
 		}
 
 		{
-			uint32_t shaderSize = code->GetBufferSize();
+			uint32_t shaderSize = uint32_t(code->GetBufferSize() );
 			bx::write(_writer, shaderSize);
 			bx::write(_writer, code->GetBufferPointer(), shaderSize);
 			uint8_t nul = 0;
