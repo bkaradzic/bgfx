@@ -886,7 +886,7 @@ void associate()
 		if (err.isOk() )
 		{
 			bx::ProcessReader reader;
-			if (bx::open(&reader, "/bin/bash /tmp/texturev.sh", &err) )
+			if (bx::open(&reader, "/bin/bash", "/tmp/texturev.sh", &err) )
 			{
 				bx::close(&reader);
 			}
