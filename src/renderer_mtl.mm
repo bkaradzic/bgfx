@@ -3084,7 +3084,7 @@ namespace bgfx { namespace mtl
 		}
 	}
 
-	void RendererContextMtl::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) override
+	void RendererContextMtl::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
 		m_cmd.finish(false);
 
