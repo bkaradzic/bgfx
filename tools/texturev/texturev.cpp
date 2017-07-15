@@ -712,8 +712,8 @@ void setGeometry(
 			}
 			else
 			{
-				const float sx = _width;
-				const float sy = _height;
+				const float sx = float(_width);
+				const float sy = float(_height);
 				const float px = float(_x) - sx/2.0f;
 				const float py = float(_y);
 
@@ -855,10 +855,10 @@ void associate()
 		if (err.isOk() )
 		{
 			std::string cmd;
-			bx::stringPrintf(cmd, "regedit.exe /s %s", temp);
+			bx::stringPrintf(cmd, "/s %s", temp);
 
 			bx::ProcessReader reader;
-			if (bx::open(&reader, cmd.c_str(), &err) )
+			if (bx::open(&reader, "regedit.exe", cmd.c_str(), &err) )
 			{
 				bx::close(&reader);
 			}
