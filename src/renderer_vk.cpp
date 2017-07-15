@@ -332,7 +332,7 @@ VK_IMPORT_DEVICE
 			return;
 		}
 
-		bx::alignedFree(g_allocator, _memory, BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT);
+		bx::alignedFree(g_allocator, _memory, 8);
 	}
 
 	static void VKAPI_PTR internalAllocationNotification(void* _userData, size_t _size, VkInternalAllocationType _allocationType, VkSystemAllocationScope _allocationScope)

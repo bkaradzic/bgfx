@@ -148,6 +148,8 @@ namespace bgfx
 #	define BGFX_CONFIG_MEMORY_TRACKING (BGFX_CONFIG_DEBUG && BX_CONFIG_SUPPORTS_THREADING)
 #endif // BGFX_CONFIG_MEMORY_TRACKING
 
+	const size_t kNaturalAlignment = 8;
+
 	class AllocatorStub : public bx::AllocatorI
 	{
 	public:
@@ -165,7 +167,7 @@ namespace bgfx
 			{
 				if (NULL != _ptr)
 				{
-					if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
+					if (kNaturalAlignment >= _align)
 					{
 #if BGFX_CONFIG_MEMORY_TRACKING
 						{
@@ -187,7 +189,7 @@ namespace bgfx
 			}
 			else if (NULL == _ptr)
 			{
-				if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
+				if (kNaturalAlignment >= _align)
 				{
 #if BGFX_CONFIG_MEMORY_TRACKING
 					{
@@ -203,7 +205,7 @@ namespace bgfx
 				return bx::alignedAlloc(this, _size, _align, _file, _line);
 			}
 
-			if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
+			if (kNaturalAlignment >= _align)
 			{
 #if BGFX_CONFIG_MEMORY_TRACKING
 				if (NULL == _ptr)

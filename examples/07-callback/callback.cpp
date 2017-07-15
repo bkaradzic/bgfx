@@ -240,6 +240,8 @@ struct BgfxCallback : public bgfx::CallbackI
 	AviWriter* m_writer;
 };
 
+const size_t kNaturalAlignment = 8;
+
 class BgfxAllocator : public bx::AllocatorI
 {
 public:
@@ -259,7 +261,7 @@ public:
 		{
 			if (NULL != _ptr)
 			{
-				if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
+				if (kNaturalAlignment >= _align)
 				{
 					bx::debugPrintf("%s(%d): FREE %p\n", _file, _line, _ptr);
 					::free(_ptr);
@@ -275,7 +277,7 @@ public:
 		}
 		else if (NULL == _ptr)
 		{
-			if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
+			if (kNaturalAlignment >= _align)
 			{
 				void* ptr = ::malloc(_size);
 				bx::debugPrintf("%s(%d): ALLOC %p of %d byte(s)\n", _file, _line, ptr, _size);
@@ -287,7 +289,7 @@ public:
 			return bx::alignedAlloc(this, _size, _align, _file, _line);
 		}
 
-		if (BX_CONFIG_ALLOCATOR_NATURAL_ALIGNMENT >= _align)
+		if (kNaturalAlignment >= _align)
 		{
 			void* ptr = ::realloc(_ptr, _size);
 			bx::debugPrintf("%s(%d): REALLOC %p (old %p) of %d byte(s)\n", _file, _line, ptr, _ptr, _size);
