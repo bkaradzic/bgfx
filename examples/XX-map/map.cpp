@@ -206,7 +206,7 @@ class ExampleCubes : public entry::AppI
             bgfx::submit(BOX1_VID, m_box1Program);
         }
 
-        if (inputGetKeyState(entry::Key::Space))
+        if (!inputGetKeyState(entry::Key::Space))
         {
             // Draw a GREEN scaled box (200x200) in the middle of the texture attached to the FBO
             {
@@ -257,7 +257,7 @@ class ExampleCubes : public entry::AppI
 
                 const float hw = mBaseWidth / 2.0f;
                 const float hh = mBaseHeight / 2.0f;
-                float quadUV[4 * (3 * 2)] = {
+                float quadUV[4 * (2+2)] = {
                     -hw,  hh ,  0.0f,  1.0f  ,
                     -hw, -hh ,  0.0f,  0.0f  ,
                     hw,  hh ,  1.0f,   1.0f  ,
