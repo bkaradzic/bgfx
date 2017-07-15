@@ -104,79 +104,79 @@ public:
 	{
 	}
 
-	virtual void Init(Scintilla::WindowID /*_wid*/) BX_OVERRIDE
+	virtual void Init(Scintilla::WindowID /*_wid*/) override
 	{
 	}
 
-	virtual void Init(Scintilla::SurfaceID /*_sid*/, Scintilla::WindowID /*_wid*/) BX_OVERRIDE
+	virtual void Init(Scintilla::SurfaceID /*_sid*/, Scintilla::WindowID /*_wid*/) override
 	{
 	}
 
-	virtual void InitPixMap(int /*_width*/, int /*_height*/, Scintilla::Surface* /*_surface*/, Scintilla::WindowID /*_wid*/) BX_OVERRIDE
+	virtual void InitPixMap(int /*_width*/, int /*_height*/, Scintilla::Surface* /*_surface*/, Scintilla::WindowID /*_wid*/) override
 	{
 	}
 
-	virtual void Release() BX_OVERRIDE
+	virtual void Release() override
 	{
 	}
 
-	virtual bool Initialised() BX_OVERRIDE
+	virtual bool Initialised() override
 	{
 		return true;
 	}
 
-	virtual void PenColour(Scintilla::ColourDesired /*_fore*/) BX_OVERRIDE
+	virtual void PenColour(Scintilla::ColourDesired /*_fore*/) override
 	{
 	}
 
-	virtual int LogPixelsY() BX_OVERRIDE
+	virtual int LogPixelsY() override
 	{
 		return 72;
 	}
 
-	virtual int DeviceHeightFont(int /*points*/) BX_OVERRIDE
+	virtual int DeviceHeightFont(int /*points*/) override
 	{
 		return 1500;
 	}
 
-	virtual void MoveTo(int _x, int _y) BX_OVERRIDE
+	virtual void MoveTo(int _x, int _y) override
 	{
 		BX_UNUSED(_x, _y);
 	}
 
-	virtual void LineTo(int _x, int _y) BX_OVERRIDE
+	virtual void LineTo(int _x, int _y) override
 	{
 		BX_UNUSED(_x, _y);
 	}
 
-	virtual void Polygon(Scintilla::Point *pts, int npts, Scintilla::ColourDesired fore, Scintilla::ColourDesired back) BX_OVERRIDE
+	virtual void Polygon(Scintilla::Point *pts, int npts, Scintilla::ColourDesired fore, Scintilla::ColourDesired back) override
 	{
 		BX_UNUSED(pts, npts, fore, back);
 	}
 
-	virtual void RectangleDraw(Scintilla::PRectangle rc, Scintilla::ColourDesired fore, Scintilla::ColourDesired back) BX_OVERRIDE
+	virtual void RectangleDraw(Scintilla::PRectangle rc, Scintilla::ColourDesired fore, Scintilla::ColourDesired back) override
 	{
 		BX_UNUSED(fore);
 
 		FillRectangle(rc, back);
 	}
 
-	virtual void FillRectangle(Scintilla::PRectangle rc, Scintilla::ColourDesired back) BX_OVERRIDE
+	virtual void FillRectangle(Scintilla::PRectangle rc, Scintilla::ColourDesired back) override
 	{
 		fillRectangle(rc, back);
 	}
 
-	virtual void FillRectangle(Scintilla::PRectangle rc, Scintilla::Surface& surfacePattern) BX_OVERRIDE
+	virtual void FillRectangle(Scintilla::PRectangle rc, Scintilla::Surface& surfacePattern) override
 	{
 		BX_UNUSED(rc, surfacePattern);
 	}
 
-	virtual void RoundedRectangle(Scintilla::PRectangle rc, Scintilla::ColourDesired fore, Scintilla::ColourDesired back) BX_OVERRIDE
+	virtual void RoundedRectangle(Scintilla::PRectangle rc, Scintilla::ColourDesired fore, Scintilla::ColourDesired back) override
 	{
 		BX_UNUSED(rc, fore, back);
 	}
 
-	virtual void AlphaRectangle(Scintilla::PRectangle _rc, int /*_cornerSize*/, Scintilla::ColourDesired _fill, int _alphaFill, Scintilla::ColourDesired /*_outline*/, int /*_alphaOutline*/, int /*_flags*/) BX_OVERRIDE
+	virtual void AlphaRectangle(Scintilla::PRectangle _rc, int /*_cornerSize*/, Scintilla::ColourDesired _fill, int _alphaFill, Scintilla::ColourDesired /*_outline*/, int /*_alphaOutline*/, int /*_flags*/) override
 	{
 		unsigned int back = 0
 			| (uint32_t)( (_fill.AsLong() & 0xffffff)
@@ -187,37 +187,37 @@ public:
 	}
 
 
-	virtual void DrawRGBAImage(Scintilla::PRectangle /*_rc*/, int /*_width*/, int /*_height*/, const unsigned char* /*_pixelsImage*/) BX_OVERRIDE
+	virtual void DrawRGBAImage(Scintilla::PRectangle /*_rc*/, int /*_width*/, int /*_height*/, const unsigned char* /*_pixelsImage*/) override
 	{
 	}
 
-	virtual void Ellipse(Scintilla::PRectangle rc, Scintilla::ColourDesired fore, Scintilla::ColourDesired /*back*/) BX_OVERRIDE
+	virtual void Ellipse(Scintilla::PRectangle rc, Scintilla::ColourDesired fore, Scintilla::ColourDesired /*back*/) override
 	{
 		FillRectangle(rc, fore);
 	}
 
-	virtual void Copy(Scintilla::PRectangle /*_rc*/, Scintilla::Point /*_from*/, Scintilla::Surface& /*_surfaceSource*/) BX_OVERRIDE
+	virtual void Copy(Scintilla::PRectangle /*_rc*/, Scintilla::Point /*_from*/, Scintilla::Surface& /*_surfaceSource*/) override
 	{
 	}
 
-	virtual void DrawTextNoClip(Scintilla::PRectangle rc, Scintilla::Font& _font, Scintilla::XYPOSITION ybase, const char *s, int len, Scintilla::ColourDesired fore, Scintilla::ColourDesired back) BX_OVERRIDE
-	{
-		BX_UNUSED(back);
-		DrawTextBase(rc, _font, ybase, s, len, fore);
-	}
-
-	virtual void DrawTextClipped(Scintilla::PRectangle rc, Scintilla::Font& _font, Scintilla::XYPOSITION ybase, const char *s, int len, Scintilla::ColourDesired fore, Scintilla::ColourDesired back) BX_OVERRIDE
+	virtual void DrawTextNoClip(Scintilla::PRectangle rc, Scintilla::Font& _font, Scintilla::XYPOSITION ybase, const char *s, int len, Scintilla::ColourDesired fore, Scintilla::ColourDesired back) override
 	{
 		BX_UNUSED(back);
 		DrawTextBase(rc, _font, ybase, s, len, fore);
 	}
 
-	virtual void DrawTextTransparent(Scintilla::PRectangle rc, Scintilla::Font& _font, Scintilla::XYPOSITION ybase, const char *s, int len, Scintilla::ColourDesired fore) BX_OVERRIDE
+	virtual void DrawTextClipped(Scintilla::PRectangle rc, Scintilla::Font& _font, Scintilla::XYPOSITION ybase, const char *s, int len, Scintilla::ColourDesired fore, Scintilla::ColourDesired back) override
+	{
+		BX_UNUSED(back);
+		DrawTextBase(rc, _font, ybase, s, len, fore);
+	}
+
+	virtual void DrawTextTransparent(Scintilla::PRectangle rc, Scintilla::Font& _font, Scintilla::XYPOSITION ybase, const char *s, int len, Scintilla::ColourDesired fore) override
 	{
 		DrawTextBase(rc, _font, ybase, s, len, fore);
 	}
 
-	virtual void MeasureWidths(Scintilla::Font& /*_font*/, const char* _str, int _len, Scintilla::XYPOSITION* _positions) BX_OVERRIDE
+	virtual void MeasureWidths(Scintilla::Font& /*_font*/, const char* _str, int _len, Scintilla::XYPOSITION* _positions) override
 	{
 		float position = 0;
 
@@ -230,63 +230,63 @@ public:
 		}
 	}
 
-	virtual Scintilla::XYPOSITION WidthText(Scintilla::Font& /*_font*/, const char* _str, int _len) BX_OVERRIDE
+	virtual Scintilla::XYPOSITION WidthText(Scintilla::Font& /*_font*/, const char* _str, int _len) override
 	{
 		ImVec2 t = ImGui::CalcTextSize(_str, _str + _len);
 		return t.x;
 	}
 
-	virtual Scintilla::XYPOSITION WidthChar(Scintilla::Font& _font, char ch) BX_OVERRIDE
+	virtual Scintilla::XYPOSITION WidthChar(Scintilla::Font& _font, char ch) override
 	{
 		FontInt* fi = (FontInt*)_font.GetID();
 		return fi->m_font->GetCharAdvance( (unsigned int)ch) * fi->m_scale;
 	}
 
-	virtual Scintilla::XYPOSITION Ascent(Scintilla::Font& _font) BX_OVERRIDE
+	virtual Scintilla::XYPOSITION Ascent(Scintilla::Font& _font) override
 	{
 		FontInt* fi = (FontInt*)_font.GetID();
 		return fi->m_font->Ascent * fi->m_scale;
 	}
 
-	virtual Scintilla::XYPOSITION Descent(Scintilla::Font& _font) BX_OVERRIDE
+	virtual Scintilla::XYPOSITION Descent(Scintilla::Font& _font) override
 	{
 		FontInt* fi = (FontInt*)_font.GetID();
 		return -fi->m_font->Descent * fi->m_scale;
 	}
 
-		virtual Scintilla::XYPOSITION InternalLeading(Scintilla::Font& /*_font*/) BX_OVERRIDE
+		virtual Scintilla::XYPOSITION InternalLeading(Scintilla::Font& /*_font*/) override
 	{
 		return 0;
 	}
 
-	virtual Scintilla::XYPOSITION ExternalLeading(Scintilla::Font& /*_font*/) BX_OVERRIDE
+	virtual Scintilla::XYPOSITION ExternalLeading(Scintilla::Font& /*_font*/) override
 	{
 		return 0;
 	}
 
-	virtual Scintilla::XYPOSITION Height(Scintilla::Font& _font) BX_OVERRIDE
+	virtual Scintilla::XYPOSITION Height(Scintilla::Font& _font) override
 	{
 		return Ascent(_font) + Descent(_font);
 	}
 
-	virtual Scintilla::XYPOSITION AverageCharWidth(Scintilla::Font& _font) BX_OVERRIDE
+	virtual Scintilla::XYPOSITION AverageCharWidth(Scintilla::Font& _font) override
 	{
 		return WidthChar(_font, 'n');
 	}
 
-	virtual void SetClip(Scintilla::PRectangle /*_rc*/) BX_OVERRIDE
+	virtual void SetClip(Scintilla::PRectangle /*_rc*/) override
 	{
 	}
 
-	virtual void FlushCachedState() BX_OVERRIDE
+	virtual void FlushCachedState() override
 	{
 	}
 
-	virtual void SetUnicodeMode(bool /*_unicodeMode*/) BX_OVERRIDE
+	virtual void SetUnicodeMode(bool /*_unicodeMode*/) override
 	{
 	}
 
-	virtual void SetDBCSMode(int /*_codePage*/) BX_OVERRIDE
+	virtual void SetDBCSMode(int /*_codePage*/) override
 	{
 	}
 
@@ -350,11 +350,11 @@ public:
 	{
 	}
 
-	virtual void SetFont(Scintilla::Font& /*_font*/) BX_OVERRIDE
+	virtual void SetFont(Scintilla::Font& /*_font*/) override
 	{
 	}
 
-	virtual void Create(Scintilla::Window& /*_parent*/, int /*_ctrlID*/, Scintilla::Point _location, int _lineHeight, bool _unicodeMode, int /*_technology*/) BX_OVERRIDE
+	virtual void Create(Scintilla::Window& /*_parent*/, int /*_ctrlID*/, Scintilla::Point _location, int _lineHeight, bool _unicodeMode, int /*_technology*/) override
 	{
 		m_location    = _location;
 		m_lineHeight  = _lineHeight;
@@ -363,22 +363,22 @@ public:
 		wid = Scintilla::WindowID(4);
 	}
 
-	virtual void SetAverageCharWidth(int width) BX_OVERRIDE
+	virtual void SetAverageCharWidth(int width) override
 	{
 		m_aveCharWidth = width;
 	}
 
-	virtual void SetVisibleRows(int rows) BX_OVERRIDE
+	virtual void SetVisibleRows(int rows) override
 	{
 		m_desiredVisibleRows = rows;
 	}
 
-	virtual int GetVisibleRows() const BX_OVERRIDE
+	virtual int GetVisibleRows() const override
 	{
 		return m_desiredVisibleRows;
 	}
 
-	virtual Scintilla::PRectangle GetDesiredRect() BX_OVERRIDE
+	virtual Scintilla::PRectangle GetDesiredRect() override
 	{
 		Scintilla::PRectangle rc;
 		rc.top    = 0;
@@ -388,60 +388,60 @@ public:
 		return rc;
 	}
 
-	virtual int CaretFromEdge() BX_OVERRIDE
+	virtual int CaretFromEdge() override
 	{
 		return 4 + 16;
 	}
 
-	virtual void Clear() BX_OVERRIDE
+	virtual void Clear() override
 	{
 	}
 
-	virtual void Append(char* /*s*/, int /*type = -1*/) BX_OVERRIDE
+	virtual void Append(char* /*s*/, int /*type = -1*/) override
 	{
 	}
 
-	virtual int Length() BX_OVERRIDE
-	{
-		return 0;
-	}
-
-	virtual void Select(int /*n*/) BX_OVERRIDE
-	{
-	}
-
-	virtual int GetSelection() BX_OVERRIDE
+	virtual int Length() override
 	{
 		return 0;
 	}
 
-	virtual int Find(const char* /*prefix*/) BX_OVERRIDE
+	virtual void Select(int /*n*/) override
+	{
+	}
+
+	virtual int GetSelection() override
 	{
 		return 0;
 	}
 
-	virtual void GetValue(int /*n*/, char* value, int /*len*/) BX_OVERRIDE
+	virtual int Find(const char* /*prefix*/) override
+	{
+		return 0;
+	}
+
+	virtual void GetValue(int /*n*/, char* value, int /*len*/) override
 	{
 		value[0] = '\0';
 	}
 
-	virtual void RegisterImage(int /*type*/, const char* /*xpm_data*/) BX_OVERRIDE
+	virtual void RegisterImage(int /*type*/, const char* /*xpm_data*/) override
 	{
 	}
 
-	virtual void RegisterRGBAImage(int /*type*/, int /*width*/, int /*height*/, const unsigned char* /*pixelsImage*/) BX_OVERRIDE
+	virtual void RegisterRGBAImage(int /*type*/, int /*width*/, int /*height*/, const unsigned char* /*pixelsImage*/) override
 	{
 	}
 
-	virtual void ClearRegisteredImages() BX_OVERRIDE
+	virtual void ClearRegisteredImages() override
 	{
 	}
 
-	virtual void SetDoubleClickAction(Scintilla::CallBackAction, void*) BX_OVERRIDE
+	virtual void SetDoubleClickAction(Scintilla::CallBackAction, void*) override
 	{
 	}
 
-	virtual void SetList(const char* /*list*/, char /*separator*/, char /*typesep*/) BX_OVERRIDE
+	virtual void SetList(const char* /*list*/, char /*separator*/, char /*typesep*/) override
 	{
 	}
 
@@ -499,7 +499,7 @@ public:
 	{
 	}
 
-	virtual void Initialise() BX_OVERRIDE
+	virtual void Initialise() override
 	{
 		wMain = AllocateWindowInt();
 
@@ -560,7 +560,7 @@ public:
 		CaretSetPeriod(0);
 	}
 
-	virtual void CreateCallTipWindow(Scintilla::PRectangle /*_rc*/) BX_OVERRIDE
+	virtual void CreateCallTipWindow(Scintilla::PRectangle /*_rc*/) override
 	{
 		if (!ct.wCallTip.Created() )
 		{
@@ -569,7 +569,7 @@ public:
 		}
 	}
 
-	virtual void AddToPopUp(const char* /*_label*/, int /*_cmd*/, bool /*_enabled*/) BX_OVERRIDE
+	virtual void AddToPopUp(const char* /*_label*/, int /*_cmd*/, bool /*_enabled*/) override
 	{
 	}
 
@@ -581,16 +581,16 @@ public:
 		wMain.SetPosition(Scintilla::PRectangle::FromInts(0, 0, m_width, m_height) );
 	}
 
-	virtual void SetVerticalScrollPos() BX_OVERRIDE
+	virtual void SetVerticalScrollPos() override
 	{
 	}
 
-	virtual void SetHorizontalScrollPos() BX_OVERRIDE
+	virtual void SetHorizontalScrollPos() override
 	{
 		xOffset = 0;
 	}
 
-	virtual bool ModifyScrollBars(int /*nMax*/, int /*nPage*/) BX_OVERRIDE
+	virtual bool ModifyScrollBars(int /*nMax*/, int /*nPage*/) override
 	{
 		return false;
 	}
@@ -599,37 +599,37 @@ public:
 	{
 	}
 
-	virtual void Copy() BX_OVERRIDE
+	virtual void Copy() override
 	{
 	}
 
-	virtual void Paste() BX_OVERRIDE
+	virtual void Paste() override
 	{
 	}
 
-	virtual void NotifyChange() BX_OVERRIDE
+	virtual void NotifyChange() override
 	{
 	}
 
-	virtual void NotifyParent(Scintilla::SCNotification /*scn*/) BX_OVERRIDE
+	virtual void NotifyParent(Scintilla::SCNotification /*scn*/) override
 	{
 	}
 
-	virtual void CopyToClipboard(const Scintilla::SelectionText& /*selectedText*/) BX_OVERRIDE
+	virtual void CopyToClipboard(const Scintilla::SelectionText& /*selectedText*/) override
 	{
 	}
 
 
-	virtual void SetMouseCapture(bool /*on*/) BX_OVERRIDE
+	virtual void SetMouseCapture(bool /*on*/) override
 	{
 	}
 
-	virtual bool HaveMouseCapture() BX_OVERRIDE
+	virtual bool HaveMouseCapture() override
 	{
 		return false;
 	}
 
-	virtual sptr_t DefWndProc(unsigned int /*iMessage*/, uptr_t /*wParam*/, sptr_t /*lParam*/) BX_OVERRIDE
+	virtual sptr_t DefWndProc(unsigned int /*iMessage*/, uptr_t /*wParam*/, sptr_t /*lParam*/) override
 	{
 		return 0;
 	}

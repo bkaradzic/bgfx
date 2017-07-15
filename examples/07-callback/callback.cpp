@@ -127,7 +127,7 @@ struct BgfxCallback : public bgfx::CallbackI
 	{
 	}
 
-	virtual void fatal(bgfx::Fatal::Enum _code, const char* _str) BX_OVERRIDE
+	virtual void fatal(bgfx::Fatal::Enum _code, const char* _str) override
 	{
 		// Something unexpected happened, inform user and bail out.
 		bx::debugPrintf("Fatal error: 0x%08x: %s", _code, _str);
@@ -136,13 +136,13 @@ struct BgfxCallback : public bgfx::CallbackI
 		abort();
 	}
 
-	virtual void traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList) BX_OVERRIDE
+	virtual void traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList) override
 	{
 		bx::debugPrintf("%s (%d): ", _filePath, _line);
 		bx::debugPrintfVargs(_format, _argList);
 	}
 
-	virtual uint32_t cacheReadSize(uint64_t _id) BX_OVERRIDE
+	virtual uint32_t cacheReadSize(uint64_t _id) override
 	{
 		char filePath[256];
 		bx::snprintf(filePath, sizeof(filePath), "temp/%016" PRIx64, _id);
@@ -162,7 +162,7 @@ struct BgfxCallback : public bgfx::CallbackI
 		return 0;
 	}
 
-	virtual bool cacheRead(uint64_t _id, void* _data, uint32_t _size) BX_OVERRIDE
+	virtual bool cacheRead(uint64_t _id, void* _data, uint32_t _size) override
 	{
 		char filePath[256];
 		bx::snprintf(filePath, sizeof(filePath), "temp/%016" PRIx64, _id);
@@ -184,7 +184,7 @@ struct BgfxCallback : public bgfx::CallbackI
 		return false;
 	}
 
-	virtual void cacheWrite(uint64_t _id, const void* _data, uint32_t _size) BX_OVERRIDE
+	virtual void cacheWrite(uint64_t _id, const void* _data, uint32_t _size) override
 	{
 		char filePath[256];
 		bx::snprintf(filePath, sizeof(filePath), "temp/%016" PRIx64, _id);
@@ -200,7 +200,7 @@ struct BgfxCallback : public bgfx::CallbackI
 		}
 	}
 
-	virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t /*_size*/, bool _yflip) BX_OVERRIDE
+	virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t /*_size*/, bool _yflip) override
 	{
 		char temp[1024];
 
@@ -209,7 +209,7 @@ struct BgfxCallback : public bgfx::CallbackI
 		saveTga(temp, _width, _height, _pitch, _data, false, _yflip);
 	}
 
-	virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t /*_pitch*/, bgfx::TextureFormat::Enum /*_format*/, bool _yflip) BX_OVERRIDE
+	virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t /*_pitch*/, bgfx::TextureFormat::Enum /*_format*/, bool _yflip) override
 	{
 		m_writer = BX_NEW(entry::getAllocator(), AviWriter)(entry::getFileWriter() );
 		if (!m_writer->open("temp/capture.avi", _width, _height, 60, _yflip) )
@@ -219,7 +219,7 @@ struct BgfxCallback : public bgfx::CallbackI
 		}
 	}
 
-	virtual void captureEnd() BX_OVERRIDE
+	virtual void captureEnd() override
 	{
 		if (NULL != m_writer)
 		{
@@ -229,7 +229,7 @@ struct BgfxCallback : public bgfx::CallbackI
 		}
 	}
 
-	virtual void captureFrame(const void* _data, uint32_t /*_size*/) BX_OVERRIDE
+	virtual void captureFrame(const void* _data, uint32_t /*_size*/) override
 	{
 		if (NULL != m_writer)
 		{
@@ -253,7 +253,7 @@ public:
 	{
 	}
 
-	virtual void* realloc(void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
+	virtual void* realloc(void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line) override
 	{
 		if (0 == _size)
 		{
@@ -322,7 +322,7 @@ public:
 	{
 	}
 
-	void init(int32_t _argc, const char* const* _argv, uint32_t _width, uint32_t _height) BX_OVERRIDE
+	void init(int32_t _argc, const char* const* _argv, uint32_t _width, uint32_t _height) override
 	{
 		Args args(_argc, _argv);
 
@@ -379,7 +379,7 @@ public:
 		imguiCreate();
 	}
 
-	virtual int shutdown() BX_OVERRIDE
+	virtual int shutdown() override
 	{
 		imguiDestroy();
 
@@ -396,7 +396,7 @@ public:
 		return 0;
 	}
 
-	bool update() BX_OVERRIDE
+	bool update() override
 	{
 		bool exit = false;
 

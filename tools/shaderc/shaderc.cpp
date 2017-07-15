@@ -224,13 +224,13 @@ namespace bgfx
 		{
 		}
 
-		virtual void close() BX_OVERRIDE
+		virtual void close() override
 		{
 			generate();
 			return bx::FileWriter::close();
 		}
 
-		virtual int32_t write(const void* _data, int32_t _size, bx::Error*) BX_OVERRIDE
+		virtual int32_t write(const void* _data, int32_t _size, bx::Error*) override
 		{
 			const char* data = (const char*)_data;
 			m_buffer.insert(m_buffer.end(), data, data+_size);

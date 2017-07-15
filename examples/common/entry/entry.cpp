@@ -62,7 +62,7 @@ namespace entry
 		typedef bx::FileReader super;
 
 	public:
-		virtual bool open(const bx::FilePath& _filePath, bx::Error* _err) BX_OVERRIDE
+		virtual bool open(const bx::FilePath& _filePath, bx::Error* _err) override
 		{
 			String filePath(s_currentDir);
 			filePath.append(_filePath.get() );
@@ -75,7 +75,7 @@ namespace entry
 		typedef bx::FileWriter super;
 
 	public:
-		virtual bool open(const bx::FilePath& _filePath, bool _append, bx::Error* _err) BX_OVERRIDE
+		virtual bool open(const bx::FilePath& _filePath, bool _append, bx::Error* _err) override
 		{
 			String filePath(s_currentDir);
 			filePath.append(_filePath.get() );

@@ -519,7 +519,7 @@ namespace bgfx { namespace spirv
 
 	struct DebugOutputWriter : public bx::WriterI
 	{
-		virtual int32_t write(const void* _data, int32_t _size, bx::Error*) BX_OVERRIDE
+		virtual int32_t write(const void* _data, int32_t _size, bx::Error*) override
 		{
 			char* out = (char*)alloca(_size + 1);
 			bx::memCopy(out, _data, _size);

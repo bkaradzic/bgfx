@@ -795,7 +795,7 @@ public:
 	{
 	}
 
-	virtual void init(int32_t _argc, const char* const* _argv, uint32_t _width, uint32_t _height) BX_OVERRIDE
+	virtual void init(int32_t _argc, const char* const* _argv, uint32_t _width, uint32_t _height) override
 	{
 		Args args(_argc, _argv);
 
@@ -876,7 +876,7 @@ public:
 		m_updateScene     = true;
 	}
 
-	virtual int shutdown() BX_OVERRIDE
+	virtual int shutdown() override
 	{
 		// Cleanup.
 		m_bunnyMesh.unload();
@@ -908,7 +908,7 @@ public:
 		return 0;
 	}
 
-	virtual bool update() BX_OVERRIDE
+	virtual bool update() override
 	{
 		if (!entry::processEvents(m_viewState.m_width, m_viewState.m_height, m_debug, m_reset, &m_mouseState) )
 		{

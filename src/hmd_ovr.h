@@ -35,25 +35,25 @@ namespace bgfx
 		VRImplOVR();
 		virtual ~VRImplOVR() = 0;
 
-		virtual bool init() BX_OVERRIDE;
-		virtual void shutdown() BX_OVERRIDE;
-		virtual void connect(VRDesc* _desc) BX_OVERRIDE;
-		virtual void disconnect() BX_OVERRIDE;
+		virtual bool init() override;
+		virtual void shutdown() override;
+		virtual void connect(VRDesc* _desc) override;
+		virtual void disconnect() override;
 
-		virtual bool isConnected() const BX_OVERRIDE
+		virtual bool isConnected() const override
 		{
 			return NULL != m_session;
 		}
 
-		virtual bool updateTracking(HMD& _hmd) BX_OVERRIDE;
-		virtual void updateInput(HMD& _hmd) BX_OVERRIDE;
-		virtual void recenter() BX_OVERRIDE;
+		virtual bool updateTracking(HMD& _hmd) override;
+		virtual void updateInput(HMD& _hmd) override;
+		virtual void recenter() override;
 
-		virtual bool createSwapChain(const VRDesc& _desc, int _msaaSamples, int _mirrorWidth, int _mirrorHeight) BX_OVERRIDE = 0;
-		virtual void destroySwapChain() BX_OVERRIDE = 0;
-		virtual void destroyMirror() BX_OVERRIDE = 0;
-		virtual void makeRenderTargetActive(const VRDesc& _desc) BX_OVERRIDE = 0;
-		virtual bool submitSwapChain(const VRDesc& _desc) BX_OVERRIDE = 0;
+		virtual bool createSwapChain(const VRDesc& _desc, int _msaaSamples, int _mirrorWidth, int _mirrorHeight) override = 0;
+		virtual void destroySwapChain() override = 0;
+		virtual void destroyMirror() override = 0;
+		virtual void makeRenderTargetActive(const VRDesc& _desc) override = 0;
+		virtual bool submitSwapChain(const VRDesc& _desc) override = 0;
 
 	protected:
 		ovrSession m_session;

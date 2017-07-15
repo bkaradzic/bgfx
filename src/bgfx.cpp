@@ -66,7 +66,7 @@ namespace bgfx
 		{
 		}
 
-		virtual void traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList) BX_OVERRIDE
+		virtual void traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList) override
 		{
 			char temp[2048];
 			char* out = temp;
@@ -85,7 +85,7 @@ namespace bgfx
 			bx::debugOutput(out);
 		}
 
-		virtual void fatal(Fatal::Enum _code, const char* _str) BX_OVERRIDE
+		virtual void fatal(Fatal::Enum _code, const char* _str) override
 		{
 			if (Fatal::DebugCheck == _code)
 			{
@@ -99,21 +99,21 @@ namespace bgfx
 			}
 		}
 
-		virtual uint32_t cacheReadSize(uint64_t /*_id*/) BX_OVERRIDE
+		virtual uint32_t cacheReadSize(uint64_t /*_id*/) override
 		{
 			return 0;
 		}
 
-		virtual bool cacheRead(uint64_t /*_id*/, void* /*_data*/, uint32_t /*_size*/) BX_OVERRIDE
+		virtual bool cacheRead(uint64_t /*_id*/, void* /*_data*/, uint32_t /*_size*/) override
 		{
 			return false;
 		}
 
-		virtual void cacheWrite(uint64_t /*_id*/, const void* /*_data*/, uint32_t /*_size*/) BX_OVERRIDE
+		virtual void cacheWrite(uint64_t /*_id*/, const void* /*_data*/, uint32_t /*_size*/) override
 		{
 		}
 
-		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip) BX_OVERRIDE
+		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip) override
 		{
 			BX_UNUSED(_filePath, _width, _height, _pitch, _data, _size, _yflip);
 
@@ -130,16 +130,16 @@ namespace bgfx
 			}
 		}
 
-		virtual void captureBegin(uint32_t /*_width*/, uint32_t /*_height*/, uint32_t /*_pitch*/, TextureFormat::Enum /*_format*/, bool /*_yflip*/) BX_OVERRIDE
+		virtual void captureBegin(uint32_t /*_width*/, uint32_t /*_height*/, uint32_t /*_pitch*/, TextureFormat::Enum /*_format*/, bool /*_yflip*/) override
 		{
 			BX_TRACE("Warning: using capture without callback (a.k.a. pointless).");
 		}
 
-		virtual void captureEnd() BX_OVERRIDE
+		virtual void captureEnd() override
 		{
 		}
 
-		virtual void captureFrame(const void* /*_data*/, uint32_t /*_size*/) BX_OVERRIDE
+		virtual void captureFrame(const void* /*_data*/, uint32_t /*_size*/) override
 		{
 		}
 	};
@@ -159,7 +159,7 @@ namespace bgfx
 		{
 		}
 
-		virtual void* realloc(void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
+		virtual void* realloc(void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line) override
 		{
 			if (0 == _size)
 			{
@@ -4096,47 +4096,47 @@ namespace bgfx
 		{
 		}
 
-		virtual void fatal(Fatal::Enum _code, const char* _str) BX_OVERRIDE
+		virtual void fatal(Fatal::Enum _code, const char* _str) override
 		{
 			m_interface->vtbl->fatal(m_interface, (bgfx_fatal_t)_code, _str);
 		}
 
-		virtual void traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList) BX_OVERRIDE
+		virtual void traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList) override
 		{
 			m_interface->vtbl->trace_vargs(m_interface, _filePath, _line, _format, _argList);
 		}
 
-		virtual uint32_t cacheReadSize(uint64_t _id) BX_OVERRIDE
+		virtual uint32_t cacheReadSize(uint64_t _id) override
 		{
 			return m_interface->vtbl->cache_read_size(m_interface, _id);
 		}
 
-		virtual bool cacheRead(uint64_t _id, void* _data, uint32_t _size) BX_OVERRIDE
+		virtual bool cacheRead(uint64_t _id, void* _data, uint32_t _size) override
 		{
 			return m_interface->vtbl->cache_read(m_interface, _id, _data, _size);
 		}
 
-		virtual void cacheWrite(uint64_t _id, const void* _data, uint32_t _size) BX_OVERRIDE
+		virtual void cacheWrite(uint64_t _id, const void* _data, uint32_t _size) override
 		{
 			m_interface->vtbl->cache_write(m_interface, _id, _data, _size);
 		}
 
-		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip) BX_OVERRIDE
+		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip) override
 		{
 			m_interface->vtbl->screen_shot(m_interface, _filePath, _width, _height, _pitch, _data, _size, _yflip);
 		}
 
-		virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t _pitch, TextureFormat::Enum _format, bool _yflip) BX_OVERRIDE
+		virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t _pitch, TextureFormat::Enum _format, bool _yflip) override
 		{
 			m_interface->vtbl->capture_begin(m_interface, _width, _height, _pitch, (bgfx_texture_format_t)_format, _yflip);
 		}
 
-		virtual void captureEnd() BX_OVERRIDE
+		virtual void captureEnd() override
 		{
 			m_interface->vtbl->capture_end(m_interface);
 		}
 
-		virtual void captureFrame(const void* _data, uint32_t _size) BX_OVERRIDE
+		virtual void captureFrame(const void* _data, uint32_t _size) override
 		{
 			m_interface->vtbl->capture_frame(m_interface, _data, _size);
 		}
@@ -4151,7 +4151,7 @@ namespace bgfx
 		{
 		}
 
-		virtual void* realloc(void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line) BX_OVERRIDE
+		virtual void* realloc(void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line) override
 		{
 			return m_interface->vtbl->realloc(m_interface, _ptr, _size, _align, _file, _line);
 		}
