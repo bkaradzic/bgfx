@@ -842,13 +842,12 @@ void associate()
 		bx::stringPrintf(str, "[HKEY_CURRENT_USER\\Software\\Classes\\.%s]\r\n@=\"texturev\"\r\n\r\n", ext);
 	}
 
-	char temp[MAX_PATH];
-	GetTempPathA(MAX_PATH, temp);
-	bx::strCat(temp, MAX_PATH, "\\texturev.reg");
+	bx::FilePath filePath(bx::TempDir::Tag);
+	filePath.join("texture.reg");
 
 	bx::FileWriter writer;
 	bx::Error err;
-	if (bx::open(&writer, temp, false, &err) )
+	if (bx::open(&writer, filePath, false, &err) )
 	{
 		bx::write(&writer, str.c_str(), uint32_t(str.length()), &err);
 		bx::close(&writer);
@@ -856,7 +855,7 @@ void associate()
 		if (err.isOk() )
 		{
 			std::string cmd;
-			bx::stringPrintf(cmd, "/s %s", temp);
+			bx::stringPrintf(cmd, "/s %s", filePath.get() );
 
 			bx::ProcessReader reader;
 			if (bx::open(&reader, "regedit.exe", cmd.c_str(), &err) )
