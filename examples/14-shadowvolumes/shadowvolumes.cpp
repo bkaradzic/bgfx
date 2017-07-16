@@ -18,8 +18,8 @@ namespace stl = tinystl;
 #include <bx/allocator.h>
 #include <bx/hash.h>
 #include <bx/simd_t.h>
-#include <bx/fpumath.h>
-#include <bx/crtimpl.h>
+#include <bx/math.h>
+#include <bx/file.h>
 #include "entry/entry.h"
 #include "camera.h"
 #include "imgui/imgui.h"

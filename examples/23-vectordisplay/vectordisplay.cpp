@@ -12,7 +12,7 @@
 #include <float.h>  // FLT_EPSILON
 #include <alloca.h> // alloca
 
-#include <bx/fpumath.h>
+#include <bx/math.h>
 
 #include "vectordisplay.h"
 #include "bgfx_utils.h"

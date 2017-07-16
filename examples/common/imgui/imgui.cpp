@@ -6,9 +6,8 @@
 #include <bgfx/bgfx.h>
 #include <bgfx/embedded_shader.h>
 #include <bx/allocator.h>
-#include <bx/fpumath.h>
+#include <bx/math.h>
 #include <bx/timer.h>
-#include <bx/crtimpl.h>
 #include <ocornut-imgui/imgui.h>
 
 #include "imgui.h"

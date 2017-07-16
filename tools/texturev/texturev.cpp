@@ -9,7 +9,7 @@
 #include <bx/os.h>
 #include <bx/filepath.h>
 #include <bx/uint32_t.h>
-#include <bx/fpumath.h>
+#include <bx/math.h>
 #include <bx/easing.h>
 #include <entry/entry.h>
 #include <entry/input.h>
@@ -19,7 +19,8 @@
 
 #include <dirent.h>
 
-#include <bx/crtimpl.h>
+#include <bx/file.h>
+#include <bx/process.h>
 
 #include <tinystl/allocator.h>
 #include <tinystl/vector.h>

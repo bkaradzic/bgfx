@@ -10,7 +10,7 @@
 #include "bounds.h"
 #include <bx/allocator.h>
 #include <bx/debug.h>
-#include <bx/fpumath.h>
+#include <bx/math.h>
 
 namespace
 {

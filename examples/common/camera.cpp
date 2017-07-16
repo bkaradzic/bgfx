@@ -4,7 +4,7 @@
  */
 
 #include <bx/timer.h>
-#include <bx/fpumath.h>
+#include <bx/math.h>
 #include "camera.h"
 #include "entry/entry.h"
 #include "entry/cmd.h"

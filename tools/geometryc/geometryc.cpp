@@ -54,8 +54,8 @@ namespace stl = tinystl;
 #include <bx/timer.h>
 #include <bx/hash.h>
 #include <bx/uint32_t.h>
-#include <bx/fpumath.h>
-#include <bx/crtimpl.h>
+#include <bx/math.h>
+#include <bx/file.h>
 
 #include "bounds.h"
 

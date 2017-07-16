@@ -13,7 +13,7 @@ namespace stl = tinystl;
 #include <bgfx/bgfx.h>
 #include <bx/commandline.h>
 #include <bx/endian.h>
-#include <bx/fpumath.h>
+#include <bx/math.h>
 #include <bx/readerwriter.h>
 #include <bx/string.h>
 #include "entry/entry.h"

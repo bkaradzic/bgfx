@@ -12,7 +12,7 @@
 #include <bgfx/bgfx.h>
 #include <bx/timer.h>
 #include <bx/readerwriter.h>
-#include <bx/fpumath.h>
+#include <bx/math.h>
 #include "entry/entry.h"
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"

@@ -117,7 +117,7 @@ namespace bgfx
 
 #include <bx/bx.h>
 #include <bx/debug.h>
-#include <bx/fpumath.h>
+#include <bx/math.h>
 #include <bx/float4x4_t.h>
 #include <bx/endian.h>
 #include <bx/handlealloc.h>

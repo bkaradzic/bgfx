@@ -8,7 +8,7 @@
 
 #include <bx/timer.h>
 #include <bx/string.h>
-#include <bx/fpumath.h>
+#include <bx/math.h>
 
 #include "font/font_manager.h"
 #include "font/text_buffer_manager.h"

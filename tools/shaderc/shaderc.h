@@ -61,7 +61,7 @@ namespace bgfx
 #include <bx/uint32_t.h>
 #include <bx/string.h>
 #include <bx/hash.h>
-#include <bx/crtimpl.h>
+#include <bx/file.h>
 #include "../../src/vertexdecl.h"
 
 namespace bgfx

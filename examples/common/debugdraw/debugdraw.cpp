@@ -9,10 +9,9 @@
 #include "../bgfx_utils.h"
 #include "../packrect.h"
 
-#include <bx/fpumath.h>
+#include <bx/math.h>
 #include <bx/sort.h>
 #include <bx/uint32_t.h>
-#include <bx/crtimpl.h>
 #include <bx/handlealloc.h>
 
 struct DebugVertex

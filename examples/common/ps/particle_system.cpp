@@ -11,7 +11,6 @@
 #include "../packrect.h"
 
 #include <bx/easing.h>
-#include <bx/crtimpl.h>
 #include <bx/handlealloc.h>
 
 #include "vs_particle.bin.h"

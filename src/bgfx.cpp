@@ -19,7 +19,7 @@
 #	include <remotery/lib/Remotery.c>
 #endif // BGFX_CONFIG_PROFILER_REMOTERY_BUILD_LIB
 
-#include <bx/crtimpl.h>
+#include <bx/file.h>
 #include <bx/mutex.h>
 
 #include "topology.h"
