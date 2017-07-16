@@ -100,9 +100,9 @@ class ExampleCubes : public entry::AppI
         PosRGBVertex::init();
         PosRGBScaleVertex::init();
 
-        m_box1Program = loadProgram("box1_vs", "box1_fs");
-        m_box2Program = loadProgram("box2_vs", "box2_fs");
-        m_textureProgram = loadProgram("texture_vs", "texture_fs");
+        m_box1Program = loadProgram("vs_box1", "fs_box1");
+        m_box2Program = loadProgram("vs_box2", "fs_box2");
+        m_textureProgram = loadProgram("vs_texture", "fs_texture");
 
         m_texUniform = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
 
