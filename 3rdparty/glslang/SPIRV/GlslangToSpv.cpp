@@ -2822,7 +2822,7 @@ int TGlslangToSpvTraverser::getMatrixStride(const glslang::TType& matrixType, gl
 // 'currentOffset' should be passed in already initialized, ready to modify, and reflecting
 // the migration of data from nextOffset -> currentOffset.  It should be -1 on the first call.
 // -1 means a non-forced member offset (no decoration needed).
-void TGlslangToSpvTraverser::updateMemberOffset(const glslang::TType& /*structType*/, const glslang::TType& memberType, int& currentOffset, int& nextOffset,
+void TGlslangToSpvTraverser::updateMemberOffset(const glslang::TType& structType, const glslang::TType& memberType, int& currentOffset, int& nextOffset,
                                                 glslang::TLayoutPacking explicitLayout, glslang::TLayoutMatrix matrixLayout)
 {
     // this will get a positive value when deemed necessary
@@ -2856,8 +2856,12 @@ void TGlslangToSpvTraverser::updateMemberOffset(const glslang::TType& /*structTy
     int memberAlignment = glslangIntermediate->getBaseAlignment(memberType, memberSize, dummyStride, explicitLayout == glslang::ElpStd140, matrixLayout == glslang::ElmRowMajor);
 
     // Adjust alignment for HLSL rules
+    // TODO: make this consistent in early phases of code:
+    //       adjusting this late means inconsistencies with earlier code, which for reflection is an issue
+    // Until reflection is brought in sync with these adjustments, don't apply to $Global,
+    // which is the most likely to rely on reflection, and least likely to rely implicit layouts
     if (glslangIntermediate->usingHlslOFfsets() &&
-        ! memberType.isArray() && memberType.isVector()) {
+        ! memberType.isArray() && memberType.isVector() && structType.getTypeName().compare("$Global") != 0) {
         int dummySize;
         int componentAlignment = glslangIntermediate->getBaseAlignmentScalar(memberType, dummySize);
         if (componentAlignment <= 4)

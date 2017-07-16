@@ -413,8 +413,21 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
     }
     int resolveInOutLocation(EShLanguage /*stage*/, const char* /*name*/, const TType& type, bool /*is_live*/) override
     {
-        if (!doAutoLocationMapping || type.getQualifier().hasLocation())
+        // kick out of not doing this
+        if (!doAutoLocationMapping)
             return -1;
+
+        // no locations added if already present, or a built-in variable
+        if (type.getQualifier().hasLocation() || type.getQualifier().builtIn != EbvNone)
+            return -1;
+
+        // no locations on blocks of built-in variables
+        if (type.isStruct()) {
+            if (type.getStruct()->size() < 1)
+                return -1;
+            if ((*type.getStruct())[0].type->getQualifier().builtIn != EbvNone)
+                return -1;
+        }
 
         // Placeholder.
         // TODO: It would be nice to flesh this out using 

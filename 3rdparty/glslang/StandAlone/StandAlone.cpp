@@ -176,7 +176,7 @@ public:
         fixLine(def);
 
         // The first "=" needs to turn into a space
-        int equal = def.find_first_of("=");
+        const size_t equal = def.find_first_of("=");
         if (equal != def.npos)
             def[equal] = ' ';
 
@@ -197,7 +197,7 @@ protected:
     void fixLine(std::string& line)
     {
         // Can't go past a newline in the line
-        int end = line.find_first_of("\n");
+        const size_t end = line.find_first_of("\n");
         if (end != line.npos)
             line = line.substr(0, end);
     }

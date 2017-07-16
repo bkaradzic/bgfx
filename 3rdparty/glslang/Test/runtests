@@ -103,6 +103,8 @@ diff -b $BASEDIR/hlsl.multiDescriptorSet.frag.out $TARGETDIR/hlsl.multiDescripto
 echo Testing SPV no location
 $EXE -V -C spv.noLocation.vert > $TARGETDIR/spv.noLocation.vert.out
 diff -b $BASEDIR/spv.noLocation.vert.out $TARGETDIR/spv.noLocation.vert.out || HASERROR=1
+$EXE -H --aml spv.noBuiltInLoc.vert > $TARGETDIR/spv.noBuiltInLoc.vert.out
+diff -b $BASEDIR/spv.noBuiltInLoc.vert.out $TARGETDIR/spv.noBuiltInLoc.vert.out || HASERROR=1
 
 #
 # Testing debug information

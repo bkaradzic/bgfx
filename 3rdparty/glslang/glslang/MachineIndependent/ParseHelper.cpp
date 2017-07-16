@@ -1386,7 +1386,6 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
         unaryArg = callNode.getAsUnaryNode()->getOperand();
         arg0 = unaryArg;
     }
-    const TIntermSequence& aggArgs = *argp;  // only valid when unaryArg is nullptr
 
     switch (callNode.getOp()) {
     case EOpTextureGather:
@@ -1417,7 +1416,7 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
                 profileRequires(loc, ~EEsProfile, 400, E_GL_ARB_texture_gather, feature);
             else
                 profileRequires(loc, ~EEsProfile, 400, E_GL_ARB_gpu_shader5, feature);
-            if (! aggArgs[fnCandidate[0].type->getSampler().shadow ? 3 : 2]->getAsConstantUnion())
+            if (! (*argp)[fnCandidate[0].type->getSampler().shadow ? 3 : 2]->getAsConstantUnion())
                 profileRequires(loc, EEsProfile, 0, Num_AEP_gpu_shader5, AEP_gpu_shader5, "non-constant offset argument");
             if (! fnCandidate[0].type->getSampler().shadow)
                 compArg = 3;
@@ -1427,7 +1426,7 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
             if (! fnCandidate[0].type->getSampler().shadow)
                 compArg = 3;
             // check for constant offsets
-            if (! aggArgs[fnCandidate[0].type->getSampler().shadow ? 3 : 2]->getAsConstantUnion())
+            if (! (*argp)[fnCandidate[0].type->getSampler().shadow ? 3 : 2]->getAsConstantUnion())
                 error(loc, "must be a compile-time constant:", feature, "offsets argument");
             break;
         default:
@@ -1435,8 +1434,8 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
         }
 
         if (compArg > 0 && compArg < fnCandidate.getParamCount()) {
-            if (aggArgs[compArg]->getAsConstantUnion()) {
-                int value = aggArgs[compArg]->getAsConstantUnion()->getConstArray()[0].getIConst();
+            if ((*argp)[compArg]->getAsConstantUnion()) {
+                int value = (*argp)[compArg]->getAsConstantUnion()->getConstArray()[0].getIConst();
                 if (value < 0 || value > 3)
                     error(loc, "must be 0, 1, 2, or 3:", feature, "component argument");
             } else
@@ -1518,12 +1517,12 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
         }
 
         if (arg > 0) {
-            if (! aggArgs[arg]->getAsConstantUnion())
+            if (! (*argp)[arg]->getAsConstantUnion())
                 error(loc, "argument must be compile-time constant", "texel offset", "");
             else {
-                const TType& type = aggArgs[arg]->getAsTyped()->getType();
+                const TType& type = (*argp)[arg]->getAsTyped()->getType();
                 for (int c = 0; c < type.getVectorSize(); ++c) {
-                    int offset = aggArgs[arg]->getAsConstantUnion()->getConstArray()[c].getIConst();
+                    int offset = (*argp)[arg]->getAsConstantUnion()->getConstArray()[c].getIConst();
                     if (offset > resources.maxProgramTexelOffset || offset < resources.minProgramTexelOffset)
                         error(loc, "value is out of range:", "texel offset", "[gl_MinProgramTexelOffset, gl_MaxProgramTexelOffset]");
                 }

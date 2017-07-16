@@ -1881,11 +1881,11 @@ gl_FragCoord origin is upper left
                               Name 603  "g_tTex2di4a"
                               Name 606  "g_tTex2du4a"
                               MemberDecorate 63($Global) 0 Offset 0
-                              MemberDecorate 63($Global) 1 Offset 4
+                              MemberDecorate 63($Global) 1 Offset 8
                               MemberDecorate 63($Global) 2 Offset 16
                               MemberDecorate 63($Global) 3 Offset 32
                               MemberDecorate 63($Global) 4 Offset 48
-                              MemberDecorate 63($Global) 5 Offset 52
+                              MemberDecorate 63($Global) 5 Offset 56
                               MemberDecorate 63($Global) 6 Offset 64
                               MemberDecorate 63($Global) 7 Offset 80
                               MemberDecorate 63($Global) 8 Offset 96

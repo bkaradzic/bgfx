@@ -506,12 +506,14 @@ TIntermTyped* HlslParseContext::handleLvalue(const TSourceLoc& loc, const char* 
 }
 
 // Deal with sampler aliasing: turning assignments into aliases
+// Return a placeholder node for higher-level code that think assignments must
+// generate code.
 TIntermTyped* HlslParseContext::handleSamplerLvalue(const TSourceLoc& loc, const char* op, TIntermTyped*& node)
 {
     // Can only alias an assignment:  "s1 = s2"
     TIntermBinary* binary = node->getAsBinaryNode();
     if (binary == nullptr || node->getAsOperator()->getOp() != EOpAssign ||
-        binary->getLeft() ->getAsSymbolNode() == nullptr ||
+        binary->getLeft()->getAsSymbolNode() == nullptr ||
         binary->getRight()->getAsSymbolNode() == nullptr) {
         error(loc, "can't modify sampler", op, "");
         return node;
@@ -520,11 +522,25 @@ TIntermTyped* HlslParseContext::handleSamplerLvalue(const TSourceLoc& loc, const
     if (controlFlowNestingLevel > 0)
         warn(loc, "sampler or image aliased under control flow; consumption must be in same path", op, "");
 
+    TIntermTyped* set = setOpaqueLvalue(binary->getLeft(), binary->getRight());
+    if (set == nullptr)
+        warn(loc, "could not create alias for sampler", op, "");
+    else
+        node = set;
+
+    return node;
+}
+
+// Do an opaque assignment that needs to turn into an alias.
+// Return nullptr if it can't be done, otherwise return a placeholder
+// node for higher-level code that think assignments must generate code.
+TIntermTyped* HlslParseContext::setOpaqueLvalue(TIntermTyped* leftTyped, TIntermTyped* rightTyped)
+{
     // Best is if we are aliasing a flattened struct member "S.s1 = s2",
     // in which case we want to update the flattening information with the alias,
     // making everything else work seamlessly.
-    TIntermSymbol* left = binary->getLeft()->getAsSymbolNode();
-    TIntermSymbol* right = binary->getRight()->getAsSymbolNode();
+    TIntermSymbol* left = leftTyped->getAsSymbolNode();
+    TIntermSymbol* right = rightTyped->getAsSymbolNode();
     for (auto fit = flattenMap.begin(); fit != flattenMap.end(); ++fit) {
         for (auto mit = fit->second.members.begin(); mit != fit->second.members.end(); ++mit) {
             if ((*mit)->getUniqueId() == left->getId()) {
@@ -533,15 +549,12 @@ TIntermTyped* HlslParseContext::handleSamplerLvalue(const TSourceLoc& loc, const
                 (*mit)->setUniqueId(right->getId());
                 // replace node (rest of compiler expects either an error or code to generate)
                 // with pointless access
-                node = binary->getRight();
-                return node;
+                return right;
             }
         }
     }
 
-    warn(loc, "could not create alias for sampler", op, "");
-
-    return node;
+    return nullptr;
 }
 
 void HlslParseContext::handlePragma(const TSourceLoc& loc, const TVector<TString>& tokens)
@@ -2412,6 +2425,34 @@ TIntermAggregate* HlslParseContext::assignClipCullDistance(const TSourceLoc& loc
     return assignList;
 }
 
+// For a declaration with an initializer, where the initialized symbol is flattened,
+// and possibly contains opaque values, such that the initializer should never exist
+// as emitted code, because even creating the initializer would write opaques.
+//
+// Decompose this into individual member-wise assignments, which themselves are
+// expected to then not exist for opaque types, because they will turn into aliases.
+//
+// Return a node that contains the non-aliased assignments that must continue to exist.
+TIntermAggregate* HlslParseContext::flattenedInit(const TSourceLoc& loc, TIntermSymbol* symbol, const TIntermAggregate& initializer)
+{
+    TIntermAggregate* initList = nullptr;
+    // synthesize an access to each member, and then an assignment to it
+    const TTypeList& typeList = *symbol->getType().getStruct();
+    for (int member = 0; member < (int)typeList.size(); ++member) {
+        TIntermTyped* memberInitializer = initializer.getSequence()[member]->getAsTyped();
+        TIntermTyped* flattenedMember = flattenAccess(symbol, member);
+        if (flattenedMember->getType().containsOpaque())
+            setOpaqueLvalue(flattenedMember, memberInitializer);
+        else
+            initList = intermediate.growAggregate(initList, handleAssign(loc, EOpAssign, flattenedMember,
+                                                  memberInitializer));
+    }
+
+    if (initList)
+        initList->setOperator(EOpSequence);
+    return initList;
+}
+
 // Some simple source assignments need to be flattened to a sequence
 // of AST assignments. Catch these and flatten, otherwise, pass through
 // to intermediate.addAssign().
@@ -2449,7 +2490,7 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
 
     // A temporary to store the right node's value, so we don't keep indirecting into it
     // if it's not a simple symbol.
-    TVariable*     rhsTempVar   = nullptr;
+    TVariable* rhsTempVar = nullptr;
 
     // If the RHS is a simple symbol node, we'll copy it for each member.
     TIntermSymbol* cloneSymNode = nullptr;
@@ -7165,6 +7206,21 @@ TIntermNode* HlslParseContext::declareVariable(const TSourceLoc& loc, const TStr
     if (voidErrorCheck(loc, identifier, type.getBasicType()))
         return nullptr;
 
+    // Global consts with initializers that are non-const act like EvqGlobal in HLSL.
+    // This test is implicitly recursive, because initializers propagate constness
+    // up the aggregate node tree during creation.  E.g, for:
+    //    { { 1, 2 }, { 3, 4 } }
+    // the initializer list is marked EvqConst at the top node, and remains so here.  However:
+    //    { 1, { myvar, 2 }, 3 }
+    // is not a const intializer, and still becomes EvqGlobal here.
+
+    const bool nonConstInitializer = (initializer != nullptr && initializer->getQualifier().storage != EvqConst);
+
+    if (type.getQualifier().storage == EvqConst && symbolTable.atGlobalLevel() && nonConstInitializer) {
+        // Force to global
+        type.getQualifier().storage = EvqGlobal;
+    }
+
     // make const and initialization consistent
     fixConstInit(loc, identifier, type, initializer);
 
@@ -7207,34 +7263,22 @@ TIntermNode* HlslParseContext::declareVariable(const TSourceLoc& loc, const TStr
             error(loc, "cannot change the type of", "redeclaration", symbol->getName().c_str());
     }
 
-    if (flattenVar)
-        flatten(loc, *symbol->getAsVariable());
-
     if (symbol == nullptr)
         return nullptr;
 
+    if (flattenVar)
+        flatten(loc, *symbol->getAsVariable());
+
+    if (initializer == nullptr)
+        return nullptr;
+
     // Deal with initializer
-    TIntermNode* initNode = nullptr;
-    if (symbol && initializer) {
-/*
- * BK -
- * uniform SamplerState s_texNormalSampler : register(s1);
- * uniform Texture2D s_texNormalTexture : register(t1);
- * static BgfxSampler2D s_texNormal = { s_texNormalSampler, s_texNormalTexture };
- *
-        if (flattenVar)
-            error(loc, "flattened array with initializer list unsupported", identifier.c_str(), "");
-*/
-
-        TVariable* variable = symbol->getAsVariable();
-        if (variable == nullptr) {
-            error(loc, "initializer requires a variable, not a member", identifier.c_str(), "");
-            return nullptr;
-        }
-        initNode = executeInitializer(loc, initializer, variable);
+    TVariable* variable = symbol->getAsVariable();
+    if (variable == nullptr) {
+        error(loc, "initializer requires a variable, not a member", identifier.c_str(), "");
+        return nullptr;
     }
-
-    return initNode;
+    return executeInitializer(loc, initializer, variable, flattenVar);
 }
 
 // Pick up global defaults from the provide global defaults into dst.
@@ -7300,7 +7344,7 @@ TVariable* HlslParseContext::declareNonArray(const TSourceLoc& loc, const TStrin
 // Returning nullptr just means there is no code to execute to handle the
 // initializer, which will, for example, be the case for constant initializers.
 //
-TIntermNode* HlslParseContext::executeInitializer(const TSourceLoc& loc, TIntermTyped* initializer, TVariable* variable)
+TIntermNode* HlslParseContext::executeInitializer(const TSourceLoc& loc, TIntermTyped* initializer, TVariable* variable, bool flattened)
 {
     //
     // Identifier must be of type constant, a global, or a temporary, and
@@ -7321,6 +7365,7 @@ TIntermNode* HlslParseContext::executeInitializer(const TSourceLoc& loc, TInterm
     TType skeletalType;
     skeletalType.shallowCopy(variable->getType());
     skeletalType.getQualifier().makeTemporary();
+    TIntermAggregate* initializerList = nullptr;
     if (initializer->getAsAggregate() && initializer->getAsAggregate()->getOp() == EOpNull)
         initializer = convertInitializerList(loc, skeletalType, initializer, nullptr);
     if (initializer == nullptr) {
@@ -7352,11 +7397,6 @@ TIntermNode* HlslParseContext::executeInitializer(const TSourceLoc& loc, TInterm
         variable->getWritableType().getQualifier().storage = EvqTemporary;
         return nullptr;
     }
-    if (qualifier == EvqConst && symbolTable.atGlobalLevel() && initializer->getType().getQualifier().storage != EvqConst) {
-        error(loc, "global const initializers must be constant", "=", "'%s'", variable->getType().getCompleteString().c_str());
-        variable->getWritableType().getQualifier().storage = EvqTemporary;
-        return nullptr;
-    }
 
     // Const variables require a constant initializer
     if (qualifier == EvqConst) {
@@ -7385,11 +7425,20 @@ TIntermNode* HlslParseContext::executeInitializer(const TSourceLoc& loc, TInterm
         // normal assigning of a value to a variable...
         specializationCheck(loc, initializer->getType(), "initializer");
         TIntermSymbol* intermSymbol = intermediate.addSymbol(*variable, loc);
-        TIntermNode* initNode = handleAssign(loc, EOpAssign, intermSymbol, initializer);
-        if (initNode == nullptr)
-            assignError(loc, "=", intermSymbol->getCompleteString(), initializer->getCompleteString());
 
-        return initNode;
+        // If we are flattening, it could be due to setting opaques, which must be handled
+        // as aliases, and the 'initializer' node cannot actually be emitted, because it
+        // itself stores the result of the constructor, and we can't store to opaques.
+        // handleAssign() will emit the initializer.
+        TIntermNode* initNode = nullptr;
+        if (flattened && intermSymbol->getType().containsOpaque())
+            return flattenedInit(loc, intermSymbol, *initializer->getAsAggregate());
+        else {
+            initNode = handleAssign(loc, EOpAssign, intermSymbol, initializer);
+            if (initNode == nullptr)
+                assignError(loc, "=", intermSymbol->getCompleteString(), initializer->getCompleteString());
+            return initNode;
+        }
     }
 
     return nullptr;

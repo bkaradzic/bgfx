@@ -2553,7 +2553,18 @@ bool HlslGrammar::acceptInitializer(TIntermTyped*& node)
             expected("assignment expression in initializer list");
             return false;
         }
+
+        const bool firstNode = (node == nullptr);
+
         node = intermediate.growAggregate(node, expr, loc);
+
+        // If every sub-node in the list has qualifier EvqConst, the returned node becomes
+        // EvqConst.  Otherwise, it becomes EvqTemporary. That doesn't happen with e.g.
+        // EvqIn or EvqPosition, since the collection isn't EvqPosition if all the members are.
+        if (firstNode && expr->getQualifier().storage == EvqConst)
+            node->getQualifier().storage = EvqConst;
+        else if (expr->getQualifier().storage != EvqConst)
+            node->getQualifier().storage = EvqTemporary;
 
         // COMMA
         if (acceptTokenClass(EHTokComma)) {

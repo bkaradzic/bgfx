@@ -196,7 +196,7 @@ gl_FragCoord origin is upper left
                               Name 65  "@finitetmp"
                               Name 83  "@entryPointOutput"
                               MemberDecorate 35($Global) 0 Offset 0
-                              MemberDecorate 35($Global) 1 Offset 4
+                              MemberDecorate 35($Global) 1 Offset 8
                               MemberDecorate 35($Global) 2 Offset 16
                               Decorate 35($Global) Block
                               Decorate 37 DescriptorSet 0

@@ -3998,7 +3998,7 @@ gl_FragCoord origin is upper left
                               Name 1146  "g_tBuffF"
                               Decorate 15(g_tTex1di1) DescriptorSet 0
                               MemberDecorate 21($Global) 0 Offset 0
-                              MemberDecorate 21($Global) 1 Offset 4
+                              MemberDecorate 21($Global) 1 Offset 8
                               MemberDecorate 21($Global) 2 Offset 16
                               MemberDecorate 21($Global) 3 Offset 28
                               MemberDecorate 21($Global) 4 Offset 32

@@ -87,6 +87,7 @@ public:
     void remapNonEntryPointIO(TFunction& function);
     TIntermNode* handleReturnValue(const TSourceLoc&, TIntermTyped*);
     void handleFunctionArgument(TFunction*, TIntermTyped*& arguments, TIntermTyped* newArg);
+    TIntermAggregate* flattenedInit(const TSourceLoc&, TIntermSymbol*, const TIntermAggregate&);
     TIntermTyped* handleAssign(const TSourceLoc&, TOperator, TIntermTyped* left, TIntermTyped* right);
     TIntermTyped* handleAssignToMatrixSwizzle(const TSourceLoc&, TOperator, TIntermTyped* left, TIntermTyped* right);
     TIntermTyped* handleFunctionCall(const TSourceLoc&, TFunction*, TIntermTyped*);
@@ -191,6 +192,7 @@ public:
     // Apply L-value conversions.  E.g, turning a write to a RWTexture into an ImageStore.
     TIntermTyped* handleLvalue(const TSourceLoc&, const char* op, TIntermTyped*& node);
     TIntermTyped* handleSamplerLvalue(const TSourceLoc&, const char* op, TIntermTyped*& node);
+    TIntermTyped* setOpaqueLvalue(TIntermTyped* left, TIntermTyped* right);
     bool lValueErrorCheck(const TSourceLoc&, const char* op, TIntermTyped*) override;
 
     TLayoutFormat getLayoutFromTxType(const TSourceLoc&, const TType&);
@@ -231,7 +233,7 @@ protected:
     TIntermSymbol* makeInternalVariableNode(const TSourceLoc&, const char* name, const TType&) const;
     TVariable* declareNonArray(const TSourceLoc&, const TString& identifier, const TType&, bool track);
     void declareArray(const TSourceLoc&, const TString& identifier, const TType&, TSymbol*&, bool track);
-    TIntermNode* executeInitializer(const TSourceLoc&, TIntermTyped* initializer, TVariable* variable);
+    TIntermNode* executeInitializer(const TSourceLoc&, TIntermTyped* initializer, TVariable* variable, bool flattened);
     TIntermTyped* convertInitializerList(const TSourceLoc&, const TType&, TIntermTyped* initializer, TIntermTyped* scalarInit);
     bool isScalarConstructor(const TIntermNode*);
     TOperator mapAtomicOp(const TSourceLoc& loc, TOperator op, bool isImage);
