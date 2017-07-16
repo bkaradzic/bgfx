@@ -71,6 +71,7 @@ namespace ImGui
 				, active(true)
 				, status(Status_Float)
 				, opened(false)
+				, first(true)
 			{
 				location[0] = 0;
 				children[0] = children[1] = NULL;
@@ -233,7 +234,10 @@ namespace ImGui
 			ImU32 id = ImHash(label, 0);
 			for (int i = 0; i < m_docks.size(); ++i)
 			{
-				if (m_docks[i]->id == id) return *m_docks[i];
+        if (m_docks[i]->id == id)
+        {
+          return *m_docks[i];
+        }
 			}
 
 			Dock* new_dock = (Dock*)MemAlloc(sizeof(Dock));
@@ -368,15 +372,19 @@ namespace ImGui
 				ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_ShowBorders | 
 				ImGuiWindowFlags_NoBringToFrontOnFocus;
 			Dock* root = getRootDock();
+      const ImVec2& displaySize = GetIO().DisplaySize;
 			if (root)
 			{
-				SetNextWindowPos(root->pos);
-				SetNextWindowSize(root->size);
+        const ImVec2 percentage(displaySize.x / root->size.x, displaySize.y / root->size.y );
+        const ImVec2 rescaledPos = root->pos * percentage;
+        const ImVec2 rescaledSize = root->size * percentage;
+        SetNextWindowPos(rescaledPos);
+        SetNextWindowSize(rescaledSize);
 			}
 			else
 			{
 				SetNextWindowPos(ImVec2(0, 0));
-				SetNextWindowSize(GetIO().DisplaySize);
+				SetNextWindowSize(displaySize);
 			}
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 			Begin("###DockPanel", NULL, flags);
