@@ -71,7 +71,7 @@ namespace entry
 
 } // namespace entry
 
-int main(int _argc, char** _argv)
+int main(int _argc, const char* const* _argv)
 {
 	entry::main(_argc, _argv);
 }

@@ -8,6 +8,9 @@
 #include "imgui/imgui.h"
 #include <bx/rng.h>
 
+namespace
+{
+
 static float s_texelHalf = 0.0f;
 
 struct PosColorTexCoord0Vertex
@@ -134,20 +137,21 @@ void setOffsets4x4Lum(bgfx::UniformHandle _handle, uint32_t _width, uint32_t _he
 	bgfx::setUniform(_handle, offsets, num);
 }
 
-inline float square(float _x)
-{
-	return _x*_x;
-}
-
 class ExampleHDR : public entry::AppI
 {
-	void init(int _argc, char** _argv) BX_OVERRIDE
+public:
+	ExampleHDR(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
+	void init(int32_t _argc, const char* const* _argv, uint32_t _width, uint32_t _height) override
 	{
 		Args args(_argc, _argv);
 
-		m_width  = 1280;
-		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_width  = _width;
+		m_height = _height;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -204,7 +208,7 @@ class ExampleHDR : public entry::AppI
 		}
 		else
 		{
-			m_rb.idx = bgfx::invalidHandle;
+			m_rb.idx = bgfx::kInvalidHandle;
 		}
 
 		// Imgui.
@@ -227,7 +231,7 @@ class ExampleHDR : public entry::AppI
 		m_time = 0.0f;
 	}
 
-	virtual int shutdown() BX_OVERRIDE
+	virtual int shutdown() override
 	{
 		// Cleanup.
 		imguiDestroy();
@@ -269,7 +273,7 @@ class ExampleHDR : public entry::AppI
 		return 0;
 	}
 
-	bool update() BX_OVERRIDE
+	bool update() override
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
@@ -301,25 +305,35 @@ class ExampleHDR : public entry::AppI
 					, uint16_t(m_height)
 					);
 
-			imguiBeginScrollArea("Settings", m_width - m_width / 5 - 10, 10, m_width / 5, m_height / 2, &m_scrollArea);
-			imguiSeparatorLine();
+			showExampleDialog(this);
 
-			imguiSlider("Speed", m_speed, 0.0f, 1.0f, 0.01f);
-			imguiSeparator();
+			ImGui::SetNextWindowPos(
+				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiSetCond_FirstUseEver
+				);
+			ImGui::Begin("Settings"
+				, NULL
+				, ImVec2(m_width / 5.0f, m_height / 2.0f)
+				, ImGuiWindowFlags_AlwaysAutoResize
+				);
 
-			imguiSlider("Middle gray", m_middleGray, 0.1f, 1.0f, 0.01f);
-			imguiSlider("White point", m_white,      0.1f, 2.0f, 0.01f);
-			imguiSlider("Threshold",   m_threshold,  0.1f, 2.0f, 0.01f);
+			ImGui::SliderFloat("Speed", &m_speed, 0.0f, 1.0f);
+			ImGui::Separator();
+
+			ImGui::SliderFloat("Middle gray", &m_middleGray, 0.1f, 1.0f);
+			ImGui::SliderFloat("White point", &m_white,      0.1f, 2.0f);
+			ImGui::SliderFloat("Threshold",   &m_threshold,  0.1f, 2.0f);
 
 			if (bgfx::isValid(m_rb) )
 			{
 				union { uint32_t color; uint8_t bgra[4]; } cast = { m_lumBgra8 };
 				float exponent = cast.bgra[3]/255.0f * 255.0f - 128.0f;
 				float lumAvg   = cast.bgra[2]/255.0f * bx::fexp2(exponent);
-				imguiSlider("Lum Avg", lumAvg, 0.0f, 1.0f, 0.01f, false);
+				ImGui::SliderFloat("Lum Avg", &lumAvg, 0.0f, 1.0f);
 			}
 
-			imguiEndScrollArea();
+			ImGui::End();
+
 			imguiEndFrame();
 
 			// This dummy draw call is here to make sure that view 0 is cleared
@@ -331,15 +345,8 @@ class ExampleHDR : public entry::AppI
 			const int64_t frameTime = now - last;
 			last = now;
 			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
 
 			m_time += (float)(frameTime*m_speed/freq);
-
-			// Use m_debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/09-hdr");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Using multiple views with frame buffers, and view order remapping.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			uint8_t shuffle[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 			bx::shuffle(&m_rng, shuffle, BX_COUNTOF(shuffle) );
@@ -399,8 +406,9 @@ class ExampleHDR : public entry::AppI
 			bgfx::FrameBufferHandle invalid = BGFX_INVALID_HANDLE;
 			bgfx::setViewFrameBuffer(hdrHBlurTonemap, invalid);
 
+			const bgfx::Caps* caps = bgfx::getCaps();
 			float proj[16];
-			bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
+			bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f, 0.0f, caps->homogeneousDepth);
 
 			uint8_t order[] =
 			{
@@ -437,12 +445,12 @@ class ExampleHDR : public entry::AppI
 
 			float view[16];
 			bx::mtxLookAt(view, temp, at);
-			bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
+			bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, caps->homogeneousDepth);
 
 			// Set view and projection matrix for view hdrMesh.
 			bgfx::setViewTransform(hdrMesh, view, proj);
 
-			float tonemap[4] = { m_middleGray, square(m_white), m_threshold, m_time };
+			float tonemap[4] = { m_middleGray, bx::fsq(m_white), m_threshold, m_time };
 
 			// Render skybox into view hdrSkybox.
 			bgfx::setTexture(0, s_texCube, m_uffizi);
@@ -582,4 +590,6 @@ class ExampleHDR : public entry::AppI
 	float m_time;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleHDR);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleHDR, "09-hdr", "Using multiple views with frame buffers, and view order remapping.");

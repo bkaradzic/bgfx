@@ -54,3 +54,15 @@ float cull(int i)
 {
     return (i >= 6) ? gl_CullDistance[5] : gl_CullDistance[i];
 }
+
+layout(location = 6) in bName1 {
+    float f;
+    layout(location = 7) float g;
+    mat4 m;
+} bInst1;
+layout(location = 12) in bName2 {
+    float f;
+    layout(location = 13) float g;  // ERROR, location on array
+} bInst2[3];
+
+layout(early_fragment_tests) in float f; // ERROR, must be standalone

@@ -28,8 +28,10 @@ if(BUILD_TESTING)
         add_executable(glslangtests ${TEST_SOURCES})
         set_property(TARGET glslangtests PROPERTY FOLDER tests)
         glslang_set_link_args(glslangtests)
-        install(TARGETS glslangtests
-                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+        if(ENABLE_GLSLANG_INSTALL)
+            install(TARGETS glslangtests
+                    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+        endif(ENABLE_GLSLANG_INSTALL)
 
         set(GLSLANG_TEST_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../Test")
         # Supply a default test root directory, so that manual testing

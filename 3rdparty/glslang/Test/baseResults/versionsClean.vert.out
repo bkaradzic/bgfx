@@ -1,6 +1,4 @@
 versionsClean.vert
-Warning, version 420 is not yet complete; most version-specific features are present, but some are missing.
-
 Shader version: 420
 0:? Sequence
 0:40  Function Definition: main( ( global void)

@@ -64,7 +64,7 @@ namespace entry
 	struct MainThreadEntry
 	{
 		int m_argc;
-		char** m_argv;
+		const char* const* m_argv;
 
 		static int32_t threadFunc(void* _userData)
 		{
@@ -271,66 +271,52 @@ namespace entry
 
 				switch (eventType)
 				{
-					case NSMouseMoved:
-					case NSLeftMouseDragged:
-					case NSRightMouseDragged:
-					case NSOtherMouseDragged:
-					{
-						getMousePos(&m_mx, &m_my);
-						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll);
-						break;
-					}
+				case NSMouseMoved:
+				case NSLeftMouseDragged:
+				case NSRightMouseDragged:
+				case NSOtherMouseDragged:
+					getMousePos(&m_mx, &m_my);
+					m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll);
+					break;
 
-					case NSLeftMouseDown:
+				case NSLeftMouseDown:
 					{
 						// Command + Left Mouse Button acts as middle! This just a temporary solution!
 						// This is because the average OSX user doesn't have middle mouse click.
 						MouseButton::Enum mb = ([event modifierFlags] & NSCommandKeyMask) ? MouseButton::Middle : MouseButton::Left;
 						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, mb, true);
-						break;
 					}
+					break;
 
-					case NSLeftMouseUp:
-					{
-						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Left, false);
-						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Middle, false); // TODO: remove!
-						break;
-					}
+				case NSLeftMouseUp:
+					m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Left, false);
+					m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Middle, false); // TODO: remove!
+					break;
 
-					case NSRightMouseDown:
-					{
-						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Right, true);
-						break;
-					}
+				case NSRightMouseDown:
+					m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Right, true);
+					break;
 
-					case NSRightMouseUp:
-					{
-						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Right, false);
-						break;
-					}
+				case NSRightMouseUp:
+					m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Right, false);
+					break;
 
-					case NSOtherMouseDown:
-					{
-						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Middle, true);
-						break;
-					}
+				case NSOtherMouseDown:
+					m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Middle, true);
+					break;
 
-					case NSOtherMouseUp:
-					{
-						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Middle, false);
-						break;
-					}
+				case NSOtherMouseUp:
+					m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Middle, false);
+					break;
 
-					case NSScrollWheel:
-					{
-						m_scrollf += [event deltaY];
+				case NSScrollWheel:
+					m_scrollf += [event deltaY];
 
-						m_scroll = (int32_t)m_scrollf;
-						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll);
-						break;
-					}
+					m_scroll = (int32_t)m_scrollf;
+					m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll);
+					break;
 
-					case NSKeyDown:
+				case NSKeyDown:
 					{
 						uint8_t modifiers = 0;
 						uint8_t pressedChar[4];
@@ -351,11 +337,10 @@ namespace entry
 								return false;
 							}
 						}
-
-						break;
 					}
+					break;
 
-					case NSKeyUp:
+				case NSKeyUp:
 					{
 						uint8_t modifiers  = 0;
 						uint8_t pressedChar[4];
@@ -369,8 +354,11 @@ namespace entry
 							return false;
 						}
 
-						break;
 					}
+					break;
+
+				default:
+					break;
 				}
 
 				[NSApp sendEvent:event];
@@ -409,7 +397,7 @@ namespace entry
 			m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::DidSuspend);
 		}
 
-		int32_t run(int _argc, char** _argv)
+		int32_t run(int _argc, const char* const* _argv)
 		{
 			[NSApplication sharedApplication];
 
@@ -487,10 +475,7 @@ namespace entry
 			{
 				@autoreleasepool
 				{
-					if (bgfx::RenderFrame::Exiting == bgfx::renderFrame() )
-					{
-						break;
-					}
+					bgfx::renderFrame();
 				}
 
 				while (dispatchEvent(peekEvent() ) )
@@ -770,7 +755,7 @@ namespace entry
 
 @end
 
-int main(int _argc, char** _argv)
+int main(int _argc, const char* const* _argv)
 {
 	using namespace entry;
 	return s_ctx.run(_argc, _argv);

@@ -446,7 +446,7 @@ struct FontManager::CachedFont
 	CachedFont()
 		: trueTypeFont(NULL)
 	{
-		masterFontHandle.idx = bx::HandleAlloc::invalid;
+		masterFontHandle.idx = bx::kInvalidHandle;
 	}
 
 	FontInfo fontInfo;
@@ -510,7 +510,7 @@ FontManager::~FontManager()
 TrueTypeHandle FontManager::createTtf(const uint8_t* _buffer, uint32_t _size)
 {
 	uint16_t id = m_filesHandles.alloc();
-	BX_CHECK(id != bx::HandleAlloc::invalid, "Invalid handle used");
+	BX_CHECK(id != bx::kInvalidHandle, "Invalid handle used");
 	m_cachedFiles[id].buffer = new uint8_t[_size];
 	m_cachedFiles[id].bufferSize = _size;
 	bx::memCopy(m_cachedFiles[id].buffer, _buffer, _size);
@@ -536,12 +536,12 @@ FontHandle FontManager::createFontByPixelSize(TrueTypeHandle _ttfHandle, uint32_
 	if (!ttf->init(m_cachedFiles[_ttfHandle.idx].buffer, m_cachedFiles[_ttfHandle.idx].bufferSize, _typefaceIndex, _pixelSize) )
 	{
 		delete ttf;
-		FontHandle invalid = { bx::HandleAlloc::invalid };
+		FontHandle invalid = { bx::kInvalidHandle };
 		return invalid;
 	}
 
 	uint16_t fontIdx = m_fontHandles.alloc();
-	BX_CHECK(fontIdx != bx::HandleAlloc::invalid, "Invalid handle used");
+	BX_CHECK(fontIdx != bx::kInvalidHandle, "Invalid handle used");
 
 	CachedFont& font = m_cachedFonts[fontIdx];
 	font.trueTypeFont = ttf;
@@ -549,7 +549,7 @@ FontHandle FontManager::createFontByPixelSize(TrueTypeHandle _ttfHandle, uint32_
 	font.fontInfo.fontType  = int16_t(_fontType);
 	font.fontInfo.pixelSize = uint16_t(_pixelSize);
 	font.cachedGlyphs.clear();
-	font.masterFontHandle.idx = bx::HandleAlloc::invalid;
+	font.masterFontHandle.idx = bx::kInvalidHandle;
 
 	FontHandle handle = { fontIdx };
 	return handle;
@@ -572,7 +572,7 @@ FontHandle FontManager::createScaledFontToPixelSize(FontHandle _baseFontHandle, 
 	newFontInfo.underlinePosition  = (newFontInfo.underlinePosition * newFontInfo.scale);
 
 	uint16_t fontIdx = m_fontHandles.alloc();
-	BX_CHECK(fontIdx != bx::HandleAlloc::invalid, "Invalid handle used");
+	BX_CHECK(fontIdx != bx::kInvalidHandle, "Invalid handle used");
 
 	CachedFont& font = m_cachedFonts[fontIdx];
 	font.cachedGlyphs.clear();

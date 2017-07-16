@@ -185,3 +185,20 @@ void fooDeeparray()
     xp = y; // ERROR, wrong size
     yp = x; // ERROR, wrong size
 }
+
+layout(num_views = 2) in; // ERROR, no extension
+
+void mwErr()
+{
+    gl_ViewID_OVR;   // ERROR, no extension
+}
+
+#extension GL_OVR_multiview : enable
+
+layout(num_views = 2) uniform float mwUniform; // ERROR, must be global
+layout(num_views = 2) in; // OK
+
+void mwOk()
+{
+    gl_ViewID_OVR;
+}

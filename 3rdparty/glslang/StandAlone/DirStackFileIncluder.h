@@ -48,6 +48,8 @@
 // Can be overridden to customize.
 class DirStackFileIncluder : public glslang::TShader::Includer {
 public:
+    DirStackFileIncluder() : externalLocalDirectoryCount(0) { }
+
     virtual IncludeResult* includeLocal(const char* headerName,
                                         const char* includerName,
                                         size_t inclusionDepth) override
@@ -60,6 +62,18 @@ public:
                                          size_t /*inclusionDepth*/) override
     {
         return readSystemPath(headerName);
+    }
+
+    // Externally set directories. E.g., from a command-line -I<dir>.
+    //  - Most-recently pushed are checked first.
+    //  - All these are checked after the parse-time stack of local directories
+    //    is checked.
+    //  - This only applies to the "local" form of #include.
+    //  - Makes its own copy of the path.
+    virtual void pushExternalLocalDirectory(const std::string& dir)
+    {
+        directoryStack.push_back(dir);
+        externalLocalDirectoryCount = directoryStack.size();
     }
 
     virtual void releaseInclude(IncludeResult* result) override
@@ -75,17 +89,19 @@ public:
 protected:
     typedef char tUserDataElement;
     std::vector<std::string> directoryStack;
+    int externalLocalDirectoryCount;
 
     // Search for a valid "local" path based on combining the stack of include
     // directories and the nominal name of the header.
     virtual IncludeResult* readLocalPath(const char* headerName, const char* includerName, int depth)
     {
-        // Discard popped include directories, and if first level, initialize.
-        directoryStack.resize(depth);
+        // Discard popped include directories, and
+        // initialize when at parse-time first level.
+        directoryStack.resize(depth + externalLocalDirectoryCount);
         if (depth == 1)
-            directoryStack.front() = getDirectory(includerName);
+            directoryStack.back() = getDirectory(includerName);
 
-        // find a directory that works, reverse search of include stack
+        // Find a directory that works, using a reverse search of the include stack.
         for (auto it = directoryStack.rbegin(); it != directoryStack.rend(); ++it) {
             std::string path = *it + '/' + headerName;
             std::replace(path.begin(), path.end(), '\\', '/');

@@ -1,5 +1,4 @@
 430.comp
-Warning, version 430 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:4: 'local_size' : cannot change previously set size 
 ERROR: 0:5: 'local_size' : too large; see gl_MaxComputeWorkGroupSize 
 ERROR: 0:43: 'in' : global storage input qualifier cannot be used in a compute shader 

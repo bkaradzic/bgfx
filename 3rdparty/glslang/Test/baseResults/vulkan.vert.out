@@ -1,5 +1,4 @@
 vulkan.vert
-Warning, version 450 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:3: 'subpass input' : not supported in this stage: vertex
 ERROR: 0:4: 'subpass input' : not supported in this stage: vertex
 ERROR: 0:5: 'subpass input' : not supported in this stage: vertex
@@ -23,7 +22,11 @@ ERROR: 0:32: 'initializer' : can't use with types containing arrays sized with a
 ERROR: 0:34: '=' : can't use with types containing arrays sized with a specialization constant 
 ERROR: 0:35: '==' : can't use with types containing arrays sized with a specialization constant 
 ERROR: 0:39: 'set' : cannot be used with push_constant 
-ERROR: 23 compilation errors.  No code generated.
+ERROR: 0:49: '[]' : only outermost dimension of an array of arrays can be a specialization constant 
+ERROR: 0:50: '[]' : only outermost dimension of an array of arrays can be a specialization constant 
+ERROR: 0:51: '[]' : only outermost dimension of an array of arrays can be a specialization constant 
+ERROR: 0:54: '[]' : only outermost dimension of an array of arrays can be a specialization constant 
+ERROR: 27 compilation errors.  No code generated.
 
 
 SPIR-V is not generated for failed compile or link

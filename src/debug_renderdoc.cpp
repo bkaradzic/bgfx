@@ -56,21 +56,27 @@ namespace bgfx
 	}
 
 	pRENDERDOC_GetAPI RENDERDOC_GetAPI;
-	static RENDERDOC_API_1_1_0* s_renderDoc;
+	static RENDERDOC_API_1_1_0* s_renderDoc = NULL;
+	static void* s_renderDocDll = NULL;
 
 	void* loadRenderDoc()
 	{
+		if (NULL != s_renderDoc)
+		{
+			return s_renderDocDll;
+		}
+
 		// Skip loading RenderDoc when IntelGPA is present to avoid RenderDoc crash.
 		if (findModule(BX_ARCH_32BIT ? "shimloader32.dll" : "shimloader64.dll") )
 		{
 			return NULL;
 		}
 
-		void* renderdocdll = bx::dlopen("renderdoc.dll");
+		void* renderDocDll = bx::dlopen("renderdoc.dll");
 
-		if (NULL != renderdocdll)
+		if (NULL != renderDocDll)
 		{
-			RENDERDOC_GetAPI = (pRENDERDOC_GetAPI)bx::dlsym(renderdocdll, "RENDERDOC_GetAPI");
+			RENDERDOC_GetAPI = (pRENDERDOC_GetAPI)bx::dlsym(renderDocDll, "RENDERDOC_GetAPI");
 			if (NULL != RENDERDOC_GetAPI
 			&&  1 == RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_1_0, (void**)&s_renderDoc) )
 			{
@@ -85,23 +91,29 @@ namespace bgfx
 				s_renderDoc->SetCaptureOptionU32(eRENDERDOC_Option_SaveAllInitials, 1);
 
 				s_renderDoc->MaskOverlayBits(eRENDERDOC_Overlay_None, eRENDERDOC_Overlay_None);
+
+				s_renderDocDll = renderDocDll;
 			}
 			else
 			{
-				bx::dlclose(renderdocdll);
-				renderdocdll = NULL;
+				bx::dlclose(renderDocDll);
+				renderDocDll = NULL;
 			}
 		}
 
-		return renderdocdll;
+		return renderDocDll;
 	}
 
 	void unloadRenderDoc(void* _renderdocdll)
 	{
 		if (NULL != _renderdocdll)
 		{
-			s_renderDoc->Shutdown();
-			bx::dlclose(_renderdocdll);
+			// BK - Once RenderDoc is loaded there shouldn't be calls
+			// to Shutdown or unload RenderDoc DLL.
+			// https://github.com/bkaradzic/bgfx/issues/1192
+			//
+			// s_renderDoc->Shutdown();
+			// bx::dlclose(_renderdocdll);
 		}
 	}
 

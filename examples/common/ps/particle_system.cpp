@@ -11,7 +11,6 @@
 #include "../packrect.h"
 
 #include <bx/easing.h>
-#include <bx/crtimpl.h>
 #include <bx/handlealloc.h>
 
 #include "vs_particle.bin.h"
@@ -195,7 +194,7 @@ namespace ps
 
 		EmitterSpriteHandle create(uint16_t _width, uint16_t _height)
 		{
-			EmitterSpriteHandle handle = { bx::HandleAlloc::invalid };
+			EmitterSpriteHandle handle = { bx::kInvalidHandle };
 
 			if (m_handleAlloc.getNumHandles() < m_handleAlloc.getMaxHandles() )
 			{
@@ -375,8 +374,8 @@ namespace ps
 
 			Aabb aabb =
 			{
-				{  bx::huge,  bx::huge,  bx::huge },
-				{ -bx::huge, -bx::huge, -bx::huge },
+				{  bx::kHuge,  bx::kHuge,  bx::kHuge },
+				{ -bx::kHuge, -bx::kHuge, -bx::kHuge },
 			};
 
 			for (uint32_t jj = 0, num = m_num, current = _first
@@ -494,13 +493,11 @@ namespace ps
 		{
 			m_allocator = _allocator;
 
-#if BX_CONFIG_ALLOCATOR_CRT
 			if (NULL == _allocator)
 			{
-				static bx::CrtAllocator allocator;
+				static bx::DefaultAllocator allocator;
 				m_allocator = &allocator;
 			}
-#endif // BX_CONFIG_ALLOCATOR_CRT
 
 			m_emitterAlloc = bx::createHandleAlloc(m_allocator, _maxEmitters);
 			m_emitter = (Emitter*)BX_ALLOC(m_allocator, sizeof(Emitter)*_maxEmitters);

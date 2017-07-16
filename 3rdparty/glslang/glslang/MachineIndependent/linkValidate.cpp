@@ -101,6 +101,9 @@ void TIntermediate::merge(TInfoSink& infoSink, TIntermediate& unit)
     if (! earlyFragmentTests)
         earlyFragmentTests = unit.earlyFragmentTests;
 
+    if (!postDepthCoverage)
+        postDepthCoverage = unit.postDepthCoverage;
+
     if (depthLayout == EldNone)
         depthLayout = unit.depthLayout;
     else if (depthLayout != unit.depthLayout)
@@ -459,9 +462,9 @@ void TIntermediate::finalCheck(TInfoSink& infoSink, bool keepUncalled)
             error(infoSink, "At least one shader must specify an output layout(vertices=...)");
         break;
     case EShLangTessEvaluation:
-        if (inputPrimitive == ElgNone)
-            error(infoSink, "At least one shader must specify an input layout primitive");
         if (source == EShSourceGlsl) {
+            if (inputPrimitive == ElgNone)
+                error(infoSink, "At least one shader must specify an input layout primitive");
             if (vertexSpacing == EvsNone)
                 vertexSpacing = EvsEqual;
             if (vertexOrder == EvoNone)
@@ -485,6 +488,11 @@ void TIntermediate::finalCheck(TInfoSink& infoSink, bool keepUncalled)
             error(infoSink, "At least one shader must specify a layout(max_vertices = value)");
         break;
     case EShLangFragment:
+        // for GL_ARB_post_depth_coverage, EarlyFragmentTest is set automatically in 
+        // ParseHelper.cpp. So if we reach here, this must be GL_EXT_post_depth_coverage 
+        // requiring explicit early_fragment_tests
+        if (getPostDepthCoverage() && !getEarlyFragmentTests())
+            error(infoSink, "post_depth_coverage requires early_fragment_tests");
         break;
     case EShLangCompute:
         break;
@@ -1057,6 +1065,8 @@ int TIntermediate::getBaseAlignmentScalar(const TType& type, int& size)
     case EbtUint64:
     case EbtDouble:  size = 8; return 8;
 #ifdef AMD_EXTENSIONS
+    case EbtInt16:
+    case EbtUint16:
     case EbtFloat16: size = 2; return 2;
 #endif
     default:         size = 4; return 4;

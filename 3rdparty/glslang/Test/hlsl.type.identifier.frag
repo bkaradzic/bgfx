@@ -24,5 +24,8 @@ float4 main() : SV_Target0
 
     float = float + int + uint + min16float + min10float + (bool[0] ? int : float) + fn(float);
 
-    return float;
+    half2x3 half2x3;
+    half2x3._11 = (float) * float;
+
+    return float + half2x3._11;
 }

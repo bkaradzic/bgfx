@@ -27,7 +27,7 @@ namespace entry
 	struct MainThreadEntry
 	{
 		int m_argc;
-		char** m_argv;
+		const char* const* m_argv;
 
 		static int32_t threadFunc(void* _userData);
 	};
@@ -38,9 +38,9 @@ namespace entry
 	{
 		Context(uint32_t _width, uint32_t _height)
 		{
-			static const char* argv[1] = { "ios" };
+			const char* const argv[1] = { "ios" };
 			m_mte.m_argc = 1;
-			m_mte.m_argv = const_cast<char**>(argv);
+			m_mte.m_argv = argv;
 
 			m_eventQueue.postSizeEvent(s_defaultWindow, _width, _height);
 
@@ -247,6 +247,8 @@ static	void* m_device = NULL;
 	BX_UNUSED(touches);
 	UITouch *touch = [[event allTouches] anyObject];
 	CGPoint touchLocation = [touch locationInView:self];
+	touchLocation.x *= self.contentScaleFactor;
+	touchLocation.y *= self.contentScaleFactor;
 
 	s_ctx->m_eventQueue.postMouseEvent(s_defaultWindow, touchLocation.x, touchLocation.y, 0);
 	s_ctx->m_eventQueue.postMouseEvent(s_defaultWindow, touchLocation.x, touchLocation.y, 0, MouseButton::Left, true);
@@ -257,6 +259,9 @@ static	void* m_device = NULL;
 	BX_UNUSED(touches);
 	UITouch *touch = [[event allTouches] anyObject];
 	CGPoint touchLocation = [touch locationInView:self];
+	touchLocation.x *= self.contentScaleFactor;
+	touchLocation.y *= self.contentScaleFactor;
+
 	s_ctx->m_eventQueue.postMouseEvent(s_defaultWindow, touchLocation.x, touchLocation.y, 0, MouseButton::Left, false);
 }
 
@@ -265,6 +270,9 @@ static	void* m_device = NULL;
 	BX_UNUSED(touches);
 	UITouch *touch = [[event allTouches] anyObject];
 	CGPoint touchLocation = [touch locationInView:self];
+	touchLocation.x *= self.contentScaleFactor;
+	touchLocation.y *= self.contentScaleFactor;
+
 	s_ctx->m_eventQueue.postMouseEvent(s_defaultWindow, touchLocation.x, touchLocation.y, 0);
 }
 
@@ -273,6 +281,9 @@ static	void* m_device = NULL;
 	BX_UNUSED(touches);
 	UITouch *touch = [[event allTouches] anyObject];
 	CGPoint touchLocation = [touch locationInView:self];
+	touchLocation.x *= self.contentScaleFactor;
+	touchLocation.y *= self.contentScaleFactor;
+
 	s_ctx->m_eventQueue.postMouseEvent(s_defaultWindow, touchLocation.x, touchLocation.y, 0, MouseButton::Left, false);
 }
 
@@ -312,8 +323,7 @@ static	void* m_device = NULL;
 
 	[m_window makeKeyAndVisible];
 
-	//float scaleFactor = [[UIScreen mainScreen] scale]; // should use this, but needs to further pass the value to the `nvgBeginFrame()` call's `devicePixelRatio` parameter in `ExampleNanoVG` class' `update()` method so it can actually work properly.
-	float scaleFactor = 1.0f;
+	float scaleFactor = [[UIScreen mainScreen] scale];
 	[m_view setContentScaleFactor: scaleFactor ];
 
 	s_ctx = new Context((uint32_t)(scaleFactor*rect.size.width), (uint32_t)(scaleFactor*rect.size.height));
@@ -361,7 +371,7 @@ static	void* m_device = NULL;
 
 @end
 
-int main(int _argc, char* _argv[])
+int main(int _argc, const char* const* _argv)
 {
 	NSAutoreleasePool* pool = [ [NSAutoreleasePool alloc] init];
 	int exitCode = UIApplicationMain(_argc, _argv, @"UIApplication", NSStringFromClass([AppDelegate class]) );

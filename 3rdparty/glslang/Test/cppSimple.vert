@@ -337,6 +337,16 @@ int aoeua = FOOOM;
 #error \ 376
 #error \377
 
+// ERROR for macro expansion to yield 'defined'
+#line 9600
+#define DEF_MAC
+#define DEF_DEFINED defined
+#if DEF_DEFINED DEF_MAC
+#error DEF_DEFINED then
+#else
+#error DEF_DEFINED else
+#endif
+
 #line 10000
 #if 1
 #else

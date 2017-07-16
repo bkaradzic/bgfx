@@ -1,5 +1,4 @@
 atomic_uint.frag
-Warning, version 420 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:10: 'atomic_uint' : samplers and atomic_uints cannot be output parameters 
 ERROR: 0:12: 'return' : type does not match, or is not convertible to, the function's return type 
 ERROR: 0:18: 'atomic_uint' : atomic_uints can only be used in uniform variables or function parameters: non_uniform_counter

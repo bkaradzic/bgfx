@@ -1,5 +1,4 @@
 410.tesc
-Warning, version 400 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:4: 'length' :  array must first be sized by a redeclaration or layout qualifier
 ERROR: 1 compilation errors.  No code generated.
 

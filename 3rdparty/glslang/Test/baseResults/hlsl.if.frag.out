@@ -319,7 +319,7 @@ gl_FragCoord origin is upper left
               48:    7(fvec4) Load 10(input)
               49:   16(bvec4) FOrdEqual 47 48
               50:    15(bool) All 49
-                              SelectionMerge 52 None
+                              SelectionMerge 52 Flatten 
                               BranchConditional 50 51 52
               51:               Label
               53:    7(fvec4)   Load 10(input)

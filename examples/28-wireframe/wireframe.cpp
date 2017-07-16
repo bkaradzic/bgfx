@@ -7,6 +7,9 @@
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"
 
+namespace
+{
+
 struct DrawMode
 {
 	enum
@@ -110,13 +113,13 @@ struct Camera
 		};
 
 		float ll[2];
-		latLongFromVec(ll[0], ll[1], toPosNorm);
+		bx::vec3ToLatLong(&ll[0], &ll[1], toPosNorm);
 		ll[0] += consume[0];
 		ll[1] -= consume[1];
-		ll[1] = bx::fclamp(ll[1], 0.02f, 0.98f);
+		ll[1]  = bx::fclamp(ll[1], 0.02f, 0.98f);
 
 		float tmp[3];
-		vecFromLatLong(tmp, ll[0], ll[1]);
+		bx::vec3FromLatLong(tmp, ll[0], ll[1]);
 
 		float diff[3];
 		diff[0] = (tmp[0]-toPosNorm[0])*toPosLen;
@@ -143,30 +146,6 @@ struct Camera
 		m_pos.curr[0] = bx::flerp(m_pos.curr[0], m_pos.dest[0], amount);
 		m_pos.curr[1] = bx::flerp(m_pos.curr[1], m_pos.dest[1], amount);
 		m_pos.curr[2] = bx::flerp(m_pos.curr[2], m_pos.dest[2], amount);
-	}
-
-	static inline void vecFromLatLong(float _vec[3], float _u, float _v)
-	{
-		const float phi   = _u * 2.0f*bx::pi;
-		const float theta = _v * bx::pi;
-
-		const float st = bx::fsin(theta);
-		const float sp = bx::fsin(phi);
-		const float ct = bx::fcos(theta);
-		const float cp = bx::fcos(phi);
-
-		_vec[0] = -st*sp;
-		_vec[1] = ct;
-		_vec[2] = -st*cp;
-	}
-
-	static inline void latLongFromVec(float& _u, float& _v, const float _vec[3])
-	{
-		const float phi   = bx::fatan2(_vec[0], _vec[2]);
-		const float theta = bx::facos(_vec[1]);
-
-		_u = (bx::pi + phi)*bx::invPi*0.5f;
-		_v = theta*bx::invPi;
 	}
 
 	struct Interp3f
@@ -225,27 +204,27 @@ struct MeshMtx
 	}
 
 	void init(const char* _path
-			, float _scale = 1.0f
-			, float _rotX = 0.0f
-			, float _rotY = 0.0f
-			, float _rotZ = 0.0f
-			, float _transX = 0.0f
-			, float _transY = 0.0f
-			, float _transZ = 0.0f
-			)
+		, float _scale = 1.0f
+		, float _rotX = 0.0f
+		, float _rotY = 0.0f
+		, float _rotZ = 0.0f
+		, float _transX = 0.0f
+		, float _transY = 0.0f
+		, float _transZ = 0.0f
+		)
 	{
 		m_mesh = meshLoad(_path);
 		bx::mtxSRT(m_mtx
-					, _scale
-					, _scale
-					, _scale
-					, _rotX
-					, _rotY
-					, _rotZ
-					, _transX
-					, _transY
-					, _transZ
-					);
+			, _scale
+			, _scale
+			, _scale
+			, _rotX
+			, _rotY
+			, _rotZ
+			, _transX
+			, _transY
+			, _transZ
+			);
 	}
 
 	void destroy()
@@ -272,7 +251,7 @@ struct Uniforms
 		m_wfColor[0] = 1.0f;
 		m_wfColor[1] = 0.0f;
 		m_wfColor[2] = 0.0f;
-		m_wfOpacity = 0.7f;
+		m_wfColor[3] = 1.0f;
 		m_drawEdges = 0.0f;
 		m_wfThickness = 1.5f;
 
@@ -294,7 +273,7 @@ struct Uniforms
 		struct
 		{
 			/*0*/struct { float m_camPos[3], m_unused0; };
-			/*1*/struct { float m_wfColor[3], m_wfOpacity; };
+			/*1*/struct { float m_wfColor[4]; };
 			/*2*/struct { float m_drawEdges, m_wfThickness, m_unused2[2]; };
 		};
 
@@ -306,13 +285,19 @@ struct Uniforms
 
 class ExampleWireframe : public entry::AppI
 {
-	void init(int _argc, char** _argv) BX_OVERRIDE
+public:
+	ExampleWireframe(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
+	void init(int32_t _argc, const char* const* _argv, uint32_t _width, uint32_t _height) override
 	{
 		Args args(_argc, _argv);
 
-		m_width  = 1280;
-		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_width  = _width;
+		m_height = _height;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = 0
 			| BGFX_RESET_VSYNC
 			| BGFX_RESET_MSAA_X16
@@ -326,18 +311,18 @@ class ExampleWireframe : public entry::AppI
 
 		// Set view 0 clear state.
 		bgfx::setViewClear(0
-				, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-				, 0x303030ff
-				, 1.0f
-				, 0
-				);
+			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
+			, 0x303030ff
+			, 1.0f
+			, 0
+			);
 
 		m_wfProgram   = loadProgram("vs_wf_wireframe", "fs_wf_wireframe");
 		m_meshProgram = loadProgram("vs_wf_mesh",      "fs_wf_mesh");
 
 		m_uniforms.init();
 
-		m_meshes[0].init("meshes/bunny.bin",      1.0f, 0.0f, bx::pi, 0.0f, 0.0f, -0.8f,  0.0f);
+		m_meshes[0].init("meshes/bunny.bin",      1.0f, 0.0f, bx::kPi, 0.0f, 0.0f, -0.8f,  0.0f);
 		m_meshes[1].init("meshes/hollowcube.bin", 1.0f, 0.0f,   0.0f, 0.0f, 0.0f,  0.0f,  0.0f);
 		m_meshes[2].init("meshes/orb.bin",        1.2f, 0.0f,   0.0f, 0.0f, 0.0f, -0.65f, 0.0f);
 
@@ -350,11 +335,9 @@ class ExampleWireframe : public entry::AppI
 
 		m_meshSelection = 1;
 		m_drawMode = DrawMode::WireframeShaded;
-		m_scrollArea = 0;
-		m_showWfColor = true;
 	}
 
-	virtual int shutdown() BX_OVERRIDE
+	virtual int shutdown() override
 	{
 		// Cleanup.
 		imguiDestroy();
@@ -374,7 +357,7 @@ class ExampleWireframe : public entry::AppI
 		return 0;
 	}
 
-	bool update() BX_OVERRIDE
+	bool update() override
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
@@ -389,67 +372,57 @@ class ExampleWireframe : public entry::AppI
 			}
 
 			imguiBeginFrame(m_mouseState.m_mx
-					,  m_mouseState.m_my
-					, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-					,  m_mouseState.m_mz
-					, uint16_t(m_width)
-					, uint16_t(m_height)
-					);
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
 
-			imguiBeginScrollArea("Settings"
-							    , m_width - m_width / 5 - 10
-							    , 10
-							    , m_width / 5
-							    , 492
-							    , &m_scrollArea
-							    );
+			showExampleDialog(this);
 
-			imguiSeparatorLine(1); imguiIndent(8); imguiLabel("Draw mode:"); imguiUnindent(8); imguiSeparatorLine(1);
-			imguiSeparator(4);
-			{
-				imguiIndent();
-				m_drawMode = imguiChoose(m_drawMode
-										, "Wireframe + Shaded"
-										, "Wireframe"
-										, "Shaded"
-										);
-				imguiUnindent();
-			}
-			imguiSeparator(8);
+			ImGui::SetNextWindowPos(
+				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiSetCond_FirstUseEver
+				);
+			ImGui::Begin("Settings"
+				, NULL
+				, ImVec2(m_width / 5.0f, m_height * 0.75f)
+				, ImGuiWindowFlags_AlwaysAutoResize
+				);
+
+			ImGui::Separator();
+			ImGui::Text("Draw mode:");
+			ImGui::RadioButton("Wireframe + Shaded", &m_drawMode, 0);
+			ImGui::RadioButton("Wireframe", &m_drawMode, 1);
+			ImGui::RadioButton("Shaded", &m_drawMode, 2);
 
 			const bool wfEnabled = (DrawMode::Shaded != m_drawMode);
-			imguiSeparatorLine(1); imguiIndent(8); imguiLabel("Wireframe:", wfEnabled); imguiUnindent(8); imguiSeparatorLine(1);
-			imguiSeparator(4);
+			if ( wfEnabled )
 			{
-				imguiColorWheel("Color", m_uniforms.m_wfColor, m_showWfColor, 0.6f, wfEnabled);
-				imguiIndent();
-				imguiSlider("Opacity",   m_uniforms.m_wfOpacity,   0.1f, 1.0f, 0.1f, wfEnabled);
-				imguiSlider("Thickness", m_uniforms.m_wfThickness, 0.6f, 2.2f, 0.1f, wfEnabled);
-				imguiUnindent();
-			}
-			imguiSeparator(8);
+				ImGui::Separator();
 
-			imguiSeparatorLine(1); imguiIndent(8); imguiLabel("Mesh:"); imguiUnindent(8); imguiSeparatorLine(1);
-			imguiSeparator(4);
+				ImGui::ColorWheel("Color", m_uniforms.m_wfColor, 0.6f);
+				ImGui::SliderFloat("Thickness", &m_uniforms.m_wfThickness, 0.6f, 2.2f);
+			}
+
+			ImGui::Separator();
+			ImGui::Text("Mesh:");
 			{
-				imguiIndent();
-				const uint32_t prevMeshSel = m_meshSelection;
-				m_meshSelection = imguiChoose(m_meshSelection
-											, "Bunny"
-											, "Hollowcubes"
-											, "Orb"
-											);
-				if (prevMeshSel != m_meshSelection)
+				bool meshChanged = false;
+				meshChanged |= ImGui::RadioButton("Bunny", &m_meshSelection, 0);
+				meshChanged |= ImGui::RadioButton("Hollowcubes", &m_meshSelection, 1);
+				meshChanged |= ImGui::RadioButton("Orb", &m_meshSelection, 2);
+
+				if (meshChanged)
 				{
 					m_camera.reset();
 				}
-				imguiUnindent();
 			}
-			imguiSeparator(8);
 
-			imguiEndScrollArea();
+			ImGui::End();
 			imguiEndFrame();
 
 			// This dummy draw call is here to make sure that view 0 is cleared
@@ -461,20 +434,13 @@ class ExampleWireframe : public entry::AppI
 			const int64_t frameTime = now - last;
 			last = now;
 			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
 			const float deltaTimeSec = float(double(frameTime)/freq);
-
-			// Use m_debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/28-wirefame");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Drawing wireframe mesh.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			// Setup view.
 			bgfx::setViewRect(0, 0, 0, bgfx::BackbufferRatio::Equal);
 			bgfx::setViewClear(0, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
 
-			const bool mouseOverGui = imguiMouseOverArea();
+			const bool mouseOverGui = ImGui::MouseOverArea();
 			m_mouse.update(float(m_mouseState.m_mx), float(m_mouseState.m_my), m_mouseState.m_mz, m_width, m_height);
 			if (!mouseOverGui)
 			{
@@ -506,25 +472,25 @@ class ExampleWireframe : public entry::AppI
 			if (DrawMode::Wireframe == m_drawMode)
 			{
 				uint64_t state = 0
-							   | BGFX_STATE_RGB_WRITE
-							   | BGFX_STATE_ALPHA_WRITE
-							   | BGFX_STATE_DEPTH_WRITE
-							   | BGFX_STATE_CULL_CCW
-							   | BGFX_STATE_MSAA
-							   | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
-							   ;
+					| BGFX_STATE_RGB_WRITE
+					| BGFX_STATE_ALPHA_WRITE
+					| BGFX_STATE_DEPTH_WRITE
+					| BGFX_STATE_CULL_CCW
+					| BGFX_STATE_MSAA
+					| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
+					;
 				meshSubmit(m_meshes[m_meshSelection].m_mesh, 0, m_wfProgram, m_meshes[m_meshSelection].m_mtx, state);
 			}
 			else
 			{
 				uint64_t state = 0
-							   | BGFX_STATE_RGB_WRITE
-							   | BGFX_STATE_ALPHA_WRITE
-							   | BGFX_STATE_DEPTH_TEST_LESS
-							   | BGFX_STATE_DEPTH_WRITE
-							   | BGFX_STATE_CULL_CCW
-							   | BGFX_STATE_MSAA
-							   ;
+					| BGFX_STATE_RGB_WRITE
+					| BGFX_STATE_ALPHA_WRITE
+					| BGFX_STATE_DEPTH_TEST_LESS
+					| BGFX_STATE_DEPTH_WRITE
+					| BGFX_STATE_CULL_CCW
+					| BGFX_STATE_MSAA
+					;
 				meshSubmit(m_meshes[m_meshSelection].m_mesh, 0, m_meshProgram, m_meshes[m_meshSelection].m_mtx, state);
 			}
 
@@ -556,11 +522,10 @@ class ExampleWireframe : public entry::AppI
 	Mouse m_mouse;
 	Uniforms m_uniforms;
 	MeshMtx m_meshes[3];
-	uint32_t m_meshSelection;
-	uint32_t m_drawMode; // Holds data for 'DrawMode'.
-
-	bool m_showWfColor;
-	int32_t m_scrollArea;
+	int32_t m_meshSelection;
+	int32_t m_drawMode; // Holds data for 'DrawMode'.
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleWireframe);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleWireframe, "28-wirefame", "Drawing wireframe mesh.");

@@ -1,5 +1,4 @@
 440.frag
-Warning, version 440 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:11: 'location' : overlapping use of location 4
 ERROR: 0:13: 'component' : type overflows the available 4 components 
 ERROR: 0:22: 'location' : fragment outputs sharing the same location must be the same basic type 30

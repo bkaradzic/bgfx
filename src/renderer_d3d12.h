@@ -306,7 +306,7 @@ namespace bgfx { namespace d3d12
 			, m_num(0)
 			, m_numTh(0)
 		{
-			m_depth.idx = bgfx::invalidHandle;
+			m_depth.idx = bgfx::kInvalidHandle;
 		}
 
 		void create(uint8_t _num, const Attachment* _attachment);

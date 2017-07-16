@@ -45,3 +45,16 @@ layout(set = 1, push_constant) uniform badpc { int a; } badpcI;  // ERROR, no de
 #if VULKAN != 100
 #error VULKAN should be 100
 #endif
+
+float AofA0[2][arraySize];              // ERROR, only outer dimension
+float AofA1[arraySize][arraySize];      // ERROR, only outer dimension
+float AofA2[arraySize][2 + arraySize];  // ERROR, only outer dimension
+float AofA3[arraySize][2];
+
+out ban1 {                              // ERROR, only outer dimension
+    float f;
+} bai1[2][arraySize];
+
+out ban2 {
+    float f;
+} bai2[arraySize][2];

@@ -9,6 +9,9 @@
 #include <bx/rng.h>
 #include <map>
 
+namespace
+{
+
 #define RENDER_PASS_SHADING 0  // Default forward rendered geo with simple shading
 #define RENDER_PASS_ID      1  // ID buffer for picking
 #define RENDER_PASS_BLIT    2  // Blit GPU render target to CPU texture
@@ -17,13 +20,19 @@
 
 class ExamplePicking : public entry::AppI
 {
-	void init(int _argc, char** _argv) BX_OVERRIDE
+public:
+	ExamplePicking(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
+	void init(int32_t _argc, const char* const* _argv, uint32_t _width, uint32_t _height) override
 	{
 		Args args(_argc, _argv);
 
-		m_width  = 1280;
-		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_width  = _width;
+		m_height = _height;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -144,7 +153,7 @@ class ExamplePicking : public entry::AppI
 		imguiCreate();
 	}
 
-	int shutdown() BX_OVERRIDE
+	int shutdown() override
 	{
 		for (uint32_t ii = 0; ii < 12; ++ii)
 		{
@@ -171,25 +180,13 @@ class ExamplePicking : public entry::AppI
 		return 0;
 	}
 
-	bool update() BX_OVERRIDE
+	bool update() override
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
 			bgfx::setViewFrameBuffer(RENDER_PASS_ID, m_pickingFB);
 
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency());
-			const double toMs = 1000.0 / freq;
 			float time = (float)( (bx::getHPCounter() - m_timeOffset) / double(bx::getHPFrequency() ) );
-
-			// Use debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/30-picking");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Mouse picking via GPU texture readback.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			// Set up matrices for basic forward renderer
 			const float camSpeed = 0.25;
@@ -357,26 +354,35 @@ class ExamplePicking : public entry::AppI
 			}
 
 			// Draw UI
-			imguiBeginFrame(m_mouseState.m_mx
-				, m_mouseState.m_my
+			imguiBeginFrame(
+				   m_mouseState.m_mx
+				,  m_mouseState.m_my
 				, (m_mouseState.m_buttons[entry::MouseButton::Left] ? IMGUI_MBUT_LEFT : 0)
 				| (m_mouseState.m_buttons[entry::MouseButton::Right] ? IMGUI_MBUT_RIGHT : 0)
 				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-				, m_mouseState.m_mz
+				,  m_mouseState.m_mz
 				, uint16_t(m_width)
 				, uint16_t(m_height)
 				);
 
-			imguiBeginArea("Picking Render Target:", 10, 100, 300, 400);
-			imguiImage(m_pickingRT, 1.0f, 1.0f, 1.0f);
-			imguiSlider("FOV", m_fov, 1.0f, 60.0f, 1.0f);
+			showExampleDialog(this);
 
-			if (imguiCheck("Spin Camera", m_cameraSpin))
-			{
-				m_cameraSpin = !m_cameraSpin;
-			}
+			ImGui::SetNextWindowPos(
+				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiSetCond_FirstUseEver
+				);
+			ImGui::Begin("Settings"
+				, NULL
+				, ImVec2(m_width / 5.0f, m_height / 2.0f)
+				, ImGuiWindowFlags_AlwaysAutoResize
+				);
 
-			imguiEndArea();
+			ImGui::Image(m_pickingRT, ImVec2(m_width / 5.0f - 16.0f, m_width / 5.0f - 16.0f) );
+			ImGui::SliderFloat("Field of view", &m_fov, 1.0f, 60.0f);
+			ImGui::Checkbox("Spin Camera", &m_cameraSpin);
+
+			ImGui::End();
+
 			imguiEndFrame();
 
 			// Advance to next frame. Rendering thread will be kicked to
@@ -389,13 +395,13 @@ class ExamplePicking : public entry::AppI
 		return false;
 	}
 
+	entry::MouseState m_mouseState;
+
 	uint32_t m_width;
 	uint32_t m_height;
 	uint32_t m_debug;
 	uint32_t m_reset;
 	int64_t m_timeOffset;
-
-	entry::MouseState m_mouseState;
 
 	Mesh* m_meshes[12];
 	float m_meshScale[12];
@@ -422,4 +428,6 @@ class ExamplePicking : public entry::AppI
 	bool  m_cameraSpin;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExamplePicking);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExamplePicking, "30-picking", "Mouse picking via GPU texture readback.");

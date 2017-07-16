@@ -24,7 +24,7 @@ using namespace Windows::Graphics::Display;
 #endif // BX_PLATFORM_WINRT
 using namespace Platform;
 
-static char* g_emptyArgs[] = { "" };
+static const char* const g_emptyArgs[] = { "" };
 static entry::WindowHandle g_defaultWindow = { 0 };
 static entry::EventQueue g_eventQueue;
 

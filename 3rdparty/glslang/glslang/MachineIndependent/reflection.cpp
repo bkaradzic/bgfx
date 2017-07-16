@@ -725,7 +725,9 @@ void TReflection::buildCounterIndices()
 // Returns false if the input is too malformed to do this.
 bool TReflection::addStage(EShLanguage stage, const TIntermediate& intermediate)
 {
-    if (intermediate.getNumEntryPoints() != 1 || intermediate.isRecursive())
+    if (intermediate.getTreeRoot() == nullptr ||
+        intermediate.getNumEntryPoints() != 1 ||
+        intermediate.isRecursive())
         return false;
 
     buildAttributeReflection(stage, intermediate);

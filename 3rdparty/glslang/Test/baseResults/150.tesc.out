@@ -210,7 +210,6 @@ ERROR: node is still EOpNull!
 0:?     'anon@0' ( out block{ gl_Position 4-component vector of float Position gl_Position,  gl_PointSize float PointSize gl_PointSize,  out implicitly-sized array of float ClipDistance gl_ClipDistance})
 
 400.tesc
-Warning, version 400 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:6: 'quads' : unrecognized layout identifier, or qualifier requires assignment (e.g., binding = 4) 
 ERROR: 0:7: 'ccw' : unrecognized layout identifier, or qualifier requires assignment (e.g., binding = 4) 
 ERROR: 0:8: 'fractional_even_spacing' : unrecognized layout identifier, or qualifier requires assignment (e.g., binding = 4) 
@@ -442,7 +441,6 @@ ERROR: node is still EOpNull!
 0:?     'badOrder' ( invariant noContraction out 4-element array of 4-component vector of float)
 
 400.tese
-Warning, version 400 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:3: 'vertices' : there is no such layout identifier for this stage taking an assigned value 
 ERROR: 0:5: 'triangles' : cannot change previously set input primitive 
 ERROR: 0:6: 'isolines' : cannot change previously set input primitive 
@@ -612,7 +610,6 @@ ERROR: node is still EOpNull!
 0:?     'pinbi' ( patch in block{ in int a})
 
 410.tesc
-Warning, version 400 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:4: 'length' :  array must first be sized by a redeclaration or layout qualifier
 ERROR: 1 compilation errors.  No code generated.
 
@@ -628,7 +625,6 @@ ERROR: node is still EOpNull!
 0:?     'patchOut' ( patch out 4-component vector of float)
 
 420.tesc
-Warning, version 420 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:7: 'vertices' : inconsistent output number of vertices for array size of gl_out
 ERROR: 0:11: 'vertices' : inconsistent output number of vertices for array size of a
 ERROR: 0:12: 'vertices' : inconsistent output number of vertices for array size of outb
@@ -747,7 +743,6 @@ ERROR: node is still EOpNull!
 0:?     'vs_tcs_last' (layout( location=12) in 32-element array of 2X4 matrix of double)
 
 420.tese
-Warning, version 420 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:7: '=' :  cannot convert from ' const 3-element array of float' to ' global 2-element array of float'
 ERROR: 0:8: 'initializer list' : wrong vector size (or rows in a matrix column):  temp 2-component vector of float
 ERROR: 0:9: 'initializer list' : wrong number of matrix columns:  temp 3X3 matrix of float

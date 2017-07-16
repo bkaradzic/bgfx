@@ -1,5 +1,4 @@
 400.geom
-Warning, version 400 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:12: 'invocations' : can only apply to a standalone qualifier 
 ERROR: 0:20: 'patch' : not supported in this stage: geometry
 ERROR: 0:20: 'gl_PointSize' : cannot add layout to redeclared block member 

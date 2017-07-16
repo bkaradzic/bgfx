@@ -14,6 +14,9 @@
 #include <bx/readerwriter.h>
 #include <bx/string.h>
 
+namespace
+{
+
 static float s_texelHalf = 0.0f;
 
 struct Uniforms
@@ -350,8 +353,8 @@ struct Camera
 
 	static inline void vecFromLatLong(float _vec[3], float _u, float _v)
 	{
-		const float phi   = _u * 2.0f*bx::pi;
-		const float theta = _v * bx::pi;
+		const float phi   = _u * 2.0f*bx::kPi;
+		const float theta = _v * bx::kPi;
 
 		const float st = bx::fsin(theta);
 		const float sp = bx::fsin(phi);
@@ -368,8 +371,8 @@ struct Camera
 		const float phi = bx::fatan2(_vec[0], _vec[2]);
 		const float theta = bx::facos(_vec[1]);
 
-		_u = (bx::pi + phi)*bx::invPi*0.5f;
-		_v = theta*bx::invPi;
+		_u = (bx::kPi + phi)*bx::kInvPi*0.5f;
+		_v = theta*bx::kInvPi;
 	}
 
 	struct Interp3f
@@ -420,365 +423,449 @@ struct Mouse
 	int32_t m_scrollPrev;
 };
 
-int _main_(int _argc, char** _argv)
+struct Settings
 {
-	Args args(_argc, _argv);
-
-	uint32_t width = 1280;
-	uint32_t height = 720;
-	uint32_t debug = BGFX_DEBUG_TEXT;
-	uint32_t reset  = 0
-		| BGFX_RESET_VSYNC
-		| BGFX_RESET_MSAA_X16
-		;
-
-	bgfx::init(args.m_type, args.m_pciId);
-	bgfx::reset(width, height, reset);
-
-	// Enable debug text.
-	bgfx::setDebug(debug);
-
-	// Set views  clear state.
-	bgfx::setViewClear(0
-		, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-		, 0x303030ff
-		, 1.0f
-		, 0
-		);
-
-	// Imgui.
-	imguiCreate();
-
-	// Uniforms.
-	Uniforms uniforms;
-	uniforms.init();
-
-	// Vertex declarations.
-	PosColorTexCoord0Vertex::init();
-
-	LightProbe lightProbes[LightProbe::Count];
-	lightProbes[LightProbe::Bolonga].load("bolonga");
-	lightProbes[LightProbe::Kyoto  ].load("kyoto");
-	LightProbe::Enum currentLightProbe = LightProbe::Bolonga;
-
-	bgfx::UniformHandle u_mtx        = bgfx::createUniform("u_mtx",        bgfx::UniformType::Mat4);
-	bgfx::UniformHandle u_params     = bgfx::createUniform("u_params",     bgfx::UniformType::Vec4);
-	bgfx::UniformHandle u_flags      = bgfx::createUniform("u_flags",      bgfx::UniformType::Vec4);
-	bgfx::UniformHandle u_camPos     = bgfx::createUniform("u_camPos",     bgfx::UniformType::Vec4);
-	bgfx::UniformHandle s_texCube    = bgfx::createUniform("s_texCube",    bgfx::UniformType::Int1);
-	bgfx::UniformHandle s_texCubeIrr = bgfx::createUniform("s_texCubeIrr", bgfx::UniformType::Int1);
-
-	bgfx::ProgramHandle programMesh  = loadProgram("vs_ibl_mesh",   "fs_ibl_mesh");
-	bgfx::ProgramHandle programSky   = loadProgram("vs_ibl_skybox", "fs_ibl_skybox");
-
-	Mesh* meshBunny;
-	meshBunny = meshLoad("meshes/bunny.bin");
-
-	Mesh* meshOrb;
-	meshOrb = meshLoad("meshes/orb.bin");
-
-	Camera camera;
-	Mouse mouse;
-
-	struct Settings
+	Settings()
 	{
-		Settings()
-		{
-			m_envRotCurr = 0.0f;
-			m_envRotDest = 0.0f;
-			m_lightDir[0] = -0.8f;
-			m_lightDir[1] = 0.2f;
-			m_lightDir[2] = -0.5f;
-			m_lightCol[0] = 1.0f;
-			m_lightCol[1] = 1.0f;
-			m_lightCol[2] = 1.0f;
-			m_glossiness = 0.7f;
-			m_exposure = 0.0f;
-			m_bgType = 3.0f;
-			m_radianceSlider = 2.0f;
-			m_reflectivity = 0.85f;
-			m_rgbDiff[0] = 1.0f;
-			m_rgbDiff[1] = 1.0f;
-			m_rgbDiff[2] = 1.0f;
-			m_rgbSpec[0] = 1.0f;
-			m_rgbSpec[1] = 1.0f;
-			m_rgbSpec[2] = 1.0f;
-			m_lod = 0.0f;
-			m_doDiffuse = false;
-			m_doSpecular = false;
-			m_doDiffuseIbl = true;
-			m_doSpecularIbl = true;
-			m_showLightColorWheel = true;
-			m_showDiffColorWheel = true;
-			m_showSpecColorWheel = true;
-			m_metalOrSpec = 0;
-			m_meshSelection = 0;
-			m_crossCubemapPreview = ImguiCubemap::Latlong;
-		}
+		m_envRotCurr = 0.0f;
+		m_envRotDest = 0.0f;
+		m_lightDir[0] = -0.8f;
+		m_lightDir[1] = 0.2f;
+		m_lightDir[2] = -0.5f;
+		m_lightCol[0] = 1.0f;
+		m_lightCol[1] = 1.0f;
+		m_lightCol[2] = 1.0f;
+		m_glossiness = 0.7f;
+		m_exposure = 0.0f;
+		m_bgType = 3.0f;
+		m_radianceSlider = 2.0f;
+		m_reflectivity = 0.85f;
+		m_rgbDiff[0] = 1.0f;
+		m_rgbDiff[1] = 1.0f;
+		m_rgbDiff[2] = 1.0f;
+		m_rgbSpec[0] = 1.0f;
+		m_rgbSpec[1] = 1.0f;
+		m_rgbSpec[2] = 1.0f;
+		m_lod = 0.0f;
+		m_doDiffuse = false;
+		m_doSpecular = false;
+		m_doDiffuseIbl = true;
+		m_doSpecularIbl = true;
+		m_showLightColorWheel = true;
+		m_showDiffColorWheel = true;
+		m_showSpecColorWheel = true;
+		m_metalOrSpec = 0;
+		m_meshSelection = 0;
+	}
 
-		float m_envRotCurr;
-		float m_envRotDest;
-		float m_lightDir[3];
-		float m_lightCol[3];
-		float m_glossiness;
-		float m_exposure;
-		float m_radianceSlider;
-		float m_bgType;
-		float m_reflectivity;
-		float m_rgbDiff[3];
-		float m_rgbSpec[3];
-		float m_lod;
-		bool m_doDiffuse;
-		bool m_doSpecular;
-		bool m_doDiffuseIbl;
-		bool m_doSpecularIbl;
-		bool m_showLightColorWheel;
-		bool m_showDiffColorWheel;
-		bool m_showSpecColorWheel;
-		uint8_t m_metalOrSpec;
-		uint8_t m_meshSelection;
-		ImguiCubemap::Enum m_crossCubemapPreview;
-	};
+	float m_envRotCurr;
+	float m_envRotDest;
+	float m_lightDir[3];
+	float m_lightCol[3];
+	float m_glossiness;
+	float m_exposure;
+	float m_radianceSlider;
+	float m_bgType;
+	float m_reflectivity;
+	float m_rgbDiff[3];
+	float m_rgbSpec[3];
+	float m_lod;
+	bool  m_doDiffuse;
+	bool  m_doSpecular;
+	bool  m_doDiffuseIbl;
+	bool  m_doSpecularIbl;
+	bool  m_showLightColorWheel;
+	bool  m_showDiffColorWheel;
+	bool  m_showSpecColorWheel;
+	int32_t m_metalOrSpec;
+	int32_t m_meshSelection;
+};
 
-	Settings settings;
-
-	int32_t leftScrollArea = 0;
-
-	entry::MouseState mouseState;
-	while (!entry::processEvents(width, height, debug, reset, &mouseState) )
+class ExampleIbl : public entry::AppI
+{
+public:
+	ExampleIbl(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
 	{
-		imguiBeginFrame(mouseState.m_mx
-			, mouseState.m_my
-			, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
-			| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
-			| (mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-			, mouseState.m_mz
-			, uint16_t(width)
-			, uint16_t(height)
+	}
+
+	void init(int32_t _argc, const char* const* _argv, uint32_t _width, uint32_t _height) override
+	{
+		Args args(_argc, _argv);
+
+		m_width  = _width;
+		m_height = _height;
+		m_debug = BGFX_DEBUG_NONE;
+		m_reset  = 0
+			| BGFX_RESET_VSYNC
+			| BGFX_RESET_MSAA_X16
+			;
+
+		bgfx::init(args.m_type, args.m_pciId);
+		bgfx::reset(m_width, m_height, m_reset);
+
+		// Enable debug text.
+		bgfx::setDebug(m_debug);
+
+		// Set views  clear state.
+		bgfx::setViewClear(0
+			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
+			, 0x303030ff
+			, 1.0f
+			, 0
 			);
 
-		static int32_t rightScrollArea = 0;
-		imguiBeginScrollArea("", width - 256 - 10, 10, 256, 700, &rightScrollArea);
+		// Imgui.
+		imguiCreate();
 
-		imguiLabel("Environment light:");
-		imguiIndent();
-		imguiBool("IBL Diffuse",  settings.m_doDiffuseIbl);
-		imguiBool("IBL Specular", settings.m_doSpecularIbl);
-		currentLightProbe = LightProbe::Enum(imguiTabs(
-								  uint8_t(currentLightProbe)
-								, true
-								, ImguiAlign::LeftIndented
-								, 16
-								, 2
-								, 2
-								, "Bolonga"
-								, "Kyoto"
-								) );
-		if (imguiCube(lightProbes[currentLightProbe].m_tex, settings.m_lod, settings.m_crossCubemapPreview, true) )
+		// Uniforms.
+		m_uniforms.init();
+
+		// Vertex declarations.
+		PosColorTexCoord0Vertex::init();
+
+		m_lightProbes[LightProbe::Bolonga].load("bolonga");
+		m_lightProbes[LightProbe::Kyoto  ].load("kyoto");
+		m_currentLightProbe = LightProbe::Bolonga;
+
+		u_mtx        = bgfx::createUniform("u_mtx",        bgfx::UniformType::Mat4);
+		u_params     = bgfx::createUniform("u_params",     bgfx::UniformType::Vec4);
+		u_flags      = bgfx::createUniform("u_flags",      bgfx::UniformType::Vec4);
+		u_camPos     = bgfx::createUniform("u_camPos",     bgfx::UniformType::Vec4);
+		s_texCube    = bgfx::createUniform("s_texCube",    bgfx::UniformType::Int1);
+		s_texCubeIrr = bgfx::createUniform("s_texCubeIrr", bgfx::UniformType::Int1);
+
+		m_programMesh  = loadProgram("vs_ibl_mesh",   "fs_ibl_mesh");
+		m_programSky   = loadProgram("vs_ibl_skybox", "fs_ibl_skybox");
+
+		m_meshBunny = meshLoad("meshes/bunny.bin");
+		m_meshOrb = meshLoad("meshes/orb.bin");
+	}
+
+	virtual int shutdown() override
+	{
+		meshUnload(m_meshBunny);
+		meshUnload(m_meshOrb);
+
+		// Cleanup.
+		bgfx::destroyProgram(m_programMesh);
+		bgfx::destroyProgram(m_programSky);
+
+		bgfx::destroyUniform(u_camPos);
+		bgfx::destroyUniform(u_flags);
+		bgfx::destroyUniform(u_params);
+		bgfx::destroyUniform(u_mtx);
+
+		bgfx::destroyUniform(s_texCube);
+		bgfx::destroyUniform(s_texCubeIrr);
+
+		for (uint8_t ii = 0; ii < LightProbe::Count; ++ii)
 		{
-			settings.m_crossCubemapPreview = ImguiCubemap::Enum( (settings.m_crossCubemapPreview+1) % ImguiCubemap::Count);
-		}
-		imguiSlider("Texture LOD", settings.m_lod, 0.0f, 10.1f, 0.1f);
-		imguiUnindent();
-
-		imguiSeparator(8);
-		imguiLabel("Directional light:");
-		imguiIndent();
-		imguiBool("Diffuse",  settings.m_doDiffuse);
-		imguiBool("Specular", settings.m_doSpecular);
-		const bool doDirectLighting = settings.m_doDiffuse || settings.m_doSpecular;
-		imguiSlider("Light direction X", settings.m_lightDir[0], -1.0f, 1.0f, 0.1f, doDirectLighting);
-		imguiSlider("Light direction Y", settings.m_lightDir[1], -1.0f, 1.0f, 0.1f, doDirectLighting);
-		imguiSlider("Light direction Z", settings.m_lightDir[2], -1.0f, 1.0f, 0.1f, doDirectLighting);
-		imguiColorWheel("Color:", settings.m_lightCol, settings.m_showLightColorWheel, 0.6f, doDirectLighting);
-		imguiUnindent();
-
-		imguiSeparator(8);
-		imguiLabel("Background:");
-		imguiIndent();
-		{
-			int32_t selection;
-			if      (0.0f == settings.m_bgType) { selection = UINT8_C(0); }
-			else if (7.0f == settings.m_bgType) { selection = UINT8_C(2); }
-			else                                { selection = UINT8_C(1); }
-
-			selection = imguiTabs(
-							  uint8_t(selection)
-							, true
-							, ImguiAlign::LeftIndented
-							, 16
-							, 2
-							, 3
-							, "Skybox"
-							, "Radiance"
-							, "Irradiance"
-							);
-			if      (0 == selection) { settings.m_bgType = 0.0f; }
-			else if (2 == selection) { settings.m_bgType = 7.0f; }
-			else                     { settings.m_bgType = settings.m_radianceSlider; }
-			const bool isRadiance = (selection == 1);
-			imguiSlider("Mip level", settings.m_radianceSlider, 1.0f, 6.0f, 0.1f, isRadiance);
-		}
-		imguiUnindent();
-
-		imguiSeparator(8);
-		imguiLabel("Post processing:");
-		imguiIndent();
-		imguiSlider("Exposure", settings.m_exposure, -4.0f, 4.0f, 0.1f);
-		imguiUnindent();
-
-		imguiSeparator();
-
-		imguiEndScrollArea();
-
-		imguiBeginScrollArea("", 10, 70, 256, 636, &leftScrollArea);
-
-		imguiLabel("Mesh:");
-		imguiIndent();
-		settings.m_meshSelection = uint8_t(imguiChoose(settings.m_meshSelection, "Bunny", "Orbs") );
-		imguiUnindent();
-
-		const bool isBunny = (0 == settings.m_meshSelection);
-		if (!isBunny)
-		{
-			settings.m_metalOrSpec = 0;
+			m_lightProbes[ii].destroy();
 		}
 
-		imguiSeparator(4);
-		imguiLabel("Workflow:");
-		imguiIndent();
-		if (imguiCheck("Metalness", 0 == settings.m_metalOrSpec, isBunny) ) { settings.m_metalOrSpec = 0; }
-		if (imguiCheck("Specular",  1 == settings.m_metalOrSpec, isBunny) ) { settings.m_metalOrSpec = 1; }
-		imguiUnindent();
+		m_uniforms.destroy();
 
-		imguiSeparator(4);
-		imguiLabel("Material:");
-		imguiIndent();
-		imguiSlider("Glossiness", settings.m_glossiness, 0.0f, 1.0f, 0.01f, isBunny);
-		imguiSlider(0 == settings.m_metalOrSpec ? "Metalness" : "Diffuse - Specular", settings.m_reflectivity, 0.0f, 1.0f, 0.01f, isBunny);
-		imguiUnindent();
+		imguiDestroy();
 
-		imguiColorWheel("Diffuse:", &settings.m_rgbDiff[0], settings.m_showDiffColorWheel, 0.7f);
-		imguiSeparator();
-		imguiColorWheel("Specular:", &settings.m_rgbSpec[0], settings.m_showSpecColorWheel, 0.7f, (1 == settings.m_metalOrSpec) && isBunny);
+		// Shutdown bgfx.
+		bgfx::shutdown();
 
-		imguiEndScrollArea();
+		return 0;
+	}
 
-		imguiEndFrame();
-
-		uniforms.m_glossiness   = settings.m_glossiness;
-		uniforms.m_reflectivity = settings.m_reflectivity;
-		uniforms.m_exposure     = settings.m_exposure;
-		uniforms.m_bgType       = settings.m_bgType;
-		uniforms.m_metalOrSpec   = float(settings.m_metalOrSpec);
-		uniforms.m_doDiffuse     = float(settings.m_doDiffuse);
-		uniforms.m_doSpecular    = float(settings.m_doSpecular);
-		uniforms.m_doDiffuseIbl  = float(settings.m_doDiffuseIbl);
-		uniforms.m_doSpecularIbl = float(settings.m_doSpecularIbl);
-		bx::memCopy(uniforms.m_rgbDiff,  settings.m_rgbDiff,  3*sizeof(float) );
-		bx::memCopy(uniforms.m_rgbSpec,  settings.m_rgbSpec,  3*sizeof(float) );
-		bx::memCopy(uniforms.m_lightDir, settings.m_lightDir, 3*sizeof(float) );
-		bx::memCopy(uniforms.m_lightCol, settings.m_lightCol, 3*sizeof(float) );
-
-		int64_t now = bx::getHPCounter();
-		static int64_t last = now;
-		const int64_t frameTime = now - last;
-		last = now;
-		const double freq = double(bx::getHPFrequency() );
-		const double toMs = 1000.0/freq;
-		const float deltaTimeSec = float(double(frameTime)/freq);
-
-		// Use debug font to print information about this example.
-		bgfx::dbgTextClear();
-		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/18-ibl");
-		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Image-based lighting.");
-		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
-
-		// Camera.
-		const bool mouseOverGui = imguiMouseOverArea();
-		mouse.update(float(mouseState.m_mx), float(mouseState.m_my), mouseState.m_mz, width, height);
-		if (!mouseOverGui)
+	bool update() override
+	{
+		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
-			if (mouseState.m_buttons[entry::MouseButton::Left])
+			imguiBeginFrame(m_mouseState.m_mx
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
+
+			showExampleDialog(this);
+
+			ImGui::SetNextWindowPos(
+				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiSetCond_FirstUseEver
+				);
+			ImGui::Begin("Settings"
+				, NULL
+				, ImVec2(m_width / 5.0f, m_height - 20.0f)
+				, ImGuiWindowFlags_AlwaysAutoResize
+				);
+			ImGui::PushItemWidth(180.0f);
+
+			ImGui::Text("Environment light:");
+			ImGui::Indent();
+			ImGui::Checkbox("IBL Diffuse",  &m_settings.m_doDiffuseIbl);
+			ImGui::Checkbox("IBL Specular", &m_settings.m_doSpecularIbl);
+
 			{
-				camera.orbit(mouse.m_dx, mouse.m_dy);
-			}
-			else if (mouseState.m_buttons[entry::MouseButton::Right])
-			{
-				camera.dolly(mouse.m_dx + mouse.m_dy);
-			}
-			else if (mouseState.m_buttons[entry::MouseButton::Middle])
-			{
-				settings.m_envRotDest += mouse.m_dx*2.0f;
-			}
-			else if (0 != mouse.m_scroll)
-			{
-				camera.dolly(float(mouse.m_scroll)*0.05f);
-			}
-		}
-		camera.update(deltaTimeSec);
-		bx::memCopy(uniforms.m_cameraPos, camera.m_pos.curr, 3*sizeof(float) );
-
-		// View Transform 0.
-		float view[16];
-		float proj[16];
-		bx::mtxIdentity(view);
-		bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
-		bgfx::setViewTransform(0, view, proj);
-
-		// View Transform 1.
-		camera.mtxLookAt(view);
-		bx::mtxProj(proj, 45.0f, float(width)/float(height), 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
-		bgfx::setViewTransform(1, view, proj);
-
-		// View rect.
-		bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height) );
-		bgfx::setViewRect(1, 0, 0, uint16_t(width), uint16_t(height) );
-
-		// Env rotation.
-		const float amount = bx::fmin(deltaTimeSec/0.12f, 1.0f);
-		settings.m_envRotCurr = bx::flerp(settings.m_envRotCurr, settings.m_envRotDest, amount);
-
-		// Env mtx.
-		float mtxEnvView[16];
-		camera.envViewMtx(mtxEnvView);
-		float mtxEnvRot[16];
-		bx::mtxRotateY(mtxEnvRot, settings.m_envRotCurr);
-		bx::mtxMul(uniforms.m_mtx, mtxEnvView, mtxEnvRot); // Used for Skybox.
-
-		// Submit view 0.
-		bgfx::setTexture(0, s_texCube, lightProbes[currentLightProbe].m_tex);
-		bgfx::setTexture(1, s_texCubeIrr, lightProbes[currentLightProbe].m_texIrr);
-		bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
-		screenSpaceQuad( (float)width, (float)height, true);
-		uniforms.submit();
-		bgfx::submit(0, programSky);
-
-		// Submit view 1.
-		bx::memCopy(uniforms.m_mtx, mtxEnvRot, 16*sizeof(float)); // Used for IBL.
-		if (0 == settings.m_meshSelection)
-		{
-			// Submit bunny.
-			float mtx[16];
-			bx::mtxSRT(mtx, 1.0f, 1.0f, 1.0f, 0.0f, bx::pi, 0.0f, 0.0f, -0.80f, 0.0f);
-			bgfx::setTexture(0, s_texCube,    lightProbes[currentLightProbe].m_tex);
-			bgfx::setTexture(1, s_texCubeIrr, lightProbes[currentLightProbe].m_texIrr);
-			uniforms.submit();
-			meshSubmit(meshBunny, 1, programMesh, mtx);
-		}
-		else
-		{
-			// Submit orbs.
-			for (float yy = 0, yend = 5.0f; yy < yend; yy+=1.0f)
-			{
-				for (float xx = 0, xend = 5.0f; xx < xend; xx+=1.0f)
+				float tabWidth = ImGui::GetContentRegionAvailWidth() / 2.0f;
+				if (ImGui::TabButton("Bolonga", tabWidth, m_currentLightProbe == LightProbe::Bolonga) )
 				{
-					const float scale   =  1.2f;
-					const float spacing =  2.2f;
-					const float yAdj    = -0.8f;
+					m_currentLightProbe = LightProbe::Bolonga;
+				}
 
-					float mtx[16];
-					bx::mtxSRT(mtx
+				ImGui::SameLine(0.0f,0.0f);
+
+				if (ImGui::TabButton("Kyoto", tabWidth, m_currentLightProbe == LightProbe::Kyoto) )
+				{
+					m_currentLightProbe = LightProbe::Kyoto;
+				}
+			}
+
+			ImGui::SliderFloat("Texture LOD", &m_settings.m_lod, 0.0f, 10.1f);
+			ImGui::Unindent();
+
+			ImGui::Separator();
+			ImGui::Text("Directional light:");
+			ImGui::Indent();
+			ImGui::Checkbox("Diffuse",  &m_settings.m_doDiffuse);
+			ImGui::Checkbox("Specular", &m_settings.m_doSpecular);
+			const bool doDirectLighting = m_settings.m_doDiffuse || m_settings.m_doSpecular;
+			if (doDirectLighting)
+			{
+				ImGui::SliderFloat("Light direction X", &m_settings.m_lightDir[0], -1.0f, 1.0f);
+				ImGui::SliderFloat("Light direction Y", &m_settings.m_lightDir[1], -1.0f, 1.0f);
+				ImGui::SliderFloat("Light direction Z", &m_settings.m_lightDir[2], -1.0f, 1.0f);
+				ImGui::ColorWheel("Color:", m_settings.m_lightCol, 0.6f);
+			}
+			ImGui::Unindent();
+
+			ImGui::Separator();
+			ImGui::Text("Background:");
+			ImGui::Indent();
+			{
+				int32_t selection;
+				if (0.0f == m_settings.m_bgType)
+				{
+					selection = UINT8_C(0);
+				}
+				else if (7.0f == m_settings.m_bgType)
+				{
+					selection = UINT8_C(2);
+				}
+				else
+				{
+					selection = UINT8_C(1);
+				}
+
+				float tabWidth = ImGui::GetContentRegionAvailWidth() / 3.0f;
+				if (ImGui::TabButton("Skybox", tabWidth, selection == 0) )
+				{
+					selection = 0;
+				}
+
+				ImGui::SameLine(0.0f,0.0f);
+				if (ImGui::TabButton("Radiance", tabWidth, selection == 1) )
+				{
+					selection = 1;
+				}
+
+				ImGui::SameLine(0.0f,0.0f);
+				if (ImGui::TabButton("Irradiance", tabWidth, selection == 2) )
+				{
+					selection = 2;
+				}
+
+				if (0 == selection)
+				{
+					m_settings.m_bgType = 0.0f;
+				}
+				else if (2 == selection)
+				{
+					m_settings.m_bgType = 7.0f;
+				}
+				else
+				{
+					m_settings.m_bgType = m_settings.m_radianceSlider;
+				}
+
+				const bool isRadiance = (selection == 1);
+				if (isRadiance)
+				{
+					ImGui::SliderFloat("Mip level", &m_settings.m_radianceSlider, 1.0f, 6.0f);
+				}
+			}
+			ImGui::Unindent();
+
+			ImGui::Separator();
+			ImGui::Text("Post processing:");
+			ImGui::Indent();
+			ImGui::SliderFloat("Exposure",& m_settings.m_exposure, -4.0f, 4.0f);
+			ImGui::Unindent();
+
+			ImGui::PopItemWidth();
+			ImGui::End();
+
+			ImGui::SetNextWindowPos(
+				  ImVec2(10.0f, 260.0f)
+				, ImGuiSetCond_FirstUseEver
+				);
+			ImGui::Begin("Mesh"
+				, NULL
+				, ImVec2(m_width / 5.0f, 450.0f)
+				, ImGuiWindowFlags_AlwaysAutoResize
+				);
+
+			ImGui::Text("Mesh:");
+			ImGui::Indent();
+			ImGui::RadioButton("Bunny", &m_settings.m_meshSelection, 0);
+			ImGui::RadioButton("Orbs",  &m_settings.m_meshSelection, 1);
+			ImGui::Unindent();
+
+			const bool isBunny = (0 == m_settings.m_meshSelection);
+			if (!isBunny)
+			{
+				m_settings.m_metalOrSpec = 0;
+			}
+			else
+			{
+				ImGui::Separator();
+				ImGui::Text("Workflow:");
+				ImGui::Indent();
+				ImGui::RadioButton("Metalness", &m_settings.m_metalOrSpec, 0);
+				ImGui::RadioButton("Specular", &m_settings.m_metalOrSpec, 1);
+				ImGui::Unindent();
+
+				ImGui::Separator();
+				ImGui::Text("Material:");
+				ImGui::Indent();
+				ImGui::PushItemWidth(130.0f);
+				ImGui::SliderFloat("Glossiness", &m_settings.m_glossiness, 0.0f, 1.0f);
+				ImGui::SliderFloat(0 == m_settings.m_metalOrSpec ? "Metalness" : "Diffuse - Specular", &m_settings.m_reflectivity, 0.0f, 1.0f);
+				ImGui::PopItemWidth();
+				ImGui::Unindent();
+			}
+
+
+			ImGui::ColorWheel("Diffuse:", &m_settings.m_rgbDiff[0], 0.7f);
+			ImGui::Separator();
+			if ( (1 == m_settings.m_metalOrSpec) && isBunny )
+			{
+				ImGui::ColorWheel("Specular:", &m_settings.m_rgbSpec[0], 0.7f);
+			}
+
+			ImGui::End();
+
+			imguiEndFrame();
+
+			m_uniforms.m_glossiness   = m_settings.m_glossiness;
+			m_uniforms.m_reflectivity = m_settings.m_reflectivity;
+			m_uniforms.m_exposure     = m_settings.m_exposure;
+			m_uniforms.m_bgType       = m_settings.m_bgType;
+			m_uniforms.m_metalOrSpec   = float(m_settings.m_metalOrSpec);
+			m_uniforms.m_doDiffuse     = float(m_settings.m_doDiffuse);
+			m_uniforms.m_doSpecular    = float(m_settings.m_doSpecular);
+			m_uniforms.m_doDiffuseIbl  = float(m_settings.m_doDiffuseIbl);
+			m_uniforms.m_doSpecularIbl = float(m_settings.m_doSpecularIbl);
+			bx::memCopy(m_uniforms.m_rgbDiff,  m_settings.m_rgbDiff,  3*sizeof(float) );
+			bx::memCopy(m_uniforms.m_rgbSpec,  m_settings.m_rgbSpec,  3*sizeof(float) );
+			bx::memCopy(m_uniforms.m_lightDir, m_settings.m_lightDir, 3*sizeof(float) );
+			bx::memCopy(m_uniforms.m_lightCol, m_settings.m_lightCol, 3*sizeof(float) );
+
+			int64_t now = bx::getHPCounter();
+			static int64_t last = now;
+			const int64_t frameTime = now - last;
+			last = now;
+			const double freq = double(bx::getHPFrequency() );
+			const float deltaTimeSec = float(double(frameTime)/freq);
+
+			// Camera.
+			const bool mouseOverGui = ImGui::MouseOverArea();
+			m_mouse.update(float(m_mouseState.m_mx), float(m_mouseState.m_my), m_mouseState.m_mz, m_width, m_height);
+			if (!mouseOverGui)
+			{
+				if (m_mouseState.m_buttons[entry::MouseButton::Left])
+				{
+					m_camera.orbit(m_mouse.m_dx, m_mouse.m_dy);
+				}
+				else if (m_mouseState.m_buttons[entry::MouseButton::Right])
+				{
+					m_camera.dolly(m_mouse.m_dx + m_mouse.m_dy);
+				}
+				else if (m_mouseState.m_buttons[entry::MouseButton::Middle])
+				{
+					m_settings.m_envRotDest += m_mouse.m_dx*2.0f;
+				}
+				else if (0 != m_mouse.m_scroll)
+				{
+					m_camera.dolly(float(m_mouse.m_scroll)*0.05f);
+				}
+			}
+			m_camera.update(deltaTimeSec);
+			bx::memCopy(m_uniforms.m_cameraPos, m_camera.m_pos.curr, 3*sizeof(float) );
+
+			// View Transform 0.
+			float view[16];
+			bx::mtxIdentity(view);
+
+			const bgfx::Caps* caps = bgfx::getCaps();
+
+			float proj[16];
+			bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f, 0.0, caps->homogeneousDepth);
+			bgfx::setViewTransform(0, view, proj);
+
+			// View Transform 1.
+			m_camera.mtxLookAt(view);
+			bx::mtxProj(proj, 45.0f, float(m_width)/float(m_height), 0.1f, 100.0f, caps->homogeneousDepth);
+			bgfx::setViewTransform(1, view, proj);
+
+			// View rect.
+			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
+			bgfx::setViewRect(1, 0, 0, uint16_t(m_width), uint16_t(m_height) );
+
+			// Env rotation.
+			const float amount = bx::fmin(deltaTimeSec/0.12f, 1.0f);
+			m_settings.m_envRotCurr = bx::flerp(m_settings.m_envRotCurr, m_settings.m_envRotDest, amount);
+
+			// Env mtx.
+			float mtxEnvView[16];
+			m_camera.envViewMtx(mtxEnvView);
+			float mtxEnvRot[16];
+			bx::mtxRotateY(mtxEnvRot, m_settings.m_envRotCurr);
+			bx::mtxMul(m_uniforms.m_mtx, mtxEnvView, mtxEnvRot); // Used for Skybox.
+
+			// Submit view 0.
+			bgfx::setTexture(0, s_texCube, m_lightProbes[m_currentLightProbe].m_tex);
+			bgfx::setTexture(1, s_texCubeIrr, m_lightProbes[m_currentLightProbe].m_texIrr);
+			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			screenSpaceQuad( (float)m_width, (float)m_height, true);
+			m_uniforms.submit();
+			bgfx::submit(0, m_programSky);
+
+			// Submit view 1.
+			bx::memCopy(m_uniforms.m_mtx, mtxEnvRot, 16*sizeof(float)); // Used for IBL.
+			if (0 == m_settings.m_meshSelection)
+			{
+				// Submit bunny.
+				float mtx[16];
+				bx::mtxSRT(mtx, 1.0f, 1.0f, 1.0f, 0.0f, bx::kPi, 0.0f, 0.0f, -0.80f, 0.0f);
+				bgfx::setTexture(0, s_texCube,    m_lightProbes[m_currentLightProbe].m_tex);
+				bgfx::setTexture(1, s_texCubeIrr, m_lightProbes[m_currentLightProbe].m_texIrr);
+				m_uniforms.submit();
+				meshSubmit(m_meshBunny, 1, m_programMesh, mtx);
+			}
+			else
+			{
+				// Submit orbs.
+				for (float yy = 0, yend = 5.0f; yy < yend; yy+=1.0f)
+				{
+					for (float xx = 0, xend = 5.0f; xx < xend; xx+=1.0f)
+					{
+						const float scale   =  1.2f;
+						const float spacing =  2.2f;
+						const float yAdj    = -0.8f;
+
+						float mtx[16];
+						bx::mtxSRT(mtx
 							, scale/xend
 							, scale/xend
 							, scale/xend
@@ -790,49 +877,57 @@ int _main_(int _argc, char** _argv)
 							, 0.0f
 							);
 
-					uniforms.m_glossiness   =        xx*(1.0f/xend);
-					uniforms.m_reflectivity = (yend-yy)*(1.0f/yend);
-					uniforms.m_metalOrSpec = 0.0f;
-					uniforms.submit();
+						m_uniforms.m_glossiness   =        xx*(1.0f/xend);
+						m_uniforms.m_reflectivity = (yend-yy)*(1.0f/yend);
+						m_uniforms.m_metalOrSpec = 0.0f;
+						m_uniforms.submit();
 
-					bgfx::setTexture(0, s_texCube,    lightProbes[currentLightProbe].m_tex);
-					bgfx::setTexture(1, s_texCubeIrr, lightProbes[currentLightProbe].m_texIrr);
-					meshSubmit(meshOrb, 1, programMesh, mtx);
+						bgfx::setTexture(0, s_texCube,    m_lightProbes[m_currentLightProbe].m_tex);
+						bgfx::setTexture(1, s_texCubeIrr, m_lightProbes[m_currentLightProbe].m_texIrr);
+						meshSubmit(m_meshOrb, 1, m_programMesh, mtx);
+					}
 				}
 			}
+
+			// Advance to next frame. Rendering thread will be kicked to
+			// process submitted rendering primitives.
+			bgfx::frame();
+
+			return true;
 		}
 
-		// Advance to next frame. Rendering thread will be kicked to
-		// process submitted rendering primitives.
-		bgfx::frame();
+		return false;
 	}
 
-	meshUnload(meshBunny);
-	meshUnload(meshOrb);
+	uint32_t m_width;
+	uint32_t m_height;
+	uint32_t m_debug;
+	uint32_t m_reset;
+	entry::MouseState m_mouseState;
 
-	// Cleanup.
-	bgfx::destroyProgram(programMesh);
-	bgfx::destroyProgram(programSky);
+	Uniforms m_uniforms;
 
-	bgfx::destroyUniform(u_camPos);
-	bgfx::destroyUniform(u_flags);
-	bgfx::destroyUniform(u_params);
-	bgfx::destroyUniform(u_mtx);
+	LightProbe m_lightProbes[LightProbe::Count];
+	LightProbe::Enum m_currentLightProbe;
 
-	bgfx::destroyUniform(s_texCube);
-	bgfx::destroyUniform(s_texCubeIrr);
+	bgfx::UniformHandle u_mtx;
+	bgfx::UniformHandle u_params;
+	bgfx::UniformHandle u_flags;
+	bgfx::UniformHandle u_camPos;
+	bgfx::UniformHandle s_texCube;
+	bgfx::UniformHandle s_texCubeIrr;
 
-	for (uint8_t ii = 0; ii < LightProbe::Count; ++ii)
-	{
-		lightProbes[ii].destroy();
-	}
+	bgfx::ProgramHandle m_programMesh;
+	bgfx::ProgramHandle m_programSky;
 
-	uniforms.destroy();
+	Mesh* m_meshBunny;
+	Mesh* m_meshOrb;
+	Camera m_camera;
+	Mouse m_mouse;
 
-	imguiDestroy();
+	Settings m_settings;
+};
 
-	// Shutdown bgfx.
-	bgfx::shutdown();
+} // namespace
 
-	return 0;
-}
+ENTRY_IMPLEMENT_MAIN(ExampleIbl, "18-ibl", "Image-based lighting.");

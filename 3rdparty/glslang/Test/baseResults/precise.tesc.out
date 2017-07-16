@@ -1,6 +1,4 @@
 precise.tesc
-Warning, version 450 is not yet complete; most version-specific features are present, but some are missing.
-
 Shader version: 450
 Requested GL_EXT_gpu_shader5
 Requested GL_EXT_shader_io_blocks

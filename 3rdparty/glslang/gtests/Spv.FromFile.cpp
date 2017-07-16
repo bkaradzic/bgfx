@@ -226,6 +226,8 @@ INSTANTIATE_TEST_CASE_P(
         "spv.aggOps.frag",
         "spv.always-discard.frag",
         "spv.always-discard2.frag",
+        "spv.arbPostDepthCoverage.frag",
+        "spv.arbPostDepthCoverage_Error.frag",
         "spv.bitCast.frag",
         "spv.bool.vert",
         "spv.boolInBlock.frag",
@@ -242,6 +244,8 @@ INSTANTIATE_TEST_CASE_P(
         "spv.drawParams.vert",
         "spv.doWhileLoop.frag",
         "spv.earlyReturnDiscard.frag",
+        "spv.extPostDepthCoverage.frag",
+        "spv.extPostDepthCoverage_Error.frag",
         "spv.flowControl.frag",
         "spv.forLoop.frag",
         "spv.forwardFun.frag",
@@ -278,6 +282,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.shaderBallot.comp",
         "spv.shaderDrawParams.vert",
         "spv.shaderGroupVote.comp",
+        "spv.shaderStencilExport.frag",
         "spv.shiftOps.frag",
         "spv.simpleFunctionCall.frag",
         "spv.simpleMat.vert",
@@ -332,7 +337,7 @@ INSTANTIATE_TEST_CASE_P(
         { "spv.ssbo.autoassign.frag", "main", 5, 10, 0, 15, 30, true, true },
         { "spv.ssboAlias.frag", "main", 0, 0, 0, 0, 83, true, false },
         { "spv.rw.autoassign.frag", "main", 5, 10, 20, 15, 30, true, true },
-        { "spv.register.autoassign.rangetest.frag", "main", 
+        { "spv.register.autoassign.rangetest.frag", "main",
                 glslang::TQualifier::layoutBindingEnd-2,
                 glslang::TQualifier::layoutBindingEnd+5,
                 20, 30, true, false },
@@ -357,6 +362,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.atomic.comp",
         "spv.glFragColor.frag",
         "spv.specConst.vert",
+        "spv.OVR_multiview.vert",
     })),
     FileNameAsCustomTestSuffix
 );
@@ -396,7 +402,9 @@ INSTANTIATE_TEST_CASE_P(
     Glsl, CompileVulkanToSpirvTestAMD,
     ::testing::ValuesIn(std::vector<std::string>({
         "spv.float16.frag",
-        "spv.shaderBallotAMD.comp"
+        "spv.int16.frag",
+        "spv.shaderBallotAMD.comp",
+        "spv.textureGatherBiasLod.frag"
     })),
     FileNameAsCustomTestSuffix
 );

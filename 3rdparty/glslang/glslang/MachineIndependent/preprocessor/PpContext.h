@@ -200,6 +200,7 @@ public:
         virtual void ungetch() = 0;
         virtual bool peekPasting() { return false; }          // true when about to see ##
         virtual bool endOfReplacementList() { return false; } // true when at the end of a macro replacement list (RHS of #define)
+        virtual bool isMacroInput() { return false; }
 
         // Will be called when we start reading tokens from this instance
         virtual void notifyActivated() {}
@@ -306,6 +307,7 @@ protected:
     void ungetChar() { inputStack.back()->ungetch(); }
     bool peekPasting() { return !inputStack.empty() && inputStack.back()->peekPasting(); }
     bool endOfReplacementList() { return inputStack.empty() || inputStack.back()->endOfReplacementList(); }
+    bool isMacroInput() { return inputStack.size() > 0 && inputStack.back()->isMacroInput(); }
 
     static const int maxIfNesting = 64;
 
@@ -329,6 +331,7 @@ protected:
         virtual void ungetch() override { assert(0); }
         bool peekPasting() override { return prepaste; }
         bool endOfReplacementList() override { return mac->body.atEnd(); }
+        bool isMacroInput() override { return true; }
 
         MacroSymbol *mac;
         TVector<TokenStream*> args;

@@ -30,7 +30,6 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 #include <bx/thread.h>
 #include <bx/handlealloc.h>
 #include <bx/readerwriter.h>
-#include <bx/crtimpl.h>
 #include <tinystl/allocator.h>
 #include <tinystl/string.h>
 

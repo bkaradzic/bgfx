@@ -8,7 +8,7 @@
 
 #include <bx/timer.h>
 #include <bx/string.h>
-#include <bx/fpumath.h>
+#include <bx/math.h>
 
 #include "font/font_manager.h"
 #include "font/text_buffer_manager.h"
@@ -18,6 +18,11 @@
 #include <iconfontheaders/icons_kenney.h>
 
 #include <wchar.h>
+
+#include "imgui/imgui.h"
+
+namespace
+{
 
 TrueTypeHandle loadTtf(FontManager* _fm, const char* _filePath)
 {
@@ -35,123 +40,127 @@ TrueTypeHandle loadTtf(FontManager* _fm, const char* _filePath)
 	return invalid;
 }
 
-int _main_(int _argc, char** _argv)
+static const char* s_fontFilePath[] =
 {
-	Args args(_argc, _argv);
+	"font/droidsans.ttf",
+	"font/chp-fire.ttf",
+	"font/bleeding_cowboys.ttf",
+	"font/mias_scribblings.ttf",
+	"font/ruritania.ttf",
+	"font/signika-regular.ttf",
+	"font/five_minutes.otf",
+};
 
-	uint32_t width = 1280;
-	uint32_t height = 720;
-	uint32_t debug = BGFX_DEBUG_TEXT;
-	uint32_t reset = BGFX_RESET_VSYNC;
-
-	bgfx::init(args.m_type, args.m_pciId);
-	bgfx::reset(width, height, reset);
-
-	// Enable debug text.
-	bgfx::setDebug(debug);
-
-	// Set view 0 clear state.
-	bgfx::setViewClear(0
-		, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
-		, 0x303030ff
-		, 1.0f
-		, 0
-		);
-
-	// Init the text rendering system.
-	FontManager* fontManager = new FontManager(512);
-	TextBufferManager* textBufferManager = new TextBufferManager(fontManager);
-
-	// Load some TTF files.
-	const char* fontFilePath[7] =
+class ExampleFont : public entry::AppI
+{
+public:
+	ExampleFont(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
 	{
-		"font/droidsans.ttf",
-		"font/chp-fire.ttf",
-		"font/bleeding_cowboys.ttf",
-		"font/mias_scribblings.ttf",
-		"font/ruritania.ttf",
-		"font/signika-regular.ttf",
-		"font/five_minutes.otf",
-	};
-
-	const uint32_t numFonts = BX_COUNTOF(fontFilePath);
-
-	TrueTypeHandle fontFiles[numFonts];
-	FontHandle fonts[numFonts];
-	for (uint32_t ii = 0; ii < numFonts; ++ii)
-	{
-		// Instantiate a usable font.
-		fontFiles[ii] = loadTtf(fontManager, fontFilePath[ii]);
-		fonts[ii] = fontManager->createFontByPixelSize(fontFiles[ii], 0, 32);
-
-		// Preload glyphs and blit them to atlas.
-		fontManager->preloadGlyph(fonts[ii], L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ. \n");
-
-		// You can unload the truetype files at this stage, but in that
-		// case, the set of glyph's will be limited to the set of preloaded
-		// glyph.
-		fontManager->destroyTtf(fontFiles[ii]);
 	}
 
-	TrueTypeHandle fontAwesomeTtf = loadTtf(fontManager, "font/fontawesome-webfont.ttf");
-	TrueTypeHandle fontKenneyTtf  = loadTtf(fontManager, "font/kenney-icon-font.ttf");
-
-	// This font doesn't have any preloaded glyph's but the truetype file
-	// is loaded so glyph will be generated as needed.
-	FontHandle fontAwesome72 = fontManager->createFontByPixelSize(fontAwesomeTtf, 0, 72);
-	FontHandle fontKenney64  = fontManager->createFontByPixelSize(fontKenneyTtf,  0, 64);
-
-	TrueTypeHandle visitorTtf = loadTtf(fontManager, "font/visitor1.ttf");
-
-	// This font doesn't have any preloaded glyph's but the truetype file
-	// is loaded so glyph will be generated as needed.
-	FontHandle visitor10 = fontManager->createFontByPixelSize(visitorTtf, 0, 10);
-
-	//create a static text buffer compatible with alpha font
-	//a static text buffer content cannot be modified after its first submit.
-	TextBufferHandle staticText = textBufferManager->createTextBuffer(FONT_TYPE_ALPHA, BufferType::Static);
-
-	// The pen position represent the top left of the box of the first line
-	// of text.
-	textBufferManager->setPenPosition(staticText, 24.0f, 100.0f);
-
-	for (uint32_t ii = 0; ii < numFonts; ++ii)
+	void init(int32_t _argc, const char* const* _argv, uint32_t _width, uint32_t _height) override
 	{
-		// Add some text to the buffer.
-		// The position of the pen is adjusted when there is an endline.
-		textBufferManager->appendText(staticText, fonts[ii], L"The quick brown fox jumps over the lazy dog\n");
-	}
+		Args args(_argc, _argv);
 
-	// Now write some styled text.
+		m_width  = _width;
+		m_height = _height;
+		m_debug  = BGFX_DEBUG_NONE;
+		m_reset  = BGFX_RESET_VSYNC;
 
-	// Setup style colors.
-	textBufferManager->setBackgroundColor(staticText, 0x551111ff);
-	textBufferManager->setUnderlineColor(staticText, 0xff2222ff);
-	textBufferManager->setOverlineColor(staticText, 0x2222ffff);
-	textBufferManager->setStrikeThroughColor(staticText, 0x22ff22ff);
+		bgfx::init(args.m_type, args.m_pciId);
+		bgfx::reset(m_width, m_height, m_reset);
 
-	// Background.
-	textBufferManager->setStyle(staticText, STYLE_BACKGROUND);
-	textBufferManager->appendText(staticText, fonts[0], L"The quick ");
+		// Enable debug text.
+		bgfx::setDebug(m_debug);
 
-	// Strike-through.
-	textBufferManager->setStyle(staticText, STYLE_STRIKE_THROUGH);
-	textBufferManager->appendText(staticText, fonts[0], L"brown fox ");
+		// Set view 0 clear state.
+		bgfx::setViewClear(0
+						   , BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
+						   , 0x303030ff
+						   , 1.0f
+						   , 0
+						   );
 
-	// Overline.
-	textBufferManager->setStyle(staticText, STYLE_OVERLINE);
-	textBufferManager->appendText(staticText, fonts[0], L"jumps over ");
+		// Init the text rendering system.
+		m_fontManager = new FontManager(512);
+		m_textBufferManager = new TextBufferManager(m_fontManager);
 
-	// Underline.
-	textBufferManager->setStyle(staticText, STYLE_UNDERLINE);
-	textBufferManager->appendText(staticText, fonts[0], L"the lazy ");
+		// Load some TTF files.
+		for (uint32_t ii = 0; ii < numFonts; ++ii)
+		{
+			// Instantiate a usable font.
+			m_fontFiles[ii] = loadTtf(m_fontManager, s_fontFilePath[ii]);
+			m_fonts[ii] = m_fontManager->createFontByPixelSize(m_fontFiles[ii], 0, 32);
 
-	// Background + strike-through.
-	textBufferManager->setStyle(staticText, STYLE_BACKGROUND | STYLE_STRIKE_THROUGH);
-	textBufferManager->appendText(staticText, fonts[0], L"dog\n");
+			// Preload glyphs and blit them to atlas.
+			m_fontManager->preloadGlyph(m_fonts[ii], L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ. \n");
 
-	textBufferManager->setStyle(staticText, STYLE_NORMAL);
-	textBufferManager->appendText(staticText, fontAwesome72,
+			// You can unload the truetype files at this stage, but in that
+			// case, the set of glyph's will be limited to the set of preloaded
+			// glyph.
+			m_fontManager->destroyTtf(m_fontFiles[ii]);
+		}
+
+		m_fontAwesomeTtf = loadTtf(m_fontManager, "font/fontawesome-webfont.ttf");
+		m_fontKenneyTtf  = loadTtf(m_fontManager, "font/kenney-icon-font.ttf");
+
+		// This font doesn't have any preloaded glyph's but the truetype file
+		// is loaded so glyph will be generated as needed.
+		m_fontAwesome72 = m_fontManager->createFontByPixelSize(m_fontAwesomeTtf, 0, 72);
+		m_fontKenney64  = m_fontManager->createFontByPixelSize(m_fontKenneyTtf,  0, 64);
+
+		m_visitorTtf = loadTtf(m_fontManager, "font/visitor1.ttf");
+
+		// This font doesn't have any preloaded glyph's but the truetype file
+		// is loaded so glyph will be generated as needed.
+		m_visitor10 = m_fontManager->createFontByPixelSize(m_visitorTtf, 0, 10);
+
+		//create a static text buffer compatible with alpha font
+		//a static text buffer content cannot be modified after its first submit.
+		m_staticText = m_textBufferManager->createTextBuffer(FONT_TYPE_ALPHA, BufferType::Static);
+
+		// The pen position represent the top left of the box of the first line
+		// of text.
+		m_textBufferManager->setPenPosition(m_staticText, 24.0f, 100.0f);
+
+		for (uint32_t ii = 0; ii < numFonts; ++ii)
+		{
+			// Add some text to the buffer.
+			// The position of the pen is adjusted when there is an endline.
+			m_textBufferManager->appendText(m_staticText, m_fonts[ii], L"The quick brown fox jumps over the lazy dog\n");
+		}
+
+		// Now write some styled text.
+
+		// Setup style colors.
+		m_textBufferManager->setBackgroundColor(m_staticText, 0x551111ff);
+		m_textBufferManager->setUnderlineColor(m_staticText, 0xff2222ff);
+		m_textBufferManager->setOverlineColor(m_staticText, 0x2222ffff);
+		m_textBufferManager->setStrikeThroughColor(m_staticText, 0x22ff22ff);
+
+		// Background.
+		m_textBufferManager->setStyle(m_staticText, STYLE_BACKGROUND);
+		m_textBufferManager->appendText(m_staticText, m_fonts[0], L"The quick ");
+
+		// Strike-through.
+		m_textBufferManager->setStyle(m_staticText, STYLE_STRIKE_THROUGH);
+		m_textBufferManager->appendText(m_staticText, m_fonts[0], L"brown fox ");
+
+		// Overline.
+		m_textBufferManager->setStyle(m_staticText, STYLE_OVERLINE);
+		m_textBufferManager->appendText(m_staticText, m_fonts[0], L"jumps over ");
+
+		// Underline.
+		m_textBufferManager->setStyle(m_staticText, STYLE_UNDERLINE);
+		m_textBufferManager->appendText(m_staticText, m_fonts[0], L"the lazy ");
+
+		// Background + strike-through.
+		m_textBufferManager->setStyle(m_staticText, STYLE_BACKGROUND | STYLE_STRIKE_THROUGH);
+		m_textBufferManager->appendText(m_staticText, m_fonts[0], L"dog\n");
+
+		m_textBufferManager->setStyle(m_staticText, STYLE_NORMAL);
+		m_textBufferManager->appendText(m_staticText, m_fontAwesome72,
 			" " ICON_FA_POWER_OFF
 			" " ICON_FA_TWITTER_SQUARE
 			" " ICON_FA_CERTIFICATE
@@ -160,7 +169,7 @@ int _main_(int _argc, char** _argv)
 			" " ICON_FA_GITHUB_ALT
 			"\n"
 			);
-	textBufferManager->appendText(staticText, fontKenney64,
+		m_textBufferManager->appendText(m_staticText, m_fontKenney64,
 			" " ICON_KI_COMPUTER
 			" " ICON_KI_JOYSTICK
 			" " ICON_KI_EXLAMATION
@@ -170,107 +179,191 @@ int _main_(int _argc, char** _argv)
 			"\n"
 			);
 
-	// Create a transient buffer for real-time data.
-	TextBufferHandle transientText = textBufferManager->createTextBuffer(FONT_TYPE_ALPHA, BufferType::Transient);
+		// Create a transient buffer for real-time data.
+		m_transientText = m_textBufferManager->createTextBuffer(FONT_TYPE_ALPHA, BufferType::Transient);
 
-	while (!entry::processEvents(width, height, debug, reset) )
-	{
-		// This dummy draw call is here to make sure that view 0 is cleared
-		// if no other draw calls are submitted to view 0.
-		bgfx::touch(0);
-
-		int64_t now = bx::getHPCounter();
-		static int64_t last = now;
-		const int64_t frameTime = now - last;
-		last = now;
-		const double freq = double(bx::getHPFrequency() );
-		const double toMs = 1000.0 / freq;
-
-		// Use debug font to print information about this example.
-		bgfx::dbgTextClear();
-		bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/10-font");
-		bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Use the font system to display text and styled text.");
-		bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
-
-		// Use transient text to display debug information.
-		wchar_t fpsText[64];
-		bx::swnprintf(fpsText, BX_COUNTOF(fpsText), L"Frame: % 7.3f[ms]", double(frameTime) * toMs);
-
-		textBufferManager->clearTextBuffer(transientText);
-		textBufferManager->setPenPosition(transientText, width - 150.0f, 10.0f);
-		textBufferManager->appendText(transientText, visitor10, L"Transient\n");
-		textBufferManager->appendText(transientText, visitor10, L"text buffer\n");
-		textBufferManager->appendText(transientText, visitor10, fpsText);
-
-		float at[3]  = { 0, 0,  0.0f };
-		float eye[3] = { 0, 0, -1.0f };
-
-		float view[16];
-		bx::mtxLookAt(view, eye, at);
-
-		const float centering = 0.5f;
-
-		// Setup a top-left ortho matrix for screen space drawing.
-		const bgfx::HMD* hmd = bgfx::getHMD();
-		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
-		{
-			float proj[16];
-			bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
-
-			static float time = 0.0f;
-			time += 0.05f;
-
-			const float dist = 10.0f;
-			const float offset0 = -proj[8] + (hmd->eye[0].viewOffset[0] / dist * proj[0]);
-			const float offset1 = -proj[8] + (hmd->eye[1].viewOffset[0] / dist * proj[0]);
-
-			float ortho[2][16];
-			const float offsetx = width/2.0f;
-			bx::mtxOrtho(ortho[0], centering, offsetx + centering, height + centering, centering, -1.0f, 1.0f, offset0);
-			bx::mtxOrtho(ortho[1], centering, offsetx + centering, height + centering, centering, -1.0f, 1.0f, offset1);
-			bgfx::setViewTransform(0, view, ortho[0], BGFX_VIEW_STEREO, ortho[1]);
-			bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
-		}
-		else
-		{
-			float ortho[16];
-			bx::mtxOrtho(ortho, centering, width + centering, height + centering, centering, -1.0f, 1.0f, bgfx::getCaps()->homogeneousDepth);
-			bgfx::setViewTransform(0, view, ortho);
-			bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height) );
-		}
-
-		// Submit the debug text.
-		textBufferManager->submitTextBuffer(transientText, 0);
-
-		// Submit the static text.
-		textBufferManager->submitTextBuffer(staticText, 0);
-
-		// Advance to next frame. Rendering thread will be kicked to
-		// process submitted rendering primitives.
-		bgfx::frame();
+		imguiCreate();
 	}
 
-	fontManager->destroyTtf(fontKenneyTtf);
-	fontManager->destroyTtf(fontAwesomeTtf);
-	fontManager->destroyTtf(visitorTtf);
-
-	// Destroy the fonts.
-	fontManager->destroyFont(fontKenney64);
-	fontManager->destroyFont(fontAwesome72);
-	fontManager->destroyFont(visitor10);
-	for (uint32_t ii = 0; ii < numFonts; ++ii)
+	virtual int shutdown() override
 	{
-		fontManager->destroyFont(fonts[ii]);
+		imguiDestroy();
+
+		m_fontManager->destroyTtf(m_fontKenneyTtf);
+		m_fontManager->destroyTtf(m_fontAwesomeTtf);
+		m_fontManager->destroyTtf(m_visitorTtf);
+
+		// Destroy the fonts.
+		m_fontManager->destroyFont(m_fontKenney64);
+		m_fontManager->destroyFont(m_fontAwesome72);
+		m_fontManager->destroyFont(m_visitor10);
+		for (uint32_t ii = 0; ii < numFonts; ++ii)
+		{
+			m_fontManager->destroyFont(m_fonts[ii]);
+		}
+
+		m_textBufferManager->destroyTextBuffer(m_staticText);
+		m_textBufferManager->destroyTextBuffer(m_transientText);
+
+		delete m_textBufferManager;
+		delete m_fontManager;
+
+		// Shutdown bgfx.
+		bgfx::shutdown();
+
+		return 0;
 	}
 
-	textBufferManager->destroyTextBuffer(staticText);
-	textBufferManager->destroyTextBuffer(transientText);
+	bool update() override
+	{
+		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
+		{
+			imguiBeginFrame(m_mouseState.m_mx
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
 
-	delete textBufferManager;
-	delete fontManager;
+			showExampleDialog(this);
 
-	// Shutdown bgfx.
-	bgfx::shutdown();
+			imguiEndFrame();
 
-	return 0;
-}
+			// This dummy draw call is here to make sure that view 0 is cleared
+			// if no other draw calls are submitted to view 0.
+			bgfx::touch(0);
+
+			int64_t now = bx::getHPCounter();
+			static int64_t last = now;
+			const int64_t frameTime = now - last;
+			last = now;
+			const double freq = double(bx::getHPFrequency() );
+			const double toMs = 1000.0 / freq;
+
+			// Use transient text to display debug information.
+			wchar_t fpsText[64];
+			bx::swnprintf(fpsText, BX_COUNTOF(fpsText), L"Frame: % 7.3f[ms]", double(frameTime) * toMs);
+
+			m_textBufferManager->clearTextBuffer(m_transientText);
+			m_textBufferManager->setPenPosition(m_transientText, m_width - 150.0f, 10.0f);
+			m_textBufferManager->appendText(m_transientText, m_visitor10, L"Transient\n");
+			m_textBufferManager->appendText(m_transientText, m_visitor10, L"text buffer\n");
+			m_textBufferManager->appendText(m_transientText, m_visitor10, fpsText);
+
+			float at[3]  = { 0, 0,  0.0f };
+			float eye[3] = { 0, 0, -1.0f };
+
+			float view[16];
+			bx::mtxLookAt(view, eye, at);
+
+			const float centering = 0.5f;
+
+			// Setup a top-left ortho matrix for screen space drawing.
+			const bgfx::HMD*  hmd  = bgfx::getHMD();
+			const bgfx::Caps* caps = bgfx::getCaps();
+			if (NULL != hmd
+			&&  0 != (hmd->flags & BGFX_HMD_RENDERING) )
+			{
+				float proj[16];
+				bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f, caps->homogeneousDepth);
+
+				static float time = 0.0f;
+				time += 0.05f;
+
+				const float dist = 10.0f;
+				const float offset0 = -proj[8] + (hmd->eye[0].viewOffset[0] / dist * proj[0]);
+				const float offset1 = -proj[8] + (hmd->eye[1].viewOffset[0] / dist * proj[0]);
+
+				float ortho[2][16];
+				const float offsetx = m_width/2.0f;
+				bx::mtxOrtho(
+					  ortho[0]
+					, centering
+					, offsetx  + centering
+					, m_height + centering
+					, centering
+					, -1.0f
+					, 1.0f
+					, offset0
+					, caps->homogeneousDepth
+					);
+				bx::mtxOrtho(
+					  ortho[1]
+					, centering
+					, offsetx  + centering
+					, m_height + centering
+					, centering
+					, -1.0f
+					, 1.0f
+					, offset1
+					, caps->homogeneousDepth
+					);
+				bgfx::setViewTransform(0, view, ortho[0], BGFX_VIEW_STEREO, ortho[1]);
+				bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
+			}
+			else
+			{
+				float ortho[16];
+				bx::mtxOrtho(
+					  ortho
+					, centering
+					, m_width  + centering
+					, m_height + centering
+					, centering
+					, 0.0f
+					, 100.0f
+					, 0.0f
+					, caps->homogeneousDepth
+					);
+				bgfx::setViewTransform(0, view, ortho);
+				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
+			}
+
+			// Submit the debug text.
+			m_textBufferManager->submitTextBuffer(m_transientText, 0);
+
+			// Submit the static text.
+			m_textBufferManager->submitTextBuffer(m_staticText, 0);
+
+			// Advance to next frame. Rendering thread will be kicked to
+			// process submitted rendering primitives.
+			bgfx::frame();
+
+			return true;
+		}
+
+		return false;
+	}
+
+	entry::MouseState m_mouseState;
+
+	uint32_t m_width;
+	uint32_t m_height;
+	uint32_t m_debug;
+	uint32_t m_reset;
+
+	FontManager* m_fontManager;
+	TextBufferManager* m_textBufferManager;
+
+	FontHandle m_visitor10;
+	TrueTypeHandle m_fontAwesomeTtf;
+	TrueTypeHandle m_fontKenneyTtf;
+	FontHandle m_fontAwesome72;
+	FontHandle m_fontKenney64;
+	TrueTypeHandle m_visitorTtf;
+
+	TextBufferHandle m_transientText;
+	TextBufferHandle m_staticText;
+
+	static const uint32_t numFonts = BX_COUNTOF(s_fontFilePath);
+
+	TrueTypeHandle m_fontFiles[numFonts];
+	FontHandle m_fonts[numFonts];
+};
+
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleFont, "10-font", "Use the font system to display text and styled text.");

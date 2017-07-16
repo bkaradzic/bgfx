@@ -10,7 +10,10 @@
 #include "bounds.h"
 #include <bx/allocator.h>
 #include <bx/debug.h>
-#include <bx/fpumath.h>
+#include <bx/math.h>
+
+namespace
+{
 
 static const uint16_t s_terrainSize = 256;
 
@@ -38,7 +41,7 @@ bgfx::VertexDecl PosTexCoord0Vertex::ms_decl;
 
 struct TerrainData
 {
-	uint32_t             m_mode;
+	int32_t              m_mode;
 	bool                 m_dirty;
 	float                m_transform[16];
 	uint8_t*             m_heightMap;
@@ -58,13 +61,19 @@ struct BrushData
 
 class ExampleTerrain : public entry::AppI
 {
-	void init(int _argc, char** _argv) BX_OVERRIDE
+public:
+	ExampleTerrain(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
+	void init(int32_t _argc, const char* const* _argv, uint32_t _width, uint32_t _height) override
 	{
 		Args args(_argc, _argv);
 
-		m_width  = 1280;
-		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_width  = _width;
+		m_height = _height;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -75,11 +84,11 @@ class ExampleTerrain : public entry::AppI
 
 		// Set view 0 clear state.
 		bgfx::setViewClear(0
-				, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
-				, 0x303030ff
-				, 1.0f
-				, 0
-				);
+			, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
+			, 0x303030ff
+			, 1.0f
+			, 0
+			);
 
 		// Create vertex stream declaration.
 		PosTexCoord0Vertex::init();
@@ -93,18 +102,16 @@ class ExampleTerrain : public entry::AppI
 
 		m_timeOffset = bx::getHPCounter();
 
-		m_vbh.idx = bgfx::invalidHandle;
-		m_ibh.idx = bgfx::invalidHandle;
-		m_dvbh.idx = bgfx::invalidHandle;
-		m_dibh.idx = bgfx::invalidHandle;
-		m_heightTexture.idx = bgfx::invalidHandle;
+		m_vbh.idx = bgfx::kInvalidHandle;
+		m_ibh.idx = bgfx::kInvalidHandle;
+		m_dvbh.idx = bgfx::kInvalidHandle;
+		m_dibh.idx = bgfx::kInvalidHandle;
+		m_heightTexture.idx = bgfx::kInvalidHandle;
 		s_heightTexture = bgfx::createUniform("s_heightTexture", bgfx::UniformType::Int1);
 
 		m_oldWidth  = 0;
 		m_oldHeight = 0;
 		m_oldReset  = m_reset;
-
-		m_scrollArea   = 0;
 
 		m_brush.m_power = 0.5f;
 		m_brush.m_size  = 10;
@@ -125,10 +132,10 @@ class ExampleTerrain : public entry::AppI
 
 		const float initialPos[3] = { s_terrainSize/2.0f, 100.0f, 0.0f };
 		cameraSetPosition(initialPos);
-		cameraSetVerticalAngle(-bx::pi/4.0f);
+		cameraSetVerticalAngle(-bx::kPi/4.0f);
 	}
 
-	virtual int shutdown() BX_OVERRIDE
+	virtual int shutdown() override
 	{
 		// Cleanup.
 		cameraDestroy();
@@ -312,7 +319,7 @@ class ExampleTerrain : public entry::AppI
 				float brushAttn = m_brush.m_size - bx::fsqrt(a2 + b2);
 
 				// Raise/Lower and scale by brush power.
-				height += (bx::fclamp(brushAttn * m_brush.m_power, 0.0, m_brush.m_power) * m_brush.m_raise)
+				height += 0.0f < bx::fclamp(brushAttn*m_brush.m_power, 0.0f, m_brush.m_power) && m_brush.m_raise
 					?  1.0f
 					: -1.0f
 					;
@@ -374,7 +381,7 @@ class ExampleTerrain : public entry::AppI
 		}
 	}
 
-	bool update() BX_OVERRIDE
+	bool update() override
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
@@ -383,60 +390,47 @@ class ExampleTerrain : public entry::AppI
 			const int64_t frameTime = now - last;
 			last = now;
 			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
 			const float deltaTime = float(frameTime/freq);
 
-			// Use m_debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/27-terrain");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Terrain painting example.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
-
 			imguiBeginFrame(m_mouseState.m_mx
-					, m_mouseState.m_my
-					, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-					, m_mouseState.m_mz
-					, uint16_t(m_width)
-					, uint16_t(m_height)
-					);
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
 
-			imguiBeginScrollArea("Settings", m_width - m_width / 5 - 10, 10, m_width / 5, m_height / 3, &m_scrollArea);
-			imguiSeparatorLine();
+			showExampleDialog(this);
 
-			if (imguiCheck("Vertex Buffer", (m_terrain.m_mode == 0) ) )
-			{
-				m_terrain.m_mode = 0;
-				m_terrain.m_dirty = true;
-			}
+			ImGui::SetNextWindowPos(
+				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiSetCond_FirstUseEver
+				);
+			ImGui::Begin("Settings"
+				, NULL
+				, ImVec2(m_width / 5.0f, m_height / 3.0f)
+				, ImGuiWindowFlags_AlwaysAutoResize
+				);
 
-			if (imguiCheck("Dynamic Vertex Buffer", (m_terrain.m_mode == 1) ) )
-			{
-				m_terrain.m_mode = 1;
-				m_terrain.m_dirty = true;
-			}
+			ImGui::Separator();
 
-			if (imguiCheck("Height Texture", (m_terrain.m_mode == 2) ) )
-			{
-				m_terrain.m_mode = 2;
-				m_terrain.m_dirty = true;
-			}
+			m_terrain.m_dirty |= ImGui::RadioButton("Vertex Buffer", &m_terrain.m_mode, 0);
+			m_terrain.m_dirty |= ImGui::RadioButton("Dynamic Vertex Buffer", &m_terrain.m_mode, 1);
+			m_terrain.m_dirty |= ImGui::RadioButton("Height Texture", &m_terrain.m_mode, 2);
 
-			imguiSeparatorLine();
+			ImGui::Separator();
 
-			if (imguiCheck("Raise Terrain", m_brush.m_raise) )
-			{
-				m_brush.m_raise = !m_brush.m_raise;
-			}
+			ImGui::Checkbox("Raise Terrain", &m_brush.m_raise);
 
-			imguiSlider("Brush Size", m_brush.m_size, 1, 50);
-			imguiSlider("Brush Power", m_brush.m_power, 0.0f, 1.0f, 0.01f);
+			ImGui::SliderInt("Brush Size", &m_brush.m_size, 1, 50);
+			ImGui::SliderFloat("Brush Power", &m_brush.m_power, 0.0f, 1.0f);
 
-			imguiEndScrollArea();
+			ImGui::End();
 			imguiEndFrame();
 
-			if (!imguiMouseOverArea() )
+			if (!ImGui::MouseOverArea() )
 			{
 				// Update camera.
 				cameraUpdate(deltaTime, m_mouseState);
@@ -516,8 +510,6 @@ class ExampleTerrain : public entry::AppI
 	uint32_t m_oldHeight;
 	uint32_t m_oldReset;
 
-	int32_t m_scrollArea;
-
 	TerrainData m_terrain;
 	BrushData m_brush;
 
@@ -526,4 +518,6 @@ class ExampleTerrain : public entry::AppI
 	int64_t m_timeOffset;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleTerrain);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleTerrain, "27-terrain", "Terrain painting example.");

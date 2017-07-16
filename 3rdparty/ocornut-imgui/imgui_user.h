@@ -43,6 +43,7 @@ namespace ImGui
 } // namespace ImGui
 
 #include "widgets/color_picker.h"
+#include "widgets/color_wheel.h"
 #include "widgets/dock.h"
 #include "widgets/file_list.h"
 #include "widgets/gizmo.h"

@@ -1,5 +1,4 @@
 420.comp
-Warning, version 420 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:3: 'gl_WorkGroupSize' : not supported for this version or the enabled extensions 
 ERROR: 1 compilation errors.  No code generated.
 

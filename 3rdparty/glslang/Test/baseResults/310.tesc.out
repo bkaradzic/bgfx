@@ -1,5 +1,4 @@
 310.tesc
-Warning, version 310 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:8: 'quads' : unrecognized layout identifier, or qualifier requires assignment (e.g., binding = 4) 
 ERROR: 0:9: 'ccw' : unrecognized layout identifier, or qualifier requires assignment (e.g., binding = 4) 
 ERROR: 0:10: 'fractional_even_spacing' : unrecognized layout identifier, or qualifier requires assignment (e.g., binding = 4) 

@@ -1,5 +1,4 @@
 constFold.frag
-Warning, version 430 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:109: '[' :  index out of range '-1'
 ERROR: 0:110: '[' :  vector index out of range '4'
 ERROR: 0:111: '[' :  index out of range '-2'

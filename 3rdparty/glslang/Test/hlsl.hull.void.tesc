@@ -19,7 +19,7 @@ struct HS_OUT
 
 [domain("tri")]
 [partitioning("fractional_even")]
-[outputtopology("line")]
+[outputtopology("triangle_ccw")]
 [outputcontrolpoints(3)]
 [patchconstantfunc("PCF")]
 HS_OUT main(InputPatch<VS_OUT, 3> ip)

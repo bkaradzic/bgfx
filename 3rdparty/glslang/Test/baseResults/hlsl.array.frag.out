@@ -57,7 +57,7 @@ gl_FragCoord origin is upper left
 0:?     Sequence
 0:8      move second child to first child ( temp int)
 0:?         'i' ( temp int)
-0:?         'i' (layout( location=0) in int)
+0:?         'i' (layout( location=0) flat in int)
 0:8      move second child to first child ( temp 3-element array of 4-component vector of float)
 0:?         'input' ( temp 3-element array of 4-component vector of float)
 0:?         'input' (layout( location=1) in 3-element array of 4-component vector of float)
@@ -69,7 +69,7 @@ gl_FragCoord origin is upper left
 0:?   Linker Objects
 0:?     'anon@0' (layout( row_major std140) uniform block{ uniform 4-element array of 4-component vector of float a,  uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m} s})
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
-0:?     'i' (layout( location=0) in int)
+0:?     'i' (layout( location=0) flat in int)
 0:?     'input' (layout( location=1) in 3-element array of 4-component vector of float)
 
 
@@ -134,7 +134,7 @@ gl_FragCoord origin is upper left
 0:?     Sequence
 0:8      move second child to first child ( temp int)
 0:?         'i' ( temp int)
-0:?         'i' (layout( location=0) in int)
+0:?         'i' (layout( location=0) flat in int)
 0:8      move second child to first child ( temp 3-element array of 4-component vector of float)
 0:?         'input' ( temp 3-element array of 4-component vector of float)
 0:?         'input' (layout( location=1) in 3-element array of 4-component vector of float)
@@ -146,7 +146,7 @@ gl_FragCoord origin is upper left
 0:?   Linker Objects
 0:?     'anon@0' (layout( row_major std140) uniform block{ uniform 4-element array of 4-component vector of float a,  uniform 11-element array of structure{ temp 7-element array of 4-component vector of float m} s})
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
-0:?     'i' (layout( location=0) in int)
+0:?     'i' (layout( location=0) flat in int)
 0:?     'input' (layout( location=1) in 3-element array of 4-component vector of float)
 
 // Module Version 10000
@@ -185,6 +185,7 @@ gl_FragCoord origin is upper left
                               MemberDecorate 26($Global) 1 Offset 64
                               Decorate 26($Global) Block
                               Decorate 28 DescriptorSet 0
+                              Decorate 68(i) Flat
                               Decorate 68(i) Location 0
                               Decorate 72(input) Location 1
                               Decorate 75(@entryPointOutput) Location 0

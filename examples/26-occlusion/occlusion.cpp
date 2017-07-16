@@ -6,6 +6,10 @@
 #include "common.h"
 #include "bgfx_utils.h"
 #include "camera.h"
+#include "imgui/imgui.h"
+
+namespace
+{
 
 #define CUBES_DIM 10
 
@@ -60,17 +64,23 @@ static const uint16_t s_cubeIndices[36] =
 
 class ExampleOcclusion : public entry::AppI
 {
-	void init(int _argc, char** _argv) BX_OVERRIDE
+public:
+	ExampleOcclusion(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
+	void init(int32_t _argc, const char* const* _argv, uint32_t _width, uint32_t _height) override
 	{
 		Args args(_argc, _argv);
 
-		uint32_t width  = 1280;
-		uint32_t height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_width  = _width;
+		m_height = _height;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
-		bgfx::reset(width, height, m_reset);
+		bgfx::reset(m_width, m_height, m_reset);
 
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
@@ -121,10 +131,14 @@ class ExampleOcclusion : public entry::AppI
 		cameraSetHorizontalAngle(bx::toRad(-45.0f) );
 
 		m_timeOffset = bx::getHPCounter();
+
+		imguiCreate();
 	}
 
-	virtual int shutdown() BX_OVERRIDE
+	virtual int shutdown() override
 	{
+		imguiDestroy();
+
 		// Cleanup.
 		cameraDestroy();
 
@@ -143,27 +157,31 @@ class ExampleOcclusion : public entry::AppI
 		return 0;
 	}
 
-	bool update() BX_OVERRIDE
+	bool update() override
 	{
-		if (!entry::processWindowEvents(m_state, m_debug, m_reset) )
+		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			imguiBeginFrame(m_mouseState.m_mx
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
+
+			showExampleDialog(this);
+
+			imguiEndFrame();
+
 			int64_t now = bx::getHPCounter();
 			static int64_t last = now;
 			const int64_t frameTime = now - last;
 			last = now;
 			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
 			const float time = (float)( (now-m_timeOffset)/double(bx::getHPFrequency() ) );
 			const float deltaTime = float(frameTime/freq);
-
-			// Use debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/26-occlusion");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Using occlusion query for conditional rendering.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
-
-			uint32_t width  = m_state.m_width;
-			uint32_t height = m_state.m_height;
 
 			// Update camera.
 			float view[16];
@@ -190,20 +208,20 @@ class ExampleOcclusion : public entry::AppI
 			else
 			{
 				float proj[16];
-				bx::mtxProj(proj, 90.0f, float(width)/float(height), 0.1f, 10000.0f, bgfx::getCaps()->homogeneousDepth);
+				bx::mtxProj(proj, 90.0f, float(m_width)/float(m_height), 0.1f, 10000.0f, bgfx::getCaps()->homogeneousDepth);
 
 				bgfx::setViewTransform(0, view, proj);
-				bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height) );
+				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
 				bgfx::setViewTransform(1, view, proj);
-				bgfx::setViewRect(1, 0, 0, uint16_t(width), uint16_t(height) );
+				bgfx::setViewRect(1, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
 				float at[3]  = {  0.0f,  0.0f,   0.0f };
 				float eye[3] = { 17.5f, 10.0f, -17.5f };
 				bx::mtxLookAt(view, eye, at);
 
 				bgfx::setViewTransform(2, view, proj);
-				bgfx::setViewRect(2, 10, uint16_t(height - height/4 - 10), uint16_t(width/4), uint16_t(height/4) );
+				bgfx::setViewRect(2, 10, uint16_t(m_height - m_height/4 - 10), uint16_t(m_width/4), uint16_t(m_height/4) );
 			}
 
 			bgfx::touch(0);
@@ -270,8 +288,12 @@ class ExampleOcclusion : public entry::AppI
 		return false;
 	}
 
-	uint32_t m_reset;
+	entry::MouseState m_mouseState;
+
+	uint32_t m_width;
+	uint32_t m_height;
 	uint32_t m_debug;
+	uint32_t m_reset;
 
 	bgfx::VertexBufferHandle m_vbh;
 	bgfx::IndexBufferHandle m_ibh;
@@ -283,4 +305,6 @@ class ExampleOcclusion : public entry::AppI
 	entry::WindowState m_state;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleOcclusion);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleOcclusion, "26-occlusion", "Using occlusion query for conditional rendering.");

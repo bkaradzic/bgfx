@@ -1,5 +1,4 @@
 specExamples.vert
-Warning, version 430 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:29: 'location' : can only apply to uniform, buffer, in, or out storage qualifiers 
 ERROR: 0:31: 'triangles' : unrecognized layout identifier, or qualifier requires assignment (e.g., binding = 4) 
 ERROR: 0:31: 'invocations' : there is no such layout identifier for this stage taking an assigned value 

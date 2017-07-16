@@ -1,10 +1,9 @@
 420.frag
-Warning, version 420 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:4: 'redeclaration' : all redeclarations must use the same depth layout on gl_FragDepth
 ERROR: 0:11: 'layout qualifier' : can only apply depth layout to gl_FragDepth 
 ERROR: 0:12: 'gl_FragDepth' : cannot redeclare after use 
-WARNING: 0:14: 'atomic_uint' : implicitly sized atomic_uint array treated as having one element for tracking the default offset 
-ERROR: 3 compilation errors.  No code generated.
+ERROR: 0:14: 'atomic_uint' : array must be explicitly sized 
+ERROR: 4 compilation errors.  No code generated.
 
 
 Shader version: 420

@@ -45,6 +45,11 @@ echo Comparing single thread to multithread for all tests in current directory..
 $EXE -i -C *.vert *.geom *.frag *.tes* *.comp > singleThread.out
 $EXE -i -C *.vert *.geom *.frag *.tes* *.comp -t > multiThread.out
 diff singleThread.out multiThread.out || HASERROR=1
+if [ $HASERROR -eq 0 ]
+then
+    rm singleThread.out
+    rm multiThread.out
+fi
 
 #
 # entry point renaming tests
@@ -116,6 +121,26 @@ $EXE -D -e main -H hlsl.includeNegative.vert > $TARGETDIR/hlsl.includeNegative.v
 diff -b $BASEDIR/hlsl.includeNegative.vert.out $TARGETDIR/hlsl.includeNegative.vert.out || HASERROR=1
 $EXE -l -i include.vert > $TARGETDIR/include.vert.out
 diff -b $BASEDIR/include.vert.out $TARGETDIR/include.vert.out || HASERROR=1
+$EXE -D -e main -H -Iinc1/path1 -Iinc1/path2 hlsl.dashI.vert > $TARGETDIR/hlsl.dashI.vert.out
+diff -b $BASEDIR/hlsl.dashI.vert.out $TARGETDIR/hlsl.dashI.vert.out || HASERROR=1
+
+#
+# Testing -D and -U
+#
+$EXE -DUNDEFED -UIN_SHADER -DFOO=200 -i -l -UUNDEFED -DMUL=FOO*2 glsl.-D-U.frag > $TARGETDIR/glsl.-D-U.frag.out
+diff -b $BASEDIR/glsl.-D-U.frag.out $TARGETDIR/glsl.-D-U.frag.out || HASERROR=1
+$EXE -D -e main -V -i -DUNDEFED -UIN_SHADER -DFOO=200 -UUNDEFED hlsl.-D-U.frag > $TARGETDIR/hlsl.-D-U.frag.out
+diff -b $BASEDIR/hlsl.-D-U.frag.out $TARGETDIR/hlsl.-D-U.frag.out || HASERROR=1
+
+#
+# Test --client and --target-env
+#
+$EXE --client vulkan100      spv.targetVulkan.vert || HASERROR=1
+$EXE --client opengl100      spv.targetOpenGL.vert || HASERROR=1
+$EXE --target-env vulkan1.0  spv.targetVulkan.vert || HASERROR=1
+$EXE --target-env opengl     spv.targetOpenGL.vert || HASERROR=1
+$EXE -V100                   spv.targetVulkan.vert || HASERROR=1
+$EXE -G100                   spv.targetOpenGL.vert || HASERROR=1
 
 #
 # Final checking
@@ -126,5 +151,7 @@ then
 else
     echo Tests Failed.
 fi
+
+rm -f comp.spv frag.spv geom.spv tesc.spv tese.spv vert.spv
 
 exit $HASERROR

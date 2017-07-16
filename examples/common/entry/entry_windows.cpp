@@ -311,7 +311,7 @@ namespace entry
 	struct MainThreadEntry
 	{
 		int m_argc;
-		char** m_argv;
+		const char* const* m_argv;
 
 		static int32_t threadFunc(void* _userData);
 	};
@@ -445,7 +445,7 @@ namespace entry
 			s_translateKey[uint8_t('Z')]  = Key::KeyZ;
 		}
 
-		int32_t run(int _argc, char** _argv)
+		int32_t run(int _argc, const char* const* _argv)
 		{
 			SetDllDirectoryA(".");
 
@@ -881,10 +881,6 @@ namespace entry
 			}
 			else
 			{
-#if defined(__MINGW32__)
-				rect  = m_rect;
-				style = m_style;
-#else
 				HMONITOR monitor = MonitorFromWindow(_hwnd, MONITOR_DEFAULTTONEAREST);
 				MONITORINFO mi;
 				mi.cbSize = sizeof(mi);
@@ -892,7 +888,6 @@ namespace entry
 				newrect = mi.rcMonitor;
 				rect = mi.rcMonitor;
 				m_aspectRatio = float(newrect.right  - newrect.left)/float(newrect.bottom - newrect.top);
-#endif // !defined(__MINGW__)
 			}
 
 			SetWindowLong(_hwnd, GWL_STYLE, style);
@@ -1095,7 +1090,7 @@ namespace entry
 
 } // namespace entry
 
-int main(int _argc, char** _argv)
+int main(int _argc, const char* const* _argv)
 {
 	using namespace entry;
 	return s_ctx.run(_argc, _argv);

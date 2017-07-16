@@ -1,5 +1,4 @@
 specExamples.frag
-Warning, version 430 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:6: '=' :  cannot convert from ' const uint' to ' global int'
 ERROR: 0:20: '' : numeric literal too big 
 ERROR: 0:21: '' : hexadecimal literal too big 

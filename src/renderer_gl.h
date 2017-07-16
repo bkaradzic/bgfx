@@ -1525,7 +1525,7 @@ namespace bgfx { namespace gl
 		{
 		}
 
-		virtual int32_t read(void* _data, int32_t _size, bx::Error* _err) BX_OVERRIDE
+		virtual int32_t read(void* _data, int32_t _size, bx::Error* _err) override
 		{
 			if (m_str[m_pos] == '\0'
 			||  m_pos == m_size)

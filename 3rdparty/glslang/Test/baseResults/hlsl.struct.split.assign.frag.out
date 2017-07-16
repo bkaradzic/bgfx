@@ -20,7 +20,7 @@ gl_FragCoord origin is upper left
 0:?     Sequence
 0:7      move second child to first child ( temp int)
 0:?         'i' ( temp int)
-0:?         'i' (layout( location=0) in int)
+0:?         'i' (layout( location=0) flat in int)
 0:7      Sequence
 0:7        move second child to first child ( temp float)
 0:7          f: direct index for structure ( temp float)
@@ -110,7 +110,7 @@ gl_FragCoord origin is upper left
 0:?           'input' ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:?   Linker Objects
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
-0:?     'i' (layout( location=0) in int)
+0:?     'i' (layout( location=0) flat in int)
 0:?     'input' (layout( location=1) in 3-element array of structure{ temp float f})
 0:?     'input_pos' ( in 3-element array of 4-component vector of float FragCoord)
 
@@ -139,7 +139,7 @@ gl_FragCoord origin is upper left
 0:?     Sequence
 0:7      move second child to first child ( temp int)
 0:?         'i' ( temp int)
-0:?         'i' (layout( location=0) in int)
+0:?         'i' (layout( location=0) flat in int)
 0:7      Sequence
 0:7        move second child to first child ( temp float)
 0:7          f: direct index for structure ( temp float)
@@ -229,7 +229,7 @@ gl_FragCoord origin is upper left
 0:?           'input' ( temp 3-element array of structure{ temp float f,  temp 4-component vector of float pos})
 0:?   Linker Objects
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
-0:?     'i' (layout( location=0) in int)
+0:?     'i' (layout( location=0) flat in int)
 0:?     'input' (layout( location=1) in 3-element array of structure{ temp float f})
 0:?     'input_pos' ( in 3-element array of 4-component vector of float FragCoord)
 
@@ -261,6 +261,7 @@ gl_FragCoord origin is upper left
                               Name 67  "@entryPointOutput"
                               Name 68  "param"
                               Name 70  "param"
+                              Decorate 32(i) Flat
                               Decorate 32(i) Location 0
                               Decorate 39(input) Location 1
                               Decorate 48(input_pos) BuiltIn FragCoord

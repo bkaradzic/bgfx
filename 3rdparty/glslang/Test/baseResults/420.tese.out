@@ -1,5 +1,4 @@
 420.tese
-Warning, version 420 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:7: '=' :  cannot convert from ' const 3-element array of float' to ' global 2-element array of float'
 ERROR: 0:8: 'initializer list' : wrong vector size (or rows in a matrix column):  temp 2-component vector of float
 ERROR: 0:9: 'initializer list' : wrong number of matrix columns:  temp 3X3 matrix of float

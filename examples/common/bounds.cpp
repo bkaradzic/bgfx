@@ -4,7 +4,7 @@
  */
 
 #include <bx/rng.h>
-#include <bx/fpumath.h>
+#include <bx/math.h>
 #include "bounds.h"
 
 void aabbToObb(Obb& _obb, const Aabb& _aabb)
@@ -216,7 +216,7 @@ void calcObb(Obb& _obb, const void* _vertices, uint32_t _numVertices, uint32_t _
 	Obb best;
 	aabbToObb(best, aabb);
 
-	float angleStep = float(bx::piHalf/_steps);
+	float angleStep = float(bx::kPiHalf/_steps);
 	float ax = 0.0f;
 	float mtx[16];
 

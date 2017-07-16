@@ -15,6 +15,6 @@ uniform vec4 u_params;
 
 void main()
 {
-	vec4 color = texture2DArrayLod(s_texColor, vec3(v_texcoord0, u_textureLayer), u_textureLod);
+	vec4 color = texture2DArrayLod(s_texColor, vec3(v_texcoord0.xy, u_textureLayer), u_textureLod);
 	gl_FragColor = color * v_color0;
 }

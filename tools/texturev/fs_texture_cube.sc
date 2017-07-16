@@ -15,7 +15,7 @@ uniform vec4 u_params;
 
 void main()
 {
-	vec3 dir = vec3( (v_texcoord0*2.0 - 1.0) * vec2(1.0, -1.0), 1.0);
+	vec3 dir = vec3( (v_texcoord0.xy*2.0 - 1.0) * vec2(1.0, -1.0), 1.0);
 	dir = normalize(mul(u_mtx, vec4(dir, 0.0) ).xyz);
 	gl_FragColor = textureCubeLod(s_texColor, dir, u_textureLod) * v_color0;
 }

@@ -101,7 +101,7 @@ void meshSubmit(const Mesh* _mesh, const MeshState*const* _state, uint8_t _numPa
 ///
 struct Args
 {
-	Args(int _argc, char** _argv);
+	Args(int _argc, const char* const* _argv);
 
 	bgfx::RendererType::Enum m_type;
 	uint16_t m_pciId;

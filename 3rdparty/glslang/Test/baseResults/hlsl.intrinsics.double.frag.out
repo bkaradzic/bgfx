@@ -35,28 +35,28 @@ gl_FragCoord origin is upper left
 0:?     Sequence
 0:5      move second child to first child ( temp double)
 0:?         'inDV1a' ( temp double)
-0:?         'inDV1a' (layout( location=0) in double)
+0:?         'inDV1a' (layout( location=0) flat in double)
 0:5      move second child to first child ( temp double)
 0:?         'inDV1b' ( temp double)
-0:?         'inDV1b' (layout( location=1) in double)
+0:?         'inDV1b' (layout( location=1) flat in double)
 0:5      move second child to first child ( temp double)
 0:?         'inDV1c' ( temp double)
-0:?         'inDV1c' (layout( location=2) in double)
+0:?         'inDV1c' (layout( location=2) flat in double)
 0:5      move second child to first child ( temp 2-component vector of double)
 0:?         'inDV2' ( temp 2-component vector of double)
-0:?         'inDV2' (layout( location=3) in 2-component vector of double)
+0:?         'inDV2' (layout( location=3) flat in 2-component vector of double)
 0:5      move second child to first child ( temp 3-component vector of double)
 0:?         'inDV3' ( temp 3-component vector of double)
-0:?         'inDV3' (layout( location=4) in 3-component vector of double)
+0:?         'inDV3' (layout( location=4) flat in 3-component vector of double)
 0:5      move second child to first child ( temp 4-component vector of double)
 0:?         'inDV4' ( temp 4-component vector of double)
-0:?         'inDV4' (layout( location=6) in 4-component vector of double)
+0:?         'inDV4' (layout( location=6) flat in 4-component vector of double)
 0:5      move second child to first child ( temp uint)
 0:?         'inU1a' ( temp uint)
-0:?         'inU1a' (layout( location=8) in uint)
+0:?         'inU1a' (layout( location=8) flat in uint)
 0:5      move second child to first child ( temp uint)
 0:?         'inU1b' ( temp uint)
-0:?         'inU1b' (layout( location=9) in uint)
+0:?         'inU1b' (layout( location=9) flat in uint)
 0:5      move second child to first child ( temp float)
 0:?         '@entryPointOutput' (layout( location=0) out float)
 0:5        Function Call: @PixelShaderFunction(d1;d1;d1;vd2;vd3;vd4;u1;u1; ( temp float)
@@ -70,14 +70,14 @@ gl_FragCoord origin is upper left
 0:?           'inU1b' ( temp uint)
 0:?   Linker Objects
 0:?     '@entryPointOutput' (layout( location=0) out float)
-0:?     'inDV1a' (layout( location=0) in double)
-0:?     'inDV1b' (layout( location=1) in double)
-0:?     'inDV1c' (layout( location=2) in double)
-0:?     'inDV2' (layout( location=3) in 2-component vector of double)
-0:?     'inDV3' (layout( location=4) in 3-component vector of double)
-0:?     'inDV4' (layout( location=6) in 4-component vector of double)
-0:?     'inU1a' (layout( location=8) in uint)
-0:?     'inU1b' (layout( location=9) in uint)
+0:?     'inDV1a' (layout( location=0) flat in double)
+0:?     'inDV1b' (layout( location=1) flat in double)
+0:?     'inDV1c' (layout( location=2) flat in double)
+0:?     'inDV2' (layout( location=3) flat in 2-component vector of double)
+0:?     'inDV3' (layout( location=4) flat in 3-component vector of double)
+0:?     'inDV4' (layout( location=6) flat in 4-component vector of double)
+0:?     'inU1a' (layout( location=8) flat in uint)
+0:?     'inU1b' (layout( location=9) flat in uint)
 
 
 Linked fragment stage:
@@ -119,28 +119,28 @@ gl_FragCoord origin is upper left
 0:?     Sequence
 0:5      move second child to first child ( temp double)
 0:?         'inDV1a' ( temp double)
-0:?         'inDV1a' (layout( location=0) in double)
+0:?         'inDV1a' (layout( location=0) flat in double)
 0:5      move second child to first child ( temp double)
 0:?         'inDV1b' ( temp double)
-0:?         'inDV1b' (layout( location=1) in double)
+0:?         'inDV1b' (layout( location=1) flat in double)
 0:5      move second child to first child ( temp double)
 0:?         'inDV1c' ( temp double)
-0:?         'inDV1c' (layout( location=2) in double)
+0:?         'inDV1c' (layout( location=2) flat in double)
 0:5      move second child to first child ( temp 2-component vector of double)
 0:?         'inDV2' ( temp 2-component vector of double)
-0:?         'inDV2' (layout( location=3) in 2-component vector of double)
+0:?         'inDV2' (layout( location=3) flat in 2-component vector of double)
 0:5      move second child to first child ( temp 3-component vector of double)
 0:?         'inDV3' ( temp 3-component vector of double)
-0:?         'inDV3' (layout( location=4) in 3-component vector of double)
+0:?         'inDV3' (layout( location=4) flat in 3-component vector of double)
 0:5      move second child to first child ( temp 4-component vector of double)
 0:?         'inDV4' ( temp 4-component vector of double)
-0:?         'inDV4' (layout( location=6) in 4-component vector of double)
+0:?         'inDV4' (layout( location=6) flat in 4-component vector of double)
 0:5      move second child to first child ( temp uint)
 0:?         'inU1a' ( temp uint)
-0:?         'inU1a' (layout( location=8) in uint)
+0:?         'inU1a' (layout( location=8) flat in uint)
 0:5      move second child to first child ( temp uint)
 0:?         'inU1b' ( temp uint)
-0:?         'inU1b' (layout( location=9) in uint)
+0:?         'inU1b' (layout( location=9) flat in uint)
 0:5      move second child to first child ( temp float)
 0:?         '@entryPointOutput' (layout( location=0) out float)
 0:5        Function Call: @PixelShaderFunction(d1;d1;d1;vd2;vd3;vd4;u1;u1; ( temp float)
@@ -154,14 +154,14 @@ gl_FragCoord origin is upper left
 0:?           'inU1b' ( temp uint)
 0:?   Linker Objects
 0:?     '@entryPointOutput' (layout( location=0) out float)
-0:?     'inDV1a' (layout( location=0) in double)
-0:?     'inDV1b' (layout( location=1) in double)
-0:?     'inDV1c' (layout( location=2) in double)
-0:?     'inDV2' (layout( location=3) in 2-component vector of double)
-0:?     'inDV3' (layout( location=4) in 3-component vector of double)
-0:?     'inDV4' (layout( location=6) in 4-component vector of double)
-0:?     'inU1a' (layout( location=8) in uint)
-0:?     'inU1b' (layout( location=9) in uint)
+0:?     'inDV1a' (layout( location=0) flat in double)
+0:?     'inDV1b' (layout( location=1) flat in double)
+0:?     'inDV1c' (layout( location=2) flat in double)
+0:?     'inDV2' (layout( location=3) flat in 2-component vector of double)
+0:?     'inDV3' (layout( location=4) flat in 3-component vector of double)
+0:?     'inDV4' (layout( location=6) flat in 4-component vector of double)
+0:?     'inU1a' (layout( location=8) flat in uint)
+0:?     'inU1b' (layout( location=9) flat in uint)
 
 // Module Version 10000
 // Generated by (magic number): 80001
@@ -211,13 +211,21 @@ gl_FragCoord origin is upper left
                               Name 83  "param"
                               Name 85  "param"
                               Name 87  "param"
+                              Decorate 44(inDV1a) Flat
                               Decorate 44(inDV1a) Location 0
+                              Decorate 47(inDV1b) Flat
                               Decorate 47(inDV1b) Location 1
+                              Decorate 50(inDV1c) Flat
                               Decorate 50(inDV1c) Location 2
+                              Decorate 54(inDV2) Flat
                               Decorate 54(inDV2) Location 3
+                              Decorate 58(inDV3) Flat
                               Decorate 58(inDV3) Location 4
+                              Decorate 62(inDV4) Flat
                               Decorate 62(inDV4) Location 6
+                              Decorate 66(inU1a) Flat
                               Decorate 66(inU1a) Location 8
+                              Decorate 69(inU1b) Flat
                               Decorate 69(inU1b) Location 9
                               Decorate 72(@entryPointOutput) Location 0
                2:             TypeVoid

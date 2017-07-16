@@ -1,6 +1,4 @@
 vulkan.ast.vert
-Warning, version 450 is not yet complete; most version-specific features are present, but some are missing.
-
 Shader version: 450
 0:? Sequence
 0:7  Function Definition: main( ( global void)

@@ -43,10 +43,18 @@ ERROR: 0:172: 'std430' : requires the 'buffer' storage qualifier
 ERROR: 0:175: '' : array size required 
 ERROR: 0:185: 'assign' :  cannot convert from ' temp 4-element array of highp float' to ' temp 3-element array of highp float'
 ERROR: 0:186: 'assign' :  cannot convert from ' temp 3-element array of highp float' to ' temp 4-element array of highp float'
-ERROR: 44 compilation errors.  No code generated.
+ERROR: 0:189: 'num_views' : required extension not requested: Possible extensions include:
+GL_OVR_multiview
+GL_OVR_multiview2
+ERROR: 0:193: 'gl_ViewID_OVR' : required extension not requested: Possible extensions include:
+GL_OVR_multiview
+GL_OVR_multiview2
+ERROR: 0:198: 'num_views' : can only apply to a standalone qualifier 
+ERROR: 47 compilation errors.  No code generated.
 
 
 Shader version: 300
+Requested GL_OVR_multiview
 ERROR: node is still EOpNull!
 0:27  Function Definition: main( ( global void)
 0:27    Function Parameters: 
@@ -289,6 +297,14 @@ ERROR: node is still EOpNull!
 0:184        'y' ( temp 4-element array of highp float)
 0:185      'xp' ( temp 3-element array of highp float)
 0:186      'yp' ( temp 4-element array of highp float)
+0:191  Function Definition: mwErr( ( global void)
+0:191    Function Parameters: 
+0:193    Sequence
+0:193      'gl_ViewID_OVR' ( in highp uint ViewIndex)
+0:201  Function Definition: mwOk( ( global void)
+0:201    Function Parameters: 
+0:203    Sequence
+0:203      'gl_ViewID_OVR' ( in highp uint ViewIndex)
 0:?   Linker Objects
 0:?     'm43' ( uniform highp 4X3 matrix of float)
 0:?     'm33' ( uniform highp 3X3 matrix of float)
@@ -323,6 +339,7 @@ ERROR: node is still EOpNull!
 0:?     'Binst' (layout( column_major shared) uniform block{layout( column_major shared) uniform highp int a})
 0:?     'Bfoo' ( global highp int)
 0:?     'B430i' (layout( column_major std430) uniform block{layout( column_major std430 offset=0) uniform highp int a})
+0:?     'mwUniform' ( uniform highp float)
 0:?     'gl_VertexID' ( gl_VertexId highp int VertexId)
 0:?     'gl_InstanceID' ( gl_InstanceId highp int InstanceId)
 
@@ -331,6 +348,7 @@ Linked vertex stage:
 
 
 Shader version: 300
+Requested GL_OVR_multiview
 ERROR: node is still EOpNull!
 0:27  Function Definition: main( ( global void)
 0:27    Function Parameters: 
@@ -481,6 +499,7 @@ ERROR: node is still EOpNull!
 0:?     'Binst' (layout( column_major shared) uniform block{layout( column_major shared) uniform highp int a})
 0:?     'Bfoo' ( global highp int)
 0:?     'B430i' (layout( column_major std430) uniform block{layout( column_major std430 offset=0) uniform highp int a})
+0:?     'mwUniform' ( uniform highp float)
 0:?     'gl_VertexID' ( gl_VertexId highp int VertexId)
 0:?     'gl_InstanceID' ( gl_InstanceId highp int InstanceId)
 

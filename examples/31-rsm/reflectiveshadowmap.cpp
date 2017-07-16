@@ -9,6 +9,9 @@
 #include <imgui/imgui.h>
 #include <bx/rng.h>
 
+namespace
+{
+
 /*
  * Intro
  * =====
@@ -183,8 +186,9 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf
 class ExampleRSM : public entry::AppI
 {
 public:
-	ExampleRSM()
-		: m_reading(0)
+	ExampleRSM(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+		, m_reading(0)
 		, m_currFrame(UINT32_MAX)
 		, m_cameraSpin(false)
 		, m_lightElevation(35.0f)
@@ -195,13 +199,13 @@ public:
 	{
 	}
 
-	void init(int _argc, char** _argv) BX_OVERRIDE
+	void init(int32_t _argc, const char* const* _argv, uint32_t _width, uint32_t _height) override
 	{
 		Args args(_argc, _argv);
 
-		m_width  = 1280;
-		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_width  = _width;
+		m_height = _height;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -219,25 +223,25 @@ public:
 
 		// Set up screen clears
 		bgfx::setViewClear(RENDER_PASS_GBUFFER
-				, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-				, 0
-				, 1.0f
-				, 0
-				);
+			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
+			, 0
+			, 1.0f
+			, 0
+			);
 
 		bgfx::setViewClear(RENDER_PASS_LIGHT_BUFFER
-				, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-				, 0
-				, 1.0f
-				, 0
-				);
+			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
+			, 0
+			, 1.0f
+			, 0
+			);
 
 		bgfx::setViewClear(RENDER_PASS_SHADOW_MAP
-				, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-				, 0
-				, 1.0f
-				, 0
-				);
+			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
+			, 0
+			, 1.0f
+			, 0
+			);
 
 		// Create uniforms
 		u_tint          = bgfx::createUniform("u_tint",          bgfx::UniformType::Vec4);  // Tint for when you click on items
@@ -371,7 +375,7 @@ public:
 		imguiCreate();
 	}
 
-	int shutdown() BX_OVERRIDE
+	int shutdown() override
 	{
 		for (uint32_t ii = 0; ii < BX_COUNTOF(s_meshPaths); ++ii)
 		{
@@ -427,7 +431,7 @@ public:
 		return 0;
 	}
 
-	bool update() BX_OVERRIDE
+	bool update() override
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
@@ -437,14 +441,7 @@ public:
 			const int64_t frameTime = now - last;
 			last = now;
 			const double freq = double(bx::getHPFrequency());
-			const double toMs = 1000.0 / freq;
 			const float deltaTime = float(frameTime/freq);
-
-			// Use debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/31-rsm");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Global Illumination with Reflective Shadow Map.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			// Update camera
 			cameraUpdate(deltaTime*0.15f, m_mouseState);
@@ -477,12 +474,8 @@ public:
 
 			bx::mtxLookAt(smView, lightEye, lightAt);
 			const float area = 10.0f;
-			bgfx::RendererType::Enum renderer = bgfx::getRendererType();
-			bool flipV = false
-				|| renderer == bgfx::RendererType::OpenGL
-				|| renderer == bgfx::RendererType::OpenGLES
-				;
-			bx::mtxOrtho(smProj, -area, area, -area, area, -100.0f, 100.0f, 0.0f, flipV);
+			const bgfx::Caps* caps = bgfx::getCaps();
+			bx::mtxOrtho(smProj, -area, area, -area, area, -100.0f, 100.0f, 0.0f, caps->homogeneousDepth);
 			bgfx::setViewTransform(RENDER_PASS_SHADOW_MAP, smView, smProj);
 			bgfx::setViewFrameBuffer(RENDER_PASS_SHADOW_MAP, m_shadowBuffer);
 			bgfx::setViewRect(RENDER_PASS_SHADOW_MAP, 0, 0, SHADOW_MAP_DIM, SHADOW_MAP_DIM);
@@ -509,10 +502,10 @@ public:
 			bx::mtxInverse(invMvpShadow, lightMtx);
 
 			// Draw some lights (these should really be instanced but for this example they aren't...)
-			const unsigned MAX_SPHERE = 32;
-			for (uint32_t i = 0; i < MAX_SPHERE; i++)
+			const uint32_t kMaxSpheres = 32;
+			for (uint32_t i = 0; i < kMaxSpheres; i++)
 			{
-				for (uint32_t j = 0; j < MAX_SPHERE; j++)
+				for (uint32_t j = 0; j < kMaxSpheres; j++)
 				{
 					// These are used in the fragment shader
 					bgfx::setTexture(0, s_normal, bgfx::getTexture(m_gbuffer, GBUFFER_RT_NORMAL) );  // Normal for lighting calculations
@@ -525,8 +518,8 @@ public:
 					bgfx::setUniform(u_invMvp, invMvp);
 					bgfx::setUniform(u_invMvpShadow, invMvpShadow);
 					float sphereInfo[4];
-					sphereInfo[0] = ((float)i/(MAX_SPHERE-1));
-					sphereInfo[1] = ((float)j/(MAX_SPHERE-1));
+					sphereInfo[0] = ((float)i/(kMaxSpheres-1));
+					sphereInfo[1] = ((float)j/(kMaxSpheres-1));
 					sphereInfo[2] = m_vplRadius;
 					sphereInfo[3] = 0.0;  // Unused
 					bgfx::setUniform(u_sphereInfo, sphereInfo);
@@ -539,12 +532,12 @@ public:
 						;
 
 					meshSubmit(
-							m_lightSphere,
-							RENDER_PASS_LIGHT_BUFFER,
-							m_lightProgram,
-							NULL,
-							lightDrawState
-							);
+						  m_lightSphere
+						, RENDER_PASS_LIGHT_BUFFER
+						, m_lightProgram
+						, NULL
+						, lightDrawState
+						);
 				}
 			}
 
@@ -572,13 +565,13 @@ public:
 			// Set up state for combine pass
 			// point of this is to avoid doing depth test, which is in the default state
 			bgfx::setState(0
-					| BGFX_STATE_RGB_WRITE
-					| BGFX_STATE_ALPHA_WRITE
-					);
+				| BGFX_STATE_RGB_WRITE
+				| BGFX_STATE_ALPHA_WRITE
+				);
 
 			// Set up transform matrix for fullscreen quad
 			float orthoProj[16];
-			bx::mtxOrtho(orthoProj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
+			bx::mtxOrtho(orthoProj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f, 0.0f, caps->homogeneousDepth);
 			bgfx::setViewTransform(RENDER_PASS_COMBINE, NULL, orthoProj);
 			bgfx::setViewRect(RENDER_PASS_COMBINE, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 			// Bind vertex buffer and draw quad
@@ -587,18 +580,24 @@ public:
 
 			// Draw UI
 			imguiBeginFrame(m_mouseState.m_mx
-					, m_mouseState.m_my
-					, (m_mouseState.m_buttons[entry::MouseButton::Left] ? IMGUI_MBUT_LEFT : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Right] ? IMGUI_MBUT_RIGHT : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-					, m_mouseState.m_mz
-					, uint16_t(m_width)
-					, uint16_t(m_height)
-					);
+				,  m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left] ? IMGUI_MBUT_LEFT : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right] ? IMGUI_MBUT_RIGHT : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
 
-			ImGui::Begin("Reflective Shadow Map"
+			showExampleDialog(this);
+
+			ImGui::SetNextWindowPos(
+				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiSetCond_FirstUseEver
+				);
+			ImGui::Begin("Settings"
 				, NULL
-				, ImVec2(300.0f, 400.0f)
+				, ImVec2(m_width / 5.0f, m_height / 3.0f)
 				, ImGuiWindowFlags_AlwaysAutoResize
 				);
 
@@ -633,16 +632,16 @@ public:
 			float scale = s_meshScale[model.mesh];
 			float mtx[16];
 			bx::mtxSRT(mtx
-					, scale
-					, scale
-					, scale
-					, 0.0f
-					, 0.0f
-					, 0.0f
-					, model.position[0]
-					, model.position[1]
-					, model.position[2]
-					);
+				, scale
+				, scale
+				, scale
+				, 0.0f
+				, 0.0f
+				, 0.0f
+				, model.position[0]
+				, model.position[1]
+				, model.position[2]
+				);
 
 			// Submit mesh to gbuffer
 			bgfx::setUniform(u_tint, model.color);
@@ -655,16 +654,16 @@ public:
 		float mtxScale[16];
 		float scale = 10.0;
 		bx::mtxScale(mtxScale
-				, scale
-				, scale
-				, scale
-				);
+			, scale
+			, scale
+			, scale
+			);
 		float mtxTrans[16];
 		bx::mtxTranslate(mtxTrans
-				, 0.0f
-				, -10.0f
-				, 0.0f
-				);
+			, 0.0f
+			, -10.0f
+			, 0.0f
+			);
 		float mtx[16];
 		bx::mtxMul(mtx, mtxScale, mtxTrans);
 		meshSubmit(m_ground, _pass, _program, mtx);
@@ -672,8 +671,8 @@ public:
 
 	void updateLightDir()
 	{
-		float el = m_lightElevation * (bx::pi/180.0f);
-		float az = m_lightAzimuth   * (bx::pi/180.0f);
+		float el = m_lightElevation * (bx::kPi/180.0f);
+		float az = m_lightAzimuth   * (bx::kPi/180.0f);
 		m_lightDir[0] = bx::fcos(el)*bx::fcos(az);
 		m_lightDir[2] = bx::fcos(el)*bx::fsin(az);
 		m_lightDir[1] = bx::fsin(el);
@@ -751,4 +750,6 @@ public:
 	float m_texelHalf;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleRSM);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleRSM, "31-rsm", "Global Illumination with Reflective Shadow Map.");

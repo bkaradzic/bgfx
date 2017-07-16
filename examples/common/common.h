@@ -7,7 +7,7 @@
 #define COMMON_H_HEADER_GUARD
 
 #include <bx/timer.h>
-#include <bx/fpumath.h>
+#include <bx/math.h>
 
 #include "entry/entry.h"
 

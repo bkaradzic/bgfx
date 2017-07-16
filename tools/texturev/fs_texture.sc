@@ -14,6 +14,6 @@ uniform vec4 u_params;
 
 void main()
 {
-	vec4 color = texture2DLod(s_texColor, v_texcoord0, u_textureLod);
+	vec4 color = texture2DLod(s_texColor, v_texcoord0.xy, u_textureLod);
 	gl_FragColor = color * v_color0;
 }

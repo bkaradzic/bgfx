@@ -1,5 +1,4 @@
 spv.aggOps.frag
-Warning, version 450 is not yet complete; most version-specific features are present, but some are missing.
 WARNING: 0:4: '' : all default precisions are highp; use precision statements to quiet warning, e.g.:
          "precision mediump int; precision highp float;" 
 

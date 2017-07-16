@@ -1,5 +1,4 @@
 400.tese
-Warning, version 400 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:3: 'vertices' : there is no such layout identifier for this stage taking an assigned value 
 ERROR: 0:5: 'triangles' : cannot change previously set input primitive 
 ERROR: 0:6: 'isolines' : cannot change previously set input primitive 

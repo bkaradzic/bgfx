@@ -1,5 +1,4 @@
 410.geom
-Warning, version 410 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:8: 'myIn' : cannot redeclare a built-in block with a user name 
 ERROR: 0:12: 'gl_myIn' : no declaration found for redeclaration 
 ERROR: 0:20: 'gl_PerVertex' : can only redeclare a built-in block once, and before any use 

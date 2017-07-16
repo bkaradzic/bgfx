@@ -4,7 +4,7 @@ layout(local_size_x = 2) in;
 layout(local_size_x = 16) in;     // ERROR, changing
 layout(local_size_z = 4096) in;   // ERROR, too large
 layout(local_size_x = 2) in;
-
+layout(local_size_y = 0) in;      // ERROR, 0 not allowed
 const int total = gl_MaxComputeWorkGroupCount.y 
                 + gl_MaxComputeUniformComponents
                 + gl_MaxComputeTextureImageUnits

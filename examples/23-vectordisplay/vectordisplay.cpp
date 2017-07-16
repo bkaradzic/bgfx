@@ -12,7 +12,7 @@
 #include <float.h>  // FLT_EPSILON
 #include <alloca.h> // alloca
 
-#include <bx/fpumath.h>
+#include <bx/math.h>
 
 #include "vectordisplay.h"
 #include "bgfx_utils.h"
@@ -47,14 +47,21 @@ bgfx::VertexDecl PosColorUvVertex::ms_decl;
 
 inline float normalizef(float _a)
 {
-	return bx::fwrap(_a, 2.0f * bx::pi);
+	return bx::fwrap(_a, 2.0f * bx::kPi);
 }
 
-VectorDisplay::VectorDisplay(bool _originBottomLeft, float _texelHalf)
-	: m_originBottomLeft(_originBottomLeft)
-	, m_texelHalf(_texelHalf)
+VectorDisplay::VectorDisplay()
+	: m_originBottomLeft(false)
+	, m_texelHalf(false)
 {
 }
+
+void VectorDisplay::init(bool _originBottomLeft, float _texelHalf)
+{
+	m_originBottomLeft = _originBottomLeft;
+	m_texelHalf = _texelHalf;
+}
+
 
 void VectorDisplay::setup(uint16_t _width, uint16_t _height, uint8_t _view)
 {
@@ -132,8 +139,20 @@ void VectorDisplay::beginFrame()
 
 void VectorDisplay::endFrame()
 {
+	const bgfx::Caps* caps = bgfx::getCaps();
+
 	float proj[16];
-	bx::mtxOrtho(proj, 0.0f, (float)m_screenWidth, (float)m_screenHeight, 0.0f, 0.0f, 1000.0f);
+	bx::mtxOrtho(
+		  proj
+		, 0.0f
+		, (float)m_screenWidth
+		, (float)m_screenHeight
+		, 0.0f
+		, 0.0f
+		, 1000.0f
+		, 0.0f
+		, caps->homogeneousDepth
+		);
 
 	bgfx::setViewRect(m_view, 0, 0, m_screenWidth, m_screenHeight);
 	bgfx::setViewFrameBuffer(m_view, m_sceneFrameBuffer);
@@ -192,7 +211,7 @@ void VectorDisplay::endFrame()
 
 	uint8_t viewCounter = m_view + 1;
 
-	bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f);
+	bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f, 0.0f, caps->homogeneousDepth);
 
 	float glow_iter_mult = 1.05f + ( (m_brightness - 1.0f) / 5.0f);
 	float glow_fin_mult  = 1.25f + ( (m_brightness - 1.0f) / 2.0f);
@@ -368,12 +387,12 @@ void VectorDisplay::endDraw()
 			float a2pa = normalizef(line->a - pline->a);
 			float maxshorten = bx::fmin(line->len, pline->len) / 2.0f;
 
-			if (bx::fmin(a2pa, pa2a) <= (bx::pi / 2.0f + FLT_EPSILON) )
+			if (bx::fmin(a2pa, pa2a) <= (bx::kPi / 2.0f + FLT_EPSILON) )
 			{
 				if (a2pa < pa2a)
 				{
 					float shorten = t * bx::fsin(a2pa / 2.0f) / bx::fcos(a2pa / 2.0f);
-					float a = (bx::pi - a2pa) / 2.0f;
+					float a = (bx::kPi - a2pa) / 2.0f;
 					if (shorten > maxshorten)
 					{
 						line->s0 = pline->s1 = maxshorten;
@@ -389,7 +408,7 @@ void VectorDisplay::endDraw()
 				else
 				{
 					float shorten = t * bx::fsin(pa2a / 2.0f) / bx::fcos(pa2a / 2.0f);
-					float a = (bx::pi - pa2a) / 2.0f;
+					float a = (bx::kPi - pa2a) / 2.0f;
 					if (shorten > maxshorten)
 					{
 						line->s0 = pline->s1 = maxshorten;
@@ -474,11 +493,11 @@ void VectorDisplay::drawCircle(float _x, float _y, float _radius, float _steps)
 	float edgeangle = 0.0f;
 	float angadjust = 0.0f;
 
-	float step = bx::pi * 2.0f / _steps;
+	float step = bx::kPi * 2.0f / _steps;
 
 	beginDraw(_x + _radius * bx::fsin(edgeangle + angadjust),
 	          _y - _radius * bx::fcos(edgeangle + angadjust) );
-	for (edgeangle = 0; edgeangle < 2.0f * bx::pi - 0.001; edgeangle += step)
+	for (edgeangle = 0; edgeangle < 2.0f * bx::kPi - 0.001; edgeangle += step)
 	{
 		drawTo(_x + _radius * bx::fsin(edgeangle + step - angadjust),
 		       _y - _radius * bx::fcos(edgeangle + step - angadjust) );
@@ -495,28 +514,28 @@ void VectorDisplay::drawWheel(float _angle, float _x, float _y, float _radius)
 	         _y - spokeradius * bx::fcos(_angle),
 	         _x - spokeradius * bx::fsin(_angle),
 	         _y + spokeradius * bx::fcos(_angle) );
-	drawLine(_x + spokeradius * bx::fsin(_angle + bx::pi / 4.0f),
-	         _y - spokeradius * bx::fcos(_angle + bx::pi / 4.0f),
-	         _x - spokeradius * bx::fsin(_angle + bx::pi / 4.0f),
-	         _y + spokeradius * bx::fcos(_angle + bx::pi / 4.0f) );
-	drawLine(_x + spokeradius * bx::fsin(_angle + bx::pi / 2.0f),
-	         _y - spokeradius * bx::fcos(_angle + bx::pi / 2.0f),
-	         _x - spokeradius * bx::fsin(_angle + bx::pi / 2.0f),
-	         _y + spokeradius * bx::fcos(_angle + bx::pi / 2.0f) );
-	drawLine(_x + spokeradius * bx::fsin(_angle + 3.0f * bx::pi / 4.0f),
-	         _y - spokeradius * bx::fcos(_angle + 3.0f * bx::pi / 4.0f),
-	         _x - spokeradius * bx::fsin(_angle + 3.0f * bx::pi / 4.0f),
-	         _y + spokeradius * bx::fcos(_angle + 3.0f * bx::pi / 4.0f) );
+	drawLine(_x + spokeradius * bx::fsin(_angle + bx::kPi / 4.0f),
+	         _y - spokeradius * bx::fcos(_angle + bx::kPi / 4.0f),
+	         _x - spokeradius * bx::fsin(_angle + bx::kPi / 4.0f),
+	         _y + spokeradius * bx::fcos(_angle + bx::kPi / 4.0f) );
+	drawLine(_x + spokeradius * bx::fsin(_angle + bx::kPi / 2.0f),
+	         _y - spokeradius * bx::fcos(_angle + bx::kPi / 2.0f),
+	         _x - spokeradius * bx::fsin(_angle + bx::kPi / 2.0f),
+	         _y + spokeradius * bx::fcos(_angle + bx::kPi / 2.0f) );
+	drawLine(_x + spokeradius * bx::fsin(_angle + 3.0f * bx::kPi / 4.0f),
+	         _y - spokeradius * bx::fcos(_angle + 3.0f * bx::kPi / 4.0f),
+	         _x - spokeradius * bx::fsin(_angle + 3.0f * bx::kPi / 4.0f),
+	         _y + spokeradius * bx::fcos(_angle + 3.0f * bx::kPi / 4.0f) );
 
 	float edgeangle = 0.0f;
 	float angadjust = 0.0f;
 
 	beginDraw(_x + _radius * bx::fsin(_angle + edgeangle + angadjust),
 	          _y - _radius * bx::fcos(_angle + edgeangle + angadjust) );
-	for (edgeangle = 0; edgeangle < 2.0f * bx::pi - 0.001f; edgeangle += bx::pi / 4.0f)
+	for (edgeangle = 0; edgeangle < 2.0f * bx::kPi - 0.001f; edgeangle += bx::kPi / 4.0f)
 	{
-		drawTo(_x + _radius * bx::fsin(_angle + edgeangle + bx::pi / 4.0f - angadjust),
-		       _y - _radius * bx::fcos(_angle + edgeangle + bx::pi / 4.0f - angadjust) );
+		drawTo(_x + _radius * bx::fsin(_angle + edgeangle + bx::kPi / 4.0f - angadjust),
+		       _y - _radius * bx::fcos(_angle + edgeangle + bx::kPi / 4.0f - angadjust) );
 	}
 
 	endDraw();
@@ -603,7 +622,7 @@ void VectorDisplay::drawFan(float _cx, float _cy, float _pa, float _a, float _t,
 	if (a2pa < pa2a)
 	{
 		_t = -_t;
-		nsteps = (int)bx::fmax(1, bx::fround(a2pa / (bx::pi / 8.0f) ) );
+		nsteps = (int)bx::fmax(1, bx::fround(a2pa / (bx::kPi / 8.0f) ) );
 		angles = (float*)alloca(sizeof(float) * (nsteps + 1) );
 		for (i = 0; i <= nsteps; i++)
 		{
@@ -612,7 +631,7 @@ void VectorDisplay::drawFan(float _cx, float _cy, float _pa, float _a, float _t,
 	}
 	else
 	{
-		nsteps = (int)bx::fmax(1, bx::fround(pa2a / (bx::pi / 8.0f) ) );
+		nsteps = (int)bx::fmax(1, bx::fround(pa2a / (bx::kPi / 8.0f) ) );
 		angles = (float*)alloca(sizeof(float) * (nsteps + 1) );
 		for (i = 0; i <= nsteps; i++)
 		{

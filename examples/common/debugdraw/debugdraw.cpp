@@ -9,10 +9,9 @@
 #include "../bgfx_utils.h"
 #include "../packrect.h"
 
-#include <bx/fpumath.h>
+#include <bx/math.h>
 #include <bx/sort.h>
 #include <bx/uint32_t.h>
-#include <bx/crtimpl.h>
 #include <bx/handlealloc.h>
 
 struct DebugVertex
@@ -335,7 +334,7 @@ struct SpriteT
 
 	SpriteHandle create(uint16_t _width, uint16_t _height)
 	{
-		SpriteHandle handle = { bx::HandleAlloc::invalid };
+		SpriteHandle handle = { bx::kInvalidHandle };
 
 		if (m_handleAlloc.getNumHandles() < m_handleAlloc.getMaxHandles() )
 		{
@@ -380,13 +379,11 @@ struct DebugDraw
 		m_allocator = _allocator;
 		m_depthTestLess = _depthTestLess;
 
-#if BX_CONFIG_ALLOCATOR_CRT
 		if (NULL == _allocator)
 		{
-			static bx::CrtAllocator allocator;
+			static bx::DefaultAllocator allocator;
 			m_allocator = &allocator;
 		}
-#endif // BX_CONFIG_ALLOCATOR_CRT
 
 		DebugVertex::init();
 		DebugUvVertex::init();
@@ -495,7 +492,7 @@ struct DebugDraw
 			Mesh::Enum id = Mesh::Enum(Mesh::Cone0+mesh);
 
 			const uint32_t num = getCircleLod(uint8_t(mesh) );
-			const float step = bx::pi * 2.0f / num;
+			const float step = bx::kPi * 2.0f / num;
 
 			const uint32_t numVertices = num+1;
 			const uint32_t numIndices  = num*6;
@@ -556,7 +553,7 @@ struct DebugDraw
 			Mesh::Enum id = Mesh::Enum(Mesh::Cylinder0+mesh);
 
 			const uint32_t num = getCircleLod(uint8_t(mesh) );
-			const float step = bx::pi * 2.0f / num;
+			const float step = bx::kPi * 2.0f / num;
 
 			const uint32_t numVertices = num*2;
 			const uint32_t numIndices  = num*12;
@@ -626,7 +623,7 @@ struct DebugDraw
 			Mesh::Enum id = Mesh::Enum(Mesh::Capsule0+mesh);
 
 			const uint32_t num = getCircleLod(uint8_t(mesh) );
-			const float step = bx::pi * 2.0f / num;
+			const float step = bx::kPi * 2.0f / num;
 
 			const uint32_t numVertices = num*2;
 			const uint32_t numIndices  = num*6;
@@ -1202,7 +1199,7 @@ struct DebugDraw
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 		const uint32_t num = getCircleLod(attrib.m_lod);
-		const float step = bx::pi * 2.0f / num;
+		const float step = bx::kPi * 2.0f / num;
 
 		_degrees = bx::fwrap(_degrees, 360.0f);
 
@@ -1244,7 +1241,7 @@ struct DebugDraw
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 		const uint32_t num = getCircleLod(attrib.m_lod);
-		const float step = bx::pi * 2.0f / num;
+		const float step = bx::kPi * 2.0f / num;
 		_weight = bx::fclamp(_weight, 0.0f, 2.0f);
 
 		float udir[3];
@@ -1291,7 +1288,7 @@ struct DebugDraw
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 		const uint32_t num = getCircleLod(attrib.m_lod);
-		const float step = bx::pi * 2.0f / num;
+		const float step = bx::kPi * 2.0f / num;
 		_weight = bx::fclamp(_weight, 0.0f, 2.0f);
 
 		float xy0[2];

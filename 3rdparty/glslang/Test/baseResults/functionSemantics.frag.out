@@ -1,5 +1,4 @@
 functionSemantics.frag
-Warning, version 400 is not yet complete; most version-specific features are present, but some are missing.
 ERROR: 0:74: 'return' : cannot convert return value to function return type 
 WARNING: 0:74: 'return' : type conversion on return values was not explicitly allowed until version 420 
 ERROR: 1 compilation errors.  No code generated.
