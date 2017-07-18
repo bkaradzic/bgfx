@@ -2568,7 +2568,7 @@ namespace bgfx { namespace gl
 			return false;
 		}
 
-		void flip(HMD& _hmd)
+		void flip(HMD& _hmd) override
 		{
 			if (m_flip)
 			{
