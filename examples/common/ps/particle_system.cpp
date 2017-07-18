@@ -525,9 +525,9 @@ namespace ps
 
 		void shutdown()
 		{
-			bgfx::destroyProgram(m_particleProgram);
-			bgfx::destroyTexture(m_texture);
-			bgfx::destroyUniform(s_texColor);
+			bgfx::destroy(m_particleProgram);
+			bgfx::destroy(m_texture);
+			bgfx::destroy(s_texColor);
 
 			bx::destroyHandleAlloc(m_allocator, m_emitterAlloc);
 			BX_FREE(m_allocator, m_emitter);

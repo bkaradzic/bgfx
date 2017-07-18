@@ -161,16 +161,16 @@ public:
 		}
 
 		// Cleanup.
-		bgfx::destroyProgram(m_shadingProgram);
-		bgfx::destroyProgram(m_idProgram);
+		bgfx::destroy(m_shadingProgram);
+		bgfx::destroy(m_idProgram);
 
-		bgfx::destroyUniform(u_tint);
-		bgfx::destroyUniform(u_id);
+		bgfx::destroy(u_tint);
+		bgfx::destroy(u_id);
 
-		bgfx::destroyFrameBuffer(m_pickingFB);
-		bgfx::destroyTexture(m_pickingRT);
-		bgfx::destroyTexture(m_pickingRTDepth);
-		bgfx::destroyTexture(m_blitTex);
+		bgfx::destroy(m_pickingFB);
+		bgfx::destroy(m_pickingRT);
+		bgfx::destroy(m_pickingRTDepth);
+		bgfx::destroy(m_blitTex);
 
 		imguiDestroy();
 

@@ -740,15 +740,15 @@ struct DebugDraw
 
 	void shutdown()
 	{
-		bgfx::destroyIndexBuffer(m_ibh);
-		bgfx::destroyVertexBuffer(m_vbh);
+		bgfx::destroy(m_ibh);
+		bgfx::destroy(m_vbh);
 		for (uint32_t ii = 0; ii < Program::Count; ++ii)
 		{
-			bgfx::destroyProgram(m_program[ii]);
+			bgfx::destroy(m_program[ii]);
 		}
-		bgfx::destroyUniform(u_params);
-		bgfx::destroyUniform(s_texColor);
-		bgfx::destroyTexture(m_texture);
+		bgfx::destroy(u_params);
+		bgfx::destroy(s_texColor);
+		bgfx::destroy(m_texture);
 	}
 
 	SpriteHandle createSprite(uint16_t _width, uint16_t _height, const void* _data)

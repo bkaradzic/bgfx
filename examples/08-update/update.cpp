@@ -306,39 +306,39 @@ public:
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_textures); ++ii)
 		{
-			bgfx::destroyTexture(m_textures[ii]);
+			bgfx::destroy(m_textures[ii]);
 		}
 
 		for (uint32_t ii = 0; ii < m_numTextures3d; ++ii)
 		{
-			bgfx::destroyTexture(m_textures3d[ii]);
+			bgfx::destroy(m_textures3d[ii]);
 		}
 
-		bgfx::destroyTexture(m_texture2d);
+		bgfx::destroy(m_texture2d);
 
 		for (uint32_t ii = 0; ii<BX_COUNTOF(m_textureCube); ++ii)
 		{
 			if (bgfx::isValid(m_textureCube[ii]))
 			{
-				bgfx::destroyTexture(m_textureCube[ii]);
+				bgfx::destroy(m_textureCube[ii]);
 			}
 		}
 
-		bgfx::destroyIndexBuffer(m_ibh);
-		bgfx::destroyVertexBuffer(m_vbh);
+		bgfx::destroy(m_ibh);
+		bgfx::destroy(m_vbh);
 		if (bgfx::isValid(m_program3d) )
 		{
-			bgfx::destroyProgram(m_program3d);
+			bgfx::destroy(m_program3d);
 		}
-		bgfx::destroyProgram(m_programCmp);
+		bgfx::destroy(m_programCmp);
 		if (bgfx::isValid(m_programCompute) )
 		{
-			bgfx::destroyProgram(m_programCompute);
+			bgfx::destroy(m_programCompute);
 		}
-		bgfx::destroyProgram(m_program);
-		bgfx::destroyUniform(u_time);
-		bgfx::destroyUniform(s_texColor);
-		bgfx::destroyUniform(s_texCube);
+		bgfx::destroy(m_program);
+		bgfx::destroy(u_time);
+		bgfx::destroy(s_texColor);
+		bgfx::destroy(s_texCube);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();

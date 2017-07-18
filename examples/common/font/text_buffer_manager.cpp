@@ -613,11 +613,11 @@ TextBufferManager::~TextBufferManager()
 	BX_CHECK(m_textBufferHandles.getNumHandles() == 0, "All the text buffers must be destroyed before destroying the manager");
 	delete [] m_textBuffers;
 
-	bgfx::destroyUniform(s_texColor);
+	bgfx::destroy(s_texColor);
 
-	bgfx::destroyProgram(m_basicProgram);
-	bgfx::destroyProgram(m_distanceProgram);
-	bgfx::destroyProgram(m_distanceSubpixelProgram);
+	bgfx::destroy(m_basicProgram);
+	bgfx::destroy(m_distanceProgram);
+	bgfx::destroy(m_distanceSubpixelProgram);
 }
 
 TextBufferHandle TextBufferManager::createTextBuffer(uint32_t _type, BufferType::Enum _bufferType)
@@ -657,8 +657,8 @@ void TextBufferManager::destroyTextBuffer(TextBufferHandle _handle)
 			bgfx::VertexBufferHandle vbh;
 			ibh.idx = bc.indexBufferHandleIdx;
 			vbh.idx = bc.vertexBufferHandleIdx;
-			bgfx::destroyIndexBuffer(ibh);
-			bgfx::destroyVertexBuffer(vbh);
+			bgfx::destroy(ibh);
+			bgfx::destroy(vbh);
 		}
 
 		break;
@@ -668,8 +668,8 @@ void TextBufferManager::destroyTextBuffer(TextBufferHandle _handle)
 		bgfx::DynamicVertexBufferHandle vbh;
 		ibh.idx = bc.indexBufferHandleIdx;
 		vbh.idx = bc.vertexBufferHandleIdx;
-		bgfx::destroyDynamicIndexBuffer(ibh);
-		bgfx::destroyDynamicVertexBuffer(vbh);
+		bgfx::destroy(ibh);
+		bgfx::destroy(vbh);
 
 		break;
 

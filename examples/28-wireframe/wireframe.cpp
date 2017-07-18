@@ -265,7 +265,7 @@ struct Uniforms
 
 	void destroy()
 	{
-		bgfx::destroyUniform(u_params);
+		bgfx::destroy(u_params);
 	}
 
 	union
@@ -346,8 +346,8 @@ public:
 		m_meshes[1].destroy();
 		m_meshes[2].destroy();
 
-		bgfx::destroyProgram(m_wfProgram);
-		bgfx::destroyProgram(m_meshProgram);
+		bgfx::destroy(m_wfProgram);
+		bgfx::destroy(m_meshProgram);
 
 		m_uniforms.destroy();
 

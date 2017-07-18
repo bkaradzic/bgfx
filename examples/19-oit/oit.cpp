@@ -235,17 +235,17 @@ public:
 		// Cleanup.
 		imguiDestroy();
 
-		bgfx::destroyFrameBuffer(m_fbh);
-		bgfx::destroyIndexBuffer(m_ibh);
-		bgfx::destroyVertexBuffer(m_vbh);
-		bgfx::destroyProgram(m_blend);
-		bgfx::destroyProgram(m_wbSeparatePass);
-		bgfx::destroyProgram(m_wbSeparateBlit);
-		bgfx::destroyProgram(m_wbPass);
-		bgfx::destroyProgram(m_wbBlit);
-		bgfx::destroyUniform(s_texColor0);
-		bgfx::destroyUniform(s_texColor1);
-		bgfx::destroyUniform(u_color);
+		bgfx::destroy(m_fbh);
+		bgfx::destroy(m_ibh);
+		bgfx::destroy(m_vbh);
+		bgfx::destroy(m_blend);
+		bgfx::destroy(m_wbSeparatePass);
+		bgfx::destroy(m_wbSeparateBlit);
+		bgfx::destroy(m_wbPass);
+		bgfx::destroy(m_wbBlit);
+		bgfx::destroy(s_texColor0);
+		bgfx::destroy(s_texColor1);
+		bgfx::destroy(u_color);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();
@@ -269,7 +269,7 @@ public:
 
 				if (bgfx::isValid(m_fbh) )
 				{
-					bgfx::destroyFrameBuffer(m_fbh);
+					bgfx::destroy(m_fbh);
 				}
 
 				m_fbtextures[0] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_RT);

@@ -144,12 +144,12 @@ public:
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_occlusionQueries); ++ii)
 		{
-			bgfx::destroyOcclusionQuery(m_occlusionQueries[ii]);
+			bgfx::destroy(m_occlusionQueries[ii]);
 		}
 
-		bgfx::destroyIndexBuffer(m_ibh);
-		bgfx::destroyVertexBuffer(m_vbh);
-		bgfx::destroyProgram(m_program);
+		bgfx::destroy(m_ibh);
+		bgfx::destroy(m_vbh);
+		bgfx::destroy(m_program);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();

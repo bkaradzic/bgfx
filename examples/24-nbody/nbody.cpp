@@ -221,20 +221,20 @@ public:
 
 		if (bgfx::isValid(m_indirectProgram) )
 		{
-			bgfx::destroyProgram(m_indirectProgram);
-			bgfx::destroyIndirectBuffer(m_indirectBuffer);
+			bgfx::destroy(m_indirectProgram);
+			bgfx::destroy(m_indirectBuffer);
 		}
 
-		bgfx::destroyUniform(u_params);
-		bgfx::destroyDynamicVertexBuffer(m_currPositionBuffer0);
-		bgfx::destroyDynamicVertexBuffer(m_currPositionBuffer1);
-		bgfx::destroyDynamicVertexBuffer(m_prevPositionBuffer0);
-		bgfx::destroyDynamicVertexBuffer(m_prevPositionBuffer1);
-		bgfx::destroyProgram(m_updateInstancesProgram);
-		bgfx::destroyProgram(m_initInstancesProgram);
-		bgfx::destroyIndexBuffer(m_ibh);
-		bgfx::destroyVertexBuffer(m_vbh);
-		bgfx::destroyProgram(m_particleProgram);
+		bgfx::destroy(u_params);
+		bgfx::destroy(m_currPositionBuffer0);
+		bgfx::destroy(m_currPositionBuffer1);
+		bgfx::destroy(m_prevPositionBuffer0);
+		bgfx::destroy(m_prevPositionBuffer1);
+		bgfx::destroy(m_updateInstancesProgram);
+		bgfx::destroy(m_initInstancesProgram);
+		bgfx::destroy(m_ibh);
+		bgfx::destroy(m_vbh);
+		bgfx::destroy(m_particleProgram);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();

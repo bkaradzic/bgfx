@@ -240,32 +240,32 @@ public:
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_lum); ++ii)
 		{
-			bgfx::destroyFrameBuffer(m_lum[ii]);
+			bgfx::destroy(m_lum[ii]);
 		}
-		bgfx::destroyFrameBuffer(m_bright);
-		bgfx::destroyFrameBuffer(m_blur);
-		bgfx::destroyFrameBuffer(m_fbh);
+		bgfx::destroy(m_bright);
+		bgfx::destroy(m_blur);
+		bgfx::destroy(m_fbh);
 
-		bgfx::destroyProgram(m_meshProgram);
-		bgfx::destroyProgram(m_skyProgram);
-		bgfx::destroyProgram(m_tonemapProgram);
-		bgfx::destroyProgram(m_lumProgram);
-		bgfx::destroyProgram(m_lumAvgProgram);
-		bgfx::destroyProgram(m_blurProgram);
-		bgfx::destroyProgram(m_brightProgram);
-		bgfx::destroyTexture(m_uffizi);
+		bgfx::destroy(m_meshProgram);
+		bgfx::destroy(m_skyProgram);
+		bgfx::destroy(m_tonemapProgram);
+		bgfx::destroy(m_lumProgram);
+		bgfx::destroy(m_lumAvgProgram);
+		bgfx::destroy(m_blurProgram);
+		bgfx::destroy(m_brightProgram);
+		bgfx::destroy(m_uffizi);
 		if (bgfx::isValid(m_rb) )
 		{
-			bgfx::destroyTexture(m_rb);
+			bgfx::destroy(m_rb);
 		}
 
-		bgfx::destroyUniform(s_texCube);
-		bgfx::destroyUniform(s_texColor);
-		bgfx::destroyUniform(s_texLum);
-		bgfx::destroyUniform(s_texBlur);
-		bgfx::destroyUniform(u_mtx);
-		bgfx::destroyUniform(u_tonemap);
-		bgfx::destroyUniform(u_offset);
+		bgfx::destroy(s_texCube);
+		bgfx::destroy(s_texColor);
+		bgfx::destroy(s_texLum);
+		bgfx::destroy(s_texBlur);
+		bgfx::destroy(u_mtx);
+		bgfx::destroy(u_tonemap);
+		bgfx::destroy(u_offset);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();
@@ -288,7 +288,7 @@ public:
 
 				uint32_t msaa = (m_reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
 
-				bgfx::destroyFrameBuffer(m_fbh);
+				bgfx::destroy(m_fbh);
 
 				m_fbtextures[0] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, ((msaa + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT) | BGFX_TEXTURE_U_CLAMP | BGFX_TEXTURE_V_CLAMP);
 				m_fbtextures[1] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY|( (msaa+1)<<BGFX_TEXTURE_RT_MSAA_SHIFT) );

@@ -110,15 +110,15 @@ public:
 		}
 
 		// Cleanup.
-		bgfx::destroyProgram(m_program);
+		bgfx::destroy(m_program);
 
-		bgfx::destroyUniform(s_texColor);
-		bgfx::destroyUniform(s_texStipple);
-		bgfx::destroyUniform(u_stipple);
+		bgfx::destroy(s_texColor);
+		bgfx::destroy(s_texStipple);
+		bgfx::destroy(u_stipple);
 
-		bgfx::destroyTexture(m_textureStipple);
-		bgfx::destroyTexture(m_textureLeafs);
-		bgfx::destroyTexture(m_textureBark);
+		bgfx::destroy(m_textureStipple);
+		bgfx::destroy(m_textureLeafs);
+		bgfx::destroy(m_textureBark);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();

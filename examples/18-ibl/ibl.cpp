@@ -35,7 +35,7 @@ struct Uniforms
 
 	void destroy()
 	{
-		bgfx::destroyUniform(u_params);
+		bgfx::destroy(u_params);
 	}
 
 	union
@@ -168,8 +168,8 @@ struct LightProbe
 
 	void destroy()
 	{
-		bgfx::destroyTexture(m_tex);
-		bgfx::destroyTexture(m_texIrr);
+		bgfx::destroy(m_tex);
+		bgfx::destroy(m_texIrr);
 	}
 
 	bgfx::TextureHandle m_tex;
@@ -548,16 +548,16 @@ public:
 		meshUnload(m_meshOrb);
 
 		// Cleanup.
-		bgfx::destroyProgram(m_programMesh);
-		bgfx::destroyProgram(m_programSky);
+		bgfx::destroy(m_programMesh);
+		bgfx::destroy(m_programSky);
 
-		bgfx::destroyUniform(u_camPos);
-		bgfx::destroyUniform(u_flags);
-		bgfx::destroyUniform(u_params);
-		bgfx::destroyUniform(u_mtx);
+		bgfx::destroy(u_camPos);
+		bgfx::destroy(u_flags);
+		bgfx::destroy(u_params);
+		bgfx::destroy(u_mtx);
 
-		bgfx::destroyUniform(s_texCube);
-		bgfx::destroyUniform(s_texCubeIrr);
+		bgfx::destroy(s_texCube);
+		bgfx::destroy(s_texCubeIrr);
 
 		for (uint8_t ii = 0; ii < LightProbe::Count; ++ii)
 		{

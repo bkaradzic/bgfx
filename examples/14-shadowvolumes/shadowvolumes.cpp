@@ -261,16 +261,16 @@ struct Uniforms
 
 	void destroy()
 	{
-		bgfx::destroyUniform(u_params);
-		bgfx::destroyUniform(u_svparams);
-		bgfx::destroyUniform(u_ambient);
-		bgfx::destroyUniform(u_diffuse);
-		bgfx::destroyUniform(u_specular_shininess);
-		bgfx::destroyUniform(u_fog);
-		bgfx::destroyUniform(u_color);
-		bgfx::destroyUniform(u_lightPosRadius);
-		bgfx::destroyUniform(u_lightRgbInnerR);
-		bgfx::destroyUniform(u_virtualLightPos_extrusionDist);
+		bgfx::destroy(u_params);
+		bgfx::destroy(u_svparams);
+		bgfx::destroy(u_ambient);
+		bgfx::destroy(u_diffuse);
+		bgfx::destroy(u_specular_shininess);
+		bgfx::destroy(u_fog);
+		bgfx::destroy(u_color);
+		bgfx::destroy(u_lightPosRadius);
+		bgfx::destroy(u_lightRgbInnerR);
+		bgfx::destroy(u_virtualLightPos_extrusionDist);
 	}
 
 	struct Params
@@ -928,10 +928,10 @@ struct Group
 
 	void unload()
 	{
-		bgfx::destroyVertexBuffer(m_vbh);
+		bgfx::destroy(m_vbh);
 		if (bgfx::kInvalidHandle != m_ibh.idx)
 		{
-			bgfx::destroyIndexBuffer(m_ibh);
+			bgfx::destroy(m_ibh);
 		}
 		free(m_vertices);
 		m_vertices = NULL;
@@ -1661,8 +1661,8 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 
 	// bgfx::destroy*Buffer doesn't actually destroy buffers now.
 	// Instead, these bgfx::destroy*Buffer commands get queued to be executed after the end of the next frame.
-	bgfx::destroyVertexBuffer(_shadowVolume.m_vbSides);
-	bgfx::destroyIndexBuffer(_shadowVolume.m_ibSides);
+	bgfx::destroy(_shadowVolume.m_vbSides);
+	bgfx::destroy(_shadowVolume.m_ibSides);
 
 	if (cap)
 	{
@@ -1672,7 +1672,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 		_shadowVolume.m_ibFrontCap = bgfx::createIndexBuffer(mem);
 
 		//gets destroyed after the end of the next frame
-		bgfx::destroyIndexBuffer(_shadowVolume.m_ibFrontCap);
+		bgfx::destroy(_shadowVolume.m_ibFrontCap);
 
 		//back cap
 		isize = backCapI * sizeof(uint16_t);
@@ -1680,7 +1680,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 		_shadowVolume.m_ibBackCap = bgfx::createIndexBuffer(mem);
 
 		//gets destroyed after the end of the next frame
-		bgfx::destroyIndexBuffer(_shadowVolume.m_ibBackCap);
+		bgfx::destroy(_shadowVolume.m_ibBackCap);
 	}
 }
 
@@ -2055,30 +2055,30 @@ public:
 
 		s_uniforms.destroy();
 
-		bgfx::destroyUniform(s_texColor);
-		bgfx::destroyUniform(s_texStencil);
-		bgfx::destroyFrameBuffer(s_stencilFb);
+		bgfx::destroy(s_texColor);
+		bgfx::destroy(s_texStencil);
+		bgfx::destroy(s_stencilFb);
 
-		bgfx::destroyTexture(m_figureTex);
-		bgfx::destroyTexture(m_fieldstoneTex);
-		bgfx::destroyTexture(m_flareTex);
+		bgfx::destroy(m_figureTex);
+		bgfx::destroy(m_fieldstoneTex);
+		bgfx::destroy(m_flareTex);
 
-		bgfx::destroyProgram(m_programTextureLighting);
-		bgfx::destroyProgram(m_programColorLighting);
-		bgfx::destroyProgram(m_programColorTexture);
-		bgfx::destroyProgram(m_programTexture);
+		bgfx::destroy(m_programTextureLighting);
+		bgfx::destroy(m_programColorLighting);
+		bgfx::destroy(m_programColorTexture);
+		bgfx::destroy(m_programTexture);
 
-		bgfx::destroyProgram(m_programBackBlank);
-		bgfx::destroyProgram(m_programSideBlank);
-		bgfx::destroyProgram(m_programFrontBlank);
-		bgfx::destroyProgram(m_programBackColor);
-		bgfx::destroyProgram(m_programSideColor);
-		bgfx::destroyProgram(m_programFrontColor);
-		bgfx::destroyProgram(m_programSideTex);
-		bgfx::destroyProgram(m_programBackTex1);
-		bgfx::destroyProgram(m_programBackTex2);
-		bgfx::destroyProgram(m_programFrontTex1);
-		bgfx::destroyProgram(m_programFrontTex2);
+		bgfx::destroy(m_programBackBlank);
+		bgfx::destroy(m_programSideBlank);
+		bgfx::destroy(m_programFrontBlank);
+		bgfx::destroy(m_programBackColor);
+		bgfx::destroy(m_programSideColor);
+		bgfx::destroy(m_programFrontColor);
+		bgfx::destroy(m_programSideTex);
+		bgfx::destroy(m_programBackTex1);
+		bgfx::destroy(m_programBackTex2);
+		bgfx::destroy(m_programFrontTex1);
+		bgfx::destroy(m_programFrontTex2);
 
 		cameraDestroy();
 		imguiDestroy();
@@ -2108,7 +2108,7 @@ public:
 				m_oldWidth  = m_viewState.m_width;
 				m_oldHeight = m_viewState.m_height;
 
-				bgfx::destroyFrameBuffer(s_stencilFb);
+				bgfx::destroy(s_stencilFb);
 
 				bgfx::TextureHandle fbtextures[] =
 				{

@@ -149,10 +149,10 @@ public:
 		imguiDestroy();
 
 		// Cleanup.
-		bgfx::destroyProgram(m_program);
+		bgfx::destroy(m_program);
 
-		bgfx::destroyUniform(u_mtx);
-		bgfx::destroyUniform(u_lightDirTime);
+		bgfx::destroy(u_mtx);
+		bgfx::destroy(u_lightDirTime);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();

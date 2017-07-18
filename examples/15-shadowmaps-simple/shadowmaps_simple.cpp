@@ -232,18 +232,18 @@ public:
 		meshStateDestroy(m_state[0]);
 		meshStateDestroy(m_state[1]);
 
-		bgfx::destroyVertexBuffer(m_vbh);
-		bgfx::destroyIndexBuffer(m_ibh);
+		bgfx::destroy(m_vbh);
+		bgfx::destroy(m_ibh);
 
-		bgfx::destroyProgram(m_progShadow);
-		bgfx::destroyProgram(m_progMesh);
+		bgfx::destroy(m_progShadow);
+		bgfx::destroy(m_progMesh);
 
-		bgfx::destroyFrameBuffer(m_shadowMapFB);
+		bgfx::destroy(m_shadowMapFB);
 
-		bgfx::destroyUniform(u_shadowMap);
-		bgfx::destroyUniform(u_lightPos);
-		bgfx::destroyUniform(u_lightMtx);
-		bgfx::destroyUniform(u_depthScaleOffset);
+		bgfx::destroy(u_shadowMap);
+		bgfx::destroy(u_lightPos);
+		bgfx::destroy(u_lightMtx);
+		bgfx::destroy(u_depthScaleOffset);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();

@@ -1228,7 +1228,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_destroy_index_buffer`.
 	///
-	void destroyIndexBuffer(IndexBufferHandle _handle);
+	void destroy(IndexBufferHandle _handle);
 
 	/// Create static vertex buffer.
 	///
@@ -1262,7 +1262,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_destroy_vertex_buffer`.
 	///
-	void destroyVertexBuffer(VertexBufferHandle _handle);
+	void destroy(VertexBufferHandle _handle);
 
 	/// Create empty dynamic index buffer.
 	///
@@ -1332,7 +1332,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_destroy_dynamic_index_buffer`.
 	///
-	void destroyDynamicIndexBuffer(DynamicIndexBufferHandle _handle);
+	void destroy(DynamicIndexBufferHandle _handle);
 
 	/// Create empty dynamic vertex buffer.
 	///
@@ -1406,7 +1406,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_destroy_dynamic_vertex_buffer`.
 	///
-	void destroyDynamicVertexBuffer(DynamicVertexBufferHandle _handle);
+	void destroy(DynamicVertexBufferHandle _handle);
 
 	/// Returns number of available indices.
 	///
@@ -1510,7 +1510,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_destroy_indirect_buffer`.
 	///
-	void destroyIndirectBuffer(IndirectBufferHandle _handle);
+	void destroy(IndirectBufferHandle _handle);
 
 	/// Create shader from memory buffer.
 	///
@@ -1541,7 +1541,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_destroy_shader`.
 	///
-	void destroyShader(ShaderHandle _handle);
+	void destroy(ShaderHandle _handle);
 
 	/// Create program with vertex and fragment shaders.
 	///
@@ -1578,7 +1578,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_destroy_program`.
 	///
-	void destroyProgram(ProgramHandle _handle);
+	void destroy(ProgramHandle _handle);
 
 	/// Validate texture parameters.
 	///
@@ -1882,7 +1882,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_destroy_texture`.
 	///
-	void destroyTexture(TextureHandle _handle);
+	void destroy(TextureHandle _handle);
 
 	/// Create frame buffer (simple).
 	///
@@ -2000,7 +2000,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_destroy_frame_buffer`.
 	///
-	void destroyFrameBuffer(FrameBufferHandle _handle);
+	void destroy(FrameBufferHandle _handle);
 
 	/// Create shader uniform parameter.
 	///
@@ -2053,7 +2053,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_destroy_uniform`.
 	///
-	void destroyUniform(UniformHandle _handle);
+	void destroy(UniformHandle _handle);
 
 	/// Create occlusion query.
 	///
@@ -2080,7 +2080,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_destroy_occlusion_query`.
 	///
-	void destroyOcclusionQuery(OcclusionQueryHandle _handle);
+	void destroy(OcclusionQueryHandle _handle);
 
 	/// Set palette color value.
 	///

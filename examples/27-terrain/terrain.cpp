@@ -143,33 +143,33 @@ public:
 
 		if (bgfx::isValid(m_ibh) )
 		{
-			bgfx::destroyIndexBuffer(m_ibh);
+			bgfx::destroy(m_ibh);
 		}
 
 		if (bgfx::isValid(m_vbh) )
 		{
-			bgfx::destroyVertexBuffer(m_vbh);
+			bgfx::destroy(m_vbh);
 		}
 
 		if (bgfx::isValid(m_dibh) )
 		{
-			bgfx::destroyDynamicIndexBuffer(m_dibh);
+			bgfx::destroy(m_dibh);
 		}
 
 		if (bgfx::isValid(m_dvbh) )
 		{
-			bgfx::destroyDynamicVertexBuffer(m_dvbh);
+			bgfx::destroy(m_dvbh);
 		}
 
-		bgfx::destroyUniform(s_heightTexture);
+		bgfx::destroy(s_heightTexture);
 
 		if (bgfx::isValid(m_heightTexture) )
 		{
-			bgfx::destroyTexture(m_heightTexture);
+			bgfx::destroy(m_heightTexture);
 		}
 
-		bgfx::destroyProgram(m_terrainProgram);
-		bgfx::destroyProgram(m_terrainHeightTextureProgram);
+		bgfx::destroy(m_terrainProgram);
+		bgfx::destroy(m_terrainHeightTextureProgram);
 
 		/// When data is passed to bgfx via makeRef we need to make
 		/// sure library is done with it before freeing memory blocks.
@@ -233,14 +233,14 @@ public:
 
 			if (bgfx::isValid(m_vbh) )
 			{
-				bgfx::destroyVertexBuffer(m_vbh);
+				bgfx::destroy(m_vbh);
 			}
 
 			mem = bgfx::makeRef(&m_terrain.m_vertices[0], sizeof(PosTexCoord0Vertex) * m_terrain.m_vertexCount);
 			m_vbh = bgfx::createVertexBuffer(mem, PosTexCoord0Vertex::ms_decl);
 			if (bgfx::isValid(m_ibh) )
 			{
-				bgfx::destroyIndexBuffer(m_ibh);
+				bgfx::destroy(m_ibh);
 			}
 
 			mem = bgfx::makeRef(&m_terrain.m_indices[0], sizeof(uint16_t) * m_terrain.m_indexCount);

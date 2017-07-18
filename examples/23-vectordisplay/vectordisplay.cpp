@@ -117,19 +117,19 @@ void VectorDisplay::teardown()
 {
 	for (size_t i = 0; i < m_vertexBuffers.size(); ++i)
 	{
-		bgfx::destroyDynamicVertexBuffer(m_vertexBuffers[i]);
+		bgfx::destroy(m_vertexBuffers[i]);
 	}
 
 	teardownResDependent();
 
-	bgfx::destroyProgram(m_drawToScreenShader);
-	bgfx::destroyProgram(m_blurShader);
-	bgfx::destroyProgram(m_blitShader);
+	bgfx::destroy(m_drawToScreenShader);
+	bgfx::destroy(m_blurShader);
+	bgfx::destroy(m_blitShader);
 
-	bgfx::destroyUniform(u_params);
-	bgfx::destroyUniform(s_texColor);
+	bgfx::destroy(u_params);
+	bgfx::destroy(s_texColor);
 
-	bgfx::destroyTexture(m_lineTexId);
+	bgfx::destroy(m_lineTexId);
 }
 
 void VectorDisplay::beginFrame()
@@ -719,7 +719,7 @@ bool VectorDisplay::setDecaySteps(int _steps)
 	{
 		for (size_t i = 0; i < m_vertexBuffers.size(); ++i)
 		{
-			bgfx::destroyDynamicVertexBuffer(m_vertexBuffers[i]);
+			bgfx::destroy(m_vertexBuffers[i]);
 		}
 
 		m_vertexBuffers.clear();
@@ -837,9 +837,9 @@ void VectorDisplay::setupResDependent()
 
 void VectorDisplay::teardownResDependent()
 {
-	bgfx::destroyFrameBuffer(m_sceneFrameBuffer);
-	bgfx::destroyFrameBuffer(m_glow0FrameBuffer);
-	bgfx::destroyFrameBuffer(m_glow1FrameBuffer);
+	bgfx::destroy(m_sceneFrameBuffer);
+	bgfx::destroy(m_glow0FrameBuffer);
+	bgfx::destroy(m_glow1FrameBuffer);
 }
 
 void VectorDisplay::genLinetex()                                    // generate the texture

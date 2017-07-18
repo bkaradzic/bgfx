@@ -60,9 +60,9 @@ public:
 		meshUnload(m_mesh);
 
 		// Cleanup.
-		bgfx::destroyProgram(m_program);
+		bgfx::destroy(m_program);
 
-		bgfx::destroyUniform(u_time);
+		bgfx::destroy(u_time);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();

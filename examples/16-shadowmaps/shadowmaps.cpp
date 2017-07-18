@@ -492,34 +492,34 @@ struct Uniforms
 
 	void destroy()
 	{
-		bgfx::destroyUniform(u_params0);
-		bgfx::destroyUniform(u_params1);
-		bgfx::destroyUniform(u_params2);
-		bgfx::destroyUniform(u_color);
-		bgfx::destroyUniform(u_smSamplingParams);
-		bgfx::destroyUniform(u_csmFarDistances);
+		bgfx::destroy(u_params0);
+		bgfx::destroy(u_params1);
+		bgfx::destroy(u_params2);
+		bgfx::destroy(u_color);
+		bgfx::destroy(u_smSamplingParams);
+		bgfx::destroy(u_csmFarDistances);
 
-		bgfx::destroyUniform(u_materialKa);
-		bgfx::destroyUniform(u_materialKd);
-		bgfx::destroyUniform(u_materialKs);
+		bgfx::destroy(u_materialKa);
+		bgfx::destroy(u_materialKd);
+		bgfx::destroy(u_materialKs);
 
-		bgfx::destroyUniform(u_tetraNormalGreen);
-		bgfx::destroyUniform(u_tetraNormalYellow);
-		bgfx::destroyUniform(u_tetraNormalBlue);
-		bgfx::destroyUniform(u_tetraNormalRed);
+		bgfx::destroy(u_tetraNormalGreen);
+		bgfx::destroy(u_tetraNormalYellow);
+		bgfx::destroy(u_tetraNormalBlue);
+		bgfx::destroy(u_tetraNormalRed);
 
-		bgfx::destroyUniform(u_shadowMapMtx0);
-		bgfx::destroyUniform(u_shadowMapMtx1);
-		bgfx::destroyUniform(u_shadowMapMtx2);
-		bgfx::destroyUniform(u_shadowMapMtx3);
+		bgfx::destroy(u_shadowMapMtx0);
+		bgfx::destroy(u_shadowMapMtx1);
+		bgfx::destroy(u_shadowMapMtx2);
+		bgfx::destroy(u_shadowMapMtx3);
 
-		bgfx::destroyUniform(u_lightMtx);
-		bgfx::destroyUniform(u_lightPosition);
-		bgfx::destroyUniform(u_lightAmbientPower);
-		bgfx::destroyUniform(u_lightDiffusePower);
-		bgfx::destroyUniform(u_lightSpecularPower);
-		bgfx::destroyUniform(u_lightSpotDirectionInner);
-		bgfx::destroyUniform(u_lightAttenuationSpotOuter);
+		bgfx::destroy(u_lightMtx);
+		bgfx::destroy(u_lightPosition);
+		bgfx::destroy(u_lightAmbientPower);
+		bgfx::destroy(u_lightDiffusePower);
+		bgfx::destroy(u_lightSpecularPower);
+		bgfx::destroy(u_lightSpotDirectionInner);
+		bgfx::destroy(u_lightAttenuationSpotOuter);
 	}
 
 	union
@@ -924,11 +924,11 @@ struct Mesh
 		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
 		{
 			const Group& group = *it;
-			bgfx::destroyVertexBuffer(group.m_vbh);
+			bgfx::destroy(group.m_vbh);
 
 			if (bgfx::kInvalidHandle != group.m_ibh.idx)
 			{
-				bgfx::destroyIndexBuffer(group.m_ibh);
+				bgfx::destroy(group.m_ibh);
 			}
 		}
 		m_groups.clear();
@@ -1190,7 +1190,7 @@ struct Programs
 			{
 				for (uint8_t kk = 0; kk < SmImpl::Count; ++kk)
 				{
-					bgfx::destroyProgram(m_colorLighting[ii][jj][kk]);
+					bgfx::destroy(m_colorLighting[ii][jj][kk]);
 				}
 			}
 		}
@@ -1200,32 +1200,32 @@ struct Programs
 		{
 			for (uint8_t jj = 0; jj < PackDepth::Count; ++jj)
 			{
-				bgfx::destroyProgram(m_packDepth[ii][jj]);
+				bgfx::destroy(m_packDepth[ii][jj]);
 			}
 		}
 
 		// Draw depth.
 		for (uint8_t ii = 0; ii < PackDepth::Count; ++ii)
 		{
-			bgfx::destroyProgram(m_drawDepth[ii]);
+			bgfx::destroy(m_drawDepth[ii]);
 		}
 
 		// Hblur.
 		for (uint8_t ii = 0; ii < PackDepth::Count; ++ii)
 		{
-			bgfx::destroyProgram(m_hBlur[ii]);
+			bgfx::destroy(m_hBlur[ii]);
 		}
 
 		// Vblur.
 		for (uint8_t ii = 0; ii < PackDepth::Count; ++ii)
 		{
-			bgfx::destroyProgram(m_vBlur[ii]);
+			bgfx::destroy(m_vBlur[ii]);
 		}
 
 		// Misc.
-		bgfx::destroyProgram(m_colorTexture);
-		bgfx::destroyProgram(m_texture);
-		bgfx::destroyProgram(m_black);
+		bgfx::destroy(m_colorTexture);
+		bgfx::destroy(m_texture);
+		bgfx::destroy(m_black);
 	}
 
 	bgfx::ProgramHandle m_black;
@@ -1914,23 +1914,23 @@ public:
 		m_hplaneMesh.unload();
 		m_vplaneMesh.unload();
 
-		bgfx::destroyTexture(m_texFigure);
-		bgfx::destroyTexture(m_texFieldstone);
-		bgfx::destroyTexture(m_texFlare);
+		bgfx::destroy(m_texFigure);
+		bgfx::destroy(m_texFieldstone);
+		bgfx::destroy(m_texFlare);
 
 		for (uint8_t ii = 0; ii < ShadowMapRenderTargets::Count; ++ii)
 		{
-			bgfx::destroyFrameBuffer(s_rtShadowMap[ii]);
+			bgfx::destroy(s_rtShadowMap[ii]);
 		}
-		bgfx::destroyFrameBuffer(s_rtBlur);
+		bgfx::destroy(s_rtBlur);
 
 		s_programs.destroy();
 
-		bgfx::destroyUniform(s_texColor);
-		bgfx::destroyUniform(s_shadowMap[3]);
-		bgfx::destroyUniform(s_shadowMap[2]);
-		bgfx::destroyUniform(s_shadowMap[1]);
-		bgfx::destroyUniform(s_shadowMap[0]);
+		bgfx::destroy(s_texColor);
+		bgfx::destroy(s_shadowMap[3]);
+		bgfx::destroy(s_shadowMap[2]);
+		bgfx::destroy(s_shadowMap[1]);
+		bgfx::destroy(s_shadowMap[0]);
 
 		s_uniforms.destroy();
 
@@ -3168,7 +3168,7 @@ public:
 				s_uniforms.m_shadowMapTexelSize = 1.0f / currentShadowMapSizef;
 
 				{
-					bgfx::destroyFrameBuffer(s_rtShadowMap[0]);
+					bgfx::destroy(s_rtShadowMap[0]);
 
 					bgfx::TextureHandle fbtextures[] =
 					{
@@ -3183,7 +3183,7 @@ public:
 					for (uint8_t ii = 1; ii < ShadowMapRenderTargets::Count; ++ii)
 					{
 						{
-							bgfx::destroyFrameBuffer(s_rtShadowMap[ii]);
+							bgfx::destroy(s_rtShadowMap[ii]);
 
 							bgfx::TextureHandle fbtextures[] =
 							{
@@ -3195,7 +3195,7 @@ public:
 					}
 				}
 
-				bgfx::destroyFrameBuffer(s_rtBlur);
+				bgfx::destroy(s_rtBlur);
 				s_rtBlur = bgfx::createFrameBuffer(m_currentShadowMapSize, m_currentShadowMapSize, bgfx::TextureFormat::BGRA8);
 			}
 

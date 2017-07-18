@@ -1407,7 +1407,7 @@ int _main_(int _argc, char** _argv)
 			{
 				if (bgfx::isValid(texture) )
 				{
-					bgfx::destroyTexture(texture);
+					bgfx::destroy(texture);
 				}
 
 				fileIndex = view.m_fileIndex;
@@ -1628,19 +1628,19 @@ int _main_(int _argc, char** _argv)
 
 	if (bgfx::isValid(texture) )
 	{
-		bgfx::destroyTexture(texture);
+		bgfx::destroy(texture);
 	}
 
-	bgfx::destroyTexture(checkerBoard);
-	bgfx::destroyUniform(s_texColor);
-	bgfx::destroyUniform(u_mtx);
-	bgfx::destroyUniform(u_params);
-	bgfx::destroyProgram(textureProgram);
-	bgfx::destroyProgram(textureArrayProgram);
-	bgfx::destroyProgram(textureCubeProgram);
-	bgfx::destroyProgram(textureCube2Program);
-	bgfx::destroyProgram(textureSdfProgram);
-	bgfx::destroyProgram(texture3DProgram);
+	bgfx::destroy(checkerBoard);
+	bgfx::destroy(s_texColor);
+	bgfx::destroy(u_mtx);
+	bgfx::destroy(u_params);
+	bgfx::destroy(textureProgram);
+	bgfx::destroy(textureArrayProgram);
+	bgfx::destroy(textureCubeProgram);
+	bgfx::destroy(textureCube2Program);
+	bgfx::destroy(textureSdfProgram);
+	bgfx::destroy(texture3DProgram);
 
 	imguiDestroy();
 
