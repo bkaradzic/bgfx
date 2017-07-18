@@ -1421,7 +1421,7 @@ namespace bgfx
 	/// @param[in] _num Number of required vertices.
 	/// @param[in] _decl Vertex declaration.
 	///
-	/// @attention C99 equivalent is `bgfx_check_avail_transient_vertex_buffer`.
+	/// @attention C99 equivalent is `bgfx_get_avail_transient_vertex_buffer`.
 	///
 	uint32_t getAvailTransientVertexBuffer(uint32_t _num, const VertexDecl& _decl);
 
@@ -1430,7 +1430,7 @@ namespace bgfx
 	/// @param[in] _num Number of required instances.
 	/// @param[in] _stride Stride per instance.
 	///
-	/// @attention C99 equivalent is `bgfx_check_avail_instance_data_buffer`.
+	/// @attention C99 equivalent is `bgfx_get_avail_instance_data_buffer`.
 	///
 	uint32_t getAvailInstanceDataBuffer(uint32_t _num, uint16_t _stride);
 
