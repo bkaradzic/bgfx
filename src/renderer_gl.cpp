@@ -2448,12 +2448,12 @@ namespace bgfx { namespace gl
 				{
 					GL_CHECK(glDebugMessageCallback(debugProcCb, NULL) );
 					GL_CHECK(glDebugMessageControl(GL_DONT_CARE
-							, GL_DONT_CARE
-							, GL_DEBUG_SEVERITY_MEDIUM
-							, 0
-							, NULL
-							, GL_TRUE
-							) );
+						, GL_DONT_CARE
+						, GL_DEBUG_SEVERITY_MEDIUM
+						, 0
+						, NULL
+						, GL_TRUE
+						) );
 				}
 			}
 
@@ -4680,21 +4680,21 @@ namespace bgfx { namespace gl
 					&&  !normalized)
 					{
 						GL_CHECK(glVertexAttribIPointer(loc
-								, num
-								, s_attribType[type]
-								, _vertexDecl.m_stride
-								, (void*)(uintptr_t)baseVertex)
-								);
+							, num
+							, s_attribType[type]
+							, _vertexDecl.m_stride
+							, (void*)(uintptr_t)baseVertex)
+							);
 					}
 					else
 					{
 						GL_CHECK(glVertexAttribPointer(loc
-								, num
-								, s_attribType[type]
-								, normalized
-								, _vertexDecl.m_stride
-								, (void*)(uintptr_t)baseVertex)
-								);
+							, num
+							, s_attribType[type]
+							, normalized
+							, _vertexDecl.m_stride
+							, (void*)(uintptr_t)baseVertex)
+							);
 					}
 
 					m_unboundUsedAttrib[ii] = Attrib::Count;
@@ -4800,21 +4800,21 @@ namespace bgfx { namespace gl
 				if (_target == GL_TEXTURE_3D)
 				{
 					GL_CHECK(glTexStorage3D(_target
-							, _numMips
-							, internalFmt
-							, m_width
-							, m_height
-							, _depth
-							) );
+						, _numMips
+						, internalFmt
+						, m_width
+						, m_height
+						, _depth
+						) );
 				}
 				else
 				{
 					GL_CHECK(glTexStorage2D(_target
-							, _numMips
-							, internalFmt
-							, m_width
-							, m_height
-							) );
+						, _numMips
+						, internalFmt
+						, m_width
+						, m_height
+						) );
 				}
 			}
 
@@ -7161,7 +7161,6 @@ namespace bgfx { namespace gl
 										{
 											const IndexBufferGL& buffer = m_indexBuffers[bind.m_idx];
 											GL_CHECK(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, stage, buffer.m_id) );
-											// TODO: barriers?
 										}
 										break;
 
@@ -7169,7 +7168,6 @@ namespace bgfx { namespace gl
 										{
 											const VertexBufferGL& buffer = m_vertexBuffers[bind.m_idx];
 											GL_CHECK(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, stage, buffer.m_id) );
-											// TODO: barriers?
 										}
 										break;
 									}
