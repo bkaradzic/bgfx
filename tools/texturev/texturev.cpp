@@ -24,8 +24,9 @@
 
 #include <tinystl/allocator.h>
 #include <tinystl/vector.h>
-#include <string>
 namespace stl = tinystl;
+#include <string>
+#include <algorithm>
 
 #include <bimg/decode.h>
 
@@ -156,6 +157,8 @@ static const InputBinding s_bindingView[] =
 
 	{ entry::Key::KeyH,      entry::Modifier::None,       1, NULL, "view help"               },
 
+	{ entry::Key::Return,    entry::Modifier::None,       1, NULL, "view files"              },
+
 	{ entry::Key::KeyS,      entry::Modifier::None,       1, NULL, "view sdf"                },
 
 	{ entry::Key::Space,     entry::Modifier::None,       1, NULL, "view geo\n"
@@ -206,6 +209,7 @@ struct View
 		, m_fit(true)
 		, m_alpha(false)
 		, m_help(false)
+		, m_files(false)
 		, m_sdf(false)
 	{
 	}
@@ -486,23 +490,34 @@ struct View
 			{
 				m_help ^= true;
 			}
+			else if (0 == bx::strCmp(_argv[1], "files") )
+			{
+				m_files ^= true;
+			}
 		}
 
 		return 0;
 	}
 
-	void updateFileList(const char* _path, const bx::StringView& _fileName)
+	static bool sortNameAscending(const std::string& _lhs, const std::string& _rhs)
 	{
-		std::string path = _path;
+		return 0 > bx::strCmpV(_lhs.c_str(), _rhs.c_str() );
+	}
 
-		DIR* dir = opendir(_path);
+	void updateFileList(const bx::FilePath& _filePath)
+	{
+		DIR* dir = opendir(_filePath.get() );
 
 		if (NULL == dir)
 		{
-			path = ".";
+			m_path = _filePath.getPath();
+			dir = opendir(m_path.get() );
+		}
+		else
+		{
+			m_path = _filePath;
 		}
 
-		dir = opendir(path.c_str() );
 		if (NULL != dir)
 		{
 			for (dirent* item = readdir(dir); NULL != item; item = readdir(dir) )
@@ -525,24 +540,29 @@ struct View
 
 						if (supported)
 						{
-							if (0 == bx::strCmp(item->d_name, _fileName) )
-							{
-								m_fileIndex = uint32_t(m_fileList.size() );
-							}
-
-							std::string name = path;
-							char ch = name[name.size()-1];
-							name += '/' == ch || '\\' == ch ? "" : "/";
-							name += item->d_name;
-							m_fileList.push_back(name);
+							m_fileList.push_back(item->d_name);
 						}
 					}
 				}
 			}
 
+			std::sort(m_fileList.begin(), m_fileList.end(), sortNameAscending);
+
+			uint32_t idx = 0;
+			for (FileList::const_iterator it = m_fileList.begin(); it != m_fileList.end(); ++it, ++idx)
+			{
+				if (0 == bx::strCmp(it->c_str(), _filePath.getFileName() ) )
+				{
+					break;
+				}
+			}
+			m_fileIndex = idx == m_fileList.size() ? 0 : idx;
+
 			closedir(dir);
 		}
 	}
+
+	bx::FilePath m_path;
 
 	typedef stl::vector<std::string> FileList;
 	FileList m_fileList;
@@ -564,6 +584,7 @@ struct View
 	bool     m_fit;
 	bool     m_alpha;
 	bool     m_help;
+	bool     m_files;
 	bool     m_sdf;
 };
 
@@ -1063,22 +1084,11 @@ int _main_(int _argc, char** _argv)
 	InterpolatorAngle angy(0.0f);
 
 	const char* filePath = _argc < 2 ? "" : _argv[1];
-	bool directory = false;
-
-	bx::FileInfo fi;
-	bx::stat(filePath, fi);
-	directory = bx::FileInfo::Directory == fi.m_type;
 
 	std::string path = filePath;
-	if (!directory)
 	{
 		bx::FilePath fp(filePath);
-		path.assign(fp.getPath().getPtr(), fp.getPath().getTerm() );
-		view.updateFileList(path.c_str(), fp.getFileName() );
-	}
-	else
-	{
-		view.updateFileList(path.c_str(), "");
+		view.updateFileList(fp);
 	}
 
 	int exitcode = bx::kExitSuccess;
@@ -1111,8 +1121,8 @@ int _main_(int _argc, char** _argv)
 				| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
 				| (mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
 				,  mouseState.m_mz
-				, uint16_t(width)
-				, uint16_t(height)
+				,  uint16_t(width)
+				,  uint16_t(height)
 				);
 
 			static bool help = false;
@@ -1162,8 +1172,9 @@ int _main_(int _argc, char** _argv)
 
 			if (ImGui::BeginPopupContextVoid("Menu") )
 			{
-//				if (ImGui::MenuItem("Open") )
+				if (ImGui::MenuItem("Files", NULL, view.m_files) )
 				{
+					cmdExec("view files");
 				}
 
 //				if (ImGui::MenuItem("Save As") )
@@ -1263,6 +1274,67 @@ int _main_(int _argc, char** _argv)
 				help = view.m_help;
 			}
 
+			if (view.m_files)
+			{
+				char temp[bx::kMaxFilePath];
+				bx::snprintf(temp, BX_COUNTOF(temp), "%s##File", view.m_path.get() );
+				if (ImGui::Begin(temp, NULL, ImVec2(400.0f, 400.0f) ) )
+				{
+					if (ImGui::BeginChild("##file_list", ImVec2(0.0f, 0.0f) ) )
+					{
+						ImGui::PushFont(ImGui::Font::Mono);
+						const float itemHeight = ImGui::GetTextLineHeightWithSpacing();
+						const float listHeight =
+							std::max(1.0f, bx::ffloor(ImGui::GetWindowHeight()/itemHeight) )
+							* itemHeight
+							;
+
+						ImGui::PushItemWidth(-1);
+						if (ImGui::ListBoxHeader("##empty", ImVec2(0.0f, listHeight) ) )
+						{
+							const int32_t itemCount  = int32_t(view.m_fileList.size() );
+
+							int32_t start, end;
+							ImGui::CalcListClipping(itemCount, itemHeight, &start, &end);
+
+							const int32_t index = int32_t(view.m_fileIndex);
+							if (index <= start)
+							{
+								ImGui::SetScrollY(ImGui::GetScrollY() - (start-index+1)*itemHeight);
+							}
+							else if (index >= end)
+							{
+								ImGui::SetScrollY(ImGui::GetScrollY() + (index-end+1)*itemHeight);
+							}
+
+							ImGuiListClipper clipper(itemCount, itemHeight);
+
+							for (int32_t pos = clipper.DisplayStart; pos < clipper.DisplayEnd; ++pos)
+							{
+								ImGui::PushID(pos);
+
+								bool isSelected = uint32_t(pos) == view.m_fileIndex;
+								if (ImGui::Selectable(view.m_fileList[pos].c_str(), &isSelected) )
+								{
+									view.m_fileIndex = pos;
+								}
+
+								ImGui::PopID();
+							}
+
+							clipper.End();
+
+							ImGui::ListBoxFooter();
+						}
+
+						ImGui::PopFont();
+						ImGui::EndChild();
+					}
+
+					ImGui::End();
+				}
+			}
+
 			if (ImGui::BeginPopupModal("Help", NULL, ImGuiWindowFlags_AlwaysAutoResize) )
 			{
 				ImGui::SetWindowFontScale(1.0f);
@@ -1340,9 +1412,10 @@ int _main_(int _argc, char** _argv)
 
 				fileIndex = view.m_fileIndex;
 
-				filePath = view.m_fileList[view.m_fileIndex].c_str();
+				bx::FilePath fp = view.m_path;
+				fp.join(view.m_fileList[view.m_fileIndex].c_str() );
 
-				texture = loadTexture(filePath
+				texture = loadTexture(fp.get()
 					, 0
 					| BGFX_TEXTURE_U_CLAMP
 					| BGFX_TEXTURE_V_CLAMP
@@ -1370,7 +1443,7 @@ int _main_(int _argc, char** _argv)
 					}
 
 					bx::stringPrintf(title, "%s (%d x %d%s, mips: %d, layers %d, %s)"
-						, filePath
+						, fp.get()
 						, view.m_info.width
 						, view.m_info.height
 						, name
