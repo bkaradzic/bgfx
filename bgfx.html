@@ -3485,8 +3485,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx13destroyShaderE12ShaderHandle">
-<span id="bgfx::destroyShader__ShaderHandle"></span><span class="target" id="bgfxnamespacebgfx_1ac36f39b0ae8cadbb4dfd2f9219561196"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyShader</code><span class="sig-paren">(</span>ShaderHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx13destroyShaderE12ShaderHandle" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7destroyE12ShaderHandle">
+<span id="bgfx::destroy__ShaderHandle"></span><span class="target" id="bgfxnamespacebgfx_1aee6eab22226f936cc82291b261792597"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroy</code><span class="sig-paren">(</span>ShaderHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7destroyE12ShaderHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Destroy shader. Once program is created with shader it is safe to destroy shader. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3540,8 +3540,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx14destroyProgramE13ProgramHandle">
-<span id="bgfx::destroyProgram__ProgramHandle"></span><span class="target" id="bgfxnamespacebgfx_1aebae6a593fbc016c512cffd01ae48d5b"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyProgram</code><span class="sig-paren">(</span>ProgramHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14destroyProgramE13ProgramHandle" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7destroyE13ProgramHandle">
+<span id="bgfx::destroy__ProgramHandle"></span><span class="target" id="bgfxnamespacebgfx_1a2b851eb71165e274b9a3d83388e45ed0"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroy</code><span class="sig-paren">(</span>ProgramHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7destroyE13ProgramHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Destroy program. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3562,7 +3562,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dd>Handle to uniform object.</dd>
 <dt><strong>Remark</strong></dt>
 <dd><ol class="arabic simple">
-<li>Uniform names are unique. It&#8217;s valid to call <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a45614b96172b438fd644c858e2c434b2"><span class="std std-ref"><span class="pre">bgfx::createUniform</span></span></a></code> multiple times with the same uniform name. The library will always return the same handle, but the handle reference count will be incremented. This means that the same number of <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a55c0d21cc00b4d7f8a05879e2114d37b"><span class="std std-ref"><span class="pre">bgfx::destroyUniform</span></span></a></code> must be called to properly destroy the uniform.</li>
+<li>Uniform names are unique. It&#8217;s valid to call <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a45614b96172b438fd644c858e2c434b2"><span class="std std-ref"><span class="pre">bgfx::createUniform</span></span></a></code> multiple times with the same uniform name. The library will always return the same handle, but the handle reference count will be incremented. This means that the same number of <code class="docutils literal"><span class="pre">bgfx::destroyUniform</span></code> must be called to properly destroy the uniform.</li>
 <li>Predefined uniforms (declared in <code class="docutils literal"><span class="pre">bgfx_shader.sh</span></code>):<ul>
 <li><code class="docutils literal"><span class="pre">u_viewRect</span> <span class="pre">vec4(x,</span> <span class="pre">y,</span> <span class="pre">width,</span> <span class="pre">height)</span></code> - view rectangle for current view.</li>
 <li><code class="docutils literal"><span class="pre">u_viewTexel</span> <span class="pre">vec4(1.0/width,</span> <span class="pre">1.0/height,</span> <span class="pre">undef,</span> <span class="pre">undef)</span></code> - inverse width and height</li>
@@ -3616,8 +3616,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx14destroyUniformE13UniformHandle">
-<span id="bgfx::destroyUniform__UniformHandle"></span><span class="target" id="bgfxnamespacebgfx_1a55c0d21cc00b4d7f8a05879e2114d37b"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyUniform</code><span class="sig-paren">(</span>UniformHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14destroyUniformE13UniformHandle" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7destroyE13UniformHandle">
+<span id="bgfx::destroy__UniformHandle"></span><span class="target" id="bgfxnamespacebgfx_1a3758fba789e327a1f3b02f887a95052b"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroy</code><span class="sig-paren">(</span>UniformHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7destroyE13UniformHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Destroy shader uniform parameter. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3750,8 +3750,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx19destroyVertexBufferE18VertexBufferHandle">
-<span id="bgfx::destroyVertexBuffer__VertexBufferHandle"></span><span class="target" id="bgfxnamespacebgfx_1a3444a0530f0f0f7c620a0d2f28c545eb"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyVertexBuffer</code><span class="sig-paren">(</span>VertexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx19destroyVertexBufferE18VertexBufferHandle" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7destroyE18VertexBufferHandle">
+<span id="bgfx::destroy__VertexBufferHandle"></span><span class="target" id="bgfxnamespacebgfx_1aca9e51180be7d3e391cc8601e443e9ea"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroy</code><span class="sig-paren">(</span>VertexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7destroyE18VertexBufferHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Destroy static vertex buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -4093,8 +4093,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx26destroyDynamicVertexBufferE25DynamicVertexBufferHandle">
-<span id="bgfx::destroyDynamicVertexBuffer__DynamicVertexBufferHandle"></span><span class="target" id="bgfxnamespacebgfx_1a21c1edd9c6c7e2e877579c067169252a"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyDynamicVertexBuffer</code><span class="sig-paren">(</span>DynamicVertexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx26destroyDynamicVertexBufferE25DynamicVertexBufferHandle" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7destroyE25DynamicVertexBufferHandle">
+<span id="bgfx::destroy__DynamicVertexBufferHandle"></span><span class="target" id="bgfxnamespacebgfx_1ade001e8189baaa5b3f9f1fbaf1f40055"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroy</code><span class="sig-paren">(</span>DynamicVertexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7destroyE25DynamicVertexBufferHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Destroy dynamic vertex buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -4115,7 +4115,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dd><p>Returns number of available vertices. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_check_avail_transient_vertex_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_get_avail_transient_vertex_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of required vertices. </p>
@@ -4182,8 +4182,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx18destroyIndexBufferE17IndexBufferHandle">
-<span id="bgfx::destroyIndexBuffer__IndexBufferHandle"></span><span class="target" id="bgfxnamespacebgfx_1ac9cc26d628a53a75c54098be95c91008"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyIndexBuffer</code><span class="sig-paren">(</span>IndexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx18destroyIndexBufferE17IndexBufferHandle" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7destroyE17IndexBufferHandle">
+<span id="bgfx::destroy__IndexBufferHandle"></span><span class="target" id="bgfxnamespacebgfx_1a0947090e39a6a46433418166d7e09cc1"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroy</code><span class="sig-paren">(</span>IndexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7destroyE17IndexBufferHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Destroy static index buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -4278,8 +4278,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx25destroyDynamicIndexBufferE24DynamicIndexBufferHandle">
-<span id="bgfx::destroyDynamicIndexBuffer__DynamicIndexBufferHandle"></span><span class="target" id="bgfxnamespacebgfx_1a3eafa9fd7f732e27f84edab6e96c42ab"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyDynamicIndexBuffer</code><span class="sig-paren">(</span>DynamicIndexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx25destroyDynamicIndexBufferE24DynamicIndexBufferHandle" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7destroyE24DynamicIndexBufferHandle">
+<span id="bgfx::destroy__DynamicIndexBufferHandle"></span><span class="target" id="bgfxnamespacebgfx_1a18d6f331ad2fdb0adfbbc5b907d7559b"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroy</code><span class="sig-paren">(</span>DynamicIndexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7destroyE24DynamicIndexBufferHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Destroy dynamic index buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -5136,8 +5136,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx14destroyTextureE13TextureHandle">
-<span id="bgfx::destroyTexture__TextureHandle"></span><span class="target" id="bgfxnamespacebgfx_1a3cc8f5416512b46cedee40d444f1bc0e"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyTexture</code><span class="sig-paren">(</span>TextureHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14destroyTextureE13TextureHandle" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7destroyE13TextureHandle">
+<span id="bgfx::destroy__TextureHandle"></span><span class="target" id="bgfxnamespacebgfx_1a28453c61a3b211da273ee4f4957dc66d"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroy</code><span class="sig-paren">(</span>TextureHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7destroyE13TextureHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Destroy texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -5336,8 +5336,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx18destroyFrameBufferE17FrameBufferHandle">
-<span id="bgfx::destroyFrameBuffer__FrameBufferHandle"></span><span class="target" id="bgfxnamespacebgfx_1a17b93a8b3a39ae31081bcdde3f971674"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyFrameBuffer</code><span class="sig-paren">(</span>FrameBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx18destroyFrameBufferE17FrameBufferHandle" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7destroyE17FrameBufferHandle">
+<span id="bgfx::destroy__FrameBufferHandle"></span><span class="target" id="bgfxnamespacebgfx_1aedeb0832cfdb4835cc3b631be5bf35db"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroy</code><span class="sig-paren">(</span>FrameBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7destroyE17FrameBufferHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Destroy frame buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -5355,7 +5355,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dd><p>Returns number of available instance buffer slots. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_check_avail_instance_data_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_get_avail_instance_data_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of required instances. </p>
@@ -5404,8 +5404,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx21destroyIndirectBufferE20IndirectBufferHandle">
-<span id="bgfx::destroyIndirectBuffer__IndirectBufferHandle"></span><span class="target" id="bgfxnamespacebgfx_1ad32cac7107eeffd862221b9bd0922110"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyIndirectBuffer</code><span class="sig-paren">(</span>IndirectBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx21destroyIndirectBufferE20IndirectBufferHandle" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7destroyE20IndirectBufferHandle">
+<span id="bgfx::destroy__IndirectBufferHandle"></span><span class="target" id="bgfxnamespacebgfx_1a5ff8e7d7902e4cd61125955df3aa9daa"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroy</code><span class="sig-paren">(</span>IndirectBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7destroyE20IndirectBufferHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Destroy draw indirect buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -5502,8 +5502,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx21destroyOcclusionQueryE20OcclusionQueryHandle">
-<span id="bgfx::destroyOcclusionQuery__OcclusionQueryHandle"></span><span class="target" id="bgfxnamespacebgfx_1a140d956fa9e8bbd5edd6c1daf749ca61"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroyOcclusionQuery</code><span class="sig-paren">(</span>OcclusionQueryHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx21destroyOcclusionQueryE20OcclusionQueryHandle" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7destroyE20OcclusionQueryHandle">
+<span id="bgfx::destroy__OcclusionQueryHandle"></span><span class="target" id="bgfxnamespacebgfx_1ac23e1de099833621a7ca0121f0ccae6d"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroy</code><span class="sig-paren">(</span>OcclusionQueryHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7destroyE20OcclusionQueryHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Destroy occlusion query. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
