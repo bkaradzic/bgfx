@@ -550,25 +550,25 @@ namespace bgfx { namespace d3d12
 
 #if USE_D3D12_DYNAMIC_LIB
 			m_kernel32dll = bx::dlopen("kernel32.dll");
-			BX_WARN(NULL != m_kernel32dll, "Failed to load kernel32.dll.");
 			if (NULL == m_kernel32dll)
 			{
+				BX_TRACE("Init error: Failed to load kernel32.dll.");
 				goto error;
 			}
 
 			CreateEventExA = (PFN_CREATE_EVENT_EX_A)bx::dlsym(m_kernel32dll, "CreateEventExA");
-			BX_WARN(NULL != CreateEventExA, "Function CreateEventExA not found.");
 			if (NULL == CreateEventExA)
 			{
+				BX_TRACE("Init error: Function CreateEventExA not found.");
 				goto error;
 			}
 
 			errorState = ErrorState::LoadedKernel32;
 
 			m_d3d12dll = bx::dlopen("d3d12.dll");
-			BX_WARN(NULL != m_d3d12dll, "Failed to load d3d12.dll.");
 			if (NULL == m_d3d12dll)
 			{
+				BX_TRACE("Init error: Failed to load d3d12.dll.");
 				goto error;
 			}
 
@@ -587,22 +587,23 @@ namespace bgfx { namespace d3d12
 			||  NULL == D3D12GetDebugInterface
 			||  NULL == D3D12SerializeRootSignature)
 			{
+				BX_TRACE("Init error: Function not found.");
 				goto error;
 			}
 
 			m_dxgidll = bx::dlopen("dxgi.dll");
-			BX_WARN(NULL != m_dxgidll, "Failed to load dxgi.dll.");
 
 			if (NULL == m_dxgidll)
 			{
+				BX_TRACE("Init error: Failed to load dxgi.dll.");
 				goto error;
 			}
 
 			CreateDXGIFactory1 = (PFN_CREATE_DXGI_FACTORY)bx::dlsym(m_dxgidll, "CreateDXGIFactory1");
-			BX_WARN(NULL != CreateDXGIFactory1, "Function CreateDXGIFactory1 not found.");
 
 			if (NULL == CreateDXGIFactory1)
 			{
+				BX_TRACE("Init error: Function CreateDXGIFactory1 not found.");
 				goto error;
 			}
 #endif // USE_D3D12_DYNAMIC_LIB
@@ -617,10 +618,10 @@ namespace bgfx { namespace d3d12
 			hr = S_OK;
 			m_factory = NULL;
 #endif // BX_PLATFORM_*
-			BX_WARN(SUCCEEDED(hr), "Unable to create DXGI factory.");
 
 			if (FAILED(hr) )
 			{
+				BX_TRACE("Init error: Unable to create DXGI factory.");
 				goto error;
 			}
 
@@ -722,7 +723,7 @@ namespace bgfx { namespace d3d12
 
 			if (FAILED(hr) )
 			{
-				BX_TRACE("Unable to create Direct3D12 device.");
+				BX_TRACE("Init error: Unable to create Direct3D12 device.");
 				goto error;
 			}
 
@@ -787,7 +788,7 @@ namespace bgfx { namespace d3d12
 
 				if (FAILED(hr) )
 				{
-					BX_TRACE("Unable to query IDXGIDevice1 interface 0x%08x.", hr);
+					BX_TRACE("Init error: Unable to query IDXGIDevice1 interface 0x%08x.", hr);
 					goto error;
 				}
 
@@ -795,7 +796,7 @@ namespace bgfx { namespace d3d12
 
 				if (FAILED(hr) )
 				{
-					BX_TRACE("DXGIDevice1::GetAdapter failed 0x%08x.", hr);
+					BX_TRACE("Init error: DXGIDevice1::GetAdapter failed 0x%08x.", hr);
 					goto error;
 				}
 
@@ -803,7 +804,7 @@ namespace bgfx { namespace d3d12
 
 				if (FAILED(hr) )
 				{
-					BX_TRACE("IDXGIAdapter::GetParent failed 0x%08x.", hr);
+					BX_TRACE("Init error: IDXGIAdapter::GetParent failed 0x%08x.", hr);
 					goto error;
 				}
 			}
@@ -828,7 +829,7 @@ namespace bgfx { namespace d3d12
 				DX_RELEASE(m_adapter, 1);
 				if (FAILED(hr) )
 				{
-					BX_TRACE("Unable to create Direct3D11 device.");
+					BX_TRACE("Init error: Unable to create Direct3D11 device.");
 					goto error;
 				}
 
@@ -908,7 +909,7 @@ namespace bgfx { namespace d3d12
 #endif // BX_PLATFORM_*
 				if (FAILED(hr) )
 				{
-					BX_TRACE("Failed to create swap chain.");
+					BX_TRACE("Init error: Failed to create swap chain.");
 					goto error;
 				}
 			}

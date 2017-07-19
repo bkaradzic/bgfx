@@ -833,7 +833,7 @@ namespace bgfx { namespace d3d11
 
 			if (NULL == m_d3d11dll)
 			{
-				BX_TRACE("Failed to load d3d11.dll.");
+				BX_TRACE("Init error: Failed to load d3d11.dll.");
 				goto error;
 			}
 
@@ -862,14 +862,14 @@ namespace bgfx { namespace d3d11
 			D3D11CreateDevice = (PFN_D3D11_CREATE_DEVICE)bx::dlsym(m_d3d11dll, "D3D11CreateDevice");
 			if (NULL == D3D11CreateDevice)
 			{
-				BX_TRACE("Function D3D11CreateDevice not found.");
+				BX_TRACE("Init error: Function D3D11CreateDevice not found.");
 				goto error;
 			}
 
 			m_dxgidll = bx::dlopen("dxgi.dll");
 			if (NULL == m_dxgidll)
 			{
-				BX_TRACE("Failed to load dxgi.dll.");
+				BX_TRACE("Init error: Failed to load dxgi.dll.");
 				goto error;
 			}
 
@@ -882,7 +882,7 @@ namespace bgfx { namespace d3d11
 			}
 			if (NULL == CreateDXGIFactory)
 			{
-				BX_TRACE("Function CreateDXGIFactory not found.");
+				BX_TRACE("Init error: Function CreateDXGIFactory not found.");
 				goto error;
 			}
 
@@ -917,7 +917,7 @@ namespace bgfx { namespace d3d11
 #endif // BX_PLATFORM_*
 			if (FAILED(hr) )
 			{
-				BX_TRACE("Unable to create DXGI factory.");
+				BX_TRACE("Init error: Unable to create DXGI factory.");
 				goto error;
 			}
 
@@ -1059,7 +1059,7 @@ namespace bgfx { namespace d3d11
 
 				if (FAILED(hr) )
 				{
-					BX_TRACE("Unable to create Direct3D11 device.");
+					BX_TRACE("Init error: Unable to create Direct3D11 device.");
 					goto error;
 				}
 
@@ -1074,7 +1074,7 @@ namespace bgfx { namespace d3d11
 
 				if (NULL == m_deviceCtx)
 				{
-					BX_TRACE("Unable to retrieve Direct3D11 ImmediateContext.");
+					BX_TRACE("Init error: Unable to retrieve Direct3D11 ImmediateContext.");
 					goto error;
 				}
 
@@ -1135,7 +1135,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				if (FAILED(hr) )
 				{
-					BX_TRACE("Unable to create Direct3D11 device.");
+					BX_TRACE("Init error: Unable to create Direct3D11 device.");
 					goto error;
 				}
 
@@ -1174,7 +1174,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					DX_RELEASE(adapter, 2);
 					if (FAILED(hr) )
 					{
-						BX_TRACE("Unable to create Direct3D11 device.");
+						BX_TRACE("Init error: Unable to create Direct3D11 device.");
 						goto error;
 					}
 
@@ -1234,7 +1234,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					DX_RELEASE(adapter, 2);
 					if (FAILED(hr) )
 					{
-						BX_TRACE("Unable to create Direct3D11 device.");
+						BX_TRACE("Init error: Unable to create Direct3D11 device.");
 						goto error;
 					}
 
@@ -1263,7 +1263,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 #endif // BX_PLATFORM_*
 					if (FAILED(hr) )
 					{
-						BX_TRACE("Failed to create swap chain.");
+						BX_TRACE("Init error: Failed to create swap chain.");
 						goto error;
 					}
 				}

@@ -747,7 +747,7 @@ VK_IMPORT_DEVICE
 
 			if (NULL == m_vulkan1dll)
 			{
-				BX_TRACE("Failed to load vulkan dynamic library.");
+				BX_TRACE("Init error: Failed to load vulkan dynamic library.");
 				goto error;
 			}
 
@@ -763,7 +763,7 @@ VK_IMPORT
 
 			if (!imported)
 			{
-				BX_TRACE("Failed to load shared library functions.");
+				BX_TRACE("Init error: Failed to load shared library functions.");
 				goto error;
 			}
 
@@ -831,7 +831,7 @@ VK_IMPORT
 
 			if (VK_SUCCESS != result)
 			{
-				BX_TRACE("vkCreateInstance failed %d: %s.", result, getName(result) );
+				BX_TRACE("Init error: vkCreateInstance failed %d: %s.", result, getName(result) );
 				goto error;
 			}
 
@@ -847,7 +847,7 @@ VK_IMPORT_INSTANCE
 
 			if (!imported)
 			{
-				BX_TRACE("Failed to load instance functions.");
+				BX_TRACE("Init error: Failed to load instance functions.");
 				goto error;
 			}
 
@@ -882,7 +882,7 @@ VK_IMPORT_INSTANCE
 
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkEnumeratePhysicalDevices failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkEnumeratePhysicalDevices failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
@@ -895,7 +895,7 @@ VK_IMPORT_INSTANCE
 
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkEnumeratePhysicalDevices failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkEnumeratePhysicalDevices failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
@@ -1088,7 +1088,7 @@ VK_IMPORT_INSTANCE
 
 				if (UINT32_MAX == m_qfiGraphics)
 				{
-					BX_TRACE("Unable to find graphics queue.");
+					BX_TRACE("Init error: Unable to find graphics queue.");
 					goto error;
 				}
 			}
@@ -1147,7 +1147,7 @@ VK_IMPORT_INSTANCE
 
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkCreateDevice failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkCreateDevice failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 			}
@@ -1164,7 +1164,7 @@ VK_IMPORT_DEVICE
 
 			if (!imported)
 			{
-				BX_TRACE("Failed to load device functions.");
+				BX_TRACE("Init error: Failed to load device functions.");
 				goto error;
 			}
 
@@ -1238,7 +1238,7 @@ VK_IMPORT_DEVICE
 
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkCreateRenderPass failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkCreateRenderPass failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 			}
@@ -1298,7 +1298,7 @@ VK_IMPORT_DEVICE
 
 			if (VK_SUCCESS != result)
 			{
-				BX_TRACE("vkCreateSurfaceKHR failed %d: %s.", result, getName(result) );
+				BX_TRACE("Init error: vkCreateSurfaceKHR failed %d: %s.", result, getName(result) );
 				goto error;
 			}
 
@@ -1310,7 +1310,7 @@ VK_IMPORT_DEVICE
 
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkGetPhysicalDeviceSurfaceSupportKHR failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkGetPhysicalDeviceSurfaceSupportKHR failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
@@ -1319,7 +1319,7 @@ VK_IMPORT_DEVICE
 
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
@@ -1328,7 +1328,7 @@ VK_IMPORT_DEVICE
 
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkGetPhysicalDeviceSurfaceFormatsKHR failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkGetPhysicalDeviceSurfaceFormatsKHR failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
@@ -1343,7 +1343,7 @@ VK_IMPORT_DEVICE
 				result = vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &numPresentModes, NULL);
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkGetPhysicalDeviceSurfacePresentModesKHR failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkGetPhysicalDeviceSurfacePresentModesKHR failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
@@ -1377,7 +1377,7 @@ VK_IMPORT_DEVICE
 
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkCreateSwapchainKHR failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkCreateSwapchainKHR failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
@@ -1386,13 +1386,13 @@ VK_IMPORT_DEVICE
 
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkGetSwapchainImagesKHR failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkGetSwapchainImagesKHR failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
 				if (numSwapchainImages < m_sci.minImageCount)
 				{
-					BX_TRACE("vkGetSwapchainImagesKHR: numSwapchainImages %d, minImageCount %d."
+					BX_TRACE("Init error: vkGetSwapchainImagesKHR: numSwapchainImages %d, minImageCount %d."
 						, numSwapchainImages
 						, m_sci.minImageCount
 						);
@@ -1404,7 +1404,7 @@ VK_IMPORT_DEVICE
 
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkGetSwapchainImagesKHR failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkGetSwapchainImagesKHR failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
@@ -1439,7 +1439,7 @@ VK_IMPORT_DEVICE
 
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkCreateImage failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkCreateImage failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
@@ -1461,7 +1461,7 @@ VK_IMPORT_DEVICE
 
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkAllocateMemory failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkAllocateMemory failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
@@ -1469,7 +1469,7 @@ VK_IMPORT_DEVICE
 
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkBindImageMemory failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkBindImageMemory failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
@@ -1496,7 +1496,7 @@ VK_IMPORT_DEVICE
 
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkCreateImageView failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkCreateImageView failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
@@ -1544,7 +1544,7 @@ VK_IMPORT_DEVICE
 
 					if (VK_SUCCESS != result)
 					{
-						BX_TRACE("vkCreateImageView failed %d: %s.", result, getName(result) );
+						BX_TRACE("Init error: vkCreateImageView failed %d: %s.", result, getName(result) );
 						goto error;
 					}
 
@@ -1553,7 +1553,7 @@ VK_IMPORT_DEVICE
 
 					if (VK_SUCCESS != result)
 					{
-						BX_TRACE("vkCreateFramebuffer failed %d: %s.", result, getName(result) );
+						BX_TRACE("Init error: vkCreateFramebuffer failed %d: %s.", result, getName(result) );
 						goto error;
 					}
 
@@ -1561,7 +1561,7 @@ VK_IMPORT_DEVICE
 
 					if (VK_SUCCESS != result)
 					{
-						BX_TRACE("vkCreateSemaphore failed %d: %s.", result, getName(result) );
+						BX_TRACE("Init error: vkCreateSemaphore failed %d: %s.", result, getName(result) );
 						goto error;
 					}
 
@@ -1580,7 +1580,7 @@ VK_IMPORT_DEVICE
 
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkCreateFence failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkCreateFence failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
@@ -1594,7 +1594,7 @@ VK_IMPORT_DEVICE
 				if (VK_SUCCESS != result)
 				{
 					vkDestroy(m_fence);
-					BX_TRACE("vkCreateCommandPool failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkCreateCommandPool failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
@@ -1611,7 +1611,7 @@ VK_IMPORT_DEVICE
 				{
 					vkDestroy(m_commandPool);
 					vkDestroy(m_fence);
-					BX_TRACE("vkAllocateCommandBuffers failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkAllocateCommandBuffers failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
@@ -1697,7 +1697,7 @@ VK_IMPORT_DEVICE
 
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkCreateDescriptorPool failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkCreateDescriptorPool failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
@@ -1711,7 +1711,7 @@ VK_IMPORT_DEVICE
 
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkCreateDescriptorSetLayout failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkCreateDescriptorSetLayout failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
@@ -1727,7 +1727,7 @@ VK_IMPORT_DEVICE
 
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkCreatePipelineLayout failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkCreatePipelineLayout failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
@@ -1741,7 +1741,7 @@ VK_IMPORT_DEVICE
 
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("vkCreatePipelineCache failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: vkCreatePipelineCache failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 			}

@@ -447,7 +447,7 @@ namespace bgfx { namespace d3d9
 
 			if (NULL == m_d3d9dll)
 			{
-				BX_TRACE("Failed to load d3d9.dll.");
+				BX_TRACE("Init error: Failed to load d3d9.dll.");
 				goto error;
 			}
 
@@ -495,7 +495,7 @@ namespace bgfx { namespace d3d9
 
 				if (NULL == Direct3DCreate9)
 				{
-					BX_TRACE("Function Direct3DCreate9 not found.");
+					BX_TRACE("Init error: Function Direct3DCreate9 not found.");
 					goto error;
 				}
 
@@ -505,7 +505,7 @@ namespace bgfx { namespace d3d9
 
 			if (NULL == m_d3d9)
 			{
-				BX_TRACE("Unable to create Direct3D.");
+				BX_TRACE("Init error: Unable to create Direct3D.");
 				goto error;
 			}
 
@@ -604,7 +604,7 @@ namespace bgfx { namespace d3d9
 
 			if (NULL == m_device)
 			{
-				BX_TRACE("Unable to create Direct3D9 device.");
+				BX_TRACE("Init error: Unable to create Direct3D9 device.");
 				goto error;
 			}
 
@@ -654,6 +654,7 @@ namespace bgfx { namespace d3d9
 			||   (D3DPTEXTURECAPS_ALPHA      & m_caps.TextureCaps) != D3DPTEXTURECAPS_ALPHA
 			||   !(m_caps.VertexShaderVersion >= D3DVS_VERSION(2, 0) && m_caps.PixelShaderVersion >= D3DPS_VERSION(2, 1) ) )
 			{
+				BX_TRACE("Init error: Min spec not satisfied.");
 				goto error;
 			}
 
