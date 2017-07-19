@@ -2535,7 +2535,7 @@ namespace bgfx { namespace gl
 		error:
 			switch (errorState)
 			{
-			default:
+			case ErrorState::Default:
 				break;
 			}
 
