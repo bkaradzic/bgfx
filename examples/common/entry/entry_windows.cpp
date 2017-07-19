@@ -669,9 +669,10 @@ namespace entry
 							{
 							case WMSZ_LEFT:
 							case WMSZ_TOPLEFT:
-							case WMSZ_BOTTOMLEFT:
-								rect.left   = rect.right - width  - m_frameWidth;
-								rect.bottom = rect.top   + height + m_frameHeight;
+							case WMSZ_TOP:
+							case WMSZ_TOPRIGHT:
+								rect.left = rect.right  - width  - m_frameWidth;
+								rect.top  = rect.bottom - height - m_frameHeight;
 								break;
 
 							default:
