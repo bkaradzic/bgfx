@@ -34,12 +34,19 @@ namespace bgfx
 
 	/// Render frame.
 	///
+	/// @param _msecs Timeout in milliseconds.
+	///
 	/// @returns Current renderer state. See: `bgfx::RenderFrame`.
+	///
+	/// @attention `bgfx::renderFrame` is blocking call. It waits for
+	///   `bgfx::frame` to be called from API thread to process frame.
+	///   If timeout value is passed call will timeout and return even
+	///   if `bgfx::frame` is not called.
 	///
 	/// @warning This call should be only used on platforms that don't
 	///   allow creating separate rendering thread. If it is called before
 	///   to bgfx::init, render thread won't be created by bgfx::init call.
-	RenderFrame::Enum renderFrame();
+	RenderFrame::Enum renderFrame(int32_t _msecs = -1);
 
 	/// Platform data.
 	///

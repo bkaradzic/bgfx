@@ -31,7 +31,7 @@ typedef enum bgfx_render_frame
  * allow creating separate rendering thread. If it is called before
  * to bgfx_init, render thread won't be created by bgfx_init call.
  */
-BGFX_C_API bgfx_render_frame_t bgfx_render_frame();
+BGFX_C_API bgfx_render_frame_t bgfx_render_frame(int32_t _msecs);
 
 typedef struct bgfx_platform_data
 {
@@ -66,7 +66,7 @@ BGFX_C_API uintptr_t bgfx_override_internal_texture(bgfx_texture_handle_t _handl
 /**/
 typedef struct bgfx_interface_vtbl
 {
-    bgfx_render_frame_t (*render_frame)();
+    bgfx_render_frame_t (*render_frame)(int32_t _msecs);
     void (*set_platform_data)(const bgfx_platform_data_t* _data);
     const bgfx_internal_data_t* (*get_internal_data)();
     uintptr_t (*override_internal_texture_ptr)(bgfx_texture_handle_t _handle, uintptr_t _ptr);

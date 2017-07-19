@@ -1031,7 +1031,7 @@ namespace bgfx
 		bx::radixSort(m_blitKeys, (uint32_t*)&s_ctx->m_tempKeys, m_numBlitItems);
 	}
 
-	RenderFrame::Enum renderFrame()
+	RenderFrame::Enum renderFrame(int32_t _msecs)
 	{
 		if (BX_ENABLED(BGFX_CONFIG_MULTITHREADED) )
 		{
@@ -1043,7 +1043,11 @@ namespace bgfx
 			}
 
 			BGFX_CHECK_RENDER_THREAD();
-			RenderFrame::Enum result = s_ctx->renderFrame(BGFX_CONFIG_API_SEMAPHORE_TIMEOUT);
+			int32_t msecs = -1 == _msecs
+				? BGFX_CONFIG_API_SEMAPHORE_TIMEOUT
+				: _msecs
+				;
+			RenderFrame::Enum result = s_ctx->renderFrame(msecs);
 			if (RenderFrame::Exiting == result)
 			{
 				Context* ctx = s_ctx;
@@ -4944,9 +4948,9 @@ BGFX_C_API void bgfx_request_screen_shot(bgfx_frame_buffer_handle _handle, const
 	bgfx::requestScreenShot(handle.cpp, _filePath);
 }
 
-BGFX_C_API bgfx_render_frame_t bgfx_render_frame()
+BGFX_C_API bgfx_render_frame_t bgfx_render_frame(int32_t _msecs)
 {
-	return bgfx_render_frame_t(bgfx::renderFrame() );
+	return bgfx_render_frame_t(bgfx::renderFrame(_msecs) );
 }
 
 BGFX_C_API void bgfx_set_platform_data(const bgfx_platform_data_t* _data)
