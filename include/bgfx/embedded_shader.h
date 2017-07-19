@@ -6,7 +6,7 @@
 #ifndef BGFX_EMBEDDED_SHADER_H_HEADER_GUARD
 #define BGFX_EMBEDDED_SHADER_H_HEADER_GUARD
 
-#include <bx/platform.h>
+#include <bx/macros.h>
 #include "bgfx.h"
 
 #define BGFX_EMBEDDED_SHADER_DXBC(...)
