@@ -1917,7 +1917,8 @@ namespace bgfx { namespace gl
 				}
 			}
 
-			if (!s_extension[Extension::ARB_framebuffer_object].m_supported)
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+			&&  !s_extension[Extension::ARB_framebuffer_object].m_supported)
 			{
 				BX_TRACE("Init error: ARB_framebuffer_object not supported.");
 				goto error;
