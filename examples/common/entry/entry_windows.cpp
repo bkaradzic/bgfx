@@ -665,14 +665,23 @@ namespace entry
 							}
 
 							// Recalculate position using different anchor points
-							switch(_wparam)
+							switch (_wparam)
 							{
-							case WMSZ_LEFT:
 							case WMSZ_TOPLEFT:
+								rect.left = rect.right - width - m_frameWidth;
+								rect.top = rect.bottom - height - m_frameHeight;
+							  break;
+
 							case WMSZ_TOP:
 							case WMSZ_TOPRIGHT:
-								rect.left = rect.right  - width  - m_frameWidth;
-								rect.top  = rect.bottom - height - m_frameHeight;
+								rect.right = rect.left + width + m_frameWidth;
+								rect.top = rect.bottom - height - m_frameHeight;
+								break;
+
+							case WMSZ_LEFT:
+							case WMSZ_BOTTOMLEFT:
+								rect.left = rect.right - width - m_frameWidth;
+								rect.bottom = rect.top + height + m_frameHeight;
 								break;
 
 							default:
