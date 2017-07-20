@@ -548,15 +548,23 @@ struct View
 
 			std::sort(m_fileList.begin(), m_fileList.end(), sortNameAscending);
 
+			m_fileIndex = 0;
 			uint32_t idx = 0;
 			for (FileList::const_iterator it = m_fileList.begin(); it != m_fileList.end(); ++it, ++idx)
 			{
-				if (0 == bx::strCmp(it->c_str(), _filePath.getFileName() ) )
+				if (0 == bx::strCmpI(it->c_str(), _filePath.getFileName() ) )
 				{
-					break;
+					// If it is case-insensitive match then might be correct one, but keep
+					// searching.
+					m_fileIndex = idx;
+
+					if (0 == bx::strCmp(it->c_str(), _filePath.getFileName() ) )
+					{
+						// If it is exact match we're done.
+						break;
+					}
 				}
 			}
-			m_fileIndex = idx == m_fileList.size() ? 0 : idx;
 
 			closedir(dir);
 		}
