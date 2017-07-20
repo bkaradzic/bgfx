@@ -205,6 +205,7 @@ struct View
 		, m_angy(0.0f)
 		, m_zoom(1.0f)
 		, m_angle(0.0f)
+		, m_orientation(0.0f)
 		, m_filter(true)
 		, m_fit(true)
 		, m_alpha(false)
@@ -401,6 +402,19 @@ struct View
 					m_angle = 0.0f;
 				}
 			}
+			else if (0 == bx::strCmp(_argv[1], "orientation") )
+			{
+				if (_argc >= 3)
+				{
+					float angle;
+					bx::fromString(&angle, _argv[2]);
+					m_orientation = bx::toRad(angle);
+				}
+				else
+				{
+					m_orientation = 0.0f;
+				}
+			}
 			else if (0 == bx::strCmp(_argv[1], "filter") )
 			{
 				if (_argc >= 3)
@@ -588,6 +602,7 @@ struct View
 	float    m_angy;
 	float    m_zoom;
 	float    m_angle;
+	float    m_orientation;
 	bool     m_filter;
 	bool     m_fit;
 	bool     m_alpha;
@@ -1423,6 +1438,7 @@ int _main_(int _argc, char** _argv)
 				bx::FilePath fp = view.m_path;
 				fp.join(view.m_fileList[view.m_fileIndex].c_str() );
 
+				bimg::Orientation::Enum orientation;
 				texture = loadTexture(fp.get()
 					, 0
 					| BGFX_TEXTURE_U_CLAMP
@@ -1430,7 +1446,17 @@ int _main_(int _argc, char** _argv)
 					| BGFX_TEXTURE_W_CLAMP
 					, 0
 					, &view.m_info
+					, &orientation
 					);
+
+				switch (orientation)
+				{
+				default:
+				case bimg::Orientation::R0:   cmdExec("view orientation 0");    break;
+				case bimg::Orientation::R90:  cmdExec("view orientation -90");  break;
+				case bimg::Orientation::R180: cmdExec("view orientation -180"); break;
+				case bimg::Orientation::R270: cmdExec("view orientation -270"); break;
+				}
 
 				std::string title;
 				if (isValid(texture) )
@@ -1566,7 +1592,7 @@ int _main_(int _argc, char** _argv)
 				);
 
 			float rotz[16];
-			bx::mtxRotateZ(rotz, angle.getValue() );
+			bx::mtxRotateZ(rotz, angle.getValue()+view.m_orientation);
 			bgfx::setTransform(rotz);
 
 			float mtx[16];
