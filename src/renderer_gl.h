@@ -995,87 +995,6 @@ namespace bgfx { namespace gl
 #define GL_IMPORT(_optional, _proto, _func, _import) extern _proto _func
 #include "glimports.h"
 
-	class VaoStateCache
-	{
-	public:
-		GLuint add(uint32_t _hash)
-		{
-			invalidate(_hash);
-
-			GLuint arrayId;
-			GL_CHECK(glGenVertexArrays(1, &arrayId) );
-
-			m_hashMap.insert(stl::make_pair(_hash, arrayId) );
-
-			return arrayId;
-		}
-
-		GLuint find(uint32_t _hash)
-		{
-			HashMap::iterator it = m_hashMap.find(_hash);
-			if (it != m_hashMap.end() )
-			{
-				return it->second;
-			}
-
-			return UINT32_MAX;
-		}
-
-		void invalidate(uint32_t _hash)
-		{
-			GL_CHECK(glBindVertexArray(0) );
-
-			HashMap::iterator it = m_hashMap.find(_hash);
-			if (it != m_hashMap.end() )
-			{
-				GL_CHECK(glDeleteVertexArrays(1, &it->second) );
-				m_hashMap.erase(it);
-			}
-		}
-
-		void invalidate()
-		{
-			GL_CHECK(glBindVertexArray(0) );
-
-			for (HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
-			{
-				GL_CHECK(glDeleteVertexArrays(1, &it->second) );
-			}
-			m_hashMap.clear();
-		}
-
-		uint32_t getCount() const
-		{
-			return uint32_t(m_hashMap.size() );
-		}
-
-	private:
-		typedef stl::unordered_map<uint32_t, GLuint> HashMap;
-		HashMap m_hashMap;
-	};
-
-	class VaoCacheRef
-	{
-	public:
-		void add(uint32_t _hash)
-		{
-			m_vaoSet.insert(_hash);
-		}
-
-		void invalidate(VaoStateCache& _vaoCache)
-		{
-			for (VaoSet::iterator it = m_vaoSet.begin(), itEnd = m_vaoSet.end(); it != itEnd; ++it)
-			{
-				_vaoCache.invalidate(*it);
-			}
-
-			m_vaoSet.clear();
-		}
-
-		typedef stl::unordered_set<uint32_t> VaoSet;
-		VaoSet m_vaoSet;
-	};
-
 	class SamplerStateCache
 	{
 	public:
@@ -1171,14 +1090,8 @@ namespace bgfx { namespace gl
 
 		void destroy();
 
-		void add(uint32_t _hash)
-		{
-			m_vcref.add(_hash);
-		}
-
 		GLuint m_id;
 		uint32_t m_size;
-		VaoCacheRef m_vcref;
 		uint16_t m_flags;
 	};
 
@@ -1225,16 +1138,10 @@ namespace bgfx { namespace gl
 
 		void destroy();
 
-		void add(uint32_t _hash)
-		{
-			m_vcref.add(_hash);
-		}
-
 		GLuint m_id;
 		GLenum m_target;
 		uint32_t m_size;
 		VertexDeclHandle m_decl;
-		VaoCacheRef m_vcref;
 	};
 
 	struct TextureGL
@@ -1363,11 +1270,6 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		void add(uint32_t _hash)
-		{
-			m_vcref.add(_hash);
-		}
-
 		GLuint m_id;
 
 		uint8_t m_unboundUsedAttrib[Attrib::Count]; // For tracking unbound used attributes between begin()/end().
@@ -1382,7 +1284,6 @@ namespace bgfx { namespace gl
 		UniformBuffer* m_constantBuffer;
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
 		uint8_t m_numPredefined;
-		VaoCacheRef m_vcref;
 	};
 
 	struct TimerQueryGL

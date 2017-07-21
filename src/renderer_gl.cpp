@@ -3284,11 +3284,6 @@ namespace bgfx { namespace gl
 
 		void invalidateCache()
 		{
-			if (m_vaoSupport)
-			{
-				m_vaoStateCache.invalidate();
-			}
-
 			if ( (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) ||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 			&&  m_samplerObjectSupport)
 			{
@@ -3803,7 +3798,6 @@ namespace bgfx { namespace gl
 		TimerQueryGL m_gpuTimer;
 		OcclusionQueryGL m_occlusionQuery;
 
-		VaoStateCache m_vaoStateCache;
 		SamplerStateCache m_samplerStateCache;
 
 		TextVideoMem m_textVideoMem;
@@ -4382,8 +4376,6 @@ namespace bgfx { namespace gl
 			GL_CHECK(glDeleteProgram(m_id) );
 			m_id = 0;
 		}
-
-		m_vcref.invalidate(s_renderGL->m_vaoStateCache);
 	}
 
 	void ProgramGL::init()
@@ -4760,16 +4752,12 @@ namespace bgfx { namespace gl
 	{
 		GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
 		GL_CHECK(glDeleteBuffers(1, &m_id) );
-
-		m_vcref.invalidate(s_renderGL->m_vaoStateCache);
 	}
 
 	void VertexBufferGL::destroy()
 	{
 		GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0) );
 		GL_CHECK(glDeleteBuffers(1, &m_id) );
-
-		m_vcref.invalidate(s_renderGL->m_vaoStateCache);
 	}
 
 	bool TextureGL::init(GLenum _target, uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _numMips, uint32_t _flags)
@@ -6423,7 +6411,6 @@ namespace bgfx { namespace gl
 			GL_CHECK(glBindVertexArray(0) );
 			GL_CHECK(glDeleteVertexArrays(1, &m_vao) );
 			m_vao = 0;
-			m_vaoStateCache.invalidate();
 		}
 
 		m_glctx.makeCurrent(NULL);
@@ -6500,7 +6487,6 @@ namespace bgfx { namespace gl
 			: GL_FILL
 			) );
 
-		GLuint currentVao = 0;
 		bool wasCompute = false;
 		bool viewHasScissor = false;
 		Rect viewScissorRect;
@@ -6648,7 +6634,6 @@ namespace bgfx { namespace gl
 					if (BGFX_CLEAR_NONE != (clear.m_flags & BGFX_CLEAR_MASK) )
 					{
 						clearQuad(_clearQuad, viewState.m_rect, clear, resolutionHeight, _render->m_colorPalette);
-						currentVao = UINT32_MAX; // clearQuad will mess with VAO, invalidate it.
 					}
 
 					GL_CHECK(glDisable(GL_STENCIL_TEST) );
@@ -7218,153 +7203,7 @@ namespace bgfx { namespace gl
 						}
 					}
 
-					if (0 != defaultVao
-					&&  0 == draw.m_stream[0].m_startVertex
-					&&  0 == draw.m_instanceDataOffset)
 					{
-						bool diffStartVertex = false;
-						bool diffStreamHandles = false;
-						for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
-							; 0 != streamMask
-							; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
-							)
-						{
-							streamMask >>= ntz;
-							idx         += ntz;
-
-							if (currentState.m_stream[idx].m_handle.idx != draw.m_stream[idx].m_handle.idx)
-							{
-								diffStreamHandles = true;
-								break;
-							}
-
-							if (currentState.m_stream[idx].m_startVertex != draw.m_stream[idx].m_startVertex)
-							{
-								diffStartVertex = true;
-								break;
-							}
-						}
-
-						if (programChanged
-						||  currentState.m_streamMask             != draw.m_streamMask
-						||  currentState.m_indexBuffer.idx        != draw.m_indexBuffer.idx
-						||  currentState.m_instanceDataOffset     != draw.m_instanceDataOffset
-						||  currentState.m_instanceDataStride     != draw.m_instanceDataStride
-						||  currentState.m_instanceDataBuffer.idx != draw.m_instanceDataBuffer.idx
-						||  diffStartVertex
-						||  diffStreamHandles)
-						{
-							bx::HashMurmur2A murmur;
-							murmur.begin();
-
-							for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
-								; 0 != streamMask
-								; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
-								)
-							{
-								streamMask >>= ntz;
-								idx         += ntz;
-
-								const Stream& stream = draw.m_stream[idx];
-								murmur.add(stream.m_handle.idx);
-
-								if (isValid(stream.m_handle) )
-								{
-									const VertexBufferGL& vb = m_vertexBuffers[stream.m_handle.idx];
-									uint16_t decl = !isValid(vb.m_decl) ? stream.m_decl.idx : vb.m_decl.idx;
-									murmur.add(decl);
-								}
-
-								currentState.m_stream[idx].m_handle      = stream.m_handle;
-								currentState.m_stream[idx].m_startVertex = stream.m_startVertex;
-							}
-							currentState.m_streamMask = draw.m_streamMask;
-
-							murmur.add(draw.m_indexBuffer.idx);
-							murmur.add(draw.m_instanceDataBuffer.idx);
-							murmur.add(draw.m_instanceDataOffset);
-							murmur.add(draw.m_instanceDataStride);
-							murmur.add(programIdx);
-							uint32_t hash = murmur.end();
-
-							currentState.m_indexBuffer        = draw.m_indexBuffer;
-							currentState.m_instanceDataOffset = draw.m_instanceDataOffset;
-							currentState.m_instanceDataStride = draw.m_instanceDataStride;
-
-							GLuint id = m_vaoStateCache.find(hash);
-							if (UINT32_MAX != id)
-							{
-								currentVao = id;
-								GL_CHECK(glBindVertexArray(id) );
-							}
-							else
-							{
-								id = m_vaoStateCache.add(hash);
-								currentVao = id;
-								GL_CHECK(glBindVertexArray(id) );
-
-								program.add(hash);
-
-								program.bindAttributesBegin();
-								for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
-									; 0 != streamMask
-									; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
-									)
-								{
-									streamMask >>= ntz;
-									idx         += ntz;
-
-									const Stream& stream = draw.m_stream[idx];
-
-									if (isValid(stream.m_handle) )
-									{
-										VertexBufferGL& vb = m_vertexBuffers[stream.m_handle.idx];
-										vb.add(hash);
-
-										uint16_t decl = !isValid(vb.m_decl) ? stream.m_decl.idx : vb.m_decl.idx;
-										GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
-										program.bindAttributes(m_vertexDecls[decl], stream.m_startVertex);
-									}
-
-									if (isValid(draw.m_instanceDataBuffer) )
-									{
-										VertexBufferGL& instanceVb = m_vertexBuffers[draw.m_instanceDataBuffer.idx];
-										instanceVb.add(hash);
-										GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, instanceVb.m_id) );
-										program.bindInstanceData(draw.m_instanceDataStride, draw.m_instanceDataOffset);
-									}
-								}
-								program.bindAttributesEnd();
-
-								if (isValid(draw.m_indexBuffer) )
-								{
-									IndexBufferGL& ib = m_indexBuffers[draw.m_indexBuffer.idx];
-									ib.add(hash);
-									GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib.m_id) );
-								}
-								else
-								{
-									GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
-								}
-							}
-						}
-					}
-					else
-					{
-						if (0 != defaultVao
-						&&  0 != currentVao)
-						{
-							GL_CHECK(glBindVertexArray(defaultVao) );
-							currentState.m_streamMask = 0;
-							for (size_t ii = 0; ii < BGFX_CONFIG_MAX_VERTEX_STREAMS; ++ii)
-							{
-								currentState.m_stream[ii].m_handle.idx = kInvalidHandle;
-							}
-							currentState.m_indexBuffer.idx = kInvalidHandle;
-							bindAttribs = true;
-							currentVao = 0;
-						}
-
 						bool diffStreamHandles = false;
 						for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
 							; 0 != streamMask
@@ -7777,9 +7616,8 @@ namespace bgfx { namespace gl
 
 				pos++;
 				tvm.printf(10, pos++, 0x8e, " State cache:     ");
-				tvm.printf(10, pos++, 0x8e, " VAO    | Sampler ");
-				tvm.printf(10, pos++, 0x8e, " %6d | %6d  "
-					, m_vaoStateCache.getCount()
+				tvm.printf(10, pos++, 0x8e, " Sampler ");
+				tvm.printf(10, pos++, 0x8e, " %6d  "
 					, m_samplerStateCache.getCount()
 					);
 
