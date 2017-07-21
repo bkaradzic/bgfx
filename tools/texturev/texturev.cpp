@@ -206,6 +206,8 @@ struct View
 		, m_zoom(1.0f)
 		, m_angle(0.0f)
 		, m_orientation(0.0f)
+		, m_flipH(0.0f)
+		, m_flipV(0.0f)
 		, m_filter(true)
 		, m_fit(true)
 		, m_alpha(false)
@@ -406,12 +408,34 @@ struct View
 			{
 				if (_argc >= 3)
 				{
-					float angle;
-					bx::fromString(&angle, _argv[2]);
-					m_orientation = bx::toRad(angle);
+					float* dst = NULL;
+					char axis = bx::toLower(_argv[2][0]);
+					switch (axis)
+					{
+					case 'x': dst = &m_flipV;       break;
+					case 'y': dst = &m_flipH;       break;
+					case 'z': dst = &m_orientation; break;
+					default:  break;
+					}
+
+					if (NULL != dst)
+					{
+						if (_argc >= 4)
+						{
+							float angle;
+							bx::fromString(&angle, _argv[3]);
+							*dst = bx::toRad(angle);
+						}
+						else
+						{
+							*dst = 0.0f;
+						}
+					}
 				}
 				else
 				{
+					m_flipH = 0.0f;
+					m_flipV = 0.0f;
 					m_orientation = 0.0f;
 				}
 			}
@@ -603,6 +627,8 @@ struct View
 	float    m_zoom;
 	float    m_angle;
 	float    m_orientation;
+	float    m_flipH;
+	float    m_flipV;
 	bool     m_filter;
 	bool     m_fit;
 	bool     m_alpha;
@@ -1452,10 +1478,14 @@ int _main_(int _argc, char** _argv)
 				switch (orientation)
 				{
 				default:
-				case bimg::Orientation::R0:   cmdExec("view orientation 0");    break;
-				case bimg::Orientation::R90:  cmdExec("view orientation -90");  break;
-				case bimg::Orientation::R180: cmdExec("view orientation -180"); break;
-				case bimg::Orientation::R270: cmdExec("view orientation -270"); break;
+				case bimg::Orientation::R0:        cmdExec("view orientation\nview orientation z 0");    break;
+				case bimg::Orientation::R90:       cmdExec("view orientation\nview orientation z -90");  break;
+				case bimg::Orientation::R180:      cmdExec("view orientation\nview orientation z -180"); break;
+				case bimg::Orientation::R270:      cmdExec("view orientation\nview orientation z -270"); break;
+				case bimg::Orientation::HFlip:     cmdExec("view orientation\nview orientation x -180"); break;
+				case bimg::Orientation::HFlipR90:  cmdExec("view orientation\nview orientation x -180\nview orientation z -90");  break;
+				case bimg::Orientation::HFlipR270: cmdExec("view orientation\nview orientation x -180\nview orientation z -270"); break;
+				case bimg::Orientation::VFlip:     cmdExec("view orientation\nview orientation y -180"); break;
 				}
 
 				std::string title;
@@ -1552,8 +1582,8 @@ int _main_(int _argc, char** _argv)
 				, px+width/2.0f
 				, py+height/2.0f
 				, py-height/2.0f
-				, 0.0f
-				, 1000.0f
+				, -10.0f
+				, 10.0f
 				, 0.0f
 				, caps->homogeneousDepth
 				);
@@ -1592,7 +1622,7 @@ int _main_(int _argc, char** _argv)
 				);
 
 			float rotz[16];
-			bx::mtxRotateZ(rotz, angle.getValue()+view.m_orientation);
+			bx::mtxRotateXYZ(rotz, view.m_flipH, view.m_flipV, angle.getValue()+view.m_orientation);
 			bgfx::setTransform(rotz);
 
 			float mtx[16];
