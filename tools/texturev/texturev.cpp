@@ -1478,13 +1478,13 @@ int _main_(int _argc, char** _argv)
 				switch (orientation)
 				{
 				default:
-				case bimg::Orientation::R0:        cmdExec("view orientation\nview orientation z 0");    break;
-				case bimg::Orientation::R90:       cmdExec("view orientation\nview orientation z -90");  break;
+				case bimg::Orientation::R0:        cmdExec("view orientation\nview orientation z    0"); break;
+				case bimg::Orientation::R90:       cmdExec("view orientation\nview orientation z  -90"); break;
 				case bimg::Orientation::R180:      cmdExec("view orientation\nview orientation z -180"); break;
 				case bimg::Orientation::R270:      cmdExec("view orientation\nview orientation z -270"); break;
 				case bimg::Orientation::HFlip:     cmdExec("view orientation\nview orientation x -180"); break;
-				case bimg::Orientation::HFlipR90:  cmdExec("view orientation\nview orientation x -180\nview orientation z -90");  break;
-				case bimg::Orientation::HFlipR270: cmdExec("view orientation\nview orientation x -180\nview orientation z -270"); break;
+				case bimg::Orientation::HFlipR90:  cmdExec("view orientation\nview orientation z  -90\nview orientation x -180");  break;
+				case bimg::Orientation::HFlipR270: cmdExec("view orientation\nview orientation z -270\nview orientation x -180"); break;
 				case bimg::Orientation::VFlip:     cmdExec("view orientation\nview orientation y -180"); break;
 				}
 
@@ -1583,7 +1583,7 @@ int _main_(int _argc, char** _argv)
 				, py+height/2.0f
 				, py-height/2.0f
 				, -10.0f
-				, 10.0f
+				,  10.0f
 				, 0.0f
 				, caps->homogeneousDepth
 				);
@@ -1592,10 +1592,19 @@ int _main_(int _argc, char** _argv)
 
 			bgfx::dbgTextClear();
 
+			float orientation[16];
+			bx::mtxRotateXYZ(orientation, view.m_flipH, view.m_flipV, angle.getValue()+view.m_orientation);
+
 			if (view.m_fit)
 			{
-				scale.set(bx::fmin(float(width)  / float(view.m_info.width)
-					,              float(height) / float(view.m_info.height) )
+				float wh[3] = { float(view.m_info.width), float(view.m_info.height), 0.0f };
+				float result[3];
+				bx::vec3MulMtx(result, wh, orientation);
+				result[0] = bx::fround(bx::fabsolute(result[0]) );
+				result[1] = bx::fround(bx::fabsolute(result[1]) );
+
+				scale.set(bx::fmin(float(width)  / result[0]
+					,              float(height) / result[1])
 					, 0.1f
 					);
 			}
@@ -1621,13 +1630,10 @@ int _main_(int _argc, char** _argv)
 				, view.m_abgr
 				);
 
-			float rotz[16];
-			bx::mtxRotateXYZ(rotz, view.m_flipH, view.m_flipV, angle.getValue()+view.m_orientation);
-			bgfx::setTransform(rotz);
+			bgfx::setTransform(orientation);
 
 			float mtx[16];
 			bx::mtxRotateXY(mtx, angx.getValue(), angy.getValue() );
-
 			bgfx::setUniform(u_mtx, mtx);
 
 			mip.set(float(view.m_mip), 0.5f);
