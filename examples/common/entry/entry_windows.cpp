@@ -523,6 +523,8 @@ namespace entry
 				}
 			}
 
+			while (bgfx::RenderFrame::NoContext != bgfx::renderFrame() ) {};
+
 			thread.shutdown();
 
 			DestroyWindow(m_hwnd[0]);
