@@ -59,7 +59,15 @@ public:
         name(pName), offset(pOffset),
         glDefineType(pGLDefineType), size(pSize), index(pIndex), counterIndex(-1), type(pType.clone()) { }
 
-    void dump() const {
+    const TType* const getType() const { return type; }
+    int getBinding() const
+    {
+        if (type == nullptr || !type->getQualifier().hasBinding())
+            return -1;
+        return type->getQualifier().layoutBinding;
+    }
+    void dump() const
+    {
         printf("%s: offset %d, type %x, size %d, index %d, binding %d",
                name.c_str(), offset, glDefineType, size, index, getBinding() );
 
@@ -68,8 +76,7 @@ public:
 
         printf("\n");
     }
-
-    const TType* const getType() const { return type; }
+    static TObjectReflection badReflection() { return TObjectReflection(); }
 
     TString name;
     int offset;
@@ -78,15 +85,7 @@ public:
     int index;
     int counterIndex;
 
-    static TObjectReflection badReflection() { return TObjectReflection(); }
-
 protected:
-    int getBinding() const {
-        if (type == nullptr || type->getQualifier().layoutBinding == TQualifier::layoutBindingEnd)
-            return -1;
-        return type->getQualifier().layoutBinding;
-    }
-
     TObjectReflection() : offset(-1), glDefineType(-1), size(-1), index(-1), type(nullptr) { }
 
     const TType* type;

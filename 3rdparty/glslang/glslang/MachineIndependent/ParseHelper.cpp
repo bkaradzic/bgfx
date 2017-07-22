@@ -2472,16 +2472,22 @@ void TParseContext::atomicUintCheck(const TSourceLoc& loc, const TType& type, co
         error(loc, "atomic_uints can only be used in uniform variables or function parameters:", type.getBasicTypeString().c_str(), identifier.c_str());
 }
 
-void TParseContext::transparentCheck(const TSourceLoc& loc, const TType& type, const TString& /*identifier*/)
+void TParseContext::transparentOpaqueCheck(const TSourceLoc& loc, const TType& type, const TString& identifier)
 {
     if (parsingBuiltins)
         return;
 
-    // Vulkan doesn't allow transparent uniforms outside of blocks
-    if (spvVersion.vulkan == 0 || type.getQualifier().storage != EvqUniform)
+    if (type.getQualifier().storage != EvqUniform)
         return;
-    if (type.containsNonOpaque())
-        vulkanRemoved(loc, "non-opaque uniforms outside a block");
+
+    if (type.containsNonOpaque()) {
+        // Vulkan doesn't allow transparent uniforms outside of blocks
+        if (spvVersion.vulkan > 0)
+            vulkanRemoved(loc, "non-opaque uniforms outside a block");
+        // OpenGL wants locations on these
+        if (spvVersion.openGl > 0 && !type.getQualifier().hasLocation())
+            error(loc, "non-opaque uniform variables need a layout(location=L)", identifier.c_str(), "");
+    }
 }
 
 //
@@ -5107,7 +5113,7 @@ TIntermNode* TParseContext::declareVariable(const TSourceLoc& loc, TString& iden
 
     samplerCheck(loc, type, identifier, initializer);
     atomicUintCheck(loc, type, identifier);
-    transparentCheck(loc, type, identifier);
+    transparentOpaqueCheck(loc, type, identifier);
 
     if (identifier != "gl_FragCoord" && (publicType.shaderQualifiers.originUpperLeft || publicType.shaderQualifiers.pixelCenterInteger))
         error(loc, "can only apply origin_upper_left and pixel_center_origin to gl_FragCoord", "layout qualifier", "");

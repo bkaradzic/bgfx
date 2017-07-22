@@ -289,31 +289,29 @@ void ProcessResourceSetBindingBase(int& argc, char**& argv, std::array<std::vect
         usage();
 
     if (!isdigit(argv[1][0])) {
-        if (argc < 5) // this form needs one more argument
+        if (argc < 3) // this form needs one more argument
             usage();
 
-        // Parse form: --argname stage base
+        // Parse form: --argname stage [regname set base...], or:
+        //             --argname stage set
         const EShLanguage lang = FindLanguage(argv[1], false);
 
-        base[lang].push_back(argv[2]);
-        base[lang].push_back(argv[3]);
-        base[lang].push_back(argv[4]);
-        argc -= 4;
-        argv += 4;
-        while(argv[1] != NULL) {
-            if(argv[1][0] != '-') {
-                base[lang].push_back(argv[1]);
-                base[lang].push_back(argv[2]);
-                base[lang].push_back(argv[3]);
-                argc -= 3;
-                argv += 3;
-            }
-            else {
-                break;
-            }
+        argc--;
+        argv++;
+
+        while (argc > 1 && argv[1] != nullptr && argv[1][0] != '-') {
+            base[lang].push_back(argv[1]);
+
+            argc--;
+            argv++;
         }
+
+        // Must have one arg, or a multiple of three (for [regname set binding] triples)
+        if (base[lang].size() != 1 && (base[lang].size() % 3) != 0)
+            usage();
+
     } else {
-        // Parse form: --argname base
+        // Parse form: --argname set
         for (int lang=0; lang<EShLangCount; ++lang)
             base[lang].push_back(argv[1]);
 
@@ -1187,7 +1185,10 @@ void usage()
            "  --ku                                 synonym for --keep-uncalled\n"
            "  --no-storage-format                  use Unknown image format\n"
            "  --nsf                                synonym for --no-storage-format\n"
-           "  --resource-set-binding [stage] num   descriptor set and binding for resources\n"
+           "  --resource-set-binding [stage] name set binding\n"
+           "              Set descriptor set and binding for individual resources\n"
+           "  --resource-set-binding [stage] set\n"
+           "              Set descriptor set for all resources\n"
            "  --rsb [stage] type set binding       synonym for --resource-set-binding\n"
            "  --shift-image-binding [stage] num    base binding number for images (uav)\n"
            "  --sib [stage] num                    synonym for --shift-image-binding\n"

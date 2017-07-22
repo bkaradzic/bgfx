@@ -275,6 +275,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.noWorkgroup.comp",
         "spv.offsets.frag",
         "spv.Operations.frag",
+        "spv.paramMemory.frag",
         "spv.precision.frag",
         "spv.prepost.frag",
         "spv.qualifiers.vert",

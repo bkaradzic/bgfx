@@ -97,6 +97,12 @@ echo Configuring HLSL descriptor set and binding number manually
 $EXE -V -D -e main -H hlsl.multiDescriptorSet.frag --rsb frag t0 0 0 t1 1 0 s0 0 1 s1 1 1 b0 2 0 b1 2 1 b2 2 2 > $TARGETDIR/hlsl.multiDescriptorSet.frag.out
 diff -b $BASEDIR/hlsl.multiDescriptorSet.frag.out $TARGETDIR/hlsl.multiDescriptorSet.frag.out || HASERROR=1
 
+$EXE -V -D -e main -H hlsl.explicitDescriptorSet.frag --hlsl-iomap --amb --ssb 10 --stb 20 --rsb 4 > $TARGETDIR/hlsl.explicitDescriptorSet.frag.out
+diff -b $BASEDIR/hlsl.explicitDescriptorSet.frag.out $TARGETDIR/hlsl.explicitDescriptorSet.frag.out || HASERROR=1
+
+$EXE -V -D -e main -H hlsl.explicitDescriptorSet.frag --hlsl-iomap --amb --ssb 10 --stb 20 --rsb frag 3 > $TARGETDIR/hlsl.explicitDescriptorSet-2.frag.out
+diff -b $BASEDIR/hlsl.explicitDescriptorSet-2.frag.out $TARGETDIR/hlsl.explicitDescriptorSet-2.frag.out || HASERROR=1
+
 #
 # Testing location error
 #

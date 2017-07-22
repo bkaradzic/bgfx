@@ -2914,6 +2914,13 @@ bool TGlslangToSpvTraverser::isShaderEntryPoint(const glslang::TIntermAggregate*
 // Make all the functions, skeletally, without actually visiting their bodies.
 void TGlslangToSpvTraverser::makeFunctions(const glslang::TIntermSequence& glslFunctions)
 {
+    const auto getParamDecorations = [](std::vector<spv::Decoration>& decorations, const glslang::TType& type) {
+        spv::Decoration paramPrecision = TranslatePrecisionDecoration(type);
+        if (paramPrecision != spv::NoPrecision)
+            decorations.push_back(paramPrecision);
+        TranslateMemoryDecoration(type.getQualifier(), decorations);
+    };
+
     for (int f = 0; f < (int)glslFunctions.size(); ++f) {
         glslang::TIntermAggregate* glslFunction = glslFunctions[f]->getAsAggregate();
         if (! glslFunction || glslFunction->getOp() != glslang::EOpFunction || isShaderEntryPoint(glslFunction))
@@ -2934,11 +2941,13 @@ void TGlslangToSpvTraverser::makeFunctions(const glslang::TIntermSequence& glslF
         //   GLSL has copy-in/copy-out semantics.  They can be handled though with a pointer to a copy.
 
         std::vector<spv::Id> paramTypes;
-        std::vector<spv::Decoration> paramPrecisions;
+        std::vector<std::vector<spv::Decoration>> paramDecorations; // list of decorations per parameter
         glslang::TIntermSequence& parameters = glslFunction->getSequence()[0]->getAsAggregate()->getSequence();
 
-        bool implicitThis = (int)parameters.size() > 0 && parameters[0]->getAsSymbolNode()->getName() == glslangIntermediate->implicitThisName;
+        bool implicitThis = (int)parameters.size() > 0 && parameters[0]->getAsSymbolNode()->getName() ==
+                                                          glslangIntermediate->implicitThisName;
 
+        paramDecorations.resize(parameters.size());
         for (int p = 0; p < (int)parameters.size(); ++p) {
             const glslang::TType& paramType = parameters[p]->getAsTyped()->getType();
             spv::Id typeId = convertGlslangToSpvType(paramType);
@@ -2952,14 +2961,15 @@ void TGlslangToSpvTraverser::makeFunctions(const glslang::TIntermSequence& glslF
                 typeId = builder.makePointer(spv::StorageClassFunction, typeId);
             else
                 rValueParameters.insert(parameters[p]->getAsSymbolNode()->getId());
-            paramPrecisions.push_back(TranslatePrecisionDecoration(paramType));
+            getParamDecorations(paramDecorations[p], paramType);
             paramTypes.push_back(typeId);
         }
 
         spv::Block* functionBlock;
         spv::Function *function = builder.makeFunctionEntry(TranslatePrecisionDecoration(glslFunction->getType()),
                                                             convertGlslangToSpvType(glslFunction->getType()),
-                                                            glslFunction->getName().c_str(), paramTypes, paramPrecisions, &functionBlock);
+                                                            glslFunction->getName().c_str(), paramTypes,
+                                                            paramDecorations, &functionBlock);
         if (implicitThis)
             function->setImplicitThis();
 

@@ -404,6 +404,11 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
     {
         if (type.getQualifier().hasSet())
             return type.getQualifier().layoutSet;
+
+        // If a command line or API option requested a single descriptor set, use that (if not overrided by spaceN)
+        if (baseResourceSetBinding.size() == 1)
+            return atoi(baseResourceSetBinding[0].c_str());
+
         return 0;
     }
 

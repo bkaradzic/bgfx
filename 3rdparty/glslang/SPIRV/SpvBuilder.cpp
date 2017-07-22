@@ -983,16 +983,16 @@ Function* Builder::makeEntryPoint(const char* entryPoint)
 
     Block* entry;
     std::vector<Id> params;
-    std::vector<Decoration> precisions;
+    std::vector<std::vector<Decoration>> decorations;
 
-    entryPointFunction = makeFunctionEntry(NoPrecision, makeVoidType(), entryPoint, params, precisions, &entry);
+    entryPointFunction = makeFunctionEntry(NoPrecision, makeVoidType(), entryPoint, params, decorations, &entry);
 
     return entryPointFunction;
 }
 
 // Comments in header
 Function* Builder::makeFunctionEntry(Decoration precision, Id returnType, const char* name,
-                                     const std::vector<Id>& paramTypes, const std::vector<Decoration>& precisions, Block **entry)
+                                     const std::vector<Id>& paramTypes, const std::vector<std::vector<Decoration>>& decorations, Block **entry)
 {
     // Make the function and initial instructions in it
     Id typeId = makeFunctionType(returnType, paramTypes);
@@ -1001,8 +1001,10 @@ Function* Builder::makeFunctionEntry(Decoration precision, Id returnType, const 
 
     // Set up the precisions
     setPrecision(function->getId(), precision);
-    for (unsigned p = 0; p < (unsigned)precisions.size(); ++p)
-        setPrecision(firstParamId + p, precisions[p]);
+    for (unsigned p = 0; p < (unsigned)decorations.size(); ++p) {
+        for (int d = 0; d < (int)decorations[p].size(); ++d)
+            addDecoration(firstParamId + p, decorations[p][d]);
+    }
 
     // CFG
     if (entry) {
