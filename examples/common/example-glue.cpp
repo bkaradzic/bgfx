@@ -7,8 +7,11 @@
 #include "entry/entry.h"
 #include "entry/cmd.h"
 #include <bx/string.h>
+#include <bx/timer.h>
 
-void showExampleDialog(entry::AppI* _app)
+#include <stdio.h>
+
+void showExampleDialog(entry::AppI* _app, const char* _errorText)
 {
 	char temp[1024];
 	bx::snprintf(temp, BX_COUNTOF(temp), "Example: %s", _app->getName() );
@@ -25,6 +28,24 @@ void showExampleDialog(entry::AppI* _app)
 
 	ImGui::TextWrapped("%s", _app->getDescription() );
 	ImGui::Separator();
+
+	if (NULL != _errorText)
+	{
+		const int64_t now  = bx::getHPCounter();
+		const int64_t freq = bx::getHPFrequency();
+		const float   time = float(now%freq)/float(freq);
+
+		bool blink = time > 0.5f;
+
+		ImGui::PushStyleColor(ImGuiCol_Text
+			, blink
+			? ImVec4(1.0, 0.0, 0.0, 1.0)
+			: ImVec4(1.0, 1.0, 1.0, 1.0)
+			);
+		ImGui::TextWrapped("%s", _errorText);
+		ImGui::Separator();
+		ImGui::PopStyleColor();
+	}
 
 	{
 		uint32_t num = entry::getNumApps();

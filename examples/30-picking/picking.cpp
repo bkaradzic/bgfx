@@ -184,175 +184,6 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
-			bgfx::setViewFrameBuffer(RENDER_PASS_ID, m_pickingFB);
-
-			float time = (float)( (bx::getHPCounter() - m_timeOffset) / double(bx::getHPFrequency() ) );
-
-			// Set up matrices for basic forward renderer
-			const float camSpeed = 0.25;
-			float cameraSpin = (float)m_cameraSpin;
-			float eyeDist = 2.5f;
-			float eye[3] =
-			{
-				-eyeDist * bx::fsin(time*cameraSpin*camSpeed),
-				0.0f,
-				-eyeDist * bx::fcos(time*cameraSpin*camSpeed),
-			};
-			float at[3] = { 0.0f, 0.0f, 0.0f };
-
-			float view[16];
-			bx::mtxLookAt(view, eye, at);
-
-			float proj[16];
-			bx::mtxProj(proj, 60.0f, float(m_width) / float(m_height), 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
-
-			// Set up view rect and transform for the shaded pass
-			bgfx::setViewRect(RENDER_PASS_SHADING, 0, 0, uint16_t(m_width), uint16_t(m_height) );
-			bgfx::setViewTransform(RENDER_PASS_SHADING, view, proj);
-
-			// Set up picking pass
-			float viewProj[16];
-			bx::mtxMul(viewProj, view, proj);
-
-			float invViewProj[16];
-			bx::mtxInverse(invViewProj, viewProj);
-
-			// Mouse coord in NDC
-			float mouseXNDC = ( m_mouseState.m_mx             / (float)m_width ) * 2.0f - 1.0f;
-			float mouseYNDC = ((m_height - m_mouseState.m_my) / (float)m_height) * 2.0f - 1.0f;
-
-			float pickEye[3];
-			float mousePosNDC[3] = { mouseXNDC, mouseYNDC, 0.0f };
-			bx::vec3MulMtxH(pickEye, mousePosNDC, invViewProj);
-
-			float pickAt[3];
-			float mousePosNDCEnd[3] = { mouseXNDC, mouseYNDC, 1.0f };
-			bx::vec3MulMtxH(pickAt, mousePosNDCEnd, invViewProj);
-
-			// Look at our unprojected point
-			float pickView[16];
-			bx::mtxLookAt(pickView, pickEye, pickAt);
-
-			// Tight FOV is best for picking
-			float pickProj[16];
-			bx::mtxProj(pickProj, m_fov, 1, 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
-
-			// View rect and transforms for picking pass
-			bgfx::setViewRect(RENDER_PASS_ID, 0, 0, ID_DIM, ID_DIM);
-			bgfx::setViewTransform(RENDER_PASS_ID, pickView, pickProj);
-
-			// Now that our passes are set up, we can finally draw each mesh
-
-			// Picking highlights a mesh so we'll set up this tint color
-			const float tintBasic[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-			const float tintHighlighted[4] = { 0.3f, 0.3f, 2.0f, 1.0f };
-
-			for (uint32_t mesh = 0; mesh < 12; ++mesh)
-			{
-				const float scale = m_meshScale[mesh];
-
-				// Set up transform matrix for each mesh
-				float mtx[16];
-				bx::mtxSRT(mtx
-					, scale, scale, scale
-					, 0.0f
-					, time*0.37f*(mesh % 2 ? 1.0f : -1.0f)
-					, 0.0f
-					, (mesh % 4) - 1.5f
-					, (mesh / 4) - 1.25f
-					, 0.0f
-					);
-
-				// Submit mesh to both of our render passes
-				// Set uniform based on if this is the highlighted mesh
-				bgfx::setUniform(u_tint
-					, mesh == m_highlighted
-					? tintHighlighted
-					: tintBasic
-					);
-				meshSubmit(m_meshes[mesh], RENDER_PASS_SHADING, m_shadingProgram, mtx);
-
-				// Submit ID pass based on mesh ID
-				bgfx::setUniform(u_id, m_idsF[mesh]);
-				meshSubmit(m_meshes[mesh], RENDER_PASS_ID, m_idProgram, mtx);
-			}
-
-			// If the user previously clicked, and we're done reading data from GPU, look at ID buffer on CPU
-			// Whatever mesh has the most pixels in the ID buffer is the one the user clicked on.
-			if (m_reading == m_currFrame)
-			{
-				m_reading = 0;
-				std::map<uint32_t, uint32_t> ids;  // This contains all the IDs found in the buffer
-				uint32_t maxAmount = 0;
-				for (uint8_t *x = m_blitData; x < m_blitData + ID_DIM * ID_DIM * 4;)
-				{
-					uint8_t rr = *x++;
-					uint8_t gg = *x++;
-					uint8_t bb = *x++;
-					uint8_t aa = *x++;
-
-					const bgfx::Caps* caps = bgfx::getCaps();
-					if (bgfx::RendererType::Direct3D9 == caps->rendererType)
-					{
-						// Comes back as BGRA
-						uint8_t temp = rr;
-						rr = bb;
-						bb = temp;
-					}
-
-					if (0 == (rr|gg|bb) ) // Skip background
-					{
-						continue;
-					}
-
-					uint32_t hashKey = rr + (gg << 8) + (bb << 16) + (aa << 24);
-					std::map<uint32_t, uint32_t>::iterator mapIter = ids.find(hashKey);
-					uint32_t amount = 1;
-					if (mapIter != ids.end() )
-					{
-						amount = mapIter->second + 1;
-					}
-
-					ids[hashKey] = amount; // Amount of times this ID (color) has been clicked on in buffer
-					maxAmount = maxAmount > amount
-						? maxAmount
-						: amount
-						;
-				}
-
-				uint32_t idKey = 0;
-				m_highlighted = UINT32_MAX;
-				if (maxAmount)
-				{
-					for (std::map<uint32_t, uint32_t>::iterator mapIter = ids.begin(); mapIter != ids.end(); mapIter++)
-					{
-						if (mapIter->second == maxAmount)
-						{
-							idKey = mapIter->first;
-							break;
-						}
-					}
-
-					for (uint32_t ii = 0; ii < 12; ++ii)
-					{
-						if (m_idsU[ii] == idKey)
-						{
-							m_highlighted = ii;
-							break;
-						}
-					}
-				}
-			}
-
-			// Start a new readback?
-			if (!m_reading
-			&&  m_mouseState.m_buttons[entry::MouseButton::Left])
-			{
-				// Blit and read
-				bgfx::blit(RENDER_PASS_BLIT, m_blitTex, 0, 0, m_pickingRT);
-				m_reading = bgfx::readTexture(m_blitTex, m_blitData);
-			}
-
 			// Draw UI
 			imguiBeginFrame(
 				   m_mouseState.m_mx
@@ -365,23 +196,201 @@ public:
 				, uint16_t(m_height)
 				);
 
-			showExampleDialog(this);
+			const bgfx::Caps* caps = bgfx::getCaps();
+			bool blitSupport = 0 != (caps->supported & BGFX_CAPS_TEXTURE_BLIT);
 
-			ImGui::SetNextWindowPos(
-				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
-				, ImGuiSetCond_FirstUseEver
-				);
-			ImGui::Begin("Settings"
-				, NULL
-				, ImVec2(m_width / 5.0f, m_height / 2.0f)
-				, ImGuiWindowFlags_AlwaysAutoResize
+			showExampleDialog(this
+				, !blitSupport
+				? "BGFX_CAPS_TEXTURE_BLIT is not supported."
+				: NULL
 				);
 
-			ImGui::Image(m_pickingRT, ImVec2(m_width / 5.0f - 16.0f, m_width / 5.0f - 16.0f) );
-			ImGui::SliderFloat("Field of view", &m_fov, 1.0f, 60.0f);
-			ImGui::Checkbox("Spin Camera", &m_cameraSpin);
+			if (blitSupport)
+			{
+				ImGui::SetNextWindowPos(
+					ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+					, ImGuiSetCond_FirstUseEver
+					);
+				ImGui::Begin("Settings"
+					, NULL
+					, ImVec2(m_width / 5.0f, m_height / 2.0f)
+					, ImGuiWindowFlags_AlwaysAutoResize
+					);
 
-			ImGui::End();
+				ImGui::Image(m_pickingRT, ImVec2(m_width / 5.0f - 16.0f, m_width / 5.0f - 16.0f) );
+				ImGui::SliderFloat("Field of view", &m_fov, 1.0f, 60.0f);
+				ImGui::Checkbox("Spin Camera", &m_cameraSpin);
+
+				ImGui::End();
+
+				bgfx::setViewFrameBuffer(RENDER_PASS_ID, m_pickingFB);
+
+				float time = (float)( (bx::getHPCounter() - m_timeOffset) / double(bx::getHPFrequency() ) );
+
+				// Set up matrices for basic forward renderer
+				const float camSpeed = 0.25;
+				float cameraSpin = (float)m_cameraSpin;
+				float eyeDist = 2.5f;
+				float eye[3] =
+				{
+					-eyeDist * bx::fsin(time*cameraSpin*camSpeed),
+					0.0f,
+					-eyeDist * bx::fcos(time*cameraSpin*camSpeed),
+				};
+				float at[3] = { 0.0f, 0.0f, 0.0f };
+
+				float view[16];
+				bx::mtxLookAt(view, eye, at);
+
+				float proj[16];
+				bx::mtxProj(proj, 60.0f, float(m_width) / float(m_height), 0.1f, 100.0f, caps->homogeneousDepth);
+
+				// Set up view rect and transform for the shaded pass
+				bgfx::setViewRect(RENDER_PASS_SHADING, 0, 0, uint16_t(m_width), uint16_t(m_height) );
+				bgfx::setViewTransform(RENDER_PASS_SHADING, view, proj);
+
+				// Set up picking pass
+				float viewProj[16];
+				bx::mtxMul(viewProj, view, proj);
+
+				float invViewProj[16];
+				bx::mtxInverse(invViewProj, viewProj);
+
+				// Mouse coord in NDC
+				float mouseXNDC = ( m_mouseState.m_mx             / (float)m_width ) * 2.0f - 1.0f;
+				float mouseYNDC = ((m_height - m_mouseState.m_my) / (float)m_height) * 2.0f - 1.0f;
+
+				float pickEye[3];
+				float mousePosNDC[3] = { mouseXNDC, mouseYNDC, 0.0f };
+				bx::vec3MulMtxH(pickEye, mousePosNDC, invViewProj);
+
+				float pickAt[3];
+				float mousePosNDCEnd[3] = { mouseXNDC, mouseYNDC, 1.0f };
+				bx::vec3MulMtxH(pickAt, mousePosNDCEnd, invViewProj);
+
+				// Look at our unprojected point
+				float pickView[16];
+				bx::mtxLookAt(pickView, pickEye, pickAt);
+
+				// Tight FOV is best for picking
+				float pickProj[16];
+				bx::mtxProj(pickProj, m_fov, 1, 0.1f, 100.0f, caps->homogeneousDepth);
+
+				// View rect and transforms for picking pass
+				bgfx::setViewRect(RENDER_PASS_ID, 0, 0, ID_DIM, ID_DIM);
+				bgfx::setViewTransform(RENDER_PASS_ID, pickView, pickProj);
+
+				// Now that our passes are set up, we can finally draw each mesh
+
+				// Picking highlights a mesh so we'll set up this tint color
+				const float tintBasic[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+				const float tintHighlighted[4] = { 0.3f, 0.3f, 2.0f, 1.0f };
+
+				for (uint32_t mesh = 0; mesh < 12; ++mesh)
+				{
+					const float scale = m_meshScale[mesh];
+
+					// Set up transform matrix for each mesh
+					float mtx[16];
+					bx::mtxSRT(mtx
+						, scale, scale, scale
+						, 0.0f
+						, time*0.37f*(mesh % 2 ? 1.0f : -1.0f)
+						, 0.0f
+						, (mesh % 4) - 1.5f
+						, (mesh / 4) - 1.25f
+						, 0.0f
+						);
+
+					// Submit mesh to both of our render passes
+					// Set uniform based on if this is the highlighted mesh
+					bgfx::setUniform(u_tint
+						, mesh == m_highlighted
+						? tintHighlighted
+						: tintBasic
+						);
+					meshSubmit(m_meshes[mesh], RENDER_PASS_SHADING, m_shadingProgram, mtx);
+
+					// Submit ID pass based on mesh ID
+					bgfx::setUniform(u_id, m_idsF[mesh]);
+					meshSubmit(m_meshes[mesh], RENDER_PASS_ID, m_idProgram, mtx);
+				}
+
+				// If the user previously clicked, and we're done reading data from GPU, look at ID buffer on CPU
+				// Whatever mesh has the most pixels in the ID buffer is the one the user clicked on.
+				if (m_reading == m_currFrame)
+				{
+					m_reading = 0;
+					std::map<uint32_t, uint32_t> ids;  // This contains all the IDs found in the buffer
+					uint32_t maxAmount = 0;
+					for (uint8_t *x = m_blitData; x < m_blitData + ID_DIM * ID_DIM * 4;)
+					{
+						uint8_t rr = *x++;
+						uint8_t gg = *x++;
+						uint8_t bb = *x++;
+						uint8_t aa = *x++;
+
+						if (bgfx::RendererType::Direct3D9 == caps->rendererType)
+						{
+							// Comes back as BGRA
+							uint8_t temp = rr;
+							rr = bb;
+							bb = temp;
+						}
+
+						if (0 == (rr|gg|bb) ) // Skip background
+						{
+							continue;
+						}
+
+						uint32_t hashKey = rr + (gg << 8) + (bb << 16) + (aa << 24);
+						std::map<uint32_t, uint32_t>::iterator mapIter = ids.find(hashKey);
+						uint32_t amount = 1;
+						if (mapIter != ids.end() )
+						{
+							amount = mapIter->second + 1;
+						}
+
+						ids[hashKey] = amount; // Amount of times this ID (color) has been clicked on in buffer
+						maxAmount = maxAmount > amount
+							? maxAmount
+							: amount
+							;
+					}
+
+					uint32_t idKey = 0;
+					m_highlighted = UINT32_MAX;
+					if (maxAmount)
+					{
+						for (std::map<uint32_t, uint32_t>::iterator mapIter = ids.begin(); mapIter != ids.end(); mapIter++)
+						{
+							if (mapIter->second == maxAmount)
+							{
+								idKey = mapIter->first;
+								break;
+							}
+						}
+
+						for (uint32_t ii = 0; ii < 12; ++ii)
+						{
+							if (m_idsU[ii] == idKey)
+							{
+								m_highlighted = ii;
+								break;
+							}
+						}
+					}
+				}
+
+				// Start a new readback?
+				if (!m_reading
+				&&  m_mouseState.m_buttons[entry::MouseButton::Left])
+				{
+					// Blit and read
+					bgfx::blit(RENDER_PASS_BLIT, m_blitTex, 0, 0, m_pickingRT);
+					m_reading = bgfx::readTexture(m_blitTex, m_blitData);
+				}
+			}
 
 			imguiEndFrame();
 

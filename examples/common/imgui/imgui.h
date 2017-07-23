@@ -34,7 +34,7 @@ void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll,
 void imguiEndFrame();
 
 namespace entry { class AppI; }
-void showExampleDialog(entry::AppI* _app);
+void showExampleDialog(entry::AppI* _app, const char* _errorText = NULL);
 
 namespace ImGui
 {
