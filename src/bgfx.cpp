@@ -3147,6 +3147,13 @@ error:
 			srgbCaps = BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB;
 		}
 
+		if (0 != (_flags & BGFX_TEXTURE_RT_MASK) )
+		{
+			formatSupported = (g_caps.formats[_format] & (0
+				| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
+				) );
+		}
+
 		if (!formatSupported)
 		{
 			_err->setError(BGFX_ERROR_TEXTURE_VALIDATION
