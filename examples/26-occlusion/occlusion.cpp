@@ -119,9 +119,15 @@ public:
 		// Create program from shaders.
 		m_program = loadProgram("vs_cubes", "fs_cubes");
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_occlusionQueries); ++ii)
+		const bgfx::Caps* caps = bgfx::getCaps();
+		m_occlusionQuerySupported = !!(caps->supported & BGFX_CAPS_OCCLUSION_QUERY);
+
+		if (m_occlusionQuerySupported)
 		{
-			m_occlusionQueries[ii] = bgfx::createOcclusionQuery();
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_occlusionQueries); ++ii)
+			{
+				m_occlusionQueries[ii] = bgfx::createOcclusionQuery();
+			}
 		}
 
 		cameraCreate();
@@ -142,9 +148,12 @@ public:
 		// Cleanup.
 		cameraDestroy();
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_occlusionQueries); ++ii)
+		if (m_occlusionQuerySupported)
 		{
-			bgfx::destroy(m_occlusionQueries[ii]);
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_occlusionQueries); ++ii)
+			{
+				bgfx::destroy(m_occlusionQueries[ii]);
+			}
 		}
 
 		bgfx::destroy(m_ibh);
@@ -171,112 +180,119 @@ public:
 				, uint16_t(m_height)
 				);
 
-			showExampleDialog(this);
+			showExampleDialog(this
+				, !m_occlusionQuerySupported
+				? "Occlusion query is not supported."
+				: NULL
+				);
 
 			imguiEndFrame();
 
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency() );
-			const float time = (float)( (now-m_timeOffset)/double(bx::getHPFrequency() ) );
-			const float deltaTime = float(frameTime/freq);
-
-			// Update camera.
-			float view[16];
-			cameraUpdate(deltaTime, m_state.m_mouse);
-			cameraGetViewMtx(view);
-
-			// Set view and projection matrix for view 0.
-			const bgfx::HMD* hmd = bgfx::getHMD();
-			if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
+			if (m_occlusionQuerySupported)
 			{
-				float viewHead[16];
-				float eye[3] = {};
-				bx::mtxQuatTranslationHMD(viewHead, hmd->eye[0].rotation, eye);
+				int64_t now = bx::getHPCounter();
+				static int64_t last = now;
+				const int64_t frameTime = now - last;
+				last = now;
+				const double freq = double(bx::getHPFrequency() );
+				const float time = (float)( (now-m_timeOffset)/double(bx::getHPFrequency() ) );
+				const float deltaTime = float(frameTime/freq);
 
-				float tmp[16];
-				bx::mtxMul(tmp, view, viewHead);
+				// Update camera.
+				float view[16];
+				cameraUpdate(deltaTime, m_state.m_mouse);
+				cameraGetViewMtx(view);
 
-				bgfx::setViewTransform(0, tmp, hmd->eye[0].projection);
-				bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
-
-				bgfx::setViewTransform(1, tmp, hmd->eye[1].projection);
-				bgfx::setViewRect(1, 0, 0, hmd->width, hmd->height);
-			}
-			else
-			{
-				float proj[16];
-				bx::mtxProj(proj, 90.0f, float(m_width)/float(m_height), 0.1f, 10000.0f, bgfx::getCaps()->homogeneousDepth);
-
-				bgfx::setViewTransform(0, view, proj);
-				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
-
-				bgfx::setViewTransform(1, view, proj);
-				bgfx::setViewRect(1, 0, 0, uint16_t(m_width), uint16_t(m_height) );
-
-				float at[3]  = {  0.0f,  0.0f,   0.0f };
-				float eye[3] = { 17.5f, 10.0f, -17.5f };
-				bx::mtxLookAt(view, eye, at);
-
-				bgfx::setViewTransform(2, view, proj);
-				bgfx::setViewRect(2, 10, uint16_t(m_height - m_height/4 - 10), uint16_t(m_width/4), uint16_t(m_height/4) );
-			}
-
-			bgfx::touch(0);
-			bgfx::touch(2);
-
-			uint8_t img[CUBES_DIM*CUBES_DIM*2];
-
-			for (uint32_t yy = 0; yy < CUBES_DIM; ++yy)
-			{
-				for (uint32_t xx = 0; xx < CUBES_DIM; ++xx)
+				// Set view and projection matrix for view 0.
+				const bgfx::HMD* hmd = bgfx::getHMD();
+				if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
 				{
-					float mtx[16];
-					bx::mtxRotateXY(mtx, time + xx*0.21f, time + yy*0.37f);
-					mtx[12] = -(CUBES_DIM-1) * 3.0f / 2.0f + float(xx)*3.0f;
-					mtx[13] = 0.0f;
-					mtx[14] = -(CUBES_DIM-1) * 3.0f / 2.0f + float(yy)*3.0f;
+					float viewHead[16];
+					float eye[3] = {};
+					bx::mtxQuatTranslationHMD(viewHead, hmd->eye[0].rotation, eye);
 
-					bgfx::OcclusionQueryHandle occlusionQuery = m_occlusionQueries[yy*CUBES_DIM+xx];
+					float tmp[16];
+					bx::mtxMul(tmp, view, viewHead);
 
-					bgfx::setTransform(mtx);
-					bgfx::setVertexBuffer(0, m_vbh);
-					bgfx::setIndexBuffer(m_ibh);
-					bgfx::setCondition(occlusionQuery, true);
-					bgfx::setState(BGFX_STATE_DEFAULT);
-					bgfx::submit(0, m_program);
+					bgfx::setViewTransform(0, tmp, hmd->eye[0].projection);
+					bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
 
-					bgfx::setTransform(mtx);
-					bgfx::setVertexBuffer(0, m_vbh);
-					bgfx::setIndexBuffer(m_ibh);
-					bgfx::setState(0
-						| BGFX_STATE_DEPTH_TEST_LEQUAL
-						| BGFX_STATE_CULL_CW
-						);
-					bgfx::submit(1, m_program, occlusionQuery);
-
-					bgfx::setTransform(mtx);
-					bgfx::setVertexBuffer(0, m_vbh);
-					bgfx::setIndexBuffer(m_ibh);
-					bgfx::setCondition(occlusionQuery, true);
-					bgfx::setState(BGFX_STATE_DEFAULT);
-					bgfx::submit(2, m_program);
-
-					img[(yy*CUBES_DIM+xx)*2+0] = " \xfex"[bgfx::getResult(occlusionQuery)];
-					img[(yy*CUBES_DIM+xx)*2+1] = 0xf;
+					bgfx::setViewTransform(1, tmp, hmd->eye[1].projection);
+					bgfx::setViewRect(1, 0, 0, hmd->width, hmd->height);
 				}
-			}
+				else
+				{
+					float proj[16];
+					bx::mtxProj(proj, 90.0f, float(m_width)/float(m_height), 0.1f, 10000.0f, bgfx::getCaps()->homogeneousDepth);
 
-			for (uint16_t xx = 0; xx < CUBES_DIM; ++xx)
-			{
-				bgfx::dbgTextImage(5 + xx*2, 5, 1, CUBES_DIM, img + xx*2, CUBES_DIM*2);
-			}
+					bgfx::setViewTransform(0, view, proj);
+					bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
-			int32_t numPixels = 0;
-			bgfx::getResult(m_occlusionQueries[0], &numPixels);
-			bgfx::dbgTextPrintf(5, 5 + CUBES_DIM + 1, 0xf, "%d", numPixels);
+					bgfx::setViewTransform(1, view, proj);
+					bgfx::setViewRect(1, 0, 0, uint16_t(m_width), uint16_t(m_height) );
+
+					float at[3]  = {  0.0f,  0.0f,   0.0f };
+					float eye[3] = { 17.5f, 10.0f, -17.5f };
+					bx::mtxLookAt(view, eye, at);
+
+					bgfx::setViewTransform(2, view, proj);
+					bgfx::setViewRect(2, 10, uint16_t(m_height - m_height/4 - 10), uint16_t(m_width/4), uint16_t(m_height/4) );
+				}
+
+				bgfx::touch(0);
+				bgfx::touch(2);
+
+				uint8_t img[CUBES_DIM*CUBES_DIM*2];
+
+				for (uint32_t yy = 0; yy < CUBES_DIM; ++yy)
+				{
+					for (uint32_t xx = 0; xx < CUBES_DIM; ++xx)
+					{
+						float mtx[16];
+						bx::mtxRotateXY(mtx, time + xx*0.21f, time + yy*0.37f);
+						mtx[12] = -(CUBES_DIM-1) * 3.0f / 2.0f + float(xx)*3.0f;
+						mtx[13] = 0.0f;
+						mtx[14] = -(CUBES_DIM-1) * 3.0f / 2.0f + float(yy)*3.0f;
+
+						bgfx::OcclusionQueryHandle occlusionQuery = m_occlusionQueries[yy*CUBES_DIM+xx];
+
+						bgfx::setTransform(mtx);
+						bgfx::setVertexBuffer(0, m_vbh);
+						bgfx::setIndexBuffer(m_ibh);
+						bgfx::setCondition(occlusionQuery, true);
+						bgfx::setState(BGFX_STATE_DEFAULT);
+						bgfx::submit(0, m_program);
+
+						bgfx::setTransform(mtx);
+						bgfx::setVertexBuffer(0, m_vbh);
+						bgfx::setIndexBuffer(m_ibh);
+						bgfx::setState(0
+							| BGFX_STATE_DEPTH_TEST_LEQUAL
+							| BGFX_STATE_CULL_CW
+							);
+						bgfx::submit(1, m_program, occlusionQuery);
+
+						bgfx::setTransform(mtx);
+						bgfx::setVertexBuffer(0, m_vbh);
+						bgfx::setIndexBuffer(m_ibh);
+						bgfx::setCondition(occlusionQuery, true);
+						bgfx::setState(BGFX_STATE_DEFAULT);
+						bgfx::submit(2, m_program);
+
+						img[(yy*CUBES_DIM+xx)*2+0] = " \xfex"[bgfx::getResult(occlusionQuery)];
+						img[(yy*CUBES_DIM+xx)*2+1] = 0xf;
+					}
+				}
+
+				for (uint16_t xx = 0; xx < CUBES_DIM; ++xx)
+				{
+					bgfx::dbgTextImage(5 + xx*2, 5, 1, CUBES_DIM, img + xx*2, CUBES_DIM*2);
+				}
+
+				int32_t numPixels = 0;
+				bgfx::getResult(m_occlusionQueries[0], &numPixels);
+				bgfx::dbgTextPrintf(5, 5 + CUBES_DIM + 1, 0xf, "%d", numPixels);
+			}
 
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
@@ -299,6 +315,7 @@ public:
 	bgfx::IndexBufferHandle m_ibh;
 	bgfx::ProgramHandle m_program;
 	int64_t m_timeOffset;
+	bool m_occlusionQuerySupported;
 
 	bgfx::OcclusionQueryHandle m_occlusionQueries[CUBES_DIM*CUBES_DIM];
 

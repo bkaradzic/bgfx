@@ -142,12 +142,12 @@ public:
 			);
 
 		const bgfx::Caps* caps = bgfx::getCaps();
-		const bool computeSupported  = !!(caps->supported & BGFX_CAPS_COMPUTE);
-		const bool indirectSupported = !!(caps->supported & BGFX_CAPS_DRAW_INDIRECT);
+		m_computeSupported  = !!(caps->supported & BGFX_CAPS_COMPUTE);
+		m_indirectSupported = !!(caps->supported & BGFX_CAPS_DRAW_INDIRECT);
 
 		imguiCreate();
 
-		if (computeSupported)
+		if (m_computeSupported)
 		{
 			bgfx::VertexDecl quadVertexDecl;
 			quadVertexDecl.begin()
@@ -189,7 +189,7 @@ public:
 			m_indirectProgram = BGFX_INVALID_HANDLE;
 			m_indirectBuffer  = BGFX_INVALID_HANDLE;
 
-			if (indirectSupported)
+			if (m_indirectSupported)
 			{
 				m_indirectProgram = bgfx::createProgram(loadShader("cs_indirect"), true);
 				m_indirectBuffer  = bgfx::createIndirectBuffer(2);
@@ -219,22 +219,25 @@ public:
 		cameraDestroy();
 		imguiDestroy();
 
-		if (bgfx::isValid(m_indirectProgram) )
+		if (m_computeSupported)
 		{
-			bgfx::destroy(m_indirectProgram);
-			bgfx::destroy(m_indirectBuffer);
-		}
+			if (m_indirectSupported)
+			{
+				bgfx::destroy(m_indirectProgram);
+				bgfx::destroy(m_indirectBuffer);
+			}
 
-		bgfx::destroy(u_params);
-		bgfx::destroy(m_currPositionBuffer0);
-		bgfx::destroy(m_currPositionBuffer1);
-		bgfx::destroy(m_prevPositionBuffer0);
-		bgfx::destroy(m_prevPositionBuffer1);
-		bgfx::destroy(m_updateInstancesProgram);
-		bgfx::destroy(m_initInstancesProgram);
-		bgfx::destroy(m_ibh);
-		bgfx::destroy(m_vbh);
-		bgfx::destroy(m_particleProgram);
+			bgfx::destroy(u_params);
+			bgfx::destroy(m_currPositionBuffer0);
+			bgfx::destroy(m_currPositionBuffer1);
+			bgfx::destroy(m_prevPositionBuffer0);
+			bgfx::destroy(m_prevPositionBuffer1);
+			bgfx::destroy(m_updateInstancesProgram);
+			bgfx::destroy(m_initInstancesProgram);
+			bgfx::destroy(m_ibh);
+			bgfx::destroy(m_vbh);
+			bgfx::destroy(m_particleProgram);
+		}
 
 		// Shutdown bgfx.
 		bgfx::shutdown();
@@ -257,14 +260,13 @@ public:
 				, uint16_t(m_height)
 				);
 
-			showExampleDialog(this);
-
-			const bgfx::Caps* caps = bgfx::getCaps();
-			const bool computeSupported  = !!(caps->supported & BGFX_CAPS_COMPUTE);
-			const bool indirectSupported = !!(caps->supported & BGFX_CAPS_DRAW_INDIRECT);
+			showExampleDialog(this
+				, !m_computeSupported
+				? "Compute is not supported."
+				: NULL
+				);
 
 			int64_t now = bx::getHPCounter();
-			float time = (float)( (now - m_timeOffset)/double(bx::getHPFrequency() ) );
 			static int64_t last = now;
 			const int64_t frameTime = now - last;
 			last = now;
@@ -274,7 +276,7 @@ public:
 			// Set view 0 default viewport.
 			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
-			if (computeSupported)
+			if (m_computeSupported)
 			{
 				ImGui::SetNextWindowPos(
 					  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
@@ -318,7 +320,7 @@ public:
 
 				ImGui::Separator();
 
-				if (indirectSupported)
+				if (m_indirectSupported)
 				{
 					ImGui::Checkbox("Use draw/dispatch indirect", &m_useIndirect);
 				}
@@ -430,15 +432,6 @@ public:
 					bgfx::submit(0, m_particleProgram);
 				}
 			}
-			else
-			{
-				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
-
-				bool blink = uint32_t(time*3.0f)&1;
-				bgfx::dbgTextPrintf(0, 0, blink ? 0x1f : 0x01, " Compute is not supported by GPU. ");
-
-				bgfx::touch(0);
-			}
 
 			imguiEndFrame();
 
@@ -459,6 +452,8 @@ public:
 	uint32_t m_debug;
 	uint32_t m_reset;
 	bool m_useIndirect;
+	bool m_computeSupported;
+	bool m_indirectSupported;
 
 	ParamsData m_paramsData;
 
