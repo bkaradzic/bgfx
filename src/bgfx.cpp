@@ -3149,7 +3149,7 @@ error:
 
 		if (0 != (_flags & BGFX_TEXTURE_RT_MASK) )
 		{
-			formatSupported = (g_caps.formats[_format] & (0
+			formatSupported = 0 != (g_caps.formats[_format] & (0
 				| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
 				) );
 		}
