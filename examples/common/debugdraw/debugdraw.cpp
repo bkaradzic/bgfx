@@ -294,7 +294,6 @@ void getPoint(float* _result, Axis::Enum _axis, float _x, float _y)
 	}
 }
 
-
 #include "vs_debugdraw_lines.bin.h"
 #include "fs_debugdraw_lines.bin.h"
 #include "vs_debugdraw_lines_stipple.bin.h"
@@ -391,40 +390,35 @@ struct DebugDraw
 
 		bgfx::RendererType::Enum type = bgfx::getRendererType();
 
-		m_program[Program::Lines] =
-			bgfx::createProgram(
-				  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_debugdraw_lines")
-				, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_debugdraw_lines")
-				, true
-				);
+		m_program[Program::Lines] = bgfx::createProgram(
+			  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_debugdraw_lines")
+			, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_debugdraw_lines")
+			, true
+			);
 
-		m_program[Program::LinesStipple] =
-			bgfx::createProgram(
-				  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_debugdraw_lines_stipple")
-				, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_debugdraw_lines_stipple")
-				, true
-				);
+		m_program[Program::LinesStipple] = bgfx::createProgram(
+			  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_debugdraw_lines_stipple")
+			, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_debugdraw_lines_stipple")
+			, true
+			);
 
-		m_program[Program::Fill] =
-			bgfx::createProgram(
-				  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_debugdraw_fill")
-				, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_debugdraw_fill")
-				, true
-				);
+		m_program[Program::Fill] = bgfx::createProgram(
+			  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_debugdraw_fill")
+			, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_debugdraw_fill")
+			, true
+			);
 
-		m_program[Program::FillLit] =
-			bgfx::createProgram(
-				  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_debugdraw_fill_lit")
-				, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_debugdraw_fill_lit")
-				, true
-				);
+		m_program[Program::FillLit] = bgfx::createProgram(
+			  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_debugdraw_fill_lit")
+			, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_debugdraw_fill_lit")
+			, true
+			);
 
-		m_program[Program::FillTexture] =
-			bgfx::createProgram(
-				  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_debugdraw_fill_texture")
-				, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_debugdraw_fill_texture")
-				, true
-				);
+		m_program[Program::FillTexture] = bgfx::createProgram(
+			  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_debugdraw_fill_texture")
+			, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_debugdraw_fill_texture")
+			, true
+			);
 
 		u_params   = bgfx::createUniform("u_params", bgfx::UniformType::Vec4, 4);
 		s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
@@ -455,24 +449,26 @@ struct DebugDraw
 				trilist[ii] = uint16_t(ii);
 			}
 
-			uint32_t numLineListIndices = bgfx::topologyConvert(bgfx::TopologyConvert::TriListToLineList
-							, NULL
-							, 0
-							, trilist
-							, numIndices
-							, false
-							);
+			uint32_t numLineListIndices = bgfx::topologyConvert(
+				  bgfx::TopologyConvert::TriListToLineList
+				, NULL
+				, 0
+				, trilist
+				, numIndices
+				, false
+				);
 			indices[id] = (uint16_t*)BX_ALLOC(m_allocator, (numIndices + numLineListIndices)*sizeof(uint16_t) );
 			uint16_t* indicesOut = indices[id];
 			bx::memCopy(indicesOut, trilist, numIndices*sizeof(uint16_t) );
 
-			bgfx::topologyConvert(bgfx::TopologyConvert::TriListToLineList
-							, &indicesOut[numIndices]
-							, numLineListIndices*sizeof(uint16_t)
-							, trilist
-							, numIndices
-							, false
-							);
+			bgfx::topologyConvert(
+				  bgfx::TopologyConvert::TriListToLineList
+				, &indicesOut[numIndices]
+				, numLineListIndices*sizeof(uint16_t)
+				, trilist
+				, numIndices
+				, false
+				);
 
 			m_mesh[id].m_startVertex = startVertex;
 			m_mesh[id].m_numVertices = numVertices;
@@ -810,7 +806,7 @@ struct DebugDraw
 		flushQuad();
 		flush();
 
-		m_state  = State::Count;
+		m_state = State::Count;
 	}
 
 	void push()
@@ -1133,16 +1129,16 @@ struct DebugDraw
 		const Attrib& attrib = m_attrib[m_stack];
 		float mtx[16];
 		bx::mtxSRT(mtx
-				, _sphere.m_radius
-				, _sphere.m_radius
-				, _sphere.m_radius
-				, 0.0f
-				, 0.0f
-				, 0.0f
-				, _sphere.m_center[0]
-				, _sphere.m_center[1]
-				, _sphere.m_center[2]
-				);
+			, _sphere.m_radius
+			, _sphere.m_radius
+			, _sphere.m_radius
+			, 0.0f
+			, 0.0f
+			, 0.0f
+			, _sphere.m_center[0]
+			, _sphere.m_center[1]
+			, _sphere.m_center[2]
+			);
 		uint8_t lod = attrib.m_lod > Mesh::SphereMaxLod
 					? uint8_t(Mesh::SphereMaxLod)
 					: attrib.m_lod
@@ -1216,23 +1212,23 @@ struct DebugDraw
 		for (uint32_t ii = 1; ii < n+1; ++ii)
 		{
 			getPoint(pos, _axis
-				 , bx::fsin(step * ii)*_radius
-				 , bx::fcos(step * ii)*_radius
-				 );
+				, bx::fsin(step * ii)*_radius
+				, bx::fcos(step * ii)*_radius
+				);
 			lineTo(pos[0] + _x, pos[1] + _y, pos[2] + _z);
 		}
 
 		moveTo(_x, _y, _z);
 		getPoint(pos, _axis
-			 , bx::fsin(step * 0)*_radius
-			 , bx::fcos(step * 0)*_radius
-			 );
+			, bx::fsin(step * 0)*_radius
+			, bx::fcos(step * 0)*_radius
+			);
 		lineTo(pos[0] + _x, pos[1] + _y, pos[2] + _z);
 
 		getPoint(pos, _axis
-			 , bx::fsin(step * n)*_radius
-			 , bx::fcos(step * n)*_radius
-			 );
+			, bx::fsin(step * n)*_radius
+			, bx::fcos(step * n)*_radius
+			);
 		moveTo(pos[0] + _x, pos[1] + _y, pos[2] + _z);
 		lineTo(_x, _y, _z);
 	}
@@ -1543,9 +1539,9 @@ struct DebugDraw
 			mid[0] = _x + _len - _thickness;
 			mid[1] = _y;
 			mid[2] = _z;
-			to[0] = _x + _len;
-			to[1] = _y;
-			to[2] = _z;
+			to[0]  = _x + _len;
+			to[1]  = _y;
+			to[2]  = _z;
 			drawCylinder(from, mid, _thickness, false);
 			drawCone(mid, to, _thickness);
 
@@ -1553,9 +1549,9 @@ struct DebugDraw
 			mid[0] = _x;
 			mid[1] = _y + _len - _thickness;
 			mid[2] = _z;
-			to[0] = _x;
-			to[1] = _y + _len;
-			to[2] = _z;
+			to[0]  = _x;
+			to[1]  = _y + _len;
+			to[2]  = _z;
 			drawCylinder(from, mid, _thickness, false);
 			drawCone(mid, to, _thickness);
 
@@ -1563,9 +1559,9 @@ struct DebugDraw
 			mid[0] = _x;
 			mid[1] = _y;
 			mid[2] = _z + _len - _thickness;
-			to[0] = _x;
-			to[1] = _y;
-			to[2] = _z + _len;
+			to[0]  = _x;
+			to[1]  = _y;
+			to[2]  = _z + _len;
 			drawCylinder(from, mid, _thickness, false);
 			drawCone(mid, to, _thickness);
 		}
@@ -1817,10 +1813,10 @@ private:
 		bgfx::setTransform(_mtx, _num);
 		bgfx::setVertexBuffer(0, m_vbh, mesh.m_startVertex, mesh.m_numVertices);
 		bgfx::setState(0
-				| attrib.m_state
-				| (_wireframe ? BGFX_STATE_PT_LINES|BGFX_STATE_LINEAA|BGFX_STATE_BLEND_ALPHA
-				: (alpha < 0xff) ? BGFX_STATE_BLEND_ALPHA : 0)
-				);
+			| attrib.m_state
+			| (_wireframe ? BGFX_STATE_PT_LINES|BGFX_STATE_LINEAA|BGFX_STATE_BLEND_ALPHA
+			: (alpha < 0xff) ? BGFX_STATE_BLEND_ALPHA : 0)
+			);
 		bgfx::submit(m_viewId, m_program[_wireframe ? Program::Fill : Program::FillLit]);
 	}
 
@@ -1851,12 +1847,12 @@ private:
 				bgfx::setVertexBuffer(0, &tvb);
 				bgfx::setIndexBuffer(&tib);
 				bgfx::setState(0
-						| BGFX_STATE_RGB_WRITE
-						| BGFX_STATE_PT_LINES
-						| attrib.m_state
-						| BGFX_STATE_LINEAA
-						| BGFX_STATE_BLEND_ALPHA
-						);
+					| BGFX_STATE_RGB_WRITE
+					| BGFX_STATE_PT_LINES
+					| attrib.m_state
+					| BGFX_STATE_LINEAA
+					| BGFX_STATE_BLEND_ALPHA
+					);
 				bgfx::setTransform(m_mtx);
 				bgfx::ProgramHandle program = m_program[attrib.m_stipple ? 1 : 0];
 				bgfx::submit(m_viewId, program);
@@ -1900,8 +1896,8 @@ private:
 				bgfx::setVertexBuffer(0, &tvb);
 				bgfx::setIndexBuffer(&tib);
 				bgfx::setState(0
-						| (attrib.m_state & ~BGFX_STATE_CULL_MASK)
-						);
+					| (attrib.m_state & ~BGFX_STATE_CULL_MASK)
+					);
 				bgfx::setTransform(m_mtx);
 				bgfx::setTexture(0, s_texColor, m_texture);
 				bgfx::submit(m_viewId, m_program[Program::FillTexture]);
