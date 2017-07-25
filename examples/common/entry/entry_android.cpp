@@ -9,8 +9,8 @@
 
 #include <bgfx/platform.h>
 
-#include <stdio.h>
 #include <bx/thread.h>
+#include <bx/file.h>
 
 #include <android/input.h>
 #include <android/log.h>
@@ -89,6 +89,84 @@ namespace entry
 		const char* const* m_argv;
 
 		static int32_t threadFunc(void* _userData);
+	};
+
+	class FileReaderAndroid : public bx::FileReaderI
+	{
+	public:
+		FileReaderAndroid(AAssetManager* _assetManager, AAsset* _file)
+			: m_assetManager(_assetManager)
+			, m_file(_file)
+			, m_open(false)
+		{
+		}
+
+		virtual ~FileReaderAndroid()
+		{
+			close();
+		}
+
+		virtual bool open(const bx::FilePath& _filePath, bx::Error* _err) override
+		{
+			BX_CHECK(NULL != _err, "Reader/Writer interface calling functions must handle errors.");
+
+			if (NULL != m_file)
+			{
+				BX_ERROR_SET(_err, BX_ERROR_READERWRITER_ALREADY_OPEN, "FileReader: File is already open.");
+				return false;
+			}
+
+			m_file = AAssetManager_open(m_assetManager, _filePath.get(), AASSET_MODE_RANDOM);
+			if (NULL == m_file)
+			{
+				BX_ERROR_SET(_err, BX_ERROR_READERWRITER_OPEN, "FileReader: Failed to open file.");
+				return false;
+			}
+
+			m_open = true;
+			return true;
+		}
+
+		virtual void close() override
+		{
+			if (m_open
+			&&  NULL != m_file)
+			{
+				AAsset_close(m_file);
+				m_file = NULL;
+			}
+		}
+
+		virtual int64_t seek(int64_t _offset, bx::Whence::Enum _whence) override
+		{
+			BX_CHECK(NULL != m_file, "Reader/Writer file is not open.");
+			return AAsset_seek64(m_file, _offset, _whence);
+
+		}
+
+		virtual int32_t read(void* _data, int32_t _size, bx::Error* _err) override
+		{
+			BX_CHECK(NULL != m_file, "Reader/Writer file is not open.");
+			BX_CHECK(NULL != _err, "Reader/Writer interface calling functions must handle errors.");
+
+			int32_t size = (int32_t)AAsset_read(m_file, _data, _size);
+			if (size != _size)
+			{
+				if (0 == AAsset_getRemainingLength(m_file) )
+				{
+					BX_ERROR_SET(_err, BX_ERROR_READERWRITER_EOF, "FileReader: EOF.");
+				}
+
+				return size >= 0 ? size : 0;
+			}
+
+			return size;
+		}
+
+	private:
+		AAssetManager* m_assetManager;
+		AAsset* m_file;
+		bool m_open;
 	};
 
 	struct Context
