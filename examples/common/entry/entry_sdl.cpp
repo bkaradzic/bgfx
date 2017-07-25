@@ -25,7 +25,6 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 #	undef None
 #endif // defined(None)
 
-#include <stdio.h>
 #include <bx/mutex.h>
 #include <bx/thread.h>
 #include <bx/handlealloc.h>

@@ -7,8 +7,6 @@
 
 #if ENTRY_CONFIG_USE_NOOP
 
-#include <stdio.h>
-
 namespace entry
 {
 	const Event* poll()

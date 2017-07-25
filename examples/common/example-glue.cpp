@@ -9,8 +9,6 @@
 #include <bx/string.h>
 #include <bx/timer.h>
 
-#include <stdio.h>
-
 void showExampleDialog(entry::AppI* _app, const char* _errorText)
 {
 	char temp[1024];
