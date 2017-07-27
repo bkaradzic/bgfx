@@ -1402,9 +1402,9 @@ namespace bgfx
 		uint32_t m_matrix;
 		IndirectBufferHandle m_indirectBuffer;
 
-		uint16_t m_numX;
-		uint16_t m_numY;
-		uint16_t m_numZ;
+		uint32_t m_numX;
+		uint32_t m_numY;
+		uint32_t m_numZ;
 		uint16_t m_startIndirect;
 		uint16_t m_numIndirect;
 		uint16_t m_num;
@@ -1776,7 +1776,7 @@ namespace bgfx
 			return submit(_id, _program, handle, _depth, _preserveState);
 		}
 
-		uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _ngx, uint16_t _ngy, uint16_t _ngz, uint8_t _flags);
+		uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint32_t _ngx, uint32_t _ngy, uint32_t _ngz, uint8_t _flags);
 
 		uint32_t dispatch(uint8_t _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
 		{
@@ -4156,7 +4156,7 @@ namespace bgfx
 			m_submit->setImage(_stage, _sampler, _handle, _mip, _access, _format);
 		}
 
-		BGFX_API_FUNC(uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint16_t _numX, uint16_t _numY, uint16_t _numZ, uint8_t _flags) )
+		BGFX_API_FUNC(uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags) )
 		{
 			BGFX_CHECK_HANDLE_INVALID_OK("dispatch", m_programHandle, _handle);
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )

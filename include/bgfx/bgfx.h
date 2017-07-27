@@ -2754,9 +2754,9 @@ namespace bgfx
 	uint32_t dispatch(
 		  uint8_t _id
 		, ProgramHandle _handle
-		, uint16_t _numX = 1
-		, uint16_t _numY = 1
-		, uint16_t _numZ = 1
+		, uint32_t _numX = 1
+		, uint32_t _numY = 1
+		, uint32_t _numZ = 1
 		, uint8_t _flags = BGFX_SUBMIT_EYE_FIRST
 		);
 
