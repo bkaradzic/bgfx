@@ -3056,11 +3056,23 @@ namespace bgfx
 				return invalid;
 			}
 
+			uint32_t shaderHash = bx::hashMurmur2A(_mem->data, _mem->size);
+			uint16_t idx = m_shaderHashMap.find(shaderHash);
+			if (kInvalidHandle != idx)
+			{
+				ShaderHandle handle = { idx };
+				shaderIncRef(handle);
+				return handle;
+			}
+
 			ShaderHandle handle = { m_shaderHandle.alloc() };
 
 			BX_WARN(isValid(handle), "Failed to allocate shader handle.");
 			if (isValid(handle) )
 			{
+				bool ok = m_shaderHashMap.insert(shaderHash, handle.idx);
+				BX_CHECK(ok, "Shader already exists!"); BX_UNUSED(ok);
+
 				uint32_t iohash;
 				bx::read(&reader, iohash);
 
@@ -3194,6 +3206,8 @@ namespace bgfx
 					sr.m_uniforms = NULL;
 					sr.m_num = 0;
 				}
+
+				m_shaderHashMap.removeByHandle(_handle.idx);
 			}
 		}
 
@@ -4373,6 +4387,8 @@ namespace bgfx
 		UniformHashMap m_uniformHashMap;
 		UniformRef m_uniformRef[BGFX_CONFIG_MAX_UNIFORMS];
 
+		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_SHADERS*2> ShaderHashMap;
+		ShaderHashMap m_shaderHashMap;
 		ShaderRef m_shaderRef[BGFX_CONFIG_MAX_SHADERS];
 
 		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_PROGRAMS*2> ProgramHashMap;
