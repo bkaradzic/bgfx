@@ -3062,6 +3062,7 @@ namespace bgfx
 			{
 				ShaderHandle handle = { idx };
 				shaderIncRef(handle);
+				release(_mem);
 				return handle;
 			}
 
@@ -3083,7 +3084,6 @@ namespace bgfx
 				sr.m_refCount = 1;
 				sr.m_hash     = iohash;
 				sr.m_num      = 0;
-				sr.m_owned    = false;
 				sr.m_uniforms = NULL;
 
 				UniformHandle* uniforms = (UniformHandle*)alloca(count*sizeof(UniformHandle) );
@@ -3169,12 +3169,7 @@ namespace bgfx
 
 		void shaderTakeOwnership(ShaderHandle _handle)
 		{
-			ShaderRef& sr = m_shaderRef[_handle.idx];
-			if (!sr.m_owned)
-			{
-				sr.m_owned = true;
-				shaderDecRef(_handle);
-			}
+			shaderDecRef(_handle);
 		}
 
 		void shaderIncRef(ShaderHandle _handle)
@@ -3227,6 +3222,8 @@ namespace bgfx
 				ProgramHandle handle = { idx };
 				ProgramRef& pr = m_programRef[handle.idx];
 				++pr.m_refCount;
+				shaderIncRef(pr.m_vsh);
+				shaderIncRef(pr.m_fsh);
 				return handle;
 			}
 
@@ -4342,7 +4339,6 @@ namespace bgfx
 			uint32_t m_hash;
 			int16_t  m_refCount;
 			uint16_t m_num;
-			bool     m_owned;
 		};
 
 		struct ProgramRef

@@ -1513,13 +1513,19 @@ namespace bgfx
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 		{
-#define CHECK_HANDLE_LEAK(_handleAlloc) \
-					BX_MACRO_BLOCK_BEGIN \
-						BX_WARN(0 == _handleAlloc.getNumHandles() \
-							, "LEAK: " #_handleAlloc " %d (max: %d)" \
-							, _handleAlloc.getNumHandles() \
-							, _handleAlloc.getMaxHandles() \
-							); \
+#define CHECK_HANDLE_LEAK(_handleAlloc)                                                               \
+					BX_MACRO_BLOCK_BEGIN                                                              \
+						if (0 != _handleAlloc.getNumHandles() )                                       \
+						{                                                                             \
+							BX_TRACE("LEAK: " #_handleAlloc " %d (max: %d)"                           \
+								, _handleAlloc.getNumHandles()                                        \
+								, _handleAlloc.getMaxHandles()                                        \
+								);                                                                    \
+							for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii) \
+							{                                                                         \
+								BX_TRACE("\t%3d: %d", ii, _handleAlloc.getHandleAt(ii) );             \
+							}                                                                         \
+						}                                                                             \
 					BX_MACRO_BLOCK_END
 
 			CHECK_HANDLE_LEAK(m_dynamicIndexBufferHandle);
