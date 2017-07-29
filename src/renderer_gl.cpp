@@ -1546,7 +1546,12 @@ namespace bgfx { namespace gl
 		return 0 == err;
 	}
 
-	static bool isFramebufferFormatValid(TextureFormat::Enum _format, bool _srgb = false, GLsizei _dim = 16)
+	static bool isFramebufferFormatValid(
+		  TextureFormat::Enum _format
+		, bool _srgb = false
+		, bool _writeOnly = false
+		, GLsizei _dim = 16
+		)
 	{
 		const TextureFormatInfo& tfi = s_textureFormat[_format];
 		GLenum internalFmt = _srgb
@@ -1557,6 +1562,24 @@ namespace bgfx { namespace gl
 		||  !tfi.m_supported)
 		{
 			return false;
+		}
+
+		if (_writeOnly)
+		{
+			GLuint rbo;
+			glGenRenderbuffers(1, &rbo);
+			glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+
+			glRenderbufferStorage(GL_RENDERBUFFER
+				, s_rboFormat[_format]
+				, _dim
+				, _dim
+				);
+			glBindRenderbuffer(GL_RENDERBUFFER, 0);
+			glDeleteRenderbuffers(1, &rbo);
+
+			GLenum err = glGetError();
+			return 0 == err;
 		}
 
 		GLuint fbo;
@@ -2162,6 +2185,11 @@ namespace bgfx { namespace gl
 						;
 
 					supported |= isFramebufferFormatValid(TextureFormat::Enum(ii) )
+						? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
+						: BGFX_CAPS_FORMAT_TEXTURE_NONE
+						;
+
+					supported |= isFramebufferFormatValid(TextureFormat::Enum(ii), false, true)
 						? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
 						: BGFX_CAPS_FORMAT_TEXTURE_NONE
 						;
