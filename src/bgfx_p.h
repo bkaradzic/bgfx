@@ -3056,8 +3056,8 @@ namespace bgfx
 				return invalid;
 			}
 
-			uint32_t shaderHash = bx::hashMurmur2A(_mem->data, _mem->size);
-			uint16_t idx = m_shaderHashMap.find(shaderHash);
+			const uint32_t shaderHash = bx::hashMurmur2A(_mem->data, _mem->size);
+			const uint16_t idx = m_shaderHashMap.find(shaderHash);
 			if (kInvalidHandle != idx)
 			{
 				ShaderHandle handle = { idx };
