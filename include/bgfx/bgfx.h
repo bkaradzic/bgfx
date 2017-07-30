@@ -1539,6 +1539,8 @@ namespace bgfx
 	/// Destroy shader. Once program is created with shader it is safe to
 	/// destroy shader.
 	///
+	/// @param[in] _handle Shader handle.
+	///
 	/// @attention C99 equivalent is `bgfx_destroy_shader`.
 	///
 	void destroy(ShaderHandle _handle);
@@ -1575,6 +1577,8 @@ namespace bgfx
 		);
 
 	/// Destroy program.
+	///
+	/// @param[in] _handle Program handle.
 	///
 	/// @attention C99 equivalent is `bgfx_destroy_program`.
 	///
@@ -1997,6 +2001,8 @@ namespace bgfx
 	TextureHandle getTexture(FrameBufferHandle _handle, uint8_t _attachment = 0);
 
 	/// Destroy frame buffer.
+	///
+	/// @param[in] _handle Frame buffer handle.
 	///
 	/// @attention C99 equivalent is `bgfx_destroy_frame_buffer`.
 	///
