@@ -1,7 +1,7 @@
 //
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2013-2016 LunarG, Inc.
-// Copyright (C) 2015-2016 Google, Inc.
+// Copyright (C) 2015-2017 Google, Inc.
 //
 // All rights reserved.
 //
@@ -116,7 +116,7 @@ TParseContextBase* CreateParseContext(TSymbolTable& symbolTable, TIntermediate& 
 
 // Local mapping functions for making arrays of symbol tables....
 
-const int VersionCount = 15;  // index range in MapVersionToIndex
+const int VersionCount = 16;  // index range in MapVersionToIndex
 
 int MapVersionToIndex(int version)
 {
@@ -138,7 +138,9 @@ int MapVersionToIndex(int version)
     case 440: index = 12; break;
     case 310: index = 13; break;
     case 450: index = 14; break;
-    default:              break;
+    case 500: index =  0; break; // HLSL
+    case 320: index = 15; break;
+    default:  assert(0);  break;
     }
 
     assert(index < VersionCount);
@@ -447,7 +449,7 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
         return correct;
     }
 
-    // Get a good version...
+    // Get a version...
     if (version == 0) {
         version = defaultVersion;
         // infoSink.info.message(EPrefixWarning, "#version: statement missing; use #version on first line of shader");
@@ -455,9 +457,9 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
 
     // Get a good profile...
     if (profile == ENoProfile) {
-        if (version == 300 || version == 310) {
+        if (version == 300 || version == 310 || version == 320) {
             correct = false;
-            infoSink.info.message(EPrefixError, "#version: versions 300 and 310 require specifying the 'es' profile");
+            infoSink.info.message(EPrefixError, "#version: versions 300, 310, and 320 require specifying the 'es' profile");
             profile = EEsProfile;
         } else if (version == 100)
             profile = EEsProfile;
@@ -474,16 +476,16 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
                 profile = EEsProfile;
             else
                 profile = ENoProfile;
-        } else if (version == 300 || version == 310) {
+        } else if (version == 300 || version == 310 || version == 320) {
             if (profile != EEsProfile) {
                 correct = false;
-                infoSink.info.message(EPrefixError, "#version: versions 300 and 310 support only the es profile");
+                infoSink.info.message(EPrefixError, "#version: versions 300, 310, and 320 support only the es profile");
             }
             profile = EEsProfile;
         } else {
             if (profile == EEsProfile) {
                 correct = false;
-                infoSink.info.message(EPrefixError, "#version: only version 300 and 310 support the es profile");
+                infoSink.info.message(EPrefixError, "#version: only version 300, 310, and 320 support the es profile");
                 if (version >= FirstProfileVersion)
                     profile = ECoreProfile;
                 else
@@ -491,6 +493,41 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
             }
             // else: typical desktop case... e.g., "#version 410 core"
         }
+    }
+
+    // Fix version...
+    switch (version) {
+    // ES versions
+    case 100: break;
+    case 300: break;
+    case 310: break;
+    case 320: break;
+
+    // desktop versions
+    case 110: break;
+    case 120: break;
+    case 130: break;
+    case 140: break;
+    case 150: break;
+    case 330: break;
+    case 400: break;
+    case 410: break;
+    case 420: break;
+    case 430: break;
+    case 440: break;
+    case 450: break;
+
+    // unknown version
+    default:
+        correct = false;
+        infoSink.info.message(EPrefixError, "version not supported");
+        if (profile == EEsProfile)
+            version = 310;
+        else {
+            version = 450;
+            profile = ECoreProfile;
+        }
+        break;
     }
 
     // Correct for stage type...

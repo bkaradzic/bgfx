@@ -44,9 +44,7 @@ spv.memoryQualifier.frag
                               Decorate 44(iCube) DescriptorSet 0
                               Decorate 44(iCube) Binding 3
                               Decorate 44(iCube) NonReadable
-                              MemberDecorate 49(Data) 0 Coherent
                               MemberDecorate 49(Data) 0 Offset 0
-                              MemberDecorate 49(Data) 1 Coherent
                               MemberDecorate 49(Data) 1 Offset 8
                               MemberDecorate 50(Buffer) 0 Coherent
                               MemberDecorate 50(Buffer) 0 Volatile

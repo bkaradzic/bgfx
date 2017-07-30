@@ -713,7 +713,7 @@ gl_FragCoord origin is upper left
              127:    6(float) CompositeExtract 124 2
              128:    6(float) CompositeExtract 124 3
              129:    7(fvec4) CompositeConstruct 125 126 127 128
-             130:    6(float) ImageSampleDrefExplicitLod 122 129 29 Lod 29
+             130:    6(float) ImageSampleDrefExplicitLod 122 129 29 Lod 34
                               Store 114(r60) 130
              135:         132 Load 134(g_tTexcdi4a)
              136:          18 Load 20(g_sSamp)
@@ -723,7 +723,7 @@ gl_FragCoord origin is upper left
              142:    6(float) CompositeExtract 124 2
              143:    6(float) CompositeExtract 124 3
              144:    7(fvec4) CompositeConstruct 140 141 142 143
-             145:    6(float) ImageSampleDrefExplicitLod 139 144 29 Lod 29
+             145:    6(float) ImageSampleDrefExplicitLod 139 144 29 Lod 34
                               Store 131(r62) 145
              150:         147 Load 149(g_tTexcdu4a)
              151:          18 Load 20(g_sSamp)
@@ -733,7 +733,7 @@ gl_FragCoord origin is upper left
              157:    6(float) CompositeExtract 124 2
              158:    6(float) CompositeExtract 124 3
              159:    7(fvec4) CompositeConstruct 155 156 157 158
-             160:    6(float) ImageSampleDrefExplicitLod 154 159 29 Lod 29
+             160:    6(float) ImageSampleDrefExplicitLod 154 159 29 Lod 34
                               Store 146(r64) 160
              167:    166(ptr) AccessChain 162(psout) 163
                               Store 167 165

@@ -1,10 +1,8 @@
 struct S {
-    float clip  : SV_ClipDistance;
     float clip0 : SV_ClipDistance0;
-    float clip7 : SV_ClipDistance7;
-    float cull  : SV_CullDistance;
-    float cull2 : SV_CullDistance2;
-    float cull5 : SV_CullDistance5;
+    float clip1 : SV_ClipDistance1;
+    float cull0 : SV_CullDistance0;
+    float cull1 : SV_CullDistance1;
     int ii      : SV_InstanceID;
 };
 

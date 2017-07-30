@@ -131,8 +131,11 @@ public:
         for (int m = 0; m <= index; ++m) {
             // modify just the children's view of matrix layout, if there is one for this member
             TLayoutMatrix subMatrixLayout = memberList[m].type->getQualifier().layoutMatrix;
-            int memberAlignment = intermediate.getBaseAlignment(*memberList[m].type, memberSize, dummyStride, type.getQualifier().layoutPacking == ElpStd140,
-                                                                subMatrixLayout != ElmNone ? subMatrixLayout == ElmRowMajor : type.getQualifier().layoutMatrix == ElmRowMajor);
+            int memberAlignment = intermediate.getBaseAlignment(*memberList[m].type, memberSize, dummyStride,
+                                                                type.getQualifier().layoutPacking == ElpStd140,
+                                                                subMatrixLayout != ElmNone
+                                                                    ? subMatrixLayout == ElmRowMajor
+                                                                    : type.getQualifier().layoutMatrix == ElmRowMajor);
             RoundToPow2(offset, memberAlignment);
             if (m < index)
                 offset += memberSize;
@@ -151,7 +154,8 @@ public:
 
         int lastMemberSize;
         int dummyStride;
-        intermediate.getBaseAlignment(*memberList[lastIndex].type, lastMemberSize, dummyStride, blockType.getQualifier().layoutPacking == ElpStd140,
+        intermediate.getBaseAlignment(*memberList[lastIndex].type, lastMemberSize, dummyStride,
+                                      blockType.getQualifier().layoutPacking == ElpStd140,
                                       blockType.getQualifier().layoutMatrix == ElmRowMajor);
 
         return lastOffset + lastMemberSize;
@@ -167,7 +171,7 @@ public:
     void blowUpActiveAggregate(const TType& baseType, const TString& baseName, const TList<TIntermBinary*>& derefs,
                                TList<TIntermBinary*>::const_iterator deref, int offset, int blockIndex, int arraySize)
     {
-        // process the part of the derefence chain that was explicit in the shader
+        // process the part of the dereference chain that was explicit in the shader
         TString name = baseName;
         const TType* terminalType = &baseType;
         for (; deref != derefs.end(); ++deref) {
@@ -177,7 +181,7 @@ public:
             switch (visitNode->getOp()) {
             case EOpIndexIndirect:
                 // Visit all the indices of this array, and for each one add on the remaining dereferencing
-                for (int i = 0; i < visitNode->getLeft()->getType().getOuterArraySize(); ++i) {
+                for (int i = 0; i < std::max(visitNode->getLeft()->getType().getOuterArraySize(), 1); ++i) {
                     TString newBaseName = name;
                     if (baseType.getBasicType() != EbtBlock)
                         newBaseName.append(TString("[") + String(i) + "]");
@@ -212,7 +216,7 @@ public:
             if (terminalType->isArray()) {
                 // Visit all the indices of this array, and for each one,
                 // fully explode the remaining aggregate to dereference
-                for (int i = 0; i < terminalType->getOuterArraySize(); ++i) {
+                for (int i = 0; i < std::max(terminalType->getOuterArraySize(), 1); ++i) {
                     TString newBaseName = name;
                     newBaseName.append(TString("[") + String(i) + "]");
                     TType derefType(*terminalType, 0);
@@ -235,7 +239,7 @@ public:
         }
 
         // Finally, add a full string to the reflection database, and update the array size if necessary.
-        // If the derefenced entity to record is an array, compute the size and update the maximum size.
+        // If the dereferenced entity to record is an array, compute the size and update the maximum size.
 
         // there might not be a final array dereference, it could have been copied as an array object
         if (arraySize == 0)
@@ -244,7 +248,8 @@ public:
         TReflection::TNameToIndex::const_iterator it = reflection.nameToIndex.find(name);
         if (it == reflection.nameToIndex.end()) {
             reflection.nameToIndex[name] = (int)reflection.indexToUniform.size();
-            reflection.indexToUniform.push_back(TObjectReflection(name, *terminalType, offset, mapToGlType(*terminalType),
+            reflection.indexToUniform.push_back(TObjectReflection(name, *terminalType, offset,
+                                                                  mapToGlType(*terminalType),
                                                                   arraySize, blockIndex));
         } else if (arraySize > 1) {
             int& reflectedArraySize = reflection.indexToUniform[it->second].size;
@@ -417,7 +422,8 @@ public:
                 case Esd2D:
                     switch ((int)sampler.ms) {
                     case false:  return sampler.arrayed ? GL_INT_SAMPLER_2D_ARRAY : GL_INT_SAMPLER_2D;
-                    case true:   return sampler.arrayed ? GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY : GL_INT_SAMPLER_2D_MULTISAMPLE;
+                    case true:   return sampler.arrayed ? GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY
+                                                        : GL_INT_SAMPLER_2D_MULTISAMPLE;
                     }
                 case Esd3D:
                     return GL_INT_SAMPLER_3D;
@@ -435,7 +441,8 @@ public:
                 case Esd2D:
                     switch ((int)sampler.ms) {
                     case false:  return sampler.arrayed ? GL_UNSIGNED_INT_SAMPLER_2D_ARRAY : GL_UNSIGNED_INT_SAMPLER_2D;
-                    case true:   return sampler.arrayed ? GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY : GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE;
+                    case true:   return sampler.arrayed ? GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY
+                                                        : GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE;
                     }
                 case Esd3D:
                     return GL_UNSIGNED_INT_SAMPLER_3D;
@@ -495,7 +502,8 @@ public:
                 case Esd2D:
                     switch ((int)sampler.ms) {
                     case false:  return sampler.arrayed ? GL_UNSIGNED_INT_IMAGE_2D_ARRAY : GL_UNSIGNED_INT_IMAGE_2D;
-                    case true:   return sampler.arrayed ? GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY : GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE;
+                    case true:   return sampler.arrayed ? GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY
+                                                        : GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE;
                     }
                 case Esd3D:
                     return GL_UNSIGNED_INT_IMAGE_3D;

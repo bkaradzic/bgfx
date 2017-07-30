@@ -69,6 +69,8 @@ output primitive = line_strip
 0:?     '@entryPointOutput' (layout( location=0) out structure{ temp int ii})
 0:?     'VertexID' (layout( location=0) in 3-element array of uint)
 0:?     'OutputStream' (layout( location=1) out structure{ temp int ii})
+0:?     'OutputStream_clip0' ( out 1-element array of float ClipDistance)
+0:?     'OutputStream_cull0' ( out 1-element array of float CullDistance)
 0:?     'OutputStream_vpai' ( out uint ViewportIndex)
 
 
@@ -145,6 +147,8 @@ output primitive = line_strip
 0:?     '@entryPointOutput' (layout( location=0) out structure{ temp int ii})
 0:?     'VertexID' (layout( location=0) in 3-element array of uint)
 0:?     'OutputStream' (layout( location=1) out structure{ temp int ii})
+0:?     'OutputStream_clip0' ( out 1-element array of float ClipDistance)
+0:?     'OutputStream_cull0' ( out 1-element array of float CullDistance)
 0:?     'OutputStream_vpai' ( out uint ViewportIndex)
 
 // Module Version 10000

@@ -38,15 +38,6 @@ static const int GLSLextAMDRevision = 4;
 // SPV_AMD_shader_ballot
 static const char* const E_SPV_AMD_shader_ballot = "SPV_AMD_shader_ballot";
 
-static const Op OpGroupIAddNonUniformAMD = static_cast<Op>(5000);
-static const Op OpGroupFAddNonUniformAMD = static_cast<Op>(5001);
-static const Op OpGroupFMinNonUniformAMD = static_cast<Op>(5002);
-static const Op OpGroupUMinNonUniformAMD = static_cast<Op>(5003);
-static const Op OpGroupSMinNonUniformAMD = static_cast<Op>(5004);
-static const Op OpGroupFMaxNonUniformAMD = static_cast<Op>(5005);
-static const Op OpGroupUMaxNonUniformAMD = static_cast<Op>(5006);
-static const Op OpGroupSMaxNonUniformAMD = static_cast<Op>(5007);
-
 enum ShaderBallotAMD {
     ShaderBallotBadAMD = 0, // Don't use
 
@@ -80,16 +71,6 @@ enum ShaderTrinaryMinMaxAMD {
 // SPV_AMD_shader_explicit_vertex_parameter
 static const char* const E_SPV_AMD_shader_explicit_vertex_parameter = "SPV_AMD_shader_explicit_vertex_parameter";
 
-static const BuiltIn BuiltInBaryCoordNoPerspAMD           = static_cast<BuiltIn>(4992);
-static const BuiltIn BuiltInBaryCoordNoPerspCentroidAMD   = static_cast<BuiltIn>(4993);
-static const BuiltIn BuiltInBaryCoordNoPerspSampleAMD     = static_cast<BuiltIn>(4994);
-static const BuiltIn BuiltInBaryCoordSmoothAMD            = static_cast<BuiltIn>(4995);
-static const BuiltIn BuiltInBaryCoordSmoothCentroidAMD    = static_cast<BuiltIn>(4996);
-static const BuiltIn BuiltInBaryCoordSmoothSampleAMD      = static_cast<BuiltIn>(4997);
-static const BuiltIn BuiltInBaryCoordPullModelAMD         = static_cast<BuiltIn>(4998);
-
-static const Decoration DecorationExplicitInterpAMD       = static_cast<Decoration>(4999);
-
 enum ShaderExplicitVertexParameterAMD {
     ShaderExplicitVertexParameterBadAMD = 0, // Don't use
 
@@ -116,8 +97,6 @@ static const char* const E_SPV_AMD_gpu_shader_half_float = "SPV_AMD_gpu_shader_h
 
 // SPV_AMD_texture_gather_bias_lod
 static const char* const E_SPV_AMD_texture_gather_bias_lod = "SPV_AMD_texture_gather_bias_lod";
-
-static const Capability CapabilityImageGatherBiasLodAMD = static_cast<Capability>(5009);
 
 // SPV_AMD_gpu_shader_int16
 static const char* const E_SPV_AMD_gpu_shader_int16 = "SPV_AMD_gpu_shader_int16";

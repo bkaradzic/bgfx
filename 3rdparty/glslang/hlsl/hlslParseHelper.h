@@ -39,6 +39,8 @@
 #include "../glslang/MachineIndependent/parseVersions.h"
 #include "../glslang/MachineIndependent/ParseHelper.h"
 
+#include <array>
+
 namespace glslang {
 
 class TAttributeMap; // forward declare
@@ -91,7 +93,7 @@ public:
     TIntermTyped* handleAssign(const TSourceLoc&, TOperator, TIntermTyped* left, TIntermTyped* right);
     TIntermTyped* handleAssignToMatrixSwizzle(const TSourceLoc&, TOperator, TIntermTyped* left, TIntermTyped* right);
     TIntermTyped* handleFunctionCall(const TSourceLoc&, TFunction*, TIntermTyped*);
-    TIntermAggregate* assignClipCullDistance(const TSourceLoc&, TOperator, TIntermTyped* left, TIntermTyped* right);
+    TIntermAggregate* assignClipCullDistance(const TSourceLoc&, TOperator, int semanticId, TIntermTyped* left, TIntermTyped* right);
     void decomposeIntrinsic(const TSourceLoc&, TIntermTyped*& node, TIntermNode* arguments);
     void decomposeSampleMethods(const TSourceLoc&, TIntermTyped*& node, TIntermNode* arguments);
     void decomposeStructBufferMethods(const TSourceLoc&, TIntermTyped*& node, TIntermNode* arguments);
@@ -308,6 +310,10 @@ protected:
     // Finalization step: remove unused buffer blocks from linkage (we don't know until the
     // shader is entirely compiled)
     void removeUnusedStructBufferCounters();
+ 
+    static bool isClipOrCullDistance(TBuiltInVariable);
+    static bool isClipOrCullDistance(const TQualifier& qual) { return isClipOrCullDistance(qual.builtIn); }
+    static bool isClipOrCullDistance(const TType& type) { return isClipOrCullDistance(type.getQualifier()); }
 
     // Pass through to base class after remembering builtin mappings.
     using TParseContextBase::trackLinkage;
@@ -368,7 +374,6 @@ protected:
     TVector<TSymbol*> ioArraySymbolResizeList;
 
     TMap<int, TFlattenData> flattenMap;
-    TVector<int> flattenLevel;  // nested postfix operator level for flattening
 
     // IO-type map. Maps a pure symbol-table form of a structure-member list into
     // each of the (up to) three kinds of IO, as each as different allowed decorations,
@@ -431,6 +436,13 @@ protected:
     TVector<TVariable*> implicitThisStack;   // currently active 'this' variables for nested structures
 
     TVariable* gsStreamOutput;               // geometry shader stream outputs, for emit (Append method)
+
+    TVariable* clipDistanceOutput;           // synthesized clip distance output variable (shader might have >1)
+    TVariable* cullDistanceOutput;           // synthesized cull distance output variable (shader might have >1)
+
+    static const int maxClipCullRegs = 2;
+    std::array<int, maxClipCullRegs> clipSemanticNSize; // vector, indexed by clip semantic ID
+    std::array<int, maxClipCullRegs> cullSemanticNSize; // vector, indexed by cull semantic ID
 
     // This tracks the first (mip level) argument to the .mips[][] operator.  Since this can be nested as
     // in tx.mips[tx.mips[0][1].x][2], we need a stack.  We also track the TSourceLoc for error reporting 

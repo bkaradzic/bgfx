@@ -133,6 +133,26 @@ uniform abl2 {
     float foo;
 } arrBl2[4];
 
+buffer buf1 {
+    float scalar;
+    float runtimeArray[];
+} buf1i;
+
+buffer buf2 {
+    float scalar;
+    N2 runtimeArray[];
+} buf2i;
+
+buffer buf3 {
+    float scalar;
+    float runtimeArray[];
+} buf3i;
+
+buffer buf4 {
+    float scalar;
+    N2 runtimeArray[];
+} buf4i;
+
 void main()
 {
     liveFunction1(image_ui2D, sampler_2D, sampler_2DMSArray);
@@ -179,4 +199,8 @@ void main()
     f += attributeFloat3.x;
     f += attributeFloat4.x;
     f += attributeMat4[0][1];
+    f += buf1i.runtimeArray[3];
+    f += buf2i.runtimeArray[3].c;
+    f += buf3i.runtimeArray[gl_InstanceID];
+    f += buf4i.runtimeArray[gl_InstanceID].c;
 }

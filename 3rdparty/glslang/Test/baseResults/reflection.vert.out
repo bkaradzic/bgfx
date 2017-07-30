@@ -70,6 +70,10 @@ deepD[1].d2.d1[3].b: offset -1, type 8b56, size 1, index -1, binding -1
 deepD[1].v3: offset -1, type 8b54, size 1, index -1, binding -1
 abl.foo: offset 0, type 1406, size 1, index 7, binding -1
 abl2.foo: offset 0, type 1406, size 1, index 11, binding -1
+buf1.runtimeArray: offset 4, type 1406, size 4, index 12, binding -1
+buf2.runtimeArray.c: offset 8, type 1406, size 1, index 13, binding -1
+buf3.runtimeArray: offset 4, type 1406, size 0, index 14, binding -1
+buf4.runtimeArray.c: offset 8, type 1406, size 1, index 15, binding -1
 anonMember1: offset 0, type 8b51, size 1, index 0, binding -1
 uf1: offset -1, type 1406, size 1, index -1, binding -1
 uf2: offset -1, type 1406, size 1, index -1, binding -1
@@ -88,6 +92,10 @@ abl2[0]: offset -1, type ffffffff, size 4, index -1, binding -1
 abl2[1]: offset -1, type ffffffff, size 4, index -1, binding -1
 abl2[2]: offset -1, type ffffffff, size 4, index -1, binding -1
 abl2[3]: offset -1, type ffffffff, size 4, index -1, binding -1
+buf1: offset -1, type ffffffff, size 4, index -1, binding -1
+buf2: offset -1, type ffffffff, size 4, index -1, binding -1
+buf3: offset -1, type ffffffff, size 4, index -1, binding -1
+buf4: offset -1, type ffffffff, size 4, index -1, binding -1
 
 Vertex attribute reflection:
 attributeFloat: offset 0, type 1406, size 0, index 0, binding -1
@@ -95,4 +103,5 @@ attributeFloat2: offset 0, type 8b50, size 0, index 0, binding -1
 attributeFloat3: offset 0, type 8b51, size 0, index 0, binding -1
 attributeFloat4: offset 0, type 8b52, size 0, index 0, binding -1
 attributeMat4: offset 0, type 8b5c, size 0, index 0, binding -1
+gl_InstanceID: offset 0, type 1404, size 0, index 0, binding -1
 

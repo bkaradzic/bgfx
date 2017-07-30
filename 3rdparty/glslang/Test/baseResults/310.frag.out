@@ -123,7 +123,7 @@ ERROR: 0:391: 'interpolateAtOffset' : first argument must be an interpolant, or 
 ERROR: 0:392: 'interpolateAtOffset' : first argument must be an interpolant, or interpolant-array element 
 ERROR: 0:396: 'interpolateAtCentroid' : first argument must be an interpolant, or interpolant-array element 
 ERROR: 0:397: 'interpolateAtSample' : first argument must be an interpolant, or interpolant-array element 
-ERROR: 0:400: 'blend equation' : required extension not requested: GL_KHR_blend_equation_advanced
+ERROR: 0:400: 'blend equation' : not supported for this version or the enabled extensions 
 ERROR: 0:423: 'blend equation' : can only apply to 'out' 
 ERROR: 0:424: 'blend equation' : can only apply to a standalone qualifier 
 ERROR: 0:425: 'blend equation' : can only apply to a standalone qualifier 
