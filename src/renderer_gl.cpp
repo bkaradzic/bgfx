@@ -5777,8 +5777,8 @@ namespace bgfx { namespace gl
 					const bool usesTextureMS    = !!bx::findIdentifierMatch(code, s_ARB_texture_multisample);
 					const bool usesPacking      = !!bx::findIdentifierMatch(code, s_ARB_shading_language_packing);
 
-					uint32_t version =
-						  usesTextureArray || usesTexture3D || usesIUsamplers|| usesTexelFetch || usesGpuShader5 ? 130
+					uint32_t version = BX_ENABLED(BX_PLATFORM_OSX) ? 120
+						: usesTextureArray || usesTexture3D || usesIUsamplers|| usesTexelFetch || usesGpuShader5 ? 130
 						: usesTextureLod ? 120
 						: 120
 						;
@@ -5823,18 +5823,30 @@ namespace bgfx { namespace gl
 
 					if (usesTextureArray)
 					{
-						writeString(&writer
-							, "#extension GL_EXT_texture_array : enable\n"
-							  "#define texture2DArrayLodEXT texture2DArrayLod\n"
-							);
+						writeString(&writer, "#extension GL_EXT_texture_array : enable\n");
+
+						if (BX_ENABLED(BX_PLATFORM_OSX) )
+						{
+							writeString(&writer, "#define texture2DArrayLodEXT texture2DArray\n");
+						}
+						else
+						{
+							writeString(&writer, "#define texture2DArrayLodEXT texture2DArrayLod\n");
+						}
 					}
 
 					if (usesTexture3D)
 					{
-						writeString(&writer
-							, "#define texture3DEXT    texture3D\n"
-							  "#define texture3DLodEXT texture3DLod\n"
-							);
+						writeString(&writer, "#define texture3DEXT texture3D\n");
+
+						if (BX_ENABLED(BX_PLATFORM_OSX) )
+						{
+							writeString(&writer, "#define texture3DLodEXT texture3D\n");
+						}
+						else
+						{
+							writeString(&writer, "#define texture3DLodEXT texture3DLod\n");
+						}
 					}
 
 					if (130 <= version)
