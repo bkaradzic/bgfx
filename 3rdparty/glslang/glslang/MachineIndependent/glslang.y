@@ -2872,8 +2872,10 @@ translation_unit
         parseContext.intermediate.setTreeRoot($$);
     }
     | translation_unit external_declaration {
-        $$ = parseContext.intermediate.growAggregate($1, $2);
-        parseContext.intermediate.setTreeRoot($$);
+        if ($2 != nullptr) {
+            $$ = parseContext.intermediate.growAggregate($1, $2);
+            parseContext.intermediate.setTreeRoot($$);
+        }
     }
     ;
 
@@ -2883,6 +2885,11 @@ external_declaration
     }
     | declaration {
         $$ = $1;
+    }
+    | SEMICOLON {
+        parseContext.requireProfile($1.loc, ~EEsProfile, "extraneous semicolon");
+        parseContext.profileRequires($1.loc, ~EEsProfile, 460, nullptr, "extraneous semicolon");
+        $$ = nullptr;
     }
     ;
 

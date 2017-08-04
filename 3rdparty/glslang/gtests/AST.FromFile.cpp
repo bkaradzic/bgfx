@@ -151,6 +151,8 @@ INSTANTIATE_TEST_CASE_P(
         "450.tese",
         "450.frag",
         "450.comp",
+        "460.frag",
+        "460.vert",
         "dce.frag",
         "atomic_uint.frag",
         "aggOps.frag",

@@ -89,7 +89,7 @@ public:
     void remapNonEntryPointIO(TFunction& function);
     TIntermNode* handleReturnValue(const TSourceLoc&, TIntermTyped*);
     void handleFunctionArgument(TFunction*, TIntermTyped*& arguments, TIntermTyped* newArg);
-    TIntermAggregate* flattenedInit(const TSourceLoc&, TIntermSymbol*, const TIntermAggregate&);
+    TIntermAggregate* executeFlattenedInitializer(const TSourceLoc&, TIntermSymbol*, const TIntermAggregate&);
     TIntermTyped* handleAssign(const TSourceLoc&, TOperator, TIntermTyped* left, TIntermTyped* right);
     TIntermTyped* handleAssignToMatrixSwizzle(const TSourceLoc&, TOperator, TIntermTyped* left, TIntermTyped* right);
     TIntermTyped* handleFunctionCall(const TSourceLoc&, TFunction*, TIntermTyped*);
@@ -249,14 +249,11 @@ protected:
     bool shouldFlatten(const TType&) const;
     bool wasFlattened(const TIntermTyped* node) const;
     bool wasFlattened(int id) const { return flattenMap.find(id) != flattenMap.end(); }
-    int  addFlattenedMember(const TSourceLoc& loc, const TVariable&, const TType&, TFlattenData&, const TString& name, bool track);
+    int  addFlattenedMember(const TVariable&, const TType&, TFlattenData&, const TString& name, bool track);
     bool isFinalFlattening(const TType& type) const { return !(type.isStruct() || type.isArray()); }
 
     // Structure splitting (splits interstage built-in types into its own struct)
-    TIntermTyped* splitAccessStruct(const TSourceLoc& loc, TIntermTyped*& base, int& member);
-    void splitAccessArray(const TSourceLoc& loc, TIntermTyped* base, TIntermTyped* index);
     TType& split(TType& type, TString name, const TType* outerStructType = nullptr);
-    void split(TIntermTyped*);
     void split(const TVariable&);
     bool wasSplit(const TIntermTyped* node) const;
     bool wasSplit(int id) const { return splitIoVars.find(id) != splitIoVars.end(); }
@@ -269,10 +266,10 @@ protected:
 
     void fixBuiltInIoType(TType&);
 
-    void flatten(const TSourceLoc& loc, const TVariable& variable);
-    int flatten(const TSourceLoc& loc, const TVariable& variable, const TType&, TFlattenData&, TString name);
-    int flattenStruct(const TSourceLoc& loc, const TVariable& variable, const TType&, TFlattenData&, TString name);
-    int flattenArray(const TSourceLoc& loc, const TVariable& variable, const TType&, TFlattenData&, TString name);
+    void flatten(const TVariable& variable);
+    int flatten(const TVariable& variable, const TType&, TFlattenData&, TString name);
+    int flattenStruct(const TVariable& variable, const TType&, TFlattenData&, TString name);
+    int flattenArray(const TVariable& variable, const TType&, TFlattenData&, TString name);
 
     bool hasUniform(const TQualifier& qualifier) const;
     void clearUniform(TQualifier& qualifier);
@@ -415,12 +412,6 @@ protected:
 
     TMap<tInterstageIoData, TVariable*> interstageBuiltInIo; // individual builtin interstage IO vars, indexed by builtin type.
     TVariable* inputPatch;
-
-    // We have to move array references to structs containing builtin interstage IO to the split variables.
-    // This is only handled for one level.  This stores the index, because we'll need it in the future, since
-    // unlike normal array references, here the index happens before we discover what it applies to.
-    TIntermTyped* builtInIoIndex;
-    TIntermTyped* builtInIoBase;
 
     unsigned int nextInLocation;
     unsigned int nextOutLocation;

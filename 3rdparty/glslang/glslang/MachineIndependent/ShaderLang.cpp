@@ -116,7 +116,7 @@ TParseContextBase* CreateParseContext(TSymbolTable& symbolTable, TIntermediate& 
 
 // Local mapping functions for making arrays of symbol tables....
 
-const int VersionCount = 16;  // index range in MapVersionToIndex
+const int VersionCount = 17;  // index range in MapVersionToIndex
 
 int MapVersionToIndex(int version)
 {
@@ -140,6 +140,7 @@ int MapVersionToIndex(int version)
     case 450: index = 14; break;
     case 500: index =  0; break; // HLSL
     case 320: index = 15; break;
+    case 460: index = 16; break;
     default:  assert(0);  break;
     }
 
@@ -516,6 +517,7 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
     case 430: break;
     case 440: break;
     case 450: break;
+    case 460: break;
 
     // unknown version
     default:

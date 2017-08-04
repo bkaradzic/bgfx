@@ -846,6 +846,8 @@ const char* CapabilityString(int info)
     case 5009: return "ImageGatherBiasLodAMD";
 #endif
 
+    case 4445: return "AtomicStorageOps";
+
     case 4447: return "SampleMaskPostDepthCoverage";
 #ifdef NV_EXTENSIONS
     case 5251: return "GeometryShaderPassthroughNV";

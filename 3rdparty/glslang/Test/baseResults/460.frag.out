@@ -1,0 +1,55 @@
+460.frag
+Shader version: 460
+0:? Sequence
+0:10  Function Definition: main( ( global void)
+0:10    Function Parameters: 
+0:12    Sequence
+0:12      interpolateAtCentroid ( global 4-component vector of float)
+0:12        v: direct index for structure ( global 4-component vector of float)
+0:12          's' ( smooth in structure{ global float f,  global 4-component vector of float v})
+0:12          Constant:
+0:12            1 (const int)
+0:14      move second child to first child ( temp bool)
+0:14        'b1' ( temp bool)
+0:14        anyInvocation ( global bool)
+0:14          'b1' ( temp bool)
+0:15      move second child to first child ( temp bool)
+0:15        'b1' ( temp bool)
+0:15        allInvocations ( global bool)
+0:15          'b1' ( temp bool)
+0:16      move second child to first child ( temp bool)
+0:16        'b1' ( temp bool)
+0:16        allInvocationsEqual ( global bool)
+0:16          'b1' ( temp bool)
+0:?   Linker Objects
+0:?     's' ( smooth in structure{ global float f,  global 4-component vector of float v})
+
+
+Linked fragment stage:
+
+
+Shader version: 460
+0:? Sequence
+0:10  Function Definition: main( ( global void)
+0:10    Function Parameters: 
+0:12    Sequence
+0:12      interpolateAtCentroid ( global 4-component vector of float)
+0:12        v: direct index for structure ( global 4-component vector of float)
+0:12          's' ( smooth in structure{ global float f,  global 4-component vector of float v})
+0:12          Constant:
+0:12            1 (const int)
+0:14      move second child to first child ( temp bool)
+0:14        'b1' ( temp bool)
+0:14        anyInvocation ( global bool)
+0:14          'b1' ( temp bool)
+0:15      move second child to first child ( temp bool)
+0:15        'b1' ( temp bool)
+0:15        allInvocations ( global bool)
+0:15          'b1' ( temp bool)
+0:16      move second child to first child ( temp bool)
+0:16        'b1' ( temp bool)
+0:16        allInvocationsEqual ( global bool)
+0:16          'b1' ( temp bool)
+0:?   Linker Objects
+0:?     's' ( smooth in structure{ global float f,  global 4-component vector of float v})
+
