@@ -401,16 +401,19 @@ namespace bgfx { namespace mtl
 				}
 #elif BX_PLATFORM_OSX
 				{
-                    NSObject* nvh = (NSObject*)g_platformData.nwh;
-                    if ([nvh isKindOfClass:[CAMetalLayer class]]) {
-                        CAMetalLayer* metalLayer = (CAMetalLayer*)g_platformData.nwh;
-                        m_metalLayer = metalLayer;
-                    } else {
-                        NSWindow* nsWindow = (NSWindow*)g_platformData.nwh;
-                        [nsWindow.contentView setWantsLayer:YES];
-                        m_metalLayer = [CAMetalLayer layer];
-                        [nsWindow.contentView setLayer:m_metalLayer];
-                    }
+					NSObject* nvh = (NSObject*)g_platformData.nwh;
+					if ([nvh isKindOfClass:[CAMetalLayer class]])
+					{
+						CAMetalLayer* metalLayer = (CAMetalLayer*)g_platformData.nwh;
+						m_metalLayer = metalLayer;
+					}
+					else
+					{
+						NSWindow* nsWindow = (NSWindow*)g_platformData.nwh;
+						[nsWindow.contentView setWantsLayer:YES];
+						m_metalLayer = [CAMetalLayer layer];
+						[nsWindow.contentView setLayer:m_metalLayer];
+					}
 				}
 #endif // BX_PLATFORM_*
 
