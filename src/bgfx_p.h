@@ -3322,6 +3322,13 @@ namespace bgfx
 			BGFX_CHECK_HANDLE("destroyProgram", m_programHandle, _handle);
 
 			ProgramRef& pr = m_programRef[_handle.idx];
+			shaderDecRef(pr.m_vsh);
+
+			if (isValid(pr.m_fsh) )
+			{
+				shaderDecRef(pr.m_fsh);
+			}
+
 			int32_t refs = --pr.m_refCount;
 			if (0 == refs)
 			{
@@ -3330,15 +3337,6 @@ namespace bgfx
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyProgram);
 				cmdbuf.write(_handle);
-
-				shaderDecRef(pr.m_vsh);
-				uint32_t hash = pr.m_vsh.idx;
-
-				if (isValid(pr.m_fsh) )
-				{
-					shaderDecRef(pr.m_fsh);
-					hash |= pr.m_fsh.idx << 16;
-				}
 
 				m_programHashMap.removeByHandle(_handle.idx);
 			}
