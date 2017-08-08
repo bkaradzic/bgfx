@@ -16,6 +16,8 @@
  - MISSION STATEMENT
  - END-USER GUIDE
  - PROGRAMMER GUIDE (read me!)
+   - Read first
+   - Getting started with integrating imgui in your code/engine
  - API BREAKING CHANGES (read me when you update!)
  - FREQUENTLY ASKED QUESTIONS (FAQ), TIPS
    - How can I help?
@@ -50,22 +52,21 @@
  Designed for developers and content-creators, not the typical end-user! Some of the weaknesses includes:
  - doesn't look fancy, doesn't animate
  - limited layout features, intricate layouts are typically crafted in code
- - occasionally uses statically sized buffers for string manipulations - won't crash, but some very long pieces of text may be clipped. functions like ImGui::TextUnformatted() don't have such restriction.
 
 
  END-USER GUIDE
  ==============
 
- - double-click title bar to collapse window
- - click upper right corner to close a window, available when 'bool* p_open' is passed to ImGui::Begin()
- - click and drag on lower right corner to resize window
- - click and drag on any empty space to move window
- - double-click/double-tap on lower right corner grip to auto-fit to content
+ - Double-click title bar to collapse window
+ - Click upper right corner to close a window, available when 'bool* p_open' is passed to ImGui::Begin()
+ - Click and drag on lower right corner to resize window
+ - Click and drag on any empty space to move window
+ - Double-click/double-tap on lower right corner grip to auto-fit to content
  - TAB/SHIFT+TAB to cycle through keyboard editable fields
- - use mouse wheel to scroll
- - use CTRL+mouse wheel to zoom window contents (if IO.FontAllowScaling is true)
+ - Use mouse wheel to scroll
+ - Use CTRL+mouse wheel to zoom window contents (if io.FontAllowScaling is true)
  - CTRL+Click on a slider or drag box to input value as text
- - text editor:
+ - Text editor:
    - Hold SHIFT or use mouse to select text.
    - CTRL+Left/Right to word jump
    - CTRL+Shift+Left/Right to select words
@@ -74,76 +75,80 @@
    - CTRL+Z,CTRL+Y to undo/redo
    - ESCAPE to revert text to its original value
    - You can apply arithmetic operators +,*,/ on numerical values. Use +- to subtract (because - would set a negative value!)
+   - Controls are automatically adjusted for OSX to match standard OSX text editing operations.
 
 
  PROGRAMMER GUIDE
  ================
 
- - read the FAQ below this section!
- - your code creates the UI, if your code doesn't run the UI is gone! == very dynamic UI, no construction/destructions steps, less data retention on your side, no state duplication, less sync, less bugs.
- - call and read ImGui::ShowTestWindow() for demo code demonstrating most features.
- - see examples/ folder for standalone sample applications. Prefer reading examples/opengl2_example/ first as it is the simplest.
-   you may be able to grab and copy a ready made imgui_impl_*** file from the examples/.
- - customization: PushStyleColor()/PushStyleVar() or the style editor to tweak the look of the interface (e.g. if you want a more compact UI or a different color scheme).
+ READ FIRST
 
- - getting started:
-   - init: call ImGui::GetIO() to retrieve the ImGuiIO structure and fill the fields marked 'Settings'.
-   - init: call io.Fonts->GetTexDataAsRGBA32(...) and load the font texture pixels into graphics memory.
-   - every frame:
-      1/ in your mainloop or right after you got your keyboard/mouse info, call ImGui::GetIO() and fill the fields marked 'Input'
-      2/ call ImGui::NewFrame() as early as you can!
-      3/ use any ImGui function you want between NewFrame() and Render()
-      4/ call ImGui::Render() as late as you can to end the frame and finalize render data. it will call your RenderDrawListFn handler that you set in the IO structure.
-         (if you don't need to render, you still need to call Render() and ignore the callback, or call EndFrame() instead. if you call neither some aspects of windows focusing/moving will appear broken.)
-   - all rendering information are stored into command-lists until ImGui::Render() is called.
-   - ImGui never touches or know about your GPU state. the only function that knows about GPU is the RenderDrawListFn handler that you provide.
-   - effectively it means you can create widgets at any time in your code, regardless of considerations of being in "update" vs "render" phases of your own application.
-   - refer to the examples applications in the examples/ folder for instruction on how to setup your code.
-   - a typical application skeleton may be:
+ - Read the FAQ below this section!
+ - Your code creates the UI, if your code doesn't run the UI is gone! == very dynamic UI, no construction/destructions steps, less data retention on your side, no state duplication, less sync, less bugs.
+ - Call and read ImGui::ShowTestWindow() for demo code demonstrating most features.
+ - Customization: PushStyleColor()/PushStyleVar() or the style editor to tweak the look of the interface (e.g. if you want a more compact UI or a different color scheme).
 
-        // Application init
-        ImGuiIO& io = ImGui::GetIO();
-        io.DisplaySize.x = 1920.0f;
-        io.DisplaySize.y = 1280.0f;
-        io.IniFilename = "imgui.ini";
-        io.RenderDrawListsFn = my_render_function;  // Setup a render function, or set to NULL and call GetDrawData() after Render() to access the render data.
-        // TODO: Fill others settings of the io structure
+ GETTING STARTED WITH INTEGRATING IMGUI IN YOUR CODE/ENGINE
 
-        // Load texture atlas
-        // There is a default font so you don't need to care about choosing a font yet
-        unsigned char* pixels;
-        int width, height;
-        io.Fonts->GetTexDataAsRGBA32(pixels, &width, &height);
-        // TODO: At this points you've got a texture pointed to by 'pixels' and you need to upload that your your graphic system
-        // TODO: Store your texture pointer/identifier (whatever your engine uses) in 'io.Fonts->TexID'
+ - See examples/ folder for standalone sample applications. Prefer reading examples/opengl_example/ first as it is the simplest.
+   You may be able to grab and copy a ready made imgui_impl_*** file from the examples/.
+ - Init: call ImGui::GetIO() to retrieve the ImGuiIO structure and fill the fields marked 'Settings'.
+ - Init: call io.Fonts->GetTexDataAsRGBA32(...) and load the font texture pixels into graphics memory.
+ - Every frame:
+    1/ in your mainloop or right after you got your keyboard/mouse info, call ImGui::GetIO() and fill the fields marked 'Input'
+    2/ call ImGui::NewFrame() as early as you can!
+    3/ use any ImGui function you want between NewFrame() and Render()
+    4/ call ImGui::Render() as late as you can to end the frame and finalize render data. it will call your RenderDrawListFn handler that you set in the IO structure.
+       (if you don't need to render, you still need to call Render() and ignore the callback, or call EndFrame() instead. if you call neither some aspects of windows focusing/moving will appear broken.)
+ - All rendering information are stored into command-lists until ImGui::Render() is called.
+ - ImGui never touches or knows about your GPU state. the only function that knows about GPU is the RenderDrawListFn handler that you provide.
+ - Effectively it means you can create widgets at any time in your code, regardless of considerations of being in "update" vs "render" phases of your own application.
+ - Refer to the examples applications in the examples/ folder for instruction on how to setup your code.
+ - A typical application skeleton may be:
 
-        // Application main loop
-        while (true)
-        {
-            // 1) get low-level inputs (e.g. on Win32, GetKeyboardState(), or poll your events, etc.)
-            // TODO: fill all fields of IO structure and call NewFrame
-            ImGuiIO& io = ImGui::GetIO();
-            io.DeltaTime = 1.0f/60.0f;
-            io.MousePos = mouse_pos;
-            io.MouseDown[0] = mouse_button_0;
-            io.MouseDown[1] = mouse_button_1;
-            io.KeysDown[i] = ...
+     // Application init
+     ImGuiIO& io = ImGui::GetIO();
+     io.DisplaySize.x = 1920.0f;
+     io.DisplaySize.y = 1280.0f;
+     io.IniFilename = "imgui.ini";
+     io.RenderDrawListsFn = my_render_function;  // Setup a render function, or set to NULL and call GetDrawData() after Render() to access the render data.
+     // TODO: Fill others settings of the io structure
 
-            // 2) call NewFrame(), after this point you can use ImGui::* functions anytime
-            ImGui::NewFrame();
+     // Load texture atlas (there is a default font so you don't need to care about choosing a font yet)
+     unsigned char* pixels;
+     int width, height;
+     io.Fonts->GetTexDataAsRGBA32(pixels, &width, &height);
+     // TODO: At this points you've got a texture pointed to by 'pixels' and you need to upload that your your graphic system
+     // TODO: Store your texture pointer/identifier (whatever your engine uses) in 'io.Fonts->TexID'
 
-            // 3) most of your application code here
-            MyGameUpdate(); // may use any ImGui functions, e.g. ImGui::Begin("My window"); ImGui::Text("Hello, world!"); ImGui::End();
-            MyGameRender(); // may use any ImGui functions
+     // Application main loop
+     while (true)
+     {
+       // 1) get low-level inputs (e.g. on Win32, GetKeyboardState(), or poll your events, etc.)
+       // TODO: fill all fields of IO structure and call NewFrame
+       ImGuiIO& io = ImGui::GetIO();
+       io.DeltaTime = 1.0f/60.0f;
+       io.MousePos = mouse_pos;
+       io.MouseDown[0] = mouse_button_0;
+       io.MouseDown[1] = mouse_button_1;
+       io.KeysDown[i] = ...
 
-            // 4) render & swap video buffers
-            ImGui::Render();
-            SwapBuffers();
-        }
+       // 2) call NewFrame(), after this point you can use ImGui::* functions anytime
+       ImGui::NewFrame();
 
-   - When calling NewFrame(), the 'io.WantCaptureMouse'/'io.WantCaptureKeyboard'/'io.WantTextInput' flags are updated. 
-     They tell you if ImGui intends to use your inputs. So for example, if 'io.WantCaptureMouse' is set you would typically want to hide 
-     mouse inputs from the rest of your application. Read the FAQ below for more information about those flags.
+       // 3) most of your application code here
+       MyGameUpdate(); // may use any ImGui functions, e.g. ImGui::Begin("My window"); ImGui::Text("Hello, world!"); ImGui::End();
+       MyGameRender(); // may use any ImGui functions
+     
+       // 4) render & swap video buffers
+       ImGui::Render();
+       SwapBuffers();
+     }
+
+ - When calling NewFrame(), the 'io.WantCaptureMouse'/'io.WantCaptureKeyboard'/'io.WantTextInput' flags are updated. 
+   They tell you if ImGui intends to use your inputs. So for example, if 'io.WantCaptureMouse' is set you would typically want to hide 
+   mouse inputs from the rest of your application. Read the FAQ below for more information about those flags.
+
 
 
  API BREAKING CHANGES
@@ -153,9 +158,12 @@
  Here is a change-log of API breaking changes, if you are using one of the functions listed, expect to have to fix some code.
  Also read releases logs https://github.com/ocornut/imgui/releases for more details.
 
- - 2017/07/20 (1.51) - Removed IsPosHoveringAnyWindow(ImVec2), which was partly broken and misleading. ASSERT + redirect user to io.WantCaptureMouse
- - 2017/05/26 (1.50) - Removed ImFontConfig::MergeGlyphCenterV in favor of a more multipurpose ImFontConfig::GlyphOffset.
- - 2017/05/01 (1.50) - Renamed ImDrawList::PathFill() (rarely used directly) to ImDrawList::PathFillConvex() for clarity.
+ - 2017/07/30 (1.51) - removed ColorEditMode() and ImGuiColorEditMode in favor of ImGuiColorEditFlags and parameters to the various Color*() functions. The SetColorEditOptions() allows to initialize default but the user can still change them with right-click context menu.
+                     - changed prototype of 'ColorEdit4(const char* label, float col[4], bool show_alpha = true)' to 'ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flags = 0)', where passing flags = 0x01 is a safe no-op (hello dodgy backward compatibility!). - check and run the demo window, under "Color/Picker Widgets", to understand the various new options.
+                     - changed prototype of rarely used 'ColorButton(ImVec4 col, bool small_height = false, bool outline_border = true)' to 'ColorButton(const char* desc_id, ImVec4 col, ImGuiColorEditFlags flags = 0, ImVec2 size = ImVec2(0,0))'
+ - 2017/07/20 (1.51) - removed IsPosHoveringAnyWindow(ImVec2), which was partly broken and misleading. ASSERT + redirect user to io.WantCaptureMouse
+ - 2017/05/26 (1.50) - removed ImFontConfig::MergeGlyphCenterV in favor of a more multipurpose ImFontConfig::GlyphOffset.
+ - 2017/05/01 (1.50) - renamed ImDrawList::PathFill() (rarely used directly) to ImDrawList::PathFillConvex() for clarity.
  - 2016/11/06 (1.50) - BeginChild(const char*) now applies the stack id to the provided label, consistently with other functions as it should always have been. It shouldn't affect you unless (extremely unlikely) you were appending multiple times to a same child from different locations of the stack id. If that's the case, generate an id with GetId() and use it instead of passing string to BeginChild().
  - 2016/10/15 (1.50) - avoid 'void* user_data' parameter to io.SetClipboardTextFn/io.GetClipboardTextFn pointers. We pass io.ClipboardUserData to it.
  - 2016/09/25 (1.50) - style.WindowTitleAlign is now a ImVec2 (ImGuiAlign enum was removed). set to (0.5f,0.5f) for horizontal+vertical centering, (0.0f,0.0f) for upper-left, etc.
@@ -269,7 +277,7 @@
 
  Q: How can I help?
  A: - If you are experienced enough with ImGui and with C/C++, look at the todo list and see how you want/can help!
-    - Become a Patron/donate. Convince your company to become a Patron or provide serious funding for development time.
+    - Become a Patron/donate! Convince your company to become a Patron or provide serious funding for development time! See http://www.patreon.com/imgui
 
  Q: How do I update to a newer version of ImGui?
  A: Overwrite the following files:
@@ -490,9 +498,9 @@
  - window/tooltip: allow to set the width of a tooltip to allow TextWrapped() etc. while keeping the height automatic.
  - window: increase minimum size of a window with menus or fix the menu rendering so that it doesn't look odd.
  - draw-list: maintaining bounding box per command would allow to merge draw command when clipping isn't relied on (typical non-scrolling window or non-overflowing column would merge with previous command).
-!- scrolling: allow immediately effective change of scroll if we haven't appended items yet
+!- scrolling: allow immediately effective change of scroll after Begin() if we haven't appended items yet
  - splitter/separator: formalize the splitter idiom into an official api (we want to handle n-way split) (#319)
- - widgets: display mode: widget-label, label-widget (aligned on column or using fixed size), label-newline-tab-widget etc.
+ - widgets: display mode: widget-label, label-widget (aligned on column or using fixed size), label-newline-tab-widget etc. (#395)
  - widgets: clean up widgets internal toward exposing everything.
  - widgets: add disabled and read-only modes (#211)
  - main: considering adding an Init() function? some constructs are awkward in the implementation because of the lack of them.
@@ -551,7 +559,6 @@
  - tabs (#261, #351)
  - separator: separator on the initial position of a window is not visible (cursorpos.y <= clippos.y)
 !- color: the color helpers/typing is a mess and needs sorting out.
- - color: add a better color picker (#346)
  - node/graph editor (#306)
  - pie menus patterns (#434)
  - drag'n drop, dragging helpers (carry dragging info, visualize drag source before clicking, drop target, etc.) (#143, #479)
@@ -575,13 +582,14 @@
  - textwrapped: figure out better way to use TextWrapped() in an always auto-resize context (tooltip, etc.) (#249)
  - settings: write more decent code to allow saving/loading new fields
  - settings: api for per-tool simple persistent data (bool,int,float,columns sizes,etc.) in .ini file
+ - stb: add defines to disable stb implementations
  - style: add window shadows.
  - style/optimization: store rounded corners in texture to use 1 quad per corner (filled and wireframe) to lower the cost of rounding.
  - style: color-box not always square?
  - style: a concept of "compact style" that the end-user can easily rely on (e.g. PushStyleCompact()?) that maps to other settings? avoid implementing duplicate helpers such as SmallCheckbox(), etc.
  - style: try to make PushStyleVar() more robust to incorrect parameters (to be more friendly to edit & continues situation).
  - style: global scale setting.
- - style: WindowPadding needs to be EVEN needs the 0.5 multiplier probably have a subtle effect on clip rectangle
+ - style: WindowPadding needs to be EVEN as the 0.5 multiplier used on this value probably have a subtle effect on clip rectangle
  - text: simple markup language for color change?
  - font: dynamic font atlas to avoid baking huge ranges into bitmap and make scaling easier.
  - font: small opt: for monospace font (like the defalt one) we can trim IndexXAdvance as long as trailing value is == FallbackXAdvance
@@ -594,6 +602,7 @@
  - log: let user copy any window content to clipboard easily (CTRL+C on windows? while moving it? context menu?). code is commented because it fails with multiple Begin/End pairs.
  - filters: set a current filter that tree node can automatically query to hide themselves
  - filters: handle wildcards (with implicit leading/trailing *), regexps
+ - filters: fuzzy matches (may use code at blog.forrestthewoods.com/4cffeed33fdb)
  - shortcuts: add a shortcut api, e.g. parse "&Save" and/or "Save (CTRL+S)", pass in to widgets or provide simple ways to use (button=activate, input=focus)
 !- keyboard: tooltip & combo boxes are messing up / not honoring keyboard tabbing
  - keyboard: full keyboard navigation and focus. (#323)
@@ -612,11 +621,11 @@
  - drawlist: end-user probably can't call Clear() directly because we expect a texture to be pushed in the stack.
  - examples: directx9: save/restore device state more thoroughly.
  - examples: window minimize, maximize (#583)
+ - optimization: add clipping for multi-component widgets (SliderFloatX, ColorEditX, etc.). one problem is that nav branch can't easily clip parent group when there is a move request.
  - optimization: add a flag to disable most of rendering, for the case where the user expect to skip it (#335)
  - optimization: use another hash function than crc32, e.g. FNV1a
  - optimization/render: merge command-lists with same clip-rect into one even if they aren't sequential? (as long as in-between clip rectangle don't overlap)?
  - optimization: turn some the various stack vectors into statically-sized arrays
- - optimization: better clipping for multi-component widgets
 */
 
 #if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
@@ -906,12 +915,53 @@ void ImGuiIO::AddInputCharactersUTF8(const char* utf8_chars)
 #define IM_NEWLINE "\n"
 #endif
 
-bool ImIsPointInTriangle(const ImVec2& p, const ImVec2& a, const ImVec2& b, const ImVec2& c)
+ImVec2 ImLineClosestPoint(const ImVec2& a, const ImVec2& b, const ImVec2& p)
+{
+    ImVec2 ap = p - a;
+    ImVec2 ab_dir = b - a;
+    float ab_len = sqrtf(ab_dir.x * ab_dir.x + ab_dir.y * ab_dir.y);
+    ab_dir *= 1.0f / ab_len;
+    float dot = ap.x * ab_dir.x + ap.y * ab_dir.y;
+    if (dot < 0.0f)
+        return a;
+    if (dot > ab_len)
+        return b;
+    return a + ab_dir * dot;
+}
+
+bool ImTriangleContainsPoint(const ImVec2& a, const ImVec2& b, const ImVec2& c, const ImVec2& p)
 {
     bool b1 = ((p.x - b.x) * (a.y - b.y) - (p.y - b.y) * (a.x - b.x)) < 0.0f;
     bool b2 = ((p.x - c.x) * (b.y - c.y) - (p.y - c.y) * (b.x - c.x)) < 0.0f;
     bool b3 = ((p.x - a.x) * (c.y - a.y) - (p.y - a.y) * (c.x - a.x)) < 0.0f;
     return ((b1 == b2) && (b2 == b3));
+}
+
+void ImTriangleBarycentricCoords(const ImVec2& a, const ImVec2& b, const ImVec2& c, const ImVec2& p, float& out_u, float& out_v, float& out_w)
+{
+    ImVec2 v0 = b - a;
+    ImVec2 v1 = c - a;
+    ImVec2 v2 = p - a;
+    const float denom = v0.x * v1.y - v1.x * v0.y;
+    out_v = (v2.x * v1.y - v1.x * v2.y) / denom;
+    out_w = (v0.x * v2.y - v2.x * v0.y) / denom;
+    out_u = 1.0f - out_v - out_w;
+}
+
+ImVec2 ImTriangleClosestPoint(const ImVec2& a, const ImVec2& b, const ImVec2& c, const ImVec2& p)
+{
+    ImVec2 proj_ab = ImLineClosestPoint(a, b, p);
+    ImVec2 proj_bc = ImLineClosestPoint(b, c, p);
+    ImVec2 proj_ca = ImLineClosestPoint(c, a, p);
+    float dist2_ab = ImLengthSqr(p - proj_ab);
+    float dist2_bc = ImLengthSqr(p - proj_bc);
+    float dist2_ca = ImLengthSqr(p - proj_ca);
+    float m = ImMin(dist2_ab, ImMin(dist2_bc, dist2_ca));
+    if (m == dist2_ab)
+        return proj_ab;
+    if (m == dist2_bc)
+        return proj_bc;
+    return proj_ca;
 }
 
 int ImStricmp(const char* str1, const char* str2)
@@ -977,7 +1027,6 @@ const char* ImStristr(const char* haystack, const char* haystack_end, const char
     }
     return NULL;
 }
-
 
 // MSVC version appears to return -1 on overflow, whereas glibc appears to return total count (which may be >= buf_size). 
 // Ideally we would test for only one of those limits at runtime depending on the behavior the vsnprintf(), but trying to deduct it at compile time sounds like a pandora can of worm.
@@ -1246,16 +1295,28 @@ ImU32 ImGui::ColorConvertFloat4ToU32(const ImVec4& in)
 
 ImU32 ImGui::GetColorU32(ImGuiCol idx, float alpha_mul)  
 { 
-    ImVec4 c = GImGui->Style.Colors[idx]; 
-    c.w *= GImGui->Style.Alpha * alpha_mul; 
+    ImGuiStyle& style = GImGui->Style;
+    ImVec4 c = style.Colors[idx]; 
+    c.w *= style.Alpha * alpha_mul; 
     return ColorConvertFloat4ToU32(c); 
 }
 
 ImU32 ImGui::GetColorU32(const ImVec4& col)
 { 
+    ImGuiStyle& style = GImGui->Style;
     ImVec4 c = col; 
-    c.w *= GImGui->Style.Alpha; 
+    c.w *= style.Alpha; 
     return ColorConvertFloat4ToU32(c); 
+}
+
+ImU32 ImGui::GetColorU32(ImU32 col)
+{ 
+    float style_alpha = GImGui->Style.Alpha;
+    if (style_alpha >= 1.0f)
+        return col;
+    int a = (col & IM_COL32_A_MASK) >> IM_COL32_A_SHIFT;
+    a = (int)(a * style_alpha); // We don't need to clamp 0..255 because Style.Alpha is in 0..1 range.
+    return (col & ~IM_COL32_A_MASK) | (a << IM_COL32_A_SHIFT);
 }
 
 // Convert rgb floats ([0-1],[0-1],[0-1]) to hsv floats ([0-1],[0-1],[0-1]), from Foley & van Dam p592
@@ -2148,6 +2209,7 @@ void ImGui::NewFrame()
     IM_ASSERT(g.IO.Fonts->Fonts.Size > 0);           // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
     IM_ASSERT(g.IO.Fonts->Fonts[0]->IsLoaded());     // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?
     IM_ASSERT(g.Style.CurveTessellationTol > 0.0f);  // Invalid style setting
+    IM_ASSERT(g.Style.Alpha >= 0.0f && g.Style.Alpha <= 1.0f);  // Invalid style setting. Alpha cannot be negative (allows us to avoid a few clamps in color computations)
 
     if (!g.Initialized)
     {
@@ -2420,7 +2482,6 @@ void ImGui::Shutdown()
     for (int i = 0; i < IM_ARRAYSIZE(g.RenderDrawLists); i++)
         g.RenderDrawLists[i].clear();
     g.OverlayDrawList.ClearFreeMemory();
-    g.ColorEditModeStorage.Clear();
     if (g.PrivateClipboard)
     {
         ImGui::MemFree(g.PrivateClipboard);
@@ -2976,6 +3037,16 @@ void ImGui::RenderFrame(ImVec2 p_min, ImVec2 p_max, ImU32 fill_col, bool border,
 
     window->DrawList->AddRectFilled(p_min, p_max, fill_col, rounding);
     if (border && (window->Flags & ImGuiWindowFlags_ShowBorders))
+    {
+        window->DrawList->AddRect(p_min+ImVec2(1,1), p_max+ImVec2(1,1), GetColorU32(ImGuiCol_BorderShadow), rounding);
+        window->DrawList->AddRect(p_min, p_max, GetColorU32(ImGuiCol_Border), rounding);
+    }
+}
+
+void ImGui::RenderFrameBorder(ImVec2 p_min, ImVec2 p_max, float rounding)
+{
+    ImGuiWindow* window = GetCurrentWindow();
+    if (window->Flags & ImGuiWindowFlags_ShowBorders)
     {
         window->DrawList->AddRect(p_min+ImVec2(1,1), p_max+ImVec2(1,1), GetColorU32(ImGuiCol_BorderShadow), rounding);
         window->DrawList->AddRect(p_min, p_max, GetColorU32(ImGuiCol_Border), rounding);
@@ -4205,12 +4276,15 @@ bool ImGui::Begin(const char* name, bool* p_open, const ImVec2& size_on_first_us
         if (window->ScrollTarget.y < FLT_MAX)
         {
             float center_ratio = window->ScrollTargetCenterRatio.y;
-            window->Scroll.y = window->ScrollTarget.y - ((1.0f - center_ratio) * (window->TitleBarHeight() + window->MenuBarHeight())) - (center_ratio * window->SizeFull.y);
+            window->Scroll.y = window->ScrollTarget.y - ((1.0f - center_ratio) * (window->TitleBarHeight() + window->MenuBarHeight())) - (center_ratio * (window->SizeFull.y - window->ScrollbarSizes.y));
             window->ScrollTarget.y = FLT_MAX;
         }
         window->Scroll = ImMax(window->Scroll, ImVec2(0.0f, 0.0f));
         if (!window->Collapsed && !window->SkipItems)
-            window->Scroll = ImMin(window->Scroll, ImMax(ImVec2(0.0f, 0.0f), window->SizeContents - window->SizeFull + window->ScrollbarSizes));
+        {
+            window->Scroll.x = ImMin(window->Scroll.x, GetScrollMaxX());
+            window->Scroll.y = ImMin(window->Scroll.y, GetScrollMaxY());
+        }
 
         // Modal window darkens what is behind them
         if ((flags & ImGuiWindowFlags_Modal) != 0 && window == GetFrontMostModalRootWindow())
@@ -4264,6 +4338,8 @@ bool ImGui::Begin(const char* name, bool* p_open, const ImVec2& size_on_first_us
             // Scrollbars
             window->ScrollbarY = (flags & ImGuiWindowFlags_AlwaysVerticalScrollbar) || ((window->SizeContents.y > window->Size.y + style.ItemSpacing.y) && !(flags & ImGuiWindowFlags_NoScrollbar));
             window->ScrollbarX = (flags & ImGuiWindowFlags_AlwaysHorizontalScrollbar) || ((window->SizeContents.x > window->Size.x - (window->ScrollbarY ? style.ScrollbarSize : 0.0f) - window->WindowPadding.x) && !(flags & ImGuiWindowFlags_NoScrollbar) && (flags & ImGuiWindowFlags_HorizontalScrollbar));
+            if (window->ScrollbarX && !window->ScrollbarY)
+                window->ScrollbarY = (window->SizeContents.y > window->Size.y + style.ItemSpacing.y - style.ScrollbarSize) && !(flags & ImGuiWindowFlags_NoScrollbar);
             window->ScrollbarSizes = ImVec2(window->ScrollbarY ? style.ScrollbarSize : 0.0f, window->ScrollbarX ? style.ScrollbarSize : 0.0f);
             window->BorderSize = (flags & ImGuiWindowFlags_ShowBorders) ? 1.0f : 0.0f;
 
@@ -4358,7 +4434,6 @@ bool ImGui::Begin(const char* name, bool* p_open, const ImVec2& size_on_first_us
         window->DC.TreeDepth = 0;
         window->DC.StateStorage = &window->StateStorage;
         window->DC.GroupStack.resize(0);
-        window->DC.ColorEditMode = ImGuiColorEditMode_UserSelect;
         window->MenuColumns.Update(3, style.ItemSpacing.x, !window_was_active);
 
         if (window->AutoFitFramesX > 0)
@@ -4512,10 +4587,10 @@ static void Scrollbar(ImGuiWindow* window, bool horizontal)
     // V denote the main axis of the scrollbar
     float scrollbar_size_v = horizontal ? bb.GetWidth() : bb.GetHeight();
     float scroll_v = horizontal ? window->Scroll.x : window->Scroll.y;
-    float win_size_avail_v = (horizontal ? window->Size.x : window->Size.y) - other_scrollbar_size_w;
+    float win_size_avail_v = (horizontal ? window->SizeFull.x : window->SizeFull.y) - other_scrollbar_size_w;
     float win_size_contents_v = horizontal ? window->SizeContents.x : window->SizeContents.y;
 
-    // The grabable box size generally represent the amount visible (vs the total scrollable amount)
+    // The grabbable box size generally represent the amount visible (vs the total scrollable amount)
     // But we maintain a minimum size in pixel to allow for the user to still aim inside.
     const float grab_h_pixels = ImMin(ImMax(scrollbar_size_v * ImSaturate(win_size_avail_v / ImMax(win_size_contents_v, win_size_avail_v)), style.GrabMinSize), scrollbar_size_v);
     const float grab_h_norm = grab_h_pixels / scrollbar_size_v;
@@ -5273,13 +5348,13 @@ float ImGui::GetScrollY()
 float ImGui::GetScrollMaxX()
 {
     ImGuiWindow* window = GetCurrentWindowRead();
-    return window->SizeContents.x - window->SizeFull.x - window->ScrollbarSizes.x;
+    return ImMax(0.0f, window->SizeContents.x - (window->SizeFull.x - window->ScrollbarSizes.x));
 }
 
 float ImGui::GetScrollMaxY()
 {
     ImGuiWindow* window = GetCurrentWindowRead();
-    return window->SizeContents.y - window->SizeFull.y - window->ScrollbarSizes.y;
+    return ImMax(0.0f, window->SizeContents.y - (window->SizeFull.y - window->ScrollbarSizes.y));
 }
 
 void ImGui::SetScrollX(float scroll_x)
@@ -5311,8 +5386,9 @@ void ImGui::SetScrollFromPosY(float pos_y, float center_y_ratio)
 void ImGui::SetScrollHere(float center_y_ratio)
 {
     ImGuiWindow* window = GetCurrentWindow();
-    float target_y = window->DC.CursorPosPrevLine.y + (window->DC.PrevLineHeight * center_y_ratio) + (GImGui->Style.ItemSpacing.y * (center_y_ratio - 0.5f) * 2.0f); // Precisely aim above, in the middle or below the last line.
-    SetScrollFromPosY(target_y - window->Pos.y, center_y_ratio);
+    float target_y = window->DC.CursorPosPrevLine.y - window->Pos.y; // Top of last item, in window space
+    target_y += (window->DC.PrevLineHeight * center_y_ratio) + (GImGui->Style.ItemSpacing.y * (center_y_ratio - 0.5f) * 2.0f); // Precisely aim above, in the middle or below the last line.
+    SetScrollFromPosY(target_y, center_y_ratio);
 }
 
 void ImGui::SetKeyboardFocusHere(int offset)
@@ -5555,6 +5631,7 @@ void ImGui::LabelText(const char* label, const char* fmt, ...)
 static inline bool IsWindowContentHoverable(ImGuiWindow* window)
 {
     // An active popup disable hovering on other windows (apart from its own children)
+    // FIXME-OPT: This could be cached/stored within the window.
     ImGuiContext& g = *GImGui;
     if (ImGuiWindow* focused_window = g.FocusedWindow)
         if (ImGuiWindow* focused_root_window = focused_window->RootWindow)
@@ -6414,6 +6491,7 @@ static bool DataTypeApplyOpFromText(const char* buf, const char* initial_value_b
 }
 
 // Create text input in place of a slider (when CTRL+Clicking on slider)
+// FIXME: Logic is messy and confusing.
 bool ImGui::InputScalarAsWidgetReplacement(const ImRect& aabb, const char* label, ImGuiDataType data_type, void* data_ptr, ImGuiID id, int decimal_precision)
 {
     ImGuiContext& g = *GImGui;
@@ -6427,9 +6505,8 @@ bool ImGui::InputScalarAsWidgetReplacement(const ImRect& aabb, const char* label
     char buf[32];
     DataTypeFormatString(data_type, data_ptr, decimal_precision, buf, IM_ARRAYSIZE(buf));
     bool text_value_changed = InputTextEx(label, buf, IM_ARRAYSIZE(buf), aabb.GetSize(), ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_AutoSelectAll);
-    if (g.ScalarAsInputTextId == 0)
+    if (g.ScalarAsInputTextId == 0)     // First frame we started displaying the InputText widget
     {
-        // First frame
         IM_ASSERT(g.ActiveId == id);    // InputText ID expected to match the Slider ID (else we'd need to store them both, which is also possible)
         g.ScalarAsInputTextId = g.ActiveId;
         SetHoveredID(id);
@@ -8938,7 +9015,7 @@ bool ImGui::BeginMenu(const char* label, bool enabled)
                 ta.x += (window->Pos.x < next_window->Pos.x) ? -0.5f : +0.5f;   // to avoid numerical issues
                 tb.y = ta.y + ImMax((tb.y - extra) - ta.y, -100.0f);            // triangle is maximum 200 high to limit the slope and the bias toward large sub-menus // FIXME: Multiply by fb_scale?
                 tc.y = ta.y + ImMin((tc.y + extra) - ta.y, +100.0f);
-                moving_within_opened_triangle = ImIsPointInTriangle(g.IO.MousePos, ta, tb, tc);
+                moving_within_opened_triangle = ImTriangleContainsPoint(ta, tb, tc, g.IO.MousePos);
                 //window->DrawList->PushClipRectFullScreen(); window->DrawList->AddTriangleFilled(ta, tb, tc, moving_within_opened_triangle ? IM_COL32(0,128,0,128) : IM_COL32(128,0,0,128)); window->DrawList->PopClipRect(); // Debug
             }
         }
@@ -8984,50 +9061,219 @@ void ImGui::EndMenu()
     EndPopup();
 }
 
+// Note: only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.
+void ImGui::ColorTooltip(const char* text, const float col[4], ImGuiColorEditFlags flags)
+{
+    ImGuiContext& g = *GImGui;
+
+    int cr = IM_F32_TO_INT8_SAT(col[0]), cg = IM_F32_TO_INT8_SAT(col[1]), cb = IM_F32_TO_INT8_SAT(col[2]), ca = (flags & ImGuiColorEditFlags_NoAlpha) ? 255 : IM_F32_TO_INT8_SAT(col[3]);
+    BeginTooltipEx(true);
+    
+    const char* text_end = text ? FindRenderedTextEnd(text, NULL) : text;
+    if (text_end > text)
+    {
+        TextUnformatted(text, text_end);
+        Separator();
+    }
+
+    ImVec2 sz(g.FontSize * 3, g.FontSize * 3);
+    ColorButton("##preview", ImVec4(col[0], col[1], col[2], col[3]), (flags & (ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_AlphaPreview | ImGuiColorEditFlags_AlphaPreviewHalf)) | ImGuiColorEditFlags_NoTooltip, sz);
+    SameLine();
+    if (flags & ImGuiColorEditFlags_NoAlpha)
+        Text("#%02X%02X%02X\nR: %d, G: %d, B: %d\n(%.3f, %.3f, %.3f)", cr, cg, cb, cr, cg, cb, col[0], col[1], col[2]);
+    else
+        Text("#%02X%02X%02X%02X\nR:%d, G:%d, B:%d, A:%d\n(%.3f, %.3f, %.3f, %.3f)", cr, cg, cb, ca, cr, cg, cb, ca, col[0], col[1], col[2], col[3]);
+    EndTooltip();
+}
+
+static inline float ColorSquareSize()
+{
+    ImGuiContext& g = *GImGui;
+    return g.FontSize + g.Style.FramePadding.y * 2.0f;
+}
+
+static inline ImU32 ImAlphaBlendColor(ImU32 col_a, ImU32 col_b)
+{
+    float t = ((col_b >> IM_COL32_A_SHIFT) & 0xFF) / 255.f;
+    int r = ImLerp((int)(col_a >> IM_COL32_R_SHIFT) & 0xFF, (int)(col_b >> IM_COL32_R_SHIFT) & 0xFF, t);
+    int g = ImLerp((int)(col_a >> IM_COL32_G_SHIFT) & 0xFF, (int)(col_b >> IM_COL32_G_SHIFT) & 0xFF, t);
+    int b = ImLerp((int)(col_a >> IM_COL32_B_SHIFT) & 0xFF, (int)(col_b >> IM_COL32_B_SHIFT) & 0xFF, t);
+    return IM_COL32(r, g, b, 0xFF);
+}
+
+// NB: This is rather brittle and will show artifact when rounding this enabled if rounded corners overlap multiple cells. Caller currently responsible for avoiding that.
+// I spent a non reasonable amount of time trying to getting this right for ColorButton with rounding+anti-aliasing+ImGuiColorEditFlags_HalfAlphaPreview flag + various grid sizes and offsets, and eventually gave up... probably more reasonable to disable rounding alltogether.
+void ImGui::RenderColorRectWithAlphaCheckerboard(ImVec2 p_min, ImVec2 p_max, ImU32 col, float grid_step, ImVec2 grid_off, float rounding, int rounding_corners_flags)
+{
+    ImGuiWindow* window = GetCurrentWindow();
+    if (((col & IM_COL32_A_MASK) >> IM_COL32_A_SHIFT) < 0xFF)
+    {
+        ImU32 col_bg1 = GetColorU32(ImAlphaBlendColor(IM_COL32(204,204,204,255), col));
+        ImU32 col_bg2 = GetColorU32(ImAlphaBlendColor(IM_COL32(128,128,128,255), col));
+        window->DrawList->AddRectFilled(p_min, p_max, col_bg1, rounding, rounding_corners_flags);
+
+        int yi = 0;
+        for (float y = p_min.y + grid_off.y; y < p_max.y; y += grid_step, yi++)
+        {
+            float y1 = ImClamp(y, p_min.y, p_max.y), y2 = ImMin(y + grid_step, p_max.y);
+            if (y2 <= y1)
+                continue;
+            for (float x = p_min.x + grid_off.x + (yi & 1) * grid_step; x < p_max.x; x += grid_step * 2.0f)
+            {
+                float x1 = ImClamp(x, p_min.x, p_max.x), x2 = ImMin(x + grid_step, p_max.x);
+                if (x2 <= x1)
+                    continue;
+                int rounding_corners_flags_cell = 0;
+                if (y1 <= p_min.y) { if (x1 <= p_min.x) rounding_corners_flags_cell |= ImGuiCorner_TopLeft;    if (x2 >= p_max.x) rounding_corners_flags_cell |= ImGuiCorner_TopRight; }
+                if (y2 >= p_max.y) { if (x1 <= p_min.x) rounding_corners_flags_cell |= ImGuiCorner_BottomLeft; if (x2 >= p_max.x) rounding_corners_flags_cell |= ImGuiCorner_BottomRight; }
+                rounding_corners_flags_cell &= rounding_corners_flags;
+                window->DrawList->AddRectFilled(ImVec2(x1,y1), ImVec2(x2,y2), col_bg2, rounding_corners_flags_cell ? rounding : 0.0f, rounding_corners_flags_cell);
+            }
+        }
+    }
+    else
+    {
+        window->DrawList->AddRectFilled(p_min, p_max, col, rounding, rounding_corners_flags);
+    }
+}
+
+void ImGui::SetColorEditOptions(ImGuiColorEditFlags flags)
+{
+    ImGuiContext& g = *GImGui;
+    if ((flags & ImGuiColorEditFlags__InputsMask) == 0)
+        flags |= ImGuiColorEditFlags__OptionsDefault & ImGuiColorEditFlags__InputsMask;
+    if ((flags & ImGuiColorEditFlags__DataTypeMask) == 0)
+        flags |= ImGuiColorEditFlags__OptionsDefault & ImGuiColorEditFlags__DataTypeMask;
+    if ((flags & ImGuiColorEditFlags__PickerMask) == 0)
+        flags |= ImGuiColorEditFlags__OptionsDefault & ImGuiColorEditFlags__PickerMask;
+    IM_ASSERT(ImIsPowerOfTwo((int)(flags & ImGuiColorEditFlags__InputsMask)));   // Check only 1 option is selected
+    IM_ASSERT(ImIsPowerOfTwo((int)(flags & ImGuiColorEditFlags__DataTypeMask))); // Check only 1 option is selected
+    IM_ASSERT(ImIsPowerOfTwo((int)(flags & ImGuiColorEditFlags__PickerMask)));   // Check only 1 option is selected
+    g.ColorEditOptions = flags;
+}
+
 // A little colored square. Return true when clicked.
 // FIXME: May want to display/ignore the alpha component in the color display? Yet show it in the tooltip.
-bool ImGui::ColorButton(const ImVec4& col, bool small_height, bool outline_border)
+// 'desc_id' is not called 'label' because we don't display it next to the button, but only in the tooltip.
+bool ImGui::ColorButton(const char* desc_id, const ImVec4& col, ImGuiColorEditFlags flags, ImVec2 size)
 {
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
         return false;
 
     ImGuiContext& g = *GImGui;
-    const ImGuiStyle& style = g.Style;
-    const ImGuiID id = window->GetID("#colorbutton");
-    const float square_size = g.FontSize;
-    const ImRect bb(window->DC.CursorPos, window->DC.CursorPos + ImVec2(square_size + style.FramePadding.y*2, square_size + (small_height ? 0 : style.FramePadding.y*2)));
-    ItemSize(bb, small_height ? 0.0f : style.FramePadding.y);
+    const ImGuiID id = window->GetID(desc_id);
+    float default_size = ColorSquareSize();
+    if (size.x == 0.0f)
+        size.x = default_size;
+    if (size.y == 0.0f)
+        size.y = default_size;
+    const ImRect bb(window->DC.CursorPos, window->DC.CursorPos + size);
+    ItemSize(bb);
     if (!ItemAdd(bb, &id))
         return false;
 
     bool hovered, held;
     bool pressed = ButtonBehavior(bb, id, &hovered, &held);
-    RenderFrame(bb.Min, bb.Max, GetColorU32(col), outline_border, style.FrameRounding);
 
-    if (hovered)
-        SetTooltip("Color:\n(%.2f,%.2f,%.2f,%.2f)\n#%02X%02X%02X%02X", col.x, col.y, col.z, col.w, IM_F32_TO_INT8_SAT(col.x), IM_F32_TO_INT8_SAT(col.y), IM_F32_TO_INT8_SAT(col.z), IM_F32_TO_INT8_SAT(col.w));
+    if (flags & ImGuiColorEditFlags_NoAlpha)
+        flags &= ~(ImGuiColorEditFlags_AlphaPreview | ImGuiColorEditFlags_AlphaPreviewHalf);
+    
+    ImVec4 col_without_alpha(col.x, col.y, col.z, 1.0f);
+    float grid_step = ImMin(size.x, size.y) / 2.99f;
+    float rounding = ImMin(g.Style.FrameRounding, grid_step * 0.5f);
+    if ((flags & ImGuiColorEditFlags_AlphaPreviewHalf) && col.w < 1.0f)
+    {
+        float mid_x = (float)(int)((bb.Min.x + bb.Max.x) * 0.5f + 0.5f);
+        RenderColorRectWithAlphaCheckerboard(ImVec2(bb.Min.x + grid_step, bb.Min.y), bb.Max, GetColorU32(col), grid_step, ImVec2(-grid_step, 0.0f), rounding, ImGuiCorner_TopRight|ImGuiCorner_BottomRight);
+        window->DrawList->AddRectFilled(bb.Min, ImVec2(mid_x, bb.Max.y), GetColorU32(col_without_alpha), rounding, ImGuiCorner_TopLeft|ImGuiCorner_BottomLeft);
+    }
+    else
+    {
+        RenderColorRectWithAlphaCheckerboard(bb.Min, bb.Max, GetColorU32((flags & ImGuiColorEditFlags_AlphaPreview) ? col : col_without_alpha), grid_step, ImVec2(0,0), rounding);
+    }
+    if (window->Flags & ImGuiWindowFlags_ShowBorders)
+        RenderFrameBorder(bb.Min, bb.Max, rounding);
+    else
+        window->DrawList->AddRect(bb.Min, bb.Max, GetColorU32(ImGuiCol_FrameBg), rounding); // Color button are often in need of some sort of border
+
+    if (hovered && !(flags & ImGuiColorEditFlags_NoTooltip))
+        ColorTooltip(desc_id, &col.x, flags & (ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_AlphaPreview | ImGuiColorEditFlags_AlphaPreviewHalf));
 
     return pressed;
 }
 
-bool ImGui::ColorEdit3(const char* label, float col[3])
+bool ImGui::ColorEdit3(const char* label, float col[3], ImGuiColorEditFlags flags)
 {
-    float col4[4];
-    col4[0] = col[0];
-    col4[1] = col[1];
-    col4[2] = col[2];
-    col4[3] = 1.0f;
-    const bool value_changed = ColorEdit4(label, col4, false);
-    col[0] = col4[0];
-    col[1] = col4[1];
-    col[2] = col4[2];
-    return value_changed;
+    return ColorEdit4(label, col, flags | ImGuiColorEditFlags_NoAlpha);
 }
 
-// Edit colors components (each component in 0.0f..1.0f range
-// Use CTRL-Click to input value and TAB to go to next item.
-bool ImGui::ColorEdit4(const char* label, float col[4], bool alpha)
+static void ColorEditOptionsPopup(ImGuiColorEditFlags flags)
+{
+    bool allow_opt_inputs = !(flags & ImGuiColorEditFlags__InputsMask);
+    bool allow_opt_datatype = !(flags & ImGuiColorEditFlags__DataTypeMask);
+    if ((!allow_opt_inputs && !allow_opt_datatype) || !ImGui::BeginPopup("context"))
+        return;
+    ImGuiContext& g = *GImGui;
+    ImGuiColorEditFlags opts = g.ColorEditOptions;
+    if (allow_opt_inputs)
+    {
+        if (ImGui::RadioButton("RGB", (opts & ImGuiColorEditFlags_RGB) ? 1 : 0)) opts = (opts & ~ImGuiColorEditFlags__InputsMask) | ImGuiColorEditFlags_RGB;
+        if (ImGui::RadioButton("HSV", (opts & ImGuiColorEditFlags_HSV) ? 1 : 0)) opts = (opts & ~ImGuiColorEditFlags__InputsMask) | ImGuiColorEditFlags_HSV;
+        if (ImGui::RadioButton("HEX", (opts & ImGuiColorEditFlags_HEX) ? 1 : 0)) opts = (opts & ~ImGuiColorEditFlags__InputsMask) | ImGuiColorEditFlags_HEX;
+    }
+    if (allow_opt_datatype)
+    {
+        if (allow_opt_inputs) ImGui::Separator();
+        if (ImGui::RadioButton("0..255",     (opts & ImGuiColorEditFlags_Uint8) ? 1 : 0)) opts = (opts & ~ImGuiColorEditFlags__DataTypeMask) | ImGuiColorEditFlags_Uint8;
+        if (ImGui::RadioButton("0.00..1.00", (opts & ImGuiColorEditFlags_Float) ? 1 : 0)) opts = (opts & ~ImGuiColorEditFlags__DataTypeMask) | ImGuiColorEditFlags_Float;
+    }
+    g.ColorEditOptions = opts;
+    ImGui::EndPopup();
+}
+
+static void ColorPickerOptionsPopup(ImGuiColorEditFlags flags, float* ref_col)
+{
+    bool allow_opt_picker = !(flags & ImGuiColorEditFlags__PickerMask);
+    bool allow_opt_alpha_bar = !(flags & ImGuiColorEditFlags_NoAlpha) && !(flags & ImGuiColorEditFlags_AlphaBar);
+    if ((!allow_opt_picker && !allow_opt_alpha_bar) || !ImGui::BeginPopup("context"))
+        return;
+    ImGuiContext& g = *GImGui;
+    if (allow_opt_picker)
+    {
+        ImVec2 picker_size(g.FontSize * 8, ImMax(g.FontSize * 8 - (ColorSquareSize() + g.Style.ItemInnerSpacing.x), 1.0f)); // FIXME: Picker size copied from main picker function
+        ImGui::PushItemWidth(picker_size.x);
+        for (int picker_type = 0; picker_type < 2; picker_type++)
+        {
+            // Draw small/thumbnail version of each picker type (over an invisible button for selection)
+            if (picker_type > 0) ImGui::Separator();
+            ImGui::PushID(picker_type);
+            ImGuiColorEditFlags picker_flags = ImGuiColorEditFlags_NoInputs|ImGuiColorEditFlags_NoOptions|ImGuiColorEditFlags_NoLabel|ImGuiColorEditFlags_NoSidePreview|(flags & ImGuiColorEditFlags_NoAlpha);
+            if (picker_type == 0) picker_flags |= ImGuiColorEditFlags_PickerHueBar;
+            if (picker_type == 1) picker_flags |= ImGuiColorEditFlags_PickerHueWheel;
+            ImVec2 backup_pos = ImGui::GetCursorScreenPos();
+            if (ImGui::Selectable("##selectable", false, 0, picker_size)) // By default, Selectable() is closing popup
+                g.ColorEditOptions = (g.ColorEditOptions & ~ImGuiColorEditFlags__PickerMask) | (picker_flags & ImGuiColorEditFlags__PickerMask);
+            ImGui::SetCursorScreenPos(backup_pos);
+            ImVec4 dummy_ref_col;
+            memcpy(&dummy_ref_col.x, ref_col, sizeof(float) * (ImGuiColorEditFlags_NoAlpha ? 3 : 4));
+            ImGui::ColorPicker4("##dummypicker", &dummy_ref_col.x, picker_flags);
+            ImGui::PopID();
+        }
+        ImGui::PopItemWidth();
+    }
+    if (allow_opt_alpha_bar)
+    {
+        if (allow_opt_picker) ImGui::Separator();
+        ImGui::CheckboxFlags("Alpha Bar", (unsigned int*)&g.ColorEditOptions, ImGuiColorEditFlags_AlphaBar);
+    }
+    ImGui::EndPopup();
+}
+
+// Edit colors components (each component in 0.0f..1.0f range). 
+// See enum ImGuiColorEditFlags_ for available options. e.g. Only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.
+// With typical options: Left-click on colored square to open color picker. Right-click to open option menu. CTRL-Click over input fields to edit them and TAB to go to next item.
+bool ImGui::ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flags)
 {
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
@@ -9035,125 +9281,169 @@ bool ImGui::ColorEdit4(const char* label, float col[4], bool alpha)
 
     ImGuiContext& g = *GImGui;
     const ImGuiStyle& style = g.Style;
-    const ImGuiID id = window->GetID(label);
-    const float w_full = CalcItemWidth();
-    const float square_sz = (g.FontSize + style.FramePadding.y * 2.0f);
+    const float w_extra = (flags & ImGuiColorEditFlags_NoSmallPreview) ? 0.0f : (ColorSquareSize() + style.ItemInnerSpacing.x);
+    const float w_items_all = CalcItemWidth() - w_extra;
+    const char* label_display_end = FindRenderedTextEnd(label);
 
-    ImGuiColorEditMode edit_mode = window->DC.ColorEditMode;
-    if (edit_mode == ImGuiColorEditMode_UserSelect || edit_mode == ImGuiColorEditMode_UserSelectShowButton)
-        edit_mode = g.ColorEditModeStorage.GetInt(id, 0) % 3;
-
-    float f[4] = { col[0], col[1], col[2], col[3] };
-    if (edit_mode == ImGuiColorEditMode_HSV)
-        ColorConvertRGBtoHSV(f[0], f[1], f[2], f[0], f[1], f[2]);
-
-    int i[4] = { IM_F32_TO_INT8_UNBOUND(f[0]), IM_F32_TO_INT8_UNBOUND(f[1]), IM_F32_TO_INT8_UNBOUND(f[2]), IM_F32_TO_INT8_UNBOUND(f[3]) };
-
-    int components = alpha ? 4 : 3;
-    bool value_changed = false;
+    const bool alpha = (flags & ImGuiColorEditFlags_NoAlpha) == 0;
+    const bool hdr = (flags & ImGuiColorEditFlags_HDR) != 0;
+    const int components = alpha ? 4 : 3;
+    const ImGuiColorEditFlags flags_untouched = flags;
 
     BeginGroup();
     PushID(label);
 
-    const bool hsv = (edit_mode == 1);
-    switch (edit_mode)
+    // If we're not showing any slider there's no point in doing any HSV conversions
+    if (flags & ImGuiColorEditFlags_NoInputs)
+        flags = (flags & (~ImGuiColorEditFlags__InputsMask)) | ImGuiColorEditFlags_RGB | ImGuiColorEditFlags_NoOptions;
+
+    // Context menu: display and modify options (before defaults are applied)
+    if (!(flags & ImGuiColorEditFlags_NoOptions))
+        ColorEditOptionsPopup(flags);
+ 
+    // Read stored options
+    if (!(flags & ImGuiColorEditFlags__InputsMask))
+        flags |= (g.ColorEditOptions & ImGuiColorEditFlags__InputsMask);
+    if (!(flags & ImGuiColorEditFlags__DataTypeMask))
+        flags |= (g.ColorEditOptions & ImGuiColorEditFlags__DataTypeMask);
+    if (!(flags & ImGuiColorEditFlags__PickerMask))
+        flags |= (g.ColorEditOptions & ImGuiColorEditFlags__PickerMask);
+    flags |= (g.ColorEditOptions & ~(ImGuiColorEditFlags__InputsMask | ImGuiColorEditFlags__DataTypeMask | ImGuiColorEditFlags__PickerMask));
+
+    // Convert to the formats we need
+    float f[4] = { col[0], col[1], col[2], alpha ? col[3] : 1.0f };
+    if (flags & ImGuiColorEditFlags_HSV)
+        ColorConvertRGBtoHSV(f[0], f[1], f[2], f[0], f[1], f[2]);
+    int i[4] = { IM_F32_TO_INT8_UNBOUND(f[0]), IM_F32_TO_INT8_UNBOUND(f[1]), IM_F32_TO_INT8_UNBOUND(f[2]), IM_F32_TO_INT8_UNBOUND(f[3]) };
+
+    bool value_changed = false;
+    bool value_changed_as_float = false;
+
+    if ((flags & (ImGuiColorEditFlags_RGB | ImGuiColorEditFlags_HSV)) != 0 && (flags & ImGuiColorEditFlags_NoInputs) == 0)
     {
-    case ImGuiColorEditMode_RGB:
-    case ImGuiColorEditMode_HSV:
-        {
-            // RGB/HSV 0..255 Sliders
-            const float w_items_all = w_full - (square_sz + style.ItemInnerSpacing.x);
-            const float w_item_one  = ImMax(1.0f, (float)(int)((w_items_all - (style.ItemInnerSpacing.x) * (components-1)) / (float)components));
-            const float w_item_last = ImMax(1.0f, (float)(int)(w_items_all - (w_item_one + style.ItemInnerSpacing.x) * (components-1)));
+        // RGB/HSV 0..255 Sliders
+        const float w_item_one  = ImMax(1.0f, (float)(int)((w_items_all - (style.ItemInnerSpacing.x) * (components-1)) / (float)components));
+        const float w_item_last = ImMax(1.0f, (float)(int)(w_items_all - (w_item_one + style.ItemInnerSpacing.x) * (components-1)));
 
-            const bool hide_prefix = (w_item_one <= CalcTextSize("M:999").x);
-            const char* ids[4] = { "##X", "##Y", "##Z", "##W" };
-            const char* fmt_table[3][4] =
-            {
-                {   "%3.0f",   "%3.0f",   "%3.0f",   "%3.0f" },
-                { "R:%3.0f", "G:%3.0f", "B:%3.0f", "A:%3.0f" },
-                { "H:%3.0f", "S:%3.0f", "V:%3.0f", "A:%3.0f" }
-            };
-            const char** fmt = hide_prefix ? fmt_table[0] : hsv ? fmt_table[2] : fmt_table[1];
-
-            PushItemWidth(w_item_one);
-            for (int n = 0; n < components; n++)
-            {
-                if (n > 0)
-                    SameLine(0, style.ItemInnerSpacing.x);
-                if (n + 1 == components)
-                    PushItemWidth(w_item_last);
-                value_changed |= DragInt(ids[n], &i[n], 1.0f, 0, 255, fmt[n]);
-            }
-            PopItemWidth();
-            PopItemWidth();
-        }
-        break;
-    case ImGuiColorEditMode_HEX:
+        const bool hide_prefix = (w_item_one <= CalcTextSize((flags & ImGuiColorEditFlags_Float) ? "M:0.000" : "M:000").x);
+        const char* ids[4] = { "##X", "##Y", "##Z", "##W" };
+        const char* fmt_table_int[3][4] =
         {
-            // RGB Hexadecimal Input
-            const float w_slider_all = w_full - square_sz;
-            char buf[64];
-            if (alpha)
-                ImFormatString(buf, IM_ARRAYSIZE(buf), "#%02X%02X%02X%02X", i[0], i[1], i[2], i[3]);
+            {   "%3.0f",   "%3.0f",   "%3.0f",   "%3.0f" }, // Short display
+            { "R:%3.0f", "G:%3.0f", "B:%3.0f", "A:%3.0f" }, // Long display for RGBA
+            { "H:%3.0f", "S:%3.0f", "V:%3.0f", "A:%3.0f" }  // Long display for HSVA
+        };
+        const char* fmt_table_float[3][4] =
+        {
+            {   "%0.3f",   "%0.3f",   "%0.3f",   "%0.3f" }, // Short display
+            { "R:%0.3f", "G:%0.3f", "B:%0.3f", "A:%0.3f" }, // Long display for RGBA
+            { "H:%0.3f", "S:%0.3f", "V:%0.3f", "A:%0.3f" }  // Long display for HSVA
+        };
+        const int fmt_idx = hide_prefix ? 0 : (flags & ImGuiColorEditFlags_HSV) ? 2 : 1;
+
+        PushItemWidth(w_item_one);
+        for (int n = 0; n < components; n++)
+        {
+            if (n > 0)
+                SameLine(0, style.ItemInnerSpacing.x);
+            if (n + 1 == components)
+                PushItemWidth(w_item_last);
+            if (flags & ImGuiColorEditFlags_Float)
+                value_changed |= value_changed_as_float |= DragFloat(ids[n], &f[n], 1.0f/255.0f, 0.0f, hdr ? 0.0f : 1.0f, fmt_table_float[fmt_idx][n]);
             else
-                ImFormatString(buf, IM_ARRAYSIZE(buf), "#%02X%02X%02X", i[0], i[1], i[2]);
-            PushItemWidth(w_slider_all - style.ItemInnerSpacing.x);
-            if (InputText("##Text", buf, IM_ARRAYSIZE(buf), ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
-            {
-                value_changed |= true;
-                char* p = buf;
-                while (*p == '#' || ImCharIsSpace(*p))
-                    p++;
-                i[0] = i[1] = i[2] = i[3] = 0;
-                if (alpha)
-                    sscanf(p, "%02X%02X%02X%02X", (unsigned int*)&i[0], (unsigned int*)&i[1], (unsigned int*)&i[2], (unsigned int*)&i[3]); // Treat at unsigned (%X is unsigned)
-                else
-                    sscanf(p, "%02X%02X%02X", (unsigned int*)&i[0], (unsigned int*)&i[1], (unsigned int*)&i[2]);
-            }
-            PopItemWidth();
+                value_changed |= DragInt(ids[n], &i[n], 1.0f, 0, hdr ? 0 : 255, fmt_table_int[fmt_idx][n]);
+            if (!(flags & ImGuiColorEditFlags_NoOptions) && IsItemHovered() && IsMouseClicked(1))
+                OpenPopup("context");
         }
-        break;
+        PopItemWidth();
+        PopItemWidth();
+    }
+    else if ((flags & ImGuiColorEditFlags_HEX) != 0 && (flags & ImGuiColorEditFlags_NoInputs) == 0)
+    {
+        // RGB Hexadecimal Input
+        char buf[64];
+        if (alpha)
+            ImFormatString(buf, IM_ARRAYSIZE(buf), "#%02X%02X%02X%02X", ImClamp(i[0],0,255), ImClamp(i[1],0,255), ImClamp(i[2],0,255), ImClamp(i[3],0,255));
+        else
+            ImFormatString(buf, IM_ARRAYSIZE(buf), "#%02X%02X%02X", ImClamp(i[0],0,255), ImClamp(i[1],0,255), ImClamp(i[2],0,255));
+        PushItemWidth(w_items_all);
+        if (InputText("##Text", buf, IM_ARRAYSIZE(buf), ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
+        {
+            value_changed |= true;
+            char* p = buf;
+            while (*p == '#' || ImCharIsSpace(*p))
+                p++;
+            i[0] = i[1] = i[2] = i[3] = 0;
+            if (alpha)
+                sscanf(p, "%02X%02X%02X%02X", (unsigned int*)&i[0], (unsigned int*)&i[1], (unsigned int*)&i[2], (unsigned int*)&i[3]); // Treat at unsigned (%X is unsigned)
+            else
+                sscanf(p, "%02X%02X%02X", (unsigned int*)&i[0], (unsigned int*)&i[1], (unsigned int*)&i[2]);
+        }
+        if (!(flags & ImGuiColorEditFlags_NoOptions) && IsItemHovered() && IsMouseClicked(1))
+            OpenPopup("context");
+        PopItemWidth();
     }
 
-    SameLine(0, style.ItemInnerSpacing.x);
+    bool picker_active = false;
+    if (!(flags & ImGuiColorEditFlags_NoSmallPreview))
+    {
+        if (!(flags & ImGuiColorEditFlags_NoInputs))
+            SameLine(0, style.ItemInnerSpacing.x);
 
-    const ImVec4 col_display(col[0], col[1], col[2], 1.0f);
-    if (ColorButton(col_display))
-        g.ColorEditModeStorage.SetInt(id, (edit_mode + 1) % 3); // Don't set local copy of 'edit_mode' right away!
+        const ImVec4 col_v4(col[0], col[1], col[2], alpha ? col[3] : 1.0f);
+        if (ColorButton("##ColorButton", col_v4, flags))
+        {
+            if (!(flags & ImGuiColorEditFlags_NoPicker))
+            {
+                // Store current color and open a picker
+                g.ColorPickerRef = col_v4;
+                OpenPopup("picker");
+                SetNextWindowPos(window->DC.LastItemRect.GetBL() + ImVec2(-1,style.ItemSpacing.y));
+            }
+        }
+        if (!(flags & ImGuiColorEditFlags_NoOptions) && IsItemHovered() && IsMouseClicked(1))
+            OpenPopup("context");
 
-    // Recreate our own tooltip over's ColorButton() one because we want to display correct alpha here
-    if (IsItemHovered())
-        SetTooltip("Color:\n(%.2f,%.2f,%.2f,%.2f)\n#%02X%02X%02X%02X", col[0], col[1], col[2], col[3], IM_F32_TO_INT8_SAT(col[0]), IM_F32_TO_INT8_SAT(col[1]), IM_F32_TO_INT8_SAT(col[2]), IM_F32_TO_INT8_SAT(col[3]));
+        if (BeginPopup("picker"))
+        {
+            picker_active = true;
+            if (label != label_display_end)
+            {
+                TextUnformatted(label, label_display_end);
+                Separator();
+            }
+            float square_sz = ColorSquareSize();
+            ImGuiColorEditFlags picker_flags_to_forward = ImGuiColorEditFlags__DataTypeMask | ImGuiColorEditFlags__PickerMask | ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_AlphaBar;
+            ImGuiColorEditFlags picker_flags = (flags_untouched & picker_flags_to_forward) | ImGuiColorEditFlags__InputsMask | ImGuiColorEditFlags_NoLabel | ImGuiColorEditFlags_AlphaPreviewHalf;
+            PushItemWidth(square_sz * 12.0f); // Use 256 + bar sizes?
+            value_changed |= ColorPicker4("##picker", col, picker_flags, &g.ColorPickerRef.x);
+            PopItemWidth();
+            EndPopup();
+        }
+    }
 
-    if (window->DC.ColorEditMode == ImGuiColorEditMode_UserSelectShowButton)
+    if (label != label_display_end && !(flags & ImGuiColorEditFlags_NoLabel))
     {
         SameLine(0, style.ItemInnerSpacing.x);
-        const char* button_titles[3] = { "RGB", "HSV", "HEX" };
-        if (ButtonEx(button_titles[edit_mode], ImVec2(0,0), ImGuiButtonFlags_DontClosePopups))
-            g.ColorEditModeStorage.SetInt(id, (edit_mode + 1) % 3); // Don't set local copy of 'edit_mode' right away!
-    }
-
-    const char* label_display_end = FindRenderedTextEnd(label);
-    if (label != label_display_end)
-    {
-        SameLine(0, (window->DC.ColorEditMode == ImGuiColorEditMode_UserSelectShowButton) ? -1.0f : style.ItemInnerSpacing.x);
         TextUnformatted(label, label_display_end);
     }
 
     // Convert back
-    for (int n = 0; n < 4; n++)
-        f[n] = i[n] / 255.0f;
-    if (edit_mode == 1)
-        ColorConvertHSVtoRGB(f[0], f[1], f[2], f[0], f[1], f[2]);
-
-    if (value_changed)
+    if (!picker_active)
     {
-        col[0] = f[0];
-        col[1] = f[1];
-        col[2] = f[2];
-        if (alpha)
-            col[3] = f[3];
+        if (!value_changed_as_float) 
+            for (int n = 0; n < 4; n++)
+                f[n] = i[n] / 255.0f;
+        if (flags & ImGuiColorEditFlags_HSV)
+            ColorConvertHSVtoRGB(f[0], f[1], f[2], f[0], f[1], f[2]);
+        if (value_changed)
+        {
+            col[0] = f[0];
+            col[1] = f[1];
+            col[2] = f[2];
+            if (alpha)
+                col[3] = f[3];
+        }
     }
 
     PopID();
@@ -9162,10 +9452,336 @@ bool ImGui::ColorEdit4(const char* label, float col[4], bool alpha)
     return value_changed;
 }
 
-void ImGui::ColorEditMode(ImGuiColorEditMode mode)
+bool ImGui::ColorPicker3(const char* label, float col[3], ImGuiColorEditFlags flags)
 {
+    float col4[4] = { col[0], col[1], col[2], 1.0f };
+    if (!ColorPicker4(label, col4, flags | ImGuiColorEditFlags_NoAlpha))
+        return false;
+    col[0] = col4[0]; col[1] = col4[1]; col[2] = col4[2];
+    return true;
+}
+
+// 'pos' is position of the arrow tip. half_sz.x is length from base to tip. half_sz.y is length on each side.
+static void RenderArrow(ImDrawList* draw_list, ImVec2 pos, ImVec2 half_sz, ImGuiDir direction, ImU32 col)
+{
+    switch (direction)
+    {
+    case ImGuiDir_Right: draw_list->AddTriangleFilled(ImVec2(pos.x - half_sz.x, pos.y + half_sz.y), ImVec2(pos.x - half_sz.x, pos.y - half_sz.y), pos, col); return;
+    case ImGuiDir_Left:  draw_list->AddTriangleFilled(ImVec2(pos.x + half_sz.x, pos.y - half_sz.y), ImVec2(pos.x + half_sz.x, pos.y + half_sz.y), pos, col); return;
+    case ImGuiDir_Down:  draw_list->AddTriangleFilled(ImVec2(pos.x - half_sz.x, pos.y - half_sz.y), ImVec2(pos.x + half_sz.x, pos.y - half_sz.y), pos, col); return;
+    case ImGuiDir_Up:    draw_list->AddTriangleFilled(ImVec2(pos.x + half_sz.x, pos.y + half_sz.y), ImVec2(pos.x - half_sz.x, pos.y + half_sz.y), pos, col); return;
+    default: break;
+    }
+}
+
+static void RenderArrowsForVerticalBar(ImDrawList* draw_list, ImVec2 pos, ImVec2 half_sz, float bar_w)
+{
+    RenderArrow(draw_list, ImVec2(pos.x + half_sz.x + 1,         pos.y), ImVec2(half_sz.x + 2, half_sz.y + 1), ImGuiDir_Right, IM_COL32_BLACK);
+    RenderArrow(draw_list, ImVec2(pos.x + half_sz.x,             pos.y), half_sz,                              ImGuiDir_Right, IM_COL32_WHITE);
+    RenderArrow(draw_list, ImVec2(pos.x + bar_w - half_sz.x - 1, pos.y), ImVec2(half_sz.x + 2, half_sz.y + 1), ImGuiDir_Left,  IM_COL32_BLACK);
+    RenderArrow(draw_list, ImVec2(pos.x + bar_w - half_sz.x,     pos.y), half_sz,                              ImGuiDir_Left,  IM_COL32_WHITE);
+}
+
+static void PaintVertsLinearGradientKeepAlpha(ImDrawVert* vert_start, ImDrawVert* vert_end, ImVec2 gradient_p0, ImVec2 gradient_p1, ImU32 col0, ImU32 col1)
+{
+    ImVec2 gradient_extent = gradient_p1 - gradient_p0;
+    float gradient_inv_length = ImInvLength(gradient_extent, 0.0f);
+    for (ImDrawVert* vert = vert_start; vert < vert_end; vert++)
+    {
+        float d = ImDot(vert->pos - gradient_p0, gradient_extent);
+        float t = ImMin(sqrtf(ImMax(d, 0.0f)) * gradient_inv_length, 1.0f);
+        int r = ImLerp((int)(col0 >> IM_COL32_R_SHIFT) & 0xFF, (int)(col1 >> IM_COL32_R_SHIFT) & 0xFF, t);
+        int g = ImLerp((int)(col0 >> IM_COL32_G_SHIFT) & 0xFF, (int)(col1 >> IM_COL32_G_SHIFT) & 0xFF, t);
+        int b = ImLerp((int)(col0 >> IM_COL32_B_SHIFT) & 0xFF, (int)(col1 >> IM_COL32_B_SHIFT) & 0xFF, t);
+        vert->col = (r << IM_COL32_R_SHIFT) | (g << IM_COL32_G_SHIFT) | (b << IM_COL32_B_SHIFT) | (vert->col & IM_COL32_A_MASK);
+    }
+}
+
+// ColorPicker
+// Note: only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.
+// FIXME: we adjust the big color square height based on item width, which may cause a flickering feedback loop (if automatic height makes a vertical scrollbar appears, affecting automatic width..) 
+bool ImGui::ColorPicker4(const char* label, float col[4], ImGuiColorEditFlags flags, const float* ref_col)
+{
+    ImGuiContext& g = *GImGui;
     ImGuiWindow* window = GetCurrentWindow();
-    window->DC.ColorEditMode = mode;
+    ImDrawList* draw_list = window->DrawList;
+
+    ImGuiStyle& style = g.Style;
+    ImGuiIO& io = g.IO;
+
+    PushID(label);
+    BeginGroup();
+
+    if ((flags & ImGuiColorEditFlags_NoSidePreview) == 0)
+        flags |= ImGuiColorEditFlags_NoSmallPreview;
+
+    if ((flags & ImGuiColorEditFlags_NoOptions) == 0)
+    {
+        // Context menu: display and store options.
+        ColorPickerOptionsPopup(flags, col);
+
+        // Read stored options
+        if ((flags & ImGuiColorEditFlags__PickerMask) == 0)
+            flags |= ((g.ColorEditOptions & ImGuiColorEditFlags__PickerMask) ? g.ColorEditOptions : ImGuiColorEditFlags__OptionsDefault) & ImGuiColorEditFlags__PickerMask; 
+        IM_ASSERT(ImIsPowerOfTwo((int)(flags & ImGuiColorEditFlags__PickerMask))); // Check that only 1 is selected
+        flags |= (g.ColorEditOptions & ImGuiColorEditFlags_AlphaBar);
+    }
+
+    // Setup
+    bool alpha_bar = (flags & ImGuiColorEditFlags_AlphaBar) && !(flags & ImGuiColorEditFlags_NoAlpha);
+    ImVec2 picker_pos = window->DC.CursorPos;
+    float bars_width = ColorSquareSize(); // Arbitrary smallish width of Hue/Alpha picking bars
+    float sv_picker_size = ImMax(bars_width * 1, CalcItemWidth() - (alpha_bar ? 2 : 1) * (bars_width + style.ItemInnerSpacing.x)); // Saturation/Value picking box
+    float bar0_pos_x = picker_pos.x + sv_picker_size + style.ItemInnerSpacing.x;
+    float bar1_pos_x = bar0_pos_x + bars_width + style.ItemInnerSpacing.x;
+    float bars_triangles_half_sz = (float)(int)(bars_width * 0.20f);
+
+    float wheel_thickness = sv_picker_size * 0.08f;
+    float wheel_r_outer = sv_picker_size * 0.50f;
+    float wheel_r_inner = wheel_r_outer - wheel_thickness;
+    ImVec2 wheel_center(picker_pos.x + (sv_picker_size + bars_width)*0.5f, picker_pos.y + sv_picker_size*0.5f);
+    
+    // Note: the triangle is displayed rotated with triangle_pa pointing to Hue, but most coordinates stays unrotated for logic.
+    float triangle_r = wheel_r_inner - (int)(sv_picker_size * 0.027f);
+    ImVec2 triangle_pa = ImVec2(triangle_r, 0.0f); // Hue point.
+    ImVec2 triangle_pb = ImVec2(triangle_r * -0.5f, triangle_r * -0.866025f); // Black point.
+    ImVec2 triangle_pc = ImVec2(triangle_r * -0.5f, triangle_r * +0.866025f); // White point.
+
+    float H,S,V;
+    ColorConvertRGBtoHSV(col[0], col[1], col[2], H, S, V);
+
+    bool value_changed = false, value_changed_h = false, value_changed_sv = false;
+
+    if (flags & ImGuiColorEditFlags_PickerHueWheel)
+    {
+        // Hue wheel + SV triangle logic
+        InvisibleButton("hsv", ImVec2(sv_picker_size + style.ItemInnerSpacing.x + bars_width, sv_picker_size));
+        if (IsItemActive())
+        {
+            ImVec2 initial_off = g.IO.MouseClickedPos[0] - wheel_center;
+            ImVec2 current_off = g.IO.MousePos - wheel_center;
+            float initial_dist2 = ImLengthSqr(initial_off);
+            if (initial_dist2 >= (wheel_r_inner-1)*(wheel_r_inner-1) && initial_dist2 <= (wheel_r_outer+1)*(wheel_r_outer+1))
+            {
+                // Interactive with Hue wheel
+                H = atan2f(current_off.y, current_off.x) / IM_PI*0.5f;
+                if (H < 0.0f)
+                    H += 1.0f;
+                value_changed = value_changed_h = true;
+            }
+            float cos_hue_angle = cosf(-H * 2.0f * IM_PI);
+            float sin_hue_angle = sinf(-H * 2.0f * IM_PI);
+            if (ImTriangleContainsPoint(triangle_pa, triangle_pb, triangle_pc, ImRotate(initial_off, cos_hue_angle, sin_hue_angle)))
+            {
+                // Interacting with SV triangle
+                ImVec2 current_off_unrotated = ImRotate(current_off, cos_hue_angle, sin_hue_angle);
+                if (!ImTriangleContainsPoint(triangle_pa, triangle_pb, triangle_pc, current_off_unrotated))
+                    current_off_unrotated = ImTriangleClosestPoint(triangle_pa, triangle_pb, triangle_pc, current_off_unrotated);
+                float uu, vv, ww;
+                ImTriangleBarycentricCoords(triangle_pa, triangle_pb, triangle_pc, current_off_unrotated, uu, vv, ww);
+                V = ImClamp(1.0f - vv, 0.0001f, 1.0f);
+                S = ImClamp(uu / V, 0.0001f, 1.0f);
+                value_changed = value_changed_sv = true;
+            }
+        }
+        if (!(flags & ImGuiColorEditFlags_NoOptions) && IsItemHovered() && IsMouseClicked(1))
+            OpenPopup("context");
+    }
+    else if (flags & ImGuiColorEditFlags_PickerHueBar)
+    {
+        // SV rectangle logic
+        InvisibleButton("sv", ImVec2(sv_picker_size, sv_picker_size));
+        if (IsItemActive())
+        {
+            S = ImSaturate((io.MousePos.x - picker_pos.x) / (sv_picker_size-1));
+            V = 1.0f - ImSaturate((io.MousePos.y - picker_pos.y) / (sv_picker_size-1));
+            value_changed = value_changed_sv = true;
+        }
+        if (!(flags & ImGuiColorEditFlags_NoOptions) && IsItemHovered() && IsMouseClicked(1))
+            OpenPopup("context");
+
+        // Hue bar logic
+        SetCursorScreenPos(ImVec2(bar0_pos_x, picker_pos.y));
+        InvisibleButton("hue", ImVec2(bars_width, sv_picker_size));
+        if (IsItemActive())
+        {
+            H = ImSaturate((io.MousePos.y - picker_pos.y) / (sv_picker_size-1));
+            value_changed = value_changed_h = true;
+        }
+    }
+
+    // Alpha bar logic
+    if (alpha_bar)
+    {
+        SetCursorScreenPos(ImVec2(bar1_pos_x, picker_pos.y));
+        InvisibleButton("alpha", ImVec2(bars_width, sv_picker_size));
+        if (IsItemActive())
+        {
+            col[3] = 1.0f - ImSaturate((io.MousePos.y - picker_pos.y) / (sv_picker_size-1));
+            value_changed = true;
+        }
+    }
+
+    if (!(flags & ImGuiColorEditFlags_NoSidePreview))
+    {
+        SameLine(0, style.ItemInnerSpacing.x);
+        BeginGroup();
+    }
+
+    if (!(flags & ImGuiColorEditFlags_NoLabel))
+    {
+        const char* label_display_end = FindRenderedTextEnd(label);
+        if (label != label_display_end)
+        {
+            if ((flags & ImGuiColorEditFlags_NoSidePreview))
+                SameLine(0, style.ItemInnerSpacing.x);
+            TextUnformatted(label, label_display_end);
+        }
+    }
+
+    if (!(flags & ImGuiColorEditFlags_NoSidePreview))
+    {
+        ImVec4 col_v4(col[0], col[1], col[2], (flags & ImGuiColorEditFlags_NoAlpha) ? 1.0f : col[3]);
+        float square_sz = ColorSquareSize();
+        if ((flags & ImGuiColorEditFlags_NoLabel))
+            Text("Current");
+        ColorButton("##current", col_v4, (flags & (ImGuiColorEditFlags_HDR|ImGuiColorEditFlags_AlphaPreview|ImGuiColorEditFlags_AlphaPreviewHalf|ImGuiColorEditFlags_NoTooltip)), ImVec2(square_sz * 3, square_sz * 2));
+        if (ref_col != NULL)
+        {
+            Text("Original");
+            ImVec4 ref_col_v4(ref_col[0], ref_col[1], ref_col[2], (flags & ImGuiColorEditFlags_NoAlpha) ? 1.0f : ref_col[3]);
+            if (ColorButton("##original", ref_col_v4, (flags & (ImGuiColorEditFlags_HDR|ImGuiColorEditFlags_AlphaPreview|ImGuiColorEditFlags_AlphaPreviewHalf|ImGuiColorEditFlags_NoTooltip)), ImVec2(square_sz * 3, square_sz * 2)))
+            {
+                memcpy(col, ref_col, ((flags & ImGuiColorEditFlags_NoAlpha) ? 3 : 4) * sizeof(float));
+                value_changed = true;
+            }
+        }
+        EndGroup();
+    }
+
+    // Convert back color to RGB
+    if (value_changed_h || value_changed_sv)
+        ColorConvertHSVtoRGB(H >= 1.0f ? H - 10 * 1e-6f : H, S > 0.0f ? S : 10*1e-6f, V > 0.0f ? V : 1e-6f, col[0], col[1], col[2]);
+
+    // R,G,B and H,S,V slider color editor
+    if ((flags & ImGuiColorEditFlags_NoInputs) == 0)
+    {
+        PushItemWidth((alpha_bar ? bar1_pos_x : bar0_pos_x) + bars_width - picker_pos.x);
+        ImGuiColorEditFlags sub_flags_to_forward = ImGuiColorEditFlags__DataTypeMask | ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSmallPreview | ImGuiColorEditFlags_AlphaPreview | ImGuiColorEditFlags_AlphaPreviewHalf;
+        ImGuiColorEditFlags sub_flags = (flags & sub_flags_to_forward) | ImGuiColorEditFlags_NoPicker;
+        if (flags & ImGuiColorEditFlags_RGB || (flags & ImGuiColorEditFlags__InputsMask) == 0)
+            value_changed |= ColorEdit4("##rgb", col, sub_flags | ImGuiColorEditFlags_RGB);
+        if (flags & ImGuiColorEditFlags_HSV || (flags & ImGuiColorEditFlags__InputsMask) == 0)
+            value_changed |= ColorEdit4("##hsv", col, sub_flags | ImGuiColorEditFlags_HSV);
+        if (flags & ImGuiColorEditFlags_HEX || (flags & ImGuiColorEditFlags__InputsMask) == 0)
+            value_changed |= ColorEdit4("##hex", col, sub_flags | ImGuiColorEditFlags_HEX);
+        PopItemWidth();
+    }
+
+    // Try to cancel hue wrap (after ColorEdit), if any
+    if (value_changed)
+    {
+        float new_H, new_S, new_V;
+        ColorConvertRGBtoHSV(col[0], col[1], col[2], new_H, new_S, new_V);
+        if (new_H <= 0 && H > 0) 
+        {
+            if (new_V <= 0 && V != new_V)
+                ColorConvertHSVtoRGB(H, S, new_V <= 0 ? V * 0.5f : new_V, col[0], col[1], col[2]);
+            else if (new_S <= 0)
+                ColorConvertHSVtoRGB(H, new_S <= 0 ? S * 0.5f : new_S, new_V, col[0], col[1], col[2]);
+        }
+    }
+
+    ImVec4 hue_color_f(1, 1, 1, 1); ColorConvertHSVtoRGB(H, 1, 1, hue_color_f.x, hue_color_f.y, hue_color_f.z);
+    ImU32 hue_color32 = ColorConvertFloat4ToU32(hue_color_f);
+    ImU32 col32_no_alpha = ColorConvertFloat4ToU32(ImVec4(col[0], col[1], col[2], 1.0f));
+
+    const ImU32 hue_colors[6+1] = { IM_COL32(255,0,0,255), IM_COL32(255,255,0,255), IM_COL32(0,255,0,255), IM_COL32(0,255,255,255), IM_COL32(0,0,255,255), IM_COL32(255,0,255,255), IM_COL32(255,0,0,255) };
+    ImVec2 sv_cursor_pos;
+    
+    if (flags & ImGuiColorEditFlags_PickerHueWheel)
+    {
+        // Render Hue Wheel
+        const float aeps = 1.5f / wheel_r_outer; // Half a pixel arc length in radians (2pi cancels out).
+        const int segment_per_arc = ImMax(4, (int)wheel_r_outer / 12);
+        for (int n = 0; n < 6; n++)
+        {
+            const float a0 = (n)     /6.0f * 2.0f * IM_PI - aeps;
+            const float a1 = (n+1.0f)/6.0f * 2.0f * IM_PI + aeps;
+            int vert_start_idx = draw_list->_VtxCurrentIdx;
+            draw_list->PathArcTo(wheel_center, (wheel_r_inner + wheel_r_outer)*0.5f, a0, a1, segment_per_arc);
+            draw_list->PathStroke(IM_COL32_WHITE, false, wheel_thickness);
+
+            // Paint colors over existing vertices
+            ImVec2 gradient_p0(wheel_center.x + cosf(a0) * wheel_r_inner, wheel_center.y + sinf(a0) * wheel_r_inner);
+            ImVec2 gradient_p1(wheel_center.x + cosf(a1) * wheel_r_inner, wheel_center.y + sinf(a1) * wheel_r_inner);
+            PaintVertsLinearGradientKeepAlpha(draw_list->_VtxWritePtr - (draw_list->_VtxCurrentIdx - vert_start_idx), draw_list->_VtxWritePtr, gradient_p0, gradient_p1, hue_colors[n], hue_colors[n+1]);
+        }
+
+        // Render Cursor + preview on Hue Wheel
+        float cos_hue_angle = cosf(H * 2.0f * IM_PI);
+        float sin_hue_angle = sinf(H * 2.0f * IM_PI);
+        ImVec2 hue_cursor_pos(wheel_center.x + cos_hue_angle * (wheel_r_inner+wheel_r_outer)*0.5f, wheel_center.y + sin_hue_angle * (wheel_r_inner+wheel_r_outer)*0.5f);
+        float hue_cursor_rad = value_changed_h ? wheel_thickness * 0.65f : wheel_thickness * 0.55f;
+        int hue_cursor_segments = ImClamp((int)(hue_cursor_rad / 1.4f), 9, 32);
+        draw_list->AddCircleFilled(hue_cursor_pos, hue_cursor_rad, hue_color32, hue_cursor_segments);
+        draw_list->AddCircle(hue_cursor_pos, hue_cursor_rad+1, IM_COL32(128,128,128,255), hue_cursor_segments);
+        draw_list->AddCircle(hue_cursor_pos, hue_cursor_rad, IM_COL32_WHITE, hue_cursor_segments);
+
+        // Render SV triangle (rotated according to hue)
+        ImVec2 tra = wheel_center + ImRotate(triangle_pa, cos_hue_angle, sin_hue_angle);
+        ImVec2 trb = wheel_center + ImRotate(triangle_pb, cos_hue_angle, sin_hue_angle);
+        ImVec2 trc = wheel_center + ImRotate(triangle_pc, cos_hue_angle, sin_hue_angle);
+        ImVec2 uv_white = g.FontTexUvWhitePixel;
+        draw_list->PrimReserve(6, 6);
+        draw_list->PrimVtx(tra, uv_white, hue_color32);
+        draw_list->PrimVtx(trb, uv_white, hue_color32);
+        draw_list->PrimVtx(trc, uv_white, IM_COL32_WHITE);
+        draw_list->PrimVtx(tra, uv_white, IM_COL32_BLACK_TRANS);
+        draw_list->PrimVtx(trb, uv_white, IM_COL32_BLACK);
+        draw_list->PrimVtx(trc, uv_white, IM_COL32_BLACK_TRANS);
+        draw_list->AddTriangle(tra, trb, trc, IM_COL32(128,128,128,255), 1.5f);
+        sv_cursor_pos = ImLerp(ImLerp(trc, tra, ImSaturate(S)), trb, ImSaturate(1 - V));
+    }
+    else if (flags & ImGuiColorEditFlags_PickerHueBar)
+    {
+        // Render SV Square
+        draw_list->AddRectFilledMultiColor(picker_pos, picker_pos + ImVec2(sv_picker_size,sv_picker_size), IM_COL32_WHITE, hue_color32, hue_color32, IM_COL32_WHITE);
+        draw_list->AddRectFilledMultiColor(picker_pos, picker_pos + ImVec2(sv_picker_size,sv_picker_size), IM_COL32_BLACK_TRANS, IM_COL32_BLACK_TRANS, IM_COL32_BLACK, IM_COL32_BLACK);
+        RenderFrameBorder(picker_pos, picker_pos + ImVec2(sv_picker_size,sv_picker_size), 0.0f);
+        sv_cursor_pos.x = ImClamp((float)(int)(picker_pos.x + ImSaturate(S)     * sv_picker_size + 0.5f), picker_pos.x + 2, picker_pos.x + sv_picker_size - 2); // Sneakily prevent the circle to stick out too much
+        sv_cursor_pos.y = ImClamp((float)(int)(picker_pos.y + ImSaturate(1 - V) * sv_picker_size + 0.5f), picker_pos.y + 2, picker_pos.y + sv_picker_size - 2);
+
+        // Render Hue Bar
+        for (int i = 0; i < 6; ++i)
+            draw_list->AddRectFilledMultiColor(ImVec2(bar0_pos_x, picker_pos.y + i * (sv_picker_size / 6)), ImVec2(bar0_pos_x + bars_width, picker_pos.y + (i + 1) * (sv_picker_size / 6)), hue_colors[i], hue_colors[i], hue_colors[i + 1], hue_colors[i + 1]);
+        float bar0_line_y = (float)(int)(picker_pos.y + H * sv_picker_size + 0.5f);
+        RenderFrameBorder(ImVec2(bar0_pos_x, picker_pos.y), ImVec2(bar0_pos_x + bars_width, picker_pos.y + sv_picker_size), 0.0f);
+        RenderArrowsForVerticalBar(draw_list, ImVec2(bar0_pos_x - 1, bar0_line_y), ImVec2(bars_triangles_half_sz + 1, bars_triangles_half_sz), bars_width + 2.0f);
+    }
+
+    // Render cursor/preview circle (clamp S/V within 0..1 range because floating points colors may lead HSV values to be out of range)
+    float sv_cursor_rad = value_changed_sv ? 10.0f : 6.0f;
+    draw_list->AddCircleFilled(sv_cursor_pos, sv_cursor_rad, col32_no_alpha, 12);
+    draw_list->AddCircle(sv_cursor_pos, sv_cursor_rad+1, IM_COL32(128,128,128,255), 12);
+    draw_list->AddCircle(sv_cursor_pos, sv_cursor_rad, IM_COL32_WHITE, 12);
+
+    // Render alpha bar
+    if (alpha_bar)
+    {
+        float alpha = ImSaturate(col[3]);
+        ImRect bar1_bb(bar1_pos_x, picker_pos.y, bar1_pos_x + bars_width, picker_pos.y + sv_picker_size);
+        RenderColorRectWithAlphaCheckerboard(bar1_bb.Min, bar1_bb.Max, IM_COL32(0,0,0,0), bar1_bb.GetWidth() / 2.0f, ImVec2(0.0f, 0.0f));
+        draw_list->AddRectFilledMultiColor(bar1_bb.Min, bar1_bb.Max, col32_no_alpha, col32_no_alpha, col32_no_alpha & ~IM_COL32_A_MASK, col32_no_alpha & ~IM_COL32_A_MASK);
+        float bar1_line_y = (float)(int)(picker_pos.y + (1.0f - alpha) * sv_picker_size + 0.5f);
+        RenderFrameBorder(bar1_bb.Min, bar1_bb.Max, 0.0f);
+        RenderArrowsForVerticalBar(draw_list, ImVec2(bar1_pos_x - 1, bar1_line_y), ImVec2(bars_triangles_half_sz + 1, bars_triangles_half_sz), bars_width + 2.0f);
+    }
+
+    EndGroup();
+    PopID();
+
+    return value_changed;
 }
 
 // Horizontal separating line.
@@ -9298,7 +9914,7 @@ void ImGui::EndGroup()
 
     window->DC.GroupStack.pop_back();
 
-    //window->DrawList->AddRect(group_bb.Min, group_bb.Max, IM_COL32(255,0,255,255));   // Debug
+    //window->DrawList->AddRect(group_bb.Min, group_bb.Max, IM_COL32(255,0,255,255));   // [Debug]
 }
 
 // Gets back to previous line and continue with horizontal layout
@@ -9416,7 +10032,7 @@ float ImGui::GetColumnOffset(int column_index)
 
     IM_ASSERT(column_index < window->DC.ColumnsData.Size);
     const float t = window->DC.ColumnsData[column_index].OffsetNorm;
-    const float x_offset = window->DC.ColumnsMinX + t * (window->DC.ColumnsMaxX - window->DC.ColumnsMinX);
+    const float x_offset = ImLerp(window->DC.ColumnsMinX, window->DC.ColumnsMaxX, t);
     return (float)(int)x_offset;
 }
 
@@ -9482,7 +10098,8 @@ void ImGui::Columns(int columns_count, const char* id, bool border)
         {
             float x = window->Pos.x + GetColumnOffset(i);
             const ImGuiID column_id = window->DC.ColumnsSetId + ImGuiID(i);
-            const ImRect column_rect(ImVec2(x-4,y1),ImVec2(x+4,y2));
+            const float column_w = 4.0f;
+            const ImRect column_rect(ImVec2(x - column_w, y1), ImVec2(x + column_w, y2));
             if (IsClippedEx(column_rect, &column_id, false))
                 continue;
 
@@ -9499,7 +10116,7 @@ void ImGui::Columns(int columns_count, const char* id, bool border)
             if (held)
             {
                 if (g.ActiveIdIsJustActivated)
-                    g.ActiveIdClickOffset.x -= 4;   // Store from center of column line (we used a 8 wide rect for columns clicking)
+                    g.ActiveIdClickOffset.x -= column_w;   // Store from center of column line (we used a 8 wide rect for columns clicking)
                 x = GetDraggedColumnOffset(i);
                 SetColumnOffset(i, x);
             }
@@ -9518,7 +10135,7 @@ void ImGui::Columns(int columns_count, const char* id, bool border)
     window->DC.ColumnsShowBorders = border;
 
     const float content_region_width = (window->SizeContentsExplicit.x != 0.0f) ? window->SizeContentsExplicit.x : window->Size.x;
-    window->DC.ColumnsMinX = window->DC.IndentX; // Lock our horizontal range
+    window->DC.ColumnsMinX = window->DC.IndentX - g.Style.ItemSpacing.x; // Lock our horizontal range
     window->DC.ColumnsMaxX = content_region_width - window->Scroll.x - ((window->Flags & ImGuiWindowFlags_NoScrollbar) ? 0 : g.Style.ScrollbarSize);// - window->WindowPadding().x;
     window->DC.ColumnsStartPosY = window->DC.CursorPos.y;
     window->DC.ColumnsCellMinY = window->DC.ColumnsCellMaxY = window->DC.CursorPos.y;
@@ -9629,14 +10246,14 @@ void ImGui::ValueColor(const char* prefix, const ImVec4& v)
 {
     Text("%s: (%.2f,%.2f,%.2f,%.2f)", prefix, v.x, v.y, v.z, v.w);
     SameLine();
-    ColorButton(v, true);
+    ColorButton(prefix, v);
 }
 
 void ImGui::ValueColor(const char* prefix, ImU32 v)
 {
     Text("%s: %08X", prefix, v);
     SameLine();
-    ColorButton(ColorConvertU32ToFloat4(v), true);
+    ColorButton(prefix, ColorConvertU32ToFloat4(v));
 }
 
 //-----------------------------------------------------------------------------
@@ -9761,7 +10378,7 @@ void ImGui::ShowMetricsWindow(bool* p_open)
         ImGui::Text("%d vertices, %d indices (%d triangles)", ImGui::GetIO().MetricsRenderVertices, ImGui::GetIO().MetricsRenderIndices, ImGui::GetIO().MetricsRenderIndices / 3);
         ImGui::Text("%d allocations", ImGui::GetIO().MetricsAllocs);
         static bool show_clip_rects = true;
-        ImGui::Checkbox("Show clipping rectangles when hovering a ImDrawCmd", &show_clip_rects);
+        ImGui::Checkbox("Show clipping rectangles when hovering an ImDrawCmd", &show_clip_rects);
         ImGui::Separator();
 
         struct Funcs
@@ -9841,6 +10458,7 @@ void ImGui::ShowMetricsWindow(bool* p_open)
                 ImGui::BulletText("Pos: (%.1f,%.1f)", window->Pos.x, window->Pos.y);
                 ImGui::BulletText("Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window->Size.x, window->Size.y, window->SizeContents.x, window->SizeContents.y);
                 ImGui::BulletText("Scroll: (%.2f,%.2f)", window->Scroll.x, window->Scroll.y);
+                ImGui::BulletText("Active: %d, Accessed: %d", window->Active, window->Accessed);
                 if (window->RootWindow != window) NodeWindow(window->RootWindow, "RootWindow");
                 if (window->DC.ChildWindows.Size > 0) NodeWindows(window->DC.ChildWindows, "ChildWindows");
                 ImGui::BulletText("Storage: %d bytes", window->StateStorage.Data.Size * (int)sizeof(ImGuiStorage::Pair));
@@ -9872,6 +10490,7 @@ void ImGui::ShowMetricsWindow(bool* p_open)
             ImGui::Text("HoveredRootWindow: '%s'", g.HoveredRootWindow ? g.HoveredRootWindow->Name : "NULL");
             ImGui::Text("HoveredID: 0x%08X/0x%08X", g.HoveredId, g.HoveredIdPreviousFrame); // Data is "in-flight" so depending on when the Metrics window is called we may see current frame information or not
             ImGui::Text("ActiveID: 0x%08X/0x%08X", g.ActiveId, g.ActiveIdPreviousFrame);
+            ImGui::Text("ActiveIdWindow: '%s'", g.ActiveIdWindow ? g.ActiveIdWindow->Name : "NULL");
             ImGui::TreePop();
         }
     }
