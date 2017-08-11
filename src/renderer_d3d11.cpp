@@ -3123,7 +3123,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				sd.AddressU       = s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT];
 				sd.AddressV       = s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT];
 				sd.AddressW       = s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT];
-				sd.MipLODBias     = 0.0f;
+				sd.MipLODBias     = float(BGFX_CONFIG_MIP_LOD_BIAS);
 				sd.MaxAnisotropy  = m_maxAnisotropy;
 				sd.ComparisonFunc = 0 == cmpFunc ? D3D11_COMPARISON_NEVER : s_cmpFunc[cmpFunc];
 				sd.BorderColor[0] = _rgba[0];

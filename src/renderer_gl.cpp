@@ -3431,13 +3431,15 @@ namespace bgfx { namespace gl
 						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, magFilter) );
 						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, minFilter) );
 
-						if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-						||  m_borderColorSupport)
+						if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 						{
-							if (hasBorderColor)
-							{
-								GL_CHECK(glSamplerParameterfv(sampler, GL_TEXTURE_BORDER_COLOR, _rgba) );
-							}
+							GL_CHECK(glSamplerParameterf(sampler, GL_TEXTURE_LOD_BIAS, float(BGFX_CONFIG_MIP_LOD_BIAS) ) );
+						}
+
+						if (m_borderColorSupport
+						&&  hasBorderColor)
+						{
+							GL_CHECK(glSamplerParameterfv(sampler, GL_TEXTURE_BORDER_COLOR, _rgba) );
 						}
 
 						if (0 != (_flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) )
@@ -5405,13 +5407,15 @@ namespace bgfx { namespace gl
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, magFilter) );
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilter) );
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-			||  s_renderGL->m_borderColorSupport)
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			{
-				if (hasBorderColor)
-				{
-					GL_CHECK(glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, _rgba) );
-				}
+				GL_CHECK(glTexParameterf(target, GL_TEXTURE_LOD_BIAS, float(BGFX_CONFIG_MIP_LOD_BIAS) ) );
+			}
+
+			if (s_renderGL->m_borderColorSupport
+			&&  hasBorderColor)
+			{
+				GL_CHECK(glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, _rgba) );
 			}
 
 			if (0 != (flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) )
