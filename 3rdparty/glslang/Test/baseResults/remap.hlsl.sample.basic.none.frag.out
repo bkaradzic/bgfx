@@ -58,8 +58,8 @@ WARNING: 0:4: 'immediate sampler state' : unimplemented
                               Name 169  "g_tTexcdu4"
                               Name 176  "psout"
                               Name 185  "flattenTemp"
-                              Name 188  "Color"
-                              Name 192  "Depth"
+                              Name 188  "@entryPointOutput.Color"
+                              Name 192  "@entryPointOutput.Depth"
                               Name 195  "g_sSamp2d"
                               Name 196  "g_sSamp2D_b"
                               Name 197  "g_tTex1df4a"
@@ -78,8 +78,8 @@ WARNING: 0:4: 'immediate sampler state' : unimplemented
                               Decorate 151(g_tTexcdf4) DescriptorSet 0
                               Decorate 160(g_tTexcdi4) DescriptorSet 0
                               Decorate 169(g_tTexcdu4) DescriptorSet 0
-                              Decorate 188(Color) Location 0
-                              Decorate 192(Depth) BuiltIn FragDepth
+                              Decorate 188(@entryPointOutput.Color) Location 0
+                              Decorate 192(@entryPointOutput.Depth) BuiltIn FragDepth
                               Decorate 195(g_sSamp2d) DescriptorSet 0
                               Decorate 196(g_sSamp2D_b) DescriptorSet 0
                               Decorate 197(g_tTex1df4a) DescriptorSet 0
@@ -185,9 +185,9 @@ WARNING: 0:4: 'immediate sampler state' : unimplemented
              178:    7(fvec4) ConstantComposite 177 177 177 177
              180:             TypePointer Function 6(float)
              187:             TypePointer Output 7(fvec4)
-      188(Color):    187(ptr) Variable Output
+188(@entryPointOutput.Color):    187(ptr) Variable Output
              191:             TypePointer Output 6(float)
-      192(Depth):    191(ptr) Variable Output
+192(@entryPointOutput.Depth):    191(ptr) Variable Output
   195(g_sSamp2d):     48(ptr) Variable UniformConstant
 196(g_sSamp2D_b):     48(ptr) Variable UniformConstant
 197(g_tTex1df4a):     44(ptr) Variable UniformConstant
@@ -198,10 +198,10 @@ WARNING: 0:4: 'immediate sampler state' : unimplemented
                               Store 185(flattenTemp) 186
              189:     41(ptr) AccessChain 185(flattenTemp) 29
              190:    7(fvec4) Load 189
-                              Store 188(Color) 190
+                              Store 188(@entryPointOutput.Color) 190
              193:    180(ptr) AccessChain 185(flattenTemp) 16
              194:    6(float) Load 193
-                              Store 192(Depth) 194
+                              Store 192(@entryPointOutput.Depth) 194
                               Return
                               FunctionEnd
       10(@main():8(PS_OUTPUT) Function None 9

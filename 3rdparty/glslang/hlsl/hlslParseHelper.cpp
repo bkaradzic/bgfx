@@ -572,6 +572,28 @@ void HlslParseContext::handlePragma(const TSourceLoc& loc, const TVector<TString
 
     if (tokens.size() == 0)
         return;
+
+    // These pragmas are case insensitive in HLSL, so we'll compare in lower case.
+    TVector<TString> lowerTokens = tokens;
+
+    for (auto it = lowerTokens.begin(); it != lowerTokens.end(); ++it)
+        std::transform(it->begin(), it->end(), it->begin(), ::tolower);
+
+    // Handle pack_matrix
+    if (tokens.size() == 4 && lowerTokens[0] == "pack_matrix" && tokens[1] == "(" && tokens[3] == ")") {
+        // Note that HLSL semantic order is Mrc, not Mcr like SPIR-V, so we reverse the sense.
+        // Row major becomes column major and vice versa.
+
+        if (lowerTokens[2] == "row_major") {
+            globalUniformDefaults.layoutMatrix = globalBufferDefaults.layoutMatrix = ElmColumnMajor;
+        } else if (lowerTokens[2] == "column_major") {
+            globalUniformDefaults.layoutMatrix = globalBufferDefaults.layoutMatrix = ElmRowMajor;
+        } else {
+            // unknown majorness strings are treated as (HLSL column major)==(SPIR-V row major)
+            warn(loc, "unknown pack_matrix pragma value", tokens[2].c_str(), "");
+            globalUniformDefaults.layoutMatrix = globalBufferDefaults.layoutMatrix = ElmRowMajor;
+        }
+    }
 }
 
 //
@@ -1099,56 +1121,62 @@ bool HlslParseContext::isBuiltInMethod(const TSourceLoc&, TIntermTyped* base, co
         return false;
 }
 
+// Independently establish a built-in that is a member of a structure.
+// 'arraySizes' are what's desired for the independent built-in, whatever
+// the higher-level source/expression of them was.
+void HlslParseContext::splitBuiltIn(const TString& baseName, const TType& memberType, const TArraySizes* arraySizes,
+                                    const TQualifier& outerQualifier)
+{
+    // Because of arrays of structs, we might be asked more than once,
+    // but the arraySizes passed in should have captured the whole thing
+    // the first time.
+    // However, clip/cull rely on multiple updates.
+    if (!isClipOrCullDistance(memberType))
+        if (splitBuiltIns.find(tInterstageIoData(memberType.getQualifier().builtIn, outerQualifier.storage)) !=
+            splitBuiltIns.end())
+            return;
+
+    TVariable* ioVar = makeInternalVariable(baseName + "." + memberType.getFieldName(), memberType);
+
+    if (arraySizes != nullptr && !memberType.isArray())
+        ioVar->getWritableType().newArraySizes(*arraySizes);
+
+    fixBuiltInIoType(ioVar->getWritableType());
+
+    splitBuiltIns[tInterstageIoData(memberType.getQualifier().builtIn, outerQualifier.storage)] = ioVar;
+    if (!isClipOrCullDistance(ioVar->getType()))
+        trackLinkage(*ioVar);
+
+    // Merge qualifier from the user structure
+    mergeQualifiers(ioVar->getWritableType().getQualifier(), outerQualifier);
+    // But, not location, we're losing that
+    ioVar->getWritableType().getQualifier().layoutLocation = TQualifier::layoutLocationEnd;
+}
+
 // Split a type into
 //   1. a struct of non-I/O members
-//   2. a collection of flattened I/O variables
+//   2. a collection of independent I/O variables
 void HlslParseContext::split(const TVariable& variable)
 {
     // Create a new variable:
-    TType& splitType = split(*variable.getType().clone(), variable.getName());
-    splitIoVars[variable.getUniqueId()] = makeInternalVariable(variable.getName(), splitType);
+    const TType& clonedType = *variable.getType().clone();
+    const TType& splitType = split(clonedType, variable.getName(), clonedType.getQualifier());
+    splitNonIoVars[variable.getUniqueId()] = makeInternalVariable(variable.getName(), splitType);
 }
 
 // Recursive implementation of split().
 // Returns reference to the modified type.
-TType& HlslParseContext::split(TType& type, TString name, const TType* outerStructType)
+const TType& HlslParseContext::split(const TType& type, const TString& name, const TQualifier& outerQualifier)
 {
-    const TArraySizes* arraySizes = nullptr;
-
-    // At the outer-most scope, remember the struct type so we can examine its storage class
-    // at deeper levels.
-    if (outerStructType == nullptr)
-        outerStructType = &type;
-
-    if (type.isArray())
-        arraySizes = &type.getArraySizes();
-
-    // We can ignore arrayness: it's uninvolved.
     if (type.isStruct()) {
         TTypeList* userStructure = type.getWritableStruct();
         for (auto ioType = userStructure->begin(); ioType != userStructure->end(); ) {
-            if (ioType->type->getQualifier().builtIn != EbvNone) {
-                // split out built-in interstage IO
-                const TType& memberType = *ioType->type;
-                TVariable* ioVar = makeInternalVariable(name + (name.empty() ? "" : "_") + memberType.getFieldName(),
-                                                        memberType);
-
-                if (arraySizes)
-                    ioVar->getWritableType().newArraySizes(*arraySizes);
-
-                fixBuiltInIoType(ioVar->getWritableType());
-
-                interstageBuiltInIo[tInterstageIoData(memberType, *outerStructType)] = ioVar;
-
-                // Merge qualifier from the user structure
-                mergeQualifiers(ioVar->getWritableType().getQualifier(), outerStructType->getQualifier());
-
-                // Erase the IO vars from the user structure.
+            if (ioType->type->isBuiltIn()) {
+                // move out the built-in
+                splitBuiltIn(name, *ioType->type, type.getArraySizes(), outerQualifier);
                 ioType = userStructure->erase(ioType);
             } else {
-                split(*ioType->type,
-                      name + (name.empty() ? "" : "_") + ioType->type->getFieldName(),
-                      outerStructType);
+                split(*ioType->type, name + "." + ioType->type->getFieldName(), outerQualifier);
                 ++ioType;
             }
         }
@@ -1167,16 +1195,20 @@ bool HlslParseContext::shouldFlatten(const TType& type) const
 }
 
 // Top level variable flattening: construct data
-void HlslParseContext::flatten(const TVariable& variable)
+void HlslParseContext::flatten(const TVariable& variable, bool linkage)
 {
     const TType& type = variable.getType();
+
+    // If it's a standalone built-in, there is nothing to flatten
+    if (type.isBuiltIn() && !type.isStruct())
+        return;
 
     auto entry = flattenMap.insert(std::make_pair(variable.getUniqueId(),
                                                   TFlattenData(type.getQualifier().layoutBinding,
                                                                type.getQualifier().layoutLocation)));
 
     // the item is a map pair, so first->second is the TFlattenData itself.
-    flatten(variable, type, entry.first->second, "");
+    flatten(variable, type, entry.first->second, variable.getName(), linkage, type.getQualifier(), nullptr);
 }
 
 // Recursively flatten the given variable at the provided type, building the flattenData as we go.
@@ -1207,14 +1239,16 @@ void HlslParseContext::flatten(const TVariable& variable)
 // so the 4th flattened member in traversal order is ours.
 //
 int HlslParseContext::flatten(const TVariable& variable, const TType& type,
-                              TFlattenData& flattenData, TString name)
+                              TFlattenData& flattenData, TString name, bool linkage,
+                              const TQualifier& outerQualifier,
+                              const TArraySizes* builtInArraySizes)
 {
     // If something is an arrayed struct, the array flattener will recursively call flatten()
     // to then flatten the struct, so this is an "if else": we don't do both.
     if (type.isArray())
-        return flattenArray(variable, type, flattenData, name);
+        return flattenArray(variable, type, flattenData, name, linkage, outerQualifier);
     else if (type.isStruct())
-        return flattenStruct(variable, type, flattenData, name);
+        return flattenStruct(variable, type, flattenData, name, linkage, outerQualifier, builtInArraySizes);
     else {
         assert(0); // should never happen
         return -1;
@@ -1224,7 +1258,9 @@ int HlslParseContext::flatten(const TVariable& variable, const TType& type,
 // Add a single flattened member to the flattened data being tracked for the composite
 // Returns true for the final flattening level.
 int HlslParseContext::addFlattenedMember(const TVariable& variable, const TType& type, TFlattenData& flattenData,
-                                         const TString& memberName, bool track)
+                                         const TString& memberName, bool linkage,
+                                         const TQualifier& outerQualifier,
+                                         const TArraySizes* builtInArraySizes)
 {
     if (isFinalFlattening(type)) {
         // This is as far as we flatten.  Insert the variable.
@@ -1234,10 +1270,9 @@ int HlslParseContext::addFlattenedMember(const TVariable& variable, const TType&
         if (flattenData.nextBinding != TQualifier::layoutBindingEnd)
             memberVariable->getWritableType().getQualifier().layoutBinding = flattenData.nextBinding++;
 
-        if (memberVariable->getType().getQualifier().builtIn == EbvNone) {
+        if (!memberVariable->getType().isBuiltIn()) {
             // inherited locations must be auto bumped, not replicated
-            if (flattenData.nextLocation != TQualifier::layoutLocationEnd &&
-                memberVariable->getType().getQualifier().builtIn == EbvNone) {
+            if (flattenData.nextLocation != TQualifier::layoutLocationEnd) {
                 memberVariable->getWritableType().getQualifier().layoutLocation = flattenData.nextLocation;
                 flattenData.nextLocation += intermediate.computeTypeLocationSize(memberVariable->getType());
                 nextOutLocation = std::max(nextOutLocation, flattenData.nextLocation);
@@ -1250,13 +1285,13 @@ int HlslParseContext::addFlattenedMember(const TVariable& variable, const TType&
         flattenData.offsets.push_back(static_cast<int>(flattenData.members.size()));
         flattenData.members.push_back(memberVariable);
 
-        if (track)
+        if (linkage)
             trackLinkage(*memberVariable);
 
-        return static_cast<int>(flattenData.offsets.size())-1; // location of the member reference
+        return static_cast<int>(flattenData.offsets.size()) - 1; // location of the member reference
     } else {
         // Further recursion required
-        return flatten(variable, type, flattenData, memberName);
+        return flatten(variable, type, flattenData, memberName, linkage, outerQualifier, builtInArraySizes);
     }
 }
 
@@ -1265,7 +1300,9 @@ int HlslParseContext::addFlattenedMember(const TVariable& variable, const TType&
 //
 // Assumes shouldFlatten() or equivalent was called first.
 int HlslParseContext::flattenStruct(const TVariable& variable, const TType& type,
-                                    TFlattenData& flattenData, TString name)
+                                    TFlattenData& flattenData, TString name, bool linkage,
+                                    const TQualifier& outerQualifier,
+                                    const TArraySizes* builtInArraySizes)
 {
     assert(type.isStruct());
 
@@ -1273,15 +1310,22 @@ int HlslParseContext::flattenStruct(const TVariable& variable, const TType& type
 
     // Reserve space for this tree level.
     int start = static_cast<int>(flattenData.offsets.size());
-    int pos   = start;
+    int pos = start;
     flattenData.offsets.resize(int(pos + members.size()), -1);
 
     for (int member = 0; member < (int)members.size(); ++member) {
         TType& dereferencedType = *members[member].type;
-        const TString memberName = name + (name.empty() ? "" : ".") + dereferencedType.getFieldName();
-
-        const int mpos = addFlattenedMember(variable, dereferencedType, flattenData, memberName, false);
-        flattenData.offsets[pos++] = mpos;
+        if (dereferencedType.isBuiltIn())
+            splitBuiltIn(variable.getName(), dereferencedType, builtInArraySizes, outerQualifier);
+        else {
+            const int mpos = addFlattenedMember(variable, dereferencedType, flattenData,
+                                                name + "." + dereferencedType.getFieldName(),
+                                                linkage, outerQualifier,
+                                                builtInArraySizes == nullptr && dereferencedType.isArray()
+                                                                       ? &dereferencedType.getArraySizes()
+                                                                       : builtInArraySizes);
+            flattenData.offsets[pos++] = mpos;
+        }
     }
 
     return start;
@@ -1292,7 +1336,8 @@ int HlslParseContext::flattenStruct(const TVariable& variable, const TType& type
 //
 // Assumes shouldFlatten() or equivalent was called first.
 int HlslParseContext::flattenArray(const TVariable& variable, const TType& type,
-                                   TFlattenData& flattenData, TString name)
+                                   TFlattenData& flattenData, TString name, bool linkage,
+                                   const TQualifier& outerQualifier)
 {
     assert(type.isArray() && !type.isImplicitlySizedArray());
 
@@ -1311,7 +1356,8 @@ int HlslParseContext::flattenArray(const TVariable& variable, const TType& type,
         char elementNumBuf[20];  // sufficient for MAXINT
         snprintf(elementNumBuf, sizeof(elementNumBuf)-1, "[%d]", element);
         const int mpos = addFlattenedMember(variable, dereferencedType, flattenData,
-                                            name + elementNumBuf, true);
+                                            name + elementNumBuf, linkage, outerQualifier,
+                                            type.getArraySizes());
 
         flattenData.offsets[pos++] = mpos;
     }
@@ -1373,13 +1419,13 @@ TIntermTyped* HlslParseContext::flattenAccess(int uniqueId, int member, const TT
 }
 
 // Find and return the split IO TVariable for id, or nullptr if none.
-TVariable* HlslParseContext::getSplitIoVar(int id) const
+TVariable* HlslParseContext::getSplitNonIoVar(int id) const
 {
-    const auto splitIoVar = splitIoVars.find(id);
-    if (splitIoVar == splitIoVars.end())
+    const auto splitNonIoVar = splitNonIoVars.find(id);
+    if (splitNonIoVar == splitNonIoVars.end())
         return nullptr;
 
-    return splitIoVar->second;
+    return splitNonIoVar->second;
 }
 
 // Pass through to base class after remembering built-in mappings.
@@ -1388,7 +1434,7 @@ void HlslParseContext::trackLinkage(TSymbol& symbol)
     TBuiltInVariable biType = symbol.getType().getQualifier().builtIn;
 
     if (biType != EbvNone)
-        builtInLinkageSymbols[biType] = symbol.clone();
+        builtInTessLinkageSymbols[biType] = symbol.clone();
 
     TParseContextBase::trackLinkage(symbol);
 }
@@ -1489,7 +1535,7 @@ void HlslParseContext::assignToInterface(TVariable& variable)
         for (auto member = memberList.begin(); member != memberList.end(); ++member)
             assignLocation(**member);
     } else if (wasSplit(variable.getUniqueId())) {
-        TVariable* splitIoVar = getSplitIoVar(variable.getUniqueId());
+        TVariable* splitIoVar = getSplitNonIoVar(variable.getUniqueId());
         assignLocation(*splitIoVar);
     } else {
         assignLocation(variable);
@@ -1528,32 +1574,6 @@ void HlslParseContext::handleFunctionDeclarator(const TSourceLoc& loc, TFunction
     // other forms of name collisions.
     if (! symbolTable.insert(function))
         error(loc, "function name is redeclaration of existing name", function.getName().c_str(), "");
-}
-
-// Finalization step: Add interstage IO variables to the linkage in canonical order.
-void HlslParseContext::addInterstageIoToLinkage()
-{
-    TSourceLoc loc;
-    loc.init();
-
-    std::vector<tInterstageIoData> io;
-    io.reserve(interstageBuiltInIo.size());
-
-    for (auto ioVar = interstageBuiltInIo.begin(); ioVar != interstageBuiltInIo.end(); ++ioVar)
-        io.push_back(ioVar->first);
-
-    // Our canonical order is the TBuiltInVariable numeric order.
-    std::sort(io.begin(), io.end());
-
-    // We have to (potentially) track two IO blocks, one in, one out.  E.g, a GS may have a
-    // PerVertex block in both directions, possibly with different members.
-    for (int idx = 0; idx < int(io.size()); ++idx) {
-        TVariable* var = interstageBuiltInIo[io[idx]];
-
-        // Add the loose interstage IO to the linkage
-        if (! var->getType().isPerVertexBuiltIn(language))
-            trackLinkage(*var);
-    }
 }
 
 // For struct buffers with counters, we must pass the counter buffer as hidden parameter.
@@ -1650,7 +1670,7 @@ TIntermAggregate* HlslParseContext::handleFunctionDefinition(const TSourceLoc& l
             if (shouldFlatten(variable->getType())) {
                 // Expand the AST parameter nodes (but not the name mangling or symbol table view)
                 // for structures that need to be flattened.
-                flatten(*variable);
+                flatten(*variable, false);
                 const TTypeList* structure = variable->getType().getStruct();
                 for (int mem = 0; mem < (int)structure->size(); ++mem) {
                     paramNodes = intermediate.growAggregate(paramNodes,
@@ -1900,10 +1920,14 @@ TIntermNode* HlslParseContext::transformEntryPoint(const TSourceLoc& loc, TFunct
             // struct inputs to the vertex stage and outputs from the fragment stage must be flattened
             if ((language == EShLangVertex   && qualifier == EvqVaryingIn) ||
                 (language == EShLangFragment && qualifier == EvqVaryingOut))
-                flatten(variable);
+                flatten(variable, false /* don't track linkage here, it will be tracked in assignToInterface() */);
             // Structs containing built-ins must be split
             else if (variable.getType().containsBuiltIn())
                 split(variable);
+            else if (!variable.getType().getQualifier().isArrayedIo(language))
+                flatten(variable, false);
+            //else
+                // TODO: unify split and flatten, so all paths can create flattened I/O
         }
 
         // For clip and cull distance, multiple output variables potentially get merged
@@ -1915,7 +1939,7 @@ TIntermNode* HlslParseContext::transformEntryPoint(const TSourceLoc& loc, TFunct
     if (entryPointOutput != nullptr)
         makeVariableInOut(*entryPointOutput);
     for (auto it = inputs.begin(); it != inputs.end(); ++it)
-        if (!isDsPcfInput((*it)->getType()))  // skip domain shader PCF input (see comment below)
+        if (!isDsPcfInput((*it)->getType()))  // wait until the end for PCF input (see comment below)
             makeVariableInOut(*(*it));
     for (auto it = outputs.begin(); it != outputs.end(); ++it)
         makeVariableInOut(*(*it));
@@ -1927,7 +1951,7 @@ TIntermNode* HlslParseContext::transformEntryPoint(const TSourceLoc& loc, TFunct
     // however, so this ensures the linkage is built in the correct order regardless of argument order.
     if (language == EShLangTessEvaluation) {
         for (auto it = inputs.begin(); it != inputs.end(); ++it)
-            if (isDsPcfInput((*it)->getType()))  // skip domain shader PCF input (see comment below)
+            if (isDsPcfInput((*it)->getType()))
                 makeVariableInOut(*(*it));
     }
 
@@ -1979,7 +2003,7 @@ TIntermNode* HlslParseContext::transformEntryPoint(const TSourceLoc& loc, TFunct
         // an array element as indexed by invocation ID, which we might have to make up.
         // This is required to match SPIR-V semantics.
         if (language == EShLangTessControl) {
-            TIntermSymbol* invocationIdSym = findLinkageSymbol(EbvInvocationId);
+            TIntermSymbol* invocationIdSym = findTessLinkageSymbol(EbvInvocationId);
 
             // If there is no user declared invocation ID, we must make one.
             if (invocationIdSym == nullptr) {
@@ -2525,11 +2549,18 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
 
         TIntermTyped* subTree;
         const TType derefType(node->getType(), member);
-        if (split && derefType.isBuiltIn()) {
-            // copy from interstage IO built-in if needed
+        const TVariable* builtInVar = nullptr;
+        if ((flattened || split) && derefType.isBuiltIn()) {
             const TIntermTyped* outer = isLeft ? outerLeft : outerRight;
-            subTree = intermediate.addSymbol(*interstageBuiltInIo.find(
-                                             HlslParseContext::tInterstageIoData(derefType, outer->getType()))->second);
+            auto splitPair = splitBuiltIns.find(HlslParseContext::tInterstageIoData(
+                                                   derefType.getQualifier().builtIn,
+                                                   outer->getType().getQualifier().storage));
+            if (splitPair != splitBuiltIns.end())
+                builtInVar = splitPair->second;
+        }
+        if (builtInVar != nullptr) {
+            // copy from interstage IO built-in if needed
+            subTree = intermediate.addSymbol(*builtInVar);
 
             // Arrayness of builtIn symbols isn't handled by the normal recursion:
             // it's been extracted and moved to the built-in.
@@ -2672,10 +2703,10 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
     // If either left or right was a split structure, we must read or write it, but still have to
     // parallel-recurse through the unsplit structure to identify the built-in IO vars.
     if (isSplitLeft)
-        splitLeft = intermediate.addSymbol(*getSplitIoVar(left->getAsSymbolNode()->getId()), loc);
+        splitLeft = intermediate.addSymbol(*getSplitNonIoVar(left->getAsSymbolNode()->getId()), loc);
 
     if (isSplitRight)
-        splitRight = intermediate.addSymbol(*getSplitIoVar(right->getAsSymbolNode()->getId()), loc);
+        splitRight = intermediate.addSymbol(*getSplitNonIoVar(right->getAsSymbolNode()->getId()), loc);
 
     // This makes the whole assignment, recursing through subtypes as needed.
     traverse(left, right, splitLeft, splitRight);
@@ -6141,133 +6172,6 @@ TSymbol* HlslParseContext::redeclareBuiltinVariable(const TSourceLoc& /*loc*/, c
 }
 
 //
-// Either redeclare the requested block, or give an error message why it can't be done.
-//
-// TODO: functionality: explicitly sizing members of redeclared blocks is not giving them an explicit size
-void HlslParseContext::redeclareBuiltinBlock(const TSourceLoc& loc, TTypeList& newTypeList, const TString& blockName,
-                                             const TString* instanceName, TArraySizes* arraySizes)
-{
-    // Redeclaring a built-in block...
-
-    // Blocks with instance names are easy to find, lookup the instance name,
-    // Anonymous blocks need to be found via a member.
-    bool builtIn;
-    TSymbol* block;
-    if (instanceName)
-        block = symbolTable.find(*instanceName, &builtIn);
-    else
-        block = symbolTable.find(newTypeList.front().type->getFieldName(), &builtIn);
-
-    // If the block was not found, this must be a version/profile/stage
-    // that doesn't have it, or the instance name is wrong.
-    const char* errorName = instanceName ? instanceName->c_str() : newTypeList.front().type->getFieldName().c_str();
-    if (block == nullptr) {
-        error(loc, "no declaration found for redeclaration", errorName, "");
-        return;
-    }
-    // Built-in blocks cannot be redeclared more than once, which if happened,
-    // we'd be finding the already redeclared one here, rather than the built in.
-    if (! builtIn) {
-        error(loc, "can only redeclare a built-in block once, and before any use", blockName.c_str(), "");
-        return;
-    }
-
-    // Copy the block to make a writable version, to insert into the block table after editing.
-    block = symbolTable.copyUpDeferredInsert(block);
-
-    if (block->getType().getBasicType() != EbtBlock) {
-        error(loc, "cannot redeclare a non block as a block", errorName, "");
-        return;
-    }
-
-    // Edit and error check the container against the redeclaration
-    //  - remove unused members
-    //  - ensure remaining qualifiers/types match
-    TType& type = block->getWritableType();
-    TTypeList::iterator member = type.getWritableStruct()->begin();
-    size_t numOriginalMembersFound = 0;
-    while (member != type.getStruct()->end()) {
-        // look for match
-        bool found = false;
-        TTypeList::const_iterator newMember;
-        TSourceLoc memberLoc;
-        memberLoc.init();
-        for (newMember = newTypeList.begin(); newMember != newTypeList.end(); ++newMember) {
-            if (member->type->getFieldName() == newMember->type->getFieldName()) {
-                found = true;
-                memberLoc = newMember->loc;
-                break;
-            }
-        }
-
-        if (found) {
-            ++numOriginalMembersFound;
-            // - ensure match between redeclared members' types
-            // - check for things that can't be changed
-            // - update things that can be changed
-            TType& oldType = *member->type;
-            const TType& newType = *newMember->type;
-            if (! newType.sameElementType(oldType))
-                error(memberLoc, "cannot redeclare block member with a different type",
-                      member->type->getFieldName().c_str(), "");
-            if (oldType.isArray() != newType.isArray())
-                error(memberLoc, "cannot change arrayness of redeclared block member",
-                      member->type->getFieldName().c_str(), "");
-            else if (! oldType.sameArrayness(newType) && oldType.isExplicitlySizedArray())
-                error(memberLoc, "cannot change array size of redeclared block member",
-                      member->type->getFieldName().c_str(), "");
-            if (newType.getQualifier().isMemory())
-                error(memberLoc, "cannot add memory qualifier to redeclared block member",
-                      member->type->getFieldName().c_str(), "");
-            if (newType.getQualifier().hasLayout())
-                error(memberLoc, "cannot add layout to redeclared block member",
-                      member->type->getFieldName().c_str(), "");
-            if (newType.getQualifier().patch)
-                error(memberLoc, "cannot add patch to redeclared block member",
-                      member->type->getFieldName().c_str(), "");
-            oldType.getQualifier().centroid = newType.getQualifier().centroid;
-            oldType.getQualifier().sample = newType.getQualifier().sample;
-            oldType.getQualifier().invariant = newType.getQualifier().invariant;
-            oldType.getQualifier().noContraction = newType.getQualifier().noContraction;
-            oldType.getQualifier().smooth = newType.getQualifier().smooth;
-            oldType.getQualifier().flat = newType.getQualifier().flat;
-            oldType.getQualifier().nopersp = newType.getQualifier().nopersp;
-
-            // go to next member
-            ++member;
-        } else {
-            // For missing members of anonymous blocks that have been redeclared,
-            // hide the original (shared) declaration.
-            // Instance-named blocks can just have the member removed.
-            if (instanceName)
-                member = type.getWritableStruct()->erase(member);
-            else {
-                member->type->hideMember();
-                ++member;
-            }
-        }
-    }
-
-    if (numOriginalMembersFound < newTypeList.size())
-        error(loc, "block redeclaration has extra members", blockName.c_str(), "");
-    if (type.isArray() != (arraySizes != nullptr))
-        error(loc, "cannot change arrayness of redeclared block", blockName.c_str(), "");
-    else if (type.isArray()) {
-        if (type.isExplicitlySizedArray() && arraySizes->getOuterSize() == UnsizedArraySize)
-            error(loc, "block already declared with size, can't redeclare as implicitly-sized", blockName.c_str(), "");
-        else if (type.isExplicitlySizedArray() && type.getArraySizes() != *arraySizes)
-            error(loc, "cannot change array size of redeclared block", blockName.c_str(), "");
-        else if (type.isImplicitlySizedArray() && arraySizes->getOuterSize() != UnsizedArraySize)
-            type.changeOuterArraySize(arraySizes->getOuterSize());
-    }
-
-    symbolTable.insert(*block);
-
-    // Save it in the AST for linker use.
-    trackLinkage(*block);
-}
-
-//
 // Generate index to the array element in a structure buffer (SSBO)
 //
 TIntermTyped* HlslParseContext::indexStructBufferContent(const TSourceLoc& loc, TIntermTyped* buffer) const
@@ -7196,6 +7100,11 @@ void HlslParseContext::declareStruct(const TSourceLoc& loc, TString& structName,
         }
         if (newLists.uniform) {
             newMember(newUniformMember);
+
+            // inherit default matrix layout (changeable via #pragma pack_matrix), if none given.
+            if (member->type->isMatrix() && member->type->getQualifier().layoutMatrix == ElmNone)
+                newUniformMember.type->getQualifier().layoutMatrix = globalUniformDefaults.layoutMatrix;
+
             correctUniform(newUniformMember.type->getQualifier());
             newLists.uniform->push_back(newUniformMember);
         }
@@ -7307,7 +7216,7 @@ TIntermNode* HlslParseContext::declareVariable(const TSourceLoc& loc, const TStr
         return nullptr;
 
     if (flattenVar)
-        flatten(*symbol->getAsVariable());
+        flatten(*symbol->getAsVariable(), symbolTable.atGlobalLevel());
 
     if (initializer == nullptr)
         return nullptr;
@@ -8030,30 +7939,23 @@ void HlslParseContext::declareBlock(const TSourceLoc& loc, TType& type, const TS
             case EvqBuffer:
                 correctUniform(type.getQualifier());
                 if (it != ioTypeMap.end() && it->second.uniform)
-                    type.setStruct(it->second.uniform);
+                    memberType.setStruct(it->second.uniform);
                 break;
             case EvqVaryingIn:
                 correctInput(type.getQualifier());
                 if (it != ioTypeMap.end() && it->second.input)
-                    type.setStruct(it->second.input);
+                    memberType.setStruct(it->second.input);
                 break;
             case EvqVaryingOut:
                 correctOutput(type.getQualifier());
                 if (it != ioTypeMap.end() && it->second.output)
-                    type.setStruct(it->second.output);
+                    memberType.setStruct(it->second.output);
                 break;
             default:
                 break;
             }
         }
     }
-
-    // This might be a redeclaration of a built-in block.  If so, redeclareBuiltinBlock() will
-    // do all the rest.
-    // if (! symbolTable.atBuiltInLevel() && builtInName(*blockName)) {
-    //    redeclareBuiltinBlock(loc, typeList, *blockName, instanceName, arraySizes);
-    //    return;
-    //}
 
     // Make default block qualification, and adjust the member qualifications
 
@@ -8855,11 +8757,11 @@ void HlslParseContext::clearUniformInputOutput(TQualifier& qualifier)
 }
 
 
-// Return a symbol for the linkage variable of the given TBuiltInVariable type
-TIntermSymbol* HlslParseContext::findLinkageSymbol(TBuiltInVariable biType) const
+// Return a symbol for the tessellation linkage variable of the given TBuiltInVariable type
+TIntermSymbol* HlslParseContext::findTessLinkageSymbol(TBuiltInVariable biType) const
 {
-    const auto it = builtInLinkageSymbols.find(biType);
-    if (it == builtInLinkageSymbols.end())  // if it wasn't declared by the user, return nullptr
+    const auto it = builtInTessLinkageSymbols.find(biType);
+    if (it == builtInTessLinkageSymbols.end())  // if it wasn't declared by the user, return nullptr
         return nullptr;
 
     return intermediate.addSymbol(*it->second->getAsVariable());
@@ -8917,7 +8819,6 @@ void HlslParseContext::addPatchConstantInvocation()
         }
     };
 
-
     // If we synthesize a built-in interface variable, we must add it to the linkage.
     const auto addToLinkage = [&](const TType& type, const TString* name, TIntermSymbol** symbolNode) {
         if (name == nullptr) {
@@ -8969,7 +8870,7 @@ void HlslParseContext::addPatchConstantInvocation()
 
     TFunction& patchConstantFunction = const_cast<TFunction&>(*candidateList[0]);
     const int pcfParamCount = patchConstantFunction.getParamCount();
-    TIntermSymbol* invocationIdSym = findLinkageSymbol(EbvInvocationId);
+    TIntermSymbol* invocationIdSym = findTessLinkageSymbol(EbvInvocationId);
     TIntermSequence& epBodySeq = entryPointFunctionBody->getAsAggregate()->getSequence();
 
     int outPatchParam = -1; // -1 means there isn't one.
@@ -9019,7 +8920,7 @@ void HlslParseContext::addPatchConstantInvocation()
                 // Presently, the only non-built-in we support is InputPatch, which is treated as
                 // a pseudo-built-in.
                 if (biType == EbvInputPatch) {
-                    builtInLinkageSymbols[biType] = inputPatch;
+                    builtInTessLinkageSymbols[biType] = inputPatch;
                 } else if (biType == EbvOutputPatch) {
                     // Nothing...
                 } else {
@@ -9065,7 +8966,7 @@ void HlslParseContext::addPatchConstantInvocation()
                 // find which built-in it is
                 const TBuiltInVariable biType = patchConstantFunction[p].getDeclaredBuiltIn();
                 
-                inputArg = findLinkageSymbol(biType);
+                inputArg = findTessLinkageSymbol(biType);
 
                 if (inputArg == nullptr) {
                     error(loc, "unable to find patch constant function built-in variable", "", "");
@@ -9259,7 +9160,6 @@ void HlslParseContext::finish()
 
     removeUnusedStructBufferCounters();
     addPatchConstantInvocation();
-    addInterstageIoToLinkage();
 
     TParseContextBase::finish();
 }

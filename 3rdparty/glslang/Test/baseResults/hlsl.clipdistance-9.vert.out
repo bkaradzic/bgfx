@@ -48,7 +48,7 @@ Shader version: 500
 0:?     Sequence
 0:7      Sequence
 0:7        move second child to first child ( temp 4-component vector of float)
-0:?           '@entryPointOutput_Position' ( out 4-component vector of float Position)
+0:?           '@entryPointOutput.Position' ( out 4-component vector of float Position)
 0:7          Position: direct index for structure ( temp 4-component vector of float)
 0:7            Function Call: @main(vf3;f1; ( temp structure{ temp 4-component vector of float Position})
 0:?               'clip0' ( temp 3-component vector of float)
@@ -91,6 +91,7 @@ Shader version: 500
 0:7              3 (const int)
 0:?           'clip1' ( temp float)
 0:?   Linker Objects
+0:?     '@entryPointOutput.Position' ( out 4-component vector of float Position)
 0:?     'clip0' ( out 4-element array of float ClipDistance)
 
 
@@ -146,7 +147,7 @@ Shader version: 500
 0:?     Sequence
 0:7      Sequence
 0:7        move second child to first child ( temp 4-component vector of float)
-0:?           '@entryPointOutput_Position' ( out 4-component vector of float Position)
+0:?           '@entryPointOutput.Position' ( out 4-component vector of float Position)
 0:7          Position: direct index for structure ( temp 4-component vector of float)
 0:7            Function Call: @main(vf3;f1; ( temp structure{ temp 4-component vector of float Position})
 0:?               'clip0' ( temp 3-component vector of float)
@@ -189,6 +190,7 @@ Shader version: 500
 0:7              3 (const int)
 0:?           'clip1' ( temp float)
 0:?   Linker Objects
+0:?     '@entryPointOutput.Position' ( out 4-component vector of float Position)
 0:?     'clip0' ( out 4-element array of float ClipDistance)
 
 // Module Version 10000
@@ -208,13 +210,13 @@ Shader version: 500
                               Name 13  "clip0"
                               Name 14  "clip1"
                               Name 18  "Output"
-                              Name 39  "@entryPointOutput_Position"
+                              Name 39  "@entryPointOutput.Position"
                               Name 40  "clip0"
                               Name 41  "clip1"
                               Name 42  "param"
                               Name 43  "param"
                               Name 51  "clip0"
-                              Decorate 39(@entryPointOutput_Position) BuiltIn Position
+                              Decorate 39(@entryPointOutput.Position) BuiltIn Position
                               Decorate 51(clip0) BuiltIn ClipDistance
                2:             TypeVoid
                3:             TypeFunction 2
@@ -239,7 +241,7 @@ Shader version: 500
               32:     25(int) Constant 2
               34:    6(float) Constant 1077936128
               38:             TypePointer Output 10(fvec4)
-39(@entryPointOutput_Position):     38(ptr) Variable Output
+39(@entryPointOutput.Position):     38(ptr) Variable Output
               48:     25(int) Constant 4
               49:             TypeArray 6(float) 48
               50:             TypePointer Output 49
@@ -260,7 +262,7 @@ Shader version: 500
               46:    6(float) Load 43(param)
                               Store 41(clip1) 46
               47:   10(fvec4) CompositeExtract 44 0
-                              Store 39(@entryPointOutput_Position) 47
+                              Store 39(@entryPointOutput.Position) 47
               52:      9(ptr) AccessChain 40(clip0) 26
               53:    6(float) Load 52
               55:     54(ptr) AccessChain 51(clip0) 20

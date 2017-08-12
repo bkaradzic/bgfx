@@ -157,25 +157,25 @@ gl_FragCoord origin is upper left
 0:18          Function Call: @PixelShaderFunction(vf4; ( temp structure{ temp int a,  temp float b,  temp bool c,  temp 4-component vector of float v})
 0:?             'input' ( temp 4-component vector of float)
 0:18        move second child to first child ( temp int)
-0:?           'a' (layout( location=0) out int)
+0:?           '@entryPointOutput.a' (layout( location=0) out int)
 0:18          a: direct index for structure ( temp int)
 0:18            'flattenTemp' ( temp structure{ temp int a,  temp float b,  temp bool c,  temp 4-component vector of float v})
 0:18            Constant:
 0:18              0 (const int)
 0:18        move second child to first child ( temp float)
-0:?           'b' (layout( location=1) out float)
+0:?           '@entryPointOutput.b' (layout( location=1) out float)
 0:18          b: direct index for structure ( temp float)
 0:18            'flattenTemp' ( temp structure{ temp int a,  temp float b,  temp bool c,  temp 4-component vector of float v})
 0:18            Constant:
 0:18              1 (const int)
 0:18        move second child to first child ( temp bool)
-0:?           'c' (layout( location=2) out bool)
+0:?           '@entryPointOutput.c' (layout( location=2) out bool)
 0:18          c: direct index for structure ( temp bool)
 0:18            'flattenTemp' ( temp structure{ temp int a,  temp float b,  temp bool c,  temp 4-component vector of float v})
 0:18            Constant:
 0:18              2 (const int)
 0:18        move second child to first child ( temp 4-component vector of float)
-0:?           'v' (layout( location=3) out 4-component vector of float)
+0:?           '@entryPointOutput.v' (layout( location=3) out 4-component vector of float)
 0:18          v: direct index for structure ( temp 4-component vector of float)
 0:18            'flattenTemp' ( temp structure{ temp int a,  temp float b,  temp bool c,  temp 4-component vector of float v})
 0:18            Constant:
@@ -183,10 +183,10 @@ gl_FragCoord origin is upper left
 0:?   Linker Objects
 0:?     'gv' ( global 4-component vector of float)
 0:?     'gfa' ( global 3-element array of float)
-0:?     'a' (layout( location=0) out int)
-0:?     'b' (layout( location=1) out float)
-0:?     'c' (layout( location=2) out bool)
-0:?     'v' (layout( location=3) out 4-component vector of float)
+0:?     '@entryPointOutput.a' (layout( location=0) out int)
+0:?     '@entryPointOutput.b' (layout( location=1) out float)
+0:?     '@entryPointOutput.c' (layout( location=2) out bool)
+0:?     '@entryPointOutput.v' (layout( location=3) out 4-component vector of float)
 0:?     'input' (layout( location=0) in 4-component vector of float)
 0:?     'cgf2a' ( const 3-element array of 2-component vector of float)
 0:?       0.000000
@@ -357,25 +357,25 @@ gl_FragCoord origin is upper left
 0:18          Function Call: @PixelShaderFunction(vf4; ( temp structure{ temp int a,  temp float b,  temp bool c,  temp 4-component vector of float v})
 0:?             'input' ( temp 4-component vector of float)
 0:18        move second child to first child ( temp int)
-0:?           'a' (layout( location=0) out int)
+0:?           '@entryPointOutput.a' (layout( location=0) out int)
 0:18          a: direct index for structure ( temp int)
 0:18            'flattenTemp' ( temp structure{ temp int a,  temp float b,  temp bool c,  temp 4-component vector of float v})
 0:18            Constant:
 0:18              0 (const int)
 0:18        move second child to first child ( temp float)
-0:?           'b' (layout( location=1) out float)
+0:?           '@entryPointOutput.b' (layout( location=1) out float)
 0:18          b: direct index for structure ( temp float)
 0:18            'flattenTemp' ( temp structure{ temp int a,  temp float b,  temp bool c,  temp 4-component vector of float v})
 0:18            Constant:
 0:18              1 (const int)
 0:18        move second child to first child ( temp bool)
-0:?           'c' (layout( location=2) out bool)
+0:?           '@entryPointOutput.c' (layout( location=2) out bool)
 0:18          c: direct index for structure ( temp bool)
 0:18            'flattenTemp' ( temp structure{ temp int a,  temp float b,  temp bool c,  temp 4-component vector of float v})
 0:18            Constant:
 0:18              2 (const int)
 0:18        move second child to first child ( temp 4-component vector of float)
-0:?           'v' (layout( location=3) out 4-component vector of float)
+0:?           '@entryPointOutput.v' (layout( location=3) out 4-component vector of float)
 0:18          v: direct index for structure ( temp 4-component vector of float)
 0:18            'flattenTemp' ( temp structure{ temp int a,  temp float b,  temp bool c,  temp 4-component vector of float v})
 0:18            Constant:
@@ -383,10 +383,10 @@ gl_FragCoord origin is upper left
 0:?   Linker Objects
 0:?     'gv' ( global 4-component vector of float)
 0:?     'gfa' ( global 3-element array of float)
-0:?     'a' (layout( location=0) out int)
-0:?     'b' (layout( location=1) out float)
-0:?     'c' (layout( location=2) out bool)
-0:?     'v' (layout( location=3) out 4-component vector of float)
+0:?     '@entryPointOutput.a' (layout( location=0) out int)
+0:?     '@entryPointOutput.b' (layout( location=1) out float)
+0:?     '@entryPointOutput.c' (layout( location=2) out bool)
+0:?     '@entryPointOutput.v' (layout( location=3) out 4-component vector of float)
 0:?     'input' (layout( location=0) in 4-component vector of float)
 0:?     'cgf2a' ( const 3-element array of 2-component vector of float)
 0:?       0.000000
@@ -433,15 +433,15 @@ gl_FragCoord origin is upper left
                               Name 80  "input"
                               Name 82  "flattenTemp"
                               Name 83  "param"
-                              Name 87  "a"
-                              Name 91  "b"
-                              Name 95  "c"
-                              Name 99  "v"
+                              Name 87  "@entryPointOutput.a"
+                              Name 91  "@entryPointOutput.b"
+                              Name 95  "@entryPointOutput.c"
+                              Name 99  "@entryPointOutput.v"
                               Decorate 80(input) Location 0
-                              Decorate 87(a) Location 0
-                              Decorate 91(b) Location 1
-                              Decorate 95(c) Location 2
-                              Decorate 99(v) Location 3
+                              Decorate 87(@entryPointOutput.a) Location 0
+                              Decorate 91(@entryPointOutput.b) Location 1
+                              Decorate 95(@entryPointOutput.c) Location 2
+                              Decorate 99(@entryPointOutput.v) Location 3
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
@@ -492,13 +492,13 @@ gl_FragCoord origin is upper left
               79:             TypePointer Input 7(fvec4)
        80(input):     79(ptr) Variable Input
               86:             TypePointer Output 9(int)
-           87(a):     86(ptr) Variable Output
+87(@entryPointOutput.a):     86(ptr) Variable Output
               90:             TypePointer Output 6(float)
-           91(b):     90(ptr) Variable Output
+91(@entryPointOutput.b):     90(ptr) Variable Output
               94:             TypePointer Output 10(bool)
-           95(c):     94(ptr) Variable Output
+95(@entryPointOutput.c):     94(ptr) Variable Output
               98:             TypePointer Output 7(fvec4)
-           99(v):     98(ptr) Variable Output
+99(@entryPointOutput.v):     98(ptr) Variable Output
              102:             TypeArray 57(fvec2) 22
              103:         102 ConstantComposite 62 62 62
 4(PixelShaderFunction):           2 Function None 3
@@ -516,16 +516,16 @@ gl_FragCoord origin is upper left
                               Store 82(flattenTemp) 85
               88:     64(ptr) AccessChain 82(flattenTemp) 42
               89:      9(int) Load 88
-                              Store 87(a) 89
+                              Store 87(@entryPointOutput.a) 89
               92:     68(ptr) AccessChain 82(flattenTemp) 66
               93:    6(float) Load 92
-                              Store 91(b) 93
+                              Store 91(@entryPointOutput.b) 93
               96:     45(ptr) AccessChain 82(flattenTemp) 35
               97:    10(bool) Load 96
-                              Store 95(c) 97
+                              Store 95(@entryPointOutput.c) 97
              100:      8(ptr) AccessChain 82(flattenTemp) 29
              101:    7(fvec4) Load 100
-                              Store 99(v) 101
+                              Store 99(@entryPointOutput.v) 101
                               Return
                               FunctionEnd
 14(@PixelShaderFunction(vf4;):    11(outs) Function None 12

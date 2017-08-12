@@ -78,14 +78,14 @@ Shader version: 500
 0:?             'v' ( temp structure{ temp 4-component vector of float Position})
 0:11            Constant:
 0:11              0 (const int)
-0:?           'Position' (layout( location=0) in 4-component vector of float)
+0:?           'v.Position' (layout( location=0) in 4-component vector of float)
 0:11      Sequence
 0:11        move second child to first child ( temp structure{ temp 4-component vector of float Position,  temp 2-element array of 2-component vector of float ClipRect})
 0:11          'flattenTemp' ( temp structure{ temp 4-component vector of float Position,  temp 2-element array of 2-component vector of float ClipRect})
 0:11          Function Call: @main(struct-VS_INPUT-vf41; ( temp structure{ temp 4-component vector of float Position,  temp 2-element array of 2-component vector of float ClipRect})
 0:?             'v' ( temp structure{ temp 4-component vector of float Position})
 0:11        move second child to first child ( temp 4-component vector of float)
-0:?           '@entryPointOutput_Position' ( out 4-component vector of float Position)
+0:?           '@entryPointOutput.Position' ( out 4-component vector of float Position)
 0:11          Position: direct index for structure ( temp 4-component vector of float)
 0:11            'flattenTemp' ( temp structure{ temp 4-component vector of float Position,  temp 2-element array of 2-component vector of float ClipRect})
 0:11            Constant:
@@ -93,7 +93,7 @@ Shader version: 500
 0:?         Sequence
 0:11          move second child to first child ( temp float)
 0:11            direct index ( temp float)
-0:?               '@entryPointOutput_ClipRect' ( out 4-element array of float ClipDistance)
+0:?               '@entryPointOutput.ClipRect' ( out 4-element array of float ClipDistance)
 0:11              Constant:
 0:11                0 (const int)
 0:11            direct index ( temp float)
@@ -108,7 +108,7 @@ Shader version: 500
 0:11                0 (const int)
 0:11          move second child to first child ( temp float)
 0:11            direct index ( temp float)
-0:?               '@entryPointOutput_ClipRect' ( out 4-element array of float ClipDistance)
+0:?               '@entryPointOutput.ClipRect' ( out 4-element array of float ClipDistance)
 0:11              Constant:
 0:11                1 (const int)
 0:11            direct index ( temp float)
@@ -123,7 +123,7 @@ Shader version: 500
 0:11                1 (const int)
 0:11          move second child to first child ( temp float)
 0:11            direct index ( temp float)
-0:?               '@entryPointOutput_ClipRect' ( out 4-element array of float ClipDistance)
+0:?               '@entryPointOutput.ClipRect' ( out 4-element array of float ClipDistance)
 0:11              Constant:
 0:11                2 (const int)
 0:11            direct index ( temp float)
@@ -138,7 +138,7 @@ Shader version: 500
 0:11                0 (const int)
 0:11          move second child to first child ( temp float)
 0:11            direct index ( temp float)
-0:?               '@entryPointOutput_ClipRect' ( out 4-element array of float ClipDistance)
+0:?               '@entryPointOutput.ClipRect' ( out 4-element array of float ClipDistance)
 0:11              Constant:
 0:11                3 (const int)
 0:11            direct index ( temp float)
@@ -152,8 +152,9 @@ Shader version: 500
 0:11              Constant:
 0:11                1 (const int)
 0:?   Linker Objects
-0:?     'Position' (layout( location=0) in 4-component vector of float)
-0:?     '@entryPointOutput_ClipRect' ( out 4-element array of float ClipDistance)
+0:?     '@entryPointOutput.Position' ( out 4-component vector of float Position)
+0:?     'v.Position' (layout( location=0) in 4-component vector of float)
+0:?     '@entryPointOutput.ClipRect' ( out 4-element array of float ClipDistance)
 
 
 Linked vertex stage:
@@ -238,14 +239,14 @@ Shader version: 500
 0:?             'v' ( temp structure{ temp 4-component vector of float Position})
 0:11            Constant:
 0:11              0 (const int)
-0:?           'Position' (layout( location=0) in 4-component vector of float)
+0:?           'v.Position' (layout( location=0) in 4-component vector of float)
 0:11      Sequence
 0:11        move second child to first child ( temp structure{ temp 4-component vector of float Position,  temp 2-element array of 2-component vector of float ClipRect})
 0:11          'flattenTemp' ( temp structure{ temp 4-component vector of float Position,  temp 2-element array of 2-component vector of float ClipRect})
 0:11          Function Call: @main(struct-VS_INPUT-vf41; ( temp structure{ temp 4-component vector of float Position,  temp 2-element array of 2-component vector of float ClipRect})
 0:?             'v' ( temp structure{ temp 4-component vector of float Position})
 0:11        move second child to first child ( temp 4-component vector of float)
-0:?           '@entryPointOutput_Position' ( out 4-component vector of float Position)
+0:?           '@entryPointOutput.Position' ( out 4-component vector of float Position)
 0:11          Position: direct index for structure ( temp 4-component vector of float)
 0:11            'flattenTemp' ( temp structure{ temp 4-component vector of float Position,  temp 2-element array of 2-component vector of float ClipRect})
 0:11            Constant:
@@ -253,7 +254,7 @@ Shader version: 500
 0:?         Sequence
 0:11          move second child to first child ( temp float)
 0:11            direct index ( temp float)
-0:?               '@entryPointOutput_ClipRect' ( out 4-element array of float ClipDistance)
+0:?               '@entryPointOutput.ClipRect' ( out 4-element array of float ClipDistance)
 0:11              Constant:
 0:11                0 (const int)
 0:11            direct index ( temp float)
@@ -268,7 +269,7 @@ Shader version: 500
 0:11                0 (const int)
 0:11          move second child to first child ( temp float)
 0:11            direct index ( temp float)
-0:?               '@entryPointOutput_ClipRect' ( out 4-element array of float ClipDistance)
+0:?               '@entryPointOutput.ClipRect' ( out 4-element array of float ClipDistance)
 0:11              Constant:
 0:11                1 (const int)
 0:11            direct index ( temp float)
@@ -283,7 +284,7 @@ Shader version: 500
 0:11                1 (const int)
 0:11          move second child to first child ( temp float)
 0:11            direct index ( temp float)
-0:?               '@entryPointOutput_ClipRect' ( out 4-element array of float ClipDistance)
+0:?               '@entryPointOutput.ClipRect' ( out 4-element array of float ClipDistance)
 0:11              Constant:
 0:11                2 (const int)
 0:11            direct index ( temp float)
@@ -298,7 +299,7 @@ Shader version: 500
 0:11                0 (const int)
 0:11          move second child to first child ( temp float)
 0:11            direct index ( temp float)
-0:?               '@entryPointOutput_ClipRect' ( out 4-element array of float ClipDistance)
+0:?               '@entryPointOutput.ClipRect' ( out 4-element array of float ClipDistance)
 0:11              Constant:
 0:11                3 (const int)
 0:11            direct index ( temp float)
@@ -312,8 +313,9 @@ Shader version: 500
 0:11              Constant:
 0:11                1 (const int)
 0:?   Linker Objects
-0:?     'Position' (layout( location=0) in 4-component vector of float)
-0:?     '@entryPointOutput_ClipRect' ( out 4-element array of float ClipDistance)
+0:?     '@entryPointOutput.Position' ( out 4-component vector of float Position)
+0:?     'v.Position' (layout( location=0) in 4-component vector of float)
+0:?     '@entryPointOutput.ClipRect' ( out 4-element array of float ClipDistance)
 
 // Module Version 10000
 // Generated by (magic number): 80001
@@ -335,13 +337,13 @@ Shader version: 500
                               Name 15  "v"
                               Name 19  "Output"
                               Name 42  "v"
-                              Name 44  "Position"
+                              Name 44  "v.Position"
                               Name 47  "flattenTemp"
-                              Name 51  "@entryPointOutput_Position"
-                              Name 57  "@entryPointOutput_ClipRect"
-                              Decorate 44(Position) Location 0
-                              Decorate 51(@entryPointOutput_Position) BuiltIn Position
-                              Decorate 57(@entryPointOutput_ClipRect) BuiltIn ClipDistance
+                              Name 51  "@entryPointOutput.Position"
+                              Name 57  "@entryPointOutput.ClipRect"
+                              Decorate 44(v.Position) Location 0
+                              Decorate 51(@entryPointOutput.Position) BuiltIn Position
+                              Decorate 57(@entryPointOutput.ClipRect) BuiltIn ClipDistance
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
@@ -369,13 +371,13 @@ Shader version: 500
               36:    6(float) Constant 1082130432
               41:             TypePointer Function 8(VS_INPUT)
               43:             TypePointer Input 7(fvec4)
-    44(Position):     43(ptr) Variable Input
+  44(v.Position):     43(ptr) Variable Input
               50:             TypePointer Output 7(fvec4)
-51(@entryPointOutput_Position):     50(ptr) Variable Output
+51(@entryPointOutput.Position):     50(ptr) Variable Output
               54:     10(int) Constant 4
               55:             TypeArray 6(float) 54
               56:             TypePointer Output 55
-57(@entryPointOutput_ClipRect):     56(ptr) Variable Output
+57(@entryPointOutput.ClipRect):     56(ptr) Variable Output
               60:             TypePointer Output 6(float)
               65:     20(int) Constant 2
               69:     20(int) Constant 3
@@ -383,7 +385,7 @@ Shader version: 500
                5:             Label
            42(v):     41(ptr) Variable Function
  47(flattenTemp):     18(ptr) Variable Function
-              45:    7(fvec4) Load 44(Position)
+              45:    7(fvec4) Load 44(v.Position)
               46:     24(ptr) AccessChain 42(v) 21
                               Store 46 45
               48: 8(VS_INPUT) Load 42(v)
@@ -391,22 +393,22 @@ Shader version: 500
                               Store 47(flattenTemp) 49
               52:     24(ptr) AccessChain 47(flattenTemp) 21
               53:    7(fvec4) Load 52
-                              Store 51(@entryPointOutput_Position) 53
+                              Store 51(@entryPointOutput.Position) 53
               58:     29(ptr) AccessChain 47(flattenTemp) 26 21 28
               59:    6(float) Load 58
-              61:     60(ptr) AccessChain 57(@entryPointOutput_ClipRect) 21
+              61:     60(ptr) AccessChain 57(@entryPointOutput.ClipRect) 21
                               Store 61 59
               62:     29(ptr) AccessChain 47(flattenTemp) 26 21 32
               63:    6(float) Load 62
-              64:     60(ptr) AccessChain 57(@entryPointOutput_ClipRect) 26
+              64:     60(ptr) AccessChain 57(@entryPointOutput.ClipRect) 26
                               Store 64 63
               66:     29(ptr) AccessChain 47(flattenTemp) 26 26 28
               67:    6(float) Load 66
-              68:     60(ptr) AccessChain 57(@entryPointOutput_ClipRect) 65
+              68:     60(ptr) AccessChain 57(@entryPointOutput.ClipRect) 65
                               Store 68 67
               70:     29(ptr) AccessChain 47(flattenTemp) 26 26 32
               71:    6(float) Load 70
-              72:     60(ptr) AccessChain 57(@entryPointOutput_ClipRect) 69
+              72:     60(ptr) AccessChain 57(@entryPointOutput.ClipRect) 69
                               Store 72 71
                               Return
                               FunctionEnd

@@ -20,12 +20,12 @@ spv.rw.autoassign.frag
                               Name 23  "r01"
                               Name 26  "g_tBuf1du1"
                               Name 30  "psout"
-                              Name 39  "Color"
+                              Name 39  "@entryPointOutput.Color"
                               Decorate 16(g_tTex1df1) DescriptorSet 0
                               Decorate 16(g_tTex1df1) Binding 20
                               Decorate 26(g_tBuf1du1) DescriptorSet 0
                               Decorate 26(g_tBuf1du1) Binding 21
-                              Decorate 39(Color) Location 0
+                              Decorate 39(@entryPointOutput.Color) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
@@ -48,12 +48,12 @@ spv.rw.autoassign.frag
               32:    7(fvec4) ConstantComposite 31 31 31 31
               33:             TypePointer Function 7(fvec4)
               38:             TypePointer Output 7(fvec4)
-       39(Color):     38(ptr) Variable Output
+39(@entryPointOutput.Color):     38(ptr) Variable Output
          4(main):           2 Function None 3
                5:             Label
               40:8(PS_OUTPUT) FunctionCall 10(@main()
               41:    7(fvec4) CompositeExtract 40 0
-                              Store 39(Color) 41
+                              Store 39(@entryPointOutput.Color) 41
                               Return
                               FunctionEnd
       10(@main():8(PS_OUTPUT) Function None 9

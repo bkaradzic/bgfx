@@ -29,7 +29,7 @@ hlsl.multiDescriptorSet.frag
                               Name 59  "txDiffuseA"
                               Name 63  "samLinearA"
                               Name 76  "input"
-                              Name 78  "input_Pos"
+                              Name 78  "input.Pos"
                               Name 81  "PS_INPUT"
                               MemberName 81(PS_INPUT) 0  "Tex"
                               Name 83  "input"
@@ -60,7 +60,7 @@ hlsl.multiDescriptorSet.frag
                               Decorate 59(txDiffuseA) Binding 0
                               Decorate 63(samLinearA) DescriptorSet 0
                               Decorate 63(samLinearA) Binding 1
-                              Decorate 78(input_Pos) BuiltIn FragCoord
+                              Decorate 78(input.Pos) BuiltIn FragCoord
                               Decorate 83(input) Location 0
                               Decorate 89(@entryPointOutput) Location 0
                               Decorate 93(txDiffuseB) DescriptorSet 1
@@ -104,7 +104,7 @@ hlsl.multiDescriptorSet.frag
               65:             TypeSampledImage 57
               70:             TypePointer Uniform 7(fvec4)
               77:             TypePointer Input 7(fvec4)
-   78(input_Pos):     77(ptr) Variable Input
+   78(input.Pos):     77(ptr) Variable Input
     81(PS_INPUT):             TypeStruct 8(fvec2)
               82:             TypePointer Input 81(PS_INPUT)
        83(input):     82(ptr) Variable Input
@@ -117,7 +117,7 @@ hlsl.multiDescriptorSet.frag
                5:             Label
        76(input):     10(ptr) Variable Function
        90(param):     10(ptr) Variable Function
-              79:    7(fvec4) Load 78(input_Pos)
+              79:    7(fvec4) Load 78(input.Pos)
               80:     29(ptr) AccessChain 76(input) 21
                               Store 80 79
               85:     84(ptr) AccessChain 83(input) 21

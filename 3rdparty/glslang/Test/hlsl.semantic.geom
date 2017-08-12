@@ -1,4 +1,5 @@
 struct S {
+    float clip0 : SV_Position;
     float clip0 : SV_ClipDistance0;
     float cull0 : SV_CullDistance0;
     uint vpai   : SV_ViewportArrayIndex;
@@ -7,9 +8,9 @@ struct S {
 };
 
 [maxvertexcount(4)]
-S main(triangle in uint VertexID[3] : VertexID,
+void main(triangle in uint VertexID[3] : VertexID,
        inout LineStream<S> OutputStream)
 {
     S s;
-    return s;
+    OutputStream.Append(s);
 }

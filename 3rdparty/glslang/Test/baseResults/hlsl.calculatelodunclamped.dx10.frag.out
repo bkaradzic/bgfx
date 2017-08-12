@@ -161,13 +161,13 @@ ERROR: node is still EOpNull!
 0:24          'flattenTemp' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:24          Function Call: @main( ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:24        move second child to first child ( temp 4-component vector of float)
-0:?           'Color' (layout( location=0) out 4-component vector of float)
+0:?           '@entryPointOutput.Color' (layout( location=0) out 4-component vector of float)
 0:24          Color: direct index for structure ( temp 4-component vector of float)
 0:24            'flattenTemp' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:24            Constant:
 0:24              0 (const int)
 0:24        move second child to first child ( temp float)
-0:?           'Depth' ( out float FragDepth)
+0:?           '@entryPointOutput.Depth' ( out float FragDepth)
 0:24          Depth: direct index for structure ( temp float)
 0:24            'flattenTemp' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:24            Constant:
@@ -184,8 +184,8 @@ ERROR: node is still EOpNull!
 0:?     'g_tTexcdf4a' ( uniform textureCubeArray)
 0:?     'g_tTexcdi4a' ( uniform itextureCubeArray)
 0:?     'g_tTexcdu4a' ( uniform utextureCubeArray)
-0:?     'Color' (layout( location=0) out 4-component vector of float)
-0:?     'Depth' ( out float FragDepth)
+0:?     '@entryPointOutput.Depth' ( out float FragDepth)
+0:?     '@entryPointOutput.Color' (layout( location=0) out 4-component vector of float)
 
 
 Linked fragment stage:
@@ -341,13 +341,13 @@ ERROR: node is still EOpNull!
 0:24          'flattenTemp' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:24          Function Call: @main( ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:24        move second child to first child ( temp 4-component vector of float)
-0:?           'Color' (layout( location=0) out 4-component vector of float)
+0:?           '@entryPointOutput.Color' (layout( location=0) out 4-component vector of float)
 0:24          Color: direct index for structure ( temp 4-component vector of float)
 0:24            'flattenTemp' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:24            Constant:
 0:24              0 (const int)
 0:24        move second child to first child ( temp float)
-0:?           'Depth' ( out float FragDepth)
+0:?           '@entryPointOutput.Depth' ( out float FragDepth)
 0:24          Depth: direct index for structure ( temp float)
 0:24            'flattenTemp' ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:24            Constant:
@@ -364,7 +364,7 @@ ERROR: node is still EOpNull!
 0:?     'g_tTexcdf4a' ( uniform textureCubeArray)
 0:?     'g_tTexcdi4a' ( uniform itextureCubeArray)
 0:?     'g_tTexcdu4a' ( uniform utextureCubeArray)
-0:?     'Color' (layout( location=0) out 4-component vector of float)
-0:?     'Depth' ( out float FragDepth)
+0:?     '@entryPointOutput.Depth' ( out float FragDepth)
+0:?     '@entryPointOutput.Color' (layout( location=0) out 4-component vector of float)
 
 SPIR-V is not generated for failed compile or link

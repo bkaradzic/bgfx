@@ -3,14 +3,14 @@ Shader version: 500
 0:? Sequence
 0:5  Function Definition: lookUp(struct-FxaaTex-p1-t211; ( temp 4-component vector of float)
 0:5    Function Parameters: 
-0:?       'smpl' ( in sampler)
-0:?       'tex' ( in texture2D)
+0:?       'tex.smpl' ( in sampler)
+0:?       'tex.tex' ( in texture2D)
 0:?     Sequence
 0:6      Branch: Return with expression
 0:6        texture ( temp 4-component vector of float)
 0:6          Construct combined texture-sampler ( temp sampler2D)
-0:?             'tex' ( in texture2D)
-0:?             'smpl' ( in sampler)
+0:?             'tex.tex' ( in texture2D)
+0:?             'tex.smpl' ( in sampler)
 0:?           Constant:
 0:?             0.300000
 0:?             0.400000
@@ -40,14 +40,14 @@ Shader version: 500
 0:? Sequence
 0:5  Function Definition: lookUp(struct-FxaaTex-p1-t211; ( temp 4-component vector of float)
 0:5    Function Parameters: 
-0:?       'smpl' ( in sampler)
-0:?       'tex' ( in texture2D)
+0:?       'tex.smpl' ( in sampler)
+0:?       'tex.tex' ( in texture2D)
 0:?     Sequence
 0:6      Branch: Return with expression
 0:6        texture ( temp 4-component vector of float)
 0:6          Construct combined texture-sampler ( temp sampler2D)
-0:?             'tex' ( in texture2D)
-0:?             'smpl' ( in sampler)
+0:?             'tex.tex' ( in texture2D)
+0:?             'tex.smpl' ( in sampler)
 0:?           Constant:
 0:?             0.300000
 0:?             0.400000
@@ -80,8 +80,8 @@ Shader version: 500
                               Source HLSL 500
                               Name 4  "main"
                               Name 15  "lookUp(struct-FxaaTex-p1-t211;"
-                              Name 13  "smpl"
-                              Name 14  "tex"
+                              Name 13  "tex.smpl"
+                              Name 14  "tex.tex"
                               Name 18  "@main("
                               Name 32  "g_tInputTexture_sampler"
                               Name 33  "g_tInputTexture"
@@ -116,11 +116,11 @@ Shader version: 500
                               Return
                               FunctionEnd
 15(lookUp(struct-FxaaTex-p1-t211;):   11(fvec4) Function None 12
-        13(smpl):      7(ptr) FunctionParameter
-         14(tex):     10(ptr) FunctionParameter
+    13(tex.smpl):      7(ptr) FunctionParameter
+     14(tex.tex):     10(ptr) FunctionParameter
               16:             Label
-              20:           9 Load 14(tex)
-              21:           6 Load 13(smpl)
+              20:           9 Load 14(tex.tex)
+              21:           6 Load 13(tex.smpl)
               23:          22 SampledImage 20 21
               29:   11(fvec4) ImageSampleExplicitLod 23 27 Lod 28
                               ReturnValue 29

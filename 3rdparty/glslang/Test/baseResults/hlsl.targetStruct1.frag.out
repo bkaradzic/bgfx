@@ -48,9 +48,19 @@ gl_FragCoord origin is upper left
 0:12  Function Definition: main( ( temp void)
 0:12    Function Parameters: 
 0:?     Sequence
-0:12      move second child to first child ( temp structure{ temp float interp,  temp uint no_interp})
-0:?         'input' ( temp structure{ temp float interp,  temp uint no_interp})
-0:?         'input' (layout( location=0) in structure{ temp float interp,  flat temp uint no_interp})
+0:12      Sequence
+0:12        move second child to first child ( temp float)
+0:12          interp: direct index for structure ( temp float)
+0:?             'input' ( temp structure{ temp float interp,  temp uint no_interp})
+0:12            Constant:
+0:12              0 (const int)
+0:?           'input.interp' (layout( location=0) in float)
+0:12        move second child to first child ( temp uint)
+0:12          no_interp: direct index for structure ( temp uint)
+0:?             'input' ( temp structure{ temp float interp,  temp uint no_interp})
+0:12            Constant:
+0:12              1 (const int)
+0:?           'input.no_interp' (layout( location=1) flat in uint)
 0:12      Sequence
 0:12        move second child to first child ( temp structure{ temp 4-component vector of float o1,  temp 4-component vector of float o2})
 0:12          'flattenTemp' ( temp structure{ temp 4-component vector of float o1,  temp 4-component vector of float o2})
@@ -58,13 +68,13 @@ gl_FragCoord origin is upper left
 0:?             'input' ( temp structure{ temp float interp,  temp uint no_interp})
 0:?             'po' ( temp 4-component vector of float)
 0:12        move second child to first child ( temp 4-component vector of float)
-0:?           'o1' (layout( location=2) out 4-component vector of float)
+0:?           '@entryPointOutput.o1' (layout( location=2) out 4-component vector of float)
 0:12          o1: direct index for structure ( temp 4-component vector of float)
 0:12            'flattenTemp' ( temp structure{ temp 4-component vector of float o1,  temp 4-component vector of float o2})
 0:12            Constant:
 0:12              0 (const int)
 0:12        move second child to first child ( temp 4-component vector of float)
-0:?           'o2' (layout( location=1) out 4-component vector of float)
+0:?           '@entryPointOutput.o2' (layout( location=1) out 4-component vector of float)
 0:12          o2: direct index for structure ( temp 4-component vector of float)
 0:12            'flattenTemp' ( temp structure{ temp 4-component vector of float o1,  temp 4-component vector of float o2})
 0:12            Constant:
@@ -73,9 +83,10 @@ gl_FragCoord origin is upper left
 0:?         'po' (layout( location=0) out 4-component vector of float)
 0:?         'po' ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     'o1' (layout( location=2) out 4-component vector of float)
-0:?     'o2' (layout( location=1) out 4-component vector of float)
-0:?     'input' (layout( location=0) in structure{ temp float interp,  flat temp uint no_interp})
+0:?     '@entryPointOutput.o1' (layout( location=2) out 4-component vector of float)
+0:?     '@entryPointOutput.o2' (layout( location=1) out 4-component vector of float)
+0:?     'input.interp' (layout( location=0) in float)
+0:?     'input.no_interp' (layout( location=1) flat in uint)
 0:?     'po' (layout( location=0) out 4-component vector of float)
 
 
@@ -131,9 +142,19 @@ gl_FragCoord origin is upper left
 0:12  Function Definition: main( ( temp void)
 0:12    Function Parameters: 
 0:?     Sequence
-0:12      move second child to first child ( temp structure{ temp float interp,  temp uint no_interp})
-0:?         'input' ( temp structure{ temp float interp,  temp uint no_interp})
-0:?         'input' (layout( location=0) in structure{ temp float interp,  flat temp uint no_interp})
+0:12      Sequence
+0:12        move second child to first child ( temp float)
+0:12          interp: direct index for structure ( temp float)
+0:?             'input' ( temp structure{ temp float interp,  temp uint no_interp})
+0:12            Constant:
+0:12              0 (const int)
+0:?           'input.interp' (layout( location=0) in float)
+0:12        move second child to first child ( temp uint)
+0:12          no_interp: direct index for structure ( temp uint)
+0:?             'input' ( temp structure{ temp float interp,  temp uint no_interp})
+0:12            Constant:
+0:12              1 (const int)
+0:?           'input.no_interp' (layout( location=1) flat in uint)
 0:12      Sequence
 0:12        move second child to first child ( temp structure{ temp 4-component vector of float o1,  temp 4-component vector of float o2})
 0:12          'flattenTemp' ( temp structure{ temp 4-component vector of float o1,  temp 4-component vector of float o2})
@@ -141,13 +162,13 @@ gl_FragCoord origin is upper left
 0:?             'input' ( temp structure{ temp float interp,  temp uint no_interp})
 0:?             'po' ( temp 4-component vector of float)
 0:12        move second child to first child ( temp 4-component vector of float)
-0:?           'o1' (layout( location=2) out 4-component vector of float)
+0:?           '@entryPointOutput.o1' (layout( location=2) out 4-component vector of float)
 0:12          o1: direct index for structure ( temp 4-component vector of float)
 0:12            'flattenTemp' ( temp structure{ temp 4-component vector of float o1,  temp 4-component vector of float o2})
 0:12            Constant:
 0:12              0 (const int)
 0:12        move second child to first child ( temp 4-component vector of float)
-0:?           'o2' (layout( location=1) out 4-component vector of float)
+0:?           '@entryPointOutput.o2' (layout( location=1) out 4-component vector of float)
 0:12          o2: direct index for structure ( temp 4-component vector of float)
 0:12            'flattenTemp' ( temp structure{ temp 4-component vector of float o1,  temp 4-component vector of float o2})
 0:12            Constant:
@@ -156,9 +177,10 @@ gl_FragCoord origin is upper left
 0:?         'po' (layout( location=0) out 4-component vector of float)
 0:?         'po' ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     'o1' (layout( location=2) out 4-component vector of float)
-0:?     'o2' (layout( location=1) out 4-component vector of float)
-0:?     'input' (layout( location=0) in structure{ temp float interp,  flat temp uint no_interp})
+0:?     '@entryPointOutput.o1' (layout( location=2) out 4-component vector of float)
+0:?     '@entryPointOutput.o2' (layout( location=1) out 4-component vector of float)
+0:?     'input.interp' (layout( location=0) in float)
+0:?     'input.no_interp' (layout( location=1) flat in uint)
 0:?     'po' (layout( location=0) out 4-component vector of float)
 
 // Module Version 10000
@@ -168,7 +190,7 @@ gl_FragCoord origin is upper left
                               Capability Shader
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
-                              EntryPoint Fragment 4  "main" 43 57 60 63
+                              EntryPoint Fragment 4  "main" 42 46 57 60 63
                               ExecutionMode 4 OriginUpperLeft
                               Source HLSL 500
                               Name 4  "main"
@@ -183,21 +205,20 @@ gl_FragCoord origin is upper left
                               Name 15  "po"
                               Name 19  "pso"
                               Name 40  "input"
-                              Name 41  "PSInput"
-                              MemberName 41(PSInput) 0  "interp"
-                              MemberName 41(PSInput) 1  "no_interp"
-                              Name 43  "input"
+                              Name 42  "input.interp"
+                              Name 46  "input.no_interp"
                               Name 49  "flattenTemp"
                               Name 50  "po"
                               Name 51  "param"
                               Name 53  "param"
-                              Name 57  "o1"
-                              Name 60  "o2"
+                              Name 57  "@entryPointOutput.o1"
+                              Name 60  "@entryPointOutput.o2"
                               Name 63  "po"
-                              MemberDecorate 41(PSInput) 1 Flat
-                              Decorate 43(input) Location 0
-                              Decorate 57(o1) Location 2
-                              Decorate 60(o2) Location 1
+                              Decorate 42(input.interp) Location 0
+                              Decorate 46(input.no_interp) Flat
+                              Decorate 46(input.no_interp) Location 1
+                              Decorate 57(@entryPointOutput.o1) Location 2
+                              Decorate 60(@entryPointOutput.o2) Location 1
                               Decorate 63(po) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
@@ -219,12 +240,13 @@ gl_FragCoord origin is upper left
               31:    6(float) Constant 1065353216
               34:   10(fvec4) ConstantComposite 31 31 31 31
               36:   10(fvec4) ConstantComposite 30 30 30 30
-     41(PSInput):             TypeStruct 6(float) 7(int)
-              42:             TypePointer Input 41(PSInput)
-       43(input):     42(ptr) Variable Input
+              41:             TypePointer Input 6(float)
+42(input.interp):     41(ptr) Variable Input
+              45:             TypePointer Input 7(int)
+46(input.no_interp):     45(ptr) Variable Input
               56:             TypePointer Output 10(fvec4)
-          57(o1):     56(ptr) Variable Output
-          60(o2):     56(ptr) Variable Output
+57(@entryPointOutput.o1):     56(ptr) Variable Output
+60(@entryPointOutput.o2):     56(ptr) Variable Output
           63(po):     56(ptr) Variable Output
          4(main):           2 Function None 3
                5:             Label
@@ -233,11 +255,10 @@ gl_FragCoord origin is upper left
           50(po):     11(ptr) Variable Function
        51(param):      9(ptr) Variable Function
        53(param):     11(ptr) Variable Function
-              44: 41(PSInput) Load 43(input)
-              45:    6(float) CompositeExtract 44 0
-              46:     27(ptr) AccessChain 40(input) 21
-                              Store 46 45
-              47:      7(int) CompositeExtract 44 1
+              43:    6(float) Load 42(input.interp)
+              44:     27(ptr) AccessChain 40(input) 21
+                              Store 44 43
+              47:      7(int) Load 46(input.no_interp)
               48:     23(ptr) AccessChain 40(input) 22
                               Store 48 47
               52:  8(PSInput) Load 40(input)
@@ -248,10 +269,10 @@ gl_FragCoord origin is upper left
                               Store 49(flattenTemp) 54
               58:     11(ptr) AccessChain 49(flattenTemp) 21
               59:   10(fvec4) Load 58
-                              Store 57(o1) 59
+                              Store 57(@entryPointOutput.o1) 59
               61:     11(ptr) AccessChain 49(flattenTemp) 22
               62:   10(fvec4) Load 61
-                              Store 60(o2) 62
+                              Store 60(@entryPointOutput.o2) 62
               64:   10(fvec4) Load 50(po)
                               Store 63(po) 64
                               Return

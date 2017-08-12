@@ -86,26 +86,26 @@ gl_FragCoord origin is upper left
 0:?         'out1' ( temp 4-component vector of float)
 0:13      Sequence
 0:13        move second child to first child ( temp 2-component vector of float)
-0:?           'v' (layout( location=2) out 2-component vector of float)
+0:?           'out2.v' (layout( location=2) out 2-component vector of float)
 0:13          v: direct index for structure ( temp 2-component vector of float)
 0:?             'out2' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:13            Constant:
 0:13              0 (const int)
 0:13        move second child to first child ( temp 2-component vector of int)
-0:?           'i' (layout( location=3) out 2-component vector of int)
+0:?           'out2.i' (layout( location=3) out 2-component vector of int)
 0:13          i: direct index for structure ( temp 2-component vector of int)
 0:?             'out2' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:13            Constant:
 0:13              1 (const int)
 0:13      Sequence
 0:13        move second child to first child ( temp 2-component vector of float)
-0:?           'v' (layout( location=4) out 2-component vector of float)
+0:?           'out3.v' (layout( location=4) out 2-component vector of float)
 0:13          v: direct index for structure ( temp 2-component vector of float)
 0:?             'out3' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:13            Constant:
 0:13              0 (const int)
 0:13        move second child to first child ( temp 2-component vector of int)
-0:?           'i' (layout( location=5) out 2-component vector of int)
+0:?           'out3.i' (layout( location=5) out 2-component vector of int)
 0:13          i: direct index for structure ( temp 2-component vector of int)
 0:?             'out3' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:13            Constant:
@@ -114,10 +114,10 @@ gl_FragCoord origin is upper left
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 0:?     'input' (layout( location=0) in 4-component vector of float)
 0:?     'out1' (layout( location=1) out 4-component vector of float)
-0:?     'v' (layout( location=2) out 2-component vector of float)
-0:?     'i' (layout( location=3) out 2-component vector of int)
-0:?     'v' (layout( location=4) out 2-component vector of float)
-0:?     'i' (layout( location=5) out 2-component vector of int)
+0:?     'out2.v' (layout( location=2) out 2-component vector of float)
+0:?     'out2.i' (layout( location=3) out 2-component vector of int)
+0:?     'out3.v' (layout( location=4) out 2-component vector of float)
+0:?     'out3.i' (layout( location=5) out 2-component vector of int)
 
 
 Linked fragment stage:
@@ -210,26 +210,26 @@ gl_FragCoord origin is upper left
 0:?         'out1' ( temp 4-component vector of float)
 0:13      Sequence
 0:13        move second child to first child ( temp 2-component vector of float)
-0:?           'v' (layout( location=2) out 2-component vector of float)
+0:?           'out2.v' (layout( location=2) out 2-component vector of float)
 0:13          v: direct index for structure ( temp 2-component vector of float)
 0:?             'out2' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:13            Constant:
 0:13              0 (const int)
 0:13        move second child to first child ( temp 2-component vector of int)
-0:?           'i' (layout( location=3) out 2-component vector of int)
+0:?           'out2.i' (layout( location=3) out 2-component vector of int)
 0:13          i: direct index for structure ( temp 2-component vector of int)
 0:?             'out2' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:13            Constant:
 0:13              1 (const int)
 0:13      Sequence
 0:13        move second child to first child ( temp 2-component vector of float)
-0:?           'v' (layout( location=4) out 2-component vector of float)
+0:?           'out3.v' (layout( location=4) out 2-component vector of float)
 0:13          v: direct index for structure ( temp 2-component vector of float)
 0:?             'out3' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:13            Constant:
 0:13              0 (const int)
 0:13        move second child to first child ( temp 2-component vector of int)
-0:?           'i' (layout( location=5) out 2-component vector of int)
+0:?           'out3.i' (layout( location=5) out 2-component vector of int)
 0:13          i: direct index for structure ( temp 2-component vector of int)
 0:?             'out3' ( temp structure{ temp 2-component vector of float v,  temp 2-component vector of int i})
 0:13            Constant:
@@ -238,10 +238,10 @@ gl_FragCoord origin is upper left
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 0:?     'input' (layout( location=0) in 4-component vector of float)
 0:?     'out1' (layout( location=1) out 4-component vector of float)
-0:?     'v' (layout( location=2) out 2-component vector of float)
-0:?     'i' (layout( location=3) out 2-component vector of int)
-0:?     'v' (layout( location=4) out 2-component vector of float)
-0:?     'i' (layout( location=5) out 2-component vector of int)
+0:?     'out2.v' (layout( location=2) out 2-component vector of float)
+0:?     'out2.i' (layout( location=3) out 2-component vector of int)
+0:?     'out3.v' (layout( location=4) out 2-component vector of float)
+0:?     'out3.i' (layout( location=5) out 2-component vector of int)
 
 // Module Version 10000
 // Generated by (magic number): 80001
@@ -277,17 +277,17 @@ gl_FragCoord origin is upper left
                               Name 67  "param"
                               Name 68  "param"
                               Name 73  "out1"
-                              Name 76  "v"
-                              Name 80  "i"
-                              Name 83  "v"
-                              Name 86  "i"
+                              Name 76  "out2.v"
+                              Name 80  "out2.i"
+                              Name 83  "out3.v"
+                              Name 86  "out3.i"
                               Decorate 57(input) Location 0
                               Decorate 60(@entryPointOutput) Location 0
                               Decorate 73(out1) Location 1
-                              Decorate 76(v) Location 2
-                              Decorate 80(i) Location 3
-                              Decorate 83(v) Location 4
-                              Decorate 86(i) Location 5
+                              Decorate 76(out2.v) Location 2
+                              Decorate 80(out2.i) Location 3
+                              Decorate 83(out3.v) Location 4
+                              Decorate 86(out3.i) Location 5
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
@@ -322,11 +322,11 @@ gl_FragCoord origin is upper left
 60(@entryPointOutput):     59(ptr) Variable Output
         73(out1):     59(ptr) Variable Output
               75:             TypePointer Output 7(fvec2)
-           76(v):     75(ptr) Variable Output
+      76(out2.v):     75(ptr) Variable Output
               79:             TypePointer Output 9(ivec2)
-           80(i):     79(ptr) Variable Output
-           83(v):     75(ptr) Variable Output
-           86(i):     79(ptr) Variable Output
+      80(out2.i):     79(ptr) Variable Output
+      83(out3.v):     75(ptr) Variable Output
+      86(out3.i):     79(ptr) Variable Output
 4(PixelShaderFunction):           2 Function None 3
                5:             Label
        55(input):     17(ptr) Variable Function
@@ -353,16 +353,16 @@ gl_FragCoord origin is upper left
                               Store 73(out1) 74
               77:     28(ptr) AccessChain 62(out2) 25
               78:    7(fvec2) Load 77
-                              Store 76(v) 78
+                              Store 76(out2.v) 78
               81:     33(ptr) AccessChain 62(out2) 30
               82:    9(ivec2) Load 81
-                              Store 80(i) 82
+                              Store 80(out2.i) 82
               84:     28(ptr) AccessChain 63(out3) 25
               85:    7(fvec2) Load 84
-                              Store 83(v) 85
+                              Store 83(out3.v) 85
               87:     33(ptr) AccessChain 63(out3) 30
               88:    9(ivec2) Load 87
-                              Store 86(i) 88
+                              Store 86(out3.i) 88
                               Return
                               FunctionEnd
 14(fun(struct-OutParam-vf2-vi21;):           2 Function None 12

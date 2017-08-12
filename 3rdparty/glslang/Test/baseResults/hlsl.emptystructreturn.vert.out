@@ -14,10 +14,11 @@ Shader version: 500
 0:10        move second child to first child ( temp structure{})
 0:?           'i' ( temp structure{})
 0:?           'i' ( in structure{})
-0:10      move second child to first child ( temp structure{})
-0:?         '@entryPointOutput' ( out structure{})
-0:10        Function Call: @main(struct-vs_in1; ( temp structure{})
-0:?           'i' ( temp structure{})
+0:10      Sequence
+0:10        move second child to first child ( temp structure{})
+0:?           '@entryPointOutput' ( out structure{})
+0:10          Function Call: @main(struct-vs_in1; ( temp structure{})
+0:?             'i' ( temp structure{})
 0:?   Linker Objects
 
 
@@ -39,10 +40,11 @@ Shader version: 500
 0:10        move second child to first child ( temp structure{})
 0:?           'i' ( temp structure{})
 0:?           'i' ( in structure{})
-0:10      move second child to first child ( temp structure{})
-0:?         '@entryPointOutput' ( out structure{})
-0:10        Function Call: @main(struct-vs_in1; ( temp structure{})
-0:?           'i' ( temp structure{})
+0:10      Sequence
+0:10        move second child to first child ( temp structure{})
+0:?           '@entryPointOutput' ( out structure{})
+0:10          Function Call: @main(struct-vs_in1; ( temp structure{})
+0:?             'i' ( temp structure{})
 0:?   Linker Objects
 
 // Module Version 10000

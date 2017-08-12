@@ -4,17 +4,17 @@ gl_FragCoord origin is upper left
 0:? Sequence
 0:12  Function Definition: osCall(struct-OS-p1-f1-t211; ( temp 4-component vector of float)
 0:12    Function Parameters: 
-0:?       'ss' ( in sampler)
-0:?       'a' ( in float)
-0:?       'tex' ( in texture2D)
+0:?       's.ss' ( in sampler)
+0:?       's.a' ( in float)
+0:?       's.tex' ( in texture2D)
 0:?     Sequence
 0:13      Branch: Return with expression
 0:13        vector-scale ( temp 4-component vector of float)
-0:?           'a' ( in float)
+0:?           's.a' ( in float)
 0:13          texture ( temp 4-component vector of float)
 0:13            Construct combined texture-sampler ( temp sampler2D)
-0:?               'tex' ( in texture2D)
-0:?               'ss' ( in sampler)
+0:?               's.tex' ( in texture2D)
+0:?               's.ss' ( in sampler)
 0:?             Constant:
 0:?               0.200000
 0:?               0.300000
@@ -25,13 +25,13 @@ gl_FragCoord origin is upper left
 0:20      'gss' ( uniform sampler)
 0:21      'gtex' ( uniform texture2D)
 0:22      move second child to first child ( temp float)
-0:?         'a' ( temp float)
+0:?         'os.a' ( temp float)
 0:22        Constant:
 0:22          3.000000
 0:28      Branch: Return with expression
 0:28        Function Call: osCall(struct-OS-p1-f1-t211; ( temp 4-component vector of float)
 0:?           'gss' ( uniform sampler)
-0:?           'a' ( temp float)
+0:?           'os.a' ( temp float)
 0:?           'gtex' ( uniform texture2D)
 0:17  Function Definition: main( ( temp void)
 0:17    Function Parameters: 
@@ -54,17 +54,17 @@ gl_FragCoord origin is upper left
 0:? Sequence
 0:12  Function Definition: osCall(struct-OS-p1-f1-t211; ( temp 4-component vector of float)
 0:12    Function Parameters: 
-0:?       'ss' ( in sampler)
-0:?       'a' ( in float)
-0:?       'tex' ( in texture2D)
+0:?       's.ss' ( in sampler)
+0:?       's.a' ( in float)
+0:?       's.tex' ( in texture2D)
 0:?     Sequence
 0:13      Branch: Return with expression
 0:13        vector-scale ( temp 4-component vector of float)
-0:?           'a' ( in float)
+0:?           's.a' ( in float)
 0:13          texture ( temp 4-component vector of float)
 0:13            Construct combined texture-sampler ( temp sampler2D)
-0:?               'tex' ( in texture2D)
-0:?               'ss' ( in sampler)
+0:?               's.tex' ( in texture2D)
+0:?               's.ss' ( in sampler)
 0:?             Constant:
 0:?               0.200000
 0:?               0.300000
@@ -75,13 +75,13 @@ gl_FragCoord origin is upper left
 0:20      'gss' ( uniform sampler)
 0:21      'gtex' ( uniform texture2D)
 0:22      move second child to first child ( temp float)
-0:?         'a' ( temp float)
+0:?         'os.a' ( temp float)
 0:22        Constant:
 0:22          3.000000
 0:28      Branch: Return with expression
 0:28        Function Call: osCall(struct-OS-p1-f1-t211; ( temp 4-component vector of float)
 0:?           'gss' ( uniform sampler)
-0:?           'a' ( temp float)
+0:?           'os.a' ( temp float)
 0:?           'gtex' ( uniform texture2D)
 0:17  Function Definition: main( ( temp void)
 0:17    Function Parameters: 
@@ -107,14 +107,14 @@ gl_FragCoord origin is upper left
                               Source HLSL 500
                               Name 4  "main"
                               Name 17  "osCall(struct-OS-p1-f1-t211;"
-                              Name 14  "ss"
-                              Name 15  "a"
-                              Name 16  "tex"
+                              Name 14  "s.ss"
+                              Name 15  "s.a"
+                              Name 16  "s.tex"
                               Name 20  "@main("
                               Name 35  "gss2"
                               Name 36  "gss"
                               Name 37  "gtex"
-                              Name 38  "a"
+                              Name 38  "os.a"
                               Name 40  "param"
                               Name 46  "@entryPointOutput"
                               Decorate 35(gss2) DescriptorSet 0
@@ -150,13 +150,13 @@ gl_FragCoord origin is upper left
                               Return
                               FunctionEnd
 17(osCall(struct-OS-p1-f1-t211;):   12(fvec4) Function None 13
-          14(ss):      7(ptr) FunctionParameter
-           15(a):      9(ptr) FunctionParameter
-         16(tex):     11(ptr) FunctionParameter
+        14(s.ss):      7(ptr) FunctionParameter
+         15(s.a):      9(ptr) FunctionParameter
+       16(s.tex):     11(ptr) FunctionParameter
               18:             Label
-              22:    8(float) Load 15(a)
-              23:          10 Load 16(tex)
-              24:           6 Load 14(ss)
+              22:    8(float) Load 15(s.a)
+              23:          10 Load 16(s.tex)
+              24:           6 Load 14(s.ss)
               26:          25 SampledImage 23 24
               31:   12(fvec4) ImageSampleImplicitLod 26 30
               32:   12(fvec4) VectorTimesScalar 31 22
@@ -164,10 +164,10 @@ gl_FragCoord origin is upper left
                               FunctionEnd
       20(@main():   12(fvec4) Function None 19
               21:             Label
-           38(a):      9(ptr) Variable Function
+        38(os.a):      9(ptr) Variable Function
        40(param):      9(ptr) Variable Function
-                              Store 38(a) 39
-              41:    8(float) Load 38(a)
+                              Store 38(os.a) 39
+              41:    8(float) Load 38(os.a)
                               Store 40(param) 41
               42:   12(fvec4) FunctionCall 17(osCall(struct-OS-p1-f1-t211;) 36(gss) 40(param) 37(gtex)
                               ReturnValue 42

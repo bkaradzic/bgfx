@@ -60,19 +60,19 @@ Shader version: 500
 0:?             'vsin' ( temp structure{ temp int x0_in,  temp 4-component vector of float Pos_in,  temp int x1_in})
 0:22            Constant:
 0:22              0 (const int)
-0:?           'x0_in' (layout( location=0) in int)
+0:?           'vsin.x0_in' (layout( location=0) in int)
 0:22        move second child to first child ( temp 4-component vector of float)
 0:22          Pos_in: direct index for structure ( temp 4-component vector of float)
 0:?             'vsin' ( temp structure{ temp int x0_in,  temp 4-component vector of float Pos_in,  temp int x1_in})
 0:22            Constant:
 0:22              1 (const int)
-0:?           'Pos_in' (layout( location=1) in 4-component vector of float)
+0:?           'vsin.Pos_in' (layout( location=1) in 4-component vector of float)
 0:22        move second child to first child ( temp int)
 0:22          x1_in: direct index for structure ( temp int)
 0:?             'vsin' ( temp structure{ temp int x0_in,  temp 4-component vector of float Pos_in,  temp int x1_in})
 0:22            Constant:
 0:22              2 (const int)
-0:?           'x1_in' (layout( location=2) in int)
+0:?           'vsin.x1_in' (layout( location=2) in int)
 0:22      Sequence
 0:22        move second child to first child ( temp structure{ temp int x0_out,  temp 4-component vector of float Pos_out,  temp int x1_out})
 0:22          'flattenTemp' ( temp structure{ temp int x0_out,  temp 4-component vector of float Pos_out,  temp int x1_out})
@@ -88,7 +88,7 @@ Shader version: 500
 0:22            Constant:
 0:22              0 (const int)
 0:22        move second child to first child ( temp 4-component vector of float)
-0:?           '@entryPointOutput_Pos_out' ( out 4-component vector of float Position)
+0:?           '@entryPointOutput.Pos_out' ( out 4-component vector of float Position)
 0:22          Pos_out: direct index for structure ( temp 4-component vector of float)
 0:22            'flattenTemp' ( temp structure{ temp int x0_out,  temp 4-component vector of float Pos_out,  temp int x1_out})
 0:22            Constant:
@@ -103,10 +103,11 @@ Shader version: 500
 0:22            Constant:
 0:22              2 (const int)
 0:?   Linker Objects
+0:?     '@entryPointOutput.Pos_out' ( out 4-component vector of float Position)
 0:?     '@entryPointOutput' (layout( location=0) out structure{ temp int x0_out,  temp int x1_out})
-0:?     'x0_in' (layout( location=0) in int)
-0:?     'Pos_in' (layout( location=1) in 4-component vector of float)
-0:?     'x1_in' (layout( location=2) in int)
+0:?     'vsin.x0_in' (layout( location=0) in int)
+0:?     'vsin.Pos_in' (layout( location=1) in 4-component vector of float)
+0:?     'vsin.x1_in' (layout( location=2) in int)
 
 
 Linked vertex stage:
@@ -173,19 +174,19 @@ Shader version: 500
 0:?             'vsin' ( temp structure{ temp int x0_in,  temp 4-component vector of float Pos_in,  temp int x1_in})
 0:22            Constant:
 0:22              0 (const int)
-0:?           'x0_in' (layout( location=0) in int)
+0:?           'vsin.x0_in' (layout( location=0) in int)
 0:22        move second child to first child ( temp 4-component vector of float)
 0:22          Pos_in: direct index for structure ( temp 4-component vector of float)
 0:?             'vsin' ( temp structure{ temp int x0_in,  temp 4-component vector of float Pos_in,  temp int x1_in})
 0:22            Constant:
 0:22              1 (const int)
-0:?           'Pos_in' (layout( location=1) in 4-component vector of float)
+0:?           'vsin.Pos_in' (layout( location=1) in 4-component vector of float)
 0:22        move second child to first child ( temp int)
 0:22          x1_in: direct index for structure ( temp int)
 0:?             'vsin' ( temp structure{ temp int x0_in,  temp 4-component vector of float Pos_in,  temp int x1_in})
 0:22            Constant:
 0:22              2 (const int)
-0:?           'x1_in' (layout( location=2) in int)
+0:?           'vsin.x1_in' (layout( location=2) in int)
 0:22      Sequence
 0:22        move second child to first child ( temp structure{ temp int x0_out,  temp 4-component vector of float Pos_out,  temp int x1_out})
 0:22          'flattenTemp' ( temp structure{ temp int x0_out,  temp 4-component vector of float Pos_out,  temp int x1_out})
@@ -201,7 +202,7 @@ Shader version: 500
 0:22            Constant:
 0:22              0 (const int)
 0:22        move second child to first child ( temp 4-component vector of float)
-0:?           '@entryPointOutput_Pos_out' ( out 4-component vector of float Position)
+0:?           '@entryPointOutput.Pos_out' ( out 4-component vector of float Position)
 0:22          Pos_out: direct index for structure ( temp 4-component vector of float)
 0:22            'flattenTemp' ( temp structure{ temp int x0_out,  temp 4-component vector of float Pos_out,  temp int x1_out})
 0:22            Constant:
@@ -216,10 +217,11 @@ Shader version: 500
 0:22            Constant:
 0:22              2 (const int)
 0:?   Linker Objects
+0:?     '@entryPointOutput.Pos_out' ( out 4-component vector of float Position)
 0:?     '@entryPointOutput' (layout( location=0) out structure{ temp int x0_out,  temp int x1_out})
-0:?     'x0_in' (layout( location=0) in int)
-0:?     'Pos_in' (layout( location=1) in 4-component vector of float)
-0:?     'x1_in' (layout( location=2) in int)
+0:?     'vsin.x0_in' (layout( location=0) in int)
+0:?     'vsin.Pos_in' (layout( location=1) in 4-component vector of float)
+0:?     'vsin.x1_in' (layout( location=2) in int)
 
 // Module Version 10000
 // Generated by (magic number): 80001
@@ -248,21 +250,21 @@ Shader version: 500
                               Name 42  "param"
                               Name 44  "param"
                               Name 50  "vsin"
-                              Name 52  "x0_in"
-                              Name 56  "Pos_in"
-                              Name 59  "x1_in"
+                              Name 52  "vsin.x0_in"
+                              Name 56  "vsin.Pos_in"
+                              Name 59  "vsin.x1_in"
                               Name 62  "flattenTemp"
                               Name 63  "param"
                               Name 66  "VS_OUTPUT"
                               MemberName 66(VS_OUTPUT) 0  "x0_out"
                               MemberName 66(VS_OUTPUT) 1  "x1_out"
                               Name 68  "@entryPointOutput"
-                              Name 74  "@entryPointOutput_Pos_out"
-                              Decorate 52(x0_in) Location 0
-                              Decorate 56(Pos_in) Location 1
-                              Decorate 59(x1_in) Location 2
+                              Name 74  "@entryPointOutput.Pos_out"
+                              Decorate 52(vsin.x0_in) Location 0
+                              Decorate 56(vsin.Pos_in) Location 1
+                              Decorate 59(vsin.x1_in) Location 2
                               Decorate 68(@entryPointOutput) Location 0
-                              Decorate 74(@entryPointOutput_Pos_out) BuiltIn Position
+                              Decorate 74(@entryPointOutput.Pos_out) BuiltIn Position
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeInt 32 1
@@ -280,28 +282,28 @@ Shader version: 500
               31:             TypePointer Function 6(int)
               38:      6(int) Constant 2
               51:             TypePointer Input 6(int)
-       52(x0_in):     51(ptr) Variable Input
+  52(vsin.x0_in):     51(ptr) Variable Input
               55:             TypePointer Input 8(fvec4)
-      56(Pos_in):     55(ptr) Variable Input
-       59(x1_in):     51(ptr) Variable Input
+ 56(vsin.Pos_in):     55(ptr) Variable Input
+  59(vsin.x1_in):     51(ptr) Variable Input
    66(VS_OUTPUT):             TypeStruct 6(int) 6(int)
               67:             TypePointer Output 66(VS_OUTPUT)
 68(@entryPointOutput):     67(ptr) Variable Output
               71:             TypePointer Output 6(int)
               73:             TypePointer Output 8(fvec4)
-74(@entryPointOutput_Pos_out):     73(ptr) Variable Output
+74(@entryPointOutput.Pos_out):     73(ptr) Variable Output
          4(main):           2 Function None 3
                5:             Label
         50(vsin):     10(ptr) Variable Function
  62(flattenTemp):     12(ptr) Variable Function
        63(param):     10(ptr) Variable Function
-              53:      6(int) Load 52(x0_in)
+              53:      6(int) Load 52(vsin.x0_in)
               54:     31(ptr) AccessChain 50(vsin) 30
                               Store 54 53
-              57:    8(fvec4) Load 56(Pos_in)
+              57:    8(fvec4) Load 56(vsin.Pos_in)
               58:     23(ptr) AccessChain 50(vsin) 22
                               Store 58 57
-              60:      6(int) Load 59(x1_in)
+              60:      6(int) Load 59(vsin.x1_in)
               61:     31(ptr) AccessChain 50(vsin) 38
                               Store 61 60
               64: 9(VS_INPUT) Load 50(vsin)
@@ -314,7 +316,7 @@ Shader version: 500
                               Store 72 70
               75:     23(ptr) AccessChain 62(flattenTemp) 22
               76:    8(fvec4) Load 75
-                              Store 74(@entryPointOutput_Pos_out) 76
+                              Store 74(@entryPointOutput.Pos_out) 76
               77:     31(ptr) AccessChain 62(flattenTemp) 38
               78:      6(int) Load 77
               79:     71(ptr) AccessChain 68(@entryPointOutput) 22

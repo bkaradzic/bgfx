@@ -1365,38 +1365,11 @@ public:
         return false;
     }
     virtual bool isOpaque() const { return basicType == EbtSampler || basicType == EbtAtomicUint; }
+    virtual bool isBuiltIn() const { return getQualifier().builtIn != EbvNone; }
 
     // "Image" is a superset of "Subpass"
     virtual bool isImage() const   { return basicType == EbtSampler && getSampler().isImage(); }
     virtual bool isSubpass() const { return basicType == EbtSampler && getSampler().isSubpass(); }
-
-    virtual bool isBuiltIn() const { return getQualifier().builtIn != EbvNone; }
-
-    // Return true if this is a per-vertex built-in
-    virtual bool isPerVertexBuiltIn(EShLanguage language) const
-    {
-        if (getQualifier().builtIn == EbvNone || language == EShLangFragment)
-            return false;
-
-        // Any non-fragment stage
-        switch (getQualifier().builtIn) {
-        case EbvPosition:
-        case EbvPointSize:
-        case EbvClipDistance:
-        case EbvCullDistance:
-#ifdef NV_EXTENSIONS
-        case EbvLayer:
-        case EbvViewportMaskNV:
-        case EbvSecondaryPositionNV:
-        case EbvSecondaryViewportMaskNV:
-        case EbvPositionPerViewNV:
-        case EbvViewportMaskPerViewNV:
-#endif
-            return true;
-        default:
-            return false;
-        }
-    }
 
     // return true if this type contains any subtype which satisfies the given predicate.
     template <typename P> 

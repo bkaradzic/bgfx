@@ -616,7 +616,7 @@ bool HlslGrammar::acceptFullySpecifiedType(TType& type, TIntermNode*& nodeList)
             qualifier.readonly     = type.getQualifier().readonly;
         }
 
-        if (type.getQualifier().builtIn != EbvNone)
+        if (type.isBuiltIn())
             qualifier.builtIn = type.getQualifier().builtIn;
 
         type.getQualifier()    = qualifier;

@@ -19,14 +19,14 @@ spv.register.autoassign-2.frag
                               Name 31  "g_tScene[1]"
                               Name 39  "psout"
                               Name 40  "param"
-                              Name 44  "Color"
+                              Name 44  "psout.Color"
                               Decorate 18(g_tScene[0]) DescriptorSet 0
                               Decorate 18(g_tScene[0]) Binding 10
                               Decorate 22(g_tSamp) DescriptorSet 0
                               Decorate 22(g_tSamp) Binding 5
                               Decorate 31(g_tScene[1]) DescriptorSet 0
                               Decorate 31(g_tScene[1]) Binding 11
-                              Decorate 44(Color) Location 0
+                              Decorate 44(psout.Color) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
@@ -50,7 +50,7 @@ spv.register.autoassign-2.frag
  31(g_tScene[1]):     17(ptr) Variable UniformConstant
               37:             TypePointer Function 7(fvec4)
               43:             TypePointer Output 7(fvec4)
-       44(Color):     43(ptr) Variable Output
+ 44(psout.Color):     43(ptr) Variable Output
          4(main):           2 Function None 3
                5:             Label
        39(psout):      9(ptr) Variable Function
@@ -60,7 +60,7 @@ spv.register.autoassign-2.frag
                               Store 39(psout) 42
               45:     37(ptr) AccessChain 39(psout) 15
               46:    7(fvec4) Load 45
-                              Store 44(Color) 46
+                              Store 44(psout.Color) 46
                               Return
                               FunctionEnd
 12(@main(struct-PS_OUTPUT-vf41;):           2 Function None 10

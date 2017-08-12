@@ -93,7 +93,7 @@ Shader version: 500
 0:8                0 (const int)
 0:8            Constant:
 0:8              0 (const int)
-0:?           'm[0]' (layout( location=1) in 4-component vector of float)
+0:?           'vi.m[0]' (layout( location=1) in 4-component vector of float)
 0:8        move second child to first child ( temp 4-component vector of float)
 0:8          direct index ( temp 4-component vector of float)
 0:8            m: direct index for structure ( temp 2-element array of 4-component vector of float)
@@ -102,19 +102,19 @@ Shader version: 500
 0:8                0 (const int)
 0:8            Constant:
 0:8              1 (const int)
-0:?           'm[1]' (layout( location=2) in 4-component vector of float)
+0:?           'vi.m[1]' (layout( location=2) in 4-component vector of float)
 0:8        move second child to first child ( temp 4-component vector of float)
 0:8          coord: direct index for structure ( temp 4-component vector of float)
 0:?             'vi' ( temp structure{ temp 2-element array of 4-component vector of float m,  temp 4-component vector of float coord,  temp 4-component vector of float b})
 0:8            Constant:
 0:8              1 (const int)
-0:?           'coord' (layout( location=3) in 4-component vector of float)
+0:?           'vi.coord' (layout( location=3) in 4-component vector of float)
 0:8        move second child to first child ( temp 4-component vector of float)
 0:8          b: direct index for structure ( temp 4-component vector of float)
 0:?             'vi' ( temp structure{ temp 2-element array of 4-component vector of float m,  temp 4-component vector of float coord,  temp 4-component vector of float b})
 0:8            Constant:
 0:8              2 (const int)
-0:?           'b' (layout( location=4) in 4-component vector of float)
+0:?           'vi.b' (layout( location=4) in 4-component vector of float)
 0:8      move second child to first child ( temp 4-component vector of float)
 0:?         'e' ( temp 4-component vector of float)
 0:?         'e' (layout( location=5) in 4-component vector of float)
@@ -135,7 +135,7 @@ Shader version: 500
 0:8            Constant:
 0:8              0 (const int)
 0:8        move second child to first child ( temp 4-component vector of float)
-0:?           '@entryPointOutput_coord' ( out 4-component vector of float Position)
+0:?           '@entryPointOutput.coord' ( out 4-component vector of float Position)
 0:8          coord: direct index for structure ( temp 4-component vector of float)
 0:8            'flattenTemp' ( temp structure{ temp 2-element array of 4-component vector of float m,  temp 4-component vector of float coord,  temp 4-component vector of float b})
 0:8            Constant:
@@ -150,14 +150,13 @@ Shader version: 500
 0:8            Constant:
 0:8              2 (const int)
 0:?   Linker Objects
+0:?     '@entryPointOutput.coord' ( out 4-component vector of float Position)
 0:?     '@entryPointOutput' (layout( location=0) out structure{ temp 2-element array of 4-component vector of float m,  smooth temp 4-component vector of float b})
 0:?     'd' (layout( location=0) in 4-component vector of float)
-0:?     'm[0]' (layout( location=1) in 4-component vector of float)
-0:?     'm[1]' (layout( location=2) in 4-component vector of float)
-0:?     'm[0]' (layout( location=1) in 4-component vector of float)
-0:?     'm[1]' (layout( location=2) in 4-component vector of float)
-0:?     'coord' (layout( location=3) in 4-component vector of float)
-0:?     'b' (layout( location=4) in 4-component vector of float)
+0:?     'vi.m[0]' (layout( location=1) in 4-component vector of float)
+0:?     'vi.m[1]' (layout( location=2) in 4-component vector of float)
+0:?     'vi.coord' (layout( location=3) in 4-component vector of float)
+0:?     'vi.b' (layout( location=4) in 4-component vector of float)
 0:?     'e' (layout( location=5) in 4-component vector of float)
 
 
@@ -258,7 +257,7 @@ Shader version: 500
 0:8                0 (const int)
 0:8            Constant:
 0:8              0 (const int)
-0:?           'm[0]' (layout( location=1) in 4-component vector of float)
+0:?           'vi.m[0]' (layout( location=1) in 4-component vector of float)
 0:8        move second child to first child ( temp 4-component vector of float)
 0:8          direct index ( temp 4-component vector of float)
 0:8            m: direct index for structure ( temp 2-element array of 4-component vector of float)
@@ -267,19 +266,19 @@ Shader version: 500
 0:8                0 (const int)
 0:8            Constant:
 0:8              1 (const int)
-0:?           'm[1]' (layout( location=2) in 4-component vector of float)
+0:?           'vi.m[1]' (layout( location=2) in 4-component vector of float)
 0:8        move second child to first child ( temp 4-component vector of float)
 0:8          coord: direct index for structure ( temp 4-component vector of float)
 0:?             'vi' ( temp structure{ temp 2-element array of 4-component vector of float m,  temp 4-component vector of float coord,  temp 4-component vector of float b})
 0:8            Constant:
 0:8              1 (const int)
-0:?           'coord' (layout( location=3) in 4-component vector of float)
+0:?           'vi.coord' (layout( location=3) in 4-component vector of float)
 0:8        move second child to first child ( temp 4-component vector of float)
 0:8          b: direct index for structure ( temp 4-component vector of float)
 0:?             'vi' ( temp structure{ temp 2-element array of 4-component vector of float m,  temp 4-component vector of float coord,  temp 4-component vector of float b})
 0:8            Constant:
 0:8              2 (const int)
-0:?           'b' (layout( location=4) in 4-component vector of float)
+0:?           'vi.b' (layout( location=4) in 4-component vector of float)
 0:8      move second child to first child ( temp 4-component vector of float)
 0:?         'e' ( temp 4-component vector of float)
 0:?         'e' (layout( location=5) in 4-component vector of float)
@@ -300,7 +299,7 @@ Shader version: 500
 0:8            Constant:
 0:8              0 (const int)
 0:8        move second child to first child ( temp 4-component vector of float)
-0:?           '@entryPointOutput_coord' ( out 4-component vector of float Position)
+0:?           '@entryPointOutput.coord' ( out 4-component vector of float Position)
 0:8          coord: direct index for structure ( temp 4-component vector of float)
 0:8            'flattenTemp' ( temp structure{ temp 2-element array of 4-component vector of float m,  temp 4-component vector of float coord,  temp 4-component vector of float b})
 0:8            Constant:
@@ -315,14 +314,13 @@ Shader version: 500
 0:8            Constant:
 0:8              2 (const int)
 0:?   Linker Objects
+0:?     '@entryPointOutput.coord' ( out 4-component vector of float Position)
 0:?     '@entryPointOutput' (layout( location=0) out structure{ temp 2-element array of 4-component vector of float m,  smooth temp 4-component vector of float b})
 0:?     'd' (layout( location=0) in 4-component vector of float)
-0:?     'm[0]' (layout( location=1) in 4-component vector of float)
-0:?     'm[1]' (layout( location=2) in 4-component vector of float)
-0:?     'm[0]' (layout( location=1) in 4-component vector of float)
-0:?     'm[1]' (layout( location=2) in 4-component vector of float)
-0:?     'coord' (layout( location=3) in 4-component vector of float)
-0:?     'b' (layout( location=4) in 4-component vector of float)
+0:?     'vi.m[0]' (layout( location=1) in 4-component vector of float)
+0:?     'vi.m[1]' (layout( location=2) in 4-component vector of float)
+0:?     'vi.coord' (layout( location=3) in 4-component vector of float)
+0:?     'vi.b' (layout( location=4) in 4-component vector of float)
 0:?     'e' (layout( location=5) in 4-component vector of float)
 
 // Module Version 10000
@@ -347,10 +345,10 @@ Shader version: 500
                               Name 53  "d"
                               Name 55  "d"
                               Name 57  "vi"
-                              Name 58  "m[0]"
-                              Name 61  "m[1]"
-                              Name 64  "coord"
-                              Name 67  "b"
+                              Name 58  "vi.m[0]"
+                              Name 61  "vi.m[1]"
+                              Name 64  "vi.coord"
+                              Name 67  "vi.b"
                               Name 70  "e"
                               Name 71  "e"
                               Name 73  "flattenTemp"
@@ -361,15 +359,15 @@ Shader version: 500
                               MemberName 81(VI) 0  "m"
                               MemberName 81(VI) 1  "b"
                               Name 83  "@entryPointOutput"
-                              Name 90  "@entryPointOutput_coord"
+                              Name 90  "@entryPointOutput.coord"
                               Decorate 55(d) Location 0
-                              Decorate 58(m[0]) Location 1
-                              Decorate 61(m[1]) Location 2
-                              Decorate 64(coord) Location 3
-                              Decorate 67(b) Location 4
+                              Decorate 58(vi.m[0]) Location 1
+                              Decorate 61(vi.m[1]) Location 2
+                              Decorate 64(vi.coord) Location 3
+                              Decorate 67(vi.b) Location 4
                               Decorate 71(e) Location 5
                               Decorate 83(@entryPointOutput) Location 0
-                              Decorate 90(@entryPointOutput_coord) BuiltIn Position
+                              Decorate 90(@entryPointOutput.coord) BuiltIn Position
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
@@ -395,10 +393,10 @@ Shader version: 500
               48:    7(fvec4) ConstantComposite 47 47 47 47
               54:             TypePointer Input 7(fvec4)
            55(d):     54(ptr) Variable Input
-        58(m[0]):     54(ptr) Variable Input
-        61(m[1]):     54(ptr) Variable Input
-       64(coord):     54(ptr) Variable Input
-           67(b):     54(ptr) Variable Input
+     58(vi.m[0]):     54(ptr) Variable Input
+     61(vi.m[1]):     54(ptr) Variable Input
+    64(vi.coord):     54(ptr) Variable Input
+        67(vi.b):     54(ptr) Variable Input
            71(e):     54(ptr) Variable Input
           81(VI):             TypeStruct 11 7(fvec4)
               82:             TypePointer Output 81(VI)
@@ -406,7 +404,7 @@ Shader version: 500
               84:             TypePointer Function 11
               87:             TypePointer Output 11
               89:             TypePointer Output 7(fvec4)
-90(@entryPointOutput_coord):     89(ptr) Variable Output
+90(@entryPointOutput.coord):     89(ptr) Variable Output
          4(main):           2 Function None 3
                5:             Label
            53(d):      8(ptr) Variable Function
@@ -418,16 +416,16 @@ Shader version: 500
        78(param):      8(ptr) Variable Function
               56:    7(fvec4) Load 55(d)
                               Store 53(d) 56
-              59:    7(fvec4) Load 58(m[0])
+              59:    7(fvec4) Load 58(vi.m[0])
               60:      8(ptr) AccessChain 57(vi) 23 23
                               Store 60 59
-              62:    7(fvec4) Load 61(m[1])
+              62:    7(fvec4) Load 61(vi.m[1])
               63:      8(ptr) AccessChain 57(vi) 23 24
                               Store 63 62
-              65:    7(fvec4) Load 64(coord)
+              65:    7(fvec4) Load 64(vi.coord)
               66:      8(ptr) AccessChain 57(vi) 24
                               Store 66 65
-              68:    7(fvec4) Load 67(b)
+              68:    7(fvec4) Load 67(vi.b)
               69:      8(ptr) AccessChain 57(vi) 22
                               Store 69 68
               72:    7(fvec4) Load 71(e)
@@ -446,7 +444,7 @@ Shader version: 500
                               Store 88 86
               91:      8(ptr) AccessChain 73(flattenTemp) 24
               92:    7(fvec4) Load 91
-                              Store 90(@entryPointOutput_coord) 92
+                              Store 90(@entryPointOutput.coord) 92
               93:      8(ptr) AccessChain 73(flattenTemp) 22
               94:    7(fvec4) Load 93
               95:     89(ptr) AccessChain 83(@entryPointOutput) 24

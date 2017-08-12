@@ -25,9 +25,19 @@ gl_FragCoord origin is upper left
 0:7  Function Definition: main( ( temp void)
 0:7    Function Parameters: 
 0:?     Sequence
-0:7      move second child to first child ( temp structure{ temp float interp,  temp uint no_interp})
-0:?         'input' ( temp structure{ temp float interp,  temp uint no_interp})
-0:?         'input' (layout( location=0) in structure{ temp float interp,  flat temp uint no_interp})
+0:7      Sequence
+0:7        move second child to first child ( temp float)
+0:7          interp: direct index for structure ( temp float)
+0:?             'input' ( temp structure{ temp float interp,  temp uint no_interp})
+0:7            Constant:
+0:7              0 (const int)
+0:?           'input.interp' (layout( location=0) in float)
+0:7        move second child to first child ( temp uint)
+0:7          no_interp: direct index for structure ( temp uint)
+0:?             'input' ( temp structure{ temp float interp,  temp uint no_interp})
+0:7            Constant:
+0:7              1 (const int)
+0:?           'input.no_interp' (layout( location=1) flat in uint)
 0:7      Function Call: @main(struct-PSInput-f1-u11;vf4;vf4; ( temp void)
 0:?         'input' ( temp structure{ temp float interp,  temp uint no_interp})
 0:?         'out1' ( temp 4-component vector of float)
@@ -39,7 +49,8 @@ gl_FragCoord origin is upper left
 0:?         'out2' (layout( location=3) out 4-component vector of float)
 0:?         'out2' ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     'input' (layout( location=0) in structure{ temp float interp,  flat temp uint no_interp})
+0:?     'input.interp' (layout( location=0) in float)
+0:?     'input.no_interp' (layout( location=1) flat in uint)
 0:?     'out1' (layout( location=1) out 4-component vector of float)
 0:?     'out2' (layout( location=3) out 4-component vector of float)
 
@@ -73,9 +84,19 @@ gl_FragCoord origin is upper left
 0:7  Function Definition: main( ( temp void)
 0:7    Function Parameters: 
 0:?     Sequence
-0:7      move second child to first child ( temp structure{ temp float interp,  temp uint no_interp})
-0:?         'input' ( temp structure{ temp float interp,  temp uint no_interp})
-0:?         'input' (layout( location=0) in structure{ temp float interp,  flat temp uint no_interp})
+0:7      Sequence
+0:7        move second child to first child ( temp float)
+0:7          interp: direct index for structure ( temp float)
+0:?             'input' ( temp structure{ temp float interp,  temp uint no_interp})
+0:7            Constant:
+0:7              0 (const int)
+0:?           'input.interp' (layout( location=0) in float)
+0:7        move second child to first child ( temp uint)
+0:7          no_interp: direct index for structure ( temp uint)
+0:?             'input' ( temp structure{ temp float interp,  temp uint no_interp})
+0:7            Constant:
+0:7              1 (const int)
+0:?           'input.no_interp' (layout( location=1) flat in uint)
 0:7      Function Call: @main(struct-PSInput-f1-u11;vf4;vf4; ( temp void)
 0:?         'input' ( temp structure{ temp float interp,  temp uint no_interp})
 0:?         'out1' ( temp 4-component vector of float)
@@ -87,7 +108,8 @@ gl_FragCoord origin is upper left
 0:?         'out2' (layout( location=3) out 4-component vector of float)
 0:?         'out2' ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     'input' (layout( location=0) in structure{ temp float interp,  flat temp uint no_interp})
+0:?     'input.interp' (layout( location=0) in float)
+0:?     'input.no_interp' (layout( location=1) flat in uint)
 0:?     'out1' (layout( location=1) out 4-component vector of float)
 0:?     'out2' (layout( location=3) out 4-component vector of float)
 
@@ -98,7 +120,7 @@ gl_FragCoord origin is upper left
                               Capability Shader
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
-                              EntryPoint Fragment 4  "main" 25 46 48
+                              EntryPoint Fragment 4  "main" 26 32 46 48
                               ExecutionMode 4 OriginUpperLeft
                               Source HLSL 500
                               Name 4  "main"
@@ -110,10 +132,8 @@ gl_FragCoord origin is upper left
                               Name 14  "out1"
                               Name 15  "out2"
                               Name 22  "input"
-                              Name 23  "PSInput"
-                              MemberName 23(PSInput) 0  "interp"
-                              MemberName 23(PSInput) 1  "no_interp"
-                              Name 25  "input"
+                              Name 26  "input.interp"
+                              Name 32  "input.no_interp"
                               Name 36  "out1"
                               Name 37  "out2"
                               Name 38  "param"
@@ -121,8 +141,9 @@ gl_FragCoord origin is upper left
                               Name 41  "param"
                               Name 46  "out1"
                               Name 48  "out2"
-                              MemberDecorate 23(PSInput) 1 Flat
-                              Decorate 25(input) Location 0
+                              Decorate 26(input.interp) Location 0
+                              Decorate 32(input.no_interp) Flat
+                              Decorate 32(input.no_interp) Location 1
                               Decorate 46(out1) Location 1
                               Decorate 48(out2) Location 3
                2:             TypeVoid
@@ -138,13 +159,14 @@ gl_FragCoord origin is upper left
               19:   10(fvec4) ConstantComposite 18 18 18 18
               20:    6(float) Constant 0
               21:   10(fvec4) ConstantComposite 20 20 20 20
-     23(PSInput):             TypeStruct 6(float) 7(int)
-              24:             TypePointer Input 23(PSInput)
-       25(input):     24(ptr) Variable Input
-              28:             TypeInt 32 1
-              29:     28(int) Constant 0
-              30:             TypePointer Function 6(float)
-              33:     28(int) Constant 1
+              23:             TypeInt 32 1
+              24:     23(int) Constant 0
+              25:             TypePointer Input 6(float)
+26(input.interp):     25(ptr) Variable Input
+              28:             TypePointer Function 6(float)
+              30:     23(int) Constant 1
+              31:             TypePointer Input 7(int)
+32(input.no_interp):     31(ptr) Variable Input
               34:             TypePointer Function 7(int)
               45:             TypePointer Output 10(fvec4)
         46(out1):     45(ptr) Variable Output
@@ -157,13 +179,12 @@ gl_FragCoord origin is upper left
        38(param):      9(ptr) Variable Function
        40(param):     11(ptr) Variable Function
        41(param):     11(ptr) Variable Function
-              26: 23(PSInput) Load 25(input)
-              27:    6(float) CompositeExtract 26 0
-              31:     30(ptr) AccessChain 22(input) 29
-                              Store 31 27
-              32:      7(int) CompositeExtract 26 1
-              35:     34(ptr) AccessChain 22(input) 33
-                              Store 35 32
+              27:    6(float) Load 26(input.interp)
+              29:     28(ptr) AccessChain 22(input) 24
+                              Store 29 27
+              33:      7(int) Load 32(input.no_interp)
+              35:     34(ptr) AccessChain 22(input) 30
+                              Store 35 33
               39:  8(PSInput) Load 22(input)
                               Store 38(param) 39
               42:           2 FunctionCall 16(@main(struct-PSInput-f1-u11;vf4;vf4;) 38(param) 40(param) 41(param)

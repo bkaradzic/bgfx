@@ -3,32 +3,32 @@ Shader version: 500
 0:? Sequence
 0:5  Function Definition: lookUp(struct-FxaaTex-p1-t21-f11; ( temp 4-component vector of float)
 0:5    Function Parameters: 
-0:?       'smpl' ( in sampler)
-0:?       'tex' ( in texture2D)
-0:?       'f' ( in float)
+0:?       'tex.smpl' ( in sampler)
+0:?       'tex.tex' ( in texture2D)
+0:?       'tex.f' ( in float)
 0:?     Sequence
 0:6      Branch: Return with expression
 0:6        texture ( temp 4-component vector of float)
 0:6          Construct combined texture-sampler ( temp sampler2D)
-0:?             'tex' ( in texture2D)
-0:?             'smpl' ( in sampler)
+0:?             'tex.tex' ( in texture2D)
+0:?             'tex.smpl' ( in sampler)
 0:?           Construct vec2 ( temp 2-component vector of float)
-0:?             'f' ( in float)
-0:?             'f' ( in float)
+0:?             'tex.f' ( in float)
+0:?             'tex.f' ( in float)
 0:10  Function Definition: @main( ( temp 4-component vector of float)
 0:10    Function Parameters: 
 0:?     Sequence
 0:11      Sequence
 0:?         Sequence
 0:11          move second child to first child ( temp float)
-0:?             'f' ( temp float)
+0:?             'tex.f' ( temp float)
 0:11            Constant:
 0:11              0.500000
 0:12      Branch: Return with expression
 0:12        Function Call: lookUp(struct-FxaaTex-p1-t21-f11; ( temp 4-component vector of float)
 0:?           'g_tInputTexture_sampler' ( uniform sampler)
 0:?           'g_tInputTexture' ( uniform texture2D)
-0:?           'f' ( temp float)
+0:?           'tex.f' ( temp float)
 0:10  Function Definition: main( ( temp void)
 0:10    Function Parameters: 
 0:?     Sequence
@@ -48,32 +48,32 @@ Shader version: 500
 0:? Sequence
 0:5  Function Definition: lookUp(struct-FxaaTex-p1-t21-f11; ( temp 4-component vector of float)
 0:5    Function Parameters: 
-0:?       'smpl' ( in sampler)
-0:?       'tex' ( in texture2D)
-0:?       'f' ( in float)
+0:?       'tex.smpl' ( in sampler)
+0:?       'tex.tex' ( in texture2D)
+0:?       'tex.f' ( in float)
 0:?     Sequence
 0:6      Branch: Return with expression
 0:6        texture ( temp 4-component vector of float)
 0:6          Construct combined texture-sampler ( temp sampler2D)
-0:?             'tex' ( in texture2D)
-0:?             'smpl' ( in sampler)
+0:?             'tex.tex' ( in texture2D)
+0:?             'tex.smpl' ( in sampler)
 0:?           Construct vec2 ( temp 2-component vector of float)
-0:?             'f' ( in float)
-0:?             'f' ( in float)
+0:?             'tex.f' ( in float)
+0:?             'tex.f' ( in float)
 0:10  Function Definition: @main( ( temp 4-component vector of float)
 0:10    Function Parameters: 
 0:?     Sequence
 0:11      Sequence
 0:?         Sequence
 0:11          move second child to first child ( temp float)
-0:?             'f' ( temp float)
+0:?             'tex.f' ( temp float)
 0:11            Constant:
 0:11              0.500000
 0:12      Branch: Return with expression
 0:12        Function Call: lookUp(struct-FxaaTex-p1-t21-f11; ( temp 4-component vector of float)
 0:?           'g_tInputTexture_sampler' ( uniform sampler)
 0:?           'g_tInputTexture' ( uniform texture2D)
-0:?           'f' ( temp float)
+0:?           'tex.f' ( temp float)
 0:10  Function Definition: main( ( temp void)
 0:10    Function Parameters: 
 0:?     Sequence
@@ -96,11 +96,11 @@ Shader version: 500
                               Source HLSL 500
                               Name 4  "main"
                               Name 17  "lookUp(struct-FxaaTex-p1-t21-f11;"
-                              Name 14  "smpl"
-                              Name 15  "tex"
-                              Name 16  "f"
+                              Name 14  "tex.smpl"
+                              Name 15  "tex.tex"
+                              Name 16  "tex.f"
                               Name 20  "@main("
-                              Name 34  "f"
+                              Name 34  "tex.f"
                               Name 36  "g_tInputTexture_sampler"
                               Name 37  "g_tInputTexture"
                               Name 38  "param"
@@ -134,25 +134,25 @@ Shader version: 500
                               Return
                               FunctionEnd
 17(lookUp(struct-FxaaTex-p1-t21-f11;):   12(fvec4) Function None 13
-        14(smpl):      7(ptr) FunctionParameter
-         15(tex):     10(ptr) FunctionParameter
-           16(f):     11(ptr) FunctionParameter
+    14(tex.smpl):      7(ptr) FunctionParameter
+     15(tex.tex):     10(ptr) FunctionParameter
+       16(tex.f):     11(ptr) FunctionParameter
               18:             Label
-              22:           9 Load 15(tex)
-              23:           6 Load 14(smpl)
+              22:           9 Load 15(tex.tex)
+              23:           6 Load 14(tex.smpl)
               25:          24 SampledImage 22 23
-              26:    8(float) Load 16(f)
-              27:    8(float) Load 16(f)
+              26:    8(float) Load 16(tex.f)
+              27:    8(float) Load 16(tex.f)
               29:   28(fvec2) CompositeConstruct 26 27
               31:   12(fvec4) ImageSampleExplicitLod 25 29 Lod 30
                               ReturnValue 31
                               FunctionEnd
       20(@main():   12(fvec4) Function None 19
               21:             Label
-           34(f):     11(ptr) Variable Function
+       34(tex.f):     11(ptr) Variable Function
        38(param):     11(ptr) Variable Function
-                              Store 34(f) 35
-              39:    8(float) Load 34(f)
+                              Store 34(tex.f) 35
+              39:    8(float) Load 34(tex.f)
                               Store 38(param) 39
               40:   12(fvec4) FunctionCall 17(lookUp(struct-FxaaTex-p1-t21-f11;) 36(g_tInputTexture_sampler) 37(g_tInputTexture) 38(param)
                               ReturnValue 40

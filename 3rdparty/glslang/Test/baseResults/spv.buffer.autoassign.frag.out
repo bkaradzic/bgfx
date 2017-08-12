@@ -24,7 +24,7 @@ spv.buffer.autoassign.frag
                               Name 34  "MyUB3"
                               MemberName 34(MyUB3) 0  "g_d"
                               Name 36  ""
-                              Name 47  "Color"
+                              Name 47  "@entryPointOutput.Color"
                               MemberDecorate 16(MyUB1) 0 Offset 0
                               MemberDecorate 16(MyUB1) 1 Offset 4
                               Decorate 16(MyUB1) Block
@@ -38,7 +38,7 @@ spv.buffer.autoassign.frag
                               Decorate 34(MyUB3) Block
                               Decorate 36 DescriptorSet 0
                               Decorate 36 Binding 16
-                              Decorate 47(Color) Location 0
+                              Decorate 47(@entryPointOutput.Color) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
@@ -62,12 +62,12 @@ spv.buffer.autoassign.frag
               36:     35(ptr) Variable Uniform
               41:             TypePointer Function 7(fvec4)
               46:             TypePointer Output 7(fvec4)
-       47(Color):     46(ptr) Variable Output
+47(@entryPointOutput.Color):     46(ptr) Variable Output
          4(main):           2 Function None 3
                5:             Label
               48:8(PS_OUTPUT) FunctionCall 10(@main()
               49:    7(fvec4) CompositeExtract 48 0
-                              Store 47(Color) 49
+                              Store 47(@entryPointOutput.Color) 49
                               Return
                               FunctionEnd
       10(@main():8(PS_OUTPUT) Function None 9

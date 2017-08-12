@@ -42,7 +42,7 @@ spv.register.noautoassign.frag
                               Name 130  "g_tTex_unused2"
                               Name 132  "g_sSamp_unused2"
                               Name 141  "psout"
-                              Name 151  "Color"
+                              Name 151  "@entryPointOutput.Color"
                               Name 154  "g_tTex_unused3"
                               Decorate 21(g_tTex1) DescriptorSet 0
                               Decorate 21(g_tTex1) Binding 11
@@ -73,7 +73,7 @@ spv.register.noautoassign.frag
                               Decorate 130(g_tTex_unused2) DescriptorSet 0
                               Decorate 130(g_tTex_unused2) Binding 12
                               Decorate 132(g_sSamp_unused2) DescriptorSet 0
-                              Decorate 151(Color) Location 0
+                              Decorate 151(@entryPointOutput.Color) Location 0
                               Decorate 154(g_tTex_unused3) DescriptorSet 0
                2:             TypeVoid
                3:             TypeFunction 2
@@ -134,13 +134,13 @@ spv.register.noautoassign.frag
              140:             TypePointer Function 15(PS_OUTPUT)
              145:             TypePointer Function 7(fvec4)
              150:             TypePointer Output 7(fvec4)
-      151(Color):    150(ptr) Variable Output
+151(@entryPointOutput.Color):    150(ptr) Variable Output
 154(g_tTex_unused3):     20(ptr) Variable UniformConstant
       4(main_ep):           2 Function None 3
                5:             Label
              152:15(PS_OUTPUT) FunctionCall 17(@main_ep()
              153:    7(fvec4) CompositeExtract 152 0
-                              Store 151(Color) 153
+                              Store 151(@entryPointOutput.Color) 153
                               Return
                               FunctionEnd
        9(Func1():    7(fvec4) Function None 8

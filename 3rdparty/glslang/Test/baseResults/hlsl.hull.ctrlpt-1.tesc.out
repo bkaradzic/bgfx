@@ -78,7 +78,7 @@ triangle order = cw
 0:?           Sequence
 0:?             move second child to first child ( temp float)
 0:?               direct index ( patch out float TessLevelOuter)
-0:?                 '@patchConstantOutput_tfactor' ( patch out 4-element array of float TessLevelOuter)
+0:?                 '@patchConstantOutput.tfactor' ( patch out 4-element array of float TessLevelOuter)
 0:?                 Constant:
 0:?                   0 (const int)
 0:?               direct index ( temp float)
@@ -90,7 +90,7 @@ triangle order = cw
 0:?                   0 (const int)
 0:?             move second child to first child ( temp float)
 0:?               direct index ( patch out float TessLevelOuter)
-0:?                 '@patchConstantOutput_tfactor' ( patch out 4-element array of float TessLevelOuter)
+0:?                 '@patchConstantOutput.tfactor' ( patch out 4-element array of float TessLevelOuter)
 0:?                 Constant:
 0:?                   1 (const int)
 0:?               direct index ( temp float)
@@ -102,7 +102,7 @@ triangle order = cw
 0:?                   1 (const int)
 0:?             move second child to first child ( temp float)
 0:?               direct index ( patch out float TessLevelOuter)
-0:?                 '@patchConstantOutput_tfactor' ( patch out 4-element array of float TessLevelOuter)
+0:?                 '@patchConstantOutput.tfactor' ( patch out 4-element array of float TessLevelOuter)
 0:?                 Constant:
 0:?                   2 (const int)
 0:?               direct index ( temp float)
@@ -114,7 +114,7 @@ triangle order = cw
 0:?                   2 (const int)
 0:?             move second child to first child ( temp float)
 0:?               direct index ( patch out float TessLevelInner)
-0:?                 '@patchConstantOutput_flInFactor' ( patch out 2-element array of float TessLevelInner)
+0:?                 '@patchConstantOutput.flInFactor' ( patch out 2-element array of float TessLevelInner)
 0:?                 Constant:
 0:?                   0 (const int)
 0:?               flInFactor: direct index for structure ( temp float)
@@ -192,8 +192,8 @@ triangle order = cw
 0:?     '@entryPointOutput' (layout( location=0) out 3-element array of structure{ temp 3-component vector of float val})
 0:?     'i' (layout( location=0) in 3-element array of structure{ temp 3-component vector of float val})
 0:?     'cpid' ( in uint InvocationID)
-0:?     '@patchConstantOutput_tfactor' ( patch out 4-element array of float TessLevelOuter)
-0:?     '@patchConstantOutput_flInFactor' ( patch out 2-element array of float TessLevelInner)
+0:?     '@patchConstantOutput.tfactor' ( patch out 4-element array of float TessLevelOuter)
+0:?     '@patchConstantOutput.flInFactor' ( patch out 2-element array of float TessLevelInner)
 
 
 Linked tessellation control stage:
@@ -278,7 +278,7 @@ triangle order = cw
 0:?           Sequence
 0:?             move second child to first child ( temp float)
 0:?               direct index ( patch out float TessLevelOuter)
-0:?                 '@patchConstantOutput_tfactor' ( patch out 4-element array of float TessLevelOuter)
+0:?                 '@patchConstantOutput.tfactor' ( patch out 4-element array of float TessLevelOuter)
 0:?                 Constant:
 0:?                   0 (const int)
 0:?               direct index ( temp float)
@@ -290,7 +290,7 @@ triangle order = cw
 0:?                   0 (const int)
 0:?             move second child to first child ( temp float)
 0:?               direct index ( patch out float TessLevelOuter)
-0:?                 '@patchConstantOutput_tfactor' ( patch out 4-element array of float TessLevelOuter)
+0:?                 '@patchConstantOutput.tfactor' ( patch out 4-element array of float TessLevelOuter)
 0:?                 Constant:
 0:?                   1 (const int)
 0:?               direct index ( temp float)
@@ -302,7 +302,7 @@ triangle order = cw
 0:?                   1 (const int)
 0:?             move second child to first child ( temp float)
 0:?               direct index ( patch out float TessLevelOuter)
-0:?                 '@patchConstantOutput_tfactor' ( patch out 4-element array of float TessLevelOuter)
+0:?                 '@patchConstantOutput.tfactor' ( patch out 4-element array of float TessLevelOuter)
 0:?                 Constant:
 0:?                   2 (const int)
 0:?               direct index ( temp float)
@@ -314,7 +314,7 @@ triangle order = cw
 0:?                   2 (const int)
 0:?             move second child to first child ( temp float)
 0:?               direct index ( patch out float TessLevelInner)
-0:?                 '@patchConstantOutput_flInFactor' ( patch out 2-element array of float TessLevelInner)
+0:?                 '@patchConstantOutput.flInFactor' ( patch out 2-element array of float TessLevelInner)
 0:?                 Constant:
 0:?                   0 (const int)
 0:?               flInFactor: direct index for structure ( temp float)
@@ -392,8 +392,8 @@ triangle order = cw
 0:?     '@entryPointOutput' (layout( location=0) out 3-element array of structure{ temp 3-component vector of float val})
 0:?     'i' (layout( location=0) in 3-element array of structure{ temp 3-component vector of float val})
 0:?     'cpid' ( in uint InvocationID)
-0:?     '@patchConstantOutput_tfactor' ( patch out 4-element array of float TessLevelOuter)
-0:?     '@patchConstantOutput_flInFactor' ( patch out 2-element array of float TessLevelInner)
+0:?     '@patchConstantOutput.tfactor' ( patch out 4-element array of float TessLevelOuter)
+0:?     '@patchConstantOutput.flInFactor' ( patch out 2-element array of float TessLevelInner)
 
 // Module Version 10000
 // Generated by (magic number): 80001
@@ -440,16 +440,16 @@ triangle order = cw
                               Name 82  "param"
                               Name 84  "param"
                               Name 88  "@patchConstantResult"
-                              Name 94  "@patchConstantOutput_tfactor"
-                              Name 108  "@patchConstantOutput_flInFactor"
+                              Name 94  "@patchConstantOutput.tfactor"
+                              Name 108  "@patchConstantOutput.flInFactor"
                               Name 112  "o"
                               Decorate 41(i) Location 0
                               Decorate 45(cpid) BuiltIn InvocationId
                               Decorate 48(@entryPointOutput) Location 0
-                              Decorate 94(@patchConstantOutput_tfactor) Patch
-                              Decorate 94(@patchConstantOutput_tfactor) BuiltIn TessLevelOuter
-                              Decorate 108(@patchConstantOutput_flInFactor) Patch
-                              Decorate 108(@patchConstantOutput_flInFactor) BuiltIn TessLevelInner
+                              Decorate 94(@patchConstantOutput.tfactor) Patch
+                              Decorate 94(@patchConstantOutput.tfactor) BuiltIn TessLevelOuter
+                              Decorate 108(@patchConstantOutput.flInFactor) Patch
+                              Decorate 108(@patchConstantOutput.flInFactor) BuiltIn TessLevelInner
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
@@ -488,12 +488,12 @@ triangle order = cw
               91:      9(int) Constant 4
               92:             TypeArray 6(float) 91
               93:             TypePointer Output 92
-94(@patchConstantOutput_tfactor):     93(ptr) Variable Output
+94(@patchConstantOutput.tfactor):     93(ptr) Variable Output
               95:             TypePointer Function 6(float)
               98:             TypePointer Output 6(float)
              106:             TypeArray 6(float) 57
              107:             TypePointer Output 106
-108(@patchConstantOutput_flInFactor):    107(ptr) Variable Output
+108(@patchConstantOutput.flInFactor):    107(ptr) Variable Output
              119:    6(float) Constant 1082130432
          4(main):           2 Function None 3
                5:             Label
@@ -553,19 +553,19 @@ triangle order = cw
                                 Store 88(@patchConstantResult) 90
               96:     95(ptr)   AccessChain 88(@patchConstantResult) 30 30
               97:    6(float)   Load 96
-              99:     98(ptr)   AccessChain 94(@patchConstantOutput_tfactor) 30
+              99:     98(ptr)   AccessChain 94(@patchConstantOutput.tfactor) 30
                                 Store 99 97
              100:     95(ptr)   AccessChain 88(@patchConstantResult) 30 73
              101:    6(float)   Load 100
-             102:     98(ptr)   AccessChain 94(@patchConstantOutput_tfactor) 73
+             102:     98(ptr)   AccessChain 94(@patchConstantOutput.tfactor) 73
                                 Store 102 101
              103:     95(ptr)   AccessChain 88(@patchConstantResult) 30 80
              104:    6(float)   Load 103
-             105:     98(ptr)   AccessChain 94(@patchConstantOutput_tfactor) 80
+             105:     98(ptr)   AccessChain 94(@patchConstantOutput.tfactor) 80
                                 Store 105 104
              109:     95(ptr)   AccessChain 88(@patchConstantResult) 73
              110:    6(float)   Load 109
-             111:     98(ptr)   AccessChain 108(@patchConstantOutput_flInFactor) 30
+             111:     98(ptr)   AccessChain 108(@patchConstantOutput.flInFactor) 30
                                 Store 111 110
                                 Branch 64
               64:             Label

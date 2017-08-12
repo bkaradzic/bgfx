@@ -9,7 +9,7 @@ WARNING: 0:4: 'immediate sampler state' : unimplemented
                               Capability Sampled1D
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
-                              EntryPoint Fragment 5663  "main" 4656 4112
+                              EntryPoint Fragment 5663  "main" 4253 3709
                               ExecutionMode 5663 OriginUpperLeft
                               Decorate 4727 DescriptorSet 0
                               Decorate 4727 Binding 0
@@ -26,8 +26,8 @@ WARNING: 0:4: 'immediate sampler state' : unimplemented
                               Decorate 3789 DescriptorSet 0
                               Decorate 3805 DescriptorSet 0
                               Decorate 3869 DescriptorSet 0
-                              Decorate 4656 Location 0
-                              Decorate 4112 BuiltIn FragDepth
+                              Decorate 4253 Location 0
+                              Decorate 3709 BuiltIn FragDepth
                8:             TypeVoid
             1282:             TypeFunction 8
               13:             TypeFloat 32
@@ -127,9 +127,9 @@ WARNING: 0:4: 'immediate sampler state' : unimplemented
             1284:   29(fvec4) ConstantComposite 138 138 138 138
              650:             TypePointer Function 13(float)
              667:             TypePointer Output 29(fvec4)
-            4656:    667(ptr) Variable Output
+            4253:    667(ptr) Variable Output
              651:             TypePointer Output 13(float)
-            4112:    651(ptr) Variable Output
+            3709:    651(ptr) Variable Output
             5663:           8 Function None 1282
            24877:             Label
             4104:   1669(ptr) Variable Function
@@ -137,10 +137,10 @@ WARNING: 0:4: 'immediate sampler state' : unimplemented
                               Store 4104 18803
            13396:    666(ptr) AccessChain 4104 2571
             7967:   29(fvec4) Load 13396
-                              Store 4656 7967
+                              Store 4253 7967
            16622:    650(ptr) AccessChain 4104 2574
            11539:   13(float) Load 16622
-                              Store 4112 11539
+                              Store 3709 11539
                               Return
                               FunctionEnd
             3317:1032(struct) Function None 319

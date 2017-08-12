@@ -11,9 +11,10 @@ gl_FragCoord origin is upper left
 0:10  Function Definition: main( ( temp void)
 0:10    Function Parameters: 
 0:?     Sequence
-0:10      move second child to first child ( temp structure{})
-0:?         'i' ( temp structure{})
-0:?         'i' ( in structure{})
+0:10      Sequence
+0:10        move second child to first child ( temp structure{})
+0:?           'i' ( temp structure{})
+0:?           'i' ( in structure{})
 0:10      Sequence
 0:10        move second child to first child ( temp structure{})
 0:?           '@entryPointOutput' ( out structure{})
@@ -37,9 +38,10 @@ gl_FragCoord origin is upper left
 0:10  Function Definition: main( ( temp void)
 0:10    Function Parameters: 
 0:?     Sequence
-0:10      move second child to first child ( temp structure{})
-0:?         'i' ( temp structure{})
-0:?         'i' ( in structure{})
+0:10      Sequence
+0:10        move second child to first child ( temp structure{})
+0:?           'i' ( temp structure{})
+0:?           'i' ( in structure{})
 0:10      Sequence
 0:10        move second child to first child ( temp structure{})
 0:?           '@entryPointOutput' ( out structure{})
