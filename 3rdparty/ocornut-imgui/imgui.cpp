@@ -17,15 +17,15 @@
  - END-USER GUIDE
  - PROGRAMMER GUIDE (read me!)
    - Read first
-   - Getting started with integrating imgui in your code/engine
+   - How to update to a newer version of ImGui
+   - Getting started with integrating ImGui in your code/engine
  - API BREAKING CHANGES (read me when you update!)
  - FREQUENTLY ASKED QUESTIONS (FAQ), TIPS
    - How can I help?
-   - How do I update to a newer version of ImGui?
    - What is ImTextureID and how do I display an image?
    - I integrated ImGui in my engine and the text or lines are blurry..
    - I integrated ImGui in my engine and some elements are clipping or disappearing when I move windows around..
-   - How can I have multiple widgets with the same label? Can I have widget without a label? (Yes). A primer on the purpose of labels/IDs.
+   - How can I have multiple widgets with the same label? Can I have widget without a label? (Yes). A primer on labels/IDs.
    - How can I tell when ImGui wants my mouse/keyboard inputs VS when I can pass them to my application?
    - How can I load a different font than the default?
    - How can I easily use icons in my application?
@@ -40,19 +40,18 @@
  MISSION STATEMENT
  =================
 
- - easy to use to create code-driven and data-driven tools
- - easy to use to create ad hoc short-lived tools and long-lived, more elaborate tools
- - easy to hack and improve
- - minimize screen real-estate usage
- - minimize setup and maintenance
- - minimize state storage on user side
- - portable, minimize dependencies, run on target (consoles, phones, etc.)
- - efficient runtime (NB- we do allocate when "growing" content - creating a window / opening a tree node for the first time, etc. - but a typical frame won't allocate anything)
- - read about immediate-mode gui principles @ http://mollyrocket.com/861, http://mollyrocket.com/forums/index.html
+ - Easy to use to create code-driven and data-driven tools
+ - Easy to use to create ad hoc short-lived tools and long-lived, more elaborate tools
+ - Easy to hack and improve
+ - Minimize screen real-estate usage
+ - Minimize setup and maintenance
+ - Minimize state storage on user side
+ - Portable, minimize dependencies, run on target (consoles, phones, etc.)
+ - Efficient runtime and memory consumption (NB- we do allocate when "growing" content - creating a window / opening a tree node for the first time, etc. - but a typical frame won't allocate anything)
 
  Designed for developers and content-creators, not the typical end-user! Some of the weaknesses includes:
- - doesn't look fancy, doesn't animate
- - limited layout features, intricate layouts are typically crafted in code
+ - Doesn't look fancy, doesn't animate
+ - Limited layout features, intricate layouts are typically crafted in code
 
 
  END-USER GUIDE
@@ -87,65 +86,110 @@
  - Read the FAQ below this section!
  - Your code creates the UI, if your code doesn't run the UI is gone! == very dynamic UI, no construction/destructions steps, less data retention on your side, no state duplication, less sync, less bugs.
  - Call and read ImGui::ShowTestWindow() for demo code demonstrating most features.
- - Customization: PushStyleColor()/PushStyleVar() or the style editor to tweak the look of the interface (e.g. if you want a more compact UI or a different color scheme).
+ - You can learn about immediate-mode gui principles at http://www.johno.se/book/imgui.html or watch http://mollyrocket.com/861
+
+ HOW TO UPDATE TO A NEWER VERSION OF IMGUI
+
+ - Overwrite all the sources files except for imconfig.h (if you have made modification to your copy of imconfig.h)
+ - Read the "API BREAKING CHANGES" section (below). This is where we list occasional API breaking changes. 
+   If a function/type has been renamed / or marked obsolete, try to fix the name in your code before it is permanently removed from the public API.
+   If you have a problem with a missing function/symbols, search for its name in the code, there will likely be a comment about it. 
+   Please report any issue to the GitHub page!
+ - Try to keep your copy of dear imgui reasonably up to date.
 
  GETTING STARTED WITH INTEGRATING IMGUI IN YOUR CODE/ENGINE
 
- - See examples/ folder for standalone sample applications. Prefer reading examples/opengl_example/ first as it is the simplest.
-   You may be able to grab and copy a ready made imgui_impl_*** file from the examples/.
- - Init: call ImGui::GetIO() to retrieve the ImGuiIO structure and fill the fields marked 'Settings'.
- - Init: call io.Fonts->GetTexDataAsRGBA32(...) and load the font texture pixels into graphics memory.
+ - Add the ImGui source files to your projects, using your preferred build system. It is recommended you build the .cpp files as part of your project and not as a library.
+ - You can later customize the imconfig.h file to tweak some compilation time behavior, such as integrating imgui types with your own maths types.
+ - See examples/ folder for standalone sample applications. To understand the integration process, you can read examples/opengl2_example/ because it is short, 
+   then switch to the one more appropriate to your use case.
+ - You may be able to grab and copy a ready made imgui_impl_*** file from the examples/.
+ - When using ImGui, your programming IDE if your friend: follow the declaration of variables, functions and types to find comments about them.
+
+ - Init: retrieve the ImGuiIO structure with ImGui::GetIO() and fill the fields marked 'Settings': at minimum you need to set io.DisplaySize (application resolution).
+   Later on you will fill your keyboard mapping, clipboard handlers, and other advanced features but for a basic integration you don't need to worry about it all.
+ - Init: call io.Fonts->GetTexDataAsRGBA32(...), it will build the font atlas texture, then load the texture pixels into graphics memory.
  - Every frame:
-    1/ in your mainloop or right after you got your keyboard/mouse info, call ImGui::GetIO() and fill the fields marked 'Input'
-    2/ call ImGui::NewFrame() as early as you can!
-    3/ use any ImGui function you want between NewFrame() and Render()
-    4/ call ImGui::Render() as late as you can to end the frame and finalize render data. it will call your RenderDrawListFn handler that you set in the IO structure.
+    - In your main loop as early a possible, fill the IO fields marked 'Input' (e.g. mouse position, buttons, keyboard info, etc.)
+    - Call ImGui::NewFrame() to begin the imgui frame
+    - You can use any ImGui function you want between NewFrame() and Render()
+    - Call ImGui::Render() as late as you can to end the frame and finalize render data. it will call your io.RenderDrawListFn handler.
        (if you don't need to render, you still need to call Render() and ignore the callback, or call EndFrame() instead. if you call neither some aspects of windows focusing/moving will appear broken.)
  - All rendering information are stored into command-lists until ImGui::Render() is called.
  - ImGui never touches or knows about your GPU state. the only function that knows about GPU is the RenderDrawListFn handler that you provide.
  - Effectively it means you can create widgets at any time in your code, regardless of considerations of being in "update" vs "render" phases of your own application.
  - Refer to the examples applications in the examples/ folder for instruction on how to setup your code.
- - A typical application skeleton may be:
+ - A minimal application skeleton may be:
 
      // Application init
      ImGuiIO& io = ImGui::GetIO();
      io.DisplaySize.x = 1920.0f;
      io.DisplaySize.y = 1280.0f;
-     io.IniFilename = "imgui.ini";
-     io.RenderDrawListsFn = my_render_function;  // Setup a render function, or set to NULL and call GetDrawData() after Render() to access the render data.
-     // TODO: Fill others settings of the io structure
+     io.RenderDrawListsFn = MyRenderFunction;  // Setup a render function, or set to NULL and call GetDrawData() after Render() to access the render data.
+     // TODO: Fill others settings of the io structure later.
 
      // Load texture atlas (there is a default font so you don't need to care about choosing a font yet)
      unsigned char* pixels;
      int width, height;
      io.Fonts->GetTexDataAsRGBA32(pixels, &width, &height);
-     // TODO: At this points you've got a texture pointed to by 'pixels' and you need to upload that your your graphic system
-     // TODO: Store your texture pointer/identifier (whatever your engine uses) in 'io.Fonts->TexID'
+     // TODO: At this points you've got the texture data and you need to upload that your your graphic system:
+     MyTexture* texture = MyEngine::CreateTextureFromMemoryPixels(pixels, width, height, TEXTURE_TYPE_RGBA)
+     // TODO: Store your texture pointer/identifier (whatever your engine uses) in 'io.Fonts->TexID'. This will be passed back to your via the renderer.
+     io.Fonts->TexID = (void*)texture;
 
      // Application main loop
      while (true)
      {
-       // 1) get low-level inputs (e.g. on Win32, GetKeyboardState(), or poll your events, etc.)
-       // TODO: fill all fields of IO structure and call NewFrame
-       ImGuiIO& io = ImGui::GetIO();
-       io.DeltaTime = 1.0f/60.0f;
-       io.MousePos = mouse_pos;
-       io.MouseDown[0] = mouse_button_0;
-       io.MouseDown[1] = mouse_button_1;
-       io.KeysDown[i] = ...
+        // Setup low-level inputs (e.g. on Win32, GetKeyboardState(), or write to those fields from your Windows message loop handlers, etc.)
+        ImGuiIO& io = ImGui::GetIO();
+        io.DeltaTime = 1.0f/60.0f;
+        io.MousePos = mouse_pos;
+        io.MouseDown[0] = mouse_button_0;
+        io.MouseDown[1] = mouse_button_1;
 
-       // 2) call NewFrame(), after this point you can use ImGui::* functions anytime
-       ImGui::NewFrame();
+        // Call NewFrame(), after this point you can use ImGui::* functions anytime
+        ImGui::NewFrame();
 
-       // 3) most of your application code here
-       MyGameUpdate(); // may use any ImGui functions, e.g. ImGui::Begin("My window"); ImGui::Text("Hello, world!"); ImGui::End();
-       MyGameRender(); // may use any ImGui functions
+        // Most of your application code here
+        MyGameUpdate(); // may use any ImGui functions, e.g. ImGui::Begin("My window"); ImGui::Text("Hello, world!"); ImGui::End();
+        MyGameRender(); // may use any ImGui functions as well!
      
-       // 4) render & swap video buffers
-       ImGui::Render();
-       SwapBuffers();
+        // Render & swap video buffers
+        ImGui::Render();
+        SwapBuffers();
      }
 
+ - A minimal render function skeleton may be:
+
+    void void MyRenderFunction(ImDrawData* draw_data)(ImDrawData* draw_data)
+    {
+       // TODO: Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled
+       // TODO: Setup viewport, orthographic projection matrix
+       // TODO: Setup shader: vertex { float2 pos, float2 uv, u32 color }, fragment shader sample color from 1 texture, multiply by vertex color.
+       for (int n = 0; n < draw_data->CmdListsCount; n++)
+       {
+          const ImDrawVert* vtx_buffer = cmd_list->VtxBuffer.Data;  // vertex buffer generated by ImGui
+          const ImDrawIdx* idx_buffer = cmd_list->IdxBuffer.Data;   // index buffer generated by ImGui
+          for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
+          {
+             const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+             if (pcmd->UserCallback)
+             {
+                 pcmd->UserCallback(cmd_list, pcmd);
+             }
+             else
+             {
+                 // Render 'pcmd->ElemCount/3' texture triangles
+                 MyEngineBindTexture(pcmd->TextureId);
+                 MyEngineScissor((int)pcmd->ClipRect.x, (int)pcmd->ClipRect.y, (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
+                 MyEngineDrawIndexedTriangles(pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer, vtx_buffer);
+             }
+             idx_buffer += pcmd->ElemCount;
+          }
+       }
+    }
+
+ - The examples/ folders contains many functional implementation of the pseudo-code above.
  - When calling NewFrame(), the 'io.WantCaptureMouse'/'io.WantCaptureKeyboard'/'io.WantTextInput' flags are updated. 
    They tell you if ImGui intends to use your inputs. So for example, if 'io.WantCaptureMouse' is set you would typically want to hide 
    mouse inputs from the rest of your application. Read the FAQ below for more information about those flags.
@@ -159,6 +203,7 @@
  Here is a change-log of API breaking changes, if you are using one of the functions listed, expect to have to fix some code.
  Also read releases logs https://github.com/ocornut/imgui/releases for more details.
 
+ - 2017/08/11 (1.51) - renamed ImGuiSetCond_*** types and flags to ImGuiCond_***. Kept redirection enums (will obsolete).
  - 2017/08/09 (1.51) - removed ValueColor() helpers, they are equivalent to calling Text(label) + SameLine() + ColorButton().
  - 2017/08/08 (1.51) - removed ColorEditMode() and ImGuiColorEditMode in favor of ImGuiColorEditFlags and parameters to the various Color*() functions. The SetColorEditOptions() allows to initialize default but the user can still change them with right-click context menu.
                      - changed prototype of 'ColorEdit4(const char* label, float col[4], bool show_alpha = true)' to 'ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flags = 0)', where passing flags = 0x01 is a safe no-op (hello dodgy backward compatibility!). - check and run the demo window, under "Color/Picker Widgets", to understand the various new options.
@@ -281,21 +326,6 @@
  A: - If you are experienced enough with ImGui and with C/C++, look at the todo list and see how you want/can help!
     - Become a Patron/donate! Convince your company to become a Patron or provide serious funding for development time! See http://www.patreon.com/imgui
 
- Q: How do I update to a newer version of ImGui?
- A: Overwrite the following files:
-      imgui.cpp
-      imgui.h
-      imgui_demo.cpp
-      imgui_draw.cpp
-      imgui_internal.h
-      stb_rect_pack.h
-      stb_textedit.h
-      stb_truetype.h
-    Don't overwrite imconfig.h if you have made modification to your copy.
-    If you have a problem with a missing function/symbols, search for its name in the code, there will likely be a comment about it. 
-    Check the "API BREAKING CHANGES" sections for a list of occasional API breaking changes. 
-    Please report any issue to the GitHub page!
-
  Q: What is ImTextureID and how do I display an image?
  A: ImTextureID is a void* used to pass renderer-agnostic texture references around until it hits your render function.
     ImGui knows nothing about what those bits represent, it just passes them around. It is up to you to decide what you want the void* to carry!
@@ -314,7 +344,7 @@
  Q: I integrated ImGui in my engine and some elements are clipping or disappearing when I move windows around..
  A: Most likely you are mishandling the clipping rectangles in your render function. Rectangles provided by ImGui are defined as (x1=left,y1=top,x2=right,y2=bottom) and NOT as (x1,y1,width,height).
 
- Q: Can I have multiple widgets with the same label? Can I have widget without a label? (Yes)
+ Q: Can I have multiple widgets with the same label? Can I have widget without a label?
  A: Yes. A primer on the use of labels/IDs in ImGui..
 
    - Elements that are not clickable, such as Text() items don't need an ID.
@@ -709,9 +739,9 @@ static ImFont*          GetDefaultFont();
 static void             SetCurrentFont(ImFont* font);
 static void             SetCurrentWindow(ImGuiWindow* window);
 static void             SetWindowScrollY(ImGuiWindow* window, float new_scroll_y);
-static void             SetWindowPos(ImGuiWindow* window, const ImVec2& pos, ImGuiSetCond cond);
-static void             SetWindowSize(ImGuiWindow* window, const ImVec2& size, ImGuiSetCond cond);
-static void             SetWindowCollapsed(ImGuiWindow* window, bool collapsed, ImGuiSetCond cond);
+static void             SetWindowPos(ImGuiWindow* window, const ImVec2& pos, ImGuiCond cond);
+static void             SetWindowSize(ImGuiWindow* window, const ImVec2& size, ImGuiCond cond);
+static void             SetWindowCollapsed(ImGuiWindow* window, bool collapsed, ImGuiCond cond);
 static ImGuiWindow*     FindHoveredWindow(ImVec2 pos, bool excluding_childs);
 static ImGuiWindow*     CreateNewWindow(const char* name, ImVec2 size, ImGuiWindowFlags flags);
 static inline bool      IsWindowContentHoverable(ImGuiWindow* window);
@@ -1883,7 +1913,7 @@ ImGuiWindow::ImGuiWindow(const char* name)
     AutoFitOnlyGrows = false;
     AutoPosLastDirection = -1;
     HiddenFrames = 0;
-    SetWindowPosAllowFlags = SetWindowSizeAllowFlags = SetWindowCollapsedAllowFlags = ImGuiSetCond_Always | ImGuiSetCond_Once | ImGuiSetCond_FirstUseEver | ImGuiSetCond_Appearing;
+    SetWindowPosAllowFlags = SetWindowSizeAllowFlags = SetWindowCollapsedAllowFlags = ImGuiCond_Always | ImGuiCond_Once | ImGuiCond_FirstUseEver | ImGuiCond_Appearing;
     SetWindowPosCenterWanted = false;
 
     LastFrameActive = -1;
@@ -2453,7 +2483,7 @@ void ImGui::NewFrame()
     CloseInactivePopups();
 
     // Create implicit window - we will only render it if the user has added something to it.
-    ImGui::SetNextWindowSize(ImVec2(400,400), ImGuiSetCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(400,400), ImGuiCond_FirstUseEver);
     ImGui::Begin("Debug");
 }
 
@@ -2608,6 +2638,8 @@ static void SaveIniSettingsToDisk(const char* ini_filename)
         if (window->Flags & ImGuiWindowFlags_NoSavedSettings)
             continue;
         ImGuiIniData* settings = FindWindowSettings(window->Name);
+        if (!settings)  // This will only return NULL in the rare instance where the window was first created with ImGuiWindowFlags_NoSavedSettings then had the flag disabled later on. We don't bind settings in this case (bug #1000).
+            continue;
         settings->Pos = window->Pos;
         settings->Size = window->SizeFull;
         settings->Collapsed = window->Collapsed;
@@ -3901,9 +3933,9 @@ static ImGuiWindow* CreateNewWindow(const char* name, ImVec2 size, ImGuiWindowFl
         }
         else
         {
-            window->SetWindowPosAllowFlags &= ~ImGuiSetCond_FirstUseEver;
-            window->SetWindowSizeAllowFlags &= ~ImGuiSetCond_FirstUseEver;
-            window->SetWindowCollapsedAllowFlags &= ~ImGuiSetCond_FirstUseEver;
+            window->SetWindowPosAllowFlags &= ~ImGuiCond_FirstUseEver;
+            window->SetWindowSizeAllowFlags &= ~ImGuiCond_FirstUseEver;
+            window->SetWindowCollapsedAllowFlags &= ~ImGuiCond_FirstUseEver;
         }
 
         if (settings->Pos.x != FLT_MAX)
@@ -3972,7 +4004,7 @@ static void ApplySizeFullWithConstraint(ImGuiWindow* window, ImVec2 new_size)
 //   You can use the "##" or "###" markers to use the same label with different id, or same id with different label. See documentation at the top of this file.
 // - Return false when window is collapsed, so you can early out in your code. You always need to call ImGui::End() even if false is returned.
 // - Passing 'bool* p_open' displays a Close button on the upper-right corner of the window, the pointed value will be set to false when the button is pressed.
-// - Passing non-zero 'size' is roughly equivalent to calling SetNextWindowSize(size, ImGuiSetCond_FirstUseEver) prior to calling Begin().
+// - Passing non-zero 'size' is roughly equivalent to calling SetNextWindowSize(size, ImGuiCond_FirstUseEver) prior to calling Begin().
 bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
 {
     return ImGui::Begin(name, p_open, ImVec2(0.f, 0.f), -1.0f, flags);
@@ -4030,12 +4062,12 @@ bool ImGui::Begin(const char* name, bool* p_open, const ImVec2& size_on_first_us
     if (g.SetNextWindowPosCond)
     {
         const ImVec2 backup_cursor_pos = window->DC.CursorPos;                  // FIXME: not sure of the exact reason of this saving/restore anymore :( need to look into that.
-        if (!window_was_active || window_appearing_after_being_hidden) window->SetWindowPosAllowFlags |= ImGuiSetCond_Appearing;
+        if (!window_was_active || window_appearing_after_being_hidden) window->SetWindowPosAllowFlags |= ImGuiCond_Appearing;
         window_pos_set_by_api = (window->SetWindowPosAllowFlags & g.SetNextWindowPosCond) != 0;
         if (window_pos_set_by_api && ImLengthSqr(g.SetNextWindowPosVal - ImVec2(-FLT_MAX,-FLT_MAX)) < 0.001f)
         {
             window->SetWindowPosCenterWanted = true;                            // May be processed on the next frame if this is our first frame and we are measuring size
-            window->SetWindowPosAllowFlags &= ~(ImGuiSetCond_Once | ImGuiSetCond_FirstUseEver | ImGuiSetCond_Appearing);
+            window->SetWindowPosAllowFlags &= ~(ImGuiCond_Once | ImGuiCond_FirstUseEver | ImGuiCond_Appearing);
         }
         else
         {
@@ -4046,7 +4078,7 @@ bool ImGui::Begin(const char* name, bool* p_open, const ImVec2& size_on_first_us
     }
     if (g.SetNextWindowSizeCond)
     {
-        if (!window_was_active || window_appearing_after_being_hidden) window->SetWindowSizeAllowFlags |= ImGuiSetCond_Appearing;
+        if (!window_was_active || window_appearing_after_being_hidden) window->SetWindowSizeAllowFlags |= ImGuiCond_Appearing;
         window_size_set_by_api = (window->SetWindowSizeAllowFlags & g.SetNextWindowSizeCond) != 0;
         SetWindowSize(window, g.SetNextWindowSizeVal, g.SetNextWindowSizeCond);
         g.SetNextWindowSizeCond = 0;
@@ -4062,7 +4094,7 @@ bool ImGui::Begin(const char* name, bool* p_open, const ImVec2& size_on_first_us
     }
     if (g.SetNextWindowCollapsedCond)
     {
-        if (!window_was_active || window_appearing_after_being_hidden) window->SetWindowCollapsedAllowFlags |= ImGuiSetCond_Appearing;
+        if (!window_was_active || window_appearing_after_being_hidden) window->SetWindowCollapsedAllowFlags |= ImGuiCond_Appearing;
         SetWindowCollapsed(window, g.SetNextWindowCollapsedVal, g.SetNextWindowCollapsedCond);
         g.SetNextWindowCollapsedCond = 0;
     }
@@ -5019,12 +5051,12 @@ static void SetWindowScrollY(ImGuiWindow* window, float new_scroll_y)
     window->DC.CursorMaxPos.y -= window->Scroll.y;
 }
 
-static void SetWindowPos(ImGuiWindow* window, const ImVec2& pos, ImGuiSetCond cond)
+static void SetWindowPos(ImGuiWindow* window, const ImVec2& pos, ImGuiCond cond)
 {
     // Test condition (NB: bit 0 is always true) and clear flags for next time
     if (cond && (window->SetWindowPosAllowFlags & cond) == 0)
         return;
-    window->SetWindowPosAllowFlags &= ~(ImGuiSetCond_Once | ImGuiSetCond_FirstUseEver | ImGuiSetCond_Appearing);
+    window->SetWindowPosAllowFlags &= ~(ImGuiCond_Once | ImGuiCond_FirstUseEver | ImGuiCond_Appearing);
     window->SetWindowPosCenterWanted = false;
 
     // Set
@@ -5035,13 +5067,13 @@ static void SetWindowPos(ImGuiWindow* window, const ImVec2& pos, ImGuiSetCond co
     window->DC.CursorMaxPos += (window->Pos - old_pos); // And more importantly we need to adjust this so size calculation doesn't get affected.
 }
 
-void ImGui::SetWindowPos(const ImVec2& pos, ImGuiSetCond cond)
+void ImGui::SetWindowPos(const ImVec2& pos, ImGuiCond cond)
 {
     ImGuiWindow* window = GetCurrentWindowRead();
     SetWindowPos(window, pos, cond);
 }
 
-void ImGui::SetWindowPos(const char* name, const ImVec2& pos, ImGuiSetCond cond)
+void ImGui::SetWindowPos(const char* name, const ImVec2& pos, ImGuiCond cond)
 {
     if (ImGuiWindow* window = FindWindowByName(name))
         SetWindowPos(window, pos, cond);
@@ -5053,12 +5085,12 @@ ImVec2 ImGui::GetWindowSize()
     return window->Size;
 }
 
-static void SetWindowSize(ImGuiWindow* window, const ImVec2& size, ImGuiSetCond cond)
+static void SetWindowSize(ImGuiWindow* window, const ImVec2& size, ImGuiCond cond)
 {
     // Test condition (NB: bit 0 is always true) and clear flags for next time
     if (cond && (window->SetWindowSizeAllowFlags & cond) == 0)
         return;
-    window->SetWindowSizeAllowFlags &= ~(ImGuiSetCond_Once | ImGuiSetCond_FirstUseEver | ImGuiSetCond_Appearing);
+    window->SetWindowSizeAllowFlags &= ~(ImGuiCond_Once | ImGuiCond_FirstUseEver | ImGuiCond_Appearing);
 
     // Set
     if (size.x > 0.0f)
@@ -5083,30 +5115,30 @@ static void SetWindowSize(ImGuiWindow* window, const ImVec2& size, ImGuiSetCond 
     }
 }
 
-void ImGui::SetWindowSize(const ImVec2& size, ImGuiSetCond cond)
+void ImGui::SetWindowSize(const ImVec2& size, ImGuiCond cond)
 {
     SetWindowSize(GImGui->CurrentWindow, size, cond);
 }
 
-void ImGui::SetWindowSize(const char* name, const ImVec2& size, ImGuiSetCond cond)
+void ImGui::SetWindowSize(const char* name, const ImVec2& size, ImGuiCond cond)
 {
     ImGuiWindow* window = FindWindowByName(name);
     if (window)
         SetWindowSize(window, size, cond);
 }
 
-static void SetWindowCollapsed(ImGuiWindow* window, bool collapsed, ImGuiSetCond cond)
+static void SetWindowCollapsed(ImGuiWindow* window, bool collapsed, ImGuiCond cond)
 {
     // Test condition (NB: bit 0 is always true) and clear flags for next time
     if (cond && (window->SetWindowCollapsedAllowFlags & cond) == 0)
         return;
-    window->SetWindowCollapsedAllowFlags &= ~(ImGuiSetCond_Once | ImGuiSetCond_FirstUseEver | ImGuiSetCond_Appearing);
+    window->SetWindowCollapsedAllowFlags &= ~(ImGuiCond_Once | ImGuiCond_FirstUseEver | ImGuiCond_Appearing);
 
     // Set
     window->Collapsed = collapsed;
 }
 
-void ImGui::SetWindowCollapsed(bool collapsed, ImGuiSetCond cond)
+void ImGui::SetWindowCollapsed(bool collapsed, ImGuiCond cond)
 {
     SetWindowCollapsed(GImGui->CurrentWindow, collapsed, cond);
 }
@@ -5116,7 +5148,7 @@ bool ImGui::IsWindowCollapsed()
     return GImGui->CurrentWindow->Collapsed;
 }
 
-void ImGui::SetWindowCollapsed(const char* name, bool collapsed, ImGuiSetCond cond)
+void ImGui::SetWindowCollapsed(const char* name, bool collapsed, ImGuiCond cond)
 {
     ImGuiWindow* window = FindWindowByName(name);
     if (window)
@@ -5141,25 +5173,25 @@ void ImGui::SetWindowFocus(const char* name)
     }
 }
 
-void ImGui::SetNextWindowPos(const ImVec2& pos, ImGuiSetCond cond)
+void ImGui::SetNextWindowPos(const ImVec2& pos, ImGuiCond cond)
 {
     ImGuiContext& g = *GImGui;
     g.SetNextWindowPosVal = pos;
-    g.SetNextWindowPosCond = cond ? cond : ImGuiSetCond_Always;
+    g.SetNextWindowPosCond = cond ? cond : ImGuiCond_Always;
 }
 
-void ImGui::SetNextWindowPosCenter(ImGuiSetCond cond)
+void ImGui::SetNextWindowPosCenter(ImGuiCond cond)
 {
     ImGuiContext& g = *GImGui;
     g.SetNextWindowPosVal = ImVec2(-FLT_MAX, -FLT_MAX);
-    g.SetNextWindowPosCond = cond ? cond : ImGuiSetCond_Always;
+    g.SetNextWindowPosCond = cond ? cond : ImGuiCond_Always;
 }
 
-void ImGui::SetNextWindowSize(const ImVec2& size, ImGuiSetCond cond)
+void ImGui::SetNextWindowSize(const ImVec2& size, ImGuiCond cond)
 {
     ImGuiContext& g = *GImGui;
     g.SetNextWindowSizeVal = size;
-    g.SetNextWindowSizeCond = cond ? cond : ImGuiSetCond_Always;
+    g.SetNextWindowSizeCond = cond ? cond : ImGuiCond_Always;
 }
 
 void ImGui::SetNextWindowSizeConstraints(const ImVec2& size_min, const ImVec2& size_max, ImGuiSizeConstraintCallback custom_callback, void* custom_callback_user_data)
@@ -5175,21 +5207,21 @@ void ImGui::SetNextWindowContentSize(const ImVec2& size)
 {
     ImGuiContext& g = *GImGui;
     g.SetNextWindowContentSizeVal = size;
-    g.SetNextWindowContentSizeCond = ImGuiSetCond_Always;
+    g.SetNextWindowContentSizeCond = ImGuiCond_Always;
 }
 
 void ImGui::SetNextWindowContentWidth(float width)
 {
     ImGuiContext& g = *GImGui;
     g.SetNextWindowContentSizeVal = ImVec2(width, g.SetNextWindowContentSizeCond ? g.SetNextWindowContentSizeVal.y : 0.0f);
-    g.SetNextWindowContentSizeCond = ImGuiSetCond_Always;
+    g.SetNextWindowContentSizeCond = ImGuiCond_Always;
 }
 
-void ImGui::SetNextWindowCollapsed(bool collapsed, ImGuiSetCond cond)
+void ImGui::SetNextWindowCollapsed(bool collapsed, ImGuiCond cond)
 {
     ImGuiContext& g = *GImGui;
     g.SetNextWindowCollapsedVal = collapsed;
-    g.SetNextWindowCollapsedCond = cond ? cond : ImGuiSetCond_Always;
+    g.SetNextWindowCollapsedCond = cond ? cond : ImGuiCond_Always;
 }
 
 void ImGui::SetNextWindowFocus()
@@ -6011,14 +6043,14 @@ bool ImGui::TreeNodeBehaviorIsOpen(ImGuiID id, ImGuiTreeNodeFlags flags)
     bool is_open;
     if (g.SetNextTreeNodeOpenCond != 0)
     {
-        if (g.SetNextTreeNodeOpenCond & ImGuiSetCond_Always)
+        if (g.SetNextTreeNodeOpenCond & ImGuiCond_Always)
         {
             is_open = g.SetNextTreeNodeOpenVal;
             storage->SetInt(id, is_open);
         }
         else
         {
-            // We treat ImGuiSetCondition_Once and ImGuiSetCondition_FirstUseEver the same because tree node state are not saved persistently.
+            // We treat ImGuiCond_Once and ImGuiCond_FirstUseEver the same because tree node state are not saved persistently.
             const int stored_value = storage->GetInt(id, -1);
             if (stored_value == -1)
             {
@@ -6285,11 +6317,11 @@ float ImGui::GetTreeNodeToLabelSpacing()
     return g.FontSize + (g.Style.FramePadding.x * 2.0f);
 }
 
-void ImGui::SetNextTreeNodeOpen(bool is_open, ImGuiSetCond cond)
+void ImGui::SetNextTreeNodeOpen(bool is_open, ImGuiCond cond)
 {
     ImGuiContext& g = *GImGui;
     g.SetNextTreeNodeOpenVal = is_open;
-    g.SetNextTreeNodeOpenCond = cond ? cond : ImGuiSetCond_Always;
+    g.SetNextTreeNodeOpenCond = cond ? cond : ImGuiCond_Always;
 }
 
 void ImGui::PushID(const char* str_id)
@@ -9058,7 +9090,7 @@ bool ImGui::BeginMenu(const char* label, bool enabled)
 
     if (menu_is_open)
     {
-        SetNextWindowPos(popup_pos, ImGuiSetCond_Always);
+        SetNextWindowPos(popup_pos, ImGuiCond_Always);
         ImGuiWindowFlags flags = ImGuiWindowFlags_ShowBorders | ((window->Flags & (ImGuiWindowFlags_Popup|ImGuiWindowFlags_ChildMenu)) ? ImGuiWindowFlags_ChildMenu|ImGuiWindowFlags_ChildWindow : ImGuiWindowFlags_ChildMenu);
         menu_is_open = BeginPopupEx(label, flags); // menu_is_open can be 'false' when the popup is completely clipped (e.g. zero size display)
     }
@@ -9266,7 +9298,7 @@ static void ColorPickerOptionsPopup(ImGuiColorEditFlags flags, float* ref_col)
                 g.ColorEditOptions = (g.ColorEditOptions & ~ImGuiColorEditFlags__PickerMask) | (picker_flags & ImGuiColorEditFlags__PickerMask);
             ImGui::SetCursorScreenPos(backup_pos);
             ImVec4 dummy_ref_col;
-            memcpy(&dummy_ref_col.x, ref_col, sizeof(float) * (ImGuiColorEditFlags_NoAlpha ? 3 : 4));
+            memcpy(&dummy_ref_col.x, ref_col, sizeof(float) * (picker_flags & ImGuiColorEditFlags_NoAlpha ? 3 : 4));
             ImGui::ColorPicker4("##dummypicker", &dummy_ref_col.x, picker_flags);
             ImGui::PopID();
         }
@@ -9476,11 +9508,11 @@ static void RenderArrow(ImDrawList* draw_list, ImVec2 pos, ImVec2 half_sz, ImGui
 {
     switch (direction)
     {
-    case ImGuiDir_Right: draw_list->AddTriangleFilled(ImVec2(pos.x - half_sz.x, pos.y + half_sz.y), ImVec2(pos.x - half_sz.x, pos.y - half_sz.y), pos, col); return;
     case ImGuiDir_Left:  draw_list->AddTriangleFilled(ImVec2(pos.x + half_sz.x, pos.y - half_sz.y), ImVec2(pos.x + half_sz.x, pos.y + half_sz.y), pos, col); return;
-    case ImGuiDir_Down:  draw_list->AddTriangleFilled(ImVec2(pos.x - half_sz.x, pos.y - half_sz.y), ImVec2(pos.x + half_sz.x, pos.y - half_sz.y), pos, col); return;
+    case ImGuiDir_Right: draw_list->AddTriangleFilled(ImVec2(pos.x - half_sz.x, pos.y + half_sz.y), ImVec2(pos.x - half_sz.x, pos.y - half_sz.y), pos, col); return;
     case ImGuiDir_Up:    draw_list->AddTriangleFilled(ImVec2(pos.x + half_sz.x, pos.y + half_sz.y), ImVec2(pos.x - half_sz.x, pos.y + half_sz.y), pos, col); return;
-    default: break;
+    case ImGuiDir_Down:  draw_list->AddTriangleFilled(ImVec2(pos.x - half_sz.x, pos.y - half_sz.y), ImVec2(pos.x + half_sz.x, pos.y - half_sz.y), pos, col); return;
+    default: return; // Fix warning for ImGuiDir_None
     }
 }
 

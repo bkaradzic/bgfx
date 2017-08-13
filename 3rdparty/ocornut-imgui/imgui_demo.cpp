@@ -181,7 +181,7 @@ void ImGui::ShowTestWindow(bool* p_open)
     if (no_scrollbar) window_flags |= ImGuiWindowFlags_NoScrollbar;
     if (no_collapse)  window_flags |= ImGuiWindowFlags_NoCollapse;
     if (!no_menu)     window_flags |= ImGuiWindowFlags_MenuBar;
-    ImGui::SetNextWindowSize(ImVec2(550,680), ImGuiSetCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(550,680), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin("ImGui Demo", p_open, window_flags))
     {
         // Early out if the window is collapsed, as an optimization.
@@ -855,8 +855,8 @@ void ImGui::ShowTestWindow(bool* p_open)
             if (ImGui::Button("Uint8 + HSV"))
                 ImGui::SetColorEditOptions(ImGuiColorEditFlags_Uint8 | ImGuiColorEditFlags_HSV);
             ImGui::SameLine();
-            if (ImGui::Button("Float + HDR + NoClamp"))
-                ImGui::SetColorEditOptions(ImGuiColorEditFlags_Float | ImGuiColorEditFlags_RGB | ImGuiColorEditFlags_HDR);
+            if (ImGui::Button("Float + HDR"))
+                ImGui::SetColorEditOptions(ImGuiColorEditFlags_Float | ImGuiColorEditFlags_RGB);
 
             ImGui::TreePop();
         }
@@ -2118,12 +2118,12 @@ static void ShowExampleAppManipulatingWindowTitle(bool*)
     // You can use the "##" and "###" markers to manipulate the display/ID.
 
     // Using "##" to display same title but have unique identifier.
-    ImGui::SetNextWindowPos(ImVec2(100,100), ImGuiSetCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(100,100), ImGuiCond_FirstUseEver);
     ImGui::Begin("Same title as another window##1");
     ImGui::Text("This is window 1.\nMy title is the same as window 2, but my identifier is unique.");
     ImGui::End();
 
-    ImGui::SetNextWindowPos(ImVec2(100,200), ImGuiSetCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(100,200), ImGuiCond_FirstUseEver);
     ImGui::Begin("Same title as another window##2");
     ImGui::Text("This is window 2.\nMy title is the same as window 1, but my identifier is unique.");
     ImGui::End();
@@ -2131,7 +2131,7 @@ static void ShowExampleAppManipulatingWindowTitle(bool*)
     // Using "###" to display a changing title but keep a static identifier "AnimatedTitle"
     char buf[128];
     sprintf(buf, "Animated title %c %d###AnimatedTitle", "|/-\\"[(int)(ImGui::GetTime()/0.25f)&3], rand());
-    ImGui::SetNextWindowPos(ImVec2(100,300), ImGuiSetCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(100,300), ImGuiCond_FirstUseEver);
     ImGui::Begin(buf);
     ImGui::Text("This window has a changing title.");
     ImGui::End();
@@ -2140,7 +2140,7 @@ static void ShowExampleAppManipulatingWindowTitle(bool*)
 // Demonstrate using the low-level ImDrawList to draw custom shapes. 
 static void ShowExampleAppCustomRendering(bool* p_open)
 {
-    ImGui::SetNextWindowSize(ImVec2(350,560), ImGuiSetCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(350,560), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin("Example: Custom rendering", p_open))
     {
         ImGui::End();
@@ -2293,7 +2293,7 @@ struct ExampleAppConsole
 
     void    Draw(const char* title, bool* p_open)
     {
-        ImGui::SetNextWindowSize(ImVec2(520,600), ImGuiSetCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(520,600), ImGuiCond_FirstUseEver);
         if (!ImGui::Begin(title, p_open))
         {
             ImGui::End();
@@ -2308,6 +2308,7 @@ struct ExampleAppConsole
         if (ImGui::SmallButton("Add Dummy Text")) { AddLog("%d some text", Items.Size); AddLog("some more text"); AddLog("display very important message here!"); } ImGui::SameLine();
         if (ImGui::SmallButton("Add Dummy Error")) { AddLog("[error] something went wrong"); } ImGui::SameLine();
         if (ImGui::SmallButton("Clear")) { ClearLog(); } ImGui::SameLine();
+        bool copy_to_clipboard = ImGui::SmallButton("Copy"); ImGui::SameLine();
         if (ImGui::SmallButton("Scroll to bottom")) ScrollToBottom = true;
         //static float t = 0.0f; if (ImGui::GetTime() - t > 0.02f) { t = ImGui::GetTime(); AddLog("Spam %f", t); }
 
@@ -2338,6 +2339,8 @@ struct ExampleAppConsole
         // and appending newly elements as they are inserted. This is left as a task to the user until we can manage to improve this example code!
         // If your items are of variable size you may want to implement code similar to what ImGuiListClipper does. Or split your data into fixed height items to allow random-seeking into your list.
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4,1)); // Tighten spacing
+        if (copy_to_clipboard)
+            ImGui::LogToClipboard();
         for (int i = 0; i < Items.Size; i++)
         {
             const char* item = Items[i];
@@ -2350,6 +2353,8 @@ struct ExampleAppConsole
             ImGui::TextUnformatted(item);
             ImGui::PopStyleColor();
         }
+        if (copy_to_clipboard)
+            ImGui::LogFinish();
         if (ScrollToBottom)
             ImGui::SetScrollHere();
         ScrollToBottom = false;
@@ -2552,7 +2557,7 @@ struct ExampleAppLog
 
     void    Draw(const char* title, bool* p_open = NULL)
     {
-        ImGui::SetNextWindowSize(ImVec2(500,400), ImGuiSetCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(500,400), ImGuiCond_FirstUseEver);
         ImGui::Begin(title, p_open);
         if (ImGui::Button("Clear")) Clear();
         ImGui::SameLine();
@@ -2609,7 +2614,7 @@ static void ShowExampleAppLog(bool* p_open)
 // Demonstrate create a window with multiple child windows.
 static void ShowExampleAppLayout(bool* p_open)
 {
-    ImGui::SetNextWindowSize(ImVec2(500, 440), ImGuiSetCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(500, 440), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Example: Layout", p_open, ImGuiWindowFlags_MenuBar))
     {
         if (ImGui::BeginMenuBar())
@@ -2655,7 +2660,7 @@ static void ShowExampleAppLayout(bool* p_open)
 // Demonstrate create a simple property editor.
 static void ShowExampleAppPropertyEditor(bool* p_open)
 {
-    ImGui::SetNextWindowSize(ImVec2(430,450), ImGuiSetCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(430,450), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin("Example: Property editor", p_open))
     {
         ImGui::End();
@@ -2728,7 +2733,7 @@ static void ShowExampleAppPropertyEditor(bool* p_open)
 // Demonstrate/test rendering huge amount of text, and the incidence of clipping.
 static void ShowExampleAppLongText(bool* p_open)
 {
-    ImGui::SetNextWindowSize(ImVec2(520,600), ImGuiSetCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(520,600), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin("Example: Long text display", p_open))
     {
         ImGui::End();
