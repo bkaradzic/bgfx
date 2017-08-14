@@ -336,6 +336,16 @@ typedef struct bgfx_hmd
 } bgfx_hmd_t;
 
 /**/
+typedef struct bgfx_view_stats
+{
+    char     name[256];
+    uint8_t  view;
+    uint64_t cpuTimeElapsed;
+    uint64_t gpuTimeElapsed;
+
+} bgfx_view_stats_t;
+
+/**/
 typedef struct bgfx_stats
 {
     uint64_t cpuTimeBegin;
@@ -357,6 +367,9 @@ typedef struct bgfx_stats
     uint16_t height;
     uint16_t textWidth;
     uint16_t textHeight;
+
+    uint16_t          numViews;
+    bgfx_view_stats_t viewStats[256];
 
 } bgfx_stats_t;
 

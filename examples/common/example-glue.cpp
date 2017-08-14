@@ -8,6 +8,7 @@
 #include "entry/cmd.h"
 #include <bx/string.h>
 #include <bx/timer.h>
+#include <bx/math.h>
 
 void showExampleDialog(entry::AppI* _app, const char* _errorText)
 {
@@ -132,6 +133,77 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 		, double(stats->gpuTimeEnd-stats->gpuTimeBegin)/stats->gpuTimerFreq*1000.0
 		, stats->maxGpuLatency
 		);
+
+	if (0 != stats->numViews)
+	{
+		if (ImGui::CollapsingHeader(ICON_FA_CLOCK_O " Profiler") )
+		{
+			if (ImGui::BeginChild("##view_profiler", ImVec2(0.0f, 0.0f) ) )
+			{
+				ImGui::PushFont(ImGui::Font::Mono);
+
+				ImVec4 cpuColor(0.5f, 1.0f, 0.5f, 1.0f);
+				ImVec4 gpuColor(0.5f, 0.5f, 1.0f, 1.0f);
+
+				const float itemHeight = ImGui::GetTextLineHeightWithSpacing();
+
+				if (ImGui::ListBoxHeader("##empty", ImVec2(ImGui::GetWindowWidth(), stats->numViews*itemHeight) ) )
+				{
+					ImGuiListClipper clipper(stats->numViews, itemHeight);
+
+					const double toCpuMs = 1000.0/stats->cpuTimerFreq;
+					const double toGpuMs = 1000.0/stats->gpuTimerFreq;
+					const float  scale   = 3.0f;
+
+					while (clipper.Step() )
+					{
+						for (int32_t pos = clipper.DisplayStart; pos < clipper.DisplayEnd; ++pos)
+						{
+							const bgfx::ViewStats& viewStats = stats->viewStats[pos];
+
+							ImGui::Text("%3d %3d %s", pos, viewStats.view, viewStats.name);
+							ImGui::SameLine(64.0f);
+
+							ImGui::PushStyleColor(ImGuiCol_Button,        cpuColor);
+							ImGui::PushStyleColor(ImGuiCol_ButtonHovered, cpuColor);
+							ImGui::PushStyleColor(ImGuiCol_ButtonActive,  cpuColor);
+
+							const float maxWidth = 30.0f*scale;
+							const float cpuWidth = bx::fclamp(float(viewStats.cpuTimeElapsed*toCpuMs)*scale, 1.0f, maxWidth);
+							const float gpuWidth = bx::fclamp(float(viewStats.gpuTimeElapsed*toGpuMs)*scale, 1.0f, maxWidth);
+
+							ImGui::Button("", ImVec2(cpuWidth, itemHeight) );
+							if (ImGui::IsItemHovered() )
+							{
+								ImGui::SetTooltip("CPU: %f [ms]", viewStats.cpuTimeElapsed*toCpuMs);
+							}
+							ImGui::PopStyleColor(3);
+							ImGui::SameLine();
+
+							ImGui::InvisibleButton("", ImVec2(maxWidth-cpuWidth, itemHeight) );
+							ImGui::SameLine();
+
+							ImGui::PushStyleColor(ImGuiCol_Button,        gpuColor);
+							ImGui::PushStyleColor(ImGuiCol_ButtonHovered, gpuColor);
+							ImGui::PushStyleColor(ImGuiCol_ButtonActive,  gpuColor);
+							ImGui::Button("", ImVec2(gpuWidth, itemHeight) );
+							if (ImGui::IsItemHovered() )
+							{
+								ImGui::SetTooltip("GPU: %f [ms]", viewStats.gpuTimeElapsed*toGpuMs);
+							}
+							ImGui::PopStyleColor(3);
+						}
+					}
+
+					ImGui::ListBoxFooter();
+				}
+
+				ImGui::PopFont();
+
+				ImGui::EndChild();
+			}
+		}
+	}
 
 	ImGui::End();
 }

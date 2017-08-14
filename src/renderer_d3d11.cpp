@@ -15,20 +15,6 @@
 #	endif // BX_PLATFORM_WINRT
 #endif // !BX_PLATFORM_WINDOWS
 
-#if BGFX_CONFIG_PROFILER_REMOTERY
-#	define BGFX_GPU_PROFILER_BIND(_device, _context) rmt_BindD3D11(_device, _context)
-#	define BGFX_GPU_PROFILER_UNBIND() rmt_UnbindD3D11()
-#	define BGFX_GPU_PROFILER_BEGIN(_group, _name, _color) rmt_BeginD3D11Sample(_group##_##_name)
-#	define BGFX_GPU_PROFILER_BEGIN_DYNAMIC(_namestr) rmt_BeginD3D11SampleDynamic(_namestr)
-#	define BGFX_GPU_PROFILER_END() rmt_EndD3D11Sample()
-#else
-#	define BGFX_GPU_PROFILER_BIND(_device, _context) BX_NOOP()
-#	define BGFX_GPU_PROFILER_UNBIND() BX_NOOP()
-#	define BGFX_GPU_PROFILER_BEGIN(_group, _name, _color) BX_NOOP()
-#	define BGFX_GPU_PROFILER_BEGIN_DYNAMIC(_namestr) BX_NOOP()
-#	define BGFX_GPU_PROFILER_END() BX_NOOP()
-#endif
-
 #if BGFX_CONFIG_USE_OVR
 #	include "hmd_ovr.h"
 #endif // BGFX_CONFIG_USE_OVR
@@ -1680,8 +1666,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				postReset();
 			}
 
-			BGFX_GPU_PROFILER_BIND(m_device, m_deviceCtx);
-
 			g_internalData.context = m_device;
 			return true;
 
@@ -1734,8 +1718,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		void shutdown()
 		{
-			BGFX_GPU_PROFILER_UNBIND();
-
 			preReset();
 			m_ovr.shutdown();
 
@@ -2726,7 +2708,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				&& (BGFX_CLEAR_DEPTH|BGFX_CLEAR_STENCIL) & _clear.m_flags)
 				{
 					DWORD flags = 0;
-					flags |= (_clear.m_flags & BGFX_CLEAR_DEPTH) ? D3D11_CLEAR_DEPTH : 0;
+					flags |= (_clear.m_flags & BGFX_CLEAR_DEPTH)   ? D3D11_CLEAR_DEPTH   : 0;
 					flags |= (_clear.m_flags & BGFX_CLEAR_STENCIL) ? D3D11_CLEAR_STENCIL : 0;
 					m_deviceCtx->ClearDepthStencilView(m_currentDepthStencil, flags, _clear.m_depth, _clear.m_stencil);
 				}
@@ -5200,68 +5182,94 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	{
 		ID3D11Device* device = s_renderD3D11->m_device;
 
-		D3D11_QUERY_DESC query;
-		query.MiscFlags = 0;
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_frame); ++ii)
+		D3D11_QUERY_DESC qd;
+		qd.MiscFlags = 0;
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_query); ++ii)
 		{
-			Frame& frame = m_frame[ii];
+			Query& query = m_query[ii];
+			query.m_ready = false;
 
-			query.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
-			DX_CHECK(device->CreateQuery(&query, &frame.m_disjoint) );
+			qd.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
+			DX_CHECK(device->CreateQuery(&qd, &query.m_disjoint) );
 
-			query.Query = D3D11_QUERY_TIMESTAMP;
-			DX_CHECK(device->CreateQuery(&query, &frame.m_begin) );
-			DX_CHECK(device->CreateQuery(&query, &frame.m_end) );
+			qd.Query = D3D11_QUERY_TIMESTAMP;
+			DX_CHECK(device->CreateQuery(&qd, &query.m_begin) );
+			DX_CHECK(device->CreateQuery(&qd, &query.m_end) );
 		}
 
-		m_elapsed   = 0;
-		m_frequency = 1;
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
+		{
+			Result& result = m_result[ii];
+			result.reset();
+		}
+
 		m_control.reset();
 	}
 
 	void TimerQueryD3D11::preReset()
 	{
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_frame); ++ii)
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_query); ++ii)
 		{
-			Frame& frame = m_frame[ii];
-			DX_RELEASE(frame.m_disjoint, 0);
-			DX_RELEASE(frame.m_begin, 0);
-			DX_RELEASE(frame.m_end, 0);
+			Query& query = m_query[ii];
+			DX_RELEASE(query.m_disjoint, 0);
+			DX_RELEASE(query.m_begin, 0);
+			DX_RELEASE(query.m_end, 0);
 		}
 	}
 
-	void TimerQueryD3D11::begin()
+	uint32_t TimerQueryD3D11::begin(uint32_t _resultIdx)
 	{
 		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
 
 		while (0 == m_control.reserve(1) )
 		{
-			get();
+			update();
 		}
 
-		Frame& frame = m_frame[m_control.m_current];
-		deviceCtx->Begin(frame.m_disjoint);
-		deviceCtx->End(frame.m_begin);
+		Result& result = m_result[_resultIdx];
+		++result.m_pending;
+
+		const uint32_t idx = m_control.m_current;
+		Query& query = m_query[idx];
+		query.m_resultIdx = _resultIdx;
+		query.m_ready     = false;
+
+		deviceCtx->Begin(query.m_disjoint);
+		deviceCtx->End(query.m_begin);
+
+		m_control.commit(1);
+
+		return idx;
 	}
 
-	void TimerQueryD3D11::end()
+	void TimerQueryD3D11::end(uint32_t _idx)
 	{
 		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
-		Frame& frame = m_frame[m_control.m_current];
-		deviceCtx->End(frame.m_end);
-		deviceCtx->End(frame.m_disjoint);
-		m_control.commit(1);
+		Query& query = m_query[_idx];
+		query.m_ready = true;
+
+		deviceCtx->End(query.m_end);
+		deviceCtx->End(query.m_disjoint);
+
+		while (update() )
+		{
+		}
 	}
 
-	bool TimerQueryD3D11::get()
+	bool TimerQueryD3D11::update()
 	{
 		if (0 != m_control.available() )
 		{
-			ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
-			Frame& frame = m_frame[m_control.m_read];
+			Query& query = m_query[m_control.m_read];
+
+			if (!query.m_ready)
+			{
+				return false;
+			}
 
 			uint64_t timeEnd;
-			HRESULT hr = deviceCtx->GetData(frame.m_end, &timeEnd, sizeof(timeEnd), D3D11_ASYNC_GETDATA_DONOTFLUSH);
+			ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
+			HRESULT hr = deviceCtx->GetData(query.m_end, &timeEnd, sizeof(timeEnd), D3D11_ASYNC_GETDATA_DONOTFLUSH);
 			if (S_OK == hr
 			||  isLost(hr) )
 			{
@@ -5274,15 +5282,17 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				};
 
 				D3D11_QUERY_DATA_TIMESTAMP_DISJOINT disjoint;
-				deviceCtx->GetData(frame.m_disjoint, &disjoint, sizeof(disjoint), 0);
+				DX_CHECK(deviceCtx->GetData(query.m_disjoint, &disjoint, sizeof(disjoint), 0) );
 
 				uint64_t timeBegin;
-				deviceCtx->GetData(frame.m_begin, &timeBegin, sizeof(timeBegin), 0);
+				DX_CHECK(deviceCtx->GetData(query.m_begin, &timeBegin, sizeof(timeBegin), 0) );
 
-				m_frequency = disjoint.Frequency;
-				m_begin     = timeBegin;
-				m_end       = timeEnd;
-				m_elapsed   = timeEnd - timeBegin;
+				Result& result = m_result[query.m_resultIdx];
+				--result.m_pending;
+
+				result.m_frequency = disjoint.Frequency;
+				result.m_begin     = timeBegin;
+				result.m_end       = timeEnd;
 
 				return true;
 			}
@@ -5290,6 +5300,58 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		return false;
 	}
+
+	struct Profiler
+	{
+		Profiler(Frame* _frame, TimerQueryD3D11& _gpuTimer, bool _enabled = false)
+			: m_frame(_frame)
+			, m_gpuTimer(_gpuTimer)
+			, m_numViews(0)
+			, m_enabled(_enabled)
+		{
+		}
+
+		~Profiler()
+		{
+			m_frame->m_perfStats.numViews = m_numViews;
+		}
+
+		void begin(uint16_t _view)
+		{
+			if (m_enabled)
+			{
+				ViewStats& viewStats = m_frame->m_perfStats.viewStats[m_numViews];
+				viewStats.cpuTimeElapsed = -bx::getHPCounter();
+
+				m_queryIdx = m_gpuTimer.begin(_view);
+
+				viewStats.view = uint8_t(_view);
+				bx::strCopy(viewStats.name, BGFX_CONFIG_MAX_VIEW_NAME, &s_viewName[_view][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]);
+			}
+		}
+
+		void end()
+		{
+			if (m_enabled)
+			{
+				m_gpuTimer.end(m_queryIdx);
+
+				ViewStats& viewStats = m_frame->m_perfStats.viewStats[m_numViews];
+				const TimerQueryD3D11::Result& result = m_gpuTimer.m_result[viewStats.view];
+
+				viewStats.cpuTimeElapsed += bx::getHPCounter();
+				viewStats.gpuTimeElapsed = result.m_end - result.m_begin;
+
+				++m_numViews;
+			}
+		}
+
+		Frame* m_frame;
+		TimerQueryD3D11& m_gpuTimer;
+		uint32_t m_queryIdx;
+		uint16_t m_numViews;
+		bool     m_enabled;
+	};
 
 	void OcclusionQueryD3D11::postReset()
 	{
@@ -5466,16 +5528,17 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		}
 
 		PIX_BEGINEVENT(D3DCOLOR_FRAME, L"rendererSubmit");
-		BGFX_GPU_PROFILER_BEGIN_DYNAMIC("rendererSubmit");
 
 		ID3D11DeviceContext* deviceCtx = m_deviceCtx;
 
 		int64_t elapsed = -bx::getHPCounter();
 		int64_t captureElapsed = 0;
 
+		uint32_t frameQueryIdx = UINT32_MAX;
+
 		if (m_timerQuerySupport)
 		{
-			m_gpuTimer.begin();
+			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS);
 		}
 
 		if (0 < _render->m_iboffset)
@@ -5533,6 +5596,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		uint32_t statsNumDrawIndirect[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumIndices = 0;
 		uint32_t statsKeyType[2] = {};
+
+		Profiler profiler(_render, m_gpuTimer);
 
 		m_occlusionQuery.resolve(_render);
 
@@ -5606,11 +5671,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					PIX_ENDEVENT();
 					if (item > 1)
 					{
-						BGFX_GPU_PROFILER_END();
-						BGFX_PROFILER_END();
+						profiler.end();
 					}
-					BGFX_PROFILER_BEGIN_DYNAMIC(s_viewName[view]);
-					BGFX_GPU_PROFILER_BEGIN_DYNAMIC(s_viewName[view]);
+
+					profiler.begin(view);
 
 					viewState.m_rect = _render->m_rect[view];
 					if (viewRestart)
@@ -6351,13 +6415,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				capture();
 				captureElapsed += bx::getHPCounter();
 
-				BGFX_GPU_PROFILER_END();
-				BGFX_PROFILER_END();
+				profiler.end();
 			}
 		}
 
 		PIX_ENDEVENT();
-		BGFX_GPU_PROFILER_END();
 
 		int64_t now = bx::getHPCounter();
 		elapsed += now;
@@ -6379,28 +6441,26 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		static double   maxGpuElapsed = 0.0f;
 		double elapsedGpuMs = 0.0;
 
-		if (m_timerQuerySupport)
+		if (UINT32_MAX != frameQueryIdx)
 		{
-			m_gpuTimer.end();
+			m_gpuTimer.end(frameQueryIdx);
 
-			do
-			{
-				double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
-				elapsedGpuMs   = m_gpuTimer.m_elapsed * toGpuMs;
-				maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
-			}
-			while (m_gpuTimer.get() );
+			const TimerQueryD3D11::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+			double toGpuMs = 1000.0 / double(result.m_frequency);
+			elapsedGpuMs   = (result.m_end - result.m_begin) * toGpuMs;
+			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
 
-			maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
+			maxGpuLatency = bx::uint32_imax(maxGpuLatency, result.m_pending-1);
 		}
 
 		const int64_t timerFreq = bx::getHPFrequency();
 
 		perfStats.cpuTimeEnd    = now;
 		perfStats.cpuTimerFreq  = timerFreq;
-		perfStats.gpuTimeBegin  = m_gpuTimer.m_begin;
-		perfStats.gpuTimeEnd    = m_gpuTimer.m_end;
-		perfStats.gpuTimerFreq  = m_gpuTimer.m_frequency;
+		const TimerQueryD3D11::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+		perfStats.gpuTimeBegin  = result.m_begin;
+		perfStats.gpuTimeEnd    = result.m_end;
+		perfStats.gpuTimerFreq  = result.m_frequency;
 		perfStats.numDraw       = statsKeyType[0];
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.maxGpuLatency = maxGpuLatency;
@@ -6550,12 +6610,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		}
 	}
 } /* namespace d3d11 */ } // namespace bgfx
-
-#undef BGFX_GPU_PROFILER_BIND
-#undef BGFX_GPU_PROFILER_UNBIND
-#undef BGFX_GPU_PROFILER_BEGIN
-#undef BGFX_GPU_PROFILER_BEGIN_DYNAMIC
-#undef BGFX_GPU_PROFILER_END
 
 #else
 
