@@ -3283,6 +3283,7 @@ namespace bgfx
 				ProgramHandle handle = { idx };
 				ProgramRef& pr = m_programRef[handle.idx];
 				++pr.m_refCount;
+				shaderIncRef(pr.m_vsh);
 				return handle;
 			}
 
