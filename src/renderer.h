@@ -28,7 +28,7 @@ namespace bgfx
 
 		const BlitItem& advance()
 		{
-			const BlitItem& bi = m_frame->m_blitItem[m_item];
+			const BlitItem& bi = m_frame->m_blitItem[m_key.m_item];
 
 			++m_item;
 			m_key.decode(m_frame->m_blitKeys[m_item]);
