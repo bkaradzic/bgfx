@@ -77,16 +77,19 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 			cmdExec("app restart");
 		}
 
-		ImGui::SameLine();
-		if (ImGui::Button(ICON_KI_PREVIOUS " Prev") )
+		if (1 < entry::getNumApps() )
 		{
-			cmdExec("app restart prev");
-		}
+			ImGui::SameLine();
+			if (ImGui::Button(ICON_KI_PREVIOUS " Prev") )
+			{
+				cmdExec("app restart prev");
+			}
 
-		ImGui::SameLine();
-		if (ImGui::Button(ICON_KI_NEXT " Next") )
-		{
-			cmdExec("app restart next");
+			ImGui::SameLine();
+			if (ImGui::Button(ICON_KI_NEXT " Next") )
+			{
+				cmdExec("app restart next");
+			}
 		}
 
 		ImGui::SameLine();

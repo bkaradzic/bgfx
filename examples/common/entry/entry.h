@@ -310,10 +310,6 @@ namespace entry
 		const char* m_description;
 	};
 
-	inline AppI::~AppI()
-	{
-	}
-
 	///
 	AppI* getFirstApp();
 

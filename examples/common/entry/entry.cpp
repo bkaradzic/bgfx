@@ -460,6 +460,30 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		s_numApps++;
 	}
 
+	AppI::~AppI()
+	{
+		for (AppI* prev = NULL, *app = s_apps, *next = app->getNext()
+			; NULL != app
+			; prev = app, app = next, next = app->getNext() )
+		{
+			if (app == this)
+			{
+				if (NULL != prev)
+				{
+					prev->m_next = next;
+				}
+				else
+				{
+					s_apps = next;
+				}
+
+				--s_numApps;
+
+				break;
+			}
+		}
+	}
+
 	const char* AppI::getName() const
 	{
 		return m_name;
