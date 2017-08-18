@@ -911,6 +911,11 @@ namespace bgfx { namespace gl
 
 	static const char* s_texelFetch[] =
 	{
+		"texture",
+		"textureLod",
+		"textureGrad",
+		"textureProj",
+		"textureProjLod",
 		"texelFetch",
 		"texelFetchOffset",
 		NULL
