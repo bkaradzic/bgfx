@@ -18,7 +18,7 @@ extern "C"
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x5)
 
 #define BGFX_SHADERC_VERSION_MAJOR 1
-#define BGFX_SHADERC_VERSION_MINOR 4
+#define BGFX_SHADERC_VERSION_MINOR 5
 
 namespace bgfx
 {
@@ -2043,10 +2043,20 @@ namespace bgfx
 												);
 										}
 
-										bx::stringPrintf(code
-											, "#define bgfxShadow2D shadow2D\n"
-											  "#define bgfxShadow2DProj shadow2DProj\n"
-											);
+										if (need130)
+										{
+											bx::stringPrintf(code
+												, "#define bgfxShadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord))\n"
+												  "#define bgfxShadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord))\n"
+												);
+										}
+										else
+										{
+											bx::stringPrintf(code
+												, "#define bgfxShadow2D     shadow2D\n"
+												  "#define bgfxShadow2DProj shadow2DProj\n"
+												);
+										}
 									}
 									else
 									{
