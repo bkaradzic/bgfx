@@ -10,37 +10,64 @@
 namespace
 {
 
-struct PosColorVertex
+struct PosVertex
 {
 	float m_x;
 	float m_y;
 	float m_z;
-	uint32_t m_abgr;
 
 	static void init()
 	{
 		ms_decl
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-			.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
 			.end();
 	};
 
 	static bgfx::VertexDecl ms_decl;
 };
 
-bgfx::VertexDecl PosColorVertex::ms_decl;
+bgfx::VertexDecl PosVertex::ms_decl;
 
-static PosColorVertex s_cubeVertices[] =
+struct ColorVertex
 {
-	{-1.0f,  1.0f,  1.0f, 0xff000000 },
-	{ 1.0f,  1.0f,  1.0f, 0xff0000ff },
-	{-1.0f, -1.0f,  1.0f, 0xff00ff00 },
-	{ 1.0f, -1.0f,  1.0f, 0xff00ffff },
-	{-1.0f,  1.0f, -1.0f, 0xffff0000 },
-	{ 1.0f,  1.0f, -1.0f, 0xffff00ff },
-	{-1.0f, -1.0f, -1.0f, 0xffffff00 },
-	{ 1.0f, -1.0f, -1.0f, 0xffffffff },
+	uint32_t m_abgr;
+
+	static void init()
+	{
+		ms_decl
+			.begin()
+			.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
+			.end();
+	};
+
+	static bgfx::VertexDecl ms_decl;
+};
+
+bgfx::VertexDecl ColorVertex::ms_decl;
+
+static PosVertex s_cubePosVertices[] =
+{
+	{-1.0f,  1.0f,  1.0f },
+	{ 1.0f,  1.0f,  1.0f },
+	{-1.0f, -1.0f,  1.0f },
+	{ 1.0f, -1.0f,  1.0f },
+	{-1.0f,  1.0f, -1.0f },
+	{ 1.0f,  1.0f, -1.0f },
+	{-1.0f, -1.0f, -1.0f },
+	{ 1.0f, -1.0f, -1.0f },
+};
+
+static ColorVertex s_cubeColorVertices[] =
+{
+	{ 0xff000000 },
+	{ 0xff0000ff },
+	{ 0xff00ff00 },
+	{ 0xff00ffff },
+	{ 0xffff0000 },
+	{ 0xffff00ff },
+	{ 0xffffff00 },
+	{ 0xffffffff },
 };
 
 static const uint16_t s_cubeTriList[] =
@@ -75,10 +102,10 @@ static const uint16_t s_cubeTriStrip[] =
 	5,
 };
 
-class ExampleCubes : public entry::AppI
+class ExampleMvs : public entry::AppI
 {
 public:
-	ExampleCubes(const char* _name, const char* _description)
+	ExampleMvs(const char* _name, const char* _description)
 		: entry::AppI(_name, _description)
 	{
 	}
@@ -109,13 +136,20 @@ public:
 				);
 
 		// Create vertex stream declaration.
-		PosColorVertex::init();
+		PosVertex::init();
+		ColorVertex::init();
 
 		// Create static vertex buffer.
-		m_vbh = bgfx::createVertexBuffer(
+		m_vbh[0] = bgfx::createVertexBuffer(
 				// Static data can be passed with bgfx::makeRef
-				bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-				, PosColorVertex::ms_decl
+				  bgfx::makeRef(s_cubePosVertices, sizeof(s_cubePosVertices) )
+				, PosVertex::ms_decl
+				);
+
+		m_vbh[1] = bgfx::createVertexBuffer(
+				// Static data can be passed with bgfx::makeRef
+				  bgfx::makeRef(s_cubeColorVertices, sizeof(s_cubeColorVertices) )
+				, ColorVertex::ms_decl
 				);
 
 		// Create static index buffer.
@@ -138,7 +172,8 @@ public:
 
 		// Cleanup.
 		bgfx::destroy(m_ibh);
-		bgfx::destroy(m_vbh);
+		bgfx::destroy(m_vbh[0]);
+		bgfx::destroy(m_vbh[1]);
 		bgfx::destroy(m_program);
 
 		// Shutdown bgfx.
@@ -216,7 +251,8 @@ public:
 					bgfx::setTransform(mtx);
 
 					// Set vertex and index buffer.
-					bgfx::setVertexBuffer(0, m_vbh);
+					bgfx::setVertexBuffer(0, m_vbh[0]);
+					bgfx::setVertexBuffer(1, m_vbh[1]);
 					bgfx::setIndexBuffer(m_ibh);
 
 					// Set render states.
@@ -246,7 +282,7 @@ public:
 	uint32_t m_height;
 	uint32_t m_debug;
 	uint32_t m_reset;
-	bgfx::VertexBufferHandle m_vbh;
+	bgfx::VertexBufferHandle m_vbh[2];
 	bgfx::IndexBufferHandle m_ibh;
 	bgfx::ProgramHandle m_program;
 	int64_t m_timeOffset;
@@ -254,4 +290,4 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleCubes, "01-cubes", "Rendering simple static mesh.");
+ENTRY_IMPLEMENT_MAIN(ExampleMvs, "34-mvc", "Multiple vertex streams.");
