@@ -290,4 +290,4 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleMvs, "34-mvc", "Multiple vertex streams.");
+ENTRY_IMPLEMENT_MAIN(ExampleMvs, "34-mvs", "Multiple vertex streams.");
