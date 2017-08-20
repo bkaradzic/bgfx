@@ -1149,6 +1149,7 @@ namespace bgfx
 	///   - `BGFX_DEBUG_IFH` - Infinitely fast hardware. When this flag is set
 	///     all rendering calls will be skipped. It's useful when profiling
 	///     to quickly assess bottleneck between CPU and GPU.
+	///   - `BGFX_DEBUG_PROFILER` - Enabled profiler.
 	///   - `BGFX_DEBUG_STATS` - Display internal statistics.
 	///   - `BGFX_DEBUG_TEXT` - Display debug text.
 	///   - `BGFX_DEBUG_WIREFRAME` - Wireframe rendering. All rendering
