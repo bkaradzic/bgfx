@@ -202,9 +202,9 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 				}
 
 				ImGui::PopFont();
-
-				ImGui::EndChild();
 			}
+
+			ImGui::EndChild();
 		}
 	}
 

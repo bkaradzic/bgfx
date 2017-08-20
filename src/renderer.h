@@ -495,6 +495,67 @@ namespace bgfx
 		return false;
 	}
 
+	template<typename Ty>
+	struct Profiler
+	{
+		Profiler(Frame* _frame, Ty& _gpuTimer, const char (*_viewName)[BGFX_CONFIG_MAX_VIEW_NAME], bool _enabled = true)
+			: m_viewName(_viewName)
+			, m_frame(_frame)
+			, m_gpuTimer(_gpuTimer)
+			, m_queryIdx(UINT32_MAX)
+			, m_numViews(0)
+			, m_enabled(_enabled)
+		{
+		}
+
+		~Profiler()
+		{
+			m_frame->m_perfStats.numViews = m_numViews;
+		}
+
+		void begin(uint16_t _view)
+		{
+			if (m_enabled)
+			{
+				ViewStats& viewStats = m_frame->m_perfStats.viewStats[m_numViews];
+				viewStats.cpuTimeElapsed = -bx::getHPCounter();
+
+				m_queryIdx = m_gpuTimer.begin(_view);
+
+				viewStats.view = uint8_t(_view);
+				bx::strCopy(viewStats.name
+					, BGFX_CONFIG_MAX_VIEW_NAME
+					, &m_viewName[_view][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
+					);
+			}
+		}
+
+		void end()
+		{
+			if (m_enabled
+			&&  UINT32_MAX != m_queryIdx)
+			{
+				m_gpuTimer.end(m_queryIdx);
+
+				ViewStats& viewStats = m_frame->m_perfStats.viewStats[m_numViews];
+				const typename Ty::Result& result = m_gpuTimer.m_result[viewStats.view];
+
+				viewStats.cpuTimeElapsed += bx::getHPCounter();
+				viewStats.gpuTimeElapsed = result.m_end - result.m_begin;
+
+				++m_numViews;
+				m_queryIdx = UINT32_MAX;
+			}
+		}
+
+		const char (*m_viewName)[BGFX_CONFIG_MAX_VIEW_NAME];
+		Frame*   m_frame;
+		Ty&      m_gpuTimer;
+		uint32_t m_queryIdx;
+		uint16_t m_numViews;
+		bool     m_enabled;
+	};
+
 } // namespace bgfx
 
 #endif // BGFX_RENDERER_H_HEADER_GUARD

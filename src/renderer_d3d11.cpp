@@ -5301,58 +5301,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		return false;
 	}
 
-	struct Profiler
-	{
-		Profiler(Frame* _frame, TimerQueryD3D11& _gpuTimer, bool _enabled = false)
-			: m_frame(_frame)
-			, m_gpuTimer(_gpuTimer)
-			, m_numViews(0)
-			, m_enabled(_enabled)
-		{
-		}
-
-		~Profiler()
-		{
-			m_frame->m_perfStats.numViews = m_numViews;
-		}
-
-		void begin(uint16_t _view)
-		{
-			if (m_enabled)
-			{
-				ViewStats& viewStats = m_frame->m_perfStats.viewStats[m_numViews];
-				viewStats.cpuTimeElapsed = -bx::getHPCounter();
-
-				m_queryIdx = m_gpuTimer.begin(_view);
-
-				viewStats.view = uint8_t(_view);
-				bx::strCopy(viewStats.name, BGFX_CONFIG_MAX_VIEW_NAME, &s_viewName[_view][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]);
-			}
-		}
-
-		void end()
-		{
-			if (m_enabled)
-			{
-				m_gpuTimer.end(m_queryIdx);
-
-				ViewStats& viewStats = m_frame->m_perfStats.viewStats[m_numViews];
-				const TimerQueryD3D11::Result& result = m_gpuTimer.m_result[viewStats.view];
-
-				viewStats.cpuTimeElapsed += bx::getHPCounter();
-				viewStats.gpuTimeElapsed = result.m_end - result.m_begin;
-
-				++m_numViews;
-			}
-		}
-
-		Frame* m_frame;
-		TimerQueryD3D11& m_gpuTimer;
-		uint32_t m_queryIdx;
-		uint16_t m_numViews;
-		bool     m_enabled;
-	};
-
 	void OcclusionQueryD3D11::postReset()
 	{
 		ID3D11Device* device = s_renderD3D11->m_device;
@@ -5597,7 +5545,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		uint32_t statsNumIndices = 0;
 		uint32_t statsKeyType[2] = {};
 
-		Profiler profiler(_render, m_gpuTimer);
+		Profiler<TimerQueryD3D11> profiler(
+			  _render
+			, m_gpuTimer
+			, s_viewName
+			, false //m_timerQuerySupport
+			);
 
 		m_occlusionQuery.resolve(_render);
 

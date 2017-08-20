@@ -11,20 +11,6 @@
 #	include <bx/uint32_t.h>
 #	include "hmd_ovr.h"
 
-#if BGFX_CONFIG_PROFILER_REMOTERY
-#	define BGFX_GPU_PROFILER_BIND() rmt_BindOpenGL()
-#	define BGFX_GPU_PROFILER_UNBIND() rmt_UnbindOpenGL()
-#	define BGFX_GPU_PROFILER_BEGIN(_group, _name, _color) rmt_BeginOpenGLSample(_group##_##_name)
-#	define BGFX_GPU_PROFILER_BEGIN_DYNAMIC(_namestr) rmt_BeginOpenGLSampleDynamic(_namestr)
-#	define BGFX_GPU_PROFILER_END() rmt_EndOpenGLSample()
-#else
-#	define BGFX_GPU_PROFILER_BIND() BX_NOOP()
-#	define BGFX_GPU_PROFILER_UNBIND() BX_NOOP()
-#	define BGFX_GPU_PROFILER_BEGIN(_group, _name, _color) BX_NOOP()
-#	define BGFX_GPU_PROFILER_BEGIN_DYNAMIC(_namestr) BX_NOOP()
-#	define BGFX_GPU_PROFILER_END() BX_NOOP()
-#endif // BGFX_CONFIG_PROFILER_REMOTERY
-
 namespace bgfx { namespace gl
 {
 	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
@@ -2561,8 +2547,6 @@ namespace bgfx { namespace gl
 				m_needPresent = false;
 			}
 
-			BGFX_GPU_PROFILER_BIND();
-
 			return true;
 
 		error:
@@ -2583,8 +2567,6 @@ namespace bgfx { namespace gl
 
 		void shutdown()
 		{
-			BGFX_GPU_PROFILER_UNBIND();
-
 			ovrPreReset();
 			m_ovr.shutdown();
 
@@ -6491,8 +6473,6 @@ namespace bgfx { namespace gl
 
 	void RendererContextGL::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
-		BGFX_GPU_PROFILER_BEGIN_DYNAMIC("rendererSubmit");
-
 		if (_render->m_capture)
 		{
 			renderDocTriggerCapture();
@@ -6522,9 +6502,11 @@ namespace bgfx { namespace gl
 		int64_t elapsed = -bx::getHPCounter();
 		int64_t captureElapsed = 0;
 
+		uint32_t frameQueryIdx = UINT32_MAX;
+
 		if (m_timerQuerySupport)
 		{
-			m_gpuTimer.begin();
+			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS);
 		}
 
 		if (0 < _render->m_iboffset)
@@ -6597,6 +6579,13 @@ namespace bgfx { namespace gl
 		uint32_t statsNumInstances[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumIndices = 0;
 		uint32_t statsKeyType[2] = {};
+
+		Profiler<TimerQueryGL> profiler(
+			  _render
+			, m_gpuTimer
+			, s_viewName
+			, false //m_timerQuerySupport && !BX_ENABLED(BX_PLATFORM_OSX)
+			);
 
 		if (m_occlusionQuerySupport)
 		{
@@ -6674,11 +6663,10 @@ namespace bgfx { namespace gl
 
 					if (item > 1)
 					{
-						BGFX_GPU_PROFILER_END();
-						BGFX_PROFILER_END();
+						profiler.end();
 					}
-					BGFX_PROFILER_BEGIN_DYNAMIC(s_viewName[view]);
-					BGFX_GPU_PROFILER_BEGIN_DYNAMIC(s_viewName[view]);
+
+					profiler.begin(view);
 
 					viewState.m_rect = _render->m_rect[view];
 					if (viewRestart)
@@ -7574,12 +7562,9 @@ namespace bgfx { namespace gl
 				capture();
 				captureElapsed += bx::getHPCounter();
 
-				BGFX_GPU_PROFILER_END();
-				BGFX_PROFILER_END();
+				profiler.end();
 			}
 		}
-
-		BGFX_GPU_PROFILER_END();
 
 		m_glctx.makeCurrent(NULL);
 		int64_t now = bx::getHPCounter();
@@ -7601,28 +7586,26 @@ namespace bgfx { namespace gl
 		static uint32_t maxGpuLatency = 0;
 		static double   maxGpuElapsed = 0.0f;
 		double elapsedGpuMs = 0.0;
-		uint64_t elapsedGl  = 0;
 
-		if (m_timerQuerySupport)
+		if (UINT32_MAX != frameQueryIdx)
 		{
-			m_gpuTimer.end();
-			do
-			{
-				elapsedGl     = m_gpuTimer.m_elapsed;
-				elapsedGpuMs  = double(elapsedGl)/1e6;
-				maxGpuElapsed = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
-			}
-			while (m_gpuTimer.get() );
+			m_gpuTimer.end(frameQueryIdx);
 
-			maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
+			const TimerQueryGL::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+			double toGpuMs = 1000.0 / 1e6;
+			elapsedGpuMs   = (result.m_end - result.m_begin) * toGpuMs;
+			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
+
+			maxGpuLatency = bx::uint32_imax(maxGpuLatency, result.m_pending-1);
 		}
 
 		const int64_t timerFreq = bx::getHPFrequency();
 
 		perfStats.cpuTimeEnd    = now;
 		perfStats.cpuTimerFreq  = timerFreq;
-		perfStats.gpuTimeBegin  = m_gpuTimer.m_begin;
-		perfStats.gpuTimeEnd    = m_gpuTimer.m_end;
+		const TimerQueryGL::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+		perfStats.gpuTimeBegin  = result.m_begin;
+		perfStats.gpuTimeEnd    = result.m_end;
 		perfStats.gpuTimerFreq  = 1000000000;
 		perfStats.numDraw       = statsKeyType[0];
 		perfStats.numCompute    = statsKeyType[1];
@@ -7810,12 +7793,6 @@ namespace bgfx { namespace gl
 		GL_CHECK(glFrameTerminatorGREMEDY() );
 	}
 } } // namespace bgfx
-
-#undef BGFX_GPU_PROFILER_BIND
-#undef BGFX_GPU_PROFILER_UNBIND
-#undef BGFX_GPU_PROFILER_BEGIN
-#undef BGFX_GPU_PROFILER_BEGIN_DYNAMIC
-#undef BGFX_GPU_PROFILER_END
 
 #else
 

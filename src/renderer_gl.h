@@ -1293,88 +1293,102 @@ namespace bgfx { namespace gl
 	struct TimerQueryGL
 	{
 		TimerQueryGL()
-			: m_control(BX_COUNTOF(m_frame) )
+			: m_control(BX_COUNTOF(m_query) )
 		{
 		}
 
 		void create()
 		{
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frame); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_query); ++ii)
 			{
-				Frame& frame = m_frame[ii];
-				GL_CHECK(glGenQueries(1, &frame.m_begin) );
-				GL_CHECK(glGenQueries(1, &frame.m_elapsed) );
+				Query& query = m_query[ii];
+				GL_CHECK(glGenQueries(1, &query.m_begin) );
+				GL_CHECK(glGenQueries(1, &query.m_end) );
 			}
 		}
 
 		void destroy()
 		{
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frame); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_query); ++ii)
 			{
-				Frame& frame = m_frame[ii];
-				GL_CHECK(glDeleteQueries(1, &frame.m_begin) );
-				GL_CHECK(glDeleteQueries(1, &frame.m_elapsed) );
+				Query& query = m_query[ii];
+				GL_CHECK(glDeleteQueries(1, &query.m_begin) );
+				GL_CHECK(glDeleteQueries(1, &query.m_end) );
 			}
 		}
 
-		void begin()
+		uint32_t begin(uint32_t _resultIdx)
 		{
 			while (0 == m_control.reserve(1) )
 			{
-				get();
+				update();
 			}
 
-			Frame& frame = m_frame[m_control.m_current];
-			if (!BX_ENABLED(BX_PLATFORM_OSX) )
-			{
-				GL_CHECK(glQueryCounter(frame.m_begin
-						, GL_TIMESTAMP
-						) );
-			}
+			Result& result = m_result[_resultIdx];
+			++result.m_pending;
 
-			GL_CHECK(glBeginQuery(GL_TIME_ELAPSED
-					, frame.m_elapsed
-					) );
-		}
+			const uint32_t idx = m_control.m_current;
+			Query& query = m_query[idx];
+			query.m_resultIdx = _resultIdx;
+			query.m_ready     = false;
 
-		void end()
-		{
-			GL_CHECK(glEndQuery(GL_TIME_ELAPSED) );
+			GL_CHECK(glQueryCounter(query.m_begin
+				, GL_TIMESTAMP
+				) );
+
 			m_control.commit(1);
+
+			return idx;
 		}
 
-		bool get()
+		void end(uint32_t _idx)
+		{
+			Query& query = m_query[_idx];
+			query.m_ready = true;
+
+			GL_CHECK(glQueryCounter(query.m_end
+				, GL_TIMESTAMP
+				) );
+
+			while (update() )
+			{
+			}
+		}
+
+		bool update()
 		{
 			if (0 != m_control.available() )
 			{
-				Frame& frame = m_frame[m_control.m_read];
+				Query& query = m_query[m_control.m_read];
+
+				if (!query.m_ready)
+				{
+					return false;
+				}
 
 				GLint available;
-				GL_CHECK(glGetQueryObjectiv(frame.m_elapsed
-						, GL_QUERY_RESULT_AVAILABLE
-						, &available
-						) );
+				GL_CHECK(glGetQueryObjectiv(query.m_end
+					, GL_QUERY_RESULT_AVAILABLE
+					, &available
+					) );
 
 				if (available)
 				{
-					if (!BX_ENABLED(BX_PLATFORM_OSX) )
-					{
-						GL_CHECK(glGetQueryObjectui64v(frame.m_begin
-								, GL_QUERY_RESULT
-								, &m_begin
-								) );
-					}
-					else
-					{
-						m_begin = 0;
-					}
-
-					GL_CHECK(glGetQueryObjectui64v(frame.m_elapsed
-							, GL_QUERY_RESULT
-							, &m_elapsed
-							) );
-					m_end = m_begin + m_elapsed;
 					m_control.consume(1);
+
+					Result& result = m_result[query.m_resultIdx];
+					--result.m_pending;
+
+					GL_CHECK(glGetQueryObjectui64v(query.m_begin
+						, GL_QUERY_RESULT
+						, &result.m_begin
+						) );
+
+					GL_CHECK(glGetQueryObjectui64v(query.m_end
+						, GL_QUERY_RESULT
+						, &result.m_end
+						) );
+
 					return true;
 				}
 			}
@@ -1382,17 +1396,31 @@ namespace bgfx { namespace gl
 			return false;
 		}
 
-		uint64_t m_begin;
-		uint64_t m_end;
-		uint64_t m_elapsed;
-
-		struct Frame
+		struct Result
 		{
-			GLuint m_begin;
-			GLuint m_elapsed;
+			void reset()
+			{
+				m_begin   = 0;
+				m_end     = 0;
+				m_pending = 0;
+			}
+
+			uint64_t m_begin;
+			uint64_t m_end;
+			uint32_t m_pending;
 		};
 
-		Frame m_frame[4];
+		struct Query
+		{
+			GLuint   m_begin;
+			GLuint   m_end;
+			uint32_t m_resultIdx;
+			bool     m_ready;
+		};
+
+		Result m_result[BGFX_CONFIG_MAX_VIEWS+1];
+
+		Query m_query[BGFX_CONFIG_MAX_VIEWS*4];
 		bx::RingBufferControl m_control;
 	};
 
