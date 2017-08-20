@@ -5549,7 +5549,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			  _render
 			, m_gpuTimer
 			, s_viewName
-			, false //m_timerQuerySupport
+			, m_timerQuerySupport
 			);
 
 		m_occlusionQuery.resolve(_render);

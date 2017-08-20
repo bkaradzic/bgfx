@@ -504,7 +504,7 @@ namespace bgfx
 			, m_gpuTimer(_gpuTimer)
 			, m_queryIdx(UINT32_MAX)
 			, m_numViews(0)
-			, m_enabled(_enabled)
+			, m_enabled(_enabled && 0 != (_frame->m_debug & BGFX_DEBUG_PROFILER) )
 		{
 		}
 

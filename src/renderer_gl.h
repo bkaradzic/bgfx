@@ -1302,8 +1302,15 @@ namespace bgfx { namespace gl
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_query); ++ii)
 			{
 				Query& query = m_query[ii];
+				query.m_ready = false;
 				GL_CHECK(glGenQueries(1, &query.m_begin) );
 				GL_CHECK(glGenQueries(1, &query.m_end) );
+			}
+
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
+			{
+				Result& result = m_result[ii];
+				result.reset();
 			}
 		}
 

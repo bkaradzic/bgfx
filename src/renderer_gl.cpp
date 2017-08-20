@@ -6570,9 +6570,10 @@ namespace bgfx { namespace gl
 		uint16_t discardFlags = BGFX_CLEAR_NONE;
 
 		const bool blendIndependentSupported = s_extension[Extension::ARB_draw_buffers_blend].m_supported;
-		const bool computeSupported = (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) && s_extension[Extension::ARB_compute_shader].m_supported)
-									|| BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31)
-									;
+		const bool computeSupported = false
+			|| (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) && s_extension[Extension::ARB_compute_shader].m_supported)
+			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31)
+			;
 
 		uint32_t statsNumPrimsSubmitted[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumPrimsRendered[BX_COUNTOF(s_primInfo)] = {};
@@ -6584,7 +6585,7 @@ namespace bgfx { namespace gl
 			  _render
 			, m_gpuTimer
 			, s_viewName
-			, false //m_timerQuerySupport && !BX_ENABLED(BX_PLATFORM_OSX)
+			, m_timerQuerySupport && !BX_ENABLED(BX_PLATFORM_OSX)
 			);
 
 		if (m_occlusionQuerySupport)
