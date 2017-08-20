@@ -18,9 +18,6 @@
 #include "cmd.h"
 #include "input.h"
 
-#define RMT_ENABLED ENTRY_CONFIG_PROFILER
-#include <remotery/lib/Remotery.h>
-
 extern "C" int32_t _main_(int32_t _argc, char** _argv);
 
 namespace entry
@@ -29,8 +26,6 @@ namespace entry
 	static uint32_t s_reset = BGFX_RESET_NONE;
 	static bool s_exit = false;
 
-	static Remotery* s_rmt = NULL;
-
 	static bx::FileReaderI* s_fileReader = NULL;
 	static bx::FileWriterI* s_fileWriter = NULL;
 
@@ -38,21 +33,6 @@ namespace entry
 	bx::AllocatorI* g_allocator = getDefaultAllocator();
 
 	typedef bx::StringT<&g_allocator> String;
-
-	void* rmtMalloc(void* /*_context*/, rmtU32 _size)
-	{
-		return BX_ALLOC(g_allocator, _size);
-	}
-
-	void* rmtRealloc(void* /*_context*/, void* _ptr, rmtU32 _size)
-	{
-		return BX_REALLOC(g_allocator, _ptr, _size);
-	}
-
-	void rmtFree(void* /*_context*/, void* _ptr)
-	{
-		BX_FREE(g_allocator, _ptr);
-	}
 
 	static String s_currentDir;
 
@@ -572,29 +552,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	{
 		//DBG(BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME);
 
-		if (BX_ENABLED(ENTRY_CONFIG_PROFILER) )
-		{
-			rmtSettings* settings = rmt_Settings();
-			BX_WARN(NULL != settings, "Remotery is not enabled.");
-			if (NULL != settings)
-			{
-				settings->malloc  = rmtMalloc;
-				settings->realloc = rmtRealloc;
-				settings->free    = rmtFree;
-
-				rmtError err = rmt_CreateGlobalInstance(&s_rmt);
-				BX_WARN(RMT_ERROR_NONE != err, "Remotery failed to create global instance.");
-				if (RMT_ERROR_NONE == err)
-				{
-					rmt_SetCurrentThreadName("Main");
-				}
-				else
-				{
-					s_rmt = NULL;
-				}
-			}
-		}
-
 		s_fileReader = BX_NEW(g_allocator, FileReader);
 		s_fileWriter = BX_NEW(g_allocator, FileWriter);
 
@@ -672,12 +629,6 @@ restart:
 
 		BX_DELETE(g_allocator, s_fileWriter);
 		s_fileWriter = NULL;
-
-		if (BX_ENABLED(ENTRY_CONFIG_PROFILER)
-		&&  NULL != s_rmt)
-		{
-			rmt_DestroyGlobalInstance(s_rmt);
-		}
 
 		return result;
 	}

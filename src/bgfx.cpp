@@ -4,21 +4,9 @@
  */
 
 #include <bx/platform.h>
-#if BX_PLATFORM_WINDOWS
-// BK - Remotery needs WinSock, but on VS2015/Win10 build
-//      fails if WinSock2 is included after Windows.h?!
-#	include <winsock2.h>
-#endif // BX_PLATFORM_WINDOWS
 
 #include "bgfx_p.h"
 #include <bgfx/embedded_shader.h>
-
-#if BGFX_CONFIG_PROFILER_REMOTERY_BUILD_LIB
-#	define RMT_USE_D3D11 BGFX_CONFIG_RENDERER_DIRECT3D11
-#	define RMT_USE_OPENGL BGFX_CONFIG_RENDERER_OPENGL
-#	include <remotery/lib/Remotery.c>
-#endif // BGFX_CONFIG_PROFILER_REMOTERY_BUILD_LIB
-
 #include <bx/file.h>
 #include <bx/mutex.h>
 
