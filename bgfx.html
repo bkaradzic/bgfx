@@ -3274,16 +3274,37 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <div class="section" id="dispatch">
 <h3>Dispatch<a class="headerlink" href="#dispatch" title="Permalink to this headline">¶</a></h3>
 <p>Within view all compute commands are dispatched after blit commands, and before draw commands.</p>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::dispatch&#8221; with arguments (uint8_t, ProgramHandle, uint16_t, uint16_t, uint16_t, uint8_t) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+<dl class="function">
+<dt id="_CPPv2N4bgfx8dispatchE7uint8_t13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t">
+<span id="bgfx::dispatch__uint8_t.ProgramHandle.uint32_t.uint32_t.uint32_t.uint8_t"></span><span class="target" id="bgfxnamespacebgfx_1ab10241281c12400fa4ad863336912f74"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">dispatch</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_handle</em>, uint32_t <em>_numX</em> = 1, uint32_t <em>_numY</em> = 1, uint32_t <em>_numZ</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8dispatchE7uint8_t13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dispatch compute. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_dispatch</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Compute program. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_numX</span></code> - <p>Number of groups X. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_numY</span></code> - <p>Number of groups Y. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_numZ</span></code> - <p>Number of groups Z. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p>View flags. Use<ul class="simple">
+<li><code class="docutils literal"><span class="pre">BGFX_VIEW_NONE</span></code> - View will be rendered only once if stereo mode is enabled.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_VIEW_STEREO</span></code> - View will be rendered for both eyes if stereo mode is enabled. When stereo mode is disabled this flag doesn&#8217;t have effect.</li>
+</ul>
 </p>
-<div class="last highlight-default"><div class="highlight"><pre><span></span><span class="o">-</span> <span class="n">uint32_t</span> <span class="n">bgfx</span><span class="p">::</span><span class="n">dispatch</span><span class="p">(</span><span class="n">uint8_t</span><span class="p">,</span> <span class="n">ProgramHandle</span><span class="p">,</span> <span class="n">IndirectBufferHandle</span><span class="p">,</span> <span class="n">uint16_t</span><span class="p">,</span> <span class="n">uint16_t</span><span class="p">,</span> <span class="n">uint8_t</span><span class="p">)</span>
-<span class="o">-</span> <span class="n">uint32_t</span> <span class="n">bgfx</span><span class="p">::</span><span class="n">dispatch</span><span class="p">(</span><span class="n">uint8_t</span><span class="p">,</span> <span class="n">ProgramHandle</span><span class="p">,</span> <span class="n">uint32_t</span><span class="p">,</span> <span class="n">uint32_t</span><span class="p">,</span> <span class="n">uint32_t</span><span class="p">,</span> <span class="n">uint8_t</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
 <dl class="function">
 <dt id="_CPPv2N4bgfx8dispatchE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t">
 <span id="bgfx::dispatch__uint8_t.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.uint8_t"></span><span class="target" id="bgfxnamespacebgfx_1ad5cf95158eedbf8f164cb67a87e06c75"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">dispatch</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_handle</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8dispatchE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t" title="Permalink to this definition">¶</a></dt>
