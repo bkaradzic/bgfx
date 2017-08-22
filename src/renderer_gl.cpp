@@ -6504,7 +6504,8 @@ namespace bgfx { namespace gl
 
 		uint32_t frameQueryIdx = UINT32_MAX;
 
-		if (m_timerQuerySupport)
+		if (m_timerQuerySupport
+		&&  !BX_ENABLED(BX_PLATFORM_OSX) )
 		{
 			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS);
 		}
