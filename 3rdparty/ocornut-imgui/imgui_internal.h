@@ -266,8 +266,8 @@ struct IMGUI_API ImRect
     void        Add(const ImRect& rhs)          { if (Min.x > rhs.Min.x) Min.x = rhs.Min.x; if (Min.y > rhs.Min.y) Min.y = rhs.Min.y; if (Max.x < rhs.Max.x) Max.x = rhs.Max.x; if (Max.y < rhs.Max.y) Max.y = rhs.Max.y; }
     void        Expand(const float amount)      { Min.x -= amount;   Min.y -= amount;   Max.x += amount;   Max.y += amount; }
     void        Expand(const ImVec2& amount)    { Min.x -= amount.x; Min.y -= amount.y; Max.x += amount.x; Max.y += amount.y; }
-    void        Reduce(const ImVec2& amount)    { Min.x += amount.x; Min.y += amount.y; Max.x -= amount.x; Max.y -= amount.y; }
-    void        Clip(const ImRect& clip)        { if (Min.x < clip.Min.x) Min.x = clip.Min.x; if (Min.y < clip.Min.y) Min.y = clip.Min.y; if (Max.x > clip.Max.x) Max.x = clip.Max.x; if (Max.y > clip.Max.y) Max.y = clip.Max.y; }
+    void        Translate(const ImVec2& v)      { Min.x += v.x; Min.y += v.y; Max.x += v.x; Max.y += v.y; }
+    void        ClipWith(const ImRect& clip)    { if (Min.x < clip.Min.x) Min.x = clip.Min.x; if (Min.y < clip.Min.y) Min.y = clip.Min.y; if (Max.x > clip.Max.x) Max.x = clip.Max.x; if (Max.y > clip.Max.y) Max.y = clip.Max.y; }
     void        Floor()                         { Min.x = (float)(int)Min.x; Min.y = (float)(int)Min.y; Max.x = (float)(int)Max.x; Max.y = (float)(int)Max.y; }
     ImVec2      GetClosestPoint(ImVec2 p, bool on_edge) const
     {
@@ -397,8 +397,8 @@ struct ImGuiContext
     ImGuiIO                 IO;
     ImGuiStyle              Style;
     ImFont*                 Font;                               // (Shortcut) == FontStack.empty() ? IO.Font : FontStack.back()
-    float                   FontSize;                           // (Shortcut) == FontBaseSize * g.CurrentWindow->FontWindowScale == window->FontSize()
-    float                   FontBaseSize;                       // (Shortcut) == IO.FontGlobalScale * Font->Scale * Font->FontSize. Size of characters.
+    float                   FontSize;                           // (Shortcut) == FontBaseSize * g.CurrentWindow->FontWindowScale == window->FontSize(). Text height for current window.
+    float                   FontBaseSize;                       // (Shortcut) == IO.FontGlobalScale * Font->Scale * Font->FontSize. Base text height.
     ImVec2                  FontTexUvWhitePixel;                // (Shortcut) == Font->TexUvWhitePixel
 
     float                   Time;
@@ -407,9 +407,9 @@ struct ImGuiContext
     int                     FrameCountRendered;
     ImVector<ImGuiWindow*>  Windows;
     ImVector<ImGuiWindow*>  WindowsSortBuffer;
-    ImGuiWindow*            CurrentWindow;                      // Being drawn into
     ImVector<ImGuiWindow*>  CurrentWindowStack;
-    ImGuiWindow*            FocusedWindow;                      // Will catch keyboard inputs
+    ImGuiWindow*            CurrentWindow;                      // Being drawn into
+    ImGuiWindow*            NavWindow;                          // Nav/focused window for navigation
     ImGuiWindow*            HoveredWindow;                      // Will catch mouse inputs
     ImGuiWindow*            HoveredRootWindow;                  // Will catch mouse inputs (for focus/move only)
     ImGuiID                 HoveredId;                          // Hovered widget
@@ -417,9 +417,10 @@ struct ImGuiContext
     ImGuiID                 HoveredIdPreviousFrame;
     ImGuiID                 ActiveId;                           // Active widget
     ImGuiID                 ActiveIdPreviousFrame;
-    bool                    ActiveIdIsAlive;
+    bool                    ActiveIdIsAlive;                    // Active widget has been seen this frame
     bool                    ActiveIdIsJustActivated;            // Set at the time of activation for one frame
-    bool                    ActiveIdAllowOverlap;               // Set only by active widget
+    bool                    ActiveIdAllowOverlap;               // Active widget allows another widget to steal active id (generally for overlapping widgets, but not always)
+
     ImVec2                  ActiveIdClickOffset;                // Clicked offset from upper-left corner, if applicable (currently only set by ButtonBehavior)
     ImGuiWindow*            ActiveIdWindow;
     ImGuiWindow*            MovedWindow;                        // Track the child window we clicked on to move a window.
@@ -470,7 +471,7 @@ struct ImGuiContext
     float                   DragSpeedScaleFast;
     ImVec2                  ScrollbarClickDeltaToGrabCenter;    // Distance between mouse and center of grab box, normalized in parent space. Use storage?
     int                     TooltipOverrideCount;
-    char*                   PrivateClipboard;                   // If no custom clipboard handler is defined
+    ImVector<char>          PrivateClipboard;                   // If no custom clipboard handler is defined
     ImVec2                  OsImePosRequest, OsImePosSet;       // Cursor position request & last passed to the OS Input Method Editor
 
     // Logging
@@ -499,7 +500,7 @@ struct ImGuiContext
         FrameCount = 0;
         FrameCountEnded = FrameCountRendered = -1;
         CurrentWindow = NULL;
-        FocusedWindow = NULL;
+        NavWindow = NULL;
         HoveredWindow = NULL;
         HoveredRootWindow = NULL;
         HoveredId = 0;
@@ -540,7 +541,6 @@ struct ImGuiContext
         DragSpeedScaleFast = 10.0f;
         ScrollbarClickDeltaToGrabCenter = ImVec2(0.0f, 0.0f);
         TooltipOverrideCount = 0;
-        PrivateClipboard = NULL;
         OsImePosRequest = OsImePosSet = ImVec2(-1.0f, -1.0f);
 
         ModalWindowDarkeningRatio = 0.0f;
@@ -678,6 +678,7 @@ struct IMGUI_API ImGuiWindow
     ImGuiID                 PopupId;                            // ID in the popup stack when this window is used as a popup/menu (because we use generic Name/ID for recycling)
     int                     AutoFitFramesX, AutoFitFramesY;
     bool                    AutoFitOnlyGrows;
+    int                     AutoFitChildAxises;
     int                     AutoPosLastDirection;
     int                     HiddenFrames;
     ImGuiCond               SetWindowPosAllowFlags;             // store condition flags for next SetWindowPos() call.
