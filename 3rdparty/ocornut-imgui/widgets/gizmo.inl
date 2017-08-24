@@ -495,10 +495,10 @@ namespace ImGuizmo
    {
       Context() : mbUsing(false), mbEnable(true), mbUsingBounds(false)
       {
-	      mX=0;
-	      mY=0;
-	      mWidth=0;
-	      mHeight=0;
+	      mX=0.f;
+	      mY=0.f;
+	      mWidth=0.f;
+	      mHeight=0.f;
       }
 
       ImDrawList* mDrawList;
