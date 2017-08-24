@@ -495,6 +495,10 @@ namespace ImGuizmo
    {
       Context() : mbUsing(false), mbEnable(true), mbUsingBounds(false)
       {
+	      mX=0.f;
+	      mY=0.f;
+	      mWidth=0.f;
+	      mHeight=0.f;
       }
 
       ImDrawList* mDrawList;
@@ -561,10 +565,13 @@ namespace ImGuizmo
       //
       int mCurrentOperation;
 
+      float mX,mY,mWidth,mHeight;
+	   /*
 	  float mX = 0.f;
 	  float mY = 0.f;
 	  float mWidth = 0.f;
 	  float mHeight = 0.f;
+	  */
    };
 
    static Context gContext;
