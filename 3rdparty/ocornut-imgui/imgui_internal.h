@@ -741,6 +741,7 @@ namespace ImGui
     IMGUI_API ImGuiWindow*  FindWindowByName(const char* name);
     IMGUI_API void          FocusWindow(ImGuiWindow* window);
 
+    IMGUI_API void          Initialize();
     IMGUI_API void          EndFrame();                 // Ends the ImGui frame. Automatically called by Render()! you most likely don't need to ever call that yourself directly. If you don't need to render you can call EndFrame() but you'll have wasted CPU already. If you don't need to render, don't create any windows instead!
 
     IMGUI_API void          SetActiveID(ImGuiID id, ImGuiWindow* window);
@@ -816,6 +817,8 @@ IMGUI_API void              ImFontAtlasBuildRegisterDefaultCustomRects(ImFontAtl
 IMGUI_API void              ImFontAtlasBuildSetupFont(ImFontAtlas* atlas, ImFont* font, ImFontConfig* font_config, float ascent, float descent); 
 IMGUI_API void              ImFontAtlasBuildPackCustomRects(ImFontAtlas* atlas, void* spc);
 IMGUI_API void              ImFontAtlasBuildRenderDefaultTexData(ImFontAtlas* atlas);
+IMGUI_API void              ImFontAtlasBuildMultiplyCalcLookupTable(unsigned char out_table[256], float in_multiply_factor);
+IMGUI_API void              ImFontAtlasBuildMultiplyRectAlpha8(const unsigned char table[256], unsigned char* pixels, int x, int y, int w, int h, int stride);
 
 #ifdef __clang__
 #pragma clang diagnostic pop
