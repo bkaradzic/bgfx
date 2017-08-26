@@ -8,7 +8,6 @@ spv.separate.frag
                               Capability Sampled1D
                               Capability SampledCubeArray
                               Capability SampledBuffer
-                              Capability ImageMSArray
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 11 34

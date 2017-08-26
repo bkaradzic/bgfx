@@ -1712,7 +1712,7 @@ gl_FragCoord origin is upper left
 // Id's are bound by 605
 
                               Capability Shader
-                              Capability Sampled1D
+                              Capability Image1D
                               Capability StorageImageExtendedFormats
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450

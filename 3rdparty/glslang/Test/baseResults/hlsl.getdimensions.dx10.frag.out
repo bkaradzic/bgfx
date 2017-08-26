@@ -2322,7 +2322,6 @@ gl_FragCoord origin is upper left
                               Capability Shader
                               Capability Sampled1D
                               Capability SampledCubeArray
-                              Capability ImageMSArray
                               Capability ImageQuery
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450

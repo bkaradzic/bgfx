@@ -582,7 +582,6 @@ gl_FragCoord origin is upper left
 // Id's are bound by 221
 
                               Capability Shader
-                              Capability ImageMSArray
                               Capability ImageQuery
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450

@@ -9,4 +9,6 @@ layout(invocations = 4) in;
 void main()
 {
     gl_PointSize = gl_in[1].gl_PointSize;
+    gl_Layer = 2;
+    gl_ViewportIndex = 3;
 }

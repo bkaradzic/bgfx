@@ -704,6 +704,10 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpImageAtomicXor:             out.debug << "imageAtomicXor";        break;
     case EOpImageAtomicExchange:        out.debug << "imageAtomicExchange";   break;
     case EOpImageAtomicCompSwap:        out.debug << "imageAtomicCompSwap";   break;
+#ifdef AMD_EXTENSIONS
+    case EOpImageLoadLod:               out.debug << "imageLoadLod";          break;
+    case EOpImageStoreLod:              out.debug << "imageStoreLod";         break;
+#endif
 
     case EOpTextureQuerySize:           out.debug << "textureSize";           break;
     case EOpTextureQueryLod:            out.debug << "textureQueryLod";       break;
@@ -756,6 +760,7 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpSparseTextureGatherLod:         out.debug << "sparseTextureGatherLod";          break;
     case EOpSparseTextureGatherLodOffset:   out.debug << "sparseTextureGatherLodOffset";    break;
     case EOpSparseTextureGatherLodOffsets:  out.debug << "sparseTextureGatherLodOffsets";   break;
+    case EOpSparseImageLoadLod:             out.debug << "sparseImageLoadLod";              break;
 #endif
 
     case EOpAddCarry:                   out.debug << "addCarry";              break;

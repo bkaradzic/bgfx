@@ -455,15 +455,13 @@ spv::BuiltIn TGlslangToSpvTraverser::TranslateBuiltInDecoration(glslang::TBuiltI
     case glslang::EbvViewportIndex:
         if (!memberDeclaration) {
             builder.addCapability(spv::CapabilityMultiViewport);
-#ifdef NV_EXTENSIONS
             if (glslangIntermediate->getStage() == EShLangVertex ||
                 glslangIntermediate->getStage() == EShLangTessControl ||
                 glslangIntermediate->getStage() == EShLangTessEvaluation) {
 
-                builder.addExtension(spv::E_SPV_NV_viewport_array2);
-                builder.addCapability(spv::CapabilityShaderViewportIndexLayerNV);
+                builder.addExtension(spv::E_SPV_EXT_shader_viewport_index_layer);
+                builder.addCapability(spv::CapabilityShaderViewportIndexLayerEXT);
             }
-#endif
         }
         return spv::BuiltInViewportIndex;
 
@@ -482,15 +480,13 @@ spv::BuiltIn TGlslangToSpvTraverser::TranslateBuiltInDecoration(glslang::TBuiltI
     case glslang::EbvLayer:
         if (!memberDeclaration) {
             builder.addCapability(spv::CapabilityGeometry);
-#ifdef NV_EXTENSIONS
             if (glslangIntermediate->getStage() == EShLangVertex ||
                 glslangIntermediate->getStage() == EShLangTessControl ||
                 glslangIntermediate->getStage() == EShLangTessEvaluation) {
 
-                builder.addExtension(spv::E_SPV_NV_viewport_array2);
-                builder.addCapability(spv::CapabilityShaderViewportIndexLayerNV);
+                builder.addExtension(spv::E_SPV_EXT_shader_viewport_index_layer);
+                builder.addCapability(spv::CapabilityShaderViewportIndexLayerEXT);
             }
-#endif
         }
 
         return spv::BuiltInLayer;
@@ -522,8 +518,9 @@ spv::BuiltIn TGlslangToSpvTraverser::TranslateBuiltInDecoration(glslang::TBuiltI
         return spv::BuiltInPrimitiveId;
 
     case glslang::EbvFragStencilRef:
-        logger->missingFunctionality("shader stencil export");
-        return spv::BuiltInMax;
+        builder.addExtension(spv::E_SPV_EXT_shader_stencil_export);
+        builder.addCapability(spv::CapabilityStencilExportEXT);
+        return spv::BuiltInFragStencilRefEXT;
 
     case glslang::EbvInvocationId:         return spv::BuiltInInvocationId;
     case glslang::EbvTessLevelInner:       return spv::BuiltInTessLevelInner;
@@ -880,11 +877,30 @@ TGlslangToSpvTraverser::TGlslangToSpvTraverser(const glslang::TIntermediate* gls
     spv::ExecutionModel executionModel = TranslateExecutionModel(glslangIntermediate->getStage());
 
     builder.clearAccessChain();
-    builder.setSource(TranslateSourceLanguage(glslangIntermediate->getSource(), glslangIntermediate->getProfile()), glslangIntermediate->getVersion());
+    builder.setSource(TranslateSourceLanguage(glslangIntermediate->getSource(), glslangIntermediate->getProfile()),
+                      glslangIntermediate->getVersion());
+
     if (options.generateDebugInfo) {
-        builder.setSourceFile(glslangIntermediate->getSourceFile());
-        builder.setSourceText(glslangIntermediate->getSourceText());
         builder.setEmitOpLines();
+        builder.setSourceFile(glslangIntermediate->getSourceFile());
+
+        // Set the source shader's text. If for SPV version 1.0, include
+        // a preamble in comments stating the OpModuleProcessed instructions.
+        // Otherwise, emit those as actual instructions.
+        std::string text;
+        const std::vector<std::string>& processes = glslangIntermediate->getProcesses();
+        for (int p = 0; p < (int)processes.size(); ++p) {
+            if (glslangIntermediate->getSpv().spv < 0x00010100) {
+                text.append("// OpModuleProcessed ");
+                text.append(processes[p]);
+                text.append("\n");
+            } else
+                builder.addModuleProcessed(processes[p]);
+        }
+        if (glslangIntermediate->getSpv().spv < 0x00010100 && (int)processes.size() > 0)
+            text.append("#line 1\n");
+        text.append(glslangIntermediate->getSourceText());
+        builder.setSourceText(text);
     }
     stdBuiltins = builder.import("GLSL.std.450");
     builder.setMemoryModel(spv::AddressingModelLogical, spv::MemoryModelGLSL450);
@@ -1452,7 +1468,11 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
         builder.setAccessChainRValue(result);
 
         return false;
+#ifdef AMD_EXTENSIONS
+    } else if (node->getOp() == glslang::EOpImageStore || node->getOp() == glslang::EOpImageStoreLod) {
+#else
     } else if (node->getOp() == glslang::EOpImageStore) {
+#endif
         // "imageStore" is a special case, which has no result
         return false;
     }
@@ -2465,6 +2485,10 @@ bool TGlslangToSpvTraverser::filterMember(const glslang::TType& member)
     if (member.getFieldName() == "gl_ViewportMaskPerViewNV" &&
         extensions.find("GL_NVX_multiview_per_view_attributes") == extensions.end())
         return true;
+    if ((member.getFieldName() == "gl_ViewportIndex" || member.getFieldName() == "gl_Layer") &&
+        extensions.find(glslang::E_GL_ARB_shader_viewport_layer_array) == extensions.end() &&
+        extensions.find("GL_NV_viewport_array2") == extensions.end())
+        return true;
 
     return false;
 };
@@ -3132,6 +3156,10 @@ void TGlslangToSpvTraverser::translateArguments(const glslang::TIntermAggregate&
             if (i == 4)
                 lvalue = true;
             break;
+        case glslang::EOpSparseImageLoadLod:
+            if (i == 3)
+                lvalue = true;
+            break;
 #endif
         default:
             break;
@@ -3234,26 +3262,55 @@ spv::Id TGlslangToSpvTraverser::createImageTextureFunctionCall(glslang::TIntermO
         }
 
         operands.push_back(*(opIt++));
+#ifdef AMD_EXTENSIONS
+        if (node->getOp() == glslang::EOpImageLoad || node->getOp() == glslang::EOpImageLoadLod) {
+#else
         if (node->getOp() == glslang::EOpImageLoad) {
+#endif
             if (sampler.ms) {
                 operands.push_back(spv::ImageOperandsSampleMask);
                 operands.push_back(*opIt);
+#ifdef AMD_EXTENSIONS
+            } else if (cracked.lod) {
+                builder.addExtension(spv::E_SPV_AMD_shader_image_load_store_lod);
+                builder.addCapability(spv::CapabilityImageReadWriteLodAMD);
+
+                operands.push_back(spv::ImageOperandsLodMask);
+                operands.push_back(*opIt);
+#endif
             }
             if (builder.getImageTypeFormat(builder.getImageType(operands.front())) == spv::ImageFormatUnknown)
                 builder.addCapability(spv::CapabilityStorageImageReadWithoutFormat);
             return builder.createOp(spv::OpImageRead, resultType(), operands);
+#ifdef AMD_EXTENSIONS
+        } else if (node->getOp() == glslang::EOpImageStore || node->getOp() == glslang::EOpImageStoreLod) {
+#else
         } else if (node->getOp() == glslang::EOpImageStore) {
+#endif
             if (sampler.ms) {
                 operands.push_back(*(opIt + 1));
                 operands.push_back(spv::ImageOperandsSampleMask);
                 operands.push_back(*opIt);
+#ifdef AMD_EXTENSIONS
+            } else if (cracked.lod) {
+                builder.addExtension(spv::E_SPV_AMD_shader_image_load_store_lod);
+                builder.addCapability(spv::CapabilityImageReadWriteLodAMD);
+
+                operands.push_back(*(opIt + 1));
+                operands.push_back(spv::ImageOperandsLodMask);
+                operands.push_back(*opIt);
+#endif
             } else
                 operands.push_back(*opIt);
             builder.createNoResultOp(spv::OpImageWrite, operands);
             if (builder.getImageTypeFormat(builder.getImageType(operands.front())) == spv::ImageFormatUnknown)
                 builder.addCapability(spv::CapabilityStorageImageWriteWithoutFormat);
             return spv::NoResult;
+#ifdef AMD_EXTENSIONS
+        } else if (node->getOp() == glslang::EOpSparseImageLoad || node->getOp() == glslang::EOpSparseImageLoadLod) {
+#else
         } else if (node->getOp() == glslang::EOpSparseImageLoad) {
+#endif
             builder.addCapability(spv::CapabilitySparseResidency);
             if (builder.getImageTypeFormat(builder.getImageType(operands.front())) == spv::ImageFormatUnknown)
                 builder.addCapability(spv::CapabilityStorageImageReadWithoutFormat);
@@ -3261,6 +3318,14 @@ spv::Id TGlslangToSpvTraverser::createImageTextureFunctionCall(glslang::TIntermO
             if (sampler.ms) {
                 operands.push_back(spv::ImageOperandsSampleMask);
                 operands.push_back(*opIt++);
+#ifdef AMD_EXTENSIONS
+            } else if (cracked.lod) {
+                builder.addExtension(spv::E_SPV_AMD_shader_image_load_store_lod);
+                builder.addCapability(spv::CapabilityImageReadWriteLodAMD);
+
+                operands.push_back(spv::ImageOperandsLodMask);
+                operands.push_back(*opIt++);
+#endif
             }
 
             // Create the return type that was a special structure
@@ -5425,14 +5490,12 @@ spv::Id TGlslangToSpvTraverser::getSymbolId(const glslang::TIntermSymbol* symbol
     }
     else if (builtIn == spv::BuiltInLayer) {
         // SPV_NV_viewport_array2 extension
-        if (symbol->getQualifier().layoutViewportRelative)
-        {
+        if (symbol->getQualifier().layoutViewportRelative) {
             addDecoration(id, (spv::Decoration)spv::DecorationViewportRelativeNV);
             builder.addCapability(spv::CapabilityShaderViewportMaskNV);
             builder.addExtension(spv::E_SPV_NV_viewport_array2);
         }
-        if(symbol->getQualifier().layoutSecondaryViewportRelativeOffset != -2048)
-        {
+        if (symbol->getQualifier().layoutSecondaryViewportRelativeOffset != -2048) {
             addDecoration(id, (spv::Decoration)spv::DecorationSecondaryViewportRelativeNV, symbol->getQualifier().layoutSecondaryViewportRelativeOffset);
             builder.addCapability(spv::CapabilityShaderStereoViewNV);
             builder.addExtension(spv::E_SPV_NV_stereo_view_rendering);

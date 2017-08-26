@@ -8,6 +8,7 @@ spv.stereoViewRendering.vert
                               Capability ShaderViewportIndexLayerNV
                               Capability ShaderViewportMaskNV
                               Capability ShaderStereoViewNV
+                              Extension  "SPV_EXT_shader_viewport_index_layer"
                               Extension  "SPV_NV_stereo_view_rendering"
                               Extension  "SPV_NV_viewport_array2"
                1:             ExtInstImport  "GLSL.std.450"

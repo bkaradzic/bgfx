@@ -4,8 +4,8 @@ spv.memoryQualifier.frag
 // Id's are bound by 97
 
                               Capability Shader
-                              Capability SampledRect
-                              Capability Sampled1D
+                              Capability ImageRect
+                              Capability Image1D
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main"

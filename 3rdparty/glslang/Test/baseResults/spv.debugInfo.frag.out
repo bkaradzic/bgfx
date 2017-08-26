@@ -7,9 +7,19 @@ spv.debugInfo.frag
                2:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 5  "main" 24 52
-                              ExecutionMode 5 OriginUpperLeft
+                              ExecutionMode 5 OriginLowerLeft
                1:             String  "spv.debugInfo.frag"
-                              Source GLSL 450 1  "#version 450
+                              Source GLSL 450 1  "// OpModuleProcessed no-storage-format
+// OpModuleProcessed resource-set-binding 3
+// OpModuleProcessed auto-map-locations
+// OpModuleProcessed client opengl100
+// OpModuleProcessed target-env opengl
+// OpModuleProcessed relaxed-errors
+// OpModuleProcessed suppress-warnings
+// OpModuleProcessed hlsl-offsets
+// OpModuleProcessed entry-point main
+#line 1
+#version 450
 
 struct S {
     int a;
@@ -84,8 +94,8 @@ void main()
                               MemberDecorate 53(S) 0 Offset 0
                               MemberDecorate 54(ubuf) 0 Offset 0
                               Decorate 54(ubuf) Block
-                              Decorate 56 DescriptorSet 0
-                              Decorate 69(s2d) DescriptorSet 0
+                              Decorate 56 DescriptorSet 3
+                              Decorate 69(s2d) DescriptorSet 3
                3:             TypeVoid
                4:             TypeFunction 3
                7:             TypeInt 32 1

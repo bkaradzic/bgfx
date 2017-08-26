@@ -11,7 +11,7 @@ Texture2D <float4> g_tTex2df4;
 
 SamplerState g_sSamp;
 
-float4 main()
+float4 main() : SV_Target0
 {
     uint MipLevel;
     uint WidthU;

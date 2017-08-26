@@ -89,7 +89,7 @@ public:
     void remapNonEntryPointIO(TFunction& function);
     TIntermNode* handleReturnValue(const TSourceLoc&, TIntermTyped*);
     void handleFunctionArgument(TFunction*, TIntermTyped*& arguments, TIntermTyped* newArg);
-    TIntermAggregate* executeFlattenedInitializer(const TSourceLoc&, TIntermSymbol*, const TIntermAggregate&);
+    TIntermTyped* executeFlattenedInitializer(const TSourceLoc&, TIntermSymbol*, TIntermAggregate&);
     TIntermTyped* handleAssign(const TSourceLoc&, TOperator, TIntermTyped* left, TIntermTyped* right);
     TIntermTyped* handleAssignToMatrixSwizzle(const TSourceLoc&, TOperator, TIntermTyped* left, TIntermTyped* right);
     TIntermTyped* handleFunctionCall(const TSourceLoc&, TFunction*, TIntermTyped*);
@@ -212,6 +212,12 @@ public:
 
     // Share struct buffer deep types
     void shareStructBufferType(TType&);
+
+    // Set texture return type of the given sampler.  Returns success (not all types are valid).
+    bool setTextureReturnType(TSampler& sampler, const TType& retType, const TSourceLoc& loc);
+
+    // Obtain the sampler return type of the given sampler in retType.
+    void getTextureReturnType(const TSampler& sampler, TType& retType) const;
 
 protected:
     struct TFlattenData {
@@ -388,6 +394,10 @@ protected:
 
     // Structuredbuffer shared types.  Typically there are only a few.
     TVector<TType*> structBufferTypes;
+
+    // This tracks texture sample user structure return types.  Only a limited number are supported, as
+    // may fit in TSampler::structReturnIndex.
+    TVector<TTypeList*> textureReturnStruct;
     
     TMap<TString, bool> structBufferCounter;
 
@@ -425,8 +435,8 @@ protected:
 
     TVariable* gsStreamOutput;               // geometry shader stream outputs, for emit (Append method)
 
-    TVariable* clipDistanceOutput;           // synthesized clip distance output variable (shader might have >1)
-    TVariable* cullDistanceOutput;           // synthesized cull distance output variable (shader might have >1)
+    TVariable* clipDistanceVariable;         // synthesized clip distance variable (shader might have >1)
+    TVariable* cullDistanceVariable;         // synthesized cull distance variable (shader might have >1)
 
     static const int maxClipCullRegs = 2;
     std::array<int, maxClipCullRegs> clipSemanticNSize; // vector, indexed by clip semantic ID

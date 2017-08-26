@@ -2,7 +2,7 @@
 
 layout(vertices = 4) out;
 
-patch out vec4 patchOut;
+layout(location=1) patch out vec4 patchOut;
 
 struct S {
     float sMem1;  // should not see a patch decoration
@@ -17,6 +17,7 @@ layout(location = 12) patch out TheBlock {
 
 void main()
 {
+    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
 }
 
 layout(location = 2) patch out SingleBlock {

@@ -152,6 +152,7 @@ int ClientInputSemanticsVersion = 100;   // maps to, say, #define VULKAN 100
 int VulkanClientVersion = 100;           // would map to, say, Vulkan 1.0
 int OpenGLClientVersion = 450;           // doesn't influence anything yet, but maps to OpenGL 4.50
 unsigned int TargetVersion = 0x00001000; // maps to, say, SPIR-V 1.0
+std::vector<std::string> Processes;      // what should be recorded by OpModuleProcessed, or equivalent
 
 std::array<unsigned int, EShLangCount> baseSamplerBinding;
 std::array<unsigned int, EShLangCount> baseTextureBinding;
@@ -175,6 +176,9 @@ public:
         text.append("#define ");
         fixLine(def);
 
+        Processes.push_back("D");
+        Processes.back().append(def);
+
         // The first "=" needs to turn into a space
         const size_t equal = def.find_first_of("=");
         if (equal != def.npos)
@@ -189,6 +193,10 @@ public:
     {
         text.append("#undef ");
         fixLine(undef);
+
+        Processes.push_back("U");
+        Processes.back().append(undef);
+
         text.append(undef);
         text.append("\n");
     }
@@ -421,6 +429,8 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                     } else if (lowerword == "no-storage-format" || // synonyms
                                lowerword == "nsf") {
                         Options |= EOptionNoStorageFormat;
+                    } else if (lowerword == "relaxed-errors") {
+                        Options |= EOptionRelaxedErrors;
                     } else if (lowerword == "resource-set-bindings" ||  // synonyms
                                lowerword == "resource-set-binding"  ||
                                lowerword == "rsb") {
@@ -459,6 +469,8 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         sourceEntryPointName = argv[1];
                         bumpArg();
                         break;
+                    } else if (lowerword == "suppress-warnings") {
+                        Options |= EOptionSuppressWarnings;
                     } else if (lowerword == "target-env") {
                         if (argc > 1) {
                             if (strcmp(argv[1], "vulkan1.0") == 0) {
@@ -737,6 +749,7 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
             shader->setSourceEntryPoint(sourceEntryPointName);
         if (UserPreamble.isSet())
             shader->setPreamble(UserPreamble.get());
+        shader->addProcesses(Processes);
 
         shader->setShiftSamplerBinding(baseSamplerBinding[compUnit.stage]);
         shader->setShiftTextureBinding(baseTextureBinding[compUnit.stage]);
@@ -1162,11 +1175,11 @@ void usage()
            "  -m          memory leak mode\n"
            "  -o  <file>  save binary to <file>, requires a binary option (e.g., -V)\n"
            "  -q          dump reflection query database\n"
-           "  -r          relaxed semantic error-checking mode\n"
+           "  -r          synonym for --relaxed-errors\n"
            "  -s          silent mode\n"
            "  -t          multi-threaded mode\n"
            "  -v          print version strings\n"
-           "  -w          suppress warnings (except as required by #extension : warn)\n"
+           "  -w          synonym for --suppress-warnings\n"
            "  -x          save binary output as text-based 32-bit hexadecimal numbers\n"
            "  --auto-map-bindings                  automatically bind uniform variables\n"
            "                                       without explicit bindings.\n"
@@ -1185,6 +1198,7 @@ void usage()
            "  --ku                                 synonym for --keep-uncalled\n"
            "  --no-storage-format                  use Unknown image format\n"
            "  --nsf                                synonym for --no-storage-format\n"
+           "  --relaxed-errors                     relaxed GLSL semantic error-checking mode\n"
            "  --resource-set-binding [stage] name set binding\n"
            "              Set descriptor set and binding for individual resources\n"
            "  --resource-set-binding [stage] set\n"
@@ -1206,11 +1220,13 @@ void usage()
            "  --source-entrypoint name             the given shader source function is\n"
            "                                       renamed to be the entry point given in -e\n"
            "  --sep                                synonym for --source-entrypoint\n"
-           "  --target-env {vulkan1.0|opengl}      set the execution environment the generated\n"
-           "                                       code will execute in (as opposed to language\n"
-           "                                       semantics selected by --client)\n"
-           "                                       default is 'vulkan1.0' under '--client vulkan'\n"
-           "                                       default is 'opengl' under '--client opengl'\n"
+           "  --suppress-warnings                  suppress GLSL warnings\n"
+           "                                       (except as required by #extension : warn)\n"
+           "  --target-env {vulkan1.0|opengl}      set the execution environment code will\n"
+           "                                       execute in (as opposed to language\n"
+           "                                       semantics selected by --client) defaults:\n"
+           "                                        'vulkan1.0' under '--client vulkan<ver>'\n"
+           "                                        'opengl' under '--client opengl<ver>'\n"
            "  --variable-name <name>               Creates a C header file that contains a\n"
            "                                       uint32_t array named <name>\n"
            "                                       initialized with the shader binary code.\n"

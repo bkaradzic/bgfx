@@ -4,10 +4,11 @@ spv.image.frag
 // Id's are bound by 376
 
                               Capability Shader
-                              Capability SampledRect
-                              Capability Sampled1D
-                              Capability SampledCubeArray
-                              Capability SampledBuffer
+                              Capability StorageImageMultisample
+                              Capability ImageCubeArray
+                              Capability ImageRect
+                              Capability Image1D
+                              Capability ImageBuffer
                               Capability ImageMSArray
                               Capability StorageImageExtendedFormats
                               Capability ImageQuery

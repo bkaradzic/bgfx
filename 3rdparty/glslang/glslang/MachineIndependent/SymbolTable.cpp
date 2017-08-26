@@ -104,11 +104,20 @@ void TType::buildMangledName(TString& mangledName) const
         default: break; // some compilers want this
         }
 
-        switch (sampler.vectorSize) {
-        case 1: mangledName += "1"; break;
-        case 2: mangledName += "2"; break;
-        case 3: mangledName += "3"; break;
-        case 4: break; // default to prior name mangle behavior
+        if (sampler.hasReturnStruct()) {
+            // Name mangle for sampler return struct uses struct table index.
+            mangledName += "-tx-struct";
+
+            char text[16]; // plenty enough space for the small integers.
+            snprintf(text, sizeof(text), "%d-", sampler.structReturnIndex);
+            mangledName += text;
+        } else {
+            switch (sampler.getVectorSize()) {
+            case 1: mangledName += "1"; break;
+            case 2: mangledName += "2"; break;
+            case 3: mangledName += "3"; break;
+            case 4: break; // default to prior name mangle behavior
+            }
         }
 
         if (sampler.ms)

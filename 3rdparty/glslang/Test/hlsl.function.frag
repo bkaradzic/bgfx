@@ -8,7 +8,7 @@ uint fun2(float4 col)
     return 7;
 }
 
-float4 fun4(uint id1, uint id2)
+float4 fun4(uint id1, uniform uint id2)
 {
     return id1 * id2;
 }

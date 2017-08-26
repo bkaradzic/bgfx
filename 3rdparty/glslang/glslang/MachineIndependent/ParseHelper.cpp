@@ -1144,7 +1144,13 @@ void TParseContext::computeBuiltinPrecisions(TIntermTyped& node, const TFunction
             operationPrecision = std::max(operationPrecision, function[arg].type->getQualifier().precision);
         }
         // compute the result precision
+#ifdef AMD_EXTENSIONS
+        if (agg->isSampling() ||
+            agg->getOp() == EOpImageLoad || agg->getOp() == EOpImageStore ||
+            agg->getOp() == EOpImageLoadLod || agg->getOp() == EOpImageStoreLod)
+#else
         if (agg->isSampling() || agg->getOp() == EOpImageLoad || agg->getOp() == EOpImageStore)
+#endif
             resultPrecision = sequence[0]->getAsTyped()->getQualifier().precision;
         else if (function.getType().getBasicType() != EbtBool)
             resultPrecision = function.getType().getQualifier().precision == EpqNone ?

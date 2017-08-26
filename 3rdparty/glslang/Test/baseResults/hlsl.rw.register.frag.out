@@ -102,8 +102,8 @@ gl_FragCoord origin is upper left
 // Id's are bound by 42
 
                               Capability Shader
-                              Capability Sampled1D
-                              Capability SampledBuffer
+                              Capability Image1D
+                              Capability ImageBuffer
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 39

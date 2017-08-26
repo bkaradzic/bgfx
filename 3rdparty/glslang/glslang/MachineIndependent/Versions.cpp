@@ -182,6 +182,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_ARB_shader_stencil_export]        = EBhDisable;
 //    extensionBehavior[E_GL_ARB_cull_distance]                = EBhDisable;    // present for 4.5, but need extension control over block members
     extensionBehavior[E_GL_ARB_post_depth_coverage]          = EBhDisable;
+    extensionBehavior[E_GL_ARB_shader_viewport_layer_array]  = EBhDisable;
 
     extensionBehavior[E_GL_EXT_shader_non_constant_global_initializers] = EBhDisable;
     extensionBehavior[E_GL_EXT_shader_image_load_formatted]             = EBhDisable;
@@ -199,12 +200,12 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_AMD_gpu_shader_half_float]                = EBhDisable;
     extensionBehavior[E_GL_AMD_texture_gather_bias_lod]              = EBhDisable;
     extensionBehavior[E_GL_AMD_gpu_shader_int16]                     = EBhDisable;
+    extensionBehavior[E_GL_AMD_shader_image_load_store_lod]          = EBhDisable;
 #endif
 
 #ifdef NV_EXTENSIONS
     extensionBehavior[E_GL_NV_sample_mask_override_coverage]         = EBhDisable;
     extensionBehavior[E_SPV_NV_geometry_shader_passthrough]          = EBhDisable;
-    extensionBehavior[E_GL_ARB_shader_viewport_layer_array]          = EBhDisable;
     extensionBehavior[E_GL_NV_viewport_array2]                       = EBhDisable;
     extensionBehavior[E_GL_NV_stereo_view_rendering]                 = EBhDisable;
     extensionBehavior[E_GL_NVX_multiview_per_view_attributes]        = EBhDisable;
@@ -331,6 +332,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_AMD_gpu_shader_half_float 1\n"
             "#define GL_AMD_texture_gather_bias_lod 1\n"
             "#define GL_AMD_gpu_shader_int16 1\n"
+            "#define GL_AMD_shader_image_load_store_lod 1\n"
 #endif
 
 #ifdef NV_EXTENSIONS

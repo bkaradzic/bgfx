@@ -4238,6 +4238,43 @@ void TBuiltIns::addImageFunctions(TSampler sampler, const TString& typeName, int
             }
         }
     }
+
+#ifdef AMD_EXTENSIONS
+    if (sampler.dim == EsdRect || sampler.dim == EsdBuffer || sampler.shadow || sampler.ms)
+        return;
+
+    if (profile == EEsProfile || version < 450)
+        return;
+
+    TString imageLodParams = typeName;
+    if (dims == 1)
+        imageLodParams.append(", int");
+    else {
+        imageLodParams.append(", ivec");
+        imageLodParams.append(postfixes[dims]);
+    }
+    imageLodParams.append(", int");
+
+    commonBuiltins.append(prefixes[sampler.type]);
+    commonBuiltins.append("vec4 imageLoadLodAMD(readonly volatile coherent ");
+    commonBuiltins.append(imageLodParams);
+    commonBuiltins.append(");\n");
+
+    commonBuiltins.append("void imageStoreLodAMD(writeonly volatile coherent ");
+    commonBuiltins.append(imageLodParams);
+    commonBuiltins.append(", ");
+    commonBuiltins.append(prefixes[sampler.type]);
+    commonBuiltins.append("vec4);\n");
+
+    if (sampler.dim != Esd1D) {
+        commonBuiltins.append("int sparseImageLoadLodAMD(readonly volatile coherent ");
+        commonBuiltins.append(imageLodParams);
+        commonBuiltins.append(", out ");
+        commonBuiltins.append(prefixes[sampler.type]);
+        commonBuiltins.append("vec4");
+        commonBuiltins.append(");\n");
+    }
+#endif
 }
 
 //
@@ -5710,6 +5747,13 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("sparseTextureGatherLodOffsetAMD",    1, &E_GL_AMD_texture_gather_bias_lod);
             symbolTable.setFunctionExtensions("sparseTextureGatherLodOffsetsAMD",   1, &E_GL_AMD_texture_gather_bias_lod);
         }
+
+        // E_GL_AMD_shader_image_load_store_lod
+        if (profile != EEsProfile) {
+            symbolTable.setFunctionExtensions("imageLoadLodAMD",        1, &E_GL_AMD_shader_image_load_store_lod);
+            symbolTable.setFunctionExtensions("imageStoreLodAMD",       1, &E_GL_AMD_shader_image_load_store_lod);
+            symbolTable.setFunctionExtensions("sparseImageLoadLodAMD",  1, &E_GL_AMD_shader_image_load_store_lod);
+        }
 #endif
 
         symbolTable.setVariableExtensions("gl_FragDepthEXT", 1, &E_GL_EXT_frag_depth);
@@ -6146,6 +6190,10 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.relateToOperator("sparseTextureGatherLodAMD",           EOpSparseTextureGatherLod);
             symbolTable.relateToOperator("sparseTextureGatherLodOffsetAMD",     EOpSparseTextureGatherLodOffset);
             symbolTable.relateToOperator("sparseTextureGatherLodOffsetsAMD",    EOpSparseTextureGatherLodOffsets);
+
+            symbolTable.relateToOperator("imageLoadLodAMD",                     EOpImageLoadLod);
+            symbolTable.relateToOperator("imageStoreLodAMD",                    EOpImageStoreLod);
+            symbolTable.relateToOperator("sparseImageLoadLodAMD",               EOpSparseImageLoadLod);
 #endif
         }
         if (profile == EEsProfile) {

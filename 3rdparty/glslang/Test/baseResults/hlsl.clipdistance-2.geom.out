@@ -1,0 +1,171 @@
+hlsl.clipdistance-2.geom
+ERROR: 0:11: '' : unimplemented: clip/cull not currently implemented for this stage 
+ERROR: 0:18: '' : unimplemented: clip/cull not currently implemented for this stage 
+ERROR: 2 compilation errors.  No code generated.
+
+
+Shader version: 500
+invocations = -1
+max_vertices = 3
+input primitive = triangles
+output primitive = line_strip
+ERROR: node is still EOpNull!
+0:11  Function Definition: @main(vf4[3];u1[3];struct-S-vf4-vf2[2]1;vf2[3][2]; ( temp void)
+0:11    Function Parameters: 
+0:11      'pos' ( in 3-element array of 4-component vector of float)
+0:11      'VertexID' ( in 3-element array of uint)
+0:11      'OutputStream' ( out structure{ temp 4-component vector of float pos,  temp 2-element array of 2-component vector of float clip})
+0:11      'clip' ( in 3-element array of 2-element array of 2-component vector of float)
+0:?     Sequence
+0:14      move second child to first child ( temp 4-component vector of float)
+0:14        pos: direct index for structure ( temp 4-component vector of float)
+0:14          's' ( temp structure{ temp 4-component vector of float pos,  temp 2-element array of 2-component vector of float clip})
+0:14          Constant:
+0:14            0 (const int)
+0:14        direct index ( temp 4-component vector of float)
+0:14          'pos' ( in 3-element array of 4-component vector of float)
+0:14          Constant:
+0:14            0 (const int)
+0:15      move second child to first child ( temp 2-component vector of float)
+0:15        direct index ( temp 2-component vector of float)
+0:15          clip: direct index for structure ( temp 2-element array of 2-component vector of float)
+0:15            's' ( temp structure{ temp 4-component vector of float pos,  temp 2-element array of 2-component vector of float clip})
+0:15            Constant:
+0:15              1 (const int)
+0:15          Constant:
+0:15            0 (const int)
+0:15        direct index ( temp 2-component vector of float)
+0:15          direct index ( temp 2-element array of 2-component vector of float)
+0:15            'clip' ( in 3-element array of 2-element array of 2-component vector of float)
+0:15            Constant:
+0:15              0 (const int)
+0:15          Constant:
+0:15            0 (const int)
+0:16      move second child to first child ( temp 2-component vector of float)
+0:16        direct index ( temp 2-component vector of float)
+0:16          clip: direct index for structure ( temp 2-element array of 2-component vector of float)
+0:16            's' ( temp structure{ temp 4-component vector of float pos,  temp 2-element array of 2-component vector of float clip})
+0:16            Constant:
+0:16              1 (const int)
+0:16          Constant:
+0:16            1 (const int)
+0:16        direct index ( temp 2-component vector of float)
+0:16          direct index ( temp 2-element array of 2-component vector of float)
+0:16            'clip' ( in 3-element array of 2-element array of 2-component vector of float)
+0:16            Constant:
+0:16              0 (const int)
+0:16          Constant:
+0:16            1 (const int)
+0:18      Sequence
+0:18        Sequence
+0:18          move second child to first child ( temp 4-component vector of float)
+0:?             'OutputStream.pos' ( out 4-component vector of float Position)
+0:18            pos: direct index for structure ( temp 4-component vector of float)
+0:18              's' ( temp structure{ temp 4-component vector of float pos,  temp 2-element array of 2-component vector of float clip})
+0:18              Constant:
+0:18                0 (const int)
+0:18        EmitVertex ( temp void)
+0:11  Function Definition: main( ( temp void)
+0:11    Function Parameters: 
+0:?     Sequence
+0:11      move second child to first child ( temp 3-element array of 4-component vector of float)
+0:?         'pos' ( temp 3-element array of 4-component vector of float)
+0:?         'pos' ( in 3-element array of 4-component vector of float Position)
+0:11      move second child to first child ( temp 3-element array of uint)
+0:?         'VertexID' ( temp 3-element array of uint)
+0:?         'VertexID' (layout( location=0) in 3-element array of uint)
+0:11      Function Call: @main(vf4[3];u1[3];struct-S-vf4-vf2[2]1;vf2[3][2]; ( temp void)
+0:?         'pos' ( temp 3-element array of 4-component vector of float)
+0:?         'VertexID' ( temp 3-element array of uint)
+0:?         'OutputStream' ( temp structure{ temp 4-component vector of float pos,  temp 2-element array of 2-component vector of float clip})
+0:?         'clip' ( temp 3-element array of 2-element array of 2-component vector of float)
+0:?   Linker Objects
+0:?     'pos' ( in 3-element array of 4-component vector of float Position)
+0:?     'VertexID' (layout( location=0) in 3-element array of uint)
+0:?     'OutputStream.pos' ( out 4-component vector of float Position)
+
+
+Linked geometry stage:
+
+
+Shader version: 500
+invocations = 1
+max_vertices = 3
+input primitive = triangles
+output primitive = line_strip
+ERROR: node is still EOpNull!
+0:11  Function Definition: @main(vf4[3];u1[3];struct-S-vf4-vf2[2]1;vf2[3][2]; ( temp void)
+0:11    Function Parameters: 
+0:11      'pos' ( in 3-element array of 4-component vector of float)
+0:11      'VertexID' ( in 3-element array of uint)
+0:11      'OutputStream' ( out structure{ temp 4-component vector of float pos,  temp 2-element array of 2-component vector of float clip})
+0:11      'clip' ( in 3-element array of 2-element array of 2-component vector of float)
+0:?     Sequence
+0:14      move second child to first child ( temp 4-component vector of float)
+0:14        pos: direct index for structure ( temp 4-component vector of float)
+0:14          's' ( temp structure{ temp 4-component vector of float pos,  temp 2-element array of 2-component vector of float clip})
+0:14          Constant:
+0:14            0 (const int)
+0:14        direct index ( temp 4-component vector of float)
+0:14          'pos' ( in 3-element array of 4-component vector of float)
+0:14          Constant:
+0:14            0 (const int)
+0:15      move second child to first child ( temp 2-component vector of float)
+0:15        direct index ( temp 2-component vector of float)
+0:15          clip: direct index for structure ( temp 2-element array of 2-component vector of float)
+0:15            's' ( temp structure{ temp 4-component vector of float pos,  temp 2-element array of 2-component vector of float clip})
+0:15            Constant:
+0:15              1 (const int)
+0:15          Constant:
+0:15            0 (const int)
+0:15        direct index ( temp 2-component vector of float)
+0:15          direct index ( temp 2-element array of 2-component vector of float)
+0:15            'clip' ( in 3-element array of 2-element array of 2-component vector of float)
+0:15            Constant:
+0:15              0 (const int)
+0:15          Constant:
+0:15            0 (const int)
+0:16      move second child to first child ( temp 2-component vector of float)
+0:16        direct index ( temp 2-component vector of float)
+0:16          clip: direct index for structure ( temp 2-element array of 2-component vector of float)
+0:16            's' ( temp structure{ temp 4-component vector of float pos,  temp 2-element array of 2-component vector of float clip})
+0:16            Constant:
+0:16              1 (const int)
+0:16          Constant:
+0:16            1 (const int)
+0:16        direct index ( temp 2-component vector of float)
+0:16          direct index ( temp 2-element array of 2-component vector of float)
+0:16            'clip' ( in 3-element array of 2-element array of 2-component vector of float)
+0:16            Constant:
+0:16              0 (const int)
+0:16          Constant:
+0:16            1 (const int)
+0:18      Sequence
+0:18        Sequence
+0:18          move second child to first child ( temp 4-component vector of float)
+0:?             'OutputStream.pos' ( out 4-component vector of float Position)
+0:18            pos: direct index for structure ( temp 4-component vector of float)
+0:18              's' ( temp structure{ temp 4-component vector of float pos,  temp 2-element array of 2-component vector of float clip})
+0:18              Constant:
+0:18                0 (const int)
+0:18        EmitVertex ( temp void)
+0:11  Function Definition: main( ( temp void)
+0:11    Function Parameters: 
+0:?     Sequence
+0:11      move second child to first child ( temp 3-element array of 4-component vector of float)
+0:?         'pos' ( temp 3-element array of 4-component vector of float)
+0:?         'pos' ( in 3-element array of 4-component vector of float Position)
+0:11      move second child to first child ( temp 3-element array of uint)
+0:?         'VertexID' ( temp 3-element array of uint)
+0:?         'VertexID' (layout( location=0) in 3-element array of uint)
+0:11      Function Call: @main(vf4[3];u1[3];struct-S-vf4-vf2[2]1;vf2[3][2]; ( temp void)
+0:?         'pos' ( temp 3-element array of 4-component vector of float)
+0:?         'VertexID' ( temp 3-element array of uint)
+0:?         'OutputStream' ( temp structure{ temp 4-component vector of float pos,  temp 2-element array of 2-component vector of float clip})
+0:?         'clip' ( temp 3-element array of 2-element array of 2-component vector of float)
+0:?   Linker Objects
+0:?     'pos' ( in 3-element array of 4-component vector of float Position)
+0:?     'VertexID' (layout( location=0) in 3-element array of uint)
+0:?     'OutputStream.pos' ( out 4-component vector of float Position)
+
+SPIR-V is not generated for failed compile or link

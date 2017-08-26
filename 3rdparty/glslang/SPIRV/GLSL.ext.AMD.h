@@ -33,7 +33,7 @@ enum Decoration;
 enum Op;
 
 static const int GLSLextAMDVersion = 100;
-static const int GLSLextAMDRevision = 4;
+static const int GLSLextAMDRevision = 5;
 
 // SPV_AMD_shader_ballot
 static const char* const E_SPV_AMD_shader_ballot = "SPV_AMD_shader_ballot";
@@ -100,5 +100,10 @@ static const char* const E_SPV_AMD_texture_gather_bias_lod = "SPV_AMD_texture_ga
 
 // SPV_AMD_gpu_shader_int16
 static const char* const E_SPV_AMD_gpu_shader_int16 = "SPV_AMD_gpu_shader_int16";
+
+// SPV_AMD_shader_image_load_store_lod
+static const char* const E_SPV_AMD_shader_image_load_store_lod = "SPV_AMD_shader_image_load_store_lod";
+
+static const Capability CapabilityImageReadWriteLodAMD = static_cast<Capability>(5015);
 
 #endif  // #ifndef GLSLextAMD_H

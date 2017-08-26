@@ -80,7 +80,19 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
     bool   combined : 1;  // true means texture is combined with a sampler, false means texture with no sampler
     bool    sampler : 1;  // true means a pure sampler, other fields should be clear()
     bool   external : 1;  // GL_OES_EGL_image_external
-    unsigned int vectorSize : 3;  // return vector size.  TODO: support arbitrary types.
+    unsigned int vectorSize : 3;  // vector return type size.
+
+    // Some languages support structures as sample results.  Storing the whole structure in the
+    // TSampler is too large, so there is an index to a separate table.
+    static const unsigned structReturnIndexBits = 4;                        // number of index bits to use.
+    static const unsigned structReturnSlots = (1<<structReturnIndexBits)-1; // number of valid values
+    static const unsigned noReturnStruct = structReturnSlots;               // value if no return struct type.
+
+    // Index into a language specific table of texture return structures.
+    unsigned int structReturnIndex : structReturnIndexBits;
+
+    // Encapsulate getting members' vector sizes packed into the vectorSize bitfield.
+    unsigned int getVectorSize() const { return vectorSize; }
 
     bool isImage()       const { return image && dim != EsdSubpass; }
     bool isSubpass()     const { return dim == EsdSubpass; }
@@ -90,6 +102,7 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
     bool isShadow()      const { return shadow; }
     bool isArrayed()     const { return arrayed; }
     bool isMultiSample() const { return ms; }
+    bool hasReturnStruct() const { return structReturnIndex != noReturnStruct; }
 
     void clear()
     {
@@ -102,6 +115,9 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
         combined = false;
         sampler = false;
         external = false;
+        structReturnIndex = noReturnStruct;
+
+        // by default, returns a single vec4;
         vectorSize = 4;
     }
 
@@ -160,16 +176,17 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
 
     bool operator==(const TSampler& right) const
     {
-        return type == right.type &&
-                dim == right.dim &&
-            arrayed == right.arrayed &&
-             shadow == right.shadow &&
-                 ms == right.ms &&
-              image == right.image &&
-           combined == right.combined &&
-            sampler == right.sampler &&
-           external == right.external &&
-         vectorSize == right.vectorSize;
+        return      type == right.type &&
+                     dim == right.dim &&
+                 arrayed == right.arrayed &&
+                  shadow == right.shadow &&
+                      ms == right.ms &&
+                   image == right.image &&
+                combined == right.combined &&
+                 sampler == right.sampler &&
+                external == right.external &&
+              vectorSize == right.vectorSize &&
+       structReturnIndex == right.structReturnIndex;            
     }
 
     bool operator!=(const TSampler& right) const

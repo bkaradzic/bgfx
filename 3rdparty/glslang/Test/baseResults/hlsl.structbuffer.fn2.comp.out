@@ -138,7 +138,7 @@ local_size = (256, 1, 1)
 // Id's are bound by 61
 
                               Capability Shader
-                              Capability SampledBuffer
+                              Capability ImageBuffer
                               Capability StorageImageExtendedFormats
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450

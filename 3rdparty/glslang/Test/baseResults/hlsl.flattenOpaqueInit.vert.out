@@ -1,4 +1,6 @@
 hlsl.flattenOpaqueInit.vert
+WARNING: 0:20: '=' : cannot do member-wise aliasing for opaque members with this initializer 
+
 Shader version: 500
 0:? Sequence
 0:5  Function Definition: lookUp(struct-FxaaTex-p1-t211; ( temp 4-component vector of float)
@@ -14,19 +16,43 @@ Shader version: 500
 0:?           Constant:
 0:?             0.300000
 0:?             0.400000
-0:10  Function Definition: @main( ( temp 4-component vector of float)
+0:10  Function Definition: fillOpaque( ( temp structure{ temp sampler smpl,  temp texture2D tex})
 0:10    Function Parameters: 
 0:?     Sequence
-0:12      Branch: Return with expression
-0:12        Function Call: lookUp(struct-FxaaTex-p1-t211; ( temp 4-component vector of float)
+0:12      'g_tInputTexture_sampler' ( uniform sampler)
+0:13      'g_tInputTexture' ( uniform texture2D)
+0:14      Branch: Return with expression
+0:14        't' ( temp structure{ temp sampler smpl,  temp texture2D tex})
+0:18  Function Definition: @main( ( temp 4-component vector of float)
+0:18    Function Parameters: 
+0:?     Sequence
+0:20      Sequence
+0:20        Sequence
+0:20          move second child to first child ( temp structure{ temp sampler smpl,  temp texture2D tex})
+0:20            'flattenTemp' ( temp structure{ temp sampler smpl,  temp texture2D tex})
+0:20            Function Call: fillOpaque( ( temp structure{ temp sampler smpl,  temp texture2D tex})
+0:20          move second child to first child ( temp sampler)
+0:?             'tex2.smpl' ( temp sampler)
+0:20            smpl: direct index for structure ( temp sampler)
+0:20              'flattenTemp' ( temp structure{ temp sampler smpl,  temp texture2D tex})
+0:20              Constant:
+0:20                0 (const int)
+0:20          move second child to first child ( temp texture2D)
+0:?             'tex2.tex' ( temp texture2D)
+0:20            tex: direct index for structure ( temp texture2D)
+0:20              'flattenTemp' ( temp structure{ temp sampler smpl,  temp texture2D tex})
+0:20              Constant:
+0:20                1 (const int)
+0:21      Branch: Return with expression
+0:21        Function Call: lookUp(struct-FxaaTex-p1-t211; ( temp 4-component vector of float)
 0:?           'g_tInputTexture_sampler' ( uniform sampler)
 0:?           'g_tInputTexture' ( uniform texture2D)
-0:10  Function Definition: main( ( temp void)
-0:10    Function Parameters: 
+0:18  Function Definition: main( ( temp void)
+0:18    Function Parameters: 
 0:?     Sequence
-0:10      move second child to first child ( temp 4-component vector of float)
+0:18      move second child to first child ( temp 4-component vector of float)
 0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
-0:10        Function Call: @main( ( temp 4-component vector of float)
+0:18        Function Call: @main( ( temp 4-component vector of float)
 0:?   Linker Objects
 0:?     'g_tInputTexture_sampler' ( uniform sampler)
 0:?     'g_tInputTexture' ( uniform texture2D)
@@ -51,19 +77,43 @@ Shader version: 500
 0:?           Constant:
 0:?             0.300000
 0:?             0.400000
-0:10  Function Definition: @main( ( temp 4-component vector of float)
+0:10  Function Definition: fillOpaque( ( temp structure{ temp sampler smpl,  temp texture2D tex})
 0:10    Function Parameters: 
 0:?     Sequence
-0:12      Branch: Return with expression
-0:12        Function Call: lookUp(struct-FxaaTex-p1-t211; ( temp 4-component vector of float)
+0:12      'g_tInputTexture_sampler' ( uniform sampler)
+0:13      'g_tInputTexture' ( uniform texture2D)
+0:14      Branch: Return with expression
+0:14        't' ( temp structure{ temp sampler smpl,  temp texture2D tex})
+0:18  Function Definition: @main( ( temp 4-component vector of float)
+0:18    Function Parameters: 
+0:?     Sequence
+0:20      Sequence
+0:20        Sequence
+0:20          move second child to first child ( temp structure{ temp sampler smpl,  temp texture2D tex})
+0:20            'flattenTemp' ( temp structure{ temp sampler smpl,  temp texture2D tex})
+0:20            Function Call: fillOpaque( ( temp structure{ temp sampler smpl,  temp texture2D tex})
+0:20          move second child to first child ( temp sampler)
+0:?             'tex2.smpl' ( temp sampler)
+0:20            smpl: direct index for structure ( temp sampler)
+0:20              'flattenTemp' ( temp structure{ temp sampler smpl,  temp texture2D tex})
+0:20              Constant:
+0:20                0 (const int)
+0:20          move second child to first child ( temp texture2D)
+0:?             'tex2.tex' ( temp texture2D)
+0:20            tex: direct index for structure ( temp texture2D)
+0:20              'flattenTemp' ( temp structure{ temp sampler smpl,  temp texture2D tex})
+0:20              Constant:
+0:20                1 (const int)
+0:21      Branch: Return with expression
+0:21        Function Call: lookUp(struct-FxaaTex-p1-t211; ( temp 4-component vector of float)
 0:?           'g_tInputTexture_sampler' ( uniform sampler)
 0:?           'g_tInputTexture' ( uniform texture2D)
-0:10  Function Definition: main( ( temp void)
-0:10    Function Parameters: 
+0:18  Function Definition: main( ( temp void)
+0:18    Function Parameters: 
 0:?     Sequence
-0:10      move second child to first child ( temp 4-component vector of float)
+0:18      move second child to first child ( temp 4-component vector of float)
 0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
-0:10        Function Call: @main( ( temp 4-component vector of float)
+0:18        Function Call: @main( ( temp 4-component vector of float)
 0:?   Linker Objects
 0:?     'g_tInputTexture_sampler' ( uniform sampler)
 0:?     'g_tInputTexture' ( uniform texture2D)
@@ -71,24 +121,32 @@ Shader version: 500
 
 // Module Version 10000
 // Generated by (magic number): 80001
-// Id's are bound by 40
+// Id's are bound by 60
 
                               Capability Shader
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
-                              EntryPoint Vertex 4  "main" 38
+                              EntryPoint Vertex 4  "main" 58
                               Source HLSL 500
                               Name 4  "main"
                               Name 15  "lookUp(struct-FxaaTex-p1-t211;"
                               Name 13  "tex.smpl"
                               Name 14  "tex.tex"
-                              Name 18  "@main("
-                              Name 32  "g_tInputTexture_sampler"
-                              Name 33  "g_tInputTexture"
-                              Name 38  "@entryPointOutput"
-                              Decorate 32(g_tInputTexture_sampler) DescriptorSet 0
-                              Decorate 33(g_tInputTexture) DescriptorSet 0
-                              Decorate 38(@entryPointOutput) Location 0
+                              Name 17  "FxaaTex"
+                              MemberName 17(FxaaTex) 0  "smpl"
+                              MemberName 17(FxaaTex) 1  "tex"
+                              Name 19  "fillOpaque("
+                              Name 22  "@main("
+                              Name 36  "g_tInputTexture_sampler"
+                              Name 37  "g_tInputTexture"
+                              Name 39  "t"
+                              Name 43  "flattenTemp"
+                              Name 45  "tex2.smpl"
+                              Name 50  "tex2.tex"
+                              Name 58  "@entryPointOutput"
+                              Decorate 36(g_tInputTexture_sampler) DescriptorSet 0
+                              Decorate 37(g_tInputTexture) DescriptorSet 0
+                              Decorate 58(@entryPointOutput) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeSampler
@@ -98,35 +156,58 @@ Shader version: 500
               10:             TypePointer UniformConstant 9
               11:             TypeVector 8(float) 4
               12:             TypeFunction 11(fvec4) 7(ptr) 10(ptr)
-              17:             TypeFunction 11(fvec4)
-              22:             TypeSampledImage 9
-              24:             TypeVector 8(float) 2
-              25:    8(float) Constant 1050253722
-              26:    8(float) Constant 1053609165
-              27:   24(fvec2) ConstantComposite 25 26
-              28:    8(float) Constant 0
-32(g_tInputTexture_sampler):      7(ptr) Variable UniformConstant
-33(g_tInputTexture):     10(ptr) Variable UniformConstant
-              37:             TypePointer Output 11(fvec4)
-38(@entryPointOutput):     37(ptr) Variable Output
+     17(FxaaTex):             TypeStruct 6 9
+              18:             TypeFunction 17(FxaaTex)
+              21:             TypeFunction 11(fvec4)
+              26:             TypeSampledImage 9
+              28:             TypeVector 8(float) 2
+              29:    8(float) Constant 1050253722
+              30:    8(float) Constant 1053609165
+              31:   28(fvec2) ConstantComposite 29 30
+              32:    8(float) Constant 0
+36(g_tInputTexture_sampler):      7(ptr) Variable UniformConstant
+37(g_tInputTexture):     10(ptr) Variable UniformConstant
+              38:             TypePointer UniformConstant 17(FxaaTex)
+           39(t):     38(ptr) Variable UniformConstant
+ 43(flattenTemp):     38(ptr) Variable UniformConstant
+   45(tex2.smpl):      7(ptr) Variable UniformConstant
+              46:             TypeInt 32 1
+              47:     46(int) Constant 0
+    50(tex2.tex):     10(ptr) Variable UniformConstant
+              51:     46(int) Constant 1
+              57:             TypePointer Output 11(fvec4)
+58(@entryPointOutput):     57(ptr) Variable Output
          4(main):           2 Function None 3
                5:             Label
-              39:   11(fvec4) FunctionCall 18(@main()
-                              Store 38(@entryPointOutput) 39
+              59:   11(fvec4) FunctionCall 22(@main()
+                              Store 58(@entryPointOutput) 59
                               Return
                               FunctionEnd
 15(lookUp(struct-FxaaTex-p1-t211;):   11(fvec4) Function None 12
     13(tex.smpl):      7(ptr) FunctionParameter
      14(tex.tex):     10(ptr) FunctionParameter
               16:             Label
-              20:           9 Load 14(tex.tex)
-              21:           6 Load 13(tex.smpl)
-              23:          22 SampledImage 20 21
-              29:   11(fvec4) ImageSampleExplicitLod 23 27 Lod 28
-                              ReturnValue 29
+              24:           9 Load 14(tex.tex)
+              25:           6 Load 13(tex.smpl)
+              27:          26 SampledImage 24 25
+              33:   11(fvec4) ImageSampleExplicitLod 27 31 Lod 32
+                              ReturnValue 33
                               FunctionEnd
-      18(@main():   11(fvec4) Function None 17
-              19:             Label
-              34:   11(fvec4) FunctionCall 15(lookUp(struct-FxaaTex-p1-t211;) 32(g_tInputTexture_sampler) 33(g_tInputTexture)
-                              ReturnValue 34
+ 19(fillOpaque(): 17(FxaaTex) Function None 18
+              20:             Label
+              40: 17(FxaaTex) Load 39(t)
+                              ReturnValue 40
+                              FunctionEnd
+      22(@main():   11(fvec4) Function None 21
+              23:             Label
+              44: 17(FxaaTex) FunctionCall 19(fillOpaque()
+                              Store 43(flattenTemp) 44
+              48:      7(ptr) AccessChain 43(flattenTemp) 47
+              49:           6 Load 48
+                              Store 45(tex2.smpl) 49
+              52:     10(ptr) AccessChain 43(flattenTemp) 51
+              53:           9 Load 52
+                              Store 50(tex2.tex) 53
+              54:   11(fvec4) FunctionCall 15(lookUp(struct-FxaaTex-p1-t211;) 36(g_tInputTexture_sampler) 37(g_tInputTexture)
+                              ReturnValue 54
                               FunctionEnd

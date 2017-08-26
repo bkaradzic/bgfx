@@ -4,6 +4,7 @@ spv.sparseTexture.frag
 // Id's are bound by 438
 
                               Capability Shader
+                              Capability StorageImageMultisample
                               Capability SampledRect
                               Capability SparseResidency
                               Capability SampledCubeArray

@@ -18,11 +18,11 @@ struct gs_in_t
 }; 
 
 [domain ( "tri" )] 
-gs_in_t main (const OutputPatch <ds_in_t, 3> i, float3 tesscoord : SV_DomainLocation, pcf_in_t pcf_data ) 
+gs_in_t main (const OutputPatch <ds_in_t, 3> i, float f : msem, float3 tesscoord : SV_DomainLocation, pcf_in_t pcf_data ) 
 { 
     gs_in_t o; 
 
-    o.pos  = i[0].pos + tesscoord.x;
+    o.pos  = i[0].pos + tesscoord.x * f;
     o.norm = i[0].norm + tesscoord.y;
 
     tesscoord.z;

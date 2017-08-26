@@ -1,0 +1,1184 @@
+hlsl.texture.struct.frag
+Shader version: 500
+gl_FragCoord origin is upper left
+0:? Sequence
+0:38  Function Definition: fn1(t2-tx-struct0-1; ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:38    Function Parameters: 
+0:38      't1' ( in texture2D)
+0:?     Sequence
+0:38      Branch: Return with expression
+0:38        Sequence
+0:38          move second child to first child ( temp 4-component vector of float)
+0:38            '@sampleResultShadow' ( temp 4-component vector of float)
+0:?             texture ( temp 4-component vector of float)
+0:38              Construct combined texture-sampler ( temp sampler2D)
+0:38                't1' ( in texture2D)
+0:38                'g_sSamp' ( uniform sampler)
+0:?               Constant:
+0:?                 0.600000
+0:?                 0.610000
+0:38          move second child to first child ( temp float)
+0:38            c0: direct index for structure ( temp float)
+0:38              '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:38              Constant:
+0:38                0 (const uint)
+0:38            direct index ( temp float)
+0:38              '@sampleResultShadow' ( temp 4-component vector of float)
+0:38              Constant:
+0:38                0 (const uint)
+0:38          move second child to first child ( temp float)
+0:38            direct index ( temp float)
+0:38              c1: direct index for structure ( temp 2-component vector of float)
+0:38                '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:38                Constant:
+0:38                  1 (const uint)
+0:38              Constant:
+0:38                0 (const int)
+0:38            direct index ( temp float)
+0:38              '@sampleResultShadow' ( temp 4-component vector of float)
+0:38              Constant:
+0:38                1 (const uint)
+0:38          move second child to first child ( temp float)
+0:38            direct index ( temp float)
+0:38              c1: direct index for structure ( temp 2-component vector of float)
+0:38                '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:38                Constant:
+0:38                  1 (const uint)
+0:38              Constant:
+0:38                1 (const int)
+0:38            direct index ( temp float)
+0:38              '@sampleResultShadow' ( temp 4-component vector of float)
+0:38              Constant:
+0:38                2 (const uint)
+0:38          move second child to first child ( temp float)
+0:38            c2: direct index for structure ( temp float)
+0:38              '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:38              Constant:
+0:38                2 (const uint)
+0:38            direct index ( temp float)
+0:38              '@sampleResultShadow' ( temp 4-component vector of float)
+0:38              Constant:
+0:38                3 (const uint)
+0:38          '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:39  Function Definition: fn1(t2-tx-struct1-1; ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:39    Function Parameters: 
+0:39      't2' ( in texture2D)
+0:?     Sequence
+0:39      Branch: Return with expression
+0:39        Sequence
+0:39          move second child to first child ( temp 4-component vector of float)
+0:39            '@sampleResultShadow' ( temp 4-component vector of float)
+0:?             texture ( temp 4-component vector of float)
+0:39              Construct combined texture-sampler ( temp sampler2D)
+0:39                't2' ( in texture2D)
+0:39                'g_sSamp' ( uniform sampler)
+0:?               Constant:
+0:?                 0.600000
+0:?                 0.610000
+0:39          move second child to first child ( temp float)
+0:39            c0: direct index for structure ( temp float)
+0:39              '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:39              Constant:
+0:39                0 (const uint)
+0:39            direct index ( temp float)
+0:39              '@sampleResultShadow' ( temp 4-component vector of float)
+0:39              Constant:
+0:39                0 (const uint)
+0:39          move second child to first child ( temp float)
+0:39            direct index ( temp float)
+0:39              c1: direct index for structure ( temp 3-component vector of float)
+0:39                '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:39                Constant:
+0:39                  1 (const uint)
+0:39              Constant:
+0:39                0 (const int)
+0:39            direct index ( temp float)
+0:39              '@sampleResultShadow' ( temp 4-component vector of float)
+0:39              Constant:
+0:39                1 (const uint)
+0:39          move second child to first child ( temp float)
+0:39            direct index ( temp float)
+0:39              c1: direct index for structure ( temp 3-component vector of float)
+0:39                '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:39                Constant:
+0:39                  1 (const uint)
+0:39              Constant:
+0:39                1 (const int)
+0:39            direct index ( temp float)
+0:39              '@sampleResultShadow' ( temp 4-component vector of float)
+0:39              Constant:
+0:39                2 (const uint)
+0:39          move second child to first child ( temp float)
+0:39            direct index ( temp float)
+0:39              c1: direct index for structure ( temp 3-component vector of float)
+0:39                '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:39                Constant:
+0:39                  1 (const uint)
+0:39              Constant:
+0:39                2 (const int)
+0:39            direct index ( temp float)
+0:39              '@sampleResultShadow' ( temp 4-component vector of float)
+0:39              Constant:
+0:39                3 (const uint)
+0:39          '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:42  Function Definition: @main( ( temp 4-component vector of float)
+0:42    Function Parameters: 
+0:?     Sequence
+0:43      Sequence
+0:43        move second child to first child ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:43          's1' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:43          Sequence
+0:43            move second child to first child ( temp 4-component vector of float)
+0:43              '@sampleResultShadow' ( temp 4-component vector of float)
+0:?               texture ( temp 4-component vector of float)
+0:43                Construct combined texture-sampler ( temp sampler2D)
+0:43                  'g_tTex2s1' ( uniform texture2D)
+0:43                  'g_sSamp' ( uniform sampler)
+0:?                 Constant:
+0:?                   0.100000
+0:?                   0.110000
+0:43            move second child to first child ( temp float)
+0:43              c0: direct index for structure ( temp float)
+0:43                '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:43                Constant:
+0:43                  0 (const uint)
+0:43              direct index ( temp float)
+0:43                '@sampleResultShadow' ( temp 4-component vector of float)
+0:43                Constant:
+0:43                  0 (const uint)
+0:43            move second child to first child ( temp float)
+0:43              direct index ( temp float)
+0:43                c1: direct index for structure ( temp 2-component vector of float)
+0:43                  '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:43                  Constant:
+0:43                    1 (const uint)
+0:43                Constant:
+0:43                  0 (const int)
+0:43              direct index ( temp float)
+0:43                '@sampleResultShadow' ( temp 4-component vector of float)
+0:43                Constant:
+0:43                  1 (const uint)
+0:43            move second child to first child ( temp float)
+0:43              direct index ( temp float)
+0:43                c1: direct index for structure ( temp 2-component vector of float)
+0:43                  '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:43                  Constant:
+0:43                    1 (const uint)
+0:43                Constant:
+0:43                  1 (const int)
+0:43              direct index ( temp float)
+0:43                '@sampleResultShadow' ( temp 4-component vector of float)
+0:43                Constant:
+0:43                  2 (const uint)
+0:43            move second child to first child ( temp float)
+0:43              c2: direct index for structure ( temp float)
+0:43                '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:43                Constant:
+0:43                  2 (const uint)
+0:43              direct index ( temp float)
+0:43                '@sampleResultShadow' ( temp 4-component vector of float)
+0:43                Constant:
+0:43                  3 (const uint)
+0:43            '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:44      Sequence
+0:44        move second child to first child ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:44          's2' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:44          Sequence
+0:44            move second child to first child ( temp 4-component vector of float)
+0:44              '@sampleResultShadow' ( temp 4-component vector of float)
+0:?               texture ( temp 4-component vector of float)
+0:44                Construct combined texture-sampler ( temp sampler2D)
+0:44                  'g_tTex2s2' ( uniform texture2D)
+0:44                  'g_sSamp' ( uniform sampler)
+0:?                 Constant:
+0:?                   0.200000
+0:?                   0.210000
+0:44            move second child to first child ( temp float)
+0:44              c0: direct index for structure ( temp float)
+0:44                '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:44                Constant:
+0:44                  0 (const uint)
+0:44              direct index ( temp float)
+0:44                '@sampleResultShadow' ( temp 4-component vector of float)
+0:44                Constant:
+0:44                  0 (const uint)
+0:44            move second child to first child ( temp float)
+0:44              direct index ( temp float)
+0:44                c1: direct index for structure ( temp 3-component vector of float)
+0:44                  '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:44                  Constant:
+0:44                    1 (const uint)
+0:44                Constant:
+0:44                  0 (const int)
+0:44              direct index ( temp float)
+0:44                '@sampleResultShadow' ( temp 4-component vector of float)
+0:44                Constant:
+0:44                  1 (const uint)
+0:44            move second child to first child ( temp float)
+0:44              direct index ( temp float)
+0:44                c1: direct index for structure ( temp 3-component vector of float)
+0:44                  '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:44                  Constant:
+0:44                    1 (const uint)
+0:44                Constant:
+0:44                  1 (const int)
+0:44              direct index ( temp float)
+0:44                '@sampleResultShadow' ( temp 4-component vector of float)
+0:44                Constant:
+0:44                  2 (const uint)
+0:44            move second child to first child ( temp float)
+0:44              direct index ( temp float)
+0:44                c1: direct index for structure ( temp 3-component vector of float)
+0:44                  '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:44                  Constant:
+0:44                    1 (const uint)
+0:44                Constant:
+0:44                  2 (const int)
+0:44              direct index ( temp float)
+0:44                '@sampleResultShadow' ( temp 4-component vector of float)
+0:44                Constant:
+0:44                  3 (const uint)
+0:44            '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:45      Sequence
+0:45        move second child to first child ( temp structure{ temp 2-component vector of float c0,  temp 1-component vector of float c1})
+0:45          's3' ( temp structure{ temp 2-component vector of float c0,  temp 1-component vector of float c1})
+0:45          Sequence
+0:45            move second child to first child ( temp 4-component vector of float)
+0:45              '@sampleResultShadow' ( temp 4-component vector of float)
+0:?               texture ( temp 4-component vector of float)
+0:45                Construct combined texture-sampler ( temp sampler2D)
+0:45                  'g_tTex2s3' ( uniform texture2D)
+0:45                  'g_sSamp' ( uniform sampler)
+0:?                 Constant:
+0:?                   0.300000
+0:?                   0.310000
+0:45            move second child to first child ( temp float)
+0:45              direct index ( temp float)
+0:45                c0: direct index for structure ( temp 2-component vector of float)
+0:45                  '@sampleStructTemp' ( temp structure{ temp 2-component vector of float c0,  temp 1-component vector of float c1})
+0:45                  Constant:
+0:45                    0 (const uint)
+0:45                Constant:
+0:45                  0 (const int)
+0:45              direct index ( temp float)
+0:45                '@sampleResultShadow' ( temp 4-component vector of float)
+0:45                Constant:
+0:45                  0 (const uint)
+0:45            move second child to first child ( temp float)
+0:45              direct index ( temp float)
+0:45                c0: direct index for structure ( temp 2-component vector of float)
+0:45                  '@sampleStructTemp' ( temp structure{ temp 2-component vector of float c0,  temp 1-component vector of float c1})
+0:45                  Constant:
+0:45                    0 (const uint)
+0:45                Constant:
+0:45                  1 (const int)
+0:45              direct index ( temp float)
+0:45                '@sampleResultShadow' ( temp 4-component vector of float)
+0:45                Constant:
+0:45                  1 (const uint)
+0:45            move second child to first child ( temp float)
+0:45              direct index ( temp float)
+0:45                c1: direct index for structure ( temp 1-component vector of float)
+0:45                  '@sampleStructTemp' ( temp structure{ temp 2-component vector of float c0,  temp 1-component vector of float c1})
+0:45                  Constant:
+0:45                    1 (const uint)
+0:45                Constant:
+0:45                  0 (const int)
+0:45              direct index ( temp float)
+0:45                '@sampleResultShadow' ( temp 4-component vector of float)
+0:45                Constant:
+0:45                  2 (const uint)
+0:45            '@sampleStructTemp' ( temp structure{ temp 2-component vector of float c0,  temp 1-component vector of float c1})
+0:46      Sequence
+0:46        move second child to first child ( temp structure{ temp int c0,  temp 2-component vector of int c1,  temp int c2})
+0:46          's4' ( temp structure{ temp int c0,  temp 2-component vector of int c1,  temp int c2})
+0:46          Sequence
+0:46            move second child to first child ( temp 4-component vector of int)
+0:46              '@sampleResultShadow' ( temp 4-component vector of int)
+0:?               texture ( temp 4-component vector of int)
+0:46                Construct combined texture-sampler ( temp isampler2D)
+0:46                  'g_tTex2s4' ( uniform itexture2D)
+0:46                  'g_sSamp' ( uniform sampler)
+0:?                 Constant:
+0:?                   0.400000
+0:?                   0.410000
+0:46            move second child to first child ( temp int)
+0:46              c0: direct index for structure ( temp int)
+0:46                '@sampleStructTemp' ( temp structure{ temp int c0,  temp 2-component vector of int c1,  temp int c2})
+0:46                Constant:
+0:46                  0 (const uint)
+0:46              direct index ( temp int)
+0:46                '@sampleResultShadow' ( temp 4-component vector of int)
+0:46                Constant:
+0:46                  0 (const uint)
+0:46            move second child to first child ( temp float)
+0:46              direct index ( temp float)
+0:46                c1: direct index for structure ( temp 2-component vector of int)
+0:46                  '@sampleStructTemp' ( temp structure{ temp int c0,  temp 2-component vector of int c1,  temp int c2})
+0:46                  Constant:
+0:46                    1 (const uint)
+0:46                Constant:
+0:46                  0 (const int)
+0:46              Convert int to float ( temp float)
+0:46                direct index ( temp int)
+0:46                  '@sampleResultShadow' ( temp 4-component vector of int)
+0:46                  Constant:
+0:46                    1 (const uint)
+0:46            move second child to first child ( temp float)
+0:46              direct index ( temp float)
+0:46                c1: direct index for structure ( temp 2-component vector of int)
+0:46                  '@sampleStructTemp' ( temp structure{ temp int c0,  temp 2-component vector of int c1,  temp int c2})
+0:46                  Constant:
+0:46                    1 (const uint)
+0:46                Constant:
+0:46                  1 (const int)
+0:46              Convert int to float ( temp float)
+0:46                direct index ( temp int)
+0:46                  '@sampleResultShadow' ( temp 4-component vector of int)
+0:46                  Constant:
+0:46                    2 (const uint)
+0:46            move second child to first child ( temp int)
+0:46              c2: direct index for structure ( temp int)
+0:46                '@sampleStructTemp' ( temp structure{ temp int c0,  temp 2-component vector of int c1,  temp int c2})
+0:46                Constant:
+0:46                  2 (const uint)
+0:46              direct index ( temp int)
+0:46                '@sampleResultShadow' ( temp 4-component vector of int)
+0:46                Constant:
+0:46                  3 (const uint)
+0:46            '@sampleStructTemp' ( temp structure{ temp int c0,  temp 2-component vector of int c1,  temp int c2})
+0:47      Sequence
+0:47        move second child to first child ( temp structure{ temp uint c0,  temp uint c1})
+0:47          's5' ( temp structure{ temp uint c0,  temp uint c1})
+0:47          Sequence
+0:47            move second child to first child ( temp 4-component vector of uint)
+0:47              '@sampleResultShadow' ( temp 4-component vector of uint)
+0:?               texture ( temp 4-component vector of uint)
+0:47                Construct combined texture-sampler ( temp usampler2D)
+0:47                  'g_tTex2s5' ( uniform utexture2D)
+0:47                  'g_sSamp' ( uniform sampler)
+0:?                 Constant:
+0:?                   0.500000
+0:?                   0.510000
+0:47            move second child to first child ( temp uint)
+0:47              c0: direct index for structure ( temp uint)
+0:47                '@sampleStructTemp' ( temp structure{ temp uint c0,  temp uint c1})
+0:47                Constant:
+0:47                  0 (const uint)
+0:47              direct index ( temp uint)
+0:47                '@sampleResultShadow' ( temp 4-component vector of uint)
+0:47                Constant:
+0:47                  0 (const uint)
+0:47            move second child to first child ( temp uint)
+0:47              c1: direct index for structure ( temp uint)
+0:47                '@sampleStructTemp' ( temp structure{ temp uint c0,  temp uint c1})
+0:47                Constant:
+0:47                  1 (const uint)
+0:47              direct index ( temp uint)
+0:47                '@sampleResultShadow' ( temp 4-component vector of uint)
+0:47                Constant:
+0:47                  1 (const uint)
+0:47            '@sampleStructTemp' ( temp structure{ temp uint c0,  temp uint c1})
+0:49      Sequence
+0:49        move second child to first child ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:49          'r0' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:49          Function Call: fn1(t2-tx-struct0-1; ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:49            'g_tTex2s1' ( uniform texture2D)
+0:50      Sequence
+0:50        move second child to first child ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:50          'r1' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:50          Function Call: fn1(t2-tx-struct1-1; ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:50            'g_tTex2s2' ( uniform texture2D)
+0:51      Sequence
+0:51        move second child to first child ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:51          'r2' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:51          Function Call: fn1(t2-tx-struct0-1; ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:51            'g_tTex2s1a' ( uniform texture2D)
+0:53      Branch: Return with expression
+0:53        Constant:
+0:53          0.000000
+0:53          0.000000
+0:53          0.000000
+0:53          0.000000
+0:42  Function Definition: main( ( temp void)
+0:42    Function Parameters: 
+0:?     Sequence
+0:42      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:42        Function Call: @main( ( temp 4-component vector of float)
+0:?   Linker Objects
+0:?     'g_sSamp' ( uniform sampler)
+0:?     'g_tTex2s1' ( uniform texture2D)
+0:?     'g_tTex2s2' ( uniform texture2D)
+0:?     'g_tTex2s3' ( uniform texture2D)
+0:?     'g_tTex2s4' ( uniform itexture2D)
+0:?     'g_tTex2s5' ( uniform utexture2D)
+0:?     'g_tTex2s1a' ( uniform texture2D)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+
+
+Linked fragment stage:
+
+
+Shader version: 500
+gl_FragCoord origin is upper left
+0:? Sequence
+0:38  Function Definition: fn1(t2-tx-struct0-1; ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:38    Function Parameters: 
+0:38      't1' ( in texture2D)
+0:?     Sequence
+0:38      Branch: Return with expression
+0:38        Sequence
+0:38          move second child to first child ( temp 4-component vector of float)
+0:38            '@sampleResultShadow' ( temp 4-component vector of float)
+0:?             texture ( temp 4-component vector of float)
+0:38              Construct combined texture-sampler ( temp sampler2D)
+0:38                't1' ( in texture2D)
+0:38                'g_sSamp' ( uniform sampler)
+0:?               Constant:
+0:?                 0.600000
+0:?                 0.610000
+0:38          move second child to first child ( temp float)
+0:38            c0: direct index for structure ( temp float)
+0:38              '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:38              Constant:
+0:38                0 (const uint)
+0:38            direct index ( temp float)
+0:38              '@sampleResultShadow' ( temp 4-component vector of float)
+0:38              Constant:
+0:38                0 (const uint)
+0:38          move second child to first child ( temp float)
+0:38            direct index ( temp float)
+0:38              c1: direct index for structure ( temp 2-component vector of float)
+0:38                '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:38                Constant:
+0:38                  1 (const uint)
+0:38              Constant:
+0:38                0 (const int)
+0:38            direct index ( temp float)
+0:38              '@sampleResultShadow' ( temp 4-component vector of float)
+0:38              Constant:
+0:38                1 (const uint)
+0:38          move second child to first child ( temp float)
+0:38            direct index ( temp float)
+0:38              c1: direct index for structure ( temp 2-component vector of float)
+0:38                '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:38                Constant:
+0:38                  1 (const uint)
+0:38              Constant:
+0:38                1 (const int)
+0:38            direct index ( temp float)
+0:38              '@sampleResultShadow' ( temp 4-component vector of float)
+0:38              Constant:
+0:38                2 (const uint)
+0:38          move second child to first child ( temp float)
+0:38            c2: direct index for structure ( temp float)
+0:38              '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:38              Constant:
+0:38                2 (const uint)
+0:38            direct index ( temp float)
+0:38              '@sampleResultShadow' ( temp 4-component vector of float)
+0:38              Constant:
+0:38                3 (const uint)
+0:38          '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:39  Function Definition: fn1(t2-tx-struct1-1; ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:39    Function Parameters: 
+0:39      't2' ( in texture2D)
+0:?     Sequence
+0:39      Branch: Return with expression
+0:39        Sequence
+0:39          move second child to first child ( temp 4-component vector of float)
+0:39            '@sampleResultShadow' ( temp 4-component vector of float)
+0:?             texture ( temp 4-component vector of float)
+0:39              Construct combined texture-sampler ( temp sampler2D)
+0:39                't2' ( in texture2D)
+0:39                'g_sSamp' ( uniform sampler)
+0:?               Constant:
+0:?                 0.600000
+0:?                 0.610000
+0:39          move second child to first child ( temp float)
+0:39            c0: direct index for structure ( temp float)
+0:39              '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:39              Constant:
+0:39                0 (const uint)
+0:39            direct index ( temp float)
+0:39              '@sampleResultShadow' ( temp 4-component vector of float)
+0:39              Constant:
+0:39                0 (const uint)
+0:39          move second child to first child ( temp float)
+0:39            direct index ( temp float)
+0:39              c1: direct index for structure ( temp 3-component vector of float)
+0:39                '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:39                Constant:
+0:39                  1 (const uint)
+0:39              Constant:
+0:39                0 (const int)
+0:39            direct index ( temp float)
+0:39              '@sampleResultShadow' ( temp 4-component vector of float)
+0:39              Constant:
+0:39                1 (const uint)
+0:39          move second child to first child ( temp float)
+0:39            direct index ( temp float)
+0:39              c1: direct index for structure ( temp 3-component vector of float)
+0:39                '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:39                Constant:
+0:39                  1 (const uint)
+0:39              Constant:
+0:39                1 (const int)
+0:39            direct index ( temp float)
+0:39              '@sampleResultShadow' ( temp 4-component vector of float)
+0:39              Constant:
+0:39                2 (const uint)
+0:39          move second child to first child ( temp float)
+0:39            direct index ( temp float)
+0:39              c1: direct index for structure ( temp 3-component vector of float)
+0:39                '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:39                Constant:
+0:39                  1 (const uint)
+0:39              Constant:
+0:39                2 (const int)
+0:39            direct index ( temp float)
+0:39              '@sampleResultShadow' ( temp 4-component vector of float)
+0:39              Constant:
+0:39                3 (const uint)
+0:39          '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:42  Function Definition: @main( ( temp 4-component vector of float)
+0:42    Function Parameters: 
+0:?     Sequence
+0:43      Sequence
+0:43        move second child to first child ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:43          's1' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:43          Sequence
+0:43            move second child to first child ( temp 4-component vector of float)
+0:43              '@sampleResultShadow' ( temp 4-component vector of float)
+0:?               texture ( temp 4-component vector of float)
+0:43                Construct combined texture-sampler ( temp sampler2D)
+0:43                  'g_tTex2s1' ( uniform texture2D)
+0:43                  'g_sSamp' ( uniform sampler)
+0:?                 Constant:
+0:?                   0.100000
+0:?                   0.110000
+0:43            move second child to first child ( temp float)
+0:43              c0: direct index for structure ( temp float)
+0:43                '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:43                Constant:
+0:43                  0 (const uint)
+0:43              direct index ( temp float)
+0:43                '@sampleResultShadow' ( temp 4-component vector of float)
+0:43                Constant:
+0:43                  0 (const uint)
+0:43            move second child to first child ( temp float)
+0:43              direct index ( temp float)
+0:43                c1: direct index for structure ( temp 2-component vector of float)
+0:43                  '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:43                  Constant:
+0:43                    1 (const uint)
+0:43                Constant:
+0:43                  0 (const int)
+0:43              direct index ( temp float)
+0:43                '@sampleResultShadow' ( temp 4-component vector of float)
+0:43                Constant:
+0:43                  1 (const uint)
+0:43            move second child to first child ( temp float)
+0:43              direct index ( temp float)
+0:43                c1: direct index for structure ( temp 2-component vector of float)
+0:43                  '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:43                  Constant:
+0:43                    1 (const uint)
+0:43                Constant:
+0:43                  1 (const int)
+0:43              direct index ( temp float)
+0:43                '@sampleResultShadow' ( temp 4-component vector of float)
+0:43                Constant:
+0:43                  2 (const uint)
+0:43            move second child to first child ( temp float)
+0:43              c2: direct index for structure ( temp float)
+0:43                '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:43                Constant:
+0:43                  2 (const uint)
+0:43              direct index ( temp float)
+0:43                '@sampleResultShadow' ( temp 4-component vector of float)
+0:43                Constant:
+0:43                  3 (const uint)
+0:43            '@sampleStructTemp' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:44      Sequence
+0:44        move second child to first child ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:44          's2' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:44          Sequence
+0:44            move second child to first child ( temp 4-component vector of float)
+0:44              '@sampleResultShadow' ( temp 4-component vector of float)
+0:?               texture ( temp 4-component vector of float)
+0:44                Construct combined texture-sampler ( temp sampler2D)
+0:44                  'g_tTex2s2' ( uniform texture2D)
+0:44                  'g_sSamp' ( uniform sampler)
+0:?                 Constant:
+0:?                   0.200000
+0:?                   0.210000
+0:44            move second child to first child ( temp float)
+0:44              c0: direct index for structure ( temp float)
+0:44                '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:44                Constant:
+0:44                  0 (const uint)
+0:44              direct index ( temp float)
+0:44                '@sampleResultShadow' ( temp 4-component vector of float)
+0:44                Constant:
+0:44                  0 (const uint)
+0:44            move second child to first child ( temp float)
+0:44              direct index ( temp float)
+0:44                c1: direct index for structure ( temp 3-component vector of float)
+0:44                  '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:44                  Constant:
+0:44                    1 (const uint)
+0:44                Constant:
+0:44                  0 (const int)
+0:44              direct index ( temp float)
+0:44                '@sampleResultShadow' ( temp 4-component vector of float)
+0:44                Constant:
+0:44                  1 (const uint)
+0:44            move second child to first child ( temp float)
+0:44              direct index ( temp float)
+0:44                c1: direct index for structure ( temp 3-component vector of float)
+0:44                  '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:44                  Constant:
+0:44                    1 (const uint)
+0:44                Constant:
+0:44                  1 (const int)
+0:44              direct index ( temp float)
+0:44                '@sampleResultShadow' ( temp 4-component vector of float)
+0:44                Constant:
+0:44                  2 (const uint)
+0:44            move second child to first child ( temp float)
+0:44              direct index ( temp float)
+0:44                c1: direct index for structure ( temp 3-component vector of float)
+0:44                  '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:44                  Constant:
+0:44                    1 (const uint)
+0:44                Constant:
+0:44                  2 (const int)
+0:44              direct index ( temp float)
+0:44                '@sampleResultShadow' ( temp 4-component vector of float)
+0:44                Constant:
+0:44                  3 (const uint)
+0:44            '@sampleStructTemp' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:45      Sequence
+0:45        move second child to first child ( temp structure{ temp 2-component vector of float c0,  temp 1-component vector of float c1})
+0:45          's3' ( temp structure{ temp 2-component vector of float c0,  temp 1-component vector of float c1})
+0:45          Sequence
+0:45            move second child to first child ( temp 4-component vector of float)
+0:45              '@sampleResultShadow' ( temp 4-component vector of float)
+0:?               texture ( temp 4-component vector of float)
+0:45                Construct combined texture-sampler ( temp sampler2D)
+0:45                  'g_tTex2s3' ( uniform texture2D)
+0:45                  'g_sSamp' ( uniform sampler)
+0:?                 Constant:
+0:?                   0.300000
+0:?                   0.310000
+0:45            move second child to first child ( temp float)
+0:45              direct index ( temp float)
+0:45                c0: direct index for structure ( temp 2-component vector of float)
+0:45                  '@sampleStructTemp' ( temp structure{ temp 2-component vector of float c0,  temp 1-component vector of float c1})
+0:45                  Constant:
+0:45                    0 (const uint)
+0:45                Constant:
+0:45                  0 (const int)
+0:45              direct index ( temp float)
+0:45                '@sampleResultShadow' ( temp 4-component vector of float)
+0:45                Constant:
+0:45                  0 (const uint)
+0:45            move second child to first child ( temp float)
+0:45              direct index ( temp float)
+0:45                c0: direct index for structure ( temp 2-component vector of float)
+0:45                  '@sampleStructTemp' ( temp structure{ temp 2-component vector of float c0,  temp 1-component vector of float c1})
+0:45                  Constant:
+0:45                    0 (const uint)
+0:45                Constant:
+0:45                  1 (const int)
+0:45              direct index ( temp float)
+0:45                '@sampleResultShadow' ( temp 4-component vector of float)
+0:45                Constant:
+0:45                  1 (const uint)
+0:45            move second child to first child ( temp float)
+0:45              direct index ( temp float)
+0:45                c1: direct index for structure ( temp 1-component vector of float)
+0:45                  '@sampleStructTemp' ( temp structure{ temp 2-component vector of float c0,  temp 1-component vector of float c1})
+0:45                  Constant:
+0:45                    1 (const uint)
+0:45                Constant:
+0:45                  0 (const int)
+0:45              direct index ( temp float)
+0:45                '@sampleResultShadow' ( temp 4-component vector of float)
+0:45                Constant:
+0:45                  2 (const uint)
+0:45            '@sampleStructTemp' ( temp structure{ temp 2-component vector of float c0,  temp 1-component vector of float c1})
+0:46      Sequence
+0:46        move second child to first child ( temp structure{ temp int c0,  temp 2-component vector of int c1,  temp int c2})
+0:46          's4' ( temp structure{ temp int c0,  temp 2-component vector of int c1,  temp int c2})
+0:46          Sequence
+0:46            move second child to first child ( temp 4-component vector of int)
+0:46              '@sampleResultShadow' ( temp 4-component vector of int)
+0:?               texture ( temp 4-component vector of int)
+0:46                Construct combined texture-sampler ( temp isampler2D)
+0:46                  'g_tTex2s4' ( uniform itexture2D)
+0:46                  'g_sSamp' ( uniform sampler)
+0:?                 Constant:
+0:?                   0.400000
+0:?                   0.410000
+0:46            move second child to first child ( temp int)
+0:46              c0: direct index for structure ( temp int)
+0:46                '@sampleStructTemp' ( temp structure{ temp int c0,  temp 2-component vector of int c1,  temp int c2})
+0:46                Constant:
+0:46                  0 (const uint)
+0:46              direct index ( temp int)
+0:46                '@sampleResultShadow' ( temp 4-component vector of int)
+0:46                Constant:
+0:46                  0 (const uint)
+0:46            move second child to first child ( temp float)
+0:46              direct index ( temp float)
+0:46                c1: direct index for structure ( temp 2-component vector of int)
+0:46                  '@sampleStructTemp' ( temp structure{ temp int c0,  temp 2-component vector of int c1,  temp int c2})
+0:46                  Constant:
+0:46                    1 (const uint)
+0:46                Constant:
+0:46                  0 (const int)
+0:46              Convert int to float ( temp float)
+0:46                direct index ( temp int)
+0:46                  '@sampleResultShadow' ( temp 4-component vector of int)
+0:46                  Constant:
+0:46                    1 (const uint)
+0:46            move second child to first child ( temp float)
+0:46              direct index ( temp float)
+0:46                c1: direct index for structure ( temp 2-component vector of int)
+0:46                  '@sampleStructTemp' ( temp structure{ temp int c0,  temp 2-component vector of int c1,  temp int c2})
+0:46                  Constant:
+0:46                    1 (const uint)
+0:46                Constant:
+0:46                  1 (const int)
+0:46              Convert int to float ( temp float)
+0:46                direct index ( temp int)
+0:46                  '@sampleResultShadow' ( temp 4-component vector of int)
+0:46                  Constant:
+0:46                    2 (const uint)
+0:46            move second child to first child ( temp int)
+0:46              c2: direct index for structure ( temp int)
+0:46                '@sampleStructTemp' ( temp structure{ temp int c0,  temp 2-component vector of int c1,  temp int c2})
+0:46                Constant:
+0:46                  2 (const uint)
+0:46              direct index ( temp int)
+0:46                '@sampleResultShadow' ( temp 4-component vector of int)
+0:46                Constant:
+0:46                  3 (const uint)
+0:46            '@sampleStructTemp' ( temp structure{ temp int c0,  temp 2-component vector of int c1,  temp int c2})
+0:47      Sequence
+0:47        move second child to first child ( temp structure{ temp uint c0,  temp uint c1})
+0:47          's5' ( temp structure{ temp uint c0,  temp uint c1})
+0:47          Sequence
+0:47            move second child to first child ( temp 4-component vector of uint)
+0:47              '@sampleResultShadow' ( temp 4-component vector of uint)
+0:?               texture ( temp 4-component vector of uint)
+0:47                Construct combined texture-sampler ( temp usampler2D)
+0:47                  'g_tTex2s5' ( uniform utexture2D)
+0:47                  'g_sSamp' ( uniform sampler)
+0:?                 Constant:
+0:?                   0.500000
+0:?                   0.510000
+0:47            move second child to first child ( temp uint)
+0:47              c0: direct index for structure ( temp uint)
+0:47                '@sampleStructTemp' ( temp structure{ temp uint c0,  temp uint c1})
+0:47                Constant:
+0:47                  0 (const uint)
+0:47              direct index ( temp uint)
+0:47                '@sampleResultShadow' ( temp 4-component vector of uint)
+0:47                Constant:
+0:47                  0 (const uint)
+0:47            move second child to first child ( temp uint)
+0:47              c1: direct index for structure ( temp uint)
+0:47                '@sampleStructTemp' ( temp structure{ temp uint c0,  temp uint c1})
+0:47                Constant:
+0:47                  1 (const uint)
+0:47              direct index ( temp uint)
+0:47                '@sampleResultShadow' ( temp 4-component vector of uint)
+0:47                Constant:
+0:47                  1 (const uint)
+0:47            '@sampleStructTemp' ( temp structure{ temp uint c0,  temp uint c1})
+0:49      Sequence
+0:49        move second child to first child ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:49          'r0' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:49          Function Call: fn1(t2-tx-struct0-1; ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:49            'g_tTex2s1' ( uniform texture2D)
+0:50      Sequence
+0:50        move second child to first child ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:50          'r1' ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:50          Function Call: fn1(t2-tx-struct1-1; ( temp structure{ temp float c0,  temp 3-component vector of float c1})
+0:50            'g_tTex2s2' ( uniform texture2D)
+0:51      Sequence
+0:51        move second child to first child ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:51          'r2' ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:51          Function Call: fn1(t2-tx-struct0-1; ( temp structure{ temp float c0,  temp 2-component vector of float c1,  temp float c2})
+0:51            'g_tTex2s1a' ( uniform texture2D)
+0:53      Branch: Return with expression
+0:53        Constant:
+0:53          0.000000
+0:53          0.000000
+0:53          0.000000
+0:53          0.000000
+0:42  Function Definition: main( ( temp void)
+0:42    Function Parameters: 
+0:?     Sequence
+0:42      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:42        Function Call: @main( ( temp 4-component vector of float)
+0:?   Linker Objects
+0:?     'g_sSamp' ( uniform sampler)
+0:?     'g_tTex2s1' ( uniform texture2D)
+0:?     'g_tTex2s2' ( uniform texture2D)
+0:?     'g_tTex2s3' ( uniform texture2D)
+0:?     'g_tTex2s4' ( uniform itexture2D)
+0:?     'g_tTex2s5' ( uniform utexture2D)
+0:?     'g_tTex2s1a' ( uniform texture2D)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+
+// Module Version 10000
+// Generated by (magic number): 80001
+// Id's are bound by 233
+
+                              Capability Shader
+               1:             ExtInstImport  "GLSL.std.450"
+                              MemoryModel Logical GLSL450
+                              EntryPoint Fragment 4  "main" 231
+                              ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
+                              Name 4  "main"
+                              Name 10  "s1_t"
+                              MemberName 10(s1_t) 0  "c0"
+                              MemberName 10(s1_t) 1  "c1"
+                              MemberName 10(s1_t) 2  "c2"
+                              Name 13  "fn1(t2-tx-struct0-1;"
+                              Name 12  "t1"
+                              Name 16  "s2_t"
+                              MemberName 16(s2_t) 0  "c0"
+                              MemberName 16(s2_t) 1  "c1"
+                              Name 19  "fn1(t2-tx-struct1-1;"
+                              Name 18  "t2"
+                              Name 23  "@main("
+                              Name 26  "@sampleResultShadow"
+                              Name 30  "g_sSamp"
+                              Name 39  "@sampleStructTemp"
+                              Name 65  "@sampleResultShadow"
+                              Name 71  "@sampleStructTemp"
+                              Name 87  "s1"
+                              Name 88  "@sampleResultShadow"
+                              Name 89  "g_tTex2s1"
+                              Name 97  "@sampleStructTemp"
+                              Name 111  "s2"
+                              Name 112  "@sampleResultShadow"
+                              Name 113  "g_tTex2s2"
+                              Name 121  "@sampleStructTemp"
+                              Name 135  "s3_t"
+                              MemberName 135(s3_t) 0  "c0"
+                              MemberName 135(s3_t) 1  "c1"
+                              Name 137  "s3"
+                              Name 138  "@sampleResultShadow"
+                              Name 139  "g_tTex2s3"
+                              Name 147  "@sampleStructTemp"
+                              Name 159  "s4_t"
+                              MemberName 159(s4_t) 0  "c0"
+                              MemberName 159(s4_t) 1  "c1"
+                              MemberName 159(s4_t) 2  "c2"
+                              Name 161  "s4"
+                              Name 164  "@sampleResultShadow"
+                              Name 167  "g_tTex2s4"
+                              Name 176  "@sampleStructTemp"
+                              Name 193  "s5_t"
+                              MemberName 193(s5_t) 0  "c0"
+                              MemberName 193(s5_t) 1  "c1"
+                              Name 195  "s5"
+                              Name 198  "@sampleResultShadow"
+                              Name 201  "g_tTex2s5"
+                              Name 210  "@sampleStructTemp"
+                              Name 219  "r0"
+                              Name 221  "r1"
+                              Name 223  "r2"
+                              Name 224  "g_tTex2s1a"
+                              Name 231  "@entryPointOutput"
+                              Decorate 30(g_sSamp) DescriptorSet 0
+                              Decorate 89(g_tTex2s1) DescriptorSet 0
+                              Decorate 113(g_tTex2s2) DescriptorSet 0
+                              Decorate 139(g_tTex2s3) DescriptorSet 0
+                              Decorate 167(g_tTex2s4) DescriptorSet 0
+                              Decorate 201(g_tTex2s5) DescriptorSet 0
+                              Decorate 224(g_tTex2s1a) DescriptorSet 0
+                              Decorate 231(@entryPointOutput) Location 0
+               2:             TypeVoid
+               3:             TypeFunction 2
+               6:             TypeFloat 32
+               7:             TypeImage 6(float) 2D sampled format:Unknown
+               8:             TypePointer UniformConstant 7
+               9:             TypeVector 6(float) 2
+        10(s1_t):             TypeStruct 6(float) 9(fvec2) 6(float)
+              11:             TypeFunction 10(s1_t) 8(ptr)
+              15:             TypeVector 6(float) 3
+        16(s2_t):             TypeStruct 6(float) 15(fvec3)
+              17:             TypeFunction 16(s2_t) 8(ptr)
+              21:             TypeVector 6(float) 4
+              22:             TypeFunction 21(fvec4)
+              25:             TypePointer Function 21(fvec4)
+              28:             TypeSampler
+              29:             TypePointer UniformConstant 28
+     30(g_sSamp):     29(ptr) Variable UniformConstant
+              32:             TypeSampledImage 7
+              34:    6(float) Constant 1058642330
+              35:    6(float) Constant 1058810102
+              36:    9(fvec2) ConstantComposite 34 35
+              38:             TypePointer Function 10(s1_t)
+              40:             TypeInt 32 1
+              41:     40(int) Constant 0
+              42:             TypeInt 32 0
+              43:     42(int) Constant 0
+              44:             TypePointer Function 6(float)
+              48:     40(int) Constant 1
+              49:     42(int) Constant 1
+              53:     42(int) Constant 2
+              57:     40(int) Constant 2
+              58:     42(int) Constant 3
+              70:             TypePointer Function 16(s2_t)
+   89(g_tTex2s1):      8(ptr) Variable UniformConstant
+              93:    6(float) Constant 1036831949
+              94:    6(float) Constant 1038174126
+              95:    9(fvec2) ConstantComposite 93 94
+  113(g_tTex2s2):      8(ptr) Variable UniformConstant
+             117:    6(float) Constant 1045220557
+             118:    6(float) Constant 1045891645
+             119:    9(fvec2) ConstantComposite 117 118
+       135(s3_t):             TypeStruct 9(fvec2) 6(float)
+             136:             TypePointer Function 135(s3_t)
+  139(g_tTex2s3):      8(ptr) Variable UniformConstant
+             143:    6(float) Constant 1050253722
+             144:    6(float) Constant 1050589266
+             145:    9(fvec2) ConstantComposite 143 144
+             158:             TypeVector 40(int) 2
+       159(s4_t):             TypeStruct 40(int) 158(ivec2) 40(int)
+             160:             TypePointer Function 159(s4_t)
+             162:             TypeVector 40(int) 4
+             163:             TypePointer Function 162(ivec4)
+             165:             TypeImage 40(int) 2D sampled format:Unknown
+             166:             TypePointer UniformConstant 165
+  167(g_tTex2s4):    166(ptr) Variable UniformConstant
+             170:             TypeSampledImage 165
+             172:    6(float) Constant 1053609165
+             173:    6(float) Constant 1053944709
+             174:    9(fvec2) ConstantComposite 172 173
+             177:             TypePointer Function 40(int)
+       193(s5_t):             TypeStruct 42(int) 42(int)
+             194:             TypePointer Function 193(s5_t)
+             196:             TypeVector 42(int) 4
+             197:             TypePointer Function 196(ivec4)
+             199:             TypeImage 42(int) 2D sampled format:Unknown
+             200:             TypePointer UniformConstant 199
+  201(g_tTex2s5):    200(ptr) Variable UniformConstant
+             204:             TypeSampledImage 199
+             206:    6(float) Constant 1056964608
+             207:    6(float) Constant 1057132380
+             208:    9(fvec2) ConstantComposite 206 207
+             211:             TypePointer Function 42(int)
+ 224(g_tTex2s1a):      8(ptr) Variable UniformConstant
+             226:    6(float) Constant 0
+             227:   21(fvec4) ConstantComposite 226 226 226 226
+             230:             TypePointer Output 21(fvec4)
+231(@entryPointOutput):    230(ptr) Variable Output
+         4(main):           2 Function None 3
+               5:             Label
+             232:   21(fvec4) FunctionCall 23(@main()
+                              Store 231(@entryPointOutput) 232
+                              Return
+                              FunctionEnd
+13(fn1(t2-tx-struct0-1;):    10(s1_t) Function None 11
+          12(t1):      8(ptr) FunctionParameter
+              14:             Label
+26(@sampleResultShadow):     25(ptr) Variable Function
+39(@sampleStructTemp):     38(ptr) Variable Function
+              27:           7 Load 12(t1)
+              31:          28 Load 30(g_sSamp)
+              33:          32 SampledImage 27 31
+              37:   21(fvec4) ImageSampleImplicitLod 33 36
+                              Store 26(@sampleResultShadow) 37
+              45:     44(ptr) AccessChain 26(@sampleResultShadow) 43
+              46:    6(float) Load 45
+              47:     44(ptr) AccessChain 39(@sampleStructTemp) 41
+                              Store 47 46
+              50:     44(ptr) AccessChain 26(@sampleResultShadow) 49
+              51:    6(float) Load 50
+              52:     44(ptr) AccessChain 39(@sampleStructTemp) 48 43
+                              Store 52 51
+              54:     44(ptr) AccessChain 26(@sampleResultShadow) 53
+              55:    6(float) Load 54
+              56:     44(ptr) AccessChain 39(@sampleStructTemp) 48 49
+                              Store 56 55
+              59:     44(ptr) AccessChain 26(@sampleResultShadow) 58
+              60:    6(float) Load 59
+              61:     44(ptr) AccessChain 39(@sampleStructTemp) 57
+                              Store 61 60
+              62:    10(s1_t) Load 39(@sampleStructTemp)
+                              ReturnValue 62
+                              FunctionEnd
+19(fn1(t2-tx-struct1-1;):    16(s2_t) Function None 17
+          18(t2):      8(ptr) FunctionParameter
+              20:             Label
+65(@sampleResultShadow):     25(ptr) Variable Function
+71(@sampleStructTemp):     70(ptr) Variable Function
+              66:           7 Load 18(t2)
+              67:          28 Load 30(g_sSamp)
+              68:          32 SampledImage 66 67
+              69:   21(fvec4) ImageSampleImplicitLod 68 36
+                              Store 65(@sampleResultShadow) 69
+              72:     44(ptr) AccessChain 65(@sampleResultShadow) 43
+              73:    6(float) Load 72
+              74:     44(ptr) AccessChain 71(@sampleStructTemp) 41
+                              Store 74 73
+              75:     44(ptr) AccessChain 65(@sampleResultShadow) 49
+              76:    6(float) Load 75
+              77:     44(ptr) AccessChain 71(@sampleStructTemp) 48 43
+                              Store 77 76
+              78:     44(ptr) AccessChain 65(@sampleResultShadow) 53
+              79:    6(float) Load 78
+              80:     44(ptr) AccessChain 71(@sampleStructTemp) 48 49
+                              Store 80 79
+              81:     44(ptr) AccessChain 65(@sampleResultShadow) 58
+              82:    6(float) Load 81
+              83:     44(ptr) AccessChain 71(@sampleStructTemp) 48 53
+                              Store 83 82
+              84:    16(s2_t) Load 71(@sampleStructTemp)
+                              ReturnValue 84
+                              FunctionEnd
+      23(@main():   21(fvec4) Function None 22
+              24:             Label
+          87(s1):     38(ptr) Variable Function
+88(@sampleResultShadow):     25(ptr) Variable Function
+97(@sampleStructTemp):     38(ptr) Variable Function
+         111(s2):     70(ptr) Variable Function
+112(@sampleResultShadow):     25(ptr) Variable Function
+121(@sampleStructTemp):     70(ptr) Variable Function
+         137(s3):    136(ptr) Variable Function
+138(@sampleResultShadow):     25(ptr) Variable Function
+147(@sampleStructTemp):    136(ptr) Variable Function
+         161(s4):    160(ptr) Variable Function
+164(@sampleResultShadow):    163(ptr) Variable Function
+176(@sampleStructTemp):    160(ptr) Variable Function
+         195(s5):    194(ptr) Variable Function
+198(@sampleResultShadow):    197(ptr) Variable Function
+210(@sampleStructTemp):    194(ptr) Variable Function
+         219(r0):     38(ptr) Variable Function
+         221(r1):     70(ptr) Variable Function
+         223(r2):     38(ptr) Variable Function
+              90:           7 Load 89(g_tTex2s1)
+              91:          28 Load 30(g_sSamp)
+              92:          32 SampledImage 90 91
+              96:   21(fvec4) ImageSampleImplicitLod 92 95
+                              Store 88(@sampleResultShadow) 96
+              98:     44(ptr) AccessChain 88(@sampleResultShadow) 43
+              99:    6(float) Load 98
+             100:     44(ptr) AccessChain 97(@sampleStructTemp) 41
+                              Store 100 99
+             101:     44(ptr) AccessChain 88(@sampleResultShadow) 49
+             102:    6(float) Load 101
+             103:     44(ptr) AccessChain 97(@sampleStructTemp) 48 43
+                              Store 103 102
+             104:     44(ptr) AccessChain 88(@sampleResultShadow) 53
+             105:    6(float) Load 104
+             106:     44(ptr) AccessChain 97(@sampleStructTemp) 48 49
+                              Store 106 105
+             107:     44(ptr) AccessChain 88(@sampleResultShadow) 58
+             108:    6(float) Load 107
+             109:     44(ptr) AccessChain 97(@sampleStructTemp) 57
+                              Store 109 108
+             110:    10(s1_t) Load 97(@sampleStructTemp)
+                              Store 87(s1) 110
+             114:           7 Load 113(g_tTex2s2)
+             115:          28 Load 30(g_sSamp)
+             116:          32 SampledImage 114 115
+             120:   21(fvec4) ImageSampleImplicitLod 116 119
+                              Store 112(@sampleResultShadow) 120
+             122:     44(ptr) AccessChain 112(@sampleResultShadow) 43
+             123:    6(float) Load 122
+             124:     44(ptr) AccessChain 121(@sampleStructTemp) 41
+                              Store 124 123
+             125:     44(ptr) AccessChain 112(@sampleResultShadow) 49
+             126:    6(float) Load 125
+             127:     44(ptr) AccessChain 121(@sampleStructTemp) 48 43
+                              Store 127 126
+             128:     44(ptr) AccessChain 112(@sampleResultShadow) 53
+             129:    6(float) Load 128
+             130:     44(ptr) AccessChain 121(@sampleStructTemp) 48 49
+                              Store 130 129
+             131:     44(ptr) AccessChain 112(@sampleResultShadow) 58
+             132:    6(float) Load 131
+             133:     44(ptr) AccessChain 121(@sampleStructTemp) 48 53
+                              Store 133 132
+             134:    16(s2_t) Load 121(@sampleStructTemp)
+                              Store 111(s2) 134
+             140:           7 Load 139(g_tTex2s3)
+             141:          28 Load 30(g_sSamp)
+             142:          32 SampledImage 140 141
+             146:   21(fvec4) ImageSampleImplicitLod 142 145
+                              Store 138(@sampleResultShadow) 146
+             148:     44(ptr) AccessChain 138(@sampleResultShadow) 43
+             149:    6(float) Load 148
+             150:     44(ptr) AccessChain 147(@sampleStructTemp) 41 43
+                              Store 150 149
+             151:     44(ptr) AccessChain 138(@sampleResultShadow) 49
+             152:    6(float) Load 151
+             153:     44(ptr) AccessChain 147(@sampleStructTemp) 41 49
+                              Store 153 152
+             154:     44(ptr) AccessChain 138(@sampleResultShadow) 53
+             155:    6(float) Load 154
+             156:     44(ptr) AccessChain 147(@sampleStructTemp) 48
+                              Store 156 155
+             157:   135(s3_t) Load 147(@sampleStructTemp)
+                              Store 137(s3) 157
+             168:         165 Load 167(g_tTex2s4)
+             169:          28 Load 30(g_sSamp)
+             171:         170 SampledImage 168 169
+             175:  162(ivec4) ImageSampleImplicitLod 171 174
+                              Store 164(@sampleResultShadow) 175
+             178:    177(ptr) AccessChain 164(@sampleResultShadow) 43
+             179:     40(int) Load 178
+             180:    177(ptr) AccessChain 176(@sampleStructTemp) 41
+                              Store 180 179
+             181:    177(ptr) AccessChain 164(@sampleResultShadow) 49
+             182:     40(int) Load 181
+             183:    6(float) ConvertSToF 182
+             184:    177(ptr) AccessChain 176(@sampleStructTemp) 48 43
+                              Store 184 183
+             185:    177(ptr) AccessChain 164(@sampleResultShadow) 53
+             186:     40(int) Load 185
+             187:    6(float) ConvertSToF 186
+             188:    177(ptr) AccessChain 176(@sampleStructTemp) 48 49
+                              Store 188 187
+             189:    177(ptr) AccessChain 164(@sampleResultShadow) 58
+             190:     40(int) Load 189
+             191:    177(ptr) AccessChain 176(@sampleStructTemp) 57
+                              Store 191 190
+             192:   159(s4_t) Load 176(@sampleStructTemp)
+                              Store 161(s4) 192
+             202:         199 Load 201(g_tTex2s5)
+             203:          28 Load 30(g_sSamp)
+             205:         204 SampledImage 202 203
+             209:  196(ivec4) ImageSampleImplicitLod 205 208
+                              Store 198(@sampleResultShadow) 209
+             212:    211(ptr) AccessChain 198(@sampleResultShadow) 43
+             213:     42(int) Load 212
+             214:    211(ptr) AccessChain 210(@sampleStructTemp) 41
+                              Store 214 213
+             215:    211(ptr) AccessChain 198(@sampleResultShadow) 49
+             216:     42(int) Load 215
+             217:    211(ptr) AccessChain 210(@sampleStructTemp) 48
+                              Store 217 216
+             218:   193(s5_t) Load 210(@sampleStructTemp)
+                              Store 195(s5) 218
+             220:    10(s1_t) FunctionCall 13(fn1(t2-tx-struct0-1;) 89(g_tTex2s1)
+                              Store 219(r0) 220
+             222:    16(s2_t) FunctionCall 19(fn1(t2-tx-struct1-1;) 113(g_tTex2s2)
+                              Store 221(r1) 222
+             225:    10(s1_t) FunctionCall 13(fn1(t2-tx-struct0-1;) 224(g_tTex2s1a)
+                              Store 223(r2) 225
+                              ReturnValue 227
+                              FunctionEnd
