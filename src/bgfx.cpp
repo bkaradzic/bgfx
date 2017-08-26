@@ -1633,6 +1633,7 @@ namespace bgfx
 		m_submit->m_resolution = m_resolution;
 		m_resolution.m_flags &= ~BGFX_RESET_INTERNAL_FORCE;
 		m_submit->m_debug = m_debug;
+		m_submit->m_perfStats.numViews = 0;
 
 		bx::memCopy(m_submit->m_viewRemap, m_viewRemap, sizeof(m_viewRemap) );
 		bx::memCopy(m_submit->m_fb, m_fb, sizeof(m_fb) );
