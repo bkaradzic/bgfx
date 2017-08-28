@@ -47,7 +47,6 @@
 #ifndef BGFX_PROFILER_SCOPE
 #	define BGFX_PROFILER_SCOPE(_group, _name, _color) BX_NOOP()
 #	define BGFX_PROFILER_BEGIN(_group, _name, _color) BX_NOOP()
-#	define BGFX_PROFILER_BEGIN_DYNAMIC(_namestr) BX_NOOP()
 #	define BGFX_PROFILER_END() BX_NOOP()
 #	define BGFX_PROFILER_SET_CURRENT_THREAD_NAME(_name) BX_NOOP()
 #endif // BGFX_PROFILER_SCOPE

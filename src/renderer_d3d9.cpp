@@ -3452,25 +3452,29 @@ namespace bgfx { namespace d3d9
 	{
 		IDirect3DDevice9* device = s_renderD3D9->m_device;
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_frame); ++ii)
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_query); ++ii)
 		{
-			Frame& frame = m_frame[ii];
+			Query& frame = m_query[ii];
 			DX_CHECK(device->CreateQuery(D3DQUERYTYPE_TIMESTAMPDISJOINT, &frame.m_disjoint) );
 			DX_CHECK(device->CreateQuery(D3DQUERYTYPE_TIMESTAMP,         &frame.m_begin) );
 			DX_CHECK(device->CreateQuery(D3DQUERYTYPE_TIMESTAMP,         &frame.m_end) );
 			DX_CHECK(device->CreateQuery(D3DQUERYTYPE_TIMESTAMPFREQ,     &frame.m_freq) );
 		}
 
-		m_elapsed   = 0;
-		m_frequency = 1;
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
+		{
+			Result& result = m_result[ii];
+			result.reset();
+		}
+
 		m_control.reset();
 	}
 
 	void TimerQueryD3D9::preReset()
 	{
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_frame); ++ii)
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_query); ++ii)
 		{
-			Frame& frame = m_frame[ii];
+			Query& frame = m_query[ii];
 			DX_RELEASE(frame.m_disjoint, 0);
 			DX_RELEASE(frame.m_begin, 0);
 			DX_RELEASE(frame.m_end, 0);
@@ -3478,51 +3482,74 @@ namespace bgfx { namespace d3d9
 		}
 	}
 
-	void TimerQueryD3D9::begin()
+	uint32_t TimerQueryD3D9::begin(uint32_t _resultIdx)
 	{
 		while (0 == m_control.reserve(1) )
 		{
-			get();
+			update();
 		}
 
-		Frame& frame = m_frame[m_control.m_current];
-		frame.m_disjoint->Issue(D3DISSUE_BEGIN);
-		frame.m_begin->Issue(D3DISSUE_END);
-	}
+		Result& result = m_result[_resultIdx];
+		++result.m_pending;
 
-	void TimerQueryD3D9::end()
-	{
-		Frame& frame = m_frame[m_control.m_current];
-		frame.m_disjoint->Issue(D3DISSUE_END);
-		frame.m_freq->Issue(D3DISSUE_END);
-		frame.m_end->Issue(D3DISSUE_END);
+		const uint32_t idx = m_control.m_current;
+		Query& query = m_query[idx];
+		query.m_resultIdx = _resultIdx;
+		query.m_ready     = false;
+
+		query.m_disjoint->Issue(D3DISSUE_BEGIN);
+		query.m_begin->Issue(D3DISSUE_END);
+
 		m_control.commit(1);
+
+		return idx;
 	}
 
-	bool TimerQueryD3D9::get()
+	void TimerQueryD3D9::end(uint32_t _idx)
+	{
+		Query& query = m_query[_idx];
+		query.m_ready = true;
+
+		query.m_disjoint->Issue(D3DISSUE_END);
+		query.m_freq->Issue(D3DISSUE_END);
+		query.m_end->Issue(D3DISSUE_END);
+
+		while (update() )
+		{
+		}
+	}
+
+	bool TimerQueryD3D9::update()
 	{
 		if (0 != m_control.available() )
 		{
-			Frame& frame = m_frame[m_control.m_read];
+			Query& query = m_query[m_control.m_read];
+
+			if (!query.m_ready)
+			{
+				return false;
+			}
 
 			uint64_t timeEnd;
-			const bool flush = BX_COUNTOF(m_frame)-1 == m_control.available();
-			HRESULT hr = frame.m_end->GetData(&timeEnd, sizeof(timeEnd), flush ? D3DGETDATA_FLUSH : 0);
+			const bool flush = BX_COUNTOF(m_query)-1 == m_control.available();
+			HRESULT hr = query.m_end->GetData(&timeEnd, sizeof(timeEnd), flush ? D3DGETDATA_FLUSH : 0);
 			if (S_OK == hr
 			||  isLost(hr) )
 			{
 				m_control.consume(1);
 
 				uint64_t timeBegin;
-				DX_CHECK(frame.m_begin->GetData(&timeBegin, sizeof(timeBegin), 0) );
+				DX_CHECK(query.m_begin->GetData(&timeBegin, sizeof(timeBegin), 0) );
 
 				uint64_t freq;
-				DX_CHECK(frame.m_freq->GetData(&freq, sizeof(freq), 0) );
+				DX_CHECK(query.m_freq->GetData(&freq, sizeof(freq), 0) );
 
-				m_frequency = freq;
-				m_begin     = timeBegin;
-				m_end       = timeEnd;
-				m_elapsed   = timeEnd - timeBegin;
+				Result& result = m_result[query.m_resultIdx];
+				--result.m_pending;
+
+				result.m_frequency = freq;
+				result.m_begin     = timeBegin;
+				result.m_end       = timeEnd;
 
 				return true;
 			}
@@ -3671,10 +3698,12 @@ namespace bgfx { namespace d3d9
 		int64_t elapsed = -bx::getHPCounter();
 		int64_t captureElapsed = 0;
 
+		uint32_t frameQueryIdx = UINT32_MAX;
+
 		device->BeginScene();
 		if (m_timerQuerySupport)
 		{
-			m_gpuTimer.begin();
+			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS);
 		}
 
 		if (0 < _render->m_iboffset)
@@ -3729,6 +3758,13 @@ namespace bgfx { namespace d3d9
 
 		invalidateSamplerState();
 
+		Profiler<TimerQueryD3D9> profiler(
+			  _render
+			, m_gpuTimer
+			, s_viewName
+			, m_timerQuerySupport
+			);
+
 		if (m_occlusionQuerySupport)
 		{
 			m_occlusionQuery.resolve(_render);
@@ -3777,14 +3813,6 @@ namespace bgfx { namespace d3d9
 					currentState.m_stateFlags = newFlags;
 					currentState.m_stencil    = newStencil;
 
-					PIX_ENDEVENT();
-					PIX_BEGINEVENT(D3DCOLOR_VIEW, s_viewNameW[key.m_view]);
-					if (item > 0)
-					{
-						BGFX_PROFILER_END();
-					}
-					BGFX_PROFILER_BEGIN_DYNAMIC(s_viewName[key.m_view]);
-
 					view = key.m_view;
 					programIdx = kInvalidHandle;
 
@@ -3793,6 +3821,15 @@ namespace bgfx { namespace d3d9
 						fbh = _render->m_fb[view];
 						setFrameBuffer(fbh);
 					}
+
+					PIX_ENDEVENT();
+					if (item > 0)
+					{
+						profiler.end();
+					}
+
+					profiler.begin(view);
+					PIX_BEGINEVENT(D3DCOLOR_VIEW, s_viewNameW[view]);
 
 					viewState.m_rect        = _render->m_rect[view];
 					const Rect& scissorRect = _render->m_scissor[view];
@@ -4298,7 +4335,7 @@ namespace bgfx { namespace d3d9
 				capture();
 				captureElapsed += bx::getHPCounter();
 
-				BGFX_PROFILER_END();
+				profiler.end();
 			}
 		}
 
@@ -4324,28 +4361,26 @@ namespace bgfx { namespace d3d9
 		static double   maxGpuElapsed = 0.0f;
 		double elapsedGpuMs = 0.0;
 
-		if (m_timerQuerySupport)
+		if (UINT32_MAX != frameQueryIdx)
 		{
-			m_gpuTimer.end();
+			m_gpuTimer.end(frameQueryIdx);
 
-			do
-			{
-				double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
-				elapsedGpuMs   = m_gpuTimer.m_elapsed * toGpuMs;
-				maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
-			}
-			while (m_gpuTimer.get() );
+			const TimerQueryD3D9::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+			double toGpuMs = 1000.0 / double(result.m_frequency);
+			elapsedGpuMs   = (result.m_end - result.m_begin) * toGpuMs;
+			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
 
-			maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
+			maxGpuLatency = bx::uint32_imax(maxGpuLatency, result.m_pending-1);
 		}
 
 		const int64_t timerFreq = bx::getHPFrequency();
 
 		perfStats.cpuTimeEnd    = now;
 		perfStats.cpuTimerFreq  = timerFreq;
-		perfStats.gpuTimeBegin  = m_gpuTimer.m_begin;
-		perfStats.gpuTimeEnd    = m_gpuTimer.m_end;
-		perfStats.gpuTimerFreq  = m_gpuTimer.m_frequency;
+		const TimerQueryD3D9::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+		perfStats.gpuTimeBegin  = result.m_begin;
+		perfStats.gpuTimeEnd    = result.m_end;
+		perfStats.gpuTimerFreq  = result.m_frequency;
 		perfStats.numDraw       = statsKeyType[0];
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.maxGpuLatency = maxGpuLatency;
