@@ -138,6 +138,7 @@ static inline int    ImClamp(int v, int mn, int mx)                             
 static inline float  ImClamp(float v, float mn, float mx)                       { return (v < mn) ? mn : (v > mx) ? mx : v; }
 static inline ImVec2 ImClamp(const ImVec2& f, const ImVec2& mn, ImVec2 mx)      { return ImVec2(ImClamp(f.x,mn.x,mx.x), ImClamp(f.y,mn.y,mx.y)); }
 static inline float  ImSaturate(float f)                                        { return (f < 0.0f) ? 0.0f : (f > 1.0f) ? 1.0f : f; }
+static inline void   ImSwap(float& a, float& b)                                 { float tmp = a; a = b; b = tmp; }
 static inline int    ImLerp(int a, int b, float t)                              { return (int)(a + (b - a) * t); }
 static inline float  ImLerp(float a, float b, float t)                          { return a + (b - a) * t; }
 static inline ImVec2 ImLerp(const ImVec2& a, const ImVec2& b, float t)          { return ImVec2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t); }
@@ -234,8 +235,8 @@ enum ImGuiCorner
 {
     ImGuiCorner_TopLeft     = 1 << 0, // 1
     ImGuiCorner_TopRight    = 1 << 1, // 2
-    ImGuiCorner_BottomRight = 1 << 2, // 4
-    ImGuiCorner_BottomLeft  = 1 << 3, // 8
+    ImGuiCorner_BotRight    = 1 << 2, // 4
+    ImGuiCorner_BotLeft     = 1 << 3, // 8
     ImGuiCorner_All         = 0x0F
 };
 
@@ -537,7 +538,7 @@ struct ImGuiContext
         DragCurrentValue = 0.0f;
         DragLastMouseDelta = ImVec2(0.0f, 0.0f);
         DragSpeedDefaultRatio = 1.0f / 100.0f;
-        DragSpeedScaleSlow = 0.01f;
+        DragSpeedScaleSlow = 1.0f / 100.0f;
         DragSpeedScaleFast = 10.0f;
         ScrollbarClickDeltaToGrabCenter = ImVec2(0.0f, 0.0f);
         TooltipOverrideCount = 0;
@@ -696,9 +697,10 @@ struct IMGUI_API ImGuiWindow
     ImGuiStorage            StateStorage;
     float                   FontWindowScale;                    // Scale multiplier per-window
     ImDrawList*             DrawList;
-    ImGuiWindow*            RootWindow;                         // If we are a child window, this is pointing to the first non-child parent window. Else point to ourself.
-    ImGuiWindow*            RootNonPopupWindow;                 // If we are a child window, this is pointing to the first non-child non-popup parent window. Else point to ourself.
-    ImGuiWindow*            ParentWindow;                       // If we are a child window, this is pointing to our parent window. Else point to NULL.
+    ImGuiWindow*            ParentWindow;                       // Immediate parent in the window stack *regardless* of whether this window is a child window or not)
+    ImGuiWindow*            RootWindow;                         // Generally point to ourself. If we are a child window, this is pointing to the first non-child parent window.
+    ImGuiWindow*            RootNonPopupWindow;                 // Generally point to ourself. Used to display TitleBgActive color and for selecting which window to use for NavWindowing
+
 
     // Navigation / Focus
     int                     FocusIdxAllCounter;                 // Start at -1 and increase as assigned via FocusItemRegister()
@@ -754,13 +756,15 @@ namespace ImGui
     IMGUI_API bool          ItemAdd(const ImRect& bb, const ImGuiID* id);
     IMGUI_API bool          IsClippedEx(const ImRect& bb, const ImGuiID* id, bool clip_even_when_logged);
     IMGUI_API bool          IsHovered(const ImRect& bb, ImGuiID id, bool flatten_childs = false);
-    IMGUI_API bool          FocusableItemRegister(ImGuiWindow* window, bool is_active, bool tab_stop = true);      // Return true if focus is requested
+    IMGUI_API bool          FocusableItemRegister(ImGuiWindow* window, ImGuiID id, bool tab_stop = true);      // Return true if focus is requested
     IMGUI_API void          FocusableItemUnregister(ImGuiWindow* window);
     IMGUI_API ImVec2        CalcItemSize(ImVec2 size, float default_x, float default_y);
     IMGUI_API float         CalcWrapWidthForPos(const ImVec2& pos, float wrap_pos_x);
 
     IMGUI_API void          OpenPopupEx(ImGuiID id, bool reopen_existing);
     IMGUI_API bool          IsPopupOpen(ImGuiID id);
+
+    IMGUI_API int           CalcTypematicPressedRepeatAmount(float t, float t_prev, float repeat_delay, float repeat_rate);
 
     // New Columns API
     IMGUI_API void          BeginColumns(const char* id, int count, ImGuiColumnsFlags flags = 0); // setup number of columns. use an identifier to distinguish multiple column sets. close with EndColumns().
@@ -778,6 +782,7 @@ namespace ImGui
     IMGUI_API void          RenderCollapseTriangle(ImVec2 pos, bool is_open, float scale = 1.0f);
     IMGUI_API void          RenderBullet(ImVec2 pos);
     IMGUI_API void          RenderCheckMark(ImVec2 pos, ImU32 col);
+    IMGUI_API void          RenderRectFilledRangeH(ImDrawList* draw_list, const ImRect& rect, ImU32 col, float x_start_norm, float x_end_norm, float rounding);
     IMGUI_API const char*   FindRenderedTextEnd(const char* text, const char* text_end = NULL); // Find the optional ## from which we stop displaying text.
 
     IMGUI_API bool          ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool* out_held, ImGuiButtonFlags flags = 0);

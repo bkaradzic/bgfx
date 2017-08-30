@@ -2107,7 +2107,7 @@ static void ShowExampleAppConstrainedResize(bool* p_open)
         ImGui::Combo("Constraint", &type, desc, IM_ARRAYSIZE(desc)); 
         if (ImGui::Button("200x200")) { ImGui::SetWindowSize(ImVec2(200,200)); } ImGui::SameLine();
         if (ImGui::Button("500x500")) { ImGui::SetWindowSize(ImVec2(500,500)); } ImGui::SameLine();
-        if (ImGui::Button("800x200")) ImGui::SetWindowSize(ImVec2(800,200));
+        if (ImGui::Button("800x200")) { ImGui::SetWindowSize(ImVec2(800,200)); }
         for (int i = 0; i < 10; i++) 
             ImGui::Text("Hello, sailor! Making this line long enough for the example.");
     }
