@@ -1552,6 +1552,15 @@ namespace bgfx
 		, uint16_t _max = 0
 		);
 
+	/// Set shader debug name.
+	///
+	/// @param[in] _handle Shader handle.
+	/// @param[in] _name Shader name.
+	///
+	/// @attention C99 equivalent is `bgfx_set_shader_name`.
+	///
+	void setName(ShaderHandle _handle, const char* _name);
+
 	/// Destroy shader. Once program is created with shader it is safe to
 	/// destroy shader.
 	///
@@ -1895,6 +1904,15 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_read_texture`.
 	///
 	uint32_t readTexture(TextureHandle _handle, void* _data, uint8_t _mip = 0);
+
+	/// Set texture debug name.
+	///
+	/// @param[in] _handle Texture handle.
+	/// @param[in] _name Texture name.
+	///
+	/// @attention C99 equivalent is `bgfx_set_texture_name`.
+	///
+	void setName(TextureHandle _handle, const char* _name);
 
 	/// Destroy texture.
 	///

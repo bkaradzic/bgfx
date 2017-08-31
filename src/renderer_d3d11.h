@@ -154,7 +154,7 @@ namespace bgfx { namespace d3d11
 			ID3D11ComputeShader* m_computeShader;
 			ID3D11PixelShader*   m_pixelShader;
 			ID3D11VertexShader*  m_vertexShader;
-			IUnknown*            m_ptr;
+			ID3D11DeviceChild*   m_ptr;
 		};
 		const Memory* m_code;
 		ID3D11Buffer* m_buffer;

@@ -239,6 +239,32 @@ namespace bgfx
 	typedef uint32_t RenderItemCount;
 #endif // BGFX_CONFIG_MAX_DRAW_CALLS < (64<<10)
 
+	struct Handle
+	{
+		enum Enum
+		{
+			Shader,
+			Texture,
+
+			Count
+		};
+
+		uint16_t type;
+		uint16_t idx;
+	};
+
+	inline Handle convert(ShaderHandle _handle)
+	{
+		Handle handle = { Handle::Shader, _handle.idx };
+		return handle;
+	}
+
+	inline Handle convert(TextureHandle _handle)
+	{
+		Handle handle = { Handle::Texture, _handle.idx };
+		return handle;
+	}
+
 	struct Clear
 	{
 		uint8_t  m_index[8];
@@ -612,6 +638,7 @@ namespace bgfx
 			CreateUniform,
 			UpdateViewName,
 			InvalidateOcclusionQuery,
+			SetName,
 			End,
 			RendererShutdownEnd,
 			DestroyVertexDecl,
@@ -2257,6 +2284,7 @@ namespace bgfx
 		virtual void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) = 0;
 		virtual void setMarker(const char* _marker, uint32_t _size) = 0;
 		virtual void invalidateOcclusionQuery(OcclusionQueryHandle _handle) = 0;
+		virtual void setName(Handle _handle, const char* _name) = 0;
 		virtual void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) = 0;
 		virtual void blitSetup(TextVideoMemBlitter& _blitter) = 0;
 		virtual void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) = 0;
@@ -3134,6 +3162,25 @@ namespace bgfx
 			return sr.m_num;
 		}
 
+		void setName(Handle _handle, const char* _name)
+		{
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::SetName);
+			cmdbuf.write(_handle);
+			uint16_t len = (uint8_t)bx::strLen(_name)+1;
+			cmdbuf.write(len);
+			cmdbuf.write(_name, len);
+		}
+
+		BGFX_API_FUNC(void setName(ShaderHandle _handle, const char* _name) )
+		{
+			BGFX_CHECK_HANDLE("setName", m_shaderHandle, _handle);
+
+			ShaderRef& sr = m_shaderRef[_handle.idx];
+			sr.m_name.set(_name);
+
+			setName(convert(_handle), _name);
+		}
+
 		BGFX_API_FUNC(void destroyShader(ShaderHandle _handle) )
 		{
 			BGFX_CHECK_HANDLE("destroyShader", m_shaderHandle, _handle);
@@ -3381,6 +3428,16 @@ namespace bgfx
 			return handle;
 		}
 
+		BGFX_API_FUNC(void setName(TextureHandle _handle, const char* _name) )
+		{
+			BGFX_CHECK_HANDLE("setName", m_textureHandle, _handle);
+
+			TextureRef& ref = m_textureRef[_handle.idx];
+			ref.m_name.set(_name);
+
+			setName(convert(_handle), _name);
+		}
+
 		BGFX_API_FUNC(void destroyTexture(TextureHandle _handle) )
 		{
 			BGFX_CHECK_HANDLE("destroyTexture", m_textureHandle, _handle);
@@ -3452,6 +3509,8 @@ namespace bgfx
 			int32_t refs = --ref.m_refCount;
 			if (0 == refs)
 			{
+				ref.m_name.clear();
+
 				bool ok = m_submit->free(_handle); BX_UNUSED(ok);
 				BX_CHECK(ok, "Texture handle %d is already destroyed!", _handle.idx);
 
@@ -4315,6 +4374,7 @@ namespace bgfx
 		struct ShaderRef
 		{
 			UniformHandle* m_uniforms;
+			String   m_name;
 			uint32_t m_hash;
 			int16_t  m_refCount;
 			uint16_t m_num;
@@ -4337,6 +4397,7 @@ namespace bgfx
 
 		struct TextureRef
 		{
+			String  m_name;
 			int16_t m_refCount;
 			uint8_t m_bbRatio;
 			uint8_t m_format;

@@ -123,7 +123,10 @@ static bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name
 	bx::strCat(filePath, BX_COUNTOF(filePath), _name);
 	bx::strCat(filePath, BX_COUNTOF(filePath), ".bin");
 
-	return bgfx::createShader(loadMem(_reader, filePath) );
+	bgfx::ShaderHandle handle = bgfx::createShader(loadMem(_reader, filePath) );
+	bgfx::setName(handle, filePath);
+
+	return handle;
 }
 
 bgfx::ShaderHandle loadShader(const char* _name)
@@ -216,6 +219,8 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath,
 					, mem
 					);
 			}
+
+			bgfx::setName(handle, _filePath);
 
 			if (NULL != _info)
 			{

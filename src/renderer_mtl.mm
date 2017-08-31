@@ -989,6 +989,11 @@ namespace bgfx { namespace mtl
 			m_occlusionQuery.invalidate(_handle);
 		}
 
+		virtual void setName(Handle _handle, const char* _name) override
+		{
+			BX_UNUSED(_handle, _name)
+		}
+
 		void submitBlit(BlitState& _bs, uint16_t _view);
 
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) override;

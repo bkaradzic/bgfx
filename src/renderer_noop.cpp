@@ -204,6 +204,10 @@ namespace bgfx { namespace noop
 		{
 		}
 
+		virtual void setName(Handle /*_handle*/, const char* /*_name*/) override
+		{
+		}
+
 		void submit(Frame* /*_render*/, ClearQuad& /*_clearQuad*/, TextVideoMemBlitter& /*_textVideoMemBlitter*/) override
 		{
 		}

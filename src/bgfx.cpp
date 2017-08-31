@@ -2535,6 +2535,20 @@ namespace bgfx
 				}
 				break;
 
+			case CommandBuffer::SetName:
+				{
+					Handle handle;
+					_cmdbuf.read(handle);
+
+					uint16_t len;
+					_cmdbuf.read(len);
+
+					const char* name = (const char*)_cmdbuf.skip(len);
+
+					m_renderCtx->setName(handle, name);
+				}
+				break;
+
 			default:
 				BX_CHECK(false, "Invalid command: %d", command);
 				break;
@@ -3044,6 +3058,12 @@ error:
 		return s_ctx->getShaderUniforms(_handle, _uniforms, _max);
 	}
 
+	void setName(ShaderHandle _handle, const char* _name)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx->setName(_handle, _name);
+	}
+
 	void destroy(ShaderHandle _handle)
 	{
 		BGFX_CHECK_MAIN_THREAD();
@@ -3371,6 +3391,12 @@ error:
 		bx::write(&writer, tc);
 
 		return s_ctx->createTexture(mem, _flags, 0, NULL, BackbufferRatio::Count);
+	}
+
+	void setName(TextureHandle _handle, const char* _name)
+	{
+		BGFX_CHECK_MAIN_THREAD();
+		s_ctx->setName(_handle, _name);
 	}
 
 	void destroy(TextureHandle _handle)
