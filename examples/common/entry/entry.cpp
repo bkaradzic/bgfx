@@ -24,6 +24,8 @@ namespace entry
 {
 	static uint32_t s_debug = BGFX_DEBUG_NONE;
 	static uint32_t s_reset = BGFX_RESET_NONE;
+	static uint32_t s_width = ENTRY_DEFAULT_WIDTH;
+	static uint32_t s_height = ENTRY_DEFAULT_HEIGHT;
 	static bool s_exit = false;
 
 	static bx::FileReaderI* s_fileReader = NULL;
@@ -494,11 +496,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	int runApp(AppI* _app, int _argc, const char* const* _argv)
 	{
-		_app->init(_argc, _argv, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
+		_app->init(_argc, _argv, s_width, s_height);
 		bgfx::frame();
 
 		WindowHandle defaultWindow = { 0 };
-		setWindowSize(defaultWindow, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
+		setWindowSize(defaultWindow, s_width, s_height);
 
 #if BX_PLATFORM_EMSCRIPTEN
 		s_app = _app;
@@ -747,6 +749,9 @@ restart:
 		}
 
 		_debug = s_debug;
+		
+		s_width = _width;
+		s_height = _height;
 
 		return s_exit;
 	}
