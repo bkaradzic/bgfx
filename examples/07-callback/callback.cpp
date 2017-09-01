@@ -350,7 +350,7 @@ public:
 		bgfx::setDebug(m_debug);
 
 		// Set view 0 default viewport.
-		bgfx::setViewRect(0, 0, 0, 1280, 720);
+		bgfx::setViewRect(0, 0, 0, m_width, m_height);
 
 		// Set view 0 clear state.
 		bgfx::setViewClear(0
