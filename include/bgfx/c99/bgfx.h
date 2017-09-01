@@ -710,6 +710,9 @@ BGFX_C_API uint16_t bgfx_get_shader_uniforms(bgfx_shader_handle_t _handle, bgfx_
 BGFX_C_API void bgfx_get_uniform_info(bgfx_uniform_handle_t _handle, bgfx_uniform_info_t* _info);
 
 /**/
+BGFX_C_API void bgfx_set_shader_name(bgfx_shader_handle_t _handle, const char* _name);
+
+/**/
 BGFX_C_API void bgfx_destroy_shader(bgfx_shader_handle_t _handle);
 
 /**/
@@ -753,6 +756,9 @@ BGFX_C_API void bgfx_update_texture_cube(bgfx_texture_handle_t _handle, uint16_t
 
 /**/
 BGFX_C_API uint32_t bgfx_read_texture(bgfx_texture_handle_t _handle, void* _data, uint8_t _mip);
+
+/**/
+BGFX_C_API void bgfx_set_texture_name(bgfx_texture_handle_t _handle, const char* _name);
 
 /**/
 BGFX_C_API void bgfx_destroy_texture(bgfx_texture_handle_t _handle);

@@ -123,6 +123,7 @@ typedef struct bgfx_interface_vtbl
     void (*destroy_indirect_buffer)(bgfx_indirect_buffer_handle_t _handle);
     bgfx_shader_handle_t (*create_shader)(const bgfx_memory_t* _mem);
     uint16_t (*get_shader_uniforms)(bgfx_shader_handle_t _handle, bgfx_uniform_handle_t* _uniforms, uint16_t _max);
+    void (*set_shader_name)(bgfx_shader_handle_t _handle, const char* _name);
     void (*destroy_shader)(bgfx_shader_handle_t _handle);
     bgfx_program_handle_t (*create_program)(bgfx_shader_handle_t _vsh, bgfx_shader_handle_t _fsh, bool _destroyShaders);
     bgfx_program_handle_t (*create_compute_program)(bgfx_shader_handle_t _csh, bool _destroyShaders);
@@ -138,6 +139,7 @@ typedef struct bgfx_interface_vtbl
     void (*update_texture_3d)(bgfx_texture_handle_t _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _z, uint16_t _width, uint16_t _height, uint16_t _depth, const bgfx_memory_t* _mem);
     void (*update_texture_cube)(bgfx_texture_handle_t _handle, uint16_t _layer, uint8_t _side, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const bgfx_memory_t* _mem, uint16_t _pitch);
     uint32_t (*read_texture)(bgfx_texture_handle_t _handle, void* _data, uint8_t _mip);
+    void (*set_texture_name)(bgfx_texture_handle_t _handle, const char* _name);
     void (*destroy_texture)(bgfx_texture_handle_t _handle);
     bgfx_frame_buffer_handle_t (*create_frame_buffer)(uint16_t _width, uint16_t _height, bgfx_texture_format_t _format, uint32_t _textureFlags);
     bgfx_frame_buffer_handle_t (*create_frame_buffer_scaled)(bgfx_backbuffer_ratio_t _ratio, bgfx_texture_format_t _format, uint32_t _textureFlags);
