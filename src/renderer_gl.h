@@ -840,6 +840,14 @@ typedef uint64_t GLuint64;
 #	define GL_UPPER_LEFT 0x8CA2
 #endif // GL_UPPER_LEFT
 
+#ifndef GL_SHADER
+#	define GL_SHADER 0x82E1
+#endif // GL_SHADER
+
+#ifndef GL_TEXTURE
+#	define GL_TEXTURE 0x1702
+#endif // GL_TEXTURE
+
 // _KHR or _ARB...
 #define GL_DEBUG_OUTPUT_SYNCHRONOUS         0x8242
 #define GL_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH 0x8243

@@ -2984,7 +2984,20 @@ namespace bgfx { namespace gl
 
 		virtual void setName(Handle _handle, const char* _name) override
 		{
-			BX_UNUSED(_handle, _name)
+			switch (_handle.type)
+			{
+			case Handle::Shader:
+				GL_CHECK(glObjectLabel(GL_SHADER, m_shaders[_handle.idx].m_id, -1, _name) );
+				break;
+
+			case Handle::Texture:
+				GL_CHECK(glObjectLabel(GL_TEXTURE, m_textures[_handle.idx].m_id, -1, _name) );
+				break;
+
+			default:
+				BX_CHECK(false, "Invalid handle type?! %d", _handle.type);
+				break;
+			}
 		}
 
 		void submitBlit(BlitState& _bs, uint16_t _view);
