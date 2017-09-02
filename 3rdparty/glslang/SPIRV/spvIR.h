@@ -65,6 +65,14 @@ const Id NoResult = 0;
 const Id NoType = 0;
 
 const Decoration NoPrecision = DecorationMax;
+
+#ifdef __GNUC__
+#   define POTENTIALLY_UNUSED __attribute__((unused))
+#else
+#   define POTENTIALLY_UNUSED
+#endif
+
+POTENTIALLY_UNUSED
 const MemorySemanticsMask MemorySemanticsAllMemory =
                 (MemorySemanticsMask)(MemorySemanticsSequentiallyConsistentMask |
                                       MemorySemanticsUniformMemoryMask |

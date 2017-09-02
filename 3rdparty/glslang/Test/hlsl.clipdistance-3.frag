@@ -4,5 +4,3 @@ float4 main(in float4 pos : SV_Position,
 {
     return pos + clip[0] + cull[0];
 }
-
-

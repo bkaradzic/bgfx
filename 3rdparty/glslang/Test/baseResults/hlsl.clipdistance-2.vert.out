@@ -106,7 +106,7 @@ Shader version: 500
 0:?         'pos' ( temp 4-component vector of float)
 0:?       Sequence
 0:4        move second child to first child ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( out float ClipDistance)
 0:?             'clip' ( out 4-element array of float ClipDistance)
 0:4            Constant:
 0:4              0 (const int)
@@ -118,7 +118,7 @@ Shader version: 500
 0:4            Constant:
 0:4              0 (const int)
 0:4        move second child to first child ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( out float ClipDistance)
 0:?             'clip' ( out 4-element array of float ClipDistance)
 0:4            Constant:
 0:4              1 (const int)
@@ -130,7 +130,7 @@ Shader version: 500
 0:4            Constant:
 0:4              1 (const int)
 0:4        move second child to first child ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( out float ClipDistance)
 0:?             'clip' ( out 4-element array of float ClipDistance)
 0:4            Constant:
 0:4              2 (const int)
@@ -142,7 +142,7 @@ Shader version: 500
 0:4            Constant:
 0:4              0 (const int)
 0:4        move second child to first child ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( out float ClipDistance)
 0:?             'clip' ( out 4-element array of float ClipDistance)
 0:4            Constant:
 0:4              3 (const int)
@@ -155,7 +155,7 @@ Shader version: 500
 0:4              1 (const int)
 0:?       Sequence
 0:4        move second child to first child ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( out float CullDistance)
 0:?             'cull' ( out 4-element array of float CullDistance)
 0:4            Constant:
 0:4              0 (const int)
@@ -167,7 +167,7 @@ Shader version: 500
 0:4            Constant:
 0:4              0 (const int)
 0:4        move second child to first child ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( out float CullDistance)
 0:?             'cull' ( out 4-element array of float CullDistance)
 0:4            Constant:
 0:4              1 (const int)
@@ -179,7 +179,7 @@ Shader version: 500
 0:4            Constant:
 0:4              1 (const int)
 0:4        move second child to first child ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( out float CullDistance)
 0:?             'cull' ( out 4-element array of float CullDistance)
 0:4            Constant:
 0:4              2 (const int)
@@ -191,7 +191,7 @@ Shader version: 500
 0:4            Constant:
 0:4              0 (const int)
 0:4        move second child to first child ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( out float CullDistance)
 0:?             'cull' ( out 4-element array of float CullDistance)
 0:4            Constant:
 0:4              3 (const int)
@@ -318,7 +318,7 @@ Shader version: 500
 0:?         'pos' ( temp 4-component vector of float)
 0:?       Sequence
 0:4        move second child to first child ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( out float ClipDistance)
 0:?             'clip' ( out 4-element array of float ClipDistance)
 0:4            Constant:
 0:4              0 (const int)
@@ -330,7 +330,7 @@ Shader version: 500
 0:4            Constant:
 0:4              0 (const int)
 0:4        move second child to first child ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( out float ClipDistance)
 0:?             'clip' ( out 4-element array of float ClipDistance)
 0:4            Constant:
 0:4              1 (const int)
@@ -342,7 +342,7 @@ Shader version: 500
 0:4            Constant:
 0:4              1 (const int)
 0:4        move second child to first child ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( out float ClipDistance)
 0:?             'clip' ( out 4-element array of float ClipDistance)
 0:4            Constant:
 0:4              2 (const int)
@@ -354,7 +354,7 @@ Shader version: 500
 0:4            Constant:
 0:4              0 (const int)
 0:4        move second child to first child ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( out float ClipDistance)
 0:?             'clip' ( out 4-element array of float ClipDistance)
 0:4            Constant:
 0:4              3 (const int)
@@ -367,7 +367,7 @@ Shader version: 500
 0:4              1 (const int)
 0:?       Sequence
 0:4        move second child to first child ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( out float CullDistance)
 0:?             'cull' ( out 4-element array of float CullDistance)
 0:4            Constant:
 0:4              0 (const int)
@@ -379,7 +379,7 @@ Shader version: 500
 0:4            Constant:
 0:4              0 (const int)
 0:4        move second child to first child ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( out float CullDistance)
 0:?             'cull' ( out 4-element array of float CullDistance)
 0:4            Constant:
 0:4              1 (const int)
@@ -391,7 +391,7 @@ Shader version: 500
 0:4            Constant:
 0:4              1 (const int)
 0:4        move second child to first child ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( out float CullDistance)
 0:?             'cull' ( out 4-element array of float CullDistance)
 0:4            Constant:
 0:4              2 (const int)
@@ -403,7 +403,7 @@ Shader version: 500
 0:4            Constant:
 0:4              0 (const int)
 0:4        move second child to first child ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( out float CullDistance)
 0:?             'cull' ( out 4-element array of float CullDistance)
 0:4            Constant:
 0:4              3 (const int)

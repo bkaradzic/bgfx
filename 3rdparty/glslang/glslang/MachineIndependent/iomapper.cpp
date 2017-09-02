@@ -253,10 +253,14 @@ struct TResolverUniformAdaptor
         ent.newBinding = -1;
         ent.newSet = -1;
         ent.newIndex = -1;
-        const bool isValid = resolver.validateBinding(stage, ent.symbol->getName().c_str(), ent.symbol->getType(), ent.live);
+        const bool isValid = resolver.validateBinding(stage, ent.symbol->getName().c_str(), ent.symbol->getType(),
+                                                             ent.live);
         if (isValid) {
-            ent.newBinding = resolver.resolveBinding(stage, ent.symbol->getName().c_str(), ent.symbol->getType(), ent.live);
+            ent.newBinding = resolver.resolveBinding(stage, ent.symbol->getName().c_str(), ent.symbol->getType(),
+                                                            ent.live);
             ent.newSet = resolver.resolveSet(stage, ent.symbol->getName().c_str(), ent.symbol->getType(), ent.live);
+            ent.newLocation = resolver.resolveUniformLocation(stage, ent.symbol->getName().c_str(),
+                                                                     ent.symbol->getType(), ent.live);
 
             if (ent.newBinding != -1) {
                 if (ent.newBinding >= int(TQualifier::layoutBindingEnd)) {
@@ -356,6 +360,7 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
     std::vector<std::string> baseResourceSetBinding;
     bool doAutoBindingMapping;
     bool doAutoLocationMapping;
+    int nextUniformLocation;
     typedef std::vector<int> TSlotSet;
     typedef std::unordered_map<int, TSlotSet> TSlotSetMap;
     TSlotSetMap slots;
@@ -411,7 +416,27 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
 
         return 0;
     }
+    int resolveUniformLocation(EShLanguage /*stage*/, const char* /*name*/, const glslang::TType& type, bool /*is_live*/) override
+    {
+        // kick out of not doing this
+        if (!doAutoLocationMapping)
+            return -1;
 
+        // no locations added if already present, a built-in variable, a block, or an opaque
+        if (type.getQualifier().hasLocation() || type.isBuiltIn() ||
+            type.getBasicType() == EbtBlock || type.containsOpaque())
+            return -1;
+
+        // no locations on blocks of built-in variables
+        if (type.isStruct()) {
+            if (type.getStruct()->size() < 1)
+                return -1;
+            if ((*type.getStruct())[0].type->isBuiltIn())
+                return -1;
+        }
+
+        return nextUniformLocation++;
+    }
     bool validateInOut(EShLanguage /*stage*/, const char* /*name*/, const TType& /*type*/, bool /*is_live*/) override
     {
         return true;
@@ -700,6 +725,7 @@ bool TIoMapper::addStage(EShLanguage stage, TIntermediate &intermediate, TInfoSi
         resolverBase->baseResourceSetBinding = intermediate.getResourceSetBinding();
         resolverBase->doAutoBindingMapping = intermediate.getAutoMapBindings();
         resolverBase->doAutoLocationMapping = intermediate.getAutoMapLocations();
+        resolverBase->nextUniformLocation = 0;
 
         resolver = resolverBase;
     }

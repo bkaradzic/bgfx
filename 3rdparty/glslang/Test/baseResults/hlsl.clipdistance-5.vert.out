@@ -92,7 +92,7 @@ Shader version: 500
 0:11              0 (const int)
 0:?         Sequence
 0:11          move second child to first child ( temp float)
-0:11            direct index ( temp float)
+0:11            direct index ( out float ClipDistance)
 0:?               '@entryPointOutput.ClipRect' ( out 4-element array of float ClipDistance)
 0:11              Constant:
 0:11                0 (const int)
@@ -107,7 +107,7 @@ Shader version: 500
 0:11              Constant:
 0:11                0 (const int)
 0:11          move second child to first child ( temp float)
-0:11            direct index ( temp float)
+0:11            direct index ( out float ClipDistance)
 0:?               '@entryPointOutput.ClipRect' ( out 4-element array of float ClipDistance)
 0:11              Constant:
 0:11                1 (const int)
@@ -122,7 +122,7 @@ Shader version: 500
 0:11              Constant:
 0:11                1 (const int)
 0:11          move second child to first child ( temp float)
-0:11            direct index ( temp float)
+0:11            direct index ( out float ClipDistance)
 0:?               '@entryPointOutput.ClipRect' ( out 4-element array of float ClipDistance)
 0:11              Constant:
 0:11                2 (const int)
@@ -137,7 +137,7 @@ Shader version: 500
 0:11              Constant:
 0:11                0 (const int)
 0:11          move second child to first child ( temp float)
-0:11            direct index ( temp float)
+0:11            direct index ( out float ClipDistance)
 0:?               '@entryPointOutput.ClipRect' ( out 4-element array of float ClipDistance)
 0:11              Constant:
 0:11                3 (const int)
@@ -253,7 +253,7 @@ Shader version: 500
 0:11              0 (const int)
 0:?         Sequence
 0:11          move second child to first child ( temp float)
-0:11            direct index ( temp float)
+0:11            direct index ( out float ClipDistance)
 0:?               '@entryPointOutput.ClipRect' ( out 4-element array of float ClipDistance)
 0:11              Constant:
 0:11                0 (const int)
@@ -268,7 +268,7 @@ Shader version: 500
 0:11              Constant:
 0:11                0 (const int)
 0:11          move second child to first child ( temp float)
-0:11            direct index ( temp float)
+0:11            direct index ( out float ClipDistance)
 0:?               '@entryPointOutput.ClipRect' ( out 4-element array of float ClipDistance)
 0:11              Constant:
 0:11                1 (const int)
@@ -283,7 +283,7 @@ Shader version: 500
 0:11              Constant:
 0:11                1 (const int)
 0:11          move second child to first child ( temp float)
-0:11            direct index ( temp float)
+0:11            direct index ( out float ClipDistance)
 0:?               '@entryPointOutput.ClipRect' ( out 4-element array of float ClipDistance)
 0:11              Constant:
 0:11                2 (const int)
@@ -298,7 +298,7 @@ Shader version: 500
 0:11              Constant:
 0:11                0 (const int)
 0:11          move second child to first child ( temp float)
-0:11            direct index ( temp float)
+0:11            direct index ( out float ClipDistance)
 0:?               '@entryPointOutput.ClipRect' ( out 4-element array of float ClipDistance)
 0:11              Constant:
 0:11                3 (const int)

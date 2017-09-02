@@ -63,7 +63,7 @@ std::string to_string(const T& val) {
 }
 #endif
 
-#if defined(_MSC_VER) && _MSC_VER < 1700
+#if defined(_MSC_VER) && _MSC_VER < 1800
 inline long long int strtoll (const char* str, char** endptr, int base)
 {
   return _strtoi64(str, endptr, base);

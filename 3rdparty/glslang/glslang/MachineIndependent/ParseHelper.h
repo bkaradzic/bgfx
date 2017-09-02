@@ -76,6 +76,7 @@ public:
                       EProfile profile, const SpvVersion& spvVersion, EShLanguage language,
                       TInfoSink& infoSink, bool forwardCompatible, EShMessages messages)
           : TParseVersions(interm, version, profile, spvVersion, language, infoSink, forwardCompatible, messages),
+            scopeMangler("::"),
             symbolTable(symbolTable),
             statementNestingLevel(0), loopNestingLevel(0), structNestingLevel(0), controlFlowNestingLevel(0),
             postEntryPointReturn(false),
@@ -143,7 +144,7 @@ public:
     virtual bool lValueErrorCheck(const TSourceLoc&, const char* op, TIntermTyped*);
     virtual void rValueErrorCheck(const TSourceLoc&, const char* op, TIntermTyped*);
 
-    const char* const scopeMangler = "::";
+    const char* const scopeMangler;
 
     // Basic parsing state, easily accessible to the grammar
 

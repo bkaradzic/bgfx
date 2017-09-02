@@ -7,7 +7,7 @@ struct S {
 void main(triangle in float4 pos[3] : SV_Position, 
           triangle in uint VertexID[3] : VertexID,
           inout LineStream<S> OutputStream,
-          triangle in float2 clip[3][2] : SV_ClipDistance)  // scalar float
+          triangle in float2 clip[3][2] : SV_ClipDistance) // externally: an array 3 of array 4 of float.
 {
     S s;
 

@@ -3425,6 +3425,12 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "in int gl_DrawIDARB;"
                 );
         }
+        if (version >= 450) {
+            stageBuiltins[EShLangVertex].append(
+                "out int gl_ViewportIndex;"
+                "out int gl_Layer;"
+                );
+        }
         if (version >= 460) {
             stageBuiltins[EShLangVertex].append(
                 "in int gl_BaseVertex;"
@@ -3436,8 +3442,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 #ifdef NV_EXTENSIONS
         if (version >= 450)
             stageBuiltins[EShLangVertex].append(
-                "out int gl_ViewportIndex;"
-                "out int gl_Layer;"
                 "out int gl_ViewportMask[];"             // GL_NV_viewport_array2
                 "out int gl_SecondaryViewportMaskNV[];"  // GL_NV_stereo_view_rendering
                 "out vec4 gl_SecondaryPositionNV;"       // GL_NV_stereo_view_rendering
@@ -3730,11 +3734,15 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "};"
             "\n");
 
+        if (version >= 450)
+            stageBuiltins[EShLangTessEvaluation].append(
+                "out int gl_ViewportIndex;"
+                "out int gl_Layer;"
+                );
+
 #ifdef NV_EXTENSIONS
         if (version >= 450)
             stageBuiltins[EShLangTessEvaluation].append(
-                "out int  gl_ViewportIndex;"
-                "out int  gl_Layer;"
                 "out int  gl_ViewportMask[];"             // GL_NV_viewport_array2
                 "out vec4 gl_SecondaryPositionNV;"        // GL_NV_stereo_view_rendering
                 "out int  gl_SecondaryViewportMaskNV[];"  // GL_NV_stereo_view_rendering
@@ -5467,6 +5475,14 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setVariableExtensions("gl_Layer",         Num_viewportEXTs, viewportEXTs);
             symbolTable.setVariableExtensions("gl_ViewportIndex", Num_viewportEXTs, viewportEXTs);
         }
+#else
+        if (language == EShLangVertex || language == EShLangTessEvaluation) {
+            symbolTable.setVariableExtensions("gl_Layer",         1, &E_GL_ARB_shader_viewport_layer_array);
+            symbolTable.setVariableExtensions("gl_ViewportIndex", 1, &E_GL_ARB_shader_viewport_layer_array);
+        }
+#endif
+
+#ifdef NV_EXTENSIONS
         symbolTable.setVariableExtensions("gl_ViewportMask",            1, &E_GL_NV_viewport_array2);
         symbolTable.setVariableExtensions("gl_SecondaryPositionNV",     1, &E_GL_NV_stereo_view_rendering);
         symbolTable.setVariableExtensions("gl_SecondaryViewportMaskNV", 1, &E_GL_NV_stereo_view_rendering);

@@ -40,7 +40,7 @@ gl_FragCoord origin is upper left
 0:8                  1 (const int)
 0:8              Constant:
 0:8                0 (const int)
-0:8            direct index ( temp float)
+0:8            direct index ( in float ClipDistance)
 0:?               'v.clip1' ( in 8-element array of float ClipDistance)
 0:8              Constant:
 0:8                0 (const int)
@@ -52,7 +52,7 @@ gl_FragCoord origin is upper left
 0:8                  1 (const int)
 0:8              Constant:
 0:8                1 (const int)
-0:8            direct index ( temp float)
+0:8            direct index ( in float ClipDistance)
 0:?               'v.clip1' ( in 8-element array of float ClipDistance)
 0:8              Constant:
 0:8                1 (const int)
@@ -64,7 +64,7 @@ gl_FragCoord origin is upper left
 0:8                  1 (const int)
 0:8              Constant:
 0:8                2 (const int)
-0:8            direct index ( temp float)
+0:8            direct index ( in float ClipDistance)
 0:?               'v.clip1' ( in 8-element array of float ClipDistance)
 0:8              Constant:
 0:8                2 (const int)
@@ -76,7 +76,7 @@ gl_FragCoord origin is upper left
 0:8                  1 (const int)
 0:8              Constant:
 0:8                3 (const int)
-0:8            direct index ( temp float)
+0:8            direct index ( in float ClipDistance)
 0:?               'v.clip1' ( in 8-element array of float ClipDistance)
 0:8              Constant:
 0:8                3 (const int)
@@ -89,7 +89,7 @@ gl_FragCoord origin is upper left
 0:8                  2 (const int)
 0:8              Constant:
 0:8                0 (const int)
-0:8            direct index ( temp float)
+0:8            direct index ( in float ClipDistance)
 0:?               'v.clip1' ( in 8-element array of float ClipDistance)
 0:8              Constant:
 0:8                4 (const int)
@@ -101,7 +101,7 @@ gl_FragCoord origin is upper left
 0:8                  2 (const int)
 0:8              Constant:
 0:8                1 (const int)
-0:8            direct index ( temp float)
+0:8            direct index ( in float ClipDistance)
 0:?               'v.clip1' ( in 8-element array of float ClipDistance)
 0:8              Constant:
 0:8                5 (const int)
@@ -113,7 +113,7 @@ gl_FragCoord origin is upper left
 0:8                  2 (const int)
 0:8              Constant:
 0:8                2 (const int)
-0:8            direct index ( temp float)
+0:8            direct index ( in float ClipDistance)
 0:?               'v.clip1' ( in 8-element array of float ClipDistance)
 0:8              Constant:
 0:8                6 (const int)
@@ -125,7 +125,7 @@ gl_FragCoord origin is upper left
 0:8                  2 (const int)
 0:8              Constant:
 0:8                3 (const int)
-0:8            direct index ( temp float)
+0:8            direct index ( in float ClipDistance)
 0:?               'v.clip1' ( in 8-element array of float ClipDistance)
 0:8              Constant:
 0:8                7 (const int)
@@ -183,7 +183,7 @@ gl_FragCoord origin is upper left
 0:8                  1 (const int)
 0:8              Constant:
 0:8                0 (const int)
-0:8            direct index ( temp float)
+0:8            direct index ( in float ClipDistance)
 0:?               'v.clip1' ( in 8-element array of float ClipDistance)
 0:8              Constant:
 0:8                0 (const int)
@@ -195,7 +195,7 @@ gl_FragCoord origin is upper left
 0:8                  1 (const int)
 0:8              Constant:
 0:8                1 (const int)
-0:8            direct index ( temp float)
+0:8            direct index ( in float ClipDistance)
 0:?               'v.clip1' ( in 8-element array of float ClipDistance)
 0:8              Constant:
 0:8                1 (const int)
@@ -207,7 +207,7 @@ gl_FragCoord origin is upper left
 0:8                  1 (const int)
 0:8              Constant:
 0:8                2 (const int)
-0:8            direct index ( temp float)
+0:8            direct index ( in float ClipDistance)
 0:?               'v.clip1' ( in 8-element array of float ClipDistance)
 0:8              Constant:
 0:8                2 (const int)
@@ -219,7 +219,7 @@ gl_FragCoord origin is upper left
 0:8                  1 (const int)
 0:8              Constant:
 0:8                3 (const int)
-0:8            direct index ( temp float)
+0:8            direct index ( in float ClipDistance)
 0:?               'v.clip1' ( in 8-element array of float ClipDistance)
 0:8              Constant:
 0:8                3 (const int)
@@ -232,7 +232,7 @@ gl_FragCoord origin is upper left
 0:8                  2 (const int)
 0:8              Constant:
 0:8                0 (const int)
-0:8            direct index ( temp float)
+0:8            direct index ( in float ClipDistance)
 0:?               'v.clip1' ( in 8-element array of float ClipDistance)
 0:8              Constant:
 0:8                4 (const int)
@@ -244,7 +244,7 @@ gl_FragCoord origin is upper left
 0:8                  2 (const int)
 0:8              Constant:
 0:8                1 (const int)
-0:8            direct index ( temp float)
+0:8            direct index ( in float ClipDistance)
 0:?               'v.clip1' ( in 8-element array of float ClipDistance)
 0:8              Constant:
 0:8                5 (const int)
@@ -256,7 +256,7 @@ gl_FragCoord origin is upper left
 0:8                  2 (const int)
 0:8              Constant:
 0:8                2 (const int)
-0:8            direct index ( temp float)
+0:8            direct index ( in float ClipDistance)
 0:?               'v.clip1' ( in 8-element array of float ClipDistance)
 0:8              Constant:
 0:8                6 (const int)
@@ -268,7 +268,7 @@ gl_FragCoord origin is upper left
 0:8                  2 (const int)
 0:8              Constant:
 0:8                3 (const int)
-0:8            direct index ( temp float)
+0:8            direct index ( in float ClipDistance)
 0:?               'v.clip1' ( in 8-element array of float ClipDistance)
 0:8              Constant:
 0:8                7 (const int)

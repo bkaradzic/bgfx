@@ -6,9 +6,7 @@ in  vec4 foo;
 layout(location = 0)
 out vec4 bar;
 
-uniform vec4 uv1;
-uniform float uv2;
-uniform vec3 uv3;
+uniform vec4 uv;
 
 void main()
 {

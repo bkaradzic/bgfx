@@ -23,7 +23,7 @@
 #include <limits>
 #include <sstream>
 
-#if defined(_MSC_VER) && _MSC_VER < 1700
+#if defined(_MSC_VER) && _MSC_VER < 1800
 namespace std {
 bool isnan(double f)
 {

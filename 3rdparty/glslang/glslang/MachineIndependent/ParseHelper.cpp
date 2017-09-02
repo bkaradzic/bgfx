@@ -2493,8 +2493,8 @@ void TParseContext::transparentOpaqueCheck(const TSourceLoc& loc, const TType& t
         // Vulkan doesn't allow transparent uniforms outside of blocks
         if (spvVersion.vulkan > 0)
             vulkanRemoved(loc, "non-opaque uniforms outside a block");
-        // OpenGL wants locations on these
-        if (spvVersion.openGl > 0 && !type.getQualifier().hasLocation())
+        // OpenGL wants locations on these (unless they are getting automapped)
+        if (spvVersion.openGl > 0 && !type.getQualifier().hasLocation() && !intermediate.getAutoMapLocations())
             error(loc, "non-opaque uniform variables need a layout(location=L)", identifier.c_str(), "");
     }
 }

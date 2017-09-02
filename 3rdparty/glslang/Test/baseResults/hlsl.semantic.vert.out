@@ -48,7 +48,7 @@ Shader version: 500
 0:?             'ins' ( temp structure{ temp float clip0,  temp float clip1,  temp float cull0,  temp float cull1,  temp int ii})
 0:?         Sequence
 0:10          move second child to first child ( temp float)
-0:10            direct index ( temp float)
+0:10            direct index ( out float ClipDistance)
 0:?               '@entryPointOutput.clip1' ( out 2-element array of float ClipDistance)
 0:10              Constant:
 0:10                0 (const int)
@@ -58,7 +58,7 @@ Shader version: 500
 0:10                0 (const int)
 0:?         Sequence
 0:10          move second child to first child ( temp float)
-0:10            direct index ( temp float)
+0:10            direct index ( out float ClipDistance)
 0:?               '@entryPointOutput.clip1' ( out 2-element array of float ClipDistance)
 0:10              Constant:
 0:10                1 (const int)
@@ -68,7 +68,7 @@ Shader version: 500
 0:10                1 (const int)
 0:?         Sequence
 0:10          move second child to first child ( temp float)
-0:10            direct index ( temp float)
+0:10            direct index ( out float CullDistance)
 0:?               '@entryPointOutput.cull1' ( out 2-element array of float CullDistance)
 0:10              Constant:
 0:10                0 (const int)
@@ -78,7 +78,7 @@ Shader version: 500
 0:10                2 (const int)
 0:?         Sequence
 0:10          move second child to first child ( temp float)
-0:10            direct index ( temp float)
+0:10            direct index ( out float CullDistance)
 0:?               '@entryPointOutput.cull1' ( out 2-element array of float CullDistance)
 0:10              Constant:
 0:10                1 (const int)
@@ -155,7 +155,7 @@ Shader version: 500
 0:?             'ins' ( temp structure{ temp float clip0,  temp float clip1,  temp float cull0,  temp float cull1,  temp int ii})
 0:?         Sequence
 0:10          move second child to first child ( temp float)
-0:10            direct index ( temp float)
+0:10            direct index ( out float ClipDistance)
 0:?               '@entryPointOutput.clip1' ( out 2-element array of float ClipDistance)
 0:10              Constant:
 0:10                0 (const int)
@@ -165,7 +165,7 @@ Shader version: 500
 0:10                0 (const int)
 0:?         Sequence
 0:10          move second child to first child ( temp float)
-0:10            direct index ( temp float)
+0:10            direct index ( out float ClipDistance)
 0:?               '@entryPointOutput.clip1' ( out 2-element array of float ClipDistance)
 0:10              Constant:
 0:10                1 (const int)
@@ -175,7 +175,7 @@ Shader version: 500
 0:10                1 (const int)
 0:?         Sequence
 0:10          move second child to first child ( temp float)
-0:10            direct index ( temp float)
+0:10            direct index ( out float CullDistance)
 0:?               '@entryPointOutput.cull1' ( out 2-element array of float CullDistance)
 0:10              Constant:
 0:10                0 (const int)
@@ -185,7 +185,7 @@ Shader version: 500
 0:10                2 (const int)
 0:?         Sequence
 0:10          move second child to first child ( temp float)
-0:10            direct index ( temp float)
+0:10            direct index ( out float CullDistance)
 0:?               '@entryPointOutput.cull1' ( out 2-element array of float CullDistance)
 0:10              Constant:
 0:10                1 (const int)

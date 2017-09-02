@@ -208,11 +208,14 @@ class TVariable;
 class TIntermediate {
 public:
     explicit TIntermediate(EShLanguage l, int v = 0, EProfile p = ENoProfile) :
+        implicitThisName("@this"),
         language(l), source(EShSourceNone), profile(p), version(v), treeRoot(0),
         numEntryPoints(0), numErrors(0), numPushConstants(0), recursive(false),
-        invocations(TQualifier::layoutNotSet), vertices(TQualifier::layoutNotSet), inputPrimitive(ElgNone), outputPrimitive(ElgNone),
+        invocations(TQualifier::layoutNotSet), vertices(TQualifier::layoutNotSet),
+        inputPrimitive(ElgNone), outputPrimitive(ElgNone),
         pixelCenterInteger(false), originUpperLeft(false),
-        vertexSpacing(EvsNone), vertexOrder(EvoNone), pointMode(false), earlyFragmentTests(false), postDepthCoverage(false), depthLayout(EldNone), depthReplacing(false),
+        vertexSpacing(EvsNone), vertexOrder(EvoNone), pointMode(false), earlyFragmentTests(false),
+        postDepthCoverage(false), depthLayout(EldNone), depthReplacing(false),
         blendEquations(0), xfbMode(false), multiStream(false),
 #ifdef NV_EXTENSIONS
         layoutOverrideCoverage(false),
@@ -607,7 +610,7 @@ public:
     void addProcessArgument(const std::string& arg) { processes.addArgument(arg); }
     const std::vector<std::string>& getProcesses() const { return processes.getProcesses(); }
 
-    const char* const implicitThisName = "@this";
+    const char* const implicitThisName;
 
 protected:
     TIntermSymbol* addSymbol(int Id, const TString&, const TType&, const TConstUnionArray&, TIntermTyped* subtree, const TSourceLoc&);

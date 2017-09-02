@@ -533,9 +533,10 @@ class TIoMapper;
 
 // Allows to customize the binding layout after linking.
 // All used uniform variables will invoke at least validateBinding.
-// If validateBinding returned true then the other resolveBinding
-// and resolveSet are invoked to resolve the binding and descriptor
-// set index respectively.
+// If validateBinding returned true then the other resolveBinding,
+// resolveSet, and resolveLocation are invoked to resolve the binding
+// and descriptor set index respectively.
+//
 // Invocations happen in a particular order:
 // 1) all shader inputs
 // 2) all shader outputs
@@ -567,6 +568,9 @@ public:
   // Should return a value >= 0 if the current set should be overridden.
   // Return -1 if the current set (including no set) should be kept.
   virtual int resolveSet(EShLanguage stage, const char* name, const TType& type, bool is_live) = 0;
+  // Should return a value >= 0 if the current location should be overridden.
+  // Return -1 if the current location (including no location) should be kept.
+  virtual int resolveUniformLocation(EShLanguage stage, const char* name, const TType& type, bool is_live) = 0;
   // Should return true if the resulting/current setup would be okay.
   // Basic idea is to do aliasing checks and reject invalid semantic names.
   virtual bool validateInOut(EShLanguage stage, const char* name, const TType& type, bool is_live) = 0;

@@ -1068,6 +1068,10 @@ int TPpContext::tMacroInput::scan(TPpToken* ppToken)
         pasting = true;
     }
 
+    // HLSL does expand macros before concatenation
+    if (pasting && pp->parseContext.isReadingHLSL())
+        pasting = false;
+
     // TODO: preprocessor:  properly handle whitespace (or lack of it) between tokens when expanding
     if (token == PpAtomIdentifier) {
         int i;

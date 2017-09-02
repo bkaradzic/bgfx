@@ -23,14 +23,14 @@ gl_FragCoord origin is upper left
 0:?       Sequence
 0:4        move second child to first child ( temp float)
 0:?           'clip' ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( in float ClipDistance)
 0:?             'clip' ( in 1-element array of float ClipDistance)
 0:4            Constant:
 0:4              0 (const int)
 0:?       Sequence
 0:4        move second child to first child ( temp float)
 0:?           'cull' ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( in float CullDistance)
 0:?             'cull' ( in 1-element array of float CullDistance)
 0:4            Constant:
 0:4              0 (const int)
@@ -74,14 +74,14 @@ gl_FragCoord origin is upper left
 0:?       Sequence
 0:4        move second child to first child ( temp float)
 0:?           'clip' ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( in float ClipDistance)
 0:?             'clip' ( in 1-element array of float ClipDistance)
 0:4            Constant:
 0:4              0 (const int)
 0:?       Sequence
 0:4        move second child to first child ( temp float)
 0:?           'cull' ( temp float)
-0:4          direct index ( temp float)
+0:4          direct index ( in float CullDistance)
 0:?             'cull' ( in 1-element array of float CullDistance)
 0:4            Constant:
 0:4              0 (const int)

@@ -55,7 +55,7 @@ gl_FragCoord origin is upper left
 0:7                  0 (const int)
 0:7              Constant:
 0:7                0 (const int)
-0:7            direct index ( temp float)
+0:7            direct index ( in float ClipDistance)
 0:?               'v.ClipRect' ( in 4-element array of float ClipDistance)
 0:7              Constant:
 0:7                0 (const int)
@@ -70,7 +70,7 @@ gl_FragCoord origin is upper left
 0:7                  0 (const int)
 0:7              Constant:
 0:7                1 (const int)
-0:7            direct index ( temp float)
+0:7            direct index ( in float ClipDistance)
 0:?               'v.ClipRect' ( in 4-element array of float ClipDistance)
 0:7              Constant:
 0:7                1 (const int)
@@ -85,7 +85,7 @@ gl_FragCoord origin is upper left
 0:7                  1 (const int)
 0:7              Constant:
 0:7                0 (const int)
-0:7            direct index ( temp float)
+0:7            direct index ( in float ClipDistance)
 0:?               'v.ClipRect' ( in 4-element array of float ClipDistance)
 0:7              Constant:
 0:7                2 (const int)
@@ -100,7 +100,7 @@ gl_FragCoord origin is upper left
 0:7                  1 (const int)
 0:7              Constant:
 0:7                1 (const int)
-0:7            direct index ( temp float)
+0:7            direct index ( in float ClipDistance)
 0:?               'v.ClipRect' ( in 4-element array of float ClipDistance)
 0:7              Constant:
 0:7                3 (const int)
@@ -173,7 +173,7 @@ gl_FragCoord origin is upper left
 0:7                  0 (const int)
 0:7              Constant:
 0:7                0 (const int)
-0:7            direct index ( temp float)
+0:7            direct index ( in float ClipDistance)
 0:?               'v.ClipRect' ( in 4-element array of float ClipDistance)
 0:7              Constant:
 0:7                0 (const int)
@@ -188,7 +188,7 @@ gl_FragCoord origin is upper left
 0:7                  0 (const int)
 0:7              Constant:
 0:7                1 (const int)
-0:7            direct index ( temp float)
+0:7            direct index ( in float ClipDistance)
 0:?               'v.ClipRect' ( in 4-element array of float ClipDistance)
 0:7              Constant:
 0:7                1 (const int)
@@ -203,7 +203,7 @@ gl_FragCoord origin is upper left
 0:7                  1 (const int)
 0:7              Constant:
 0:7                0 (const int)
-0:7            direct index ( temp float)
+0:7            direct index ( in float ClipDistance)
 0:?               'v.ClipRect' ( in 4-element array of float ClipDistance)
 0:7              Constant:
 0:7                2 (const int)
@@ -218,7 +218,7 @@ gl_FragCoord origin is upper left
 0:7                  1 (const int)
 0:7              Constant:
 0:7                1 (const int)
-0:7            direct index ( temp float)
+0:7            direct index ( in float ClipDistance)
 0:?               'v.ClipRect' ( in 4-element array of float ClipDistance)
 0:7              Constant:
 0:7                3 (const int)
