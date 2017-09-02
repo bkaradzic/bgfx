@@ -1685,7 +1685,20 @@ namespace bgfx { namespace d3d12
 
 		virtual void setName(Handle _handle, const char* _name) override
 		{
-			BX_UNUSED(_handle, _name)
+			switch (_handle.type)
+			{
+			case Handle::Shader:
+//				setDebugObjectName(m_shaders[_handle.idx].m_ptr, _name);
+				break;
+
+			case Handle::Texture:
+				setDebugObjectName(m_textures[_handle.idx].m_ptr, _name);
+				break;
+
+			default:
+				BX_CHECK(false, "Invalid handle type?! %d", _handle.type);
+				break;
+			}
 		}
 
 		void submitBlit(BlitState& _bs, uint16_t _view);
