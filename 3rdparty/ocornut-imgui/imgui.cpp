@@ -1794,6 +1794,7 @@ ImGuiWindow::ImGuiWindow(const char* name)
     Accessed = false;
     Collapsed = false;
     SkipItems = false;
+    Appearing = false;
     BeginCount = 0;
     PopupId = 0;
     AutoFitFramesX = AutoFitFramesY = -1;
@@ -3981,13 +3982,15 @@ bool ImGui::Begin(const char* name, bool* p_open, const ImVec2& size_on_first_us
     }
 
     const bool window_appearing_after_being_hidden = (window->HiddenFrames == 1);
+    window->Appearing = (!window_was_active || window_appearing_after_being_hidden);
 
     // Process SetNextWindow***() calls
     bool window_pos_set_by_api = false, window_size_set_by_api = false;
     if (g.SetNextWindowPosCond)
     {
         const ImVec2 backup_cursor_pos = window->DC.CursorPos;                  // FIXME: not sure of the exact reason of this saving/restore anymore :( need to look into that.
-        if (!window_was_active || window_appearing_after_being_hidden) window->SetWindowPosAllowFlags |= ImGuiCond_Appearing;
+        if (window->Appearing) 
+            window->SetWindowPosAllowFlags |= ImGuiCond_Appearing;
         window_pos_set_by_api = (window->SetWindowPosAllowFlags & g.SetNextWindowPosCond) != 0;
         if (window_pos_set_by_api && ImLengthSqr(g.SetNextWindowPosVal - ImVec2(-FLT_MAX,-FLT_MAX)) < 0.001f)
         {
@@ -4003,7 +4006,8 @@ bool ImGui::Begin(const char* name, bool* p_open, const ImVec2& size_on_first_us
     }
     if (g.SetNextWindowSizeCond)
     {
-        if (!window_was_active || window_appearing_after_being_hidden) window->SetWindowSizeAllowFlags |= ImGuiCond_Appearing;
+        if (window->Appearing) 
+            window->SetWindowSizeAllowFlags |= ImGuiCond_Appearing;
         window_size_set_by_api = (window->SetWindowSizeAllowFlags & g.SetNextWindowSizeCond) != 0;
         SetWindowSize(window, g.SetNextWindowSizeVal, g.SetNextWindowSizeCond);
         g.SetNextWindowSizeCond = 0;
@@ -4019,13 +4023,14 @@ bool ImGui::Begin(const char* name, bool* p_open, const ImVec2& size_on_first_us
     }
     if (g.SetNextWindowCollapsedCond)
     {
-        if (!window_was_active || window_appearing_after_being_hidden) window->SetWindowCollapsedAllowFlags |= ImGuiCond_Appearing;
+        if (window->Appearing)
+            window->SetWindowCollapsedAllowFlags |= ImGuiCond_Appearing;
         SetWindowCollapsed(window, g.SetNextWindowCollapsedVal, g.SetNextWindowCollapsedCond);
         g.SetNextWindowCollapsedCond = 0;
     }
     if (g.SetNextWindowFocus)
     {
-        ImGui::SetWindowFocus();
+        SetWindowFocus();
         g.SetNextWindowFocus = false;
     }
 
@@ -5079,7 +5084,14 @@ void ImGui::SetWindowCollapsed(bool collapsed, ImGuiCond cond)
 
 bool ImGui::IsWindowCollapsed()
 {
-    return GImGui->CurrentWindow->Collapsed;
+    ImGuiWindow* window = GetCurrentWindowRead();
+    return window->Collapsed;
+}
+
+bool ImGui::IsWindowAppearing()
+{
+    ImGuiWindow* window = GetCurrentWindowRead();
+    return window->Appearing;
 }
 
 void ImGui::SetWindowCollapsed(const char* name, bool collapsed, ImGuiCond cond)
@@ -8563,8 +8575,7 @@ bool ImGui::Combo(const char* label, int* current_item, const char* items_separa
     return value_changed;
 }
 
-// Combo box function.
-bool ImGui::Combo(const char* label, int* current_item, bool (*items_getter)(void*, int, const char**), void* data, int items_count, int height_in_items)
+bool ImGui::BeginCombo(const char* label, const char* preview_value, float popup_opened_height)
 {
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
@@ -8591,88 +8602,102 @@ bool ImGui::Combo(const char* label, int* current_item, bool (*items_getter)(voi
     RenderFrame(ImVec2(frame_bb.Max.x-arrow_size, frame_bb.Min.y), frame_bb.Max, GetColorU32(popup_open || hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button), true, style.FrameRounding); // FIXME-ROUNDING
     RenderCollapseTriangle(ImVec2(frame_bb.Max.x-arrow_size, frame_bb.Min.y) + style.FramePadding, true);
 
-    if (*current_item >= 0 && *current_item < items_count)
-    {
-        const char* item_text;
-        if (items_getter(data, *current_item, &item_text))
-            RenderTextClipped(frame_bb.Min + style.FramePadding, value_bb.Max, item_text, NULL, NULL, ImVec2(0.0f,0.0f));
-    }
+    if (preview_value != NULL)
+        RenderTextClipped(frame_bb.Min + style.FramePadding, value_bb.Max, preview_value, NULL, NULL, ImVec2(0.0f,0.0f));
 
     if (label_size.x > 0)
         RenderText(ImVec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y), label);
 
-    bool popup_toggled = false;
     if (hovered)
     {
         SetHoveredID(id);
         if (g.IO.MouseClicked[0])
         {
             ClearActiveID();
-            popup_toggled = true;
-        }
-    }
-    if (popup_toggled)
-    {
-        if (IsPopupOpen(id))
-        {
-            ClosePopup(id);
-        }
-        else
-        {
-            FocusWindow(window);
-            OpenPopup(label);
-            popup_open = true;
-        }
-    }
-
-    bool value_changed = false;
-    if (IsPopupOpen(id))
-    {
-        // Size default to hold ~7 items
-        if (height_in_items < 0)
-            height_in_items = 7;
-
-        float popup_height = (label_size.y + style.ItemSpacing.y) * ImMin(items_count, height_in_items) + (style.FramePadding.y * 3);
-        float popup_y1 = frame_bb.Max.y;
-        float popup_y2 = ImClamp(popup_y1 + popup_height, popup_y1, g.IO.DisplaySize.y - style.DisplaySafeAreaPadding.y);
-        if ((popup_y2 - popup_y1) < ImMin(popup_height, frame_bb.Min.y - style.DisplaySafeAreaPadding.y))
-        {
-            // Position our combo ABOVE because there's more space to fit! (FIXME: Handle in Begin() or use a shared helper. We have similar code in Begin() for popup placement)
-            popup_y1 = ImClamp(frame_bb.Min.y - popup_height, style.DisplaySafeAreaPadding.y, frame_bb.Min.y);
-            popup_y2 = frame_bb.Min.y;
-        }
-        ImRect popup_rect(ImVec2(frame_bb.Min.x, popup_y1), ImVec2(frame_bb.Max.x, popup_y2));
-        SetNextWindowPos(popup_rect.Min);
-        SetNextWindowSize(popup_rect.GetSize());
-        PushStyleVar(ImGuiStyleVar_WindowPadding, style.FramePadding);
-
-        const ImGuiWindowFlags flags = ImGuiWindowFlags_ComboBox | ((window->Flags & ImGuiWindowFlags_ShowBorders) ? ImGuiWindowFlags_ShowBorders : 0);
-        if (BeginPopupEx(id, flags))
-        {
-            // Display items
-            // FIXME-OPT: Use clipper
-            Spacing();
-            for (int i = 0; i < items_count; i++)
+            if (IsPopupOpen(id))
             {
-                PushID((void*)(intptr_t)i);
-                const bool item_selected = (i == *current_item);
-                const char* item_text;
-                if (!items_getter(data, i, &item_text))
-                    item_text = "*Unknown item*";
-                if (Selectable(item_text, item_selected))
-                {
-                    ClearActiveID();
-                    value_changed = true;
-                    *current_item = i;
-                }
-                if (item_selected && popup_toggled)
-                    SetScrollHere();
-                PopID();
+                ClosePopup(id);
             }
-            EndPopup();
+            else
+            {
+                FocusWindow(window);
+                OpenPopup(label);
+            }
         }
-        PopStyleVar();
     }
+
+    if (!IsPopupOpen(id))
+        return false;
+
+    float popup_y1 = frame_bb.Max.y;
+    float popup_y2 = ImClamp(popup_y1 + popup_opened_height, popup_y1, g.IO.DisplaySize.y - style.DisplaySafeAreaPadding.y);
+    if ((popup_y2 - popup_y1) < ImMin(popup_opened_height, frame_bb.Min.y - style.DisplaySafeAreaPadding.y))
+    {
+        // Position our combo ABOVE because there's more space to fit! (FIXME: Handle in Begin() or use a shared helper. We have similar code in Begin() for popup placement)
+        popup_y1 = ImClamp(frame_bb.Min.y - popup_opened_height, style.DisplaySafeAreaPadding.y, frame_bb.Min.y);
+        popup_y2 = frame_bb.Min.y;
+    }
+    ImRect popup_rect(ImVec2(frame_bb.Min.x, popup_y1), ImVec2(frame_bb.Max.x, popup_y2));
+    SetNextWindowPos(popup_rect.Min);
+    SetNextWindowSize(popup_rect.GetSize());
+    PushStyleVar(ImGuiStyleVar_WindowPadding, style.FramePadding);
+
+    const ImGuiWindowFlags flags = ImGuiWindowFlags_ComboBox | ((window->Flags & ImGuiWindowFlags_ShowBorders) ? ImGuiWindowFlags_ShowBorders : 0);
+    if (!BeginPopupEx(id, flags))
+    {
+        IM_ASSERT(0);   // This should never happen as we tested for IsPopupOpen() above
+        return false;
+    }
+    Spacing();
+
+    return true;
+}
+
+void ImGui::EndCombo()
+{
+    EndPopup();
+    PopStyleVar();
+}
+
+// Combo box function.
+bool ImGui::Combo(const char* label, int* current_item, bool (*items_getter)(void*, int, const char**), void* data, int items_count, int height_in_items)
+{
+    ImGuiContext& g = *GImGui;
+    const ImGuiStyle& style = g.Style;
+
+    const char* preview_text = NULL;
+    if (*current_item >= 0 && *current_item < items_count)
+        items_getter(data, *current_item, &preview_text);
+
+    // Size default to hold ~7 items
+    if (height_in_items < 0)
+        height_in_items = 7;
+    float popup_opened_height = (g.FontSize + style.ItemSpacing.y) * ImMin(items_count, height_in_items) + (style.FramePadding.y * 3);
+
+    if (!BeginCombo(label, preview_text, popup_opened_height))
+        return false;
+
+    // Display items
+    // FIXME-OPT: Use clipper
+    bool value_changed = false;
+    for (int i = 0; i < items_count; i++)
+    {
+        PushID((void*)(intptr_t)i);
+        const bool item_selected = (i == *current_item);
+        const char* item_text;
+        if (!items_getter(data, i, &item_text))
+            item_text = "*Unknown item*";
+        if (Selectable(item_text, item_selected))
+        {
+            value_changed = true;
+            *current_item = i;
+        }
+        if (item_selected && IsWindowAppearing())
+            SetScrollHere();
+        PopID();
+    }
+
+    EndCombo();
     return value_changed;
 }
 
