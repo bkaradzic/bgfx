@@ -995,7 +995,20 @@ namespace bgfx { namespace mtl
 
 		virtual void setName(Handle _handle, const char* _name) override
 		{
-			BX_UNUSED(_handle, _name)
+			switch (_handle.type)
+			{
+			case Handle::Shader:
+				m_shaders[_handle.idx].m_function.m_obj.label = [NSString stringWithUTF8String:_name];
+				break;
+
+			case Handle::Texture:
+				m_textures[_handle.idx].m_ptr.m_obj.label = [NSString stringWithUTF8String:_name];
+				break;
+
+			default:
+				BX_CHECK(false, "Invalid handle type?! %d", _handle.type);
+				break;
+			}
 		}
 
 		void submitBlit(BlitState& _bs, uint16_t _view);
