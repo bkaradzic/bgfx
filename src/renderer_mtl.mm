@@ -998,7 +998,7 @@ namespace bgfx { namespace mtl
 			switch (_handle.type)
 			{
 			case Handle::Shader:
-				m_shaders[_handle.idx].m_function.m_obj.label = [NSString stringWithUTF8String:_name];
+//				m_shaders[_handle.idx].m_function.m_obj.label = [NSString stringWithUTF8String:_name];
 				break;
 
 			case Handle::Texture:
