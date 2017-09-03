@@ -1600,8 +1600,8 @@ int _main_(int _argc, char** _argv)
 				float wh[3] = { float(view.m_info.width), float(view.m_info.height), 0.0f };
 				float result[3];
 				bx::vec3MulMtx(result, wh, orientation);
-				result[0] = bx::fround(bx::fabsolute(result[0]) );
-				result[1] = bx::fround(bx::fabsolute(result[1]) );
+				result[0] = bx::fround(bx::fabs(result[0]) );
+				result[1] = bx::fround(bx::fabs(result[1]) );
 
 				scale.set(bx::fmin(float(width)  / result[0]
 					,              float(height) / result[1])

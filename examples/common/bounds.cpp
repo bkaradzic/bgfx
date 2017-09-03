@@ -543,7 +543,7 @@ bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule, Inters
 	bx::vec3Cross(normal, _ray.m_dir, axis);
 
 	const float len  = bx::vec3Norm(normal, normal);
-	const float dist = bx::fabsolute(bx::vec3Dot(rc, normal) );
+	const float dist = bx::fabs(bx::vec3Dot(rc, normal) );
 
 	if (dist > _cylinder.m_radius)
 	{
@@ -559,7 +559,7 @@ bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule, Inters
 
 	const float rsq   = bx::fsq(_cylinder.m_radius);
 	const float ddoto = bx::vec3Dot(_ray.m_dir, vo);
-	const float ss    = t0 - bx::fabsolute(bx::fsqrt(rsq - bx::fsq(dist) ) / ddoto);
+	const float ss    = t0 - bx::fabs(bx::fsqrt(rsq - bx::fsq(dist) ) / ddoto);
 
 	float point[3];
 	getPointAt(point, _ray, ss);

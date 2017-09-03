@@ -137,8 +137,8 @@ static void squircle(float* _out, float _angle)
 {
 	float sa = bx::fsin(_angle);
 	float ca = bx::fcos(_angle);
-	_out[0] = bx::fsqrt(bx::fabsolute(sa) ) * bx::fsign(sa);
-	_out[1] = bx::fsqrt(bx::fabsolute(ca) ) * bx::fsign(ca);
+	_out[0] = bx::fsqrt(bx::fabs(sa) ) * bx::fsign(sa);
+	_out[1] = bx::fsqrt(bx::fabs(ca) ) * bx::fsign(ca);
 }
 
 uint32_t genSphere(uint8_t _subdiv0, void* _pos0 = NULL, uint16_t _posStride0 = 0, void* _normals0 = NULL, uint16_t _normalStride0 = 0)
