@@ -10,7 +10,8 @@
 
 namespace bgfx { namespace d3d12
 {
-	static wchar_t s_viewNameW[BGFX_CONFIG_MAX_VIEWS][256];
+	static wchar_t s_viewNameW[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
+	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
 
 	struct PrimInfo
 	{
@@ -1199,6 +1200,13 @@ namespace bgfx { namespace d3d12
 					g_caps.formats[ii] = support;
 				}
 
+				// Init reserved part of view name.
+				for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
+				{
+					bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED + 1, "%3d   ", ii);
+					mbstowcs(s_viewNameW[ii], s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED);
+				}
+
 				postReset();
 
 				m_batch.create(4<<10);
@@ -1665,8 +1673,20 @@ namespace bgfx { namespace d3d12
 			DX_RELEASE(readback, 0);
 		}
 
-		void updateViewName(uint8_t /*_id*/, const char* /*_name*/) override
+		void updateViewName(uint8_t _id, const char* _name) override
 		{
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+			{
+				mbstowcs(&s_viewNameW[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
+					, _name
+					, BX_COUNTOF(s_viewNameW[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
+					);
+			}
+
+			bx::strCopy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
+				, BX_COUNTOF(s_viewName[0]) - BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
+				, _name
+				);
 		}
 
 		void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) override
@@ -4675,20 +4695,28 @@ data.NumQualityLevels = 0;
 		queryHeapDesc.NodeMask = 1;
 		queryHeapDesc.Type     = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
 		DX_CHECK(s_renderD3D12->m_device->CreateQueryHeap(&queryHeapDesc
-				, IID_ID3D12QueryHeap
-				, (void**)&m_queryHeap
-				) );
+			, IID_ID3D12QueryHeap
+			, (void**)&m_queryHeap
+			) );
 
 		const uint32_t size = queryHeapDesc.Count*sizeof(uint64_t);
 		m_readback = createCommittedResource(s_renderD3D12->m_device
-						, HeapProperty::ReadBack
-						, size
-						);
+			, HeapProperty::ReadBack
+			, size
+			);
 
 		DX_CHECK(s_renderD3D12->m_cmd.m_commandQueue->GetTimestampFrequency(&m_frequency) );
-
+		
 		D3D12_RANGE range = { 0, size };
-		m_readback->Map(0, &range, (void**)&m_result);
+		m_readback->Map(0, &range, (void**)&m_queryResult);
+	
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
+		{
+			Result& result = m_result[ii];
+			result.reset();
+		}
+
+		m_control.reset();
 	}
 
 	void TimerQueryD3D12::shutdown()
@@ -4700,49 +4728,85 @@ data.NumQualityLevels = 0;
 		DX_RELEASE(m_readback, 0);
 	}
 
-	void TimerQueryD3D12::begin(ID3D12GraphicsCommandList* _commandList)
+	uint32_t TimerQueryD3D12::begin(uint32_t _resultIdx)
 	{
-		BX_UNUSED(_commandList);
 		while (0 == m_control.reserve(1) )
 		{
 			m_control.consume(1);
 		}
 
-		uint32_t offset = m_control.m_current * 2 + 0;
-		_commandList->EndQuery(m_queryHeap
+		Result& result = m_result[_resultIdx];
+		++result.m_pending;
+
+		const uint32_t idx = m_control.m_current;
+		Query& query = m_query[idx];
+		query.m_resultIdx = _resultIdx;
+		query.m_ready     = false;
+
+		ID3D12GraphicsCommandList* commandList = s_renderD3D12->m_commandList;
+
+		uint32_t offset = idx * 2 + 0;
+		commandList->EndQuery(m_queryHeap
 			, D3D12_QUERY_TYPE_TIMESTAMP
 			, offset
 			);
+
+		m_control.commit(1);
+
+		return idx;
 	}
 
-	void TimerQueryD3D12::end(ID3D12GraphicsCommandList* _commandList)
+	void TimerQueryD3D12::end(uint32_t _idx)
 	{
-		BX_UNUSED(_commandList);
-		uint32_t offset = m_control.m_current * 2;
-		_commandList->EndQuery(m_queryHeap
+		Query& query = m_query[_idx];
+		query.m_ready = true;
+		query.m_fence = s_renderD3D12->m_cmd.m_currentFence - 1;
+		uint32_t offset = _idx * 2;
+
+		ID3D12GraphicsCommandList* commandList = s_renderD3D12->m_commandList;
+
+		commandList->EndQuery(m_queryHeap
 			, D3D12_QUERY_TYPE_TIMESTAMP
 			, offset + 1
 			);
-		_commandList->ResolveQueryData(m_queryHeap
+		commandList->ResolveQueryData(m_queryHeap
 			, D3D12_QUERY_TYPE_TIMESTAMP
 			, offset
 			, 2
 			, m_readback
 			, offset * sizeof(uint64_t)
 			);
-		m_control.commit(1);
+
+		while (update() )
+		{
+		}
 	}
 
-	bool TimerQueryD3D12::get()
+	bool TimerQueryD3D12::update()
 	{
 		if (0 != m_control.available() )
 		{
-			uint32_t offset = m_control.m_read * 2;
-			m_begin = m_result[offset+0];
-			m_end   = m_result[offset+1];
-			m_elapsed = m_end - m_begin;
+			uint32_t idx = m_control.m_read;
+			Query& query = m_query[idx];
+
+			if (!query.m_ready)
+			{
+				return false;
+			}
+
+			if (query.m_fence > s_renderD3D12->m_cmd.m_completedFence)
+			{
+				return false;
+			}
 
 			m_control.consume(1);
+
+			Result& result = m_result[query.m_resultIdx];
+			--result.m_pending;
+
+			uint32_t offset = idx * 2;
+			result.m_begin  = m_queryResult[offset+0];
+			result.m_end    = m_queryResult[offset+1];
 
 			return true;
 		}
@@ -4928,7 +4992,7 @@ data.NumQualityLevels = 0;
 		int64_t elapsed = -bx::getHPCounter();
 		int64_t captureElapsed = 0;
 
-		m_gpuTimer.begin(m_commandList);
+		uint32_t frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS);
 
 		if (0 < _render->m_iboffset)
 		{
@@ -4991,6 +5055,12 @@ data.NumQualityLevels = 0;
 		uint32_t statsNumIndices = 0;
 		uint32_t statsKeyType[2] = {};
 
+		Profiler<TimerQueryD3D12> profiler(
+			  _render
+			, m_gpuTimer
+			, s_viewName
+			);
+
 #if BX_PLATFORM_WINDOWS
 		m_backBufferColorIdx = m_swapChain->GetCurrentBackBufferIndex();
 #endif // BX_PLATFORM_WINDOWS
@@ -5052,6 +5122,13 @@ data.NumQualityLevels = 0;
 
 					fbh = _render->m_fb[view];
 					setFrameBuffer(fbh);
+
+					if (item > 1)
+					{
+						profiler.end();
+					}
+
+					profiler.begin(view);
 
 					viewState.m_rect = _render->m_rect[view];
 					const Rect& rect        = _render->m_rect[view];
@@ -5577,6 +5654,20 @@ data.NumQualityLevels = 0;
 			kick();
 
 			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
+
+			if (0 < _render->m_num)
+			{
+				if (0 != (m_resolution.m_flags & BGFX_RESET_FLUSH_AFTER_RENDER) )
+				{
+//					deviceCtx->Flush();
+				}
+
+//				captureElapsed = -bx::getHPCounter();
+//				capture();
+//				captureElapsed += bx::getHPCounter();
+
+				profiler.end();
+			}
 		}
 
 		int64_t now = bx::getHPCounter();
@@ -5604,15 +5695,17 @@ data.NumQualityLevels = 0;
 		presentMin = bx::int64_min(presentMin, m_presentElapsed);
 		presentMax = bx::int64_max(presentMax, m_presentElapsed);
 
-		m_gpuTimer.end(m_commandList);
-
-		do
+		if (UINT32_MAX != frameQueryIdx)
 		{
+			m_gpuTimer.end(frameQueryIdx);
+
+			const TimerQueryD3D12::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
 			double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
-			elapsedGpuMs   = m_gpuTimer.m_elapsed * toGpuMs;
+			elapsedGpuMs   = (result.m_end - result.m_begin) * toGpuMs;
 			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
+
+			maxGpuLatency = bx::uint32_imax(maxGpuLatency, result.m_pending-1);
 		}
-		while (m_gpuTimer.get() );
 
 		maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
 
@@ -5620,8 +5713,9 @@ data.NumQualityLevels = 0;
 
 		perfStats.cpuTimeEnd    = now;
 		perfStats.cpuTimerFreq  = timerFreq;
-		perfStats.gpuTimeBegin  = m_gpuTimer.m_begin;
-		perfStats.gpuTimeEnd    = m_gpuTimer.m_end;
+		const TimerQueryD3D12::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+		perfStats.gpuTimeBegin  = result.m_begin;
+		perfStats.gpuTimeEnd    = result.m_end;
 		perfStats.gpuTimerFreq  = m_gpuTimer.m_frequency;
 		perfStats.numDraw       = statsKeyType[0];
 		perfStats.numCompute    = statsKeyType[1];
