@@ -2478,7 +2478,13 @@ namespace bgfx
 
 		BGFX_API_FUNC(VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexDecl& _decl, uint16_t _flags) )
 		{
-			VertexBufferHandle handle = { m_vertexBufferHandle.alloc() };
+			VertexBufferHandle handle = BGFX_INVALID_HANDLE;
+
+			BX_WARN(0 != _decl.m_stride, "VertexDecl stride is 0.");
+			if (0 != _decl.m_stride)
+			{
+				handle.idx = m_vertexBufferHandle.alloc();
+			}
 
 			BX_WARN(isValid(handle), "Failed to allocate vertex buffer handle.");
 			if (isValid(handle) )
