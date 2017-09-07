@@ -176,8 +176,17 @@ namespace bgfx { namespace gl
 			, nil
 			];
 
-		EAGLContext* context = [ [EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
-		BX_CHECK(NULL != context, "Failed to create kEAGLRenderingAPIOpenGLES2 context.");
+		EAGLContext* context = (EAGLContext*)g_platformData.context;
+		if (NULL == context)
+		{
+			context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3];
+			if (NULL == context)
+			{
+				context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+			}
+		}
+		BX_CHECK(NULL != context, "No valid OpenGLES context.");
+
 		m_context = (void*)context;
 		[EAGLContext setCurrentContext:context];
 
