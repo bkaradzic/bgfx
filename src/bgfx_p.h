@@ -134,6 +134,11 @@ namespace bgfx
 #if BGFX_CONFIG_USE_TINYSTL
 namespace bgfx
 {
+	inline bool isValid(const VertexDecl& _decl)
+	{
+		return 0 != _decl.m_stride;
+	}
+
 	struct TinyStlAllocator
 	{
 		static void* static_allocate(size_t _bytes);
@@ -1092,7 +1097,7 @@ namespace bgfx
 		{
 			uint32_t size = BX_ALIGN_16(bx::uint32_max(_size, sizeof(UniformBuffer) ) );
 			void*    data = BX_ALLOC(g_allocator, size);
-			return ::new(data) UniformBuffer(_size);
+			return BX_PLACEMENT_NEW(data, UniformBuffer)(_size);
 		}
 
 		static void destroy(UniformBuffer* _uniformBuffer)
@@ -2478,13 +2483,7 @@ namespace bgfx
 
 		BGFX_API_FUNC(VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexDecl& _decl, uint16_t _flags) )
 		{
-			VertexBufferHandle handle = BGFX_INVALID_HANDLE;
-
-			BX_WARN(0 != _decl.m_stride, "VertexDecl stride is 0.");
-			if (0 != _decl.m_stride)
-			{
-				handle.idx = m_vertexBufferHandle.alloc();
-			}
+			VertexBufferHandle handle = { m_vertexBufferHandle.alloc() };
 
 			BX_WARN(isValid(handle), "Failed to allocate vertex buffer handle.");
 			if (isValid(handle) )

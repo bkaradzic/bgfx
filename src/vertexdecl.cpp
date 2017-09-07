@@ -64,6 +64,7 @@ namespace bgfx
 	}
 
 	VertexDecl::VertexDecl()
+		: m_stride(0)
 	{
 		// BK - struct need to have ctor to qualify as non-POD data.
 		// Need this to catch programming errors when serializing struct.

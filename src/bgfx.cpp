@@ -2895,7 +2895,7 @@ error:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
-		BX_CHECK(0 != _decl.m_stride, "Invalid VertexDecl.");
+		BX_CHECK(isValid(_decl), "Invalid VertexDecl.");
 		return s_ctx->createVertexBuffer(_mem, _decl, _flags);
 	}
 
@@ -2934,7 +2934,7 @@ error:
 	DynamicVertexBufferHandle createDynamicVertexBuffer(uint32_t _num, const VertexDecl& _decl, uint16_t _flags)
 	{
 		BGFX_CHECK_MAIN_THREAD();
-		BX_CHECK(0 != _decl.m_stride, "Invalid VertexDecl.");
+		BX_CHECK(isValid(_decl), "Invalid VertexDecl.");
 		return s_ctx->createDynamicVertexBuffer(_num, _decl, _flags);
 	}
 
@@ -2942,7 +2942,7 @@ error:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
-		BX_CHECK(0 != _decl.m_stride, "Invalid VertexDecl.");
+		BX_CHECK(isValid(_decl), "Invalid VertexDecl.");
 		return s_ctx->createDynamicVertexBuffer(_mem, _decl, _flags);
 	}
 
@@ -2970,7 +2970,7 @@ error:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(0 < _num, "Requesting 0 vertices.");
-		BX_CHECK(0 != _decl.m_stride, "Invalid VertexDecl.");
+		BX_CHECK(isValid(_decl), "Invalid VertexDecl.");
 		return s_ctx->getAvailTransientVertexBuffer(_num, _decl.m_stride);
 	}
 
@@ -2999,7 +2999,7 @@ error:
 		BX_CHECK(NULL != _tvb, "_tvb can't be NULL");
 		BX_CHECK(0 < _num, "Requesting 0 vertices.");
 		BX_CHECK(UINT16_MAX >= _num, "Requesting %d vertices (max: %d).", _num, UINT16_MAX);
-		BX_CHECK(0 != _decl.m_stride, "Invalid VertexDecl.");
+		BX_CHECK(isValid(_decl), "Invalid VertexDecl.");
 		s_ctx->allocTransientVertexBuffer(_tvb, _num, _decl);
 		BX_CHECK(_num == _tvb->size / _decl.m_stride, "Failed to allocate transient vertex buffer (requested %d, available %d). Use bgfx::checkAvailTransient* functions to ensure availability."
 			, _num
