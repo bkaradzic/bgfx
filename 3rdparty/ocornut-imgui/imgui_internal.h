@@ -48,6 +48,7 @@ typedef int ImGuiLayoutType;      // enum ImGuiLayoutType_
 typedef int ImGuiButtonFlags;     // enum ImGuiButtonFlags_
 typedef int ImGuiTreeNodeFlags;   // enum ImGuiTreeNodeFlags_
 typedef int ImGuiSliderFlags;     // enum ImGuiSliderFlags_
+typedef int ImGuiItemFlags;       // enum ImGuiItemFlags_
 
 //-------------------------------------------------------------------------
 // STB libraries
@@ -486,8 +487,9 @@ struct ImGuiContext
     float                   FramerateSecPerFrame[120];          // calculate estimate of framerate for user
     int                     FramerateSecPerFrameIdx;
     float                   FramerateSecPerFrameAccum;
-    int                     CaptureMouseNextFrame;              // explicit capture via CaptureInputs() sets those flags
-    int                     CaptureKeyboardNextFrame;
+    int                     WantCaptureMouseNextFrame;          // explicit capture via CaptureInputs() sets those flags
+    int                     WantCaptureKeyboardNextFrame;
+    int                     WantTextInputNextFrame;
     char                    TempBuffer[1024*3+1];               // temporary text buffer
 
     ImGuiContext()
@@ -558,9 +560,20 @@ struct ImGuiContext
         memset(FramerateSecPerFrame, 0, sizeof(FramerateSecPerFrame));
         FramerateSecPerFrameIdx = 0;
         FramerateSecPerFrameAccum = 0.0f;
-        CaptureMouseNextFrame = CaptureKeyboardNextFrame = -1;
+        WantCaptureMouseNextFrame = WantCaptureKeyboardNextFrame = WantTextInputNextFrame = -1;
         memset(TempBuffer, 0, sizeof(TempBuffer));
     }
+};
+
+// Transient per-window flags, reset at the beginning of the frame. For child window, inherited from parent on first Begin().
+enum ImGuiItemFlags_
+{
+    ImGuiItemFlags_AllowKeyboardFocus           = 1 << 0,  // true
+    ImGuiItemFlags_ButtonRepeat                 = 1 << 1,  // false    // Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings.
+    //ImGuiItemFlags_Disabled                   = 1 << 2,  // false    // All widgets appears are disabled
+    //ImGuiItemFlags_AllowNavDefaultFocus       = 1 << 3,  // true
+    //ImGuiItemFlags_SelectableDontClosePopup   = 1 << 4,  // false    // MenuItem/Selectable() automatically closes current Popup window
+    ImGuiItemFlags_Default_                 = ImGuiItemFlags_AllowKeyboardFocus
 };
 
 // Transient per-window data, reset at the beginning of the frame
@@ -588,14 +601,12 @@ struct IMGUI_API ImGuiDrawContext
     ImGuiLayoutType         LayoutType;
 
     // We store the current settings outside of the vectors to increase memory locality (reduce cache misses). The vectors are rarely modified. Also it allows us to not heap allocate for short-lived windows which are not using those settings.
+    ImGuiItemFlags          ItemFlags;              // == ItemFlagsStack.back() [empty == ImGuiItemFlags_Default]
     float                   ItemWidth;              // == ItemWidthStack.back(). 0.0: default, >0.0: width in pixels, <0.0: align xx pixels to the right of window
     float                   TextWrapPos;            // == TextWrapPosStack.back() [empty == -1.0f]
-    bool                    AllowKeyboardFocus;     // == AllowKeyboardFocusStack.back() [empty == true]
-    bool                    ButtonRepeat;           // == ButtonRepeatStack.back() [empty == false]
+    ImVector<ImGuiItemFlags>ItemFlagsStack;
     ImVector<float>         ItemWidthStack;
     ImVector<float>         TextWrapPosStack;
-    ImVector<bool>          AllowKeyboardFocusStack;
-    ImVector<bool>          ButtonRepeatStack;
     ImVector<ImGuiGroupData>GroupStack;
     int                     StackSizesBackup[6];    // Store size of various stacks for asserting
 
@@ -629,8 +640,7 @@ struct IMGUI_API ImGuiDrawContext
         StateStorage = NULL;
         LayoutType = ImGuiLayoutType_Vertical;
         ItemWidth = 0.0f;
-        ButtonRepeat = false;
-        AllowKeyboardFocus = true;
+        ItemFlags = ImGuiItemFlags_Default_;
         TextWrapPos = -1.0f;
         memset(StackSizesBackup, 0, sizeof(StackSizesBackup));
 
@@ -760,6 +770,8 @@ namespace ImGui
     IMGUI_API void          FocusableItemUnregister(ImGuiWindow* window);
     IMGUI_API ImVec2        CalcItemSize(ImVec2 size, float default_x, float default_y);
     IMGUI_API float         CalcWrapWidthForPos(const ImVec2& pos, float wrap_pos_x);
+    IMGUI_API void          PushItemFlag(ImGuiItemFlags option, bool enabled);
+    IMGUI_API void          PopItemFlag();
 
     IMGUI_API void          OpenPopupEx(ImGuiID id, bool reopen_existing);
     IMGUI_API bool          IsPopupOpen(ImGuiID id);

@@ -1986,7 +1986,7 @@ bool ImGui::FocusableItemRegister(ImGuiWindow* window, ImGuiID id, bool tab_stop
 {
     ImGuiContext& g = *GImGui;
 
-    const bool allow_keyboard_focus = window->DC.AllowKeyboardFocus;
+    const bool allow_keyboard_focus = (window->DC.ItemFlags & ImGuiItemFlags_AllowKeyboardFocus) != 0;
     window->FocusIdxAllCounter++;
     if (allow_keyboard_focus)
         window->FocusIdxTabCounter++;
@@ -2291,14 +2291,14 @@ void ImGui::NewFrame()
                 mouse_earliest_button_down = i;
     }
     bool mouse_avail_to_imgui = (mouse_earliest_button_down == -1) || g.IO.MouseDownOwned[mouse_earliest_button_down];
-    if (g.CaptureMouseNextFrame != -1)
-        g.IO.WantCaptureMouse = (g.CaptureMouseNextFrame != 0);
+    if (g.WantCaptureMouseNextFrame != -1)
+        g.IO.WantCaptureMouse = (g.WantCaptureMouseNextFrame != 0);
     else
         g.IO.WantCaptureMouse = (mouse_avail_to_imgui && (g.HoveredWindow != NULL || mouse_any_down)) || (g.ActiveId != 0) || (!g.OpenPopupStack.empty());
-    g.IO.WantCaptureKeyboard = (g.CaptureKeyboardNextFrame != -1) ? (g.CaptureKeyboardNextFrame != 0) : (g.ActiveId != 0);
-    g.IO.WantTextInput = (g.ActiveId != 0 && g.InputTextState.Id == g.ActiveId);
+    g.IO.WantCaptureKeyboard = (g.WantCaptureKeyboardNextFrame != -1) ? (g.WantCaptureKeyboardNextFrame != 0) : (g.ActiveId != 0);
+    g.IO.WantTextInput = (g.WantTextInputNextFrame != -1) ? (g.WantTextInputNextFrame != 0) : 0;
     g.MouseCursor = ImGuiMouseCursor_Arrow;
-    g.CaptureMouseNextFrame = g.CaptureKeyboardNextFrame = -1;
+    g.WantCaptureMouseNextFrame = g.WantCaptureKeyboardNextFrame = g.WantTextInputNextFrame = -1;
     g.OsImePosRequest = ImVec2(1.0f, 1.0f); // OS Input Method Editor showing on top-left of our window by default
 
     // If mouse was first clicked outside of ImGui bounds we also cancel out hovering.
@@ -3311,12 +3311,12 @@ void ImGui::SetMouseCursor(ImGuiMouseCursor cursor_type)
 
 void ImGui::CaptureKeyboardFromApp(bool capture)
 {
-    GImGui->CaptureKeyboardNextFrame = capture ? 1 : 0;
+    GImGui->WantCaptureKeyboardNextFrame = capture ? 1 : 0;
 }
 
 void ImGui::CaptureMouseFromApp(bool capture)
 {
-    GImGui->CaptureMouseNextFrame = capture ? 1 : 0;
+    GImGui->WantCaptureMouseNextFrame = capture ? 1 : 0;
 }
 
 bool ImGui::IsItemHovered()
@@ -4375,13 +4375,11 @@ bool ImGui::Begin(const char* name, bool* p_open, const ImVec2& size_on_first_us
         window->DC.LogLinePosY = window->DC.CursorPos.y - 9999.0f;
         window->DC.ChildWindows.resize(0);
         window->DC.LayoutType = ImGuiLayoutType_Vertical;
+        window->DC.ItemFlags = ImGuiItemFlags_Default_;
         window->DC.ItemWidth = window->ItemWidthDefault;
         window->DC.TextWrapPos = -1.0f; // disabled
-        window->DC.AllowKeyboardFocus = true;
-        window->DC.ButtonRepeat = false;
+        window->DC.ItemFlagsStack.resize(0);
         window->DC.ItemWidthStack.resize(0);
-        window->DC.AllowKeyboardFocusStack.resize(0);
-        window->DC.ButtonRepeatStack.resize(0);
         window->DC.TextWrapPosStack.resize(0);
         window->DC.ColumnsCurrent = 0;
         window->DC.ColumnsCount = 1;
@@ -4392,6 +4390,12 @@ bool ImGui::Begin(const char* name, bool* p_open, const ImVec2& size_on_first_us
         window->DC.StateStorage = &window->StateStorage;
         window->DC.GroupStack.resize(0);
         window->MenuColumns.Update(3, style.ItemSpacing.x, window_just_activated_by_user);
+
+        if ((flags & ImGuiWindowFlags_ChildWindow) && (window->DC.ItemFlags != parent_window->DC.ItemFlags))
+        {
+            window->DC.ItemFlags = parent_window->DC.ItemFlags;
+            window->DC.ItemFlagsStack.push_back(window->DC.ItemFlags);
+        }
 
         if (window->AutoFitFramesX > 0)
             window->AutoFitFramesX--;
@@ -4726,32 +4730,41 @@ void  ImGui::PopFont()
     SetCurrentFont(g.FontStack.empty() ? GetDefaultFont() : g.FontStack.back());
 }
 
-void ImGui::PushAllowKeyboardFocus(bool allow_keyboard_focus)
+void ImGui::PushItemFlag(ImGuiItemFlags option, bool enabled)
 {
     ImGuiWindow* window = GetCurrentWindow();
-    window->DC.AllowKeyboardFocus = allow_keyboard_focus;
-    window->DC.AllowKeyboardFocusStack.push_back(allow_keyboard_focus);
+    if (enabled)
+        window->DC.ItemFlags |= option;
+    else
+        window->DC.ItemFlags &= ~option;
+    window->DC.ItemFlagsStack.push_back(window->DC.ItemFlags);
+}
+
+void ImGui::PopItemFlag()
+{
+    ImGuiWindow* window = GetCurrentWindow();
+    window->DC.ItemFlagsStack.pop_back();
+    window->DC.ItemFlags = window->DC.ItemFlagsStack.empty() ? ImGuiItemFlags_Default_ : window->DC.ItemFlagsStack.back();
+}
+
+void ImGui::PushAllowKeyboardFocus(bool allow_keyboard_focus)
+{
+    PushItemFlag(ImGuiItemFlags_AllowKeyboardFocus, allow_keyboard_focus);
 }
 
 void ImGui::PopAllowKeyboardFocus()
 {
-    ImGuiWindow* window = GetCurrentWindow();
-    window->DC.AllowKeyboardFocusStack.pop_back();
-    window->DC.AllowKeyboardFocus = window->DC.AllowKeyboardFocusStack.empty() ? true : window->DC.AllowKeyboardFocusStack.back();
+    PopItemFlag();
 }
 
 void ImGui::PushButtonRepeat(bool repeat)
 {
-    ImGuiWindow* window = GetCurrentWindow();
-    window->DC.ButtonRepeat = repeat;
-    window->DC.ButtonRepeatStack.push_back(repeat);
+    PushItemFlag(ImGuiItemFlags_ButtonRepeat, repeat);
 }
 
 void ImGui::PopButtonRepeat()
 {
-    ImGuiWindow* window = GetCurrentWindow();
-    window->DC.ButtonRepeatStack.pop_back();
-    window->DC.ButtonRepeat = window->DC.ButtonRepeatStack.empty() ? false : window->DC.ButtonRepeatStack.back();
+    PopItemFlag();
 }
 
 void ImGui::PushTextWrapPos(float wrap_pos_x)
@@ -5728,7 +5741,7 @@ bool ImGui::ButtonEx(const char* label, const ImVec2& size_arg, ImGuiButtonFlags
     if (!ItemAdd(bb, &id))
         return false;
 
-    if (window->DC.ButtonRepeat) flags |= ImGuiButtonFlags_Repeat;
+    if (window->DC.ItemFlags & ImGuiItemFlags_ButtonRepeat) flags |= ImGuiButtonFlags_Repeat;
     bool hovered, held;
     bool pressed = ButtonBehavior(bb, id, &hovered, &held, flags);
 
@@ -6484,6 +6497,7 @@ bool ImGui::InputScalarAsWidgetReplacement(const ImRect& aabb, const char* label
     ImGuiWindow* window = GetCurrentWindow();
 
     // Our replacement widget will override the focus ID (registered previously to allow for a TAB focus to happen)
+    // On the first frame, g.ScalarAsInputTextId == 0, then on subsequent frames it becomes == id
     SetActiveID(g.ScalarAsInputTextId, window);
     SetHoveredID(0);
     FocusableItemUnregister(window);
@@ -6729,7 +6743,6 @@ bool ImGui::SliderFloat(const char* label, float* v, float v_min, float v_max, c
     {
         SetActiveID(id, window);
         FocusWindow(window);
-
         if (tab_focus_requested || g.IO.KeyCtrl)
         {
             start_text_input = true;
@@ -7026,11 +7039,10 @@ bool ImGui::DragFloat(const char* label, float* v, float v_speed, float v_min, f
     // Tabbing or CTRL-clicking on Drag turns it into an input box
     bool start_text_input = false;
     const bool tab_focus_requested = FocusableItemRegister(window, id);
-    if (tab_focus_requested || (hovered && (g.IO.MouseClicked[0] | g.IO.MouseDoubleClicked[0])))
+    if (tab_focus_requested || (hovered && (g.IO.MouseClicked[0] || g.IO.MouseDoubleClicked[0])))
     {
         SetActiveID(id, window);
         FocusWindow(window);
-
         if (tab_focus_requested || g.IO.KeyCtrl || g.IO.MouseDoubleClicked[0])
         {
             start_text_input = true;
@@ -7913,6 +7925,7 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
         // Although we are active we don't prevent mouse from hovering other elements unless we are interacting right now with the widget.
         // Down the line we should have a cleaner library-wide concept of Selected vs Active.
         g.ActiveIdAllowOverlap = !io.MouseDown[0];
+        g.WantTextInputNextFrame = 1;
 
         // Edit in progress
         const float mouse_x = (io.MousePos.x - frame_bb.Min.x - style.FramePadding.x) + edit_state.ScrollX;
@@ -8605,25 +8618,31 @@ bool ImGui::BeginCombo(const char* label, const char* preview_value, float popup
     if (label_size.x > 0)
         RenderText(ImVec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y), label);
 
+    bool popup_toggled = false;
     if (hovered)
     {
         SetHoveredID(id);
         if (g.IO.MouseClicked[0])
         {
             ClearActiveID();
-            if (IsPopupOpen(id))
-            {
-                ClosePopup(id);
-            }
-            else
-            {
-                FocusWindow(window);
-                OpenPopup(label);
-            }
+            popup_toggled = true;
         }
     }
+    if (popup_toggled)
+    {
+        if (popup_open)
+        {
+            ClosePopup(id);
+        }
+        else
+        {
+            FocusWindow(window);
+            OpenPopupEx(id, false);
+        }
+        popup_open = !popup_open;
+    }
 
-    if (!IsPopupOpen(id))
+    if (!popup_open)
         return false;
 
     float popup_y1 = frame_bb.Max.y;
@@ -9060,7 +9079,10 @@ bool ImGui::BeginMenu(const char* label, bool enabled)
         want_open = menu_is_open = false;
     }
     else if (pressed || (hovered && menuset_is_open && !menu_is_open)) // menu-bar: first click to open, then hover to open others
+    {
         want_open = true;
+    }
+
     if (!enabled) // explicitly close if an open menu becomes disabled, facilitate users code a lot in pattern such as 'if (BeginMenu("options", has_object)) { ..use object.. }'
         want_close = true;
     if (want_close && IsPopupOpen(id))
