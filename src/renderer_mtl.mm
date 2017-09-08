@@ -2503,21 +2503,21 @@ namespace bgfx { namespace mtl
 			const bool writeOnly    = 0 != (_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
 			const bool computeWrite = 0 != (_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 			const bool renderTarget = 0 != (_flags&BGFX_TEXTURE_RT_MASK);
-			const bool srgb			= 0 != (_flags&BGFX_TEXTURE_SRGB) || imageContainer.m_srgb;
+			const bool srgb         = 0 != (_flags&BGFX_TEXTURE_SRGB);
 
 			BX_TRACE("Texture %3d: %s (requested: %s), layers %d, %dx%d%s RT[%c], WO[%c], CW[%c], sRGB[%c]"
-					 , this - s_renderMtl->m_textures
-					 , getName( (TextureFormat::Enum)m_textureFormat)
-					 , getName( (TextureFormat::Enum)m_requestedFormat)
-					 , numLayers
-					 , textureWidth
-					 , textureHeight
-					 , imageContainer.m_cubeMap ? "x6" : ""
-					 , renderTarget ? 'x' : '.'
-					 , writeOnly ? 'x' : '.'
-					 , computeWrite ? 'x' : '.'
-					 , srgb ? 'x' : '.'
-					 );
+					, this - s_renderMtl->m_textures
+					, getName( (TextureFormat::Enum)m_textureFormat)
+					, getName( (TextureFormat::Enum)m_requestedFormat)
+					, numLayers
+					, textureWidth
+					, textureHeight
+					, imageContainer.m_cubeMap ? "x6" : ""
+					, renderTarget ? 'x' : '.'
+					, writeOnly ? 'x' : '.'
+					, computeWrite ? 'x' : '.'
+					, srgb ? 'x' : '.'
+					);
 
 			const uint32_t msaaQuality = bx::uint32_satsub( (_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
 			int sampleCount = s_msaa[msaaQuality];

@@ -4532,7 +4532,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			const bool writeOnly    = 0 != (m_flags&(BGFX_TEXTURE_RT_WRITE_ONLY|BGFX_TEXTURE_READ_BACK) );
 			const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 			const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
-			const bool srgb         = 0 != (m_flags&BGFX_TEXTURE_SRGB) || imageContainer.m_srgb;
+			const bool srgb         = 0 != (m_flags&BGFX_TEXTURE_SRGB);
 			const bool blit         = 0 != (m_flags&BGFX_TEXTURE_BLIT_DST);
 			const bool readBack     = 0 != (m_flags&BGFX_TEXTURE_READ_BACK);
 			const uint32_t msaaQuality = bx::uint32_satsub( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);

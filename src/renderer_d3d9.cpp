@@ -2933,11 +2933,6 @@ namespace bgfx { namespace d3d9
 				createTexture(textureWidth, textureHeight, numMips);
 			}
 
-			if (imageContainer.m_srgb)
-			{
-				m_flags |= BGFX_TEXTURE_SRGB;
-			}
-
 			BX_TRACE("Texture %3d: %s (requested: %s), %dx%d%s%s."
 				, this - s_renderD3D9->m_textures
 				, getName( (TextureFormat::Enum)m_textureFormat)
