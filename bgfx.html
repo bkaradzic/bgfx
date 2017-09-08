@@ -2815,6 +2815,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="bgfx::setIndexBuffer__TransientIndexBufferCP"></span><span class="target" id="bgfxnamespacebgfx_1a31bede5af454ba8b2c802d15ee84abab"></span>void <code class="descclassname">bgfx::</code><code class="descname">setIndexBuffer</code><span class="sig-paren">(</span><em class="property">const</em> TransientIndexBuffer *<em>_tib</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14setIndexBufferEPK20TransientIndexBuffer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set index buffer for draw primitive. </p>
 <p><dl class="docutils">
+<dt><strong>Remark</strong></dt>
+<dd>_tib pointer after this call is invalid.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transient_index_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -2832,6 +2834,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="bgfx::setIndexBuffer__TransientIndexBufferCP.uint32_t.uint32_t"></span><span class="target" id="bgfxnamespacebgfx_1a1ff04459d5f92944634903ab4bdfe8bc"></span>void <code class="descclassname">bgfx::</code><code class="descname">setIndexBuffer</code><span class="sig-paren">(</span><em class="property">const</em> TransientIndexBuffer *<em>_tib</em>, uint32_t <em>_firstIndex</em>, uint32_t <em>_numIndices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14setIndexBufferEPK20TransientIndexBuffer8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set index buffer for draw primitive. </p>
 <p><dl class="docutils">
+<dt><strong>Remark</strong></dt>
+<dd>_tib pointer after this call is invalid.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transient_index_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -2937,6 +2941,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="bgfx::setVertexBuffer__uint8_t.TransientVertexBufferCP"></span><span class="target" id="bgfxnamespacebgfx_1adedeea9d83dc33076177b6c0657dbf6f"></span>void <code class="descclassname">bgfx::</code><code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, <em class="property">const</em> TransientVertexBuffer *<em>_tvb</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15setVertexBufferE7uint8_tPK21TransientVertexBuffer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set vertex buffer for draw primitive. </p>
 <p><dl class="docutils">
+<dt><strong>Remark</strong></dt>
+<dd>_tvb pointer after this call is invalid.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transient_vertex_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -2956,6 +2962,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="bgfx::setVertexBuffer__uint8_t.TransientVertexBufferCP.uint32_t.uint32_t"></span><span class="target" id="bgfxnamespacebgfx_1aa9547529632951c0f1b64c327444c4f6"></span>void <code class="descclassname">bgfx::</code><code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, <em class="property">const</em> TransientVertexBuffer *<em>_tvb</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set vertex buffer for draw primitive. </p>
 <p><dl class="docutils">
+<dt><strong>Remark</strong></dt>
+<dd>_tvb pointer after this call is invalid.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transient_vertex_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -2979,30 +2987,60 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="bgfx::setInstanceDataBuffer__InstanceDataBufferCP.uint32_t"></span><span class="target" id="bgfxnamespacebgfx_1a81b11930fa83a0616e8e1ab9d7af982a"></span>void <code class="descclassname">bgfx::</code><code class="descname">setInstanceDataBuffer</code><span class="sig-paren">(</span><em class="property">const</em> InstanceDataBuffer *<em>_idb</em>, uint32_t <em>_num</em> = UINT32_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx21setInstanceDataBufferEPK18InstanceDataBuffer8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set instance data buffer for draw primitive. </p>
 <p><dl class="docutils">
+<dt><strong>Remark</strong></dt>
+<dd>_idb pointer after this call is invalid.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_instance_data_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_idb</span></code> - <p>Transient instance data buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of data instances.</p>
+</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx21setInstanceDataBufferE18VertexBufferHandle8uint32_t8uint32_t">
-<span id="bgfx::setInstanceDataBuffer__VertexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="bgfxnamespacebgfx_1a659331644300a320dbbd5ac9f69a5949"></span>void <code class="descclassname">bgfx::</code><code class="descname">setInstanceDataBuffer</code><span class="sig-paren">(</span>VertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx21setInstanceDataBufferE18VertexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::setInstanceDataBuffer__VertexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="bgfxnamespacebgfx_1a20b0e58f00d16430069e045755e72bb0"></span>void <code class="descclassname">bgfx::</code><code class="descname">setInstanceDataBuffer</code><span class="sig-paren">(</span>VertexBufferHandle <em>_handle</em>, uint32_t <em>_start</em>, uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx21setInstanceDataBufferE18VertexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set instance data buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_instance_data_from_vertex_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Vertex buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_start</span></code> - <p>First instance data. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of data instances.</p>
+</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx21setInstanceDataBufferE25DynamicVertexBufferHandle8uint32_t8uint32_t">
-<span id="bgfx::setInstanceDataBuffer__DynamicVertexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="bgfxnamespacebgfx_1ab9d044f4cbfd0d8272507f2fe65b050e"></span>void <code class="descclassname">bgfx::</code><code class="descname">setInstanceDataBuffer</code><span class="sig-paren">(</span>DynamicVertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx21setInstanceDataBufferE25DynamicVertexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::setInstanceDataBuffer__DynamicVertexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="bgfxnamespacebgfx_1af5f5a928ce18fe1d2ea45e52e6d20238"></span>void <code class="descclassname">bgfx::</code><code class="descname">setInstanceDataBuffer</code><span class="sig-paren">(</span>DynamicVertexBufferHandle <em>_handle</em>, uint32_t <em>_start</em>, uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx21setInstanceDataBufferE25DynamicVertexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set instance data buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_instance_data_from_dynamic_vertex_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Vertex buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_start</span></code> - <p>First instance data. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of data instances.</p>
+</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
