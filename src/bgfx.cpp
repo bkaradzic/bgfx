@@ -1511,23 +1511,41 @@ namespace bgfx
 								);                                                                    \
 							for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii) \
 							{                                                                         \
-								BX_TRACE("\t%3d: %d", ii, _handleAlloc.getHandleAt(ii) );             \
+								BX_TRACE("\t%3d: %4d", ii, _handleAlloc.getHandleAt(ii) );            \
 							}                                                                         \
 						}                                                                             \
 					BX_MACRO_BLOCK_END
 
-			CHECK_HANDLE_LEAK(m_dynamicIndexBufferHandle);
-			CHECK_HANDLE_LEAK(m_dynamicVertexBufferHandle);
-			CHECK_HANDLE_LEAK(m_indexBufferHandle);
-			CHECK_HANDLE_LEAK(m_vertexDeclHandle);
-			CHECK_HANDLE_LEAK(m_vertexBufferHandle);
-			CHECK_HANDLE_LEAK(m_shaderHandle);
-			CHECK_HANDLE_LEAK(m_programHandle);
-			CHECK_HANDLE_LEAK(m_textureHandle);
-			CHECK_HANDLE_LEAK(m_frameBufferHandle);
-			CHECK_HANDLE_LEAK(m_uniformHandle);
-			CHECK_HANDLE_LEAK(m_occlusionQueryHandle);
+#define CHECK_HANDLE_LEAK_NAME(_handleAlloc, _type, _ref)                                             \
+					BX_MACRO_BLOCK_BEGIN                                                              \
+						if (0 != _handleAlloc.getNumHandles() )                                       \
+						{                                                                             \
+							BX_TRACE("LEAK: " #_handleAlloc " %d (max: %d)"                           \
+								, _handleAlloc.getNumHandles()                                        \
+								, _handleAlloc.getMaxHandles()                                        \
+								);                                                                    \
+							for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii) \
+							{                                                                         \
+								uint16_t idx = _handleAlloc.getHandleAt(ii);                          \
+								const _type& ref = _ref[idx];                                         \
+								BX_TRACE("\t%3d: %4d %s", ii, idx, ref.m_name.getPtr() );             \
+							}                                                                         \
+						}                                                                             \
+					BX_MACRO_BLOCK_END
+
+			CHECK_HANDLE_LEAK     (m_dynamicIndexBufferHandle                          );
+			CHECK_HANDLE_LEAK     (m_dynamicVertexBufferHandle                         );
+			CHECK_HANDLE_LEAK     (m_indexBufferHandle                                 );
+			CHECK_HANDLE_LEAK     (m_vertexDeclHandle                                  );
+			CHECK_HANDLE_LEAK     (m_vertexBufferHandle                                );
+			CHECK_HANDLE_LEAK_NAME(m_shaderHandle,             ShaderRef,  m_shaderRef );
+			CHECK_HANDLE_LEAK     (m_programHandle                                     );
+			CHECK_HANDLE_LEAK_NAME(m_textureHandle,            TextureRef, m_textureRef);
+			CHECK_HANDLE_LEAK     (m_frameBufferHandle                                 );
+			CHECK_HANDLE_LEAK_NAME(m_uniformHandle,            UniformRef, m_uniformRef);
+			CHECK_HANDLE_LEAK     (m_occlusionQueryHandle                              );
 #undef CHECK_HANDLE_LEAK
+#undef CHECK_HANDLE_LEAK_NAME
 		}
 	}
 
