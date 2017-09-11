@@ -496,11 +496,14 @@ namespace entry
 			{
 				bx::AllocatorI* allocator = getAllocator();
 				uint32_t size = (uint32_t)bx::getSize(reader);
-				void* data = BX_ALLOC(allocator, size);
+				void* data = BX_ALLOC(allocator, size + 1);
 				bx::read(reader, data, size);
 				bx::close(reader);
+				((char*)data)[size] = '\0';
 
-				SDL_GameControllerAddMapping( (char*)data);
+				if (SDL_GameControllerAddMapping( (char*)data) < 0) {
+					DBG("SDL game controller add mapping failed: %s", SDL_GetError());
+				}
 
 				BX_FREE(allocator, data);
 			}
