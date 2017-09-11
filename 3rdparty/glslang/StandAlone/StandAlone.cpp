@@ -94,6 +94,7 @@ enum TOptions {
     EOptionHlslIoMapping        = (1 << 24),
     EOptionAutoMapLocations     = (1 << 25),
     EOptionDebug                = (1 << 26),
+    EOptionStdin                = (1 << 27),
 };
 
 //
@@ -469,6 +470,9 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         sourceEntryPointName = argv[1];
                         bumpArg();
                         break;
+                    } else if (lowerword == "stdin") {
+                        Options |= EOptionStdin;
+                        shaderStageName = argv[1];
                     } else if (lowerword == "suppress-warnings") {
                         Options |= EOptionSuppressWarnings;
                     } else if (lowerword == "target-env") {
@@ -606,6 +610,10 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
         }
     }
 
+    // Make sure that -S is always specified if --stdin is specified
+    if ((Options & EOptionStdin) && shaderStageName == nullptr)
+        Error("must provide -S when --stdin is given");
+
     // Make sure that -E is not specified alongside linking (which includes SPV generation)
     if ((Options & EOptionOutputPreprocessed) && (Options & EOptionLinkProgram))
         Error("can't use -E when linking is selected");
@@ -654,17 +662,31 @@ void SetMessageOptions(EShMessages& messages)
 void CompileShaders(glslang::TWorklist& worklist)
 {
     glslang::TWorkItem* workItem;
-    while (worklist.remove(workItem)) {
-        ShHandle compiler = ShConstructCompiler(FindLanguage(workItem->name), Options);
+    if (Options & EOptionStdin) {
+        worklist.remove(workItem);
+        ShHandle compiler = ShConstructCompiler(FindLanguage("stdin"), Options);
         if (compiler == 0)
             return;
 
-        CompileFile(workItem->name.c_str(), compiler);
+        CompileFile("stdin", compiler);
 
-        if (! (Options & EOptionSuppressInfolog))
-            workItem->results = ShGetInfoLog(compiler);
+            if (! (Options & EOptionSuppressInfolog))
+                workItem->results = ShGetInfoLog(compiler);
 
         ShDestruct(compiler);
+    } else {
+        while (worklist.remove(workItem)) {
+            ShHandle compiler = ShConstructCompiler(FindLanguage(workItem->name), Options);
+            if (compiler == 0)
+                return;
+
+            CompileFile(workItem->name.c_str(), compiler);
+
+            if (! (Options & EOptionSuppressInfolog))
+                workItem->results = ShGetInfoLog(compiler);
+
+            ShDestruct(compiler);
+        }
     }
 }
 
@@ -908,19 +930,32 @@ void CompileAndLinkShaderFiles(glslang::TWorklist& Worklist)
 {
     std::vector<ShaderCompUnit> compUnits;
 
-    // Transfer all the work items from to a simple list of
-    // of compilation units.  (We don't care about the thread
-    // work-item distribution properties in this path, which
-    // is okay due to the limited number of shaders, know since
-    // they are all getting linked together.)
-    glslang::TWorkItem* workItem;
-    while (Worklist.remove(workItem)) {
-        ShaderCompUnit compUnit(FindLanguage(workItem->name));
-        char* fileText = ReadFileData(workItem->name.c_str());
-        if (fileText == nullptr)
-            usage();
-        compUnit.addString(workItem->name, fileText);
+    // If this is using stdin, we can't really detect multiple different file
+    // units by input type. We need to assume that we're just being given one
+    // file of a certain type.
+    if ((Options & EOptionStdin) != 0) {
+        ShaderCompUnit compUnit(FindLanguage("stdin"));
+        std::istreambuf_iterator<char> begin(std::cin), end;
+        std::string tempString(begin, end);
+        char* fileText = strdup(tempString.c_str());
+        std::string fileName = "stdin";
+        compUnit.addString(fileName, fileText);
         compUnits.push_back(compUnit);
+    } else {
+        // Transfer all the work items from to a simple list of
+        // of compilation units.  (We don't care about the thread
+        // work-item distribution properties in this path, which
+        // is okay due to the limited number of shaders, know since
+        // they are all getting linked together.)
+        glslang::TWorkItem* workItem;
+        while (Worklist.remove(workItem)) {
+            ShaderCompUnit compUnit(FindLanguage(workItem->name));
+            char* fileText = ReadFileData(workItem->name.c_str());
+            if (fileText == nullptr)
+                usage();
+            compUnit.addString(workItem->name, fileText);
+            compUnits.push_back(compUnit);
+        }
     }
 
     // Actual call to programmatic processing of compile and link,
@@ -973,8 +1008,13 @@ int C_DECL main(int argc, char* argv[])
             return ESuccess;
     }
 
-    if (workList.empty()) {
+    if (workList.empty() && ((Options & EOptionStdin) == 0)) {
         usage();
+    }
+
+    if (Options & EOptionStdin) {
+        workItems.push_back(std::unique_ptr<glslang::TWorkItem>{new glslang::TWorkItem("stdin")});
+        workList.add(workItems.back().get());
     }
 
     ProcessConfigFile();
@@ -1087,7 +1127,14 @@ EShLanguage FindLanguage(const std::string& name, bool parseSuffix)
 void CompileFile(const char* fileName, ShHandle compiler)
 {
     int ret = 0;
-    char* shaderString = ReadFileData(fileName);
+    char* shaderString;
+    if ((Options & EOptionStdin) != 0) {
+        std::istreambuf_iterator<char> begin(std::cin), end;
+        std::string tempString(begin, end);
+        shaderString = strdup(tempString.c_str());
+    } else {
+        shaderString = ReadFileData(fileName);
+    }
 
     // move to length-based strings, rather than null-terminated strings
     int* lengths = new int[1];
@@ -1220,6 +1267,9 @@ void usage()
            "  --source-entrypoint name             the given shader source function is\n"
            "                                       renamed to be the entry point given in -e\n"
            "  --sep                                synonym for --source-entrypoint\n"
+           "  --stdin                              Read from stdin instead of from a file.\n"
+           "                                       You'll have to provide the shader stage\n"
+           "                                       using -S.\n"
            "  --suppress-warnings                  suppress GLSL warnings\n"
            "                                       (except as required by #extension : warn)\n"
            "  --target-env {vulkan1.0|opengl}      set the execution environment code will\n"
