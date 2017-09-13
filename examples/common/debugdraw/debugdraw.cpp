@@ -726,7 +726,6 @@ struct DebugDraw
 		m_vbh = bgfx::createVertexBuffer(vb, DebugShapeVertex::ms_decl);
 		m_ibh = bgfx::createIndexBuffer(ib);
 
-		m_mtx       = 0;
 		m_viewId    = 0;
 		m_pos       = 0;
 		m_indexPos  = 0;
@@ -779,7 +778,6 @@ struct DebugDraw
 		BX_CHECK(State::Count == m_state);
 
 		m_viewId  = _viewId;
-		m_mtx     = 0;
 		m_state   = State::None;
 		m_stack   = 0;
 
@@ -797,6 +795,9 @@ struct DebugDraw
 		attrib.m_stipple   = false;
 		attrib.m_wireframe = false;
 		attrib.m_lod       = 0;
+
+		m_mtxStackCurrent = 0;
+		m_mtxStack[m_mtxStackCurrent].reset();
 	}
 
 	void end()
@@ -829,20 +830,24 @@ struct DebugDraw
 		--m_stack;
 	}
 
-	void setTransform(const void* _mtx)
+	void setTransform(const void* _mtx, uint16_t _num = 1)
 	{
 		BX_CHECK(State::Count != m_state);
 		flush();
 
+		MatrixStack& stack = m_mtxStack[m_mtxStackCurrent];
+
 		if (NULL == _mtx)
 		{
-			m_mtx = 0;
+			stack.reset();
 			return;
 		}
 
 		bgfx::Transform transform;
-		m_mtx = bgfx::allocTransform(&transform, 1);
-		bx::memCopy(transform.data, _mtx, 64);
+		stack.mtx  = bgfx::allocTransform(&transform, _num);
+		stack.num  = _num;
+		stack.data = transform.data;
+		bx::memCopy(transform.data, _mtx, _num*64);
 	}
 
 	void setTranslate(float _x, float _y, float _z)
@@ -855,6 +860,54 @@ struct DebugDraw
 	void setTranslate(const float* _pos)
 	{
 		setTranslate(_pos[0], _pos[1], _pos[2]);
+	}
+
+	void pushTransform(const void* _mtx, uint16_t _num)
+	{
+		BX_CHECK(m_mtxStackCurrent < BX_COUNTOF(m_mtxStack), "Out of matrix stack!");
+		BX_CHECK(State::Count != m_state);
+		flush();
+
+		float* mtx = NULL;
+
+		const MatrixStack& stack = m_mtxStack[m_mtxStackCurrent];
+
+		if (NULL == stack.data)
+		{
+			mtx = (float*)_mtx;
+		}
+		else
+		{
+			mtx = (float*)alloca(_num*64);
+			for (uint16_t ii = 0; ii < _num; ++ii)
+			{
+				const float* mtxTransform = (const float*)_mtx;
+				bx::mtxMul(&mtx[ii*16], &mtxTransform[ii*16], stack.data);
+			}
+		}
+
+		m_mtxStackCurrent++;
+		setTransform(mtx, _num);
+	}
+
+	void popTransform()
+	{
+		BX_CHECK(State::Count != m_state);
+		flush();
+
+		m_mtxStackCurrent--;
+	}
+
+	void pushTranslate(float _x, float _y, float _z)
+	{
+		float mtx[16];
+		bx::mtxTranslate(mtx, _x, _y, _z);
+		pushTransform(mtx, 1);
+	}
+
+	void pushTranslate(const float* _pos)
+	{
+		pushTranslate(_pos[0], _pos[1], _pos[2]);
 	}
 
 	void setState(bool _depthTest, bool _depthWrite, bool _clockwise)
@@ -1090,7 +1143,7 @@ struct DebugDraw
 		const Attrib& attrib = m_attrib[m_stack];
 		if (attrib.m_wireframe)
 		{
-			setTransform(_obb.m_mtx);
+			pushTransform(_obb.m_mtx, 1);
 
 			moveTo(-1.0f, -1.0f, -1.0f);
 			lineTo( 1.0f, -1.0f, -1.0f);
@@ -1116,7 +1169,7 @@ struct DebugDraw
 			moveTo(-1.0f, -1.0f, -1.0f);
 			lineTo(-1.0f, -1.0f,  1.0f);
 
-			setTransform(NULL);
+			popTransform();
 		}
 		else
 		{
@@ -1651,7 +1704,7 @@ struct DebugDraw
 	void drawGrid(Axis::Enum _axis, const float* _center, uint32_t _size, float _step)
 	{
 		push();
-		setTranslate(_center);
+		pushTranslate(_center);
 
 		const uint32_t num = (_size/2)*2-1;
 		const float halfExtent = float(_size/2) * _step;
@@ -1761,8 +1814,10 @@ private:
 		};
 	};
 
-	void draw(Mesh::Enum _mesh, const float* _mtx, uint16_t _num, bool _wireframe) const
+	void draw(Mesh::Enum _mesh, const float* _mtx, uint16_t _num, bool _wireframe)
 	{
+		pushTransform(_mtx, _num);
+
 		const Mesh& mesh = m_mesh[_mesh];
 
 		const Attrib& attrib = m_attrib[m_stack];
@@ -1810,7 +1865,9 @@ private:
 
 		bgfx::setUniform(u_params, params, 4);
 
-		bgfx::setTransform(_mtx, _num);
+		MatrixStack& stack = m_mtxStack[m_mtxStackCurrent];
+		bgfx::setTransform(stack.mtx, stack.num);
+
 		bgfx::setVertexBuffer(0, m_vbh, mesh.m_startVertex, mesh.m_numVertices);
 		bgfx::setState(0
 			| attrib.m_state
@@ -1818,6 +1875,8 @@ private:
 			: (alpha < 0xff) ? BGFX_STATE_BLEND_ALPHA : 0)
 			);
 		bgfx::submit(m_viewId, m_program[_wireframe ? Program::Fill : Program::FillLit]);
+
+		popTransform();
 	}
 
 	void softFlush()
@@ -1853,7 +1912,7 @@ private:
 					| BGFX_STATE_LINEAA
 					| BGFX_STATE_BLEND_ALPHA
 					);
-				bgfx::setTransform(m_mtx);
+				bgfx::setTransform(m_mtxStack[m_mtxStackCurrent].mtx);
 				bgfx::ProgramHandle program = m_program[attrib.m_stipple ? 1 : 0];
 				bgfx::submit(m_viewId, program);
 			}
@@ -1898,7 +1957,7 @@ private:
 				bgfx::setState(0
 					| (attrib.m_state & ~BGFX_STATE_CULL_MASK)
 					);
-				bgfx::setTransform(m_mtx);
+				bgfx::setTransform(m_mtxStack[m_mtxStackCurrent].mtx);
 				bgfx::setTexture(0, s_texColor, m_texture);
 				bgfx::submit(m_viewId, m_program[Program::FillTexture]);
 			}
@@ -1932,7 +1991,24 @@ private:
 	DebugUvVertex m_cacheQuad[cacheQuadSize];
 	uint16_t m_posQuad;
 
-	uint32_t m_mtx;
+	uint32_t m_mtxStackCurrent;
+
+	struct MatrixStack
+	{
+		void reset()
+		{
+			mtx  = 0;
+			num  = 1;
+			data = NULL;
+		}
+
+		uint32_t mtx;
+		uint16_t num;
+		float*   data;
+	};
+
+	MatrixStack m_mtxStack[32];
+
 	uint8_t  m_viewId;
 	uint8_t  m_stack;
 	bool     m_depthTestLess;
