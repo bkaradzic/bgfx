@@ -51,25 +51,24 @@ const int EndOfInput = -1;
 //
 class TInputScanner {
 public:
-    TInputScanner(int n, const char* const s[], size_t L[], const char* const* names = nullptr, int b = 0, int f = 0, bool single = false) :
+    TInputScanner(int n, const char* const s[], size_t L[], const char* const* names = nullptr,
+                  int b = 0, int f = 0, bool single = false) :
         numSources(n),
-        sources(reinterpret_cast<const unsigned char* const *>(s)), // up to this point, common usage is "char*", but now we need positive 8-bit characters
-        lengths(L), currentSource(0), currentChar(0), stringBias(b), finale(f), singleLogical(single), endOfFileReached(false)
+         // up to this point, common usage is "char*", but now we need positive 8-bit characters
+        sources(reinterpret_cast<const unsigned char* const *>(s)),
+        lengths(L), currentSource(0), currentChar(0), stringBias(b), finale(f), singleLogical(single),
+        endOfFileReached(false)
     {
         loc = new TSourceLoc[numSources];
         for (int i = 0; i < numSources; ++i) {
-            loc[i].init();
+            loc[i].init(i - stringBias);
         }
         if (names != nullptr) {
             for (int i = 0; i < numSources; ++i)
                 loc[i].name = names[i];
         }
-        loc[currentSource].string = -stringBias;
         loc[currentSource].line = 1;
-        loc[currentSource].column = 0;
-        logicalSourceLoc.string = 0;
-        logicalSourceLoc.line = 1;
-        logicalSourceLoc.column = 0;
+        logicalSourceLoc.init(1);
         logicalSourceLoc.name = loc[0].name;
     }
 

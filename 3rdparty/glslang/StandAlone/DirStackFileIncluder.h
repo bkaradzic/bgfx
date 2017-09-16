@@ -54,7 +54,7 @@ public:
                                         const char* includerName,
                                         size_t inclusionDepth) override
     {
-        return readLocalPath(headerName, includerName, inclusionDepth);
+        return readLocalPath(headerName, includerName, (int)inclusionDepth);
     }
 
     virtual IncludeResult* includeSystem(const char* headerName,
@@ -73,7 +73,7 @@ public:
     virtual void pushExternalLocalDirectory(const std::string& dir)
     {
         directoryStack.push_back(dir);
-        externalLocalDirectoryCount = directoryStack.size();
+        externalLocalDirectoryCount = (int)directoryStack.size();
     }
 
     virtual void releaseInclude(IncludeResult* result) override

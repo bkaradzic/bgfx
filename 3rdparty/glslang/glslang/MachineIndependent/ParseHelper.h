@@ -74,7 +74,8 @@ class TParseContextBase : public TParseVersions {
 public:
     TParseContextBase(TSymbolTable& symbolTable, TIntermediate& interm, bool parsingBuiltins, int version,
                       EProfile profile, const SpvVersion& spvVersion, EShLanguage language,
-                      TInfoSink& infoSink, bool forwardCompatible, EShMessages messages)
+                      TInfoSink& infoSink, bool forwardCompatible, EShMessages messages,
+                      const TString* entryPoint = nullptr)
           : TParseVersions(interm, version, profile, spvVersion, language, infoSink, forwardCompatible, messages),
             scopeMangler("::"),
             symbolTable(symbolTable),
@@ -84,7 +85,10 @@ public:
             parsingBuiltins(parsingBuiltins), scanContext(nullptr), ppContext(nullptr),
             limits(resources.limits),
             globalUniformBlock(nullptr)
-    { }
+    {
+        if (entryPoint != nullptr)
+            sourceEntryPointName = *entryPoint;
+    }
     virtual ~TParseContextBase() { }
 
     virtual void C_DECL   error(const TSourceLoc&, const char* szReason, const char* szToken,
@@ -97,6 +101,8 @@ public:
                                 const char* szExtraInfoFormat, ...);
 
     virtual void setLimits(const TBuiltInResource&) = 0;
+
+    void checkIndex(const TSourceLoc&, const TType&, int& index);
 
     EShLanguage getLanguage() const { return language; }
     void setScanContext(TScanContext* c) { scanContext = c; }
@@ -141,6 +147,15 @@ public:
     // Manage the global uniform block (default uniforms in GLSL, $Global in HLSL)
     virtual void growGlobalUniformBlock(const TSourceLoc&, TType&, const TString& memberName, TTypeList* typeList = nullptr);
 
+    // Potentially rename shader entry point function
+    void renameShaderFunction(TString*& name) const
+    {
+        // Replace the entry point name given in the shader with the real entry point name,
+        // if there is a substitution.
+        if (name != nullptr && *name == sourceEntryPointName)
+            name = NewPoolTString(intermediate.getEntryPointName().c_str());
+    }
+
     virtual bool lValueErrorCheck(const TSourceLoc&, const char* op, TIntermTyped*);
     virtual void rValueErrorCheck(const TSourceLoc&, const char* op, TIntermTyped*);
 
@@ -173,6 +188,7 @@ protected:
     TPpContext* ppContext;
     TBuiltInResource resources;
     TLimits& limits;
+    TString sourceEntryPointName;
 
     // These, if set, will be called when a line, pragma ... is preprocessed.
     // They will be called with any parameters to the original directive.
@@ -249,7 +265,8 @@ protected:
 class TParseContext : public TParseContextBase {
 public:
     TParseContext(TSymbolTable&, TIntermediate&, bool parsingBuiltins, int version, EProfile, const SpvVersion& spvVersion, EShLanguage, TInfoSink&,
-                  bool forwardCompatible = false, EShMessages messages = EShMsgDefault);
+                  bool forwardCompatible = false, EShMessages messages = EShMsgDefault,
+                  const TString* entryPoint = nullptr);
     virtual ~TParseContext();
 
     bool obeyPrecisionQualifiers() const { return precisionManager.respectingPrecisionQualifiers(); };
@@ -268,7 +285,6 @@ public:
     void handlePragma(const TSourceLoc&, const TVector<TString>&) override;
     TIntermTyped* handleVariable(const TSourceLoc&, TSymbol* symbol, const TString* string);
     TIntermTyped* handleBracketDereference(const TSourceLoc&, TIntermTyped* base, TIntermTyped* index);
-    void checkIndex(const TSourceLoc&, const TType&, int& index);
     void handleIndexLimits(const TSourceLoc&, TIntermTyped* base, TIntermTyped* index);
 
     void makeEditable(TSymbol*&) override;

@@ -234,6 +234,31 @@ void TParseContextBase::trackLinkage(TSymbol& symbol)
         linkageSymbols.push_back(&symbol);
 }
 
+// Ensure index is in bounds, correct if necessary.
+// Give an error if not.
+void TParseContextBase::checkIndex(const TSourceLoc& loc, const TType& type, int& index)
+{
+    if (index < 0) {
+        error(loc, "", "[", "index out of range '%d'", index);
+        index = 0;
+    } else if (type.isArray()) {
+        if (type.isExplicitlySizedArray() && index >= type.getOuterArraySize()) {
+            error(loc, "", "[", "array index out of range '%d'", index);
+            index = type.getOuterArraySize() - 1;
+        }
+    } else if (type.isVector()) {
+        if (index >= type.getVectorSize()) {
+            error(loc, "", "[", "vector index out of range '%d'", index);
+            index = type.getVectorSize() - 1;
+        }
+    } else if (type.isMatrix()) {
+        if (index >= type.getMatrixCols()) {
+            error(loc, "", "[", "matrix index out of range '%d'", index);
+            index = type.getMatrixCols() - 1;
+        }
+    }
+}
+
 // Make a shared symbol have a non-shared version that can be edited by the current
 // compile, such that editing its type will not change the shared version and will
 // effect all nodes already sharing it (non-shallow type),

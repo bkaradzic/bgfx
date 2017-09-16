@@ -78,6 +78,10 @@ inline long long int atoll (const char* str)
 }
 #endif
 
+#if defined(_MSC_VER)
+#define strdup _strdup
+#endif
+
 /* windows only pragma */
 #ifdef _MSC_VER
     #pragma warning(disable : 4786) // Don't warn about too long identifiers
@@ -222,6 +226,7 @@ inline const TString String(const int i, const int /*base*/ = 10)
 
 struct TSourceLoc {
     void init() { name = nullptr; string = 0; line = 0; column = 0; }
+    void init(int stringNum) { init(); string = stringNum; }
     // Returns the name if it exists. Otherwise, returns the string number.
     std::string getStringNameOrNum(bool quoteStringName = true) const
     {

@@ -431,10 +431,13 @@ bool TOutputTraverser::visitUnary(TVisit /* visit */, TIntermUnary* node)
     case EOpMaxInvocationsExclusiveScanNonUniform:  out.debug << "maxInvocationsExclusiveScanNonUniform";   break;
     case EOpAddInvocationsExclusiveScanNonUniform:  out.debug << "addInvocationsExclusiveScanNonUniform";   break;
 
-    case EOpMbcnt:                      out.debug << "mbcnt";                       break;
+    case EOpMbcnt:                  out.debug << "mbcnt";                       break;
 
-    case EOpCubeFaceIndex:          out.debug << "cubeFaceIndex";         break;
-    case EOpCubeFaceCoord:          out.debug << "cubeFaceCoord";         break;
+    case EOpCubeFaceIndex:          out.debug << "cubeFaceIndex";               break;
+    case EOpCubeFaceCoord:          out.debug << "cubeFaceCoord";               break;
+
+    case EOpFragmentMaskFetch:      out.debug << "fragmentMaskFetchAMD";        break;
+    case EOpFragmentFetch:          out.debug << "fragmentFetchAMD";            break;
 
     case EOpConvBoolToFloat16:      out.debug << "Convert bool to float16";     break;
     case EOpConvIntToFloat16:       out.debug << "Convert int to float16";      break;

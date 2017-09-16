@@ -201,6 +201,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_AMD_texture_gather_bias_lod]              = EBhDisable;
     extensionBehavior[E_GL_AMD_gpu_shader_int16]                     = EBhDisable;
     extensionBehavior[E_GL_AMD_shader_image_load_store_lod]          = EBhDisable;
+    extensionBehavior[E_GL_AMD_shader_fragment_mask]                 = EBhDisable;
 #endif
 
 #ifdef NV_EXTENSIONS
@@ -333,6 +334,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_AMD_texture_gather_bias_lod 1\n"
             "#define GL_AMD_gpu_shader_int16 1\n"
             "#define GL_AMD_shader_image_load_store_lod 1\n"
+            "#define GL_AMD_shader_fragment_mask 1\n"
 #endif
 
 #ifdef NV_EXTENSIONS

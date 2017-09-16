@@ -91,18 +91,16 @@ TParseContextBase* CreateParseContext(TSymbolTable& symbolTable, TIntermediate& 
                                       int version, EProfile profile, EShSource source,
                                       EShLanguage language, TInfoSink& infoSink,
                                       SpvVersion spvVersion, bool forwardCompatible, EShMessages messages,
-                                      bool parsingBuiltIns, const std::string sourceEntryPointName = "")
+                                      bool parsingBuiltIns, std::string sourceEntryPointName = "")
 {
-#ifndef ENABLE_HLSL
-    (void)sourceEntryPointName; // Unused argument.
-#endif
-
     switch (source) {
-    case EShSourceGlsl:
-        intermediate.setEntryPointName("main");
+    case EShSourceGlsl: {
+        if (sourceEntryPointName.size() == 0)
+            intermediate.setEntryPointName("main");
+        TString entryPoint = sourceEntryPointName.c_str();
         return new TParseContext(symbolTable, intermediate, parsingBuiltIns, version, profile, spvVersion,
-                                 language, infoSink, forwardCompatible, messages);
-
+                                 language, infoSink, forwardCompatible, messages, &entryPoint);
+    }
 #ifdef ENABLE_HLSL
     case EShSourceHlsl:
         return new HlslParseContext(symbolTable, intermediate, parsingBuiltIns, version, profile, spvVersion,

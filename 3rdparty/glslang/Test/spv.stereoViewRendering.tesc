@@ -8,8 +8,9 @@ layout(vertices = 4) out;
 out gl_PerVertex {
     int gl_SecondaryViewportMaskNV[2];
     vec4 gl_SecondaryPositionNV;
-    layout (viewport_relative, secondary_view_offset = 1) out highp int gl_Layer;
 } gl_out[4];
+
+layout (viewport_relative, secondary_view_offset = 1) out highp int gl_Layer;
 
 void main()
 {

@@ -45,7 +45,7 @@ gl_FragCoord origin is upper left
 0:24                direct index (layout( row_major std140) temp 4-element array of block{layout( row_major std140) uniform bool x, layout( row_major std140) uniform float y})
 0:24                  'cb3' (layout( row_major std140) uniform 2-element array of 4-element array of block{layout( row_major std140) uniform bool x, layout( row_major std140) uniform float y})
 0:24                  Constant:
-0:24                    2 (const int)
+0:24                    1 (const int)
 0:24                Constant:
 0:24                  3 (const int)
 0:24              Constant:
@@ -113,7 +113,7 @@ gl_FragCoord origin is upper left
 0:24                direct index (layout( row_major std140) temp 4-element array of block{layout( row_major std140) uniform bool x, layout( row_major std140) uniform float y})
 0:24                  'cb3' (layout( row_major std140) uniform 2-element array of 4-element array of block{layout( row_major std140) uniform bool x, layout( row_major std140) uniform float y})
 0:24                  Constant:
-0:24                    2 (const int)
+0:24                    1 (const int)
 0:24                Constant:
 0:24                  3 (const int)
 0:24              Constant:
@@ -231,7 +231,7 @@ gl_FragCoord origin is upper left
               54:    7(fvec4)   FAdd 45 53
                                 ReturnValue 54
               56:               Label
-              58:     41(ptr)   AccessChain 18(cb3) 21 57 20
+              58:     41(ptr)   AccessChain 18(cb3) 20 57 20
               59:    6(float)   Load 58
               60:    7(fvec4)   CompositeConstruct 59 59 59 59
                                 ReturnValue 60

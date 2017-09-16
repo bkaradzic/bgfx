@@ -73,7 +73,6 @@ public:
     TIntermTyped* handleVariable(const TSourceLoc&, const TString* string);
     TIntermTyped* handleBracketDereference(const TSourceLoc&, TIntermTyped* base, TIntermTyped* index);
     TIntermTyped* handleBracketOperator(const TSourceLoc&, TIntermTyped* base, TIntermTyped* index);
-    void checkIndex(const TSourceLoc&, const TType&, int& index);
 
     TIntermTyped* handleBinaryMath(const TSourceLoc&, const char* str, TOperator op, TIntermTyped* left, TIntermTyped* right);
     TIntermTyped* handleUnaryMath(const TSourceLoc&, const char* str, TOperator op, TIntermTyped* childNode);
@@ -182,7 +181,7 @@ public:
 
     void pushNamespace(const TString& name);
     void popNamespace();
-    void getFullNamespaceName(const TString*&) const;
+    void getFullNamespaceName(TString*&) const;
     void addScopeMangler(TString&);
 
     void pushSwitchSequence(TIntermSequence* sequence) { switchSequenceStack.push_back(sequence); }
@@ -206,9 +205,6 @@ public:
 
     // Determine loop control from attributes
     TLoopControl handleLoopControl(const TAttributeMap& attributes) const;
-
-    // Potentially rename shader entry point function
-    void renameShaderFunction(const TString*& name) const;
 
     // Share struct buffer deep types
     void shareStructBufferType(TType&);
@@ -319,6 +315,9 @@ protected:
     static bool isClipOrCullDistance(const TQualifier& qual) { return isClipOrCullDistance(qual.builtIn); }
     static bool isClipOrCullDistance(const TType& type) { return isClipOrCullDistance(type.getQualifier()); }
 
+    // Find the patch constant function (issues error, returns nullptr if not found)
+    const TFunction* findPatchConstantFunction(const TSourceLoc& loc);
+
     // Pass through to base class after remembering built-in mappings.
     using TParseContextBase::trackLinkage;
     void trackLinkage(TSymbol& variable) override;
@@ -418,12 +417,12 @@ protected:
     };
 
     TMap<tInterstageIoData, TVariable*> splitBuiltIns; // split built-ins, indexed by built-in type.
-    TVariable* inputPatch;
+    TVariable* inputPatch; // input patch is special for PCF: it's the only non-builtin PCF input,
+                           // and is handled as a pseudo-builtin.
 
     unsigned int nextInLocation;
     unsigned int nextOutLocation;
 
-    TString    sourceEntryPointName;
     TFunction* entryPointFunction;
     TIntermNode* entryPointFunctionBody;
 

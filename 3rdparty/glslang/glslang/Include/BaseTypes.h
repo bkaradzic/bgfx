@@ -198,6 +198,7 @@ enum TBuiltInVariable {
     EbvSamplePosition,
     EbvSampleMask,
     EbvHelperInvocation,
+
 #ifdef AMD_EXTENSIONS
     EbvBaryCoordNoPersp,
     EbvBaryCoordNoPerspCentroid,
@@ -334,6 +335,7 @@ __inline const char* GetBuiltInVariableString(TBuiltInVariable v)
     case EbvSamplePosition:       return "SamplePosition";
     case EbvSampleMask:           return "SampleMaskIn";
     case EbvHelperInvocation:     return "HelperInvocation";
+
 #ifdef AMD_EXTENSIONS
     case EbvBaryCoordNoPersp:           return "BaryCoordNoPersp";
     case EbvBaryCoordNoPerspCentroid:   return "BaryCoordNoPerspCentroid";

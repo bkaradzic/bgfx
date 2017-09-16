@@ -21,6 +21,6 @@ float4 main() : SV_Target0
     if (cb3[1][2].x)
         return cb1.x + cb2[1].y + c1;
     else
-        return cb3[2][3].y;
+        return cb3[1][3].y;
 }
 

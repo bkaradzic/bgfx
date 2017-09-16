@@ -754,7 +754,7 @@ ERROR: 0:29: 'constructor' :  cannot convert parameter 2 from ' const 2X2 matrix
 ERROR: 0:29: ' const 2-element array of 4-component vector of float' : cannot construct with these arguments 
 ERROR: 0:29: '=' :  cannot convert from ' const float' to ' global 2-element array of 4-component vector of float'
 ERROR: 0:30: 'initializer list' : wrong number of matrix columns:  temp 4X2 matrix of float
-ERROR: 0:40: 'constructor' :  cannot convert parameter 1 from ' temp float' to ' temp structure{ global float s,  global float t}'
+ERROR: 0:40: 'constructor' :  cannot convert parameter 1 from ' const structure{ global 4-component vector of float a,  global 4-component vector of float b}' to ' temp structure{ global float s,  global float t}'
 ERROR: 0:70: 'initializer list' : wrong number of structure members 
 ERROR: 13 compilation errors.  No code generated.
 

@@ -409,6 +409,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.imageLoadStoreLod.frag",
         "spv.int16.frag",
         "spv.shaderBallotAMD.comp",
+        "spv.shaderFragMaskAMD.frag",
         "spv.textureGatherBiasLod.frag"
     })),
     FileNameAsCustomTestSuffix

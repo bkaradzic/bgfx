@@ -164,6 +164,8 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.hull.1.tesc", "main"},
         {"hlsl.hull.2.tesc", "main"},
         {"hlsl.hull.3.tesc", "main"},
+        {"hlsl.hull.4.tesc", "main"},
+        {"hlsl.hull.5.tesc", "main"},
         {"hlsl.hull.void.tesc", "main"},
         {"hlsl.hull.ctrlpt-1.tesc", "main"},
         {"hlsl.hull.ctrlpt-2.tesc", "main"},

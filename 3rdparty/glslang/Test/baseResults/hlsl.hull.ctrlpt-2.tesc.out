@@ -36,7 +36,7 @@ triangle order = cw
 0:?         'cpid' ( temp uint)
 0:?         'cpid' ( in uint InvocationID)
 0:28      move second child to first child ( temp structure{ temp 3-component vector of float val})
-0:28        indirect index ( temp structure{ temp 3-component vector of float val})
+0:28        indirect index (layout( location=0) out structure{ temp 3-component vector of float val})
 0:?           '@entryPointOutput' (layout( location=0) out 3-element array of structure{ temp 3-component vector of float val})
 0:?           'cpid' ( in uint InvocationID)
 0:28        Function Call: @main(struct-hs_in_t-vf31[3];u1; ( temp structure{ temp 3-component vector of float val})
@@ -82,7 +82,7 @@ triangle order = cw
 0:?             '@patchConstantResult' ( temp structure{ temp 3-element array of float tfactor,  temp float flInFactor})
 0:?             Function Call: PCF(struct-hs_out_t-vf31[3];struct-hs_in_t-vf31[3]; ( temp structure{ temp 3-element array of float tfactor,  temp float flInFactor})
 0:?               'pcf_out' ( temp 3-element array of structure{ temp 3-component vector of float val})
-0:?               'i' (layout( location=0) in 3-element array of structure{ temp 3-component vector of float val})
+0:?               'i' ( temp 3-element array of structure{ temp 3-component vector of float val})
 0:?           Sequence
 0:?             move second child to first child ( temp float)
 0:?               direct index ( patch out float TessLevelOuter)
@@ -245,7 +245,7 @@ triangle order = cw
 0:?         'cpid' ( temp uint)
 0:?         'cpid' ( in uint InvocationID)
 0:28      move second child to first child ( temp structure{ temp 3-component vector of float val})
-0:28        indirect index ( temp structure{ temp 3-component vector of float val})
+0:28        indirect index (layout( location=0) out structure{ temp 3-component vector of float val})
 0:?           '@entryPointOutput' (layout( location=0) out 3-element array of structure{ temp 3-component vector of float val})
 0:?           'cpid' ( in uint InvocationID)
 0:28        Function Call: @main(struct-hs_in_t-vf31[3];u1; ( temp structure{ temp 3-component vector of float val})
@@ -291,7 +291,7 @@ triangle order = cw
 0:?             '@patchConstantResult' ( temp structure{ temp 3-element array of float tfactor,  temp float flInFactor})
 0:?             Function Call: PCF(struct-hs_out_t-vf31[3];struct-hs_in_t-vf31[3]; ( temp structure{ temp 3-element array of float tfactor,  temp float flInFactor})
 0:?               'pcf_out' ( temp 3-element array of structure{ temp 3-component vector of float val})
-0:?               'i' (layout( location=0) in 3-element array of structure{ temp 3-component vector of float val})
+0:?               'i' ( temp 3-element array of structure{ temp 3-component vector of float val})
 0:?           Sequence
 0:?             move second child to first child ( temp float)
 0:?               direct index ( patch out float TessLevelOuter)
@@ -568,7 +568,7 @@ triangle order = cw
               87:     30(ptr)   AccessChain 67(pcf_out) 81
                                 Store 87 86
               90:          20   Load 67(pcf_out)
-              91:          11   Load 42(i)
+              91:          11   Load 40(i)
               92:22(hs_pcf_t)   FunctionCall 26(PCF(struct-hs_out_t-vf31[3];struct-hs_in_t-vf31[3];) 90 91
                                 Store 89(@patchConstantResult) 92
               98:     97(ptr)   AccessChain 89(@patchConstantResult) 29 29

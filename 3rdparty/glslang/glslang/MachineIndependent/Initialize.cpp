@@ -2283,7 +2283,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     if (profile != EEsProfile && version >= 450) {
         commonBuiltins.append(
             "float cubeFaceIndexAMD(vec3);"
-            "vec2 cubeFaceCoordAMD(vec3);"
+            "vec2  cubeFaceCoordAMD(vec3);"
             "uint64_t timeAMD();"
 
             "\n");
@@ -2787,6 +2787,29 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
             "\n");
     }
+
+    // GL_AMD_shader_fragment_mask
+    if (profile != EEsProfile && version >= 450) {
+        commonBuiltins.append(
+            "uint fragmentMaskFetchAMD(sampler2DMS,       ivec2);"
+            "uint fragmentMaskFetchAMD(isampler2DMS,      ivec2);"
+            "uint fragmentMaskFetchAMD(usampler2DMS,      ivec2);"
+
+            "uint fragmentMaskFetchAMD(sampler2DMSArray,  ivec3);"
+            "uint fragmentMaskFetchAMD(isampler2DMSArray, ivec3);"
+            "uint fragmentMaskFetchAMD(usampler2DMSArray, ivec3);"
+
+            "vec4  fragmentFetchAMD(sampler2DMS,       ivec2, uint);"
+            "ivec4 fragmentFetchAMD(isampler2DMS,      ivec2, uint);"
+            "uvec4 fragmentFetchAMD(usampler2DMS,      ivec2, uint);"
+
+            "vec4  fragmentFetchAMD(sampler2DMSArray,  ivec3, uint);"
+            "ivec4 fragmentFetchAMD(isampler2DMSArray, ivec3, uint);"
+            "uvec4 fragmentFetchAMD(usampler2DMSArray, ivec3, uint);"
+
+            "\n");
+    }
+
 #endif
 
     //============================================================================
@@ -3126,6 +3149,20 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
             "\n");
     }
+
+    // GL_AMD_shader_fragment_mask
+    if (profile != EEsProfile && version >= 450 && spvVersion.vulkan >= 100) {
+        stageBuiltins[EShLangFragment].append(
+            "uint fragmentMaskFetchAMD(subpassInputMS);"
+            "uint fragmentMaskFetchAMD(isubpassInputMS);"
+            "uint fragmentMaskFetchAMD(usubpassInputMS);"
+
+            "vec4  fragmentFetchAMD(subpassInputMS,  uint);"
+            "ivec4 fragmentFetchAMD(isubpassInputMS, uint);"
+            "uvec4 fragmentFetchAMD(usubpassInputMS, uint);"
+
+            "\n");
+        }
 #endif
 
     //============================================================================
@@ -3425,7 +3462,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "in int gl_DrawIDARB;"
                 );
         }
-        if (version >= 450) {
+        if (version >= 410) {
             stageBuiltins[EShLangVertex].append(
                 "out int gl_ViewportIndex;"
                 "out int gl_Layer;"
@@ -3558,6 +3595,11 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "out int gl_PrimitiveID;"
             "out int gl_Layer;");
 
+        if (version >= 150)
+            stageBuiltins[EShLangGeometry].append(
+            "out int gl_ViewportIndex;"
+            );
+
         if (profile == ECompatibilityProfile && version < 400)
             stageBuiltins[EShLangGeometry].append(
             "out vec4 gl_ClipVertex;"
@@ -3566,11 +3608,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         if (version >= 400)
             stageBuiltins[EShLangGeometry].append(
             "in int gl_InvocationID;"
-            );
-        // GL_ARB_viewport_array
-        if (version >= 150)
-            stageBuiltins[EShLangGeometry].append(
-            "out int gl_ViewportIndex;"
             );
 
 #ifdef NV_EXTENSIONS
@@ -3648,8 +3685,6 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             stageBuiltins[EShLangTessControl].append(
                 "float gl_CullDistance[];"
 #ifdef NV_EXTENSIONS
-                "int  gl_ViewportIndex;"
-                "int  gl_Layer;"
                 "int  gl_ViewportMask[];"             // GL_NV_viewport_array2
                 "vec4 gl_SecondaryPositionNV;"        // GL_NV_stereo_view_rendering
                 "int  gl_SecondaryViewportMaskNV[];"  // GL_NV_stereo_view_rendering
@@ -3663,6 +3698,13 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "patch out float gl_TessLevelOuter[4];"
             "patch out float gl_TessLevelInner[2];"
             "\n");
+
+        if (version >= 410)
+            stageBuiltins[EShLangTessControl].append(
+                "out int gl_ViewportIndex;"
+                "out int gl_Layer;"
+                "\n");
+
     } else {
         // Note:  "in gl_PerVertex {...} gl_in[gl_MaxPatchVertices];" is declared in initialize() below,
         // as it depends on the resource sizing of gl_MaxPatchVertices.
@@ -3734,11 +3776,11 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "};"
             "\n");
 
-        if (version >= 450)
+        if (version >= 410)
             stageBuiltins[EShLangTessEvaluation].append(
                 "out int gl_ViewportIndex;"
                 "out int gl_Layer;"
-                );
+                "\n");
 
 #ifdef NV_EXTENSIONS
         if (version >= 450)
@@ -5372,6 +5414,11 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("cubeFaceCoordAMD", 1, &E_GL_AMD_gcn_shader);
             symbolTable.setFunctionExtensions("timeAMD",          1, &E_GL_AMD_gcn_shader);
         }
+
+        if (profile != EEsProfile) {
+            symbolTable.setFunctionExtensions("fragmentMaskFetchAMD", 1, &E_GL_AMD_shader_fragment_mask);
+            symbolTable.setFunctionExtensions("fragmentFetchAMD",     1, &E_GL_AMD_shader_fragment_mask);
+        }
 #endif
 
         // Compatibility variables, vertex only
@@ -5476,7 +5523,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setVariableExtensions("gl_ViewportIndex", Num_viewportEXTs, viewportEXTs);
         }
 #else
-        if (language == EShLangVertex || language == EShLangTessEvaluation) {
+        if (language != EShLangGeometry && version >= 410) {
             symbolTable.setVariableExtensions("gl_Layer",         1, &E_GL_ARB_shader_viewport_layer_array);
             symbolTable.setVariableExtensions("gl_ViewportIndex", 1, &E_GL_ARB_shader_viewport_layer_array);
         }
@@ -5499,8 +5546,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_in", "gl_SecondaryPositionNV", EbvSecondaryPositionNV, symbolTable);
             BuiltInVariable("gl_in", "gl_PositionPerViewNV",   EbvPositionPerViewNV,   symbolTable);
         }
-        BuiltInVariable("gl_out", "gl_Layer",                   EbvLayer,                   symbolTable);
-        BuiltInVariable("gl_out", "gl_ViewportIndex",           EbvViewportIndex,           symbolTable);
         BuiltInVariable("gl_out", "gl_ViewportMask",            EbvViewportMaskNV,          symbolTable);
         BuiltInVariable("gl_out", "gl_SecondaryPositionNV",     EbvSecondaryPositionNV,     symbolTable);
         BuiltInVariable("gl_out", "gl_SecondaryViewportMaskNV", EbvSecondaryViewportMaskNV, symbolTable);
@@ -6210,6 +6255,9 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.relateToOperator("imageLoadLodAMD",                     EOpImageLoadLod);
             symbolTable.relateToOperator("imageStoreLodAMD",                    EOpImageStoreLod);
             symbolTable.relateToOperator("sparseImageLoadLodAMD",               EOpSparseImageLoadLod);
+
+            symbolTable.relateToOperator("fragmentMaskFetchAMD",                EOpFragmentMaskFetch);
+            symbolTable.relateToOperator("fragmentFetchAMD",                    EOpFragmentFetch);
 #endif
         }
         if (profile == EEsProfile) {

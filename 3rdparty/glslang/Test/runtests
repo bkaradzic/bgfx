@@ -157,6 +157,16 @@ $EXE -V100                   spv.targetVulkan.vert || HASERROR=1
 $EXE -G100                   spv.targetOpenGL.vert || HASERROR=1
 
 #
+# Testing GLSL entry point rename
+#
+$EXE -H -e foo --source-entrypoint main glsl.entryPointRename.vert > $TARGETDIR/glsl.entryPointRename.vert.out
+diff -b $BASEDIR/glsl.entryPointRename.vert.out $TARGETDIR/glsl.entryPointRename.vert.out || HASERROR=1
+$EXE -H -e foo --source-entrypoint bar glsl.entryPointRename.vert > $TARGETDIR/glsl.entryPointRename.vert.bad.out
+diff -b $BASEDIR/glsl.entryPointRename.vert.bad.out $TARGETDIR/glsl.entryPointRename.vert.bad.out || HASERROR=1
+$EXE -H -e foo --source-entrypoint main glsl.entryPointRename2.vert > $TARGETDIR/glsl.entryPointRename2.vert.out
+diff -b $BASEDIR/glsl.entryPointRename2.vert.out $TARGETDIR/glsl.entryPointRename2.vert.out || HASERROR=1
+
+#
 # Final checking
 #
 if [ $HASERROR -eq 0 ]

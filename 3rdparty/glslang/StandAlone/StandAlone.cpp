@@ -553,7 +553,7 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                 // This is okay for one compilation unit with one entry point.
                 entryPointName = argv[1];
                 if (argc <= 1)
-                    Error("no <entry-point> provided for -e");
+                    Error("no <name> provided for -e");
                 bumpArg();
                 break;
             case 'g':
@@ -1214,13 +1214,13 @@ void usage()
            "              creates the default configuration file (redirect to a .conf file)\n"
            "  -d          default to desktop (#version 110) when there is no shader #version\n"
            "              (default is ES version 100)\n"
-           "  -e          specify entry-point name\n"
+           "  -e <name>   specify <name> as the entry-point name\n"
            "  -g          generate debug information\n"
            "  -h          print this usage message\n"
            "  -i          intermediate tree (glslang AST) is printed out\n"
            "  -l          link all input files together to form a single module\n"
            "  -m          memory leak mode\n"
-           "  -o  <file>  save binary to <file>, requires a binary option (e.g., -V)\n"
+           "  -o <file>   save binary to <file>, requires a binary option (e.g., -V)\n"
            "  -q          dump reflection query database\n"
            "  -r          synonym for --relaxed-errors\n"
            "  -s          silent mode\n"
@@ -1264,8 +1264,8 @@ void usage()
            "  --shift-UBO-binding [stage] num      base binding number for UBOs\n"
            "  --shift-cbuffer-binding [stage] num  synonym for --shift-UBO-binding\n"
            "  --sub [stage] num                    synonym for --shift-UBO-binding\n"
-           "  --source-entrypoint name             the given shader source function is\n"
-           "                                       renamed to be the entry point given in -e\n"
+           "  --source-entrypoint <name>           the given shader source function is\n"
+           "                                       renamed to be the <name> given in -e\n"
            "  --sep                                synonym for --source-entrypoint\n"
            "  --stdin                              Read from stdin instead of from a file.\n"
            "                                       You'll have to provide the shader stage\n"

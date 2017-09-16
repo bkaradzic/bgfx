@@ -215,14 +215,19 @@ namespace spv {
     bool spirvbin_t::isConstOp(spv::Op opCode) const
     {
         switch (opCode) {
-        case spv::OpConstantNull:       error("unimplemented constant type");
-        case spv::OpConstantSampler:    error("unimplemented constant type");
+        case spv::OpConstantNull:
+        case spv::OpConstantSampler:
+            error("unimplemented constant type");
+            return true;
 
         case spv::OpConstantTrue:
         case spv::OpConstantFalse:
         case spv::OpConstantComposite:
-        case spv::OpConstant:         return true;
-        default:                      return false;
+        case spv::OpConstant:
+            return true;
+
+        default:
+            return false;
         }
     }
 
