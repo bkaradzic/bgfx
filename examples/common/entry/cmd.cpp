@@ -4,8 +4,9 @@
  */
 
 #include <bx/allocator.h>
-#include <bx/hash.h>
 #include <bx/commandline.h>
+#include <bx/hash.h>
+#include <bx/string.h>
 
 #include "dbg.h"
 #include "cmd.h"
@@ -104,7 +105,14 @@ void cmdAdd(const char* _name, ConsoleFn _fn, void* _userData)
 	s_cmdContext->add(_name, _fn, _userData);
 }
 
-void cmdExec(const char* _cmd)
+void cmdExec(const char* _format, ...)
 {
-	s_cmdContext->exec(_cmd);
+	char tmp[2048];
+
+	va_list argList;
+	va_start(argList, _format);
+	bx::vsnprintf(tmp, BX_COUNTOF(tmp), _format, argList);
+	va_end(argList);
+
+	s_cmdContext->exec(tmp);
 }

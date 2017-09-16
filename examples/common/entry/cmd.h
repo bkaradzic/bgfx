@@ -19,6 +19,6 @@ void cmdShutdown();
 void cmdAdd(const char* _name, ConsoleFn _fn, void* _userData = NULL);
 
 ///
-void cmdExec(const char* _cmd);
+void cmdExec(const char* _format, ...);
 
 #endif // CMD_H_HEADER_GUARD
