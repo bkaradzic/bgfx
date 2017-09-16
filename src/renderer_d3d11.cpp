@@ -4113,13 +4113,32 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		}
 		else if (m_dynamic)
 		{
-			desc.Usage = D3D11_USAGE_DYNAMIC;
+#if USE_D3D11_STAGING_BUFFER
+			desc.Usage          = D3D11_USAGE_DEFAULT;
+			desc.CPUAccessFlags = 0;
+
+			DX_CHECK(device->CreateBuffer(&desc
+				, NULL
+				, &m_ptr
+				) );
+
+			desc.BindFlags      = 0;
+			desc.Usage          = D3D11_USAGE_STAGING;
+			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+			DX_CHECK(device->CreateBuffer(&desc
+				, NULL
+				, &m_staging
+				) );
+#else
+			desc.Usage          = D3D11_USAGE_DYNAMIC;
 			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
 			DX_CHECK(device->CreateBuffer(&desc
 				, NULL
 				, &m_ptr
 				) );
+#endif // USE_D3D11_STAGING_BUFFER
 		}
 		else
 		{
@@ -4151,54 +4170,79 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
 		BX_CHECK(m_dynamic, "Must be dynamic!");
 
-#if 0
+#if USE_D3D11_STAGING_BUFFER
 		BX_UNUSED(_discard);
-		D3D11_BUFFER_DESC desc;
-		desc.ByteWidth = _size;
-		desc.Usage     = D3D11_USAGE_STAGING;
-		desc.BindFlags = 0;
-		desc.MiscFlags = 0;
-		desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-		desc.StructureByteStride = 0;
 
-		D3D11_SUBRESOURCE_DATA srd;
-		srd.pSysMem     = _data;
-		srd.SysMemPitch = 0;
-		srd.SysMemSlicePitch = 0;
+		D3D11_MAPPED_SUBRESOURCE mapped;
+		DX_CHECK(deviceCtx->Map(m_staging, 0, D3D11_MAP_WRITE, 0, &mapped) );
+		bx::memCopy( (uint8_t*)mapped.pData + _offset, _data, _size);
+		deviceCtx->Unmap(m_staging, 0);
 
-		D3D11_BOX srcBox;
-		srcBox.left   = 0;
-		srcBox.top    = 0;
-		srcBox.front  = 0;
-		srcBox.right  = _size;
-		srcBox.bottom = 1;
-		srcBox.back   = 1;
-
-		ID3D11Device* device = s_renderD3D11->m_device;
-
-		ID3D11Buffer* ptr;
-		DX_CHECK(device->CreateBuffer(&desc, &srd, &ptr) );
+		D3D11_BOX box;
+		box.left   = _offset;
+		box.top    = 0;
+		box.front  = 0;
+		box.right  = _offset + _size;
+		box.bottom = 1;
+		box.back   = 1;
 
 		deviceCtx->CopySubresourceRegion(m_ptr
 			, 0
 			, _offset
 			, 0
 			, 0
-			, ptr
+			, m_staging
 			, 0
-			, &srcBox
+			, &box
 			);
-
-		DX_RELEASE(ptr, 0);
 #else
-		D3D11_MAPPED_SUBRESOURCE mapped;
-		D3D11_MAP type = _discard
-			? D3D11_MAP_WRITE_DISCARD
-			: D3D11_MAP_WRITE_NO_OVERWRITE
-			;
-		DX_CHECK(deviceCtx->Map(m_ptr, 0, type, 0, &mapped) );
-		bx::memCopy( (uint8_t*)mapped.pData + _offset, _data, _size);
-		deviceCtx->Unmap(m_ptr, 0);
+		if (_discard)
+		{
+			D3D11_MAPPED_SUBRESOURCE mapped;
+			DX_CHECK(deviceCtx->Map(m_ptr, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped) );
+			bx::memCopy( (uint8_t*)mapped.pData + _offset, _data, _size);
+			deviceCtx->Unmap(m_ptr, 0);
+		}
+		else
+		{
+			D3D11_BUFFER_DESC desc;
+			desc.ByteWidth = _size;
+			desc.Usage     = D3D11_USAGE_STAGING;
+			desc.BindFlags = 0;
+			desc.MiscFlags = 0;
+			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+			desc.StructureByteStride = 0;
+
+			D3D11_SUBRESOURCE_DATA srd;
+			srd.pSysMem     = _data;
+			srd.SysMemPitch = 0;
+			srd.SysMemSlicePitch = 0;
+
+			D3D11_BOX srcBox;
+			srcBox.left   = 0;
+			srcBox.top    = 0;
+			srcBox.front  = 0;
+			srcBox.right  = _size;
+			srcBox.bottom = 1;
+			srcBox.back   = 1;
+
+			ID3D11Device* device = s_renderD3D11->m_device;
+
+			ID3D11Buffer* ptr;
+			DX_CHECK(device->CreateBuffer(&desc, &srd, &ptr) );
+
+			deviceCtx->CopySubresourceRegion(m_ptr
+				, 0
+				, _offset
+				, 0
+				, 0
+				, ptr
+				, 0
+				, &srcBox
+				);
+
+			DX_RELEASE(ptr, 0);
+		}
 #endif // 0
 	}
 
