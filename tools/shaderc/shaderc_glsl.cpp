@@ -126,6 +126,13 @@ namespace bgfx { namespace glsl
 						continue;
 					}
 
+					if (0 == bx::strCmp(parse, "tmpvar", 6) )
+					{
+						// skip temporaries
+						parse = eol + 1;
+						continue;
+					}
+
 					if (0 != bx::strCmp(qualifier, "uniform", 7) )
 					{
 						// end if there is no uniform keyword.
