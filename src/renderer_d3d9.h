@@ -113,15 +113,21 @@ namespace bgfx { namespace d3d9
 	{
 		IndexBufferD3D9()
 			: m_ptr(NULL)
+			, m_dynamic(NULL)
 			, m_size(0)
 			, m_flags(BGFX_BUFFER_NONE)
-			, m_dynamic(false)
 		{
 		}
 
 		void create(uint32_t _size, void* _data, uint16_t _flags);
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false)
 		{
+			if (NULL  != m_dynamic
+			&&  _data != m_dynamic)
+			{
+				bx::memCopy(&m_dynamic[_offset], _data, _size);
+			}
+
 			void* buffer;
 			DX_CHECK(m_ptr->Lock(_offset
 				, _size
@@ -139,7 +145,12 @@ namespace bgfx { namespace d3d9
 			if (NULL != m_ptr)
 			{
 				DX_RELEASE(m_ptr, 0);
-				m_dynamic = false;
+
+				if (NULL != m_dynamic)
+				{
+					BX_FREE(g_allocator, m_dynamic);
+					m_dynamic = NULL;
+				}
 			}
 		}
 
@@ -147,22 +158,29 @@ namespace bgfx { namespace d3d9
 		void postReset();
 
 		IDirect3DIndexBuffer9* m_ptr;
+		uint8_t* m_dynamic;
 		uint32_t m_size;
 		uint16_t m_flags;
-		bool m_dynamic;
 	};
 
 	struct VertexBufferD3D9
 	{
 		VertexBufferD3D9()
 			: m_ptr(NULL)
-			, m_dynamic(false)
+			, m_dynamic(NULL)
+			, m_size(0)
 		{
 		}
 
 		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle);
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false)
 		{
+			if (NULL  != m_dynamic
+			&&  _data != m_dynamic)
+			{
+				bx::memCopy(&m_dynamic[_offset], _data, _size);
+			}
+
 			void* buffer;
 			DX_CHECK(m_ptr->Lock(_offset
 				, _size
@@ -180,7 +198,12 @@ namespace bgfx { namespace d3d9
 			if (NULL != m_ptr)
 			{
 				DX_RELEASE(m_ptr, 0);
-				m_dynamic = false;
+
+				if (NULL != m_dynamic)
+				{
+					BX_FREE(g_allocator, m_dynamic);
+					m_dynamic = NULL;
+				}
 			}
 		}
 
@@ -188,9 +211,9 @@ namespace bgfx { namespace d3d9
 		void postReset();
 
 		IDirect3DVertexBuffer9* m_ptr;
+		uint8_t* m_dynamic;
 		uint32_t m_size;
 		VertexDeclHandle m_decl;
-		bool m_dynamic;
 	};
 
 	struct ShaderD3D9

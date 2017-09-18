@@ -130,7 +130,7 @@ public:
 		}
 
 		// Create static index buffer.
-		m_ibh = bgfx::createIndexBuffer(
+		m_ibh = bgfx::createDynamicIndexBuffer(
 				// Static data can be passed with bgfx::makeRef
 				bgfx::makeRef(s_cubeTriStrip, sizeof(s_cubeTriStrip) )
 				);
@@ -220,11 +220,16 @@ public:
 			bgfx::touch(0);
 
 			{
+				float angle = bx::frnd(&m_mwc);
+				float mtx[16];
+				bx::mtxRotateZ(mtx, angle);
+
 				const bgfx::Memory* mem = bgfx::copy(s_cubeVertices, sizeof(s_cubeVertices) );
 				PosColorVertex* vertex = (PosColorVertex*)mem->data;
 				const uint32_t abgr = m_mwc.gen();
 				for (uint32_t ii = 0; ii < BX_COUNTOF(s_cubeVertices); ++ii)
 				{
+					bx::vec3MulMtx(&vertex[ii].m_x, &s_cubeVertices[ii].m_x, mtx);
 					vertex[ii].m_abgr = abgr;
 				}
 
@@ -279,7 +284,7 @@ public:
 	uint32_t m_debug;
 	uint32_t m_reset;
 	bgfx::DynamicVertexBufferHandle m_vbh[kDimWidth*kDimHeight];
-	bgfx::IndexBufferHandle m_ibh;
+	bgfx::DynamicIndexBufferHandle m_ibh;
 	bgfx::ProgramHandle m_program;
 	int64_t m_timeOffset;
 };
