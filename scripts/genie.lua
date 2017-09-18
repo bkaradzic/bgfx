@@ -468,6 +468,7 @@ or _OPTIONS["with-combined-examples"] then
 		, "32-particles"
 		, "33-pom"
 		, "34-mvs"
+		, "35-dynamic"
 		)
 
 	-- C99 source doesn't compile under WinRT settings
