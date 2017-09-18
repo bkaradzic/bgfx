@@ -412,6 +412,9 @@ namespace ImGui
     IMGUI_API void          PushClipRect(const ImVec2& clip_rect_min, const ImVec2& clip_rect_max, bool intersect_with_current_clip_rect);
     IMGUI_API void          PopClipRect();
 
+    // Styles
+    IMGUI_API void          StyleColorsClassic(ImGuiStyle* dst = NULL);
+
     // Utilities
     IMGUI_API bool          IsItemHovered();                                                    // is the last item hovered by mouse (and usable)?
     IMGUI_API bool          IsItemRectHovered();                                                // is the last item hovered by mouse? even if another item is active or window is blocked by popup while we are hovering this
@@ -618,8 +621,8 @@ enum ImGuiCol_
     ImGuiCol_FrameBgHovered,
     ImGuiCol_FrameBgActive,
     ImGuiCol_TitleBg,
-    ImGuiCol_TitleBgCollapsed,
     ImGuiCol_TitleBgActive,
+    ImGuiCol_TitleBgCollapsed,
     ImGuiCol_MenuBarBg,
     ImGuiCol_ScrollbarBg,
     ImGuiCol_ScrollbarGrab,
@@ -854,6 +857,7 @@ struct ImGuiIO
     bool        WantCaptureMouse;           // Mouse is hovering a window or widget is active (= ImGui will use your mouse input). Use to hide mouse from the rest of your application
     bool        WantCaptureKeyboard;        // Widget is active (= ImGui will use your keyboard input). Use to hide keyboard from the rest of your application
     bool        WantTextInput;              // Some text input widget is active, which will read input characters from the InputCharacters array. Use to activate on screen keyboard if your system needs one
+    bool        WantMoveMouse;              // [BETA-NAV] MousePos has been altered. back-end should reposition mouse on next frame. used only if 'NavMovesMouse=true'.
     float       Framerate;                  // Application framerate estimation, in frame per second. Solely for convenience. Rolling average estimation based on IO.DeltaTime over 120 frames
     int         MetricsAllocs;              // Number of active memory allocations
     int         MetricsRenderVertices;      // Vertices output during last call to Render()
@@ -923,13 +927,13 @@ public:
     inline int                  _grow_capacity(int sz) const  { int new_capacity = Capacity ? (Capacity + Capacity/2) : 8; return new_capacity > sz ? new_capacity : sz; }
 
     inline void                 resize(int new_size)            { if (new_size > Capacity) reserve(_grow_capacity(new_size)); Size = new_size; }
+    inline void                 resize(int new_size, const T& v){ if (new_size > Capacity) reserve(_grow_capacity(new_size)); if (new_size > Size) for (int n = Size; n < new_size; n++) Data[n] = v; Size = new_size; }
     inline void                 reserve(int new_capacity)
     {
         if (new_capacity <= Capacity) return;
-        T* new_data = (value_type*)ImGui::MemAlloc((size_t)new_capacity * sizeof(value_type));
-        memset(&new_data[Size], 0, (size_t)(new_capacity - Size) * sizeof(value_type)); // BK - clear garbage so that 0 initialized ImString works properly.
+        T* new_data = (value_type*)ImGui::MemAlloc((size_t)new_capacity * sizeof(T));
         if (Data)
-            memcpy(new_data, Data, (size_t)Size * sizeof(value_type));
+            memcpy(new_data, Data, (size_t)Size * sizeof(T));
         ImGui::MemFree(Data);
         Data = new_data;
         Capacity = new_capacity;
