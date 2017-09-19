@@ -3302,47 +3302,46 @@ namespace bgfx
 				return invalid;
 			}
 
-			uint16_t idx = m_programHashMap.find(uint32_t(_fsh.idx<<16)|_vsh.idx);
-			if (kInvalidHandle != idx)
+			ProgramHandle handle = { m_programHashMap.find(uint32_t(_fsh.idx<<16)|_vsh.idx) };
+			if (isValid(handle) )
 			{
-				ProgramHandle handle = { idx };
 				ProgramRef& pr = m_programRef[handle.idx];
 				++pr.m_refCount;
 				shaderIncRef(pr.m_vsh);
 				shaderIncRef(pr.m_fsh);
-				return handle;
 			}
-
-			const ShaderRef& vsr = m_shaderRef[_vsh.idx];
-			const ShaderRef& fsr = m_shaderRef[_fsh.idx];
-			if (vsr.m_hash != fsr.m_hash)
+			else
 			{
-				BX_TRACE("Vertex shader output doesn't match fragment shader input.");
-				ProgramHandle invalid = BGFX_INVALID_HANDLE;
-				return invalid;
-			}
+				const ShaderRef& vsr = m_shaderRef[_vsh.idx];
+				const ShaderRef& fsr = m_shaderRef[_fsh.idx];
+				if (vsr.m_hash != fsr.m_hash)
+				{
+					BX_TRACE("Vertex shader output doesn't match fragment shader input.");
+					ProgramHandle invalid = BGFX_INVALID_HANDLE;
+					return invalid;
+				}
 
-			ProgramHandle handle;
-			handle.idx = m_programHandle.alloc();
+				handle.idx = m_programHandle.alloc();
 
-			BX_WARN(isValid(handle), "Failed to allocate program handle.");
-			if (isValid(handle) )
-			{
-				shaderIncRef(_vsh);
-				shaderIncRef(_fsh);
-				ProgramRef& pr = m_programRef[handle.idx];
-				pr.m_vsh = _vsh;
-				pr.m_fsh = _fsh;
-				pr.m_refCount = 1;
+				BX_WARN(isValid(handle), "Failed to allocate program handle.");
+				if (isValid(handle) )
+				{
+					shaderIncRef(_vsh);
+					shaderIncRef(_fsh);
+					ProgramRef& pr = m_programRef[handle.idx];
+					pr.m_vsh = _vsh;
+					pr.m_fsh = _fsh;
+					pr.m_refCount = 1;
 
-				const uint32_t key = uint32_t(_fsh.idx<<16)|_vsh.idx;
-				bool ok = m_programHashMap.insert(key, handle.idx);
-				BX_CHECK(ok, "Program already exists (key: %x, handle: %3d)!", key, handle.idx); BX_UNUSED(ok);
+					const uint32_t key = uint32_t(_fsh.idx<<16)|_vsh.idx;
+					bool ok = m_programHashMap.insert(key, handle.idx);
+					BX_CHECK(ok, "Program already exists (key: %x, handle: %3d)!", key, handle.idx); BX_UNUSED(ok);
 
-				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
-				cmdbuf.write(handle);
-				cmdbuf.write(_vsh);
-				cmdbuf.write(_fsh);
+					CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
+					cmdbuf.write(handle);
+					cmdbuf.write(_vsh);
+					cmdbuf.write(_fsh);
+				}
 			}
 
 			if (_destroyShaders)
