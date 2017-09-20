@@ -3212,7 +3212,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			murmur.begin();
 			murmur.add(_handle);
 			murmur.add(_mip);
-			murmur.add(0);
+			murmur.add(1);
 			uint32_t hash = murmur.end();
 
 			IUnknown** ptr = m_srvUavLru.find(hash);
@@ -3257,13 +3257,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			return uav;
 		}
 
-		ID3D11ShaderResourceView* getCachedSrv(TextureHandle _handle, uint8_t _mip)
+		ID3D11ShaderResourceView* getCachedSrv(TextureHandle _handle, uint8_t _mip, bool _compute = false)
 		{
 			bx::HashMurmur2A murmur;
 			murmur.begin();
 			murmur.add(_handle);
 			murmur.add(_mip);
 			murmur.add(0);
+			murmur.add(_compute);
 			uint32_t hash = murmur.end();
 
 			IUnknown** ptr = m_srvUavLru.find(hash);
@@ -3289,9 +3290,20 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					break;
 
 				case TextureD3D11::TextureCube:
-					desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
-					desc.TextureCube.MostDetailedMip = _mip;
-					desc.TextureCube.MipLevels       = 1;
+					if (_compute)
+					{
+						desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+						desc.Texture2DArray.MostDetailedMip = _mip;
+						desc.Texture2DArray.MipLevels       = 1;
+						desc.Texture2DArray.FirstArraySlice = 0;
+						desc.Texture2DArray.ArraySize       = 6;
+					}
+					else
+					{
+						desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+						desc.TextureCube.MostDetailedMip = _mip;
+						desc.TextureCube.MipLevels       = 1;
+					}
 					break;
 
 				case TextureD3D11::Texture3D:
@@ -5843,10 +5855,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 									}
 									else
 									{
-										srv[ii] = 0 == bind.m_un.m_compute.m_mip
-											? texture.m_srv
-											: s_renderD3D11->getCachedSrv(texture.getHandle(), bind.m_un.m_compute.m_mip)
-											;
+										srv[ii] = s_renderD3D11->getCachedSrv(texture.getHandle(), bind.m_un.m_compute.m_mip, true);
 										sampler[ii] = s_renderD3D11->getSamplerState(texture.m_flags, NULL);
 									}
 								}
