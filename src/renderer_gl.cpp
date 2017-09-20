@@ -2945,7 +2945,7 @@ namespace bgfx { namespace gl
 
 			if (GL_RGBA == m_readPixelsFmt)
 			{
-				bimg::imageSwizzleBgra8(data, width, height, width*4, data);
+				bimg::imageSwizzleBgra8(data, width*4, width, height, data, width*4);
 			}
 
 			g_callback->screenShot(_filePath
@@ -3531,7 +3531,14 @@ namespace bgfx { namespace gl
 
 				if (GL_RGBA == m_readPixelsFmt)
 				{
-					bimg::imageSwizzleBgra8(m_capture, m_resolution.m_width, m_resolution.m_height, m_resolution.m_width*4, m_capture);
+					bimg::imageSwizzleBgra8(
+						  m_capture
+						, m_resolution.m_width*4
+						, m_resolution.m_width
+						, m_resolution.m_height
+						, m_capture
+						, m_resolution.m_width*4
+						);
 				}
 
 				g_callback->captureFrame(m_capture, m_captureSize);

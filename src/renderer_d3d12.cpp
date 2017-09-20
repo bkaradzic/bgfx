@@ -1655,15 +1655,16 @@ namespace bgfx { namespace d3d12
 			readback->Map(0, NULL, (void**)&data);
 			bimg::imageSwizzleBgra8(
 				  data
+				, layout.Footprint.RowPitch
 				, width
 				, height
-				, (uint32_t)pitch
 				, data
+				, layout.Footprint.RowPitch
 				);
 			g_callback->screenShot(_filePath
 				, width
 				, height
-				, (uint32_t)pitch
+				, layout.Footprint.RowPitch
 				, data
 				, (uint32_t)total
 				, false
@@ -4189,11 +4190,6 @@ data.NumQualityLevels = 0;
 							srd[kk].SlicePitch = slice;
 							totalSize += slice;
 						}
-
- 						if (swizzle)
- 						{
-// 							imageSwizzleBgra8(temp, width, height, mip.m_width*4, data);
- 						}
 
 						srd[kk].SlicePitch = mip.m_height*srd[kk].RowPitch;
 						++kk;

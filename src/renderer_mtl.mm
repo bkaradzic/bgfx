@@ -1286,10 +1286,11 @@ namespace bgfx { namespace mtl
 				{
 					bimg::imageSwizzleBgra8(
 						  m_capture
+						, m_resolution.m_width*4
 						, m_resolution.m_width
 						, m_resolution.m_height
-						, m_resolution.m_width*4
 						, m_capture
+						, m_resolution.m_width*4
 						);
 				}
 

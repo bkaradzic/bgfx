@@ -2075,10 +2075,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				DX_CHECK(m_deviceCtx->Map(texture, 0, D3D11_MAP_READ, 0, &mapped) );
 				bimg::imageSwizzleBgra8(
 					  mapped.pData
+					, mapped.RowPitch
 					, backBufferDesc.Width
 					, backBufferDesc.Height
-					, mapped.RowPitch
 					, mapped.pData
+					, mapped.RowPitch
 					);
 				g_callback->screenShot(_filePath
 					, backBufferDesc.Width
@@ -3398,10 +3399,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				bimg::imageSwizzleBgra8(
 					  mapped.pData
+					, mapped.RowPitch
 					, getBufferWidth()
 					, getBufferHeight()
-					, mapped.RowPitch
 					, mapped.pData
+					, mapped.RowPitch
 					);
 
 				g_callback->captureFrame(mapped.pData, getBufferHeight()*mapped.RowPitch);
@@ -4557,11 +4559,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						{
 							srd[kk].SysMemPitch = mip.m_width*mip.m_bpp/8;
 						}
-
- 						if (swizzle)
- 						{
-// 							imageSwizzleBgra8(temp, width, height, mip.m_width*4, data);
- 						}
 
 						srd[kk].SysMemSlicePitch = mip.m_height*srd[kk].SysMemPitch;
 						++kk;
