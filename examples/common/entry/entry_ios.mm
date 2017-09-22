@@ -374,7 +374,7 @@ static	void* m_device = NULL;
 int main(int _argc, const char* const* _argv)
 {
 	NSAutoreleasePool* pool = [ [NSAutoreleasePool alloc] init];
-	int exitCode = UIApplicationMain(_argc, _argv, @"UIApplication", NSStringFromClass([AppDelegate class]) );
+	int exitCode = UIApplicationMain(_argc, (char**)_argv, @"UIApplication", NSStringFromClass([AppDelegate class]) );
 	[pool release];
 	return exitCode;
 }

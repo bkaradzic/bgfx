@@ -2229,10 +2229,10 @@ int bndIconLabelTextPosition(NVGcontext *ctx, float x, float y, float w, float h
         ctx, x, y, rows[row].start, rows[row].end + 1, glyphs, BND_MAX_GLYPHS);
     int col, p = 0;
     for (col = 0; col < nglyphs && glyphs[col].x < px; ++col)
-        p = glyphs[col].str - label;
+        p = (int)(glyphs[col].str - label);
     // see if we should move one character further
     if (col > 0 && col < nglyphs && glyphs[col].x - px < px - glyphs[col - 1].x)
-        p = glyphs[col].str - label;
+        p = (int)(glyphs[col].str - label);
     return p;
 }
 
