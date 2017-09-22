@@ -33,7 +33,6 @@
       <program source>:6:23: error: type 'half4' (aka 'vector_half4') is not valid for attribute 'position'
       half4 gl_Position [[position]];
 
-
 Known issues(driver problems??):
   OSX mac mini(late 2014), OSX10.11.3 : nanovg-rendering: color writemask off causes problem...
   03-raymarch: OSX nothing is visible  ( depth/color order should be swapped in fragment output struct)
@@ -43,6 +42,8 @@ Known issues(driver problems??):
   Only on this device ( no problem on iPad Air 2 with iOS9.3.1)
 
   TODOs:
+ - support multiple vertex buffers: 34-mvs
+
  - framebufferMtl and TextureMtl resolve
 
  - FrameBufferMtl::postReset recreate framebuffer???
@@ -998,11 +999,11 @@ namespace bgfx { namespace mtl
 			switch (_handle.type)
 			{
 			case Handle::Shader:
-//				m_shaders[_handle.idx].m_function.m_obj.label = [NSString stringWithUTF8String:_name];
+				m_shaders[_handle.idx].m_function.setLabel(_name);
 				break;
 
 			case Handle::Texture:
-				m_textures[_handle.idx].m_ptr.m_obj.label = [NSString stringWithUTF8String:_name];
+				m_textures[_handle.idx].m_ptr.setLabel(_name);
 				break;
 
 			default:
@@ -2075,7 +2076,7 @@ namespace bgfx { namespace mtl
 			FrameBufferMtl& frameBuffer = s_renderMtl->m_frameBuffers[_fbHandle.idx];
 			murmur.add(frameBuffer.m_pixelFormatHash);
 		}
-		murmur.add(_declHandle.idx);
+		murmur.add(s_renderMtl->m_vertexDecls[_declHandle.idx].m_hash);
 		murmur.add(_numInstanceData);
 		uint32_t hash = murmur.end();
 
@@ -2543,7 +2544,7 @@ namespace bgfx { namespace mtl
 			desc.width  = textureWidth;
 			desc.height = textureHeight;
 			desc.depth  = bx::uint32_max(1,imageContainer.m_depth);
-			desc.mipmapLevelCount = imageContainer.m_numMips;
+			desc.mipmapLevelCount = numMips;
 			desc.sampleCount      = 1;
 			desc.arrayLength = numLayers;
 
@@ -3046,6 +3047,9 @@ namespace bgfx { namespace mtl
 
 	void RendererContextMtl::submitBlit(BlitState& _bs, uint16_t _view)
 	{
+		if (!_bs.hasItem(_view))
+			return;
+
 		if (0 != m_renderCommandEncoder)
 		{
 			m_renderCommandEncoder.endEncoding();
