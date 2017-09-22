@@ -82,7 +82,7 @@ public:
 		bgfx::setDebug(m_debug);
 
 		// Uniforms.
-		u_shadowMap = bgfx::createUniform("u_shadowMap", bgfx::UniformType::Int1);
+		s_shadowMap = bgfx::createUniform("s_shadowMap", bgfx::UniformType::Int1);
 		u_lightPos  = bgfx::createUniform("u_lightPos",  bgfx::UniformType::Vec4);
 		u_lightMtx  = bgfx::createUniform("u_lightMtx",  bgfx::UniformType::Mat4);
 
@@ -204,7 +204,7 @@ public:
 		m_state[1]->m_numTextures = 1;
 		m_state[1]->m_textures[0].m_flags = UINT32_MAX;
 		m_state[1]->m_textures[0].m_stage = 0;
-		m_state[1]->m_textures[0].m_sampler = u_shadowMap;
+		m_state[1]->m_textures[0].m_sampler = s_shadowMap;
 		m_state[1]->m_textures[0].m_texture = shadowMapTexture;
 
 		// Set view and projection matrices.
@@ -240,7 +240,7 @@ public:
 
 		bgfx::destroy(m_shadowMapFB);
 
-		bgfx::destroy(u_shadowMap);
+		bgfx::destroy(s_shadowMap);
 		bgfx::destroy(u_lightPos);
 		bgfx::destroy(u_lightMtx);
 		bgfx::destroy(u_depthScaleOffset);
@@ -421,7 +421,7 @@ public:
 	uint32_t m_debug;
 	uint32_t m_reset;
 
-	bgfx::UniformHandle u_shadowMap;
+	bgfx::UniformHandle s_shadowMap;
 	bgfx::UniformHandle u_lightPos;
 	bgfx::UniformHandle u_lightMtx;
 
