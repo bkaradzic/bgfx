@@ -1345,6 +1345,14 @@ inline void MemcpySubresource(
     }
 }
 
+static inline D3D12_RESOURCE_DESC ID3D12ResourceGetDesc(ID3D12Resource *res)
+{
+    typedef void (STDMETHODCALLTYPE ID3D12Resource::*GetDesc_f)(D3D12_RESOURCE_DESC *);
+    D3D12_RESOURCE_DESC ret;
+    (res->*(GetDesc_f)(&ID3D12Resource::GetDesc))(&ret);
+    return ret;
+}
+
 //------------------------------------------------------------------------------------------------
 // Returns required size of a buffer to be used for data upload
 inline UINT64 GetRequiredIntermediateSize(
@@ -1352,7 +1360,7 @@ inline UINT64 GetRequiredIntermediateSize(
     _In_range_(0,D3D12_REQ_SUBRESOURCES) UINT FirstSubresource,
     _In_range_(0,D3D12_REQ_SUBRESOURCES-FirstSubresource) UINT NumSubresources)
 {
-    D3D12_RESOURCE_DESC Desc = pDestinationResource->GetDesc();
+    D3D12_RESOURCE_DESC Desc = ID3D12ResourceGetDesc(pDestinationResource);
     UINT64 RequiredSize = 0;
     
     ID3D12Device* pDevice;
@@ -1378,8 +1386,8 @@ inline UINT64 UpdateSubresources(
     _In_reads_(NumSubresources) const D3D12_SUBRESOURCE_DATA* pSrcData)
 {
     // Minor validation
-    D3D12_RESOURCE_DESC IntermediateDesc = pIntermediate->GetDesc();
-    D3D12_RESOURCE_DESC DestinationDesc = pDestinationResource->GetDesc();
+    D3D12_RESOURCE_DESC IntermediateDesc = ID3D12ResourceGetDesc(pIntermediate);
+    D3D12_RESOURCE_DESC DestinationDesc = ID3D12ResourceGetDesc(pDestinationResource);
     if (IntermediateDesc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER || 
         IntermediateDesc.Width < RequiredSize + pLayouts[0].Offset || 
         RequiredSize > (SIZE_T)-1 || 
@@ -1448,7 +1456,7 @@ inline UINT64 UpdateSubresources(
     UINT64* pRowSizesInBytes = reinterpret_cast<UINT64*>(pLayouts + NumSubresources);
     UINT* pNumRows = reinterpret_cast<UINT*>(pRowSizesInBytes + NumSubresources);
     
-    D3D12_RESOURCE_DESC Desc = pDestinationResource->GetDesc();
+    D3D12_RESOURCE_DESC Desc = ID3D12ResourceGetDesc(pDestinationResource);
     ID3D12Device* pDevice;
     pDestinationResource->GetDevice(__uuidof(ID3D12Device), reinterpret_cast<void**>(&pDevice));
     pDevice->GetCopyableFootprints(&Desc, FirstSubresource, NumSubresources, IntermediateOffset, pLayouts, pNumRows, pRowSizesInBytes, &RequiredSize);
@@ -1476,7 +1484,7 @@ inline UINT64 UpdateSubresources(
     UINT NumRows[MaxSubresources];
     UINT64 RowSizesInBytes[MaxSubresources];
     
-    D3D12_RESOURCE_DESC Desc = pDestinationResource->GetDesc();
+    D3D12_RESOURCE_DESC Desc = ID3D12ResourceGetDesc(pDestinationResource);
     ID3D12Device* pDevice;
     pDestinationResource->GetDevice(__uuidof(*pDevice), reinterpret_cast<void**>(&pDevice));
     pDevice->GetCopyableFootprints(&Desc, FirstSubresource, NumSubresources, IntermediateOffset, Layouts, NumRows, RowSizesInBytes, &RequiredSize);
