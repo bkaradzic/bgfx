@@ -7679,7 +7679,7 @@ namespace bgfx { namespace gl
 					, !!(m_resolution.m_flags&BGFX_RESET_MAXANISOTROPY) ? '\xfe' : ' '
 					);
 
-				double elapsedCpuMs = double(timeBegin)*toMs;
+				double elapsedCpuMs = double(frameTime)*toMs;
 				tvm.printf(10, pos++, 0x8e, "    Submitted: %5d (draw %5d, compute %4d) / CPU %7.4f [ms] %c GPU %7.4f [ms] (latency %d) "
 					, _render->m_num
 					, statsKeyType[0]

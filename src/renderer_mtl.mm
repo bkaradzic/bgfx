@@ -3966,7 +3966,7 @@ namespace bgfx { namespace mtl
 						, !!(m_resolution.m_flags&BGFX_RESET_MAXANISOTROPY) ? '\xfe' : ' '
 						);
 
-				double elapsedCpuMs = double(elapsed)*toMs;
+				double elapsedCpuMs = double(frameTime)*toMs;
 				tvm.printf(10, pos++, 0x8e, "    Submitted: %4d (draw %4d, compute %4d) / CPU %3.4f [ms] %c GPU %3.4f [ms] (latency %d)"
 						, _render->m_num
 						, statsKeyType[0]
