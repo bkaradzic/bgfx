@@ -502,21 +502,20 @@ namespace bgfx { namespace d3d12
 	static PFN_CREATE_EVENT_EX_A CreateEventExA;
 #endif // USE_D3D12_DYNAMIC_LIB
 
-	// NOTICE: gcc64 trick for return struct
-	static inline D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleForHeapStart(ID3D12DescriptorHeap *heap) 
+	static D3D12_CPU_DESCRIPTOR_HANDLE getCPUHandleHeapStart(ID3D12DescriptorHeap* _heap) 
 	{
-		typedef void (STDMETHODCALLTYPE ID3D12DescriptorHeap::*GetIDescriptorHandle_f)(D3D12_CPU_DESCRIPTOR_HANDLE *);
-		D3D12_CPU_DESCRIPTOR_HANDLE ret;
-		(heap->*(GetIDescriptorHandle_f)(&ID3D12DescriptorHeap::GetCPUDescriptorHandleForHeapStart))(&ret);
-		return ret;
+		D3D12_CPU_DESCRIPTOR_HANDLE handle;
+		typedef void (WINAPI ID3D12DescriptorHeap::*PFN_GET_CPU_DESCRIPTOR_HANDLE_FOR_HEAP_START)(D3D12_CPU_DESCRIPTOR_HANDLE *);
+		(_heap->*(PFN_GET_CPU_DESCRIPTOR_HANDLE_FOR_HEAP_START)(&ID3D12DescriptorHeap::GetCPUDescriptorHandleForHeapStart) )(&handle);
+		return handle;
 	}
 
-	static inline D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandleForHeapStart(ID3D12DescriptorHeap *heap) 
+	static D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandleHeapStart(ID3D12DescriptorHeap* _heap) 
 	{
-		typedef void (STDMETHODCALLTYPE ID3D12DescriptorHeap::*GetIDescriptorHandle_f)(D3D12_GPU_DESCRIPTOR_HANDLE *);
-		D3D12_GPU_DESCRIPTOR_HANDLE ret;
-		(heap->*(GetIDescriptorHandle_f)(&ID3D12DescriptorHeap::GetGPUDescriptorHandleForHeapStart))(&ret);
-		return ret;
+		D3D12_GPU_DESCRIPTOR_HANDLE handle;
+		typedef void (WINAPI ID3D12DescriptorHeap::*PFN_GET_GPU_DESCRIPTOR_HANDLE_FOR_HEAP_START)(D3D12_GPU_DESCRIPTOR_HANDLE *);
+		(_heap->*(PFN_GET_GPU_DESCRIPTOR_HANDLE_FOR_HEAP_START)(&ID3D12DescriptorHeap::GetGPUDescriptorHandleForHeapStart) )(&handle);
+		return handle;
 	}
 
 	struct RendererContextD3D12 : public RendererContextI
@@ -1877,7 +1876,7 @@ namespace bgfx { namespace d3d12
 
 			for (uint32_t ii = 0, num = m_scd.BufferCount; ii < num; ++ii)
 			{
-				D3D12_CPU_DESCRIPTOR_HANDLE handle = GetCPUDescriptorHandleForHeapStart(m_rtvDescriptorHeap);
+				D3D12_CPU_DESCRIPTOR_HANDLE handle = getCPUHandleHeapStart(m_rtvDescriptorHeap);
 				handle.ptr += ii * rtvDescriptorSize;
 				DX_CHECK(m_swapChain->GetBuffer(ii
 						, IID_ID3D12Resource
@@ -1917,7 +1916,7 @@ namespace bgfx { namespace d3d12
 
 			m_device->CreateDepthStencilView(m_backBufferDepthStencil
 				, &dsvDesc
-				, GetCPUDescriptorHandleForHeapStart(m_dsvDescriptorHeap)
+				, getCPUHandleHeapStart(m_dsvDescriptorHeap)
 				);
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
@@ -2128,10 +2127,10 @@ data.NumQualityLevels = 0;
 
 			if (!isValid(_fbh) )
 			{
-				m_rtvHandle = GetCPUDescriptorHandleForHeapStart(m_rtvDescriptorHeap);
+				m_rtvHandle = getCPUHandleHeapStart(m_rtvDescriptorHeap);
 				uint32_t rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 				m_rtvHandle.ptr += m_backBufferColorIdx * rtvDescriptorSize;
-				m_dsvHandle = GetCPUDescriptorHandleForHeapStart(m_dsvDescriptorHeap);
+				m_dsvHandle = getCPUHandleHeapStart(m_dsvDescriptorHeap);
 
 				m_currentColor        = &m_rtvHandle;
 				m_currentDepthStencil = &m_dsvHandle;
@@ -2143,7 +2142,7 @@ data.NumQualityLevels = 0;
 
 				if (0 < frameBuffer.m_num)
 				{
-					D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor = GetCPUDescriptorHandleForHeapStart(m_rtvDescriptorHeap);
+					D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor = getCPUHandleHeapStart(m_rtvDescriptorHeap);
 					uint32_t rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 					m_rtvHandle.ptr = rtvDescriptor.ptr + (BX_COUNTOF(m_backBufferColor) + _fbh.idx * BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) * rtvDescriptorSize;
 					m_currentColor  = &m_rtvHandle;
@@ -2155,7 +2154,7 @@ data.NumQualityLevels = 0;
 
 				if (isValid(frameBuffer.m_depth) )
 				{
-					D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = GetCPUDescriptorHandleForHeapStart(m_dsvDescriptorHeap);
+					D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = getCPUHandleHeapStart(m_dsvDescriptorHeap);
 					uint32_t dsvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 					m_dsvHandle.ptr = dsvDescriptor.ptr + (1 + _fbh.idx) * dsvDescriptorSize;
 					m_currentDepthStencil = &m_dsvHandle;
@@ -3054,8 +3053,8 @@ data.NumQualityLevels = 0;
 	void ScratchBufferD3D12::reset(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle)
 	{
 		m_pos = 0;
-		m_cpuHandle = GetCPUDescriptorHandleForHeapStart(m_heap);
-		m_gpuHandle = GetGPUDescriptorHandleForHeapStart(m_heap);
+		m_cpuHandle = getCPUHandleHeapStart(m_heap);
+		m_gpuHandle = getGPUHandleHeapStart(m_heap);
 		_gpuHandle = m_gpuHandle;
 	}
 
@@ -3211,8 +3210,8 @@ data.NumQualityLevels = 0;
 				, (void**)&m_heap
 				) );
 
-		m_cpuHandle = GetCPUDescriptorHandleForHeapStart(m_heap);
-		m_gpuHandle = GetGPUDescriptorHandleForHeapStart(m_heap);
+		m_cpuHandle = getCPUHandleHeapStart(m_heap);
+		m_gpuHandle = getGPUHandleHeapStart(m_heap);
 	}
 
 	void DescriptorAllocatorD3D12::destroy()
@@ -4555,7 +4554,7 @@ data.NumQualityLevels = 0;
 		{
 			ID3D12Device* device = s_renderD3D12->m_device;
 
-			D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor = GetCPUDescriptorHandleForHeapStart(s_renderD3D12->m_rtvDescriptorHeap);
+			D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor = getCPUHandleHeapStart(s_renderD3D12->m_rtvDescriptorHeap);
 			uint32_t rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 			uint32_t fbhIdx = (uint32_t)(this - s_renderD3D12->m_frameBuffers);
 			rtvDescriptor.ptr += (BX_COUNTOF(s_renderD3D12->m_backBufferColor) + fbhIdx * BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) * rtvDescriptorSize;
@@ -4582,7 +4581,7 @@ data.NumQualityLevels = 0;
 					{
 						BX_CHECK(!isValid(m_depth), "");
 						m_depth = handle;
-						D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = GetCPUDescriptorHandleForHeapStart(s_renderD3D12->m_dsvDescriptorHeap);
+						D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = getCPUHandleHeapStart(s_renderD3D12->m_dsvDescriptorHeap);
 						uint32_t dsvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 						dsvDescriptor.ptr += (1 + fbhIdx) * dsvDescriptorSize;
 
@@ -4642,7 +4641,7 @@ data.NumQualityLevels = 0;
 		if (BGFX_CLEAR_COLOR & _clear.m_flags
 		&&  0 != m_num)
 		{
-			D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor = GetCPUDescriptorHandleForHeapStart(s_renderD3D12->m_rtvDescriptorHeap);
+			D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor = getCPUHandleHeapStart(s_renderD3D12->m_rtvDescriptorHeap);
 			uint32_t rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 			rtvDescriptor.ptr += (BX_COUNTOF(s_renderD3D12->m_backBufferColor) + fbhIdx * BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) * rtvDescriptorSize;
 
@@ -4686,7 +4685,7 @@ data.NumQualityLevels = 0;
 		if (isValid(m_depth)
 		&& (BGFX_CLEAR_DEPTH|BGFX_CLEAR_STENCIL) & _clear.m_flags)
 		{
-			D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = GetCPUDescriptorHandleForHeapStart(s_renderD3D12->m_dsvDescriptorHeap);
+			D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = getCPUHandleHeapStart(s_renderD3D12->m_dsvDescriptorHeap);
 			uint32_t dsvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 			dsvDescriptor.ptr += (1 + fbhIdx) * dsvDescriptorSize;
 
