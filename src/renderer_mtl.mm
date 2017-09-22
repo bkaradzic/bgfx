@@ -21,17 +21,7 @@
 /*
  // known metal shader generation issues:
    03-raymarch: OSX10.11.3 nothing is visible ( depth/color swap in fragment output struct fixed this )
-   14-shadowvolumes: in texture as stencil mode - columns/bunny are dark. in fs_shadowvolume_color_lighting SAMPLER2D(s_texStencil, 1) is
-      converted to "texture2d<float> s_texStencil [[texture(0)]], sampler _mtlsmp_s_texStencil [[sampler(0)]]". Slot is 1 -> 0.
-   15-shadowmaps-simple: shader compilation error
-   16-shadowmaps:  //problem with essl -> metal: SAMPLER2D(u_shadowMap0, 4);  sampler index is lost. Shadowmap is set to slot 4, but
-      metal shader uses sampler/texture slot 0. this could require changes outside of renderer_mtl?
-      packFloatToRGBA needs highp. currently it uses half.
    24-nbody: no generated compute shaders for metal
-   27-terrain: shaderc generates invalid metal shader for vs_terrain_height_texture. vertex output: half4 gl_Position [[position]], should be float4
-   31-rsm:
-      <program source>:6:23: error: type 'half4' (aka 'vector_half4') is not valid for attribute 'position'
-      half4 gl_Position [[position]];
 
 
 Known issues(driver problems??):
@@ -2022,6 +2012,8 @@ namespace bgfx { namespace mtl
 		m_fshConstantBufferSize = 0;
 		m_fshConstantBufferAlignmentMask = 0;
 
+		m_samplerCount = 0;
+
 		m_processedUniforms = false;
 		m_numPredefined = 0;
 
@@ -2340,16 +2332,25 @@ namespace bgfx { namespace mtl
 								}
 								else if (arg.type == MTLArgumentTypeTexture)
 								{
-									if (0 == shaderType)
-									{
-										m_usedVertexSamplerStages |= 1<<arg.index;
-									}
-									else
-									{
-										m_usedFragmentSamplerStages |= 1<<arg.index;
-									}
+									const char* name = utf8String(arg.name);
+									const UniformRegInfo* info = s_renderMtl->m_uniformReg.find(name);
+									BX_WARN(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
 
-									BX_TRACE("texture: %s index:%d", utf8String(arg.name), arg.index);
+									if (NULL != info)
+									{
+										if ( m_samplerCount >= BGFX_CONFIG_MAX_TEXTURE_SAMPLERS)
+										{
+											BX_WARN(NULL != info, "Too many samplers in shader(only %d is supported). User defined uniform '%s' won't be set.", BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, name);
+										}
+										else
+										{
+											m_samplers[m_samplerCount].m_index = uint32_t(arg.index);
+											m_samplers[m_samplerCount].m_uniform = info->m_handle;
+											m_samplers[m_samplerCount].m_fragment = fragmentBit ? 1 : 0;
+											++m_samplerCount;
+											BX_TRACE("texture %s %d index:%d", name, info->m_handle, uint32_t(arg.index) );
+										}
+									}
 								}
 								else if (arg.type == MTLArgumentTypeSampler)
 								{
@@ -3727,19 +3728,17 @@ namespace bgfx { namespace mtl
 					m_uniformBufferVertexOffset = m_uniformBufferFragmentOffset;
 				}
 
+				if (kInvalidHandle != programIdx)
 				{
-					uint32_t usedVertexSamplerStages = 0;
-					uint32_t usedFragmentSamplerStages = 0;
+					ProgramMtl& program = m_program[programIdx];
 
-					if (kInvalidHandle != programIdx)
+					for (uint32_t sampler = 0; sampler < program.m_samplerCount; ++sampler)
 					{
-						ProgramMtl& program = m_program[programIdx];
-						usedVertexSamplerStages = program.m_usedVertexSamplerStages;
-						usedFragmentSamplerStages = program.m_usedFragmentSamplerStages;
-					}
+						ProgramMtl::SamplerInfo& samplerInfo = program.m_samplers[sampler];
 
-					for (uint8_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
-					{
+						UniformHandle handle = samplerInfo.m_uniform;
+						int stage = *((int*)m_uniforms[handle.idx]);
+
 						const Binding& bind = renderBind.m_bind[stage];
 						Binding& current = currentBind.m_bind[stage];
 
@@ -3750,11 +3749,11 @@ namespace bgfx { namespace mtl
 							if (kInvalidHandle != bind.m_idx)
 							{
 								TextureMtl& texture = m_textures[bind.m_idx];
-								texture.commit(stage
-									, 0 != (usedVertexSamplerStages   & (1<<stage) )
-									, 0 != (usedFragmentSamplerStages & (1<<stage) )
-									, bind.m_un.m_draw.m_textureFlags
-									);
+								texture.commit(samplerInfo.m_index
+											   , !samplerInfo.m_fragment
+											   , samplerInfo.m_fragment
+											   , bind.m_un.m_draw.m_textureFlags
+											   );
 							}
 						}
 
