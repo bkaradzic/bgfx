@@ -326,6 +326,12 @@ namespace bgfx { namespace mtl
 
 	MTL_CLASS(Function)
 		NSArray* vertexAttributes() { return m_obj.vertexAttributes; }
+
+		void setLabel(const char* _label)
+		{
+			if ([m_obj respondsToSelector:@selector(setLabel:)])
+				[m_obj setLabel:@(_label)];
+		}
 	MTL_CLASS_END
 
 	MTL_CLASS(Library)
@@ -497,6 +503,11 @@ namespace bgfx { namespace mtl
 		MTLTextureType textureType() const
 		{
 			return m_obj.textureType;
+		}
+
+		void setLabel(const char* _label)
+		{
+			[m_obj setLabel:@(_label)];
 		}
 	MTL_CLASS_END
 
