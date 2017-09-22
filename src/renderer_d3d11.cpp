@@ -5550,7 +5550,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		ID3D11DeviceContext* deviceCtx = m_deviceCtx;
 
-		int64_t elapsed = -bx::getHPCounter();
+		int64_t timeBegin = bx::getHPCounter();
 		int64_t captureElapsed = 0;
 
 		uint32_t frameQueryIdx = UINT32_MAX;
@@ -6442,16 +6442,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		PIX_ENDEVENT();
 
-		int64_t now = bx::getHPCounter();
-		elapsed += now;
-
-		static int64_t last = now;
-
-		Stats& perfStats = _render->m_perfStats;
-		perfStats.cpuTimeBegin = last;
-
-		int64_t frameTime = now - last;
-		last = now;
+		int64_t timeEnd = bx::getHPCounter();
+		int64_t frameTime = timeEnd - timeBegin;
 
 		static int64_t min = frameTime;
 		static int64_t max = frameTime;
@@ -6476,7 +6468,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		const int64_t timerFreq = bx::getHPFrequency();
 
-		perfStats.cpuTimeEnd    = now;
+		Stats& perfStats = _render->m_perfStats;
+		perfStats.cpuTimeBegin  = timeBegin;
+		perfStats.cpuTimeEnd    = timeEnd;
 		perfStats.cpuTimerFreq  = timerFreq;
 		const TimerQueryD3D11::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
 		perfStats.gpuTimeBegin  = result.m_begin;
@@ -6493,12 +6487,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			m_needPresent = true;
 			TextVideoMem& tvm = m_textVideoMem;
 
-			static int64_t next = now;
+			static int64_t next = timeEnd;
 
-			if (now >= next)
+			if (timeEnd >= next)
 			{
-				next = now + timerFreq;
-				double freq = double(bx::getHPFrequency() );
+				next = timeEnd + timerFreq;
+
+				double freq = double(timerFreq);
 				double toMs = 1000.0/freq;
 
 				tvm.clear();
@@ -6555,7 +6550,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					, !!(m_resolution.m_flags&BGFX_RESET_MAXANISOTROPY) ? '\xfe' : ' '
 					);
 
-				double elapsedCpuMs = double(elapsed)*toMs;
+				double elapsedCpuMs = double(timeBegin)*toMs;
 				tvm.printf(10, pos++, 0x8e, "    Submitted: %5d (draw %5d, compute %4d) / CPU %7.4f [ms] %c GPU %7.4f [ms] (latency %d) "
 					, _render->m_num
 					, statsKeyType[0]
