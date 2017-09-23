@@ -4509,6 +4509,7 @@ namespace bgfx
 		uint8_t m_colorPaletteDirty;
 
 		Resolution m_resolution;
+		int64_t  m_frameTimeLast;
 		int32_t  m_instBufferCount;
 		uint32_t m_frames;
 		uint32_t m_debug;

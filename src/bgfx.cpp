@@ -1332,6 +1332,7 @@ namespace bgfx
 		m_flipped = true;
 		m_frames  = 0;
 		m_debug   = BGFX_DEBUG_NONE;
+		m_frameTimeLast = bx::getHPCounter();
 
 		m_submit->create();
 
@@ -1693,6 +1694,10 @@ namespace bgfx
 			, m_resolution.m_width
 			, m_resolution.m_height
 			);
+
+		int64_t now = bx::getHPCounter();
+		m_submit->m_perfStats.cpuTimeFrame = now - m_frameTimeLast;
+		m_frameTimeLast = now;
 	}
 
 	const char* Context::getName(UniformHandle _handle) const

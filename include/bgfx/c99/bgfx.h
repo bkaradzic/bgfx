@@ -348,6 +348,7 @@ typedef struct bgfx_view_stats
 /**/
 typedef struct bgfx_stats
 {
+    uint64_t cpuTimeFrame;
     uint64_t cpuTimeBegin;
     uint64_t cpuTimeEnd;
     uint64_t cpuTimerFreq;

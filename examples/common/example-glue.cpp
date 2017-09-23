@@ -162,12 +162,14 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 #endif // 0
 
 	const bgfx::Stats* stats = bgfx::getStats();
-	ImGui::Text("CPU %0.3f"
-		, double(stats->cpuTimeEnd-stats->cpuTimeBegin)/stats->cpuTimerFreq*1000.0
+	const double toMs = 1000.0/stats->cpuTimerFreq;
+	ImGui::Text("Frame %0.3f"
+		, double(stats->cpuTimeFrame)*toMs
 		);
 
-	ImGui::Text("GPU %0.3f (latency: %d)"
-		, double(stats->gpuTimeEnd-stats->gpuTimeBegin)/stats->gpuTimerFreq*1000.0
+	ImGui::Text("Submit CPU %0.3f, GPU %0.3f (L: %d)"
+		, double(stats->cpuTimeEnd - stats->cpuTimeBegin)*toMs
+		, double(stats->gpuTimeEnd - stats->gpuTimeBegin)*toMs
 		, stats->maxGpuLatency
 		);
 

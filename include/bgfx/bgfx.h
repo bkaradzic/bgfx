@@ -741,8 +741,9 @@ namespace bgfx
 	///
 	struct Stats
 	{
-		uint64_t cpuTimeBegin;    //!< CPU frame begin time.
-		uint64_t cpuTimeEnd;      //!< CPU frame end time.
+		uint64_t cpuTimeFrame;    //!< CPU time between two `bgfx::frame` calls.
+		uint64_t cpuTimeBegin;    //!< Render thread CPU submit begin time.
+		uint64_t cpuTimeEnd;      //!< Render thread CPU submit end time.
 		uint64_t cpuTimerFreq;    //!< CPU timer frequency.
 
 		uint64_t gpuTimeBegin;    //!< GPU frame begin time.
