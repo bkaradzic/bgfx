@@ -56,7 +56,7 @@ gl_FragCoord origin is upper left
                               Capability Shader
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
-                              EntryPoint Fragment 4  "main" 20 23
+                              EntryPoint Fragment 4  "main"
                               ExecutionMode 4 OriginUpperLeft
                               Source HLSL 500
                               Name 4  "main"

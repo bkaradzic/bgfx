@@ -33,3 +33,10 @@ if(BUILD_TESTING)
             "Google Mock was not found - tests based on that will not build")
     endif()
 endif()
+
+if(ENABLE_OPT AND NOT TARGET SPIRV-Tools-opt)
+    if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/spirv-tools)
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/spirv-tools spirv-tools)
+    endif()
+endif()
+

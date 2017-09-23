@@ -18,6 +18,8 @@ option(ENABLE_NV_EXTENSIONS "Enables support of Nvidia-specific extensions" ON)
 
 option(ENABLE_HLSL "Enables HLSL input support" ON)
 
+option(ENABLE_OPT "Enables spirv-opt capability if present" ON)
+
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND WIN32)
     set(CMAKE_INSTALL_PREFIX "install" CACHE STRING "..." FORCE)
 endif()
@@ -82,6 +84,17 @@ endfunction(glslang_set_link_args)
 
 # We depend on these for later projects, so they should come first.
 add_subdirectory(External)
+
+if(NOT TARGET SPIRV-Tools-opt)
+    set(ENABLE_OPT OFF)
+endif()
+
+if(ENABLE_OPT)
+    message(STATUS "optimizer enabled")
+    add_definitions(-DENABLE_OPT)
+elseif(ENABLE_HLSL)
+    message(STATUS "spirv-tools not linked - illegal SPIRV may be generated for HLSL")
+endif()
 
 add_subdirectory(glslang)
 add_subdirectory(OGLCompilersDLL)

@@ -1081,8 +1081,10 @@ void TGlslangToSpvTraverser::visitSymbol(glslang::TIntermSymbol* symbol)
     // Include all "static use" and "linkage only" interface variables on the OpEntryPoint instruction
     if (builder.isPointer(id)) {
         spv::StorageClass sc = builder.getStorageClass(id);
-        if (sc == spv::StorageClassInput || sc == spv::StorageClassOutput)
-            iOSet.insert(id);
+        if (sc == spv::StorageClassInput || sc == spv::StorageClassOutput) {
+            if (!symbol->getType().isStruct() || symbol->getType().getStruct()->size() > 0)
+                iOSet.insert(id);
+        }
     }
 
     // Only process non-linkage-only nodes for generating actual static uses

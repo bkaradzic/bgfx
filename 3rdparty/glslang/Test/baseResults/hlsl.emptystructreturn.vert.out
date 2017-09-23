@@ -54,7 +54,7 @@ Shader version: 500
                               Capability Shader
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
-                              EntryPoint Vertex 4  "main" 20 23
+                              EntryPoint Vertex 4  "main"
                               Source HLSL 500
                               Name 4  "main"
                               Name 6  "vs_in"
