@@ -502,20 +502,40 @@ namespace bgfx { namespace d3d12
 	static PFN_CREATE_EVENT_EX_A CreateEventExA;
 #endif // USE_D3D12_DYNAMIC_LIB
 
-	static D3D12_CPU_DESCRIPTOR_HANDLE getCPUHandleHeapStart(ID3D12DescriptorHeap* _heap) 
+	inline D3D12_CPU_DESCRIPTOR_HANDLE getCPUHandleHeapStart(ID3D12DescriptorHeap* _heap)
 	{
+#if BX_COMPILER_MSVC
+		return _heap->GetCPUDescriptorHandleForHeapStart();
+#else
 		D3D12_CPU_DESCRIPTOR_HANDLE handle;
 		typedef void (WINAPI ID3D12DescriptorHeap::*PFN_GET_CPU_DESCRIPTOR_HANDLE_FOR_HEAP_START)(D3D12_CPU_DESCRIPTOR_HANDLE *);
 		(_heap->*(PFN_GET_CPU_DESCRIPTOR_HANDLE_FOR_HEAP_START)(&ID3D12DescriptorHeap::GetCPUDescriptorHandleForHeapStart) )(&handle);
 		return handle;
+#endif // BX_COMPILER_MSVC
 	}
 
-	static D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandleHeapStart(ID3D12DescriptorHeap* _heap) 
+	inline D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandleHeapStart(ID3D12DescriptorHeap* _heap)
 	{
+#if BX_COMPILER_MSVC
+		return _heap->GetGPUDescriptorHandleForHeapStart();
+#else
 		D3D12_GPU_DESCRIPTOR_HANDLE handle;
 		typedef void (WINAPI ID3D12DescriptorHeap::*PFN_GET_GPU_DESCRIPTOR_HANDLE_FOR_HEAP_START)(D3D12_GPU_DESCRIPTOR_HANDLE *);
 		(_heap->*(PFN_GET_GPU_DESCRIPTOR_HANDLE_FOR_HEAP_START)(&ID3D12DescriptorHeap::GetGPUDescriptorHandleForHeapStart) )(&handle);
 		return handle;
+#endif // BX_COMPILER_MSVC
+	}
+
+	inline D3D12_RESOURCE_DESC getResourceDesc(ID3D12Resource* _resource)
+	{
+#if BX_COMPILER_MSVC
+		return _resource->GetDesc();
+#else
+		typedef void (STDMETHODCALLTYPE ID3D12Resource::*PFN_GET_GET_DESC)(D3D12_RESOURCE_DESC*);
+		D3D12_RESOURCE_DESC desc;
+		(_resource->*(PFN_GET_GET_DESC)(&ID3D12Resource::GetDesc))(&desc);
+		return desc;
+#endif // BX_COMPILER_MSVC
 	}
 
 	struct RendererContextD3D12 : public RendererContextI
@@ -1478,7 +1498,7 @@ namespace bgfx { namespace d3d12
 		{
 			const TextureD3D12& texture = m_textures[_handle.idx];
 
-			D3D12_RESOURCE_DESC desc = ID3D12ResourceGetDesc(texture.m_ptr);
+			D3D12_RESOURCE_DESC desc = getResourceDesc(texture.m_ptr);
 
 			D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
 			uint32_t numRows;
@@ -1635,7 +1655,7 @@ namespace bgfx { namespace d3d12
 			m_cmd.finish(m_backBufferColorFence[idx]);
 			ID3D12Resource* backBuffer = m_backBufferColor[idx];
 
-			D3D12_RESOURCE_DESC desc = ID3D12ResourceGetDesc(backBuffer);
+			D3D12_RESOURCE_DESC desc = getResourceDesc(backBuffer);
 
 			const uint32_t width  = (uint32_t)desc.Width;
 			const uint32_t height = (uint32_t)desc.Height;
@@ -4464,7 +4484,7 @@ data.NumQualityLevels = 0;
 		const uint32_t rectpitch = _rect.m_width*bpp/8;
 		const uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
 
-		D3D12_RESOURCE_DESC desc = ID3D12ResourceGetDesc(m_ptr);
+		D3D12_RESOURCE_DESC desc = getResourceDesc(m_ptr);
 
 		desc.Height = _rect.m_height;
 
@@ -4572,7 +4592,7 @@ data.NumQualityLevels = 0;
 
 					if (0 == m_width)
 					{
-						D3D12_RESOURCE_DESC desc = ID3D12ResourceGetDesc(texture.m_ptr);
+						D3D12_RESOURCE_DESC desc = getResourceDesc(texture.m_ptr);
 						m_width  = uint32_t(desc.Width);
 						m_height = uint32_t(desc.Height);
 					}
@@ -4721,10 +4741,10 @@ data.NumQualityLevels = 0;
 			);
 
 		DX_CHECK(s_renderD3D12->m_cmd.m_commandQueue->GetTimestampFrequency(&m_frequency) );
-		
+
 		D3D12_RANGE range = { 0, size };
 		m_readback->Map(0, &range, (void**)&m_queryResult);
-	
+
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
 		{
 			Result& result = m_result[ii];
