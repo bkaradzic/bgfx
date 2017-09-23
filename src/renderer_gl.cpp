@@ -7611,7 +7611,7 @@ namespace bgfx { namespace gl
 			m_gpuTimer.end(frameQueryIdx);
 
 			const TimerQueryGL::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
-			double toGpuMs = 1000.0 / 1e6;
+			double toGpuMs = 1000.0 / 1e9;
 			elapsedGpuMs   = (result.m_end - result.m_begin) * toGpuMs;
 			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
 

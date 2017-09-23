@@ -162,14 +162,15 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 #endif // 0
 
 	const bgfx::Stats* stats = bgfx::getStats();
-	const double toMs = 1000.0/stats->cpuTimerFreq;
+	const double toMsCpu = 1000.0/stats->cpuTimerFreq;
+	const double toMsGpu = 1000.0/stats->gpuTimerFreq;
 	ImGui::Text("Frame %0.3f"
-		, double(stats->cpuTimeFrame)*toMs
+		, double(stats->cpuTimeFrame)*toMsCpu
 		);
 
 	ImGui::Text("Submit CPU %0.3f, GPU %0.3f (L: %d)"
-		, double(stats->cpuTimeEnd - stats->cpuTimeBegin)*toMs
-		, double(stats->gpuTimeEnd - stats->gpuTimeBegin)*toMs
+		, double(stats->cpuTimeEnd - stats->cpuTimeBegin)*toMsCpu
+		, double(stats->gpuTimeEnd - stats->gpuTimeBegin)*toMsGpu
 		, stats->maxGpuLatency
 		);
 
@@ -190,8 +191,8 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 				{
 					ImGuiListClipper clipper(stats->numViews, itemHeight);
 
-					const double toCpuMs = 1000.0/stats->cpuTimerFreq;
-					const double toGpuMs = 1000.0/stats->gpuTimerFreq;
+					const double toCpuMs = 1000.0/double(stats->cpuTimerFreq);
+					const double toGpuMs = 1000.0/double(stats->gpuTimerFreq);
 					const float  scale   = 3.0f;
 
 					while (clipper.Step() )
