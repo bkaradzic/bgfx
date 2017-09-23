@@ -1043,7 +1043,7 @@ namespace bgfx { namespace gl
 		glGetError(); // ignore error if glGetString returns NULL.
 		if (NULL != str)
 		{
-			return bx::hashMurmur2A(str, (uint32_t)bx::strLen(str) );
+			return bx::hash<bx::HashMurmur2A>(str, (uint32_t)bx::strLen(str) );
 		}
 
 		return 0;
@@ -5531,7 +5531,7 @@ namespace bgfx { namespace gl
 	void ShaderGL::create(Memory* _mem)
 	{
 		bx::MemoryReader reader(_mem->data, _mem->size);
-		m_hash = bx::hashMurmur2A(_mem->data, _mem->size);
+		m_hash = bx::hash<bx::HashMurmur2A>(_mem->data, _mem->size);
 
 		uint32_t magic;
 		bx::read(&reader, magic);

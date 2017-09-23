@@ -1285,7 +1285,7 @@ namespace bgfx
 
 		const UniformRegInfo* find(const char* _name) const
 		{
-			uint16_t handle = m_uniforms.find(bx::hashMurmur2A(_name) );
+			uint16_t handle = m_uniforms.find(bx::hash<bx::HashMurmur2A>(_name) );
 			if (kInvalidHandle != handle)
 			{
 				return &m_info[handle];
@@ -1297,7 +1297,7 @@ namespace bgfx
 		const UniformRegInfo& add(UniformHandle _handle, const char* _name, const void* _data)
 		{
 			BX_CHECK(isValid(_handle), "Uniform handle is invalid (name: %s)!", _name);
-			const uint32_t key = bx::hashMurmur2A(_name);
+			const uint32_t key = bx::hash<bx::HashMurmur2A>(_name);
 			m_uniforms.removeByKey(key);
 			m_uniforms.insert(key, _handle.idx);
 
@@ -3123,7 +3123,7 @@ namespace bgfx
 				return invalid;
 			}
 
-			const uint32_t shaderHash = bx::hashMurmur2A(_mem->data, _mem->size);
+			const uint32_t shaderHash = bx::hash<bx::HashMurmur2A>(_mem->data, _mem->size);
 			const uint16_t idx = m_shaderHashMap.find(shaderHash);
 			if (kInvalidHandle != idx)
 			{
@@ -3749,7 +3749,7 @@ namespace bgfx
 
 			_num  = bx::uint16_max(1, _num);
 
-			uint16_t idx = m_uniformHashMap.find(bx::hashMurmur2A(_name) );
+			uint16_t idx = m_uniformHashMap.find(bx::hash<bx::HashMurmur2A>(_name) );
 			if (kInvalidHandle != idx)
 			{
 				UniformHandle handle = { idx };
@@ -3794,7 +3794,7 @@ namespace bgfx
 				uniform.m_type = _type;
 				uniform.m_num  = _num;
 
-				bool ok = m_uniformHashMap.insert(bx::hashMurmur2A(_name), handle.idx);
+				bool ok = m_uniformHashMap.insert(bx::hash<bx::HashMurmur2A>(_name), handle.idx);
 				BX_CHECK(ok, "Uniform already exists (name: %s)!", _name); BX_UNUSED(ok);
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateUniform);
