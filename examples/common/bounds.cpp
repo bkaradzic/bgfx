@@ -647,6 +647,92 @@ bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule, Inters
 	return false;
 }
 
+bool intersect(const Ray& _ray, const Cone& _cone, Intersection* _intersection)
+{
+	float axis[3];
+	bx::vec3Sub(axis, _cone.m_end, _cone.m_pos);
+
+	float normal[3];
+	const float len = bx::vec3Norm(normal, axis);
+
+	Disk disk;
+	bx::vec3Move(disk.m_center, _cone.m_pos);
+	bx::vec3Neg(disk.m_normal, normal);
+	disk.m_radius = _cone.m_radius;
+
+	if (intersect(_ray, disk, _intersection) )
+	{
+		return true;
+	}
+
+	float rs[3];
+	bx::vec3Sub(rs, _ray.m_pos, _cone.m_end);
+
+	const float hyp  = bx::fsqrt(bx::fsq(_cone.m_radius) + bx::fsq(len) );
+	const float cosa = len/hyp;
+
+	const float cosaSq = bx::fsq(cosa);
+
+	const float rsdotaxis = bx::vec3Dot(rs, normal);
+	const float rdota = bx::vec3Dot(normal, _ray.m_dir);
+
+	const float aa = bx::fsq(rdota) - cosaSq;
+	const float bb = 2.0f * (rdota*rsdotaxis - bx::vec3Dot(_ray.m_dir, rs)*cosaSq);
+	const float cc = bx::fsq(rsdotaxis) - bx::vec3Dot(rs, rs)*cosaSq;
+
+	float det = bb*bb - 4.0f*aa*cc;
+
+	if (0.0f > det)
+	{
+		return false;
+	}
+
+	det = bx::fsqrt(det);
+
+	float t1 = (-bb - det) / (2.0f * aa);
+	float t2 = (-bb + det) / (2.0f * aa);
+
+	float tt = t1;
+	if (0.0f > t1
+	|| (0.0f < t2 && t2 < t1) )
+	{
+		tt = t2;
+	}
+
+	if (0.0f > tt)
+	{
+		return false;
+	}
+
+	float point[3];
+	getPointAt(point, _ray, tt);
+
+	const float hh = bx::vec3Dot(normal, point);
+
+	if (0.0f > hh
+	||  len  < hh)
+	{
+		return false;
+	}
+
+	if (NULL != _intersection)
+	{
+		_intersection->m_dist = tt;
+
+		bx::vec3Move(_intersection->m_pos, point);
+
+		const float scale = hh / bx::vec3Dot(point, point);
+		float pointScaled[3];
+		bx::vec3Mul(pointScaled, point, scale);
+
+		float tmp[3];
+		bx::vec3Sub(tmp, pointScaled, normal);
+		bx::vec3Norm(_intersection->m_normal, tmp);
+	}
+
+	return true;
+}
+
 bool intersect(const Ray& _ray, const Plane& _plane, Intersection* _intersection)
 {
 	float equation = bx::vec3Dot(_ray.m_pos, _plane.m_normal) + _plane.m_dist;
