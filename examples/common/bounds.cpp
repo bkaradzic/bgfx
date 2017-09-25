@@ -561,6 +561,11 @@ bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule, Inters
 	const float ddoto = bx::vec3Dot(_ray.m_dir, vo);
 	const float ss    = t0 - bx::fabs(bx::fsqrt(rsq - bx::fsq(dist) ) / ddoto);
 
+	if (0.0f > ss)
+	{
+		return false;
+	}
+
 	float point[3];
 	getPointAt(point, _ray, ss);
 
