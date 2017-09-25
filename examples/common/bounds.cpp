@@ -660,37 +660,33 @@ bool intersect(const Ray& _ray, const Cone& _cone, Intersection* _intersection)
 	bx::vec3Neg(disk.m_normal, normal);
 	disk.m_radius = _cone.m_radius;
 
-	if (intersect(_ray, disk, _intersection) )
-	{
-		return true;
-	}
+	Intersection tmpInt;
+	Intersection* out = NULL != _intersection ? _intersection : &tmpInt;
+	bool hit = intersect(_ray, disk, out);
 
-	float rs[3];
-	bx::vec3Sub(rs, _ray.m_pos, _cone.m_end);
+	float ro[3];
+	bx::vec3Sub(ro, _ray.m_pos, _cone.m_end);
 
-	const float hyp  = bx::fsqrt(bx::fsq(_cone.m_radius) + bx::fsq(len) );
-	const float cosa = len/hyp;
+	const float hyp    = bx::fsqrt(bx::fsq(_cone.m_radius) + bx::fsq(len) );
+	const float cosaSq = bx::fsq(len/hyp);
+	const float ndoto  = bx::vec3Dot(normal, ro);
+	const float ndotd  = bx::vec3Dot(normal, _ray.m_dir);
 
-	const float cosaSq = bx::fsq(cosa);
-
-	const float rsdotaxis = bx::vec3Dot(rs, normal);
-	const float rdota = bx::vec3Dot(normal, _ray.m_dir);
-
-	const float aa = bx::fsq(rdota) - cosaSq;
-	const float bb = 2.0f * (rdota*rsdotaxis - bx::vec3Dot(_ray.m_dir, rs)*cosaSq);
-	const float cc = bx::fsq(rsdotaxis) - bx::vec3Dot(rs, rs)*cosaSq;
+	const float aa = bx::fsq(ndotd) - cosaSq;
+	const float bb = 2.0f * (ndotd*ndoto - bx::vec3Dot(_ray.m_dir, ro)*cosaSq);
+	const float cc = bx::fsq(ndoto) - bx::vec3Dot(ro, ro)*cosaSq;
 
 	float det = bb*bb - 4.0f*aa*cc;
 
 	if (0.0f > det)
 	{
-		return false;
+		return hit;
 	}
 
 	det = bx::fsqrt(det);
-
-	float t1 = (-bb - det) / (2.0f * aa);
-	float t2 = (-bb + det) / (2.0f * aa);
+	const float invA2 = 1.0f / (2.0f*aa);
+	const float t1 = (-bb - det) * invA2;
+	const float t2 = (-bb + det) * invA2;
 
 	float tt = t1;
 	if (0.0f > t1
@@ -701,33 +697,39 @@ bool intersect(const Ray& _ray, const Cone& _cone, Intersection* _intersection)
 
 	if (0.0f > tt)
 	{
-		return false;
+		return hit;
 	}
 
+	float tmp[3];
+	getPointAt(tmp, _ray, tt);
+
 	float point[3];
-	getPointAt(point, _ray, tt);
+	bx::vec3Sub(point, tmp, _cone.m_pos);
 
 	const float hh = bx::vec3Dot(normal, point);
 
 	if (0.0f > hh
 	||  len  < hh)
 	{
-		return false;
+		return hit;
 	}
 
 	if (NULL != _intersection)
 	{
-		_intersection->m_dist = tt;
+		if (!hit
+		||  tt < _intersection->m_dist)
+		{
+			_intersection->m_dist = tt;
 
-		bx::vec3Move(_intersection->m_pos, point);
+			bx::vec3Move(_intersection->m_pos, point);
 
-		const float scale = hh / bx::vec3Dot(point, point);
-		float pointScaled[3];
-		bx::vec3Mul(pointScaled, point, scale);
+			const float scale = hh / bx::vec3Dot(point, point);
+			float pointScaled[3];
+			bx::vec3Mul(pointScaled, point, scale);
 
-		float tmp[3];
-		bx::vec3Sub(tmp, pointScaled, normal);
-		bx::vec3Norm(_intersection->m_normal, tmp);
+			bx::vec3Sub(tmp, pointScaled, normal);
+			bx::vec3Norm(_intersection->m_normal, tmp);
+		}
 	}
 
 	return true;
