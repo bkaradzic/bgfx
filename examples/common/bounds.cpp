@@ -531,7 +531,7 @@ bool intersect(const Ray& _ray, const Disk& _disk, Intersection* _intersection)
 	return false;
 }
 
-bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule, Intersection* _intersection)
+static bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule, Intersection* _intersection)
 {
 	float axis[3];
 	bx::vec3Sub(axis, _cylinder.m_end, _cylinder.m_pos);
@@ -650,6 +650,17 @@ bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule, Inters
 	}
 
 	return false;
+}
+
+bool intersect(const Ray& _ray, const Cylinder& _cylinder, Intersection* _intersection)
+{
+	return intersect(_ray, _cylinder, false, _intersection);
+}
+
+bool intersect(const Ray& _ray, const Capsule& _capsule, Intersection* _intersection)
+{
+	BX_STATIC_ASSERT(sizeof(Capsule) == sizeof(Cylinder) );
+	return intersect(_ray, *( (const Cylinder*)&_capsule), true, _intersection);
 }
 
 bool intersect(const Ray& _ray, const Cone& _cone, Intersection* _intersection)

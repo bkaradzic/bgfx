@@ -19,6 +19,13 @@ struct Cylinder
 	float m_radius;
 };
 
+struct Capsule
+{
+	float m_pos[3];
+	float m_end[3];
+	float m_radius;
+};
+
 struct Cone
 {
 	float m_pos[3];
@@ -123,7 +130,10 @@ Ray makeRay(float _x, float _y, const float* _invVp);
 bool intersect(const Ray& _ray, const Aabb& _aabb, Intersection* _intersection = NULL);
 
 /// Intersect ray / cylinder.
-bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule, Intersection* _intersection = NULL);
+bool intersect(const Ray& _ray, const Cylinder& _cylinder, Intersection* _intersection = NULL);
+
+/// Intersect ray / capsule.
+bool intersect(const Ray& _ray, const Capsule& _capsule, Intersection* _intersection = NULL);
 
 /// Intersect ray / cone.
 bool intersect(const Ray& _ray, const Cone& _cone, Intersection* _intersection = NULL);
