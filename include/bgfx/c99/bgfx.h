@@ -348,14 +348,14 @@ typedef struct bgfx_view_stats
 /**/
 typedef struct bgfx_stats
 {
-    uint64_t cpuTimeFrame;
-    uint64_t cpuTimeBegin;
-    uint64_t cpuTimeEnd;
-    uint64_t cpuTimerFreq;
+    int64_t cpuTimeFrame;
+    int64_t cpuTimeBegin;
+    int64_t cpuTimeEnd;
+    int64_t cpuTimerFreq;
 
-    uint64_t gpuTimeBegin;
-    uint64_t gpuTimeEnd;
-    uint64_t gpuTimerFreq;
+    int64_t gpuTimeBegin;
+    int64_t gpuTimeEnd;
+    int64_t gpuTimerFreq;
 
     int64_t waitRender;
     int64_t waitSubmit;
@@ -363,6 +363,9 @@ typedef struct bgfx_stats
     uint32_t numDraw;
     uint32_t numCompute;
     uint32_t maxGpuLatency;
+
+    int64_t gpuMemoryMax;
+    int64_t gpuMemoryUsed;
 
     uint16_t width;
     uint16_t height;

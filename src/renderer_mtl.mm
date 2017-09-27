@@ -3930,6 +3930,8 @@ namespace bgfx { namespace mtl
 		perfStats.numDraw       = statsKeyType[0];
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.maxGpuLatency = maxGpuLatency;
+		perfStats.gpuMemoryMax  = -INT64_MAX;
+		perfStats.gpuMemoryUsed = -INT64_MAX;
 
 		rce.setTriangleFillMode(MTLTriangleFillModeFill);
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )

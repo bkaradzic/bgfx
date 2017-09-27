@@ -4396,6 +4396,8 @@ BX_UNUSED(presentMin, presentMax);
 //		perfStats.numDraw       = statsKeyType[0];
 //		perfStats.numCompute    = statsKeyType[1];
 //		perfStats.maxGpuLatency = maxGpuLatency;
+		perfStats.gpuMemoryMax  = -INT64_MAX;
+		perfStats.gpuMemoryUsed = -INT64_MAX;
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{

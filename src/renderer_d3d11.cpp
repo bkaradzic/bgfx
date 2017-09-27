@@ -562,8 +562,12 @@ namespace bgfx { namespace d3d11
 #endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 	}
 
-	// Reference:
-	// https://github.com/GPUOpen-LibrariesAndSDKs/AGS_SDK
+	/*
+	 * AMD GPU Services (AGS) library
+	 *
+	 * Reference:
+	 * https://github.com/GPUOpen-LibrariesAndSDKs/AGS_SDK
+	 */
 	enum AGS_RETURN_CODE
 	{
 		AGS_SUCCESS,
@@ -625,6 +629,53 @@ namespace bgfx { namespace d3d11
 	static MultiDrawIndirectFn multiDrawInstancedIndirect;
 	static MultiDrawIndirectFn multiDrawIndexedInstancedIndirect;
 
+	/*
+	 * NVAPI
+	 *
+	 * Reference:
+	 * http://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/index.html
+	 * https://github.com/jNizM/AHK_NVIDIA_NvAPI/blob/master/info/NvAPI_IDs.txt
+	 */
+	struct NvDisplayHandle;
+
+	enum NvApiStatus
+	{
+		NVAPI_OK    =  0,
+		NVAPI_ERROR = -1,
+	};
+
+	struct NvMemoryInfoV2
+	{
+		NvMemoryInfoV2()
+			: version(sizeof(NvMemoryInfoV2) | (2 << 16) )
+		{
+		}
+
+		uint32_t version;
+		uint32_t dedicatedVideoMemory;
+		uint32_t availableDedicatedVideoMemory;
+		uint32_t systemVideoMemory;
+		uint32_t sharedSystemMemory;
+		uint32_t curAvailableDedicatedVideoMemory;
+	};
+
+	typedef void*       (__cdecl* PFN_NVAPI_QUERYINTERFACE)(uint32_t _functionOffset);
+	typedef NvApiStatus (__cdecl* PFN_NVAPI_INITIALIZE)();
+	typedef NvApiStatus (__cdecl* PFN_NVAPI_UNLOAD)();
+	typedef NvApiStatus (__cdecl* PFN_NVAPI_ENUMNVIDIADISPLAYHANDLE)(uint32_t _index, NvDisplayHandle** _handle);
+	typedef NvApiStatus (__cdecl* PFN_NVAPI_GPU_GETMEMORYINFO)(NvDisplayHandle* _handle, NvMemoryInfoV2* _memoryInfo);
+
+#define NVAPI_INITIALIZE              UINT32_C(0x0150e828)
+#define NVAPI_UNLOAD                  UINT32_C(0xd22bdd7e)
+#define NVAPI_ENUMNVIDIADISPLAYHANDLE UINT32_C(0x9abdd40d)
+#define NVAPI_GPU_GETMEMORYINFO       UINT32_C(0x774AA982) //UINT32_C(0x07f9b368)
+
+	static PFN_NVAPI_QUERYINTERFACE          nvApiQueryInterface;
+	static PFN_NVAPI_INITIALIZE              nvApiInitialize;
+	static PFN_NVAPI_UNLOAD                  nvApiUnload;
+	static PFN_NVAPI_ENUMNVIDIADISPLAYHANDLE nvApiEnumNvidiaDisplayHandle;
+	static PFN_NVAPI_GPU_GETMEMORYINFO       nvApiGetMemoryInfo;
+
 #if USE_D3D11_DYNAMIC_LIB
 	static PFN_D3D11_CREATE_DEVICE  D3D11CreateDevice;
 	static PFN_CREATE_DXGI_FACTORY  CreateDXGIFactory;
@@ -668,6 +719,8 @@ namespace bgfx { namespace d3d11
 			, m_renderdocdll(NULL)
 			, m_agsdll(NULL)
 			, m_ags(NULL)
+			, m_nvapidll(NULL)
+			, m_nvDisplayHandle(NULL)
 			, m_driverType(D3D_DRIVER_TYPE_NULL)
 			, m_featureLevel(D3D_FEATURE_LEVEL(0) )
 			, m_adapter(NULL)
@@ -737,11 +790,11 @@ namespace bgfx { namespace d3d11
 			m_ags = NULL;
 			m_agsdll = bx::dlopen(
 #if BX_ARCH_32BIT
-						"amd_ags_x86.dll"
+				"amd_ags_x86.dll"
 #else
-						"amd_ags_x64.dll"
+				"amd_ags_x64.dll"
 #endif // BX_ARCH_32BIT
-						);
+				);
 			if (NULL != m_agsdll)
 			{
 				agsInit   = (PFN_AGS_INIT  )bx::dlsym(m_agsdll, "agsInit");
@@ -812,6 +865,59 @@ namespace bgfx { namespace d3d11
 					bx::dlclose(m_agsdll);
 					m_agsdll = NULL;
 				}
+			}
+
+			m_nvDisplayHandle = NULL;
+			m_nvapidll = bx::dlopen(
+#if BX_ARCH_32BIT
+				"nvapi.dll"
+#else
+				"nvapi64.dll"
+#endif // BX_ARCH_32BIT
+				);
+
+			if (NULL != m_nvapidll)
+			{
+				nvApiQueryInterface = (PFN_NVAPI_QUERYINTERFACE)bx::dlsym(m_nvapidll, "nvapi_QueryInterface");
+
+				bool initialized = NULL != nvApiQueryInterface;
+
+				if (initialized)
+				{
+					nvApiInitialize              = (PFN_NVAPI_INITIALIZE             )nvApiQueryInterface(NVAPI_INITIALIZE);
+					nvApiUnload                  = (PFN_NVAPI_UNLOAD                 )nvApiQueryInterface(NVAPI_UNLOAD);
+					nvApiEnumNvidiaDisplayHandle = (PFN_NVAPI_ENUMNVIDIADISPLAYHANDLE)nvApiQueryInterface(NVAPI_ENUMNVIDIADISPLAYHANDLE);
+					nvApiGetMemoryInfo           = (PFN_NVAPI_GPU_GETMEMORYINFO      )nvApiQueryInterface(NVAPI_GPU_GETMEMORYINFO);
+
+					initialized &= true
+						&& NULL != nvApiInitialize
+						&& NULL != nvApiUnload
+						&& NULL != nvApiEnumNvidiaDisplayHandle
+						&& NULL != nvApiGetMemoryInfo
+						;
+
+					if (initialized)
+					{
+						initialized &= true
+							&& NVAPI_OK == nvApiInitialize()
+							&& NVAPI_OK == nvApiEnumNvidiaDisplayHandle(0, &m_nvDisplayHandle)
+							;
+					 }
+
+					if (!initialized)
+					{
+						m_nvDisplayHandle = NULL;
+						nvApiUnload();
+					}
+				}
+
+				if (!initialized)
+				{
+					bx::dlclose(m_nvapidll);
+					m_nvapidll = NULL;
+				}
+
+				BX_TRACE("NVAPI supported.");
 			}
 
 #if USE_D3D11_DYNAMIC_LIB
@@ -1702,12 +1808,24 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			case ErrorState::Default:
 			default:
+				if (NULL != m_nvDisplayHandle)
+				{
+					nvApiUnload();
+					m_nvDisplayHandle = NULL;
+				}
+
+				bx::dlclose(m_nvapidll);
+				m_nvapidll = NULL;
+
 				if (NULL != m_ags)
 				{
 					agsDeInit(m_ags);
+					m_ags = NULL;
 				}
+
 				bx::dlclose(m_agsdll);
 				m_agsdll = NULL;
+
 				unloadRenderDoc(m_renderdocdll);
 				m_ovr.shutdown();
 				break;
@@ -1720,6 +1838,15 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			preReset();
 			m_ovr.shutdown();
+
+			if (NULL != m_nvDisplayHandle)
+			{
+				nvApiUnload();
+				m_nvDisplayHandle = NULL;
+			}
+
+			bx::dlclose(m_nvapidll);
+			m_nvapidll = NULL;
 
 			if (NULL != m_ags)
 			{
@@ -3652,6 +3779,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		void* m_renderdocdll;
 		void* m_agsdll;
 		AGSContext* m_ags;
+		void* m_nvapidll;
+		NvDisplayHandle* m_nvDisplayHandle;
 
 
 		D3D_DRIVER_TYPE   m_driverType;
@@ -6479,6 +6608,23 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		perfStats.numDraw       = statsKeyType[0];
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.maxGpuLatency = maxGpuLatency;
+		perfStats.gpuMemoryMax  = -INT64_MAX;
+		perfStats.gpuMemoryUsed = -INT64_MAX;
+
+		if (NULL != m_nvDisplayHandle)
+		{
+			NvMemoryInfoV2 memInfo;
+			if (NVAPI_OK == nvApiGetMemoryInfo(m_nvDisplayHandle, &memInfo) )
+			{
+				perfStats.gpuMemoryMax  = 1024 *  memInfo.availableDedicatedVideoMemory;
+				perfStats.gpuMemoryUsed = 1024 * (memInfo.availableDedicatedVideoMemory - memInfo.curAvailableDedicatedVideoMemory);
+//				BX_TRACE("            dedicatedVideoMemory: %d KiB", memInfo.dedicatedVideoMemory);
+//				BX_TRACE("   availableDedicatedVideoMemory: %d KiB", memInfo.availableDedicatedVideoMemory);
+//				BX_TRACE("               systemVideoMemory: %d KiB", memInfo.systemVideoMemory);
+//				BX_TRACE("              sharedSystemMemory: %d KiB", memInfo.sharedSystemMemory);
+//				BX_TRACE("curAvailableDedicatedVideoMemory: %d KiB", memInfo.curAvailableDedicatedVideoMemory);
+			}
+		}
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
