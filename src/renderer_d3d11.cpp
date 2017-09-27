@@ -637,11 +637,14 @@ namespace bgfx { namespace d3d11
 	 * https://github.com/jNizM/AHK_NVIDIA_NvAPI/blob/master/info/NvAPI_IDs.txt
 	 */
 	struct NvDisplayHandle;
+	struct NvPhysicalGpuHandle;
+
+#define NVAPI_MAX_PHYSICAL_GPUS 64
 
 	enum NvApiStatus
 	{
-		NVAPI_OK    =  0,
-		NVAPI_ERROR = -1,
+		NVAPI_OK                      =  0,
+		NVAPI_ERROR                   = -1,
 	};
 
 	struct NvMemoryInfoV2
@@ -662,19 +665,19 @@ namespace bgfx { namespace d3d11
 	typedef void*       (__cdecl* PFN_NVAPI_QUERYINTERFACE)(uint32_t _functionOffset);
 	typedef NvApiStatus (__cdecl* PFN_NVAPI_INITIALIZE)();
 	typedef NvApiStatus (__cdecl* PFN_NVAPI_UNLOAD)();
-	typedef NvApiStatus (__cdecl* PFN_NVAPI_ENUMNVIDIADISPLAYHANDLE)(uint32_t _index, NvDisplayHandle** _handle);
-	typedef NvApiStatus (__cdecl* PFN_NVAPI_GPU_GETMEMORYINFO)(NvDisplayHandle* _handle, NvMemoryInfoV2* _memoryInfo);
+	typedef NvApiStatus (__cdecl* PFN_NVAPI_ENUMPHYSICALGPUS)(NvPhysicalGpuHandle* _handle[NVAPI_MAX_PHYSICAL_GPUS], uint32_t* _gpuCount);
+	typedef NvApiStatus (__cdecl* PFN_NVAPI_GPUGETMEMORYINFO)(NvPhysicalGpuHandle* _handle, NvMemoryInfoV2* _memoryInfo);
 
 #define NVAPI_INITIALIZE              UINT32_C(0x0150e828)
 #define NVAPI_UNLOAD                  UINT32_C(0xd22bdd7e)
-#define NVAPI_ENUMNVIDIADISPLAYHANDLE UINT32_C(0x9abdd40d)
-#define NVAPI_GPU_GETMEMORYINFO       UINT32_C(0x774AA982) //UINT32_C(0x07f9b368)
+#define NVAPI_ENUMPHYSICALGPUS        UINT32_C(0xe5ac921f)
+#define NVAPI_GPUGETMEMORYINFO        UINT32_C(0x07f9b368)
 
 	static PFN_NVAPI_QUERYINTERFACE          nvApiQueryInterface;
 	static PFN_NVAPI_INITIALIZE              nvApiInitialize;
 	static PFN_NVAPI_UNLOAD                  nvApiUnload;
-	static PFN_NVAPI_ENUMNVIDIADISPLAYHANDLE nvApiEnumNvidiaDisplayHandle;
-	static PFN_NVAPI_GPU_GETMEMORYINFO       nvApiGetMemoryInfo;
+	static PFN_NVAPI_ENUMPHYSICALGPUS        nvApiEnumPhysicalGPUs;
+	static PFN_NVAPI_GPUGETMEMORYINFO        nvApiGpuGetMemoryInfo;
 
 #if USE_D3D11_DYNAMIC_LIB
 	static PFN_D3D11_CREATE_DEVICE  D3D11CreateDevice;
@@ -720,7 +723,7 @@ namespace bgfx { namespace d3d11
 			, m_agsdll(NULL)
 			, m_ags(NULL)
 			, m_nvapidll(NULL)
-			, m_nvDisplayHandle(NULL)
+			, m_nvGpu(NULL)
 			, m_driverType(D3D_DRIVER_TYPE_NULL)
 			, m_featureLevel(D3D_FEATURE_LEVEL(0) )
 			, m_adapter(NULL)
@@ -867,7 +870,7 @@ namespace bgfx { namespace d3d11
 				}
 			}
 
-			m_nvDisplayHandle = NULL;
+			m_nvGpu = NULL;
 			m_nvapidll = bx::dlopen(
 #if BX_ARCH_32BIT
 				"nvapi.dll"
@@ -886,27 +889,36 @@ namespace bgfx { namespace d3d11
 				{
 					nvApiInitialize              = (PFN_NVAPI_INITIALIZE             )nvApiQueryInterface(NVAPI_INITIALIZE);
 					nvApiUnload                  = (PFN_NVAPI_UNLOAD                 )nvApiQueryInterface(NVAPI_UNLOAD);
-					nvApiEnumNvidiaDisplayHandle = (PFN_NVAPI_ENUMNVIDIADISPLAYHANDLE)nvApiQueryInterface(NVAPI_ENUMNVIDIADISPLAYHANDLE);
-					nvApiGetMemoryInfo           = (PFN_NVAPI_GPU_GETMEMORYINFO      )nvApiQueryInterface(NVAPI_GPU_GETMEMORYINFO);
+					nvApiEnumPhysicalGPUs        = (PFN_NVAPI_ENUMPHYSICALGPUS       )nvApiQueryInterface(NVAPI_ENUMPHYSICALGPUS);
+					nvApiGpuGetMemoryInfo        = (PFN_NVAPI_GPUGETMEMORYINFO       )nvApiQueryInterface(NVAPI_GPUGETMEMORYINFO);
 
-					initialized &= true
+					initialized = true
 						&& NULL != nvApiInitialize
 						&& NULL != nvApiUnload
-						&& NULL != nvApiEnumNvidiaDisplayHandle
-						&& NULL != nvApiGetMemoryInfo
+						&& NULL != nvApiEnumPhysicalGPUs
+						&& NULL != nvApiGpuGetMemoryInfo
+						&& NVAPI_OK == nvApiInitialize()
 						;
 
 					if (initialized)
 					{
-						initialized &= true
-							&& NVAPI_OK == nvApiInitialize()
-							&& NVAPI_OK == nvApiEnumNvidiaDisplayHandle(0, &m_nvDisplayHandle)
-							;
-					 }
+						NvApiStatus status;
+
+						NvPhysicalGpuHandle* physicalGpus[NVAPI_MAX_PHYSICAL_GPUS];
+						uint32_t numGpus = 0;
+						nvApiEnumPhysicalGPUs(physicalGpus, &numGpus);
+
+						initialized = 0 < numGpus;
+						if (initialized)
+						{
+							m_nvGpu = physicalGpus[0];
+						}
+					}
+
+					initialized = NULL != m_nvGpu;
 
 					if (!initialized)
 					{
-						m_nvDisplayHandle = NULL;
 						nvApiUnload();
 					}
 				}
@@ -917,7 +929,7 @@ namespace bgfx { namespace d3d11
 					m_nvapidll = NULL;
 				}
 
-				BX_TRACE("NVAPI supported.");
+				BX_WARN(!initialized, "NVAPI supported.");
 			}
 
 #if USE_D3D11_DYNAMIC_LIB
@@ -1808,10 +1820,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			case ErrorState::Default:
 			default:
-				if (NULL != m_nvDisplayHandle)
+				if (NULL != m_nvGpu)
 				{
 					nvApiUnload();
-					m_nvDisplayHandle = NULL;
+					m_nvGpu = NULL;
 				}
 
 				bx::dlclose(m_nvapidll);
@@ -1839,10 +1851,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			preReset();
 			m_ovr.shutdown();
 
-			if (NULL != m_nvDisplayHandle)
+			if (NULL != m_nvGpu)
 			{
 				nvApiUnload();
-				m_nvDisplayHandle = NULL;
+				m_nvGpu = NULL;
 			}
 
 			bx::dlclose(m_nvapidll);
@@ -3780,7 +3792,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		void* m_agsdll;
 		AGSContext* m_ags;
 		void* m_nvapidll;
-		NvDisplayHandle* m_nvDisplayHandle;
+		NvPhysicalGpuHandle* m_nvGpu;
 
 
 		D3D_DRIVER_TYPE   m_driverType;
@@ -6611,10 +6623,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		perfStats.gpuMemoryMax  = -INT64_MAX;
 		perfStats.gpuMemoryUsed = -INT64_MAX;
 
-		if (NULL != m_nvDisplayHandle)
+		if (NULL != m_nvGpu)
 		{
 			NvMemoryInfoV2 memInfo;
-			if (NVAPI_OK == nvApiGetMemoryInfo(m_nvDisplayHandle, &memInfo) )
+			NvApiStatus status = nvApiGpuGetMemoryInfo(m_nvGpu, &memInfo);
+			if (NVAPI_OK == status)
 			{
 				perfStats.gpuMemoryMax  = 1024 *  memInfo.availableDedicatedVideoMemory;
 				perfStats.gpuMemoryUsed = 1024 * (memInfo.availableDedicatedVideoMemory - memInfo.curAvailableDedicatedVideoMemory);

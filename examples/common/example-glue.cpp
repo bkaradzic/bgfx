@@ -174,6 +174,17 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 		, stats->maxGpuLatency
 		);
 
+	if (-INT64_MAX != stats->gpuMemoryUsed)
+	{
+		char tmp0[64];
+		bx::prettify(tmp0, BX_COUNTOF(tmp0), stats->gpuMemoryUsed);
+
+		char tmp1[64];
+		bx::prettify(tmp1, BX_COUNTOF(tmp1), stats->gpuMemoryMax);
+
+		ImGui::Text("GPU mem: %s / %s", tmp0, tmp1);
+	}
+
 	if (0 != stats->numViews)
 	{
 		if (ImGui::CollapsingHeader(ICON_FA_CLOCK_O " Profiler") )
