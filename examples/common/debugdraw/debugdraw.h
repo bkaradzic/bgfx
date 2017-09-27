@@ -92,7 +92,10 @@ void ddClose();
 void ddDraw(const Aabb& _aabb);
 
 ///
-void ddDraw(const Cylinder& _cylinder, bool _capsule = false);
+void ddDraw(const Cylinder& _cylinder);
+
+///
+void ddDraw(const Capsule& _capsule);
 
 ///
 void ddDraw(const Disk& _disk);
@@ -102,6 +105,9 @@ void ddDraw(const Obb& _obb);
 
 ///
 void ddDraw(const Sphere& _sphere);
+
+///
+void ddDraw(const Cone& _cone);
 
 ///
 void ddDrawFrustum(const void* _viewProj);

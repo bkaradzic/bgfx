@@ -80,6 +80,9 @@ struct Intersection
 /// Convert axis aligned bounding box to oriented bounding box.
 void aabbToObb(Obb& _obb, const Aabb& _aabb);
 
+/// Convert oriented bounding box to axis aligned bounding box.
+void toAabb(Aabb& _aabb, const Obb& _obb);
+
 /// Convert sphere to axis aligned bounding box.
 void toAabb(Aabb& _aabb, const Sphere& _sphere);
 
@@ -126,8 +129,11 @@ void intersectPlanes(float _result[3], const Plane& _pa, const Plane& _pb, const
 /// Make screen space ray from x, y coordinate and inverse view-projection matrix.
 Ray makeRay(float _x, float _y, const float* _invVp);
 
-/// Intersect ray / aabb.
+/// Intersect ray / AABB.
 bool intersect(const Ray& _ray, const Aabb& _aabb, Intersection* _intersection = NULL);
+
+/// Intersect ray / OBB.
+bool intersect(const Ray& _ray, const Obb& _obb, Intersection* _intersection = NULL);
 
 /// Intersect ray / cylinder.
 bool intersect(const Ray& _ray, const Cylinder& _cylinder, Intersection* _intersection = NULL);

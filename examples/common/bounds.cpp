@@ -19,6 +19,28 @@ void aabbToObb(Obb& _obb, const Aabb& _aabb)
 	_obb.m_mtx[15] = 1.0f;
 }
 
+void toAabb(Aabb& _aabb, const Obb& _obb)
+{
+	float xyz[3] = { 1.0f, 1.0f, 1.0f };
+
+	float tmp[3];
+	bx::vec3MulMtx(tmp, xyz, _obb.m_mtx);
+
+	bx::vec3Move(_aabb.m_min, tmp);
+	bx::vec3Move(_aabb.m_max, tmp);
+
+	for (uint32_t ii = 1; ii < 8; ++ii)
+	{
+		xyz[0] = ii & 1 ? -1.0f : 1.0f;
+		xyz[1] = ii & 2 ? -1.0f : 1.0f;
+		xyz[2] = ii & 4 ? -1.0f : 1.0f;
+		bx::vec3MulMtx(tmp, xyz, _obb.m_mtx);
+
+		bx::vec3Min(_aabb.m_min, _aabb.m_min, tmp);
+		bx::vec3Max(_aabb.m_max, _aabb.m_max, tmp);
+	}
+}
+
 void toAabb(Aabb& _aabb, const Sphere& _sphere)
 {
 	float radius = _sphere.m_radius;
@@ -510,6 +532,47 @@ bool intersect(const Ray& _ray, const Aabb& _aabb, Intersection* _intersection)
 	}
 
 	return true;
+}
+
+static const Aabb s_kUnitAabb =
+{
+	{ -1.0f, -1.0f, -1.0f },
+	{  1.0f,  1.0f,  1.0f },
+};
+
+bool intersect(const Ray& _ray, const Obb& _obb, Intersection* _intersection)
+{
+	Aabb aabb;
+	toAabb(aabb, _obb);
+
+	if (!intersect(_ray, aabb) )
+	{
+		return false;
+	}
+
+	float mtxInv[16];
+	bx::mtxInverse(mtxInv, _obb.m_mtx);
+
+	Ray obbRay;
+	bx::vec3MulMtx(obbRay.m_pos, _ray.m_pos, mtxInv);
+	bx::vec3MulMtxXyz0(obbRay.m_dir, _ray.m_dir, mtxInv);
+
+	if (intersect(obbRay, s_kUnitAabb, _intersection) )
+	{
+		if (NULL != _intersection)
+		{
+			float tmp[3];
+			bx::vec3MulMtx(tmp, _intersection->m_pos, _obb.m_mtx);
+			bx::vec3Move(_intersection->m_pos, tmp);
+
+			bx::vec3MulMtxXyz0(tmp, _intersection->m_normal, _obb.m_mtx);
+			bx::vec3Norm(_intersection->m_normal, tmp);
+		}
+
+		return true;
+	}
+
+	return false;
 }
 
 bool intersect(const Ray& _ray, const Disk& _disk, Intersection* _intersection)

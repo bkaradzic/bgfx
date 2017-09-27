@@ -2157,9 +2157,14 @@ void ddDraw(const Aabb& _aabb)
 	s_dd.draw(_aabb);
 }
 
-void ddDraw(const Cylinder& _cylinder, bool _capsule)
+void ddDraw(const Cylinder& _cylinder)
 {
-	s_dd.draw(_cylinder, _capsule);
+	s_dd.draw(_cylinder, false);
+}
+
+void ddDraw(const Capsule& _capsule)
+{
+	s_dd.draw( *( (const Cylinder*)&_capsule), true);
 }
 
 void ddDraw(const Disk& _disk)
@@ -2175,6 +2180,11 @@ void ddDraw(const Obb& _obb)
 void ddDraw(const Sphere& _sphere)
 {
 	s_dd.draw(_sphere);
+}
+
+void ddDraw(const Cone& _cone)
+{
+	ddDrawCone(_cone.m_pos, _cone.m_end, _cone.m_radius);
 }
 
 void ddDrawFrustum(const void* _viewProj)

@@ -98,7 +98,8 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
-			imguiBeginFrame(m_mouseState.m_mx
+			imguiBeginFrame(
+				   m_mouseState.m_mx
 				,  m_mouseState.m_my
 				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
 				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
@@ -145,25 +146,36 @@ public:
 				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 			}
 
-			float zero[3] = {};
+			float mtxVp[16];
+			bx::mtxMul(mtxVp, view, proj);
 
-			float mvp[16];
+			float mtxInvVp[16];
+			bx::mtxInverse(mtxInvVp, mtxVp);
+
+			float zero[3] = {};
 			float eye[] = { 5.0f, 10.0f, 5.0f };
 			bx::mtxLookAt(view, eye, zero);
 			bx::mtxProj(proj, 45.0f, float(m_width)/float(m_height), 1.0f, 15.0f, bgfx::getCaps()->homogeneousDepth);
-			bx::mtxMul(mvp, view, proj);
+			bx::mtxMul(mtxVp, view, proj);
+
+			Ray ray = makeRay(
+				   (float(m_mouseState.m_mx)/float(m_width)  * 2.0f - 1.0f)
+				, -(float(m_mouseState.m_my)/float(m_height) * 2.0f - 1.0f)
+				, mtxInvVp
+				);
+
+			const uint32_t selected = 0xff80ffff;
 
 			ddBegin(0);
 			ddDrawAxis(0.0f, 0.0f, 0.0f);
 
 			ddPush();
-				ddSetColor(0xff00ff00);
-
 				Aabb aabb =
 				{
 					{  5.0f, 1.0f, 1.0f },
 					{ 10.0f, 5.0f, 5.0f },
 				};
+				ddSetColor(intersect(ray, aabb) ? selected : 0xff00ff00);
 				ddDraw(aabb);
 			ddPop();
 
@@ -172,39 +184,46 @@ public:
 			Obb obb;
 			bx::mtxRotateX(obb.m_mtx, time);
 			ddSetWireframe(true);
+			ddSetColor(intersect(ray, obb) ? selected : 0xffffffff);
+			ddDraw(obb);
+
+			bx::mtxSRT(obb.m_mtx, 1.0f, 1.0f, 1.0f, time*0.23f, time, 0.0f, 3.0f, 0.0f, 0.0f);
+
+			toAabb(aabb, obb);
+			ddSetColor(0xff0000ff);
+			ddDraw(aabb);
+
+			ddSetWireframe(false);
+			ddSetColor(intersect(ray, obb) ? selected : 0xffffffff);
 			ddDraw(obb);
 
 			ddSetColor(0xffffffff);
-			bx::mtxSRT(obb.m_mtx, 1.0f, 1.0f, 1.0f, 0.0f, time, 0.0f, 3.0f, 0.0f, 0.0f);
-			ddSetWireframe(false);
-			ddDraw(obb);
-
 			ddSetTranslate(0.0f, -2.0f, 0.0f);
 			ddDrawGrid(Axis::Y, zero, 20, 1.0f);
 			ddSetTransform(NULL);
 
-			ddDrawFrustum(mvp);
+			ddDrawFrustum(mtxVp);
 
 			ddPush();
 				Sphere sphere = { { 0.0f, 5.0f, 0.0f }, 1.0f };
-				ddSetColor(0xfff0c0ff);
+				ddSetColor(intersect(ray, sphere) ? selected : 0xfff0c0ff);
 				ddSetWireframe(true);
 				ddSetLod(3);
 				ddDraw(sphere);
 				ddSetWireframe(false);
 
-				ddSetColor(0xc0ffc0ff);
 				sphere.m_center[0] = -2.0f;
+				ddSetColor(intersect(ray, sphere) ? selected : 0xc0ffc0ff);
 				ddSetLod(2);
 				ddDraw(sphere);
 
-				ddSetColor(0xa0f0ffff);
 				sphere.m_center[0] = -4.0f;
+				ddSetColor(intersect(ray, sphere) ? selected : 0xa0f0ffff);
 				ddSetLod(1);
 				ddDraw(sphere);
 
-				ddSetColor(0xffc0ff00);
 				sphere.m_center[0] = -6.0f;
+				ddSetColor(intersect(ray, sphere) ? selected : 0xffc0ff00);
 				ddSetLod(0);
 				ddDraw(sphere);
 			ddPop();
@@ -237,22 +256,42 @@ public:
 				ddPush();
 					ddSetSpin(time*0.3f);
 					{
-						float from[3] = { -11.0f, 4.0f,  0.0f };
-						float to[3]   = { -13.0f, 6.0f,  1.0f };
-						ddDrawCone(from, to, 1.0f );
-					}
+						Cone cone =
+						{
+							{ -11.0f, 4.0f,  0.0f },
+							{ -13.0f, 6.0f,  1.0f },
+							1.0f
+						};
 
-					{
-						float from[3] = {  -9.0f, 2.0f, -1.0f };
-						float to[3]   = { -11.0f, 4.0f,  0.0f };
-						ddDrawCylinder(from, to, 0.5f );
+						Cylinder cylinder =
+						{
+							{  -9.0f, 2.0f, -1.0f },
+							{ -11.0f, 4.0f,  0.0f },
+							0.5f
+						};
+
+						ddSetColor(false
+							|| intersect(ray, cone)
+							|| intersect(ray, cylinder)
+							? selected
+							: 0xffffffff
+							);
+
+						ddDraw(cone);
+						ddDraw(cylinder);
 					}
 				ddPop();
 
 				{
-					float from[3] = {  0.0f, 7.0f, 0.0f };
-					float to[3]   = { -6.0f, 7.0f, 0.0f };
-					ddDrawCylinder(from, to, 0.5f, true);
+					ddSetLod(0);
+					Capsule capsule =
+					{
+						{  0.0f, 7.0f, 0.0f },
+						{ -6.0f, 7.0f, 0.0f },
+						0.5f
+					};
+					ddSetColor(intersect(ray, capsule) ? selected : 0xffffffff);
+					ddDraw(capsule);
 				}
 			ddPop();
 
@@ -274,6 +313,7 @@ public:
 
 				float up[3] = { 0.0f, 4.0f, 0.0f };
 				bx::vec3MulMtx(cylinder.m_end, up, mtx);
+				ddSetColor(intersect(ray, cylinder) ? selected : 0xffffffff);
 				ddDraw(cylinder);
 
 				toAabb(aabb, cylinder);
