@@ -70,7 +70,7 @@ struct Tris
 	float m_v2[3];
 };
 
-struct Intersection
+struct Hit
 {
 	float m_pos[3];
 	float m_normal[3];
@@ -130,30 +130,30 @@ void intersectPlanes(float _result[3], const Plane& _pa, const Plane& _pb, const
 Ray makeRay(float _x, float _y, const float* _invVp);
 
 /// Intersect ray / AABB.
-bool intersect(const Ray& _ray, const Aabb& _aabb, Intersection* _intersection = NULL);
+bool intersect(const Ray& _ray, const Aabb& _aabb, Hit* _hit = NULL);
 
 /// Intersect ray / OBB.
-bool intersect(const Ray& _ray, const Obb& _obb, Intersection* _intersection = NULL);
+bool intersect(const Ray& _ray, const Obb& _obb, Hit* _hit = NULL);
 
 /// Intersect ray / cylinder.
-bool intersect(const Ray& _ray, const Cylinder& _cylinder, Intersection* _intersection = NULL);
+bool intersect(const Ray& _ray, const Cylinder& _cylinder, Hit* _hit = NULL);
 
 /// Intersect ray / capsule.
-bool intersect(const Ray& _ray, const Capsule& _capsule, Intersection* _intersection = NULL);
+bool intersect(const Ray& _ray, const Capsule& _capsule, Hit* _hit = NULL);
 
 /// Intersect ray / cone.
-bool intersect(const Ray& _ray, const Cone& _cone, Intersection* _intersection = NULL);
+bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit = NULL);
 
 /// Intersect ray / disk.
-bool intersect(const Ray& _ray, const Disk& _disk, Intersection* _intersection = NULL);
+bool intersect(const Ray& _ray, const Disk& _disk, Hit* _hit = NULL);
 
 /// Intersect ray / plane.
-bool intersect(const Ray& _ray, const Plane& _plane, Intersection* _intersection = NULL);
+bool intersect(const Ray& _ray, const Plane& _plane, Hit* _hit = NULL);
 
 /// Intersect ray / sphere.
-bool intersect(const Ray& _ray, const Sphere& _sphere, Intersection* _intersection = NULL);
+bool intersect(const Ray& _ray, const Sphere& _sphere, Hit* _hit = NULL);
 
 /// Intersect ray / triangle.
-bool intersect(const Ray& _ray, const Tris& _triangle, Intersection* _intersection = NULL);
+bool intersect(const Ray& _ray, const Tris& _triangle, Hit* _hit = NULL);
 
 #endif // BOUNDS_H_HEADER_GUARD

@@ -491,7 +491,7 @@ inline void getPointAt(float* _result, const Ray& _ray, float _t)
 	bx::vec3Add(_result, _ray.m_pos, tmp);
 }
 
-bool intersect(const Ray& _ray, const Aabb& _aabb, Intersection* _intersection)
+bool intersect(const Ray& _ray, const Aabb& _aabb, Hit* _hit)
 {
 	float invDir[3];
 	bx::vec3Rcp(invDir, _ray.m_dir);
@@ -521,14 +521,14 @@ bool intersect(const Ray& _ray, const Aabb& _aabb, Intersection* _intersection)
 		return false;
 	}
 
-	if (NULL != _intersection)
+	if (NULL != _hit)
 	{
-		_intersection->m_normal[0] = float( (min[0] == tmin) - (max[0] == tmin) );
-		_intersection->m_normal[1] = float( (min[1] == tmin) - (max[1] == tmin) );
-		_intersection->m_normal[2] = float( (min[2] == tmin) - (max[2] == tmin) );
+		_hit->m_normal[0] = float( (min[0] == tmin) - (max[0] == tmin) );
+		_hit->m_normal[1] = float( (min[1] == tmin) - (max[1] == tmin) );
+		_hit->m_normal[2] = float( (min[2] == tmin) - (max[2] == tmin) );
 
-		_intersection->m_dist = tmin;
-		getPointAt(_intersection->m_pos, _ray, tmin);
+		_hit->m_dist = tmin;
+		getPointAt(_hit->m_pos, _ray, tmin);
 	}
 
 	return true;
@@ -540,7 +540,7 @@ static const Aabb s_kUnitAabb =
 	{  1.0f,  1.0f,  1.0f },
 };
 
-bool intersect(const Ray& _ray, const Obb& _obb, Intersection* _intersection)
+bool intersect(const Ray& _ray, const Obb& _obb, Hit* _hit)
 {
 	Aabb aabb;
 	toAabb(aabb, _obb);
@@ -557,16 +557,16 @@ bool intersect(const Ray& _ray, const Obb& _obb, Intersection* _intersection)
 	bx::vec3MulMtx(obbRay.m_pos, _ray.m_pos, mtxInv);
 	bx::vec3MulMtxXyz0(obbRay.m_dir, _ray.m_dir, mtxInv);
 
-	if (intersect(obbRay, s_kUnitAabb, _intersection) )
+	if (intersect(obbRay, s_kUnitAabb, _hit) )
 	{
-		if (NULL != _intersection)
+		if (NULL != _hit)
 		{
 			float tmp[3];
-			bx::vec3MulMtx(tmp, _intersection->m_pos, _obb.m_mtx);
-			bx::vec3Move(_intersection->m_pos, tmp);
+			bx::vec3MulMtx(tmp, _hit->m_pos, _obb.m_mtx);
+			bx::vec3Move(_hit->m_pos, tmp);
 
-			bx::vec3MulMtxXyz0(tmp, _intersection->m_normal, _obb.m_mtx);
-			bx::vec3Norm(_intersection->m_normal, tmp);
+			bx::vec3MulMtxXyz0(tmp, _hit->m_normal, _obb.m_mtx);
+			bx::vec3Norm(_hit->m_normal, tmp);
 		}
 
 		return true;
@@ -575,26 +575,26 @@ bool intersect(const Ray& _ray, const Obb& _obb, Intersection* _intersection)
 	return false;
 }
 
-bool intersect(const Ray& _ray, const Disk& _disk, Intersection* _intersection)
+bool intersect(const Ray& _ray, const Disk& _disk, Hit* _hit)
 {
 	Plane plane;
 	bx::vec3Move(plane.m_normal, _disk.m_normal);
 	plane.m_dist = -bx::vec3Dot(_disk.m_center, _disk.m_normal);
 
-	Intersection tmpIntersection;
-	_intersection = NULL != _intersection ? _intersection : &tmpIntersection;
+	Hit tmpHit;
+	_hit = NULL != _hit ? _hit : &tmpHit;
 
-	if (intersect(_ray, plane, _intersection) )
+	if (intersect(_ray, plane, _hit) )
 	{
 		float tmp[3];
-		bx::vec3Sub(tmp, _disk.m_center, _intersection->m_pos);
+		bx::vec3Sub(tmp, _disk.m_center, _hit->m_pos);
 		return bx::vec3Dot(tmp, tmp) <= bx::fsq(_disk.m_radius);
 	}
 
 	return false;
 }
 
-static bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule, Intersection* _intersection)
+static bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule, Hit* _hit)
 {
 	float axis[3];
 	bx::vec3Sub(axis, _cylinder.m_end, _cylinder.m_pos);
@@ -639,19 +639,19 @@ static bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule,
 	if (height > 0.0f
 	&&  height < axisLen)
 	{
-		if (NULL != _intersection)
+		if (NULL != _hit)
 		{
 			const float t1 = height / axisLen;
 			float pointOnAxis[3];
 			bx::vec3Lerp(pointOnAxis, _cylinder.m_pos, _cylinder.m_end, t1);
 
-			bx::vec3Move(_intersection->m_pos, point);
+			bx::vec3Move(_hit->m_pos, point);
 
 			float tmp[3];
 			bx::vec3Sub(tmp, point, pointOnAxis);
-			bx::vec3Norm(_intersection->m_normal, tmp);
+			bx::vec3Norm(_hit->m_normal, tmp);
 
-			_intersection->m_dist = ss;
+			_hit->m_dist = ss;
 		}
 
 		return true;
@@ -683,7 +683,7 @@ static bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule,
 			: _cylinder.m_end
 			);
 
-		return intersect(_ray, sphere, _intersection);
+		return intersect(_ray, sphere, _hit);
 	}
 
 	Plane plane;
@@ -702,31 +702,31 @@ static bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule,
 
 	plane.m_dist = -bx::vec3Dot(pos, plane.m_normal);
 
-	Intersection tmpIntersection;
-	_intersection = NULL != _intersection ? _intersection : &tmpIntersection;
+	Hit tmpHit;
+	_hit = NULL != _hit ? _hit : &tmpHit;
 
-	if (intersect(_ray, plane, _intersection) )
+	if (intersect(_ray, plane, _hit) )
 	{
 		float tmp[3];
-		bx::vec3Sub(tmp, pos, _intersection->m_pos);
+		bx::vec3Sub(tmp, pos, _hit->m_pos);
 		return bx::vec3Dot(tmp, tmp) <= rsq;
 	}
 
 	return false;
 }
 
-bool intersect(const Ray& _ray, const Cylinder& _cylinder, Intersection* _intersection)
+bool intersect(const Ray& _ray, const Cylinder& _cylinder, Hit* _hit)
 {
-	return intersect(_ray, _cylinder, false, _intersection);
+	return intersect(_ray, _cylinder, false, _hit);
 }
 
-bool intersect(const Ray& _ray, const Capsule& _capsule, Intersection* _intersection)
+bool intersect(const Ray& _ray, const Capsule& _capsule, Hit* _hit)
 {
 	BX_STATIC_ASSERT(sizeof(Capsule) == sizeof(Cylinder) );
-	return intersect(_ray, *( (const Cylinder*)&_capsule), true, _intersection);
+	return intersect(_ray, *( (const Cylinder*)&_capsule), true, _hit);
 }
 
-bool intersect(const Ray& _ray, const Cone& _cone, Intersection* _intersection)
+bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit)
 {
 	float axis[3];
 	bx::vec3Sub(axis, _cone.m_end, _cone.m_pos);
@@ -739,8 +739,8 @@ bool intersect(const Ray& _ray, const Cone& _cone, Intersection* _intersection)
 	bx::vec3Neg(disk.m_normal, normal);
 	disk.m_radius = _cone.m_radius;
 
-	Intersection tmpInt;
-	Intersection* out = NULL != _intersection ? _intersection : &tmpInt;
+	Hit tmpInt;
+	Hit* out = NULL != _hit ? _hit : &tmpInt;
 	bool hit = intersect(_ray, disk, out);
 
 	float ro[3];
@@ -793,28 +793,28 @@ bool intersect(const Ray& _ray, const Cone& _cone, Intersection* _intersection)
 		return hit;
 	}
 
-	if (NULL != _intersection)
+	if (NULL != _hit)
 	{
 		if (!hit
-		||  tt < _intersection->m_dist)
+		||  tt < _hit->m_dist)
 		{
-			_intersection->m_dist = tt;
+			_hit->m_dist = tt;
 
-			bx::vec3Move(_intersection->m_pos, point);
+			bx::vec3Move(_hit->m_pos, point);
 
 			const float scale = hh / bx::vec3Dot(point, point);
 			float pointScaled[3];
 			bx::vec3Mul(pointScaled, point, scale);
 
 			bx::vec3Sub(tmp, pointScaled, normal);
-			bx::vec3Norm(_intersection->m_normal, tmp);
+			bx::vec3Norm(_hit->m_normal, tmp);
 		}
 	}
 
 	return true;
 }
 
-bool intersect(const Ray& _ray, const Plane& _plane, Intersection* _intersection)
+bool intersect(const Ray& _ray, const Plane& _plane, Hit* _hit)
 {
 	float equation = bx::vec3Dot(_ray.m_pos, _plane.m_normal) + _plane.m_dist;
 	if (0.0f > equation)
@@ -828,20 +828,20 @@ bool intersect(const Ray& _ray, const Plane& _plane, Intersection* _intersection
 		return false;
 	}
 
-	if (NULL != _intersection)
+	if (NULL != _hit)
 	{
-		bx::vec3Move(_intersection->m_normal, _plane.m_normal);
+		bx::vec3Move(_hit->m_normal, _plane.m_normal);
 
 		float tt = -equation/ndotd;
-		_intersection->m_dist = tt;
+		_hit->m_dist = tt;
 
-		getPointAt(_intersection->m_pos, _ray, tt);
+		getPointAt(_hit->m_pos, _ray, tt);
 	}
 
 	return true;
 }
 
-bool intersect(const Ray& _ray, const Sphere& _sphere, Intersection* _intersection)
+bool intersect(const Ray& _ray, const Sphere& _sphere, Hit* _hit)
 {
 	float rs[3];
 	bx::vec3Sub(rs, _ray.m_pos, _sphere.m_center);
@@ -871,23 +871,23 @@ bool intersect(const Ray& _ray, const Sphere& _sphere, Intersection* _intersecti
 		return false;
 	}
 
-	if (NULL != _intersection)
+	if (NULL != _hit)
 	{
-		_intersection->m_dist = tt;
+		_hit->m_dist = tt;
 
 		float point[3];
 		getPointAt(point, _ray, tt);
-		bx::vec3Move(_intersection->m_pos, point);
+		bx::vec3Move(_hit->m_pos, point);
 
 		float tmp[3];
 		bx::vec3Sub(tmp, point, _sphere.m_center);
-		bx::vec3Norm(_intersection->m_normal, tmp);
+		bx::vec3Norm(_hit->m_normal, tmp);
 	}
 
 	return true;
 }
 
-bool intersect(const Ray& _ray, const Tris& _triangle, Intersection* _intersection)
+bool intersect(const Ray& _ray, const Tris& _triangle, Hit* _hit)
 {
 	float edge10[3];
 	bx::vec3Sub(edge10, _triangle.m_v1, _triangle.m_v0);
@@ -921,14 +921,14 @@ bool intersect(const Ray& _ray, const Tris& _triangle, Intersection* _intersecti
 		return false;
 	}
 
-	if (NULL != _intersection)
+	if (NULL != _hit)
 	{
-		bx::vec3Norm(_intersection->m_normal, normal);
+		bx::vec3Norm(_hit->m_normal, normal);
 
 		const float tt = bx::vec3Dot(normal, vo) * invDet;
-		_intersection->m_dist = tt;
+		_hit->m_dist = tt;
 
-		getPointAt(_intersection->m_pos, _ray, tt);
+		getPointAt(_hit->m_pos, _ray, tt);
 	}
 
 	return true;
