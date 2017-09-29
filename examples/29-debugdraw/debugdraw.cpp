@@ -102,6 +102,8 @@ public:
 		{
 			ddPush();
 
+			ddSetWireframe(false);
+
 			ddSetColor(0xff0000ff);
 
 			float tmp[3];
