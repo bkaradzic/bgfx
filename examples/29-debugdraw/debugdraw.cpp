@@ -94,6 +94,32 @@ public:
 		return 0;
 	}
 
+	template<typename Ty>
+	bool intersect(const Ray& _ray, const Ty& _shape)
+	{
+		Hit hit;
+		if (::intersect(_ray, _shape, &hit) )
+		{
+			ddPush();
+
+			ddSetColor(0xff0000ff);
+
+			float tmp[3];
+			bx::vec3Mul(tmp, hit.m_normal, 0.7f);
+
+			float end[3];
+			bx::vec3Add(end, hit.m_pos, tmp);
+
+			ddDrawCone(hit.m_pos, end, 0.1f);
+
+			ddPop();
+
+			return true;
+		}
+
+		return false;
+	}
+
 	bool update() override
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )

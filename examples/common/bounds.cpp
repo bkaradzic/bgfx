@@ -729,14 +729,14 @@ bool intersect(const Ray& _ray, const Capsule& _capsule, Hit* _hit)
 bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit)
 {
 	float axis[3];
-	bx::vec3Sub(axis, _cone.m_end, _cone.m_pos);
+	bx::vec3Sub(axis, _cone.m_pos, _cone.m_end);
 
 	float normal[3];
 	const float len = bx::vec3Norm(normal, axis);
 
 	Disk disk;
 	bx::vec3Move(disk.m_center, _cone.m_pos);
-	bx::vec3Neg(disk.m_normal, normal);
+	bx::vec3Move(disk.m_normal, normal);
 	disk.m_radius = _cone.m_radius;
 
 	Hit tmpInt;
@@ -783,7 +783,7 @@ bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit)
 	getPointAt(hitPos, _ray, tt);
 
 	float point[3];
-	bx::vec3Sub(point, hitPos, _cone.m_pos);
+	bx::vec3Sub(point, hitPos, _cone.m_end);
 
 	const float hh = bx::vec3Dot(normal, point);
 
