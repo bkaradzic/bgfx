@@ -14,6 +14,9 @@
 
 BX_ERROR_RESULT(BGFX_ERROR_TEXTURE_VALIDATION,  BX_MAKEFOURCC('b', 'g', 0, 1) );
 
+// turn on to support utf8 debug text
+#define UNICODE_GLYPH_SUPPORT
+
 namespace bgfx
 {
 #define BGFX_MAIN_THREAD_MAGIC UINT32_C(0x78666762)
@@ -472,6 +475,15 @@ namespace bgfx
 
 #include "charset.h"
 
+#ifdef UNICODE_GLYPH_SUPPORT
+
+#include "uniglyph.h"
+
+	static const int glyphTextureHeight = 24 + sizeof(uni16x16) / (2048 / 8);
+#else
+	static const int glyphTextureHeight = 24;
+#endif
+
 	void charsetFillTexture(const uint8_t* _charset, uint8_t* _rgba, uint32_t _height, uint32_t _pitch, uint32_t _bpp)
 	{
 		for (uint32_t ii = 0; ii < 256; ++ii)
@@ -487,6 +499,21 @@ namespace bgfx
 
 				pix += _pitch;
 			}
+		}
+	}
+
+	void uniFillTexture(const uint8_t* _uniglyph, uint8_t * _rgba, uint32_t _bytes, uint32_t _bpp)
+	{
+		// fill 2048 x 944 bitmap into texture 2048
+		for (uint32_t ii = 0; ii < _bytes; ++ii)
+		{
+			for (uint32_t xx = 0; xx < 8; ++xx)
+			{
+				uint8_t bit = 1<<(7-xx);
+				bx::memSet(&_rgba[xx*_bpp], (*_uniglyph)&bit ? 255 : 0, _bpp);
+			}
+			_rgba += 8*_bpp;
+			++_uniglyph;
 		}
 	}
 
@@ -531,6 +558,32 @@ namespace bgfx
 		return attr;
 	}
 
+#ifdef UNICODE_GLYPH_SUPPORT
+
+#define UNICODE_SUBSTITUTE 0x25A1
+
+	static const char * utf8_decode(const char *o, int *val)
+	{
+		const unsigned char *s = (const unsigned char *)o;
+		unsigned int c = s[0];
+		unsigned int res = 0;  /* final result */
+
+		int count = 0;  /* to count number of continuation bytes */
+		while (c & 0x40) {  /* still have continuation bytes? */
+			int cc = s[++count];  /* read next byte */
+			if ((cc & 0xC0) != 0x80) { /* not a continuation byte? */
+				return NULL;  /* invalid byte sequence */
+			}
+			res = (res << 6) | (cc & 0x3F);  /* add lower 6 bits from cont. byte */
+			c <<= 1;  /* to test next bit */
+		}
+		res |= ((c & 0x7F) << (count * 5));  /* add first byte */
+		s += count;  /* skip continuation bytes read */
+		*val = res;
+		return (const char *)s;  /* +1 to include first byte */
+	}
+#endif
+
 	void TextVideoMem::printfVargs(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, va_list _argList)
 	{
 		if (_x < m_width && _y < m_height)
@@ -546,13 +599,33 @@ namespace bgfx
 			uint8_t* mem = &m_mem[(_y*m_width+_x)*2];
 			for (uint32_t ii = 0, xx = _x; ii < num && xx < m_width; ++ii)
 			{
-				char ch = temp[ii];
+				int ch = (uint8_t)temp[ii];
 				if (BX_UNLIKELY(ch == '\x1b') )
 				{
 					char* ptr = &temp[ii+1];
 					attr = parseAttr(ptr, _attr);
 					ii += uint32_t(ptr - &temp[ii+1]);
 				}
+#ifdef UNICODE_GLYPH_SUPPORT
+				else if (ch > 127) {
+					const char * next = utf8_decode(&temp[ii], &ch);
+					if (next) {
+						ii += next - &temp[ii];
+						if (ch > 0xffff)
+							ch = UNICODE_SUBSTITUTE;
+						mem[0] = ch >> 8;
+						mem[1] = 0xff;
+						mem += 2;
+						++xx;
+					}
+					if (xx < m_width) {
+						mem[0] = ch & 0xff;
+						mem[1] = attr;
+						mem += 2;
+						++xx;
+					}
+				}
+#endif
 				else
 				{
 					mem[0] = ch;
@@ -580,7 +653,7 @@ namespace bgfx
 			.end();
 
 		uint16_t width  = 2048;
-		uint16_t height = 24;
+		uint16_t height = glyphTextureHeight;
 		uint8_t  bpp    = 1;
 		uint32_t pitch  = width*bpp;
 
@@ -590,6 +663,10 @@ namespace bgfx
 		uint8_t* rgba = mem->data;
 		charsetFillTexture(vga8x8, rgba, 8, pitch, bpp);
 		charsetFillTexture(vga8x16, &rgba[8*pitch], 16, pitch, bpp);
+#ifdef UNICODE_GLYPH_SUPPORT
+		uniFillTexture(uni16x16, &rgba[24*pitch], sizeof(uni16x16), bpp);
+#endif
+
 		m_texture = createTexture2D(width, height, false, 1, TextureFormat::R8
 						, BGFX_TEXTURE_MIN_POINT
 						| BGFX_TEXTURE_MAG_POINT
@@ -660,7 +737,7 @@ namespace bgfx
 
 		const float texelWidth = 1.0f/2048.0f;
 		const float texelWidthHalf = RendererType::Direct3D9 == g_caps.rendererType ? 0.0f : texelWidth*0.5f;
-		const float texelHeight = 1.0f/24.0f;
+		const float texelHeight = 1.0f/glyphTextureHeight;
 		const float texelHeightHalf = RendererType::Direct3D9 == g_caps.rendererType ? texelHeight*0.5f : 0.0f;
 		const float utop = (_mem.m_small ? 0.0f : 8.0f)*texelHeight + texelHeightHalf;
 		const float ubottom = (_mem.m_small ? 8.0f : 24.0f)*texelHeight + texelHeightHalf;
@@ -684,7 +761,50 @@ namespace bgfx
 				{
 					uint8_t ch = line[0];
 					uint8_t attr = line[1];
+#ifdef UNICODE_GLYPH_SUPPORT
+					if (xx+1 < _mem.m_width && attr == 0xff) {
+						// unicode char
+						attr = line[3];
+						int uc = (int)ch << 8 | line[2];
+						line += 2;
+						uint32_t fg = palette[attr&0xf];
+						uint32_t bg = palette[(attr>>4)&0xf];
+						int index = unimap[uc];
+						if (index < 0) {
+							index = unimap[UNICODE_SUBSTITUTE];
+						}
+						if (index >= 0) {
+							int numofline = 2048/16;	// number glyph of line
+							uint32_t fontx = index % numofline;
+							uint32_t fonty = index / numofline;
+							const float uChar = 24.0f * texelHeight + texelHeightHalf;
 
+							Vertex vert[4] =
+							{
+								{ (xx  )*8.0f, (yy  )*fontHeight, 0.0f, fg, bg, fontx*16.0f*texelWidth - texelWidthHalf, fonty * 16.0f * texelHeight + uChar},
+								{ (xx+2)*8.0f, (yy  )*fontHeight, 0.0f, fg, bg, (fontx+1)*16.0f*texelWidth - texelWidthHalf, fonty * 16.0f * texelHeight + uChar },
+								{ (xx+2)*8.0f, (yy+1)*fontHeight, 0.0f, fg, bg, (fontx+1)*16.0f*texelWidth - texelWidthHalf, (fonty+1) * 16.0f * texelHeight + uChar },
+								{ (xx  )*8.0f, (yy+1)*fontHeight, 0.0f, fg, bg, (fontx  )*16.0f*texelWidth - texelWidthHalf, (fonty+1) * 16.0f * texelHeight + uChar },
+							};
+
+							bx::memCopy(vertex, vert, sizeof(vert) );
+							vertex += 4;
+
+							indices[0] = uint16_t(startVertex+0);
+							indices[1] = uint16_t(startVertex+1);
+							indices[2] = uint16_t(startVertex+2);
+							indices[3] = uint16_t(startVertex+2);
+							indices[4] = uint16_t(startVertex+3);
+							indices[5] = uint16_t(startVertex+0);
+
+							startVertex += 4;
+							indices += 6;
+
+							numIndices += 6;
+						}
+						++xx;
+					} else
+#endif
 					if (0 != (ch|attr)
 					&& (' ' != ch || 0 != (attr&0xf0) ) )
 					{
