@@ -1103,29 +1103,39 @@ struct DebugDraw
 
 	void draw(const Aabb& _aabb)
 	{
-		moveTo(_aabb.m_min[0], _aabb.m_min[1], _aabb.m_min[2]);
-		lineTo(_aabb.m_max[0], _aabb.m_min[1], _aabb.m_min[2]);
-		lineTo(_aabb.m_max[0], _aabb.m_max[1], _aabb.m_min[2]);
-		lineTo(_aabb.m_min[0], _aabb.m_max[1], _aabb.m_min[2]);
-		close();
+		const Attrib& attrib = m_attrib[m_stack];
+		if (attrib.m_wireframe)
+		{
+			moveTo(_aabb.m_min[0], _aabb.m_min[1], _aabb.m_min[2]);
+			lineTo(_aabb.m_max[0], _aabb.m_min[1], _aabb.m_min[2]);
+			lineTo(_aabb.m_max[0], _aabb.m_max[1], _aabb.m_min[2]);
+			lineTo(_aabb.m_min[0], _aabb.m_max[1], _aabb.m_min[2]);
+			close();
 
-		moveTo(_aabb.m_min[0], _aabb.m_min[1], _aabb.m_max[2]);
-		lineTo(_aabb.m_max[0], _aabb.m_min[1], _aabb.m_max[2]);
-		lineTo(_aabb.m_max[0], _aabb.m_max[1], _aabb.m_max[2]);
-		lineTo(_aabb.m_min[0], _aabb.m_max[1], _aabb.m_max[2]);
-		close();
+			moveTo(_aabb.m_min[0], _aabb.m_min[1], _aabb.m_max[2]);
+			lineTo(_aabb.m_max[0], _aabb.m_min[1], _aabb.m_max[2]);
+			lineTo(_aabb.m_max[0], _aabb.m_max[1], _aabb.m_max[2]);
+			lineTo(_aabb.m_min[0], _aabb.m_max[1], _aabb.m_max[2]);
+			close();
 
-		moveTo(_aabb.m_min[0], _aabb.m_min[1], _aabb.m_min[2]);
-		lineTo(_aabb.m_min[0], _aabb.m_min[1], _aabb.m_max[2]);
+			moveTo(_aabb.m_min[0], _aabb.m_min[1], _aabb.m_min[2]);
+			lineTo(_aabb.m_min[0], _aabb.m_min[1], _aabb.m_max[2]);
 
-		moveTo(_aabb.m_max[0], _aabb.m_min[1], _aabb.m_min[2]);
-		lineTo(_aabb.m_max[0], _aabb.m_min[1], _aabb.m_max[2]);
+			moveTo(_aabb.m_max[0], _aabb.m_min[1], _aabb.m_min[2]);
+			lineTo(_aabb.m_max[0], _aabb.m_min[1], _aabb.m_max[2]);
 
-		moveTo(_aabb.m_min[0], _aabb.m_max[1], _aabb.m_min[2]);
-		lineTo(_aabb.m_min[0], _aabb.m_max[1], _aabb.m_max[2]);
+			moveTo(_aabb.m_min[0], _aabb.m_max[1], _aabb.m_min[2]);
+			lineTo(_aabb.m_min[0], _aabb.m_max[1], _aabb.m_max[2]);
 
-		moveTo(_aabb.m_max[0], _aabb.m_max[1], _aabb.m_min[2]);
-		lineTo(_aabb.m_max[0], _aabb.m_max[1], _aabb.m_max[2]);
+			moveTo(_aabb.m_max[0], _aabb.m_max[1], _aabb.m_min[2]);
+			lineTo(_aabb.m_max[0], _aabb.m_max[1], _aabb.m_max[2]);
+		}
+		else
+		{
+			Obb obb;
+			aabbToObb(obb, _aabb);
+			draw(Mesh::Cube, obb.m_mtx, 1, false);
+		}
 	}
 
 	void draw(const Cylinder& _cylinder, bool _capsule)

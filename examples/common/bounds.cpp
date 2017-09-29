@@ -523,9 +523,9 @@ bool intersect(const Ray& _ray, const Aabb& _aabb, Hit* _hit)
 
 	if (NULL != _hit)
 	{
-		_hit->m_normal[0] = float( (min[0] == tmin) - (max[0] == tmin) );
-		_hit->m_normal[1] = float( (min[1] == tmin) - (max[1] == tmin) );
-		_hit->m_normal[2] = float( (min[2] == tmin) - (max[2] == tmin) );
+		_hit->m_normal[0] = float( (t1[0] == tmin) - (t0[0] == tmin) );
+		_hit->m_normal[1] = float( (t1[1] == tmin) - (t0[1] == tmin) );
+		_hit->m_normal[2] = float( (t1[2] == tmin) - (t0[2] == tmin) );
 
 		_hit->m_dist = tmin;
 		getPointAt(_hit->m_pos, _ray, tmin);
@@ -779,11 +779,11 @@ bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit)
 		return hit;
 	}
 
-	float tmp[3];
-	getPointAt(tmp, _ray, tt);
+	float hitPos[3];
+	getPointAt(hitPos, _ray, tt);
 
 	float point[3];
-	bx::vec3Sub(point, tmp, _cone.m_pos);
+	bx::vec3Sub(point, hitPos, _cone.m_pos);
 
 	const float hh = bx::vec3Dot(normal, point);
 
@@ -800,12 +800,13 @@ bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit)
 		{
 			_hit->m_dist = tt;
 
-			bx::vec3Move(_hit->m_pos, point);
+			bx::vec3Move(_hit->m_pos, hitPos);
 
 			const float scale = hh / bx::vec3Dot(point, point);
 			float pointScaled[3];
 			bx::vec3Mul(pointScaled, point, scale);
 
+			float tmp[3];
 			bx::vec3Sub(tmp, pointScaled, normal);
 			bx::vec3Norm(_hit->m_normal, tmp);
 		}

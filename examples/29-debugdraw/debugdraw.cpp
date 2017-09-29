@@ -175,6 +175,7 @@ public:
 					{  5.0f, 1.0f, 1.0f },
 					{ 10.0f, 5.0f, 5.0f },
 				};
+				ddSetWireframe(true);
 				ddSetColor(intersect(ray, aabb) ? selected : 0xff00ff00);
 				ddDraw(aabb);
 			ddPop();
@@ -189,9 +190,12 @@ public:
 
 			bx::mtxSRT(obb.m_mtx, 1.0f, 1.0f, 1.0f, time*0.23f, time, 0.0f, 3.0f, 0.0f, 0.0f);
 
-			toAabb(aabb, obb);
-			ddSetColor(0xff0000ff);
-			ddDraw(aabb);
+			ddPush();
+				toAabb(aabb, obb);
+				ddSetWireframe(true);
+				ddSetColor(0xff0000ff);
+				ddDraw(aabb);
+			ddPop();
 
 			ddSetWireframe(false);
 			ddSetColor(intersect(ray, obb) ? selected : 0xffffffff);
@@ -316,9 +320,12 @@ public:
 				ddSetColor(intersect(ray, cylinder) ? selected : 0xffffffff);
 				ddDraw(cylinder);
 
-				toAabb(aabb, cylinder);
-				ddSetColor(0xff0000ff);
-				ddDraw(aabb);
+				ddPush();
+					toAabb(aabb, cylinder);
+					ddSetWireframe(true);
+					ddSetColor(0xff0000ff);
+					ddDraw(aabb);
+				ddPop();
 
 			ddPop();
 
