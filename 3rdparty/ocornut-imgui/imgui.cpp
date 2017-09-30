@@ -9082,7 +9082,7 @@ bool ImGui::BeginMenu(const char* label, bool enabled)
         g.NavWindow = backed_nav_window;
 
     bool want_open = false, want_close = false;
-    if (window->Flags & (ImGuiWindowFlags_Popup|ImGuiWindowFlags_ChildMenu))
+    if (window->DC.LayoutType != ImGuiLayoutType_Horizontal) // (window->Flags & (ImGuiWindowFlags_Popup|ImGuiWindowFlags_ChildMenu))
     {
         // Implement http://bjk5.com/post/44698559168/breaking-down-amazons-mega-dropdown to avoid using timers, so menus feels more reactive.
         bool moving_within_opened_triangle = false;
@@ -9106,14 +9106,18 @@ bool ImGui::BeginMenu(const char* label, bool enabled)
         want_close = (menu_is_open && !hovered && g.HoveredWindow == window && g.HoveredIdPreviousFrame != 0 && g.HoveredIdPreviousFrame != id && !moving_within_opened_triangle);
         want_open = (!menu_is_open && hovered && !moving_within_opened_triangle) || (!menu_is_open && hovered && pressed);
     }
-    else if (menu_is_open && pressed && menuset_is_open) // Menu bar: click an open menu again to close it
+    else
     {
-        want_close = true;
-        want_open = menu_is_open = false;
-    }
-    else if (pressed || (hovered && menuset_is_open && !menu_is_open)) // menu-bar: first click to open, then hover to open others
-    {
-        want_open = true;
+        // Menu bar
+        if (menu_is_open && pressed && menuset_is_open) // Click an open menu again to close it
+        {
+            want_close = true;
+            want_open = menu_is_open = false;
+        }
+        else if (pressed || (hovered && menuset_is_open && !menu_is_open)) // First click to open, then hover to open others
+        {
+            want_open = true;
+        }
     }
 
     if (!enabled) // explicitly close if an open menu becomes disabled, facilitate users code a lot in pattern such as 'if (BeginMenu("options", has_object)) { ..use object.. }'
