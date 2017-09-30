@@ -923,6 +923,32 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
+#ifdef NV_EXTENSIONS
+    if (profile != EEsProfile && version >= 440) {
+        commonBuiltins.append(
+            "uint64_t atomicMin(coherent volatile inout uint64_t, uint64_t);"
+            " int64_t atomicMin(coherent volatile inout  int64_t,  int64_t);"
+
+            "uint64_t atomicMax(coherent volatile inout uint64_t, uint64_t);"
+            " int64_t atomicMax(coherent volatile inout  int64_t,  int64_t);"
+
+            "uint64_t atomicAnd(coherent volatile inout uint64_t, uint64_t);"
+            " int64_t atomicAnd(coherent volatile inout  int64_t,  int64_t);"
+
+            "uint64_t atomicOr (coherent volatile inout uint64_t, uint64_t);"
+            " int64_t atomicOr (coherent volatile inout  int64_t,  int64_t);"
+
+            "uint64_t atomicXor(coherent volatile inout uint64_t, uint64_t);"
+            " int64_t atomicXor(coherent volatile inout  int64_t,  int64_t);"
+
+            " int64_t atomicAdd(coherent volatile inout int64_t, int64_t);"
+            " int64_t atomicExchange(coherent volatile inout int64_t, int64_t);"
+            " int64_t atomicCompSwap(coherent volatile inout int64_t, int64_t, int64_t);"
+
+            "\n");
+    }
+#endif
+
     if ((profile == EEsProfile && version >= 310) ||
         (profile != EEsProfile && version >= 450)) {
         commonBuiltins.append(

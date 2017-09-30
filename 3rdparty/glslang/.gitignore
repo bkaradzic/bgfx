@@ -7,3 +7,4 @@ TAGS
 build/
 Test/localResults/
 External/googletest
+External/spirv-tools

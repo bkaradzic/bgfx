@@ -59,9 +59,10 @@ std::string FileNameAsCustomTestSuffix(
 
 using HlslCompileTest = GlslangTest<::testing::TestWithParam<FileNameEntryPointPair>>;
 using HlslCompileAndFlattenTest = GlslangTest<::testing::TestWithParam<FileNameEntryPointPair>>;
+using HlslLegalizeTest = GlslangTest<::testing::TestWithParam<FileNameEntryPointPair>>;
 
-// Compiling HLSL to SPIR-V under Vulkan semantics. Expected to successfully
-// generate both AST and SPIR-V.
+// Compiling HLSL to pre-legalized SPIR-V under Vulkan semantics. Expected
+// to successfully generate both AST and SPIR-V.
 TEST_P(HlslCompileTest, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam().fileName,
@@ -74,6 +75,16 @@ TEST_P(HlslCompileAndFlattenTest, FromFile)
     loadFileCompileFlattenUniformsAndCheck(GlobalTestSettings.testRoot, GetParam().fileName,
                                            Source::HLSL, Semantics::Vulkan,
                                            Target::BothASTAndSpv, GetParam().entryPoint);
+}
+
+// Compiling HLSL to legal SPIR-V under Vulkan semantics. Expected to
+// successfully generate SPIR-V.
+TEST_P(HlslLegalizeTest, FromFile)
+{
+    loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam().fileName,
+                            Source::HLSL, Semantics::Vulkan,
+                            Target::Spv, GetParam().entryPoint,
+                            "/baseLegalResults/", false);
 }
 
 // clang-format off
@@ -353,7 +364,22 @@ INSTANTIATE_TEST_CASE_P(
     }),
     FileNameAsCustomTestSuffix
 );
-
 // clang-format on
+
+#ifdef ENABLE_OPT
+// clang-format off
+INSTANTIATE_TEST_CASE_P(
+    ToSpirv, HlslLegalizeTest,
+    ::testing::ValuesIn(std::vector<FileNameEntryPointPair>{
+        {"hlsl.aliasOpaque.frag", "main"},
+        {"hlsl.flattenOpaque.frag", "main"},
+        {"hlsl.flattenOpaqueInit.vert", "main"},
+        {"hlsl.flattenOpaqueInitMix.vert", "main"}
+    }),
+    FileNameAsCustomTestSuffix
+);
+// clang-format on
+#endif
+
 }  // anonymous namespace
 }  // namespace glslangtest

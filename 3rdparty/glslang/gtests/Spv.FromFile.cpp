@@ -410,7 +410,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.int16.frag",
         "spv.shaderBallotAMD.comp",
         "spv.shaderFragMaskAMD.frag",
-        "spv.textureGatherBiasLod.frag"
+        "spv.textureGatherBiasLod.frag",
     })),
     FileNameAsCustomTestSuffix
 );
@@ -428,6 +428,7 @@ INSTANTIATE_TEST_CASE_P(
     "spv.stereoViewRendering.tesc",
     "spv.multiviewPerViewAttributes.vert",
     "spv.multiviewPerViewAttributes.tesc",
+    "spv.atomicInt64.comp",
 })),
 FileNameAsCustomTestSuffix
 );

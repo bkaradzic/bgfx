@@ -166,11 +166,6 @@ bool HlslParseContext::shouldConvertLValue(const TIntermNode* node) const
     if (lhsAsAggregate != nullptr && lhsAsAggregate->getOp() == EOpImageLoad)
         return true;
 
-    // If it's a syntactic write to a sampler, we will use that to establish
-    // a compile-time alias.
-    if (node->getAsTyped()->getBasicType() == EbtSampler)
-        return true;
-
     return false;
 }
 
@@ -239,6 +234,13 @@ bool HlslParseContext::lValueErrorCheck(const TSourceLoc& loc, const char* op, T
         }
     }
 
+    // We tolerate samplers as l-values, even though they are nominally
+    // illegal, because we expect a later optimization to eliminate them.
+    if (node->getType().getBasicType() == EbtSampler) {
+        intermediate.setNeedsLegalization();
+        return false;
+    }
+
     // Let the base class check errors
     return TParseContextBase::lValueErrorCheck(loc, op, node);
 }
@@ -273,10 +275,6 @@ TIntermTyped* HlslParseContext::handleLvalue(const TSourceLoc& loc, const char* 
     }
 
     // *** If we get here, we're going to apply some conversion to an l-value.
-
-    // Spin off sampler aliasing
-    if (node->getAsTyped()->getBasicType() == EbtSampler)
-        return handleSamplerLvalue(loc, op, node);
 
     // Helper to create a load.
     const auto makeLoad = [&](TIntermSymbol* rhsTmp, TIntermTyped* object, TIntermTyped* coord, const TType& derefType) {
@@ -522,58 +520,6 @@ TIntermTyped* HlslParseContext::handleLvalue(const TSourceLoc& loc, const char* 
             return nullptr;
 
     return node;
-}
-
-// Deal with sampler aliasing: turning assignments into aliases
-// Return a placeholder node for higher-level code that think assignments must
-// generate code.
-TIntermTyped* HlslParseContext::handleSamplerLvalue(const TSourceLoc& loc, const char* op, TIntermTyped*& node)
-{
-    // Can only alias an assignment:  "s1 = s2"
-    TIntermBinary* binary = node->getAsBinaryNode();
-    if (binary == nullptr || node->getAsOperator()->getOp() != EOpAssign ||
-        binary->getLeft()->getAsSymbolNode() == nullptr ||
-        binary->getRight()->getAsSymbolNode() == nullptr) {
-        error(loc, "can't modify sampler", op, "");
-        return node;
-    }
-
-    if (controlFlowNestingLevel > 0)
-        warn(loc, "sampler or image aliased under control flow; consumption must be in same path", op, "");
-
-    TIntermTyped* set = setOpaqueLvalue(binary->getLeft(), binary->getRight());
-    if (set == nullptr)
-        warn(loc, "could not create alias for sampler", op, "");
-    else
-        node = set;
-
-    return node;
-}
-
-// Do an opaque assignment that needs to turn into an alias.
-// Return nullptr if it can't be done, otherwise return a placeholder
-// node for higher-level code that think assignments must generate code.
-TIntermTyped* HlslParseContext::setOpaqueLvalue(TIntermTyped* leftTyped, TIntermTyped* rightTyped)
-{
-    // Best is if we are aliasing a flattened struct member "S.s1 = s2",
-    // in which case we want to update the flattening information with the alias,
-    // making everything else work seamlessly.
-    TIntermSymbol* left = leftTyped->getAsSymbolNode();
-    TIntermSymbol* right = rightTyped->getAsSymbolNode();
-    for (auto fit = flattenMap.begin(); fit != flattenMap.end(); ++fit) {
-        for (auto mit = fit->second.members.begin(); mit != fit->second.members.end(); ++mit) {
-            if ((*mit)->getUniqueId() == left->getId()) {
-                // found it: update with alias to the existing variable, and don't emit any code
-                (*mit) = new TVariable(&right->getName(), right->getType());
-                (*mit)->setUniqueId(right->getId());
-                // replace node (rest of compiler expects either an error or code to generate)
-                // with pointless access
-                return right;
-            }
-        }
-    }
-
-    return nullptr;
 }
 
 void HlslParseContext::handlePragma(const TSourceLoc& loc, const TVector<TString>& tokens)
@@ -2513,41 +2459,6 @@ TIntermAggregate* HlslParseContext::assignClipCullDistance(const TSourceLoc& loc
     return assignList;
 }
 
-// For a declaration with an initializer, where the initialized symbol is flattened,
-// and possibly contains opaque values, such that the initializer should never exist
-// as emitted code, because even creating the initializer would write opaques.
-//
-// If possible, decompose this into individual member-wise assignments, which themselves
-// are expected to then not exist for opaque types, because they will turn into aliases.
-//
-// Return a node that contains the non-aliased assignments that must continue to exist.
-TIntermTyped* HlslParseContext::executeFlattenedInitializer(const TSourceLoc& loc, TIntermSymbol* symbol,
-                                                            TIntermAggregate& initializer)
-{
-    // We need individual RHS initializers per member to do this
-    const TTypeList* typeList = symbol->getType().getStruct();
-    if (typeList == nullptr || initializer.getSequence().size() != typeList->size()) {
-        warn(loc, "cannot do member-wise aliasing for opaque members with this initializer", "=", "");
-        return handleAssign(loc, EOpAssign, symbol, &initializer);
-    }
-
-    TIntermAggregate* initList = nullptr;
-    // synthesize an access to each member, and then an assignment to it
-    for (int member = 0; member < (int)typeList->size(); ++member) {
-        TIntermTyped* memberInitializer = initializer.getSequence()[member]->getAsTyped();
-        TIntermTyped* flattenedMember = flattenAccess(symbol, member);
-        if (flattenedMember->getType().containsOpaque())
-            setOpaqueLvalue(flattenedMember, memberInitializer);
-        else
-            initList = intermediate.growAggregate(initList, handleAssign(loc, EOpAssign, flattenedMember,
-                                                  memberInitializer));
-    }
-
-    if (initList)
-        initList->setOperator(EOpSequence);
-    return initList;
-}
-
 // Some simple source assignments need to be flattened to a sequence
 // of AST assignments. Catch these and flatten, otherwise, pass through
 // to intermediate.addAssign().
@@ -2559,6 +2470,10 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
 {
     if (left == nullptr || right == nullptr)
         return nullptr;
+
+    // writing to opaques will require fixing transforms
+    if (left->getType().containsOpaque())
+        intermediate.setNeedsLegalization();
 
     if (left->getAsOperator() && left->getAsOperator()->getOp() == EOpMatrixSwizzle)
         return handleAssignToMatrixSwizzle(loc, op, left, right);
@@ -2720,7 +2635,8 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
             const int elementsL = left->getType().isArray()  ? left->getType().getOuterArraySize()  : 1;
             const int elementsR = right->getType().isArray() ? right->getType().getOuterArraySize() : 1;
 
-            // The arrays may not be the same size, e.g, if the size has been forced for EbvTessLevelInner or Outer.
+            // The arrays might not be the same size,
+            // e.g., if the size has been forced for EbvTessLevelInner/Outer.
             const int elementsToCopy = std::min(elementsL, elementsR);
 
             // array case
@@ -2945,6 +2861,36 @@ TIntermAggregate* HlslParseContext::handleSamplerTextureCombine(const TSourceLoc
     TSampler samplerType = argTex->getType().getSampler();
     samplerType.combined = true;
     samplerType.shadow   = argSampler->getType().getSampler().shadow;
+
+    {
+        // ** TODO: **
+        // This forces the texture's shadow state to be the sampler's
+        // shadow state.  This can't work if a single texture is used with
+        // both comparison and non-comparison samplers, so an error is
+        // reported if the shader does that.
+        //
+        // If this code is ever removed (possibly due to a relaxation in the
+        // SPIR-V rules), also remove the textureShadowMode member variable.
+        TIntermSymbol* texSymbol = argTex->getAsSymbolNode();
+
+        if (texSymbol == nullptr)
+            texSymbol = argTex->getAsBinaryNode()->getLeft()->getAsSymbolNode();
+
+        if (texSymbol != nullptr) {
+            const auto textureShadowModeEntry = textureShadowMode.find(texSymbol->getId());
+
+            // Check to see if this texture has been given a different shadow mode already.
+            if (textureShadowModeEntry != textureShadowMode.end() &&
+                textureShadowModeEntry->second != samplerType.shadow) {
+                error(loc, "all uses of texture must use the same shadow mode", "", "");
+                return nullptr;
+            }
+
+            argTex->getWritableType().getSampler().shadow = samplerType.shadow;
+            textureShadowMode[texSymbol->getId()] = samplerType.shadow;
+        }
+    }
+
 
     txcombine->setType(TType(samplerType, EvqTemporary));
     txcombine->setLoc(loc);
@@ -7586,20 +7532,10 @@ TIntermNode* HlslParseContext::executeInitializer(const TSourceLoc& loc, TInterm
         // normal assigning of a value to a variable...
         specializationCheck(loc, initializer->getType(), "initializer");
         TIntermSymbol* intermSymbol = intermediate.addSymbol(*variable, loc);
-
-        // If we are flattening, it could be due to setting opaques, which must be handled
-        // as aliases, and the 'initializer' node cannot actually be emitted, because it
-        // itself stores the result of the constructor, and we can't store to opaques.
-        // handleAssign() will emit the initializer.
-        TIntermNode* initNode = nullptr;
-        if (flattened && intermSymbol->getType().containsOpaque())
-            return executeFlattenedInitializer(loc, intermSymbol, *initializer->getAsAggregate());
-        else {
-            initNode = handleAssign(loc, EOpAssign, intermSymbol, initializer);
-            if (initNode == nullptr)
-                assignError(loc, "=", intermSymbol->getCompleteString(), initializer->getCompleteString());
-            return initNode;
-        }
+        TIntermNode* initNode = handleAssign(loc, EOpAssign, intermSymbol, initializer);
+        if (initNode == nullptr)
+            assignError(loc, "=", intermSymbol->getCompleteString(), initializer->getCompleteString());
+        return initNode;
     }
 
     return nullptr;
@@ -9463,6 +9399,21 @@ void HlslParseContext::removeUnusedStructBufferCounters()
     linkageSymbols.erase(endIt, linkageSymbols.end());
 }
 
+// Finalization step: patch texture shadow modes to match samplers they were combined with
+void HlslParseContext::fixTextureShadowModes()
+{
+    for (auto symbol = linkageSymbols.begin(); symbol != linkageSymbols.end(); ++symbol) {
+        TSampler& sampler = (*symbol)->getWritableType().getSampler();
+
+        if (sampler.isTexture()) {
+            const auto shadowMode = textureShadowMode.find((*symbol)->getUniqueId());
+            if (shadowMode != textureShadowMode.end())
+                sampler.shadow = shadowMode->second;
+        }
+    }
+}
+
+
 // post-processing
 void HlslParseContext::finish()
 {
@@ -9472,8 +9423,14 @@ void HlslParseContext::finish()
         error(mipsOperatorMipArg.back().loc, "unterminated mips operator:", "", "");
     }
 
+    // Communicate out (esp. for command line) that we formed AST that will make
+    // illegal AST SPIR-V and it needs transforms to legalize it.
+    if (intermediate.needsLegalization())
+        infoSink.info << "WARNING: AST will form illegal SPIR-V; need to transform to legalize";
+
     removeUnusedStructBufferCounters();
     addPatchConstantInvocation();
+    fixTextureShadowModes();
 
     TParseContextBase::finish();
 }

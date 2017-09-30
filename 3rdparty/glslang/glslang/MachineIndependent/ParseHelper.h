@@ -152,7 +152,7 @@ public:
     {
         // Replace the entry point name given in the shader with the real entry point name,
         // if there is a substitution.
-        if (name != nullptr && *name == sourceEntryPointName)
+        if (name != nullptr && *name == sourceEntryPointName && intermediate.getEntryPointName().size() > 0)
             name = NewPoolTString(intermediate.getEntryPointName().c_str());
     }
 

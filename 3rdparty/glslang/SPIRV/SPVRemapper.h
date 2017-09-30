@@ -39,6 +39,7 @@
 #include <string>
 #include <vector>
 #include <cstdlib>
+#include <exception>
 
 namespace spv {
 
@@ -111,7 +112,9 @@ namespace spv {
 class spirvbin_t : public spirvbin_base_t
 {
 public:
-   spirvbin_t(int verbose = 0) : entryPoint(spv::NoResult), largestNewId(0), verbose(verbose) { }
+   spirvbin_t(int verbose = 0) : entryPoint(spv::NoResult), largestNewId(0), verbose(verbose), errorLatch(false)
+   { }
+
    virtual ~spirvbin_t() { }
 
    // remap on an existing binary in memory
@@ -165,7 +168,7 @@ private:
    typedef std::unordered_map<spv::Id, unsigned> typesize_map_t;
 
    // handle error
-   void error(const std::string& txt) const { errorHandler(txt); }
+   void error(const std::string& txt) const { errorLatch = true; errorHandler(txt); }
 
    bool     isConstOp(spv::Op opCode)      const;
    bool     isTypeOp(spv::Op opCode)       const;
@@ -285,6 +288,11 @@ private:
    // processing options:
    std::uint32_t options;
    int           verbose;     // verbosity level
+
+   // Error latch: this is set if the error handler is ever executed.  It would be better to
+   // use a try/catch block and throw, but that's not desired for certain environments, so
+   // this is the alternative.
+   mutable bool errorLatch;
 
    static errorfn_t errorHandler;
    static logfn_t   logHandler;

@@ -39,11 +39,8 @@ addons:
   apt:
     packages:
       - clang-3.6
-      - ninja-build
 
 install:
-  # Install ninja on Mac OS X.
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update && brew install ninja; fi
   # Make sure that clang-3.6 is selected on Linux.
   - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "clang" ]]; then
       export CC=clang-3.6 CXX=clang++-3.6;
@@ -57,7 +54,8 @@ install:
     fi
 
 before_script:
-  - git clone https://github.com/google/googletest.git External/googletest
+  - git clone --depth=1 https://github.com/google/googletest.git External/googletest
+  - ./update_glslang_sources.py
 
 script:
   - mkdir build && cd build
@@ -68,14 +66,12 @@ script:
             -DANDROID_NATIVE_API_LEVEL=android-12
             -DCMAKE_BUILD_TYPE=Release
             -DANDROID_ABI="armeabi-v7a with NEON"
-            -DBUILD_TESTING=OFF
-            -GNinja ..;
-      ninja;
+            -DBUILD_TESTING=OFF ..;
+      make -j4;
     else
       cmake -DCMAKE_BUILD_TYPE=${GLSLANG_BUILD_TYPE}
-            -DCMAKE_INSTALL_PREFIX=`pwd`/install
-            -GNinja ..;
-      ninja install;
+            -DCMAKE_INSTALL_PREFIX=`pwd`/install ..;
+      make -j4 install;
       ctest --output-on-failure &&
       cd ../Test && ./runtests;
     fi

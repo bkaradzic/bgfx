@@ -1286,7 +1286,7 @@ protected:
 };
 
 typedef TVector<TIntermNode*> TIntermSequence;
-typedef TVector<int> TQualifierList;
+typedef TVector<TStorageQualifier> TQualifierList;
 //
 // Nodes that operate on an arbitrary sized set of children.
 //
