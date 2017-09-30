@@ -711,7 +711,7 @@ namespace bgfx { namespace d3d12
 						}
 
 						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PERFHUD)
-						&&  0 != bx::strFind(description, "PerfHUD") )
+						&&  0 != bx::strFind(description, INT32_MAX, "PerfHUD") )
 						{
 							m_adapter = adapter;
 							m_driverType = D3D_DRIVER_TYPE_REFERENCE;

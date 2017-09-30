@@ -492,7 +492,7 @@ namespace bgfx
 
 	static uint8_t parseAttrTo(char*& _ptr, char _to, uint8_t _default)
 	{
-		const char* str = bx::strFind(_ptr, _to);
+		const char* str = bx::strFind(_ptr, INT32_MAX, _to);
 		if (NULL != str
 		&&  3 > str-_ptr)
 		{

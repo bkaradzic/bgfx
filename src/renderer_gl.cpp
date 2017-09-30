@@ -1059,7 +1059,7 @@ namespace bgfx { namespace gl
 			while (pos < end)
 			{
 				uint32_t len;
-				const char* space = bx::strFind(pos, ' ');
+				const char* space = bx::strFind(pos, INT32_MAX, ' ');
 				if (NULL != space)
 				{
 					len = bx::uint32_min(sizeof(name), (uint32_t)(space - pos) );
@@ -1861,8 +1861,8 @@ namespace bgfx { namespace gl
 				;
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31)
-			&&  0    == bx::strCmp(m_vendor,  "Imagination Technologies")
-			&&  NULL != bx::strFind(m_version, "(SDK 3.5@3510720)") )
+			&&  0    == bx::strCmp(m_vendor, "Imagination Technologies")
+			&&  NULL != bx::strFind(m_version, INT32_MAX, "(SDK 3.5@3510720)") )
 			{
 				// Skip initializing extensions that are broken in emulator.
 				s_extension[Extension::ARB_program_interface_query     ].m_initialize =
@@ -1870,8 +1870,8 @@ namespace bgfx { namespace gl
 			}
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
-			&&  0    == bx::strCmp(m_vendor,  "Imagination Technologies")
-			&&  NULL != bx::strFind(m_version, "1.8@905891") )
+			&&  0    == bx::strCmp(m_vendor, "Imagination Technologies")
+			&&  NULL != bx::strFind(m_version, INT32_MAX, "1.8@905891") )
 			{
 				m_workaround.m_detachShader = false;
 			}
@@ -1889,7 +1889,7 @@ namespace bgfx { namespace gl
 					while (pos < end)
 					{
 						uint32_t len;
-						const char* space = bx::strFind(pos, ' ');
+						const char* space = bx::strFind(pos, INT32_MAX, ' ');
 						if (NULL != space)
 						{
 							len = bx::uint32_min(sizeof(name), (uint32_t)(space - pos) );
@@ -4587,13 +4587,13 @@ namespace bgfx { namespace gl
 			num = bx::uint32_max(num, 1);
 
 			int offset = 0;
-			char* array = const_cast<char*>(bx::strFind(name, '[') );
+			char* array = const_cast<char*>(bx::strFind(name, INT32_MAX, '[') );
 			if (NULL != array)
 			{
 				BX_TRACE("--- %s", name);
 				*array = '\0';
 				array++;
-				char* end = const_cast<char*>(bx::strFind(array, ']') );
+				char* end = const_cast<char*>(bx::strFind(array, INT32_MAX, ']') );
 				if (NULL != end)
 				{ // Some devices (Amazon Fire) might not return terminating brace.
 					*end = '\0';
@@ -5754,10 +5754,10 @@ namespace bgfx { namespace gl
 
 					if (insertFragDepth)
 					{
-						const char* entry = bx::strFind(temp, "void main ()");
+						const char* entry = bx::strFind(temp, INT32_MAX, "void main ()");
 						if (NULL != entry)
 						{
-							char* brace = const_cast<char*>(bx::strFind(entry, "{") );
+							char* brace = const_cast<char*>(bx::strFind(entry, INT32_MAX, "{") );
 							if (NULL != brace)
 							{
 								const char* end = bx::strmb(brace, '{', '}');
@@ -5885,7 +5885,7 @@ namespace bgfx { namespace gl
 							{
 								char tmpFragData[16];
 								bx::snprintf(tmpFragData, BX_COUNTOF(tmpFragData), "gl_FragData[%d]", ii);
-								fragData = bx::uint32_max(fragData, NULL == bx::strFind(code, tmpFragData) ? 0 : ii+1);
+								fragData = bx::uint32_max(fragData, NULL == bx::strFind(code, INT32_MAX, tmpFragData) ? 0 : ii+1);
 							}
 
 							BGFX_FATAL(0 != fragData, Fatal::InvalidShader, "Unable to find and patch gl_FragData!");
@@ -5978,7 +5978,7 @@ namespace bgfx { namespace gl
 							{
 								char tmpFragData[16];
 								bx::snprintf(tmpFragData, BX_COUNTOF(tmpFragData), "gl_FragData[%d]", ii);
-								fragData = bx::uint32_max(fragData, NULL == bx::strFind(code, tmpFragData) ? 0 : ii+1);
+								fragData = bx::uint32_max(fragData, NULL == bx::strFind(code, INT32_MAX, tmpFragData) ? 0 : ii+1);
 							}
 
 							BGFX_FATAL(0 != fragData, Fatal::InvalidShader, "Unable to find and patch gl_FragData!");
