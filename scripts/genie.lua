@@ -77,8 +77,8 @@ solution "bgfx"
 
 MODULE_DIR = path.getabsolute("../")
 BGFX_DIR   = path.getabsolute("..")
-BIMG_DIR   = path.getabsolute(path.join(BGFX_DIR, "../bimg"))
 BX_DIR     = os.getenv("BX_DIR")
+BIMG_DIR   = os.getenv("BIMG_DIR")
 
 local BGFX_BUILD_DIR = path.join(BGFX_DIR, ".build")
 local BGFX_THIRD_PARTY_DIR = path.join(BGFX_DIR, "3rdparty")
@@ -86,8 +86,20 @@ if not BX_DIR then
 	BX_DIR = path.getabsolute(path.join(BGFX_DIR, "../bx"))
 end
 
-if not os.isdir(BX_DIR) then
-	print("bx not found at " .. BX_DIR)
+if not BIMG_DIR then
+	BIMG_DIR = path.getabsolute(path.join(BGFX_DIR, "../bimg"))
+end
+
+if not os.isdir(BX_DIR) or not os.isdir(BIMG_DIR) then
+
+	if not os.isdir(BX_DIR) then
+		print("bx not found at " .. BX_DIR)
+	end
+
+	if not os.isdir(BIMG_DIR) then
+		print("bimg not found at " .. BIMG_DIR)
+	end
+
 	print("For more info see: https://bkaradzic.github.io/bgfx/build.html")
 	os.exit()
 end
