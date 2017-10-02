@@ -629,56 +629,6 @@ namespace bgfx { namespace d3d11
 	static MultiDrawIndirectFn multiDrawInstancedIndirect;
 	static MultiDrawIndirectFn multiDrawIndexedInstancedIndirect;
 
-	/*
-	 * NVAPI
-	 *
-	 * Reference:
-	 * http://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/index.html
-	 * https://github.com/jNizM/AHK_NVIDIA_NvAPI/blob/master/info/NvAPI_IDs.txt
-	 */
-	struct NvDisplayHandle;
-	struct NvPhysicalGpuHandle;
-
-#define NVAPI_MAX_PHYSICAL_GPUS 64
-
-	enum NvApiStatus
-	{
-		NVAPI_OK                      =  0,
-		NVAPI_ERROR                   = -1,
-	};
-
-	struct NvMemoryInfoV2
-	{
-		NvMemoryInfoV2()
-			: version(sizeof(NvMemoryInfoV2) | (2 << 16) )
-		{
-		}
-
-		uint32_t version;
-		uint32_t dedicatedVideoMemory;
-		uint32_t availableDedicatedVideoMemory;
-		uint32_t systemVideoMemory;
-		uint32_t sharedSystemMemory;
-		uint32_t curAvailableDedicatedVideoMemory;
-	};
-
-	typedef void*       (__cdecl* PFN_NVAPI_QUERYINTERFACE)(uint32_t _functionOffset);
-	typedef NvApiStatus (__cdecl* PFN_NVAPI_INITIALIZE)();
-	typedef NvApiStatus (__cdecl* PFN_NVAPI_UNLOAD)();
-	typedef NvApiStatus (__cdecl* PFN_NVAPI_ENUMPHYSICALGPUS)(NvPhysicalGpuHandle* _handle[NVAPI_MAX_PHYSICAL_GPUS], uint32_t* _gpuCount);
-	typedef NvApiStatus (__cdecl* PFN_NVAPI_GPUGETMEMORYINFO)(NvPhysicalGpuHandle* _handle, NvMemoryInfoV2* _memoryInfo);
-
-#define NVAPI_INITIALIZE              UINT32_C(0x0150e828)
-#define NVAPI_UNLOAD                  UINT32_C(0xd22bdd7e)
-#define NVAPI_ENUMPHYSICALGPUS        UINT32_C(0xe5ac921f)
-#define NVAPI_GPUGETMEMORYINFO        UINT32_C(0x07f9b368)
-
-	static PFN_NVAPI_QUERYINTERFACE          nvApiQueryInterface;
-	static PFN_NVAPI_INITIALIZE              nvApiInitialize;
-	static PFN_NVAPI_UNLOAD                  nvApiUnload;
-	static PFN_NVAPI_ENUMPHYSICALGPUS        nvApiEnumPhysicalGPUs;
-	static PFN_NVAPI_GPUGETMEMORYINFO        nvApiGpuGetMemoryInfo;
-
 #if USE_D3D11_DYNAMIC_LIB
 	static PFN_D3D11_CREATE_DEVICE  D3D11CreateDevice;
 	static PFN_CREATE_DXGI_FACTORY  CreateDXGIFactory;
@@ -722,8 +672,6 @@ namespace bgfx { namespace d3d11
 			, m_renderdocdll(NULL)
 			, m_agsdll(NULL)
 			, m_ags(NULL)
-			, m_nvapidll(NULL)
-			, m_nvGpu(NULL)
 			, m_driverType(D3D_DRIVER_TYPE_NULL)
 			, m_featureLevel(D3D_FEATURE_LEVEL(0) )
 			, m_adapter(NULL)
@@ -870,65 +818,7 @@ namespace bgfx { namespace d3d11
 				}
 			}
 
-			m_nvGpu = NULL;
-			m_nvapidll = bx::dlopen(
-#if BX_ARCH_32BIT
-				"nvapi.dll"
-#else
-				"nvapi64.dll"
-#endif // BX_ARCH_32BIT
-				);
-
-			if (NULL != m_nvapidll)
-			{
-				nvApiQueryInterface = (PFN_NVAPI_QUERYINTERFACE)bx::dlsym(m_nvapidll, "nvapi_QueryInterface");
-
-				bool initialized = NULL != nvApiQueryInterface;
-
-				if (initialized)
-				{
-					nvApiInitialize       = (PFN_NVAPI_INITIALIZE             )nvApiQueryInterface(NVAPI_INITIALIZE);
-					nvApiUnload           = (PFN_NVAPI_UNLOAD                 )nvApiQueryInterface(NVAPI_UNLOAD);
-					nvApiEnumPhysicalGPUs = (PFN_NVAPI_ENUMPHYSICALGPUS       )nvApiQueryInterface(NVAPI_ENUMPHYSICALGPUS);
-					nvApiGpuGetMemoryInfo = (PFN_NVAPI_GPUGETMEMORYINFO       )nvApiQueryInterface(NVAPI_GPUGETMEMORYINFO);
-
-					initialized = true
-						&& NULL != nvApiInitialize
-						&& NULL != nvApiUnload
-						&& NULL != nvApiEnumPhysicalGPUs
-						&& NULL != nvApiGpuGetMemoryInfo
-						&& NVAPI_OK == nvApiInitialize()
-						;
-
-					if (initialized)
-					{
-						NvPhysicalGpuHandle* physicalGpus[NVAPI_MAX_PHYSICAL_GPUS];
-						uint32_t numGpus = 0;
-						nvApiEnumPhysicalGPUs(physicalGpus, &numGpus);
-
-						initialized = 0 < numGpus;
-						if (initialized)
-						{
-							m_nvGpu = physicalGpus[0];
-						}
-					}
-
-					initialized = NULL != m_nvGpu;
-
-					if (!initialized)
-					{
-						nvApiUnload();
-					}
-				}
-
-				if (!initialized)
-				{
-					bx::dlclose(m_nvapidll);
-					m_nvapidll = NULL;
-				}
-
-				BX_WARN(!initialized, "NVAPI supported.");
-			}
+			m_nvapi.init();
 
 #if USE_D3D11_DYNAMIC_LIB
 			m_d3d11dll = bx::dlopen("d3d11.dll");
@@ -1818,14 +1708,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			case ErrorState::Default:
 			default:
-				if (NULL != m_nvGpu)
-				{
-					nvApiUnload();
-					m_nvGpu = NULL;
-				}
-
-				bx::dlclose(m_nvapidll);
-				m_nvapidll = NULL;
+				m_nvapi.shutdown();
 
 				if (NULL != m_ags)
 				{
@@ -1849,14 +1732,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			preReset();
 			m_ovr.shutdown();
 
-			if (NULL != m_nvGpu)
-			{
-				nvApiUnload();
-				m_nvGpu = NULL;
-			}
-
-			bx::dlclose(m_nvapidll);
-			m_nvapidll = NULL;
+			m_nvapi.shutdown();
 
 			if (NULL != m_ags)
 			{
@@ -3789,9 +3665,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		void* m_renderdocdll;
 		void* m_agsdll;
 		AGSContext* m_ags;
-		void* m_nvapidll;
-		NvPhysicalGpuHandle* m_nvGpu;
 
+		NvApi m_nvapi;
 
 		D3D_DRIVER_TYPE   m_driverType;
 		D3D_FEATURE_LEVEL m_featureLevel;
@@ -6618,24 +6493,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		perfStats.numDraw       = statsKeyType[0];
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.maxGpuLatency = maxGpuLatency;
-		perfStats.gpuMemoryMax  = -INT64_MAX;
-		perfStats.gpuMemoryUsed = -INT64_MAX;
-
-		if (NULL != m_nvGpu)
-		{
-			NvMemoryInfoV2 memInfo;
-			NvApiStatus status = nvApiGpuGetMemoryInfo(m_nvGpu, &memInfo);
-			if (NVAPI_OK == status)
-			{
-				perfStats.gpuMemoryMax  = 1024 *  memInfo.availableDedicatedVideoMemory;
-				perfStats.gpuMemoryUsed = 1024 * (memInfo.availableDedicatedVideoMemory - memInfo.curAvailableDedicatedVideoMemory);
-//				BX_TRACE("            dedicatedVideoMemory: %d KiB", memInfo.dedicatedVideoMemory);
-//				BX_TRACE("   availableDedicatedVideoMemory: %d KiB", memInfo.availableDedicatedVideoMemory);
-//				BX_TRACE("               systemVideoMemory: %d KiB", memInfo.systemVideoMemory);
-//				BX_TRACE("              sharedSystemMemory: %d KiB", memInfo.sharedSystemMemory);
-//				BX_TRACE("curAvailableDedicatedVideoMemory: %d KiB", memInfo.curAvailableDedicatedVideoMemory);
-			}
-		}
+		m_nvapi.getMemoryInfo(perfStats.gpuMemoryUsed, perfStats.gpuMemoryMax);
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
