@@ -109,7 +109,7 @@ namespace bgfx { namespace glsl
 				&&  *parse != '\0')
 			{
 				parse = bx::strws(parse);
-				const char* eol = bx::strFind(parse, INT32_MAX, ';');
+				const char* eol = bx::strFind(parse, ';');
 				if (NULL != eol)
 				{
 					const char* qualifier = parse;
@@ -169,13 +169,13 @@ namespace bgfx { namespace glsl
 
 					char uniformName[256];
 					uint8_t num = 1;
-					const char* array = bx::strFind(name, int32_t(eol-parse), "[");
+					const char* array = bx::strFind(bx::StringView(name, int32_t(eol-parse) ), "[");
 					if (NULL != array)
 					{
 						bx::strCopy(uniformName, int32_t(array-name+1), name);
 
 						char arraySize[32];
-						const char* end = bx::strFind(array, int32_t(eol-array), "]");
+						const char* end = bx::strFind(bx::StringView(array, int32_t(eol-array) ), "]");
 						bx::strCopy(arraySize, int32_t(end-array), array+1);
 						num = uint8_t(atoi(arraySize) );
 					}
@@ -204,19 +204,19 @@ namespace bgfx { namespace glsl
 		}
 		else
 		{
-			const char* parse = bx::strFind(optimizedShader, INT32_MAX, "struct xlatMtlShaderUniform {");
+			const char* parse = bx::strFind(optimizedShader, "struct xlatMtlShaderUniform {");
 			const char* end   = parse;
 			if (NULL != parse)
 			{
 				parse += bx::strLen("struct xlatMtlShaderUniform {");
-				end   =  bx::strFind(parse, INT32_MAX, "};");
+				end   =  bx::strFind(parse, "};");
 			}
 
 			while ( parse < end
 			&&     *parse != '\0')
 			{
 				parse = bx::strws(parse);
-				const char* eol = bx::strFind(parse, INT32_MAX, ';');
+				const char* eol = bx::strFind(parse, ';');
 				if (NULL != eol)
 				{
 					const char* typen = parse;
@@ -228,13 +228,13 @@ namespace bgfx { namespace glsl
 
 					char uniformName[256];
 					uint8_t num = 1;
-					const char* array = bx::strFind(name, int32_t(eol-parse), "[");
+					const char* array = bx::strFind(bx::StringView(name, int32_t(eol-parse) ), "[");
 					if (NULL != array)
 					{
 						bx::strCopy(uniformName, int32_t(array-name+1), name);
 
 						char arraySize[32];
-						const char* arrayEnd = bx::strFind(array, int32_t(eol-array), "]");
+						const char* arrayEnd = bx::strFind(bx::StringView(array, int32_t(eol-array) ), "]");
 						bx::strCopy(arraySize, int32_t(arrayEnd-array), array+1);
 						num = uint8_t(atoi(arraySize) );
 					}

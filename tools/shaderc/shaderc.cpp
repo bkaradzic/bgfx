@@ -393,9 +393,9 @@ namespace bgfx
 		replace[len] = '\0';
 
 		BX_CHECK(len >= bx::strLen(_replace), "");
-		for (const char* ptr = bx::strFind(_str, INT32_MAX, _find)
+		for (const char* ptr = bx::strFind(_str, _find)
 			; NULL != ptr
-			; ptr = bx::strFind(ptr + len, INT32_MAX, _find)
+			; ptr = bx::strFind(ptr + len, _find)
 			)
 		{
 			bx::memCopy(const_cast<char*>(ptr), replace, len);
@@ -534,9 +534,9 @@ namespace bgfx
 		{
 			char* start = scratch(_includeDir);
 
-			for (char* split = const_cast<char*>(bx::strFind(start, INT32_MAX, ';') )
+			for (char* split = const_cast<char*>(bx::strFind(start, ';') )
 				; NULL != split
-				; split = const_cast<char*>(bx::strFind(start, INT32_MAX, ';') )
+				; split = const_cast<char*>(bx::strFind(start, ';') )
 				)
 			{
 				*split = '\0';
@@ -713,7 +713,7 @@ namespace bgfx
 		bx::FilePath fp(_filePath);
 		char tmp[bx::kMaxFilePath];
 		bx::strCopy(tmp, BX_COUNTOF(tmp), fp.getFileName() );
-		const char* base = bx::strFind(_filePath, INT32_MAX, tmp);
+		const char* base = bx::strFind(_filePath, tmp);
 		return base;
 	}
 
@@ -954,7 +954,7 @@ namespace bgfx
 		&&    '\0'  != *defines)
 		{
 			defines = bx::strws(defines);
-			const char* eol = bx::strFind(defines, INT32_MAX, ';');
+			const char* eol = bx::strFind(defines, ';');
 			if (NULL == eol)
 			{
 				eol = defines + bx::strLen(defines);
@@ -1090,7 +1090,7 @@ namespace bgfx
 			   &&  *parse != '\0')
 			{
 				parse = bx::strws(parse);
-				const char* eol = bx::strFind(parse, INT32_MAX, ';');
+				const char* eol = bx::strFind(parse, ';');
 				if (NULL == eol)
 				{
 					eol = bx::streol(parse);
@@ -1220,14 +1220,14 @@ namespace bgfx
 					if (0 == bx::strCmp(str, "input", 5) )
 					{
 						str += 5;
-						const char* comment = bx::strFind(str, INT32_MAX, "//");
+						const char* comment = bx::strFind(str, "//");
 						eol = NULL != comment && comment < eol ? comment : eol;
 						inputHash = parseInOut(shaderInputs, str, eol);
 					}
 					else if (0 == bx::strCmp(str, "output", 6) )
 					{
 						str += 6;
-						const char* comment = bx::strFind(str, INT32_MAX, "//");
+						const char* comment = bx::strFind(str, "//");
 						eol = NULL != comment && comment < eol ? comment : eol;
 						outputHash = parseInOut(shaderOutputs, str, eol);
 					}
@@ -1301,7 +1301,7 @@ namespace bgfx
 			}
 			else if ('c' == shaderType) // Compute
 			{
-				char* entry = const_cast<char*>(bx::strFind(input, INT32_MAX, "void main()") );
+				char* entry = const_cast<char*>(bx::strFind(input, "void main()") );
 				if (NULL == entry)
 				{
 					fprintf(stderr, "Shader entry point 'void main()' is not found.\n");
@@ -1340,10 +1340,10 @@ namespace bgfx
 
 						uint32_t arg = 0;
 
-						const bool hasLocalInvocationID    = NULL != bx::strFind(input, INT32_MAX, "gl_LocalInvocationID");
-						const bool hasLocalInvocationIndex = NULL != bx::strFind(input, INT32_MAX, "gl_LocalInvocationIndex");
-						const bool hasGlobalInvocationID   = NULL != bx::strFind(input, INT32_MAX, "gl_GlobalInvocationID");
-						const bool hasWorkGroupID          = NULL != bx::strFind(input, INT32_MAX, "gl_WorkGroupID");
+						const bool hasLocalInvocationID    = NULL != bx::strFind(input, "gl_LocalInvocationID");
+						const bool hasLocalInvocationIndex = NULL != bx::strFind(input, "gl_LocalInvocationIndex");
+						const bool hasGlobalInvocationID   = NULL != bx::strFind(input, "gl_GlobalInvocationID");
+						const bool hasWorkGroupID          = NULL != bx::strFind(input, "gl_WorkGroupID");
 
 						if (hasLocalInvocationID)
 						{
@@ -1488,7 +1488,7 @@ namespace bgfx
 			}
 			else // Vertex/Fragment
 			{
-				char* entry = const_cast<char*>(bx::strFind(input, INT32_MAX, "void main()") );
+				char* entry = const_cast<char*>(bx::strFind(input, "void main()") );
 				if (NULL == entry)
 				{
 					fprintf(stderr, "Shader entry point 'void main()' is not found.\n");
@@ -1588,17 +1588,17 @@ namespace bgfx
 
 						if ('f' == shaderType)
 						{
-							const char* insert = bx::strFind(entry, INT32_MAX, "{");
+							const char* insert = bx::strFind(entry, "{");
 							if (NULL != insert)
 							{
 								insert = strInsert(const_cast<char*>(insert+1), "\nvec4 bgfx_VoidFrag = vec4_splat(0.0);\n");
 							}
 
-							const bool hasFragColor   = NULL != bx::strFind(input, INT32_MAX, "gl_FragColor");
-							const bool hasFragCoord   = NULL != bx::strFind(input, INT32_MAX, "gl_FragCoord") || hlsl > 3 || hlsl == 2;
-							const bool hasFragDepth   = NULL != bx::strFind(input, INT32_MAX, "gl_FragDepth");
-							const bool hasFrontFacing = NULL != bx::strFind(input, INT32_MAX, "gl_FrontFacing");
-							const bool hasPrimitiveId = NULL != bx::strFind(input, INT32_MAX, "gl_PrimitiveID");
+							const bool hasFragColor   = NULL != bx::strFind(input, "gl_FragColor");
+							const bool hasFragCoord   = NULL != bx::strFind(input, "gl_FragCoord") || hlsl > 3 || hlsl == 2;
+							const bool hasFragDepth   = NULL != bx::strFind(input, "gl_FragDepth");
+							const bool hasFrontFacing = NULL != bx::strFind(input, "gl_FrontFacing");
+							const bool hasPrimitiveId = NULL != bx::strFind(input, "gl_PrimitiveID");
 
 							bool hasFragData[8] = {};
 							uint32_t numFragData = 0;
@@ -1606,7 +1606,7 @@ namespace bgfx
 							{
 								char temp[32];
 								bx::snprintf(temp, BX_COUNTOF(temp), "gl_FragData[%d]", ii);
-								hasFragData[ii] = NULL != bx::strFind(input, INT32_MAX, temp);
+								hasFragData[ii] = NULL != bx::strFind(input, temp);
 								numFragData += hasFragData[ii];
 							}
 
@@ -1728,10 +1728,10 @@ namespace bgfx
 						}
 						else if ('v' == shaderType)
 						{
-							const bool hasVertexId    = NULL != bx::strFind(input, INT32_MAX, "gl_VertexID");
-							const bool hasInstanceId  = NULL != bx::strFind(input, INT32_MAX, "gl_InstanceID");
+							const bool hasVertexId    = NULL != bx::strFind(input, "gl_VertexID");
+							const bool hasInstanceId  = NULL != bx::strFind(input, "gl_InstanceID");
 
-							const char* brace = bx::strFind(entry, INT32_MAX, "{");
+							const char* brace = bx::strFind(entry, "{");
 							if (NULL != brace)
 							{
 								const char* end = bx::strmb(brace, '{', '}');
@@ -1930,7 +1930,7 @@ namespace bgfx
 										|| !!bx::findIdentifierMatch(input, s_ARB_shader_texture_lod)
 										|| !!bx::findIdentifierMatch(input, s_EXT_shader_texture_lod)
 										;
-									const bool usesInstanceID   = !!bx::strFind(input, INT32_MAX, "gl_InstanceID");
+									const bool usesInstanceID   = !!bx::strFind(input, "gl_InstanceID");
 									const bool usesGpuShader4   = !!bx::findIdentifierMatch(input, s_EXT_gpu_shader4);
 									const bool usesGpuShader5   = !!bx::findIdentifierMatch(input, s_ARB_gpu_shader5);
 									const bool usesTexelFetch   = !!bx::findIdentifierMatch(input, s_texelFetch);

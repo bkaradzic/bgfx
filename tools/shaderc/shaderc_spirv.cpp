@@ -602,7 +602,7 @@ namespace bgfx { namespace spirv
 				int32_t start   = 0;
 				int32_t end     = INT32_MAX;
 
-				const char* err = bx::strFind(log, INT32_MAX, "ERROR:");
+				const char* err = bx::strFind(log, "ERROR:");
 
 				bool found = false;
 
