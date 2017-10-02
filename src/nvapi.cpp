@@ -19,6 +19,12 @@ namespace bgfx
 
 #define NVAPI_MAX_PHYSICAL_GPUS 64
 
+#if BX_PLATFORM_WINDOWS
+#	define NVAPICALL __cdecl
+#else
+#	define NVAPICALL
+#endif // BX_PLATFORM_WINDOWS
+
 	enum NvApiStatus
 	{
 		NVAPI_OK    =  0,
@@ -40,12 +46,12 @@ namespace bgfx
 		uint32_t curAvailableDedicatedVideoMemory;
 	};
 
-	typedef void*       (__cdecl* PFN_NVAPI_QUERYINTERFACE)(uint32_t _functionOffset);
-	typedef NvApiStatus (__cdecl* PFN_NVAPI_INITIALIZE)();
-	typedef NvApiStatus (__cdecl* PFN_NVAPI_UNLOAD)();
-	typedef NvApiStatus (__cdecl* PFN_NVAPI_ENUMPHYSICALGPUS)(NvPhysicalGpuHandle* _handle[NVAPI_MAX_PHYSICAL_GPUS], uint32_t* _gpuCount);
-	typedef NvApiStatus (__cdecl* PFN_NVAPI_GPUGETMEMORYINFO)(NvPhysicalGpuHandle* _handle, NvMemoryInfoV2* _memoryInfo);
-	typedef NvApiStatus (__cdecl* PFN_NVAPI_GPUGETFULLNAME)(NvPhysicalGpuHandle* _physicalGpu, char _name[64]);
+	typedef void*       (NVAPICALL* PFN_NVAPI_QUERYINTERFACE)(uint32_t _functionOffset);
+	typedef NvApiStatus (NVAPICALL* PFN_NVAPI_INITIALIZE)();
+	typedef NvApiStatus (NVAPICALL* PFN_NVAPI_UNLOAD)();
+	typedef NvApiStatus (NVAPICALL* PFN_NVAPI_ENUMPHYSICALGPUS)(NvPhysicalGpuHandle* _handle[NVAPI_MAX_PHYSICAL_GPUS], uint32_t* _gpuCount);
+	typedef NvApiStatus (NVAPICALL* PFN_NVAPI_GPUGETMEMORYINFO)(NvPhysicalGpuHandle* _handle, NvMemoryInfoV2* _memoryInfo);
+	typedef NvApiStatus (NVAPICALL* PFN_NVAPI_GPUGETFULLNAME)(NvPhysicalGpuHandle* _physicalGpu, char _name[64]);
 
 #define NVAPI_INITIALIZE        UINT32_C(0x0150e828)
 #define NVAPI_UNLOAD            UINT32_C(0xd22bdd7e)
@@ -151,7 +157,7 @@ namespace bgfx
 	{
 		_gpuMemoryMax  = -INT64_MAX;
 		_gpuMemoryUsed = -INT64_MAX;
-	
+
 		if (NULL != m_nvGpu)
 		{
 			NvMemoryInfoV2 memInfo;
