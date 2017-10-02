@@ -887,10 +887,10 @@ namespace bgfx { namespace d3d11
 
 				if (initialized)
 				{
-					nvApiInitialize              = (PFN_NVAPI_INITIALIZE             )nvApiQueryInterface(NVAPI_INITIALIZE);
-					nvApiUnload                  = (PFN_NVAPI_UNLOAD                 )nvApiQueryInterface(NVAPI_UNLOAD);
-					nvApiEnumPhysicalGPUs        = (PFN_NVAPI_ENUMPHYSICALGPUS       )nvApiQueryInterface(NVAPI_ENUMPHYSICALGPUS);
-					nvApiGpuGetMemoryInfo        = (PFN_NVAPI_GPUGETMEMORYINFO       )nvApiQueryInterface(NVAPI_GPUGETMEMORYINFO);
+					nvApiInitialize       = (PFN_NVAPI_INITIALIZE             )nvApiQueryInterface(NVAPI_INITIALIZE);
+					nvApiUnload           = (PFN_NVAPI_UNLOAD                 )nvApiQueryInterface(NVAPI_UNLOAD);
+					nvApiEnumPhysicalGPUs = (PFN_NVAPI_ENUMPHYSICALGPUS       )nvApiQueryInterface(NVAPI_ENUMPHYSICALGPUS);
+					nvApiGpuGetMemoryInfo = (PFN_NVAPI_GPUGETMEMORYINFO       )nvApiQueryInterface(NVAPI_GPUGETMEMORYINFO);
 
 					initialized = true
 						&& NULL != nvApiInitialize
@@ -902,8 +902,6 @@ namespace bgfx { namespace d3d11
 
 					if (initialized)
 					{
-						NvApiStatus status;
-
 						NvPhysicalGpuHandle* physicalGpus[NVAPI_MAX_PHYSICAL_GPUS];
 						uint32_t numGpus = 0;
 						nvApiEnumPhysicalGPUs(physicalGpus, &numGpus);
