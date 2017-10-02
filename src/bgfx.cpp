@@ -11,6 +11,7 @@
 #include <bx/mutex.h>
 
 #include "topology.h"
+#include "codepage.h"
 
 BX_ERROR_RESULT(BGFX_ERROR_TEXTURE_VALIDATION,  BX_MAKEFOURCC('b', 'g', 0, 1) );
 
@@ -546,7 +547,7 @@ namespace bgfx
 			struct MemSlot* mem = &m_mem[_y*m_width+_x];
 			for (uint32_t ii = 0, xx = _x; ii < num && xx < m_width; ++ii)
 			{
-				char ch = temp[ii];
+				int ch = (uint8_t)temp[ii];	// ch as unicode
 				if (BX_UNLIKELY(ch == '\x1b') )
 				{
 					char* ptr = &temp[ii+1];
@@ -555,8 +556,33 @@ namespace bgfx
 				}
 				else
 				{
-					mem->character = ch;
 					mem->attribute = attr;
+
+					if (ch < 128)	// ch is ascii
+						mem->character = ch;
+					else
+					{
+						const char * next = CodePage::utf8_decode(&temp[ii], &ch);
+						if (next) {
+							ii += next - &temp[ii];
+							int cp437 = CodePage::cp437(ch);
+							if (cp437) {
+								mem->character = cp437;
+							} else {
+								mem->character = ch + 256;	// store as unicode ( shift 256 )
+								if (CodePage::doublewidth(ch)) {
+									++mem;
+									++xx;
+									if (xx < m_width) {
+										mem->character = 0;
+										mem->attribute = 0;
+									}
+								}
+							}
+						} else {
+							mem->character = 254;	// invalid unicode character
+						}
+					}
 					++mem;
 					++xx;
 				}
