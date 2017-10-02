@@ -551,7 +551,7 @@ namespace bgfx { namespace d3d9
 							}
 
 							if (BX_ENABLED(BGFX_CONFIG_DEBUG_PERFHUD)
-							&&  0 != bx::strFind(desc.Description, INT32_MAX, "PerfHUD") )
+							&&  0 != bx::strFind(desc.Description, "PerfHUD") )
 							{
 								m_adapter = ii;
 								m_deviceType = D3DDEVTYPE_REF;
