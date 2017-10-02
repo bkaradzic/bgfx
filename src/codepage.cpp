@@ -14,7 +14,7 @@ namespace bgfx {
 		return (unicode ^ (unicode >> 10)) % CodePage::CACHESIZE;
 	}
 
-	int CodePage::index(int32_t unicode)
+	int CodePage::index(int unicode)
 	{
 		int hash = hash_unicode(unicode);
 		uint32_t id = s_cache[hash];
@@ -24,12 +24,14 @@ namespace bgfx {
 		// lookup cache, it's thread safe.
 		if (pageid == m_id && m_codemap[codeindex] == unicode)
 			return codeindex;
+		if (pageid == NONEXIST_ID && codeindex == unicode)
+			return -1;
 
 		// cache miss, use binary search
 		int begin = 0, end = m_size;
 		while(begin < end) {
 			int mid = (begin + end)/2;
-			int32_t u = m_codemap[mid];
+			int u = m_codemap[mid];
 			if (u == unicode) {
 				// update cache, it's thread safe.
 				s_cache[hash] = mid << 8 | m_id;
@@ -41,6 +43,24 @@ namespace bgfx {
 			}
 		}
 		return -1;
+	}
+
+	int CodePage::prefetch(int unicode)
+	{
+		int hash = hash_unicode(unicode);
+		uint32_t id = s_cache[hash];
+		int pageid = id & 0xff;
+		int codeindex = id >> 8;
+		if (pageid == NONEXIST_ID && codeindex == unicode) {
+			return -1;
+		}
+		return pageid;
+	}
+
+	void CodePage::mark_nonexist(int unicode)
+	{
+		int hash = hash_unicode(unicode);
+		s_cache[hash] = (uint32_t)(unicode << 8) | NONEXIST_ID;
 	}
 
 	const char * CodePage::utf8_decode(const char *o, int *val)
@@ -66,7 +86,7 @@ namespace bgfx {
 
 	int CodePage::cp437(int unicode)
 	{
-		static const int32_t cp437_unicode[] = {
+		static const int cp437_unicode[] = {
 			0x00a0,0x00a1,0x00a2,0x00a3,0x00a5,0x00aa,0x00ab,0x00ac,0x00b0,0x00b1,0x00b2,0x00b5,0x00b7,0x00ba,0x00bb,0x00bc,
 			0x00bd,0x00bf,0x00c4,0x00c5,0x00c6,0x00c7,0x00c9,0x00d1,0x00d6,0x00dc,0x00df,0x00e0,0x00e1,0x00e2,0x00e4,0x00e5,
 			0x00e6,0x00e7,0x00e8,0x00e9,0x00ea,0x00eb,0x00ec,0x00ed,0x00ee,0x00ef,0x00f1,0x00f2,0x00f3,0x00f4,0x00f6,0x00f7,

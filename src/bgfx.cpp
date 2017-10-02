@@ -590,6 +590,73 @@ namespace bgfx
 		}
 	}
 
+	struct TextCodePage {
+		uint16_t m_start;
+		uint16_t m_height;
+		uint32_t m_size;
+		bool m_doublewidth;
+		CodePage *m_map;
+		const uint8_t *m_glyph;
+		TextCodePage(CodePage *map, const uint8_t *glyph, uint32_t sz, bool dw) :
+			m_start(0), m_height(sz / (2048/8)), m_size(sz), m_doublewidth(dw), m_map(map), m_glyph(glyph)  {}
+
+		void fillTexture(uint8_t *buffer, uint8_t cpp);
+		int lookup(int unicode) {
+			return m_map->index(unicode);
+		}
+		static void enable_cp936(TextVideoMemBlitter *t);
+		bool enable(TextVideoMemBlitter *t);
+	};
+
+	bool TextCodePage::enable(TextVideoMemBlitter *t)
+	{
+		uint16_t new_height = t->m_height + m_height;
+		if (new_height > 2048)	// max texture height
+			return false;
+		for (int i = 0; i < BGFX_MAX_CODEPAGE; i++) {
+			if (t->m_codepage[i] == NULL) {
+				if (i+1 < BGFX_MAX_CODEPAGE) {
+					t->m_codepage[i+1] = NULL;
+				}
+				m_start = t->m_height;
+				m_map->init(i+1);	// base 1, 0 is reserved for CP437
+				t->m_codepage[i] = this;
+				t->m_height = new_height;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	void TextCodePage::fillTexture(uint8_t *_rgba, uint8_t _bpp)
+	{
+		const uint8_t *_uniglyph = m_glyph;
+
+		for (uint32_t ii = 0; ii < m_size; ++ii)
+		{
+			for (uint32_t xx = 0; xx < 8; ++xx)
+			{
+				uint8_t bit = 1<<(7-xx);
+				bx::memSet(&_rgba[xx*_bpp], (*_uniglyph)&bit ? 255 : 0, _bpp);
+			}
+			_rgba += 8*_bpp;
+			++_uniglyph;
+		}
+	}
+
+#include "charset_cp936.h"
+
+	void TextCodePage::enable_cp936(TextVideoMemBlitter *t)
+	{
+		// 	use 0 as fake id to avoid lazy init.
+		static CodePage s_schinese(0, unimap_cp936, sizeof(unimap_cp936) / sizeof(unimap_cp936[0]));
+		static TextCodePage	s_codepage(&s_schinese, uni16x16_cp936, sizeof(uni16x16_cp936), true);
+
+		if (!s_codepage.enable(t)) {
+			BX_TRACE("CP936 (Simplfied Chinese) font enable failed")
+		}
+	}
+
 	static const uint32_t numCharsPerBatch = 1024;
 	static const uint32_t numBatchVertices = numCharsPerBatch*4;
 	static const uint32_t numBatchIndices  = numCharsPerBatch*6;
@@ -605,10 +672,17 @@ namespace bgfx
 			.add(Attrib::TexCoord0, 2, AttribType::Float)
 			.end();
 
-		uint16_t width  = 2048;
-		uint16_t height = 24;
+		uint16_t width  = 2048;	// don't change width, it must be 2048
 		uint8_t  bpp    = 1;
 		uint32_t pitch  = width*bpp;
+
+		m_height = 24;
+		m_codepage[0] = NULL;
+
+		// comment out this line to disable simplified Chinese (CP936) supported.
+		TextCodePage::enable_cp936(this);
+
+		uint16_t height = m_height;
 
 		const Memory* mem;
 
@@ -616,6 +690,15 @@ namespace bgfx
 		uint8_t* rgba = mem->data;
 		charsetFillTexture(vga8x8, rgba, 8, pitch, bpp);
 		charsetFillTexture(vga8x16, &rgba[8*pitch], 16, pitch, bpp);
+
+		{
+			int texture_lines = 24;
+			for (int i = 0; m_codepage[i] && i < BGFX_MAX_CODEPAGE; i++) {
+				m_codepage[i]->fillTexture(&rgba[texture_lines*pitch], bpp);
+				texture_lines += m_codepage[i]->m_height;
+			}
+		}
+
 		m_texture = createTexture2D(width, height, false, 1, TextureFormat::R8
 						, BGFX_TEXTURE_MIN_POINT
 						| BGFX_TEXTURE_MAG_POINT
@@ -646,6 +729,64 @@ namespace bgfx
 		destroy(m_texture);
 		s_ctx->destroyTransientVertexBuffer(m_vb);
 		s_ctx->destroyTransientIndexBuffer(m_ib);
+	}
+
+	struct FontRect {
+		int x;
+		int y;
+		int w;
+		int h;
+		int cwidth;
+	};
+
+	static bool FetchChar(TextVideoMemBlitter& _blitter, int unicode, struct FontRect *rect)
+	{
+		int id = CodePage::prefetch(unicode);
+		if (id < 0)
+			return false;
+		int priority[BGFX_MAX_CODEPAGE];
+		int i;
+		for (i=0; i<BGFX_MAX_CODEPAGE; i++) {
+			priority[i] = i;
+		}
+		if (id > 1) {
+			--id;
+			priority[0] = id;
+			priority[id] = 0;
+		}
+		for (i=0; i<BGFX_MAX_CODEPAGE;i++) {
+			TextCodePage *t = _blitter.m_codepage[priority[i]];
+			if (t == NULL)
+				break;
+			int idx = t->lookup(unicode);
+			if (idx < 0)
+				break;
+			if (t->m_doublewidth) {
+				int numofline = 2048/16;
+				int x = idx % numofline;
+				int y = idx / numofline;
+				rect->x = x * 16;
+				rect->y = y * 16;
+				rect->w = 16;
+				rect->h = 16;
+				rect->cwidth = 2;
+			} else {
+				int numofline = 2048/8;
+				int x = idx % numofline;
+				int y = idx / numofline;
+				rect->x = x * 8;
+				rect->y = y * 16;
+				rect->w = 8;
+				rect->h = 16;
+				rect->cwidth = 1;
+			}
+			rect->y += t->m_start;
+			return true;
+		}
+
+		CodePage::mark_nonexist(unicode);
+
+		return false;
 	}
 
 	void blit(RendererContextI* _renderCtx, TextVideoMemBlitter& _blitter, const TextVideoMem& _mem)
@@ -686,7 +827,7 @@ namespace bgfx
 
 		const float texelWidth = 1.0f/2048.0f;
 		const float texelWidthHalf = RendererType::Direct3D9 == g_caps.rendererType ? 0.0f : texelWidth*0.5f;
-		const float texelHeight = 1.0f/24.0f;
+		const float texelHeight = 1.0f/_blitter.m_height;
 		const float texelHeightHalf = RendererType::Direct3D9 == g_caps.rendererType ? texelHeight*0.5f : 0.0f;
 		const float utop = (_mem.m_small ? 0.0f : 8.0f)*texelHeight + texelHeightHalf;
 		const float ubottom = (_mem.m_small ? 8.0f : 24.0f)*texelHeight + texelHeightHalf;
@@ -710,8 +851,6 @@ namespace bgfx
 				{
 					uint32_t ch = line->character;
 					uint8_t attr = line->attribute;
-					if (ch > 0xff)
-						ch = 0;	// todo: render unicode code point , ch > 255)
 
 					if (0 != (ch|attr)
 					&& (' ' != ch || 0 != (attr&0xf0) ) )
@@ -719,15 +858,41 @@ namespace bgfx
 						uint32_t fg = palette[attr&0xf];
 						uint32_t bg = palette[(attr>>4)&0xf];
 
-						Vertex vert[4] =
-						{
-							{ (xx  )*8.0f, (yy  )*fontHeight, 0.0f, fg, bg, (ch  )*8.0f*texelWidth - texelWidthHalf, utop },
-							{ (xx+1)*8.0f, (yy  )*fontHeight, 0.0f, fg, bg, (ch+1)*8.0f*texelWidth - texelWidthHalf, utop },
-							{ (xx+1)*8.0f, (yy+1)*fontHeight, 0.0f, fg, bg, (ch+1)*8.0f*texelWidth - texelWidthHalf, ubottom },
-							{ (xx  )*8.0f, (yy+1)*fontHeight, 0.0f, fg, bg, (ch  )*8.0f*texelWidth - texelWidthHalf, ubottom },
-						};
+						if (ch >= 0x100) {
+							// Unicode
+							int unicode = ch - 256;
+							FontRect rect;
+							if (FetchChar(_blitter, unicode, &rect)) {
+								float left   = (rect.x       )*texelWidth  - texelWidthHalf;
+								float right  = (rect.x+rect.w)*texelWidth  - texelWidthHalf;
+								float top    = (rect.y       )*texelHeight + texelHeightHalf;
+								float bottom = (rect.y+rect.h)*texelHeight + texelHeightHalf;
+								Vertex vert[4] =
+								{
+									{ (xx            )*8.0f, (yy  )*fontHeight, 0.0f, fg, bg, left , top },
+									{ (xx+rect.cwidth)*8.0f, (yy  )*fontHeight, 0.0f, fg, bg, right, top },
+									{ (xx+rect.cwidth)*8.0f, (yy+1)*fontHeight, 0.0f, fg, bg, right, bottom },
+									{ (xx            )*8.0f, (yy+1)*fontHeight, 0.0f, fg, bg, left , bottom },
+								};
 
-						bx::memCopy(vertex, vert, sizeof(vert) );
+								bx::memCopy(vertex, vert, sizeof(vert) );
+							} else {
+								ch = 254;
+							}
+						}
+
+						if (ch < 0x100) {
+							// CP 437
+							Vertex vert[4] =
+							{
+								{ (xx  )*8.0f, (yy  )*fontHeight, 0.0f, fg, bg, (ch  )*8.0f*texelWidth - texelWidthHalf, utop },
+								{ (xx+1)*8.0f, (yy  )*fontHeight, 0.0f, fg, bg, (ch+1)*8.0f*texelWidth - texelWidthHalf, utop },
+								{ (xx+1)*8.0f, (yy+1)*fontHeight, 0.0f, fg, bg, (ch+1)*8.0f*texelWidth - texelWidthHalf, ubottom },
+								{ (xx  )*8.0f, (yy+1)*fontHeight, 0.0f, fg, bg, (ch  )*8.0f*texelWidth - texelWidthHalf, ubottom },
+							};
+
+							bx::memCopy(vertex, vert, sizeof(vert) );
+						}
 						vertex += 4;
 
 						indices[0] = uint16_t(startVertex+0);

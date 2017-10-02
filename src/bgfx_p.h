@@ -175,6 +175,7 @@ namespace stl = std;
 #define BGFX_DEFAULT_HEIGHT 720
 
 #define BGFX_MAX_COMPUTE_BINDINGS 8
+#define BGFX_MAX_CODEPAGE 4
 
 #define BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER  UINT32_C(0x10000000)
 #define BGFX_TEXTURE_INTERNAL_SHARED           UINT32_C(0x20000000)
@@ -510,6 +511,8 @@ namespace bgfx
 		bool m_small;
 	};
 
+	struct TextCodePage;
+
 	struct TextVideoMemBlitter
 	{
 		void init();
@@ -520,6 +523,8 @@ namespace bgfx
 		TransientIndexBuffer* m_ib;
 		VertexDecl m_decl;
 		ProgramHandle m_program;
+		uint16_t m_height;
+		TextCodePage * m_codepage[BGFX_MAX_CODEPAGE];
 	};
 
 	struct RendererContextI;

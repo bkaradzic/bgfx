@@ -92,7 +92,7 @@ public:
 				, 160
 				);
 			bgfx::dbgTextPrintf(0, 1, 0x0f, "Color can be changed with ANSI \x1b[9;me\x1b[10;ms\x1b[11;mc\x1b[12;ma\x1b[13;mp\x1b[14;me\x1b[0m code too."
-				" UTF-8 string is supported : π≈3.14 ");
+				" UTF-8 string is supported : π≈3.14 你好，世界。");
 
 			const bgfx::Stats* stats = bgfx::getStats();
 			bgfx::dbgTextPrintf(0, 2, 0x0f, "Backbuffer %dW x %dH in pixels, debug text %dW x %dH in characters."
