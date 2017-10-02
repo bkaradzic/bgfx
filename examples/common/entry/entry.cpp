@@ -592,7 +592,7 @@ restart:
 		for (AppI* app = getFirstApp(); NULL != app; app = app->getNext() )
 		{
 			if (NULL == selected
-			&&  bx::strFindI(app->getName(), INT32_MAX, find) )
+			&&  bx::strFindI(app->getName(), find) )
 			{
 				selected = app;
 			}
