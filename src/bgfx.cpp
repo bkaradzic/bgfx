@@ -543,7 +543,7 @@ namespace bgfx
 			num = bx::vsnprintf(temp, num, _format, argListCopy);
 
 			uint8_t attr = _attr;
-			uint8_t* mem = &m_mem[(_y*m_width+_x)*2];
+			struct MemSlot* mem = &m_mem[_y*m_width+_x];
 			for (uint32_t ii = 0, xx = _x; ii < num && xx < m_width; ++ii)
 			{
 				char ch = temp[ii];
@@ -555,9 +555,9 @@ namespace bgfx
 				}
 				else
 				{
-					mem[0] = ch;
-					mem[1] = attr;
-					mem += 2;
+					mem->character = ch;
+					mem->attribute = attr;
+					++mem;
 					++xx;
 				}
 			}
@@ -678,12 +678,14 @@ namespace bgfx
 			for (; yy < _mem.m_height && numIndices < numBatchIndices; ++yy)
 			{
 				xx = xx < _mem.m_width ? xx : 0;
-				const uint8_t* line = &_mem.m_mem[(yy*_mem.m_width+xx)*2];
+				const struct TextVideoMem::MemSlot* line = &_mem.m_mem[yy*_mem.m_width+xx];
 
 				for (; xx < _mem.m_width && numIndices < numBatchIndices; ++xx)
 				{
-					uint8_t ch = line[0];
-					uint8_t attr = line[1];
+					uint32_t ch = line->character;
+					uint8_t attr = line->attribute;
+					if (ch > 0xff)
+						ch = 0;	// todo: render unicode code point , ch > 255)
 
 					if (0 != (ch|attr)
 					&& (' ' != ch || 0 != (attr&0xf0) ) )
@@ -715,7 +717,7 @@ namespace bgfx
 						numIndices += 6;
 					}
 
-					line += 2;
+					line ++;
 				}
 
 				if (numIndices >= numBatchIndices)

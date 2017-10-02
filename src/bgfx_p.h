@@ -445,25 +445,26 @@ namespace bgfx
 				m_height = (uint16_t)height;
 
 				uint32_t size = m_size;
-				m_size = m_width * m_height * 2;
+				m_size = m_width * m_height;
 
-				m_mem = (uint8_t*)BX_REALLOC(g_allocator, m_mem, m_size);
+				m_mem = (struct MemSlot*)BX_REALLOC(g_allocator, m_mem, m_size * sizeof(struct MemSlot));
 
 				if (size < m_size)
 				{
-					bx::memSet(&m_mem[size], 0, m_size-size);
+					bx::memSet(&m_mem[size], 0, (m_size-size) * sizeof(struct MemSlot));
 				}
 			}
 		}
 
 		void clear(uint8_t _attr = 0)
 		{
-			uint8_t* mem = m_mem;
-			for (uint32_t ii = 0, num = m_size/2; ii < num; ++ii)
-			{
-				mem[0] = 0;
-				mem[1] = _attr;
-				mem += 2;
+			struct MemSlot* mem = m_mem;
+			bx::memSet(mem, 0, m_size * sizeof(struct MemSlot));
+			if (_attr != 0) {
+				for (uint32_t ii = 0, num = m_size; ii < num; ++ii)
+				{
+					mem[ii].attribute = _attr;
+				}
 			}
 		}
 
@@ -481,16 +482,28 @@ namespace bgfx
 		{
 			if (_x < m_width && _y < m_height)
 			{
-				uint8_t* dst = &m_mem[(_y*m_width+_x)*2];
+				struct MemSlot * dst = &m_mem[_y*m_width+_x];
 				const uint8_t* src = (const uint8_t*)_data;
-				const uint32_t width  = (bx::uint32_min(m_width,  _width +_x)-_x)*2;
+				const uint32_t width  =  bx::uint32_min(m_width,  _width +_x)-_x;
 				const uint32_t height =  bx::uint32_min(m_height, _height+_y)-_y;
-				const uint32_t dstPitch = m_width*2;
-				bx::memCopy(dst, src, width, height, _pitch, dstPitch);
+				const uint32_t dstPitch = m_width;
+				for (uint32_t ii = 0; ii < height; ++ii) {
+					for (uint32_t jj = 0; jj < width; ++jj) {
+						dst[jj].character = src[jj*2];
+						dst[jj].attribute = src[jj*2+1];
+					}
+					src += _pitch;
+					dst += dstPitch;
+				}
 			}
 		}
 
-		uint8_t* m_mem;
+		struct MemSlot {
+			uint32_t attribute:8;
+			uint32_t character:24;	// 24bit for dos (code page 437) and unicode (000000–​10FFFF)
+		};
+
+		struct MemSlot* m_mem;
 		uint32_t m_size;
 		uint16_t m_width;
 		uint16_t m_height;
