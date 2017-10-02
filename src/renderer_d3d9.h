@@ -23,6 +23,7 @@
 
 #include "renderer.h"
 #include "renderer_d3d.h"
+#include "nvapi.h"
 
 namespace bgfx { namespace d3d9
 {

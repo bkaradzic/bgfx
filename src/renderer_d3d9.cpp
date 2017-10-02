@@ -453,6 +453,8 @@ namespace bgfx { namespace d3d9
 
 			errorState = ErrorState::LoadedD3D9;
 
+			m_nvapi.init();
+
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 			{
 				D3DPERF_SetMarker  = (PFN_D3DPERF_SET_MARKER )bx::dlsym(m_d3d9dll, "D3DPERF_SetMarker");
@@ -879,10 +881,9 @@ namespace bgfx { namespace d3d9
 					DX_RELEASE(m_d3d9, 0);
 				}
 
-#if BX_PLATFORM_WINDOWS
 			case ErrorState::LoadedD3D9:
+				m_nvapi.shutdown();
 				bx::dlclose(m_d3d9dll);
-#endif // BX_PLATFORM_WINDOWS
 
 			case ErrorState::Default:
 				break;
@@ -928,9 +929,8 @@ namespace bgfx { namespace d3d9
 				DX_RELEASE(m_d3d9, 0);
 			}
 
-#if BX_PLATFORM_WINDOWS
+			m_nvapi.shutdown();
 			bx::dlclose(m_d3d9dll);
-#endif // BX_PLATFORM_WINDOWS
 
 			m_initialized = false;
 		}
@@ -1186,7 +1186,6 @@ namespace bgfx { namespace d3d9
 
 		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) override
 		{
-#if BX_PLATFORM_WINDOWS
 			IDirect3DSwapChain9* swapChain = isValid(_handle)
 				? m_frameBuffers[_handle.idx].m_swapChain
 				: m_swapChain
@@ -1250,9 +1249,6 @@ namespace bgfx { namespace d3d9
 
 			DX_CHECK(surface->UnlockRect() );
 			DX_RELEASE(surface, 0);
-#else
-			BX_UNUSED(_handle, _filePath);
-#endif // BX_PLATFORM_WINDOWS
 		}
 
 		void updateViewName(uint8_t _id, const char* _name) override
@@ -1421,7 +1417,6 @@ namespace bgfx { namespace d3d9
 				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
 				m_textVideoMem.clear();
 
-#if BX_PLATFORM_WINDOWS
 				D3DDEVICE_CREATION_PARAMETERS dcp;
 				DX_CHECK(m_device->GetCreationParameters(&dcp) );
 
@@ -1429,7 +1424,6 @@ namespace bgfx { namespace d3d9
 				DX_CHECK(m_d3d9->GetAdapterDisplayMode(dcp.AdapterOrdinal, &dm) );
 
 				m_params.BackBufferFormat = dm.Format;
-#endif // BX_PLATFORM_WINDOWS
 
 				m_params.BackBufferWidth  = _resolution.m_width;
 				m_params.BackBufferHeight = _resolution.m_height;
@@ -1554,7 +1548,6 @@ namespace bgfx { namespace d3d9
 						hr = m_frameBuffers[m_windows[ii].idx].present();
 					}
 
-#if BX_PLATFORM_WINDOWS
 					if (isLost(hr) )
 					{
 						do
@@ -1576,7 +1569,6 @@ namespace bgfx { namespace d3d9
 					{
 						BX_TRACE("Present failed with err 0x%08x.", hr);
 					}
-#endif // BX_PLATFORM_
 				}
 			}
 		}
@@ -2180,9 +2172,7 @@ namespace bgfx { namespace d3d9
 			setInputLayout(BX_COUNTOF(decls), decls, _numInstanceData);
 		}
 
-#if BX_PLATFORM_WINDOWS
 		D3DCAPS9 m_caps;
-#endif // BX_PLATFORM_WINDOWS
 
 		IDirect3D9Ex* m_d3d9ex;
 		IDirect3DDevice9Ex* m_deviceEx;
@@ -2210,6 +2200,7 @@ namespace bgfx { namespace d3d9
 		IDirect3DVertexDeclaration9* m_instanceDataDecls[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
 
 		void* m_d3d9dll;
+		NvApi m_nvapi;
 		uint32_t m_adapter;
 		D3DDEVTYPE m_deviceType;
 		D3DPRESENT_PARAMETERS m_params;
@@ -4382,8 +4373,7 @@ namespace bgfx { namespace d3d9
 		perfStats.numDraw       = statsKeyType[0];
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.maxGpuLatency = maxGpuLatency;
-		perfStats.gpuMemoryMax  = -INT64_MAX;
-		perfStats.gpuMemoryUsed = -INT64_MAX;
+		m_nvapi.getMemoryInfo(perfStats.gpuMemoryUsed, perfStats.gpuMemoryMax);
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{

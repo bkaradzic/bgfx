@@ -5752,6 +5752,15 @@ data.NumQualityLevels = 0;
 		perfStats.gpuMemoryMax  = -INT64_MAX;
 		perfStats.gpuMemoryUsed = -INT64_MAX;
 
+#if BX_PLATFORM_WINDOWS
+		DXGI_QUERY_VIDEO_MEMORY_INFO vmi[2];
+		DX_CHECK(m_adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL,     &vmi[0]) );
+		DX_CHECK(m_adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL, &vmi[1]) );
+
+		perfStats.gpuMemoryMax  = int64_t(vmi[0].Budget);
+		perfStats.gpuMemoryUsed = int64_t(vmi[0].CurrentUsage);
+#endif // BX_PLATFORM_WINDOWS
+
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
 //			PIX_BEGINEVENT(D3DCOLOR_FRAME, L"debugstats");
@@ -5802,10 +5811,6 @@ data.NumQualityLevels = 0;
 					);
 
 #if BX_PLATFORM_WINDOWS
-				DXGI_QUERY_VIDEO_MEMORY_INFO vmi[2];
-				DX_CHECK(m_adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL,     &vmi[0]) );
-				DX_CHECK(m_adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL, &vmi[1]) );
-
 				for (uint32_t ii = 0; ii < BX_COUNTOF(vmi); ++ii)
 				{
 					const DXGI_QUERY_VIDEO_MEMORY_INFO& memInfo = vmi[ii];

@@ -53,11 +53,11 @@ namespace bgfx
 	typedef NvApiStatus (NVAPICALL* PFN_NVAPI_GPUGETMEMORYINFO)(NvPhysicalGpuHandle* _handle, NvMemoryInfoV2* _memoryInfo);
 	typedef NvApiStatus (NVAPICALL* PFN_NVAPI_GPUGETFULLNAME)(NvPhysicalGpuHandle* _physicalGpu, char _name[64]);
 
-#define NVAPI_INITIALIZE        UINT32_C(0x0150e828)
-#define NVAPI_UNLOAD            UINT32_C(0xd22bdd7e)
-#define NVAPI_ENUMPHYSICALGPUS  UINT32_C(0xe5ac921f)
-#define NVAPI_GPUGETMEMORYINFO  UINT32_C(0x07f9b368)
-#define NVAPI_GPUGETFULLNAME    UINT32_C(0xceee8e9f)
+#define NVAPI_INITIALIZE       UINT32_C(0x0150e828)
+#define NVAPI_UNLOAD           UINT32_C(0xd22bdd7e)
+#define NVAPI_ENUMPHYSICALGPUS UINT32_C(0xe5ac921f)
+#define NVAPI_GPUGETMEMORYINFO UINT32_C(0x07f9b368)
+#define NVAPI_GPUGETFULLNAME   UINT32_C(0xceee8e9f)
 
 	static PFN_NVAPI_QUERYINTERFACE   nvApiQueryInterface;
 	static PFN_NVAPI_INITIALIZE       nvApiInitialize;
@@ -149,15 +149,15 @@ namespace bgfx
 			m_nvGpu = NULL;
 		}
 
-		bx::dlclose(m_nvApiDll);
-		m_nvApiDll = NULL;
+		if (NULL != m_nvApiDll)
+		{
+			bx::dlclose(m_nvApiDll);
+			m_nvApiDll = NULL;
+		}
 	}
 
 	void NvApi::getMemoryInfo(int64_t& _gpuMemoryUsed, int64_t& _gpuMemoryMax)
 	{
-		_gpuMemoryMax  = -INT64_MAX;
-		_gpuMemoryUsed = -INT64_MAX;
-
 		if (NULL != m_nvGpu)
 		{
 			NvMemoryInfoV2 memInfo;
@@ -172,6 +172,11 @@ namespace bgfx
 //				BX_TRACE("              sharedSystemMemory: %d KiB", memInfo.sharedSystemMemory);
 //				BX_TRACE("curAvailableDedicatedVideoMemory: %d KiB", memInfo.curAvailableDedicatedVideoMemory);
 			}
+		}
+		else
+		{
+			_gpuMemoryMax  = -INT64_MAX;
+			_gpuMemoryUsed = -INT64_MAX;
 		}
 	}
 
