@@ -35,6 +35,8 @@ rebuild:
 	@make -s --no-print-directory rebuild -C 31-rsm
 	@make -s --no-print-directory rebuild -C 33-pom
 #	@make -s --no-print-directory rebuild -C 34-mvs
+#	@make -s --no-print-directory rebuild -C 35-dynamic
+	@make -s --no-print-directory rebuild -C 36-sky
 	@make -s --no-print-directory rebuild -C common/debugdraw
 	@make -s --no-print-directory rebuild -C common/font
 	@make -s --no-print-directory rebuild -C common/imgui

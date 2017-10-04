@@ -15,3 +15,4 @@ build $meshes/tree1b_lod1_1.bin:   geometryc_pack_normal             $pwd/tree1b
 build $meshes/tree1b_lod1_2.bin:   geometryc_pack_normal             $pwd/tree1b_lod1_2.obj
 build $meshes/tree1b_lod2_1.bin:   geometryc_pack_normal             $pwd/tree1b_lod2_1.obj
 build $meshes/tree1b_lod2_2.bin:   geometryc_pack_normal             $pwd/tree1b_lod2_2.obj
+build $meshes/test_scene.bin:      geometryc_pack_normal             $pwd/../sky/test_scene.obj

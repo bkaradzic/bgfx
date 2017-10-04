@@ -1,7 +1,7 @@
 ﻿/*
-* Copyright 2017 Stanislav Pidhorskyi. All rights reserved.
-* License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
-*/
+ * Copyright 2017 Stanislav Pidhorskyi. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ */
 
 /*
  * This example demonstrates:
@@ -227,7 +227,7 @@ namespace
 	class SunController
 	{
 	public:
-		enum Month :int
+		enum Month : int
 		{
 			January = 0,
 			February,
@@ -333,7 +333,7 @@ namespace
 			ProceduralSky::ScreenPosVertex::init();
 
 			m_skyProgram = loadProgram("vs_sky", "fs_sky");
-			m_skyProgram_colorBandingFix = loadProgram("vs_sky", "fs_sky_ColorBandingFix");
+			m_skyProgram_colorBandingFix = loadProgram("vs_sky", "fs_sky_color_banding_fix");
 
 			m_preventBanding = true;
 
@@ -528,7 +528,6 @@ namespace
 
 			ImGui::End();
 		}
-
 
 		bool update() override
 		{

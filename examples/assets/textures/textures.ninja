@@ -9,3 +9,4 @@ build $textures/texture_compression_etc2.ktx: texturec_etc2 $pwd/texture_compres
 build $textures/parallax-d.ktx: texturec_diffuse $pwd/parallax-d.png
 build $textures/parallax-n.ktx: texturec_normal  $pwd/parallax-n.png
 build $textures/parallax-h.ktx: texturec_height  $pwd/parallax-h.png
+build $textures/lightmap.ktx:   texturec_height  $pwd/../sky/lightmap.png

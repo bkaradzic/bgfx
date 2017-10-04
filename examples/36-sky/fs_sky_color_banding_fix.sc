@@ -25,14 +25,14 @@ float nrand(in vec2 n)
 float n4rand_ss(in vec2 n)
 {
 	float nrnd0 = nrand( n + 0.07*fract( u_parameters.w ) );
-	float nrnd1 = nrand( n + 0.11*fract( u_parameters.w + 0.573953 ) );	
+	float nrnd1 = nrand( n + 0.11*fract( u_parameters.w + 0.573953 ) );
 	return 0.23*sqrt(-log(nrnd0+0.00001))*cos(2.0*3.141592*nrnd1)+0.5;
 }
 
 void main()
 {
 	float size2 = u_parameters.x * u_parameters.x;
-				
+
 	vec3 lightDir = normalize(u_sunDirection.xyz);
 	float distance = 2.0 * (1.0 - dot(normalize(v_viewDir), lightDir));
 	float sun = exp(-distance/ u_parameters.y / size2) + step(distance, size2);
@@ -41,6 +41,6 @@ void main()
 	color = toGamma(color);
 	float r = n4rand_ss(v_screenPos);
 	color += vec3(r, r, r) / 40.0;
-	
+
 	gl_FragColor = vec4(color, 1.0);
 }
