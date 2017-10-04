@@ -481,6 +481,7 @@ or _OPTIONS["with-combined-examples"] then
 		, "33-pom"
 		, "34-mvs"
 		, "35-dynamic"
+		, "36-sky"
 		)
 
 	-- C99 source doesn't compile under WinRT settings
