@@ -8,42 +8,42 @@
  * - Usage of Perez sky model [1] to render a dynamic sky.
  * - Rendering a mesh with a lightmap, shading of which is driven by the same parameters as the sky.
  *
- * Typically, the sky is rendered using cubemaps or other environment maps. 
+ * Typically, the sky is rendered using cubemaps or other environment maps.
  * This approach can provide a high-quality sky, but the downside is that the
  * image is static. To achieve daytime changes in sky appearance, there is a need
- * in a dynamic model. 
+ * in a dynamic model.
  *
  * Perez "An All-Weather Model for Sky Luminance Distribution" is a simple,
- * but good enough model which is, in essence, a function that 
- * interpolates a sky color. As input, it requires several turbidity 
+ * but good enough model which is, in essence, a function that
+ * interpolates a sky color. As input, it requires several turbidity
  * coefficients, a color at zenith and direction to the sun.
- * Turbidity coefficients are taken from [2], which are computed using more 
+ * Turbidity coefficients are taken from [2], which are computed using more
  * complex physically based models. Color at zenith depends on daytime and can
  * vary depending on many factors.
  *
- * In the code below, there are two tables that contain sky and sun luminance 
+ * In the code below, there are two tables that contain sky and sun luminance
  * which were computed using code from [3]. Luminance in those tables
  * represents actual scale of light energy that comes from sun compared to
- * the sky. 
+ * the sky.
  *
- * The sky is driven by luminance of the sky, while the material of the 
- * landscape is driven by both, the luminance of the sky and the sun. The 
+ * The sky is driven by luminance of the sky, while the material of the
+ * landscape is driven by both, the luminance of the sky and the sun. The
  * lightening model is very simple and consists of two parts: directional
- * light and hemisphere light. The first is used for the sun while the second 
- * is used for the sky. Additionally, the second part is modulated by a 
+ * light and hemisphere light. The first is used for the sun while the second
+ * is used for the sky. Additionally, the second part is modulated by a
  * lightmap to achieve ambient occlusion effect.
- * 
- * 
+ *
+ *
  * References
  * ==========
- * [1] R. Perez, R. Seals, and J. Michalsky."An All-Weather Model for Sky Luminance Distribution". 
+ * [1] R. Perez, R. Seals, and J. Michalsky."An All-Weather Model for Sky Luminance Distribution".
  *     Solar Energy, Volume 50, Number 3 (March 1993), pp. 235–245.
- * [2] A. J. Preetham, Peter Shirley, and Brian Smits. "A Practical Analytic Model for Daylight", 
+ * [2] A. J. Preetham, Peter Shirley, and Brian Smits. "A Practical Analytic Model for Daylight",
  *     Proceedings of the 26th Annual Conference on Computer Graphics and Interactive Techniques, 1999, pp. 91–100.
  * [3] E. Lengyel, Game Engine Gems, Volume One. Jones & Bartlett Learning, 2010. pp. 219 - 234
  *
  */
- 
+
 #include "common.h"
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"
@@ -71,9 +71,9 @@ namespace
 
 		float data[3];
 	};
-	
 
-	// HDTV rec. 709 matrix. 
+
+	// HDTV rec. 709 matrix.
 	static float M_XYZ2RGB[] =
 	{
 		3.240479f, -0.969256f, 0.055648f,
@@ -93,7 +93,7 @@ namespace
 	};
 
 
-	// Precomputed luminance of sunlight in XYZ colorspace. 
+	// Precomputed luminance of sunlight in XYZ colorspace.
 	// Computed using code from Game Engine Gems, Volume One, chapter 15. Implementation based on Dr. Richard Bird model.
 	// This table is used for piecewise linear interpolation. Transitions from and to 0.0 at sunset and sunrise are highly inaccurate
 	static std::map<float, Color> sunLuminanceXYZTable = {
@@ -114,10 +114,10 @@ namespace
 	};
 
 
-	// Precomputed luminance of sky in the zenith point in XYZ colorspace. 
+	// Precomputed luminance of sky in the zenith point in XYZ colorspace.
 	// Computed using code from Game Engine Gems, Volume One, chapter 15. Implementation based on Dr. Richard Bird model.
 	// This table is used for piecewise linear interpolation. Day/night transitions are highly inaccurate.
-	// The scale of luminance change in Day/night transitions is not preserved. 
+	// The scale of luminance change in Day/night transitions is not preserved.
 	// Luminance at night was increased to eliminate need the of HDR render.
 	static std::map<float, Color> skyLuminanceXYZTable = {
 		{ 0.0f, {{ 0.308f, 0.308f, 0.411f }} },
@@ -166,7 +166,7 @@ namespace
 	};
 
 
-	// Performs piecewise linear interpolation of a Color parameter. 
+	// Performs piecewise linear interpolation of a Color parameter.
 	class DynamicValueController
 	{
 		typedef Color ValueType;
@@ -384,7 +384,7 @@ namespace
 			bgfx::destroy(m_skyProgram);
 			bgfx::destroy(m_skyProgram_colorBandingFix);
 		}
-		
+
 		void Draw()
 		{
 			bgfx::setState(BGFX_STATE_RGB_WRITE | BGFX_STATE_DEPTH_TEST_EQUAL);
@@ -392,7 +392,7 @@ namespace
 			bgfx::setVertexBuffer(0, m_vbh);
 			bgfx::submit(0, m_preventBanding ? m_skyProgram_colorBandingFix : m_skyProgram);
 		}
-		
+
 		bool m_preventBanding;
 
 	private:
@@ -489,12 +489,12 @@ namespace
 			bgfx::destroy(u_sunDirection);
 			bgfx::destroy(u_parameters);
 			bgfx::destroy(u_perezCoeff);
-			
+
 			bgfx::destroy(m_lightmapTexture);
 			bgfx::destroy(m_landscapeProgram);
 
 			bgfx::frame();
-			
+
 			// Shutdown bgfx.
 			bgfx::shutdown();
 
@@ -558,10 +558,10 @@ namespace
 				ImGui::SetNextWindowPos(
 					ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
 					, ImGuiSetCond_FirstUseEver
-				); 
-				
+				);
+
 				DrawGUI();
-								
+
 				imguiEndFrame();
 
 				if (!ImGui::MouseOverArea())
@@ -573,11 +573,14 @@ namespace
 				// Set view 0 default viewport.
 				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height));
 
-				cameraGetViewMtx(m_viewMtx);
-				bx::mtxProj(m_projMtx, 60.0f, float(m_width) / float(m_height), 0.1f, 2000.0f, bgfx::getCaps()->homogeneousDepth);
+				float view[16];
+				cameraGetViewMtx(view);
 
-				bgfx::setViewTransform(0, m_viewMtx, m_projMtx);
-				
+				float proj[16];
+				bx::mtxProj(proj, 60.0f, float(m_width) / float(m_height), 0.1f, 2000.0f, bgfx::getCaps()->homogeneousDepth);
+
+				bgfx::setViewTransform(0, view, proj);
+
 				Color sunLuminanceXYZ = m_sunLuminanceXYZ.GetValue(m_time);
 				Color sunLuminanceRGB = XYZToRGB(sunLuminanceXYZ);
 
@@ -596,7 +599,7 @@ namespace
 				float perezCoeff[4 * 5];
 				ComputePerezCoeff(m_turbidity, perezCoeff);
 				bgfx::setUniform(u_perezCoeff, perezCoeff, 5);
-								
+
 				bgfx::setTexture(0, s_lightmapTexture, m_lightmapTexture);
 
 				meshSubmit(m_mesh, 0, m_landscapeProgram, NULL);
@@ -639,9 +642,6 @@ namespace
 		DynamicValueController m_sunLuminanceXYZ;
 		DynamicValueController m_skyLuminanceXYZ;
 
-		float m_viewMtx[16];
-		float m_projMtx[16];
-
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_debug;
@@ -659,4 +659,4 @@ namespace
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleProceduralSky, "36-sky", "Dynamic sky example.");
+ENTRY_IMPLEMENT_MAIN(ExampleProceduralSky, "36-sky", "Perez dynamic sky model.");
