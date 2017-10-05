@@ -3,6 +3,8 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
+#include <stdio.h>
+
 #include <algorithm>
 #include <vector>
 
@@ -13,6 +15,7 @@
 #include <tinystl/allocator.h>
 #include <tinystl/unordered_map.h>
 #include <tinystl/unordered_set.h>
+#include <tinystl/string.h>
 namespace stl = tinystl;
 
 #include <forsyth-too/forsythtriangleorderoptimizer.h>
@@ -87,8 +90,8 @@ struct Group
 {
 	uint32_t m_startTriangle;
 	uint32_t m_numTriangles;
-	std::string m_name;
-	std::string m_material;
+	stl::string m_name;
+	stl::string m_material;
 };
 
 typedef std::vector<Group> GroupArray;
@@ -99,7 +102,7 @@ struct Primitive
 	uint32_t m_startIndex;
 	uint32_t m_numVertices;
 	uint32_t m_numIndices;
-	std::string m_name;
+	stl::string m_name;
 };
 
 typedef std::vector<Primitive> PrimitiveArray;
@@ -292,7 +295,7 @@ void write(bx::WriterI* _writer
 		, uint32_t _numIndices
 		, const uint8_t* _compressedIndices
 		, uint32_t _compressedSize
-		, const std::string& _material
+		, const stl::string& _material
 		, const PrimitiveArray& _primitives
 		)
 {
@@ -354,7 +357,7 @@ struct GroupSortByMaterial
 {
 	bool operator()(const Group& _lhs, const Group& _rhs)
 	{
-		return _lhs.m_material < _rhs.m_material;
+		return 0 < bx::strCmp(_lhs.m_material.c_str(), _rhs.m_material.c_str() );
 	}
 };
 
@@ -694,9 +697,9 @@ int main(int _argc, const char* _argv[])
 			}
 			else if (0 == bx::strCmp(argv[0], "usemtl") )
 			{
-				std::string material(argv[1]);
+				stl::string material(argv[1]);
 
-				if (material != group.m_material)
+				if (0 != bx::strCmp(material.c_str(), group.m_material.c_str() ) )
 				{
 					group.m_numTriangles = (uint32_t)(triangles.size() ) - group.m_startTriangle;
 					if (0 < group.m_numTriangles)
@@ -847,7 +850,7 @@ int main(int _argc, const char* _argv[])
 	uint8_t* vertices = vertexData;
 	uint16_t* indices = indexData;
 
-	std::string material = groups.begin()->m_material;
+	stl::string material = groups.begin()->m_material;
 
 	PrimitiveArray primitives;
 
@@ -873,7 +876,7 @@ int main(int _argc, const char* _argv[])
 	{
 		for (uint32_t tri = groupIt->m_startTriangle, end = tri + groupIt->m_numTriangles; tri < end; ++tri)
 		{
-			if (material != groupIt->m_material
+			if (0 != bx::strCmp(material.c_str(), groupIt->m_material.c_str() )
 			||  65533 < numVertices)
 			{
 				prim.m_numVertices = numVertices - prim.m_startVertex;
