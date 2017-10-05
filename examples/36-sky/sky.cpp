@@ -304,33 +304,33 @@ namespace
 		float m_delta;
 	};
 
+	struct ScreenPosVertex
+	{
+		float m_x;
+		float m_y;
+
+		static void init()
+		{
+			ms_decl
+				.begin()
+				.add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
+				.end();
+		}
+
+		static bgfx::VertexDecl ms_decl;
+	};
+
+	bgfx::VertexDecl ScreenPosVertex::ms_decl;
 
 	// Renders a screen-space grid of triangles.
 	// Because of performance reasons, and because sky color is smooth, sky color is computed in vertex shader.
 	// 32x32 is a reasonable size for the grid to have smooth enough colors.
-	class ProceduralSky
+	struct ProceduralSky
 	{
-		struct ScreenPosVertex
-		{
-			float m_x;
-			float m_y;
-
-			static void init()
-			{
-				ms_decl
-					.begin()
-					.add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
-					.end();
-			}
-
-			static bgfx::VertexDecl ms_decl;
-		};
-
-	public:
-		void Init(int verticalCount, int horizontalCount)
+		void init(int verticalCount, int horizontalCount)
 		{
 			// Create vertex stream declaration.
-			ProceduralSky::ScreenPosVertex::init();
+			ScreenPosVertex::init();
 
 			m_skyProgram = loadProgram("vs_sky", "fs_sky");
 			m_skyProgram_colorBandingFix = loadProgram("vs_sky", "fs_sky_color_banding_fix");
@@ -339,8 +339,9 @@ namespace
 
 			bx::AllocatorI* allocator = entry::getAllocator();
 
-			ScreenPosVertex* vertices = (ScreenPosVertex*)BX_ALLOC(allocator,
-				verticalCount * horizontalCount * sizeof(ScreenPosVertex));
+			ScreenPosVertex* vertices = (ScreenPosVertex*)BX_ALLOC(allocator
+				, verticalCount * horizontalCount * sizeof(ScreenPosVertex)
+				);
 
 			for (int i = 0; i < verticalCount; i++)
 			{
@@ -352,8 +353,9 @@ namespace
 				}
 			}
 
-			uint16_t* indices = (uint16_t*)BX_ALLOC(allocator,
-				(verticalCount - 1) * (horizontalCount - 1) * 6 * sizeof(uint16_t));
+			uint16_t* indices = (uint16_t*)BX_ALLOC(allocator
+				, (verticalCount - 1) * (horizontalCount - 1) * 6 * sizeof(uint16_t)
+				);
 
 			int k = 0;
 			for (int i = 0; i < verticalCount - 1; i++)
@@ -377,7 +379,7 @@ namespace
 			BX_FREE(allocator, vertices);
 		}
 
-		void Free()
+		void shutdown()
 		{
 			bgfx::destroy(m_ibh);
 			bgfx::destroy(m_vbh);
@@ -385,7 +387,7 @@ namespace
 			bgfx::destroy(m_skyProgram_colorBandingFix);
 		}
 
-		void Draw()
+		void draw()
 		{
 			bgfx::setState(BGFX_STATE_RGB_WRITE | BGFX_STATE_DEPTH_TEST_EQUAL);
 			bgfx::setIndexBuffer(m_ibh);
@@ -393,18 +395,14 @@ namespace
 			bgfx::submit(0, m_preventBanding ? m_skyProgram_colorBandingFix : m_skyProgram);
 		}
 
-		bool m_preventBanding;
-
-	private:
 		bgfx::VertexBufferHandle m_vbh;
 		bgfx::IndexBufferHandle m_ibh;
 
 		bgfx::ProgramHandle m_skyProgram;
 		bgfx::ProgramHandle m_skyProgram_colorBandingFix;
+
+		bool m_preventBanding;
 	};
-
-	bgfx::VertexDecl ProceduralSky::ScreenPosVertex::ms_decl;
-
 
 	class ExampleProceduralSky : public entry::AppI
 	{
@@ -448,17 +446,17 @@ namespace
 			m_timeOffset = bx::getHPCounter();
 			m_time = 0.0f;
 
-			s_lightmapTexture = bgfx::createUniform("s_heightTexture", bgfx::UniformType::Int1);
-			u_sunLuminance = bgfx::createUniform("u_sunLuminance", bgfx::UniformType::Vec4);
+			s_texLightmap     = bgfx::createUniform("s_texLightmap",     bgfx::UniformType::Int1);
+			u_sunLuminance    = bgfx::createUniform("u_sunLuminance",    bgfx::UniformType::Vec4);
 			u_skyLuminanceXYZ = bgfx::createUniform("u_skyLuminanceXYZ", bgfx::UniformType::Vec4);
-			u_skyLuminance = bgfx::createUniform("u_skyLuminance", bgfx::UniformType::Vec4);
-			u_sunDirection = bgfx::createUniform("u_sunDirection", bgfx::UniformType::Vec4);
-			u_parameters = bgfx::createUniform("u_parameters", bgfx::UniformType::Vec4);
-			u_perezCoeff = bgfx::createUniform("u_perezCoeff", bgfx::UniformType::Vec4, 5);
+			u_skyLuminance    = bgfx::createUniform("u_skyLuminance",    bgfx::UniformType::Vec4);
+			u_sunDirection    = bgfx::createUniform("u_sunDirection",    bgfx::UniformType::Vec4);
+			u_parameters      = bgfx::createUniform("u_parameters",      bgfx::UniformType::Vec4);
+			u_perezCoeff      = bgfx::createUniform("u_perezCoeff",      bgfx::UniformType::Vec4, 5);
 
 			m_landscapeProgram = loadProgram("vs_sky_landscape", "fs_sky_landscape");
 
-			m_sky.Init(32, 32);
+			m_sky.init(32, 32);
 
 			m_sun.Update(0);
 
@@ -480,9 +478,9 @@ namespace
 
 			meshUnload(m_mesh);
 
-			m_sky.Free();
+			m_sky.shutdown();
 
-			bgfx::destroy(s_lightmapTexture);
+			bgfx::destroy(s_texLightmap);
 			bgfx::destroy(u_sunLuminance);
 			bgfx::destroy(u_skyLuminanceXYZ);
 			bgfx::destroy(u_skyLuminance);
@@ -501,7 +499,7 @@ namespace
 			return 0;
 		}
 
-		void DrawGUI()
+		void imgui()
 		{
 			ImGui::Begin("ProceduralSky");
 			ImGui::SetWindowSize(ImVec2(350, 200));
@@ -560,7 +558,7 @@ namespace
 					, ImGuiSetCond_FirstUseEver
 				);
 
-				DrawGUI();
+				imgui();
 
 				imguiEndFrame();
 
@@ -587,9 +585,9 @@ namespace
 				Color skyLuminanceXYZ = m_skyLuminanceXYZ.GetValue(m_time);
 				Color skyLuminanceRGB = XYZToRGB(skyLuminanceXYZ);
 
-				bgfx::setUniform(u_sunLuminance, sunLuminanceRGB.data);
+				bgfx::setUniform(u_sunLuminance,    sunLuminanceRGB.data);
 				bgfx::setUniform(u_skyLuminanceXYZ, skyLuminanceXYZ.data);
-				bgfx::setUniform(u_skyLuminance, skyLuminanceRGB.data);
+				bgfx::setUniform(u_skyLuminance,    skyLuminanceRGB.data);
 
 				bgfx::setUniform(u_sunDirection, m_sun.m_sunDirection);
 
@@ -597,14 +595,13 @@ namespace
 				bgfx::setUniform(u_parameters, exposition);
 
 				float perezCoeff[4 * 5];
-				ComputePerezCoeff(m_turbidity, perezCoeff);
+				computePerezCoeff(m_turbidity, perezCoeff);
 				bgfx::setUniform(u_perezCoeff, perezCoeff, 5);
 
-				bgfx::setTexture(0, s_lightmapTexture, m_lightmapTexture);
-
+				bgfx::setTexture(0, s_texLightmap, m_lightmapTexture);
 				meshSubmit(m_mesh, 0, m_landscapeProgram, NULL);
 
-				m_sky.Draw();
+				m_sky.draw();
 
 				bgfx::frame();
 
@@ -614,7 +611,7 @@ namespace
 			return false;
 		}
 
-		void ComputePerezCoeff(float turbidity, float* perezCoeff)
+		void computePerezCoeff(float turbidity, float* perezCoeff)
 		{
 			for (int i = 0; i < 5; ++i)
 			{
@@ -626,7 +623,7 @@ namespace
 		}
 
 		bgfx::ProgramHandle m_landscapeProgram;
-		bgfx::UniformHandle s_lightmapTexture;
+		bgfx::UniformHandle s_texLightmap;
 		bgfx::TextureHandle m_lightmapTexture;
 
 		bgfx::UniformHandle u_sunLuminance;
