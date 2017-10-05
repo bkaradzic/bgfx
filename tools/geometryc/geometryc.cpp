@@ -5,11 +5,8 @@
 
 #include <algorithm>
 #include <vector>
-#include <string>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
+#include <bx/string.h>
 #include <bgfx/bgfx.h>
 #include "../../src/vertexdecl.h"
 
@@ -540,7 +537,7 @@ int main(int _argc, const char* _argv[])
 						index.m_vbc = 0;
 					}
 
-					const char* vertex   = argv[edge+1];
+					const char* vertex = argv[edge+1];
 					char* texcoord = const_cast<char*>(bx::strFind(vertex, '/') );
 					if (NULL != texcoord)
 					{
@@ -550,19 +547,22 @@ int main(int _argc, const char* _argv[])
 						if (NULL != normal)
 						{
 							*normal++ = '\0';
-							const int nn = atoi(normal);
+							int32_t nn;
+							bx::fromString(&nn, normal);
 							index.m_normal = (nn < 0) ? nn+numNormals : nn-1;
 						}
 
 						// https://en.wikipedia.org/wiki/Wavefront_.obj_file#Vertex_Normal_Indices_Without_Texture_Coordinate_Indices
 						if(*texcoord != '\0')
 						{
-							const int tex = atoi(texcoord);
+							int32_t tex;
+							bx::fromString(&tex, texcoord);
 							index.m_texcoord = (tex < 0) ? tex+numTexcoords : tex-1;
 						}
 					}
 
-					const int pos = atoi(vertex);
+					int32_t pos;
+					bx::fromString(&pos, vertex);
 					index.m_position = (pos < 0) ? pos+numPositions : pos-1;
 
 					uint64_t hash0 = index.m_position;
@@ -749,25 +749,35 @@ int main(int _argc, const char* _argv[])
 		hasNormal   = -1 != it->second.m_normal;
 		hasTexcoord = -1 != it->second.m_texcoord;
 
-		if (!hasTexcoord
-		&&  texcoords.size() == positions.size() )
+		if (!hasTexcoord)
 		{
-			hasTexcoord = true;
-
-			for (Index3Map::iterator jt = indexMap.begin(), jtEnd = indexMap.end(); jt != jtEnd; ++jt)
+			for (Index3Map::iterator jt = indexMap.begin(), jtEnd = indexMap.end(); jt != jtEnd && !hasTexcoord; ++jt)
 			{
-				jt->second.m_texcoord = jt->second.m_position;
+				hasTexcoord |= -1 != jt->second.m_texcoord;
+			}
+
+			if (hasTexcoord)
+			{
+				for (Index3Map::iterator jt = indexMap.begin(), jtEnd = indexMap.end(); jt != jtEnd; ++jt)
+				{
+					jt->second.m_texcoord = -1 == jt->second.m_texcoord ? 0 : jt->second.m_texcoord;
+				}
 			}
 		}
 
-		if (!hasNormal
-		&&  normals.size() == positions.size() )
+		if (!hasNormal)
 		{
-			hasNormal = true;
-
-			for (Index3Map::iterator jt = indexMap.begin(), jtEnd = indexMap.end(); jt != jtEnd; ++jt)
+			for (Index3Map::iterator jt = indexMap.begin(), jtEnd = indexMap.end(); jt != jtEnd && !hasNormal; ++jt)
 			{
-				jt->second.m_normal = jt->second.m_position;
+				hasNormal |= -1 != jt->second.m_normal;
+			}
+
+			if (hasNormal)
+			{
+				for (Index3Map::iterator jt = indexMap.begin(), jtEnd = indexMap.end(); jt != jtEnd; ++jt)
+				{
+					jt->second.m_normal = -1 == jt->second.m_normal ? 0 : jt->second.m_normal;
+				}
 			}
 		}
 	}
