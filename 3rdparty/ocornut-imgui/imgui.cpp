@@ -105,7 +105,7 @@
  - See examples/ folder for standalone sample applications. To understand the integration process, you can read examples/opengl2_example/ because it is short, 
    then switch to the one more appropriate to your use case.
  - You may be able to grab and copy a ready made imgui_impl_*** file from the examples/.
- - When using Dear ImGui, your programming IDE if your friend: follow the declaration of variables, functions and types to find comments about them.
+ - When using Dear ImGui, your programming IDE is your friend: follow the declaration of variables, functions and types to find comments about them.
 
  - Init: retrieve the ImGuiIO structure with ImGui::GetIO() and fill the fields marked 'Settings': at minimum you need to set io.DisplaySize (application resolution).
    Later on you will fill your keyboard mapping, clipboard handlers, and other advanced features but for a basic integration you don't need to worry about it all.
@@ -747,6 +747,29 @@ void ImGui::StyleColorsClassic(ImGuiStyle* dst)
     colors[ImGuiCol_PlotHistogramHovered]   = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
     colors[ImGuiCol_TextSelectedBg]         = ImVec4(0.00f, 0.00f, 1.00f, 0.35f);
     colors[ImGuiCol_ModalWindowDarkening]   = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
+}
+
+// To scale your entire UI (e.g. if you want your app to use High DPI or generally be DPI aware) you may use this helper function. Scaling the fonts is done separately and is up to you.
+// Tips: if you need to change your scale multiple times, prefer calling this on a freshly initialized ImGuiStyle structure rather than scaling multiple times (because floating point multiplications are lossy).
+void ImGuiStyle::ScaleAllSizes(float scale_factor)
+{
+    WindowPadding *= scale_factor;
+    WindowMinSize *= scale_factor;
+    WindowRounding *= scale_factor;
+    ChildWindowRounding *= scale_factor;
+    FramePadding *= scale_factor;
+    FrameRounding *= scale_factor;
+    ItemSpacing *= scale_factor;
+    ItemInnerSpacing *= scale_factor;
+    TouchExtraPadding *= scale_factor;
+    IndentSpacing *= scale_factor;
+    ColumnsMinSpacing *= scale_factor;
+    ScrollbarSize *= scale_factor;
+    ScrollbarRounding *= scale_factor;
+    GrabMinSize *= scale_factor;
+    GrabRounding *= scale_factor;
+    DisplayWindowPadding *= scale_factor;
+    DisplaySafeAreaPadding *= scale_factor;
 }
 
 ImGuiIO::ImGuiIO()
