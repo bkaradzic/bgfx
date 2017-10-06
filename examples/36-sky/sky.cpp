@@ -504,10 +504,10 @@ namespace
 			return 0;
 		}
 
-		void imgui(uint32_t _width)
+		void imgui(float _width)
 		{
 			ImGui::Begin("ProceduralSky");
-			ImGui::SetWindowSize(ImVec2(float(_width), 200.0f) );
+			ImGui::SetWindowSize(ImVec2(_width, 200.0f) );
 			ImGui::SliderFloat("Time scale", &m_timeScale, 0.0f, 1.0f);
 			ImGui::SliderFloat("Time", &m_time, 0.0f, 24.0f);
 			ImGui::SliderFloat("Latitude", &m_sun.m_latitude, -90.0f, 90.0f);
