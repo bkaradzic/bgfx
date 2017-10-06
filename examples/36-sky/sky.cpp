@@ -445,6 +445,7 @@ namespace
 
 			m_timeOffset = bx::getHPCounter();
 			m_time = 0.0f;
+			m_timeScale = 1.0f;
 
 			s_texLightmap     = bgfx::createUniform("s_texLightmap",     bgfx::UniformType::Int1);
 			u_sunLuminance    = bgfx::createUniform("u_sunLuminance",    bgfx::UniformType::Vec4);
@@ -499,10 +500,11 @@ namespace
 			return 0;
 		}
 
-		void imgui()
+		void imgui(uint32_t _width)
 		{
 			ImGui::Begin("ProceduralSky");
-			ImGui::SetWindowSize(ImVec2(350, 200));
+			ImGui::SetWindowSize(ImVec2(float(_width), 200.0f) );
+			ImGui::SliderFloat("Time scale", &m_timeScale, 0.0f, 1.0f);
 			ImGui::SliderFloat("Time", &m_time, 0.0f, 24.0f);
 			ImGui::SliderFloat("Latitude", &m_sun.m_latitude, -90.0f, 90.0f);
 			ImGui::SliderFloat("Turbidity", &m_turbidity, 1.9f, 10.0f);
@@ -537,7 +539,7 @@ namespace
 				last = now;
 				const double freq = double(bx::getHPFrequency());
 				const float deltaTime = float(frameTime / freq);
-				m_time += deltaTime;
+				m_time += m_timeScale * deltaTime;
 				m_time = bx::fmod(m_time, 24.0f);
 				m_sun.Update(m_time);
 
@@ -554,11 +556,11 @@ namespace
 				showExampleDialog(this);
 
 				ImGui::SetNextWindowPos(
-					ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+					  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
 					, ImGuiSetCond_FirstUseEver
 				);
 
-				imgui();
+				imgui(m_width / 5.0f - 10.0f);
 
 				imguiEndFrame();
 
@@ -649,6 +651,7 @@ namespace
 		entry::MouseState m_mouseState;
 
 		float m_time;
+		float m_timeScale;
 		int64_t m_timeOffset;
 
 		float m_turbidity;
