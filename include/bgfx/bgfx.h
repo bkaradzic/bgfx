@@ -1509,9 +1509,7 @@ namespace bgfx
 	/// @param[in] _num Number of indices to allocate.
 	///
 	/// @remarks
-	///   1. You must call setIndexBuffer after alloc in order to avoid memory
-	///      leak.
-	///   2. Only 16-bit index buffer is supported.
+	///   Only 16-bit index buffer is supported.
 	///
 	/// @attention C99 equivalent is `bgfx_alloc_transient_index_buffer`.
 	///
@@ -1524,10 +1522,6 @@ namespace bgfx
 	///   calls.
 	/// @param[in] _num Number of vertices to allocate.
 	/// @param[in] _decl Vertex declaration.
-	///
-	/// @remarks
-	///   You must call setVertexBuffer after alloc in order to avoid memory
-	///   leak.
 	///
 	/// @attention C99 equivalent is `bgfx_alloc_transient_vertex_buffer`.
 	///
@@ -1561,10 +1555,6 @@ namespace bgfx
 	///   calls.
 	/// @param[in] _num Number of instances.
 	/// @param[in] _stride Instance stride. Must be multiple of 16.
-	///
-	/// @remarks
-	///   You must call setInstanceDataBuffer after alloc in order to avoid
-	///   memory leak.
 	///
 	/// @attention C99 equivalent is `bgfx_alloc_instance_data_buffer`.
 	///
