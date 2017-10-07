@@ -197,6 +197,7 @@ public:
 					bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 				}
 
+				// 80 bytes stride = 64 bytes for 4x4 matrix + 16 bytes for RGBA color.
 				const uint16_t instanceStride = 80;
 				const bgfx::InstanceDataBuffer* idb = bgfx::allocInstanceDataBuffer(121, instanceStride);
 				if (NULL != idb)
