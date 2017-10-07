@@ -258,17 +258,19 @@ public:
 			bgfx::setUniform(u_lightRgbInnerR, lightRgbInnerR, m_numLights);
 
 			const uint16_t instanceStride = 64;
-			const uint16_t numInstances = 3;
+			const uint16_t numInstances   = 3;
 
 			if (m_instancingSupported)
 			{
 				// Write instance data for 3x3 cubes.
 				for (uint32_t yy = 0; yy < 3; ++yy)
 				{
-					const bgfx::InstanceDataBuffer* idb = bgfx::allocInstanceDataBuffer(numInstances, instanceStride);
-					if (NULL != idb)
+					if (numInstances == bgfx::getAvailInstanceDataBuffer(numInstances, instanceStride) )
 					{
-						uint8_t* data = idb->data;
+						bgfx::InstanceDataBuffer idb;
+						bgfx::allocInstanceDataBuffer(&idb, numInstances, instanceStride);
+
+						uint8_t* data = idb.data;
 
 						for (uint32_t xx = 0; xx < 3; ++xx)
 						{
@@ -282,7 +284,7 @@ public:
 						}
 
 						// Set instance data buffer.
-						bgfx::setInstanceDataBuffer(idb, numInstances);
+						bgfx::setInstanceDataBuffer(&idb, numInstances);
 
 						// Set vertex and index buffer.
 						bgfx::setVertexBuffer(0, m_vbh);

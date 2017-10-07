@@ -1531,7 +1531,8 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_alloc_transient_vertex_buffer`.
 	///
-	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb
+	void allocTransientVertexBuffer(
+		  TransientVertexBuffer* _tvb
 		, uint32_t _num
 		, const VertexDecl& _decl
 		);
@@ -1545,7 +1546,8 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_alloc_transient_buffers`.
 	///
-	bool allocTransientBuffers(TransientVertexBuffer* _tvb
+	bool allocTransientBuffers(
+		  TransientVertexBuffer* _tvb
 		, const VertexDecl& _decl
 		, uint32_t _numVertices
 		, TransientIndexBuffer* _tib
@@ -1554,13 +1556,23 @@ namespace bgfx
 
 	/// Allocate instance data buffer.
 	///
+	/// @param[out] _idb InstanceDataBuffer structure is filled and is valid
+	///   for duration of frame, and it can be reused for multiple draw
+	///   calls.
+	/// @param[in] _num Number of instances.
+	/// @param[in] _stride Instance stride. Must be multiple of 16.
+	///
 	/// @remarks
 	///   You must call setInstanceDataBuffer after alloc in order to avoid
 	///   memory leak.
 	///
 	/// @attention C99 equivalent is `bgfx_alloc_instance_data_buffer`.
 	///
-	const InstanceDataBuffer* allocInstanceDataBuffer(uint32_t _num, uint16_t _stride);
+	void allocInstanceDataBuffer(
+		  InstanceDataBuffer* _idb
+		, uint32_t _num
+		, uint16_t _stride
+		);
 
 	/// Create draw indirect buffer.
 	///

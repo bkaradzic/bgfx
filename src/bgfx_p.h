@@ -1777,7 +1777,6 @@ namespace bgfx
 			m_draw.m_instanceDataStride = _idb->stride;
 			m_draw.m_numInstances       = bx::uint32_min(_idb->num, _num);
 			m_draw.m_instanceDataBuffer = _idb->handle;
-			BX_FREE(g_allocator, const_cast<InstanceDataBuffer*>(_idb) );
 		}
 
 		void setInstanceDataBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num, uint16_t _stride)
@@ -2388,7 +2387,6 @@ namespace bgfx
 			, m_numFreeDynamicVertexBufferHandles(0)
 			, m_numFreeOcclusionQueryHandles(0)
 			, m_colorPaletteDirty(0)
-			, m_instBufferCount(0)
 			, m_frames(0)
 			, m_debug(BGFX_DEBUG_NONE)
 			, m_renderCtx(NULL)
@@ -3061,23 +3059,18 @@ namespace bgfx
 			_tvb->decl   = declHandle;
 		}
 
-		BGFX_API_FUNC(const InstanceDataBuffer* allocInstanceDataBuffer(uint32_t _num, uint16_t _stride) )
+		BGFX_API_FUNC(void allocInstanceDataBuffer(InstanceDataBuffer* _idb, uint32_t _num, uint16_t _stride) )
 		{
-			++m_instBufferCount;
-
 			uint16_t stride = BX_ALIGN_16(_stride);
 			uint32_t offset = m_submit->allocTransientVertexBuffer(_num, stride);
 
 			TransientVertexBuffer& dvb = *m_submit->m_transientVb;
-			InstanceDataBuffer* idb = (InstanceDataBuffer*)BX_ALLOC(g_allocator, sizeof(InstanceDataBuffer) );
-			idb->data   = &dvb.data[offset];
-			idb->size   = _num * stride;
-			idb->offset = offset;
-			idb->num    = _num;
-			idb->stride = stride;
-			idb->handle = dvb.handle;
-
-			return idb;
+			_idb->data   = &dvb.data[offset];
+			_idb->size   = _num * stride;
+			_idb->offset = offset;
+			_idb->num    = _num;
+			_idb->stride = stride;
+			_idb->handle = dvb.handle;
 		}
 
 		IndirectBufferHandle createIndirectBuffer(uint32_t _num)
@@ -4175,8 +4168,6 @@ namespace bgfx
 
 		BGFX_API_FUNC(void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint32_t _num) )
 		{
-			--m_instBufferCount;
-
 			m_submit->setInstanceDataBuffer(_idb, _num);
 		}
 
@@ -4528,7 +4519,6 @@ namespace bgfx
 
 		Resolution m_resolution;
 		int64_t  m_frameTimeLast;
-		int32_t  m_instBufferCount;
 		uint32_t m_frames;
 		uint32_t m_debug;
 

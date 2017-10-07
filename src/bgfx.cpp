@@ -3071,17 +3071,17 @@ error:
 		return false;
 	}
 
-	const InstanceDataBuffer* allocInstanceDataBuffer(uint32_t _num, uint16_t _stride)
+	void allocInstanceDataBuffer(InstanceDataBuffer* _idb, uint32_t _num, uint16_t _stride)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BGFX_CHECK_CAPS(BGFX_CAPS_INSTANCING, "Instancing is not supported!");
+		BX_CHECK(_stride == BX_ALIGN_16(_stride), "Stride must be multiple of 16.");
 		BX_CHECK(0 < _num, "Requesting 0 instanced data vertices.");
-		const InstanceDataBuffer* idb = s_ctx->allocInstanceDataBuffer(_num, _stride);
+		s_ctx->allocInstanceDataBuffer(_idb, _num, _stride);
 		BX_CHECK(_num == idb->size / _stride, "Failed to allocate instance data buffer (requested %d, available %d). Use bgfx::checkAvailTransient* functions to ensure availability."
 			, _num
 			, idb->size / _stride
 			);
-		return idb;
 	}
 
 	IndirectBufferHandle createIndirectBuffer(uint32_t _num)
@@ -4549,9 +4549,9 @@ BGFX_C_API bool bgfx_alloc_transient_buffers(bgfx_transient_vertex_buffer_t* _tv
 	return bgfx::allocTransientBuffers( (bgfx::TransientVertexBuffer*)_tvb, decl, _numVertices, (bgfx::TransientIndexBuffer*)_tib, _numIndices);
 }
 
-BGFX_C_API const bgfx_instance_data_buffer_t* bgfx_alloc_instance_data_buffer(uint32_t _num, uint16_t _stride)
+BGFX_C_API void bgfx_alloc_instance_data_buffer(bgfx_instance_data_buffer_t* _idb, uint32_t _num, uint16_t _stride)
 {
-	return (bgfx_instance_data_buffer_t*)bgfx::allocInstanceDataBuffer(_num, _stride);
+	bgfx::allocInstanceDataBuffer( (bgfx::InstanceDataBuffer*)_idb, _num, _stride);
 }
 
 BGFX_C_API bgfx_indirect_buffer_handle_t bgfx_create_indirect_buffer(uint32_t _num)
