@@ -334,6 +334,7 @@ INSTANTIATE_TEST_CASE_P(
         { "spv.register.autoassign.frag", "main_ep", 5, 10, 0, 20, 30, true, false },
         { "spv.register.noautoassign.frag", "main_ep", 5, 10, 0, 15, 30, false, false },
         { "spv.register.autoassign-2.frag", "main", 5, 10, 0, 15, 30, true, true },
+        { "spv.register.subpass.frag", "main", 0, 20, 0, 0, 0, true, true },
         { "spv.buffer.autoassign.frag", "main", 5, 10, 0, 15, 30, true, true },
         { "spv.ssbo.autoassign.frag", "main", 5, 10, 0, 15, 30, true, true },
         { "spv.ssboAlias.frag", "main", 0, 0, 0, 0, 83, true, false },

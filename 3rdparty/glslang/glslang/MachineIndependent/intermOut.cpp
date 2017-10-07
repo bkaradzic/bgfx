@@ -196,6 +196,7 @@ bool TOutputTraverser::visitBinary(TVisit /* visit */, TIntermBinary* node)
     case EOpLogicalOr:  out.debug << "logical-or";   break;
     case EOpLogicalXor: out.debug << "logical-xor"; break;
     case EOpLogicalAnd: out.debug << "logical-and"; break;
+
     default: out.debug << "<unknown op>";
     }
 
@@ -490,6 +491,9 @@ bool TOutputTraverser::visitUnary(TVisit /* visit */, TIntermUnary* node)
     case EOpConvUint16ToInt64:      out.debug << "Convert uint16 to int64";     break;
     case EOpConvUint16ToUint64:     out.debug << "Convert uint16 to uint64";    break;
 #endif
+
+    case EOpSubpassLoad:   out.debug << "subpassLoad";   break;
+    case EOpSubpassLoadMS: out.debug << "subpassLoadMS"; break;
 
     default: out.debug.message(EPrefixError, "Bad unary op");
     }
@@ -790,6 +794,9 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpGroupMemoryBarrierWithGroupSync: out.debug << "GroupMemoryBarrierWithGroupSync"; break;
     case EOpWorkgroupMemoryBarrier:           out.debug << "WorkgroupMemoryBarrier";           break;
     case EOpWorkgroupMemoryBarrierWithGroupSync: out.debug << "WorkgroupMemoryBarrierWithGroupSync"; break;
+
+    case EOpSubpassLoad:   out.debug << "subpassLoad";   break;
+    case EOpSubpassLoadMS: out.debug << "subpassLoadMS"; break;
 
     default: out.debug.message(EPrefixError, "Bad aggregation op");
     }

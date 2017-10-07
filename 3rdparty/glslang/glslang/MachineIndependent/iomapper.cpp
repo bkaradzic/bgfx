@@ -497,7 +497,8 @@ protected:
     }
 
     static bool isTextureType(const glslang::TType& type) {
-        return type.getBasicType() == glslang::EbtSampler && type.getSampler().isTexture();
+        return (type.getBasicType() == glslang::EbtSampler && 
+                (type.getSampler().isTexture() || type.getSampler().isSubpass()));
     }
 
     static bool isUboType(const glslang::TType& type) {

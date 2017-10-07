@@ -1379,6 +1379,44 @@ TIntermTyped* HlslParseContext::flattenAccess(int uniqueId, int member, const TT
     return subsetSymbol;
 }
 
+// For finding where the first leaf is in a subtree of a multi-level aggregate
+// that is just getting a subset assigned. Follows the same logic as flattenAccess,
+// but logically going down the "left-most" tree branch each step of the way.
+//
+// Returns the offset into the first leaf of the subset.
+int HlslParseContext::findSubtreeOffset(const TIntermNode& node) const
+{
+    const TIntermSymbol* sym = node.getAsSymbolNode();
+    if (sym == nullptr)
+        return 0;
+    if (!sym->isArray() && !sym->isStruct())
+        return 0;
+    int subset = sym->getFlattenSubset();
+    if (subset == -1)
+        return 0;
+
+    // Getting this far means a partial aggregate is identified by the flatten subset.
+    // Find the first leaf of the subset.
+
+    const auto flattenData = flattenMap.find(sym->getId());
+    if (flattenData == flattenMap.end())
+        return 0;
+
+    return findSubtreeOffset(sym->getType(), subset, flattenData->second.offsets);
+
+    do {
+        subset = flattenData->second.offsets[subset];
+    } while (true);
+}
+// Recursively do the desent
+int HlslParseContext::findSubtreeOffset(const TType& type, int subset, const TVector<int>& offsets) const
+{
+    if (!type.isArray() && !type.isStruct())
+        return offsets[subset];
+    TType derefType(type, 0);
+    return findSubtreeOffset(derefType, offsets[subset], offsets);
+};
+
 // Find and return the split IO TVariable for id, or nullptr if none.
 TVariable* HlslParseContext::getSplitNonIoVar(int id) const
 {
@@ -1666,7 +1704,6 @@ TIntermAggregate* HlslParseContext::handleFunctionDefinition(const TSourceLoc& l
     return paramNodes;
 }
 
-
 // Handle all [attrib] attribute for the shader entry point
 void HlslParseContext::handleEntryPointAttributes(const TSourceLoc& loc, const TAttributeMap& attributes)
 {
@@ -1813,6 +1850,44 @@ void HlslParseContext::handleEntryPointAttributes(const TSourceLoc& loc, const T
             }
         }
     }
+}
+
+// Update the given type with any type-like attribute information in the
+// attributes.
+void HlslParseContext::transferTypeAttributes(const TAttributeMap& attributes, TType& type)
+{
+    // extract integers out of attribute arguments stored in attribute aggregate
+    const auto getInt = [&](TAttributeType attr, int argNum, int& value) -> bool {
+        const TIntermAggregate* attrAgg = attributes[attr];
+        if (attrAgg == nullptr)
+            return false;
+        if (argNum >= (int)attrAgg->getSequence().size())
+            return false;
+        const TConstUnion& intConst = attrAgg->getSequence()[argNum]->getAsConstantUnion()->getConstArray()[0];
+        if (intConst.getType() != EbtInt)
+            return false;
+        value = intConst.getIConst();
+        return true;
+    };
+
+    // location
+    int value;
+    if (getInt(EatLocation, 0, value))
+        type.getQualifier().layoutLocation = value;
+
+    // binding
+    if (getInt(EatBinding, 0, value)) {
+        type.getQualifier().layoutBinding = value;
+        type.getQualifier().layoutSet = 0;
+    }
+
+    // set
+    if (getInt(EatBinding, 1, value))
+        type.getQualifier().layoutSet = value;
+
+    // input attachment
+    if (getInt(EatInputAttachment, 0, value))
+        type.getQualifier().layoutAttachment = value;
 }
 
 //
@@ -2558,30 +2633,29 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
         }
     }
 
-    int memberIdx = 0;
-
     // When dealing with split arrayed structures of built-ins, the arrayness is moved to the extracted built-in
     // variables, which is awkward when copying between split and unsplit structures.  This variable tracks
     // array indirections so they can be percolated from outer structs to inner variables.
     std::vector <int> arrayElement;
 
-    // We track the outer-most aggregate, so that we can use its storage class later.
-    const TIntermTyped* outerLeft  = left;
-    const TIntermTyped* outerRight = right;
+    TStorageQualifier leftStorage = left->getType().getQualifier().storage;
+    TStorageQualifier rightStorage = right->getType().getQualifier().storage;
 
-    const auto getMember = [&](bool isLeft, TIntermTyped* node, int member, TIntermTyped* splitNode, int splitMember)
+    int leftOffset = findSubtreeOffset(*left);
+    int rightOffset = findSubtreeOffset(*right);
+
+    const auto getMember = [&](bool isLeft, const TType& type, int member, TIntermTyped* splitNode, int splitMember)
                            -> TIntermTyped * {
         const bool flattened = isLeft ? isFlattenLeft : isFlattenRight;
         const bool split     = isLeft ? isSplitLeft   : isSplitRight;
 
         TIntermTyped* subTree;
-        const TType derefType(node->getType(), member);
+        const TType derefType(type, member);
         const TVariable* builtInVar = nullptr;
         if ((flattened || split) && derefType.isBuiltIn()) {
-            const TIntermTyped* outer = isLeft ? outerLeft : outerRight;
             auto splitPair = splitBuiltIns.find(HlslParseContext::tInterstageIoData(
                                                    derefType.getQualifier().builtIn,
-                                                   outer->getType().getQualifier().storage));
+                                                   isLeft ? leftStorage : rightStorage));
             if (splitPair != splitBuiltIns.end())
                 builtInVar = splitPair->second;
         }
@@ -2598,12 +2672,14 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
                 subTree->setType(splitDerefType);
             }
         } else if (flattened && isFinalFlattening(derefType)) {
-            const TVector<TVariable*>& flatVariables = isLeft ? *leftVariables : *rightVariables;
-            subTree = intermediate.addSymbol(*flatVariables[memberIdx++]);
+            if (isLeft)
+                subTree = intermediate.addSymbol(*(*leftVariables)[leftOffset++]);
+            else
+                subTree = intermediate.addSymbol(*(*rightVariables)[rightOffset++]);
         } else {
             // Index operator if it's an aggregate, else EOpNull
-            const TOperator accessOp = node->getType().isArray()  ? EOpIndexDirect
-                                     : node->getType().isStruct() ? EOpIndexDirectStruct
+            const TOperator accessOp = type.isArray()  ? EOpIndexDirect
+                                     : type.isStruct() ? EOpIndexDirectStruct
                                      : EOpNull;
             if (accessOp == EOpNull) {
                 subTree = splitNode;
@@ -2644,12 +2720,12 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
                 arrayElement.push_back(element);
 
                 // Add a new AST symbol node if we have a temp variable holding a complex RHS.
-                TIntermTyped* subLeft  = getMember(true,  left,  element, left, element);
-                TIntermTyped* subRight = getMember(false, right, element, right, element);
+                TIntermTyped* subLeft  = getMember(true,  left->getType(),  element, left, element);
+                TIntermTyped* subRight = getMember(false, right->getType(), element, right, element);
 
-                TIntermTyped* subSplitLeft =  isSplitLeft  ? getMember(true,  left,  element, splitLeft, element)
+                TIntermTyped* subSplitLeft =  isSplitLeft  ? getMember(true,  left->getType(),  element, splitLeft, element)
                                                            : subLeft;
-                TIntermTyped* subSplitRight = isSplitRight ? getMember(false, right, element, splitRight, element)
+                TIntermTyped* subSplitRight = isSplitRight ? getMember(false, right->getType(), element, splitRight, element)
                                                            : subRight;
 
                 traverse(subLeft, subRight, subSplitLeft, subSplitRight);
@@ -2674,13 +2750,13 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
                 const TType& typeL = *membersL[member].type;
                 const TType& typeR = *membersR[member].type;
 
-                TIntermTyped* subLeft  = getMember(true,  left, member, left, member);
-                TIntermTyped* subRight = getMember(false, right, member, right, member);
+                TIntermTyped* subLeft  = getMember(true,  left->getType(), member, left, member);
+                TIntermTyped* subRight = getMember(false, right->getType(), member, right, member);
 
                 // If there is no splitting, use the same values to avoid inefficiency.
-                TIntermTyped* subSplitLeft =  isSplitLeft  ? getMember(true,  left,  member, splitLeft, memberL)
+                TIntermTyped* subSplitLeft =  isSplitLeft  ? getMember(true,  left->getType(),  member, splitLeft, memberL)
                                                            : subLeft;
-                TIntermTyped* subSplitRight = isSplitRight ? getMember(false, right, member, splitRight, memberR)
+                TIntermTyped* subSplitRight = isSplitRight ? getMember(false, right->getType(), member, splitRight, memberR)
                                                            : subRight;
 
                 if (isClipOrCullDistance(subSplitLeft->getType()) || isClipOrCullDistance(subSplitRight->getType())) {
@@ -2860,37 +2936,66 @@ TIntermAggregate* HlslParseContext::handleSamplerTextureCombine(const TSourceLoc
 
     TSampler samplerType = argTex->getType().getSampler();
     samplerType.combined = true;
-    samplerType.shadow   = argSampler->getType().getSampler().shadow;
 
+    // TODO:
+    // This block exists until the spec no longer requires shadow modes on texture objects.
+    // It can be deleted after that, along with the shadowTextureVariant member.
     {
-        // ** TODO: **
-        // This forces the texture's shadow state to be the sampler's
-        // shadow state.  This can't work if a single texture is used with
-        // both comparison and non-comparison samplers, so an error is
-        // reported if the shader does that.
-        //
-        // If this code is ever removed (possibly due to a relaxation in the
-        // SPIR-V rules), also remove the textureShadowMode member variable.
+        const bool shadowMode = argSampler->getType().getSampler().shadow;
+
         TIntermSymbol* texSymbol = argTex->getAsSymbolNode();
 
         if (texSymbol == nullptr)
             texSymbol = argTex->getAsBinaryNode()->getLeft()->getAsSymbolNode();
 
-        if (texSymbol != nullptr) {
-            const auto textureShadowModeEntry = textureShadowMode.find(texSymbol->getId());
-
-            // Check to see if this texture has been given a different shadow mode already.
-            if (textureShadowModeEntry != textureShadowMode.end() &&
-                textureShadowModeEntry->second != samplerType.shadow) {
-                error(loc, "all uses of texture must use the same shadow mode", "", "");
-                return nullptr;
-            }
-
-            argTex->getWritableType().getSampler().shadow = samplerType.shadow;
-            textureShadowMode[texSymbol->getId()] = samplerType.shadow;
+        if (texSymbol == nullptr) {
+            error(loc, "unable to find texture symbol", "", "");
+            return nullptr;
         }
-    }
 
+        // This forces the texture's shadow state to be the sampler's
+        // shadow state.  This depends on downstream optimization to
+        // DCE one variant in [shadow, nonshadow] if both are present,
+        // or the SPIR-V module would be invalid.
+        int newId = texSymbol->getId();
+
+        // Check to see if this texture has been given a shadow mode already.
+        // If so, look up the one we already have.
+        const auto textureShadowEntry = textureShadowVariant.find(texSymbol->getId());
+
+        if (textureShadowEntry != textureShadowVariant.end())
+            newId = textureShadowEntry->second->get(shadowMode);
+        else
+            textureShadowVariant[texSymbol->getId()] = new tShadowTextureSymbols;
+
+        // Sometimes we have to create another symbol (if this texture has been seen before,
+        // and we haven't created the form for this shadow mode).
+        if (newId == -1) {
+            TType texType;
+            texType.shallowCopy(argTex->getType());
+            texType.getSampler().shadow = shadowMode;  // set appropriate shadow mode.
+            globalQualifierFix(loc, texType.getQualifier());
+
+            TVariable* newTexture = makeInternalVariable(texSymbol->getName(), texType);
+
+            trackLinkage(*newTexture);
+
+            newId = newTexture->getUniqueId();
+        }
+
+        assert(newId != -1);
+
+        if (textureShadowVariant.find(newId) == textureShadowVariant.end())
+            textureShadowVariant[newId] = textureShadowVariant[texSymbol->getId()];
+
+        textureShadowVariant[newId]->set(shadowMode, newId);
+
+        // Remember this shadow mode in the texture and the merged type.
+        argTex->getWritableType().getSampler().shadow = shadowMode;
+        samplerType.shadow = shadowMode;
+
+        texSymbol->setId(newId);
+    }
 
     txcombine->setType(TType(samplerType, EvqTemporary));
     txcombine->setLoc(loc);
@@ -4177,6 +4282,25 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
 
             break;
         }
+
+    case EOpSubpassLoad:
+        {
+            const TIntermTyped* argSubpass = 
+                argAggregate ? argAggregate->getSequence()[0]->getAsTyped() :
+                arguments->getAsTyped();
+
+            const TSampler& sampler = argSubpass->getType().getSampler();
+
+            // subpass load: the multisample form is overloaded.  Here, we convert that to
+            // the EOpSubpassLoadMS opcode.
+            if (argAggregate != nullptr && argAggregate->getSequence().size() > 1)
+                node->getAsOperator()->setOp(EOpSubpassLoadMS);
+
+            node = convertReturn(node, sampler);
+
+            break;
+        }
+        
 
     default:
         break; // most pass through unchanged
@@ -7383,7 +7507,7 @@ TIntermNode* HlslParseContext::declareVariable(const TSourceLoc& loc, const TStr
         error(loc, "initializer requires a variable, not a member", identifier.c_str(), "");
         return nullptr;
     }
-    return executeInitializer(loc, initializer, variable, flattenVar);
+    return executeInitializer(loc, initializer, variable);
 }
 
 // Pick up global defaults from the provide global defaults into dst.
@@ -7451,8 +7575,7 @@ TVariable* HlslParseContext::declareNonArray(const TSourceLoc& loc, const TStrin
 // Returning nullptr just means there is no code to execute to handle the
 // initializer, which will, for example, be the case for constant initializers.
 //
-TIntermNode* HlslParseContext::executeInitializer(const TSourceLoc& loc, TIntermTyped* initializer, TVariable* variable,
-                                                  bool flattened)
+TIntermNode* HlslParseContext::executeInitializer(const TSourceLoc& loc, TIntermTyped* initializer, TVariable* variable)
 {
     //
     // Identifier must be of type constant, a global, or a temporary, and
@@ -8195,8 +8318,9 @@ void HlslParseContext::declareBlock(const TSourceLoc& loc, TType& type, const TS
         return;
     }
 
-    // Save it in the AST for linker use.
-    trackLinkage(variable);
+	// Save it in the AST for linker use.
+    if (symbolTable.atGlobalLevel())
+        trackLinkage(variable);
 }
 
 //
@@ -8916,6 +9040,12 @@ bool HlslParseContext::setTextureReturnType(TSampler& sampler, const TType& retT
         return false;
     }
 
+    // TODO: Subpass doesn't handle struct returns, due to some oddities with fn overloading.
+    if (sampler.isSubpass()) {
+        error(loc, "Unimplemented: structure template type in subpass input", "", "");
+        return false;
+    }
+
     TTypeList* members = retType.getWritableStruct();
 
     // Check for too many or not enough structure members.
@@ -9406,13 +9536,18 @@ void HlslParseContext::fixTextureShadowModes()
         TSampler& sampler = (*symbol)->getWritableType().getSampler();
 
         if (sampler.isTexture()) {
-            const auto shadowMode = textureShadowMode.find((*symbol)->getUniqueId());
-            if (shadowMode != textureShadowMode.end())
-                sampler.shadow = shadowMode->second;
+            const auto shadowMode = textureShadowVariant.find((*symbol)->getUniqueId());
+            if (shadowMode != textureShadowVariant.end()) {
+
+                if (shadowMode->second->overloaded())
+                    // Texture needs legalization if it's been seen with both shadow and non-shadow modes.
+                    intermediate.setNeedsLegalization();
+
+                sampler.shadow = shadowMode->second->isShadowId((*symbol)->getUniqueId());
+            }
         }
     }
 }
-
 
 // post-processing
 void HlslParseContext::finish()
@@ -9423,14 +9558,14 @@ void HlslParseContext::finish()
         error(mipsOperatorMipArg.back().loc, "unterminated mips operator:", "", "");
     }
 
+    removeUnusedStructBufferCounters();
+    addPatchConstantInvocation();
+    fixTextureShadowModes();
+
     // Communicate out (esp. for command line) that we formed AST that will make
     // illegal AST SPIR-V and it needs transforms to legalize it.
     if (intermediate.needsLegalization())
         infoSink.info << "WARNING: AST will form illegal SPIR-V; need to transform to legalize";
-
-    removeUnusedStructBufferCounters();
-    addPatchConstantInvocation();
-    fixTextureShadowModes();
 
     TParseContextBase::finish();
 }

@@ -87,6 +87,7 @@ namespace glslang {
         bool acceptAnnotations(TQualifier&);
         bool acceptSamplerType(TType&);
         bool acceptTextureType(TType&);
+        bool acceptSubpassInputType(TType&);
         bool acceptStructBufferType(TType&);
         bool acceptConstantBufferType(TType&);
         bool acceptStruct(TType&, TIntermNode*& nodeList);

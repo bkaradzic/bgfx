@@ -1,0 +1,218 @@
+hlsl.flattenSubset.frag
+WARNING: AST will form illegal SPIR-V; need to transform to legalize
+Shader version: 500
+gl_FragCoord origin is upper left
+0:? Sequence
+0:30  Function Definition: @main(vf4; ( temp 4-component vector of float)
+0:30    Function Parameters: 
+0:30      'vpos' ( in 4-component vector of float)
+0:?     Sequence
+0:33      move second child to first child ( temp sampler)
+0:?         's1.s0.ss' ( temp sampler)
+0:33        'samp' ( uniform sampler)
+0:34      Sequence
+0:34        move second child to first child ( temp float)
+0:?           's2.resources.b' ( temp float)
+0:?           's1.b' ( temp float)
+0:34        move second child to first child ( temp sampler)
+0:?           's2.resources.samplerState' ( temp sampler)
+0:?           's1.samplerState' ( temp sampler)
+0:34        move second child to first child ( temp int)
+0:?           's2.resources.s0.x' ( temp int)
+0:?           's1.s0.x' ( temp int)
+0:34        move second child to first child ( temp int)
+0:?           's2.resources.s0.y' ( temp int)
+0:?           's1.s0.y' ( temp int)
+0:34        move second child to first child ( temp sampler)
+0:?           's2.resources.s0.ss' ( temp sampler)
+0:?           's1.s0.ss' ( temp sampler)
+0:34        move second child to first child ( temp int)
+0:?           's2.resources.a' ( temp int)
+0:?           's1.a' ( temp int)
+0:35      Branch: Return with expression
+0:35        texture ( temp 4-component vector of float)
+0:35          Construct combined texture-sampler ( temp sampler2D)
+0:35            'tex' ( uniform texture2D)
+0:?             's2.resources.s0.ss' ( temp sampler)
+0:35          Constant:
+0:35            0.500000
+0:35            0.500000
+0:30  Function Definition: main( ( temp void)
+0:30    Function Parameters: 
+0:?     Sequence
+0:30      move second child to first child ( temp 4-component vector of float)
+0:?         'vpos' ( temp 4-component vector of float)
+0:?         'vpos' (layout( location=0) in 4-component vector of float)
+0:30      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:30        Function Call: @main(vf4; ( temp 4-component vector of float)
+0:?           'vpos' ( temp 4-component vector of float)
+0:?   Linker Objects
+0:?     'samp' ( uniform sampler)
+0:?     'tex' ( uniform texture2D)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'vpos' (layout( location=0) in 4-component vector of float)
+
+
+Linked fragment stage:
+
+
+Shader version: 500
+gl_FragCoord origin is upper left
+0:? Sequence
+0:30  Function Definition: @main(vf4; ( temp 4-component vector of float)
+0:30    Function Parameters: 
+0:30      'vpos' ( in 4-component vector of float)
+0:?     Sequence
+0:33      move second child to first child ( temp sampler)
+0:?         's1.s0.ss' ( temp sampler)
+0:33        'samp' ( uniform sampler)
+0:34      Sequence
+0:34        move second child to first child ( temp float)
+0:?           's2.resources.b' ( temp float)
+0:?           's1.b' ( temp float)
+0:34        move second child to first child ( temp sampler)
+0:?           's2.resources.samplerState' ( temp sampler)
+0:?           's1.samplerState' ( temp sampler)
+0:34        move second child to first child ( temp int)
+0:?           's2.resources.s0.x' ( temp int)
+0:?           's1.s0.x' ( temp int)
+0:34        move second child to first child ( temp int)
+0:?           's2.resources.s0.y' ( temp int)
+0:?           's1.s0.y' ( temp int)
+0:34        move second child to first child ( temp sampler)
+0:?           's2.resources.s0.ss' ( temp sampler)
+0:?           's1.s0.ss' ( temp sampler)
+0:34        move second child to first child ( temp int)
+0:?           's2.resources.a' ( temp int)
+0:?           's1.a' ( temp int)
+0:35      Branch: Return with expression
+0:35        texture ( temp 4-component vector of float)
+0:35          Construct combined texture-sampler ( temp sampler2D)
+0:35            'tex' ( uniform texture2D)
+0:?             's2.resources.s0.ss' ( temp sampler)
+0:35          Constant:
+0:35            0.500000
+0:35            0.500000
+0:30  Function Definition: main( ( temp void)
+0:30    Function Parameters: 
+0:?     Sequence
+0:30      move second child to first child ( temp 4-component vector of float)
+0:?         'vpos' ( temp 4-component vector of float)
+0:?         'vpos' (layout( location=0) in 4-component vector of float)
+0:30      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:30        Function Call: @main(vf4; ( temp 4-component vector of float)
+0:?           'vpos' ( temp 4-component vector of float)
+0:?   Linker Objects
+0:?     'samp' ( uniform sampler)
+0:?     'tex' ( uniform texture2D)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'vpos' (layout( location=0) in 4-component vector of float)
+
+// Module Version 10000
+// Generated by (magic number): 80001
+// Id's are bound by 61
+
+                              Capability Shader
+               1:             ExtInstImport  "GLSL.std.450"
+                              MemoryModel Logical GLSL450
+                              EntryPoint Fragment 4  "main" 54 57
+                              ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
+                              Name 4  "main"
+                              Name 11  "@main(vf4;"
+                              Name 10  "vpos"
+                              Name 15  "s1.s0.ss"
+                              Name 17  "samp"
+                              Name 20  "s2.resources.b"
+                              Name 21  "s1.b"
+                              Name 23  "s2.resources.samplerState"
+                              Name 24  "s1.samplerState"
+                              Name 28  "s2.resources.s0.x"
+                              Name 29  "s1.s0.x"
+                              Name 31  "s2.resources.s0.y"
+                              Name 32  "s1.s0.y"
+                              Name 34  "s2.resources.s0.ss"
+                              Name 36  "s2.resources.a"
+                              Name 37  "s1.a"
+                              Name 41  "tex"
+                              Name 52  "vpos"
+                              Name 54  "vpos"
+                              Name 57  "@entryPointOutput"
+                              Name 58  "param"
+                              Decorate 17(samp) DescriptorSet 0
+                              Decorate 41(tex) DescriptorSet 0
+                              Decorate 54(vpos) Location 0
+                              Decorate 57(@entryPointOutput) Location 0
+               2:             TypeVoid
+               3:             TypeFunction 2
+               6:             TypeFloat 32
+               7:             TypeVector 6(float) 4
+               8:             TypePointer Function 7(fvec4)
+               9:             TypeFunction 7(fvec4) 8(ptr)
+              13:             TypeSampler
+              14:             TypePointer Function 13
+              16:             TypePointer UniformConstant 13
+        17(samp):     16(ptr) Variable UniformConstant
+              19:             TypePointer Function 6(float)
+              26:             TypeInt 32 1
+              27:             TypePointer Function 26(int)
+              39:             TypeImage 6(float) 2D sampled format:Unknown
+              40:             TypePointer UniformConstant 39
+         41(tex):     40(ptr) Variable UniformConstant
+              44:             TypeSampledImage 39
+              46:             TypeVector 6(float) 2
+              47:    6(float) Constant 1056964608
+              48:   46(fvec2) ConstantComposite 47 47
+              53:             TypePointer Input 7(fvec4)
+        54(vpos):     53(ptr) Variable Input
+              56:             TypePointer Output 7(fvec4)
+57(@entryPointOutput):     56(ptr) Variable Output
+         4(main):           2 Function None 3
+               5:             Label
+        52(vpos):      8(ptr) Variable Function
+       58(param):      8(ptr) Variable Function
+              55:    7(fvec4) Load 54(vpos)
+                              Store 52(vpos) 55
+              59:    7(fvec4) Load 52(vpos)
+                              Store 58(param) 59
+              60:    7(fvec4) FunctionCall 11(@main(vf4;) 58(param)
+                              Store 57(@entryPointOutput) 60
+                              Return
+                              FunctionEnd
+  11(@main(vf4;):    7(fvec4) Function None 9
+        10(vpos):      8(ptr) FunctionParameter
+              12:             Label
+    15(s1.s0.ss):     14(ptr) Variable Function
+20(s2.resources.b):     19(ptr) Variable Function
+        21(s1.b):     19(ptr) Variable Function
+23(s2.resources.samplerState):     14(ptr) Variable Function
+24(s1.samplerState):     14(ptr) Variable Function
+28(s2.resources.s0.x):     27(ptr) Variable Function
+     29(s1.s0.x):     27(ptr) Variable Function
+31(s2.resources.s0.y):     27(ptr) Variable Function
+     32(s1.s0.y):     27(ptr) Variable Function
+34(s2.resources.s0.ss):     14(ptr) Variable Function
+36(s2.resources.a):     27(ptr) Variable Function
+        37(s1.a):     27(ptr) Variable Function
+              18:          13 Load 17(samp)
+                              Store 15(s1.s0.ss) 18
+              22:    6(float) Load 21(s1.b)
+                              Store 20(s2.resources.b) 22
+              25:          13 Load 24(s1.samplerState)
+                              Store 23(s2.resources.samplerState) 25
+              30:     26(int) Load 29(s1.s0.x)
+                              Store 28(s2.resources.s0.x) 30
+              33:     26(int) Load 32(s1.s0.y)
+                              Store 31(s2.resources.s0.y) 33
+              35:          13 Load 15(s1.s0.ss)
+                              Store 34(s2.resources.s0.ss) 35
+              38:     26(int) Load 37(s1.a)
+                              Store 36(s2.resources.a) 38
+              42:          39 Load 41(tex)
+              43:          13 Load 34(s2.resources.s0.ss)
+              45:          44 SampledImage 42 43
+              49:    7(fvec4) ImageSampleImplicitLod 45 48
+                              ReturnValue 49
+                              FunctionEnd

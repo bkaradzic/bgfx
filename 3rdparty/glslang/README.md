@@ -52,6 +52,7 @@ Building
 ### Dependencies
 
 * [CMake][cmake]: for generating compilation targets.
+* [Python 2.7][python]: for executing SPIRV-Tools scripts. (Optional if not using SPIRV-Tools.)
 * [bison][bison]: _optional_, but needed when changing the grammar (glslang.y).
 * [googletest][googletest]: _optional_, but should use if making any changes to glslang.
 
@@ -81,6 +82,10 @@ spirv-tools with this:
 ```bash
 ./update_glslang_sources.py
 ```
+
+For running the CMake GUI or Visual Studio with python dependencies, you will,
+in addition to python within the cygwin environment, need a Windows [python][python]
+installation, including selecting the `PATH` update.
 
 #### 3) Configure
 
@@ -309,6 +314,7 @@ Basic Internal Operation
 
 
 [cmake]: https://cmake.org/
+[python]: https://www.python.org/
 [bison]: https://www.gnu.org/software/bison/
 [googletest]: https://github.com/google/googletest
 [bison-gnu-win32]: http://gnuwin32.sourceforge.net/packages/bison.htm

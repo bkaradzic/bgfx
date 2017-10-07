@@ -83,6 +83,7 @@ public:
     TIntermAggregate* handleFunctionDefinition(const TSourceLoc&, TFunction&, const TAttributeMap&, TIntermNode*& entryPointTree);
     TIntermNode* transformEntryPoint(const TSourceLoc&, TFunction&, const TAttributeMap&);
     void handleEntryPointAttributes(const TSourceLoc&, const TAttributeMap&);
+    void transferTypeAttributes(const TAttributeMap&, TType&);
     void handleFunctionBody(const TSourceLoc&, TFunction&, TIntermNode* functionBody, TIntermNode*& node);
     void remapEntryPointIO(TFunction& function, TVariable*& returnValue, TVector<TVariable*>& inputs, TVector<TVariable*>& outputs);
     void remapNonEntryPointIO(TFunction& function);
@@ -233,7 +234,7 @@ protected:
     TIntermSymbol* makeInternalVariableNode(const TSourceLoc&, const char* name, const TType&) const;
     TVariable* declareNonArray(const TSourceLoc&, const TString& identifier, const TType&, bool track);
     void declareArray(const TSourceLoc&, const TString& identifier, const TType&, TSymbol*&, bool track);
-    TIntermNode* executeInitializer(const TSourceLoc&, TIntermTyped* initializer, TVariable* variable, bool flattened);
+    TIntermNode* executeInitializer(const TSourceLoc&, TIntermTyped* initializer, TVariable* variable);
     TIntermTyped* convertInitializerList(const TSourceLoc&, const TType&, TIntermTyped* initializer, TIntermTyped* scalarInit);
     bool isScalarConstructor(const TIntermNode*);
     TOperator mapAtomicOp(const TSourceLoc& loc, TOperator op, bool isImage);
@@ -244,6 +245,8 @@ protected:
     // Array and struct flattening
     TIntermTyped* flattenAccess(TIntermTyped* base, int member);
     TIntermTyped* flattenAccess(int uniqueId, int member, const TType&, int subset = -1);
+    int findSubtreeOffset(const TIntermNode&) const;
+    int findSubtreeOffset(const TType&, int subset, const TVector<int>& offsets) const;
     bool shouldFlatten(const TType&) const;
     bool wasFlattened(const TIntermTyped* node) const;
     bool wasFlattened(int id) const { return flattenMap.find(id) != flattenMap.end(); }
@@ -454,10 +457,29 @@ protected:
 
     TVector<tMipsOperatorData> mipsOperatorMipArg;
 
-    // This can be removed if and when the texture shadow workarounnd in
-    // HlslParseContext::handleSamplerTextureCombine is removed.  It maps
-    // texture symbol IDs to the shadow modes of samplers they were combined with.
-    TMap<int, bool> textureShadowMode;
+    // A texture object may be used with shadow and non-shadow samplers, but both may not be
+    // alive post-DCE in the same shader.  We do not know at compilation time which are alive: that's
+    // only known post-DCE.  If a texture is used both ways, we create two textures, and
+    // leave the elimiation of one to the optimizer.  This maps the shader variant to
+    // the shadow variant.
+    //
+    // This can be removed if and when the texture shadow code in
+    // HlslParseContext::handleSamplerTextureCombine is removed.
+    struct tShadowTextureSymbols {
+        tShadowTextureSymbols() { symId.fill(-1); }
+
+        void set(bool shadow, int id) { symId[int(shadow)] = id; }
+        int get(bool shadow) const { return symId[int(shadow)]; }
+
+        // True if this texture has been seen with both shadow and non-shadow modes
+        bool overloaded() const { return symId[0] != -1 && symId[1] != -1; }
+        bool isShadowId(int id) const { return symId[1] == id; }
+
+    private:
+        std::array<int, 2> symId;
+    };
+
+    TMap<int, tShadowTextureSymbols*> textureShadowVariant;
 };
 
 // This is the prefix we use for built-in methods to avoid namespace collisions with

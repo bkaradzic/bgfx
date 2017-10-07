@@ -68,14 +68,21 @@ const char* BaseTypeName(const char argOrder, const char* scalarName, const char
     }
 }
 
-bool IsSamplerType(const char argType) { return argType == 'S' || argType == 's'; }
-bool IsArrayed(const char argOrder)    { return argOrder == '@' || argOrder == '&' || argOrder == '#'; }
-bool IsTextureMS(const char argOrder)  { return argOrder == '$' || argOrder == '&'; }
-bool IsBuffer(const char argOrder)     { return argOrder == '*' || argOrder == '~'; }
-bool IsImage(const char argOrder)      { return argOrder == '!' || argOrder == '#' || argOrder == '~'; }
+// arg order queries
+bool IsSamplerType(const char argType)     { return argType == 'S' || argType == 's'; }
+bool IsArrayed(const char argOrder)        { return argOrder == '@' || argOrder == '&' || argOrder == '#'; }
+bool IsTextureNonMS(const char argOrder)   { return argOrder == '%'; }
+bool IsSubpassInput(const char argOrder)   { return argOrder == '[' || argOrder == ']'; }
+bool IsArrayedTexture(const char argOrder) { return argOrder == '@'; }
+bool IsTextureMS(const char argOrder)      { return argOrder == '$' || argOrder == '&'; }
+bool IsMS(const char argOrder)             { return IsTextureMS(argOrder) || argOrder == ']'; }
+bool IsBuffer(const char argOrder)         { return argOrder == '*' || argOrder == '~'; }
+bool IsImage(const char argOrder)          { return argOrder == '!' || argOrder == '#' || argOrder == '~'; }
+
 bool IsTextureType(const char argOrder)
 {
-    return argOrder == '%' || argOrder == '@' || IsTextureMS(argOrder) || IsBuffer(argOrder) | IsImage(argOrder);
+    return IsTextureNonMS(argOrder) || IsArrayedTexture(argOrder) ||
+           IsTextureMS(argOrder) || IsBuffer(argOrder) || IsImage(argOrder);
 }
 
 // Reject certain combinations that are illegal sample methods.  For example,
@@ -222,15 +229,16 @@ glslang::TString& AppendTypeName(glslang::TString& s, const char* argOrder, cons
     const bool isTexture   = IsTextureType(argOrder[0]);
     const bool isArrayed   = IsArrayed(argOrder[0]);
     const bool isSampler   = IsSamplerType(argType[0]);
-    const bool isMS        = IsTextureMS(argOrder[0]);
+    const bool isMS        = IsMS(argOrder[0]);
     const bool isBuffer    = IsBuffer(argOrder[0]);
     const bool isImage     = IsImage(argOrder[0]);
+    const bool isSubpass   = IsSubpassInput(argOrder[0]);
 
     char type  = *argType;
 
     if (isTranspose) {  // Take transpose of matrix dimensions
         std::swap(dim0, dim1);
-    } else if (isTexture) {
+    } else if (isTexture || isSubpass) {
         if (type == 'F')       // map base type to texture of that type.
             type = 'T';        // e.g, int -> itexture, uint -> utexture, etc.
         else if (type == 'I')
@@ -255,16 +263,23 @@ glslang::TString& AppendTypeName(glslang::TString& s, const char* argOrder, cons
         case 'S': s += "sampler";                             break;
         case 's': s += "SamplerComparisonState";              break;
         case 'T': s += ((isBuffer && isImage) ? "RWBuffer" :
+                        isSubpass ? "SubpassInput" :
                         isBuffer ? "Buffer" :
                         isImage  ? "RWTexture" : "Texture");  break;
         case 'i': s += ((isBuffer && isImage) ? "RWBuffer" :
+                        isSubpass ? "SubpassInput" :
                         isBuffer ? "Buffer" :
                         isImage ? "RWTexture" : "Texture");   break;
         case 'u': s += ((isBuffer && isImage) ? "RWBuffer" :
+                        isSubpass ? "SubpassInput" :
                         isBuffer ? "Buffer" :
                         isImage ? "RWTexture" : "Texture");   break;
         default:  s += "UNKNOWN_TYPE";                        break;
         }
+
+        if (isSubpass && isMS)
+            s += "MS";
+
     } else {
         switch (type) {
         case '-': s += "void"; break;
@@ -282,6 +297,7 @@ glslang::TString& AppendTypeName(glslang::TString& s, const char* argOrder, cons
                 s += type;
 
             s += ((isImage && isBuffer) ? "imageBuffer"   :
+                  isSubpass             ? "subpassInput" :
                   isImage               ? "image"         :
                   isBuffer              ? "samplerBuffer" :
                   "texture");
@@ -295,6 +311,9 @@ glslang::TString& AppendTypeName(glslang::TString& s, const char* argOrder, cons
     const int fixedVecSize = FixedVecSize(argOrder);
     if (fixedVecSize != 0)
         dim0 = dim1 = fixedVecSize;
+
+    const char dim0Char = ('0' + char(dim0));
+    const char dim1Char = ('0' + char(dim1));
 
     // Add sampler dimensions
     if (isSampler || isTexture) {
@@ -320,12 +339,12 @@ glslang::TString& AppendTypeName(glslang::TString& s, const char* argOrder, cons
         case '-': break;  // no dimensions for voids
         case 'S': break;  // no dimensions on scalars
         case 'V':
-            s += ('0' + char(dim0));
+            s += dim0Char;
             break;
         case 'M':
-            s += ('0' + char(dim0));
+            s += dim0Char;
             s += 'x';
-            s += ('0' + char(dim1));
+            s += dim1Char;
             break;
         default:
             break;
@@ -339,9 +358,9 @@ glslang::TString& AppendTypeName(glslang::TString& s, const char* argOrder, cons
     // For HLSL, append return type for texture types
     if (UseHlslTypes) {
         switch (type) {
-        case 'i': s += "<int4>";   break;
-        case 'u': s += "<uint4>";  break;
-        case 'T': s += "<float4>"; break;
+        case 'i': s += "<int";   s += dim0Char; s += ">"; break;
+        case 'u': s += "<uint";  s += dim0Char; s += ">"; break;
+        case 'T': s += "<float"; s += dim0Char; s += ">"; break;
         default: break;
         }
     }
@@ -414,7 +433,7 @@ inline void FindVectorMatrixBounds(const char* argOrder, int fixedVecSize, int& 
         const char* nthArgOrder(NthArg(argOrder, arg));
         if (nthArgOrder == nullptr)
             break;
-        else if (*nthArgOrder == 'V')
+        else if (*nthArgOrder == 'V' || IsSubpassInput(*nthArgOrder))
             dim0Max = 4;
         else if (*nthArgOrder == 'M')
             dim0Max = dim1Max = 4;
@@ -537,6 +556,7 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
     // '!' as first letter of order creates image object
     // '#' as first letter of order creates arrayed image object
     // '~' as first letter of order creates an image buffer object
+    // '[' / ']' as first letter of order creates a SubpassInput/SubpassInputMS object
 
     static const struct {
         const char*   name;      // intrinsic name
@@ -882,6 +902,10 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
         { "DecrementCounter",                 nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
         { "Consume",                          nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
 
+        // Methods for subpass input objects
+        { "SubpassLoad",                      "V4",    nullptr,   "[",              "FIU",            EShLangPS,    true },
+        { "SubpassLoad",                      "V4",    nullptr,   "],S",            "FIU,I",          EShLangPS,    true },
+
         // Mark end of list, since we want to avoid a range-based for, as some compilers don't handle it yet.
         { nullptr,                            nullptr, nullptr,   nullptr,      nullptr,  0, false },
     };
@@ -1219,6 +1243,10 @@ void TBuiltInParseablesHlsl::identifyBuiltIns(int /*version*/, EProfile /*profil
     // GS methods
     symbolTable.relateToOperator(BUILTIN_PREFIX "Append",                      EOpMethodAppend);
     symbolTable.relateToOperator(BUILTIN_PREFIX "RestartStrip",                EOpMethodRestartStrip);
+
+    // Subpass input methods
+    symbolTable.relateToOperator(BUILTIN_PREFIX "SubpassLoad",                 EOpSubpassLoad);
+    symbolTable.relateToOperator(BUILTIN_PREFIX "SubpassLoadMS",               EOpSubpassLoadMS);
 }
 
 //

@@ -1,0 +1,207 @@
+hlsl.flattenSubset2.frag
+WARNING: AST will form illegal SPIR-V; need to transform to legalize
+Shader version: 500
+gl_FragCoord origin is upper left
+0:? Sequence
+0:8  Function Definition: @main(vf4; ( temp 4-component vector of float)
+0:8    Function Parameters: 
+0:8      'vpos' ( in 4-component vector of float)
+0:?     Sequence
+0:13      Sequence
+0:13        move second child to first child ( temp float)
+0:?           'a1.n.y' ( temp float)
+0:?           'a2.n.y' ( temp float)
+0:13        move second child to first child ( temp texture2D)
+0:?           'a1.n.texNested' ( temp texture2D)
+0:?           'a2.n.texNested' ( temp texture2D)
+0:14      Sequence
+0:14        move second child to first child ( temp float)
+0:?           'b.n.y' ( temp float)
+0:?           'a1.n.y' ( temp float)
+0:14        move second child to first child ( temp texture2D)
+0:?           'b.n.texNested' ( temp texture2D)
+0:?           'a1.n.texNested' ( temp texture2D)
+0:17      Sequence
+0:17        Sequence
+0:17          move second child to first child ( temp float)
+0:?             'n.y' ( temp float)
+0:?             'b.n.y' ( temp float)
+0:17          move second child to first child ( temp texture2D)
+0:?             'n.texNested' ( temp texture2D)
+0:?             'b.n.texNested' ( temp texture2D)
+0:20      move second child to first child ( temp texture2D)
+0:?         'a2.n.texNested' ( temp texture2D)
+0:20        'someTex' ( uniform texture2D)
+0:21      move second child to first child ( temp float)
+0:?         'a1.n.y' ( temp float)
+0:21        Constant:
+0:21          1.000000
+0:23      Branch: Return with expression
+0:?         Constant:
+0:?           0.000000
+0:?           0.000000
+0:?           0.000000
+0:?           0.000000
+0:8  Function Definition: main( ( temp void)
+0:8    Function Parameters: 
+0:?     Sequence
+0:8      move second child to first child ( temp 4-component vector of float)
+0:?         'vpos' ( temp 4-component vector of float)
+0:?         'vpos' (layout( location=0) in 4-component vector of float)
+0:8      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:8        Function Call: @main(vf4; ( temp 4-component vector of float)
+0:?           'vpos' ( temp 4-component vector of float)
+0:?   Linker Objects
+0:?     'someTex' ( uniform texture2D)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'vpos' (layout( location=0) in 4-component vector of float)
+
+
+Linked fragment stage:
+
+
+Shader version: 500
+gl_FragCoord origin is upper left
+0:? Sequence
+0:8  Function Definition: @main(vf4; ( temp 4-component vector of float)
+0:8    Function Parameters: 
+0:8      'vpos' ( in 4-component vector of float)
+0:?     Sequence
+0:13      Sequence
+0:13        move second child to first child ( temp float)
+0:?           'a1.n.y' ( temp float)
+0:?           'a2.n.y' ( temp float)
+0:13        move second child to first child ( temp texture2D)
+0:?           'a1.n.texNested' ( temp texture2D)
+0:?           'a2.n.texNested' ( temp texture2D)
+0:14      Sequence
+0:14        move second child to first child ( temp float)
+0:?           'b.n.y' ( temp float)
+0:?           'a1.n.y' ( temp float)
+0:14        move second child to first child ( temp texture2D)
+0:?           'b.n.texNested' ( temp texture2D)
+0:?           'a1.n.texNested' ( temp texture2D)
+0:17      Sequence
+0:17        Sequence
+0:17          move second child to first child ( temp float)
+0:?             'n.y' ( temp float)
+0:?             'b.n.y' ( temp float)
+0:17          move second child to first child ( temp texture2D)
+0:?             'n.texNested' ( temp texture2D)
+0:?             'b.n.texNested' ( temp texture2D)
+0:20      move second child to first child ( temp texture2D)
+0:?         'a2.n.texNested' ( temp texture2D)
+0:20        'someTex' ( uniform texture2D)
+0:21      move second child to first child ( temp float)
+0:?         'a1.n.y' ( temp float)
+0:21        Constant:
+0:21          1.000000
+0:23      Branch: Return with expression
+0:?         Constant:
+0:?           0.000000
+0:?           0.000000
+0:?           0.000000
+0:?           0.000000
+0:8  Function Definition: main( ( temp void)
+0:8    Function Parameters: 
+0:?     Sequence
+0:8      move second child to first child ( temp 4-component vector of float)
+0:?         'vpos' ( temp 4-component vector of float)
+0:?         'vpos' (layout( location=0) in 4-component vector of float)
+0:8      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:8        Function Call: @main(vf4; ( temp 4-component vector of float)
+0:?           'vpos' ( temp 4-component vector of float)
+0:?   Linker Objects
+0:?     'someTex' ( uniform texture2D)
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:?     'vpos' (layout( location=0) in 4-component vector of float)
+
+// Module Version 10000
+// Generated by (magic number): 80001
+// Id's are bound by 47
+
+                              Capability Shader
+               1:             ExtInstImport  "GLSL.std.450"
+                              MemoryModel Logical GLSL450
+                              EntryPoint Fragment 4  "main" 40 43
+                              ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
+                              Name 4  "main"
+                              Name 11  "@main(vf4;"
+                              Name 10  "vpos"
+                              Name 14  "a1.n.y"
+                              Name 15  "a2.n.y"
+                              Name 19  "a1.n.texNested"
+                              Name 20  "a2.n.texNested"
+                              Name 22  "b.n.y"
+                              Name 24  "b.n.texNested"
+                              Name 26  "n.y"
+                              Name 28  "n.texNested"
+                              Name 31  "someTex"
+                              Name 38  "vpos"
+                              Name 40  "vpos"
+                              Name 43  "@entryPointOutput"
+                              Name 44  "param"
+                              Decorate 31(someTex) DescriptorSet 0
+                              Decorate 40(vpos) Location 0
+                              Decorate 43(@entryPointOutput) Location 0
+               2:             TypeVoid
+               3:             TypeFunction 2
+               6:             TypeFloat 32
+               7:             TypeVector 6(float) 4
+               8:             TypePointer Function 7(fvec4)
+               9:             TypeFunction 7(fvec4) 8(ptr)
+              13:             TypePointer Function 6(float)
+              17:             TypeImage 6(float) 2D sampled format:Unknown
+              18:             TypePointer Function 17
+              30:             TypePointer UniformConstant 17
+     31(someTex):     30(ptr) Variable UniformConstant
+              33:    6(float) Constant 1065353216
+              34:    6(float) Constant 0
+              35:    7(fvec4) ConstantComposite 34 34 34 34
+              39:             TypePointer Input 7(fvec4)
+        40(vpos):     39(ptr) Variable Input
+              42:             TypePointer Output 7(fvec4)
+43(@entryPointOutput):     42(ptr) Variable Output
+         4(main):           2 Function None 3
+               5:             Label
+        38(vpos):      8(ptr) Variable Function
+       44(param):      8(ptr) Variable Function
+              41:    7(fvec4) Load 40(vpos)
+                              Store 38(vpos) 41
+              45:    7(fvec4) Load 38(vpos)
+                              Store 44(param) 45
+              46:    7(fvec4) FunctionCall 11(@main(vf4;) 44(param)
+                              Store 43(@entryPointOutput) 46
+                              Return
+                              FunctionEnd
+  11(@main(vf4;):    7(fvec4) Function None 9
+        10(vpos):      8(ptr) FunctionParameter
+              12:             Label
+      14(a1.n.y):     13(ptr) Variable Function
+      15(a2.n.y):     13(ptr) Variable Function
+19(a1.n.texNested):     18(ptr) Variable Function
+20(a2.n.texNested):     18(ptr) Variable Function
+       22(b.n.y):     13(ptr) Variable Function
+24(b.n.texNested):     18(ptr) Variable Function
+         26(n.y):     13(ptr) Variable Function
+ 28(n.texNested):     18(ptr) Variable Function
+              16:    6(float) Load 15(a2.n.y)
+                              Store 14(a1.n.y) 16
+              21:          17 Load 20(a2.n.texNested)
+                              Store 19(a1.n.texNested) 21
+              23:    6(float) Load 14(a1.n.y)
+                              Store 22(b.n.y) 23
+              25:          17 Load 19(a1.n.texNested)
+                              Store 24(b.n.texNested) 25
+              27:    6(float) Load 22(b.n.y)
+                              Store 26(n.y) 27
+              29:          17 Load 24(b.n.texNested)
+                              Store 28(n.texNested) 29
+              32:          17 Load 31(someTex)
+                              Store 20(a2.n.texNested) 32
+                              Store 14(a1.n.y) 33
+                              ReturnValue 35
+                              FunctionEnd

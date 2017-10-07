@@ -417,8 +417,8 @@ enum TOperator {
     EOpAtomicExchange,
     EOpAtomicCompSwap,
 
-    EOpAtomicCounterIncrement,
-    EOpAtomicCounterDecrement,
+    EOpAtomicCounterIncrement, // results in pre-increment value
+    EOpAtomicCounterDecrement, // results in post-decrement value
     EOpAtomicCounter,
     EOpAtomicCounterAdd,
     EOpAtomicCounterSubtract,
@@ -979,6 +979,7 @@ public:
         constSubtree(nullptr)
           { name = n; }
     virtual int getId() const { return id; }
+    virtual void setId(int newId) { id = newId; }
     virtual const TString& getName() const { return name; }
     virtual void traverse(TIntermTraverser*);
     virtual       TIntermSymbol* getAsSymbolNode()       { return this; }

@@ -99,6 +99,7 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.assoc.frag", "PixelShaderFunction"},
         {"hlsl.attribute.frag", "PixelShaderFunction"},
         {"hlsl.attribute.expression.comp", "main"},
+        {"hlsl.attributeC11.frag", "main"},
         {"hlsl.basic.comp", "main"},
         {"hlsl.basic.geom", "main"},
         {"hlsl.boolConv.vert", "main"},
@@ -152,6 +153,8 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.flattenOpaque.frag", "main"},
         {"hlsl.flattenOpaqueInit.vert", "main"},
         {"hlsl.flattenOpaqueInitMix.vert", "main"},
+        {"hlsl.flattenSubset.frag", "main"},
+        {"hlsl.flattenSubset2.frag", "main"},
         {"hlsl.forLoop.frag", "PixelShaderFunction"},
         {"hlsl.gather.array.dx10.frag", "main"},
         {"hlsl.gather.basic.dx10.frag", "main"},
@@ -216,6 +219,7 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.load.rwtexture.array.dx10.frag", "main"},
         {"hlsl.load.offset.dx10.frag", "main"},
         {"hlsl.load.offsetarray.dx10.frag", "main"},
+        {"hlsl.localStructuredBuffer.comp", "main"},
         {"hlsl.logical.binary.frag", "main"},
         {"hlsl.logical.binary.vec.frag", "main"},
         {"hlsl.logicalConvert.frag", "main"},
@@ -266,6 +270,7 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.samplebias.offsetarray.dx10.frag", "main"},
         {"hlsl.samplecmp.array.dx10.frag", "main"},
         {"hlsl.samplecmp.basic.dx10.frag", "main"},
+        {"hlsl.samplecmp.dualmode.frag", "main"},
         {"hlsl.samplecmp.offset.dx10.frag", "main"},
         {"hlsl.samplecmp.offsetarray.dx10.frag", "main"},
         {"hlsl.samplecmp.negative.frag", "main"},
@@ -317,6 +322,7 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.structin.vert", "main"},
         {"hlsl.structIoFourWay.frag", "main"},
         {"hlsl.structStructName.frag", "main"},
+        {"hlsl.subpass.frag", "main"},
         {"hlsl.synthesizeInput.frag", "main"},
         {"hlsl.texture.struct.frag", "main"},
         {"hlsl.texture.subvec4.frag", "main"},
@@ -374,7 +380,8 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.aliasOpaque.frag", "main"},
         {"hlsl.flattenOpaque.frag", "main"},
         {"hlsl.flattenOpaqueInit.vert", "main"},
-        {"hlsl.flattenOpaqueInitMix.vert", "main"}
+        {"hlsl.flattenOpaqueInitMix.vert", "main"},
+        {"hlsl.flattenSubset.frag", "main"}
     }),
     FileNameAsCustomTestSuffix
 );

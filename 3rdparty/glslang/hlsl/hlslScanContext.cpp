@@ -336,6 +336,8 @@ void HlslScanContext::fillInKeywordMap()
     (*KeywordMap)["RWTexture2DArray"] =        EHTokRWTexture2darray;
     (*KeywordMap)["RWTexture3D"] =             EHTokRWTexture3d;
     (*KeywordMap)["RWBuffer"] =                EHTokRWBuffer;
+    (*KeywordMap)["SubpassInput"] =            EHTokSubpassInput;
+    (*KeywordMap)["SubpassInputMS"] =          EHTokSubpassInputMS;
 
     (*KeywordMap)["AppendStructuredBuffer"] =  EHTokAppendStructuredBuffer;
     (*KeywordMap)["ByteAddressBuffer"] =       EHTokByteAddressBuffer;
@@ -827,6 +829,8 @@ EHlslTokenClass HlslScanContext::tokenizeIdentifier()
     case EHTokRWByteAddressBuffer:
     case EHTokRWStructuredBuffer:
     case EHTokStructuredBuffer:
+    case EHTokSubpassInput:
+    case EHTokSubpassInputMS:
         return keyword;
 
     // variable, user type, ...
