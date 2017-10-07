@@ -44,9 +44,14 @@
 				, _handleAlloc.getMaxHandles() \
 				)
 
-#ifndef BGFX_PROFILER_SCOPE
-#	define BGFX_PROFILER_SCOPE(_group, _name, _color) BX_NOOP()
-#	define BGFX_PROFILER_BEGIN(_group, _name, _color) BX_NOOP()
+#if BGFX_CONFIG_PROFILER
+#	define BGFX_PROFILER_SCOPE(_name, _abgr) ProfilerScope BX_CONCATENATE(profilerScope, __LINE__)(_name, _abgr, __FILE__, uint16_t(__LINE__) )
+#	define BGFX_PROFILER_BEGIN(_name, _abgr) g_callback->profilerBeginLiteral(_name, _abgr, __FILE__, uint16_t(__LINE__) )
+#	define BGFX_PROFILER_END() g_callback->profilerEnd()
+#	define BGFX_PROFILER_SET_CURRENT_THREAD_NAME(_name) BX_NOOP()
+#else
+#	define BGFX_PROFILER_SCOPE(_name, _abgr) BX_NOOP()
+#	define BGFX_PROFILER_BEGIN(_name, _abgr) BX_NOOP()
 #	define BGFX_PROFILER_END() BX_NOOP()
 #	define BGFX_PROFILER_SET_CURRENT_THREAD_NAME(_name) BX_NOOP()
 #endif // BGFX_PROFILER_SCOPE
@@ -363,6 +368,19 @@ namespace bgfx
 	extern Caps g_caps;
 
 	typedef bx::StringT<&g_allocator> String;
+
+	struct ProfilerScope
+	{
+		ProfilerScope(const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line)
+		{
+			g_callback->profilerBeginLiteral(_name, _abgr, _filePath, _line);
+		}
+
+		~ProfilerScope()
+		{
+			g_callback->profilerEnd();
+		}
+	};
 
 	void setGraphicsDebuggerPresent(bool _present);
 	bool isGraphicsDebuggerPresent();
@@ -4337,7 +4355,7 @@ namespace bgfx
 				return true;
 			}
 
-			BGFX_PROFILER_SCOPE(bgfx, main_thread_wait, 0xff2040ff);
+			BGFX_PROFILER_SCOPE("bgfx/API thread wait", 0xff2040ff);
 			int64_t start = bx::getHPCounter();
 			bool ok = m_apiSem.wait(_msecs);
 			if (ok)
@@ -4362,7 +4380,7 @@ namespace bgfx
 		{
 			if (!m_singleThreaded)
 			{
-				BGFX_PROFILER_SCOPE(bgfx, render_thread_wait, 0xff2040ff);
+				BGFX_PROFILER_SCOPE("bgfx/Render thread wait", 0xff2040ff);
 				int64_t start = bx::getHPCounter();
 				bool ok = m_renderSem.wait();
 				BX_CHECK(ok, "Semaphore wait failed."); BX_UNUSED(ok);

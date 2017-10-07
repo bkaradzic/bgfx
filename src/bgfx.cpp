@@ -54,6 +54,20 @@ namespace bgfx
 		{
 		}
 
+		virtual void fatal(Fatal::Enum _code, const char* _str) override
+		{
+			if (Fatal::DebugCheck == _code)
+			{
+				bx::debugBreak();
+			}
+			else
+			{
+				BX_TRACE("0x%08x: %s", _code, _str);
+				BX_UNUSED(_code, _str);
+				abort();
+			}
+		}
+
 		virtual void traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList) override
 		{
 			char temp[2048];
@@ -73,18 +87,16 @@ namespace bgfx
 			bx::debugOutput(out);
 		}
 
-		virtual void fatal(Fatal::Enum _code, const char* _str) override
+		virtual void profilerBegin(const char* /*_name*/, uint32_t /*_abgr*/, const char* /*_filePath*/, uint16_t /*_line*/) override
 		{
-			if (Fatal::DebugCheck == _code)
-			{
-				bx::debugBreak();
-			}
-			else
-			{
-				BX_TRACE("0x%08x: %s", _code, _str);
-				BX_UNUSED(_code, _str);
-				abort();
-			}
+		}
+
+		virtual void profilerBeginLiteral(const char* /*_name*/, uint32_t /*_abgr*/, const char* /*_filePath*/, uint16_t /*_line*/) override
+		{
+		}
+
+		virtual void profilerEnd() override
+		{
 		}
 
 		virtual uint32_t cacheReadSize(uint64_t /*_id*/) override
@@ -1000,6 +1012,8 @@ namespace bgfx
 
 	void Frame::sort()
 	{
+		BGFX_PROFILER_SCOPE("bgfx/Sort", 0xff2040ff);
+
 		uint8_t viewRemap[BGFX_CONFIG_MAX_VIEWS];
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 		{
@@ -1634,7 +1648,7 @@ namespace bgfx
 
 		m_submit->m_capture = _capture;
 
-		BGFX_PROFILER_SCOPE(bgfx, main_thread_frame, 0xff2040ff);
+		BGFX_PROFILER_SCOPE("bgfx/API thread frame", 0xff2040ff);
 		// wait for render thread to finish
 		renderSemWait();
 		frameNoRenderWait();
@@ -1729,28 +1743,38 @@ namespace bgfx
 
 	RenderFrame::Enum Context::renderFrame(int32_t _msecs)
 	{
-		BGFX_PROFILER_SCOPE(bgfx, render_frame, 0xff2040ff);
+		BGFX_PROFILER_SCOPE("bgfx::renderFrame", 0xff2040ff);
 
 		if (!m_flipAfterRender)
 		{
+			BGFX_PROFILER_SCOPE("bgfx/flip", 0xff2040ff);
 			flip();
 		}
 
 		if (apiSemWait(_msecs) )
 		{
-			rendererExecCommands(m_render->m_cmdPre);
+			{
+				BGFX_PROFILER_SCOPE("bgfx/Exec commands pre", 0xff2040ff);
+				rendererExecCommands(m_render->m_cmdPre);
+			}
+
 			if (m_rendererInitialized)
 			{
-				BGFX_PROFILER_SCOPE(bgfx, render_submit, 0xff2040ff);
+				BGFX_PROFILER_SCOPE("bgfx/Render submit", 0xff2040ff);
 				m_renderCtx->submit(m_render, m_clearQuad, m_textVideoMemBlitter);
 				m_flipped = false;
 			}
-			rendererExecCommands(m_render->m_cmdPost);
+
+			{
+				BGFX_PROFILER_SCOPE("bgfx/Exec commands post", 0xff2040ff);
+				rendererExecCommands(m_render->m_cmdPost);
+			}
 
 			renderSemPost();
 
 			if (m_flipAfterRender)
 			{
+				BGFX_PROFILER_SCOPE("bgfx/flip", 0xff2040ff);
 				flip();
 			}
 		}
@@ -4166,6 +4190,21 @@ namespace bgfx
 		virtual void traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList) override
 		{
 			m_interface->vtbl->trace_vargs(m_interface, _filePath, _line, _format, _argList);
+		}
+
+		virtual void profilerBegin(const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line) override
+		{
+			m_interface->vtbl->profiler_begin(m_interface, _name, _abgr, _filePath, _line);
+		}
+
+		virtual void profilerBeginLiteral(const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line) override
+		{
+			m_interface->vtbl->profiler_begin_literal(m_interface, _name, _abgr, _filePath, _line);
+		}
+
+		virtual void profilerEnd() override
+		{
+			m_interface->vtbl->profiler_end(m_interface);
 		}
 
 		virtual uint32_t cacheReadSize(uint64_t _id) override

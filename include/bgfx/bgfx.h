@@ -423,6 +423,53 @@ namespace bgfx
 			, va_list _argList
 			) = 0;
 
+		/// Profiler region begin.
+		///
+		/// @param[in] _name Region name, contains dynamic string.
+		/// @param[in] _abgr Color of profiler region.
+		/// @param[in] _filePath File path where profilerBegin was called.
+		/// @param[in] _line Line where profilerBegin was called.
+		///
+		/// @remarks
+		///   Not thread safe and it can be called from any thread.
+		///
+		/// @attention C99 equivalent is `bgfx_callback_vtbl.profiler_begin`.
+		///
+		virtual void profilerBegin(
+			  const char* _name
+			, uint32_t _abgr
+			, const char* _filePath
+			, uint16_t _line
+			) = 0;
+
+		/// Profiler region begin with string literal name.
+		///
+		/// @param[in] _name Region name, contains string literal.
+		/// @param[in] _abgr Color of profiler region.
+		/// @param[in] _filePath File path where profilerBeginLiteral was called.
+		/// @param[in] _line Line where profilerBeginLiteral was called.
+		///
+		/// @remarks
+		///   Not thread safe and it can be called from any thread.
+		///
+		/// @attention C99 equivalent is `bgfx_callback_vtbl.profiler_begin_literal`.
+		///
+		virtual void profilerBeginLiteral(
+			  const char* _name
+			, uint32_t _abgr
+			, const char* _filePath
+			, uint16_t _line
+			) = 0;
+
+		/// Profiler region end.
+		///
+		/// @remarks
+		///   Not thread safe and it can be called from any thread.
+		///
+		/// @attention C99 equivalent is `bgfx_callback_vtbl.profiler_end`.
+		///
+		virtual void profilerEnd() = 0;
+
 		/// Return size of for cached item. Return 0 if no cached item was
 		/// found.
 		///
