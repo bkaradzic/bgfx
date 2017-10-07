@@ -1634,8 +1634,6 @@ namespace bgfx
 
 	uint32_t Context::frame(bool _capture)
 	{
-		BX_CHECK(0 == m_instBufferCount, "Instance buffer allocated, but not used. This is incorrect, and causes memory leak.");
-
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG_OCCLUSION) )
 		{
 			m_occlusionQuerySet.clear();
@@ -3078,9 +3076,9 @@ error:
 		BX_CHECK(_stride == BX_ALIGN_16(_stride), "Stride must be multiple of 16.");
 		BX_CHECK(0 < _num, "Requesting 0 instanced data vertices.");
 		s_ctx->allocInstanceDataBuffer(_idb, _num, _stride);
-		BX_CHECK(_num == idb->size / _stride, "Failed to allocate instance data buffer (requested %d, available %d). Use bgfx::checkAvailTransient* functions to ensure availability."
+		BX_CHECK(_num == _idb->size / _stride, "Failed to allocate instance data buffer (requested %d, available %d). Use bgfx::checkAvailTransient* functions to ensure availability."
 			, _num
-			, idb->size / _stride
+			, _idb->size / _stride
 			);
 	}
 
