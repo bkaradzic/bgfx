@@ -326,6 +326,69 @@
 </dd></dl>
 
 <dl class="function">
+<dt id="_CPPv2N4bgfx9CallbackI13profilerBeginEPKc8uint32_tPKc8uint16_t">
+<span id="bgfx::CallbackI::profilerBegin__cCP.uint32_t.cCP.uint16_t"></span>virtual <span class="target" id="bgfxstructbgfx_1_1_callback_i_1a3bd1177a4621524bd90da103ca3417de"></span>void <code class="descname">profilerBegin</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>_name</em>, uint32_t <em>_abgr</em>, <em class="property">const</em> char *<em>_filePath</em>, uint16_t <em>_line</em><span class="sig-paren">)</span> = 0<a class="headerlink" href="#_CPPv2N4bgfx9CallbackI13profilerBeginEPKc8uint32_tPKc8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Profiler region begin. </p>
+<p><dl class="docutils">
+<dt><strong>Remark</strong></dt>
+<dd>Not thread safe and it can be called from any thread.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_callback_vtbl.profiler_begin</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_name</span></code> - <p>Region name, contains dynamic string. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_abgr</span></code> - <p>Color of profiler region. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_filePath</span></code> - <p>File path where profilerBegin was called. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_line</span></code> - <p>Line where profilerBegin was called.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx9CallbackI20profilerBeginLiteralEPKc8uint32_tPKc8uint16_t">
+<span id="bgfx::CallbackI::profilerBeginLiteral__cCP.uint32_t.cCP.uint16_t"></span>virtual <span class="target" id="bgfxstructbgfx_1_1_callback_i_1a4a2875d0cf4a47e4c22df25f0b4d041b"></span>void <code class="descname">profilerBeginLiteral</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>_name</em>, uint32_t <em>_abgr</em>, <em class="property">const</em> char *<em>_filePath</em>, uint16_t <em>_line</em><span class="sig-paren">)</span> = 0<a class="headerlink" href="#_CPPv2N4bgfx9CallbackI20profilerBeginLiteralEPKc8uint32_tPKc8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Profiler region begin with string literal name. </p>
+<p><dl class="docutils">
+<dt><strong>Remark</strong></dt>
+<dd>Not thread safe and it can be called from any thread.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_callback_vtbl.profiler_begin_literal</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_name</span></code> - <p>Region name, contains string literal. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_abgr</span></code> - <p>Color of profiler region. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_filePath</span></code> - <p>File path where profilerBeginLiteral was called. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_line</span></code> - <p>Line where profilerBeginLiteral was called.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx9CallbackI11profilerEndEv">
+<span id="bgfx::CallbackI::profilerEnd"></span>virtual <span class="target" id="bgfxstructbgfx_1_1_callback_i_1ac0d86e638d8af10bd5792a3aac3b82b5"></span>void <code class="descname">profilerEnd</code><span class="sig-paren">(</span><span class="sig-paren">)</span> = 0<a class="headerlink" href="#_CPPv2N4bgfx9CallbackI11profilerEndEv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Profiler region end. </p>
+<p><dl class="docutils">
+<dt><strong>Remark</strong></dt>
+<dd>Not thread safe and it can be called from any thread.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_callback_vtbl.profiler_end</span></code>. </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="_CPPv2N4bgfx9CallbackI13cacheReadSizeE8uint64_t">
 <span id="bgfx::CallbackI::cacheReadSize__uint64_t"></span>virtual <span class="target" id="bgfxstructbgfx_1_1_callback_i_1a0e42c49e7a21b94a8866f4ad0e76a317"></span>uint32_t <code class="descname">cacheReadSize</code><span class="sig-paren">(</span>uint64_t <em>_id</em><span class="sig-paren">)</span> = 0<a class="headerlink" href="#_CPPv2N4bgfx9CallbackI13cacheReadSizeE8uint64_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return size of for cached item. Return 0 if no cached item was found. </p>
@@ -5509,14 +5572,24 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx23allocInstanceDataBufferE8uint32_t8uint16_t">
-<span id="bgfx::allocInstanceDataBuffer__uint32_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1a61a8b2b96c02f6d2d447fbce2b9e6896"></span><em class="property">const</em> InstanceDataBuffer *<code class="descclassname">bgfx::</code><code class="descname">allocInstanceDataBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, uint16_t <em>_stride</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx23allocInstanceDataBufferE8uint32_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx23allocInstanceDataBufferEP18InstanceDataBuffer8uint32_t8uint16_t">
+<span id="bgfx::allocInstanceDataBuffer__InstanceDataBufferP.uint32_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1a57f18c024a3c7f0f1e902dc85b987757"></span>void <code class="descclassname">bgfx::</code><code class="descname">allocInstanceDataBuffer</code><span class="sig-paren">(</span>InstanceDataBuffer *<em>_idb</em>, uint32_t <em>_num</em>, uint16_t <em>_stride</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx23allocInstanceDataBufferEP18InstanceDataBuffer8uint32_t8uint16_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Allocate instance data buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Remark</strong></dt>
 <dd>You must call setInstanceDataBuffer after alloc in order to avoid memory leak.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_alloc_instance_data_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_idb</span></code> - <p>InstanceDataBuffer structure is filled and is valid for duration of frame, and it can be reused for multiple draw calls. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of instances. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_stride</span></code> - <p>Instance stride. Must be multiple of 16.</p>
+</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
