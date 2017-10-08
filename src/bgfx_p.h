@@ -1612,7 +1612,6 @@ namespace bgfx
 			m_matrixCache.reset();
 			m_rectCache.reset();
 			m_key.reset();
-			m_num            = 0;
 			m_numRenderItems = 0;
 			m_numDropped     = 0;
 			m_numBlitItems   = 0;
@@ -1636,7 +1635,7 @@ namespace bgfx
 			if (0 < m_numDropped)
 			{
 				BX_TRACE("Too many draw calls: %d, dropped %d (max: %d)"
-					, m_num+m_numDropped
+					, m_numRenderItems+m_numDropped
 					, m_numDropped
 					, BGFX_CONFIG_MAX_DRAW_CALLS
 					);
@@ -2001,7 +2000,6 @@ namespace bgfx
 
 		UniformBuffer* m_uniformBuffer;
 
-		RenderItemCount m_num;
 		RenderItemCount m_numRenderItems;
 		RenderItemCount m_numDropped;
 		uint16_t m_numBlitItems;

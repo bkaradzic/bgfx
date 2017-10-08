@@ -3271,7 +3271,7 @@ namespace bgfx { namespace mtl
 			uint8_t restartState = 0;
 			viewState.m_rect = _render->m_rect[0];
 
-			int32_t numItems = _render->m_num;
+			int32_t numItems = _render->m_numRenderItems;
 			for (int32_t item = 0, restartItem = numItems; item < numItems || restartItem < numItems;)
 			{
 				const uint64_t encodedKey = _render->m_sortKeys[item];
@@ -3879,7 +3879,7 @@ namespace bgfx { namespace mtl
 
 			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
 
-			if (0 < _render->m_num)
+			if (0 < _render->m_numRenderItems)
 			{
 				captureElapsed = -bx::getHPCounter();
 				capture();
@@ -3890,7 +3890,7 @@ namespace bgfx { namespace mtl
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG_MTL) )
 		{
-			if (0 < _render->m_num)
+			if (0 < _render->m_numRenderItems)
 			{
 				rce.popDebugGroup();
 			}
@@ -3973,7 +3973,7 @@ namespace bgfx { namespace mtl
 
 				double elapsedCpuMs = double(frameTime)*toMs;
 				tvm.printf(10, pos++, 0x8e, "    Submitted: %4d (draw %4d, compute %4d) / CPU %3.4f [ms] %c GPU %3.4f [ms] (latency %d)"
-						, _render->m_num
+						, _render->m_numRenderItems
 						, statsKeyType[0]
 						, statsKeyType[1]
 						, elapsedCpuMs

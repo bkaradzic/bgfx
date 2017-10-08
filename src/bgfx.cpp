@@ -858,14 +858,14 @@ namespace bgfx
 		if (m_discard)
 		{
 			discard();
-			return m_num;
+			return m_numRenderItems;
 		}
 
-		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= m_num
+		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= m_numRenderItems
 		|| (0 == m_draw.m_numVertices && 0 == m_draw.m_numIndices) )
 		{
 			++m_numDropped;
-			return m_num;
+			return m_numRenderItems;
 		}
 
 		m_uniformEnd = m_uniformBuffer->getPos();
@@ -888,9 +888,8 @@ namespace bgfx
 		s_ctx->m_seq[_id]++;
 
 		uint64_t key = m_key.encodeDraw(type);
-		m_sortKeys[m_num]   = key;
-		m_sortValues[m_num] = m_numRenderItems;
-		++m_num;
+		m_sortKeys[m_numRenderItems]   = key;
+		m_sortValues[m_numRenderItems] = m_numRenderItems;
 
 		m_draw.m_constBegin = m_uniformBegin;
 		m_draw.m_constEnd   = m_uniformEnd;
@@ -928,7 +927,7 @@ namespace bgfx
 			m_stateFlags = BGFX_STATE_NONE;
 		}
 
-		return m_num;
+		return m_numRenderItems;
 	}
 
 	uint32_t Frame::dispatch(uint8_t _id, ProgramHandle _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
@@ -936,13 +935,13 @@ namespace bgfx
 		if (m_discard)
 		{
 			discard();
-			return m_num;
+			return m_numRenderItems;
 		}
 
-		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= m_num)
+		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= m_numRenderItems)
 		{
 			++m_numDropped;
-			return m_num;
+			return m_numRenderItems;
 		}
 
 		m_uniformEnd = m_uniformBuffer->getPos();
@@ -961,9 +960,8 @@ namespace bgfx
 		s_ctx->m_seq[_id]++;
 
 		uint64_t key = m_key.encodeCompute();
-		m_sortKeys[m_num]   = key;
-		m_sortValues[m_num] = m_numRenderItems;
-		++m_num;
+		m_sortKeys[m_numRenderItems]   = key;
+		m_sortValues[m_numRenderItems] = m_numRenderItems;
 
 		m_compute.m_constBegin = m_uniformBegin;
 		m_compute.m_constEnd   = m_uniformEnd;
@@ -975,7 +973,7 @@ namespace bgfx
 		m_bind.clear();
 		m_uniformBegin = m_uniformEnd;
 
-		return m_num;
+		return m_numRenderItems;
 	}
 
 	void Frame::blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
@@ -1020,11 +1018,11 @@ namespace bgfx
 			viewRemap[m_viewRemap[ii] ] = uint8_t(ii);
 		}
 
-		for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
+		for (uint32_t ii = 0, num = m_numRenderItems; ii < num; ++ii)
 		{
 			m_sortKeys[ii] = SortKey::remapView(m_sortKeys[ii], viewRemap);
 		}
-		bx::radixSort(m_sortKeys, s_ctx->m_tempKeys, m_sortValues, s_ctx->m_tempValues, m_num);
+		bx::radixSort(m_sortKeys, s_ctx->m_tempKeys, m_sortValues, s_ctx->m_tempValues, m_numRenderItems);
 
 		for (uint32_t ii = 0, num = m_numBlitItems; ii < num; ++ii)
 		{
