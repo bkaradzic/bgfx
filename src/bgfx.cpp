@@ -880,12 +880,11 @@ namespace bgfx
 		SortKey::Enum type = SortKey::SortProgram;
 		switch (s_ctx->m_viewMode[_id])
 		{
-		case ViewMode::Sequential:      m_key.m_seq   = s_ctx->m_seq[_id]; type = SortKey::SortSequence; break;
-		case ViewMode::DepthAscending:  m_key.m_depth = (uint32_t)_depth;  type = SortKey::SortDepth;    break;
-		case ViewMode::DepthDescending: m_key.m_depth = (uint32_t)-_depth; type = SortKey::SortDepth;    break;
+		case ViewMode::Sequential:      m_key.m_seq   = s_ctx->getSeqIncr(_id); type = SortKey::SortSequence; break;
+		case ViewMode::DepthAscending:  m_key.m_depth = (uint32_t)_depth;       type = SortKey::SortDepth;    break;
+		case ViewMode::DepthDescending: m_key.m_depth = (uint32_t)-_depth;      type = SortKey::SortDepth;    break;
 		default: break;
 		}
-		s_ctx->m_seq[_id]++;
 
 		uint64_t key = m_key.encodeDraw(type);
 		m_sortKeys[m_numRenderItems]   = key;
@@ -956,8 +955,7 @@ namespace bgfx
 		m_key.m_program = _handle.idx;
 		m_key.m_depth   = 0;
 		m_key.m_view    = _id;
-		m_key.m_seq     = s_ctx->m_seq[_id];
-		s_ctx->m_seq[_id]++;
+		m_key.m_seq     = s_ctx->getSeqIncr(_id);
 
 		uint64_t key = m_key.encodeCompute();
 		m_sortKeys[m_numRenderItems]   = key;

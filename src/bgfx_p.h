@@ -4315,6 +4315,11 @@ namespace bgfx
 
 		BGFX_API_FUNC(uint32_t frame(bool _capture = false) );
 
+		uint32_t getSeqIncr(uint8_t _id)
+		{
+			return m_seq[_id]++;
+		}
+
 		void dumpViewStats();
 		void freeDynamicBuffers();
 		void freeAllHandles(Frame* _frame);
