@@ -389,6 +389,7 @@ namespace bgfx
 	void getTextureSizeFromRatio(BackbufferRatio::Enum _ratio, uint16_t& _width, uint16_t& _height);
 	TextureFormat::Enum getViableTextureFormat(const bimg::ImageContainer& _imageContainer);
 	const char* getName(TextureFormat::Enum _fmt);
+	const char* getName(UniformHandle _handle);
 
 	inline uint32_t castfu(float _value)
 	{
@@ -1861,6 +1862,19 @@ namespace bgfx
 			discard();
 		}
 
+		void frame()
+		{
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_OCCLUSION) )
+			{
+				m_occlusionQuerySet.clear();
+			}
+
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
+			{
+				m_uniformSet.clear();
+			}
+		}
+
 		void setMarker(Frame* _frame, const char* _name)
 		{
 			_frame->m_uniformBuffer->writeMarker(_name);
@@ -1868,6 +1882,16 @@ namespace bgfx
 
 		void setUniform(Frame* _frame, UniformType::Enum _type, UniformHandle _handle, const void* _value, uint16_t _num)
 		{
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
+			{
+				BX_CHECK(m_uniformSet.end() == m_uniformSet.find(_handle.idx)
+					, "Uniform %d (%s) was already set for this draw call."
+					, _handle.idx
+					, getName(_handle)
+					);
+				m_uniformSet.insert(_handle.idx);
+			}
+
 			UniformBuffer::update(_frame->m_uniformBuffer);
 			_frame->m_uniformBuffer->writeUniform(_type, _handle.idx, _value, _num);
 		}
@@ -2066,6 +2090,11 @@ namespace bgfx
 
 		void discard()
 		{
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
+			{
+				m_uniformSet.clear();
+			}
+
 			m_discard = false;
 			m_draw.clear();
 			m_compute.clear();
@@ -2105,6 +2134,10 @@ namespace bgfx
 		uint64_t m_stateFlags;
 		uint32_t m_numVertices[BGFX_CONFIG_MAX_VERTEX_STREAMS];
 		bool     m_discard;
+
+		typedef stl::unordered_set<uint16_t> HandleSet;
+		HandleSet m_uniformSet;
+		HandleSet m_occlusionQuerySet;
 	};
 
 	struct VertexDeclRef
@@ -4125,15 +4158,6 @@ namespace bgfx
 			const UniformRef& uniform = m_uniformRef[_handle.idx];
 			BX_CHECK(isValid(_handle) && 0 < uniform.m_refCount, "Setting invalid uniform (handle %3d)!", _handle.idx);
 			BX_CHECK(_num == UINT16_MAX || uniform.m_num >= _num, "Truncated uniform update. %d (max: %d)", _num, uniform.m_num);
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
-			{
-				BX_CHECK(m_uniformSet.end() == m_uniformSet.find(_handle.idx)
-					, "Uniform %d (%s) was already set for this draw call."
-					, _handle.idx
-					, getName(_handle)
-					);
-				m_uniformSet.insert(_handle.idx);
-			}
 			m_encoder[0].setUniform(m_submit, uniform.m_type, _handle, _value, bx::uint16_min(uniform.m_num, _num) );
 		}
 
@@ -4209,22 +4233,6 @@ namespace bgfx
 		{
 			BGFX_CHECK_HANDLE_INVALID_OK("submit", m_programHandle, _program);
 			BGFX_CHECK_HANDLE_INVALID_OK("submit", m_occlusionQueryHandle, _occlusionQuery);
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM)
-			&& !_preserveState)
-			{
-				m_uniformSet.clear();
-			}
-
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_OCCLUSION)
-			&&  isValid(_occlusionQuery) )
-			{
-				BX_CHECK(m_occlusionQuerySet.end() == m_occlusionQuerySet.find(_occlusionQuery.idx)
-					, "OcclusionQuery %d was already used for this frame."
-					, _occlusionQuery.idx
-					);
-				m_occlusionQuerySet.insert(_occlusionQuery.idx);
-			}
-
 			return m_encoder[0].submit(m_submit, _id, _program, _occlusionQuery, _depth, _preserveState);
 		}
 
@@ -4232,11 +4240,6 @@ namespace bgfx
 		{
 			BGFX_CHECK_HANDLE_INVALID_OK("submit", m_programHandle, _handle);
 			BGFX_CHECK_HANDLE("submit", m_vertexBufferHandle, _indirectHandle);
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM)
-			&& !_preserveState)
-			{
-				m_uniformSet.clear();
-			}
 			return m_encoder[0].submit(m_submit, _id, _handle, _indirectHandle, _start, _num, _depth, _preserveState);
 		}
 
@@ -4285,10 +4288,6 @@ namespace bgfx
 		BGFX_API_FUNC(uint32_t dispatch(uint8_t _id, ProgramHandle _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags) )
 		{
 			BGFX_CHECK_HANDLE_INVALID_OK("dispatch", m_programHandle, _handle);
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
-			{
-				m_uniformSet.clear();
-			}
 			return m_encoder[0].dispatch(m_submit, _id, _handle, _numX, _numY, _numZ, _flags);
 		}
 
@@ -4296,19 +4295,11 @@ namespace bgfx
 		{
 			BGFX_CHECK_HANDLE_INVALID_OK("dispatch", m_programHandle, _handle);
 			BGFX_CHECK_HANDLE("dispatch", m_vertexBufferHandle, _indirectHandle);
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
-			{
-				m_uniformSet.clear();
-			}
 			return m_encoder[0].dispatch(m_submit, _id, _handle, _indirectHandle, _start, _num, _flags);
 		}
 
 		BGFX_API_FUNC(void discard() )
 		{
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
-			{
-				m_uniformSet.clear();
-			}
 			m_encoder[0].discard();
 		}
 
@@ -4337,7 +4328,6 @@ namespace bgfx
 		void freeAllHandles(Frame* _frame);
 		void frameNoRenderWait();
 		void swap();
-		const char* getName(UniformHandle _handle) const;
 
 		// render thread
 		void flip();
@@ -4498,10 +4488,6 @@ namespace bgfx
 			} un;
 			bool m_window;
 		};
-
-		typedef stl::unordered_set<uint16_t> HandleSet;
-		HandleSet m_uniformSet;
-		HandleSet m_occlusionQuerySet;
 
 		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_UNIFORMS*2> UniformHashMap;
 		UniformHashMap m_uniformHashMap;

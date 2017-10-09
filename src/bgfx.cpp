@@ -855,6 +855,22 @@ namespace bgfx
 
 	uint32_t EncoderImpl::submit(Frame* _frame, uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth, bool _preserveState)
 	{
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM)
+		&& !_preserveState)
+		{
+			m_uniformSet.clear();
+		}
+
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG_OCCLUSION)
+		&&  isValid(_occlusionQuery) )
+		{
+			BX_CHECK(m_occlusionQuerySet.end() == m_occlusionQuerySet.find(_occlusionQuery.idx)
+				, "OcclusionQuery %d was already used for this frame."
+				, _occlusionQuery.idx
+				);
+			m_occlusionQuerySet.insert(_occlusionQuery.idx);
+		}
+
 		if (m_discard)
 		{
 			discard();
@@ -933,6 +949,11 @@ namespace bgfx
 
 	uint32_t EncoderImpl::dispatch(Frame* _frame, uint8_t _id, ProgramHandle _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
 	{
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
+		{
+			m_uniformSet.clear();
+		}
+
 		if (m_discard)
 		{
 			discard();
@@ -1316,6 +1337,11 @@ namespace bgfx
 		return bimg::getName(bimg::TextureFormat::Enum(_fmt));
 	}
 
+	const char* getName(UniformHandle _handle)
+	{
+		return s_ctx->m_uniformRef[_handle.idx].m_name.getPtr();
+	}
+
 	static TextureFormat::Enum s_emulatedFormats[] =
 	{
 		TextureFormat::BC1,
@@ -1633,16 +1659,7 @@ namespace bgfx
 
 	uint32_t Context::frame(bool _capture)
 	{
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_OCCLUSION) )
-		{
-			m_occlusionQuerySet.clear();
-		}
-
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
-		{
-			m_uniformSet.clear();
-		}
-
+		m_encoder[0].frame();
 		m_submit->m_capture = _capture;
 
 		BGFX_PROFILER_SCOPE("bgfx/API thread frame", 0xff2040ff);
@@ -1709,11 +1726,6 @@ namespace bgfx
 		int64_t now = bx::getHPCounter();
 		m_submit->m_perfStats.cpuTimeFrame = now - m_frameTimeLast;
 		m_frameTimeLast = now;
-	}
-
-	const char* Context::getName(UniformHandle _handle) const
-	{
-		return m_uniformRef[_handle.idx].m_name.getPtr();
 	}
 
 	RendererContextI* rendererCreate(RendererType::Enum _type);
