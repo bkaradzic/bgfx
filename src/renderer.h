@@ -109,6 +109,8 @@ namespace bgfx
 		template<uint16_t mtxRegs, typename RendererContext, typename Program, typename Draw>
 		void setPredefined(RendererContext* _renderer, uint16_t _view, uint8_t _eye, const Program& _program, const Frame* _frame, const Draw& _draw)
 		{
+			const FrameCache& frameCache = _frame->m_frameCache;
+
 			for (uint32_t ii = 0, num = _program.m_numPredefined; ii < num; ++ii)
 			{
 				const PredefinedUniform& predefined = _program.m_predefined[ii];
@@ -234,7 +236,7 @@ namespace bgfx
 
 				case PredefinedUniform::Model:
 					{
-						const Matrix4& model = _frame->m_matrixCache.m_cache[_draw.m_matrix];
+						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_matrix];
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
 							, model.un.val
@@ -246,7 +248,7 @@ namespace bgfx
 				case PredefinedUniform::ModelView:
 					{
 						Matrix4 modelView;
-						const Matrix4& model = _frame->m_matrixCache.m_cache[_draw.m_matrix];
+						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_matrix];
 						bx::float4x4_mul(&modelView.un.f4x4
 							, &model.un.f4x4
 							, &m_view[_eye][_view].un.f4x4
@@ -262,7 +264,7 @@ namespace bgfx
 				case PredefinedUniform::ModelViewProj:
 					{
 						Matrix4 modelViewProj;
-						const Matrix4& model = _frame->m_matrixCache.m_cache[_draw.m_matrix];
+						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_matrix];
 						bx::float4x4_mul(&modelViewProj.un.f4x4
 							, &model.un.f4x4
 							, &m_viewProj[_eye][_view].un.f4x4

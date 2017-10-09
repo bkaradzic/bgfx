@@ -5612,7 +5612,7 @@ data.NumQualityLevels = 0;
 						{
 							restoreScissor = true;
 							Rect scissorRect;
-							scissorRect.setIntersect(viewScissorRect,_render->m_rectCache.m_cache[scissor]);
+							scissorRect.setIntersect(viewScissorRect, _render->m_frameCache.m_rectCache.m_cache[scissor]);
 							if (scissorRect.isZeroArea() )
 							{
 								continue;

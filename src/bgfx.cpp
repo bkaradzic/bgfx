@@ -853,22 +853,22 @@ namespace bgfx
 		return PredefinedUniform::Count;
 	}
 
-	uint32_t Frame::submit(uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth, bool _preserveState)
+	uint32_t EncoderImpl::submit(Frame* _frame, uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth, bool _preserveState)
 	{
 		if (m_discard)
 		{
 			discard();
-			return m_numRenderItems;
+			return _frame->m_numRenderItems;
 		}
 
-		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= m_numRenderItems
+		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= _frame->m_numRenderItems
 		|| (0 == m_draw.m_numVertices && 0 == m_draw.m_numIndices) )
 		{
-			++m_numDropped;
-			return m_numRenderItems;
+			++_frame->m_numDropped;
+			return _frame->m_numRenderItems;
 		}
 
-		m_uniformEnd = m_uniformBuffer->getPos();
+		_frame->m_uniformEnd = _frame->m_uniformBuffer->getPos();
 
 		m_key.m_program = kInvalidHandle == _program.idx
 			? 0
@@ -887,11 +887,14 @@ namespace bgfx
 		}
 
 		uint64_t key = m_key.encodeDraw(type);
-		m_sortKeys[m_numRenderItems]   = key;
-		m_sortValues[m_numRenderItems] = m_numRenderItems;
 
-		m_draw.m_constBegin = m_uniformBegin;
-		m_draw.m_constEnd   = m_uniformEnd;
+		const RenderItemCount numRenderItems = _frame->m_numRenderItems++;
+
+		_frame->m_sortKeys[numRenderItems]   = key;
+		_frame->m_sortValues[numRenderItems] = numRenderItems;
+
+		m_draw.m_constBegin = _frame->m_uniformBegin;
+		m_draw.m_constEnd   = _frame->m_uniformEnd;
 		m_draw.m_stateFlags |= m_stateFlags;
 
 		uint32_t numVertices = UINT32_MAX;
@@ -914,36 +917,35 @@ namespace bgfx
 			m_draw.m_occlusionQuery = _occlusionQuery;
 		}
 
-		m_renderItem[m_numRenderItems].draw = m_draw;
-		m_renderItemBind[m_numRenderItems]  = m_bind;
-		++m_numRenderItems;
+		_frame->m_renderItem[numRenderItems].draw = m_draw;
+		_frame->m_renderItemBind[numRenderItems]  = m_bind;
 
 		if (!_preserveState)
 		{
 			m_draw.clear();
 			m_bind.clear();
-			m_uniformBegin = m_uniformEnd;
+			_frame->m_uniformBegin = _frame->m_uniformEnd;
 			m_stateFlags = BGFX_STATE_NONE;
 		}
 
-		return m_numRenderItems;
+		return numRenderItems+1;
 	}
 
-	uint32_t Frame::dispatch(uint8_t _id, ProgramHandle _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
+	uint32_t EncoderImpl::dispatch(Frame* _frame, uint8_t _id, ProgramHandle _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
 	{
 		if (m_discard)
 		{
 			discard();
-			return m_numRenderItems;
+			return _frame->m_numRenderItems;
 		}
 
-		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= m_numRenderItems)
+		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= _frame->m_numRenderItems)
 		{
-			++m_numDropped;
-			return m_numRenderItems;
+			++_frame->m_numDropped;
+			return _frame->m_numRenderItems;
 		}
 
-		m_uniformEnd = m_uniformBuffer->getPos();
+		_frame->m_uniformEnd = _frame->m_uniformBuffer->getPos();
 
 		m_compute.m_matrix = m_draw.m_matrix;
 		m_compute.m_num    = m_draw.m_num;
@@ -957,34 +959,35 @@ namespace bgfx
 		m_key.m_view    = _id;
 		m_key.m_seq     = s_ctx->getSeqIncr(_id);
 
-		uint64_t key = m_key.encodeCompute();
-		m_sortKeys[m_numRenderItems]   = key;
-		m_sortValues[m_numRenderItems] = m_numRenderItems;
+		const RenderItemCount numRenderItems = _frame->m_numRenderItems++;
 
-		m_compute.m_constBegin = m_uniformBegin;
-		m_compute.m_constEnd   = m_uniformEnd;
-		m_renderItem[m_numRenderItems].compute = m_compute;
-		m_renderItemBind[m_numRenderItems]     = m_bind;
-		++m_numRenderItems;
+		uint64_t key = m_key.encodeCompute();
+		_frame->m_sortKeys[numRenderItems]   = key;
+		_frame->m_sortValues[numRenderItems] = numRenderItems;
+
+		m_compute.m_constBegin = _frame->m_uniformBegin;
+		m_compute.m_constEnd   = _frame->m_uniformEnd;
+		_frame->m_renderItem[numRenderItems].compute = m_compute;
+		_frame->m_renderItemBind[numRenderItems]     = m_bind;
 
 		m_compute.clear();
 		m_bind.clear();
-		m_uniformBegin = m_uniformEnd;
+		_frame->m_uniformBegin = _frame->m_uniformEnd;
 
-		return m_numRenderItems;
+		return numRenderItems+1;
 	}
 
-	void Frame::blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
+	void EncoderImpl::blit(Frame* _frame, uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
 	{
-		BX_WARN(m_numBlitItems < BGFX_CONFIG_MAX_BLIT_ITEMS
+		BX_WARN(_frame->m_numBlitItems < BGFX_CONFIG_MAX_BLIT_ITEMS
 			, "Exceed number of available blit items per frame. BGFX_CONFIG_MAX_BLIT_ITEMS is %d. Skipping blit."
 			, BGFX_CONFIG_MAX_BLIT_ITEMS
 			);
-		if (m_numBlitItems < BGFX_CONFIG_MAX_BLIT_ITEMS)
+		if (_frame->m_numBlitItems < BGFX_CONFIG_MAX_BLIT_ITEMS)
 		{
-			uint16_t item = m_numBlitItems++;
+			uint16_t item = _frame->m_numBlitItems++;
 
-			BlitItem& bi = m_blitItem[item];
+			BlitItem& bi = _frame->m_blitItem[item];
 			bi.m_srcX    = _srcX;
 			bi.m_srcY    = _srcY;
 			bi.m_srcZ    = _srcZ;
@@ -1002,7 +1005,7 @@ namespace bgfx
 			BlitKey key;
 			key.m_view = _id;
 			key.m_item = item;
-			m_blitKeys[item] = key.encode();
+			_frame->m_blitKeys[item] = key.encode();
 		}
 	}
 

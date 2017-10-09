@@ -3576,7 +3576,7 @@ namespace bgfx { namespace mtl
 					else
 					{
 						Rect scissorRect;
-						scissorRect.setIntersect(viewScissorRect, _render->m_rectCache.m_cache[scissor]);
+						scissorRect.setIntersect(viewScissorRect, _render->m_frameCache.m_rectCache.m_cache[scissor]);
 
 						if (scissorRect.isZeroArea() )
 						{
