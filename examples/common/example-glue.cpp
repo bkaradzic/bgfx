@@ -19,10 +19,9 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 		  ImVec2(10.0f, 50.0f)
 		, ImGuiSetCond_FirstUseEver
 		);
-	ImGui::SetNextWindowSize(ImVec2(256.0f, 200.0f));
 	ImGui::Begin(temp
 		, NULL
-		, ImGuiWindowFlags_AlwaysAutoResize
+		, ImVec2(256.0f, 200.0f)
 		);
 
 	ImGui::TextWrapped("%s", _app->getDescription() );
