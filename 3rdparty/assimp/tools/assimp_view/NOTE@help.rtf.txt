@@ -1,0 +1,2 @@
+text1.bin is the corresponding bin file to be included with the executable file.
+When updating the rich formatted text inside Visual Studio, a terminating 0 character must be appended

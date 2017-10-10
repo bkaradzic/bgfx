@@ -1,0 +1,40 @@
+Libraries needed to compile DevIL* :
+----------------------------------
+
+(Most of these are optional)
+
+
+Libpng for .png (and some .ico) support available at http://www.libpng.org/pub/png/libpng.html
+ZLib for .png (and some .ico) support available at http://www.gzip.org/zlib/
+Libjpeg for .jpg (and some .blp) support from http://www.ijg.org/
+Libtiff for .tif support from http://www.libtiff.org/
+Libmng for .mng and .jng support from http://www.libmng.com/
+JasPer for .jp2 (and some .icns) support available at http://www.ece.uvic.ca/~mdadams/jasper/
+HD Photo Device Porting Kit for .wdp/.hdp support from http://www.microsoft.com/Downloads/details.aspx?FamilyID=285eeffd-d86c-48c3-ab93-3abd5ee7f1ce&displaylang=en.
+Little CMS for color profiles (ILU) from http://www.littlecms.com/
+Colour Picker lib for WindowsTest from http://www.fluidstudios.com/freeware.html
+Freeglut (or glut) for GLTest from http://freeglut.sourceforge.net
+glext.h from http://oss.sgi.com/projects/ogl-sample/ABI/glext.h (as <gl/glext.h> if using OpenGL)
+libsquish for DXT compression from http://code.google.com/p/libsquish/
+nVidia Texture Tools for DXT compression from http://developer.nvidia.com/object/nv_texture_tools.html.
+
+MSVC++ precompiled versions of libpng, zlib, libjpeg, libtiff, lcms and JasPer can be found
+at http://openil.sourceforge.net/libs/LibCompiled-vc8.zip or
+http://openil.sourceforge.net/libs/LibCompiled-vc9.zip.
+
+Sources of libpng, zlib, libjpeg, libmng, libungif, libtiff, lcms and JasPer can be
+found at http://openil.sourceforge.net/libs/LibSrc.zip
+
+Intel Jpeg Library from
+ http://developer.intel.com/software/products/perflib/ijl/index.htm
+
+
+MAC OS X
+These library are not still uploaded!
+To learn how to install these libraries, read README.macosx
+
+Source of external framework, downloaded from the previous sites
+http://openil.sourceforge.net/libs/ExternFrameworksSrc.sitx
+
+Complete Compiled Library
+http://openil.sourceforge.net/libs/OpenILBin.sitx

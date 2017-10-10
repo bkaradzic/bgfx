@@ -16,12 +16,20 @@
 #include <tinystl/unordered_map.h>
 #include <tinystl/unordered_set.h>
 #include <tinystl/string.h>
+#include <tinystl/vector.h>
 namespace stl = tinystl;
 
 #include <forsyth-too/forsythtriangleorderoptimizer.h>
 #include <ib-compress/indexbuffercompression.h>
 
-#define BGFX_GEOMETRYC_VERSION_MAJOR 1
+//#undef GEOMETRYC_USE_ASSIMP
+#if GEOMETRYC_USE_ASSIMP
+#include <assimp/Importer.hpp>
+#include "assimp/postprocess.h"
+#include "assimp/scene.h"
+#endif
+
+#define BGFX_GEOMETRYC_VERSION_MAJOR 2
 #define BGFX_GEOMETRYC_VERSION_MINOR 0
 
 #if 0
@@ -66,7 +74,7 @@ struct Vector3
 	float z;
 };
 
-typedef std::vector<Vector3> Vector3Array;
+typedef stl::vector<Vector3> Vector3Array;
 
 struct Index3
 {
@@ -75,26 +83,119 @@ struct Index3
 	int32_t m_normal;
 	int32_t m_vertexIndex;
 	int32_t m_vbc; // Barycentric ID. Holds eigher 0, 1 or 2.
+
+
+	uint64_t hash() const
+	{
+		uint64_t hash0 = m_position;
+		uint64_t hash1 = uint64_t(m_texcoord) << 20;
+		uint64_t hash2 = uint64_t(m_normal) << 40;
+		uint64_t hash3 = uint64_t(m_vbc) << 60;
+		uint64_t hash = hash0^hash1^hash2^hash3;
+		return hash;
+	}
+
 };
 
 typedef stl::unordered_map<uint64_t, Index3> Index3Map;
+
+
+class StringsTable
+{
+	stl::vector<stl::string> entries;
+	uint32_t sizeInChars;
+
+public:
+
+	typedef stl::vector<stl::string>::const_iterator const_iterator;
+
+	static const uint32_t invalid_offset = uint32_t(-1);
+
+	StringsTable()
+	{
+		sizeInChars = 0;
+		entries.reserve(32);
+	}
+
+	void clear()
+	{
+		sizeInChars = 0;
+		entries.clear();
+	}
+
+	uint32_t getSizeInChars() const
+	{
+		return sizeInChars;
+	}
+
+	uint32_t find(const stl::string & s) const
+	{
+		uint32_t offset = 0;
+		for (uint32_t i = 0; i < entries.size(); i++)
+		{
+			if (entries[i] == s)
+			{
+				return offset;
+			}
+			offset += entries[i].size() + 1;
+		}
+
+		return invalid_offset;
+	}
+
+	uint32_t add(const stl::string & s)
+	{
+		uint32_t offset = find(s);
+		if (offset != invalid_offset)
+		{
+			return offset;
+		}
+
+		offset = sizeInChars;
+		sizeInChars += s.size() + 1;
+		entries.push_back(s);
+		return offset;
+	}
+
+	const_iterator begin() const
+	{
+		return entries.begin();
+	}
+
+	const_iterator end() const
+	{
+		return entries.end();
+	}
+
+};
+
 
 struct Triangle
 {
 	uint64_t m_index[3];
 };
 
-typedef std::vector<Triangle> TriangleArray;
+typedef stl::vector<Triangle> TriangleArray;
+
+struct Material
+{
+	uint32_t m_nameId;
+	uint32_t m_diffuseId;
+	uint32_t m_normalId;
+	uint32_t m_specularId;
+};
+
+typedef stl::vector<Material> MaterialArray;
 
 struct Group
 {
 	uint32_t m_startTriangle;
 	uint32_t m_numTriangles;
-	stl::string m_name;
-	stl::string m_material;
-};
+	uint32_t m_nameId;
+	uint32_t m_materialIndex;
+	stl::string m_materialName;};
 
-typedef std::vector<Group> GroupArray;
+typedef stl::vector<Group> GroupArray;
 
 struct Primitive
 {
@@ -102,17 +203,19 @@ struct Primitive
 	uint32_t m_startIndex;
 	uint32_t m_numVertices;
 	uint32_t m_numIndices;
-	stl::string m_name;
+	uint32_t m_nameId;
 };
 
-typedef std::vector<Primitive> PrimitiveArray;
+typedef stl::vector<Primitive> PrimitiveArray;
 
 static uint32_t s_obbSteps = 17;
 
 #define BGFX_CHUNK_MAGIC_VB  BX_MAKEFOURCC('V', 'B', ' ', 0x1)
 #define BGFX_CHUNK_MAGIC_IB  BX_MAKEFOURCC('I', 'B', ' ', 0x0)
 #define BGFX_CHUNK_MAGIC_IBC BX_MAKEFOURCC('I', 'B', 'C', 0x0)
-#define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
+#define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x1)
+#define BGFX_CHUNK_MAGIC_STR BX_MAKEFOURCC('S', 'T', 'R', 0x0)
+#define BGFX_CHUNK_MAGIC_MAT BX_MAKEFOURCC('M', 'A', 'T', 0x0)
 
 long int fsize(FILE* _file)
 {
@@ -158,6 +261,26 @@ void triangleCompress(bx::WriterI* _writer, uint16_t* _indices, uint32_t _numInd
 	free(vertexRemap);
 
 	bx::write(_writer, writer.RawData(), (uint32_t)writer.ByteSize() );
+}
+
+void packTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl, Vector3* tangents, Vector3* bitangents)
+{
+	for (uint32_t i = 0; i < _numVertices; ++i)
+	{
+		float normal[4];
+		bgfx::vertexUnpack(normal, bgfx::Attrib::Normal, _decl, _vertices, i);
+
+		float nxt[3];
+		bx::vec3Cross(nxt, (const float*)&tangents[i], normal);
+
+		float tangent[4];
+		tangent[0] = tangents[i].x;
+		tangent[1] = tangents[i].y;
+		tangent[2] = tangents[i].z;
+		tangent[3] = bx::vec3Dot(nxt, (const float*)&bitangents[i]) < 0.0f ? -1.0f : 1.0f;
+		bgfx::vertexPack(tangent, true, bgfx::Attrib::Tangent, _decl, _vertices, i);
+	}
+
 }
 
 void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
@@ -267,7 +390,7 @@ void write(bx::WriterI* _writer, const void* _vertices, uint32_t _numVertices, u
 	calcMaxBoundingSphere(maxSphere, _vertices, _numVertices, _stride);
 
 	Sphere minSphere;
-	calcMinBoundingSphere(minSphere, _vertices, _numVertices, _stride);
+	calcMinBoundingSphere(minSphere, _vertices, _numVertices, _stride, 0.01f, 1024);
 
 	if (minSphere.m_radius > maxSphere.m_radius)
 	{
@@ -288,6 +411,39 @@ void write(bx::WriterI* _writer, const void* _vertices, uint32_t _numVertices, u
 }
 
 void write(bx::WriterI* _writer
+		, const StringsTable& _stringTable)
+{
+	write(_writer, BGFX_CHUNK_MAGIC_STR);
+
+	uint32_t sizeInChars = _stringTable.getSizeInChars();
+	write(_writer, sizeInChars);
+	for (StringsTable::const_iterator tableIt = _stringTable.begin(); tableIt != _stringTable.end(); ++tableIt)
+	{
+		const stl::string& entry = *tableIt;
+		uint32_t stringSize = entry.size();
+		write(_writer, entry.c_str(), stringSize + 1);
+	}
+}
+
+void write(bx::WriterI* _writer
+		, MaterialArray _materials)
+{
+	write(_writer, BGFX_CHUNK_MAGIC_MAT);
+
+	uint32_t numMaterials = _materials.size();
+	write(_writer, numMaterials);
+	for (uint32_t i = 0; i < numMaterials; i++)
+	{
+		const Material& material = _materials[i];
+		write(_writer, material.m_nameId);
+		write(_writer, material.m_diffuseId);
+		write(_writer, material.m_normalId);
+		write(_writer, material.m_specularId);
+	}
+}
+
+
+void write(bx::WriterI* _writer
 		, const uint8_t* _vertices
 		, uint32_t _numVertices
 		, const bgfx::VertexDecl& _decl
@@ -295,7 +451,7 @@ void write(bx::WriterI* _writer
 		, uint32_t _numIndices
 		, const uint8_t* _compressedIndices
 		, uint32_t _compressedSize
-		, const stl::string& _material
+		, uint32_t _materialIndex
 		, const PrimitiveArray& _primitives
 		)
 {
@@ -326,16 +482,12 @@ void write(bx::WriterI* _writer
 	}
 
 	write(_writer, BGFX_CHUNK_MAGIC_PRI);
-	uint16_t nameLen = uint16_t(_material.size() );
-	write(_writer, nameLen);
-	write(_writer, _material.c_str(), nameLen);
+	write(_writer, _materialIndex);
 	write(_writer, uint16_t(_primitives.size() ) );
 	for (PrimitiveArray::const_iterator primIt = _primitives.begin(); primIt != _primitives.end(); ++primIt)
 	{
 		const Primitive& prim = *primIt;
-		nameLen = uint16_t(prim.m_name.size() );
-		write(_writer, nameLen);
-		write(_writer, prim.m_name.c_str(), nameLen);
+		write(_writer, prim.m_nameId);
 		write(_writer, prim.m_startIndex);
 		write(_writer, prim.m_numIndices);
 		write(_writer, prim.m_startVertex);
@@ -357,7 +509,7 @@ struct GroupSortByMaterial
 {
 	bool operator()(const Group& _lhs, const Group& _rhs)
 	{
-		return 0 < bx::strCmp(_lhs.m_material.c_str(), _rhs.m_material.c_str() );
+		return _lhs.m_materialIndex < _rhs.m_materialIndex;
 	}
 };
 
@@ -382,7 +534,18 @@ void help(const char* _error = NULL)
 
 		  "\n"
 		  "Supported input file types:\n"
+#if GEOMETRYC_USE_ASSIMP
+		  "    *.fbx                  Autodesk\n"
+		  "    *.dae                  Collada\n"
+		  "    *.blend                Blender 3D\n"
+		  "    *.3ds                  3ds Max 3DS\n"
+		  "    *.ase                  3ds Max ASE\n"
 		  "    *.obj                  Wavefront\n"
+		  "    *.lwo                  LightWave\n"
+		  "    *.ms3d                 Milkshape 3D\n"
+#else
+		  "    *.obj                  Wavefront\n"
+#endif
 
 		  "\n"
 		  "Options:\n"
@@ -410,6 +573,31 @@ void help(const char* _error = NULL)
 		  "For additional information, see https://github.com/bkaradzic/bgfx\n"
 		);
 }
+
+
+stl::string getTextureFilePath(const bx::StringView& _filePath)
+{
+	bx::FilePath filePath;
+	filePath.set(_filePath);
+
+	const bx::StringView path = filePath.getPath();
+	const bx::StringView baseName = filePath.getBaseName();
+
+	stl::string ddsName(baseName.getPtr(), baseName.getLength());
+	ddsName.append(".dds");
+	
+	if (filePath.isAbsolute())
+	{
+		return ddsName;
+	}
+
+	bx::FilePath r;
+	r.set(path);
+	r.join(ddsName.c_str());
+
+	return stl::string(r.get());
+}
+
 
 int main(int _argc, const char* _argv[])
 {
@@ -468,6 +656,251 @@ int main(int _argc, const char* _argv[])
 	bool flipV = cmdLine.hasArg("flipv");
 	bool hasTangent = cmdLine.hasArg("tangent");
 	bool hasBc = cmdLine.hasArg("barycentric");
+	Vector3* precalculatedTangents = NULL;
+	Vector3* precalculatedBitangents = NULL;
+
+	Vector3Array positions;
+	positions.reserve(512);
+
+	Vector3Array normals;
+	normals.reserve(512);
+
+	Vector3Array texcoords;
+	texcoords.reserve(512);
+
+	TriangleArray triangles;
+	triangles.reserve(512);
+
+	GroupArray groups;
+	groups.reserve(128);
+
+	MaterialArray materials;
+	materials.reserve(32);
+
+	StringsTable stringsTable;
+	Index3Map indexMap;
+
+	int64_t parseElapsed = -bx::getHPCounter();
+	int64_t triReorderElapsed = 0;
+	uint32_t num = 0;
+
+#if GEOMETRYC_USE_ASSIMP
+	Assimp::Importer importer;
+	const aiScene* asset = importer.ReadFile(filePath, aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_FlipUVs);
+	if (NULL == asset)
+	{
+		printf("Unable to open input file '%s'.", filePath);
+		exit(bx::kExitFailure);
+	}
+
+	uint32_t numMeshes = asset->mNumMeshes;
+	if (numMeshes == 0)
+	{
+		printf("There are no meshes found in the file '%s'.", filePath);
+		exit(bx::kExitFailure);
+	}
+
+	aiString temp;
+	stl::string materialName;
+	stl::string diffuseMapName;
+	stl::string normalMapName;
+	stl::string specularMapName;
+	for (uint32_t n = 0; n < asset->mNumMaterials; n++)
+	{
+		const aiMaterial* inMaterial = asset->mMaterials[n];
+
+		if (inMaterial->Get(AI_MATKEY_NAME, temp) == aiReturn_SUCCESS)
+		{
+			materialName = temp.C_Str();
+		}
+		else
+		{
+			materialName = "default";
+		}
+
+		if (inMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &temp) == aiReturn_SUCCESS)
+		{
+			diffuseMapName = getTextureFilePath(temp.C_Str());
+		}
+		else
+		{
+			diffuseMapName = "";
+		}
+
+		if (inMaterial->GetTexture(aiTextureType_NORMALS, 0, &temp) == aiReturn_SUCCESS)
+		{
+			normalMapName = getTextureFilePath(temp.C_Str());
+		}
+		else
+		{
+			normalMapName = "";
+		}
+
+		if (inMaterial->GetTexture(aiTextureType_SPECULAR, 0, &temp) == aiReturn_SUCCESS)
+		{
+			specularMapName = getTextureFilePath(temp.C_Str());
+		}
+		else
+		{
+			specularMapName = "";
+		}
+
+		Material material;
+		material.m_nameId = stringsTable.add(materialName);
+		material.m_diffuseId = stringsTable.add(diffuseMapName);
+		material.m_normalId = stringsTable.add(normalMapName);
+		material.m_specularId = stringsTable.add(specularMapName);
+		materials.push_back(material);
+	}
+	
+	Vector3Array tangents;
+	tangents.reserve(512);
+
+	Vector3Array bitangents;
+	bitangents.reserve(512);
+
+	uint32_t startVertex = 0;
+	for (uint32_t n = 0; n < numMeshes; n++)
+	{
+		const aiMesh* mesh = asset->mMeshes[n];
+
+		uint32_t firstTriangle = triangles.size();
+
+		for (uint32_t i = 0; i < mesh->mNumFaces; i++)
+		{
+			const aiFace& inFace = mesh->mFaces[i];
+			BX_CHECK(inFace.mNumIndices == 3, "Mesh must be triangulated");
+			if (inFace.mNumIndices != 3)
+			{
+				continue;
+			}
+
+			Triangle triangle;
+			for (uint32_t edge = 0; edge < 3; ++edge)
+			{
+				Index3 index;
+				index.m_vertexIndex = -1;
+				index.m_texcoord = startVertex + inFace.mIndices[edge];
+				index.m_normal = startVertex + inFace.mIndices[edge];
+				index.m_position = startVertex + inFace.mIndices[edge];
+
+				if (hasBc)
+				{
+					index.m_vbc = edge < 3 ? edge : (1 + (edge + 1)) & 1;
+				}
+				else
+				{
+					index.m_vbc = 0;
+				}
+
+				uint64_t hash = index.hash();
+
+				stl::pair<Index3Map::iterator, bool> result = indexMap.insert(stl::make_pair(hash, index));
+				if (!result.second)
+				{
+					Index3& oldIndex = result.first->second;
+					BX_UNUSED(oldIndex);
+					BX_CHECK(oldIndex.m_position == index.m_position
+						&& oldIndex.m_texcoord == index.m_texcoord
+						&& oldIndex.m_normal == index.m_normal
+						, "Hash collision!"
+						);
+				}
+
+				triangle.m_index[edge] = hash;
+			}
+
+			if (ccw)
+			{
+				std::swap(triangle.m_index[1], triangle.m_index[2]);
+			}
+
+			triangles.push_back(triangle);
+		}
+
+		uint32_t lastTriangle = triangles.size();
+
+
+		for (uint32_t i = 0; i < mesh->mNumVertices; i++)
+		{
+			const aiVector3D& inPos = mesh->mVertices[i];
+
+			Vector3 pos;
+			pos.x = inPos.x;
+			pos.y = inPos.y;
+			pos.z = inPos.z;
+			positions.push_back(pos);
+
+			Vector3 uv;
+			aiVector3D* uvStream0 = mesh->mTextureCoords[0];
+			if (uvStream0)
+			{
+				const aiVector3D& inUv = uvStream0[i];
+				uv.x = inUv.x;
+				uv.y = inUv.y;
+				uv.z = inUv.z;
+			} else
+			{
+				uv.x = 0.0f;
+				uv.y = 0.0f;
+				uv.z = 0.0f;
+			}
+			texcoords.push_back(uv);
+
+			const aiVector3D& inNormal = mesh->mNormals[i];
+			Vector3 normal;
+			normal.x = inNormal.x;
+			normal.y = inNormal.y;
+			normal.z = inNormal.z;
+			bx::vec3Norm((float*)&normal, (float*)&normal);
+			normals.push_back(normal);
+
+			if (mesh->HasTangentsAndBitangents())
+			{
+				const aiVector3D& inTangent = mesh->mTangents[i];
+				Vector3 tangent;
+				tangent.x = inTangent.x;
+				tangent.y = inTangent.y;
+				tangent.z = inTangent.z;
+				bx::vec3Norm((float*)&tangent, (float*)&tangent);
+				tangents.push_back(tangent);
+
+				const aiVector3D& inBitangent = mesh->mBitangents[i];
+				Vector3 bitangent;
+				bitangent.x = inBitangent.x;
+				bitangent.y = inBitangent.y;
+				bitangent.z = inBitangent.z;
+				bx::vec3Norm((float*)&bitangent, (float*)&bitangent);
+				bitangents.push_back(bitangent);
+			}
+		}
+
+		uint32_t trianglesCount = lastTriangle - firstTriangle;
+
+		if (trianglesCount > 0)
+		{
+			aiString meshName = mesh->mName;
+
+			Group group;
+			group.m_nameId = stringsTable.add(meshName.C_Str());
+			group.m_materialIndex = mesh->mMaterialIndex;
+			group.m_startTriangle = firstTriangle;
+			group.m_numTriangles = lastTriangle - firstTriangle;
+			groups.push_back(group);
+		}
+
+		startVertex = positions.size();
+	}
+
+	if (tangents.size() == positions.size() && bitangents.size() == positions.size())
+	{
+		hasTangent = true;
+		precalculatedTangents = &tangents[0];
+		precalculatedBitangents = &bitangents[0];
+	}
+
+
+#else
 
 	FILE* file = fopen(filePath, "r");
 	if (NULL == file)
@@ -476,9 +909,6 @@ int main(int _argc, const char* _argv[])
 		exit(bx::kExitFailure);
 	}
 
-	int64_t parseElapsed = -bx::getHPCounter();
-	int64_t triReorderElapsed = 0;
-
 	uint32_t size = (uint32_t)fsize(file);
 	char* data = new char[size+1];
 	size = (uint32_t)fread(data, 1, size, file);
@@ -486,15 +916,6 @@ int main(int _argc, const char* _argv[])
 	fclose(file);
 
 	// https://en.wikipedia.org/wiki/Wavefront_.obj_file
-
-	Vector3Array positions;
-	Vector3Array normals;
-	Vector3Array texcoords;
-	Index3Map indexMap;
-	TriangleArray triangles;
-	GroupArray groups;
-
-	uint32_t num = 0;
 
 	Group group;
 	group.m_startTriangle = 0;
@@ -568,11 +989,7 @@ int main(int _argc, const char* _argv[])
 					bx::fromString(&pos, vertex);
 					index.m_position = (pos < 0) ? pos+numPositions : pos-1;
 
-					uint64_t hash0 = index.m_position;
-					uint64_t hash1 = uint64_t(index.m_texcoord)<<20;
-					uint64_t hash2 = uint64_t(index.m_normal)<<40;
-					uint64_t hash3 = uint64_t(index.m_vbc)<<60;
-					uint64_t hash = hash0^hash1^hash2^hash3;
+					uint64_t hash = index.hash();
 
 					stl::pair<Index3Map::iterator, bool> result = indexMap.insert(stl::make_pair(hash, index) );
 					if (!result.second)
@@ -620,7 +1037,7 @@ int main(int _argc, const char* _argv[])
 			}
 			else if (0 == bx::strCmp(argv[0], "g") )
 			{
-				group.m_name = argv[1];
+				group.m_nameId = stringsTable.add(argv[1]);
 			}
 			else if (*argv[0] == 'v')
 			{
@@ -697,9 +1114,30 @@ int main(int _argc, const char* _argv[])
 			}
 			else if (0 == bx::strCmp(argv[0], "usemtl") )
 			{
-				stl::string material(argv[1]);
+				stl::string materialName(argv[1]);
 
-				if (0 != bx::strCmp(material.c_str(), group.m_material.c_str() ) )
+				uint32_t materialNameId = stringsTable.add(materialName);
+				bool isMaterialExists = false;
+				for (uint32_t i = 0; i < materials.size(); i++)
+				{
+					if (materials[i].m_nameId == materialNameId)
+					{
+						isMaterialExists = true;
+						break;
+					}
+				}
+
+				if (!isMaterialExists)
+				{
+					Material material;
+					material.m_nameId = materialNameId;
+					material.m_diffuseId = stringsTable.add("");
+					material.m_normalId = stringsTable.add("");
+					material.m_specularId = stringsTable.add("");
+					materials.push_back(material);
+				}
+
+				if (0 == bx::strCmp(materialName.c_str(), group.m_materialName.c_str()))
 				{
 					group.m_numTriangles = (uint32_t)(triangles.size() ) - group.m_startTriangle;
 					if (0 < group.m_numTriangles)
@@ -710,7 +1148,7 @@ int main(int _argc, const char* _argv[])
 					}
 				}
 
-				group.m_material = material;
+				group.m_materialName = materialName;
 			}
 // unsupported tags
 // 				else if (0 == bx::strCmp(argv[0], "mtllib") )
@@ -737,6 +1175,14 @@ int main(int _argc, const char* _argv[])
 	}
 
 	delete [] data;
+
+	if (indexMap.empty())
+	{
+		printf("Ignoring invalid Wavefront OBJ file '%s'.\n", filePath);
+		exit(bx::kExitSuccess);
+	}
+
+#endif
 
 	int64_t now = bx::getHPCounter();
 	parseElapsed += now;
@@ -850,7 +1296,7 @@ int main(int _argc, const char* _argv[])
 	uint8_t* vertices = vertexData;
 	uint16_t* indices = indexData;
 
-	stl::string material = groups.begin()->m_material;
+	uint32_t materialIndex = groups.begin()->m_materialIndex;
 
 	PrimitiveArray primitives;
 
@@ -860,6 +1306,9 @@ int main(int _argc, const char* _argv[])
 		printf("Unable to open output file '%s'.", outFilePath);
 		exit(bx::kExitFailure);
 	}
+
+	write(&writer, stringsTable);
+	write(&writer, materials);
 
 	Primitive prim;
 	prim.m_startVertex = 0;
@@ -876,7 +1325,7 @@ int main(int _argc, const char* _argv[])
 	{
 		for (uint32_t tri = groupIt->m_startTriangle, end = tri + groupIt->m_numTriangles; tri < end; ++tri)
 		{
-			if (0 != bx::strCmp(material.c_str(), groupIt->m_material.c_str() )
+			if (materialIndex != groupIt->m_materialIndex
 			||  65533 < numVertices)
 			{
 				prim.m_numVertices = numVertices - prim.m_startVertex;
@@ -888,7 +1337,14 @@ int main(int _argc, const char* _argv[])
 
 				if (hasTangent)
 				{
-					calcTangents(vertexData, uint16_t(numVertices), decl, indexData, numIndices);
+					if (precalculatedTangents && precalculatedBitangents)
+					{
+						packTangents(vertexData, uint16_t(numVertices), decl, precalculatedTangents, precalculatedBitangents);
+					}
+					else
+					{
+						calcTangents(vertexData, uint16_t(numVertices), decl, indexData, numIndices);
+					}
 				}
 
 				bx::MemoryWriter memWriter(&memBlock);
@@ -919,7 +1375,7 @@ int main(int _argc, const char* _argv[])
 					, numIndices
 					, (uint8_t*)memBlock.more()
 					, memBlock.getSize()
-					, material
+					, materialIndex
 					, primitives
 					);
 				primitives.clear();
@@ -937,14 +1393,16 @@ int main(int _argc, const char* _argv[])
 				prim.m_startIndex = 0;
 				++numPrimitives;
 
-				material = groupIt->m_material;
+				materialIndex = groupIt->m_materialIndex;
 			}
 
 			Triangle& triangle = triangles[tri];
 			for (uint32_t edge = 0; edge < 3; ++edge)
 			{
 				uint64_t hash = triangle.m_index[edge];
-				Index3& index = indexMap[hash];
+				Index3Map::iterator indexIt = indexMap.find(hash);
+				BX_CHECK(indexIt != indexMap.end(), "Can't find valid index for triangle");
+				Index3& index = indexIt->second;
 				if (index.m_vertexIndex == -1)
 				{
 		 			index.m_vertexIndex = numVertices++;
@@ -1001,7 +1459,7 @@ int main(int _argc, const char* _argv[])
 		if (0 < prim.m_numVertices)
 		{
 			prim.m_numIndices = numIndices - prim.m_startIndex;
-			prim.m_name = groupIt->m_name;
+			prim.m_nameId = groupIt->m_nameId;
 			primitives.push_back(prim);
 			prim.m_startVertex = numVertices;
 			prim.m_startIndex  = numIndices;
@@ -1050,7 +1508,7 @@ int main(int _argc, const char* _argv[])
 			, numIndices
 			, (uint8_t*)memBlock.more()
 			, memBlock.getSize()
-			, material
+			, materialIndex
 			, primitives
 			);
 	}

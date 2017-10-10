@@ -1,0 +1,15 @@
+# Declare files that will always have LF line endings on checkout.
+*.cpp text eol=lf
+*.h text eol=lf
+*.c text eol=lf
+*.cc text eol=lf
+*.cpp text eol=lf
+*.rc text eol=lf
+*.hpp text eol=lf
+*.txt text eol=lf
+*.cmake text eol=lf
+*.sh text eol=lf
+CHANGES text eol=lf
+CREDITS text eol=lf
+LICENSE text eol=lf
+Readme.md text eol=lf

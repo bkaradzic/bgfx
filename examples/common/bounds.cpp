@@ -307,7 +307,7 @@ void calcMaxBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 	_sphere.m_radius = bx::fsqrt(maxDistSq);
 }
 
-void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _numVertices, uint32_t _stride, float _step)
+bool calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _numVertices, uint32_t _stride, float _step, uint32_t _steps)
 {
 	bx::RngMwc rng;
 
@@ -334,7 +334,7 @@ void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 	float radiusStep = _step * 0.37f;
 
 	bool done;
-	do
+	for (uint32_t step = 0; step < _steps; step++)
 	{
 		done = true;
 		for (uint32_t ii = 0, index = rng.gen()%_numVertices; ii < _numVertices; ++ii, index = (index + 1)%_numVertices)
@@ -359,10 +359,17 @@ void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 			}
 		}
 
-	} while (!done);
+		if (done)
+		{
+			bx::vec3Move(_sphere.m_center, center);
+			_sphere.m_radius = bx::fsqrt(maxDistSq);
+			return true;
+		}
+	}
 
-	bx::vec3Move(_sphere.m_center, center);
-	_sphere.m_radius = bx::fsqrt(maxDistSq);
+	// fallback
+	calcMaxBoundingSphere(_sphere, _vertices, _numVertices, _stride);
+	return false;
 }
 
 void calcPlaneUv(const Plane& _plane, float* _udir, float* _vdir)

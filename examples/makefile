@@ -37,7 +37,7 @@ rebuild:
 #	@make -s --no-print-directory rebuild -C 34-mvs
 #	@make -s --no-print-directory rebuild -C 35-dynamic
 	@make -s --no-print-directory rebuild -C 36-sky
-	@make -s --no-print-directory rebuild -C common/debugdraw
+	@make -s --no-print-directory rebuild -C 37-sponza	@make -s --no-print-directory rebuild -C common/debugdraw
 	@make -s --no-print-directory rebuild -C common/font
 	@make -s --no-print-directory rebuild -C common/imgui
 	@make -s --no-print-directory rebuild -C common/nanovg

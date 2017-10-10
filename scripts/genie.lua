@@ -44,6 +44,11 @@ newoption {
 }
 
 newoption {
+	trigger = "with-assimp",
+	description = "Enable Open Asset Import Library support for geometry compiler tool.",
+}
+
+newoption {
 	trigger = "with-combined-examples",
 	description = "Enable building examples (combined as single executable).",
 }
@@ -481,6 +486,7 @@ or _OPTIONS["with-combined-examples"] then
 		, "34-mvs"
 		, "35-dynamic"
 		, "36-sky"
+		, "37-sponza"
 		)
 
 	-- C99 source doesn't compile under WinRT settings

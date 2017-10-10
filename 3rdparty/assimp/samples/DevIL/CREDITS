@@ -1,0 +1,264 @@
+Credits as of 02/06/2009
+------------------------
+
+If I inadvertently omitted anyone's name from this list, please e-mail me at
+doomwiz@users.sourceforge.net to remedy the problem.
+
+
+James Joplin, alias jayjay (rjoplin@webzone.net)
+for all his invaluable help and encouragement with DevIL.
+
+Edouard Gomez for his invaluable help.
+
+All the #flipCode gang for their support.
+
+All my friends at uni for their support.
+
+SoftImage .pic support based off of code obtained from
+http://www.swin.edu.au/astronomy/pbourke/dataformats/
+
+TestPic, used in TestIL
+http://www.paintlib.de/paintlib/testpic.zip
+
+Png Test Images
+http://www.schaik.com/pngsuite/pngsuite.html
+
+John Villar (john.villar@eliaschev.com) for making the suggestion of not
+letting the user use ILimage structs but instead binding images like OpenGL.
+He also made a suggestion on how to load luminance .jpg images, along with
+other suggestions.
+
+http://www.opengl.org/Coding/KilgardTechniques/oglpitfall/oglpitfall.html
+section 6 for the values the NTSC uses, so I could convert from coloured
+images to luminance values.
+
+Kodak Photo CD code from the .pcd link on http://www.wotsit.org.
+
+Foper (foper@hotmail.com) from #flipCode for supplying the excellent
+flipcode.jpg in testil\in. The original can be found at
+http://webpatterns.com/flip/flipshow.htm
+
+Lightman (cdthompson@home.net) from #flipCode for restructuring the project
+into /bin, /obj, etc.
+
+Alexander Blach (alexander@abee.de) from #flipCode for creating the Delphi
+headers and test app.  He figured out that we needed to use .def files to
+prevent name decoration of the dlls.  He has contributed multiple ideas and
+found flaws.  Alexander also created a lovely documentation database to help
+with documenting DevIL.
+
+Randy Heit for finding problems in my Doom texture code.
+
+Oliver Kurowski (oliver.kurowski@gmx.de) for locating a bug in ilut's
+DllMain() and another very harmful bug with ilDeleteImages().
+
+Ender Wiggin's article on "Elementary Digital Filtering",
+found at http://www.gamedev.net/reference/programming/features/edf/
+for many filters in DevIL.
+
+SGI's "Graphica Obscura" site at http://www.sgi.com/grafica/matrix/index.html
+for several filters in DevIL.
+
+The http://bae.fse.missouri.edu/luw/course/image/project1/project1.html
+page for help in determining filter code for Graphica Obscura's interpolation
+article at http://www.sgi.com/grafica/interp/index.html.
+
+Matt Denham for suggesting optimizations in ilNegativeImage(),
+iluEdgeDetectS() and iluEdgeDetectP().
+
+Timo Heister (Timo-Heister@gmx.de) from #flipCode for creating the original
+Visual Basic headers and test apps for VB.
+
+The OpenGL SuperBible for code for ilutGetHPal().
+
+DJ Luminescent (luminescent@uswest.net) for finding a couple of bugs in the
+.bmp-loading code and diligently beta testing.
+
+Lionel Brits, alias Zaewo from #flipCode for slapping me around and telling
+me how Microsoft does their .bmp padding.  He then wrote most of the
+iluEqualize() code from the base code on
+http://www.manning.com/Kabir/Files.html .
+
+Joel Wilsson, alias Siigron (siigron@hotmail.com) for pointing-out several
+design flaws that I (Denton) had introduced and posing very useful
+suggestions.
+
+Sean Montgomery, alias Vapor (sean@astralfx.com) for patiently listening to
+my endless drivel about DevIL.
+
+Perlin Noise site http://freespace.virgin.net/hugo.elias/models/m_perlin.htm
+for information on interpolation used in iluScale().
+
+Shimon Shvartsbroit, alias MasterBoy (cobra11@netvision.net.il) from #flipCode
+for explaining bilinear interpolation to me.
+
+Lbm source from http://www.wotsit.org
+
+Eran Kampf, alias ttentacle (ekampf@internet-zahav.net) for giving me
+resource-loading code for ilutLoadResource and helping with the Windows
+clipboard functions.
+
+Strumpf from #flipCode for writing a really good DirectDraw class for me to
+use in the DDraw test, which is based off of his test, too.
+
+NullSoft (http://www.nullsoft.com), for their SuperPiMP installer.  It is
+extremely easy to learn to use and very powerful.
+
+Serun from #flipCode for noticing that Quake2 .pcx files sometimes don't have
+the checksum byte for palette'd .pcx files.
+
+Conor Stokes, aka DirtyPunk from #flipCode for helping explain several things
+to me.
+
+Half-Life model viewer sources (at http://www.swissquake.ch/chumbalum-soft/)
+for specs for the Half-Life model format.
+
+Rich Schwab, alias endura (endura29@hotmail.com) for contributing
+girlfriend.cpp.
+
+The Djgpp libc sources (http://www.delorie.com/djgpp), from where I copied
+several functions.
+
+Roman Podobedov (romka@ut.ee) of Romka Graphics (http://romka.demonews.com)
+for his colour quantization sources, which he was kind enough to let me use.
+
+Pcx document on http://www.wotsit.org for .pcx saving code.
+
+http://www-classic.be.com/aboutbe/benewsletter/volume_III/Issue2.html#Insight
+for iluWave().
+
+.lif specs from http://www.infinite-mass.com/bob/files/lifed.zip and
+ http://www.infinite-mass.com/bob/files/lif.zip
+
+Rune Kock (rune@vupti.com) for writing the new Visual Basic headers and for
+finding a return bug in iluScaleAdvanced.
+
+Julien Verchere and Xavier Decoret for suggesting that I use const char*'s
+instead of char*'s as function parameters.
+
+Jason Reeve (jason@retribution-entertainment.com) for finding a bug in iluCrop,
+several origin-related problems, and helping me bring my targa-loading code up
+to spec.
+
+Darren Adams for telling me the #pragmas to use in MSVC++ to disable the
+console window in a "console app".
+
+David Gould for getting onto me about my crappy Linux support.
+
+David Galeano for his DX8 Surface to TGA code, modified to save to any texture.
+The original can be found at http://rt000s2p.eresmas.net/downloads.htm
+
+RLE code from TrueVision's TGA sample code available as Tgautils.zip at
+ftp://ftp.truevision.com/pub/TGA.File.Format.Spec/PC.Version/
+
+Jeroen Janssen for creating a Mandrake RPM patch for DevIL.
+
+Greg Priem for his help with supporting libungif and some various other things.
+
+Nelson Rush for SDL surface support and finding several bugs with DevIL.
+
+George McBay for his wonderful help finding bugs in my mipmapping code.
+
+Marco Kögler for finding bugs in my .jpg and .png code.
+
+Falco Kleinschmidt for fixing problems with the Linux makefiles.
+
+Olivier Bucher for finding a bug in saving 8-bit .bmp files.
+
+Derek Wills for noticing a problem with ilutGLScreenie when the screen width is
+not a multiple of 4.
+
+Dale Schumacher's "Filtered Image Rescaling" code in Graphic Gems III for some
+scaling algorithms in ILU.
+
+Kevin Park for making some suggestions on the ilImage C++ wrapper.
+
+Alessandro Pedretti for finding a bug in my TIFF code and making suggestions
+about portability issues.
+
+boostrlns from #flipCode for finding the ilutGLLoadImage bug in the 1.1.5
+release.
+
+Ismo Kärkkäinen (iak@cs.joensuu.fi) for making some really nice new makefiles
+for Linux.
+
+Kishan (http://www.hackorama.com) for the nice directions on how to compile
+the external libraries under Linux.
+
+Wojciech Sobczuk for creating FreeBSD versions of the makefiles.
+
+nVidia for code to load .DDS files available at
+http://www.nvidia.com/view.asp?IO=dxtc_decompression_code
+
+PixiGreg for noticing that many viewers don't like .bmp files with negative
+heights (flipped), even though the specs say that it is valid.
+
+Matthias Stiller and Andre Normann for their invaluable help with getting
+DevIL to work on Big Endian machines.
+
+Jean-Francois Richard for the Python bindings of DevIL.
+
+Nick Marley for post-build information in MSVC++.
+
+Kenneth Hurley for his help in expanding and fixing my DDS code.
+
+Mark Callow for EXIF-loading and saving code, along with il[Load/Save]FromJpegStruct
+
+Sam for several fixes to my .bmp and .jpg loaders.
+
+chris79 for his help debugging my .psp and .gif code in several versions.
+
+Nick Marley for his MSVC++ post-build fixes.
+
+Marc Gregoire for sending images that DevIL would not load.
+
+Alberto Barbati for noticing that the IL_NEU_QUANT_SAMPLE mode wasn't being used properly.
+
+Ryan Butterfoss for his contributions to the DDS saving code.
+
+Computer Graphics (C Version) book by Hearn and Baker for the arbitrary polygon filling code.
+
+Nicolas Weber
+
+Meloni Dario
+
+Erick Tryzelaar
+
+Matej Tyc for completely redoing the Linux makefile system and rewriting the documentation.
+
+Matevz Tadel for fixing makefile for Scientific Linux.
+
+Richard Sim for contributing several fixes, especially for .psd loading
+
+robin_charlton for contributing a patch for Windows BMP support in ILUT.
+
+Vincent Richomme for DirectX Mobile support
+
+Antibyte for DDS save bugfix
+
+Stefan Cornelius, Secunia Research, for finding some buffer overflow vulnerabilities.
+
+Nico Golde for finding that my fix for the above vulnerability was not totally complete.
+
+GAIA (Group for Artificial Intelligence Applications) for contributions including .iff-loading
+and redoing the ilutConvertToHBitmap code.  Their changes are at 
+http://gaia.fdi.ucm.es/grupo/projects/javy/devzone.html#DevILNotes.
+
+Jesse Maurais for support of X11 component
+
+
+Translations:
+-------------
+
+Carlos Aragonés, for Spanish translation
+
+Bart De Lathouwer, for Danish translation
+
+Osamu Ohara, for English translation
+
+Abdullah Alshammari, for Arabic translation
+
+Osamu Ohara, for Japanese translation
+
+Andreas Stöckel, for German translation
+

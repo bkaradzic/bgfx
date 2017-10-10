@@ -1,0 +1,72 @@
+textures = $pwd/../../runtime/textures/sponza
+
+build $textures/empty_ddn.dds:                  texturec_normal  $pwd/sponza/empty_ddn.tga
+build $textures/empty_spec.dds:                 texturec_diffuse $pwd/sponza/empty_spec.tga
+
+build $textures/background.dds:                 texturec_diffuse  $pwd/sponza/background.tga
+build $textures/background_ddn.dds:             texturec_normal   $pwd/sponza/background_ddn.tga
+
+build $textures/chain_texture.dds:              texturec_diffuse  $pwd/sponza/chain_texture.tga
+build $textures/chain_texture_ddn.dds:          texturec_normal   $pwd/sponza/chain_texture_ddn.tga
+
+build $textures/lion.dds:                       texturec_diffuse  $pwd/sponza/lion.tga
+build $textures/lion_ddn.dds:                   texturec_normal   $pwd/sponza/lion_ddn.tga
+
+build $textures/spnza_bricks_a_diff.dds:        texturec_diffuse  $pwd/sponza/spnza_bricks_a_diff.tga
+build $textures/spnza_bricks_a_ddn.dds:         texturec_normal   $pwd/sponza/spnza_bricks_a_ddn.tga
+build $textures/spnza_bricks_a_spec.dds:        texturec_diffuse  $pwd/sponza/spnza_bricks_a_spec.tga
+
+build $textures/sponza_arch_diff.dds:           texturec_diffuse  $pwd/sponza/sponza_arch_diff.tga
+build $textures/sponza_arch_ddn.dds:            texturec_normal   $pwd/sponza/sponza_arch_ddn.tga
+build $textures/sponza_arch_spec.dds:           texturec_diffuse  $pwd/sponza/sponza_arch_spec.tga
+
+build $textures/sponza_ceiling_a_diff.dds:      texturec_diffuse  $pwd/sponza/sponza_ceiling_a_diff.tga
+build $textures/sponza_ceiling_a_spec.dds:      texturec_diffuse  $pwd/sponza/sponza_ceiling_a_spec.tga
+
+build $textures/sponza_column_a_diff.dds:       texturec_diffuse  $pwd/sponza/sponza_column_a_diff.tga
+build $textures/sponza_column_a_ddn.dds:        texturec_normal   $pwd/sponza/sponza_column_a_ddn.tga
+build $textures/sponza_column_a_spec.dds:       texturec_diffuse  $pwd/sponza/sponza_column_a_spec.tga
+
+build $textures/sponza_column_b_diff.dds:       texturec_diffuse  $pwd/sponza/sponza_column_b_diff.tga
+build $textures/sponza_column_b_ddn.dds:        texturec_normal   $pwd/sponza/sponza_column_b_ddn.tga
+build $textures/sponza_column_b_spec.dds:       texturec_diffuse  $pwd/sponza/sponza_column_b_spec.tga
+
+build $textures/sponza_column_c_diff.dds:       texturec_diffuse  $pwd/sponza/sponza_column_c_diff.tga
+build $textures/sponza_column_c_ddn.dds:        texturec_normal   $pwd/sponza/sponza_column_c_ddn.tga
+build $textures/sponza_column_c_spec.dds:       texturec_diffuse  $pwd/sponza/sponza_column_c_spec.tga
+
+build $textures/sponza_curtain_diff.dds:        texturec_diffuse  $pwd/sponza/sponza_curtain_diff.tga
+build $textures/sponza_curtain_blue_diff.dds:   texturec_diffuse  $pwd/sponza/sponza_curtain_blue_diff.tga
+build $textures/sponza_curtain_green_diff.dds:  texturec_diffuse  $pwd/sponza/sponza_curtain_green_diff.tga
+
+build $textures/sponza_details_diff.dds:        texturec_diffuse  $pwd/sponza/sponza_details_diff.tga
+build $textures/sponza_details_spec.dds:        texturec_diffuse  $pwd/sponza/sponza_details_spec.tga
+
+build $textures/sponza_fabric_blue_diff.dds:    texturec_diffuse  $pwd/sponza/sponza_fabric_blue_diff.tga
+build $textures/sponza_fabric_diff.dds:         texturec_diffuse  $pwd/sponza/sponza_fabric_diff.tga
+build $textures/sponza_fabric_green_diff.dds:   texturec_diffuse  $pwd/sponza/sponza_fabric_green_diff.tga
+build $textures/sponza_fabric_spec.dds:         texturec_diffuse  $pwd/sponza/sponza_fabric_spec.tga
+
+build $textures/sponza_flagpole_diff.dds:       texturec_diffuse  $pwd/sponza/sponza_flagpole_diff.tga
+build $textures/sponza_flagpole_spec.dds:       texturec_diffuse  $pwd/sponza/sponza_flagpole_spec.tga
+
+build $textures/sponza_floor_a_diff.dds:        texturec_diffuse  $pwd/sponza/sponza_floor_a_diff.tga
+build $textures/sponza_floor_a_spec.dds:        texturec_diffuse  $pwd/sponza/sponza_floor_a_spec.tga
+
+build $textures/sponza_roof_diff.dds:           texturec_diffuse  $pwd/sponza/sponza_roof_diff.tga
+
+build $textures/sponza_thorn_diff.dds:          texturec_diffuse  $pwd/sponza/sponza_thorn_diff.tga
+build $textures/sponza_thorn_ddn.dds:           texturec_normal   $pwd/sponza/sponza_thorn_ddn.tga
+build $textures/sponza_thorn_spec.dds:          texturec_diffuse  $pwd/sponza/sponza_thorn_spec.tga
+
+build $textures/vase_dif.dds:                   texturec_diffuse  $pwd/sponza/vase_dif.tga
+build $textures/vase_ddn.dds:                   texturec_normal   $pwd/sponza/vase_ddn.tga
+
+build $textures/vase_hanging.dds:               texturec_diffuse  $pwd/sponza/vase_hanging.tga
+
+build $textures/vase_plant.dds:                 texturec_diffuse  $pwd/sponza/vase_plant.tga
+build $textures/vase_plant_spec.dds:            texturec_diffuse  $pwd/sponza/vase_plant_spec.tga
+
+build $textures/vase_round.dds:                 texturec_diffuse  $pwd/sponza/vase_round.tga
+build $textures/vase_round_ddn.dds:             texturec_normal   $pwd/sponza/vase_round_ddn.tga
+build $textures/vase_round_spec.dds:            texturec_diffuse  $pwd/sponza/vase_round_spec.tga

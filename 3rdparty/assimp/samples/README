@@ -1,0 +1,59 @@
+
+
+ASSIMP SAMPLES README
+=====================
+
+
+1. General
+----------
+
+This directory contains various samples to illustrate Assimp's
+use in various real-world environments. Workspaces to build the
+samples can be found in the respective directories. The VC workspaces
+copy the created executables to the ./bin directory.
+
+All GL-based samples depend on GLUT, some on DevIL. For convenience,
+these libraries are included in the repository in their respective
+ Windows/x86 prebuilt versions. To build on linux, install the
+ required packages using the package manager of your choice.
+
+Also note that the VS workspaces link against the DLL version of the 
+Assimp library, thus you need to build it in the first place ( 
+assimp-release-dll build configuration). The Assimp DLL needs to be
+copied to ./bin as well (the VS workspaces will try to do this
+automatically).
+
+
+2. List of samples
+------------------
+
+
+SimpleOpenGL
+
+  A very simple and straightforward OpenGL sample. It loads a
+  model (gets the path to it on the command line, default is dwarf.x)
+  and displays the model as wireframe. Animations and materials are
+  not evaluated at all. This samples uses the C interface to Assimp.
+  Basic materials are displayed, but no textures.
+
+  This sample should work virtually everywhere, provided glut
+  is available.
+
+
+SimpleTexturedOpenGL
+
+  An extended OpenGL sample, featuring texturing using the DevIL 
+  library. Based on SimpleOpenGL and the NeHe GL tutorial style.
+
+  This is a Windows-only sample.
+
+  This sample was kindly provided by SamHayne (http://sf.net/users/samhayne/)
+  See http://sourceforge.net/projects/assimp/forums/forum/817654/topic/3736373
+
+
+SimpleAssimpViewX
+
+  A Mac OSX-based viewer app. This sample was kindly provided by drparallax. 
+  See http://sourceforge.net/projects/assimp/forums/forum/817654/topic/3917829
+
+

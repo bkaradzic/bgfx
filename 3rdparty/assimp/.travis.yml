@@ -1,0 +1,65 @@
+sudo: required
+language: cpp
+
+before_install:
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get update -qq && sudo apt-get install cmake && sudo apt-get install cmake python3 && sudo apt-get install -qq freeglut3-dev libxmu-dev libxi-dev ; echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca- ; fi
+  - 'if [ "$TRAVIS_OS_NAME" = "osx" ];  then
+       if brew ls --versions cmake > /dev/null; then
+         echo cmake already installed.;
+       else
+         brew install cmake;
+       fi;
+       brew install python3;
+       brew install homebrew/x11/freeglut; 
+    fi'
+  - echo -e "#ifndef A_R_H_INC\n#define A_R_H_INC\n#define GitVersion ${TRAVIS_JOB_ID}\n#define GitBranch \"${TRAVIS_BRANCH}\"\n#endif // A_R_H_INC" > revision.h
+  # install latest LCOV (1.9 was failing)
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cd ${TRAVIS_BUILD_DIR} && wget http://ftp.de.debian.org/debian/pool/main/l/lcov/lcov_1.11.orig.tar.gz && tar xf lcov_1.11.orig.tar.gz && sudo make -C lcov-1.11/ install && gem install coveralls-lcov && lcov --version && g++ --version ; fi
+
+branches:
+  only:
+    - master
+
+osx_image: xcode8.3
+
+env:
+  global:
+  # COVERITY_SCAN_TOKEN
+    - secure: "lZ7pHQvl5dpZWzBQAaIMf0wqrvtcZ4wiZKeIZjf83TEsflW8+z0uTpIuN30ZV6Glth/Sq1OhLnTP5+N57fZU/1ebA5twHdvP4bS5CIUUg71/CXQZNl36xeaqvxsG/xRrdpKOsPdjAOsQ9KPTQulsX43XDLS7CasMiLvYOpqKcPc="
+    - PV=r8e PLATF=linux-x86_64 NDK_HOME=${TRAVIS_BUILD_DIR}/android-ndk-${PV} PATH=${PATH}:${NDK_HOME}
+  matrix:
+    - LINUX=1 TRAVIS_NO_EXPORT=YES ENABLE_COVERALLS=ON
+    - LINUX=1 TRAVIS_NO_EXPORT=NO  ENABLE_COVERALLS=OFF
+    - LINUX=1 SHARED_BUILD=ON      ENABLE_COVERALLS=OFF
+    - LINUX=1 SHARED_BUILD=OFF     ENABLE_COVERALLS=OFF
+
+compiler:
+  - gcc
+  - clang
+
+install:
+  - if [ $ANDROID ]; then wget -c http://dl.google.com/android/ndk/android-ndk-${PV}-${PLATF}.tar.bz2 && tar xf android-ndk-${PV}-${PLATF}.tar.bz2 ; fi
+
+before_script:
+  # init coverage to 0 (optional)
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cd ${TRAVIS_BUILD_DIR} && lcov --directory . --zerocounters ; fi
+
+script:
+  - export COVERALLS_SERVICE_NAME=travis-ci
+  - export COVERALLS_REPO_TOKEN=abc12345
+  - . ./.travis.sh
+os:
+  - linux
+  - osx
+ 
+after_success:
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cd ${TRAVIS_BUILD_DIR} && lcov --directory . --capture --output-file coverage.info && lcov --remove coverage.info '/usr/*' 'contrib/*' 'test/*' --output-file coverage.info && lcov --list coverage.info && coveralls-lcov --source-encoding=ISO-8859-1 --repo-token=${COVERALLS_TOKEN} coverage.info ; fi
+
+addons:
+  coverity_scan:
+    project:
+      name: "assimp/assimp"
+    notification_email: kim.kulling@googlemail.com
+    build_command_prepend: "cmake"
+    build_command: "make"
+    branch_pattern: coverity_scan
