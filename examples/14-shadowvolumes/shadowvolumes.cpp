@@ -581,6 +581,7 @@ struct Primitive
 	uint32_t m_numIndices;
 	uint32_t m_startVertex;
 	uint32_t m_numVertices;
+	uint32_t m_nameId;
 
 	Sphere m_sphere;
 	Aabb m_aabb;
@@ -777,6 +778,21 @@ uint16_t weldVertices(WeldedVertex* _output, const bgfx::VertexDecl& _decl, cons
 	return numVertices;
 }
 
+struct Material
+{
+	uint32_t m_nameId;
+	uint32_t m_diffuseId;
+	uint32_t m_normalId;
+	uint32_t m_specularId;
+
+	bgfx::TextureHandle diffuseMap;
+	bgfx::TextureHandle normalMap;
+	bgfx::TextureHandle specularMap;
+};
+
+typedef std::vector<Material> MaterialArray;
+
+
 struct Group
 {
 	Group()
@@ -949,6 +965,7 @@ struct Group
 	uint16_t m_numVertices;
 	uint8_t* m_vertices;
 	uint32_t m_numIndices;
+	uint32_t m_materialIndex;
 	uint16_t* m_indices;
 	Sphere m_sphere;
 	Aabb m_aabb;
@@ -999,7 +1016,10 @@ struct Mesh
 	{
 #define BGFX_CHUNK_MAGIC_VB  BX_MAKEFOURCC('V', 'B', ' ', 0x1)
 #define BGFX_CHUNK_MAGIC_IB  BX_MAKEFOURCC('I', 'B', ' ', 0x0)
-#define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
+#define BGFX_CHUNK_MAGIC_IBC BX_MAKEFOURCC('I', 'B', 'C', 0x0)
+#define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x1)
+#define BGFX_CHUNK_MAGIC_STR BX_MAKEFOURCC('S', 'T', 'R', 0x0)
+#define BGFX_CHUNK_MAGIC_MAT BX_MAKEFOURCC('M', 'A', 'T', 0x0)
 
 		bx::FileReaderI* reader = entry::getFileReader();
 		bx::open(reader, _filePath);
@@ -1011,6 +1031,34 @@ struct Mesh
 		{
 			switch (chunk)
 			{
+			case BGFX_CHUNK_MAGIC_STR:
+				{
+					uint32_t sizeInChars;
+					read(reader, sizeInChars);
+					stringTable.resize(sizeInChars);
+					read(reader, (void*)stringTable.c_str(), sizeInChars);
+				}
+				break;
+
+			case BGFX_CHUNK_MAGIC_MAT:
+				{
+					uint32_t numMaterials;
+					read(reader, numMaterials);
+					for (uint32_t i = 0; i < numMaterials; i++)
+					{
+						Material material;
+						read(reader, material.m_nameId);
+						read(reader, material.m_diffuseId);
+						read(reader, material.m_normalId);
+						read(reader, material.m_specularId);
+						material.diffuseMap = BGFX_INVALID_HANDLE;
+						material.normalMap = BGFX_INVALID_HANDLE;
+						material.specularMap = BGFX_INVALID_HANDLE;
+						m_materials.push_back(material);
+					}
+				}
+				break;
+
 			case BGFX_CHUNK_MAGIC_VB:
 				{
 					bx::read(reader, group.m_sphere);
@@ -1043,41 +1091,31 @@ struct Mesh
 				break;
 
 			case BGFX_CHUNK_MAGIC_PRI:
+			{
+				read(reader, group.m_materialIndex);
+
+				uint16_t num;
+				read(reader, num);
+
+				for (uint32_t ii = 0; ii < num; ++ii)
 				{
-					uint16_t len;
-					bx::read(reader, len);
+					Primitive prim;
+					read(reader, prim.m_nameId);
+					read(reader, prim.m_startIndex);
+					read(reader, prim.m_numIndices);
+					read(reader, prim.m_startVertex);
+					read(reader, prim.m_numVertices);
+					read(reader, prim.m_sphere);
+					read(reader, prim.m_aabb);
+					read(reader, prim.m_obb);
 
-					std::string material;
-					material.resize(len);
-					bx::read(reader, const_cast<char*>(material.c_str() ), len);
-
-					uint16_t num;
-					bx::read(reader, num);
-
-					for (uint32_t ii = 0; ii < num; ++ii)
-					{
-						bx::read(reader, len);
-
-						std::string name;
-						name.resize(len);
-						bx::read(reader, const_cast<char*>(name.c_str() ), len);
-
-						Primitive prim;
-						bx::read(reader, prim.m_startIndex);
-						bx::read(reader, prim.m_numIndices);
-						bx::read(reader, prim.m_startVertex);
-						bx::read(reader, prim.m_numVertices);
-						bx::read(reader, prim.m_sphere);
-						bx::read(reader, prim.m_aabb);
-						bx::read(reader, prim.m_obb);
-
-						group.m_prims.push_back(prim);
-					}
-
-					m_groups.push_back(group);
-					group.reset();
+					group.m_prims.push_back(prim);
 				}
-				break;
+
+				m_groups.push_back(group);
+				group.reset();
+			}
+			break;
 
 			default:
 				DBG("%08x at %d", chunk, bx::seek(reader) );
@@ -1105,6 +1143,8 @@ struct Mesh
 
 	bgfx::VertexDecl m_decl;
 	GroupArray m_groups;
+	MaterialArray m_materials;
+	std::string stringTable;
 };
 
 struct Model

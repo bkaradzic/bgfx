@@ -22,6 +22,9 @@ void cameraCreate();
 void cameraDestroy();
 
 ///
+void cameraSetMoveSpeed(float _speed);
+
+///
 void cameraSetPosition(const float* _pos);
 
 ///

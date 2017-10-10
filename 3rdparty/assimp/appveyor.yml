@@ -1,0 +1,42 @@
+# AppVeyor file
+# http://www.appveyor.com/docs/appveyor-yml
+
+# clone directory
+clone_folder: c:\projects\assimp
+
+# branches to build
+branches:
+  # whitelist
+  only:
+    - master
+
+platform:
+    - x86
+    - x64
+
+configuration:
+  - 14 2015
+  - 12 2013
+  #- MinGW
+  #- 10 2010 # only works for x86
+
+init:
+- if "%platform%" EQU "x64" ( for %%a in (2008 2010 MinGW) do ( if "%Configuration%"=="%%a" (echo "Skipping unsupported configuration" && exit /b 1 ) ) )
+
+install:
+# Make compiler command line tools available
+- call c:\projects\assimp\scripts\appveyor\compiler_setup.bat
+
+build_script:
+- cd c:\projects\assimp
+- if "%platform%" equ "x64" (cmake CMakeLists.txt -G "Visual Studio %Configuration% Win64")
+- if "%platform%" equ "x86" (cmake CMakeLists.txt -G "Visual Studio %Configuration%")
+- if "%platform%" equ "x64" (msbuild /m /p:Configuration=Release /p:Platform="x64" Assimp.sln)
+- if "%platform%" equ "x86" (msbuild /m /p:Configuration=Release /p:Platform="Win32" Assimp.sln)
+
+after_build:
+  - 7z a assimp.7z c:\projects\assimp\bin\release\* c:\projects\assimp\lib\release\*
+
+artifacts:
+  - path: assimp.7z
+    name: assimp_lib

@@ -1,0 +1,22 @@
+Mac OSX Assimp Sample, using OpenGL with VBOs
+=============================================
+
+Written & donated by drparallax.
+See http://sourceforge.net/projects/assimp/forums/forum/817654/topic/3917829
+
+
+How to build:
+-------------
+
+  - compile Assimp as static library, copy the generated libassimp.a right here.
+  - copy the Assimp headers from ./../../include to ./include
+  - open the XCode project file and build it
+
+
+Troubleshooting:
+----------------
+
+  - OSX workspaces are not updated too frequently, so same files may be missing.
+
+If you have any problems which you can't solve on your own, 
+please report them on the thread above.

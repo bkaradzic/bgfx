@@ -1,5 +1,6 @@
 meshes = $pwd/../../runtime/meshes
 
+build $meshes/sponza.bin:          geometryc_pack_normal             $pwd/sponza.fbx
 build $meshes/bunny.bin:           geometryc_pack_normal_barycentric $pwd/bunny.obj
 build $meshes/bunny_decimated.bin: geometryc_pack_normal             $pwd/bunny_decimated.obj
 build $meshes/bunny_patched.bin:   geometryc_pack_normal             $pwd/bunny_patched.obj

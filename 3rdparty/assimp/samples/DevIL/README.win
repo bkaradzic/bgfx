@@ -1,0 +1,44 @@
+Where do I find the project files ?
+-----------------------------------------
+
+MSVC++ projects are in DevIL\projects\vc8 and DevIL\projects\vc9.
+If compiling with Cygwin or MinGW, use the instructions in README.unix.
+
+
+The IL_NO_XXX #define's:
+------------------------
+
+A user can recompile this library without complete image support in it.  For
+example, if your project does not use .jpg files, you can uncomment
+#define IL_NO_JPG at the top of il/il.h, recompile the library, and no .jpg
+support will be added, meaning quicker compiles and a smaller library.
+
+
+The ILUT_USE_XXX #define's:
+---------------------------
+
+To disable support for a specific API, edit IL/ilut.h and comment the
+corresponding #define.  Per example, to disable OpenGL functions support,
+ add // in front of the line that reads:
+
+#define ILUT_USE_OPENGL
+
+
+Libraries needed to compile DevIL* :
+-----------------------------------
+
+Libraries.txt (included with the DevIL distribution) lists all libraries needed
+to properly compile DevIL.
+
+Precompiled versions and sources of all libraries needed to compile DevIL are
+available at http://openil.sourceforge.net/libs/LibCompiled.zip and
+http://openil.sourceforge.net/libs/LibSrc.zip , respectively.
+
+
+Installation:
+-------------
+
+Just unzip and compile other libs included if needed.
+
+Please also refer to MSVC++.txt for further instructions if you are using
+Microsoft Visual C++.

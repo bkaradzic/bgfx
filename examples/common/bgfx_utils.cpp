@@ -372,12 +372,27 @@ struct Sphere
 	float m_radius;
 };
 
+struct Material
+{
+	uint32_t m_nameId;
+	uint32_t m_diffuseId;
+	uint32_t m_normalId;
+	uint32_t m_specularId;
+
+	bgfx::TextureHandle diffuseMap;
+	bgfx::TextureHandle normalMap;
+	bgfx::TextureHandle specularMap;
+};
+
+typedef stl::vector<Material> MaterialArray;
+
 struct Primitive
 {
 	uint32_t m_startIndex;
 	uint32_t m_numIndices;
 	uint32_t m_startVertex;
 	uint32_t m_numVertices;
+	uint32_t m_nameId;
 
 	Sphere m_sphere;
 	Aabb m_aabb;
@@ -398,6 +413,7 @@ struct Group
 		m_vbh.idx = bgfx::kInvalidHandle;
 		m_ibh.idx = bgfx::kInvalidHandle;
 		m_prims.clear();
+		m_materialIndex = 0;
 	}
 
 	bgfx::VertexBufferHandle m_vbh;
@@ -406,6 +422,7 @@ struct Group
 	Aabb m_aabb;
 	Obb m_obb;
 	PrimitiveArray m_prims;
+	uint32_t m_materialIndex;
 };
 
 namespace bgfx
@@ -420,7 +437,10 @@ struct Mesh
 #define BGFX_CHUNK_MAGIC_VB  BX_MAKEFOURCC('V', 'B', ' ', 0x1)
 #define BGFX_CHUNK_MAGIC_IB  BX_MAKEFOURCC('I', 'B', ' ', 0x0)
 #define BGFX_CHUNK_MAGIC_IBC BX_MAKEFOURCC('I', 'B', 'C', 0x0)
-#define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
+#define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x1)
+#define BGFX_CHUNK_MAGIC_STR BX_MAKEFOURCC('S', 'T', 'R', 0x0)
+#define BGFX_CHUNK_MAGIC_MAT BX_MAKEFOURCC('M', 'A', 'T', 0x0)
+
 
 		using namespace bx;
 		using namespace bgfx;
@@ -436,6 +456,33 @@ struct Mesh
 		{
 			switch (chunk)
 			{
+			case BGFX_CHUNK_MAGIC_STR:
+				{
+					uint32_t sizeInChars;
+					read(_reader, sizeInChars);
+					stringTable.resize(sizeInChars);
+					read(_reader, (void*)stringTable.c_str(), sizeInChars);
+				}
+				break;
+			case BGFX_CHUNK_MAGIC_MAT:
+				{
+					uint32_t numMaterials;
+					read(_reader, numMaterials);
+					for (uint32_t i = 0; i < numMaterials; i++)
+					{
+						Material material;
+						read(_reader, material.m_nameId);
+						read(_reader, material.m_diffuseId);
+						read(_reader, material.m_normalId);
+						read(_reader, material.m_specularId);
+						material.diffuseMap = BGFX_INVALID_HANDLE;
+						material.normalMap = BGFX_INVALID_HANDLE;
+						material.specularMap = BGFX_INVALID_HANDLE;
+						m_materials.push_back(material);
+					}
+				}
+				break;
+
 			case BGFX_CHUNK_MAGIC_VB:
 				{
 					read(_reader, group.m_sphere);
@@ -490,25 +537,15 @@ struct Mesh
 
 			case BGFX_CHUNK_MAGIC_PRI:
 				{
-					uint16_t len;
-					read(_reader, len);
-
-					stl::string material;
-					material.resize(len);
-					read(_reader, const_cast<char*>(material.c_str() ), len);
+					read(_reader, group.m_materialIndex);
 
 					uint16_t num;
 					read(_reader, num);
 
 					for (uint32_t ii = 0; ii < num; ++ii)
 					{
-						read(_reader, len);
-
-						stl::string name;
-						name.resize(len);
-						read(_reader, const_cast<char*>(name.c_str() ), len);
-
 						Primitive prim;
+						read(_reader, prim.m_nameId);
 						read(_reader, prim.m_startIndex);
 						read(_reader, prim.m_numIndices);
 						read(_reader, prim.m_startVertex);
@@ -534,6 +571,26 @@ struct Mesh
 
 	void unload()
 	{
+		for (uint32_t i = 0; i < m_materials.size(); i++)
+		{
+			Material& material = m_materials[i];
+			if (bgfx::isValid(material.diffuseMap))
+			{
+				bgfx::destroy(material.diffuseMap);
+			}
+
+			if (bgfx::isValid(material.normalMap))
+			{
+				bgfx::destroy(material.normalMap);
+			}
+
+			if (bgfx::isValid(material.specularMap))
+			{
+				bgfx::destroy(material.specularMap);
+			}
+		}
+		m_materials.clear();
+
 		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
 		{
 			const Group& group = *it;
@@ -545,9 +602,72 @@ struct Mesh
 			}
 		}
 		m_groups.clear();
+		stringTable.resize(0);
 	}
 
-	void submit(uint8_t _id, bgfx::ProgramHandle _program, const float* _mtx, uint64_t _state) const
+	void loadTextures()
+	{
+		// load textures
+		for (uint32_t i = 0; i < m_materials.size(); i++)
+		{
+			Material& material = m_materials[i];
+			//const char* name = getString(material.m_nameId);
+			const char* diffuseName = getString(material.m_diffuseId);
+			const char* normalName = getString(material.m_normalId);
+			const char* specularName = getString(material.m_specularId);
+
+			if (diffuseName && *diffuseName != '\0')
+			{
+				material.diffuseMap = loadTexture(diffuseName, BGFX_TEXTURE_MIN_ANISOTROPIC | BGFX_TEXTURE_SRGB);
+				if (!bgfx::isValid(material.diffuseMap))
+				{
+					DBG("Failed to open diffuse map texture: %s.", diffuseName);
+				}
+			}
+			else
+			{
+				material.diffuseMap = BGFX_INVALID_HANDLE;
+			}
+
+			if (normalName && *normalName != '\0')
+			{
+				material.normalMap = loadTexture(normalName, BGFX_TEXTURE_MIN_ANISOTROPIC);
+				if (!bgfx::isValid(material.normalMap))
+				{
+					DBG("Failed to open normal map texture: %s.", normalName);
+				}
+			}
+			else
+			{
+				material.normalMap = BGFX_INVALID_HANDLE;
+			}
+
+			if (normalName && *normalName != '\0')
+			{
+				material.specularMap = loadTexture(specularName, BGFX_TEXTURE_MIN_ANISOTROPIC);
+				if (!bgfx::isValid(material.specularMap))
+				{
+					DBG("Failed to open specular map texture: %s.", specularName);
+				}
+			}
+			else
+			{
+				material.specularMap = BGFX_INVALID_HANDLE;
+			}
+		}
+	}
+
+	const char* getString(uint32_t offset) const
+	{
+		if (offset < stringTable.size())
+		{
+			return stringTable.c_str() + offset;
+		}
+
+		return "";
+	}
+
+	void submit(uint8_t _id, bgfx::ProgramHandle _program, const float* _mtx, uint64_t _state, SubmitCallback callback, void* userData) const
 	{
 		if (BGFX_STATE_MASK == _state)
 		{
@@ -561,16 +681,23 @@ struct Mesh
 				;
 		}
 
-		bgfx::setTransform(_mtx);
-		bgfx::setState(_state);
-
-		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
+		uint32_t index = 0;
+		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it, ++index)
 		{
 			const Group& group = *it;
+			const Material& material = m_materials[group.m_materialIndex];
 
+			bgfx::setState(_state);
+			bgfx::setTransform(_mtx);
 			bgfx::setIndexBuffer(group.m_ibh);
 			bgfx::setVertexBuffer(0, group.m_vbh);
-			bgfx::submit(_id, _program, 0, it != itEnd-1);
+
+			if (callback != NULL)
+			{
+				callback(index, material.diffuseMap, material.normalMap, material.specularMap, userData);
+			}
+
+			bgfx::submit(_id, _program);
 		}
 	}
 
@@ -609,6 +736,8 @@ struct Mesh
 	bgfx::VertexDecl m_decl;
 	typedef stl::vector<Group> GroupArray;
 	GroupArray m_groups;
+	MaterialArray m_materials;
+	stl::string stringTable;
 };
 
 Mesh* meshLoad(bx::ReaderSeekerI* _reader)
@@ -625,6 +754,7 @@ Mesh* meshLoad(const char* _filePath)
 	{
 		Mesh* mesh = meshLoad(reader);
 		bx::close(reader);
+		mesh->loadTextures();
 		return mesh;
 	}
 
@@ -648,9 +778,10 @@ void meshStateDestroy(MeshState* _meshState)
 	BX_FREE(entry::getAllocator(), _meshState);
 }
 
-void meshSubmit(const Mesh* _mesh, uint8_t _id, bgfx::ProgramHandle _program, const float* _mtx, uint64_t _state)
+
+void meshSubmit(const Mesh* _mesh, uint8_t _id, bgfx::ProgramHandle _program, const float* _mtx, uint64_t _state, SubmitCallback callback, void* userData)
 {
-	_mesh->submit(_id, _program, _mtx, _state);
+	_mesh->submit(_id, _program, _mtx, _state, callback, userData);
 }
 
 void meshSubmit(const Mesh* _mesh, const MeshState*const* _state, uint8_t _numPasses, const float* _mtx, uint16_t _numMatrices)

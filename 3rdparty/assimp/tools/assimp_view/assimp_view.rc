@@ -1,0 +1,497 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// German (Germany) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+#ifdef _WIN32
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ASSIMP_VIEW         ICON                    "../shared/assimp_tools_icon.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOGEX 22, 17, 283, 149
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_CAPTION | WS_SYSMENU
+CAPTION "About Open Asset Import Library"
+FONT 9, "Courier New", 400, 0, 0x0
+BEGIN
+    LTEXT           "Open Asset Import Library (Assimp)",IDC_STATIC,30,14,144,9
+    LTEXT           "A free C/C++ library to read various well-known 3D model formats into a straightforward in-memory format for easy processing by applications. Licensed under a 3-clause BSD license and totally awesome.",IDC_STATIC,31,34,204,24
+    LTEXT           "(c) 2008-2009. Assimp Development Team. See the CREDITS file for a list of all contributors.",IDC_STATIC,30,65,204,23
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,0,27,282,1
+    LTEXT           "http://assimp.sourceforge.net  http://www.zfx.info",IDC_STATIC,31,101,127,22
+    DEFPUSHBUTTON   "Love this library",IDOK,186,110,84,14
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,0,148,283,1
+    CONTROL         130,IDC_STATIC,"Static",SS_BITMAP,0,129,514,20
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,0,10,281,1
+END
+
+#define X_GROUP1 7
+#define W_GROUP1 6+160+6
+#define X_GROUP2 X_GROUP1+W_GROUP1+7
+#define W_GROUP2 6+150+8
+#define X_GROUP3 X_GROUP2+W_GROUP2+7
+#define W_GROUP3 6+60+35+8
+
+#define W X_GROUP3+W_GROUP3+47
+#define H 450
+
+#define Y_PANEL H-12-82-7-7-14-4
+#define Y_GROUPS Y_PANEL+14+7
+
+#define TREE_W 143
+#define COMBO_W 100
+
+IDD_DIALOGMAIN DIALOGEX 0, 0, W+TREE_W, H
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU 
+EXSTYLE WS_EX_ACCEPTFILES | WS_EX_WINDOWEDGE
+CAPTION "Open Asset Import Library - Model Viewer "
+MENU IDR_MENU1
+FONT 8, "Microsoft Sans Serif", 400, 0, 0x0
+BEGIN
+
+    CONTROL         "",IDC_RT,"Static",SS_OWNERDRAW,0,0,W,Y_PANEL
+    CONTROL         "",IDC_TREE1,"SysTreeView32",TVS_HASBUTTONS|TVS_HASLINES|TVS_SHOWSELALWAYS|WS_BORDER|WS_HSCROLL|WS_TABSTOP, W,0,TREE_W,H
+
+#define Y Y_PANEL+4
+    CONTROL         "<<",IDC_BLUBB,"Button",BS_AUTOCHECKBOX|BS_PUSHLIKE|WS_TABSTOP, W-7-35,Y,35,14
+    COMBOBOX        IDC_COMBO1, W-7-35-4-100,Y,100,14, CBS_DROPDOWN|WS_VSCROLL|WS_TABSTOP
+    PUSHBUTTON      "Play",IDC_PLAY, W-7-35-4-100-35-4,Y,35,14
+    CONTROL         "",IDC_SLIDERANIM,"msctls_trackbar32",TBS_AUTOTICKS|TBS_BOTH|TBS_NOTICKS|WS_TABSTOP, 0,Y,W-7-35-4-100-35-4,15
+
+#undef Y
+#define Y Y_GROUPS+12
+#define X X_GROUP1+6
+
+    GROUPBOX        "Display",IDC_STATIC,	X_GROUP1,Y_GROUPS,W_GROUP1,12+82+7
+
+    CONTROL         "Multisampling [M]",IDC_TOGGLEMS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,		X,Y,80,10
+    CONTROL         "Wireframe [W]",IDC_TOGGLEWIRE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,		X,Y+12,80,10
+    CONTROL         "No materials [D]",IDC_TOGGLEMAT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,		X,Y+24,80,10
+    CONTROL         "Display normals [N]",IDC_TOGGLENORMALS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,	X,Y+36,80,10
+    CONTROL         "Low quality [P]",IDC_LOWQUALITY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,		X,Y+48,80,10
+    CONTROL         "No specular [S]",IDC_NOSPECULAR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,		X,Y+60,80,10
+    CONTROL         "Show skeleton [K]",IDC_SHOWSKELETON,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,		X,Y+72,80,10
+
+    CONTROL         "AutoRotate [A]",IDC_AUTOROTATE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,		X+80,Y,80,10
+    CONTROL         "Zoom/Rotate [Z]",IDC_ZOOM,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,			X+80,Y+12,80,10
+    CONTROL         "Rotate lights [R]",IDC_LIGHTROTATE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,		X+80,Y+24,80,10
+    CONTROL         "Two lights [L]",IDC_3LIGHTS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,			X+80,Y+36,80,10
+    CONTROL         "Backface culling [C]",IDC_BFCULL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,		X+80,Y+48,80,10
+    CONTROL         "No transparency [T]",IDC_NOAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,		X+80,Y+60,80,10
+
+#undef X
+#define X X_GROUP2+6
+
+    GROUPBOX        "Statistics",IDC_STATIC,	X_GROUP2,Y_GROUPS,W_GROUP2,12+36+8+7
+
+    LTEXT           "Vertices:",IDC_NUMVERTS,	X,Y,35,8
+    LTEXT           "Nodes:",IDC_NUMNODES,	X,Y+12,35,8
+    LTEXT           "Shaders:",IDC_NUMSHADERS,	X,Y+24,35,8
+    LTEXT           "Time:",IDC_LOADTIME,	X,Y+36,35,8
+
+    EDITTEXT        IDC_EVERT,			X+35,Y,35,8,		ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | ES_RIGHT
+    EDITTEXT        IDC_ENODEWND,		X+35,Y+12,35,8,		ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | ES_RIGHT
+    EDITTEXT        IDC_ESHADER,		X+35,Y+24,35,8,		ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | ES_RIGHT
+    EDITTEXT        IDC_ELOAD,			X+35,Y+36,35,8,		ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | ES_RIGHT
+
+    LTEXT           "Faces:",IDC_NUMFACES,	X+80,Y,35,8
+    LTEXT           "Materials:",IDC_NUMMATS,	X+80,Y+12,35,8
+    LTEXT           "Meshes:",IDC_NUMMESHES,	X+80,Y+24,35,8
+    LTEXT           "FPS:",IDC_FPS,		X+80,Y+36,35,8
+
+    EDITTEXT        IDC_EFACE,			X+115,Y,35,8,		ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | ES_RIGHT
+    EDITTEXT        IDC_EMAT,			X+115,Y+12,35,8,	ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | ES_RIGHT
+    EDITTEXT        IDC_EMESH,			X+115,Y+24,35,8,	ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | ES_RIGHT
+    EDITTEXT        IDC_EFPS,			X+115,Y+36,35,8,	ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | ES_RIGHT
+
+    EDITTEXT        IDC_VIEWMATRIX,		X,Y+48+7,72,44,		ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | NOT WS_VISIBLE
+
+#undef X
+#define X X_GROUP3+6
+
+    GROUPBOX        "Colors",IDC_STATIC,	X_GROUP3,Y_GROUPS,W_GROUP3,12+54+14+7
+
+    LTEXT           "Primary:",IDC_STATIC,	X,Y+3,48,8
+    LTEXT           "Secondary:",IDC_STATIC,	X,Y+3+18,54,8
+    LTEXT           "Ambient:",IDC_STATIC,	X,Y+3+36,54,8
+
+    CONTROL         "Button1",IDC_LCOLOR1,"Button",BS_OWNERDRAW | WS_TABSTOP,	X+60,Y,35,14
+    CONTROL         "Button1",IDC_LCOLOR2,"Button",BS_OWNERDRAW | WS_TABSTOP,	X+60,Y+18,35,14
+    CONTROL         "Button1",IDC_LCOLOR3,"Button",BS_OWNERDRAW | WS_TABSTOP,	X+60,Y+36,35,14
+    PUSHBUTTON      "Reset",IDC_LRESET,						X+60,Y+54,35,14
+END
+
+IDD_LOADDIALOG DIALOGEX 0, 0, 143, 60
+STYLE DS_SETFONT | DS_CENTER | WS_POPUP | WS_BORDER | WS_SYSMENU
+FONT 12, "Tahoma", 400, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "Cancel",IDOK,104,41,33,13
+    CONTROL         "",IDC_PROGRESS,"msctls_progress32",WS_BORDER,6,30,130,8
+    LTEXT           "Loading ...\nMay the force be with you ...",IDC_STATIC,8,9,123,16
+END
+
+IDD_AVHELP DIALOGEX 0, 0, 481, 346
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "ASSIMP Viewer: Help"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,420,324,50,14
+    CONTROL         "",IDC_RICHEDIT21,"RichEdit20A",ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL | WS_TABSTOP,19,18,462,294
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,0,312,490,1
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,0,16,490,1
+END
+
+IDD_LOGVIEW DIALOGEX 0, 0, 365, 182
+STYLE DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+EXSTYLE WS_EX_TOPMOST | WS_EX_WINDOWEDGE
+CAPTION "AssimpView Log Output"
+FONT 8, "Courier New", 400, 0, 0x0
+BEGIN
+    CONTROL         "",IDC_EDIT1,"RichEdit20A",ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | ES_NUMBER | WS_VSCROLL | WS_TABSTOP,3,4,358,174,WS_EX_STATICEDGE
+END
+
+IDD_DIALOGSMOOTH DIALOGEX 0, 0, 278, 141
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Set smooth limit "
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,213,94,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,161,94,50,14
+    EDITTEXT        IDC_EDITSM,99,7,175,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Angle limit (in degrees):",IDC_STATIC,13,10,76,8
+    LTEXT           "The angle limit defines the maximum angle that may be between two adjacent face normals that they're smoothed together.",IDC_STATIC,13,31,253,19
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,0,113,278,1
+    LTEXT           "This setting is also used during import, but it can be overriden by single model importers to match the original look of a model as closely as possible. Examples include 3DS, ASE and LWO, all of them relying on smoothing groups and their own angle limits. ",IDC_STATIC,13,51,254,33
+    LTEXT           "NOTE: New settings don't take effect immediately, use 'Smooth Normals' or 'Reload' to update the model.",IDC_STATIC,14,118,254,22
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,0,90,277,1
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""windows.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,1,700,0
+ PRODUCTVERSION 1,1,700,1
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x0L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040704b0"
+        BEGIN
+            VALUE "CompanyName", "assimp team"
+            VALUE "FileDescription", "ASSIMP Viewer Application"
+            VALUE "FileVersion", "1, 1, SVNRevision, 0"
+            VALUE "InternalName", "assimp_view"
+            VALUE "LegalCopyright", "Licensed under the LGPL"
+            VALUE "OriginalFilename", "assimpview32.exe"
+            VALUE "ProductName", "ASSIMP Viewer Application"
+            VALUE "ProductVersion", "1, 1, SVNRevision, 0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x407, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        TOPMARGIN, 1
+        BOTTOMMARGIN, 138
+    END
+
+    IDD_DIALOGMAIN, DIALOG
+    BEGIN
+        RIGHTMARGIN, 623
+        BOTTOMMARGIN, 484
+    END
+
+    IDD_LOADDIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        TOPMARGIN, 7
+    END
+
+    IDD_AVHELP, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 474
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 339
+    END
+
+    IDD_LOGVIEW, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 358
+        TOPMARGIN, 14
+        BOTTOMMARGIN, 175
+    END
+
+    IDD_DIALOGSMOOTH, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 271
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 134
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP1             BITMAP                  "banner.bmp"
+IDB_BANIM               BITMAP                  "base_anim.bmp"
+IDB_BDISPLAY            BITMAP                  "base_display.bmp"
+IDB_BINTER              BITMAP                  "base_inter.bmp"
+IDB_BRENDERING          BITMAP                  "base_rendering.bmp"
+IDB_BSTATS              BITMAP                  "base_stats.bmp"
+IDB_BTX                 BITMAP                  "tx.bmp"
+IDB_BFX                 BITMAP                  "fx.bmp"
+IDB_BNODE               BITMAP                  "n.bmp"
+IDB_BROOT               BITMAP                  "root.bmp"
+IDB_BTXI                BITMAP                  "txi.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU1 MENU 
+BEGIN
+    POPUP "Viewer"
+    BEGIN
+        MENUITEM "Open Asset",                  ID_VIEWER_OPEN
+        MENUITEM "Close Asset",                 ID_VIEWER_CLOSEASSET
+        MENUITEM "Reload",                      ID_VIEWER_RELOAD
+        POPUP "Import settings"
+        BEGIN
+            MENUITEM "Calculate Tangent Space",     ID_VIEWER_PP_CTS
+            MENUITEM "Compute Indexed Meshes",      ID_VIEWER_PP_JIV
+            MENUITEM "Optimize Materials",          ID_VIEWER_PP_RRM2
+            MENUITEM "Optimize Meshes",             ID_VIEWER_PP_OM
+            MENUITEM "Optimize Scenegraph",         ID_VIEWER_PP_OG
+            MENUITEM "Find Instanced Meshes",       ID_VIEWER_PP_FIM
+            MENUITEM "Run Full Validation",         ID_VIEWER_PP_VDS
+            MENUITEM "Pretransform Vertices",       ID_VIEWER_PP_PTV
+            MENUITEM "VCache Optimization",         ID_VIEWER_PP_ICL
+            MENUITEM "Fix Infacing Normals",        ID_VIEWER_PP_FIN
+            MENUITEM "Find Degenerates",            ID_VIEWER_PP_FD
+            MENUITEM "Find Invalid Data",           ID_VIEWER_PP_FID
+            MENUITEM "Generate UV Coords",          ID_VIEWER_PP_GUV
+            MENUITEM "Transform UV Coords",         ID_VIEWER_PP_TUV
+            MENUITEM "Remove Lines and Points",     ID_VIEWER_PP_RLINE_PNT, GRAYED
+            MENUITEM "Remove dummy bones (De-bone)", ID_VIEWER_PP_DB
+            MENUITEM SEPARATOR
+            MENUITEM "(required) Triangulate",      ID_VIEWER_PP_JIV, GRAYED
+            MENUITEM "(required) Limit Bone Weights", ID_VIEWER_PP_JIV, GRAYED
+            MENUITEM "(required) Split Large Meshes", ID_VIEWER_PP_JIV, GRAYED
+            MENUITEM "(required) Sort by primitive type", ID_VIEWER_PP_JIV, GRAYED
+            MENUITEM "(required) Convert to Left-Handed", ID_VIEWER_PP_JIV, GRAYED
+            MENUITEM SEPARATOR
+            MENUITEM "Reset to default",            ID_IMPORTSETTINGS_RESETTODEFAULT
+            MENUITEM "Open Post-Process Short Reference", ID_IMPORTSETTINGS_OPENPOST
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Save Screenshot",             ID_VIEWER_SAVESCREENSHOTTOFILE
+        MENUITEM "Reset view",                  ID_VIEWER_RESETVIEW
+        MENUITEM "Memory consumption",          ID_VIEWER_MEMORYCONSUMATION
+        MENUITEM SEPARATOR
+        MENUITEM "Setup file associations",     ID_VIEWER_H
+        MENUITEM SEPARATOR
+        MENUITEM "Recent files ",               ID_VIEWER_RECENTFILES
+        MENUITEM "Clear history",               ID_VIEWER_CLEARHISTORY
+        MENUITEM SEPARATOR
+        MENUITEM "Quit",                        ID_VIEWER_QUIT
+    END
+    POPUP "Tools"
+    BEGIN
+        MENUITEM "Log window",                  ID_TOOLS_LOGWINDOW
+        MENUITEM "Save log to file",            ID_TOOLS_SAVELOGTOFILE
+        MENUITEM "Clear log",                   ID_TOOLS_CLEARLOG
+        MENUITEM SEPARATOR
+        MENUITEM "Original normals",            ID_TOOLS_ORIGINALNORMALS, CHECKED
+        MENUITEM "Hard normals",                ID_TOOLS_HARDNORMALS
+        MENUITEM "Smooth normals",              ID_TOOLS_SMOOTHNORMALS
+        MENUITEM SEPARATOR
+        MENUITEM "Set angle limit ...",         ID_TOOLS_SETANGLELIMIT
+        MENUITEM "Flip normals",                ID_TOOLS_FLIPNORMALS
+        MENUITEM SEPARATOR
+        MENUITEM "Stereo view",                 ID_TOOLS_STEREOVIEW
+    END
+    POPUP "Background"
+    BEGIN
+        MENUITEM "Set color",                   ID_BACKGROUND_SETCOLOR
+        MENUITEM "Load skybox",                 ID_BACKGROUND_LOADSKYBOX
+        MENUITEM "Load texture",                ID_BACKGROUND_LOADTEXTURE
+        MENUITEM SEPARATOR
+        MENUITEM "Clear",                       ID_BACKGROUND_CLEAR
+    END
+    MENUITEM "Export",                      32878
+    POPUP "?"
+    BEGIN
+        POPUP "Feedback"
+        BEGIN
+            MENUITEM "Report bug",                  ID_REPORTBUG
+            MENUITEM "Feature request/discuss",     ID_FR
+        END
+        MENUITEM "Help",                        ID__HELP
+        MENUITEM SEPARATOR
+        MENUITEM "About",                       ID__ABOUT
+        MENUITEM SEPARATOR
+        MENUITEM "Website",                     ID__WEBSITE
+        MENUITEM "SF.net Project Page",         ID__WEBSITESF
+    END
+END
+
+IDR_TXPOPUP MENU 
+BEGIN
+    POPUP "Hey"
+    BEGIN
+        MENUITEM "Replace texture",             ID_HEY_REPLACE
+        MENUITEM "Export texture",              ID_HEY_EXPORT
+        MENUITEM "Remove texture",              ID_HEY_REMOVE
+        MENUITEM SEPARATOR
+        MENUITEM "Reset texture",               ID_HEY_RESETTEXTURE
+    END
+    MENUITEM "This is not an easter egg",   0
+END
+
+IDR_MATPOPUP MENU 
+BEGIN
+    POPUP "So long"
+    BEGIN
+        MENUITEM "Add diffuse texture",         ID_SOLONG_ADDDIFFUSETEXTURE
+        MENUITEM "Add specular texture",        ID_SOLONG_ADDSPECULARTEXTURE
+        MENUITEM "Add ambient texture",         ID_SOLONG_ADDAMBIENTTEXTURE
+        MENUITEM "Add emissive texture",        ID_SOLONG_ADDEMISSIVETEXTURE
+        MENUITEM "Add opacity texture",         ID_SOLONG_ADDOPACITYTEXTURE
+        MENUITEM "Add normal/height texture",   ID_SOLONG_ADDNORMAL
+        MENUITEM "Add shininess texture",       ID_SOLONG_ADDSHININESSTEXTURE
+        MENUITEM SEPARATOR
+        MENUITEM "Set diffuse color",           ID_SOLONG_CLEARDIFFUSECOLOR
+        MENUITEM "Set specular color",          ID_SOLONG_CLEARSPECULARCOLOR
+        MENUITEM "Set ambient color",           ID_SOLONG_CLEARAMBIENTCOLOR
+        MENUITEM "Set emissive color",          ID_SOLONG_CLEAREMISSIVECOLOR
+        MENUITEM "Set transparency",            ID_SOLONG_CLEARTRANSPARENCY
+        MENUITEM SEPARATOR
+        MENUITEM "Make default material",       ID_SOLONG_MAKEDEFAULTMATERIAL
+        POPUP "Set shading mode"
+        BEGIN
+            MENUITEM "Gouraud",                     ID_SETSHADINGMODE_GOURAUD
+            MENUITEM "Phong (specular)",            ID_SETSHADINGMODE_PHONG
+        END
+    END
+    MENUITEM "and thanks for all the fish", 0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXT
+//
+
+IDR_TEXT1               TEXT                    "text1.bin"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RCDATA
+//
+
+IDR_HUD                 RCDATA                  "HUD.png"
+IDR_HUDMASK             RCDATA                  "HUDMask.png"
+#endif    // German (Germany) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

@@ -262,6 +262,11 @@ struct Camera
 		bx::mtxLookAt(_viewMtx, m_eye, m_at, m_up);
 	}
 
+	void setMoveSpeed(float _speed)
+	{
+		m_moveSpeed = _speed;
+	}
+
 	void setPosition(const float* _pos)
 	{
 		bx::memCopy(m_eye, _pos, sizeof(float)*3);
@@ -305,6 +310,11 @@ void cameraDestroy()
 {
 	BX_DELETE(entry::getAllocator(), s_camera);
 	s_camera = NULL;
+}
+
+void cameraSetMoveSpeed(float _speed)
+{
+	s_camera->setMoveSpeed(_speed);
 }
 
 void cameraSetPosition(const float* _pos)

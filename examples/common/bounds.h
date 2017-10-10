@@ -118,7 +118,7 @@ void calcObb(Obb& _obb, const void* _vertices, uint32_t _numVertices, uint32_t _
 void calcMaxBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _numVertices, uint32_t _stride);
 
 /// Calculate minimum bounding sphere.
-void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _numVertices, uint32_t _stride, float _step = 0.01f);
+bool calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _numVertices, uint32_t _stride, float _step = 0.01f, uint32_t _steps = 0xFFFFFFFF);
 
 /// Returns 6 (near, far, left, right, top, bottom) planes representing frustum planes.
 void buildFrustumPlanes(Plane* _planes, const float* _viewProj);
