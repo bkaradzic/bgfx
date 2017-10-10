@@ -2014,9 +2014,9 @@ namespace bgfx
 			if (m_draw.setStreamBit(_stream, _tvb->handle) )
 			{
 				Stream& stream = m_draw.m_stream[_stream];
-				stream.m_startVertex  = _tvb->startVertex + _startVertex;
-				stream.m_handle       = _tvb->handle;
-				stream.m_decl         = _tvb->decl;
+				stream.m_startVertex   = _tvb->startVertex + _startVertex;
+				stream.m_handle        = _tvb->handle;
+				stream.m_decl          = _tvb->decl;
 				m_numVertices[_stream] =
 					bx::uint32_min(bx::uint32_imax(0, _tvb->size/_tvb->stride - _startVertex), _numVertices)
 					;
@@ -4174,7 +4174,8 @@ namespace bgfx
 		BGFX_API_FUNC(void setIndexBuffer(DynamicIndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices) )
 		{
 			BGFX_CHECK_HANDLE("setIndexBuffer", m_dynamicIndexBufferHandle, _handle);
-			m_encoder[0].setIndexBuffer(m_dynamicIndexBuffers[_handle.idx], _firstIndex, _numIndices);
+			const DynamicIndexBuffer& dib = m_dynamicIndexBuffers[_handle.idx];
+			m_encoder[0].setIndexBuffer(dib, _firstIndex, _numIndices);
 		}
 
 		BGFX_API_FUNC(void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _firstIndex, uint32_t _numIndices) )
@@ -4192,7 +4193,8 @@ namespace bgfx
 		BGFX_API_FUNC(void setVertexBuffer(uint8_t _stream, DynamicVertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices) )
 		{
 			BGFX_CHECK_HANDLE("setVertexBuffer", m_dynamicVertexBufferHandle, _handle);
-			m_encoder[0].setVertexBuffer(_stream, m_dynamicVertexBuffers[_handle.idx], _startVertex, _numVertices);
+			const DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[_handle.idx];
+			m_encoder[0].setVertexBuffer(_stream, dvb, _startVertex, _numVertices);
 		}
 
 		BGFX_API_FUNC(void setVertexBuffer(uint8_t _stream, const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices) )
