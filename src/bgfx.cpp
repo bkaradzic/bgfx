@@ -968,8 +968,8 @@ namespace bgfx
 
 		_frame->m_uniformEnd = _frame->m_uniformBuffer->getPos();
 
-		m_compute.m_matrix = m_draw.m_matrix;
-		m_compute.m_num    = m_draw.m_num;
+		m_compute.m_startMatrix = m_draw.m_startMatrix;
+		m_compute.m_numMatrices = m_draw.m_numMatrices;
 		m_compute.m_numX   = bx::uint32_max(_numX, 1);
 		m_compute.m_numY   = bx::uint32_max(_numY, 1);
 		m_compute.m_numZ   = bx::uint32_max(_numZ, 1);

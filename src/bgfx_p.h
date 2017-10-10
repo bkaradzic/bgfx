@@ -1409,7 +1409,7 @@ namespace bgfx
 			m_stateFlags   = BGFX_STATE_DEFAULT;
 			m_stencil      = packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT);
 			m_rgba         = 0;
-			m_matrix       = 0;
+			m_startMatrix  = 0;
 			m_startIndex   = 0;
 			m_numIndices   = UINT32_MAX;
 			m_numVertices  = UINT32_MAX;
@@ -1418,7 +1418,7 @@ namespace bgfx
 			m_numInstances       = 1;
 			m_startIndirect = 0;
 			m_numIndirect   = UINT16_MAX;
-			m_num           = 1;
+			m_numMatrices   = 1;
 			m_submitFlags   = BGFX_SUBMIT_EYE_FIRST;
 			m_scissor       = UINT16_MAX;
 			m_streamMask    = 0;
@@ -1444,7 +1444,7 @@ namespace bgfx
 		uint32_t m_rgba;
 		uint32_t m_uniformBegin;
 		uint32_t m_uniformEnd;
-		uint32_t m_matrix;
+		uint32_t m_startMatrix;
 		uint32_t m_startIndex;
 		uint32_t m_numIndices;
 		uint32_t m_numVertices;
@@ -1453,7 +1453,7 @@ namespace bgfx
 		uint16_t m_instanceDataStride;
 		uint16_t m_startIndirect;
 		uint16_t m_numIndirect;
-		uint16_t m_num;
+		uint16_t m_numMatrices;
 		uint16_t m_scissor;
 		uint8_t  m_submitFlags;
 		uint8_t  m_streamMask;
@@ -1468,14 +1468,14 @@ namespace bgfx
 	{
 		void clear()
 		{
-			m_uniformBegin  = 0;
-			m_uniformEnd    = 0;
-			m_matrix      = 0;
-			m_numX        = 0;
-			m_numY        = 0;
-			m_numZ        = 0;
-			m_num         = 0;
-			m_submitFlags = BGFX_SUBMIT_EYE_FIRST;
+			m_uniformBegin = 0;
+			m_uniformEnd   = 0;
+			m_startMatrix  = 0;
+			m_numX         = 0;
+			m_numY         = 0;
+			m_numZ         = 0;
+			m_numMatrices  = 0;
+			m_submitFlags  = BGFX_SUBMIT_EYE_FIRST;
 
 			m_indirectBuffer.idx = kInvalidHandle;
 			m_startIndirect      = 0;
@@ -1484,7 +1484,7 @@ namespace bgfx
 
 		uint32_t m_uniformBegin;
 		uint32_t m_uniformEnd;
-		uint32_t m_matrix;
+		uint32_t m_startMatrix;
 		IndirectBufferHandle m_indirectBuffer;
 
 		uint32_t m_numX;
@@ -1492,7 +1492,7 @@ namespace bgfx
 		uint32_t m_numZ;
 		uint16_t m_startIndirect;
 		uint16_t m_numIndirect;
-		uint16_t m_num;
+		uint16_t m_numMatrices;
 		uint8_t  m_submitFlags;
 	};
 
@@ -1931,10 +1931,10 @@ namespace bgfx
 
 		uint32_t setTransform(FrameCache& _frameCache, const void* _mtx, uint16_t _num)
 		{
-			m_draw.m_matrix = _frameCache.m_matrixCache.add(_mtx, _num);
-			m_draw.m_num    = _num;
+			m_draw.m_startMatrix = _frameCache.m_matrixCache.add(_mtx, _num);
+			m_draw.m_numMatrices = _num;
 
-			return m_draw.m_matrix;
+			return m_draw.m_startMatrix;
 		}
 
 		uint32_t allocTransform(FrameCache& _frameCache, Transform* _transform, uint16_t _num)
@@ -1952,8 +1952,8 @@ namespace bgfx
 				, _cache
 				, BGFX_CONFIG_MAX_MATRIX_CACHE
 				);
-			m_draw.m_matrix = _cache;
-			m_draw.m_num    = uint16_t(bx::uint32_min(_cache+_num, BGFX_CONFIG_MAX_MATRIX_CACHE-1) - _cache);
+			m_draw.m_startMatrix = _cache;
+			m_draw.m_numMatrices = uint16_t(bx::uint32_min(_cache+_num, BGFX_CONFIG_MAX_MATRIX_CACHE-1) - _cache);
 		}
 
 		void setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)

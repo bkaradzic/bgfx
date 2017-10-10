@@ -236,11 +236,11 @@ namespace bgfx
 
 				case PredefinedUniform::Model:
 					{
-						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_matrix];
+						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
 							, model.un.val
-							, bx::uint32_min(_draw.m_num*mtxRegs, predefined.m_count)
+							, bx::uint32_min(_draw.m_numMatrices*mtxRegs, predefined.m_count)
 							);
 					}
 					break;
@@ -248,7 +248,7 @@ namespace bgfx
 				case PredefinedUniform::ModelView:
 					{
 						Matrix4 modelView;
-						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_matrix];
+						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
 						bx::float4x4_mul(&modelView.un.f4x4
 							, &model.un.f4x4
 							, &m_view[_eye][_view].un.f4x4
@@ -264,7 +264,7 @@ namespace bgfx
 				case PredefinedUniform::ModelViewProj:
 					{
 						Matrix4 modelViewProj;
-						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_matrix];
+						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
 						bx::float4x4_mul(&modelViewProj.un.f4x4
 							, &model.un.f4x4
 							, &m_viewProj[_eye][_view].un.f4x4
