@@ -909,9 +909,9 @@ namespace bgfx
 		_frame->m_sortKeys[numRenderItems]   = key;
 		_frame->m_sortValues[numRenderItems] = numRenderItems;
 
-		m_draw.m_constBegin = _frame->m_uniformBegin;
-		m_draw.m_constEnd   = _frame->m_uniformEnd;
-		m_draw.m_stateFlags |= m_stateFlags;
+		m_draw.m_uniformBegin = _frame->m_uniformBegin;
+		m_draw.m_uniformEnd   = _frame->m_uniformEnd;
+		m_draw.m_stateFlags  |= m_stateFlags;
 
 		uint32_t numVertices = UINT32_MAX;
 		for (uint32_t idx = 0, streamMask = m_draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
@@ -986,8 +986,8 @@ namespace bgfx
 		_frame->m_sortKeys[numRenderItems]   = key;
 		_frame->m_sortValues[numRenderItems] = numRenderItems;
 
-		m_compute.m_constBegin = _frame->m_uniformBegin;
-		m_compute.m_constEnd   = _frame->m_uniformEnd;
+		m_compute.m_uniformBegin = _frame->m_uniformBegin;
+		m_compute.m_uniformEnd   = _frame->m_uniformEnd;
 		_frame->m_renderItem[numRenderItems].compute = m_compute;
 		_frame->m_renderItemBind[numRenderItems]     = m_bind;
 

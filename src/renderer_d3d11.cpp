@@ -5806,8 +5806,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 
 					bool programChanged = false;
-					bool constantsChanged = compute.m_constBegin < compute.m_constEnd;
-					rendererUpdateUniforms(this, _render->m_uniformBuffer, compute.m_constBegin, compute.m_constEnd);
+					bool constantsChanged = compute.m_uniformBegin < compute.m_uniformEnd;
+					rendererUpdateUniforms(this, _render->m_uniformBuffer, compute.m_uniformBegin, compute.m_uniformEnd);
 
 					if (key.m_program != programIdx)
 					{
@@ -6075,8 +6075,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				}
 
 				bool programChanged = false;
-				bool constantsChanged = draw.m_constBegin < draw.m_constEnd;
-				rendererUpdateUniforms(this, _render->m_uniformBuffer, draw.m_constBegin, draw.m_constEnd);
+				bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
+				rendererUpdateUniforms(this, _render->m_uniformBuffer, draw.m_uniformBegin, draw.m_uniformEnd);
 
 				if (key.m_program != programIdx)
 				{

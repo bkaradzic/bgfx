@@ -1404,15 +1404,15 @@ namespace bgfx
 	{
 		void clear()
 		{
-			m_constBegin  = 0;
-			m_constEnd    = 0;
-			m_stateFlags  = BGFX_STATE_DEFAULT;
-			m_stencil     = packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT);
-			m_rgba        = 0;
-			m_matrix      = 0;
-			m_startIndex  = 0;
-			m_numIndices  = UINT32_MAX;
-			m_numVertices = UINT32_MAX;
+			m_uniformBegin = 0;
+			m_uniformEnd   = 0;
+			m_stateFlags   = BGFX_STATE_DEFAULT;
+			m_stencil      = packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT);
+			m_rgba         = 0;
+			m_matrix       = 0;
+			m_startIndex   = 0;
+			m_numIndices   = UINT32_MAX;
+			m_numVertices  = UINT32_MAX;
 			m_instanceDataOffset = 0;
 			m_instanceDataStride = 0;
 			m_numInstances       = 1;
@@ -1442,8 +1442,8 @@ namespace bgfx
 		uint64_t m_stateFlags;
 		uint64_t m_stencil;
 		uint32_t m_rgba;
-		uint32_t m_constBegin;
-		uint32_t m_constEnd;
+		uint32_t m_uniformBegin;
+		uint32_t m_uniformEnd;
 		uint32_t m_matrix;
 		uint32_t m_startIndex;
 		uint32_t m_numIndices;
@@ -1468,8 +1468,8 @@ namespace bgfx
 	{
 		void clear()
 		{
-			m_constBegin  = 0;
-			m_constEnd    = 0;
+			m_uniformBegin  = 0;
+			m_uniformEnd    = 0;
 			m_matrix      = 0;
 			m_numX        = 0;
 			m_numY        = 0;
@@ -1482,8 +1482,8 @@ namespace bgfx
 			m_numIndirect        = UINT16_MAX;
 		}
 
-		uint32_t m_constBegin;
-		uint32_t m_constEnd;
+		uint32_t m_uniformBegin;
+		uint32_t m_uniformEnd;
 		uint32_t m_matrix;
 		IndirectBufferHandle m_indirectBuffer;
 
