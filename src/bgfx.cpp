@@ -3844,8 +3844,7 @@ error:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(NULL != _tib, "_tib can't be NULL");
-		uint32_t numIndices = bx::uint32_min(_numIndices, _tib->size/2);
-		s_ctx->setIndexBuffer(_tib, _tib->startIndex + _firstIndex, numIndices);
+		s_ctx->setIndexBuffer(_tib, _firstIndex, _numIndices);
 	}
 
 	void setVertexBuffer(uint8_t _stream, VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices)
