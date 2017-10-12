@@ -472,7 +472,13 @@ namespace bgfx
 					if (_type == esd->type
 					&&  1 < esd->size)
 					{
-						return createShader(makeRef(esd->data, esd->size) );
+						ShaderHandle handle = createShader(makeRef(esd->data, esd->size) );
+						if (isValid(handle) )
+						{
+							setName(handle, _name);
+						}
+
+						return handle;
 					}
 				}
 			}

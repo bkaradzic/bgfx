@@ -788,14 +788,14 @@ namespace bgfx
 	///
 	struct Stats
 	{
-		int64_t cpuTimeFrame;    //!< CPU time between two `bgfx::frame` calls.
-		int64_t cpuTimeBegin;    //!< Render thread CPU submit begin time.
-		int64_t cpuTimeEnd;      //!< Render thread CPU submit end time.
-		int64_t cpuTimerFreq;    //!< CPU timer frequency.
+		int64_t cpuTimeFrame;     //!< CPU time between two `bgfx::frame` calls.
+		int64_t cpuTimeBegin;     //!< Render thread CPU submit begin time.
+		int64_t cpuTimeEnd;       //!< Render thread CPU submit end time.
+		int64_t cpuTimerFreq;     //!< CPU timer frequency.
 
-		int64_t gpuTimeBegin;    //!< GPU frame begin time.
-		int64_t gpuTimeEnd;      //!< GPU frame end time.
-		int64_t gpuTimerFreq;    //!< GPU timer frequency.
+		int64_t gpuTimeBegin;     //!< GPU frame begin time.
+		int64_t gpuTimeEnd;       //!< GPU frame end time.
+		int64_t gpuTimerFreq;     //!< GPU timer frequency.
 
 		int64_t waitRender;       //!< Time spent waiting for render backend thread to finish issuing
 		                          //!  draw commands to underlying graphics API.
@@ -805,8 +805,8 @@ namespace bgfx
 		uint32_t numCompute;      //!< Number of compute calls submitted.
 		uint32_t maxGpuLatency;   //!< GPU driver latency.
 
-		int64_t gpuMemoryMax;     //!< Maximum available GPU memory.
-		int64_t gpuMemoryUsed;    //!< Available GPU memory.
+		int64_t gpuMemoryMax;     //!< Maximum available GPU memory for application.
+		int64_t gpuMemoryUsed;    //!< Amount of GPU memory used.
 
 		uint16_t width;           //!< Backbuffer width in pixels.
 		uint16_t height;          //!< Backbuffer height in pixels.

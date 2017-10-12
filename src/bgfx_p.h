@@ -139,11 +139,6 @@ namespace bgfx
 #if BGFX_CONFIG_USE_TINYSTL
 namespace bgfx
 {
-	inline bool isValid(const VertexDecl& _decl)
-	{
-		return 0 != _decl.m_stride;
-	}
-
 	struct TinyStlAllocator
 	{
 		static void* static_allocate(size_t _bytes);
@@ -273,6 +268,11 @@ namespace bgfx
 	{
 		Handle handle = { Handle::Texture, _handle.idx };
 		return handle;
+	}
+
+	inline bool isValid(const VertexDecl& _decl)
+	{
+		return 0 != _decl.m_stride;
 	}
 
 	struct Clear
