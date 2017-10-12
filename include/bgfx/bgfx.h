@@ -2364,7 +2364,7 @@ namespace bgfx
 	/// @param[in] _remap View remap id table. Passing `NULL` will reset view ids
 	///   to default state.
 	///
-	/// @attention C99 equivalent is `bgfx_set_view_remap`.
+	/// @attention C99 equivalent is `bgfx_set_view_order`.
 	///
 	void setViewOrder(uint8_t _id = 0, uint8_t _num = UINT8_MAX, const void* _remap = NULL);
 
