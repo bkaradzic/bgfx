@@ -143,10 +143,11 @@ function bgfxProject(_name, _kind, _defines)
 				"-weak_framework MetalKit",
 			}
 
-		configuration { "not nacl", "not linux-steamlink" }
+		configuration { "not nacl", "not linux-steamlink", "not NX32", "not NX64" }
 			includedirs {
 				--nacl has GLES2 headers modified...
 				--steamlink has EGL headers modified...
+				--NX has EGL headers modified...
 				path.join(BGFX_DIR, "3rdparty/khronos"),
 			}
 

@@ -66,6 +66,7 @@
 					|| BX_PLATFORM_QNX \
 					|| BX_PLATFORM_RPI \
 					|| BX_PLATFORM_STEAMLINK \
+					|| BX_PLATFORM_NX \
 					? 1 : 0)
 #	endif // BGFX_CONFIG_RENDERER_OPENGLES
 
@@ -74,6 +75,7 @@
 					|| BX_PLATFORM_ANDROID \
 					|| BX_PLATFORM_LINUX \
 					|| BX_PLATFORM_WINDOWS \
+					|| BX_PLATFORM_NX \
 					? 1 : 0)
 #	endif // BGFX_CONFIG_RENDERER_VULKAN
 
