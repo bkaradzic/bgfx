@@ -169,13 +169,13 @@
 
 ///
 #define BGFX_STATE_BLEND_FUNC_RT_x(_src, _dst) (0               \
-			| ( uint32_t( (_src)>>BGFX_STATE_BLEND_SHIFT)       \
-			| ( uint32_t( (_dst)>>BGFX_STATE_BLEND_SHIFT)<<4) ) \
+			| ( (uint32_t)( (_src)>>BGFX_STATE_BLEND_SHIFT)       \
+			| ( (uint32_t)( (_dst)>>BGFX_STATE_BLEND_SHIFT)<<4) ) \
 			)
 
 #define BGFX_STATE_BLEND_FUNC_RT_xE(_src, _dst, _equation) (0               \
 			| BGFX_STATE_BLEND_FUNC_RT_x(_src, _dst)                        \
-			| ( uint32_t( (_equation)>>BGFX_STATE_BLEND_EQUATION_SHIFT)<<8) \
+			| ( (uint32_t)( (_equation)>>BGFX_STATE_BLEND_EQUATION_SHIFT)<<8) \
 			)
 
 #define BGFX_STATE_BLEND_FUNC_RT_1(_src, _dst)  (BGFX_STATE_BLEND_FUNC_RT_x(_src, _dst)<< 0)
@@ -241,10 +241,10 @@
 #define BGFX_STENCIL_DEFAULT             UINT32_C(0x00000000) //!<
 
 /// Set stencil ref value.
-#define BGFX_STENCIL_FUNC_REF(_ref) ( (uint32_t(_ref)<<BGFX_STENCIL_FUNC_REF_SHIFT)&BGFX_STENCIL_FUNC_REF_MASK)
+#define BGFX_STENCIL_FUNC_REF(_ref) ( ((uint32_t)(_ref)<<BGFX_STENCIL_FUNC_REF_SHIFT)&BGFX_STENCIL_FUNC_REF_MASK)
 
 /// Set stencil rmask value.
-#define BGFX_STENCIL_FUNC_RMASK(_mask) ( (uint32_t(_mask)<<BGFX_STENCIL_FUNC_RMASK_SHIFT)&BGFX_STENCIL_FUNC_RMASK_MASK)
+#define BGFX_STENCIL_FUNC_RMASK(_mask) ( ((uint32_t)(_mask)<<BGFX_STENCIL_FUNC_RMASK_SHIFT)&BGFX_STENCIL_FUNC_RMASK_MASK)
 
 ///
 #define BGFX_CLEAR_NONE                  UINT16_C(0x0000) //!< No clear flags.
