@@ -38,6 +38,8 @@ static const char* s_directionName[] =
 static const char* s_easeFuncName[] =
 {
 	"Linear",
+	"Step",
+	"SmoothStep",
 	"InQuad",
 	"OutQuad",
 	"InOutQuad",
