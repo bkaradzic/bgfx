@@ -281,6 +281,7 @@ public:
 		{
 			m_emitter[ii].create();
 			m_emitter[ii].m_uniforms.m_handle = sprite;
+			m_emitter[ii].update();
 		}
 
 		imguiCreate();

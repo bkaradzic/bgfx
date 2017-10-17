@@ -187,8 +187,12 @@ namespace ps
 
 		void reset()
 		{
+			m_dt = 0.0f;
+			m_uniforms.reset();
 			m_num = 0;
 			bx::memSet(&m_aabb, 0, sizeof(Aabb) );
+
+			m_rng.reset();
 		}
 
 		void update(float _dt)
@@ -684,13 +688,11 @@ namespace ps
 
 	void Emitter::create(EmitterShape::Enum _shape, EmitterDirection::Enum _direction, uint32_t _maxParticles)
 	{
-		m_dt = 0.0f;
-		m_uniforms.reset();
+		reset();
+
 		m_shape     = _shape;
 		m_direction = _direction;
-
-		m_num = 0;
-		m_max = _maxParticles;
+		m_max       = _maxParticles;
 		m_particles = (Particle*)BX_ALLOC(s_ctx.m_allocator, m_max*sizeof(Particle) );
 	}
 
