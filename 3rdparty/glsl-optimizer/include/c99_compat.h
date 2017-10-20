@@ -73,10 +73,8 @@
 // BK - STFU!
 #  pragma GCC diagnostic ignored "-Wunknown-pragmas" // for clang to disable GCC pragmas
 #  pragma GCC diagnostic ignored "-Wpragmas"         // for GCC to disable clang pragmas
-#  pragma GCC diagnostic ignored "-Wformat="
 #  pragma GCC diagnostic ignored "-Wformat-extra-args"
 #  pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#  pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #  pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #  pragma GCC diagnostic ignored "-Wreorder"
 #  pragma GCC diagnostic ignored "-Woverloaded-virtual"
@@ -85,6 +83,13 @@
 #  pragma GCC diagnostic ignored "-Wunused-parameter"
 #  pragma GCC diagnostic ignored "-Wunused-private-field"
 #  pragma GCC diagnostic ignored "-Wunused-variable"
+#  pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"
+
+#  if !defined(__clang__)
+#    pragma GCC diagnostic ignored "-Wformat="
+#    pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#  endif
+
 #endif
 
 
