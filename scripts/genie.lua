@@ -313,8 +313,8 @@ function exampleProjectDefaults()
 	configuration { "rpi" }
 		links {
 			"X11",
-			"GLESv2",
-			"EGL",
+			"brcmGLESv2",
+			"brcmEGL",
 			"bcm_host",
 			"vcos",
 			"vchiq_arm",
