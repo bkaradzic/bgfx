@@ -567,8 +567,8 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
         unsigned int  stage;     // stage mask
         bool          method;    // true if it's a method.
     } hlslIntrinsics[] = {
-        // name                               retOrd   retType    argOrder          argType   stage mask
-        // -----------------------------------------------------------------------------------------------
+        // name                               retOrd   retType    argOrder          argType          stage mask     method
+        // ----------------------------------------------------------------------------------------------------------------
         { "abort",                            nullptr, nullptr,   "-",              "-",             EShLangAll,    false },
         { "abs",                              nullptr, nullptr,   "SVM",            "DFUI",          EShLangAll,    false },
         { "acos",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
@@ -587,7 +587,7 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
         { "ceil",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
         { "CheckAccessFullyMapped",           "S",     "B" ,      "S",              "U",             EShLangPSCS,   false },
         { "clamp",                            nullptr, nullptr,   "SVM,,",          "FUI,,",         EShLangAll,    false },
-        { "clip",                             "-",     "-",       "SVM",            "F",             EShLangPS,     false },
+        { "clip",                             "-",     "-",       "SVM",            "FUI",           EShLangPS,     false },
         { "cos",                              nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
         { "cosh",                             nullptr, nullptr,   "SVM",            "F",             EShLangAll,    false },
         { "countbits",                        nullptr, nullptr,   "SV",             "UI",            EShLangAll,    false },

@@ -64,6 +64,7 @@ namespace glslang {
         EatUnroll,
         EatLoop,
         EatBinding,
+        EatGlobalBinding,
         EatLocation,
         EatInputAttachment
     };
@@ -93,7 +94,16 @@ namespace glslang {
         // True if entry exists in map (even if value is nullptr)
         bool contains(TAttributeType) const;
 
+        // Obtain attribute as integer
+        bool getInt(TAttributeType attr, int& value, int argNum = 0) const;
+
+        // Obtain attribute as string, with optional to-lower transform
+        bool getString(TAttributeType attr, TString& value, int argNum = 0, bool convertToLower = true) const;
+
     protected:
+        // Helper to get attribute const union
+        const TConstUnion* getConstUnion(TAttributeType attr, TBasicType, int argNum) const;
+
         // Find an attribute enum given its name.
         static TAttributeType attributeFromName(const TString& nameSpace, const TString& name);
 

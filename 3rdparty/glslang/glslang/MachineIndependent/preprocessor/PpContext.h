@@ -309,7 +309,7 @@ protected:
     bool endOfReplacementList() { return inputStack.empty() || inputStack.back()->endOfReplacementList(); }
     bool isMacroInput() { return inputStack.size() > 0 && inputStack.back()->isMacroInput(); }
 
-    static const int maxIfNesting = 64;
+    static const int maxIfNesting = 65;
 
     int ifdepth;                  // current #if-#else-#endif nesting in the cpp.c file (pre-processor)
     bool elseSeen[maxIfNesting];  // Keep a track of whether an else has been seen at a particular depth

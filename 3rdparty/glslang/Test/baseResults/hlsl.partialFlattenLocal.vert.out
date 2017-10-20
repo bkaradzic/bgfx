@@ -1,0 +1,366 @@
+hlsl.partialFlattenLocal.vert
+WARNING: AST will form illegal SPIR-V; need to transform to legalize
+Shader version: 500
+0:? Sequence
+0:12  Function Definition: @main(vf4; ( temp 4-component vector of float)
+0:12    Function Parameters: 
+0:12      'pos' ( in 4-component vector of float)
+0:?     Sequence
+0:14      move second child to first child ( temp texture2D)
+0:?         'packed.tex' ( temp texture2D)
+0:14        'tex' ( uniform texture2D)
+0:15      move second child to first child ( temp 3-component vector of float)
+0:15        direct index ( temp 3-component vector of float)
+0:?           'packed.pos' ( temp 3-element array of 3-component vector of float)
+0:15          Constant:
+0:15            0 (const int)
+0:?         Constant:
+0:?           0.000000
+0:?           0.000000
+0:?           0.000000
+0:16      move second child to first child ( temp 2-component vector of float)
+0:16        direct index ( temp 2-component vector of float)
+0:?           'packed.uv' ( temp 2-element array of 2-component vector of float)
+0:16          Constant:
+0:16            0 (const int)
+0:?         Constant:
+0:?           0.000000
+0:?           1.000000
+0:17      move second child to first child ( temp float)
+0:?         'packed.x' ( temp float)
+0:17        Constant:
+0:17          1.000000
+0:18      move second child to first child ( temp int)
+0:?         'packed.n' ( temp int)
+0:18        Constant:
+0:18          3 (const int)
+0:20      Sequence
+0:20        move second child to first child ( temp int)
+0:20          'i' ( temp int)
+0:20          Constant:
+0:20            0 (const int)
+0:20        Loop with condition tested first
+0:20          Loop Condition
+0:20          Compare Less Than ( temp bool)
+0:20            'i' ( temp int)
+0:20            Constant:
+0:20              1 (const int)
+0:20          Loop Body
+0:?           Sequence
+0:21            add second child into first child ( temp 2-component vector of float)
+0:21              vector swizzle ( temp 2-component vector of float)
+0:21                indirect index ( temp 3-component vector of float)
+0:?                   'packed.pos' ( temp 3-element array of 3-component vector of float)
+0:21                  'i' ( temp int)
+0:21                Sequence
+0:21                  Constant:
+0:21                    0 (const int)
+0:21                  Constant:
+0:21                    1 (const int)
+0:21              indirect index ( temp 2-component vector of float)
+0:?                 'packed.uv' ( temp 2-element array of 2-component vector of float)
+0:21                'i' ( temp int)
+0:20          Loop Terminal Expression
+0:20          Pre-Increment ( temp int)
+0:20            'i' ( temp int)
+0:24      Sequence
+0:24        Sequence
+0:24          move second child to first child ( temp texture2D)
+0:?             'packed2.tex' ( temp texture2D)
+0:?             'packed.tex' ( temp texture2D)
+0:24          move second child to first child ( temp 3-element array of 3-component vector of float)
+0:?             'packed2.pos' ( temp 3-element array of 3-component vector of float)
+0:?             'packed.pos' ( temp 3-element array of 3-component vector of float)
+0:24          move second child to first child ( temp 2-element array of 2-component vector of float)
+0:?             'packed2.uv' ( temp 2-element array of 2-component vector of float)
+0:?             'packed.uv' ( temp 2-element array of 2-component vector of float)
+0:24          move second child to first child ( temp float)
+0:?             'packed2.x' ( temp float)
+0:?             'packed.x' ( temp float)
+0:24          move second child to first child ( temp int)
+0:?             'packed2.n' ( temp int)
+0:?             'packed.n' ( temp int)
+0:26      Branch: Return with expression
+0:26        add ( temp 4-component vector of float)
+0:26          'pos' ( in 4-component vector of float)
+0:?           Construct vec4 ( temp 4-component vector of float)
+0:26            direct index ( temp 3-component vector of float)
+0:?               'packed2.pos' ( temp 3-element array of 3-component vector of float)
+0:26              Constant:
+0:26                0 (const int)
+0:26            Constant:
+0:26              0.000000
+0:12  Function Definition: main( ( temp void)
+0:12    Function Parameters: 
+0:?     Sequence
+0:12      move second child to first child ( temp 4-component vector of float)
+0:?         'pos' ( temp 4-component vector of float)
+0:?         'pos' (layout( location=0) in 4-component vector of float)
+0:12      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' ( out 4-component vector of float Position)
+0:12        Function Call: @main(vf4; ( temp 4-component vector of float)
+0:?           'pos' ( temp 4-component vector of float)
+0:?   Linker Objects
+0:?     'tex' ( uniform texture2D)
+0:?     '@entryPointOutput' ( out 4-component vector of float Position)
+0:?     'pos' (layout( location=0) in 4-component vector of float)
+
+
+Linked vertex stage:
+
+
+Shader version: 500
+0:? Sequence
+0:12  Function Definition: @main(vf4; ( temp 4-component vector of float)
+0:12    Function Parameters: 
+0:12      'pos' ( in 4-component vector of float)
+0:?     Sequence
+0:14      move second child to first child ( temp texture2D)
+0:?         'packed.tex' ( temp texture2D)
+0:14        'tex' ( uniform texture2D)
+0:15      move second child to first child ( temp 3-component vector of float)
+0:15        direct index ( temp 3-component vector of float)
+0:?           'packed.pos' ( temp 3-element array of 3-component vector of float)
+0:15          Constant:
+0:15            0 (const int)
+0:?         Constant:
+0:?           0.000000
+0:?           0.000000
+0:?           0.000000
+0:16      move second child to first child ( temp 2-component vector of float)
+0:16        direct index ( temp 2-component vector of float)
+0:?           'packed.uv' ( temp 2-element array of 2-component vector of float)
+0:16          Constant:
+0:16            0 (const int)
+0:?         Constant:
+0:?           0.000000
+0:?           1.000000
+0:17      move second child to first child ( temp float)
+0:?         'packed.x' ( temp float)
+0:17        Constant:
+0:17          1.000000
+0:18      move second child to first child ( temp int)
+0:?         'packed.n' ( temp int)
+0:18        Constant:
+0:18          3 (const int)
+0:20      Sequence
+0:20        move second child to first child ( temp int)
+0:20          'i' ( temp int)
+0:20          Constant:
+0:20            0 (const int)
+0:20        Loop with condition tested first
+0:20          Loop Condition
+0:20          Compare Less Than ( temp bool)
+0:20            'i' ( temp int)
+0:20            Constant:
+0:20              1 (const int)
+0:20          Loop Body
+0:?           Sequence
+0:21            add second child into first child ( temp 2-component vector of float)
+0:21              vector swizzle ( temp 2-component vector of float)
+0:21                indirect index ( temp 3-component vector of float)
+0:?                   'packed.pos' ( temp 3-element array of 3-component vector of float)
+0:21                  'i' ( temp int)
+0:21                Sequence
+0:21                  Constant:
+0:21                    0 (const int)
+0:21                  Constant:
+0:21                    1 (const int)
+0:21              indirect index ( temp 2-component vector of float)
+0:?                 'packed.uv' ( temp 2-element array of 2-component vector of float)
+0:21                'i' ( temp int)
+0:20          Loop Terminal Expression
+0:20          Pre-Increment ( temp int)
+0:20            'i' ( temp int)
+0:24      Sequence
+0:24        Sequence
+0:24          move second child to first child ( temp texture2D)
+0:?             'packed2.tex' ( temp texture2D)
+0:?             'packed.tex' ( temp texture2D)
+0:24          move second child to first child ( temp 3-element array of 3-component vector of float)
+0:?             'packed2.pos' ( temp 3-element array of 3-component vector of float)
+0:?             'packed.pos' ( temp 3-element array of 3-component vector of float)
+0:24          move second child to first child ( temp 2-element array of 2-component vector of float)
+0:?             'packed2.uv' ( temp 2-element array of 2-component vector of float)
+0:?             'packed.uv' ( temp 2-element array of 2-component vector of float)
+0:24          move second child to first child ( temp float)
+0:?             'packed2.x' ( temp float)
+0:?             'packed.x' ( temp float)
+0:24          move second child to first child ( temp int)
+0:?             'packed2.n' ( temp int)
+0:?             'packed.n' ( temp int)
+0:26      Branch: Return with expression
+0:26        add ( temp 4-component vector of float)
+0:26          'pos' ( in 4-component vector of float)
+0:?           Construct vec4 ( temp 4-component vector of float)
+0:26            direct index ( temp 3-component vector of float)
+0:?               'packed2.pos' ( temp 3-element array of 3-component vector of float)
+0:26              Constant:
+0:26                0 (const int)
+0:26            Constant:
+0:26              0.000000
+0:12  Function Definition: main( ( temp void)
+0:12    Function Parameters: 
+0:?     Sequence
+0:12      move second child to first child ( temp 4-component vector of float)
+0:?         'pos' ( temp 4-component vector of float)
+0:?         'pos' (layout( location=0) in 4-component vector of float)
+0:12      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' ( out 4-component vector of float Position)
+0:12        Function Call: @main(vf4; ( temp 4-component vector of float)
+0:?           'pos' ( temp 4-component vector of float)
+0:?   Linker Objects
+0:?     'tex' ( uniform texture2D)
+0:?     '@entryPointOutput' ( out 4-component vector of float Position)
+0:?     'pos' (layout( location=0) in 4-component vector of float)
+
+// Module Version 10000
+// Generated by (magic number): 80002
+// Id's are bound by 97
+
+                              Capability Shader
+               1:             ExtInstImport  "GLSL.std.450"
+                              MemoryModel Logical GLSL450
+                              EntryPoint Vertex 4  "main" 90 93
+                              Source HLSL 500
+                              Name 4  "main"
+                              Name 11  "@main(vf4;"
+                              Name 10  "pos"
+                              Name 15  "packed.tex"
+                              Name 17  "tex"
+                              Name 24  "packed.pos"
+                              Name 35  "packed.uv"
+                              Name 41  "packed.x"
+                              Name 43  "packed.n"
+                              Name 45  "i"
+                              Name 68  "packed2.tex"
+                              Name 70  "packed2.pos"
+                              Name 72  "packed2.uv"
+                              Name 74  "packed2.x"
+                              Name 76  "packed2.n"
+                              Name 88  "pos"
+                              Name 90  "pos"
+                              Name 93  "@entryPointOutput"
+                              Name 94  "param"
+                              Decorate 17(tex) DescriptorSet 0
+                              Decorate 90(pos) Location 0
+                              Decorate 93(@entryPointOutput) BuiltIn Position
+               2:             TypeVoid
+               3:             TypeFunction 2
+               6:             TypeFloat 32
+               7:             TypeVector 6(float) 4
+               8:             TypePointer Function 7(fvec4)
+               9:             TypeFunction 7(fvec4) 8(ptr)
+              13:             TypeImage 6(float) 2D sampled format:Unknown
+              14:             TypePointer Function 13
+              16:             TypePointer UniformConstant 13
+         17(tex):     16(ptr) Variable UniformConstant
+              19:             TypeVector 6(float) 3
+              20:             TypeInt 32 0
+              21:     20(int) Constant 3
+              22:             TypeArray 19(fvec3) 21
+              23:             TypePointer Function 22
+              25:             TypeInt 32 1
+              26:     25(int) Constant 0
+              27:    6(float) Constant 0
+              28:   19(fvec3) ConstantComposite 27 27 27
+              29:             TypePointer Function 19(fvec3)
+              31:             TypeVector 6(float) 2
+              32:     20(int) Constant 2
+              33:             TypeArray 31(fvec2) 32
+              34:             TypePointer Function 33
+              36:    6(float) Constant 1065353216
+              37:   31(fvec2) ConstantComposite 27 36
+              38:             TypePointer Function 31(fvec2)
+              40:             TypePointer Function 6(float)
+              42:             TypePointer Function 25(int)
+              44:     25(int) Constant 3
+              52:     25(int) Constant 1
+              53:             TypeBool
+              89:             TypePointer Input 7(fvec4)
+         90(pos):     89(ptr) Variable Input
+              92:             TypePointer Output 7(fvec4)
+93(@entryPointOutput):     92(ptr) Variable Output
+         4(main):           2 Function None 3
+               5:             Label
+         88(pos):      8(ptr) Variable Function
+       94(param):      8(ptr) Variable Function
+              91:    7(fvec4) Load 90(pos)
+                              Store 88(pos) 91
+              95:    7(fvec4) Load 88(pos)
+                              Store 94(param) 95
+              96:    7(fvec4) FunctionCall 11(@main(vf4;) 94(param)
+                              Store 93(@entryPointOutput) 96
+                              Return
+                              FunctionEnd
+  11(@main(vf4;):    7(fvec4) Function None 9
+         10(pos):      8(ptr) FunctionParameter
+              12:             Label
+  15(packed.tex):     14(ptr) Variable Function
+  24(packed.pos):     23(ptr) Variable Function
+   35(packed.uv):     34(ptr) Variable Function
+    41(packed.x):     40(ptr) Variable Function
+    43(packed.n):     42(ptr) Variable Function
+           45(i):     42(ptr) Variable Function
+ 68(packed2.tex):     14(ptr) Variable Function
+ 70(packed2.pos):     23(ptr) Variable Function
+  72(packed2.uv):     34(ptr) Variable Function
+   74(packed2.x):     40(ptr) Variable Function
+   76(packed2.n):     42(ptr) Variable Function
+              18:          13 Load 17(tex)
+                              Store 15(packed.tex) 18
+              30:     29(ptr) AccessChain 24(packed.pos) 26
+                              Store 30 28
+              39:     38(ptr) AccessChain 35(packed.uv) 26
+                              Store 39 37
+                              Store 41(packed.x) 36
+                              Store 43(packed.n) 44
+                              Store 45(i) 26
+                              Branch 46
+              46:             Label
+                              LoopMerge 48 49 None
+                              Branch 50
+              50:             Label
+              51:     25(int) Load 45(i)
+              54:    53(bool) SLessThan 51 52
+                              BranchConditional 54 47 48
+              47:               Label
+              55:     25(int)   Load 45(i)
+              56:     25(int)   Load 45(i)
+              57:     38(ptr)   AccessChain 35(packed.uv) 56
+              58:   31(fvec2)   Load 57
+              59:     29(ptr)   AccessChain 24(packed.pos) 55
+              60:   19(fvec3)   Load 59
+              61:   31(fvec2)   VectorShuffle 60 60 0 1
+              62:   31(fvec2)   FAdd 61 58
+              63:     29(ptr)   AccessChain 24(packed.pos) 55
+              64:   19(fvec3)   Load 63
+              65:   19(fvec3)   VectorShuffle 64 62 3 4 2
+                                Store 63 65
+                                Branch 49
+              49:               Label
+              66:     25(int)   Load 45(i)
+              67:     25(int)   IAdd 66 52
+                                Store 45(i) 67
+                                Branch 46
+              48:             Label
+              69:          13 Load 15(packed.tex)
+                              Store 68(packed2.tex) 69
+              71:          22 Load 24(packed.pos)
+                              Store 70(packed2.pos) 71
+              73:          33 Load 35(packed.uv)
+                              Store 72(packed2.uv) 73
+              75:    6(float) Load 41(packed.x)
+                              Store 74(packed2.x) 75
+              77:     25(int) Load 43(packed.n)
+                              Store 76(packed2.n) 77
+              78:    7(fvec4) Load 10(pos)
+              79:     29(ptr) AccessChain 70(packed2.pos) 26
+              80:   19(fvec3) Load 79
+              81:    6(float) CompositeExtract 80 0
+              82:    6(float) CompositeExtract 80 1
+              83:    6(float) CompositeExtract 80 2
+              84:    7(fvec4) CompositeConstruct 81 82 83 27
+              85:    7(fvec4) FAdd 78 84
+                              ReturnValue 85
+                              FunctionEnd

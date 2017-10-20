@@ -2426,6 +2426,9 @@ bool HlslGrammar::acceptDefaultParameterDeclaration(const TType& type, TIntermTy
         node = parseContext.handleFunctionCall(token.loc, constructor, node);
     }
 
+    if (node == nullptr)
+        return false;
+
     // If this is simply a constant, we can use it directly.
     if (node->getAsConstantUnion())
         return true;
@@ -2862,7 +2865,7 @@ bool HlslGrammar::acceptUnaryExpression(TIntermTyped*& node)
                 parseContext.handleFunctionArgument(constructorFunction, arguments, node);
                 node = parseContext.handleFunctionCall(loc, constructorFunction, arguments);
 
-                return true;
+                return node != nullptr;
             } else {
                 // This could be a parenthesized constructor, ala (int(3)), and we just accepted
                 // the '(int' part.  We must back up twice.
@@ -3072,7 +3075,7 @@ bool HlslGrammar::acceptConstructor(TIntermTyped*& node)
         // hook it up
         node = parseContext.handleFunctionCall(arguments->getLoc(), constructorFunction, arguments);
 
-        return true;
+        return node != nullptr;
     }
 
     return false;
@@ -3120,7 +3123,7 @@ bool HlslGrammar::acceptFunctionCall(const TSourceLoc& loc, TString& name, TInte
     // call
     node = parseContext.handleFunctionCall(loc, function, arguments);
 
-    return true;
+    return node != nullptr;
 }
 
 // arguments

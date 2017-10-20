@@ -126,11 +126,6 @@ void TParseContext::setPrecisionDefaults()
             sampler.set(EbtFloat, Esd2D);
             sampler.external = true;
             defaultSamplerPrecision[computeSamplerTypeIndex(sampler)] = EpqLow;
-        } else {
-            // Non-ES profile
-            // All default to highp.
-            for (int type = 0; type < maxSamplerIndex; ++type)
-                defaultSamplerPrecision[type] = EpqHigh;
         }
 
         // If we are parsing built-in computational variables/functions, it is meaningful to record
@@ -145,6 +140,13 @@ void TParseContext::setPrecisionDefaults()
                 defaultPrecision[EbtInt] = EpqHigh;
                 defaultPrecision[EbtUint] = EpqHigh;
                 defaultPrecision[EbtFloat] = EpqHigh;
+            }
+
+            if (profile != EEsProfile) {
+                // Non-ES profile
+                // All sampler precisions default to highp.
+                for (int type = 0; type < maxSamplerIndex; ++type)
+                    defaultSamplerPrecision[type] = EpqHigh;
             }
         }
 
@@ -663,7 +665,7 @@ TIntermTyped* TParseContext::handleDotDereference(const TSourceLoc& loc, TInterm
     // leaving swizzles and struct/block dereferences.
 
     TIntermTyped* result = base;
-    if (base->isVector() || base->isScalar()) {
+    if (base->getBasicType() != EbtVoid && (base->isVector() || base->isScalar())) {
         if (base->isScalar()) {
             const char* dotFeature = "scalar swizzle";
             requireProfile(loc, ~EEsProfile, dotFeature);

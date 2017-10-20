@@ -1,0 +1,34 @@
+invalidSwizzle.vert
+ERROR: 0:6: 'xx' : does not apply to this type:  global void
+ERROR: 0:7: 'xy' : does not apply to this type:  global void
+ERROR: 2 compilation errors.  No code generated.
+
+
+Shader version: 420
+ERROR: node is still EOpNull!
+0:5  Function Definition: main( ( global void)
+0:5    Function Parameters: 
+0:6    Sequence
+0:6      Function Call: f( ( global void)
+0:7      Function Call: f( ( global void)
+0:?   Linker Objects
+0:?     'gl_VertexID' ( gl_VertexId int VertexId)
+0:?     'gl_InstanceID' ( gl_InstanceId int InstanceId)
+
+
+Linked vertex stage:
+
+ERROR: Linking vertex stage: No function definition (body) found: 
+    f(
+
+Shader version: 420
+ERROR: node is still EOpNull!
+0:5  Function Definition: main( ( global void)
+0:5    Function Parameters: 
+0:6    Sequence
+0:6      Function Call: f( ( global void)
+0:7      Function Call: f( ( global void)
+0:?   Linker Objects
+0:?     'gl_VertexID' ( gl_VertexId int VertexId)
+0:?     'gl_InstanceID' ( gl_InstanceId int InstanceId)
+

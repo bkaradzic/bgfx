@@ -569,6 +569,10 @@ void TParseContextBase::growGlobalUniformBlock(const TSourceLoc& loc, TType& mem
         firstNewMember = 0;
     }
 
+    // Update with binding and set
+    globalUniformBlock->getWritableType().getQualifier().layoutBinding = globalUniformBinding;
+    globalUniformBlock->getWritableType().getQualifier().layoutSet = globalUniformSet;
+
     // Add the requested member as a member to the global block.
     TType* type = new TType;
     type->shallowCopy(memberType);
