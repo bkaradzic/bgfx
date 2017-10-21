@@ -216,11 +216,13 @@
  Here is a change-log of API breaking changes, if you are using one of the functions listed, expect to have to fix some code.
  Also read releases logs https://github.com/ocornut/imgui/releases for more details.
 
+ - 2017/10/20 (1.52) - changed IsWindowHovered() default parameters behavior to return false an item is active in another window (e.g. click-dragging item from another window to this window). You can use the newly introduced IsWindowHovered() flags to requests that specific behavior if you need it.
+ - 2017/10/20 (1.52) - removed the IsItemRectHovered()/IsWindowRectHovered() names introduced in 1.51, the new flags available for IsItemHovered() and IsWindowHovered() are providing much more details/options, and those legacy entry points were confusing/misleading.
  - 2017/10/17 (1.52) - marked the old 5-parameters version of Begin() as obsolete (still available). Use SetNextWindowSize()+Begin() instead!
  - 2017/10/11 (1.52) - renamed AlignFirstTextHeightToWidgets() to AlignTextToFramePadding(). Kept inline redirection function (will obsolete).
  - 2017/09/25 (1.52) - removed SetNextWindowPosCenter() because SetNextWindowPos() now has the optional pivot information to do the same and more. Kept redirection function (will obsolete). 
  - 2017/08/25 (1.52) - io.MousePos needs to be set to ImVec2(-FLT_MAX,-FLT_MAX) when mouse is unavailable/missing. Previously ImVec2(-1,-1) was enough but we now accept negative mouse coordinates. In your binding if you need to support unavailable mouse, make sure to replace "io.MousePos = ImVec2(-1,-1)" with "io.MousePos = ImVec2(-FLT_MAX,-FLT_MAX)".
- - 2017/08/22 (1.51) - renamed IsItemHoveredRect() to IsItemRectHovered(). Kept inline redirection function (will obsolete).
+ - 2017/08/22 (1.51) - renamed IsItemHoveredRect() to IsItemRectHovered(). Kept inline redirection function (will obsolete). -> (1.52) use IsItemHovered(ImGuiHoveredFlags_RectOnly)! 
                      - renamed IsMouseHoveringAnyWindow() to IsAnyWindowHovered() for consistency. Kept inline redirection function (will obsolete).
                      - renamed IsMouseHoveringWindow() to IsWindowRectHovered() for consistency. Kept inline redirection function (will obsolete).
  - 2017/08/20 (1.51) - renamed GetStyleColName() to GetStyleColorName() for consistency.
@@ -648,7 +650,7 @@ static void             MarkIniSettingsDirty(ImGuiWindow* window);
 
 static ImRect           GetVisibleRect();
 
-static void             CloseInactivePopups();
+static void             CloseInactivePopups(ImGuiWindow* ref_window);
 static void             ClosePopupToLevel(int remaining);
 static ImGuiWindow*     GetFrontMostModalRootWindow();
 static ImVec2           FindBestPopupWindowPos(const ImVec2& base_pos, const ImVec2& size, int* last_dir, const ImRect& rect_to_avoid);
@@ -1949,15 +1951,22 @@ void ImGui::KeepAliveID(ImGuiID id)
         g.ActiveIdIsAlive = true;
 }
 
-static inline bool IsWindowContentHoverable(ImGuiWindow* window)
+static inline bool IsWindowContentHoverable(ImGuiWindow* window, ImGuiHoveredFlags flags)
 {
     // An active popup disable hovering on other windows (apart from its own children)
     // FIXME-OPT: This could be cached/stored within the window.
     ImGuiContext& g = *GImGui;
     if (g.NavWindow)
         if (ImGuiWindow* focused_root_window = g.NavWindow->RootWindow)
-            if ((focused_root_window->Flags & ImGuiWindowFlags_Popup) != 0 && focused_root_window->WasActive && focused_root_window != window->RootWindow)
-                return false;
+            if (focused_root_window->WasActive && focused_root_window != window->RootWindow)
+            {
+                // For the purpose of those flags we differentiate "standard popup" from "modal popup"
+                // NB: The order of those two tests is important because Modal windows are also Popups.
+                if (focused_root_window->Flags & ImGuiWindowFlags_Modal)
+                    return false;
+                if ((focused_root_window->Flags & ImGuiWindowFlags_Popup) && !(flags & ImGuiHoveredFlags_AllowWhenBlockedByPopup))
+                    return false;
+            }
 
     return true;
 }
@@ -2017,7 +2026,7 @@ bool ImGui::ItemAdd(const ImRect& bb, ImGuiID id)
 // This is roughly matching the behavior of internal-facing ItemHoverable()
 // - we allow hovering to be true when ActiveId==window->MoveID, so that clicking on non-interactive items such as a Text() item still returns true with IsItemHovered())
 // - this should work even for non-interactive items that have no ID, so we cannot use LastItemId
-bool ImGui::IsItemHovered()
+bool ImGui::IsItemHovered(ImGuiHoveredFlags flags)
 {
     ImGuiContext& g = *GImGui;
 
@@ -2028,19 +2037,14 @@ bool ImGui::IsItemHovered()
     // Until a solution is found I believe reverting to the test from 2017/09/27 is safe since this was the test that has been running for a long while.
     //if (g.HoveredWindow != window)
     //    return false;
-    if (g.HoveredRootWindow != window->RootWindow)
+    if (g.HoveredRootWindow != window->RootWindow && !(flags & ImGuiHoveredFlags_AllowWhenOverlapped))
         return false;
-    if (g.ActiveId != 0 && g.ActiveId != window->DC.LastItemId && !g.ActiveIdAllowOverlap && g.ActiveId != window->MoveId)
-        return false;
-    if (!IsWindowContentHoverable(window))
+    if (!(flags & ImGuiHoveredFlags_AllowWhenBlockedByActiveItem))
+        if (g.ActiveId != 0 && g.ActiveId != window->DC.LastItemId && !g.ActiveIdAllowOverlap && g.ActiveId != window->MoveId)
+            return false;
+    if (!IsWindowContentHoverable(window, flags))
         return false;
     return true;
-}
-
-bool ImGui::IsItemRectHovered()
-{
-    ImGuiWindow* window = GetCurrentWindowRead();
-    return window->DC.LastItemRectHoveredRect;
 }
 
 // Internal facing ItemHoverable() used when submitting widgets. Differs slightly from IsItemHovered().
@@ -2057,7 +2061,7 @@ bool ImGui::ItemHoverable(const ImRect& bb, ImGuiID id)
         return false;
     if (!IsMouseHoveringRect(bb.Min, bb.Max))
         return false;
-    if (!IsWindowContentHoverable(window))
+    if (!IsWindowContentHoverable(window, ImGuiHoveredFlags_Default))
         return false;
 
     SetHoveredID(id);
@@ -2446,7 +2450,7 @@ void ImGui::NewFrame()
     // But in order to allow the user to call NewFrame() multiple times without calling Render(), we are doing an explicit clear.
     g.CurrentWindowStack.resize(0);
     g.CurrentPopupStack.resize(0);
-    CloseInactivePopups();
+    CloseInactivePopups(g.NavWindow);
 
     // Create implicit window - we will only render it if the user has added something to it.
     // We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.
@@ -2776,25 +2780,49 @@ void ImGui::EndFrame()
         g.CurrentWindow->Active = false;
     ImGui::End();
 
-    // Click to focus window and start moving (after we're done with all our widgets)
-    if (g.ActiveId == 0 && g.HoveredId == 0 && g.IO.MouseClicked[0])
+    if (g.ActiveId == 0 && g.HoveredId == 0)
     {
-        if (!(g.NavWindow && !g.NavWindow->WasActive && g.NavWindow->Active)) // Unless we just made a popup appear
+        if (!g.NavWindow || !g.NavWindow->Appearing) // Unless we just made a window/popup appear
         {
-            if (g.HoveredRootWindow != NULL)
+            // Click to focus window and start moving (after we're done with all our widgets)
+            if (g.IO.MouseClicked[0])
             {
-                FocusWindow(g.HoveredWindow);
-                if (!(g.HoveredWindow->Flags & ImGuiWindowFlags_NoMove))
+                if (g.HoveredRootWindow != NULL)
                 {
-                    g.MovedWindow = g.HoveredWindow;
-                    g.MovedWindowMoveId = g.HoveredWindow->MoveId;
-                    SetActiveID(g.MovedWindowMoveId, g.HoveredRootWindow);
+                    FocusWindow(g.HoveredWindow);
+                    if (!(g.HoveredWindow->Flags & ImGuiWindowFlags_NoMove) && !(g.HoveredRootWindow->Flags & ImGuiWindowFlags_NoMove))
+                    {
+                        g.MovedWindow = g.HoveredWindow;
+                        g.MovedWindowMoveId = g.HoveredWindow->MoveId;
+                        SetActiveID(g.MovedWindowMoveId, g.HoveredRootWindow);
+                    }
+                }
+                else if (g.NavWindow != NULL && GetFrontMostModalRootWindow() == NULL)
+                {
+                    // Clicking on void disable focus
+                    FocusWindow(NULL);
                 }
             }
-            else if (g.NavWindow != NULL && GetFrontMostModalRootWindow() == NULL)
+
+            // With right mouse button we close popups without changing focus
+            // (The left mouse button path calls FocusWindow which will lead NewFrame->CloseInactivePopups to trigger)
+            if (g.IO.MouseClicked[1])
             {
-                // Clicking on void disable focus
-                FocusWindow(NULL);
+                // Find the top-most window between HoveredWindow and the front most Modal Window.
+                // This is where we can trim the popup stack.
+                ImGuiWindow* modal = GetFrontMostModalRootWindow();
+                bool hovered_window_above_modal = false;
+                if (modal == NULL)
+                    hovered_window_above_modal = true;
+                for (int i = g.Windows.Size - 1; i >= 0 && hovered_window_above_modal == false; i--)
+                {
+                    ImGuiWindow* window = g.Windows[i];
+                    if (window == modal)
+                        break;
+                    if (window == g.HoveredWindow)
+                        hovered_window_above_modal = true;
+                }
+                CloseInactivePopups(hovered_window_above_modal ? g.HoveredWindow : modal);
             }
         }
     }
@@ -3437,7 +3465,7 @@ bool ImGui::IsItemActive()
 
 bool ImGui::IsItemClicked(int mouse_button)
 {
-    return IsMouseClicked(mouse_button) && IsItemHovered();
+    return IsMouseClicked(mouse_button) && IsItemHovered(ImGuiHoveredFlags_Default);
 }
 
 bool ImGui::IsAnyItemHovered()
@@ -3560,6 +3588,11 @@ void ImGui::OpenPopupEx(ImGuiID id, bool reopen_existing)
     {
         g.OpenPopupStack.resize(current_stack_size+1);
         g.OpenPopupStack[current_stack_size] = popup_ref;
+
+        // When reopening a popup we first refocus its parent, otherwise if its parent is itself a popup it would get closed by CloseInactivePopups().
+        // This is equivalent to what ClosePopupToLevel() does.
+        if (g.OpenPopupStack[current_stack_size].PopupId == id)
+            FocusWindow(window);
     }
 }
 
@@ -3569,16 +3602,16 @@ void ImGui::OpenPopup(const char* str_id)
     OpenPopupEx(g.CurrentWindow->GetID(str_id), false);
 }
 
-static void CloseInactivePopups()
+static void CloseInactivePopups(ImGuiWindow* ref_window)
 {
     ImGuiContext& g = *GImGui;
     if (g.OpenPopupStack.empty())
         return;
 
     // When popups are stacked, clicking on a lower level popups puts focus back to it and close popups above it.
-    // Don't close our own child popup windows
+    // Don't close our own child popup windows.
     int n = 0;
-    if (g.NavWindow)
+    if (ref_window)
     {
         for (n = 0; n < g.OpenPopupStack.Size; n++)
         {
@@ -3589,24 +3622,25 @@ static void CloseInactivePopups()
             if (popup.Window->Flags & ImGuiWindowFlags_ChildWindow)
                 continue;
 
+            // Trim the stack if popups are not direct descendant of the reference window (which is often the NavWindow)
             bool has_focus = false;
             for (int m = n; m < g.OpenPopupStack.Size && !has_focus; m++)
-                has_focus = (g.OpenPopupStack[m].Window && g.OpenPopupStack[m].Window->RootWindow == g.NavWindow->RootWindow);
+                has_focus = (g.OpenPopupStack[m].Window && g.OpenPopupStack[m].Window->RootWindow == ref_window->RootWindow);
             if (!has_focus)
                 break;
         }
     }
-    if (n < g.OpenPopupStack.Size)   // This test is not required but it allows to set a useful breakpoint on the line below
-        g.OpenPopupStack.resize(n);
+    if (n < g.OpenPopupStack.Size) // This test is not required but it allows to set a convenient breakpoint on the block below
+        ClosePopupToLevel(n);
 }
 
 static ImGuiWindow* GetFrontMostModalRootWindow()
 {
     ImGuiContext& g = *GImGui;
     for (int n = g.OpenPopupStack.Size-1; n >= 0; n--)
-        if (ImGuiWindow* front_most_popup = g.OpenPopupStack.Data[n].Window)
-            if (front_most_popup->Flags & ImGuiWindowFlags_Modal)
-                return front_most_popup;
+        if (ImGuiWindow* popup = g.OpenPopupStack.Data[n].Window)
+            if (popup->Flags & ImGuiWindowFlags_Modal)
+                return popup;
     return NULL;
 }
 
@@ -3737,22 +3771,30 @@ void ImGui::EndPopup()
         PopStyleVar();
 }
 
+bool ImGui::OpenPopupOnItemClick(const char* str_id, int mouse_button)
+{
+    ImGuiWindow* window = GImGui->CurrentWindow;
+    if (IsMouseClicked(mouse_button) && IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup))
+    {
+        ImGuiID id = str_id ? window->GetID(str_id) : window->DC.LastItemId; // If user hasn't passed an ID, we can use the LastItemID. Using LastItemID as a Popup ID won't conflict!
+        IM_ASSERT(id != 0);                                                  // However, you cannot pass a NULL str_id if the last item has no identifier (e.g. a Text() item)
+        OpenPopupEx(id, true);
+        return true;
+    }
+    return false;
+}
+
 // This is a helper to handle the simplest case of associating one named popup to one given widget.
-// 1. If you have many possible popups (for different "instances" of a same widget, or for wholly different widgets), you may be better off handling
-//    this yourself so you can store data relative to the widget that opened the popup instead of choosing different popup identifiers.
-// 2. If you want right-clicking on the same item to reopen the popup at new location, use the same code replacing IsItemHovered() with IsItemRectHovered()
-//    and passing true to the OpenPopupEx().
-//    This is because hovering an item in a window below the popup won't work. IsItemRectHovered() skips this test.
-//    The pattern of ignoring the fact that the item can be interacted with (because it is blocked by the active popup) may useful in some situation 
-//    when e.g. large canvas where the content of menu driven by click position.
+// You may want to handle this on user side if you have specific needs (e.g. tweaking IsItemHovered() parameters).
+// You can pass a NULL str_id to use the identifier of the last item.
 bool ImGui::BeginPopupContextItem(const char* str_id, int mouse_button)
 {
     ImGuiWindow* window = GImGui->CurrentWindow;
     ImGuiID id = str_id ? window->GetID(str_id) : window->DC.LastItemId; // If user hasn't passed an ID, we can use the LastItemID. Using LastItemID as a Popup ID won't conflict!
     IM_ASSERT(id != 0);                                                  // However, you cannot pass a NULL str_id if the last item has no identifier (e.g. a Text() item)
-    if (IsItemHovered() && IsMouseClicked(mouse_button))
-        OpenPopupEx(id, false);
-    return BeginPopupEx(id, 0);
+    if (IsMouseClicked(mouse_button) && IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup))
+        OpenPopupEx(id, true);
+    return BeginPopupEx(id, ImGuiWindowFlags_ShowBorders | ImGuiWindowFlags_AlwaysAutoResize);
 }
 
 bool ImGui::BeginPopupContextWindow(const char* str_id, int mouse_button, bool also_over_items)
@@ -3760,10 +3802,11 @@ bool ImGui::BeginPopupContextWindow(const char* str_id, int mouse_button, bool a
     if (!str_id)
         str_id = "window_context";
     ImGuiID id = GImGui->CurrentWindow->GetID(str_id);
-    if (IsWindowRectHovered() && IsMouseClicked(mouse_button))
-        if (also_over_items || !IsAnyItemHovered())
-            OpenPopupEx(id, true);
-    return BeginPopupEx(id, 0);
+    if (IsMouseClicked(mouse_button))
+        if (IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup))
+            if (also_over_items || !IsAnyItemHovered())
+                OpenPopupEx(id, true);
+    return BeginPopupEx(id, ImGuiWindowFlags_ShowBorders | ImGuiWindowFlags_AlwaysAutoResize);
 }
 
 bool ImGui::BeginPopupContextVoid(const char* str_id, int mouse_button)
@@ -3773,13 +3816,14 @@ bool ImGui::BeginPopupContextVoid(const char* str_id, int mouse_button)
     ImGuiID id = GImGui->CurrentWindow->GetID(str_id);
     if (!IsAnyWindowHovered() && IsMouseClicked(mouse_button))
         OpenPopupEx(id, true);
-    return BeginPopupEx(id, 0);
+    return BeginPopupEx(id, ImGuiWindowFlags_ShowBorders | ImGuiWindowFlags_AlwaysAutoResize);
 }
 
 static bool BeginChildEx(const char* name, ImGuiID id, const ImVec2& size_arg, bool border, ImGuiWindowFlags extra_flags)
 {
     ImGuiWindow* parent_window = ImGui::GetCurrentWindow();
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoSavedSettings|ImGuiWindowFlags_ChildWindow;
+    flags |= (parent_window->Flags & ImGuiWindowFlags_NoMove);  // Inherit the NoMove flag
 
     const ImVec2 content_avail = ImGui::GetContentRegionAvail();
     ImVec2 size = ImFloor(size_arg);
@@ -5081,16 +5125,18 @@ const char* ImGui::GetStyleColorName(ImGuiCol idx)
     return "Unknown";
 }
 
-bool ImGui::IsWindowHovered()
+bool ImGui::IsWindowHovered(ImGuiHoveredFlags flags)
 {
+    IM_ASSERT((flags & ImGuiHoveredFlags_AllowWhenOverlapped) == 0);   // Flags not supported by this function
     ImGuiContext& g = *GImGui;
-    return g.HoveredWindow == g.CurrentWindow && IsWindowContentHoverable(g.HoveredRootWindow);
-}
-
-bool ImGui::IsWindowRectHovered()
-{
-    ImGuiContext& g = *GImGui;
-    return g.HoveredWindow == g.CurrentWindow;
+    if (g.HoveredWindow != g.CurrentWindow)
+        return false;
+    if (!IsWindowContentHoverable(g.HoveredRootWindow, flags))
+        return false;
+    if (!(flags & ImGuiHoveredFlags_AllowWhenBlockedByActiveItem))
+        if (g.ActiveId != 0 && g.ActiveIdWindow != g.CurrentWindow)
+            return false;
+    return true;
 }
 
 bool ImGui::IsWindowFocused()
@@ -5111,10 +5157,18 @@ bool ImGui::IsRootWindowOrAnyChildFocused()
     return g.NavWindow && g.NavWindow->RootWindow == g.CurrentWindow->RootWindow;
 }
 
-bool ImGui::IsRootWindowOrAnyChildHovered()
+bool ImGui::IsRootWindowOrAnyChildHovered(ImGuiHoveredFlags flags)
 {
+    IM_ASSERT((flags & ImGuiHoveredFlags_AllowWhenOverlapped) == 0);   // Flags not supported by this function
     ImGuiContext& g = *GImGui;
-    return g.HoveredRootWindow && (g.HoveredRootWindow == g.CurrentWindow->RootWindow) && IsWindowContentHoverable(g.HoveredRootWindow);
+    if (!g.HoveredRootWindow || (g.HoveredRootWindow != g.CurrentWindow->RootWindow))
+        return false;
+    if (!IsWindowContentHoverable(g.HoveredRootWindow, flags))
+        return false;
+    if (!(flags & ImGuiHoveredFlags_AllowWhenBlockedByActiveItem))
+        if (g.ActiveId != 0 && g.ActiveIdWindow != g.CurrentWindow)
+            return false;
+    return true;
 }
 
 float ImGui::GetWindowWidth()
@@ -5278,13 +5332,6 @@ void ImGui::SetNextWindowPos(const ImVec2& pos, ImGuiCond cond, const ImVec2& pi
     g.SetNextWindowPosPivot = pivot;
     g.SetNextWindowPosCond = cond ? cond : ImGuiCond_Always;
 }
-
-#ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-void ImGui::SetNextWindowPosCenter(ImGuiCond cond)
-{
-    SetNextWindowPos(GetIO().DisplaySize * 0.5f, cond, ImVec2(0.5f, 0.5f));
-}
-#endif
 
 void ImGui::SetNextWindowSize(const ImVec2& size, ImGuiCond cond)
 {
@@ -9561,8 +9608,8 @@ bool ImGui::ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flag
                 value_changed |= value_changed_as_float |= DragFloat(ids[n], &f[n], 1.0f/255.0f, 0.0f, hdr ? 0.0f : 1.0f, fmt_table_float[fmt_idx][n]);
             else
                 value_changed |= DragInt(ids[n], &i[n], 1.0f, 0, hdr ? 0 : 255, fmt_table_int[fmt_idx][n]);
-            if (!(flags & ImGuiColorEditFlags_NoOptions) && IsItemHovered() && IsMouseClicked(1))
-                OpenPopup("context");
+            if (!(flags & ImGuiColorEditFlags_NoOptions))
+                OpenPopupOnItemClick("context");
         }
         PopItemWidth();
         PopItemWidth();
@@ -9588,8 +9635,8 @@ bool ImGui::ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flag
             else
                 sscanf(p, "%02X%02X%02X", (unsigned int*)&i[0], (unsigned int*)&i[1], (unsigned int*)&i[2]);
         }
-        if (!(flags & ImGuiColorEditFlags_NoOptions) && IsItemHovered() && IsMouseClicked(1))
-            OpenPopup("context");
+        if (!(flags & ImGuiColorEditFlags_NoOptions))
+            OpenPopupOnItemClick("context");
         PopItemWidth();
     }
 
@@ -9610,9 +9657,9 @@ bool ImGui::ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flag
                 SetNextWindowPos(window->DC.LastItemRect.GetBL() + ImVec2(-1,style.ItemSpacing.y));
             }
         }
-        if (!(flags & ImGuiColorEditFlags_NoOptions) && IsItemHovered() && IsMouseClicked(1))
-            OpenPopup("context");
-
+        if (!(flags & ImGuiColorEditFlags_NoOptions))
+            OpenPopupOnItemClick("context");
+        
         if (BeginPopup("picker"))
         {
             picker_active = true;
@@ -9777,8 +9824,8 @@ bool ImGui::ColorPicker4(const char* label, float col[4], ImGuiColorEditFlags fl
                 value_changed = value_changed_sv = true;
             }
         }
-        if (!(flags & ImGuiColorEditFlags_NoOptions) && IsItemHovered() && IsMouseClicked(1))
-            OpenPopup("context");
+        if (!(flags & ImGuiColorEditFlags_NoOptions))
+            OpenPopupOnItemClick("context");
     }
     else if (flags & ImGuiColorEditFlags_PickerHueBar)
     {
@@ -9790,8 +9837,8 @@ bool ImGui::ColorPicker4(const char* label, float col[4], ImGuiColorEditFlags fl
             V = 1.0f - ImSaturate((io.MousePos.y - picker_pos.y) / (sv_picker_size-1));
             value_changed = value_changed_sv = true;
         }
-        if (!(flags & ImGuiColorEditFlags_NoOptions) && IsItemHovered() && IsMouseClicked(1))
-            OpenPopup("context");
+        if (!(flags & ImGuiColorEditFlags_NoOptions))
+            OpenPopupOnItemClick("context");
 
         // Hue bar logic
         SetCursorScreenPos(ImVec2(bar0_pos_x, picker_pos.y));
