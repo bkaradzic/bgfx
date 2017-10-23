@@ -245,6 +245,7 @@ namespace bgfx { namespace d3d11
 		void commit(uint8_t _stage, uint32_t _flags, const float _palette[][4]);
 		void resolve() const;
 		TextureHandle getHandle() const;
+		DXGI_FORMAT getSrvFormat() const;
 
 		union
 		{

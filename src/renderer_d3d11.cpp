@@ -3235,7 +3235,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				TextureD3D11& texture = m_textures[_handle.idx];
 
 				D3D11_UNORDERED_ACCESS_VIEW_DESC desc;
-				desc.Format = s_textureFormat[texture.m_textureFormat].m_fmtSrv;
+				desc.Format = texture.getSrvFormat();
 				switch (texture.m_type)
 				{
 				case TextureD3D11::Texture2D:
@@ -3290,7 +3290,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				const bool msaaSample = 1 < msaa.Count && 0 != (texture.m_flags&BGFX_TEXTURE_MSAA_SAMPLE);
 
 				D3D11_SHADER_RESOURCE_VIEW_DESC desc;
-				desc.Format = s_textureFormat[texture.m_textureFormat].m_fmtSrv;
+				desc.Format = texture.getSrvFormat();
 				switch (texture.m_type)
 				{
 				case TextureD3D11::Texture2D:
@@ -4635,7 +4635,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			{
 				// not swizzled and not sRGB, or sRGB unsupported
 				format      = s_textureFormat[m_textureFormat].m_fmt;
-				srvd.Format = s_textureFormat[m_textureFormat].m_fmtSrv;
+				srvd.Format = getSrvFormat();
 			}
 
 			switch (m_type)
@@ -4923,6 +4923,19 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		return handle;
 	}
 
+	DXGI_FORMAT TextureD3D11::getSrvFormat() const
+	{
+		if (bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) ) )
+		{
+			return s_textureFormat[m_textureFormat].m_fmtSrv;
+		}
+
+		return 0 != (m_flags&BGFX_TEXTURE_SRGB)
+			? s_textureFormat[m_textureFormat].m_fmtSrgb
+			: s_textureFormat[m_textureFormat].m_fmt
+			;
+	}
+
 	void FrameBufferD3D11::create(uint8_t _num, const Attachment* _attachment)
 	{
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_rtv); ++ii)
@@ -5112,62 +5125,52 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 					else
 					{
+						D3D11_RENDER_TARGET_VIEW_DESC desc;
+						desc.Format = texture.getSrvFormat();
 						switch (texture.m_type)
 						{
 						default:
 						case TextureD3D11::Texture2D:
+							if (1 < msaa.Count)
 							{
-								D3D11_RENDER_TARGET_VIEW_DESC desc;
-								desc.Format = s_textureFormat[texture.m_textureFormat].m_fmt;
-								if (1 < msaa.Count)
-								{
-									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
-								}
-								else
-								{
-									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-									desc.Texture2D.MipSlice = m_attachment[ii].mip;
-								}
-
-								DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(
-									  NULL == texture.m_rt ? texture.m_ptr : texture.m_rt
-									, &desc
-									, &m_rtv[m_num]
-									) );
+								desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
 							}
+							else
+							{
+								desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+								desc.Texture2D.MipSlice = m_attachment[ii].mip;
+							}
+
+							DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(
+									NULL == texture.m_rt ? texture.m_ptr : texture.m_rt
+								, &desc
+								, &m_rtv[m_num]
+								) );
 							break;
 
 						case TextureD3D11::TextureCube:
+							if (1 < msaa.Count)
 							{
-								D3D11_RENDER_TARGET_VIEW_DESC desc;
-								desc.Format = s_textureFormat[texture.m_textureFormat].m_fmt;
-								if (1 < msaa.Count)
-								{
-									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY;
-									desc.Texture2DMSArray.ArraySize       = 1;
-									desc.Texture2DMSArray.FirstArraySlice = m_attachment[ii].layer;
-								}
-								else
-								{
-									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
-									desc.Texture2DArray.ArraySize       = 1;
-									desc.Texture2DArray.FirstArraySlice = m_attachment[ii].layer;
-									desc.Texture2DArray.MipSlice        = m_attachment[ii].mip;
-								}
-								DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(texture.m_ptr, &desc, &m_rtv[m_num]) );
+								desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY;
+								desc.Texture2DMSArray.ArraySize       = 1;
+								desc.Texture2DMSArray.FirstArraySlice = m_attachment[ii].layer;
 							}
+							else
+							{
+								desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+								desc.Texture2DArray.ArraySize       = 1;
+								desc.Texture2DArray.FirstArraySlice = m_attachment[ii].layer;
+								desc.Texture2DArray.MipSlice        = m_attachment[ii].mip;
+							}
+							DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(texture.m_ptr, &desc, &m_rtv[m_num]) );
 							break;
 
 						case TextureD3D11::Texture3D:
-							{
-								D3D11_RENDER_TARGET_VIEW_DESC desc;
-								desc.Format        = s_textureFormat[texture.m_textureFormat].m_fmt;
-								desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE3D;
-								desc.Texture3D.MipSlice    = m_attachment[ii].mip;
-								desc.Texture3D.WSize       = 1;
-								desc.Texture3D.FirstWSlice = m_attachment[ii].layer;
-								DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(texture.m_ptr, &desc, &m_rtv[m_num]) );
-							}
+							desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE3D;
+							desc.Texture3D.MipSlice    = m_attachment[ii].mip;
+							desc.Texture3D.WSize       = 1;
+							desc.Texture3D.FirstWSlice = m_attachment[ii].layer;
+							DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(texture.m_ptr, &desc, &m_rtv[m_num]) );
 							break;
 						}
 
