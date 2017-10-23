@@ -2463,7 +2463,7 @@ namespace bgfx
 	void setViewOrder(
 		  uint8_t _id = 0
 		, uint8_t _num = UINT8_MAX
-		, const void* _remap = NULL
+		, const uint8_t* _remap = NULL
 		);
 
 	/// Reset all view settings to default.

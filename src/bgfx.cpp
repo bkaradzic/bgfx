@@ -3743,7 +3743,7 @@ error:
 		s_ctx->setViewTransform(_id, _view, _projL, _flags, _projR);
 	}
 
-	void setViewOrder(uint8_t _id, uint8_t _num, const void* _order)
+	void setViewOrder(uint8_t _id, uint8_t _num, const uint8_t* _order)
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		BX_CHECK(checkView(_id), "Invalid view id: %d", _id);
@@ -4856,7 +4856,7 @@ BGFX_C_API void bgfx_set_view_transform_stereo(uint8_t _id, const void* _view, c
 	bgfx::setViewTransform(_id, _view, _projL, _flags, _projR);
 }
 
-BGFX_C_API void bgfx_set_view_order(uint8_t _id, uint8_t _num, const void* _order)
+BGFX_C_API void bgfx_set_view_order(uint8_t _id, uint8_t _num, const uint8_t* _order)
 {
 	bgfx::setViewOrder(_id, _num, _order);
 }

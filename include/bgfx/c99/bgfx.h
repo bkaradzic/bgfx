@@ -840,7 +840,7 @@ BGFX_C_API void bgfx_set_view_transform(uint8_t _id, const void* _view, const vo
 BGFX_C_API void bgfx_set_view_transform_stereo(uint8_t _id, const void* _view, const void* _projL, uint8_t _flags, const void* _projR);
 
 /**/
-BGFX_C_API void bgfx_set_view_order(uint8_t _id, uint8_t _num, const void* _order);
+BGFX_C_API void bgfx_set_view_order(uint8_t _id, uint8_t _num, const uint8_t* _order);
 
 /**/
 BGFX_C_API void bgfx_reset_view(uint8_t _id);

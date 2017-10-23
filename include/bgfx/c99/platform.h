@@ -163,7 +163,7 @@ typedef struct bgfx_interface_vtbl
     void (*set_view_frame_buffer)(uint8_t _id, bgfx_frame_buffer_handle_t _handle);
     void (*set_view_transform)(uint8_t _id, const void* _view, const void* _proj);
     void (*set_view_transform_stereo)(uint8_t _id, const void* _view, const void* _projL, uint8_t _flags, const void* _projR);
-    void (*set_view_order)(uint8_t _id, uint8_t _num, const void* _order);
+    void (*set_view_order)(uint8_t _id, uint8_t _num, const uint8_t* _order);
     void (*set_marker)(const char* _marker);
     void (*set_state)(uint64_t _state, uint32_t _rgba);
     void (*set_condition)(bgfx_occlusion_query_handle_t _handle, bool _visible);

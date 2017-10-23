@@ -4094,7 +4094,7 @@ namespace bgfx
 			setViewTransform(_id, NULL, NULL, BGFX_VIEW_NONE, NULL);
 		}
 
-		BGFX_API_FUNC(void setViewOrder(uint8_t _id, uint8_t _num, const void* _order) )
+		BGFX_API_FUNC(void setViewOrder(uint8_t _id, uint8_t _num, const uint8_t* _order) )
 		{
 			const uint32_t num = bx::uint32_min(_id + _num, BGFX_CONFIG_MAX_VIEWS) - _id;
 			if (NULL == _order)
