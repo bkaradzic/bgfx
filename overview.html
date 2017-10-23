@@ -211,7 +211,7 @@ licensed under permissive BSD-2 clause open source license.</p>
 <ul class="simple">
 <li>Clang 3.3 and above</li>
 <li>GCC 4.6 and above</li>
-<li>vs2012 and above</li>
+<li>vs2015 and above</li>
 </ul>
 </div>
 <div class="section" id="supported-languages">
@@ -223,7 +223,8 @@ licensed under permissive BSD-2 clause open source license.</p>
 <li><a class="reference external" href="https://github.com/james4k/go-bgfx">Go language API bindings</a></li>
 <li><a class="reference external" href="https://github.com/haskell-game/bgfx">Haskell language API bindings</a></li>
 <li><a class="reference external" href="https://github.com/LWJGL/lwjgl3#lwjgl---lightweight-java-game-library-3">Lightweight Java Game Library 3 bindings</a></li>
-<li><a class="reference external" href="https://github.com/excessive/lua-bgfx">Lua language API bindings</a></li>
+<li><a class="reference external" href="https://github.com/excessive/lua-bgfx">Lua language API bindings 1</a></li>
+<li><a class="reference external" href="https://github.com/cloudwu/lua-bgfx">Lua language API bindings 2</a></li>
 <li><a class="reference external" href="https://github.com/Halsys/nim-bgfx">Nim language API bindings</a></li>
 <li><a class="reference external" href="https://github.com/jnadro/pybgfx#pybgfx">Python language API bindings</a></li>
 <li><a class="reference external" href="https://github.com/rhoot/bgfx-rs#bgfx-rs">Rust language API bindings</a></li>
@@ -256,7 +257,7 @@ one place, and on the low-level this allows better optimization of
 rendering order. This sometimes creates undesired results usually for
 GUI rendering, where draw order should usually match submit order. bgfx
 provides way to enable sequential rendering for these cases (see
-<code class="docutils literal"><span class="pre">bgfx::setViewSeq</span></code>).</p>
+<code class="docutils literal"><span class="pre">bgfx::setViewMode</span></code>).</p>
 <p>Internally all low-level rendering draw calls are issued inside single
 function <code class="docutils literal"><span class="pre">RendererContextI::submit</span></code>. This function exist inside each
 renderer backend implementation.</p>
@@ -541,6 +542,7 @@ Library 3 bindings.</li>
 cubemap as texture 2D array in a compute shader.</li>
 <li>Apoorva Joshi (<a class="reference external" href="https://github.com/ApoorvaJ">&#64;ApoorvaJ</a>) - 33-pom example.</li>
 <li>Stanislav Pidhorsky (<a class="reference external" href="https://github.com/podgorskiy">&#64;podgorskiy</a>) - 36-sky example.</li>
+<li>云风 (<a class="reference external" href="https://github.com/cloudwu">&#64;cloudwu</a>) - Alternative Lua bindings.</li>
 </ul>
 </div></blockquote>
 </div>

@@ -1415,13 +1415,13 @@
 <dl class="member">
 <dt id="_CPPv2N4bgfx5Stats12gpuMemoryMaxE">
 <span id="bgfx::Stats::gpuMemoryMax__int64_t"></span><span class="target" id="bgfxstructbgfx_1_1_stats_1afe5fd057109b00d5a4f760a034c59c8b"></span>int64_t <code class="descname">gpuMemoryMax</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats12gpuMemoryMaxE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Maximum available GPU memory. </p>
+<dd><p>Maximum available GPU memory for application. </p>
 </dd></dl>
 
 <dl class="member">
 <dt id="_CPPv2N4bgfx5Stats13gpuMemoryUsedE">
 <span id="bgfx::Stats::gpuMemoryUsed__int64_t"></span><span class="target" id="bgfxstructbgfx_1_1_stats_1aa936cf20a5da4419936958f67a594bc1"></span>int64_t <code class="descname">gpuMemoryUsed</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats13gpuMemoryUsedE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Available GPU memory. </p>
+<dd><p>Amount of GPU memory used. </p>
 </dd></dl>
 
 <dl class="member">
@@ -2284,9 +2284,22 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <dl class="function">
 <dt id="_CPPv2N4bgfx11setViewRectE7uint8_t8uint16_t8uint16_tN15BackbufferRatio4EnumE">
 <span id="bgfx::setViewRect__uint8_t.uint16_t.uint16_t.BackbufferRatio::Enum"></span><span class="target" id="bgfxnamespacebgfx_1a60262b4046cf2510dd3c216e13829c87"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewRect</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, uint16_t <em>_x</em>, uint16_t <em>_y</em>, BackbufferRatio::Enum <em>_ratio</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11setViewRectE7uint8_t8uint16_t8uint16_tN15BackbufferRatio4EnumE" title="Permalink to this definition">¶</a></dt>
-<dd><p><dl class="docutils">
+<dd><p>Set view rectangle. Draw primitive outside view will be clipped. </p>
+<p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_view_rect_auto</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_x</span></code> - <p>Position x from the left corner of the window. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_y</span></code> - <p>Position y from the top corner of the window. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_ratio</span></code> - <p>Width and height will be set in respect to back-buffer size. See: <code class="docutils literal"><span class="pre">BackbufferRatio::Enum</span></code>.</p>
+</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
@@ -2484,7 +2497,7 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <dd><p>Post submit view reordering. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_view_remap</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_view_order</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>First view id. </p>
@@ -3270,17 +3283,20 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="member">
 <dt id="_CPPv2N4bgfx6Access4ReadE">
 <span id="bgfx::Access::Read"></span><span class="target" id="bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180aa8c5d200b47f6eba1f1ad2dc4149bcd4"></span><code class="descname">Read</code><a class="headerlink" href="#_CPPv2N4bgfx6Access4ReadE" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Read. </p>
+</dd></dl>
 
 <dl class="member">
 <dt id="_CPPv2N4bgfx6Access5WriteE">
 <span id="bgfx::Access::Write"></span><span class="target" id="bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180a10ed39a89f1207269328309b7238ad74"></span><code class="descname">Write</code><a class="headerlink" href="#_CPPv2N4bgfx6Access5WriteE" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Write. </p>
+</dd></dl>
 
 <dl class="member">
 <dt id="_CPPv2N4bgfx6Access9ReadWriteE">
 <span id="bgfx::Access::ReadWrite"></span><span class="target" id="bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180a844968ef8ec9575127437553bd0b128b"></span><code class="descname">ReadWrite</code><a class="headerlink" href="#_CPPv2N4bgfx6Access9ReadWriteE" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Read and write. </p>
+</dd></dl>
 
 <dl class="member">
 <dt id="_CPPv2N4bgfx6Access5CountE">
@@ -3594,6 +3610,21 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_memory_t</span></code>. </dd>
 </dl>
 </p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N4bgfx6Memory4dataE">
+<span id="bgfx::Memory::data__uint8_tP"></span><span class="target" id="bgfxstructbgfx_1_1_memory_1a074d49f89140737540e6fb377ee02859"></span>uint8_t *<code class="descname">data</code><a class="headerlink" href="#_CPPv2N4bgfx6Memory4dataE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pointer to data. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx6Memory4sizeE">
+<span id="bgfx::Memory::size__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_memory_1af2daa4c1c380a5055a5adb33d5cfaa0a"></span>uint32_t <code class="descname">size</code><a class="headerlink" href="#_CPPv2N4bgfx6Memory4sizeE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Data size. </p>
+</dd></dl>
+
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -3614,6 +3645,14 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_copy</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_data</span></code> - <p>Pointer to data to be copied. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_size</span></code> - <p>Size of data to be copied.</p>
+</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
@@ -3848,27 +3887,32 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="member">
 <dt id="_CPPv2N4bgfx11UniformType4Int1E">
 <span id="bgfx::UniformType::Int1"></span><span class="target" id="bgfxstructbgfx_1_1_uniform_type_1a50bf3685e07ddb0cbcf34b4a2e134c79a173664bed3eef9991e511cb9815f4522"></span><code class="descname">Int1</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformType4Int1E" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Int, used for samplers only. </p>
+</dd></dl>
 
 <dl class="member">
 <dt id="_CPPv2N4bgfx11UniformType3EndE">
 <span id="bgfx::UniformType::End"></span><span class="target" id="bgfxstructbgfx_1_1_uniform_type_1a50bf3685e07ddb0cbcf34b4a2e134c79af032fc38d9876bbc4f4609116ced94c9"></span><code class="descname">End</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformType3EndE" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Reserved, do not use. </p>
+</dd></dl>
 
 <dl class="member">
 <dt id="_CPPv2N4bgfx11UniformType4Vec4E">
 <span id="bgfx::UniformType::Vec4"></span><span class="target" id="bgfxstructbgfx_1_1_uniform_type_1a50bf3685e07ddb0cbcf34b4a2e134c79ad3a487a974362da30ed861d5e60134dd"></span><code class="descname">Vec4</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformType4Vec4E" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>4 floats vector. </p>
+</dd></dl>
 
 <dl class="member">
 <dt id="_CPPv2N4bgfx11UniformType4Mat3E">
 <span id="bgfx::UniformType::Mat3"></span><span class="target" id="bgfxstructbgfx_1_1_uniform_type_1a50bf3685e07ddb0cbcf34b4a2e134c79a4912934f4e16efd08a14a396fed267f2"></span><code class="descname">Mat3</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformType4Mat3E" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>3x3 matrix. </p>
+</dd></dl>
 
 <dl class="member">
 <dt id="_CPPv2N4bgfx11UniformType4Mat4E">
 <span id="bgfx::UniformType::Mat4"></span><span class="target" id="bgfxstructbgfx_1_1_uniform_type_1a50bf3685e07ddb0cbcf34b4a2e134c79ac875f375dfc3adf73780a4114c6cc851"></span><code class="descname">Mat4</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformType4Mat4E" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>4x4 matrix. </p>
+</dd></dl>
 
 <dl class="member">
 <dt id="_CPPv2N4bgfx11UniformType5CountE">
@@ -4330,8 +4374,6 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="bgfx::allocTransientVertexBuffer__TransientVertexBufferP.uint32_t.VertexDeclCR"></span><span class="target" id="bgfxnamespacebgfx_1a6a4d9cc701bc40867080297ab59390e7"></span>void <code class="descclassname">bgfx::</code><code class="descname">allocTransientVertexBuffer</code><span class="sig-paren">(</span>TransientVertexBuffer *<em>_tvb</em>, uint32_t <em>_num</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx10VertexDeclE" title="bgfx::VertexDecl">VertexDecl</a> &amp;<em>_decl</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx26allocTransientVertexBufferEP21TransientVertexBuffer8uint32_tRK10VertexDecl" title="Permalink to this definition">¶</a></dt>
 <dd><p>Allocate transient vertex buffer. </p>
 <p><dl class="docutils">
-<dt><strong>Remark</strong></dt>
-<dd>You must call setVertexBuffer after alloc in order to avoid memory leak.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_alloc_transient_vertex_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -4514,11 +4556,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dd><p>Allocate transient index buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Remark</strong></dt>
-<dd><ol class="arabic simple">
-<li>You must call setIndexBuffer after alloc in order to avoid memory leak.</li>
-<li>Only 16-bit index buffer is supported.</li>
-</ol>
-</dd>
+<dd>Only 16-bit index buffer is supported.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_alloc_transient_index_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -5576,8 +5614,6 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="bgfx::allocInstanceDataBuffer__InstanceDataBufferP.uint32_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1a57f18c024a3c7f0f1e902dc85b987757"></span>void <code class="descclassname">bgfx::</code><code class="descname">allocInstanceDataBuffer</code><span class="sig-paren">(</span>InstanceDataBuffer *<em>_idb</em>, uint32_t <em>_num</em>, uint16_t <em>_stride</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx23allocInstanceDataBufferEP18InstanceDataBuffer8uint32_t8uint16_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Allocate instance data buffer. </p>
 <p><dl class="docutils">
-<dt><strong>Remark</strong></dt>
-<dd>You must call setInstanceDataBuffer after alloc in order to avoid memory leak.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_alloc_instance_data_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
