@@ -2,6 +2,7 @@
 #	pragma GCC diagnostic ignored "-Wtype-limits"
 #	pragma GCC diagnostic ignored "-Wunused-function"
 #	pragma GCC diagnostic ignored "-Wunused-parameter"
+#	pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #else
 #	pragma warning(disable:4100) // C4100: 'c': unreferenced formal parameter
 #endif
