@@ -197,8 +197,8 @@ public:
 				vert->m_x = (float)x;
 				vert->m_y = m_terrain.m_heightMap[(y * s_terrainSize) + x];
 				vert->m_z = (float)y;
-				vert->m_u = (float)x / (float)s_terrainSize;
-				vert->m_v = (float)y / (float)s_terrainSize;
+				vert.m_u = (x + 0.5f) / s_terrainSize_x;
+				vert.m_v = (y + 0.5f) / s_terrainSize_y;
 
 				m_terrain.m_vertexCount++;
 			}
