@@ -298,14 +298,14 @@ public:
 			{
 				int32_t brush_x = _x + area_x;
 				if (brush_x < 0
-				||  brush_x > (int32_t)s_terrainSize)
+				||  brush_x >= (int32_t)s_terrainSize)
 				{
 					continue;
 				}
 
 				int32_t brush_y = _y + area_y;
 				if (brush_y < 0
-				||  brush_y > (int32_t)s_terrainSize)
+				||  brush_y >= (int32_t)s_terrainSize)
 				{
 					continue;
 				}
@@ -365,9 +365,9 @@ public:
 			bx::vec3Add(pos, pos, ray_dir);
 
 			if (pos[0] < 0
-			||  pos[0] > s_terrainSize
+			||  pos[0] >= s_terrainSize
 			||  pos[2] < 0
-			||  pos[2] > s_terrainSize)
+			||  pos[2] >= s_terrainSize)
 			{
 				continue;
 			}
