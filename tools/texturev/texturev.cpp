@@ -48,6 +48,9 @@ namespace stl = tinystl;
 #define BGFX_TEXTUREV_VERSION_MAJOR 1
 #define BGFX_TEXTUREV_VERSION_MINOR 0
 
+const float kEvMin = -10.0f;
+const float kEvMax =  20.0f;
+
 static const bgfx::EmbeddedShader s_embeddedShaders[] =
 {
 	BGFX_EMBEDDED_SHADER(vs_texture),
@@ -115,6 +118,7 @@ const char* s_resetCmd =
 	"view rotate 0\n"
 	"view cubemap\n"
 	"view pan\n"
+	"view ev\n"
 	;
 
 static const InputBinding s_bindingView[] =
@@ -201,6 +205,9 @@ struct View
 		, m_mip(0)
 		, m_layer(0)
 		, m_abgr(UINT32_MAX)
+		, m_ev(0.0f)
+		, m_evMin(kEvMin)
+		, m_evMax(kEvMax)
 		, m_posx(0.0f)
 		, m_posy(0.0f)
 		, m_angx(0.0f)
@@ -246,7 +253,36 @@ struct View
 					}
 					else
 					{
-						mip = atoi(_argv[2]);
+						bx::fromString(&mip, _argv[2]);
+					}
+
+					m_mip = bx::uint32_iclamp(mip, 0, m_textureInfo.numMips-1);
+				}
+				else
+				{
+					m_mip = 0;
+				}
+			}
+			if (0 == bx::strCmp(_argv[1], "mip") )
+			{
+				if (_argc >= 3)
+				{
+					uint32_t mip = m_mip;
+					if (0 == bx::strCmp(_argv[2], "next") )
+					{
+						++mip;
+					}
+					else if (0 == bx::strCmp(_argv[2], "prev") )
+					{
+						--mip;
+					}
+					else if (0 == bx::strCmp(_argv[2], "last") )
+					{
+						mip = INT32_MAX;
+					}
+					else
+					{
+						bx::fromString(&mip, _argv[2]);
 					}
 
 					m_mip = bx::uint32_iclamp(mip, 0, m_textureInfo.numMips-1);
@@ -275,7 +311,7 @@ struct View
 					}
 					else
 					{
-						layer = atoi(_argv[2]);
+						bx::fromString(&layer, _argv[2]);
 					}
 
 					m_layer = bx::uint32_iclamp(layer, 0, m_textureInfo.numLayers-1);
@@ -283,6 +319,20 @@ struct View
 				else
 				{
 					m_layer = 0;
+				}
+			}
+			else if (0 == bx::strCmp(_argv[1], "ev") )
+			{
+				if (_argc >= 3)
+				{
+					float ev = m_ev;
+					bx::fromString(&ev, _argv[2]);
+
+					m_ev = bx::fclamp(ev, kEvMin, kEvMax);
+				}
+				else
+				{
+					m_ev = 0.0f;
 				}
 			}
 			else if (0 == bx::strCmp(_argv[1], "pan") )
@@ -627,6 +677,9 @@ struct View
 	uint32_t m_mip;
 	uint32_t m_layer;
 	uint32_t m_abgr;
+	float    m_ev;
+	float    m_evMin;
+	float    m_evMax;
 	float    m_posx;
 	float    m_posy;
 	float    m_angx;
@@ -880,6 +933,7 @@ struct InterpolatorT
 
 typedef InterpolatorT<bx::flerp,     bx::easeInOutQuad>  Interpolator;
 typedef InterpolatorT<bx::angleLerp, bx::easeInOutCubic> InterpolatorAngle;
+typedef InterpolatorT<bx::flerp,     bx::easeLinear>     InterpolatorLinear;
 
 void keyBindingHelp(const char* _bindings, const char* _description)
 {
@@ -1132,6 +1186,7 @@ int _main_(int _argc, char** _argv)
 
 	Interpolator mip(0.0f);
 	Interpolator layer(0.0f);
+	InterpolatorLinear ev(0.0f);
 	Interpolator zoom(1.0f);
 	Interpolator scale(1.0f);
 	Interpolator posx(0.0f);
@@ -1360,6 +1415,9 @@ int _main_(int _argc, char** _argv)
 							, view.m_mip
 							, view.m_textureInfo.numMips - 1
 							);
+
+						ImGui::RangeSliderFloat("EV range", &view.m_evMin, &view.m_evMax, kEvMin, kEvMax);
+						ImGui::SliderFloat("EV", &view.m_ev, view.m_evMin, view.m_evMax);
 
 						ImGui::EndChild();
 					}
@@ -1683,8 +1741,9 @@ int _main_(int _argc, char** _argv)
 
 			mip.set(float(view.m_mip), 0.5f);
 			layer.set(float(view.m_layer), 0.25f);
+			ev.set(view.m_ev, 0.5f);
 
-			float params[4] = { mip.getValue(), layer.getValue(), 0.0f, 0.0f };
+			float params[4] = { mip.getValue(), layer.getValue(), 0.0f, ev.getValue() };
 			if (1 < view.m_textureInfo.depth)
 			{
 				params[1] = layer.getValue()/view.m_textureInfo.depth;

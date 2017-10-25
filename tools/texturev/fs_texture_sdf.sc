@@ -5,12 +5,9 @@ $input v_texcoord0, v_color0
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
-#include <bgfx_shader.sh>
+#include "common.sh"
 
 SAMPLER2D(s_texColor, 0);
-
-uniform vec4 u_params;
-#define u_textureLod u_params.x
 
 float median(float r, float g, float b)
 {
