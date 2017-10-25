@@ -155,6 +155,8 @@ static const InputBinding s_bindingView[] =
 	{ entry::Key::KeyB,      entry::Modifier::None,       1, NULL, "view rgb b"              },
 	{ entry::Key::KeyA,      entry::Modifier::None,       1, NULL, "view rgb a"              },
 
+	{ entry::Key::KeyI,      entry::Modifier::None,       1, NULL, "view info"               },
+
 	{ entry::Key::KeyH,      entry::Modifier::None,       1, NULL, "view help"               },
 
 	{ entry::Key::Return,    entry::Modifier::None,       1, NULL, "view files"              },
@@ -212,6 +214,7 @@ struct View
 		, m_fit(true)
 		, m_alpha(false)
 		, m_help(false)
+		, m_info(false)
 		, m_files(false)
 		, m_sdf(false)
 	{
@@ -246,7 +249,7 @@ struct View
 						mip = atoi(_argv[2]);
 					}
 
-					m_mip = bx::uint32_iclamp(mip, 0, m_info.numMips-1);
+					m_mip = bx::uint32_iclamp(mip, 0, m_textureInfo.numMips-1);
 				}
 				else
 				{
@@ -275,7 +278,7 @@ struct View
 						layer = atoi(_argv[2]);
 					}
 
-					m_layer = bx::uint32_iclamp(layer, 0, m_info.numLayers-1);
+					m_layer = bx::uint32_iclamp(layer, 0, m_textureInfo.numLayers-1);
 				}
 				else
 				{
@@ -528,6 +531,10 @@ struct View
 			{
 				m_help ^= true;
 			}
+			else if (0 == bx::strCmp(_argv[1], "info") )
+			{
+				m_info ^= true;
+			}
 			else if (0 == bx::strCmp(_argv[1], "files") )
 			{
 				m_files ^= true;
@@ -613,7 +620,7 @@ struct View
 	typedef stl::vector<std::string> FileList;
 	FileList m_fileList;
 
-	bgfx::TextureInfo m_info;
+	bgfx::TextureInfo m_textureInfo;
 	Geometry::Enum m_cubeMapGeo;
 	uint32_t m_fileIndex;
 	uint32_t m_scaleFn;
@@ -633,6 +640,7 @@ struct View
 	bool     m_fit;
 	bool     m_alpha;
 	bool     m_help;
+	bool     m_info;
 	bool     m_files;
 	bool     m_sdf;
 };
@@ -1202,7 +1210,7 @@ int _main_(int _argc, char** _argv)
 
 			if (dragging)
 			{
-				if (view.m_info.cubeMap
+				if (view.m_textureInfo.cubeMap
 				&&  Geometry::Quad == view.m_cubeMapGeo)
 				{
 					char exec[64];
@@ -1226,6 +1234,11 @@ int _main_(int _argc, char** _argv)
 					cmdExec("view files");
 				}
 
+				if (ImGui::MenuItem("Info", NULL, view.m_info) )
+				{
+					cmdExec("view info");
+				}
+
 //				if (ImGui::MenuItem("Save As") )
 				{
 				}
@@ -1244,7 +1257,7 @@ int _main_(int _argc, char** _argv)
 						cmdExec("view filter");
 					}
 
-					if (ImGui::BeginMenu("Cubemap", view.m_info.cubeMap) )
+					if (ImGui::BeginMenu("Cubemap", view.m_textureInfo.cubeMap) )
 					{
 						if (ImGui::MenuItem("Quad", NULL, Geometry::Quad == view.m_cubeMapGeo) )
 						{
@@ -1321,6 +1334,38 @@ int _main_(int _argc, char** _argv)
 				}
 
 				help = view.m_help;
+			}
+
+			if (view.m_info)
+			{
+				if (ImGui::Begin("Info", NULL, ImVec2(300.0f, 200.0f) ) )
+				{
+					if (ImGui::BeginChild("##info", ImVec2(0.0f, 0.0f) ) )
+					{
+						ImGui::Text("Dimensions: %d x %d"
+							, view.m_textureInfo.width
+							, view.m_textureInfo.height
+							);
+
+						ImGui::Text("Format: %s"
+							, bimg::getName(bimg::TextureFormat::Enum(view.m_textureInfo.format) )
+							);
+
+						ImGui::Text("Layers: %d / %d"
+							, view.m_layer
+							, view.m_textureInfo.numLayers - 1
+							);
+
+						ImGui::Text("Mips: %d / %d"
+							, view.m_mip
+							, view.m_textureInfo.numMips - 1
+							);
+
+						ImGui::EndChild();
+					}
+
+					ImGui::End();
+				}
 			}
 
 			if (view.m_files)
@@ -1471,7 +1516,7 @@ int _main_(int _argc, char** _argv)
 					| BGFX_TEXTURE_V_CLAMP
 					| BGFX_TEXTURE_W_CLAMP
 					, 0
-					, &view.m_info
+					, &view.m_textureInfo
 					, &orientation
 					);
 
@@ -1492,28 +1537,28 @@ int _main_(int _argc, char** _argv)
 				if (isValid(texture) )
 				{
 					const char* name = "";
-					if (view.m_info.cubeMap)
+					if (view.m_textureInfo.cubeMap)
 					{
 						name = " CubeMap";
 					}
-					else if (1 < view.m_info.depth)
+					else if (1 < view.m_textureInfo.depth)
 					{
 						name = " 3D";
-						view.m_info.numLayers = view.m_info.depth;
+						view.m_textureInfo.numLayers = view.m_textureInfo.depth;
 					}
-					else if (1 < view.m_info.numLayers)
+					else if (1 < view.m_textureInfo.numLayers)
 					{
 						name = " 2D Array";
 					}
 
 					bx::stringPrintf(title, "%s (%d x %d%s, mips: %d, layers %d, %s)"
 						, fp.get()
-						, view.m_info.width
-						, view.m_info.height
+						, view.m_textureInfo.width
+						, view.m_textureInfo.height
 						, name
-						, view.m_info.numMips
-						, view.m_info.numLayers
-						, bimg::getName(bimg::TextureFormat::Enum(view.m_info.format) )
+						, view.m_textureInfo.numMips
+						, view.m_textureInfo.numLayers
+						, bimg::getName(bimg::TextureFormat::Enum(view.m_textureInfo.format) )
 						);
 				}
 				else
@@ -1597,7 +1642,7 @@ int _main_(int _argc, char** _argv)
 
 			if (view.m_fit)
 			{
-				float wh[3] = { float(view.m_info.width), float(view.m_info.height), 0.0f };
+				float wh[3] = { float(view.m_textureInfo.width), float(view.m_textureInfo.height), 0.0f };
 				float result[3];
 				bx::vec3MulMtx(result, wh, orientation);
 				result[0] = bx::fround(bx::fabs(result[0]) );
@@ -1622,11 +1667,11 @@ int _main_(int _argc, char** _argv)
 				* zoom.getValue()
 				;
 
-			setGeometry(view.m_info.cubeMap ? view.m_cubeMapGeo : Geometry::Quad
-				, -int(view.m_info.width  * ss)/2
-				, -int(view.m_info.height * ss)/2
-				,  int(view.m_info.width  * ss)
-				,  int(view.m_info.height * ss)
+			setGeometry(view.m_textureInfo.cubeMap ? view.m_cubeMapGeo : Geometry::Quad
+				, -int(view.m_textureInfo.width  * ss)/2
+				, -int(view.m_textureInfo.height * ss)/2
+				,  int(view.m_textureInfo.width  * ss)
+				,  int(view.m_textureInfo.height * ss)
 				, view.m_abgr
 				);
 
@@ -1640,9 +1685,9 @@ int _main_(int _argc, char** _argv)
 			layer.set(float(view.m_layer), 0.25f);
 
 			float params[4] = { mip.getValue(), layer.getValue(), 0.0f, 0.0f };
-			if (1 < view.m_info.depth)
+			if (1 < view.m_textureInfo.depth)
 			{
-				params[1] = layer.getValue()/view.m_info.depth;
+				params[1] = layer.getValue()/view.m_textureInfo.depth;
 			}
 
 			bgfx::setUniform(u_params, params);
@@ -1670,18 +1715,18 @@ int _main_(int _argc, char** _argv)
 				);
 
 			bgfx:: ProgramHandle program = textureProgram;
-			if (1 < view.m_info.depth)
+			if (1 < view.m_textureInfo.depth)
 			{
 				program = texture3DProgram;
 			}
-			else if (view.m_info.cubeMap)
+			else if (view.m_textureInfo.cubeMap)
 			{
 				program = Geometry::Quad == view.m_cubeMapGeo
 					? textureCubeProgram
 					: textureCube2Program
 					;
 			}
-			else if (1 < view.m_info.numLayers)
+			else if (1 < view.m_textureInfo.numLayers)
 			{
 				program = textureArrayProgram;
 			}
