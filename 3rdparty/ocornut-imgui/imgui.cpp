@@ -2056,6 +2056,8 @@ bool ImGui::IsItemHovered(ImGuiHoveredFlags flags)
             return false;
     if (!IsWindowContentHoverable(window, flags))
         return false;
+    if (window->DC.ItemFlags & ImGuiItemFlags_Disabled)
+        return false;
     return true;
 }
 
@@ -2074,6 +2076,8 @@ bool ImGui::ItemHoverable(const ImRect& bb, ImGuiID id)
     if (!IsMouseHoveringRect(bb.Min, bb.Max))
         return false;
     if (!IsWindowContentHoverable(window, ImGuiHoveredFlags_Default))
+        return false;
+    if (window->DC.ItemFlags & ImGuiItemFlags_Disabled)
         return false;
 
     SetHoveredID(id);
@@ -2095,7 +2099,7 @@ bool ImGui::FocusableItemRegister(ImGuiWindow* window, ImGuiID id, bool tab_stop
 {
     ImGuiContext& g = *GImGui;
 
-    const bool allow_keyboard_focus = (window->DC.ItemFlags & ImGuiItemFlags_AllowKeyboardFocus) != 0;
+    const bool allow_keyboard_focus = (window->DC.ItemFlags & (ImGuiItemFlags_AllowKeyboardFocus | ImGuiItemFlags_Disabled)) == ImGuiItemFlags_AllowKeyboardFocus;
     window->FocusIdxAllCounter++;
     if (allow_keyboard_focus)
         window->FocusIdxTabCounter++;
@@ -2383,7 +2387,7 @@ void ImGui::NewFrame()
         g.ModalWindowDarkeningRatio = 0.0f;
     }
 
-    // Are we using inputs? Tell user so they can capture/discard the inputs away from the rest of their application.
+    // Update the WantCaptureMouse/WantCAptureKeyboard flags, so user can capture/discard the inputs away from the rest of their application.
     // When clicking outside of a window we assume the click is owned by the application and won't request capture. We need to track click ownership.
     int mouse_earliest_button_down = -1;
     bool mouse_any_down = false;
@@ -2393,7 +2397,7 @@ void ImGui::NewFrame()
             g.IO.MouseDownOwned[i] = (g.HoveredWindow != NULL) || (!g.OpenPopupStack.empty());
         mouse_any_down |= g.IO.MouseDown[i];
         if (g.IO.MouseDown[i])
-            if (mouse_earliest_button_down == -1 || g.IO.MouseClickedTime[mouse_earliest_button_down] > g.IO.MouseClickedTime[i])
+            if (mouse_earliest_button_down == -1 || g.IO.MouseClickedTime[i] < g.IO.MouseClickedTime[mouse_earliest_button_down])
                 mouse_earliest_button_down = i;
     }
     bool mouse_avail_to_imgui = (mouse_earliest_button_down == -1) || g.IO.MouseDownOwned[mouse_earliest_button_down];
@@ -2408,6 +2412,7 @@ void ImGui::NewFrame()
     g.OsImePosRequest = ImVec2(1.0f, 1.0f); // OS Input Method Editor showing on top-left of our window by default
 
     // If mouse was first clicked outside of ImGui bounds we also cancel out hovering.
+    // FIXME: For patterns of drag and drop between "application" and "imgui" we may need to rework/remove this test (first committed 311c0ca9 on 2015/02)
     if (!mouse_avail_to_imgui)
         g.HoveredWindow = g.HoveredRootWindow = NULL;
 
