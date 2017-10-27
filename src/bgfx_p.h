@@ -100,25 +100,29 @@ namespace bgfx
 				} \
 			BX_MACRO_BLOCK_END
 
+#include <bx/allocator.h>
 #include <bx/bx.h>
+#include <bx/cpu.h>
 #include <bx/debug.h>
-#include <bx/math.h>
-#include <bx/float4x4_t.h>
 #include <bx/endian.h>
+#include <bx/float4x4_t.h>
 #include <bx/handlealloc.h>
 #include <bx/hash.h>
-#include <bx/sort.h>
-#include <bx/ringbuffer.h>
-#include <bx/uint32_t.h>
-#include <bx/readerwriter.h>
-#include <bx/allocator.h>
-#include <bx/string.h>
-#include <bx/os.h>
 #include <bx/maputil.h>
+#include <bx/math.h>
+#include <bx/os.h>
+#include <bx/readerwriter.h>
+#include <bx/ringbuffer.h>
+#include <bx/sort.h>
+#include <bx/string.h>
+#include <bx/thread.h>
+#include <bx/timer.h>
+#include <bx/uint32_t.h>
 
 #include <bgfx/platform.h>
 #include <bimg/bimg.h>
 #include "shader.h"
+#include "vertexdecl.h"
 
 #define BGFX_CHUNK_MAGIC_TEX BX_MAKEFOURCC('T', 'E', 'X', 0x0)
 
@@ -164,12 +168,6 @@ namespace stl = std;
 #elif BX_PLATFORM_WINDOWS
 #	include <windows.h>
 #endif // BX_PLATFORM_*
-
-#include <bx/cpu.h>
-#include <bx/thread.h>
-#include <bx/timer.h>
-
-#include "vertexdecl.h"
 
 #define BGFX_DEFAULT_WIDTH  1280
 #define BGFX_DEFAULT_HEIGHT 720
