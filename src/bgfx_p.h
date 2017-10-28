@@ -3418,37 +3418,37 @@ namespace bgfx
 				return invalid;
 			}
 
-			uint16_t idx = m_programHashMap.find(_vsh.idx);
-			if (kInvalidHandle != idx)
+			ProgramHandle handle = { m_programHashMap.find(_vsh.idx) };
+
+			if (isValid(handle) )
 			{
-				ProgramHandle handle = { idx };
 				ProgramRef& pr = m_programRef[handle.idx];
 				++pr.m_refCount;
 				shaderIncRef(pr.m_vsh);
-				return handle;
 			}
-
-			ProgramHandle handle;
-			handle.idx = m_programHandle.alloc();
-
-			BX_WARN(isValid(handle), "Failed to allocate program handle.");
-			if (isValid(handle) )
+			else
 			{
-				shaderIncRef(_vsh);
-				ProgramRef& pr = m_programRef[handle.idx];
-				pr.m_vsh = _vsh;
-				ShaderHandle fsh = BGFX_INVALID_HANDLE;
-				pr.m_fsh = fsh;
-				pr.m_refCount = 1;
+				handle.idx = m_programHandle.alloc();
 
-				const uint32_t key = uint32_t(_vsh.idx);
-				bool ok = m_programHashMap.insert(key, handle.idx);
-				BX_CHECK(ok, "Program already exists (key: %x, handle: %3d)!", key, handle.idx); BX_UNUSED(ok);
+				BX_WARN(isValid(handle), "Failed to allocate program handle.");
+				if (isValid(handle) )
+				{
+					shaderIncRef(_vsh);
+					ProgramRef& pr = m_programRef[handle.idx];
+					pr.m_vsh = _vsh;
+					ShaderHandle fsh = BGFX_INVALID_HANDLE;
+					pr.m_fsh = fsh;
+					pr.m_refCount = 1;
 
-				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
-				cmdbuf.write(handle);
-				cmdbuf.write(_vsh);
-				cmdbuf.write(fsh);
+					const uint32_t key = uint32_t(_vsh.idx);
+					bool ok = m_programHashMap.insert(key, handle.idx);
+					BX_CHECK(ok, "Program already exists (key: %x, handle: %3d)!", key, handle.idx); BX_UNUSED(ok);
+
+					CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateProgram);
+					cmdbuf.write(handle);
+					cmdbuf.write(_vsh);
+					cmdbuf.write(fsh);
+				}
 			}
 
 			if (_destroyShader)

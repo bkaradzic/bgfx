@@ -1578,7 +1578,12 @@ namespace bgfx
 							{                                                                         \
 								uint16_t idx = _handleAlloc.getHandleAt(ii);                          \
 								const _type& ref = _ref[idx]; BX_UNUSED(ref);                         \
-								BX_TRACE("\t%3d: %4d %s", ii, idx, ref.m_name.getPtr() );             \
+								BX_TRACE("\t%3d: %4d %s (count %d)"                                   \
+										, ii                                                          \
+										, idx                                                         \
+										, ref.m_name.getPtr()                                         \
+										, ref.m_refCount                                              \
+										);                                                            \
 							}                                                                         \
 						}                                                                             \
 					BX_MACRO_BLOCK_END
