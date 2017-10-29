@@ -279,6 +279,8 @@ public:
 			pos[1] = -step*m_dim / 2.0f;
 			pos[2] = -15.0;
 
+			bgfx::Encoder* encoder = bgfx::begin();
+
 			for (uint32_t zz = 0; zz < uint32_t(m_dim); ++zz)
 			{
 				for (uint32_t yy = 0; yy < uint32_t(m_dim); ++yy)
@@ -296,20 +298,22 @@ public:
 						mtx[14] = pos[2] + float(zz)*step;
 
 						// Set model matrix for rendering.
-						bgfx::setTransform(mtx);
+						encoder->setTransform(mtx);
 
 						// Set vertex and index buffer.
-						bgfx::setVertexBuffer(0, m_vbh);
-						bgfx::setIndexBuffer(m_ibh);
+						encoder->setVertexBuffer(0, m_vbh);
+						encoder->setIndexBuffer(m_ibh);
 
 						// Set render states.
-						bgfx::setState(BGFX_STATE_DEFAULT);
+						encoder->setState(BGFX_STATE_DEFAULT);
 
 						// Submit primitive for rendering to view 0.
-						bgfx::submit(0, m_program);
+						encoder->submit(0, m_program);
 					}
 				}
 			}
+
+			bgfx::end(encoder);
 
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
