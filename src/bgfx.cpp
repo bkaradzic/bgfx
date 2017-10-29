@@ -995,7 +995,7 @@ namespace bgfx
 
 		uint64_t key = m_key.encodeCompute();
 		m_frame->m_sortKeys[renderItemIdx]   = key;
-		m_frame->m_sortValues[renderItemIdx] = renderItemIdx;
+		m_frame->m_sortValues[renderItemIdx] = RenderItemCount(renderItemIdx);
 
 		m_compute.m_uniformBegin = m_frame->m_uniformBegin;
 		m_compute.m_uniformEnd   = m_frame->m_uniformEnd;
@@ -1680,6 +1680,7 @@ namespace bgfx
 	{
 		EncoderImpl* encoder = &m_encoder[0];
 
+#if BGFX_CONFIG_MULTITHREADED
 		if (BGFX_API_THREAD_MAGIC != s_threadIndex)
 		{
 			bx::MutexScope scopeLock(m_encoderApiLock);
@@ -1693,12 +1694,14 @@ namespace bgfx
 			encoder = &m_encoder[idx];
 			encoder->begin(m_frame);
 		}
+#endif // BGFX_CONFIG_MULTITHREADED
 
 		return reinterpret_cast<Encoder*>(encoder);
 	}
 
 	void Context::end(Encoder* _encoder)
 	{
+#if BGFX_CONFIG_MULTITHREADED
 		if (BGFX_API_THREAD_MAGIC != s_threadIndex)
 		{
 			EncoderImpl* encoder = reinterpret_cast<EncoderImpl*>(_encoder);
@@ -1706,6 +1709,7 @@ namespace bgfx
 
 			m_encoderApiSem.post();
 		}
+#endif // BGFX_CONFIG_MULTITHREADED
 	}
 
 	uint32_t Context::frame(bool _capture)
