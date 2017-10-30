@@ -2448,6 +2448,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <span id="bgfx::setViewMode__uint8_t.ViewMode::Enum"></span><span class="target" id="bgfxnamespacebgfx_1a0c3c0121f555d23c214e0f1991b927ab"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewMode</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, <a class="reference internal" href="#_CPPv2N4bgfx8ViewModeE" title="bgfx::ViewMode">ViewMode</a>::<a class="reference internal" href="#_CPPv2N4bgfx8ViewMode4EnumE" title="bgfx::ViewMode::Enum">Enum</a> <em>_mode</em> = ViewMode::Default<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11setViewModeE7uint8_tN8ViewMode4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set view sorting mode. </p>
 <p><dl class="docutils">
+<dt><strong>Remark</strong></dt>
+<dd>View mode must be set prior calling <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1aa4b058cface13ced7c67a1dbede8339f"><span class="std std-ref"><span class="pre">bgfx::submit</span></span></a></code> for the view.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_view_mode</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -2492,8 +2494,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx12setViewOrderE7uint8_t7uint8_tPKv">
-<span id="bgfx::setViewOrder__uint8_t.uint8_t.voidCP"></span><span class="target" id="bgfxnamespacebgfx_1a72a956ceb35612848b9424b7ddde7051"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewOrder</code><span class="sig-paren">(</span>uint8_t <em>_id</em> = 0, uint8_t <em>_num</em> = UINT8_MAX, <em class="property">const</em> void *<em>_remap</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12setViewOrderE7uint8_t7uint8_tPKv" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx12setViewOrderE7uint8_t7uint8_tPK7uint8_t">
+<span id="bgfx::setViewOrder__uint8_t.uint8_t.uint8_tCP"></span><span class="target" id="bgfxnamespacebgfx_1a7ddafc608f14063a8e6299ce28f48bc4"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewOrder</code><span class="sig-paren">(</span>uint8_t <em>_id</em> = 0, uint8_t <em>_num</em> = UINT8_MAX, <em class="property">const</em> uint8_t *<em>_remap</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12setViewOrderE7uint8_t7uint8_tPK7uint8_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Post submit view reordering. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
