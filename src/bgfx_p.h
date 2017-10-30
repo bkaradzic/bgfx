@@ -275,6 +275,34 @@ namespace bgfx
 
 	struct Clear
 	{
+		void set(uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
+		{
+			m_flags    = _flags;
+			m_index[0] = uint8_t(_rgba>>24);
+			m_index[1] = uint8_t(_rgba>>16);
+			m_index[2] = uint8_t(_rgba>> 8);
+			m_index[3] = uint8_t(_rgba>> 0);
+			m_depth    = _depth;
+			m_stencil  = _stencil;
+		}
+
+		void set(uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7)
+		{
+			m_flags = (_flags & ~BGFX_CLEAR_COLOR)
+				| (0xff != (_0&_1&_2&_3&_4&_5&_6&_7) ? BGFX_CLEAR_COLOR|BGFX_CLEAR_COLOR_USE_PALETTE : 0)
+				;
+			m_index[0] = _0;
+			m_index[1] = _1;
+			m_index[2] = _2;
+			m_index[3] = _3;
+			m_index[4] = _4;
+			m_index[5] = _5;
+			m_index[6] = _6;
+			m_index[7] = _7;
+			m_depth    = _depth;
+			m_stencil  = _stencil;
+		}
+
 		uint8_t  m_index[8];
 		float    m_depth;
 		uint8_t  m_stencil;
@@ -1557,6 +1585,96 @@ namespace bgfx
 		uint16_t m_flags;
 	};
 
+	BX_ALIGN_DECL_CACHE_LINE(struct) View
+	{
+		void reset()
+		{
+			setRect(0, 0, 1, 1);
+			setScissor(0, 0, 0, 0);
+			setClear(BGFX_CLEAR_NONE, 0, 0.0f, 0);
+			setMode(ViewMode::Default);
+			setFrameBuffer(BGFX_INVALID_HANDLE);
+			setTransform(NULL, NULL, BGFX_VIEW_NONE, NULL);
+		}
+
+		void setRect(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+		{
+			m_rect.m_x = (uint16_t)bx::uint32_imax(int16_t(_x), 0);
+			m_rect.m_y = (uint16_t)bx::uint32_imax(int16_t(_y), 0);
+			m_rect.m_width  = bx::uint16_max(_width,  1);
+			m_rect.m_height = bx::uint16_max(_height, 1);
+		}
+
+		void setScissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+		{
+			m_scissor.m_x = _x;
+			m_scissor.m_y = _y;
+			m_scissor.m_width  = _width;
+			m_scissor.m_height = _height;
+		}
+
+		void setClear(uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
+		{
+			m_clear.set(_flags, _rgba, _depth, _stencil);
+		}
+
+		void setClear(uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7)
+		{
+			m_clear.set(_flags, _depth, _stencil, _0, _1, _2, _3, _4, _5, _6, _7);
+		}
+
+		void setMode(ViewMode::Enum _mode)
+		{
+			m_mode = uint8_t(_mode);
+		}
+
+		void setFrameBuffer(FrameBufferHandle _handle)
+		{
+			m_fbh = _handle;
+		}
+
+		void setTransform(const void* _view, const void* _proj, uint8_t _flags, const void* _proj1)
+		{
+			m_flags = _flags;
+
+			if (NULL != _view)
+			{
+				bx::memCopy(m_view.un.val, _view, sizeof(Matrix4) );
+			}
+			else
+			{
+				m_view.setIdentity();
+			}
+
+			if (NULL != _proj)
+			{
+				bx::memCopy(m_proj[0].un.val, _proj, sizeof(Matrix4) );
+			}
+			else
+			{
+				m_proj[0].setIdentity();
+			}
+
+			if (NULL != _proj1)
+			{
+				bx::memCopy(m_proj[1].un.val, _proj1, sizeof(Matrix4) );
+			}
+			else
+			{
+				bx::memCopy(m_proj[1].un.val, m_proj[0].un.val, sizeof(Matrix4) );
+			}
+		}
+
+		Clear   m_clear;
+		Rect    m_rect;
+		Rect    m_scissor;
+		Matrix4 m_view;
+		Matrix4 m_proj[2];
+		FrameBufferHandle m_fbh;
+		uint8_t m_mode;
+		uint8_t m_flags;
+	};
+
 	struct FrameCache
 	{
 		void reset()
@@ -1738,14 +1856,10 @@ namespace bgfx
 		}
 
 		uint8_t m_viewRemap[BGFX_CONFIG_MAX_VIEWS];
-		FrameBufferHandle m_fb[BGFX_CONFIG_MAX_VIEWS];
-		Clear m_clear[BGFX_CONFIG_MAX_VIEWS];
 		float m_colorPalette[BGFX_CONFIG_MAX_COLOR_PALETTE][4];
-		Rect m_rect[BGFX_CONFIG_MAX_VIEWS];
-		Rect m_scissor[BGFX_CONFIG_MAX_VIEWS];
-		Matrix4 m_view[BGFX_CONFIG_MAX_VIEWS];
-		Matrix4 m_proj[2][BGFX_CONFIG_MAX_VIEWS];
-		uint8_t m_viewFlags[BGFX_CONFIG_MAX_VIEWS];
+
+		View m_view[BGFX_CONFIG_MAX_VIEWS];
+
 		int32_t m_occlusion[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
 
 		uint64_t m_sortKeys[BGFX_CONFIG_MAX_DRAW_CALLS+1];
@@ -2488,7 +2602,10 @@ namespace bgfx
 
 			m_flipAfterRender = !!(_flags & BGFX_RESET_FLIP_AFTER_RENDER);
 
-			bx::memSet(m_fb, 0xff, sizeof(m_fb) );
+			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
+			{
+				m_view[ii].setFrameBuffer(BGFX_INVALID_HANDLE);
+			}
 
 			for (uint16_t ii = 0, num = m_textureHandle.getNumHandles(); ii < num; ++ii)
 			{
@@ -3982,20 +4099,12 @@ namespace bgfx
 
 		BGFX_API_FUNC(void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height) )
 		{
-			Rect& rect = m_rect[_id];
-			rect.m_x = (uint16_t)bx::uint32_imax(int16_t(_x), 0);
-			rect.m_y = (uint16_t)bx::uint32_imax(int16_t(_y), 0);
-			rect.m_width  = bx::uint16_max(_width,  1);
-			rect.m_height = bx::uint16_max(_height, 1);
+			m_view[_id].setRect(_x, _y, _width, _height);
 		}
 
 		BGFX_API_FUNC(void setViewScissor(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height) )
 		{
-			Rect& scissor = m_scissor[_id];
-			scissor.m_x = _x;
-			scissor.m_y = _y;
-			scissor.m_width  = _width;
-			scissor.m_height = _height;
+			m_view[_id].setScissor(_x, _y, _width, _height);
 		}
 
 		BGFX_API_FUNC(void setViewClear(uint8_t _id, uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil) )
@@ -4005,14 +4114,7 @@ namespace bgfx
 				, _depth
 				);
 
-			Clear& clear = m_clear[_id];
-			clear.m_flags = _flags;
-			clear.m_index[0] = uint8_t(_rgba>>24);
-			clear.m_index[1] = uint8_t(_rgba>>16);
-			clear.m_index[2] = uint8_t(_rgba>> 8);
-			clear.m_index[3] = uint8_t(_rgba>> 0);
-			clear.m_depth    = _depth;
-			clear.m_stencil  = _stencil;
+			m_view[_id].setClear(_flags, _rgba, _depth, _stencil);
 		}
 
 		BGFX_API_FUNC(void setViewClear(uint8_t _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7) )
@@ -4022,74 +4124,28 @@ namespace bgfx
 				, _depth
 				);
 
-			Clear& clear = m_clear[_id];
-			clear.m_flags = (_flags & ~BGFX_CLEAR_COLOR)
-				| (0xff != (_0&_1&_2&_3&_4&_5&_6&_7) ? BGFX_CLEAR_COLOR|BGFX_CLEAR_COLOR_USE_PALETTE : 0)
-				;
-			clear.m_index[0] = _0;
-			clear.m_index[1] = _1;
-			clear.m_index[2] = _2;
-			clear.m_index[3] = _3;
-			clear.m_index[4] = _4;
-			clear.m_index[5] = _5;
-			clear.m_index[6] = _6;
-			clear.m_index[7] = _7;
-			clear.m_depth    = _depth;
-			clear.m_stencil  = _stencil;
+			m_view[_id].setClear(_flags, _depth, _stencil, _0, _1, _2, _3, _4, _5, _6, _7);
 		}
 
 		BGFX_API_FUNC(void setViewMode(uint8_t _id, ViewMode::Enum _mode) )
 		{
-			m_viewMode[_id] = uint8_t(_mode);
+			m_view[_id].setMode(_mode);
 		}
 
 		BGFX_API_FUNC(void setViewFrameBuffer(uint8_t _id, FrameBufferHandle _handle) )
 		{
 			BGFX_CHECK_HANDLE_INVALID_OK("setViewFrameBuffer", m_frameBufferHandle, _handle);
-			m_fb[_id] = _handle;
+			m_view[_id].setFrameBuffer(_handle);
 		}
 
 		BGFX_API_FUNC(void setViewTransform(uint8_t _id, const void* _view, const void* _proj, uint8_t _flags, const void* _proj1) )
 		{
-			m_viewFlags[_id] = _flags;
-
-			if (NULL != _view)
-			{
-				bx::memCopy(m_view[_id].un.val, _view, sizeof(Matrix4) );
-			}
-			else
-			{
-				m_view[_id].setIdentity();
-			}
-
-			if (NULL != _proj)
-			{
-				bx::memCopy(m_proj[0][_id].un.val, _proj, sizeof(Matrix4) );
-			}
-			else
-			{
-				m_proj[0][_id].setIdentity();
-			}
-
-			if (NULL != _proj1)
-			{
-				bx::memCopy(m_proj[1][_id].un.val, _proj1, sizeof(Matrix4) );
-			}
-			else
-			{
-				bx::memCopy(m_proj[1][_id].un.val, m_proj[0][_id].un.val, sizeof(Matrix4) );
-			}
+			m_view[_id].setTransform(_view, _proj, _flags, _proj1);
 		}
 
 		BGFX_API_FUNC(void resetView(uint8_t _id) )
 		{
-			setViewRect(_id, 0, 0, 1, 1);
-			setViewScissor(_id, 0, 0, 0, 0);
-			setViewClear(_id, BGFX_CLEAR_NONE, 0, 0.0f, 0);
-			setViewMode(_id, ViewMode::Default);
-			FrameBufferHandle invalid = BGFX_INVALID_HANDLE;
-			setViewFrameBuffer(_id, invalid);
-			setViewTransform(_id, NULL, NULL, BGFX_VIEW_NONE, NULL);
+			m_view[_id].reset();
 		}
 
 		BGFX_API_FUNC(void setViewOrder(uint8_t _id, uint8_t _num, const uint8_t* _order) )
@@ -4510,17 +4566,10 @@ namespace bgfx
 		VertexDeclRef m_declRef;
 
 		uint8_t m_viewRemap[BGFX_CONFIG_MAX_VIEWS];
-		FrameBufferHandle m_fb[BGFX_CONFIG_MAX_VIEWS];
-		Clear m_clear[BGFX_CONFIG_MAX_VIEWS];
+		uint16_t m_seq[BGFX_CONFIG_MAX_VIEWS];
+		View m_view[BGFX_CONFIG_MAX_VIEWS];
 
 		float m_clearColor[BGFX_CONFIG_MAX_COLOR_PALETTE][4];
-		Rect m_rect[BGFX_CONFIG_MAX_VIEWS];
-		Rect m_scissor[BGFX_CONFIG_MAX_VIEWS];
-		Matrix4 m_view[BGFX_CONFIG_MAX_VIEWS];
-		Matrix4 m_proj[2][BGFX_CONFIG_MAX_VIEWS];
-		uint8_t m_viewFlags[BGFX_CONFIG_MAX_VIEWS];
-		uint16_t m_seq[BGFX_CONFIG_MAX_VIEWS];
-		uint8_t m_viewMode[BGFX_CONFIG_MAX_VIEWS];
 
 		uint8_t m_colorPaletteDirty;
 

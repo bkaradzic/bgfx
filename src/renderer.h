@@ -59,7 +59,7 @@ namespace bgfx
 			m_invProjCached = UINT16_MAX;
 			m_invViewProjCached = UINT16_MAX;
 
-			m_view[0] = _frame->m_view;
+			m_view[0] = m_viewTmp[0];
 			m_view[1] = m_viewTmp[1];
 
 			if (_hmdEnabled)
@@ -79,18 +79,25 @@ namespace bgfx
 
 					for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 					{
-						if (BGFX_VIEW_STEREO == (_frame->m_viewFlags[ii] & BGFX_VIEW_STEREO) )
+						if (BGFX_VIEW_STEREO == (_frame->m_view[ii].m_flags & BGFX_VIEW_STEREO) )
 						{
 							bx::float4x4_mul(&m_view[eye][ii].un.f4x4
-								, &_frame->m_view[ii].un.f4x4
+								, &_frame->m_view[ii].m_view.un.f4x4
 								, &viewAdjust.un.f4x4
 								);
 						}
 						else
 						{
-							bx::memCopy(&m_view[0][ii].un.f4x4, &_frame->m_view[ii].un.f4x4, sizeof(Matrix4) );
+							bx::memCopy(&m_view[0][ii].un.f4x4, &_frame->m_view[ii].m_view.un.f4x4, sizeof(Matrix4) );
 						}
 					}
+				}
+			}
+			else
+			{
+				for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
+				{
+					bx::memCopy(&m_view[0][ii].un.f4x4, &_frame->m_view[ii].m_view.un.f4x4, sizeof(Matrix4) );
 				}
 			}
 
@@ -100,7 +107,7 @@ namespace bgfx
 				{
 					bx::float4x4_mul(&m_viewProj[eye][ii].un.f4x4
 						, &m_view[eye][ii].un.f4x4
-						, &_frame->m_proj[eye][ii].un.f4x4
+						, &_frame->m_view[ii].m_proj[eye].un.f4x4
 						);
 				}
 			}
@@ -180,7 +187,7 @@ namespace bgfx
 					{
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
-							, _frame->m_proj[_eye][_view].un.val
+							, _frame->m_view[_view].m_proj[_eye].un.val
 							, bx::uint32_min(mtxRegs, predefined.m_count)
 							);
 					}
@@ -193,7 +200,7 @@ namespace bgfx
 						{
 							m_invProjCached = viewEye;
 							bx::float4x4_inverse(&m_invProj.un.f4x4
-								, &_frame->m_proj[_eye][_view].un.f4x4
+								, &_frame->m_view[_view].m_proj[_eye].un.f4x4
 								);
 						}
 
