@@ -3078,6 +3078,9 @@ namespace bgfx
 	/// @param[in] _id View id.
 	/// @param[in] _mode View sort mode. See `ViewMode::Enum`.
 	///
+	/// @remarks
+	///   View mode must be set prior calling `bgfx::submit` for the view.
+	///
 	/// @attention C99 equivalent is `bgfx_set_view_mode`.
 	///
 	void setViewMode(
