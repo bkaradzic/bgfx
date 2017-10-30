@@ -3269,7 +3269,7 @@ namespace bgfx { namespace mtl
 			bool viewRestart = false;
 			uint8_t eye = 0;
 			uint8_t restartState = 0;
-			viewState.m_rect = _render->m_rect[0];
+			viewState.m_rect = _render->m_view[0].m_rect;
 
 			int32_t numItems = _render->m_numRenderItems;
 			for (int32_t item = 0, restartItem = numItems; item < numItems || restartItem < numItems;)
@@ -3302,7 +3302,7 @@ namespace bgfx { namespace mtl
 					view = key.m_view;
 					programIdx = kInvalidHandle;
 
-					viewRestart  = BGFX_VIEW_STEREO == (_render->m_viewFlags[view] & BGFX_VIEW_STEREO);
+					viewRestart  = BGFX_VIEW_STEREO == (_render->m_view[view].m_flags & BGFX_VIEW_STEREO);
 					viewRestart &= hmdEnabled;
 
 					if (viewRestart)
@@ -3321,7 +3321,7 @@ namespace bgfx { namespace mtl
 						eye = 0;
 					}
 
-					viewState.m_rect = _render->m_rect[view];
+					viewState.m_rect = _render->m_view[view].m_rect;
 
 					if (viewRestart)
 					{
@@ -3331,16 +3331,16 @@ namespace bgfx { namespace mtl
 
 					submitBlit(bs, view);
 
-					const Rect& scissorRect = _render->m_scissor[view];
+					const Rect& scissorRect = _render->m_view[view].m_scissor;
 					viewHasScissor = !scissorRect.isZero();
 					viewScissorRect = viewHasScissor ? scissorRect : viewState.m_rect;
-					Clear& clr = _render->m_clear[view];
+					Clear& clr = _render->m_view[view].m_clear;
 
 					Rect viewRect = viewState.m_rect;
 					bool clearWithRenderPass = false;
 
 					if (NULL == m_renderCommandEncoder
-					||  fbh.idx != _render->m_fb[view].idx)
+					||  fbh.idx != _render->m_view[view].m_fbh.idx)
 					{
 						if (0 != m_renderCommandEncoder)
 						{
@@ -3350,7 +3350,7 @@ namespace bgfx { namespace mtl
 						RenderPassDescriptor renderPassDescriptor = newRenderPassDescriptor();
 						renderPassDescriptor.visibilityResultBuffer = m_occlusionQuery.m_buffer;
 
-						fbh = _render->m_fb[view];
+						fbh = _render->m_view[view].m_fbh;
 
 						uint32_t width  = m_resolution.m_width;
 						uint32_t height = m_resolution.m_height;
