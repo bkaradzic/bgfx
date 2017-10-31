@@ -1888,6 +1888,8 @@ void ImGui::SetActiveID(ImGuiID id, ImGuiWindow* window)
 {
     ImGuiContext& g = *GImGui;
     g.ActiveIdIsJustActivated = (g.ActiveId != id);
+    if (g.ActiveIdIsJustActivated)
+        g.ActiveIdTimer = 0.0f;
     g.ActiveId = id;
     g.ActiveIdAllowOverlap = false;
     g.ActiveIdIsAlive |= (id != 0);
@@ -1904,6 +1906,7 @@ void ImGui::SetHoveredID(ImGuiID id)
     ImGuiContext& g = *GImGui;
     g.HoveredId = id;
     g.HoveredIdAllowOverlap = false;
+    g.HoveredIdTimer = (id != 0 && g.HoveredIdPreviousFrame == id) ? (g.HoveredIdTimer + g.IO.DeltaTime) : 0.0f;
 }
 
 void ImGui::KeepAliveID(ImGuiID id)
@@ -1986,7 +1989,7 @@ bool ImGui::ItemAdd(const ImRect& bb, ImGuiID id)
 }
 
 // This is roughly matching the behavior of internal-facing ItemHoverable()
-// - we allow hovering to be true when ActiveId==window->MoveID, so that clicking on non-interactive items such as a Text() item still returns true with IsItemHovered())
+// - we allow hovering to be true when ActiveId==window->MoveID, so that clicking on non-interactive items such as a Text() item still returns true with IsItemHovered()
 // - this should work even for non-interactive items that have no ID, so we cannot use LastItemId
 bool ImGui::IsItemHovered(ImGuiHoveredFlags flags)
 {
@@ -2225,11 +2228,15 @@ void ImGui::NewFrame()
     g.RenderDrawData.CmdListsCount = g.RenderDrawData.TotalVtxCount = g.RenderDrawData.TotalIdxCount = 0;
 
     // Clear reference to active widget if the widget isn't alive anymore
+    if (!g.HoveredIdPreviousFrame)
+        g.HoveredIdTimer = 0.0f;
     g.HoveredIdPreviousFrame = g.HoveredId;
     g.HoveredId = 0;
     g.HoveredIdAllowOverlap = false;
     if (!g.ActiveIdIsAlive && g.ActiveIdPreviousFrame == g.ActiveId && g.ActiveId != 0)
         ClearActiveID();
+    if (g.ActiveId)
+        g.ActiveIdTimer += g.IO.DeltaTime;
     g.ActiveIdPreviousFrame = g.ActiveId;
     g.ActiveIdIsAlive = false;
     g.ActiveIdIsJustActivated = false;
@@ -5124,25 +5131,29 @@ bool ImGui::IsWindowHovered(ImGuiHoveredFlags flags)
 bool ImGui::IsWindowFocused()
 {
     ImGuiContext& g = *GImGui;
+    IM_ASSERT(g.CurrentWindow);     // Not inside a Begin()/End()
     return g.NavWindow == g.CurrentWindow;
 }
 
 bool ImGui::IsRootWindowFocused()
 {
     ImGuiContext& g = *GImGui;
+    IM_ASSERT(g.CurrentWindow);     // Not inside a Begin()/End()
     return g.NavWindow == g.CurrentWindow->RootWindow;
 }
 
 bool ImGui::IsRootWindowOrAnyChildFocused()
 {
     ImGuiContext& g = *GImGui;
+    IM_ASSERT(g.CurrentWindow);     // Not inside a Begin()/End()
     return g.NavWindow && g.NavWindow->RootWindow == g.CurrentWindow->RootWindow;
 }
 
 bool ImGui::IsRootWindowOrAnyChildHovered(ImGuiHoveredFlags flags)
 {
-    IM_ASSERT((flags & ImGuiHoveredFlags_AllowWhenOverlapped) == 0);   // Flags not supported by this function
     ImGuiContext& g = *GImGui;
+    IM_ASSERT((flags & ImGuiHoveredFlags_AllowWhenOverlapped) == 0);   // Flags not supported by this function
+    IM_ASSERT(g.CurrentWindow);                                        // Not inside a Begin()/End()
     if (!g.HoveredRootWindow || (g.HoveredRootWindow != g.CurrentWindow->RootWindow))
         return false;
     if (!IsWindowContentHoverable(g.HoveredRootWindow, flags))
@@ -10826,8 +10837,8 @@ void ImGui::ShowMetricsWindow(bool* p_open)
         {
             ImGui::Text("HoveredWindow: '%s'", g.HoveredWindow ? g.HoveredWindow->Name : "NULL");
             ImGui::Text("HoveredRootWindow: '%s'", g.HoveredRootWindow ? g.HoveredRootWindow->Name : "NULL");
-            ImGui::Text("HoveredId: 0x%08X/0x%08X", g.HoveredId, g.HoveredIdPreviousFrame); // Data is "in-flight" so depending on when the Metrics window is called we may see current frame information or not
-            ImGui::Text("ActiveId: 0x%08X/0x%08X", g.ActiveId, g.ActiveIdPreviousFrame);
+            ImGui::Text("HoveredId: 0x%08X/0x%08X (%.2f sec)", g.HoveredId, g.HoveredIdPreviousFrame, g.HoveredIdTimer); // Data is "in-flight" so depending on when the Metrics window is called we may see current frame information or not
+            ImGui::Text("ActiveId: 0x%08X/0x%08X (%.2f sec)", g.ActiveId, g.ActiveIdPreviousFrame, g.ActiveIdTimer);
             ImGui::Text("ActiveIdWindow: '%s'", g.ActiveIdWindow ? g.ActiveIdWindow->Name : "NULL");
             ImGui::Text("NavWindow: '%s'", g.NavWindow ? g.NavWindow->Name : "NULL");
             ImGui::TreePop();
