@@ -6827,7 +6827,7 @@ namespace bgfx { namespace gl
 						if (0 != barrier)
 						{
 							bool constantsChanged = compute.m_uniformBegin < compute.m_uniformEnd;
-							rendererUpdateUniforms(this, _render->m_uniformBuffer, compute.m_uniformBegin, compute.m_uniformEnd);
+							rendererUpdateUniforms(this, _render->m_uniformBuffer[compute.m_uniformIdx], compute.m_uniformBegin, compute.m_uniformEnd);
 
 							if (constantsChanged
 							&&  NULL != program.m_constantBuffer)
@@ -7242,7 +7242,7 @@ namespace bgfx { namespace gl
 				bool programChanged = false;
 				bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
 				bool bindAttribs = false;
-				rendererUpdateUniforms(this, _render->m_uniformBuffer, draw.m_uniformBegin, draw.m_uniformEnd);
+				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
 
 				if (key.m_program != programIdx)
 				{
@@ -7710,7 +7710,7 @@ namespace bgfx { namespace gl
 				}
 
 				tvm.printf(10, pos++, 0x8e, "      Indices: %7d ", statsNumIndices);
-				tvm.printf(10, pos++, 0x8e, " Uniform size: %7d, Max: %7d ", _render->m_uniformEnd, _render->m_uniformMax);
+//				tvm.printf(10, pos++, 0x8e, " Uniform size: %7d, Max: %7d ", _render->m_uniformEnd, _render->m_uniformMax);
 				tvm.printf(10, pos++, 0x8e, "     DVB size: %7d ", _render->m_vboffset);
 				tvm.printf(10, pos++, 0x8e, "     DIB size: %7d ", _render->m_iboffset);
 

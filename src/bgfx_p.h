@@ -1110,13 +1110,9 @@ namespace bgfx
 		uint32_t reserve(uint16_t* _num)
 		{
 			uint32_t num = *_num;
-			BX_WARN(m_num+num < BGFX_CONFIG_MAX_MATRIX_CACHE, "Matrix cache overflow. %d (max: %d)", m_num+num, BGFX_CONFIG_MAX_MATRIX_CACHE);
-			num = bx::uint32_min(num, BGFX_CONFIG_MAX_MATRIX_CACHE-m_num);
-			uint32_t first = m_num < BGFX_CONFIG_MAX_MATRIX_CACHE
-				? m_num
-				: BGFX_CONFIG_MAX_MATRIX_CACHE - 1
-				;
-			m_num += num;
+			uint32_t first = bx::atomicFetchAndAddsat<uint32_t>(&m_num, num, BGFX_CONFIG_MAX_MATRIX_CACHE - 1);
+			BX_WARN(first+num < BGFX_CONFIG_MAX_MATRIX_CACHE, "Matrix cache overflow. %d (max: %d)", first+num, BGFX_CONFIG_MAX_MATRIX_CACHE);
+			num = bx::uint32_min(num, BGFX_CONFIG_MAX_MATRIX_CACHE-1-first);
 			*_num = (uint16_t)num;
 			return first;
 		}
@@ -1165,17 +1161,16 @@ namespace bgfx
 
 		uint32_t add(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 		{
-			BX_CHECK(m_num+1 < BGFX_CONFIG_MAX_RECT_CACHE, "Rect cache overflow. %d (max: %d)", m_num, BGFX_CONFIG_MAX_RECT_CACHE);
+			const uint32_t first = bx::atomicFetchAndAddsat<uint32_t>(&m_num, 1, BGFX_CONFIG_MAX_RECT_CACHE-1);
+			BX_CHECK(first+1 < BGFX_CONFIG_MAX_RECT_CACHE, "Rect cache overflow. %d (max: %d)", first, BGFX_CONFIG_MAX_RECT_CACHE);
 
-			uint32_t first = m_num;
-			Rect& rect = m_cache[m_num];
+			Rect& rect = m_cache[first];
 
 			rect.m_x = _x;
 			rect.m_y = _y;
 			rect.m_width = _width;
 			rect.m_height = _height;
 
-			m_num++;
 			return first;
 		}
 
@@ -1460,6 +1455,7 @@ namespace bgfx
 			m_instanceDataBuffer.idx = kInvalidHandle;
 			m_indirectBuffer.idx     = kInvalidHandle;
 			m_occlusionQuery.idx     = kInvalidHandle;
+			m_uniformIdx = UINT8_MAX;
 		}
 
 		bool setStreamBit(uint8_t _stream, VertexBufferHandle _handle)
@@ -1490,6 +1486,7 @@ namespace bgfx
 		uint16_t m_scissor;
 		uint8_t  m_submitFlags;
 		uint8_t  m_streamMask;
+		uint8_t  m_uniformIdx;
 
 		IndexBufferHandle    m_indexBuffer;
 		VertexBufferHandle   m_instanceDataBuffer;
@@ -1509,6 +1506,7 @@ namespace bgfx
 			m_numZ         = 0;
 			m_numMatrices  = 0;
 			m_submitFlags  = BGFX_SUBMIT_EYE_FIRST;
+			m_uniformIdx = UINT8_MAX;
 
 			m_indirectBuffer.idx = kInvalidHandle;
 			m_startIndirect      = 0;
@@ -1527,6 +1525,7 @@ namespace bgfx
 		uint16_t m_numIndirect;
 		uint16_t m_numMatrices;
 		uint8_t  m_submitFlags;
+		uint8_t  m_uniformIdx;
 	};
 
 	union RenderItem
@@ -1697,8 +1696,7 @@ namespace bgfx
 	BX_ALIGN_DECL_CACHE_LINE(struct) Frame
 	{
 		Frame()
-			: m_uniformMax(0)
-			, m_waitSubmit(0)
+			: m_waitSubmit(0)
 			, m_waitRender(0)
 			, m_hmdInitialized(false)
 			, m_capture(false)
@@ -1717,7 +1715,11 @@ namespace bgfx
 
 		void create()
 		{
-			m_uniformBuffer = UniformBuffer::create();
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_uniformBuffer); ++ii)
+			{
+				m_uniformBuffer[ii] = UniformBuffer::create();
+			}
+
 			reset();
 			start();
 			m_textVideoMem = BX_NEW(g_allocator, TextVideoMem);
@@ -1725,7 +1727,10 @@ namespace bgfx
 
 		void destroy()
 		{
-			UniformBuffer::destroy(m_uniformBuffer);
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_uniformBuffer); ++ii)
+			{
+				UniformBuffer::destroy(m_uniformBuffer[ii]);
+			}
 			BX_DELETE(g_allocator, m_textVideoMem);
 		}
 
@@ -1738,17 +1743,13 @@ namespace bgfx
 
 		void start()
 		{
-			m_uniformBegin = 0;
-			m_uniformEnd   = 0;
 			m_frameCache.reset();
 			m_numRenderItems = 0;
-			m_numDropped     = 0;
 			m_numBlitItems   = 0;
 			m_iboffset = 0;
 			m_vboffset = 0;
 			m_cmdPre.start();
 			m_cmdPost.start();
-			m_uniformBuffer->reset();
 			m_capture = false;
 		}
 
@@ -1757,17 +1758,14 @@ namespace bgfx
 			m_cmdPre.finish();
 			m_cmdPost.finish();
 
-			m_uniformMax = bx::uint32_max(m_uniformMax, m_uniformBuffer->getPos() );
-			m_uniformBuffer->finish();
-
-			if (0 < m_numDropped)
-			{
-				BX_TRACE("Too many draw calls: %d, dropped %d (max: %d)"
-					, m_numRenderItems+m_numDropped
-					, m_numDropped
-					, BGFX_CONFIG_MAX_DRAW_CALLS
-					);
-			}
+//			if (0 < m_numDropped)
+//			{
+//				BX_TRACE("Too many draw calls: %d, dropped %d (max: %d)"
+//					, m_numRenderItems+m_numDropped
+//					, m_numDropped
+//					, BGFX_CONFIG_MAX_DRAW_CALLS
+//					);
+//			}
 		}
 
 		void sort();
@@ -1876,15 +1874,11 @@ namespace bgfx
 
 		uint32_t m_blitKeys[BGFX_CONFIG_MAX_BLIT_ITEMS+1];
 		BlitItem m_blitItem[BGFX_CONFIG_MAX_BLIT_ITEMS+1];
-		uint32_t m_uniformBegin;
-		uint32_t m_uniformEnd;
-		uint32_t m_uniformMax;
 
 		FrameCache m_frameCache;
-		UniformBuffer* m_uniformBuffer;
+		UniformBuffer* m_uniformBuffer[BGFX_CONFIG_MAX_ENCODERS];
 
 		uint32_t m_numRenderItems;
-		uint32_t m_numDropped;
 		uint16_t m_numBlitItems;
 
 		uint32_t m_iboffset;
@@ -1981,13 +1975,25 @@ namespace bgfx
 			discard();
 		}
 
-		void begin(Frame* _frame)
+		void begin(Frame* _frame, uint8_t _idx)
 		{
 			m_frame = _frame;
+
+			m_uniformIdx = _idx;
+			m_uniformBegin = 0;
+			m_uniformEnd   = 0;
+
+			m_uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
+			m_uniformBuffer->reset();
+
+			m_numSubmitted = 0;
+			m_numDropped   = 0;
 		}
 
 		void end()
 		{
+			m_uniformBuffer->finish();
+
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_OCCLUSION) )
 			{
 				m_occlusionQuerySet.clear();
@@ -2001,7 +2007,7 @@ namespace bgfx
 
 		void setMarker(const char* _name)
 		{
-			m_frame->m_uniformBuffer->writeMarker(_name);
+			m_uniformBuffer->writeMarker(_name);
 		}
 
 		void setUniform(UniformType::Enum _type, UniformHandle _handle, const void* _value, uint16_t _num)
@@ -2016,8 +2022,8 @@ namespace bgfx
 				m_uniformSet.insert(_handle.idx);
 			}
 
-			UniformBuffer::update(m_frame->m_uniformBuffer);
-			m_frame->m_uniformBuffer->writeUniform(_type, _handle.idx, _value, _num);
+			UniformBuffer::update(m_uniformBuffer);
+			m_uniformBuffer->writeUniform(_type, _handle.idx, _value, _num);
 		}
 
 		void setState(uint64_t _state, uint32_t _rgba)
@@ -2261,13 +2267,21 @@ namespace bgfx
 		RenderCompute m_compute;
 		RenderBind    m_bind;
 
+		uint32_t m_numSubmitted;
+		uint32_t m_numDropped;
+
+		uint32_t m_uniformBegin;
+		uint32_t m_uniformEnd;
 		uint64_t m_stateFlags;
 		uint32_t m_numVertices[BGFX_CONFIG_MAX_VERTEX_STREAMS];
+		uint8_t  m_uniformIdx;
 		bool     m_discard;
 
 		typedef stl::unordered_set<uint16_t> HandleSet;
 		HandleSet m_uniformSet;
 		HandleSet m_occlusionQuerySet;
+
+		UniformBuffer* m_uniformBuffer;
 	};
 
 	struct VertexDeclRef
@@ -4345,9 +4359,9 @@ namespace bgfx
 			}
 		}
 
-		void encoderApiWait()
+		BX_NO_INLINE void encoderApiWait()
 		{
-			for (uint32_t ii = 1; ii < m_numEncoders; ++ii)
+			for (uint32_t ii = 1, num = m_numEncoders; ii < num; ++ii)
 			{
 				m_encoderApiSem.wait();
 			}

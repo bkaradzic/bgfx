@@ -887,7 +887,7 @@ namespace bgfx
 		&&  0 == m_draw.m_numIndices)
 		{
 			discard();
-			++m_frame->m_numDropped;
+			++m_numDropped;
 			return;
 		}
 
@@ -895,11 +895,13 @@ namespace bgfx
 		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= renderItemIdx)
 		{
 			discard();
-			++m_frame->m_numDropped;
+			++m_numDropped;
 			return;
 		}
 
-		m_frame->m_uniformEnd = m_frame->m_uniformBuffer->getPos();
+		++m_numSubmitted;
+
+		m_uniformEnd = m_uniformBuffer->getPos();
 
 		m_key.m_program = kInvalidHandle == _program.idx
 			? 0
@@ -922,8 +924,9 @@ namespace bgfx
 		m_frame->m_sortKeys[renderItemIdx]   = key;
 		m_frame->m_sortValues[renderItemIdx] = RenderItemCount(renderItemIdx);
 
-		m_draw.m_uniformBegin = m_frame->m_uniformBegin;
-		m_draw.m_uniformEnd   = m_frame->m_uniformEnd;
+		m_draw.m_uniformIdx   = m_uniformIdx;
+		m_draw.m_uniformBegin = m_uniformBegin;
+		m_draw.m_uniformEnd   = m_uniformEnd;
 		m_draw.m_stateFlags  |= m_stateFlags;
 
 		uint32_t numVertices = UINT32_MAX;
@@ -953,7 +956,7 @@ namespace bgfx
 		{
 			m_draw.clear();
 			m_bind.clear();
-			m_frame->m_uniformBegin = m_frame->m_uniformEnd;
+			m_uniformBegin = m_uniformEnd;
 			m_stateFlags = BGFX_STATE_NONE;
 		}
 	}
@@ -975,11 +978,13 @@ namespace bgfx
 		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= renderItemIdx)
 		{
 			discard();
-			++m_frame->m_numDropped;
+			++m_numDropped;
 			return;
 		}
 
-		m_frame->m_uniformEnd = m_frame->m_uniformBuffer->getPos();
+		++m_numSubmitted;
+
+		m_uniformEnd = m_uniformBuffer->getPos();
 
 		m_compute.m_startMatrix = m_draw.m_startMatrix;
 		m_compute.m_numMatrices = m_draw.m_numMatrices;
@@ -997,14 +1002,15 @@ namespace bgfx
 		m_frame->m_sortKeys[renderItemIdx]   = key;
 		m_frame->m_sortValues[renderItemIdx] = RenderItemCount(renderItemIdx);
 
-		m_compute.m_uniformBegin = m_frame->m_uniformBegin;
-		m_compute.m_uniformEnd   = m_frame->m_uniformEnd;
+		m_compute.m_uniformIdx   = m_uniformIdx;
+		m_compute.m_uniformBegin = m_uniformBegin;
+		m_compute.m_uniformEnd   = m_uniformEnd;
 		m_frame->m_renderItem[renderItemIdx].compute = m_compute;
 		m_frame->m_renderItemBind[renderItemIdx]     = m_bind;
 
 		m_compute.clear();
 		m_bind.clear();
-		m_frame->m_uniformBegin = m_frame->m_uniformEnd;
+		m_uniformBegin = m_uniformEnd;
 	}
 
 	void EncoderImpl::blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
@@ -1437,7 +1443,7 @@ namespace bgfx
 
 		frameNoRenderWait();
 
-		m_encoder[0].begin(m_submit);
+		m_encoder[0].begin(m_submit, 0);
 		m_encoder0 = reinterpret_cast<Encoder*>(&m_encoder[0]);
 
 		// Make sure renderer init is called from render thread.
@@ -1691,9 +1697,9 @@ namespace bgfx
 				return NULL;
 			}
 
-			uint32_t idx = m_numEncoders++;
+			uint8_t idx = uint8_t(m_numEncoders++);
 			encoder = &m_encoder[idx];
-			encoder->begin(m_frame);
+			encoder->begin(m_submit, idx);
 		}
 #endif // BGFX_CONFIG_MULTITHREADED
 
@@ -1716,8 +1722,9 @@ namespace bgfx
 	uint32_t Context::frame(bool _capture)
 	{
 		bx::MutexScope resourceApiScope(m_resourceApiLock);
-		bx::MutexScope encoderApiScope(m_encoderApiLock);
+
 		encoderApiWait();
+		bx::MutexScope encoderApiScope(m_encoderApiLock);
 
 		m_encoder[0].end();
 		m_submit->m_capture = _capture;
@@ -1727,7 +1734,7 @@ namespace bgfx
 		renderSemWait();
 		frameNoRenderWait();
 
-		m_encoder[0].begin(m_submit);
+		m_encoder[0].begin(m_submit, 0);
 
 		return m_frames;
 	}
