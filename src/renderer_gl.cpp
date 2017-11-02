@@ -6900,10 +6900,12 @@ namespace bgfx { namespace gl
 					continue;
 				}
 
+				const uint64_t oldFlags = currentState.m_stateFlags;
 				const uint64_t newFlags = draw.m_stateFlags;
 				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
 				currentState.m_stateFlags = newFlags;
 
+				const uint64_t oldStencil = currentState.m_stencil;
 				const uint64_t newStencil = draw.m_stencil;
 				uint64_t changedStencil = currentState.m_stencil ^ draw.m_stencil;
 				currentState.m_stencil = newStencil;
@@ -6947,6 +6949,8 @@ namespace bgfx { namespace gl
 						scissorRect.setIntersect(viewScissorRect, _render->m_frameCache.m_rectCache.m_cache[scissor]);
 						if (scissorRect.isZeroArea() )
 						{
+							currentState.m_stateFlags = oldFlags;
+							currentState.m_stencil = oldStencil;
 							continue;
 						}
 
