@@ -36,9 +36,13 @@ function overridefiles(_srcPath, _dstPath, _files)
 end
 
 function bgfxProject(_name, _kind, _defines)
-
 	project ("bgfx" .. _name)
 		uuid (os.uuid("bgfx" .. _name))
+		bgfxProjectBase(_kind, _defines)
+		copyLib()
+end
+
+function bgfxProjectBase(_kind, _defines)
 		kind (_kind)
 
 		if _kind == "SharedLib" then
@@ -223,6 +227,4 @@ function bgfxProject(_name, _kind, _defines)
 		end
 
 		configuration {}
-
-		copyLib()
 end
