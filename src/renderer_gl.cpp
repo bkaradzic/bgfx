@@ -6947,7 +6947,7 @@ namespace bgfx { namespace gl
 						scissorRect.setIntersect(viewScissorRect, _render->m_frameCache.m_rectCache.m_cache[scissor]);
 						if (scissorRect.isZeroArea() )
 						{
-							continue;
+							//continue;
 						}
 
 						GL_CHECK(glEnable(GL_SCISSOR_TEST) );
