@@ -1721,12 +1721,13 @@ namespace bgfx
 
 	uint32_t Context::frame(bool _capture)
 	{
+		m_encoder[0].end();
+
 		bx::MutexScope resourceApiScope(m_resourceApiLock);
 
 		encoderApiWait();
 		bx::MutexScope encoderApiScope(m_encoderApiLock);
 
-		m_encoder[0].end();
 		m_submit->m_capture = _capture;
 
 		BGFX_PROFILER_SCOPE("bgfx/API thread frame", 0xff2040ff);

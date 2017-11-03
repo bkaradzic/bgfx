@@ -1412,7 +1412,7 @@ namespace bgfx
 		VertexDeclHandle   m_decl;
 	};
 
-	struct RenderBind
+	BX_ALIGN_DECL_CACHE_LINE(struct) RenderBind
 	{
 		void clear()
 		{
@@ -1428,7 +1428,7 @@ namespace bgfx
 		Binding m_bind[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 	};
 
-	struct RenderDraw
+	BX_ALIGN_DECL_CACHE_LINE(struct) RenderDraw
 	{
 		void clear()
 		{
@@ -1494,7 +1494,7 @@ namespace bgfx
 		OcclusionQueryHandle m_occlusionQuery;
 	};
 
-	struct RenderCompute
+	BX_ALIGN_DECL_CACHE_LINE(struct) RenderCompute
 	{
 		void clear()
 		{
@@ -1534,7 +1534,7 @@ namespace bgfx
 		RenderCompute compute;
 	};
 
-	struct BlitItem
+	BX_ALIGN_DECL_CACHE_LINE(struct) BlitItem
 	{
 		uint16_t m_srcX;
 		uint16_t m_srcY;
@@ -1707,6 +1707,8 @@ namespace bgfx
 			m_sortKeys[BGFX_CONFIG_MAX_DRAW_CALLS]   = term.encodeDraw(SortKey::SortProgram);
 			m_sortValues[BGFX_CONFIG_MAX_DRAW_CALLS] = BGFX_CONFIG_MAX_DRAW_CALLS;
 			bx::memSet(m_occlusion, 0xff, sizeof(m_occlusion) );
+
+			m_perfStats.viewStats = m_viewStats;
 		}
 
 		~Frame()
@@ -1959,7 +1961,9 @@ namespace bgfx
 
 		TextVideoMem* m_textVideoMem;
 		HMD m_hmd;
-		Stats m_perfStats;
+
+		Stats     m_perfStats;
+		ViewStats m_viewStats[BGFX_CONFIG_MAX_VIEWS];
 
 		int64_t m_waitSubmit;
 		int64_t m_waitRender;
@@ -1979,6 +1983,8 @@ namespace bgfx
 		{
 			m_frame = _frame;
 
+			m_cpuTimeBegin = bx::getHPCounter();
+
 			m_uniformIdx = _idx;
 			m_uniformBegin = 0;
 			m_uniformEnd   = 0;
@@ -1993,6 +1999,8 @@ namespace bgfx
 		void end()
 		{
 			m_uniformBuffer->finish();
+
+			m_cpuTimeEnd = bx::getHPCounter();
 
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_OCCLUSION) )
 			{
@@ -2282,6 +2290,9 @@ namespace bgfx
 		HandleSet m_occlusionQuerySet;
 
 		UniformBuffer* m_uniformBuffer;
+
+		int64_t m_cpuTimeBegin;
+		int64_t m_cpuTimeEnd;
 	};
 
 	struct VertexDeclRef
@@ -2703,6 +2714,7 @@ namespace bgfx
 			const TextVideoMem* tvm = m_submit->m_textVideoMem;
 			stats.textWidth  = tvm->m_width;
 			stats.textHeight = tvm->m_height;
+			stats.encoderStats = m_encoderStats;
 			return &stats;
 		}
 
@@ -4384,11 +4396,18 @@ namespace bgfx
 
 		BX_NO_INLINE void encoderApiWait()
 		{
-			for (uint32_t ii = 1, num = m_numEncoders; ii < num; ++ii)
+			for (uint32_t ii = 0, num = m_numEncoders; ii < num; ++ii)
 			{
-				m_encoderApiSem.wait();
+				if (0 != ii)
+				{
+					m_encoderApiSem.wait();
+				}
+
+				m_encoderStats[ii].cpuTimeBegin = m_encoder[ii].m_cpuTimeBegin;
+				m_encoderStats[ii].cpuTimeEnd   = m_encoder[ii].m_cpuTimeEnd;
 			}
 
+			m_submit->m_perfStats.numEncoders = uint8_t(m_numEncoders);
 			m_numEncoders = 1;
 		}
 
@@ -4422,11 +4441,12 @@ namespace bgfx
 		}
 #endif // BGFX_CONFIG_MULTITHREADED
 
+		EncoderStats  m_encoderStats[BGFX_CONFIG_MAX_ENCODERS];
 		Encoder*      m_encoder0;
 		EncoderImpl   m_encoder[BGFX_CONFIG_MAX_ENCODERS];
 		uint32_t      m_numEncoders;
 
-		Frame m_frame[1+(BGFX_CONFIG_MULTITHREADED ? 1 : 0)];
+		Frame  m_frame[1+(BGFX_CONFIG_MULTITHREADED ? 1 : 0)];
 		Frame* m_render;
 		Frame* m_submit;
 

@@ -197,7 +197,45 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 
 				const float itemHeight = ImGui::GetTextLineHeightWithSpacing();
 
-				if (ImGui::ListBoxHeader("##empty", ImVec2(ImGui::GetWindowWidth(), stats->numViews*itemHeight) ) )
+				if (ImGui::ListBoxHeader("Encoders", ImVec2(ImGui::GetWindowWidth(), stats->numEncoders*itemHeight) ) )
+				{
+					ImGuiListClipper clipper(stats->numEncoders, itemHeight);
+					const double toCpuMs = 1000.0/double(stats->cpuTimerFreq);
+					const double toGpuMs = 1000.0/double(stats->gpuTimerFreq);
+					const float  scale   = 3.0f;
+
+					while (clipper.Step() )
+					{
+						for (int32_t pos = clipper.DisplayStart; pos < clipper.DisplayEnd; ++pos)
+						{
+							const bgfx::EncoderStats& encoderStats = stats->encoderStats[pos];
+
+							ImGui::Text("%3d", pos);
+							ImGui::SameLine(64.0f);
+
+							ImGui::PushStyleColor(ImGuiCol_Button,        cpuColor);
+							ImGui::PushStyleColor(ImGuiCol_ButtonHovered, cpuColor);
+							ImGui::PushStyleColor(ImGuiCol_ButtonActive,  cpuColor);
+
+							const float maxWidth = 30.0f*scale;
+							const float cpuMs    = float( (encoderStats.cpuTimeEnd-encoderStats.cpuTimeBegin)*toCpuMs);
+							const float cpuWidth = bx::fclamp(cpuMs*scale, 1.0f, maxWidth);
+
+							ImGui::Button("", ImVec2(cpuWidth, itemHeight) );
+							if (ImGui::IsItemHovered() )
+							{
+								ImGui::SetTooltip("CPU: %f [ms]", cpuMs);
+							}
+							ImGui::PopStyleColor(3);
+						}
+					}
+
+					ImGui::ListBoxFooter();
+				}
+
+				ImGui::Separator();
+
+				if (ImGui::ListBoxHeader("Views", ImVec2(ImGui::GetWindowWidth(), stats->numViews*itemHeight) ) )
 				{
 					ImGuiListClipper clipper(stats->numViews, itemHeight);
 
