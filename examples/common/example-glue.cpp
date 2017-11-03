@@ -196,13 +196,13 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 				ImVec4 gpuColor(0.5f, 0.5f, 1.0f, 1.0f);
 
 				const float itemHeight = ImGui::GetTextLineHeightWithSpacing();
+				const double toCpuMs = 1000.0/double(stats->cpuTimerFreq);
+				const double toGpuMs = 1000.0/double(stats->gpuTimerFreq);
+				const float  scale   = 3.0f;
 
 				if (ImGui::ListBoxHeader("Encoders", ImVec2(ImGui::GetWindowWidth(), stats->numEncoders*itemHeight) ) )
 				{
 					ImGuiListClipper clipper(stats->numEncoders, itemHeight);
-					const double toCpuMs = 1000.0/double(stats->cpuTimerFreq);
-					const double toGpuMs = 1000.0/double(stats->gpuTimerFreq);
-					const float  scale   = 3.0f;
 
 					while (clipper.Step() )
 					{
@@ -238,10 +238,6 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 				if (ImGui::ListBoxHeader("Views", ImVec2(ImGui::GetWindowWidth(), stats->numViews*itemHeight) ) )
 				{
 					ImGuiListClipper clipper(stats->numViews, itemHeight);
-
-					const double toCpuMs = 1000.0/double(stats->cpuTimerFreq);
-					const double toGpuMs = 1000.0/double(stats->gpuTimerFreq);
-					const float  scale   = 3.0f;
 
 					while (clipper.Step() )
 					{
