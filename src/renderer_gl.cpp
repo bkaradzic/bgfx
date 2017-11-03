@@ -6902,11 +6902,9 @@ namespace bgfx { namespace gl
 
 				const uint64_t newFlags = draw.m_stateFlags;
 				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
-				currentState.m_stateFlags = newFlags;
 
 				const uint64_t newStencil = draw.m_stencil;
 				uint64_t changedStencil = currentState.m_stencil ^ draw.m_stencil;
-				currentState.m_stencil = newStencil;
 
 				if (resetState)
 				{
@@ -6914,8 +6912,6 @@ namespace bgfx { namespace gl
 					currentState.m_scissor = !draw.m_scissor;
 					changedFlags = BGFX_STATE_MASK;
 					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
-					currentState.m_stateFlags = newFlags;
-					currentState.m_stencil    = newStencil;
 
 					currentBind.clear();
 				}
@@ -6947,7 +6943,7 @@ namespace bgfx { namespace gl
 						scissorRect.setIntersect(viewScissorRect, _render->m_frameCache.m_rectCache.m_cache[scissor]);
 						if (scissorRect.isZeroArea() )
 						{
-							//continue;
+							continue;
 						}
 
 						GL_CHECK(glEnable(GL_SCISSOR_TEST) );
@@ -6958,6 +6954,9 @@ namespace bgfx { namespace gl
 							) );
 					}
 				}
+
+				currentState.m_stateFlags = newFlags;
+				currentState.m_stencil    = newStencil;
 
 				if (0 != changedStencil)
 				{
