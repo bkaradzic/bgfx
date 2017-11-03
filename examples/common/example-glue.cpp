@@ -224,7 +224,10 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 							ImGui::Button("", ImVec2(cpuWidth, itemHeight) );
 							if (ImGui::IsItemHovered() )
 							{
-								ImGui::SetTooltip("CPU: %f [ms]", cpuMs);
+								ImGui::SetTooltip("Encoder %d, CPU: %f [ms]"
+									, pos
+									, cpuMs
+									);
 							}
 							ImGui::PopStyleColor(3);
 						}
@@ -259,7 +262,11 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 							ImGui::Button("", ImVec2(cpuWidth, itemHeight) );
 							if (ImGui::IsItemHovered() )
 							{
-								ImGui::SetTooltip("CPU: %f [ms]", viewStats.cpuTimeElapsed*toCpuMs);
+								ImGui::SetTooltip("View %d \"%s\", CPU: %f [ms]"
+									, pos
+									, viewStats.name
+									, viewStats.cpuTimeElapsed*toCpuMs
+									);
 							}
 							ImGui::PopStyleColor(3);
 							ImGui::SameLine();
@@ -273,7 +280,11 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 							ImGui::Button("", ImVec2(gpuWidth, itemHeight) );
 							if (ImGui::IsItemHovered() )
 							{
-								ImGui::SetTooltip("GPU: %f [ms]", viewStats.gpuTimeElapsed*toGpuMs);
+								ImGui::SetTooltip("View: %d \"%s\", GPU: %f [ms]"
+									, pos
+									, viewStats.name
+									, viewStats.gpuTimeElapsed*toGpuMs
+									);
 							}
 							ImGui::PopStyleColor(3);
 						}
