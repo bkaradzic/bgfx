@@ -219,6 +219,7 @@ struct View
 		, m_orientation(0.0f)
 		, m_flipH(0.0f)
 		, m_flipV(0.0f)
+		, m_transitionTime(1.0f)
 		, m_filter(true)
 		, m_fit(true)
 		, m_alpha(false)
@@ -494,6 +495,19 @@ struct View
 					m_orientation = 0.0f;
 				}
 			}
+			else if (0 == bx::strCmp(_argv[1], "transition") )
+			{
+				if (_argc >= 3)
+				{
+					float time;
+					bx::fromString(&time, _argv[3]);
+					m_transitionTime = bx::fclamp(time, 0.0f, 5.0f);
+				}
+				else
+				{
+					m_transitionTime = 1.0f;
+				}
+			}
 			else if (0 == bx::strCmp(_argv[1], "filter") )
 			{
 				if (_argc >= 3)
@@ -691,6 +705,7 @@ struct View
 	float    m_orientation;
 	float    m_flipH;
 	float    m_flipV;
+	float    m_transitionTime;
 	bool     m_filter;
 	bool     m_fit;
 	bool     m_alpha;
@@ -1314,6 +1329,12 @@ int _main_(int _argc, char** _argv)
 						cmdExec("view filter");
 					}
 
+					bool animate = 0.0f < view.m_transitionTime;
+					if (ImGui::MenuItem("Animate", NULL, &animate) )
+					{
+						cmdExec("view transition %f", animate ? 1.0f : 0.0f);
+					}
+
 					if (ImGui::BeginMenu("Cubemap", view.m_textureInfo.cubeMap) )
 					{
 						if (ImGui::MenuItem("Quad", NULL, Geometry::Quad == view.m_cubeMapGeo) )
@@ -1637,7 +1658,7 @@ int _main_(int _argc, char** _argv)
 
 			time += (float)(frameTime*speed/freq);
 
-			float transitionTime = dragging ? 0.0f : 0.25f;
+			float transitionTime = dragging ? 0.0f : 0.25f*view.m_transitionTime;
 
 			posx.set(view.m_posx, transitionTime);
 			posy.set(view.m_posy, transitionTime);
@@ -1710,12 +1731,12 @@ int _main_(int _argc, char** _argv)
 
 				scale.set(bx::fmin(float(width)  / result[0]
 					,              float(height) / result[1])
-					, 0.1f
+					, 0.1f*view.m_transitionTime
 					);
 			}
 			else
 			{
-				scale.set(1.0f, 0.1f);
+				scale.set(1.0f, 0.1f*view.m_transitionTime);
 			}
 
 			zoom.set(view.m_zoom, transitionTime);
