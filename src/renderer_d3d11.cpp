@@ -1791,6 +1791,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				m_textures[ii].destroy();
 			}
 
+			DX_RELEASE(m_annotation, 1);
 			DX_RELEASE(m_swapChain, 0);
 			DX_RELEASE(m_deviceCtx, 0);
 			DX_RELEASE(m_device, 0);
