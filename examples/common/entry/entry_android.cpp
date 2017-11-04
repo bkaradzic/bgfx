@@ -88,7 +88,7 @@ namespace entry
 		int m_argc;
 		const char* const* m_argv;
 
-		static int32_t threadFunc(void* _userData);
+		static int32_t threadFunc(bx::Thread* _thread, void* _userData);
 	};
 
 	class FileReaderAndroid : public bx::FileReaderI
@@ -550,8 +550,10 @@ namespace entry
 		BX_UNUSED(_handle, _lock);
 	}
 
-	int32_t MainThreadEntry::threadFunc(void* _userData)
+	int32_t MainThreadEntry::threadFunc(bx::Thread* _thread, void* _userData)
 	{
+		BX_UNUSED(_thread);
+
 		int32_t result = chdir("/sdcard/bgfx/examples/runtime");
 		BX_CHECK(0 == result, "Failed to chdir to dir. android.permission.WRITE_EXTERNAL_STORAGE?", errno);
 

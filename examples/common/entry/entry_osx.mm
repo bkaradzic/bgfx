@@ -66,19 +66,22 @@ namespace entry
 		int m_argc;
 		const char* const* m_argv;
 
-		static int32_t threadFunc(void* _userData)
+		static int32_t threadFunc(bx::Thread* _thread, void* _userData);
 		{
+			BX_UNUSED(_thread);
+
 			CFBundleRef mainBundle = CFBundleGetMainBundle();
-			if ( mainBundle != nil )
+			if (mainBundle != nil)
 			{
 				CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL(mainBundle);
-				if ( resourcesURL != nil )
+				if (resourcesURL != nil)
 				{
 					char path[PATH_MAX];
-					if (CFURLGetFileSystemRepresentation(resourcesURL, TRUE, (UInt8 *)path, PATH_MAX) )
+					if (CFURLGetFileSystemRepresentation(resourcesURL, TRUE, (UInt8*)path, PATH_MAX) )
 					{
 						chdir(path);
 					}
+
 					CFRelease(resourcesURL);
 				}
 			}
