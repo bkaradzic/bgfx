@@ -2562,7 +2562,7 @@ namespace bgfx
 		{
 		}
 
-		static int32_t renderThread(void* /*_userData*/)
+		static int32_t renderThread(bx::Thread* /*_self*/, void* /*_userData*/)
 		{
 			BX_TRACE("render thread start");
 			BGFX_PROFILER_SET_CURRENT_THREAD_NAME("bgfx - Render Thread");

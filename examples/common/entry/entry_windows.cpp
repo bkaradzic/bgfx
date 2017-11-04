@@ -313,7 +313,7 @@ namespace entry
 		int m_argc;
 		const char* const* m_argv;
 
-		static int32_t threadFunc(void* _userData);
+		static int32_t threadFunc(bx::Thread* _thread, void* _userData);
 	};
 
 	struct Msg
@@ -1096,7 +1096,7 @@ namespace entry
 		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_MOUSE_LOCK, _handle.idx, _lock);
 	}
 
-	int32_t MainThreadEntry::threadFunc(void* _userData)
+	int32_t MainThreadEntry::threadFunc(bx::Thread* /*_thread*/, void* _userData)
 	{
 		MainThreadEntry* self = (MainThreadEntry*)_userData;
 		int32_t result = main(self->m_argc, self->m_argv);
