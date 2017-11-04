@@ -223,7 +223,7 @@ namespace entry
 		int32_t m_argc;
 		const char* const* m_argv;
 
-		static int32_t threadFunc(void* _userData);
+		static int32_t threadFunc(bx::Thread* _thread, void* _userData);
 	};
 
 	struct Msg
@@ -679,8 +679,10 @@ namespace entry
 
 	static Context s_ctx;
 
-	int32_t MainThreadEntry::threadFunc(void* _userData)
+	int32_t MainThreadEntry::threadFunc(bx::Thread* _thread, void* _userData)
 	{
+		BX_UNUSED(_thread);
+
 		MainThreadEntry* self = (MainThreadEntry*)_userData;
 		int32_t result = main(self->m_argc, self->m_argv);
 		s_ctx.m_exit = true;
