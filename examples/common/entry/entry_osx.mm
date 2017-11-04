@@ -66,7 +66,7 @@ namespace entry
 		int m_argc;
 		const char* const* m_argv;
 
-		static int32_t threadFunc(bx::Thread* _thread, void* _userData);
+		static int32_t threadFunc(bx::Thread* _thread, void* _userData)
 		{
 			BX_UNUSED(_thread);
 
