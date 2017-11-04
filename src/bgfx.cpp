@@ -3416,6 +3416,8 @@ error:
 
 	bool allocTransientBuffers(bgfx::TransientVertexBuffer* _tvb, const bgfx::VertexDecl& _decl, uint32_t _numVertices, bgfx::TransientIndexBuffer* _tib, uint32_t _numIndices)
 	{
+		BGFX_MUTEX_SCOPE(s_ctx->m_resourceApiLock);
+
 		if (_numVertices == getAvailTransientVertexBuffer(_numVertices, _decl)
 		&&  _numIndices  == getAvailTransientIndexBuffer(_numIndices) )
 		{
