@@ -4440,6 +4440,9 @@ namespace bgfx
 
 		void encoderApiWait()
 		{
+			m_encoderStats[0].cpuTimeBegin = m_encoder[0].m_cpuTimeBegin;
+			m_encoderStats[0].cpuTimeEnd   = m_encoder[0].m_cpuTimeEnd;
+			m_submit->m_perfStats.numEncoders = 1;
 		}
 #endif // BGFX_CONFIG_MULTITHREADED
 

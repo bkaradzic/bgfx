@@ -1714,6 +1714,8 @@ namespace bgfx
 
 			m_encoderApiSem.post();
 		}
+#else
+		BX_UNUSED(_encoder);
 #endif // BGFX_CONFIG_MULTITHREADED
 	}
 
@@ -1721,10 +1723,14 @@ namespace bgfx
 	{
 		m_encoder[0].end();
 
+#if BGFX_CONFIG_MULTITHREADED
 		bx::MutexScope resourceApiScope(m_resourceApiLock);
 
 		encoderApiWait();
 		bx::MutexScope encoderApiScope(m_encoderApiLock);
+#else
+		encoderApiWait();
+#endif // BGFX_CONFIG_MULTITHREADED
 
 		m_submit->m_capture = _capture;
 

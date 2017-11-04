@@ -10,6 +10,38 @@
 #include <bx/timer.h>
 #include <bx/math.h>
 
+static bool bar(float _width, float _maxWidth, float _height, const ImVec4& _color)
+{
+	const ImGuiStyle& style = ImGui::GetStyle();
+
+	ImVec4 hoveredColor(
+		  _color.x + _color.x*0.1f
+		, _color.y + _color.y*0.1f
+		, _color.z + _color.z*0.1f
+		, _color.w + _color.w*0.1f
+		);
+
+	ImGui::PushStyleColor(ImGuiCol_Button,        _color);
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoveredColor);
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive,  _color);
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, style.ItemSpacing.y) );
+
+	bool itemHovered = false;
+
+	ImGui::Button("", ImVec2(_width, _height) );
+	itemHovered |= ImGui::IsItemHovered();
+
+	ImGui::SameLine();
+	ImGui::InvisibleButton("", ImVec2(_maxWidth-_width, _height) );
+	itemHovered |= ImGui::IsItemHovered();
+
+	ImGui::PopStyleVar(2);
+	ImGui::PopStyleColor(3);
+
+	return itemHovered;
+}
+
 void showExampleDialog(entry::AppI* _app, const char* _errorText)
 {
 	char temp[1024];
@@ -196,11 +228,12 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 				ImVec4 gpuColor(0.5f, 0.5f, 1.0f, 1.0f);
 
 				const float itemHeight = ImGui::GetTextLineHeightWithSpacing();
+				const float itemHeightWithSpacing = ImGui::GetItemsLineHeightWithSpacing();
 				const double toCpuMs = 1000.0/double(stats->cpuTimerFreq);
 				const double toGpuMs = 1000.0/double(stats->gpuTimerFreq);
 				const float  scale   = 3.0f;
 
-				if (ImGui::ListBoxHeader("Encoders", ImVec2(ImGui::GetWindowWidth(), stats->numEncoders*itemHeight) ) )
+				if (ImGui::ListBoxHeader("Encoders", ImVec2(ImGui::GetWindowWidth(), stats->numEncoders*itemHeightWithSpacing) ) )
 				{
 					ImGuiListClipper clipper(stats->numEncoders, itemHeight);
 
@@ -213,23 +246,17 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 							ImGui::Text("%3d", pos);
 							ImGui::SameLine(64.0f);
 
-							ImGui::PushStyleColor(ImGuiCol_Button,        cpuColor);
-							ImGui::PushStyleColor(ImGuiCol_ButtonHovered, cpuColor);
-							ImGui::PushStyleColor(ImGuiCol_ButtonActive,  cpuColor);
-
 							const float maxWidth = 30.0f*scale;
 							const float cpuMs    = float( (encoderStats.cpuTimeEnd-encoderStats.cpuTimeBegin)*toCpuMs);
 							const float cpuWidth = bx::fclamp(cpuMs*scale, 1.0f, maxWidth);
 
-							ImGui::Button("", ImVec2(cpuWidth, itemHeight) );
-							if (ImGui::IsItemHovered() )
+							if (bar(cpuWidth, maxWidth, itemHeight, cpuColor) )
 							{
 								ImGui::SetTooltip("Encoder %d, CPU: %f [ms]"
 									, pos
 									, cpuMs
 									);
 							}
-							ImGui::PopStyleColor(3);
 						}
 					}
 
@@ -238,7 +265,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 
 				ImGui::Separator();
 
-				if (ImGui::ListBoxHeader("Views", ImVec2(ImGui::GetWindowWidth(), stats->numViews*itemHeight) ) )
+				if (ImGui::ListBoxHeader("Views", ImVec2(ImGui::GetWindowWidth(), stats->numViews*itemHeightWithSpacing) ) )
 				{
 					ImGuiListClipper clipper(stats->numViews, itemHeight);
 
@@ -249,18 +276,14 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 							const bgfx::ViewStats& viewStats = stats->viewStats[pos];
 
 							ImGui::Text("%3d %3d %s", pos, viewStats.view, viewStats.name);
-							ImGui::SameLine(64.0f);
-
-							ImGui::PushStyleColor(ImGuiCol_Button,        cpuColor);
-							ImGui::PushStyleColor(ImGuiCol_ButtonHovered, cpuColor);
-							ImGui::PushStyleColor(ImGuiCol_ButtonActive,  cpuColor);
 
 							const float maxWidth = 30.0f*scale;
 							const float cpuWidth = bx::fclamp(float(viewStats.cpuTimeElapsed*toCpuMs)*scale, 1.0f, maxWidth);
 							const float gpuWidth = bx::fclamp(float(viewStats.gpuTimeElapsed*toGpuMs)*scale, 1.0f, maxWidth);
 
-							ImGui::Button("", ImVec2(cpuWidth, itemHeight) );
-							if (ImGui::IsItemHovered() )
+							ImGui::SameLine(64.0f);
+
+							if (bar(cpuWidth, maxWidth, itemHeight, cpuColor) )
 							{
 								ImGui::SetTooltip("View %d \"%s\", CPU: %f [ms]"
 									, pos
@@ -268,17 +291,9 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 									, viewStats.cpuTimeElapsed*toCpuMs
 									);
 							}
-							ImGui::PopStyleColor(3);
-							ImGui::SameLine();
 
-							ImGui::InvisibleButton("", ImVec2(maxWidth-cpuWidth, itemHeight) );
 							ImGui::SameLine();
-
-							ImGui::PushStyleColor(ImGuiCol_Button,        gpuColor);
-							ImGui::PushStyleColor(ImGuiCol_ButtonHovered, gpuColor);
-							ImGui::PushStyleColor(ImGuiCol_ButtonActive,  gpuColor);
-							ImGui::Button("", ImVec2(gpuWidth, itemHeight) );
-							if (ImGui::IsItemHovered() )
+							if (bar(gpuWidth, maxWidth, itemHeight, gpuColor) )
 							{
 								ImGui::SetTooltip("View: %d \"%s\", GPU: %f [ms]"
 									, pos
@@ -286,7 +301,6 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 									, viewStats.gpuTimeElapsed*toGpuMs
 									);
 							}
-							ImGui::PopStyleColor(3);
 						}
 					}
 
