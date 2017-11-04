@@ -7,6 +7,8 @@
 #include "bgfx_utils.h"
 
 #include <bx/uint32_t.h>
+#include <bx/thread.h>
+#include <bx/os.h>
 #include "imgui/imgui.h"
 
 #include <bgfx/embedded_shader.h>
@@ -75,6 +77,16 @@ static const uint16_t s_cubeIndices[36] =
 	6, 3, 7,
 };
 
+static const float s_mod[6][3] =
+{
+	{ 1.0f, 1.0f, 1.0f },
+	{ 1.0f, 0.0f, 0.0f },
+	{ 0.0f, 1.0f, 0.0f },
+	{ 0.0f, 0.0f, 1.0f },
+	{ 1.0f, 1.0f, 0.0f },
+	{ 0.0f, 1.0f, 1.0f },
+};
+
 #if BX_PLATFORM_EMSCRIPTEN
 static const int64_t highwm = 1000000/35;
 static const int64_t lowwm  = 1000000/27;
@@ -82,6 +94,8 @@ static const int64_t lowwm  = 1000000/27;
 static const int64_t highwm = 1000000/65;
 static const int64_t lowwm  = 1000000/57;
 #endif // BX_PLATFORM_EMSCRIPTEN
+
+int32_t threadFunc(bx::Thread* _thread, void* _userData);
 
 class ExampleDrawStress : public entry::AppI
 {
@@ -152,10 +166,23 @@ public:
 
 		// Imgui.
 		imguiCreate();
+
+		m_numThreads = (BX_COUNTOF(m_thread)+1)/2;
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_thread); ++ii)
+		{
+			m_thread[ii].init(threadFunc, this);
+		}
 	}
 
 	int shutdown() override
 	{
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_thread); ++ii)
+		{
+			m_thread[ii].push(reinterpret_cast<void*>(UINTPTR_MAX) );
+			m_thread[ii].shutdown();
+		}
+
 		// Cleanup.
 		imguiDestroy();
 		bgfx::destroy(m_ibh);
@@ -166,6 +193,93 @@ public:
 		bgfx::shutdown();
 
 		return 0;
+	}
+
+	int32_t thread(bx::Thread* _thread)
+	{
+		for (;;)
+		{
+			union
+			{
+				void* ptr;
+				uintptr_t id;
+
+			} cast;
+
+			cast.ptr = _thread->pop();
+			if (UINTPTR_MAX == cast.id)
+			{
+				break;
+			}
+
+			const uint32_t numThreads = uint32_t(cast.id);
+			const uint32_t idx = uint32_t(_thread - m_thread);
+			const uint32_t num = uint32_t(m_dim)/numThreads;
+			const uint32_t rem = idx == numThreads-1 ? uint32_t(m_dim)%numThreads : 0;
+			const uint32_t xx  = idx*num;
+			submit(idx+1, xx, num + rem);
+		}
+
+		return bx::kExitSuccess;
+	}
+
+	void submit(uint32_t _tid, uint32_t _xstart, uint32_t _num)
+	{
+		bgfx::Encoder* encoder = bgfx::begin();
+		if (0 != _tid)
+		{
+			m_sync.post();
+		}
+
+		if (NULL != encoder)
+		{
+			const int64_t now = bx::getHPCounter();
+			const double freq = double(bx::getHPFrequency() );
+			float time = (float)( (now-m_timeOffset)/freq);
+
+			const float* mod = s_mod[_tid%BX_COUNTOF(s_mod)];
+
+			float mtxS[16];
+			const float scale = 0 == m_transform ? 0.25f : 0.0f;
+			bx::mtxScale(mtxS, scale, scale, scale);
+
+			const float step = 0.6f;
+			float pos[3];
+			pos[0] = -step*m_dim / 2.0f;
+			pos[1] = -step*m_dim / 2.0f;
+			pos[2] = -15.0;
+
+			for (uint32_t zz = 0; zz < uint32_t(m_dim); ++zz)
+			{
+				for (uint32_t yy = 0; yy < uint32_t(m_dim); ++yy)
+				{
+					for (uint32_t xx = _xstart, xend = _xstart+_num; xx < xend; ++xx)
+					{
+						float mtxR[16];
+						bx::mtxRotateXYZ(mtxR
+							, (time + xx*0.21f)*mod[0]
+							, (time + yy*0.37f)*mod[1]
+							, (time + zz*0.13f)*mod[2]
+							);
+
+						float mtx[16];
+						bx::mtxMul(mtx, mtxS, mtxR);
+
+						mtx[12] = pos[0] + float(xx)*step;
+						mtx[13] = pos[1] + float(yy)*step;
+						mtx[14] = pos[2] + float(zz)*step;
+
+						encoder->setTransform(mtx);
+						encoder->setVertexBuffer(0, m_vbh);
+						encoder->setIndexBuffer(m_ibh);
+						encoder->setState(BGFX_STATE_DEFAULT);
+						encoder->submit(0, m_program);
+					}
+				}
+			}
+
+			bgfx::end(encoder);
+		}
 	}
 
 	bool update() override
@@ -206,8 +320,6 @@ public:
 				++m_numFrames;
 			}
 
-			float time = (float)( (now-m_timeOffset)/freq);
-
 			imguiBeginFrame(m_mouseState.m_mx
 				,  m_mouseState.m_my
 				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
@@ -233,6 +345,9 @@ public:
 			ImGui::Separator();
 
 			ImGui::Checkbox("Auto adjust", &m_autoAdjust);
+
+			ImGui::SliderInt("Num threads", &m_numThreads, 1, BX_COUNTOF(m_thread) );
+			const uint32_t numThreads = m_numThreads;
 
 			ImGui::SliderInt("Dim", &m_dim, 5, m_maxDim);
 			ImGui::Text("Draw calls: %d", m_dim*m_dim*m_dim);
@@ -269,51 +384,22 @@ public:
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
 
-			float mtxS[16];
-			const float scale = 0 == m_transform ? 0.25f : 0.0f;
-			bx::mtxScale(mtxS, scale, scale, scale);
-
-			const float step = 0.6f;
-			float pos[3];
-			pos[0] = -step*m_dim / 2.0f;
-			pos[1] = -step*m_dim / 2.0f;
-			pos[2] = -15.0;
-
-			bgfx::Encoder* encoder = bgfx::begin();
-
-			for (uint32_t zz = 0; zz < uint32_t(m_dim); ++zz)
+			if (1 < numThreads)
 			{
-				for (uint32_t yy = 0; yy < uint32_t(m_dim); ++yy)
+				for (uint32_t ii = 0; ii < numThreads; ++ii)
 				{
-					for (uint32_t xx = 0; xx < uint32_t(m_dim); ++xx)
-					{
-						float mtxR[16];
-						bx::mtxRotateXYZ(mtxR, time + xx*0.21f, time + yy*0.37f, time + yy*0.13f);
+					m_thread[ii].push(reinterpret_cast<void*>(uintptr_t(numThreads) ) );
+				}
 
-						float mtx[16];
-						bx::mtxMul(mtx, mtxS, mtxR);
-
-						mtx[12] = pos[0] + float(xx)*step;
-						mtx[13] = pos[1] + float(yy)*step;
-						mtx[14] = pos[2] + float(zz)*step;
-
-						// Set model matrix for rendering.
-						encoder->setTransform(mtx);
-
-						// Set vertex and index buffer.
-						encoder->setVertexBuffer(0, m_vbh);
-						encoder->setIndexBuffer(m_ibh);
-
-						// Set render states.
-						encoder->setState(BGFX_STATE_DEFAULT);
-
-						// Submit primitive for rendering to view 0.
-						encoder->submit(0, m_program);
-					}
+				for (uint32_t ii = 0; ii < numThreads; ++ii)
+				{
+					m_sync.wait();
 				}
 			}
-
-			bgfx::end(encoder);
+			else
+			{
+				submit(0, 0, uint32_t(m_dim) );
+			}
 
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
@@ -337,6 +423,7 @@ public:
 	int32_t  m_dim;
 	int32_t  m_maxDim;
 	int32_t  m_transform;
+	int32_t  m_numThreads;
 
 	int64_t  m_timeOffset;
 
@@ -344,10 +431,19 @@ public:
 	int64_t  m_deltaTimeAvgNs;
 	int64_t  m_numFrames;
 
+	bx::Thread m_thread[5];
+	bx::Semaphore m_sync;
+
 	bgfx::ProgramHandle m_program;
 	bgfx::VertexBufferHandle m_vbh;
 	bgfx::IndexBufferHandle  m_ibh;
 };
+
+int32_t threadFunc(bx::Thread* _thread, void* _userData)
+{
+	ExampleDrawStress* self = static_cast<ExampleDrawStress*>(_userData);
+	return self->thread(_thread);
+}
 
 } // namespace
 
