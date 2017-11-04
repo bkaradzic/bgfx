@@ -1207,14 +1207,17 @@ namespace bgfx
 			BX_FREE(g_allocator, _uniformBuffer);
 		}
 
-		static void update(UniformBuffer*& _uniformBuffer, uint32_t _treshold = 64<<10, uint32_t _grow = 1<<20)
+		static void update(UniformBuffer** _uniformBuffer, uint32_t _treshold = 64<<10, uint32_t _grow = 1<<20)
 		{
-			if (_treshold >= _uniformBuffer->m_size - _uniformBuffer->m_pos)
+			UniformBuffer* uniformBuffer = *_uniformBuffer;
+			if (_treshold >= uniformBuffer->m_size - uniformBuffer->m_pos)
 			{
-				uint32_t size = BX_ALIGN_16(bx::uint32_max(_uniformBuffer->m_size + _grow, sizeof(UniformBuffer) ) );
-				void*    data = BX_REALLOC(g_allocator, _uniformBuffer, size);
-				_uniformBuffer = reinterpret_cast<UniformBuffer*>(data);
-				_uniformBuffer->m_size = size;
+				uint32_t size = BX_ALIGN_16(bx::uint32_max(uniformBuffer->m_size + _grow, sizeof(UniformBuffer) ) );
+				void*    data = BX_REALLOC(g_allocator, uniformBuffer, size);
+				uniformBuffer = reinterpret_cast<UniformBuffer*>(data);
+				uniformBuffer->m_size = size;
+
+				*_uniformBuffer = uniformBuffer;
 			}
 		}
 
@@ -1989,8 +1992,8 @@ namespace bgfx
 			m_uniformBegin = 0;
 			m_uniformEnd   = 0;
 
-			m_uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
-			m_uniformBuffer->reset();
+			UniformBuffer* uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
+			uniformBuffer->reset();
 
 			m_numSubmitted = 0;
 			m_numDropped   = 0;
@@ -1998,7 +2001,8 @@ namespace bgfx
 
 		void end()
 		{
-			m_uniformBuffer->finish();
+			UniformBuffer* uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
+			uniformBuffer->finish();
 
 			m_cpuTimeEnd = bx::getHPCounter();
 
@@ -2015,7 +2019,8 @@ namespace bgfx
 
 		void setMarker(const char* _name)
 		{
-			m_uniformBuffer->writeMarker(_name);
+			UniformBuffer* uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
+			uniformBuffer->writeMarker(_name);
 		}
 
 		void setUniform(UniformType::Enum _type, UniformHandle _handle, const void* _value, uint16_t _num)
@@ -2030,8 +2035,9 @@ namespace bgfx
 				m_uniformSet.insert(_handle.idx);
 			}
 
-			UniformBuffer::update(m_uniformBuffer);
-			m_uniformBuffer->writeUniform(_type, _handle.idx, _value, _num);
+			UniformBuffer::update(&m_frame->m_uniformBuffer[m_uniformIdx]);
+			UniformBuffer* uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
+			uniformBuffer->writeUniform(_type, _handle.idx, _value, _num);
 		}
 
 		void setState(uint64_t _state, uint32_t _rgba)
@@ -2241,7 +2247,6 @@ namespace bgfx
 			m_draw.clear();
 			m_compute.clear();
 			m_bind.clear();
-			m_stateFlags = BGFX_STATE_NONE;
 		}
 
 		void submit(uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth, bool _preserveState);
@@ -2280,7 +2285,6 @@ namespace bgfx
 
 		uint32_t m_uniformBegin;
 		uint32_t m_uniformEnd;
-		uint64_t m_stateFlags;
 		uint32_t m_numVertices[BGFX_CONFIG_MAX_VERTEX_STREAMS];
 		uint8_t  m_uniformIdx;
 		bool     m_discard;
@@ -2288,8 +2292,6 @@ namespace bgfx
 		typedef stl::unordered_set<uint16_t> HandleSet;
 		HandleSet m_uniformSet;
 		HandleSet m_occlusionQuerySet;
-
-		UniformBuffer* m_uniformBuffer;
 
 		int64_t m_cpuTimeBegin;
 		int64_t m_cpuTimeEnd;

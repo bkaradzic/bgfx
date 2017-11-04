@@ -901,7 +901,8 @@ namespace bgfx
 
 		++m_numSubmitted;
 
-		m_uniformEnd = m_uniformBuffer->getPos();
+		UniformBuffer* uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
+		m_uniformEnd = uniformBuffer->getPos();
 
 		m_key.m_program = kInvalidHandle == _program.idx
 			? 0
@@ -927,7 +928,6 @@ namespace bgfx
 		m_draw.m_uniformIdx   = m_uniformIdx;
 		m_draw.m_uniformBegin = m_uniformBegin;
 		m_draw.m_uniformEnd   = m_uniformEnd;
-		m_draw.m_stateFlags  |= m_stateFlags;
 
 		uint32_t numVertices = UINT32_MAX;
 		for (uint32_t idx = 0, streamMask = m_draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
@@ -943,8 +943,6 @@ namespace bgfx
 
 		if (isValid(_occlusionQuery) )
 		{
-			BX_CHECK(!isValid(m_draw.m_occlusionQuery), "");
-
 			m_draw.m_stateFlags |= BGFX_STATE_INTERNAL_OCCLUSION_QUERY;
 			m_draw.m_occlusionQuery = _occlusionQuery;
 		}
@@ -957,7 +955,6 @@ namespace bgfx
 			m_draw.clear();
 			m_bind.clear();
 			m_uniformBegin = m_uniformEnd;
-			m_stateFlags = BGFX_STATE_NONE;
 		}
 	}
 
@@ -984,7 +981,8 @@ namespace bgfx
 
 		++m_numSubmitted;
 
-		m_uniformEnd = m_uniformBuffer->getPos();
+		UniformBuffer* uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
+		m_uniformEnd = uniformBuffer->getPos();
 
 		m_compute.m_startMatrix = m_draw.m_startMatrix;
 		m_compute.m_numMatrices = m_draw.m_numMatrices;
