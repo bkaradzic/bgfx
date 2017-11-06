@@ -42,6 +42,7 @@
 
 #include <algorithm>
 #include <set>
+#include <array>
 
 class TInfoSink;
 
@@ -221,12 +222,6 @@ public:
         layoutOverrideCoverage(false),
         geoPassthroughEXT(false),
 #endif
-        shiftSamplerBinding(0),
-        shiftTextureBinding(0),
-        shiftImageBinding(0),
-        shiftUboBinding(0),
-        shiftSsboBinding(0),
-        shiftUavBinding(0),
         autoMapBindings(false),
         autoMapLocations(false),
         flattenUniformArrays(false),
@@ -244,6 +239,8 @@ public:
         localSizeSpecId[1] = TQualifier::layoutNotSet;
         localSizeSpecId[2] = TQualifier::layoutNotSet;
         xfbBuffers.resize(TQualifier::layoutXfbBufferEnd);
+
+        shiftBinding.fill(0);
     }
     void setLimits(const TBuiltInResource& r) { resources = r; }
 
@@ -263,42 +260,39 @@ public:
     const std::string& getEntryPointName() const { return entryPointName; }
     const std::string& getEntryPointMangledName() const { return entryPointMangledName; }
 
-    void setShiftSamplerBinding(unsigned int shift)
+    void setShiftBinding(TResourceType res, unsigned int shift)
     {
-        shiftSamplerBinding = shift;
-        processes.addIfNonZero("shift-sampler-binding", shift);
+        shiftBinding[res] = shift;
+
+        const char* name = getResourceName(res);
+        if (name != nullptr)
+            processes.addIfNonZero(name, shift);
     }
-    unsigned int getShiftSamplerBinding() const { return shiftSamplerBinding; }
-    void setShiftTextureBinding(unsigned int shift)
+
+    unsigned int getShiftBinding(TResourceType res) const { return shiftBinding[res]; }
+
+    void setShiftBindingForSet(TResourceType res, unsigned int set, unsigned int shift)
     {
-        shiftTextureBinding = shift;
-        processes.addIfNonZero("shift-texture-binding", shift);
+        if (shift == 0) // ignore if there's no shift: it's a no-op.
+            return;
+
+        shiftBindingForSet[res][set] = shift;
+
+        const char* name = getResourceName(res);
+        if (name != nullptr) {
+            processes.addProcess(name);
+            processes.addArgument(set);
+            processes.addArgument(shift);
+        }
     }
-    unsigned int getShiftTextureBinding() const { return shiftTextureBinding; }
-    void setShiftImageBinding(unsigned int shift)
+
+    int getShiftBindingForSet(TResourceType res, unsigned int set) const
     {
-        shiftImageBinding = shift;
-        processes.addIfNonZero("shift-image-binding", shift);
+        const auto shift = shiftBindingForSet[res].find(set);
+        return shift == shiftBindingForSet[res].end() ? -1 : shift->second;
     }
-    unsigned int getShiftImageBinding() const { return shiftImageBinding; }
-    void setShiftUboBinding(unsigned int shift)
-    {
-        shiftUboBinding = shift;
-        processes.addIfNonZero("shift-UBO-binding", shift);
-    }
-    unsigned int getShiftUboBinding() const { return shiftUboBinding; }
-    void setShiftSsboBinding(unsigned int shift)
-    {
-        shiftSsboBinding = shift;
-        processes.addIfNonZero("shift-ssbo-binding", shift);
-    }
-    unsigned int getShiftSsboBinding() const { return shiftSsboBinding; }
-    void setShiftUavBinding(unsigned int shift)
-    {
-        shiftUavBinding = shift;
-        processes.addIfNonZero("shift-uav-binding", shift);
-    }
-    unsigned int getShiftUavBinding() const { return shiftUavBinding; }
+    bool hasShiftBindingForSet(TResourceType res) const { return !shiftBindingForSet[res].empty(); }
+
     void setResourceSetBinding(const std::vector<std::string>& shift)
     {
         resourceSetBinding = shift;
@@ -638,6 +632,7 @@ protected:
     void pushSelector(TIntermSequence&, const TMatrixSelector&, const TSourceLoc&);
     bool specConstantPropagates(const TIntermTyped&, const TIntermTyped&);
     void performTextureUpgradeAndSamplerRemovalTransformation(TIntermNode* root);
+    static const char* getResourceName(TResourceType);
 
     const EShLanguage language;  // stage, known at construction time
     EShSource source;            // source language, known a bit later
@@ -678,12 +673,12 @@ protected:
     bool geoPassthroughEXT;
 #endif
 
-    unsigned int shiftSamplerBinding;
-    unsigned int shiftTextureBinding;
-    unsigned int shiftImageBinding;
-    unsigned int shiftUboBinding;
-    unsigned int shiftSsboBinding;
-    unsigned int shiftUavBinding;
+    // Base shift values
+    std::array<unsigned int, EResCount> shiftBinding;
+
+    // Per-descriptor-set shift values
+    std::array<std::map<int, int>, EResCount>  shiftBindingForSet;
+
     std::vector<std::string> resourceSetBinding;
     bool autoMapBindings;
     bool autoMapLocations;

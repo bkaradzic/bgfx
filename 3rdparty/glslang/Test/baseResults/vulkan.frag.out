@@ -39,7 +39,11 @@ ERROR: 0:93: ',' : sampler constructor must appear at point of use
 ERROR: 0:94: ':' :  wrong operand types: no operation ':' exists that takes a left-hand operand of type ' temp sampler2D' and a right operand of type ' temp sampler2D' (or there is no acceptable conversion)
 ERROR: 0:94: 'call argument' : sampler constructor must appear at point of use 
 ERROR: 0:96: 'gl_NumSamples' : undeclared identifier 
-ERROR: 38 compilation errors.  No code generated.
+ERROR: 0:101: 'noise1' : no matching overloaded function found 
+ERROR: 0:102: 'noise2' : no matching overloaded function found 
+ERROR: 0:103: 'noise3' : no matching overloaded function found 
+ERROR: 0:104: 'noise4' : no matching overloaded function found 
+ERROR: 42 compilation errors.  No code generated.
 
 
 ERROR: Linking fragment stage: Only one push_constant block is allowed per stage

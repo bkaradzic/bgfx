@@ -264,6 +264,15 @@ struct TArraySizes {
 
         return false;
     }
+    bool clearInnerImplicit()
+    {
+        for (int d = 1; d < sizes.size(); ++d) {
+            if (sizes.getDimSize(d) == (unsigned)UnsizedArraySize)
+                setDimSize(d, 1);
+        }
+
+        return false;
+    }
     bool isInnerSpecialization() const
     {
         for (int d = 1; d < sizes.size(); ++d) {

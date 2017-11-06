@@ -11,7 +11,9 @@ ERROR: 0:50: '' : hexadecimal literal too big
 ERROR: 0:88: '' : float literal needs a decimal point or exponent 
 ERROR: 0:98: '' : numeric literal too big 
 ERROR: 0:101: '' : numeric literal too big 
-ERROR: 12 compilation errors.  No code generated.
+ERROR: 0:104: '#' : preprocessor directive cannot be preceded by another token 
+ERROR: 0:104: '' :  syntax error, unexpected $end, expecting COMMA or SEMICOLON
+ERROR: 14 compilation errors.  No code generated.
 
 
 Shader version: 400
@@ -417,6 +419,7 @@ ERROR: node is still EOpNull!
 0:?     'g4' ( global int)
 0:?     'g5' ( global int)
 0:?     'g6' ( global int)
+0:?     'inf1' ( global float)
 
 
 Linked fragment stage:
@@ -825,4 +828,5 @@ ERROR: node is still EOpNull!
 0:?     'g4' ( global int)
 0:?     'g5' ( global int)
 0:?     'g6' ( global int)
+0:?     'inf1' ( global float)
 

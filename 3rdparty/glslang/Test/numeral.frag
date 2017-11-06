@@ -101,3 +101,6 @@ uint g3 = 4294967294u;
 int g4 = 4294967296;   // ERROR, too big
 int g5 = 4294967295;
 int g6 = 4294967294;
+float inf1 = -1.#INF;
+float inf2 =  1.#INF;
+float inf3 = +1.#INF;

@@ -55,6 +55,7 @@
 #include <cctype>
 #include <cmath>
 #include <array>
+#include <map>
 #include <memory>
 #include <thread>
 
@@ -157,12 +158,11 @@ int OpenGLClientVersion = 450;           // doesn't influence anything yet, but 
 unsigned int TargetVersion = 0x00001000; // maps to, say, SPIR-V 1.0
 std::vector<std::string> Processes;      // what should be recorded by OpModuleProcessed, or equivalent
 
-std::array<unsigned int, EShLangCount> baseSamplerBinding;
-std::array<unsigned int, EShLangCount> baseTextureBinding;
-std::array<unsigned int, EShLangCount> baseImageBinding;
-std::array<unsigned int, EShLangCount> baseUboBinding;
-std::array<unsigned int, EShLangCount> baseSsboBinding;
-std::array<unsigned int, EShLangCount> baseUavBinding;
+// Per descriptor-set binding base data
+typedef std::map<unsigned int, unsigned int> TPerSetBaseBinding;
+
+std::array<std::array<unsigned int, EShLangCount>, glslang::EResCount> baseBinding;
+std::array<std::array<TPerSetBaseBinding, EShLangCount>, glslang::EResCount> baseBindingForSet;
 std::array<std::vector<std::string>, EShLangCount> baseResourceSetBinding;
 
 // Add things like "#define ..." to a preamble to use in the beginning of the shader.
@@ -261,36 +261,59 @@ bool SetConfigFile(const std::string& name)
 //
 void Error(const char* message)
 {
-    printf("%s: Error %s (use -h for usage)\n", ExecutableName, message);
+    fprintf(stderr, "%s: Error %s (use -h for usage)\n", ExecutableName, message);
     exit(EFailUsage);
 }
 
 //
-// Process an optional binding base of the form:
-//   --argname [stage] base
+// Process an optional binding base of one the forms:
+//   --argname [stage] base            // base for stage (if given) or all stages (if not)
+//   --argname [stage] [set base]...   // set/base pairs: set the base for given binding set.
+
 // Where stage is one of the forms accepted by FindLanguage, and base is an integer
 //
-void ProcessBindingBase(int& argc, char**& argv, std::array<unsigned int, EShLangCount>& base)
+void ProcessBindingBase(int& argc, char**& argv, glslang::TResourceType res)
 {
     if (argc < 2)
         usage();
 
-    if (!isdigit(argv[1][0])) {
+    EShLanguage lang = EShLangCount;
+    int singleBase = 0;
+    TPerSetBaseBinding perSetBase;
+    int arg = 1;
+
+    // Parse stage, if given
+    if (!isdigit(argv[arg][0])) {
         if (argc < 3) // this form needs one more argument
             usage();
 
-        // Parse form: --argname stage base
-        const EShLanguage lang = FindLanguage(argv[1], false);
-        base[lang] = atoi(argv[2]);
-        argc-= 2;
-        argv+= 2;
-    } else {
-        // Parse form: --argname base
-        for (int lang=0; lang<EShLangCount; ++lang)
-            base[lang] = atoi(argv[1]);
+        lang = FindLanguage(argv[arg++], false);
+    }
 
-        argc--;
-        argv++;
+    if ((argc - arg) > 2 && isdigit(argv[arg+0][0]) && isdigit(argv[arg+1][0])) {
+        // Parse a per-set binding base
+        while ((argc - arg) > 2 && isdigit(argv[arg+0][0]) && isdigit(argv[arg+1][0])) {
+            const int setNum = atoi(argv[arg++]);
+            const int baseNum = atoi(argv[arg++]);
+            perSetBase[setNum] = baseNum;
+        }
+    } else {
+        // Parse single binding base
+        singleBase = atoi(argv[arg++]);
+    }
+
+    argc -= (arg-1);
+    argv += (arg-1);
+
+    // Set one or all languages
+    const int langMin = (lang < EShLangCount) ? lang+0 : 0;
+    const int langMax = (lang < EShLangCount) ? lang+1 : EShLangCount;
+
+    for (int lang = langMin; lang < langMax; ++lang) {
+        if (!perSetBase.empty())
+            baseBindingForSet[res][lang] = perSetBase;
+        else
+            baseBinding[res][lang] = singleBase;
     }
 }
 
@@ -339,12 +362,8 @@ void ProcessResourceSetBindingBase(int& argc, char**& argv, std::array<std::vect
 //
 void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItems, int argc, char* argv[])
 {
-    baseSamplerBinding.fill(0);
-    baseTextureBinding.fill(0);
-    baseImageBinding.fill(0);
-    baseUboBinding.fill(0);
-    baseSsboBinding.fill(0);
-    baseUavBinding.fill(0);
+    for (int res = 0; res < glslang::EResCount; ++res)
+        baseBinding[res].fill(0);
 
     ExecutableName = argv[0];
     workItems.reserve(argc);
@@ -441,30 +460,30 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                     } else if (lowerword == "shift-image-bindings" ||  // synonyms
                                lowerword == "shift-image-binding"  ||
                                lowerword == "sib") {
-                        ProcessBindingBase(argc, argv, baseImageBinding);
+                        ProcessBindingBase(argc, argv, glslang::EResImage);
                     } else if (lowerword == "shift-sampler-bindings" || // synonyms
                         lowerword == "shift-sampler-binding"  ||
                         lowerword == "ssb") {
-                        ProcessBindingBase(argc, argv, baseSamplerBinding);
+                        ProcessBindingBase(argc, argv, glslang::EResSampler);
                     } else if (lowerword == "shift-uav-bindings" ||  // synonyms
                                lowerword == "shift-uav-binding"  ||
                                lowerword == "suavb") {
-                        ProcessBindingBase(argc, argv, baseUavBinding);
+                        ProcessBindingBase(argc, argv, glslang::EResUav);
                     } else if (lowerword == "shift-texture-bindings" ||  // synonyms
                                lowerword == "shift-texture-binding"  ||
                                lowerword == "stb") {
-                        ProcessBindingBase(argc, argv, baseTextureBinding);
+                        ProcessBindingBase(argc, argv, glslang::EResTexture);
                     } else if (lowerword == "shift-ubo-bindings" ||  // synonyms
                                lowerword == "shift-ubo-binding"  ||
                                lowerword == "shift-cbuffer-bindings" ||
                                lowerword == "shift-cbuffer-binding"  ||
                                lowerword == "sub" ||
                                lowerword == "scb") {
-                        ProcessBindingBase(argc, argv, baseUboBinding);
+                        ProcessBindingBase(argc, argv, glslang::EResUbo);
                     } else if (lowerword == "shift-ssbo-bindings" ||  // synonyms
                                lowerword == "shift-ssbo-binding"  ||
                                lowerword == "sbb") {
-                        ProcessBindingBase(argc, argv, baseSsboBinding);
+                        ProcessBindingBase(argc, argv, glslang::EResSsbo);
                     } else if (lowerword == "source-entrypoint" || // synonyms
                                lowerword == "sep") {
                         if (argc <= 1)
@@ -791,12 +810,20 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
             shader->setPreamble(UserPreamble.get());
         shader->addProcesses(Processes);
 
-        shader->setShiftSamplerBinding(baseSamplerBinding[compUnit.stage]);
-        shader->setShiftTextureBinding(baseTextureBinding[compUnit.stage]);
-        shader->setShiftImageBinding(baseImageBinding[compUnit.stage]);
-        shader->setShiftUboBinding(baseUboBinding[compUnit.stage]);
-        shader->setShiftSsboBinding(baseSsboBinding[compUnit.stage]);
-        shader->setShiftUavBinding(baseUavBinding[compUnit.stage]);
+        // Set IO mapper binding shift values
+        for (int r = 0; r < glslang::EResCount; ++r) {
+            const glslang::TResourceType res = glslang::TResourceType(r);
+
+            // Set base bindings
+            shader->setShiftBinding(res, baseBinding[res][compUnit.stage]);
+            
+            // Set bindings for particular resource sets
+            // TODO: use a range based for loop here, when available in all environments.
+            for (auto i = baseBindingForSet[res][compUnit.stage].begin();
+                 i != baseBindingForSet[res][compUnit.stage].end(); ++i)
+                shader->setShiftBindingForSet(res, i->first, i->second);
+        }
+
         shader->setFlattenUniformArrays((Options & EOptionFlattenUniformArrays) != 0);
         shader->setNoStorageFormat((Options & EOptionNoStorageFormat) != 0);
         shader->setResourceSetBinding(baseResourceSetBinding[compUnit.stage]);
@@ -1022,6 +1049,7 @@ int C_DECL main(int argc, char* argv[])
         printf("SPIR-V Version %s\n", spirvVersion.c_str());
         printf("GLSL.std.450 Version %d, Revision %d\n", GLSLstd450Version, GLSLstd450Revision);
         printf("Khronos Tool ID %d\n", glslang::GetKhronosToolId());
+        printf("SPIR-V Generator Version %d\n", glslang::GetSpirvGeneratorVersion());
         printf("GL_KHR_vulkan_glsl version %d\n", 100);
         printf("ARB_GL_gl_spirv version %d\n", 100);
         if (workList.empty())
@@ -1062,7 +1090,7 @@ int C_DECL main(int argc, char* argv[])
                 threads[t] = std::thread(CompileShaders, std::ref(workList));
                 if (threads[t].get_id() == std::thread::id())
                 {
-                    printf("Failed to create thread\n");
+                    fprintf(stderr, "Failed to create thread\n");
                     return EFailThreadCreate;
                 }
             }
@@ -1274,17 +1302,24 @@ void usage()
            "              Set descriptor set for all resources\n"
            "  --rsb [stage] type set binding       synonym for --resource-set-binding\n"
            "  --shift-image-binding [stage] num    base binding number for images (uav)\n"
+           "  --shift-image-binding [stage] [set num]... per-descriptor-set shift values\n"
            "  --sib [stage] num                    synonym for --shift-image-binding\n"
            "  --shift-sampler-binding [stage] num  base binding number for samplers\n"
+           "  --shift-sampler-binding [stage] [set num]... per-descriptor-set shift values\n"
            "  --ssb [stage] num                    synonym for --shift-sampler-binding\n"
            "  --shift-ssbo-binding [stage] num     base binding number for SSBOs\n"
+           "  --shift-ssbo-binding [stage] [set num]... per-descriptor-set shift values\n"
            "  --sbb [stage] num                    synonym for --shift-ssbo-binding\n"
            "  --shift-texture-binding [stage] num  base binding number for textures\n"
+           "  --shift-texture-binding [stage] [set num]... per-descriptor-set shift values\n"
            "  --stb [stage] num                    synonym for --shift-texture-binding\n"
            "  --shift-uav-binding [stage] num      base binding number for UAVs\n"
+           "  --shift-uav-binding [stage] [set num]... per-descriptor-set shift values\n"
            "  --suavb [stage] num                  synonym for --shift-uav-binding\n"
            "  --shift-UBO-binding [stage] num      base binding number for UBOs\n"
+           "  --shift-UBO-binding [stage] [set num]... per-descriptor-set shift values\n"
            "  --shift-cbuffer-binding [stage] num  synonym for --shift-UBO-binding\n"
+           "  --shift-cbuffer-binding [stage] [set num]... per-descriptor-set shift values\n"
            "  --sub [stage] num                    synonym for --shift-UBO-binding\n"
            "  --source-entrypoint <name>           the given shader source function is\n"
            "                                       renamed to be the <name> given in -e\n"

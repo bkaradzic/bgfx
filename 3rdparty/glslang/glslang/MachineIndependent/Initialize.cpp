@@ -1,7 +1,7 @@
 //
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2012-2016 LunarG, Inc.
-// Copyright (C) 2015-2016 Google, Inc.
+// Copyright (C) 2015-2017 Google, Inc.
 //
 // All rights reserved.
 //
@@ -1384,7 +1384,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     //
     // Noise functions.
     //
-    if (profile != EEsProfile) {
+    if (spvVersion.spv == 0 && profile != EEsProfile) {
         commonBuiltins.append(
             "float noise1(float x);"
             "float noise1(vec2  x);"

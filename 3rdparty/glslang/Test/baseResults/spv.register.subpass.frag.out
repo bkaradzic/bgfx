@@ -4,7 +4,6 @@ spv.register.subpass.frag
 // Id's are bound by 40
 
                               Capability Shader
-                              Capability StorageImageMultisample
                               Capability InputAttachment
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450

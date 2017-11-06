@@ -95,3 +95,11 @@ void callUserTexture()
 
     gl_NumSamples;   // ERROR, not for Vulkan
 }
+
+void noise()
+{
+    noise1(dv4);
+    noise2(4.0);
+    noise3(vec2(3));
+    noise4(dv4);
+}

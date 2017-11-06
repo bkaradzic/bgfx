@@ -78,11 +78,6 @@ using namespace spvtools;
 
 namespace {
 
-// For low-order part of the generator's magic number. Bump up
-// when there is a change in the style (e.g., if SSA form changes,
-// or a different instruction sequence to do something gets used).
-const int GeneratorVersion = 2;
-
 namespace {
 class SpecConstantOpModeGuard {
 public:
@@ -885,7 +880,7 @@ TGlslangToSpvTraverser::TGlslangToSpvTraverser(const glslang::TIntermediate* gls
       options(options),
       shaderEntry(nullptr), currentFunction(nullptr),
       sequenceDepth(0), logger(buildLogger),
-      builder((glslang::GetKhronosToolId() << 16) | GeneratorVersion, logger),
+      builder((glslang::GetKhronosToolId() << 16) | glslang::GetSpirvGeneratorVersion(), logger),
       inEntryPoint(false), entryPointTerminated(false), linkageOnly(false),
       glslangIntermediate(glslangIntermediate)
 {
@@ -5959,6 +5954,14 @@ void GetSpirvVersion(std::string& version)
     version = buf;
 }
 
+// For low-order part of the generator's magic number. Bump up
+// when there is a change in the style (e.g., if SSA form changes,
+// or a different instruction sequence to do something gets used).
+int GetSpirvGeneratorVersion()
+{
+    return 2;
+}
+
 // Write SPIR-V out to a binary file
 void OutputSpvBin(const std::vector<unsigned int>& spirv, const char* baseName)
 {
@@ -6061,6 +6064,7 @@ void GlslangToSpv(const glslang::TIntermediate& intermediate, std::vector<unsign
         optimizer.RegisterPass(CreateInsertExtractElimPass());
         optimizer.RegisterPass(CreateAggressiveDCEPass());
         optimizer.RegisterPass(CreateDeadBranchElimPass());
+        optimizer.RegisterPass(CreateCFGCleanupPass());
         optimizer.RegisterPass(CreateBlockMergePass());
         optimizer.RegisterPass(CreateLocalMultiStoreElimPass());
         optimizer.RegisterPass(CreateInsertExtractElimPass());

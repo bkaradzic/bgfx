@@ -1572,12 +1572,12 @@ namespace glslang {
 
 const char* GetEsslVersionString()
 {
-    return "OpenGL ES GLSL 3.00 glslang LunarG Khronos." GLSLANG_REVISION " " GLSLANG_DATE;
+    return "OpenGL ES GLSL 3.20 glslang Khronos." GLSLANG_REVISION " " GLSLANG_DATE;
 }
 
 const char* GetGlslVersionString()
 {
-    return "4.20 glslang LunarG Khronos." GLSLANG_REVISION " " GLSLANG_DATE;
+    return "4.60 glslang Khronos." GLSLANG_REVISION " " GLSLANG_DATE;
 }
 
 int GetKhronosToolId()
@@ -1661,20 +1661,30 @@ void TShader::addProcesses(const std::vector<std::string>& p)
     intermediate->addProcesses(p);
 }
 
+// Set binding base for given resource type
+void TShader::setShiftBinding(TResourceType res, unsigned int base) {
+    intermediate->setShiftBinding(res, base);
+}
+
+// Set binding base for given resource type for a given binding set.
+void TShader::setShiftBindingForSet(TResourceType res, unsigned int set, unsigned int base) {
+    intermediate->setShiftBindingForSet(res, set, base); 
+}
+
 // Set binding base for sampler types
-void TShader::setShiftSamplerBinding(unsigned int base) { intermediate->setShiftSamplerBinding(base); }
+void TShader::setShiftSamplerBinding(unsigned int base) { setShiftBinding(EResSampler, base); }
 // Set binding base for texture types (SRV)
-void TShader::setShiftTextureBinding(unsigned int base) { intermediate->setShiftTextureBinding(base); }
+void TShader::setShiftTextureBinding(unsigned int base) { setShiftBinding(EResTexture, base); }
 // Set binding base for image types
-void TShader::setShiftImageBinding(unsigned int base)   { intermediate->setShiftImageBinding(base); }
+void TShader::setShiftImageBinding(unsigned int base)   { setShiftBinding(EResImage, base); }
 // Set binding base for uniform buffer objects (CBV)
-void TShader::setShiftUboBinding(unsigned int base)     { intermediate->setShiftUboBinding(base); }
+void TShader::setShiftUboBinding(unsigned int base)     { setShiftBinding(EResUbo, base); }
 // Synonym for setShiftUboBinding, to match HLSL language.
-void TShader::setShiftCbufferBinding(unsigned int base) { intermediate->setShiftUboBinding(base); }
+void TShader::setShiftCbufferBinding(unsigned int base) { setShiftBinding(EResUbo, base); }
 // Set binding base for UAV (unordered access view)
-void TShader::setShiftUavBinding(unsigned int base)     { intermediate->setShiftUavBinding(base); }
+void TShader::setShiftUavBinding(unsigned int base)     { setShiftBinding(EResUav, base); }
 // Set binding base for SSBOs
-void TShader::setShiftSsboBinding(unsigned int base)    { intermediate->setShiftSsboBinding(base); }
+void TShader::setShiftSsboBinding(unsigned int base)    { setShiftBinding(EResSsbo, base); }
 // Enables binding automapping using TIoMapper
 void TShader::setAutoMapBindings(bool map)              { intermediate->setAutoMapBindings(map); }
 // Fragile: currently within one stage: simple auto-assignment of location

@@ -1,6 +1,6 @@
 //
-// Copyright (C) 2016 Google, Inc.
-// Copyright (C) 2016 LunarG, Inc.
+// Copyright (C) 2017 Google, Inc.
+// Copyright (C) 2017 LunarG, Inc.
 //
 // All rights reserved.
 //
@@ -1157,8 +1157,8 @@ bool HlslParseContext::shouldFlatten(const TType& type, TStorageQualifier qualif
     case EvqVaryingOut:
         return type.isStruct() || type.isArray();
     case EvqUniform:
-        return type.isArray() && intermediate.getFlattenUniformArrays() && topLevel ||
-               type.isStruct() && type.containsOpaque();
+        return (type.isArray() && intermediate.getFlattenUniformArrays() && topLevel) ||
+               (type.isStruct() && type.containsOpaque());
     default:
         return type.isStruct() && type.containsOpaque();
     };

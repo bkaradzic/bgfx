@@ -4,7 +4,6 @@ spv.shaderFragMaskAMD.frag
 // Id's are bound by 80
 
                               Capability Shader
-                              Capability StorageImageMultisample
                               Capability InputAttachment
                               Capability FragmentMaskAMD
                               Extension  "SPV_AMD_shader_fragment_mask"

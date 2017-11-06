@@ -469,7 +469,10 @@ Id Builder::makeImageType(Id sampledType, Dim dim, bool depth, bool arrayed, boo
 
     if (ms) {
         if (sampled == 2) {
-            addCapability(CapabilityStorageImageMultisample);
+            // Images used with subpass data are not storage
+            // images, so don't require the capability for them.
+            if (dim != Dim::DimSubpassData)
+                addCapability(CapabilityStorageImageMultisample);
             if (arrayed)
                 addCapability(CapabilityImageMSArray);
         }
