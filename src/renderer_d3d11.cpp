@@ -686,6 +686,7 @@ namespace bgfx { namespace d3d11
 			, m_numWindows(0)
 			, m_device(NULL)
 			, m_deviceCtx(NULL)
+			, m_annotation(NULL)
 			, m_infoQueue(NULL)
 			, m_backBufferColor(NULL)
 			, m_backBufferDepthStencil(NULL)
