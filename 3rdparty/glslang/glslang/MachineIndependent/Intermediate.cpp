@@ -3222,4 +3222,20 @@ void TIntermediate::performTextureUpgradeAndSamplerRemovalTransformation(TInterm
     root->traverse(&transform);
 }
 
+const char* TIntermediate::getResourceName(TResourceType res)
+{
+    switch (res) {
+    case EResSampler: return "shift-sampler-binding";
+    case EResTexture: return "shift-texture-binding";
+    case EResImage:   return "shift-image-binding";
+    case EResUbo:     return "shift-UBO-binding";
+    case EResSsbo:    return "shift-ssbo-binding";
+    case EResUav:     return "shift-uav-binding";
+    default:
+        assert(0); // internal error: should only be called with valid resource types.
+        return nullptr;
+    }
+}
+
+
 } // end namespace glslang

@@ -56,6 +56,7 @@ struct SpvOptions {
 };
 
 void GetSpirvVersion(std::string&);
+int GetSpirvGeneratorVersion();
 void GlslangToSpv(const glslang::TIntermediate& intermediate, std::vector<unsigned int>& spirv,
                   SpvOptions* options = nullptr);
 void GlslangToSpv(const glslang::TIntermediate& intermediate, std::vector<unsigned int>& spirv,

@@ -405,7 +405,7 @@ ERROR: node is still EOpNull!
 0:?   Linker Objects
 0:?     'many' ( global 1-element array of 2-element array of 3-element array of 4-element array of 5-element array of 6-element array of float)
 0:?     'gu' ( global implicitly-sized array of 7-element array of float)
-0:?     'gimp' ( global implicitly-sized array of implicitly-sized array of float)
+0:?     'gimp' ( global implicitly-sized array of 1-element array of float)
 0:?     'g4' ( global 4-element array of 7-element array of float)
 0:?     'g5' ( global 5-element array of 7-element array of float)
 
@@ -768,7 +768,7 @@ ERROR: node is still EOpNull!
 0:?   Linker Objects
 0:?     'many' ( global 1-element array of 2-element array of 3-element array of 4-element array of 5-element array of 6-element array of float)
 0:?     'gu' ( global 1-element array of 7-element array of float)
-0:?     'gimp' ( global 1-element array of implicitly-sized array of float)
+0:?     'gimp' ( global 1-element array of 1-element array of float)
 0:?     'g4' ( global 4-element array of 7-element array of float)
 0:?     'g5' ( global 5-element array of 7-element array of float)
 

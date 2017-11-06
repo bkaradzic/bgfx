@@ -324,6 +324,17 @@ bool InitializeProcess();
 // Call once per process to tear down everything
 void FinalizeProcess();
 
+// Resource type for IO resolver
+enum TResourceType {
+    EResSampler,
+    EResTexture,
+    EResImage,
+    EResUbo,
+    EResSsbo,
+    EResUav,
+    EResCount
+};
+
 // Make one TShader per shader that you will link into a program.  Then provide
 // the shader through setStrings() or setStringsWithLengths(), then call parse(),
 // then query the info logs.
@@ -347,13 +358,17 @@ public:
     void setEntryPoint(const char* entryPoint);
     void setSourceEntryPoint(const char* sourceEntryPointName);
     void addProcesses(const std::vector<std::string>&);
-    void setShiftSamplerBinding(unsigned int base);
-    void setShiftTextureBinding(unsigned int base);
-    void setShiftImageBinding(unsigned int base);
-    void setShiftUboBinding(unsigned int base);
-    void setShiftUavBinding(unsigned int base);
-    void setShiftCbufferBinding(unsigned int base); // synonym for setShiftUboBinding
-    void setShiftSsboBinding(unsigned int base);
+
+    // IO resolver binding data: see comments in ShaderLang.cpp
+    void setShiftBinding(TResourceType res, unsigned int base);
+    void setShiftSamplerBinding(unsigned int base);  // DEPRECATED: use setShiftBinding
+    void setShiftTextureBinding(unsigned int base);  // DEPRECATED: use setShiftBinding
+    void setShiftImageBinding(unsigned int base);    // DEPRECATED: use setShiftBinding
+    void setShiftUboBinding(unsigned int base);      // DEPRECATED: use setShiftBinding
+    void setShiftUavBinding(unsigned int base);      // DEPRECATED: use setShiftBinding
+    void setShiftCbufferBinding(unsigned int base);  // synonym for setShiftUboBinding
+    void setShiftSsboBinding(unsigned int base);     // DEPRECATED: use setShiftBinding
+    void setShiftBindingForSet(TResourceType res, unsigned int set, unsigned int base);
     void setResourceSetBinding(const std::vector<std::string>& base);
     void setAutoMapBindings(bool map);
     void setAutoMapLocations(bool map);

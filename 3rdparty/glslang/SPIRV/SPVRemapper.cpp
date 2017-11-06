@@ -1392,7 +1392,7 @@ namespace spv {
 
         int strippedPos = 0;
         for (unsigned word = 0; word < unsigned(spv.size()); ++word) {
-            if (strip_it != stripRange.end() && word >= strip_it->second)
+            while (strip_it != stripRange.end() && word >= strip_it->second)
                 ++strip_it;
 
             if (strip_it == stripRange.end() || word < strip_it->first || word >= strip_it->second)

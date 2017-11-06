@@ -1,0 +1,67 @@
+cppPassMacroName.frag
+Shader version: 100
+0:? Sequence
+0:5  Function Definition: main( ( global void)
+0:5    Function Parameters: 
+0:7    Sequence
+0:7      Sequence
+0:7        move second child to first child ( temp mediump int)
+0:7          'f1' ( temp mediump int)
+0:7          Constant:
+0:7            4 (const int)
+0:8      Sequence
+0:8        move second child to first child ( temp mediump int)
+0:8          'f2' ( temp mediump int)
+0:8          'f1' ( temp mediump int)
+0:9      Sequence
+0:9        move second child to first child ( temp mediump int)
+0:9          'f3' ( temp mediump int)
+0:9          Constant:
+0:9            9 (const int)
+0:10      Sequence
+0:10        move second child to first child ( temp mediump int)
+0:10          'f4' ( temp mediump int)
+0:10          Constant:
+0:10            1 (const int)
+0:11      Sequence
+0:11        move second child to first child ( temp mediump int)
+0:11          'f5' ( temp mediump int)
+0:11          Constant:
+0:11            5 (const int)
+0:?   Linker Objects
+
+
+Linked fragment stage:
+
+
+Shader version: 100
+0:? Sequence
+0:5  Function Definition: main( ( global void)
+0:5    Function Parameters: 
+0:7    Sequence
+0:7      Sequence
+0:7        move second child to first child ( temp mediump int)
+0:7          'f1' ( temp mediump int)
+0:7          Constant:
+0:7            4 (const int)
+0:8      Sequence
+0:8        move second child to first child ( temp mediump int)
+0:8          'f2' ( temp mediump int)
+0:8          'f1' ( temp mediump int)
+0:9      Sequence
+0:9        move second child to first child ( temp mediump int)
+0:9          'f3' ( temp mediump int)
+0:9          Constant:
+0:9            9 (const int)
+0:10      Sequence
+0:10        move second child to first child ( temp mediump int)
+0:10          'f4' ( temp mediump int)
+0:10          Constant:
+0:10            1 (const int)
+0:11      Sequence
+0:11        move second child to first child ( temp mediump int)
+0:11          'f5' ( temp mediump int)
+0:11          Constant:
+0:11            5 (const int)
+0:?   Linker Objects
+

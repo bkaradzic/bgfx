@@ -141,7 +141,7 @@ def main():
 
     # Create the subdirectories in sorted order so that parent git repositories
     # are created first.
-    for c in sorted(commits, cmp=lambda x,y: cmp(x.subdir, y.subdir)):
+    for c in sorted(commits, key=lambda x: x.subdir):
         print('Get {n}\n'.format(n=c.name))
         c.Checkout()
     sys.exit(0)

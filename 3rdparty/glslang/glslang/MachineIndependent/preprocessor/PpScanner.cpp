@@ -128,7 +128,7 @@ int TPpContext::lFloatConst(int len, int ch, TPpToken* ppToken)
         ch = getChar();
 
         // 1.#INF or -1.#INF
-        if (ch == '#') {
+        if (parseContext.intermediate.getSource() == EShSourceHlsl && ch == '#') {
             if ((len <  2) ||
                 (len == 2 && ppToken->name[0] != '1') ||
                 (len == 3 && ppToken->name[1] != '1' && !(ppToken->name[0] == '-' || ppToken->name[0] == '+')) ||
@@ -420,7 +420,7 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
 
                     ival = 0;
                     do {
-                        if (ival <= 0x0fffffffu || (enableInt64 && ival <= 0x0fffffffffffffffull)) {
+                        if (len < MaxTokenLength && (ival <= 0x0fffffffu || (enableInt64 && ival <= 0x0fffffffffffffffull))) {
                             ppToken->name[len++] = (char)ch;
                             if (ch >= '0' && ch <= '9') {
                                 ii = ch - '0';
@@ -433,7 +433,10 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
                             ival = (ival << 4) | ii;
                         } else {
                             if (! AlreadyComplained) {
-                                pp->parseContext.ppError(ppToken->loc, "hexadecimal literal too big", "", "");
+                                if(len < MaxTokenLength)
+                                    pp->parseContext.ppError(ppToken->loc, "hexadecimal literal too big", "", "");
+                                else
+                                    pp->parseContext.ppError(ppToken->loc, "hexadecimal literal too long", "", "");
                                 AlreadyComplained = 1;
                             }
                             ival = 0xffffffffffffffffull;
