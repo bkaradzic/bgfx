@@ -266,36 +266,7 @@ struct View
 					m_mip = 0;
 				}
 			}
-			if (0 == bx::strCmp(_argv[1], "mip") )
-			{
-				if (_argc >= 3)
-				{
-					uint32_t mip = m_mip;
-					if (0 == bx::strCmp(_argv[2], "next") )
-					{
-						++mip;
-					}
-					else if (0 == bx::strCmp(_argv[2], "prev") )
-					{
-						--mip;
-					}
-					else if (0 == bx::strCmp(_argv[2], "last") )
-					{
-						mip = INT32_MAX;
-					}
-					else
-					{
-						bx::fromString(&mip, _argv[2]);
-					}
-
-					m_mip = bx::uint32_iclamp(mip, 0, m_textureInfo.numMips-1);
-				}
-				else
-				{
-					m_mip = 0;
-				}
-			}
-			if (0 == bx::strCmp(_argv[1], "layer") )
+			else if (0 == bx::strCmp(_argv[1], "layer") )
 			{
 				if (_argc >= 3)
 				{
@@ -500,7 +471,7 @@ struct View
 				if (_argc >= 3)
 				{
 					float time;
-					bx::fromString(&time, _argv[3]);
+					bx::fromString(&time, _argv[2]);
 					m_transitionTime = bx::fclamp(time, 0.0f, 5.0f);
 				}
 				else
@@ -1762,9 +1733,9 @@ int _main_(int _argc, char** _argv)
 			bx::mtxRotateXY(mtx, angx.getValue(), angy.getValue() );
 			bgfx::setUniform(u_mtx, mtx);
 
-			mip.set(float(view.m_mip), 0.5f);
-			layer.set(float(view.m_layer), 0.25f);
-			ev.set(view.m_ev, 0.5f);
+			mip.set(float(view.m_mip), 0.5f*view.m_transitionTime);
+			layer.set(float(view.m_layer), 0.25f*view.m_transitionTime);
+			ev.set(view.m_ev, 0.5f*view.m_transitionTime);
 
 			float params[4] = { mip.getValue(), layer.getValue(), 0.0f, ev.getValue() };
 			if (1 < view.m_textureInfo.depth)
