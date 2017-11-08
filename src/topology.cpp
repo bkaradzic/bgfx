@@ -223,16 +223,6 @@ namespace bgfx
 		return 0;
 	}
 
-	inline uint32_t floatFlip(uint32_t _value)
-	{
-		using namespace bx;
-		const uint32_t tmp0   = uint32_sra(_value, 31);
-		const uint32_t tmp1   = uint32_neg(tmp0);
-		const uint32_t mask   = uint32_or(tmp1, 0x80000000);
-		const uint32_t result = uint32_xor(_value, mask);
-		return result;
-	}
-
 	inline float favg3(float _a, float _b, float _c)
 	{
 		return (_a + _b + _c) * 1.0f/3.0f;
@@ -281,10 +271,8 @@ namespace bgfx
 			float distance1 = dfn(_dirOrPos, _vertices, _stride, idx1);
 			float distance2 = dfn(_dirOrPos, _vertices, _stride, idx2);
 
-			union { float fl; uint32_t ui; } un;
-			un.fl = kfn(distance0, distance1, distance2);
-
-			_keys[ii] = floatFlip(un.ui) ^ xorBits;
+			uint32_t ui = bx::floatToBits(kfn(distance0, distance1, distance2) );
+			_keys[ii]   = bx::floatFlip(ui) ^ xorBits;
 			_values[ii] = ii;
 		}
 	}
