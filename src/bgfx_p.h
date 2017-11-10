@@ -1509,7 +1509,7 @@ namespace bgfx
 			m_numZ         = 0;
 			m_numMatrices  = 0;
 			m_submitFlags  = BGFX_SUBMIT_EYE_FIRST;
-			m_uniformIdx = UINT8_MAX;
+			m_uniformIdx   = UINT8_MAX;
 
 			m_indirectBuffer.idx = kInvalidHandle;
 			m_startIndirect      = 0;
@@ -1988,7 +1988,7 @@ namespace bgfx
 
 			m_cpuTimeBegin = bx::getHPCounter();
 
-			m_uniformIdx = _idx;
+			m_uniformIdx   = _idx;
 			m_uniformBegin = 0;
 			m_uniformEnd   = 0;
 
