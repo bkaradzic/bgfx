@@ -167,9 +167,10 @@ public:
 		// Imgui.
 		imguiCreate();
 
-		m_numThreads = (BX_COUNTOF(m_thread)+1)/2;
+		m_maxThreads = bx::min<int32_t>(caps->limits.maxEncoders, BX_COUNTOF(m_thread) );
+		m_numThreads = (m_maxThreads+1)/2;
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_thread); ++ii)
+		for (int32_t ii = 0; ii < m_maxThreads; ++ii)
 		{
 			m_thread[ii].init(threadFunc, this);
 		}
@@ -177,7 +178,7 @@ public:
 
 	int shutdown() override
 	{
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_thread); ++ii)
+		for (int32_t ii = 0; ii < m_maxThreads; ++ii)
 		{
 			m_thread[ii].push(reinterpret_cast<void*>(UINTPTR_MAX) );
 			m_thread[ii].shutdown();
@@ -346,7 +347,7 @@ public:
 
 			ImGui::Checkbox("Auto adjust", &m_autoAdjust);
 
-			ImGui::SliderInt("Num threads", &m_numThreads, 1, BX_COUNTOF(m_thread) );
+			ImGui::SliderInt("Num threads", &m_numThreads, 1, m_maxThreads);
 			const uint32_t numThreads = m_numThreads;
 
 			ImGui::SliderInt("Dim", &m_dim, 5, m_maxDim);
@@ -424,6 +425,7 @@ public:
 	int32_t  m_maxDim;
 	int32_t  m_transform;
 	int32_t  m_numThreads;
+	int32_t  m_maxThreads;
 
 	int64_t  m_timeOffset;
 
