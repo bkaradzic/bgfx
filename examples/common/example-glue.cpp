@@ -246,11 +246,6 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 							ImGui::Text("%3d", pos);
 							ImGui::SameLine(64.0f);
 
-							if (encoderStats.cpuTimeEnd-encoderStats.cpuTimeBegin < 0)
-							{
-								DBG("x");
-							}
-
 							const float maxWidth = 30.0f*scale;
 							const float cpuMs    = float( (encoderStats.cpuTimeEnd-encoderStats.cpuTimeBegin)*toCpuMs);
 							const float cpuWidth = bx::fclamp(cpuMs*scale, 1.0f, maxWidth);
