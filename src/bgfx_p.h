@@ -4396,15 +4396,15 @@ namespace bgfx
 			}
 		}
 
-		BX_NO_INLINE void encoderApiWait()
+		void encoderApiWait()
 		{
+			for (uint32_t ii = 1, num = m_numEncoders; ii < num; ++ii)
+			{
+				m_encoderApiSem.wait();
+			}
+
 			for (uint32_t ii = 0, num = m_numEncoders; ii < num; ++ii)
 			{
-				if (0 != ii)
-				{
-					m_encoderApiSem.wait();
-				}
-
 				m_encoderStats[ii].cpuTimeBegin = m_encoder[ii].m_cpuTimeBegin;
 				m_encoderStats[ii].cpuTimeEnd   = m_encoder[ii].m_cpuTimeEnd;
 			}
