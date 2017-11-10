@@ -837,7 +837,7 @@ namespace bgfx
 	/// Encoder for submitting draw calls from multiple threads. Use `bgfx::begin()`
 	/// to obtain encoder for thread.
 	///
-	/// @attention C99 equivalent is `bgfx_encoder_t`.
+	/// @attention C99 equivalent is `bgfx_encoder`.
 	///
 	struct Encoder
 	{

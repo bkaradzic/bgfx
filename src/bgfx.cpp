@@ -5337,6 +5337,207 @@ BGFX_C_API void bgfx_blit(uint8_t _id, bgfx_texture_handle_t _dst, uint8_t _dstM
 	bgfx::blit(_id, dst.cpp, _dstMip, _dstX, _dstY, _dstZ, src.cpp, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
 }
 
+#define BGFX_ENCODER(_func) reinterpret_cast<bgfx::Encoder*>(_encoder)->_func
+
+BGFX_C_API void bgfx_encoder_set_marker(bgfx_encoder* _encoder, const char* _marker)
+{
+	BGFX_ENCODER(setMarker(_marker) );
+}
+
+BGFX_C_API void bgfx_encoder_set_state(bgfx_encoder* _encoder, uint64_t _state, uint32_t _rgba)
+{
+	BGFX_ENCODER(setState(_state, _rgba) );
+}
+
+BGFX_C_API void bgfx_encoder_set_condition(bgfx_encoder* _encoder, bgfx_occlusion_query_handle_t _handle, bool _visible)
+{
+	union { bgfx_occlusion_query_handle_t c; bgfx::OcclusionQueryHandle cpp; } handle = { _handle };
+	BGFX_ENCODER(setCondition(handle.cpp, _visible) );
+}
+
+BGFX_C_API void bgfx_encoder_set_stencil(bgfx_encoder* _encoder, uint32_t _fstencil, uint32_t _bstencil)
+{
+	BGFX_ENCODER(setStencil(_fstencil, _bstencil) );
+}
+
+BGFX_C_API uint16_t bgfx_encoder_set_scissor(bgfx_encoder* _encoder, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+{
+	return BGFX_ENCODER(setScissor(_x, _y, _width, _height) );
+}
+
+BGFX_C_API void bgfx_encoder_set_scissor_cached(bgfx_encoder* _encoder, uint16_t _cache)
+{
+	BGFX_ENCODER(setScissor(_cache) );
+}
+
+BGFX_C_API uint32_t bgfx_encoder_set_transform(bgfx_encoder* _encoder, const void* _mtx, uint16_t _num)
+{
+	return BGFX_ENCODER(setTransform(_mtx, _num) );
+}
+
+BGFX_C_API uint32_t bgfx_encoder_alloc_transform(bgfx_encoder* _encoder, bgfx_transform_t* _transform, uint16_t _num)
+{
+	return BGFX_ENCODER(allocTransform( (bgfx::Transform*)_transform, _num) );
+}
+
+BGFX_C_API void bgfx_encoder_set_transform_cached(bgfx_encoder* _encoder, uint32_t _cache, uint16_t _num)
+{
+	BGFX_ENCODER(setTransform(_cache, _num) );
+}
+
+BGFX_C_API void bgfx_encoder_set_uniform(bgfx_encoder* _encoder, bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num)
+{
+	union { bgfx_uniform_handle_t c; bgfx::UniformHandle cpp; } handle = { _handle };
+	BGFX_ENCODER(setUniform(handle.cpp, _value, _num) );
+}
+
+BGFX_C_API void bgfx_encoder_set_index_buffer(bgfx_encoder* _encoder, bgfx_index_buffer_handle_t _handle, uint32_t _firstIndex, uint32_t _numIndices)
+{
+	union { bgfx_index_buffer_handle_t c; bgfx::IndexBufferHandle cpp; } handle = { _handle };
+	BGFX_ENCODER(setIndexBuffer(handle.cpp, _firstIndex, _numIndices) );
+}
+
+BGFX_C_API void bgfx_encoder_set_dynamic_index_buffer(bgfx_encoder* _encoder, bgfx_dynamic_index_buffer_handle_t _handle, uint32_t _firstIndex, uint32_t _numIndices)
+{
+	union { bgfx_dynamic_index_buffer_handle_t c; bgfx::DynamicIndexBufferHandle cpp; } handle = { _handle };
+	BGFX_ENCODER(setIndexBuffer(handle.cpp, _firstIndex, _numIndices) );
+}
+
+BGFX_C_API void bgfx_encoder_set_transient_index_buffer(bgfx_encoder* _encoder, const bgfx_transient_index_buffer_t* _tib, uint32_t _firstIndex, uint32_t _numIndices)
+{
+	BGFX_ENCODER(setIndexBuffer( (const bgfx::TransientIndexBuffer*)_tib, _firstIndex, _numIndices) );
+}
+
+BGFX_C_API void bgfx_encoder_set_vertex_buffer(bgfx_encoder* _encoder, uint8_t _stream, bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices)
+{
+	union { bgfx_vertex_buffer_handle_t c; bgfx::VertexBufferHandle cpp; } handle = { _handle };
+	BGFX_ENCODER(setVertexBuffer(_stream, handle.cpp, _startVertex, _numVertices) );
+}
+
+BGFX_C_API void bgfx_encoder_set_dynamic_vertex_buffer(bgfx_encoder* _encoder, uint8_t _stream, bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices)
+{
+	union { bgfx_dynamic_vertex_buffer_handle_t c; bgfx::DynamicVertexBufferHandle cpp; } handle = { _handle };
+	BGFX_ENCODER(setVertexBuffer(_stream, handle.cpp, _startVertex, _numVertices) );
+}
+
+BGFX_C_API void bgfx_encoder_set_transient_vertex_buffer(bgfx_encoder* _encoder, uint8_t _stream, const bgfx_transient_vertex_buffer_t* _tvb, uint32_t _startVertex, uint32_t _numVertices)
+{
+	BGFX_ENCODER(setVertexBuffer(_stream, (const bgfx::TransientVertexBuffer*)_tvb, _startVertex, _numVertices) );
+}
+
+BGFX_C_API void bgfx_encoder_set_instance_data_buffer(bgfx_encoder* _encoder, const bgfx_instance_data_buffer_t* _idb, uint32_t _num)
+{
+	BGFX_ENCODER(setInstanceDataBuffer( (const bgfx::InstanceDataBuffer*)_idb, _num) );
+}
+
+BGFX_C_API void bgfx_encoder_set_instance_data_from_vertex_buffer(bgfx_encoder* _encoder, bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num)
+{
+	union { bgfx_vertex_buffer_handle_t c; bgfx::VertexBufferHandle cpp; } handle = { _handle };
+	BGFX_ENCODER(setInstanceDataBuffer(handle.cpp, _startVertex, _num) );
+}
+
+BGFX_C_API void bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer(bgfx_encoder* _encoder, bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num)
+{
+	union { bgfx_dynamic_vertex_buffer_handle_t c; bgfx::DynamicVertexBufferHandle cpp; } handle = { _handle };
+	BGFX_ENCODER(setInstanceDataBuffer(handle.cpp, _startVertex, _num) );
+}
+
+BGFX_C_API void bgfx_encoder_set_texture(bgfx_encoder* _encoder, uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint32_t _flags)
+{
+	union { bgfx_uniform_handle_t c; bgfx::UniformHandle cpp; } sampler = { _sampler };
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle  = { _handle  };
+	BGFX_ENCODER(setTexture(_stage, sampler.cpp, handle.cpp, _flags) );
+}
+
+BGFX_C_API void bgfx_encoder_touch(bgfx_encoder* _encoder, uint8_t _id)
+{
+	return BGFX_ENCODER(touch(_id) );
+}
+
+BGFX_C_API void bgfx_encoder_submit(bgfx_encoder* _encoder, uint8_t _id, bgfx_program_handle_t _handle, int32_t _depth, bool _preserveState)
+{
+	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
+	BGFX_ENCODER(submit(_id, handle.cpp, _depth, _preserveState) );
+}
+
+BGFX_C_API void bgfx_encoder_submit_occlusion_query(bgfx_encoder* _encoder, uint8_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, int32_t _depth, bool _preserveState)
+{
+	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } program = { _program };
+	union { bgfx_occlusion_query_handle c; bgfx::OcclusionQueryHandle cpp; } occlusionQuery = { _occlusionQuery };
+	BGFX_ENCODER(submit(_id, program.cpp, occlusionQuery.cpp, _depth, _preserveState) );
+}
+
+BGFX_C_API void bgfx_encoder_submit_indirect(bgfx_encoder* _encoder, uint8_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth, bool _preserveState)
+{
+	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
+	union { bgfx_indirect_buffer_handle_t c; bgfx::IndirectBufferHandle cpp; } indirectHandle = { _indirectHandle };
+	BGFX_ENCODER(submit(_id, handle.cpp, indirectHandle.cpp, _start, _num, _depth, _preserveState) );
+}
+
+BGFX_C_API void bgfx_encoder_set_image(bgfx_encoder* _encoder, uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format)
+{
+	union { bgfx_uniform_handle_t c; bgfx::UniformHandle cpp; } sampler = { _sampler };
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle  = { _handle  };
+	BGFX_ENCODER(setImage(_stage, sampler.cpp, handle.cpp, _mip, bgfx::Access::Enum(_access), bgfx::TextureFormat::Enum(_format) ) );
+}
+
+BGFX_C_API void bgfx_encoder_set_compute_index_buffer(bgfx_encoder* _encoder, uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access)
+{
+	union { bgfx_index_buffer_handle_t c; bgfx::IndexBufferHandle cpp; } handle = { _handle };
+	BGFX_ENCODER(setBuffer(_stage, handle.cpp, bgfx::Access::Enum(_access) ) );
+}
+
+BGFX_C_API void bgfx_encoder_set_compute_vertex_buffer(bgfx_encoder* _encoder, uint8_t _stage, bgfx_vertex_buffer_handle_t _handle, bgfx_access_t _access)
+{
+	union { bgfx_vertex_buffer_handle_t c; bgfx::VertexBufferHandle cpp; } handle = { _handle };
+	BGFX_ENCODER(setBuffer(_stage, handle.cpp, bgfx::Access::Enum(_access) ) );
+}
+
+BGFX_C_API void bgfx_encoder_set_compute_dynamic_index_buffer(bgfx_encoder* _encoder, uint8_t _stage, bgfx_dynamic_index_buffer_handle_t _handle, bgfx_access_t _access)
+{
+	union { bgfx_dynamic_index_buffer_handle_t c; bgfx::DynamicIndexBufferHandle cpp; } handle = { _handle };
+	BGFX_ENCODER(setBuffer(_stage, handle.cpp, bgfx::Access::Enum(_access) ) );
+}
+
+BGFX_C_API void bgfx_encoder_set_compute_dynamic_vertex_buffer(bgfx_encoder* _encoder, uint8_t _stage, bgfx_dynamic_vertex_buffer_handle_t _handle, bgfx_access_t _access)
+{
+	union { bgfx_dynamic_vertex_buffer_handle_t c; bgfx::DynamicVertexBufferHandle cpp; } handle = { _handle };
+	BGFX_ENCODER(setBuffer(_stage, handle.cpp, bgfx::Access::Enum(_access) ) );
+}
+
+BGFX_C_API void bgfx_encoder_set_compute_indirect_buffer(bgfx_encoder* _encoder, uint8_t _stage, bgfx_indirect_buffer_handle_t _handle, bgfx_access_t _access)
+{
+	union { bgfx_indirect_buffer_handle_t c; bgfx::IndirectBufferHandle cpp; } handle = { _handle };
+	BGFX_ENCODER(setBuffer(_stage, handle.cpp, bgfx::Access::Enum(_access) ) );
+}
+
+BGFX_C_API void bgfx_encoder_dispatch(bgfx_encoder* _encoder, uint8_t _id, bgfx_program_handle_t _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
+{
+	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
+	BGFX_ENCODER(dispatch(_id, handle.cpp, _numX, _numY, _numZ, _flags) );
+}
+
+BGFX_C_API void bgfx_encoder_dispatch_indirect(bgfx_encoder* _encoder, uint8_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
+{
+	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
+	union { bgfx_indirect_buffer_handle_t c; bgfx::IndirectBufferHandle cpp; } indirectHandle = { _indirectHandle };
+	BGFX_ENCODER(dispatch(_id, handle.cpp, indirectHandle.cpp, _start, _num, _flags) );
+}
+
+BGFX_C_API void bgfx_encoder_discard(bgfx_encoder* _encoder)
+{
+	BGFX_ENCODER(discard() );
+}
+
+BGFX_C_API void bgfx_encoder_blit(bgfx_encoder* _encoder, uint8_t _id, bgfx_texture_handle_t _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, bgfx_texture_handle_t _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
+{
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } dst = { _dst };
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } src = { _src };
+	BGFX_ENCODER(blit(_id, dst.cpp, _dstMip, _dstX, _dstY, _dstZ, src.cpp, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth) );
+}
+
+#undef BGFX_ENCODER
+
 BGFX_C_API void bgfx_request_screen_shot(bgfx_frame_buffer_handle _handle, const char* _filePath)
 {
 	union { bgfx_frame_buffer_handle_t c; bgfx::FrameBufferHandle cpp; } handle = { _handle };
@@ -5374,139 +5575,139 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 {
 	if (_version == BGFX_API_VERSION)
 	{
-#define BGFX_IMPORT                                                \
-	BGFX_IMPORT_FUNC(render_frame)                                 \
-	BGFX_IMPORT_FUNC(set_platform_data)                            \
-	BGFX_IMPORT_FUNC(get_internal_data)                            \
-	BGFX_IMPORT_FUNC(override_internal_texture_ptr)                \
-	BGFX_IMPORT_FUNC(override_internal_texture)                    \
-	BGFX_IMPORT_FUNC(vertex_decl_begin)                            \
-	BGFX_IMPORT_FUNC(vertex_decl_add)                              \
-	BGFX_IMPORT_FUNC(vertex_decl_skip)                             \
-	BGFX_IMPORT_FUNC(vertex_decl_end)                              \
-	BGFX_IMPORT_FUNC(vertex_pack)                                  \
-	BGFX_IMPORT_FUNC(vertex_unpack)                                \
-	BGFX_IMPORT_FUNC(vertex_convert)                               \
-	BGFX_IMPORT_FUNC(weld_vertices)                                \
-	BGFX_IMPORT_FUNC(topology_convert)                             \
-	BGFX_IMPORT_FUNC(topology_sort_tri_list)                       \
-	BGFX_IMPORT_FUNC(get_supported_renderers)                      \
-	BGFX_IMPORT_FUNC(get_renderer_name)                            \
-	BGFX_IMPORT_FUNC(init)                                         \
-	BGFX_IMPORT_FUNC(shutdown)                                     \
-	BGFX_IMPORT_FUNC(reset)                                        \
-	BGFX_IMPORT_FUNC(frame)                                        \
-	BGFX_IMPORT_FUNC(get_renderer_type)                            \
-	BGFX_IMPORT_FUNC(get_caps)                                     \
-	BGFX_IMPORT_FUNC(get_hmd)                                      \
-	BGFX_IMPORT_FUNC(get_stats)                                    \
-	BGFX_IMPORT_FUNC(alloc)                                        \
-	BGFX_IMPORT_FUNC(copy)                                         \
-	BGFX_IMPORT_FUNC(make_ref)                                     \
-	BGFX_IMPORT_FUNC(make_ref_release)                             \
-	BGFX_IMPORT_FUNC(set_debug)                                    \
-	BGFX_IMPORT_FUNC(dbg_text_clear)                               \
-	BGFX_IMPORT_FUNC(dbg_text_printf)                              \
-	BGFX_IMPORT_FUNC(dbg_text_vprintf)                             \
-	BGFX_IMPORT_FUNC(dbg_text_image)                               \
-	BGFX_IMPORT_FUNC(create_index_buffer)                          \
-	BGFX_IMPORT_FUNC(destroy_index_buffer)                         \
-	BGFX_IMPORT_FUNC(create_vertex_buffer)                         \
-	BGFX_IMPORT_FUNC(destroy_vertex_buffer)                        \
-	BGFX_IMPORT_FUNC(create_dynamic_index_buffer)                  \
-	BGFX_IMPORT_FUNC(create_dynamic_index_buffer_mem)              \
-	BGFX_IMPORT_FUNC(update_dynamic_index_buffer)                  \
-	BGFX_IMPORT_FUNC(destroy_dynamic_index_buffer)                 \
-	BGFX_IMPORT_FUNC(create_dynamic_vertex_buffer)                 \
-	BGFX_IMPORT_FUNC(create_dynamic_vertex_buffer_mem)             \
-	BGFX_IMPORT_FUNC(update_dynamic_vertex_buffer)                 \
-	BGFX_IMPORT_FUNC(destroy_dynamic_vertex_buffer)                \
-	BGFX_IMPORT_FUNC(get_avail_transient_index_buffer)             \
-	BGFX_IMPORT_FUNC(get_avail_transient_vertex_buffer)            \
-	BGFX_IMPORT_FUNC(get_avail_instance_data_buffer)               \
-	BGFX_IMPORT_FUNC(alloc_transient_index_buffer)                 \
-	BGFX_IMPORT_FUNC(alloc_transient_vertex_buffer)                \
-	BGFX_IMPORT_FUNC(alloc_transient_buffers)                      \
-	BGFX_IMPORT_FUNC(alloc_instance_data_buffer)                   \
-	BGFX_IMPORT_FUNC(create_indirect_buffer)                       \
-	BGFX_IMPORT_FUNC(destroy_indirect_buffer)                      \
-	BGFX_IMPORT_FUNC(create_shader)                                \
-	BGFX_IMPORT_FUNC(get_shader_uniforms)                          \
-	BGFX_IMPORT_FUNC(set_shader_name)                              \
-	BGFX_IMPORT_FUNC(destroy_shader)                               \
-	BGFX_IMPORT_FUNC(create_program)                               \
-	BGFX_IMPORT_FUNC(create_compute_program)                       \
-	BGFX_IMPORT_FUNC(destroy_program)                              \
-	BGFX_IMPORT_FUNC(is_texture_valid)                             \
-	BGFX_IMPORT_FUNC(calc_texture_size)                            \
-	BGFX_IMPORT_FUNC(create_texture)                               \
-	BGFX_IMPORT_FUNC(create_texture_2d)                            \
-	BGFX_IMPORT_FUNC(create_texture_2d_scaled)                     \
-	BGFX_IMPORT_FUNC(create_texture_3d)                            \
-	BGFX_IMPORT_FUNC(create_texture_cube)                          \
-	BGFX_IMPORT_FUNC(update_texture_2d)                            \
-	BGFX_IMPORT_FUNC(update_texture_3d)                            \
-	BGFX_IMPORT_FUNC(update_texture_cube)                          \
-	BGFX_IMPORT_FUNC(read_texture)                                 \
-	BGFX_IMPORT_FUNC(set_texture_name)                             \
-	BGFX_IMPORT_FUNC(destroy_texture)                              \
-	BGFX_IMPORT_FUNC(create_frame_buffer)                          \
-	BGFX_IMPORT_FUNC(create_frame_buffer_scaled)                   \
-	BGFX_IMPORT_FUNC(create_frame_buffer_from_attachment)          \
-	BGFX_IMPORT_FUNC(create_frame_buffer_from_nwh)                 \
-	BGFX_IMPORT_FUNC(get_texture)                                  \
-	BGFX_IMPORT_FUNC(destroy_frame_buffer)                         \
-	BGFX_IMPORT_FUNC(create_uniform)                               \
-	BGFX_IMPORT_FUNC(get_uniform_info)                             \
-	BGFX_IMPORT_FUNC(destroy_uniform)                              \
-	BGFX_IMPORT_FUNC(create_occlusion_query)                       \
-	BGFX_IMPORT_FUNC(get_result)                                   \
-	BGFX_IMPORT_FUNC(destroy_occlusion_query)                      \
-	BGFX_IMPORT_FUNC(set_palette_color)                            \
-	BGFX_IMPORT_FUNC(set_view_name)                                \
-	BGFX_IMPORT_FUNC(set_view_rect)                                \
-	BGFX_IMPORT_FUNC(set_view_scissor)                             \
-	BGFX_IMPORT_FUNC(set_view_clear)                               \
-	BGFX_IMPORT_FUNC(set_view_clear_mrt)                           \
-	BGFX_IMPORT_FUNC(set_view_mode)                                \
-	BGFX_IMPORT_FUNC(set_view_frame_buffer)                        \
-	BGFX_IMPORT_FUNC(set_view_transform)                           \
-	BGFX_IMPORT_FUNC(set_view_transform_stereo)                    \
-	BGFX_IMPORT_FUNC(set_view_order)                               \
-	BGFX_IMPORT_FUNC(set_marker)                                   \
-	BGFX_IMPORT_FUNC(set_state)                                    \
-	BGFX_IMPORT_FUNC(set_condition)                                \
-	BGFX_IMPORT_FUNC(set_stencil)                                  \
-	BGFX_IMPORT_FUNC(set_scissor)                                  \
-	BGFX_IMPORT_FUNC(set_scissor_cached)                           \
-	BGFX_IMPORT_FUNC(set_transform)                                \
-	BGFX_IMPORT_FUNC(alloc_transform)                              \
-	BGFX_IMPORT_FUNC(set_transform_cached)                         \
-	BGFX_IMPORT_FUNC(set_uniform)                                  \
-	BGFX_IMPORT_FUNC(set_index_buffer)                             \
-	BGFX_IMPORT_FUNC(set_dynamic_index_buffer)                     \
-	BGFX_IMPORT_FUNC(set_transient_index_buffer)                   \
-	BGFX_IMPORT_FUNC(set_vertex_buffer)                            \
-	BGFX_IMPORT_FUNC(set_dynamic_vertex_buffer)                    \
-	BGFX_IMPORT_FUNC(set_transient_vertex_buffer)                  \
-	BGFX_IMPORT_FUNC(set_instance_data_buffer)                     \
-	BGFX_IMPORT_FUNC(set_instance_data_from_vertex_buffer)         \
-	BGFX_IMPORT_FUNC(set_instance_data_from_dynamic_vertex_buffer) \
-	BGFX_IMPORT_FUNC(set_texture)                                  \
-	BGFX_IMPORT_FUNC(touch)                                        \
-	BGFX_IMPORT_FUNC(submit)                                       \
-	BGFX_IMPORT_FUNC(submit_occlusion_query)                       \
-	BGFX_IMPORT_FUNC(submit_indirect)                              \
-	BGFX_IMPORT_FUNC(set_image)                                    \
-	BGFX_IMPORT_FUNC(set_compute_index_buffer)                     \
-	BGFX_IMPORT_FUNC(set_compute_vertex_buffer)                    \
-	BGFX_IMPORT_FUNC(set_compute_dynamic_index_buffer)             \
-	BGFX_IMPORT_FUNC(set_compute_dynamic_vertex_buffer)            \
-	BGFX_IMPORT_FUNC(set_compute_indirect_buffer)                  \
-	BGFX_IMPORT_FUNC(dispatch)                                     \
-	BGFX_IMPORT_FUNC(dispatch_indirect)                            \
-	BGFX_IMPORT_FUNC(discard)                                      \
-	BGFX_IMPORT_FUNC(blit)                                         \
+#define BGFX_IMPORT                                                        \
+	BGFX_IMPORT_FUNC(render_frame)                                         \
+	BGFX_IMPORT_FUNC(set_platform_data)                                    \
+	BGFX_IMPORT_FUNC(get_internal_data)                                    \
+	BGFX_IMPORT_FUNC(override_internal_texture_ptr)                        \
+	BGFX_IMPORT_FUNC(override_internal_texture)                            \
+	BGFX_IMPORT_FUNC(vertex_decl_begin)                                    \
+	BGFX_IMPORT_FUNC(vertex_decl_add)                                      \
+	BGFX_IMPORT_FUNC(vertex_decl_skip)                                     \
+	BGFX_IMPORT_FUNC(vertex_decl_end)                                      \
+	BGFX_IMPORT_FUNC(vertex_pack)                                          \
+	BGFX_IMPORT_FUNC(vertex_unpack)                                        \
+	BGFX_IMPORT_FUNC(vertex_convert)                                       \
+	BGFX_IMPORT_FUNC(weld_vertices)                                        \
+	BGFX_IMPORT_FUNC(topology_convert)                                     \
+	BGFX_IMPORT_FUNC(topology_sort_tri_list)                               \
+	BGFX_IMPORT_FUNC(get_supported_renderers)                              \
+	BGFX_IMPORT_FUNC(get_renderer_name)                                    \
+	BGFX_IMPORT_FUNC(init)                                                 \
+	BGFX_IMPORT_FUNC(shutdown)                                             \
+	BGFX_IMPORT_FUNC(reset)                                                \
+	BGFX_IMPORT_FUNC(frame)                                                \
+	BGFX_IMPORT_FUNC(get_renderer_type)                                    \
+	BGFX_IMPORT_FUNC(get_caps)                                             \
+	BGFX_IMPORT_FUNC(get_hmd)                                              \
+	BGFX_IMPORT_FUNC(get_stats)                                            \
+	BGFX_IMPORT_FUNC(alloc)                                                \
+	BGFX_IMPORT_FUNC(copy)                                                 \
+	BGFX_IMPORT_FUNC(make_ref)                                             \
+	BGFX_IMPORT_FUNC(make_ref_release)                                     \
+	BGFX_IMPORT_FUNC(set_debug)                                            \
+	BGFX_IMPORT_FUNC(dbg_text_clear)                                       \
+	BGFX_IMPORT_FUNC(dbg_text_printf)                                      \
+	BGFX_IMPORT_FUNC(dbg_text_vprintf)                                     \
+	BGFX_IMPORT_FUNC(dbg_text_image)                                       \
+	BGFX_IMPORT_FUNC(create_index_buffer)                                  \
+	BGFX_IMPORT_FUNC(destroy_index_buffer)                                 \
+	BGFX_IMPORT_FUNC(create_vertex_buffer)                                 \
+	BGFX_IMPORT_FUNC(destroy_vertex_buffer)                                \
+	BGFX_IMPORT_FUNC(create_dynamic_index_buffer)                          \
+	BGFX_IMPORT_FUNC(create_dynamic_index_buffer_mem)                      \
+	BGFX_IMPORT_FUNC(update_dynamic_index_buffer)                          \
+	BGFX_IMPORT_FUNC(destroy_dynamic_index_buffer)                         \
+	BGFX_IMPORT_FUNC(create_dynamic_vertex_buffer)                         \
+	BGFX_IMPORT_FUNC(create_dynamic_vertex_buffer_mem)                     \
+	BGFX_IMPORT_FUNC(update_dynamic_vertex_buffer)                         \
+	BGFX_IMPORT_FUNC(destroy_dynamic_vertex_buffer)                        \
+	BGFX_IMPORT_FUNC(get_avail_transient_index_buffer)                     \
+	BGFX_IMPORT_FUNC(get_avail_transient_vertex_buffer)                    \
+	BGFX_IMPORT_FUNC(get_avail_instance_data_buffer)                       \
+	BGFX_IMPORT_FUNC(alloc_transient_index_buffer)                         \
+	BGFX_IMPORT_FUNC(alloc_transient_vertex_buffer)                        \
+	BGFX_IMPORT_FUNC(alloc_transient_buffers)                              \
+	BGFX_IMPORT_FUNC(alloc_instance_data_buffer)                           \
+	BGFX_IMPORT_FUNC(create_indirect_buffer)                               \
+	BGFX_IMPORT_FUNC(destroy_indirect_buffer)                              \
+	BGFX_IMPORT_FUNC(create_shader)                                        \
+	BGFX_IMPORT_FUNC(get_shader_uniforms)                                  \
+	BGFX_IMPORT_FUNC(set_shader_name)                                      \
+	BGFX_IMPORT_FUNC(destroy_shader)                                       \
+	BGFX_IMPORT_FUNC(create_program)                                       \
+	BGFX_IMPORT_FUNC(create_compute_program)                               \
+	BGFX_IMPORT_FUNC(destroy_program)                                      \
+	BGFX_IMPORT_FUNC(is_texture_valid)                                     \
+	BGFX_IMPORT_FUNC(calc_texture_size)                                    \
+	BGFX_IMPORT_FUNC(create_texture)                                       \
+	BGFX_IMPORT_FUNC(create_texture_2d)                                    \
+	BGFX_IMPORT_FUNC(create_texture_2d_scaled)                             \
+	BGFX_IMPORT_FUNC(create_texture_3d)                                    \
+	BGFX_IMPORT_FUNC(create_texture_cube)                                  \
+	BGFX_IMPORT_FUNC(update_texture_2d)                                    \
+	BGFX_IMPORT_FUNC(update_texture_3d)                                    \
+	BGFX_IMPORT_FUNC(update_texture_cube)                                  \
+	BGFX_IMPORT_FUNC(read_texture)                                         \
+	BGFX_IMPORT_FUNC(set_texture_name)                                     \
+	BGFX_IMPORT_FUNC(destroy_texture)                                      \
+	BGFX_IMPORT_FUNC(create_frame_buffer)                                  \
+	BGFX_IMPORT_FUNC(create_frame_buffer_scaled)                           \
+	BGFX_IMPORT_FUNC(create_frame_buffer_from_attachment)                  \
+	BGFX_IMPORT_FUNC(create_frame_buffer_from_nwh)                         \
+	BGFX_IMPORT_FUNC(get_texture)                                          \
+	BGFX_IMPORT_FUNC(destroy_frame_buffer)                                 \
+	BGFX_IMPORT_FUNC(create_uniform)                                       \
+	BGFX_IMPORT_FUNC(get_uniform_info)                                     \
+	BGFX_IMPORT_FUNC(destroy_uniform)                                      \
+	BGFX_IMPORT_FUNC(create_occlusion_query)                               \
+	BGFX_IMPORT_FUNC(get_result)                                           \
+	BGFX_IMPORT_FUNC(destroy_occlusion_query)                              \
+	BGFX_IMPORT_FUNC(set_palette_color)                                    \
+	BGFX_IMPORT_FUNC(set_view_name)                                        \
+	BGFX_IMPORT_FUNC(set_view_rect)                                        \
+	BGFX_IMPORT_FUNC(set_view_scissor)                                     \
+	BGFX_IMPORT_FUNC(set_view_clear)                                       \
+	BGFX_IMPORT_FUNC(set_view_clear_mrt)                                   \
+	BGFX_IMPORT_FUNC(set_view_mode)                                        \
+	BGFX_IMPORT_FUNC(set_view_frame_buffer)                                \
+	BGFX_IMPORT_FUNC(set_view_transform)                                   \
+	BGFX_IMPORT_FUNC(set_view_transform_stereo)                            \
+	BGFX_IMPORT_FUNC(set_view_order)                                       \
+	BGFX_IMPORT_FUNC(encoder_set_marker)                                   \
+	BGFX_IMPORT_FUNC(encoder_set_state)                                    \
+	BGFX_IMPORT_FUNC(encoder_set_condition)                                \
+	BGFX_IMPORT_FUNC(encoder_set_stencil)                                  \
+	BGFX_IMPORT_FUNC(encoder_set_scissor)                                  \
+	BGFX_IMPORT_FUNC(encoder_set_scissor_cached)                           \
+	BGFX_IMPORT_FUNC(encoder_set_transform)                                \
+	BGFX_IMPORT_FUNC(encoder_alloc_transform)                              \
+	BGFX_IMPORT_FUNC(encoder_set_transform_cached)                         \
+	BGFX_IMPORT_FUNC(encoder_set_uniform)                                  \
+	BGFX_IMPORT_FUNC(encoder_set_index_buffer)                             \
+	BGFX_IMPORT_FUNC(encoder_set_dynamic_index_buffer)                     \
+	BGFX_IMPORT_FUNC(encoder_set_transient_index_buffer)                   \
+	BGFX_IMPORT_FUNC(encoder_set_vertex_buffer)                            \
+	BGFX_IMPORT_FUNC(encoder_set_dynamic_vertex_buffer)                    \
+	BGFX_IMPORT_FUNC(encoder_set_transient_vertex_buffer)                  \
+	BGFX_IMPORT_FUNC(encoder_set_instance_data_buffer)                     \
+	BGFX_IMPORT_FUNC(encoder_set_instance_data_from_vertex_buffer)         \
+	BGFX_IMPORT_FUNC(encoder_set_instance_data_from_dynamic_vertex_buffer) \
+	BGFX_IMPORT_FUNC(encoder_set_texture)                                  \
+	BGFX_IMPORT_FUNC(encoder_touch)                                        \
+	BGFX_IMPORT_FUNC(encoder_submit)                                       \
+	BGFX_IMPORT_FUNC(encoder_submit_occlusion_query)                       \
+	BGFX_IMPORT_FUNC(encoder_submit_indirect)                              \
+	BGFX_IMPORT_FUNC(encoder_set_image)                                    \
+	BGFX_IMPORT_FUNC(encoder_set_compute_index_buffer)                     \
+	BGFX_IMPORT_FUNC(encoder_set_compute_vertex_buffer)                    \
+	BGFX_IMPORT_FUNC(encoder_set_compute_dynamic_index_buffer)             \
+	BGFX_IMPORT_FUNC(encoder_set_compute_dynamic_vertex_buffer)            \
+	BGFX_IMPORT_FUNC(encoder_set_compute_indirect_buffer)                  \
+	BGFX_IMPORT_FUNC(encoder_dispatch)                                     \
+	BGFX_IMPORT_FUNC(encoder_dispatch_indirect)                            \
+	BGFX_IMPORT_FUNC(encoder_discard)                                      \
+	BGFX_IMPORT_FUNC(encoder_blit)                                         \
 	BGFX_IMPORT_FUNC(request_screen_shot)
 
 		static bgfx_interface_vtbl_t s_bgfx_interface =

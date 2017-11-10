@@ -388,6 +388,9 @@ typedef struct bgfx_stats
 } bgfx_stats_t;
 
 /**/
+struct bgfx_encoder;
+
+/**/
 typedef struct bgfx_vertex_decl
 {
     uint32_t hash;
@@ -612,6 +615,12 @@ BGFX_C_API void bgfx_shutdown();
 
 /**/
 BGFX_C_API void bgfx_reset(uint32_t _width, uint32_t _height, uint32_t _flags);
+
+/**/
+BGFX_C_API struct bgfx_encoder* bgfx_begin();
+
+/**/
+BGFX_C_API void bgfx_end(struct bgfx_encoder* _encoder);
 
 /**/
 BGFX_C_API uint32_t bgfx_frame(bool _capture);
@@ -957,6 +966,108 @@ BGFX_C_API void bgfx_discard();
 
 /**/
 BGFX_C_API void bgfx_blit(uint8_t _id, bgfx_texture_handle_t _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, bgfx_texture_handle_t _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_marker(struct bgfx_encoder* _encoder, const char* _marker);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_state(struct bgfx_encoder* _encoder, uint64_t _state, uint32_t _rgba);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_condition(struct bgfx_encoder* _encoder, bgfx_occlusion_query_handle_t _handle, bool _visible);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_stencil(struct bgfx_encoder* _encoder, uint32_t _fstencil, uint32_t _bstencil);
+
+/**/
+BGFX_C_API uint16_t bgfx_encoder_set_scissor(struct bgfx_encoder* _encoder, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_scissor_cached(struct bgfx_encoder* _encoder, uint16_t _cache);
+
+/**/
+BGFX_C_API uint32_t bgfx_encoder_set_transform(struct bgfx_encoder* _encoder, const void* _mtx, uint16_t _num);
+
+/**/
+BGFX_C_API uint32_t bgfx_encoder_alloc_transform(struct bgfx_encoder* _encoder, bgfx_transform_t* _transform, uint16_t _num);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_transform_cached(struct bgfx_encoder* _encoder, uint32_t _cache, uint16_t _num);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_uniform(struct bgfx_encoder* _encoder, bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_index_buffer(struct bgfx_encoder* _encoder, bgfx_index_buffer_handle_t _handle, uint32_t _firstIndex, uint32_t _numIndices);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_dynamic_index_buffer(struct bgfx_encoder* _encoder, bgfx_dynamic_index_buffer_handle_t _handle, uint32_t _firstIndex, uint32_t _numIndices);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_transient_index_buffer(struct bgfx_encoder* _encoder, const bgfx_transient_index_buffer_t* _tib, uint32_t _firstIndex, uint32_t _numIndices);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_vertex_buffer(struct bgfx_encoder* _encoder, uint8_t _stream, bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_dynamic_vertex_buffer(struct bgfx_encoder* _encoder, uint8_t _stream, bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_transient_vertex_buffer(struct bgfx_encoder* _encoder, uint8_t _stream, const bgfx_transient_vertex_buffer_t* _tvb, uint32_t _startVertex, uint32_t _numVertices);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_instance_data_buffer(struct bgfx_encoder* _encoder, const bgfx_instance_data_buffer_t* _idb, uint32_t _num);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_instance_data_from_vertex_buffer(struct bgfx_encoder* _encoder, bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer(struct bgfx_encoder* _encoder, bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_texture(struct bgfx_encoder* _encoder, uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint32_t _flags);
+
+/**/
+BGFX_C_API void bgfx_encoder_touch(struct bgfx_encoder* _encoder, uint8_t _id);
+
+/**/
+BGFX_C_API void bgfx_encoder_submit(struct bgfx_encoder* _encoder, uint8_t _id, bgfx_program_handle_t _handle, int32_t _depth, bool _preserveState);
+
+/**/
+BGFX_C_API void bgfx_encoder_submit_occlusion_query(struct bgfx_encoder* _encoder, uint8_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, int32_t _depth, bool _preserveState);
+
+/**/
+BGFX_C_API void bgfx_encoder_submit_indirect(struct bgfx_encoder* _encoder, uint8_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth, bool _preserveState);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_image(struct bgfx_encoder* _encoder, uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_compute_index_buffer(struct bgfx_encoder* _encoder, uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_compute_vertex_buffer(struct bgfx_encoder* _encoder, uint8_t _stage, bgfx_vertex_buffer_handle_t _handle, bgfx_access_t _access);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_compute_dynamic_index_buffer(struct bgfx_encoder* _encoder, uint8_t _stage, bgfx_dynamic_index_buffer_handle_t _handle, bgfx_access_t _access);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_compute_dynamic_vertex_buffer(struct bgfx_encoder* _encoder, uint8_t _stage, bgfx_dynamic_vertex_buffer_handle_t _handle, bgfx_access_t _access);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_compute_indirect_buffer(struct bgfx_encoder* _encoder, uint8_t _stage, bgfx_indirect_buffer_handle_t _handle, bgfx_access_t _access);
+
+/**/
+BGFX_C_API void bgfx_encoder_dispatch(struct bgfx_encoder* _encoder, uint8_t _id, bgfx_program_handle_t _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags);
+
+/**/
+BGFX_C_API void bgfx_encoder_dispatch_indirect(struct bgfx_encoder* _encoder, uint8_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags);
+
+/**/
+BGFX_C_API void bgfx_encoder_discard(struct bgfx_encoder* _encoder);
+
+/**/
+BGFX_C_API void bgfx_encoder_blit(struct bgfx_encoder* _encoder, uint8_t _id, bgfx_texture_handle_t _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, bgfx_texture_handle_t _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth);
 
 /**/
 BGFX_C_API void bgfx_request_screen_shot(bgfx_frame_buffer_handle_t _handle, const char* _filePath);
