@@ -1441,6 +1441,8 @@ namespace bgfx
 
 		frameNoRenderWait();
 
+		uint16_t idx = m_encoderHandle.alloc();
+		BX_CHECK(0 == idx, "Internal encoder handle is not 0 (idx %d).", idx); BX_UNUSED(idx);
 		m_encoder[0].begin(m_submit, 0);
 		m_encoder0 = reinterpret_cast<Encoder*>(&m_encoder[0]);
 
@@ -1529,7 +1531,7 @@ namespace bgfx
 		getCommandBuffer(CommandBuffer::RendererShutdownEnd);
 		frame();
 
-		m_encoder[0].end();
+		m_encoder[0].end(true);
 
 		m_dynVertexBufferAllocator.compact();
 		m_dynIndexBufferAllocator.compact();
@@ -1690,14 +1692,14 @@ namespace bgfx
 		{
 			bx::MutexScope scopeLock(m_encoderApiLock);
 
-			if (BGFX_CONFIG_MAX_ENCODERS == m_numEncoders )
+			uint16_t idx = m_encoderHandle.alloc();
+			if (kInvalidHandle == idx)
 			{
 				return NULL;
 			}
 
-			uint8_t idx = uint8_t(m_numEncoders++);
 			encoder = &m_encoder[idx];
-			encoder->begin(m_submit, idx);
+			encoder->begin(m_submit, uint8_t(idx) );
 		}
 #endif // BGFX_CONFIG_MULTITHREADED
 
@@ -1710,9 +1712,9 @@ namespace bgfx
 		if (BGFX_API_THREAD_MAGIC != s_threadIndex)
 		{
 			EncoderImpl* encoder = reinterpret_cast<EncoderImpl*>(_encoder);
-			encoder->end();
+			encoder->end(true);
 
-			m_encoderApiSem.post();
+			m_encoderEndSem.post();
 		}
 #else
 		BX_UNUSED(_encoder);
@@ -1721,7 +1723,7 @@ namespace bgfx
 
 	uint32_t Context::frame(bool _capture)
 	{
-		m_encoder[0].end();
+		m_encoder[0].end(true);
 
 #if BGFX_CONFIG_MULTITHREADED
 		bx::MutexScope resourceApiScope(m_resourceApiLock);

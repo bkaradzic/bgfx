@@ -1999,12 +1999,15 @@ namespace bgfx
 			m_numDropped   = 0;
 		}
 
-		void end()
+		void end(bool _finalize)
 		{
-			UniformBuffer* uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
-			uniformBuffer->finish();
+			if (_finalize)
+			{
+				UniformBuffer* uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
+				uniformBuffer->finish();
 
-			m_cpuTimeEnd = bx::getHPCounter();
+				m_cpuTimeEnd = bx::getHPCounter();
+			}
 
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_OCCLUSION) )
 			{
@@ -2581,8 +2584,7 @@ namespace bgfx
 	struct Context
 	{
 		Context()
-			: m_numEncoders(1)
-			, m_render(&m_frame[0])
+			: m_render(&m_frame[0])
 			, m_submit(&m_frame[BGFX_CONFIG_MULTITHREADED ? 1 : 0])
 			, m_numFreeDynamicIndexBufferHandles(0)
 			, m_numFreeDynamicVertexBufferHandles(0)
@@ -4398,27 +4400,33 @@ namespace bgfx
 
 		void encoderApiWait()
 		{
-			for (uint32_t ii = 1, num = m_numEncoders; ii < num; ++ii)
+			uint16_t numEncoders = m_encoderHandle.getNumHandles();
+
+			for (uint16_t ii = 1; ii < numEncoders; ++ii)
 			{
-				m_encoderApiSem.wait();
+				m_encoderEndSem.wait();
 			}
 
-			for (uint32_t ii = 0, num = m_numEncoders; ii < num; ++ii)
+			for (uint16_t ii = 0; ii < numEncoders; ++ii)
 			{
-				m_encoderStats[ii].cpuTimeBegin = m_encoder[ii].m_cpuTimeBegin;
-				m_encoderStats[ii].cpuTimeEnd   = m_encoder[ii].m_cpuTimeEnd;
+				uint16_t idx = m_encoderHandle.getHandleAt(ii);
+				m_encoderStats[ii].cpuTimeBegin = m_encoder[idx].m_cpuTimeBegin;
+				m_encoderStats[ii].cpuTimeEnd   = m_encoder[idx].m_cpuTimeEnd;
 			}
 
-			m_submit->m_perfStats.numEncoders = uint8_t(m_numEncoders);
-			m_numEncoders = 1;
+			m_submit->m_perfStats.numEncoders = uint8_t(numEncoders);
+
+			m_encoderHandle.reset();
+			uint16_t idx = m_encoderHandle.alloc();
+			BX_CHECK(0 == idx, "Internal encoder handle is not 0 (idx %d).", idx); BX_UNUSED(idx);
 		}
 
 		bx::Semaphore m_renderSem;
 		bx::Semaphore m_apiSem;
-		bx::Semaphore m_encoderApiSem;
+		bx::Semaphore m_encoderEndSem;
 		bx::Mutex     m_encoderApiLock;
 		bx::Mutex     m_resourceApiLock;
-		bx::Thread m_thread;
+		bx::Thread    m_thread;
 #else
 		void apiSemPost()
 		{
@@ -4450,6 +4458,7 @@ namespace bgfx
 		Encoder*      m_encoder0;
 		EncoderImpl   m_encoder[BGFX_CONFIG_MAX_ENCODERS];
 		uint32_t      m_numEncoders;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_ENCODERS> m_encoderHandle;
 
 		Frame  m_frame[1+(BGFX_CONFIG_MULTITHREADED ? 1 : 0)];
 		Frame* m_render;
