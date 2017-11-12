@@ -268,7 +268,7 @@ void Error(const char* message)
 //
 // Process an optional binding base of one the forms:
 //   --argname [stage] base            // base for stage (if given) or all stages (if not)
-//   --argname [stage] [set base]...   // set/base pairs: set the base for given binding set.
+//   --argname [stage] [base set]...   // set/base pairs: set the base for given binding set.
 
 // Where stage is one of the forms accepted by FindLanguage, and base is an integer
 //
@@ -293,8 +293,8 @@ void ProcessBindingBase(int& argc, char**& argv, glslang::TResourceType res)
     if ((argc - arg) > 2 && isdigit(argv[arg+0][0]) && isdigit(argv[arg+1][0])) {
         // Parse a per-set binding base
         while ((argc - arg) > 2 && isdigit(argv[arg+0][0]) && isdigit(argv[arg+1][0])) {
-            const int setNum = atoi(argv[arg++]);
             const int baseNum = atoi(argv[arg++]);
+            const int setNum = atoi(argv[arg++]);
             perSetBase[setNum] = baseNum;
         }
     } else {
@@ -821,7 +821,7 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
             // TODO: use a range based for loop here, when available in all environments.
             for (auto i = baseBindingForSet[res][compUnit.stage].begin();
                  i != baseBindingForSet[res][compUnit.stage].end(); ++i)
-                shader->setShiftBindingForSet(res, i->first, i->second);
+                shader->setShiftBindingForSet(res, i->second, i->first);
         }
 
         shader->setFlattenUniformArrays((Options & EOptionFlattenUniformArrays) != 0);
@@ -1302,24 +1302,24 @@ void usage()
            "              Set descriptor set for all resources\n"
            "  --rsb [stage] type set binding       synonym for --resource-set-binding\n"
            "  --shift-image-binding [stage] num    base binding number for images (uav)\n"
-           "  --shift-image-binding [stage] [set num]... per-descriptor-set shift values\n"
+           "  --shift-image-binding [stage] [num set]... per-descriptor-set shift values\n"
            "  --sib [stage] num                    synonym for --shift-image-binding\n"
            "  --shift-sampler-binding [stage] num  base binding number for samplers\n"
-           "  --shift-sampler-binding [stage] [set num]... per-descriptor-set shift values\n"
+           "  --shift-sampler-binding [stage] [num set]... per-descriptor-set shift values\n"
            "  --ssb [stage] num                    synonym for --shift-sampler-binding\n"
            "  --shift-ssbo-binding [stage] num     base binding number for SSBOs\n"
-           "  --shift-ssbo-binding [stage] [set num]... per-descriptor-set shift values\n"
+           "  --shift-ssbo-binding [stage] [num set]... per-descriptor-set shift values\n"
            "  --sbb [stage] num                    synonym for --shift-ssbo-binding\n"
            "  --shift-texture-binding [stage] num  base binding number for textures\n"
-           "  --shift-texture-binding [stage] [set num]... per-descriptor-set shift values\n"
+           "  --shift-texture-binding [stage] [num set]... per-descriptor-set shift values\n"
            "  --stb [stage] num                    synonym for --shift-texture-binding\n"
            "  --shift-uav-binding [stage] num      base binding number for UAVs\n"
-           "  --shift-uav-binding [stage] [set num]... per-descriptor-set shift values\n"
+           "  --shift-uav-binding [stage] [num set]... per-descriptor-set shift values\n"
            "  --suavb [stage] num                  synonym for --shift-uav-binding\n"
            "  --shift-UBO-binding [stage] num      base binding number for UBOs\n"
-           "  --shift-UBO-binding [stage] [set num]... per-descriptor-set shift values\n"
+           "  --shift-UBO-binding [stage] [num set]... per-descriptor-set shift values\n"
            "  --shift-cbuffer-binding [stage] num  synonym for --shift-UBO-binding\n"
-           "  --shift-cbuffer-binding [stage] [set num]... per-descriptor-set shift values\n"
+           "  --shift-cbuffer-binding [stage] [num set]... per-descriptor-set shift values\n"
            "  --sub [stage] num                    synonym for --shift-UBO-binding\n"
            "  --source-entrypoint <name>           the given shader source function is\n"
            "                                       renamed to be the <name> given in -e\n"

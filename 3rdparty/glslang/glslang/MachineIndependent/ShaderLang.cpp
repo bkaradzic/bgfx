@@ -1667,8 +1667,8 @@ void TShader::setShiftBinding(TResourceType res, unsigned int base) {
 }
 
 // Set binding base for given resource type for a given binding set.
-void TShader::setShiftBindingForSet(TResourceType res, unsigned int set, unsigned int base) {
-    intermediate->setShiftBindingForSet(res, set, base); 
+void TShader::setShiftBindingForSet(TResourceType res, unsigned int base, unsigned int set) {
+    intermediate->setShiftBindingForSet(res, base, set);
 }
 
 // Set binding base for sampler types

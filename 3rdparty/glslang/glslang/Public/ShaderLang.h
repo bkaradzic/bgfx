@@ -368,7 +368,7 @@ public:
     void setShiftUavBinding(unsigned int base);      // DEPRECATED: use setShiftBinding
     void setShiftCbufferBinding(unsigned int base);  // synonym for setShiftUboBinding
     void setShiftSsboBinding(unsigned int base);     // DEPRECATED: use setShiftBinding
-    void setShiftBindingForSet(TResourceType res, unsigned int set, unsigned int base);
+    void setShiftBindingForSet(TResourceType res, unsigned int base, unsigned int set);
     void setResourceSetBinding(const std::vector<std::string>& base);
     void setAutoMapBindings(bool map);
     void setAutoMapLocations(bool map);

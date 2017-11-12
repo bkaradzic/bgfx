@@ -271,7 +271,7 @@ public:
 
     unsigned int getShiftBinding(TResourceType res) const { return shiftBinding[res]; }
 
-    void setShiftBindingForSet(TResourceType res, unsigned int set, unsigned int shift)
+    void setShiftBindingForSet(TResourceType res, unsigned int shift, unsigned int set)
     {
         if (shift == 0) // ignore if there's no shift: it's a no-op.
             return;
@@ -281,8 +281,8 @@ public:
         const char* name = getResourceName(res);
         if (name != nullptr) {
             processes.addProcess(name);
-            processes.addArgument(set);
             processes.addArgument(shift);
+            processes.addArgument(set);
         }
     }
 
