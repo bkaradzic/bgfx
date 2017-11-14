@@ -273,6 +273,17 @@ target="_blank"><img src="http://img.youtube.com/vi/Mr_L7KuiByU/0.jpg"
 alt="Smith and Winston: Gameplay Video"
 width="640" height="480" border="0" /></a>
 
+## Football Manager 2018
+
+http://www.footballmanager.com/ - Football Manager 2018 is a 2017 football
+management simulation video game developed by Sports Interactive and published
+by Sega.
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=1Woak1Bl_KI" 
+target="_blank"><img src="http://img.youtube.com/vi/1Woak1Bl_KI/0.jpg" 
+alt="Match Engine | Football Manager 2018"
+width="640" height="480" border="0" /></a>
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
