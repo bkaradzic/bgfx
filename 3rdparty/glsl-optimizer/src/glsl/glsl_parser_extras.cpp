@@ -568,7 +568,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(EXT_separate_shader_objects,    false, true,      dummy_true),
    EXT(EXT_shader_framebuffer_fetch,   false, true,      EXT_shader_framebuffer_fetch),
    EXT(EXT_shader_integer_mix,         true,  true,      EXT_shader_integer_mix),
-   EXT(EXT_shader_texture_lod,         false, true,      ARB_shader_texture_lod),
+   EXT(EXT_shader_texture_lod,         true,  true,      ARB_shader_texture_lod), // BK - made it available in GLSL
    EXT(EXT_shadow_samplers,            false, true,      EXT_shadow_samplers),
    EXT(EXT_texture_array,              true,  true,      EXT_texture_array), // BK - made it available in ESSL
 };
