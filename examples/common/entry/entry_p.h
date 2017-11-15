@@ -177,6 +177,11 @@ namespace entry
 	class EventQueue
 	{
 	public:
+		EventQueue()
+			: m_queue(getAllocator() )
+		{
+		}
+
 		~EventQueue()
 		{
 			for (const Event* ev = poll(); NULL != ev; ev = poll() )
@@ -187,7 +192,7 @@ namespace entry
 
 		void postAxisEvent(WindowHandle _handle, GamepadHandle _gamepad, GamepadAxis::Enum _axis, int32_t _value)
 		{
-			AxisEvent* ev = new AxisEvent(_handle);
+			AxisEvent* ev = BX_NEW(getAllocator(), AxisEvent)(_handle);
 			ev->m_gamepad = _gamepad;
 			ev->m_axis    = _axis;
 			ev->m_value   = _value;
@@ -196,7 +201,7 @@ namespace entry
 
 		void postCharEvent(WindowHandle _handle, uint8_t _len, const uint8_t _char[4])
 		{
-			CharEvent* ev = new CharEvent(_handle);
+			CharEvent* ev = BX_NEW(getAllocator(), CharEvent)(_handle);
 			ev->m_len = _len;
 			bx::memCopy(ev->m_char, _char, 4);
 			m_queue.push(ev);
@@ -204,13 +209,13 @@ namespace entry
 
 		void postExitEvent()
 		{
-			Event* ev = new Event(Event::Exit);
+			Event* ev = BX_NEW(getAllocator(), Event)(Event::Exit);
 			m_queue.push(ev);
 		}
 
 		void postGamepadEvent(WindowHandle _handle, GamepadHandle _gamepad, bool _connected)
 		{
-			GamepadEvent* ev = new GamepadEvent(_handle);
+			GamepadEvent* ev = BX_NEW(getAllocator(), GamepadEvent)(_handle);
 			ev->m_gamepad   = _gamepad;
 			ev->m_connected = _connected;
 			m_queue.push(ev);
@@ -218,7 +223,7 @@ namespace entry
 
 		void postKeyEvent(WindowHandle _handle, Key::Enum _key, uint8_t _modifiers, bool _down)
 		{
-			KeyEvent* ev = new KeyEvent(_handle);
+			KeyEvent* ev = BX_NEW(getAllocator(), KeyEvent)(_handle);
 			ev->m_key       = _key;
 			ev->m_modifiers = _modifiers;
 			ev->m_down      = _down;
@@ -227,7 +232,7 @@ namespace entry
 
 		void postMouseEvent(WindowHandle _handle, int32_t _mx, int32_t _my, int32_t _mz)
 		{
-			MouseEvent* ev = new MouseEvent(_handle);
+			MouseEvent* ev = BX_NEW(getAllocator(), MouseEvent)(_handle);
 			ev->m_mx     = _mx;
 			ev->m_my     = _my;
 			ev->m_mz     = _mz;
@@ -239,7 +244,7 @@ namespace entry
 
 		void postMouseEvent(WindowHandle _handle, int32_t _mx, int32_t _my, int32_t _mz, MouseButton::Enum _button, bool _down)
 		{
-			MouseEvent* ev = new MouseEvent(_handle);
+			MouseEvent* ev = BX_NEW(getAllocator(), MouseEvent)(_handle);
 			ev->m_mx     = _mx;
 			ev->m_my     = _my;
 			ev->m_mz     = _mz;
@@ -251,7 +256,7 @@ namespace entry
 
 		void postSizeEvent(WindowHandle _handle, uint32_t _width, uint32_t _height)
 		{
-			SizeEvent* ev = new SizeEvent(_handle);
+			SizeEvent* ev = BX_NEW(getAllocator(), SizeEvent)(_handle);
 			ev->m_width  = _width;
 			ev->m_height = _height;
 			m_queue.push(ev);
@@ -259,14 +264,14 @@ namespace entry
 
 		void postWindowEvent(WindowHandle _handle, void* _nwh = NULL)
 		{
-			WindowEvent* ev = new WindowEvent(_handle);
+			WindowEvent* ev = BX_NEW(getAllocator(), WindowEvent)(_handle);
 			ev->m_nwh = _nwh;
 			m_queue.push(ev);
 		}
 
 		void postSuspendEvent(WindowHandle _handle, Suspend::Enum _state)
 		{
-			SuspendEvent* ev = new SuspendEvent(_handle);
+			SuspendEvent* ev = BX_NEW(getAllocator(), SuspendEvent)(_handle);
 			ev->m_state = _state;
 			m_queue.push(ev);
 		}
@@ -293,7 +298,7 @@ namespace entry
 
 		void release(const Event* _event) const
 		{
-			delete _event;
+			BX_DELETE(getAllocator(), const_cast<Event*>(_event) );
 		}
 
 	private:
