@@ -388,7 +388,7 @@ typedef struct bgfx_stats
 } bgfx_stats_t;
 
 /**/
-struct bgfx_encoder;
+typedef struct bgfx_encoder bgfx_encoder;
 
 /**/
 typedef struct bgfx_vertex_decl
