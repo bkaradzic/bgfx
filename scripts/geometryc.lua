@@ -37,6 +37,11 @@ project "geometryc"
 			"Cocoa.framework",
 		}
 
+	configuration { "vs20* or mingw*" }
+		links {
+			"psapi",
+		}
+
 	configuration {}
 
 	strip()
