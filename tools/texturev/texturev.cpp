@@ -962,7 +962,7 @@ void associate()
 		bx::stringPrintf(str, "[HKEY_CURRENT_USER\\Software\\Classes\\.%s]\r\n@=\"texturev\"\r\n\r\n", ext);
 	}
 
-	bx::FilePath filePath(bx::TempDir::Tag);
+	bx::FilePath filePath(bx::Dir::Temp);
 	filePath.join("texture.reg");
 
 	bx::FileWriter writer;
