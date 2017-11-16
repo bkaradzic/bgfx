@@ -309,7 +309,8 @@ namespace entry
 	struct Context
 	{
 		Context()
-			: m_scrollPos(0.0)
+			: m_msgs(getAllocator() )
+			, m_scrollPos(0.0f)
 		{
 			bx::memSet(s_translateKey, 0, sizeof(s_translateKey));
 			s_translateKey[GLFW_KEY_ESCAPE]       = Key::Esc;
