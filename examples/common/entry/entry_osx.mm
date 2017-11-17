@@ -103,7 +103,7 @@ namespace entry
 			, m_fullscreen(false)
 		{
 			s_translateKey[27]             = Key::Esc;
-			s_translateKey[uint8_t('\n')]  = Key::Return;
+			s_translateKey[uint8_t('\r')]  = Key::Return;
 			s_translateKey[uint8_t('\t')]  = Key::Tab;
 			s_translateKey[127]            = Key::Backspace;
 			s_translateKey[uint8_t(' ')]   = Key::Space;
