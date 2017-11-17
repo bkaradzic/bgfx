@@ -96,8 +96,6 @@
 <li class="toctree-l3"><a class="reference internal" href="#contact">Contact</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#internals">Internals</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#customization">Customization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#debugging-and-profiling">Debugging and Profiling</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#renderdoc">RenderDoc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#intelgpa">IntelGPA</a></li>
@@ -105,7 +103,6 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#sdl-glfw-etc">SDL, GLFW, etc.</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#todo">Todo</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#getting-involved">Getting Involved</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#contributors">Contributors</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#repository-visualization">Repository visualization</a></li>
@@ -117,6 +114,7 @@
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bgfx.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="internals.html">Internals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
 
@@ -246,47 +244,6 @@ licensed under permissive BSD-2 clause open source license.</p>
 </ul>
 </div></blockquote>
 </div>
-</div>
-<div class="section" id="internals">
-<h2>Internals<a class="headerlink" href="#internals" title="Permalink to this headline">¶</a></h2>
-<p>bgfx is using sort-based draw call bucketing. This means that submission
-order doesn&#8217;t necessarily match the rendering order, but on the
-low-level they will be sorted and ordered correctly. On the high level
-this allows more optimal way of submitting draw calls for all passes at
-one place, and on the low-level this allows better optimization of
-rendering order. This sometimes creates undesired results usually for
-GUI rendering, where draw order should usually match submit order. bgfx
-provides way to enable sequential rendering for these cases (see
-<code class="docutils literal"><span class="pre">bgfx::setViewMode</span></code>).</p>
-<p>Internally all low-level rendering draw calls are issued inside single
-function <code class="docutils literal"><span class="pre">RendererContextI::submit</span></code>. This function exist inside each
-renderer backend implementation.</p>
-<blockquote>
-<div><ul class="simple">
-<li>More detailed description of sort-based draw call bucketing can be found at: <a class="reference external" href="http://realtimecollisiondetection.net/blog/?p=86">Order your graphics draw calls around!</a></li>
-<li>High level overview of bgfx, presented at EclipseCon 2016: <a class="reference external" href="https://www.eclipsecon.org/na2016/session/dark-side-moon-gpu-programming-bgfx-and-eclipse">From the Dark Side of the Moon: GPU Programming with BGFX and Eclipse, Tony McCrary [l33t labs]</a>, Slides: [<a class="reference external" href="https://www.eclipsecon.org/na2016/sites/default/files/slides/FromTheDarkSideOfTheMoon_BGFX.pdf">PDF</a>]</li>
-</ul>
-</div></blockquote>
-</div>
-<div class="section" id="customization">
-<h2>Customization<a class="headerlink" href="#customization" title="Permalink to this headline">¶</a></h2>
-<p>By default each platform has sane default values. For example on Windows
-default renderer is DirectX9, and on Linux it is OpenGL 2.1. On Windows
-platform all rendering backends are available. For OpenGL ES on desktop
-you can find more information at:- <a class="reference external" href="http://www.g-truc.net/post-0457.html">OpenGL ES 2.0 and EGL on
-desktop</a></p>
-<p>If you&#8217;re targeting specific mobile hardware, you can find GLES support
-in their official SDKs: <a class="reference external" href="http://developer.qualcomm.com/mobile-development/mobile-technologies/gaming-graphics-optimization-adreno/tools-and-resources">Adreno
-SDK</a>,
-<a class="reference external" href="http://www.malideveloper.com/">Mali SDK</a>, <a class="reference external" href="http://www.imgtec.com/powervr/insider/sdkdownloads/">PowerVR
-SDK</a>.</p>
-<p>All configuration settings are located inside
-<a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/config.h">src/config.h</a>.</p>
-<p>Every <code class="docutils literal"><span class="pre">BGFX_CONFIG_*</span></code> setting can be changed by passing defines thru
-compiler switches. For example setting preprocessor define
-<code class="docutils literal"><span class="pre">BGFX_CONFIG_RENDERER_OPENGL=1</span></code> will change backend renderer to OpenGL
-2.1. on Windows. Since rendering APIs are platform specific, this
-obviously won&#8217;t work nor make sense in all cases.</p>
 </div>
 <div class="section" id="debugging-and-profiling">
 <h2>Debugging and Profiling<a class="headerlink" href="#debugging-and-profiling" title="Permalink to this headline">¶</a></h2>
@@ -475,18 +432,6 @@ Each platform has rules about where renderer can be and how multithreading inter
 with context/device. To disable multithreaded render use <code class="docutils literal"><span class="pre">BGFX_CONFIG_MULTITHREDED=0</span></code>
 preprocessor define.</p>
 </div>
-</div>
-<div class="section" id="todo">
-<h2>Todo<a class="headerlink" href="#todo" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li>Fullscreen mode.</li>
-<li>ETC2, PVRTC1/2 decoding fallback for targets that don&#8217;t support it
-natively.</li>
-<li>shaderc as library for runtime shader building.</li>
-<li>Multiple vertex streams support.</li>
-<li>Animated mesh example.</li>
-<li>Vulkan renderer backend.</li>
-</ul>
 </div>
 <div class="section" id="getting-involved">
 <h2>Getting Involved<a class="headerlink" href="#getting-involved" title="Permalink to this headline">¶</a></h2>

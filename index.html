@@ -89,6 +89,7 @@
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bgfx.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="internals.html">Internals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
 
@@ -158,8 +159,6 @@ licensed under permissive BSD-2 clause open source license.</p>
 <li class="toctree-l3"><a class="reference internal" href="overview.html#contact">Contact</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="overview.html#internals">Internals</a></li>
-<li class="toctree-l2"><a class="reference internal" href="overview.html#customization">Customization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#debugging-and-profiling">Debugging and Profiling</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="overview.html#renderdoc">RenderDoc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="overview.html#intelgpa">IntelGPA</a></li>
@@ -167,7 +166,6 @@ licensed under permissive BSD-2 clause open source license.</p>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#sdl-glfw-etc">SDL, GLFW, etc.</a></li>
-<li class="toctree-l2"><a class="reference internal" href="overview.html#todo">Todo</a></li>
 <li class="toctree-l2"><a class="reference internal" href="overview.html#getting-involved">Getting Involved</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="overview.html#contributors">Contributors</a></li>
 <li class="toctree-l3"><a class="reference internal" href="overview.html#repository-visualization">Repository visualization</a></li>
@@ -254,26 +252,19 @@ licensed under permissive BSD-2 clause open source license.</p>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="bgfx.html#views">Views</a></li>
-<li class="toctree-l2"><a class="reference internal" href="bgfx.html#draw">Draw</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#state">State</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#buffers">Buffers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#textures">Textures</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#submit">Submit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bgfx.html#encoder">Encoder</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id1">Encoder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#draw">Draw</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#compute">Compute</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#blit">Blit</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="bgfx.html#compute">Compute</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id3">Buffers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#images">Images</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#dispatch">Dispatch</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="bgfx.html#blit">Blit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="bgfx.html#resources">Resources</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#shaders-and-programs">Shaders and Programs</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#uniforms">Uniforms</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#vertex-buffers">Vertex Buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#index-buffers">Index Buffers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#id4">Textures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#textures">Textures</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#frame-buffers">Frame Buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#instance-buffer">Instance Buffer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#indirect-buffer">Indirect Buffer</a></li>
@@ -290,6 +281,18 @@ licensed under permissive BSD-2 clause open source license.</p>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tools.html#texture-compiler-texturec">Texture Compiler (texturec)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tools.html#texture-viewer-texturev">Texture Viewer (texturev)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="internals.html">Internals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#sort-based-draw-call-bucketing">Sort based draw call bucketing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#api-and-render-thread">API and render thread</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#resource-api">Resource API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#view-api">View API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#encoder-api">Encoder API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#customization">Customization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#options">Options</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a><ul>

@@ -114,10 +114,11 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#views">Views</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#draw">Draw</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#state">State</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id1">Debug</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id2">State</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#encoder">Encoder</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Encoder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#draw">Draw</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id2">Debug</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#state">State</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#state-flags">State Flags</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#stencil">Stencil</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#stencil-flags">Stencil Flags</a></li>
@@ -126,24 +127,16 @@
 <li class="toctree-l4"><a class="reference internal" href="#conditional-rendering">Conditional Rendering</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#buffers">Buffers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#textures">Textures</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#submit">Submit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#compute">Compute</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#blit">Blit</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#compute">Compute</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id3">Buffers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#images">Images</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#dispatch">Dispatch</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#blit">Blit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#resources">Resources</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#shaders-and-programs">Shaders and Programs</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#uniforms">Uniforms</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vertex-buffers">Vertex Buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#index-buffers">Index Buffers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id4">Textures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#textures">Textures</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#frame-buffers">Frame Buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#instance-buffer">Instance Buffer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#indirect-buffer">Indirect Buffer</a></li>
@@ -153,6 +146,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="internals.html">Internals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
 
@@ -1197,6 +1191,12 @@
 <dd><p>Maximum number of occlusion query handles. </p>
 </dd></dl>
 
+<dl class="member">
+<dt id="_CPPv2N4bgfx4Caps6Limits11maxEncodersE">
+<span id="bgfx::Caps::Limits::maxEncoders__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1ad8bf1308949450d13fc231179c0d8a2c"></span>uint32_t <code class="descname">maxEncoders</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits11maxEncodersE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of encoder threads. </p>
+</dd></dl>
+
 </div>
 </dd></dl>
 
@@ -1456,8 +1456,20 @@
 
 <dl class="member">
 <dt id="_CPPv2N4bgfx5Stats9viewStatsE">
-<span id="bgfx::Stats::viewStats__ViewStatsA"></span><span class="target" id="bgfxstructbgfx_1_1_stats_1ad11fc40c9a11a9089fa4d671bb7bed91"></span>ViewStats <code class="descname">viewStats</code>[256]<a class="headerlink" href="#_CPPv2N4bgfx5Stats9viewStatsE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::Stats::viewStats__ViewStatsP"></span><span class="target" id="bgfxstructbgfx_1_1_stats_1ae16496ef386b462267436e1bbd3d5f72"></span>ViewStats *<code class="descname">viewStats</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats9viewStatsE" title="Permalink to this definition">¶</a></dt>
 <dd><p>View stats. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx5Stats11numEncodersE">
+<span id="bgfx::Stats::numEncoders__uint8_t"></span><span class="target" id="bgfxstructbgfx_1_1_stats_1a36cd71d8c46eeb0efd677e0783a5f126"></span>uint8_t <code class="descname">numEncoders</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats11numEncodersE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of encoders used during frame. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx5Stats12encoderStatsE">
+<span id="bgfx::Stats::encoderStats__EncoderStatsP"></span><span class="target" id="bgfxstructbgfx_1_1_stats_1abf32715c9e2f41f01545fa0f0f5dd821"></span>EncoderStats *<code class="descname">encoderStats</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats12encoderStatsE" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="#bgfxstructbgfx_1_1_encoder"><span class="std std-ref">Encoder</span></a> stats. </p>
 </dd></dl>
 
 </div>
@@ -2113,12 +2125,10 @@ creating windows.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx5touchE7uint8_t">
-<span id="bgfx::touch__uint8_t"></span><span class="target" id="bgfxnamespacebgfx_1ad618bc888550110ff95d1b78c635e460"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">touch</code><span class="sig-paren">(</span>uint8_t <em>_id</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx5touchE7uint8_t" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::touch__uint8_t"></span><span class="target" id="bgfxnamespacebgfx_1a86f64606ddcd442b41b0cbbff4779eec"></span>void <code class="descclassname">bgfx::</code><code class="descname">touch</code><span class="sig-paren">(</span>uint8_t <em>_id</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx5touchE7uint8_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit an empty primitive for rendering. Uniforms and draw state will be applied but no geometry will be submitted. </p>
 <p>These empty draw calls will sort before ordinary draw calls.</p>
 <p><dl class="docutils">
-<dt><strong>Return</strong></dt>
-<dd>Number of draw calls. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
@@ -2449,7 +2459,7 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <dd><p>Set view sorting mode. </p>
 <p><dl class="docutils">
 <dt><strong>Remark</strong></dt>
-<dd>View mode must be set prior calling <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1aa4b058cface13ced7c67a1dbede8339f"><span class="std std-ref"><span class="pre">bgfx::submit</span></span></a></code> for the view.</dd>
+<dd>View mode must be set prior calling <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a8afb76c5cfbe35602c8544b37b086b07"><span class="std std-ref"><span class="pre">bgfx::submit</span></span></a></code> for the view.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_view_mode</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -2536,14 +2546,963 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 </div>
+<div class="section" id="encoder">
+<h2>Encoder<a class="headerlink" href="#encoder" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h3>Encoder<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>API for multi-threaded submission.</p>
+<dl class="class">
+<dt id="_CPPv2N4bgfx7EncoderE">
+<span id="bgfx::Encoder"></span><span class="target" id="bgfxstructbgfx_1_1_encoder"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">Encoder</code><a class="headerlink" href="#_CPPv2N4bgfx7EncoderE" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="#bgfxstructbgfx_1_1_encoder"><span class="std std-ref">Encoder</span></a> for submitting draw calls from multiple threads. Use <code class="docutils literal"><span class="pre">bgfx::begin()</span></code> to obtain encoder for thread. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder</span></code>. </dd>
+</dl>
+</p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Functions</p>
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder9setMarkerEPKc">
+<span id="bgfx::Encoder::setMarker__cCP"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a29db6cb6d4cabce115dae0f6c8b0be6d"></span>void <code class="descname">setMarker</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>_marker</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder9setMarkerEPKc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets debug marker. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_marker</span></code>. </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder8setStateE8uint64_t8uint32_t">
+<span id="bgfx::Encoder::setState__uint64_t.uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1ae0325e59abbf8628f5e4be92cb886160"></span>void <code class="descname">setState</code><span class="sig-paren">(</span>uint64_t <em>_state</em>, uint32_t <em>_rgba</em> = 0<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder8setStateE8uint64_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set render states for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Remark</strong></dt>
+<dd><ol class="arabic simple">
+<li>To setup more complex states use: <code class="docutils literal"><span class="pre">BGFX_STATE_ALPHA_REF(_ref)</span></code>, <code class="docutils literal"><span class="pre">BGFX_STATE_POINT_SIZE(_size)</span></code>, <code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_FUNC(_src,</span> <span class="pre">_dst)</span></code>, <code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_FUNC_SEPARATE(_srcRGB,</span> <span class="pre">_dstRGB,</span> <span class="pre">_srcA,</span> <span class="pre">_dstA)</span></code> <code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_EQUATION(_equation)</span></code> <code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_EQUATION_SEPARATE(_equationRGB,</span> <span class="pre">_equationA)</span></code></li>
+<li><code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_EQUATION_ADD</span></code> is set when no other blend equation is specified.</li>
+</ol>
+</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_state</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_state</span></code> - <p>State flags. Default state for primitive type is triangles. See: <code class="docutils literal"><span class="pre">BGFX_STATE_DEFAULT</span></code>.<ul class="simple">
+<li><code class="docutils literal"><span class="pre">BGFX_STATE_ALPHA_WRITE</span></code> - Enable alpha write.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_STATE_DEPTH_WRITE</span></code> - Enable depth write.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_STATE_DEPTH_TEST_*</span></code> - Depth test function.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_*</span></code> - See remark 1 about BGFX_STATE_BLEND_FUNC.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_EQUATION_*</span></code> - See remark 2.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_STATE_CULL_*</span></code> - Backface culling mode.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_STATE_RGB_WRITE</span></code> - Enable RGB write.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_STATE_MSAA</span></code> - Enable MSAA.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_STATE_PT_[TRISTRIP/LINES/POINTS]</span></code> - Primitive type.</li>
+</ul>
+</p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_rgba</span></code> - <p>Sets blend factor used by <code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_FACTOR</span></code> and <code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_INV_FACTOR</span></code> blend modes.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder12setConditionE20OcclusionQueryHandleb">
+<span id="bgfx::Encoder::setCondition__OcclusionQueryHandle.b"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1acc5a16a11bcfd00a38983bd8b807eb11"></span>void <code class="descname">setCondition</code><span class="sig-paren">(</span>OcclusionQueryHandle <em>_handle</em>, bool <em>_visible</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder12setConditionE20OcclusionQueryHandleb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set condition for rendering. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_condition</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Occlusion query handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_visible</span></code> - <p>Render if occlusion query is visible.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder10setStencilE8uint32_t8uint32_t">
+<span id="bgfx::Encoder::setStencil__uint32_t.uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a5bf00e5be9ad6cb946cffd519c63b432"></span>void <code class="descname">setStencil</code><span class="sig-paren">(</span>uint32_t <em>_fstencil</em>, uint32_t <em>_bstencil</em> = BGFX_STENCIL_NONE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder10setStencilE8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set stencil test state. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_stencil</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_fstencil</span></code> - <p>Front stencil state. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_bstencil</span></code> - <p>Back stencil state. If back is set to <code class="docutils literal"><span class="pre">BGFX_STENCIL_NONE</span></code> _fstencil is applied to both front and back facing primitives.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder10setScissorE8uint16_t8uint16_t8uint16_t8uint16_t">
+<span id="bgfx::Encoder::setScissor__uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a37472617364a0c6db4f2229bcfe8ea62"></span>uint16_t <code class="descname">setScissor</code><span class="sig-paren">(</span>uint16_t <em>_x</em>, uint16_t <em>_y</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder10setScissorE8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set scissor for draw primitive. For scissor for all primitives in view see <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a3d1b68d9678d716e25795aa3eef2bfe1"><span class="std std-ref"><span class="pre">bgfx::setViewScissor</span></span></a></code>. </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Scissor cache index.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_scissor</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_x</span></code> - <p>Position x from the left corner of the window. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_y</span></code> - <p>Position y from the top corner of the window. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_width</span></code> - <p>Width of scissor region. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Height of scissor region. </p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder10setScissorE8uint16_t">
+<span id="bgfx::Encoder::setScissor__uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a0d4775b75c096869e87072949029f36c"></span>void <code class="descname">setScissor</code><span class="sig-paren">(</span>uint16_t <em>_cache</em> = UINT16_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder10setScissorE8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set scissor from cache for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_scissor_cached</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_cache</span></code> - <p>Index in scissor cache. Passing UINT16_MAX unset primitive scissor and primitive will use view scissor instead.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder12setTransformEPKv8uint16_t">
+<span id="bgfx::Encoder::setTransform__voidCP.uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a429104d3ae2e43ca7f9fecd947427c76"></span>uint32_t <code class="descname">setTransform</code><span class="sig-paren">(</span><em class="property">const</em> void *<em>_mtx</em>, uint16_t <em>_num</em> = 1<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder12setTransformEPKv8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set model matrix for draw primitive. If it is not called model will be rendered with identity model matrix. </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>index into matrix cache in case the same model matrix has to be used for other draw primitive call.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transform</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_mtx</span></code> - <p>Pointer to first matrix in array. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of matrices in array. </p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder14allocTransformEP9Transform8uint16_t">
+<span id="bgfx::Encoder::allocTransform__TransformP.uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1ab9e5be71b42efd0af21d1686eb1c350c"></span>uint32_t <code class="descname">allocTransform</code><span class="sig-paren">(</span>Transform *<em>_transform</em>, uint16_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder14allocTransformEP9Transform8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reserve <code class="docutils literal"><span class="pre">_num</span></code> matrices in internal matrix cache. </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>index into matrix cache.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>Pointer returned can be modifed until <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a7b228b3e83595148e428a248d73480e8"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> is called. </dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_alloc_transform</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_transform</span></code> - <p>Pointer to <code class="docutils literal"><span class="pre">Transform</span></code> structure. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of matrices. </p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder12setTransformE8uint32_t8uint16_t">
+<span id="bgfx::Encoder::setTransform__uint32_t.uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1ac998aeaafffec67a147d158f68333f67"></span>void <code class="descname">setTransform</code><span class="sig-paren">(</span>uint32_t <em>_cache</em>, uint16_t <em>_num</em> = 1<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder12setTransformE8uint32_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set model matrix from matrix cache for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transform_cached</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_cache</span></code> - <p>Index in matrix cache. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of matrices from cache.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder10setUniformE13UniformHandlePKv8uint16_t">
+<span id="bgfx::Encoder::setUniform__UniformHandle.voidCP.uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a0cb3b27753bbbfd722344d47023de07e"></span>void <code class="descname">setUniform</code><span class="sig-paren">(</span>UniformHandle <em>_handle</em>, <em class="property">const</em> void *<em>_value</em>, uint16_t <em>_num</em> = 1<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder10setUniformE13UniformHandlePKv8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set shader uniform parameter for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_uniform</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Uniform. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_value</span></code> - <p>Pointer to uniform data. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of elements. Passing <code class="docutils literal"><span class="pre">UINT16_MAX</span></code> will use the _num passed on uniform creation.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder14setIndexBufferE17IndexBufferHandle">
+<span id="bgfx::Encoder::setIndexBuffer__IndexBufferHandle"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a29b6203c38cfe6faf584d5dc458a24dc"></span>void <code class="descname">setIndexBuffer</code><span class="sig-paren">(</span>IndexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder14setIndexBufferE17IndexBufferHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set index buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_index_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Index buffer.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder14setIndexBufferE17IndexBufferHandle8uint32_t8uint32_t">
+<span id="bgfx::Encoder::setIndexBuffer__IndexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1ae89b8f384c1fa58345b8e0d6d4c6d5dd"></span>void <code class="descname">setIndexBuffer</code><span class="sig-paren">(</span>IndexBufferHandle <em>_handle</em>, uint32_t <em>_firstIndex</em>, uint32_t <em>_numIndices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder14setIndexBufferE17IndexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set index buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_index_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Index buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_firstIndex</span></code> - <p>First index to render. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_numIndices</span></code> - <p>Number of indices to render.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder14setIndexBufferE24DynamicIndexBufferHandle">
+<span id="bgfx::Encoder::setIndexBuffer__DynamicIndexBufferHandle"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1aeb7869c500e780b84de6342bd2b70ae0"></span>void <code class="descname">setIndexBuffer</code><span class="sig-paren">(</span>DynamicIndexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder14setIndexBufferE24DynamicIndexBufferHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set index buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_dynamic_index_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Dynamic index buffer.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder14setIndexBufferE24DynamicIndexBufferHandle8uint32_t8uint32_t">
+<span id="bgfx::Encoder::setIndexBuffer__DynamicIndexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1aff23b1df245c0bf5400bb5b9609a75a1"></span>void <code class="descname">setIndexBuffer</code><span class="sig-paren">(</span>DynamicIndexBufferHandle <em>_handle</em>, uint32_t <em>_firstIndex</em>, uint32_t <em>_numIndices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder14setIndexBufferE24DynamicIndexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set index buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_dynamic_index_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Dynamic index buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_firstIndex</span></code> - <p>First index to render. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_numIndices</span></code> - <p>Number of indices to render.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder14setIndexBufferEPK20TransientIndexBuffer">
+<span id="bgfx::Encoder::setIndexBuffer__TransientIndexBufferCP"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a111617d3f649d957be50b91079a9c052"></span>void <code class="descname">setIndexBuffer</code><span class="sig-paren">(</span><em class="property">const</em> TransientIndexBuffer *<em>_tib</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder14setIndexBufferEPK20TransientIndexBuffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set index buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Remark</strong></dt>
+<dd>_tib pointer after this call is invalid.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transient_index_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_tib</span></code> - <p>Transient index buffer.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder14setIndexBufferEPK20TransientIndexBuffer8uint32_t8uint32_t">
+<span id="bgfx::Encoder::setIndexBuffer__TransientIndexBufferCP.uint32_t.uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a2a2273ecc04472bd1c6fe9c0c05e530f"></span>void <code class="descname">setIndexBuffer</code><span class="sig-paren">(</span><em class="property">const</em> TransientIndexBuffer *<em>_tib</em>, uint32_t <em>_firstIndex</em>, uint32_t <em>_numIndices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder14setIndexBufferEPK20TransientIndexBuffer8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set index buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Remark</strong></dt>
+<dd>_tib pointer after this call is invalid.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transient_index_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_tib</span></code> - <p>Transient index buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_firstIndex</span></code> - <p>First index to render. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_numIndices</span></code> - <p>Number of indices to render.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t18VertexBufferHandle">
+<span id="bgfx::Encoder::setVertexBuffer__uint8_t.VertexBufferHandle"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a7187107e8a5f8daa48a97482582f66c1"></span>void <code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, VertexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t18VertexBufferHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set vertex buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_vertex_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_stream</span></code> - <p>Vertex stream. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Vertex buffer.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t">
+<span id="bgfx::Encoder::setVertexBuffer__uint8_t.VertexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1aa72e2d3343575591c2d4bfcf6e002a73"></span>void <code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, VertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set vertex buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_vertex_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_stream</span></code> - <p>Vertex stream. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Vertex buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_startVertex</span></code> - <p>First vertex to render. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_numVertices</span></code> - <p>Number of vertices to render.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t25DynamicVertexBufferHandle">
+<span id="bgfx::Encoder::setVertexBuffer__uint8_t.DynamicVertexBufferHandle"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a85c20c041e5dca255f058aa91e434bc9"></span>void <code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, DynamicVertexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t25DynamicVertexBufferHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set vertex buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_dynamic_vertex_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_stream</span></code> - <p>Vertex stream. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Dynamic vertex buffer.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t">
+<span id="bgfx::Encoder::setVertexBuffer__uint8_t.DynamicVertexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a3f2a49c7879a7b56e8606ca289c367e1"></span>void <code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, DynamicVertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set vertex buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_dynamic_vertex_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_stream</span></code> - <p>Vertex stream. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Dynamic vertex buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_startVertex</span></code> - <p>First vertex to render. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_numVertices</span></code> - <p>Number of vertices to render.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_tPK21TransientVertexBuffer">
+<span id="bgfx::Encoder::setVertexBuffer__uint8_t.TransientVertexBufferCP"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a4d17b54519e2a8c8c2a806368df50080"></span>void <code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, <em class="property">const</em> TransientVertexBuffer *<em>_tvb</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_tPK21TransientVertexBuffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set vertex buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Remark</strong></dt>
+<dd>_tvb pointer after this call is invalid.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transient_vertex_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_stream</span></code> - <p>Vertex stream. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_tvb</span></code> - <p>Transient vertex buffer.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t">
+<span id="bgfx::Encoder::setVertexBuffer__uint8_t.TransientVertexBufferCP.uint32_t.uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a6dd809b31661588edb32dcf0f5d3c61b"></span>void <code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, <em class="property">const</em> TransientVertexBuffer *<em>_tvb</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set vertex buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Remark</strong></dt>
+<dd>_tvb pointer after this call is invalid.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transient_vertex_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_stream</span></code> - <p>Vertex stream. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_tvb</span></code> - <p>Transient vertex buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_startVertex</span></code> - <p>First vertex to render. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_numVertices</span></code> - <p>Number of vertices to render.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder21setInstanceDataBufferEPK18InstanceDataBuffer8uint32_t">
+<span id="bgfx::Encoder::setInstanceDataBuffer__InstanceDataBufferCP.uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a9cf7e46a5705a52a0b2d7f41e0bd9ad4"></span>void <code class="descname">setInstanceDataBuffer</code><span class="sig-paren">(</span><em class="property">const</em> InstanceDataBuffer *<em>_idb</em>, uint32_t <em>_num</em> = UINT32_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder21setInstanceDataBufferEPK18InstanceDataBuffer8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set instance data buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Remark</strong></dt>
+<dd>_idb pointer after this call is invalid.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_instance_data_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_idb</span></code> - <p>Transient instance data buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of data instances.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder21setInstanceDataBufferE18VertexBufferHandle8uint32_t8uint32_t">
+<span id="bgfx::Encoder::setInstanceDataBuffer__VertexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a67c4f46964ff32c170699939158434c5"></span>void <code class="descname">setInstanceDataBuffer</code><span class="sig-paren">(</span>VertexBufferHandle <em>_handle</em>, uint32_t <em>_start</em>, uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder21setInstanceDataBufferE18VertexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set instance data buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_instance_data_from_vertex_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Vertex buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_start</span></code> - <p>First instance data. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of data instances.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder21setInstanceDataBufferE25DynamicVertexBufferHandle8uint32_t8uint32_t">
+<span id="bgfx::Encoder::setInstanceDataBuffer__DynamicVertexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1af7464e8909bd5aa11811151c0650e56d"></span>void <code class="descname">setInstanceDataBuffer</code><span class="sig-paren">(</span>DynamicVertexBufferHandle <em>_handle</em>, uint32_t <em>_start</em>, uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder21setInstanceDataBufferE25DynamicVertexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set instance data buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_instance_data_from_dynamic_vertex_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Vertex buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_start</span></code> - <p>First instance data. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of data instances.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder10setTextureE7uint8_t13UniformHandle13TextureHandle8uint32_t">
+<span id="bgfx::Encoder::setTexture__uint8_t.UniformHandle.TextureHandle.uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1ababcdc9b1bf89fe863573c5629c1ea31"></span>void <code class="descname">setTexture</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, UniformHandle <em>_sampler</em>, TextureHandle <em>_handle</em>, uint32_t <em>_flags</em> = UINT32_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder10setTextureE7uint8_t13UniformHandle13TextureHandle8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set texture stage for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_texture</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_stage</span></code> - <p>Texture unit. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_sampler</span></code> - <p>Program sampler. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Texture handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p>Texture sampling mode. Default value UINT32_MAX uses texture sampling settings from the texture.<ul class="simple">
+<li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]</span></code> - Point or anisotropic sampling.</li>
+</ul>
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder5touchE7uint8_t">
+<span id="bgfx::Encoder::touch__uint8_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a5465d28eec7ade59b8c667477c26a683"></span>void <code class="descname">touch</code><span class="sig-paren">(</span>uint8_t <em>_id</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder5touchE7uint8_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Submit an empty primitive for rendering. Uniforms and draw state will be applied but no geometry will be submitted. </p>
+<p>These empty draw calls will sort before ordinary draw calls.</p>
+<p><dl class="docutils">
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder6submitE7uint8_t13ProgramHandle7int32_tb">
+<span id="bgfx::Encoder::submit__uint8_t.ProgramHandle.int32_t.b"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1aa84fe310a11fa029da7b1374a1e5118d"></span>void <code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder6submitE7uint8_t13ProgramHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Submit primitive for rendering. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_submit</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_program</span></code> - <p>Program. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>Depth for sorting. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_preserveState</span></code> - <p>Preserve internal draw state for next draw call submit.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder6submitE7uint8_t13ProgramHandle20OcclusionQueryHandle7int32_tb">
+<span id="bgfx::Encoder::submit__uint8_t.ProgramHandle.OcclusionQueryHandle.int32_t.b"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a2f810bd065b655af8cc33110f1e9189e"></span>void <code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, OcclusionQueryHandle <em>_occlusionQuery</em>, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder6submitE7uint8_t13ProgramHandle20OcclusionQueryHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Submit primitive with occlusion query for rendering. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_submit_occlusion_query</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_program</span></code> - <p>Program. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_occlusionQuery</span></code> - <p>Occlusion query. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>Depth for sorting. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_preserveState</span></code> - <p>Preserve internal draw state for next draw call submit.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder6submitE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_tb">
+<span id="bgfx::Encoder::submit__uint8_t.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.int32_t.b"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a6d041fd366e9d842858e23b387ad499c"></span>void <code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder6submitE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_tb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Submit primitive for rendering with index and instance data info from indirect buffer. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_submit_indirect</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_program</span></code> - <p>Program. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_indirectHandle</span></code> - <p>Indirect buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_start</span></code> - <p>First element in indirect buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of dispatches. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>Depth for sorting. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_preserveState</span></code> - <p>Preserve internal draw state for next draw call submit.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder9setBufferE7uint8_t17IndexBufferHandleN6Access4EnumE">
+<span id="bgfx::Encoder::setBuffer__uint8_t.IndexBufferHandle.Access::Enum"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1abbcd6de6e5e97a7fe957eda92ad0822f"></span>void <code class="descname">setBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, IndexBufferHandle <em>_handle</em>, <a class="reference internal" href="#_CPPv2N4bgfx6AccessE" title="bgfx::Access">Access</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Access4EnumE" title="bgfx::Access::Enum">Enum</a> <em>_access</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder9setBufferE7uint8_t17IndexBufferHandleN6Access4EnumE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set compute index buffer. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_compute_index_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_stage</span></code> - <p>Compute stage. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Index buffer handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Buffer access. See <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180"><span class="std std-ref"><span class="pre">Access::Enum</span></span></a></code>.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder9setBufferE7uint8_t18VertexBufferHandleN6Access4EnumE">
+<span id="bgfx::Encoder::setBuffer__uint8_t.VertexBufferHandle.Access::Enum"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a5f7f342edc7994cd4d3bc490bc2fd871"></span>void <code class="descname">setBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, VertexBufferHandle <em>_handle</em>, <a class="reference internal" href="#_CPPv2N4bgfx6AccessE" title="bgfx::Access">Access</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Access4EnumE" title="bgfx::Access::Enum">Enum</a> <em>_access</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder9setBufferE7uint8_t18VertexBufferHandleN6Access4EnumE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set compute vertex buffer. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_compute_vertex_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_stage</span></code> - <p>Compute stage. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Vertex buffer handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Buffer access. See <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180"><span class="std std-ref"><span class="pre">Access::Enum</span></span></a></code>.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder9setBufferE7uint8_t24DynamicIndexBufferHandleN6Access4EnumE">
+<span id="bgfx::Encoder::setBuffer__uint8_t.DynamicIndexBufferHandle.Access::Enum"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1ac33eb79ca4276af07beeed8814d4cf8c"></span>void <code class="descname">setBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, DynamicIndexBufferHandle <em>_handle</em>, <a class="reference internal" href="#_CPPv2N4bgfx6AccessE" title="bgfx::Access">Access</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Access4EnumE" title="bgfx::Access::Enum">Enum</a> <em>_access</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder9setBufferE7uint8_t24DynamicIndexBufferHandleN6Access4EnumE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set compute dynamic index buffer. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_compute_dynamic_index_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_stage</span></code> - <p>Compute stage. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Dynamic index buffer handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Buffer access. See <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180"><span class="std std-ref"><span class="pre">Access::Enum</span></span></a></code>.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder9setBufferE7uint8_t25DynamicVertexBufferHandleN6Access4EnumE">
+<span id="bgfx::Encoder::setBuffer__uint8_t.DynamicVertexBufferHandle.Access::Enum"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a0a7b96ce730a411113f8701b2773df2c"></span>void <code class="descname">setBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, DynamicVertexBufferHandle <em>_handle</em>, <a class="reference internal" href="#_CPPv2N4bgfx6AccessE" title="bgfx::Access">Access</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Access4EnumE" title="bgfx::Access::Enum">Enum</a> <em>_access</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder9setBufferE7uint8_t25DynamicVertexBufferHandleN6Access4EnumE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set compute dynamic vertex buffer. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_compute_dynamic_vertex_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_stage</span></code> - <p>Compute stage. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Dynamic vertex buffer handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Buffer access. See <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180"><span class="std std-ref"><span class="pre">Access::Enum</span></span></a></code>.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder9setBufferE7uint8_t20IndirectBufferHandleN6Access4EnumE">
+<span id="bgfx::Encoder::setBuffer__uint8_t.IndirectBufferHandle.Access::Enum"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a0b796ad4a8fdadaf1128f76d132f1d15"></span>void <code class="descname">setBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, IndirectBufferHandle <em>_handle</em>, <a class="reference internal" href="#_CPPv2N4bgfx6AccessE" title="bgfx::Access">Access</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Access4EnumE" title="bgfx::Access::Enum">Enum</a> <em>_access</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder9setBufferE7uint8_t20IndirectBufferHandleN6Access4EnumE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set compute indirect buffer. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_compute_indirect_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_stage</span></code> - <p>Compute stage. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Indirect buffer handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Buffer access. See <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180"><span class="std std-ref"><span class="pre">Access::Enum</span></span></a></code>.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder8setImageE7uint8_t13UniformHandle13TextureHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE">
+<span id="bgfx::Encoder::setImage__uint8_t.UniformHandle.TextureHandle.uint8_t.Access::Enum.TextureFormat::Enum"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1aab6644ec7e5d5d2a58d13b410065677f"></span>void <code class="descname">setImage</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, UniformHandle <em>_sampler</em>, TextureHandle <em>_handle</em>, uint8_t <em>_mip</em>, <a class="reference internal" href="#_CPPv2N4bgfx6AccessE" title="bgfx::Access">Access</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Access4EnumE" title="bgfx::Access::Enum">Enum</a> <em>_access</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em> = TextureFormat::Count<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder8setImageE7uint8_t13UniformHandle13TextureHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set compute image from texture. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_image</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_stage</span></code> - <p>Texture unit. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_sampler</span></code> - <p>Program sampler. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Texture handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_mip</span></code> - <p>Mip level. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_access</span></code> - <p>Texture access. See <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180"><span class="std std-ref"><span class="pre">Access::Enum</span></span></a></code>. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_format</span></code> - <p>Texture format. See: <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span class="std std-ref"><span class="pre">TextureFormat::Enum</span></span></a></code>.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder8dispatchE7uint8_t13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t">
+<span id="bgfx::Encoder::dispatch__uint8_t.ProgramHandle.uint32_t.uint32_t.uint32_t.uint8_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a89fb54471d04918ee3f0dd30a357a069"></span>void <code class="descname">dispatch</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_handle</em>, uint32_t <em>_numX</em> = 1, uint32_t <em>_numY</em> = 1, uint32_t <em>_numZ</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder8dispatchE7uint8_t13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dispatch compute. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_dispatch</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Compute program. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_numX</span></code> - <p>Number of groups X. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_numY</span></code> - <p>Number of groups Y. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_numZ</span></code> - <p>Number of groups Z. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p>View flags. Use<ul class="simple">
+<li><code class="docutils literal"><span class="pre">BGFX_VIEW_NONE</span></code> - View will be rendered only once if stereo mode is enabled.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_VIEW_STEREO</span></code> - View will be rendered for both eyes if stereo mode is enabled. When stereo mode is disabled this flag doesn&#8217;t have effect.</li>
+</ul>
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder8dispatchE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t">
+<span id="bgfx::Encoder::dispatch__uint8_t.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.uint8_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1ab1ad5e7586977a89288a659343e050d4"></span>void <code class="descname">dispatch</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_handle</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder8dispatchE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dispatch compute indirect. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_dispatch_indirect</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Compute program. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_indirectHandle</span></code> - <p>Indirect buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_start</span></code> - <p>First element in indirect buffer. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_num</span></code> - <p>Number of dispatches. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_flags</span></code> - <p>View flags. Use<ul class="simple">
+<li><code class="docutils literal"><span class="pre">BGFX_VIEW_NONE</span></code> - View will be rendered only once if stereo mode is enabled.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_VIEW_STEREO</span></code> - View will be rendered for both eyes if stereo mode is enabled. When stereo mode is disabled this flag doesn&#8217;t have effect.</li>
+</ul>
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder7discardEv">
+<span id="bgfx::Encoder::discard"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1adc633c7153e2da26c9449b2f37b3d60f"></span>void <code class="descname">discard</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder7discardEv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Discard all previously set state for draw or compute call. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_discard</span></code>. </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder4blitE7uint8_t13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t">
+<span id="bgfx::Encoder::blit__uint8_t.TextureHandle.uint16_t.uint16_t.TextureHandle.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1ac50aec9f28b70b791b712b74fa3a475c"></span>void <code class="descname">blit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, TextureHandle <em>_dst</em>, uint16_t <em>_dstX</em>, uint16_t <em>_dstY</em>, TextureHandle <em>_src</em>, uint16_t <em>_srcX</em> = 0, uint16_t <em>_srcY</em> = 0, uint16_t <em>_width</em> = UINT16_MAX, uint16_t <em>_height</em> = UINT16_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder4blitE7uint8_t13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blit texture 2D region between two 2D textures. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>Destination texture must be create with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_BLIT_DST</span></code> flag. </dd>
+<dt><strong>Attention</strong></dt>
+<dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_BLIT</span></code>. </dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_blit</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dst</span></code> - <p>Destination texture handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstX</span></code> - <p>Destination texture X position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstY</span></code> - <p>Destination texture Y position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_src</span></code> - <p>Source texture handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcX</span></code> - <p>Source texture X position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcY</span></code> - <p>Source texture Y position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_width</span></code> - <p>Width of region. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Height of region.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder4blitE7uint8_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t">
+<span id="bgfx::Encoder::blit__uint8_t.TextureHandle.uint8_t.uint16_t.uint16_t.uint16_t.TextureHandle.uint8_t.uint16_t.uint16_t.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a99478493345fea9480f522792c432a43"></span>void <code class="descname">blit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, TextureHandle <em>_dst</em>, uint8_t <em>_dstMip</em>, uint16_t <em>_dstX</em>, uint16_t <em>_dstY</em>, uint16_t <em>_dstZ</em>, TextureHandle <em>_src</em>, uint8_t <em>_srcMip</em> = 0, uint16_t <em>_srcX</em> = 0, uint16_t <em>_srcY</em> = 0, uint16_t <em>_srcZ</em> = 0, uint16_t <em>_width</em> = UINT16_MAX, uint16_t <em>_height</em> = UINT16_MAX, uint16_t <em>_depth</em> = UINT16_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder4blitE7uint8_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blit texture region between two textures. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>Destination texture must be create with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_BLIT_DST</span></code> flag. </dd>
+<dt><strong>Attention</strong></dt>
+<dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_BLIT</span></code>. </dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_blit</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_id</span></code> - <p>View id. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dst</span></code> - <p>Destination texture handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstMip</span></code> - <p>Destination texture mip level. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstX</span></code> - <p>Destination texture X position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstY</span></code> - <p>Destination texture Y position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_dstZ</span></code> - <p>If texture is 2D this argument should be 0. If destination texture is cube this argument represent destination texture cube face. For 3D texture this argument represent destination texture Z position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_src</span></code> - <p>Source texture handle. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcMip</span></code> - <p>Source texture mip level. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcX</span></code> - <p>Source texture X position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcY</span></code> - <p>Source texture Y position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_srcZ</span></code> - <p>If texture is 2D this argument should be 0. If source texture is cube this argument represent source texture cube face. For 3D texture this argument represent source texture Z position. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_width</span></code> - <p>Width of region. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Height of region. </p>
+</li>
+<li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>If texture is 3D this argument represent depth of region, otherwise is unused.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</div>
 <div class="section" id="draw">
-<h2>Draw<a class="headerlink" href="#draw" title="Permalink to this headline">¶</a></h2>
+<h3>Draw<a class="headerlink" href="#draw" title="Permalink to this headline">¶</a></h3>
 <p>Draw state is not preserved between two draw calls. All state is cleared after calling
 <cite>bgfx::submit</cite>.</p>
-<div class="section" id="state">
-<h3>State<a class="headerlink" href="#state" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="id1">
-<h4>Debug<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id2">
+<h4>Debug<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
 <dt id="_CPPv2N4bgfx9setMarkerEPKc">
 <span id="bgfx::setMarker__cCP"></span><span class="target" id="bgfxnamespacebgfx_1a826b5408b0fe0e104625e179e115576b"></span>void <code class="descclassname">bgfx::</code><code class="descname">setMarker</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>_marker</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx9setMarkerEPKc" title="Permalink to this definition">¶</a></dt>
@@ -2594,8 +3553,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 </div>
-<div class="section" id="id2">
-<h4>State<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="state">
+<h4>State<a class="headerlink" href="#state" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
 <dt id="_CPPv2N4bgfx8setStateE8uint64_t8uint32_t">
 <span id="bgfx::setState__uint64_t.uint32_t"></span><span class="target" id="bgfxnamespacebgfx_1a3e5edf50886f88e8f022e18a3e53ba4d"></span>void <code class="descclassname">bgfx::</code><code class="descname">setState</code><span class="sig-paren">(</span>uint64_t <em>_state</em>, uint32_t <em>_rgba</em> = 0<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8setStateE8uint64_t8uint32_t" title="Permalink to this definition">¶</a></dt>
@@ -2826,10 +3785,6 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
-</div>
-</div>
-<div class="section" id="buffers">
-<h3>Buffers<a class="headerlink" href="#buffers" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="_CPPv2N4bgfx14setIndexBufferE17IndexBufferHandle">
 <span id="bgfx::setIndexBuffer__IndexBufferHandle"></span><span class="target" id="bgfxnamespacebgfx_1a788bf7feee1fd76127e628fcc0e879d4"></span>void <code class="descclassname">bgfx::</code><code class="descname">setIndexBuffer</code><span class="sig-paren">(</span>IndexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14setIndexBufferE17IndexBufferHandle" title="Permalink to this definition">¶</a></dt>
@@ -3141,9 +4096,6 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
-</div>
-<div class="section" id="textures">
-<h3>Textures<a class="headerlink" href="#textures" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="_CPPv2N4bgfx10setTextureE7uint8_t13UniformHandle13TextureHandle8uint32_t">
 <span id="bgfx::setTexture__uint8_t.UniformHandle.TextureHandle.uint32_t"></span><span class="target" id="bgfxnamespacebgfx_1a62ed3fb0f144798a2a8ba2e19d0e2dc0"></span>void <code class="descclassname">bgfx::</code><code class="descname">setTexture</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, UniformHandle <em>_sampler</em>, TextureHandle <em>_handle</em>, uint32_t <em>_flags</em> = UINT32_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx10setTextureE7uint8_t13UniformHandle13TextureHandle8uint32_t" title="Permalink to this definition">¶</a></dt>
@@ -3171,17 +4123,12 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
-</div>
-<div class="section" id="submit">
-<h3>Submit<a class="headerlink" href="#submit" title="Permalink to this headline">¶</a></h3>
 <p>Within view all draw commands are executed after blit and compute commands.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle7int32_tb">
-<span id="bgfx::submit__uint8_t.ProgramHandle.int32_t.b"></span><span class="target" id="bgfxnamespacebgfx_1aa4b058cface13ced7c67a1dbede8339f"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::submit__uint8_t.ProgramHandle.int32_t.b"></span><span class="target" id="bgfxnamespacebgfx_1a8afb76c5cfbe35602c8544b37b086b07"></span>void <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit primitive for rendering. </p>
 <p><dl class="docutils">
-<dt><strong>Return</strong></dt>
-<dd>Number of draw calls.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_submit</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -3192,7 +4139,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>Depth for sorting. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_preserveState</span></code> - <p>Preserve internal draw state for next draw call submit. </p>
+<li><code class="first docutils literal"><span class="pre">_preserveState</span></code> - <p>Preserve internal draw state for next draw call submit.</p>
 </li>
 </ul>
 </dd>
@@ -3202,11 +4149,9 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20OcclusionQueryHandle7int32_tb">
-<span id="bgfx::submit__uint8_t.ProgramHandle.OcclusionQueryHandle.int32_t.b"></span><span class="target" id="bgfxnamespacebgfx_1af24217fa4ff9afea227dc03f73ee8f63"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, OcclusionQueryHandle <em>_occlusionQuery</em>, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20OcclusionQueryHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::submit__uint8_t.ProgramHandle.OcclusionQueryHandle.int32_t.b"></span><span class="target" id="bgfxnamespacebgfx_1a7b00aefd0c648fd755b55c42b5011f0d"></span>void <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, OcclusionQueryHandle <em>_occlusionQuery</em>, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20OcclusionQueryHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit primitive with occlusion query for rendering. </p>
 <p><dl class="docutils">
-<dt><strong>Return</strong></dt>
-<dd>Number of draw calls.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_submit_occlusion_query</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -3219,7 +4164,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>Depth for sorting. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_preserveState</span></code> - <p>Preserve internal draw state for next draw call submit. </p>
+<li><code class="first docutils literal"><span class="pre">_preserveState</span></code> - <p>Preserve internal draw state for next draw call submit.</p>
 </li>
 </ul>
 </dd>
@@ -3229,11 +4174,9 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_tb">
-<span id="bgfx::submit__uint8_t.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.int32_t.b"></span><span class="target" id="bgfxnamespacebgfx_1ade90dc0d315e5314e10ba415a7621584"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_tb" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::submit__uint8_t.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.int32_t.b"></span><span class="target" id="bgfxnamespacebgfx_1a1dc995ee482a25ceccaeb7a05ea81bae"></span>void <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_tb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit primitive for rendering with index and instance data info from indirect buffer. </p>
 <p><dl class="docutils">
-<dt><strong>Return</strong></dt>
-<dd>Number of draw calls.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_submit_indirect</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -3250,7 +4193,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>Depth for sorting. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_preserveState</span></code> - <p>Preserve internal draw state for next draw call submit. </p>
+<li><code class="first docutils literal"><span class="pre">_preserveState</span></code> - <p>Preserve internal draw state for next draw call submit.</p>
 </li>
 </ul>
 </dd>
@@ -3261,11 +4204,9 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </div>
 </div>
 <div class="section" id="compute">
-<h2>Compute<a class="headerlink" href="#compute" title="Permalink to this headline">¶</a></h2>
+<h3>Compute<a class="headerlink" href="#compute" title="Permalink to this headline">¶</a></h3>
 <p>Compute state is not preserved between two compute dispatches. All state is cleared after calling
 <cite>bgfx::dispatch</cite>.</p>
-<div class="section" id="id3">
-<h3>Buffers<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="_CPPv2N4bgfx6AccessE">
 <span id="bgfx::Access"></span><span class="target" id="bgfxstructbgfx_1_1_access"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">Access</code><a class="headerlink" href="#_CPPv2N4bgfx6AccessE" title="Permalink to this definition">¶</a></dt>
@@ -3415,9 +4356,6 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
-</div>
-<div class="section" id="images">
-<h3>Images<a class="headerlink" href="#images" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="_CPPv2N4bgfx8setImageE7uint8_t13UniformHandle13TextureHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE">
 <span id="bgfx::setImage__uint8_t.UniformHandle.TextureHandle.uint8_t.Access::Enum.TextureFormat::Enum"></span><span class="target" id="bgfxnamespacebgfx_1ad8db33907881ef115e47ef9702c25f4d"></span>void <code class="descclassname">bgfx::</code><code class="descname">setImage</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, UniformHandle <em>_sampler</em>, TextureHandle <em>_handle</em>, uint8_t <em>_mip</em>, <a class="reference internal" href="#_CPPv2N4bgfx6AccessE" title="bgfx::Access">Access</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Access4EnumE" title="bgfx::Access::Enum">Enum</a> <em>_access</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em> = TextureFormat::Count<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8setImageE7uint8_t13UniformHandle13TextureHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
@@ -3445,13 +4383,10 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
-</div>
-<div class="section" id="dispatch">
-<h3>Dispatch<a class="headerlink" href="#dispatch" title="Permalink to this headline">¶</a></h3>
 <p>Within view all compute commands are dispatched after blit commands, and before draw commands.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx8dispatchE7uint8_t13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t">
-<span id="bgfx::dispatch__uint8_t.ProgramHandle.uint32_t.uint32_t.uint32_t.uint8_t"></span><span class="target" id="bgfxnamespacebgfx_1ab10241281c12400fa4ad863336912f74"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">dispatch</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_handle</em>, uint32_t <em>_numX</em> = 1, uint32_t <em>_numY</em> = 1, uint32_t <em>_numZ</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8dispatchE7uint8_t13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::dispatch__uint8_t.ProgramHandle.uint32_t.uint32_t.uint32_t.uint8_t"></span><span class="target" id="bgfxnamespacebgfx_1a6abadd66a78896ec5297bfa4fb40a197"></span>void <code class="descclassname">bgfx::</code><code class="descname">dispatch</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_handle</em>, uint32_t <em>_numX</em> = 1, uint32_t <em>_numY</em> = 1, uint32_t <em>_numZ</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8dispatchE7uint8_t13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dispatch compute. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3482,7 +4417,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx8dispatchE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t">
-<span id="bgfx::dispatch__uint8_t.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.uint8_t"></span><span class="target" id="bgfxnamespacebgfx_1ad5cf95158eedbf8f164cb67a87e06c75"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">dispatch</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_handle</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8dispatchE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::dispatch__uint8_t.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.uint8_t"></span><span class="target" id="bgfxnamespacebgfx_1a4a5341a7ea92338c183209a051c9b71a"></span>void <code class="descclassname">bgfx::</code><code class="descname">dispatch</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_handle</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8dispatchE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dispatch compute indirect. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3512,9 +4447,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 </div>
-</div>
 <div class="section" id="blit">
-<h2>Blit<a class="headerlink" href="#blit" title="Permalink to this headline">¶</a></h2>
+<h3>Blit<a class="headerlink" href="#blit" title="Permalink to this headline">¶</a></h3>
 <p>Within view all blit commands are executed before compute, and draw commands.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx4blitE7uint8_t13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t">
@@ -3600,6 +4534,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
+</div>
 </div>
 <div class="section" id="resources">
 <h2>Resources<a class="headerlink" href="#resources" title="Permalink to this headline">¶</a></h2>
@@ -4574,8 +5509,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="id4">
-<h3>Textures<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="textures">
+<h3>Textures<a class="headerlink" href="#textures" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="_CPPv2N4bgfx13TextureFormatE">
 <span id="bgfx::TextureFormat"></span><span class="target" id="bgfxstructbgfx_1_1_texture_format"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">TextureFormat</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormatE" title="Permalink to this definition">¶</a></dt>
