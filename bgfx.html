@@ -2551,10 +2551,22 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <div class="section" id="id1">
 <h3>Encoder<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <p>API for multi-threaded submission.</p>
+<dl class="function">
+<dt id="_CPPv2N4bgfx5beginEv">
+<span id="bgfx::begin"></span><span class="target" id="bgfxnamespacebgfx_1ad9800f61a086fe35076e141c1198fc80"></span><a class="reference internal" href="#_CPPv2N4bgfx7EncoderE" title="bgfx::Encoder">Encoder</a> *<code class="descclassname">bgfx::</code><code class="descname">begin</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx5beginEv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Begin submitting draw calls from thread. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx3endEP7Encoder">
+<span id="bgfx::end__EncoderP"></span><span class="target" id="bgfxnamespacebgfx_1aa107fa4aeb1da2eb1f8984fd6b4aa195"></span>void <code class="descclassname">bgfx::</code><code class="descname">end</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv2N4bgfx7EncoderE" title="bgfx::Encoder">Encoder</a> *<em>_encoder</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx3endEP7Encoder" title="Permalink to this definition">¶</a></dt>
+<dd><p>End submitting draw calls from thread. </p>
+</dd></dl>
+
 <dl class="class">
 <dt id="_CPPv2N4bgfx7EncoderE">
 <span id="bgfx::Encoder"></span><span class="target" id="bgfxstructbgfx_1_1_encoder"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">Encoder</code><a class="headerlink" href="#_CPPv2N4bgfx7EncoderE" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference internal" href="#bgfxstructbgfx_1_1_encoder"><span class="std std-ref">Encoder</span></a> for submitting draw calls from multiple threads. Use <code class="docutils literal"><span class="pre">bgfx::begin()</span></code> to obtain encoder for thread. </p>
+<dd><p><a class="reference internal" href="#bgfxstructbgfx_1_1_encoder"><span class="std std-ref">Encoder</span></a> for submitting draw calls from multiple threads. Use <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1ad9800f61a086fe35076e141c1198fc80"><span class="std std-ref"><span class="pre">bgfx::begin()</span></span></a></code> to obtain encoder for thread. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder</span></code>. </dd>
