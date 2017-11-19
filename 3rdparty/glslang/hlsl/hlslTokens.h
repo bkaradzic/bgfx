@@ -283,6 +283,7 @@ enum EHlslTokenClass {
     EHTokRWByteAddressBuffer,
     EHTokRWStructuredBuffer,
     EHTokStructuredBuffer,
+    EHTokTextureBuffer,
 
     // variable, user type, ...
     EHTokIdentifier,

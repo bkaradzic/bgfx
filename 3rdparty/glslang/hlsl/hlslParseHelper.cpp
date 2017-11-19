@@ -8559,6 +8559,11 @@ bool HlslParseContext::handleInputGeometry(const TSourceLoc& loc, const TLayoutG
 //
 bool HlslParseContext::handleOutputGeometry(const TSourceLoc& loc, const TLayoutGeometry& geometry)
 {
+    // If this is not a geometry shader, ignore.  It might be a mixed shader including several stages.
+    // Since that's an OK situation, return true for success.
+    if (language != EShLangGeometry)
+        return true;
+
     switch (geometry) {
     case ElgPoints:
     case ElgLineStrip:

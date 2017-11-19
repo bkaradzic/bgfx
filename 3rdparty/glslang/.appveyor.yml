@@ -17,6 +17,13 @@ branches:
   only:
     - master
 
+# Travis advances the master-tot tag to current top of the tree after
+# each push into the master branch, because it relies on that tag to
+# upload build artifacts to the master-tot release. This will cause
+# double testing for each push on Appveyor: one for the push, one for
+# the tag advance. Disable testing tags.
+skip_tags: true
+
 clone_depth: 5
 
 matrix:

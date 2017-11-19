@@ -49,6 +49,12 @@ There is also a non-shader extension
 Building
 --------
 
+Instead of building manually, you can also download the binaries for your
+platform directly from the [master-tot release][master-tot-release] on GitHub.
+Those binaries are automatically uploaded by the buildbots after successful
+testing and they always reflect the current top of the tree of the master
+branch.
+
 ### Dependencies
 
 * [CMake][cmake]: for generating compilation targets.
@@ -318,3 +324,4 @@ Basic Internal Operation
 [bison]: https://www.gnu.org/software/bison/
 [googletest]: https://github.com/google/googletest
 [bison-gnu-win32]: http://gnuwin32.sourceforge.net/packages/bison.htm
+[master-tot-release]: https://github.com/KhronosGroup/glslang/releases/tag/master-tot

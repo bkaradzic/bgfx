@@ -250,15 +250,8 @@ private:
 // different times.  But a simple use is to have a global pop
 // with everyone using the same global allocator.
 //
-typedef TPoolAllocator* PoolAllocatorPointer;
 extern TPoolAllocator& GetThreadPoolAllocator();
-
-struct TThreadMemoryPools
-{
-    TPoolAllocator* threadPoolAllocator;
-};
-
-void SetThreadPoolAllocator(TPoolAllocator& poolAllocator);
+void SetThreadPoolAllocator(TPoolAllocator* poolAllocator);
 
 //
 // This STL compatible allocator is intended to be used as the allocator
