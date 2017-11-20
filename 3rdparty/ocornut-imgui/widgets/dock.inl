@@ -369,17 +369,17 @@ namespace ImGui
 			ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
 				ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse |
 				ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar |
-				ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_ShowBorders | 
+				ImGuiWindowFlags_NoScrollWithMouse |
 				ImGuiWindowFlags_NoBringToFrontOnFocus;
 			Dock* root = getRootDock();
-      const ImVec2& displaySize = GetIO().DisplaySize;
+			const ImVec2& displaySize = GetIO().DisplaySize;
 			if (root)
 			{
-        const ImVec2 percentage(displaySize.x / root->size.x, displaySize.y / root->size.y );
-        const ImVec2 rescaledPos = root->pos * percentage;
-        const ImVec2 rescaledSize = root->size * percentage;
-        SetNextWindowPos(rescaledPos);
-        SetNextWindowSize(rescaledSize);
+				const ImVec2 percentage(displaySize.x / root->size.x, displaySize.y / root->size.y );
+				const ImVec2 rescaledPos = root->pos * percentage;
+				const ImVec2 rescaledSize = root->size * percentage;
+				SetNextWindowPos(rescaledPos);
+				SetNextWindowSize(rescaledSize);
 			}
 			else
 			{
@@ -970,7 +970,7 @@ namespace ImGui
 						opened,
 						dock.size,
 						-1.0f,
-						ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_ShowBorders | extra_flags);
+						ImGuiWindowFlags_NoCollapse | extra_flags);
 				m_end_action = EndAction_End;
 				dock.pos = GetWindowPos();
 				dock.size = GetWindowSize();
