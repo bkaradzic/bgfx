@@ -2237,19 +2237,9 @@ void ddDrawCone(const void* _from, const void* _to, float _radius)
 	s_dd.drawCone(_from, _to, _radius);
 }
 
-void ddDrawCylinder(const void* _from, const void* _to, float _radius, bool _capsule)
+void ddDrawCylinder(const void* _from, const void* _to, float _radius)
 {
-	if (_capsule)
-	{
-		s_dd.push();
-		s_dd.setLod(0);
-		s_dd.drawCylinder(_from, _to, _radius, true);
-		s_dd.pop();
-	}
-	else
-	{
-		s_dd.drawCylinder(_from, _to, _radius, false);
-	}
+	s_dd.drawCylinder(_from, _to, _radius, false);
 }
 
 void ddDrawCapsule(const void* _from, const void* _to, float _radius)

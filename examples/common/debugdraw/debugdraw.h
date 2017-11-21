@@ -134,7 +134,7 @@ void ddDrawQuad(bgfx::TextureHandle _handle, const float* _normal, const float* 
 void ddDrawCone(const void* _from, const void* _to, float _radius);
 
 ///
-void ddDrawCylinder(const void* _from, const void* _to, float _radius, bool _capsule = false);
+void ddDrawCylinder(const void* _from, const void* _to, float _radius);
 
 ///
 void ddDrawCapsule(const void* _from, const void* _to, float _radius);
