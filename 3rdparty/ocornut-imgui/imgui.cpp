@@ -4283,7 +4283,6 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
             window->WindowPadding = ImVec2(0.0f, (flags & ImGuiWindowFlags_MenuBar) ? style.WindowPadding.y : 0.0f);
         const float window_rounding = window->WindowRounding;
         const float window_border_size = window->WindowBorderSize;
-//        const ImVec2 window_padding = window->WindowPadding;
 
         // Calculate auto-fit size, handle automatic resize
         const ImVec2 size_auto_fit = CalcSizeAutoFit(window);
@@ -10188,6 +10187,55 @@ void ImGui::VerticalSeparator()
     window->DrawList->AddLine(ImVec2(bb.Min.x, bb.Min.y), ImVec2(bb.Min.x, bb.Max.y), GetColorU32(ImGuiCol_Separator));
     if (g.LogEnabled)
         LogText(" |");
+}
+
+bool ImGui::SplitterBehavior(ImGuiID id, const ImRect& bb, ImGuiAxis axis, float* size1, float* size2, float min_size1, float min_size2, float hover_extend)
+{
+    ImGuiContext& g = *GImGui;
+    ImGuiWindow* window = g.CurrentWindow;
+
+    const ImGuiItemFlags item_flags_backup = window->DC.ItemFlags;
+#ifdef IMGUI_HAS_NAV
+    window->DC.ItemFlags |= ImGuiItemFlags_NoNav | ImGuiItemFlags_NoNavDefaultFocus;
+#endif
+    bool add = ItemAdd(bb, id);
+    window->DC.ItemFlags = item_flags_backup;
+    if (!add)
+        return false;
+
+    bool hovered, held;
+    ImRect bb_interact = bb;
+    bb_interact.Expand(axis == ImGuiAxis_Y ? ImVec2(0.0f, hover_extend) : ImVec2(hover_extend, 0.0f));
+    ButtonBehavior(bb_interact, id, &hovered, &held, ImGuiButtonFlags_FlattenChilds | ImGuiButtonFlags_AllowOverlapMode);
+    if (g.ActiveId != id)
+        SetItemAllowOverlap();
+
+    if (held || (g.HoveredId == id && g.HoveredIdPreviousFrame == id))
+        SetMouseCursor(axis == ImGuiAxis_Y ? ImGuiMouseCursor_ResizeNS : ImGuiMouseCursor_ResizeEW);
+
+    ImRect bb_render = bb;
+    if (held)
+    {
+        ImVec2 mouse_delta_2d = g.IO.MousePos - g.ActiveIdClickOffset - bb_interact.Min;
+        float mouse_delta = (axis == ImGuiAxis_Y) ? mouse_delta_2d.y : mouse_delta_2d.x;
+
+        // Minimum pane size
+        if (mouse_delta < min_size1 - *size1)
+            mouse_delta = min_size1 - *size1;
+        if (mouse_delta > *size2 - min_size2)
+            mouse_delta = *size2 - min_size2;
+
+        // Apply resize
+        *size1 += mouse_delta;
+        *size2 -= mouse_delta;
+        bb_render.Translate((axis == ImGuiAxis_X) ? ImVec2(mouse_delta, 0.0f) : ImVec2(0.0f, mouse_delta));
+    }
+
+    // Render
+    const ImU32 col = GetColorU32(held ? ImGuiCol_SeparatorActive : hovered ? ImGuiCol_SeparatorHovered : ImGuiCol_Separator);
+    RenderFrame(bb_render.Min, bb_render.Max, col, true, g.Style.FrameRounding);
+
+    return held;
 }
 
 void ImGui::Spacing()
