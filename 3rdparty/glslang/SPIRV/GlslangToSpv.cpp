@@ -479,7 +479,6 @@ spv::BuiltIn TGlslangToSpvTraverser::TranslateBuiltInDecoration(glslang::TBuiltI
         return spv::BuiltInSamplePosition;
 
     case glslang::EbvSampleMask:
-        builder.addCapability(spv::CapabilitySampleRateShading);
         return spv::BuiltInSampleMask;
 
     case glslang::EbvLayer:

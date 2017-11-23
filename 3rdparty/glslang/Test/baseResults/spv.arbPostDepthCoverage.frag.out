@@ -4,7 +4,6 @@ spv.arbPostDepthCoverage.frag
 // Id's are bound by 18
 
                               Capability Shader
-                              Capability SampleRateShading
                               Capability SampleMaskPostDepthCoverage
                               Extension  "SPV_KHR_post_depth_coverage"
                1:             ExtInstImport  "GLSL.std.450"

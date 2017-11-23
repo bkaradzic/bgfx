@@ -2916,7 +2916,7 @@ function_definition
         // information. This information can be queried from the parse tree
         $$->getAsAggregate()->setOptimize(parseContext.contextPragma.optimize);
         $$->getAsAggregate()->setDebug(parseContext.contextPragma.debug);
-        $$->getAsAggregate()->addToPragmaTable(parseContext.contextPragma.pragmaTable);
+        $$->getAsAggregate()->setPragmaTable(parseContext.contextPragma.pragmaTable);
     }
     ;
 

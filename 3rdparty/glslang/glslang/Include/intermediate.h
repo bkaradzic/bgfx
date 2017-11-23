@@ -1303,8 +1303,8 @@ typedef TVector<TStorageQualifier> TQualifierList;
 //
 class TIntermAggregate : public TIntermOperator {
 public:
-    TIntermAggregate() : TIntermOperator(EOpNull), userDefined(false), pragmaTable(0) { }
-    TIntermAggregate(TOperator o) : TIntermOperator(o), pragmaTable(0) { }
+    TIntermAggregate() : TIntermOperator(EOpNull), userDefined(false), pragmaTable(nullptr) { }
+    TIntermAggregate(TOperator o) : TIntermOperator(o), pragmaTable(nullptr) { }
     ~TIntermAggregate() { delete pragmaTable; }
     virtual       TIntermAggregate* getAsAggregate()       { return this; }
     virtual const TIntermAggregate* getAsAggregate() const { return this; }
@@ -1322,7 +1322,7 @@ public:
     void setDebug(bool d) { debug = d; }
     bool getOptimize() const { return optimize; }
     bool getDebug() const { return debug; }
-    void addToPragmaTable(const TPragmaTable& pTable);
+    void setPragmaTable(const TPragmaTable& pTable);
     const TPragmaTable& getPragmaTable() const { return *pragmaTable; }
 protected:
     TIntermAggregate(const TIntermAggregate&); // disallow copy constructor

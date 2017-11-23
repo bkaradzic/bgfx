@@ -7975,7 +7975,7 @@ yyreduce:
         // information. This information can be queried from the parse tree
         (yyval.interm.intermNode)->getAsAggregate()->setOptimize(parseContext.contextPragma.optimize);
         (yyval.interm.intermNode)->getAsAggregate()->setDebug(parseContext.contextPragma.debug);
-        (yyval.interm.intermNode)->getAsAggregate()->addToPragmaTable(parseContext.contextPragma.pragmaTable);
+        (yyval.interm.intermNode)->getAsAggregate()->setPragmaTable(parseContext.contextPragma.pragmaTable);
     }
 #line 7981 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
