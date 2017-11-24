@@ -8,9 +8,9 @@
 
 namespace bgfx { namespace glsl
 {
-	static bool compile(const bx::CommandLine& _cmdLine, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
+	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
 	{
-		char ch = char(tolower(_cmdLine.findOption('\0', "type")[0]) );
+		char ch = _options.shaderType;
 		const glslopt_shader_type type = ch == 'f'
 			? kGlslOptShaderFragment
 			: (ch == 'c' ? kGlslOptShaderCompute : kGlslOptShaderVertex);
@@ -292,10 +292,9 @@ namespace bgfx { namespace glsl
 		uint8_t nul = 0;
 		bx::write(_writer, nul);
 
-		if (_cmdLine.hasArg('\0', "disasm") )
+		if (_options.disasm )
 		{
-			std::string disasmfp = _cmdLine.findOption('o');
-			disasmfp += ".disasm";
+			std::string disasmfp = _options.outputFilePath + ".disasm";
 			writeFile(disasmfp.c_str(), optimizedShader, shaderSize);
 		}
 
@@ -306,9 +305,9 @@ namespace bgfx { namespace glsl
 
 } // namespace glsl
 
-	bool compileGLSLShader(const bx::CommandLine& _cmdLine, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
+	bool compileGLSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
 	{
-		return glsl::compile(_cmdLine, _version, _code, _writer);
+		return glsl::compile(_options, _version, _code, _writer);
 	}
 
 } // namespace bgfx

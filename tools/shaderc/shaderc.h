@@ -122,6 +122,41 @@ namespace bgfx
 		uint16_t regCount;
 	};
 
+	struct Options
+	{
+		Options();
+
+		void dump();
+
+		char shaderType;
+		std::string platform;
+		std::string profile;
+
+		std::string	inputFilePath;
+		std::string	outputFilePath;
+
+		std::vector<std::string> includeDirs;
+		std::vector<std::string> defines;
+		std::vector<std::string> dependencies;
+
+		bool disasm;
+		bool raw;
+		bool preprocessOnly;
+		bool depends;
+
+		bool debugInformation;
+
+		bool avoidFlowControl;
+		bool noPreshader;
+		bool partialPrecision;
+		bool preferFlowControl;
+		bool backwardsCompatibility;
+		bool warningsAreErrors;
+
+		bool optimize;
+		uint32_t optimizationLevel;
+	};
+
 	typedef std::vector<Uniform> UniformArray;
 
 	void printCode(const char* _code, int32_t _line = 0, int32_t _start = 0, int32_t _end = INT32_MAX, int32_t _column = -1);
@@ -129,10 +164,10 @@ namespace bgfx
 	int32_t writef(bx::WriterI* _writer, const char* _format, ...);
 	void writeFile(const char* _filePath, const void* _data, int32_t _size);
 
-	bool compileGLSLShader(const bx::CommandLine& _cmdLine, uint32_t _version, const std::string& _code, bx::WriterI* _writer);
-	bool compileHLSLShader(const bx::CommandLine& _cmdLine, uint32_t _version, const std::string& _code, bx::WriterI* _writer);
-	bool compilePSSLShader(const bx::CommandLine& _cmdLine, uint32_t _version, const std::string& _code, bx::WriterI* _writer);
-	bool compileSPIRVShader(const bx::CommandLine& _cmdLine, uint32_t _version, const std::string& _code, bx::WriterI* _writer);
+	bool compileGLSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer);
+	bool compileHLSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer);
+	bool compilePSSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer);
+	bool compileSPIRVShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer);
 
 } // namespace bgfx
 
