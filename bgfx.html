@@ -2124,8 +2124,8 @@ creating windows.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx5touchE7uint8_t">
-<span id="bgfx::touch__uint8_t"></span><span class="target" id="bgfxnamespacebgfx_1a86f64606ddcd442b41b0cbbff4779eec"></span>void <code class="descclassname">bgfx::</code><code class="descname">touch</code><span class="sig-paren">(</span>uint8_t <em>_id</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx5touchE7uint8_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx5touchE6ViewId">
+<span id="bgfx::touch__ViewId"></span><span class="target" id="bgfxnamespacebgfx_1aff2b109acf8d4f26daf0c494938837e3"></span>void <code class="descclassname">bgfx::</code><code class="descname">touch</code><span class="sig-paren">(</span>ViewId <em>_id</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx5touchE6ViewId" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit an empty primitive for rendering. Uniforms and draw state will be applied but no geometry will be submitted. </p>
 <p>These empty draw calls will sort before ordinary draw calls.</p>
 <p><dl class="docutils">
@@ -2235,8 +2235,8 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <cite>bgfx::setViewOrder</cite>.</p>
 <p>View state is preserved between multiple frames.</p>
 <dl class="function">
-<dt id="_CPPv2N4bgfx11setViewNameE7uint8_tPKc">
-<span id="bgfx::setViewName__uint8_t.cCP"></span><span class="target" id="bgfxnamespacebgfx_1ab0d0a3f61f5adc31ee7f59f2893cfcd9"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewName</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, <em class="property">const</em> char *<em>_name</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11setViewNameE7uint8_tPKc" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx11setViewNameE6ViewIdPKc">
+<span id="bgfx::setViewName__ViewId.cCP"></span><span class="target" id="bgfxnamespacebgfx_1af08d8fae9b2a2ceff9debcf25c0966fb"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewName</code><span class="sig-paren">(</span>ViewId <em>_id</em>, <em class="property">const</em> char *<em>_name</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11setViewNameE6ViewIdPKc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set view name. </p>
 <p>
 In graphics debugger view name will appear as: <div class="highlight-default"><div class="highlight"><pre><span></span><span class="s2">&quot;nnnce &lt;view name&gt;&quot;</span>
@@ -2267,8 +2267,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx11setViewRectE7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t">
-<span id="bgfx::setViewRect__uint8_t.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1a0d9b4f0ae1b9ca9d637c1062910d468a"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewRect</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, uint16_t <em>_x</em>, uint16_t <em>_y</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11setViewRectE7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx11setViewRectE6ViewId8uint16_t8uint16_t8uint16_t8uint16_t">
+<span id="bgfx::setViewRect__ViewId.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1a3359fac48262c25cc7bebed179c0e0b0"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewRect</code><span class="sig-paren">(</span>ViewId <em>_id</em>, uint16_t <em>_x</em>, uint16_t <em>_y</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11setViewRectE6ViewId8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set view rectangle. Draw primitive outside view will be clipped. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -2292,8 +2292,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx11setViewRectE7uint8_t8uint16_t8uint16_tN15BackbufferRatio4EnumE">
-<span id="bgfx::setViewRect__uint8_t.uint16_t.uint16_t.BackbufferRatio::Enum"></span><span class="target" id="bgfxnamespacebgfx_1a60262b4046cf2510dd3c216e13829c87"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewRect</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, uint16_t <em>_x</em>, uint16_t <em>_y</em>, BackbufferRatio::Enum <em>_ratio</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11setViewRectE7uint8_t8uint16_t8uint16_tN15BackbufferRatio4EnumE" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx11setViewRectE6ViewId8uint16_t8uint16_tN15BackbufferRatio4EnumE">
+<span id="bgfx::setViewRect__ViewId.uint16_t.uint16_t.BackbufferRatio::Enum"></span><span class="target" id="bgfxnamespacebgfx_1a97266f78aaaea47de5245eae918e49f8"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewRect</code><span class="sig-paren">(</span>ViewId <em>_id</em>, uint16_t <em>_x</em>, uint16_t <em>_y</em>, BackbufferRatio::Enum <em>_ratio</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11setViewRectE6ViewId8uint16_t8uint16_tN15BackbufferRatio4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set view rectangle. Draw primitive outside view will be clipped. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -2315,8 +2315,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx14setViewScissorE7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t">
-<span id="bgfx::setViewScissor__uint8_t.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1a3d1b68d9678d716e25795aa3eef2bfe1"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewScissor</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, uint16_t <em>_x</em> = 0, uint16_t <em>_y</em> = 0, uint16_t <em>_width</em> = 0, uint16_t <em>_height</em> = 0<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14setViewScissorE7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx14setViewScissorE6ViewId8uint16_t8uint16_t8uint16_t8uint16_t">
+<span id="bgfx::setViewScissor__ViewId.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1a4c5184c35ba92387e4609f4919a35e05"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewScissor</code><span class="sig-paren">(</span>ViewId <em>_id</em>, uint16_t <em>_x</em> = 0, uint16_t <em>_y</em> = 0, uint16_t <em>_width</em> = 0, uint16_t <em>_height</em> = 0<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14setViewScissorE6ViewId8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set view scissor. Draw primitive outside view will be clipped. When _x, _y, _width and _height are set to 0, scissor will be disabled. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -2340,8 +2340,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx12setViewClearE7uint8_t8uint16_t8uint32_tf7uint8_t">
-<span id="bgfx::setViewClear__uint8_t.uint16_t.uint32_t.float.uint8_t"></span><span class="target" id="bgfxnamespacebgfx_1aa1caf5f59c3505034c652d08e9b3e752"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewClear</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, uint16_t <em>_flags</em>, uint32_t <em>_rgba</em> = 0x000000ff, float <em>_depth</em> = 1.0f, uint8_t <em>_stencil</em> = 0<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12setViewClearE7uint8_t8uint16_t8uint32_tf7uint8_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx12setViewClearE6ViewId8uint16_t8uint32_tf7uint8_t">
+<span id="bgfx::setViewClear__ViewId.uint16_t.uint32_t.float.uint8_t"></span><span class="target" id="bgfxnamespacebgfx_1aadac86f70437f5cf694b68e223520316"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewClear</code><span class="sig-paren">(</span>ViewId <em>_id</em>, uint16_t <em>_flags</em>, uint32_t <em>_rgba</em> = 0x000000ff, float <em>_depth</em> = 1.0f, uint8_t <em>_stencil</em> = 0<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12setViewClearE6ViewId8uint16_t8uint32_tf7uint8_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set view clear flags. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -2365,8 +2365,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx12setViewClearE7uint8_t8uint16_tf7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t">
-<span id="bgfx::setViewClear__uint8_t.uint16_t.float.uint8_t.uint8_t.uint8_t.uint8_t.uint8_t.uint8_t.uint8_t.uint8_t.uint8_t"></span><span class="target" id="bgfxnamespacebgfx_1a0c9bfcccd7744ddade8c8cb40f688de5"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewClear</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, uint16_t <em>_flags</em>, float <em>_depth</em>, uint8_t <em>_stencil</em>, uint8_t <em>_0</em> = UINT8_MAX, uint8_t <em>_1</em> = UINT8_MAX, uint8_t <em>_2</em> = UINT8_MAX, uint8_t <em>_3</em> = UINT8_MAX, uint8_t <em>_4</em> = UINT8_MAX, uint8_t <em>_5</em> = UINT8_MAX, uint8_t <em>_6</em> = UINT8_MAX, uint8_t <em>_7</em> = UINT8_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12setViewClearE7uint8_t8uint16_tf7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx12setViewClearE6ViewId8uint16_tf7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t">
+<span id="bgfx::setViewClear__ViewId.uint16_t.float.uint8_t.uint8_t.uint8_t.uint8_t.uint8_t.uint8_t.uint8_t.uint8_t.uint8_t"></span><span class="target" id="bgfxnamespacebgfx_1abf98809ca6f644a2e2fe80013675b054"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewClear</code><span class="sig-paren">(</span>ViewId <em>_id</em>, uint16_t <em>_flags</em>, float <em>_depth</em>, uint8_t <em>_stencil</em>, uint8_t <em>_0</em> = UINT8_MAX, uint8_t <em>_1</em> = UINT8_MAX, uint8_t <em>_2</em> = UINT8_MAX, uint8_t <em>_3</em> = UINT8_MAX, uint8_t <em>_4</em> = UINT8_MAX, uint8_t <em>_5</em> = UINT8_MAX, uint8_t <em>_6</em> = UINT8_MAX, uint8_t <em>_7</em> = UINT8_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12setViewClearE6ViewId8uint16_tf7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set view clear flags with different clear color for each frame buffer texture. Must use setClearColor to setup clear color palette. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -2454,12 +2454,12 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx11setViewModeE7uint8_tN8ViewMode4EnumE">
-<span id="bgfx::setViewMode__uint8_t.ViewMode::Enum"></span><span class="target" id="bgfxnamespacebgfx_1a0c3c0121f555d23c214e0f1991b927ab"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewMode</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, <a class="reference internal" href="#_CPPv2N4bgfx8ViewModeE" title="bgfx::ViewMode">ViewMode</a>::<a class="reference internal" href="#_CPPv2N4bgfx8ViewMode4EnumE" title="bgfx::ViewMode::Enum">Enum</a> <em>_mode</em> = ViewMode::Default<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11setViewModeE7uint8_tN8ViewMode4EnumE" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx11setViewModeE6ViewIdN8ViewMode4EnumE">
+<span id="bgfx::setViewMode__ViewId.ViewMode::Enum"></span><span class="target" id="bgfxnamespacebgfx_1ac351af2c0188891568b9c5ec09122d9b"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewMode</code><span class="sig-paren">(</span>ViewId <em>_id</em>, <a class="reference internal" href="#_CPPv2N4bgfx8ViewModeE" title="bgfx::ViewMode">ViewMode</a>::<a class="reference internal" href="#_CPPv2N4bgfx8ViewMode4EnumE" title="bgfx::ViewMode::Enum">Enum</a> <em>_mode</em> = ViewMode::Default<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx11setViewModeE6ViewIdN8ViewMode4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set view sorting mode. </p>
 <p><dl class="docutils">
 <dt><strong>Remark</strong></dt>
-<dd>View mode must be set prior calling <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a8afb76c5cfbe35602c8544b37b086b07"><span class="std std-ref"><span class="pre">bgfx::submit</span></span></a></code> for the view.</dd>
+<dd>View mode must be set prior calling <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a2cd7129b200218e2a4240b947e193eb5"><span class="std std-ref"><span class="pre">bgfx::submit</span></span></a></code> for the view.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_view_mode</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -2475,8 +2475,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx16setViewTransformE7uint8_tPKvPKv7uint8_tPKv">
-<span id="bgfx::setViewTransform__uint8_t.voidCP.voidCP.uint8_t.voidCP"></span><span class="target" id="bgfxnamespacebgfx_1a62647b80c0b15422a32a287ef04198b1"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewTransform</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, <em class="property">const</em> void *<em>_view</em>, <em class="property">const</em> void *<em>_projL</em>, uint8_t <em>_flags</em> = BGFX_VIEW_STEREO, <em class="property">const</em> void *<em>_projR</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx16setViewTransformE7uint8_tPKvPKv7uint8_tPKv" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx16setViewTransformE6ViewIdPKvPKv7uint8_tPKv">
+<span id="bgfx::setViewTransform__ViewId.voidCP.voidCP.uint8_t.voidCP"></span><span class="target" id="bgfxnamespacebgfx_1a707f5822ab3d885f14c4d0e575ab3b3f"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewTransform</code><span class="sig-paren">(</span>ViewId <em>_id</em>, <em class="property">const</em> void *<em>_view</em>, <em class="property">const</em> void *<em>_projL</em>, uint8_t <em>_flags</em> = BGFX_VIEW_STEREO, <em class="property">const</em> void *<em>_projR</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx16setViewTransformE6ViewIdPKvPKv7uint8_tPKv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set view view and projection matrices, all draw primitives in this view will use these matrices. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -2504,8 +2504,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx12setViewOrderE7uint8_t7uint8_tPK7uint8_t">
-<span id="bgfx::setViewOrder__uint8_t.uint8_t.uint8_tCP"></span><span class="target" id="bgfxnamespacebgfx_1a7ddafc608f14063a8e6299ce28f48bc4"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewOrder</code><span class="sig-paren">(</span>uint8_t <em>_id</em> = 0, uint8_t <em>_num</em> = UINT8_MAX, <em class="property">const</em> uint8_t *<em>_remap</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12setViewOrderE7uint8_t7uint8_tPK7uint8_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx12setViewOrderE6ViewId7uint8_tPK7uint8_t">
+<span id="bgfx::setViewOrder__ViewId.uint8_t.uint8_tCP"></span><span class="target" id="bgfxnamespacebgfx_1a10409066394c706ddb28b5a20370f75c"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewOrder</code><span class="sig-paren">(</span>ViewId <em>_id</em> = 0, uint8_t <em>_num</em> = UINT8_MAX, <em class="property">const</em> uint8_t *<em>_remap</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12setViewOrderE6ViewId7uint8_tPK7uint8_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Post submit view reordering. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -2525,8 +2525,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx18setViewFrameBufferE7uint8_t17FrameBufferHandle">
-<span id="bgfx::setViewFrameBuffer__uint8_t.FrameBufferHandle"></span><span class="target" id="bgfxnamespacebgfx_1ad7fba17d491dd60be65bed55ef95483c"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewFrameBuffer</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, FrameBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx18setViewFrameBufferE7uint8_t17FrameBufferHandle" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx18setViewFrameBufferE6ViewId17FrameBufferHandle">
+<span id="bgfx::setViewFrameBuffer__ViewId.FrameBufferHandle"></span><span class="target" id="bgfxnamespacebgfx_1a25661fb8ab782ebc22ccfe10fe19e016"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewFrameBuffer</code><span class="sig-paren">(</span>ViewId <em>_id</em>, FrameBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx18setViewFrameBufferE6ViewId17FrameBufferHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set view frame buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Remark</strong></dt>
@@ -2662,7 +2662,7 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <dl class="function">
 <dt id="_CPPv2N4bgfx7Encoder10setScissorE8uint16_t8uint16_t8uint16_t8uint16_t">
 <span id="bgfx::Encoder::setScissor__uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a37472617364a0c6db4f2229bcfe8ea62"></span>uint16_t <code class="descname">setScissor</code><span class="sig-paren">(</span>uint16_t <em>_x</em>, uint16_t <em>_y</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder10setScissorE8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set scissor for draw primitive. For scissor for all primitives in view see <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a3d1b68d9678d716e25795aa3eef2bfe1"><span class="std std-ref"><span class="pre">bgfx::setViewScissor</span></span></a></code>. </p>
+<dd><p>Set scissor for draw primitive. For scissor for all primitives in view see <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a4c5184c35ba92387e4609f4919a35e05"><span class="std std-ref"><span class="pre">bgfx::setViewScissor</span></span></a></code>. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
 <dd>Scissor cache index.</dd>
@@ -3124,8 +3124,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx7Encoder5touchE7uint8_t">
-<span id="bgfx::Encoder::touch__uint8_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a5465d28eec7ade59b8c667477c26a683"></span>void <code class="descname">touch</code><span class="sig-paren">(</span>uint8_t <em>_id</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder5touchE7uint8_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7Encoder5touchE6ViewId">
+<span id="bgfx::Encoder::touch__ViewId"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a57dd7836d684ce252f915fda652dd4d9"></span>void <code class="descname">touch</code><span class="sig-paren">(</span>ViewId <em>_id</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder5touchE6ViewId" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit an empty primitive for rendering. Uniforms and draw state will be applied but no geometry will be submitted. </p>
 <p>These empty draw calls will sort before ordinary draw calls.</p>
 <p><dl class="docutils">
@@ -3140,8 +3140,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx7Encoder6submitE7uint8_t13ProgramHandle7int32_tb">
-<span id="bgfx::Encoder::submit__uint8_t.ProgramHandle.int32_t.b"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1aa84fe310a11fa029da7b1374a1e5118d"></span>void <code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder6submitE7uint8_t13ProgramHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle7int32_tb">
+<span id="bgfx::Encoder::submit__ViewId.ProgramHandle.int32_t.b"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a47e059ac9b9ae395ced112058953502b"></span>void <code class="descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit primitive for rendering. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3163,8 +3163,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx7Encoder6submitE7uint8_t13ProgramHandle20OcclusionQueryHandle7int32_tb">
-<span id="bgfx::Encoder::submit__uint8_t.ProgramHandle.OcclusionQueryHandle.int32_t.b"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a2f810bd065b655af8cc33110f1e9189e"></span>void <code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, OcclusionQueryHandle <em>_occlusionQuery</em>, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder6submitE7uint8_t13ProgramHandle20OcclusionQueryHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle20OcclusionQueryHandle7int32_tb">
+<span id="bgfx::Encoder::submit__ViewId.ProgramHandle.OcclusionQueryHandle.int32_t.b"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1abb4985101e103d4b9ebbfd67b1d39f19"></span>void <code class="descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, OcclusionQueryHandle <em>_occlusionQuery</em>, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle20OcclusionQueryHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit primitive with occlusion query for rendering. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3188,8 +3188,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx7Encoder6submitE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_tb">
-<span id="bgfx::Encoder::submit__uint8_t.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.int32_t.b"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a6d041fd366e9d842858e23b387ad499c"></span>void <code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder6submitE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_tb" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_tb">
+<span id="bgfx::Encoder::submit__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.int32_t.b"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a1ff33c6db5b8dda86d970a4c61fe9ce1"></span>void <code class="descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_tb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit primitive for rendering with index and instance data info from indirect buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3349,8 +3349,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx7Encoder8dispatchE7uint8_t13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t">
-<span id="bgfx::Encoder::dispatch__uint8_t.ProgramHandle.uint32_t.uint32_t.uint32_t.uint8_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a89fb54471d04918ee3f0dd30a357a069"></span>void <code class="descname">dispatch</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_handle</em>, uint32_t <em>_numX</em> = 1, uint32_t <em>_numY</em> = 1, uint32_t <em>_numZ</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder8dispatchE7uint8_t13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t">
+<span id="bgfx::Encoder::dispatch__ViewId.ProgramHandle.uint32_t.uint32_t.uint32_t.uint8_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a5c2b6688ce666527081766957e88c56e"></span>void <code class="descname">dispatch</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_handle</em>, uint32_t <em>_numX</em> = 1, uint32_t <em>_numY</em> = 1, uint32_t <em>_numZ</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dispatch compute. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3380,8 +3380,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx7Encoder8dispatchE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t">
-<span id="bgfx::Encoder::dispatch__uint8_t.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.uint8_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1ab1ad5e7586977a89288a659343e050d4"></span>void <code class="descname">dispatch</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_handle</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder8dispatchE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t">
+<span id="bgfx::Encoder::dispatch__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.uint8_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1ada478ec003a6eb7d1461f8585ae4daa9"></span>void <code class="descname">dispatch</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_handle</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dispatch compute indirect. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3422,8 +3422,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx7Encoder4blitE7uint8_t13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t">
-<span id="bgfx::Encoder::blit__uint8_t.TextureHandle.uint16_t.uint16_t.TextureHandle.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1ac50aec9f28b70b791b712b74fa3a475c"></span>void <code class="descname">blit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, TextureHandle <em>_dst</em>, uint16_t <em>_dstX</em>, uint16_t <em>_dstY</em>, TextureHandle <em>_src</em>, uint16_t <em>_srcX</em> = 0, uint16_t <em>_srcY</em> = 0, uint16_t <em>_width</em> = UINT16_MAX, uint16_t <em>_height</em> = UINT16_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder4blitE7uint8_t13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7Encoder4blitE6ViewId13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t">
+<span id="bgfx::Encoder::blit__ViewId.TextureHandle.uint16_t.uint16_t.TextureHandle.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a99af0d97b74d4ae3659088947e265761"></span>void <code class="descname">blit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, TextureHandle <em>_dst</em>, uint16_t <em>_dstX</em>, uint16_t <em>_dstY</em>, TextureHandle <em>_src</em>, uint16_t <em>_srcX</em> = 0, uint16_t <em>_srcY</em> = 0, uint16_t <em>_width</em> = UINT16_MAX, uint16_t <em>_height</em> = UINT16_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder4blitE6ViewId13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Blit texture 2D region between two 2D textures. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3459,8 +3459,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx7Encoder4blitE7uint8_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t">
-<span id="bgfx::Encoder::blit__uint8_t.TextureHandle.uint8_t.uint16_t.uint16_t.uint16_t.TextureHandle.uint8_t.uint16_t.uint16_t.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a99478493345fea9480f522792c432a43"></span>void <code class="descname">blit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, TextureHandle <em>_dst</em>, uint8_t <em>_dstMip</em>, uint16_t <em>_dstX</em>, uint16_t <em>_dstY</em>, uint16_t <em>_dstZ</em>, TextureHandle <em>_src</em>, uint8_t <em>_srcMip</em> = 0, uint16_t <em>_srcX</em> = 0, uint16_t <em>_srcY</em> = 0, uint16_t <em>_srcZ</em> = 0, uint16_t <em>_width</em> = UINT16_MAX, uint16_t <em>_height</em> = UINT16_MAX, uint16_t <em>_depth</em> = UINT16_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder4blitE7uint8_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7Encoder4blitE6ViewId13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t">
+<span id="bgfx::Encoder::blit__ViewId.TextureHandle.uint8_t.uint16_t.uint16_t.uint16_t.TextureHandle.uint8_t.uint16_t.uint16_t.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a5bb0375324fcb6bb95d46a040f6caaf3"></span>void <code class="descname">blit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, TextureHandle <em>_dst</em>, uint8_t <em>_dstMip</em>, uint16_t <em>_dstX</em>, uint16_t <em>_dstY</em>, uint16_t <em>_dstZ</em>, TextureHandle <em>_src</em>, uint8_t <em>_srcMip</em> = 0, uint16_t <em>_srcX</em> = 0, uint16_t <em>_srcY</em> = 0, uint16_t <em>_srcZ</em> = 0, uint16_t <em>_width</em> = UINT16_MAX, uint16_t <em>_height</em> = UINT16_MAX, uint16_t <em>_depth</em> = UINT16_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder4blitE6ViewId13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Blit texture region between two textures. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3670,7 +3670,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx10setScissorE8uint16_t8uint16_t8uint16_t8uint16_t">
 <span id="bgfx::setScissor__uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1a044469089552c76b36ec5e5ac57cf695"></span>uint16_t <code class="descclassname">bgfx::</code><code class="descname">setScissor</code><span class="sig-paren">(</span>uint16_t <em>_x</em>, uint16_t <em>_y</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx10setScissorE8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set scissor for draw primitive. For scissor for all primitives in view see <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a3d1b68d9678d716e25795aa3eef2bfe1"><span class="std std-ref"><span class="pre">bgfx::setViewScissor</span></span></a></code>. </p>
+<dd><p>Set scissor for draw primitive. For scissor for all primitives in view see <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a4c5184c35ba92387e4609f4919a35e05"><span class="std std-ref"><span class="pre">bgfx::setViewScissor</span></span></a></code>. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
 <dd>Scissor cache index.</dd>
@@ -4137,8 +4137,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <p>Within view all draw commands are executed after blit and compute commands.</p>
 <dl class="function">
-<dt id="_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle7int32_tb">
-<span id="bgfx::submit__uint8_t.ProgramHandle.int32_t.b"></span><span class="target" id="bgfxnamespacebgfx_1a8afb76c5cfbe35602c8544b37b086b07"></span>void <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle7int32_tb">
+<span id="bgfx::submit__ViewId.ProgramHandle.int32_t.b"></span><span class="target" id="bgfxnamespacebgfx_1a2cd7129b200218e2a4240b947e193eb5"></span>void <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE6ViewId13ProgramHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit primitive for rendering. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -4160,8 +4160,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20OcclusionQueryHandle7int32_tb">
-<span id="bgfx::submit__uint8_t.ProgramHandle.OcclusionQueryHandle.int32_t.b"></span><span class="target" id="bgfxnamespacebgfx_1a7b00aefd0c648fd755b55c42b5011f0d"></span>void <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, OcclusionQueryHandle <em>_occlusionQuery</em>, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20OcclusionQueryHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle20OcclusionQueryHandle7int32_tb">
+<span id="bgfx::submit__ViewId.ProgramHandle.OcclusionQueryHandle.int32_t.b"></span><span class="target" id="bgfxnamespacebgfx_1aaadd2819fbc4d86a45614482823244d1"></span>void <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, OcclusionQueryHandle <em>_occlusionQuery</em>, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE6ViewId13ProgramHandle20OcclusionQueryHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit primitive with occlusion query for rendering. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -4185,8 +4185,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_tb">
-<span id="bgfx::submit__uint8_t.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.int32_t.b"></span><span class="target" id="bgfxnamespacebgfx_1a1dc995ee482a25ceccaeb7a05ea81bae"></span>void <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_program</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_tb" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_tb">
+<span id="bgfx::submit__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.int32_t.b"></span><span class="target" id="bgfxnamespacebgfx_1ae5178548ffbf561fca06078176c10f3c"></span>void <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_tb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit primitive for rendering with index and instance data info from indirect buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -4397,8 +4397,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <p>Within view all compute commands are dispatched after blit commands, and before draw commands.</p>
 <dl class="function">
-<dt id="_CPPv2N4bgfx8dispatchE7uint8_t13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t">
-<span id="bgfx::dispatch__uint8_t.ProgramHandle.uint32_t.uint32_t.uint32_t.uint8_t"></span><span class="target" id="bgfxnamespacebgfx_1a6abadd66a78896ec5297bfa4fb40a197"></span>void <code class="descclassname">bgfx::</code><code class="descname">dispatch</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_handle</em>, uint32_t <em>_numX</em> = 1, uint32_t <em>_numY</em> = 1, uint32_t <em>_numZ</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8dispatchE7uint8_t13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t">
+<span id="bgfx::dispatch__ViewId.ProgramHandle.uint32_t.uint32_t.uint32_t.uint8_t"></span><span class="target" id="bgfxnamespacebgfx_1ae5125007d2b5389dc086f5969c50a163"></span>void <code class="descclassname">bgfx::</code><code class="descname">dispatch</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_handle</em>, uint32_t <em>_numX</em> = 1, uint32_t <em>_numY</em> = 1, uint32_t <em>_numZ</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dispatch compute. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -4428,8 +4428,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx8dispatchE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t">
-<span id="bgfx::dispatch__uint8_t.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.uint8_t"></span><span class="target" id="bgfxnamespacebgfx_1a4a5341a7ea92338c183209a051c9b71a"></span>void <code class="descclassname">bgfx::</code><code class="descname">dispatch</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, ProgramHandle <em>_handle</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8dispatchE7uint8_t13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t">
+<span id="bgfx::dispatch__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.uint8_t"></span><span class="target" id="bgfxnamespacebgfx_1a1dd2575ec96a6ede6139137841ee7b85"></span>void <code class="descclassname">bgfx::</code><code class="descname">dispatch</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_handle</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dispatch compute indirect. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -4463,8 +4463,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <h3>Blit<a class="headerlink" href="#blit" title="Permalink to this headline">¶</a></h3>
 <p>Within view all blit commands are executed before compute, and draw commands.</p>
 <dl class="function">
-<dt id="_CPPv2N4bgfx4blitE7uint8_t13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t">
-<span id="bgfx::blit__uint8_t.TextureHandle.uint16_t.uint16_t.TextureHandle.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1a0ced752657573f20fd4fb3006b6287c8"></span>void <code class="descclassname">bgfx::</code><code class="descname">blit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, TextureHandle <em>_dst</em>, uint16_t <em>_dstX</em>, uint16_t <em>_dstY</em>, TextureHandle <em>_src</em>, uint16_t <em>_srcX</em> = 0, uint16_t <em>_srcY</em> = 0, uint16_t <em>_width</em> = UINT16_MAX, uint16_t <em>_height</em> = UINT16_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx4blitE7uint8_t13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx4blitE6ViewId13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t">
+<span id="bgfx::blit__ViewId.TextureHandle.uint16_t.uint16_t.TextureHandle.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1aebd5560001cdeb76b4fa88ac04b660d6"></span>void <code class="descclassname">bgfx::</code><code class="descname">blit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, TextureHandle <em>_dst</em>, uint16_t <em>_dstX</em>, uint16_t <em>_dstY</em>, TextureHandle <em>_src</em>, uint16_t <em>_srcX</em> = 0, uint16_t <em>_srcY</em> = 0, uint16_t <em>_width</em> = UINT16_MAX, uint16_t <em>_height</em> = UINT16_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx4blitE6ViewId13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Blit texture 2D region between two 2D textures. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -4500,8 +4500,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx4blitE7uint8_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t">
-<span id="bgfx::blit__uint8_t.TextureHandle.uint8_t.uint16_t.uint16_t.uint16_t.TextureHandle.uint8_t.uint16_t.uint16_t.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1aa14664b2fd3aafb69138fe6ccfe3ca1f"></span>void <code class="descclassname">bgfx::</code><code class="descname">blit</code><span class="sig-paren">(</span>uint8_t <em>_id</em>, TextureHandle <em>_dst</em>, uint8_t <em>_dstMip</em>, uint16_t <em>_dstX</em>, uint16_t <em>_dstY</em>, uint16_t <em>_dstZ</em>, TextureHandle <em>_src</em>, uint8_t <em>_srcMip</em> = 0, uint16_t <em>_srcX</em> = 0, uint16_t <em>_srcY</em> = 0, uint16_t <em>_srcZ</em> = 0, uint16_t <em>_width</em> = UINT16_MAX, uint16_t <em>_height</em> = UINT16_MAX, uint16_t <em>_depth</em> = UINT16_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx4blitE7uint8_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx4blitE6ViewId13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t">
+<span id="bgfx::blit__ViewId.TextureHandle.uint8_t.uint16_t.uint16_t.uint16_t.TextureHandle.uint8_t.uint16_t.uint16_t.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1a3a1768b60ba0a0f162afa485bd013844"></span>void <code class="descclassname">bgfx::</code><code class="descname">blit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, TextureHandle <em>_dst</em>, uint8_t <em>_dstMip</em>, uint16_t <em>_dstX</em>, uint16_t <em>_dstY</em>, uint16_t <em>_dstZ</em>, TextureHandle <em>_src</em>, uint8_t <em>_srcMip</em> = 0, uint16_t <em>_srcX</em> = 0, uint16_t <em>_srcY</em> = 0, uint16_t <em>_srcZ</em> = 0, uint16_t <em>_width</em> = UINT16_MAX, uint16_t <em>_height</em> = UINT16_MAX, uint16_t <em>_depth</em> = UINT16_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx4blitE6ViewId13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Blit texture region between two textures. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
