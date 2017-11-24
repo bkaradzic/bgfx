@@ -547,7 +547,7 @@ struct Mesh
 		m_groups.clear();
 	}
 
-	void submit(uint8_t _id, bgfx::ProgramHandle _program, const float* _mtx, uint64_t _state) const
+	void submit(bgfx::ViewId _id, bgfx::ProgramHandle _program, const float* _mtx, uint64_t _state) const
 	{
 		if (BGFX_STATE_MASK == _state)
 		{
@@ -648,7 +648,7 @@ void meshStateDestroy(MeshState* _meshState)
 	BX_FREE(entry::getAllocator(), _meshState);
 }
 
-void meshSubmit(const Mesh* _mesh, uint8_t _id, bgfx::ProgramHandle _program, const float* _mtx, uint64_t _state)
+void meshSubmit(const Mesh* _mesh, bgfx::ViewId _id, bgfx::ProgramHandle _program, const float* _mtx, uint64_t _state)
 {
 	_mesh->submit(_id, _program, _mtx, _state);
 }

@@ -1982,7 +1982,7 @@ namespace bgfx
 			discard();
 		}
 
-		void begin(Frame* _frame, uint8_t _idx)
+		void begin(Frame* _frame, ViewId _idx)
 		{
 			m_frame = _frame;
 
@@ -2252,9 +2252,9 @@ namespace bgfx
 			m_bind.clear();
 		}
 
-		void submit(uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth, bool _preserveState);
+		void submit(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth, bool _preserveState);
 
-		void submit(uint8_t _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth, bool _preserveState)
+		void submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth, bool _preserveState)
 		{
 			m_draw.m_startIndirect  = _start;
 			m_draw.m_numIndirect    = _num;
@@ -2263,9 +2263,9 @@ namespace bgfx
 			submit(_id, _program, handle, _depth, _preserveState);
 		}
 
-		void dispatch(uint8_t _id, ProgramHandle _handle, uint32_t _ngx, uint32_t _ngy, uint32_t _ngz, uint8_t _flags);
+		void dispatch(ViewId _id, ProgramHandle _handle, uint32_t _ngx, uint32_t _ngy, uint32_t _ngz, uint8_t _flags);
 
-		void dispatch(uint8_t _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
+		void dispatch(ViewId _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
 		{
 			m_compute.m_indirectBuffer = _indirectHandle;
 			m_compute.m_startIndirect  = _start;
@@ -2273,7 +2273,7 @@ namespace bgfx
 			dispatch(_id, _handle, 0, 0, 0, _flags);
 		}
 
-		void blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth);
+		void blit(ViewId _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth);
 
 		Frame* m_frame;
 
@@ -2559,7 +2559,7 @@ namespace bgfx
 		virtual void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name) = 0;
 		virtual void destroyUniform(UniformHandle _handle) = 0;
 		virtual void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) = 0;
-		virtual void updateViewName(uint8_t _id, const char* _name) = 0;
+		virtual void updateViewName(ViewId _id, const char* _name) = 0;
 		virtual void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) = 0;
 		virtual void setMarker(const char* _marker, uint32_t _size) = 0;
 		virtual void invalidateOcclusionQuery(OcclusionQueryHandle _handle) = 0;
@@ -4246,7 +4246,7 @@ namespace bgfx
 			m_colorPaletteDirty = 2;
 		}
 
-		BGFX_API_FUNC(void setViewName(uint8_t _id, const char* _name) )
+		BGFX_API_FUNC(void setViewName(ViewId _id, const char* _name) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
@@ -4257,17 +4257,17 @@ namespace bgfx
 			cmdbuf.write(_name, len);
 		}
 
-		BGFX_API_FUNC(void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height) )
+		BGFX_API_FUNC(void setViewRect(ViewId _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height) )
 		{
 			m_view[_id].setRect(_x, _y, _width, _height);
 		}
 
-		BGFX_API_FUNC(void setViewScissor(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height) )
+		BGFX_API_FUNC(void setViewScissor(ViewId _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height) )
 		{
 			m_view[_id].setScissor(_x, _y, _width, _height);
 		}
 
-		BGFX_API_FUNC(void setViewClear(uint8_t _id, uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil) )
+		BGFX_API_FUNC(void setViewClear(ViewId _id, uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil) )
 		{
 			BX_CHECK(bx::fequal(_depth, bx::fclamp(_depth, 0.0f, 1.0f), 0.0001f)
 				, "Clear depth value must be between 0.0 and 1.0 (_depth %f)."
@@ -4277,7 +4277,7 @@ namespace bgfx
 			m_view[_id].setClear(_flags, _rgba, _depth, _stencil);
 		}
 
-		BGFX_API_FUNC(void setViewClear(uint8_t _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7) )
+		BGFX_API_FUNC(void setViewClear(ViewId _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7) )
 		{
 			BX_CHECK(bx::fequal(_depth, bx::fclamp(_depth, 0.0f, 1.0f), 0.0001f)
 				, "Clear depth value must be between 0.0 and 1.0 (_depth %f)."
@@ -4287,28 +4287,28 @@ namespace bgfx
 			m_view[_id].setClear(_flags, _depth, _stencil, _0, _1, _2, _3, _4, _5, _6, _7);
 		}
 
-		BGFX_API_FUNC(void setViewMode(uint8_t _id, ViewMode::Enum _mode) )
+		BGFX_API_FUNC(void setViewMode(ViewId _id, ViewMode::Enum _mode) )
 		{
 			m_view[_id].setMode(_mode);
 		}
 
-		BGFX_API_FUNC(void setViewFrameBuffer(uint8_t _id, FrameBufferHandle _handle) )
+		BGFX_API_FUNC(void setViewFrameBuffer(ViewId _id, FrameBufferHandle _handle) )
 		{
 			BGFX_CHECK_HANDLE_INVALID_OK("setViewFrameBuffer", m_frameBufferHandle, _handle);
 			m_view[_id].setFrameBuffer(_handle);
 		}
 
-		BGFX_API_FUNC(void setViewTransform(uint8_t _id, const void* _view, const void* _proj, uint8_t _flags, const void* _proj1) )
+		BGFX_API_FUNC(void setViewTransform(ViewId _id, const void* _view, const void* _proj, uint8_t _flags, const void* _proj1) )
 		{
 			m_view[_id].setTransform(_view, _proj, _flags, _proj1);
 		}
 
-		BGFX_API_FUNC(void resetView(uint8_t _id) )
+		BGFX_API_FUNC(void resetView(ViewId _id) )
 		{
 			m_view[_id].reset();
 		}
 
-		BGFX_API_FUNC(void setViewOrder(uint8_t _id, uint8_t _num, const uint8_t* _order) )
+		BGFX_API_FUNC(void setViewOrder(ViewId _id, uint8_t _num, const uint8_t* _order) )
 		{
 			const uint32_t num = bx::uint32_min(_id + _num, BGFX_CONFIG_MAX_VIEWS) - _id;
 			if (NULL == _order)
@@ -4331,7 +4331,7 @@ namespace bgfx
 
 		BGFX_API_FUNC(uint32_t frame(bool _capture = false) );
 
-		uint32_t getSeqIncr(uint8_t _id)
+		uint32_t getSeqIncr(ViewId _id)
 		{
 			return bx::atomicFetchAndAdd<uint32_t>(&m_seq[_id], 1);
 		}

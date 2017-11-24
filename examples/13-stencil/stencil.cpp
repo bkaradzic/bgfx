@@ -542,7 +542,7 @@ struct ClearValues
 	uint8_t  m_clearStencil;
 };
 
-void clearView(uint8_t _id, uint8_t _flags, const ClearValues& _clearValues)
+void clearView(bgfx::ViewId _id, uint8_t _flags, const ClearValues& _clearValues)
 {
 	bgfx::setViewClear(_id
 		, _flags
@@ -746,13 +746,13 @@ struct Mesh
 		m_groups.clear();
 	}
 
-	void submit(uint8_t _viewId, float* _mtx, bgfx::ProgramHandle _program, const RenderState& _renderState)
+	void submit(bgfx::ViewId _id, float* _mtx, bgfx::ProgramHandle _program, const RenderState& _renderState)
 	{
 		bgfx::TextureHandle texture = BGFX_INVALID_HANDLE;
-		submit(_viewId, _mtx, _program, _renderState, texture);
+		submit(_id, _mtx, _program, _renderState, texture);
 	}
 
-	void submit(uint8_t _viewId, float* _mtx, bgfx::ProgramHandle _program, const RenderState& _renderState, bgfx::TextureHandle _texture)
+	void submit(bgfx::ViewId _id, float* _mtx, bgfx::ProgramHandle _program, const RenderState& _renderState, bgfx::TextureHandle _texture)
 	{
 		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
 		{
@@ -774,10 +774,10 @@ struct Mesh
 			bgfx::setState(_renderState.m_state, _renderState.m_blendFactorRgba);
 
 			// Submit
-			bgfx::submit(_viewId, _program);
+			bgfx::submit(_id, _program);
 
 			// Keep track of submited view ids
-			s_viewMask |= 1 << _viewId;
+			s_viewMask |= 1 << _id;
 		}
 	}
 

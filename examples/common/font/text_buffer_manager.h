@@ -47,7 +47,7 @@ public:
 
 	TextBufferHandle createTextBuffer(uint32_t _type, BufferType::Enum _bufferType);
 	void destroyTextBuffer(TextBufferHandle _handle);
-	void submitTextBuffer(TextBufferHandle _handle, uint8_t _id, int32_t _depth = 0);
+	void submitTextBuffer(TextBufferHandle _handle, bgfx::ViewId _id, int32_t _depth = 0);
 
 	void setStyle(TextBufferHandle _handle, uint32_t _flags = STYLE_NORMAL);
 	void setTextColor(TextBufferHandle _handle, uint32_t _rgba = 0x000000FF);
@@ -64,16 +64,16 @@ public:
 
 	/// Append a wide char unicode string to the buffer using current pen position and color.
 	void appendText(TextBufferHandle _handle, FontHandle _fontHandle, const wchar_t* _string, const wchar_t* _end = NULL);
-		
+
 	/// Append a whole face of the atlas cube, mostly used for debugging and visualizing atlas.
 	void appendAtlasFace(TextBufferHandle _handle, uint16_t _faceIndex);
 
 	/// Clear the text buffer and reset its state (pen/color).
 	void clearTextBuffer(TextBufferHandle _handle);
-	
+
 	/// Return the rectangular size of the current text buffer (including all its content).
-	TextRectangle getRectangle(TextBufferHandle _handle) const;	
-	
+	TextRectangle getRectangle(TextBufferHandle _handle) const;
+
 private:
 	struct BufferCache
 	{

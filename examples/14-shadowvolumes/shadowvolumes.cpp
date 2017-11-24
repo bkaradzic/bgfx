@@ -544,7 +544,7 @@ struct ClearValues
 	uint8_t  m_clearStencil;
 };
 
-void submit(uint8_t _id, bgfx::ProgramHandle _handle, int32_t _depth = 0)
+void submit(bgfx::ViewId _id, bgfx::ProgramHandle _handle, int32_t _depth = 0)
 {
 	bgfx::submit(_id, _handle, _depth);
 
@@ -552,7 +552,7 @@ void submit(uint8_t _id, bgfx::ProgramHandle _handle, int32_t _depth = 0)
 	s_viewMask |= 1 << _id;
 }
 
-void touch(uint8_t _id)
+void touch(bgfx::ViewId _id)
 {
 	bgfx::ProgramHandle handle = BGFX_INVALID_HANDLE;
 	::submit(_id, handle);

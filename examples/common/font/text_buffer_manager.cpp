@@ -678,7 +678,7 @@ void TextBufferManager::destroyTextBuffer(TextBufferHandle _handle)
 	}
 }
 
-void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, uint8_t _id, int32_t _depth)
+void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, bgfx::ViewId _id, int32_t _depth)
 {
 	BX_CHECK(bgfx::isValid(_handle), "Invalid handle used");
 

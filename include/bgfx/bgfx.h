@@ -834,6 +834,9 @@ namespace bgfx
 		EncoderStats* encoderStats; //!< Encoder stats.
 	};
 
+	///
+	typedef uint16_t ViewId;
+
 	/// Encoder for submitting draw calls from multiple threads. Use `bgfx::begin()`
 	/// to obtain encoder for thread.
 	///
@@ -1223,7 +1226,7 @@ namespace bgfx
 		///
 		/// @param[in] _id View id.
 		///
-		void touch(uint8_t _id);
+		void touch(ViewId _id);
 
 		/// Submit primitive for rendering.
 		///
@@ -1236,7 +1239,7 @@ namespace bgfx
 		/// @attention C99 equivalent is `bgfx_submit`.
 		///
 		void submit(
-			  uint8_t _id
+			  ViewId _id
 			, ProgramHandle _program
 			, int32_t _depth = 0
 			, bool _preserveState = false
@@ -1254,7 +1257,7 @@ namespace bgfx
 		/// @attention C99 equivalent is `bgfx_submit_occlusion_query`.
 		///
 		void submit(
-			  uint8_t _id
+			  ViewId _id
 			, ProgramHandle _program
 			, OcclusionQueryHandle _occlusionQuery
 			, int32_t _depth = 0
@@ -1276,7 +1279,7 @@ namespace bgfx
 		/// @attention C99 equivalent is `bgfx_submit_indirect`.
 		///
 		void submit(
-			  uint8_t _id
+			  ViewId _id
 			, ProgramHandle _program
 			, IndirectBufferHandle _indirectHandle
 			, uint16_t _start = 0
@@ -1390,7 +1393,7 @@ namespace bgfx
 		/// @attention C99 equivalent is `bgfx_dispatch`.
 		///
 		void dispatch(
-			  uint8_t _id
+			  ViewId _id
 			, ProgramHandle _handle
 			, uint32_t _numX = 1
 			, uint32_t _numY = 1
@@ -1413,7 +1416,7 @@ namespace bgfx
 		/// @attention C99 equivalent is `bgfx_dispatch_indirect`.
 		///
 		void dispatch(
-			  uint8_t _id
+			  ViewId _id
 			, ProgramHandle _handle
 			, IndirectBufferHandle _indirectHandle
 			, uint16_t _start = 0
@@ -1444,7 +1447,7 @@ namespace bgfx
 		/// @attention C99 equivalent is `bgfx_blit`.
 		///
 		void blit(
-			  uint8_t _id
+			  ViewId _id
 			, TextureHandle _dst
 			, uint16_t _dstX
 			, uint16_t _dstY
@@ -1482,7 +1485,7 @@ namespace bgfx
 		/// @attention C99 equivalent is `bgfx_blit`.
 		///
 		void blit(
-			  uint8_t _id
+			  ViewId _id
 			, TextureHandle _dst
 			, uint8_t _dstMip
 			, uint16_t _dstX
@@ -2974,7 +2977,7 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_set_view_name`.
 	///
 	void setViewName(
-		  uint8_t _id
+		  ViewId _id
 		, const char* _name
 		);
 
@@ -2989,7 +2992,7 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_set_view_rect`.
 	///
 	void setViewRect(
-		  uint8_t _id
+		  ViewId _id
 		, uint16_t _x
 		, uint16_t _y
 		, uint16_t _width
@@ -3007,7 +3010,7 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_set_view_rect_auto`.
 	///
 	void setViewRect(
-		  uint8_t _id
+		  ViewId _id
 		, uint16_t _x
 		, uint16_t _y
 		, BackbufferRatio::Enum _ratio
@@ -3025,7 +3028,7 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_set_view_scissor`.
 	///
 	void setViewScissor(
-		  uint8_t _id
+		  ViewId _id
 		, uint16_t _x = 0
 		, uint16_t _y = 0
 		, uint16_t _width = 0
@@ -3044,7 +3047,7 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_set_view_clear`.
 	///
 	void setViewClear(
-		  uint8_t _id
+		  ViewId _id
 		, uint16_t _flags
 		, uint32_t _rgba = 0x000000ff
 		, float _depth = 1.0f
@@ -3072,7 +3075,7 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_set_view_clear_mrt`.
 	///
 	void setViewClear(
-		  uint8_t _id
+		  ViewId _id
 		, uint16_t _flags
 		, float _depth
 		, uint8_t _stencil
@@ -3097,7 +3100,7 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_set_view_mode`.
 	///
 	void setViewMode(
-		  uint8_t _id
+		  ViewId _id
 		, ViewMode::Enum _mode = ViewMode::Default
 		);
 
@@ -3114,7 +3117,7 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_set_view_frame_buffer`.
 	///
 	void setViewFrameBuffer(
-		  uint8_t _id
+		  ViewId _id
 		, FrameBufferHandle _handle
 		);
 
@@ -3134,7 +3137,7 @@ namespace bgfx
 	/// @attention C99 equivalent are `bgfx_set_view_transform`, `bgfx_set_view_transform_stereo`.
 	///
 	void setViewTransform(
-		  uint8_t _id
+		  ViewId _id
 		, const void* _view
 		, const void* _projL
 		, uint8_t _flags = BGFX_VIEW_STEREO
@@ -3151,7 +3154,7 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_set_view_order`.
 	///
 	void setViewOrder(
-		  uint8_t _id = 0
+		  ViewId _id = 0
 		, uint8_t _num = UINT8_MAX
 		, const uint8_t* _remap = NULL
 		);
@@ -3162,7 +3165,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_reset_view`.
 	///
-	void resetView(uint8_t _id);
+	void resetView(ViewId _id);
 
 	/// Sets debug marker.
 	///
@@ -3546,7 +3549,7 @@ namespace bgfx
 	///
 	/// @param[in] _id View id.
 	///
-	void touch(uint8_t _id);
+	void touch(ViewId _id);
 
 	/// Submit primitive for rendering.
 	///
@@ -3559,7 +3562,7 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_submit`.
 	///
 	void submit(
-		  uint8_t _id
+		  ViewId _id
 		, ProgramHandle _program
 		, int32_t _depth = 0
 		, bool _preserveState = false
@@ -3577,7 +3580,7 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_submit_occlusion_query`.
 	///
 	void submit(
-		  uint8_t _id
+		  ViewId _id
 		, ProgramHandle _program
 		, OcclusionQueryHandle _occlusionQuery
 		, int32_t _depth = 0
@@ -3599,7 +3602,7 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_submit_indirect`.
 	///
 	void submit(
-		  uint8_t _id
+		  ViewId _id
 		, ProgramHandle _program
 		, IndirectBufferHandle _indirectHandle
 		, uint16_t _start = 0
@@ -3713,7 +3716,7 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_dispatch`.
 	///
 	void dispatch(
-		  uint8_t _id
+		  ViewId _id
 		, ProgramHandle _handle
 		, uint32_t _numX = 1
 		, uint32_t _numY = 1
@@ -3736,7 +3739,7 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_dispatch_indirect`.
 	///
 	void dispatch(
-		  uint8_t _id
+		  ViewId _id
 		, ProgramHandle _handle
 		, IndirectBufferHandle _indirectHandle
 		, uint16_t _start = 0
@@ -3767,7 +3770,7 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_blit`.
 	///
 	void blit(
-		  uint8_t _id
+		  ViewId _id
 		, TextureHandle _dst
 		, uint16_t _dstX
 		, uint16_t _dstY
@@ -3805,7 +3808,7 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_blit`.
 	///
 	void blit(
-		  uint8_t _id
+		  ViewId _id
 		, TextureHandle _dst
 		, uint8_t _dstMip
 		, uint16_t _dstX

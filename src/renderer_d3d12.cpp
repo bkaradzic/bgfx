@@ -1715,7 +1715,7 @@ namespace bgfx { namespace d3d12
 			DX_RELEASE(readback, 0);
 		}
 
-		void updateViewName(uint8_t _id, const char* _name) override
+		void updateViewName(ViewId _id, const char* _name) override
 		{
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 			{

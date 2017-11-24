@@ -2100,7 +2100,7 @@ VK_IMPORT_DEVICE
 		{
 		}
 
-		void updateViewName(uint8_t _id, const char* _name) override
+		void updateViewName(ViewId _id, const char* _name) override
 		{
 			bx::strCopy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
 				, BX_COUNTOF(s_viewName[0]) - BGFX_CONFIG_MAX_VIEW_NAME_RESERVED

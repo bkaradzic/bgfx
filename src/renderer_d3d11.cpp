@@ -2131,7 +2131,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			DX_RELEASE(backBuffer, 0);
 		}
 
-		void updateViewName(uint8_t _id, const char* _name) override
+		void updateViewName(ViewId _id, const char* _name) override
 		{
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 			{

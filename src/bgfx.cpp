@@ -859,7 +859,7 @@ namespace bgfx
 		return PredefinedUniform::Count;
 	}
 
-	void EncoderImpl::submit(uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth, bool _preserveState)
+	void EncoderImpl::submit(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth, bool _preserveState)
 	{
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM)
 		&& !_preserveState)
@@ -958,7 +958,7 @@ namespace bgfx
 		}
 	}
 
-	void EncoderImpl::dispatch(uint8_t _id, ProgramHandle _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
+	void EncoderImpl::dispatch(ViewId _id, ProgramHandle _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
 	{
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
 		{
@@ -1011,7 +1011,7 @@ namespace bgfx
 		m_uniformBegin = m_uniformEnd;
 	}
 
-	void EncoderImpl::blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
+	void EncoderImpl::blit(ViewId _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
 	{
 		BX_WARN(m_frame->m_numBlitItems < BGFX_CONFIG_MAX_BLIT_ITEMS
 			, "Exceed number of available blit items per frame. BGFX_CONFIG_MAX_BLIT_ITEMS is %d. Skipping blit."
@@ -2645,7 +2645,7 @@ namespace bgfx
 
 			case CommandBuffer::UpdateViewName:
 				{
-					uint8_t id;
+					ViewId id;
 					_cmdbuf.read(id);
 
 					uint16_t len;
@@ -3062,19 +3062,19 @@ error:
 		BGFX_ENCODER(setTexture(_stage, _sampler, _handle, _flags) );
 	}
 
-	void Encoder::touch(uint8_t _id)
+	void Encoder::touch(ViewId _id)
 	{
 		ProgramHandle handle = BGFX_INVALID_HANDLE;
 		submit(_id, handle);
 	}
 
-	void Encoder::submit(uint8_t _id, ProgramHandle _program, int32_t _depth, bool _preserveState)
+	void Encoder::submit(ViewId _id, ProgramHandle _program, int32_t _depth, bool _preserveState)
 	{
 		OcclusionQueryHandle handle = BGFX_INVALID_HANDLE;
 		submit(_id, _program, handle, _depth, _preserveState);
 	}
 
-	void Encoder::submit(uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth, bool _preserveState)
+	void Encoder::submit(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth, bool _preserveState)
 	{
 		BX_CHECK(false
 			|| !isValid(_occlusionQuery)
@@ -3086,7 +3086,7 @@ error:
 		BGFX_ENCODER(submit(_id, _program, _occlusionQuery, _depth, _preserveState) );
 	}
 
-	void Encoder::submit(uint8_t _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth, bool _preserveState)
+	void Encoder::submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth, bool _preserveState)
 	{
 		BGFX_CHECK_HANDLE_INVALID_OK("submit", s_ctx->m_programHandle, _program);
 		BGFX_CHECK_HANDLE("submit", s_ctx->m_vertexBufferHandle, _indirectHandle);
@@ -3145,14 +3145,14 @@ error:
 		BGFX_ENCODER(setImage(_stage, _sampler, _handle, _mip, _access, _format) );
 	}
 
-	void Encoder::dispatch(uint8_t _id, ProgramHandle _program, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
+	void Encoder::dispatch(ViewId _id, ProgramHandle _program, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
 	{
 		BGFX_CHECK_CAPS(BGFX_CAPS_COMPUTE, "Compute is not supported!");
 		BGFX_CHECK_HANDLE_INVALID_OK("dispatch", s_ctx->m_programHandle, _program);
 		BGFX_ENCODER(dispatch(_id, _program, _numX, _numY, _numZ, _flags) );
 	}
 
-	void Encoder::dispatch(uint8_t _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
+	void Encoder::dispatch(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
 	{
 		BGFX_CHECK_CAPS(BGFX_CAPS_DRAW_INDIRECT, "Dispatch indirect is not supported!");
 		BGFX_CHECK_CAPS(BGFX_CAPS_COMPUTE, "Compute is not supported!");
@@ -3166,12 +3166,12 @@ error:
 		BGFX_ENCODER(discard() );
 	}
 
-	void Encoder::blit(uint8_t _id, TextureHandle _dst, uint16_t _dstX, uint16_t _dstY, TextureHandle _src, uint16_t _srcX, uint16_t _srcY, uint16_t _width, uint16_t _height)
+	void Encoder::blit(ViewId _id, TextureHandle _dst, uint16_t _dstX, uint16_t _dstY, TextureHandle _src, uint16_t _srcX, uint16_t _srcY, uint16_t _width, uint16_t _height)
 	{
 		blit(_id, _dst, 0, _dstX, _dstY, 0, _src, 0, _srcX, _srcY, 0, _width, _height, 0);
 	}
 
-	void Encoder::blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
+	void Encoder::blit(ViewId _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
 	{
 		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_BLIT, "Texture blit is not supported!");
 		const Context::TextureRef& src = s_ctx->m_textureRef[_src.idx];
@@ -3978,26 +3978,26 @@ error:
 		s_ctx->setPaletteColor(_index, _rgba);
 	}
 
-	bool checkView(uint8_t _id)
+	bool checkView(ViewId _id)
 	{
 		// workaround GCC 4.9 type-limit check.
 		const uint32_t id = _id;
 		return id < BGFX_CONFIG_MAX_VIEWS;
 	}
 
-	void setViewName(uint8_t _id, const char* _name)
+	void setViewName(ViewId _id, const char* _name)
 	{
 		BX_CHECK(checkView(_id), "Invalid view id: %d", _id);
 		s_ctx->setViewName(_id, _name);
 	}
 
-	void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+	void setViewRect(ViewId _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 	{
 		BX_CHECK(checkView(_id), "Invalid view id: %d", _id);
 		s_ctx->setViewRect(_id, _x, _y, _width, _height);
 	}
 
-	void setViewRect(uint8_t _id, uint16_t _x, uint16_t _y, BackbufferRatio::Enum _ratio)
+	void setViewRect(ViewId _id, uint16_t _x, uint16_t _y, BackbufferRatio::Enum _ratio)
 	{
 		BX_CHECK(checkView(_id), "Invalid view id: %d", _id);
 
@@ -4007,49 +4007,49 @@ error:
 		setViewRect(_id, _x, _y, width, height);
 	}
 
-	void setViewScissor(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+	void setViewScissor(ViewId _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 	{
 		BX_CHECK(checkView(_id), "Invalid view id: %d", _id);
 		s_ctx->setViewScissor(_id, _x, _y, _width, _height);
 	}
 
-	void setViewClear(uint8_t _id, uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
+	void setViewClear(ViewId _id, uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
 	{
 		BX_CHECK(checkView(_id), "Invalid view id: %d", _id);
 		s_ctx->setViewClear(_id, _flags, _rgba, _depth, _stencil);
 	}
 
-	void setViewClear(uint8_t _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7)
+	void setViewClear(ViewId _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7)
 	{
 		BX_CHECK(checkView(_id), "Invalid view id: %d", _id);
 		s_ctx->setViewClear(_id, _flags, _depth, _stencil, _0, _1, _2, _3, _4, _5, _6, _7);
 	}
 
-	void setViewMode(uint8_t _id, ViewMode::Enum _mode)
+	void setViewMode(ViewId _id, ViewMode::Enum _mode)
 	{
 		BX_CHECK(checkView(_id), "Invalid view id: %d", _id);
 		s_ctx->setViewMode(_id, _mode);
 	}
 
-	void setViewFrameBuffer(uint8_t _id, FrameBufferHandle _handle)
+	void setViewFrameBuffer(ViewId _id, FrameBufferHandle _handle)
 	{
 		BX_CHECK(checkView(_id), "Invalid view id: %d", _id);
 		s_ctx->setViewFrameBuffer(_id, _handle);
 	}
 
-	void setViewTransform(uint8_t _id, const void* _view, const void* _projL, uint8_t _flags, const void* _projR)
+	void setViewTransform(ViewId _id, const void* _view, const void* _projL, uint8_t _flags, const void* _projR)
 	{
 		BX_CHECK(checkView(_id), "Invalid view id: %d", _id);
 		s_ctx->setViewTransform(_id, _view, _projL, _flags, _projR);
 	}
 
-	void setViewOrder(uint8_t _id, uint8_t _num, const uint8_t* _order)
+	void setViewOrder(ViewId _id, uint8_t _num, const uint8_t* _order)
 	{
 		BX_CHECK(checkView(_id), "Invalid view id: %d", _id);
 		s_ctx->setViewOrder(_id, _num, _order);
 	}
 
-	void resetView(uint8_t _id)
+	void resetView(ViewId _id)
 	{
 		BX_CHECK(checkView(_id), "Invalid view id: %d", _id);
 		s_ctx->resetView(_id);
@@ -4205,25 +4205,25 @@ error:
 		s_ctx->m_encoder0->setTexture(_stage, _sampler, _handle, _flags);
 	}
 
-	void touch(uint8_t _id)
+	void touch(ViewId _id)
 	{
 		ProgramHandle handle = BGFX_INVALID_HANDLE;
 		submit(_id, handle);
 	}
 
-	void submit(uint8_t _id, ProgramHandle _program, int32_t _depth, bool _preserveState)
+	void submit(ViewId _id, ProgramHandle _program, int32_t _depth, bool _preserveState)
 	{
 		OcclusionQueryHandle handle = BGFX_INVALID_HANDLE;
 		submit(_id, _program, handle, _depth, _preserveState);
 	}
 
-	void submit(uint8_t _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth, bool _preserveState)
+	void submit(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, int32_t _depth, bool _preserveState)
 	{
 		BGFX_CHECK_API_THREAD();
 		s_ctx->m_encoder0->submit(_id, _program, _occlusionQuery, _depth, _preserveState);
 	}
 
-	void submit(uint8_t _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth, bool _preserveState)
+	void submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth, bool _preserveState)
 	{
 		BGFX_CHECK_API_THREAD();
 		s_ctx->m_encoder0->submit(_id, _program, _indirectHandle, _start, _num, _depth, _preserveState);
@@ -4265,13 +4265,13 @@ error:
 		s_ctx->m_encoder0->setImage(_stage, _sampler, _handle, _mip, _access, _format);
 	}
 
-	void dispatch(uint8_t _id, ProgramHandle _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
+	void dispatch(ViewId _id, ProgramHandle _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
 	{
 		BGFX_CHECK_API_THREAD();
 		s_ctx->m_encoder0->dispatch(_id, _handle, _numX, _numY, _numZ, _flags);
 	}
 
-	void dispatch(uint8_t _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
+	void dispatch(ViewId _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
 	{
 		BGFX_CHECK_API_THREAD();
 		s_ctx->m_encoder0->dispatch(_id, _handle, _indirectHandle, _start, _num, _flags);
@@ -4283,12 +4283,12 @@ error:
 		s_ctx->m_encoder0->discard();
 	}
 
-	void blit(uint8_t _id, TextureHandle _dst, uint16_t _dstX, uint16_t _dstY, TextureHandle _src, uint16_t _srcX, uint16_t _srcY, uint16_t _width, uint16_t _height)
+	void blit(ViewId _id, TextureHandle _dst, uint16_t _dstX, uint16_t _dstY, TextureHandle _src, uint16_t _srcX, uint16_t _srcY, uint16_t _width, uint16_t _height)
 	{
 		blit(_id, _dst, 0, _dstX, _dstY, 0, _src, 0, _srcX, _srcY, 0, _width, _height, 0);
 	}
 
-	void blit(uint8_t _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
+	void blit(ViewId _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
 	{
 		BGFX_CHECK_API_THREAD();
 		s_ctx->m_encoder0->blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
@@ -5081,63 +5081,63 @@ BGFX_C_API void bgfx_set_palette_color(uint8_t _index, const float _rgba[4])
 	bgfx::setPaletteColor(_index, _rgba);
 }
 
-BGFX_C_API void bgfx_set_view_name(uint8_t _id, const char* _name)
+BGFX_C_API void bgfx_set_view_name(bgfx_view_id_t _id, const char* _name)
 {
 	bgfx::setViewName(_id, _name);
 }
 
-BGFX_C_API void bgfx_set_view_rect(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+BGFX_C_API void bgfx_set_view_rect(bgfx_view_id_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 {
 	bgfx::setViewRect(_id, _x, _y, _width, _height);
 }
 
-BGFX_C_API void bgfx_set_view_rect_auto(uint8_t _id, uint16_t _x, uint16_t _y, bgfx_backbuffer_ratio_t _ratio)
+BGFX_C_API void bgfx_set_view_rect_auto(bgfx_view_id_t _id, uint16_t _x, uint16_t _y, bgfx_backbuffer_ratio_t _ratio)
 {
 	bgfx::setViewRect(_id, _x, _y, bgfx::BackbufferRatio::Enum(_ratio));
 }
 
-BGFX_C_API void bgfx_set_view_scissor(uint8_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+BGFX_C_API void bgfx_set_view_scissor(bgfx_view_id_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 {
 	bgfx::setViewScissor(_id, _x, _y, _width, _height);
 }
 
-BGFX_C_API void bgfx_set_view_clear(uint8_t _id, uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
+BGFX_C_API void bgfx_set_view_clear(bgfx_view_id_t _id, uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
 {
 	bgfx::setViewClear(_id, _flags, _rgba, _depth, _stencil);
 }
 
-BGFX_C_API void bgfx_set_view_clear_mrt(uint8_t _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7)
+BGFX_C_API void bgfx_set_view_clear_mrt(bgfx_view_id_t _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7)
 {
 	bgfx::setViewClear(_id, _flags, _depth, _stencil, _0, _1, _2, _3, _4, _5, _6, _7);
 }
 
-BGFX_C_API void bgfx_set_view_mode(uint8_t _id, bgfx_view_mode_t _mode)
+BGFX_C_API void bgfx_set_view_mode(bgfx_view_id_t _id, bgfx_view_mode_t _mode)
 {
 	bgfx::setViewMode(_id, bgfx::ViewMode::Enum(_mode) );
 }
 
-BGFX_C_API void bgfx_set_view_frame_buffer(uint8_t _id, bgfx_frame_buffer_handle_t _handle)
+BGFX_C_API void bgfx_set_view_frame_buffer(bgfx_view_id_t _id, bgfx_frame_buffer_handle_t _handle)
 {
 	union { bgfx_frame_buffer_handle_t c; bgfx::FrameBufferHandle cpp; } handle = { _handle };
 	bgfx::setViewFrameBuffer(_id, handle.cpp);
 }
 
-BGFX_C_API void bgfx_set_view_transform(uint8_t _id, const void* _view, const void* _proj)
+BGFX_C_API void bgfx_set_view_transform(bgfx_view_id_t _id, const void* _view, const void* _proj)
 {
 	bgfx::setViewTransform(_id, _view, _proj);
 }
 
-BGFX_C_API void bgfx_set_view_transform_stereo(uint8_t _id, const void* _view, const void* _projL, uint8_t _flags, const void* _projR)
+BGFX_C_API void bgfx_set_view_transform_stereo(bgfx_view_id_t _id, const void* _view, const void* _projL, uint8_t _flags, const void* _projR)
 {
 	bgfx::setViewTransform(_id, _view, _projL, _flags, _projR);
 }
 
-BGFX_C_API void bgfx_set_view_order(uint8_t _id, uint8_t _num, const uint8_t* _order)
+BGFX_C_API void bgfx_set_view_order(bgfx_view_id_t _id, uint8_t _num, const uint8_t* _order)
 {
 	bgfx::setViewOrder(_id, _num, _order);
 }
 
-BGFX_C_API void bgfx_reset_view(uint8_t _id)
+BGFX_C_API void bgfx_reset_view(bgfx_view_id_t _id)
 {
 	bgfx::resetView(_id);
 }
@@ -5252,25 +5252,25 @@ BGFX_C_API void bgfx_set_texture(uint8_t _stage, bgfx_uniform_handle_t _sampler,
 	bgfx::setTexture(_stage, sampler.cpp, handle.cpp, _flags);
 }
 
-BGFX_C_API void bgfx_touch(uint8_t _id)
+BGFX_C_API void bgfx_touch(bgfx_view_id_t _id)
 {
 	return bgfx::touch(_id);
 }
 
-BGFX_C_API void bgfx_submit(uint8_t _id, bgfx_program_handle_t _handle, int32_t _depth, bool _preserveState)
+BGFX_C_API void bgfx_submit(bgfx_view_id_t _id, bgfx_program_handle_t _handle, int32_t _depth, bool _preserveState)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
 	bgfx::submit(_id, handle.cpp, _depth, _preserveState);
 }
 
-BGFX_C_API void bgfx_submit_occlusion_query(uint8_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, int32_t _depth, bool _preserveState)
+BGFX_C_API void bgfx_submit_occlusion_query(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, int32_t _depth, bool _preserveState)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } program = { _program };
 	union { bgfx_occlusion_query_handle c; bgfx::OcclusionQueryHandle cpp; } occlusionQuery = { _occlusionQuery };
 	bgfx::submit(_id, program.cpp, occlusionQuery.cpp, _depth, _preserveState);
 }
 
-BGFX_C_API void bgfx_submit_indirect(uint8_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth, bool _preserveState)
+BGFX_C_API void bgfx_submit_indirect(bgfx_view_id_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth, bool _preserveState)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
 	union { bgfx_indirect_buffer_handle_t c; bgfx::IndirectBufferHandle cpp; } indirectHandle = { _indirectHandle };
@@ -5314,13 +5314,13 @@ BGFX_C_API void bgfx_set_compute_indirect_buffer(uint8_t _stage, bgfx_indirect_b
 	bgfx::setBuffer(_stage, handle.cpp, bgfx::Access::Enum(_access) );
 }
 
-BGFX_C_API void bgfx_dispatch(uint8_t _id, bgfx_program_handle_t _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
+BGFX_C_API void bgfx_dispatch(bgfx_view_id_t _id, bgfx_program_handle_t _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
 	bgfx::dispatch(_id, handle.cpp, _numX, _numY, _numZ, _flags);
 }
 
-BGFX_C_API void bgfx_dispatch_indirect(uint8_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
+BGFX_C_API void bgfx_dispatch_indirect(bgfx_view_id_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
 	union { bgfx_indirect_buffer_handle_t c; bgfx::IndirectBufferHandle cpp; } indirectHandle = { _indirectHandle };
@@ -5332,7 +5332,7 @@ BGFX_C_API void bgfx_discard()
 	bgfx::discard();
 }
 
-BGFX_C_API void bgfx_blit(uint8_t _id, bgfx_texture_handle_t _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, bgfx_texture_handle_t _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
+BGFX_C_API void bgfx_blit(bgfx_view_id_t _id, bgfx_texture_handle_t _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, bgfx_texture_handle_t _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
 {
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } dst = { _dst };
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } src = { _src };
@@ -5451,25 +5451,25 @@ BGFX_C_API void bgfx_encoder_set_texture(bgfx_encoder* _encoder, uint8_t _stage,
 	BGFX_ENCODER(setTexture(_stage, sampler.cpp, handle.cpp, _flags) );
 }
 
-BGFX_C_API void bgfx_encoder_touch(bgfx_encoder* _encoder, uint8_t _id)
+BGFX_C_API void bgfx_encoder_touch(bgfx_encoder* _encoder, bgfx_view_id_t _id)
 {
 	return BGFX_ENCODER(touch(_id) );
 }
 
-BGFX_C_API void bgfx_encoder_submit(bgfx_encoder* _encoder, uint8_t _id, bgfx_program_handle_t _handle, int32_t _depth, bool _preserveState)
+BGFX_C_API void bgfx_encoder_submit(bgfx_encoder* _encoder, bgfx_view_id_t _id, bgfx_program_handle_t _handle, int32_t _depth, bool _preserveState)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
 	BGFX_ENCODER(submit(_id, handle.cpp, _depth, _preserveState) );
 }
 
-BGFX_C_API void bgfx_encoder_submit_occlusion_query(bgfx_encoder* _encoder, uint8_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, int32_t _depth, bool _preserveState)
+BGFX_C_API void bgfx_encoder_submit_occlusion_query(bgfx_encoder* _encoder, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, int32_t _depth, bool _preserveState)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } program = { _program };
 	union { bgfx_occlusion_query_handle c; bgfx::OcclusionQueryHandle cpp; } occlusionQuery = { _occlusionQuery };
 	BGFX_ENCODER(submit(_id, program.cpp, occlusionQuery.cpp, _depth, _preserveState) );
 }
 
-BGFX_C_API void bgfx_encoder_submit_indirect(bgfx_encoder* _encoder, uint8_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth, bool _preserveState)
+BGFX_C_API void bgfx_encoder_submit_indirect(bgfx_encoder* _encoder, bgfx_view_id_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth, bool _preserveState)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
 	union { bgfx_indirect_buffer_handle_t c; bgfx::IndirectBufferHandle cpp; } indirectHandle = { _indirectHandle };
@@ -5513,13 +5513,13 @@ BGFX_C_API void bgfx_encoder_set_compute_indirect_buffer(bgfx_encoder* _encoder,
 	BGFX_ENCODER(setBuffer(_stage, handle.cpp, bgfx::Access::Enum(_access) ) );
 }
 
-BGFX_C_API void bgfx_encoder_dispatch(bgfx_encoder* _encoder, uint8_t _id, bgfx_program_handle_t _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
+BGFX_C_API void bgfx_encoder_dispatch(bgfx_encoder* _encoder, bgfx_view_id_t _id, bgfx_program_handle_t _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
 	BGFX_ENCODER(dispatch(_id, handle.cpp, _numX, _numY, _numZ, _flags) );
 }
 
-BGFX_C_API void bgfx_encoder_dispatch_indirect(bgfx_encoder* _encoder, uint8_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
+BGFX_C_API void bgfx_encoder_dispatch_indirect(bgfx_encoder* _encoder, bgfx_view_id_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
 	union { bgfx_indirect_buffer_handle_t c; bgfx::IndirectBufferHandle cpp; } indirectHandle = { _indirectHandle };
@@ -5531,7 +5531,7 @@ BGFX_C_API void bgfx_encoder_discard(bgfx_encoder* _encoder)
 	BGFX_ENCODER(discard() );
 }
 
-BGFX_C_API void bgfx_encoder_blit(bgfx_encoder* _encoder, uint8_t _id, bgfx_texture_handle_t _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, bgfx_texture_handle_t _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
+BGFX_C_API void bgfx_encoder_blit(bgfx_encoder* _encoder, bgfx_view_id_t _id, bgfx_texture_handle_t _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, bgfx_texture_handle_t _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
 {
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } dst = { _dst };
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } src = { _src };
