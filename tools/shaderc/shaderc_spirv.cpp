@@ -545,25 +545,18 @@ namespace bgfx { namespace spirv
 //		fprintf(stderr, "%s\n", _message);
 //	}
 
-	static bool compile(const bx::CommandLine& _cmdLine, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
+	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
 	{
-		BX_UNUSED(_cmdLine, _version, _code, _writer);
-
-		const char* type = _cmdLine.findOption('\0', "type");
-		if (NULL == type)
-		{
-			fprintf(stderr, "Error: Shader type must be specified.\n");
-			return false;
-		}
+		BX_UNUSED(_version);
 
 		glslang::InitializeProcess();
 
 		glslang::TProgram* program = new glslang::TProgram;
 
-		EShLanguage stage = getLang(type[0]);
+		EShLanguage stage = getLang(_options.shaderType);
 		if (EShLangCount == stage)
 		{
-			fprintf(stderr, "Error: Unknown shader type %s.\n", type);
+			fprintf(stderr, "Error: Unknown shader type %s.\n", _options.shaderType);
 			return false;
 		}
 		glslang::TShader* shader = new glslang::TShader(stage);
@@ -649,7 +642,7 @@ namespace bgfx { namespace spirv
 					uint16_t count = (uint16_t)program->getNumLiveUniformVariables();
 					bx::write(_writer, count);
 
-					uint32_t fragmentBit = type[0] == 'f' ? BGFX_UNIFORM_FRAGMENTBIT : 0;
+					uint32_t fragmentBit = _options.shaderType == 'f' ? BGFX_UNIFORM_FRAGMENTBIT : 0;
 					for (uint16_t ii = 0; ii < count; ++ii)
 					{
 						Uniform un;
@@ -767,9 +760,9 @@ namespace bgfx { namespace spirv
 
 } // namespace spirv
 
-	bool compileSPIRVShader(const bx::CommandLine& _cmdLine, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
+	bool compileSPIRVShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
 	{
-		return spirv::compile(_cmdLine, _version, _code, _writer);
+		return spirv::compile(_options, _version, _code, _writer);
 	}
 
 } // namespace bgfx
