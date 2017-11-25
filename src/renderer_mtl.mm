@@ -955,14 +955,15 @@ namespace bgfx { namespace mtl
 			m_commandBuffer = m_cmd.alloc();
 		}
 
-		void updateViewName(uint8_t _id, const char* _name) override
+		void updateViewName(ViewId _id, const char* _name) override
 		{
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 			{
-				bx::strCopy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
-						, BX_COUNTOF(s_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
-						, _name
-						);
+				bx::strCopy(
+					  &s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
+					, BX_COUNTOF(s_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
+					, _name
+					);
 			}
 		}
 
@@ -2558,8 +2559,8 @@ namespace bgfx { namespace mtl
 					|| bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
 					? 2 /*MTLStorageModePrivate*/
 					: (BX_ENABLED(BX_PLATFORM_IOS)
-						? 0 /* MTLStorageModeShared */
-						:  1 /*MTLStorageModeManaged*/
+						? 0 /* MTLStorageModeShared  */
+						: 1 /* MTLStorageModeManaged */
 					) );
 
 				desc.usage = MTLTextureUsageShaderRead;

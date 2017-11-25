@@ -330,7 +330,9 @@ namespace bgfx { namespace mtl
 		void setLabel(const char* _label)
 		{
 			if ([m_obj respondsToSelector:@selector(setLabel:)])
+			{
 				[m_obj setLabel:@(_label)];
+			}
 		}
 	MTL_CLASS_END
 
