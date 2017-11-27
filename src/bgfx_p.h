@@ -996,7 +996,7 @@ namespace bgfx
 		}
 
 		/// Returns true if item is compute command.
-		bool decode(uint64_t _key, uint8_t _viewRemap[BGFX_CONFIG_MAX_VIEWS])
+		bool decode(uint64_t _key, ViewId _viewRemap[BGFX_CONFIG_MAX_VIEWS])
 		{
 			m_view = _viewRemap[(_key & SORT_KEY_VIEW_MASK) >> SORT_KEY_VIEW_SHIFT];
 			if (_key & SORT_KEY_DRAW_BIT)
@@ -1865,7 +1865,7 @@ namespace bgfx
 			m_freeUniform.reset();
 		}
 
-		uint8_t m_viewRemap[BGFX_CONFIG_MAX_VIEWS];
+		ViewId m_viewRemap[BGFX_CONFIG_MAX_VIEWS];
 		float m_colorPalette[BGFX_CONFIG_MAX_COLOR_PALETTE][4];
 
 		View m_view[BGFX_CONFIG_MAX_VIEWS];

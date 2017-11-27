@@ -396,7 +396,7 @@ struct OcornutImguiContext
 		, int _width
 		, int _height
 		, char _inputChar
-		, uint8_t _viewId
+		, bgfx::ViewId _viewId
 		)
 	{
 		m_viewId = _viewId;
@@ -455,7 +455,7 @@ struct OcornutImguiContext
 	ImFont* m_font[ImGui::Font::Count];
 	int64_t m_last;
 	int32_t m_lastScroll;
-	uint8_t m_viewId;
+	bgfx::ViewId m_viewId;
 };
 
 static OcornutImguiContext s_ctx;
@@ -485,7 +485,7 @@ void imguiDestroy()
 	s_ctx.destroy();
 }
 
-void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar, uint8_t _viewId)
+void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar, bgfx::ViewId _viewId)
 {
 	s_ctx.beginFrame(_mx, _my, _button, _scroll, _width, _height, _inputChar, _viewId);
 }

@@ -18,7 +18,7 @@ extern "C"
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x5)
 
 #define BGFX_SHADERC_VERSION_MAJOR 1
-#define BGFX_SHADERC_VERSION_MINOR 5
+#define BGFX_SHADERC_VERSION_MINOR 6
 
 namespace bgfx
 {
@@ -151,7 +151,7 @@ namespace bgfx
 	BX_STATIC_ASSERT(BX_COUNTOF(s_uniformTypeName) == UniformType::Count*2);
 
 
-	Options::Options() 
+	Options::Options()
 		: shaderType(' ')
 		, disasm(false)
 		, raw(false)
