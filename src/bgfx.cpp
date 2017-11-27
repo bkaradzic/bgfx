@@ -1047,7 +1047,7 @@ namespace bgfx
 	{
 		BGFX_PROFILER_SCOPE("bgfx/Sort", 0xff2040ff);
 
-		uint8_t viewRemap[BGFX_CONFIG_MAX_VIEWS];
+		ViewId viewRemap[BGFX_CONFIG_MAX_VIEWS];
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 		{
 			viewRemap[m_viewRemap[ii] ] = uint8_t(ii);

@@ -1026,7 +1026,7 @@ namespace bgfx
 			return uint8_t( (_key & SORT_KEY_VIEW_MASK) >> SORT_KEY_VIEW_SHIFT);
 		}
 
-		static uint64_t remapView(uint64_t _key, uint8_t _viewRemap[BGFX_CONFIG_MAX_VIEWS])
+		static uint64_t remapView(uint64_t _key, ViewId _viewRemap[BGFX_CONFIG_MAX_VIEWS])
 		{
 			const uint8_t  oldView = uint8_t( (_key & SORT_KEY_VIEW_MASK) >> SORT_KEY_VIEW_SHIFT);
 			const uint64_t view    = uint64_t(_viewRemap[oldView])        << SORT_KEY_VIEW_SHIFT;
@@ -1046,7 +1046,7 @@ namespace bgfx
 		uint32_t m_depth;
 		uint32_t m_seq;
 		uint16_t m_program;
-		uint8_t  m_view;
+		ViewId   m_view;
 		uint8_t  m_trans;
 	};
 #undef SORT_KEY_RENDER_DRAW
@@ -1067,16 +1067,16 @@ namespace bgfx
 			m_view =  uint8_t(_key >> 24);
 		}
 
-		static uint32_t remapView(uint32_t _key, uint8_t _viewRemap[BGFX_CONFIG_MAX_VIEWS])
+		static uint32_t remapView(uint32_t _key, ViewId _viewRemap[BGFX_CONFIG_MAX_VIEWS])
 		{
-			const uint8_t  oldView  = uint8_t(_key >> 24);
+			const ViewId   oldView  = ViewId(_key >> 24);
 			const uint32_t view     = uint32_t(_viewRemap[oldView]) << 24;
 			const uint32_t key      = (_key & ~UINT32_C(0xff000000) ) | view;
 			return key;
 		}
 
 		uint16_t m_item;
-		uint8_t  m_view;
+		ViewId   m_view;
 	};
 
 	BX_ALIGN_DECL_16(struct) Matrix4
@@ -1982,7 +1982,7 @@ namespace bgfx
 			discard();
 		}
 
-		void begin(Frame* _frame, ViewId _idx)
+		void begin(Frame* _frame, uint8_t _idx)
 		{
 			m_frame = _frame;
 
@@ -4555,7 +4555,7 @@ namespace bgfx
 		FrameBufferRef m_frameBufferRef[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 		VertexDeclRef m_declRef;
 
-		uint8_t m_viewRemap[BGFX_CONFIG_MAX_VIEWS];
+		ViewId m_viewRemap[BGFX_CONFIG_MAX_VIEWS];
 		uint32_t m_seq[BGFX_CONFIG_MAX_VIEWS];
 		View m_view[BGFX_CONFIG_MAX_VIEWS];
 
