@@ -556,7 +556,7 @@ namespace bgfx { namespace spirv
 		EShLanguage stage = getLang(_options.shaderType);
 		if (EShLangCount == stage)
 		{
-			fprintf(stderr, "Error: Unknown shader type %s.\n", _options.shaderType);
+			fprintf(stderr, "Error: Unknown shader type '%c'.\n", _options.shaderType);
 			return false;
 		}
 		glslang::TShader* shader = new glslang::TShader(stage);
