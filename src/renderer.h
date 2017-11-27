@@ -531,7 +531,7 @@ namespace bgfx
 
 				m_queryIdx = m_gpuTimer.begin(_view);
 
-				viewStats.view = uint8_t(_view);
+				viewStats.view = ViewId(_view);
 				bx::strCopy(viewStats.name
 					, BGFX_CONFIG_MAX_VIEW_NAME
 					, &m_viewName[_view][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]

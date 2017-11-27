@@ -440,7 +440,7 @@ public:
 			float proj[16];
 			bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f, 0.0f, caps->homogeneousDepth);
 
-			uint8_t order[] =
+			bgfx::ViewId order[] =
 			{
 				hdrSkybox,
 				hdrMesh,

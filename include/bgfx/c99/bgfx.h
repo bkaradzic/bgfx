@@ -336,12 +336,15 @@ typedef struct bgfx_hmd
 } bgfx_hmd_t;
 
 /**/
+typedef uint16_t bgfx_view_id_t;
+
+/**/
 typedef struct bgfx_view_stats
 {
-    char    name[256];
-    uint8_t view;
-    int64_t cpuTimeElapsed;
-    int64_t gpuTimeElapsed;
+    char           name[256];
+    bgfx_view_id_t view;
+    int64_t        cpuTimeElapsed;
+    int64_t        gpuTimeElapsed;
 
 } bgfx_view_stats_t;
 
@@ -386,9 +389,6 @@ typedef struct bgfx_stats
     bgfx_encoder_stats_t* encoderStats;
 
 } bgfx_stats_t;
-
-/**/
-typedef uint16_t bgfx_view_id_t;
 
 /**/
 struct bgfx_encoder;
@@ -863,7 +863,7 @@ BGFX_C_API void bgfx_set_view_transform(bgfx_view_id_t _id, const void* _view, c
 BGFX_C_API void bgfx_set_view_transform_stereo(bgfx_view_id_t _id, const void* _view, const void* _projL, uint8_t _flags, const void* _projR);
 
 /**/
-BGFX_C_API void bgfx_set_view_order(bgfx_view_id_t _id, uint8_t _num, const uint8_t* _order);
+BGFX_C_API void bgfx_set_view_order(bgfx_view_id_t _id, uint16_t _num, const bgfx_view_id_t* _order);
 
 /**/
 BGFX_C_API void bgfx_reset_view(bgfx_view_id_t _id);

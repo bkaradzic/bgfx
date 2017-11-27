@@ -4308,14 +4308,14 @@ namespace bgfx
 			m_view[_id].reset();
 		}
 
-		BGFX_API_FUNC(void setViewOrder(ViewId _id, uint8_t _num, const uint8_t* _order) )
+		BGFX_API_FUNC(void setViewOrder(ViewId _id, uint16_t _num, const ViewId* _order) )
 		{
 			const uint32_t num = bx::uint32_min(_id + _num, BGFX_CONFIG_MAX_VIEWS) - _id;
 			if (NULL == _order)
 			{
 				for (uint32_t ii = 0; ii < num; ++ii)
 				{
-					uint8_t id = uint8_t(ii+_id);
+					ViewId id = ViewId(ii+_id);
 					m_viewRemap[id] = id;
 				}
 			}

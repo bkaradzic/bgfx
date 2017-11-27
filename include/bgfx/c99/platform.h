@@ -47,7 +47,7 @@ typedef struct bgfx_platform_data
 /**/
 BGFX_C_API void bgfx_set_platform_data(const bgfx_platform_data_t* _data);
 
-typedef struct bgfx_internal_data
+typedef struct bgfx_internal_datauint8_t
 {
     const struct bgfx_caps* caps;
     void* context;
@@ -163,7 +163,7 @@ typedef struct bgfx_interface_vtbl
     void (*set_view_frame_buffer)(bgfx_view_id_t _id, bgfx_frame_buffer_handle_t _handle);
     void (*set_view_transform)(bgfx_view_id_t _id, const void* _view, const void* _proj);
     void (*set_view_transform_stereo)(bgfx_view_id_t _id, const void* _view, const void* _projL, uint8_t _flags, const void* _projR);
-    void (*set_view_order)(bgfx_view_id_t _id, uint8_t _num, const uint8_t* _order);
+    void (*set_view_order)(bgfx_view_id_t _id, uint16_t _num, const bgfx_view_id_t* _order);
     void (*encoder_set_marker)(struct bgfx_encoder* _encoder, const char* _marker);
     void (*encoder_set_state)(struct bgfx_encoder* _encoder, uint64_t _state, uint32_t _rgba);
     void (*encoder_set_condition)(struct bgfx_encoder* _encoder, bgfx_occlusion_query_handle_t _handle, bool _visible);

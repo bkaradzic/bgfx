@@ -774,6 +774,9 @@ namespace bgfx
 		uint8_t  flags;        //!< Status flags.
 	};
 
+	///
+	typedef uint16_t ViewId;
+
 	/// View stats.
 	///
 	/// @attention C99 equivalent is `bgfx_view_stats_t`.
@@ -781,7 +784,7 @@ namespace bgfx
 	struct ViewStats
 	{
 		char    name[256];      //!< View name.
-		uint8_t view;           //!< View id.
+		ViewId  view;           //!< View id.
 		int64_t cpuTimeElapsed; //!< CPU (submit) time elapsed.
 		int64_t gpuTimeElapsed; //!< GPU time elapsed.
 	};
@@ -833,9 +836,6 @@ namespace bgfx
 		uint8_t       numEncoders;  //!< Number of encoders used during frame.
 		EncoderStats* encoderStats; //!< Encoder stats.
 	};
-
-	///
-	typedef uint16_t ViewId;
 
 	/// Encoder for submitting draw calls from multiple threads. Use `bgfx::begin()`
 	/// to obtain encoder for thread.
@@ -3155,8 +3155,8 @@ namespace bgfx
 	///
 	void setViewOrder(
 		  ViewId _id = 0
-		, uint8_t _num = UINT8_MAX
-		, const uint8_t* _remap = NULL
+		, uint16_t _num = UINT16_MAX
+		, const ViewId* _remap = NULL
 		);
 
 	/// Reset all view settings to default.
