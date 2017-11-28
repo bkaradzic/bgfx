@@ -483,7 +483,7 @@ struct View
 			{
 				if (_argc >= 3)
 				{
-					m_filter = bx::toBool(_argv[2]);
+					bx::fromString(&m_filter, _argv[2]);
 				}
 				else
 				{
@@ -494,7 +494,7 @@ struct View
 			{
 				if (_argc >= 3)
 				{
-					m_fit = bx::toBool(_argv[2]);
+					bx::fromString(&m_fit, _argv[2]);
 				}
 				else
 				{

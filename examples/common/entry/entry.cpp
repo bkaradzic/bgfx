@@ -240,7 +240,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			if (_argc > arg)
 			{
 				_flags &= ~_bit;
-				_flags |= bx::toBool(_argv[arg]) ? _bit : 0;
+
+				bool set = false;
+				bx::fromString(&set, _argv[arg]);
+
+				_flags |= set ? _bit : 0;
 			}
 			else
 			{
@@ -255,9 +259,19 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	int cmdMouseLock(CmdContext* /*_context*/, void* /*_userData*/, int _argc, char const* const* _argv)
 	{
-		if (_argc > 1)
+		if (1 < _argc)
 		{
-			inputSetMouseLock(_argc > 1 ? bx::toBool(_argv[1]) : !inputIsMouseLocked() );
+			bool set = false;
+			if (2 < _argc)
+			{
+				bx::fromString(&set, _argv[1]);
+				inputSetMouseLock(set);
+			}
+			else
+			{
+				inputSetMouseLock(!inputIsMouseLocked() );
+			}
+
 			return bx::kExitSuccess;
 		}
 
