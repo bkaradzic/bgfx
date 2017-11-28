@@ -38,7 +38,7 @@ struct ImGuiGroupData;
 struct ImGuiSimpleColumns;
 struct ImGuiDrawContext;
 struct ImGuiTextEditState;
-struct ImGuiIniData;
+struct ImGuiSettingsWindow;
 struct ImGuiMouseCursorData;
 struct ImGuiPopupRef;
 struct ImGuiWindow;
@@ -106,6 +106,7 @@ IMGUI_API int           ImStricmp(const char* str1, const char* str2);
 IMGUI_API int           ImStrnicmp(const char* str1, const char* str2, int count);
 IMGUI_API void          ImStrncpy(char* dst, const char* src, int count);
 IMGUI_API char*         ImStrdup(const char* str);
+IMGUI_API char*         ImStrchrRange(const char* str_begin, const char* str_end, char c);
 IMGUI_API int           ImStrlenW(const ImWchar* str);
 IMGUI_API const ImWchar*ImStrbolW(const ImWchar* buf_mid_line, const ImWchar* buf_begin); // Find beginning-of-line
 IMGUI_API const char*   ImStristr(const char* haystack, const char* haystack_end, const char* needle, const char* needle_end);
@@ -370,13 +371,24 @@ struct IMGUI_API ImGuiTextEditState
 };
 
 // Data saved in imgui.ini file
-struct ImGuiIniData
+struct ImGuiSettingsWindow
 {
     char*       Name;
     ImGuiID     Id;
     ImVec2      Pos;
     ImVec2      Size;
     bool        Collapsed;
+
+    ImGuiSettingsWindow() { Name = NULL; Id = 0; Pos = Size = ImVec2(0,0); Collapsed = false; }
+};
+
+struct ImGuiSettingsHandler
+{
+    const char* TypeName;   // Short description stored in .ini file. Disallowed characters: '[' ']'  
+    ImGuiID     TypeHash;   // == ImHash(TypeName, 0, 0)
+    void*       (*ReadOpenEntryFn)(ImGuiContext& ctx, const char* name);
+    void        (*ReadLineFn)(ImGuiContext& ctx, void* entry, const char* line);
+    void        (*WriteAllFn)(ImGuiContext& ctx, ImGuiTextBuffer* out_buf);
 };
 
 // Mouse cursor data (used when io.MouseDrawCursor is set)
@@ -438,8 +450,6 @@ struct ImGuiContext
     ImGuiWindow*            ActiveIdWindow;
     ImGuiWindow*            MovingWindow;                       // Track the child window we clicked on to move a window.
     ImGuiID                 MovingWindowMoveId;                 // == MovingWindow->MoveId
-    ImVector<ImGuiIniData>  Settings;                           // .ini Settings
-    float                   SettingsDirtyTimer;                 // Save .ini Settings on disk when time reaches zero
     ImVector<ImGuiColMod>   ColorModifiers;                     // Stack for PushStyleColor()/PopStyleColor()
     ImVector<ImGuiStyleMod> StyleModifiers;                     // Stack for PushStyleVar()/PopStyleVar()
     ImVector<ImFont*>       FontStack;                          // Stack for PushFont()/PopFont()
@@ -488,6 +498,11 @@ struct ImGuiContext
     ImVector<char>          PrivateClipboard;                   // If no custom clipboard handler is defined
     ImVec2                  OsImePosRequest, OsImePosSet;       // Cursor position request & last passed to the OS Input Method Editor
 
+    // Settings
+    float                          SettingsDirtyTimer;          // Save .ini Settings on disk when time reaches zero
+    ImVector<ImGuiSettingsWindow>  SettingsWindows;             // .ini settings for ImGuiWindow
+    ImVector<ImGuiSettingsHandler> SettingsHandlers;            // List of .ini settings handlers
+
     // Logging
     bool                    LogEnabled;
     FILE*                   LogFile;                            // If != NULL log to stdout/ file
@@ -532,7 +547,6 @@ struct ImGuiContext
         ActiveIdWindow = NULL;
         MovingWindow = NULL;
         MovingWindowMoveId = 0;
-        SettingsDirtyTimer = 0.0f;
 
         SetNextWindowPosVal = ImVec2(0.0f, 0.0f);
         SetNextWindowSizeVal = ImVec2(0.0f, 0.0f);
@@ -564,6 +578,8 @@ struct ImGuiContext
         OverlayDrawList._OwnerName = "##Overlay"; // Give it a name for debugging
         MouseCursor = ImGuiMouseCursor_Arrow;
         memset(MouseCursorData, 0, sizeof(MouseCursorData));
+
+        SettingsDirtyTimer = 0.0f;
 
         LogEnabled = false;
         LogFile = NULL;
@@ -786,6 +802,8 @@ namespace ImGui
     IMGUI_API void          BringWindowToBack(ImGuiWindow* window);
 
     IMGUI_API void          Initialize();
+
+    IMGUI_API void          MarkIniSettingsDirty();
 
     IMGUI_API void          SetActiveID(ImGuiID id, ImGuiWindow* window);
     IMGUI_API void          ClearActiveID();
