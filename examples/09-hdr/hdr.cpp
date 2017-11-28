@@ -378,19 +378,19 @@ public:
 
 			m_time += (float)(frameTime*m_speed/freq);
 
-			uint8_t shuffle[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+			bgfx::ViewId shuffle[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 			bx::shuffle(&m_rng, shuffle, BX_COUNTOF(shuffle) );
 
-			uint8_t hdrSkybox       = shuffle[0];
-			uint8_t hdrMesh         = shuffle[1];
-			uint8_t hdrLuminance    = shuffle[2];
-			uint8_t hdrLumScale0    = shuffle[3];
-			uint8_t hdrLumScale1    = shuffle[4];
-			uint8_t hdrLumScale2    = shuffle[5];
-			uint8_t hdrLumScale3    = shuffle[6];
-			uint8_t hdrBrightness   = shuffle[7];
-			uint8_t hdrVBlur        = shuffle[8];
-			uint8_t hdrHBlurTonemap = shuffle[9];
+			bgfx::ViewId hdrSkybox       = shuffle[0];
+			bgfx::ViewId hdrMesh         = shuffle[1];
+			bgfx::ViewId hdrLuminance    = shuffle[2];
+			bgfx::ViewId hdrLumScale0    = shuffle[3];
+			bgfx::ViewId hdrLumScale1    = shuffle[4];
+			bgfx::ViewId hdrLumScale2    = shuffle[5];
+			bgfx::ViewId hdrLumScale3    = shuffle[6];
+			bgfx::ViewId hdrBrightness   = shuffle[7];
+			bgfx::ViewId hdrVBlur        = shuffle[8];
+			bgfx::ViewId hdrHBlurTonemap = shuffle[9];
 
 			// Set views.
 			bgfx::setViewName(hdrSkybox, "Skybox");

@@ -1021,15 +1021,15 @@ namespace bgfx
 			return true; // compute
 		}
 
-		static uint8_t decodeView(uint64_t _key)
+		static ViewId decodeView(uint64_t _key)
 		{
-			return uint8_t( (_key & SORT_KEY_VIEW_MASK) >> SORT_KEY_VIEW_SHIFT);
+			return ViewId( (_key & SORT_KEY_VIEW_MASK) >> SORT_KEY_VIEW_SHIFT);
 		}
 
 		static uint64_t remapView(uint64_t _key, ViewId _viewRemap[BGFX_CONFIG_MAX_VIEWS])
 		{
-			const uint8_t  oldView = uint8_t( (_key & SORT_KEY_VIEW_MASK) >> SORT_KEY_VIEW_SHIFT);
-			const uint64_t view    = uint64_t(_viewRemap[oldView])        << SORT_KEY_VIEW_SHIFT;
+			const ViewId   oldView = decodeView(_key);
+			const uint64_t view    = uint64_t(_viewRemap[oldView]) << SORT_KEY_VIEW_SHIFT;
 			const uint64_t key     = (_key & ~SORT_KEY_VIEW_MASK) | view;
 			return key;
 		}
@@ -1064,7 +1064,7 @@ namespace bgfx
 		void decode(uint32_t _key)
 		{
 			m_item = uint16_t(_key & UINT16_MAX);
-			m_view =  uint8_t(_key >> 24);
+			m_view =   ViewId(_key >> 24);
 		}
 
 		static uint32_t remapView(uint32_t _key, ViewId _viewRemap[BGFX_CONFIG_MAX_VIEWS])
@@ -4321,7 +4321,7 @@ namespace bgfx
 			}
 			else
 			{
-				bx::memCopy(&m_viewRemap[_id], _order, num);
+				bx::memCopy(&m_viewRemap[_id], _order, num*sizeof(ViewId) );
 			}
 		}
 

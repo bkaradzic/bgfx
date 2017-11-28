@@ -1050,7 +1050,7 @@ namespace bgfx
 		ViewId viewRemap[BGFX_CONFIG_MAX_VIEWS];
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 		{
-			viewRemap[m_viewRemap[ii] ] = uint8_t(ii);
+			viewRemap[m_viewRemap[ii] ] = ViewId(ii);
 		}
 
 		for (uint32_t ii = 0, num = m_numRenderItems; ii < num; ++ii)
@@ -1418,12 +1418,12 @@ namespace bgfx
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_viewRemap); ++ii)
 		{
-			m_viewRemap[ii] = uint8_t(ii);
+			m_viewRemap[ii] = ViewId(ii);
 		}
 
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 		{
-			resetView(uint8_t(ii) );
+			resetView(ViewId(ii) );
 		}
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_clearColor); ++ii)
