@@ -18,13 +18,23 @@ struct NVGLUframebuffer {
   int image;
   uint8_t viewId;
 };
+
 typedef struct NVGLUframebuffer NVGLUframebuffer;
 
-NVGcontext* nvgCreate(int edgeaa, unsigned char _viewId, bx::AllocatorI* _allocator);
-NVGcontext* nvgCreate(int edgeaa, unsigned char _viewId);
+///
+NVGcontext* nvgCreate(int32_t edgeaa, uint16_t _viewId, bx::AllocatorI* _allocator);
+
+///
+NVGcontext* nvgCreate(int32_t edgeaa, uint16_t _viewId);
+
+///
 void nvgDelete(struct NVGcontext* ctx);
-uint8_t nvgViewId(struct NVGcontext* ctx);
-void nvgViewId(struct NVGcontext* ctx, unsigned char _viewId);
+
+///
+void nvgSetViewId(struct NVGcontext* ctx, uint16_t _viewId);
+
+///
+uint16_t nvgGetViewId(struct NVGcontext* ctx);
 
 // Helper functions to create bgfx framebuffer to render to.
 // Example:
@@ -45,10 +55,20 @@ void nvgViewId(struct NVGcontext* ctx, unsigned char _viewId);
 //		nvgFillPaint(ctx, paint);
 //		nvgFill(ctx);
 //		nvgEndFrame(ctx);
-NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* ctx, int width, int height, int imageFlags, uint8_t viewId);
+
+///
+NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* ctx, int width, int height, int imageFlags, uint16_t viewId);
+
+///
 NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* ctx, int width, int height, int imageFlags);
+
+///
 void nvgluBindFramebuffer(NVGLUframebuffer* framebuffer);
+
+///
 void nvgluDeleteFramebuffer(NVGLUframebuffer* framebuffer);
-void nvgluSetViewFramebuffer(uint8_t viewId, NVGLUframebuffer* framebuffer);
+
+///
+void nvgluSetViewFramebuffer(uint16_t viewId, NVGLUframebuffer* framebuffer);
 
 #endif // NANOVG_BGFX_H_HEADER_GUARD

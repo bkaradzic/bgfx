@@ -151,7 +151,7 @@ namespace
 		bgfx::TextureHandle texMissing;
 
 		bgfx::TransientVertexBuffer tvb;
-		uint8_t m_viewId;
+		bgfx::ViewId m_viewId;
 
 		struct GLNVGtexture* textures;
 		float view[2];
@@ -1088,7 +1088,7 @@ namespace
 
 } // namespace
 
-NVGcontext* nvgCreate(int edgeaa, unsigned char _viewId, bx::AllocatorI* _allocator)
+NVGcontext* nvgCreate(int32_t edgeaa, uint16_t _viewId, bx::AllocatorI* _allocator)
 {
 	if (NULL == _allocator)
 	{
@@ -1123,7 +1123,7 @@ NVGcontext* nvgCreate(int edgeaa, unsigned char _viewId, bx::AllocatorI* _alloca
 
 	gl->m_allocator   = _allocator;
 	gl->edgeAntiAlias = edgeaa;
-	gl->m_viewId      = uint8_t(_viewId);
+	gl->m_viewId      = _viewId;
 
 	ctx = nvgCreateInternal(&params);
 	if (ctx == NULL) goto error;
@@ -1140,7 +1140,7 @@ error:
 	return NULL;
 }
 
-NVGcontext* nvgCreate(int edgeaa, unsigned char _viewId) {
+NVGcontext* nvgCreate(int32_t edgeaa, uint16_t _viewId) {
 	return nvgCreate(edgeaa, _viewId, NULL);
 }
 
@@ -1149,18 +1149,18 @@ void nvgDelete(struct NVGcontext* ctx)
 	nvgDeleteInternal(ctx);
 }
 
-uint8_t nvgViewId(struct NVGcontext* ctx)
+void nvgSetViewId(struct NVGcontext* ctx, uint16_t _viewId)
+{
+	struct NVGparams* params = nvgInternalParams(ctx);
+	struct GLNVGcontext* gl = (struct GLNVGcontext*)params->userPtr;
+	gl->m_viewId = _viewId;
+}
+
+uint16_t nvgGetViewId(struct NVGcontext* ctx)
 {
 	struct NVGparams* params = nvgInternalParams(ctx);
 	struct GLNVGcontext* gl = (struct GLNVGcontext*)params->userPtr;
 	return gl->m_viewId;
-}
-
-void nvgViewId(struct NVGcontext* ctx, unsigned char _viewId)
-{
-	struct NVGparams* params = nvgInternalParams(ctx);
-	struct GLNVGcontext* gl = (struct GLNVGcontext*)params->userPtr;
-	gl->m_viewId = uint8_t(_viewId);
 }
 
 bgfx::TextureHandle nvglImageHandle(NVGcontext* ctx, int image)
@@ -1170,7 +1170,7 @@ bgfx::TextureHandle nvglImageHandle(NVGcontext* ctx, int image)
 	return tex->id;
 }
 
-NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* ctx, int width, int height, int imageFlags, uint8_t viewId)
+NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* ctx, int width, int height, int imageFlags, uint16_t viewId)
 {
 	NVGLUframebuffer* framebuffer = nvgluCreateFramebuffer(ctx, width, height, imageFlags);
 
@@ -1228,16 +1228,16 @@ NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* _ctx, int _width, int _heig
 void nvgluBindFramebuffer(NVGLUframebuffer* framebuffer)
 {
 	static NVGcontext* s_prevCtx = NULL;
-	static uint8_t s_prevViewId;
+	static bgfx::ViewId s_prevViewId;
 	if (framebuffer != NULL)
 	{
 		s_prevCtx    = framebuffer->ctx;
-		s_prevViewId = nvgViewId(framebuffer->ctx);
-		nvgViewId(framebuffer->ctx, framebuffer->viewId);
+		s_prevViewId = nvgGetViewId(framebuffer->ctx);
+		nvgSetViewId(framebuffer->ctx, framebuffer->viewId);
 	}
 	else if (s_prevCtx != NULL)
 	{
-		nvgViewId(s_prevCtx, s_prevViewId);
+		nvgSetViewId(s_prevCtx, s_prevViewId);
 	}
 }
 
@@ -1259,7 +1259,7 @@ void nvgluDeleteFramebuffer(NVGLUframebuffer* framebuffer)
 	BX_DELETE(gl->m_allocator, framebuffer);
 }
 
-void nvgluSetViewFramebuffer(uint8_t viewId, NVGLUframebuffer* framebuffer)
+void nvgluSetViewFramebuffer(uint16_t viewId, NVGLUframebuffer* framebuffer)
 {
 	framebuffer->viewId = viewId;
 	bgfx::setViewFrameBuffer(viewId, framebuffer->handle);
