@@ -4,13 +4,19 @@
  */
 
 #include "common.h"
+
 #include <bgfx/bgfx.h>
+
 #include <bx/commandline.h>
-#include <bx/os.h>
-#include <bx/filepath.h>
-#include <bx/uint32_t.h>
-#include <bx/math.h>
 #include <bx/easing.h>
+#include <bx/file.h>
+#include <bx/filepath.h>
+#include <bx/math.h>
+#include <bx/os.h>
+#include <bx/process.h>
+#include <bx/settings.h>
+#include <bx/uint32_t.h>
+
 #include <entry/entry.h>
 #include <entry/input.h>
 #include <entry/cmd.h>
@@ -18,9 +24,6 @@
 #include <bgfx_utils.h>
 
 #include <dirent.h>
-
-#include <bx/file.h>
-#include <bx/process.h>
 
 #include <tinystl/allocator.h>
 #include <tinystl/vector.h>
@@ -228,6 +231,7 @@ struct View
 		, m_files(false)
 		, m_sdf(false)
 	{
+		load();
 	}
 
 	~View()
@@ -568,6 +572,10 @@ struct View
 			{
 				m_help ^= true;
 			}
+			else if (0 == bx::strCmp(_argv[1], "save") )
+			{
+				save();
+			}
 			else if (0 == bx::strCmp(_argv[1], "info") )
 			{
 				m_info ^= true;
@@ -649,6 +657,48 @@ struct View
 			}
 
 			closedir(dir);
+		}
+	}
+
+	void load()
+	{
+		bx::FilePath filePath(bx::Dir::Home);
+		filePath.join(".config/bgfx/texturev.ini");
+
+		bx::Settings settings(entry::getAllocator() );
+
+		bx::FileReader reader;
+		if (bx::open(&reader, filePath) )
+		{
+			bx::read(&reader, settings);
+			bx::close(&reader);
+
+			if (!bx::fromString(&m_transitionTime, settings.get("view/transition") ) )
+			{
+				m_transitionTime = 1.0f;
+			}
+		}
+	}
+
+	void save()
+	{
+		bx::FilePath filePath(bx::Dir::Home);
+		filePath.join(".config/bgfx/texturev.ini");
+
+		if (bx::makeAll(filePath.getPath() ) )
+		{
+			bx::Settings settings(entry::getAllocator() );
+
+			char tmp[256];
+			bx::toString(tmp, sizeof(tmp), m_transitionTime);
+			settings.set("view/transition", tmp);
+
+			bx::FileWriter writer;
+			if (bx::open(&writer, filePath) )
+			{
+				bx::write(&writer, settings);
+				bx::close(&writer);
+			}
 		}
 	}
 
@@ -1348,6 +1398,13 @@ int _main_(int _argc, char** _argv)
 					if (ImGui::MenuItem("Checkerboard", NULL, &alpha) )
 					{
 						cmdExec("view rgb a");
+					}
+
+					ImGui::Separator();
+
+					if (ImGui::MenuItem("Save Options") )
+					{
+						cmdExec("view save");
 					}
 
 					ImGui::EndMenu();
