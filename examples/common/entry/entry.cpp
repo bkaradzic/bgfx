@@ -944,6 +944,11 @@ restart:
 
 	bx::AllocatorI* getAllocator()
 	{
+		if (NULL == g_allocator)
+		{
+			g_allocator = getDefaultAllocator();
+		}
+
 		return g_allocator;
 	}
 
