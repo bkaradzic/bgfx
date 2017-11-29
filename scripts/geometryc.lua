@@ -4,7 +4,7 @@
 --
 
 project "geometryc"
-	uuid "8794dc3a-2d57-11e2-ba18-368d09e48fda"
+	uuid (os.uuid("geometryc"))
 	kind "ConsoleApp"
 
 	includedirs {
@@ -31,13 +31,16 @@ project "geometryc"
 
 	configuration { "mingw-*" }
 		targetextension ".exe"
+		links {
+			"psapi",
+		}
 
 	configuration { "osx" }
 		links {
 			"Cocoa.framework",
 		}
 
-	configuration { "vs20* or mingw*" }
+	configuration { "vs20*" }
 		links {
 			"psapi",
 		}
