@@ -793,9 +793,9 @@ static uint32_t addQuad(uint16_t* _indices, uint16_t _idx0, uint16_t _idx1, uint
 
 void setGeometry(
 	  Geometry::Enum _type
-	, int32_t _x
-	, int32_t _y
-	, int32_t _width
+	, int32_t  _x
+	, int32_t  _y
+	, uint32_t _width
 	, uint32_t _height
 	, uint32_t _abgr
 	, float _maxu = 1.0f
@@ -1382,6 +1382,12 @@ int _main_(int _argc, char** _argv)
 						}
 
 						ImGui::EndMenu();
+					}
+
+					bool sdf = view.m_sdf;
+					if (ImGui::MenuItem("SDF", NULL, &sdf) )
+					{
+						cmdExec("view sdf");
 					}
 
 					bool rr = 0 != (view.m_abgr & 0x000000ff);
