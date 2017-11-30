@@ -43,6 +43,7 @@ namespace stl = tinystl;
 #include "fs_texture_cube.bin.h"
 #include "fs_texture_cube2.bin.h"
 #include "fs_texture_sdf.bin.h"
+#include "fs_texture_msdf.bin.h"
 #include "fs_texture_3d.bin.h"
 
 #define BACKGROUND_VIEW_ID 0
@@ -63,6 +64,7 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] =
 	BGFX_EMBEDDED_SHADER(fs_texture_cube),
 	BGFX_EMBEDDED_SHADER(fs_texture_cube2),
 	BGFX_EMBEDDED_SHADER(fs_texture_sdf),
+	BGFX_EMBEDDED_SHADER(fs_texture_msdf),
 	BGFX_EMBEDDED_SHADER(fs_texture_3d),
 
 	BGFX_EMBEDDED_SHADER_END()
@@ -1198,6 +1200,12 @@ int _main_(int _argc, char** _argv)
 		, true
 		);
 
+	bgfx::ProgramHandle textureMsdfProgram = bgfx::createProgram(
+		  vsTexture
+		, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_texture_msdf")
+		, true
+		);
+
 	bgfx::ProgramHandle texture3DProgram = bgfx::createProgram(
 		  vsTexture
 		, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_texture_3d")
@@ -1842,7 +1850,14 @@ int _main_(int _argc, char** _argv)
 			}
 			else if (view.m_sdf)
 			{
-				program = textureSdfProgram;
+				if (8 < bimg::getBitsPerPixel(bimg::TextureFormat::Enum(view.m_textureInfo.format) ) )
+				{
+					program = textureMsdfProgram;
+				}
+				else
+				{
+					program = textureSdfProgram;
+				}
 			}
 
 			bgfx::submit(IMAGE_VIEW_ID, program);
