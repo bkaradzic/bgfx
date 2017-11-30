@@ -1988,7 +1988,7 @@ void ImGui::ItemSize(const ImVec2& size, float text_offset_y)
     window->DC.CursorPosPrevLine = ImVec2(window->DC.CursorPos.x + size.x, window->DC.CursorPos.y);
     window->DC.CursorPos = ImVec2((float)(int)(window->Pos.x + window->DC.IndentX + window->DC.ColumnsOffsetX), (float)(int)(window->DC.CursorPos.y + line_height + g.Style.ItemSpacing.y));
     window->DC.CursorMaxPos.x = ImMax(window->DC.CursorMaxPos.x, window->DC.CursorPosPrevLine.x);
-    window->DC.CursorMaxPos.y = ImMax(window->DC.CursorMaxPos.y, window->DC.CursorPos.y);
+    window->DC.CursorMaxPos.y = ImMax(window->DC.CursorMaxPos.y, window->DC.CursorPos.y - g.Style.ItemSpacing.y);
     //if (g.IO.KeyAlt) window->DrawList->AddCircle(window->DC.CursorMaxPos, 3.0f, IM_COL32(255,0,0,255), 4); // [DEBUG]
 
     window->DC.PrevLineHeight = line_height;
@@ -4151,20 +4151,29 @@ static ImVec2 CalcSizeAutoFit(ImGuiWindow* window)
     if ((flags & ImGuiWindowFlags_Tooltip) != 0)
     {
         // Tooltip always resize. We keep the spacing symmetric on both axises for aesthetic purpose.
-        size_auto_fit = window->SizeContents + window->WindowPadding - ImVec2(0.0f, style.ItemSpacing.y);
+        size_auto_fit = window->SizeContents;
     }
     else
     {
         // Handling case of auto fit window not fitting on the screen (on either axis): we are growing the size on the other axis to compensate for expected scrollbar. FIXME: Might turn bigger than DisplaySize-WindowPadding.
-        size_auto_fit = ImClamp(window->SizeContents + window->WindowPadding, style.WindowMinSize, ImMax(style.WindowMinSize, g.IO.DisplaySize - g.Style.DisplaySafeAreaPadding));
+        size_auto_fit = ImClamp(window->SizeContents, style.WindowMinSize, ImMax(style.WindowMinSize, g.IO.DisplaySize - g.Style.DisplaySafeAreaPadding));
         ImVec2 size_auto_fit_after_constraint = CalcSizeFullWithConstraint(window, size_auto_fit);
         if (size_auto_fit_after_constraint.x < window->SizeContents.x && !(flags & ImGuiWindowFlags_NoScrollbar) && (flags & ImGuiWindowFlags_HorizontalScrollbar))
             size_auto_fit.y += style.ScrollbarSize;
         if (size_auto_fit_after_constraint.y < window->SizeContents.y && !(flags & ImGuiWindowFlags_NoScrollbar))
             size_auto_fit.x += style.ScrollbarSize;
-        size_auto_fit.y = ImMax(size_auto_fit.y - style.ItemSpacing.y, 0.0f);
     }
     return size_auto_fit;
+}
+
+static float GetScrollMaxX(ImGuiWindow* window)
+{
+    return ImMax(0.0f, window->SizeContents.x - (window->SizeFull.x - window->ScrollbarSizes.x));
+}
+
+static float GetScrollMaxY(ImGuiWindow* window)
+{
+    return ImMax(0.0f, window->SizeContents.y - (window->SizeFull.y - window->ScrollbarSizes.y));
 }
 
 static ImVec2 CalcNextScrollFromScrollTargetAndClamp(ImGuiWindow* window)
@@ -4179,8 +4188,8 @@ static ImVec2 CalcNextScrollFromScrollTargetAndClamp(ImGuiWindow* window)
     scroll = ImMax(scroll, ImVec2(0.0f, 0.0f));
     if (!window->Collapsed && !window->SkipItems)
     {
-        scroll.x = ImMin(scroll.x, ImMax(0.0f, window->SizeContents.x - (window->SizeFull.x - window->ScrollbarSizes.x))); // == GetScrollMaxX for that window
-        scroll.y = ImMin(scroll.y, ImMax(0.0f, window->SizeContents.y - (window->SizeFull.y - window->ScrollbarSizes.y))); // == GetScrollMaxY for that window
+        scroll.x = ImMin(scroll.x, GetScrollMaxX(window));
+        scroll.y = ImMin(scroll.y, GetScrollMaxY(window));
     }
     return scroll;
 }
@@ -4359,6 +4368,7 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         // Update contents size from last frame for auto-fitting (unless explicitly specified)
         window->SizeContents.x = (float)(int)((window->SizeContentsExplicit.x != 0.0f) ? window->SizeContentsExplicit.x : ((window_is_new ? 0.0f : window->DC.CursorMaxPos.x - window->Pos.x) + window->Scroll.x));
         window->SizeContents.y = (float)(int)((window->SizeContentsExplicit.y != 0.0f) ? window->SizeContentsExplicit.y : ((window_is_new ? 0.0f : window->DC.CursorMaxPos.y - window->Pos.y) + window->Scroll.y));
+        window->SizeContents += window->WindowPadding;
 
         // Hide popup/tooltip window when first appearing while we measure size (because we recycle them)
         if (window->HiddenFrames > 0)
@@ -4425,10 +4435,10 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         // Update scrollbar status (based on the Size that was effective during last frame or the auto-resized Size). We need to do this before manual resize (below) is effective.
         if (!window->Collapsed)
         {
-            window->ScrollbarY = (flags & ImGuiWindowFlags_AlwaysVerticalScrollbar) || ((window->SizeContents.y > window->SizeFull.y + style.ItemSpacing.y) && !(flags & ImGuiWindowFlags_NoScrollbar));
+            window->ScrollbarY = (flags & ImGuiWindowFlags_AlwaysVerticalScrollbar) || ((window->SizeContents.y > window->SizeFull.y) && !(flags & ImGuiWindowFlags_NoScrollbar));
             window->ScrollbarX = (flags & ImGuiWindowFlags_AlwaysHorizontalScrollbar) || ((window->SizeContents.x > window->SizeFull.x - (window->ScrollbarY ? style.ScrollbarSize : 0.0f) - window->WindowPadding.x) && !(flags & ImGuiWindowFlags_NoScrollbar) && (flags & ImGuiWindowFlags_HorizontalScrollbar));
             if (window->ScrollbarX && !window->ScrollbarY)
-                window->ScrollbarY = (window->SizeContents.y > window->SizeFull.y + style.ItemSpacing.y - style.ScrollbarSize) && !(flags & ImGuiWindowFlags_NoScrollbar);
+                window->ScrollbarY = (window->SizeContents.y > window->SizeFull.y + style.ScrollbarSize) && !(flags & ImGuiWindowFlags_NoScrollbar);
             window->ScrollbarSizes = ImVec2(window->ScrollbarY ? style.ScrollbarSize : 0.0f, window->ScrollbarX ? style.ScrollbarSize : 0.0f);
         }
 
@@ -5677,14 +5687,12 @@ float ImGui::GetScrollY()
 
 float ImGui::GetScrollMaxX()
 {
-    ImGuiWindow* window = GetCurrentWindowRead();
-    return ImMax(0.0f, window->SizeContents.x - (window->SizeFull.x - window->ScrollbarSizes.x));
+    return GetScrollMaxX(GImGui->CurrentWindow);
 }
 
 float ImGui::GetScrollMaxY()
 {
-    ImGuiWindow* window = GetCurrentWindowRead();
-    return ImMax(0.0f, window->SizeContents.y - (window->SizeFull.y - window->ScrollbarSizes.y));
+    return GetScrollMaxY(GImGui->CurrentWindow);
 }
 
 void ImGui::SetScrollX(float scroll_x)
@@ -5707,9 +5715,13 @@ void ImGui::SetScrollFromPosY(float pos_y, float center_y_ratio)
     ImGuiWindow* window = GetCurrentWindow();
     IM_ASSERT(center_y_ratio >= 0.0f && center_y_ratio <= 1.0f);
     window->ScrollTarget.y = (float)(int)(pos_y + window->Scroll.y);
-    if (center_y_ratio <= 0.0f && window->ScrollTarget.y <= window->WindowPadding.y)    // Minor hack to make "scroll to top" take account of WindowPadding, else it would scroll to (WindowPadding.y - ItemSpacing.y)
-        window->ScrollTarget.y = 0.0f;
     window->ScrollTargetCenterRatio.y = center_y_ratio;
+
+    // Minor hack to to make scrolling to top/bottom of window take account of WindowPadding, it looks more right to the user this way
+    if (center_y_ratio <= 0.0f && window->ScrollTarget.y <= window->WindowPadding.y)
+        window->ScrollTarget.y = 0.0f;
+    else if (center_y_ratio >= 1.0f && window->ScrollTarget.y >= window->SizeContents.y - window->WindowPadding.y + GImGui->Style.ItemSpacing.y)
+        window->ScrollTarget.y = window->SizeContents.y;
 }
 
 // center_y_ratio: 0.0f top of last item, 0.5f vertical center of last item, 1.0f bottom of last item.
@@ -10407,7 +10419,6 @@ void ImGui::EndGroup()
     ImGuiGroupData& group_data = window->DC.GroupStack.back();
 
     ImRect group_bb(group_data.BackupCursorPos, window->DC.CursorMaxPos);
-    group_bb.Max.y -= g.Style.ItemSpacing.y;      // Cancel out last vertical spacing because we are adding one ourselves.
     group_bb.Max = ImMax(group_bb.Min, group_bb.Max);
 
     window->DC.CursorPos = group_data.BackupCursorPos;
@@ -11045,7 +11056,7 @@ void ImGui::ShowMetricsWindow(bool* p_open)
                 ImGui::BulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window->Pos.x, window->Pos.y, window->Size.x, window->Size.y, window->SizeContents.x, window->SizeContents.y);
                 if (ImGui::IsItemHovered())
                     GImGui->OverlayDrawList.AddRect(window->Pos, window->Pos + window->Size, IM_COL32(255,255,0,255));
-                ImGui::BulletText("Scroll: (%.2f,%.2f)", window->Scroll.x, window->Scroll.y);
+                ImGui::BulletText("Scroll: (%.2f/%.2f,%.2f/%.2f)", window->Scroll.x, GetScrollMaxX(window), window->Scroll.y, GetScrollMaxY(window));
                 ImGui::BulletText("Active: %d, WriteAccessed: %d", window->Active, window->WriteAccessed);
                 if (window->RootWindow != window) NodeWindow(window->RootWindow, "RootWindow");
                 if (window->DC.ChildWindows.Size > 0) NodeWindows(window->DC.ChildWindows, "ChildWindows");
