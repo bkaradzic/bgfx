@@ -9,17 +9,12 @@ $input v_texcoord0, v_color0
 
 SAMPLER2D(s_texColor, 0);
 
-float median(float r, float g, float b)
+void main()
 {
-	return max(min(r, g), min(max(r, g), b) );
-}
+	vec4 bgColor = vec4(0.0, 0.0, 0.0, 0.0);
+	vec4 fgColor = vec4(1.0, 1.0, 1.0, 1.0);
 
-void main() {
-	vec4 bgColor = vec4(1.0, 1.0, 1.0, 1.0);
-	vec4 fgColor = vec4(0.0, 0.0, 0.0, 1.0);
-
-	vec3 sample = texture2DLod(s_texColor, v_texcoord0.xy, u_textureLod).rgb;
-	float sigDist = median(sample.r, sample.g, sample.b) - 0.5;
+	float sigDist = texture2DLod(s_texColor, v_texcoord0.xy, u_textureLod).x;
 	float opacity = clamp(sigDist/fwidth(sigDist) + 0.5, 0.0, 1.0);
-	gl_FragColor = mix(bgColor, fgColor, opacity);
+	gl_FragColor  = mix(bgColor, fgColor, opacity);
 }
