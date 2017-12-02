@@ -2164,11 +2164,17 @@ public:
 
 			showExampleDialog(this);
 
-			ImGui::SetNextWindowPos(ImVec2(m_viewState.m_width - 256.0f, 10.0f) );
+			ImGui::SetNextWindowPos(
+				  ImVec2(m_viewState.m_width - 256.0f, 10.0f)
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::SetNextWindowSize(
+				  ImVec2(256.0f, 700.0f)
+				, ImGuiCond_FirstUseEver
+				);
 			ImGui::Begin("Settings"
 				, NULL
-				, ImVec2(256.0f, 700.0f)
-				, ImGuiWindowFlags_AlwaysAutoResize
+				, 0
 				);
 
 			const char* titles[2] =
@@ -2266,11 +2272,17 @@ public:
 
 			ImGui::End();
 
-			ImGui::SetNextWindowPos(ImVec2(10, float(m_viewState.m_height) - 77.0f - 10.0f) );
+			ImGui::SetNextWindowPos(
+				  ImVec2(10, float(m_viewState.m_height) - 77.0f - 10.0f)
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::SetNextWindowSize(
+				  ImVec2(120.0f, 77.0f)
+				, ImGuiCond_FirstUseEver
+				);
 			ImGui::Begin("Show help:"
 				, NULL
-				, ImVec2(120.0f, 77.0f)
-				, ImGuiWindowFlags_AlwaysAutoResize
+				, 0
 				);
 
 			if (ImGui::Button(m_showHelp ? "ON" : "OFF") )

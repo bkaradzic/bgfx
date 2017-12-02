@@ -208,13 +208,16 @@ public:
 			if (blitSupport)
 			{
 				ImGui::SetNextWindowPos(
-					ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
-					, ImGuiSetCond_FirstUseEver
+					  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+					, ImGuiCond_FirstUseEver
+					);
+				ImGui::SetNextWindowSize(
+					  ImVec2(m_width / 5.0f, m_height / 2.0f)
+					, ImGuiCond_FirstUseEver
 					);
 				ImGui::Begin("Settings"
 					, NULL
-					, ImVec2(m_width / 5.0f, m_height / 2.0f)
-					, ImGuiWindowFlags_AlwaysAutoResize
+					, 0
 					);
 
 				ImGui::Image(m_pickingRT, ImVec2(m_width / 5.0f - 16.0f, m_width / 5.0f - 16.0f) );

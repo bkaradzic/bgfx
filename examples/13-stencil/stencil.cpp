@@ -926,12 +926,15 @@ public:
 
 			ImGui::SetNextWindowPos(
 				  ImVec2(m_viewState.m_width - m_viewState.m_width / 5.0f - 10.0f, 10.0f)
-				, ImGuiSetCond_FirstUseEver
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::SetNextWindowSize(
+				  ImVec2(m_viewState.m_width / 5.0f, m_viewState.m_height / 2.0f)
+				, ImGuiCond_FirstUseEver
 				);
 			ImGui::Begin("Settings"
 				, NULL
-				, ImVec2(m_viewState.m_width / 5.0f, m_viewState.m_height / 2.0f)
-				, ImGuiWindowFlags_AlwaysAutoResize
+				, 0
 				);
 
 			{

@@ -372,12 +372,14 @@ public:
 
 			ImGui::SetNextWindowPos(
 				  ImVec2(m_width - m_width / 4.0f - 10.0f, 10.0f)
-				, ImGuiSetCond_FirstUseEver
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::SetNextWindowSize(
+				  ImVec2(m_width / 4.0f, m_height - 20.0f)
+				, ImGuiCond_FirstUseEver
 				);
 			ImGui::Begin("Settings"
 				, NULL
-				, ImVec2(m_width / 4.0f, m_height - 20.0f)
-				, ImGuiWindowFlags_AlwaysAutoResize
 				);
 
 			static float timeScale = 1.0f;

@@ -592,12 +592,15 @@ public:
 
 			ImGui::SetNextWindowPos(
 				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
-				, ImGuiSetCond_FirstUseEver
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::SetNextWindowSize(
+				  ImVec2(m_width / 5.0f, m_height - 20.0f)
+				, ImGuiCond_FirstUseEver
 				);
 			ImGui::Begin("Settings"
 				, NULL
-				, ImVec2(m_width / 5.0f, m_height - 20.0f)
-				, ImGuiWindowFlags_AlwaysAutoResize
+				, 0
 				);
 			ImGui::PushItemWidth(180.0f);
 
@@ -707,12 +710,15 @@ public:
 
 			ImGui::SetNextWindowPos(
 				  ImVec2(10.0f, 260.0f)
-				, ImGuiSetCond_FirstUseEver
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::SetNextWindowSize(
+				  ImVec2(m_width / 5.0f, 450.0f)
+				, ImGuiCond_FirstUseEver
 				);
 			ImGui::Begin("Mesh"
 				, NULL
-				, ImVec2(m_width / 5.0f, 450.0f)
-				, ImGuiWindowFlags_AlwaysAutoResize
+				, 0
 				);
 
 			ImGui::Text("Mesh:");

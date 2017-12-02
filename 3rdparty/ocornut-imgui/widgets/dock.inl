@@ -512,8 +512,6 @@ namespace ImGui
 
 			Begin("##Overlay",
 					NULL,
-					ImVec2(0, 0),
-					0.f,
 					ImGuiWindowFlags_Tooltip | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
 					ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings |
 					ImGuiWindowFlags_AlwaysAutoResize);
@@ -968,8 +966,6 @@ namespace ImGui
 				SetNextWindowSize(dock.size);
 				bool ret = Begin(label,
 						opened,
-						dock.size,
-						-1.0f,
 						ImGuiWindowFlags_NoCollapse | extra_flags);
 				m_end_action = EndAction_End;
 				dock.pos = GetWindowPos();

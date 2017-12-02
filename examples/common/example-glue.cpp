@@ -49,12 +49,14 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 
 	ImGui::SetNextWindowPos(
 		  ImVec2(10.0f, 50.0f)
-		, ImGuiSetCond_FirstUseEver
+		, ImGuiCond_FirstUseEver
 		);
-	ImGui::Begin(temp
-		, NULL
-		, ImVec2(256.0f, 200.0f)
+	ImGui::SetNextWindowSize(
+		  ImVec2(256.0f, 200.0f)
+		, ImGuiCond_FirstUseEver
 		);
+
+	ImGui::Begin(temp);
 
 	ImGui::TextWrapped("%s", _app->getDescription() );
 	ImGui::Separator();

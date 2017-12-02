@@ -12,7 +12,7 @@ namespace ImGui
 		// Setup
 		ImVec2 picker_pos = ImGui::GetCursorScreenPos();
 		ImVec2 sv_picker_size = ImVec2(256.0f, 256.0f);                             // Saturation/Value picking box
-		float bars_width = ImGui::GetWindowFontSize() + style.FramePadding.y*2.0f;  // Width of Hue/Alpha picking bars (using Framepadding.y to match the ColorButton sides)
+		float bars_width = ImGui::GetFontSize() + style.FramePadding.y*2.0f;  // Width of Hue/Alpha picking bars (using Framepadding.y to match the ColorButton sides)
 		float bar0_pos_x = picker_pos.x + sv_picker_size.x + style.ItemInnerSpacing.x;
 		float bar1_pos_x = bar0_pos_x + bars_width + style.ItemInnerSpacing.x;
 

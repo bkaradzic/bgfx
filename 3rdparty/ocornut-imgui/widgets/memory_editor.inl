@@ -202,7 +202,7 @@ namespace ImGui
 
         Separator();
 
-        AlignFirstTextHeightToWidgets();
+        AlignTextToFramePadding();
         PushItemWidth(50);
         PushAllowKeyboardFocus(false);
         int rows_backup = Rows;
