@@ -1458,7 +1458,12 @@ int _main_(int _argc, char** _argv)
 
 			if (view.m_info)
 			{
-				if (ImGui::Begin("Info", NULL, ImVec2(300.0f, 200.0f) ) )
+				ImGui::SetNextWindowSize(
+					  ImVec2(300.0f, 200.0f)
+					, ImGuiCond_FirstUseEver
+					);
+
+				if (ImGui::Begin("Info", NULL) )
 				{
 					if (ImGui::BeginChild("##info", ImVec2(0.0f, 0.0f) ) )
 					{
@@ -1495,7 +1500,13 @@ int _main_(int _argc, char** _argv)
 			{
 				char temp[bx::kMaxFilePath];
 				bx::snprintf(temp, BX_COUNTOF(temp), "%s##File", view.m_path.get() );
-				if (ImGui::Begin(temp, NULL, ImVec2(400.0f, 400.0f) ) )
+
+				ImGui::SetNextWindowSize(
+					  ImVec2(400.0f, 400.0f)
+					, ImGuiCond_FirstUseEver
+					);
+
+				if (ImGui::Begin(temp, NULL) )
 				{
 					if (ImGui::BeginChild("##file_list", ImVec2(0.0f, 0.0f) ) )
 					{
