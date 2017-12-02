@@ -2874,7 +2874,7 @@ namespace bgfx
 			uint32_t size = BX_ALIGN_16(_num*indexSize);
 
 			uint64_t ptr = 0;
-			if (0 != (_flags & BGFX_BUFFER_COMPUTE_WRITE) )
+			if (0 != (_flags & BGFX_BUFFER_COMPUTE_READ_WRITE) )
 			{
 				IndexBufferHandle indexBufferHandle = { m_indexBufferHandle.alloc() };
 				if (!isValid(indexBufferHandle) )
@@ -2942,7 +2942,7 @@ namespace bgfx
 			BGFX_CHECK_HANDLE("updateDynamicIndexBuffer", m_dynamicIndexBufferHandle, _handle);
 
 			DynamicIndexBuffer& dib = m_dynamicIndexBuffers[_handle.idx];
-			BX_CHECK(0 == (dib.m_flags &  BGFX_BUFFER_COMPUTE_READ_WRITE), "Can't update GPU buffer from CPU.");
+			BX_CHECK(0 == (dib.m_flags &  BGFX_BUFFER_COMPUTE_WRITE), "Can't update GPU buffer from CPU.");
 			const uint32_t indexSize = 0 == (dib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
 
 			if (dib.m_size < _mem->size
@@ -2987,7 +2987,7 @@ namespace bgfx
 		{
 			DynamicIndexBuffer& dib = m_dynamicIndexBuffers[_handle.idx];
 
-			if (0 != (dib.m_flags & BGFX_BUFFER_COMPUTE_WRITE) )
+			if (0 != (dib.m_flags & BGFX_BUFFER_COMPUTE_READ_WRITE) )
 			{
 				destroyIndexBuffer(dib.m_handle);
 			}
