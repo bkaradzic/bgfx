@@ -655,7 +655,17 @@ namespace ImGuizmo
    {
       ImGuiIO& io = ImGui::GetIO();
 
-      ImGui::Begin("gizmo", NULL, io.DisplaySize, 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus);
+      const uint32_t flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus;
+      ImGui::SetNextWindowSize(io.DisplaySize);
+
+      const ImGuiCol bgColorIdx = GetWindowBgColorIdxFromFlags(flags);
+      ImGuiStyle& style = ImGui::GetStyle();
+      const float oldAlpha = style.Colors[bgColorIdx].w;
+      style.Colors[bgColorIdx].w = 0.0f;
+
+      ImGui::Begin("gizmo", NULL, flags);
+
+      style.Colors[bgColorIdx].w = oldAlpha;
 
 	  gContext.mDrawList = ImGui::GetWindowDrawList();
 
