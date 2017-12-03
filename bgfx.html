@@ -1086,7 +1086,7 @@
 <dl class="member">
 <dt id="_CPPv2N4bgfx4Caps6Limits12maxDrawCallsE">
 <span id="bgfx::Caps::Limits::maxDrawCalls__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1ac324029c23579396238cca5af3027a64"></span>uint32_t <code class="descname">maxDrawCalls</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits12maxDrawCallsE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Maximum draw calls. </p>
+<dd><p>Maximum number of draw calls. </p>
 </dd></dl>
 
 <dl class="member">
@@ -1104,7 +1104,7 @@
 <dl class="member">
 <dt id="_CPPv2N4bgfx4Caps6Limits8maxViewsE">
 <span id="bgfx::Caps::Limits::maxViews__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1ab498589784aa6b1cf5b746994634171d"></span>uint32_t <code class="descname">maxViews</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits8maxViewsE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Maximum views. </p>
+<dd><p>Maximum number of views. </p>
 </dd></dl>
 
 <dl class="member">
@@ -1116,7 +1116,7 @@
 <dl class="member">
 <dt id="_CPPv2N4bgfx4Caps6Limits16maxFBAttachmentsE">
 <span id="bgfx::Caps::Limits::maxFBAttachments__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1af7cd37b90264f803a0cd32feb38eef15"></span>uint32_t <code class="descname">maxFBAttachments</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits16maxFBAttachmentsE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Maximum frame buffer attachments. </p>
+<dd><p>Maximum number of frame buffer attachments. </p>
 </dd></dl>
 
 <dl class="member">
@@ -2504,8 +2504,8 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx12setViewOrderE6ViewId7uint8_tPK7uint8_t">
-<span id="bgfx::setViewOrder__ViewId.uint8_t.uint8_tCP"></span><span class="target" id="bgfxnamespacebgfx_1a10409066394c706ddb28b5a20370f75c"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewOrder</code><span class="sig-paren">(</span>ViewId <em>_id</em> = 0, uint8_t <em>_num</em> = UINT8_MAX, <em class="property">const</em> uint8_t *<em>_remap</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12setViewOrderE6ViewId7uint8_tPK7uint8_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx12setViewOrderE6ViewId8uint16_tPK6ViewId">
+<span id="bgfx::setViewOrder__ViewId.uint16_t.ViewIdCP"></span><span class="target" id="bgfxnamespacebgfx_1a03baba7d5b3b640b82904a7b4c57d6b4"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewOrder</code><span class="sig-paren">(</span>ViewId <em>_id</em> = 0, uint16_t <em>_num</em> = UINT16_MAX, <em class="property">const</em> ViewId *<em>_remap</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12setViewOrderE6ViewId8uint16_tPK6ViewId" title="Permalink to this definition">¶</a></dt>
 <dd><p>Post submit view reordering. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -6312,6 +6312,27 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><code class="first docutils literal"><span class="pre">_data</span></code> - <p>Destination buffer. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_mip</span></code> - <p>Mip level.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx18getDirectAccessPtrE13TextureHandle">
+<span id="bgfx::getDirectAccessPtr__TextureHandle"></span><span class="target" id="bgfxnamespacebgfx_1a4d5729a970dc429b53b9fd1aae57d78b"></span>void *<code class="descclassname">bgfx::</code><code class="descname">getDirectAccessPtr</code><span class="sig-paren">(</span>TextureHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx18getDirectAccessPtrE13TextureHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns texture direct access pointer. </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Pointer to texture memory. If pointer is <code class="docutils literal"><span class="pre">NULL</span></code> direct access is not supported. If pointer is <code class="docutils literal"><span class="pre">UINTPTR_MAX</span></code> sentinel value it means texture is pending creation.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_DIRECT_ACCESS</span></code>. </dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_get_direct_access_ptr</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last">
+<li><code class="first docutils literal"><span class="pre">_handle</span></code> - <p>Texture handle.</p>
 </li>
 </ul>
 </dd>
