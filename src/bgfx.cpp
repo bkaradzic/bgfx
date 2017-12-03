@@ -1160,6 +1160,7 @@ namespace bgfx
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_COMPARE_ALL),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_COMPARE_LEQUAL),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_CUBE_ARRAY),
+		CAPS_FLAGS(BGFX_CAPS_TEXTURE_DIRECT_ACCESS),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_READ_BACK),
 		CAPS_FLAGS(BGFX_CAPS_VERTEX_ATTRIB_HALF),
 		CAPS_FLAGS(BGFX_CAPS_VERTEX_ATTRIB_UINT10),
@@ -2457,7 +2458,11 @@ namespace bgfx
 					uint8_t skip;
 					_cmdbuf.read(skip);
 
-					m_renderCtx->createTexture(handle, mem, flags, skip);
+					void* ptr = m_renderCtx->createTexture(handle, mem, flags, skip);
+					if (NULL != ptr)
+					{
+						setDirectAccessPtr(handle, ptr);
+					}
 
 					bx::MemoryReader reader(mem->data, mem->size);
 
@@ -3792,6 +3797,11 @@ error:
 		s_ctx->setName(_handle, _name);
 	}
 
+	void* getDirectAccessPtr(TextureHandle _handle)
+	{
+		return s_ctx->getDirectAccessPtr(_handle);
+	}
+
 	void destroy(TextureHandle _handle)
 	{
 		s_ctx->destroyTexture(_handle);
@@ -4982,6 +4992,12 @@ BGFX_C_API void bgfx_set_texture_name(bgfx_texture_handle_t _handle, const char*
 	bgfx::setName(handle.cpp, _name);
 }
 
+BGFX_C_API void* bgfx_get_direct_access_ptr(bgfx_texture_handle_t _handle)
+{
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
+	return bgfx::getDirectAccessPtr(handle.cpp);
+}
+
 BGFX_C_API void bgfx_destroy_texture(bgfx_texture_handle_t _handle)
 {
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
@@ -5652,6 +5668,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 	BGFX_IMPORT_FUNC(update_texture_cube)                                  \
 	BGFX_IMPORT_FUNC(read_texture)                                         \
 	BGFX_IMPORT_FUNC(set_texture_name)                                     \
+	BGFX_IMPORT_FUNC(get_direct_access_ptr)                                \
 	BGFX_IMPORT_FUNC(destroy_texture)                                      \
 	BGFX_IMPORT_FUNC(create_frame_buffer)                                  \
 	BGFX_IMPORT_FUNC(create_frame_buffer_scaled)                           \

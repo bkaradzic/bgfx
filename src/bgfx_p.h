@@ -2547,7 +2547,7 @@ namespace bgfx
 		virtual void destroyShader(ShaderHandle _handle) = 0;
 		virtual void createProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh) = 0;
 		virtual void destroyProgram(ProgramHandle _handle) = 0;
-		virtual void createTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags, uint8_t _skip) = 0;
+		virtual void* createTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags, uint8_t _skip) = 0;
 		virtual void updateTextureBegin(TextureHandle _handle, uint8_t _side, uint8_t _mip) = 0;
 		virtual void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) = 0;
 		virtual void updateTextureEnd() = 0;
@@ -3768,11 +3768,7 @@ namespace bgfx
 			if (isValid(handle) )
 			{
 				TextureRef& ref = m_textureRef[handle.idx];
-				ref.m_refCount = 1;
-				ref.m_bbRatio  = uint8_t(_ratio);
-				ref.m_format   = uint8_t(_info->format);
-				ref.m_numMips  = imageContainer.m_numMips;
-				ref.m_owned    = false;
+				ref.init(_ratio, _info->format, imageContainer.m_numMips, 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_DIRECT_ACCESS) );
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateTexture);
 				cmdbuf.write(handle);
@@ -3791,13 +3787,27 @@ namespace bgfx
 		BGFX_API_FUNC(void setName(TextureHandle _handle, const char* _name) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
-
 			BGFX_CHECK_HANDLE("setName", m_textureHandle, _handle);
 
 			TextureRef& ref = m_textureRef[_handle.idx];
 			ref.m_name.set(_name);
 
 			setName(convert(_handle), _name);
+		}
+
+		void setDirectAccessPtr(TextureHandle _handle, void* _ptr)
+		{
+			TextureRef& ref = m_textureRef[_handle.idx];
+			ref.m_ptr = _ptr;
+		}
+
+		BGFX_API_FUNC(void* getDirectAccessPtr(TextureHandle _handle) )
+		{
+			BGFX_MUTEX_SCOPE(m_resourceApiLock);
+			BGFX_CHECK_HANDLE("getDirectAccessPtr", m_textureHandle, _handle);
+
+			TextureRef& ref = m_textureRef[_handle.idx];
+			return ref.m_ptr;
 		}
 
 		BGFX_API_FUNC(void destroyTexture(TextureHandle _handle) )
@@ -4524,7 +4534,18 @@ namespace bgfx
 
 		struct TextureRef
 		{
+			void init(BackbufferRatio::Enum _ratio, TextureFormat::Enum _format, uint8_t _numMips, bool _ptrPending)
+			{
+				m_ptr      = _ptrPending ? (void*)UINTPTR_MAX : NULL;
+				m_refCount = 1;
+				m_bbRatio  = uint8_t(_ratio);
+				m_format   = uint8_t(_format);
+				m_numMips  = _numMips;
+				m_owned    = false;
+			}
+
 			String  m_name;
+			void*   m_ptr;
 			int16_t m_refCount;
 			uint8_t m_bbRatio;
 			uint8_t m_format;

@@ -493,12 +493,10 @@ namespace bgfx { namespace d3d11
 
 	BX_PRAGMA_DIAGNOSTIC_POP();
 
-	static BX_NO_INLINE bool getIntelExtensions(ID3D11Device* _device)
+	static HRESULT setIntelExtension(ID3D11Device* _device, const void* _data, uint32_t _size)
 	{
-		uint8_t temp[28];
-
 		D3D11_BUFFER_DESC desc;
-		desc.ByteWidth = sizeof(temp);
+		desc.ByteWidth = _size;
 		desc.Usage = D3D11_USAGE_STAGING;
 		desc.BindFlags = 0;
 		desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
@@ -506,15 +504,9 @@ namespace bgfx { namespace d3d11
 		desc.StructureByteStride = 0;
 
 		D3D11_SUBRESOURCE_DATA initData;
-		initData.pSysMem = &temp;
-		initData.SysMemPitch = sizeof(temp);
+		initData.pSysMem = _data;
+		initData.SysMemPitch = _size;
 		initData.SysMemSlicePitch = 0;
-
-		bx::StaticMemoryBlockWriter writer(&temp, sizeof(temp) );
-		bx::write(&writer, "INTCEXTNCAPSFUNC", 16);
-		bx::write(&writer, UINT32_C(0x00010000) );
-		bx::write(&writer, UINT32_C(0) );
-		bx::write(&writer, UINT32_C(0) );
 
 		ID3D11Buffer* buffer;
 		HRESULT hr = _device->CreateBuffer(&desc, &initData, &buffer);
@@ -522,7 +514,46 @@ namespace bgfx { namespace d3d11
 		if (SUCCEEDED(hr) )
 		{
 			buffer->Release();
+		}
 
+		return hr;
+	};
+
+	static const uint32_t kIntelExtensionInterfaceVersion = UINT32_C(0x10000);
+
+	struct IntelExtension
+	{
+		char     key[16];
+		uint32_t version;
+		uint32_t type;
+		uint32_t data[16];
+	};
+
+	static const IntelExtension s_intelDirectAccessResource =
+	{
+		{ 'I', 'N', 'T', 'C', 'E', 'X', 'T', 'N', 'R', 'E', 'S', 'O', 'U', 'R', 'C', 'E' },
+		kIntelExtensionInterfaceVersion,
+		1,
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+	};
+
+	static HRESULT setIntelDirectAccessResource(ID3D11Device* _device)
+	{
+		return setIntelExtension(_device, &s_intelDirectAccessResource, sizeof(s_intelDirectAccessResource) );
+	}
+
+	static BX_NO_INLINE bool getIntelExtensions(ID3D11Device* _device)
+	{
+		uint8_t temp[28];
+
+		bx::StaticMemoryBlockWriter writer(&temp, sizeof(temp) );
+		bx::write(&writer, "INTCEXTNCAPSFUNC", 16);
+		bx::write(&writer, kIntelExtensionInterfaceVersion);
+		bx::write(&writer, UINT32_C(0) );
+		bx::write(&writer, UINT32_C(0) );
+
+		if (SUCCEEDED(setIntelExtension(_device, temp, sizeof(temp) ) ) )
+		{
 			bx::MemoryReader reader(&temp, sizeof(temp) );
 			bx::skip(&reader, 16);
 
@@ -702,6 +733,7 @@ namespace bgfx { namespace d3d11
 			, m_fsChanges(0)
 			, m_rtMsaa(false)
 			, m_timerQuerySupport(false)
+			, m_directAccessSupport(false)
 		{
 			m_fbh.idx = kInvalidHandle;
 			bx::memSet(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
@@ -925,6 +957,11 @@ namespace bgfx { namespace d3d11
 
 			if (NULL == m_device)
 			{
+				if (NULL != m_renderdocdll)
+				{
+					setGraphicsDebuggerPresent(true);
+				}
+
 				m_adapter    = NULL;
 				m_driverType = BGFX_PCI_ID_SOFTWARE_RASTERIZER == g_caps.vendorId
 					? D3D_DRIVER_TYPE_WARP
@@ -1334,20 +1371,30 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					| BGFX_CAPS_VERTEX_ATTRIB_HALF
 					| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 					| BGFX_CAPS_FRAGMENT_DEPTH
-					| (getIntelExtensions(m_device) ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
+					| (getIntelExtensions(m_device)
+						? BGFX_CAPS_FRAGMENT_ORDERING
+						| BGFX_CAPS_TEXTURE_DIRECT_ACCESS
+						: 0)
 					| BGFX_CAPS_SWAP_CHAIN
-					| (m_ovr.isInitialized() ? BGFX_CAPS_HMD : 0)
+					| (m_ovr.isInitialized()
+						? BGFX_CAPS_HMD
+						: 0)
 					| BGFX_CAPS_DRAW_INDIRECT
 					| BGFX_CAPS_TEXTURE_BLIT
 					| BGFX_CAPS_TEXTURE_READ_BACK
-					| ( (m_featureLevel >= D3D_FEATURE_LEVEL_9_2) ? BGFX_CAPS_OCCLUSION_QUERY : 0)
+					| ( (m_featureLevel >= D3D_FEATURE_LEVEL_9_2)
+						? BGFX_CAPS_OCCLUSION_QUERY
+						: 0)
 					| BGFX_CAPS_ALPHA_TO_COVERAGE
-					| ( (m_deviceInterfaceVersion >= 3) ? BGFX_CAPS_CONSERVATIVE_RASTER : 0)
+					| ( (m_deviceInterfaceVersion >= 3)
+						? BGFX_CAPS_CONSERVATIVE_RASTER
+						: 0)
 					| BGFX_CAPS_TEXTURE_2D_ARRAY
 					| BGFX_CAPS_TEXTURE_CUBE_ARRAY
 					);
 
-				m_timerQuerySupport = m_featureLevel >= D3D_FEATURE_LEVEL_10_0;
+				m_timerQuerySupport   = m_featureLevel >= D3D_FEATURE_LEVEL_10_0;
+				m_directAccessSupport = 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_DIRECT_ACCESS);
 
 				if (m_featureLevel <= D3D_FEATURE_LEVEL_9_2)
 				{
@@ -1913,9 +1960,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			m_program[_handle.idx].destroy();
 		}
 
-		void createTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags, uint8_t _skip) override
+		void* createTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags, uint8_t _skip) override
 		{
-			m_textures[_handle.idx].create(_mem, _flags, _skip);
+			return m_textures[_handle.idx].create(_mem, _flags, _skip);
 		}
 
 		void updateTextureBegin(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/) override
@@ -3769,6 +3816,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		FrameBufferHandle m_fbh;
 		bool m_rtMsaa;
 		bool m_timerQuerySupport;
+		bool m_directAccessSupport;
 
 		VR m_ovr;
 #if BGFX_CONFIG_USE_OVR
@@ -4531,8 +4579,70 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		}
 	}
 
-	void TextureD3D11::create(const Memory* _mem, uint32_t _flags, uint8_t _skip)
+	void* DirectAccessResourceD3D11::createTexture2D(const D3D11_TEXTURE2D_DESC* _gpuDesc, const D3D11_SUBRESOURCE_DATA* _srd, ID3D11Texture2D** _gpuTexture2d)
 	{
+		ID3D11Device* device = s_renderD3D11->m_device;
+		DX_CHECK(setIntelDirectAccessResource(device) );
+		DX_CHECK(device->CreateTexture2D(_gpuDesc, _srd, _gpuTexture2d) );
+
+		D3D11_TEXTURE2D_DESC cpuDesc;
+		bx::memCopy(&cpuDesc, _gpuDesc, sizeof(cpuDesc) );
+		cpuDesc.BindFlags = 0;
+		cpuDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+		cpuDesc.Usage = D3D11_USAGE_STAGING;
+
+		DX_CHECK(setIntelDirectAccessResource(s_renderD3D11->m_device) );
+		DX_CHECK(device->CreateTexture2D(&cpuDesc, NULL, &m_texture2d) );
+
+		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
+		deviceCtx->CopyResource(m_texture2d, *_gpuTexture2d);
+
+		D3D11_MAPPED_SUBRESOURCE mappedResource;
+		deviceCtx->Map(m_texture2d, 0, D3D11_MAP_WRITE, NULL, &mappedResource);
+		m_descriptor = reinterpret_cast<IntelDirectAccessResourceDescriptor*>(mappedResource.pData);
+
+		return m_descriptor->ptr;
+	}
+
+	void* DirectAccessResourceD3D11::createTexture3D(const D3D11_TEXTURE3D_DESC* _gpuDesc, const D3D11_SUBRESOURCE_DATA* _srd, ID3D11Texture3D** _gpuTexture3d)
+	{
+		ID3D11Device* device = s_renderD3D11->m_device;
+		DX_CHECK(setIntelDirectAccessResource(device) );
+		DX_CHECK(device->CreateTexture3D(_gpuDesc, _srd, _gpuTexture3d) );
+
+		D3D11_TEXTURE3D_DESC cpuDesc;
+		bx::memCopy(&cpuDesc, _gpuDesc, sizeof(cpuDesc) );
+		cpuDesc.BindFlags = 0;
+		cpuDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+		cpuDesc.Usage = D3D11_USAGE_STAGING;
+
+		DX_CHECK(setIntelDirectAccessResource(s_renderD3D11->m_device) );
+		DX_CHECK(device->CreateTexture3D(&cpuDesc, NULL, &m_texture3d) );
+
+		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
+		deviceCtx->CopyResource(m_texture3d, *_gpuTexture3d);
+
+		D3D11_MAPPED_SUBRESOURCE mappedResource;
+		deviceCtx->Map(m_texture3d, 0, D3D11_MAP_WRITE, NULL, &mappedResource);
+		m_descriptor = reinterpret_cast<IntelDirectAccessResourceDescriptor*>(mappedResource.pData);
+
+		return m_descriptor->ptr;
+	}
+
+	void DirectAccessResourceD3D11::destroy()
+	{
+		if (NULL != m_descriptor)
+		{
+			s_renderD3D11->m_deviceCtx->Unmap(m_ptr, 0);
+			m_descriptor = NULL;
+			DX_RELEASE(m_ptr, 0);
+		}
+	}
+
+	void* TextureD3D11::create(const Memory* _mem, uint32_t _flags, uint8_t _skip)
+	{
+		void* directAccessPtr = NULL;
+
 		bimg::ImageContainer imageContainer;
 
 		if (bimg::imageParse(imageContainer, _mem->data, _mem->size) )
@@ -4678,6 +4788,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				srvd.Format = getSrvFormat();
 			}
 
+			bool directAccess = s_renderD3D11->m_directAccessSupport
+				&& !renderTarget
+				&& !readBack
+				&& !blit
+				&& !writeOnly
+				;
+
 			switch (m_type)
 			{
 			case Texture2D:
@@ -4774,7 +4891,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						desc.SampleDesc = s_msaa[0];
 					}
 
-					DX_CHECK(s_renderD3D11->m_device->CreateTexture2D(&desc, kk == 0 ? NULL : srd, &m_texture2d) );
+					if (directAccess)
+					{
+						directAccessPtr = m_dar.createTexture2D(&desc, kk == 0 ? NULL : srd, &m_texture2d);
+					}
+					else
+					{
+						DX_CHECK(s_renderD3D11->m_device->CreateTexture2D(&desc, kk == 0 ? NULL : srd, &m_texture2d) );
+					}
 				}
 				break;
 
@@ -4816,7 +4940,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
 					srvd.Texture3D.MipLevels = numMips;
 
-					DX_CHECK(s_renderD3D11->m_device->CreateTexture3D(&desc, kk == 0 ? NULL : srd, &m_texture3d) );
+					if (directAccess)
+					{
+						directAccessPtr = m_dar.createTexture3D(&desc, kk == 0 ? NULL : srd, &m_texture3d);
+					}
+					else
+					{
+						DX_CHECK(s_renderD3D11->m_device->CreateTexture3D(&desc, kk == 0 ? NULL : srd, &m_texture3d) );
+					}
 				}
 				break;
 			}
@@ -4845,10 +4976,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				}
 			}
 		}
+
+		return directAccessPtr;
 	}
 
 	void TextureD3D11::destroy()
 	{
+		m_dar.destroy();
+
 		s_renderD3D11->m_srvUavLru.invalidateWithParent(getHandle().idx);
 		DX_RELEASE(m_rt, 0);
 		DX_RELEASE(m_srv, 0);

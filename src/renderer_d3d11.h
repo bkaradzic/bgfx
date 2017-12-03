@@ -220,6 +220,38 @@ namespace bgfx { namespace d3d11
 		uint8_t m_numPredefined;
 	};
 
+	struct IntelDirectAccessResourceDescriptor
+	{
+		void*    ptr;
+		uint32_t xoffset;
+		uint32_t yoffset;
+		uint32_t tileFormat;
+		uint32_t pitch;
+		uint32_t size;
+	};
+
+	struct DirectAccessResourceD3D11
+	{
+		DirectAccessResourceD3D11()
+			: m_ptr(NULL)
+			, m_descriptor(NULL)
+		{
+		}
+
+		void* createTexture2D(const D3D11_TEXTURE2D_DESC* _gpuDesc, const D3D11_SUBRESOURCE_DATA* _srd, ID3D11Texture2D** _gpuTexture2d);
+		void* createTexture3D(const D3D11_TEXTURE3D_DESC* _gpuDesc, const D3D11_SUBRESOURCE_DATA* _srd, ID3D11Texture3D** _gpuTexture3d);
+		void destroy();
+
+		union
+		{
+			ID3D11Resource*  m_ptr;
+			ID3D11Texture2D* m_texture2d;
+			ID3D11Texture3D* m_texture3d;
+		};
+
+		IntelDirectAccessResourceDescriptor* m_descriptor;
+	};
+
 	struct TextureD3D11
 	{
 		enum Enum
@@ -238,7 +270,7 @@ namespace bgfx { namespace d3d11
 		{
 		}
 
-		void create(const Memory* _mem, uint32_t _flags, uint8_t _skip);
+		void* create(const Memory* _mem, uint32_t _flags, uint8_t _skip);
 		void destroy();
 		void overrideInternal(uintptr_t _ptr);
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
@@ -253,6 +285,8 @@ namespace bgfx { namespace d3d11
 			ID3D11Texture2D* m_texture2d;
 			ID3D11Texture3D* m_texture3d;
 		};
+
+		DirectAccessResourceD3D11 m_dar;
 
 		union
 		{

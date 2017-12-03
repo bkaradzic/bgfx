@@ -2698,6 +2698,19 @@ namespace bgfx
 		, const char* _name
 		);
 
+	/// Returns texture direct access pointer.
+	///
+	/// @param[in] _handle Texture handle.
+	///
+	/// @returns Pointer to texture memory. If pointer is `NULL` direct access is
+	///   not supported. If pointer is `UINTPTR_MAX` sentinel value it means texture
+	///   is pending creation.
+	///
+	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_DIRECT_ACCESS`.
+	/// @attention C99 equivalent is `bgfx_get_direct_access_ptr`.
+	///
+	void* getDirectAccessPtr(TextureHandle _handle);
+
 	/// Destroy texture.
 	///
 	/// @param[in] _handle Texture handle.
