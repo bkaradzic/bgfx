@@ -308,7 +308,7 @@ struct View
 					float ev = m_ev;
 					bx::fromString(&ev, _argv[2]);
 
-					m_ev = bx::fclamp(ev, kEvMin, kEvMax);
+					m_ev = bx::clamp(ev, kEvMin, kEvMax);
 				}
 				else
 				{
@@ -406,7 +406,7 @@ struct View
 						m_zoom = zoom;
 					}
 
-					m_zoom = bx::fclamp(m_zoom, 0.01f, 10.0f);
+					m_zoom = bx::clamp(m_zoom, 0.01f, 10.0f);
 				}
 				else
 				{
@@ -478,7 +478,7 @@ struct View
 				{
 					float time;
 					bx::fromString(&time, _argv[2]);
-					m_transitionTime = bx::fclamp(time, 0.0f, 5.0f);
+					m_transitionTime = bx::clamp(time, 0.0f, 5.0f);
 				}
 				else
 				{
@@ -963,7 +963,7 @@ struct InterpolatorT
 			const double freq = double(bx::getHPFrequency() );
 			int64_t now = bx::getHPCounter();
 			float time = (float)(double(now - offset) / freq);
-			float lerp = bx::fclamp(time, 0.0, duration) / duration;
+			float lerp = bx::clamp(time, 0.0f, duration) / duration;
 			return lerpT(from, to, easeT(lerp) );
 		}
 
@@ -1782,8 +1782,8 @@ int _main_(int _argc, char** _argv)
 				result[0] = bx::fround(bx::fabs(result[0]) );
 				result[1] = bx::fround(bx::fabs(result[1]) );
 
-				scale.set(bx::fmin(float(width)  / result[0]
-					,              float(height) / result[1])
+				scale.set(bx::min(float(width)  / result[0]
+					,             float(height) / result[1])
 					, 0.1f*view.m_transitionTime
 					);
 			}

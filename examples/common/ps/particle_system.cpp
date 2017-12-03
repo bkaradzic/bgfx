@@ -345,8 +345,8 @@ namespace ps
 
 				const float ttPos   = easePos(particle.life);
 				const float ttScale = easeScale(particle.life);
-				const float ttBlend = bx::fsaturate(easeBlend(particle.life) );
-				const float ttRgba  = bx::fsaturate(easeRgba(particle.life) );
+				const float ttBlend = bx::clamp(easeBlend(particle.life), 0.0f, 1.0f);
+				const float ttRgba  = bx::clamp(easeRgba(particle.life),  0.0f, 1.0f);
 
 				float p0[3];
 				bx::vec3Lerp(p0, particle.start, particle.end[0], ttPos);

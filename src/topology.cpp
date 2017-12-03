@@ -223,6 +223,16 @@ namespace bgfx
 		return 0;
 	}
 
+	inline float fmin3(float _a, float _b, float _c)
+	{
+		return bx::min(_a, _b, _c);
+	}
+
+	inline float fmax3(float _a, float _b, float _c)
+	{
+		return bx::max(_a, _b, _c);
+	}
+
 	inline float favg3(float _a, float _b, float _c)
 	{
 		return (_a + _b + _c) * 1.0f/3.0f;

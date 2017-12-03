@@ -250,7 +250,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 
 							const float maxWidth = 30.0f*scale;
 							const float cpuMs    = float( (encoderStats.cpuTimeEnd-encoderStats.cpuTimeBegin)*toCpuMs);
-							const float cpuWidth = bx::fclamp(cpuMs*scale, 1.0f, maxWidth);
+							const float cpuWidth = bx::clamp(cpuMs*scale, 1.0f, maxWidth);
 
 							if (bar(cpuWidth, maxWidth, itemHeight, cpuColor) )
 							{
@@ -280,8 +280,8 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 							ImGui::Text("%3d %3d %s", pos, viewStats.view, viewStats.name);
 
 							const float maxWidth = 30.0f*scale;
-							const float cpuWidth = bx::fclamp(float(viewStats.cpuTimeElapsed*toCpuMs)*scale, 1.0f, maxWidth);
-							const float gpuWidth = bx::fclamp(float(viewStats.gpuTimeElapsed*toGpuMs)*scale, 1.0f, maxWidth);
+							const float cpuWidth = bx::clamp(float(viewStats.cpuTimeElapsed*toCpuMs)*scale, 1.0f, maxWidth);
+							const float gpuWidth = bx::clamp(float(viewStats.gpuTimeElapsed*toGpuMs)*scale, 1.0f, maxWidth);
 
 							ImGui::SameLine(64.0f);
 

@@ -385,9 +385,9 @@ void VectorDisplay::endDraw()
 		{
 			float pa2a = normalizef(pline->a - line->a);
 			float a2pa = normalizef(line->a - pline->a);
-			float maxshorten = bx::fmin(line->len, pline->len) / 2.0f;
+			float maxshorten = bx::min(line->len, pline->len) / 2.0f;
 
-			if (bx::fmin(a2pa, pa2a) <= (bx::kPi / 2.0f + FLT_EPSILON) )
+			if (bx::min(a2pa, pa2a) <= (bx::kPi / 2.0f + FLT_EPSILON) )
 			{
 				if (a2pa < pa2a)
 				{
@@ -550,8 +550,8 @@ float VectorDisplay::effectiveThickness()
 	else
 	{
 		// this makes thickness=16 at 2048x1536
-		float v = (0.01f * (m_screenWidth + m_screenHeight) / 2.0f) * m_drawScale / 2.0f;
-		return bx::fmax(v, 6.0f);
+		float vv = (0.01f * (m_screenWidth + m_screenHeight) / 2.0f) * m_drawScale / 2.0f;
+		return bx::max(vv, 6.0f);
 	}
 }
 
@@ -622,7 +622,7 @@ void VectorDisplay::drawFan(float _cx, float _cy, float _pa, float _a, float _t,
 	if (a2pa < pa2a)
 	{
 		_t = -_t;
-		nsteps = (int)bx::fmax(1, bx::fround(a2pa / (bx::kPi / 8.0f) ) );
+		nsteps = (int32_t)bx::max(1.0f, bx::fround(a2pa / (bx::kPi / 8.0f) ) );
 		angles = (float*)alloca(sizeof(float) * (nsteps + 1) );
 		for (i = 0; i <= nsteps; i++)
 		{
@@ -631,7 +631,7 @@ void VectorDisplay::drawFan(float _cx, float _cy, float _pa, float _a, float _t,
 	}
 	else
 	{
-		nsteps = (int)bx::fmax(1, bx::fround(pa2a / (bx::kPi / 8.0f) ) );
+		nsteps = (int32_t)bx::max(1.0f, bx::fround(pa2a / (bx::kPi / 8.0f) ) );
 		angles = (float*)alloca(sizeof(float) * (nsteps + 1) );
 		for (i = 0; i <= nsteps; i++)
 		{
@@ -853,14 +853,14 @@ void VectorDisplay::genLinetex()                                    // generate 
 	{
 		for (y = 0; y < TEXTURE_SIZE; y++)
 		{
-			float distance = bx::fmin(1.0f
+			float distance = bx::min(1.0f
 				, bx::fsqrt( (float)( (x - HALF_TEXTURE_SIZE) * (x - HALF_TEXTURE_SIZE) + (y - HALF_TEXTURE_SIZE) * (y - HALF_TEXTURE_SIZE) ) ) / (float)HALF_TEXTURE_SIZE
 				);
 
 			float line = bx::fpow(16.0f, -2.0f * distance);
 			float glow = bx::fpow( 2.0f, -4.0f * distance) / 10.0f;
 			glow = 0;
-			float val = bx::fsaturate(line + glow);
+			float val = bx::clamp(line + glow, 0.0f, 1.0f);
 
 			texbuf[(x + y * TEXTURE_SIZE) * 4 + 0] = 0xff;
 			texbuf[(x + y * TEXTURE_SIZE) * 4 + 1] = 0xff;

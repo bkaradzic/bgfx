@@ -134,12 +134,12 @@ void toAabb(Aabb& _aabb, const void* _vertices, uint32_t _numVertices, uint32_t 
 		float xx = position[0];
 		float yy = position[1];
 		float zz = position[2];
-		min[0] = bx::fmin(xx, min[0]);
-		min[1] = bx::fmin(yy, min[1]);
-		min[2] = bx::fmin(zz, min[2]);
-		max[0] = bx::fmax(xx, max[0]);
-		max[1] = bx::fmax(yy, max[1]);
-		max[2] = bx::fmax(zz, max[2]);
+		min[0] = bx::min(xx, min[0]);
+		min[1] = bx::min(yy, min[1]);
+		min[2] = bx::min(zz, min[2]);
+		max[0] = bx::max(xx, max[0]);
+		max[1] = bx::max(yy, max[1]);
+		max[2] = bx::max(zz, max[2]);
 	}
 
 	_aabb.m_min[0] = min[0];
@@ -170,12 +170,12 @@ void toAabb(Aabb& _aabb, const float* _mtx, const void* _vertices, uint32_t _num
 		float xx = position[0];
 		float yy = position[1];
 		float zz = position[2];
-		min[0] = bx::fmin(xx, min[0]);
-		min[1] = bx::fmin(yy, min[1]);
-		min[2] = bx::fmin(zz, min[2]);
-		max[0] = bx::fmax(xx, max[0]);
-		max[1] = bx::fmax(yy, max[1]);
-		max[2] = bx::fmax(zz, max[2]);
+		min[0] = bx::min(xx, min[0]);
+		min[1] = bx::min(yy, min[1]);
+		min[2] = bx::min(zz, min[2]);
+		max[0] = bx::max(xx, max[0]);
+		max[1] = bx::max(yy, max[1]);
+		max[2] = bx::max(zz, max[2]);
 	}
 
 	_aabb.m_min[0] = min[0];
@@ -300,7 +300,7 @@ void calcMaxBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 		float zz = position[2] - center[2];
 
 		float distSq = xx*xx + yy*yy + zz*zz;
-		maxDistSq = bx::fmax(distSq, maxDistSq);
+		maxDistSq = bx::max(distSq, maxDistSq);
 	}
 
 	bx::vec3Move(_sphere.m_center, center);
@@ -512,8 +512,8 @@ bool intersect(const Ray& _ray, const Aabb& _aabb, Hit* _hit)
 	float max[3];
 	bx::vec3Max(max, t0, t1);
 
-	const float tmin = bx::fmax3(min[0], min[1], min[2]);
-	const float tmax = bx::fmin3(max[0], max[1], max[2]);
+	const float tmin = bx::max(min[0], min[1], min[2]);
+	const float tmax = bx::min(max[0], max[1], max[2]);
 
 	if (tmax < 0.0f
 	||  tmin > tmax)

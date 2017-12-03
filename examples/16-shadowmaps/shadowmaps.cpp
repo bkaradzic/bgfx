@@ -2478,12 +2478,12 @@ public:
 						bx::vec3MulMtx(lightSpaceFrustumCorner, frustumCorners[ii][jj], lightView[0]);
 
 						// Update bounding box.
-						min[0] = bx::fmin(min[0], lightSpaceFrustumCorner[0]);
-						max[0] = bx::fmax(max[0], lightSpaceFrustumCorner[0]);
-						min[1] = bx::fmin(min[1], lightSpaceFrustumCorner[1]);
-						max[1] = bx::fmax(max[1], lightSpaceFrustumCorner[1]);
-						min[2] = bx::fmin(min[2], lightSpaceFrustumCorner[2]);
-						max[2] = bx::fmax(max[2], lightSpaceFrustumCorner[2]);
+						min[0] = bx::min(min[0], lightSpaceFrustumCorner[0]);
+						max[0] = bx::max(max[0], lightSpaceFrustumCorner[0]);
+						min[1] = bx::min(min[1], lightSpaceFrustumCorner[1]);
+						max[1] = bx::max(max[1], lightSpaceFrustumCorner[1]);
+						min[2] = bx::min(min[2], lightSpaceFrustumCorner[2]);
+						max[2] = bx::max(max[2], lightSpaceFrustumCorner[2]);
 					}
 
 					float minproj[3];

@@ -172,11 +172,11 @@ struct OcornutImguiContext
 						state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
 					}
 
-					const uint16_t xx = uint16_t(bx::fmax(cmd->ClipRect.x, 0.0f) );
-					const uint16_t yy = uint16_t(bx::fmax(cmd->ClipRect.y, 0.0f) );
+					const uint16_t xx = uint16_t(bx::max(cmd->ClipRect.x, 0.0f) );
+					const uint16_t yy = uint16_t(bx::max(cmd->ClipRect.y, 0.0f) );
 					bgfx::setScissor(xx, yy
-							, uint16_t(bx::fmin(cmd->ClipRect.z, 65535.0f)-xx)
-							, uint16_t(bx::fmin(cmd->ClipRect.w, 65535.0f)-yy)
+							, uint16_t(bx::min(cmd->ClipRect.z, 65535.0f)-xx)
+							, uint16_t(bx::min(cmd->ClipRect.w, 65535.0f)-yy)
 							);
 
 					bgfx::setState(state);

@@ -580,20 +580,20 @@ public:
 					for (uint32_t ii = 1; ii < 8; ++ii)
 					{
 						bx::vec3MulMtxH(xyz, box[ii], vp);
-						minx = bx::fmin(minx, xyz[0]);
-						miny = bx::fmin(miny, xyz[1]);
-						maxx = bx::fmax(maxx, xyz[0]);
-						maxy = bx::fmax(maxy, xyz[1]);
-						maxz = bx::fmax(maxz, xyz[2]);
+						minx = bx::min(minx, xyz[0]);
+						miny = bx::min(miny, xyz[1]);
+						maxx = bx::max(maxx, xyz[0]);
+						maxy = bx::max(maxy, xyz[1]);
+						maxz = bx::max(maxz, xyz[2]);
 					}
 
 					// Cull light if it's fully behind camera.
 					if (maxz >= 0.0f)
 					{
-						float x0 = bx::fclamp( (minx * 0.5f + 0.5f) * m_width,  0.0f, (float)m_width);
-						float y0 = bx::fclamp( (miny * 0.5f + 0.5f) * m_height, 0.0f, (float)m_height);
-						float x1 = bx::fclamp( (maxx * 0.5f + 0.5f) * m_width,  0.0f, (float)m_width);
-						float y1 = bx::fclamp( (maxy * 0.5f + 0.5f) * m_height, 0.0f, (float)m_height);
+						float x0 = bx::clamp( (minx * 0.5f + 0.5f) * m_width,  0.0f, (float)m_width);
+						float y0 = bx::clamp( (miny * 0.5f + 0.5f) * m_height, 0.0f, (float)m_height);
+						float x1 = bx::clamp( (maxx * 0.5f + 0.5f) * m_width,  0.0f, (float)m_width);
+						float y1 = bx::clamp( (maxy * 0.5f + 0.5f) * m_height, 0.0f, (float)m_height);
 
 						if (m_showScissorRects)
 						{
