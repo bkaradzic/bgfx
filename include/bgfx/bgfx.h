@@ -2702,11 +2702,14 @@ namespace bgfx
 	///
 	/// @param[in] _handle Texture handle.
 	///
-	/// @returns Pointer to texture memory. If pointer is `NULL` direct access is
-	///   not supported. If pointer is `UINTPTR_MAX` sentinel value it means texture
-	///   is pending creation.
+	/// @returns Pointer to texture memory. If returned pointer is `NULL` direct access
+	///   is not available for this texture. If pointer is `UINTPTR_MAX` sentinel value
+	///   it means texture is pending creation. Pointer returned can be cached and it
+	///   will be valid until texture is destroyed.
 	///
-	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_DIRECT_ACCESS`.
+	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_DIRECT_ACCESS`. This feature
+	///   is available on GPUs that have unified memory architecture (UMA) support.
+	///
 	/// @attention C99 equivalent is `bgfx_get_direct_access_ptr`.
 	///
 	void* getDirectAccessPtr(TextureHandle _handle);
