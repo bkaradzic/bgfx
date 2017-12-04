@@ -6325,9 +6325,9 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dd><p>Returns texture direct access pointer. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
-<dd>Pointer to texture memory. If pointer is <code class="docutils literal"><span class="pre">NULL</span></code> direct access is not supported. If pointer is <code class="docutils literal"><span class="pre">UINTPTR_MAX</span></code> sentinel value it means texture is pending creation.</dd>
+<dd>Pointer to texture memory. If returned pointer is <code class="docutils literal"><span class="pre">NULL</span></code> direct access is not available for this texture. If pointer is <code class="docutils literal"><span class="pre">UINTPTR_MAX</span></code> sentinel value it means texture is pending creation. Pointer returned can be cached and it will be valid until texture is destroyed.</dd>
 <dt><strong>Attention</strong></dt>
-<dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_DIRECT_ACCESS</span></code>. </dd>
+<dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_DIRECT_ACCESS</span></code>. This feature is available on GPUs that have unified memory architecture (UMA) support.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_get_direct_access_ptr</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
