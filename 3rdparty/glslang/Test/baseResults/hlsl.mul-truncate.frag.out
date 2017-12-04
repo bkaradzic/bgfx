@@ -1,0 +1,684 @@
+hlsl.mul-truncate.frag
+WARNING: 0:24: '' : mul() matrix size mismatch 
+WARNING: 0:25: '' : mul() matrix size mismatch 
+WARNING: 0:28: '' : mul() matrix size mismatch 
+WARNING: 0:29: '' : mul() matrix size mismatch 
+WARNING: 0:32: '' : mul() matrix size mismatch 
+WARNING: 0:33: '' : mul() matrix size mismatch 
+WARNING: 0:34: '' : mul() matrix size mismatch 
+WARNING: 0:35: '' : mul() matrix size mismatch 
+
+Shader version: 500
+gl_FragCoord origin is upper left
+0:? Sequence
+0:18  Function Definition: @main( ( temp 4-component vector of float)
+0:18    Function Parameters: 
+0:?     Sequence
+0:20      Sequence
+0:20        move second child to first child ( temp float)
+0:20          'r00' ( temp float)
+0:20          dot-product ( temp float)
+0:20            v2: direct index for structure (layout( row_major std140) uniform 2-component vector of float)
+0:20              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:20              Constant:
+0:20                8 (const uint)
+0:20            Construct vec2 ( in 2-component vector of float)
+0:20              v3: direct index for structure (layout( row_major std140) uniform 3-component vector of float)
+0:20                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:20                Constant:
+0:20                  7 (const uint)
+0:21      Sequence
+0:21        move second child to first child ( temp float)
+0:21          'r01' ( temp float)
+0:21          dot-product ( temp float)
+0:21            Construct vec2 ( in 2-component vector of float)
+0:21              v4: direct index for structure (layout( row_major std140) uniform 4-component vector of float)
+0:21                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:21                Constant:
+0:21                  6 (const uint)
+0:21            v2: direct index for structure (layout( row_major std140) uniform 2-component vector of float)
+0:21              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:21              Constant:
+0:21                8 (const uint)
+0:24      Sequence
+0:24        move second child to first child ( temp 4-component vector of float)
+0:24          'r10' ( temp 4-component vector of float)
+0:24          matrix-times-vector ( temp 4-component vector of float)
+0:24            Construct mat3x4 ( uniform 3X4 matrix of float)
+0:24              m44: direct index for structure (layout( row_major std140) uniform 4X4 matrix of float)
+0:24                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:24                Constant:
+0:24                  0 (const uint)
+0:24            v3: direct index for structure (layout( row_major std140) uniform 3-component vector of float)
+0:24              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:24              Constant:
+0:24                7 (const uint)
+0:25      Sequence
+0:25        move second child to first child ( temp 4-component vector of float)
+0:25          'r11' ( temp 4-component vector of float)
+0:25          matrix-times-vector ( temp 4-component vector of float)
+0:25            m34: direct index for structure (layout( row_major std140) uniform 3X4 matrix of float)
+0:25              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:25              Constant:
+0:25                2 (const uint)
+0:25            Construct vec3 ( uniform 3-component vector of float)
+0:25              v4: direct index for structure (layout( row_major std140) uniform 4-component vector of float)
+0:25                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:25                Constant:
+0:25                  6 (const uint)
+0:28      Sequence
+0:28        move second child to first child ( temp 4-component vector of float)
+0:28          'r20' ( temp 4-component vector of float)
+0:28          vector-times-matrix ( temp 4-component vector of float)
+0:28            v3: direct index for structure (layout( row_major std140) uniform 3-component vector of float)
+0:28              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:28              Constant:
+0:28                7 (const uint)
+0:28            Construct mat4x3 ( uniform 4X3 matrix of float)
+0:28              m44: direct index for structure (layout( row_major std140) uniform 4X4 matrix of float)
+0:28                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:28                Constant:
+0:28                  0 (const uint)
+0:29      Sequence
+0:29        move second child to first child ( temp 4-component vector of float)
+0:29          'r21' ( temp 4-component vector of float)
+0:29          vector-times-matrix ( temp 4-component vector of float)
+0:29            Construct vec3 ( uniform 3-component vector of float)
+0:29              v4: direct index for structure (layout( row_major std140) uniform 4-component vector of float)
+0:29                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:29                Constant:
+0:29                  6 (const uint)
+0:29            m43: direct index for structure (layout( row_major std140) uniform 4X3 matrix of float)
+0:29              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:29              Constant:
+0:29                1 (const uint)
+0:32      Sequence
+0:32        move second child to first child ( temp 2X3 matrix of float)
+0:32          'r30' ( temp 2X3 matrix of float)
+0:32          matrix-multiply ( temp 2X3 matrix of float)
+0:32            m33: direct index for structure (layout( row_major std140) uniform 3X3 matrix of float)
+0:32              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:32              Constant:
+0:32                3 (const uint)
+0:32            Construct mat2x3 ( uniform 2X3 matrix of float)
+0:32              m24: direct index for structure (layout( row_major std140) uniform 2X4 matrix of float)
+0:32                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:32                Constant:
+0:32                  4 (const uint)
+0:33      Sequence
+0:33        move second child to first child ( temp 3X4 matrix of float)
+0:33          'r31' ( temp 3X4 matrix of float)
+0:33          matrix-multiply ( temp 3X4 matrix of float)
+0:33            m24: direct index for structure (layout( row_major std140) uniform 2X4 matrix of float)
+0:33              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:33              Constant:
+0:33                4 (const uint)
+0:33            Construct mat3x2 ( uniform 3X2 matrix of float)
+0:33              m33: direct index for structure (layout( row_major std140) uniform 3X3 matrix of float)
+0:33                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:33                Constant:
+0:33                  3 (const uint)
+0:34      Sequence
+0:34        move second child to first child ( temp 3X2 matrix of float)
+0:34          'r32' ( temp 3X2 matrix of float)
+0:34          matrix-multiply ( temp 3X2 matrix of float)
+0:34            Construct mat3x2 ( uniform 3X2 matrix of float)
+0:34              m42: direct index for structure (layout( row_major std140) uniform 4X2 matrix of float)
+0:34                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:34                Constant:
+0:34                  5 (const uint)
+0:34            m33: direct index for structure (layout( row_major std140) uniform 3X3 matrix of float)
+0:34              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:34              Constant:
+0:34                3 (const uint)
+0:35      Sequence
+0:35        move second child to first child ( temp 4X3 matrix of float)
+0:35          'r33' ( temp 4X3 matrix of float)
+0:35          matrix-multiply ( temp 4X3 matrix of float)
+0:35            Construct mat2x3 ( uniform 2X3 matrix of float)
+0:35              m33: direct index for structure (layout( row_major std140) uniform 3X3 matrix of float)
+0:35                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:35                Constant:
+0:35                  3 (const uint)
+0:35            m42: direct index for structure (layout( row_major std140) uniform 4X2 matrix of float)
+0:35              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:35              Constant:
+0:35                5 (const uint)
+0:37      Branch: Return with expression
+0:37        add ( temp 4-component vector of float)
+0:37          add ( temp 4-component vector of float)
+0:37            add ( temp 4-component vector of float)
+0:37              add ( temp 4-component vector of float)
+0:37                add ( temp 4-component vector of float)
+0:37                  add ( temp 4-component vector of float)
+0:37                    add ( temp 4-component vector of float)
+0:37                      add ( temp 4-component vector of float)
+0:37                        add ( temp 4-component vector of float)
+0:37                          'r10' ( temp 4-component vector of float)
+0:37                          'r11' ( temp 4-component vector of float)
+0:37                        'r20' ( temp 4-component vector of float)
+0:37                      'r21' ( temp 4-component vector of float)
+0:37                    'r00' ( temp float)
+0:37                  'r01' ( temp float)
+0:37                direct index ( temp float)
+0:37                  direct index ( temp 3-component vector of float)
+0:37                    'r30' ( temp 2X3 matrix of float)
+0:37                    Constant:
+0:37                      0 (const int)
+0:37                  Constant:
+0:37                    0 (const int)
+0:37              direct index ( temp 4-component vector of float)
+0:37                'r31' ( temp 3X4 matrix of float)
+0:37                Constant:
+0:37                  0 (const int)
+0:37            direct index ( temp float)
+0:37              direct index ( temp 2-component vector of float)
+0:37                'r32' ( temp 3X2 matrix of float)
+0:37                Constant:
+0:37                  0 (const int)
+0:37              Constant:
+0:37                0 (const int)
+0:37          direct index ( temp 4-component vector of float)
+0:37            transpose ( temp 3X4 matrix of float)
+0:37              'r33' ( temp 4X3 matrix of float)
+0:37            Constant:
+0:37              0 (const int)
+0:18  Function Definition: main( ( temp void)
+0:18    Function Parameters: 
+0:?     Sequence
+0:18      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:18        Function Call: @main( ( temp 4-component vector of float)
+0:?   Linker Objects
+0:?     'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+
+
+Linked fragment stage:
+
+
+Shader version: 500
+gl_FragCoord origin is upper left
+0:? Sequence
+0:18  Function Definition: @main( ( temp 4-component vector of float)
+0:18    Function Parameters: 
+0:?     Sequence
+0:20      Sequence
+0:20        move second child to first child ( temp float)
+0:20          'r00' ( temp float)
+0:20          dot-product ( temp float)
+0:20            v2: direct index for structure (layout( row_major std140) uniform 2-component vector of float)
+0:20              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:20              Constant:
+0:20                8 (const uint)
+0:20            Construct vec2 ( in 2-component vector of float)
+0:20              v3: direct index for structure (layout( row_major std140) uniform 3-component vector of float)
+0:20                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:20                Constant:
+0:20                  7 (const uint)
+0:21      Sequence
+0:21        move second child to first child ( temp float)
+0:21          'r01' ( temp float)
+0:21          dot-product ( temp float)
+0:21            Construct vec2 ( in 2-component vector of float)
+0:21              v4: direct index for structure (layout( row_major std140) uniform 4-component vector of float)
+0:21                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:21                Constant:
+0:21                  6 (const uint)
+0:21            v2: direct index for structure (layout( row_major std140) uniform 2-component vector of float)
+0:21              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:21              Constant:
+0:21                8 (const uint)
+0:24      Sequence
+0:24        move second child to first child ( temp 4-component vector of float)
+0:24          'r10' ( temp 4-component vector of float)
+0:24          matrix-times-vector ( temp 4-component vector of float)
+0:24            Construct mat3x4 ( uniform 3X4 matrix of float)
+0:24              m44: direct index for structure (layout( row_major std140) uniform 4X4 matrix of float)
+0:24                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:24                Constant:
+0:24                  0 (const uint)
+0:24            v3: direct index for structure (layout( row_major std140) uniform 3-component vector of float)
+0:24              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:24              Constant:
+0:24                7 (const uint)
+0:25      Sequence
+0:25        move second child to first child ( temp 4-component vector of float)
+0:25          'r11' ( temp 4-component vector of float)
+0:25          matrix-times-vector ( temp 4-component vector of float)
+0:25            m34: direct index for structure (layout( row_major std140) uniform 3X4 matrix of float)
+0:25              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:25              Constant:
+0:25                2 (const uint)
+0:25            Construct vec3 ( uniform 3-component vector of float)
+0:25              v4: direct index for structure (layout( row_major std140) uniform 4-component vector of float)
+0:25                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:25                Constant:
+0:25                  6 (const uint)
+0:28      Sequence
+0:28        move second child to first child ( temp 4-component vector of float)
+0:28          'r20' ( temp 4-component vector of float)
+0:28          vector-times-matrix ( temp 4-component vector of float)
+0:28            v3: direct index for structure (layout( row_major std140) uniform 3-component vector of float)
+0:28              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:28              Constant:
+0:28                7 (const uint)
+0:28            Construct mat4x3 ( uniform 4X3 matrix of float)
+0:28              m44: direct index for structure (layout( row_major std140) uniform 4X4 matrix of float)
+0:28                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:28                Constant:
+0:28                  0 (const uint)
+0:29      Sequence
+0:29        move second child to first child ( temp 4-component vector of float)
+0:29          'r21' ( temp 4-component vector of float)
+0:29          vector-times-matrix ( temp 4-component vector of float)
+0:29            Construct vec3 ( uniform 3-component vector of float)
+0:29              v4: direct index for structure (layout( row_major std140) uniform 4-component vector of float)
+0:29                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:29                Constant:
+0:29                  6 (const uint)
+0:29            m43: direct index for structure (layout( row_major std140) uniform 4X3 matrix of float)
+0:29              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:29              Constant:
+0:29                1 (const uint)
+0:32      Sequence
+0:32        move second child to first child ( temp 2X3 matrix of float)
+0:32          'r30' ( temp 2X3 matrix of float)
+0:32          matrix-multiply ( temp 2X3 matrix of float)
+0:32            m33: direct index for structure (layout( row_major std140) uniform 3X3 matrix of float)
+0:32              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:32              Constant:
+0:32                3 (const uint)
+0:32            Construct mat2x3 ( uniform 2X3 matrix of float)
+0:32              m24: direct index for structure (layout( row_major std140) uniform 2X4 matrix of float)
+0:32                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:32                Constant:
+0:32                  4 (const uint)
+0:33      Sequence
+0:33        move second child to first child ( temp 3X4 matrix of float)
+0:33          'r31' ( temp 3X4 matrix of float)
+0:33          matrix-multiply ( temp 3X4 matrix of float)
+0:33            m24: direct index for structure (layout( row_major std140) uniform 2X4 matrix of float)
+0:33              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:33              Constant:
+0:33                4 (const uint)
+0:33            Construct mat3x2 ( uniform 3X2 matrix of float)
+0:33              m33: direct index for structure (layout( row_major std140) uniform 3X3 matrix of float)
+0:33                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:33                Constant:
+0:33                  3 (const uint)
+0:34      Sequence
+0:34        move second child to first child ( temp 3X2 matrix of float)
+0:34          'r32' ( temp 3X2 matrix of float)
+0:34          matrix-multiply ( temp 3X2 matrix of float)
+0:34            Construct mat3x2 ( uniform 3X2 matrix of float)
+0:34              m42: direct index for structure (layout( row_major std140) uniform 4X2 matrix of float)
+0:34                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:34                Constant:
+0:34                  5 (const uint)
+0:34            m33: direct index for structure (layout( row_major std140) uniform 3X3 matrix of float)
+0:34              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:34              Constant:
+0:34                3 (const uint)
+0:35      Sequence
+0:35        move second child to first child ( temp 4X3 matrix of float)
+0:35          'r33' ( temp 4X3 matrix of float)
+0:35          matrix-multiply ( temp 4X3 matrix of float)
+0:35            Construct mat2x3 ( uniform 2X3 matrix of float)
+0:35              m33: direct index for structure (layout( row_major std140) uniform 3X3 matrix of float)
+0:35                'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:35                Constant:
+0:35                  3 (const uint)
+0:35            m42: direct index for structure (layout( row_major std140) uniform 4X2 matrix of float)
+0:35              'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:35              Constant:
+0:35                5 (const uint)
+0:37      Branch: Return with expression
+0:37        add ( temp 4-component vector of float)
+0:37          add ( temp 4-component vector of float)
+0:37            add ( temp 4-component vector of float)
+0:37              add ( temp 4-component vector of float)
+0:37                add ( temp 4-component vector of float)
+0:37                  add ( temp 4-component vector of float)
+0:37                    add ( temp 4-component vector of float)
+0:37                      add ( temp 4-component vector of float)
+0:37                        add ( temp 4-component vector of float)
+0:37                          'r10' ( temp 4-component vector of float)
+0:37                          'r11' ( temp 4-component vector of float)
+0:37                        'r20' ( temp 4-component vector of float)
+0:37                      'r21' ( temp 4-component vector of float)
+0:37                    'r00' ( temp float)
+0:37                  'r01' ( temp float)
+0:37                direct index ( temp float)
+0:37                  direct index ( temp 3-component vector of float)
+0:37                    'r30' ( temp 2X3 matrix of float)
+0:37                    Constant:
+0:37                      0 (const int)
+0:37                  Constant:
+0:37                    0 (const int)
+0:37              direct index ( temp 4-component vector of float)
+0:37                'r31' ( temp 3X4 matrix of float)
+0:37                Constant:
+0:37                  0 (const int)
+0:37            direct index ( temp float)
+0:37              direct index ( temp 2-component vector of float)
+0:37                'r32' ( temp 3X2 matrix of float)
+0:37                Constant:
+0:37                  0 (const int)
+0:37              Constant:
+0:37                0 (const int)
+0:37          direct index ( temp 4-component vector of float)
+0:37            transpose ( temp 3X4 matrix of float)
+0:37              'r33' ( temp 4X3 matrix of float)
+0:37            Constant:
+0:37              0 (const int)
+0:18  Function Definition: main( ( temp void)
+0:18    Function Parameters: 
+0:?     Sequence
+0:18      move second child to first child ( temp 4-component vector of float)
+0:?         '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+0:18        Function Call: @main( ( temp 4-component vector of float)
+0:?   Linker Objects
+0:?     'anon@0' (layout( row_major std140) uniform block{layout( row_major std140) uniform 4X4 matrix of float m44, layout( row_major std140) uniform 4X3 matrix of float m43, layout( row_major std140) uniform 3X4 matrix of float m34, layout( row_major std140) uniform 3X3 matrix of float m33, layout( row_major std140) uniform 2X4 matrix of float m24, layout( row_major std140) uniform 4X2 matrix of float m42, layout( row_major std140) uniform 4-component vector of float v4, layout( row_major std140) uniform 3-component vector of float v3, layout( row_major std140) uniform 2-component vector of float v2})
+0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
+
+// Module Version 10000
+// Generated by (magic number): 80002
+// Id's are bound by 231
+
+                              Capability Shader
+               1:             ExtInstImport  "GLSL.std.450"
+                              MemoryModel Logical GLSL450
+                              EntryPoint Fragment 4  "main" 229
+                              ExecutionMode 4 OriginUpperLeft
+                              Source HLSL 500
+                              Name 4  "main"
+                              Name 9  "@main("
+                              Name 12  "r00"
+                              Name 21  "Matrix"
+                              MemberName 21(Matrix) 0  "m44"
+                              MemberName 21(Matrix) 1  "m43"
+                              MemberName 21(Matrix) 2  "m34"
+                              MemberName 21(Matrix) 3  "m33"
+                              MemberName 21(Matrix) 4  "m24"
+                              MemberName 21(Matrix) 5  "m42"
+                              MemberName 21(Matrix) 6  "v4"
+                              MemberName 21(Matrix) 7  "v3"
+                              MemberName 21(Matrix) 8  "v2"
+                              Name 23  ""
+                              Name 37  "r01"
+                              Name 49  "r10"
+                              Name 75  "r11"
+                              Name 87  "r20"
+                              Name 110  "r21"
+                              Name 124  "r30"
+                              Name 144  "r31"
+                              Name 162  "r32"
+                              Name 181  "r33"
+                              Name 229  "@entryPointOutput"
+                              MemberDecorate 21(Matrix) 0 RowMajor
+                              MemberDecorate 21(Matrix) 0 Offset 0
+                              MemberDecorate 21(Matrix) 0 MatrixStride 16
+                              MemberDecorate 21(Matrix) 1 RowMajor
+                              MemberDecorate 21(Matrix) 1 Offset 64
+                              MemberDecorate 21(Matrix) 1 MatrixStride 16
+                              MemberDecorate 21(Matrix) 2 RowMajor
+                              MemberDecorate 21(Matrix) 2 Offset 112
+                              MemberDecorate 21(Matrix) 2 MatrixStride 16
+                              MemberDecorate 21(Matrix) 3 RowMajor
+                              MemberDecorate 21(Matrix) 3 Offset 176
+                              MemberDecorate 21(Matrix) 3 MatrixStride 16
+                              MemberDecorate 21(Matrix) 4 RowMajor
+                              MemberDecorate 21(Matrix) 4 Offset 224
+                              MemberDecorate 21(Matrix) 4 MatrixStride 16
+                              MemberDecorate 21(Matrix) 5 RowMajor
+                              MemberDecorate 21(Matrix) 5 Offset 288
+                              MemberDecorate 21(Matrix) 5 MatrixStride 16
+                              MemberDecorate 21(Matrix) 6 Offset 320
+                              MemberDecorate 21(Matrix) 7 Offset 336
+                              MemberDecorate 21(Matrix) 8 Offset 352
+                              Decorate 21(Matrix) Block
+                              Decorate 23 DescriptorSet 0
+                              Decorate 229(@entryPointOutput) Location 0
+               2:             TypeVoid
+               3:             TypeFunction 2
+               6:             TypeFloat 32
+               7:             TypeVector 6(float) 4
+               8:             TypeFunction 7(fvec4)
+              11:             TypePointer Function 6(float)
+              13:             TypeMatrix 7(fvec4) 4
+              14:             TypeVector 6(float) 3
+              15:             TypeMatrix 14(fvec3) 4
+              16:             TypeMatrix 7(fvec4) 3
+              17:             TypeMatrix 14(fvec3) 3
+              18:             TypeMatrix 7(fvec4) 2
+              19:             TypeVector 6(float) 2
+              20:             TypeMatrix 19(fvec2) 4
+      21(Matrix):             TypeStruct 13 15 16 17 18 20 7(fvec4) 14(fvec3) 19(fvec2)
+              22:             TypePointer Uniform 21(Matrix)
+              23:     22(ptr) Variable Uniform
+              24:             TypeInt 32 1
+              25:     24(int) Constant 8
+              26:             TypePointer Uniform 19(fvec2)
+              29:     24(int) Constant 7
+              30:             TypePointer Uniform 14(fvec3)
+              38:     24(int) Constant 6
+              39:             TypePointer Uniform 7(fvec4)
+              48:             TypePointer Function 7(fvec4)
+              50:     24(int) Constant 0
+              51:             TypePointer Uniform 13
+              54:    6(float) Constant 1065353216
+              55:    6(float) Constant 0
+              76:     24(int) Constant 2
+              77:             TypePointer Uniform 16
+             117:     24(int) Constant 1
+             118:             TypePointer Uniform 15
+             122:             TypeMatrix 14(fvec3) 2
+             123:             TypePointer Function 122
+             125:     24(int) Constant 3
+             126:             TypePointer Uniform 17
+             129:     24(int) Constant 4
+             130:             TypePointer Uniform 18
+             143:             TypePointer Function 16
+             149:             TypeMatrix 19(fvec2) 3
+             161:             TypePointer Function 149
+             163:     24(int) Constant 5
+             164:             TypePointer Uniform 20
+             180:             TypePointer Function 15
+             209:             TypeInt 32 0
+             210:    209(int) Constant 0
+             228:             TypePointer Output 7(fvec4)
+229(@entryPointOutput):    228(ptr) Variable Output
+         4(main):           2 Function None 3
+               5:             Label
+             230:    7(fvec4) FunctionCall 9(@main()
+                              Store 229(@entryPointOutput) 230
+                              Return
+                              FunctionEnd
+       9(@main():    7(fvec4) Function None 8
+              10:             Label
+         12(r00):     11(ptr) Variable Function
+         37(r01):     11(ptr) Variable Function
+         49(r10):     48(ptr) Variable Function
+         75(r11):     48(ptr) Variable Function
+         87(r20):     48(ptr) Variable Function
+        110(r21):     48(ptr) Variable Function
+        124(r30):    123(ptr) Variable Function
+        144(r31):    143(ptr) Variable Function
+        162(r32):    161(ptr) Variable Function
+        181(r33):    180(ptr) Variable Function
+              27:     26(ptr) AccessChain 23 25
+              28:   19(fvec2) Load 27
+              31:     30(ptr) AccessChain 23 29
+              32:   14(fvec3) Load 31
+              33:    6(float) CompositeExtract 32 0
+              34:    6(float) CompositeExtract 32 1
+              35:   19(fvec2) CompositeConstruct 33 34
+              36:    6(float) Dot 28 35
+                              Store 12(r00) 36
+              40:     39(ptr) AccessChain 23 38
+              41:    7(fvec4) Load 40
+              42:    6(float) CompositeExtract 41 0
+              43:    6(float) CompositeExtract 41 1
+              44:   19(fvec2) CompositeConstruct 42 43
+              45:     26(ptr) AccessChain 23 25
+              46:   19(fvec2) Load 45
+              47:    6(float) Dot 44 46
+                              Store 37(r01) 47
+              52:     51(ptr) AccessChain 23 50
+              53:          13 Load 52
+              56:    6(float) CompositeExtract 53 0 0
+              57:    6(float) CompositeExtract 53 0 1
+              58:    6(float) CompositeExtract 53 0 2
+              59:    6(float) CompositeExtract 53 0 3
+              60:    6(float) CompositeExtract 53 1 0
+              61:    6(float) CompositeExtract 53 1 1
+              62:    6(float) CompositeExtract 53 1 2
+              63:    6(float) CompositeExtract 53 1 3
+              64:    6(float) CompositeExtract 53 2 0
+              65:    6(float) CompositeExtract 53 2 1
+              66:    6(float) CompositeExtract 53 2 2
+              67:    6(float) CompositeExtract 53 2 3
+              68:    7(fvec4) CompositeConstruct 56 57 58 59
+              69:    7(fvec4) CompositeConstruct 60 61 62 63
+              70:    7(fvec4) CompositeConstruct 64 65 66 67
+              71:          16 CompositeConstruct 68 69 70
+              72:     30(ptr) AccessChain 23 29
+              73:   14(fvec3) Load 72
+              74:    7(fvec4) MatrixTimesVector 71 73
+                              Store 49(r10) 74
+              78:     77(ptr) AccessChain 23 76
+              79:          16 Load 78
+              80:     39(ptr) AccessChain 23 38
+              81:    7(fvec4) Load 80
+              82:    6(float) CompositeExtract 81 0
+              83:    6(float) CompositeExtract 81 1
+              84:    6(float) CompositeExtract 81 2
+              85:   14(fvec3) CompositeConstruct 82 83 84
+              86:    7(fvec4) MatrixTimesVector 79 85
+                              Store 75(r11) 86
+              88:     30(ptr) AccessChain 23 29
+              89:   14(fvec3) Load 88
+              90:     51(ptr) AccessChain 23 50
+              91:          13 Load 90
+              92:    6(float) CompositeExtract 91 0 0
+              93:    6(float) CompositeExtract 91 0 1
+              94:    6(float) CompositeExtract 91 0 2
+              95:    6(float) CompositeExtract 91 1 0
+              96:    6(float) CompositeExtract 91 1 1
+              97:    6(float) CompositeExtract 91 1 2
+              98:    6(float) CompositeExtract 91 2 0
+              99:    6(float) CompositeExtract 91 2 1
+             100:    6(float) CompositeExtract 91 2 2
+             101:    6(float) CompositeExtract 91 3 0
+             102:    6(float) CompositeExtract 91 3 1
+             103:    6(float) CompositeExtract 91 3 2
+             104:   14(fvec3) CompositeConstruct 92 93 94
+             105:   14(fvec3) CompositeConstruct 95 96 97
+             106:   14(fvec3) CompositeConstruct 98 99 100
+             107:   14(fvec3) CompositeConstruct 101 102 103
+             108:          15 CompositeConstruct 104 105 106 107
+             109:    7(fvec4) VectorTimesMatrix 89 108
+                              Store 87(r20) 109
+             111:     39(ptr) AccessChain 23 38
+             112:    7(fvec4) Load 111
+             113:    6(float) CompositeExtract 112 0
+             114:    6(float) CompositeExtract 112 1
+             115:    6(float) CompositeExtract 112 2
+             116:   14(fvec3) CompositeConstruct 113 114 115
+             119:    118(ptr) AccessChain 23 117
+             120:          15 Load 119
+             121:    7(fvec4) VectorTimesMatrix 116 120
+                              Store 110(r21) 121
+             127:    126(ptr) AccessChain 23 125
+             128:          17 Load 127
+             131:    130(ptr) AccessChain 23 129
+             132:          18 Load 131
+             133:    6(float) CompositeExtract 132 0 0
+             134:    6(float) CompositeExtract 132 0 1
+             135:    6(float) CompositeExtract 132 0 2
+             136:    6(float) CompositeExtract 132 1 0
+             137:    6(float) CompositeExtract 132 1 1
+             138:    6(float) CompositeExtract 132 1 2
+             139:   14(fvec3) CompositeConstruct 133 134 135
+             140:   14(fvec3) CompositeConstruct 136 137 138
+             141:         122 CompositeConstruct 139 140
+             142:         122 MatrixTimesMatrix 128 141
+                              Store 124(r30) 142
+             145:    130(ptr) AccessChain 23 129
+             146:          18 Load 145
+             147:    126(ptr) AccessChain 23 125
+             148:          17 Load 147
+             150:    6(float) CompositeExtract 148 0 0
+             151:    6(float) CompositeExtract 148 0 1
+             152:    6(float) CompositeExtract 148 1 0
+             153:    6(float) CompositeExtract 148 1 1
+             154:    6(float) CompositeExtract 148 2 0
+             155:    6(float) CompositeExtract 148 2 1
+             156:   19(fvec2) CompositeConstruct 150 151
+             157:   19(fvec2) CompositeConstruct 152 153
+             158:   19(fvec2) CompositeConstruct 154 155
+             159:         149 CompositeConstruct 156 157 158
+             160:          16 MatrixTimesMatrix 146 159
+                              Store 144(r31) 160
+             165:    164(ptr) AccessChain 23 163
+             166:          20 Load 165
+             167:    6(float) CompositeExtract 166 0 0
+             168:    6(float) CompositeExtract 166 0 1
+             169:    6(float) CompositeExtract 166 1 0
+             170:    6(float) CompositeExtract 166 1 1
+             171:    6(float) CompositeExtract 166 2 0
+             172:    6(float) CompositeExtract 166 2 1
+             173:   19(fvec2) CompositeConstruct 167 168
+             174:   19(fvec2) CompositeConstruct 169 170
+             175:   19(fvec2) CompositeConstruct 171 172
+             176:         149 CompositeConstruct 173 174 175
+             177:    126(ptr) AccessChain 23 125
+             178:          17 Load 177
+             179:         149 MatrixTimesMatrix 176 178
+                              Store 162(r32) 179
+             182:    126(ptr) AccessChain 23 125
+             183:          17 Load 182
+             184:    6(float) CompositeExtract 183 0 0
+             185:    6(float) CompositeExtract 183 0 1
+             186:    6(float) CompositeExtract 183 0 2
+             187:    6(float) CompositeExtract 183 1 0
+             188:    6(float) CompositeExtract 183 1 1
+             189:    6(float) CompositeExtract 183 1 2
+             190:   14(fvec3) CompositeConstruct 184 185 186
+             191:   14(fvec3) CompositeConstruct 187 188 189
+             192:         122 CompositeConstruct 190 191
+             193:    164(ptr) AccessChain 23 163
+             194:          20 Load 193
+             195:          15 MatrixTimesMatrix 192 194
+                              Store 181(r33) 195
+             196:    7(fvec4) Load 49(r10)
+             197:    7(fvec4) Load 75(r11)
+             198:    7(fvec4) FAdd 196 197
+             199:    7(fvec4) Load 87(r20)
+             200:    7(fvec4) FAdd 198 199
+             201:    7(fvec4) Load 110(r21)
+             202:    7(fvec4) FAdd 200 201
+             203:    6(float) Load 12(r00)
+             204:    7(fvec4) CompositeConstruct 203 203 203 203
+             205:    7(fvec4) FAdd 202 204
+             206:    6(float) Load 37(r01)
+             207:    7(fvec4) CompositeConstruct 206 206 206 206
+             208:    7(fvec4) FAdd 205 207
+             211:     11(ptr) AccessChain 124(r30) 50 210
+             212:    6(float) Load 211
+             213:    7(fvec4) CompositeConstruct 212 212 212 212
+             214:    7(fvec4) FAdd 208 213
+             215:     48(ptr) AccessChain 144(r31) 50
+             216:    7(fvec4) Load 215
+             217:    7(fvec4) FAdd 214 216
+             218:     11(ptr) AccessChain 162(r32) 50 210
+             219:    6(float) Load 218
+             220:    7(fvec4) CompositeConstruct 219 219 219 219
+             221:    7(fvec4) FAdd 217 220
+             222:          15 Load 181(r33)
+             223:          16 Transpose 222
+             224:    7(fvec4) CompositeExtract 223 0
+             225:    7(fvec4) FAdd 221 224
+                              ReturnValue 225
+                              FunctionEnd

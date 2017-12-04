@@ -17,7 +17,10 @@ FxaaTex fillOpaque()
 float4 main() : SV_TARGET0
 {
     FxaaTex tex1 = { g_tInputTexture_sampler, g_tInputTexture };
+    float4 res = lookUp(tex1);
     FxaaTex tex2 = fillOpaque();
+    res += lookUp(tex2);
     FxaaTex tex3 = tex1;
-    return lookUp(tex3);
+    res += lookUp(tex3);
+    return res;
 }

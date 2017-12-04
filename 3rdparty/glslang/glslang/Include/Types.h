@@ -1152,6 +1152,7 @@ public:
                                 sampler.clear();
                                 qualifier.clear();
                                 qualifier.storage = q;
+                                assert(!(isMatrix() && vectorSize != 0));  // prevent vectorSize != 0 on matrices
                             }
     // for explicit precision qualifier
     TType(TBasicType t, TStorageQualifier q, TPrecisionQualifier p, int vs = 1, int mc = 0, int mr = 0,
@@ -1164,6 +1165,7 @@ public:
                                 qualifier.storage = q;
                                 qualifier.precision = p;
                                 assert(p >= EpqNone && p <= EpqHigh);
+                                assert(!(isMatrix() && vectorSize != 0));  // prevent vectorSize != 0 on matrices
                             }
     // for turning a TPublicType into a TType, using a shallow copy
     explicit TType(const TPublicType& p) :

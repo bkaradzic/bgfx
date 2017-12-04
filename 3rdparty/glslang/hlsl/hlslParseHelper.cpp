@@ -3238,7 +3238,7 @@ void HlslParseContext::decomposeStructBufferMethods(const TSourceLoc& loc, TInte
 
             // Index into the array to find the item being loaded.
             // Byte address buffers index in bytes (only multiples of 4 permitted... not so much a byte address
-            // buffer then, but that's what it calls itself.
+            // buffer then, but that's what it calls itself).
 
             int size = 0;
 
@@ -3274,6 +3274,9 @@ void HlslParseContext::decomposeStructBufferMethods(const TSourceLoc& loc, TInte
                                                                                         : EOpIndexIndirect;
 
                 TIntermTyped* lValue = intermediate.addIndex(idxOp, argArray, offsetIdx, loc);
+                const TType derefType(argArray->getType(), 0);
+                lValue->setType(derefType);
+
                 TIntermTyped* rValue = (size == 1) ? argValue :
                     intermediate.addIndex(EOpIndexDirect, argValue, idxConst, loc);
                     
@@ -5008,6 +5011,12 @@ TIntermTyped* HlslParseContext::handleFunctionCall(const TSourceLoc& loc, TFunct
         bool builtIn = false;
         int thisDepth = 0;
 
+        // For mat mul, the situation is unusual: we have to compare vector sizes to mat row or col sizes,
+        // and clamp the opposite arg.  Since that's complex, we farm it off to a separate method.
+        // It doesn't naturally fall out of processing an argument at a time in isolation.
+        if (function->getName() == "mul")
+            addGenMulArgumentConversion(loc, *function, arguments);
+
         TIntermAggregate* aggregate = arguments ? arguments->getAsAggregate() : nullptr;
 
         // TODO: this needs improvement: there's no way at present to look up a signature in
@@ -5167,6 +5176,83 @@ void HlslParseContext::pushFrontArguments(TIntermTyped* front, TIntermTyped*& ar
         arguments->getAsAggregate()->getSequence().insert(arguments->getAsAggregate()->getSequence().begin(), front);
     else
         arguments = intermediate.growAggregate(front, arguments);
+}
+
+//
+// HLSL allows mismatched dimensions on vec*mat, mat*vec, vec*vec, and mat*mat.  This is a
+// situation not well suited to resolution in intrinsic selection, but we can do so here, since we
+// can look at both arguments insert explicit shape changes if required.
+//
+void HlslParseContext::addGenMulArgumentConversion(const TSourceLoc& loc, TFunction& call, TIntermTyped*& args)
+{
+    TIntermAggregate* argAggregate = args ? args->getAsAggregate() : nullptr;
+
+    if (argAggregate == nullptr || argAggregate->getSequence().size() != 2) {
+        // It really ought to have two arguments.
+        error(loc, "expected: mul arguments", "", "");
+        return;
+    }
+
+    TIntermTyped* arg0 = argAggregate->getSequence()[0]->getAsTyped();
+    TIntermTyped* arg1 = argAggregate->getSequence()[1]->getAsTyped();
+
+    if (arg0->isVector() && arg1->isVector()) {
+        // For:
+        //    vec * vec: it's handled during intrinsic selection, so while we could do it here,
+        //               we can also ignore it, which is easier.
+    } else if (arg0->isVector() && arg1->isMatrix()) {
+        // vec * mat: we clamp the vec if the mat col is smaller, else clamp the mat col.
+        if (arg0->getVectorSize() < arg1->getMatrixCols()) {
+            // vec is smaller, so truncate larger mat dimension
+            const TType truncType(arg1->getBasicType(), arg1->getQualifier().storage, arg1->getQualifier().precision,
+                                  0, arg0->getVectorSize(), arg1->getMatrixRows());
+            arg1 = addConstructor(loc, arg1, truncType);
+        } else if (arg0->getVectorSize() > arg1->getMatrixCols()) {
+            // vec is larger, so truncate vec to mat size
+            const TType truncType(arg0->getBasicType(), arg0->getQualifier().storage, arg0->getQualifier().precision,
+                                  arg1->getMatrixCols());
+            arg0 = addConstructor(loc, arg0, truncType);
+        }
+    } else if (arg0->isMatrix() && arg1->isVector()) {
+        // mat * vec: we clamp the vec if the mat col is smaller, else clamp the mat col.
+        if (arg1->getVectorSize() < arg0->getMatrixRows()) {
+            // vec is smaller, so truncate larger mat dimension
+            const TType truncType(arg0->getBasicType(), arg0->getQualifier().storage, arg0->getQualifier().precision,
+                                  0, arg0->getMatrixCols(), arg1->getVectorSize());
+            arg0 = addConstructor(loc, arg0, truncType);
+        } else if (arg1->getVectorSize() > arg0->getMatrixRows()) {
+            // vec is larger, so truncate vec to mat size
+            const TType truncType(arg1->getBasicType(), arg1->getQualifier().storage, arg1->getQualifier().precision,
+                                  arg0->getMatrixRows());
+            arg1 = addConstructor(loc, arg1, truncType);
+        }
+    } else if (arg0->isMatrix() && arg1->isMatrix()) {
+        // mat * mat: we clamp the smaller inner dimension to match the other matrix size.
+        // Remember, HLSL Mrc = GLSL/SPIRV Mcr.
+        if (arg0->getMatrixRows() > arg1->getMatrixCols()) {
+            const TType truncType(arg0->getBasicType(), arg0->getQualifier().storage, arg0->getQualifier().precision,
+                                  0, arg0->getMatrixCols(), arg1->getMatrixCols());
+            arg0 = addConstructor(loc, arg0, truncType);
+        } else if (arg0->getMatrixRows() < arg1->getMatrixCols()) {
+            const TType truncType(arg1->getBasicType(), arg1->getQualifier().storage, arg1->getQualifier().precision,
+                                  0, arg0->getMatrixRows(), arg1->getMatrixRows());
+            arg1 = addConstructor(loc, arg1, truncType);
+        }
+    } else {
+        // It's something with scalars: we'll just leave it alone.  Function selection will handle it
+        // downstream.
+    }
+
+    // Warn if we altered one of the arguments
+    if (arg0 != argAggregate->getSequence()[0] || arg1 != argAggregate->getSequence()[1])
+        warn(loc, "mul() matrix size mismatch", "", "");
+
+    // Put arguments back.  (They might be unchanged, in which case this is harmless).
+    argAggregate->getSequence()[0] = arg0;
+    argAggregate->getSequence()[1] = arg1;
+
+    call[0].type = &arg0->getWritableType();
+    call[1].type = &arg1->getWritableType();
 }
 
 //
@@ -7014,6 +7100,7 @@ void HlslParseContext::mergeObjectLayoutQualifiers(TQualifier& dst, const TQuali
             dst.layoutPushConstant = true;
     }
 }
+
 
 //
 // Look up a function name in the symbol table, and make sure it is a function.
