@@ -2722,6 +2722,19 @@ namespace bgfx
 			stats.textWidth  = tvm->m_width;
 			stats.textHeight = tvm->m_height;
 			stats.encoderStats = m_encoderStats;
+
+			stats.numDynamicIndexBuffers  = m_dynamicIndexBufferHandle.getNumHandles();
+			stats.numDynamicVertexBuffers = m_dynamicVertexBufferHandle.getNumHandles();
+			stats.numFrameBuffers         = m_frameBufferHandle.getNumHandles();
+			stats.numIndexBuffers         = m_indexBufferHandle.getNumHandles();
+			stats.numOcclusionQueries     = m_occlusionQueryHandle.getNumHandles();
+			stats.numPrograms             = m_programHandle.getNumHandles();
+			stats.numShaders              = m_shaderHandle.getNumHandles();
+			stats.numTextures             = m_textureHandle.getNumHandles();
+			stats.numUniforms             = m_uniformHandle.getNumHandles();
+			stats.numVertexBuffers        = m_vertexBufferHandle.getNumHandles();
+			stats.numVertexDecls          = m_vertexDeclHandle.getNumHandles();
+
 			return &stats;
 		}
 

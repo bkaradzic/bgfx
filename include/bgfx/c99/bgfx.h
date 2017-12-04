@@ -374,6 +374,18 @@ typedef struct bgfx_stats
     uint32_t numCompute;
     uint32_t maxGpuLatency;
 
+    uint16_t numDynamicIndexBuffers;
+    uint16_t numDynamicVertexBuffers;
+    uint16_t numFrameBuffers;
+    uint16_t numIndexBuffers;
+    uint16_t numOcclusionQueries;
+    uint16_t numPrograms;
+    uint16_t numShaders;
+    uint16_t numTextures;
+    uint16_t numUniforms;
+    uint16_t numVertexBuffers;
+    uint16_t numVertexDecls;
+
     int64_t gpuMemoryMax;
     int64_t gpuMemoryUsed;
 

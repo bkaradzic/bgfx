@@ -805,36 +805,48 @@ namespace bgfx
 	///
 	struct Stats
 	{
-		int64_t cpuTimeFrame;       //!< CPU time between two `bgfx::frame` calls.
-		int64_t cpuTimeBegin;       //!< Render thread CPU submit begin time.
-		int64_t cpuTimeEnd;         //!< Render thread CPU submit end time.
-		int64_t cpuTimerFreq;       //!< CPU timer frequency.
+		int64_t cpuTimeFrame;             //!< CPU time between two `bgfx::frame` calls.
+		int64_t cpuTimeBegin;             //!< Render thread CPU submit begin time.
+		int64_t cpuTimeEnd;               //!< Render thread CPU submit end time.
+		int64_t cpuTimerFreq;             //!< CPU timer frequency.
 
-		int64_t gpuTimeBegin;       //!< GPU frame begin time.
-		int64_t gpuTimeEnd;         //!< GPU frame end time.
-		int64_t gpuTimerFreq;       //!< GPU timer frequency.
+		int64_t gpuTimeBegin;             //!< GPU frame begin time.
+		int64_t gpuTimeEnd;               //!< GPU frame end time.
+		int64_t gpuTimerFreq;             //!< GPU timer frequency.
 
-		int64_t waitRender;         //!< Time spent waiting for render backend thread to finish issuing
-		                            //!  draw commands to underlying graphics API.
-		int64_t waitSubmit;         //!< Time spent waiting for submit thread to advance to next frame.
+		int64_t waitRender;               //!< Time spent waiting for render backend thread to finish issuing
+		                                  //!  draw commands to underlying graphics API.
+		int64_t waitSubmit;               //!< Time spent waiting for submit thread to advance to next frame.
 
-		uint32_t numDraw;           //!< Number of draw calls submitted.
-		uint32_t numCompute;        //!< Number of compute calls submitted.
-		uint32_t maxGpuLatency;     //!< GPU driver latency.
+		uint32_t numDraw;                 //!< Number of draw calls submitted.
+		uint32_t numCompute;              //!< Number of compute calls submitted.
+		uint32_t maxGpuLatency;           //!< GPU driver latency.
 
-		int64_t gpuMemoryMax;       //!< Maximum available GPU memory for application.
-		int64_t gpuMemoryUsed;      //!< Amount of GPU memory used.
+		uint16_t numDynamicIndexBuffers;  //!<
+		uint16_t numDynamicVertexBuffers; //!<
+		uint16_t numFrameBuffers;         //!<
+		uint16_t numIndexBuffers;         //!<
+		uint16_t numOcclusionQueries;     //!<
+		uint16_t numPrograms;             //!<
+		uint16_t numShaders;              //!<
+		uint16_t numTextures;             //!<
+		uint16_t numUniforms;             //!<
+		uint16_t numVertexBuffers;        //!<
+		uint16_t numVertexDecls;          //!<
 
-		uint16_t width;             //!< Backbuffer width in pixels.
-		uint16_t height;            //!< Backbuffer height in pixels.
-		uint16_t textWidth;         //!< Debug text width in characters.
-		uint16_t textHeight;        //!< Debug text height in characters.
+		int64_t gpuMemoryMax;             //!< Maximum available GPU memory for application.
+		int64_t gpuMemoryUsed;            //!< Amount of GPU memory used.
 
-		uint16_t   numViews;        //!< Number of view stats.
-		ViewStats* viewStats;       //!< View stats.
+		uint16_t width;                   //!< Backbuffer width in pixels.
+		uint16_t height;                  //!< Backbuffer height in pixels.
+		uint16_t textWidth;               //!< Debug text width in characters.
+		uint16_t textHeight;              //!< Debug text height in characters.
 
-		uint8_t       numEncoders;  //!< Number of encoders used during frame.
-		EncoderStats* encoderStats; //!< Encoder stats.
+		uint16_t   numViews;              //!< Number of view stats.
+		ViewStats* viewStats;             //!< View stats.
+
+		uint8_t       numEncoders;        //!< Number of encoders used during frame.
+		EncoderStats* encoderStats;       //!< Encoder stats.
 	};
 
 	/// Encoder for submitting draw calls from multiple threads. Use `bgfx::begin()`

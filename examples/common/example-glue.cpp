@@ -151,6 +151,8 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 		const char* items[bgfx::RendererType::Count];
 
 		int32_t current = 0;
+
+
 		for (uint8_t ii = 0; ii < num; ++ii)
 		{
 			items[ii] = bgfx::getRendererName(supportedRenderers[ii]);
@@ -216,6 +218,26 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 		bx::prettify(tmp1, BX_COUNTOF(tmp1), stats->gpuMemoryMax);
 
 		ImGui::Text("GPU mem: %s / %s", tmp0, tmp1);
+	}
+
+	if (ImGui::CollapsingHeader("Resources") )
+	{
+		const bgfx::Caps* caps = bgfx::getCaps();
+
+		ImGui::PushFont(ImGui::Font::Mono);
+		ImGui::Text("Res: Num  / Max");
+		ImGui::Text("DIB: %4d / %4d", stats->numDynamicIndexBuffers,  caps->limits.maxDynamicIndexBuffers);
+		ImGui::Text("DVB: %4d / %4d", stats->numDynamicVertexBuffers, caps->limits.maxDynamicVertexBuffers);
+		ImGui::Text(" FB: %4d / %4d", stats->numFrameBuffers,         caps->limits.maxFrameBuffers);
+		ImGui::Text(" IB: %4d / %4d", stats->numIndexBuffers,         caps->limits.maxIndexBuffers);
+		ImGui::Text(" OQ: %4d / %4d", stats->numOcclusionQueries,     caps->limits.maxOcclusionQueries);
+		ImGui::Text("  P: %4d / %4d", stats->numPrograms,             caps->limits.maxPrograms);
+		ImGui::Text("  S: %4d / %4d", stats->numShaders,              caps->limits.maxShaders);
+		ImGui::Text("  T: %4d / %4d", stats->numTextures,             caps->limits.maxTextures);
+		ImGui::Text("  U: %4d / %4d", stats->numUniforms,             caps->limits.maxUniforms);
+		ImGui::Text(" VB: %4d / %4d", stats->numVertexBuffers,        caps->limits.maxVertexBuffers);
+		ImGui::Text(" VD: %4d / %4d", stats->numVertexDecls,          caps->limits.maxVertexDecls);
+		ImGui::PopFont();
 	}
 
 	if (0 != stats->numViews)
