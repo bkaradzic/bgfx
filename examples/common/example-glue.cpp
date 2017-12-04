@@ -42,6 +42,15 @@ static bool bar(float _width, float _maxWidth, float _height, const ImVec4& _col
 	return itemHovered;
 }
 
+static const ImVec4 s_resourceColor(0.5f, 0.5f, 0.5f, 1.0f);
+
+static bool resourceBar(const char* _name, uint32_t _num, uint32_t _max, float _maxWidth, float _height)
+{
+	ImGui::Text("%s: %4d / %4d", _name, _num, _max);
+	ImGui::SameLine();
+	return bar(bx::max(1.0f, float(_num*_maxWidth)/float(_max) ), _maxWidth, _height, s_resourceColor);
+}
+
 void showExampleDialog(entry::AppI* _app, const char* _errorText)
 {
 	char temp[1024];
@@ -222,19 +231,21 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 	{
 		const bgfx::Caps* caps = bgfx::getCaps();
 
+		const float itemHeight = ImGui::GetTextLineHeightWithSpacing();
+
 		ImGui::PushFont(ImGui::Font::Mono);
 		ImGui::Text("Res: Num  / Max");
-		ImGui::Text("DIB: %4d / %4d", stats->numDynamicIndexBuffers,  caps->limits.maxDynamicIndexBuffers);
-		ImGui::Text("DVB: %4d / %4d", stats->numDynamicVertexBuffers, caps->limits.maxDynamicVertexBuffers);
-		ImGui::Text(" FB: %4d / %4d", stats->numFrameBuffers,         caps->limits.maxFrameBuffers);
-		ImGui::Text(" IB: %4d / %4d", stats->numIndexBuffers,         caps->limits.maxIndexBuffers);
-		ImGui::Text(" OQ: %4d / %4d", stats->numOcclusionQueries,     caps->limits.maxOcclusionQueries);
-		ImGui::Text("  P: %4d / %4d", stats->numPrograms,             caps->limits.maxPrograms);
-		ImGui::Text("  S: %4d / %4d", stats->numShaders,              caps->limits.maxShaders);
-		ImGui::Text("  T: %4d / %4d", stats->numTextures,             caps->limits.maxTextures);
-		ImGui::Text("  U: %4d / %4d", stats->numUniforms,             caps->limits.maxUniforms);
-		ImGui::Text(" VB: %4d / %4d", stats->numVertexBuffers,        caps->limits.maxVertexBuffers);
-		ImGui::Text(" VD: %4d / %4d", stats->numVertexDecls,          caps->limits.maxVertexDecls);
+		resourceBar("DIB", stats->numDynamicIndexBuffers,caps->limits.maxDynamicIndexBuffers,    30.0f, itemHeight);
+		resourceBar("DVB", stats->numDynamicVertexBuffers, caps->limits.maxDynamicVertexBuffers, 30.0f, itemHeight);
+		resourceBar(" FB", stats->numFrameBuffers,         caps->limits.maxFrameBuffers,         30.0f, itemHeight);
+		resourceBar(" IB", stats->numIndexBuffers,         caps->limits.maxIndexBuffers,         30.0f, itemHeight);
+		resourceBar(" OQ", stats->numOcclusionQueries,     caps->limits.maxOcclusionQueries,     30.0f, itemHeight);
+		resourceBar("  P", stats->numPrograms,             caps->limits.maxPrograms,             30.0f, itemHeight);
+		resourceBar("  S", stats->numShaders,              caps->limits.maxShaders,              30.0f, itemHeight);
+		resourceBar("  T", stats->numTextures,             caps->limits.maxTextures,             30.0f, itemHeight);
+		resourceBar("  U", stats->numUniforms,             caps->limits.maxUniforms,             30.0f, itemHeight);
+		resourceBar(" VB", stats->numVertexBuffers,        caps->limits.maxVertexBuffers,        30.0f, itemHeight);
+		resourceBar(" VD", stats->numVertexDecls,          caps->limits.maxVertexDecls,          30.0f, itemHeight);
 		ImGui::PopFont();
 	}
 
