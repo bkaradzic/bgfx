@@ -1091,7 +1091,7 @@ namespace ImGuizmo
 
        // compute best projection axis
        vec_t axesWorldDirections[3];
-       vec_t bestAxisWorldDirection;
+       vec_t bestAxisWorldDirection = { 0.0f, 0.0f, 0.0f, 0.0f };
        int axes[3];
        unsigned int numAxes = 1;
        axes[0] = gContext.mBoundsBestAxis;
