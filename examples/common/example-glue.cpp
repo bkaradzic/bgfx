@@ -151,8 +151,6 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 		const char* items[bgfx::RendererType::Count];
 
 		int32_t current = 0;
-
-
 		for (uint8_t ii = 0; ii < num; ++ii)
 		{
 			items[ii] = bgfx::getRendererName(supportedRenderers[ii]);
