@@ -44,12 +44,31 @@ static bool bar(float _width, float _maxWidth, float _height, const ImVec4& _col
 
 static const ImVec4 s_resourceColor(0.5f, 0.5f, 0.5f, 1.0f);
 
-static bool resourceBar(const char* _name, uint32_t _num, uint32_t _max, float _maxWidth, float _height)
+static void resourceBar(const char* _name, const char* _tooltip, uint32_t _num, uint32_t _max, float _maxWidth, float _height)
 {
+	bool itemHovered = false;
+
 	ImGui::Text("%s: %4d / %4d", _name, _num, _max);
+	itemHovered |= ImGui::IsItemHovered();
 	ImGui::SameLine();
-	return bar(bx::max(1.0f, float(_num*_maxWidth)/float(_max) ), _maxWidth, _height, s_resourceColor);
+
+	const float percentage = float(_num)/float(_max);
+
+	itemHovered |= bar(bx::max(1.0f, percentage*_maxWidth), _maxWidth, _height, s_resourceColor);
+	ImGui::SameLine();
+
+	ImGui::Text("%5.2f%%", percentage*100.0f);
+
+	if (itemHovered)
+	{
+		ImGui::SetTooltip("%s %5.2f%%"
+			, _tooltip
+			, percentage*100.0f
+			);
+	}
 }
+
+static bool s_showStats = false;
 
 void showExampleDialog(entry::AppI* _app, const char* _errorText)
 {
@@ -61,7 +80,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 		, ImGuiCond_FirstUseEver
 		);
 	ImGui::SetNextWindowSize(
-		  ImVec2(256.0f, 200.0f)
+		  ImVec2(300.0f, 200.0f)
 		, ImGuiCond_FirstUseEver
 		);
 
@@ -147,6 +166,9 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 			cmdExec("exit");
 		}
 
+		ImGui::SameLine();
+		s_showStats ^= ImGui::Button(ICON_FA_BAR_CHART);
+
 		ImGui::PopStyleVar();
 	}
 
@@ -227,123 +249,141 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 		ImGui::Text("GPU mem: %s / %s", tmp0, tmp1);
 	}
 
-	if (ImGui::CollapsingHeader("Resources") )
+	if (s_showStats)
 	{
-		const bgfx::Caps* caps = bgfx::getCaps();
+		ImGui::SetNextWindowSize(
+			  ImVec2(300.0f, 500.0f)
+			, ImGuiCond_FirstUseEver
+			);
 
-		const float itemHeight = ImGui::GetTextLineHeightWithSpacing();
-
-		ImGui::PushFont(ImGui::Font::Mono);
-		ImGui::Text("Res: Num  / Max");
-		resourceBar("DIB", stats->numDynamicIndexBuffers,caps->limits.maxDynamicIndexBuffers,    30.0f, itemHeight);
-		resourceBar("DVB", stats->numDynamicVertexBuffers, caps->limits.maxDynamicVertexBuffers, 30.0f, itemHeight);
-		resourceBar(" FB", stats->numFrameBuffers,         caps->limits.maxFrameBuffers,         30.0f, itemHeight);
-		resourceBar(" IB", stats->numIndexBuffers,         caps->limits.maxIndexBuffers,         30.0f, itemHeight);
-		resourceBar(" OQ", stats->numOcclusionQueries,     caps->limits.maxOcclusionQueries,     30.0f, itemHeight);
-		resourceBar("  P", stats->numPrograms,             caps->limits.maxPrograms,             30.0f, itemHeight);
-		resourceBar("  S", stats->numShaders,              caps->limits.maxShaders,              30.0f, itemHeight);
-		resourceBar("  T", stats->numTextures,             caps->limits.maxTextures,             30.0f, itemHeight);
-		resourceBar("  U", stats->numUniforms,             caps->limits.maxUniforms,             30.0f, itemHeight);
-		resourceBar(" VB", stats->numVertexBuffers,        caps->limits.maxVertexBuffers,        30.0f, itemHeight);
-		resourceBar(" VD", stats->numVertexDecls,          caps->limits.maxVertexDecls,          30.0f, itemHeight);
-		ImGui::PopFont();
-	}
-
-	if (0 != stats->numViews)
-	{
-		if (ImGui::CollapsingHeader(ICON_FA_CLOCK_O " Profiler") )
+		if (ImGui::Begin(ICON_FA_BAR_CHART " Stats", &s_showStats) )
 		{
-			if (ImGui::BeginChild("##view_profiler", ImVec2(0.0f, 0.0f) ) )
+			if (ImGui::CollapsingHeader(ICON_FA_PUZZLE_PIECE " Resources") )
 			{
-				ImGui::PushFont(ImGui::Font::Mono);
-
-				ImVec4 cpuColor(0.5f, 1.0f, 0.5f, 1.0f);
-				ImVec4 gpuColor(0.5f, 0.5f, 1.0f, 1.0f);
+				const bgfx::Caps* caps = bgfx::getCaps();
 
 				const float itemHeight = ImGui::GetTextLineHeightWithSpacing();
-				const float itemHeightWithSpacing = ImGui::GetItemsLineHeightWithSpacing();
-				const double toCpuMs = 1000.0/double(stats->cpuTimerFreq);
-				const double toGpuMs = 1000.0/double(stats->gpuTimerFreq);
-				const float  scale   = 3.0f;
+				const float maxWidth   = 90.0f;
 
-				if (ImGui::ListBoxHeader("Encoders", ImVec2(ImGui::GetWindowWidth(), stats->numEncoders*itemHeightWithSpacing) ) )
-				{
-					ImGuiListClipper clipper(stats->numEncoders, itemHeight);
-
-					while (clipper.Step() )
-					{
-						for (int32_t pos = clipper.DisplayStart; pos < clipper.DisplayEnd; ++pos)
-						{
-							const bgfx::EncoderStats& encoderStats = stats->encoderStats[pos];
-
-							ImGui::Text("%3d", pos);
-							ImGui::SameLine(64.0f);
-
-							const float maxWidth = 30.0f*scale;
-							const float cpuMs    = float( (encoderStats.cpuTimeEnd-encoderStats.cpuTimeBegin)*toCpuMs);
-							const float cpuWidth = bx::clamp(cpuMs*scale, 1.0f, maxWidth);
-
-							if (bar(cpuWidth, maxWidth, itemHeight, cpuColor) )
-							{
-								ImGui::SetTooltip("Encoder %d, CPU: %f [ms]"
-									, pos
-									, cpuMs
-									);
-							}
-						}
-					}
-
-					ImGui::ListBoxFooter();
-				}
-
-				ImGui::Separator();
-
-				if (ImGui::ListBoxHeader("Views", ImVec2(ImGui::GetWindowWidth(), stats->numViews*itemHeightWithSpacing) ) )
-				{
-					ImGuiListClipper clipper(stats->numViews, itemHeight);
-
-					while (clipper.Step() )
-					{
-						for (int32_t pos = clipper.DisplayStart; pos < clipper.DisplayEnd; ++pos)
-						{
-							const bgfx::ViewStats& viewStats = stats->viewStats[pos];
-
-							ImGui::Text("%3d %3d %s", pos, viewStats.view, viewStats.name);
-
-							const float maxWidth = 30.0f*scale;
-							const float cpuWidth = bx::clamp(float(viewStats.cpuTimeElapsed*toCpuMs)*scale, 1.0f, maxWidth);
-							const float gpuWidth = bx::clamp(float(viewStats.gpuTimeElapsed*toGpuMs)*scale, 1.0f, maxWidth);
-
-							ImGui::SameLine(64.0f);
-
-							if (bar(cpuWidth, maxWidth, itemHeight, cpuColor) )
-							{
-								ImGui::SetTooltip("View %d \"%s\", CPU: %f [ms]"
-									, pos
-									, viewStats.name
-									, viewStats.cpuTimeElapsed*toCpuMs
-									);
-							}
-
-							ImGui::SameLine();
-							if (bar(gpuWidth, maxWidth, itemHeight, gpuColor) )
-							{
-								ImGui::SetTooltip("View: %d \"%s\", GPU: %f [ms]"
-									, pos
-									, viewStats.name
-									, viewStats.gpuTimeElapsed*toGpuMs
-									);
-							}
-						}
-					}
-
-					ImGui::ListBoxFooter();
-				}
-
+				ImGui::PushFont(ImGui::Font::Mono);
+				ImGui::Text("Res: Num  / Max");
+				resourceBar("DIB", "Dynamic index buffers",  stats->numDynamicIndexBuffers,  caps->limits.maxDynamicIndexBuffers,  maxWidth, itemHeight);
+				resourceBar("DVB", "Dynamic vertex buffers", stats->numDynamicVertexBuffers, caps->limits.maxDynamicVertexBuffers, maxWidth, itemHeight);
+				resourceBar(" FB", "Frame buffers",          stats->numFrameBuffers,         caps->limits.maxFrameBuffers,         maxWidth, itemHeight);
+				resourceBar(" IB", "Index buffers",          stats->numIndexBuffers,         caps->limits.maxIndexBuffers,         maxWidth, itemHeight);
+				resourceBar(" OQ", "Occlusion queries",      stats->numOcclusionQueries,     caps->limits.maxOcclusionQueries,     maxWidth, itemHeight);
+				resourceBar("  P", "Programs",               stats->numPrograms,             caps->limits.maxPrograms,             maxWidth, itemHeight);
+				resourceBar("  S", "Shaders",                stats->numShaders,              caps->limits.maxShaders,              maxWidth, itemHeight);
+				resourceBar("  T", "Textures",               stats->numTextures,             caps->limits.maxTextures,             maxWidth, itemHeight);
+				resourceBar("  U", "Uniforms",               stats->numUniforms,             caps->limits.maxUniforms,             maxWidth, itemHeight);
+				resourceBar(" VB", "Vertex buffers",         stats->numVertexBuffers,        caps->limits.maxVertexBuffers,        maxWidth, itemHeight);
+				resourceBar(" VD", "Vertex declarations",    stats->numVertexDecls,          caps->limits.maxVertexDecls,          maxWidth, itemHeight);
 				ImGui::PopFont();
 			}
 
-			ImGui::EndChild();
+			if (ImGui::CollapsingHeader(ICON_FA_CLOCK_O " Profiler") )
+			{
+				if (0 == stats->numViews)
+				{
+					ImGui::Text("Profiler is not enabled.");
+				}
+				else
+				{
+					if (ImGui::BeginChild("##view_profiler", ImVec2(0.0f, 0.0f) ) )
+					{
+						ImGui::PushFont(ImGui::Font::Mono);
+
+						ImVec4 cpuColor(0.5f, 1.0f, 0.5f, 1.0f);
+						ImVec4 gpuColor(0.5f, 0.5f, 1.0f, 1.0f);
+
+						const float itemHeight = ImGui::GetTextLineHeightWithSpacing();
+						const float itemHeightWithSpacing = ImGui::GetItemsLineHeightWithSpacing();
+						const double toCpuMs = 1000.0/double(stats->cpuTimerFreq);
+						const double toGpuMs = 1000.0/double(stats->gpuTimerFreq);
+						const float  scale   = 3.0f;
+
+						if (ImGui::ListBoxHeader("Encoders", ImVec2(ImGui::GetWindowWidth(), stats->numEncoders*itemHeightWithSpacing) ) )
+						{
+							ImGuiListClipper clipper(stats->numEncoders, itemHeight);
+
+							while (clipper.Step() )
+							{
+								for (int32_t pos = clipper.DisplayStart; pos < clipper.DisplayEnd; ++pos)
+								{
+									const bgfx::EncoderStats& encoderStats = stats->encoderStats[pos];
+
+									ImGui::Text("%3d", pos);
+									ImGui::SameLine(64.0f);
+
+									const float maxWidth = 30.0f*scale;
+									const float cpuMs    = float( (encoderStats.cpuTimeEnd-encoderStats.cpuTimeBegin)*toCpuMs);
+									const float cpuWidth = bx::clamp(cpuMs*scale, 1.0f, maxWidth);
+
+									if (bar(cpuWidth, maxWidth, itemHeight, cpuColor) )
+									{
+										ImGui::SetTooltip("Encoder %d, CPU: %f [ms]"
+											, pos
+											, cpuMs
+											);
+									}
+								}
+							}
+
+							ImGui::ListBoxFooter();
+						}
+
+						ImGui::Separator();
+
+						if (ImGui::ListBoxHeader("Views", ImVec2(ImGui::GetWindowWidth(), stats->numViews*itemHeightWithSpacing) ) )
+						{
+							ImGuiListClipper clipper(stats->numViews, itemHeight);
+
+							while (clipper.Step() )
+							{
+								for (int32_t pos = clipper.DisplayStart; pos < clipper.DisplayEnd; ++pos)
+								{
+									const bgfx::ViewStats& viewStats = stats->viewStats[pos];
+
+									ImGui::Text("%3d %3d %s", pos, viewStats.view, viewStats.name);
+
+									const float maxWidth = 30.0f*scale;
+									const float cpuWidth = bx::clamp(float(viewStats.cpuTimeElapsed*toCpuMs)*scale, 1.0f, maxWidth);
+									const float gpuWidth = bx::clamp(float(viewStats.gpuTimeElapsed*toGpuMs)*scale, 1.0f, maxWidth);
+
+									ImGui::SameLine(64.0f);
+
+									if (bar(cpuWidth, maxWidth, itemHeight, cpuColor) )
+									{
+										ImGui::SetTooltip("View %d \"%s\", CPU: %f [ms]"
+											, pos
+											, viewStats.name
+											, viewStats.cpuTimeElapsed*toCpuMs
+											);
+									}
+
+									ImGui::SameLine();
+									if (bar(gpuWidth, maxWidth, itemHeight, gpuColor) )
+									{
+										ImGui::SetTooltip("View: %d \"%s\", GPU: %f [ms]"
+											, pos
+											, viewStats.name
+											, viewStats.gpuTimeElapsed*toGpuMs
+											);
+									}
+								}
+							}
+
+							ImGui::ListBoxFooter();
+						}
+
+						ImGui::PopFont();
+					}
+
+					ImGui::EndChild();
+				}
+			}
+
+			ImGui::End();
 		}
 	}
 
