@@ -4623,7 +4623,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		deviceCtx->CopyResource(m_texture3d, *_gpuTexture3d);
 
 		D3D11_MAPPED_SUBRESOURCE mappedResource;
-		deviceCtx->Map(m_texture3d, 0, D3D11_MAP_WRITE, NULL, &mappedResource);
+		deviceCtx->Map(m_texture3d, 0, D3D11_MAP_WRITE, 0, &mappedResource);
 		m_descriptor = reinterpret_cast<IntelDirectAccessResourceDescriptor*>(mappedResource.pData);
 
 		return m_descriptor->ptr;
