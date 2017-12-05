@@ -822,17 +822,17 @@ namespace bgfx
 		uint32_t numCompute;              //!< Number of compute calls submitted.
 		uint32_t maxGpuLatency;           //!< GPU driver latency.
 
-		uint16_t numDynamicIndexBuffers;  //!<
-		uint16_t numDynamicVertexBuffers; //!<
-		uint16_t numFrameBuffers;         //!<
-		uint16_t numIndexBuffers;         //!<
-		uint16_t numOcclusionQueries;     //!<
-		uint16_t numPrograms;             //!<
-		uint16_t numShaders;              //!<
-		uint16_t numTextures;             //!<
-		uint16_t numUniforms;             //!<
-		uint16_t numVertexBuffers;        //!<
-		uint16_t numVertexDecls;          //!<
+		uint16_t numDynamicIndexBuffers;  //!< Number of used dynamic index buffers.
+		uint16_t numDynamicVertexBuffers; //!< Number of used dynamic vertex buffers.
+		uint16_t numFrameBuffers;         //!< Number of used frame buffers.
+		uint16_t numIndexBuffers;         //!< Number of used index buffers.
+		uint16_t numOcclusionQueries;     //!< Number of used occlusion queries.
+		uint16_t numPrograms;             //!< Number of used programs.
+		uint16_t numShaders;              //!< Number of used shaders.
+		uint16_t numTextures;             //!< Number of used textures.
+		uint16_t numUniforms;             //!< Number of used uniforms.
+		uint16_t numVertexBuffers;        //!< Number of used vertex buffers.
+		uint16_t numVertexDecls;          //!< Number of used vertex declarations.
 
 		int64_t gpuMemoryMax;             //!< Maximum available GPU memory for application.
 		int64_t gpuMemoryUsed;            //!< Amount of GPU memory used.
