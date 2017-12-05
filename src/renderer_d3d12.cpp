@@ -4966,8 +4966,8 @@ data.NumQualityLevels = 0;
  				box.bottom = blit.m_srcY + height;;
  				box.back   = blit.m_srcZ + bx::uint32_imax(1, depth);
 
-				D3D12_TEXTURE_COPY_LOCATION dstLocation = { dst.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{}} };
-				D3D12_TEXTURE_COPY_LOCATION srcLocation = { src.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{}} };
+				D3D12_TEXTURE_COPY_LOCATION dstLocation = { dst.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{0,{DXGI_FORMAT_UNKNOWN,0,0,0,0}}} };
+				D3D12_TEXTURE_COPY_LOCATION srcLocation = { src.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{0,{DXGI_FORMAT_UNKNOWN,0,0,0,0}}} };
 				m_commandList->CopyTextureRegion(&dstLocation
 					, blit.m_dstX
 					, blit.m_dstY
