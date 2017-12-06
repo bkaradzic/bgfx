@@ -410,6 +410,8 @@ namespace bgfx { namespace d3d11
 	static const GUID IID_ID3D11Device2             = { 0x9d06dffa, 0xd1e5, 0x4d07, { 0x83, 0xa8, 0x1b, 0xb1, 0x23, 0xf2, 0xf8, 0x41 } };
 	static const GUID IID_ID3D11Device3             = { 0xa05c8c37, 0xd2c6, 0x4732, { 0xb3, 0xa0, 0x9c, 0xe0, 0xb0, 0xdc, 0x9a, 0xe6 } };
 	static const GUID IID_IDXGIAdapter              = { 0x2411e7e1, 0x12ac, 0x4ccf, { 0xbd, 0x14, 0x97, 0x98, 0xe8, 0x53, 0x4d, 0xc0 } };
+	static const GUID IID_IDXGISwapChain3           = { 0x94d99bdb, 0xf1f8, 0x4ab0, { 0xb2, 0x36, 0x7d, 0xa0, 0x17, 0x0e, 0xda, 0xb1 } };
+	static const GUID IID_IDXGISwapChain4           = { 0x3d585d5a, 0xbd4a, 0x489e, { 0xb1, 0xf4, 0x3d, 0xbc, 0xb6, 0x45, 0x2f, 0xfb } };
 	static const GUID IID_ID3D11InfoQueue           = { 0x6543dbb6, 0x1b48, 0x42f5, { 0xab, 0x82, 0xe9, 0x7e, 0xc7, 0x43, 0x26, 0xf6 } };
 	static const GUID IID_IDXGIDeviceRenderDoc      = { 0xa7aa6116, 0x9c8d, 0x4bba, { 0x90, 0x83, 0xb4, 0xd8, 0x16, 0xb7, 0x1b, 0x78 } };
 	static const GUID IID_ID3DUserDefinedAnnotation = { 0xb2daad8b, 0x03d4, 0x4dbf, { 0x95, 0xeb, 0x32, 0xab, 0x4b, 0x63, 0xd0, 0xab } };
@@ -418,6 +420,13 @@ namespace bgfx { namespace d3d11
 	{
 		D3D11_FORMAT_SUPPORT2_UAV_TYPED_LOAD  = 0x40,
 		D3D11_FORMAT_SUPPORT2_UAV_TYPED_STORE = 0x80,
+	};
+
+	static const DXGI_COLOR_SPACE_TYPE s_colorSpace[] =
+	{
+		DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709,    // gamma 2.2,  BT.709
+		DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709,    // gamma 1.0,  BT.709
+		DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, // gamma 2084, BT.2020
 	};
 
 	static const GUID s_d3dDeviceIIDs[] =
@@ -433,6 +442,12 @@ namespace bgfx { namespace d3d11
 		IID_IDXGIDevice2,
 		IID_IDXGIDevice1,
 		IID_IDXGIDevice0,
+	};
+
+	static const GUID s_dxgiSwapChainIIDs[] =
+	{
+		IID_IDXGISwapChain4,
+		IID_IDXGISwapChain3,
 	};
 
 	inline bool isLost(HRESULT _hr)
@@ -711,6 +726,7 @@ namespace bgfx { namespace d3d11
 			, m_driverType(D3D_DRIVER_TYPE_NULL)
 			, m_featureLevel(D3D_FEATURE_LEVEL(0) )
 			, m_adapter(NULL)
+			, m_output(NULL)
 			, m_factory(NULL)
 			, m_swapChain(NULL)
 			, m_lost(false)
@@ -963,6 +979,7 @@ namespace bgfx { namespace d3d11
 				}
 
 				m_adapter    = NULL;
+				m_output     = NULL;
 				m_driverType = BGFX_PCI_ID_SOFTWARE_RASTERIZER == g_caps.vendorId
 					? D3D_DRIVER_TYPE_WARP
 					: D3D_DRIVER_TYPE_HARDWARE
@@ -1021,8 +1038,37 @@ namespace bgfx { namespace d3d11
 							}
 						}
 
+						IDXGIOutput* output;
+						for (uint32_t jj = 0
+							; DXGI_ERROR_NOT_FOUND != adapter->EnumOutputs(jj, &output)
+							; ++jj
+							)
+						{
+							DXGI_OUTPUT_DESC outputDesc;
+							hr = output->GetDesc(&outputDesc);
+							if (SUCCEEDED(hr))
+							{
+								BX_TRACE("\tOutput #%d", jj);
+
+								char deviceName[BX_COUNTOF(outputDesc.DeviceName)];
+								wcstombs(deviceName, outputDesc.DeviceName, BX_COUNTOF(outputDesc.DeviceName));
+								BX_TRACE("\t\tDeviceName: %s", deviceName);
+								BX_TRACE("\t\tDesktopCoordinates: %d, %d, %d, %d"
+									, outputDesc.DesktopCoordinates.left
+									, outputDesc.DesktopCoordinates.top
+									, outputDesc.DesktopCoordinates.right
+									, outputDesc.DesktopCoordinates.bottom
+								);
+								BX_TRACE("\t\tAttachedToDesktop: %d", outputDesc.AttachedToDesktop);
+								BX_TRACE("\t\tRotation: %d", outputDesc.Rotation);
+
+								DX_RELEASE(output, 0);
+							}
+						}
+
 						DX_RELEASE(adapter, adapter == m_adapter ? 1 : 0);
 					}
+
 					DX_RELEASE(factory, NULL != m_adapter ? 1 : 0);
 				}
 
@@ -1296,11 +1342,43 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						| DXGI_MWA_NO_ALT_ENTER
 						) );
 #endif // BX_PLATFORM_*
+
 					if (FAILED(hr) )
 					{
 						BX_TRACE("Init error: Failed to create swap chain.");
 						goto error;
 					}
+
+#if BX_PLATFORM_WINDOWS
+					for (uint32_t ii = 0; ii < BX_COUNTOF(s_dxgiSwapChainIIDs); ++ii)
+					{
+						IDXGISwapChain1* swapChain;
+						hr = m_swapChain->QueryInterface(s_dxgiSwapChainIIDs[ii], (void**)&swapChain);
+						BX_TRACE("DXGI swap chain %d, hr %x", 4-ii, hr);
+
+						if (SUCCEEDED(hr) )
+						{
+							DX_RELEASE(m_swapChain, 1);
+							m_swapChain = swapChain;
+
+							BX_TRACE("Color space support:");
+							for (uint32_t jj = 0; jj < BX_COUNTOF(s_colorSpace); ++jj)
+							{
+								uint32_t colorSpaceSupport;
+								reinterpret_cast<IDXGISwapChain3*>(m_swapChain)->CheckColorSpaceSupport(s_colorSpace[jj], &colorSpaceSupport);
+								BX_TRACE("\t%2d, 0x%08x, %s"
+									, s_colorSpace[jj]
+									, colorSpaceSupport
+									, 0 != (colorSpaceSupport & DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT)
+									? "supported"
+									: "-"
+									);
+							}
+
+							break;
+						}
+					}
+#endif // BX_PLATFORM_WINDOWS
 				}
 				else
 				{
@@ -3739,6 +3817,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		D3D_DRIVER_TYPE   m_driverType;
 		D3D_FEATURE_LEVEL m_featureLevel;
 		IDXGIAdapter*     m_adapter;
+		IDXGIOutput*      m_output;
 		DXGI_ADAPTER_DESC m_adapterDesc;
 #if BX_PLATFORM_WINDOWS
 		IDXGIFactory*     m_factory;

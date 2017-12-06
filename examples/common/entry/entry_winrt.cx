@@ -9,7 +9,7 @@
 
 #include <bgfx/platform.h>
 #include <bx/thread.h>
-#include <bx/fpumath.h>
+#include <bx/math.h>
 #include <Unknwn.h>
 
 using namespace Windows::ApplicationModel;
@@ -144,7 +144,7 @@ private:
 		m_windowClosed = true;
 	}
 
-	static int32_t MainThreadFunc(void*)
+	static int32_t MainThreadFunc(bx::Thread*, void*)
 	{
 		return entry::main(0, g_emptyArgs);
 	}

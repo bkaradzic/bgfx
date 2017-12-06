@@ -39,7 +39,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wmissing-field-initializers");
 BX_PRAGMA_DIAGNOSTIC_POP();
 
 #if BX_PLATFORM_WINDOWS
-#	include <dxgi1_4.h>
+#	include <dxgi1_6.h>
 #endif // BX_PLATFORM_WINDOWS
 
 #ifndef D3D12_TEXTURE_DATA_PITCH_ALIGNMENT
