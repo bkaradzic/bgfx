@@ -4069,12 +4069,8 @@ static ImGuiWindow* CreateNewWindow(const char* name, ImVec2 size, ImGuiWindowFl
     window->Flags = flags;
     g.WindowsById.SetVoidPtr(window->ID, window);
 
-    if (flags & ImGuiWindowFlags_NoSavedSettings)
-    {
-        // User can disable loading and saving of settings. Tooltip and child windows also don't store settings.
-        window->Size = window->SizeFull = size;
-    }
-    else
+    // User can disable loading and saving of settings. Tooltip and child windows also don't store settings.
+    if (!(flags & ImGuiWindowFlags_NoSavedSettings))
     {
         // Retrieve settings from .ini file
         // Use SetWindowPos() or SetNextWindowPos() with the appropriate condition flag to change the initial position of a window.
@@ -4090,8 +4086,8 @@ static ImGuiWindow* CreateNewWindow(const char* name, ImVec2 size, ImGuiWindowFl
             if (ImLengthSqr(settings->Size) > 0.00001f)
                 size = settings->Size;
         }
-        window->Size = window->SizeFull = size;
     }
+    window->Size = window->SizeFull = window->SizeFullAtLastBegin = size;
 
     if ((flags & ImGuiWindowFlags_AlwaysAutoResize) != 0)
     {
@@ -4203,6 +4199,47 @@ static ImGuiCol GetWindowBgColorIdxFromFlags(ImGuiWindowFlags flags)
     return ImGuiCol_WindowBg;
 }
 
+static void CalcResizePosSizeFromAnyCorner(ImGuiWindow* window, const ImVec2& corner_target, const ImVec2& corner_norm, ImVec2* out_pos, ImVec2* out_size)
+{
+    ImVec2 pos_min = ImLerp(corner_target, window->Pos, corner_norm);                // Expected window upper-left
+    ImVec2 pos_max = ImLerp(window->Pos + window->Size, corner_target, corner_norm); // Expected window lower-right
+    ImVec2 size_expected = pos_max - pos_min;
+    ImVec2 size_constrained = CalcSizeFullWithConstraint(window, size_expected);
+    *out_pos = pos_min;
+    if (corner_norm.x == 0.0f)
+        out_pos->x -= (size_constrained.x - size_expected.x);
+    if (corner_norm.y == 0.0f)
+        out_pos->y -= (size_constrained.y - size_expected.y);
+    *out_size = size_constrained;
+}
+
+struct ImGuiResizeGripDef
+{
+    ImVec2           CornerPos;
+    ImVec2           InnerDir;
+    int              AngleMin12, AngleMax12;
+};
+
+const ImGuiResizeGripDef resize_grip_def[4] =
+{
+    { ImVec2(1,1), ImVec2(-1,-1), 0, 3 }, // Lower right
+    { ImVec2(0,1), ImVec2(+1,-1), 3, 6 }, // Lower left
+    { ImVec2(0,0), ImVec2(+1,+1), 6, 9 }, // Upper left
+    { ImVec2(1,0), ImVec2(-1,+1), 9,12 }, // Upper right
+};
+
+static ImRect GetBorderRect(ImGuiWindow* window, int border_n, float perp_padding, float thickness)
+{
+    ImRect rect = window->Rect();
+    if (thickness == 0.0f) rect.Max -= ImVec2(1,1);
+    if (border_n == 0) return ImRect(rect.Min.x + perp_padding, rect.Min.y,                rect.Max.x - perp_padding, rect.Min.y + thickness);
+    if (border_n == 1) return ImRect(rect.Max.x - thickness,    rect.Min.y + perp_padding, rect.Max.x,                rect.Max.y - perp_padding);
+    if (border_n == 2) return ImRect(rect.Min.x + perp_padding, rect.Max.y - thickness,    rect.Max.x - perp_padding, rect.Max.y);
+    if (border_n == 3) return ImRect(rect.Min.x,                rect.Min.y + perp_padding, rect.Min.x + thickness,    rect.Max.y - perp_padding);
+    IM_ASSERT(0);
+    return ImRect();
+}
+
 // Push a new ImGui window to add widgets to.
 // - A default window called "Debug" is automatically stacked at the beginning of every frame so you can use widgets without explicitly calling a Begin/End pair.
 // - Begin/End can be called multiple times during the frame with the same window name to append content.
@@ -4238,6 +4275,20 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
     else
         flags = window->Flags;
 
+    // Update the Appearing flag
+    bool window_just_activated_by_user = (window->LastFrameActive < current_frame - 1);   // Not using !WasActive because the implicit "Debug" window would always toggle off->on
+    const bool window_just_appearing_after_hidden_for_resize = (window->HiddenFrames == 1);
+    if (flags & ImGuiWindowFlags_Popup)
+    {
+        ImGuiPopupRef& popup_ref = g.OpenPopupStack[g.CurrentPopupStack.Size];
+        window_just_activated_by_user |= (window->PopupId != popup_ref.PopupId); // We recycle popups so treat window as activated if popup id changed
+        window_just_activated_by_user |= (window != popup_ref.Window);
+    }
+    window->Appearing = (window_just_activated_by_user || window_just_appearing_after_hidden_for_resize);
+    window->CloseButton = (p_open != NULL);
+    if (window->Appearing)
+        SetWindowConditionAllowFlags(window, ImGuiCond_Appearing, true);
+
     // Parent window is latched only on the first call to Begin() of the frame, so further append-calls can be done from a different window stack
     ImGuiWindow* parent_window = first_begin_of_the_frame ? (!g.CurrentWindowStack.empty() ? g.CurrentWindowStack.back() : NULL) : window->ParentWindow;
     IM_ASSERT(parent_window != NULL || !(flags & ImGuiWindowFlags_ChildWindow));
@@ -4246,25 +4297,15 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
     g.CurrentWindowStack.push_back(window);
     SetCurrentWindow(window);
     CheckStacksSize(window, true);
-
-    bool window_just_activated_by_user = (window->LastFrameActive < current_frame - 1);   // Not using !WasActive because the implicit "Debug" window would always toggle off->on
     if (flags & ImGuiWindowFlags_Popup)
     {
         ImGuiPopupRef& popup_ref = g.OpenPopupStack[g.CurrentPopupStack.Size];
-        window_just_activated_by_user |= (window->PopupId != popup_ref.PopupId); // We recycle popups so treat window as activated if popup id changed
-        window_just_activated_by_user |= (window != popup_ref.Window);
         popup_ref.Window = window;
         g.CurrentPopupStack.push_back(popup_ref);
         window->PopupId = popup_ref.PopupId;
     }
 
-    const bool window_just_appearing_after_hidden_for_resize = (window->HiddenFrames == 1);
-    window->Appearing = (window_just_activated_by_user || window_just_appearing_after_hidden_for_resize);
-    window->CloseButton = (p_open != NULL);
-
     // Process SetNextWindow***() calls
-    if (window->Appearing)
-        SetWindowConditionAllowFlags(window, ImGuiCond_Appearing, true);
     bool window_pos_set_by_api = false, window_size_set_by_api = false;
     if (g.SetNextWindowPosCond)
     {
@@ -4432,13 +4473,13 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
 
         // SCROLLBAR STATUS
 
-        // Update scrollbar status (based on the Size that was effective during last frame or the auto-resized Size). We need to do this before manual resize (below) is effective.
+        // Update scrollbar status (based on the Size that was effective during last frame or the auto-resized Size). 
         if (!window->Collapsed)
         {
-            window->ScrollbarY = (flags & ImGuiWindowFlags_AlwaysVerticalScrollbar) || ((window->SizeContents.y > window->SizeFull.y) && !(flags & ImGuiWindowFlags_NoScrollbar));
-            window->ScrollbarX = (flags & ImGuiWindowFlags_AlwaysHorizontalScrollbar) || ((window->SizeContents.x > window->SizeFull.x - (window->ScrollbarY ? style.ScrollbarSize : 0.0f) - window->WindowPadding.x) && !(flags & ImGuiWindowFlags_NoScrollbar) && (flags & ImGuiWindowFlags_HorizontalScrollbar));
+            window->ScrollbarY = (flags & ImGuiWindowFlags_AlwaysVerticalScrollbar) || ((window->SizeContents.y > window->SizeFullAtLastBegin.y) && !(flags & ImGuiWindowFlags_NoScrollbar));
+            window->ScrollbarX = (flags & ImGuiWindowFlags_AlwaysHorizontalScrollbar) || ((window->SizeContents.x > window->SizeFullAtLastBegin.x - (window->ScrollbarY ? style.ScrollbarSize : 0.0f) - window->WindowPadding.x) && !(flags & ImGuiWindowFlags_NoScrollbar) && (flags & ImGuiWindowFlags_HorizontalScrollbar));
             if (window->ScrollbarX && !window->ScrollbarY)
-                window->ScrollbarY = (window->SizeContents.y > window->SizeFull.y + style.ScrollbarSize) && !(flags & ImGuiWindowFlags_NoScrollbar);
+                window->ScrollbarY = (window->SizeContents.y > window->SizeFullAtLastBegin.y + style.ScrollbarSize) && !(flags & ImGuiWindowFlags_NoScrollbar);
             window->ScrollbarSizes = ImVec2(window->ScrollbarY ? style.ScrollbarSize : 0.0f, window->ScrollbarX ? style.ScrollbarSize : 0.0f);
         }
 
@@ -4538,39 +4579,87 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         }
         else
         {
-            ImU32 resize_col = 0;
-            const float resize_corner_size = ImMax(g.FontSize * 1.35f, window_rounding + 1.0f + g.FontSize * 0.2f);
+            // Handle resize for: Resize Grips, Borders, Gamepad
+            int border_held = -1;
+            ImU32 resize_grip_col[4] = { 0 };
+            const int resize_grip_count = (flags & ImGuiWindowFlags_ResizeFromAnySide) ? 2 : 1; // 4
+            const int resize_border_count = (flags & ImGuiWindowFlags_ResizeFromAnySide) ? 4 : 0;
+
+            const float grip_draw_size = (float)(int)ImMax(g.FontSize * 1.35f, window_rounding + 1.0f + g.FontSize * 0.2f);
+            const float grip_hover_size = (float)(int)(grip_draw_size * 0.75f);
             if (!(flags & ImGuiWindowFlags_AlwaysAutoResize) && window->AutoFitFramesX <= 0 && window->AutoFitFramesY <= 0 && !(flags & ImGuiWindowFlags_NoResize))
             {
-                // Manual resize
-                // Using the FlattenChilds button flag, we make the resize button accessible even if we are hovering over a child window
-                const ImVec2 br = window->Rect().GetBR();
-                const ImRect resize_rect(br - ImFloor(ImVec2(resize_corner_size * 0.75f, resize_corner_size * 0.75f)), br);
-                const ImGuiID resize_id = window->GetID("#RESIZE");
-                bool hovered, held;
-                ButtonBehavior(resize_rect, resize_id, &hovered, &held, ImGuiButtonFlags_FlattenChilds);
-                resize_col = GetColorU32(held ? ImGuiCol_ResizeGripActive : hovered ? ImGuiCol_ResizeGripHovered : ImGuiCol_ResizeGrip);
-                if (hovered || held)
-                    g.MouseCursor = ImGuiMouseCursor_ResizeNWSE;
+                ImVec2 pos_target(FLT_MAX, FLT_MAX);
+                ImVec2 size_target(FLT_MAX, FLT_MAX);
 
-                ImVec2 size_target(FLT_MAX,FLT_MAX);
-                if (g.HoveredWindow == window && held && g.IO.MouseDoubleClicked[0])
+                // Manual resize grips
+                PushID("#RESIZE");
+                for (int resize_grip_n = 0; resize_grip_n < resize_grip_count; resize_grip_n++)
                 {
-                    // Manual auto-fit when double-clicking
-                    size_target = size_auto_fit;
-                    ClearActiveID();
-                }
-                else if (held)
-                {
-                    // We don't use an incremental MouseDelta but rather compute an absolute target size based on mouse position
-                    size_target = (g.IO.MousePos - g.ActiveIdClickOffset - window->Pos) + resize_rect.GetSize();
-                }
+                    const ImGuiResizeGripDef& grip = resize_grip_def[resize_grip_n];
+                    const ImVec2 corner = ImLerp(window->Pos, window->Pos + window->Size, grip.CornerPos);
 
-                if (size_target.x != FLT_MAX && size_target.y != FLT_MAX)
+                    // Using the FlattenChilds button flag we make the resize button accessible even if we are hovering over a child window
+                    ImRect resize_rect(corner, corner + grip.InnerDir * grip_hover_size);
+                    resize_rect.FixInverted();
+                    bool hovered, held;
+                    ButtonBehavior(resize_rect, window->GetID((void*)resize_grip_n), &hovered, &held, ImGuiButtonFlags_FlattenChilds);
+                    if (hovered || held)
+                        g.MouseCursor = (resize_grip_n & 1) ? ImGuiMouseCursor_ResizeNESW : ImGuiMouseCursor_ResizeNWSE;
+
+                    if (g.HoveredWindow == window && held && g.IO.MouseDoubleClicked[0] && resize_grip_n == 0)
+                    {
+                        // Manual auto-fit when double-clicking
+                        size_target = CalcSizeFullWithConstraint(window, size_auto_fit);
+                        ClearActiveID();
+                    }
+                    else if (held)
+                    {
+                        // Resize from any of the four corners
+                        // We don't use an incremental MouseDelta but rather compute an absolute target size based on mouse position
+                        ImVec2 corner_target = g.IO.MousePos - g.ActiveIdClickOffset + resize_rect.GetSize() * grip.CornerPos; // Corner of the window corresponding to our corner grip
+                        CalcResizePosSizeFromAnyCorner(window, corner_target, grip.CornerPos, &pos_target, &size_target);
+                    }
+                    if (resize_grip_n == 0 || held || hovered)
+                        resize_grip_col[resize_grip_n] = GetColorU32(held ? ImGuiCol_ResizeGripActive : hovered ? ImGuiCol_ResizeGripHovered : ImGuiCol_ResizeGrip);
+                }
+                for (int border_n = 0; border_n < resize_border_count; border_n++)
                 {
-                    window->SizeFull = CalcSizeFullWithConstraint(window, size_target);
+                    const float BORDER_SIZE = 5.0f;          // FIXME: Only works _inside_ window because of HoveredWindow check.
+                    const float BORDER_APPEAR_TIMER = 0.05f; // Reduce visual noise
+                    bool hovered, held;
+                    ImRect border_rect = GetBorderRect(window, border_n, grip_hover_size, BORDER_SIZE);
+                    ButtonBehavior(border_rect, window->GetID((void*)(border_n+4)), &hovered, &held, ImGuiButtonFlags_FlattenChilds);
+                    if ((hovered && g.HoveredIdTimer > BORDER_APPEAR_TIMER) || held)
+                    {
+                        g.MouseCursor = (border_n & 1) ? ImGuiMouseCursor_ResizeEW : ImGuiMouseCursor_ResizeNS;
+                        if (held) border_held = border_n;
+                    }
+                    if (held)
+                    {
+                        ImVec2 border_target = window->Pos;
+                        ImVec2 border_posn;
+                        if (border_n == 0) { border_posn = ImVec2(0, 0); border_target.y = (g.IO.MousePos.y - g.ActiveIdClickOffset.y); }
+                        if (border_n == 1) { border_posn = ImVec2(1, 0); border_target.x = (g.IO.MousePos.x - g.ActiveIdClickOffset.x + BORDER_SIZE); }
+                        if (border_n == 2) { border_posn = ImVec2(0, 1); border_target.y = (g.IO.MousePos.y - g.ActiveIdClickOffset.y + BORDER_SIZE); }
+                        if (border_n == 3) { border_posn = ImVec2(0, 0); border_target.x = (g.IO.MousePos.x - g.ActiveIdClickOffset.x); }
+                        CalcResizePosSizeFromAnyCorner(window, border_target, border_posn, &pos_target, &size_target);
+                    }
+                }
+                PopID();
+
+                // Apply back modified position/size to window
+                if (size_target.x != FLT_MAX)
+                {
+                    window->SizeFull = size_target;
                     MarkIniSettingsDirty(window);
                 }
+                if (pos_target.x != FLT_MAX)
+                {
+                    window->Pos = window->PosFloat = ImVec2((float)(int)pos_target.x, (float)(int)pos_target.y);
+                    MarkIniSettingsDirty(window);
+                }
+
                 window->Size = window->SizeFull;
                 title_bar_rect = window->TitleBarRect();
             }
@@ -4600,23 +4689,34 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
             if (window->ScrollbarY)
                 Scrollbar(ImGuiLayoutType_Vertical);
 
-            // Render resize grip
-            // (after the input handling so we don't have a frame of latency)
+            // Render resize grips (after their input handling so we don't have a frame of latency)
             if (!(flags & ImGuiWindowFlags_NoResize))
             {
-                const ImVec2 br = window->Rect().GetBR();
-                window->DrawList->PathLineTo(br + ImVec2(-resize_corner_size, -window_border_size));
-                window->DrawList->PathLineTo(br + ImVec2(-window_border_size, -resize_corner_size));
-                window->DrawList->PathArcToFast(ImVec2(br.x - window_rounding - window_border_size, br.y - window_rounding - window_border_size), window_rounding, 0, 3);
-                window->DrawList->PathFillConvex(resize_col);
+                for (int resize_grip_n = 0; resize_grip_n < resize_grip_count; resize_grip_n++)
+                {
+                    const ImGuiResizeGripDef& grip = resize_grip_def[resize_grip_n];
+                    const ImVec2 corner = ImLerp(window->Pos, window->Pos + window->Size, grip.CornerPos);
+                    window->DrawList->PathLineTo(corner + grip.InnerDir * ((resize_grip_n & 1) ? ImVec2(window_border_size, grip_draw_size) : ImVec2(grip_draw_size, window_border_size)));
+                    window->DrawList->PathLineTo(corner + grip.InnerDir * ((resize_grip_n & 1) ? ImVec2(grip_draw_size, window_border_size) : ImVec2(window_border_size, grip_draw_size)));
+                    window->DrawList->PathArcToFast(ImVec2(corner.x + grip.InnerDir.x * (window_rounding + window_border_size), corner.y + grip.InnerDir.y * (window_rounding + window_border_size)), window_rounding, grip.AngleMin12, grip.AngleMax12);
+                    window->DrawList->PathFillConvex(resize_grip_col[resize_grip_n]);
+                }
             }
 
             // Borders
             if (window_border_size > 0.0f)
                 window->DrawList->AddRect(window->Pos, window->Pos+window->Size, GetColorU32(ImGuiCol_Border), window_rounding, ImDrawCornerFlags_All, window_border_size);
+            if (border_held != -1)
+            {
+                ImRect border = GetBorderRect(window, border_held, grip_draw_size, 0.0f);
+                window->DrawList->AddLine(border.Min, border.Max, GetColorU32(ImGuiCol_SeparatorActive), ImMax(1.0f, window_border_size));
+            }
             if (style.FrameBorderSize > 0 && !(flags & ImGuiWindowFlags_NoTitleBar))
                 window->DrawList->AddLine(title_bar_rect.GetBL()+ImVec2(1,-1), title_bar_rect.GetBR()+ImVec2(-1,-1), GetColorU32(ImGuiCol_Border), style.FrameBorderSize);
         }
+
+        // Store a backup of SizeFull which we will use next frame to decide if we need scrollbars. 
+        window->SizeFullAtLastBegin = window->SizeFull;
 
         // Update ContentsRegionMax. All the variable it depends on are set above in this function.
         window->ContentsRegionRect.Min.x = -window->Scroll.x + window->WindowPadding.x;
