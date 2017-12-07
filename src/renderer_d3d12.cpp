@@ -360,6 +360,7 @@ namespace bgfx { namespace d3d12
 	static const GUID IID_ID3D12CommandQueue        = { 0x0ec870a6, 0x5d7e, 0x4c22, { 0x8c, 0xfc, 0x5b, 0xaa, 0xe0, 0x76, 0x16, 0xed } };
 	static const GUID IID_ID3D12CommandSignature    = { 0xc36a797c, 0xec80, 0x4f0a, { 0x89, 0x85, 0xa7, 0xb2, 0x47, 0x50, 0x82, 0xd1 } };
 	static const GUID IID_ID3D12Debug               = { 0x344488b7, 0x6846, 0x474b, { 0xb9, 0x89, 0xf0, 0x27, 0x44, 0x82, 0x45, 0xe0 } };
+	static const GUID IID_ID3D12Debug1              = { 0xaffaa4ca, 0x63fe, 0x4d8e, { 0xb8, 0xad, 0x15, 0x90, 0x00, 0xaf, 0x43, 0x04 } };
 	static const GUID IID_ID3D12DescriptorHeap      = { 0x8efb471d, 0x616c, 0x4f49, { 0x90, 0xf7, 0x12, 0x7b, 0xb7, 0x63, 0xfa, 0x51 } };
 	static const GUID IID_ID3D12Device              = { 0x189819f1, 0x1db6, 0x4b57, { 0xbe, 0x54, 0x18, 0x21, 0x33, 0x9b, 0x85, 0xf7 } };
 	static const GUID IID_ID3D12Fence               = { 0x0a753dcf, 0xc4d8, 0x4b91, { 0xad, 0xf6, 0xbe, 0x5a, 0x60, 0xd9, 0x5a, 0x76 } };
@@ -724,12 +725,20 @@ namespace bgfx { namespace d3d12
 
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 			{
-				ID3D12Debug* debug;
-				hr = D3D12GetDebugInterface(IID_ID3D12Debug, (void**)&debug);
+				ID3D12Debug* debug0;
+				hr = D3D12GetDebugInterface(IID_ID3D12Debug, (void**)&debug0);
 
 				if (SUCCEEDED(hr) )
 				{
-					debug->EnableDebugLayer();
+					debug0->EnableDebugLayer();
+
+					ID3D12Debug1* debug1;
+					hr = debug0->QueryInterface(IID_ID3D12Debug1, (void**)&debug1);
+	
+					if (SUCCEEDED(hr) )
+					{
+//						debug1->SetEnableGPUBasedValidation(true);
+					}
 				}
 			}
 
