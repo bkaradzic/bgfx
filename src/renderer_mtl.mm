@@ -360,6 +360,7 @@ namespace bgfx { namespace mtl
 
 		bool init(const Init& _init)
 		{
+			BX_UNUSED(_init);
 			BX_TRACE("Init.");
 
 			m_fbh.idx = kInvalidHandle;
