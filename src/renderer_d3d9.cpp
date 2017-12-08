@@ -399,7 +399,7 @@ namespace bgfx { namespace d3d9
 		{
 		}
 
-		bool init()
+		bool init(const Init& _init)
 		{
 			struct ErrorState
 			{
@@ -422,8 +422,8 @@ namespace bgfx { namespace d3d9
 
 			// http://msdn.microsoft.com/en-us/library/windows/desktop/bb172588%28v=vs.85%29.aspx
 			bx::memSet(&m_params, 0, sizeof(m_params) );
-			m_params.BackBufferWidth = BGFX_DEFAULT_WIDTH;
-			m_params.BackBufferHeight = BGFX_DEFAULT_HEIGHT;
+			m_params.BackBufferWidth  = _init.resolution.m_width;
+			m_params.BackBufferHeight = _init.resolution.m_height;
 			m_params.BackBufferFormat = adapterFormat;
 			m_params.BackBufferCount = 1;
 			m_params.MultiSampleType = D3DMULTISAMPLE_NONE;
@@ -2247,10 +2247,10 @@ namespace bgfx { namespace d3d9
 
 	static RendererContextD3D9* s_renderD3D9;
 
-	RendererContextI* rendererCreate()
+	RendererContextI* rendererCreate(const Init& _init)
 	{
 		s_renderD3D9 = BX_NEW(g_allocator, RendererContextD3D9);
-		if (!s_renderD3D9->init() )
+		if (!s_renderD3D9->init(_init) )
 		{
 			BX_DELETE(g_allocator, s_renderD3D9);
 			s_renderD3D9 = NULL;
@@ -4494,8 +4494,9 @@ namespace bgfx { namespace d3d9
 
 namespace bgfx { namespace d3d9
 {
-	RendererContextI* rendererCreate()
+	RendererContextI* rendererCreate(const Init& _init)
 	{
+		BX_UNUSED(_init);
 		return NULL;
 	}
 

@@ -703,7 +703,7 @@ VK_IMPORT_DEVICE
 		{
 		}
 
-		bool init()
+		bool init(const Init& _init)
 		{
 			BX_UNUSED(s_checkMsaa, s_textureAddress);
 
@@ -1361,8 +1361,8 @@ VK_IMPORT_DEVICE
 				m_sci.minImageCount   = BX_COUNTOF(m_backBufferColorImage);
 				m_sci.imageFormat     = surfaceFormats[surfaceFormatIdx].format;
 				m_sci.imageColorSpace = surfaceFormats[surfaceFormatIdx].colorSpace;
-				m_sci.imageExtent.width  = 1280;
-				m_sci.imageExtent.height =  720;
+				m_sci.imageExtent.width  = _init.resolution.m_width;
+				m_sci.imageExtent.height = _init.resolution.m_height;
 				m_sci.imageArrayLayers = 1;
 				m_sci.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 				m_sci.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -3056,10 +3056,10 @@ VK_IMPORT_DEVICE
 
 	static RendererContextVK* s_renderVK;
 
-	RendererContextI* rendererCreate()
+	RendererContextI* rendererCreate(const Init& _init)
 	{
 		s_renderVK = BX_NEW(g_allocator, RendererContextVK);
-		if (!s_renderVK->init() )
+		if (!s_renderVK->init(_init) )
 		{
 			BX_DELETE(g_allocator, s_renderVK);
 			s_renderVK = NULL;
@@ -4599,8 +4599,9 @@ BX_UNUSED(presentMin, presentMax);
 
 namespace bgfx { namespace vk
 {
-	RendererContextI* rendererCreate()
+	RendererContextI* rendererCreate(const Init& _init)
 	{
+		BX_UNUSED(_init);
 		return NULL;
 	}
 

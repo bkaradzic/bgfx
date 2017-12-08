@@ -176,9 +176,6 @@ namespace stl = std;
 #	include <windows.h>
 #endif // BX_PLATFORM_*
 
-#define BGFX_DEFAULT_WIDTH  1280
-#define BGFX_DEFAULT_HEIGHT 720
-
 #define BGFX_MAX_COMPUTE_BINDINGS 8
 
 #define BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER  UINT32_C(0x10000000)
@@ -473,7 +470,7 @@ namespace bgfx
 			, m_height(0)
 			, m_small(false)
 		{
-			resize();
+			resize(false, 1, 1);
 			clear();
 		}
 
@@ -482,7 +479,7 @@ namespace bgfx
 			BX_FREE(g_allocator, m_mem);
 		}
 
-		void resize(bool _small = false, uint32_t _width = BGFX_DEFAULT_WIDTH, uint32_t _height = BGFX_DEFAULT_HEIGHT)
+		void resize(bool _small, uint32_t _width, uint32_t _height)
 		{
 			uint32_t width  = bx::uint32_imax(1, _width/8);
 			uint32_t height = bx::uint32_imax(1, _height/(_small ? 8 : 16) );
@@ -1560,8 +1557,8 @@ namespace bgfx
 	struct Resolution
 	{
 		Resolution()
-			: m_width(BGFX_DEFAULT_WIDTH)
-			, m_height(BGFX_DEFAULT_HEIGHT)
+			: m_width(1280)
+			, m_height(720)
 			, m_flags(BGFX_RESET_NONE)
 		{
 		}
@@ -1569,6 +1566,11 @@ namespace bgfx
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_flags;
+	};
+
+	struct Init
+	{
+		Resolution resolution;
 	};
 
 	struct VertexBuffer

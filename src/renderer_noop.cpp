@@ -224,8 +224,9 @@ namespace bgfx { namespace noop
 
 	static RendererContextNOOP* s_renderNOOP;
 
-	RendererContextI* rendererCreate()
+	RendererContextI* rendererCreate(const Init& _init)
 	{
+		BX_UNUSED(_init);
 		s_renderNOOP = BX_NEW(g_allocator, RendererContextNOOP);
 		return s_renderNOOP;
 	}

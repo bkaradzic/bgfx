@@ -761,7 +761,7 @@ namespace bgfx { namespace d3d11
 		{
 		}
 
-		bool init()
+		bool init(const Init& _init)
 		{
 			struct ErrorState
 			{
@@ -1260,8 +1260,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 
 					bx::memSet(&m_scd, 0, sizeof(m_scd) );
-					m_scd.Width  = BGFX_DEFAULT_WIDTH;
-					m_scd.Height = BGFX_DEFAULT_HEIGHT;
+					m_scd.Width  = _init.resolution.m_width;
+					m_scd.Height = _init.resolution.m_height;
 					m_scd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 					m_scd.Stereo = false;
 					m_scd.SampleDesc.Count   = 1;
@@ -1320,8 +1320,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 
 					bx::memSet(&m_scd, 0, sizeof(m_scd) );
-					m_scd.BufferDesc.Width  = BGFX_DEFAULT_WIDTH;
-					m_scd.BufferDesc.Height = BGFX_DEFAULT_HEIGHT;
+					m_scd.BufferDesc.Width  = _init.resolution.m_width;
+					m_scd.BufferDesc.Height = _init.resolution.m_height;
 					m_scd.BufferDesc.RefreshRate.Numerator   = 60;
 					m_scd.BufferDesc.RefreshRate.Denominator = 1;
 					m_scd.BufferDesc.Format  = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -1385,7 +1385,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					bx::memSet(&m_scd, 0, sizeof(m_scd) );
 					m_scd.SampleDesc.Count   = 1;
 					m_scd.SampleDesc.Quality = 0;
-					setBufferSize(BGFX_DEFAULT_WIDTH, BGFX_DEFAULT_HEIGHT);
+					setBufferSize(_init.resolution.m_width, _init.resolution.m_height);
 					m_backBufferColor        = (ID3D11RenderTargetView*)g_platformData.backBuffer;
 					m_backBufferDepthStencil = (ID3D11DepthStencilView*)g_platformData.backBufferDS;
 				}
@@ -3905,10 +3905,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	static RendererContextD3D11* s_renderD3D11;
 
-	RendererContextI* rendererCreate()
+	RendererContextI* rendererCreate(const Init& _init)
 	{
 		s_renderD3D11 = BX_NEW(g_allocator, RendererContextD3D11);
-		if (!s_renderD3D11->init() )
+		if (!s_renderD3D11->init(_init) )
 		{
 			BX_DELETE(g_allocator, s_renderD3D11);
 			s_renderD3D11 = NULL;
@@ -6903,8 +6903,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 namespace bgfx { namespace d3d11
 {
-	RendererContextI* rendererCreate()
+	RendererContextI* rendererCreate(const Init& _init)
 	{
+		BX_UNUSED(_init);
 		return NULL;
 	}
 

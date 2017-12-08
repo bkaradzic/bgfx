@@ -1800,7 +1800,10 @@ namespace bgfx
 		m_frameTimeLast = now;
 	}
 
-	RendererContextI* rendererCreate(RendererType::Enum _type);
+	///
+	RendererContextI* rendererCreate(RendererType::Enum _type, const Init& _init);
+
+	///
 	void rendererDestroy(RendererContextI* _renderCtx);
 
 	void Context::flip()
@@ -1816,7 +1819,8 @@ namespace bgfx
 				// Something horribly went wrong, fallback to noop renderer.
 				rendererDestroy(m_renderCtx);
 
-				m_renderCtx = rendererCreate(RendererType::Noop);
+				Init init;
+				m_renderCtx = rendererCreate(RendererType::Noop, init);
 				g_caps.rendererType = RendererType::Noop;
 			}
 		}
@@ -1971,14 +1975,14 @@ namespace bgfx
 		}
 	}
 
-	typedef RendererContextI* (*RendererCreateFn)();
+	typedef RendererContextI* (*RendererCreateFn)(const Init& _init);
 	typedef void (*RendererDestroyFn)();
 
-#define BGFX_RENDERER_CONTEXT(_namespace) \
-			namespace _namespace \
-			{ \
-				extern RendererContextI* rendererCreate(); \
-				extern void rendererDestroy(); \
+#define BGFX_RENDERER_CONTEXT(_namespace)                                   \
+			namespace _namespace                                            \
+			{                                                               \
+				extern RendererContextI* rendererCreate(const Init& _init); \
+				extern void rendererDestroy();                              \
 			}
 
 	BGFX_RENDERER_CONTEXT(noop);
@@ -2060,7 +2064,7 @@ namespace bgfx
 		return *(const int32_t*)_rhs - *(const int32_t*)_lhs;
 	}
 
-	RendererContextI* rendererCreate(RendererType::Enum _type)
+	RendererContextI* rendererCreate(RendererType::Enum _type, const Init& _init)
 	{
 		int32_t scores[RendererType::Count];
 		uint32_t numScores = 0;
@@ -2136,7 +2140,7 @@ namespace bgfx
 		for (uint32_t ii = 0; ii < numScores; ++ii)
 		{
 			RendererType::Enum renderer = RendererType::Enum(scores[ii] & 0xff);
-			renderCtx = s_rendererCreator[renderer].createFn();
+			renderCtx = s_rendererCreator[renderer].createFn(_init);
 			if (NULL != renderCtx)
 			{
 				break;
@@ -2187,7 +2191,8 @@ namespace bgfx
 					RendererType::Enum type;
 					_cmdbuf.read(type);
 
-					m_renderCtx = rendererCreate(type);
+					Init init;
+					m_renderCtx = rendererCreate(type, init);
 
 					m_rendererInitialized = NULL != m_renderCtx;
 

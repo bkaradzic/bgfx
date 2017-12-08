@@ -561,7 +561,7 @@ namespace bgfx { namespace d3d12
 		{
 		}
 
-		bool init()
+		bool init(const Init& _init)
 		{
 			struct ErrorState
 			{
@@ -888,8 +888,8 @@ namespace bgfx { namespace d3d12
 					goto error;
 				}
 
-				m_scd.Width  = BGFX_DEFAULT_WIDTH;
-				m_scd.Height = BGFX_DEFAULT_HEIGHT;
+				m_scd.Width  = _init.resolution.m_width;
+				m_scd.Height = _init.resolution.m_height;
 				m_scd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 				m_scd.Stereo  = false;
 				m_scd.SampleDesc.Count   = 1;
@@ -937,8 +937,8 @@ namespace bgfx { namespace d3d12
 #	endif // BX_PLATFORM_WINRT
 				}
 #else
-				m_scd.BufferDesc.Width  = BGFX_DEFAULT_WIDTH;
-				m_scd.BufferDesc.Height = BGFX_DEFAULT_HEIGHT;
+				m_scd.BufferDesc.Width  = _init.resolution.m_width;
+				m_scd.BufferDesc.Height = _init.resolution.m_height;
 				m_scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 				m_scd.BufferDesc.Scaling                 = DXGI_MODE_SCALING_STRETCHED;
 				m_scd.BufferDesc.ScanlineOrdering        = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
@@ -972,8 +972,8 @@ namespace bgfx { namespace d3d12
 			m_presentElapsed = 0;
 
 			{
-				m_resolution.m_width  = BGFX_DEFAULT_WIDTH;
-				m_resolution.m_height = BGFX_DEFAULT_HEIGHT;
+				m_resolution.m_width  = _init.resolution.m_width;
+				m_resolution.m_height = _init.resolution.m_height;
 
 				m_numWindows = 1;
 
@@ -3035,10 +3035,10 @@ data.NumQualityLevels = 0;
 
 	static RendererContextD3D12* s_renderD3D12;
 
-	RendererContextI* rendererCreate()
+	RendererContextI* rendererCreate(const Init& _init)
 	{
 		s_renderD3D12 = BX_NEW(g_allocator, RendererContextD3D12);
-		if (!s_renderD3D12->init() )
+		if (!s_renderD3D12->init(_init) )
 		{
 			BX_DELETE(g_allocator, s_renderD3D12);
 			s_renderD3D12 = NULL;
@@ -5970,8 +5970,9 @@ data.NumQualityLevels = 0;
 
 namespace bgfx { namespace d3d12
 {
-	RendererContextI* rendererCreate()
+	RendererContextI* rendererCreate(const Init& _init)
 	{
+		BX_UNUSED(_init);
 		return NULL;
 	}
 

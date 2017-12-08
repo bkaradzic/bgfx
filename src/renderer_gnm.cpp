@@ -33,8 +33,9 @@ BGFX_DECLARE_EMBEDDED_SHADER(fs_clear7);
 
 namespace bgfx { namespace gnm
 {
-	RendererContextI* rendererCreate()
+	RendererContextI* rendererCreate(const Init& _init)
 	{
+		BX_UNUSED(_init);
 		return NULL;
 	}
 

@@ -358,7 +358,7 @@ namespace bgfx { namespace mtl
 		{
 		}
 
-		bool init()
+		bool init(const Init& _init)
 		{
 			BX_TRACE("Init.");
 
@@ -1847,10 +1847,10 @@ namespace bgfx { namespace mtl
 
 	static RendererContextMtl* s_renderMtl;
 
-	RendererContextI* rendererCreate()
+	RendererContextI* rendererCreate(const Init& _init)
 	{
 		s_renderMtl = BX_NEW(g_allocator, RendererContextMtl);
-		if (!s_renderMtl->init() )
+		if (!s_renderMtl->init(_init) )
 		{
 			BX_DELETE(g_allocator, s_renderMtl);
 			s_renderMtl = NULL;
@@ -4061,8 +4061,9 @@ namespace bgfx { namespace mtl
 
 namespace bgfx { namespace mtl
 	{
-		RendererContextI* rendererCreate()
+		RendererContextI* rendererCreate(const Init& _init)
 		{
+			BX_UNUSED(_init);
 			return NULL;
 		}
 
