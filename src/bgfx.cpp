@@ -2227,7 +2227,7 @@ namespace bgfx
 
 					m_exit = true;
 				}
-				// fall through
+				BX_FALLTHROUGH;
 
 			case CommandBuffer::End:
 				end = true;

@@ -1767,7 +1767,7 @@ namespace bgfx
 			{
 			case DXBC_CHUNK_SHADER_EX:
 				_dxbc.shader.shex = true;
-				// fallthrough
+				BX_FALLTHROUGH;
 
 			case DXBC_CHUNK_SHADER:
 				size += read(_reader, _dxbc.shader, _err);
