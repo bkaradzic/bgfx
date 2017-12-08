@@ -732,13 +732,17 @@ namespace bgfx { namespace d3d12
 				{
 					debug0->EnableDebugLayer();
 
-					ID3D12Debug1* debug1;
-					hr = debug0->QueryInterface(IID_ID3D12Debug1, (void**)&debug1);
-	
-					if (SUCCEEDED(hr) )
+#if BX_PLATFORM_WINDOWS
 					{
-//						debug1->SetEnableGPUBasedValidation(true);
+						ID3D12Debug1* debug1;
+						hr = debug0->QueryInterface(IID_ID3D12Debug1, (void**)&debug1);
+
+						if (SUCCEEDED(hr) )
+						{
+//							debug1->SetEnableGPUBasedValidation(true);
+						}
 					}
+#endif // BX_PLATFORM_WINDOWS
 				}
 			}
 
