@@ -1160,7 +1160,7 @@ bool HlslParseContext::shouldFlatten(const TType& type, TStorageQualifier qualif
         return (type.isArray() && intermediate.getFlattenUniformArrays() && topLevel) ||
                (type.isStruct() && type.containsOpaque());
     default:
-        return type.isStruct() && type.containsOpaque();
+        return false;
     };
 }
 
@@ -1854,6 +1854,9 @@ void HlslParseContext::handleEntryPointAttributes(const TSourceLoc& loc, const T
 // attributes.
 void HlslParseContext::transferTypeAttributes(const TAttributeMap& attributes, TType& type)
 {
+    if (attributes.size() == 0)
+        return;
+
     // location
     int value;
     if (attributes.getInt(EatLocation, value))
@@ -1880,6 +1883,13 @@ void HlslParseContext::transferTypeAttributes(const TAttributeMap& attributes, T
     // input attachment
     if (attributes.getInt(EatInputAttachment, value))
         type.getQualifier().layoutAttachment = value;
+
+    // PointSize built-in
+    TString builtInString;
+    if (attributes.getString(EatBuiltIn, builtInString, 0, false)) {
+        if (builtInString == "PointSize")
+            type.getQualifier().builtIn = EbvPointSize;
+    }
 }
 
 //
@@ -5846,7 +5856,10 @@ void HlslParseContext::handleRegister(const TSourceLoc& loc, TQualifier& qualifi
     case 'c':
     case 's':
     case 'u':
-        qualifier.layoutBinding = regNumber + subComponent;
+        // if nothing else has set the binding, do so now
+        // (other mechanisms override this one)
+        if (!qualifier.hasBinding())
+            qualifier.layoutBinding = regNumber + subComponent;
 
         // This handles per-register layout sets numbers.  For the global mode which sets
         // every symbol to the same value, see setLinkageLayoutSets().
@@ -5880,7 +5893,9 @@ void HlslParseContext::handleRegister(const TSourceLoc& loc, TQualifier& qualifi
         return true;
     };
 
-    if (spaceDesc) {
+    // if nothing else has set the set, do so now
+    // (other mechanisms override this one)
+    if (spaceDesc && !qualifier.hasSet()) {
         if (! crackSpace()) {
             error(loc, "expected spaceN", "register", "");
             return;
@@ -8985,7 +9000,7 @@ bool HlslParseContext::isInputBuiltIn(const TQualifier& qualifier) const
     case EbvVertexIndex:
         return language == EShLangVertex;
     case EbvPrimitiveId:
-        return language == EShLangGeometry || language == EShLangFragment;
+        return language == EShLangGeometry || language == EShLangFragment || language == EShLangTessControl;
     case EbvTessLevelInner:
     case EbvTessLevelOuter:
         return language == EShLangTessEvaluation;
@@ -9033,7 +9048,7 @@ bool HlslParseContext::isOutputBuiltIn(const TQualifier& qualifier) const
     case EbvViewportIndex:
         return language == EShLangGeometry;
     case EbvPrimitiveId:
-        return language == EShLangGeometry || language == EShLangTessControl || language == EShLangTessEvaluation;
+        return language == EShLangGeometry;
     case EbvTessLevelInner:
     case EbvTessLevelOuter:
         return language == EShLangTessControl;

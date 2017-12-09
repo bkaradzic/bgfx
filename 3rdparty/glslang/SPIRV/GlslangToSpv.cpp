@@ -2966,8 +2966,14 @@ bool TGlslangToSpvTraverser::isShaderEntryPoint(const glslang::TIntermAggregate*
 }
 
 // Does parameter need a place to keep writes, separate from the original?
+// Assumes called after originalParam(), which filters out block/buffer/opaque-based
+// qualifiers such that we should have only in/out/inout/constreadonly here.
 bool TGlslangToSpvTraverser::writableParam(glslang::TStorageQualifier qualifier)
 {
+    assert(qualifier == glslang::EvqIn ||
+           qualifier == glslang::EvqOut ||
+           qualifier == glslang::EvqInOut ||
+           qualifier == glslang::EvqConstReadOnly);
     return qualifier != glslang::EvqConstReadOnly;
 }
 
@@ -2978,7 +2984,7 @@ bool TGlslangToSpvTraverser::originalParam(glslang::TStorageQualifier qualifier,
     if (implicitThisParam)                                                                     // implicit this
         return true;
     if (glslangIntermediate->getSource() == glslang::EShSourceHlsl)
-        return false;
+        return paramType.getBasicType() == glslang::EbtBlock;
     return paramType.containsOpaque() ||                                                       // sampler, etc.
            (paramType.getBasicType() == glslang::EbtBlock && qualifier == glslang::EvqBuffer); // SSBO
 }
@@ -3609,8 +3615,8 @@ spv::Id TGlslangToSpvTraverser::handleUserFunctionCall(const glslang::TIntermAgg
         glslangArgs[a]->traverse(this);
         argTypes.push_back(&paramType);
         // keep outputs and pass-by-originals as l-values, evaluate others as r-values
-        if (writableParam(qualifiers[a]) ||
-            originalParam(qualifiers[a], paramType, function->hasImplicitThis() && a == 0)) {
+        if (originalParam(qualifiers[a], paramType, function->hasImplicitThis() && a == 0) ||
+            writableParam(qualifiers[a])) {
             // save l-value
             lValues.push_back(builder.getAccessChain());
         } else {

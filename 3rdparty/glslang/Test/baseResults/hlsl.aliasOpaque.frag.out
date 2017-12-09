@@ -5,17 +5,24 @@ gl_FragCoord origin is upper left
 0:? Sequence
 0:12  Function Definition: osCall(struct-OS-p1-f1-t211; ( temp 4-component vector of float)
 0:12    Function Parameters: 
-0:?       's.ss' ( in sampler)
-0:?       's.a' ( in float)
-0:?       's.tex' ( in texture2D)
+0:12      's' ( in structure{ temp sampler ss,  temp float a,  temp texture2D tex})
 0:?     Sequence
 0:13      Branch: Return with expression
 0:13        vector-scale ( temp 4-component vector of float)
-0:?           's.a' ( in float)
+0:13          a: direct index for structure ( temp float)
+0:13            's' ( in structure{ temp sampler ss,  temp float a,  temp texture2D tex})
+0:13            Constant:
+0:13              1 (const int)
 0:13          texture ( temp 4-component vector of float)
 0:13            Construct combined texture-sampler ( temp sampler2D)
-0:?               's.tex' ( in texture2D)
-0:?               's.ss' ( in sampler)
+0:13              tex: direct index for structure ( temp texture2D)
+0:13                's' ( in structure{ temp sampler ss,  temp float a,  temp texture2D tex})
+0:13                Constant:
+0:13                  2 (const int)
+0:13              ss: direct index for structure ( temp sampler)
+0:13                's' ( in structure{ temp sampler ss,  temp float a,  temp texture2D tex})
+0:13                Constant:
+0:13                  0 (const int)
 0:?             Constant:
 0:?               0.200000
 0:?               0.300000
@@ -23,23 +30,33 @@ gl_FragCoord origin is upper left
 0:17    Function Parameters: 
 0:?     Sequence
 0:19      move second child to first child ( temp sampler)
-0:?         'os.ss' ( temp sampler)
+0:19        ss: direct index for structure ( temp sampler)
+0:19          'os' ( temp structure{ temp sampler ss,  temp float a,  temp texture2D tex})
+0:19          Constant:
+0:19            0 (const int)
 0:19        'gss2' ( uniform sampler)
 0:20      move second child to first child ( temp sampler)
-0:?         'os.ss' ( temp sampler)
+0:20        ss: direct index for structure ( temp sampler)
+0:20          'os' ( temp structure{ temp sampler ss,  temp float a,  temp texture2D tex})
+0:20          Constant:
+0:20            0 (const int)
 0:20        'gss' ( uniform sampler)
 0:21      move second child to first child ( temp texture2D)
-0:?         'os.tex' ( temp texture2D)
+0:21        tex: direct index for structure ( temp texture2D)
+0:21          'os' ( temp structure{ temp sampler ss,  temp float a,  temp texture2D tex})
+0:21          Constant:
+0:21            2 (const int)
 0:21        'gtex' ( uniform texture2D)
 0:22      move second child to first child ( temp float)
-0:?         'os.a' ( temp float)
+0:22        a: direct index for structure ( temp float)
+0:22          'os' ( temp structure{ temp sampler ss,  temp float a,  temp texture2D tex})
+0:22          Constant:
+0:22            1 (const int)
 0:22        Constant:
 0:22          3.000000
 0:28      Branch: Return with expression
 0:28        Function Call: osCall(struct-OS-p1-f1-t211; ( temp 4-component vector of float)
-0:?           'os.ss' ( temp sampler)
-0:?           'os.a' ( temp float)
-0:?           'os.tex' ( temp texture2D)
+0:28          'os' ( temp structure{ temp sampler ss,  temp float a,  temp texture2D tex})
 0:17  Function Definition: main( ( temp void)
 0:17    Function Parameters: 
 0:?     Sequence
@@ -61,17 +78,24 @@ gl_FragCoord origin is upper left
 0:? Sequence
 0:12  Function Definition: osCall(struct-OS-p1-f1-t211; ( temp 4-component vector of float)
 0:12    Function Parameters: 
-0:?       's.ss' ( in sampler)
-0:?       's.a' ( in float)
-0:?       's.tex' ( in texture2D)
+0:12      's' ( in structure{ temp sampler ss,  temp float a,  temp texture2D tex})
 0:?     Sequence
 0:13      Branch: Return with expression
 0:13        vector-scale ( temp 4-component vector of float)
-0:?           's.a' ( in float)
+0:13          a: direct index for structure ( temp float)
+0:13            's' ( in structure{ temp sampler ss,  temp float a,  temp texture2D tex})
+0:13            Constant:
+0:13              1 (const int)
 0:13          texture ( temp 4-component vector of float)
 0:13            Construct combined texture-sampler ( temp sampler2D)
-0:?               's.tex' ( in texture2D)
-0:?               's.ss' ( in sampler)
+0:13              tex: direct index for structure ( temp texture2D)
+0:13                's' ( in structure{ temp sampler ss,  temp float a,  temp texture2D tex})
+0:13                Constant:
+0:13                  2 (const int)
+0:13              ss: direct index for structure ( temp sampler)
+0:13                's' ( in structure{ temp sampler ss,  temp float a,  temp texture2D tex})
+0:13                Constant:
+0:13                  0 (const int)
 0:?             Constant:
 0:?               0.200000
 0:?               0.300000
@@ -79,23 +103,33 @@ gl_FragCoord origin is upper left
 0:17    Function Parameters: 
 0:?     Sequence
 0:19      move second child to first child ( temp sampler)
-0:?         'os.ss' ( temp sampler)
+0:19        ss: direct index for structure ( temp sampler)
+0:19          'os' ( temp structure{ temp sampler ss,  temp float a,  temp texture2D tex})
+0:19          Constant:
+0:19            0 (const int)
 0:19        'gss2' ( uniform sampler)
 0:20      move second child to first child ( temp sampler)
-0:?         'os.ss' ( temp sampler)
+0:20        ss: direct index for structure ( temp sampler)
+0:20          'os' ( temp structure{ temp sampler ss,  temp float a,  temp texture2D tex})
+0:20          Constant:
+0:20            0 (const int)
 0:20        'gss' ( uniform sampler)
 0:21      move second child to first child ( temp texture2D)
-0:?         'os.tex' ( temp texture2D)
+0:21        tex: direct index for structure ( temp texture2D)
+0:21          'os' ( temp structure{ temp sampler ss,  temp float a,  temp texture2D tex})
+0:21          Constant:
+0:21            2 (const int)
 0:21        'gtex' ( uniform texture2D)
 0:22      move second child to first child ( temp float)
-0:?         'os.a' ( temp float)
+0:22        a: direct index for structure ( temp float)
+0:22          'os' ( temp structure{ temp sampler ss,  temp float a,  temp texture2D tex})
+0:22          Constant:
+0:22            1 (const int)
 0:22        Constant:
 0:22          3.000000
 0:28      Branch: Return with expression
 0:28        Function Call: osCall(struct-OS-p1-f1-t211; ( temp 4-component vector of float)
-0:?           'os.ss' ( temp sampler)
-0:?           'os.a' ( temp float)
-0:?           'os.tex' ( temp texture2D)
+0:28          'os' ( temp structure{ temp sampler ss,  temp float a,  temp texture2D tex})
 0:17  Function Definition: main( ( temp void)
 0:17    Function Parameters: 
 0:?     Sequence
@@ -110,98 +144,99 @@ gl_FragCoord origin is upper left
 
 // Module Version 10000
 // Generated by (magic number): 80002
-// Id's are bound by 59
+// Id's are bound by 64
 
                               Capability Shader
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical GLSL450
-                              EntryPoint Fragment 4  "main" 57
+                              EntryPoint Fragment 4  "main" 62
                               ExecutionMode 4 OriginUpperLeft
                               Source HLSL 500
                               Name 4  "main"
-                              Name 17  "osCall(struct-OS-p1-f1-t211;"
-                              Name 14  "s.ss"
-                              Name 15  "s.a"
-                              Name 16  "s.tex"
-                              Name 20  "@main("
-                              Name 35  "os.ss"
-                              Name 37  "gss2"
-                              Name 39  "gss"
-                              Name 41  "os.tex"
-                              Name 43  "gtex"
-                              Name 45  "os.a"
-                              Name 47  "param"
-                              Name 49  "param"
-                              Name 51  "param"
-                              Name 57  "@entryPointOutput"
-                              Decorate 37(gss2) DescriptorSet 0
-                              Decorate 39(gss) DescriptorSet 0
-                              Decorate 43(gtex) DescriptorSet 0
-                              Decorate 57(@entryPointOutput) Location 0
+                              Name 9  "OS"
+                              MemberName 9(OS) 0  "ss"
+                              MemberName 9(OS) 1  "a"
+                              MemberName 9(OS) 2  "tex"
+                              Name 14  "osCall(struct-OS-p1-f1-t211;"
+                              Name 13  "s"
+                              Name 17  "@main("
+                              Name 42  "os"
+                              Name 44  "gss2"
+                              Name 47  "gss"
+                              Name 51  "gtex"
+                              Name 56  "param"
+                              Name 62  "@entryPointOutput"
+                              Decorate 44(gss2) DescriptorSet 0
+                              Decorate 47(gss) DescriptorSet 0
+                              Decorate 51(gtex) DescriptorSet 0
+                              Decorate 62(@entryPointOutput) Location 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeSampler
-               7:             TypePointer Function 6
-               8:             TypeFloat 32
-               9:             TypePointer Function 8(float)
-              10:             TypeImage 8(float) 2D sampled format:Unknown
-              11:             TypePointer Function 10
-              12:             TypeVector 8(float) 4
-              13:             TypeFunction 12(fvec4) 7(ptr) 9(ptr) 11(ptr)
-              19:             TypeFunction 12(fvec4)
-              25:             TypeSampledImage 10
-              27:             TypeVector 8(float) 2
-              28:    8(float) Constant 1045220557
-              29:    8(float) Constant 1050253722
-              30:   27(fvec2) ConstantComposite 28 29
-              36:             TypePointer UniformConstant 6
-        37(gss2):     36(ptr) Variable UniformConstant
-         39(gss):     36(ptr) Variable UniformConstant
-              42:             TypePointer UniformConstant 10
-        43(gtex):     42(ptr) Variable UniformConstant
-              46:    8(float) Constant 1077936128
-              56:             TypePointer Output 12(fvec4)
-57(@entryPointOutput):     56(ptr) Variable Output
+               7:             TypeFloat 32
+               8:             TypeImage 7(float) 2D sampled format:Unknown
+           9(OS):             TypeStruct 6 7(float) 8
+              10:             TypePointer Function 9(OS)
+              11:             TypeVector 7(float) 4
+              12:             TypeFunction 11(fvec4) 10(ptr)
+              16:             TypeFunction 11(fvec4)
+              19:             TypeInt 32 1
+              20:     19(int) Constant 1
+              21:             TypePointer Function 7(float)
+              24:     19(int) Constant 2
+              25:             TypePointer Function 8
+              28:     19(int) Constant 0
+              29:             TypePointer Function 6
+              32:             TypeSampledImage 8
+              34:             TypeVector 7(float) 2
+              35:    7(float) Constant 1045220557
+              36:    7(float) Constant 1050253722
+              37:   34(fvec2) ConstantComposite 35 36
+              43:             TypePointer UniformConstant 6
+        44(gss2):     43(ptr) Variable UniformConstant
+         47(gss):     43(ptr) Variable UniformConstant
+              50:             TypePointer UniformConstant 8
+        51(gtex):     50(ptr) Variable UniformConstant
+              54:    7(float) Constant 1077936128
+              61:             TypePointer Output 11(fvec4)
+62(@entryPointOutput):     61(ptr) Variable Output
          4(main):           2 Function None 3
                5:             Label
-              58:   12(fvec4) FunctionCall 20(@main()
-                              Store 57(@entryPointOutput) 58
+              63:   11(fvec4) FunctionCall 17(@main()
+                              Store 62(@entryPointOutput) 63
                               Return
                               FunctionEnd
-17(osCall(struct-OS-p1-f1-t211;):   12(fvec4) Function None 13
-        14(s.ss):      7(ptr) FunctionParameter
-         15(s.a):      9(ptr) FunctionParameter
-       16(s.tex):     11(ptr) FunctionParameter
-              18:             Label
-              22:    8(float) Load 15(s.a)
-              23:          10 Load 16(s.tex)
-              24:           6 Load 14(s.ss)
-              26:          25 SampledImage 23 24
-              31:   12(fvec4) ImageSampleImplicitLod 26 30
-              32:   12(fvec4) VectorTimesScalar 31 22
-                              ReturnValue 32
+14(osCall(struct-OS-p1-f1-t211;):   11(fvec4) Function None 12
+           13(s):     10(ptr) FunctionParameter
+              15:             Label
+              22:     21(ptr) AccessChain 13(s) 20
+              23:    7(float) Load 22
+              26:     25(ptr) AccessChain 13(s) 24
+              27:           8 Load 26
+              30:     29(ptr) AccessChain 13(s) 28
+              31:           6 Load 30
+              33:          32 SampledImage 27 31
+              38:   11(fvec4) ImageSampleImplicitLod 33 37
+              39:   11(fvec4) VectorTimesScalar 38 23
+                              ReturnValue 39
                               FunctionEnd
-      20(@main():   12(fvec4) Function None 19
-              21:             Label
-       35(os.ss):      7(ptr) Variable Function
-      41(os.tex):     11(ptr) Variable Function
-        45(os.a):      9(ptr) Variable Function
-       47(param):      7(ptr) Variable Function
-       49(param):      9(ptr) Variable Function
-       51(param):     11(ptr) Variable Function
-              38:           6 Load 37(gss2)
-                              Store 35(os.ss) 38
-              40:           6 Load 39(gss)
-                              Store 35(os.ss) 40
-              44:          10 Load 43(gtex)
-                              Store 41(os.tex) 44
-                              Store 45(os.a) 46
-              48:           6 Load 35(os.ss)
-                              Store 47(param) 48
-              50:    8(float) Load 45(os.a)
-                              Store 49(param) 50
-              52:          10 Load 41(os.tex)
-                              Store 51(param) 52
-              53:   12(fvec4) FunctionCall 17(osCall(struct-OS-p1-f1-t211;) 47(param) 49(param) 51(param)
-                              ReturnValue 53
+      17(@main():   11(fvec4) Function None 16
+              18:             Label
+          42(os):     10(ptr) Variable Function
+       56(param):     10(ptr) Variable Function
+              45:           6 Load 44(gss2)
+              46:     29(ptr) AccessChain 42(os) 28
+                              Store 46 45
+              48:           6 Load 47(gss)
+              49:     29(ptr) AccessChain 42(os) 28
+                              Store 49 48
+              52:           8 Load 51(gtex)
+              53:     25(ptr) AccessChain 42(os) 24
+                              Store 53 52
+              55:     21(ptr) AccessChain 42(os) 20
+                              Store 55 54
+              57:       9(OS) Load 42(os)
+                              Store 56(param) 57
+              58:   11(fvec4) FunctionCall 14(osCall(struct-OS-p1-f1-t211;) 56(param)
+                              ReturnValue 58
                               FunctionEnd

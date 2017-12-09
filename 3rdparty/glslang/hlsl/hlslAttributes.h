@@ -66,7 +66,8 @@ namespace glslang {
         EatBinding,
         EatGlobalBinding,
         EatLocation,
-        EatInputAttachment
+        EatInputAttachment,
+        EatBuiltIn
     };
 }
 
@@ -84,6 +85,8 @@ namespace glslang {
 
     class TAttributeMap {
     public:
+        int size() const { return (int)attributes.size(); }
+
         // Search for and potentially add the attribute into the map.  Return the
         // attribute type enum for it, if found, else EatNone.
         TAttributeType setAttribute(const TString& nameSpace, const TString* name, TIntermAggregate* value);

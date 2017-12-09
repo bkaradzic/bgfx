@@ -22,5 +22,6 @@ float4 main() : SV_TARGET0
     res += lookUp(tex2);
     FxaaTex tex3 = tex1;
     res += lookUp(tex3);
+
     return res;
 }

@@ -60,6 +60,8 @@ namespace glslang {
                 return EatBinding;
             else if (lowername == "global_cbuffer_binding")
                 return EatGlobalBinding;
+            else if (lowername == "builtin")
+                return EatBuiltIn;
         } else if (lowernameSpace.size() > 0)
             return EatNone;
 
@@ -177,7 +179,7 @@ namespace glslang {
         const TConstUnion* constVal = &attrAgg->getSequence()[argNum]->getAsConstantUnion()->getConstArray()[0];
         if (constVal == nullptr || constVal->getType() != basicType)
             return nullptr;
-        
+
         return constVal;
     }
 
