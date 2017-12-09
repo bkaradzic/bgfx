@@ -381,6 +381,7 @@ namespace bgfx { namespace d3d12
 		enum Enum
 		{
 			Default,
+			Texture,
 			Upload,
 			ReadBack,
 
@@ -391,13 +392,30 @@ namespace bgfx { namespace d3d12
 		D3D12_RESOURCE_STATES m_state;
 	};
 
-	static const HeapProperty s_heapProperties[] =
+	static HeapProperty s_heapProperties[] =
 	{
-		{ { D3D12_HEAP_TYPE_DEFAULT,  D3D12_CPU_PAGE_PROPERTY_UNKNOWN, D3D12_MEMORY_POOL_UNKNOWN, 1, 1 }, D3D12_RESOURCE_STATE_COMMON       },
-		{ { D3D12_HEAP_TYPE_UPLOAD,   D3D12_CPU_PAGE_PROPERTY_UNKNOWN, D3D12_MEMORY_POOL_UNKNOWN, 1, 1 }, D3D12_RESOURCE_STATE_GENERIC_READ },
-		{ { D3D12_HEAP_TYPE_READBACK, D3D12_CPU_PAGE_PROPERTY_UNKNOWN, D3D12_MEMORY_POOL_UNKNOWN, 1, 1 }, D3D12_RESOURCE_STATE_COPY_DEST    },
+		{ { D3D12_HEAP_TYPE_DEFAULT,  D3D12_CPU_PAGE_PROPERTY_UNKNOWN, D3D12_MEMORY_POOL_UNKNOWN, 0, 0 }, D3D12_RESOURCE_STATE_COMMON       },
+		{ { D3D12_HEAP_TYPE_DEFAULT,  D3D12_CPU_PAGE_PROPERTY_UNKNOWN, D3D12_MEMORY_POOL_UNKNOWN, 0, 0 }, D3D12_RESOURCE_STATE_COMMON       },
+		{ { D3D12_HEAP_TYPE_UPLOAD,   D3D12_CPU_PAGE_PROPERTY_UNKNOWN, D3D12_MEMORY_POOL_UNKNOWN, 0, 0 }, D3D12_RESOURCE_STATE_GENERIC_READ },
+		{ { D3D12_HEAP_TYPE_READBACK, D3D12_CPU_PAGE_PROPERTY_UNKNOWN, D3D12_MEMORY_POOL_UNKNOWN, 0, 0 }, D3D12_RESOURCE_STATE_COPY_DEST    },
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_heapProperties) == HeapProperty::Count);
+
+	static void initHeapProperties(ID3D12Device* _device, D3D12_HEAP_PROPERTIES& _properties)
+	{
+		if (D3D12_HEAP_TYPE_CUSTOM != _properties.Type)
+		{
+			_properties = _device->GetCustomHeapProperties(1, _properties.Type);
+		}
+	}
+
+	static void initHeapProperties(ID3D12Device* _device)
+	{
+		initHeapProperties(_device, s_heapProperties[HeapProperty::Default ].m_properties);
+		initHeapProperties(_device, s_heapProperties[HeapProperty::Texture ].m_properties);
+		initHeapProperties(_device, s_heapProperties[HeapProperty::Upload  ].m_properties);
+		initHeapProperties(_device, s_heapProperties[HeapProperty::ReadBack].m_properties);
+	}
 
 	ID3D12Resource* createCommittedResource(ID3D12Device* _device, HeapProperty::Enum _heapProperty, D3D12_RESOURCE_DESC* _resourceDesc, D3D12_CLEAR_VALUE* _clearValue)
 	{
@@ -873,6 +891,8 @@ namespace bgfx { namespace d3d12
 			BX_TRACE("\tConservativeRasterizationTier %d", m_options.ConservativeRasterizationTier);
 			BX_TRACE("\tCrossNodeSharingTier %d", m_options.CrossNodeSharingTier);
 			BX_TRACE("\tResourceHeapTier %d", m_options.ResourceHeapTier);
+
+			initHeapProperties(m_device);
 
 			m_cmd.init(m_device);
 			errorState = ErrorState::CreatedCommandQueue;
@@ -1492,8 +1512,7 @@ namespace bgfx { namespace d3d12
 
 		void* createTexture(TextureHandle _handle, Memory* _mem, uint32_t _flags, uint8_t _skip) override
 		{
-			m_textures[_handle.idx].create(_mem, _flags, _skip);
-			return NULL;
+			return m_textures[_handle.idx].create(_mem, _flags, _skip);
 		}
 
 		void updateTextureBegin(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/) override
@@ -4103,7 +4122,7 @@ data.NumQualityLevels = 0;
 		bx::read(&reader, m_size);
 	}
 
-	void TextureD3D12::create(const Memory* _mem, uint32_t _flags, uint8_t _skip)
+	void* TextureD3D12::create(const Memory* _mem, uint32_t _flags, uint8_t _skip)
 	{
 		bimg::ImageContainer imageContainer;
 
@@ -4415,7 +4434,13 @@ data.NumQualityLevels = 0;
 				break;
 			}
 
-			m_ptr = createCommittedResource(device, HeapProperty::Default, &resourceDesc, clearValue);
+			m_ptr = createCommittedResource(device, HeapProperty::Texture, &resourceDesc, clearValue);
+
+			if (kk != 0)
+			{
+//				void* directAccessPtr;
+//				DX_CHECK(m_ptr->Map(0, NULL, &directAccessPtr) );
+			}
 
 			{
 				uint64_t uploadBufferSize;
@@ -4479,12 +4504,20 @@ data.NumQualityLevels = 0;
 				}
 			}
 		}
+
+		return m_directAccessPtr;
 	}
 
 	void TextureD3D12::destroy()
 	{
 		if (NULL != m_ptr)
 		{
+			if (NULL != m_directAccessPtr)
+			{
+				m_ptr->Unmap(0, NULL);
+				m_directAccessPtr = NULL;
+			}
+
 			s_renderD3D12->m_cmd.release(m_ptr);
 			m_ptr = NULL;
 		}

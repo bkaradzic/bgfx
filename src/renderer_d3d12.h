@@ -268,6 +268,7 @@ namespace bgfx { namespace d3d12
 
 		TextureD3D12()
 			: m_ptr(NULL)
+			, m_directAccessPtr(NULL)
 			, m_state(D3D12_RESOURCE_STATE_COMMON)
 			, m_numMips(0)
 		{
@@ -275,7 +276,7 @@ namespace bgfx { namespace d3d12
 			bx::memSet(&m_uavd, 0, sizeof(m_uavd) );
 		}
 
-		void create(const Memory* _mem, uint32_t _flags, uint8_t _skip);
+		void* create(const Memory* _mem, uint32_t _flags, uint8_t _skip);
 		void destroy();
 		void update(ID3D12GraphicsCommandList* _commandList, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void resolve();
@@ -284,6 +285,7 @@ namespace bgfx { namespace d3d12
 		D3D12_SHADER_RESOURCE_VIEW_DESC  m_srvd;
 		D3D12_UNORDERED_ACCESS_VIEW_DESC m_uavd;
 		ID3D12Resource* m_ptr;
+		void* m_directAccessPtr;
 		D3D12_RESOURCE_STATES m_state;
 		uint32_t m_flags;
 		uint32_t m_width;
