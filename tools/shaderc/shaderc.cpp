@@ -1637,8 +1637,18 @@ namespace bgfx
 							if (varyingIt != varyingMap.end() )
 							{
 								const Varying& var = varyingIt->second;
-								preprocessor.writef("\t%s %s : %s;\n", var.m_type.c_str(), var.m_name.c_str(), var.m_semantics.c_str() );
-								preprocessor.writef("#define %s _varying_.%s\n", var.m_name.c_str(), var.m_name.c_str() );
+								preprocessor.writef(
+									  "\t%s %s %s : %s;\n"
+									, interpolationDx11(var.m_interpolation.c_str() )
+									, var.m_type.c_str()
+									, var.m_name.c_str()
+									, var.m_semantics.c_str()
+									);
+								preprocessor.writef(
+									  "#define %s _varying_.%s\n"
+									, var.m_name.c_str()
+									, var.m_name.c_str()
+									);
 							}
 						}
 						preprocessor.writef(
