@@ -159,8 +159,7 @@ namespace ImGui
     IMGUI_API void          SetNextWindowPos(const ImVec2& pos, ImGuiCond cond = 0, const ImVec2& pivot = ImVec2(0,0)); // set next window position. call before Begin(). use pivot=(0.5f,0.5f) to center on given point, etc.
     IMGUI_API void          SetNextWindowSize(const ImVec2& size, ImGuiCond cond = 0);          // set next window size. set axis to 0.0f to force an auto-fit on this axis. call before Begin()
     IMGUI_API void          SetNextWindowSizeConstraints(const ImVec2& size_min, const ImVec2& size_max, ImGuiSizeConstraintCallback custom_callback = NULL, void* custom_callback_data = NULL); // set next window size limits. use -1,-1 on either X/Y axis to preserve the current size. Use callback to apply non-trivial programmatic constraints.
-    IMGUI_API void          SetNextWindowContentSize(const ImVec2& size);                       // set next window content size (enforce the range of scrollbars). set axis to 0.0f to leave it automatic. call before Begin()
-    IMGUI_API void          SetNextWindowContentWidth(float width);                             // set next window content width (enforce the range of horizontal scrollbar). call before Begin()
+    IMGUI_API void          SetNextWindowContentSize(const ImVec2& size);                       // set next window content size (~ enforce the range of scrollbars). not including window decorations (title bar, menu bar, etc.). set an axis to 0.0f to leave it automatic. call before Begin()
     IMGUI_API void          SetNextWindowCollapsed(bool collapsed, ImGuiCond cond = 0);         // set next window collapsed state. call before Begin()
     IMGUI_API void          SetNextWindowFocus();                                               // set next window to be focused / front-most. call before Begin()
     IMGUI_API void          SetWindowPos(const ImVec2& pos, ImGuiCond cond = 0);                // (not recommended) set current window position - call within Begin()/End(). prefer using SetNextWindowPos(), as this may incur tearing and side-effects.
@@ -278,7 +277,7 @@ namespace ImGui
     // Widgets: Main
     IMGUI_API bool          Button(const char* label, const ImVec2& size = ImVec2(0,0));            // button
     IMGUI_API bool          SmallButton(const char* label);                                         // button with FramePadding=(0,0) to easily embed within text
-    IMGUI_API bool          InvisibleButton(const char* str_id, const ImVec2& size);
+    IMGUI_API bool          InvisibleButton(const char* str_id, const ImVec2& size);                // button behavior without the visuals, useful to build custom behaviors using the public api (along with IsItemActive, IsItemHovered, etc.)
     IMGUI_API void          Image(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0 = ImVec2(0,0), const ImVec2& uv1 = ImVec2(1,1), const ImVec4& tint_col = ImVec4(1,1,1,1), const ImVec4& border_col = ImVec4(0,0,0,0));
     IMGUI_API bool          ImageButton(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0 = ImVec2(0,0),  const ImVec2& uv1 = ImVec2(1,1), int frame_padding = -1, const ImVec4& bg_col = ImVec4(0,0,0,0), const ImVec4& tint_col = ImVec4(1,1,1,1));    // <0 frame_padding uses default frame padding settings. 0 for no padding
     IMGUI_API bool          Checkbox(const char* label, bool* v);
@@ -916,6 +915,7 @@ struct ImGuiIO
 #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 namespace ImGui
 {
+    static inline void      SetNextWindowContentWidth(float width) { ImGui::SetNextWindowContentSize(ImVec2(width, 0.0f)); } // OBSOLETE 1.53+ (nb: original version preserved last Y value set by SetNextWindowContentSize())
     static inline bool      IsRootWindowOrAnyChildHovered(ImGuiHoveredFlags flags = 0) { return IsItemHovered(flags | ImGuiHoveredFlags_FlattenChilds); } // OBSOLETE 1.53+ use flags directly
     bool                    Begin(const char* name, bool* p_open, const ImVec2& size_on_first_use, float bg_alpha_override = -1.0f, ImGuiWindowFlags flags = 0); // OBSOLETE 1.52+. use SetNextWindowSize() instead if you want to set a window size.
     static inline void      AlignFirstTextHeightToWidgets() { AlignTextToFramePadding(); }     // OBSOLETE 1.52+
