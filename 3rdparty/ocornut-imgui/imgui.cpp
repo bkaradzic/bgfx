@@ -5890,6 +5890,15 @@ void ImGui::SetScrollHere(float center_y_ratio)
     SetScrollFromPosY(target_y, center_y_ratio);
 }
 
+// FIXME-NAV: This function is a placeholder for the upcoming Navigation branch + Focusing features.
+// In the current branch this function will only set the scrolling, in the navigation branch it will also set your navigation cursor.
+// Prefer using "SetItemDefaultFocus()" over "if (IsWindowAppearing()) SetScrollHere()" when applicable.
+void ImGui::SetItemDefaultFocus()
+{
+    if (IsWindowAppearing())
+        SetScrollHere();
+}
+
 void ImGui::SetKeyboardFocusHere(int offset)
 {
     IM_ASSERT(offset >= -1);    // -1 is allowed but not below
@@ -9172,7 +9181,7 @@ void ImGui::EndCombo()
     EndPopup();
 }
 
-// Combo box function.
+// Old API, prefer using BeginCombo() nowadays if you can.
 bool ImGui::Combo(const char* label, int* current_item, bool (*items_getter)(void*, int, const char**), void* data, int items_count, int popup_max_height_in_items)
 {
     ImGuiContext& g = *GImGui;
@@ -9181,16 +9190,18 @@ bool ImGui::Combo(const char* label, int* current_item, bool (*items_getter)(voi
     if (*current_item >= 0 && *current_item < items_count)
         items_getter(data, *current_item, &preview_text);
 
+    // The old Combo() API exposed "popup_max_height_in_items", however the new more general BeginCombo() API doesn't, so we emulate it here.
     if (popup_max_height_in_items != -1 && !g.SetNextWindowSizeConstraint)
     {
         float popup_max_height = CalcMaxPopupHeightFromItemCount(popup_max_height_in_items);
         SetNextWindowSizeConstraints(ImVec2(0,0), ImVec2(FLT_MAX, popup_max_height));
     }
+
     if (!BeginCombo(label, preview_text, 0))
         return false;
 
     // Display items
-    // FIXME-OPT: Use clipper
+    // FIXME-OPT: Use clipper (but we need to disable it on the appearing frame to make sure our call to SetItemDefaultFocus() is processed)
     bool value_changed = false;
     for (int i = 0; i < items_count; i++)
     {
@@ -9204,8 +9215,8 @@ bool ImGui::Combo(const char* label, int* current_item, bool (*items_getter)(voi
             value_changed = true;
             *current_item = i;
         }
-        if (item_selected && IsWindowAppearing())
-            SetScrollHere();
+        if (item_selected)
+            SetItemDefaultFocus();
         PopID();
     }
 
@@ -9242,7 +9253,7 @@ static bool Items_SingleStringGetter(void* data, int idx, const char** out_text)
 }
 
 // Combo box helper allowing to pass an array of strings.
-bool ImGui::Combo(const char* label, int* current_item, const char* const* items, int items_count, int height_in_items)
+bool ImGui::Combo(const char* label, int* current_item, const char* const items[], int items_count, int height_in_items)
 {
     const bool value_changed = Combo(label, current_item, Items_ArrayGetter, (void*)items, items_count, height_in_items);
     return value_changed;

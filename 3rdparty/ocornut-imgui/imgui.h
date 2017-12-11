@@ -72,18 +72,19 @@ typedef unsigned int ImGuiID;       // unique ID used by widgets (typically hash
 typedef unsigned short ImWchar;     // character for keyboard input/display
 typedef void* ImTextureID;          // user data to identify a texture (this is whatever to you want it to be! read the FAQ about ImTextureID in imgui.cpp)
 typedef int ImGuiCol;               // enum: a color identifier for styling     // enum ImGuiCol_
-typedef int ImGuiStyleVar;          // enum: a variable identifier for styling  // enum ImGuiStyleVar_
+typedef int ImGuiCond;              // enum: a condition for Set*()             // enum ImGuiCond_
 typedef int ImGuiKey;               // enum: a key identifier (ImGui-side enum) // enum ImGuiKey_
 typedef int ImGuiMouseCursor;       // enum: a mouse cursor identifier          // enum ImGuiMouseCursor_
-typedef int ImGuiCond;              // enum: a condition for Set*()             // enum ImGuiCond_
-typedef int ImDrawCornerFlags;      // flags: corner flags for AddRect*() etc.  // enum ImDrawCornerFlags_
-typedef int ImGuiColorEditFlags;    // flags: color edit flags for Color*()     // enum ImGuiColorEditFlags_
-typedef int ImGuiWindowFlags;       // flags: window flags for Begin*()         // enum ImGuiWindowFlags_
+typedef int ImGuiStyleVar;          // enum: a variable identifier for styling  // enum ImGuiStyleVar_
+typedef int ImDrawCornerFlags;      // flags: for ImDrawList::AddRect*() etc.   // enum ImDrawCornerFlags_
+typedef int ImGuiColorEditFlags;    // flags: for ColorEdit*(), ColorPicker*()  // enum ImGuiColorEditFlags_
 typedef int ImGuiColumnsFlags;      // flags: for *Columns*()                   // enum ImGuiColumnsFlags_
+typedef int ImGuiComboFlags;        // flags: for BeginCombo()                  // enum ImGuiComboFlags_
+typedef int ImGuiHoveredFlags;      // flags: for IsItemHovered()               // enum ImGuiHoveredFlags_
 typedef int ImGuiInputTextFlags;    // flags: for InputText*()                  // enum ImGuiInputTextFlags_
 typedef int ImGuiSelectableFlags;   // flags: for Selectable()                  // enum ImGuiSelectableFlags_
-typedef int ImGuiTreeNodeFlags;     // flags: for TreeNode*(), Collapsing*()    // enum ImGuiTreeNodeFlags_
-typedef int ImGuiHoveredFlags;      // flags: for IsItemHovered()               // enum ImGuiHoveredFlags_
+typedef int ImGuiTreeNodeFlags;     // flags: for TreeNode*(),CollapsingHeader()// enum ImGuiTreeNodeFlags_
+typedef int ImGuiWindowFlags;       // flags: for Begin*()                      // enum ImGuiWindowFlags_
 typedef int (*ImGuiTextEditCallback)(ImGuiTextEditCallbackData *data);
 typedef void (*ImGuiSizeConstraintCallback)(ImGuiSizeConstraintCallbackData* data);
 #ifdef _MSC_VER
@@ -177,9 +178,8 @@ namespace ImGui
     IMGUI_API float         GetScrollMaxY();                                                    // get maximum scrolling amount ~~ ContentSize.Y - WindowSize.Y
     IMGUI_API void          SetScrollX(float scroll_x);                                         // set scrolling amount [0..GetScrollMaxX()]
     IMGUI_API void          SetScrollY(float scroll_y);                                         // set scrolling amount [0..GetScrollMaxY()]
-    IMGUI_API void          SetScrollHere(float center_y_ratio = 0.5f);                         // adjust scrolling amount to make current cursor position visible. center_y_ratio=0.0: top, 0.5: center, 1.0: bottom.
+    IMGUI_API void          SetScrollHere(float center_y_ratio = 0.5f);                         // adjust scrolling amount to make current cursor position visible. center_y_ratio=0.0: top, 0.5: center, 1.0: bottom. When using to make a "default/current item" visible, consider using SetItemDefaultFocus() instead.
     IMGUI_API void          SetScrollFromPosY(float pos_y, float center_y_ratio = 0.5f);        // adjust scrolling amount to make given position valid. use GetCursorPos() or GetCursorStartPos()+offset to get valid positions.
-    IMGUI_API void          SetKeyboardFocusHere(int offset = 0);                               // focus keyboard on the next widget. Use positive 'offset' to access sub components of a multiple component widget. Use -1 to access previous widget.
     IMGUI_API void          SetStateStorage(ImGuiStorage* tree);                                // replace tree state storage with our own (if you want to manipulate it yourself, typically clear subsection of it)
     IMGUI_API ImGuiStorage* GetStateStorage();
 
@@ -284,14 +284,19 @@ namespace ImGui
     IMGUI_API bool          CheckboxFlags(const char* label, unsigned int* flags, unsigned int flags_value);
     IMGUI_API bool          RadioButton(const char* label, bool active);
     IMGUI_API bool          RadioButton(const char* label, int* v, int v_button);
-    IMGUI_API bool          Combo(const char* label, int* current_item, const char* const* items, int items_count, int height_in_items = -1);
-    IMGUI_API bool          Combo(const char* label, int* current_item, const char* items_separated_by_zeros, int height_in_items = -1);    // separate items with \0, end item-list with \0\0
-    IMGUI_API bool          Combo(const char* label, int* current_item, bool (*items_getter)(void* data, int idx, const char** out_text), void* data, int items_count, int height_in_items = -1);
     IMGUI_API void          PlotLines(const char* label, const float* values, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0), int stride = sizeof(float));
     IMGUI_API void          PlotLines(const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0));
     IMGUI_API void          PlotHistogram(const char* label, const float* values, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0), int stride = sizeof(float));
     IMGUI_API void          PlotHistogram(const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0,0));
     IMGUI_API void          ProgressBar(float fraction, const ImVec2& size_arg = ImVec2(-1,0), const char* overlay = NULL);
+
+    // Widgets: Combo Box
+    // The new BeginCombo()/EndCombo() api allows you to manage your contents and selection state however you want it. 
+    IMGUI_API bool          BeginCombo(const char* label, const char* preview_value, ImGuiComboFlags flags = 0);
+    IMGUI_API void          EndCombo();
+    IMGUI_API bool          Combo(const char* label, int* current_item, const char* const items[], int items_count, int popup_max_height_in_items = -1);
+    IMGUI_API bool          Combo(const char* label, int* current_item, const char* items_separated_by_zeros, int popup_max_height_in_items = -1);      // Separate items with \0 within a string, end item-list with \0\0. e.g. "One\0Two\0Three\0"
+    IMGUI_API bool          Combo(const char* label, int* current_item, bool(*items_getter)(void* data, int idx, const char** out_text), void* data, int items_count, int popup_max_height_in_items = -1);
 
     // Widgets: Drags (tip: ctrl+click on a drag box to input with keyboard. manually input values aren't clamped, can go off-bounds)
     // For all the Float2/Float3/Float4/Int2/Int3/Int4 versions of every functions, note that a 'float v[X]' function argument is the same as 'float* v', the array syntax is just a way to document the number of elements that are expected to be accessible. You can pass address of your first element out of a contiguous set, e.g. &myvector.x
@@ -403,7 +408,7 @@ namespace ImGui
     IMGUI_API bool          IsPopupOpen(const char* str_id);                                    // return true if the popup is open
     IMGUI_API void          CloseCurrentPopup();                                                // close the popup we have begin-ed into. clicking on a MenuItem or Selectable automatically close the current popup.
 
-    // Logging: all text output from interface is redirected to tty/file/clipboard. By default, tree nodes are automatically opened during logging.
+    // Logging/Capture: all text output from interface is captured to tty/file/clipboard. By default, tree nodes are automatically opened during logging.
     IMGUI_API void          LogToTTY(int max_depth = -1);                                       // start logging to tty
     IMGUI_API void          LogToFile(int max_depth = -1, const char* filename = NULL);         // start logging to file
     IMGUI_API void          LogToClipboard(int max_depth = -1);                                 // start logging to OS clipboard
@@ -419,6 +424,12 @@ namespace ImGui
     IMGUI_API void          StyleColorsClassic(ImGuiStyle* dst = NULL);
     IMGUI_API void          StyleColorsDark(ImGuiStyle* dst = NULL);
     IMGUI_API void          StyleColorsLight(ImGuiStyle* dst = NULL);
+
+    // Focus
+    // (FIXME: Those functions will be reworked after we merge the navigation branch + have a pass at focusing/tabbing features.)
+    // (Prefer using "SetItemDefaultFocus()" over "if (IsWindowAppearing()) SetScrollHere()" when applicable, to make your code more forward compatible when navigation branch is merged)
+    IMGUI_API void          SetItemDefaultFocus();                                              // make last item the default focused item of a window (WIP navigation branch only). Pleaase use instead of SetScrollHere().
+    IMGUI_API void          SetKeyboardFocusHere(int offset = 0);                               // focus keyboard on the next widget. Use positive 'offset' to access sub components of a multiple component widget. Use -1 to access previous widget.
 
     // Utilities
     IMGUI_API bool          IsItemHovered(ImGuiHoveredFlags flags = 0);                         // is the last item hovered by mouse (and usable)?
@@ -573,6 +584,17 @@ enum ImGuiSelectableFlags_
     ImGuiSelectableFlags_DontClosePopups    = 1 << 0,   // Clicking this don't close parent popup window
     ImGuiSelectableFlags_SpanAllColumns     = 1 << 1,   // Selectable frame can span all columns (text will still fit in current column)
     ImGuiSelectableFlags_AllowDoubleClick   = 1 << 2    // Generate press events on double clicks too
+};
+
+// Flags for ImGui::BeginCombo()
+enum ImGuiComboFlags_
+{
+    ImGuiComboFlags_PopupAlignLeft      = 1 << 0,   // Align the popup toward the left by default
+    ImGuiComboFlags_HeightSmall         = 1 << 1,   // Max ~4 items visible. Tip: If you want your combo popup to be a specific size you can use SetNextWindowSizeConstraints() prior to calling BeginCombo()
+    ImGuiComboFlags_HeightRegular       = 1 << 2,   // Max ~8 items visible (default)
+    ImGuiComboFlags_HeightLarge         = 1 << 3,   // Max ~20 items visible
+    ImGuiComboFlags_HeightLargest       = 1 << 4,   // As many fitting items as possible
+    ImGuiComboFlags_HeightMask_         = ImGuiComboFlags_HeightSmall | ImGuiComboFlags_HeightRegular | ImGuiComboFlags_HeightLarge | ImGuiComboFlags_HeightLargest
 };
 
 // Flags for ImGui::IsItemHovered(), ImGui::IsWindowHovered()
@@ -925,9 +947,6 @@ namespace ImGui
     static inline bool      IsMouseHoveringAnyWindow() { return IsAnyWindowHovered(); }        // OBSOLETE 1.51+
     static inline bool      IsMouseHoveringWindow() { return IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem); } // OBSOLETE 1.51+
     static inline bool      CollapsingHeader(const char* label, const char* str_id, bool framed = true, bool default_open = false) { (void)str_id; (void)framed; ImGuiTreeNodeFlags default_open_flags = 1 << 5; return CollapsingHeader(label, (default_open ? default_open_flags : 0)); } // OBSOLETE 1.49+
-    static inline ImFont*   GetWindowFont() { return GetFont(); }                              // OBSOLETE 1.48+
-    static inline float     GetWindowFontSize() { return GetFontSize(); }                      // OBSOLETE 1.48+
-    static inline void      SetScrollPosHere() { SetScrollHere(); }                            // OBSOLETE 1.42+
 }
 #endif
 
@@ -1554,6 +1573,7 @@ struct ImFont
     IMGUI_API void              SetFallbackChar(ImWchar c);
     float                       GetCharAdvance(ImWchar c) const     { return ((int)c < IndexAdvanceX.Size) ? IndexAdvanceX[(int)c] : FallbackAdvanceX; }
     bool                        IsLoaded() const                    { return ContainerAtlas != NULL; }
+    const char*                 GetDebugName() const                { return ConfigData ? ConfigData->Name : "<unknown>"; }
 
     // 'max_width' stops rendering after a certain width (could be turned into a 2d size). FLT_MAX to disable.
     // 'wrap_width' enable automatic word-wrapping across multiple lines to fit into given width. 0.0f to disable.
