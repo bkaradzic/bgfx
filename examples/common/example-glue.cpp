@@ -297,7 +297,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 						ImVec4 gpuColor(0.5f, 0.5f, 1.0f, 1.0f);
 
 						const float itemHeight = ImGui::GetTextLineHeightWithSpacing();
-						const float itemHeightWithSpacing = ImGui::GetItemsLineHeightWithSpacing();
+						const float itemHeightWithSpacing = ImGui::GetFrameHeight();
 						const double toCpuMs = 1000.0/double(stats->cpuTimerFreq);
 						const double toGpuMs = 1000.0/double(stats->gpuTimerFreq);
 						const float  scale   = 3.0f;
