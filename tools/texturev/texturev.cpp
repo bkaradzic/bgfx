@@ -76,6 +76,7 @@ static const char* s_supportedExt[] =
 	"dds",
 	"exr",
 	"gif",
+	"gnf",
 	"jpg",
 	"jpeg",
 	"hdr",
@@ -232,6 +233,7 @@ struct View
 		, m_info(false)
 		, m_files(false)
 		, m_sdf(false)
+		, m_inLinear(false)
 	{
 		load();
 	}
@@ -736,6 +738,7 @@ struct View
 	bool     m_info;
 	bool     m_files;
 	bool     m_sdf;
+	bool     m_inLinear;
 };
 
 int cmdView(CmdContext* /*_context*/, void* _userData, int _argc, char const* const* _argv)
@@ -1459,11 +1462,11 @@ int _main_(int _argc, char** _argv)
 			if (view.m_info)
 			{
 				ImGui::SetNextWindowSize(
-					  ImVec2(300.0f, 200.0f)
+					  ImVec2(300.0f, 240.0f)
 					, ImGuiCond_FirstUseEver
 					);
 
-				if (ImGui::Begin("Info", NULL) )
+				if (ImGui::Begin("Info", NULL, ImGuiWindowFlags_AlwaysAutoResize) )
 				{
 					if (ImGui::BeginChild("##info", ImVec2(0.0f, 0.0f) ) )
 					{
@@ -1486,6 +1489,7 @@ int _main_(int _argc, char** _argv)
 							, view.m_textureInfo.numMips - 1
 							);
 
+						ImGui::Checkbox("Input linear", &view.m_inLinear);
 						ImGui::RangeSliderFloat("EV range", &view.m_evMin, &view.m_evMax, kEvMin, kEvMax);
 						ImGui::SliderFloat("EV", &view.m_ev, view.m_evMin, view.m_evMax);
 
@@ -1654,6 +1658,8 @@ int _main_(int _argc, char** _argv)
 					, &orientation
 					);
 
+				view.m_inLinear = bimg::isFloat(bimg::TextureFormat::Enum(view.m_textureInfo.format) );
+
 				switch (orientation)
 				{
 				default:
@@ -1819,7 +1825,7 @@ int _main_(int _argc, char** _argv)
 			layer.set(float(view.m_layer), 0.25f*view.m_transitionTime);
 			ev.set(view.m_ev, 0.5f*view.m_transitionTime);
 
-			float params[4] = { mip.getValue(), layer.getValue(), 0.0f, ev.getValue() };
+			float params[4] = { mip.getValue(), layer.getValue(), view.m_inLinear ? 1.0f : 0.0f, ev.getValue() };
 			if (1 < view.m_textureInfo.depth)
 			{
 				params[1] = layer.getValue()/view.m_textureInfo.depth;
